@@ -1,7 +1,7 @@
 /*                        M A K E _ N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,9 +37,9 @@ ged_make_name_core(struct ged *gedp, int argc, const char *argv[])
     int len;
     static const char *usage = "template | -s [num]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -56,21 +56,21 @@ ged_make_name_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 
 	    i = 0;
-	    return GED_OK;
+	    return BRLCAD_OK;
 
 	case 3:
 
 	    if ((BU_STR_EQUAL(argv[1], "-s"))
 		&& (sscanf(argv[2], "%d", &new_i) == 1)) {
 		i = new_i;
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     for (cp = (char *)argv[1], len = 0; *cp != '\0'; ++cp, ++len) {
@@ -90,12 +90,12 @@ ged_make_name_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&obj_name, "%d", i++);
 	bu_vls_strcat(&obj_name, tp);
     }
-    while (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != RT_DIR_NULL);
+    while (db_lookup(gedp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != RT_DIR_NULL);
 
     bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&obj_name));
     bu_vls_free(&obj_name);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

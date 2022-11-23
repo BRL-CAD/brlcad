@@ -1,7 +1,7 @@
 /*                      S H _ C L O U D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,10 +47,10 @@ struct bu_structparse cloud_parse[] = {
 };
 
 
-HIDDEN int cloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int cloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void cloud_print(register struct region *rp, void *dp);
-HIDDEN void cloud_free(void *cp);
+static int cloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int cloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void cloud_print(register struct region *rp, void *dp);
+static void cloud_free(void *cp);
 
 struct mfuncs cloud_mfuncs[] = {
     {MF_MAGIC,	"cloud",	0,		MFI_UV,		0,
@@ -133,7 +133,7 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
 }
 
 
-HIDDEN int
+static int
 cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct cloud_specific *cp;
@@ -151,14 +151,14 @@ cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **d
 }
 
 
-HIDDEN void
+static void
 cloud_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, cloud_parse, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 cloud_free(void *cp)
 {
     BU_PUT(cp, struct cloud_specific);

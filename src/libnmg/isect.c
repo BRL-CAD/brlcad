@@ -1,7 +1,7 @@
 /*                  N M G _ R T _ I S E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2021 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bn/mat.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "nmg.h"
 
 
@@ -123,7 +123,7 @@ nmg_ck_hitmiss_list(const struct bu_list *hd)
 }
 
 
-HIDDEN void
+static void
 nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt, struct bu_list *vlfree)
 {
     FILE *fp;
@@ -140,7 +140,7 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt, struct bu_
     }
 
     bu_log("overlay %s\n", name);
-    b = (long *)nmg_calloc(fu->s_p->r_p->m_p->maxindex,
+    b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
 			  sizeof(long), "bit vec");
 
 	pl_erase(fp);
@@ -157,12 +157,12 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt, struct bu_
     pl_color(fp, 255, 50, 50);
     pdv_3line(fp, pt, plane_pt);
 
-    nmg_free((char *)b, "bit vec");
+    bu_free((char *)b, "bit vec");
     fclose(fp);
 }
 
 
-HIDDEN void
+static void
 pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
 {
     FILE *fp;
@@ -181,7 +181,7 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
 
     bu_log("overlay %s\n", name);
     m = nmg_find_model(eu->up.magic_p);
-    b = (long *)nmg_calloc(m->maxindex, sizeof(long), "bit vec");
+    b = (long *)bu_calloc(m->maxindex, sizeof(long), "bit vec");
 
     pl_erase(fp);
 
@@ -202,7 +202,7 @@ pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
     nmg_pl_eu(fp, eu, b, 255, 255, 255);
     pl_color(fp, 255, 50, 50);
     pdv_3line(fp, pt, plane_pt);
-    nmg_free((char *)b, "bit vec");
+    bu_free((char *)b, "bit vec");
     fclose(fp);
 }
 
@@ -247,7 +247,7 @@ nmg_rt_print_hitlist(struct bu_list *hd)
  * insert the new hit point in the correct place in the list of hits
  * so that the list is always in sorted order
  */
-HIDDEN void
+static void
 hit_ins(struct nmg_ray_data *rd, struct nmg_hitmiss *newhit)
 {
     struct nmg_hitmiss *a_hit;
@@ -289,7 +289,7 @@ hit_ins(struct nmg_ray_data *rd, struct nmg_hitmiss *newhit)
 /**
  * The ray missed this vertex.  Build the appropriate miss structure.
  */
-HIDDEN struct nmg_hitmiss *
+static struct nmg_hitmiss *
 ray_miss_vertex(struct nmg_ray_data *rd, struct vertexuse *vu_p)
 {
     struct nmg_hitmiss *myhit;
@@ -344,7 +344,7 @@ ray_miss_vertex(struct nmg_ray_data *rd, struct vertexuse *vu_p)
 /**
  * Support routine for vertex_neighborhood()
  */
-HIDDEN void
+static void
 get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Pole, fastf_t *Pole_prj_pt, double *Pole_dist, fastf_t *Pole_pca, fastf_t *pointA, fastf_t *leftA, fastf_t *pointB, fastf_t *leftB, fastf_t *polar_height_vect, char *Pole_name)
 {
     vect_t pca_to_pole_vect;
@@ -356,7 +356,7 @@ get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Po
     VSETALL(pca_to_pole_vect, 0);
 
     /* find the points of closest approach
-     * There are six distinct return values from bn_dist_pnt3_lseg3():
+     * There are six distinct return values from bg_dist_pnt3_lseg3():
      *
      *    Value	Condition
      *    	-----------------------------------------------------------------
@@ -369,7 +369,7 @@ get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Po
      *	4	P is to the "right" of point B.  *dist=|P-B|, pca=B.
      *	5	P is "above/below" lseg AB.  *dist=|PCA-P|, pca=computed.
      */
-    code = bn_dist_pnt3_lseg3(&distA, pcaA, vu->v_p->vg_p->coord, pointA,
+    code = bg_dist_pnt3_lseg3(&distA, pcaA, vu->v_p->vg_p->coord, pointA,
 			     Pole_prj_pt, rd->tol);
     if (code < 3) {
 	/* Point is on line */
@@ -379,7 +379,7 @@ get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Po
     }
 
     status = code << 4;
-    code = bn_dist_pnt3_lseg3(&distB, pcaB, vu->v_p->vg_p->coord, pointB,
+    code = bg_dist_pnt3_lseg3(&distB, pcaB, vu->v_p->vg_p->coord, pointB,
 			     Pole_prj_pt, rd->tol);
     if (code < 3) {
 	/* Point is on line */
@@ -569,7 +569,7 @@ get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Po
 }
 
 
-HIDDEN void
+static void
 plot_neighborhood(fastf_t *North_Pole, fastf_t *North_pl_pt, fastf_t *North_pca, fastf_t *South_Pole, fastf_t *South_pl_pt, fastf_t *South_pca, fastf_t *pointA, fastf_t *pointB, fastf_t *norm, fastf_t *pt, fastf_t *leftA, fastf_t *leftB)
 {
     static int plotnum=0;
@@ -703,7 +703,7 @@ plot_neighborhood(fastf_t *North_Pole, fastf_t *North_pl_pt, fastf_t *North_pca,
  * face, then the ray state is "outside" before (after) the ray hits
  * the vertex.
  */
-HIDDEN void
+static void
 vertex_neighborhood(struct nmg_ray_data *rd, struct vertexuse *vu_p, struct nmg_hitmiss *myhit)
 {
     struct vertexuse *vu;
@@ -956,7 +956,7 @@ vertex_neighborhood(struct nmg_ray_data *rd, struct vertexuse *vu_p, struct nmg_
  * Once it has been decided that the ray hits the vertex, this routine
  * takes care of recording that fact.
  */
-HIDDEN void
+static void
 ray_hit_vertex(struct nmg_ray_data *rd, struct vertexuse *vu_p, int status)
 {
     struct nmg_hitmiss *myhit;
@@ -1022,7 +1022,7 @@ ray_hit_vertex(struct nmg_ray_data *rd, struct vertexuse *vu_p, int status)
  * 1 vertex was hit
  * 0 vertex was missed
  */
-HIDDEN int
+static int
 isect_ray_vertexuse(struct nmg_ray_data *rd, struct vertexuse *vu_p)
 {
     struct nmg_hitmiss *myhit;
@@ -1057,7 +1057,7 @@ isect_ray_vertexuse(struct nmg_ray_data *rd, struct vertexuse *vu_p)
     }
 
     /* intersect ray with vertex */
-    ray_vu_dist = bn_dist_line3_pnt3(rd->rp->r_pt, rd->rp->r_dir,
+    ray_vu_dist = bg_dist_line3_pnt3(rd->rp->r_pt, rd->rp->r_dir,
 				    vu_p->v_p->vg_p->coord);
 
     if (ray_vu_dist > rd->tol->dist) {
@@ -1083,7 +1083,7 @@ isect_ray_vertexuse(struct nmg_ray_data *rd, struct vertexuse *vu_p)
  * remembering that this is a seg_in/seg_out pair, and builds the hit
  * on the edge.
  */
-HIDDEN void
+static void
 colinear_edge_ray(struct nmg_ray_data *rd, struct edgeuse *eu_p)
 {
     struct nmg_hitmiss *vhit1, *vhit2, *myhit;
@@ -1151,7 +1151,7 @@ colinear_edge_ray(struct nmg_ray_data *rd, struct edgeuse *eu_p)
  * Compute the "ray state" before and after the ray encounters a
  * hit-point on an edge.
  */
-HIDDEN void
+static void
 edge_hit_ray_state(struct nmg_ray_data *rd, struct edgeuse *eu, struct nmg_hitmiss *myhit)
 {
     double cos_angle;
@@ -1356,7 +1356,7 @@ edge_hit_ray_state(struct nmg_ray_data *rd, struct edgeuse *eu, struct nmg_hitmi
 /**
  * record a hit on an edge.
  */
-HIDDEN void
+static void
 ray_hit_edge(struct nmg_ray_data *rd, struct edgeuse *eu_p, double dist_along_ray, fastf_t *pt, struct bu_list *vlfree)
 {
     struct nmg_hitmiss *myhit;
@@ -1426,7 +1426,7 @@ isect_ray_lseg(struct nmg_ray_data *rd, struct edgeuse *eu_p, struct bu_list *vl
     VMOVE(r_dir_unit, rd->rp->r_dir);
     VUNITIZE(r_dir_unit);
 
-    status = bn_isect_line_lseg(&dist_along_ray,
+    status = bg_isect_line_lseg(&dist_along_ray,
 				rd->rp->r_pt, rd->rp->r_dir,
 				eu_p->vu_p->v_p->vg_p->coord,
 				eu_p->eumate_p->vu_p->v_p->vg_p->coord,
@@ -1434,7 +1434,7 @@ isect_ray_lseg(struct nmg_ray_data *rd, struct edgeuse *eu_p, struct bu_list *vl
 
     switch (status) {
 	case -4 :
-	    /* Zero length edge.  The routine bn_isect_line_lseg()
+	    /* Zero length edge.  The routine bg_isect_line_lseg()
 	     * can't help us.  Intersect the ray with each vertex.  If
 	     * either vertex is hit, then record that the edge has
 	     * sub-elements which where hit.  Otherwise, record the
@@ -1527,7 +1527,7 @@ isect_ray_lseg(struct nmg_ray_data *rd, struct edgeuse *eu_p, struct bu_list *vl
  * Intersect ray with edgeuse.  If they pass within tolerance, a hit
  * is generated.
  */
-HIDDEN void
+static void
 isect_ray_edgeuse(struct nmg_ray_data *rd, struct edgeuse *eu_p, struct bu_list *vlfree)
 {
     struct nmg_hitmiss *myhit;
@@ -1595,7 +1595,7 @@ isect_ray_edgeuse(struct nmg_ray_data *rd, struct edgeuse *eu_p, struct bu_list 
 }
 
 
-HIDDEN void
+static void
 isect_ray_loopuse(struct nmg_ray_data *rd, struct loopuse *lu_p, struct bu_list *vlfree)
 {
     struct edgeuse *eu_p;
@@ -1605,7 +1605,7 @@ isect_ray_loopuse(struct nmg_ray_data *rd, struct loopuse *lu_p, struct bu_list 
 
     NMG_CK_LOOPUSE(lu_p);
     NMG_CK_LOOP(lu_p->l_p);
-    NMG_CK_LOOP_G(lu_p->l_p->lg_p);
+    NMG_CK_LOOP_A(lu_p->l_p->la_p);
 
     if (BU_LIST_FIRST_MAGIC(&lu_p->down_hd) == NMG_EDGEUSE_MAGIC) {
 	for (BU_LIST_FOR(eu_p, edgeuse, &lu_p->down_hd)) {
@@ -1624,7 +1624,7 @@ isect_ray_loopuse(struct nmg_ray_data *rd, struct loopuse *lu_p, struct bu_list 
 }
 
 
-HIDDEN void
+static void
 eu_touch_func(struct edgeuse *eu, fastf_t *pt, const char *priv, struct bu_list *vlfree)
 {
     struct edgeuse *eu_next;
@@ -1656,7 +1656,7 @@ eu_touch_func(struct edgeuse *eu, fastf_t *pt, const char *priv, struct bu_list 
 }
 
 
-HIDDEN void
+static void
 vu_touch_func(struct vertexuse *vu, fastf_t *UNUSED(pt), char *priv)
 {
     struct nmg_ray_data *rd;
@@ -1674,7 +1674,7 @@ vu_touch_func(struct vertexuse *vu, fastf_t *UNUSED(pt), char *priv)
 }
 
 
-HIDDEN void
+static void
 record_face_hit(struct nmg_ray_data *rd, struct nmg_hitmiss *myhit, fastf_t *plane_pt, double dist, struct faceuse *fu_p, fastf_t *norm, struct bu_list *vlfree)
 {
     double cos_angle;
@@ -1876,7 +1876,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 	    VUNITIZE(pl);
 	    pl[W] = VDOT(pl, ctl_pt[0]);
 	    hp = (struct nmg_nurb_uv_hit *)NULL;
-	    if (bn_isect_line3_plane(&dist,  rd->rp->r_pt,  rd->rp->r_dir, pl, rd->tol) <= 0) {
+	    if (bg_isect_line3_plane(&dist,  rd->rp->r_pt,  rd->rp->r_dir, pl, rd->tol) <= 0) {
 		if (nmg_debug & NMG_DEBUG_RT_ISECT)
 		    bu_log("\tNo intersection\n");
 
@@ -1953,7 +1953,7 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 		if (nmg_debug & NMG_DEBUG_RT_ISECT)
 		    bu_log("\tNot a hit\n");
 
-		nmg_free((char *)hp, "hit");
+		bu_free((char *)hp, "hit");
 		hp = next;
 		continue;
 	    }
@@ -2047,14 +2047,14 @@ isect_ray_snurb_face(struct nmg_ray_data *rd, struct faceuse *fu, struct face_g_
 
 	    hit_ins(rd, myhit);
 
-	    nmg_free((char *)hp, "hit");
+	    bu_free((char *)hp, "hit");
 	    hp = next;
 	}
 	nmg_nurb_free_snurb(srf);
     }
 }
 
-HIDDEN void
+static void
 isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_list *vlfree)
 {
     plane_t norm;
@@ -2102,7 +2102,7 @@ isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_l
 	bu_log("\tDIST_PNT_PLANE(%16.10e) %p %p\n",
 	       new_dist, (void *)plane_pt, (void *)norm);
 
-	bn_isect_line3_plane(&new_dist, plane_pt, rd->rp->r_dir,
+	bg_isect_line3_plane(&new_dist, plane_pt, rd->rp->r_dir,
 			     norm, rd->tol);
 
 	bu_log("Normal %16.10e %16.10e %16.10e %16.10e)\n",
@@ -2195,7 +2195,7 @@ isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_l
 /**
  * check to see if ray hits face.
  */
-HIDDEN void
+static void
 isect_ray_faceuse(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_list *vlfree)
 {
 
@@ -2253,7 +2253,7 @@ isect_ray_faceuse(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_list 
 	fgp = fu_p->f_p->g.plane_p;
 	NMG_CK_FACE_G_PLANE(fgp);
 
-	code = bn_isect_line3_plane(&dist, rd->rp->r_pt, rd->rp->r_dir, fgp->N, rd->tol);
+	code = bg_isect_line3_plane(&dist, rd->rp->r_pt, rd->rp->r_dir, fgp->N, rd->tol);
 	if (code < 1) {
 	    NMG_GET_HITMISS(myhit);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
@@ -2313,7 +2313,7 @@ isect_ray_faceuse(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_list 
 /**
  * Implicit return: adds hit points to the hit-list "hl"
  */
-HIDDEN void
+static void
 nmg_isect_ray_shell(struct nmg_ray_data *rd, const struct shell *s_p, struct bu_list *vlfree)
 {
     struct faceuse *fu_p;
@@ -2446,7 +2446,7 @@ nmg_pl_hitmiss_list(const char *str, int num, const struct bu_list *hd, const st
 }
 
 
-HIDDEN int
+static int
 guess_class_from_hitlist_max(struct nmg_ray_data *rd, int *hari_kari, int in_or_out_only)
 {
     struct nmg_hitmiss *a_hit;
@@ -2537,7 +2537,7 @@ guess_class_from_hitlist_max(struct nmg_ray_data *rd, int *hari_kari, int in_or_
 }
 
 
-HIDDEN int
+static int
 guess_class_from_hitlist_min(struct nmg_ray_data *rd, int *hari_kari, int in_or_out_only)
 {
     struct nmg_hitmiss *a_hit;
@@ -2701,7 +2701,7 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
     rd.stp = NULL;
     rd.seghead = NULL;
     rd.magic = NMG_RAY_DATA_MAGIC;
-    rd.hitmiss = (struct nmg_hitmiss **)nmg_calloc(rd.rd_m->maxindex,
+    rd.hitmiss = (struct nmg_hitmiss **)bu_calloc(rd.rd_m->maxindex,
 					      sizeof(struct nmg_hitmiss *), "nmg geom hit list");
     rd.classifying_ray = 1;
 
@@ -2758,12 +2758,12 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
 	while (BU_LIST_WHILE(hitp, nmg_hitmiss, &re_nmgfree)) {
 	    NMG_CK_HITMISS(hitp);
 	    BU_LIST_DEQUEUE((struct bu_list *)hitp);
-	    nmg_free((void *)hitp, "struct nmg_hitmiss");
+	    bu_free((void *)hitp, "struct nmg_hitmiss");
 	}
     }
 
     /* free the hitmiss table */
-    nmg_free((char *)rd.hitmiss, "free nmg geom hit list");
+    bu_free((char *)rd.hitmiss, "free nmg geom hit list");
 
     if (!rd.rd_m->manifolds) {
 	/* If there is no manifolds list attached to the model
@@ -2774,7 +2774,7 @@ nmg_class_ray_vs_shell(struct nmg_ray *rp, const struct shell *s, const int in_o
 	 * function and should be freed in the nmg_bool
 	 * function.
 	 */
-	nmg_free((char *)rd.manifolds, "free local manifolds table");
+	bu_free((char *)rd.manifolds, "free local manifolds table");
 	rd.manifolds = NULL; /* sanity */
     }
 

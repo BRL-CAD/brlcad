@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,9 +46,8 @@
 #  endif
 #endif
 
-/* NOTE: do not rely on these values */
-#define BRLCAD_OK 0
-#define BRLCAD_ERROR 1
+#define BRLCAD_OK    0x0000   /**< logic worked as expected */
+#define BRLCAD_ERROR 0x0001 /**< something went wrong */
 
 /**
  * @def BU_DIR_SEPARATOR
@@ -101,24 +100,6 @@
 #  define _BU_ATTR_SCANF23
 #endif
 
-/**
- * shorthand declaration of a function that doesn't return
- */
-#ifdef HAVE_NORETURN_ATTRIBUTE
-#  define _BU_ATTR_NORETURN __attribute__((__noreturn__))
-#else
-#  define _BU_ATTR_NORETURN
-#endif
-
-/* For the moment, we need to specially flag some functions
- * for clang.  It's not clear if we will always need to do
- * this, but for now this suppresses a lot of noise in the
- * reports */
-#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
-#  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
-#else
-#  define _BU_ATTR_ANALYZE_NORETURN
-#endif
 
 /**
  * shorthand declaration of a function that should always be inline
@@ -168,7 +149,7 @@
 
 /**
  * shorthand declaration of a function that doesn't accept NULL
- * pointer arugments.  if a null pointer is detected during
+ * pointer arguments.  if a null pointer is detected during
  * compilation, a warning/error can be emitted.
  */
 #ifdef HAVE_NONNULL_ATTRIBUTE

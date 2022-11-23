@@ -41,7 +41,7 @@ command. The <command>red</command> command performs a similar function for comb
   <example><title>Use a text editor to modify a currently edited shape.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>ted</userinput>
+      <prompt>mged&gt; </prompt><userinput>ted</userinput>
     </para>
     <para>Starts a text editor to modify a currently edited shape.
     </para>

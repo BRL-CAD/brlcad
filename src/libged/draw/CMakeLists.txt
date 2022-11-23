@@ -8,6 +8,7 @@ include_directories(
 
 set(DRAW_SRCS
   draw.c
+  draw2.cpp
   loadview.c
   preview.c
   )

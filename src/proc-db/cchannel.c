@@ -1,7 +1,7 @@
 /** @file cchannel.c
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -318,8 +318,11 @@ main (int argc, char **argv)
     (void)mk_addmember("sub1.c", &channel.l, NULL, WMOP_UNION);
     if (parameters.holes)
 	(void)mk_addmember("holes.c", &channel.l, NULL, WMOP_SUBTRACT);
-    mk_lcomb(db, "channel.r", &channel, 1, NULL, NULL, NULL, 1);
+
     /* make final region */
+    mk_lcomb(db, "channel.r", &channel, 1, NULL, NULL, NULL, 1);
+
+    db_close(db->dbip);
 
     return 0;
 }

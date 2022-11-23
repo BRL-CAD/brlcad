@@ -10,7 +10,7 @@
 #ifndef __XSLT_LIBXSLT_H__
 #define __XSLT_LIBXSLT_H__
 
-#if defined(WIN32) && !defined (__CYGWIN__) && !defined (__MINGW32__)
+#if defined(_WIN32) && !defined (__CYGWIN__) && !defined (__MINGW32__)
 #include <win32config.h>
 #else
 #include "config.h"
@@ -23,8 +23,14 @@
 #if (defined (__CYGWIN__) || defined _MSC_VER) && !defined IN_LIBXSLT && !defined LIBXSLT_STATIC
 #define LIBXSLT_PUBLIC __declspec(dllimport)
 #else
-#define LIBXSLT_PUBLIC 
+#define LIBXSLT_PUBLIC
 #endif
+#endif
+
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#include <io.h>
+#include <direct.h>
+#define mkdir(p,m) _mkdir(p)
 #endif
 
 #endif /* ! __XSLT_LIBXSLT_H__ */

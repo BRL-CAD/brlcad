@@ -1,7 +1,7 @@
 /*                         V I E W 2 G R I D _ L U . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,9 +44,9 @@ ged_view2grid_lu_core(struct ged *gedp, int argc, const char *argv[])
     point_t diff;
     static const char *usage = "x y z";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -60,17 +60,17 @@ ged_view2grid_lu_core(struct ged *gedp, int argc, const char *argv[])
 	goto bad;
 
     MAT4X3PNT(mo_view_pt, gedp->ged_gvp->gv_model2view, model_pt);
-    f = gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;
+    f = gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local;
     VSCALE(mo_view_pt, mo_view_pt, f);
     VSUB2(diff, view_pt, mo_view_pt);
 
     bu_vls_printf(gedp->ged_result_str, "%.15e %.15e", diff[X], diff[Y]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 
 bad:
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

@@ -1,0 +1,64 @@
+%GED_PLUGIN_PATH%
+%BRLCAD_DATA%/plugins/ged
+%BRLCAD_ROOT%/share/plugins/ged
+%HOME%/.brlcad/plugins/ged
+%HOME%/Library/
+
+
+struct ged_cmd {
+  const char *name;
+  const char description[80];
+  const char *manpage;
+  const struct ged_synopsis *(*synopsis)(void);
+
+  uint32_t version;
+  int blocking;
+
+  int (*load)(struct ged *);
+  void (*unload)(struct ged *);
+
+  int (*exec)(struct ged *, int, char *[]);
+};
+
+
+/**
+ * returns callback registration table for the command
+ */
+ged_[cmd]_registry
+
+
+/**
+ * The load callback is run during initialization.  All plugins must
+ * register their callbacks during load.
+ */
+ged_[cmd]_load
+
+/**
+ * executes a command, returns a transaction set
+ */
+ged_[cmd]
+
+/**
+ * returns usage synopsis and options
+ * consider encoding input/output types?
+ */
+ged_[cmd]_synopsis
+
+/**
+ * returns a one-line description of the command
+ */
+ged_[cmd]_description
+
+/**
+ * returns manual page for the command
+ */
+ged_[cmd]_manual
+
+/**
+ * 
+ */
+
+/**
+ * called on library / application shutdown
+ */
+ged_[cmd]_unload

@@ -1,7 +1,7 @@
 /*                R E A D _ E D G E _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2021 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ struct iges_edge_list *
 Read_edge_list(struct iges_edge_use *edge)
 {
     struct iges_edge_list *edge_list;
-    int entityno;
+    size_t entityno;
     int sol_num = 0;
     int i;
 

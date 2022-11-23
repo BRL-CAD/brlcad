@@ -39,7 +39,7 @@
     </para>
     <example><title>Delay the next command by a specified amount of time.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>delay 5 0</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>delay 5 0</userinput></para>
       <para>Delays the next command for 5 seconds. </para>
     </example>
   </refsection>

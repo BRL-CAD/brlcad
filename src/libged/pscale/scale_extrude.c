@@ -1,7 +1,7 @@
 /*                         S C A L E _ E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,10 +57,10 @@ _ged_scale_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const 
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad extrude attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

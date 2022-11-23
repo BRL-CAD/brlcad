@@ -1,8 +1,0 @@
-set(linenoise_ignore_files
-README.markdown
-linenoise-win32.c
-linenoise.c
-linenoise.h
-utf8.c
-utf8.h
-)

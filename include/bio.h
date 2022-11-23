@@ -1,7 +1,7 @@
 /*                           B I O . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,8 @@ extern int fileno(FILE *stream);
 #  include <unistd.h>
 
 /* provide a stub so we don't need to wrap all setmode() calls */
-#  define setmode(a, b) /* poof */
+static inline int setmode(int UNUSED(a), int UNUSED(b)) {return 42;}
+static int (* volatile setmode_func)(int, int) = setmode; /* quell use */
 #endif
 
 /* needed for testing O_TEMPORARY and O_BINARY */

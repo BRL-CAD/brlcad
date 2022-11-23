@@ -64,65 +64,74 @@
 
 namespace p2t {
 
-class CDT
-{
-public:
+    class CDT
+    {
+	public:
 
-  /**
-   * Constructor - add polyline with non repeating points
-   */
-  P2T_EXPORT CDT();
-  P2T_EXPORT CDT(std::vector<Point*> &polyline);
+	    /**
+	     * Constructor - add polyline with non repeating points
+	     */
+	    P2T_EXPORT CDT();
+	    P2T_EXPORT CDT(std::vector<Point*> &polyline);
 
-   /**
-   * Destructor - clean up memory
-   */
-  P2T_EXPORT ~CDT();
+	    /**
+	     * Destructor - clean up memory
+	     */
+	    P2T_EXPORT ~CDT();
 
-  /**
-   * Add outer loop
-   */
-  P2T_EXPORT void AddOuterLoop(std::vector<Point*> &polyline);
+	    /**
+	     * Add outer loop
+	     */
+	    P2T_EXPORT void AddOuterLoop(std::vector<Point*> &polyline);
 
-  /**
-   * Add a hole
-   */
-  P2T_EXPORT void AddHole(std::vector<Point*> &polyline);
+	    /**
+	     * Add a hole
+	     */
+	    P2T_EXPORT void AddHole(std::vector<Point*> &polyline);
 
-  /**
-   * Add a steiner point
-   */
-  P2T_EXPORT void AddPoint(Point* point);
+	    /**
+	     * Add a steiner point
+	     */
+	    P2T_EXPORT void AddPoint(Point* point);
 
-  P2T_EXPORT std::vector<Point*>& GetPoints();
+	    P2T_EXPORT std::vector<Point*>& GetPoints();
 
-  /**
-   * Triangulate - do this AFTER you've added the polyline, holes, and Steiner points
-   */
-  P2T_EXPORT void Triangulate(bool finalize = true, int num_points = -1);
+	    /**
+	     * Triangulate - do this AFTER you've added the polyline, holes, and Steiner points
+	     */
+	    P2T_EXPORT void Triangulate(bool finalize = true, int num_points = -1);
 
-  /**
-   * Get CDT triangles
-   */
-  P2T_EXPORT std::vector<Triangle*>& GetTriangles();
+	    /**
+	     * Get CDT triangles
+	     */
+	    P2T_EXPORT std::vector<Triangle*>& GetTriangles();
 
-  /**
-   * Get triangle map
-   */
-  P2T_EXPORT std::list<Triangle*>& GetMap();
+	    /**
+	     * Get triangle map
+	     */
+	    P2T_EXPORT std::list<Triangle*>& GetMap();
 
-  private:
+	private:
 
-  /**
-   * Internals
-   */
+	    /**
+	     * Internals
+	     */
 
-  SweepContext* sweep_context_;
-  Sweep* sweep_;
+	    SweepContext* sweep_context_;
+	    Sweep* sweep_;
 
-};
+    };
 
 }
 
 #endif
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
 

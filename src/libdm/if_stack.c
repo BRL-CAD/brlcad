@@ -1,7 +1,7 @@
 /*                      I F _ S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2021 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ struct stkinfo {
 #define SIL(ptr) ((ptr)->i->u1.p)		/* left hand side version */
 
 
-HIDDEN int
+static int
 stk_open(struct fb *ifp, const char *file, int width, int height)
 {
     int i;
@@ -63,7 +63,8 @@ stk_open(struct fb *ifp, const char *file, int width, int height)
 	return -1;
     }
 
-    if ((SIL(ifp) = (char *)calloc(1, sizeof(struct stkinfo))) == NULL) {
+    size_t stksize = sizeof(struct stkinfo);
+    if ((SIL(ifp) = (char *)calloc(1, stksize)) == NULL) {
 	fb_log("stack_dopen:  stkinfo malloc failed\n");
 	return -1;
     }
@@ -114,46 +115,46 @@ stk_open(struct fb *ifp, const char *file, int width, int height)
 	return -1;
 }
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 stk_get_fbps(uint32_t UNUSED(magic))
 {
         return NULL;
 }
 
 
-HIDDEN void
+static void
 stk_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 {
         return;
 }
 
-HIDDEN int
+static int
 stk_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
 
 
-HIDDEN int
+static int
 stk_close_existing(struct fb *UNUSED(ifp))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 stk_configure_window(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
-HIDDEN int
+static int
 stk_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
 
 
-HIDDEN int
+static int
 stk_close(struct fb *ifp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -169,7 +170,7 @@ stk_close(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 stk_clear(struct fb *ifp, unsigned char *pp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -183,7 +184,7 @@ stk_clear(struct fb *ifp, unsigned char *pp)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 stk_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -196,7 +197,7 @@ stk_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 stk_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -213,7 +214,7 @@ stk_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t coun
 /*
  * Read only from the first source on the stack.
  */
-HIDDEN int
+static int
 stk_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -229,7 +230,7 @@ stk_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned
 /*
  * Write to all destinations on the stack
  */
-HIDDEN int
+static int
 stk_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -246,7 +247,7 @@ stk_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const u
 /*
  * Read only from the first source on the stack.
  */
-HIDDEN int
+static int
 stk_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -262,7 +263,7 @@ stk_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsign
 /*
  * Write to all destinations on the stack
  */
-HIDDEN int
+static int
 stk_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -276,7 +277,7 @@ stk_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const
 }
 
 
-HIDDEN int
+static int
 stk_rmap(struct fb *ifp, ColorMap *cmp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -289,7 +290,7 @@ stk_rmap(struct fb *ifp, ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 stk_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -303,7 +304,7 @@ stk_wmap(struct fb *ifp, const ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 stk_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -317,7 +318,7 @@ stk_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-HIDDEN int
+static int
 stk_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -330,7 +331,7 @@ stk_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 }
 
 
-HIDDEN int
+static int
 stk_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -344,7 +345,7 @@ stk_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, i
 }
 
 
-HIDDEN int
+static int
 stk_cursor(struct fb *ifp, int mode, int x, int y)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -358,7 +359,7 @@ stk_cursor(struct fb *ifp, int mode, int x, int y)
 }
 
 
-HIDDEN int
+static int
 stk_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -371,7 +372,7 @@ stk_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 }
 
 
-HIDDEN int
+static int
 stk_poll(struct fb *ifp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -385,7 +386,7 @@ stk_poll(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 stk_flush(struct fb *ifp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -399,7 +400,7 @@ stk_flush(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 stk_free(struct fb *ifp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -413,7 +414,7 @@ stk_free(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 stk_help(struct fb *ifp)
 {
     register struct fb **ip = SI(ifp)->if_list;
@@ -483,6 +484,10 @@ struct fb_impl stk_interface_impl =  {
     0L,			/* page_pixels */
     0,			/* debug */
     0,			/* refresh rate */
+    NULL,
+    NULL,
+    0,
+    NULL,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

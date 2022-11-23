@@ -1,7 +1,7 @@
 /*                      S P H G R O U P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,9 +46,9 @@ ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_ell_internal *bsph;
     static const char *usage = "gname target_sphere.s";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -56,30 +56,30 @@ ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if ((sphdp = db_lookup(gedp->ged_wdbp->dbip, argv[argc-1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((sphdp = db_lookup(gedp->dbip, argv[argc-1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Specified bounding sphere %s not found\n", argv[argc-1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else {
-	if (rt_db_get_internal(&sph_intern, sphdp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
-	  return GED_ERROR;
+	if (rt_db_get_internal(&sph_intern, sphdp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+	  return BRLCAD_ERROR;
 	if ((sph_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ELL) && (sph_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_SPH)) {
 	    bu_vls_printf(gedp->ged_result_str, "Specified bounding object %s not a sphere\n", argv[argc-1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	bsph = (struct rt_ell_internal *)sph_intern.idb_ptr;
     }
 
     /* get objects to add to group - at the moment, only gets regions*/
     for (i = 0; i < RT_DBNHASH; i++)
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_nref == 0 && !(dp->d_flags & RT_DIR_HIDDEN) && (dp->d_addr != RT_DIR_PHONY_ADDR)) continue;
 	    if (BU_STR_EQUAL(dp->d_namep, sphdp->d_namep)) continue;
 	    if (!(dp->d_flags & RT_DIR_REGION)) continue;
 	    inside_flag = 0;
-	    if (ged_get_obj_bounds(gedp, 1, (const char **)&(dp->d_namep), 0, obj_min, obj_max) != GED_ERROR) {
+	    if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&(dp->d_namep), 0, obj_min, obj_max) != BRLCAD_ERROR) {
 		VSETALL(rpp_min, INFINITY);
 		VSETALL(rpp_max, -INFINITY);
 		VMINMAX(rpp_min, rpp_max, (double *)obj_min);
@@ -99,12 +99,11 @@ ged_sphgroup_core(struct ged *gedp, int argc, const char *argv[])
 		VSET(centerpt, (rpp_min[0] + rpp_max[0])*0.5, (rpp_min[1] + rpp_max[1])*0.5, (rpp_min[2] + rpp_max[2])*0.5);
 		if (DIST_PNT_PNT(centerpt, bsph->v) <= MAGNITUDE(bsph->a)) inside_flag = 1;
 		if (inside_flag == 1) {
-		    if (_ged_combadd(gedp, dp, (char *)argv[1], 0, WMOP_UNION, 0, 0) == RT_DIR_NULL) return GED_ERROR;
-		    inside_flag = 0;
+		    if (_ged_combadd(gedp, dp, (char *)argv[1], 0, WMOP_UNION, 0, 0) == RT_DIR_NULL) return BRLCAD_ERROR;
 		}
 	    }
 	}
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

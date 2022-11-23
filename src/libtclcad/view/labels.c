@@ -1,7 +1,7 @@
 /*                       L A B E L S . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2021 United States Government as represented by
+ * Copyright (c) 2000-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,17 +54,17 @@ go_data_labels(Tcl_Interp *interp,
 
     if (argc < 2 || 5 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     ret = to_data_labels_func(interp, gedp, gdvp, argc, argv);
-    if (ret & GED_ERROR)
+    if (ret & BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;
@@ -93,19 +93,19 @@ to_data_labels(struct ged *gedp,
 
     if (argc < 3 || 6 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    gdvp = ged_find_view(gedp, argv[1]);
+    gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* shift the command name to argv[1] before calling to_data_labels_func */
     argv[1] = argv[0];
     ret = to_data_labels_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1);
-    if (ret == GED_ERROR)
+    if (ret == BRLCAD_ERROR)
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 
     return ret;
@@ -119,17 +119,17 @@ to_data_labels_func(Tcl_Interp *interp,
 		    int argc,
 		    const char *argv[])
 {
-    struct bview_data_label_state *gdlsp;
+    struct bv_data_label_state *gdlsp;
 
     if (argv[0][0] == 's')
-	gdlsp = &gdvp->gv_sdata_labels;
+	gdlsp = &gdvp->gv_tcl.gv_sdata_labels;
     else
-	gdlsp = &gdvp->gv_data_labels;
+	gdlsp = &gdvp->gv_tcl.gv_data_labels;
 
     if (BU_STR_EQUAL(argv[1], "draw")) {
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_draw);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -144,7 +144,7 @@ to_data_labels_func(Tcl_Interp *interp,
 		gdlsp->gdls_draw = 0;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -154,7 +154,7 @@ to_data_labels_func(Tcl_Interp *interp,
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdlsp->gdls_color));
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 5) {
@@ -175,7 +175,7 @@ to_data_labels_func(Tcl_Interp *interp,
 	    VSET(gdlsp->gdls_color, r, g, b);
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -192,7 +192,7 @@ to_data_labels_func(Tcl_Interp *interp,
 		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf}} ",
 			      V3ARGS(gdlsp->gdls_points[i]));
 	    }
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -201,7 +201,7 @@ to_data_labels_func(Tcl_Interp *interp,
 
 	    if (Tcl_SplitList(interp, argv[2], &ac, &av) != TCL_OK) {
 		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    if (gdlsp->gdls_num_labels) {
@@ -216,7 +216,7 @@ to_data_labels_func(Tcl_Interp *interp,
 	    if (ac < 1) {
 		Tcl_Free((char *)av);
 		to_refresh_view(gdvp);
-		return GED_OK;
+		return BRLCAD_OK;
 	    }
 
 	    gdlsp->gdls_num_labels = ac;
@@ -238,7 +238,7 @@ to_data_labels_func(Tcl_Interp *interp,
 		    bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
 		    Tcl_Free((char *)av);
 		    to_refresh_view(gdvp);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 
 		if (sub_ac != 2) {
@@ -253,7 +253,7 @@ to_data_labels_func(Tcl_Interp *interp,
 		    Tcl_Free((char *)sub_av);
 		    Tcl_Free((char *)av);
 		    to_refresh_view(gdvp);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 
 		if (bu_sscanf(sub_av[1], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
@@ -269,7 +269,7 @@ to_data_labels_func(Tcl_Interp *interp,
 		    Tcl_Free((char *)sub_av);
 		    Tcl_Free((char *)av);
 		    to_refresh_view(gdvp);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		/* convert double to fastf_t */
 		VMOVE(gdlsp->gdls_points[i], scan);
@@ -280,14 +280,14 @@ to_data_labels_func(Tcl_Interp *interp,
 
 	    Tcl_Free((char *)av);
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
     if (BU_STR_EQUAL(argv[1], "size")) {
 	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_size);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	if (argc == 3) {
@@ -299,7 +299,7 @@ to_data_labels_func(Tcl_Interp *interp,
 	    gdlsp->gdls_size = size;
 
 	    to_refresh_view(gdvp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	goto bad;
@@ -307,28 +307,7 @@ to_data_labels_func(Tcl_Interp *interp,
 
 
 bad:
-    return GED_ERROR;
-}
-
-void
-go_dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
-{
-    register int i;
-
-    /* set color */
-    (void)dm_set_fg(dmp,
-		    gdlsp->gdls_color[0],
-		    gdlsp->gdls_color[1],
-		    gdlsp->gdls_color[2], 1, 1.0);
-
-    for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
-	point_t vpoint;
-
-	MAT4X3PNT(vpoint, m2vmat,
-		  gdlsp->gdls_points[i]);
-	(void)dm_draw_string_2d(dmp, gdlsp->gdls_labels[i],
-				vpoint[X], vpoint[Y], 0, 1);
-    }
+    return BRLCAD_ERROR;
 }
 
 int
@@ -346,26 +325,26 @@ to_prim_label(struct ged *gedp,
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Free the previous list of primitives scheduled for labeling */
-    if (tgd->go_prim_label_list_size) {
-	for (i = 0; i < tgd->go_prim_label_list_size; ++i)
-	    bu_vls_free(&tgd->go_prim_label_list[i]);
-	bu_free((void *)tgd->go_prim_label_list, "prim_label");
-	tgd->go_prim_label_list = (struct bu_vls *)0;
+    if (tgd->go_dmv.prim_label_list_size) {
+	for (i = 0; i < tgd->go_dmv.prim_label_list_size; ++i)
+	    bu_vls_free(&tgd->go_dmv.prim_label_list[i]);
+	bu_free((void *)tgd->go_dmv.prim_label_list, "prim_label");
+	tgd->go_dmv.prim_label_list = (struct bu_vls *)0;
     }
 
     /* Set the list of primitives scheduled for labeling */
-    tgd->go_prim_label_list_size = argc - 1;
-    if (tgd->go_prim_label_list_size < 1)
-	return GED_OK;
+    tgd->go_dmv.prim_label_list_size = argc - 1;
+    if (tgd->go_dmv.prim_label_list_size < 1)
+	return BRLCAD_OK;
 
-    tgd->go_prim_label_list = (struct bu_vls *)bu_calloc(tgd->go_prim_label_list_size,
+    tgd->go_dmv.prim_label_list = (struct bu_vls *)bu_calloc(tgd->go_dmv.prim_label_list_size,
 									 sizeof(struct bu_vls), "prim_label");
-    for (i = 0; i < tgd->go_prim_label_list_size; ++i) {
-	bu_vls_init(&tgd->go_prim_label_list[i]);
-	bu_vls_printf(&tgd->go_prim_label_list[i], "%s", argv[i+1]);
+    for (i = 0; i < tgd->go_dmv.prim_label_list_size; ++i) {
+	bu_vls_init(&tgd->go_dmv.prim_label_list[i]);
+	bu_vls_printf(&tgd->go_dmv.prim_label_list[i], "%s", argv[i+1]);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

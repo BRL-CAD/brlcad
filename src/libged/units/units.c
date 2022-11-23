@@ -1,7 +1,7 @@
 /*                         U N I T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,15 +41,15 @@ ged_units_core(struct ged *gedp, int argc, const char *argv[])
     int sflag = 0;
     static const char *usage = "[-s] [mm|cm|m|in|ft|...]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 2) {
@@ -65,22 +65,22 @@ ged_units_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_free(vlsp);
 	    bu_free(vlsp, "ged_units_core: vlsp");
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
     }
 
     /* Get units */
     if (argc == 1) {
-	str = bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base);
+	str = bu_units_string(gedp->dbip->dbi_local2base);
 	if (!str) str = "Unknown_unit";
 
 	if (sflag)
 	    bu_vls_printf(gedp->ged_result_str, "%s", str);
 	else
 	    bu_vls_printf(gedp->ged_result_str, "You are editing in '%s'.  1 %s = %g mm \n",
-			  str, str, gedp->ged_wdbp->dbip->dbi_local2base);
+			  str, str, gedp->dbip->dbi_local2base);
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* Set units */
@@ -89,22 +89,22 @@ ged_units_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str,
 		      "%s: unrecognized unit\nvalid units: <um|mm|cm|m|km|in|ft|yd|mi>\n",
 		      argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (db_update_ident(gedp->ged_wdbp->dbip, gedp->ged_wdbp->dbip->dbi_title, loc2mm) < 0) {
+    if (db_update_ident(gedp->dbip, gedp->dbip->dbi_title, loc2mm) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Warning: unable to stash working units into database\n");
     }
 
-    gedp->ged_wdbp->dbip->dbi_local2base = loc2mm;
-    gedp->ged_wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
+    gedp->dbip->dbi_local2base = loc2mm;
+    gedp->dbip->dbi_base2local = 1.0 / loc2mm;
 
-    str = bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base);
+    str = bu_units_string(gedp->dbip->dbi_local2base);
     if (!str) str = "Unknown_unit";
     bu_vls_printf(gedp->ged_result_str, "You are now editing in '%s'.  1 %s = %g mm \n",
-		  str, str, gedp->ged_wdbp->dbip->dbi_local2base);
+		  str, str, gedp->dbip->dbi_local2base);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

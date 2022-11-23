@@ -1,7 +1,7 @@
 /*                         N M G _ S I M P L I F Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,14 +52,15 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
     char *nmg_name;
     int success = 0;
     int shell_count=0;
-    int ret = GED_ERROR;
+    int ret = BRLCAD_ERROR;
     size_t i;
 
     static const char *usage = "[arb|tgc|poly] new_prim nmg_prim";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -88,39 +89,38 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str,
 			  "%s is unknown or simplification is not yet supported\n", argv[1]);
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    goto out3;
 	}
 	new_name = (char *)argv[2];
 	nmg_name = (char *)argv[3];
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	success = 0;
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out3;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists\n", new_name);
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out3;
     }
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    if ((dp=db_lookup(gedp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", nmg_name);
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out3;
     }
 
-    if (rt_db_get_internal(&nmg_intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&nmg_intern, dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out3;
     }
 
     if (nmg_intern.idb_type != ID_NMG) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not an NMG solid\n", nmg_name);
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out2;
     }
 
@@ -136,7 +136,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_ptbl_free(&faces);
 	    bu_vls_printf(gedp->ged_result_str,
 		"%s cannot be applied to \"%s\" because it has non-planar faces\n", argv[0], nmg_name);
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    goto out2;
 	}
     }
@@ -152,7 +152,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 
     if (shell_count != 1) {
 	bu_vls_printf(gedp->ged_result_str, "shell count is not one\n");
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out2;
     }
 
@@ -172,17 +172,16 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 
 	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
-	nmg_shell_coplanar_face_merge(s, &gedp->ged_wdbp->wdb_tol, 0, &RTG.rtg_vlfree);
+	nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 0, &RTG.rtg_vlfree);
 	nmg_simplify_shell(s, &RTG.rtg_vlfree);
 
 	if (nmg_to_arb(m, arb_int)) {
 	    success = 1;
-	    ret = GED_OK;
 	    goto out1;
 	} else {
 	    rt_db_free_internal(&new_intern);
 	    if (!do_all) {
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto out2;
 	    }
 	}
@@ -200,14 +199,13 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_type = ID_TGC;
 	new_intern.idb_meth = &OBJ[ID_TGC];
 
-	if (nmg_to_tgc(m, tgc_int, &gedp->ged_wdbp->wdb_tol)) {
+	if (nmg_to_tgc(m, tgc_int, &wdbp->wdb_tol)) {
 	    success = 1;
-	    ret = GED_OK;
 	    goto out1;
 	} else {
 	    rt_db_free_internal(&new_intern);
 	    if (!do_all) {
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto out2;
 	    }
 	}
@@ -225,14 +223,13 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_type = ID_POLY;
 	new_intern.idb_meth = &OBJ[ID_POLY];
 
-	if (nmg_to_poly(m, poly_int, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol)) {
+	if (nmg_to_poly(m, poly_int, &RTG.rtg_vlfree, &wdbp->wdb_tol)) {
 	    success = 1;
-	    ret = GED_OK;
 	    goto out1;
 	} else {
 	    rt_db_free_internal(&new_intern);
 	    if (!do_all) {
-		ret = GED_ERROR;
+		ret = BRLCAD_ERROR;
 		goto out2;
 	    }
 	}
@@ -254,25 +251,25 @@ out1:
 	bu_vls_printf(gedp->ged_result_str,
 		"Single vertexuse in shell of %s has been ignored in conversion\n", nmg_name);
 
-    dp = db_diradd(gedp->ged_wdbp->dbip, new_name,
+    dp = db_diradd(gedp->dbip, new_name,
 	RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	success = 0;
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out2;
     }
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &new_intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&new_intern);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	success = 0;
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto out2;
     }
 
-    ret = GED_OK;
+    ret = BRLCAD_OK;
 
 out2:
     rt_db_free_internal(&nmg_intern);

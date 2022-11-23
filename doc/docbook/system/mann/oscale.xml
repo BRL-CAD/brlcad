@@ -38,7 +38,7 @@ scale operation. A <emphasis>scale_factor</emphasis> of 2 doubles the size of th
   <example><title>Increase a currently edited object by a specified factor.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>oscale 3</userinput>
+      <prompt>mged&gt; </prompt><userinput>oscale 3</userinput>
     </para>
     <para>Increases the size of the currently edited object by a factor of 3.
      </para>

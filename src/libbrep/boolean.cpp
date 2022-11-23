@@ -1,7 +1,7 @@
 /*                  B O O L E A N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -323,7 +323,7 @@ struct TrimmedFace {
 };
 
 
-HIDDEN int
+static int
 loop_t_compare(const IntersectPoint *p1, const IntersectPoint *p2)
 {
     // Use for sorting an array. Use strict FP comparison.
@@ -334,7 +334,7 @@ loop_t_compare(const IntersectPoint *p1, const IntersectPoint *p2)
 }
 
 
-HIDDEN int
+static int
 curve_t_compare(const IntersectPoint *p1, const IntersectPoint *p2)
 {
     // Use for sorting an array. Use strict FP comparison.
@@ -362,7 +362,7 @@ append_to_polycurve(ON_Curve *curve, ON_PolyCurve &polycurve)
 }
 
 
-HIDDEN bool
+static bool
 is_loop_valid(const ON_SimpleArray<ON_Curve *> &loop, double tolerance, ON_PolyCurve *polycurve = NULL)
 {
     bool delete_curve = false;
@@ -434,7 +434,7 @@ enum {
 //
 //   If you want to know whether this point is on the loop boundary,
 //   call is_point_on_loop().
-HIDDEN int
+static int
 point_loop_location(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
     ON_PolyCurve polycurve;
@@ -490,7 +490,7 @@ point_loop_location(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop
 
 // Returns whether or not point is on the loop boundary.
 // Throws InvalidGeometry if loop is invalid.
-HIDDEN bool
+static bool
 is_point_on_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
     ON_PolyCurve polycurve;
@@ -509,21 +509,21 @@ is_point_on_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 }
 
 
-HIDDEN bool
+static bool
 is_point_inside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
     return (point_loop_location(pt, loop) == INSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
 }
 
 
-HIDDEN bool
+static bool
 is_point_outside_loop(const ON_2dPoint &pt, const ON_SimpleArray<ON_Curve *> &loop)
 {
     return (point_loop_location(pt, loop) == OUTSIDE_OR_ON_LOOP) && !is_point_on_loop(pt, loop);
 }
 
 
-HIDDEN ON_SimpleArray<ON_Interval>
+static ON_SimpleArray<ON_Interval>
 get_curve_intervals_inside_or_on_face(
     ON_Curve *curve2D,
     const ON_ClassArray<ON_SimpleArray<ON_Curve *> > &face_loops,
@@ -647,7 +647,7 @@ public:
 // given parameters in a curve interval, create new interval
 // parameters that reflect the the non-degenerate (different
 // dimensioned) curve interval used to generate the curve parameters
-HIDDEN IntervalParams
+static IntervalParams
 curve_interval_from_params(
     IntervalParams interval_t,
     const ON_Curve *curve)
@@ -695,7 +695,7 @@ enum seam_location {SEAM_NONE, SEAM_ALONG_V, SEAM_ALONG_U, SEAM_ALONG_UV};
 // given interval points in surface uv space, create new interval
 // points that reflect the non-degenerate curve parameter interval
 // used to generate the input points
-HIDDEN IntervalPoints
+static IntervalPoints
 uv_interval_from_points(
     IntervalPoints interval_pts,
     const ON_Surface *surf)
@@ -781,7 +781,7 @@ uv_interval_from_points(
 }
 
 
-HIDDEN IntervalPoints
+static IntervalPoints
 interval_2d_to_uv(
     const ON_Interval &interval_2d,
     const ON_Curve *curve2d,
@@ -797,7 +797,7 @@ interval_2d_to_uv(
 }
 
 
-HIDDEN std::pair<IntervalPoints, IntervalPoints>
+static std::pair<IntervalPoints, IntervalPoints>
 interval_2d_to_2uv(
     const ON_Interval &interval_2d,
     const ON_Curve *curve2d,
@@ -816,7 +816,7 @@ interval_2d_to_2uv(
 }
 
 
-HIDDEN IntervalPoints
+static IntervalPoints
 points_uv_to_3d(
     const IntervalPoints &interval_uv,
     const ON_Surface *surf)
@@ -831,7 +831,7 @@ points_uv_to_3d(
 }
 
 
-HIDDEN IntervalParams
+static IntervalParams
 points_3d_to_params_3d(
     const IntervalPoints &pts_3d,
     const ON_Curve *curve3d)
@@ -854,7 +854,7 @@ points_3d_to_params_3d(
 }
 
 
-HIDDEN std::vector<ON_Interval>
+static std::vector<ON_Interval>
 interval_2d_to_3d(
     const ON_Interval &interval,
     const ON_Curve *curve2d,
@@ -986,7 +986,7 @@ interval_2d_to_3d(
 
 // Convert parameter interval of a 3d curve into the equivalent parameter
 // interval on a matching 2d face curve.
-HIDDEN ON_Interval
+static ON_Interval
 interval_3d_to_2d(
     const ON_Interval &interval,
     const ON_Curve *curve2d,
@@ -1046,7 +1046,7 @@ interval_3d_to_2d(
 }
 
 
-HIDDEN void
+static void
 get_subcurves_inside_faces(
     ON_SimpleArray<ON_Curve *> &subcurves_on1,
     ON_SimpleArray<ON_Curve *> &subcurves_on2,
@@ -1070,11 +1070,11 @@ get_subcurves_inside_faces(
     }
 
     // get the face loops
-    if (face_i1 < 0 || face_i1 >= brep1->m_F.Count()) {
+    if (face_i1 < 0 || face_i1 >= brep1->m_F.Count() || brep1->m_F[face_i1].m_li.Count() <= 0) {
 	bu_log("get_subcurves_inside_faces(): invalid face_i1 (%d).\n", face_i1);
 	return;
     }
-    if (face_i2 < 0 || face_i2 >= brep2->m_F.Count()) {
+    if (face_i2 < 0 || face_i2 >= brep2->m_F.Count() || brep2->m_F[face_i2].m_li.Count() <= 0) {
 	bu_log("get_subcurves_inside_faces(): invalid face_i2 (%d).\n", face_i2);
 	return;
     }
@@ -1166,7 +1166,7 @@ get_subcurves_inside_faces(
 }
 
 
-HIDDEN double
+static double
 bbox_diagonal_length(ON_Curve *curve)
 {
     double len = 0.0;
@@ -1182,7 +1182,7 @@ bbox_diagonal_length(ON_Curve *curve)
 }
 
 
-HIDDEN void
+static void
 split_curve(ON_Curve *&left, ON_Curve *&right, const ON_Curve *in, double t)
 {
     try {
@@ -1198,7 +1198,7 @@ split_curve(ON_Curve *&left, ON_Curve *&right, const ON_Curve *in, double t)
 }
 
 
-HIDDEN double
+static double
 configure_for_linking(
     LinkedCurve *&first,
     LinkedCurve *&second,
@@ -1243,7 +1243,7 @@ struct LinkedCurveX {
 };
 
 
-HIDDEN ON_ClassArray<LinkedCurve>
+static ON_ClassArray<LinkedCurve>
 get_joinable_ssi_curves(const ON_SimpleArray<SSICurve> &in)
 {
     ON_SimpleArray<SSICurve> curves;
@@ -1385,7 +1385,7 @@ get_joinable_ssi_curves(const ON_SimpleArray<SSICurve> &in)
 }
 
 
-HIDDEN ON_ClassArray<LinkedCurve>
+static ON_ClassArray<LinkedCurve>
 link_curves(const ON_SimpleArray<SSICurve> &in)
 {
     // There might be two reasons why we need to link these curves.
@@ -1564,6 +1564,10 @@ public:
 	CurveSegment::Location l)
 	: orig_loop(loop), from(f), to(t), location(l)
     {
+	if (!orig_loop.Capacity()) {
+	    size_t c = (from.loop_index > to.loop_index) ? from.loop_index : to.loop_index;
+	    orig_loop.SetCapacity(c + 1);
+	}
     }
 
     void
@@ -1667,7 +1671,7 @@ public:
 #define LOOP_DIRECTION_CW  -1
 #define LOOP_DIRECTION_NONE 0
 
-HIDDEN bool
+static bool
 close_small_gap(ON_SimpleArray<ON_Curve *> &loop, int curr, int next)
 {
     ON_3dPoint end_curr = loop[curr]->PointAtEnd();
@@ -1683,7 +1687,7 @@ close_small_gap(ON_SimpleArray<ON_Curve *> &loop, int curr, int next)
 }
 
 
-HIDDEN void
+static void
 close_small_gaps(ON_SimpleArray<ON_Curve *> &loop)
 {
     if (loop.Count() == 0) {
@@ -1883,7 +1887,7 @@ find_similar_segments(
 }
 
 
-HIDDEN std::multiset<CurveSegment>
+static std::multiset<CurveSegment>
 get_op_segments(
     std::multiset<CurveSegment> &curve1_segments,
     std::multiset<CurveSegment> &curve2_segments,
@@ -2062,6 +2066,9 @@ get_loop_points(
 {
     std::multiset<CurvePoint> out;
 
+    if (loop1.Count() <= 0)
+	return out;
+
     ON_Curve *loop1_seg = loop1[0];
     out.insert(CurvePoint(source_loop, 0, loop1_seg->Domain().m_t[0], loop1_seg,
 			  loop2));
@@ -2077,7 +2084,7 @@ get_loop_points(
 
 
 // separate outerloops and innerloops
-HIDDEN LoopBooleanResult
+static LoopBooleanResult
 make_result_from_loops(const std::list<ON_SimpleArray<ON_Curve *> > &loops)
 {
     LoopBooleanResult out;
@@ -2121,6 +2128,11 @@ loop_boolean(
 	op != BOOLEAN_UNION)
     {
 	bu_log("loop_boolean: unsupported operation\n");
+	return out;
+    }
+
+    if (l1.Count() <= 0 || l2.Count() <= 0) {
+	bu_log("loop_boolean: one or more empty loops\n");
 	return out;
     }
 
@@ -2266,7 +2278,7 @@ make_face_from_loops(
 }
 
 
-HIDDEN LoopBooleanResult
+static LoopBooleanResult
 combine_loops(
     const TrimmedFace *orig_face,
     const LoopBooleanResult &new_loops)
@@ -2382,19 +2394,23 @@ combine_loops(
 }
 
 
-HIDDEN void
+static void
 append_faces_from_loops(
     ON_SimpleArray<TrimmedFace *> &out,
     const TrimmedFace *orig_face,
     const LoopBooleanResult &new_loops)
 {
+    std::vector<TrimmedFace *> o;
     LoopBooleanResult combined_loops = combine_loops(orig_face, new_loops);
 
     // make a face from each outerloop, using appropriate innerloops
     for (size_t i = 0; i < combined_loops.outerloops.size(); ++i) {
-	out.Append(make_face_from_loops(orig_face,
+	o.push_back(make_face_from_loops(orig_face,
 					combined_loops.outerloops[i],
 					combined_loops.innerloops));
+    }
+    for (size_t i = 0; i < o.size(); i++) {
+	out.Append(o[i]);
     }
 }
 
@@ -2546,7 +2562,7 @@ split_face_into_loops(
 	ON_Curve *remainder = orig_face->m_outerloop[loop_seg]->Duplicate();
 	if (remainder == NULL) {
 	    bu_log("ON_Curve::Duplicate() failed.\n");
-	    continue;
+	    return out;
 	}
 	for (; clx_i < clx_points.Count() && clx_points[clx_i].m_loop_seg == loop_seg; clx_i++) {
 	    IntersectPoint &ipt = clx_points[clx_i];
@@ -2573,9 +2589,7 @@ split_face_into_loops(
 	    }
 	    ipt.m_split_li = outerloop_segs.Count() - 1;
 	}
-	if (remainder) {
-	    outerloop_segs.Append(remainder);
-	}
+	outerloop_segs.Append(remainder);
     }
 
     // Append the first element at the last to handle some special cases.
@@ -2792,7 +2806,7 @@ loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
 // faces' bounding boxes removes the most volume from that box when subtracted, we may be able to decide
 // (say, for a subtraction) which face is cutting deeper.  It's not clear to me yet if such an approach would
 // work or would scale to complex cases, but it may be worth thinking about.
-HIDDEN ON_SimpleArray<TrimmedFace *>
+static ON_SimpleArray<TrimmedFace *>
 split_trimmed_face(
     const TrimmedFace *orig_face,
     ON_ClassArray<LinkedCurve> &ssx_curves)
@@ -2916,7 +2930,7 @@ split_trimmed_face(
 }
 
 
-HIDDEN bool
+static bool
 is_same_surface(const ON_Surface *surf1, const ON_Surface *surf2)
 {
     // Approach: Get their NURBS forms, and compare their CVs.
@@ -2992,7 +3006,7 @@ is_same_surface(const ON_Surface *surf1, const ON_Surface *surf2)
 }
 
 
-HIDDEN void
+static void
 add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve *> &loop, ON_BrepLoop::TYPE loop_type)
 {
     if (!loop.Count()) {
@@ -3172,7 +3186,7 @@ add_elements(ON_Brep *brep, ON_BrepFace &face, const ON_SimpleArray<ON_Curve *> 
 }
 
 
-HIDDEN bool
+static bool
 is_point_on_brep_surface(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
 {
     // Decide whether a point is on a brep's surface.
@@ -3224,7 +3238,7 @@ is_point_on_brep_surface(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArr
 }
 
 
-HIDDEN bool
+static bool
 is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
 {
     // Decide whether a point is inside a brep's surface.
@@ -3307,7 +3321,7 @@ is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
 }
 
 
-HIDDEN bool
+static bool
 is_point_inside_trimmed_face(const ON_2dPoint &pt, const TrimmedFace *tface)
 {
     bool inside = false;
@@ -3328,7 +3342,7 @@ is_point_inside_trimmed_face(const ON_2dPoint &pt, const TrimmedFace *tface)
 // a very inefficient algorithm. If the grid approach doesn't work
 // after a small number of samples, we should switch to an alternative
 // algorithm, such as sampling around points on the inner loops.
-HIDDEN ON_2dPoint
+static ON_2dPoint
 get_point_inside_trimmed_face(const TrimmedFace *tface)
 {
     const int GP_MAX_STEPS = 8; // must be a power of two
@@ -3375,7 +3389,7 @@ enum {
 // Throws InvalidGeometry if given invalid arguments.
 // Throws AlgorithmError if a point inside the TrimmedFace can't be
 // found for testing.
-HIDDEN int
+static int
 face_brep_location(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArray<Subsurface *> &surf_tree)
 {
     if (tface == NULL || brep == NULL) {
@@ -3420,7 +3434,7 @@ face_brep_location(const TrimmedFace *tface, const ON_Brep *brep, ON_SimpleArray
 }
 
 
-HIDDEN ON_ClassArray<ON_SimpleArray<SSICurve> >
+static ON_ClassArray<ON_SimpleArray<SSICurve> >
 get_face_intersection_curves(
     ON_SimpleArray<Subsurface *> &surf_tree1,
     ON_SimpleArray<Subsurface *> &surf_tree2,
@@ -3428,10 +3442,22 @@ get_face_intersection_curves(
     const ON_Brep *brep2,
     op_type operation)
 {
+    std::vector<Subsurface *> st1, st2;
     std::set<int> unused1, unused2;
     std::set<int> finalform1, finalform2;
+    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array;
     int face_count1 = brep1->m_F.Count();
     int face_count2 = brep2->m_F.Count();
+    int surf_count1 = brep1->m_S.Count();
+    int surf_count2 = brep2->m_S.Count();
+
+    // We're not well set up currently to handle a situation where
+    // one of the breps has no faces - don't try.  Also make sure
+    // we don't have too many faces.
+    if (!face_count1 || !face_count2 || ((face_count1 + face_count2) < 0))
+	return curves_array;
+    if (!surf_count1 || !surf_count2 || ((surf_count1 + surf_count2) < 0))
+	return curves_array;
 
     /* Depending on the operation type and the bounding box behaviors, we
      * can sometimes decide immediately whether a face will end up in the
@@ -3516,16 +3542,16 @@ get_face_intersection_curves(
 	}
     }
 
-    int surf_count1 = brep1->m_S.Count();
-    int surf_count2 = brep2->m_S.Count();
     for (int i = 0; i < surf_count1; i++) {
-	surf_tree1.Append(new Subsurface(brep1->m_S[i]->Duplicate()));
+	Subsurface *ss = new Subsurface(brep1->m_S[i]->Duplicate());
+	st1.push_back(ss);
     }
     for (int i = 0; i < surf_count2; i++) {
-	surf_tree2.Append(new Subsurface(brep2->m_S[i]->Duplicate()));
+	Subsurface *ss = new Subsurface(brep2->m_S[i]->Duplicate());
+	st2.push_back(ss);
     }
 
-    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array(face_count1 + face_count2);
+    curves_array.SetCapacity(face_count1 + face_count2);
 
     // count must equal capacity for array copy to work as expected
     // when the result of the function is assigned
@@ -3533,6 +3559,10 @@ get_face_intersection_curves(
 
     // calculate intersection curves
     for (int i = 0; i < face_count1; i++) {
+
+	if ((int)st1.size() < brep1->m_F[i].m_si + 1)
+	    continue;
+
 	for (int j = 0; j < face_count2; j++) {
 	    if (intersection_candidates.find(std::pair<int, int>(i, j)) != intersection_candidates.end()) {
 		ON_Surface *surf1, *surf2;
@@ -3543,6 +3573,9 @@ get_face_intersection_curves(
 		if (is_same_surface(surf1, surf2)) {
 		    continue;
 		}
+
+		if (surf_tree2.Count() < brep2->m_F[j].m_si + 1)
+		    continue;
 
 		// Possible enhancement: Some faces may share the same surface.
 		// We can store the result of SSI to avoid re-computation.
@@ -3556,8 +3589,8 @@ get_face_intersection_curves(
 				       NULL,
 				       NULL,
 				       NULL,
-				       surf_tree1[brep1->m_F[i].m_si],
-				       surf_tree2[brep2->m_F[j].m_si]);
+				       st1[brep1->m_F[i].m_si],
+				       st2[brep2->m_F[j].m_si]);
 		if (results <= 0) {
 		    continue;
 		}
@@ -3610,11 +3643,19 @@ get_face_intersection_curves(
 	}
     }
 
+    for (size_t i = 0; i < st1.size(); i++) {
+	surf_tree1.Append(st1[i]);
+    }
+
+    for (size_t i = 0; i < st2.size(); i++) {
+	surf_tree2.Append(st2[i]);
+    }
+
     return curves_array;
 }
 
 
-HIDDEN ON_SimpleArray<ON_Curve *>get_face_trim_loop(const ON_Brep *brep, int face_loop_index)
+static ON_SimpleArray<ON_Curve *>get_face_trim_loop(const ON_Brep *brep, int face_loop_index)
 {
     const ON_BrepLoop &loop = brep->m_L[face_loop_index];
     const ON_SimpleArray<int> &trim_index = loop.m_ti;
@@ -3627,33 +3668,37 @@ HIDDEN ON_SimpleArray<ON_Curve *>get_face_trim_loop(const ON_Brep *brep, int fac
 }
 
 
-HIDDEN ON_SimpleArray<TrimmedFace *>
+static ON_SimpleArray<TrimmedFace *>
 get_trimmed_faces(const ON_Brep *brep)
 {
-    ON_SimpleArray<TrimmedFace *> trimmed_faces;
+    std::vector<TrimmedFace *> trimmed_faces;
     int face_count = brep->m_F.Count();
     for (int i = 0; i < face_count; i++) {
 	const ON_BrepFace &face = brep->m_F[i];
 	const ON_SimpleArray<int> &loop_index = face.m_li;
+	if (loop_index.Count() <= 0) {
+	    continue;
+	}
 
 	TrimmedFace *trimmed_face = new TrimmedFace();
 	trimmed_face->m_face = &face;
-
-	if (loop_index.Count() > 0) {
-	    ON_SimpleArray<ON_Curve *> index_loop = get_face_trim_loop(brep, loop_index[0]);
-	    trimmed_face->m_outerloop = index_loop;
-	    for (int j = 1; j < loop_index.Count(); j++) {
-		index_loop = get_face_trim_loop(brep, loop_index[j]);
-		trimmed_face->m_innerloop.push_back(index_loop);
-	    }
+	ON_SimpleArray<ON_Curve *> index_loop = get_face_trim_loop(brep, loop_index[0]);
+	trimmed_face->m_outerloop = index_loop;
+	for (int j = 1; j < loop_index.Count(); j++) {
+	    index_loop = get_face_trim_loop(brep, loop_index[j]);
+	    trimmed_face->m_innerloop.push_back(index_loop);
 	}
-	trimmed_faces.Append(trimmed_face);
+	trimmed_faces.push_back(trimmed_face);
     }
-    return trimmed_faces;
+    ON_SimpleArray<TrimmedFace *> tf;
+    for (size_t i = 0; i < trimmed_faces.size(); i++) {
+	tf.Append(trimmed_faces[i]);
+    }
+    return tf;
 }
 
 
-HIDDEN void
+static void
 categorize_trimmed_faces(
     ON_ClassArray<ON_SimpleArray<TrimmedFace *> > &trimmed_faces,
     const ON_Brep *brep1,
@@ -3772,16 +3817,20 @@ categorize_trimmed_faces(
 }
 
 
-HIDDEN ON_ClassArray<ON_SimpleArray<TrimmedFace *> >
+static ON_ClassArray<ON_SimpleArray<TrimmedFace *> >
 get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operation)
 {
     ON_SimpleArray<Subsurface *> surf_tree1, surf_tree2;
 
-    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array =
-	get_face_intersection_curves(surf_tree1, surf_tree2, brep1, brep2, operation);
-
     int face_count1 = brep1->m_F.Count();
     int face_count2 = brep2->m_F.Count();
+
+    // check for face counts high enough to cause overflow
+    if ((face_count1 + face_count2) < 0)
+	return ON_ClassArray<ON_SimpleArray<TrimmedFace *> > ();
+
+    ON_ClassArray<ON_SimpleArray<SSICurve> > curves_array =
+	get_face_intersection_curves(surf_tree1, surf_tree2, brep1, brep2, operation);
 
     ON_SimpleArray<TrimmedFace *> brep1_faces, brep2_faces;
     brep1_faces = get_trimmed_faces(brep1);
@@ -3847,7 +3896,7 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 }
 
 
-HIDDEN void
+static void
 standardize_loop_orientations(ON_Brep *brep)
 {
     std::map<int, int> reversed_curve2d, reversed_edge;
@@ -3967,6 +4016,11 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
 
     int face_count1 = brep1->m_F.Count();
     int face_count2 = brep2->m_F.Count();
+
+    // check for face counts high enough to cause overflow
+    if ((face_count1 + face_count2) < 0)
+	return -1;
+
     for (int i = 0; i < trimmed_faces.Count(); i++) {
 	const ON_SimpleArray<TrimmedFace *> &splitted = trimmed_faces[i];
 	const ON_Surface *surf = splitted.Count() ? splitted[0]->m_face->SurfaceOf() : NULL;

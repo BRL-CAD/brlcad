@@ -23,6 +23,10 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
   add_definitions(-DDM_PLUGIN)
 
+  if (X11_Xi_LIB)
+    list(APPEND X11_LIBRARIES ${X11_Xi_LIB})
+  endif (X11_Xi_LIB)
+
   dm_plugin_library(dm-X SHARED ${X_SRCS})
   target_link_libraries(dm-X libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
   set_property(TARGET dm-X APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)

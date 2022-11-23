@@ -36,7 +36,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>i region3 group5</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>i region3 group5</userinput></term>
 	   <listitem>
 	     <para>Adds <emphasis>region3</emphasis> to the combination <emphasis>group5</emphasis>.
 	       </para>

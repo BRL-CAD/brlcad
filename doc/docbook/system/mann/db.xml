@@ -107,7 +107,7 @@ and display command formats.
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>db match *.s</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>db match *.s</userinput></term>
 	   <listitem>
 	     <para>Gets a list of all objects in the database that end with .s.
 		     </para>
@@ -119,7 +119,7 @@ and display command formats.
   <example><title>List all attributes and their values for <emphasis>cone.s</emphasis></title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>db get cone.s</userinput>
+      <prompt>mged&gt; </prompt><userinput>db get cone.s</userinput>
     </para>
     <para>
        Gets a list of all the attributes and their values for shape <emphasis>cone.s</emphasis>.
@@ -129,7 +129,7 @@ and display command formats.
  <example><title>Get the value of the vertex attribute of <emphasis>cone.s</emphasis></title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>db get cone.s V</userinput>
+      <prompt>mged&gt; </prompt><userinput>db get cone.s V</userinput>
     </para>
     <para>
        Gets the value of the <emphasis>V</emphasis> (vertex) attribute of shape <emphasis>cone.s</emphasis>
@@ -139,7 +139,7 @@ and display command formats.
  <example><title>Create a new TGC shape named <emphasis>new_cone.s</emphasis> with specified attributes.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>db put new_cone.s tgc V {0 0 0} H {0 0 1} A {1 0 0}
+      <prompt>mged&gt; </prompt><userinput>db put new_cone.s tgc V {0 0 0} H {0 0 1} A {1 0 0}
      B {0 1 0} C {5 0 0} D {0 5 0}</userinput>
     </para>
     <para>Creates a new TGC shape named <emphasis>new_cone.s</emphasis> with the specified attributes.
@@ -149,7 +149,7 @@ and display command formats.
 <example><title>Adjust the vertex attribute of <emphasis>new_cone.s</emphasis> to a given value.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>db adjust new_cone.s V {0 0 10}</userinput>
+      <prompt>mged&gt; </prompt><userinput>db adjust new_cone.s V {0 0 10}</userinput>
     </para>
     <para>Adjusts the <emphasis>V</emphasis> (vertex) attribute of <emphasis>new_cone.s</emphasis> to the value {0 0 10}.
     </para>
@@ -158,7 +158,7 @@ and display command formats.
 <example><title>Display the format used by the <command>get</command> and <command>put</command> commands for the TGC shape type.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>db form tgc</userinput>
+      <prompt>mged&gt; </prompt><userinput>db form tgc</userinput>
     </para>
     <para>Displays the format used by the <command>get</command> and <command>put</command> commands for the TGC shape type.
     </para>

@@ -41,7 +41,7 @@
   <example><title>Create a UNIX plot of the current MGED display and send the results to a specified command.</title>
 
     <para>
-      <prompt>mged&gt;</prompt> plot -float | pldebug
+      <prompt>mged&gt; </prompt>plot -float | pldebug
     </para>
     <para>Creates a UNIX plot of the current MGED display and pipe the results to the
 	<command>pldebug</command> command.

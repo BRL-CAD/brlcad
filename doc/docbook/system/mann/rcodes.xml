@@ -40,7 +40,7 @@ command.
   <example><title>Assign region-specific attributes to listed regions.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rcodes region_codes</userinput>
+      <prompt>mged&gt; </prompt><userinput>rcodes region_codes</userinput>
     </para>
     <para>Reads the file named <emphasis>region_codes</emphasis> and sets the region-specific attributes 	according to the values found in the file.
 

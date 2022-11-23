@@ -1,7 +1,7 @@
 /*                         R R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,10 +42,10 @@ ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
     char **gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -56,7 +56,7 @@ ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
     vp = &gd_rt_cmd[0];
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
-    *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
+    *vp++ = gedp->dbip->dbi_filename;
 
     gd_rt_cmd_len = ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
 
@@ -64,7 +64,7 @@ ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

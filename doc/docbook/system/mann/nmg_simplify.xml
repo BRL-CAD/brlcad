@@ -43,7 +43,7 @@ simpler primitive shape type.
   <example><title>Convert an existing shape to a polysolid.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>nmg_simplify poly shapea.poly shapea.nmg</userinput>
+      <prompt>mged&gt; </prompt><userinput>nmg_simplify poly shapea.poly shapea.nmg</userinput>
     </para>
     <para>Converts the nmg shape named <emphasis>shapea.nmg</emphasis> to a polysolid named <emphasis>		shapea.poly</emphasis>.
     </para>

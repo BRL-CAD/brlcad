@@ -1,7 +1,7 @@
 /*                  R H I N O _ R E A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016-2021 United States Government as represented by
+ * Copyright (c) 2016-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,14 +86,14 @@ private:
 
 
 template <typename T, std::size_t length>
-HIDDEN std::size_t array_length(const T(&)[length])
+static std::size_t array_length(const T(&)[length])
 {
     return length;
 }
 
 
 template <typename Target, typename Source>
-HIDDEN Target lexical_cast(const Source &value)
+static Target lexical_cast(const Source &value)
 {
     std::stringstream interpreter;
     Target result;
@@ -107,7 +107,7 @@ HIDDEN Target lexical_cast(const Source &value)
 }
 
 
-HIDDEN void
+static void
 comb_to_region(db_i &db, const std::string &name)
 {
     RT_CK_DBI(&db);
@@ -151,13 +151,16 @@ comb_region_name_check(std::map<const directory *, std::string> &renamed, db_i &
 
     directory * const dir = db_lookup(&db, name.c_str(), true);
     if (dir == RT_DIR_NULL) {
+	bu_vls_free(&nname);
 	return;
     }
     std::pair<const directory *, std::string> rpair = std::make_pair(dir, name);
     if (db_rename(&db, dir, bu_vls_cstr(&nname))){
+	bu_vls_free(&nname);
 	return;
     }
     renamed.insert(rpair);
+    bu_vls_free(&nname);
 }
 
 struct UuidCompare {
@@ -178,7 +181,7 @@ public:
 
 
 template <template<typename> class Array, typename T>
-HIDDEN const T &at(const Array<T> &array, std::size_t index)
+static const T &at(const Array<T> &array, std::size_t index)
 {
     if (const T * const result = array.At(static_cast<unsigned>(index)))
 	return *result;
@@ -188,14 +191,14 @@ HIDDEN const T &at(const Array<T> &array, std::size_t index)
 
 
 template <template<typename> class Array, typename T>
-HIDDEN T &at(Array<T> &array, std::size_t index)
+static T &at(Array<T> &array, std::size_t index)
 {
     return const_cast<T &>(at(const_cast<const Array<T> &>(array), index));
 }
 
 
 template <typename T, typename Array>
-HIDDEN const T &at(const Array &array, std::size_t index)
+static const T &at(const Array &array, std::size_t index)
 {
     if (const T * const result = array.At(static_cast<unsigned>(index)))
 	return *result;
@@ -206,7 +209,7 @@ HIDDEN const T &at(const Array &array, std::size_t index)
 
 // ON_CreateUuid() is not implemented for all platforms.
 // When it fails, we create a UUIDv4.
-HIDDEN ON_UUID
+static ON_UUID
 generate_uuid()
 {
     ON_UUID result;
@@ -234,7 +237,7 @@ generate_uuid()
 
 // ONX_Model::Audit() fails to repair UUID issues on platforms
 // where ON_CreateUuid() is not implemented.
-HIDDEN std::size_t
+static std::size_t
 replace_invalid_uuids(ONX_Model &model)
 {
     std::size_t num_repairs = 0;
@@ -275,7 +278,7 @@ replace_invalid_uuids(ONX_Model &model)
 }
 
 
-HIDDEN void
+static void
 clean_name(std::map<ON_wString, std::size_t> &seen,
 	   const std::string &default_name, ON_wString &name)
 {
@@ -292,7 +295,7 @@ clean_name(std::map<ON_wString, std::size_t> &seen,
 }
 
 
-HIDDEN void
+static void
 load_model(const gcv_opts &gcv_options, const std::string &path,
 	   ONX_Model &model, std::string &root_name)
 {
@@ -336,7 +339,7 @@ load_model(const gcv_opts &gcv_options, const std::string &path,
 }
 
 
-HIDDEN void
+static void
 write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 {
     ON_Brep *b = const_cast<ON_Brep *>(&brep);
@@ -345,9 +348,10 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 }
 
 
-HIDDEN void
-write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
+static void
+write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 {
+    ON_Mesh mesh = in_mesh;
     mesh.ConvertQuadsToTriangles();
     mesh.CombineIdenticalVertices();
     mesh.Compact();
@@ -438,7 +442,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 
     for (std::size_t i = 0; i < mesh.m_FN.UnsignedCount(); ++i) {
 	int * const dest_face_normal = &face_normals.at(3 * i);
-	VSETALL(dest_face_normal, i);
+	VSETALL(dest_face_normal, (int)i);
     }
 
     if (mk_bot_w_normals(&wdb, name.c_str(), mode, orientation,
@@ -450,7 +454,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 }
 
 
-HIDDEN bool
+static bool
 write_geometry(rt_wdb &wdb, const std::string &name,
 	       const ON_Geometry &geometry)
 {
@@ -471,7 +475,7 @@ write_geometry(rt_wdb &wdb, const std::string &name,
 typedef std::pair<std::string, std::string> Shader;
 
 
-HIDDEN Shader
+static Shader
 get_shader(const ON_Material &material)
 {
     std::ostringstream sstream;
@@ -491,7 +495,7 @@ get_shader(const ON_Material &material)
 }
 
 
-HIDDEN void
+static void
 get_object_material(const ON_3dmObjectAttributes &attributes,
 		    const ONX_Model &model, Shader &out_shader, unsigned char *out_rgb,
 		    bool &out_own_shader, bool &out_own_rgb)
@@ -520,16 +524,16 @@ get_object_material(const ON_3dmObjectAttributes &attributes,
 }
 
 
-HIDDEN void
+static void
 write_comb(rt_wdb &wdb, const std::string &name,
-	   const std::set<std::string> &members, const mat_t matrix = NULL,
+	   const std::vector<std::string> &members, const mat_t matrix = NULL,
 	   const char *shader_name = NULL, const char *shader_options = NULL,
 	   const unsigned char *rgb = NULL)
 {
     wmember wmembers;
     BU_LIST_INIT(&wmembers.l);
 
-    for (std::set<std::string>::const_iterator it = members.begin();
+    for (std::vector<std::string>::const_iterator it = members.begin();
 	 it != members.end(); ++it)
 	mk_addmember(it->c_str(), &wmembers.l, const_cast<fastf_t *>(matrix),
 		     WMOP_UNION);
@@ -540,7 +544,7 @@ write_comb(rt_wdb &wdb, const std::string &name,
 }
 
 
-HIDDEN void
+static void
 import_object(rt_wdb &wdb, const std::string &name,
 	      const ON_InstanceRef &instance_ref, const ONX_Model &model,
 	      const char *shader_name, const char *shader_options, const unsigned char *rgb)
@@ -555,14 +559,14 @@ import_object(rt_wdb &wdb, const std::string &name,
 	for (std::size_t j = 0; j < 4; ++j)
 	    matrix[4 * i + j] = instance_ref.m_xform[i][j];
 
-    std::set<std::string> members;
-    members.insert(ON_String(idef.m_name).Array());
+    std::vector<std::string> members_vec;
+    members_vec.push_back(ON_String(idef.m_name).Array());
 
-    write_comb(wdb, name, members, matrix, shader_name, shader_options, rgb);
+    write_comb(wdb, name, members_vec, matrix, shader_name, shader_options, rgb);
 }
 
 
-HIDDEN void
+static void
 write_attributes(rt_wdb &wdb, const std::string &name, const ON_Object &object,
 		 const ON_UUID &uuid)
 {
@@ -578,7 +582,7 @@ write_attributes(rt_wdb &wdb, const std::string &name, const ON_Object &object,
 }
 
 
-HIDDEN void
+static void
 import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 		     const ONX_Model &model)
 {
@@ -601,9 +605,9 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 			  own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
 	else if (write_geometry(wdb, member_name,
 				*ON_Geometry::Cast(object.m_object))) {
-	    std::set<std::string> members;
-	    members.insert(member_name);
-	    write_comb(wdb, name, members, NULL, own_shader ? shader.first.c_str() : NULL,
+	    std::vector<std::string> members_vec;
+	    members_vec.push_back(member_name);
+	    write_comb(wdb, name, members_vec, NULL, own_shader ? shader.first.c_str() : NULL,
 		       own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
 	} else {
 	    if (gcv_options.verbosity_level)
@@ -624,27 +628,29 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 }
 
 
-HIDDEN void
+static void
 import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
 	    const ONX_Model &model)
 {
     std::set<std::string> members;
+    std::vector<std::string> members_vec;
 
     for (std::size_t i = 0; i < idef.m_object_uuid.UnsignedCount(); ++i) {
 	const ONX_Model_Object &object = at(model.m_object_table,
 					    model.ObjectIndex(at(idef.m_object_uuid, i)));
 
-	members.insert(ON_String(object.m_attributes.m_name).Array());
+	if (members.insert(ON_String(object.m_attributes.m_name).Array()).second)
+	    members_vec.push_back(ON_String(object.m_attributes.m_name).Array());
     }
 
     const std::string name = ON_String(idef.m_name).Array();
 
-    write_comb(wdb, name, members);
+    write_comb(wdb, name, members_vec);
     write_attributes(wdb, name, idef, idef.m_uuid);
 }
 
 
-HIDDEN void
+static void
 import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 {
     for (std::size_t i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
@@ -652,7 +658,7 @@ import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 }
 
 
-HIDDEN std::set<std::string>
+static std::set<std::string>
 get_all_idef_members(const ONX_Model &model)
 {
     std::set<std::string> result;
@@ -671,23 +677,28 @@ get_all_idef_members(const ONX_Model &model)
 }
 
 
-HIDDEN std::set<std::string>
+static std::vector<std::string>
 get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 {
     std::set<std::string> members;
+    std::map<std::string, int> members_pos; /* member name, order encountered */
 
     for (std::size_t i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
 	const ON_Layer &current_layer = at(model.m_layer_table, i);
 
-	if (current_layer.m_parent_layer_id == layer.ModelObjectId())
-	    members.insert(ON_String(current_layer.m_name).Array());
+	if (current_layer.m_parent_layer_id == layer.ModelObjectId()) {
+	    if (members.insert(ON_String(current_layer.m_name).Array()).second)
+		members_pos.emplace(ON_String(current_layer.m_name).Array(), members.size() - 1);
+	}
     }
 
     for (std::size_t i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
 	const ONX_Model_Object &object = at(model.m_object_table, i);
 
-	if (object.m_attributes.m_layer_index == layer.m_layer_index)
-	    members.insert(ON_String(object.m_attributes.m_name).Array());
+	if (object.m_attributes.m_layer_index == layer.m_layer_index) {
+	    if (members.insert(ON_String(object.m_attributes.m_name).Array()).second)
+		members_pos.emplace(ON_String(object.m_attributes.m_name).Array(), members.size() - 1);
+	}
     }
 
     const std::set<std::string> model_idef_members = get_all_idef_members(model);
@@ -695,11 +706,24 @@ get_layer_members(const ON_Layer &layer, const ONX_Model &model)
     std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
 			model_idef_members.end(), std::inserter(result, result.end()));
 
-    return result;
+    /* add results to vector in order encountered */
+    std::vector<std::string> members_vec(members.size(), "");
+    for (auto& itr : result) {
+	members_vec[members_pos[itr]] = itr;
+    }
+    /* if any were removed by set_difference, erase the empty location in vector */
+    if (result.size() != members.size()) {
+	for (int i = members_vec.size() - 1; i >= 0; i--) {
+	    if (members_vec[i] == "")
+		members_vec.erase(members_vec.begin() + i);
+	}
+    }
+
+    return members_vec;
 }
 
 
-HIDDEN void
+static void
 import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
 {
     const std::string name = ON_String(layer.m_name).Array();
@@ -718,7 +742,7 @@ import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
 }
 
 
-HIDDEN void
+static void
 import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 		    const std::string &root_name)
 {
@@ -731,7 +755,7 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 }
 
 
-HIDDEN void
+static void
 polish_output(const gcv_opts &gcv_options, db_i &db)
 {
     std::map<const directory *, std::string> renamed;
@@ -829,7 +853,13 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		    if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")
 			|| (bu_path_match(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
 			    && bu_path_match("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
-			const std::string prefix = (*entry)->fp_names[i]->d_namep;
+
+			// If we have a .r suffix, we don't want to incorporate it into the solid name
+			struct bu_vls basename = BU_VLS_INIT_ZERO;
+			bu_path_component(&basename, (*entry)->fp_names[i]->d_namep, BU_PATH_EXTLESS);
+			const std::string prefix = bu_vls_cstr(&basename);
+			bu_vls_free(&basename);
+
 			std::string suffix = ".s";
 			std::size_t num = 1;
 
@@ -867,10 +897,17 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		      "-type shape -not -below -type region", 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
+    struct rt_wdb *wdbp = wdb_dbopen(&db, RT_WDB_TYPE_DB_INMEM);
+
     if (BU_PTBL_LEN(&found)) {
 	db_full_path **entry;
 
 	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
+
+	    // Sanity
+	    if (!(*entry) || (*entry)->fp_len <= 0)
+		continue;
+
 	    std::string prefix = DB_FULL_PATH_CUR_DIR(*entry)->d_namep;
 	    std::string suffix = ".r";
 
@@ -894,9 +931,9 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		    bu_bomb("db_comb_mvall() failed");
 	    }
 
-	    std::set<std::string> members;
-	    members.insert(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
-	    write_comb(*db.dbi_wdbp, region_name, members);
+	    std::vector<std::string> members_vec;
+	    members_vec.push_back(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
+	    write_comb(*wdbp, region_name, members_vec);
 
 	    comb_to_region(db, region_name);
 
@@ -932,7 +969,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 }
 
 
-HIDDEN int
+static int
 rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	   const void *UNUSED(options_data), const char *source_path)
 {
@@ -947,12 +984,14 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	root_name = bu_vls_addr(&temp);
     }
 
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+
     try {
 	ONX_Model model;
 	load_model(*gcv_options, source_path, model, root_name);
-	import_model_layers(*context->dbip->dbi_wdbp, model, root_name);
-	import_model_idefs(*context->dbip->dbi_wdbp, model);
-	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
+	import_model_layers(*wdbp, model, root_name);
+	import_model_idefs(*wdbp, model);
+	import_model_objects(*gcv_options, *wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
 	return 0;
@@ -963,7 +1002,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     return 1;
 }
 
-HIDDEN int
+static int
 rhino_can_read(const char *source_path)
 {
     int fv;

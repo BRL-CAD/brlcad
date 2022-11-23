@@ -1,7 +1,7 @@
 /*                         L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ vls_long_dpp(struct ged *gedp,
 	else if (dp->d_flags & RT_DIR_SOLID) {
 	    struct rt_db_internal intern;
 	    len = 9; /* "primitive" */
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
 		len = strlen(intern.idb_meth->ft_label);
 		rt_db_free_internal(&intern);
 	    }
@@ -121,7 +121,7 @@ vls_long_dpp(struct ged *gedp,
 	} else if (dp->d_flags & RT_DIR_SOLID) {
 	    struct rt_db_internal intern;
 	    type = "primitive";
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) >= 0) {
 		type = intern.idb_meth->ft_label;
 		rt_db_free_internal(&intern);
 	    }
@@ -229,7 +229,7 @@ vls_line_dpp(struct ged *gedp,
     }
 }
 
-HIDDEN void
+static void
 _ged_ls_show_help(struct ged *gedp, struct bu_opt_desc *d)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -275,7 +275,7 @@ _ged_ls_attr_objs(struct ged *gedp, struct _ged_ls_data *ls, int argc, const cha
     if ((argc < 2) || (argc%2 != 0)) {
 	/* should be even number of name/value pairs */
 	bu_log("Error: ls -A option expects even number of 'name value' pairs\n\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     op = (ls->or_flag) ? 2 : 1;
@@ -289,10 +289,10 @@ _ged_ls_attr_objs(struct ged *gedp, struct _ged_ls_data *ls, int argc, const cha
 	}
     }
 
-    ls->results_obj = db_lookup_by_attr(gedp->ged_wdbp->dbip, ls->dir_flags, &avs, op);
+    ls->results_obj = db_lookup_by_attr(gedp->dbip, ls->dir_flags, &avs, op);
     bu_avs_free(&avs);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -316,13 +316,13 @@ _ged_ls_named_objs(struct ged *gedp, struct _ged_ls_data *ls, int argc, const ch
 	if (is_path) {
 	    /* TODO - for now, just do a db_lookup on the full path, but need to rework
 	     * the printing logic and formatting to properly deal with paths */
-	    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], lq);
+	    struct directory *dp = db_lookup(gedp->dbip, argv[i], lq);
 	    if (dp != RT_DIR_NULL && ((dp->d_flags & ls->dir_flags) != 0)) {
 		bu_ptbl_ins(ls->results_obj, (long *)dp);
 	    }
 
 	} else {
-	    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], lq);
+	    struct directory *dp = db_lookup(gedp->dbip, argv[i], lq);
 	    if (dp != RT_DIR_NULL && ((dp->d_flags & ls->dir_flags) != 0)) {
 		bu_ptbl_ins(ls->results_obj, (long *)dp);
 	    }
@@ -364,7 +364,7 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
     int attr_flag = 0; /* arguments are attribute name/value pairs */
     struct bu_opt_desc d[13];
     BU_OPT(d[0],  "h", "help",           "",  NULL, &print_help,   "Print help and exit");
-    BU_OPT(d[1],  "a", "all",            "",  NULL, &(ls.aflag),   "Do not ignore HIDDEN objects.");
+    BU_OPT(d[1],  "a", "all",            "",  NULL, &(ls.aflag),   "Do not ignore static objects.");
     BU_OPT(d[2],  "c", "combs",          "",  NULL, &(ls.cflag),   "List combinations");
     BU_OPT(d[3],  "r", "regions",        "",  NULL, &(ls.rflag),   "List regions");
     BU_OPT(d[4],  "p", "primitives",     "",  NULL, &(ls.sflag),   "List primitives");
@@ -377,8 +377,8 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[11], "o", "or",             "",  NULL, &(ls.or_flag), "In attribute mode, match if one or more attribute patterns match");
     BU_OPT_NULL(d[12]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize */
     _ged_ls_data_init(&ls);
@@ -393,12 +393,12 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
     if (ret_ac < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
 	bu_vls_free(&str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (print_help) {
 	_ged_ls_show_help(gedp, d);
 	bu_vls_free(&str);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* object patterns are whatever is left in argv (none is OK) */
@@ -417,8 +417,8 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* In this scenario we're only going to get object names, and db_lookup_by_attr will provide
 	 * the table for us, so don't init either of them.  */
-	if (_ged_ls_attr_objs(gedp, &ls, argc, argv) != GED_OK) {
-	    return GED_ERROR;
+	if (_ged_ls_attr_objs(gedp, &ls, argc, argv) != BRLCAD_OK) {
+	    return BRLCAD_ERROR;
 	}
 
     } else {
@@ -443,7 +443,7 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 	     * list adding pointers (to the directory entries) to the tbl.
 	     */
 	    for (i = 0; i < RT_DBNHASH; i++) {
-		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		    if (!ls.aflag && (dp->d_flags & RT_DIR_HIDDEN)) continue;
 		    if (((dp->d_flags & ls.dir_flags) != 0)) {
 			bu_ptbl_ins(ls.results_obj, (long *)dp);
@@ -473,7 +473,7 @@ ged_ls_core(struct ged *gedp, int argc, const char *argv[])
 	bu_free((void *)ls.results_fullpath, "full path results");
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

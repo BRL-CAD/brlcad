@@ -1,7 +1,7 @@
 /*                         P U S H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -192,9 +192,9 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
     int push_error;
     static const char *usage = "object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -244,9 +244,10 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
      * check to make sure that a solid is not pushed in two
      * different directions at the same time.
      */
-    i = db_walk_tree(gedp->ged_wdbp->dbip, argc, (const char **)argv,
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
 		     ncpu,
-		     &gedp->ged_wdbp->wdb_initial_tree_state,
+		     &wdbp->wdb_initial_tree_state,
 		     0,				/* take all regions */
 		     push_region_end,
 		     push_leaf, (void *)gpdp);
@@ -265,21 +266,21 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
 	rt_debug = old_debug;
 	BU_PUT(gpdp, struct push_data);
 	bu_vls_printf(gedp->ged_result_str, "ged_push_core:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 /*
  * We've built the push solid list, now all we need to do is apply
  * the matrix we've stored for each solid.
  */
     FOR_ALL_PUSH_SOLIDS(gpip, gpdp->pi_head) {
-	if (rt_db_get_internal(&es_int, gpip->pi_dir, gedp->ged_wdbp->dbip, gpip->pi_mat, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&es_int, gpip->pi_dir, gedp->dbip, gpip->pi_mat, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_push_core: Read error fetching '%s'\n", gpip->pi_dir->d_namep);
 	    gpdp->push_error = -1;
 	    continue;
 	}
 	RT_CK_DB_INTERNAL(&es_int);
 
-	if (rt_db_put_internal(gpip->pi_dir, gedp->ged_wdbp->dbip, &es_int, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(gpip->pi_dir, gedp->dbip, &es_int, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_push_core(%s): solid export failure\n", gpip->pi_dir->d_namep);
 	}
 	rt_db_free_internal(&es_int);
@@ -297,9 +298,9 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
 
     while (argc > 0) {
 	struct directory *db;
-	db = db_lookup(gedp->ged_wdbp->dbip, *argv++, 0);
+	db = db_lookup(gedp->dbip, *argv++, 0);
 	if (db)
-	    identitize(db, gedp->ged_wdbp->dbip, gedp->ged_result_str);
+	    identitize(db, gedp->dbip, gedp->ged_result_str);
 	--argc;
     }
 
@@ -317,7 +318,7 @@ ged_push_core(struct ged *gedp, int argc, const char *argv[])
     push_error = gpdp->push_error;
     BU_PUT(gpdp, struct push_data);
 
-    return push_error ? GED_ERROR : GED_OK;
+    return push_error ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 

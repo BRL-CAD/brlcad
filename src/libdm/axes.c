@@ -1,7 +1,7 @@
 /*                          A X E S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,13 +32,13 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm/bview.h"
+#include "bv/defines.h"
 #include "./include/private.h"
 
 void
 dm_draw_data_axes(struct dm *dmp,
 		  fastf_t sf,
-		  struct bview_data_axes_state *bndasp)
+		  struct bv_data_axes_state *bndasp)
 {
 
     if (dmp->i->dm_draw_data_axes) {
@@ -101,10 +101,51 @@ dm_draw_data_axes(struct dm *dmp,
 }
 
 void
-dm_draw_axes(struct dm		        *dmp,
+dm_draw_scene_axes(struct dm *dmp,  struct bv_scene_obj *s)
+{
+    if (!(s->s_type_flags & BV_AXES))
+	return;
+
+    struct bv_axes *bndasp = (struct bv_axes *)s->s_i_data;
+    fastf_t halfAxesSize;		/* half the length of an axis */
+    point_t ptA, ptB;
+    /* Save the line attributes */
+    int saveLineWidth = dmp->i->dm_lineWidth;
+    int saveLineStyle = dmp->i->dm_lineStyle;
+
+    /* set color */
+    dm_set_fg(dmp, bndasp->axes_color[0], bndasp->axes_color[1], bndasp->axes_color[2], 1, 1.0);
+
+    halfAxesSize = bndasp->axes_size * 0.5;
+
+    /* set linewidth */
+    dm_set_line_attr(dmp, bndasp->line_width, 0);  /* solid lines */
+
+    /* draw X axis with x/y offsets */
+    VSET(ptA, bndasp->axes_pos[X] - halfAxesSize, bndasp->axes_pos[Y], bndasp->axes_pos[Z]);
+    VSET(ptB, bndasp->axes_pos[X] + halfAxesSize, bndasp->axes_pos[Y], bndasp->axes_pos[Z]);
+    dm_draw_line_3d(dmp, ptA, ptB);
+
+    /* draw Y axis with x/y offsets */
+    VSET(ptA, bndasp->axes_pos[X], bndasp->axes_pos[Y] - halfAxesSize, bndasp->axes_pos[Z]);
+    VSET(ptB, bndasp->axes_pos[X], bndasp->axes_pos[Y] + halfAxesSize, bndasp->axes_pos[Z]);
+    dm_draw_line_3d(dmp, ptA, ptB);
+
+    /* draw Z axis with x/y offsets */
+    VSET(ptA, bndasp->axes_pos[X], bndasp->axes_pos[Y], bndasp->axes_pos[Z] - halfAxesSize);
+    VSET(ptB, bndasp->axes_pos[X], bndasp->axes_pos[Y], bndasp->axes_pos[Z] + halfAxesSize);
+    dm_draw_line_3d(dmp, ptA, ptB);
+
+
+    /* Restore the line attributes */
+    dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
+}
+
+void
+dm_draw_hud_axes(struct dm		        *dmp,
 	     fastf_t			viewSize, /* in mm */
 	     const mat_t		rmat,       /* view rotation matrix */
-	     struct bview_axes_state 	*bnasp)
+	     struct bv_axes	 	*bnasp)
 {
     fastf_t halfAxesSize;		/* half the length of an axis */
     fastf_t xlx, xly;			/* X axis label position */
@@ -147,7 +188,8 @@ dm_draw_axes(struct dm		        *dmp,
 	dm_set_fg(dmp, 255, 0, 0, 1, 1.0);
 
 	/* draw the X label */
-	dm_draw_string_2d(dmp, "X", xlx + bnasp->axes_pos[X], xly + bnasp->axes_pos[Y], 1, 1);
+	if (bnasp->label_flag)
+	    dm_draw_string_2d(dmp, "X", xlx + bnasp->axes_pos[X], xly + bnasp->axes_pos[Y], 1, 1);
     } else
 	/* set axes color */
 	dm_set_fg(dmp, bnasp->axes_color[0], bnasp->axes_color[1], bnasp->axes_color[2], 1, 1.0);
@@ -178,7 +220,8 @@ dm_draw_axes(struct dm		        *dmp,
 	dm_set_fg(dmp, 0, 255, 0, 1, 1.0);
 
 	/* draw the Y label */
-	dm_draw_string_2d(dmp, "Y", ylx + bnasp->axes_pos[X], yly + bnasp->axes_pos[Y], 1, 1);
+	if (bnasp->label_flag)
+	    dm_draw_string_2d(dmp, "Y", ylx + bnasp->axes_pos[X], yly + bnasp->axes_pos[Y], 1, 1);
     }
 
     /* draw Y axis with x/y offsets */
@@ -207,7 +250,8 @@ dm_draw_axes(struct dm		        *dmp,
 	dm_set_fg(dmp, 0, 0, 255, 1, 1.0);
 
 	/* draw the Z label */
-	dm_draw_string_2d(dmp, "Z", zlx + bnasp->axes_pos[X], zly + bnasp->axes_pos[Y], 1, 1);
+	if (bnasp->label_flag)
+	    dm_draw_string_2d(dmp, "Z", zlx + bnasp->axes_pos[X], zly + bnasp->axes_pos[Y], 1, 1);
     }
 
     /* draw Z axis with x/y offsets */
@@ -219,9 +263,17 @@ dm_draw_axes(struct dm		        *dmp,
 	dm_set_fg(dmp, bnasp->label_color[0], bnasp->label_color[1], bnasp->label_color[2], 1, 1.0);
 
 	/* draw axes strings/labels with x/y offsets */
-	dm_draw_string_2d(dmp, "X", xlx + bnasp->axes_pos[X], xly + bnasp->axes_pos[Y], 1, 1);
-	dm_draw_string_2d(dmp, "Y", ylx + bnasp->axes_pos[X], yly + bnasp->axes_pos[Y], 1, 1);
-	dm_draw_string_2d(dmp, "Z", zlx + bnasp->axes_pos[X], zly + bnasp->axes_pos[Y], 1, 1);
+	if (bnasp->label_flag) {
+	    fastf_t cxlx = xlx + bnasp->axes_pos[X];
+	    fastf_t cxly = xly + bnasp->axes_pos[Y];
+	    fastf_t cylx = ylx + bnasp->axes_pos[X];
+	    fastf_t cyly = yly + bnasp->axes_pos[Y];
+	    fastf_t czlx = zlx + bnasp->axes_pos[X];
+	    fastf_t czly = zly + bnasp->axes_pos[Y];
+	    dm_draw_string_2d(dmp, "X", cxlx, cxly, 1, 1);
+	    dm_draw_string_2d(dmp, "Y", cylx, cyly, 1, 1);
+	    dm_draw_string_2d(dmp, "Z", czlx, czly, 1, 1);
+	}
     }
 
     if (bnasp->tick_enabled) {

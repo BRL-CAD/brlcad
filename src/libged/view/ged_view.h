@@ -1,7 +1,7 @@
 /*                    G E D _ V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,12 +32,32 @@
 
 __BEGIN_DECLS
 
-GED_EXPORT extern int ged_quat_core(struct ged *gedp, int argc, const char **argv);
-GED_EXPORT extern int ged_ypr_core(struct ged *gedp, int argc, const char **argv);
-GED_EXPORT extern int ged_aet_core(struct ged *gedp, int argc, const char **argv);
-GED_EXPORT extern int ged_center_core(struct ged *gedp, int argc, const char **argv);
-GED_EXPORT extern int ged_eye_core(struct ged *gedp, int argc, const char **argv);
-GED_EXPORT extern int ged_size_core(struct ged *gedp, int argc, const char **argv);
+struct _ged_view_info {
+    struct ged *gedp;
+    int verbosity;
+    const struct bu_cmdtab *cmds;
+    struct bu_opt_desc *gopts;
+    const char *vobj;
+    struct bview *cv;
+    struct bv_scene_obj *s;
+};
+extern int _view_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
+extern int _view_cmd_lines(void *bs, int argc, const char **argv);
+extern int _view_cmd_axes(void *bs, int argc, const char **argv);
+extern int _view_cmd_labels(void *bs, int argc, const char **argv);
+extern int _view_cmd_lod(void *bs, int argc, const char **argv);
+extern int _view_cmd_polygons(void *bs, int argc, const char **argv);
+extern int _view_cmd_objs(void *bs, int argc, const char **argv);
+extern int _view_cmd_gobjs(void *bs, int argc, const char **argv);
+
+extern int ged_aet_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_center_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_eye_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_faceplate_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_quat_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_size_core(struct ged *gedp, int argc, const char **argv);
+extern int ged_view_snap(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_ypr_core(struct ged *gedp, int argc, const char **argv);
 
 __END_DECLS
 

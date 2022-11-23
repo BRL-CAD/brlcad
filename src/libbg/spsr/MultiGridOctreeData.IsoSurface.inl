@@ -762,7 +762,7 @@ void Octree< Real >::SetXSliceIsoEdges( int depth , int slab , std::vector< Slab
 }
 template< class Real >
 template< class Vertex >
-int Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< Vertex >& bValues , const SliceValues< Vertex >& fValues , const XSliceValues< Vertex >& xValues , CoredMeshData< Vertex >& mesh , bool polygonMesh , bool addBarycenter , int& vOffset , int threads )
+void Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< Vertex >& bValues , const SliceValues< Vertex >& fValues , const XSliceValues< Vertex >& xValues , CoredMeshData< Vertex >& mesh , bool polygonMesh , bool addBarycenter , int& vOffset , int threads )
 {
 	std::vector< std::pair< int , Vertex > > polygon;
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
@@ -810,7 +810,11 @@ int Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< V
 					}
 					else
 					{
-						int fIdx = xValues.xSliceData.faceIndices(i)[ Square::EdgeIndex( 1-d , o ) ];
+						int eind = Square::EdgeIndex( 1-d , o );
+						if (eind < 0) {
+							fprintf( stderr , "[ERROR] MultiGridOctreeData.IsoSurface.inl:%d - invalid index: %d\n" , __LINE__, eind ) , exit( 0 );
+						}
+						int fIdx = xValues.xSliceData.faceIndices(i)[ eind ];
 						if( xValues.faceSet[fIdx] )
 						{
 							const FaceEdges& fe = xValues.faceEdges[ fIdx ];

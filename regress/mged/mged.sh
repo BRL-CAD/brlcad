@@ -2,7 +2,7 @@
 #                       M G E D . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2021 United States Government as represented by
+# Copyright (c) 2008-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -99,7 +99,17 @@ check_command ( ) {
     return 0
 }
 
-log "seting up an almost empty database (mged.g) to make sure mged runs"
+
+rm -f mged.g
+output="`$MGED -c mged.g quit 2>&1`"
+if test $? != 0 ; then
+    log "Output: $output"
+    log "Unable to run mged, aborting"
+    exit 1
+fi
+
+
+log "set up a minimal database (mged.g) to make sure mged runs commands"
 rm -f mged.g
 $MGED -c >> $LOGFILE 2>&1 <<EOF
 opendb mged.g y

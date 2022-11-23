@@ -1,7 +1,7 @@
 /*                         M A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,9 +76,9 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     /* intentionally not included: cline */
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|datum|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -102,14 +102,14 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 			   &origin[Y],
 			   &origin[Z]) != 3) {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		break;
 	    case 's':
 	    case 'S':
 		if (sscanf(bu_optarg, "%lf", &scale) != 1) {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		break;
 	    case 't':
@@ -121,14 +121,14 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 		}
 
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    case 'h':
 	    case 'H':
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		return GED_HELP;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -136,12 +136,12 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     save_bu_optind = bu_optind;
 
-    GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
     if (BU_STR_EQUAL(argv[bu_optind+1], "arb8") ||
@@ -549,7 +549,9 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	VSET(vertex, origin[X], origin[Y], origin[Z] - scale*0.5);
 	VSET(height, 0.0, 0.0, scale);
 	VSET(vectA, 0.0, scale*0.5, 0.0);
-	return mk_hyp(gedp->ged_wdbp, argv[save_bu_optind], vertex, height, vectA, scale*0.25, 0.4);
+	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	int ret = mk_hyp(wdbp, argv[save_bu_optind], vertex, height, vectA, scale*0.25, 0.4);
+	return ret;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "part")) {
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PARTICLE;
@@ -665,7 +667,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	extrude_ip->keypoint = 0;
 	av[0] = "make_name";
 	av[1] = "skt_";
-	ged_make_name(gedp, 2, (const char **)av);
+	ged_exec(gedp, 2, (const char **)av);
 	extrude_ip->sketch_name = bu_strdup(bu_vls_addr(gedp->ged_result_str));
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
 
@@ -805,11 +807,11 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "hf")) {
 	bu_vls_printf(gedp->ged_result_str, "make: the height field is deprecated and not supported by this command.\nUse the dsp primitive.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "pg") ||
 	       BU_STR_EQUAL(argv[bu_optind+1], "poly")) {
 	bu_vls_printf(gedp->ged_result_str, "make: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "cline") ||
 	       BU_STR_EQUAL(argv[bu_optind+1], "dsp") ||
 	       BU_STR_EQUAL(argv[bu_optind+1], "ebm") ||
@@ -818,7 +820,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	       BU_STR_EQUAL(argv[bu_optind+1], "submodel") ||
 	       BU_STR_EQUAL(argv[bu_optind+1], "vol")) {
 	bu_vls_printf(gedp->ged_result_str, "make: the %s primitive is not supported by this command", argv[bu_optind+1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "metaball")) {
 	struct wdb_metaball_pnt *mbpt;
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -915,16 +917,16 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    GED_DB_DIRADD(gedp, dp, argv[save_bu_optind], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[save_bu_optind], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

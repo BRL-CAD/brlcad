@@ -1,7 +1,7 @@
 /*                          A R G V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -167,7 +167,11 @@ bu_argv_free(size_t argc, char *argv[])
 {
     register size_t i;
 
-    if (UNLIKELY(!argv || (ssize_t)argc < 1)) {
+    if (UNLIKELY(!argv))
+	return;
+
+    if ((ssize_t)argc < 1) {
+	bu_free((void *)argv, "bu_argv_free");
 	return;
     }
 

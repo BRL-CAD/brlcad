@@ -1,7 +1,7 @@
 /*                             N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2021 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,9 +51,8 @@ int
 ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "nmg object subcommand [V|F|R|S] [suffix]";
-    const char *subcmd = argv[2];
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
 
     /* must be wanting help */
     if (argc < 3) {
@@ -93,13 +92,14 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* advance CLI arguments for subcommands */
     --argc;
     ++argv;
 
+    const char *subcmd = argv[0];
     if( BU_STR_EQUAL( "mm", subcmd ) ) {
 	ged_nmg_mm_core(gedp, argc, argv);
     }
@@ -128,10 +128,10 @@ ged_nmg_core(struct ged *gedp, int argc, const char *argv[])
     }
     else {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a subcommand.", subcmd );
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

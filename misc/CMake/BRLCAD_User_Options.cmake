@@ -1,7 +1,7 @@
 #       B R L C A D _ U S E R _ O P T I O N S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2020-2021 United States Government as represented by
+# Copyright (c) 2020-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -164,29 +164,24 @@ if(BRLCAD_ENABLE_X11)
   set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
 endif(BRLCAD_ENABLE_X11)
 
-# Enable features requiring OPENGL
-# Be smart about this - if we don't have X11 or Aqua and we're not on Windows,
-# we're non-graphical and that means OpenGL is a no-go.  The Windows version
-# would have to be some sort of option for the WIN32 graphics layer?  Should
-# probably think about that... for now, on Win32 don't try OpenGL if Tk is off.
-# That'll hold until we get a non-Tk based GUI - then setting non-graphical on
-# Windows will take more thought.
-if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  set(OPENGL_FOUND OFF)
-  set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11 and NOT BRLCAD_ENABLE_AQUA" FORCE)
-else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  include(FindGL)
-endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-
+find_package(OpenGL)
+set(BRLCAD_ENABLE_OPENGL_DEFAULT OFF)
+if (OPENGL_FOUND)
+  set(BRLCAD_ENABLE_OPENGL_DEFAULT ON)
+endif (OPENGL_FOUND)
 set(BRLCAD_ENABLE_OPENGL_DESCRIPTION "
 Enable support for OpenGL based Display Managers in BRL-CAD.
 Default depends on whether OpenGL is successfully detected -
 if it is, default is to enable.
 ")
-BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ${OPENGL_FOUND}
+BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ${BRLCAD_ENABLE_OPENGL_DEFAULT}
   TYPE BOOL
   ALIASES ENABLE_OPENGL
   DESCRIPTION BRLCAD_ENABLE_OPENGL_DESCRIPTION)
+
+if(BRLCAD_ENABLE_OPENGL)
+  CONFIG_H_APPEND(BRLCAD "#define BRLCAD_OPENGL 1\n")
+endif(BRLCAD_ENABLE_OPENGL)
 
 if(BRLCAD_ENABLE_AQUA)
   set(OPENGL_USE_AQUA ON CACHE STRING "Aqua enabled - use Aqua OpenGL" FORCE)
@@ -204,6 +199,10 @@ mark_as_advanced(BRLCAD_ENABLE_BULLET)
 option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" ON)
 mark_as_advanced(BRLCAD_ENABLE_GDAL)
 
+# Enable features requiring Open Asset Import library
+option(BRLCAD_ENABLE_ASSIMP "Enable features requiring the Open Asset Import Library" OFF)
+mark_as_advanced(BRLCAD_ENABLE_ASSIMP)
+
 # Enable features requiring STEPcode library
 option(BRLCAD_ENABLE_STEP "Enable features requiring the STEP support libraries" ON)
 mark_as_advanced(BRLCAD_ENABLE_STEP)
@@ -212,13 +211,64 @@ mark_as_advanced(BRLCAD_ENABLE_STEP)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
 if (BRLCAD_ENABLE_QT)
-  # TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
-  find_package(Qt5Widgets QUIET)
-  if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-    message("QT interface requested, but QT5 is not found - disabling")
-    set(BRLCAD_ENABLE_QT OFF)
-  endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
+  # Note - to use Qt6, set Qt6_DIR to <qt_install_dir>/lib/cmake/Qt6 and CMAKE_PREFIX_PATH
+  # to <qt_install_dir>
+  if(Qt6_DIR)
+    if(BRLCAD_ENABLE_OPENGL)
+      find_package(Qt6 COMPONENTS Core Widgets Gui OpenGL OpenGLWidgets Network REQUIRED)
+      find_package(Qt6 COMPONENTS Test)
+    else()
+      find_package(Qt6 COMPONENTS Core Widgets Gui Network REQUIRED)
+      find_package(Qt6 COMPONENTS Test)
+    endif(BRLCAD_ENABLE_OPENGL)
+  else()
+    if(BRLCAD_ENABLE_OPENGL)
+      find_package(Qt6 COMPONENTS Core Widgets Gui OpenGL OpenGLWidgets Network QUIET)
+      find_package(Qt6 COMPONENTS Test)
+    else()
+      find_package(Qt6 COMPONENTS Core Widgets Gui Network QUIET)
+      find_package(Qt6 COMPONENTS Test)
+    endif(BRLCAD_ENABLE_OPENGL)
+  endif(Qt6_DIR)
+
+  if(NOT Qt6Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
+    # We didn't find 6, try 5.  For non-standard install locations, you may need to set
+    # the following:
+    #
+    # Qt5_DIR=<install_dir>/lib/cmake/Qt5
+    # QT_QMAKE_EXECUTABLE=<install_dir>/bin/qmake
+    # AUTORCC_EXECUTABLE=<install_dir>/bin/rcc
+    # TODO - others?
+    if(BRLCAD_ENABLE_OPENGL)
+      find_package(Qt5 COMPONENTS Core Widgets Gui OpenGL Network)
+      find_package(Qt5 COMPONENTS Test)
+    else()
+      find_package(Qt5 COMPONENTS Core Widgets Gui Network)
+      find_package(Qt5 COMPONENTS Test)
+    endif(BRLCAD_ENABLE_OPENGL)
+
+    if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
+      message("Qt requested, but Qt installation not found - disabling")
+
+      set(BRLCAD_ENABLE_QT OFF)
+
+    endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
+  endif(NOT Qt6Widgets_FOUND AND BRLCAD_ENABLE_QT)
+
+  # There are a few source level incompatibilities between Qt6 and Qt5 - set
+  # configure flag so we know what we need to do.
+  if (Qt6Widgets_FOUND)
+    CONFIG_H_APPEND(BRLCAD "#define USE_QT6 1\n")
+  endif (Qt6Widgets_FOUND)
+
 endif (BRLCAD_ENABLE_QT)
+mark_as_advanced(Qt6Widgets_DIR)
+mark_as_advanced(Qt6Core_DIR)
+mark_as_advanced(Qt6Gui_DIR)
 mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
@@ -226,11 +276,12 @@ mark_as_advanced(Qt5Gui_DIR)
 # Enable features requiring OpenSceneGraph
 option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
 mark_as_advanced(BRLCAD_ENABLE_OSG)
-if(BRLCAD_ENABLE_OSG)
-  if(APPLE AND NOT BRLCAD_ENABLE_AQUA)
+
+if(APPLE)
+  if(BRLCAD_ENABLE_OSG AND NOT BRLCAD_ENABLE_AQUA)
     set(OSG_WINDOWING_SYSTEM "X11" CACHE STRING "Use X11" FORCE)
-  endif(APPLE AND NOT BRLCAD_ENABLE_AQUA)
-endif(BRLCAD_ENABLE_OSG)
+  endif(BRLCAD_ENABLE_OSG AND NOT BRLCAD_ENABLE_AQUA)
+endif(APPLE)
 
 # Enable features requiring GCT
 option(BRLCAD_ENABLE_GCT "Enable features requiring GCT" ON)
@@ -315,29 +366,29 @@ endif(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
 
 # Enable debug flags during compilation - we always want to use these unless
 # explicitly told not to.
-set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
+set(BRLCAD_DEBUGGING_DESCRIPTION "
 Add compiler flags to aid in program debugging.  Defaults to ON.
 ")
-BRLCAD_OPTION(BRLCAD_FLAGS_DEBUG ON
+BRLCAD_OPTION(BRLCAD_DEBUGGING ON
   TYPE BOOL
-  ALIASES ENABLE_DEBUG ENABLE_FLAGS_DEBUG ENABLE_DEBUG_FLAGS
-  DESCRIPTION BRLCAD_FLAGS_DEBUG_DESCRIPTION)
+  ALIASES ENABLE_DEBUG ENABLE_FLAGS_DEBUG ENABLE_DEBUG_FLAGS BRLCAD_FLAGS_DEBUG
+  DESCRIPTION BRLCAD_DEBUGGING_DESCRIPTION)
 
 # A variety of debugging messages in the code key off of the DEBUG definition -
 # set it according to whether we're using debug flags.
-if(BRLCAD_FLAGS_DEBUG)
+if(BRLCAD_DEBUGGING)
   CONFIG_H_APPEND(BRLCAD "#define DEBUG 1\n")
-endif(BRLCAD_FLAGS_DEBUG)
+endif(BRLCAD_DEBUGGING)
 
 # Build with compiler warning flags
-set(BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION "
-Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
+set(BRLCAD_WARNINGS_DESCRIPTION "
+Use extra warning flags when compiling C/C++ code.  Defaults to ON.
 ")
-BRLCAD_OPTION(BRLCAD_ENABLE_COMPILER_WARNINGS ON
+BRLCAD_OPTION(BRLCAD_WARNINGS ON
   TYPE BOOL
-  ALIASES ENABLE_WARNINGS ENABLE_COMPILER_WARNINGS
-  DESCRIPTION BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
-mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
+  ALIASES ENABLE_WARNINGS ENABLE_COMPILER_WARNINGS BRLCAD_ENABLE_COMPILER_WARNINGS
+  DESCRIPTION BRLCAD_WARNINGS_DESCRIPTION)
+mark_as_advanced(BRLCAD_WARNINGS)
 
 # Enable/disable strict compiler settings - these are used for building BRL-CAD
 # by default, but not src/other code.  Always used for BRL-CAD code unless the
@@ -362,20 +413,20 @@ endif(BRLCAD_ENABLE_STRICT)
 # release builds and off otherwise, unless the user specifically enables it.
 # For multi-config build tools, this is managed on a per-configuration basis.
 if(CMAKE_BUILD_TYPE)
-  cmake_dependent_option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" ON "${CMAKE_BUILD_TYPE} STREQUAL Release" OFF)
+  cmake_dependent_option(BRLCAD_OPTIMIZED "Enable optimized compilation" ON "${CMAKE_BUILD_TYPE} STREQUAL Release" OFF)
 else(CMAKE_BUILD_TYPE)
   # Note: the cmake_dependent_option test doesn't work if CMAKE_BUILD_TYPE isn't set.
-  option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" OFF)
+  option(BRLCAD_OPTIMIZED "Enable optimized compilation" OFF)
 endif(CMAKE_BUILD_TYPE)
-mark_as_advanced(BRLCAD_OPTIMIZED_BUILD)
+mark_as_advanced(BRLCAD_OPTIMIZED)
 
 # Build with full compiler lines visible by default (won't need make VERBOSE=1)
 # on command line
-option(BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF)
-mark_as_advanced(BRLCAD_ENABLE_VERBOSE_PROGRESS)
-if(BRLCAD_ENABLE_VERBOSE_PROGRESS)
+option(BRLCAD_VERBOSE "verbose output" OFF)
+mark_as_advanced(BRLCAD_VERBOSE)
+if(BRLCAD_VERBOSE)
   set(CMAKE_VERBOSE_MAKEFILE ON)
-endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
+endif(BRLCAD_VERBOSE)
 
 # Build with profile-guided optimization support.  this requires a two-pass
 # compile, once with BRLCAD_PGO=ON on a location that did not exist beforehand
@@ -414,11 +465,11 @@ if(BRLCAD_ENABLE_DTRACE)
 endif(BRLCAD_ENABLE_DTRACE)
 
 # Take advantage of parallel processors if available - highly recommended
-option(BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
-mark_as_advanced(BRLCAD_ENABLE_SMP)
-if(BRLCAD_ENABLE_SMP)
+option(BRLCAD_SMP "Enable SMP architecture parallel computation support" ON)
+mark_as_advanced(BRLCAD_SMP)
+if(BRLCAD_SMP)
   CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
-endif(BRLCAD_ENABLE_SMP)
+endif(BRLCAD_SMP)
 
 if(BRLCAD_HEADERS_OLD_COMPAT)
   add_definitions(-DEXPOSE_FB_HEADER)

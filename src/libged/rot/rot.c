@@ -1,7 +1,7 @@
 /*                         R O T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ ged_rot_core(struct ged *gedp, int argc, const char *argv[])
     char coord;
     mat_t rmat;
 
-    if ((ret = ged_rot_args(gedp, argc, argv, &coord, rmat)) != GED_OK)
+    if ((ret = ged_rot_args(gedp, argc, argv, &coord, rmat)) != BRLCAD_OK)
 	return ret;
 
     return _ged_do_rot(gedp, coord, rmat, (int (*)())0);

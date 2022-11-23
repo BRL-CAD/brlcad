@@ -1,6 +1,6 @@
 /*
- * Summary: compile-time version informations on Windows
- * Description: compile-time version informations for the XML library
+ * Summary: compile-time version information on Windows
+ * Description: compile-time version information for the XML library
  *              when compiled on the Windows platform
  *
  * Copy: See Copyright for the status of this software.
@@ -243,9 +243,6 @@ extern void xmlCheckVersion(int version);
 #endif
 
 #ifdef __GNUC__
-#ifdef HAVE_ANSIDECL_H
-#include <ansidecl.h>
-#endif
 
 /**
  * ATTRIBUTE_UNUSED:

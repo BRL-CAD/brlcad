@@ -1,7 +1,7 @@
 /*                              R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -481,7 +481,7 @@ tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 		  rtip->needprep
 	);
 
-    bu_vls_printf(&str, " space_partition_type %s n_cutnode %d n_boxnode %d n_empty %ld",
+    bu_vls_printf(&str, " space_partition_type %s n_cutnode %d n_boxnode %d n_empty %zu",
 		  rtip->rti_space_partition == RT_PART_NUBSPT ?
 		  "NUBSP" : "unknown",
 		  rtip->rti_ncut_by_type[CUT_CUTNODE],

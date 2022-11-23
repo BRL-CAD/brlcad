@@ -1,7 +1,7 @@
 /*                        I O U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2021 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "dm.h"
 
 
-HIDDEN void
+static void
 VMessage(const char *format, va_list ap)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;

@@ -1,7 +1,7 @@
 /*                          H E A P . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,7 +94,7 @@ static struct cpus per_cpu[MAX_PSW] = {{{{0, 0, 0}}, 0}};
 
 /* Need a function signature that matches bu_heap_func_t, so wrap bu_log in
  * order to allow it to act as the default bu_heap_log function. */
-HIDDEN int
+static int
 _log_heap_wrapper(const char *fmt, ...)
 {
     struct bu_vls output = BU_VLS_INIT_ZERO;

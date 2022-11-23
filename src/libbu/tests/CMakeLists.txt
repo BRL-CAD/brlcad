@@ -13,6 +13,7 @@ set(bu_test_srcs
   dir.c
   dirname.c
   encode.c
+  env.c
   escape.c
   file.c
   file_mime.c
@@ -21,6 +22,7 @@ set(bu_test_srcs
   humanize_number.c
   vls_incr.c
   vls_simplify.c
+  list.c
   mappedfile.c
   opt.c
   parallel.c
@@ -129,9 +131,9 @@ BRLCAD_ADD_TEST(NAME bu_path_match COMMAND bu_test path_match ${CMAKE_CURRENT_SO
 BRLCAD_ADD_TEST(NAME bu_file  COMMAND bu_test file) # tests bu/file.h API
 
 # NOTE: these test numbers correspond with the bu_mime_t enum values in include/bu/mime.h
-BRLCAD_ADD_TEST(NAME bu_file_mime_dxf   COMMAND bu_test file_mime dxf 5 1) # tests dxf extension in model context
-BRLCAD_ADD_TEST(NAME bu_file_mime_stp   COMMAND bu_test file_mime stp 5 7) # tests stp extension in model context
-BRLCAD_ADD_TEST(NAME bu_file_mime_png   COMMAND bu_test file_mime png 3 13) # tests png extension in image context
+BRLCAD_ADD_TEST(NAME bu_file_mime_dxf   COMMAND bu_test file_mime dxf 5 BU_MIME_MODEL_DXF) # tests dxf extension in model context
+BRLCAD_ADD_TEST(NAME bu_file_mime_stp   COMMAND bu_test file_mime stp 5 BU_MIME_MODEL_STEP) # tests stp extension in model context
+BRLCAD_ADD_TEST(NAME bu_file_mime_png   COMMAND bu_test file_mime png 3 BU_MIME_IMAGE_PNG) # tests png extension in image context
 
 #BRLCAD_ADD_TEST(NAME bu_file_glob   COMMAND bu_test file_glob) # runs a series of built-in unit tests
 
@@ -770,4 +772,4 @@ CMAKEFILES(
 # mode: cmake
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=2 tabstop=8 textwidth=0 wrapmargin=0
+# ex: shiftwidth=2 tabstop=8

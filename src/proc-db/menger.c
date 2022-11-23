@@ -1,7 +1,7 @@
 /*                        M E N G E R . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2021 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -395,11 +395,10 @@ main(int ac, char *av[])
 	    }
 	    case 'r':
 	    case 'R': {
-		long val = repeat;
 		if (!bu_optarg)
 		    bu_exit(3, "ERROR: missing repeat count after -r option\n");
 
-		val = strtol(bu_optarg, NULL, 0);
+		long val = strtol(bu_optarg, NULL, 0);
 		if (val <= 0)
 		    bu_exit(3, "ERROR: invalid repeat specification [%ld <= 0]\n", val);
 
@@ -541,7 +540,6 @@ main(int ac, char *av[])
 	mk_comb(fp, "menger", &(menger->l), 0, NULL, NULL, NULL, 0, 0, 0, 0, 0, 0, 0);
 
 	/* clean up after ourselves */
-	wdb_close(fp);
 	bu_free(menger, "free menger");
 	bu_free(ground, "free ground");
 	bu_free(light0, "free light0");
@@ -549,6 +547,7 @@ main(int ac, char *av[])
 	bu_free(sponge, "free sponge");
     }
 
+    db_close(fp->dbip);
     bu_vls_free(&filename);
     bu_vls_free(&pattern);
     bu_vls_free(boxes);

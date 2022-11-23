@@ -1,7 +1,7 @@
 /*                         E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -583,7 +583,7 @@ struct edit_cmd_tab {
 /**
  * Initialize an argument node.
  */
-HIDDEN void
+static void
 edit_arg_init(struct edit_arg *arg)
 {
     arg->next = (struct edit_arg *)NULL;
@@ -598,7 +598,7 @@ edit_arg_init(struct edit_arg *arg)
 /**
  * Attach an argument node to the end of the list.
  */
-HIDDEN void
+static void
 edit_arg_postfix(struct edit_arg *head,
 		 struct edit_arg *node)
 {
@@ -615,7 +615,7 @@ edit_arg_postfix(struct edit_arg *head,
  * Returns a pointer to the new node. Caller is responsible for
  * freeing.
  */
-HIDDEN struct edit_arg *
+static struct edit_arg *
 edit_arg_postfix_new(struct edit_arg *head)
 {
     struct edit_arg *arg;
@@ -632,7 +632,7 @@ edit_arg_postfix_new(struct edit_arg *head)
  * calling, caller is responsible for freeing objects contained by
  * destination argument node, if necessary, via edit_arg_free_inner().
  */
-HIDDEN void
+static void
 edit_arg_duplicate_in_place(struct edit_arg *const dest,
 			    const struct edit_arg *src)
 {
@@ -663,7 +663,7 @@ edit_arg_duplicate_in_place(struct edit_arg *const dest,
  * responsible for freeing destination argument, using the
  * appropriate edit_arg_free*() function.
  */
-HIDDEN void
+static void
 edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
 {
     BU_ALLOC(*dest, struct edit_arg);
@@ -672,9 +672,9 @@ edit_arg_duplicate(struct edit_arg **dest, const struct edit_arg *src)
 
 
 /**
- * Returns GED_OK if arg is empty, otherwise GED_ERROR is returned
+ * Returns BRLCAD_OK if arg is empty, otherwise BRLCAD_ERROR is returned
  */
-HIDDEN int
+static int
 edit_arg_is_empty(struct edit_arg *arg)
 {
     if (!arg->next &&
@@ -683,15 +683,15 @@ edit_arg_is_empty(struct edit_arg *arg)
 	(!arg->type) &&
 	(!arg->object) &&
 	(!arg->vector))
-	return GED_OK;
-    return GED_ERROR;
+	return BRLCAD_OK;
+    return BRLCAD_ERROR;
 }
 
 
 /**
  * Free all objects contained by an argument node.
  */
-HIDDEN void
+static void
 edit_arg_free_inner(struct edit_arg *arg)
 {
     if (arg->object) {
@@ -709,7 +709,7 @@ edit_arg_free_inner(struct edit_arg *arg)
 /**
  * Free an argument node, including what it contains.
  */
-HIDDEN void
+static void
 edit_arg_free(struct edit_arg *arg)
 {
     edit_arg_free_inner(arg);
@@ -720,7 +720,7 @@ edit_arg_free(struct edit_arg *arg)
 /**
  * Free the last argument node in the list.
  */
-HIDDEN void
+static void
 edit_arg_free_last(struct edit_arg *arg)
 {
     struct edit_arg *last_arg = arg;
@@ -738,7 +738,7 @@ edit_arg_free_last(struct edit_arg *arg)
 /**
  * Free an argument node and all nodes down its list.
  */
-HIDDEN void
+static void
 edit_arg_free_all(struct edit_arg *arg)
 {
     if (arg->next)
@@ -760,9 +760,9 @@ edit_arg_free_all(struct edit_arg *arg)
  * If the path only contains a primitive, the coordinates of the
  * primitive will be the result of the conversion.
  *
- * Returns GED_ERROR on failure, and GED_OK on success.
+ * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
  */
-HIDDEN int
+static int
 edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 			   vect_t *const coord)
 {
@@ -778,14 +778,17 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
     point_t rpp_max;
     size_t i;
 
-    if (ged_path_validate(gedp, path) & GED_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
-		      "the database", db_path_to_string(path));
-	return GED_ERROR;
+    if (!path || path->fp_len <= 0)
+	return BRLCAD_ERROR;
+
+    if (ged_path_validate(gedp, path) & BRLCAD_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in the database", db_path_to_string(path));
+	return BRLCAD_ERROR;
     }
 
     /* sum the transformation matrices of each object in path */
     d = DB_FULL_PATH_ROOT_DIR(path);
+
     for (i = (size_t)0; i < path->fp_len - (size_t)1; ++i) {
 	d_next = DB_FULL_PATH_GET(path, i + (size_t)1);
 
@@ -796,7 +799,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 
 	/* sum transformation matrices */
 	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
-			    &rt_uniresource, GED_ERROR);
+			    &rt_uniresource, BRLCAD_ERROR);
 	comb_i = (struct rt_comb_internal *)intern.idb_ptr;
 	leaf = db_find_named_leaf(comb_i->tree, d_next->d_namep);
 	BU_ASSERT(leaf != TREE_NULL); /* path is validated */
@@ -813,28 +816,28 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
     /* add final combination/primitive natural origin to sum */
     if (d->d_flags & RT_DIR_SOLID) {
 	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d->d_namep, &gtd,
-				 rpp_min, rpp_max) == GED_ERROR)
-	    return GED_ERROR;
+				 rpp_min, rpp_max) == BRLCAD_ERROR)
+	    return BRLCAD_ERROR;
     } else {
 	BU_ASSERT(d->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
-	if (ged_get_obj_bounds(gedp, 1, (const char **)&d->d_namep, 1,
-				rpp_min, rpp_max) == GED_ERROR)
-	    return GED_ERROR;
+	if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&d->d_namep, 1,
+				rpp_min, rpp_max) == BRLCAD_ERROR)
+	    return BRLCAD_ERROR;
     }
 
     if (arg->type & EDIT_NATURAL_ORIGIN) {
 	if (d->d_flags & (RT_DIR_COMB | RT_DIR_REGION)) {
 	    bu_vls_printf(gedp->ged_result_str, "combinations do not have a"
 			  " natural origin (%s)", d->d_namep);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	GED_DB_GET_INTERNAL(gedp, &intern, d, (fastf_t *)NULL,
-			    &rt_uniresource, GED_ERROR);
-	if (_ged_get_solid_keypoint(gedp, leaf_deltas, &intern, (const fastf_t *)gtd.gtd_xform) == GED_ERROR) {
+			    &rt_uniresource, BRLCAD_ERROR);
+	if (_ged_get_solid_keypoint(gedp, leaf_deltas, &intern, (const fastf_t *)gtd.gtd_xform) == BRLCAD_ERROR) {
 	    bu_vls_printf(gedp->ged_result_str, "\nunable to get natural origin"
 			  " of \"%s\"", d->d_namep);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	rt_db_free_internal(&intern);
     } else {
@@ -843,7 +846,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
     }
 
     VADD2(*coord, *coord, leaf_deltas);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -855,9 +858,9 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
  *
  * The only flags respected are object argument type modifier flags.
  *
- * Returns GED_ERROR on failure, and GED_OK on success.
+ * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
  */
-HIDDEN int
+static int
 edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
 {
     vect_t obj_coord = VINIT_ZERO;
@@ -868,8 +871,8 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
     else
 	dest = &arg->vector;
 
-    if (edit_arg_to_apparent_coord(gedp, arg, &obj_coord) == GED_ERROR)
-	return GED_ERROR;
+    if (edit_arg_to_apparent_coord(gedp, arg, &obj_coord) == BRLCAD_ERROR)
+	return BRLCAD_ERROR;
 
     if (arg->vector) {
 	VADD2(**dest, *arg->vector, obj_coord);
@@ -884,7 +887,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
 	arg->object = (struct db_full_path *)NULL;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -895,19 +898,19 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
  * certain meta_arg flags applied and/or consolidated with those of
  * the source objects. Objects + offsets are converted to coordinates.
  *
- * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
+ * Set GED_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively.
  *
- * Returns GED_ERROR on failure, and GED_OK on success.
+ * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
  */
-HIDDEN int
+static int
 edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 		     const struct edit_arg *src_objs, const int flags)
 {
     struct edit_arg *prototype;
     struct edit_arg **dest;
     const struct edit_arg *src;
-    const int noisy = (flags & GED_ERROR); /* side with verbosity */
+    const int noisy = (flags & BRLCAD_ERROR); /* side with verbosity */
     int firstrun = 1;
 
     BU_ASSERT(!meta_arg->next); /* should be at end of list */
@@ -933,7 +936,7 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 		bu_vls_printf(gedp->ged_result_str,
 			      "coordinate filters for batch operator and target"
 			      "objects result in no coordinates being used");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* respect certain type flags from the prototype/target obj */
@@ -941,10 +944,10 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 	    src->type;
 	(*dest)->type |= (EDIT_FROM | EDIT_TO) & prototype->type;
 
-	if (edit_arg_to_coord(gedp, *dest, (vect_t *)NULL) == GED_ERROR)
-	    return GED_ERROR;
+	if (edit_arg_to_coord(gedp, *dest, (vect_t *)NULL) == BRLCAD_ERROR)
+	    return BRLCAD_ERROR;
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -956,7 +959,7 @@ edit_arg_expand_meta(struct ged *gedp, struct edit_arg *meta_arg,
 /**
  * Initialize all command argument-pointer members to NULL.
  */
-HIDDEN void
+static void
 edit_cmd_init(union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
@@ -973,7 +976,7 @@ edit_cmd_init(union edit_cmd *const subcmd)
 /**
  * Free any dynamically allocated argument nodes that may exist.
  */
-HIDDEN void
+static void
 edit_cmd_free(union edit_cmd *const cmd)
 {
     struct edit_arg **arg_head;
@@ -993,7 +996,7 @@ edit_cmd_free(union edit_cmd *const cmd)
 /**
  * Perform a shallow copy of a subcommand's argument grouping.
  */
-HIDDEN void
+static void
 edit_cmd_sduplicate(union edit_cmd *const dest,
 		    const union edit_cmd *const src)
 {
@@ -1024,7 +1027,7 @@ edit_cmd_sduplicate(union edit_cmd *const dest,
  * (i.e. edit_<subcmd>_wrapper()) call this prior to execution, so
  * that some commands can expand their own vectors in an unusual ways.
  */
-HIDDEN int
+static int
 edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
@@ -1035,8 +1038,8 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 
     /* draw source vector from target object */
     arg_head = subcmd->cmd->get_arg_head(subcmd, i++);
-    if (edit_arg_to_apparent_coord(gedp, *arg_head, &src_v) == GED_ERROR)
-	return GED_ERROR;
+    if (edit_arg_to_apparent_coord(gedp, *arg_head, &src_v) == BRLCAD_ERROR)
+	return BRLCAD_ERROR;
 
     while ((arg_head = subcmd->cmd->get_arg_head(subcmd, i++)) !=
 	   &subcmd->common.objects) {
@@ -1083,7 +1086,7 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
 	}
 	(*arg_head)->coords_used |= EDIT_COORDS_ALL;
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1096,9 +1099,9 @@ edit_cmd_expand_vectors(struct ged *gedp, union edit_cmd *const subcmd)
  *
  * Common objects are left alone if skip_common_objects != 0.
  *
- * Returns GED_ERROR on failure, and GED_OK on success.
+ * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
  */
-HIDDEN int
+static int
 edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 		      int skip_common_objects)
 {
@@ -1134,11 +1137,11 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 
 		/* convert objects to coords */
 		if (cur_arg->object && edit_arg_to_coord(gedp, cur_arg,
-							 (vect_t *)NULL) == GED_ERROR)
-		    return GED_ERROR;
+							 (vect_t *)NULL) == BRLCAD_ERROR)
+		    return BRLCAD_ERROR;
 		if (prev_arg->object && edit_arg_to_coord(gedp, prev_arg,
-							  (vect_t *)NULL) == GED_ERROR)
-		    return GED_ERROR;
+							  (vect_t *)NULL) == BRLCAD_ERROR)
+		    return BRLCAD_ERROR;
 
 		/* consolidate */
 		if (cur_arg->coords_used & EDIT_COORD_X) {
@@ -1164,7 +1167,7 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 	    }
 	}
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1191,7 +1194,7 @@ edit_cmd_consolidate (struct ged *gedp, union edit_cmd *const subcmd,
 /**
  * Rotate an object by specifying points.
  */
-HIDDEN int
+static int
 edit_rotate(struct ged *gedp, const vect_t * axis_from,
 	    const vect_t *axis_to, const vect_t *center,
 	    const vect_t *angle_origin, const vect_t *angle_from,
@@ -1205,7 +1208,7 @@ edit_rotate(struct ged *gedp, const vect_t * axis_from,
     (void)angle_from;
     (void)angle_to;
     (void)path;
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1213,7 +1216,7 @@ edit_rotate(struct ged *gedp, const vect_t * axis_from,
  * Maps edit_arg fields to the subcommand function's arguments and
  * calls it.
  */
-HIDDEN int
+static int
 edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     const vect_t *from_vp = (const vect_t *)cmd->rotate.ref_axis.from->vector;
@@ -1231,14 +1234,14 @@ edit_rotate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 /*
  * Add arguments to the command that were built from the cmd line.
  */
-HIDDEN int
+static int
 edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 			const int flags)
 {
     (void)gedp;
     (void)cmd;
     (void)flags;
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1246,7 +1249,7 @@ edit_rotate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
  * Given an pointer to an argument head in the edit_cmd union, this
  * function will return the next argument head in the union.
  */
-HIDDEN struct edit_arg **
+static struct edit_arg **
 edit_rotate_get_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_ROTATE_ARG_HEADS_LEN 7
@@ -1282,7 +1285,7 @@ edit_scale(struct ged *gedp, const vect_t *scale_from,
     (void)factor_from;
     (void)factor_to;
     (void)path;
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1290,7 +1293,7 @@ edit_scale(struct ged *gedp, const vect_t *scale_from,
  * Maps edit_arg fields to the subcommand function's arguments and
  * calls it.
  */
-HIDDEN int
+static int
 edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     const vect_t *from_vp = (const vect_t *)cmd->scale.ref_scale.from->vector;
@@ -1307,14 +1310,14 @@ edit_scale_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 /*
  * Add arguments to the command that were built from the cmd line.
  */
-HIDDEN int
+static int
 edit_scale_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 		       const int flags)
 {
     (void)gedp;
     (void)cmd;
     (void)flags;
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1322,7 +1325,7 @@ edit_scale_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
  * Given an pointer to an argument head in the edit_cmd union, this
  * function will return the next argument head in the union.
  */
-HIDDEN struct edit_arg **
+static struct edit_arg **
 edit_scale_get_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_SCALE_ARG_HEADS_LEN 6
@@ -1344,7 +1347,7 @@ edit_scale_get_arg_head(const union edit_cmd *const cmd, int idx)
 /**
  * Perform a translation on an object by specifying points.
  */
-HIDDEN int
+static int
 edit_translate(struct ged *gedp, const vect_t *from,
 	       const vect_t *to,
 	       const struct db_full_path *path)
@@ -1355,13 +1358,16 @@ edit_translate(struct ged *gedp, const vect_t *from,
     struct rt_db_internal intern;
 
     VSUB2(delta, *to, *from);
-    VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(delta, delta, gedp->dbip->dbi_local2base);
+
+    if (!path || path->fp_len <= 0)
+	return BRLCAD_ERROR;
+
     d_obj = DB_FULL_PATH_CUR_DIR(path);
 
-    if (ged_path_validate(gedp, path) == GED_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
-		      "the database", db_path_to_string(path));
-	return GED_ERROR;
+    if (ged_path_validate(gedp, path) & BRLCAD_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in the database", db_path_to_string(path));
+	return BRLCAD_ERROR;
     }
 
     if (path->fp_len > 1) {
@@ -1373,7 +1379,7 @@ edit_translate(struct ged *gedp, const vect_t *from,
 
 	d_to_modify = DB_FULL_PATH_GET(path, path->fp_len - (size_t)2);
 	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, (fastf_t *)NULL,
-			    &rt_uniresource, GED_ERROR);
+			    &rt_uniresource, BRLCAD_ERROR);
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	leaf_to_modify = db_find_named_leaf(comb->tree, d_obj->d_namep);
 
@@ -1399,12 +1405,12 @@ edit_translate(struct ged *gedp, const vect_t *from,
 
 	d_to_modify = d_obj;
 	if (_ged_get_obj_bounds2(gedp, 1, (const char **)&d_to_modify->d_namep,
-				 &gtd, rpp_min, rpp_max) == GED_ERROR)
-	    return GED_ERROR;
+				 &gtd, rpp_min, rpp_max) == BRLCAD_ERROR)
+	    return BRLCAD_ERROR;
 	if (!(d_to_modify->d_flags & RT_DIR_SOLID) &&
-	    (ged_get_obj_bounds(gedp, 1, (const char **)&d_to_modify->d_namep,
-				 1, rpp_min, rpp_max) == GED_ERROR))
-	    return GED_ERROR;
+	    (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&d_to_modify->d_namep,
+				 1, rpp_min, rpp_max) == BRLCAD_ERROR))
+	    return BRLCAD_ERROR;
 
 	MAT_IDN(dmat);
 	MAT_DELTAS_VEC(dmat, delta);
@@ -1414,14 +1420,14 @@ edit_translate(struct ged *gedp, const vect_t *from,
 	bn_mat_mul(emat, tmpMat, gtd.gtd_xform);
 
 	GED_DB_GET_INTERNAL(gedp, &intern, d_to_modify, emat,
-			    &rt_uniresource, GED_ERROR);
+			    &rt_uniresource, BRLCAD_ERROR);
     }
 
     RT_CK_DB_INTERNAL(&intern);
     GED_DB_PUT_INTERNAL(gedp, d_to_modify, &intern, &rt_uniresource,
-			GED_ERROR);
+			BRLCAD_ERROR);
     rt_db_free_internal(&intern);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1432,7 +1438,7 @@ edit_translate(struct ged *gedp, const vect_t *from,
  * other than vector, and the first object to operate on in the
  * objects edit_arg. Ignores all edit_arg->next arguments.
  */
-HIDDEN int
+static int
 edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
 {
     const vect_t *from = (const vect_t *)cmd->translate.ref_vector.from->vector;
@@ -1452,11 +1458,11 @@ edit_translate_wrapper(struct ged *gedp, const union edit_cmd *const cmd)
  * Note: This command happens to only accept the standard command line
  * options, so others are ignored.
  */
-HIDDEN int
+static int
 edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 			   const int flags)
 {
-    const int noisy = (flags & GED_ERROR); /* side with verbosity */
+    const int noisy = (flags & BRLCAD_ERROR); /* side with verbosity */
     struct edit_arg *cur_arg = cmd->cmd_line.args;
 
     BU_ASSERT(cur_arg != (struct edit_arg *)NULL);
@@ -1493,7 +1499,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 		    bu_vls_printf(gedp->ged_result_str,
 				  "cannot use a reference object's coordinates"
 				  " as an offset distance");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 
@@ -1508,7 +1514,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	    else
 		bu_vls_printf(gedp->ged_result_str, "missing \"TO\" argument");
 	}
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* all that should be left is target objects; validate them */
@@ -1518,7 +1524,7 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 		bu_vls_printf(gedp->ged_result_str, "invalid syntax\n"
 			      "Usage: %s [help] | %s",
 			      cmd->cmd->name, cmd->cmd->usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* disallow non-standard opts */
@@ -1534,13 +1540,13 @@ edit_translate_add_cl_args(struct ged *gedp, union edit_cmd *const cmd,
 	cmd->translate.ref_vector.from->type |= EDIT_FROM;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 
 err_option_unknown:
     if (noisy)
 	bu_vls_printf(gedp->ged_result_str, "unknown option \"-%c\"",
 		      cur_arg->cl_options[0]);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -1554,7 +1560,7 @@ err_option_unknown:
  *
  * XXX: Kind of dirty; haven't found a better way yet, though.
  */
-HIDDEN struct edit_arg **
+static struct edit_arg **
 edit_translate_get_arg_head(const union edit_cmd *const cmd, int idx)
 {
 #define EDIT_TRANSLATE_ARG_HEADS_LEN 3
@@ -1632,7 +1638,7 @@ static const struct edit_cmd_tab edit_cmds[] = {
  * with EDIT_USE_TARGETS will be replaced (expanded) in performing
  * batch commands.
  *
- * Returns GED_ERROR on failure, and GED_OK on success.
+ * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
  *
  * Note that this function ignores most argument type flags, since
  * it's expected that all args will be in the proper locations in the
@@ -1651,7 +1657,7 @@ static const struct edit_cmd_tab edit_cmds[] = {
  * lopsided set of arguments, which should result in a BU_ASSERT
  * failure.
  */
-HIDDEN int
+static int
 edit(struct ged *gedp, union edit_cmd *const subcmd)
 {
     struct edit_arg **arg_head;
@@ -1688,15 +1694,15 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 
 	    if (cur_arg->type & EDIT_USE_TARGETS) {
 		if (edit_arg_expand_meta(gedp, cur_arg, subcmd->common.objects,
-					 GED_ERROR) == GED_ERROR)
-		    return GED_ERROR;
+					 BRLCAD_ERROR) == BRLCAD_ERROR)
+		    return BRLCAD_ERROR;
 		num_args_set += num_target_objs;
 		break; /* batch opertor should be last arg */
 	    }
 	    if (cur_arg->object) {
 		if (edit_arg_to_coord(gedp, cur_arg, (vect_t *)NULL) ==
-		    GED_ERROR)
-		    return GED_ERROR;
+		    BRLCAD_ERROR)
+		    return BRLCAD_ERROR;
 	    }
 	    ++num_args_set;
 	}
@@ -1726,10 +1732,10 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
      * determines how many times the command is run.
      */
     do {
-	if (edit_cmd_expand_vectors(gedp, &subcmd_iter) == GED_ERROR)
-	    return GED_ERROR;
-	if (subcmd_iter.cmd->exec(gedp, &subcmd_iter) == GED_ERROR)
-	    return GED_ERROR;
+	if (edit_cmd_expand_vectors(gedp, &subcmd_iter) == BRLCAD_ERROR)
+	    return BRLCAD_ERROR;
+	if (subcmd_iter.cmd->exec(gedp, &subcmd_iter) == BRLCAD_ERROR)
+	    return BRLCAD_ERROR;
 
 	/* set all heads to the next arguments in their lists */
 	num_args_set = 0;
@@ -1745,7 +1751,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
 	}
     } while (num_args_set != 0);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1753,16 +1759,16 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
  * Converts a string to an existing edit_arg. See subcommand manuals
  * for examples of acceptable argument strings.
  *
- * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
+ * Set GED_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively.
  *
- * Returns GED_ERROR on failure, and GED_OK on success.
+ * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
  */
-HIDDEN int
+static int
 edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 		const int flags)
 {
-    const int noisy = (flags & GED_ERROR); /* side with verbosity */
+    const int noisy = (flags & BRLCAD_ERROR); /* side with verbosity */
     char const *first_slash = NULL;
     char *endchr = NULL; /* for strtod's */
     vect_t coord;
@@ -1782,7 +1788,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	/* batch operators; objects with same name will be masked */
 	if (BU_STR_EQUAL(str, ".")) {
 	    arg->type |= EDIT_USE_TARGETS;
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	/* an arg with a slash is always interpreted as a path */
@@ -1806,14 +1812,14 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 		if (noisy)
 		    bu_vls_printf(gedp->ged_result_str, "cannot use root path "
 				  "alone");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    goto convert_obj;
 	}
 
 	/* it may still be an obj, so quietly check db for obj name */
-	if (db_lookup(gedp->ged_wdbp->dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
+	if (db_lookup(gedp->dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
 	    goto convert_obj;
     }
 
@@ -1823,7 +1829,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "unrecognized argument, \"%s\"",
 			  str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (!arg->vector)
 	BU_ALLOC(arg->vector, vect_t);
@@ -1850,7 +1856,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 			      " coordinates: %f %f %f %f ...",
 			      (*arg->vector)[0], (*arg->vector)[1],
 			      (*arg->vector)[2], coord[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     } else {
 	/* only set specified coord */
@@ -1866,12 +1872,12 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	    arg->coords_used |= EDIT_COORD_IS_SET_Z;
 	}
     }
-    return GED_OK;
+    return BRLCAD_OK;
 
 convert_obj:
     /* convert string to path/object */
     BU_ALLOC(arg->object, struct db_full_path);
-    if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
+    if (db_string_to_path(arg->object, gedp->dbip,
 			  str)) {
 	db_free_full_path(arg->object);
 	bu_free((void *)arg->object, "db_string_to_path");
@@ -1879,18 +1885,18 @@ convert_obj:
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "one of the objects in"
 			  " the path \"%s\" does not exist", str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
-    if (ged_path_validate(gedp, arg->object) == GED_ERROR) {
+    if (ged_path_validate(gedp, arg->object) & BRLCAD_ERROR) {
 	db_free_full_path(arg->object);
 	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL;
 	if (noisy)
 	    bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
 			  "the database", str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1900,19 +1906,19 @@ convert_obj:
  * arguments. See subcommand manuals for examples of acceptable
  * argument strings.
  *
- * Set GED_QUIET or GED_ERROR bits in 'flags' to suppress or enable
+ * Set GED_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively. Note that output is always
  * suppressed after the first string is successfully converted.
  *
- * Returns GED_OK if at least one string is converted, otherwise
- * GED_ERROR is returned.
+ * Returns BRLCAD_OK if at least one string is converted, otherwise
+ * BRLCAD_ERROR is returned.
  *
  */
-HIDDEN int
+static int
 edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 		 struct edit_arg *arg, int flags)
 {
-    int ret = GED_ERROR;
+    int ret = BRLCAD_ERROR;
     int len;
     int idx;
 
@@ -1929,10 +1935,10 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 		idx = 2;
 	}
 
-	if (edit_str_to_arg(gedp, &(**argv)[idx], arg, flags) == GED_ERROR)
+	if (edit_str_to_arg(gedp, &(**argv)[idx], arg, flags) == BRLCAD_ERROR)
 	    break;
 
-	ret = GED_OK;
+	ret = BRLCAD_OK;
 	flags = GED_QUIET; /* only first conv attempt can be noisy */
 	--(*argc);
 	++(*argv);
@@ -1977,9 +1983,9 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     int allow_subopts = 0; /* false(=0) when a subopt is bad syntax */
     int ret;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -2034,7 +2040,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	    /* no arguments accepted without a subcommand */
 	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand \"%s\"\n",
 			  argv[1]);
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s"
@@ -2048,7 +2054,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     if (subcmd.cmd == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "subcommand \"%s\""
 		      " is disabled", subcmd_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /*
@@ -2085,7 +2091,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 			if (edit_cmds[i].enabled)
 			    bu_vls_printf(gedp->ged_result_str, "%s ",
 					  edit_cmds[i].name);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		} else /* point to the cmd we want help for */
 		    subcmd.cmd = &edit_cmds[i];
 		goto get_full_help;
@@ -2176,9 +2182,9 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 
     /* no options are required by default, so quietly look for args */
     while (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_QUIET) !=
-	   GED_ERROR) {
+	   BRLCAD_ERROR) {
 	if (argc == 0) {
-	    if (edit_arg_is_empty(subcmd.cmd_line.args) == GED_OK) {
+	    if (edit_arg_is_empty(subcmd.cmd_line.args) == BRLCAD_OK) {
 		edit_arg_free(subcmd.cmd_line.args);
 		subcmd.cmd_line.args = NULL;
 	    }
@@ -2197,7 +2203,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str,
 				  "expected only objects after first arg");
 		    edit_cmd_free(&subcmd);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		cur_arg->type |= EDIT_TARGET_OBJ;
 	    }
@@ -2205,9 +2211,9 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	    /* let cmd specific func validate/move args to proper
 	     * locations
 	     */
-	    if (subcmd.cmd->add_cl_args(gedp, &subcmd, GED_ERROR) ==
-		GED_ERROR)
-		return GED_ERROR;
+	    if (subcmd.cmd->add_cl_args(gedp, &subcmd, BRLCAD_ERROR) ==
+		BRLCAD_ERROR)
+		return BRLCAD_ERROR;
 	    ret = edit(gedp, &subcmd);
 	    edit_cmd_free(&subcmd);
 	    return ret;
@@ -2220,10 +2226,10 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
      * what it choked on.
      */
     if (strlen(argv[0]) > 1 && ((*argv)[0] != '-') && isdigit((int)(*argv)[1])) {
-	ret = edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_ERROR);
+	ret = edit_strs_to_arg(gedp, &argc, &argv, cur_arg, BRLCAD_ERROR);
 	edit_cmd_free(&subcmd);
-	BU_ASSERT(ret == GED_ERROR);
-	return GED_ERROR;
+	BU_ASSERT(ret == BRLCAD_ERROR);
+	return BRLCAD_ERROR;
     }
 
     bu_optind = 1; /* re-init bu_getopt() */
@@ -2237,7 +2243,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str,
 			  "No OBJECT provided; nothing to operate on");
 	    edit_cmd_free(&subcmd);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (idx_cur_opt >= EDIT_MAX_ARG_OPTIONS) {
 	    bu_vls_printf(gedp->ged_result_str, "too many options given, \"");
@@ -2246,10 +2252,10 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 			      cur_arg->cl_options[i]);
 	    bu_vls_printf(gedp->ged_result_str, "-%c\"", c);
 	    edit_cmd_free(&subcmd);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
-	conv_flags = GED_ERROR;
+	conv_flags = BRLCAD_ERROR;
 	switch (c) {
 	    case 'n': /* use natural coordinates of object */
 		conv_flags = GED_QUIET;
@@ -2268,7 +2274,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "-%c must follow an"
 				  " argument specification option", c);
 		    edit_cmd_free(&subcmd);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 		break;
 	    case 'k': /* standard arg specification options */
@@ -2300,7 +2306,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 			bu_vls_printf(gedp->ged_result_str,
 				      "Unknown option character '\\x%x'", c);
 			edit_cmd_free(&subcmd);
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		    }
 
 		/* next element may be an arg */
@@ -2351,10 +2357,10 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* convert next element to an arg */
 	if (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, conv_flags) ==
-	    GED_ERROR) {
-	    if (conv_flags & GED_ERROR) {
+	    BRLCAD_ERROR) {
+	    if (conv_flags & BRLCAD_ERROR) {
 		edit_cmd_free(&subcmd);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	} else {
 	    /* init for next arg */
@@ -2370,7 +2376,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 			  "using the batch operator to specify individual"
 			  " coordinates is not yet supported");
 	    edit_cmd_free(&subcmd);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* conversion moves argc/argv, so re-init bu_getopt() */
@@ -2385,17 +2391,17 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str,
 		      "a keypoint is missing its matching 'TO' argument");
 	edit_cmd_free(&subcmd);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* get final/trailing args */
     ++argv;
     --argc;
     while (argc > 0) {
-	if (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_ERROR) ==
-	    GED_ERROR) {
+	if (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, BRLCAD_ERROR) ==
+	    BRLCAD_ERROR) {
 	    edit_cmd_free(&subcmd);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	cur_arg->type |= EDIT_TARGET_OBJ;
 	cur_arg = edit_arg_postfix_new(subcmd.cmd_line.args);
@@ -2404,10 +2410,10 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
     /* free unused arg block */
     edit_arg_free_last(subcmd.cmd_line.args);
 
-    if (edit_cmd_consolidate(gedp, &subcmd, 0) == GED_ERROR)
-	return GED_ERROR;
-    if (subcmd.cmd->add_cl_args(gedp, &subcmd, GED_ERROR) == GED_ERROR)
-	return GED_ERROR;
+    if (edit_cmd_consolidate(gedp, &subcmd, 0) == BRLCAD_ERROR)
+	return BRLCAD_ERROR;
+    if (subcmd.cmd->add_cl_args(gedp, &subcmd, BRLCAD_ERROR) == BRLCAD_ERROR)
+	return BRLCAD_ERROR;
     ret = edit(gedp, &subcmd);
     edit_cmd_free(&subcmd);
     return ret;
@@ -2416,7 +2422,7 @@ err_missing_arg:
     bu_vls_printf(gedp->ged_result_str, "Missing argument for option -%c",
 		  bu_optopt);
     edit_cmd_free(&subcmd);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

@@ -1,4 +1,4 @@
-libfort
+https://github.com/seleznevae/libfort
 
 MIT License
 
@@ -24,3 +24,4 @@ SOFTWARE.
 
 file:/src/libbu/fort.c
 file:/src/libbu/fort.h
+

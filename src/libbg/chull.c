@@ -1,7 +1,7 @@
 /*                       C H U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright 2001 softSurfer, 2012 Dan Sunday
@@ -102,7 +102,7 @@ bg_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
 
 
 /* bu_sort functions for points */
-HIDDEN int
+static int
 pnt_compare_2d(const void *pnt1, const void *pnt2, void *UNUSED(arg))
 {
     point2d_t *p1 = (point2d_t *)pnt1;

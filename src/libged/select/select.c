@@ -1,7 +1,7 @@
 /*                         S E L E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,9 +40,14 @@
  * select [-b bot] [-p] [-z vminz] vx vy {vr | vw vh}
  *
  */
+extern int ged_select2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_select_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_select2_core(gedp, argc, argv);
+
     int c;
     double vx, vy, vw, vh, vr;
     static const char *usage = "[-b bot] [-p] [-z vminz] vx vy {vr | vw vh}";
@@ -52,14 +57,15 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
     int pflag = 0;
     double vminz = -1000.0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     /* Get command line options. */
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, "b:pz:")) != -1) {
@@ -72,9 +78,9 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    if (botip != (struct rt_bot_internal *)NULL)
 		break;
 
-	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) & GED_ERROR) {
+	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, wdbp, mat) & BRLCAD_ERROR) {
 		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -82,7 +88,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT", cmd, bu_optarg);
 		rt_db_free_internal(&intern);
 
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    botip = (struct rt_bot_internal *)intern.idb_ptr;
@@ -104,7 +110,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -113,7 +119,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 4 || 5 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 4) {
@@ -121,7 +127,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    sscanf(argv[2], "%lf", &vy) != 1 ||
 	    sscanf(argv[3], "%lf", &vr) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (botip != (struct rt_bot_internal *)NULL) {
@@ -143,7 +149,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    sscanf(argv[3], "%lf", &vw) != 1 ||
 	    sscanf(argv[4], "%lf", &vh) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (botip != (struct rt_bot_internal *)NULL) {
@@ -181,13 +187,15 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
     int pflag = 0;
     double vminz = -1000.0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
+
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* Get command line options. */
     bu_optind = 1;
@@ -201,9 +209,9 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 	    if (botip != (struct rt_bot_internal *)NULL)
 		break;
 
-	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) == GED_ERROR) {
+	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, wdbp, mat) == BRLCAD_ERROR) {
 		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -211,7 +219,7 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT", cmd, bu_optarg);
 		rt_db_free_internal(&intern);
 
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    botip = (struct rt_bot_internal *)intern.idb_ptr;
@@ -233,26 +241,25 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
     argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (botip != (struct rt_bot_internal *)NULL) {
 	int ret;
 
 	ret = _ged_select_botpts(gedp, botip,
-				  gedp->ged_gvp->gv_rect.x,
-				  gedp->ged_gvp->gv_rect.y,
-				  gedp->ged_gvp->gv_rect.width,
-				  gedp->ged_gvp->gv_rect.height,
+				  gedp->ged_gvp->gv_s->gv_rect.x,
+				  gedp->ged_gvp->gv_s->gv_rect.y,
+				  gedp->ged_gvp->gv_s->gv_rect.width,
+				  gedp->ged_gvp->gv_s->gv_rect.height,
 				  vminz,
 				  0);
 
@@ -260,16 +267,16 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 	return ret;
     } else {
 	if (pflag)
-	    return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
-				     gedp->ged_gvp->gv_rect.y,
-				     gedp->ged_gvp->gv_rect.width,
-				     gedp->ged_gvp->gv_rect.height,
+	    return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_s->gv_rect.x,
+				     gedp->ged_gvp->gv_s->gv_rect.y,
+				     gedp->ged_gvp->gv_s->gv_rect.width,
+				     gedp->ged_gvp->gv_s->gv_rect.height,
 				     0);
 	else
-	    return dl_select(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
-			     gedp->ged_gvp->gv_rect.y,
-			     gedp->ged_gvp->gv_rect.width,
-			     gedp->ged_gvp->gv_rect.height,
+	    return dl_select(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_s->gv_rect.x,
+			     gedp->ged_gvp->gv_s->gv_rect.y,
+			     gedp->ged_gvp->gv_s->gv_rect.width,
+			     gedp->ged_gvp->gv_s->gv_rect.height,
 			     0);
     }
 }

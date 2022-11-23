@@ -1,7 +1,7 @@
 /*                 S P A C E _ P A R T I T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2021 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include "vmath.h"
 #include "bn/tol.h"
 #include "rt/defines.h"
+#include "rt/application.h"
 #include "rt/soltab.h"
 
 __BEGIN_DECLS

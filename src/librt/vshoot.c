@@ -1,7 +1,7 @@
 /*                        V S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 /**
  * Stub function which will "simulate" a call to a vector shot routine
  */
-HIDDEN void
+static void
 vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
 /* An array of solid pointers */
 /* An array of ray pointers */

@@ -1,7 +1,7 @@
 /*                      G E N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2021 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -132,7 +132,7 @@ main(int argc, char **argv)
     if (argc > 1) {
 	/* get values from the command line */
 	i = 0;
-	while (argc > 1 && i < MAX_BYTES) {
+	while (argc > 1 && i < MAX_BYTES - 1) {
 	    buf[i] = atoi(argv[i+1]);
 	    argc--;
 	    i++;

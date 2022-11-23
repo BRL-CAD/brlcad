@@ -1,7 +1,7 @@
 /*                          S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -291,7 +291,7 @@ icv_image_size(const char *name, size_t udpi, size_t file_size, bu_mime_image_t 
     return      0;
 }
 
-HIDDEN int
+static int
 shrink_image(icv_image_t* bif, size_t factor)
 {
     double *data_p, *res_p; /**< input and output pointers */
@@ -337,7 +337,7 @@ shrink_image(icv_image_t* bif, size_t factor)
 }
 
 
-HIDDEN int
+static int
 under_sample(icv_image_t* bif, size_t factor)
 {
     double *data_p, *res_p;
@@ -349,7 +349,7 @@ under_sample(icv_image_t* bif, size_t factor)
     }
 
     widthstep = bif->width*bif->channels;
-    res_p = data_p = bif->data;
+    res_p = bif->data;
 
     for (y = 0; y < bif->height; y += factor) {
 	data_p = bif->data + widthstep*y;
@@ -366,7 +366,7 @@ under_sample(icv_image_t* bif, size_t factor)
 }
 
 
-HIDDEN int
+static int
 ninterp(icv_image_t* bif, size_t out_width, size_t out_height)
 {
     double xstep, ystep;
@@ -413,7 +413,7 @@ ninterp(icv_image_t* bif, size_t out_width, size_t out_height)
 }
 
 
-HIDDEN int
+static int
 binterp(icv_image_t *bif, size_t out_width, size_t out_height)
 {
     size_t i, j;

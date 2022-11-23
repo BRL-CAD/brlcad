@@ -40,7 +40,7 @@ edited.
   <example><title>Select a matrix to be edited in a particular region and group.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>matpick group1/region3</userinput>
+      <prompt>mged&gt; </prompt><userinput>matpick group1/region3</userinput>
     </para>
     <para>Selects the matrix for <emphasis>region3</emphasis> in <emphasis>group1</emphasis> for 				editing.
       </para>

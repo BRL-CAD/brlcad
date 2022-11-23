@@ -94,7 +94,7 @@
   <example><title>Set the relative and perpendicularity tolerances.</title>
 
     <para>
-	<prompt>mged&gt;</prompt> <userinput>tol rel .05 perp 1e-6</userinput></para>
+	<prompt>mged&gt; </prompt><userinput>tol rel .05 perp 1e-6</userinput></para>
 	<para>Sets the <emphasis>relative</emphasis> tolerance to 5% and the <emphasis>perpendicularity</emphasis> tolerance to 1e-06 			(cosine of 89.9999°).
       </para>
 	</example>

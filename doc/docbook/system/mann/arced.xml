@@ -71,7 +71,7 @@
     <example><title>Rotate body/head 45 degrees about Z axis</title>
 
       <para>
-	<prompt>mged&gt;</prompt> <userinput>arced body/head matrix rot 0 0 45</userinput>
+	<prompt>mged&gt; </prompt><userinput>arced body/head matrix rot 0 0 45</userinput>
       </para>
       <para>
 	Rotates member head (in combination body) about the <emphasis>z</emphasis> axis

@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2021 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,10 +45,6 @@
 #  include <sys/stat.h>
 #endif
 
-#ifdef HAVE_POLL_H
-#  include <poll.h>
-#endif
-
 #ifdef HAVE_WINDOWS_H
 #  include <direct.h> /* For chdir */
 #endif
@@ -73,7 +69,7 @@
 #include "raytrace.h"
 #include "libtermio.h"
 #include "rt/db4.h"
-#include "dm/bview_util.h"
+#include "bv/util.h"
 #include "ged.h"
 #include "tclcad.h"
 
@@ -114,7 +110,7 @@ extern struct _mged_variables default_mged_variables;
 extern struct _color_scheme default_color_scheme;
 
 /* defined in grid.c */
-extern struct bview_grid_state default_grid_state;
+extern struct bv_grid_state default_grid_state;
 
 /* defined in axes.c */
 extern struct _axes_state default_axes_state;
@@ -285,7 +281,7 @@ attach_display_manager(Tcl_Interp *interpreter, const char *manager, const char 
 }
 
 
-HIDDEN void
+static void
 mged_notify(int UNUSED(i))
 {
     pr_prompt(interactive);
@@ -390,7 +386,7 @@ mged_view_callback(struct bview *gvp,
 void
 new_mats(void)
 {
-    bview_update(view_state->vs_gvp);
+    bv_update(view_state->vs_gvp);
 }
 
 
@@ -1022,8 +1018,8 @@ main(int argc, char *argv[])
      * initialization.
      */
 #ifdef HAVE_PIPE
-    int pipe_out[2];
-    int pipe_err[2];
+    int pipe_out[2] = {-1, -1};
+    int pipe_err[2] = {-1, -1};
 #endif
 
     int rateflag = 0;
@@ -1037,7 +1033,6 @@ main(int argc, char *argv[])
     Tcl_Channel chan;
 #if !defined(_WIN32) || defined(__CYGWIN__)
     fd_set read_set;
-    fd_set exception_set;
     int result;
 #endif
 
@@ -1133,69 +1128,7 @@ main(int argc, char *argv[])
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
-#if defined(_WIN32) && !defined(CYGWIN)
-	if(!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
-	    interactive = 0;
-#else
-	struct timeval timeout;
-
-	/* wait 1/10sec for input, in case we're piped */
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 100000;
-
-	/* check if there is data on stdin, first relying on whether
-	 * there is standard input pending, second on whether there's
-	 * a controlling terminal (isatty).
-	 */
-	FD_ZERO(&read_set);
-	FD_SET(fileno(stdin), &read_set);
-	result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
-	if (bu_debug > 0)
-	    fprintf(stdout, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
-
-	if (result == 0) {
-	    if (!isatty(fileno(stdin)) || !isatty(fileno(stdout))) {
-		interactive = 0;
-	    }
-	} else if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
-	    /* stdin pending, probably not interactive */
-	    interactive = 0;
-
-	    /* check if there's an out-of-bounds exception.  sometimes
-	     * the case if mged -c is started via desktop GUI.
-	     */
-	    FD_ZERO(&exception_set);
-	    FD_SET(fileno(stdin), &exception_set);
-	    result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
-	    if (bu_debug > 0)
-		fprintf(stdout, "DEBUG: select result: %d, stdin exception: %d\n", result, FD_ISSET(fileno(stdin), &exception_set));
-
-	    /* see if there's valid input waiting (more reliable than select) */
-	    if (result > 0 && FD_ISSET(fileno(stdin), &exception_set)) {
-#ifdef HAVE_POLL_H
-		struct pollfd pfd;
-		pfd.fd = fileno(stdin);
-		pfd.events = POLLIN;
-		pfd.revents = 0;
-
-		result = poll(&pfd, 1, 100);
-		if (bu_debug > 0)
-		    fprintf(stdout, "DEBUG: poll result: %d, revents: %d\n", result, pfd.revents);
-
-		if (pfd.revents & POLLNVAL) {
-		    interactive = 1;
-		}
-#else
-		/* just in case we get input too quickly, see if it's coming from a tty */
-		if (isatty(fileno(stdin))) {
-		    interactive = 1;
-		}
-#endif /* HAVE_POLL_H */
-
-	    }
-
-	} /* read_set */
-#endif
+	interactive = bu_interactive();
     } /* argc > 1 */
 
     //bu_log("interactive: %d\n", interactive);
@@ -1287,12 +1220,17 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&mged_curr_dm->dm_p_vlist);
     predictor_init();
 
-    DMP = dm_get();
-    dm_set_null(DMP);
+    /* register application provided routines */
+
+    DMP = dm_open(NULL, INTERP, "nu", 0, NULL);
     struct bu_vls *dpvp = dm_get_pathname(DMP);
     if (dpvp) {
 	bu_vls_strcpy(dpvp, "nu");
     }
+
+    /* If we're only doing the 'nu' dm we don't need most of mged_dm_init, but
+     * we do still need to register the dm_commands */
+    mged_curr_dm->dm_cmd_hook = dm_commands;
 
     struct bu_vls *tnvp = dm_get_tkname(mged_curr_dm->dm_dmp);
     if (tnvp) {
@@ -1309,7 +1247,7 @@ main(int argc, char *argv[])
     BU_ALLOC(color_scheme, struct _color_scheme);
     *color_scheme = default_color_scheme;	/* struct copy */
 
-    BU_ALLOC(grid_state, struct bview_grid_state);
+    BU_ALLOC(grid_state, struct bv_grid_state);
     *grid_state = default_grid_state;		/* struct copy */
 
     BU_ALLOC(axes_state, struct _axes_state);
@@ -1433,6 +1371,9 @@ main(int argc, char *argv[])
 
 	    /* Command line may have more than 2 args, opendb only wants 2
 	     * expecting second to be the file name.
+	     * NOTE: this way makes it so f_opendb does not care about y/n
+	     * and always create a new db if one does not exist since we want
+	     * to allow mged to process args after the db as a command
 	     */
 	    if (f_opendb((ClientData)NULL, INTERP, 2, av) == TCL_ERROR) {
 		if (!run_in_foreground && use_pipe) {
@@ -1558,9 +1499,9 @@ main(int argc, char *argv[])
      * dm first opens filled with garbage.
      */
     {
-	const unsigned char *dm_bg = dm_get_bg(DMP);
-	if (dm_bg)
-	    dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2]);
+	unsigned char *dm_bg;
+	dm_get_bg(&dm_bg, NULL, DMP);
+	dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2], dm_bg[0], dm_bg[1], dm_bg[2]);
     }
 
     /* initialize a display manager */
@@ -1579,8 +1520,16 @@ main(int argc, char *argv[])
 	/* Call cmdline instead of calling mged_cmd directly so that
 	 * access to Tcl/Tk is possible.
 	 */
-	for (argc -= 1, argv += 1; argc; --argc, ++argv)
+	for (argc -= 1, argv += 1; argc; --argc, ++argv) {
+	    /* in order to process interactively, an old optional y/n argument
+	    * intended for f_opendb must be filtered out here to remove
+	    * garbage "unrecognized command" line prints
+	    */
+	    if (!BU_STR_EQUAL("y", argv[0]) && !BU_STR_EQUAL("Y", argv[0])
+	     && !BU_STR_EQUAL("n", argv[0]) && !BU_STR_EQUAL("N", argv[0])) {
 	    bu_vls_printf(&input_str, "%s ", *argv);
+	    }
+	}
 
 	cmdline(&input_str, TRUE);
 	bu_vls_free(&input_str);
@@ -1691,6 +1640,15 @@ main(int argc, char *argv[])
 		Tcl_SetChannelOption(INTERP, chan, "-blocking", "false");
 		Tcl_SetChannelOption(INTERP, chan, "-buffering", "line");
 		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		/* intermittently, the process of Tcl_UnregisterChannel does not
+		 * finish cleaning up the write threads before we spawn new
+		 * ones with Tcl_MakeFileChannel. This error prematurely invokes the
+		 * new threads when the old ones finally signal which breaks all 'puts'
+		 * from the channel. Calling puts with an empty string here
+		 * *appears* to force a sync and resolve the issue.
+		 */
+		if (Tcl_Eval(INTERP, "puts \"\"") != TCL_OK)
+		    perror("STDOUT chan broken");
 		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
 	    }
 
@@ -1702,6 +1660,8 @@ main(int argc, char *argv[])
 		Tcl_SetChannelOption(INTERP, chan, "-blocking", "false");
 		Tcl_SetChannelOption(INTERP, chan, "-buffering", "line");
 		chan = Tcl_MakeFileChannel(handle[0], TCL_READABLE);
+		if (Tcl_Eval(INTERP, "puts stderr \"\"") != TCL_OK)
+		    perror("STDERR chan broken");
 		Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, chan);
 	    }
 	}
@@ -2400,7 +2360,7 @@ refresh(void)
 
 
 		    /* Restore to non-rotated, full brightness */
-		    dm_normal(DMP);
+		    dm_hud_begin(DMP);
 
 		    /* only if not doing overlay */
 		    if (!mged_variables->mv_fb ||
@@ -2542,12 +2502,11 @@ mged_finish(int exitcode)
     Tcl_Eval(INTERP, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
     Tcl_Release((ClientData)INTERP);
 
+    struct tclcad_io_data *giod = (struct tclcad_io_data *)GEDP->ged_io_data;
     ged_close(GEDP);
-    if (GEDP->ged_io_data) {
-	tclcad_destroy_io_data((struct tclcad_io_data *)GEDP->ged_io_data);
+    if (giod) {
+	tclcad_destroy_io_data(giod);
     }
-    if (GEDP)
-	BU_PUT(GEDP, struct ged);
 
     WDBP = RT_WDB_NULL;
     DBIP = DBI_NULL;
@@ -2601,8 +2560,6 @@ mged_refresh_handler(void *UNUSED(clientdata))
 int
 f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
 {
-    struct rt_wdb *ged_wdbp = RT_WDB_NULL;
-    struct ged *save_gedp;
     struct db_i *save_dbip = DBI_NULL;
     struct mater *save_materp = MATER_NULL;
     struct bu_vls msg = BU_VLS_INIT_ZERO;	/* use this to hold returned message */
@@ -2648,7 +2605,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	return TCL_ERROR;
     }
 
-    save_gedp = GEDP;
     save_dbip = DBIP;
     DBIP = DBI_NULL;
     save_materp = rt_material_head();
@@ -2664,7 +2620,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	 */
 	if (bu_file_exists(argv[1], NULL)) {
 	    /* need to reset things before returning */
-	    GEDP = save_gedp;
 	    DBIP = save_dbip;
 	    rt_new_material_head(save_materp);
 
@@ -2720,7 +2675,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 		/* not initializing mged */
 		if (argc == 2) {
 		    /* need to reset this before returning */
-		    GEDP = save_gedp;
 		    DBIP = save_dbip;
 		    rt_new_material_head(save_materp);
 		    Tcl_AppendResult(interpreter, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
@@ -2735,7 +2689,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* did the caller specify not creating a new database? */
 	if (argc >= 3 && bu_str_false(argv[2])) {
-	    GEDP = save_gedp;
 	    DBIP = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
 	    bu_vls_free(&msg);
@@ -2744,7 +2697,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* File does not exist, and should be created */
 	if ((DBIP = db_create(argv[1], mged_db_version)) == DBI_NULL) {
-	    GEDP = save_gedp;
 	    DBIP = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
 	    bu_vls_free(&msg);
@@ -2790,7 +2742,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	new_materp = rt_material_head();
 
 	/* activate the 'saved' values so we can cleanly close the previous db */
-	GEDP = save_gedp;
 	DBIP = save_dbip;
 	rt_new_material_head(save_materp);
 
@@ -2825,24 +2776,13 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	bu_vls_printf(&msg, "%s: READ ONLY\n", DBIP->dbi_filename);
     }
 
-    /* associate the gedp with a wdbp as well, but separate from the
-     * one we fed tcl.  must occur before the call to [get_dbip] since
+    /* This must occur before the call to [get_dbip] since
      * that hooks into a libged callback.
      */
-    if (!GEDP) {
-	BU_ALLOC(GEDP, struct ged);
-    }
-
-    /* initialize a separate wdbp for libged to manage */
-    ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
-    if (GEDP) {
-	ged_free(GEDP);
-	BU_ALLOC(GEDP, struct ged);
-    }
-    GED_INIT(GEDP, ged_wdbp);
+    GEDP->dbip = DBIP;
     GEDP->ged_output_handler = mged_output_handler;
     GEDP->ged_refresh_handler = mged_refresh_handler;
-    GEDP->ged_create_vlist_solid_callback = createDListSolid;
+    GEDP->ged_create_vlist_scene_obj_callback = createDListSolid;
     GEDP->ged_create_vlist_display_list_callback = createDListAll;
     GEDP->ged_destroy_vlist_callback = freeDListsAll;
     GEDP->ged_create_io_handler = &tclcad_create_io_handler;
@@ -2860,12 +2800,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     /* Provide LIBWDB C access to the on-disk database */
     if ((WDBP = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
 	Tcl_AppendResult(interpreter, "wdb_dbopen() failed?\n", (char *)NULL);
-
-	/* release any allocated memory */
-	ged_free(GEDP);
-	bu_free((void *)GEDP, "struct ged");
-	GEDP = NULL;
-
 	return TCL_ERROR;
     }
 
@@ -2903,12 +2837,6 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
 	    bu_vls_free(&msg);
 	    bu_vls_free(&cmd);
-
-	    /* release any allocated memory */
-	    ged_free(GEDP);
-	    bu_free((void *)GEDP, "struct ged");
-	    GEDP = NULL;
-
 	    return TCL_ERROR;
 	}
 
@@ -2995,29 +2923,8 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
-    if (GEDP->ged_io_data) {
-	tclcad_destroy_io_data((struct tclcad_io_data *)GEDP->ged_io_data);
-    }
-    ged_close(GEDP);
-    BU_PUT(GEDP, struct ged);
-
-    // initialize a new blank ged structure
-    BU_GET(GEDP, struct ged);
-    ged_init(GEDP);
-    GEDP->ged_output_handler = mged_output_handler;
-    GEDP->ged_refresh_handler = mged_refresh_handler;
-    GEDP->ged_create_vlist_solid_callback = createDListSolid;
-    GEDP->ged_create_vlist_display_list_callback = createDListAll;
-    GEDP->ged_destroy_vlist_callback = freeDListsAll;
-    GEDP->ged_create_io_handler = &tclcad_create_io_handler;
-    GEDP->ged_delete_io_handler = &tclcad_delete_io_handler;
-    GEDP->ged_interp = (void *)interpreter;
-    GEDP->ged_interp_eval = &mged_db_search_callback;
-    struct tclcad_io_data *t_iod = tclcad_create_io_data();
-    t_iod->io_mode = TCL_READABLE;
-    t_iod->interp = interpreter;
-    GEDP->ged_io_data = t_iod;
-
+    db_close(GEDP->dbip);
+    GEDP->dbip = NULL;
 
     WDBP = RT_WDB_NULL;
     DBIP = DBI_NULL;

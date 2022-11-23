@@ -1,7 +1,7 @@
 /*                          H A S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ struct bu_hash_tbl {
 #define BU_CK_HASH_TBL(_hp) BU_CKMAG(_hp, BU_HASH_TBL_MAGIC, "bu_hash_tbl")
 
 
-HIDDEN unsigned long
+static unsigned long
 _bu_hash(const uint8_t *key, size_t len)
 {
     unsigned long hash = 5381;
@@ -65,7 +65,7 @@ _bu_hash(const uint8_t *key, size_t len)
 }
 
 
-HIDDEN int
+static int
 _nhash_keycmp(const uint8_t *k1, const uint8_t *k2, size_t key_len)
 {
     const uint8_t *c1 = k1;

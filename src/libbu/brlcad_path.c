@@ -1,7 +1,7 @@
 /*                   B R L C A D _ P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@
  *
  * @return boolean on whether a match was found.
  */
-HIDDEN int
+static int
 join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where)
 {
     size_t llen, rlen;
@@ -79,7 +79,7 @@ join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_v
 	return 0;
     }
 
-    rlen = llen = 0;
+    rlen = 0;
     if (rhs) {
 	rlen = strlen(rhs);
     }
@@ -153,7 +153,7 @@ join_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_v
  * print out an error/warning message if we cannot find the specified
  * BRLCAD_ROOT (compile-time install path)
  */
-HIDDEN void
+static void
 root_missing(const char *paths)
 {
     bu_log("\

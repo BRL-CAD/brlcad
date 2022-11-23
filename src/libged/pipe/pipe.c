@@ -1,7 +1,7 @@
 /*                        E D P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2021 United States Government as represented by
+ * Copyright (c) 1995-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,8 +59,8 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
     int seg_i;
     char *last;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -73,7 +73,7 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((last = strrchr(argv[1], '/')) == NULL)
@@ -83,23 +83,23 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 
     if (last[0] == '\0') {
 	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%d", &seg_i) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[3]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to get internal for %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -107,26 +107,26 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s is not a PIPE", argv[1]);
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
     if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (_ged_pipe_delete_pnt(ps) == ps) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot delete pipe segment %d", argv[0], seg_i);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
 
     rt_db_free_internal(&intern);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -143,9 +143,9 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
     int seg_i;
     char *last;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -158,7 +158,7 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 
     if (argc != 3 && argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((last = strrchr(argv[1], '/')) == NULL)
@@ -168,31 +168,33 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 
     if (last[0] == '\0') {
 	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 3) {
 	if (sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     } else if (sscanf(argv[2], "%lf", &scan[X]) != 1 ||
 	       sscanf(argv[3], "%lf", &scan[Y]) != 1 ||
 	       sscanf(argv[4], "%lf", &scan[Z]) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad X, Y or Z", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     /* convert from double to fastf_t */
     VMOVE(model_pt, scan);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & GED_ERROR)
-	return GED_ERROR;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
 
     nearest = find_pipe_pnt_nearest_pnt(&((struct rt_pipe_internal *)intern.idb_ptr)->pipe_segs_head,
 				     model_pt, gedp->ged_gvp->gv_view2model);
@@ -201,11 +203,11 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 
     if (seg_i < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find segment for %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_printf(gedp->ged_result_str, "%d", seg_i);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -224,8 +226,8 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
     int rflag = 0;
     char *last;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -238,13 +240,13 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 4 || 5 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 5) {
 	if (argv[1][0] != '-' || argv[1][1] != 'r' || argv[1][2] != '\0') {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	rflag = 1;
@@ -259,42 +261,44 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 
     if (last[0] == '\0') {
 	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%d", &seg_i) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[3], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[3]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
-    VSCALE(ps_pt, scan, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(ps_pt, scan, gedp->dbip->dbi_local2base);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
-	return GED_ERROR;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) == BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE) {
 	bu_vls_printf(gedp->ged_result_str, "Object not a PIPE");
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
     if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (rflag) {
@@ -304,7 +308,7 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
     if (_ged_pipe_move_pnt(pipeip, ps, ps_pt)) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot move point there", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     {
@@ -318,11 +322,11 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	    VMOVE(curr_ps->pp_coord, curr_pt);
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     }
 
     rt_db_free_internal(&intern);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

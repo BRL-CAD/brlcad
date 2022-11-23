@@ -12,7 +12,6 @@ set(BREP_INCLUDE_DIRS
 set(BREP_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${REGEX_INCLUDE_DIRS}
-  ${BRLCAD_SOURCE_DIR}/src/other/Eigen
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(brep BREP_INCLUDE_DIRS BREP_LOCAL_INCLUDE_DIRS)
@@ -49,7 +48,7 @@ set(LIBBREP_SOURCES
   tools/util.cpp
   )
 
-BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${POLY2TRI_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbv;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${POLY2TRI_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(HIDE_INTERNAL_SYMBOLS)
@@ -65,7 +64,6 @@ CMAKEFILES(
   PullbackCurve.h
   brep_defines.h
   brep_except.h
-  cdt/RTree.h
   cdt/cdt.h
   cdt/mesh.h
   debug_plot.h

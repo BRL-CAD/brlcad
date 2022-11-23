@@ -1,7 +1,7 @@
 /*                       S H _ F L A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,10 +51,10 @@
 #include "optical.h"
 
 
-HIDDEN int flat_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void flat_print(register struct region *rp, void *dp);
-HIDDEN void flat_free(void *cp);
+static int flat_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int flat_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void flat_print(register struct region *rp, void *dp);
+static void flat_free(void *cp);
 
 /* local sp_hook functions */
 /* these are two helper functions to process input color and transparency values */
@@ -196,7 +196,7 @@ singleNormalizedInput_hook(const struct bu_structparse *sdp,
  * shader.  The shader specific flat_specific structure is allocated and
  * default values are set.  Then any user-given values override.
  */
-HIDDEN int
+static int
 flat_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
 
@@ -294,14 +294,14 @@ flat_render(struct application *ap, const struct partition *pp, struct shadework
 }
 
 
-HIDDEN void
+static void
 flat_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, flat_parse_tab, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 flat_free(void *cp)
 {
     BU_PUT(cp, struct flat_specific);

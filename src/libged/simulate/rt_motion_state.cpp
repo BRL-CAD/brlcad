@@ -1,7 +1,7 @@
 /*             R T _ M O T I O N _ S T A T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2021 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ namespace
 {
 
 
-HIDDEN void
+static void
 bt_transform_to_matrix(const btTransform &transform, fastf_t * const matrix)
 {
     if (!matrix)
@@ -55,7 +55,7 @@ bt_transform_to_matrix(const btTransform &transform, fastf_t * const matrix)
 }
 
 
-HIDDEN void
+static void
 path_to_matrix(db_i &db, const db_full_path &path, fastf_t * const result)
 {
     RT_CK_DBI(&db);
@@ -76,7 +76,7 @@ path_to_matrix(db_i &db, const db_full_path &path, fastf_t * const result)
 }
 
 
-HIDDEN void
+static void
 check_region_path(const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
@@ -96,7 +96,7 @@ check_region_path(const db_full_path &path)
 }
 
 
-HIDDEN void
+static void
 apply_tree_matrix(db_i &db, const db_full_path &path,
 		  const fastf_t * const matrix)
 {
@@ -115,11 +115,11 @@ apply_tree_matrix(db_i &db, const db_full_path &path,
     RT_DB_INTERNAL_INIT(&parent_internal);
 
     if (0 > rt_db_get_internal(&parent_internal, &parent_dir, &db, bn_mat_identity,
-			       &rt_uniresource))
+			      &rt_uniresource))
 	bu_bomb("rt_db_get_internal() failed");
 
     rt_comb_internal &comb = *static_cast<rt_comb_internal *>
-			     (parent_internal.idb_ptr);
+    (parent_internal.idb_ptr);
     RT_CK_COMB(&comb);
 
     tree * const leaf = db_find_named_leaf(comb.tree,

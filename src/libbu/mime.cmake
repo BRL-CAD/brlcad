@@ -1,7 +1,7 @@
 #                      M I M E . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2015-2021 United States Government as represented by
+# Copyright (c) 2015-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -156,7 +156,7 @@ set(h_contents "${h_contents}\n#endif /*BU_MIME_TYPES_H*/\n")
 
 # C mapping functions - extension to type
 foreach(c ${ACTIVE_TYPES})
-  set(enum_str "HIDDEN int\nmime_${c}(const char *ext)\n{")
+  set(enum_str "static int\nmime_${c}(const char *ext)\n{")
   list(SORT ${c}_types)
   foreach(type ${${c}_types})
     foreach(ext ${${type}_extensions})
@@ -186,7 +186,7 @@ set(c_contents "${c_contents}\n${mcstr}")
 
 # C mapping functions - type to string
 foreach(c ${ACTIVE_TYPES})
-  set(enum_str "HIDDEN const char *\nmime_str_${c}(int type)\n{")
+  set(enum_str "static const char *\nmime_str_${c}(int type)\n{")
   string(TOUPPER "${c}" c_u)
   set(enum_str "${enum_str}\n    const char *ret = NULL;")
   set(enum_str "${enum_str}\n    if (type < 0 || type >= BU_MIME_${c_u}_UNKNOWN) {\n\tret = bu_strdup(\"BU_MIME_${c_u}_UNKNOWN\");\n\tgoto found_type;\n    }\n")
@@ -230,7 +230,7 @@ set(c_contents "${c_contents}\n${enum_str}")
 
 # C mapping functions - type to extension(s)
 foreach(c ${ACTIVE_TYPES})
-  set(enum_str "HIDDEN const char *\nmime_ext_${c}(int type)\n{")
+  set(enum_str "static const char *\nmime_ext_${c}(int type)\n{")
   string(TOUPPER "${c}" c_u)
   set(enum_str "${enum_str}\n    const char *ret = NULL;")
   set(enum_str "${enum_str}\n    if (type < 0 || type >= BU_MIME_${c_u}_UNKNOWN) {\n\tgoto found_type;\n    }\n")

@@ -1,7 +1,7 @@
 /*                         P R E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 
 #include "../ged_private.h"
 
-static struct bn_vlblock *preview_vbp;
+static struct bv_vlblock *preview_vbp;
 static double preview_delay;
 static int preview_mode;
 static int preview_desiredframe;
@@ -45,7 +45,6 @@ static int preview_currentframe;
 static int preview_tree_walk_needed;
 static int draw_eye_path;
 static char *image_name = NULL;
-
 
 /* FIXME: this shouldn't exist as a static array and doesn't even seem
  * to be necessary.  gd_rt_cmd points into it as an argv, but the
@@ -59,10 +58,10 @@ int
 ged_cm_anim(const int argc, const char **argv)
 {
 
-    if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
+    if (_ged_current_gedp->dbip == DBI_NULL)
 	return 0;
 
-    if (db_parse_anim(_ged_current_gedp->ged_wdbp->dbip, argc, (const char **)argv) < 0) {
+    if (db_parse_anim(_ged_current_gedp->dbip, argc, (const char **)argv) < 0) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "cm_anim:  %s %s failed\n", argv[1], argv[2]);
 	return -1;		/* BAD */
     }
@@ -76,13 +75,13 @@ ged_cm_anim(const int argc, const char **argv)
 int
 ged_cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 {
-    if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
+    if (_ged_current_gedp->dbip == DBI_NULL)
 	return 0;
 
     /*f_zap(NULL, interp, 0, (char **)0);*/
 
     /* Free animation structures */
-    db_free_anim(_ged_current_gedp->ged_wdbp->dbip);
+    db_free_anim(_ged_current_gedp->dbip);
 
     preview_tree_walk_needed = 0;
     return 0;
@@ -97,6 +96,7 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
     vect_t xv, yv;			/* view x, y */
     vect_t xm, ym;			/* model x, y */
     struct bu_list *vhead = &preview_vbp->head[0];
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     /* Only display the frames the user is interested in */
     if (preview_currentframe < preview_desiredframe) return 0;
@@ -104,15 +104,15 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 
     /* Record eye path as a polyline.  Move, then draws */
     if (BU_LIST_IS_EMPTY(vhead)) {
-	RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(vlfree, vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
     } else {
-	RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(vlfree, vhead, _ged_eye_model, BV_VLIST_LINE_DRAW);
     }
 
     /* First step:  put eye at view center (view 0, 0, 0) */
     MAT_COPY(_ged_current_gedp->ged_gvp->gv_rotation, _ged_viewrot);
     MAT_DELTAS_VEC_NEG(_ged_current_gedp->ged_gvp->gv_center, _ged_eye_model);
-    bview_update(_ged_current_gedp->ged_gvp);
+    bv_update(_ged_current_gedp->ged_gvp);
 
     /*
      * Compute camera orientation notch to right (+X) and up (+Y)
@@ -122,10 +122,10 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
     VSET(yv, 0.0, 0.05, 0.0);
     MAT4X3PNT(xm, _ged_current_gedp->ged_gvp->gv_view2model, xv);
     MAT4X3PNT(ym, _ged_current_gedp->ged_gvp->gv_view2model, yv);
-    RT_ADD_VLIST(vhead, xm, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, ym, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, _ged_eye_model, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, xm, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, ym, BV_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, _ged_eye_model, BV_VLIST_LINE_MOVE);
 
     /* Second step:  put eye at view 0, 0, 1.
      * For eye to be at 0, 0, 1, the old 0, 0, -1 needs to become 0, 0, 0.
@@ -133,7 +133,7 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
     VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
     MAT4X3PNT(new_cent, _ged_current_gedp->ged_gvp->gv_view2model, xlate);
     MAT_DELTAS_VEC_NEG(_ged_current_gedp->ged_gvp->gv_center, new_cent);
-    bview_update(_ged_current_gedp->ged_gvp);
+    bv_update(_ged_current_gedp->ged_gvp);
 
     /* If new treewalk is needed, get new objects into view. */
     if (preview_tree_walk_needed) {
@@ -141,8 +141,8 @@ ged_cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 
 	av[0] = "zap";
 	av[1] = NULL;
+	(void)ged_exec(_ged_current_gedp, 1, av);
 
-	(void)ged_zap(_ged_current_gedp, 1, av);
 	_ged_drawtrees(_ged_current_gedp, _ged_current_gedp->ged_gdp->gd_rt_cmd_len, (const char **)&_ged_current_gedp->ged_gdp->gd_rt_cmd[1], preview_mode, (struct _ged_client_data *)0);
     }
 
@@ -262,9 +262,9 @@ _loadframe(struct ged *gedp, FILE *fp)
     }
 
     if (end) {
-	return GED_OK; /* possible more frames */
+	return BRLCAD_OK; /* possible more frames */
     }
-    return GED_ERROR; /* end of frames */
+    return BRLCAD_ERROR; /* end of frames */
 }
 
 
@@ -293,9 +293,9 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls name = BU_VLS_INIT_ZERO;
     char *dot;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -308,7 +308,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     preview_delay = 0;			/* Full speed, by default */
@@ -349,7 +349,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "        -D#     desired starting frame\n");
 		bu_vls_printf(gedp->ged_result_str, "        -K#     final frame\n");
 		bu_vls_printf(gedp->ged_result_str, "        -o image_name.ext     output frame to file typed by extension(defaults to PIX)\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 		break;
@@ -361,7 +361,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     fp = fopen(argv[1], "r");
     if (fp == NULL) {
 	perror(argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     args = argc + 2 + ged_who_argc(gedp);
@@ -378,7 +378,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    preview_vbp = rt_vlblock_init();
+    preview_vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
 
     bu_vls_printf(gedp->ged_result_str, "eyepoint at (0, 0, 1) viewspace\n");
 
@@ -401,7 +401,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_strcpy(&name, image_name);
 	}
     }
-    while (_loadframe(gedp, fp) == GED_OK) {
+    while (_loadframe(gedp, fp) == BRLCAD_OK) {
 	if (image_name) {
 	    struct bu_vls fullname = BU_VLS_INIT_ZERO;
 	    const char *screengrab_args[3];
@@ -413,7 +413,7 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
 			   preview_currentframe, bu_vls_addr(&extension));
 	    screengrab_args[screengrab_argc++] = bu_vls_addr(&fullname);
 
-	    ged_screen_grab(gedp, screengrab_argc, screengrab_args);
+	    ged_exec(gedp, screengrab_argc, screengrab_args);
 
 	    bu_vls_free(&fullname);
 	}
@@ -427,16 +427,23 @@ ged_preview_core(struct ged *gedp, int argc, const char *argv[])
     fclose(fp);
     fp = NULL;
 
-    if (draw_eye_path)
-	_ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
+    if (draw_eye_path) {
+	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+	if (BU_STR_EQUAL(nview, "1")) {
+	    struct bview *view = gedp->ged_gvp;
+	    bv_vlblock_obj(preview_vbp, view, "preview::eye_path");
+	} else {
+	    _ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
+	}
+    }
 
     if (preview_vbp) {
-	bn_vlblock_free(preview_vbp);
-	preview_vbp = (struct bn_vlblock *)NULL;
+	bv_vlblock_free(preview_vbp);
+	preview_vbp = (struct bv_vlblock *)NULL;
     }
-    db_free_anim(gedp->ged_wdbp->dbip);	/* Forget any anim commands */
+    db_free_anim(gedp->dbip);	/* Forget any anim commands */
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

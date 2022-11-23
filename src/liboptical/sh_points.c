@@ -1,7 +1,7 @@
 /*                     S H _ P O I N T S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2021 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,10 +61,10 @@ struct bu_structparse points_parse[] = {
 };
 
 
-HIDDEN int points_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int points_render(struct application *ap, const struct partition *partp, struct shadework *swp, void *dp);
-HIDDEN void points_print(register struct region *rp, void *dp);
-HIDDEN void points_mfree(void *cp);
+static int points_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int points_render(struct application *ap, const struct partition *partp, struct shadework *swp, void *dp);
+static void points_print(register struct region *rp, void *dp);
+static void points_mfree(void *cp);
 
 struct mfuncs points_mfuncs[] = {
     {MF_MAGIC,	"points",	0,		MFI_UV,		0,     points_setup,	points_render,	points_print,	points_mfree },
@@ -85,7 +85,7 @@ struct points {
  * <0 failed
  * >0 success
  */
-HIDDEN int
+static int
 points_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
@@ -154,7 +154,7 @@ fail:
  * and a "size" of the pixel being rendered (du, dv), fill in the
  * color of the "brightest" point (if any) within that region.
  */
-HIDDEN int
+static int
 points_render(struct application *ap, const struct partition *UNUSED(partp), struct shadework *swp, void *dp)
 {
     register struct points_specific *ptp =
@@ -216,7 +216,7 @@ points_render(struct application *ap, const struct partition *UNUSED(partp), str
 }
 
 
-HIDDEN void
+static void
 points_print(register struct region *UNUSED(rp), void *dp)
 {
     bu_struct_print("points_setup", points_parse, (char *)dp);
@@ -224,7 +224,7 @@ points_print(register struct region *UNUSED(rp), void *dp)
 }
 
 
-HIDDEN void
+static void
 points_mfree(void *cp)
 {
     /* XXX - free linked lists in every bin! */

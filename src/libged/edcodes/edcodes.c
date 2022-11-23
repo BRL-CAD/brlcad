@@ -1,7 +1,7 @@
 /*                         E D C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,12 +36,12 @@
 #include "../ged_private.h"
 
 
-#define EDCODES_OK GED_OK
-#define EDCODES_NOTOK GED_ERROR
+#define EDCODES_OK BRLCAD_OK
+#define EDCODES_NOTOK BRLCAD_ERROR
 #define EDCODES_HALT -99
 
 
-HIDDEN int
+static int
 edcodes_id_compare(const void *p1, const void *p2, void *UNUSED(arg))
 {
     int id1, id2;
@@ -53,7 +53,7 @@ edcodes_id_compare(const void *p1, const void *p2, void *UNUSED(arg))
 }
 
 
-HIDDEN int
+static int
 edcodes_reg_compare(const void *p1, const void *p2, void *UNUSED(arg))
 {
     char *reg1, *reg2;
@@ -65,9 +65,9 @@ edcodes_reg_compare(const void *p1, const void *p2, void *UNUSED(arg))
 }
 
 
-HIDDEN int edcodes_collect_regnames(struct ged *, struct directory *, int);
+static int edcodes_collect_regnames(struct ged *, struct directory *, int);
 
-HIDDEN void
+static void
 edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4))
 {
     int ret;
@@ -95,7 +95,7 @@ edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), 
 }
 
 
-HIDDEN int
+static int
 edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
 {
     int id;
@@ -106,7 +106,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     if (!(dp->d_flags & RT_DIR_COMB))
 	return EDCODES_OK;
 
-    id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Cannot get records for %s\n", dp->d_namep);
@@ -128,7 +128,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     }
 
     if (comb->tree) {
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node, (void *)&pathpos, (void *)gedp, (void *)&status, (void *)NULL);
+	db_tree_funcleaf(gedp->dbip, comb, comb->tree, edcodes_traverse_node, (void *)&pathpos, (void *)gedp, (void *)&status, (void *)NULL);
     }
 
     intern.idb_meth->ft_ifree(&intern);
@@ -155,9 +155,9 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 
     static const char *usage = "[-i|-n|-r|-E editor] object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -188,7 +188,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 
     if ((nflag + sort_by_ident + sort_by_region) > 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     argc -= bu_optind - 1;
@@ -198,24 +198,24 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp;
 
 	for (i = 1; i < argc; ++i) {
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
+	    if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 		status = edcodes_collect_regnames(gedp, dp, 0);
 
 		if (status != EDCODES_OK) {
 		    if (status == EDCODES_HALT)
 			bu_vls_printf(gedp->ged_result_str, "%s: nesting is too deep\n", argv[0]);
 
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    }
 	}
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (!fp)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "ged_edcodes_core av");
     av[0] = "wcodes";
@@ -227,10 +227,10 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (ged_wcodes(gedp, argc + 1, (const char **)av) & GED_ERROR) {
+    if (ged_exec(gedp, argc + 1, (const char **)av) & BRLCAD_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "ged_edcodes_core av");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sort_by_ident || sort_by_region) {
@@ -244,7 +244,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 	if (f_srt == NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", argv[0]);
 	    bu_file_delete(tmpfil);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* count lines */
@@ -283,9 +283,9 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
     if (_ged_editit(editstring, tmpfil)) {
 	av[0] = "rcodes";
 	av[2] = NULL;
-	status = ged_rcodes(gedp, 2, (const char **)av);
+	status = ged_exec(gedp, 2, (const char **)av);
     } else
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
 
     bu_file_delete(tmpfil);
     bu_free((void *)av, "ged_edcodes_core av");

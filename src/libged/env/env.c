@@ -1,7 +1,7 @@
 /*                           E N V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ extern int env_cmd(struct bu_vls *s_out, int argc, const char **argv);
 int
 ged_env_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -59,7 +59,7 @@ ged_env_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    ret = (!ret) ? GED_OK : GED_ERROR;
+    ret = (!ret) ? BRLCAD_OK : BRLCAD_ERROR;
 
     return ret;
 }

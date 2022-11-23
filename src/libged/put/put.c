@@ -1,7 +1,7 @@
 /*                         P U T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,9 +42,9 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
     char type[16];
     static const char *usage = "object type attrs";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -57,14 +57,14 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     name = (char *)argv[1];
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     RT_DB_INTERNAL_INIT(&intern);
@@ -78,7 +78,7 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
     ftp = rt_get_functab_by_label(type);
     if (ftp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s is an unknown object type.", type);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     RT_CK_FUNCTAB(ftp);
@@ -89,20 +89,21 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
 	rt_generic_make(ftp, &intern);
     }
 
-    if (!ftp->ft_adjust || ftp->ft_adjust(gedp->ged_result_str, &intern, argc-3, argv+3) & GED_ERROR) {
+    if (!ftp->ft_adjust || ftp->ft_adjust(gedp->ged_result_str, &intern, argc-3, argv+3) & BRLCAD_ERROR) {
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     rt_db_free_internal(&intern);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

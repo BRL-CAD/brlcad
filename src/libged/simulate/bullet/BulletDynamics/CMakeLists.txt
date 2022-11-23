@@ -1,7 +1,5 @@
 INCLUDE_DIRECTORIES( ${BULLET_PHYSICS_SOURCE_DIR}/src  )
 
-
-
 SET(BulletDynamics_SRCS
 	Character/btKinematicCharacterController.cpp
 	ConstraintSolver/btConeTwistConstraint.cpp
@@ -158,3 +156,10 @@ DESTINATION ${INCLUDE_INSTALL_DIR}/BulletDynamics)
 		ENDIF (APPLE AND BUILD_SHARED_LIBS AND FRAMEWORK)
 	ENDIF (NOT INTERNAL_CREATE_DISTRIBUTABLE_MSVC_PROJECTFILES)
 ENDIF (INSTALL_LIBS)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

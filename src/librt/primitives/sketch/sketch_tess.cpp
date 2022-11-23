@@ -1,7 +1,7 @@
 /*                        S K E T C H _ T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2021 United States Government as represented by
+ * Copyright (c) 2012-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@
 /* returns the incenter of the inscribed circle inside the triangle defined by
  * points a, b, c
  */
-HIDDEN ON_2dPoint
+static ON_2dPoint
 incenter(const ON_2dPoint a, const ON_2dPoint b, const ON_2dPoint c)
 {
     fastf_t a_b, a_c, b_c, sum;
@@ -74,7 +74,7 @@ incenter(const ON_2dPoint a, const ON_2dPoint b, const ON_2dPoint c)
  * the biarc passes through the first and last control points, and the incenter
  * of the circle defined by the first, last and intersection points.
  */
-HIDDEN ON_Arc
+static ON_Arc
 make_biarc(const ON_BezierCurve& bezier)
 {
     ON_2dPoint isect, arc_pt;
@@ -107,7 +107,7 @@ make_biarc(const ON_BezierCurve& bezier)
  * value of parameter 't' where the signed curvature of the bezier changes
  * signs. Returns true if an inflection point is found.
  */
-HIDDEN bool
+static bool
 bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
 {
     int sign;
@@ -142,7 +142,7 @@ bezier_inflection(const ON_BezierCurve& bezier, fastf_t& inflection_pt)
  * recursively calling on the subsections until it is approximated to
  * tolerance by the biarc
  */
-HIDDEN void
+static void
 approx_bezier(const ON_BezierCurve& bezier, const ON_Arc& biarc, const struct bn_tol *tol, std::vector<ON_Arc>& approx)
 {
     fastf_t t = 0.0, step = 0.0;
@@ -180,7 +180,7 @@ approx_bezier(const ON_BezierCurve& bezier, const ON_Arc& biarc, const struct bn
 /* approximates a bezier curve with a set of circular arcs.
  * returns approximation in carcs
  */
-HIDDEN void
+static void
 bezier_to_carcs(const ON_BezierCurve& bezier, const struct bn_tol *tol, std::vector<ON_Arc>& carcs)
 {
     bool skip_while = true, curvature_changed = false;
@@ -340,12 +340,12 @@ rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

@@ -1,7 +1,7 @@
 /*                     D B 5 _ S I Z E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ struct db5_sizecalc {
 };
 #define DB5SIZE(_dp) ((struct db5_sizecalc *)_dp->u_data)
 
-HIDDEN int
+static int
 db_get_external_reuse(struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
 {
     ep->ext_nbytes = dp->d_len;
@@ -87,7 +87,7 @@ db_get_external_reuse(struct bu_external *ep, const struct directory *dp, const 
 
 // TODO - figure out what to do about submodel...
 #define DB5COMB_TOKEN_LEAF 1
-HIDDEN int
+static int
 _db5_children(
 	const struct directory *dp,
 	const struct db_i *dbip,
@@ -244,7 +244,7 @@ _db5_children(
 }
 
 
-HIDDEN long
+static long
 _db5_get_attributes_size(struct bu_external *ext, const struct db_i *dbip, const struct directory *dp)
 {
     struct db5_raw_internal raw;
@@ -537,12 +537,12 @@ db5size_freemem:
 }
 
 /** @} */
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

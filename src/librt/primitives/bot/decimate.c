@@ -1,7 +1,7 @@
 /*                      D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2021 United States Government as represented by
+ * Copyright (c) 1999-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@
 #define MAX_AFFECTED_FACES 128
 
 
-HIDDEN void
+static void
 delete_edge(int v1, int v2, struct bot_edge **edges)
 {
     struct bot_edge *edg, *prev=NULL;
@@ -106,7 +106,7 @@ delete_edge(int v1, int v2, struct bot_edge **edges)
  * are eliminated.  Faces that used v1 will have that reference
  * changed to v2.
  */
-HIDDEN int
+static int
 decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *faces, size_t num_faces, int face_del1, int face_del2)
 {
     size_t i;
@@ -271,6 +271,10 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *fa
 		    edg->v = -1;
 		    edg->next = NULL;
 		    bu_free(edg, "bot edge");
+		    // TODO - Just freed edg, so we can't use that to test in
+		    // the while loop - is this our terminating case?  Not 100%
+		    // sure what the correct behavior is here...
+		    edg = NULL;
 		}
 	    } else {
 		/* unaffected edge, just continue */
@@ -306,7 +310,7 @@ decimate_edge(int v1, int v2, struct bot_edge **edges, size_t num_edges, int *fa
  * returns 1 if edge can be eliminated without breaking constraints, 0
  * otherwise.
  */
-HIDDEN int
+static int
 edge_can_be_decimated(struct rt_bot_internal *bot,
 		      int *faces,
 		      struct bot_edge **edges,

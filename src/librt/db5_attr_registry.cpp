@@ -1,7 +1,7 @@
 /*             D B 5 _ A T T R _ R E G I S T R Y . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ void db5_attr_registry_init(struct db5_registry *registry)
     registry->internal = (void *)new attr_regmap_t;
 }
 
-HIDDEN
+static
 void db5_attr_ctype_free(struct db5_attr_ctype *attr)
 {
     bu_free((void *)attr->name, "free attr name");

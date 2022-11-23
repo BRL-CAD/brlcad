@@ -248,7 +248,7 @@
 
   <variablelist>
     <varlistentry>
-      <term><prompt>mged&gt;</prompt> <userinput>mater region1 "plastic {tr 0.5 re 0.2}" 210 100 100 0		</userinput></term>
+      <term><prompt>mged&gt; </prompt><userinput>mater region1 "plastic {tr 0.5 re 0.2}" 210 100 100 0		</userinput></term>
       <listitem>
 	<para>Sets <emphasis>region1</emphasis> to use the plastic shader with 50% transparency, 20% 			reflectivity, a base color of (210 100 100), and inheritance set to 0.
 	</para>
@@ -260,7 +260,7 @@
   <example><title>Importing Density Data</title>
   <variablelist>
     <varlistentry>
-      <term><prompt>mged&gt;</prompt> <userinput>mater -d import /home/user/.density</userinput></term>
+      <term><prompt>mged&gt; </prompt><userinput>mater -d import /home/user/.density</userinput></term>
       <listitem>
 	<para>
 	  After this operation, the density valued defined in /home/user/.density are now stored in the .g file.
@@ -273,7 +273,7 @@
   <example><title>Viewing Density Data</title>
   <variablelist>
     <varlistentry>
-      <term><prompt>mged&gt;</prompt> <userinput>mater -d get --name \*Rubber\*</userinput></term>
+      <term><prompt>mged&gt; </prompt><userinput>mater -d get --name \*Rubber\*</userinput></term>
       <listitem>
 	<para>
 	  Lists all density entries with a material name containing "Rubber".
@@ -286,7 +286,7 @@
   <example><title>Names from IDs</title>
   <variablelist>
     <varlistentry>
-      <term><prompt>mged&gt;</prompt> <userinput>mater -d map --names-from-ids /home/user/.density</userinput></term>
+      <term><prompt>mged&gt; </prompt><userinput>mater -d map --names-from-ids /home/user/.density</userinput></term>
       <listitem>
 	<para>
 	  Assigns <emphasis remap="B" role="bold">material_name</emphasis> names from a density file assuming existing <emphasis remap="B" role="bold">material_id</emphasis> attributes.
@@ -299,7 +299,7 @@
   <example><title>IDs from Names</title>
   <variablelist>
     <varlistentry>
-      <term><prompt>mged&gt;</prompt> <userinput>mater -d map --ids-from-names /home/user/.density /home/user/mapping_file </userinput></term>
+      <term><prompt>mged&gt; </prompt><userinput>mater -d map --ids-from-names /home/user/.density /home/user/mapping_file </userinput></term>
       <listitem>
 	<para>
 	  Assigning or updating <emphasis remap="B" role="bold">material_id</emphasis> attributes based on <emphasis remap="B" role="bold">material_name</emphasis> attribute values, density file names, and mapping file associations.

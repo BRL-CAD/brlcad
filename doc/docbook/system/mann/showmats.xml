@@ -39,7 +39,7 @@
   <example><title>List the transformation matrices along a path and the accumulated matrix for the path.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>showmats head/skull/jaw</userinput>
+      <prompt>mged&gt; </prompt><userinput>showmats head/skull/jaw</userinput>
     </para>
     <para>Lists the transformation matrices along the path head/skull/jaw and the
 	accumulated matrix for the entire path.

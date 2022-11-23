@@ -76,13 +76,13 @@
 	  <imageobject role="html">
 	    <imagedata
 	       width="6in"
-	       fileref="../../books/images/tutorial_series_volI_fig01.png" format="PNG"/>
+	       fileref="../books/images/tutorial_series_volI_fig01.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
 	    <imagedata
 	       width="100%"
 	       scalefit="1"
-	       fileref="../../books/images/tutorial_series_volI_fig01.png" format="PNG"/>
+	       fileref="../books/images/tutorial_series_volI_fig01.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
 
@@ -275,12 +275,12 @@
 		  <imagedata
 		      width="2in"
 		      scalefit="1"
-		      fileref="../../books/images/tutorial_series_volI_fig02.png"
+		      fileref="../books/images/tutorial_series_volI_fig02.png"
 		    />
 		</imageobject>
 		<imageobject role="fo">
 		  <imagedata
-		      fileref="../../books/images/tutorial_series_volI_fig02.png"
+		      fileref="../books/images/tutorial_series_volI_fig02.png"
 		    />
 		</imageobject>
 	      </inlinemediaobject></entry>
@@ -289,12 +289,12 @@
 		   <imagedata
 		      width="2in"
 		      scalefit="1"
-		       fileref="../../books/images/tutorial_series_volI_fig03.png"
+		       fileref="../books/images/tutorial_series_volI_fig03.png"
 		     />
 		 </imageobject>
 		 <imageobject role="fo">
 		   <imagedata
-		       fileref="../../books/images/tutorial_series_volI_fig03.png"
+		       fileref="../books/images/tutorial_series_volI_fig03.png"
 		     />
 		 </imageobject>
 	      </inlinemediaobject></entry>
@@ -303,12 +303,12 @@
 		   <imagedata
 		      width="2in"
 		      scalefit="1"
-		       fileref="../../books/images/tutorial_series_volI_fig04.png"
+		       fileref="../books/images/tutorial_series_volI_fig04.png"
 		     />
 		 </imageobject>
 		 <imageobject role="fo">
 		   <imagedata
-		       fileref="../../books/images/tutorial_series_volI_fig04.png"
+		       fileref="../books/images/tutorial_series_volI_fig04.png"
 		     />
 		 </imageobject>
 	      </inlinemediaobject></entry>
@@ -326,12 +326,12 @@
 		  <imagedata
 		      width="2in"
 		      scalefit="1"
-		      fileref="../../books/images/tutorial_series_volI_fig05.png"
+		      fileref="../books/images/tutorial_series_volI_fig05.png"
 		    />
 		</imageobject>
 		<imageobject role="fo">
 		  <imagedata
-		      fileref="../../books/images/tutorial_series_volI_fig05.png"
+		      fileref="../books/images/tutorial_series_volI_fig05.png"
 		    />
 		</imageobject>
 	      </inlinemediaobject></entry>
@@ -340,12 +340,12 @@
 		  <imagedata
 		      width="2in"
 		      scalefit="1"
-		      fileref="../../books/images/tutorial_series_volI_fig06.png"
+		      fileref="../books/images/tutorial_series_volI_fig06.png"
 		    />
 		</imageobject>
 		<imageobject role="fo">
 		  <imagedata
-		      fileref="../../books/images/tutorial_series_volI_fig06.png"
+		      fileref="../books/images/tutorial_series_volI_fig06.png"
 		    />
 		</imageobject>
 	      </inlinemediaobject></entry>
@@ -354,12 +354,12 @@
 		  <imagedata
 		      width="2in"
 		      scalefit="1"
-		      fileref="../../books/images/tutorial_series_volI_fig07.png"
+		      fileref="../books/images/tutorial_series_volI_fig07.png"
 		    />
 		</imageobject>
 		<imageobject role="fo">
 		  <imagedata
-		      fileref="../../books/images/tutorial_series_volI_fig07.png"
+		      fileref="../books/images/tutorial_series_volI_fig07.png"
 		      />
 		</imageobject>
 	      </inlinemediaobject></entry>

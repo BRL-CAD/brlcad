@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ color_putrec(struct ged *gedp, struct mater *mp)
 
     /* we get here only if database is NOT read-only */
 
-    rec.md.md_id = ID_MATERIAL;
+    rec.md.md_id = ID_COLORTAB;
     rec.md.md_low = mp->mt_low;
     rec.md.md_hi = mp->mt_high;
     rec.md.md_r = mp->mt_r;
@@ -65,7 +65,7 @@ color_putrec(struct ged *gedp, struct mater *mp)
 
     if (mp->mt_daddr == MATER_NO_ADDR) {
 	/* Need to allocate new database space */
-	if (db_alloc(gedp->ged_wdbp->dbip, &dir, 1)) {
+	if (db_alloc(gedp->dbip, &dir, 1)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database alloc error, aborting");
 	    return;
 	}
@@ -75,7 +75,7 @@ color_putrec(struct ged *gedp, struct mater *mp)
 	dir.d_len = 1;
     }
 
-    if (db_put(gedp->ged_wdbp->dbip, &dir, &rec, 0, 1)) {
+    if (db_put(gedp->dbip, &dir, &rec, 0, 1)) {
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	return;
     }
@@ -100,7 +100,7 @@ color_zaprec(struct ged *gedp, struct mater *mp)
     dir.d_addr = mp->mt_daddr;
     dir.d_flags = 0;
 
-    if (db_delete(gedp->ged_wdbp->dbip, &dir) != 0) {
+    if (db_delete(gedp->dbip, &dir) != 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database delete error, aborting");
 	return;
     }
@@ -123,9 +123,9 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     char tmpfil[MAXPATHLEN];
     char *editstring = NULL;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     bu_optind = 1;
     /* First, grab the editstring off of the argv list */
@@ -139,7 +139,6 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    argc -= bu_optind - 1;
     argv += bu_optind - 1;
 
     /* initialize result */
@@ -148,7 +147,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: could not create tmp file", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fprintf(fp, "%s", hdr);
@@ -162,24 +161,24 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 
     if (!_ged_editit(editstring, (const char *)tmpfil)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: editor returned bad status. Aborted\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Read file and process it */
     fp = fopen(tmpfil, "r");
     if (fp == NULL) {
 	perror(tmpfil);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_fgets(line, sizeof (line), fp) == NULL ||
 	line[0] != hdr[0]) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Header line damaged, aborting\n", argv[0]);
 	(void)fclose(fp);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	/* Zap all the current records, both in core and on disk */
 	while (rt_material_head() != MATER_NULL) {
 	    zot = rt_material_head();
@@ -231,7 +230,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(&vls, "{%d %d %d %d %d} ", low, hi, r, g, b);
 	}
 
-	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&vls), gedp->ged_wdbp->dbip);
+	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&vls), gedp->dbip);
 	db5_import_color_table(bu_vls_addr(&vls));
 	bu_vls_free(&vls);
     }
@@ -243,23 +242,23 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     if (gedp->ged_gdp)
 	dl_color_soltab(gedp->ged_gdp->gd_headDisplay);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 int
 ged_edcolor_core(struct ged *gedp, int argc, const char *argv[])
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return edcolor(gedp, argc, argv);
@@ -274,9 +273,9 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
     struct mater *next_mater;
     static const char *usage = "[-e] [low high r g b]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -289,7 +288,7 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 6 && argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* edcolor */
@@ -298,11 +297,11 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	    return edcolor(gedp, argc, argv);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	/* Delete all color records from the database */
 	mp = rt_material_head();
 	while (mp != MATER_NULL) {
@@ -351,11 +350,11 @@ ged_color_core(struct ged *gedp, int argc, const char *argv[])
 	 */
 	rt_vls_color_map(&colors);
 
-	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), gedp->ged_wdbp->dbip);
+	db5_update_attribute("_GLOBAL", "regionid_colortable", bu_vls_addr(&colors), gedp->dbip);
 	bu_vls_free(&colors);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

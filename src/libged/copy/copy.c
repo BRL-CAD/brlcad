@@ -1,7 +1,7 @@
 /*                         C O P Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,9 +41,9 @@ ged_copy_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_external external;
     static const char *usage = "from to";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -56,29 +56,30 @@ ged_copy_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_LOOKUP(gedp, from_dp, argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, GED_ERROR);
+    GED_DB_LOOKUP(gedp, from_dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
+    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
 
-    if (db_get_external(&external, from_dp, gedp->ged_wdbp->dbip)) {
+    if (db_get_external(&external, from_dp, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (wdb_export_external(gedp->ged_wdbp, &external, argv[2],
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_export_external(wdbp, &external, argv[2],
 			    from_dp->d_flags,  from_dp->d_minor_type) < 0) {
 	bu_free_external(&external);
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
 		      argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_free_external(&external);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 #ifdef GED_PLUGIN

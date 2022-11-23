@@ -1,7 +1,7 @@
 /*                       C O N V E R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -127,7 +127,7 @@ bu_cv_cookie(const char *in)			/* input format */
 }
 
 
-HIDDEN void
+static void
 bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
 {
     register char *cp = buf;
@@ -508,6 +508,10 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
      */
     outsize = bu_cv_itemlen(outcookie);
     insize = bu_cv_itemlen(incookie);
+
+    /* Sanity */
+    if (!outsize || !insize)
+	return 0;
 
     /*
      * If the input format is the same as the output format then the

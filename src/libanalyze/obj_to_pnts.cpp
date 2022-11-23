@@ -1,7 +1,7 @@
 /*                    O B J _ T O  _ P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2021 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ pnthickness_free(struct pnt_normal_thickness *p, int free_pnt) {
     BU_PUT(p, struct pnt_normal_thickness);
 }
 
-HIDDEN void
+static void
 _tgc_hack_fix(struct partition *part, struct soltab *stp) {
     /* hack fix for bad tgc surfaces - avoids a logging crash, which is probably something else altogether... */
     if (bu_strncmp("rec", stp->st_meth->ft_label, 3) == 0 || bu_strncmp("tgc", stp->st_meth->ft_label, 3) == 0) {
@@ -74,7 +74,7 @@ _tgc_hack_fix(struct partition *part, struct soltab *stp) {
     }
 }
 
-HIDDEN int
+static int
 outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     double thickness = 0.0;
@@ -112,7 +112,7 @@ outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *
     return 0;
 }
 
-HIDDEN int
+static int
 all_pnts_hit(struct application *app, struct partition *partH, struct seg *UNUSED(segs))
 {
     double thickness = 0.0;
@@ -152,7 +152,7 @@ all_pnts_hit(struct application *app, struct partition *partH, struct seg *UNUSE
     return 0;
 }
 
-HIDDEN int
+static int
 op_overlap(struct application *ap, struct partition *UNUSED(pp),
 		struct region *UNUSED(reg1), struct region *UNUSED(reg2),
 		struct partition *UNUSED(hp))
@@ -162,7 +162,7 @@ op_overlap(struct application *ap, struct partition *UNUSED(pp),
 }
 
 
-HIDDEN int
+static int
 op_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
@@ -174,7 +174,7 @@ analyze_prand_pnt_worker(int cpu, void *ptr)
 {
     struct application ap;
     struct rt_gen_worker_vars *state = &(((struct rt_gen_worker_vars *)ptr)[cpu]);
-    int i;
+    size_t i;
 
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = state->rtip;
@@ -240,14 +240,15 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
        const char *obj, struct bn_tol *tol, int flags, int max_pnts, int max_time, int verbosity)
 {
     int pntcnt = 0;
-    int ret, i, j;
+    size_t i;
+    int ret, j;
     int do_grid = 1;
     fastf_t oldtime, currtime;
     int ind = 0;
     int count = 0;
     double avgt = 0.0;
     struct rt_i *rtip = NULL;
-    int ncpus = bu_avail_cpus();
+    size_t ncpus = bu_avail_cpus();
     struct rt_gen_worker_vars *state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
     struct bu_ptbl **grid_pnts = NULL;
     struct bu_ptbl **rand_pnts = NULL;
@@ -285,11 +286,11 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 	state[i].foverlap = op_overlap;
 	state[i].resp = &resp[i];
 	state[i].ind_src = &ind;
-	rt_init_resource(state[i].resp, i, rtip);
+	rt_init_resource(state[i].resp, (int)i, rtip);
     }
     if (rt_gettree(rtip, obj) < 0) return -1;
 
-    rt_prep_parallel(rtip, ncpus);
+    rt_prep_parallel(rtip, (int)ncpus);
 
     currtime = bu_gettime();
 
@@ -337,8 +338,9 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 
 	/* We now know enough to get the max ray count.  Try up to 10x the number of max
 	 * points of rays, or up to 2 million. */
-	long int mrc = ((max_pnts * 10) > 2000000 || !max_pnts) ? 2000000 : max_pnts * 10;
-	long int craynum = mrc/(ncpus+1);
+	size_t mrc = ((max_pnts * 10) > 2000000 || !max_pnts) ? 2000000 : max_pnts * 10;
+	size_t ccnt = (ncpus >= LONG_MAX-1) ? ncpus : ncpus+1;
+	size_t craynum = mrc/ccnt;
 	fastf_t mt = (max_time > 0) ? (fastf_t)max_time : (fastf_t)INT_MAX;
 
 	point_t center;
@@ -347,7 +349,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 
 	if (flags & ANALYZE_OBJ_TO_PNTS_RAND) {
 	    fastf_t delta = 0;
-	    long int raycnt = 0;
+	    size_t raycnt = 0;
 	    int pc = 0;
 	    rand_pnts = (struct bu_ptbl **)bu_calloc(ncpus+1, sizeof(struct bu_ptbl *), "local state");
 	    for (i = 0; i < ncpus+1; i++) {
@@ -378,7 +380,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 
 	if (flags & ANALYZE_OBJ_TO_PNTS_SOBOL) {
 	    fastf_t delta = 0;
-	    long int raycnt = 0;
+	    size_t raycnt = 0;
 	    int pc = 0;
 	    struct bn_soboldata *sobolseq = bn_sobol_create(2, time(NULL));
 	    bn_sobol_skip(sobolseq, (int)craynum);
@@ -548,12 +550,12 @@ memfree:
     return ret;
 }
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

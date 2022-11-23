@@ -1,7 +1,7 @@
 /*                         W C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,10 +45,10 @@ static struct directory **path = NULL;
 static size_t path_capacity = 0;
 
 
-HIDDEN int wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathpos);
+static int wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathpos);
 
 
-HIDDEN void
+static void
 wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4))
 {
     FILE *fp;
@@ -73,7 +73,7 @@ wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union
 }
 
 
-HIDDEN int
+static int
 wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathpos)
 {
     size_t i;
@@ -82,17 +82,17 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
     int id;
 
     if (!(dp->d_flags & RT_DIR_COMB))
-	return GED_OK;
+	return BRLCAD_OK;
 
-    id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get records for %s\n", dp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (id != ID_COMBINATION) {
 	intern.idb_meth->ft_ifree(&intern);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -108,7 +108,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
 	    fprintf(fp, "/%s", path[i]->d_namep);
 	fprintf(fp, "/%s\n", dp->d_namep);
 	intern.idb_meth->ft_ifree(&intern);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (comb->tree) {
@@ -117,12 +117,12 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
 	    path = (struct directory **)bu_realloc(path, sizeof(struct directory *) * path_capacity, "realloc path bigger");
 	}
 	path[pathpos] = dp;
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, wcodes_printnode,
+	db_tree_funcleaf(gedp->dbip, comb, comb->tree, wcodes_printnode,
 			 (void *)fp, (void *)&pathpos, (void *)gedp, (void *)gedp);
     }
 
     intern.idb_meth->ft_ifree(&intern);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -135,8 +135,8 @@ ged_wcodes_core(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     static const char *usage = "filename object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -146,26 +146,26 @@ ged_wcodes_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	if (argc == 1)
 	    return GED_HELP;
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fp = fopen(argv[1], "w");
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Failed to open file - %s",
 		      argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     path = (struct directory **)bu_calloc(PATH_STEP, sizeof(struct directory *), "alloc initial path");
     path_capacity = PATH_STEP;
 
     for (i = 2; i < argc; ++i) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 	    status = wcodes_printcodes(gedp, fp, dp, 0);
 
-	    if (status & GED_ERROR) {
+	    if (status & BRLCAD_ERROR) {
 		(void)fclose(fp);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -175,7 +175,7 @@ ged_wcodes_core(struct ged *gedp, int argc, const char *argv[])
     path = NULL;
     path_capacity = 0;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -1,7 +1,7 @@
 /*                        J O I N T 2 . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2021 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ joint_selection(
      */
     if (argc < 4) {
 	bu_vls_printf(gedp->ged_result_str, "not enough args for selection replace\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     solid_name = argv[1];
@@ -87,7 +87,7 @@ joint_selection(
 	 */
 	if (argc != 11) {
 	    bu_vls_printf(gedp->ged_result_str, "wrong args for selection replace\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	selection_name = argv[4];
 
@@ -103,7 +103,7 @@ joint_selection(
 	selection_set = ip->idb_meth->ft_find_selections(ip, &query);
 	if (!selection_set) {
 	    bu_vls_printf(gedp->ged_result_str, "no matching selections");
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	/* could be multiple options, just grabbing the first and
@@ -139,7 +139,7 @@ joint_selection(
 	 * selection_name dx dy dz
 	 */
 	if (argc != 8) {
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	selection_name = argv[4];
 
@@ -147,7 +147,7 @@ joint_selection(
 	selections = &selection_set->selections;
 
 	if (BU_PTBL_LEN(selections) < 1) {
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	for (i = 0; i < (int)BU_PTBL_LEN(selections); ++i) {
@@ -157,11 +157,11 @@ joint_selection(
 	    operation.parameters.tran.dy = atof(argv[6]);
 	    operation.parameters.tran.dz = atof(argv[7]);
 
-	    ret = ip->idb_meth->ft_process_selection(ip, gedp->ged_wdbp->dbip,
+	    ret = ip->idb_meth->ft_process_selection(ip, gedp->dbip,
 		    (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
 
 	    if (ret != 0) {
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -176,9 +176,9 @@ ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     /*struct rt_joint_internal *ji; */
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -196,12 +196,12 @@ ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((ndp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
 
     RT_CK_DB_INTERNAL(&intern);
@@ -210,7 +210,7 @@ ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
 
     if (ji->magic != RT_JOINT_INTERNAL_MAGIC) {
 	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a joint primitive.", ndp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     */
 
@@ -218,7 +218,7 @@ ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
     if (BU_STR_EQUAL(argv[2], "selection")) {
 	int ret = joint_selection(gedp, &intern, argc, argv);
 	if (BU_STR_EQUAL(argv[3], "translate") && ret == 0) {
-	    GED_DB_PUT_INTERNAL(gedp, ndp, &intern, &rt_uniresource, GED_ERROR);
+	    GED_DB_PUT_INTERNAL(gedp, ndp, &intern, &rt_uniresource, BRLCAD_ERROR);
 	}
 	rt_db_free_internal(&intern);
 	return ret;
@@ -226,7 +226,7 @@ ged_joint2_core(struct ged *gedp, int argc, const char *argv[])
 
     rt_db_free_internal(&intern);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

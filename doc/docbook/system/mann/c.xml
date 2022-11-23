@@ -56,7 +56,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>c -c abc (a u b)-(a + d)</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>c -c abc (a u b)-(a + d)</userinput></term>
 	  <listitem>
 	    <para>Creates a combination named <emphasis>abc</emphasis> according to the formula
 	    <emphasis>(a u b) - (a + d)</emphasis>.

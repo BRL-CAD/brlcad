@@ -303,7 +303,7 @@ static unsigned long blumtbl[256];
  *
  * Typically the screen and visual default to 0 by being omitted.
  */
-HIDDEN void
+static void
 print_display_info(Display *dpy)
 {
     int i;
@@ -428,7 +428,7 @@ print_display_info(Display *dpy)
 /*
   Create 6x9x4 color cube.
 */
-HIDDEN void
+static void
 X24_createColorCube(struct xinfo *xi)
 {
     size_t i;
@@ -465,7 +465,7 @@ X24_createColorCube(struct xinfo *xi)
 /*
   Create fast lookup tables for dithering
 */
-HIDDEN void
+static void
 X24_createColorTables(struct xinfo *xi)
 {
     int i, j;
@@ -525,7 +525,7 @@ X24_createColorTables(struct xinfo *xi)
 }
 
 
-HIDDEN int
+static int
 x24_setup(struct fb *ifp, int width, int height)
 {
     struct xinfo *xi = XI(ifp);
@@ -879,13 +879,13 @@ x24_setup(struct fb *ifp, int width, int height)
     XFlush(xi->xi_dpy);
 
     /* Allocate image buffer, and make our X11 Image */
+    unsigned int sratio = sizeof(unsigned int)/sizeof(unsigned char);
 
     switch (xi->xi_flags & FLG_VMASK) {
 	case FLG_VD24:
 	case FLG_VT24:
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned int),
-						       width*height)) == NULL) {
-		fb_log("X24_open: pix32 malloc failed\n");
+	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint32_t), sratio*width*height)) == NULL) {
+		fb_log("X24_open: pix24 malloc failed\n");
 		return -1;
 	    }
 
@@ -897,8 +897,8 @@ x24_setup(struct fb *ifp, int width, int height)
 
 	case FLG_VD16:
 	case FLG_VT16:
-	    if ((xi->xi_pix = (unsigned char *) calloc(2, width*height)) == NULL) {
-		fb_log("X24_open: pix32 malloc failed\n");
+	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint16_t), width*height)) == NULL) {
+		fb_log("X24_open: pix16 malloc failed\n");
 		return -1;
 	    }
 
@@ -911,8 +911,7 @@ x24_setup(struct fb *ifp, int width, int height)
 	case FLG_VP8:
 	case FLG_VS8:
 	case FLG_VG8:
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(char),
-						       width*height)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint8_t), width*height)) == NULL) {
 		fb_log("X24_open: pix8 malloc failed\n");
 		return -1;
 	    }
@@ -928,9 +927,8 @@ x24_setup(struct fb *ifp, int width, int height)
 					xi->xi_visual, xi->xi_depth, XYBitmap, 0,
 					NULL, width, height, 32, 0);
 
-	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(char),
-						       xi->xi_image->bytes_per_line * height)) == NULL) {
-		fb_log("X24_open: pix_1 malloc failed\n");
+	    if ((xi->xi_pix = (unsigned char *) calloc(sizeof(uint8_t), xi->xi_image->bytes_per_line * height)) == NULL) {
+		fb_log("X24_open: pix1 malloc failed\n");
 		return -1;
 	    }
 	    xi->xi_image->data = (char *) xi->xi_pix;
@@ -1006,7 +1004,7 @@ x24_setup(struct fb *ifp, int width, int height)
  *
  * x_1, y_1->w, h describes a Rectangle of changed bits (image space coord.)
  */
-HIDDEN void
+static void
 X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx flags */)
 {
     struct xinfo *xi = XI(ifp);
@@ -1861,7 +1859,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 }
 
 
-HIDDEN int
+static int
 X24_rmap(struct fb *ifp, ColorMap *cmp)
 {
     struct xinfo *xi = XI(ifp);
@@ -1873,7 +1871,7 @@ X24_rmap(struct fb *ifp, ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 X24_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     struct xinfo *xi = XI(ifp);
@@ -1981,7 +1979,7 @@ X24_wmap(struct fb *ifp, const ColorMap *cmp)
  * previous contents of the frame buffer still exist, and can be
  * accessed again, even though the windows are transient, per-process.
  */
-HIDDEN int
+static int
 X24_getmem(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -2022,6 +2020,10 @@ X24_getmem(struct fb *ifp)
 		    close(fd);
 		    break;
 		}
+
+		// fd tests over
+		if (fd >= 0)
+		    close(fd);
 
 		/* Change it to local */
 		xi->xi_mode = (xi->xi_mode & ~MODE10_MASK) | MODE10_MALLOC;
@@ -2079,7 +2081,7 @@ store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
 }
 
 
-HIDDEN void
+static void
 X24_updstate(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -2338,7 +2340,7 @@ X24_updstate(struct fb *ifp)
 }
 
 
-HIDDEN void
+static void
 X24_zapmem(void)
 {
 #ifndef HAVE_SYS_MMAN_H
@@ -2368,7 +2370,7 @@ X24_zapmem(void)
 }
 
 
-HIDDEN void
+static void
 X24_destroy(struct xinfo *xi)
 {
     if (xi) {
@@ -2414,7 +2416,7 @@ X24_destroy(struct xinfo *xi)
 }
 
 
-HIDDEN int
+static int
 X24_open(struct fb *ifp, const char *file, int width, int height)
 {
     struct xinfo *xi;
@@ -2524,7 +2526,8 @@ X24_open(struct fb *ifp, const char *file, int width, int height)
     X24_updstate(ifp);
 
     /* Make the Display connection available for selecting on */
-    ifp->i->if_selfd = ConnectionNumber(xi->xi_dpy);
+    if (xi->xi_dpy)
+	ifp->i->if_selfd = ConnectionNumber(xi->xi_dpy);
 
     /* If we already have data, display it */
 
@@ -2582,6 +2585,8 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 
     X24_updstate(ifp);
 
+    unsigned int sratio = sizeof(unsigned int)/sizeof(unsigned char);
+
     switch (xi->xi_flags & FLG_VMASK) {
 	case FLG_VD24:
 	case FLG_VT24:
@@ -2589,9 +2594,8 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 	    XDestroyImage(xi->xi_image);
 
 	    /* Make new buffer and new image */
-	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(unsigned int),
-						      xi->xi_xwidth*xi->xi_xheight)) == NULL) {
-		fb_log("X24: pix32 malloc failed in resize!\n");
+	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint32_t), sratio*xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+		fb_log("X24: pix24 malloc failed in resize!\n");
 		return 1;
 	    }
 
@@ -2607,8 +2611,8 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 	    XDestroyImage(xi->xi_image);
 
 	    /* Make new buffer and new image */
-	    if ((xi->xi_pix = (unsigned char *)calloc(2, xi->xi_xwidth*xi->xi_xheight)) == NULL) {
-		fb_log("X24: pix32 malloc failed in resize!\n");
+	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint16_t), xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+		fb_log("X24: pix16 malloc failed in resize!\n");
 		return 1;
 	    }
 
@@ -2625,8 +2629,7 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 	    XDestroyImage(xi->xi_image);
 
 	    /* Make new buffers and new image */
-	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(char),
-						      xi->xi_xwidth * xi->xi_xheight)) == NULL) {
+	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint8_t), xi->xi_xwidth * xi->xi_xheight)) == NULL) {
 		fb_log("X24: pix8 malloc failed in resize!\n");
 		return 1;
 	    }
@@ -2644,9 +2647,8 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 					xi->xi_visual, xi->xi_depth, XYBitmap, 0,
 					NULL, xi->xi_xwidth, xi->xi_xheight, 32, 0);
 
-	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(char),
-						      xi->xi_image->bytes_per_line * xi->xi_xheight)) == NULL) {
-		fb_log("X24: pix_1 malloc failed in resize!\n");
+	    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(uint8_t), xi->xi_image->bytes_per_line * xi->xi_xheight)) == NULL) {
+		fb_log("X24: pix1 malloc failed in resize!\n");
 		return 1;
 	    }
 
@@ -2828,7 +2830,7 @@ _X24_open_existing(struct fb *ifp, Display *dpy, Window win, Window cwinp, Color
     return 0;
 }
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 X24_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
@@ -2841,7 +2843,7 @@ X24_get_fbps(uint32_t magic)
 }
 
 
-HIDDEN void
+static void
 X24_put_fbps(struct fb_platform_specific *fbps)
 {
     BU_CKMAG(fbps, FB_X24_MAGIC, "X24 framebuffer");
@@ -2850,7 +2852,7 @@ X24_put_fbps(struct fb_platform_specific *fbps)
     return;
 }
 
-HIDDEN int
+static int
 X24_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct X24_fb_info *x24_internal = (struct X24_fb_info *)fb_p->data;
@@ -2863,7 +2865,7 @@ X24_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spec
 
 static int alive = 1;
 
-HIDDEN void
+static void
 X24_handle_event(struct fb *ifp, XEvent *event)
 {
     struct xinfo *xi = XI(ifp);
@@ -2988,7 +2990,7 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 }
 
 
-HIDDEN int
+static int
 x24_linger(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3006,7 +3008,7 @@ x24_linger(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 X24_close(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3049,7 +3051,7 @@ X24_close_existing(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 X24_clear(struct fb *ifp, unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3091,7 +3093,7 @@ X24_clear(struct fb *ifp, unsigned char *pp)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 X24_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     struct xinfo *xi = XI(ifp);
@@ -3112,7 +3114,7 @@ X24_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 }
 
 
-HIDDEN ssize_t
+static ssize_t
 X24_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     struct xinfo *xi = XI(ifp);
@@ -3152,7 +3154,7 @@ X24_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t coun
 }
 
 
-HIDDEN int
+static int
 X24_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct xinfo *xi = XI(ifp);
@@ -3183,7 +3185,7 @@ X24_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-HIDDEN int
+static int
 X24_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 
@@ -3197,7 +3199,7 @@ X24_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 /*ARGSUSED*/
-HIDDEN int
+static int
 X24_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp->i);
@@ -3206,7 +3208,7 @@ X24_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbit
 }
 
 
-HIDDEN int
+static int
 X24_cursor(struct fb *ifp, int mode, int x, int y)
 {
     struct xinfo *xi = XI(ifp);
@@ -3264,7 +3266,7 @@ X24_cursor(struct fb *ifp, int mode, int x, int y)
 }
 
 
-HIDDEN int
+static int
 X24_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
     fb_sim_getcursor(ifp, mode, x, y);
@@ -3273,7 +3275,7 @@ X24_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 }
 
 
-HIDDEN int
+static int
 X24_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3316,7 +3318,7 @@ X24_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned
 }
 
 
-HIDDEN int
+static int
 X24_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3362,7 +3364,7 @@ X24_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const u
 }
 
 
-HIDDEN int
+static int
 X24_poll(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3378,7 +3380,7 @@ X24_poll(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 X24_flush(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3389,7 +3391,7 @@ X24_flush(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 X24_free(struct fb *ifp)
 {
     FB_CK_FB(ifp->i);
@@ -3398,7 +3400,7 @@ X24_free(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 X24_help(struct fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
@@ -3535,6 +3537,10 @@ struct fb_impl X24_interface_impl =  {
     0L,			/* page_pixels */
     0,			/* debug */
     50000,		/* refresh rate */
+    NULL,
+    NULL,
+    0,
+    NULL,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

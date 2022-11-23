@@ -1,7 +1,7 @@
 /*                      P L O T 3 - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2021 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@
 #include "bu/process.h"
 #include "bu/exit.h"
 #include "dm.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 #define COMMA ','
 
@@ -361,8 +361,12 @@ Dequeue(struct band *bp, stroke **hp)
 static void
 Requeue(struct band *bp, stroke *vp)
 {
+    if (!bp || !vp)
+	return;
+
     CK_STROKE(vp);
     vp->next = NULL;
+
     if (bp->last)
 	bp->last->next = vp;
     else

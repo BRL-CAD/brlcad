@@ -1,7 +1,7 @@
 #             O V E R L A P F I L E T O O L . T C L
 # BRL-CAD
 #
-# Copyright (c) 2018-2021 United States Government as represented by
+# Copyright (c) 2018-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -210,13 +210,18 @@ body OverlapFileTool::runTools { } {
 	puts "gchecker run failed: $gcmd"
     }
 
-    # check for the count of overlaps detected
-    set fp [open $filename r]
-    set ldata [read $fp]
-    set ov_count [llength [split $ldata "\n"]]
-    incr ov_count -1
+    # gchecker does not create a file when no overlaps are found - check before attempting to read
+    set overlap_exists [file exists $filename]
+    if { $overlap_exists } {
+        # check for the count of overlaps detected
+        set fp [open $filename r]
+        set ldata [read $fp]
+        set ov_count [llength [split $ldata "\n"]]
+        incr ov_count -1
+    }
 
-    if { $ov_count == 0 } {
+    # no file or empty file means none were found - let user know and return
+    if { !$overlap_exists || $ov_count == 0 } {
 	tk_messageBox -type ok -title "No Overlaps Found" -message "No Overlaps Found"
 	$itk_component(buttonGo) configure -state normal
 	$itk_component(objectsEntry) configure -state normal

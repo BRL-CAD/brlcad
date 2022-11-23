@@ -1,7 +1,7 @@
 /*                         C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2021 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 #define MAX_WIDTH (32*1024)
 
 
-HIDDEN void
+static void
 check_show_help(struct ged *gedp)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -93,7 +93,7 @@ check_show_help(struct ged *gedp)
  * 1 Failure
  * 0 Success
  */
-HIDDEN int
+static int
 read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 {
     double a;
@@ -132,7 +132,7 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 }
 
 
-HIDDEN int
+static int
 parse_check_args(int ac, char *av[], struct check_parameters* options, struct current_state *state)
 {
     int c;
@@ -478,8 +478,8 @@ clear_list(struct regions_list *list)
 	bu_free(rp->region1, "reg1 name");
 	if (rp->region2 != (char*)NULL)
 	    bu_free(rp->region2, "reg1 name");
-	bu_free(rp, "overlap_list");
     }
+    bu_list_free(&list->l);
 }
 
 
@@ -522,8 +522,8 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 
     state = analyze_current_state_init();
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     _ged_current_gedp = gedp;
 
@@ -558,6 +558,7 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
     options.overlaps_overlay_flag = 0;
     options.plot_files = 0;
     options.debug = 0;
+    options.ncpu = bu_avail_cpus();
     options.verbose = 0;
     options.rpt_overlap_flag = 1;
 
@@ -585,7 +586,7 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str,"no objects specified or in view -- raytrace aborted\n");
 	analyze_free_current_state(state);
 	state = NULL;
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     tobjtab = (char **)bu_calloc(tnobjs, sizeof(char *), "alloc tobjtab");
@@ -612,32 +613,32 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
     sub = argv[0];
     len = strlen(sub);
     if (bu_strncmp(sub, "adj_air", len) == 0) {
-	if (check_adj_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_adj_air(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "centroid", len) == 0) {
-	if (check_centroid(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_centroid(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "exp_air", len) == 0) {
-	if (check_exp_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_exp_air(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "gap", len) == 0) {
-	if (check_gap(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_gap(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "mass", len) == 0) {
-	if (check_mass(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_mass(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "moments", len) == 0) {
-	if (check_moments(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_moments(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
@@ -649,22 +650,22 @@ int ged_check_core(struct ged *gedp, int argc, const char *argv[])
 	    _ged_rt_set_eye_model(gedp, eye_model);
 	    analyze_set_view_information(state, gedp->ged_gvp->gv_size, &eye_model, &quat);
 	}
-	if (check_overlaps(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_overlaps(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "surf_area", len) == 0) {
-	if (check_surf_area(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_surf_area(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "unconf_air", len) == 0) {
-	if (check_unconf_air(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_unconf_air(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
     } else if (bu_strncmp(sub, "volume", len) == 0) {
-	if (check_volume(state, gedp->ged_wdbp->dbip, tobjtab, tnobjs, &options)) {
+	if (check_volume(state, gedp->dbip, tobjtab, tnobjs, &options)) {
 	    error = 1;
 	    goto freemem;
 	}
@@ -680,7 +681,7 @@ freemem:
     state = NULL;
     if (options.verbose) bu_vls_free(options.verbose_str);
     if (options.debug) bu_vls_free(options.debug_str);
-    return (error) ? GED_ERROR : GED_OK;
+    return (error) ? BRLCAD_ERROR : BRLCAD_OK;
 }
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"

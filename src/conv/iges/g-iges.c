@@ -1,7 +1,7 @@
 /*                        G - I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -557,7 +557,6 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		suffix[0]--;
 		while (!unique) {
 		    if (bu_file_readable(multi_name)) {
-			unique = 1;
 			break;
 		    }
 

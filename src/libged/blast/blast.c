@@ -1,7 +1,7 @@
 /*                         B L A S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,9 +37,9 @@ ged_blast_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -56,12 +56,12 @@ ged_blast_core(struct ged *gedp, int argc, const char *argv[])
 
 	av[0] = "zap";
 	av[1] = (char *)0;
-	ged_zap(gedp, 1, av);
+	ged_exec(gedp, 1, av);
     }
 
     /* Draw the new object(s) */
     argv[0] = "draw";
-    return ged_draw(gedp, argc, argv);
+    return ged_exec(gedp, argc, argv);
 }
 
 

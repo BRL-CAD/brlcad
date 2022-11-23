@@ -1,7 +1,7 @@
 /*                         T R A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ ged_tra_core(struct ged *gedp, int argc, const char *argv[])
     char coord;
     vect_t tvec;
 
-    if ((ret = ged_tra_args(gedp, argc, argv, &coord, tvec)) != GED_OK)
+    if ((ret = ged_tra_args(gedp, argc, argv, &coord, tvec)) != BRLCAD_OK)
 	return ret;
 
     return _ged_do_tra(gedp, coord, tvec, (int (*)())0);

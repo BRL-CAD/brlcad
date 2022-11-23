@@ -1,7 +1,7 @@
 /*                         B O T _ F U S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "rt/geom.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 #include "../ged_private.h"
 
@@ -46,7 +46,7 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
     int done;
     point_t pt1, pt2;
     size_t i, cnt;
-    struct bn_vlblock *vbp = NULL;
+    struct bv_vlblock *vbp = NULL;
     struct bu_list *vhead = NULL;
     struct bu_ptbl faces;
     struct bu_vls plot_file_name = BU_VLS_INIT_ZERO;
@@ -63,8 +63,8 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
     }
 
     if (out_type == 1) {
-	vbp = rt_vlblock_init();
-	vhead = bn_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
+	vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+	vhead = bv_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
     }
 
     bu_ptbl_init(&faces, 64, "faces buffer");
@@ -99,8 +99,8 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 			    VMOVE(pt1, eu->vu_p->v_p->vg_p->coord);
 			    VMOVE(pt2, eu->eumate_p->vu_p->v_p->vg_p->coord);
 			    if (out_type == 1) {
-				BN_ADD_VLIST(vbp->free_vlist_hd, vhead, pt1, BN_VLIST_LINE_MOVE);
-				BN_ADD_VLIST(vbp->free_vlist_hd, vhead, pt2, BN_VLIST_LINE_DRAW);
+				BV_ADD_VLIST(vbp->free_vlist_hd, vhead, pt1, BV_VLIST_LINE_MOVE);
+				BV_ADD_VLIST(vbp->free_vlist_hd, vhead, pt2, BV_VLIST_LINE_DRAW);
 			    } else if (out_type == 2) {
 				if (!plotfp) {
 				    bu_vls_sprintf(&plot_file_name, "%s.%p.pl", name, (void *)magic_p);
@@ -127,8 +127,17 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 
     if (out_type == 1) {
 	/* Add overlay */
-	_ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
-	bn_vlblock_free(vbp);
+	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+	if (BU_STR_EQUAL(nview, "1")) {
+	    struct bu_vls nroot = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&nroot, "bot_fuse::%s", name);
+	    struct bview *view = gedp->ged_gvp;
+	    bv_vlblock_obj(vbp, view, bu_vls_cstr(&nroot));
+	    bu_vls_free(&nroot);
+	} else {
+	    _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
+	}
+	bv_vlblock_free(vbp);
 	bu_log("Showing open edges...\n");
     } else if (out_type == 2) {
 	if (plotfp) {
@@ -155,7 +164,8 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     struct model *m;
     struct nmgregion *r;
     int ret, c, i;
-    struct bn_tol *tol = &gedp->ged_wdbp->wdb_tol;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct bn_tol *tol = &wdbp->wdb_tol;
     int total = 0;
     volatile int out_type = 0; /* open edge output type: 0 = none, 1 = show, 2 = plot */
     size_t open_cnt;
@@ -165,9 +175,9 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     static const char *bot_fuse_options = "sp";
     static const char *bot_fuse_options_str = "[-s|-p]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -207,12 +217,12 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 
     bu_log("%s: start\n", argv[0]);
 
-    GED_DB_LOOKUP(gedp, old_dp, argv[i+1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
-    GED_DB_GET_INTERNAL(gedp, &intern, old_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, old_dp, argv[i+1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, old_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s is not a BOT solid!\n", argv[0], argv[i+1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* create nmg model structure */
@@ -220,7 +230,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 
     /* place bot in nmg structure */
     bu_log("%s: running rt_bot_tess\n", argv[0]);
-    ret = rt_bot_tess(&r, m, &intern, &gedp->ged_wdbp->wdb_ttol, tol);
+    ret = rt_bot_tess(&r, m, &intern, &wdbp->wdb_ttol, tol);
 
     /* free internal representation of original bot */
     rt_db_free_internal(&intern);
@@ -228,7 +238,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     if (ret != 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (1).\n", argv[0], argv[i+1]);
 	nmg_km(m);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     total = 0;
@@ -294,7 +304,7 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
 	/* catch */
 	BU_UNSETJUMP;
 	bu_vls_printf(gedp->ged_result_str, "%s: %s fuse failed (2).\n", argv[0], argv[i+1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } BU_UNSETJUMP;
 
     RT_DB_INTERNAL_INIT(&intern2);
@@ -303,13 +313,13 @@ ged_bot_fuse_core(struct ged *gedp, int argc, const char **argv)
     intern2.idb_meth = &OBJ[ID_BOT];
     intern2.idb_ptr = (void *)bot;
 
-    GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern2.idb_type, GED_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, new_dp, &intern2, &rt_uniresource, GED_ERROR);
+    GED_DB_DIRADD(gedp, new_dp, argv[i], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern2.idb_type, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, new_dp, &intern2, &rt_uniresource, BRLCAD_ERROR);
 
     bu_log("%s: Created new BOT (%s)\n", argv[0], argv[i]);
     bu_log("%s: Done.\n", argv[0]);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

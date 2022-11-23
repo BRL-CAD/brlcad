@@ -37,7 +37,7 @@
   <example><title>Rotate the view or object a specified number of degrees about the <emphasis>z	</emphasis> axis.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rot 0 0 45</userinput>
+      <prompt>mged&gt; </prompt><userinput>rot 0 0 45</userinput>
     </para>
     <para>Rotates the view or object 45° about the <emphasis>z</emphasis> axis.
      </para>
@@ -46,7 +46,7 @@
   <example><title>Rotate the view or object a specified number of degrees about the <emphasis>y	</emphasis> and <emphasis>x</emphasis> axes.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rot 45 45 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>rot 45 45 0</userinput>
     </para>
     <para>Rotates the view or object 45° about the <emphasis>y</emphasis> axis, then rotates 45° 	about the <emphasis>x</emphasis> axis.
     </para>

@@ -1,7 +1,7 @@
 /*                         V F O N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -109,7 +109,7 @@ get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
  * Obtain a 16-bit signed integer from two adjacent characters, stored
  * in VAX order, regardless of word alignment.
  */
-HIDDEN int
+static int
 _vax_gshort(unsigned char *msgp)
 {
     register unsigned char *p = (unsigned char *) msgp;
@@ -127,7 +127,7 @@ vfont_get(char *font)
     register struct vfont *vfp = VFONT_NULL;
     register FILE *fp = NULL;
     register int i;
-    char fname[FONTNAMESZ];
+    char fname[FONTNAMESZ] = {'\0'};
     unsigned char header[2*5];		/* 5 16-bit vax shorts */
     unsigned char dispatch[10*256];	/* 256 10-byte structs */
     uint16_t magic;

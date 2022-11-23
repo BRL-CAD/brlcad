@@ -1,7 +1,7 @@
 /*                           S E T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2021 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -445,9 +445,9 @@ set_dlist(const struct bu_structparse *UNUSED(sdp),
 
 			(void)dm_make_current(dlp1->dm_dmp);
 			(void)dm_free_dlists(dlp1->dm_dmp,
-				      BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
-				      BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
-				      BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
+				      BU_LIST_FIRST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist,
+				      BU_LIST_LAST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist -
+				      BU_LIST_FIRST(bv_scene_obj, &gdlp->dl_head_scene_obj)->s_dlist + 1);
 
 			gdlp = next_gdlp;
 		    }

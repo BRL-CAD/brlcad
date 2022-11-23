@@ -1,7 +1,7 @@
 /*                          P T B L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,7 +146,7 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 	return -1;	/* To signal that it was added */
     }
 
-    b->buffer[k=b->end++] = p;
+    b->buffer[b->end++] = p;
     return -1;		/* To signal that it was added */
 }
 

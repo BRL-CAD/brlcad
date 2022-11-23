@@ -1,7 +1,7 @@
 /*                      V I E W A R E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -702,7 +702,7 @@ print_region_area_list(size_t *count, struct rt_i *rtip, area_type_t type)
 	cell = listp->cell;
 
 	if (type == PRESENTED_AREA) {
-	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
+	    bu_log("Region %s\t(%zu hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
 		   cell->name,
 		   cell->hits,
 		   cell_area * (fastf_t)cell->hits / (units*units),
@@ -723,7 +723,7 @@ print_region_area_list(size_t *count, struct rt_i *rtip, area_type_t type)
 	    }
 	}
 	if (type == EXPOSED_AREA) {
-	    bu_log("Region %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
+	    bu_log("Region %s\t(%zu hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
 		   cell->name,
 		   cell->exposures,
 		   cell_area * (fastf_t)cell->exposures / (units*units),
@@ -848,7 +848,7 @@ print_assembly_area_list(struct rt_i *rtip, size_t max_depth, area_type_t type)
 	}
 
 	if (type == PRESENTED_AREA) {
-	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
+	    bu_log("Assembly %s\t(%zu hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
 		   cell->name,
 		   cell->hits,
 		   cell_area * (fastf_t)cell->hits / (units*units),
@@ -868,7 +868,7 @@ print_assembly_area_list(struct rt_i *rtip, size_t max_depth, area_type_t type)
 	    }
 	}
 	if (type == EXPOSED_AREA) {
-	    bu_log("Assembly %s\t(%ld hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
+	    bu_log("Assembly %s\t(%zu hits)\t= %18.4lf square %s\t(%.4lf %s^2)",
 		   cell->name,
 		   cell->exposures,
 		   cell_area * (fastf_t)cell->exposures / (units*units),

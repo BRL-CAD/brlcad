@@ -17,6 +17,8 @@
 #if !defined(ON_ARRAY_DEFS_INC_)
 #define ON_ARRAY_DEFS_INC_
 
+#include <iostream>
+
 #if defined(ON_COMPILER_MSC)
 
 // When this file is parsed with /W4 warnings, two bogus warnings
@@ -437,13 +439,15 @@ void ON_SimpleArray<T>::Append( const T& x )
         T temp;   // ON_*Array<> templates do not require robust copy constructor.
         temp = x; // ON_*Array<> templates require a robust operator=.
         Reserve( newcapacity );
-        m_a[m_count++] = temp;
+	if (m_a)
+           m_a[m_count++] = temp;
         return;
       }
     }
     Reserve(newcapacity);
   }
-  m_a[m_count++] = x;
+  if (m_a)
+     m_a[m_count++] = x;
 }
 
 template <class T>
@@ -836,11 +840,13 @@ void ON_SimpleArray<T>::SetCapacity( int capacity )
         // out of memory
         m_count = m_capacity = 0;
       }
-    }
-    else if (m_a) {
+    } else if (capacity == 0 && m_a) {
       Realloc(m_a,0);
       m_a = 0;
       m_count = m_capacity = 0;
+    } else {
+      std::cerr << "Negative capacity supplied to ON_SimpleArray SetCapacity: " << capacity << "\n";
+      exit(-1);
     }
   }
 }
@@ -1384,13 +1390,17 @@ void ON_ClassArray<T>::Append( const T& x )
         T temp;   // ON_*Array<> templates do not require robust copy constructor.
         temp = x; // ON_*Array<> templates require a robust operator=.
         Reserve( newcapacity );
-        m_a[m_count++] = temp;
+	if (m_a)
+           m_a[m_count++] = temp;
         return;
       }
     }
     Reserve(newcapacity);
   }
-  m_a[m_count++] = x;
+
+  // Only do this if we have a non-null m_a
+  if (m_a)
+      m_a[m_count++] = x;
 }
 
 template <class T>

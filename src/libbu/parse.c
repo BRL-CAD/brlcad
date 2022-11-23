@@ -1,7 +1,7 @@
 /*                         P A R S E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2021 United States Government as represented by
+ * Copyright (c) 1989-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -584,7 +584,7 @@ bu_struct_wrap_buf(struct bu_external *ext, void *buf)
  * Returns: 0 when successful
  *         <0 upon failure
  */
-HIDDEN int
+static int
 parse_floating(const char *str, size_t count, fastf_t *floc, double *dloc)
 {
     size_t i;
@@ -668,7 +668,7 @@ parse_floating(const char *str, size_t count, fastf_t *floc, double *dloc)
  * @return -1 not found
  * @return  0 entry found and processed
  */
-HIDDEN int
+static int
 parse_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value, void *data)
 /* structure description */
 /* struct member name */
@@ -981,7 +981,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
  * FIXME: This should not be here, need to adapt bu_num_*() to support
  * printing to strings/bu_log/etc.
  */
-HIDDEN void
+static void
 parse_vls_matprint(struct bu_vls *vls,
 		   const char *name,
 		   register const fastf_t *mat)
@@ -1019,7 +1019,7 @@ parse_vls_matprint(struct bu_vls *vls,
  * FIXME: This should not be here, need to adapt bu_num_*() to support
  * printing to strings/bu_log/etc.
  */
-HIDDEN void
+static void
 parse_matprint(const char *name, register const fastf_t *mat)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -1366,7 +1366,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 }
 
 
-HIDDEN void
+static void
 parse_vls_print_floating(struct bu_vls *vls, const char *name, size_t count, const fastf_t *fp, const double *dp)
 {
     size_t increase;
@@ -1996,7 +1996,7 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
  *
  * Note: caller is responsible for freeing the returned string.
  */
-HIDDEN char *
+static char *
 parse_list_elem(const char *in, int idx)
 {
     int depth = 0;
@@ -2091,7 +2091,7 @@ parse_list_elem(const char *in, int idx)
 /**
  * Return number of items in a string, interpreted as a Tcl list.
  */
-HIDDEN int
+static int
 parse_list_length(const char *in)
 {
     int count = 0;
@@ -2141,7 +2141,7 @@ parse_list_length(const char *in)
 }
 
 
-HIDDEN int
+static int
 parse_key_val_to_vls(struct bu_vls *vls, char *params)
 {
     int len;

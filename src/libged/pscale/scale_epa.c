@@ -1,7 +1,7 @@
 /*                         S C A L E _ E P A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,10 +69,10 @@ _ged_scale_epa(struct ged *gedp, struct rt_epa_internal *epa, const char *attrib
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad epa attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

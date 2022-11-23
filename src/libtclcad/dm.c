@@ -1,7 +1,7 @@
 /*                            D M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ static struct dm_obj HeadDMObj;	/* head of display manager object list */
 /*
  * Open/activate the display managers framebuffer.
  */
-HIDDEN int
+static int
 dmo_openFb(struct dm_obj *dmop)
 {
     if (!dmop || !dmop->interp)
@@ -108,7 +108,7 @@ dmo_openFb(struct dm_obj *dmop)
  * objname drawPoint x y
  *
  */
-HIDDEN int
+static int
 dmo_closeFb(struct dm_obj *dmop)
 {
     if (dmop->dmo_fbs.fbs_fbp == FB_NULL)
@@ -132,7 +132,7 @@ dmo_closeFb(struct dm_obj *dmop)
  * Returns the port number actually used.
  *
  */
-HIDDEN int
+static int
 dmo_listen_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -202,7 +202,7 @@ dmo_listen_tcl(void *clientData, int argc, const char **argv)
  * objname refresh
  *
  */
-HIDDEN int
+static int
 dmo_refreshFb_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -234,7 +234,7 @@ dmo_refreshFb_tcl(void *clientData, int argc, const char **argv)
 #endif
 
 
-HIDDEN int
+static int
 dmo_parseAxesArgs(int argc,
 		  const char **argv,
 		  fastf_t *viewSize,
@@ -356,7 +356,7 @@ dmo_parseAxesArgs(int argc,
  * objname drawViewAxes args
  *
  */
-HIDDEN int
+static int
 dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
 {
     point_t axesPos;
@@ -368,7 +368,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
     int lineWidth;
     int posOnly;
     int tripleColor;
-    struct bview_axes_state bnas;
+    struct bv_axes bnas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -383,7 +383,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    memset(&bnas, 0, sizeof(struct bview_axes_state));
+    memset(&bnas, 0, sizeof(struct bv_axes));
 
     if (dmo_parseAxesArgs(argc, argv, &viewSize, rmat, axesPos, &axesSize,
 			  axesColor, labelColor, &lineWidth,
@@ -401,7 +401,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
     bnas.pos_only = posOnly;
     bnas.triple_color = tripleColor;
 
-    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
+    dm_draw_hud_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
 
     bu_vls_free(&vls);
     return BRLCAD_OK;
@@ -415,7 +415,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
  * drawCenterDot color
  *
  */
-HIDDEN int
+static int
 dmo_drawCenterDot_cmd(struct dm_obj *dmop,
 		      int argc,
 		      const char **argv)
@@ -478,7 +478,7 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
  * objname drawCenterDot color
  *
  */
-HIDDEN int
+static int
 dmo_drawCenterDot_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -490,7 +490,7 @@ dmo_drawCenterDot_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_parseDataAxesArgs(int argc,
 		      const char **argv,
 		      fastf_t *viewSize,
@@ -574,7 +574,7 @@ dmo_parseDataAxesArgs(int argc,
  *
  *XXX This needs to be modified to handle an array/list of data points
  */
-HIDDEN int
+static int
 dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 {
     point_t modelAxesPos;
@@ -584,7 +584,7 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
     fastf_t axesSize;
     int axesColor[3];
     int lineWidth;
-    struct bview_data_axes_state bndas;
+    struct bv_data_axes_state bndas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -614,22 +614,22 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    memset(&bndas, 0, sizeof(struct bview_data_axes_state));
+    point_t mapos = VINIT_ZERO;
+    memset(&bndas, 0, sizeof(struct bv_data_axes_state));
+    bndas.points = &mapos;
     VMOVE(bndas.points[0], modelAxesPos);
     bndas.size = axesSize;
     VMOVE(bndas.color, axesColor);
     bndas.line_width = lineWidth;
 
-    dm_draw_data_axes(dmop->dmo_dmp,
-		      viewSize,
-		      &bndas);
+    dm_draw_data_axes(dmop->dmo_dmp, viewSize, &bndas);
 
     bu_vls_free(&vls);
     return BRLCAD_OK;
 }
 
 
-HIDDEN int
+static int
 dmo_parseModelAxesArgs(int argc,
 		       const char **argv,
 		       fastf_t *viewSize,
@@ -788,7 +788,7 @@ dmo_parseModelAxesArgs(int argc,
  * objname drawModelAxes args
  *
  */
-HIDDEN int
+static int
 dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
 {
     point_t modelAxesPos;
@@ -810,7 +810,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
     int tickColor[3];
     int majorTickColor[3];
     int tickThreshold;
-    struct bview_axes_state bnas;
+    struct bv_axes bnas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -842,7 +842,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
 
     MAT4X3PNT(viewAxesPos, model2view, modelAxesPos);
 
-    memset(&bnas, 0, sizeof(struct bview_axes_state));
+    memset(&bnas, 0, sizeof(struct bv_axes));
     VMOVE(bnas.axes_pos, viewAxesPos);
     bnas.axes_size = axesSize;
     VMOVE(bnas.axes_color, axesColor);
@@ -859,7 +859,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
     VMOVE(bnas.tick_major_color, majorTickColor);
     bnas.tick_threshold = tickThreshold;
 
-    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
+    dm_draw_hud_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
 
     bu_vls_free(&vls);
     return BRLCAD_OK;
@@ -873,7 +873,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
  * objname drawBegin
  *
  */
-HIDDEN int
+static int
 dmo_drawBegin_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -885,7 +885,7 @@ dmo_drawBegin_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 }
 
 
-HIDDEN int
+static int
 dmo_drawEnd_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -904,7 +904,7 @@ dmo_drawEnd_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
  * objname drawEnd
  *
  */
-HIDDEN int
+static int
 dmo_clear_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -927,7 +927,7 @@ dmo_clear_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
  * objname clear
  *
  */
-HIDDEN int
+static int
 dmo_normal_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -935,7 +935,7 @@ dmo_normal_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop || !dmop->interp)
 	return BRLCAD_ERROR;
 
-    return dm_normal(dmop->dmo_dmp);
+    return dm_hud_begin(dmop->dmo_dmp);
 }
 
 
@@ -946,7 +946,7 @@ dmo_normal_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
  * objname normal
  *
  */
-HIDDEN int
+static int
 dmo_loadmat_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -994,7 +994,7 @@ dmo_loadmat_tcl(void *clientData, int argc, const char **argv)
  * objname drawString args
  *
  */
-HIDDEN int
+static int
 dmo_drawString_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1024,7 +1024,7 @@ dmo_drawString_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_drawPoint_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1057,7 +1057,7 @@ dmo_drawPoint_tcl(void *clientData, int argc, const char **argv)
  * objname drawLine x1 y1 x2 y2
  *
  */
-HIDDEN int
+static int
 dmo_drawLine_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1091,11 +1091,11 @@ dmo_drawLine_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname drawVList vid
  */
-HIDDEN int
+static int
 dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
 
     if (!dmop || !dmop->interp)
 	return BRLCAD_ERROR;
@@ -1121,24 +1121,24 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    BN_CK_VLIST(vp);
+    BV_CK_VLIST(vp);
 
     return dm_draw_vlist(dmop->dmo_dmp, vp);
 }
 
 
-HIDDEN void
+static void
 dmo_drawSolid(struct dm_obj *dmop,
-	      struct solid *sp)
+	      struct bv_scene_obj *sp)
 {
     if (sp->s_iflag == UP)
-	dm_set_fg(dmop->dmo_dmp, 255, 255, 255, 0, sp->s_transparency);
+	dm_set_fg(dmop->dmo_dmp, 255, 255, 255, 0, sp->s_os->transparency);
     else
 	dm_set_fg(dmop->dmo_dmp,
 		       (unsigned char)sp->s_color[0],
 		       (unsigned char)sp->s_color[1],
-		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-    dm_draw_vlist(dmop->dmo_dmp, (struct bn_vlist *)&sp->s_vlist);
+		       (unsigned char)sp->s_color[2], 0, sp->s_os->transparency);
+    dm_draw_vlist(dmop->dmo_dmp, (struct bv_vlist *)&sp->s_vlist);
 }
 
 
@@ -1214,7 +1214,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
  * Usage:
  * objname drawScale vsize unit color
  */
-HIDDEN int
+static int
 dmo_drawScale_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1230,20 +1230,21 @@ dmo_drawScale_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname drawSList hsp
  */
-HIDDEN int
+static int
 dmo_drawSList(struct dm_obj *dmop,
 	      struct bu_list *hsp)
 {
-    struct solid *sp;
+    struct bv_scene_obj *sp;
     int linestyle = -1;
 
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    if (dmop->dmo_dmp->i->dm_transparency) {
+    int dm_transparency = dm_get_transparency(dmop->dmo_dmp);
+    if (dm_transparency) {
 	/* First, draw opaque stuff */
-	FOR_ALL_SOLIDS(sp, hsp) {
-	    if (sp->s_transparency < 1.0)
+	for (BU_LIST_FOR(sp, bv_scene_obj, hsp)) {
+	    if (sp->s_os->transparency < 1.0)
 		continue;
 
 	    if (linestyle != sp->s_soldash) {
@@ -1258,9 +1259,9 @@ dmo_drawSList(struct dm_obj *dmop,
 	dm_set_depth_mask(dmop->dmo_dmp, 0);
 
 	/* Second, draw transparent stuff */
-	FOR_ALL_SOLIDS(sp, hsp) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, hsp)) {
 	    /* already drawn above */
-	    if (ZERO(sp->s_transparency - 1.0))
+	    if (ZERO(sp->s_os->transparency - 1.0))
 		continue;
 
 	    if (linestyle != sp->s_soldash) {
@@ -1275,7 +1276,7 @@ dmo_drawSList(struct dm_obj *dmop,
 	dm_set_depth_mask(dmop->dmo_dmp, 1);
     } else {
 
-	FOR_ALL_SOLIDS(sp, hsp) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, hsp)) {
 	    if (linestyle != sp->s_soldash) {
 		linestyle = sp->s_soldash;
 		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->i->dm_lineWidth, linestyle);
@@ -1293,7 +1294,7 @@ dmo_drawSList(struct dm_obj *dmop,
  * Usage:
  * objname drawSList sid
  */
-HIDDEN int
+static int
 dmo_drawSList_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1336,7 +1337,7 @@ dmo_drawSList_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname fg [rgb]
  */
-HIDDEN int
+static int
 dmo_fg_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1405,7 +1406,7 @@ bad_color:
  * Usage:
  * objname bg [rgb]
  */
-HIDDEN int
+static int
 dmo_bg_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1423,9 +1424,9 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
     /* get background color */
     if (argc == 2) {
 	bu_vls_printf(&vls, "%d %d %d",
-		      dmop->dmo_dmp->i->dm_bg[0],
-		      dmop->dmo_dmp->i->dm_bg[1],
-		      dmop->dmo_dmp->i->dm_bg[2]);
+		      dmop->dmo_dmp->i->dm_bg1[0],
+		      dmop->dmo_dmp->i->dm_bg1[1],
+		      dmop->dmo_dmp->i->dm_bg1[2]);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1445,7 +1446,7 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
 	    goto bad_color;
 
 	bu_vls_free(&vls);
-	return dm_set_bg(dmop->dmo_dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b);
+	return dm_set_bg(dmop->dmo_dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)r, (unsigned char)g, (unsigned char)b);
     }
 
     /* wrong number of arguments */
@@ -1470,7 +1471,7 @@ bad_color:
  * Usage:
  * objname linewidth [n]
  */
-HIDDEN int
+static int
 dmo_lineWidth_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1530,7 +1531,7 @@ bad_lineWidth:
  * Usage:
  * objname linestyle [0|1]
  */
-HIDDEN int
+static int
 dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1591,7 +1592,7 @@ bad_linestyle:
  * Usage:
  * objname configure
  */
-HIDDEN int
+static int
 dmo_configure_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1630,7 +1631,7 @@ dmo_configure_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname zclip [0|1]
  */
-HIDDEN int
+static int
 dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1647,7 +1648,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 
     /* get zclip flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_zclip);
+	bu_vls_printf(&vls, "%d", dm_get_zclip(dmop->dmo_dmp));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1664,7 +1665,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	dmop->dmo_dmp->i->dm_zclip = zclip;
+	dm_set_zclip(dmop->dmo_dmp, zclip);
 	return BRLCAD_OK;
     }
 
@@ -1681,7 +1682,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname zbuffer [0|1]
  */
-HIDDEN int
+static int
 dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1698,7 +1699,7 @@ dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
 
     /* get zbuffer flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_zbuffer);
+	bu_vls_printf(&vls, "%d", dm_get_zbuffer(dmop->dmo_dmp));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1732,7 +1733,7 @@ dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname light [0|1]
  */
-HIDDEN int
+static int
 dmo_light_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1749,7 +1750,7 @@ dmo_light_tcl(void *clientData, int argc, const char **argv)
 
     /* get light flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_light);
+	bu_vls_printf(&vls, "%d", dm_get_light(dmop->dmo_dmp));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1784,7 +1785,7 @@ dmo_light_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname transparency [0|1]
  */
-HIDDEN int
+static int
 dmo_transparency_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1801,7 +1802,8 @@ dmo_transparency_tcl(void *clientData, int argc, const char **argv)
 
     /* get transparency flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_transparency);
+	int dm_transparency = dm_get_transparency(dmop->dmo_dmp);
+	bu_vls_printf(&vls, "%d", dm_transparency);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1836,7 +1838,7 @@ dmo_transparency_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname depthMask [0|1]
  */
-HIDDEN int
+static int
 dmo_depthMask_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1888,7 +1890,7 @@ dmo_depthMask_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname bounds ["xmin xmax ymin ymax zmin zmax"]
  */
-HIDDEN int
+static int
 dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -1945,9 +1947,9 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 	 * dm_clipmin and dm_clipmax.
 	 */
 	if (dmop->dmo_dmp->i->dm_clipmax[2] <= GED_MAX)
-	    dmop->dmo_dmp->i->dm_bound = 1.0;
+	    dm_set_bound(dmop->dmo_dmp, 1.0);
 	else
-	    dmop->dmo_dmp->i->dm_bound = GED_MAX / dmop->dmo_dmp->i->dm_clipmax[2];
+	    dm_set_bound(dmop->dmo_dmp, GED_MAX / dmop->dmo_dmp->i->dm_clipmax[2]);
 
 	return BRLCAD_OK;
     }
@@ -1966,7 +1968,7 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname perspective [n]
  */
-HIDDEN int
+static int
 dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2013,7 +2015,7 @@ dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_png_cmd(struct dm_obj *dmop,
 	    int argc,
 	    const char **argv)
@@ -2059,7 +2061,7 @@ dmo_png_cmd(struct dm_obj *dmop,
  * objname png args
  *
  */
-HIDDEN int
+static int
 dmo_png_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2078,7 +2080,7 @@ dmo_png_tcl(void *clientData, int argc, const char **argv)
  * objname clearBufferAfter [flag]
  *
  */
-HIDDEN int
+static int
 dmo_clearBufferAfter_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2129,7 +2131,7 @@ dmo_clearBufferAfter_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname debug [n]
  */
-HIDDEN int
+static int
 dmo_debug_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2146,7 +2148,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
 
     /* get debug level */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_debugLevel);
+	bu_vls_printf(&vls, "%d", dm_get_debug(dmop->dmo_dmp));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -2164,7 +2166,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	return dm_debug(dmop->dmo_dmp, level);
+	return dm_set_debug(dmop->dmo_dmp, level);
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);
@@ -2179,7 +2181,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * objname logfile [filename]
  */
-HIDDEN int
+static int
 dmo_logfile_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2223,7 +2225,7 @@ dmo_logfile_tcl(void *clientData, int argc, const char **argv)
  * objname flush
  *
  */
-HIDDEN int
+static int
 dmo_flush_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2231,7 +2233,7 @@ dmo_flush_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    if (!dmop->dmo_dmp->i->dm_flush) {
+    if (dmop->dmo_dmp->i->dm_flush) {
 	dmop->dmo_dmp->i->dm_flush(dmop->dmo_dmp);
     }
 
@@ -2246,7 +2248,7 @@ dmo_flush_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
  * objname sync
  *
  */
-HIDDEN int
+static int
 dmo_sync_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2254,7 +2256,7 @@ dmo_sync_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    if (!dmop->dmo_dmp->i->dm_sync) {
+    if (dmop->dmo_dmp->i->dm_sync) {
 	dmop->dmo_dmp->i->dm_sync(dmop->dmo_dmp);
     }
 
@@ -2269,7 +2271,7 @@ dmo_sync_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
  * objname size [width [height]]
  *
  */
-HIDDEN int
+static int
 dmo_size_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2335,7 +2337,7 @@ dmo_size_tcl(void *clientData, int argc, const char **argv)
  * objname get_aspect
  *
  */
-HIDDEN int
+static int
 dmo_get_aspect_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2372,7 +2374,7 @@ dmo_get_aspect_tcl(void *clientData, int argc, const char **argv)
  * objname observer cmd [args]
  *
  */
-HIDDEN int
+static int
 dmo_observer_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2393,14 +2395,14 @@ dmo_observer_tcl(void *clientData, int argc, const char **argv)
     return bu_observer_cmd((ClientData)&dmop->dmo_observers, argc-2, (const char **)argv+2);
 }
 
-HIDDEN void
+static void
 _dm_obj_eval(void *context, const char *cmd) {
     Tcl_Interp *interp = (Tcl_Interp *)context;
     Tcl_Eval(interp, cmd);
 }
 
 #ifdef USE_FBSERV
-HIDDEN void
+static void
 dmo_fbs_callback(void *clientData)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2413,7 +2415,7 @@ dmo_fbs_callback(void *clientData)
 #endif
 
 
-HIDDEN int
+static int
 dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 {
     char buf[64];
@@ -2443,7 +2445,7 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_getDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2452,7 +2454,7 @@ dmo_getDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 {
     int (*hook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
@@ -2506,7 +2508,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dmo_setDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2518,7 +2520,7 @@ dmo_setDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 /*
  * Called by Tcl when the object is destroyed.
  */
-HIDDEN void
+static void
 dmo_deleteProc(ClientData clientData)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
@@ -2546,7 +2548,7 @@ dmo_deleteProc(ClientData clientData)
  *
  * Returns: result of DM command.
  */
-HIDDEN int
+static int
 dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char **argv)
 {
     int ret;
@@ -2615,7 +2617,7 @@ dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
  * Usage:
  * dm_open [name type [args]]
  */
-HIDDEN int
+static int
 dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct dm_obj *dmop;
@@ -2704,7 +2706,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	    av[i+newargs] = argv[i];
 	av[i+newargs] = (const char *)NULL;
 
-	if ((dmp = dm_open((void *)interp, type, ac, av)) == DM_NULL) {
+	if ((dmp = dm_open(NULL, (void *)interp, type, ac, av)) == DM_NULL) {
 	    if (Tcl_IsShared(obj))
 		obj = Tcl_DuplicateObj(obj);
 
@@ -2783,7 +2785,7 @@ Dmo_Init(Tcl_Interp *interp)
 /* from libdm/query.c */
 extern int dm_validXType(const char *dpy_string, const char *name);
 
-HIDDEN int
+static int
 dm_validXType_tcl(void *clientData, int argc, const char **argv)
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;
@@ -2811,7 +2813,7 @@ dm_validXType_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 dm_bestXType_tcl(void *clientData, int argc, const char **argv)
 {
     Tcl_Interp *interp = (Tcl_Interp *)clientData;

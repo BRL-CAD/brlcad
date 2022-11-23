@@ -1,7 +1,7 @@
 /*               G E T _ O U T E R _ S H E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2021 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 struct shell *
-Get_outer_shell(struct nmgregion *r, int entityno)
+Get_outer_shell(struct nmgregion *r, size_t entityno)
 {
 
     int sol_num;		/* IGES solid type number */

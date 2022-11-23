@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,8 +69,8 @@ common_dm(int argc, const char *argv[])
 
 	/* redraw after scaling */
 	if (GEDP && GEDP->ged_gvp &&
-	    GEDP->ged_gvp->gv_adaptive_plot &&
-	    GEDP->ged_gvp->gv_redraw_on_zoom &&
+	    GEDP->ged_gvp->gv_s->adaptive_plot_csg &&
+	    GEDP->ged_gvp->gv_s->redraw_on_zoom &&
 	    (am_mode == AMM_SCALE ||
 	     am_mode == AMM_CON_SCALE_X ||
 	     am_mode == AMM_CON_SCALE_Y ||
@@ -566,10 +566,10 @@ common_dm(int argc, const char *argv[])
 
 	/* return background color of current display manager */
 	if (argc == 1) {
-	    if (dm_get_bg(DMP)) {
-		bu_vls_printf(&vls, "%d %d %d", dm_get_bg(DMP)[0], dm_get_bg(DMP)[1], dm_get_bg(DMP)[2]);
-		Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
-	    }
+	    unsigned char *dm_bg;
+	    dm_get_bg(&dm_bg, NULL, DMP);
+	    bu_vls_printf(&vls, "%d %d %d", dm_bg[0], dm_bg[1], dm_bg[2]);
+	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_OK;
@@ -588,7 +588,7 @@ common_dm(int argc, const char *argv[])
 	DMP_dirty = 1;
 	dm_set_dirty(DMP, 1);
 	(void)dm_make_current(DMP);
-	return dm_set_bg(DMP, r, g, b);
+	return dm_set_bg(DMP, r, g, b, r, g, b);
     }
 
     Tcl_AppendResult(INTERP, "dm: bad command - ", argv[0], "\n", (char *)NULL);
@@ -628,7 +628,7 @@ zclip_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct mged_view_hook_state *hs = (struct mged_view_hook_state *)data;
-    hs->vs->vs_gvp->gv_zclip = dm_get_zclip(hs->hs_dmp);
+    hs->vs->vs_gvp->gv_s->gv_zclip = dm_get_zclip(hs->hs_dmp);
     dirty_hook(sdp, name, base, value, data);
 }
 
@@ -683,6 +683,9 @@ dm_commands(int argc,
 		void *data = set_hook_data(&global_hs);
 
 		ret = dm_set_hook(vparse_map, argv[1], data, &mged_dm_hook);
+		if (ret < 0) {
+		    bu_log("Warning - failed to set dm hook - dm-generic.c:%d\n", __LINE__);
+		}
 
 		bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 		bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);

@@ -1,7 +1,7 @@
 #                A R C H E R _ I N I T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2021 United States Government as represented by
+# Copyright (c) 2002-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -63,7 +63,9 @@ if {[file exists [file normalize $argv0]]} {
 
 # Itk's default class doesn't keep the menu, but Archer needs it - redefine itk:Toplevel
 set itk_file [file join [bu_dir data] "tclscripts" archer itk_redefines.tcl]
-source $itk_file
+if {[file exists [file normalize $itk_file]]} {
+    source $itk_file
+}
 
 # Set ttk theme
 if {[tk windowingsystem] eq "aqua"} {
@@ -90,11 +92,6 @@ if { [catch {package require Archer 1.0} _initialized] } {
     puts ""
     puts "ERROR: Unable to load Archer"
     exit 1
-}
-
-set Archer::debug 0
-if { [info exists env(DEBUG)] } {
-    set Archer::debug $env(DEBUG)
 }
 
 # Initialize bgerror
@@ -138,6 +135,10 @@ proc showMainWindow {} {
 #
 proc createSplashScreen {} {
     global env
+
+    if { ![info exists ::ArcherCore::splash] } {
+	return
+    }
 
     set useImage 1
 
@@ -278,11 +279,11 @@ wm withdraw .
 
 # start splash screen
 createSplashScreen
-if { $::argc eq 1 } {
+if { [info exists argc] && $::argc eq 1 } {
    set argv1 [lindex $argv 0]
    set argv1_ext [file extension $argv1]
    if {[string compare -nocase $argv1_ext ".g"] != 0} {
-    $::ArcherCore::splash deactivate
+       $::ArcherCore::splash deactivate
    }
 }
 

@@ -1,7 +1,7 @@
 /*                         G E T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@ ged_get_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     static const char *usage = "object ?attr?";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -53,21 +53,23 @@ ged_get_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc > 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Verify that this wdb supports lookup operations
        (non-null dbip) */
-    if (gedp->ged_wdbp->dbip == 0) {
+    if (gedp->dbip == 0) {
 	bu_vls_printf(gedp->ged_result_str, "dbip does not support lookup operations");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) & GED_ERROR)
-	return GED_ERROR;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], wdbp) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
 
     if (!intern.idb_meth->ft_get) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     status = intern.idb_meth->ft_get(gedp->ged_result_str, &intern, argv[2]);

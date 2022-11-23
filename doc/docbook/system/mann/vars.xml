@@ -300,7 +300,7 @@ stereo viewing; otherwise, stereo is off.
   <example><title>Display the sliders.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>vars sliders=1</userinput>
+      <prompt>mged&gt; </prompt><userinput>vars sliders=1</userinput>
     </para>
     <para>Turns on the <emphasis>sliders</emphasis>.
 

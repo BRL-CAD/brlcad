@@ -1,7 +1,7 @@
 /*                        G I F - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -136,9 +136,9 @@ Sig_Catcher(int sig)
 static void
 Skip(void)					/* skip over raster data */
 {
-    int c;
+    int c = getc(gfp);
 
-    if ((c = getc(gfp)) == EOF)
+    if (c == EOF)
 	Fatal(fbp, "Error reading code size");
 
     while ((c = getc(gfp)) != 0) {
@@ -224,7 +224,7 @@ static struct
 {
     short pfx;		/* prefix string's table index */
     short ext;		/* extension value */
-}	table[1 << 12];		/* big enough for 12-bit codes */
+}	table[1 << 13];
 /* Unlike the example in Welch's paper, our table contains no atomic values. */
 
 static int bytecnt;		/* # of bytes remaining in block */
@@ -369,8 +369,13 @@ LZW(void)
 	    next_code = compress_code;	/* empty code table */
 	    w = -1;		/* we use -1 for "nil" */
 	} else {
-	    if (c > next_code)
-		Fatal(fbp, "LZW code impossibly large (%x > %x, diff: %d)", c, next_code, c-next_code);
+	    if (c > next_code) {
+		bu_log("LZW code impossibly large (%d > %d, diff: %d)\n", c, next_code, c-next_code);
+		if (fbp != FB_NULL && fb_close(fbp) == -1) {
+		    bu_log("Error closing frame buffer\n");
+		}
+		bu_exit(EXIT_FAILURE, NULL);
+	    }
 
 	    if (c == next_code) {
 		/* KwKwK special case */
@@ -405,15 +410,16 @@ LZW(void)
 	Message("Warning: unused raster data present");
 
 	do {
-	    if ((c = getc(gfp)) == EOF) {
+	    c = getc(gfp);
+	    if (c == EOF) {
 		Fatal(fbp, "Error reading extra raster data");
 	    }
 	} while (--bytecnt > 0);
     }
 
     /* Strange data format in the GIF spec! */
-
-    if ((c = getc(gfp)) != 0)
+    c = getc(gfp);
+    if (c != 0)
 	Fatal(fbp, "Zero byte count missing");
 }
 
@@ -765,7 +771,7 @@ main(int argc, char **argv)
 		if ((i = getc(gfp)) == EOF)
 		    Fatal(fbp, "Error reading extension function code");
 
-		Message("Extension function code %d unknown", i);
+		bu_log("gif-fb: Extension function code %d unknown\n", i);
 
 		while ((i = getc(gfp)) != 0) {
 		    if (i == EOF) {

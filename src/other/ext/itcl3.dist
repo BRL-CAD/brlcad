@@ -1,0 +1,31 @@
+set(itcl3_ignore_files
+CMake/FindTCL.cmake
+license.terms
+generic/itclStubLib.c
+generic/itclDecls.h
+generic/itcl_cmds.c
+generic/itcl_linkage.c
+generic/itclStubInit.c
+generic/itcl_ensemble.c
+generic/itcl.decls
+generic/itcl_parse.c
+generic/itcl_bicmds.c
+generic/itcl_methods.c
+generic/itcl_class.c
+generic/itcl_util.c
+generic/itclInt.h
+generic/itclInt.decls
+generic/itclIntDecls.h
+generic/itcl.h
+generic/itcl_migrate.c
+generic/itcl_objects.c
+library/itcl.tcl
+win/dllEntryPoint.c
+win/toaster.bmp
+win/itcl.rc
+CMakeLists.txt
+)
+if (COMMAND CMAKEFILES_IN_DIR)
+  CMAKEFILES_IN_DIR(itcl3_ignore_files itcl3)
+endif (COMMAND CMAKEFILES_IN_DIR)
+

@@ -43,7 +43,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>lookat 10 20 30</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>lookat 10 20 30</userinput></term>
 	   <listitem>
 	     <para>Rotates the view to place the point (10 20 30) (model coordinates) in the center of
 			the display.</para>

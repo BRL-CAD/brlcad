@@ -1,7 +1,7 @@
 /*                T C L C A D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2021 United States Government as represented by
+ * Copyright (c) 2012-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,13 +39,6 @@ __BEGIN_DECLS
 
 extern struct tclcad_obj HeadTclcadObj;
 extern struct tclcad_obj *current_top;
-
-struct path_edit_params {
-    int edit_mode;
-    double dx;
-    double dy;
-    mat_t edit_mat;
-};
 
 /**
  * function returns truthfully whether the library has been
@@ -456,6 +449,20 @@ extern int to_more_args_func(struct ged *gedp,
                              ged_func_ptr func,
                              const char *usage,
                              int maxargs);
+
+extern int
+tclcad_is_listening(struct fbserv_obj *fbsp);
+extern int
+tclcad_listen_on_port(struct fbserv_obj *fbsp, int available_port);
+extern void
+tclcad_open_server_handler(struct fbserv_obj *fbsp);
+extern void
+tclcad_close_server_handler(struct fbserv_obj *fbsp);
+extern void
+tclcad_open_client_handler(struct fbserv_obj *fbsp, int i, void *data);
+extern void
+tclcad_close_client_handler(struct fbserv_obj *fbsp, int sub);
+
 __END_DECLS
 
 #endif /* LIBTCLCAD_TCLCAD_PRIVATE_H */

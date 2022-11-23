@@ -37,7 +37,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>labelvert shapeb</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>labelvert shapeb</userinput></term>
 	   <listitem>
 	     <para>Places coordinate values in the display near the vertices of <emphasis>shapeb				</emphasis>.
 	     </para>

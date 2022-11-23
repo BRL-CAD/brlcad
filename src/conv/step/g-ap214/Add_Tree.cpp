@@ -1,7 +1,7 @@
 /*                   A D D _ T R E E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -111,7 +111,7 @@ AP214_Boolean_Result(STEPentity **bool_result, int op, int left_type, int right_
     return 1;
 }
 
-HIDDEN int
+static int
 conv_tree(struct directory **d, int depth, int UNUSED(parent_branch), struct directory **solid, STEPentity **stepobj, const union tree *t, AP203_Contents *sc)
 {
     struct bu_vls comb_shape_name = BU_VLS_INIT_ZERO;

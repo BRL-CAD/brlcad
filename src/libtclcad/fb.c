@@ -1,7 +1,7 @@
 /*                            F B . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2021 United States Government as represented by
+ * Copyright (c) 1997-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,10 +48,6 @@
 #include "./tclcad_private.h"
 #include "./view/view.h"
 
-/* defined in libfb/tcl.c */
-extern int fb_refresh(struct fb *ifp, int x, int y, int w, int h);
-
-
 #define FBO_CONSTRAIN(_v, _a, _b)		\
     ((_v > _a) ? (_v < _b ? _v : _b) : _a)
 
@@ -71,7 +67,7 @@ static struct fb_obj_list {
 } fb_objs;
 
 
-HIDDEN int
+static int
 fbo_coords_ok(struct fb *fbp, int x, int y)
 {
     int width;
@@ -113,7 +109,7 @@ fbo_coords_ok(struct fb *fbp, int x, int y)
 /*
  * Called when the object is destroyed.
  */
-HIDDEN void
+static void
 fbo_deleteProc(void *clientData)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -136,7 +132,7 @@ fbo_deleteProc(void *clientData)
  * Usage:
  * procname close
  */
-HIDDEN int
+static int
 fbo_close_tcl(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -153,7 +149,7 @@ fbo_close_tcl(void *clientData, int argc, const char **UNUSED(argv))
 }
 
 
-HIDDEN int
+static int
 fbo_tcllist2color(const char *str, unsigned char *pixel)
 {
     int r, g, b;
@@ -178,7 +174,7 @@ fbo_tcllist2color(const char *str, unsigned char *pixel)
  * Usage:
  * procname clear [rgb]
  */
-HIDDEN int
+static int
 fbo_clear_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -220,7 +216,7 @@ fbo_clear_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname cursor mode x y
  */
-HIDDEN int
+static int
 fbo_cursor_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -261,7 +257,7 @@ fbo_cursor_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname getcursor
  */
-HIDDEN int
+static int
 fbo_getcursor_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -296,7 +292,7 @@ fbo_getcursor_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname refresh [rect]
  */
-HIDDEN int
+static int
 fbo_refresh_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -331,7 +327,7 @@ fbo_refresh_tcl(void *clientData, int argc, const char **argv)
  * Returns the port number actually used.
  *
  */
-HIDDEN int
+static int
 fbo_listen_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -355,9 +351,16 @@ fbo_listen_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	if (port >= 0)
+	if (port >= 0) {
+	    //Set up fbo_fbs callbacks, then call fbs_open
+	    fbop->fbo_fbs.fbs_is_listening = &tclcad_is_listening;
+	    fbop->fbo_fbs.fbs_listen_on_port = &tclcad_listen_on_port;
+	    fbop->fbo_fbs.fbs_open_server_handler = &tclcad_open_server_handler;
+	    fbop->fbo_fbs.fbs_close_server_handler = &tclcad_close_server_handler;
+	    fbop->fbo_fbs.fbs_open_client_handler = &tclcad_open_client_handler;
+	    fbop->fbo_fbs.fbs_close_client_handler = &tclcad_close_client_handler;
 	    fbs_open(&fbop->fbo_fbs, port);
-	else {
+	} else {
 	    fbs_close(&fbop->fbo_fbs);
 	}
 	bu_vls_printf(&vls, "%d", fbop->fbo_fbs.fbs_listener.fbsl_port);
@@ -383,7 +386,7 @@ fbo_listen_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname pixel x y [rgb]
  */
-HIDDEN int
+static int
 fbo_pixel_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -445,7 +448,7 @@ fbo_pixel_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname cell xmin ymin width height color
  */
-HIDDEN int
+static int
 fbo_cell_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -522,7 +525,7 @@ fbo_cell_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname flush
  */
-HIDDEN int
+static int
 fbo_flush_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -545,7 +548,7 @@ fbo_flush_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname getheight
  */
-HIDDEN int
+static int
 fbo_getheight_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -571,7 +574,7 @@ fbo_getheight_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname getwidth
  */
-HIDDEN int
+static int
 fbo_getwidth_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -597,7 +600,7 @@ fbo_getwidth_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname getsize
  */
-HIDDEN int
+static int
 fbo_getsize_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -625,7 +628,7 @@ fbo_getsize_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname cell xmin ymin width height color
  */
-HIDDEN int
+static int
 fbo_rect_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -712,7 +715,7 @@ fbo_rect_tcl(void *clientData, int argc, const char **argv)
  * Usage:
  * procname configure width height
  */
-HIDDEN int
+static int
 fbo_configure_tcl(void *clientData, int argc, const char **argv)
 {
     struct fb_obj *fbop = (struct fb_obj *)clientData;
@@ -748,7 +751,7 @@ fbo_configure_tcl(void *clientData, int argc, const char **argv)
  *
  * Returns: result of FB command.
  */
-HIDDEN int
+static int
 fbo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char **argv)
 {
     int ret;
@@ -785,7 +788,7 @@ fbo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
  * Usage:
  * fb_open [name device [args]]
  */
-HIDDEN int
+static int
 fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char **argv)
 {
     struct fb_obj *fbop;
@@ -981,26 +984,26 @@ to_set_fb_mode(struct ged *gedp,
 
     if (3 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Get fb mode */
     if (argc == 2) {
 	struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
 	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_mode);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* Set fb mode */
     if (bu_sscanf(argv[2], "%d", &mode) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "set_fb_mode: bad value - %s\n", argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (mode < 0)
@@ -1014,7 +1017,7 @@ to_set_fb_mode(struct ged *gedp,
     }
     to_refresh_view(gdvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1037,25 +1040,25 @@ to_listen(struct ged *gedp,
 
     if (3 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     struct tclcad_view_data *tvd = (struct tclcad_view_data *)gdvp->u_data;
     if (tvd->gdv_fbs.fbs_fbp == FB_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s listen: framebuffer not open!\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* return the port number */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc == 3) {
@@ -1063,20 +1066,27 @@ to_listen(struct ged *gedp,
 
 	if (bu_sscanf(argv[2], "%d", &port) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "listen: bad value - %s\n", argv[2]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
-	if (port >= 0)
+	if (port >= 0) {
+	    // Set up fbo_fbs callbacks, then call fbs_open
+	    tvd->gdv_fbs.fbs_is_listening = &tclcad_is_listening;
+	    tvd->gdv_fbs.fbs_listen_on_port = &tclcad_listen_on_port;
+	    tvd->gdv_fbs.fbs_open_server_handler = &tclcad_open_server_handler;
+	    tvd->gdv_fbs.fbs_close_server_handler = &tclcad_close_server_handler;
+	    tvd->gdv_fbs.fbs_open_client_handler = &tclcad_open_client_handler;
+	    tvd->gdv_fbs.fbs_close_client_handler = &tclcad_close_client_handler;
 	    fbs_open(&tvd->gdv_fbs, port);
-	else {
+	} else {
 	    fbs_close(&tvd->gdv_fbs);
 	}
 	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

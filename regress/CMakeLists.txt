@@ -118,10 +118,12 @@ if(SH_EXEC)
 endif(SH_EXEC)
 
 CMAKEFILES(
+  art.sh
   flawfinder.sh
   g-dot.sh
   g-nff.sh
   library.sh
+  rtweight.sh
   usage.sh
   )
 

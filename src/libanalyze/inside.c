@@ -1,7 +1,7 @@
 /*                       I N S I D E . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2021 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ struct rayio_container {
     struct rt_i *rtip;
     struct resource *resp;
     int ray_dir;
-    int ncpus;
+    size_t ncpus;
     const char *left_name;
     const char *right_name;
     fastf_t *rays;
@@ -53,7 +53,7 @@ struct rayio_container {
 };
 
 
-HIDDEN int
+static int
 rayio_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
 {
     struct partition *part;
@@ -74,7 +74,7 @@ rayio_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSE
 }
 
 
-HIDDEN int
+static int
 rayio_overlap(struct application *ap,
 		struct partition *UNUSED(pp),
 		struct region *UNUSED(reg1),
@@ -87,7 +87,7 @@ rayio_overlap(struct application *ap,
 }
 
 
-HIDDEN int
+static int
 rayio_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
@@ -96,7 +96,7 @@ rayio_miss(struct application *ap)
 }
 
 
-HIDDEN void
+static void
 rayio_gen_worker(int cpu, void *ptr)
 {
     struct application ap;
@@ -139,9 +139,9 @@ int
 analyze_obj_inside(struct db_i *dbip, const char *outside_candidate, const char *inside_candidate, fastf_t in_tol)
 {
     int ret = 1;
-    int count = 0;
+    size_t count = 0;
     struct rt_i *rtip;
-    int ncpus = bu_avail_cpus();
+    size_t ncpus = bu_avail_cpus();
     point_t min, mid, max;
     struct rt_pattern_data *xdata, *ydata, *zdata;
     fastf_t *rays;
@@ -251,7 +251,7 @@ analyze_obj_inside(struct db_i *dbip, const char *outside_candidate, const char 
     bu_log("ray cnt: %d\n", count);
 */
     {
-	int i;
+	size_t i;
 	state = (struct rayio_container *)bu_calloc(ncpus+1, sizeof(struct rayio_container), "resources");
 	for (i = 0; i < ncpus+1; i++) {
 	    state[i].rtip = rtip;
@@ -259,7 +259,7 @@ analyze_obj_inside(struct db_i *dbip, const char *outside_candidate, const char 
 	    state[i].left_name = bu_strdup(outside_candidate);
 	    state[i].right_name = bu_strdup(inside_candidate);
 	    BU_GET(state[i].resp, struct resource);
-	    rt_init_resource(state[i].resp, i, state->rtip);
+	    rt_init_resource(state[i].resp, (int)i, state->rtip);
 	    state[i].rays_cnt = count;
 	    state[i].rays = rays;
 	    state[i].results = ray_results;

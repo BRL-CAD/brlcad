@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,7 +92,7 @@ struct identt {
 };
 
 
-HIDDEN int
+static int
 tables_check(char *a, char *b)
 {
 
@@ -108,7 +108,7 @@ tables_check(char *a, char *b)
 }
 
 
-HIDDEN size_t
+static size_t
 tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
 {
     b_off_t i;
@@ -185,7 +185,7 @@ sort_table_objs(const void *a, const void *b, void *UNUSED(arg))
 }
 
 
-HIDDEN void
+static void
 tables_objs_print(struct bu_vls *tabvls, struct bu_ptbl *tabptr, int type)
 {
     size_t i, j;
@@ -210,7 +210,7 @@ tables_objs_print(struct bu_vls *tabvls, struct bu_ptbl *tabptr, int type)
 }
 
 
-HIDDEN void
+static void
 tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struct bu_ptbl *cur_path, const fastf_t *old_mat, int flag, size_t *numreg, size_t *numsol)
 {
     struct rt_db_internal intern;
@@ -226,7 +226,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
     if (!(dp->d_flags & RT_DIR_COMB))
 	return;
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	return;
     }
@@ -319,7 +319,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		    break;
 	    }
 
-	    sol_dp = db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET);
+	    sol_dp = db_lookup(gedp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET);
 	    if (sol_dp != RT_DIR_NULL) {
 		if (sol_dp->d_flags & RT_DIR_COMB) {
 		    bu_vls_printf(tobj->tree, "   RG %c %s\n", op, sol_dp->d_namep);
@@ -334,9 +334,8 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		    } else {
 			MAT_COPY(temp_mat, old_mat);
 		    }
-		    if (rt_db_get_internal(&sol_intern, sol_dp, gedp->ged_wdbp->dbip, temp_mat, &rt_uniresource) < 0) {
+		    if (rt_db_get_internal(&sol_intern, sol_dp, gedp->dbip, temp_mat, &rt_uniresource) < 0) {
 			bu_log("Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name);
-			nsoltemp = 0;
 		    }
 		    nsoltemp = tables_sol_number((matp_t)temp_mat, tree_list[i].tl_tree->tr_l.tl_name, &old, numsol);
 		    bu_vls_printf(tobj->tree, "   %c [%d] ", op, nsoltemp);
@@ -360,7 +359,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 		if (!OBJ[sol_intern.idb_type].ft_describe ||
-		    OBJ[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->ged_wdbp->dbip->dbi_base2local) < 0) {
+		    OBJ[sol_intern.idb_type].ft_describe(&tmp_vls, &sol_intern, 1, gedp->dbip->dbi_base2local) < 0) {
 		    bu_vls_printf(gedp->ged_result_str, "%s describe error\n", tree_list[i].tl_tree->tr_l.tl_name);
 		}
 		bu_vls_printf(tobj->describe, "%s", bu_vls_addr(&tmp_vls));
@@ -402,7 +401,7 @@ tables_new(struct ged *gedp, struct bu_ptbl *tabptr, struct directory *dp, struc
 		}
 	    }
 
-	    nextdp = db_lookup(gedp->ged_wdbp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY);
+	    nextdp = db_lookup(gedp->dbip, tree_list[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY);
 	    if (nextdp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "\tskipping this object\n");
 		continue;
@@ -429,12 +428,12 @@ out:
 }
 
 
-HIDDEN void
+static void
 tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *gedp, char *timep)
 {
     int i;
     bu_vls_printf(tabvls, "1 -8    Summary Table {%s}  (written: %s)\n", argv[0], timep);
-    bu_vls_printf(tabvls, "2 -7         file name    : %s\n", gedp->ged_wdbp->dbip->dbi_filename);
+    bu_vls_printf(tabvls, "2 -7         file name    : %s\n", gedp->dbip->dbi_filename);
     bu_vls_printf(tabvls, "3 -6         \n");
     bu_vls_printf(tabvls, "4 -5         \n");
 #ifndef _WIN32
@@ -449,8 +448,8 @@ tables_header(struct bu_vls *tabvls, int argc, const char **argv, struct ged *ge
 	    bu_vls_printf(tabvls, "5 -4         user         : UNKNOWN\n");
     }
 #endif
-    bu_vls_printf(tabvls, "6 -3         target title : %s\n", gedp->ged_wdbp->dbip->dbi_title);
-    bu_vls_printf(tabvls, "7 -2         target units : %s\n", bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base));
+    bu_vls_printf(tabvls, "6 -3         target title : %s\n", gedp->dbip->dbi_title);
+    bu_vls_printf(tabvls, "7 -2         target units : %s\n", bu_units_string(gedp->dbip->dbi_local2base));
     bu_vls_printf(tabvls, "8 -1         objects      :");
     for (i = 2; i < argc; i++) {
 	if ((i%8) == 0)
@@ -481,8 +480,8 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     time_t now;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -495,13 +494,13 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_ptbl_init(&cur_path, 8, "f_tables: cur_path");
     bu_ptbl_init(&tabobjs, 8, "f_tables: objects");
 
-    status = GED_OK;
+    status = BRLCAD_OK;
 
     /* find out which ascii table is desired */
     if (BU_STR_EQUAL(argv[0], "solids")) {
@@ -516,7 +515,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     } else {
 	/* should never reach here */
 	bu_vls_printf(gedp->ged_result_str, "%s:  input error\n", argv[0]);
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
 	goto end;
     }
 
@@ -524,7 +523,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     test_f = fopen(argv[1], "w+");
     if (test_f == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open file [%s]\n\tMake sure the directory and file are writable.\n", argv[0], argv[1]);
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
 	goto end;
     }
     fclose(test_f);
@@ -534,7 +533,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 	/* !!! this needs to be a bu_temp_file() */
 	if ((idfd = creat("/tmp/mged_discr", 0600)) < 0) {
 	    perror("/tmp/mged_discr");
-	    status = GED_ERROR;
+	    status = BRLCAD_ERROR;
 	    goto end;
 	}
 	rd_idfd = open("/tmp/mged_discr", 2);
@@ -552,7 +551,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp;
 
 	bu_ptbl_reset(&cur_path);
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL)
+	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL)
 	    tables_new(gedp, &tabobjs, dp, &cur_path, (const fastf_t *)bn_mat_identity, flag, &numreg, &numsol);
 	else
 	    bu_vls_printf(gedp->ged_result_str, "%s:  skip this object\n", argv[i]);
@@ -586,7 +585,7 @@ ged_tables_core(struct ged *gedp, int argc, const char *argv[])
     ftabvls = fopen(argv[1], "w+");
     if (ftabvls == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s:  Can't open file [%s]\n\tMake sure the directory and file are still writable.\n", argv[0], argv[1]);
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
 	goto end;
     }
     bu_vls_fwrite(ftabvls, &tabvls);

@@ -1,7 +1,7 @@
 /*                     G - V O X E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ struct voxelizeData
 /**
  * Function to print values to File
  */
-HIDDEN void
+static void
 printToFile(void *callBackData, int x, int y, int z, const char *a, fastf_t fill) {
     struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
     FILE *fp;

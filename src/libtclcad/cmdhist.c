@@ -1,7 +1,7 @@
 /*                       C M D H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ static struct tclcad_cmdhist_obj HeadCmdHistObj;		/* head of command history obj
  * Stores the given command with start and finish times in the
  * history vls'es. 'status' is either BRLCAD_OK or BRLCAD_ERROR.
  */
-HIDDEN void
+static void
 _tclcad_cmdhist_record(struct tclcad_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
 {
     struct tclcad_cmdhist *new_hist;
@@ -85,7 +85,7 @@ _tclcad_cmdhist_record(struct tclcad_cmdhist_obj *chop, struct bu_vls *cmdp, str
 }
 
 
-HIDDEN int
+static int
 _tclcad_cmdhist_timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 {
     if (UNLIKELY(finish->tv_sec == 0 && finish->tv_usec == 0))
@@ -104,7 +104,7 @@ _tclcad_cmdhist_timediff(struct timeval *tvdiff, struct timeval *start, struct t
 }
 
 
-HIDDEN int
+static int
 tclcad_cmdhist_history(void *data, int argc, const char *argv[])
 {
     FILE *fp;
@@ -177,7 +177,7 @@ tclcad_cmdhist_history(void *data, int argc, const char *argv[])
 }
 
 
-HIDDEN int
+static int
 tclcad_cmdhist_add(void *clientData, int argc, const char **argv)
 {
     struct tclcad_cmdhist_obj *chop = (struct tclcad_cmdhist_obj *)clientData;
@@ -206,7 +206,7 @@ tclcad_cmdhist_add(void *clientData, int argc, const char **argv)
 }
 
 
-HIDDEN int
+static int
 tclcad_cmdhist_prev(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct tclcad_cmdhist_obj *chop = (struct tclcad_cmdhist_obj *)clientData;
@@ -226,7 +226,7 @@ tclcad_cmdhist_prev(void *clientData, int argc, const char **UNUSED(argv))
 }
 
 
-HIDDEN int
+static int
 tclcad_cmdhist_curr(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct tclcad_cmdhist_obj *chop = (struct tclcad_cmdhist_obj *)clientData;
@@ -246,7 +246,7 @@ tclcad_cmdhist_curr(void *clientData, int argc, const char **UNUSED(argv))
 }
 
 
-HIDDEN int
+static int
 tclcad_cmdhist_next(void *clientData, int argc, const char **UNUSED(argv))
 {
     struct tclcad_cmdhist_obj *chop = (struct tclcad_cmdhist_obj *)clientData;
@@ -270,7 +270,7 @@ tclcad_cmdhist_next(void *clientData, int argc, const char **UNUSED(argv))
 
 
 
-HIDDEN int
+static int
 cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     int ret;
@@ -295,7 +295,7 @@ cho_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 }
 
 
-HIDDEN void
+static void
 cho_deleteProc(ClientData clientData)
 {
     struct tclcad_cmdhist_obj *chop = (struct tclcad_cmdhist_obj *)clientData;
@@ -322,7 +322,7 @@ cho_deleteProc(ClientData clientData)
 }
 
 
-HIDDEN struct tclcad_cmdhist_obj *
+static struct tclcad_cmdhist_obj *
 cho_open(ClientData UNUSED(clientData), Tcl_Interp *interp, const char *name)
 {
     struct tclcad_cmdhist_obj *chop;

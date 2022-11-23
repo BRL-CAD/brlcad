@@ -1,7 +1,7 @@
 /*                    E X T R U D C I R C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2021 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 
 
 int
-Extrudcirc(int entityno, int curve, vect_t evect)
+Extrudcirc(size_t entityno, int curve, vect_t evect)
     /* extrusion entity number */
     /* circular arc entity number */
     /* extrusion vector */

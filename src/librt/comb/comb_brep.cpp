@@ -1,7 +1,7 @@
 /*                    C O M B _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db
     return 0;
 }
 
-HIDDEN int
+static int
 conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 {
     ON_Brep *left = NULL, *right = NULL, *old = NULL;

@@ -36,7 +36,7 @@ shapes based on their parameters.
   <example><title>Create a PART shape that surrounds two specified spheres.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>sph-part sph1.s sph2.s part.s</userinput>
+      <prompt>mged&gt; </prompt><userinput>sph-part sph1.s sph2.s part.s</userinput>
     </para>
     <para>Creates a PART shape named <emphasis>part.s</emphasis> that surrounds the spheres <emphasis>sph1.s	</emphasis> and <emphasis>sph2.s</emphasis>.
     </para>

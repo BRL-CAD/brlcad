@@ -48,7 +48,7 @@ The user must be editing an <emphasis>ARB</emphasis> shape and be rotating a fac
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>eqn 0 0 1</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>eqn 0 0 1</userinput></term>
 	   <listitem>
 	     <para>The face of the <emphasis>ARB</emphasis> is rotated to be parallel to the <emphasis>xy</emphasis> 			 plane.
 	     </para>

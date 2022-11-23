@@ -42,7 +42,7 @@ toggle between the two modes.
   <example><title>Rotate the view on the geometry display window about the <emphasis>x</emphasis> axis.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>vrot 90 0 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>vrot 90 0 0</userinput>
     </para>
     <para>Rotates the view 90° about the <emphasis>x</emphasis> axis.
     </para>
@@ -50,7 +50,7 @@ toggle between the two modes.
  <example><title>Rotate the view on the geometry display window about the <emphasis>y</emphasis> axis.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>vrot 0 180 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>vrot 0 180 0</userinput>
     </para>
     <para>Rotates the view 180° about the <emphasis>y</emphasis> axis.
 

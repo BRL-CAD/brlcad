@@ -1,7 +1,7 @@
 /*                    V L S _ V P R I N T F . H
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,6 +52,7 @@ vprintf_flags
     int left_justify;
     ssize_t precision;
 } vflags_t;
+#define VFLAGS_INIT_ZERO {0, 0, 0, 0, 0, 0}
 
 /* private shared function decls */
 BU_EXPORT extern int format_part_status(const char c);

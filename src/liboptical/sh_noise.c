@@ -1,7 +1,7 @@
 /*                      S H _ N O I S E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,10 +46,10 @@
 #define CK_noise_SP(_p) BU_CKMAG(_p, noise_MAGIC, "noise_specific")
 
 
-HIDDEN int noise_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int noise_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
 int fractal_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void noise_print(register struct region *rp, void *dp);
-HIDDEN void noise_free(void *cp);
+static void noise_print(register struct region *rp, void *dp);
+static void noise_free(void *cp);
 
 
 /* The "mfuncs" structure defines the external interface to the shader.
@@ -186,7 +186,7 @@ struct bu_structparse noise_parse_tab[] = {
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
-HIDDEN int
+static int
 noise_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 /* pointer to reg_udata in *rp */
 /* New since 4.4 release */
@@ -266,14 +266,14 @@ found:
 }
 
 
-HIDDEN void
+static void
 noise_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, noise_print_tab, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 noise_free(void *cp)
 {
     BU_PUT(cp, struct noise_specific);

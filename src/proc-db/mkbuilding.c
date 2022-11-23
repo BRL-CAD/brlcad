@@ -1,7 +1,7 @@
 /*                    M K B U I L D I N G . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2021 United States Government as represented by
+ * Copyright (c) 2009-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ main(int ac, char *av[])
 
     mkbldg_makeWallSegment("TestWall", db_filepointer, p1, p2);
 
-    wdb_close(db_filepointer);
+    db_close(db_filepointer->dbip);
     return 0;
 }
 

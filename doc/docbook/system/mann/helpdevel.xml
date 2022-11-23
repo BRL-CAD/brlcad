@@ -40,7 +40,7 @@ one-line usage message for that command is returned. The <command>help, helplib,
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>helpdevel winset</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>helpdevel winset</userinput></term>
 	   <listitem>
 	     <para>Displays a one-line usage message for the <command>winset</command> command.
 	     </para>

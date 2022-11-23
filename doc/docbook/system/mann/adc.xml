@@ -260,7 +260,7 @@
    <example>
       <variablelist>
        <varlistentry>
-	 <term><prompt>mged&gt;</prompt> <userinput>adc</userinput></term>
+	 <term><prompt>mged&gt; </prompt><userinput>adc</userinput></term>
 	 <listitem>
 	   <para>
 	     Toggle display of angle/distance cursor.
@@ -272,7 +272,7 @@
    <example>
      <variablelist>
        <varlistentry>
-	 <term><prompt>mged&gt;</prompt> <userinput>adc a1 37.5</userinput></term>
+	 <term><prompt>mged&gt; </prompt><userinput>adc a1 37.5</userinput></term>
 	 <listitem>
 	   <para>
 	     Sets angle1 to 37.5 degrees.
@@ -284,7 +284,7 @@
    <example>
      <variablelist>
        <varlistentry>
-	 <term><prompt>mged&gt;</prompt> <userinput>adc a1 37.5</userinput></term>
+	 <term><prompt>mged&gt; </prompt><userinput>adc a1 37.5</userinput></term>
 	 <listitem>
 	   <para>
 	     Gets angle1.
@@ -296,7 +296,7 @@
    <example>
      <variablelist>
        <varlistentry>
-	 <term><prompt>mged&gt;</prompt> <userinput>adc xyz 100 0 0</userinput></term>
+	 <term><prompt>mged&gt; </prompt><userinput>adc xyz 100 0 0</userinput></term>
 	 <listitem>
 	   <para>
 	     Moves ADC position to (100,0,0), model coordinates and local units.

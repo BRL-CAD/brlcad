@@ -150,7 +150,7 @@ respectively. The units for <emphasis>value</emphasis> are degrees for rotation 
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>knob y 1</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>knob y 1</userinput></term>
 	   <listitem>
 	     <para>Starts the view rotating about the vertical axis.
 		     </para>

@@ -1,7 +1,7 @@
 /*                        P O L Y G O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,9 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/color.h"
 #include "bn/tol.h"
+#include "bv/defines.h"
 #include "bg/defines.h"
 #include "bg/polygon_types.h"
 
@@ -43,7 +45,13 @@ __BEGIN_DECLS
  * to get all the related logic in the same place so it is clearer what we do
  * and don't have, and make what we do have easier to reuse. */
 
-BG_EXPORT fastf_t
+/*
+ * Weird upper limit from clipper ---> sqrt(2^63 -1)/2
+ * Probably should be sqrt(2^63 -1)
+ */
+#define CLIPPER_MAX 1518500249
+
+BG_EXPORT extern fastf_t
 bg_find_polygon_area(
 	struct bg_polygon *gpoly,
 	fastf_t sf,
@@ -51,17 +59,17 @@ bg_find_polygon_area(
 	fastf_t size
 	);
 
-BG_EXPORT int
+BG_EXPORT extern int
 bg_polygons_overlap(
 	struct bg_polygon *polyA,
 	struct bg_polygon *polyB,
 	matp_t model2view,
-	struct bn_tol *tol,
+	const struct bn_tol *tol,
 	fastf_t iscale
 	);
 
 /* model2view and view2model may be NULL, if the polygons are coplanar */
-BG_EXPORT struct bg_polygon *
+BG_EXPORT extern struct bg_polygon *
 bg_clip_polygon(
 	bg_clip_t op,
        	struct bg_polygon *subj,
@@ -72,7 +80,7 @@ bg_clip_polygon(
 	);
 
 /* model2view and view2model may be NULL, if the polygons are coplanar */
-BG_EXPORT struct bg_polygon *
+BG_EXPORT extern struct bg_polygon *
 bg_clip_polygons(
 	bg_clip_t op,
        	struct bg_polygons *subj,
@@ -81,6 +89,14 @@ bg_clip_polygons(
        	matp_t model2view,
        	matp_t view2model
 	);
+
+BG_EXPORT extern struct bg_polygon *
+bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t line_spacing);
+
+BG_EXPORT extern void bg_polygon_free(struct bg_polygon *gpp);
+BG_EXPORT extern void bg_polygons_free(struct bg_polygons *gpp);
+
+BG_EXPORT extern void bg_polygon_cpy(struct bg_polygon *dest, struct bg_polygon *src);
 
 
 /********************************
@@ -210,6 +226,13 @@ BG_EXPORT extern int bg_polygon_triangulate(int **faces, int *num_faces, point2d
 					    const point2d_t *pts, const size_t npts, triangulation_t type);
 
 
+/* Test function - do not use */
+BG_EXPORT extern int
+bg_poly2tri_test(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+	const int *poly, const size_t poly_pnts,
+	const int **holes_array, const size_t *holes_npts, const size_t nholes,
+	const int *steiner, const size_t steiner_npts,
+	const point2d_t *pts);
 
 /*********************************************************
   Operations on 3D point types - these are assumed to be
@@ -288,6 +311,71 @@ BG_EXPORT extern int bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts,
 BG_EXPORT extern void bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b);
 BG_EXPORT extern void bg_polygon_plot(const char *filename, const point_t *pnts, int npnts, int r, int g, int b);
 BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b);
+
+
+/* BV related polygon logic and types */
+
+#define BV_POLYGON_GENERAL 0
+#define BV_POLYGON_CIRCLE 1
+#define BV_POLYGON_ELLIPSE 2
+#define BV_POLYGON_RECTANGLE 3
+#define BV_POLYGON_SQUARE 4
+
+struct bv_polygon {
+    int                 type;
+    int                 fill_flag;         /* set to shade the interior */
+    vect2d_t            fill_dir;
+    fastf_t             fill_delta;
+    struct bu_color     fill_color;
+    long                curr_contour_i;
+    long                curr_point_i;
+    point_t             prev_point;
+
+    /* We stash the view state on creation, so we know how to return
+     * to it for future 2D alterations */
+    struct bview v;
+
+    /* Actual polygon info */
+    struct bg_polygon   polygon;
+
+    /* Arbitrary data */
+    void *u_data;
+};
+
+// Note - for these functions it is important that the bv
+// gv_width and gv_height values are current!  I.e.:
+//
+//  v->gv_width  = dm_get_width((struct dm *)v->dmp);
+//  v->gv_height = dm_get_height((struct dm *)v->dmp);
+BG_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int type, int x, int y);
+
+// Various update modes have similar logic - we pass in the flags to the update
+// routine to enable/disable specific portions of the overall flow.
+#define BV_POLYGON_UPDATE_DEFAULT 0
+#define BV_POLYGON_UPDATE_PROPS_ONLY 1
+#define BV_POLYGON_UPDATE_PT_SELECT 2
+#define BV_POLYGON_UPDATE_PT_MOVE 3
+#define BV_POLYGON_UPDATE_PT_APPEND 4
+BG_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s, struct bview *v, int utype);
+
+// Update just the scene obj vlist, without altering the source polygon
+BG_EXPORT extern void bv_polygon_vlist(struct bv_scene_obj *s);
+
+// Find the closest polygon obj to a view's current x,y mouse points
+BG_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, struct bview *v);
+
+BG_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s);
+BG_EXPORT extern struct bv_scene_obj *bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s);
+
+
+// For all polygon objects in the objs table, apply the specified boolean op
+// using p and replace the original polygons in objs with the results (NOTE:  p
+// will not act on itself if it is in objs):
+//
+// u : objs[i] u p  (unions p with objs[i])
+// - : objs[i] - p  (removes p from objs[i])
+// + : objs[i] + p  (intersects p with objs[i])
+BG_EXPORT extern int bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op, int merge);
 
 __END_DECLS
 

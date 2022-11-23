@@ -1,7 +1,7 @@
 /*                       D I S P L A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2020-2021 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 #ifndef RT3_DISPLAY_H
 #define RT3_DISPLAY_H
 
+#include <QTimer>
 #include <QtWidgets/QOpenGLWidget>
 #include "Camera.h"
 #include "AxesRenderer.h"
@@ -33,11 +34,11 @@ class DisplayManager;
 class GeometryRenderer;
 
 
-class Display : public QOpenGLWidget{
+class BRLCADDisplay : public QOpenGLWidget{
 
 Q_OBJECT
 public:
-    Display();
+    BRLCADDisplay();
 
     Camera *camera;
     void onDatabaseUpdated();
@@ -48,6 +49,8 @@ public:
 
 protected:
     void resizeGL(int w, int h) override;
+
+
     void paintGL() override;
 
     void mousePressEvent(QMouseEvent *event) override;
@@ -55,6 +58,13 @@ protected:
     void mouseMoveEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
     void keyPressEvent(QKeyEvent *k) override ;
+    void resizeEvent(QResizeEvent *e) override;
+
+private slots:
+    void enableResize() {
+	    setUpdatesEnabled(true);
+	    repaint();
+    };
 
 private:
     int w = 400;
@@ -73,6 +83,8 @@ private:
     GeometryRenderer * geometryRenderer;
     AxesRenderer * axesRenderer;
     std::vector<Renderable*> renderers;
+
+    QTimer *resizeTimer;
 
 public slots:
     void onDatabaseOpen();

@@ -58,7 +58,7 @@
 #include "common.h"
 #include <math.h>
 #include "vmath.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/tol.h"
 #include "bg/tri_tri.h"
 
@@ -190,13 +190,13 @@ int bg_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
     };
 
     /* compute plane of triangle (V0, V1, V2) */
-    ret = bn_make_plane_3pnts(P1, V0, V1, V2, &tol);
+    ret = bg_make_plane_3pnts(P1, V0, V1, V2, &tol);
     if (ret) return -1;
     /* compute plane of triangle (U0, U1, U2) */
-    ret = bn_make_plane_3pnts(P2, U0, U1, U2, &tol);
+    ret = bg_make_plane_3pnts(P2, U0, U1, U2, &tol);
     if (ret) return -1;
     /* verify that triangles are coplanar */
-    if (bn_coplanar(P1, P2, &tol) <= 0) return -1;
+    if (bg_coplanar(P1, P2, &tol) <= 0) return -1;
 
     /* first project onto an axis-aligned plane, that maximizes the area */
     /* of the triangles, compute indices: i0, i1. */
@@ -283,13 +283,13 @@ int bg_tri_tri_isect_coplanar2(point_t V0, point_t V1, point_t V2,
     };
 
     /* compute plane of triangle (V0, V1, V2) */
-    ret = bn_make_plane_3pnts(P1, V0, V1, V2, &tol);
+    ret = bg_make_plane_3pnts(P1, V0, V1, V2, &tol);
     if (ret) return -1;
     /* compute plane of triangle (U0, U1, U2) */
-    ret = bn_make_plane_3pnts(P2, U0, U1, U2, &tol);
+    ret = bg_make_plane_3pnts(P2, U0, U1, U2, &tol);
     if (ret) return -1;
     /* verify that triangles are coplanar */
-    if (bn_coplanar(P1, P2, &tol) <= 0) return -1;
+    if (bg_coplanar(P1, P2, &tol) <= 0) return -1;
 
     /* first project onto an axis-aligned plane, that maximizes the area */
     /* of the triangles, compute indices: i0, i1. */

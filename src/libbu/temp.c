@@ -1,7 +1,7 @@
 /*                           T E M P . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2021 United States Government as represented by
+ * Copyright (c) 2001-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,7 +78,7 @@ static void disable_duplicate_close_check(const wchar_t* UNUSED(expression),
 					  uintptr_t UNUSED(pReserved)) {}
 #endif
 
-HIDDEN void
+static void
 temp_close_files(void)
 {
     size_t i;
@@ -121,7 +121,7 @@ temp_close_files(void)
 }
 
 
-HIDDEN void
+static void
 temp_add_to_list(const char *fn, int fd)
 {
     if (all_temp_files.capacity == 0) {
@@ -149,13 +149,14 @@ temp_add_to_list(const char *fn, int fd)
 
 
 #ifndef HAVE_MKSTEMP
-HIDDEN int
+static int
 mkstemp(char *file_template)
 {
     int fd = -1;
     int counter = 0;
-    size_t i;
+    int i;
     size_t start, end;
+    size_t len;
 
     static const char replace[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     static int replacelen = sizeof(replace) - 1;
@@ -163,9 +164,14 @@ mkstemp(char *file_template)
     if (!file_template || file_template[0] == '\0')
 	return -1;
 
+    /* last 6 chars must be X */
+    len = strlen(file_template);
+    if (len < 6 || memcmp(file_template + (len - 6), "XXXXXX", 6))
+	return -1;
+
     /* identify the replacement suffix */
-    start = end = strlen(file_template)-1;
-    for (i=strlen(file_template)-1; i>=0; i--) {
+    start = end = len-1;
+    for (i=(int)len-1; i>=0; i--) {
 	if (file_template[i] != 'X') {
 	    break;
 	}
@@ -175,7 +181,7 @@ mkstemp(char *file_template)
     do {
 	/* replace the template with random chars */
 	srand((unsigned)(bu_gettime() % UINT_MAX));
-	for (i=start; i>=end; i--) {
+	for (i=(int)start; i>=(int)end; i--) {
 	    file_template[i] = replace[(int)(replacelen * ((double)rand() / (double)RAND_MAX))];
 	}
 	fd = open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR | O_TEMPORARY, S_IRUSR | S_IWUSR);

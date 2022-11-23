@@ -1,7 +1,7 @@
 /*                  W I N D O W _ F R A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2021 United States Government as represented by
+ * Copyright (c) 2009-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -508,7 +508,7 @@ main(int argc, char **argv)
     }							/* START # 2 */
 
     /* Close file. */
-    wdb_close(fpw);
+    db_close(fpw->dbip);
 
     return 0;
 }							/* END # 1 */

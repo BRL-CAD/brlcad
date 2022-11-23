@@ -1,7 +1,7 @@
 /*                         U S A G E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -250,12 +250,12 @@ usage(const char *argv0, int verbose)
 
 } /* extern "C" */
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

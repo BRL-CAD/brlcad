@@ -16,7 +16,7 @@
 #ifdef LIBXML_FTP_ENABLED
 
 /* Needed for portability to Windows 64 bits */
-#if defined(__MINGW32__) || defined(_WIN32_WCE)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #include <winsock2.h>
 #else
 /**
@@ -31,6 +31,7 @@
  * macro used to provide portability of code to windows sockets
  * the value to be used when the socket is not valid
  */
+#undef  INVALID_SOCKET
 #define INVALID_SOCKET (-1)
 #endif
 

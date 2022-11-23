@@ -1,7 +1,7 @@
 /*                          L E N S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -327,7 +327,7 @@ main(int ac, char *av[])
     }
 
     /* Close database */
-    wdb_close(db_fp);
+    db_close(db_fp->dbip);
 
     bu_log("Done.\n");
 

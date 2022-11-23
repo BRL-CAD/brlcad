@@ -1,7 +1,7 @@
 /*                C H E C K _ A D J _ A I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2021 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ struct adj_air_context {
 };
 
 
-HIDDEN void
+static void
 adj_air(const struct xray* ray, const struct partition *pp, point_t pt, void* callback_data)
 {
     struct adj_air_context *context = (struct adj_air_context*) callback_data;
@@ -86,7 +86,7 @@ int check_adj_air(struct current_state *state,
 
     if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_ADJ_AIR)) {
 	clear_list(&adjAirList);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     print_verbose_debug(options);
@@ -98,7 +98,7 @@ int check_adj_air(struct current_state *state,
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

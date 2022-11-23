@@ -50,7 +50,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>attach ogl</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>attach ogl</userinput></term>
 	  <listitem>
 	    <para>
 	      Opens an ogl display window named .dm_ogl0 (assuming this is the first
@@ -59,7 +59,7 @@
 	   </listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged</prompt> <userinput>attach ogl</userinput></term>
+	<term><prompt>mged</prompt><userinput>attach ogl</userinput></term>
 	<listitem>
 	  <para>
 	    Opens an ogl display window named .dm_ogl1.
@@ -67,7 +67,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt><userinput>attach -n myOgl -W 720 -N 486 ogl</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>attach -n myOgl -W 720 -N 486 ogl</userinput></term>
 	<listitem>
 	  <para>
 	    Opens a 720 x 486 OpenGL display window named myOgl.
@@ -75,7 +75,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt><userinput>attach -n myX -d remote_host:0 -i myInitX</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>attach -n myX -d remote_host:0 -i myInitX</userinput></term>
 	<listitem>
 	  <para>
 	    Open an X display window named myX on remote_host that is initialized by
@@ -88,7 +88,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt><userinput>toplevel.t</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>toplevel.t</userinput></term>
 	<listitem>
 	  <para>
 	    A top-level window named .t was created.
@@ -96,7 +96,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt><userinput>attach -t 0 -S 800 -n .t.ogl ogl</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>attach -t 0 -S 800 -n .t.ogl ogl</userinput></term>
 	<listitem>
 	  <para>
 	    Opens a 800 x 800 OpenGL display window named .t.ogl that is not a top-level window.
@@ -104,7 +104,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt><userinput>button .t.dismiss -text Dismiss -command "release .t.ogl; destroy .t"</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>button .t.dismiss -text Dismiss -command "release .t.ogl; destroy .t"</userinput></term>
 	<listitem>
 	  <para>
 	    Creates a button that dismisses the display manager, etc.
@@ -112,7 +112,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt><userinput>pack .t.ogl -expand 1 -fill both</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>pack .t.ogl -expand 1 -fill both</userinput></term>
 	<listitem>
 	  <para>
 	    Packs the display manager inside .t.
@@ -120,7 +120,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt><userinput>pack .t.dismiss</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>pack .t.dismiss</userinput></term>
 	<listitem>
 	  <para>
 	    Packs the Dismiss button inside .t.
@@ -128,7 +128,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt><userinput>attach</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>attach</userinput></term>
 	<listitem>
 	  <para>
 	    Lists the help message that includes the valid display types.

@@ -1,7 +1,7 @@
 /*                         B O T _ S M O O T H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,9 +45,10 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
     int arg_index=1;
     static const char *usage = "[-t angle_tolerance] new_bot old_bot";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     dp_old = dp_new = RT_DIR_NULL;
 
@@ -61,14 +62,14 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* check that we are using a version 5 database */
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "This is an older database version.\nIt does not support BOT surface normals.\nUse \"dbupgrade\" to upgrade this database to the current version.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     while (*argv[arg_index] == '-') {
@@ -78,52 +79,52 @@ ged_bot_smooth_core(struct ged *gedp, int argc, const char *argv[])
 	    tolerance_angle = atof(argv[arg_index]);
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	arg_index++;
     }
 
     if (arg_index >= argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     new_bot_name = (char *)argv[arg_index++];
     old_bot_name = (char *)argv[arg_index];
 
-    GED_DB_LOOKUP(gedp, dp_old, old_bot_name, LOOKUP_QUIET, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dp_old, old_bot_name, LOOKUP_QUIET, BRLCAD_ERROR);
 
     if (!BU_STR_EQUAL(old_bot_name, new_bot_name)) {
-	GED_CHECK_EXISTS(gedp, new_bot_name, LOOKUP_QUIET, GED_ERROR);
+	GED_CHECK_EXISTS(gedp, new_bot_name, LOOKUP_QUIET, BRLCAD_ERROR);
     } else {
 	dp_new = dp_old;
     }
 
-    GED_DB_GET_INTERNAL(gedp, &intern, dp_old, NULL, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp_old, NULL, wdbp->wdb_resp, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a BOT primitive\n", old_bot_name);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     old_bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(old_bot);
 
-    if (rt_bot_smooth(old_bot, old_bot_name, gedp->ged_wdbp->dbip, tolerance_angle*DEG2RAD)) {
+    if (rt_bot_smooth(old_bot, old_bot_name, gedp->dbip, tolerance_angle*DEG2RAD)) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to smooth %s\n", old_bot_name);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (dp_new == RT_DIR_NULL) {
-	GED_DB_DIRADD(gedp, dp_new, new_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp_new, new_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, wdbp->wdb_resp, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

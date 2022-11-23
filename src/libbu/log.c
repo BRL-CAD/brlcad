@@ -1,7 +1,7 @@
 /*                           L O G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ bu_log_delete_hook(bu_hook_t func, void *clientdata)
 }
 
 
-HIDDEN void
+static void
 log_call_hooks(void *buf)
 {
 
@@ -113,7 +113,7 @@ bu_log_hook_restore_all(struct bu_hook_list *restore_hlp)
  * level of all messages at that recursion level, even if the calls
  * to bu_log come from non-librt routines.
  */
-HIDDEN void
+static void
 log_do_indent_level(struct bu_vls *new_vls, register const char *old_vls)
 {
     register int i;

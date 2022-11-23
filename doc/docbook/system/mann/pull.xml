@@ -37,7 +37,7 @@
   <example><title>Pull the effects of any transformation matrices from the leaves(primitive shapes) of the tree up to the specified head nodes(objects).</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>pull group1 regiona</userinput>
+      <prompt>mged&gt; </prompt><userinput>pull group1 regiona</userinput>
     </para>
     <para>Pulls the effects of any transformation matrices from the primitive shapes in the tree up to the root nodes specified by <emphasis>group1</emphasis> 	and <emphasis>regiona</emphasis>.
     </para>

@@ -1,7 +1,7 @@
 /*                         R M A P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,27 +43,27 @@ ged_rmap_core(struct ged *gedp, int argc, const char *argv[])
     struct _ged_id_to_names *itnp;
     struct _ged_id_names *inp;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not available prior to version 5 of the .g file format\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     BU_LIST_INIT(&headIdName.l);
 
     /* For all regions not hidden */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    int found = 0;
 
 	    if (!(dp->d_flags & RT_DIR_REGION) ||
@@ -72,11 +72,11 @@ ged_rmap_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (rt_db_get_internal(&intern,
 				   dp,
-				   gedp->ged_wdbp->dbip,
+				   gedp->dbip,
 				   (fastf_t *)NULL,
 				   &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting", argv[0]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -136,7 +136,7 @@ ged_rmap_core(struct ged *gedp, int argc, const char *argv[])
 	BU_PUT(itnp, struct _ged_id_to_names);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

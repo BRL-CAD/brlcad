@@ -1,14 +1,15 @@
-
-SET(VERSION "0.8.15")
-SET(LIBEXSLT_VERSION_NUMBER 815)
-SET(LIBEXSLT_VERSION_EXTRA "-BRLCAD")
-SET(WITH_CRYPTO 0)
+set(VERSION "0.8.15")
+set(LIBEXSLT_VERSION_NUMBER 815)
+set(LIBEXSLT_VERSION_EXTRA "-BRLCAD")
+set(WITH_CRYPTO 0)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/exsltconfig.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/../include/libexslt/exsltconfig.h)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../include/libexslt/exsltconfig.h")
+if(COMMAND DISTCLEAN)
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/../include/libexslt/exsltconfig.h")
+endif(COMMAND DISTCLEAN)
 
-SET(libexslt_srcs
+set(libexslt_srcs
   src/common.c
   src/crypto.c
   src/date.c
@@ -35,3 +36,10 @@ include_directories(
 
 add_library(exslt SHARED ${libexslt_srcs})
 target_link_libraries(exslt xml xslt)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

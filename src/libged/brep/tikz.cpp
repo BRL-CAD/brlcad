@@ -1,7 +1,7 @@
 /*                      T I K Z . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file libged/brep/tikz.cpp
  *
- * The brep command logic for exporting Tikz plotting files.
+ * The brep command logic for exporting TikZ plotting files.
  *
  */
 
@@ -42,17 +42,17 @@ tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, stru
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    /* convert right */
-	    ret = tikz_tree(gedp, tikz, oldtree->tr_b.tb_right, color, cnt);
+	    ret |= tikz_tree(gedp, tikz, oldtree->tr_b.tb_right, color, cnt);
 	    /* fall through */
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
 	    /* convert left */
-	    ret = tikz_tree(gedp, tikz, oldtree->tr_b.tb_left, color, cnt);
+	    ret |= tikz_tree(gedp, tikz, oldtree->tr_b.tb_left, color, cnt);
 	    break;
 	case OP_DB_LEAF:
 	    {
-		struct directory *dir = db_lookup(gedp->ged_wdbp->dbip, oldtree->tr_l.tl_name, LOOKUP_QUIET);
+		struct directory *dir = db_lookup(gedp->dbip, oldtree->tr_l.tl_name, LOOKUP_QUIET);
 		if (dir != RT_DIR_NULL) {
 		    if (dir->d_flags & RT_DIR_COMB) {
 			tikz_comb(gedp, tikz, dir, color, cnt);
@@ -62,9 +62,9 @@ tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, stru
 			struct rt_db_internal bintern;
 			struct rt_brep_internal *b_ip = NULL;
 			RT_DB_INTERNAL_INIT(&bintern)
-			    if (rt_db_get_internal(&bintern, dir, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
-				return GED_ERROR;
-			    }
+			if (rt_db_get_internal(&bintern, dir, gedp->dbip, NULL, &rt_uniresource) < 0) {
+			    return BRLCAD_ERROR;
+			}
 			if (bintern.idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
 			    ON_String s;
 			    struct bu_vls cntstr = BU_VLS_INIT_ZERO;
@@ -92,16 +92,15 @@ tikz_comb(struct ged *gedp, struct bu_vls *tikz, struct directory *dp, struct bu
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb_internal = NULL;
-    struct rt_wdb *wdbp = gedp->ged_wdbp;
     struct bu_vls color_backup = BU_VLS_INIT_ZERO;
 
     bu_vls_sprintf(&color_backup, "%s", bu_vls_addr(color));
 
     RT_DB_INTERNAL_INIT(&intern)
 
-	if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
-	    return;
-	}
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
+	return;
+    }
 
     RT_CK_COMB(intern.idb_ptr);
     comb_internal = (struct rt_comb_internal *)intern.idb_ptr;
@@ -133,7 +132,6 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
     struct bu_vls tikz = BU_VLS_INIT_ZERO;
 
     struct ged *gedp = gb->gedp;
-    struct rt_wdb *wdbp = gedp->ged_wdbp;
     struct rt_brep_internal *brep_ip = NULL;
 
     bu_vls_printf(&tikz, "\\documentclass{article}\n");
@@ -152,15 +150,15 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
     ON_MinMaxInit(&(bbox.m_min), &(bbox.m_max));
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &gb->dp, gedp->ged_wdbp->dbip, NULL);
+    db_update_nref(gedp->dbip, &rt_uniresource);
+    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &gb->dp, gedp->dbip, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct rt_db_internal bintern;
 	struct rt_brep_internal *b_ip = NULL;
 	RT_DB_INTERNAL_INIT(&bintern)
-	    struct directory *d = (struct directory *)BU_PTBL_GET(&breps, i);
-	if (rt_db_get_internal(&bintern, d, wdbp->dbip, NULL, &rt_uniresource) < 0) {
-	    return GED_ERROR;
+	struct directory *d = (struct directory *)BU_PTBL_GET(&breps, i);
+	if (rt_db_get_internal(&bintern, d, gedp->dbip, NULL, &rt_uniresource) < 0) {
+	    return BRLCAD_ERROR;
 	}
 	b_ip = (struct rt_brep_internal *)bintern.idb_ptr;
 	b_ip->brep->GetBBox(bbox[0], bbox[1], true);
@@ -205,7 +203,7 @@ brep_tikz(struct _ged_brep_info *gb, const char *outfile)
 	bu_vls_free(&tikz);
     }
     bu_vls_free(&tikz);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 // Local Variables:

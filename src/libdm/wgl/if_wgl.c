@@ -1,7 +1,7 @@
 /*                       I F _ W G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,17 +63,17 @@
 
 
 /* Internal callbacks etc.*/
-HIDDEN void wgl_do_event(struct fb *ifp);
-HIDDEN void expose_callback(struct fb *ifp, int eventPtr);
+static void wgl_do_event(struct fb *ifp);
+static void expose_callback(struct fb *ifp, int eventPtr);
 
 /* Other Internal routines */
-HIDDEN void fb_clipper(struct fb *ifp);
-HIDDEN int wgl_getmem(struct fb *ifp);
-HIDDEN void backbuffer_to_screen(struct fb *ifp, int one_y);
-HIDDEN void wgl_cminit(struct fb *ifp);
-HIDDEN int is_linear_cmap(struct fb *ifp);
+static void fb_clipper(struct fb *ifp);
+static int wgl_getmem(struct fb *ifp);
+static void backbuffer_to_screen(struct fb *ifp, int one_y);
+static void wgl_cminit(struct fb *ifp);
+static int is_linear_cmap(struct fb *ifp);
 
-HIDDEN int wgl_nwindows = 0; 	/* number of open windows */
+static int wgl_nwindows = 0; 	/* number of open windows */
 
 extern struct fb wgl_interface;
 
@@ -184,7 +184,7 @@ struct wglinfo {
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15MASK	(1<<14)
 
-HIDDEN struct modeflags {
+static struct modeflags {
     char c;
     long mask;
     long value;
@@ -210,7 +210,7 @@ HIDDEN struct modeflags {
 };
 
 
-HIDDEN int
+static int
 wgl_getmem(struct fb *ifp)
 {
     int pixsize;
@@ -257,7 +257,7 @@ fail:
 }
 
 
-HIDDEN void
+static void
 sigkid(int UNUSED(pid))
 {
     exit(0);
@@ -268,7 +268,7 @@ sigkid(int UNUSED(pid))
  * Note: unlike sgi_xmit_scanlines, this function updates an arbitrary
  * rectangle of the frame buffer
  */
-HIDDEN void
+static void
 wgl_xmit_scanlines(struct fb *ifp, int ybase, int nlines, int xbase, int npix)
 {
     int y;
@@ -711,7 +711,7 @@ wgl_open(struct fb *ifp, const char *file, int width, int height)
 }
 
 
-HIDDEN struct fb_platform_specific *
+static struct fb_platform_specific *
 wgl_get_fbps(uint32_t magic)
 {
     struct fb_platform_specific *fb_ps = NULL;
@@ -724,7 +724,7 @@ wgl_get_fbps(uint32_t magic)
 }
 
 
-HIDDEN void
+static void
 wgl_put_fbps(struct fb_platform_specific *fbps)
 {
     BU_CKMAG(fbps, FB_WGL_MAGIC, "wgl framebuffer");
@@ -734,7 +734,7 @@ wgl_put_fbps(struct fb_platform_specific *fbps)
 }
 
 
-HIDDEN int
+static int
 open_existing(struct fb *ifp,
 	      Display *dpy,
 	      Window win,
@@ -819,7 +819,7 @@ wgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spec
 }
 
 
-HIDDEN int
+static int
 wgl_final_close(struct fb *ifp)
 {
     if (FB_DEBUG)
@@ -853,7 +853,7 @@ wgl_final_close(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 wgl_flush(struct fb *ifp)
 {
     if ((ifp->i->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
@@ -883,7 +883,7 @@ wgl_flush(struct fb *ifp)
 /*
  * Handle any pending input events
  */
-HIDDEN int
+static int
 wgl_poll(struct fb *ifp)
 {
     wgl_do_event(ifp);
@@ -967,7 +967,7 @@ wgl_close_existing(struct fb *ifp)
 /*
  * Free memory resources, and close.
  */
-HIDDEN int
+static int
 wgl_free(struct fb *ifp)
 {
     int ret;
@@ -985,7 +985,7 @@ wgl_free(struct fb *ifp)
 /**
  * pp is a pointer to beginning of memory segment
  */
-HIDDEN int
+static int
 wgl_clear(struct fb *ifp, unsigned char *pp)
 {
     struct fb_pixel bg;
@@ -1059,7 +1059,7 @@ wgl_clear(struct fb *ifp, unsigned char *pp)
 }
 
 
-HIDDEN int
+static int
 wgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct fb_clip *clp;
@@ -1131,7 +1131,7 @@ wgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 }
 
 
-HIDDEN int
+static int
 wgl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (FB_DEBUG)
@@ -1149,7 +1149,7 @@ wgl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 /*
  * read count pixels into pixelp starting at x, y
  */
-HIDDEN int
+static int
 wgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t n;
@@ -1203,7 +1203,7 @@ wgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 /*
  * write count pixels from pixelp starting at xstart, ystart
  */
-HIDDEN int
+static int
 wgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     size_t scan_count;	/* # pix on this scanline */
@@ -1331,7 +1331,7 @@ wgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, s
  * The task of this routine is to reformat the pixels into internal
  * form, and then arrange to have them sent to the screen separately.
  */
-HIDDEN int
+static int
 wgl_writerect(struct fb *ifp,
 	      int xmin,
 	      int ymin,
@@ -1400,7 +1400,7 @@ wgl_writerect(struct fb *ifp,
  * The task of this routine is to reformat the pixels into internal
  * form, and then arrange to have them sent to the screen separately.
  */
-HIDDEN int
+static int
 wgl_bwwriterect(struct fb *ifp,
 		int xmin,
 		int ymin,
@@ -1465,7 +1465,7 @@ wgl_bwwriterect(struct fb *ifp,
 }
 
 
-HIDDEN int
+static int
 wgl_rmap(struct fb *ifp, ColorMap *cmp)
 {
     int i;
@@ -1487,7 +1487,7 @@ wgl_rmap(struct fb *ifp, ColorMap *cmp)
  * Check for a color map being linear in R, G, and B.  Returns 1 for
  * linear map, 0 for non-linear map (i.e., non-identity map).
  */
-HIDDEN int
+static int
 is_linear_cmap(struct fb *ifp)
 {
     int i;
@@ -1501,7 +1501,7 @@ is_linear_cmap(struct fb *ifp)
 }
 
 
-HIDDEN void
+static void
 wgl_cminit(struct fb *ifp)
 {
     int i;
@@ -1514,7 +1514,7 @@ wgl_cminit(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 wgl_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     int i;
@@ -1565,7 +1565,7 @@ wgl_wmap(struct fb *ifp, const ColorMap *cmp)
 }
 
 
-HIDDEN int
+static int
 wgl_help(struct fb *ifp)
 {
     struct modeflags *mfp;
@@ -1592,7 +1592,7 @@ wgl_help(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 wgl_setcursor(struct fb *ifp,
 	      const unsigned char *bits,
 	      int xbits,
@@ -1604,7 +1604,7 @@ wgl_setcursor(struct fb *ifp,
 }
 
 
-HIDDEN int
+static int
 wgl_cursor(struct fb *ifp, int mode, int x, int y)
 {
     return 0;
@@ -1624,7 +1624,7 @@ wgl_cursor(struct fb *ifp, int mode, int x, int y)
  * - the portion of the image which is visible in the viewport
  * (xpixmin, xpixmax, ypixmin, ypixmax)
  */
-HIDDEN void
+static void
 fb_clipper(struct fb *ifp)
 {
     struct fb_clip *clp;
@@ -1689,7 +1689,7 @@ fb_clipper(struct fb *ifp)
 /* Call back routines and so on */
 /********************************/
 
-HIDDEN void
+static void
 wgl_do_event(struct fb *ifp)
 {
     MSG msg;
@@ -1707,7 +1707,7 @@ wgl_do_event(struct fb *ifp)
 }
 
 
-HIDDEN void
+static void
 expose_callback(struct fb *ifp, int eventPtr)
 {
     struct fb_clip *clp;
@@ -1861,7 +1861,7 @@ wgl_configureWindow(struct fb *ifp, int width, int height)
  * the front buffer. Do one scanline specified by one_y, or whole
  * screen if one_y equals -1.
  */
-HIDDEN void
+static void
 backbuffer_to_screen(struct fb *ifp, int one_y)
 {
     struct fb_clip *clp;
@@ -2038,6 +2038,10 @@ struct fb_impl wgl_interface_impl = {
     0L,			/* page_pixels */
     0,			/* debug */
     50000,		/* refresh rate */
+    NULL,
+    NULL,
+    0,
+    NULL,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

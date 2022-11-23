@@ -1313,10 +1313,9 @@ markerBoxLayout (
     }
 
     if (pComputed->imListStyleImage) {
-        HtmlImage2 *pImg = pComputed->imListStyleImage;
         int iWidth = PIXELVAL_AUTO;
         int iHeight = PIXELVAL_AUTO;
-        pImg = HtmlImageScale(pComputed->imListStyleImage, &iWidth, &iHeight,1);
+        HtmlImage2 *pImg = HtmlImageScale(pComputed->imListStyleImage, &iWidth, &iHeight,1);
         /* voffset = iHeight * -1; */
         HtmlDrawImage(
             &pBox->vc, pImg, 0, -1 * iHeight, iWidth, iHeight, pNode, mmt
@@ -1649,10 +1648,8 @@ drawReplacementContent (LayoutContext *pLayout, BoxContext *pBox, HtmlNode *pNod
 
             if (!pLayout->minmaxTest) {
                 doConfigureCmd(pLayout->pTree, pElem, pBox->iContaining);
-                pWin = Tcl_NewStringObj(zReplace, -1);
             }
 
-            iOffset = pElem->pReplacement->iOffset;
             DRAW_WINDOW(&pBox->vc, pNode, 0, 0, iWidth, height);
         }
     } else {
@@ -2745,7 +2742,12 @@ normalFlowLayoutInlineReplaced (LayoutContext *pLayout, BoxContext *pBox, HtmlNo
 
     MarginProperties margin;
     BoxProperties box;
-    HtmlNodeReplacement *pReplace = HtmlNodeAsElement(pNode)->pReplacement;
+
+    HtmlElementNode *hn = HtmlNodeAsElement(pNode);
+    if (!hn)
+       return 0;
+
+    HtmlNodeReplacement *pReplace = hn->pReplacement;
 
     memset(&sBox, 0, sizeof(BoxContext));
     sBox.iContaining = pBox->iContaining;
@@ -3450,7 +3452,7 @@ normalFlowLayout (
     /* Finish the inline-border started by the parent, if any. */
     HtmlInlineContextPopBorder(pContext, pBorder);
 
-    rc = inlineLayoutDrawLines(pLayout, pBox, pContext, 1, &y, pNormal);
+    inlineLayoutDrawLines(pLayout, pBox, pContext, 1, &y, pNormal);
     HtmlInlineContextCleanup(pContext);
 
     /* If this element is a list-item with "list-style-position:outside", 

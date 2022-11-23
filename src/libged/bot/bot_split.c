@@ -1,7 +1,7 @@
 /*                         B O T _ S P L I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,9 +47,9 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_bot_internal *bot;
     struct rt_db_internal intern;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -71,13 +71,13 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 	    obj = bu_strdup(argv[i]);
 	}
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, obj, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, obj, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	    bu_vls_printf(&error_str, "%s: db_lookup(%s) error\n", argv[0], obj);
 	    bu_free(obj, "free obj");
 	    continue;
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	    rt_db_free_internal(&intern);
@@ -101,7 +101,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 	    av[3] = (char *)0;
 
 	    /* Set make_name's count to 0 */
-	    ged_make_name(gedp, ac, av);
+	    ged_exec(gedp, ac, av);
 
 	    ac = 2;
 	    av[2] = (char *)0;
@@ -109,7 +109,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 	    for (BU_LIST_FOR(rblp, rt_bot_list, &headRblp->l)) {
 		/* Get a unique name based on the original name */
 		av[1] = obj;
-		ged_make_name(gedp, ac, av);
+		ged_exec(gedp, ac, av);
 
 		/* Create the bot */
 		RT_DB_INTERNAL_INIT(&bot_intern);
@@ -121,13 +121,13 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
 		/* Save new bot name for later use */
 		bu_vls_printf(&new_bots, "%s ", bu_vls_addr(gedp->ged_result_str));
 
-		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&bot_intern.idb_type);
+		dp = db_diradd(gedp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&bot_intern.idb_type);
 		if (dp == RT_DIR_NULL) {
 		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);
 		} else {
-		  if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &bot_intern, &rt_uniresource) < 0) {
+		  if (rt_db_put_internal(dp, gedp->dbip, &bot_intern, &rt_uniresource) < 0) {
 		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);
 		    rt_db_free_internal(&intern);
@@ -154,7 +154,7 @@ ged_bot_split_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&new_bots);
     bu_vls_free(&error_str);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

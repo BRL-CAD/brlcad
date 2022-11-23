@@ -1,7 +1,7 @@
 /*                         G E T _ A U T O V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,9 +48,9 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
     int pflag = 0;
     int c;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -70,12 +70,10 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default: {
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
-    argc -= bu_optind;
-    argv += bu_optind;
 
     is_empty = dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &min, &max, pflag);
 
@@ -90,14 +88,14 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
     if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
 	VSETALL(radial, 1.0);
 
-    VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
-    VSCALE(radial, radial, gedp->ged_wdbp->dbip->dbi_base2local * 2.0);
+    VSCALE(center, center, gedp->dbip->dbi_base2local);
+    VSCALE(radial, radial, gedp->dbip->dbi_base2local * 2.0);
     size = radial[X];
     V_MAX(size, radial[Y]);
     V_MAX(size, radial[Z]);
     bu_vls_printf(gedp->ged_result_str, "center {%g %g %g} size %g", V3ARGS(center), size);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

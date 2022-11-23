@@ -1,7 +1,7 @@
 /*                    N M G _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 /**
  *  Routine to create a planar NURBS surface from 4 points
  */
-HIDDEN ON_Surface*
+static ON_Surface*
 sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
 {
     ON_NurbsSurface *surf = ON_NurbsSurface::New(3, 0, 2, 2, 2, 2);
@@ -51,7 +51,7 @@ sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, co
     return surf;
 }
 
-HIDDEN int
+static int
 nmg_brep_face(ON_Brep **b, const struct faceuse *fu, const struct bn_tol *tol, long *brepi) {
     const struct face_g_plane *fg = fu->f_p->g.plane_p;
     struct bu_ptbl vert_table;

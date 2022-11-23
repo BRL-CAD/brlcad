@@ -22,6 +22,11 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* re-enable regress-asc and regress-weight
+
+* material infrastructure has regressions due to attr sync code that
+  needs to be resolved.
+
 * dbconcat corrupted database / failed. created a top-level comb with
   invalid "1_[subcomb]/" to be created that result in error messages
   during any db listing (e.g., tops).  workaround was to manually edit
@@ -83,7 +88,7 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   duplicate entries.
 
 * tree command shouldn't infinite loop when encountering a cyclic
-  path - need to print a warning and stop walking.  Requries full
+  path - need to print a warning and stop walking.  Requires full
   path awareness in tree command walk.
 
   Consider implementing a corollary to FTS instead of dirent for
@@ -102,21 +107,108 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * heap unit test needs to actually compare performance against system
   allocation, not just do some work
 
-* mged> nirt -? needs to provide help
-
-* mged> nirt -f fmt doesn't seem to work at all
+* mged> nirt -f fmt needs output cleanup. When run with -f csv there are 
+  unexpected warnings and duplicate line prints
 
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
 
-* investigate problems with struct parsing running the MGED
-  "vars" command - most visible on OpenBSD, but Linux valgrind can
-  also see issues.
-
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* consider user interface and usability implications of gchecker
+  and/or overlap_tool as commands that kick off GUI.  need to consider
+  if there's a non-GUI output/utility and how the CLI pairs up with
+  other GUI-inducing commands like rtwizard, raytrace control panel,
+  geometree, etc.
+
+* Add manual page for 3dm-g
+
+* Attempt to update to use latest upstream poly2tri resulted in incorrect
+  shading when trying to view the NIST2 example - many faces didn't
+  facetize.  We've had occasional robustness problems with brep triangulation
+  for a long while - need to investigate approaches to this algorithm that
+  might help:
+
+  https://github.com/ChengCat/fast-poly2tri
+  https://github.com/raptor/clip2tri
+
+* add basic bot validation so we can have a means to sanity check
+  that vertex, edge, and other indices are valid.
+
+* automatic tops
+
+  implement db_tops() to return list of top-level entities.  then,
+  implement a db_tops_default() to support automatic default object
+  loading for commands like rt* that typically work with top-level
+  objects.  let some commands default to an unspecified object when
+  there's an identifiable priority according to matching criteria:
+
+  a) _GLOBAL has a tops_default attribute set, default to that object
+  b) there's only one object, default to that object
+  c) there's only one comb, default to that comb
+  d) there's only one comb (sans any ext) matching filename (sans ext)
+  e) there's only one comb with pattern matching '^(all|scene)*'
+
+  if _GLOBAL has a tops_default attribute set to empty/negative, then
+  this behavior will be disabled.
+
+  when there is not a match, the commands should report out the
+  available top-level objects by default.  that way the user doesn't
+  have to manually run mged to figure out what can be rendered.
+
+* automatic ground plane
+
+  Need ability to auto-calculate a ground plane default for a given
+  model.  Need render option to display the ground plane (e.g.,
+  auto-insert a half or arb8).  Need libged command for
+  creating/manipulating explicit ground objects.  Needs to work with
+  ground_plane_offset attribute on _GLOBAL.
+
+* audit support for slashes in object names and commands that expect
+  paths or can/should have meaningful behavior with paths
+
+* default tops to undecorated, deprecate -n, add tops -p
+
+* default ls to undecorated, deprecate -n, add ls -p
+
+* make mv and mvall not accept slashes on destination:
+
+  mged> mv sph.r sph.r/R
+  db_lookup(R) failed: R does not exist
+  db_string_to_path() of 'sph.r/R' failed on 'R'
+  mged> tops
+  sph.r/R/R
+  mged> mv sph.r/R sph.r
+  mged> tops
+  sph.r/R
+
+* consider not using spaces in the default installer path on Windows
+  for simplified scripting usage (e.g., when installed to C:\)
+
+* color management of objects in mged/archer so you can brighten dark
+  objects, darken bright objects, map objects to other colors, etc.
+  related to the luminance adjustments being done in the Creo export
+  plugin.
+
+* idents command needs to have csv/xls output options and should
+  output a column header and optionally not export the comment header
+  for ease of import into spreadsheet programs.
+
+* running mged geometry browser and selecting preview results in an
+  error.  code appears to be assuming both /dev/X framebuffer and uses
+  /dev/null redirect to sink output.
+
+* rtwizard greys out the File->New and Open menu items when run with a
+  filename, which is very confusing.  Either menu should remain usable
+  or there should be some other indication that a file was specified
+  and is open.
+
+* the mged tutorials apparently do not mention the tops command (even
+  once), but really should as it's the starting point for discovering
+  what is in databases that are opened or imported.
 
 * nburst appears to be missing logging output (bounding volume lines)
   and isn't outputting units (outputs NULL).  can run regress-burst
@@ -130,6 +222,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   translucency.
 
 * add linear interpolation method for metaballs
+
+* optimize metaballs performance case where there are lots of single
+  points, no interpolation.
 
 * add script/command for changing metaball weights in masse
 
@@ -203,13 +298,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   first drawn in MGED - should properly "overlay" them so the user
   doesn't have to first erase the solid from the scene visual.
 
-* MGED's startup directory is inconsistent and sometimes problematic.
-  If the current working directory is read-only (e.g., a default
-  system install and opening one of the sample .g files), then
-  numerous commands the write out to the current path will fail (e.g.,
-  "idents file.log").  Review startup path behavior and consider using
-  $HOME or some other system path, unless started on the command-line.
-
 * rtwizard's reopening of the database is causing db_dircheck
   "Duplicate of..." errors when opening read-only .g files.
 
@@ -219,12 +307,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * verify all of the src/util utilities behave correctly on Windows
   with respect to mode (i.e. correctly using setmode/O_BINARY when
   performing file I/O.)
-
-* the osgl libdm backend has what appears to be an off-by-one-pixel
-  error in the x and y directions with respect to mouse placement.
-  Using kmag, can see tha putting the mouse cursor over the center
-  yellow dot and center clicking (which should be a no-op, and is
-  with ogl) results in the scene shifting slightly.
 
 * replace los references/terminology with span, len, dist, factor, etc
   accordingly since los is ambiguous and a source of user confusion.
@@ -323,8 +405,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * optimize mged interactive loop command processing.  creating 10k
   objects: 40 sec, via inmem: 2 sec
 
-* rtwizard unit test legitimately failing on mac/windows
-
 * implement a bu_exec wrapper and investigate something like capnproto
   to build up a process-isolated command execution system for libged.
   Possibly useful resources:
@@ -356,11 +436,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   we can upgrade to these for our DocBook processing
 
 * Fedora doesn't have the old fonts mged assumes: dm-X: Can't open font '9x15' or '-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1'
-
-* Investigate using https://github.com/weiss/c99-snprintf to guarantee
-  snprintf cross-platform.  There are potential drawbacks to the current
-  MSVC approach pre Visual Studio 2015 (_snprintf doesn't null terminate
-  on overflow, and _snprintf_s returns -1 on overflow...)
 
 * lay out filesystem and URI models for database storage and access -
   these design decisions are fundamental and have broad implications for many
@@ -444,10 +519,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * V&V bwcrop, pixembed are behaving correctly, as documented
 
-* need routine that returns a color given a path, similar to
-  rt_comb_get_color() but full path so that inheritance is taken into
-  account and colors set correctly.
-
 * implement unit tests for bu dirent / stat API
 
 * convert src/util/terrain.c to src/shapes/terrain.c writing out the
@@ -495,10 +566,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * investigate merging functionality from the sig tools into libicv
   and removing the tools themselves.  Also, need some documentation
   for the sig functionality (currently none??)
-
-* investigate updating our fnmatch code to use OpenBSD's non-recursive
-  implementation, added starting at revision 1.16:
-  http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/lib/libc/gen/fnmatch.c
 
 * start making use of the CMakePushCheckState macros - we are doing
   this manually in several places
@@ -677,102 +744,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
       (term-line-mode)
       (switch-to-buffer termbuf))) 
 
-* Need to mark or otherwise disambiguate grazing hit segments so we
-  can consistently retain or remove hits without introducing overlaps.
-  Consider the case of a tgc stacked on top of an arb8, perfectly
-  tangent, and shoot a ray at that point:
-
-                                   -----   z=2.0
-                                   |tgc|
-  shoot a ray through here --->   -------- z=1.0   <--- or here
-                                  | arb8 |
-                                  -------- z=0.0
-
-  Here are the primary concerns:
-
-  A) solidity: a ray should never pass through the two without one or
-  both evaluating to a hit,
-
-  B) usability: a convention that precludes forcing the user to
-  "nudge" them apart by some arbitrary epsilon is desired (it's
-  intuitive and common for users to model two objects with "perfect
-  tangency"),
-
-  C) deterministic: firing a ray should give the same result every
-  time that same ray is fired, and,
-
-  D) bidirectional: a ray fired in one direction should evaluate to
-  the same result if fired from the opposite direction along the same
-  path (view independence).
-
-  If we hit both, an overlap will ensue unless these objects are
-  unioned.  This is undesirable.  If we miss both, slipping through
-  the hairline "crack", it can be devastating for analysis and result
-  in raytrace speckling.
-
-  In order to only hit one, a consistent grazing policy must be
-  applied such that grazing points on one "side" of an object are
-  always kept and grazing hits on the other "side" are always thrown
-  away.  The proposed method, similar to handling special case
-  grazings with a Breseham line painter algorithm, is to consistently
-  consider grazes with a procedure:
-
-  1) Calculate the ray intersection, detect whether the hit is grazing
-  (defined as a hit being barely in/on the surface either through a
-  point, edge or even down a surface).
-
-  2) Calculate a hit normal.  It may be desirable to average both the
-  in/out hit points to get more of a "practical" surface normal.
-
-  3) Calculate the ray of reflection.  Use the surface normal and ray
-  of intersection to calculate our reflection direction.
-
-  4) Determine which plane of a globally bounding rpp the reflected
-  ray would intersect with.
-
-  5) If the reflected ray hits the front, right, or bottom face, the
-  grazing is kept, but if it reflects onto the back, left, or top
-  face, the grazing is ignored.  In ray-view projected 2D, this
-  corresponds with keeping the grazing if the reflection is pointing
-  up or to the left and discarding if pointing down or to the right.
-
-                                   discard top/left/rear
-                rear              keep bottom/right/front
-            .____________.
-            |\           |\ t              discard
-            | \          | \ o           ._________.
-          l |  \         |  \ p          |/////////|
-          e |   o____________o          d|//view// |
-          f |   |        |   |          i|//of///  |
-          t |   |        |   | r        s|//ray/   |k
-        b   .___|________.   | i        c|////+    |e
-         o  \   |         \  | g        a|////     |e
-          t  \  |          \ | h        r|///      |p
-           t  \ |           \| t        d|//       |
-            o  \o____________o           ./________.
-             m     front                     keep
-
-  This should result in consistent grazing behavior that addresses the
-  above case: we consistently hit the tgc but not the arb8 and there
-  are no overlaps requiring modeler intervention.  The main problem
-  with this approach, however, is calculating an appropriate surface
-  normal for edge and face grazings can be difficult for some objects.
-
-  In the case above, we do not get a hit on the tgc's bottom ellipse,
-  for example, instead getting two hits near the edge of the side.
-  Similarly, we hit the left and right arb8 faces, not the top face
-  even though that is what we are conceptually grazing through.
-
-  One possibility to address that difficulty is to simply report all
-  grazing hits, but mark them as grazing, and let rt_shootray() sort
-  it out by sampling a 3x3 pattern that determines if we're grazing
-  the "top/left" or "bottom/right" side of a surface.
-
-* fix the redblack tree callback function signatures.  they're
-  declared and handled as taking (void) but they actually take a
-  pointer and an int.  need to create a proper void* data parameter or
-  change the interface to not require so much cast spagettery.
-
 * decouple libwdb from librt, particularly the headers and relevant
   structures that cross over to both such as the rtgeom.h types.
 
@@ -860,15 +831,14 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * fix 64b detection across platforms. Fix rhel 32/64 confusion
 
-* test/fix patch-g on windows.  the input file read loops assume
-  unix-style files resulting in parser errors.
-
 * merge conv-vg2g into dbupgrade
 
 * add option to rtedge to also show back-facing hidden edges
 
 * add option to push/xpush to stop at the region level, to stop before
-  primitives, to stop after N levels, to stop before N levels.
+  primitives, to stop after N levels, to stop before N levels. (This
+  is at least partially accomplished in npush work - need to hammer
+  out any remaining issues with depth stoppage limits...)
 
 * make rt_dirbuild()+rt_dirbuild() work without vomiting error
   messages about duplicate geometry.  should be able to open the same
@@ -887,11 +857,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * eliminate dbi_filepath (perhaps replace with dbi_filedir) as we
   shouldn't need to search.  we were told where the database was.
 
-* check libbu implementation of red-black trees (see note in bu.h
-  referencing an error in the Cormen book used as a basis)
+* replace use of libbu red-black trees with C++ containers (current
+  remaining uses appear to be pixcount and glint)
 
-* make libfb parallel-safe.  use bu memory management.  remove
-  semaphore locks in src/rt/main.c and elsewhere.
+* make libdm framebuffer parallel-safe.  use bu memory management.
+  remove semaphore locks in src/rt/main.c and elsewhere.
 
 * eliminate the need for bu_semaphore_init().  allocate up to the
   index requested on demand (so we can retain O(1) lookups) and
@@ -942,13 +912,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add support for a zoom/viewsize and twist options to rt so you can
   adjust the image without having to feed a view script.
 
-* provide pkgIndex.tcl files for bu, bn, rt, fb, dm so we can properly
-  package require the libs without an explicit 'load'
-
 * struct rt_bot_internal should be using "size_t *" instead of "int *"
   for the faces and face_normals members
-
-* fix the "(type)(size_t)val" hacks (using ints like ptrs, etc.)
 
 * pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
   .bw input files.  cause is due to tool assuming input is rgb triplets
@@ -977,9 +942,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   refresh the new memory and zap the framebuffer.
 
 * make the right-hand path to oed optional
-
-* deprecate dbcp and merge functionality (and improved
-  double-buffering) with the buffer tool.
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
@@ -1080,9 +1042,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   backgrounded, but then later ignores them.  needs to consistently
   ignore or not ignore them, ideally the latter.
 
-* libfb needs to have the fb_open/close_existing functions refactored
-  into the function table and have the #ifdef sections removed.
-
 * integrate library tester into regression suite that validates
   exported library symbols published in headers.  make sure they at
   least exist and maybe even try to ensure they will run with null
@@ -1149,8 +1108,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * hook bombardier in for crash reporting
 
-* modify the new tree traversal code to be generic
-
 * add high dynamic range image support to the framebuffers
 
 * add alpha channel support to the framebuffers
@@ -1164,9 +1121,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * bezier extrusions need to be optimized, really should not be
   performing dynamic memory allocation in the root solver
 
-* better/consistent argument processing supporting both long and short
-  option names, perhaps using argtable
-
 * Implement an optical shader for the new "pixelated" military
   camouflage style
 
@@ -1177,19 +1131,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   creating multiple objects for the individual objects in the dxf file
   (instead of one conglomerate BoT)
 
-* Generate plain .zip files for Windows binary releases
-
-* fix the variety of ami.tcl and ampi.tcl tclscript warnings/errors
-
-* run indent.sh on directories (one at a time, validating results)
-
-* configure support to enable/disable framebuffers, display
-  managers, geometry converters, and image converters.  consider
-  apache's module management as an example.
-
 * review and merge in the rest of the GSI modifications
-
-* display the current mode in mged graphics window
 
 * Optional compile-time support for using GMP or CLN for arbitrary
   exact precision arithmetic computation support
@@ -1220,8 +1162,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
        perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | \
        sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; \
        do echo command: $cmd2 ; done
-
-* add geometry example of building 238
 
 * Mac OS X SGI dial knobs support
   - Note that we might do better here to focus on the 3Dconnexion
@@ -1276,66 +1216,138 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add support for filesystem-based geometry collections
 
-* design plugin system to allow domain specific tools (say, for
-  example, a tool to create propeller parts) to identify themselves
-  and their features to BRL-CAD, and to allow BRL-CAD to incorporate
-  those features as an integrated part of interaction environments.
-
-* see if it is possible to use tec/ehy primitives to create a proc-db
-  for airfoil/wing shapes.  Interesting possibilities with boolean
-  combinations of these primitives, provided their continuity at the
-  ends ensures continuity all along "seams" - something to consider.
-
-* we need to define a libbu api for option handling that supports more
-  features than getopt:
-
-  - need support for long options (e.g. --help and --color, not just -h
-    and -C)
+* libbu's bu_opt is our option handling API that supports more
+  features than getopt - remaining features we need:
 
   - need a way to consolidate documentation for options into one place
     (DRY) that supports all of our various documentation styles.
     Discussed with Sean in the past - initial thoughts:
 
-    + should be in C code - will be needed there, and easier to get it
-      from there to other formats than vice versa.
-
-    + should support printing out the options and documentation in
+    + support printing out the options and documentation in
       formatted structures that allow our build system to build the
-      command and have the command itself supply a generated snippit
+      command and have the command itself supply a generated block
       of text or markup that could be incorporated into the final
-      document - e.g. the DocBook man page for a command would be set
-      up to expect the <command>_options.xml file generated by
-      <command> --print-options DocBook (or some other mechanism,
+      document.  For example, the DocBook man page for a command
+      would be set up to expect the <command>_options.xml file generated
+      by <command> --print-options DocBook (or some other mechanism,
       that's just an idea) and the CMake build could first build and
-      then run the command at compilation time to provide the absolute
-      most current option listing and short descriptions for the other
-      docs.
-
-  - need to allow order dependent options (e.g. <command> inputfile
-    outputfile) that become order independent if enough information is
-    available, e.g. the above would work and <command> <opt1> -i
-    inputfile <opt2> -o outputfile <opt3> would also work.
-
-  - (maybe) incorporate some sort of sanity/bounds checking into the
-    option definitions API - i.e. in the C definition of an option,
-    there could be optional parameters to indicate the type and bounds
-    of valid input to that option.  Won't always be possible, but may
-    be a good feature to have if it can save lots of repetitive coding
-    of bounds checking in programs.
-
-  *might* be worth taking a look at http://rpm5.org/files/popt/ to see
-  if they have any code we could snarf to make life easier, but
-  regardless we need a libbu API on top of any other code - at such a
-  core level, we can't introduce an external API.
+      then run the command at compilation time to provide the most
+      current option listing and short descriptions for the other docs.
 
 * investigate the libngpcore and libngput libraries from the ngPlant
   project as a possible means of procedurally generating plant models
   in BRL-CAD (libraries are BSD licensed:
-  http://ngplant.sourceforge.net)
+  https://github.com/stager13/ngplant)
+
+* Literally days after I completed my initial extraction of the
+  OSMesa code for a software rendering fallback, a project for a compact C99
+  implementation of OpenGL 3.x first released some public code:
+  https://github.com/rswinkle/PortableGL  The project shows current
+  activity, and it appears based on some code used there that TinyGL itself
+  has also gotten some fixes from the original author.  Based on experiments
+  with the other "cleaned up" fork, TinyGL on its own doesn't have enough of
+  OpenGL to support all of BRL-CAD's currently used features, but it would be
+  interesting to know if PortableGL could be a viable alternative to
+  libosmesa.  Given the latter works and has been cleaned up quite a lot the
+  question is not urgent, but if PortableGL is actively maintained, gives us
+  a similar capability with a newer standard and similar independence from
+  any third party dependencies, it is of interest.  First question is how
+  much of our existing OpenGL would need to be updated to target 3.x...
 
 
 OVERLAP TOOLS
 -------------
+
+* Need to mark or otherwise disambiguate grazing hit segments so we
+  can consistently retain or remove hits without introducing overlaps.
+  Consider the case of a tgc stacked on top of an arb8, perfectly
+  tangent, and shoot a ray at that point:
+
+                                   -----   z=2.0
+                                   |tgc|
+  shoot a ray through here --->   -------- z=1.0   <--- or here
+                                  | arb8 |
+                                  -------- z=0.0
+
+  Here are the primary concerns:
+
+  A) solidity: a ray should never pass through the two without one or
+  both evaluating to a hit,
+
+  B) usability: a convention that precludes forcing the user to
+  "nudge" them apart by some arbitrary epsilon is desired (it's
+  intuitive and common for users to model two objects with "perfect
+  tangency"),
+
+  C) deterministic: firing a ray should give the same result every
+  time that same ray is fired, and,
+
+  D) bidirectional: a ray fired in one direction should evaluate to
+  the same result if fired from the opposite direction along the same
+  path (view independence).
+
+  If we hit both, an overlap will ensue unless these objects are
+  unioned.  This is undesirable.  If we miss both, slipping through
+  the hairline "crack", it can be devastating for analysis and result
+  in raytrace speckling.
+
+  In order to only hit one, a consistent grazing policy must be
+  applied such that grazing points on one "side" of an object are
+  always kept and grazing hits on the other "side" are always thrown
+  away.  The proposed method, similar to handling special case
+  grazings with a Breseham line painter algorithm, is to consistently
+  consider grazes with a procedure:
+
+  1) Calculate the ray intersection, detect whether the hit is grazing
+  (defined as a hit being barely in/on the surface either through a
+  point, edge or even down a surface).
+
+  2) Calculate a hit normal.  It may be desirable to average both the
+  in/out hit points to get more of a "practical" surface normal.
+
+  3) Calculate the ray of reflection.  Use the surface normal and ray
+  of intersection to calculate our reflection direction.
+
+  4) Determine which plane of a globally bounding rpp the reflected
+  ray would intersect with.
+
+  5) If the reflected ray hits the front, right, or bottom face, the
+  grazing is kept, but if it reflects onto the back, left, or top
+  face, the grazing is ignored.  In ray-view projected 2D, this
+  corresponds with keeping the grazing if the reflection is pointing
+  up or to the left and discarding if pointing down or to the right.
+
+                                   discard top/left/rear
+                rear              keep bottom/right/front
+            .____________.
+            |\           |\ t              discard
+            | \          | \ o           ._________.
+          l |  \         |  \ p          |/////////|
+          e |   o____________o          d|//view// |
+          f |   |        |   |          i|//of///  |
+          t |   |        |   | r        s|//ray/   |k
+        b   .___|________.   | i        c|////+    |e
+         o  \   |         \  | g        a|////     |e
+          t  \  |          \ | h        r|///      |p
+           t  \ |           \| t        d|//       |
+            o  \o____________o           ./________.
+             m     front                     keep
+
+  This should result in consistent grazing behavior that addresses the
+  above case: we consistently hit the tgc but not the arb8 and there
+  are no overlaps requiring modeler intervention.  The main problem
+  with this approach, however, is calculating an appropriate surface
+  normal for edge and face grazings can be difficult for some objects.
+
+  In the case above, we do not get a hit on the tgc's bottom ellipse,
+  for example, instead getting two hits near the edge of the side.
+  Similarly, we hit the left and right arb8 faces, not the top face
+  even though that is what we are conceptually grazing through.
+
+  One possibility to address that difficulty is to simply report all
+  grazing hits, but mark them as grazing, and let rt_shootray() sort
+  it out by sampling a 3x3 pattern that determines if we're grazing
+  the "top/left" or "bottom/right" side of a surface.
 
 * implement quasi-random unbiased iterative spherical ray sampling.
   requires devising an algorithm whereby we obtain a set of points on
@@ -1726,7 +1738,7 @@ NEW OBJECTS
   orthogonal vs perspective, ambient lighting levels, and possibly
   styling/render modes.
 
-  obviously need to be able to derive a homogenous transformation
+  obviously need to be able to derive a homogeneous transformation
   matrix, but may want to encode/preserve scale, translate, rotate
   with prescribed ordering separately for proper reversibility.
 
@@ -2060,30 +2072,23 @@ The following binaries are not yet available on Windows.  The reason
 is identified in parentheses.
 
 bombardier (possibly just a problem with the build logic)
-enigma     (not ported)
 fbcolor    (TERMLIB)
-fbed       (TERMLIB)
 fbpoint    (TERMLIB)
 fbzoom     (TERMLIB)
-ir-X       (X11 specific)
-irdisp     (X11 specific)
-lgt        (TERMLIB)
-pl-X       (X11 specific)
-pl-dm      (possibly X11 specific)
-pp-fb      (TERMLIB)
 remrt      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
 rtsrv      (remrt dir commented out for WIN32 in src/CMakeLists.txt)
-scriptsort (lex)
 ttcp       (not ported)
-
-The MGED points support doesn't appear as an executable, but it is
-missing on Windows due to needing lex.
 
 
 CONVERTERS
 ----------
 
-* add glTF importer/exporter (.gltf and .glb file formats)
+* add obj cstype/bezier/surf/curv/param/trim/etc import for nurbs
+  import/export support
+
+* improve glTF importer
+
+* add glTF exporter (.gltf and .glb file formats)
 
 * add 3MF importer/exporter (3D printing file format like STL that
   supports materials, colors, and other information.)
@@ -2232,11 +2237,6 @@ BREP/NURBS
 
 * implement boolean evaluation of nurbs surfaces
 
-* plate mode NURBS/BREP objects.  Similar, if not identical, to plate
-  mode BoTs, 'brep' objects need the ability to have a thickness
-  described so you could automatically handle non-solid NURBS and
-  sheet-metal style geometry without requiring surface solidity.
-
 * NURBS editing command, let you interactively
   add/update/join/split/remove component points, edges, surfaces.
 
@@ -2362,10 +2362,6 @@ INFRASTRUCTURE
 * ensure it's possible to set global CFLAGS/CPPFLAGS/LDFLAGS that are
   in addition to any/all that we automatically set
 
-* fix failure disabling IF_X when X11 headers are not found.
-  include/fb.h still ends up entering the IF_X section and declaring a
-  function that takes a Display and other X11 objects
-
 
 THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 (i.e., v6 database format)
@@ -2472,6 +2468,8 @@ FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 
 * write and use kdtree - make traversal cache coherent
 
+* replace adrt's kdtree with one that builds faster
+
 
 GEOMETRY MODELS
 ---------------
@@ -2488,6 +2486,19 @@ GEOMETRY MODELS
 DOCUMENTATION
 -------------
 
+* HTML docs that display in MGED via menu are way out of date and look
+  bad per modern standards. Needs to be updated/replaced with doxygen
+  docs and/or clean presentation layout with overview, tutorials, and
+  reference.
+
+* "apropos man" does not exist
+
+* "help man" does not exist
+
+* Need ability to search manual pages
+
+* rename MGED Help->Apropos to Help->Search Commands (apropos)
+
 * BRL-CAD Primitives
 	An overview of the various primitive object types in BRL-CAD,
 	their range of features, and a description of their input
@@ -2499,12 +2510,6 @@ DOCUMENTATION
         sphere, flat disc, long spike, etc.).  this is necessarily
         defined per object type and possibly programmable.  See
         src/proc-db/csgbrep.cpp for a basic start.
-
-* BRL-CAD Ray Tracing Shaders
-	An overview of the various shaders and shader options
-	available in BRL-CAD.  Create a catalog of all
-	possible/distinct/useful shader settings.  See
-	regress/shaders.sh for a basic start.
 
 * update the rt* manual pages to note that they can all write out to
   various image formats like png just by specifying an output file
@@ -2691,6 +2696,9 @@ DOCUMENTATION
 	nirt.  Succinct overview of less than 10% of the core
 	functionality in 10 pages or less (plus pictures).
 
+* Introduction to MGED Tutorial
+        This exists, but has not yet been added to the repo.
+
 * Technical Overview of BRL-CAD
 	Describes everything in the package succinctly yet
 	comprehensively.  Survey of all the major features,
@@ -2753,6 +2761,16 @@ DOCUMENTATION
 
 * Procedural Geometry in BRL-CAD
 	How-To for creating new tools that create geometry.
+
+* Guide to Rendering with BRL-CAD
+        Basic overview of all the ray tracers and primary rendering
+        options supported.
+
+* BRL-CAD Ray Tracing Shaders
+	An overview of the various shaders and shader options
+	available in BRL-CAD.  Create a catalog of all
+	possible/distinct/useful shader settings.  See
+	regress/shaders.sh for a basic start.
 
 * BRL-CAD Ray Tracing Shader Development
 	How-To for creating new shaders.

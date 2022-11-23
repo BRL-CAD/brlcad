@@ -1,7 +1,7 @@
 /*                         K I L L T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ struct killtree_data {
  * can make sure we don't kill objects that are referenced somewhere
  * else in the database.
  */
-HIDDEN int
+static int
 find_reference(struct db_i *dbip, const char *topobj, const char *obj)
 {
     int ret;
@@ -75,7 +75,7 @@ find_reference(struct db_i *dbip, const char *topobj, const char *obj)
 }
 
 
-HIDDEN void
+static void
 killtree_callback(struct db_i *dbip, struct directory *dp, void *ptr)
 {
     struct killtree_data *gktdp = (struct killtree_data *)ptr;
@@ -150,9 +150,10 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     struct killtree_data gktd;
     static const char *usage = "[-a|-f|-n] object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -194,7 +195,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		bu_free(gktd.av, "free av (error)");
 		gktd.av = NULL;
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -204,14 +205,14 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Update references once before we start all of this - db_search
      * needs nref to be current to work correctly. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     /* Objects that would be killed are in the first sublist */
     if (gktd.print)
 	bu_vls_printf(gedp->ged_result_str, "{");
 
     for (i = 1; i < argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	/* ignore phony objects */
@@ -221,9 +222,9 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 	/* stash the what's killed so we can find refs elsewhere */
 	gktd.top = argv[i];
 
-	db_functree(gedp->ged_wdbp->dbip, dp,
+	db_functree(gedp->dbip, dp,
 		    killtree_callback, killtree_callback,
-		    gedp->ged_wdbp->wdb_resp, (void *)&gktd);
+		    wdbp->wdb_resp, (void *)&gktd);
     }
 
     /* Close the sublist of would-be killed objects. Also open the
@@ -234,7 +235,7 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
 
     if (gktd.killrefs && gktd.ac > 1) {
 	gedp->ged_internal_call = 1;
-	(void)ged_killrefs(gedp, gktd.ac, (const char **)gktd.av);
+	(void)ged_exec(gedp, gktd.ac, (const char **)gktd.av);
 	gedp->ged_internal_call = 0;
 
 	for (i = 1; i < gktd.ac; i++) {
@@ -252,9 +253,9 @@ ged_killtree_core(struct ged *gedp, int argc, const char *argv[])
     gktd.av = NULL;
 
     /* Done removing stuff - update references. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

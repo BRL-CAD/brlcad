@@ -1,7 +1,7 @@
 /*                         A U T O V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include "dm.h"
 #include "../ged_private.h"
 
+extern int ged_autoview2_core(struct ged *gedp, int argc, const char *argv[]);
 /*
  * Auto-adjust the view so that all displayed geometry is in view
  *
@@ -37,6 +38,10 @@
 int
 ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+       return ged_autoview2_core(gedp, argc, argv);
+
     int is_empty = 1;
     vect_t min, max;
     vect_t center = VINIT_ZERO;
@@ -46,17 +51,17 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
     /* less than or near zero uses default, 0.5 model scale == 2.0 view factor */
     fastf_t factor = -1.0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s [scale]", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* parse the optional scale argument */
@@ -65,7 +70,7 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 	int ret = sscanf(argv[1], "%lf", &scale);
 	if (ret != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Expecting floating point scale value after %s\n", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (scale > 0.0) {
 	    factor = 1.0 / scale;
@@ -104,21 +109,17 @@ ged_autoview_core(struct ged *gedp, int argc, const char *argv[])
 
     gedp->ged_gvp->gv_size = factor * gedp->ged_gvp->gv_scale;
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl autoview_cmd_impl = {
-    "autoview",
-    ged_autoview_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl autoview_cmd_impl = { "autoview", ged_autoview_core, GED_CMD_DEFAULT };
 const struct ged_cmd autoview_cmd = { &autoview_cmd_impl };
+
 const struct ged_cmd *autoview_cmds[] = { &autoview_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  autoview_cmds, 1 };

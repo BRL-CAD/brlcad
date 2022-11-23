@@ -5,7 +5,7 @@ set(WGL_SRCS
 
 if(WIN32 AND BRLCAD_ENABLE_OPENGL)
 
-  find_package(GL)
+  find_package(OpenGL)
   find_package(TCL)
 
   include_directories(
@@ -25,8 +25,15 @@ if(WIN32 AND BRLCAD_ENABLE_OPENGL)
 
   add_definitions(-DDM_PLUGIN)
 
+  if (OPENGL_opengl_LIBRARY)
+    set(OPENGL_LIBS ${OPENGL_opengl_LIBRARY})
+  endif (OPENGL_opengl_LIBRARY)
+  if (OPENGL_gl_LIBRARY)
+    set(OPENGL_LIBS ${OPENGL_gl_LIBRARY})
+  endif (OPENGL_gl_LIBRARY)
+
   dm_plugin_library(dm-wgl SHARED ${WGL_SRCS})
-  target_link_libraries(dm-wgl libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${OPENGL32_LIBRARY} ${OPENGL_LIBRARIES})
+  target_link_libraries(dm-wgl libdmgl libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${OPENGL32_LIBRARY} ${OPENGL_LIBS})
   set_property(TARGET dm-wgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   VALIDATE_STYLE(dm-wgl "${WGL_SRCS}")
 

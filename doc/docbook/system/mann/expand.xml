@@ -39,7 +39,7 @@ of all the objects in the database. It returns all those that successfully match
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>expand *.r</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>expand *.r</userinput></term>
 	   <listitem>
 	     <para>A list of all database object names that end in .r is displayed.
 	     </para>

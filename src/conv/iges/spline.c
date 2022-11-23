@@ -1,7 +1,7 @@
 /*                        S P L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2021 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 #define PATCH_COUNT 1
 
 int
-spline(int entityno, struct face_g_snurb **b_patch)
+spline(size_t entityno, struct face_g_snurb **b_patch)
 {
     int k1 = 0;	/* upper index of first sum */
     int k2 = 0;	/* upper index of second sum */

@@ -1,7 +1,7 @@
 /*                          B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@
  * partition, which probably signals going through some solid an odd
  * number of times, or hitting an NMG wire edge or NMG lone vertex.
  */
-HIDDEN void
+static void
 bool_weave0seg(struct seg *segp, struct partition *PartHdp, struct application *ap)
 {
     register struct partition *pp;
@@ -253,9 +253,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 	    APPEND_PT(pp, PartHdp);
 	    if (RT_G_DEBUG&RT_DEBUG_PARTITION) bu_log("No partitions yet, segment forms first partition\n");
 	} else if (ap->a_no_booleans) {
-	    lastseg = segp;
 	    lasthit = &segp->seg_in;
-	    lastflip = 0;
 	    /* Just sort in ascending in-dist order */
 	    for (pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw) {
 		if (lasthit->hit_dist < pp->pt_inhit->hit_dist) {
@@ -621,7 +619,7 @@ rt_defoverlap(register struct application *ap, register struct partition *pp, st
  * The bu_ptbl is initialized here, and must be freed by the caller.
  * It will contain a pointer to at least one segment.
  */
-HIDDEN void
+static void
 bool_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *pp, const struct region *regp)
 {
     const struct seg **segpp;
@@ -655,7 +653,7 @@ bool_region_seglist_for_partition(struct bu_ptbl *sl, const struct partition *pp
  *  # Maximum ray index
  * -1 If no rays are contributing segs for this region.
  */
-HIDDEN int
+static int
 bool_max_raynum(register const union tree *tp, register const struct partition *pp)
 {
     RT_CK_TREE(tp);
@@ -704,7 +702,7 @@ bool_max_raynum(register const union tree *tp, register const struct partition *
  *
  * Required to null out one of the two regions.
  */
-HIDDEN void
+static void
 bool_vol_vol_overlap(struct region **fr1, struct region **fr2, const struct partition *pp)
 {
     struct bu_ptbl sl1 = BU_PTBL_INIT_ZERO;
@@ -787,7 +785,7 @@ bool_vol_vol_overlap(struct region **fr1, struct region **fr2, const struct part
  *
  * Required to null out one of the two regions.
  */
-HIDDEN void
+static void
 bool_plate_vol_overlap(struct region **fr1, struct region **fr2, struct partition *pp, struct application *ap)
 {
     struct partition *prev;
@@ -963,8 +961,6 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	if (regp == REGION_NULL) continue;	/* empty slot in table */
 	RT_CK_REGION(regp);
 
-	code = -1;				/* For debug out in policy */
-
 	/*
 	 * Two or more regions claim this partition
 	 */
@@ -1126,7 +1122,7 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
  * 1 The tables match
  * 0 The tables do not match
  */
-HIDDEN int
+static int
 bool_equal_overlap_tables(struct region *const*a, struct region *const*b)
 {
     int alen=0, blen=0;
@@ -1167,7 +1163,7 @@ bool_equal_overlap_tables(struct region *const*a, struct region *const*b)
  * !0 Region is ready for (correct) evaluation.
  *  0 Region is not ready
  */
-HIDDEN int
+static int
 bool_test_tree(register const union tree *tp, register const struct bu_bitv *solidbits, register const struct region *regionp, register const struct partition *pp)
 {
     RT_CK_TREE(tp);
@@ -1217,7 +1213,7 @@ bool_test_tree(register const union tree *tp, register const struct bu_bitv *sol
  * !0 Partition is ready for (correct) evaluation.
  *  0 Partition is not ready
  */
-HIDDEN int
+static int
 bool_partition_eligible(register const struct bu_ptbl *regiontable, register const struct bu_bitv *solidbits, register const struct partition *pp)
 {
     struct region **regpp;
@@ -1266,7 +1262,7 @@ rt_bool_growstack(register struct resource *resp)
  *  0 tree is BOOL_FALSE
  * -1 tree is in error (GUARD)
  */
-HIDDEN int
+static int
 bool_eval(register union tree *treep, struct partition *partp, struct resource *resp)
 /* Tree to evaluate */
 /* Partition to evaluate */

@@ -1,7 +1,7 @@
 /*                         G L O B . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2021 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -116,7 +116,7 @@ BU_EXPORT struct bu_glob_context *bu_glob_init();
 
 
 /**
- * release any resoures allocated during bu_glob(), including any
+ * release any resources allocated during bu_glob(), including any
  * returned paths
  */
 BU_EXPORT extern void bu_glob_free(struct bu_glob_context *);

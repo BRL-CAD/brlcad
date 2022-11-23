@@ -23,6 +23,7 @@ install(PROGRAMS ${sh_SCRIPTS} DESTINATION ${BIN_DIR} PERMISSIONS OWNER_EXECUTE 
 set(noinst_SCRIPTS
   copyright.sh
   enumerate.sh
+  facetall.sh
   footer.sh
   fs2org.sh
   header.sh
@@ -35,6 +36,8 @@ set(noinst_SCRIPTS
   news2tracker.sh
   template.sh
   ws.sh
+  sandbox/metaring.sh
+  sandbox/visibility.sh
   )
 CMAKEFILES(${sh_SCRIPTS})
 CMAKEFILES(${noinst_SCRIPTS})

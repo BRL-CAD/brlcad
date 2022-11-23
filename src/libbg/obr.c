@@ -1,7 +1,7 @@
 /*                            O B R . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Geometric Tools, LLC
@@ -57,7 +57,7 @@
 
 #include "bu/malloc.h"
 #include "bn/tol.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bg/chull.h"
 #include "bg/obr.h"
 #include "./bg_private.h"
@@ -68,7 +68,7 @@
 #define F_TOP 2
 #define F_LEFT 3
 
-HIDDEN int
+static int
 pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_center, point2d_t *p1, point2d_t *p2)
 {
     int i = 0;
@@ -146,7 +146,7 @@ pnt2d_array_get_dimension(const point2d_t *pnts, int pnt_cnt, point2d_t *p_cente
 	V2MOVE(curr_pnt, pnts[i]);
 	VSET(curr_pnt_3D, curr_pnt[0], curr_pnt[1], 0.0);
 	/* If we're off the line, it's 2D. */
-	if (bn_dist_pnt2_lseg2(&dist_sq, pca, A_3D, B_3D, curr_pnt_3D, &tol) > 2)
+	if (bg_dist_pnt2_lseg2(&dist_sq, pca, A_3D, B_3D, curr_pnt_3D, &tol) > 2)
 	    return 2;
     }
     /* If we've got a line, make sure p1 and p2 are the extreme points */
@@ -169,7 +169,7 @@ struct obr_vals {
 /* The oriented bounding rectangle must be calculated from the points and 2D vectors provided by
  * the rotating calipers, and the smallest resultant area tracked.  Those functions are handled
  * by this routine.*/
-HIDDEN void
+static void
 UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d_t bottom_pnt,
 	  point2d_t top_pnt, vect2d_t u)
 {
@@ -204,7 +204,7 @@ UpdateBox(struct obr_vals *obr, point2d_t left_pnt, point2d_t right_pnt, point2d
 /* Three consecutive collinear points will cause a problem (as per a comment in the original code)
  * Consequently, we're going to have to build the convex hull for all non-trivial inputs in order to
  * make sure we don't get collinear points from the NMG inputs.*/
-HIDDEN int
+static int
 bg_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 {
     int i = 0;
@@ -376,7 +376,6 @@ bg_obr_calc(const point2d_t *pnts, int pnt_cnt, struct obr_vals *obr)
 		      bu_log("edge_unit_vects[%d]: %f, %f\n", BIndex, edge_unit_vects[LIndex][0], edge_unit_vects[LIndex][1]);
 		      bu_log("l_dot: %f\n", dot);*/
 		    if (dot > maxDot) {
-			maxDot = dot;
 			flag = F_LEFT;
 		    }
 
@@ -532,6 +531,9 @@ bg_3d_coplanar_obr(point_t *center, vect_t *v1, vect_t *v2, const point_t *pnts,
 
     const_points_tmp = (const point2d_t *)points_tmp;
     ret = bg_2d_obr(&obr_2d_center, &obr_2d_v1, &obr_2d_v2, const_points_tmp, pnt_cnt);
+
+    if (ret < 0)
+	return ret;
 
     /* Set up the 2D point list so converting it will result in useful 3D points */
     V2MOVE(points_obr[0], obr_2d_center);

@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2021 United States Government as represented by
+# Copyright (c) 1998-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -245,6 +245,7 @@ package provide cadwidgets::Ged 1.0
 	method form {args}
 	method fracture {args}
 	method g {args}
+	method garbage_collect {args}
 	method gdiff {args}
 	method get {args}
 	method get_autoview {args}
@@ -1854,6 +1855,10 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::g {args} {
     set mRayNeedGettrees 1
     eval $mGed g $args
+}
+
+::itcl::body cadwidgets::Ged::garbage_collect {args} {
+    eval $mGed garbage_collect $args
 }
 
 ::itcl::body cadwidgets::Ged::gdiff {args} {
@@ -6278,6 +6283,7 @@ package provide cadwidgets::Ged 1.0
     $help add form		{{objType} {returns form of objType}}
     $help add fracture		{{} {}}
     $help add g			{{groupname <objects>} {group objects}}
+    $help add garbage_collect	{{-c} {remove unused objects from the .g file}}
     $help add get		{{obj ?attr?} {get obj attributes}}
     $help add get_autoview	{{} {get view parameters that shows drawn geometry}}
     $help add get_comb		{{comb} {get the specified combination as a list}}

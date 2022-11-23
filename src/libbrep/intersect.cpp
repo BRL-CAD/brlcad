@@ -1,7 +1,7 @@
 /*                  I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -302,7 +302,7 @@ sub_surface(const ON_Surface *in, int dir, double a, double b)
 }
 
 
-HIDDEN const ON_Interval
+static const ON_Interval
 check_domain(const ON_Interval *in, const ON_Interval &domain, const char *name)
 {
     // Check the validity of the input domain.
@@ -327,7 +327,7 @@ check_domain(const ON_Interval *in, const ON_Interval &domain, const char *name)
 }
 
 
-HIDDEN bool
+static bool
 build_curve_root(const ON_Curve *curve, const ON_Interval *domain, Subcurve &root)
 {
     // Build the curve tree root within a given domain
@@ -359,7 +359,7 @@ build_curve_root(const ON_Curve *curve, const ON_Interval *domain, Subcurve &roo
 }
 
 
-HIDDEN Subcurve *
+static Subcurve *
 get_curve_root(
     const ON_Curve *curve,
     const ON_Interval *domain)
@@ -376,7 +376,7 @@ get_curve_root(
 }
 
 
-HIDDEN bool
+static bool
 build_surface_root(const ON_Surface *surf, const ON_Interval *u_domain, const ON_Interval *v_domain, Subsurface &root)
 {
     // Build the surface tree root within a given domain
@@ -437,7 +437,7 @@ build_surface_root(const ON_Surface *surf, const ON_Interval *u_domain, const ON
 }
 
 
-HIDDEN Subsurface *
+static Subsurface *
 get_surface_root(
     const ON_Surface *surf,
     const ON_Interval *u_domain,
@@ -455,7 +455,7 @@ get_surface_root(
 }
 
 
-HIDDEN ON_Curve *
+static ON_Curve *
 curve_fitting(ON_Curve *in, double fitting_tol = ON_ZERO_TOLERANCE, bool delete_curve = true)
 {
     // Fit a *2D* curve into line, arc, ellipse or other conic curves.
@@ -664,7 +664,7 @@ ON_Intersect(const ON_3dPoint &pointA,
  * - Use Newton-Raphson iterations to calculate an accurate intersection
  *   point, with the estimated one as a start.
  */
-HIDDEN bool
+static bool
 newton_pci(double &t, const ON_3dPoint &pointA, const ON_Curve &curveB, double tol)
 {
     ON_3dPoint closest_point = curveB.PointAt(t);
@@ -813,7 +813,7 @@ ON_Intersect(const ON_3dPoint &pointA,
  * - If the closest point is within the given tolerance, there is an
  *   intersection.
  */
-HIDDEN bool
+static bool
 newton_psi(double &u, double &v, const ON_3dPoint &pointA, const ON_Surface &surfB, double tol)
 {
     ON_3dPoint closest_point = surfB.PointAt(u, v);
@@ -974,7 +974,7 @@ ON_Intersect(const ON_3dPoint &pointA,
 // Here we test 16 points uniformly distributed.
 #define CCI_OVERLAP_TEST_POINTS 16
 
-HIDDEN void
+static void
 newton_cci(double &t_a, double &t_b, const ON_Curve *curveA, const ON_Curve *curveB, double isect_tol)
 {
     // Equations:
@@ -1534,7 +1534,7 @@ ON_Intersect(const ON_Curve *curveA,
 // Here we test 2 points uniformly distributed.
 #define CSI_OVERLAP_TEST_POINTS 2
 
-HIDDEN void
+static void
 newton_csi(double &t, double &u, double &v, const ON_Curve *curveA, const ON_Surface *surfB, double isect_tol, Subsurface *tree)
 {
     // Equations:
@@ -1662,6 +1662,8 @@ ON_Intersect(const ON_Curve *curveA,
 	     Subcurve *treeA,
 	     Subsurface *treeB)
 {
+    std::vector<ON_Curve *> ovlp2d;
+
     if (curveA == NULL || surfaceB == NULL) {
 	return 0;
     }
@@ -1693,7 +1695,7 @@ ON_Intersect(const ON_Curve *curveA,
 	    x.Append(event.Event());
 	    if (overlap2d) {
 		ON_X_EVENT xevent = event.Event();
-		overlap2d->Append(new ON_LineCurve(xevent.m_B[0], xevent.m_B[1]));
+		ovlp2d.push_back(new ON_LineCurve(xevent.m_B[0], xevent.m_B[1]));
 	    }
 	    return 1;
 	} else {
@@ -2123,7 +2125,7 @@ ON_Intersect(const ON_Curve *curveA,
 		    ptarrayB.Append(ON_3dPoint(pending.m_b[2], pending.m_b[3], 0.0));
 		    ON_PolylineCurve *polyline = new ON_PolylineCurve(ptarrayB);
 		    polyline->ChangeDimension(2);
-		    overlap2d->Append(curve_fitting(polyline));
+		    ovlp2d.push_back(curve_fitting(polyline));
 		    ptarrayB.Empty();
 		    ptarrayB.Append(ON_3dPoint(overlap[i].m_b[0], overlap[i].m_b[1], 0.0));
 		}
@@ -2160,7 +2162,7 @@ ON_Intersect(const ON_Curve *curveA,
 	    ptarrayB.Append(ON_3dPoint(pending.m_b[2], pending.m_b[3], 0.0));
 	    ON_PolylineCurve *polyline = new ON_PolylineCurve(ptarrayB);
 	    polyline->ChangeDimension(2);
-	    overlap2d->Append(curve_fitting(polyline));
+	    ovlp2d.push_back(curve_fitting(polyline));
 	}
     }
 
@@ -2177,8 +2179,14 @@ ON_Intersect(const ON_Curve *curveA,
 	if (j == overlap_events) {
 	    x.Append(points[i]);
 	    if (overlap2d) {
-		overlap2d->Append(NULL);
+		ovlp2d.push_back(NULL);
 	    }
+	}
+    }
+
+    if (overlap2d) {
+	for (size_t i = 0; i < ovlp2d.size(); i++) {
+	    overlap2d->Append(ovlp2d[i]);
 	}
     }
 
@@ -2267,7 +2275,7 @@ struct Triangle {
 };
 
 
-HIDDEN bool
+static bool
 triangle_intersection(const struct Triangle &triA, const struct Triangle &triB, ON_3dPoint &center)
 {
     ON_Plane plane_a(triA.a, triA.b, triA.c);
@@ -2409,9 +2417,14 @@ triangle_intersection(const struct Triangle &triA, const struct Triangle &triB, 
 
 
 struct PointPair {
-    int indexA, indexB;
-    double distance3d, dist_uA, dist_vA, dist_uB, dist_vB;
-    double tol;
+    int indexA = -1;
+    int indexB = -1;
+    double distance3d = DBL_MAX;
+    double dist_uA = DBL_MAX;
+    double dist_vA = DBL_MAX;
+    double dist_uB = DBL_MAX;
+    double dist_vB = DBL_MAX;
+    double tol = DBL_MAX;
     bool operator < (const PointPair &pp) const
     {
 	if (ON_NearZero(distance3d - pp.distance3d, tol)) {
@@ -2422,7 +2435,7 @@ struct PointPair {
 };
 
 
-HIDDEN void
+static void
 add_points_to_closed_seams(
     const ON_Surface *surfA,
     const ON_Surface *surfB,
@@ -2430,6 +2443,11 @@ add_points_to_closed_seams(
     ON_2dPointArray &curve_uvA,
     ON_2dPointArray &curve_uvB)
 {
+
+    if (!curve_uvA.Capacity() || !curve_uvB.Capacity()) {
+	bu_log("add_points_to_closed_seams called with unpopulated curve_uvA and/or curve_uvB arrays, line %d\n", __LINE__);
+	return;
+    }
 
     for (int i = 0; i < 4; ++i) {
 	int dir = i % 2;
@@ -2466,7 +2484,7 @@ add_points_to_closed_seams(
 }
 
 
-HIDDEN bool
+static bool
 newton_ssi(double &uA, double &vA, double &uB, double &vB, const ON_Surface *surfA, const ON_Surface *surfB, double isect_tol)
 {
     ON_3dPoint pointA = surfA->PointAt(uA, vA);
@@ -2528,12 +2546,12 @@ newton_ssi(double &uA, double &vA, double &uB, double &vB, const ON_Surface *sur
 
     pointA = surfA->PointAt(uA, vA);
     pointB = surfB->PointAt(uB, vB);
-    return (pointA.DistanceTo(pointB) < isect_tol) && !std::isnan(uA) && !std::isnan(vA) && !std::isnan(uB) & !std::isnan(vB);
+    return (pointA.DistanceTo(pointB) < isect_tol) && !std::isnan(uA) && !std::isnan(vA) && !std::isnan(uB) && !std::isnan(vB);
 }
 
 // if curve end is greater than tol distance from pt, append a linear
 // segment to the curve so it extends to the pt
-HIDDEN void
+static void
 extend_curve_end_to_pt(ON_Curve *&curve, ON_3dPoint pt, double tol)
 {
     ON_NurbsCurve *nc = curve->NurbsCurve();
@@ -2549,7 +2567,7 @@ extend_curve_end_to_pt(ON_Curve *&curve, ON_3dPoint pt, double tol)
     }
 }
 
-HIDDEN ON_Curve *
+static ON_Curve *
 link_curves(ON_Curve *&c1, ON_Curve *&c2)
 {
     extend_curve_end_to_pt(c1, c2->PointAtStart(), ON_ZERO_TOLERANCE);
@@ -2575,7 +2593,7 @@ link_curves(ON_Curve *&c1, ON_Curve *&c2)
 // if curve start and end are within tolerance, append a linear
 // segment to the curve to close it completely so it passes
 // IsClosed() tests
-HIDDEN void
+static void
 fill_gap_if_closed(ON_Curve *&curve, double tol)
 {
     if (curve->PointAtStart().DistanceTo(curve->PointAtEnd()) <= tol) {
@@ -2754,7 +2772,7 @@ struct Overlapevent {
 };
 
 
-HIDDEN bool
+static bool
 is_pt_in_surf_overlap(
     ON_2dPoint surf1_pt,
     const ON_Surface *surf1,
@@ -2781,7 +2799,7 @@ is_pt_in_surf_overlap(
 }
 
 
-HIDDEN bool
+static bool
 is_subsurfaceA_completely_inside_overlap(
     const ON_SimpleArray<Overlapevent> &overlap_events,
     const Subsurface *subA,
@@ -2819,7 +2837,7 @@ is_subsurfaceA_completely_inside_overlap(
 }
 
 
-HIDDEN bool
+static bool
 is_uvA_completely_inside_overlap(
     const ON_SimpleArray<Overlapevent> &overlap_events,
     const ON_2dPoint &pt)
@@ -2849,7 +2867,7 @@ is_uvA_completely_inside_overlap(
 }
 
 
-HIDDEN ON_2dPoint
+static ON_2dPoint
 point_xy_or_yx(double x, double y, bool swap)
 {
     ON_2dPoint pt(x, y);
@@ -2924,7 +2942,7 @@ enum {
 };
 
 
-HIDDEN int
+static int
 isocurve_surface_overlap_location(
     OverlapIsocurve iso,
     const ON_Surface *surf1,
@@ -2961,7 +2979,7 @@ isocurve_surface_overlap_location(
 }
 
 
-HIDDEN bool
+static bool
 is_curve_on_overlap_boundary(
     OverlapIsocurve iso,
     const ON_Surface *surf1,
@@ -3100,7 +3118,7 @@ get_overlap_intersection_parameters(
 }
 
 
-HIDDEN bool
+static bool
 is_valid_overlap(const OverlapSegment *overlap)
 {
     if (overlap            &&
@@ -3113,7 +3131,7 @@ is_valid_overlap(const OverlapSegment *overlap)
 }
 
 
-HIDDEN void
+static void
 split_overlaps_at_intersections(
     ON_SimpleArray<OverlapSegment *> &overlaps,
     const ON_Surface *surfA,
@@ -3223,7 +3241,7 @@ split_overlaps_at_intersections(
 }
 
 
-HIDDEN std::vector<Subsurface *>
+static std::vector<Subsurface *>
 subdivide_subsurface(Subsurface *sub)
 {
     std::vector<Subsurface *> parts;
@@ -3238,7 +3256,7 @@ subdivide_subsurface(Subsurface *sub)
 }
 
 
-HIDDEN std::pair<Triangle, Triangle>
+static std::pair<Triangle, Triangle>
 get_subsurface_triangles(const Subsurface *sub, const ON_Surface *surf)
 {
     double min_u = sub->m_u.Min();
@@ -3275,7 +3293,7 @@ get_subsurface_triangles(const Subsurface *sub, const ON_Surface *surf)
 }
 
 
-HIDDEN ON_2dPoint
+static ON_2dPoint
 barycentric_to_uv(const ON_3dPoint &bc, const Triangle &tri)
 {
     ON_3dVector vertx(tri.a_2d.x, tri.b_2d.x, tri.c_2d.x);
@@ -3285,7 +3303,7 @@ barycentric_to_uv(const ON_3dPoint &bc, const Triangle &tri)
 }
 
 
-HIDDEN bool
+static bool
 join_continuous_ppair_to_polyline(ON_SimpleArray<int> *polyline, const PointPair &ppair)
 {
     int polyline_first = (*polyline)[0];
@@ -3311,7 +3329,7 @@ join_continuous_ppair_to_polyline(ON_SimpleArray<int> *polyline, const PointPair
 }
 
 
-HIDDEN std::vector<double>
+static std::vector<double>
 get_knots(const ON_Surface *surf, int dir)
 {
     int knot_count = surf->SpanCount(dir) + 1;
@@ -3331,7 +3349,7 @@ get_knots(const ON_Surface *surf, int dir)
 
 // get surface knots in given direction that can be boundaries of
 // Bezier patches
-HIDDEN std::vector<double>
+static std::vector<double>
 get_bezier_knots(
     const ON_Surface *surf,
     int dir)
@@ -3351,13 +3369,14 @@ get_bezier_knots(
 }
 
 
-HIDDEN void
+static void
 append_overlap_segments(
     ON_SimpleArray<OverlapSegment *> &overlaps,
     OverlapIsocurve iso,
     const ON_Curve *overlap2d,
     const ON_Surface *surf1)
 {
+    std::vector<OverlapSegment *> ovlps;
     OverlapSegment *seg = new OverlapSegment;
     try {
 	seg->m_curve3d = sub_curve(iso.curve, iso.overlap_t[0],
@@ -3376,7 +3395,7 @@ append_overlap_segments(
     seg->m_dir = surf_dir;
     seg->m_fix = iso.src.knot.c;
 
-    overlaps.Append(seg);
+    ovlps.push_back(seg);
 
     if (iso.src.knot.IsFirst() && surf1->IsClosed(surf_dir)) {
 	// Something like close_domain().
@@ -3394,12 +3413,16 @@ append_overlap_segments(
 	delete surf1_curve;
 	surf1_curve = new ON_LineCurve(iso_pt1, iso_pt2);
 
-	overlaps.Append(seg);
+	ovlps.push_back(seg);
+    }
+
+    for (size_t i = 0; i < ovlps.size(); i++) {
+	overlaps.Append(ovlps[i]);
     }
 }
 
 
-HIDDEN void
+static void
 append_csx_event_points(
     ON_3dPointArray &curveA_3d,
     ON_2dPointArray &surfB_2d,
@@ -3421,7 +3444,7 @@ append_csx_event_points(
 
 // Make a transverse or tangent ssx curve event from matching 3d and surface
 // A/B curves.
-HIDDEN int
+static int
 set_ssx_event_from_curves(
     ON_SSX_EVENT &event,
     ON_Curve *c3d,
@@ -3508,7 +3531,7 @@ set_ssx_event_from_curves(
 // 1. See ON_NurbsSurface::ConvertSpanToBezier().
 // 2. Theorem 3 in
 // http://libgen.org/scimag1/10.1016/S0010-4485%252896%252900099-1.pdf
-HIDDEN void
+static void
 find_overlap_boundary_curves(
     ON_SimpleArray<OverlapSegment *> &overlaps,
     ON_ClassArray<ON_SSX_EVENT> &csx_events,
@@ -4081,7 +4104,7 @@ ON_Intersect(const ON_Surface *surfA,
 	candidates = next_candidates;
     }
     if (DEBUG_BREP_INTERSECT) {
-	bu_log("We get %lu intersection bounding boxes.\n", candidates.size());
+	bu_log("We get %zu intersection bounding boxes.\n", candidates.size());
     }
 
     /* Third step: get the intersection points using triangular approximation,
@@ -4399,7 +4422,7 @@ ON_Intersect(const ON_Surface *surfA,
     }
 
     // generate ON_Curves from the polylines
-    ON_SimpleArray<ON_Curve *> intersect3d, intersect_uvA, intersect_uvB;
+    std::vector<ON_Curve *>intersect3d, intersect_uvA, intersect_uvB;
     ON_SimpleArray<int> single_pts;
     for (size_t i = 0; i < polylines.size(); i++) {
 	if (polylines[i] == NULL) {
@@ -4427,7 +4450,7 @@ ON_Intersect(const ON_Surface *surfA,
 	    ptarray.Append(curvept[startpoint]);
 	}
 	ON_PolylineCurve *curve = new ON_PolylineCurve(ptarray);
-	intersect3d.Append(curve);
+	intersect3d.push_back(curve);
 
 	// curve in UV space (surfA)
 	ptarray.Empty();
@@ -4445,7 +4468,7 @@ ON_Intersect(const ON_Surface *surfA,
 	}
 	curve = new ON_PolylineCurve(ptarray);
 	curve->ChangeDimension(2);
-	intersect_uvA.Append(curve_fitting(curve, fitting_tolA));
+	intersect_uvA.push_back(curve_fitting(curve, fitting_tolA));
 
 	// curve in UV space (surfB)
 	ptarray.Empty();
@@ -4463,13 +4486,13 @@ ON_Intersect(const ON_Surface *surfA,
 	}
 	curve = new ON_PolylineCurve(ptarray);
 	curve->ChangeDimension(2);
-	intersect_uvB.Append(curve_fitting(curve, fitting_tolB));
+	intersect_uvB.push_back(curve_fitting(curve, fitting_tolB));
 
 	delete polylines[i];
     }
 
     if (DEBUG_BREP_INTERSECT) {
-	bu_log("%d curve segments and %d single points.\n", intersect3d.Count(), single_pts.Count());
+	bu_log("%zd curve segments and %d single points.\n", intersect3d.size(), single_pts.Count());
     }
     bu_free(polyline_of_terminal, "int");
     bu_free(startpt, "int");
@@ -4477,27 +4500,29 @@ ON_Intersect(const ON_Surface *surfA,
 
     // generate transverse and tangent ON_SSX_EVENTs (overlap events
     // handled above)
-    for (int i = 0; i < intersect3d.Count(); i++) {
-	ON_SSX_EVENT event;
+    if (intersect3d.size() == intersect_uvA.size() && intersect3d.size() == intersect_uvB.size()) {
+	for (size_t i = 0; i < intersect3d.size(); i++) {
+	    ON_SSX_EVENT event;
 
-       	int ret = set_ssx_event_from_curves(event, intersect3d[i],
-					    intersect_uvA[i], intersect_uvB[i], surfA, surfB);
+	    int ret = set_ssx_event_from_curves(event, intersect3d[i],
+		    intersect_uvA[i], intersect_uvB[i], surfA, surfB);
 
-	if (ret != 0) {
-	    bu_log("warning: reverse failed. The direction of %d might be "
-		   "wrong.\n", x.Count() - original_count);
+	    if (ret != 0) {
+		bu_log("warning: reverse failed. The direction of %d might be "
+			"wrong.\n", x.Count() - original_count);
+	    }
+
+	    x.Append(event);
+
+	    // set the curves to NULL so they aren't deleted by
+	    // ~ON_SSX_EVENT()
+	    event.m_curve3d = event.m_curveA = event.m_curveB = NULL;
 	}
-
-	x.Append(event);
-
-	// set the curves to NULL so they aren't deleted by
-	// ~ON_SSX_EVENT()
-	event.m_curve3d = event.m_curveA = event.m_curveB = NULL;
     }
 
     for (int i = 0; i < single_pts.Count(); i++) {
 	bool unique_pt = true;
-	for (int j = 0; j < intersect3d.Count(); ++j) {
+	for (size_t j = 0; j < intersect3d.size(); ++j) {
 	    ON_ClassArray<ON_PX_EVENT> px_event;
 	    if (ON_Intersect(curvept[single_pts[i]], *intersect3d[j], px_event)) {
 		unique_pt = false;

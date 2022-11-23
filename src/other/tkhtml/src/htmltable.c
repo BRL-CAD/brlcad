@@ -858,7 +858,7 @@ tableDrawCells (HtmlNode *pNode, int col, int colspan, int row, int rowspan, voi
     BoxContext *pBox;
     BoxProperties box;
     int i;
-    int x = 0;
+    //int x = 0;
     int y = 0;
     int belowY;
     LayoutContext *pLayout = pData->pLayout;
@@ -885,10 +885,10 @@ tableDrawCells (HtmlNode *pNode, int col, int colspan, int row, int rowspan, voi
         pData->aY[row] = y;
     }
 
-    for (i=0; i<col; i++) {
-        x += pData->aWidth[i];
-    }
-    x += ((col+1) * pData->border_spacing);
+    //for (i=0; i<col; i++) {
+    //    x += pData->aWidth[i];
+    //}
+    //x += ((col+1) * pData->border_spacing);
 
     pBox = &pData->aCell[col].box;
     assert (pData->aCell[col].finrow==0);

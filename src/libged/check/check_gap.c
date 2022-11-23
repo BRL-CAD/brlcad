@@ -1,7 +1,7 @@
 /*                C H E C K _ G A P . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2021 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ struct gap_context {
 };
 
 
-HIDDEN void
+static void
 gaps(const struct xray* ray, const struct partition *pp, double gap_dist, point_t pt, void* callback_data)
 {
     struct gap_context *context = (struct gap_context*) callback_data;
@@ -85,7 +85,7 @@ int check_gap(struct current_state *state,
 
     if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_GAP)) {
 	clear_list(&gapList);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     print_verbose_debug(options);
@@ -97,7 +97,7 @@ int check_gap(struct current_state *state,
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

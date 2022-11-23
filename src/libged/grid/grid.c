@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,11 +30,13 @@
 
 
 #include "vmath.h"
+#include "bv.h"
+#include "bg/lseg.h"
 
 #include "../ged_private.h"
 
 
-HIDDEN void
+static void
 grid_vsnap(struct ged *gedp)
 {
     point_t view_pt;
@@ -42,34 +44,34 @@ grid_vsnap(struct ged *gedp)
 
     MAT_DELTAS_GET_NEG(model_pt, gedp->ged_gvp->gv_center);
     MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
-    ged_snap_to_grid(gedp, &view_pt[X], &view_pt[Y]);
+    bv_snap_grid_2d(gedp->ged_gvp, &view_pt[X], &view_pt[Y]);
     MAT4X3PNT(model_pt, gedp->ged_gvp->gv_view2model, view_pt);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, model_pt);
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 }
 
 
-HIDDEN void
+static void
 grid_vls_print(struct ged *gedp)
 {
     bu_vls_printf(gedp->ged_result_str, "anchor = %g %g %g\n",
-		  gedp->ged_gvp->gv_grid.anchor[0] * gedp->ged_wdbp->dbip->dbi_base2local,
-		  gedp->ged_gvp->gv_grid.anchor[1] * gedp->ged_wdbp->dbip->dbi_base2local,
-		  gedp->ged_gvp->gv_grid.anchor[2] * gedp->ged_wdbp->dbip->dbi_base2local);
+		  gedp->ged_gvp->gv_s->gv_grid.anchor[0] * gedp->dbip->dbi_base2local,
+		  gedp->ged_gvp->gv_s->gv_grid.anchor[1] * gedp->dbip->dbi_base2local,
+		  gedp->ged_gvp->gv_s->gv_grid.anchor[2] * gedp->dbip->dbi_base2local);
     bu_vls_printf(gedp->ged_result_str, "color = %d %d %d\n",
-		  gedp->ged_gvp->gv_grid.color[0],
-		  gedp->ged_gvp->gv_grid.color[1],
-		  gedp->ged_gvp->gv_grid.color[2]);
-    bu_vls_printf(gedp->ged_result_str, "draw = %d\n", gedp->ged_gvp->gv_grid.draw);
-    bu_vls_printf(gedp->ged_result_str, "mrh = %d\n", gedp->ged_gvp->gv_grid.res_major_h);
-    bu_vls_printf(gedp->ged_result_str, "mrv = %d\n", gedp->ged_gvp->gv_grid.res_major_v);
-    bu_vls_printf(gedp->ged_result_str, "rh = %g\n", gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, "rv = %g\n", gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, "snap = %d\n", gedp->ged_gvp->gv_grid.snap);
+		  gedp->ged_gvp->gv_s->gv_grid.color[0],
+		  gedp->ged_gvp->gv_s->gv_grid.color[1],
+		  gedp->ged_gvp->gv_s->gv_grid.color[2]);
+    bu_vls_printf(gedp->ged_result_str, "draw = %d\n", gedp->ged_gvp->gv_s->gv_grid.draw);
+    bu_vls_printf(gedp->ged_result_str, "mrh = %d\n", gedp->ged_gvp->gv_s->gv_grid.res_major_h);
+    bu_vls_printf(gedp->ged_result_str, "mrv = %d\n", gedp->ged_gvp->gv_s->gv_grid.res_major_v);
+    bu_vls_printf(gedp->ged_result_str, "rh = %g\n", gedp->ged_gvp->gv_s->gv_grid.res_h * gedp->dbip->dbi_base2local);
+    bu_vls_printf(gedp->ged_result_str, "rv = %g\n", gedp->ged_gvp->gv_s->gv_grid.res_v * gedp->dbip->dbi_base2local);
+    bu_vls_printf(gedp->ged_result_str, "snap = %d\n", gedp->ged_gvp->gv_s->gv_grid.snap);
 }
 
 
-HIDDEN void
+static void
 grid_usage(struct ged *gedp, const char *argv0)
 {
     bu_vls_printf(gedp->ged_result_str, "Usage: %s\n", argv0);
@@ -99,21 +101,21 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
     double user_pt[3];		/* Value(s) provided by user */
     int i;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc == 1) {
 	grid_usage(gedp, argv[0]);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc < 2 || 5 < argc) {
 	grid_usage(gedp, argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     command = (char *)argv[0];
@@ -124,7 +126,7 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < argc; ++i)
 	if (sscanf(argp[i], "%lf", &user_pt[i]) != 1) {
 	    grid_usage(gedp, argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
     // TODO - need more sophisticated grid drawing - when zoomed out too far
@@ -137,151 +139,151 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
     // points to target...
     if (BU_STR_EQUAL(parameter, "draw")) {
 	if (argc == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.draw);
-	    return GED_OK;
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_grid.draw);
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i)
-		gedp->ged_gvp->gv_grid.draw = 1;
+		gedp->ged_gvp->gv_s->gv_grid.draw = 1;
 	    else
-		gedp->ged_gvp->gv_grid.draw = 0;
+		gedp->ged_gvp->gv_s->gv_grid.draw = 0;
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s draw' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "vsnap")) {
 	if (argc == 0) {
 	    grid_vsnap(gedp);
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s vsnap' command accepts no arguments\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "snap")) {
 	if (argc == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.snap);
-	    return GED_OK;
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_grid.snap);
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
 	    i = (int)user_pt[X];
 
 	    if (i)
-		gedp->ged_gvp->gv_grid.snap = 1;
+		gedp->ged_gvp->gv_s->gv_grid.snap = 1;
 	    else
-		gedp->ged_gvp->gv_grid.snap = 0;
+		gedp->ged_gvp->gv_s->gv_grid.snap = 0;
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s snap' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "rh")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%g",
-			  gedp->ged_gvp->gv_grid.res_h * gedp->ged_wdbp->dbip->dbi_base2local);
-	    return GED_OK;
+			  gedp->ged_gvp->gv_s->gv_grid.res_h * gedp->dbip->dbi_base2local);
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    gedp->ged_gvp->gv_grid.res_h = user_pt[X] * gedp->ged_wdbp->dbip->dbi_local2base;
+	    gedp->ged_gvp->gv_s->gv_grid.res_h = user_pt[X] * gedp->dbip->dbi_local2base;
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s rh' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "rv")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%g",
-			  gedp->ged_gvp->gv_grid.res_v * gedp->ged_wdbp->dbip->dbi_base2local);
-	    return GED_OK;
+			  gedp->ged_gvp->gv_s->gv_grid.res_v * gedp->dbip->dbi_base2local);
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    gedp->ged_gvp->gv_grid.res_v = user_pt[X] * gedp->ged_wdbp->dbip->dbi_local2base;
+	    gedp->ged_gvp->gv_s->gv_grid.res_v = user_pt[X] * gedp->dbip->dbi_local2base;
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s rv' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "mrh")) {
 	if (argc == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.res_major_h);
-	    return GED_OK;
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_grid.res_major_h);
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    gedp->ged_gvp->gv_grid.res_major_h = (int)user_pt[X];
+	    gedp->ged_gvp->gv_s->gv_grid.res_major_h = (int)user_pt[X];
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s mrh' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "mrv")) {
 	if (argc == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_grid.res_major_v);
-	    return GED_OK;
+	    bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_grid.res_major_v);
+	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    gedp->ged_gvp->gv_grid.res_major_v = (int)user_pt[X];
+	    gedp->ged_gvp->gv_s->gv_grid.res_major_v = (int)user_pt[X];
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s mrv' command accepts 0 or 1 argument\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "anchor")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g",
-			  gedp->ged_gvp->gv_grid.anchor[X] * gedp->ged_wdbp->dbip->dbi_base2local,
-			  gedp->ged_gvp->gv_grid.anchor[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
-			  gedp->ged_gvp->gv_grid.anchor[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
-	    return GED_OK;
+			  gedp->ged_gvp->gv_s->gv_grid.anchor[X] * gedp->dbip->dbi_base2local,
+			  gedp->ged_gvp->gv_s->gv_grid.anchor[Y] * gedp->dbip->dbi_base2local,
+			  gedp->ged_gvp->gv_s->gv_grid.anchor[Z] * gedp->dbip->dbi_base2local);
+	    return BRLCAD_OK;
 	} else if (argc == 3) {
-	    gedp->ged_gvp->gv_grid.anchor[0] = user_pt[X] * gedp->ged_wdbp->dbip->dbi_local2base;
-	    gedp->ged_gvp->gv_grid.anchor[1] = user_pt[Y] * gedp->ged_wdbp->dbip->dbi_local2base;
-	    gedp->ged_gvp->gv_grid.anchor[2] = user_pt[Z] * gedp->ged_wdbp->dbip->dbi_local2base;
+	    gedp->ged_gvp->gv_s->gv_grid.anchor[0] = user_pt[X] * gedp->dbip->dbi_local2base;
+	    gedp->ged_gvp->gv_s->gv_grid.anchor[1] = user_pt[Y] * gedp->dbip->dbi_local2base;
+	    gedp->ged_gvp->gv_s->gv_grid.anchor[2] = user_pt[Z] * gedp->dbip->dbi_local2base;
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s anchor' command requires 0 or 3 arguments\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "color")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-			  gedp->ged_gvp->gv_grid.color[X],
-			  gedp->ged_gvp->gv_grid.color[Y],
-			  gedp->ged_gvp->gv_grid.color[Z]);
-	    return GED_OK;
+			  gedp->ged_gvp->gv_s->gv_grid.color[X],
+			  gedp->ged_gvp->gv_s->gv_grid.color[Y],
+			  gedp->ged_gvp->gv_s->gv_grid.color[Z]);
+	    return BRLCAD_OK;
 	} else if (argc == 3) {
-	    gedp->ged_gvp->gv_grid.color[0] = (int)user_pt[X];
-	    gedp->ged_gvp->gv_grid.color[1] = (int)user_pt[Y];
-	    gedp->ged_gvp->gv_grid.color[2] = (int)user_pt[Z];
+	    gedp->ged_gvp->gv_s->gv_grid.color[0] = (int)user_pt[X];
+	    gedp->ged_gvp->gv_s->gv_grid.color[1] = (int)user_pt[Y];
+	    gedp->ged_gvp->gv_s->gv_grid.color[2] = (int)user_pt[Z];
 
-	    return GED_OK;
+	    return BRLCAD_OK;
 	}
 
 	bu_vls_printf(gedp->ged_result_str, "The '%s color' command requires 0 or 3 arguments\n", command);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (BU_STR_EQUAL(parameter, "vars")) {
 	grid_vls_print(gedp);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (BU_STR_EQUAL(parameter, "help")) {
@@ -292,7 +294,7 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n", argv[0], command);
     grid_usage(gedp, argv[0]);
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

@@ -1,7 +1,7 @@
 /*                 B R E P L I C A T O R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -451,14 +451,14 @@ main(int argc, char *argv[])
     ret = mk_brep(wdbp, name, (void *)brep);
     if (ret) {
 	delete brep;
-	wdb_close(wdbp);
+	db_close(wdbp->dbip);
 	bu_exit(3, "ERROR: Unable to export %s\n", name);
     }
 
     bu_log("Done.\n");
 
     delete brep;
-    wdb_close(wdbp);
+    db_close(wdbp->dbip);
 
     return 0;
 }

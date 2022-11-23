@@ -1,7 +1,7 @@
 /*                         P U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -215,9 +215,9 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
     int c;
     static const char *usage = "object";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -230,17 +230,17 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* get directory pointer for arg */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
-	return GED_ERROR;
+    if ((dp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+	return BRLCAD_ERROR;
 
     /* Checks whether the object is a primitive.*/
     if (dp->d_flags & RT_DIR_SOLID) {
 	bu_log("Attempt to pull primitive, aborting.\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Parse options */
@@ -263,9 +263,9 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
      * right to the the head of the tree pulling objects.
      * All new changes are immediately written to database
      */
-    db_functree(gedp->ged_wdbp->dbip, dp, pull_comb, pull_leaf, &rt_uniresource, &mat);
+    db_functree(gedp->dbip, dp, pull_comb, pull_leaf, &rt_uniresource, &mat);
 
-   return  GED_OK;
+   return  BRLCAD_OK;
 }
 
 

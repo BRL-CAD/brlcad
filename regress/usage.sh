@@ -2,7 +2,7 @@
 #                       U S A G E . S H
 # BRL-CAD
 #
-# Copyright (c) 2018-2021 United States Government as represented by
+# Copyright (c) 2018-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -209,7 +209,7 @@ log "`printf \"| %5d | %5d | %7d | %4d | %5d | %10d | %4d | %4d |\n\" $CNT $USAG
 log "---------------------------------------------------------------------"
 
 
-NEED_FIXING=86
+NEED_FIXING=54
 if test $LONG -lt `expr $NEED_FIXING + 1` ; then
     if test $LONG -ne $NEED_FIXING ; then
 	log "********************************************************"

@@ -1,7 +1,7 @@
 /*                    D A T E T I M E . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2021 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,10 @@ main(int argc, char *argv[])
     int64_t curr_time;
     int function_num;
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     if (argc != 2) {
 	bu_log("Usage: %s {function_num}\n", argv[0]);

@@ -128,7 +128,8 @@ void PPolynomial<Degree>::reset( size_t newSize )
 template<int Degree>
 PPolynomial<Degree>& PPolynomial<Degree>::operator = (const PPolynomial<Degree>& p){
 	set(p.polyCount);
-	memcpy(polys,p.polys,sizeof(StartingPolynomial<Degree>)*p.polyCount);
+	if (polys)
+	   memcpy(polys,p.polys,sizeof(StartingPolynomial<Degree>)*p.polyCount);
 	return *this;
 }
 

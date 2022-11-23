@@ -44,7 +44,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>E some_object</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>E some_object</userinput></term>
 	  <listitem>
 	    <para>
 	      Displays a faceted approximation of <emphasis>some_object</emphasis>.

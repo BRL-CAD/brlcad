@@ -1,7 +1,7 @@
 /*                       S H _ B R D F . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2021 United States Government as represented by
+ * Copyright (c) 1996-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -81,10 +81,10 @@ struct bu_structparse brdf_parse[] = {
 };
 
 
-HIDDEN int brdf_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int brdf_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void brdf_print(register struct region *rp, void *dp);
-HIDDEN void brdf_free(void *cp);
+static int brdf_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int brdf_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void brdf_print(register struct region *rp, void *dp);
+static void brdf_free(void *cp);
 
 struct mfuncs brdf_mfuncs[] = {
     {MF_MAGIC,	"brdf",		0,		MFI_NORMAL|MFI_LIGHT,	0,
@@ -97,7 +97,7 @@ struct mfuncs brdf_mfuncs[] = {
 
 #define RI_AIR 1.0    /* Refractive index of air.		*/
 
-HIDDEN int
+static int
 brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct brdf_specific *pp;
@@ -125,14 +125,14 @@ brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dp
 
     return 1;
 }
-HIDDEN void
+static void
 brdf_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, brdf_parse, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 brdf_free(void *cp)
 {
     BU_PUT(cp, struct brdf_specific);
@@ -180,7 +180,7 @@ brdf_free(void *cp)
  R is a surface roughness term.
 
 */
-HIDDEN int
+static int
 brdf_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct light_specific *lp;

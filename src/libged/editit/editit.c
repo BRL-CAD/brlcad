@@ -1,7 +1,7 @@
 /*                        E D I T I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,15 +46,15 @@ int
 ged_editit_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret = 0;
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* FIXME: this should NOT assume that argv[2] and argv[4] are the
      * edit string and temp file.  should use bu_getopt().
      */
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else {
 	char *edstr = bu_strdup((char *)argv[2]);
 	ret = _ged_editit(edstr, argv[4]);

@@ -1,7 +1,7 @@
 /*                         G - D O T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2021 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -196,6 +196,7 @@ dot_header(FILE *outfp, const char *label)
     fprintf(outfp, "\tgraph [ rankdir=LR ];\n");
     fprintf(outfp, "\tnode [ style=filled ];\n");
     fprintf(outfp, "\tnode [ shape=box ];\n"); /* try Mrecord */
+    bu_vls_free(&vp);
 }
 
 
@@ -333,7 +334,7 @@ main(int ac, char *av[])
 	struct bu_vls vp = BU_VLS_INIT_ZERO;
 	const char *title[2] = {"title", NULL};
 
-	ged_title(gp, 1, title);
+	ged_exec(gp, 1, title);
 	bu_vls_printf(&vp, "%s\\n", bu_vls_addr(gp->ged_result_str));
 	if (!(av[0][0] == '-' && av[0][1] == '\0')) {
 	    char base[MAXPATHLEN] = {0};
@@ -358,7 +359,7 @@ main(int ac, char *av[])
 
 	/* all top-level objects */
 
-	ged_tops(gp, 2, tops);
+	ged_exec(gp, 2, tops);
 
 	topobjs = (char **)bu_calloc(bu_vls_strlen(gp->ged_result_str) + 1, sizeof(char *), "alloc topobjs");
 	c = (int)bu_argv_from_string(topobjs, bu_vls_strlen(gp->ged_result_str), bu_vls_addr(gp->ged_result_str));
@@ -372,10 +373,10 @@ main(int ac, char *av[])
     while (objs[c]) {
 	struct directory *dp = NULL;
 
-	dp = db_lookup(gp->ged_wdbp->dbip, objs[c], 1);
+	dp = db_lookup(gp->dbip, objs[c], 1);
 	if (dp) {
 	    bu_log("Exporting object [%s]\n", objs[c]);
-	    db_functree(gp->ged_wdbp->dbip, dp, dot_comb, dot_leaf, NULL, &o);
+	    db_functree(gp->dbip, dp, dot_comb, dot_leaf, NULL, &o);
 	} else {
 	    bu_log("ERROR: Unable to locate [%s] within input database, skipping.\n", objs[c]);
 	}
@@ -394,8 +395,6 @@ main(int ac, char *av[])
     bu_ptbl_free(&o.groups);
 
     ged_close(gp);
-    if (gp)
-	BU_PUT(gp, struct ged);
 
     bu_argv_free(c, objs);
 

@@ -1,7 +1,7 @@
 /*                         R C O D E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,9 +46,9 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -61,13 +61,13 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s filename", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fp = fopen(argv[1], "r");
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Failed to read file - %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     while (bu_fgets(line, RT_MAXLINE, fp) != NULL) {
@@ -86,7 +86,7 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 	if (*cp == '\0')
 	    continue;
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, cp, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[1], cp);
 	    continue;
 	}
@@ -96,7 +96,7 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) != ID_COMBINATION) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) != ID_COMBINATION) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not a region\n", argv[1], cp);
 	    continue;
 	}
@@ -127,14 +127,14 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (changed) {
 	    /* write out all changes */
-	    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
+	    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource)) {
 		bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 		bu_vls_printf(gedp->ged_result_str,
 			      "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety, \nyou should exit now, and resolve the I/O problem, before continuing.\n");
 
 		rt_db_free_internal(&intern);
 		fclose(fp);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 	g_changed += (size_t)changed;
@@ -152,7 +152,7 @@ ged_rcodes_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

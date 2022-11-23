@@ -1,7 +1,7 @@
 /*                        D B 5 _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -193,7 +193,7 @@ db5_encode_length(
  * 0 on success
  * -1 on error
  */
-HIDDEN int
+static int
 crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 {
     if (cp[0] != DB5HDR_MAGIC1) {
@@ -202,7 +202,7 @@ crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 	    bu_log ("Concatenation of different database versions detected.\n");
 	    bu_log ("Run 'dbupgrade' on all databases before concatenation (cat command).\n");
 	}
-	return 0;
+	return -1;
     }
 
     /* hflags */
@@ -256,7 +256,7 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if ((size_t)rip->object_length < sizeof(struct db5_ondisk_header)) {
-	bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database possibly corrupted\n", rip->object_length);
+	bu_log("db5_get_raw_internal_ptr(): object_length=%zu is too short, database possibly corrupted\n", rip->object_length);
 	return NULL;
     }
 
@@ -291,7 +291,6 @@ db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
     if (rip->b_present) {
 	cp += db5_decode_length(&rip->body.ext_nbytes, cp, rip->b_width);
 	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
-	cp += rip->body.ext_nbytes;
     }
 
     rip->buf = NULL;	/* no buffer needs freeing */
@@ -355,7 +354,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if (rip->object_length < sizeof(struct db5_ondisk_header) || rip->object_length < used) {
-	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database possibly corrupted\n",
+	bu_log("db5_get_raw_internal_fp(): object_length=%zu is too short, database possibly corrupted\n",
 	       rip->object_length);
 	return -1;
     }
@@ -370,7 +369,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     want = rip->object_length - used;
 
     if ((got = fread(cp, 1, want, fp)) != want) {
-	bu_log("db5_get_raw_internal_fp(): database is too short, want=%ld, got=%ld\n", want, got);
+	bu_log("db5_get_raw_internal_fp(): database is too short, want=%zu, got=%zu\n", want, got);
 	return -2;
     }
 
@@ -405,7 +404,6 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     if (rip->b_present) {
 	cp += db5_decode_length(&rip->body.ext_nbytes, cp, rip->b_width);
 	rip->body.ext_buf = (uint8_t *)cp;	/* discard const */
-	cp += rip->body.ext_nbytes;
     }
 
     return 0;		/* success */
@@ -783,6 +781,15 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     if (db_write(dbip, (char *)ep->ext_buf, ep->ext_nbytes, dp->d_addr) < 0) {
 	return -1;
     }
+
+    /* Made a change for real - do callback */
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	    (*cb->f)(dbip, dp, 0, cb->u_data);
+	}
+    }
+
     return 0;
 }
 
@@ -829,6 +836,15 @@ rt_db_put_internal5(
     if (db_write(dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr) < 0) {
 	goto fail;
     }
+
+    /* Made a change for real - do callback */
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	    (*cb->f)(dbip, dp, 0, cb->u_data);
+	}
+    }
+
 ok:
     bu_free_external(&ext);
     rt_db_free_internal(ip);

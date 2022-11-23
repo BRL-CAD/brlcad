@@ -1,7 +1,7 @@
 /*                         S A V E K E Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,9 +65,9 @@ ged_savekey_core(struct ged *gedp, int argc, const char *argv[])
     vect_t temp;
     static const char *usage = "file [time]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -80,13 +80,13 @@ ged_savekey_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 2 || 3 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fp = fopen(argv[1], "a");
     if (fp == NULL) {
 	perror(argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (argc > 2) {
 	timearg = atof(argv[2]);
@@ -100,7 +100,7 @@ ged_savekey_core(struct ged *gedp, int argc, const char *argv[])
     savekey_rt_oldwrite(gedp, fp, eye_model);
     (void)fclose(fp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -1,7 +1,7 @@
 /*                      P I P E T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -144,6 +144,8 @@ main(int argc, char **argv)
 	fprintf(stderr, "mk_pipe(%s) returns %d\n", "pipe1", i);
 
     do_bending(outfp, "pipe2", pipeB, pipeB_npts, 0.1, 0.05);
+
+    db_close(outfp->dbip);
     return 0;
 }
 

@@ -40,7 +40,7 @@
   <example><title>List the shader parameters of two objects to a specified file.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>wmater mater_file group1 regiona</userinput>
+      <prompt>mged&gt; </prompt><userinput>wmater mater_file group1 regiona</userinput>
     </para>
     <para>Lists the shader parameters of <emphasis>group1</emphasis> and <emphasis>regiona</emphasis> to <emphasis>mater_file</emphasis>.
 

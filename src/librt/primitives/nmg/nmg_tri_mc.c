@@ -1,7 +1,7 @@
 /*                     N M G _ T R I _ M C . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2021 United States Government as represented by
+ * Copyright (c) 1994-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 #define MAX_INTERSECTS 1024
 
@@ -95,7 +95,7 @@ int marching_cubes_use_midpoint = 0;
  * Grid definition matches SIGGRAPH 1987 p 164 (original presentation of technique)
  */
 
-HIDDEN int mc_tris[256][16] = {
+static int mc_tris[256][16] = {
     /* 00 */  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
     /* 01 */  {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
     /* 02 */  {0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -354,12 +354,12 @@ HIDDEN int mc_tris[256][16] = {
     /* ff */  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
 /* pairs of vertices associated with the edge. */
-HIDDEN int edge_vertex[12][2] = {
+static int edge_vertex[12][2] = {
     {0, 1}, {1, 2}, {2, 3}, {3, 0},
     {4, 5}, {5, 6}, {6, 7}, {7, 4},
     {0, 4}, {1, 5}, {2, 6}, {3, 7}};
 
-HIDDEN point_t point_offset[8] = {
+static point_t point_offset[8] = {
     {0, 0, 1}, {1, 0, 1}, {1, 0, 0}, {0, 0, 0},
     {0, 1, 1}, {1, 1, 1}, {1, 1, 0}, {0, 1, 0}};
 
@@ -417,8 +417,8 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	    return -1;
 	}
 
-	if (!bn_3pnts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) ||
-	    bn_3pnts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
+	if (!bg_3pnts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) ||
+	    bg_3pnts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
 	    vi+=3;
 	    continue;
 	}
@@ -458,7 +458,7 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 }
 
 
-HIDDEN fastf_t bin(fastf_t val, fastf_t step) {return step*floor(val/step);}
+static fastf_t bin(fastf_t val, fastf_t step) {return step*floor(val/step);}
 
 #define INHIT 1
 #define OUTHIT 2
@@ -469,7 +469,7 @@ struct whack {
 };
 
 
-HIDDEN int
+static int
 bangbang(struct application * a, struct partition *PartHeadp, struct seg * UNUSED(s))
 {
     struct partition *pp;
@@ -497,7 +497,7 @@ bangbang(struct application * a, struct partition *PartHeadp, struct seg * UNUSE
 }
 
 
-HIDDEN int
+static int
 missed(struct application *a)
 {
     struct whack *t = (struct whack *)a->a_uptr;
@@ -506,7 +506,7 @@ missed(struct application *a)
 }
 
 
-HIDDEN int
+static int
 bitdiff(unsigned char t, unsigned char a, unsigned char b)
 {
     unsigned char ma, mb, hb;
@@ -517,7 +517,7 @@ bitdiff(unsigned char t, unsigned char a, unsigned char b)
 }
 
 
-HIDDEN int
+static int
 rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, struct whack *muh, const fastf_t step, const struct bn_tol *tol)
 {
     struct whack *puh;
@@ -548,7 +548,7 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
 }
 
 
-HIDDEN int
+static int
 rt_nmg_mc_pew(struct shell *s, struct whack *primp[4], struct application *a, fastf_t x, fastf_t y, fastf_t b, fastf_t step, const struct bn_tol *tol)
 {
     int i, in[4] = { 0, 0, 0, 0}, count = 0;
@@ -668,7 +668,7 @@ struct mci_s {
 };
 
 
-HIDDEN void
+static void
 fire_row(int cpu, void * ptr)
 {
     struct mci_s *m = (struct mci_s *)ptr;

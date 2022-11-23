@@ -1,7 +1,7 @@
 /*                           T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2021 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 int
-torus(int entityno)
+torus(size_t entityno)
 {
     fastf_t rad = 0.0;
     fastf_t rad2 = 0.0;	/* radius of disc */

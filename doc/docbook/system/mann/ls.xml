@@ -86,7 +86,7 @@ command.  If the object argument is supplied, only those objects are listed.
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>ls shape*</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>ls shape*</userinput></term>
 	   <listitem>
 	     <para>Lists all objects with names beginning with "shape" (output is formatted).
 		     </para>
@@ -98,7 +98,7 @@ command.  If the object argument is supplied, only those objects are listed.
   <example><title>List all objects beginning with a particular name.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>ls -a shape*</userinput>
+      <prompt>mged&gt; </prompt><userinput>ls -a shape*</userinput>
     </para>
     <para>Lists all objects with names beginning with "shape."
     </para>
@@ -106,7 +106,7 @@ command.  If the object argument is supplied, only those objects are listed.
   <example><title>List all primitives beginning with a particular name.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>ls -p wheel*</userinput>
+      <prompt>mged&gt; </prompt><userinput>ls -p wheel*</userinput>
     </para>
     <para>Lists all primitives with names beginning with "wheel."
     </para>
@@ -114,7 +114,7 @@ command.  If the object argument is supplied, only those objects are listed.
  <example><title>List all regions beginning with a particular name.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>ls -r wheel*</userinput>
+      <prompt>mged&gt; </prompt><userinput>ls -r wheel*</userinput>
     </para>
     <para>Lists all regions with names beginning with "wheel."
     </para>
@@ -122,7 +122,7 @@ command.  If the object argument is supplied, only those objects are listed.
  <example><title>List all combinations beginning with a particular name.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>ls -c suspension*</userinput>
+      <prompt>mged&gt; </prompt><userinput>ls -c suspension*</userinput>
     </para>
     <para>Lists all combinations with names beginning with "suspension."
     </para>
@@ -130,7 +130,7 @@ command.  If the object argument is supplied, only those objects are listed.
   <example><title>List all regions having particular attributes.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>ls -A -o -r Comment{First comment} Comment{Second comment}</userinput>
+      <prompt>mged&gt; </prompt><userinput>ls -A -o -r Comment{First comment} Comment{Second comment}</userinput>
     </para>
     <para>Lists all regions that have a "Comment" attribute that is set to either "First comment" or "Second comment."
     </para>

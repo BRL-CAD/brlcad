@@ -1,7 +1,7 @@
 /*                    S O L I D _ R E P O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,9 +42,9 @@ ged_solid_report_core(struct ged *gedp, int argc, const char *argv[])
     int lvl = 0;
     static const char *usage = "lvl";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -57,17 +57,17 @@ ged_solid_report_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     lvl = atoi(argv[1]);
 
     if (lvl <= 3)
-	dl_print_schain(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, lvl, 0, gedp->ged_result_str);
+	dl_print_schain(gedp->ged_gdp->gd_headDisplay, gedp->dbip, lvl, 0, gedp->ged_result_str);
     else
-	dl_print_schain(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, 0, 1, gedp->ged_result_str);
+	dl_print_schain(gedp->ged_gdp->gd_headDisplay, gedp->dbip, 0, 1, gedp->ged_result_str);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

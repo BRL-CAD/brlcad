@@ -35,7 +35,7 @@
   <example><title>List all the top-level objects in the current database.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>tops</userinput>
+      <prompt>mged&gt; </prompt><userinput>tops</userinput>
     </para>
     <para>Lists all the top-level objects in the current database.
 

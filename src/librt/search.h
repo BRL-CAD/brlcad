@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ struct db_plan_t {
 
 
 typedef struct _option {
-    char *name;				/* option name */
+    const char *name;				/* option name */
     enum db_search_ntype token;			/* token type */
     int (*create)(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);	/* create function */
 #define O_NONE		0x01			/* no call required */

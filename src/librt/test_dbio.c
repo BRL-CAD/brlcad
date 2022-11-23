@@ -1,7 +1,7 @@
 /*                     T E S T _ D B I O . C
  * BRL-CAD
  *
- * Copyright (c) 2019-2021 United States Government as represented by
+ * Copyright (c) 2019-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -76,7 +76,7 @@ main(int ac, char *av[])
 	t = bu_gettime();
 	for (size_t i = 0; i < iterations; i++) {
 	    wdbfp = wdb_fopen(gfile);
-	    wdb_close(wdbfp);
+	    db_close(wdbfp->dbip);
 	}
 	wdbfp = wdb_fopen(gfile);
 	print_elapsed("wdb_fopen", bu_gettime() - t);
@@ -125,14 +125,7 @@ main(int ac, char *av[])
 	    print_elapsed("mk_lcomb", bu_gettime() - t);
 	}
     }
-
-    {
-	t = bu_gettime();
-	for (size_t i = 0; i < iterations; i++) {
-	    wdb_close(wdbfp);
-	}
-	print_elapsed("wdb_close", bu_gettime() - t);
-    }
+    db_close(wdbfp->dbip);
 
     {
 	t = bu_gettime();

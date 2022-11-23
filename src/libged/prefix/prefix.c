@@ -1,7 +1,7 @@
 /*                         P R E F I X . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,9 +76,9 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
     int len = NAMESIZE+1;
     static const char *usage = "new_prefix object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -91,19 +91,19 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_log("!!! ged_prefix_core: step 1\n");
 
     /* First, check validity, and change node names */
     for (i = 2; i < argc; i++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    argv[i] = "";
 	    continue;
 	}
 
-	if (db_version(gedp->ged_wdbp->dbip) < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
+	if (db_version(gedp->dbip) < 5 && (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
 	    bu_vls_printf(gedp->ged_result_str, "'%s%s' too long, must be %d characters or less.\n",
 			  argv[1], argv[i], NAMESIZE);
 
@@ -111,7 +111,7 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	if (db_version(gedp->ged_wdbp->dbip) < 5) {
+	if (db_version(gedp->dbip) < 5) {
 	    bu_strlcpy(tempstring_v4, argv[1], len);
 	    bu_strlcat(tempstring_v4, argv[i], len);
 	    tempstring = tempstring_v4;
@@ -122,28 +122,28 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
 	    tempstring = bu_vls_addr(&tempstring_v5);
 	}
 
-	if (db_lookup(gedp->ged_wdbp->dbip, tempstring, LOOKUP_QUIET) != RT_DIR_NULL) {
+	if (db_lookup(gedp->dbip, tempstring, LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: already exists\n", tempstring);
 	    argv[i] = "";
 	    continue;
 	}
 
 	/* Change object name in the directory. */
-	if (db_rename(gedp->ged_wdbp->dbip, dp, tempstring) < 0) {
+	if (db_rename(gedp->dbip, dp, tempstring) < 0) {
 	    bu_vls_free(&tempstring_v5);
 	    bu_vls_printf(gedp->ged_result_str, "error in rename to %s, aborting\n", tempstring);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* Change object name on disk. */
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	bu_log("XXXged_prefix_core: changed name from %s to %s\n", argv[i], tempstring);
     }
@@ -151,26 +151,26 @@ ged_prefix_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&tempstring_v5);
 
     /* Examine all COMB nodes */
-    FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
+    FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
 	if (!(dp->d_flags & RT_DIR_COMB))
 	    continue;
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	for (k = 2; k < argc; k++)
-	    db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, prefix_do,
+	    db_tree_funcleaf(gedp->dbip, comb, comb->tree, prefix_do,
 			     (void *)argv[1], (void *)argv[k], (void *)NULL, (void *)NULL);
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     } FOR_ALL_DIRECTORY_END;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -1,7 +1,7 @@
 /*                         S Y N C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,20 +35,20 @@
 int
 ged_sync_core(struct ged *gedp, int argc, const char *argv[])
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    db_sync(gedp->ged_wdbp->dbip);
+    db_sync(gedp->dbip);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

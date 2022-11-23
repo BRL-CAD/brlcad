@@ -1,7 +1,7 @@
 /*                      S H _ G A U S S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -126,10 +126,10 @@ struct bu_structparse gauss_parse_tab[] = {
 };
 
 
-HIDDEN int gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void gauss_print(register struct region *rp, void *dp);
-HIDDEN void gauss_free(void *cp);
+static int gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void gauss_print(register struct region *rp, void *dp);
+static void gauss_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -291,7 +291,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
-HIDDEN int
+static int
 gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
@@ -357,14 +357,14 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 }
 
 
-HIDDEN void
+static void
 gauss_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, gauss_print_tab, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 gauss_free(void *cp)
 {
     register struct gauss_specific *gauss_sp =

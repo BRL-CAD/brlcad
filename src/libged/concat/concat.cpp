@@ -1,7 +1,7 @@
 /*                         C O N C A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,10 +64,10 @@ struct ged_concat_data {
  */
 static std::string
 get_new_name(const char *name,
-		 struct db_i *dbip,
-		 std::unordered_map<std::string, std::string> &name_map,
-		 std::set<std::string> &used_names,
-		 struct ged_concat_data *cc_data)
+	     struct db_i *dbip,
+	     std::unordered_map<std::string, std::string> &name_map,
+	     std::set<std::string> &used_names,
+	     struct ged_concat_data *cc_data)
 {
     struct bu_vls new_name = BU_VLS_INIT_ZERO;
     char *aname = NULL;
@@ -139,9 +139,9 @@ get_new_name(const char *name,
 	/* make sure it fits for v4 */
 	if (db_version(cc_data->old_dbip) < 5) {
 	    if (bu_vls_strlen(&new_name) > _GED_V4_MAXNAME) {
-		bu_log("ERROR: generated new name [%s] is too long (%zu > %d)\n", bu_vls_addr(&new_name), bu_vls_strlen(&new_name), _GED_V4_MAXNAME);
+		bu_log("WARNING: generated new name [%s] is too long (%zu > %d).  Truncating.\n", bu_vls_addr(&new_name), bu_vls_strlen(&new_name), _GED_V4_MAXNAME);
 	    }
-	    return NULL;
+	    bu_vls_addr(&new_name)[_GED_V4_MAXNAME-1] = '\0';
 	}
 	aname = bu_vls_addr(&new_name);
 
@@ -172,10 +172,10 @@ get_new_name(const char *name,
 
 static void
 adjust_names(union tree *trp,
-		 struct db_i *dbip,
-		 std::unordered_map<std::string, std::string> &name_map,
-		 std::set<std::string> &used_names,
-		 struct ged_concat_data *cc_data)
+	     struct db_i *dbip,
+	     std::unordered_map<std::string, std::string> &name_map,
+	     std::set<std::string> &used_names,
+	     struct ged_concat_data *cc_data)
 {
     std::string new_name;
     std::string old_name;
@@ -188,7 +188,7 @@ adjust_names(union tree *trp,
 	case OP_DB_LEAF:
 	    old_name = std::string(trp->tr_l.tl_name);
 	    new_name = get_new_name(trp->tr_l.tl_name, dbip,
-					name_map, used_names, cc_data);
+				    name_map, used_names, cc_data);
 	    if (old_name != new_name) {
 		bu_free(trp->tr_l.tl_name, "leaf name");
 		trp->tr_l.tl_name = bu_strdup(new_name.c_str());
@@ -199,15 +199,15 @@ adjust_names(union tree *trp,
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    adjust_names(trp->tr_b.tb_left, dbip,
-			     name_map, used_names, cc_data);
+			 name_map, used_names, cc_data);
 	    adjust_names(trp->tr_b.tb_right, dbip,
-			     name_map, used_names, cc_data);
+			 name_map, used_names, cc_data);
 	    break;
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
 	    adjust_names(trp->tr_b.tb_left, dbip,
-			     name_map, used_names, cc_data);
+			 name_map, used_names, cc_data);
 	    break;
     }
 }
@@ -233,7 +233,7 @@ copy_object(struct ged *gedp,
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to get internal form of object (%s) - aborting!!!\n",
 		      input_dp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (ip.idb_major_type == DB5_MAJORTYPE_BRLCAD) {
@@ -261,7 +261,7 @@ copy_object(struct ged *gedp,
 		if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ) {
 		    /* This dsp references a database object, may need to change its name */
 		    new_name = get_new_name(bu_vls_addr(&dsp->dsp_name), curr_dbip,
-						name_map, used_names, cc_data);
+					    name_map, used_names, cc_data);
 		    if (new_name.length()) {
 			bu_vls_free(&dsp->dsp_name);
 			bu_vls_strcpy(&dsp->dsp_name, new_name.c_str());
@@ -280,7 +280,7 @@ copy_object(struct ged *gedp,
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
 		      new_name.c_str());
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* db_diradd doesn't produce the correct major type for binary objects -
@@ -291,10 +291,10 @@ copy_object(struct ged *gedp,
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
 		      new_name.c_str());
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -318,16 +318,16 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     int c;
     const char *commandName;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_init(&cc_data.affix);
@@ -355,10 +355,10 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 		cc_data.copy_mode |= AUTO_SUFFIX;
 		break;
 	    default: {
-		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
-		    bu_vls_free(&cc_data.affix);
-		    return GED_ERROR;
-		}
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
+		bu_vls_free(&cc_data.affix);
+		return BRLCAD_ERROR;
+	    }
 	}
     }
     argc -= bu_optind;
@@ -366,7 +366,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     oldfile = argv[0];
@@ -398,7 +398,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    bu_vls_free(&cc_data.affix);
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
     } else {
@@ -415,11 +415,11 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 
     }
 
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	if (bu_vls_strlen(&cc_data.affix) > _GED_V4_MAXNAME-1) {
-	    bu_log("ERROR: affix [%s] is too long for v%d\n", bu_vls_addr(&cc_data.affix), db_version(gedp->ged_wdbp->dbip));
+	    bu_log("ERROR: affix [%s] is too long for v%d\n", bu_vls_addr(&cc_data.affix), db_version(gedp->dbip));
 	    bu_vls_free(&cc_data.affix);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -428,20 +428,20 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&cc_data.affix);
 	perror(oldfile);
 	bu_vls_printf(gedp->ged_result_str, "%s: Can't open geometry database file %s", commandName, oldfile);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (db_version(newdbp) > 4 && db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(newdbp) > 4 && db_version(gedp->dbip) < 5) {
 	bu_vls_free(&cc_data.affix);
 	bu_vls_printf(gedp->ged_result_str, "%s: databases are incompatible, use dbupgrade on %s first",
-		      commandName, gedp->ged_wdbp->dbip->dbi_filename);
-	return GED_ERROR;
+		      commandName, gedp->dbip->dbi_filename);
+	return BRLCAD_ERROR;
     }
 
     db_dirbuild(newdbp);
 
     cc_data.new_dbip = newdbp;
-    cc_data.old_dbip = gedp->ged_wdbp->dbip;
+    cc_data.old_dbip = gedp->dbip;
 
     /* visit each directory pointer in the input database */
     if (importUnits || importTitle || importColorTable) {
@@ -452,12 +452,12 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	    if (saveGlobalAttrs) {
 		if (db5_get_attributes(newdbp, &g_avs, dp)) {
 		    bu_vls_printf(gedp->ged_result_str, "%s: Can't get global attributes from %s", commandName, oldfile);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    }
 	    continue;
 	}
-	copy_object(gedp, dp, newdbp, gedp->ged_wdbp->dbip, name_map, used_names, &cc_data);
+	copy_object(gedp, dp, newdbp, gedp->dbip, name_map, used_names, &cc_data);
     } FOR_ALL_DIRECTORY_END;
 
     bu_vls_free(&cc_data.affix);
@@ -473,7 +473,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_free(colorTab, "colorTab");
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "%s: no region color table "
-		    "was found in %s to import\n", commandName, oldfile);
+			  "was found in %s to import\n", commandName, oldfile);
 	}
     } else if (saveGlobalAttrs) {
 	bu_avs_remove(&g_avs, "regionid_colortable");
@@ -481,15 +481,15 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 
     if (importTitle) {
 	if ((cp = bu_avs_get(&g_avs, "title")) != NULL) {
-	    char *oldTitle = gedp->ged_wdbp->dbip->dbi_title;
-	    gedp->ged_wdbp->dbip->dbi_title = bu_strdup(cp);
+	    char *oldTitle = gedp->dbip->dbi_title;
+	    gedp->dbip->dbi_title = bu_strdup(cp);
 	    if (oldTitle) {
 		bu_free(oldTitle, "old title");
 	    }
 	} else {
 	    bu_vls_printf(gedp->ged_result_str,
-		    "%s: no title was found in %s to import\n", commandName,
-		    oldfile);
+			  "%s: no title was found in %s to import\n", commandName,
+			  oldfile);
 	}
     } else if (saveGlobalAttrs) {
 	bu_avs_remove(&g_avs, "title");
@@ -503,59 +503,59 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 		       oldfile, DB5_GLOBAL_OBJECT_NAME, cp);
 		bu_avs_remove(&g_avs, "units");
 	    } else {
-		gedp->ged_wdbp->dbip->dbi_local2base = dd;
-		gedp->ged_wdbp->dbip->dbi_base2local = 1 / dd;
+		gedp->dbip->dbi_local2base = dd;
+		gedp->dbip->dbi_base2local = 1 / dd;
 	    }
 	} else {
 	    bu_vls_printf(gedp->ged_result_str,
-		    "%s: no units were found in %s to import\n", commandName,
-		    oldfile);
+			  "%s: no units were found in %s to import\n", commandName,
+			  oldfile);
 	}
     } else if (saveGlobalAttrs) {
 	bu_avs_remove(&g_avs, "units");
     }
 
     if (saveGlobalAttrs) {
-	dp = db_lookup(gedp->ged_wdbp->dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY);
-	db5_update_attributes(dp, &g_avs, gedp->ged_wdbp->dbip);
+	dp = db_lookup(gedp->dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY);
+	db5_update_attributes(dp, &g_avs, gedp->dbip);
     }
 
-    db_sync(gedp->ged_wdbp->dbip);	/* force changes to disk */
+    db_sync(gedp->dbip);	/* force changes to disk */
 
     /* Update references. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl concat_cmd_impl = { "concat", ged_concat_core, GED_CMD_DEFAULT };
-    const struct ged_cmd concat_cmd = { &concat_cmd_impl };
+struct ged_cmd_impl concat_cmd_impl = { "concat", ged_concat_core, GED_CMD_DEFAULT };
+const struct ged_cmd concat_cmd = { &concat_cmd_impl };
 
-    struct ged_cmd_impl dbconcat_cmd_impl = { "dbconcat", ged_concat_core, GED_CMD_DEFAULT };
-    const struct ged_cmd dbconcat_cmd = { &dbconcat_cmd_impl };
+struct ged_cmd_impl dbconcat_cmd_impl = { "dbconcat", ged_concat_core, GED_CMD_DEFAULT };
+const struct ged_cmd dbconcat_cmd = { &dbconcat_cmd_impl };
 
 
-    const struct ged_cmd *concat_cmds[] = { &concat_cmd,  &dbconcat_cmd, NULL };
+const struct ged_cmd *concat_cmds[] = { &concat_cmd,  &dbconcat_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  concat_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  concat_cmds, 2 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

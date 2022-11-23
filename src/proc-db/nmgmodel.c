@@ -1,7 +1,7 @@
 /*                      N M G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -225,7 +225,7 @@ make_3manifold_bits(struct bn_tol *tol)
     /* this face isn't strictly convex, so we have to make the plane
      * equation the old-fashioned way.
      */
-    bn_make_plane_3pnts(plane,
+    bg_make_plane_3pnts(plane,
 		     vertl[7]->vg_p->coord,
 		     vertl[17]->vg_p->coord,
 		     vertl[12]->vg_p->coord,
@@ -567,7 +567,7 @@ main(int ac, char *av[])
 	/* build a database region mentioning the solid */
 	mk_comb1(fdmodel, "r.NMG", "s.NMG", 1);
 
-	wdb_close(fdmodel);
+	db_close(fdmodel->dbip);
     }
 
     bu_log(" done.\n");

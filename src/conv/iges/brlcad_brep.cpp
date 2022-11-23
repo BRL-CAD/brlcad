@@ -1,7 +1,7 @@
 /*                 B R L C A D _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ BRLCADBrepHandler::write(const string& filename) {
     mk_brep(outfp, sol.c_str(), (void *)_brep);
     unsigned char rgb[] = {200, 180, 180};
     mk_region1(outfp, reg.c_str(), sol.c_str(), "plastic", "", rgb);
-    wdb_close(outfp);
+    db_close(outfp->dbip);
 }
 
 

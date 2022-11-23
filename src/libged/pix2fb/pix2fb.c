@@ -1,7 +1,7 @@
 /*                        P I X 2 F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2021 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -176,20 +176,25 @@ ged_pix2fb_core(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
-    if (!gedp->ged_dmp) {
-	bu_vls_printf(gedp->ged_result_str, "no display manager currently active");
-	return GED_ERROR;
+    if (!gedp->ged_gvp) {
+	bu_vls_printf(gedp->ged_result_str, ": no current view set\n");
+	return BRLCAD_ERROR;
     }
 
-    struct dm *dmp = (struct dm *)gedp->ged_dmp;
+    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
+    if (!dmp) {
+	bu_vls_printf(gedp->ged_result_str, ": no current display manager set\n");
+	return BRLCAD_ERROR;
+    }
+
     struct fb *fbp = dm_get_fb(dmp);
 
     if (!fbp) {
 	bu_vls_printf(gedp->ged_result_str, "display manager does not have a framebuffer");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
@@ -226,10 +231,10 @@ ged_pix2fb_core(struct ged *gedp, int argc, const char *argv[])
 	(void)dm_draw_begin(dmp);
 	fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
 	(void)dm_draw_end(dmp);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
-    return GED_ERROR;
+    return BRLCAD_ERROR;
 }
 
 

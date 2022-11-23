@@ -174,7 +174,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>make shapea sph</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>make shapea sph</userinput></term>
 	   <listitem>
 	     <para>Creates a sphere named <emphasis>shapea</emphasis>.
 	      </para>
@@ -185,7 +185,7 @@
   <example><title>Generate a list of shape types handled by <command>make</command>.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>make -t</userinput>
+      <prompt>mged&gt; </prompt><userinput>make -t</userinput>
     </para>
     <para>
        Lists the shape types handled by <command>make</command>.

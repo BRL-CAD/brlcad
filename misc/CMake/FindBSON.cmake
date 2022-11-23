@@ -53,10 +53,7 @@ else()
   )
 
   mark_as_advanced(BSON_LIBRARY)
-
-  find_package (Threads REQUIRED)
-
-  set(BSON_LIBRARIES ${BSON_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+  set(BSON_LIBRARIES ${BSON_LIBRARY})
 
 endif()
 
@@ -77,6 +74,7 @@ include(FindPackageHandleStandardArgs)
 if (BSON_VERSION)
    find_package_handle_standard_args(BSON
     REQUIRED_VARS
+      BSON_LIBRARY
       BSON_LIBRARIES
       BSON_INCLUDE_DIR
     VERSION_VAR

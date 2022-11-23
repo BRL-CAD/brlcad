@@ -1,7 +1,7 @@
 /*                         P A T H L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,8 +67,8 @@ ged_pathlist_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "name";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -81,7 +81,7 @@ ged_pathlist_core(struct ged *gedp, int argc, const char *argv[])
 
     if (3 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     pathListNoLeaf = 0;
@@ -94,14 +94,15 @@ ged_pathlist_core(struct ged *gedp, int argc, const char *argv[])
 	--argc;
     }
 
-    if (db_walk_tree(gedp->ged_wdbp->dbip, argc-1, (const char **)argv+1, 1,
-		     &gedp->ged_wdbp->wdb_initial_tree_state,
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (db_walk_tree(gedp->dbip, argc-1, (const char **)argv+1, 1,
+		     &wdbp->wdb_initial_tree_state,
 		     0, 0, pathlist_leaf_func, (void *)gedp) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "ged_pathlist_core: db_walk_tree() error");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

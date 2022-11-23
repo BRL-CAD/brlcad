@@ -1,7 +1,7 @@
 /*                         C E N T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,9 +43,9 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
     point_t center;
     static const char *usage = "[-v] | [x y z]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -53,28 +53,28 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
     /* get view center */
     if (argc == 1) {
 	MAT_DELTAS_GET_NEG(center, gedp->ged_gvp->gv_center);
-	VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(center, center, gedp->dbip->dbi_base2local);
 	bn_encode_vect(gedp->ged_result_str, center, 1);
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc == 2 && BU_STR_EQUAL(argv[1], "-v")) {
 	std::ostringstream ss;
 	MAT_DELTAS_GET_NEG(center, gedp->ged_gvp->gv_center);
-	VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(center, center, gedp->dbip->dbi_base2local);
 	ss << std::fixed << std::setprecision(std::numeric_limits<fastf_t>::max_digits10) << center[X];
 	ss << " ";
 	ss << std::fixed << std::setprecision(std::numeric_limits<fastf_t>::max_digits10) << center[Y];
 	ss << " ";
 	ss << std::fixed << std::setprecision(std::numeric_limits<fastf_t>::max_digits10) << center[Z];
 	bu_vls_printf(gedp->ged_result_str, "%s", ss.str().c_str());
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (argc != 2 && argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* set view center */
@@ -119,44 +119,44 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	if (!success) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     } else {
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_center: bad X value - %s\n", argv[1]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_center: bad Y value - %s\n", argv[2]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "ged_center: bad Z value - %s\n", argv[3]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* convert from double to fastf_t */
 	VMOVE(center, scan);
     }
 
-    VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(center, center, gedp->dbip->dbi_local2base);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

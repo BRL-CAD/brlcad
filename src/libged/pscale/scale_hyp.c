@@ -1,7 +1,7 @@
 /*                         S C A L E _ H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ _ged_scale_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attrib
 		    break;
 		default:
 		    bu_vls_printf(gedp->ged_result_str, "bad hyp attribute - %s", attribute);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 	    }
 	    break;
 	case 'a':
@@ -93,10 +93,10 @@ _ged_scale_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attrib
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad hyp attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

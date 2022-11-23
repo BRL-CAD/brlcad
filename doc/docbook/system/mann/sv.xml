@@ -39,7 +39,7 @@
   <example><title>Keep the view center at the center of the screen.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>sv 0 0 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>sv 0 0 0</userinput>
     </para>
     <para>The view is unchanged.
 
@@ -49,7 +49,7 @@
 <example><title>Move the view center half way between the current view center and the right side of the view screen.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>sv 1024 0 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>sv 1024 0 0</userinput>
     </para>
     <para>The view center is moved half way between the current view center and the right side of the view screen.
      </para>

@@ -1,7 +1,7 @@
 /*                     P I X S H R I N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ UCHAR *read_image(int scanlen, int Width, int Height, unsigned char *buffer)
     int count = 0;
 
     if (!buffer &&
-	(buffer=(UCHAR *)malloc(scanlen * Height)) == (UCHAR *)NULL) {
+	(buffer=(UCHAR *)calloc(scanlen, Height)) == (UCHAR *)NULL) {
 	fprintf(stderr, "%s: cannot allocate input buffer\n",
 		progname);
 	bu_exit (-1, NULL);

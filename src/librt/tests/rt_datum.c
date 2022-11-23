@@ -1,7 +1,7 @@
 /*                        R T _ D A T U M . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2021 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,6 +86,7 @@ add_datum(struct db_i *dbip, const char *name, point_t *pnt, vect_t *dir, double
     struct rt_datum_internal *datum;
     RT_DB_INTERNAL_INIT(&intern);
     intern.idb_meth = &OBJ[ID_DATUM];
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_DATUM;
     BU_ALLOC(intern.idb_ptr, struct rt_datum_internal);
     datum = (struct rt_datum_internal *)intern.idb_ptr;
@@ -342,21 +343,12 @@ main(int UNUSED(argc), char *argv[])
     }
 
     /* Manually turn the temp file into a .g */
-    if (db5_fwrite_ident(fp, "librt datum test file", 1.0) < 0) {
-	bu_log("%s error: failed to prepare .g file %s\n", argv[0], rt_tmpfile);
-	return 1;
-    }
-    (void)fclose(fp);
-    if ((dbip = db_open(rt_tmpfile, DB_OPEN_READWRITE)) == DBI_NULL) {
+    dbip = db_setup(fp, rt_tmpfile, 5);
+    if (dbip == DBI_NULL) {
 	bu_log("%s error: db_open of %s failed\n", argv[0], rt_tmpfile);
 	return 1;
     }
-    if (db_dirbuild(dbip) < 0) {
-	bu_log("%s error: db_dirbuild of %s failed\n", argv[0], rt_tmpfile);
-	return 1;
-    }
     RT_CK_DBI(dbip);
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* Control RCC shape */
     {
@@ -489,13 +481,11 @@ main(int UNUSED(argc), char *argv[])
     report_instance_params(dbip, "comb_2.c", "rcc_1.s");
     report_instance_params(dbip, "comb_2.c", "datum_plane.s");
 
-
-
-
     /*bu_snooze(BU_SEC2USEC(1000));*/
 
     db_close(dbip);
-    /*bu_file_delete(tmpfile);*/
+    bu_file_delete(rt_tmpfile);
+
     return 0;
 }
 

@@ -1,7 +1,7 @@
 /*                    P O L Y C L I P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2021 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,11 +30,11 @@
 
 #include "bu/sort.h"
 #include "bg/polygon.h"
-#include "dm/bview_util.h"
+#include "bv/util.h"
 #include "ged.h"
 
 int
-ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
+ged_export_polygon(struct ged *gedp, bv_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
 {
     size_t j, k, n;
     size_t num_verts = 0;
@@ -46,18 +46,18 @@ ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t pol
     point_t vorigin;
     mat_t invRot;
 
-    GED_CHECK_EXISTS(gedp, sname, LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, sname, LOOKUP_QUIET, BRLCAD_ERROR);
     RT_DB_INTERNAL_INIT(&internal);
 
     if (polygon_i >= gdpsp->gdps_polygons.num_polygons ||
 	gdpsp->gdps_polygons.polygon[polygon_i].num_contours < 1)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     for (j = 0; j < gdpsp->gdps_polygons.polygon[polygon_i].num_contours; ++j)
 	num_verts += gdpsp->gdps_polygons.polygon[polygon_i].contour[j].num_points;
 
     if (num_verts < 3)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_SKETCH;
@@ -124,10 +124,10 @@ ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t pol
     }
 
 
-    GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, sname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -158,8 +158,10 @@ ged_import_polygon(struct ged *gedp, const char *sname)
     struct contour_node *curr_cnode;
     struct bg_polygon *gpp;
 
-    if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, gedp->ged_wdbp) & GED_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, wdbp) & BRLCAD_ERROR) {
 	return (struct bg_polygon *)0;
+    }
 
     sketch_ip = (rt_sketch_internal *)intern.idb_ptr;
     if (sketch_ip->vert_count < 3 || sketch_ip->curve.count < 1) {
@@ -288,13 +290,14 @@ typedef struct {
 int
 ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polygon *polyB)
 {
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
-    return bg_polygons_overlap(polyA, polyB, gedp->ged_gvp->gv_model2view, &gedp->ged_wdbp->wdb_tol, gedp->ged_gvp->gv_scale);
+    return bg_polygons_overlap(polyA, polyB, gedp->ged_gvp->gv_model2view, &wdbp->wdb_tol, gedp->ged_gvp->gv_scale);
 }
 
-HIDDEN int
+static int
 sort_by_X(const void *p1, const void *p2, void *UNUSED(arg))
 {
     point2d_t *pt1 = (point2d_t *)p1;
@@ -331,6 +334,7 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
     int tweakCount;
     static size_t isectSize = 8;
     static int maxTweaks = 10;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -373,8 +377,8 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
 	pt_2d[Y] = vy;
 
     try_y_tweak:
-        ecount = 0;
-        icount = 0;
+	ecount = 0;
+	icount = 0;
 	for (i = 0; i < poly_2d.p_num_contours; ++i) {
 	    for (begin = 0; begin < poly_2d.p_contour[i].pc_num_points; ++begin) {
 		vect2d_t distvec;
@@ -389,10 +393,10 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
 
 		V2SUB2(pdir, poly_2d.p_contour[i].pc_point[end], poly_2d.p_contour[i].pc_point[begin]);
 
-		if ((ret = bn_isect_line2_lseg2(distvec,
+		if ((ret = bg_isect_line2_lseg2(distvec,
 						pt_2d, vfilldir,
 						poly_2d.p_contour[i].pc_point[begin], pdir,
-						&gedp->ged_wdbp->wdb_tol)) >= 0) {
+					       &wdbp->wdb_tol)) >= 0) {
 		    /* We have an intersection */
 		    V2JOIN1(pt, poly_2d.p_contour[i].pc_point[begin], distvec[1], pdir);
 
@@ -461,8 +465,8 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
 	pt_2d[X] = vx;
 
     try_x_tweak:
-        ecount = 0;
-        icount = 0;
+	ecount = 0;
+	icount = 0;
 	for (i = 0; i < poly_2d.p_num_contours; ++i) {
 	    for (begin = 0; begin < poly_2d.p_contour[i].pc_num_points; ++begin) {
 		vect2d_t distvec;
@@ -478,10 +482,10 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
 
 		V2SUB2(pdir, poly_2d.p_contour[i].pc_point[end], poly_2d.p_contour[i].pc_point[begin]);
 
-		if ((ret = bn_isect_line2_lseg2(distvec,
+		if ((ret = bg_isect_line2_lseg2(distvec,
 						pt_2d, vfilldir,
 						poly_2d.p_contour[i].pc_point[begin], pdir,
-						&gedp->ged_wdbp->wdb_tol)) >= 0) {
+					       &wdbp->wdb_tol)) >= 0) {
 		    /* We have an intersection */
 		    V2JOIN1(pt, poly_2d.p_contour[i].pc_point[begin], distvec[1], pdir);
 

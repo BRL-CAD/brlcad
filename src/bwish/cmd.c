@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,12 +73,12 @@ struct bu_cmdhist_obj {
 /* defined in tcl.c */
 extern void Cad_Exit(int status);
 
-HIDDEN struct bu_cmdhist_list currHist;
+static struct bu_cmdhist_list currHist;
 
 
 /***************************** BWISH/BTCLSH COMMANDS *****************************/
 
-HIDDEN int
+static int
 cmd_quit(void *UNUSED(clientData),
 	 int argc,
 	 const char **argv)
@@ -99,8 +99,8 @@ cmd_quit(void *UNUSED(clientData),
 
 /***************************** BWISH/BTCLSH COMMAND HISTORY *****************************/
 
-HIDDEN int historyInitialized=0;
-HIDDEN void
+static int historyInitialized=0;
+static void
 historyInit(void)
 {
     if (currHist.capacity == 0) {
@@ -154,7 +154,7 @@ history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *
 }
 
 
-HIDDEN int
+static int
 timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 {
     if (finish->tv_sec == 0 && finish->tv_usec == 0)

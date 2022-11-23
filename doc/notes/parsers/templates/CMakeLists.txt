@@ -20,3 +20,10 @@ set (LOCAL_INCLUDE_DIRS
 
 BRLCAD_LIB_INCLUDE_DIRS(lib${READER} LOCAL_INCLUDE_DIRS)
 BRLCAD_ADDLIB(lib${READER} "${SOURCES}" "librt;libbn;libbu")
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

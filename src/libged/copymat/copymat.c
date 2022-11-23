@@ -1,7 +1,7 @@
 /*                         C O P Y M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,9 +49,9 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     union tree *tp;
     static const char *usage = "a/b c/d";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -64,7 +64,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /*
@@ -75,15 +75,17 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 	    || (strchr(++child, '/') != NULL))
 	{
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad arc: '%s'\n", argv[0], argv[i]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
     memset(&anp, 0, sizeof(struct animate));
     anp.magic = ANIMATE_MAGIC;
 
-    ts = gedp->ged_wdbp->wdb_initial_tree_state;	/* struct copy */
-    ts.ts_dbip = gedp->ged_wdbp->dbip;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    ts = wdbp->wdb_initial_tree_state;	/* struct copy */
+
+    ts.ts_dbip = gedp->dbip;
     ts.ts_resp = &rt_uniresource;
     MAT_IDN(ts.ts_mat);
     db_full_path_init(&anp.an_path);
@@ -91,14 +93,14 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 	|| db_follow_path_for_state(&ts, &(anp.an_path), argv[1], LOOKUP_NOISY) < 0)
     {
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot follow path for arc: '%s'\n", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_vls_strcat(&pvls, argv[2]);
     parent = bu_vls_addr(&pvls);
     sep = strchr(parent, '/') - parent;
     bu_vls_trunc(&pvls, sep);
-    switch (rt_db_lookup_internal(gedp->ged_wdbp->dbip, parent, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)) {
+    switch (rt_db_lookup_internal(gedp->dbip, parent, &dp, &intern, LOOKUP_NOISY, &rt_uniresource)) {
 	case ID_COMBINATION:
 	    if (dp->d_flags & RT_DIR_COMB)
 		break;
@@ -113,7 +115,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 	    /* fall through */
 	case ID_NULL:
 	    bu_vls_free(&pvls);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
     comb = (struct rt_comb_internal *) intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -122,7 +124,7 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
     if (tp == TREE_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: unable to find instance of '%s' in combination '%s'\n",
 		      argv[0], child, dp->d_namep);
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
 	goto wrapup;
     }
 
@@ -139,18 +141,18 @@ ged_copymat_core(struct ged *gedp, int argc, const char *argv[])
 	tp->tr_l.tl_mat = (matp_t) 0;
     }
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
 	goto wrapup;
     }
 
-    status = GED_OK;
+    status = BRLCAD_OK;
 
 wrapup:
 
     bu_vls_free(&pvls);
-    if (status & GED_ERROR)
+    if (status & BRLCAD_ERROR)
 	rt_db_free_internal(&intern);
     return status;
 }

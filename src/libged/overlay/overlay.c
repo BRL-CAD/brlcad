@@ -1,7 +1,7 @@
 /*                         O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 
 #include "bu/path.h"
 #include "bu/mime.h"
+#include "bv/vlist.h"
 #include "icv.h"
 #include "dm.h"
 
@@ -65,7 +66,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     int height = 0;  /* may need to specify for some formats (such as PIX) */
     int inverse = 0;
     int print_help = 0;
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     int scr_xoff=0;
     int scr_yoff=0;
     int square = 0; /* may need to specify for some formats (such as PIX) */
@@ -75,43 +76,51 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
     int zoom = 0;
     struct dm *dmp = NULL;
     struct fb *fbp = NULL;
-    const char *name = "_PLOT_OVERLAY_";
+    struct bu_vls vname = BU_VLS_INIT_ZERO;
 
     static char usage[] = "Usage: overlay [options] file\n";
 
-    struct bu_opt_desc d[14];
+    struct bu_opt_desc d[15];
     BU_OPT(d[0],  "h", "help",           "",     NULL,            &print_help,       "Print help and exit");
     BU_OPT(d[1],  "F", "fb",             "",     NULL,            &write_fb,         "Overlay image on framebuffer");
     BU_OPT(d[2],  "s", "size",           "#",    &bu_opt_fastf_t, &size,             "[Plot] Character size for plot drawing");
-    BU_OPT(d[3],  "i", "inverse",        "",     NULL,            &inverse,          "[Fb]   Draw upside-down");
-    BU_OPT(d[4],  "c", "clear",          "",     NULL,            &clear,            "[Fb]   Clear framebuffer before drawing");
-    BU_OPT(d[5],  "v", "verbose",        "",     NULL,            &verbose,          "[Fb]   Verbose reporting");
-    BU_OPT(d[6],  "z", "zoom",           "",     NULL,            &zoom,             "[Fb]   Zoom image to fill screen");
-    BU_OPT(d[7],  "X", "scr_xoff",       "#",    &bu_opt_int,     &scr_xoff,         "[Fb]   X drawing offset in framebuffer");
-    BU_OPT(d[8],  "Y", "scr_yoff",       "#",    &bu_opt_int,     &scr_yoff,         "[Fb]   Y drawing offset in framebuffer");
-    BU_OPT(d[9],  "w", "width",          "#",    &bu_opt_int,     &width,            "[Fb]   image width");
-    BU_OPT(d[10], "n", "height",         "#",    &bu_opt_int,     &height,           "[Fb]   image height");
-    BU_OPT(d[11], "S", "square",         "#",    &bu_opt_int,     &square,           "[Fb]   image width/height (for square image)");
-    BU_OPT(d[12], "",  "format",         "fmt",  &image_mime,     &type,             "[Fb]   image file format");
-    BU_OPT_NULL(d[13]);
+    BU_OPT(d[3],  "N", "view-obj",       "name", &bu_opt_vls,     &vname,            "[Plot] Name of view object");
+    BU_OPT(d[4],  "i", "inverse",        "",     NULL,            &inverse,          "[Fb]   Draw upside-down");
+    BU_OPT(d[5],  "c", "clear",          "",     NULL,            &clear,            "[Fb]   Clear framebuffer before drawing");
+    BU_OPT(d[6],  "v", "verbose",        "",     NULL,            &verbose,          "[Fb]   Verbose reporting");
+    BU_OPT(d[7],  "z", "zoom",           "",     NULL,            &zoom,             "[Fb]   Zoom image to fill screen");
+    BU_OPT(d[8],  "X", "scr_xoff",       "#",    &bu_opt_int,     &scr_xoff,         "[Fb]   X drawing offset in framebuffer");
+    BU_OPT(d[9],  "Y", "scr_yoff",       "#",    &bu_opt_int,     &scr_yoff,         "[Fb]   Y drawing offset in framebuffer");
+    BU_OPT(d[10],  "w", "width",          "#",    &bu_opt_int,     &width,            "[Fb]   image width");
+    BU_OPT(d[11], "n", "height",         "#",    &bu_opt_int,     &height,           "[Fb]   image height");
+    BU_OPT(d[12], "S", "square",         "#",    &bu_opt_int,     &square,           "[Fb]   image width/height (for square image)");
+    BU_OPT(d[13], "",  "format",         "fmt",  &image_mime,     &type,             "[Fb]   image file format");
+    BU_OPT_NULL(d[14]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (!gedp->ged_dmp) {
-	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active");
-	return GED_ERROR;
+    if (!gedp->ged_gvp) {
+	bu_vls_printf(gedp->ged_result_str, ": no current view set\n");
+	bu_vls_free(&vname);
+	return BRLCAD_ERROR;
     }
 
-    dmp = (struct dm *)gedp->ged_dmp;
+    dmp = (struct dm *)gedp->ged_gvp->dmp;
+    if (!dmp) {
+	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active");
+	bu_vls_free(&vname);
+	return BRLCAD_ERROR;
+    }
 
     /* must be wanting help */
     if (argc == 1) {
 	_ged_cmd_help(gedp, usage, d);
+	bu_vls_free(&vname);
 	return GED_HELP;
     }
 
@@ -121,13 +130,15 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
+	bu_vls_free(&vname);
 	return GED_HELP;
     }
 
     if (!write_fb && NEAR_ZERO(size, VUNITIZE_TOL)) {
 	if (!gedp->ged_gvp) {
 	    bu_vls_printf(gedp->ged_result_str, ": no character size specified, and could not determine default value");
-	    return GED_ERROR;
+	    bu_vls_free(&vname);
+	    return BRLCAD_ERROR;
 	}
 	size = gedp->ged_gvp->gv_scale * 0.01;
     }
@@ -138,28 +149,44 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	fbp = dm_get_fb(dmp);
 	if (!fbp) {
 	    bu_vls_printf(gedp->ged_result_str, ": display manager does not have a framebuffer");
-	    return GED_ERROR;
+	    bu_vls_free(&vname);
+	    return BRLCAD_ERROR;
 	}
     }
 
     /* must be wanting help */
     if (!argc) {
 	_ged_cmd_help(gedp, usage, d);
+	bu_vls_free(&vname);
 	return GED_HELP;
     }
     /* check arg cnt */
     if (argc > 2) {
 	_ged_cmd_help(gedp, usage, d);
+	bu_vls_free(&vname);
 	return GED_HELP;
     }
 
     /* Second arg, if present, is view obj name */
     if (argc == 2) {
-	name = argv[1];
+	bu_vls_sprintf(&vname, "%s", argv[1]);
+    } else {
+	if (!bu_vls_strlen(&vname))
+	    bu_vls_sprintf(&vname, "_PLOT_OVERLAY_");
     }
 
     if (!write_fb) {
-	struct bn_vlblock*vbp;
+	struct bv_vlblock*vbp;
+
+	struct bu_vls nroot = BU_VLS_INIT_ZERO;
+	if (!BU_STR_EQUAL(bu_vls_cstr(&vname), "_PLOT_OVERLAY_")) {
+	    bu_vls_sprintf(&nroot, "overlay::%s", bu_vls_cstr(&vname));
+	} else {
+	    bu_path_component(&nroot, argv[0], BU_PATH_BASENAME_EXTLESS);
+	    bu_vls_simplify(&nroot, NULL, NULL, NULL);
+	    bu_vls_prepend(&nroot, "overlay::");
+	}
+
 	FILE *fp = fopen(argv[0], "rb");
 
 	/* If we don't have an exact filename match, see if we got a pattern -
@@ -170,45 +197,62 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    size_t count = bu_file_list(".", argv[0], &files);
 	    if (count <= 0) {
 		bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", argv[1]);
-		return GED_ERROR;
+		bu_vls_free(&nroot);
+		bu_vls_free(&vname);
+		return BRLCAD_ERROR;
 	    }
-	    vbp = rt_vlblock_init();
+	    vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
 	    for (size_t i = 0; i < count; i++) {
 		if ((fp = fopen(files[i], "rb")) == NULL) {
 		    bu_vls_printf(gedp->ged_result_str, "ged_overlay_core: failed to open file - %s\n", files[i]);
 		    bu_argv_free(count, files);
-		    return GED_ERROR;
+		    bu_vls_free(&nroot);
+		    bu_vls_free(&vname);
+		    return BRLCAD_ERROR;
 		}
 		ret = rt_uplot_to_vlist(vbp, fp, size, gedp->ged_gdp->gd_uplotOutputMode);
 		fclose(fp);
 		if (ret < 0) {
-		    bn_vlblock_free(vbp);
+		    bv_vlblock_free(vbp);
 		    bu_argv_free(count, files);
-		    return GED_ERROR;
+		    bu_vls_free(&nroot);
+		    bu_vls_free(&vname);
+		    return BRLCAD_ERROR;
 		}
 	    }
 	    bu_argv_free(count, files);
-	    ret = 0;
 	} else {
-	    vbp = rt_vlblock_init();
+	    vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
 	    ret = rt_uplot_to_vlist(vbp, fp, size, gedp->ged_gdp->gd_uplotOutputMode);
 	    fclose(fp);
 	    if (ret < 0) {
-		bn_vlblock_free(vbp);
-		return GED_ERROR;
+		bv_vlblock_free(vbp);
+		bu_vls_free(&nroot);
+		bu_vls_free(&vname);
+		return BRLCAD_ERROR;
 	    }
 	}
 
-	_ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
-	bn_vlblock_free(vbp);
+	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+	if (BU_STR_EQUAL(nview, "1")) {
+	    struct bview *v = gedp->ged_gvp;
+	    bv_vlblock_obj(vbp, v, bu_vls_cstr(&nroot));
+	} else {
+	    _ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_cstr(&vname), 0);
+	}
 
-	return GED_OK;
+	bv_vlblock_free(vbp);
+	bu_vls_free(&nroot);
+	bu_vls_free(&vname);
+
+	return BRLCAD_OK;
 
     } else {
 
 	if (!bu_file_exists(argv[0], NULL)) {
 	    bu_vls_printf(gedp->ged_result_str, ": file %s not found", argv[0]);
-	    return GED_ERROR;
+	    bu_vls_free(&vname);
+	    return BRLCAD_ERROR;
 	}
 
 	const char *file_name = argv[0];
@@ -222,7 +266,8 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "no input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
 		bu_vls_free(&c);
-		return GED_ERROR;
+		bu_vls_free(&vname);
+		return BRLCAD_ERROR;
 	    }
 	    bu_vls_free(&c);
 	}
@@ -239,12 +284,14 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	    struct stat sbuf;
 	    if (stat(file_name, &sbuf) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "unable to stat input file");
-		return GED_ERROR;
+		bu_vls_free(&vname);
+		return BRLCAD_ERROR;
 	    }
 	    size_t lwidth, lheight;
 	    if (!icv_image_size(NULL, 0, (size_t)sbuf.st_size, type, &lwidth, &lheight)) {
 		bu_vls_printf(gedp->ged_result_str, "input image type does not have dimension information encoded, and libicv was not able to deduce a size.  Please specify image width in pixels with the \"-w\" option and image height in pixels with the \"-n\" option.\n");
-		return GED_ERROR;
+		bu_vls_free(&vname);
+		return BRLCAD_ERROR;
 	    } else {
 		width = (int)lwidth;
 		height = (int)lheight;
@@ -260,7 +307,8 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(gedp->ged_result_str, "icv_read failed to read %s.\n", file_name);
 	    }
 	    icv_destroy(img);
-	    return GED_ERROR;
+	    bu_vls_free(&vname);
+	    return BRLCAD_ERROR;
 	}
 
 	ret = fb_read_icv(fbp, img, 0, 0, 0, 0,	scr_xoff, scr_yoff, clear, zoom, inverse, 0, 0, gedp->ged_result_str);
@@ -270,6 +318,7 @@ ged_overlay_core(struct ged *gedp, int argc, const char *argv[])
 	(void)dm_draw_end(dmp);
 
 	icv_destroy(img);
+	bu_vls_free(&vname);
 	return ret;
 
     }

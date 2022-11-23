@@ -40,7 +40,7 @@
   <example><title>Rotate a currently edited object.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>qorot 1 2 3 0 0 1 25</userinput>
+      <prompt>mged&gt; </prompt><userinput>qorot 1 2 3 0 0 1 25</userinput>
     </para>
     <para>Rotates the currently edited object through 25° about the axis through the point (1, 2,
 	3) and in the Z-direction.

@@ -6,7 +6,7 @@ ASLocalizer.cpp
 ASLocalizer.h
 ASResource.cpp
 CMakeLists.txt
-LICENSE
+LICENSE.md
 README
 TODO
 astyle.h

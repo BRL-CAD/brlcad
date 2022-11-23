@@ -1,7 +1,7 @@
 /*                         L I N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2021 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -108,9 +108,9 @@ struct _ged_invalid_data {
 /* Because lint is intended to be a deep inspection of the .g looking for problems,
  * we need to do this check using the low level tree walk rather than operating on
  * a search result set (which has checks to filter out cyclic paths.) */
-HIDDEN void
+static void
 _ged_cyclic_search_subtree(struct db_full_path *path, int curr_bool, union tree *tp,
-	void (*traverse_func) (struct db_full_path *path, void *), void *client_data)
+			   void (*traverse_func) (struct db_full_path *path, void *), void *client_data)
 {
     struct directory *dp;
     struct _ged_cyclic_data *cdata = (struct _ged_cyclic_data *)client_data;
@@ -140,7 +140,7 @@ _ged_cyclic_search_subtree(struct db_full_path *path, int curr_bool, union tree 
 	    _ged_cyclic_search_subtree(path, OP_UNION, tp->tr_b.tb_left, traverse_func, client_data);
 	    break;
 	case OP_DB_LEAF:
-	    dp = db_lookup(gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_QUIET);
+	    dp = db_lookup(gedp->dbip, tp->tr_l.tl_name, LOOKUP_QUIET);
 	    if (dp == RT_DIR_NULL) {
 		return;
 	    } else {
@@ -184,7 +184,7 @@ _ged_cyclic_search(struct db_full_path *fp, void *client_data)
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal(&in, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) return;
+	if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
 	_ged_cyclic_search_subtree(fp, OP_UNION, comb->tree, _ged_cyclic_search, client_data);
@@ -197,10 +197,10 @@ _ged_cyclic_check(struct _ged_cyclic_data *cdata, struct ged *gedp, int argc, st
 {
     int i;
     struct db_full_path *start_path = NULL;
-    int ret = GED_OK;
-    if (!gedp) return GED_ERROR;
+    int ret = BRLCAD_OK;
+    if (!gedp) return BRLCAD_ERROR;
     if (argc) {
-	if (!dpa) return GED_ERROR;
+	if (!dpa) return BRLCAD_ERROR;
 	BU_GET(start_path, struct db_full_path);
 	db_full_path_init(start_path);
 	for (i = 0; i < argc; i++) {
@@ -216,7 +216,7 @@ _ged_cyclic_check(struct _ged_cyclic_data *cdata, struct ged *gedp, int argc, st
 	 * path can produce a situation where there are no tops objects and/or
 	 * hide the paths we need to report. */
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		db_add_node_to_full_path(start_path, dp);
 		_ged_cyclic_search(start_path, (void *)cdata);
 		DB_FULL_PATH_POP(start_path);
@@ -228,7 +228,7 @@ _ged_cyclic_check(struct _ged_cyclic_data *cdata, struct ged *gedp, int argc, st
     return ret;
 }
 
-HIDDEN void
+static void
 _ged_lint_comb_find_missing(struct _ged_missing_data *mdata, const char *parent, struct db_i *dbip, union tree *tp)
 {
     if (!tp) return;
@@ -260,7 +260,7 @@ _ged_lint_comb_find_missing(struct _ged_missing_data *mdata, const char *parent,
     }
 }
 
-HIDDEN void
+static void
 _ged_lint_shape_find_missing(struct _ged_missing_data *mdata, struct db_i *dbip, struct directory *dp)
 {
     struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
@@ -273,7 +273,7 @@ _ged_lint_shape_find_missing(struct _ged_missing_data *mdata, struct db_i *dbip,
     if (!mdata || !dbip || !dp) return;
 
     switch (dp->d_minor_type) {
-   	case DB5_MINORTYPE_BRLCAD_DSP:
+	case DB5_MINORTYPE_BRLCAD_DSP:
 	    /* For DSP we can't do a full import up front, since the potential invalidity we're looking to detect will cause
 	     * the import to fail.  Partially crack it, enough to where we can get what we need */
 	    if (db_get_external(&ext, dp, dbip) < 0) return;
@@ -305,11 +305,11 @@ _ged_lint_shape_find_missing(struct _ged_missing_data *mdata, struct db_i *dbip,
 	    /* For EXTRUDE we can't do a full import up front, since the potential invalidity we're looking to detect will cause
 	     * the import to fail.  Partially crack it, enough to where we can get what we need */
 	    if (db_get_external(&ext, dp, dbip) < 0) return;
-            if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
-                bu_free_external(&ext);
-                return;
-            }
-            cp = (unsigned char *)raw.body.ext_buf;
+	    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
+		bu_free_external(&ext);
+		return;
+	    }
+	    cp = (unsigned char *)raw.body.ext_buf;
 	    sketch_name = (char *)cp + ELEMENTS_PER_VECT*4*SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG;
 	    if (db_lookup(dbip, sketch_name, LOOKUP_QUIET) == RT_DIR_NULL) {
 		std::string inst = std::string(dp->d_namep) + std::string("/") + std::string(sketch_name);
@@ -326,16 +326,16 @@ int
 _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, struct directory **dpa)
 {
     struct directory *dp;
-    int ret = GED_OK;
-    if (!gedp) return GED_ERROR;
+    int ret = BRLCAD_OK;
+    if (!gedp) return BRLCAD_ERROR;
     if (argc) {
 	unsigned int i;
 	struct bu_ptbl *pc = NULL;
 	const char *osearch = "-type comb";
-	if (!dpa) return GED_ERROR;
+	if (!dpa) return BRLCAD_ERROR;
 	BU_ALLOC(pc, struct bu_ptbl);
-	if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
-	    ret = GED_ERROR;
+	if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, argc, dpa, gedp->dbip, NULL) < 0) {
+	    ret = BRLCAD_ERROR;
 	    bu_ptbl_free(pc);
 	    bu_free(pc, "pc table");
 	} else {
@@ -344,11 +344,11 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
 		if (dp->d_flags & RT_DIR_COMB) {
 		    struct rt_db_internal in;
 		    struct rt_comb_internal *comb;
-		    if (rt_db_get_internal(&in, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) continue;
+		    if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) continue;
 		    comb = (struct rt_comb_internal *)in.idb_ptr;
-		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->ged_wdbp->dbip, comb->tree);
+		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->dbip, comb->tree);
 		} else {
-		    _ged_lint_shape_find_missing(mdata, gedp->ged_wdbp->dbip, dp);
+		    _ged_lint_shape_find_missing(mdata, gedp->dbip, dp);
 		}
 	    }
 	    bu_ptbl_free(pc);
@@ -357,15 +357,15 @@ _ged_missing_check(struct _ged_missing_data *mdata, struct ged *gedp, int argc, 
     } else {
 	int i;
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (dp->d_flags & RT_DIR_COMB) {
 		    struct rt_db_internal in;
 		    struct rt_comb_internal *comb;
-		    if (rt_db_get_internal(&in, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) continue;
+		    if (rt_db_get_internal(&in, dp, gedp->dbip, NULL, &rt_uniresource) < 0) continue;
 		    comb = (struct rt_comb_internal *)in.idb_ptr;
-		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->ged_wdbp->dbip, comb->tree);
+		    _ged_lint_comb_find_missing(mdata, dp->d_namep, gedp->dbip, comb->tree);
 		} else {
-		    _ged_lint_shape_find_missing(mdata, gedp->ged_wdbp->dbip, dp);
+		    _ged_lint_shape_find_missing(mdata, gedp->dbip, dp);
 		}
 	    }
 	}
@@ -389,7 +389,7 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
     if (dp->d_flags & RT_DIR_HIDDEN) return;
     if (dp->d_addr == RT_DIR_PHONY_ADDR) return;
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) return;
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	rt_db_free_internal(&intern);
 	return;
@@ -445,7 +445,7 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 int
 _ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int argc, struct directory **dpa)
 {
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     struct directory *dp;
     struct _ged_lint_opts *opts = (struct _ged_lint_opts *)idata->o;
     unsigned int i;
@@ -453,8 +453,8 @@ _ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int 
     struct bu_vls sopts = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&sopts, "! -type comb %s", bu_vls_cstr(&opts->filter));
     BU_ALLOC(pc, struct bu_ptbl);
-    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
-	ret = GED_ERROR;
+    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), argc, dpa, gedp->dbip, NULL) < 0) {
+	ret = BRLCAD_ERROR;
 	bu_free(pc, "pc table");
     } else {
 	for (i = 0; i < BU_PTBL_LEN(pc); i++) {
@@ -472,18 +472,19 @@ extern "C" int
 ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 {
     size_t pc;
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     static const char *usage = "Usage: lint [ -CMS ] [obj1] [obj2] [...]\n";
     int print_help = 0;
     struct _ged_lint_opts *opts;
     struct directory **dpa = NULL;
     int nonexist_obj_cnt = 0;
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
     struct _ged_cyclic_data *cdata = NULL;
     struct _ged_missing_data *mdata = new struct _ged_missing_data;
     struct _ged_invalid_data *idata = new struct _ged_invalid_data;
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     opts = _ged_lint_opts_create();
 
@@ -507,7 +508,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
-	ret = GED_OK;
+	ret = BRLCAD_OK;
 	goto ged_lint_memfree;
     }
 
@@ -520,7 +521,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	    for (i = argc - nonexist_obj_cnt - 1; i < argc; i++) {
 		bu_vls_printf(gedp->ged_result_str, " %s\n", argv[i]);
 	    }
-	    ret = GED_ERROR;
+	    ret = BRLCAD_ERROR;
 	    goto ged_lint_memfree;
 	}
     }
@@ -535,7 +536,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	BU_GET(cdata->paths, struct bu_ptbl);
 	bu_ptbl_init(cdata->paths, 0, "path table");
 	ret = _ged_cyclic_check(cdata, gedp, argc, dpa);
-	if (ret != GED_OK) {
+	if (ret != BRLCAD_OK) {
 	    goto ged_lint_memfree;
 	}
 	if (BU_PTBL_LEN(cdata->paths)) {
@@ -551,7 +552,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	bu_log("Checking for references to non-extant objects...\n");
 	mdata->gedp = gedp;
 	ret = _ged_missing_check(mdata, gedp, argc, dpa);
-	if (ret != GED_OK) {
+	if (ret != BRLCAD_OK) {
 	    goto ged_lint_memfree;
 	}
 	if (mdata->missing.size()) {
@@ -568,7 +569,7 @@ ged_lint_core(struct ged *gedp, int argc, const char *argv[])
 	bu_log("Checking for invalid objects...\n");
 	idata->o = opts;
 	ret = _ged_invalid_shape_check(idata, gedp, argc, dpa);
-	if (ret != GED_OK) {
+	if (ret != BRLCAD_OK) {
 	    goto ged_lint_memfree;
 	}
 	if (idata->invalid_dps.size()) {
@@ -597,6 +598,7 @@ ged_lint_memfree:
     }
 
     delete mdata;
+    delete idata;
 
     if (dpa) bu_free(dpa, "dp array");
 
@@ -607,25 +609,25 @@ ged_lint_memfree:
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl lint_cmd_impl = { "lint", ged_lint_core, GED_CMD_DEFAULT };
-    const struct ged_cmd lint_cmd = { &lint_cmd_impl };
-    const struct ged_cmd *lint_cmds[] = { &lint_cmd,  NULL };
+struct ged_cmd_impl lint_cmd_impl = { "lint", ged_lint_core, GED_CMD_DEFAULT };
+const struct ged_cmd lint_cmd = { &lint_cmd_impl };
+const struct ged_cmd *lint_cmds[] = { &lint_cmd,  NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  lint_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  lint_cmds, 1 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

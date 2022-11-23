@@ -1,7 +1,7 @@
 /*                     D B _ I N M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2021 United States Government as represented by
+ * Copyright (c) 2006-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -81,10 +81,22 @@ db_open_inmem(void)
      */
 
     bu_ptbl_init(&dbip->dbi_clients, 128, "dbi_clients[]");
+    bu_ptbl_init(&dbip->dbi_changed_clbks , 8, "dbi_changed_clbks]");
+    bu_ptbl_init(&dbip->dbi_update_nref_clbks, 8, "dbi_update_nref_clbks");
+
+    dbip->dbi_use_comb_instance_ids = 0;
     dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
-    /* mark the wdb structure as in-memory. */
-    dbip->dbi_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+    /* These wdb modes aren't valid for an in-mem db */
+    dbip->dbi_wdbp = NULL;
+    dbip->dbi_wdbp_a = NULL;
+
+    /* Set up the valid in-mem wdb modes */
+    BU_ALLOC(dbip->dbi_wdbp_inmem, struct rt_wdb);
+    wdb_init(dbip->dbi_wdbp_inmem, dbip, RT_WDB_TYPE_DB_INMEM);
+
+    BU_ALLOC(dbip->dbi_wdbp_inmem_a, struct rt_wdb);
+    wdb_init(dbip->dbi_wdbp_inmem_a, dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 
     return dbip;
 }
@@ -92,6 +104,7 @@ db_open_inmem(void)
 struct db_i *
 db_create_inmem(void) {
     struct db_i *dbip;
+    struct rt_wdb *wdbp;
     struct bu_external obj;
     struct bu_attribute_value_set avs;
     struct bu_vls units = BU_VLS_INIT_ZERO;
@@ -101,7 +114,9 @@ db_create_inmem(void) {
     dbip = db_open_inmem();
 
     RT_CK_DBI(dbip);
-    RT_CK_WDB(dbip->dbi_wdbp);
+
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+    RT_CK_WDB(wdbp);
 
     /* Second, create the attribute-only _GLOBAL object */
     bu_vls_printf(&units, "%.25e", dbip->dbi_local2base);
@@ -116,7 +131,7 @@ db_create_inmem(void) {
 		       DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
 		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
     flags = RT_DIR_HIDDEN | RT_DIR_NON_GEOM | RT_DIR_INMEM;
-    wdb_export_external(dbip->dbi_wdbp, &obj, DB5_GLOBAL_OBJECT_NAME, flags, 0);
+    wdb_export_external(wdbp, &obj, DB5_GLOBAL_OBJECT_NAME, flags, 0);
 
     bu_free_external(&obj);
     bu_free_external(&attr);

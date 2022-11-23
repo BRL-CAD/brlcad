@@ -48,7 +48,7 @@ forms of input - combination or region.</para>
   <example><title>Specifying a combination using <command>put_comb</command></title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>put_comb test.c n 255/255/255 plastic n "u sph.s u arb8.s"</userinput>
+      <prompt>mged&gt; </prompt><userinput>put_comb test.c n 255/255/255 plastic n "u sph.s u arb8.s"</userinput>
     </para>
     <para>Creates a combination that is not a region, using the plastic shader, consisting of the union of sph.s and arb8.s".
     </para>
@@ -66,7 +66,7 @@ oshader {plastic}
   <example><title>Specifying a region using <command>put_comb</command></title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>put_comb test.r y 1001 0 32 1 255/255/255 plastic y "u sph.s u arb8.s"</userinput>
+      <prompt>mged&gt; </prompt><userinput>put_comb test.r y 1001 0 32 1 255/255/255 plastic y "u sph.s u arb8.s"</userinput>
     </para>
     <para>Creates a combination that is a region, with region id 1001, air flag off, material 32, los 1, white in color, using the plastic shader, inheriting, consisting of the union of sph.s and arb8.s"
     </para>

@@ -1,7 +1,7 @@
 /*                         H E L P . C
  * BRL-CAD
  *
- * Copyright (c) 2017-2021 United States Government as represented by
+ * Copyright (c) 2017-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
  * dynamically allocated.  returns the number of files found in an
  * argv array that the caller must free via bu_argv_free().
  */
-HIDDEN size_t
+static size_t
 help_files(const char *dir, char ***files)
 {
     char **dirs;
@@ -96,19 +96,19 @@ help_files(const char *dir, char ***files)
 }
 
 
-HIDDEN size_t
+static size_t
 help_tokenize(size_t count, const char **files)
 {
-    size_t bytes;
-    size_t zeros;
-    struct bu_mapped_file *data;
+    size_t bytes = 0;
+    size_t zeros = 0;
+    struct bu_mapped_file *data = NULL;
 
 #define USE_ARRAY 0
 #define MAX_WORDS 820000
 #if USE_ARRAY
     struct bu_vls words[MAX_WORDS] = {BU_VLS_INIT_ZERO};
 #else
-    struct bu_hash_tbl *hash;
+    struct bu_hash_tbl *hash = NULL;
 #endif
     size_t cnt[MAX_WORDS] = {0};
     size_t words = 0;
@@ -127,7 +127,6 @@ help_tokenize(size_t count, const char **files)
 	}
 #endif
 
-	bytes = zeros = 0;
 	data = bu_open_mapped_file(files[count], NULL);
 	if (!data)
 	    continue;
@@ -191,14 +190,14 @@ help_tokenize(size_t count, const char **files)
 		    int ret = bu_hash_set(hash, wordbytes, wordbyteslen, &cnt[words]);
 /*		    bu_log("adding %s\n", (char *)wordbytes); */
 		    if (ret != 1)
- 			bu_bomb("totally expected a new entry\n");
+			bu_bomb("totally expected a new entry\n");
 		    cnt[words]++;
 		    words++;
 
 		}
 #endif
 		bu_vls_trunc(&word, 0);
-  	    }
+	    }
 	}
 
 	/* bu_log("FILE: %s (%zu bytes, %zu words)\n", files[count], data->buflen, words); */
@@ -259,7 +258,7 @@ ged_help_core(struct ged *gedp, int argc, const char *argv[])
     words = help_tokenize(count, (const char **)entries);
 
     if (words == 0) {
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bu_free(dir, "free doc dir");
@@ -271,29 +270,29 @@ ged_help_core(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl help_cmd_impl     = { "help",    ged_help_core, GED_CMD_DEFAULT };
-    const struct ged_cmd help_cmd = { &help_cmd_impl };
+struct ged_cmd_impl help_cmd_impl     = { "help",    ged_help_core, GED_CMD_DEFAULT };
+const struct ged_cmd help_cmd = { &help_cmd_impl };
 
-    struct ged_cmd_impl apropos_cmd_impl  = { "apropos", ged_help_core, GED_CMD_DEFAULT };
-    const struct ged_cmd apropos_cmd = { &apropos_cmd_impl };
+struct ged_cmd_impl apropos_cmd_impl  = { "apropos", ged_help_core, GED_CMD_DEFAULT };
+const struct ged_cmd apropos_cmd = { &apropos_cmd_impl };
 
-    struct ged_cmd_impl info_cmd_impl     = { "info",    ged_help_core, GED_CMD_DEFAULT };
-    const struct ged_cmd info_cmd = { &info_cmd_impl };
+struct ged_cmd_impl info_cmd_impl     = { "info",    ged_help_core, GED_CMD_DEFAULT };
+const struct ged_cmd info_cmd = { &info_cmd_impl };
 
-    struct ged_cmd_impl man_cmd_impl      = { "man",     ged_help_core, GED_CMD_DEFAULT };
-    const struct ged_cmd man_cmd = { &man_cmd_impl };
+struct ged_cmd_impl man_cmd_impl      = { "man",     ged_help_core, GED_CMD_DEFAULT };
+const struct ged_cmd man_cmd = { &man_cmd_impl };
 
-    struct ged_cmd_impl question_cmd_impl = { "?",       ged_help_core, GED_CMD_DEFAULT };
-    const struct ged_cmd question_cmd = { &question_cmd_impl };
+struct ged_cmd_impl question_cmd_impl = { "?",       ged_help_core, GED_CMD_DEFAULT };
+const struct ged_cmd question_cmd = { &question_cmd_impl };
 
-    const struct ged_cmd *help_cmds[] = { &help_cmd,  &apropos_cmd,  &info_cmd,  &man_cmd,  &question_cmd, NULL };
+const struct ged_cmd *help_cmds[] = { &help_cmd,  &apropos_cmd,  &info_cmd,  &man_cmd,  &question_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  help_cmds, 5 };
+static const struct ged_plugin pinfo = { GED_API,  help_cmds, 5 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 
@@ -311,12 +310,12 @@ int main(int ac, char *av[])
 }
 #endif
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

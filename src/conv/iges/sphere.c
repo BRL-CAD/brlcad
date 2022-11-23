@@ -1,7 +1,7 @@
 /*                        S P H E R E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2021 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 int
-sphere(int entityno)
+sphere(size_t entityno)
 {
     fastf_t radius = 0.0;
     point_t center;

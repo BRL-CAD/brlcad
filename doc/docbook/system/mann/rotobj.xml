@@ -52,7 +52,7 @@
 
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rotobj 0 0 25</userinput>
+      <prompt>mged&gt; </prompt><userinput>rotobj 0 0 25</userinput>
     </para>
     <para>Rotates the currently edited object by 25° about the <emphasis>z</emphasis> direction 	from the original orientation.
        </para>

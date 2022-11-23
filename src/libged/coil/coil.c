@@ -1,7 +1,7 @@
 /*                          C O I L . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2021 United States Government as represented by
+ * Copyright (c) 2009-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -280,13 +280,13 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 	    mk_add_pipe_pnt(&head, pnt1, e_data->wd, 0.0, (e_data->od/2-e_data->wd/2));
 	    break;
 	case 1:
-	    last_pitch_pt = cap_squared(&head, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
+	    (void)cap_squared(&head, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
 	    break;
 	case 2:
-	    last_pitch_pt = cap_ground(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
+	    (void)cap_ground(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
 	    break;
 	case 3:
-	    last_pitch_pt = cap_squared_ground(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
+	    (void)cap_squared_ground(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
 	    break;
 	default:
 	    break;
@@ -392,7 +392,7 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
 		break;
 	    default:
 		usage(gedp);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
     if ((argc - bu_optind) == 1) {
@@ -403,16 +403,17 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
 	bu_vls_sprintf(name, "%s", DEFAULT_COIL_OBJECT);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 int
 ged_coil_core(struct ged *gedp, int argc, const char *argv[])
 {
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     struct bu_vls name;
-    struct rt_wdb *db_fp = gedp->ged_wdbp;
     fastf_t mean_outer_diameter, wire_diameter, overall_length, nominal_length;
     fastf_t helix_angle, pitch;
 
@@ -422,9 +423,6 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
     int nt; /* Number of turns */
     int start_cap_type, end_cap_type;
     int lhf; /* Winding flag */
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
     bu_vls_init(&name);
@@ -441,8 +439,8 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
     lhf = 1;
 
     /* Process arguments */
-    if (ReadArgs(gedp, argc, argv, &name, &sections, &mean_outer_diameter, &wire_diameter, &helix_angle, &pitch, &nt, &start_cap_type, &end_cap_type, &overall_length, &lhf) != GED_OK) {
-	return GED_ERROR;
+    if (ReadArgs(gedp, argc, argv, &name, &sections, &mean_outer_diameter, &wire_diameter, &helix_angle, &pitch, &nt, &start_cap_type, &end_cap_type, &overall_length, &lhf) != BRLCAD_OK) {
+	return BRLCAD_ERROR;
     }
 
     /* Handle various potential errors in args and set defaults if nothing supplied */
@@ -454,7 +452,7 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "negative value in one or more arguments supplied to coil");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (ZERO(wire_diameter) && ZERO(mean_outer_diameter)) {
@@ -549,11 +547,12 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* do it. */
+    struct rt_wdb *db_fp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     make_coil(db_fp, bu_vls_addr(&name), &sections, start_cap_type, end_cap_type);
 
     bu_vls_free(&name);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

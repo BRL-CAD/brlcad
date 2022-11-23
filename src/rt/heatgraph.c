@@ -1,7 +1,7 @@
 /*                      H E A T G R A P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "scanline.h"
 
 #include "./rtuif.h"
@@ -174,7 +174,7 @@ timeTable_singleProcess(struct application *app, fastf_t **timeTable, fastf_t *t
     return timeColor;
 }
 
-#ifndef RT_TXT_OUTPUT
+
 /**
  * This function takes the contents of the time table, and produces the
  * heat graph based on time taken for each pixel.
@@ -263,7 +263,7 @@ timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), struct f
       (void)fb_view(fbp, width/2, height/2, zoomH, zoomW);
     }
 }
-#endif
+
 
 /*
  * Local Variables:

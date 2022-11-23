@@ -1,7 +1,7 @@
 /*                      N M G _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2021 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,8 +51,8 @@ struct nmg_bool_state {
 };
 
 
-HIDDEN void nmg_eval_shell(struct shell *s, struct nmg_bool_state *bs);
-HIDDEN void nmg_eval_plot(struct nmg_bool_state *bs, int num);
+static void nmg_eval_shell(struct shell *s, struct nmg_bool_state *bs);
+static void nmg_eval_plot(struct nmg_bool_state *bs, int num);
 
 
 #define BACTION_KILL 1
@@ -191,7 +191,7 @@ static const int intersect_actions[8] = {
 void
 nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlist, struct bu_list *vlfree, const struct bn_tol *tol)
 {
-    int const *actions;
+    int const *actions = NULL;
     struct nmg_bool_state bool_state;
 
     NMG_CK_SHELL(sA);
@@ -215,7 +215,6 @@ nmg_evaluate_boolean(struct shell *sA, struct shell *sB, int op, char **classlis
 	    actions = intersect_actions;
 	    break;
 	default:
-	    actions = union_actions;	/* shut up lint */
 	    bu_log("ERROR nmg_evaluate_boolean() op=%d.\n", op);
 	    bu_bomb("bad boolean\n");
     }
@@ -269,7 +268,7 @@ static int nmg_eval_count = 0;	/* debug -- plot file numbering */
  * future, this should be done with one big array).  Then, return the
  * action code for an item of that classification.
  */
-HIDDEN int
+static int
 nmg_eval_action(uint32_t *ptr, register struct nmg_bool_state *bs)
 {
     register int ret;
@@ -352,7 +351,7 @@ out:
  *
  * Note that there is no moving of items from one shell to another.
  */
-HIDDEN void
+static void
 nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 {
     struct faceuse *fu;
@@ -594,7 +593,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
  * Located here because definition of nmg_bool_state is local to this
  * module.
  */
-HIDDEN void
+static void
 nmg_eval_plot(struct nmg_bool_state *bs, int num)
 {
     FILE *fp;
@@ -625,7 +624,7 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
     }
 
     if (do_anim) {
-	struct bn_vlblock *vbp = bn_vlblock_init(bs->vlfree, 32);
+	struct bv_vlblock *vbp = bv_vlblock_init(bs->vlfree, 32);
 
 	nmg_vlblock_s(vbp, bs->bs_dest, 0, bs->vlfree);
 	nmg_vlblock_s(vbp, bs->bs_src, 0, bs->vlfree);
@@ -634,15 +633,15 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
 	if (nmg_vlblock_anim_upcall) {
 	    /* if requested, delay 1/4 second */
 	    /* need to cast nmg_vlblock_anim_upcall pointer for actual use as a function */
-	    void (*cfp)(struct bn_vlblock *, int, int);
-	    cfp = (void (*)(struct bn_vlblock *, int, int))nmg_vlblock_anim_upcall;
+	    void (*cfp)(struct bv_vlblock *, int, int);
+	    cfp = (void (*)(struct bv_vlblock *, int, int))nmg_vlblock_anim_upcall;
 	    cfp(vbp,
 		(nmg_debug&NMG_DEBUG_PL_SLOW) ? 250000 : 0,
 		0);
 	} else {
 	    bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 	}
-	bn_vlblock_free(vbp);
+	bv_vlblock_free(vbp);
     }
 }
 

@@ -42,7 +42,7 @@ of <command>nirt</command> for more details.
   <example><title>Run the NIRT program to fire a ray through the MGED display.</title>
 
      <para>
-      <prompt>mged&gt;</prompt> <userinput>nirt</userinput>
+      <prompt>mged&gt; </prompt><userinput>nirt</userinput>
     </para>
     <para>Fires a single ray through the center of the MGED display.
     </para>

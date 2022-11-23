@@ -4,7 +4,7 @@ set(INTAVAL_INCLUDE_DIRS
   ${WDB_INCLUDE_DIRS}
   )
 list(REMOVE_DUPLICATES INTAVAL_INCLUDE_DIRS)
-include_directories(${INTAVAL_INCLUDE_DIRS})
+BRLCAD_INCLUDE_DIRS(INTAVAL_INCLUDE_DIRS)
 
 set(tgf_SRCS
   read_dra.cpp
@@ -12,7 +12,7 @@ set(tgf_SRCS
   tgf-g.cpp
   write_brl.cpp
   )
-BRLCAD_ADDEXEC(tgf-g "${tgf_SRCS}" "libwdb;librt;libbu")
+BRLCAD_ADDEXEC(tgf-g "${tgf_SRCS}" "libwdb;librt;libbu" FOLDER Conv)
 
 set(intaval_ignore_files
   CMakeLists.txt

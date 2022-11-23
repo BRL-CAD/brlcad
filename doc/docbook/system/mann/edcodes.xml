@@ -42,7 +42,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>edcodes object1 object2</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>edcodes object1 object2</userinput></term>
 	   <listitem>
 	     <para>Enables the user to edit the region codes for all regions below <emphasis>object1</emphasis> and 		     <emphasis>object2</emphasis>.
 	      </para>

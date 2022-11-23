@@ -1,7 +1,7 @@
 /*                         R A W - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2012-2021 United States Government as represented by
+ * Copyright (c) 2012-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -163,7 +163,7 @@ int main(int   argc,
 	    }
 
 	    regions.create(wdbp);
-	    wdb_close(wdbp);
+	    db_close(wdbp->dbip);
 	}
     }
 

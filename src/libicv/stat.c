@@ -1,7 +1,7 @@
 /*                          S T A T . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include "bu/malloc.h"
 #include "icv.h"
 
-HIDDEN size_t **
+static size_t **
 icv_init_bins(icv_image_t* img, size_t n_bins)
 {
     size_t c;

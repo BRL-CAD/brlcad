@@ -7,15 +7,16 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-autoview SHARED autoview.c)
+ged_plugin_library(ged-autoview SHARED autoview.c autoview2.cpp)
 target_link_libraries(ged-autoview libged libbu)
 set_property(TARGET ged-autoview APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
-VALIDATE_STYLE(ged-autoview autoview.c)
+VALIDATE_STYLE(ged-autoview autoview.c autoview2.cpp)
 PLUGIN_SETUP(ged-autoview ged)
 
 CMAKEFILES(
   CMakeLists.txt
   autoview.c
+  autoview2.cpp
   )
 
 # Local Variables:

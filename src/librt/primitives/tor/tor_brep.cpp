@@ -1,7 +1,7 @@
 /*                    T O R _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@
 #include "opennurbs_torus.h"
 
 
-HIDDEN ON_RevSurface*
+static ON_RevSurface*
 Torus_RevSurfaceForm(const ON_Torus& torus )
 {
     ON_Circle circle = torus.MinorCircleRadians(0.0);

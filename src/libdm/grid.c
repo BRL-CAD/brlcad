@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #include "./include/private.h"
 
 void
-dm_draw_grid(struct dm *dmp, struct bview_grid_state *ggsp, fastf_t scale, mat_t model2view, fastf_t base2local)
+dm_draw_grid(struct dm *dmp, struct bv_grid_state *ggsp, fastf_t scale, mat_t model2view, fastf_t base2local)
 {
     int	i, j;
     int	nh, nv;

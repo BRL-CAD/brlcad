@@ -1,7 +1,7 @@
 /*                      D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2021 United States Government as represented by
+ * Copyright (c) 2016-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include "gcv/api.h"
 
 
-HIDDEN int
+static int
 decimate_filter(struct gcv_context *context, const struct gcv_opts *gcv_options,
 	const void *UNUSED(options_data), const char *UNUSED(target))
 {

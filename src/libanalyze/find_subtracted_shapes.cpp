@@ -1,7 +1,7 @@
 /*      F I N D _ S U B T R A C T E D _ S H A P E S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2021 United States Government as represented by
+ * Copyright (c) 2015-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@
 
 #define MINIMUM_RAYS_FOR_DECISION 100
 
-HIDDEN void
+static void
 plot_min_partitions(struct bu_ptbl *p, const char *cname)
 {
     struct bu_vls name = BU_VLS_INIT_ZERO;
@@ -101,7 +101,7 @@ plot_min_partitions(struct bu_ptbl *p, const char *cname)
 }
 
 
-HIDDEN int
+static int
 find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptbl *p_comb, struct subbrep_island_data *candidate, int max_cnt)
 {
     ON_BoundingBox *bbox = candidate->bbox;
@@ -231,7 +231,7 @@ find_missing_gaps(struct bu_ptbl *missing, struct bu_ptbl *p_brep, struct bu_ptb
     return BU_PTBL_LEN(missing);
 }
 
-HIDDEN int
+static int
 subtraction_decision(struct bu_ptbl *missing, struct bu_ptbl *candidate, int max_cnt)
 {
     if (!missing || !candidate || max_cnt == 0) return 0;
@@ -314,7 +314,7 @@ bu_log("missing size: %d, entry size: %d, exit size: %d\n", BU_PTBL_LEN(missing)
     return ((size_t)((entry_match.size() + exit_match.size())/2) > 0) ? 1 : 0;
 }
 
-HIDDEN int
+static int
 minimum_partitions_bbox(struct bu_ptbl *missing, point_t *bmin, point_t *bmax)
 {
     if (!missing || !bmin || !bmax || BU_PTBL_LEN(missing) == 0) return 0;
@@ -346,7 +346,7 @@ minimum_partitions_bbox(struct bu_ptbl *missing, point_t *bmin, point_t *bmax)
     return 1;
 }
 
-HIDDEN int
+static int
 refine_missing_rays(struct bu_ptbl *new_missing, fastf_t **candidate_rays, int *ray_cnt, struct bu_ptbl *old_missing,
        	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
        	const char *curr_comb, struct rt_gen_worker_vars *ccomb_vars,
@@ -663,12 +663,12 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
     return 0;
 }
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

@@ -1,7 +1,7 @@
 /*                         R T S R V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,6 +49,7 @@
 #include "bu/str.h"
 #include "bu/process.h"
 #include "bu/snooze.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -75,14 +76,12 @@ struct pkg_queue {
 struct fb *fbp = FB_NULL;	/* Framebuffer handle */
 FILE *outfp = NULL;	/* optional pixel output file */
 
-mat_t view2model;
-mat_t model2view;
 int srv_startpix = 0;	/* offset for view_pixel */
 int srv_scanlen = REMRT_MAX_PIXELS;	/* max assignment */
 unsigned char *scanbuf = NULL;
 /***** end of sharing with viewing model *****/
 
-extern void grid_setup();
+extern int grid_setup(struct bu_vls *err);
 extern void worker();
 extern void application_init(void);
 
@@ -106,21 +105,20 @@ static char *title_obj = NULL;	/* name of file and first object */
 
 #define MAX_WIDTH (16*1024)
 
-static int avail_cpus = 0;	/* # of cpus avail on this system */
+static size_t avail_cpus = 0;	/* # of cpus avail on this system */
 
 /* store program parameters in case of restart */
 static int original_argc;
 static char **original_argv;
 
-int save_overlaps = 0;
-
 struct icv_image *bif = NULL;
+
 
 /*
  * Package Handlers.
  */
-void ph_unexp(struct pkg_conn *pc, char *buf);		/* foobar message handler */
-void ph_enqueue(struct pkg_conn *pc, char *buf);	/* Adds message to linked list */
+void ph_unexp(struct pkg_conn *pc, char *buf);   /* foobar message handler */
+void ph_enqueue(struct pkg_conn *pc, char *buf); /* Adds message to linked list */
 void ph_dirbuild(struct pkg_conn *pc, char *buf);
 void ph_gettrees(struct pkg_conn *pc, char *buf);
 void ph_matrix(struct pkg_conn *pc, char *buf);
@@ -315,13 +313,13 @@ main(int argc, char **argv)
 
     /* Need to set rtg_parallel non_zero here for RES_INIT to work */
     npsw = avail_cpus;
-    if (npsw > 1) {
-	RTG.rtg_parallel = 1;
-    } else {
+    if (npsw == 1) {
 	RTG.rtg_parallel = 0;
+    } else {
+	RTG.rtg_parallel = 1;
     }
 
-    bu_log("using %zu of %d cpus\n", npsw, avail_cpus);
+    bu_log("using %zd of %zu cpus\n", npsw, avail_cpus);
 
     /* Before option processing, do application-specific initialization */
     RT_APPLICATION_INIT(&APP);
@@ -685,7 +683,12 @@ prepare(void)
     if (rtip->nsolids <= 0)
 	bu_exit(3, "ph_matrix: No solids remain after prep.\n");
 
-    grid_setup();
+    {
+	struct bu_vls err = BU_VLS_INIT_ZERO;
+	int ret = grid_setup(&err);
+	if (ret)
+	    bu_exit(BRLCAD_ERROR, "%s\n", bu_vls_cstr(&err));
+    }
 
     /* initialize lighting */
     view_2init(&APP, NULL);

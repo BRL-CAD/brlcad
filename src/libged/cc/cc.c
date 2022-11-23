@@ -1,7 +1,7 @@
 /*                         C C . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2021 United States Government as represented by
+ * Copyright (c) 2009-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,9 +45,9 @@ ged_cc_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_constraint_internal *con_ip;
     struct directory *dp;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -56,8 +56,8 @@ ged_cc_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
-    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
+    GED_CHECK_EXISTS(gedp, argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
 
     RT_DB_INTERNAL_INIT(&internal);
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -72,11 +72,11 @@ ged_cc_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_init(&(con_ip->expression));
     bu_vls_strcat(&(con_ip->expression), argv[2]);
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM , (void *)&internal.idb_type, GED_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM , (void *)&internal.idb_type, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
 
     bu_vls_printf(gedp->ged_result_str, "Constraint saved");
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

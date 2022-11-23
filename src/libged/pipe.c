@@ -1,7 +1,7 @@
 /*                        P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2021 United States Government as represented by
+ * Copyright (c) 1995-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -321,7 +321,7 @@ find_pipe_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t model_pt,
     for (BU_LIST_FOR(ps, wdb_pipe_pnt, pipe_hd)) {
 	fastf_t dist;
 
-	dist = bn_dist_line3_pnt3(model_pt, dir, ps->pp_coord);
+	dist = bg_dist_line3_pnt3(model_pt, dir, ps->pp_coord);
 	if (dist < min_dist) {
 	    min_dist = dist;
 	    nearest = ps;
@@ -531,7 +531,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 		seg_i = 0;
 
 	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 
 	    pipe_seg_scale_radius(ps, sf);
 	    break;
@@ -544,7 +544,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 		seg_i = 0;
 
 	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 
 	    pipe_seg_scale_id(ps, sf);
 	    break;
@@ -556,7 +556,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 		seg_i = 0;
 
 	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 
 	    pipe_seg_scale_od(ps, sf);
 	    break;
@@ -565,10 +565,10 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 	    break;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "bad pipe attribute - %s", attribute);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -587,9 +587,9 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
     double scan[3];
     char *last;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -602,7 +602,7 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
 
     if (argc != 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((last = strrchr(argv[1], '/')) == NULL)
@@ -612,31 +612,33 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
 
     if (last[0] == '\0') {
 	bu_vls_printf(gedp->ged_result_str, "%s: illegal input - %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     /* convert from double to fastf_t */
     VMOVE(view_ps_pt, scan);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & GED_ERROR)
-	return GED_ERROR;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE) {
 	bu_vls_printf(gedp->ged_result_str, "Object not a PIPE");
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
@@ -654,7 +656,7 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
     if ((*func)(pipeip, (struct wdb_pipe_pnt *)NULL, ps_pt) == (struct wdb_pipe_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot move point there", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     {
@@ -668,11 +670,11 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
 	    VMOVE(curr_ps->pp_coord, curr_pt);
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     }
 
     rt_db_free_internal(&intern);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

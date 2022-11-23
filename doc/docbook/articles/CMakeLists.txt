@@ -168,7 +168,7 @@ set(articles_EN_IMAGES
   images/rim.jpg
   )
 if(BRLCAD_EXTRADOCS)
-  ADD_DOC(articles_EN_IMAGES articles/images)
+  ADD_DOC(articles_EN_IMAGES html/articles/images)
 else(BRLCAD_EXTRADOCS)
   CMAKEFILES(${articles_EN_IMAGES})
 endif(BRLCAD_EXTRADOCS)

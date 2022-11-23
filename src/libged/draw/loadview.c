@@ -1,7 +1,7 @@
 /*                         L O A D V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -90,20 +90,26 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
     int ret;
     int failed = 0;
     FILE *fp;
-    char buffer[512] = {0};
+
+#define BUFFER_SIZE 511
+    char buffer[BUFFER_SIZE+1] = {0};
 
     /* data pulled from script file */
     int perspective=-1;
-#define MAX_DBNAME 2048
-    char name[MAX_DBNAME] = {0};
+
+#define DBNAME_SIZE 2047
+    char name[DBNAME_SIZE+1] = {0};
     char *dbName = name;
-    char objects[10000] = {0};
+
+#define OBJECTS_SIZE 9999
+    char objects[OBJECTS_SIZE+1] = {0};
     char *editArgv[3];
+
     static const char *usage = "filename";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -117,14 +123,14 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
     /* make sure the file exists */
     if (!bu_file_exists(argv[1], NULL)) {
 	bu_log("Error: File %s does not exist\n", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* open the file for reading */
     fp = fopen(argv[1], "r");
     if (fp == NULL) {
 	perror(argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     _ged_current_gedp = gedp;
@@ -137,8 +143,8 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
     /* iterate over the contents of the raytrace script */
     /* TODO: change to bu_fgets or bu_vls_fgets */
     while (!feof(fp)) {
-	memset(buffer, 0, 512);
-	ret = fscanf(fp, "%512s", buffer);
+	memset(buffer, 0, sizeof(buffer));
+	ret = fscanf(fp, "%" CPP_XSTR(BUFFER_SIZE) "s", buffer);
 	if (ret != 1) {
 	    bu_log("Failed to read buffer\n");
 	    failed++;
@@ -157,15 +163,13 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 	    /* bu_log("perspective=%d\n", perspective);*/
 	    snprintf(perspective_angle, sizeof(perspective_angle), "%d", perspective);
 
-	    ged_perspective(gedp, 2, (const char **)perspective_argv);
+	    ged_exec(gedp, 2, (const char **)perspective_argv);
 
 	} else if (bu_strncmp(buffer, "$*", 2) == 0) {
 	    /* the next read is the file name, the objects come
 	     * after that
 	     */
-
-	    memset(dbName, 0, MAX_DBNAME);
-	    ret = fscanf(fp, "%2048s", dbName); /* MAX_DBNAME */
+	    ret = fscanf(fp, "%" CPP_XSTR(DBNAME_SIZE) "s", dbName);
 	    if (ret != 1) {
 		bu_log("Failed to read database name\n");
 		failed++;
@@ -186,11 +190,11 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 		memset(dbName + strlen(dbName)-1, 0, 1);
 	    }
 
-	    if (!bu_file_same(gedp->ged_wdbp->dbip->dbi_filename, dbName)) {
+	    if (!bu_file_same(gedp->dbip->dbi_filename, dbName)) {
 		/* warn here if they are not the same file, otherwise,
 		 * proceed as expected, and try to load the objects.
 		 */
-		bu_log("WARNING: view script seems to reference a different database\n([%s] != [%s])\n", dbName, gedp->ged_wdbp->dbip->dbi_filename);
+		bu_log("WARNING: view script seems to reference a different database\n([%s] != [%s])\n", dbName, gedp->dbip->dbi_filename);
 	    }
 
 	    /* get rid of anything that may be displayed, since we
@@ -200,10 +204,10 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 	     * all exist.
 	     */
 	    const char *Z_cmd = "Z";
-	    (void)ged_zap(gedp, 1, &Z_cmd);
+	    (void)ged_exec(gedp, 1, &Z_cmd);
 
 	    /* now get the objects listed */
-	    ret = fscanf(fp, "%10000s", objects);
+	    ret = fscanf(fp, "%" CPP_XSTR(OBJECTS_SIZE) "s", objects);
 	    if (ret != 1) {
 		bu_log("Failed to read object names\n");
 		failed++;
@@ -216,18 +220,18 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
 		if (bu_strncmp(objects, "'", 1) == 0) {
 		    objects[0]=' ';
 		    memset(objects+strlen(objects)-1, ' ', 1);
-		    sscanf(objects, "%10000s", objects);
+		    sscanf(objects, "%" CPP_XSTR(OBJECTS_SIZE) "s", objects);
 		}
 
 		editArgv[0] = "draw";
 		editArgv[1] = objects;
 		editArgv[2] = (char *)NULL;
-		if (ged_draw(gedp, 2, (const char **)editArgv) != GED_OK) {
+		if (ged_exec(gedp, 2, (const char **)editArgv) != BRLCAD_OK) {
 		    bu_vls_printf(gedp->ged_result_str, "Unable to load object: %s\n", objects);
 		}
 
 		/* bu_log("objects=%s\n", objects);*/
-		ret = fscanf(fp, "%10000s", objects);
+		ret = fscanf(fp, "%" CPP_XSTR(OBJECTS_SIZE) "s", objects);
 		if (ret != 1) {
 		    bu_log("Failed to read object names\n");
 		    failed++;
@@ -259,9 +263,9 @@ ged_loadview_core(struct ged *gedp, int argc, const char *argv[])
     fclose(fp);
 
     if (failed)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -315,7 +319,9 @@ _ged_cm_lookat_pt(const int argc, const char **argv)
     {
 	vect_t neg_Z_axis = VINIT_ZERO;
 	neg_Z_axis[Z] = -1.0;
-	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis, &_ged_current_gedp->ged_wdbp->wdb_tol);
+
+	struct rt_wdb *wdbp = wdb_dbopen(_ged_current_gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	bn_mat_fromto(_ged_viewrot, dir, neg_Z_axis, &wdbp->wdb_tol);
     }
 
     /* Final processing is deferred until view 'end', but eye_pt
@@ -385,7 +391,7 @@ int
 _ged_cm_end(const int argc, const char **argv)
 {
     struct bu_vls eye = BU_VLS_INIT_ZERO;
-    char *eye_argv[6] = {"eye", NULL, NULL, NULL, NULL, NULL};
+    char *eye_argv[5] = {"eye", NULL, NULL, NULL, NULL};
 
     if (argc < 0 || argv == NULL)
 	return 1;
@@ -395,11 +401,11 @@ _ged_cm_end(const int argc, const char **argv)
      */
     MAT_COPY(_ged_current_gedp->ged_gvp->gv_rotation, _ged_viewrot);
     MAT_DELTAS_VEC_NEG(_ged_current_gedp->ged_gvp->gv_center, _ged_eye_model);
-    bview_update(_ged_current_gedp->ged_gvp);
+    bv_update(_ged_current_gedp->ged_gvp);
 
     bu_vls_printf(&eye, "%lf %lf %lf", V3ARGS(_ged_eye_model));
-    bu_argv_from_string(eye_argv+1, 4, bu_vls_addr(&eye));
-    ged_eye(_ged_current_gedp, 4, (const char **)eye_argv);
+    bu_argv_from_string(eye_argv+1, 3, bu_vls_addr(&eye));
+    ged_exec(_ged_current_gedp, 4, (const char **)eye_argv);
     bu_vls_free(&eye);
 
     return 0;

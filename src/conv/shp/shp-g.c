@@ -1,7 +1,7 @@
 /*                         S H P - G . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2021 United States Government as represented by
+ * Copyright (c) 2009-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -309,7 +309,6 @@ main(int argc, char *argv[])
 
 	bu_free(verts, "free point array");
 	verts = NULL;
-	num_verts = 0;
 
 	SHPDestroyObject(object);
 	object = NULL;
@@ -324,7 +323,7 @@ main(int argc, char *argv[])
 
     /* close up our files */
     SHPClose(shapefile);
-    wdb_close(fd_out);
+    db_close(fd_out->dbip);
 
     /* free up allocated resources */
     bu_vls_free(&vls_in);

@@ -1,7 +1,7 @@
 /*                    R I N G W O R L D . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2021 United States Government as represented by
+ * Copyright (c) 2011-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
     }
 
 
-    wdb_close(fp);
+    db_close(fp->dbip);
     bu_log("BRL-CAD geometry database file [%s] created.\nDone.\n", outfile);
 
     return EXIT_SUCCESS;

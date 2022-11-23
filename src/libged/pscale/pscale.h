@@ -1,7 +1,7 @@
 /*                        P S C A L E . H
  * BRL-CAD
  *
- * Copyright (c) 2020-2021 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,42 +33,42 @@
 __BEGIN_DECLS
 
 /* defined in scale_ehy.c */
-GED_EXPORT extern int _ged_scale_ehy(struct ged *gedp,
+extern int _ged_scale_ehy(struct ged *gedp,
 			  struct rt_ehy_internal *ehy,
 			  const char *attribute,
 			  fastf_t sf,
 			  int rflag);
 
 /* defined in scale_ell.c */
-GED_EXPORT extern int _ged_scale_ell(struct ged *gedp,
+extern int _ged_scale_ell(struct ged *gedp,
 			  struct rt_ell_internal *ell,
 			  const char *attribute,
 			  fastf_t sf,
 			  int rflag);
 
 /* defined in scale_epa.c */
-GED_EXPORT extern int _ged_scale_epa(struct ged *gedp,
+extern int _ged_scale_epa(struct ged *gedp,
 			  struct rt_epa_internal *epa,
 			  const char *attribute,
 			  fastf_t sf,
 			  int rflag);
 
 /* defined in scale_eto.c */
-GED_EXPORT extern int _ged_scale_eto(struct ged *gedp,
+extern int _ged_scale_eto(struct ged *gedp,
 			  struct rt_eto_internal *eto,
 			  const char *attribute,
 			  fastf_t sf,
 			  int rflag);
 
 /* defined in scale_extrude.c */
-GED_EXPORT extern int _ged_scale_extrude(struct ged *gedp,
+extern int _ged_scale_extrude(struct ged *gedp,
 			      struct rt_extrude_internal *extrude,
 			      const char *attribute,
 			      fastf_t sf,
 			      int rflag);
 
 /* defined in scale_hyp.c */
-GED_EXPORT extern int _ged_scale_hyp(struct ged *gedp,
+extern int _ged_scale_hyp(struct ged *gedp,
 			  struct rt_hyp_internal *hyp,
 			  const char *attribute,
 			  fastf_t sf,

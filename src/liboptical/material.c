@@ -1,7 +1,7 @@
 /*                      M A T E R I A L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -142,7 +142,7 @@ load_dynamic_shader(const char *material)
 	bu_log("load_dynamic_shader(\"%s\")\n", material);
 
     if (sizeof(mat_fname) <= strlen(material)) {
-	bu_log("shader name too long \"%s\" %zu > %lu\n",
+	bu_log("shader name too long \"%s\" %zu > %zu\n",
 	       material, strlen(material), sizeof(mat_fname));
 	return (struct mfuncs *)NULL;
     }

@@ -1,0 +1,76 @@
+This is an experimental alternate Parser implementation, with a view to facilitating the integration
+of Part21 and Part28 exchange structures with other schema (such as AP203, AP214 and AP242).
+
+The idea is to build a base Part21 parser implementation implemented using Ply (such as the one you
+can now find in SCL.Part21 in this branch).
+
+Exp2Python would be enhanced to subclass this parser and implement parser rules based on Part21
+type / parameter mapping of schemas.
+
+Exp2Python output Entity classes would be minimal, implementing all calculated attributes and
+automatic type conversion from Part21 parameter types to the schema defined types.  DERIVED
+attributes would be implemented in the output class (as they are now).
+
+Validating and non-validating versions of the parser would be generated.
+
+For the validating parser all type checking / compatibility would be implemented by parser rules and
+callbacks.  Callbacks would be run after the first parser run, or sooner if a way could be found to
+trigger them when appropriate.
+
+Some pseudo code is given below (see comments):
+
+import SCL.Part21
+
+# entity classes would be fully implemented by exp2python
+class RepresentationItem:
+    def __init__(self, name):
+        pass
+
+# complete implementation not shown here!
+class GeometricRepresentationItem(RepresentationItem):
+    def __init__(self, name):
+        RepresentationItem.__init__(self, name)
+
+class Curve(GeometricRepresentationItem):
+    def __init__(self, name):
+        GeometricRepresentationItem.__init__(self, name)
+
+class Conic(Curve):
+    def __init__(self, name, position):
+        Curve.__init__(self, name, position)
+
+class Circle(Conic):
+    def __init__(self, name, position, radius):
+        Conic.__init__(self, name, position, radius)
+        
+
+class AP203Parser(SCL.Part21.Parser):
+    entities = ['ABSORBED_DOSE_MEASURE_WITH_UNIT',
+                'ABSORBED_DOSE_UNIT',
+                ...,
+                'AXIS1_PLACEMENT',
+                'AXIS2_PLACEMENT_2D',
+                'AXIS2_PLACEMENT_3D',
+                ...,
+                'CIRCLE',
+                'CIRCULAR_RUNOUT_TOLERANCE',
+                'YEAR_MONTH',
+                ...,
+                'ZONE_STRUCTURAL_MAKEUP']
+
+    def __init__(self, ...):
+        SCL.Part21.Parser.__init__(self)
+        # schema entities would be passed to the underlying lexer to facilitate exact rule matches
+        self.lexer.register_entities(self.entities)    
+    
+    # validating form
+    def p_circle_entity(self, p):
+        r"""simple_record : CIRCLE '(' STRING ',' ENTITY_INSTANCE_NAME ',' REAL ')'"""
+        p[0] = Circle(p[3], p[5], p[7])
+        self.add_instance_validation(p[5], lambda x: isinstance(x, Axis2Placement))
+
+    # non validating form
+    def p_circle_entity(self, p):
+        r"""simple_record : CIRCLE '(' parameter_list ')'"""
+        p[0] = Circle(*p[3])
+    

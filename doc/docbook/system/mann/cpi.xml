@@ -48,7 +48,7 @@
     </para>
     <example><title>Copy an existing TGC shape to a new TGC shape.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>cpi tgc_a tgc_b</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>cpi tgc_a tgc_b</userinput></para>
       <para>
 	Copies <emphasis>tgc_a</emphasis> to <emphasis>tgc_b</emphasis> and translates
 	<emphasis>tgc_b</emphasis> to the end of <emphasis>tgc_a</emphasis>.

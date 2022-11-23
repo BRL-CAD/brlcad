@@ -1,7 +1,7 @@
 /*                   	P C _ T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -113,7 +113,7 @@ main(int argc, char **argv)
 
     /* Todo: Free pcs parametric set */
 
-    wdb_close(fp);
+    db_close(fp->dbip);
 
     return 0;
 }

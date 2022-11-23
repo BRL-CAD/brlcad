@@ -1,7 +1,7 @@
 /*                           W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2021 United States Government as represented by
+ * Copyright (c) 1988-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -345,6 +345,17 @@ WDB_EXPORT extern int mk_ars(struct rt_wdb *fp, const char *name, size_t ncurves
  * wdb_put_internal.  Only supported on database version 5 or above
  */
 WDB_EXPORT extern int mk_constraint(struct rt_wdb *wdbp, const char *name, const char *expr);
+
+
+WDB_EXPORT extern int mk_material(struct rt_wdb *wdbp,
+                                    const char *db_name,
+                                    const char *name,
+                                    const char *parent,
+                                    const char *source,
+                                    struct bu_attribute_value_set *physicalProperties,
+                                    struct bu_attribute_value_set *mechanicalProperties,
+                                    struct bu_attribute_value_set *opticalProperties,
+                                    struct bu_attribute_value_set *thermalProperties);
 
 
 /* FIXME: are the variable-sized types actually necessary?  should be

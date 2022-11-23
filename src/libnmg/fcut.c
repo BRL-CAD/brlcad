@@ -1,7 +1,7 @@
 /*                      N M G _ F C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2021 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,8 +49,8 @@
 #include "vmath.h"
 #include "bu/malloc.h"
 #include "bu/sort.h"
-#include "bn/plane.h"
-#include "bn/plot3.h"
+#include "bg/plane.h"
+#include "bv/plot3.h"
 #include "nmg.h"
 
 #define PLOT_BOTH_FACES 1
@@ -211,7 +211,7 @@ struct loop_cuts {
 };
 
 #if 0
-HIDDEN int
+static int
 nmg_face_state_transition(struct nmg_ray_state *rs,
 			  int pos,
 			  int multi,
@@ -229,7 +229,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs,
  * For now, a bubble-sort is used, because the list should not have more
  * than a few hundred entries on it.
  */
-HIDDEN void
+static void
 ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t dist_tol)
 /* table of vertexuses on intercept line */
 /* unused? */
@@ -248,7 +248,7 @@ ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t d
 	    fastf_t dist;
 
 	    NMG_CK_VERTEXUSE(vu[i]);
-	    dist = bn_dist_line3_pnt3(pt, dir, vu[i]->v_p->vg_p->coord);
+	    dist = bg_dist_line3_pnt3(pt, dir, vu[i]->v_p->vg_p->coord);
 	    if (dist > dist_tol) {
 		bu_log("WARNING ptbl_vsort() vu=%p point off line by %e %g*tol, tol=%e\n",
 		       (void *)vu[i], dist,
@@ -489,7 +489,7 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
     /* in==0 "prev" is really next, so this is departing vec */
     VSUB2(vec, prev_eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord);
 
-    ang = bn_angle_measure(vec, x_dir, y_dir);
+    ang = bg_angle_measure(vec, x_dir, y_dir);
     if (nmg_debug&NMG_DEBUG_VU_SORT)
 	bu_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*RAD2DEG);
 
@@ -536,7 +536,7 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
 }
 
 
-HIDDEN int
+static int
 nmg_is_v_on_rs_list(const struct nmg_ray_state *rs, const struct vertex *v)
 {
     register int i;
@@ -559,7 +559,7 @@ nmg_is_v_on_rs_list(const struct nmg_ray_state *rs, const struct vertex *v)
  * Even if there are edges which loop around to the same vertex
  * (with a different vertexuse), that (0-length) edge is ON the ray.
  */
-HIDDEN int
+static int
 nmg_assess_eu(struct edgeuse *eu, int forw, struct nmg_ray_state *rs, int pos)
 {
     struct vertex *v;
@@ -718,7 +718,7 @@ out:
 }
 
 
-HIDDEN int
+static int
 nmg_assess_vu(struct nmg_ray_state *rs, int pos)
 {
     struct vertexuse *vu;
@@ -771,8 +771,8 @@ nmg_assess_vu(struct nmg_ray_state *rs, int pos)
 
 	    /* See how far off the line they are */
 	    bu_log("vu dist=%e, next dist=%e, tol=%e\n",
-		   bn_dist_line3_pnt3(rs->pt, rs->dir, this_eu->vu_p->v_p->vg_p->coord),
-		   bn_dist_line3_pnt3(rs->pt, rs->dir, prev->vu_p->v_p->vg_p->coord),
+		   bg_dist_line3_pnt3(rs->pt, rs->dir, this_eu->vu_p->v_p->vg_p->coord),
+		   bg_dist_line3_pnt3(rs->pt, rs->dir, prev->vu_p->v_p->vg_p->coord),
 		   rs->tol->dist);
 	    bu_bomb("nmg_assess_vu() ON/ON edgeuse ends on different vertices.\n");
 	}
@@ -819,7 +819,7 @@ static const char *nmg_wedgeclass_string[] = {
 };
 
 
-HIDDEN void
+static void
 nmg_pr_vu_stuff(const struct nmg_vu_stuff *vs)
 {
     bu_log("nmg_pr_vu_stuff(%p) vu=%p, loop_index=%d, lsp=%p\n",
@@ -831,24 +831,6 @@ nmg_pr_vu_stuff(const struct nmg_vu_stuff *vs)
 	   WEDGECLASS2STR(vs->wedge_class));
 }
 
-
-/**
- * 0 degrees is to the rear (ON_REV), 90 degrees is to the RIGHT,
- * 180 is ON_FORW, 270 is to the LEFT.
- * Determine if the given wedge is entirely to the left or right of
- * the ray, or if it crosses.
- *
- * "halfway X" (ha, hb) have these properties:
- * < 0 (==> X < 180) RIGHT
- * > 0 (==> X > 180) LEFT
- *	==0	(==> X == 180) ON_FORW
- *
- * Returns -
- * WEDGE_LEFT
- * WEDGE_CROSSING
- * WEDGE_RIGHT
- * WEDGE_ON
- */
 int
 nmg_wedge_class(int ass, double a, double b)
 /* assessment of two edges forming wedge */
@@ -951,7 +933,7 @@ static const char *nmg_wedge2_string[] = {
  * WEDGE2_TOUCH_AT_BC AB touches CD at BC, but does not overlap
  * WEDGE2_TOUCH_AT_DA CD touches AB at DA, but does not overlap
  */
-HIDDEN int
+static int
 nmg_compare_2_wedges(double a, double b, double c, double d)
 {
     double t;
@@ -1100,7 +1082,7 @@ out:
  * the current best "candidate" so far,
  * and "this", the current one being considered.
  */
-HIDDEN int
+static int
 nmg_find_vu_in_wedge(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *skip_array)
 
 /* vu index of coincident range */
@@ -1224,7 +1206,7 @@ out:
  * 1 if wedge should be processed before cross
  * 0 if cross should be processed before wedge
  */
-HIDDEN int
+static int
 nmg_is_wedge_before_cross(const struct nmg_vu_stuff *wedge, const struct nmg_vu_stuff *cross)
 {
     int class2;
@@ -1288,7 +1270,7 @@ nmg_is_wedge_before_cross(const struct nmg_vu_stuff *wedge, const struct nmg_vu_
 #define A_LT_B {ret = -1; goto out;}
 #define AB_EQUAL {ret = 0; goto out;}
 #define A_GT_B {ret = 1; goto out;}
-HIDDEN int
+static int
 nmg_face_vu_compare(const void *aa, const void *bb, void *UNUSED(arg))
 {
     register const struct nmg_vu_stuff *a = (const struct nmg_vu_stuff *)aa;
@@ -1432,7 +1414,7 @@ out:
  * the vertexuse's into sequence by "angle" along the ray direction,
  * starting with the vertexuse that the ray first encounters.
  */
-HIDDEN void
+static void
 nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_ray_state *rs, int ass)
 {
     struct edgeuse *this_eu;
@@ -1503,7 +1485,7 @@ nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_r
  * 1 Loops were cut or joined, need to reclassify everything
  * at this vertexuse.
  */
-HIDDEN int
+static int
 nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *exclude, struct bu_list *vlfree, const struct bn_tol *tol)
 
 /* vu index of coincident range */
@@ -1525,7 +1507,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	FILE *fp;
 	struct model *m;
 	long *b;
-	struct bn_vlblock *vbp;
+	struct bv_vlblock *vbp;
 	static int num = 0;
 
 	bu_log("nmg_special_wedge_processing(start=%d, end=%d, lo=%g, hi=%g, wclass=%s)\n",
@@ -1535,8 +1517,8 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 
 	/* Plot all the loops that touch here. */
 	m = nmg_find_model((uint32_t *)vs[start].vu);
-	b = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]");
-	vbp = bn_vlblock_init(vlfree, 32);
+	b = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]");
+	vbp = bv_vlblock_init(vlfree, 32);
 	for (i=start; i < end; i++) {
 	    struct loopuse *lu;
 	    lu = nmg_find_lu_of_vu(vs[i].vu);
@@ -1550,11 +1532,11 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	}
 	sprintf(buf, "wedge%d.plot3", num++);
 	fp = fopen(buf, "wb");
-	bn_plot_vlblock(fp, vbp);
+	bv_plot_vlblock(fp, vbp);
 	fclose(fp);
 	bu_log("wrote %s\n", buf);
-	nmg_free((char *)b, "nmg_special_wedge_processing flag[]");
-	bn_vlblock_free(vbp);
+	bu_free((char *)b, "nmg_special_wedge_processing flag[]");
+	bv_vlblock_free(vbp);
     }
 
     if (end-start >= 128) bu_bomb("nmg_special_wedge_processing: array overflow\n");
@@ -1613,8 +1595,8 @@ again_inner:
 	new_lu = nmg_cut_loop(vs[outer_wedge].vu, vs[inner_wedge].vu, vlfree);
 	NMG_CK_LOOPUSE(new_lu);
 	NMG_CK_LOOPUSE(inner_lu);
-	nmg_loop_g(inner_lu->l_p, tol);
-	nmg_loop_g(new_lu->l_p, tol);
+	nmg_loop_a(inner_lu->l_p, tol);
+	nmg_loop_a(new_lu->l_p, tol);
 	nmg_lu_reorient(inner_lu);
 	nmg_lu_reorient(new_lu);
 	return 1;		/* cutjoin was done */
@@ -1634,7 +1616,7 @@ again_inner:
 	    bu_log("joining loops\n");
 	vs[inner_wedge].vu = nmg_join_2loops(vs[outer_wedge].vu,
 					     vs[inner_wedge].vu);
-	nmg_loop_g(outer_lu->l_p, tol);
+	nmg_loop_a(outer_lu->l_p, tol);
 	return 1;		/* cutjoin was done */
     }
 
@@ -1655,7 +1637,7 @@ again_inner:
 
     vs[inner_wedge].vu = nmg_join_2loops(vs[outer_wedge].vu,
 					 vs[inner_wedge].vu);
-    nmg_loop_g(outer_lu->l_p, tol);
+    nmg_loop_a(outer_lu->l_p, tol);
     return 1;		/* cutjoin was done */
 }
 
@@ -1664,7 +1646,7 @@ again_inner:
  * Given co-incident vertexuses (same distance along the ray),
  * sort them into the "proper" order for driving the state machine.
  */
-HIDDEN int
+static int
 nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end, struct bu_list *vlfree)
 
 /* first index */
@@ -1687,9 +1669,9 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end, struct
     NMG_CK_RAYSTATE(rs);
 
     num = end - start;
-    vs = (struct nmg_vu_stuff *)nmg_malloc(sizeof(struct nmg_vu_stuff)*num,
+    vs = (struct nmg_vu_stuff *)bu_malloc(sizeof(struct nmg_vu_stuff)*num,
 					  "nmg_vu_stuff");
-    ls = (struct nmg_loop_stuff *)nmg_malloc(sizeof(struct nmg_loop_stuff)*num,
+    ls = (struct nmg_loop_stuff *)bu_malloc(sizeof(struct nmg_loop_stuff)*num,
 					    "nmg_loop_stuff");
 
 top:
@@ -1856,8 +1838,8 @@ top:
 	}
     }
 
-    nmg_free((char *)vs, "nmg_vu_stuff");
-    nmg_free((char *)ls, "nmg_loop_stuff");
+    bu_free((char *)vs, "nmg_vu_stuff");
+    bu_free((char *)ls, "nmg_loop_stuff");
 
     if (nmg_debug&NMG_DEBUG_VU_SORT)
 	bu_log("nmg_face_coincident_vu_sort(, %d, %d) END, ret=%d\n", start, end, start+nvu);
@@ -1901,7 +1883,7 @@ nmg_sanitize_fu(struct faceuse *fu)
  * make this happen;  see the comments in nmg_inter.c for details, or
  * Mike's notes "The 'Left' Vector Choice" dated 27-Aug-93, page 1.
  */
-HIDDEN void
+static void
 nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, struct edge_g_lseg *eg, const struct bn_tol *tol)
 
 /* table of vertexuses in fu1 on intercept line */
@@ -2010,7 +1992,7 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
  *
  * See the comments in nmg_radial_join_eu() for the rationale.
  */
-HIDDEN void
+static void
 nmg_edge_geom_isect_line(struct edgeuse *eu, struct nmg_ray_state *rs, const char *reason)
 {
     register struct edge_g_lseg *eg;
@@ -2069,7 +2051,7 @@ out:
 }
 #endif
 
-HIDDEN struct bu_ptbl *
+static struct bu_ptbl *
 find_loop_to_cut(int *index1, int *index2, size_t prior_start, size_t prior_end, size_t next_start, size_t next_end, fastf_t *mid_pt, struct nmg_ray_state *rs, struct bu_list *vlfree)
 {
     struct loopuse *lu1, *lu2;
@@ -2415,7 +2397,7 @@ find_loop_to_cut(int *index1, int *index2, size_t prior_start, size_t prior_end,
 }
 
 
-HIDDEN fastf_t
+static fastf_t
 nmg_eu_angle(struct edgeuse *eu, struct vertex *vp)
 {
     struct faceuse *fu;
@@ -2448,7 +2430,7 @@ nmg_eu_angle(struct edgeuse *eu, struct vertex *vp)
 }
 
 
-HIDDEN int
+static int
 find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *rs, struct bu_list *vlfree)
 {
     struct edgeuse *eu;
@@ -2579,7 +2561,7 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
     return best_index;
 }
 
-HIDDEN void
+static void
 #if PLOT_BOTH_FACES
 nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *vlfree)
 #else
@@ -2760,8 +2742,8 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 		/* make intersection edges real */
 		new_eu1->e_p->is_real = 1;
 
-		nmg_loop_g(lu1->l_p, rs->tol);
-		nmg_loop_g(new_lu->l_p, rs->tol);
+		nmg_loop_a(lu1->l_p, rs->tol);
+		nmg_loop_a(new_lu->l_p, rs->tol);
 
 		nmg_lu_reorient(lu1);
 		nmg_lu_reorient(new_lu);
@@ -2787,7 +2769,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 		rs->vu[prior_end-1-cut_no] = eu_tmp->vu_p;
 	    }
 	    bu_ptbl_free(cuts);
-	    nmg_free((char *)cuts, "cuts");
+	    bu_free((char *)cuts, "cuts");
 
 	    continue;
 	}
@@ -2805,7 +2787,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	    /* make intersection edges real */
 	    new_eu1->e_p->is_real = 1;
 
-	    nmg_loop_g(lu1->l_p, rs->tol);
+	    nmg_loop_a(lu1->l_p, rs->tol);
 	    lu1->orientation = OT_SAME;
 	    lu1->lumate_p->orientation = OT_SAME;
 
@@ -2839,7 +2821,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	    /* make intersection edges real */
 	    new_eu1->e_p->is_real = 1;
 
-	    nmg_loop_g(lu2->l_p, rs->tol);
+	    nmg_loop_a(lu2->l_p, rs->tol);
 	    lu2->orientation = orient2;
 	    lu2->lumate_p->orientation = orient2;
 
@@ -2877,7 +2859,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	    /* make intersection edges real */
 	    new_eu1->e_p->is_real = 1;
 
-	    nmg_loop_g(lu1->l_p, rs->tol);
+	    nmg_loop_a(lu1->l_p, rs->tol);
 	    lu1->orientation = orient1;
 	    lu1->lumate_p->orientation = orient1;
 
@@ -2910,7 +2892,7 @@ nmg_fcut_face(struct nmg_ray_state *rs, struct bu_list *UNUSED(vlfree))
 	    /* make intersection edges real */
 	    new_eu1->e_p->is_real = 1;
 
-	    nmg_loop_g(lu1->l_p, rs->tol);
+	    nmg_loop_a(lu1->l_p, rs->tol);
 
 	    if (nmg_debug&NMG_DEBUG_FCUT) {
 		bu_log("\t join 2 loops\n");
@@ -2967,7 +2949,7 @@ nmg_unlist_v(struct bu_ptbl *b, fastf_t *mag, struct vertex *v)
  *
  * Must be called after vu list has been sorted.
  */
-HIDDEN int
+static int
 nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fastf_t *mag, fastf_t *omag)
 
 
@@ -3375,7 +3357,7 @@ static const struct state_transitions nmg_state_is_in[17] = {
  * Modifications to the NMG shell being operated on.
  * Updated state etc. in nmg_ray_state structure.
  */
-HIDDEN int
+static int
 nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int other_rs_state, struct bu_list *vlfree)
 {
     int assessment;
@@ -3643,7 +3625,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 	    /* Fusing to this new edge will happen in nmg_face_cutjoin() */
 
 	    /* Recompute loop geometry.  Bounding box may have expanded */
-	    nmg_loop_g(nmg_find_lu_of_vu(rs->vu[pos])->l_p, rs->tol);
+	    nmg_loop_a(nmg_find_lu_of_vu(rs->vu[pos])->l_p, rs->tol);
 
 	    if (nmg_debug&NMG_DEBUG_FCUT) {
 		bu_log("After LONE_V_JAUNT, the final loop:\n");
@@ -3708,8 +3690,8 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 		    if (old_eu) nmg_radial_join_eu(old_eu, first_new_eu, rs->tol);
 		}
 
-		nmg_loop_g(lu->l_p, rs->tol);
-		nmg_loop_g(prev_lu->l_p, rs->tol);
+		nmg_loop_a(lu->l_p, rs->tol);
+		nmg_loop_a(prev_lu->l_p, rs->tol);
 
 		nmg_lu_reorient(lu);
 		nmg_lu_reorient(prev_lu);
@@ -3787,7 +3769,7 @@ nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int othe
 	    }
 
 	    /* Recompute loop geometry.  Bounding box may have expanded */
-	    nmg_loop_g(lu->l_p, rs->tol);
+	    nmg_loop_a(lu->l_p, rs->tol);
 
 	    if (nmg_debug&NMG_DEBUG_FCUT) {
 		bu_log("After JOIN, the final loop:\n");

@@ -1,19 +1,12 @@
 #define IN_LIBEXSLT
 #include "libexslt/libexslt.h"
 
-#if defined(WIN32) && !defined (__CYGWIN__) && (!__MINGW32__)
-#include <win32config.h>
-#else
-#include "config.h"
-#endif
-
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 #include <libxml/parser.h>
 #include <libxml/hash.h>
 
-#include <libxslt/xsltconfig.h>
 #include <libxslt/xsltutils.h>
 #include <libxslt/xsltInternals.h>
 #include <libxslt/extensions.h>
@@ -29,10 +22,16 @@
  *
  * Returns the data for this transformation
  */
-static xmlHashTablePtr
+static void *
 exsltSaxonInit (xsltTransformContextPtr ctxt ATTRIBUTE_UNUSED,
 		const xmlChar *URI ATTRIBUTE_UNUSED) {
     return xmlHashCreate(1);
+}
+
+static void
+exsltSaxonFreeCompExprEntry(void *payload,
+                            const xmlChar *name ATTRIBUTE_UNUSED) {
+    xmlXPathFreeCompExpr((xmlXPathCompExprPtr) payload);
 }
 
 /**
@@ -46,8 +45,9 @@ exsltSaxonInit (xsltTransformContextPtr ctxt ATTRIBUTE_UNUSED,
 static void
 exsltSaxonShutdown (xsltTransformContextPtr ctxt ATTRIBUTE_UNUSED,
 		    const xmlChar *URI ATTRIBUTE_UNUSED,
-		    xmlHashTablePtr data) {
-    xmlHashFree(data, (xmlHashDeallocator) xmlXPathFreeCompExpr);
+		    void *vdata) {
+    xmlHashTablePtr data = (xmlHashTablePtr) vdata;
+    xmlHashFree(data, exsltSaxonFreeCompExprEntry);
 }
 
 
@@ -98,12 +98,10 @@ exsltSaxonExpressionFunction (xmlXPathParserContextPtr ctxt, int nargs) {
     ret = xmlHashLookup(hash, arg);
 
     if (ret == NULL) {
-	 ret = xmlXPathCompile(arg);
+	 ret = xmlXPathCtxtCompile(tctxt->xpathCtxt, arg);
 	 if (ret == NULL) {
 	      xmlFree(arg);
-	      xsltGenericError(xsltGenericErrorContext,
-			"{%s}:%s: argument is not an XPath expression\n",
-			ctxt->context->functionURI, ctxt->context->function);
+              xmlXPathSetError(ctxt, XPATH_EXPR_ERROR);
 	      return;
 	 }
 	 xmlHashAddEntry(hash, arg, (void *) ret);
@@ -147,6 +145,10 @@ exsltSaxonEvalFunction (xmlXPathParserContextPtr ctxt, int nargs) {
      expr = (xmlXPathCompExprPtr) xmlXPathPopExternal(ctxt);
 
      ret = xmlXPathCompiledEval(expr, ctxt->context);
+     if (ret == NULL) {
+	  xmlXPathSetError(ctxt, XPATH_EXPR_ERROR);
+	  return;
+     }
 
      valuePush(ctxt, ret);
 }
@@ -180,10 +182,36 @@ exsltSaxonEvaluateFunction (xmlXPathParserContextPtr ctxt, int nargs) {
 }
 
 /**
+ * exsltSaxonSystemIdFunction:
+ * @ctxt:  an XPath parser context
+ * @nargs: number of arguments
+ *
+ * Implements the SAXON systemId() function
+ *     string saxon:systemId ()
+ * This function returns the system ID of the document being styled.
+ */
+static void
+exsltSaxonSystemIdFunction(xmlXPathParserContextPtr ctxt, int nargs)
+{
+    if (ctxt == NULL)
+        return;
+    if (nargs != 0) {
+        xmlXPathSetArityError(ctxt);
+        return;
+    }
+
+    if ((ctxt->context) && (ctxt->context->doc) &&
+        (ctxt->context->doc->URL))
+	valuePush(ctxt, xmlXPathNewString(ctxt->context->doc->URL));
+    else
+	valuePush(ctxt, xmlXPathNewString(BAD_CAST ""));
+}
+
+/**
  * exsltSaxonLineNumberFunction:
  * @ctxt:  an XPath parser context
  * @nargs: number of arguments
- * 
+ *
  * Implements the SAXON line-number() function
  *     integer saxon:line-number()
  *
@@ -201,11 +229,12 @@ exsltSaxonEvaluateFunction (xmlXPathParserContextPtr ctxt, int nargs) {
 static void
 exsltSaxonLineNumberFunction(xmlXPathParserContextPtr ctxt, int nargs) {
     xmlNodePtr cur = NULL;
+    xmlXPathObjectPtr obj = NULL;
+    long lineNo = -1;
 
     if (nargs == 0) {
 	cur = ctxt->context->node;
     } else if (nargs == 1) {
-	xmlXPathObjectPtr obj;
 	xmlNodeSetPtr nodelist;
 	int i;
 
@@ -218,18 +247,14 @@ exsltSaxonLineNumberFunction(xmlXPathParserContextPtr ctxt, int nargs) {
 
 	obj = valuePop(ctxt);
 	nodelist = obj->nodesetval;
-	if ((nodelist == NULL) || (nodelist->nodeNr <= 0)) {
-	    xmlXPathFreeObject(obj);
-	    valuePush(ctxt, xmlXPathNewFloat(-1));
-	    return;
-	}
-	cur = nodelist->nodeTab[0];
-	for (i = 1;i < nodelist->nodeNr;i++) {
-	    int ret = xmlXPathCmpNodes(cur, nodelist->nodeTab[i]);
-	    if (ret == -1)
-		cur = nodelist->nodeTab[i];
-	}
-	xmlXPathFreeObject(obj);
+	if ((nodelist != NULL) && (nodelist->nodeNr > 0)) {
+            cur = nodelist->nodeTab[0];
+            for (i = 1;i < nodelist->nodeNr;i++) {
+                int ret = xmlXPathCmpNodes(cur, nodelist->nodeTab[i]);
+                if (ret == -1)
+                    cur = nodelist->nodeTab[i];
+            }
+        }
     } else {
 	xsltTransformError(xsltXPathGetTransformContext(ctxt), NULL, NULL,
 		"saxon:line-number() : invalid number of args %d\n",
@@ -238,8 +263,26 @@ exsltSaxonLineNumberFunction(xmlXPathParserContextPtr ctxt, int nargs) {
 	return;
     }
 
-    valuePush(ctxt, xmlXPathNewFloat(xmlGetLineNo(cur)));
-    return;
+    if ((cur != NULL) && (cur->type == XML_NAMESPACE_DECL)) {
+        /*
+        * The XPath module sets the owner element of a ns-node on
+        * the ns->next field.
+        */
+        cur = (xmlNodePtr) ((xmlNsPtr) cur)->next;
+        if (cur == NULL || cur->type != XML_ELEMENT_NODE) {
+            xsltGenericError(xsltGenericErrorContext,
+                "Internal error in exsltSaxonLineNumberFunction: "
+                "Cannot retrieve the doc of a namespace node.\n");
+            cur = NULL;
+        }
+    }
+
+    if (cur != NULL)
+        lineNo = xmlGetLineNo(cur);
+
+    valuePush(ctxt, xmlXPathNewFloat(lineNo));
+
+    xmlXPathFreeObject(obj);
 }
 
 /**
@@ -250,8 +293,8 @@ exsltSaxonLineNumberFunction(xmlXPathParserContextPtr ctxt, int nargs) {
 void
 exsltSaxonRegister (void) {
      xsltRegisterExtModule (SAXON_NAMESPACE,
-			    (xsltExtInitFunction) exsltSaxonInit,
-			    (xsltExtShutdownFunction) exsltSaxonShutdown);
+			    exsltSaxonInit,
+			    exsltSaxonShutdown);
      xsltRegisterExtModuleFunction((const xmlChar *) "expression",
 				   SAXON_NAMESPACE,
 				   exsltSaxonExpressionFunction);
@@ -264,4 +307,7 @@ exsltSaxonRegister (void) {
     xsltRegisterExtModuleFunction ((const xmlChar *) "line-number",
 				   SAXON_NAMESPACE,
 				   exsltSaxonLineNumberFunction);
+    xsltRegisterExtModuleFunction ((const xmlChar *) "systemId",
+				   SAXON_NAMESPACE,
+				   exsltSaxonSystemIdFunction);
 }

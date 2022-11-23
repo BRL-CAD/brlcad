@@ -1,7 +1,7 @@
 /*                         E A C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,9 +43,9 @@ ged_eac_core(struct ged *gedp, int argc, const char *argv[])
     int lim;
     static const char *usage = "air_code(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -64,7 +64,7 @@ ged_eac_core(struct ged *gedp, int argc, const char *argv[])
 	if (item < 1)
 	    continue;
 
-	FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
 	    struct rt_db_internal intern;
 	    struct rt_comb_internal *comb;
 
@@ -73,9 +73,9 @@ ged_eac_core(struct ged *gedp, int argc, const char *argv[])
 
 	    bu_vls_printf(gedp->ged_result_str, "%s: looking at %s\n", argv[0], dp->d_namep);
 
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    if (comb->region_id != 0
@@ -98,14 +98,14 @@ ged_eac_core(struct ged *gedp, int argc, const char *argv[])
 
 	new_argv = (char **)bu_calloc(lim+1, sizeof(char *), "ged_eac_core: new_argv");
 	new_argc = bu_argv_from_string(new_argv, lim, bu_vls_addr(&v));
-	retval = ged_draw(gedp, new_argc, (const char **)new_argv);
+	retval = ged_exec(gedp, new_argc, (const char **)new_argv);
 	bu_free((void *)new_argv, "ged_eac_core: new_argv");
 	bu_vls_free(&v);
 	return retval;
     }
 
     bu_vls_free(&v);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

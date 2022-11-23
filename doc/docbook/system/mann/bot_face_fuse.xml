@@ -41,7 +41,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>bot_face_fuse bot1_fused bot1_original</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>bot_face_fuse bot1_fused bot1_original</userinput></term>
 	  <listitem>
 	    <para>
 	      Eliminates any duplicate faces from the primitive named

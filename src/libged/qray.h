@@ -1,7 +1,7 @@
 /*                          Q R A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2021 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ struct qray_dataList {
 /* defined in qray.c */
 GED_EXPORT extern void qray_init(struct ged_drawable *gdp);
 GED_EXPORT extern void qray_free(struct ged_drawable *gdp);
-GED_EXPORT extern void qray_data_to_vlist(struct ged *gdp, struct bn_vlblock *vbp, struct qray_dataList *headp, vect_t dir, int do_overlaps);
+GED_EXPORT extern void qray_data_to_vlist(struct ged *gdp, struct bv_vlblock *vbp, struct qray_dataList *headp, vect_t dir, int do_overlaps);
 
 #endif
 

@@ -1,7 +1,7 @@
 /*                       G E T _ A T T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2021 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ Get_att()
 	    Readname(&str, "");
 	    if (!bu_strncmp(str, "BRLCAD", 6) || !bu_strncmp(str, "BRL-CAD", 7)) {
 		/* this is what we have been looking for */
-		brlcad_att_de = 2*i+1;
+		brlcad_att_de = (int)i*2+1;
 		return;
 	    }
 	}

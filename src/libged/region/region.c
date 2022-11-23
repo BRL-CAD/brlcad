@@ -1,7 +1,7 @@
 /*                         R E G I O N . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,9 +42,9 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
     db_op_t oper;
     static const char *usage = "reg_name <op obj ...>";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -57,30 +57,31 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    ident = gedp->ged_wdbp->wdb_item_default;
-    air = gedp->ged_wdbp->wdb_air_default;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    ident = wdbp->wdb_item_default;
+    air = wdbp->wdb_air_default;
 
     /* Check for even number of arguments */
     if (argc & 01) {
 	bu_vls_printf(gedp->ged_result_str, "error in number of args!");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* will attempt to create the region */
-	if (gedp->ged_wdbp->wdb_item_default) {
-	    gedp->ged_wdbp->wdb_item_default++;
+	if (wdbp->wdb_item_default) {
+	    wdbp->wdb_item_default++;
 	    bu_vls_printf(gedp->ged_result_str, "Defaulting item number to %d\n",
-			  gedp->ged_wdbp->wdb_item_default);
+			  wdbp->wdb_item_default);
 	}
     }
 
     /* Get operation and solid name for each solid */
     for (i = 2; i < argc; i += 2) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "skipping %s\n", argv[i+1]);
 	    continue;
 	}
@@ -98,18 +99,18 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (_ged_combadd(gedp, dp, (char *)argv[1], 1, oper, ident, air) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "error in combadd");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* failed to create region */
-	if (gedp->ged_wdbp->wdb_item_default > 1)
-	    gedp->ged_wdbp->wdb_item_default--;
-	return GED_ERROR;
+	if (wdbp->wdb_item_default > 1)
+	    wdbp->wdb_item_default--;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

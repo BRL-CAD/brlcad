@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2021 United States Government as represented by
+ * Copyright (c) 1988-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,13 +57,15 @@
 
 #include "vmath.h"
 #include "bu/endian.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "bn.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
 #include "./fb_X.h"
 #include "./dm-X.h"
 
-#include "rt/solid.h"
+#include "bv/defines.h"
 
 #include "../include/private.h"
 
@@ -78,6 +80,13 @@ extern void X_allocate_color_cube(Display *, Colormap, long unsigned int *, int,
 extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, long unsigned int *, int);
 
 
+struct X_mvars {
+    int zclip;
+    double bound;
+    int boundFlag;
+};
+
+
 struct allocated_colors {
     struct bu_list l;
     int r;
@@ -87,7 +96,7 @@ struct allocated_colors {
 };
 
 
-HIDDEN void
+static void
 get_color(Display *dpy, Colormap cmap, XColor *color)
 {
     Status st;
@@ -142,7 +151,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 }
 
 
-HIDDEN int
+static int
 X_reshape(struct dm *dmp, int width, int height)
 {
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
@@ -157,7 +166,7 @@ X_reshape(struct dm *dmp, int width, int height)
     return 0;
 }
 
-HIDDEN int
+static int
 X_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
 {
     XEvent *eventPtr= (XEvent *)veventPtr;
@@ -170,7 +179,7 @@ X_doevent(struct dm *dmp, void *UNUSED(vclientData), void *veventPtr)
     return TCL_OK;
 }
 
-HIDDEN int
+static int
 X_configureWin_guts(struct dm *dmp, int force)
 {
     XWindowAttributes xwa;
@@ -292,7 +301,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 }
 
 
-HIDDEN XVisualInfo *
+static XVisualInfo *
 X_choose_visual(struct dm *dmp)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
@@ -388,7 +397,7 @@ X_choose_visual(struct dm *dmp)
 /*
  * Gracefully release the display.
  */
-HIDDEN int
+static int
 X_close(struct dm *dmp)
 {
     struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
@@ -420,6 +429,7 @@ X_close(struct dm *dmp)
     bu_vls_free(&dmp->i->dm_pathName);
     bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_dName);
+    bu_free((void *)dmp->i->m_vars, "X_close: m_vars");
     bu_free((void *)dmp->i->dm_vars.priv_vars, "X_close: x_vars");
     bu_free((void *)dmp->i->dm_vars.pub_vars, "X_close: dm_Xvars");
     bu_free((void *)dmp->i, "X_close: dmp->i");
@@ -444,7 +454,7 @@ X_viable(const char *dpy_string)
  *
  */
 struct dm *
-X_open(void *vinterp, int argc, const char **argv)
+X_open(void *UNUSED(ctx), void *vinterp, int argc, const char **argv)
 {
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
     static int count = 0;
@@ -478,6 +488,7 @@ X_open(void *vinterp, int argc, const char **argv)
 
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_ALLOC(dmpi, struct dm_impl);
 
@@ -490,6 +501,12 @@ X_open(void *vinterp, int argc, const char **argv)
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct x_vars);
     privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+
+    BU_ALLOC(dmp->i->m_vars, struct X_mvars);
+    struct X_mvars *m_vars = (struct X_mvars *)dmp->i->m_vars;
+    m_vars->zclip = 0;
+    m_vars->bound = PLOTBOUND;
+    m_vars->boundFlag = 1;
 
     bu_vls_init(&dmp->i->dm_pathName);
     bu_vls_init(&dmp->i->dm_tkName);
@@ -789,7 +806,7 @@ Skip_dials:
 }
 
 
-HIDDEN int
+static int
 X_drawBegin(struct dm *dmp)
 {
     XGCValues gcv;
@@ -820,7 +837,7 @@ X_drawBegin(struct dm *dmp)
 }
 
 
-HIDDEN int
+static int
 X_drawEnd(struct dm *dmp)
 {
     struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
@@ -847,7 +864,7 @@ X_drawEnd(struct dm *dmp)
  * Load a new Model matrix.  This will be followed by many
  * calls to X_draw().
  */
-HIDDEN int
+static int
 X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
@@ -870,11 +887,11 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 
-HIDDEN int
-X_drawVList(struct dm *dmp, struct bn_vlist *vp)
+static int
+X_drawVList(struct dm *dmp, struct bv_vlist *vp)
 {
     static vect_t spnt, lpnt, pnt;
-    struct bn_vlist *tvp;
+    struct bv_vlist *tvp;
     XSegment segbuf[1024];	/* XDrawSegments list */
     XSegment *segp;		/* current segment */
     int nseg;		        /* number of segments */
@@ -886,6 +903,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
     static int nvectors = 0;
     struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct X_mvars *m_vars = (struct X_mvars *)dmp->i->m_vars;
 
     /* delta is used in clipping to insure clipped endpoint is
      * slightly in front of eye plane (perspective mode only).  This
@@ -899,7 +917,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     nseg = 0;
     segp = segbuf;
-    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
 	int i;
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
@@ -913,24 +931,24 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	/* Integerize and let the X server do the clipping */
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    switch (*cmd) {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_POLY_VERTNORM:
-		case BN_VLIST_TRI_START:
-		case BN_VLIST_TRI_VERTNORM:
+		case BV_VLIST_POLY_START:
+		case BV_VLIST_POLY_VERTNORM:
+		case BV_VLIST_TRI_START:
+		case BV_VLIST_TRI_VERTNORM:
 		    continue;
-		case BN_VLIST_MODEL_MAT:
+		case BV_VLIST_MODEL_MAT:
 		    privars->xmat = &(privars->mod_mat[0]);
 		    continue;
-		case BN_VLIST_DISPLAY_MAT:
+		case BV_VLIST_DISPLAY_MAT:
 		    MAT4X3PNT(tlate, privars->mod_mat, *pt);
 		    privars->disp_mat[3] = tlate[0];
 		    privars->disp_mat[7] = tlate[1];
 		    privars->disp_mat[11] = tlate[2];
 		    privars->xmat = &(privars->disp_mat[0]);
 		    continue;
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_TRI_MOVE:
+		case BV_VLIST_POLY_MOVE:
+		case BV_VLIST_LINE_MOVE:
+		case BV_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->i->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -959,11 +977,11 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    lpnt[1] *= 2047 * dmp->i->dm_aspect;
 		    lpnt[2] *= 2047;
 		    continue;
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_TRI_DRAW:
-		case BN_VLIST_TRI_END:
+		case BV_VLIST_POLY_DRAW:
+		case BV_VLIST_POLY_END:
+		case BV_VLIST_LINE_DRAW:
+		case BV_VLIST_TRI_DRAW:
+		case BV_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->i->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
@@ -1044,7 +1062,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
 		    }
 
-		    if (dmp->i->dm_zclip) {
+		    if (m_vars->zclip) {
 			if (vclip(lpnt, pnt,
 				  dmp->i->dm_clipmin,
 				  dmp->i->dm_clipmax) == 0) {
@@ -1100,7 +1118,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			segp = segbuf;
 		    }
 		    break;
-		case BN_VLIST_POINT_DRAW:
+		case BV_VLIST_POINT_DRAW:
 		    if (dmp->i->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
 			bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
@@ -1150,7 +1168,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			XFillArc(pubvars->dpy, privars->pix, privars->gc, upperLeft[X], upperLeft[Y], pointSize, pointSize, 0, 360*64);
 		    }
 		    break;
-		case BN_VLIST_POINT_SIZE:
+		case BV_VLIST_POINT_SIZE:
 		    pointSize = (*pt)[0];
 		    if (pointSize < DM_X_DEFAULT_POINT_SIZE) {
 			pointSize = DM_X_DEFAULT_POINT_SIZE;
@@ -1181,13 +1199,13 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-HIDDEN int
-X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+static int
+X_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
 {
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
     if (!callback_function) {
 	if (data) {
-	    vp = (struct bn_vlist *)data;
+	    vp = (struct bv_vlist *)data;
 	    X_drawVList(dmp, vp);
 	}
     } else {
@@ -1201,12 +1219,17 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **dat
 }
 
 
-/**
- * Restore the display processor to a normal mode of operation (i.e.,
- * not scaled, rotated, displaced, etc.).
- */
-HIDDEN int
-X_normal(struct dm *dmp)
+static int
+X_hud_begin(struct dm *dmp)
+{
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_normal()\n");
+
+    return BRLCAD_OK;
+}
+
+static int
+X_hud_end(struct dm *dmp)
 {
     if (dmp->i->dm_debugLevel)
 	bu_log("X_normal()\n");
@@ -1215,11 +1238,12 @@ X_normal(struct dm *dmp)
 }
 
 
+
 /**
  * Output a string into the displaylist.  The starting position of the
  * beam is as specified.
  */
-HIDDEN int
+static int
 X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
@@ -1250,7 +1274,7 @@ X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, 
 }
 
 
-HIDDEN int
+static int
 X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 {
     int sx1, sy1, sx2, sy2;
@@ -1279,14 +1303,14 @@ X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 }
 
 
-HIDDEN int
+static int
 X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
     return draw_Line3D(dmp, pt1, pt2);
 }
 
 
-HIDDEN int
+static int
 X_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
@@ -1296,7 +1320,7 @@ X_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 }
 
 
-HIDDEN int
+static int
 X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     int sx, sy;
@@ -1320,7 +1344,7 @@ X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 }
 
 
-HIDDEN int
+static int
 X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     XGCValues gcv;
@@ -1362,8 +1386,11 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
 }
 
 
-HIDDEN int
-X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+static int
+X_setBGColor(struct dm *dmp,
+	unsigned char r, unsigned char g, unsigned char b,
+	unsigned char UNUSED(r2), unsigned char UNUSED(g2), unsigned char UNUSED(b2)
+	)
 {
     struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
@@ -1371,9 +1398,9 @@ X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     if (dmp->i->dm_debugLevel)
 	bu_log("X_setBGColor()\n");
 
-    dmp->i->dm_bg[0] = r;
-    dmp->i->dm_bg[1] = g;
-    dmp->i->dm_bg[2] = b;
+    dmp->i->dm_bg1[0] = r;
+    dmp->i->dm_bg1[1] = g;
+    dmp->i->dm_bg1[2] = b;
 
     if (privars->is_trueColor) {
 	XColor color;
@@ -1397,7 +1424,7 @@ X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 }
 
 
-HIDDEN int
+static int
 X_setLineAttr(struct dm *dmp, int width, int style)
 {
     int linestyle;
@@ -1426,7 +1453,7 @@ X_setLineAttr(struct dm *dmp, int width, int style)
 }
 
 
-HIDDEN int
+static int
 X_debug(struct dm *dmp, int lvl)
 {
     dmp->i->dm_debugLevel = lvl;
@@ -1435,7 +1462,7 @@ X_debug(struct dm *dmp, int lvl)
 }
 
 
-HIDDEN int
+static int
 X_logfile(struct dm *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->i->dm_log, "%s", filename);
@@ -1444,7 +1471,7 @@ X_logfile(struct dm *dmp, const char *filename)
 }
 
 
-HIDDEN int
+static int
 X_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     if (dmp->i->dm_debugLevel)
@@ -1460,8 +1487,79 @@ X_setWinBounds(struct dm *dmp, fastf_t *w)
     return BRLCAD_OK;
 }
 
+static int
+X_setZClip(struct dm *dmp, int zclip)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
 
-HIDDEN int
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_setZClip");
+
+    mvars->zclip = zclip;
+
+    return BRLCAD_OK;
+}
+
+static int
+X_getZClip(struct dm *dmp)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_getZClip");
+
+    return mvars->zclip;
+}
+
+static int
+X_setBound(struct dm *dmp, double bound)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_setBound");
+
+    mvars->bound = bound;
+
+    return BRLCAD_OK;
+}
+
+static double
+X_getBound(struct dm *dmp)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_getBound");
+
+    return mvars->bound;
+}
+
+static int
+X_setBoundFlag(struct dm *dmp, int bound)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_setBoundFlag");
+
+    mvars->boundFlag = bound;
+
+    return BRLCAD_OK;
+}
+
+static int
+X_getBoundFlag(struct dm *dmp)
+{
+    struct X_mvars *mvars = (struct X_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("X_getBoundFlag");
+
+    return mvars->boundFlag;
+}
+
+static int
 X_configureWin(struct dm *dmp, int force)
 {
     /* don't force */
@@ -1469,32 +1567,8 @@ X_configureWin(struct dm *dmp, int force)
 }
 
 
-HIDDEN int
-X_setLight(struct dm *dmp, int light_on)
-{
-    if (dmp->i->dm_debugLevel)
-	bu_log("X_setLight:\n");
-
-    dmp->i->dm_light = light_on;
-
-    return BRLCAD_OK;
-}
-
-
-HIDDEN int
-X_setZBuffer(struct dm *dmp, int zbuffer_on)
-{
-    if (dmp->i->dm_debugLevel)
-	bu_log("X_setZBuffer:\n");
-
-    dmp->i->dm_zbuffer = zbuffer_on;
-
-    return BRLCAD_OK;
-}
-
-
-HIDDEN int
-X_getDisplayImage(struct dm *dmp, unsigned char **image)
+static int
+X_getDisplayImage(struct dm *dmp, unsigned char **image, int flip, int alpha)
 {
     XImage *ximage_p;
     unsigned char **rows;
@@ -1512,6 +1586,15 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image)
     int green_bits;
     int blue_bits;
 
+    if (flip) {
+	bu_log("X: flipping unimplemented for this backend\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (alpha) {
+	bu_log("X: alpha support unimplemented for this backend\n");
+	return BRLCAD_ERROR;
+    }
 
     ximage_p = XGetImage(((struct dm_Xvars *)dmp->i->dm_vars.pub_vars)->dpy,
 			 ((struct dm_Xvars *)dmp->i->dm_vars.pub_vars)->win,
@@ -1729,11 +1812,11 @@ X_openFb(struct dm *dmp)
     return 0;
 }
 
+#define X_MV_O(_m) offsetof(struct X_mvars, _m)
 struct bu_structparse X_vparse[] = {
-    {"%g",  1, "bound",         DM_O(dm_bound),         dm_generic_hook, NULL, NULL},
-    {"%d",  1, "useBound",      DM_O(dm_boundFlag),     dm_generic_hook, NULL, NULL},
-    {"%d",  1, "zclip",         DM_O(dm_zclip),         dm_generic_hook, NULL, NULL},
-    {"%d",  1, "debug",         DM_O(dm_debugLevel),    dm_generic_hook, NULL, NULL},
+    {"%g",  1, "bound",         X_MV_O(bound),          dm_generic_hook, NULL, NULL},
+    {"%d",  1, "useBound",      X_MV_O(boundFlag),      dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         X_MV_O(zclip),          dm_generic_hook, NULL, NULL},
     {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
@@ -2075,10 +2158,13 @@ struct dm_impl dm_X_impl = {
     X_viable,
     X_drawBegin,
     X_drawEnd,
-    X_normal,
+    X_hud_begin,
+    X_hud_end,
     X_loadMatrix,
     null_loadPMatrix,
+    null_popPMatrix,
     X_drawString2D,
+    null_String2DBBox,
     X_drawLine2D,
     X_drawLine3D,
     X_drawLines3D,
@@ -2087,6 +2173,7 @@ struct dm_impl dm_X_impl = {
     null_drawPoints3D,
     X_drawVList,
     X_drawVList,
+    null_draw_obj,
     NULL,
     X_draw,
     X_setFGColor,
@@ -2094,10 +2181,19 @@ struct dm_impl dm_X_impl = {
     X_setLineAttr,
     X_configureWin,
     X_setWinBounds,
-    X_setLight,
+    null_setLight,
+    null_getLight,
     null_setTransparency,
+    null_getTransparency,
     null_setDepthMask,
-    X_setZBuffer,
+    null_setZBuffer,
+    null_getZBuffer,
+    X_setZClip,
+    X_getZClip,
+    X_setBound,
+    X_getBound,
+    X_setBoundFlag,
+    X_getBoundFlag,
     X_debug,
     X_logfile,
     null_beginDList,
@@ -2109,6 +2205,7 @@ struct dm_impl dm_X_impl = {
     X_getDisplayImage, /* display to image function */
     X_reshape,
     null_makeCurrent,
+    null_SwapBuffers,
     X_doevent,
     X_openFb,
     NULL,
@@ -2126,8 +2223,6 @@ struct dm_impl dm_X_impl = {
     "Tk",                       /* uses Tk graphics system */
     0,				/* no displaylist */
     0,                          /* no stereo */
-    PLOTBOUND,			/* zoom-in limit */
-    1,				/* bound flag */
     "X",
     "X Window System (X11)",
     1, /* top */
@@ -2147,25 +2242,24 @@ struct dm_impl dm_X_impl = {
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* bg1 color */
+    {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
     0,				/* depth buffer is not writable */
-    0,				/* no zbuffer */
-    0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
     X_vparse,
     FB_NULL,
-    0				/* Tcl interpreter */
+    0,				/* Tcl interpreter */
+    NULL,                       /* Drawing context */
+    NULL                        /* App data */
 };
 
-struct dm dm_X = { DM_MAGIC, &dm_X_impl };
+struct dm dm_X = { DM_MAGIC, &dm_X_impl, 0 };
 
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_X };

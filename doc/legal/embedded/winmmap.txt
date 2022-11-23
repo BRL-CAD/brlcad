@@ -4,3 +4,4 @@ Author: Mike Frysinger <vapier@gentoo.org>
 Placed into the public domain
 
 file:/src/libbu/mappedfile.c
+

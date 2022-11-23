@@ -1,0 +1,23 @@
+string(REPLACE "\\" "" LICENSE_CHECK_EXEC "${EXEC}")
+set(FILES_LIST "@DIST_LIST@")
+set(LICENSE_FILE_SET "@LICENSE_LIST@")
+set(LOGFILE "@LOG_FILE@")
+
+file(WRITE ${LOGFILE} "Running other_license check:\n${LICENSE_CHECK_EXEC} ${LICENSE_FILE_SET} ${FILES_LIST}\n")
+execute_process(
+  COMMAND "${LICENSE_CHECK_EXEC}" "${LICENSE_FILE_SET}" "${FILES_LIST}"
+  RESULT_VARIABLE license_result OUTPUT_VARIABLE license_log ERROR_VARIABLE license_log
+  )
+
+if(license_result)
+  file(APPEND ${LOGFILE} "${license_log}\n")
+  file(READ "${LOGFILE}" LOG)
+  message(FATAL_ERROR "[other_license check] Failure: ${license_result} - see details in log file: ${LOGFILE}\n${LOG}")
+endif(license_result)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

@@ -1,7 +1,7 @@
 /*                      M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -119,8 +119,10 @@ test_bn_matXvec(int argc, char *argv[])
 static int
 test_bn_mat_inverse(int argc, char *argv[])
 {
-    mat_t m, expected, actual;
-    int singular;
+    mat_t m = MAT_INIT_ZERO;
+    mat_t expected = MAT_INIT_ZERO;
+    mat_t actual = MAT_INIT_ZERO;
+    int singular = 0;
 
     sscanf(argv[2], "%d", &singular);
     if ((argc == 4 && !singular) || (argc != 4 && argc != 5)) {

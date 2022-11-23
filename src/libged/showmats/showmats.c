@@ -1,7 +1,7 @@
 /*                         S H O W M A T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,8 +92,8 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, parent, LOOKUP_NOISY)) == RT_DIR_NULL)
-	    return GED_ERROR;
+	if ((dp = db_lookup(gedp->dbip, parent, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    return BRLCAD_ERROR;
 
 	if (!aflag)
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", parent);
@@ -104,22 +104,22 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 	    break;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	sm_data.smd_count = 0;
 
 	if (comb->tree)
-	    db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_showmats,
+	    db_tree_funcleaf(gedp->dbip, comb, comb->tree, Do_showmats,
 			     (void *)&sm_data, (void *)&aflag, (void *)NULL, (void *)NULL);
 	rt_db_free_internal(&intern);
 
 	if (!sm_data.smd_count) {
 	    bu_vls_printf(gedp->ged_result_str, "%s is not a member of %s\n", sm_data.smd_child, parent);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (sm_data.smd_count > max_count)
 	    max_count = sm_data.smd_count;
@@ -146,7 +146,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 	    bu_vls_printf(gedp->ged_result_str, " %lf", sm_data.smd_mat[i]);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -156,8 +156,8 @@ ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
     int aflag = 0;
     static const char *usage = "path";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -173,7 +173,7 @@ ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
 	++argv;
     } else if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return Run_showmats(gedp, argv[1], aflag);

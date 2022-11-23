@@ -1,7 +1,7 @@
 /*                         G L O B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@
 /**
  * unescapes various special characters
  */
-HIDDEN void
+static void
 _debackslash(struct bu_vls *dest, struct bu_vls *src)
 {
     char *ptr;
@@ -61,7 +61,7 @@ _debackslash(struct bu_vls *dest, struct bu_vls *src)
 /**
  * escapes various special characters
  */
-HIDDEN void
+static void
 _backslash_specials(struct bu_vls *dest, struct bu_vls *src)
 {
     int backslashed;
@@ -88,7 +88,7 @@ _backslash_specials(struct bu_vls *dest, struct bu_vls *src)
     }
 }
 
-HIDDEN int
+static int
 _ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, int flags)
 {
     char *start, *end;          /* Start and ends of words */
@@ -108,7 +108,7 @@ _ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, 
 
     src = bu_strdup(input);
 
-    start = end = src;
+    end = src;
     while (*end != '\0') {
 	/* Run through entire string */
 
@@ -209,7 +209,7 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Silently return */
     if (gedp == GED_NULL)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     /* Initialize result. This behavior is depended upon by mged - apparently
      * the interpretation is that if no database is open, all expressions match
@@ -217,8 +217,8 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* No database to match against, so return. */
-    if (gedp->ged_wdbp == RT_WDB_NULL || gedp->ged_wdbp->dbip == DBI_NULL)
-	return GED_OK;
+    if (gedp->dbip == DBI_NULL)
+	return BRLCAD_OK;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -228,14 +228,14 @@ ged_glob_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
-    (void)_ged_expand_str_glob(gedp->ged_result_str, argv[1], gedp->ged_wdbp->dbip, flags);
+    (void)_ged_expand_str_glob(gedp->ged_result_str, argv[1], gedp->dbip, flags);
 
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

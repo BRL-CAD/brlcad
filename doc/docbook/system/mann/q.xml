@@ -38,7 +38,7 @@ This is a synonym for the <command>quit</command> command.
   <example><title>Quit MGED</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>q</userinput>
+      <prompt>mged&gt; </prompt><userinput>q</userinput>
     </para>
     <para>The current MGED session is ended.
 

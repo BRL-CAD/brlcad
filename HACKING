@@ -899,7 +899,7 @@ binaries in the path/to/builddir/src/libbu/tests build directory.
 A profile build, useful for some types of performance inspection
 (e.g., gprof) but not enabled by default, may be specified via:
 
-   cmake .. -DBRLCAD_ENABLE_PROFILING=ON
+   cmake .. -DBRLCAD_PROFILING=ON
 
 Debug symbols are enabled by default, even for installation, for all
 libraries and binaries in order to facilitate diagnosing and
@@ -1036,6 +1036,12 @@ responsibility of the contributor that introduced the change to assist
 in resolving the issue promptly.  It is the responsibility of all
 developers to address issues as they are encountered regardless of who
 introduces the problem.
+
+To assist developers in these efforts,  BRL-CAD utilizes Continuous
+Integration (CI) testing via the Github Actions infrastructure to
+monitor code health:  https://github.com/BRL-CAD/brlcad/actions
+Under normal conditions, all developers should strive to keep all
+Github Actions tests passing.
 
 3) Contributors making commits to the repository are required to
 uphold the legal conventions and requirements summarized in the
@@ -1224,7 +1230,7 @@ or data corruption issue involved.  That said, binary releases may be
 re-posted with a modified name per the convention described in VERSION
 NUMBERS & COMPATIBILITY.
 
-Example:  BRL-CAD-7.12.2.dmg is superseded by BRL-CAD-7.12.2-1.dmg
+Example:  BRL-CAD_7.12.2.dmg is superseded by BRL-CAD_7.12.2-1.dmg
 
 Older binary releases may be moved to the hidden attic folder, though
 not necessary or recommended except where critical vulnerabilities are
@@ -1366,7 +1372,7 @@ Release steps are as follows:
     TODO - if we want GNU style changelogs, more work will be needed
     as there's not an out of the box solution...
 
-    LAST=`grep -E "\--- [0-9]{4}-[0-9]{2}-[0-9]{2}" NEWS | head -n 2 | tail -n 1 | awk '{print $2}'`
+    LAST=`grep -E "\--- [0-9]{4}-[0-9X]{2}-[0-9X]{2}" NEWS | head -n 2 | tail -n 1 | awk '{print $2}'`
     echo "LAST=$LAST"
     git log --since=$LAST > ChangeLog
     git add ChangeLog

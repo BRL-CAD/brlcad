@@ -1,7 +1,7 @@
 /*                          C L I P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #define CLIP_DISTANCE 100000000.0
 
 
-HIDDEN int
+static int
 code(fastf_t x, fastf_t y)
 {
     int cval;

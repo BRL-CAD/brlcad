@@ -1,7 +1,7 @@
 /*                  S H _ T R E E T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -143,10 +143,10 @@ struct bu_structparse tthrm_parse[] = {
 };
 
 
-HIDDEN int tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void tthrm_print(register struct region *rp, void *dp);
-HIDDEN void tthrm_free(void *cp);
+static int tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int tthrm_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void tthrm_print(register struct region *rp, void *dp);
+static void tthrm_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -216,7 +216,7 @@ build_tree(struct bu_list *br, struct region *rp)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
-HIDDEN int
+static int
 tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
@@ -325,7 +325,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 	    }
 	    break;
 	default:
-	    bu_log("a long int is %lu bytes on this machine\n", sizeof(long));
+	    bu_log("a long int is %zu bytes on this machine\n", sizeof(long));
 	    bu_bomb("I can only handle 4 or 8 byte longs\n");
 	    break;
     }
@@ -456,7 +456,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 }
 
 
-HIDDEN void
+static void
 tthrm_print(register struct region *UNUSED(rp), void *dp)
 {
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)dp;
@@ -466,13 +466,12 @@ tthrm_print(register struct region *UNUSED(rp), void *dp)
 }
 
 
-HIDDEN void
+static void
 tthrm_free(void *cp)
 {
     struct tthrm_specific *tthrm_sp = (struct tthrm_specific *)cp;
 
     bu_free(tthrm_sp->tt_segs, "thermal segs");
-    bu_free(tthrm_sp->tt_name, "bu_vls_strdup");
 
     tthrm_sp->tt_segs = (struct thrm_seg *)NULL;
     tthrm_sp->tt_name[0] = '\0';

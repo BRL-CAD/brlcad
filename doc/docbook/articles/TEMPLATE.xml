@@ -82,14 +82,14 @@
         <imageobject role="html">
           <!--
                NOTE: fileref will normally be something like
-               "../../articles/images/nirt_fig02.png" NOT http: URL
+               "../articles/images/nirt_fig02.png" NOT http: URL
                -->
           <imagedata align="center" fileref="http://brlcad.org/images/logo/BRL-CAD_gear_logo_w_name_256.png" format="PNG" width="256"/>
         </imageobject>
         <imageobject role="fo">
           <!--
                NOTE: fileref will normally be something like
-               "../../articles/images/nirt_fig02.png" NOT http: URL
+               "../articles/images/nirt_fig02.png" NOT http: URL
                -->
           <imagedata align="center" fileref="http://brlcad.org/images/logo/BRL-CAD_gear_logo_w_name_256.png" format="PNG" width="256"/>
         </imageobject>

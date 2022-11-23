@@ -1,7 +1,7 @@
 /*                         F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -157,7 +157,7 @@ bu_file_size(const char *path)
 
 
 #ifdef HAVE_GETFULLPATHNAME
-HIDDEN int
+static int
 file_compare_info(HANDLE handle1, HANDLE handle2)
 {
     BOOL got1 = FALSE, got2 = FALSE;
@@ -266,7 +266,7 @@ bu_file_same(const char *fn1, const char *fn2)
  * the current user has the ability permission-wise to access the
  * specified file.
  */
-HIDDEN int
+static int
 file_access(const char *path, int access_level)
 {
     struct stat sb;
@@ -404,7 +404,7 @@ int
 bu_file_delete(const char *path)
 {
     int ret = 0;
-    int fd = 0;
+    int fd = -1;
     struct stat sb;
 
     /* reject empty, special, or non-existent paths */
@@ -429,7 +429,9 @@ bu_file_delete(const char *path)
     }
 #endif
 
-    if (!bu_file_exists(path, &fd)) {
+    if (!bu_file_exists(path, &fd) || fd == -1) {
+	if (fd > -1)
+	    close(fd);
 	return 1;
     }
 

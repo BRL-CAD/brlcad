@@ -1,7 +1,7 @@
 /*                         S U M M A R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ summary_dir(struct ged *gedp,
 
     sol = comb = reg = 0;
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & RT_DIR_SOLID)
 		sol++;
 	    if (dp->d_flags & RT_DIR_COMB) {
@@ -72,14 +72,14 @@ summary_dir(struct ged *gedp,
     /* Print all names matching the flags parameter */
     /* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
 
-    dirp = _ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
+    dirp = _ged_dir_getspace(gedp->dbip, 0);
     dirp0 = dirp;
     /*
      * Walk the directory list adding pointers (to the directory entries
      * of interest) to the array
      */
     for (i = 0; i < RT_DBNHASH; i++)
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    if (dp->d_flags & flag)
 		*dirp++ = dp;
 
@@ -95,20 +95,20 @@ ged_summary_core(struct ged *gedp, int argc, const char *argv[])
     int flags = 0;
     static const char *usage = "[p r g]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc == 1) {
 	summary_dir(gedp, 0);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     if (2 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     cp = (char *)argv[1];
@@ -125,12 +125,12 @@ ged_summary_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "%s:  p, r or g are the only valid parameters\n", argv[0]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
     summary_dir(gedp, flags);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

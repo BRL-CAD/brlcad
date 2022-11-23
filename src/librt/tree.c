@@ -1,7 +1,7 @@
 /*                          T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2021 United States Government as represented by
+ * Copyright (c) 1995-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@
     }
 
 
-HIDDEN void
+static void
 _rt_tree_region_assign(union tree *tp, const struct region *regionp)
 {
     RT_CK_TREE(tp);
@@ -104,7 +104,7 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
 /**
  * This routine must be prepared to run in parallel.
  */
-HIDDEN int
+static int
 _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, void *UNUSED(client_data))
 {
     if (tsp) {
@@ -141,7 +141,7 @@ struct gettree_data
  * Therefore, everything which referred to the tree has been moved out
  * into the serial section.  (_rt_tree_region_assign, rt_bound_tree)
  */
-HIDDEN union tree *
+static union tree *
 _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct region *rp;
@@ -196,7 +196,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	rp->reg_mater.ma_shader = (char *)NULL;
 
     rp->reg_name = db_path_to_string(pathp);
-
 
     if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	bu_log("_rt_gettree_region_end() %s\n", rp->reg_name);
@@ -305,7 +304,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
  * will be using the same hash, and will thus wait for the proper
  * semaphore.
  */
-HIDDEN struct soltab *
+static struct soltab *
 _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rtip)
 {
     struct soltab *stp = RT_SOLTAB_NULL;
@@ -439,7 +438,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
 /**
  * This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *
+static union tree *
 _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
     struct gettree_data *data;
@@ -474,7 +473,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 	/* Not identity matrix */
 	mat = (matp_t)tsp->ts_mat;
     } else {
-	/* Identity matrix */
+	/* 0 == identity matrix */
 	mat = (matp_t)0;
     }
 
@@ -504,11 +503,6 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 
     stp->st_id = ip->idb_type;
     stp->st_meth = &OBJ[ip->idb_type];
-    if (mat) {
-	mat = stp->st_matp;
-    } else {
-	mat = (matp_t)bn_mat_identity;
-    }
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -712,14 +706,14 @@ _rt_tree_kill_dead_solid_refs(union tree *tp)
 
 
 int
-rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
+rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
 {
     struct soltab *stp;
     struct region *regp;
     struct bu_hash_tbl *tbl;
 
     size_t prev_sol_count;
-    int i;
+    int ret = 0;
     int num_attrs=0;
     point_t region_min, region_max;
 
@@ -780,12 +774,39 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 	    data.cache = rt_cache_open();
 	}
 
-	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
-			 &tree_state,
-			 _rt_gettree_region_start,
-			 _rt_gettree_region_end,
-			 _rt_gettree_leaf, (void *)&data);
-	bu_avs_free(&tree_state.ts_attrs);
+	if (UNLIKELY(rtip->rti_dbip->dbi_use_comb_instance_ids)) {
+	    struct bu_ptbl pos_paths = BU_PTBL_INIT_ZERO;
+	    for (int i = 0; i < argc; i++) {
+		struct db_full_path ifp;
+		db_full_path_init(&ifp);
+		db_string_to_path(&ifp, rtip->rti_dbip, argv[i]);
+		if (db_fp_op(&ifp, rtip->rti_dbip, 0, &rt_uniresource) == OP_UNION) {
+		    bu_ptbl_ins(&pos_paths, (long *)argv[i]);
+		}
+		db_free_full_path(&ifp);
+	    }
+	    int ac = (int)BU_PTBL_LEN(&pos_paths);
+	    const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&pos_paths)+1, sizeof(const char *), "av");
+	    for (size_t i = 0; i < BU_PTBL_LEN(&pos_paths); i++) {
+		av[i] = (const char *)BU_PTBL_GET(&pos_paths, i);
+	    }
+	    bu_ptbl_free(&pos_paths);
+
+	    ret = db_walk_tree(rtip->rti_dbip, ac, av, ncpus,
+		    &tree_state,
+		    _rt_gettree_region_start,
+		    _rt_gettree_region_end,
+		    _rt_gettree_leaf, (void *)&data);
+	    bu_avs_free(&tree_state.ts_attrs);
+	    bu_free(av, "av");
+	} else {
+	    ret = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
+		    &tree_state,
+		    _rt_gettree_region_start,
+		    _rt_gettree_region_end,
+		    _rt_gettree_leaf, (void *)&data);
+	    bu_avs_free(&tree_state.ts_attrs);
+	}
 
 	if (rtip->rti_dbip->dbi_version > 4) {
 	    rt_cache_close(data.cache);
@@ -872,21 +893,13 @@ again:
 	db_ck_tree(regp->reg_treetop);
     }
 
-    if (i < 0)
-	return i;
+    if (ret < 0)
+	return ret;
 
     if (rtip->nsolids <= prev_sol_count)
 	bu_log("rt_gettrees(%s) warning:  no primitives found\n", argv[0]);
-    return 0;	/* OK */
+    return ret;	/* OK */
 }
-
-
-int
-rt_gettrees_and_attrs(struct rt_i *rtip, const char **attrs, int argc, const char **argv, int ncpus)
-{
-    return rt_gettrees_muves(rtip, attrs, argc, argv, ncpus);
-}
-
 
 int
 rt_gettree(struct rt_i *rtip, const char *node)

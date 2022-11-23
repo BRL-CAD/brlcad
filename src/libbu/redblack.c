@@ -1,7 +1,7 @@
 /*                           R B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -376,7 +376,7 @@ void rb_rot_right (struct bu_rb_node *y, int order)
  * implementation of the routine RB-DELETE-FIXUP on p. 274 of Cormen
  * et al. (p. 326 in the paperback version of the 2009 edition).
  */
-HIDDEN void
+static void
 _rb_fixup(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
 {
     int direction;
@@ -435,7 +435,7 @@ _rb_fixup(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
  * as the nil node pointer. rb_extreme() returns a pointer to the
  * extreme node.
  */
-HIDDEN struct bu_rb_node *
+static struct bu_rb_node *
 _rb_extreme(struct bu_rb_node *root, int order, int sense, struct bu_rb_node *empty_node)
 {
     struct bu_rb_node *child;
@@ -504,7 +504,7 @@ rb_neighbor(struct bu_rb_node *node, int order, int sense)
  * implementation of the routine RB-DELETE on p. 273 of Cormen et
  * al. (p. 324 in the paperback version of the 2009 edition).
  */
-HIDDEN void
+static void
 _rb_delete(struct bu_rb_tree *tree, struct bu_rb_node *node, int order)
 {
     struct bu_rb_node *y;		/* The node to splice out */
@@ -604,7 +604,7 @@ static int d_order;	/* Used by describe_node() */
  * depth in the tree.  _rb_describe_node() is intended to be called by
  * bu_rb_diagnose_tree().
  */
-HIDDEN void
+static void
 _rb_describe_node(struct bu_rb_node *node, int depth)
 {
     struct bu_rb_tree *tree;
@@ -633,7 +633,7 @@ _rb_describe_node(struct bu_rb_node *node, int depth)
 /**
  * Perform a preorder traversal of a red-black tree
  */
-HIDDEN void
+static void
 prewalknodes(struct bu_rb_node *root,
 	     int order,
 	     void (*visit)(void),
@@ -660,7 +660,7 @@ prewalknodes(struct bu_rb_node *root,
 /**
  * Perform an inorder traversal of a red-black tree
  */
-HIDDEN void
+static void
 inwalknodes(struct bu_rb_node *root,
 	    int order,
 	    void (*visit)(void),
@@ -687,7 +687,7 @@ inwalknodes(struct bu_rb_node *root,
 /**
  * Perform a postorder traversal of a red-black tree
  */
-HIDDEN void
+static void
 postwalknodes(struct bu_rb_node *root,
 	      int order,
 	      void (*visit)(void),
@@ -714,7 +714,7 @@ postwalknodes(struct bu_rb_node *root,
 /**
  * Perform a preorder traversal of a red-black tree
  */
-HIDDEN void
+static void
 prewalkdata(struct bu_rb_node *root,
 	    int order,
 	    void (*visit)(void),
@@ -741,7 +741,7 @@ prewalkdata(struct bu_rb_node *root,
 /**
  * Perform an inorder traversal of a red-black tree
  */
-HIDDEN void
+static void
 inwalkdata(struct bu_rb_node *root,
 	   int order,
 	   void (*visit)(void),
@@ -768,7 +768,7 @@ inwalkdata(struct bu_rb_node *root,
 /**
  * Perform a postorder traversal of a red-black tree
  */
-HIDDEN void
+static void
 postwalkdata(struct bu_rb_node *root,
 	     int order,
 	     void (*visit)(void),
@@ -960,7 +960,7 @@ bu_rb_curr(struct bu_rb_tree *tree, int order)
  * is equal (modulo the linear order) to a node already in the tree,
  * _rb_insert() returns 1.  Otherwise, it returns 0.
  */
-HIDDEN int
+static int
 _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
 {
     struct bu_rb_node *node;
@@ -1225,7 +1225,7 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
  * sets the specified flag to the specified value and returns the
  * previous value of the flag.
  */
-HIDDEN int
+static int
 _rb_set_uniq(struct bu_rb_tree *tree, int order, int new_value)
 {
     int prev_value;
@@ -1292,7 +1292,7 @@ bu_rb_set_uniqv(struct bu_rb_tree *tree, bitv_t flag_rep)
  * This function has two parameters: the tree, and the new value for
  * all the flags.
  */
-HIDDEN void
+static void
 _rb_set_uniq_all(struct bu_rb_tree *tree, int new_value)
 {
     int nm_orders;
@@ -1327,7 +1327,7 @@ void bu_rb_uniq_all_off(struct bu_rb_tree *tree)
  * of the routine OS-SELECT on p. 282 of Cormen et al. (p. 341 in the
  * paperback version of the 2009 edition).
  */
-HIDDEN struct bu_rb_node *
+static struct bu_rb_node *
 _rb_select(struct bu_rb_node *root, int order, int k)
 {
     int rank;
@@ -1407,7 +1407,7 @@ int bu_rb_rank(struct bu_rb_tree *tree, int order)
  * returns a pointer to the discovered node.  Otherwise, it returns
  * (tree->rbt_empty_node).
  */
-HIDDEN struct bu_rb_node *
+static struct bu_rb_node *
 _rb_search(struct bu_rb_node *root, int order_nm, int (*compare)(const void *, const void *), void *data)
 {
     int result;

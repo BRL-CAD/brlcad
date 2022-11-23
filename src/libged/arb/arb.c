@@ -1,7 +1,7 @@
 /*                         A R B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,9 +45,9 @@ ged_arb_core(struct ged *gedp, int argc, const char *argv[])
     vect_t norm1, norm2, norm3;
     static const char *usage = "name rot fb";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -60,21 +60,21 @@ ged_arb_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
 
     /* get rotation angle */
     if (sscanf(argv[2], "%lf", &rota) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad rotation angle - %s", argv[0], argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* get fallback angle */
     if (sscanf(argv[3], "%lf", &fb_a) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad fallback angle - %s", argv[0], argv[3]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     rota *= DEG2RAD;
@@ -122,10 +122,10 @@ ged_arb_core(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < 4; i++)
 	VJOIN1(arb->pt[i+4], arb->pt[i], -50.8, norm1);
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

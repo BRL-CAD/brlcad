@@ -1,7 +1,7 @@
 /*                  P L O T 3 - P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2021 United States Government as represented by
+ * Copyright (c) 1988-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -155,6 +155,8 @@ main(int argc, char **argv)
 	    verbose++;
 	} else if (BU_STR_EQUAL(argv[1], "-S")) {
 	    scale = 1;
+	} else if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
+	    bu_exit(0, "%s", usage);
 	} else
 	    break;
 

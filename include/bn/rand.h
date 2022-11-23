@@ -1,7 +1,7 @@
 /*                        R A N D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,6 +45,10 @@
  */
 /** @{ */
 /** @file rand.h */
+
+/* TODO - investigate whether it makes sense to incorporate the T258 code from
+ * ARL-TR-7928 Section 9.1 by Joseph C Collins into libbn
+ * (https://apps.dtic.mil/sti/pdfs/AD1024837.pdf) */
 
 #ifndef BN_RAND_H
 #define BN_RAND_H

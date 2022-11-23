@@ -1,7 +1,7 @@
 /*                    D B U P G R A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,10 +63,10 @@ main(int argc, char **argv)
     long errors = 0, skipped = 0;
     struct bn_tol tol;
     struct bu_vls colortab = BU_VLS_INIT_ZERO;
-    struct db_i *dbip4;
-    struct db_i *dbip;
-    struct directory *dp;
-    struct rt_wdb *fp;
+    struct db_i *dbip4 = NULL;
+    struct db_i *dbip = NULL;
+    struct directory *dp = NULL;
+    struct rt_wdb *fp = NULL;
 
     bu_setprogname(argv0);
 
@@ -245,7 +245,8 @@ main(int argc, char **argv)
 	rt_db_free_internal(&intern);
     } FOR_ALL_DIRECTORY_END
 
-	  wdb_close(fp);
+    wdb_close(fp);
+    db_close(dbip4);
     db_close(dbip);
 
     fprintf(stderr, "%ld objects failed to convert\n", errors);

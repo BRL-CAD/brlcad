@@ -1,7 +1,7 @@
 /*                         B O T _ S Y N C . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,9 +44,10 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_bot_internal *bot;
     static const char *usage = "bot [bot2 bot3 ...]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -67,11 +68,11 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
 	    obj = bu_strdup(argv[i]);
 	}
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, obj, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, obj, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: db_lookup(%s) error\n", argv[0], obj);
 	} else {
 
-	    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	    GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
 	    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 		rt_db_free_internal(&intern);
@@ -81,13 +82,13 @@ ged_bot_sync_core(struct ged *gedp, int argc, const char *argv[])
 		bot = (struct rt_bot_internal *)intern.idb_ptr;
 		rt_bot_sync(bot);
 
-		GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+		GED_DB_PUT_INTERNAL(gedp, dp, &intern, wdbp->wdb_resp, BRLCAD_ERROR);
 	    }
 	}
 	bu_free(obj, "free obj");
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

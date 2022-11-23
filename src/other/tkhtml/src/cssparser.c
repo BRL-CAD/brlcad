@@ -800,7 +800,7 @@ static int parseDeclarationBlock(CssInput *pInput, CssParse *pParse){
             char *z;
             int n;
             inputNextTokenIgnoreSpace(pInput);
-            eToken = inputGetToken(pInput, (const char **)&z, &n);
+            inputGetToken(pInput, (const char **)&z, &n);
             if (n != 9 || 0 != strnicmp("important", z, 9)) {
                 goto syntax_error;
             }

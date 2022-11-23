@@ -1,7 +1,7 @@
 /*                       G A S T A N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -801,7 +801,7 @@ main(int argc, char **argv)
     }							/* START # 2 */
 
     /* Close file. */
-    wdb_close(fpw);
+    db_close(fpw->dbip);
     return 0;
 }							/* END # 1 */
 

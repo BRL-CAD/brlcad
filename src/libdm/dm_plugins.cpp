@@ -1,7 +1,7 @@
 /*                  D M _ P L U G I N S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2021 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 #include <map>
+#include <set>
 #include <string>
 #include <cstdio>
 
@@ -36,6 +38,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/ptbl.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 
 #include "dm.h"
@@ -43,10 +46,10 @@
 
 
 extern "C" struct dm *
-dm_open(void *interp, const char *type, int argc, const char *argv[])
+dm_open(void *ctx, void *interp, const char *type, int argc, const char *argv[])
 {
     if (BU_STR_EQUIV(type, "nu") || BU_STR_EQUIV(type, "null")) {
-	return dm_null.i->dm_open(interp, argc, argv);
+	return dm_null.i->dm_open(ctx , interp, argc, argv);
     }
 
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
@@ -58,7 +61,7 @@ dm_open(void *interp, const char *type, int argc, const char *argv[])
     }
 
     const struct dm *d = d_it->second;
-    struct dm *dmp = d->i->dm_open(interp, argc, argv);
+    struct dm *dmp = d->i->dm_open(ctx, interp, argc, argv);
     return dmp;
 }
 
@@ -106,7 +109,7 @@ dm_graphics_system(const char *dmtype)
 }
 
 
-static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", NULL};
+static const char *priority_list[] = {"wgl", "ogl", "X", NULL};
 
 
 extern "C" void
@@ -121,11 +124,16 @@ dm_list_types(struct bu_vls *list, const char *separator)
 
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
 
+    std::set<std::string> checked;
+
+    /* First, do the priority list (Tcl/Tk client codes expect the reported output to be
+     * in order of "most preferred" interface */
     int i = 0;
     const char *b = priority_list[i];
     while (b) {
 	std::string key(b);
 	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
+	checked.insert(key);
 	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
 	if (d_it == dmb->end()) {
 	    i++;
@@ -142,6 +150,30 @@ dm_list_types(struct bu_vls *list, const char *separator)
 	i++;
 	b = priority_list[i];
     }
+
+    /* Report anything not included in the priority list but still available */
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    int report_swrast = 0;
+    if (BU_STR_EQUAL(cmd2, "1"))
+	report_swrast = 1;
+
+    std::map<std::string, const struct dm *>::iterator d_it;
+    for (d_it = dmb->begin(); d_it != dmb->end(); d_it++) {
+	if (checked.find(d_it->first) != checked.end()) {
+	    continue;
+	}
+	const struct dm *d = d_it->second;
+	const char *dname = dm_get_name(d);
+	if (dname) {
+	    if (BU_STR_EQUAL(dname, "swrast") && !report_swrast)
+		continue;
+	    if (strlen(bu_vls_cstr(list)) > 0)
+		bu_vls_printf(list, "%s", separator);
+	    bu_vls_printf(list, "%s", dname);
+	}
+    }
+
+    /* Null is always available */
     if (strlen(bu_vls_cstr(list)) > 0)
 	bu_vls_printf(list, "%s", separator);
     bu_vls_strcat(list, "nu");
@@ -163,6 +195,13 @@ dm_validXType(const char *dpy_string, const char *name)
     if (d_it == dmb->end()) {
 	return 0;
     }
+
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    int report_swrast = 0;
+    if (BU_STR_EQUAL(cmd2, "1"))
+	report_swrast = 1;
+    if (BU_STR_EQUAL(name, "swrast") && !report_swrast)
+	return 0;
 
     const struct dm *d = d_it->second;
     int is_valid = d->i->dm_viable(dpy_string);
@@ -260,11 +299,11 @@ dm_default_type()
 }
 
 
-extern "C" void
+extern "C" int
 fb_set_interface(struct fb *ifp, const char *interface_type)
 {
     if (!ifp)
-	return;
+	return 0;
 
     std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
     std::map<std::string, const struct fb *>::iterator f_it;
@@ -274,9 +313,11 @@ fb_set_interface(struct fb *ifp, const char *interface_type)
         if (bu_strncmp(interface_type, f->i->if_name+5, strlen(interface_type)) == 0) {
 	    /* found it, copy its struct in */
             *ifp->i = *(f->i);
-            return;
+            return 1;
         }
     }
+
+    return 0;
 }
 
 
@@ -319,7 +360,7 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
 
 
 #define Malloc_Bomb(_bytes_)                                    \
-    fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",    \
+    fb_log("\"%s\"(%d) : allocation of %zu bytes failed.\n",    \
            __FILE__, __LINE__, _bytes_)
 
 /**
@@ -438,22 +479,12 @@ fb_open(const char *file, int width, int height)
     }
 
 found_interface:
-    /* Copy over the name it was opened by. */
-    ifp->i->if_name = (char*)malloc((unsigned) strlen(file) + 1);
-    if (!ifp->i->if_name) {
-        Malloc_Bomb(strlen(file) + 1);
-        free((void *) ifp);
-        return FB_NULL;
-    }
-    bu_strlcpy(ifp->i->if_name, file, strlen(file)+1);
-
     /* Mark OK by filling in magic number */
     ifp->i->if_magic = FB_MAGIC;
 
     i = (*ifp->i->if_open)(ifp, file, width, height);
     if (i != 0) {
         ifp->i->if_magic = 0;           /* sanity */
-        free((void *) ifp->i->if_name);
         free((void *) ifp);
 
         if (i < 0)
@@ -497,12 +528,12 @@ fb_genhelp(void)
 }
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

@@ -1,7 +1,7 @@
 /*                  S I M U L A T I O N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2021 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ namespace
 const char * const attribute_prefix = "simulate::";
 
 
-HIDDEN std::string
+static std::string
 error_at(const std::string &message, const db_full_path &path)
 {
     RT_CK_FULL_PATH(&path);
@@ -61,7 +61,7 @@ error_at(const std::string &message, const db_full_path &path)
 }
 
 
-HIDDEN btRigidBody::btRigidBodyConstructionInfo
+static btRigidBody::btRigidBodyConstructionInfo
 get_rigid_body_construction_info(btMotionState &motion_state,
 				 btCollisionShape &collision_shape, const db_i &db, const btScalar mass)
 {
@@ -73,11 +73,11 @@ get_rigid_body_construction_info(btMotionState &motion_state,
     btVector3 inertia(0.0, 0.0, 0.0);
     collision_shape.calculateLocalInertia(mass, inertia);
     return btRigidBody::btRigidBodyConstructionInfo(mass, &motion_state,
-	    &collision_shape, inertia);
+						   &collision_shape, inertia);
 }
 
 
-HIDDEN std::pair<btVector3, btVector3>
+static std::pair<btVector3, btVector3>
 get_aabb(db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
@@ -146,7 +146,7 @@ get_aabb(db_i &db, const db_full_path &path)
 }
 
 
-HIDDEN btVector3
+static btVector3
 get_center_of_mass(db_i &db, const db_full_path &path)
 {
     RT_CK_DBI(&db);
@@ -159,7 +159,7 @@ get_center_of_mass(db_i &db, const db_full_path &path)
 }
 
 
-HIDDEN btVector3
+static btVector3
 deserialize_vector(const std::string &source)
 {
     std::istringstream stream(source);
@@ -189,7 +189,7 @@ struct SimulationParameters {
 
 
     static SimulationParameters get_simulation_parameters(const db_i &db,
-	    const db_full_path &path);
+							  const db_full_path &path);
 
 
     btVector3 m_gravity;
@@ -199,7 +199,7 @@ struct SimulationParameters {
 
 SimulationParameters
 SimulationParameters::get_simulation_parameters(const db_i &db,
-	const db_full_path &path)
+						const db_full_path &path)
 {
     RT_CK_DBI(&db);
     RT_CK_FULL_PATH(&path);
@@ -222,7 +222,7 @@ SimulationParameters::get_simulation_parameters(const db_i &db,
 		result.m_gravity = deserialize_vector(value);
 	    else if (!bu_strcmp(name, "grid_radius")) {
 		const long temp = simulate::lexical_cast<long>(value,
-				  error_at("invalid grid_radius", path));
+							       error_at("invalid grid_radius", path));
 
 		if (temp < 0)
 		    throw simulate::InvalidSimulationError(error_at("invalid grid_radius", path));
@@ -230,7 +230,7 @@ SimulationParameters::get_simulation_parameters(const db_i &db,
 		result.m_grid_radius = temp;
 	    } else
 		throw simulate::InvalidSimulationError(error_at(std::string() +
-						       "invalid scene attribute '" + avs.avp[i].name + "'", path));
+								"invalid scene attribute '" + avs.avp[i].name + "'", path));
 	}
 
     return result;
@@ -253,7 +253,7 @@ public:
 			      btDiscreteDynamicsWorld &world);
 
     static std::vector<const Region *> get_regions(db_i &db,
-	    const db_full_path &path, btDiscreteDynamicsWorld &world);
+						   const db_full_path &path, btDiscreteDynamicsWorld &world);
 
 
 private:
@@ -312,7 +312,7 @@ Simulation::Region::get_region(db_i &db, const db_full_path &path,
     }
 
     return new Region(db, path, world, get_aabb(db, path), get_center_of_mass(db,
-		      path), mass, linear_velocity, angular_velocity);
+									      path), mass, linear_velocity, angular_velocity);
 }
 
 
@@ -388,7 +388,7 @@ Simulation::Region::Region(db_i &db, const db_full_path &path,
 		      (aabb.first + aabb.second) / 2.0 - center_of_mass,
 		      DB_FULL_PATH_CUR_DIR(&path)->d_namep),
     m_rigid_body(get_rigid_body_construction_info(m_motion_state, m_collision_shape,
-		 db, mass))
+						  db, mass))
 {
     m_world.addRigidBody(&m_rigid_body);
 
@@ -410,7 +410,7 @@ Simulation::Simulation(db_i &db, const db_full_path &path) :
     m_collision_dispatcher(&m_collision_config),
     m_constraint_solver(),
     m_world(&m_collision_dispatcher, &m_broadphase, &m_constraint_solver,
-	    &m_collision_config),
+	   &m_collision_config),
     m_regions(Region::get_regions(db, path, m_world)),
     m_rt_instance(db)
 {
@@ -418,7 +418,7 @@ Simulation::Simulation(db_i &db, const db_full_path &path) :
     RT_CK_FULL_PATH(&path);
 
     const SimulationParameters parameters =
-	SimulationParameters::get_simulation_parameters(db, path);
+    SimulationParameters::get_simulation_parameters(db, path);
 
     m_world.setDebugDrawer(&m_debug_draw);
     m_world.setGravity(parameters.m_gravity);
@@ -427,7 +427,7 @@ Simulation::Simulation(db_i &db, const db_full_path &path) :
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
 	RtCollisionShape::RT_COLLISION_SHAPE_TYPE,
 	new RtCollisionAlgorithm::CreateFunc(m_rt_instance, parameters.m_grid_radius,
-		*m_world.getDebugDrawer()));
+					    *m_world.getDebugDrawer()));
 }
 
 
@@ -454,15 +454,15 @@ Simulation::step(const fastf_t seconds, const DebugMode debug_mode)
 
     if (debug_mode & debug_aabb)
 	m_world.getDebugDrawer()->setDebugMode(m_world.getDebugDrawer()->getDebugMode()
-					       | btIDebugDraw::DBG_DrawAabb);
+					      | btIDebugDraw::DBG_DrawAabb);
 
     if (debug_mode & debug_contact)
 	m_world.getDebugDrawer()->setDebugMode(m_world.getDebugDrawer()->getDebugMode()
-					       | btIDebugDraw::DBG_DrawContactPoints);
+					      | btIDebugDraw::DBG_DrawContactPoints);
 
     if (debug_mode & debug_ray)
 	m_world.getDebugDrawer()->setDebugMode(m_world.getDebugDrawer()->getDebugMode()
-					       | btIDebugDraw::DBG_DrawFrames);
+					      | btIDebugDraw::DBG_DrawFrames);
 
     m_world.stepSimulation(seconds, max_substeps, fixed_time_step);
     m_world.debugDrawWorld();

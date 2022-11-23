@@ -1,7 +1,7 @@
 /*                         C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ struct ged_clone_state {
     int updpos;			/* Position of number to update (for -c) */
     struct bu_vls olist;        /* List of cloned object names */
 };
-
+#define GED_CLONE_STATE_INIT {NULL, NULL, 0, 0, HINIT_ZERO, HINIT_ZERO, HINIT_ZERO, 0, 0.0, 0, BU_VLS_INIT_ZERO}
 
 struct name {
     struct bu_vls src;		/* source object name */
@@ -267,7 +267,7 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 	} else /* non-region combinations */
 	    bu_vls_printf(newname, "%d", (num == 0) ? i + 1 : i + num);
 	i++;
-    } while (db_lookup(state->gedp->ged_wdbp->dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
+    } while (db_lookup(state->gedp->dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
     return newname;
 }
 
@@ -424,8 +424,8 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	argv[1] = proto->d_namep;
 	argv[2] = bu_vls_addr(name);
 	argv[3] = (char *)0;
-	ret = ged_copy(state->gedp, 3, (const char **)argv);
-	if (ret != GED_OK)
+	ret = ged_exec(state->gedp, 3, (const char **)argv);
+	if (ret != BRLCAD_OK)
 	    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failure cloning \"%s\" to \"%s\"\n",
 			  proto->d_namep, bu_vls_addr(name));
 
@@ -728,13 +728,13 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
     /* copy the object */
     if (dp->d_flags & RT_DIR_COMB) {
 
-	if (db_version(state->gedp->ged_wdbp->dbip) < 5) {
+	if (db_version(state->gedp->dbip) < 5) {
 	    /* A v4 method of peeking into a combination */
 
 	    int errors = 0;
 
 	    /* get an in-memory record of this object */
-	    if ((rp = db_getmrec(state->gedp->ged_wdbp->dbip, dp)) == (union record *)0) {
+	    if ((rp = db_getmrec(state->gedp->dbip, dp)) == (union record *)0) {
 		bu_vls_printf(state->gedp->ged_result_str, "Database read error, aborting\n");
 		goto done_copy_tree;
 	    }
@@ -743,7 +743,7 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 	     * make up the object.
 	     */
 	    for (i = 1; i < dp->d_len; i++) {
-		if ((mdp = db_lookup(state->gedp->ged_wdbp->dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == RT_DIR_NULL) {
+		if ((mdp = db_lookup(state->gedp->dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		    errors++;
 		    bu_vls_printf(state->gedp->ged_result_str, "WARNING: failed to locate \"%s\"\n", rp[i].M.m_instname);
 		    continue;
@@ -760,13 +760,13 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 	    }
 
 	    /* copy this combination itself */
-	    copy_comb(state->gedp->ged_wdbp->dbip, dp, (void *)state);
+	    copy_comb(state->gedp->dbip, dp, (void *)state);
 	} else
 	    /* A v5 method of peeking into a combination */
-	    db_functree(state->gedp->ged_wdbp->dbip, dp, copy_comb, copy_solid, resp, (void *)state);
+	    db_functree(state->gedp->dbip, dp, copy_comb, copy_solid, resp, (void *)state);
     } else if (dp->d_flags & RT_DIR_SOLID)
 	/* leaf node -- make a copy the object */
-	copy_solid(state->gedp->ged_wdbp->dbip, dp, (void *)state);
+	copy_solid(state->gedp->dbip, dp, (void *)state);
     else {
 	bu_vls_printf(state->gedp->ged_result_str, "%s is neither a combination or a primitive?\n", dp->d_namep);
 	goto done_copy_tree;
@@ -777,7 +777,7 @@ copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *s
 	bu_vls_printf(state->gedp->ged_result_str, "ERROR: unable to successfully clone \"%s\" to \"%s\"\n",
 		      dp->d_namep, bu_vls_addr(copyname));
     else
-	copy = db_lookup(state->gedp->ged_wdbp->dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
+	copy = db_lookup(state->gedp->dbip, bu_vls_addr(copyname), LOOKUP_QUIET);
 
 done_copy_tree:
     if (rp)
@@ -957,7 +957,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		break;
 	    default:
 		print_usage(gedp->ged_result_str);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	}
     }
 
@@ -965,36 +965,36 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     if ((argc - bu_optind) == 0) {
 	bu_vls_printf(gedp->ged_result_str, "Need to specify an object to be cloned.\n");
 	print_usage(gedp->ged_result_str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     } else if (bu_optind + 1 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "clone:  Can only clone exactly one object at a time right now.\n");
 	print_usage(gedp->ged_result_str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* sanity */
     if (!argv[bu_optind])
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
-    GED_DB_LOOKUP(gedp, state->src, argv[bu_optind], LOOKUP_QUIET, GED_ERROR);
+    GED_DB_LOOKUP(gedp, state->src, argv[bu_optind], LOOKUP_QUIET, BRLCAD_ERROR);
 
-    VSCALE(state->trans, state->trans, gedp->ged_wdbp->dbip->dbi_local2base);
-    VSCALE(state->rpnt, state->rpnt, gedp->ged_wdbp->dbip->dbi_local2base);
-    state->mirpos *= gedp->ged_wdbp->dbip->dbi_local2base;
+    VSCALE(state->trans, state->trans, gedp->dbip->dbi_local2base);
+    VSCALE(state->rpnt, state->rpnt, gedp->dbip->dbi_local2base);
+    state->mirpos *= gedp->dbip->dbi_local2base;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 int
 ged_clone_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_clone_state state;
+    struct ged_clone_state state = GED_CLONE_STATE_INIT;
     struct directory *copy;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1006,8 +1006,8 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* validate user options */
-    if (get_args(gedp, argc, (char **)argv, &state) & GED_ERROR)
-	return GED_ERROR;
+    if (get_args(gedp, argc, (char **)argv, &state) & BRLCAD_ERROR)
+	return BRLCAD_ERROR;
 
     bu_vls_init(&state.olist);
 
@@ -1017,7 +1017,7 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(gedp->ged_result_str, " {%s}", bu_vls_addr(&state.olist));
     bu_vls_free(&state.olist);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

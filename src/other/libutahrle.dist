@@ -1,14 +1,10 @@
 set(libutahrle_ignore_files
 CMakeLists.txt
 Runput.c
-buildmap.c
 cmd_name.c
-colorquant.c
 dither.c
 float_to_exp.c
-getopt.c
 hilbert.c
-include/colorquant.h
 include/rle.h
 include/rle_code.h
 include/rle_config.h
@@ -31,6 +27,5 @@ rle_putrow.c
 rle_raw_alc.c
 rle_rawrow.c
 rle_row_alc.c
-scanargs.c
 vaxshort.c
 )

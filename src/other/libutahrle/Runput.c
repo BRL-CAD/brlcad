@@ -239,7 +239,7 @@ register rle_hdr * the_hdr;
     }
 
     /* Now write out comments if given */
-    if ( setup.h_flags & H_COMMENT )
+    if ( the_hdr->comments && setup.h_flags & H_COMMENT )
     {
 	int comlen;
 	register CONST_DECL char ** com_p;

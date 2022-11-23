@@ -1,7 +1,7 @@
 /*                        A R B N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2021 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -81,14 +81,14 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     print_faces_table(gedp, &table);
     print_volume_table(gedp,
 		       tot_vol
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local,
 		       tot_area
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local,
 		       tot_vol/GALLONS_TO_MM3
-	);
+		      );
 
     for (i = 0; i < aip->neqn; i++) {
 	bu_free((char *)faces[i].pts, "analyze_arbn: pts");

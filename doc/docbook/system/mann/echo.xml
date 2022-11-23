@@ -39,7 +39,7 @@ command line. This is intended for use in <emphasis>MGED</emphasis> scripts.
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>echo some text goes here</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>echo some text goes here</userinput></term>
 	   <listitem>
 	     <para>Displays the text, some text goes here.
 	     </para>

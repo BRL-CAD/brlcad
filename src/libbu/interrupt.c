@@ -1,7 +1,7 @@
 /*                     I N T E R R U P T . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2021 United States Government as represented by
+ * Copyright (c) 2009-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -109,10 +109,10 @@ interrupt_suspend_signal_handler(int signum)
  * Returns 1 if already suspended.
  * Returns 2 if signal failure.
  *
- * This comment should be moved to bu/file.h if this HIDDEN function is
+ * This comment should be moved to bu/file.h if this static function is
  * publicly exposed.
  */
-HIDDEN int
+static int
 interrupt_suspend_signal(int signum)
 {
     BU_ASSERT(signum < INTERRUPT_MAX_SIGNUM && "signal number out of range");
@@ -146,10 +146,10 @@ interrupt_suspend_signal(int signum)
  * Returns 1 if unexpected suspend state.
  * Returns 2 if signal failure.
  *
- * This comment should be moved to bu/file.h if this HIDDEN function is
+ * This comment should be moved to bu/file.h if this static function is
  * publicly exposed.
  */
-HIDDEN int
+static int
 interrupt_restore_signal(int signum)
 {
     BU_ASSERT(signum < INTERRUPT_MAX_SIGNUM && "signal number out of range");

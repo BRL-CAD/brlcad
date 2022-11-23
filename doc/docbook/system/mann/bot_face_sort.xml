@@ -46,7 +46,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>bot_face_sort 4 bot1 bot2</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>bot_face_sort 4 bot1 bot2</userinput></term>
 	  <listitem>
 	    <para>
 	      The faces of <emphasis>bot1</emphasis> and <emphasis>bot2</emphasis> to optimize

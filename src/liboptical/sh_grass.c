@@ -1,7 +1,7 @@
 /*                      S H _ G R A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "raytrace.h"
 #include "optical.h"
 
@@ -216,10 +216,10 @@ struct bu_structparse grass_parse_tab[] = {
 };
 
 
-HIDDEN int grass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int grass_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void grass_print(register struct region *rp, void *dp);
-HIDDEN void grass_free(void *cp);
+static int grass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int grass_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void grass_print(register struct region *rp, void *dp);
+static void grass_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -347,7 +347,7 @@ plant_scale(struct plant *pl, double w)
 	CLAMP(pl->blades, 1, BLADE_LAST);
     }
 
-    for (blade=0; blade < pl->blades; blade++) {
+    for (blade=0; (blade < pl->blades && blade < BLADE_MAX); blade++) {
 	pl->b[blade].tot_len = 0.0;
 	if (blade != BLADE_LAST)
 	    pl->b[blade].width *= d;
@@ -483,7 +483,7 @@ make_proto(struct grass_specific *grass_sp)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
-HIDDEN int
+static int
 grass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
@@ -544,14 +544,14 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 }
 
 
-HIDDEN void
+static void
 grass_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, grass_print_tab, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 grass_free(void *cp)
 {
     BU_PUT(cp, struct grass_specific);
@@ -720,7 +720,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 
 	BU_CKMAG(&bl->leaf[seg].magic, LEAF_MAGIC, "leaf");
 
-	cond = bn_dist_line3_line3(ldist, r->r.r_pt, r->r.r_dir,
+	cond = bg_dist_line3_line3(ldist, r->r.r_pt, r->r.r_dir,
 				   pt, bl->leaf[seg].blade, &r->tol);
 
 	if (optical_debug&OPTICAL_DEBUG_SHADE) {

@@ -1,7 +1,7 @@
 /*                      P N G _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 2020-2021 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,19 +66,20 @@ static int png_read(struct gcv_context *context, const struct gcv_opts *UNUSED(g
     const fastf_t radius = 1.0;
 
     const struct png_read_opts *opts = (struct png_read_opts *)options_data;
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
 
     bu_log("importing from PNG file '%s'\n", source_path);
     bu_log("image is coloured: %s\n", opts->coloured ? "True" : "False");
 
-    mk_id(context->dbip->dbi_wdbp, "GCV plugin test");
+    mk_id(wdbp, "GCV plugin test");
 
-    mk_sph(context->dbip->dbi_wdbp, "test", center, radius);
+    mk_sph(wdbp, "test", center, radius);
 
     return 1;
 }
 
 
-HIDDEN int png_can_read(const char * data)
+static int png_can_read(const char * data)
 {
     bu_log("VOL_PLUGIN: entered png_can_read, data=%p\n", (void *)data);
 

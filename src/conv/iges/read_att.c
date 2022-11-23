@@ -1,7 +1,7 @@
 /*                      R E A D _ A T T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2021 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,9 +26,9 @@
  * (att_de) and stores the values in the structure (att)
  */
 void
-Read_att(int att_de, struct brlcad_att *att)
+Read_att(size_t att_de, struct brlcad_att *att)
 {
-    int entityno;
+    size_t entityno;
     int i = 0;
 
     if (att_de == 0) {

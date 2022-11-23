@@ -1,7 +1,7 @@
 /*                          A P P . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -183,6 +183,13 @@ BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
 /**@brief BRL-CAD specific path queries */
 
 /**
+ * NOTE: this API is replaced by bu_dir()
+ *
+ * For example:
+ * bu_brlcad_dir("doc", 1);
+ * is now:
+ * bu_dir(NULL, 0, BU_DIR_DOC, NULL);
+ *
  * @brief
  * Report the relative paths being used to hold BRL-CAD applications,
  * libraries, and data.
@@ -203,10 +210,18 @@ BU_EXPORT extern int bu_fchmod(int fd, unsigned long pmode);
  * A STATIC buffer is returned.  It is the caller's responsibility to
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
+ *
  */
 DEPRECATED BU_EXPORT extern const char *bu_brlcad_dir(const char *dirkey, int fail_quietly);
 
 /**
+ * NOTE: this API is replaced by bu_dir()
+ *
+ * For example:
+ * bu_brlcad_root("share/tclscripts/isst/isst.tcl", 1);
+ * is now:
+ * bu_dir(NULL, 0, BU_DIR_DATA, "tclscripts", "isst", "isst.tcl", NULL);
+ *
  * @brief
  * Locate where the BRL-CAD applications and libraries are installed.
  *
@@ -293,11 +308,6 @@ typedef enum {
  * @endcode
  */
 BU_EXPORT extern const char *bu_dir(char *result, size_t len, .../*, NULL */);
-
-/**
- * Return the id of the current process.
- */
-BU_EXPORT extern unsigned long int bu_pid();
 
 /** @} */
 

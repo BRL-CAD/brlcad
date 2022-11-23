@@ -1,7 +1,7 @@
 /*                          T I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1781,7 +1781,7 @@ MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, 
     bu_vls_free(&str);
 }
 
-HIDDEN int
+static int
 _opt_tire_iso(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     int d1, d2, d3;
@@ -1809,7 +1809,7 @@ _opt_tire_iso(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 #define ISO_TIRE_FMT "<width>/<aspect>R<rim diameter>"
 
 /* Help message printed when -h option is supplied */
-HIDDEN void
+static void
 _tire_show_help(struct ged *gedp, const char *cmd, struct bu_opt_desc *d)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
@@ -1850,7 +1850,7 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     fastf_t hub_width = 0;
     int pattern_type = 0;
     fastf_t zside1 = 0;
-    fastf_t tread_depth_float = tread_depth/32.0;
+    fastf_t tread_depth_float = 0.0;
     int print_help = 0;
     int ret_ac = 0;
     const char *cmd_name = argv[0];
@@ -1874,8 +1874,8 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[15], "t", "tread-shape",         "#",          &bu_opt_int,      &tread_type,     "Tread shape profile (integer id, range 1 - 2)");
     BU_OPT_NULL(d[16]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* Skip first arg */
     argv++; argc--;
@@ -1885,13 +1885,13 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&str));
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     if (print_help) {
 	_tire_show_help(gedp, cmd_name, d);
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Perform overrides, if we got them */
@@ -1919,20 +1919,21 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_sprintf(gedp->ged_result_str, "unknown args supplied.\n");
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&name), LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, bu_vls_addr(&name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_sprintf(gedp->ged_result_str, "%s already exists.\n", bu_vls_addr(&name));
 	bu_vls_free(&name);
 	bu_vls_free(&str);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Use name to create a suffix for other object names. */
     bu_vls_sprintf(&dimen, "-%s", bu_vls_addr(&name));
 
-    mk_id(gedp->ged_wdbp, "Tire");
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    mk_id(wdbp, "Tire");
 
     bu_vls_printf(gedp->ged_result_str, "width = %f\n", isoarray[0]);
     bu_vls_printf(gedp->ged_result_str, "ratio = %f\n", isoarray[1]);
@@ -1971,7 +1972,7 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     if (pattern_type == 2 && tread_type == 0) tread_type = 2;
 
     /* Make the tire region */
-    MakeTire(gedp->ged_wdbp, bu_vls_addr(&dimen), dytred, dztred,
+    MakeTire(wdbp, bu_vls_addr(&dimen), dytred, dztred,
 	     d1, dyside1, zside1, ztire, dyhub, zhub, tire_thickness,
 	     tread_type, num_tread_ptns, tread_depth_float, pattern_type);
 
@@ -1987,12 +1988,12 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Make the wheel region*/
     if (usewheel != 0)
-	MakeWheelRims(gedp->ged_wdbp, bu_vls_addr(&dimen),
+	MakeWheelRims(wdbp, bu_vls_addr(&dimen),
 		      dyhub, zhub, bolts, bolt_diam, bolt_circ_diam,
 		      spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
 
     /* Make the air region*/
-    MakeAirRegion(gedp->ged_wdbp, bu_vls_addr(&dimen), dyhub, zhub, usewheel);
+    MakeAirRegion(wdbp, bu_vls_addr(&dimen), dyhub, zhub, usewheel);
 
     /* Final top level providing a single name for tire+wheel */
     BU_LIST_INIT(&wheel_and_tire.l);
@@ -2005,13 +2006,13 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
 	(void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
     }
 
-    mk_lcomb(gedp->ged_wdbp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);
+    mk_lcomb(wdbp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);
 
     bu_vls_free(&str);
     bu_vls_free(&name);
     bu_vls_free(&dimen);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

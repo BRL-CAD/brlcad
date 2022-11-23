@@ -820,9 +820,9 @@ enum ft_color {
     FT_COLOR_LIGHT_GREEN    = 11, /**< Light green color */
     FT_COLOR_LIGHT_YELLOW   = 12, /**< Light yellow color */
     FT_COLOR_LIGHT_BLUE     = 13, /**< Light blue color */
-    FT_COLOR_LIGHT_MAGENTA  = 15, /**< Light magenta color */
-    FT_COLOR_LIGHT_CYAN     = 16, /**< Light cyan color */
-    FT_COLOR_LIGHT_WHYTE    = 17  /**< Light whyte color */
+    FT_COLOR_LIGHT_MAGENTA  = 14, /**< Light magenta color */
+    FT_COLOR_LIGHT_CYAN     = 15, /**< Light cyan color */
+    FT_COLOR_LIGHT_WHYTE    = 16  /**< Light whyte color */
 };
 
 /**
@@ -836,7 +836,7 @@ enum ft_text_style {
     FT_TSTYLE_UNDERLINED = (1U << 4), /**< Underlined */
     FT_TSTYLE_BLINK      = (1U << 5), /**< Blink */
     FT_TSTYLE_INVERTED   = (1U << 6), /**< Reverse (invert the foreground and background colors) */
-    FT_TSTYLE_HIDDEN     = (1U << 7)  /**< Hidden (useful for passwords)  */
+    FT_TSTYLE_static     = (1U << 7)  /**< Hidden (useful for passwords)  */
 };
 
 

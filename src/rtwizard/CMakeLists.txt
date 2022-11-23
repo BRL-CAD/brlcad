@@ -26,6 +26,14 @@ if (TARGET libtclcad)
     add_dependencies(rtwizard ${item})
   endforeach(item ${tclindex_target_list})
 
+  # stage targets
+  set(stgts tcl tk itcl itk iwidgets)
+  foreach(ST ${stgts})
+    if (TARGET ${ST}_stage)
+      add_dependencies(rtwizard ${ST}_stage)
+    endif (TARGET ${ST}_stage)
+  endforeach(ST ${stgts})
+
   # RtWizard is one of the programs that gets a start menu entry
   set_property(INSTALL "${BIN_DIR}/$<TARGET_FILE_NAME:rtwizard>"
     PROPERTY CPACK_START_MENU_SHORTCUTS "RtWizard ${BRLCAD_VERSION}"

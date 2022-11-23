@@ -1,7 +1,7 @@
 /*                      R A Y T R A C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2021 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -123,7 +123,7 @@ __BEGIN_DECLS
 
 #include "./rt/private.h"
 
-#include "./rt/nmg.h"
+#include "./rt/nmg_conv.h"
 
 #include "./rt/overlap.h"
 

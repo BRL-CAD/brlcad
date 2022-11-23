@@ -1,3 +1,6 @@
+NOTE: Upstream (http://tkhtml.tcl.tk/tkhtml.html) is no longer active -
+BRL-CAD copy is now the primary repository for this code.
+
 Copyright (c) 2005 Dan Kennedy.
 All rights reserved.
 
@@ -27,3 +30,4 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
+

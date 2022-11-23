@@ -1,7 +1,7 @@
 /*                           G E D . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,9 +46,8 @@
 
 #include "common.h"
 
-#include "dm/bview.h"
+#include "bv/defines.h"
 #include "raytrace.h"
-#include "rt/solid.h"
 #include "analyze.h"
 #include "ged/defines.h"
 #include "ged/database.h"

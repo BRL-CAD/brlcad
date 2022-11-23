@@ -60,10 +60,10 @@
 
     <mediaobject>
       <imageobject role="html">
-	<imagedata align="center" fileref="../../articles/images/mgedrc_fig01.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/mgedrc_fig01.png" format="PNG"/>
       </imageobject>
     <imageobject role="fo">
-	<imagedata align="center" fileref="../../articles/images/mgedrc_fig01.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/mgedrc_fig01.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
@@ -205,10 +205,10 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
 
     <mediaobject>
       <imageobject role="html">
-	<imagedata align="center" fileref="../../articles/images/mgedrc_fig02.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/mgedrc_fig02.png" format="PNG"/>
       </imageobject>
     <imageobject role="fo">
-	<imagedata align="center" fileref="../../articles/images/mgedrc_fig02.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/mgedrc_fig02.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>
@@ -260,10 +260,10 @@ proc cps {oldprim newprim} {cp $oldprim $newprim; sed $newprim}
 
     <mediaobject>
       <imageobject role="html">
-	<imagedata align="center" fileref="../../articles/images/mgedrc_fig03.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/mgedrc_fig03.png" format="PNG"/>
       </imageobject>
     <imageobject role="fo">
-	<imagedata align="center" fileref="../../articles/images/mgedrc_fig03.png" format="PNG"/>
+	<imagedata align="center" fileref="../articles/images/mgedrc_fig03.png" format="PNG"/>
       </imageobject>
     </mediaobject>
   </figure>

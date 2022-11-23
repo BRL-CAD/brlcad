@@ -1,7 +1,7 @@
 /*                      A D D _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2021 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 struct faceuse *
-Add_face_to_shell(struct shell *s, int entityno, int face_orient)
+Add_face_to_shell(struct shell *s, size_t entityno, int face_orient)
 {
 
     int sol_num = 0;		/* IGES solid type number */

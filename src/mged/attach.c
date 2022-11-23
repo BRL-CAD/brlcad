@@ -1,7 +1,7 @@
 /*                        A T T A C H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,7 +70,7 @@ void set_curr_dm(struct mged_dm *nc)
     mged_curr_dm = nc;
     if (nc != MGED_DM_NULL && nc->dm_view_state) {
 	GEDP->ged_gvp = nc->dm_view_state->vs_gvp;
-	GEDP->ged_gvp->gv_grid = *nc->dm_grid_state; /* struct copy */
+	GEDP->ged_gvp->gv_s->gv_grid = *nc->dm_grid_state; /* struct copy */
     } else {
 	if (GEDP) {
 	    GEDP->ged_gvp = NULL;
@@ -91,7 +91,13 @@ mged_dm_init(struct mged_dm *o_dm,
     /* register application provided routines */
     cmd_hook = dm_commands;
 
-    if ((DMP = dm_open((void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
+    /* In case the user wants swrast in headless mode, set ged_ctx to the view.
+     * Other dms will either not use the ctx argument or will catch the
+     * BV_MAGIC value and not initialize (such as qtgl, which needs a context
+     * from a parent Qt widget and won't work in MGED.) */
+    GEDP->ged_ctx = view_state->vs_gvp;
+
+    if ((DMP = dm_open(GEDP->ged_ctx, (void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */
@@ -99,7 +105,7 @@ mged_dm_init(struct mged_dm *o_dm,
     dm_set_perspective(DMP, mged_variables->mv_perspective_mode);
 
 #ifdef HAVE_TK
-    if (dm_graphical(DMP)) {
+    if (dm_graphical(DMP) && !BU_STR_EQUAL(dm_get_dm_name(DMP), "swrast")) {
 	Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 	Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
     }
@@ -411,7 +417,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	/* look for "-d display_string" and use it if provided */
-	tmp_dmp = dm_get();
+	tmp_dmp = dm_open(NULL, INTERP, "nu", 0, NULL);
 
 	opt_argc = argc - 1;
 	opt_argv = bu_argv_dup(opt_argc, argv + 1);
@@ -424,19 +430,19 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
 		bu_free((void *)mged_curr_dm, "f_attach: dm_list");
 		set_curr_dm(o_dm);
 		bu_vls_free(&tmp_vls);
-		dm_put(tmp_dmp);
+		dm_close(tmp_dmp);
 		return TCL_ERROR;
 	    }
 	} else if (gui_setup((char *)NULL) == TCL_ERROR) {
 	    bu_free((void *)mged_curr_dm, "f_attach: dm_list");
 	    set_curr_dm(o_dm);
 	    bu_vls_free(&tmp_vls);
-	    dm_put(tmp_dmp);
+	    dm_close(tmp_dmp);
 	    return TCL_ERROR;
 	}
 
 	bu_vls_free(&tmp_vls);
-	dm_put(tmp_dmp);
+	dm_close(tmp_dmp);
     }
 
     bu_ptbl_ins(&active_dm_set, (long *)mged_curr_dm);
@@ -480,7 +486,7 @@ mged_attach(const char *wp_name, int argc, const char *argv[])
     mged_fb_open();
 
     GEDP->ged_gvp = mged_curr_dm->dm_view_state->vs_gvp;
-    GEDP->ged_gvp->gv_grid = *mged_curr_dm->dm_grid_state; /* struct copy */
+    GEDP->ged_gvp->gv_s->gv_grid = *mged_curr_dm->dm_grid_state; /* struct copy */
 
     return TCL_OK;
 
@@ -674,7 +680,7 @@ dm_var_init(struct mged_dm *target_dm)
 
     color_scheme->cs_rc = 1;
 
-    BU_ALLOC(grid_state, struct bview_grid_state);
+    BU_ALLOC(grid_state, struct bv_grid_state);
     *grid_state = *target_dm->dm_grid_state;		/* struct copy */
     grid_state->rc = 1;
 
@@ -689,14 +695,24 @@ dm_var_init(struct mged_dm *target_dm)
     *view_state = *target_dm->dm_view_state;			/* struct copy */
     BU_ALLOC(view_state->vs_gvp, struct bview);
     BU_GET(view_state->vs_gvp->callbacks, struct bu_ptbl);
-    bu_ptbl_init(view_state->vs_gvp->callbacks, 8, "bview callbacks");
+    bu_ptbl_init(view_state->vs_gvp->callbacks, 8, "bv callbacks");
 
     *view_state->vs_gvp = *target_dm->dm_view_state->vs_gvp;	/* struct copy */
+
+    BU_GET(view_state->vs_gvp->gv_objs.db_objs, struct bu_ptbl);
+    bu_ptbl_init(view_state->vs_gvp->gv_objs.db_objs, 8, "view_objs init");
+
+    BU_GET(view_state->vs_gvp->gv_objs.view_objs, struct bu_ptbl);
+    bu_ptbl_init(view_state->vs_gvp->gv_objs.view_objs, 8, "view_objs init");
+
+    view_state->vs_gvp->vset = &GEDP->ged_views;
+    view_state->vs_gvp->independent = 0;
+
     view_state->vs_gvp->gv_clientData = (void *)view_state;
-    view_state->vs_gvp->gv_adaptive_plot = 0;
-    view_state->vs_gvp->gv_redraw_on_zoom = 0;
-    view_state->vs_gvp->gv_point_scale = 1.0;
-    view_state->vs_gvp->gv_curve_scale = 1.0;
+    view_state->vs_gvp->gv_s->adaptive_plot_csg = 0;
+    view_state->vs_gvp->gv_s->redraw_on_zoom = 0;
+    view_state->vs_gvp->gv_s->point_scale = 1.0;
+    view_state->vs_gvp->gv_s->curve_scale = 1.0;
     view_state->vs_rc = 1;
     view_ring_init(mged_curr_dm->dm_view_state, (struct _view_state *)NULL);
 

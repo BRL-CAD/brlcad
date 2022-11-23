@@ -1,7 +1,7 @@
 /*                         3 P T A R B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,16 +63,16 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_arb_internal *aip;
     static const char *usage = "name x1 y1 z1 x2 y2 z2 x3 y3 z3 coord c1 c2 th";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 15) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc < 2) {
@@ -80,7 +80,7 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 	return GED_MORE;
     }
 
-    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, GED_ERROR);
+    GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
 
     /* read the three points */
     prompts = &p_arb3pt[0];
@@ -98,7 +98,7 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
     length = MAGNITUDE(norm);
     if (ZERO(length)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: points are collinear\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     VSCALE(norm, norm, 1.0/length);
 
@@ -111,7 +111,7 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 	case 'x':
 	    if (ZERO(norm[0])) {
 		bu_vls_printf(gedp->ged_result_str, "%s: X not unique in this face\n", argv[0]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    solve = X;
 
@@ -124,14 +124,14 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	    }
 
-	    pt4[0] = atof(argv[12]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	    pt4[1] = atof(argv[13]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    pt4[0] = atof(argv[12]) * gedp->dbip->dbi_local2base;
+	    pt4[1] = atof(argv[13]) * gedp->dbip->dbi_local2base;
 	    break;
 
 	case 'y':
 	    if (ZERO(norm[1])) {
 		bu_vls_printf(gedp->ged_result_str, "%s: Y not unique in this face\n", argv[0]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    solve = Y;
 
@@ -144,14 +144,14 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	    }
 
-	    pt4[0] = atof(argv[12]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	    pt4[1] = atof(argv[13]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    pt4[0] = atof(argv[12]) * gedp->dbip->dbi_local2base;
+	    pt4[1] = atof(argv[13]) * gedp->dbip->dbi_local2base;
 	    break;
 
 	case 'z':
 	    if (ZERO(norm[2])) {
 		bu_vls_printf(gedp->ged_result_str, "%s: Z not unique in this face\n", argv[0]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    solve = Z;
 
@@ -164,13 +164,13 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 		return GED_MORE;
 	    }
 
-	    pt4[0] = atof(argv[12]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	    pt4[1] = atof(argv[13]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    pt4[0] = atof(argv[12]) * gedp->dbip->dbi_local2base;
+	    pt4[1] = atof(argv[13]) * gedp->dbip->dbi_local2base;
 	    break;
 
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "%s: coordinate must be x, y, or z\n", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     if (argc < 15) {
@@ -181,7 +181,7 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
     thick = atof(argv[14]);
     if (ZERO(thick)) {
 	bu_vls_printf(gedp->ged_result_str, "%s: thickness = 0.0\n", argv[0]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     RT_DB_INTERNAL_INIT(&internal);
@@ -198,10 +198,10 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 0; i < 3; i++) {
 	/* the three given vertices */
-	VSET(aip->pt[i], atof(argv[i*3+2])*gedp->ged_wdbp->dbip->dbi_local2base, atof(argv[i*3+3])*gedp->ged_wdbp->dbip->dbi_local2base, atof(argv[i*3+4])*gedp->ged_wdbp->dbip->dbi_local2base);
+	VSET(aip->pt[i], atof(argv[i*3+2])*gedp->dbip->dbi_local2base, atof(argv[i*3+3])*gedp->dbip->dbi_local2base, atof(argv[i*3+4])*gedp->dbip->dbi_local2base);
     }
 
-    thick *= gedp->ged_wdbp->dbip->dbi_local2base;
+    thick *= gedp->dbip->dbi_local2base;
 
     ndotv = VDOT(aip->pt[0], norm);
 
@@ -240,7 +240,7 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 	default:
 	    bu_free((void *)internal.idb_ptr, "rt_arb_internal");
 	    bu_vls_printf(gedp->ged_result_str, "%s: bad coordinate to solve for\n", argv[0]);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     /* calculate the remaining 4 vertices */
@@ -248,11 +248,11 @@ ged_3ptarb_core(struct ged *gedp, int argc, const char *argv[])
 	VJOIN1(aip->pt[i+4], aip->pt[i], thick, norm);
     }
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 #ifdef GED_PLUGIN

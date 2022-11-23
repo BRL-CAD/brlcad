@@ -158,7 +158,7 @@ set(lessons_EN_IMAGES
   images/mged16_radio_cutaways.png
   )
 if(BRLCAD_EXTRADOCS)
-  ADD_DOC(lessons_EN_IMAGES lessons/images)
+  ADD_DOC(lessons_EN_IMAGES html/lessons/images)
 else(BRLCAD_EXTRADOCS)
   CMAKEFILES(${lessons_EN_IMAGES})
 endif(BRLCAD_EXTRADOCS)

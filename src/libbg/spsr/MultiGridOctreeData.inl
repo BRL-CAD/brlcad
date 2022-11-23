@@ -1737,7 +1737,7 @@ int Octree< Real >::_SolveSystemGS( PointInfo& pointInfo , int depth , const typ
 		for( int i=_sNodes.nodeCount[depth] ; i<_sNodes.nodeCount[depth+1] ; i++ ) constraints[i] -= metConstraints[i];
 	// Initialize with the previously computed solution
 	for( int i=_sNodes.nodeCount[depth] ; i<_sNodes.nodeCount[depth+1] ; i++ ) X[ i-_sNodes.nodeCount[depth] ] = solution[i];
-	double bNorm=0 , inRNorm=0 , outRNorm=0;
+	double bNorm=0.0 , inRNorm=0.0, outRNorm=0.0;
 	if( depth>=_minDepth )
 	{
 		int frontOffset = ( showResidual || inRNorm2 ) ? 2 : 0;
@@ -1880,7 +1880,7 @@ int Octree< Real >::_SolveSystemCG( PointInfo& pointInfo , int depth , const typ
 	MapReduceVector< Real > mrVector;
 	mrVector.resize( threads , M.rows );
 	bool addDCTerm = (M.rows==res*res*res && !_constrainValues && _boundaryType!=-1);
-	double bNorm , inRNorm , outRNorm;
+	double bNorm=0.0, inRNorm=0.0, outRNorm=0.0;
 	if( showResidual || bNorm2 ) bNorm = B.Norm( 2 );
 	if( showResidual || inRNorm2 ) inRNorm = ( addDCTerm ? ( B - M * X - X.Average() ) : ( B - M * X ) ).Norm( 2 );
 
@@ -2110,24 +2110,24 @@ Pointer( Real ) Octree< Real >::SetLaplacianConstraints( const NormalInfo& norma
 			int d , off[3];
 			node->depthAndOffset( d , off );
 			for( int x=startX ; x<endX ; x++ ) for( int y=startY ; y<endY ; y++ ) for( int z=startZ ; z<endZ ; z++ )
-				if( neighbors5.neighbors[x][y][z] )
-				{
-					TreeOctNode* _node = neighbors5.neighbors[x][y][z];
-					int _i = _node->nodeData.nodeIndex;
-					if( isInterior )
-					{
-						Point3D< double >& div = _stencil.values[x][y][z];
-						Point3D< Real >& normal = coefficients[_i];
-						constraint += Real( div[0] * normal[0] + div[1] * normal[1] + div[2] * normal[2] );
-					}
-					else
-					{
-						int _d , _off[3];
-						_node->depthAndOffset( _d , _off );
-						constraint += Real( GetDivergence2( integrator , d , off , _off , true , coefficients[_i] ) );
-					}
-				}
-				constraints[ node->nodeData.nodeIndex ] += constraint;
+						if( neighbors5.neighbors[x][y][z] )
+						{
+							TreeOctNode* _node = neighbors5.neighbors[x][y][z];
+							int _i = _node->nodeData.nodeIndex;
+							if( isInterior )
+							{
+								Point3D< double >& div = _stencil.values[x][y][z];
+								Point3D< Real >& normal = coefficients[_i];
+								constraint += Real( div[0] * normal[0] + div[1] * normal[1] + div[2] * normal[2] );
+							}
+							else
+							{
+								int _d , _off[3];
+								_node->depthAndOffset( _d , _off );
+								constraint += Real( GetDivergence2( integrator , d , off , _off , true , coefficients[_i] ) );
+							}
+						}
+					constraints[ node->nodeData.nodeIndex ] += constraint;
 		}
 	}
 	return constraints;

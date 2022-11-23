@@ -1,4 +1,4 @@
-set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/linenoise")
+set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/ext/linenoise")
 
 set(NIRT_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -9,35 +9,18 @@ set(NIRT_INCLUDE_DIRS
   )
 BRLCAD_INCLUDE_DIRS(NIRT_INCLUDE_DIRS)
 
-set(NIRT_OLD_SRCS
-  nirt.c
-  command.c
-  conversion.c
-  if.c
-  interact.c
-  bsphere.c
-  read_mat.c
-  str_manip.c
-  parse_fmt.c
-  )
-
 set(NIRT_SRCS
-  ${NIRT_OLD_SRCS}
   main.cpp
   ${LDIR}/utf8.c
   ${LDIR}/linenoise.c
+  ${LDIR}/stringbuf.c
   )
 
 BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "libanalyze;librt;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(showshot showshot.c libbn)
 
-set(nirt_ignore_files
-  CMakeLists.txt
-  nirt.h
-  usrfmt.h
-  )
-CMAKEFILES(${nirt_ignore_files})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

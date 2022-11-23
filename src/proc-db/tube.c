@@ -1,7 +1,7 @@
 /*                          T U B E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2021 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -239,7 +239,7 @@ main(int argc, char **argv)
 
 	fprintf(stderr, "frame %d\n", frame);  fflush(stderr);
     }
-    wdb_close(outfp);
+    db_close(outfp->dbip);
     fflush(stderr);
 
     return 0;

@@ -1,7 +1,7 @@
 /*                     G D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2021 United States Government as represented by
+ * Copyright (c) 2014-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -100,6 +100,7 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	inmem_dbip->dbi_fp = NULL;
 	inmem_dbip->dbi_mf = NULL;
 	inmem_dbip->dbi_read_only = 0;
+	inmem_dbip->dbi_use_comb_instance_ids = 0;
 
 	/* Initialize fields */
 	for (i = 0; i <RT_DBNHASH; i++) {

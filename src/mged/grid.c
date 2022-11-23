@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ static void set_grid_draw(const struct bu_structparse *, const char *, void *, c
 static void set_grid_res(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 
-struct bview_grid_state default_grid_state = {
+struct bv_grid_state default_grid_state = {
     /* rc */		1,
     /* draw */		0,
     /* snap */		0,
@@ -57,7 +57,7 @@ struct bview_grid_state default_grid_state = {
 };
 
 
-#define GRID_O(_m) bu_offsetof(struct bview_grid_state, _m)
+#define GRID_O(_m) bu_offsetof(struct bv_grid_state, _m)
 struct bu_structparse grid_vparse[] = {
     {"%d", 1, "draw",	GRID_O(draw),        set_grid_draw, NULL, NULL },
     {"%d", 1, "snap",	GRID_O(snap),        grid_set_dirty_flag, NULL, NULL },

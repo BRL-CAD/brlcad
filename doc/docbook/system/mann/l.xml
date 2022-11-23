@@ -81,7 +81,7 @@
   <example><title>Display details about a particular region.</title>
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>l region1</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>l region1</userinput></term>
 	   <listitem>
 	     <para>Displays details about region1.
 		     </para>
@@ -93,7 +93,7 @@
   <example><title>Display shape parameters for a particular shape.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>l group1/group2/region1/shape3</userinput>
+      <prompt>mged&gt; </prompt><userinput>l group1/group2/region1/shape3</userinput>
     </para>
     <para>Displays shape parameters for <emphasis>shape3</emphasis> with
     matrices applied from the <emphasis>path</emphasis>.
@@ -103,7 +103,7 @@
  <example><title>Display all paths that start with a particular designation and end in a primitive shape.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>l -r a/b</userinput>
+      <prompt>mged&gt; </prompt><userinput>l -r a/b</userinput>
     </para>
     <para>Displays all paths that start with a particular designation and end in a primitive shape. Also, the shape parameters with the accumulated transformation applied will be displayed.
     </para>

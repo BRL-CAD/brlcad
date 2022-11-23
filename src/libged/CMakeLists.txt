@@ -29,7 +29,7 @@ set(LIBGED_SOURCES
   ged_init.cpp
   columns.c
   display_list.c
-  draw_calc.cpp
+  draw.cpp
   facedef.c
   ged.c
   ged_util.c
@@ -39,13 +39,15 @@ set(LIBGED_SOURCES
   path.c
   pipe.c
   pnts_util.c
+  points_eval.c
   polyclip.cpp
   qray.c
   rotate_eto.c
   rotate_extrude.c
   rotate_hyp.c
   rotate_tgc.c
-  snap.c
+  select.cpp
+  tab_complete.cpp
   trace.c
   track.c
   translate_extrude.c
@@ -53,6 +55,7 @@ set(LIBGED_SOURCES
   vutil.c
   view/data_lines.c
   wdb_importFg4Section.c
+  wireframe_eval.c
   )
 
 set_property(SOURCE ged_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "GED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
@@ -96,7 +99,7 @@ if (BRLCAD_ENABLE_OPENVDB)
   set_property(SOURCE bot_remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
 endif (BRLCAD_ENABLE_OPENVDB)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libdm;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libbv;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
@@ -106,6 +109,7 @@ BRLCAD_ADDEXEC(test_help help/test_help.c libged TEST)
 
 set(ged_ignore_files
   CMakeLists.txt
+  NOTES
   README
   TODO
   alphanum.h
@@ -153,6 +157,7 @@ add_subdirectory(cat)
 add_subdirectory(cc)
 add_subdirectory(check)
 add_subdirectory(clone)
+add_subdirectory(close)
 add_subdirectory(coil)
 add_subdirectory(color)
 add_subdirectory(comb)
@@ -165,7 +170,6 @@ add_subdirectory(copy)
 add_subdirectory(copyeval)
 add_subdirectory(copymat)
 add_subdirectory(cpi)
-add_subdirectory(dag)
 add_subdirectory(dbip)
 add_subdirectory(debug)
 add_subdirectory(debugbu)
@@ -175,6 +179,7 @@ add_subdirectory(debugnmg)
 add_subdirectory(decompose)
 add_subdirectory(delay)
 add_subdirectory(dir2ae)
+add_subdirectory(dm)
 add_subdirectory(draw)
 add_subdirectory(dsp)
 add_subdirectory(dump)
@@ -198,6 +203,7 @@ add_subdirectory(fbclear)
 add_subdirectory(find)
 add_subdirectory(form)
 add_subdirectory(fracture)
+add_subdirectory(garbage_collect)
 add_subdirectory(gdiff)
 add_subdirectory(get)
 add_subdirectory(get_autoview)
@@ -206,6 +212,7 @@ add_subdirectory(get_eyemodel)
 add_subdirectory(get_type)
 add_subdirectory(glob)
 add_subdirectory(gqa)
+add_subdirectory(graph)
 add_subdirectory(grid)
 add_subdirectory(grid2model_lu)
 add_subdirectory(grid2view_lu)
@@ -244,6 +251,7 @@ add_subdirectory(make)
 add_subdirectory(make_name)
 add_subdirectory(match)
 add_subdirectory(mater)
+add_subdirectory(material)
 add_subdirectory(metaball)
 add_subdirectory(mirror)
 add_subdirectory(model2grid_lu)
@@ -310,7 +318,6 @@ add_subdirectory(rtwizard)
 add_subdirectory(savekey)
 add_subdirectory(saveview)
 add_subdirectory(scale)
-add_subdirectory(screengrab)
 add_subdirectory(search)
 add_subdirectory(select)
 add_subdirectory(set_output_script)

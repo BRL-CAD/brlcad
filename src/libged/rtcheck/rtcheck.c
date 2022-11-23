@@ -1,7 +1,7 @@
 /*                         R T C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 struct ged_rtcheck {
     struct ged_subprocess *rrtp;
     FILE *fp;
-    struct bn_vlblock *vbp;
+    struct bv_vlblock *vbp;
     struct bu_list *vhead;
     double csize;
     void *chan;
@@ -104,7 +104,7 @@ rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 
 	if (have_visual) {
 	    _ged_cvt_vlblock_to_solids(gedp, rtcp->vbp, sname, 0);
-	    bn_vlblock_free(rtcp->vbp);
+	    bv_vlblock_free(rtcp->vbp);
 	} else {
 	    /* TODO - yuck.  This name is a product of the internals of the
 	     * "_ged_cvt_vlblock_to_solids" routine.  We should have a way to kill
@@ -112,8 +112,8 @@ rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 	     * this name ties proper stale drawing cleanup to the internals of the
 	     * current phony object drawing system.*/
 	    const char *sname_obj = "OVERLAPSffff00";
-	    struct directory *dp;
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, sname_obj, LOOKUP_QUIET)) != RT_DIR_NULL) {
+	    struct directory *dp = db_lookup(gedp->dbip, sname_obj, LOOKUP_QUIET);
+	    if (dp != RT_DIR_NULL) {
 		dl_erasePathFromDisplay(gedp, sname_obj, 0);
 	    }
 	}
@@ -167,6 +167,8 @@ rtcheck_output_handler(void *clientData, int UNUSED(mask))
     }
 }
 
+extern int ged_rtcheck2_core(struct ged *gedp, int argc, const char *argv[]);
+
 /*
  * Check for overlaps in the current view.
  *
@@ -177,6 +179,10 @@ rtcheck_output_handler(void *clientData, int UNUSED(mask))
 int
 ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_rtcheck2_core(gedp, argc, argv);
+
     char **vp;
     int i;
     FILE *fp;
@@ -191,10 +197,10 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
     char rtcheck[256] = {0};
     size_t args = 0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -213,7 +219,7 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
 
-    *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
+    *vp++ = gedp->dbip->dbi_filename;
 
     /*
      * Now that we've grabbed all the options, if no args remain,
@@ -222,7 +228,14 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
      */
     if (i == argc) {
 	gd_rt_cmd_len = vp - gd_rt_cmd;
+	int cmd_prev_len = gd_rt_cmd_len;
 	gd_rt_cmd_len += ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
+	if (gd_rt_cmd_len == cmd_prev_len) {
+	    // Nothing specified, nothing displayed
+	    bu_vls_printf(gedp->ged_result_str, "no objects displayed\n");
+	    bu_free(gd_rt_cmd, "free gd_rt_cmd");
+	    return BRLCAD_ERROR;
+	}
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
@@ -245,7 +258,7 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	bu_vls_printf(gedp->ged_result_str, "\n");
 	bu_free(gd_rt_cmd, "free gd_rt_cmd");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fp = bu_process_open(p, BU_PROCESS_STDIN);
@@ -260,8 +273,8 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
     rtcp->fp = bu_process_open(p, BU_PROCESS_STDOUT);
     /* Needed on Windows for successful rtcheck drawing data communication */
     setmode(fileno(rtcp->fp), O_BINARY);
-    rtcp->vbp = rt_vlblock_init();
-    rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
+    rtcp->vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+    rtcp->vhead = bv_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
     rtcp->read_failed = 0;
     rtcp->draw_read_failed = 0;
@@ -287,7 +300,7 @@ ged_rtcheck_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

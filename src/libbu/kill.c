@@ -1,7 +1,7 @@
 /*                          K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2021 United States Government as represented by
+ * Copyright (c) 2007-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ extern int kill(pid_t, int);
 
 #ifdef HAVE_KILL
 
-HIDDEN int
+static int
 _bu_terminate(int process)
 {
     int successful = 0;
@@ -54,7 +54,7 @@ _bu_terminate(int process)
 
 #else /* !HAVE_KILL */
 
-HIDDEN int
+static int
 _bu_terminate(int process)
 {
     int successful = 0;

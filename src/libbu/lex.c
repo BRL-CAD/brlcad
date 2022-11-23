@@ -1,7 +1,7 @@
 /*                           L E X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 static int bu_lex_reading_comment = 0;
 
 
-HIDDEN char *
+static char *
 lex_getone(int *used, struct bu_vls *rtstr)
 {
     register char *cp;

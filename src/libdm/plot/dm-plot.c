@@ -1,7 +1,7 @@
 /*                       D M - P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,8 +45,8 @@
 #include "./dm-plot.h"
 #include "../null/dm-Null.h"
 
-#include "rt/solid.h"
-#include "bn/plot3.h"
+#include "bv/defines.h"
+#include "bv/plot3.h"
 
 #include "../include/private.h"
 
@@ -56,6 +56,12 @@ extern FILE *popen(const char *command, const char *type);
 #if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(pclose)
 extern int pclose(FILE *stream);
 #endif
+
+struct plot_mvars {
+    int zclip;
+    double bound;
+    int boundFlag;
+};
 
 /* Display Manager package interface */
 
@@ -70,15 +76,19 @@ static int plot_close(struct dm *dmp);
  *
  */
 struct dm *
-plot_open(void *vinterp, int argc, const char *argv[])
+plot_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 {
     static int count = 0;
     struct dm *dmp;
     Tcl_Obj *obj;
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
+    if (!interp)
+	return NULL;
+
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_ALLOC(dmp->i, struct dm_impl);
 
@@ -86,8 +96,13 @@ plot_open(void *vinterp, int argc, const char *argv[])
     dmp->i->dm_interp = interp;
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct plot_vars);
-
     struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
+
+    BU_ALLOC(dmp->i->m_vars, struct plot_mvars);
+    struct plot_mvars *m_vars = (struct plot_mvars *)dmp->i->m_vars;
+    m_vars->zclip = 0;
+    m_vars->bound = PLOTBOUND;
+    m_vars->boundFlag = 1;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -123,7 +138,7 @@ plot_open(void *vinterp, int argc, const char *argv[])
 		/* Enable Z clipping */
 		Tcl_AppendStringsToObj(obj, "Clipped in Z to viewing cube\n", (char *)NULL);
 
-		dmp->i->dm_zclip = 1;
+		m_vars->zclip = 1;
 		break;
 	    default:
 		Tcl_AppendStringsToObj(obj, "bad PLOT option ", argv[0], "\n", (char *)NULL);
@@ -196,7 +211,7 @@ plot_open(void *vinterp, int argc, const char *argv[])
 /**
  * Gracefully release the display.
  */
-HIDDEN int
+static int
 plot_close(struct dm *dmp)
 {
     if (!dmp)
@@ -212,6 +227,7 @@ plot_close(struct dm *dmp)
 	fclose(privars->up_fp);
 
     bu_vls_free(&dmp->i->dm_pathName);
+    bu_free((void *)dmp->i->m_vars, "plot_close: m_vars");
     bu_free((void *)dmp->i->dm_vars.priv_vars, "plot_close: plot_vars");
     bu_free((void *)dmp->i, "plot_close: dmp impl");
     bu_free((void *)dmp, "plot_close: dmp");
@@ -229,7 +245,7 @@ plot_viable(const char *UNUSED(dpy_string))
 /**
  * There are global variables which are parameters to this routine.
  */
-HIDDEN int
+static int
 plot_drawBegin(struct dm *dmp)
 {
     if (!dmp)
@@ -241,7 +257,7 @@ plot_drawBegin(struct dm *dmp)
 }
 
 
-HIDDEN int
+static int
 plot_drawEnd(struct dm *dmp)
 {
     if (!dmp)
@@ -261,7 +277,7 @@ plot_drawEnd(struct dm *dmp)
  * Load a new transformation matrix.  This will be followed by
  * many calls to plot_draw().
  */
-HIDDEN int
+static int
 plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     Tcl_Obj *obj;
@@ -306,11 +322,11 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *
  * Returns 0 if object could be drawn, !0 if object was omitted.
  */
-HIDDEN int
-plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
+static int
+plot_drawVList(struct dm *dmp, struct bv_vlist *vp)
 {
     static vect_t last;
-    struct bn_vlist *tvp;
+    struct bv_vlist *tvp;
     point_t *pt_prev=NULL;
     fastf_t dist_prev=1.0;
     fastf_t dist;
@@ -321,7 +337,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
     struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     if (privars->floating) {
-	bn_vlist_to_uplot(privars->up_fp, &vp->l);
+	bv_vlist_to_uplot(privars->up_fp, &vp->l);
 
 	return BRLCAD_OK;
     }
@@ -336,7 +352,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
     if (delta < SQRT_SMALL_FASTF)
 	delta = SQRT_SMALL_FASTF;
 
-    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
 	int i;
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
@@ -344,24 +360,24 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    static vect_t start, fin;
 	    switch (*cmd) {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_POLY_VERTNORM:
-		case BN_VLIST_TRI_START:
-		case BN_VLIST_TRI_VERTNORM:
+		case BV_VLIST_POLY_START:
+		case BV_VLIST_POLY_VERTNORM:
+		case BV_VLIST_TRI_START:
+		case BV_VLIST_TRI_VERTNORM:
 		    continue;
-		case BN_VLIST_MODEL_MAT:
+		case BV_VLIST_MODEL_MAT:
 		    MAT_COPY(privars->plotmat, privars->mod_mat);
 		    continue;
-		case BN_VLIST_DISPLAY_MAT:
+		case BV_VLIST_DISPLAY_MAT:
 		    MAT4X3PNT(tlate, (privars->mod_mat), *pt);
 		    privars->disp_mat[3] = tlate[0];
 		    privars->disp_mat[7] = tlate[1];
 		    privars->disp_mat[11] = tlate[2];
 		    MAT_COPY(privars->plotmat, privars->disp_mat);
 		    continue;
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_TRI_MOVE:
+		case BV_VLIST_POLY_MOVE:
+		case BV_VLIST_LINE_MOVE:
+		case BV_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->i->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -380,11 +396,11 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    } else
 			MAT4X3PNT(last, privars->plotmat, *pt);
 		    continue;
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_TRI_DRAW:
-		case BN_VLIST_TRI_END:
+		case BV_VLIST_POLY_DRAW:
+		case BV_VLIST_POLY_END:
+		case BV_VLIST_LINE_DRAW:
+		case BV_VLIST_TRI_DRAW:
+		case BV_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->i->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -463,13 +479,13 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 }
 
 
-HIDDEN int
-plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+static int
+plot_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
 {
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
     if (!callback_function) {
 	if (data) {
-	    vp = (struct bn_vlist *)data;
+	    vp = (struct bv_vlist *)data;
 	    plot_drawVList(dmp, vp);
 	}
     } else {
@@ -483,12 +499,17 @@ plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **
 }
 
 
-/**
- * Restore the display processor to a normal mode of operation (i.e.,
- * not scaled, rotated, displaced, etc.).  Turns off windowing.
- */
-HIDDEN int
-plot_normal(struct dm *dmp)
+static int
+plot_hud_begin(struct dm *dmp)
+{
+    if (!dmp)
+	return BRLCAD_ERROR;
+
+    return BRLCAD_OK;
+}
+
+static int
+plot_hud_end(struct dm *dmp)
 {
     if (!dmp)
 	return BRLCAD_ERROR;
@@ -501,7 +522,7 @@ plot_normal(struct dm *dmp)
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
  */
-HIDDEN int
+static int
 plot_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
     int sx, sy;
@@ -521,7 +542,7 @@ plot_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int siz
 }
 
 
-HIDDEN int
+static int
 plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
 {
     int sx1, sy1;
@@ -540,14 +561,14 @@ plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fas
 }
 
 
-HIDDEN int
+static int
 plot_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
     return draw_Line3D(dmp, pt1, pt2);
 }
 
 
-HIDDEN int
+static int
 plot_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
@@ -557,14 +578,14 @@ plot_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag)
 }
 
 
-HIDDEN int
+static int
 plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     return plot_drawLine2D(dmp, x, y, x, y);
 }
 
 
-HIDDEN int
+static int
 plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     if (!dmp) {
@@ -576,11 +597,14 @@ plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
     pl_color(privars->up_fp, (int)r, (int)g, (int)b);
     return BRLCAD_OK;
 }
-HIDDEN int
-plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+static int
+plot_setBGColor(struct dm *dmp,
+	unsigned char r1, unsigned char g1, unsigned char b1,
+	unsigned char r2, unsigned char g2, unsigned char b2
+	)
 {
     if (!dmp) {
-	bu_log("WARNING: Null display (r/g/b==%d/%d/%d)\n", r, g, b);
+	bu_log("WARNING: Null display (r/g/b==%d/%d/%d, color2==%d/%d/%d)\n", r1, g1, b1, r2, g2, b2);
 	return BRLCAD_ERROR;
     }
 
@@ -588,7 +612,7 @@ plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 }
 
 
-HIDDEN int
+static int
 plot_setLineAttr(struct dm *dmp, int width, int style)
 {
     dmp->i->dm_lineWidth = width;
@@ -605,7 +629,7 @@ plot_setLineAttr(struct dm *dmp, int width, int style)
 }
 
 
-HIDDEN int
+static int
 plot_debug(struct dm *dmp, int lvl)
 {
     Tcl_Obj *obj;
@@ -624,7 +648,7 @@ plot_debug(struct dm *dmp, int lvl)
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 plot_logfile(struct dm *dmp, const char *filename)
 {
     Tcl_Obj *obj;
@@ -645,16 +669,17 @@ plot_logfile(struct dm *dmp, const char *filename)
 
 
 
-HIDDEN int
+static int
 plot_setWinBounds(struct dm *dmp, fastf_t *w)
 {
+    struct plot_mvars *m_vars = (struct plot_mvars *)dmp->i->m_vars;
     /* Compute the clipping bounds */
     dmp->i->dm_clipmin[0] = w[0] / 2048.0;
     dmp->i->dm_clipmax[0] = w[1] / 2047.0;
     dmp->i->dm_clipmin[1] = w[2] / 2048.0;
     dmp->i->dm_clipmax[1] = w[3] / 2047.0;
 
-    if (dmp->i->dm_zclip) {
+    if (m_vars->zclip) {
 	dmp->i->dm_clipmin[2] = w[4] / 2048.0;
 	dmp->i->dm_clipmax[2] = w[5] / 2047.0;
     } else {
@@ -665,6 +690,85 @@ plot_setWinBounds(struct dm *dmp, fastf_t *w)
     return BRLCAD_OK;
 }
 
+static int
+plot_setZClip(struct dm *dmp, int zclip)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("plot_setZClip");
+
+    mvars->zclip = zclip;
+
+    return BRLCAD_OK;
+}
+
+static int
+plot_getZClip(struct dm *dmp)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("plot_getZClip");
+
+    return mvars->zclip;
+}
+
+static int
+plot_setBound(struct dm *dmp, double bound)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("plot_setBound");
+
+    mvars->bound = bound;
+
+    return BRLCAD_OK;
+}
+
+static double
+plot_getBound(struct dm *dmp)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("plot_getBound");
+
+    return mvars->bound;
+}
+
+static int
+plot_setBoundFlag(struct dm *dmp, int bound)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("plot_setBoundFlag");
+
+    mvars->boundFlag = bound;
+
+    return BRLCAD_OK;
+}
+
+static int
+plot_getBoundFlag(struct dm *dmp)
+{
+    struct plot_mvars *mvars = (struct plot_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("plot_getBoundFlag");
+
+    return mvars->boundFlag;
+}
+
+#define plot_MV_O(_m) offsetof(struct plot_mvars, _m)
+struct bu_structparse plot_vparse[] = {
+    {"%g",  1, "bound",         plot_MV_O(bound),       dm_generic_hook, NULL, NULL},
+    {"%d",  1, "useBound",      plot_MV_O(boundFlag),   dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         plot_MV_O(zclip),       dm_generic_hook, NULL, NULL},
+    {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
+};
 
 struct dm_impl dm_plot_impl = {
     plot_open,
@@ -672,10 +776,13 @@ struct dm_impl dm_plot_impl = {
     plot_viable,
     plot_drawBegin,
     plot_drawEnd,
-    plot_normal,
+    plot_hud_begin,
+    plot_hud_end,
     plot_loadMatrix,
     null_loadPMatrix,
+    null_popPMatrix,
     plot_drawString2D,
+    null_String2DBBox,
     plot_drawLine2D,
     plot_drawLine3D,
     plot_drawLines3D,
@@ -684,6 +791,7 @@ struct dm_impl dm_plot_impl = {
     null_drawPoints3D,
     plot_drawVList,
     plot_drawVList,
+    null_draw_obj,
     NULL,
     plot_draw,
     plot_setFGColor,
@@ -692,9 +800,18 @@ struct dm_impl dm_plot_impl = {
     null_configureWin,
     plot_setWinBounds,
     null_setLight,
+    null_getLight,
     null_setTransparency,
+    null_getTransparency,
     null_setDepthMask,
     null_setZBuffer,
+    null_getZBuffer,
+    plot_setZClip,
+    plot_getZClip,
+    plot_setBound,
+    plot_getBound,
+    plot_setBoundFlag,
+    plot_getBoundFlag,
     plot_debug,
     plot_logfile,
     null_beginDList,
@@ -706,6 +823,7 @@ struct dm_impl dm_plot_impl = {
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
+    null_SwapBuffers,
     null_doevent,
     null_openFb,
     NULL,
@@ -723,8 +841,6 @@ struct dm_impl dm_plot_impl = {
     NULL,                       /* not graphical */
     0,				/* no displaylist */
     0,				/* no stereo */
-    PLOTBOUND,			/* zoom-in limit */
-    1,				/* bound flag */
     "plot",
     "Screen to UNIX-Plot",
     0, /* top */
@@ -744,25 +860,24 @@ struct dm_impl dm_plot_impl = {
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* bg1 color */
+    {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
     VINIT_ZERO,			/* clipmin */
     VINIT_ZERO,			/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
     0,				/* depth buffer is not writable */
-    0,				/* no zbuffer */
-    0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
-    BU_STRUCTPARSE_NULL,
+    plot_vparse,
     FB_NULL,
-    NULL			/* Tcl interpreter */
+    NULL,			/* Tcl interpreter */
+    NULL,                       /* Drawing context */
+    NULL                        /* App data */
 };
 
-struct dm dm_plot = { DM_MAGIC, &dm_plot_impl };
+struct dm dm_plot = { DM_MAGIC, &dm_plot_impl, 0 };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_plot };

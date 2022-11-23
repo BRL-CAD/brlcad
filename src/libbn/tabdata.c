@@ -1,7 +1,7 @@
 /*                       T A B D A T A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -931,7 +931,7 @@ bn_tabdata_binary_read(const char *filename, size_t num, const struct bn_table *
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     fd = open(filename, O_RDONLY|O_BINARY);
     bu_semaphore_release(BU_SEM_SYSCALL);
-    if (fd <= 0)  {
+    if (fd < 0)  {
 	perror(filename);
 	bu_log("bn_tabdata_binary_read open failed on \"%s\"\n", filename);
 	return (struct bn_tabdata *)NULL;

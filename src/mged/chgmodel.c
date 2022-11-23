@@ -1,7 +1,7 @@
 /*                      C H G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@
 
 
 /* defined in chgview.c */
-extern int edit_com(int argc, const char *argv[], int kind);
+extern int edit_com(int argc, const char *argv[]);
 
 /* defined in buttons.c */
 extern int be_s_trans();
@@ -95,22 +95,22 @@ f_make(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	av[6] = argv[2];
 	av[7] = (char *)0;
 
-	ret = ged_make(GEDP, 7, (const char **)av);
+	ret = ged_exec(GEDP, 7, (const char **)av);
     } else
-	ret = ged_make(GEDP, argc, (const char **)argv);
+	ret = ged_exec(GEDP, argc, (const char **)argv);
 
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
-    if (ret == GED_OK) {
+    if (ret == BRLCAD_OK) {
 	const char *av[4];
 
 	av[0] = "draw";
 	av[1] = "-R";
 	av[2] = argv[argc-2];
 	av[3] = NULL;
-	edit_com(3, av, 1);
+	edit_com(3, av);
     } else {
 	return TCL_ERROR;
     }

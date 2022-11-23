@@ -1,7 +1,7 @@
 /*                    S H _ P L A S T I C . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2021 United States Government as represented by
+ * Copyright (c) 1998-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,12 +68,12 @@ struct bu_structparse phong_parse[] = {
 };
 
 
-HIDDEN int phong_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int mirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int glass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int phong_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void phong_print(register struct region *rp, void *dp);
-HIDDEN void phong_free(void *cp);
+static int phong_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int mirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int glass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int phong_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void phong_print(register struct region *rp, void *dp);
+static void phong_free(void *cp);
 
 /* This can't be const, so the forward link can be written later */
 struct mfuncs phg_mfuncs[] = {
@@ -92,7 +92,7 @@ extern double phg_ipow();
 
 #define RI_AIR 1.0    /* Refractive index of air.		*/
 
-HIDDEN int
+static int
 phong_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
@@ -122,7 +122,7 @@ phong_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 }
 
 
-HIDDEN int
+static int
 mirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
@@ -152,7 +152,7 @@ mirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
 }
 
 
-HIDDEN int
+static int
 glass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 {
     register struct phong_specific *pp;
@@ -183,14 +183,14 @@ glass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 }
 
 
-HIDDEN void
+static void
 phong_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, phong_parse, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 phong_free(void *cp)
 {
     BU_PUT(cp, struct phong_specific);
@@ -261,7 +261,7 @@ phong_free(void *cp)
  s	is the angle between the reflected ray and the observer.
  `	n	'Shininess' of the material,  range 1 to 10.
 */
-HIDDEN int
+static int
 phong_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     struct light_specific *lp;

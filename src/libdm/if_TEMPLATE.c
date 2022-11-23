@@ -1,7 +1,7 @@
 /*                   I F _ T E M P L A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@
 #include "dm.h"
 
 
-HIDDEN int
+static int
 DEVNAME_open(struct fb *ifp, const char *file, int width, int height)
 {
     FB_CK_fb(ifp);
@@ -63,119 +63,119 @@ DEVNAME_open(struct fb *ifp, const char *file, int width, int height)
 }
 
 
-HIDDEN int
+static int
 DEVNAME_close(struct fb *ifp)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_clear(struct fb *ifp, unsigned char *pp)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     return (int)count;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     return (int)count;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_rmap(struct fb *ifp, ColorMap *cmp)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_cursor(struct fb *ifp, int mode, int x, int y)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     return width*height;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     return width*height;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_poll(struct fb *ifp)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_flush(struct fb *ifp)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_free(struct fb *ifp)
 {
     return 0;
 }
 
 
-HIDDEN int
+static int
 DEVNAME_help(struct fb *ifp)
 {
     fb_log("Description: %s\n", DEVNAME_interface.if_type);
@@ -231,7 +231,17 @@ struct fb DEVNAME_interface =  {
     0,			/* page_dirty */
     0L,			/* page_curpos */
     0L,			/* page_pixels */
-    0			/* debug */
+    0,			/* debug */
+    NULL,
+    NULL,
+    0,
+    NULL,
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 

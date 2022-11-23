@@ -36,7 +36,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>extrude 1234 5</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>extrude 1234 5</userinput></term>
 	   <listitem>
 	     <para>Moves face 5678 so that it is 5 units from face 1234.
 	      </para>

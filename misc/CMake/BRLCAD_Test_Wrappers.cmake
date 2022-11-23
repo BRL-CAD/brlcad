@@ -2,7 +2,7 @@
 #
 # BRL-CAD
 #
-# Copyright (c) 2020-2021 United States Government as represented by
+# Copyright (c) 2020-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,10 +34,8 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-#---------------------------------------------------------------------
-# "make check" runs all of the tests (unit, benchmark, and regression) that are expected to work.
-# "make unit"  runs all the unit tests.
 
+# "make unit"  runs all the unit tests.
 # To build the required targets for testing in the style of GNU Autotools "make
 # check") we define "unit" and "check" targets per
 # http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
@@ -69,8 +67,8 @@ if (NOT TARGET check)
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
     COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD\\'s unit, system, integration, benchmark \\(performance\\), and"
-    COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
-    COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
+    COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  These tests must pass to consider a build viable"
+    COMMAND ${CMAKE_COMMAND} -E echo "      for production use."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|STAND_ALONE\" -E \"^regress-|NOTE|benchmark|slow-\" --output-on-failure ${JFLAG}
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -R \"benchmark\" --output-on-failure ${JFLAG}
@@ -82,10 +80,8 @@ endif (NOT TARGET check)
 if (NOT TARGET unit)
   add_custom_target(unit
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"unit\\\" a.k.a. \\\"BRL-CAD Unit Testing\\\" target runs the"
-    COMMAND ${CMAKE_COMMAND} -E echo "      subset of BRL-CAD\\'s API unit tests that are expected to work \\(i.e.,"
-    COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development\\).  All dependencies required"
-    COMMAND ${CMAKE_COMMAND} -E echo "      by the tests are compiled automatically."
+    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"unit\\\" a.k.a. \\\"BRL-CAD Unit Testing\\\" target runs all"
+    COMMAND ${CMAKE_COMMAND} -E echo "      the BRL-CAD API unit tests that are expected to pass."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
     COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark|slow-\" ${JFLAG}
     )
@@ -108,112 +104,16 @@ endif (NOT TARGET unit)
 # unknowingly tries.
 function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
 
-  # TODO - once we can require CMake 3.18, replace the empty string workaround
-  # below with this cmake_language based version.  See
-  # https://gitlab.kitware.com/cmake/cmake/-/issues/21414
-
-  # cmake_parse_arguments(PARSE_ARGV 3 ARG "" "" "")
-  # foreach(_av IN LISTS ARG_UNPARSED_ARGUMENTS)
-  #   string(APPEND test_args " [==[${_av}]==]")
-  # endforeach()
-  # cmake_language(EVAL CODE "add_test(NAME ${test_name} COMMAND ${test_args})")
-
-
-  # find any occurrences of empty strings
-  set(idx 0)
-  set(matches)
-  foreach (ARG IN LISTS ARGV)
-    # need 'x' to avoid older cmake seeing "COMMAND" "STREQUAL" ""
-    if ("x${ARG}" STREQUAL "x")
-      list(APPEND matches ${idx})
-    endif ("x${ARG}" STREQUAL "x")
-    math(EXPR idx "${idx} + 1")
+  # CMake 3.18, cmake_language based wrapper for add_test, replaces the
+  # previous workaround for default ARGN behavior that doesn't pass through
+  # empty strings.  See https://gitlab.kitware.com/cmake/cmake/-/issues/21414
+  cmake_parse_arguments(PARSE_ARGV 3 ARG "" "" "")
+  foreach(_av IN LISTS ARG_UNPARSED_ARGUMENTS)
+    string(APPEND test_args " [==[${_av}]==]")
   endforeach()
+  cmake_language(EVAL CODE "add_test(NAME ${test_name} COMMAND ${test_args})")
 
-  # make sure we don't exceed current support
-  list(LENGTH matches cnt)
-  if ("${cnt}" GREATER 1)
-    message(FATAL_ERROR "ERROR: encountered ${cnt} > 1 empty string being passed to add_test(${test_name}).  Expand support in the top-level CMakeLists.txt file (grep add_test) or pass fewer empty strings.")
-  endif ("${cnt}" GREATER 1)
-
-  # if there are empty strings, we need to manually recreate their calling
-  if ("${cnt}" GREATER 0)
-
-    list(GET matches 0 empty)
-    if ("${empty}" EQUAL 4)
-      foreach (i 1)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} "" ${ARGN})
-    elseif ("${empty}" EQUAL 5)
-      foreach (i 1 2)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} "" ${ARGN})
-    elseif ("${empty}" EQUAL 6)
-      foreach (i 1 2 3)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} "" ${ARGN})
-    elseif ("${empty}" EQUAL 7)
-      foreach (i 1 2 3 4)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} "" ${ARGN})
-    elseif ("${empty}" EQUAL 8)
-      foreach (i 1 2 3 4 5)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} "" ${ARGN})
-    elseif ("${empty}" EQUAL 9)
-      foreach (i 1 2 3 4 5 6)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} "" ${ARGN})
-    elseif ("${empty}" EQUAL 10)
-      foreach (i 1 2 3 4 5 6 7)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} "" ${ARGN})
-    elseif ("${empty}" EQUAL 11)
-      foreach (i 1 2 3 4 5 6 7 8)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} "" ${ARGN})
-
-
-      # ADD_EMPTY_HERE: insert support for additional argv positions
-      # as extra elseif tests here using the preceding pattern.  be
-      # sure to update the index in the following else clause fatal
-      # error message too.
-
-    else ("${empty}" EQUAL 4)
-      message(FATAL_ERROR "ERROR: encountered an empty string passed to add_test(${test_name}) as ARGV${empty} > ARGV11.  Expand support in the top-level CMakeLists.txt file (grep ADD_EMPTY_HERE).")
-    endif ("${empty}" EQUAL 4)
-
-  else ("${cnt}" GREATER 0)
-    # no empty strings, no worries
-    add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGN})
-  endif ("${cnt}" GREATER 0)
-
-
-  # There are a variety of criteria that disqualify test_prog as a
+ # There are a variety of criteria that disqualify test_prog as a
   # dependency - check and return if we hit any of them.
   if (NOT TARGET ${test_prog})
     return()
@@ -242,8 +142,8 @@ endfunction(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
 
 
 # Local Variables:
-# tab-width: 8
 # mode: cmake
-# indent-tabs-mode: t
+# tab-width: 2
+# indent-tabs-mode: nil
 # End:
 # ex: shiftwidth=2 tabstop=8

@@ -1,0 +1,89 @@
+#!/bin/sh
+
+# Ensure /bin/sh
+export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+path_to_this="`dirname $0`"
+LC_ALL=C
+
+echo Looking for RT...
+# find the raytracer
+# RT environment variable overrides
+if test "x${RT}" = "x" ; then
+    # see if we find the rt binary
+    if test -x "$path_to_this/../src/rt/rt" ; then
+	echo ...found $path_to_this/../src/rt/rt
+	RT="$path_to_this/../src/rt/rt"
+    elif test -x "$path_to_this/rt" ; then
+	echo ...found $path_to_this/rt
+	RT="$path_to_this/rt"
+    elif test -x "$path_to_this/../bin/rt" ; then
+	echo ...found $path_to_this/../bin/rt
+	RT="$path_to_this/../bin/rt"
+    elif test -x "$path_to_this/../build/bin/rt" ; then
+  echo ...found $path_to_this/../build/bin/rt
+  RT="$path_to_this/../build/bin/rt"
+    elif test -x "/usr/brlcad/bin/rt" ; then
+	echo ...found /usr/brlcad/bin/rt
+	RT="/usr/brlcad/bin/rt"
+    fi
+else
+    echo ...using $RT from RT environment variable setting
+fi
+
+echo Looking for DB...
+# find the geometry directory
+# DB environment variable overrides
+if test "x${DB}" = "x" ; then
+    # see if we find the db dir
+    if test -d "$path_to_this/../build/share/db" ; then
+  echo ...found $path_to_this/../build/share/db
+  DB="$path_to_this/../build/share/db"
+    elif test -d "$path_to_this/../db" ; then
+	echo ...found $path_to_this/../db
+	DB="$path_to_this/../db"
+    elif test -d "$path_to_this/db" ; then
+	echo ...found $path_to_this/db
+	DB="$path_to_this/db"
+    fi
+else
+    echo ...using $DB from DB environment variable setting
+fi
+
+# print results or choke
+if test "x${RT}" = "x" ; then
+    echo "ERROR:  Could not find the BRL-CAD raytracer"
+    exit 1
+else
+    echo "Using [$RT] for RT"
+fi
+if test "x${DB}" = "x" ; then
+    echo "ERROR:  Could not find the BRL-CAD database directory"
+    exit 1
+else
+    echo "Using [$DB] for DB"
+fi
+
+if test -f traffic_light.png ; then mv traffic_light.png traffic_light.png.$$ ; fi
+if test -f traffic_light.log ; then mv traffic_light.log traffic_light.log.$$ ; fi
+
+echo "Ray-tracing to file: traffic_light.png"
+
+$RT -M -s1024 $*\
+  -o traffic_light.png\
+  ${DB}/traffic_light.g\
+  'scene.c' \
+  2> traffic_light.log\
+ <<EOF
+viewsize 1.60626398444471e+03;
+orientation 5.25794963790780e-01 4.41938505076552e-01 4.69062489119843e-01 5.55166997473420e-01;
+eye_pt 3.17305150328335e+04 -5.45678517872137e+03 5.82070858116997e+03;
+start 0; clean;
+end;
+
+EOF
+
+if test x$? != x0 ; then
+    echo "ERROR: Ray-trace failed."
+fi
+
+echo "Done.  See traffic_light.log for details."

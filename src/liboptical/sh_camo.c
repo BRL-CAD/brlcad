@@ -1,7 +1,7 @@
 /*                       S H _ C A M O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,40 +66,6 @@ struct camo_specific {
 };
 #define CK_camo_SP(_p) BU_CKMAG(_p, camo_MAGIC, "camo_specific")
 
-static struct camo_specific camo_defaults = {
-    camo_MAGIC,
-    2.1753974,		/* noise_lacunarity */
-    1.0,		/* noise_h_val */
-    4.0,		/* noise_octaves */
-    1.0,		/* noise_size */
-    VINITALL(0.0125),	/* noise_vscale */
-    VINITALL(1000.0),	/* delta into noise space */
-    -0.25,		/* t1 */
-    0.25,		/* t2 */
-    { .38, .29, .16 },	/* darker color c1 (97/74/41) */
-    { .1, .30, .04 },	/* basic color c2 (26/77/10) */
-    VINITALL(0.15),	/* dark black (38/38/38) */
-    MAT_INIT_IDN
-};
-
-
-static struct camo_specific marble_defaults = {
-    camo_MAGIC,
-    2.1753974,		/* noise_lacunarity */
-    1.0,		/* noise_h_val */
-    4.0,		/* noise_octaves */
-    1.0,		/* noise_size */
-    VINITALL(1.0),	/* noise_vscale */
-    VINITALL(1000.0),	/* delta into noise space */
-    0.25,		/* t1 */
-    0.5,		/* t2 */
-    { .8, .2, .16 },	/* darker color c1 (97/74/41) */
-    { .9, .9, .8 },	/* basic color c2 (26/77/10) */
-    VINITALL(0.15),	/* dark black (38/38/38) */
-    MAT_INIT_IDN
-};
-
-
 #define SHDR_NULL ((struct camo_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct camo_specific, m)
 
@@ -144,12 +110,12 @@ struct bu_structparse camo_parse[] = {
 };
 
 
-HIDDEN int marble_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int marble_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN int camo_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int camo_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void camo_print(register struct region *rp, void *dp);
-HIDDEN void camo_free(void *cp);
+static int marble_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int marble_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static int camo_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int camo_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void camo_print(register struct region *rp, void *dp);
+static void camo_free(void *cp);
 
 struct mfuncs camo_mfuncs[] = {
     {MF_MAGIC,	"camo",		0,		MFI_HIT,	0,
@@ -198,8 +164,8 @@ color_fix(const struct bu_structparse *sdp,
 }
 
 
-HIDDEN int
-setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_i *rtip, char *parameters, struct camo_specific defaults)
+static int
+setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_i *rtip, char *parameters, struct camo_specific *defaults)
 {
 /* pointer to reg_udata in *rp */
 
@@ -217,7 +183,7 @@ setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_
     if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("%s'%s'\n", parameters, bu_vls_addr(matparm));
     }
-    memcpy(camo_sp, &defaults, sizeof(struct camo_specific));
+    memcpy(camo_sp, defaults, sizeof(struct camo_specific));
 
     if (bu_struct_parse(matparm, camo_parse, (char *)camo_sp, NULL) < 0)
 	return -1;
@@ -264,21 +230,37 @@ setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
-HIDDEN int
+static int
 camo_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
-    return setup(rp, matparm, dpp, rtip, "camouflage parameters = ", camo_defaults);
+    static struct camo_specific camo_defaults = {
+	camo_MAGIC,
+	2.1753974,		/* noise_lacunarity */
+	1.0,			/* noise_h_val */
+	4.0,			/* noise_octaves */
+	1.0,			/* noise_size */
+	VINITALL(0.0125),	/* noise_vscale */
+	VINITALL(1000.0),	/* delta into noise space */
+	-0.25,			/* t1 */
+	0.25,			/* t2 */
+	{ .38, .29, .16 },	/* darker color c1 (97/74/41) */
+	{ .1, .30, .04 },	/* basic color c2 (26/77/10) */
+	VINITALL(0.15),		/* dark black (38/38/38) */
+	MAT_INIT_IDN
+    };
+
+    return setup(rp, matparm, dpp, rtip, "camouflage parameters = ", &camo_defaults);
 }
 
 
-HIDDEN void
+static void
 camo_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, camo_print_tab, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 camo_free(void *cp)
 {
     BU_PUT(cp, struct camo_specific);
@@ -329,10 +311,26 @@ camo_render(struct application *ap, const struct partition *pp, struct shadework
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
-HIDDEN int
+static int
 marble_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
-    return setup(rp, matparm, dpp, rtip, "marble parameters = ", marble_defaults);
+    static struct camo_specific marble_defaults = {
+	camo_MAGIC,
+	2.1753974,		/* noise_lacunarity */
+	1.0,			/* noise_h_val */
+	4.0,			/* noise_octaves */
+	1.0,			/* noise_size */
+	VINITALL(1.0),		/* noise_vscale */
+	VINITALL(1000.0),	/* delta into noise space */
+	0.25,			/* t1 */
+	0.5,			/* t2 */
+	{ .8, .2, .16 },	/* darker color c1 (97/74/41) */
+	{ .9, .9, .8 },		/* basic color c2 (26/77/10) */
+	VINITALL(0.15),		/* dark black (38/38/38) */
+	MAT_INIT_IDN
+    };
+
+    return setup(rp, matparm, dpp, rtip, "marble parameters = ", &marble_defaults);
 }
 
 

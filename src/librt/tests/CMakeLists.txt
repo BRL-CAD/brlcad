@@ -23,6 +23,17 @@ BRLCAD_ADDEXEC(rt_nurbs_tester nurbs_tests.cpp "librt;libbrep;libbu" TEST)
 # disabled prior to 7.22.2 release due to unresolved failures in the implementation
 #BRLCAD_ADD_TEST(NAME NURBS-get_closest_point-distinct_points nurbs_tester ${CMAKE_CURRENT_SOURCE_DIR}/nurbs_surfaces.g 1)
 
+# materialX testing
+#set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
+set(USING_MATERIALX NO)
+if(USING_MATERIALX)
+  BRLCAD_ADDEXEC(materialx_test materialx_test.cpp "librt;" TEST)
+  BRLCAD_ADD_TEST(NAME rt_mtlx_test COMMAND materialx_test)
+else(USING_MATERIALX)
+  CMAKEFILES(materialx_test.cpp)
+endif(USING_MATERIALX)
+
+
 # diff testing
 BRLCAD_ADDEXEC(rt_diff diff.c "librt" TEST)
 
@@ -35,8 +46,12 @@ endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 BRLCAD_ADDEXEC(db5_size db5_size.c "librt" TEST)
 
 # datum testing
-BRLCAD_ADDEXEC(rt_datum rt_datum.c "librt" TEST)
+#BRLCAD_ADDEXEC(rt_datum rt_datum.c "librt" TEST)
+#BRLCAD_ADD_TEST(NAME rt_datum_basic COMMAND rt_datum)
 
+# cyclic path testing
+BRLCAD_ADDEXEC(rt_cyclic cyclic.c "librt" TEST)
+BRLCAD_ADD_TEST(NAME rt_cyclic_basic COMMAND rt_cyclic ${CMAKE_CURRENT_SOURCE_DIR}/cyclic_tests.g)
 
 BRLCAD_ADDEXEC(rt_cache cache.cpp "librt" TEST)
 BRLCAD_ADD_TEST(NAME rt_cache_serial_single_object COMMAND rt_cache 1)
@@ -47,13 +62,19 @@ BRLCAD_ADD_TEST(NAME rt_cache_serial_multiple_different_objects COMMAND rt_cache
 BRLCAD_ADD_TEST(NAME rt_cache_parallel_multiple_different_objects  COMMAND rt_cache 6 10)
 BRLCAD_ADD_TEST(NAME rt_cache_parallel_multiple_different_objects_hierarchy_1  COMMAND rt_cache 7 10)
 
+# lod testing
+BRLCAD_ADDEXEC(rt_lod lod.c "librt;libbg" TEST)
+
 set(distcheck_files
   CMakeLists.txt
   arb_intersect.g
   brep_boolean_tests.g
+  cyclic_tests.g
+  matrix_tests.g
   nurbs_surfaces.g
   extreme_ssi_test.g
   binary_attribute.c
+  rt_datum.c
   )
 
 CMAKEFILES(${distcheck_files})
@@ -63,4 +84,4 @@ CMAKEFILES(${distcheck_files})
 # mode: cmake
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=2 tabstop=8 textwidth=0 wrapmargin=0
+# ex: shiftwidth=2 tabstop=8

@@ -1,7 +1,7 @@
 /*                  T I E N E T _ S L A V E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2021 United States Government as represented by
+ * Copyright (c) 2002-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -97,14 +97,16 @@ void tienet_slave_free()
 
 
 void tienet_slave_worker(int port, char *host) {
-    tienet_buffer_t result, buffer;
-    struct sockaddr_in master, slave;
+    tienet_buffer_t result = {0};
+    tienet_buffer_t buffer = {0};
+    struct sockaddr_in master = {0};
+    struct sockaddr_in slave = {0};
     struct hostent h;
-    short op;
-    uint32_t size;
-    int slave_socket;
-    tienet_buffer_t buffer_comp;
-    unsigned long dest_len;
+    short op = 0;
+    uint32_t size = 0;
+    int slave_socket = 0;
+    tienet_buffer_t buffer_comp = {0};
+    unsigned long dest_len = 0;
 
 
     /* Initialize res_buf to NULL for realloc'ing */

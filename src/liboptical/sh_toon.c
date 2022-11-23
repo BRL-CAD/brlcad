@@ -1,7 +1,7 @@
 /*                        S H _ T O O N . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2021 United States Government as represented by
+ * Copyright (c) 2010-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -75,10 +75,10 @@ struct bu_structparse toon_parse_tab[] = {
 };
 
 
-HIDDEN int toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int toon_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void toon_print(register struct region *rp, void *dp);
-HIDDEN void toon_free(void *cp);
+static int toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int toon_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void toon_print(register struct region *rp, void *dp);
+static void toon_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -107,7 +107,7 @@ struct mfuncs toon_mfuncs[] = {
  * 0 success, but delete region
  * -1 failure
  */
-HIDDEN int
+static int
 toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
@@ -144,14 +144,14 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 }
 
 
-HIDDEN void
+static void
 toon_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, toon_print_tab, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 toon_free(void *cp)
 {
     BU_PUT(cp, struct toon_specific);
@@ -168,7 +168,6 @@ toon_render(struct application *ap, const struct partition *pp, struct shadework
 {
     int i;
     struct toon_specific *toon_sp = (struct toon_specific *)dp;
-    struct light_specific *lp;
     fastf_t cosi, scale;
 
     /* check the validity of the arguments we got */
@@ -191,7 +190,7 @@ toon_render(struct application *ap, const struct partition *pp, struct shadework
 
     /* Consider effects of each light source */
     for (i=ap->a_rt_i->rti_nlights-1; i>=0; i--) {
-	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
+	if ((struct light_specific *)swp->sw_visible[i] == LIGHT_NULL)
 	    continue;
 
 	cosi = VDOT(swp->sw_hit.hit_normal, swp->sw_tolight);

@@ -40,7 +40,7 @@
    <example><title>Create a new nmg shape by decimating the edges of an existing nmg shape.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>nmg_collapse nmg_old nmg_new 1.0 10.0</userinput>
+      <prompt>mged&gt; </prompt><userinput>nmg_collapse nmg_old nmg_new 1.0 10.0</userinput>
     </para>
     <para>Decimates edges in <emphasis>nmg_old</emphasis> to produce an NMG with an error no greater than 1.0
 	units. The process will not create any triangles with an angle less than 10°. The new

@@ -1,7 +1,7 @@
 /*                  N M G _ F I X _ N O R M A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2021 United States Government as represented by
+ * Copyright (c) 2009-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,9 +47,9 @@ ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[])
 
     static const char *usage = "nmg_prim";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* in theory, we should probably allow the user to override this. */
     tol.magic = BN_TOL_MAGIC;
@@ -66,20 +66,20 @@ ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[])
     /* attempt to resolve and verify before we jump in */
     nmg_name = argv[1];
 
-    if ((dp=db_lookup(gedp->ged_wdbp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    if ((dp=db_lookup(gedp->dbip, nmg_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", nmg_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&nmg_intern, dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&nmg_intern, dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (nmg_intern.idb_type != ID_NMG) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not an NMG solid\n", nmg_name);
 	rt_db_free_internal(&nmg_intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     m = (struct model *)nmg_intern.idb_ptr;
@@ -90,7 +90,7 @@ ged_nmg_fix_normals_core(struct ged *gedp, int argc, const char *argv[])
 	for (BU_LIST_FOR(s, shell, &r->s_hd))
 	    nmg_fix_normals(s, &RTG.rtg_vlfree, &tol);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

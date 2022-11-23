@@ -1,7 +1,7 @@
 /*                      G E T C U R V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2021 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ mat_t idn = MAT_INIT_IDN;
 
 
 int
-Getcurve(int curve, struct ptlist **curv_pts)
+Getcurve(size_t curve, struct ptlist **curv_pts)
 {
     int type;
     int npts = 0;
@@ -217,8 +217,10 @@ Getcurve(int curve, struct ptlist **curv_pts)
 			ptr->next = NULL;
 		    }
 		    ptr = ptr->prev;
-		    bu_free((char *)ptr->next, "Getcurve: ptr->next");
-		    ptr->next = NULL;
+		    if (ptr) {
+			bu_free((char *)ptr->next, "Getcurve: ptr->next");
+			ptr->next = NULL;
+		    }
 		    npts = ntuples;
 		    break;
 		}
@@ -247,8 +249,10 @@ Getcurve(int curve, struct ptlist **curv_pts)
 			ptr->prev = prev;
 		    }
 		    ptr = ptr->prev;
-		    bu_free((char *)ptr->next, "Getcurve: ptr->next");
-		    ptr->next = NULL;
+		    if (ptr) {
+			bu_free((char *)ptr->next, "Getcurve: ptr->next");
+			ptr->next = NULL;
+		    }
 		    npts = ntuples;
 		    break;
 		}
@@ -285,6 +289,17 @@ Getcurve(int curve, struct ptlist **curv_pts)
 	    Readint(&splroot->ndim, ""); /* 2->planar, 3->3d */
 	    Readint(&splroot->nsegs, ""); /* Number of segments */
 	    Readdbl(&a, "");	/* first breakpoint */
+
+	    if (splroot->ndim != 2 && splroot->ndim != 3) {
+		bu_log("Error in Getcurve, read invalid ndim: %d\n", splroot->ndim);
+		npts = 0;
+		break;
+	    }
+	    if (!splroot->nsegs) {
+		bu_log("Getcurve: nsegs == 0\n");
+		npts = 0;
+		break;
+	    }
 
 	    /* start a linked list of segments */
 	    seg = splroot->start;
@@ -348,8 +363,10 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		seg = seg->next;
 	    }
 	    ptr = ptr->prev;
-	    bu_free((char *)ptr->next, "Getcurve: ptr->next");
-	    ptr->next = NULL;
+	    if (ptr) {
+		bu_free((char *)ptr->next, "Getcurve: ptr->next");
+		ptr->next = NULL;
+	    }
 
 	    /* free the used memory */
 	    seg = splroot->start;
@@ -412,7 +429,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		if (ZERO(B) && ZERO(D) && ZERO(E))
 		    type = 1;
 		else
-		    bu_log("Entity #%d is an incorrectly formatted ellipse\n", curve);
+		    bu_log("Entity #%zu is an incorrectly formatted ellipse\n", curve);
 	    }
 
 	    /* make coeff of X**2 equal to 1.0 */
@@ -438,7 +455,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		I = A+C;
 		if (ZERO(del)) {
 		    /* not a conic */
-		    bu_log("Entity #%d, claims to be conic arc, but isn't\n", curve);
+		    bu_log("Entity #%zu, claims to be conic arc, but isn't\n", curve);
 		    break;
 		} else if (a > 0.0 && del*I < 0.0)
 		    type = 1; /* ellipse */
@@ -448,7 +465,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    type = 3; /* parabola */
 		else {
 		    /* imaginary ellipse */
-		    bu_log("Entity #%d is an imaginary ellipse!!\n", curve);
+		    bu_log("Entity #%zu is an imaginary ellipse!!\n", curve);
 		    break;
 		}
 	    }
@@ -477,7 +494,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    /* p is the distance from vertex to directrix */
 		    p = (-E*sin(theta) - D*cos(theta))/4.0;
 		    if (fabs(p) < TOL) {
-			bu_log("Cannot plot entity %d, p=%g\n", curve, p);
+			bu_log("Cannot plot entity %zu, p=%g\n", curve, p);
 			break;
 		    }
 
@@ -491,7 +508,7 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    b = ((v1[0]-v2[0])*cos(theta) + (v1[1]-v2[1])*sin(theta))/a;
 		    c = ((v1[1]-v2[1])*cos(theta) - (v1[0]-v2[0])*sin(theta));
 		    if (fabs(c) < TOL*TOL) {
-			bu_log("Cannot plot entity %d\n", curve);
+			bu_log("Cannot plot entity %zu\n", curve);
 			break;
 		    }
 		    b = b/c;
@@ -552,9 +569,13 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		case 1:	/* ellipse */
 		case 2: {
 		    /* hyperbola */
-		    double A1, C1, F1, alpha, beta;
+		    double A1 = 0.0;
+		    double C1 = 0.0;
+		    double F1 = 0.0;
+		    double alpha = 0.0;
+		    double beta = 0.0;
+		    point_t v3 = VINIT_ZERO;
 		    mat_t rot2;
-		    point_t v3;
 
 		    /* calculate center of ellipse or hyperbola */
 		    xc = (B*E/4.0 - D*C/2.0)/a;
@@ -606,7 +627,6 @@ Getcurve(int curve, struct ptlist **curv_pts)
 		    beta = 0.0;
 		    if (EQUAL(v2[0], v1[0]) && EQUAL(v2[1], v1[1])) {
 			/* full circle */
-			alpha = 0.0;
 			beta = 2.0*pi;
 		    }
 		    a = sqrt(fabs(F1/A1)); /* semi-axis length */

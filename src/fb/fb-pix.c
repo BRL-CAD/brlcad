@@ -1,7 +1,7 @@
 /*                        F B - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2021 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "dm.h"
 
@@ -115,7 +116,7 @@ main(int argc, char **argv)
     struct fb *fbp;
     int y;
 
-    unsigned char *scanline;	/* 1 scanline pixel buffer */
+    unsigned char *scanline = NULL;	/* 1 scanline pixel buffer */
     int scanbytes;		/* # of bytes of scanline */
     int scanpix;		/* # of pixels of scanline */
     ColorMap cmap;		/* libfb color map */
@@ -182,6 +183,8 @@ Usage: fb-pix [-i -c] [-F framebuffer]\n\
 	}
     }
     fb_close(fbp);
+    if (scanline)
+	bu_free(scanline, "scanline");
     return 0;
 }
 

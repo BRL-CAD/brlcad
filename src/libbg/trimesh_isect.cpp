@@ -1,7 +1,7 @@
 /*               T R I M E S H _ I S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2021 United States Government as represented by
+ * Copyright (c) 2018-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,14 +39,14 @@
 #include <ctype.h>
 #include <time.h>
 
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn/tol.h"
 #include "bg/tri_tri.h"
 #include "bg/trimesh.h"
 
-HIDDEN void
+static void
 plot_faces(const char *fname, std::set<int> *faces, int *f, point_t *v)
 {
     std::set<int>::iterator f_it;

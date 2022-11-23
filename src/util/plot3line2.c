@@ -1,7 +1,7 @@
 /*                     P L O T 3 L I N E 2 . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2021 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "vmath.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 static const char usage[] = "Usage: plot3line2 x1 y1 x2 y2 [r g b]\n";

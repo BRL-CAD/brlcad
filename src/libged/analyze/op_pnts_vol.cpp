@@ -1,7 +1,7 @@
 /*                 O P _ P N T S _ V O L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2021 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,13 +51,13 @@ _tgc_hack_fix(struct partition *part, struct soltab *stp) {
     /* hack fix for bad tgc surfaces - avoids a logging crash, which is probably something else altogether... */
     if (bu_strncmp("rec", stp->st_meth->ft_label, 3) == 0 || bu_strncmp("tgc", stp->st_meth->ft_label, 3) == 0) {
 
-        /* correct invalid surface number */
-        if (part->pt_inhit->hit_surfno < 1 || part->pt_inhit->hit_surfno > 3) {
-            part->pt_inhit->hit_surfno = 2;
-        }
-        if (part->pt_outhit->hit_surfno < 1 || part->pt_outhit->hit_surfno > 3) {
-            part->pt_outhit->hit_surfno = 2;
-        }
+	/* correct invalid surface number */
+	if (part->pt_inhit->hit_surfno < 1 || part->pt_inhit->hit_surfno > 3) {
+	    part->pt_inhit->hit_surfno = 2;
+	}
+	if (part->pt_outhit->hit_surfno < 1 || part->pt_outhit->hit_surfno > 3) {
+	    part->pt_outhit->hit_surfno = 2;
+	}
     }
 }
 
@@ -79,7 +79,7 @@ in_out_hit(struct application *ap, struct partition *partH, struct seg *UNUSED(s
     bool t1 = ((part->pt_inhit->hit_dist < r->dist_test_pt) || NEAR_EQUAL(part->pt_inhit->hit_dist, r->dist_test_pt, VUNITIZE_TOL));
     bool t2 = ((part->pt_outhit->hit_dist > r->dist_test_pt) || NEAR_EQUAL(part->pt_outhit->hit_dist, r->dist_test_pt, VUNITIZE_TOL));
     if (t1 && t2) {
-        r->flag = -1;
+	r->flag = -1;
     }
 
     // Test point not on the partition
@@ -172,12 +172,12 @@ _pnt_in_vol(point_t *p, struct application *ap)
 
 extern "C" long
 op_pnts_vol(
-	const char *output_pnts_obj,
-	struct ged *gedp,
-	db_op_t op,
-	const char *pnts_obj,
-	const char *vol_obj
-	)
+    const char *output_pnts_obj,
+    struct ged *gedp,
+    db_op_t op,
+    const char *pnts_obj,
+    const char *vol_obj
+	   )
 {
     struct pnt *pstd, *pstdl = NULL;
     struct pnt_color *pc, *pcl = NULL;
@@ -196,7 +196,7 @@ op_pnts_vol(
     // If we're supposed to make an output object, don't do anything
     // until we're sure the way is clear.
     if (output_pnts_obj) {
-	struct directory *odp = db_lookup(gedp->ged_wdbp->dbip, output_pnts_obj, LOOKUP_QUIET);
+	struct directory *odp = db_lookup(gedp->dbip, output_pnts_obj, LOOKUP_QUIET);
 	if (odp != RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s already exists, aborting", output_pnts_obj);
 	    return -1;
@@ -204,9 +204,9 @@ op_pnts_vol(
     }
 
     // Unpack the points object
-    struct directory *dp = db_lookup(gedp->ged_wdbp->dbip, pnts_obj, LOOKUP_QUIET);
+    struct directory *dp = db_lookup(gedp->dbip, pnts_obj, LOOKUP_QUIET);
     struct rt_db_internal tpnts_intern;
-    GED_DB_GET_INTERNAL(gedp, &tpnts_intern, dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &tpnts_intern, dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
     if (tpnts_intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a pnts object, aborting", pnts_obj);
 	rt_db_free_internal(&tpnts_intern);
@@ -217,7 +217,7 @@ op_pnts_vol(
 
     // Since we need to verify type info about vol_obj, look it up
     if (vol_obj) {
-	dp = db_lookup(gedp->ged_wdbp->dbip, vol_obj, LOOKUP_QUIET);
+	dp = db_lookup(gedp->dbip, vol_obj, LOOKUP_QUIET);
     }
     // If we're missing the volume object, union or subtraction result
     // in the point set being unchanged.
@@ -227,7 +227,7 @@ op_pnts_vol(
 	    av[0] = "copy";
 	    av[1] = pnts_obj;
 	    av[2] = output_pnts_obj;
-	    (void)ged_copy(gedp, 3, (const char **)av);
+	    (void)ged_exec(gedp, 3, (const char **)av);
 	}
 	rt_db_free_internal(&tpnts_intern);
 	return pnts->count;
@@ -242,7 +242,7 @@ op_pnts_vol(
      * non non-volumetric object types in its hierarchy.  If
      * there is such an object, abandon the test.  */
     const char *tfilter = "! -type shape";
-    if (db_search(NULL, DB_SEARCH_QUIET, tfilter, 1, &dp, gedp->ged_wdbp->dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_QUIET, tfilter, 1, &dp, gedp->dbip, NULL) > 0) {
 	bu_vls_printf(gedp->ged_result_str, "Non-solid object found in %s, aborting\n", vol_obj);
 	rt_db_free_internal(&tpnts_intern);
 	return -1;
@@ -256,7 +256,7 @@ op_pnts_vol(
     BU_GET(ap, struct application);
     RT_APPLICATION_INIT(ap);
     BU_GET(resp, struct resource);
-    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    rtip = rt_new_rti(gedp->dbip);
     rt_init_resource(resp, 0, rtip);
     ap->a_rt_i = rtip;
     ap->a_resource = resp;
@@ -400,8 +400,8 @@ op_pnts_vol(
 
     if (output_pnts_obj) {
 	opnts->count = pntcnt;
-	GED_DB_DIRADD(gedp, dp, output_pnts_obj, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
-	GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp, output_pnts_obj, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
 
 	bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s\n", output_pnts_obj);
     }

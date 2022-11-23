@@ -1,7 +1,7 @@
 /*                         D M - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2021 United States Government as represented by
+ * Copyright (c) 1985-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,11 +45,17 @@
 #include "./dm-ps.h"
 #include "../null/dm-Null.h"
 
-#include "rt/solid.h"
+#include "bv/defines.h"
 
 #include "../include/private.h"
 
 #define EPSILON 0.0001
+
+struct ps_mvars {
+    int zclip;
+    double bound;
+    int boundFlag;
+};
 
 /* Display Manager package interface */
 
@@ -71,15 +77,19 @@ static int ps_close(struct dm *dmp);
  *
  */
 struct dm *
-ps_open(void *vinterp, int argc, const char *argv[])
+ps_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
 {
     static int count = 0;
     struct dm *dmp;
     Tcl_Obj *obj;
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
+    if (!interp)
+	return NULL;
+
     BU_ALLOC(dmp, struct dm);
     dmp->magic = DM_MAGIC;
+    dmp->start_time = 0;
 
     BU_ALLOC(dmp->i, struct dm_impl);
 
@@ -87,6 +97,12 @@ ps_open(void *vinterp, int argc, const char *argv[])
     dmp->i->dm_interp = interp;
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct ps_vars);
+
+    BU_ALLOC(dmp->i->m_vars, struct ps_mvars);
+    struct ps_mvars *m_vars = (struct ps_mvars *)dmp->i->m_vars;
+    m_vars->zclip = 0;
+    m_vars->bound = PLOTBOUND;
+    m_vars->boundFlag = 1;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -108,7 +124,6 @@ ps_open(void *vinterp, int argc, const char *argv[])
     bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator, "LIBDM dm-ps");
     ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->scale = 0.0791;
     ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->linewidth = 4;
-    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->zclip = 0;
 
     /* skip first argument */
     --argc; ++argv;
@@ -198,7 +213,7 @@ ps_open(void *vinterp, int argc, const char *argv[])
 		}
 		break;
 	    case 'z':
-		dmp->i->dm_zclip = 1;
+		m_vars->zclip = 1;
 		break;
 	    default:
 		Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
@@ -295,7 +310,7 @@ NEWPG\n\
 /*
  * Gracefully release the display.
  */
-HIDDEN int
+static int
 ps_close(struct dm *dmp)
 {
     if (!((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp)
@@ -328,7 +343,7 @@ ps_viable(const char *UNUSED(dpy_string))
 /*
  * There are global variables which are parameters to this routine.
  */
-HIDDEN int
+static int
 ps_drawBegin(struct dm *dmp)
 {
     if (!dmp)
@@ -338,7 +353,7 @@ ps_drawBegin(struct dm *dmp)
 }
 
 
-HIDDEN int
+static int
 ps_drawEnd(struct dm *dmp)
 {
     if (!dmp)
@@ -359,7 +374,7 @@ ps_drawEnd(struct dm *dmp)
  * Load a new transformation matrix.  This will be followed by
  * many calls to ps_draw().
  */
-HIDDEN int
+static int
 ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     Tcl_Obj *obj;
@@ -394,11 +409,11 @@ ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 
 /* ARGSUSED */
-HIDDEN int
-ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
+static int
+ps_drawVList(struct dm *dmp, struct bv_vlist *vp)
 {
     static vect_t last;
-    struct bn_vlist *tvp;
+    struct bv_vlist *tvp;
     point_t *pt_prev=NULL;
     fastf_t dist_prev=1.0;
     fastf_t dist;
@@ -419,7 +434,7 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
     if (delta < SQRT_SMALL_FASTF)
 	delta = SQRT_SMALL_FASTF;
 
-    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+    for (BU_LIST_FOR(tvp, bv_vlist, &vp->l)) {
 	int i;
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
@@ -427,24 +442,24 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    static vect_t start, fin;
 	    switch (*cmd) {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_POLY_VERTNORM:
-		case BN_VLIST_TRI_START:
-		case BN_VLIST_TRI_VERTNORM:
+		case BV_VLIST_POLY_START:
+		case BV_VLIST_POLY_VERTNORM:
+		case BV_VLIST_TRI_START:
+		case BV_VLIST_TRI_VERTNORM:
 		    continue;
-		case BN_VLIST_MODEL_MAT:
+		case BV_VLIST_MODEL_MAT:
 		    MAT_COPY(psmat, mod_mat);
 		    continue;
-		case BN_VLIST_DISPLAY_MAT:
+		case BV_VLIST_DISPLAY_MAT:
 		    MAT4X3PNT(tlate, (mod_mat), *pt);
 		    disp_mat[3] = tlate[0];
 		    disp_mat[7] = tlate[1];
 		    disp_mat[11] = tlate[2];
 		    MAT_COPY(psmat, disp_mat);
 		    continue;
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_TRI_MOVE:
+		case BV_VLIST_POLY_MOVE:
+		case BV_VLIST_LINE_MOVE:
+		case BV_VLIST_TRI_MOVE:
 		    /* Move, not draw */
 		    if (dmp->i->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -463,11 +478,11 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    } else
 			MAT4X3PNT(last, psmat, *pt);
 		    continue;
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_TRI_DRAW:
-		case BN_VLIST_TRI_END:
+		case BV_VLIST_POLY_DRAW:
+		case BV_VLIST_POLY_END:
+		case BV_VLIST_LINE_DRAW:
+		case BV_VLIST_TRI_DRAW:
+		case BV_VLIST_TRI_END:
 		    /* draw */
 		    if (dmp->i->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
@@ -540,13 +555,13 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 /* ARGSUSED */
-HIDDEN int
-ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+static int
+ps_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data)
 {
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
     if (!callback_function) {
 	if (data) {
-	    vp = (struct bn_vlist *)data;
+	    vp = (struct bv_vlist *)data;
 	    ps_drawVList(dmp, vp);
 	}
     } else {
@@ -560,13 +575,17 @@ ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **da
 }
 
 
-/*
- * Restore the display processor to a normal mode of operation
- * (i.e., not scaled, rotated, displaced, etc.).
- * Turns off windowing.
- */
-HIDDEN int
-ps_normal(struct dm *dmp)
+static int
+ps_hud_begin(struct dm *dmp)
+{
+    if (!dmp)
+	return BRLCAD_ERROR;
+
+    return BRLCAD_OK;
+}
+
+static int
+ps_hud_end(struct dm *dmp)
 {
     if (!dmp)
 	return BRLCAD_ERROR;
@@ -575,12 +594,13 @@ ps_normal(struct dm *dmp)
 }
 
 
+
 /*
  * Output a string into the displaylist.
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
-HIDDEN int
+static int
 ps_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
     int sx, sy;
@@ -614,7 +634,7 @@ ps_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size,
 }
 
 
-HIDDEN int
+static int
 ps_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
 {
     int sx1, sy1;
@@ -636,14 +656,14 @@ ps_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf
 }
 
 
-HIDDEN int
+static int
 ps_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
     return draw_Line3D(dmp, pt1, pt2);
 }
 
 
-HIDDEN int
+static int
 ps_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
@@ -653,14 +673,14 @@ ps_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 }
 
 
-HIDDEN int
+static int
 ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     return ps_drawLine2D(dmp, x, y, x, y);
 }
 
 
-HIDDEN int
+static int
 ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     if (!dmp) {
@@ -672,11 +692,14 @@ ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 }
 
 
-HIDDEN int
-ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+static int
+ps_setBGColor(struct dm *dmp,
+	unsigned char r1, unsigned char g1, unsigned char b1,
+	unsigned char r2, unsigned char g2, unsigned char b2
+	)
 {
     if (!dmp) {
-	bu_log("WARNING: Null display (r/g/b==%d/%d/%d)\n", r, g, b);
+	bu_log("WARNING: Null display (r/g/b==%d/%d/%d, color2==%d/%d/%d)\n", r1, g1, b1, r2, g2, b2);
 	return BRLCAD_ERROR;
     }
 
@@ -684,7 +707,7 @@ ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 }
 
 
-HIDDEN int
+static int
 ps_setLineAttr(struct dm *dmp, int width, int style)
 {
     dmp->i->dm_lineWidth = width;
@@ -700,30 +723,32 @@ ps_setLineAttr(struct dm *dmp, int width, int style)
 
 
 /* ARGSUSED */
-HIDDEN int
+static int
 ps_debug(struct dm *dmp, int lvl)
 {
     dmp->i->dm_debugLevel = lvl;
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 ps_logfile(struct dm *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->i->dm_log, "%s", filename);
     return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 ps_setWinBounds(struct dm *dmp, fastf_t *w)
 {
+    struct ps_mvars *m_vars = (struct ps_mvars *)dmp->i->m_vars;
+
     /* Compute the clipping bounds */
     dmp->i->dm_clipmin[0] = w[0] / 2048.0;
     dmp->i->dm_clipmax[0] = w[1] / 2047.0;
     dmp->i->dm_clipmin[1] = w[2] / 2048.0;
     dmp->i->dm_clipmax[1] = w[3] / 2047.0;
 
-    if (dmp->i->dm_zclip) {
+    if (m_vars->zclip) {
 	dmp->i->dm_clipmin[2] = w[4] / 2048.0;
 	dmp->i->dm_clipmax[2] = w[5] / 2047.0;
     } else {
@@ -734,6 +759,86 @@ ps_setWinBounds(struct dm *dmp, fastf_t *w)
     return BRLCAD_OK;
 }
 
+static int
+ps_setZClip(struct dm *dmp, int zclip)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("ps_setZClip");
+
+    mvars->zclip = zclip;
+
+    return BRLCAD_OK;
+}
+
+static int
+ps_getZClip(struct dm *dmp)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+	bu_log("ps_getZClip");
+
+    return mvars->zclip;
+}
+
+static int
+ps_setBound(struct dm *dmp, double bound)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("ps_setBound");
+
+    mvars->bound = bound;
+
+    return BRLCAD_OK;
+}
+
+static double
+ps_getBound(struct dm *dmp)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("ps_getBound");
+
+    return mvars->bound;
+}
+
+static int
+ps_setBoundFlag(struct dm *dmp, int bound)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("ps_setBoundFlag");
+
+    mvars->boundFlag = bound;
+
+    return BRLCAD_OK;
+}
+
+static int
+ps_getBoundFlag(struct dm *dmp)
+{
+    struct ps_mvars *mvars = (struct ps_mvars *)dmp->i->m_vars;
+
+    if (dmp->i->dm_debugLevel)
+       bu_log("ps_getBoundFlag");
+
+    return mvars->boundFlag;
+}
+
+
+#define ps_MV_O(_m) offsetof(struct ps_mvars, _m)
+struct bu_structparse ps_vparse[] = {
+    {"%g",  1, "bound",         ps_MV_O(bound),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "useBound",      ps_MV_O(boundFlag),     dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         ps_MV_O(zclip),         dm_generic_hook, NULL, NULL},
+    {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
+};
 
 struct dm_impl dm_ps_impl = {
     ps_open,
@@ -741,10 +846,13 @@ struct dm_impl dm_ps_impl = {
     ps_viable,
     ps_drawBegin,
     ps_drawEnd,
-    ps_normal,
+    ps_hud_begin,
+    ps_hud_end,
     ps_loadMatrix,
     null_loadPMatrix,
+    null_popPMatrix,
     ps_drawString2D,
+    null_String2DBBox,
     ps_drawLine2D,
     ps_drawLine3D,
     ps_drawLines3D,
@@ -753,6 +861,7 @@ struct dm_impl dm_ps_impl = {
     null_drawPoints3D,
     ps_drawVList,
     ps_drawVList,
+    null_draw_obj,
     NULL,
     ps_draw,
     ps_setFGColor,
@@ -761,9 +870,18 @@ struct dm_impl dm_ps_impl = {
     null_configureWin,
     ps_setWinBounds,
     null_setLight,
+    null_getLight,
     null_setTransparency,
+    null_getTransparency,
     null_setDepthMask,
     null_setZBuffer,
+    null_getZBuffer,
+    ps_setZClip,
+    ps_getZClip,
+    ps_setBound,
+    ps_getBound,
+    ps_setBoundFlag,
+    ps_getBoundFlag,
     ps_debug,
     ps_logfile,
     null_beginDList,
@@ -775,6 +893,7 @@ struct dm_impl dm_ps_impl = {
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
+    null_SwapBuffers,
     null_doevent,
     null_openFb,
     NULL,
@@ -792,8 +911,6 @@ struct dm_impl dm_ps_impl = {
     NULL,                       /* not graphical */
     0,				/* no displaylist */
     0,                          /* no stereo */
-    PLOTBOUND,			/* zoom-in limit */
-    1,				/* bound flag */
     "ps",
     "Screen to PostScript",
     0, /* top */
@@ -813,26 +930,25 @@ struct dm_impl dm_ps_impl = {
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* bg1 color */
+    {0, 0, 0},			/* bg2 color */
     {0, 0, 0},			/* fg color */
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
     0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
     0,				/* depth buffer is not writable */
-    0,				/* no zbuffer */
-    0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
-    BU_STRUCTPARSE_NULL,
+    ps_vparse,
     FB_NULL,
-    0				/* Tcl interpreter */
+    0,				/* Tcl interpreter */
+    NULL,                       /* Drawing context */
+    NULL                        /* App data */
 };
 
 
-struct dm dm_ps = { DM_MAGIC, &dm_ps_impl };
+struct dm dm_ps = { DM_MAGIC, &dm_ps_impl, 0 };
 
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_ps };

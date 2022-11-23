@@ -1,7 +1,7 @@
 /*                        C O M B _ C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,9 +36,9 @@ ged_comb_color_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal *comb;
     static const char *usage = "combination R G B";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -51,12 +51,12 @@ ged_comb_color_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, GED_ERROR);
-    GED_CHECK_COMB(gedp, dp, GED_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR);
+    GED_CHECK_COMB(gedp, dp, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR);
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
@@ -65,15 +65,15 @@ ged_comb_color_core(struct ged *gedp, int argc, const char *argv[])
 	if (sscanf(argv[i+2], "%d", &val) != 1 || val < 0 || 255 < val) {
 	    bu_vls_printf(gedp->ged_result_str, "RGB value out of range: %s", argv[i + 2]);
 	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	} else
 	    comb->rgb[i] = val;
     }
 
     comb->rgb_valid = 1;
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -43,7 +43,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>cat region_1 region_2</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>cat region_1 region_2</userinput></term>
 	  <listitem>
 	    <para>Displays the Boolean formulas for region_1 and region_2.
 	    </para>

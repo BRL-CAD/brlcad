@@ -1,7 +1,7 @@
 /*                  S H _ B I L L B O A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "optical.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 #define bbd_MAGIC 0x62626400	/* "bbd" */
@@ -164,7 +164,7 @@ new_image(const struct bu_structparse *UNUSED(sdp),
  * 0 success, but delete region
  * -1 failure
  */
-HIDDEN int
+static int
 bbd_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 {
     register struct bbd_specific *bbd_sp;
@@ -289,14 +289,14 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mf
 }
 
 
-HIDDEN void
+static void
 bbd_print(struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, bbd_print_tab, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 bbd_free(void *cp)
 {
     BU_PUT(cp, struct bbd_specific);
@@ -540,7 +540,7 @@ bbd_render(struct application *ap, const struct partition *pp, struct shadework 
 	/* find out if the ray hits the plane */
 	id[i].index = i;
 	id[i].bi = bi;
-	id[i].status = bn_isect_line3_plane(&id[i].dist,
+	id[i].status = bg_isect_line3_plane(&id[i].dist,
 					    ap->a_ray.r_pt, ap->a_ray.r_dir,
 					    bi->img_plane, &ap->a_rt_i->rti_tol);
 	i++;

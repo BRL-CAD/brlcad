@@ -1,7 +1,7 @@
 /*                        V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,6 +61,14 @@ __BEGIN_DECLS
 	return (_flags); \
     }
 
+struct ged_bv_data {
+    struct db_full_path s_fullpath;
+    void *u_data;
+};
+/* Check ged_bv data associated with a display list */
+GED_EXPORT extern unsigned long long ged_dl_hash(struct display_list *dl);
+
+
 /* defined in display_list.c */
 GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
 GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp);
@@ -68,13 +76,6 @@ GED_EXPORT extern void dl_erasePathFromDisplay(struct ged *gedp, const char *pat
 GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
 
 GED_EXPORT extern int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, int csoltab);
-
-/* defined in ged.c */
-GED_EXPORT extern void ged_view_init(struct bview *gvp);
-
-/* defined in grid.c */
-GED_EXPORT extern int ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy);
-GED_EXPORT extern void ged_view_center_linesnap(struct ged *gedp);
 
 /**
  * Grid utility command.
@@ -144,16 +145,10 @@ GED_EXPORT extern int ged_view_func(struct ged *gedp, int argc, const char *argv
  */
 GED_EXPORT extern int ged_set_uplotOutputMode(struct ged *gedp, int argc, const char *argv[]);
 
-GED_EXPORT extern int ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
+GED_EXPORT extern int ged_export_polygon(struct ged *gedp, bv_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
 GED_EXPORT extern struct bg_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
 GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polygon *polyB);
 GED_EXPORT extern void ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta);
-
-GED_EXPORT extern struct bview * ged_find_view(struct ged *gedp, const char *key);
-
-// TODO - this (and probably the grid logic too) belong at the libdm level - they're operating
-// on the bview, rather than the ged level data...
-GED_EXPORT extern int ged_snap_to_lines(struct ged *gedp, fastf_t *vx, fastf_t *vy);
 
 __END_DECLS
 

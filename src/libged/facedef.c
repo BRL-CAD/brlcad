@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2021 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ get_pleqn(struct ged *gedp, fastf_t *plane, const char *argv[])
     for (i=0; i<4; i++)
 	plane[i]= atof(argv[i]);
     VUNITIZE(&plane[0]);
-    plane[W] *= gedp->ged_wdbp->dbip->dbi_local2base;
+    plane[W] *= gedp->dbip->dbi_local2base;
     return;
 }
 
@@ -98,13 +98,13 @@ get_3pts(struct ged *gedp, fastf_t *plane, const char *argv[], const struct bn_t
     point_t a, b, c;
 
     for (i=0; i<3; i++)
-	a[i] = atof(argv[0+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	a[i] = atof(argv[0+i]) * gedp->dbip->dbi_local2base;
     for (i=0; i<3; i++)
-	b[i] = atof(argv[3+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	b[i] = atof(argv[3+i]) * gedp->dbip->dbi_local2base;
     for (i=0; i<3; i++)
-	c[i] = atof(argv[6+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	c[i] = atof(argv[6+i]) * gedp->dbip->dbi_local2base;
 
-    if (bn_make_plane_3pnts(plane, a, b, c, tol) < 0) {
+    if (bg_make_plane_3pnts(plane, a, b, c, tol) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "facedef: not a plane\n");
 	return -1;		/* failure */
     }
@@ -141,7 +141,7 @@ get_rotfb(struct ged *gedp, fastf_t *plane, const char *argv[], const struct rt_
     } else {
 	/* definite point given */
 	for (i=0; i<3; i++)
-	    pt[i]=atof(argv[2+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    pt[i]=atof(argv[2+i]) * gedp->dbip->dbi_local2base;
 	plane[W]=VDOT(&plane[0], pt);
     }
 }
@@ -159,7 +159,7 @@ get_nupnt(struct ged *gedp, fastf_t *plane, const char *argv[])
     point_t pt;
 
     for (i=0; i<3; i++)
-	pt[i] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pt[i] = atof(argv[i]) * gedp->dbip->dbi_local2base;
     plane[W] = VDOT(&plane[0], pt);
 }
 
@@ -189,31 +189,32 @@ edarb_facedef(void *data, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, GED_ERROR);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_LOOKUP(gedp, dp, (char *)argv[2], LOOKUP_QUIET, BRLCAD_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (intern.idb_type != ID_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "%s %s: solid type must be ARB\n", argv[0], argv[1]);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
+    type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
     if (type != 8 && type != 6 && type != 4) {
 	bu_vls_printf(gedp->ged_result_str, "ARB%d: extrusion of faces not allowed\n", type);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
     /* find new planes to account for any editing */
-    if (rt_arb_calc_planes(&error_msg, arb, type, planes, &gedp->ged_wdbp->wdb_tol)) {
+    if (rt_arb_calc_planes(&error_msg, arb, type, planes, &wdbp->wdb_tol)) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&error_msg));
 	bu_vls_free(&error_msg);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&error_msg);
 
@@ -269,7 +270,7 @@ edarb_facedef(void *data, int argc, const char *argv[])
 	    {
 		bu_vls_printf(gedp->ged_result_str, "bad face (product=%d)\n", prod);
 		rt_db_free_internal(&intern);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
     }
 
@@ -292,7 +293,7 @@ Enter form of new face definition: ");
 		if (plane!=0 && plane!=3) {
 		    bu_vls_printf(gedp->ged_result_str, "facedef: can't redefine that arb7 plane\n");
 		    rt_db_free_internal(&intern);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    if (argc < 9) {
 		/* total # of args under this option */
@@ -308,7 +309,7 @@ Enter form of new face definition: ");
 		if (plane!=0 && plane!=3) {
 		    bu_vls_printf(gedp->ged_result_str, "facedef: can't redefine that arb7 plane\n");
 		    rt_db_free_internal(&intern);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    if (argc < 14) {
 		/* total # of args under this option */
@@ -316,8 +317,8 @@ Enter form of new face definition: ");
 		rt_db_free_internal(&intern);
 		return GED_MORE;
 	    }
-	    if (get_3pts(gedp, planes[plane], &argv[5], &gedp->ged_wdbp->wdb_tol)) {
-		return GED_ERROR;
+	    if (get_3pts(gedp, planes[plane], &argv[5], &wdbp->wdb_tol)) {
+		return BRLCAD_ERROR;
 	    }
 	    break;
 	case 'c':
@@ -346,7 +347,7 @@ Enter form of new face definition: ");
 		if (plane!=0 && plane!=3) {
 		    bu_vls_printf(gedp->ged_result_str, "facedef: can't redefine that arb7 plane\n");
 		    rt_db_free_internal(&intern);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		}
 	    if (argc < 8) {
 		bu_vls_printf(gedp->ged_result_str, "%s", p_nupnt[argc-5]);
@@ -356,24 +357,24 @@ Enter form of new face definition: ");
 	    get_nupnt(gedp, planes[plane], &argv[5]);
 	    break;
 	case 'q':
-	    return GED_OK;
+	    return BRLCAD_OK;
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "facedef: %s is not an option\n", argv[2]);
 	    rt_db_free_internal(&intern);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
     /* find all vertices from the plane equations */
-    if (rt_arb_calc_points(arb, type, (const plane_t *)planes, &gedp->ged_wdbp->wdb_tol) < 0) {
+    if (rt_arb_calc_points(arb, type, (const plane_t *)planes, &wdbp->wdb_tol) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "facedef:  unable to find points\n");
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     rt_db_free_internal(&intern);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

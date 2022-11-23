@@ -1,0 +1,19 @@
+-- derived from ap214e3
+-- test schema for exppp
+-- '/' should not become 'DIV' and vice versa
+
+SCHEMA div_slash;
+
+ENTITY divided_real;
+    x, y : REAL;
+  DERIVE
+    result_r: REAL := x/y;
+END_ENTITY;
+
+ENTITY divided_int;
+    x, y : INTEGER;
+  DERIVE
+    result_i: INTEGER := x DIV y;
+END_ENTITY;
+
+END_SCHEMA;

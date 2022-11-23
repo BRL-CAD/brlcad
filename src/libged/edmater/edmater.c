@@ -1,7 +1,7 @@
 /*                       E D M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,9 +48,9 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
     char tmpfil[MAXPATHLEN];
     const char *editstring = NULL;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     bu_optind = 1;
     /* First, grab the editstring off of the argv list */
@@ -79,7 +79,7 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (!fp)
-	return GED_ERROR;
+	return BRLCAD_ERROR;
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
     av[0] = "wmater";
@@ -91,18 +91,18 @@ ged_edmater_core(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (ged_wmater(gedp, argc, av) & GED_ERROR) {
+    if (ged_exec(gedp, argc, av) & BRLCAD_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "f_edmater: av");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (_ged_editit(editstring, tmpfil)) {
 	av[0] = "rmater";
 	av[2] = NULL;
-	status = ged_rmater(gedp, 2, av);
+	status = ged_exec(gedp, 2, av);
     } else {
-	status = GED_ERROR;
+	status = BRLCAD_ERROR;
     }
 
     bu_file_delete(tmpfil);

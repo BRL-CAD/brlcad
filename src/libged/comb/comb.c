@@ -1,7 +1,7 @@
 /*                  C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,75 +36,75 @@
 
 #include "../ged_private.h"
 
-HIDDEN int
+static int
 region_flag_set(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
-    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     db5_standardize_avs(&avs);
     dp->d_flags |= RT_DIR_REGION;
     (void)bu_avs_add(&avs, "region", "R");
-    if (db5_update_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+    if (db5_update_attributes(dp, &avs, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str,
 		"Error: failed to update attributes\n");
 	bu_avs_free(&avs);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 region_flag_clear(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
-    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     db5_standardize_avs(&avs);
     dp->d_flags = dp->d_flags & ~(RT_DIR_REGION);
     (void)bu_avs_remove(&avs, "region");
-    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+    if (db5_replace_attributes(dp, &avs, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str,
 		"Error: failed to update attributes\n");
 	bu_avs_free(&avs);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 color_shader_clear(struct ged *gedp, struct directory *dp) {
     struct bu_attribute_value_set avs;
     bu_avs_init_empty(&avs);
-    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     db5_standardize_avs(&avs);
     (void)bu_avs_remove(&avs, "rgb");
     (void)bu_avs_remove(&avs, "color");
     (void)bu_avs_remove(&avs, "shader");
     (void)bu_avs_remove(&avs, "oshader");
-    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+    if (db5_replace_attributes(dp, &avs, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str,
 		"Error: failed to update attributes\n");
 	bu_avs_free(&avs);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 comb_tree_clear(struct ged *gedp, struct directory *dp)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     /* Clear the tree from the original object */
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, GED_ERROR);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, (matp_t)NULL, &rt_uniresource, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&intern);
     comb = (struct rt_comb_internal *)(&intern)->idb_ptr;
     RT_CK_COMB(comb);
@@ -112,17 +112,18 @@ comb_tree_clear(struct ged *gedp, struct directory *dp)
     comb->tree = TREE_NULL;
     db5_sync_comb_to_attr(&((&intern)->idb_avs), comb);
     db5_standardize_avs(&((&intern)->idb_avs));
-    if (wdb_put_internal(gedp->ged_wdbp, dp->d_namep, &intern, 1.0) < 0) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_put_internal(wdbp, dp->d_namep, &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_export(%s) failure", dp->d_namep);
 	rt_db_free_internal(&intern);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     rt_db_free_internal(&intern);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
-HIDDEN int
+static int
 comb_wrap(struct ged *gedp, struct directory *dp) {
 
     struct bu_vls orig_name, comb_child_name;
@@ -137,62 +138,63 @@ comb_wrap(struct ged *gedp, struct directory *dp) {
     bu_vls_sprintf(&comb_child_name, "%s.c", dp->d_namep);
 
     /* First, make sure the target comb name for wrapping doesn't already exist */
-    new_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_child_name), LOOKUP_QUIET);
+    new_dp = db_lookup(gedp->dbip, bu_vls_addr(&comb_child_name), LOOKUP_QUIET);
     if (new_dp != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s already exists in the database, cannot wrap %s", bu_vls_addr(&comb_child_name), dp->d_namep);
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Create a copy of the comb using a new name */
-    if (db_get_external(&external, dp, gedp->ged_wdbp->dbip)) {
+    if (db_get_external(&external, dp, gedp->dbip)) {
 	bu_vls_printf(gedp->ged_result_str, "Wrapping %s: Database read error retrieving external, aborting\n", dp->d_namep);
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
-    if (wdb_export_external(gedp->ged_wdbp, &external, bu_vls_addr(&comb_child_name), dp->d_flags, dp->d_minor_type) < 0) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_export_external(wdbp, &external, bu_vls_addr(&comb_child_name), dp->d_flags, dp->d_minor_type) < 0) {
 	bu_free_external(&external);
 	bu_vls_printf(gedp->ged_result_str, "Failed to write new object (%s) to database - aborting!!\n", bu_vls_addr(&comb_child_name));
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_free_external(&external);
 
     /* Load new obj.c comb and clear its region flag, if any */
-    new_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&comb_child_name), LOOKUP_QUIET);
+    new_dp = db_lookup(gedp->dbip, bu_vls_addr(&comb_child_name), LOOKUP_QUIET);
     if (new_dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Wrapping %s: creation of %s failed!", dp->d_namep, bu_vls_addr(&comb_child_name));
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
-    if (region_flag_clear(gedp, new_dp) & GED_ERROR) {
+    if (region_flag_clear(gedp, new_dp) & BRLCAD_ERROR) {
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
-    if (color_shader_clear(gedp, new_dp) == GED_ERROR) {
+    if (color_shader_clear(gedp, new_dp) == BRLCAD_ERROR) {
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Clear the tree from the original object */
-    if (comb_tree_clear(gedp, dp) == GED_ERROR) {
+    if (comb_tree_clear(gedp, dp) == BRLCAD_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", bu_vls_addr(&orig_name));
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
-    orig_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&orig_name), LOOKUP_QUIET);
+    orig_dp = db_lookup(gedp->dbip, bu_vls_addr(&orig_name), LOOKUP_QUIET);
     if (orig_dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", bu_vls_addr(&orig_name));
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* add "child" comb to the newly cleared parent */
@@ -200,12 +202,12 @@ comb_wrap(struct ged *gedp, struct directory *dp) {
 	bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", bu_vls_addr(&comb_child_name), WMOP_UNION, dp->d_namep);
 	bu_vls_free(&comb_child_name);
 	bu_vls_free(&orig_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     bu_vls_free(&comb_child_name);
     bu_vls_free(&orig_name);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /* bu_sort functions for solids */
@@ -231,7 +233,7 @@ name_compare(const void *d1, const void *d2, void *UNUSED(arg))
  *  which (if any) of the combs under the current comb are not used
  *  elsewhere.  For those that are not, remove them.
  */
-HIDDEN int
+static int
 comb_flatten(struct ged *gedp, struct directory *dp)
 {
     int result_cnt = 0;
@@ -247,39 +249,39 @@ comb_flatten(struct ged *gedp, struct directory *dp)
     struct directory **dp_curr;
 
     /* if there are non-union booleans in this comb's tree, error out */
-    result_cnt = db_search(NULL, DB_SEARCH_TREE, only_unions_in_tree_plan, 1, &dp, gedp->ged_wdbp->dbip, NULL);
+    result_cnt = db_search(NULL, DB_SEARCH_TREE, only_unions_in_tree_plan, 1, &dp, gedp->dbip, NULL);
     if (result_cnt) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree contains non-union booleans", dp->d_namep);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Find the solids and combs in the tree */
-    (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solids_in_tree_plan, 1, &dp, gedp->ged_wdbp->dbip, NULL);
-    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, combs_in_tree_plan, 1, &dp, gedp->ged_wdbp->dbip, NULL);
+    (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solids_in_tree_plan, 1, &dp, gedp->dbip, NULL);
+    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, combs_in_tree_plan, 1, &dp, gedp->dbip, NULL);
 
     /* If it's all solids already, nothing to do */
     if (!BU_PTBL_LEN(&combs)) {
 	db_search_free(&solids);
 	db_search_free(&combs);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
 
     /* Find the combs NOT in the tree */
-    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
+    obj_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
     bu_vls_init(&plan_string);
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -below -name %s -type comb", dp->d_namep);
-    (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp->dbip, NULL);
+    (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->dbip, NULL);
     bu_vls_free(&plan_string);
 
     /* Done searching - now we can free the path list and clear the original tree */
     bu_free(all_paths, "free db_tops output");
-    if (comb_tree_clear(gedp, dp) == GED_ERROR) {
+    if (comb_tree_clear(gedp, dp) == BRLCAD_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", dp->d_namep);
 	db_search_free(&solids);
 	db_search_free(&combs);
 	db_search_free(&combs_outside_of_tree);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Sort the solids and union them into a new tree for dp */
@@ -292,7 +294,7 @@ comb_flatten(struct ged *gedp, struct directory *dp)
 		db_search_free(&solids);
 		db_search_free(&combs);
 		db_search_free(&combs_outside_of_tree);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -304,26 +306,26 @@ comb_flatten(struct ged *gedp, struct directory *dp)
 	if (bu_ptbl_locate(&combs_outside_of_tree, (const long *)(*dp_curr)) == -1 && ((*dp_curr) != dp)) {
 	    /* This comb is only part of the flattened tree - remove */
 	    bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s", (*dp_curr)->d_namep);
-	    if (db_delete(gedp->ged_wdbp->dbip, (*dp_curr)) != 0 || db_dirdelete(gedp->ged_wdbp->dbip, (*dp_curr)) == 0) {
+	    if (db_delete(gedp->dbip, (*dp_curr)) != 0 || db_dirdelete(gedp->dbip, (*dp_curr)) == 0) {
 		bu_vls_trunc(gedp->ged_result_str, 0);
 	    } else {
 		db_search_free(&combs);
 		db_search_free(&combs_outside_of_tree);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
 
     db_search_free(&combs);
     db_search_free(&combs_outside_of_tree);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 /* "Lift a region flag to the specified comb, removing all region
  * flags below in the tree if practical.
  */
-HIDDEN int
+static int
 comb_lift_region(struct ged *gedp, struct directory *dp)
 {
     int j;
@@ -341,21 +343,21 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     int failure_case = 0;
 
     /* Find the regions - need full paths here, because we'll be checking parents */
-    (void)db_search(&regions, DB_SEARCH_TREE, regions_in_tree_plan, 1, &dp, gedp->ged_wdbp->dbip, NULL);
+    (void)db_search(&regions, DB_SEARCH_TREE, regions_in_tree_plan, 1, &dp, gedp->dbip, NULL);
 
     /* If it's all non-region combs and solids already, nothing to do except possibly set the region flag*/
     if (!BU_PTBL_LEN(&regions)) {
 	db_search_free(&regions);
 	if (!(dp->d_flags & RT_DIR_REGION))
 	    return region_flag_set(gedp, dp);
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     /* Find the combs NOT in the tree */
-    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
+    obj_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
     bu_vls_init(&plan_string);
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -below -name %s -type comb", dp->d_namep);
-    (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp->dbip, NULL);
+    (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->dbip, NULL);
     bu_vls_free(&plan_string);
 
     /* release our db_ls path */
@@ -397,16 +399,16 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
 	bu_vls_printf(gedp->ged_result_str,  "\nThe above combs must be reworked before region lifting the tree of %s can succeed.\n", dp->d_namep);
 	bu_ptbl_free(&regions_to_clear);
 	bu_ptbl_free(&regions_to_wrap);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* Easy case first - if we can just clear the region flag, do it. */
     for (BU_PTBL_FOR(dp_curr, (struct directory **), &regions_to_clear)) {
 	if ((*dp_curr) != dp) {
-	    if (region_flag_clear(gedp, (*dp_curr)) == GED_ERROR) {
+	    if (region_flag_clear(gedp, (*dp_curr)) == BRLCAD_ERROR) {
 		bu_ptbl_free(&regions_to_clear);
 		bu_ptbl_free(&regions_to_wrap);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -427,27 +429,27 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
 
 	bu_ptbl_init(&stack, 64, "comb mvall working stack");
 
-	(void)db_search(&combs_in_tree, DB_SEARCH_RETURN_UNIQ_DP, combs_in_tree_plan, 1, &dp, gedp->ged_wdbp->dbip, NULL);
+	(void)db_search(&combs_in_tree, DB_SEARCH_RETURN_UNIQ_DP, combs_in_tree_plan, 1, &dp, gedp->dbip, NULL);
 	bu_ptbl_ins(&combs_in_tree, (long *)dp);
 	for (BU_PTBL_FOR(dp_curr, (struct directory **), &regions_to_wrap)) {
 	    if ((*dp_curr) != dp) {
 		struct directory **dp_comb_from_tree;
-		if (comb_wrap(gedp, (*dp_curr)) == GED_ERROR) {
+		if (comb_wrap(gedp, (*dp_curr)) == BRLCAD_ERROR) {
 		    bu_ptbl_free(&regions_to_wrap);
 		    db_search_free(&combs_in_tree);
 		    bu_ptbl_free(&stack);
-		    return GED_ERROR;
+		    return BRLCAD_ERROR;
 		} else {
 		    bu_vls_sprintf(&new_comb_name, "%s.c", (*dp_curr)->d_namep);
-		    new_comb = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&new_comb_name), LOOKUP_QUIET);
+		    new_comb = db_lookup(gedp->dbip, bu_vls_addr(&new_comb_name), LOOKUP_QUIET);
 		}
 		for (BU_PTBL_FOR(dp_comb_from_tree, (struct directory **), &combs_in_tree)) {
 		    bu_ptbl_reset(&stack);
-		    if (db_comb_mvall((*dp_comb_from_tree), gedp->ged_wdbp->dbip, (*dp_curr)->d_namep, bu_vls_addr(&new_comb_name), &stack) == 2) {
+		    if (db_comb_mvall((*dp_comb_from_tree), gedp->dbip, (*dp_curr)->d_namep, bu_vls_addr(&new_comb_name), &stack) == 2) {
 			db_search_free(&combs_in_tree);
 			bu_ptbl_free(&regions_to_wrap);
 			bu_ptbl_free(&stack);
-			return GED_ERROR;
+			return BRLCAD_ERROR;
 		    }
 		}
 		bu_ptbl_ins(&combs_in_tree, (long *)new_comb);
@@ -460,30 +462,30 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     bu_ptbl_free(&regions_to_wrap);
 
     /* Finally, set the region flag on the toplevel comb */
-    if (region_flag_set(gedp, dp) == GED_ERROR)
-	return GED_ERROR;
+    if (region_flag_set(gedp, dp) == BRLCAD_ERROR)
+	return BRLCAD_ERROR;
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
-HIDDEN int
+static int
 comb_decimate(struct ged *gedp, struct directory *dp)
 {
     unsigned int i;
-    int ret = GED_OK;
+    int ret = BRLCAD_OK;
     struct bu_ptbl *bot_dps = NULL;
     const char *bot_objs = "-type bot";
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
 
     BU_ALLOC(bot_dps, struct bu_ptbl);
-    if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, 1, &dp, gedp->ged_wdbp->dbip, NULL) < 0) {
+    if (db_search(bot_dps, DB_SEARCH_RETURN_UNIQ_DP, bot_objs, 1, &dp, gedp->dbip, NULL) < 0) {
 	bu_log("Problem searching for BoTs - aborting.\n");
-	ret = GED_ERROR;
+	ret = BRLCAD_ERROR;
 	goto comb_decimate_memfree;
     }
 
     for (i = 0; i < BU_PTBL_LEN(bot_dps); i++) {
-	struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+	struct bn_tol btol = BN_TOL_INIT_TOL;
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 	int not_solid = 0;
@@ -494,10 +496,10 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 	fastf_t avg_thickness;
 	fastf_t fs;
 	struct directory *bot_dp = (struct directory *)BU_PTBL_GET(bot_dps, i);
-	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, bot_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
-	ged_get_obj_bounds(gedp, 1, (const char **)&bot_dp->d_namep, 0, obj_min, obj_max);
+	rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&bot_dp->d_namep, 0, obj_min, obj_max);
 	bbox_diag = DIST_PNT_PNT(obj_min, obj_max);
 
 	/* Get avg thickness from raytracer */
@@ -537,7 +539,8 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 	    if (not_solid) {
 		bu_log("Unable to create a valid version of %s via decimation\n", bot_dp->d_namep);
 	    } else {
-		if (wdb_put_internal(gedp->ged_wdbp, bot_dp->d_namep, &intern, 1.0) < 0) {
+		struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+		if (wdb_put_internal(wdbp, bot_dp->d_namep, &intern, 1.0) < 0) {
 		    bu_log("Failed to write decimated version of %s back to database\n", bot_dp->d_namep);
 		}
 	    }
@@ -570,9 +573,9 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     int alter_existing = 1;
     static const char *usage = "[-c|-r] [-w|-f|-l] [-d] [-S] comb_name [<operation object>]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -587,7 +590,7 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* First, handle options, if any */
@@ -630,38 +633,38 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 
     if (set_comb && set_region) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], cmd_name);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     sum = wrap_comb + flatten_comb + lift_region_comb;
     if (sum > 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((wrap_comb || flatten_comb || lift_region_comb) && argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
     /* Get target combination info */
     comb_name = (char *)argv[1];
-    dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, comb_name, LOOKUP_QUIET);
     if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s is not a combination", comb_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 	if (!alter_existing && !do_decimation) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: %s already exists.", comb_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
     /* Update references once before we start all of this - db_search
      * needs nref to be current to work correctly. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
     /* Do decimation, if that's enabled */
     if (do_decimation) {
@@ -676,7 +679,7 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	/* Check for odd number of arguments */
 	if (argc & 01) {
 	    bu_vls_printf(gedp->ged_result_str, "error in number of args!");
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* Get operation and solid name for each solid */
@@ -684,7 +687,7 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    /* they come in pairs */
 	    if (i+1 >= argc) {
 		bu_vls_printf(gedp->ged_result_str, "Invalid syntax near '%s', ignored.  Expecting object name after operator.\n", argv[i+1]);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 
 	    oper = db_str2op(argv[i]);
@@ -694,7 +697,7 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    /* object name comes after op */
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((dp = db_lookup(gedp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Object '%s does not exist.\n", argv[i+1]);
 		continue;
 	    }
@@ -702,7 +705,7 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    /* add it to the comb immediately */
 	    if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Error adding '%s' (with op '%c') to '%s'\n", dp->d_namep, (char)oper, comb_name);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -711,15 +714,15 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     if (wrap_comb) {
 	if (!dp || dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
-	if (comb_wrap(gedp, dp) == GED_ERROR) {
-	    return GED_ERROR;
+	if (comb_wrap(gedp, dp) == BRLCAD_ERROR) {
+	    return BRLCAD_ERROR;
 	} else {
-	    dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
+	    dp = db_lookup(gedp->dbip, comb_name, LOOKUP_QUIET);
 	    if (dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "ERROR: wrap of %s failed", comb_name);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -727,15 +730,15 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     if (flatten_comb) {
 	if (!dp || dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
-	if (comb_flatten(gedp, dp) == GED_ERROR) {
-	    return GED_ERROR;
+	if (comb_flatten(gedp, dp) == BRLCAD_ERROR) {
+	    return BRLCAD_ERROR;
 	} else {
-	    dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
+	    dp = db_lookup(gedp->dbip, comb_name, LOOKUP_QUIET);
 	    if (dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "ERROR: flattening of %s failed", comb_name);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -743,15 +746,15 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
     if (lift_region_comb) {
 	if (!dp || dp == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Combination '%s does not exist.\n", comb_name);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
-	if (comb_lift_region(gedp, dp) == GED_ERROR) {
-	    return GED_ERROR;
+	if (comb_lift_region(gedp, dp) == BRLCAD_ERROR) {
+	    return BRLCAD_ERROR;
 	} else {
-	    dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_QUIET);
+	    dp = db_lookup(gedp->dbip, comb_name, LOOKUP_QUIET);
 	    if (dp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "ERROR: region lift to %s failed", comb_name);
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
     }
@@ -759,35 +762,34 @@ ged_comb_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Make sure the region flag is set appropriately */
     if (set_comb || set_region) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, comb_name, LOOKUP_NOISY)) != RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, comb_name, LOOKUP_NOISY)) != RT_DIR_NULL) {
 	    if (set_region) {
-		if (region_flag_set(gedp, dp) == GED_ERROR)
-		    return GED_ERROR;
+		if (region_flag_set(gedp, dp) == BRLCAD_ERROR)
+		    return BRLCAD_ERROR;
 	    }
 	    if (set_comb) {
-		if (region_flag_clear(gedp, dp) == GED_ERROR)
-		    return GED_ERROR;
+		if (region_flag_clear(gedp, dp) == BRLCAD_ERROR)
+		    return BRLCAD_ERROR;
 	    }
 	}
     }
 
     /* Done changing stuff - update nref. */
-    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+    db_update_nref(gedp->dbip, &rt_uniresource);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl comb_cmd_impl = {
-    "comb",
-    ged_comb_core,
-    GED_CMD_DEFAULT
-};
+struct ged_cmd_impl comb_cmd_impl = {"comb", ged_comb_core, GED_CMD_DEFAULT};
 
 const struct ged_cmd comb_cmd = { &comb_cmd_impl };
-const struct ged_cmd *comb_cmds[] = { &comb_cmd, NULL };
+const struct ged_cmd *comb_cmds[] = {
+    &comb_cmd,
+    NULL
+};
 
 static const struct ged_plugin pinfo = { GED_API,  comb_cmds, 1 };
 

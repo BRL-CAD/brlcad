@@ -32,6 +32,9 @@ fixdel
 set modeline
 set modelines=5
 
+" Disable bells
+set belloff=all
+
 " Advanced LaTeX support:
 " http://vim-latex.sourceforge.net/
 "
@@ -70,6 +73,20 @@ set cinoptions+=t0
 " http://www.vim.org/scripts/script.php?script_id=1717
 :autocmd BufRead,BufNewFile *.tcl,*.tcl.in setf tcl
 
+" Git commit settings
+" https://csswizardry.com/2017/03/configuring-git-and-vim/
+autocmd FileType gitcommit set textwidth=72
+autocmd FileType gitcommit set colorcolumn=+51
+
+" YAML settings
+autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+
+"Asynchronous Lint Engine: https://github.com/dense-analysis/ale
+let g:indentLine_char = '⦙'
+let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
+let g:ale_sign_error = '✘'
+let g:ale_sign_warning = '⚠'
+let g:ale_lint_on_text_changed = 'never'
 
 ##############################################################################################
 

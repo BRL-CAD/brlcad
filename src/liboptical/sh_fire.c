@@ -1,7 +1,7 @@
 /*                       S H _ F I R E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2021 United States Government as represented by
+ * Copyright (c) 1997-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -154,10 +154,10 @@ struct bu_structparse fire_parse_tab[] = {
 };
 
 
-HIDDEN int fire_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
-HIDDEN void fire_print(register struct region *rp, void *dp);
-HIDDEN void fire_free(void *cp);
+static int fire_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+static int fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+static void fire_print(register struct region *rp, void *dp);
+static void fire_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -203,7 +203,7 @@ const double flame_colors[18][3] = {
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
-HIDDEN int
+static int
 fire_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 /* pointer to reg_udata in *rp */
 /* New since 4.4 release */
@@ -267,14 +267,14 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 }
 
 
-HIDDEN void
+static void
 fire_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, fire_print_tab, (char *)dp);
 }
 
 
-HIDDEN void
+static void
 fire_free(void *cp)
 {
     BU_PUT(cp, struct fire_specific);

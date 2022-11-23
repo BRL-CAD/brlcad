@@ -1,7 +1,7 @@
 /*                         P A T H S U M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,8 +47,8 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage2 =
 	"{path_start}\n{path_start} may be specified by '/' or space separated components, but not both";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -97,8 +97,8 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 	char *tok;
 	tok = strtok((char *)argv[pos_in], "/");
 	while (tok) {
-	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL) {
-		return GED_ERROR;
+	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(gedp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL) {
+		return BRLCAD_ERROR;
 	    }
 	    tok = strtok((char *)NULL, "/");
 	}
@@ -106,15 +106,15 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 	gtd.gtd_objpos = argc - pos_in;
 	/* build directory pointer array for desired path */
 	for (i = 0; i < gtd.gtd_objpos; i++) {
-	    if ((gtd.gtd_obj[i] = db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL) {
-		return GED_ERROR;
+	    if ((gtd.gtd_obj[i] = db_lookup(gedp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+		return BRLCAD_ERROR;
 	    }
 	}
     }
 
     if (!gtd.gtd_objpos) {
 	bu_vls_printf(gedp->ged_result_str, "Invalid path\n");
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     MAT_IDN(gtd.gtd_xform);
@@ -130,7 +130,7 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "  NOT FOUND\n");
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

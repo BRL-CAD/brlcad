@@ -2,7 +2,9 @@
 if (SH_EXEC AND TARGET mged)
 
   BRLCAD_ADD_TEST(NAME regress-weight COMMAND ${SH_EXEC} "${CMAKE_CURRENT_SOURCE_DIR}/weight.sh" ${CMAKE_SOURCE_DIR})
-  BRLCAD_REGRESSION_TEST(regress-weight "rtweight;mged" TEST_DEFINED)
+
+  # 20220909CSM - temp disable during delayed testing fix
+  # BRLCAD_REGRESSION_TEST(regress-weight "rtweight;mged" TEST_DEFINED)
 
 endif (SH_EXEC AND TARGET mged)
 

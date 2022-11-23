@@ -1,7 +1,7 @@
 /*                         G T I M E S . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2021 United States Government as represented by
+ * Copyright (c) 2016-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,7 +61,6 @@ main(int ac, char *av[])
         return 1;
     }
   }
-  ac -= bu_optind;
   av += bu_optind;
 
   if (!bu_file_exists(av[0], NULL)) {
@@ -101,13 +100,13 @@ main(int ac, char *av[])
       struct ged ged;
       int tops_ac = 1;
       const char *tops_av[2] = {"tops", NULL};
-
-      GED_INIT(&ged, dbip->dbi_wdbp);
-      (void)ged_tops(&ged, tops_ac, (const char **)tops_av);
+      struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+      GED_INIT(&ged, wdbp);
+      (void)ged_exec(&ged, tops_ac, (const char **)tops_av);
     }
     seconds[4] += (bu_gettime() - timer) / 1000000.0;
     if (iterations < SKIP || (i % SKIP == 0))
-	printf("[%2d] ged_tops: %02fs\n", i, (bu_gettime() - timer) / 1000000.0);
+	printf("[%2d] tops: %02fs\n", i, (bu_gettime() - timer) / 1000000.0);
 
     timer = bu_gettime();
     db_close(dbip);

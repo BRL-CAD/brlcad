@@ -62,7 +62,8 @@ rle_hdr *the_hdr;
 rle_op ***scanp;
 int **nrawp;
 {
-    rle_op ** scanbuf, * opbuf;
+    rle_op ** scanbuf = NULL;
+    rle_op *opbuf = NULL;
     int rowlen, nchan = 0, i, ncol;
 
     rowlen = the_hdr->xmax - the_hdr->xmin + 1;
@@ -106,7 +107,7 @@ int **nrawp;
 	else
 	    scanbuf[i] = 0;
     *scanp = scanbuf;
-
+    free( opbuf );
     return 0;
 }
 

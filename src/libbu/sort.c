@@ -196,7 +196,9 @@ heapsort(void *vbase, size_t nmemb, size_t size,
 static char	*med3(char *, char *, char *, int (*)(const void *, const void *, void *), void *);
 static void	 swapfunc(char *, char *, size_t, int);
 
-#define min(a, b)	(a) < (b) ? a : b
+#ifndef min
+#  define min(a, b)	(a) < (b) ? a : b
+#endif
 
 /*
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".

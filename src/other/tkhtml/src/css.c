@@ -2150,6 +2150,10 @@ cssParse(
     CssParse sParse;
     int ii;
 
+    /* If we don't have anything to append to, just return */
+    if (!ppStyle)
+       return 0;
+
     memset(&sParse, 0, sizeof(CssParse));
     sParse.origin = origin;
     sParse.pStyleId = pStyleId;
@@ -2812,7 +2816,7 @@ cssSelectorPropertySetPair (CssParse *pParse, CssSelector *pSelector, CssPropert
     pRule->iRule = pParse->iNextRule++;
 
     /* Insert the rule into it's list. */
-    if (pParse->pStyleId) {
+    if (pParse->pStyleId && pSelector) {
         pS = pSelector;
 
         while (pS->pNext && (

@@ -97,7 +97,7 @@
 	    that are candidates for flattening:
 	    <literallayout>
 		    <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>search -type comb ! -below ( -bool + -or -bool - )</userinput>
+<prompt>mged&gt; </prompt><userinput>search -type comb ! -below ( -bool + -or -bool - )</userinput>
 		    </computeroutput>
 	    </literallayout>
           </para>
@@ -167,7 +167,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>comb abc u a u b - a + d</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>comb abc u a u b - a + d</userinput></term>
 	  <listitem>
 	    <para>Creates a combination named <emphasis>abc</emphasis>.
 	    </para>
@@ -194,7 +194,7 @@
 
 	<literallayout>
       <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>tree region1.r</userinput>
+<prompt>mged&gt; </prompt><userinput>tree region1.r</userinput>
 region1.r/R
         u region2.r/R
                 u sph.s
@@ -216,8 +216,8 @@ region1.r/R
 
       <literallayout>
       <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>comb -w region2.r</userinput>
-<prompt>mged&gt;</prompt> <userinput>tree region2.r</userinput>
+<prompt>mged&gt; </prompt><userinput>comb -w region2.r</userinput>
+<prompt>mged&gt; </prompt><userinput>tree region2.r</userinput>
 region2.r/R
         u region2.r.c/
                   u sph.s
@@ -231,12 +231,12 @@ region2.r/R
 
       <literallayout>
       <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>set glob_compat_mode 0</userinput>
+<prompt>mged&gt; </prompt><userinput>set glob_compat_mode 0</userinput>
 0
-<prompt>mged&gt;</prompt> <userinput>get region1.r tree</userinput>
+<prompt>mged&gt; </prompt><userinput>get region1.r tree</userinput>
 u {l region2.r} {l comb.c}
-<prompt>mged&gt;</prompt> <userinput>adjust region1.r tree {u {l region2.r.c} {l comb.c}}</userinput>
-<prompt>mged&gt;</prompt> <userinput>tree region1.r</userinput>
+<prompt>mged&gt; </prompt><userinput>adjust region1.r tree {u {l region2.r.c} {l comb.c}}</userinput>
+<prompt>mged&gt; </prompt><userinput>tree region1.r</userinput>
 region1.r/R
         u region2.r.c/
                 u sph.s
@@ -258,14 +258,14 @@ region1.r/R
 
       <literallayout>
       <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>mvall region2.r.c region2.c</userinput>
-<prompt>mged&gt;</prompt> <userinput>tree region1.r</userinput>
+<prompt>mged&gt; </prompt><userinput>mvall region2.r.c region2.c</userinput>
+<prompt>mged&gt; </prompt><userinput>tree region1.r</userinput>
 region1.r/R
         u region2.c/
                 u sph.s
         u comb.c/
                 u arb.s
-<prompt>mged&gt;</prompt> <userinput>tree region2.r</userinput>
+<prompt>mged&gt; </prompt><userinput>tree region2.r</userinput>
 region2.r/R
         u region2.c/
                 u sph.s
@@ -290,25 +290,25 @@ region2.r/R
 		  <para>First, create an appropriate example to properly illustrate the option's behavior:</para>
 		  <literallayout>
 			  <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>make sph1.s sph</userinput>
-<prompt>mged&gt;</prompt> <userinput>make sph2.s sph</userinput>
-<prompt>mged&gt;</prompt> <userinput>comb sph1.c u sph1.s</userinput>
-<prompt>mged&gt;</prompt> <userinput>comb sph2.c u sph2.s</userinput>
-<prompt>mged&gt;</prompt> <userinput>comb spheres.c u sph1.c u sph2.c</userinput>
-<prompt>mged&gt;</prompt> <userinput>comb misc.c u sph2.c</userinput>
-<prompt>mged&gt;</prompt> <userinput>tree spheres.c</userinput>
+<prompt>mged&gt; </prompt><userinput>make sph1.s sph</userinput>
+<prompt>mged&gt; </prompt><userinput>make sph2.s sph</userinput>
+<prompt>mged&gt; </prompt><userinput>comb sph1.c u sph1.s</userinput>
+<prompt>mged&gt; </prompt><userinput>comb sph2.c u sph2.s</userinput>
+<prompt>mged&gt; </prompt><userinput>comb spheres.c u sph1.c u sph2.c</userinput>
+<prompt>mged&gt; </prompt><userinput>comb misc.c u sph2.c</userinput>
+<prompt>mged&gt; </prompt><userinput>tree spheres.c</userinput>
 spheres.c/
          u sph1.c/
                  u sph1.s
          u sph2.c/
                  u sph2.s
 
-<prompt>mged&gt;</prompt> <userinput>tree misc.c</userinput>
+<prompt>mged&gt; </prompt><userinput>tree misc.c</userinput>
 misc.c/
          u sph2.c/
                  u sph2.s
 
-<prompt>mged&gt;</prompt> <userinput>tops</userinput>
+<prompt>mged&gt; </prompt><userinput>tops</userinput>
 misc.c/               spheres.c
       </computeroutput>
       </literallayout>
@@ -320,18 +320,18 @@ misc.c/               spheres.c
 
       <literallayout>
       <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>comb -f spheres.c</userinput>
-<prompt>mged&gt;</prompt> <userinput>tree spheres.c</userinput>
+<prompt>mged&gt; </prompt><userinput>comb -f spheres.c</userinput>
+<prompt>mged&gt; </prompt><userinput>tree spheres.c</userinput>
 spheres.c/
         u sph1.s
         u sph2.s
 
-<prompt>mged&gt;</prompt> <userinput>tree misc.c</userinput>
+<prompt>mged&gt; </prompt><userinput>tree misc.c</userinput>
 misc.c/
          u sph2.c/
                  u sph2.s
 
-<prompt>mged&gt;</prompt> <userinput>tops</userinput>
+<prompt>mged&gt; </prompt><userinput>tops</userinput>
 misc.c/               spheres.c
       </computeroutput>
       </literallayout>
@@ -362,22 +362,22 @@ misc.c/               spheres.c
 		  <para>Suppose a geometry has the following structure:</para>
 		  <literallayout>
 			  <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>make sph1.s sph</userinput>
-<prompt>mged&gt;</prompt> <userinput>make sph2.s sph</userinput>
-<prompt>mged&gt;</prompt> <userinput>r r1 u sph1.s</userinput>
-<prompt>mged&gt;</prompt> <userinput>r r2 u sph2.s</userinput>
-<prompt>mged&gt;</prompt> <userinput>comb assembly u r1 u r2</userinput>
-<prompt>mged&gt;</prompt> <userinput>r r3 u r1 - r2</userinput>
-<prompt>mged&gt;</prompt> <userinput>tops</userinput>
+<prompt>mged&gt; </prompt><userinput>make sph1.s sph</userinput>
+<prompt>mged&gt; </prompt><userinput>make sph2.s sph</userinput>
+<prompt>mged&gt; </prompt><userinput>r r1 u sph1.s</userinput>
+<prompt>mged&gt; </prompt><userinput>r r2 u sph2.s</userinput>
+<prompt>mged&gt; </prompt><userinput>comb assembly u r1 u r2</userinput>
+<prompt>mged&gt; </prompt><userinput>r r3 u r1 - r2</userinput>
+<prompt>mged&gt; </prompt><userinput>tops</userinput>
 assembly/           r3/R
 
-<prompt>mged&gt;</prompt> <userinput>tree assembly</userinput>
+<prompt>mged&gt; </prompt><userinput>tree assembly</userinput>
 assembly/
         u r1/R
                 u sph1.s
         u r2/R
                 u sph2.s
-<prompt>mged&gt;</prompt> <userinput>tree r3</userinput>
+<prompt>mged&gt; </prompt><userinput>tree r3</userinput>
 r3/R
         u r1/R
                 u sph1.s
@@ -396,8 +396,8 @@ r3/R
 
       <literallayout>
       <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>comb -l r3</userinput>
-<prompt>mged&gt;</prompt> <userinput>tree assembly</userinput>
+<prompt>mged&gt; </prompt><userinput>comb -l r3</userinput>
+<prompt>mged&gt; </prompt><userinput>tree assembly</userinput>
 assembly/
         u r1/R
                 u r1.c/
@@ -405,7 +405,7 @@ assembly/
         u r2/R
                 u r1.c/
                          u sph1.s
-<prompt>mged&gt;</prompt> <userinput>tree r3</userinput>
+<prompt>mged&gt; </prompt><userinput>tree r3</userinput>
 r3/R
         u r1.c/
                 u sph1.s
@@ -436,25 +436,25 @@ r3/R
 		  <para>Suppose a geometry has the following structure:</para>
 		  <literallayout>
 			  <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>make sph1.s sph</userinput>
-<prompt>mged&gt;</prompt> <userinput>make sph2.s sph</userinput>
-<prompt>mged&gt;</prompt> <userinput>make sph3.s sph</userinput>
-<prompt>mged&gt;</prompt> <userinput>r r1 u sph1.s</userinput>
-<prompt>mged&gt;</prompt> <userinput>r r2 u sph2.s</userinput>
-<prompt>mged&gt;</prompt> <userinput>comb subassembly u r1 u r2</userinput>
-<prompt>mged&gt;</prompt> <userinput>r r3 u sph3.s - subassembly</userinput>
-<prompt>mged&gt;</prompt> <userinput>comb assembly u subassembly</userinput>
-<prompt>mged&gt;</prompt> <userinput>tops</userinput>
+<prompt>mged&gt; </prompt><userinput>make sph1.s sph</userinput>
+<prompt>mged&gt; </prompt><userinput>make sph2.s sph</userinput>
+<prompt>mged&gt; </prompt><userinput>make sph3.s sph</userinput>
+<prompt>mged&gt; </prompt><userinput>r r1 u sph1.s</userinput>
+<prompt>mged&gt; </prompt><userinput>r r2 u sph2.s</userinput>
+<prompt>mged&gt; </prompt><userinput>comb subassembly u r1 u r2</userinput>
+<prompt>mged&gt; </prompt><userinput>r r3 u sph3.s - subassembly</userinput>
+<prompt>mged&gt; </prompt><userinput>comb assembly u subassembly</userinput>
+<prompt>mged&gt; </prompt><userinput>tops</userinput>
 assembly/           r3/R
 
-<prompt>mged&gt;</prompt> <userinput>tree assembly</userinput>
+<prompt>mged&gt; </prompt><userinput>tree assembly</userinput>
 assembly/
         u subassembly/
                 u r1/R
                         u sph1.s
                 u r2/R
                         u sph2.s
-<prompt>mged&gt;</prompt> <userinput>tree r3</userinput>
+<prompt>mged&gt; </prompt><userinput>tree r3</userinput>
 r3/R
         u sph3.s
         - subassembly/
@@ -473,7 +473,7 @@ r3/R
 
       <literallayout>
       <computeroutput>
-<prompt>mged&gt;</prompt> <userinput>comb -l r3</userinput>
+<prompt>mged&gt; </prompt><userinput>comb -l r3</userinput>
 Comb region lift failed - the following combs in the tree contain
 regions and are also used outside the tree of r3:
 

@@ -1,7 +1,7 @@
 /*                      C O M B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@ Comb_to_STEP(struct directory *dp, AP203_Contents *sc, STEPentity **shape, STEPe
     (*shape) = (STEPentity *)shape_rep;
 }
 
-HIDDEN union tree *
+static union tree *
 _db_tree_get_child(union tree *tp) {
     union tree *ret;
 

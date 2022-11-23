@@ -1,7 +1,7 @@
 /*                         W H I C H _ S H A D E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,8 +44,8 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
     char **myArgv;
     static const char *usage = "[-s] args";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -67,7 +67,7 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
 
     if (myArgc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     for (j = 1; j < myArgc; j++) {
@@ -76,13 +76,13 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "Combination[s] with shader %s:\n", myArgv[j]);
 
 	/* Examine all COMB nodes */
-	FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
 	    if (!(dp->d_flags & RT_DIR_COMB))
 		continue;
 
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
-		return GED_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -97,7 +97,7 @@ ged_which_core_shader(struct ged *gedp, int argc, const char *argv[])
 	} FOR_ALL_DIRECTORY_END;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

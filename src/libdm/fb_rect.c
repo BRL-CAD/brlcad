@@ -1,7 +1,7 @@
 /*                       F B _ R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2021 United States Government as represented by
+ * Copyright (c) 1997-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -135,7 +135,7 @@ fb_sim_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, co
     register int tot;
     int got;
     size_t xlen;
-    unsigned char buf[SIMBUF_SIZE];
+    unsigned char buf[SIMBUF_SIZE*3];
 
     if (width > SIMBUF_SIZE) {
 	fb_log("fb_sim_bwwriterect() width of %d exceeds internal buffer, aborting\n", width);

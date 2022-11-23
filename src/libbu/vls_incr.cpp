@@ -1,7 +1,7 @@
 /*                      V L S _ I N C R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,6 @@ vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *inc_
 {
     int i = 0;
     long ret = 0;
-    /*char bsep = '\0';
-      char esep = '\0';*/
     long vals[4] = {0}; /* 0 = width, 1 = min/init, 2 = max, 3 = increment */
     long state_val = 0;
     const char *wstr = inc_specifier;
@@ -43,7 +41,8 @@ vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *inc_
     int spacer_cnt = 1;
     long spacer_val;
 
-    if (!inc_specifier || !next_incr || !incr_state) return 0;
+    if (!inc_specifier || !next_incr || !incr_state)
+	return 0;
 
     errno = 0;
     state_val = strtol(incr_state, &endptr, 10);
@@ -81,7 +80,8 @@ vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *inc_
     /* find out if we need padding zeros */
     if (vals[0]) {
 	spacer_val = state_val;
-	while ((spacer_val = spacer_val / 10)) spacer_cnt++;
+	while ((spacer_val = spacer_val / 10))
+	    spacer_cnt++;
     }
 
     if (wstr) {
@@ -95,7 +95,8 @@ vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *inc_
 	    bu_vls_printf(next_incr, "%ld", state_val);
 	}
 	wstr = (strchr(wstr, ':')) ?  strchr(wstr, ':') + 1 : NULL;
-	if (wstr) bu_vls_printf(next_incr, "%c", wstr[0]);
+	if (wstr)
+	    bu_vls_printf(next_incr, "%c", wstr[0]);
     } else {
 	if (vals[0]) {
 	    for (i = 0; i < vals[0]-spacer_cnt; i++) {
@@ -109,10 +110,12 @@ vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *inc_
     return ret;
 }
 
+
 int
 bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, bu_vls_uniq_t ut, void *data)
 {
-    if (!name) return -1;
+    if (!name)
+	return -1;
 
     int ret = 0;
     struct bu_vls new_name = BU_VLS_INIT_ZERO;
@@ -128,6 +131,7 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 	while (!success) {
 	    std::string sline(bu_vls_cstr(name));
 	    std::string incr_str, prefix, suffix;
+
 	    /* Find incrementer. */
 	    std::smatch ivar;
 	    if (!std::regex_search(sline, ivar, cregex)) {
@@ -166,7 +170,7 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 
 	    /* If we need to, test for uniqueness */
 	    if (ut) {
-		success = (*ut)(name,data);
+		success = (*ut)(name, data);
 	    } else {
 		success = 1;
 	    }
@@ -175,9 +179,8 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 	    bu_vls_trunc(&ispec, 0);
 	    bu_vls_trunc(&new_name, 0);
 	}
-    }
 
-    catch (const std::regex_error& e) {
+    } catch (const std::regex_error& e) {
 	bu_log("bu_vls_incr regex error: %s\n", e.what());
 	ret = -1;
     }

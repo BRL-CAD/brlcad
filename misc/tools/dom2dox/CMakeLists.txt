@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2021 United States Government as represented by
+# Copyright (c) 2015-2022 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.18)
 
 project(DOM2DOX)
 

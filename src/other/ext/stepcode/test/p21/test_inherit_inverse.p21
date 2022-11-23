@@ -1,0 +1,14 @@
+ISO-10303-21;
+HEADER;
+FILE_DESCRIPTION(('SCL test file'),'2;1');
+FILE_NAME('test_inherit_inverse.p21','2014-03-17T',('mp'),(''),'0','1','2');
+FILE_SCHEMA(('test_inherit_inverse'));
+ENDSEC;
+DATA;
+
+#1=GEOMETRIC_REPRESENTATION_CONTEXT(2,'ctx type',9);
+
+#2=REPRESENTATION('rep',#1);
+
+ENDSEC;
+END-ISO-10303-21;

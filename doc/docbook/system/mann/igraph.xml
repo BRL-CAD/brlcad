@@ -36,7 +36,7 @@
 
     <variablelist>
       <varlistentry>
-	<term><prompt>mged&gt;</prompt><userinput>igraph</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>igraph</userinput></term>
 	<listitem>
 	  <para>
 	    Displays a graph that corresponds to the currently opened .g database.

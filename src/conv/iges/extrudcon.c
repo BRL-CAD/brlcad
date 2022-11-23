@@ -1,7 +1,7 @@
 /*                     E X T R U D C O N . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2021 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include "./iges_extern.h"
 
 int
-Extrudcon(int entityno, int curve, vect_t evect)
+Extrudcon(size_t entityno, int curve, vect_t evect)
     /* extrusion entity number */
     /* elliptical arc entity number */
     /* extrusion vector */

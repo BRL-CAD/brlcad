@@ -1,7 +1,7 @@
 /*                       T C L C A D _ V I E W S . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2021 United States Government as represented by
+ * Copyright (c) 2000-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,23 +37,6 @@
 /* Private headers */
 #include "../tclcad_private.h"
 #include "../view/view.h"
-
-
-fastf_t
-screen_to_view_x(struct dm *dmp, fastf_t x)
-{
-    int width = dm_get_width(dmp);
-    return x / (fastf_t)width * 2.0 - 1.0;
-}
-
-
-fastf_t
-screen_to_view_y(struct dm *dmp, fastf_t y)
-{
-    int height = dm_get_height(dmp);
-    return (y / (fastf_t)height * -2.0 + 1.0) / dm_get_aspect(dmp);
-}
-
 
 int
 to_is_viewable(struct bview *gdvp)

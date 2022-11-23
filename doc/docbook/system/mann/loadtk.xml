@@ -36,7 +36,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>loadtk</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>loadtk</userinput></term>
 	   <listitem>
 	     <para>Initializes the Tk window library.</para>
 	   </listitem>

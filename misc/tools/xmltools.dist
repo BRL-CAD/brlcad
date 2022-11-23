@@ -82,11 +82,14 @@ libxml/src/HTMLparser.c
 libxml/src/HTMLtree.c
 libxml/src/SAX.c
 libxml/src/SAX2.c
+libxml/src/buf.c
+libxml/src/buf.h
 libxml/src/c14n.c
 libxml/src/catalog.c
 libxml/src/chvalid.c
 libxml/src/debugXML.c
 libxml/src/dict.c
+libxml/src/enc.h
 libxml/src/encoding.c
 libxml/src/entities.c
 libxml/src/error.c
@@ -97,8 +100,10 @@ libxml/src/parser.c
 libxml/src/parserInternals.c
 libxml/src/pattern.c
 libxml/src/relaxng.c
+libxml/src/save.h
 libxml/src/schematron.c
 libxml/src/threads.c
+libxml/src/timsort.h
 libxml/src/tree.c
 libxml/src/trio.c
 libxml/src/trionan.c

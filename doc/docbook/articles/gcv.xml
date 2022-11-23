@@ -34,7 +34,7 @@
       <title>GCV architecture</title>
       <mediaobject>
         <imageobject>
-          <imagedata fileref="../../articles/images/gcv_architecture.png"/>
+          <imagedata fileref="../articles/images/gcv_architecture.png"/>
         </imageobject>
       </mediaobject>
     </figure>
@@ -283,7 +283,7 @@ LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
         <title>Tessellation of incompatible entities</title>
         <mediaobject>
           <imageobject>
-            <imagedata fileref="../../articles/images/gcv_unsupported_tessellation.png"/>
+            <imagedata fileref="../articles/images/gcv_unsupported_tessellation.png"/>
           </imageobject>
         </mediaobject>
       </figure>
@@ -341,7 +341,7 @@ LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
         <title>Using MGED's gdiff utility</title>
         <mediaobject>
           <imageobject>
-            <imagedata fileref="../../articles/images/gcv_using_gdiff.png"/>
+            <imagedata fileref="../articles/images/gcv_using_gdiff.png"/>
           </imageobject>
         </mediaobject>
       </figure>

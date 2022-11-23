@@ -7,7 +7,6 @@ if (TARGET NIST_MBE_PMI_3.g)
   set(NHIT_GFILE "${DATA_DIR}/db/nist/NIST_MBE_PMI_3.g")
   set(NHIT_ARGS "Document -114.61944548140064626 -127.49462006675899772 -134.83948901109894791 35 25")
   BRLCAD_REGRESSION_TEST(regress-nurbs_${NHIT_NAME} "analyze_nhit;NIST_MBE_PMI_3.g" TEST_SCRIPT "${TSCRIPT}" EXEC analyze_nhit)
-  set_target_properties(regress-nurbs_${NHIT_NAME} PROPERTIES FOLDER "BRL-CAD Regression Tests/NURBS")
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/regress-nurbs_${NHIT_NAME}.log)
 endif (TARGET NIST_MBE_PMI_3.g)
 
@@ -17,7 +16,7 @@ set(NHIT_OPTS "-b")
 set(NHIT_GFILE "${CMAKE_SOURCE_DIR}/src/libbrep/tests/plate_mode_samples.g")
 set(NHIT_ARGS "sph.brep 0 0 0 0 0")
 #BRLCAD_REGRESSION_TEST(regress-nurbs_${NHIT_NAME} "analyze_nhit" TEST_SCRIPT "${TSCRIPT}" EXEC analyze_nhit)
-#set_target_properties(regress-nurbs-${NHIT_NAME} PROPERTIES FOLDER "BRL-CAD Regression Tests/NURBS")
+#set_target_properties(regress-nurbs-${NHIT_NAME} PROPERTIES FOLDER "BRL-CAD Regression Tests/nurbs")
 #DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/regress-nurbs_${NHIT_NAME}.log)
 
 

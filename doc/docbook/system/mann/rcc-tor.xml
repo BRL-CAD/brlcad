@@ -39,7 +39,7 @@ greater than half its height.
   <example><title>Round the edges of an RCC.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rcc-tor rcc.s tor.s</userinput>
+      <prompt>mged&gt; </prompt><userinput>rcc-tor rcc.s tor.s</userinput>
     </para>
     <para>Creates a TOR shape named <emphasis>tor.s</emphasis> using the parameters of <emphasis>rcc.s	</emphasis>.
     </para>

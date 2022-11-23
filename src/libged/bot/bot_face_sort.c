@@ -1,7 +1,7 @@
 /*                   B O T _ F A C E _ S O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,9 +40,10 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
     int tris_per_piece=0;
     static const char *usage = "triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -55,7 +56,7 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     tris_per_piece = atoi(argv[1]);
@@ -64,7 +65,7 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 		      "Illegal value for triangle per piece (%s)\n",
 		      argv[1]);
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     for (i = 2; i < argc; i++) {
@@ -72,12 +73,12 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 	struct rt_db_internal intern;
 	struct rt_bot_internal *bot;
 
-	dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY);
+	dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY);
 	if (dp == RT_DIR_NULL) {
 	    continue;
 	}
 
-	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+	GED_DB_GET_INTERNAL(gedp, &intern, dp, bn_mat_identity, wdbp->wdb_resp, BRLCAD_ERROR);
 
 	if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	    rt_db_free_internal(&intern);
@@ -100,10 +101,10 @@ ged_bot_face_sort_core(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, wdbp->wdb_resp, BRLCAD_ERROR);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 /*

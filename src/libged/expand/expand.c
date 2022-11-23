@@ -1,7 +1,7 @@
 /*                         E X P A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,8 +63,8 @@ ged_expand_core(struct ged *gedp, int argc, const char *argv[])
     int regexp, nummatch, thismatch, backslashed;
     static const char *usage = "expression";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -95,7 +95,7 @@ ged_expand_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* If it isn't a regexp, copy directly and continue */
 	if (regexp == 0) {
-	    if (db_lookup(gedp->ged_wdbp->dbip, argv[whicharg], LOOKUP_QUIET) != RT_DIR_NULL) {
+	    if (db_lookup(gedp->dbip, argv[whicharg], LOOKUP_QUIET) != RT_DIR_NULL) {
 		if (nummatch > 0)
 		    bu_vls_printf(gedp->ged_result_str, " ");
 		expand_scrape_escapes(gedp->ged_result_str, argv[whicharg]);
@@ -114,7 +114,7 @@ ged_expand_core(struct ged *gedp, int argc, const char *argv[])
 	pattern = (char *)argv[whicharg];
 	thismatch = 0;
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (bu_path_match(pattern, dp->d_namep, 0) != 0)
 		    continue;
 		/* Successful match */
@@ -128,7 +128,7 @@ ged_expand_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

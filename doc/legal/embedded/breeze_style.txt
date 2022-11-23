@@ -1,0 +1,73 @@
+The MIT License (MIT)
+=====================
+
+Copyright © `<2013-2014>` `<Colin Duquesnoy>`
+Copyright © `<2015-2016>` `<Alex Huszagh>`
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the “Software”), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+https://github.com/Alexhuszagh/BreezeStyleSheets
+
+file:/src/qged/theme/dark.qss
+file:/src/qged/theme/dark/hmovetoolbar.svg
+file:/src/qged/theme/dark/radio_checked_disabled.svg
+file:/src/qged/theme/dark/checkbox_checked_disabled.svg
+file:/src/qged/theme/dark/checkbox_indeterminate.svg
+file:/src/qged/theme/dark/down_arrow.svg
+file:/src/qged/theme/dark/close-pressed.svg
+file:/src/qged/theme/dark/close.svg
+file:/src/qged/theme/dark/checkbox_indeterminate_disabled.svg
+file:/src/qged/theme/dark/vmovetoolbar.svg
+file:/src/qged/theme/dark/checkbox_unchecked.svg
+file:/src/qged/theme/dark/hsepartoolbar.svg
+file:/src/qged/theme/dark/stylesheet-vline.svg
+file:/src/qged/theme/dark/up_arrow-hover.svg
+file:/src/qged/theme/dark/down_arrow_disabled.svg
+file:/src/qged/theme/dark/vsepartoolbars.svg
+file:/src/qged/theme/dark/transparent.svg
+file:/src/qged/theme/dark/radio_unchecked.svg
+file:/src/qged/theme/dark/stylesheet-branch-end-closed.svg
+file:/src/qged/theme/dark/checkbox_unchecked_disabled.svg
+file:/src/qged/theme/dark/right_arrow.svg
+file:/src/qged/theme/dark/left_arrow_disabled.svg
+file:/src/qged/theme/dark/sizegrip.svg
+file:/src/qged/theme/dark/spinup_disabled.svg
+file:/src/qged/theme/dark/close-hover.svg
+file:/src/qged/theme/dark/stylesheet-branch-end.svg
+file:/src/qged/theme/dark/radio_unchecked_disabled.svg
+file:/src/qged/theme/dark/undock-hover.svg
+file:/src/qged/theme/dark/branch_closed-on.svg
+file:/src/qged/theme/dark/radio_checked.svg
+file:/src/qged/theme/dark/branch_open-on.svg
+file:/src/qged/theme/dark/branch_closed.svg
+file:/src/qged/theme/dark/undock.svg
+file:/src/qged/theme/dark/left_arrow.svg
+file:/src/qged/theme/dark/down_arrow-hover.svg
+file:/src/qged/theme/dark/right_arrow_disabled.svg
+file:/src/qged/theme/dark/up_arrow.svg
+file:/src/qged/theme/dark/up_arrow_disabled.svg
+file:/src/qged/theme/dark/checkbox_checked.svg
+file:/src/qged/theme/dark/branch_open.svg
+file:/src/qged/theme/dark/stylesheet-branch-end-open.svg
+file:/src/qged/theme/dark/stylesheet-branch-more.svg
+file:/src/qged/theme/breeze.qrc
+

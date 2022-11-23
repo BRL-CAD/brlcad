@@ -1,7 +1,7 @@
 /*                   W D B _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -135,7 +135,7 @@ main(int ac, char *av[])
 	     0);             /* inherit (override) flag */
 
     /* Close the database file. */
-    wdb_close(db_fp);
+    db_close(db_fp->dbip);
 
     return 0;
 }

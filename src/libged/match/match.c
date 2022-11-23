@@ -1,7 +1,7 @@
 /*                         M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,8 +38,8 @@ ged_match_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "expression";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -54,7 +54,7 @@ ged_match_core(struct ged *gedp, int argc, const char *argv[])
 	register int i, num;
 	register struct directory *dp;
 	for (i = num = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 		if (bu_path_match(*argv, dp->d_namep, 0) != 0)
 		    continue;
 		if (num == 0)
@@ -72,7 +72,7 @@ ged_match_core(struct ged *gedp, int argc, const char *argv[])
     }
     bu_vls_trimspace(gedp->ged_result_str);
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

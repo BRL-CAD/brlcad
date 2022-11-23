@@ -44,7 +44,7 @@
   <example><title>Place a <emphasis>PostScript</emphasis> version of the current MGED display in a specified file.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>postscript -t "Test Title" test.ps</userinput>
+      <prompt>mged&gt; </prompt><userinput>postscript -t "Test Title" test.ps</userinput>
     </para>
     <para>Places a <emphasis>PostScript</emphasis> version of the current MGED display in a file named 	<emphasis>test.ps</emphasis> and titles it Test Title.
     </para>
@@ -52,7 +52,7 @@
   <example><title>Specify the line width of a <emphasis>PostScript</emphasis> version of the current MGED display in a 	specified file.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>postscript -l 10 -t "Test Fat Lines" fat_lines.ps</userinput>
+      <prompt>mged&gt; </prompt><userinput>postscript -l 10 -t "Test Fat Lines" fat_lines.ps</userinput>
     </para>
     <para>Places a <emphasis>PostScript</emphasis> version of the current MGED display with fat lines in a file 	named <emphasis>fat_lines.ps</emphasis> and titles it Test Fat Lines.
     </para>

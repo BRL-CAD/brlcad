@@ -1,7 +1,7 @@
 /*                         M O V E _ A R B _ E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,9 +58,9 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
     const short arb5_evm[9][2] = arb5_edge_vertex_mapping;
     const short arb4_evm[5][2] = arb4_edge_vertex_mapping;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -73,13 +73,13 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 4 || 5 < argc) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc == 5) {
 	if (argv[1][0] != '-' || argv[1][1] != 'r' || argv[1][2] != '\0') {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	rflag = 1;
@@ -94,30 +94,32 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
 
     if (last[0] == '\0') {
 	bu_vls_printf(gedp->ged_result_str, "illegal input - %s", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s not found", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & GED_ERROR)
-	return GED_ERROR;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
 	bu_vls_printf(gedp->ged_result_str, "Object not an ARB");
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%d", &edge) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "bad edge - %s", argv[2]);
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     edge -= 1;
 
@@ -125,7 +127,7 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "bad point - %s", argv[3]);
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     /* convert from double to fastf_t */
     VMOVE(pt, scan);
@@ -133,7 +135,7 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
 
-    arb_type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
+    arb_type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
 
     /* check the arb type */
     switch (arb_type) {
@@ -181,7 +183,7 @@ ged_move_arb_edge_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "unrecognized arb type");
 	    rt_db_free_internal(&intern);
 
-	    return GED_ERROR;
+	    return BRLCAD_ERROR;
     }
 
 bad_edge:
@@ -191,25 +193,25 @@ bad_edge:
 	bu_vls_printf(gedp->ged_result_str, "bad edge - %s", argv[2]);
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol)) {
+    if (rt_arb_calc_planes(gedp->ged_result_str, arb, arb_type, planes, &wdbp->wdb_tol)) {
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    VSCALE(pt, pt, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(pt, pt, gedp->dbip->dbi_local2base);
 
     if (rflag) {
 	VADD2(pt, pt, arb->pt[arb_pt_index]);
     }
 
-    if (rt_arb_edit(gedp->ged_result_str, arb, arb_type, edge, pt, planes, &gedp->ged_wdbp->wdb_tol)) {
+    if (rt_arb_edit(gedp->ged_result_str, arb, arb_type, edge, pt, planes, &wdbp->wdb_tol)) {
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     {
@@ -225,10 +227,10 @@ bad_edge:
 	    VMOVE(arb->pt[i], arb_pt);
 	}
 
-	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
+	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, BRLCAD_ERROR);
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -246,9 +248,9 @@ ged_find_arb_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
     double scan[ELEMENTS_PER_VECT];
     double ptol_scan;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -261,24 +263,25 @@ ged_find_arb_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 
     if (argc != 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (bu_sscanf(argv[2], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad view location - %s", argv[0], argv[2]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     VMOVE(view, scan); /* convert double to fastf_t */
 
     if (bu_sscanf(argv[3], "%lf", &ptol_scan) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s: bad ptol - %s", argv[0], argv[3]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
     ptol = ptol_scan;
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) == BRLCAD_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -286,14 +289,14 @@ ged_find_arb_edge_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 	bu_vls_printf(gedp->ged_result_str, "Object is not an ARB");
 	rt_db_free_internal(&intern);
 
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     (void)rt_arb_find_e_nearest_pt2(&edge, &vi1, &vi2, &intern, view, gedp->ged_gvp->gv_model2view, ptol);
     bu_vls_printf(gedp->ged_result_str, "%d %d %d", edge, vi1, vi2);
 
     rt_db_free_internal(&intern);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

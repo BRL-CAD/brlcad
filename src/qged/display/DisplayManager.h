@@ -1,7 +1,7 @@
 /*                D I S P L A Y M A N A G E R . H
  * BRL-CAD
  *
- * Copyright (c) 2020-2021 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,10 +36,10 @@
 
 class DisplayManager{
 public:
-    explicit DisplayManager(Display *display);
+    explicit DisplayManager(BRLCADDisplay *display);
 
     // most of the methods below correspond to a method with a similar name from libdm
-    void drawVList(bn_vlist *vp);
+    void drawVList(bv_vlist *vp);
     void setFGColor(float r, float g, float b, float transparency);
     void setLineAttr(int width, int style);
     void setLineStyle(int style);
@@ -57,7 +57,7 @@ public:
     void loadPMatrix(const GLfloat *m);
 
 private:
-    Display *display;
+    BRLCADDisplay *display;
 
     int dmLight = 1;
     bool dmTransparency = false;

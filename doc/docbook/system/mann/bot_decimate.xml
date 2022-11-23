@@ -61,7 +61,7 @@
       </para>
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>bot_decimate -c 0.5 -n 10.0 bot.new abot</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>bot_decimate -c 0.5 -n 10.0 bot.new abot</userinput></term>
 	  <listitem>
 	    <para>
 	      Creates a new BOT primitive named <emphasis>bot.new</emphasis>by reducing the number
@@ -78,13 +78,13 @@
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>bot_decimate -c 10.0 bot_b bot_a</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>bot_decimate -c 10.0 bot_b bot_a</userinput></term>
       <listitem>
           <para/>
       </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>bot_decimate -c 10.0 bot_c bot_b</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>bot_decimate -c 10.0 bot_c bot_b</userinput></term>
 	  <listitem>
 	  <para/>
 	    <para>
@@ -95,13 +95,13 @@
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>bot_decimate -c 10.0 bot_b bot_a</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>bot_decimate -c 10.0 bot_b bot_a</userinput></term>
       <listitem>
           <para/>
       </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>bot_decimate -n 5.0 bot_c bot_b</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>bot_decimate -n 5.0 bot_c bot_b</userinput></term>
 	  <listitem>
 	    <para/>
 	    <para>This sequence of commands will produce primitive <emphasis>bot_c</emphasis> with

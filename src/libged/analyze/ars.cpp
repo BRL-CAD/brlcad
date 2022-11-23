@@ -1,7 +1,7 @@
 /*                        A R S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2021 United States Government as represented by
+ * Copyright (c) 2020-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,6 +44,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
     plane_t old_plane = HINIT_ZERO;
     struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
     struct poly_face face = POLY_FACE_INIT_ZERO;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct rt_ars_internal *arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
 
@@ -62,8 +63,8 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 	    if (double_ended && i != 0 && (j == 0 || j == k || j == arip->pts_per_curve - 1)) continue;
 
 	    /* first triangular face, make sure it's not a duplicate */
-	    if (bn_make_plane_3pnts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &gedp->ged_wdbp->wdb_tol) == 0
-		&& !HEQUAL(old_plane, face.plane_eqn)) {
+	    if (bg_make_plane_3pnts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &wdbp->wdb_tol) == 0
+	       && !HEQUAL(old_plane, face.plane_eqn)) {
 		HMOVE(old_plane, face.plane_eqn);
 		ADD_PT(face, ARS_PT(0, 1));
 		ADD_PT(face, ARS_PT(0, 0));
@@ -85,8 +86,8 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 	    }
 
 	    /* second triangular face, make sure it's not a duplicate */
-	    if (bn_make_plane_3pnts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &gedp->ged_wdbp->wdb_tol) == 0
-		&& !HEQUAL(old_plane, face.plane_eqn)) {
+	    if (bg_make_plane_3pnts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &wdbp->wdb_tol) == 0
+	       && !HEQUAL(old_plane, face.plane_eqn)) {
 		HMOVE(old_plane, face.plane_eqn);
 		ADD_PT(face, ARS_PT(1, 0));
 		ADD_PT(face, ARS_PT(0, 0));
@@ -112,14 +113,14 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
     print_faces_table(gedp, &table);
     print_volume_table(gedp,
 		       tot_vol
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local,
 		       tot_area
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local,
 		       tot_vol/GALLONS_TO_MM3
-	);
+		      );
 
     bu_free((char *)face.pts, "analyze_ars: pts");
     bu_free((char *)table.rows, "analyze_ars: rows");

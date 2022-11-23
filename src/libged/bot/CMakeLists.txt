@@ -4,6 +4,7 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
+  ${BRLCAD_SOURCE_DIR}/src/libbu # for fort.h
   )
 
 set(BOT_SRCS
@@ -11,6 +12,7 @@ set(BOT_SRCS
   bot.cpp
   bot_decimate.c
   bot_dump.c
+  bot_exterior.c
   bot_face_fuse.c
   bot_face_sort.c
   bot_flip.c
@@ -24,11 +26,12 @@ set(BOT_SRCS
   check.cpp
   extrude.cpp
   remesh.cpp
+  ../../libbu/fort.c
   )
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-bot SHARED ${BOT_SRCS})
-target_link_libraries(ged-bot libged libbu)
+target_link_libraries(ged-bot libged libbg libbu)
 set_property(TARGET ged-bot APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-bot ${BOT_SRCS})
 PLUGIN_SETUP(ged-bot ged)

@@ -1,7 +1,7 @@
 /*                         G E T _ T Y P E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
     int type;
     static const char *usage = "object";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -53,17 +53,19 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) & GED_ERROR)
-	return GED_ERROR;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], wdbp) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	bu_vls_printf(gedp->ged_result_str, "unknown");
 	rt_db_free_internal(&intern);
 
-	return GED_OK;
+	return BRLCAD_OK;
     }
 
     switch (intern.idb_minor_type) {
@@ -80,7 +82,7 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "superell");
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ARB8:
-	    type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
+	    type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
 
 	    switch (type) {
 		case 4:
@@ -206,7 +208,7 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     rt_db_free_internal(&intern);
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

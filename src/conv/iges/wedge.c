@@ -1,7 +1,7 @@
 /*                         W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2021 United States Government as represented by
+ * Copyright (c) 1990-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 int
-wedge(int entityno)
+wedge(size_t entityno)
 {
     fastf_t xscale = 0.0;
     fastf_t yscale = 0.0;

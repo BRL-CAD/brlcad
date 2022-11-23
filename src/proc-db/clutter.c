@@ -1,7 +1,7 @@
 /*                       C L U T T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2021 United States Government as represented by
+ * Copyright (c) 2004-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -173,6 +173,8 @@ main(int argc, char **argv)
 
     /* Build the overall combination */
     mk_lfcomb(outfp, "clut", &head, 0);
+
+    db_close(outfp->dbip);
 
     return 0;
 }

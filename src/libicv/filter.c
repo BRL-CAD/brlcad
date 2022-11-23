@@ -1,7 +1,7 @@
 /*                        F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2021 United States Government as represented by
+ * Copyright (c) 2013-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 
 /* private functions */
 
-HIDDEN void
+static void
 get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 {
     switch (filter_type) {
@@ -88,7 +88,7 @@ get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
     return;
 }
 
-HIDDEN void
+static void
 get_kernel3(ICV_FILTER3 filter_type, double *kern, double *offset)
 {
     switch (filter_type) {

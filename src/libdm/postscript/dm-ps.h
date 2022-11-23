@@ -1,7 +1,7 @@
 /*                          D M - P S . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2021 United States Government as represented by
+ * Copyright (c) 1993-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,10 @@
 /** @addtogroup libstruct dm */
 /** @{ */
 /** @file dm-ps.h
+ *
+ * TODO:  See if we can use https://gitlab.onelab.info/gl2ps/gl2ps
+ * to replace this with nicer output based on the swrast OpenGL
+ * generation...
  *
  */
 
@@ -48,7 +52,6 @@ struct ps_vars {
     struct bu_vls creator;
     fastf_t scale;
     int linewidth;
-    int zclip;
     int debug;
 };
 

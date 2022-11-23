@@ -1,7 +1,7 @@
 /*                         D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2021 United States Government as represented by
+ * Copyright (c) 2008-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@ ged_dump_core(struct ged *gedp, int argc, const char *argv[])
     int ret;
     static const char *usage = "file.g";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -53,24 +53,24 @@ ged_dump_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
     op = wdb_fopen(argv[1]);
     if (op == RT_WDB_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "dump: %s: cannot create", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    ret = db_dump(op, gedp->ged_wdbp->dbip);
-    wdb_close(op);
+    ret = db_dump(op, gedp->dbip);
+    db_close(op->dbip);
 
     if (ret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "dump: %s: db_dump() error", argv[1]);
-	return GED_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return GED_OK;
+    return BRLCAD_OK;
 }
 
 

@@ -1,7 +1,7 @@
 /*                       F O R T R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2021 United States Government as represented by
+ * Copyright (c) 1986-2022 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 static struct partition fr_global_head;
 
 
-HIDDEN int
+static int
 fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
 {
     RT_CK_AP(ap);
@@ -59,7 +59,7 @@ fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
 }
 
 
-HIDDEN int
+static int
 fr_miss(struct application *ap)
 {
     RT_CK_AP(ap);
