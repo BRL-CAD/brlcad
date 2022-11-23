@@ -18,9 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* remove docs pertaining to 7c9572e27025047b145d0a8b415e03a91ccf716d
-  and update CHANGES with itemization
-
 * re-enable regress-asc and regress-weight
 
 * material infrastructure has regressions due to attr sync code that
