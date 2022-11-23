@@ -27,6 +27,7 @@
 #include <stdlib.h> /* exit */
 #include <sys/types.h>
 #include "bio.h"
+#include "bnetwork.h"
 #include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/list.h"
@@ -545,17 +546,10 @@ bu_interactive()
 {
     int interactive = 1;
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
     fd_set read_set;
     fd_set exception_set;
     int result;
-#endif
 
-
-#if defined(_WIN32) && !defined(CYGWIN)
-    if(!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
-	interactive = 0;
-#else
     struct timeval timeout;
 
     /* wait 1/10sec for input, in case we're piped */
@@ -614,7 +608,6 @@ bu_interactive()
 	}
 
     } /* read_set */
-#endif
 
     return interactive;
 }
