@@ -386,7 +386,7 @@ check_syntax(struct ged *gedp, struct bu_list *hp, char *comb_name, struct direc
 		arg_count++;
 		if (!dp && BU_STR_EQUAL(comb_name, tok->tp->tr_l.tl_name))
 		    circular_ref++;
-		else if (db_lookup(gedp->ged_wdbp->dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL)
+		else if (db_lookup(gedp->dbip, tok->tp->tr_l.tl_name, LOOKUP_QUIET) == RT_DIR_NULL)
 		    bu_vls_printf(gedp->ged_result_str, "WARNING: '%s' does not currently exist\n", tok->tp->tr_l.tl_name);
 		break;
 	}
@@ -454,7 +454,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3) {
@@ -493,7 +493,7 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	/*
 	 * Set/Reset the REGION flag of an existing combination
 	 */
-	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+	GED_DB_LOOKUP(gedp, dp, comb_name, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
 
 	if (!(dp->d_flags & RT_DIR_COMB)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s is not a combination\n", comb_name);
@@ -507,10 +507,11 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	if (region_flag) {
 	    if (!comb->region_flag) {
 		/* assign values from the defaults */
-		comb->region_id = gedp->ged_wdbp->wdb_item_default++;
-		comb->aircode = gedp->ged_wdbp->wdb_air_default;
-		comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
-		comb->los = gedp->ged_wdbp->wdb_los_default;
+		struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+		comb->region_id = wdbp->wdb_item_default++;
+		comb->aircode = wdbp->wdb_air_default;
+		comb->GIFTmater = wdbp->wdb_mat_default;
+		comb->los = wdbp->wdb_los_default;
 	    }
 	    comb->region_flag = 1;
 	} else
@@ -624,11 +625,12 @@ ged_comb_std_core(struct ged *gedp, int argc, const char *argv[])
 	    comb->region_flag = region_flag;
 
 	if (comb->region_flag) {
+	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	    comb->region_flag = 1;
-	    comb->region_id = gedp->ged_wdbp->wdb_item_default++;
-	    comb->aircode = gedp->ged_wdbp->wdb_air_default;
-	    comb->los = gedp->ged_wdbp->wdb_los_default;
-	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
+	    comb->region_id = wdbp->wdb_item_default++;
+	    comb->aircode = wdbp->wdb_air_default;
+	    comb->los = wdbp->wdb_los_default;
+	    comb->GIFTmater = wdbp->wdb_mat_default;
 
 	    bu_vls_printf(gedp->ged_result_str, "Creating region with attrs: region_id=%ld, ", comb->region_id);
 	    if (comb->aircode)

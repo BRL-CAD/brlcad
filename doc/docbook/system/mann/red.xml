@@ -38,7 +38,7 @@
   <example><title>Create a file describing a specified combination and edit the combination.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>red group2</userinput>
+      <prompt>mged&gt; </prompt><userinput>red group2</userinput>
     </para>
     <para>Edits the combination <emphasis>group2</emphasis> with the users editor of choice.
 

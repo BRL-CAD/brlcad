@@ -37,9 +37,9 @@ extern "C" {
 extern "C" {
 #include "bu/malloc.h"
 #include "bu/vls.h"
-#include "../ged_private.h"
 #include "./ged_analyze.h"
 }
+#include "../ged_private.h"
 
 void get_dashes(field_t *f, const int ndashes)
 {
@@ -66,8 +66,8 @@ print_edges_table(struct ged *gedp, table_t *table)
     int i;
     int tcol, nd, nrow, nrows;
     int maxwidth[] = {0, 0, 0,
-		      0, 0, 0,
-		      0, 0};
+	0, 0, 0,
+	0, 0};
     int indent = 2;
     field_t dashes;
     char EDGE[] = {"EDGE"};
@@ -267,8 +267,8 @@ print_faces_table(struct ged *gedp, table_t *table)
     /* track actual table column widths */
     /* this table has 8 columns */
     int maxwidth[8] = {0, 0, 0,
-		       0, 0, 0,
-		       0, 0};
+	0, 0, 0,
+	0, 0};
     int i, j;
     int c0, h1a, h1b, h1c;
     int h2a, h2b, h2c;
@@ -414,14 +414,21 @@ print_faces_table(struct ged *gedp, table_t *table)
 	    bu_vls_printf(gedp->ged_result_str, "***NOT A PLANE ***");
 
 	bu_vls_printf(gedp->ged_result_str, "|");
-	for (j = 0; j < table->rows[i].nfields; ++j) {
+	for (j = 0; j < table->rows[i].nfields - 1; ++j) {
+
+	    // For Coverity - check to ensure we never overrun maxwidth
+	    if (j == 8) {
+		bu_log("util.cpp:%d - trying to print more than 8 columns (?)\n", __LINE__);
+		break;
+	    }
 	    assert(table->rows[i].fields[j].buf);
-	    bu_vls_printf(gedp->ged_result_str, " %*.*s",
-			  maxwidth[j], maxwidth[j],
-			  table->rows[i].fields[j].buf);
+
+	    bu_vls_printf(gedp->ged_result_str, " %*.*s", maxwidth[j], maxwidth[j], table->rows[i].fields[j].buf);
+
 	    /* do we need a separator? */
 	    if (j == 0 || j == 2 || j == 6 || j == 7)
 		bu_vls_printf(gedp->ged_result_str, " |");
+
 	}
 	/* close the row */
 	bu_vls_printf(gedp->ged_result_str, "\n");
@@ -453,11 +460,11 @@ print_faces_table(struct ged *gedp, table_t *table)
 
 void
 print_volume_table(
-	struct ged *gedp,
-	const fastf_t tot_vol,
-	const fastf_t tot_area,
-	const fastf_t tot_gallons
-	)
+    struct ged *gedp,
+    const fastf_t tot_vol,
+    const fastf_t tot_area,
+    const fastf_t tot_gallons
+		  )
 {
 
 /* table format
@@ -625,9 +632,9 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
     row->fields[4].nchars = sprintf(row->fields[4].buf, "%10.8f", face->plane_eqn[Y]);
     row->fields[5].nchars = sprintf(row->fields[5].buf, "%10.8f", face->plane_eqn[Z]);
     row->fields[6].nchars = sprintf(row->fields[6].buf, "%10.8f",
-				    face->plane_eqn[W]*gedp->ged_wdbp->dbip->dbi_base2local);
+				    face->plane_eqn[W]*gedp->dbip->dbi_base2local);
     row->fields[7].nchars = sprintf(row->fields[7].buf, "%10.8f",
-				    face->area*gedp->ged_wdbp->dbip->dbi_base2local*gedp->ged_wdbp->dbip->dbi_base2local);
+				    face->area*gedp->dbip->dbi_base2local*gedp->dbip->dbi_base2local);
 }
 
 /**
@@ -661,21 +668,21 @@ analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
     if (OBJ[ip->idb_minor_type].ft_centroid) {
 	OBJ[ip->idb_minor_type].ft_centroid(&centroid, ip);
 	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
-		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
-		      centroid[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
-		      centroid[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
+		      centroid[X] * gedp->dbip->dbi_base2local,
+		      centroid[Y] * gedp->dbip->dbi_base2local,
+		      centroid[Z] * gedp->dbip->dbi_base2local);
     }
 
     print_volume_table(gedp,
 		       vol
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local,
 		       area
-		       * gedp->ged_wdbp->dbip->dbi_base2local
-		       * gedp->ged_wdbp->dbip->dbi_base2local,
+		      * gedp->dbip->dbi_base2local
+		      * gedp->dbip->dbi_base2local,
 		       vol/GALLONS_TO_MM3
-	);
+		      );
 }
 
 

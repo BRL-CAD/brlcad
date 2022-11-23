@@ -39,7 +39,7 @@ analyze_gen_worker(int cpu, void *ptr)
 {
     struct application ap;
     struct rt_gen_worker_vars *state = &(((struct rt_gen_worker_vars *)ptr)[cpu]);
-    int start_ind, end_ind, i;
+    size_t start_ind, end_ind, i;
     int state_jmp = 0;
 
     RT_APPLICATION_INIT(&ap);
@@ -129,7 +129,7 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
     bu_free(ydata->n_vec, "y vec inputs");
     bu_free(ydata->n_p, "y p inputs");
     if (ret < 0) {
-	ret = 0;
+	count = ret;
 	goto memfree;
     }
 
@@ -148,7 +148,7 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
     bu_free(zdata->n_vec, "x vec inputs");
     bu_free(zdata->n_p, "x p inputs");
     if (ret < 0) {
-	ret = 0;
+	count = ret;
 	goto memfree;
     }
 
@@ -619,13 +619,13 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
 	    /* standard */
 	    state[i].rtip = rtip;
 	    state[i].resp = &resp[i];
-	    rt_init_resource(state[i].resp, i, rtip);
+	    rt_init_resource(state[i].resp, (int)i, rtip);
 	}
 	if (rt_gettree(rtip, obj) < 0) {
 	    ret = -1;
 	    goto memfree;
 	}
-	rt_prep_parallel(rtip, ncpus);
+	rt_prep_parallel(rtip, (int)ncpus);
     }
 
     for (i = 0; i < ncpus+1; i++) {
@@ -656,7 +656,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
 	}
     }
     if (filter) {
-	analyze_seg_filter(&temp_results, &mp_ray, &mp_flag, rtip, resp, 0.5, ncpus);
+	analyze_seg_filter(&temp_results, &mp_ray, &mp_flag, rtip, resp, 0.5, (int)ncpus);
     } else {
 	for (j = 0; j < BU_PTBL_LEN(&temp_results); j++) {
 	    struct minimal_partitions *p = (struct minimal_partitions *)BU_PTBL_GET(&temp_results, j);
@@ -671,7 +671,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
 	}
     }
 
-    ret = BU_PTBL_LEN(results);
+    ret = (int)BU_PTBL_LEN(results);
 memfree:
 
     bu_free(ray_results, "free state");
@@ -683,12 +683,12 @@ memfree:
     return ret;
 }
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

@@ -30,6 +30,32 @@
 
 extern void *ged_cmds;
 
+#define GED_CMD_REGISTER(command, callback, options) \
+    extern "C" { \
+	struct ged_cmd_impl CPP_GLUE(command, _cmd_impl) = {CPP_STR(command), callback, options}; \
+	const struct ged_cmd CPP_GLUE(command, _cmd) = {&CPP_GLUE(command, _cmd_impl)}; \
+    }
+
+#define GED_CMD_HELPER1(x, y) x##y
+#define GED_CMD(x) \
+	int GED_CMD_HELPER1(ged_,x)(struct ged *gedp, int argc, const char *argv[]) \
+	{ \
+	    const char *fname = #x ; \
+	    const char *argv0 = argv[0] ; \
+	    int vret = ged_cmd_valid(argv[0], fname); \
+	    if (vret) { \
+		argv[0] = fname; \
+	    }\
+	    int ret = ged_exec(gedp, argc, argv); \
+	    if (vret) { \
+		ret |= GED_UNKNOWN; \
+	    } \
+	    argv[0] = argv0; \
+	    return ret; \
+	} \
+
+
+
 /* Default command behaviors when it comes to impacts on calling applications.
  * Need callback hooks in gedp so the application can tell the command what it
  * needs in these scenarios.  For some it might be possible to have default

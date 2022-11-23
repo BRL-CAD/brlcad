@@ -1,0 +1,67 @@
+https://www.zlib.net/
+
+Acknowledgments:
+
+  The deflate format used by zlib was defined by Phil Katz.  The deflate and
+  zlib specifications were written by L.  Peter Deutsch.  Thanks to all the
+  people who reported problems and suggested various improvements in zlib; they
+  are too numerous to cite here.
+
+Copyright notice:
+
+ (C) 1995-2022 Jean-loup Gailly and Mark Adler
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  Jean-loup Gailly        Mark Adler
+  jloup@gzip.org          madler@alumni.caltech.edu
+
+If you use the zlib library in a product, we would appreciate *not* receiving
+lengthy legal documents to sign.  The sources are provided for free but without
+warranty of any kind.  The library has been entirely written by Jean-loup
+Gailly and Mark Adler; it does not include third-party code.
+
+If you redistribute modified sources, we would appreciate that you include in
+the file ChangeLog history information documenting your changes.  Please read
+the FAQ for more information on the distribution of modified source versions.
+
+
+FAQ entry #24 from https://zlib.net/zlib_faq.html, 2018-09-26:
+
+The license says that altered source versions must be "plainly marked". So what
+exactly do I need to do to meet that requirement?
+
+You need to change the ZLIB_VERSION and ZLIB_VERNUM #defines in zlib.h. In
+particular, the final version number needs to be changed to f, and an
+identification string should be appended to ZLIB_VERSION. Version numbers
+x.x.x.f are reserved for modifications to zlib by others than the zlib
+maintainers. For example, if the version of the base zlib you are altering is
+1.2.3.4, then in zlib.h you should change ZLIB_VERNUM to 0x123f, and
+ZLIB_VERSION to something like 1.2.3.f-zachary-mods-v3. You can also update the
+version strings in deflate.c and inftrees.c.
+
+For altered source distributions, you should also note the origin and nature of
+the changes in zlib.h, as well as in ChangeLog and README, along with the dates
+of the alterations. The origin should include at least your name (or your
+company's name), and an email address to contact for help or issues with the
+library.
+
+Note that distributing a compiled zlib library along with zlib.h and zconf.h is
+also a source distribution, and so you should change ZLIB_VERSION and
+ZLIB_VERNUM and note the origin and nature of the changes in zlib.h as you
+would for a full source distribution.
+

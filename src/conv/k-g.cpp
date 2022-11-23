@@ -121,7 +121,6 @@ process_parts(std::ifstream &infile, int offset, struct dyna_world *world)
     while (std::getline(infile, line) && !end_part) {
 	if (line.c_str()[0] == '$') continue;
 	if (line_cnt == 2 || line.c_str()[0] == '*') {
-	    end_part = 1;
 	    break;
 	}
 	if (line_cnt == 0) {
@@ -180,7 +179,6 @@ process_nodes(std::ifstream &infile, int offset, struct dyna_world *world)
     while (std::getline(infile, line) && !end_nodes) {
 	if (line.c_str()[0] == '$') continue;
 	if (line.c_str()[0] == '*') {
-	    end_nodes = 1;
 	    break;
 	}
 	int i = 0;
@@ -236,14 +234,12 @@ void
 process_element_solid(std::ifstream &infile, int offset, struct dyna_world *world)
 {
     std::string line;
-    int end_es = 0;
     infile.clear();
     infile.seekg(offset);
     char *endptr;
-    while (std::getline(infile, line) && !end_es) {
+    while (std::getline(infile, line)) {
 	if (line.c_str()[0] == '$') continue;
 	if (line.c_str()[0] == '*') {
-	    end_es = 1;
 	    break;
 	}
 	int i = 0;
@@ -327,13 +323,11 @@ void
 process_element_shell(std::ifstream &infile, int offset, struct dyna_world *world)
 {
     std::string line;
-    int end_es = 0;
     infile.clear();
     infile.seekg(offset);
-    while (std::getline(infile, line) && !end_es) {
+    while (std::getline(infile, line)) {
 	if (line.c_str()[0] == '$') continue;
 	if (line.c_str()[0] == '*') {
-	    end_es = 1;
 	    break;
 	}
 	int i = 0;
@@ -815,7 +809,7 @@ main(int argc, char **argv)
 
     mk_comb(fd_out, "all", &all_head.l, 0, (char *)NULL, (char *)NULL, NULL, 0, 0, 0, 0, 0, 0, 0);
 
-    wdb_close(fd_out);
+    db_close(fd_out->dbip);
     rt_clean_resource_complete(NULL, &rt_uniresource);
 
     for (size_t i = 0; i < BU_PTBL_LEN(world->nodes); i++) {
@@ -841,12 +835,12 @@ main(int argc, char **argv)
 }
 
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

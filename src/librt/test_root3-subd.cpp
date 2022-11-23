@@ -31,7 +31,7 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "bu/app.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "opennurbs.h"
 
 
@@ -590,7 +590,7 @@ main(int argc, char *argv[])
     bu_vls_init(&bname);
     bu_vls_sprintf(&bname, "%s_subd", argv[2]);
     mk_bot(wdbp, bu_vls_addr(&bname), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, points_inf.Count(), mesh->face_pts.size(), vertices, faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
-    wdb_close(wdbp);
+    db_close(dbip);
     bu_vls_free(&bname);
 
     bu_free(vertices, "free subdivision BoT vertices");

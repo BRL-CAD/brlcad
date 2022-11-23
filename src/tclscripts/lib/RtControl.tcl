@@ -276,6 +276,16 @@
     bind $itk_component(raytraceB) <Enter> [::itcl::code $this enterRaytraceCB]
     bind $itk_component(raytraceB) <Leave> [::itcl::code $this leaveCB]
 
+	itk_component add artB {
+	::ttk::button $itk_interior.artB \
+	    -text "Art" \
+	    -width 7 \
+	    -command [::itcl::code $this raytrace]
+    } {}
+    bind $itk_component(artB) <Enter> [::itcl::code $this enterRaytraceCB]
+    bind $itk_component(artB) <Leave> [::itcl::code $this leaveCB]
+
+
     itk_component add abortB {
 	::ttk::button $itk_interior.abortB \
 	    -text "Abort" \

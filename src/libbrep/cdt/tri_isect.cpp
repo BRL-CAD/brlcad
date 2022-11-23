@@ -117,26 +117,26 @@ class tri_isect_t {
 void
 tri_isect_t::plot(const char *fname)
 {
-    FILE *plot = fopen(fname, "w");
+    FILE *plotfile = fopen(fname, "w");
     double fpnt_r = -1.0;
     double pnt_r = -1.0;
-    pl_color(plot, 0, 0, 255);
-    fmesh1->plot_tri(t1, NULL, plot, 0, 0, 0);
+    pl_color(plotfile, 0, 0, 255);
+    fmesh1->plot_tri(t1, NULL, plotfile, 0, 0, 0);
     pnt_r = fmesh1->tri_pnt_r(t1.ind);
     fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
-    pl_color(plot, 255, 0, 0);
-    fmesh2->plot_tri(t2, NULL, plot, 0, 0, 0);
+    pl_color(plotfile, 255, 0, 0);
+    fmesh2->plot_tri(t2, NULL, plotfile, 0, 0, 0);
     pnt_r = fmesh2->tri_pnt_r(t2.ind);
     fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
-    pl_color(plot, 255, 255, 255);
-    plot_pnt_3d(plot, &ipt_1, fpnt_r, 0);
-    plot_pnt_3d(plot, &ipt_2, fpnt_r, 0);
+    pl_color(plotfile, 255, 255, 255);
+    plot_pnt_3d(plotfile, &ipt_1, fpnt_r, 0);
+    plot_pnt_3d(plotfile, &ipt_2, fpnt_r, 0);
     point_t isectpt1, isectpt2;
     VSET(isectpt1, ipt_1.x, ipt_1.y, ipt_1.z);
     VSET(isectpt2, ipt_2.x, ipt_2.y, ipt_2.z);
-    pdv_3move(plot, isectpt1);
-    pdv_3cont(plot, isectpt2);
-    fclose(plot);
+    pdv_3move(plotfile, isectpt1);
+    pdv_3cont(plotfile, isectpt2);
+    fclose(plotfile);
 }
 
 bool

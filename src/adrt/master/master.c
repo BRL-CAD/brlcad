@@ -231,6 +231,10 @@ master_result(tienet_buffer_t *result)
 		TIENET_BUFFER_INIT(selection_buf);
 		TIENET_BUFFER_SIZE(selection_buf, result->ind);
 
+		/* Make sure we have somewhere to copy data to */
+		if (!selection_buf.data)
+		    return;
+
 		/* Send this data to the slaves as ADRT_WORK_SELECT for highlighting hit components */
 		selection_buf.ind = 0;
 
@@ -319,13 +323,14 @@ master_result(tienet_buffer_t *result)
 int
 master_networking(void *ptr)
 {
-    master_socket_t *sock, *tmp;
-    struct sockaddr_in master_addr, observer_addr;
+    master_socket_t *sock = NULL, *tmp = NULL;
+    struct sockaddr_in master_addr = {0};
+    struct sockaddr_in observer_addr = {0};
     fd_set readfds;
-    int port, master_socket, highest_fd, new_socket, error;
-    unsigned int addrlen;
-    uint8_t op;
-    uint16_t endian;
+    int port=0, master_socket=0, highest_fd=0, new_socket=0, error=0;
+    unsigned int addrlen = 0;
+    uint8_t op = 0;
+    uint16_t endian = 0;
 
 
     port = *(int *) ptr;
@@ -438,11 +443,13 @@ master_networking(void *ptr)
 		tmp = sock;
 		if (sock->prev)
 		    sock->prev->next = sock->next;
-		/* master is always last, no need to check for sock->next next */
-		sock->next->prev = sock->prev;
+		if (sock->next)
+		    sock->next->prev = sock->prev;
 		if (sock == master.socklist)
 		    master.socklist = master.socklist->next;
 		close(sock->num);
+		if (!sock->next)
+		    break;
 		sock = sock->next;
 		bu_free(tmp, "tmp socket");
 		master.active_connections--;
@@ -598,8 +605,10 @@ master_networking(void *ptr)
     }
 
     /* free master.socklist */
-    for (sock = master.socklist->next; sock; sock = sock->next)
-	bu_free(sock->prev, "master socket list");
+    if (master.socklist) {
+	for (sock = master.socklist->next; sock; sock = sock->next)
+	    bu_free(sock->prev, "master socket list");
+    }
 
     return 0;
 }
@@ -716,8 +725,6 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
     }
-    argc -= bu_optind;
-    argv += bu_optind;
 
     master_init(port, obs_port, list, exec, comp_host, verbose);
 

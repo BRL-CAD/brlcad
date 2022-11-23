@@ -51,7 +51,7 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3) {
@@ -63,7 +63,7 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "arced: bad path specification '%s'", argv[1]);
 	return BRLCAD_ERROR;
     }
-    anp = db_parse_1anim(gedp->ged_wdbp->dbip, argc, (const char **)argv);
+    anp = db_parse_1anim(gedp->dbip, argc, (const char **)argv);
     if (!anp) {
 	bu_vls_printf(gedp->ged_result_str, "arced: unable to parse command");
 	return BRLCAD_ERROR;
@@ -86,7 +86,7 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
     /* GED_DB_GET_INTERNAL(gedp, &intern, (fastf_t *)NULL, &rt_uniresource, BRLCAD_ERROR); */
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	db_free_1anim(anp);
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
@@ -119,7 +119,7 @@ ged_arced_core(struct ged *gedp, int argc, const char *argv[])
 	tp->tr_l.tl_mat = (matp_t)NULL;
     }
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	goto fail;
     }

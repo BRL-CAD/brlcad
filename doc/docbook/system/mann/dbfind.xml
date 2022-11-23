@@ -37,7 +37,7 @@ as a member.
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>dbfind shapea</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>dbfind shapea</userinput></term>
 	   <listitem>
 	     <para>Lists all combinations that refer to <emphasis>shapea</emphasis>.
 	      </para>

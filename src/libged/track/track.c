@@ -66,7 +66,7 @@ ged_track_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 15) {
@@ -74,7 +74,9 @@ ged_track_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    return ged_track2(gedp->ged_result_str, gedp->ged_wdbp, argv);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    int ret = ged_track2(gedp->ged_result_str, wdbp, argv);
+    return ret;
 }
 
 #ifdef GED_PLUGIN

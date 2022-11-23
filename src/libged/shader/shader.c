@@ -43,7 +43,7 @@ ged_shader_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_NOISY, BRLCAD_ERROR);
@@ -58,7 +58,7 @@ ged_shader_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&comb->shader));
 	rt_db_free_internal(&intern);
     } else {
-	if (gedp->ged_wdbp->dbip->dbi_read_only) {
+	if (gedp->dbip->dbi_read_only) {
 	    bu_vls_printf(gedp->ged_result_str, "Sorry, this database is READ-ONLY");
 	    rt_db_free_internal(&intern);
 

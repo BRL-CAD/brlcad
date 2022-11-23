@@ -43,7 +43,7 @@ combination specified that corresponds to the member specified.
 </title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>putmat group1/regiona I</userinput>
+      <prompt>mged&gt; </prompt><userinput>putmat group1/regiona I</userinput>
     </para>
     <para>Sets the transformation matrix for <emphasis>regiona</emphasis> in <emphasis>group1</emphasis> to the 	identity matrix.
     </para>

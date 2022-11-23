@@ -93,6 +93,14 @@ extern struct fb ogl_interface;
 static int ogl_nwindows = 0; 	/* number of open windows */
 static XColor color_cell[256];		/* used to set colormap */
 
+#if 0
+static void gl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[0], m[4], m[8], m[12]);
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[1], m[5], m[9], m[13]);
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[2], m[6], m[10], m[14]);
+    bu_vls_printf(tmp_vls, "   %g %g %g %g\n", m[3], m[7], m[11], m[15]);
+}
+#endif
 
 /*
  * Per window state information, overflow area.
@@ -351,15 +359,15 @@ ogl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, in
 
 	    /* Blank out area right of image */
 	    if (clp->xscrmax >= ifp->i->if_width) glRecti(ifp->i->if_width - CLIP_XTRA,
-						       clp->yscrmin - CLIP_XTRA,
-						       clp->xscrmax + CLIP_XTRA,
-						       clp->yscrmax + CLIP_XTRA);
+							  clp->yscrmin - CLIP_XTRA,
+							  clp->xscrmax + CLIP_XTRA,
+							  clp->yscrmax + CLIP_XTRA);
 
 	    /* Blank out area above image */
 	    if (clp->yscrmax >= ifp->i->if_height) glRecti(clp->xscrmin - CLIP_XTRA,
-							ifp->i->if_height- CLIP_XTRA,
-							clp->xscrmax + CLIP_XTRA,
-							clp->yscrmax + CLIP_XTRA);
+							   ifp->i->if_height- CLIP_XTRA,
+							   clp->xscrmax + CLIP_XTRA,
+							   clp->yscrmax + CLIP_XTRA);
 
 	} else if (OGL(ifp)->front_flag) {
 	    /* in COPY mode, always draw full sized image into backbuffer.
@@ -390,7 +398,7 @@ ogl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, in
 
 	/* Perform software color mapping into temp scanline */
 	scanline = (struct fb_pixel *)calloc(ifp->i->if_width, sizeof(struct fb_pixel));
-	if (scanline == NULL) {
+	if (!scanline) {
 	    fb_log("ogl_getmem: scanline memory malloc failed\n");
 	    return;
 	}
@@ -496,7 +504,7 @@ ogl_getmem(struct fb *ifp)
 	size = pixsize + sizeof(struct fb_cmap);
 
 	sp = (char *)calloc(1, size);
-	if (sp == NULL) {
+	if (!sp) {
 	    fb_log("ogl_getmem: frame buffer memory malloc failed\n");
 	    return -1;
 	}
@@ -518,7 +526,8 @@ ogl_getmem(struct fb *ifp)
 	} else if (shm_result == 1) {
 	    ifp->i->if_mode |= MODE_1MALLOC;
 	    fb_log("ogl_getmem:  Unable to attach to shared memory, using private\n");
-	    if ((sp = (char *)calloc(1, size)) == NULL) {
+	    sp = (char *)calloc(1, size);
+	    if (!sp) {
 		fb_log("ogl_getmem:  malloc failure\n");
 		return -1;
 	    }
@@ -547,7 +556,8 @@ ogl_zapmem(void)
 
     errno = 0;
 
-    if ((shmid = shmget(SHMEM_KEY, 0, 0)) < 0) {
+    shmid = shmget(SHMEM_KEY, 0, 0);
+    if (shmid < 0) {
 	if (errno != ENOENT) {
 	    fb_log("ogl_zapmem shmget failed, errno=%d\n", errno);
 	    perror("shmget");
@@ -836,9 +846,8 @@ ogl_do_event(struct fb *ifp)
 				    break;
 				}
 
-				oglp = (struct fb_pixel *)&ifp->i->if_mem[
-				    (y*WIN(ifp)->mi_pixwidth)*
-				    sizeof(struct fb_pixel) ];
+				size_t memidx = (y * WIN(ifp)->mi_pixwidth) * sizeof(struct fb_pixel);
+				oglp = (struct fb_pixel *)&ifp->i->if_mem[memidx];
 
 				fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
 				       x, y, (int)oglp[x].red, (int)oglp[x].green, (int)oglp[x].blue);
@@ -1034,7 +1043,7 @@ static int
 fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 {
     static char title[128] = {0};
-    int mode, i, direct;
+    int mode, i;
     long valuemask;
     XSetWindowAttributes swa;
 
@@ -1049,7 +1058,7 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 
     if (file != NULL) {
 	const char *cp;
-	char modebuf[80];
+	char modebuf[80] = {0};
 	char *mp;
 	int alpha;
 	struct modeflags *mfp;
@@ -1103,11 +1112,15 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
      * addressed by WIN(ifp)->mi_xxx and OGL(ifp)->xxx
      */
 
-    if ((WINL(ifp) = (char *)calloc(1, sizeof(struct wininfo))) == NULL) {
+    struct wininfo *winfo = (struct wininfo *)calloc(1, sizeof(struct wininfo));
+    WINL(ifp) = (char *)winfo;
+    if (!WINL(ifp)) {
 	fb_log("fb_ogl_open:  wininfo malloc failed\n");
 	return -1;
     }
-    if ((OGLL(ifp) = (char *)calloc(1, sizeof(struct oglinfo))) == NULL) {
+    struct oglinfo *oinfo = (struct oglinfo *)calloc(1, sizeof(struct oglinfo));
+    OGLL(ifp) = (char *)oinfo;
+    if (!OGL(ifp)) {
 	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return -1;
     }
@@ -1153,7 +1166,8 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 
     /* Open an X connection to the display.  Sending NULL to XOpenDisplay
        tells it to use the DISPLAY environment variable. */
-    if ((OGL(ifp)->dispp = XOpenDisplay(NULL)) == NULL) {
+    OGL(ifp)->dispp = XOpenDisplay(NULL);
+    if (!OGL(ifp)->dispp) {
 	fb_log("fb_ogl_open: Failed to open display.  Check DISPLAY environment variable.\n");
 	return -1;
     }
@@ -1162,21 +1176,21 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 	printf("Connection opened to X display on fd %d.\n", ConnectionNumber(OGL(ifp)->dispp));
 
     /* Choose an appropriate visual. */
-    if ((OGL(ifp)->vip = fb_ogl_choose_visual(ifp)) == NULL) {
+    OGL(ifp)->vip = fb_ogl_choose_visual(ifp);
+    if (!OGL(ifp)->vip) {
 	fb_log("fb_ogl_open: Couldn't find an appropriate visual.  Exiting.\n");
 	return -1;
     }
 
     /* Open an OpenGL context with this visual*/
     OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp, OGL(ifp)->vip, 0, GL_TRUE /* direct context */);
-    if (OGL(ifp)->glxc == NULL) {
+    if (!OGL(ifp)->glxc) {
 	fb_log("ERROR: Couldn't create an OpenGL context!\n");
 	return -1;
     }
 
-    direct = glXIsDirect(OGL(ifp)->dispp, OGL(ifp)->glxc);
     if (FB_DEBUG)
-	printf("Framebuffer drawing context is %s.\n", direct ? "direct" : "indirect");
+	printf("Framebuffer drawing context is %s.\n", glXIsDirect(OGL(ifp)->dispp, OGL(ifp)->glxc) ? "direct" : "indirect");
 
     /* Create a colormap for this visual */
     WIN(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
@@ -1305,11 +1319,15 @@ open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
      * addressed by WIN(ifp)->mi_xxx and OGL(ifp)->xxx
      */
 
-    if ((WINL(ifp) = (char *)calloc(1, sizeof(struct wininfo))) == NULL) {
+    struct wininfo *winfo = (struct wininfo *)calloc(1, sizeof(struct wininfo));
+    WINL(ifp) = (char *)winfo;
+    if (!WINL(ifp)) {
 	fb_log("fb_ogl_open:  wininfo malloc failed\n");
 	return -1;
     }
-    if ((OGLL(ifp) = (char *)calloc(1, sizeof(struct oglinfo))) == NULL) {
+    struct oglinfo *oinfo = (struct oglinfo *)calloc(1, sizeof(struct oglinfo));
+    OGLL(ifp) = (char *)oinfo;
+    if (!OGL(ifp)) {
 	fb_log("fb_ogl_open:  oglinfo malloc failed\n");
 	return -1;
     }
@@ -1402,7 +1420,7 @@ ogl_close_existing(struct fb *ifp)
     if (OGL(ifp)->cursor)
 	XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
 
-    if (WINL(ifp) != NULL) {
+    if (WINL(ifp)) {
 
 	/* free up memory associated with image */
 	if (WIN(ifp)->mi_shmid != -1) {
@@ -1425,7 +1443,7 @@ ogl_close_existing(struct fb *ifp)
 	WINL(ifp) = NULL;
     }
 
-    if (OGLL(ifp) != NULL) {
+    if (OGL(ifp)) {
 	(void)free((char *)OGLL(ifp));
 	OGLL(ifp) = NULL;
     }
@@ -2267,6 +2285,18 @@ ogl_refresh(struct fb *ifp, int x, int y, int w, int h)
 	y -= h;
     }
 
+#if 0
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    GLfloat mvmat[16], pmat[16];
+    glGetFloatv(GL_MODELVIEW_MATRIX, mvmat);
+    bu_vls_printf(&msg, "   MODELVIEW:\n");
+    gl_printglmat(&msg, (GLfloat *)mvmat);
+    glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+    bu_vls_printf(&msg, "   PROJECTION:\n");
+    gl_printglmat(&msg, (GLfloat *)pmat);
+    bu_log("ogl_refresh: %s\n", bu_vls_cstr(&msg));
+    bu_vls_trunc(&msg, 0);
+#endif
 
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
@@ -2289,6 +2319,18 @@ ogl_refresh(struct fb *ifp, int x, int y, int w, int h)
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
     glMatrixMode(mm);
+
+#if 0
+    glGetFloatv(GL_MODELVIEW_MATRIX, mvmat);
+    bu_vls_printf(&msg, "   MODELVIEW:\n");
+    gl_printglmat(&msg, (GLfloat *)mvmat);
+
+    glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+    bu_vls_printf(&msg, "   PROJECTION:\n");
+    gl_printglmat(&msg, (GLfloat *)pmat);
+
+    bu_log("ogl_refresh after: %s\n", bu_vls_cstr(&msg));
+#endif
 
     if (!OGL(ifp)->use_ext_ctrl) {
 	glFlush();
@@ -2348,6 +2390,10 @@ struct fb_impl ogl_interface_impl =  {
     0L,			/* page_pixels */
     0,			/* debug */
     50000,		/* refresh rate */
+    NULL,
+    NULL,
+    0,
+    NULL,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

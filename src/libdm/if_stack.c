@@ -63,7 +63,8 @@ stk_open(struct fb *ifp, const char *file, int width, int height)
 	return -1;
     }
 
-    if ((SIL(ifp) = (char *)calloc(1, sizeof(struct stkinfo))) == NULL) {
+    size_t stksize = sizeof(struct stkinfo);
+    if ((SIL(ifp) = (char *)calloc(1, stksize)) == NULL) {
 	fb_log("stack_dopen:  stkinfo malloc failed\n");
 	return -1;
     }
@@ -483,6 +484,10 @@ struct fb_impl stk_interface_impl =  {
     0L,			/* page_pixels */
     0,			/* debug */
     0,			/* refresh rate */
+    NULL,
+    NULL,
+    0,
+    NULL,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

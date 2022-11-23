@@ -60,6 +60,7 @@ struct rt_db_internal {
 	(_p)->idb_ptr = ((void *)0); \
 	bu_avs_init_empty(&(_p)->idb_avs); \
     }
+#define RT_DB_INTERNAL_INIT_ZERO {RT_DB_INTERNAL_MAGIC, -1, -1, NULL, NULL, BU_AVS_INIT_ZERO}
 #define RT_CK_DB_INTERNAL(_p) BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
 /**

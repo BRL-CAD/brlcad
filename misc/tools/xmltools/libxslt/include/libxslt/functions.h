@@ -26,11 +26,11 @@ extern "C" {
  */
 #define XSLT_REGISTER_FUNCTION_LOOKUP(ctxt)			\
     xmlXPathRegisterFuncLookup((ctxt)->xpathCtxt,		\
-	(xmlXPathFuncLookupFunc) xsltXPathFunctionLookup,	\
+	xsltXPathFunctionLookup,				\
 	(void *)(ctxt->xpathCtxt));
 
 XSLTPUBFUN xmlXPathFunction XSLTCALL
-	xsltXPathFunctionLookup		(xmlXPathContextPtr ctxt,
+	xsltXPathFunctionLookup		(void *vctxt,
 					 const xmlChar *name,
 					 const xmlChar *ns_uri);
 
@@ -38,28 +38,28 @@ XSLTPUBFUN xmlXPathFunction XSLTCALL
  * Interfaces for the functions implementations.
  */
 
-XSLTPUBFUN void XSLTCALL	
+XSLTPUBFUN void XSLTCALL
 	xsltDocumentFunction		(xmlXPathParserContextPtr ctxt,
 					 int nargs);
-XSLTPUBFUN void XSLTCALL	
+XSLTPUBFUN void XSLTCALL
 	xsltKeyFunction			(xmlXPathParserContextPtr ctxt,
 					 int nargs);
-XSLTPUBFUN void XSLTCALL	
+XSLTPUBFUN void XSLTCALL
 	xsltUnparsedEntityURIFunction	(xmlXPathParserContextPtr ctxt,
 					 int nargs);
-XSLTPUBFUN void XSLTCALL	
+XSLTPUBFUN void XSLTCALL
 	xsltFormatNumberFunction	(xmlXPathParserContextPtr ctxt,
 					 int nargs);
-XSLTPUBFUN void XSLTCALL	
+XSLTPUBFUN void XSLTCALL
 	xsltGenerateIdFunction		(xmlXPathParserContextPtr ctxt,
 					 int nargs);
-XSLTPUBFUN void XSLTCALL	
+XSLTPUBFUN void XSLTCALL
 	xsltSystemPropertyFunction	(xmlXPathParserContextPtr ctxt,
 					 int nargs);
-XSLTPUBFUN void XSLTCALL	
+XSLTPUBFUN void XSLTCALL
 	xsltElementAvailableFunction	(xmlXPathParserContextPtr ctxt,
 					 int nargs);
-XSLTPUBFUN void XSLTCALL	
+XSLTPUBFUN void XSLTCALL
 	xsltFunctionAvailableFunction	(xmlXPathParserContextPtr ctxt,
 					 int nargs);
 
@@ -67,7 +67,7 @@ XSLTPUBFUN void XSLTCALL
  * And the registration
  */
 
-XSLTPUBFUN void XSLTCALL	
+XSLTPUBFUN void XSLTCALL
 	xsltRegisterAllFunctions	(xmlXPathContextPtr ctxt);
 
 #ifdef __cplusplus

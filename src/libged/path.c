@@ -46,7 +46,7 @@ path_validate_recurse(struct ged *gedp, struct db_full_path *path,
     struct directory *root = DB_FULL_PATH_ROOT_DIR(path);
 
     /* get comb object */
-    if (rt_db_get_internal(&intern, root, gedp->ged_wdbp->dbip,
+    if (rt_db_get_internal(&intern, root, gedp->dbip,
 			   (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
@@ -83,6 +83,10 @@ path_validate_recurse(struct ged *gedp, struct db_full_path *path,
 int
 ged_path_validate(struct ged *gedp, const struct db_full_path *const path)
 {
+    /* If we don't have a path, it's not valid */
+    if (!gedp || !path)
+	return BRLCAD_ERROR;
+
     /* Since this is a db_full_path, we already know that each
      * directory exists at root, and just need to check the order */
     struct directory *root;

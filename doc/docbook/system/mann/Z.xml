@@ -37,7 +37,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>Z</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>Z</userinput></term>
 	  <listitem>
 	    <para>The <emphasis>mged</emphasis> display is clear.
 	    </para>

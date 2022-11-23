@@ -52,7 +52,7 @@
     <example><title>Create a new primitive object by applying the transformation matrices along the path
       to the old primitive.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>copyeval shapeb comb1/comb2/comb3/shapea</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>copyeval shapeb comb1/comb2/comb3/shapea</userinput></para>
       <para>Creates <emphasis>shapeb</emphasis> from <emphasis>shapea</emphasis> by applying the accumulated transformation matrices from the path comb1/comb2/comb3.</para>
     </example>
   </refsection>

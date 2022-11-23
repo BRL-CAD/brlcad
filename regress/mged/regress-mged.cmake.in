@@ -1,7 +1,7 @@
 # Values set at CMake configure time
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
-set(TNAME "@TARGET_NAME@")
+set(TNAME "@TNAME@")
 set(LOGFILE "@LOG_FILE@")
 
 file(WRITE "${LOGFILE}" "Starting mged test run\n")

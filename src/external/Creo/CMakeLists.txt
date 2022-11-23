@@ -1,7 +1,7 @@
 
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # Minimum required version of CMake
-  cmake_minimum_required(VERSION 3.12)
+  cmake_minimum_required(VERSION 3.18)
 
   # Set CMake project name
   project(CREO2BRL)
@@ -38,7 +38,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO_DEFS "-DPRO_MACHINE=36 -DPRO_OS=4 -DPRO_USE_VAR_ARGS -D_USING_V100_SDK71_")
 
   # BRL-CAD definitions
-  set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS -DNMG_DLL_IMPORTS -DBG_DLL_IMPORTS -DBREP_DLL_IMPORTS -DRT_DLL_IMPORTS -DWDB_DLL_IMPORTS -DTIE_DLL_IMPORTS -DDB5_DLL_IMPORTS -DON_DLL_IMPORTS")
+  set(BRLCAD_DEFS "-DHAVE_CONFIG_H -DBRLCAD_DLL -DBRLCADBUILD -DBU_DLL_IMPORTS -DBN_DLL_IMPORTS -DBV_DLL_IMPORTS -DNMG_DLL_IMPORTS -DBG_DLL_IMPORTS -DBREP_DLL_IMPORTS -DRT_DLL_IMPORTS -DWDB_DLL_IMPORTS -DTIE_DLL_IMPORTS -DDB5_DLL_IMPORTS -DOPENNURBS_IMPORTS")
 
   # These settings are global to all the configs.
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CREO_DEFS} ${BRLCAD_DEFS}" CACHE STRING "" FORCE)
@@ -204,6 +204,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     libbn
     libbrep
     libbu
+    libbv
     libnmg
     librt
     libwdb
@@ -341,26 +342,28 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
 else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 
-  include_directories(
+  set(CREO_DIRS
     "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
     ${ZLIB_INCLUDE_DIRS}
     ${REGEX_INCLUDE_DIRS}
     )
+  BRLCAD_INCLUDE_DIRS(CREO_DIRS)
 
   # The build shims aren't so great at mocking the initialization
   # behavior of the real code.
   CHECK_CXX_FLAG("Wno-maybe-uninitialized")
 
   set(creo_brl_srcs ${creo_brl_srcs} shim.cpp)
-  add_definitions(-DTEST_BUILD)
   add_library(creo-brl ${creo_brl_srcs})
-  target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbn libbu)
+  set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS TEST_BUILD BRLCADBUILD HAVE_CONFIG_H)
+  target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbv libbn libbu)
   set_target_properties(creo-brl PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
   if(HIDE_INTERNAL_SYMBOLS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BN_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BV_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "NMG_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BG_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BREP_DLL_IMPORTS")
@@ -368,7 +371,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "WDB_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_IMPORTS")
-    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
+    set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
   endif(HIDE_INTERNAL_SYMBOLS)
 
   # Distcheck file list

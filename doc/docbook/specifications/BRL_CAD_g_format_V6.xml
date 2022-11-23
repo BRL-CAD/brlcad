@@ -1261,7 +1261,7 @@
 	    <listitem>
 	      <para>
 		regionid_colortable = A string that contains a collection of all the information
-		previously found in "struct material_rec ID_MATERIAL" records. Exact encoding yet
+		previously found in "struct material_rec ID_COLORTAB" records. Exact encoding yet
 		to be determined; it's a collection of integer 5-tuples of the form:
 		{low, high, r, g, b}.
 	      </para>

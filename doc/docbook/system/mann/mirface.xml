@@ -43,7 +43,7 @@ along the selected <emphasis>x, y,</emphasis> or <emphasis>z</emphasis> axis.
   <example><title>Modify an ARB shape by mirroring the indicated face along the x, y, or z axis.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>mirface 1234 x</userinput>
+      <prompt>mged&gt; </prompt><userinput>mirface 1234 x</userinput>
     </para>
     <para>Modifies currently edited ARB by moving the face opposite face 1234 such that it is
 the mirror image of face 1234 across the <emphasis>yz</emphasis> plane.

@@ -40,7 +40,7 @@
 #include "bu/debug.h"
 #include "bu/malloc.h"
 #include "bn/mat.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "nmg.h"
 
 /************************************************************************
@@ -400,7 +400,7 @@ nmg_measure_fu_angle(const struct edgeuse *eu, const vect_t xvec, const vect_t y
     if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC) return -M_PI;
     if (nmg_find_eu_leftvec(left, eu) < 0) return -M_PI;
 
-    return bn_angle_measure(left, xvec, yvec);
+    return bg_angle_measure(left, xvec, yvec);
 }
 
 
@@ -633,12 +633,6 @@ nmg_loop_touches_self(const struct loopuse *lu)
  *									*
  ************************************************************************/
 
-/**
- * If shell s2 has an edge that connects the same vertices as eu1 connects,
- * return the matching edgeuse in s2.
- * This routine works properly regardless of whether eu1 is in s2 or not.
- * A convenient wrapper for nmg_findeu().
- */
 struct edgeuse *
 nmg_find_matching_eu_in_s(const struct edgeuse *eu1, const struct shell *s2)
 {
@@ -663,23 +657,6 @@ nmg_find_matching_eu_in_s(const struct edgeuse *eu1, const struct shell *s2)
 }
 
 
-/**
- * Find an edgeuse in a shell between a given pair of vertex structs.
- *
- * If a given shell "s" is specified, then only edgeuses in that shell
- * will be considered, otherwise all edgeuses in the model are fair game.
- *
- * If a particular edgeuse "eup" is specified, then that edgeuse
- * and its mate will not be returned as a match.
- *
- * If "dangling_only" is true, then an edgeuse will be matched only if
- * there are no other edgeuses on the edge, i.e. the radial edgeuse is
- * the same as the mate edgeuse.
- *
- * Returns -
- * edgeuse* Edgeuse which matches the criteria
- * NULL Unable to find matching edgeuse
- */
 struct edgeuse *
 nmg_findeu(const struct vertex *v1, const struct vertex *v2, const struct shell *s, const struct edgeuse *eup, int dangling_only)
 {
@@ -772,10 +749,6 @@ out:
 }
 
 
-/**
- * An analog to nmg_findeu(), only restricted to searching a faceuse,
- * rather than to a whole shell.
- */
 struct edgeuse *
 nmg_find_eu_in_face(const struct vertex *v1, const struct vertex *v2, const struct faceuse *fu, const struct edgeuse *eup, int dangling_only)
 {
@@ -866,20 +839,6 @@ out:
     return (struct edgeuse *)eu;
 }
 
-
-/**
- * Find an edge between a given pair of vertices.
- *
- * If a given shell "s" is specified, then only edges in that shell
- * will be considered, otherwise all edges in the model are fair game.
- *
- * If a particular edge "ep" is specified, then that edge
- * will not be returned as a match.
- *
- * Returns -
- * edgeuse* Edgeuse of an edge which matches the criteria
- * NULL Unable to find matching edge
- */
 struct edgeuse *
 nmg_find_e(const struct vertex *v1, const struct vertex *v2, const struct shell *s, const struct edge *ep)
 {
@@ -946,13 +905,6 @@ out:
 }
 
 
-/**
- * Return a pointer to the edgeuse which is the parent of this vertexuse.
- *
- * A simple helper routine, which replaces the amazingly bad sequence of:
- * nmg_find_eu_with_vu_in_lu(nmg_find_lu_of_vu(vu), vu)
- * that was being used in several places.
- */
 struct edgeuse *
 nmg_find_eu_of_vu(const struct vertexuse *vu)
 {
@@ -965,9 +917,6 @@ nmg_find_eu_of_vu(const struct vertexuse *vu)
 }
 
 
-/**
- * Find an edgeuse starting at a given vertexuse within a loopuse.
- */
 struct edgeuse *
 nmg_find_eu_with_vu_in_lu(const struct loopuse *lu, const struct vertexuse *vu)
 {
@@ -989,10 +938,6 @@ nmg_find_eu_with_vu_in_lu(const struct loopuse *lu, const struct vertexuse *vu)
 }
 
 
-/**
- * Looking radially around an edge, find another edge in the same
- * face as the current edge. (this could be the mate to the current edge)
- */
 const struct edgeuse *
 nmg_faceradial(const struct edgeuse *eu)
 {
@@ -1015,10 +960,6 @@ nmg_faceradial(const struct edgeuse *eu)
 }
 
 
-/**
- * looking radially around an edge, find another edge which is a part
- * of a face in the same shell
- */
 const struct edgeuse *
 nmg_radial_face_edge_in_shell(const struct edgeuse *eu)
 {
@@ -1043,21 +984,6 @@ nmg_radial_face_edge_in_shell(const struct edgeuse *eu)
 }
 
 
-/**
- * Perform a topology search to determine if two faces (specified by
- * their faceuses) share an edge in common.  If so, return an edgeuse
- * in fu1 of that edge.
- *
- * If there are multiple edgeuses in common, ensure that they all refer
- * to the same edge_g_lseg geometry structure.  The intersection of two planes
- * (non-coplanar) must be a single line.
- *
- * Calling this routine when the two faces share face geometry
- * and have more than one edge in common gives
- * a NULL return, as there is no unique answer.
- *
- * NULL is also returned if no common edge could be found.
- */
 const struct edgeuse *
 nmg_find_edge_between_2fu(const struct faceuse *fu1, const struct faceuse *fu2, struct bu_list *vlfree, const struct bn_tol *tol)
 {
@@ -1170,7 +1096,7 @@ nmg_find_e_pt2_handler(uint32_t *lp, void *state, int UNUSED(unused))
     MAT4X3PNT(a2, sp->mat, va->vg_p->coord);
     MAT4X3PNT(b2, sp->mat, vb->vg_p->coord);
 
-    code = bn_dist_pnt2_lseg2(&dist_sq, pca, a2, b2, sp->pt2, sp->tol);
+    code = bg_dist_pnt2_lseg2(&dist_sq, pca, a2, b2, sp->pt2, sp->tol);
 
     if (code == 0) dist_sq = 0;
 
@@ -1181,19 +1107,11 @@ nmg_find_e_pt2_handler(uint32_t *lp, void *state, int UNUSED(unused))
 }
 
 
-/**
- * A geometric search routine to find the edge that is nearest to
- * the given point, when all edges are projected into 2D using
- * the matrix 'mat'.
- * Useful for finding the edge nearest a mouse click, for example.
- */
 struct edge *
 nmg_find_e_nearest_pt2(uint32_t *magic_p, const point_t pt2, const mat_t mat, struct bu_list *vlfree, const struct bn_tol *tol)
-
-/* 2d point */
-/* 3d to 3d xform */
-
 {
+    /* 2d point */
+    /* 3d to 3d xform */
     struct model *m;
     struct fen2d_state st;
     static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL,
@@ -1207,7 +1125,7 @@ nmg_find_e_nearest_pt2(uint32_t *magic_p, const point_t pt2, const mat_t mat, st
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.mindist = INFINITY;
     VMOVE(st.pt2, pt2);
     MAT_COPY(st.mat, mat);
@@ -1216,7 +1134,7 @@ nmg_find_e_nearest_pt2(uint32_t *magic_p, const point_t pt2, const mat_t mat, st
 
     nmg_visit(magic_p, &htab, (void *)&st, vlfree);
 
-    nmg_free((char *)st.visited, "visited[]");
+    bu_free((char *)st.visited, "visited[]");
 
     if (st.ep) {
 	NMG_CK_EDGE(st.ep);
@@ -1225,16 +1143,6 @@ nmg_find_e_nearest_pt2(uint32_t *magic_p, const point_t pt2, const mat_t mat, st
     return (struct edge *)NULL;
 }
 
-
-/**
- * Given an edgeuse, return two arbitrary unit-length vectors which
- * are perpendicular to each other and to the edgeuse, such that
- * they can be considered the +X and +Y axis, and the edgeuse is +Z.
- * That is, X cross Y = Z.
- *
- * Useful for erecting a coordinate system around an edge suitable
- * for measuring the angles of other edges and faces with.
- */
 void
 nmg_eu_2vecs_perp(vect_t xvec, vect_t yvec, vect_t zvec, const struct edgeuse *eu, const struct bn_tol *tol)
 {
@@ -1260,18 +1168,6 @@ nmg_eu_2vecs_perp(vect_t xvec, vect_t yvec, vect_t zvec, const struct edgeuse *e
 }
 
 
-/**
- * Given an edgeuse, if it is part of a faceuse, return the inward pointing
- * "left" vector which points into the interior of this loop, and
- * lies in the plane of the face. The left vector is unitized.
- *
- * This routine depends on the vertex ordering in an OT_SAME loopuse being
- * properly CCW for exterior loops, and CW for interior (hole) loops.
- *
- * Returns -
- * -1 if edgeuse is not part of a faceuse.
- * 0 if left vector successfully computed into caller's array.
- */
 int
 nmg_find_eu_leftvec(vect_t left, const struct edgeuse *eu)
 {
@@ -1393,19 +1289,6 @@ nmg_find_eu_leftvec(vect_t left, const struct edgeuse *eu)
     return 0;
 }
 
-
-/**
- * Given an edgeuse, if it is part of a faceuse, return the inward pointing
- * "left" vector which points into the interior of this loop, and
- * lies in the plane of the face. The left vector is not unitized.
- *
- * This routine depends on the vertex ordering in an OT_SAME loopuse being
- * properly CCW for exterior loops, and CW for interior (hole) loops.
- *
- * Returns -
- * -1 if edgeuse is not part of a faceuse.
- * 0 if left vector successfully computed into caller's array.
- */
 int
 nmg_find_eu_left_non_unit(vect_t left, const struct edgeuse *eu)
 {
@@ -1434,11 +1317,7 @@ nmg_find_eu_left_non_unit(vect_t left, const struct edgeuse *eu)
     VCROSS(left, Norm, edgevect);
     return 0;
 }
-/**
- * If there is an edgeuse of an OT_SAME faceuse on this edge, return it.
- * Only return a wire edgeuse if that is all there is.
- * Useful for selecting a "good" edgeuse to pass to nmg_eu_2vecs_perp().
- */
+
 struct edgeuse *
 nmg_find_ot_same_eu_of_e(const struct edge *e)
 {
@@ -1568,7 +1447,7 @@ nmg_find_pnt_in_lu(const struct loopuse *lu, const point_t pt, const struct bn_t
 	if (!vg) {
 	    return (struct vertexuse *)NULL;
 	}
-	if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
+	if (bg_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 	    return vu;
 	}
 	return (struct vertexuse *)NULL;
@@ -1582,7 +1461,7 @@ nmg_find_pnt_in_lu(const struct loopuse *lu, const point_t pt, const struct bn_t
 	if (!vg) {
 	    continue;
 	}
-	if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
+	if (bg_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 	    return eu->vu_p;
 	}
     }
@@ -1678,7 +1557,7 @@ nmg_find_pnt_in_shell(const struct shell *s, const point_t pt, const struct bn_t
 	vg = v->vg_p;
 
 	if (vg) {
-	    if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
+	    if (bg_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 		return v;
 	    }
 	}
@@ -1691,7 +1570,7 @@ nmg_find_pnt_in_shell(const struct shell *s, const point_t pt, const struct bn_t
 	vg = v->vg_p;
 
 	if (vg) {
-	    if (bn_pnt3_pnt3_equal(vg->coord, pt, tol)) {
+	    if (bg_pnt3_pnt3_equal(vg->coord, pt, tol)) {
 		return v;
 	    }
 	}
@@ -1728,11 +1607,6 @@ nmg_find_pnt_in_model(const struct model *m, const point_t pt, const struct bn_t
 }
 
 
-/**
- * Returns -
- * 1 If found
- * 0 If not found
- */
 int
 nmg_is_vertex_in_edgelist(register const struct vertex *v, const struct bu_list *hd)
 {
@@ -1860,11 +1734,6 @@ nmg_is_vertex_in_facelist(register const struct vertex *v, const struct bu_list 
 }
 
 
-/**
- * Returns -
- * 1 If found
- * 0 If not found
- */
 int
 nmg_is_edge_in_edgelist(const struct edge *e, const struct bu_list *hd)
 {
@@ -1959,11 +1828,9 @@ struct vf_state {
 };
 
 
-/**
- * A private support routine for nmg_vertex_tabulate().
+/* A private support routine for nmg_vertex_tabulate().
  * Having just visited a vertex, if this is the first time,
- * add it to the bu_ptbl array.
- */
+ * add it to the bu_ptbl array. */
 static void
 nmg_2rvf_handler(uint32_t *vp, void *state, int UNUSED(unused))
 {
@@ -1978,11 +1845,6 @@ nmg_2rvf_handler(uint32_t *vp, void *state, int UNUSED(unused))
 }
 
 
-/**
- * Given a pointer to any nmg data structure,
- * build an bu_ptbl list which has every vertex
- * pointer from there on "down" in the model, each one listed exactly once.
- */
 void
 nmg_vertex_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list *vlfree)
 {
@@ -1998,14 +1860,14 @@ nmg_vertex_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    nmg_free((char *)st.visited, "visited[]");
+    bu_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2030,12 +1892,6 @@ nmg_vert_a_handler(uint32_t *vp, void *state, int UNUSED(unused))
     bu_ptbl_ins(sp->tabl, (long *)vp);
 }
 
-
-/**
- * Given a pointer to any nmg data structure,
- * build an bu_ptbl list which has every vertexuse normal
- * pointer from there on "down" in the model, each one listed exactly once.
- */
 void
 nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list *vlfree)
 {
@@ -2051,14 +1907,14 @@ nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, stru
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    nmg_free((char *)st.visited, "visited[]");
+    bu_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2081,11 +1937,6 @@ nmg_2edgeuse_handler(uint32_t *eup, void *state, int UNUSED(unused))
 }
 
 
-/**
- * Given a pointer to any nmg data structure,
- * build an bu_ptbl list which has every edgeuse
- * pointer from there on "down" in the model, each one listed exactly once.
- */
 void
 nmg_edgeuse_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list *vlfree)
 {
@@ -2101,14 +1952,14 @@ nmg_edgeuse_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_lis
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    nmg_free((char *)st.visited, "visited[]");
+    bu_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2130,12 +1981,6 @@ nmg_2edge_handler(uint32_t *ep, void *state, int UNUSED(unused))
     bu_ptbl_ins(sp->tabl, (long *)ep);
 }
 
-
-/**
- * Given a pointer to any nmg data structure,
- * build an bu_ptbl list which has every edge
- * pointer from there on "down" in the model, each one listed exactly once.
- */
 void
 nmg_edge_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list *vlfree)
 {
@@ -2151,16 +1996,15 @@ nmg_edge_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list *
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    nmg_free((char *)st.visited, "visited[]");
+    bu_free((char *)st.visited, "visited[]");
 }
-
 
 /**
  * A private support routine for nmg_edge_g_tabulate().
@@ -2190,11 +2034,6 @@ nmg_edge_g_handler(uint32_t *ep, void *state, int UNUSED(unused))
 }
 
 
-/**
- * Given a pointer to any nmg data structure,
- * build an bu_ptbl list which has every edge
- * pointer from there on "down" in the model, each one listed exactly once.
- */
 void
 nmg_edge_g_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list *vlfree)
 {
@@ -2210,14 +2049,14 @@ nmg_edge_g_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    nmg_free((char *)st.visited, "visited[]");
+    bu_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2260,14 +2099,14 @@ nmg_face_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, struct bu_list *
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
 
     (void)bu_ptbl_init(tab, 64, " tab");
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    nmg_free((char *)st.visited, "visited[]");
+    bu_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2332,10 +2171,10 @@ nmg_line_handler(uint32_t *longp, void *state, int UNUSED(unused))
 	0.9 * MAGNITUDE(eu->g.lseg_p->e_dir) * MAGNITUDE(sp->dir))
 	return;
 
-    if (bn_distsq_line3_pnt3(sp->pt, sp->dir, eu->vu_p->v_p->vg_p->coord)
+    if (bg_distsq_line3_pnt3(sp->pt, sp->dir, eu->vu_p->v_p->vg_p->coord)
 	> sp->tol.dist_sq)
 	return;
-    if (bn_distsq_line3_pnt3(sp->pt, sp->dir, eu->eumate_p->vu_p->v_p->vg_p->coord)
+    if (bg_distsq_line3_pnt3(sp->pt, sp->dir, eu->eumate_p->vu_p->v_p->vg_p->coord)
 	> sp->tol.dist_sq)
 	return;
 
@@ -2344,20 +2183,6 @@ nmg_line_handler(uint32_t *longp, void *state, int UNUSED(unused))
 }
 
 
-/**
- * Given a pointer to any nmg data structure,
- * build an bu_ptbl list which cites every edgeuse
- * pointer from there on "down" in the model
- * that has both vertices within tolerance of the given line.
- *
- * XXX This routine is a potential source of major trouble.
- * XXX If there are "nearby" edges that "should" be on the list but
- * XXX don't make it, then the intersection calculations might
- * XXX miss important intersections.
- * As an admittedly grubby workaround, use 10X the distance tol here,
- * just to get more candidates onto the list.
- * The caller will have to wrestle with the added fuzz.
- */
 void
 nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, const point_t pt, const vect_t dir, struct bu_list *vlfree, const struct bn_tol *tol)
 {
@@ -2374,7 +2199,7 @@ nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, const
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
 
-    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.tabl = tab;
     VMOVE(st.pt, pt);
     VMOVE(st.dir, dir);
@@ -2385,7 +2210,7 @@ nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const uint32_t *magic_p, const
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    nmg_free((char *)st.visited, "visited[]");
+    bu_free((char *)st.visited, "visited[]");
 }
 
 
@@ -2434,12 +2259,6 @@ nmg_v_handler(uint32_t *longp, void *state, int UNUSED(unused))
     bu_ptbl_ins(sp->verts, (long *)longp);
 }
 
-
-/**
- * Build lists of all edges (represented by one edgeuse on that edge)
- * and all vertices found underneath the
- * NMG entity indicated by magic_p.
- */
 void
 nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const uint32_t *magic_p, struct bu_list *vlfree)
 {
@@ -2456,7 +2275,7 @@ nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const uint32_t
     m = nmg_find_model(magic_p);
     NMG_CK_MODEL(m);
 
-    st.visited = (char *)nmg_calloc(m->maxindex+1, sizeof(char), "visited[]");
+    st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
     st.edges = eutab;
     st.verts = vtab;
 
@@ -2465,19 +2284,9 @@ nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const uint32_t
 
     nmg_visit(magic_p, &handlers, (void *)&st, vlfree);
 
-    nmg_free((char *)st.visited, "visited[]");
+    bu_free((char *)st.visited, "visited[]");
 }
 
-
-/**
- * Given two edgeuses, determine if they share the same edge geometry,
- * either topologically, or within tolerance.
- *
- * Returns -
- * 0 two edge geometries are not coincident
- * 1 edges geometries are everywhere coincident.
- * (For linear edge_g_lseg, the 2 are the same line, within tol.)
- */
 int
 nmg_2edgeuse_g_coincident(const struct edgeuse *eu1, const struct edgeuse *eu2, const struct bn_tol *tol)
 {
@@ -2492,11 +2301,11 @@ nmg_2edgeuse_g_coincident(const struct edgeuse *eu1, const struct edgeuse *eu2, 
     }
 
     /* Ensure that vertices on edge 2 are within tol of e1 */
-    if (bn_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir,
+    if (bg_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir,
 			    eu2->vu_p->v_p->vg_p->coord) > tol->dist_sq) {
 	return 0;
     }
-    if (bn_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir,
+    if (bg_distsq_line3_pnt3(eg1->e_pt, eg1->e_dir,
 			    eu2->eumate_p->vu_p->v_p->vg_p->coord) > tol->dist_sq) {
 	return 0;
     }

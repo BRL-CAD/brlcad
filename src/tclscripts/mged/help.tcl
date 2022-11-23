@@ -47,6 +47,7 @@ set mged_help_data(arb)		{{name rot fb}	{make arb8, rotation + fallback}}
 set mged_help_data(arced)	{{a/b ...anim_command...}	{edit matrix or materials on combination's arc}}
 set mged_help_data(area)	{{[endpoint_tolerance]}	{calculate presented area of view (use ev -wT)}}
 set mged_help_data(arot)        $helplib_data(vo_arot)
+set mged_help_data(art) $helplib_data(dgo_art)
 set mged_help_data(attach)	{{[-d display_string] [-i init_script] [-n name]
     [-t is_toplevel] [-W width] [-N height]
     [-S square_size] win_type}	{attach to a display manager}}
@@ -198,6 +199,7 @@ set mged_help_data(knob)	{{[-e -i -m -v] [-o v/m/e/k] [zap|zero|(x|y|z|X|Y|Z|S|a
 set mged_help_data(l)		$helplib_data(wdb_list)
 set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
 set mged_help_data(labelface)	{{object[s]}	{label faces of wireframes of objects}}
+set mged_help_data(lc)          {{[-d|-m|-s] [-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {fileName}] {groupName}} {list codes within a group or combination}}
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(loadview)	{{file}	{load view from raytrace script file}}
@@ -210,6 +212,22 @@ set mged_help_data(make)	{{-t | name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|
 set mged_help_data(make_pnts)	{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
 set mged_help_data(match)	$helplib_data(wdb_match)
 set mged_help_data(mater)	{{comb [material]}	{assign/delete material to combination}}
+set mged_help_data(material)	{{[options]} {Creates materials and allows assigning of properties.
+
+Options:
+	
+import [--id|--name] fileName					-Imports materials from a density table.
+	--id - Specifies that the material will be imported with the id.
+	--name - Specifies that the material will be imported with the name.
+
+create objectName materialName			    	-Stores a material with name db_name.
+
+destroy objectName					    	-Deletes material from database.
+
+set objectName propertyGroup propertyName propertyValue 	-Sets a property in specified group with name and value.
+
+get objectName propertyGroup propertyName		    	-Gets a property value based on name and group.
+	propertyGroup : [physical | mechanical | optical | thermal]}}
 set mged_help_data(matpick)	{{# | a/b}	{select arc which has matrix to be edited, in O_PATH state}}
 set mged_help_data(mirface)	{{#### of axis}	{mirror an ARB face}}
 set mged_help_data(mirror)	{{[-p point] [-d dir] [-x] [-y] [-z] [-o offset] old new}	{mirror primitive or combination along the specified axis}}
@@ -316,7 +334,7 @@ set mged_help_data(tor-rcc)     {{torname newname}     {create an rcc from a tor
 set mged_help_data(tra)		$helplib_data(vo_tra)
 set mged_help_data(track)	{{<parameters>}	{adds tracks to database}}
 set mged_help_data(translate)	{{x y z}	{trans object to x,y, z}}
-set mged_help_data(tree)	{{[-c] [-i n] [-d n] [-o outfile] object(s)}	{print out a tree of all members of an object, or all members to depth n if -d option is supplied}}
+set mged_help_data(tree)	{{[-a] [-c] [-d n] [-i n] [-o outfile] [object(s)]} {print hierarchical tree of all displayed or specified objects}}
 set mged_help_data(unhide)	$helplib_data(wdb_unhide)
 set mged_help_data(units)	$helplib_data(wdb_units)
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}

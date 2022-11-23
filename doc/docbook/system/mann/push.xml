@@ -37,7 +37,7 @@
   <example><title>Push the effects of any transformation matrices in trees headed by two specified objects down to the 	primitive shapes.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>push group1 regiona</userinput>
+      <prompt>mged&gt; </prompt><userinput>push group1 regiona</userinput>
     </para>
     <para>Pushes the effects of any transformation matrices in the trees headed by <emphasis>group1</emphasis> 	and <emphasis>regiona</emphasis> down to the primitive shapes.
     </para>

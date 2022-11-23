@@ -24,6 +24,7 @@
 
 #include "bu/app.h"
 #include "analyze.h"
+#include "limits.h"
 
 
 const char *simple_buff = "1 7.8295        steel";
@@ -47,7 +48,7 @@ const char *test_buff =
     "               12   3.00      Gunner\n"
     "               14   10.00     Fuel\n"
     "#  Material ID too high \n"
-    "99999 70.84    Kryptonite\n";
+    CPP_XSTR(LONG_MAX) " 70.84    Kryptonite\n";
 
 const char *tbuff_out_ctrl =
     "2	7.82	Carbon Tool Steel\n"
@@ -332,13 +333,13 @@ analyze_density_fail:
 }
 
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+
 

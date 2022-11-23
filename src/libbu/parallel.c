@@ -491,7 +491,6 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 
     struct thread_data *thread_context;
     rt_thread_t thread_tbl[MAX_PSW];
-    size_t avail_cpus = 1;
     size_t x;
     size_t i;
 
@@ -530,16 +529,6 @@ bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 	    bu_log("CPU affinity enabled. (LIBBU_AFFINITY=%d)\n", affinity);
 	else
 	    bu_log("CPU affinity disabled.\n");
-    }
-
-    /* if we're in debug mode, allow additional cpus */
-    if (!(bu_debug & BU_DEBUG_PARALLEL)) {
-	/* otherwise, limit ourselves to what is actually available */
-	avail_cpus = bu_avail_cpus();
-	if (ncpu > avail_cpus) {
-	    bu_log("%zd cpus requested, but only %zu available\n", ncpu, avail_cpus);
-	    ncpu = avail_cpus;
-	}
     }
 
     parent = parallel_mapping(PARALLEL_GET, bu_parallel_id(), ncpu);

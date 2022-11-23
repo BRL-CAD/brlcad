@@ -31,11 +31,15 @@ int
 ged_item_core(struct ged *gedp, int argc, const char *argv[])
 {
     int status = BRLCAD_OK;
-    struct directory *dp;
-    int ident, air, GIFTmater=0, los=0;
-    int GIFTmater_set, los_set;
+    struct directory *dp = NULL;
+    int GIFTmater = 0;
+    int GIFTmater_set = 0;
+    int air = 0;
+    int ident = 0;
+    int los = 0;
+    int los_set = 0;
     struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
+    struct rt_comb_internal *comb = NULL;
     static const char *usage = "region ident [air [material [los]]]";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
@@ -48,7 +52,7 @@ ged_item_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
@@ -60,8 +64,6 @@ ged_item_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_COMB(gedp, dp, BRLCAD_ERROR);
     GED_CHECK_REGION(gedp, dp, BRLCAD_ERROR);
 
-    air = ident = 0;
-    GIFTmater_set = los_set = 0;
     ident = atoi(argv[2]);
 
     /*

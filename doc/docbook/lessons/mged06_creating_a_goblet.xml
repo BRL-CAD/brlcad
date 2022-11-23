@@ -40,10 +40,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_rtgoblet.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_rtgoblet.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_rtgoblet.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_rtgoblet.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -99,10 +99,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_gobletbase.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_gobletbase.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_gobletbase.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_gobletbase.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -134,10 +134,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_goblet1stsphere.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_goblet1stsphere.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_goblet1stsphere.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_goblet1stsphere.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -221,10 +221,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_gobletstem.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_gobletstem.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_gobletstem.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_gobletstem.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -254,10 +254,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_gobletbasestembasin.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_gobletbasestembasin.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_gobletbasestembasin.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_gobletbasestembasin.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -418,10 +418,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_base_subtracted_vol.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_base_subtracted_vol.png" format="PNG"/>
 	  </imageobject>
 	<imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_base_subtracted_vol.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_base_subtracted_vol.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </informalfigure>
@@ -448,10 +448,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_rtgobletaz_35_el_25.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_rtgobletaz_35_el_25.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged06_rtgobletaz_35_el_25.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged06_rtgobletaz_35_el_25.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>

@@ -60,9 +60,13 @@ void Vector<T>::Resize( size_t N )
 {
 	if( m_N!=N )
 	{
-		if( m_N ) DeletePointer( m_pV );
+		if( m_pV != NullPointer< T >() ) {
+		   DeletePointer( m_pV );
+		   m_pV = NullPointer< T >();
+		}
 		m_N = N;
-		m_pV = NewPointer< T >( N );
+		if (N)
+		   m_pV = NewPointer< T >( N );
 	}
 	if( N ) memset( m_pV , 0 , N*sizeof(T) );
 }

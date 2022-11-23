@@ -45,7 +45,7 @@
 #include "raytrace.h"
 #include "ged.h"
 #include "wdb.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 static int grid_size;		/* Number of points that will fit in current grid_pts array */
@@ -438,6 +438,8 @@ make_bot_object(const char *name,
     bot_ip.bot_flags = 0;
 
     count = rt_bot_vertex_fuse(&bot_ip, &wdbp->wdb_tol);
+    if (count)
+	bu_log("WARNING: %d vertices eliminated from group %d component %d\n", count, group_id, comp_id);
     count = rt_bot_face_fuse(&bot_ip);
     if (count)
 	bu_log("WARNING: %d duplicate faces eliminated from group %d component %d\n", count, group_id, comp_id);

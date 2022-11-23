@@ -49,7 +49,7 @@ ged_whatid_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
@@ -57,7 +57,7 @@ ged_whatid_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
     if (dp == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
@@ -66,7 +66,7 @@ ged_whatid_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
 	return BRLCAD_ERROR;
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 

@@ -245,12 +245,28 @@ typedef int (*vdsFoldCriterion) (const vdsNode *, void *);
 typedef void (*vdsNodeDataWriter) (FILE *f, const vdsNode *);
 typedef vdsNodeData (*vdsNodeDataReader) (FILE *f);
 
+
+/*
+ * Global state
+ */
+struct vdsState {
+    vdsNode *nodearray;
+    int vdsNumnodes;
+    int maxnodes;
+    vdsTri *triarray;
+    int vdsNumtris;
+    int maxtris;
+    int curroffset;
+    int openflag;
+};
+#define VDS_STATE_INIT_ZERO {NULL, 0, 0, NULL, 0, 0, 0, 0}
+
+
 /*
  * Prototypes
  */
 
 /* Routines for maintaining the vertex tree (dynamic.c) */
-extern void vdsAdjustTreeBoundary(vdsNode *, vdsFoldCriterion, void *);
 extern void vdsAdjustTreeTopDown(vdsNode *, vdsFoldCriterion, void *);
 /* Low-level vertex tree maintainance routines; not need by most users: */
 extern void vdsFoldNode(vdsNode *);
@@ -265,23 +281,17 @@ extern void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
 /* Routines for building the vertex tree (build.c) */
 extern void vdsBeginVertexTree();
 extern void vdsBeginGeometry();
-extern vdsNode *vdsAddNode(vdsFloat x, vdsFloat y, vdsFloat z);
-extern vdsTri *vdsAddTri(int v0, int v1, int v2,
+extern vdsNode *vdsAddNode(struct vdsState *s, vdsFloat x, vdsFloat y, vdsFloat z);
+extern vdsTri *vdsAddTri(struct vdsState *s, int v0, int v1, int v2,
 	vdsVec3 n0, vdsVec3 n1, vdsVec3 n2,
 	vdsByte3 c0, vdsByte3 c1, vdsByte3 c2);
-extern void vdsNewObject();
 extern vdsNode *vdsEndGeometry();
 extern vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
 	vdsFloat x, vdsFloat y, vdsFloat z);
 extern vdsNode *vdsEndVertexTree();
 
-/* Routines for reading and writing the vertex tree (file.c) */
-extern vdsNode *vdsReadTree(FILE *f, vdsNodeDataReader readdata);
-extern void vdsWriteTree(FILE *f, vdsNode *root, vdsNodeDataWriter writedata);
-
 /* Assorted useful routines (util.c) */
 extern vdsNode *vdsFindNode(vdsNodeId id, vdsNode *root);
-extern void vdsPrintNodeId(const vdsNodeId *id);
 extern void vdsSprintNodeId(char *str, const vdsNodeId *id);
 extern void vdsStatTree(vdsNode *root, int *nodes, int *leaves, int *tris);
 extern void vdsFreeTree(vdsNode *node);

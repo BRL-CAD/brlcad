@@ -61,11 +61,11 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv0, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* check that we are using a version 5 database */
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "This is an older database version.\nIt does not support binary objects.Use \"dbupgrade\" to upgrade this database to the current version.\n");
 	return BRLCAD_ERROR;
     }
@@ -167,7 +167,8 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	file_name = (char *)*argv;
 
 	/* make a binunif of the entire file */
-	if (rt_mk_binunif (gedp->ged_wdbp, obj_name, file_name, minor_type, 0)) {
+	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	if (rt_mk_binunif (wdbp, obj_name, file_name, minor_type, 0)) {
 	    bu_vls_printf(gedp->ged_result_str, "Error creating %s", obj_name);
 	    return BRLCAD_ERROR;
 	}
@@ -182,7 +183,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 
 	obj_name = (char *)*argv;
 
-	dp = db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_NOISY);
+	dp = db_lookup(gedp->dbip, obj_name, LOOKUP_NOISY);
 	if (dp == RT_DIR_NULL) {
 	    return BRLCAD_ERROR;
 	}
@@ -202,7 +203,7 @@ ged_bo_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL,
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL,
 			       &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Error reading %s from database", dp->d_namep);
 	    fclose(fp);

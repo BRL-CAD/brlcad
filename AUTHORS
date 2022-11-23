@@ -154,14 +154,14 @@ nicknames adam
 1995 October
 Geometric Solutions, Inc.
 
-Parker, Robert G.  **
+Parker, Robert G.
 nicknames include bparker, bob1961
 1995 January
 U.S. Army Research Laboratory
 SURVICE Engineering, Inc.
 Open Source
 
-Morrison, Christopher Sean  <morrison@brlcad.org>  **
+Morrison, Christopher Sean  <morrison@brlcad.org>
 nicknames sean, morrison, brlcad
 1998 December
 ARL Student Hire / Johns Hopkins University
@@ -195,20 +195,20 @@ nicknames erikg, erikgreenwald
 U.S. Army Research Laboratory
 Open Source
 
-Roßberg, Daniel  **
+Roßberg, Daniel
 nicknames d_rossberg
 2005 June
 Industrieanlagen-Betriebsgesellschaft mbH (IABG)
 Open Source
 
-Yapp, Cliff  **
+Yapp, Cliff
 nicknames starseeker
 2007 September
 Open Source
 Quantum Research International, Inc.
 U.S. Army Research Laboratory
 
-Bowman, W. Keith  **
+Bowman, W. Keith
 nicknames indianlarry
 SURVICE Engineering, Inc.
 U.S. Army Research Laboratory
@@ -224,7 +224,7 @@ nicknames tbrowder2
 ManTech International Corporation
 Open Source
 
-Reed, Nicholas  **
+Reed, Nicholas
 nicknames n_reed
 2008 July
 ARL Student Hire / University of Maryland, Baltimore County
@@ -260,7 +260,7 @@ U.S. Army Ballistic Research Laboratory
 Applin, Keith A.
 U.S. Army Research Laboratory
 
-Kregel, Dwayne  **
+Kregel, Dwayne
 SURVICE Engineering, Inc.
 
 Weaver, Stephanie 'Rain'
@@ -898,6 +898,11 @@ nicknames lois221
 2019 May
 Open Source (GSoC)
 
+Nayak, Himanshu
+nicknames himanshu40
+2020 January
+Open Source (GSoC)
+
 Suthar, Rishabh
 nicknames yamhai, rishabhsuthar32
 2020 March
@@ -917,6 +922,95 @@ Atreya, Vikram
 nicknames vikram-atreya
 2020 October
 Open Source
+
+Dinges, Trey
+nicknames treydinges
+2021 October
+Texas A&M University
+
+Connelly, Cole D.
+nicknames cdconn00
+2021 October
+Texas A&M University
+
+Olivarez, Vincent
+nicknames volivarez60
+2021 October
+Texas A&M University
+
+McGregor, Christopher J.
+nicknames f4alt
+2021 October
+Texas A&M University
+
+Studwell, Alex P.
+nicknames apstudwell
+2021 October
+Texas A&M University
+
+Wilson, Reid
+nicknames rwilson
+2021 October
+Texas A&M University
+
+Paz, Luz
+nicknames luzpaz
+2022 February
+Open Source
+
+Ferguson, Sean
+nicknames GradualSyrup
+2022 March
+Texas A&M University
+
+Chambers, William R.
+nicknames redcarrera
+2022 April
+U.S. Army DEVCOM Analysis Center
+
+Kejriwal, Tanya
+nicknames tanyakejriwal
+2022 February
+Texas A&M University
+
+Servin, Diego
+nicknames dservin
+2022 February
+Texas A&M University
+
+Norris, Cameron
+nicknames cameron-norris
+2022 February
+Texas A&M University
+
+Hernandez, Luis
+nicknames LouisTheLeaf
+2022 February
+Texas A&M University
+
+Curtis, Alexandria
+nicknames acurtis55
+2022 February
+Texas A&M University
+
+Plaisance, Andrew T.
+nicknames atp318
+2022 February
+Texas A&M University
+
+Stepic, Joseph
+nicknames JosephStepic
+2022 February
+Texas A&M University
+
+Santos, Kevin
+2022 February
+Texas A&M University
+
+Bergeron, Wesley Paul
+2022 February
+Texas A&M University
+
 
 
 SPECIAL THANKS
@@ -1232,6 +1326,10 @@ Liu, Jeffrey
 2019 December
 Open Source (GCI)
 
+nicknames r-ricci
+2022 January
+Open Source
+
 
 CORPORATE AND ORGANIZATION SUPPORT
 ----------------------------------
@@ -1303,10 +1401,6 @@ contributed entirely before the name change reflect the original name,
 whereas persons who continued or began contributions after the name
 change reflect the new name.
 
-** The individual is an active contributor, participating in BRL-CAD
-development within the past 12 months with numerous contributions.
-
-If any corrections or additions need to be made, please contact one of
-the active core developers.  Additionally, you may send inquiries,
-suggestions, and comments to the developer mailing list:
-brlcad-devel@lists.sourceforge.net
+If corrections or additions need to be made, please contact one of the
+developers.  Additionally, you may send inquiries, suggestions, and
+comments to the developer list: brlcad-devel@lists.sourceforge.net

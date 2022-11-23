@@ -112,7 +112,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>ev region1 shapea</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>ev region1 shapea</userinput></term>
 	   <listitem>
 	     <para>Displays evaluated <emphasis>region1</emphasis> and <emphasis>shapea</emphasis> as shaded polygons.
 	     </para>
@@ -124,7 +124,7 @@
   <example><title>Display an evaluated object as wireframe without triangulation.</title>
 
     <para>
-      <prompt>mged&gt;</prompt> <userinput>ev -wT region1</userinput>
+      <prompt>mged&gt; </prompt><userinput>ev -wT region1</userinput>
     </para>
     <para>Displays an evaluated object, <emphasis>region1</emphasis>, as wireframe without triangulation.
 

@@ -50,8 +50,8 @@ void
 dozoom(int which_eye)
 {
     int ndrawn = 0;
-    fastf_t inv_viewsize;
-    mat_t newmat;
+    fastf_t inv_viewsize = 0.0;
+    mat_t newmat = MAT_INIT_ZERO;
     matp_t mat = newmat;
     short r = -1;
     short g = -1;
@@ -104,22 +104,15 @@ dozoom(int which_eye)
 	    case 0:
 		/* Non-stereo case */
 		mat = view_state->vs_gvp->gv_model2view;
-		/* XXX hack */
-		/* if (mged_variables->mv_faceplate > 0) */
-		if (1) {
-		    if (EQUAL(view_state->vs_gvp->gv_eye_pos[Z], 1.0)) {
-			/* This way works, with reasonable Z-clipping */
-			persp_mat(perspective_mat, view_state->vs_gvp->gv_perspective,
-				  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
-		    } else {
-			/* This way does not have reasonable Z-clipping,
-			 * but includes shear, for GDurf's testing.
-			 */
-			deering_persp_mat(perspective_mat, l, h, view_state->vs_gvp->gv_eye_pos);
-		    }
+		if (EQUAL(view_state->vs_gvp->gv_eye_pos[Z], 1.0)) {
+		    /* This way works, with reasonable Z-clipping */
+		    persp_mat(perspective_mat, view_state->vs_gvp->gv_perspective,
+			    (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
 		} else {
-		    /* New way, should handle all cases */
-		    mike_persp_mat(perspective_mat, view_state->vs_gvp->gv_eye_pos);
+		    /* This way does not have reasonable Z-clipping,
+		     * but includes shear, for GDurf's testing.
+		     */
+		    deering_persp_mat(perspective_mat, l, h, view_state->vs_gvp->gv_eye_pos);
 		}
 		break;
 	    case 1:
@@ -144,7 +137,7 @@ dozoom(int which_eye)
     if (dm_get_transparency(DMP)) {
 	/* First, draw opaque stuff */
 
-	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
@@ -158,7 +151,7 @@ dozoom(int which_eye)
 
 	/* Second, draw transparent stuff */
 
-	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 0, mged_variables->mv_dlist);
 
@@ -167,7 +160,7 @@ dozoom(int which_eye)
 
     } else {
 
-	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+	ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
@@ -185,7 +178,7 @@ dozoom(int which_eye)
 		       color_scheme->cs_predictor[0],
 		       color_scheme->cs_predictor[1],
 		       color_scheme->cs_predictor[2], 1, 1.0);
-	dm_draw_vlist(DMP, (struct bn_vlist *)&mged_curr_dm->dm_p_vlist);
+	dm_draw_vlist(DMP, (struct bv_vlist *)&mged_curr_dm->dm_p_vlist);
     }
 
     /*
@@ -209,7 +202,7 @@ dozoom(int which_eye)
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
 
-    ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+    ndrawn = dm_draw_head_dl(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color, 0, mged_variables->mv_dlist);
 
@@ -233,7 +226,7 @@ createDLists(struct bu_list *hdlp)
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	dm_set_dirty(DMP, 1);
-	dm_draw_obj(DMP, gdlp);
+	dm_draw_display_list(DMP, gdlp);
 
 	gdlp = next_gdlp;
     }
@@ -248,7 +241,7 @@ createDLists(struct bu_list *hdlp)
  * display manager that has already created the display list)
  */
 void
-createDListSolid(struct solid *sp)
+createDListSolid(struct bv_scene_obj *sp)
 {
     struct mged_dm *save_dlp;
 
@@ -266,13 +259,13 @@ createDListSolid(struct solid *sp)
 	    (void)dm_make_current(DMP);
 	    (void)dm_begin_dlist(DMP, sp->s_dlist);
 	    if (sp->s_iflag == UP)
-		(void)dm_set_fg(DMP, 255, 255, 255, 0, sp->s_transparency);
+		(void)dm_set_fg(DMP, 255, 255, 255, 0, sp->s_os->transparency);
 	    else
 		(void)dm_set_fg(DMP,
 			(unsigned char)sp->s_color[0],
 			(unsigned char)sp->s_color[1],
-			(unsigned char)sp->s_color[2], 0, sp->s_transparency);
-	    (void)dm_draw_vlist(DMP, (struct bn_vlist *)&sp->s_vlist);
+			(unsigned char)sp->s_color[2], 0, sp->s_os->transparency);
+	    (void)dm_draw_vlist(DMP, (struct bv_vlist *)&sp->s_vlist);
 	    (void)dm_end_dlist(DMP);
 	}
 
@@ -294,8 +287,8 @@ createDListSolid(struct solid *sp)
 void
 createDListAll(struct display_list *gdlp)
 {
-    struct solid *sp;
-    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+    struct bv_scene_obj *sp;
+    for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	createDListSolid(sp);
     }
 }

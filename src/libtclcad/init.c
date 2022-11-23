@@ -35,6 +35,7 @@
 
 #include "vmath.h"
 #include "bu/app.h"
+#include "bu/cmd.h"
 #include "bu/path.h"
 #include "bu/vls.h"
 #include "bn.h"

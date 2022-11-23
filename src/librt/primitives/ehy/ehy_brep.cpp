@@ -64,7 +64,7 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     }
 
     point_t p1_origin;
-    ON_3dPoint plane1_origin, plane2_origin;
+    ON_3dPoint plane1_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
 
     //  First, find plane in 3 space corresponding to the bottom face of the EPA.

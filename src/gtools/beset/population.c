@@ -100,7 +100,7 @@ pop_spawn (struct population *p)
     char shape[256];
 
     p->db_p = db_create("gen000", 5);
-    p->db_p->dbi_wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
+    struct rt_wdb *wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
 
     for (i = 0; i < p->size; i++) {
 	p->name[i] = (char *)bu_malloc(sizeof(char) * 256, "name");
@@ -118,7 +118,7 @@ pop_spawn (struct population *p)
 	    p1[2] = -10*pop_rand()*10;
 	    r1 = 1+3*pop_rand();
 	    snprintf(shape, 256, "ind%.3d-%.3d", i, j);
-	    mk_sph(p->db_p->dbi_wdbp, shape, p1, r1);
+	    mk_sph(wdbp, shape, p1, r1);
 	    mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
 	}
 
@@ -128,27 +128,27 @@ pop_spawn (struct population *p)
 	/*
 
 	snprintf(shape, 256, "ind%.3d-%.3d", i, 0);
-	mk_sph(p->db_p->dbi_wdbp, shape, p1, r1);
+	mk_sph(wdbp, shape, p1, r1);
 	mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
 
 
 	snprintf(shape, 256, "ind%.3d-%.3d", i, 1);
-	mk_sph(p->db_p->dbi_wdbp, shape, p2, r2);
+	mk_sph(wdbp, shape, p2, r2);
 	mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
 
 	snprintf(shape, 256, "gen%.3dind%.3d-%.3d", 0, i, 2);
-	mk_sph(p->db_p->dbi_wdbp, shape, p3, r3);
+	mk_sph(wdbp, shape, p3, r3);
 	mk_addmember(shape, &wm_hd.l, NULL, WMOP_UNION);
 	*/
-	mk_lcomb(p->db_p->dbi_wdbp, NL_P(p->parent[i].id), &wm_hd, 1, NULL, NULL, NULL, 0);
+	mk_lcomb(wdbp, NL_P(p->parent[i].id), &wm_hd, 1, NULL, NULL, NULL, 0);
     }
 
-/*
- * reload the db so we don't
- * have to do any extra checks
- * in the main loop
- */
-    wdb_close(p->db_p->dbi_wdbp);
+    /*
+     * reload the db so we don't
+     * have to do any extra checks
+     * in the main loop
+     */
+    db_close(p->db_p);
     if ((p->db_p = db_open("gen000", DB_OPEN_READONLY)) == DBI_NULL)
 	bu_exit(EXIT_FAILURE, "Failed to re-open initial population");
     if (db_dirbuild(p->db_p) < 0)

@@ -1,7 +1,5 @@
 set(bn_headers
-  adc.h
   anim.h
-  clip.h
   complex.h
   defines.h
   dvec.h
@@ -9,8 +7,6 @@ set(bn_headers
   msr.h
   multipoly.h
   noise.h
-  plane.h
-  plot3.h
   poly.h
   qmath.h
   rand.h
@@ -20,10 +16,7 @@ set(bn_headers
   sobol.h
   str.h
   tol.h
-  vectfont.h
   version.h
-  vert_tree.h
-  vlist.h
   wavelet.h
   )
 BRLCAD_MANAGE_FILES(bn_headers ${INCLUDE_DIR}/brlcad/bn)

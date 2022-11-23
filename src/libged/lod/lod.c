@@ -33,15 +33,18 @@
 
 #include "../ged_private.h"
 
-
+extern int ged_lod2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_lod_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_lod2_core(gedp, argc, argv);
+
     struct bview *gvp;
     int printUsage = 0;
     static const char *usage = "lod (on|off|enabled)\n"
-			       "lod scale (points|curves) <factor>\n"
-			       "lod redraw (off|onzoom)\n";
+			       "lod scale (points|curves) <factor>\n";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -51,13 +54,26 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
-    if (argc < 2) {
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], "-h")) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     gvp = gedp->ged_gvp;
     if (gvp == NULL) {
+	return BRLCAD_OK;
+    }
+
+    /* Print current state if no args are supplied */
+    if (argc == 1) {
+	if (gvp->gv_s->adaptive_plot_csg) {
+	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: enabled\n");
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "LoD drawing: disabled\n");
+	}
+	bu_vls_printf(gedp->ged_result_str, "Point scale: %g\n", gvp->gv_s->point_scale);
+	bu_vls_printf(gedp->ged_result_str, "Curve scale: %g\n", gvp->gv_s->curve_scale);
+	bu_vls_printf(gedp->ged_result_str, "BoT face threshold: %zd\n", gvp->gv_s->bot_threshold);
 	return BRLCAD_OK;
     }
 
@@ -67,57 +83,36 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
     printUsage = 0;
     if (argc == 1 && BU_STR_EQUAL(argv[0], "on")) {
 	/* lod on */
-	gvp->gv_adaptive_plot = 1;
+	gvp->gv_s->adaptive_plot_csg = 1;
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "off")) {
 	/* lod off */
-	gvp->gv_adaptive_plot = 0;
+	gvp->gv_s->adaptive_plot_csg = 0;
     } else if (argc == 1 && BU_STR_EQUAL(argv[0], "enabled")) {
 	/* lod enabled - return on state */
-	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_adaptive_plot);
+	bu_vls_printf(gedp->ged_result_str, "%d", gvp->gv_s->adaptive_plot_csg);
     } else if (BU_STR_EQUAL(argv[0], "scale")) {
 	if (argc == 2 || argc == 3) {
 	    if (BU_STR_EQUAL(argv[1], "points")) {
 		if (argc == 2) {
 		    /* lod scale points - return current value */
-		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_point_scale);
+		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_s->point_scale);
 		} else {
 		    /* lod scale points f - set value */
-		    gvp->gv_point_scale = atof(argv[2]);
+		    gvp->gv_s->point_scale = atof(argv[2]);
 		}
 	    } else if (BU_STR_EQUAL(argv[1], "curves")) {
 		if (argc == 2) {
 		    /* lod scale curves - return current value */
-		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_curve_scale);
+		    bu_vls_printf(gedp->ged_result_str, "%f", gvp->gv_s->curve_scale);
 		} else {
 		    /* lod scale curves f - set value */
-		    gvp->gv_curve_scale = atof(argv[2]);
+		    gvp->gv_s->curve_scale = atof(argv[2]);
 		}
 	    } else {
 		printUsage = 1;
 	    }
 	} else {
 	    printUsage = 1;
-	}
-    } else if (BU_STR_EQUAL(argv[0], "redraw")) {
-	printUsage = 1;
-	if (argc == 1) {
-	    /* lod redraw - return current value */
-	    if (gvp->gv_redraw_on_zoom) {
-		bu_vls_printf(gedp->ged_result_str, "onzoom");
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "off");
-	    }
-	    printUsage = 0;
-	} else if (argc == 2) {
-	    if (BU_STR_EQUAL(argv[1], "off")) {
-		/* lod redraw off */
-		gvp->gv_redraw_on_zoom = 0;
-		printUsage = 0;
-	    } else if (BU_STR_EQUAL(argv[1], "onzoom")) {
-		/* lod redraw onzoom */
-		gvp->gv_redraw_on_zoom = 1;
-		printUsage = 0;
-	    }
 	}
     } else {
 	printUsage = 1;

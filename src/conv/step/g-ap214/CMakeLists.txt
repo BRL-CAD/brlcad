@@ -10,7 +10,7 @@ link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
 BRLCAD_INCLUDE_DIRS(AP214_INCLUDE_DIRS)
 
-set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap214e3/AP214E3_2010.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap214e3/AP214E3_2010.exp)
 add_definitions(-DAP214e3)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} gap214)
@@ -47,7 +47,7 @@ set(gap214_LIBS
   )
 list(APPEND gap214_LIBS ${gap214_LIBS})
 
-BRLCAD_ADDEXEC(g-ap214 "${gap214_SOURCES}" "${gap214_LIBS}" NO_STRICT)
+BRLCAD_ADDEXEC(g-ap214 "${gap214_SOURCES}" "${gap214_LIBS}" NO_STRICT FOLDER Conv)
 add_dependencies(g-ap214 step-express-${SCHEMA_NAME}-gap214)
 
 if (HIDE_INTERNAL_SYMBOLS)

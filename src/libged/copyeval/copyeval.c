@@ -39,7 +39,8 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     struct _ged_trace_data gtd;
     struct directory *dp;
     struct rt_db_internal *ip;
-    struct rt_db_internal internal, new_int;
+    struct rt_db_internal internal = RT_DB_INTERNAL_INIT_ZERO;
+    struct rt_db_internal new_int = RT_DB_INTERNAL_INIT_ZERO;
 
     char *tok;
     int endpos = 0;
@@ -56,7 +57,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
@@ -78,12 +79,12 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     if (strchr(argv[1], '/')) {
 	tok = strtok((char *)argv[1], "/");
 	while (tok) {
-	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+	    GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], tok, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
 	    endpos++;
 	    tok = strtok((char *)NULL, "/");
 	}
     } else {
-	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[1], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+	GED_DB_LOOKUP(gedp, gtd.gtd_obj[endpos], argv[1], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
 	endpos++;
     }
 
@@ -123,7 +124,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* create the new solid */
 	RT_DB_INTERNAL_INIT(&new_int);
-	if (rt_generic_xform(&new_int, gtd.gtd_xform, &internal, 0, gedp->ged_wdbp->dbip)) {
+	if (rt_generic_xform(&new_int, gtd.gtd_xform, &internal, 0, gedp->dbip)) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(gedp->ged_result_str, "ged_copyeval: rt_generic_xform failed\n");
 	    return BRLCAD_ERROR;
@@ -136,7 +137,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     /* should call GED_DB_DIRADD() but need to deal with freeing the
      * internals on failure.
      */
-    dp = db_diradd(gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (void *)&ip->idb_type);
+    dp = db_diradd(gedp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&internal);
 	if (ip == &new_int)
@@ -148,7 +149,7 @@ ged_copyeval_core(struct ged *gedp, int argc, const char *argv[])
     /* should call GED_DB_DIRADD() but need to deal with freeing the
      * internals on failure.
      */
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, ip, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, ip, &rt_uniresource) < 0) {
 	/* if (ip == &new_int) then new_int gets freed by the rt_db_put_internal above
 	 * regardless of whether it succeeds or not. At this point only internal needs
 	 * to be freed. On the other hand if (ip == &internal), the internal gets freed

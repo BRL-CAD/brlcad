@@ -48,7 +48,7 @@ ged_get_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc > 3) {
@@ -58,13 +58,15 @@ ged_get_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Verify that this wdb supports lookup operations
        (non-null dbip) */
-    if (gedp->ged_wdbp->dbip == 0) {
+    if (gedp->dbip == 0) {
 	bu_vls_printf(gedp->ged_result_str, "dbip does not support lookup operations");
 	return BRLCAD_ERROR;
     }
 
-    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) & BRLCAD_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], wdbp) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
+    }
 
     if (!intern.idb_meth->ft_get) {
 	return BRLCAD_ERROR;

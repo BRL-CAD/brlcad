@@ -58,7 +58,7 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* Parse options. */
@@ -74,8 +74,6 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
 	    }
 	}
     }
-    argc -= bu_optind;
-    argv += bu_optind;
 
     is_empty = dl_bounding_sph(gedp->ged_gdp->gd_headDisplay, &min, &max, pflag);
 
@@ -90,8 +88,8 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
     if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
 	VSETALL(radial, 1.0);
 
-    VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
-    VSCALE(radial, radial, gedp->ged_wdbp->dbip->dbi_base2local * 2.0);
+    VSCALE(center, center, gedp->dbip->dbi_base2local);
+    VSCALE(radial, radial, gedp->dbip->dbi_base2local * 2.0);
     size = radial[X];
     V_MAX(size, radial[Y]);
     V_MAX(size, radial[Z]);

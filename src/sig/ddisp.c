@@ -168,7 +168,6 @@ main(int argc, char **argv)
 	} else if (BU_STR_EQUAL(argv[1], "-c")) {
 	    Clear++;
 	} else if (BU_STR_EQUAL(argv[1], "-H")) {
-	    fbsize = 1024;
 	    bu_exit(1, "%s", usage);
 	} else {
 	    if (! BU_STR_EQUAL(argv[1], "-h") && ! BU_STR_EQUAL(argv[1], "-?"))

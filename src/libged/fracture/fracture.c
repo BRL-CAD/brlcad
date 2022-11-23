@@ -38,11 +38,12 @@ static int frac_stat;
 static void
 fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct rt_db_internal new_intern;
     struct directory *new_dp;
     struct nmgregion *r;
 
-    if (db_lookup(gedp->ged_wdbp->dbip,  newname, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip,  newname, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: already exists\n", newname);
 	/* Free memory here */
 	nmg_km(m);
@@ -50,7 +51,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 	return;
     }
 
-    new_dp = db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
+    new_dp = db_diradd(gedp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
     if (new_dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
@@ -60,7 +61,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
 
     /* make sure the geometry/bounding boxes are up to date */
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
-	nmg_region_a(r, &gedp->ged_wdbp->wdb_tol);
+	nmg_region_a(r, &wdbp->wdb_tol);
 
 
     /* Export NMG as a new solid */
@@ -70,7 +71,7 @@ fracture_add_nmg_part(struct ged *gedp, char *newname, struct model *m)
     new_intern.idb_meth = &OBJ[ID_NMG];
     new_intern.idb_ptr = (void *)m;
 
-    if (rt_db_put_internal(new_dp, gedp->ged_wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(new_dp, gedp->dbip, &new_intern, &rt_uniresource) < 0) {
 	/* Free memory */
 	nmg_km(m);
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal() failure\n");
@@ -110,7 +111,7 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {
@@ -123,10 +124,10 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, " %s", argv[i]);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    if ((old_dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+    if ((old_dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
-    if (rt_db_get_internal(&old_intern, old_dp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&old_intern, old_dp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
 	return BRLCAD_ERROR;
     }
@@ -171,6 +172,10 @@ ged_fracture_core(struct ged *gedp, int argc, const char *argv[])
 		new_model = nmg_mm();
 		nmg_mrsv(new_model);
 		new_s = BU_LIST_FIRST(shell, &r->s_hd);
+		if (!new_s || !new_s->vu_p) {
+		    bu_log("ERROR: nmg structural problem, fracture.c(%d)\n", __LINE__);
+		    return BRLCAD_ERROR;
+		}
 		v_new = new_s->vu_p->v_p;
 		if (v->vg_p) {
 		    nmg_vertex_gv(v_new, v->vg_p->coord);

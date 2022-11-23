@@ -39,7 +39,7 @@
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
@@ -130,10 +130,14 @@ main(int argc, char **argv)
 		ncpu = atoi( bu_optarg );
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_debug );
+		c = bu_sscanf( bu_optarg, "%x", (unsigned int *)&rt_debug );
+		if (c < 1)
+		    bu_exit(1, "ERROR: unexpected error parsing -x debug option\n");
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&nmg_debug );
+		c = bu_sscanf( bu_optarg, "%x", (unsigned int *)&nmg_debug );
+		if (c < 1)
+		    bu_exit(1, "ERROR: unexpected error parsing -X debug option\n");
 		NMG_debug = nmg_debug;
 		break;
 	    default:
@@ -275,6 +279,9 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     if (curtree->tr_op == OP_NOP)
 	return curtree;
 
+    if (!pathp || pathp->fp_len <= 0)
+	return TREE_NULL;
+
     regions_tried++;
 
     ret_tree = process_boolean(curtree, tsp, pathp);
@@ -360,7 +367,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 			  (int)(tsp->ts_mater.ma_color[2] * 255) );
 		BU_LIST_INIT( &vhead );
 		nmg_r_to_vlist(&vhead, r, 0, &RTG.rtg_vlfree);
-		bn_vlist_to_uplot( fp, &vhead );
+		bv_vlist_to_uplot( fp, &vhead );
 		fclose(fp);
 		if (verbose) bu_log("*** Wrote %s\n", bu_vls_addr(&file));
 	    }

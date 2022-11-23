@@ -77,8 +77,10 @@ create_text_overlay(struct bu_vls *vp)
      * Check if the illuminated solid still exists or it has been killed
      * before Accept was clicked.
      */
-    if (es_edflag >= 0 && illump != SOLID_NULL) {
-	dp = LAST_SOLID(illump);
+    if (es_edflag >= 0 && illump != NULL && illump->s_u_data != NULL) {
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+
+	dp = LAST_SOLID(bdata);
 
 	bu_vls_strcat(vp, "** SOLID -- ");
 	bu_vls_strcat(vp, dp->d_namep);
@@ -86,9 +88,9 @@ create_text_overlay(struct bu_vls *vp)
 
 	vls_solid(vp, &es_int, bn_mat_identity);
 
-	if (illump->s_fullpath.fp_len > 1) {
+	if (bdata->s_fullpath.fp_len > 1) {
 	    bu_vls_strcat(vp, "\n** PATH --  ");
-	    db_path_to_vls(vp, &illump->s_fullpath);
+	    db_path_to_vls(vp, &bdata->s_fullpath);
 	    bu_vls_strcat(vp, ": ");
 
 	    /* print the evaluated (path) solid parameters */
@@ -97,13 +99,15 @@ create_text_overlay(struct bu_vls *vp)
     }
 
     /* display path info for object editing also */
-    if (STATE == ST_O_EDIT) {
+    if (STATE == ST_O_EDIT && illump != NULL && illump->s_u_data != NULL) {
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+
 	bu_vls_strcat(vp, "** PATH --  ");
-	db_path_to_vls(vp, &illump->s_fullpath);
+	db_path_to_vls(vp, &bdata->s_fullpath);
 	bu_vls_strcat(vp, ": ");
 
 	/* print the evaluated (path) solid parameters */
-	if (illump->s_Eflag == 0) {
+	if (illump->s_old.s_Eflag == 0) {
 	    mat_t new_mat;
 	    /* NOT an evaluated region */
 	    /* object edit option selected */
@@ -238,11 +242,13 @@ dotitles(struct bu_vls *overlay_vls)
 
     /* Set the Tcl variables to the appropriate values. */
 
-    if (illump != SOLID_NULL) {
+    if (illump != NULL && illump->s_u_data != NULL) {
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+
 	struct bu_vls path_lhs = BU_VLS_INIT_ZERO;
 	struct bu_vls path_rhs = BU_VLS_INIT_ZERO;
 	struct directory *dp;
-	struct db_full_path *dbfp = &illump->s_fullpath;
+	struct db_full_path *dbfp = &bdata->s_fullpath;
 
 	if (!dbfp) {
 	    bu_vls_free(&vls);
@@ -335,7 +341,7 @@ dotitles(struct bu_vls *overlay_vls)
     dm_set_line_attr(DMP, mged_variables->mv_linewidth, 0);
 
     /* Label the vertices of the edited solid */
-    if (es_edflag >= 0 || (STATE == ST_O_EDIT && illump->s_Eflag == 0)) {
+    if (es_edflag >= 0 || (STATE == ST_O_EDIT && illump->s_old.s_Eflag == 0)) {
 	mat_t xform;
 	struct rt_point_labels pl[8+1];
 	point_t lines[2*4];	/* up to 4 lines to draw */
@@ -416,9 +422,12 @@ dotitles(struct bu_vls *overlay_vls)
 	/*
 	 * Print information about object illuminated
 	 */
-	if (illump != SOLID_NULL &&
+	if (illump != NULL && illump->s_u_data != NULL &&
 	    (STATE==ST_O_PATH || STATE==ST_O_PICK || STATE==ST_S_PICK)) {
-	    for (i=0; i < illump->s_fullpath.fp_len; i++) {
+
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+
+	    for (i=0; i < bdata->s_fullpath.fp_len; i++) {
 		if (i == (size_t)ipathpos  &&  STATE == ST_O_PATH) {
 		    dm_set_fg(DMP,
 				   color_scheme->cs_state_text1[0],
@@ -433,7 +442,7 @@ dotitles(struct bu_vls *overlay_vls)
 			       color_scheme->cs_state_text2[1],
 			       color_scheme->cs_state_text2[2], 1, 1.0);
 		dm_draw_string_2d(DMP,
-				  DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep,
+				  DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep,
 				  GED2PM1(x), GED2PM1(y), 0, 0);
 		y += MENU_DY;
 	    }
@@ -453,7 +462,7 @@ dotitles(struct bu_vls *overlay_vls)
 	    mmenu_display(y);
 
 	    /* print parameter locations on screen */
-	    if (STATE == ST_O_EDIT && illump->s_Eflag) {
+	    if (STATE == ST_O_EDIT && illump->s_old.s_Eflag) {
 		/* region is a processed region */
 		MAT4X3PNT(temp, view_state->vs_model2objview, es_keypoint);
 		xloc = (int)(temp[X]*GED_MAX);
@@ -580,18 +589,21 @@ dotitles(struct bu_vls *overlay_vls)
 	Tcl_SetVar(INTERP, bu_vls_addr(&vls), "", TCL_GLOBAL_ONLY);
     }
 
-    if (illump != SOLID_NULL) {
+    if (illump != NULL && illump->s_u_data != NULL) {
+
+	struct ged_bv_data *bdata = (struct ged_bv_data *)illump->s_u_data;
+
 	if (mged_variables->mv_faceplate && ss_line_not_drawn) {
 	    bu_vls_trunc(&vls, 0);
 
 	    /* Illuminated path */
 	    bu_vls_strcat(&vls, " Path: ");
-	    for (i=0; i < illump->s_fullpath.fp_len; i++) {
+	    for (i=0; i < bdata->s_fullpath.fp_len; i++) {
 		if (i == (size_t)ipathpos  &&
 		    (STATE == ST_O_PATH || STATE == ST_O_EDIT))
 		    bu_vls_strcat(&vls, "/__MATRIX__");
 		bu_vls_printf(&vls, "/%s",
-			      DB_FULL_PATH_GET(&illump->s_fullpath, i)->d_namep);
+			      DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep);
 	    }
 	    dm_set_fg(DMP,
 			   color_scheme->cs_status_text2[0],

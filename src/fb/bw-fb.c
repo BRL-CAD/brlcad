@@ -185,9 +185,9 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    int x, y, n;
-    long xout, yout;		/* number of screen output lines */
-    long xstart, xskip;
+    int x=0, y=0, n=0;
+    long xout=1, yout=1;		/* number of screen output lines */
+    long xstart=0, xskip=0;
 
     bu_setprogname(argv[0]);
 
@@ -253,7 +253,7 @@ main(int argc, char **argv)
     if (clear) {
 	fb_clear(fbp, PIXEL_NULL);
     }
-    if (zoom) {
+    if (zoom && xout && yout) {
 	/* Zoom in, and center the file */
 	fb_zoom(fbp, scr_width/xout, scr_height/yout);
 	if (inverse)

@@ -34,6 +34,7 @@
 
 #include "bu/app.h"
 #include "bu/getopt.h"
+#include "bu/malloc.h"
 #include "bu/exit.h"
 
 
@@ -223,12 +224,12 @@ doit(void)
 
     i = ras.ras_width * ras.ras_height;
     /* allocate buffer for the pix file */
-    if ((pix=(unsigned char *)malloc(i*3)) == (unsigned char *)NULL) {
+    if ((pix=(unsigned char *)bu_calloc(i, 3, "pix")) == (unsigned char *)NULL) {
 	bu_exit(1, "%s: cannot get memory for a %zu x %zu pix file\n",
 		progname, ras.ras_width, ras.ras_height);
     }
 
-    if ((rast=(unsigned char *)malloc(i)) == (unsigned char *)NULL) {
+    if ((rast=(unsigned char *)bu_calloc(i, 1, "rast")) == (unsigned char *)NULL) {
 	bu_exit(1, "%s: cannot get memory for a %zu x %zu pixrect\n",
 		progname, ras.ras_width, ras.ras_height);
     }

@@ -306,6 +306,13 @@ BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
  * libbu replacement for Tcl's ascii list to argc/argv functionality
  * (Note: function signature duplicates that of Tcl_SplitList)
  *
+ * Caller is responsible for freeing output argv array with bu_free(),
+ * but NOT the strings within argv.
+ *
+ * @param       list_str input string from caller
+ * @param[out]  argc pointer to variable that will hold number of entries in argv
+ * @param[out]  argv pointer to the parsed array of list items
+ *
  * Returns 0 if parsing was successful
  */
 BU_EXPORT extern int bu_argv_from_tcl_list(const char *list_str,
@@ -353,8 +360,8 @@ BU_EXPORT extern char **bu_argv_dupinsert(int insert, size_t insertArgc, const c
  * max_dist is defined, calculation will terminate once that distance is reached
  * and max_dist will be returned.  When max_dist is 0, the calculation will
  * proceed up to an internally defined calculation limit. */
-BU_EXPORT unsigned long
-bu_editdist(const char *s1, const char *s2, unsigned long max_dist);
+BU_EXPORT size_t
+bu_editdist(const char *s1, const char *s2);
 
 
 __END_DECLS

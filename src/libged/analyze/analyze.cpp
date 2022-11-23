@@ -36,9 +36,9 @@ extern "C" {
 extern "C" {
 #include "bu/cmd.h"
 #include "bu/opt.h"
-#include "../ged_private.h"
 #include "./ged_analyze.h"
 }
+#include "../ged_private.h"
 
 #define DB_SOLID INT_MAX
 #define DB_NON_SOLID INT_MAX - 1
@@ -279,11 +279,11 @@ analyze_do_summary(struct ged *gedp, const struct rt_db_internal *ip)
 	    analyze_general(gedp, ip);
 	    break;
 
-	 case ID_EXTRUDE:
+	case ID_EXTRUDE:
 	    analyze_general(gedp, ip);
 	    break;
 
-	 case ID_RHC:
+	case ID_RHC:
 	    analyze_general(gedp, ip);
 	    break;
 
@@ -321,7 +321,7 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
 
     /* use the names that were input */
     for (int i = 0; i < argc; i++) {
-	struct directory *ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[i], LOOKUP_NOISY);
+	struct directory *ndp = db_lookup(gedp->dbip,  argv[i], LOOKUP_NOISY);
 	if (ndp == RT_DIR_NULL)
 	    continue;
 
@@ -345,7 +345,7 @@ clear_obj(struct ged *gedp, const char *name)
     av[1] = "-f";
     av[2] = "-q";
     av[3] = name;
-    ged_kill(gedp, 4, (const char **)av);
+    ged_exec(gedp, 4, (const char **)av);
     bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
 }
 
@@ -360,7 +360,7 @@ mv_obj(struct ged *gedp, const char *n1, const char *n2)
     av[0] = "mv";
     av[1] = n1;
     av[2] = n2;
-    ged_move(gedp, 3, (const char **)av);
+    ged_exec(gedp, 3, (const char **)av);
     bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_cstr(&tmpstr));
 }
 
@@ -399,16 +399,16 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     int ac = bu_opt_parse(NULL, argc, argv, d);
     if (help) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     if (ac < 2) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     argc = ac;
 
     if (bu_vls_strlen(&oname)) {
-	struct directory *dp_out = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
+	struct directory *dp_out = db_lookup(gedp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
 	if (dp_out != RT_DIR_NULL) {
 	    bu_vls_sprintf(gedp->ged_result_str, "specified output object %s already exists.\n", bu_vls_cstr(&oname));
 	    bu_vls_free(&oname);
@@ -418,8 +418,8 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 
     long ret = 0;
     const char *tmpname = "___analyze_cmd_intersect_tmp_obj__";
-    struct directory *dp1 = db_lookup(gedp->ged_wdbp->dbip, argv[0], LOOKUP_NOISY);
-    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    struct directory *dp1 = db_lookup(gedp->dbip, argv[0], LOOKUP_NOISY);
+    struct directory *dp2 = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
     op_func_ptr of = _analyze_find_processor(gc, DB_OP_INTERSECT, dp1->d_minor_type, dp2->d_minor_type);
     if (!of) {
 	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
@@ -439,8 +439,8 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
 	for (int i = 2; i < argc; i++) {
 	    const char *n1 = tmpname;
 	    const char *n2 = argv[i];
-	    dp1 = db_lookup(gedp->ged_wdbp->dbip, n1, LOOKUP_NOISY);
-	    dp2 = db_lookup(gedp->ged_wdbp->dbip, n2, LOOKUP_NOISY);
+	    dp1 = db_lookup(gedp->dbip, n1, LOOKUP_NOISY);
+	    dp2 = db_lookup(gedp->dbip, n2, LOOKUP_NOISY);
 	    of = _analyze_find_processor(gc, DB_OP_INTERSECT, dp1->d_minor_type, dp2->d_minor_type);
 	    if (!of) {
 		bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
@@ -507,16 +507,16 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     int ac = bu_opt_parse(NULL, argc, argv, d);
     if (help) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     if (ac < 2) {
 	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     argc = ac;
 
     if (bu_vls_strlen(&oname)) {
-	struct directory *dp_out = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
+	struct directory *dp_out = db_lookup(gedp->dbip, bu_vls_cstr(&oname), LOOKUP_QUIET);
 	if (dp_out != RT_DIR_NULL) {
 	    bu_vls_sprintf(gedp->ged_result_str, "specified output object %s already exists.\n", bu_vls_cstr(&oname));
 	    bu_vls_free(&oname);
@@ -526,8 +526,8 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 
     long ret = 0;
     const char *tmpname = "___analyze_cmd_subtract_tmp_obj__";
-    struct directory *dp1 = db_lookup(gedp->ged_wdbp->dbip, argv[0], LOOKUP_NOISY);
-    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    struct directory *dp1 = db_lookup(gedp->dbip, argv[0], LOOKUP_NOISY);
+    struct directory *dp2 = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
     op_func_ptr of = _analyze_find_processor(gc, DB_OP_SUBTRACT, dp1->d_minor_type, dp2->d_minor_type);
     if (!of) {
 	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
@@ -547,8 +547,8 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
 	for (int i = 2; i < argc; i++) {
 	    const char *n1 = tmpname;
 	    const char *n2 = argv[i];
-	    dp1 = db_lookup(gedp->ged_wdbp->dbip, n1, LOOKUP_NOISY);
-	    dp2 = db_lookup(gedp->ged_wdbp->dbip, n2, LOOKUP_NOISY);
+	    dp1 = db_lookup(gedp->dbip, n1, LOOKUP_NOISY);
+	    dp2 = db_lookup(gedp->dbip, n2, LOOKUP_NOISY);
 	    of = _analyze_find_processor(gc, DB_OP_SUBTRACT, dp1->d_minor_type, dp2->d_minor_type);
 	    if (!of) {
 		bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
@@ -629,11 +629,11 @@ _analyze_cmd_help(void *bs, int argc, const char **argv)
 
 
 const struct bu_cmdtab _analyze_cmds[] = {
-      { "summarize",           _analyze_cmd_summarize},
-      { "intersect",           _analyze_cmd_intersect},
-      { "subtract",            _analyze_cmd_subtract},
-      { (char *)NULL,      NULL}
-  };
+    { "summarize",           _analyze_cmd_summarize},
+    { "intersect",           _analyze_cmd_intersect},
+    { "subtract",            _analyze_cmd_subtract},
+    { (char *)NULL,      NULL}
+};
 
 
 extern "C" int
@@ -718,22 +718,21 @@ ged_analyze_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_ERROR;
 }
 
-// Local Variables:
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl analyze_cmd_impl = { "analyze", ged_analyze_core, GED_CMD_DEFAULT };
-    const struct ged_cmd analyze_cmd = { &analyze_cmd_impl };
+struct ged_cmd_impl analyze_cmd_impl = { "analyze", ged_analyze_core, GED_CMD_DEFAULT };
+const struct ged_cmd analyze_cmd = { &analyze_cmd_impl };
 
-    const struct ged_cmd *analyze_cmds[] = { &analyze_cmd, NULL };
+const struct ged_cmd *analyze_cmds[] = { &analyze_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  analyze_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  analyze_cmds, 1 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 

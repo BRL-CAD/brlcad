@@ -39,7 +39,7 @@
   <example><title>List the ident number of a specified region.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>whatid regiona</userinput>
+      <prompt>mged&gt; </prompt><userinput>whatid regiona</userinput>
     </para>
     <para>
        Gets the ident number for regiona.

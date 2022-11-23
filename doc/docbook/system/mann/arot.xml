@@ -48,7 +48,7 @@
     <example><title>Rotating a view or shape 10 degrees about the z axis.</title>
 
       <para>
-	<prompt>mged&gt;</prompt> <userinput>arot 0 0 1 10</userinput>
+	<prompt>mged&gt; </prompt><userinput>arot 0 0 1 10</userinput>
       </para>
       <para>
 	The view or shape is rotated 10 degrees about the z axis.

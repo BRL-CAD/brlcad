@@ -225,7 +225,7 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
@@ -234,7 +234,7 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* get directory pointer for arg */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+    if ((dp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
     /* Checks whether the object is a primitive.*/
@@ -263,7 +263,7 @@ ged_pull_core(struct ged *gedp, int argc, const char *argv[])
      * right to the the head of the tree pulling objects.
      * All new changes are immediately written to database
      */
-    db_functree(gedp->ged_wdbp->dbip, dp, pull_comb, pull_leaf, &rt_uniresource, &mat);
+    db_functree(gedp->dbip, dp, pull_comb, pull_leaf, &rt_uniresource, &mat);
 
    return  BRLCAD_OK;
 }

@@ -33,7 +33,7 @@ int main(int ac, char *av[]) {
 
   GED_INIT(&g, NULL);
 
-  return ged_help(&g, ac, (const char **)av);
+  return ged_exec(&g, ac, (const char **)av);
 }
 
 /*

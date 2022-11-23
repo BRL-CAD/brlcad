@@ -52,6 +52,7 @@ vprintf_flags
     int left_justify;
     ssize_t precision;
 } vflags_t;
+#define VFLAGS_INIT_ZERO {0, 0, 0, 0, 0, 0}
 
 /* private shared function decls */
 BU_EXPORT extern int format_part_status(const char c);

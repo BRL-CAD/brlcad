@@ -68,7 +68,7 @@ ppm_write(icv_image_t *bif, const char *filename)
 	ppm_writeppmrow(fp, pixelrow, cols, (pixval) 255, 0 );
     }
 
-    ppm_freerow(pixelrow);
+    ppm_freerow((void *)pixelrow);
 
     pm_close(fp);
 

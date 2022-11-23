@@ -80,7 +80,7 @@ static int color_by_layer = 0;		/* flag, if set, colors are set by layer */
 struct layer {
     char *name;			/* layer name */
     int color_number;		/* color */
-    struct bn_vert_tree *vert_tree; /* root of vertex tree */
+    struct bg_vert_tree *vert_tree; /* root of vertex tree */
     int *part_tris;			/* list of triangles for current part */
     size_t max_tri;			/* number of triangles currently malloced */
     size_t curr_tri;			/* number of triangles currently being used */
@@ -331,7 +331,7 @@ get_layer()
 	     curr_state->sub_state == POLYLINE_VERTEX_ENTITY_STATE)) {
 	    layers[curr_layer]->vert_tree = layers[old_layer]->vert_tree;
 	} else {
-	    layers[curr_layer]->vert_tree = bn_vert_tree_create();
+	    layers[curr_layer]->vert_tree = bg_vert_tree_create();
 	}
 	layers[curr_layer]->color_number = curr_color;
 	bu_ptbl_init(&layers[curr_layer]->solids, 8, "layers[curr_layer]->solids");
@@ -675,7 +675,7 @@ add_polyline_vertex(fastf_t x, fastf_t y, fastf_t z)
 	polyline_vertex_max = POLYLINE_VERTEX_BLOCK;
     } else if (polyline_vertex_count >= polyline_vertex_max) {
 	polyline_vertex_max += POLYLINE_VERTEX_BLOCK;
-	polyline_verts = (fastf_t *)bu_realloc(polyline_verts, polyline_vertex_max * 3 * sizeof(fastf_t), "polyline_verts");
+	polyline_verts = (fastf_t *)bu_realloc(polyline_verts, sizeof(fastf_t) * 3 * polyline_vertex_max, "polyline_verts");
     }
 
     VSET(&polyline_verts[polyline_vertex_count*3], x, y, z);
@@ -781,7 +781,7 @@ process_entities_polyline_vertex_code(int code)
 		}
 		VSET(tmp_pt1, x, y, z);
 		MAT4X3PNT(tmp_pt2, curr_state->xform, tmp_pt1);
-		polyline_vert_indices[polyline_vert_indices_count++] = bn_vert_tree_add(layers[curr_layer]->vert_tree, tmp_pt2[X], tmp_pt2[Y], tmp_pt2[Z], tol_sq);
+		polyline_vert_indices[polyline_vert_indices_count++] = (int)bg_vert_tree_add(layers[curr_layer]->vert_tree, tmp_pt2[X], tmp_pt2[Y], tmp_pt2[Z], tol_sq);
 		if (verbose) {
 		    bu_log("Added 3D mesh vertex (%g %g %g) index = %d, number = %d\n",
 			   x, y, z, polyline_vert_indices[polyline_vert_indices_count-1],
@@ -916,7 +916,7 @@ process_entities_polyline_code(int code)
 			if (polyline_flag & POLY_CLOSED) {
 			    v2 = v0;
 			    (void)nmg_me(v1, v2, layers[curr_layer]->s);
-			    if (verbose) {
+			    if (verbose && v1 && v1->vg_p && v2 && v2->vg_p) {
 				bu_log("Wire edge (closing polyline): (%g %g %g) <-> (%g %g %g)\n",
 				       V3ARGS(v1->vg_p->coord),
 				       V3ARGS(v2->vg_p->coord));
@@ -1422,7 +1422,7 @@ process_lwpolyline_entities_code(int code)
 		if (polyline_flag & POLY_CLOSED) {
 		    v2 = v0;
 		    (void)nmg_me(v1, v2, layers[curr_layer]->s);
-		    if (verbose) {
+		    if (verbose && v1 && v1->vg_p && v2 && v2->vg_p) {
 			bu_log("Wire edge (closing lwpolyline): (%g %g %g) <-> (%g %g %g)\n",
 			       V3ARGS(v1->vg_p->coord),
 			       V3ARGS(v2->vg_p->coord));
@@ -1466,7 +1466,10 @@ process_line_entities_code(int code)
 	case 21:
 	case 31:
 	    vert_no = code % 10;
-	    coord = code / 10 - 1;
+	    coord = (code / 10) - 1;
+	    if (vert_no != 0 && vert_no != 1) {
+		break;
+	    }
 	    line_pt[vert_no][coord] = atof(line) * units_conv[units] * scale_factor;
 	    if (verbose) {
 		bu_log("LINE vertex #%d coord #%d = %g\n", vert_no, coord, line_pt[vert_no][coord]);
@@ -1902,7 +1905,7 @@ drawString(char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPo
 
     BU_LIST_INIT(&vhead);
 
-    copyOfText = (char *)bu_calloc((unsigned int)strlen(theText)+1, 1, "copyOfText");
+    copyOfText = (char *)bu_calloc(strlen(theText)+1, 1, "copyOfText");
     c = theText;
     cp = copyOfText;
     (void)convertSecretCodes(c, cp, &maxLineLen);
@@ -1922,46 +1925,46 @@ drawString(char *theText, point_t firstAlignmentPoint, point_t secondAlignmentPo
 	xScale = allowedLength / stringLength;
 	yScale = textHeight;
 	scale = xScale < yScale ? xScale : yScale;
-	bn_vlist_2string(&vhead, &free_hd, copyOfText,
+	bv_vlist_2string(&vhead, &free_hd, copyOfText,
 			 firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			 scale, textRotation);
 	nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	BN_FREE_VLIST(&free_hd, &vhead);
+	BV_FREE_VLIST(&free_hd, &vhead);
     } else if (horizAlignment == LEFT && vertAlignment == BASELINE) {
-	bn_vlist_2string(&vhead, &free_hd, copyOfText,
+	bv_vlist_2string(&vhead, &free_hd, copyOfText,
 			 firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			 textHeight, textRotation);
 	nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	BN_FREE_VLIST(&free_hd, &vhead);
+	BV_FREE_VLIST(&free_hd, &vhead);
     } else if ((horizAlignment == CENTER || horizAlignment == HMIDDLE) && vertAlignment == BASELINE) {
 	double len = stringLength * textHeight;
 	firstAlignmentPoint[X] = secondAlignmentPoint[X] - cos(textRotation) * len / 2.0;
 	firstAlignmentPoint[Y] = secondAlignmentPoint[Y] - sin(textRotation) * len / 2.0;
-	bn_vlist_2string(&vhead, &free_hd, copyOfText,
+	bv_vlist_2string(&vhead, &free_hd, copyOfText,
 			 firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			 textHeight, textRotation);
 	nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	BN_FREE_VLIST(&free_hd, &vhead);
+	BV_FREE_VLIST(&free_hd, &vhead);
     } else if ((horizAlignment == CENTER || horizAlignment == HMIDDLE) && vertAlignment == VMIDDLE) {
 	double len = stringLength * textHeight;
 	firstAlignmentPoint[X] = secondAlignmentPoint[X] - len / 2.0;
 	firstAlignmentPoint[Y] = secondAlignmentPoint[Y] - textHeight / 2.0;
 	firstAlignmentPoint[X] = firstAlignmentPoint[X] - (1.0 - cos(textRotation)) * len / 2.0;
 	firstAlignmentPoint[Y] = firstAlignmentPoint[Y] - sin(textRotation) * len / 2.0;
-	bn_vlist_2string(&vhead, &free_hd, copyOfText,
+	bv_vlist_2string(&vhead, &free_hd, copyOfText,
 			 firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			 textHeight, textRotation);
 	nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	BN_FREE_VLIST(&free_hd, &vhead);
+	BV_FREE_VLIST(&free_hd, &vhead);
     } else if (horizAlignment == RIGHT && vertAlignment == BASELINE) {
 	double len = stringLength * textHeight;
 	firstAlignmentPoint[X] = secondAlignmentPoint[X] - cos(textRotation) * len;
 	firstAlignmentPoint[Y] = secondAlignmentPoint[Y] - sin(textRotation) * len;
-	bn_vlist_2string(&vhead, &free_hd, copyOfText,
+	bv_vlist_2string(&vhead, &free_hd, copyOfText,
 			 firstAlignmentPoint[X], firstAlignmentPoint[Y],
 			 textHeight, textRotation);
 	nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	BN_FREE_VLIST(&free_hd, &vhead);
+	BV_FREE_VLIST(&free_hd, &vhead);
     } else {
 	bu_log("cannot handle this alignment: horiz = %d, vert = %d\n", horizAlignment, vertAlignment);
     }
@@ -1986,7 +1989,7 @@ drawMtext(char *text, int attachPoint, int UNUSED(drawingDirection), double text
     double scale = 1.0;
     double xdel = 0.0, ydel = 0.0;
     double radians = rotationAngle * DEG2RAD;
-    char *copyOfText = (char *)bu_calloc((unsigned int)strlen(text)+1, 1, "copyOfText");
+    char *copyOfText = (char *)bu_calloc(strlen(text)+1, 1, "copyOfText");
 
     BU_LIST_INIT(&vhead);
 
@@ -2058,11 +2061,11 @@ drawMtext(char *text, int attachPoint, int UNUSED(drawingDirection), double text
 		done = 1;
 	    }
 	    *cp = '\0';
-	    bn_vlist_2string(&vhead, &free_hd, c,
+	    bv_vlist_2string(&vhead, &free_hd, c,
 			     startx, starty,
 			     scale, rotationAngle);
 	    nmg_vlist_to_eu(&vhead, layers[curr_layer]->s);
-	    BN_FREE_VLIST(&free_hd, &vhead);
+	    BV_FREE_VLIST(&free_hd, &vhead);
 	    c = ++cp;
 	    startx -= lineSpace * ydir[X];
 	    starty -= lineSpace * ydir[Y];
@@ -2325,7 +2328,8 @@ process_mtext_entities_code(int code)
 		    bu_free(t, "temp char buf");
 	    }
 	    bu_vls_free(vls);
-	    BU_PUT(vls, struct bu_vls);
+	    if (vls)
+		BU_PUT(vls, struct bu_vls);
 
 	    attachPoint = 0;
 	    textHeight = 0.0;
@@ -2716,7 +2720,8 @@ process_spline_entities_code(int code)
 	case 210:
 	case 220:
 	case 230:
-	    coord = code / 10 - 21;
+	    /* coord assignment is unread - unimplemented? */
+	    // coord = code / 10 - 21;
 	    break;
 	case 70:
 	    flag = atoi(line);
@@ -2734,10 +2739,8 @@ process_spline_entities_code(int code)
 	case 73:
 	    numCtlPts = atoi(line);
 	    if (numCtlPts > 0) {
-		ctlPts = (fastf_t *)bu_malloc(numCtlPts*3*sizeof(fastf_t),
-					      "spline control points");
-		weights = (fastf_t *)bu_malloc(numCtlPts*sizeof(fastf_t),
-					       "spline weights");
+		ctlPts = (fastf_t *)bu_malloc(sizeof(fastf_t) * 3 * numCtlPts, "spline control points");
+		weights = (fastf_t *)bu_malloc(sizeof(fastf_t) * numCtlPts, "spline weights");
 	    }
 	    for (i = 0; i < numCtlPts; i++) {
 		weights[i] = 1.0;
@@ -2746,8 +2749,7 @@ process_spline_entities_code(int code)
 	case 74:
 	    numFitPts = atoi(line);
 	    if (numFitPts > 0) {
-		fitPts = (fastf_t *)bu_malloc(numFitPts*3*sizeof(fastf_t),
-					      "fit control points");
+		fitPts = (fastf_t *)bu_malloc(sizeof(fastf_t) * 3 * numFitPts, "fit control points");
 	    }
 	    break;
 	case 42:
@@ -2759,25 +2761,31 @@ process_spline_entities_code(int code)
 	case 12:
 	case 22:
 	case 32:
-	    coord = code / 10 - 1;
 	    /* start tangent, unimplemented */
+	    // coord = code / 10 - 1;
 	    break;
 	case 13:
 	case 23:
 	case 33:
-	    coord = code / 10 - 1;
 	    /* end tangent, unimplemented */
+	    // coord = code / 10 - 1;
 	    break;
 	case 40:
+	    if (!knots)
+		bu_exit(BRLCAD_ERROR, "dxf-g - trying to access knots array before allocation at dxf-g.c line %d\n", __LINE__);
 	    knots[knotCount++] = atof(line);
 	    break;
 	case 41:
+	    if (!weights)
+		bu_exit(BRLCAD_ERROR, "dxf-g - trying to access weights array before allocation at dxf-g.c line %d\n", __LINE__);
 	    weights[weightCount++] = atof(line);
 	    break;
 	case 10:
 	case 20:
 	case 30:
 	    coord = (code / 10) - 1 + ctlPtCount*3;
+	    if (!ctlPts)
+		bu_exit(BRLCAD_ERROR, "dxf-g - trying to access ctlPts[%d] before allocation at dxf-g.c line %d\n", coord, __LINE__);
 	    ctlPts[coord] = atof(line) * units_conv[units] * scale_factor;
 	    subCounter++;
 	    if (subCounter > 2) {
@@ -2789,6 +2797,8 @@ process_spline_entities_code(int code)
 	case 21:
 	case 31:
 	    coord = (code / 10) - 1 + fitPtCount*3;
+	    if (!fitPts)
+		bu_exit(BRLCAD_ERROR, "dxf-g - trying to access fitPts[%d] before allocation at dxf-g.c line %d\n", coord, __LINE__);
 	    fitPts[coord] = atof(line) * units_conv[units] * scale_factor;
 	    subCounter2++;
 	    if (subCounter2 > 2) {
@@ -2801,6 +2811,8 @@ process_spline_entities_code(int code)
 	    break;
 	case 0:
 	    /* draw the spline */
+	    if (!knots)
+		bu_exit(BRLCAD_ERROR, "dxf-g - trying to draw spline with no knots at dxf-g.c line %d\n", __LINE__);
 	    get_layer();
 	    layers[curr_layer]->spline_count++;
 
@@ -2832,7 +2844,7 @@ process_spline_entities_code(int code)
 	    paramDelta = (stopParam - startParam) / (double)splineSegs;
 	    nmg_nurb_c_eval(crv, startParam, pt);
 	    for (i = 0; i < splineSegs; i++) {
-		fastf_t param = startParam + paramDelta * (i+1);
+		fastf_t param = startParam + paramDelta * ((fastf_t)i+1);
 		eu = nmg_me(v1, v2, layers[curr_layer]->s);
 		v1 = eu->vu_p->v_p;
 		if (i == 0) {
@@ -2928,9 +2940,9 @@ process_3dface_entities_code(int code)
 		point_t tmp_pt1;
 		MAT4X3PNT(tmp_pt1, curr_state->xform, pts[vert_no]);
 		VMOVE(pts[vert_no], tmp_pt1);
-		face[vert_no] = bn_vert_tree_add(layers[curr_layer]->vert_tree,
-						 V3ARGS(pts[vert_no]),
-						 tol_sq);
+		face[vert_no] = (int)bg_vert_tree_add(layers[curr_layer]->vert_tree,
+						      V3ARGS(pts[vert_no]),
+						      tol_sq);
 	    }
 	    add_triangle(face[0], face[1], face[2], curr_layer);
 	    add_triangle(face[2], face[3], face[0], curr_layer);
@@ -3010,7 +3022,7 @@ nmg_wire_edges_to_sketch(struct model *m)
     struct shell *s;
     struct edgeuse *eu;
     struct vertex *v;
-    struct bn_vert_tree *tree;
+    struct bg_vert_tree *tree;
     size_t idx;
 
     BU_ALLOC(skt, struct rt_sketch_internal);
@@ -3019,7 +3031,7 @@ nmg_wire_edges_to_sketch(struct model *m)
     VSET(skt->u_vec, 1.0, 0.0, 0.0);
     VSET(skt->v_vec, 0.0, 1.0, 0.0);
 
-    tree = bn_vert_tree_create();
+    tree = bg_vert_tree_create();
     bu_ptbl_init(&segs, 64, "segs for sketch");
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
@@ -3038,9 +3050,9 @@ nmg_wire_edges_to_sketch(struct model *m)
 		BU_ALLOC(lseg, struct line_seg);
 		lseg->magic = CURVE_LSEG_MAGIC;
 		v = eu->vu_p->v_p;
-		lseg->start = bn_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
+		lseg->start = (int)bg_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
 		v = eu->eumate_p->vu_p->v_p;
-		lseg->end = bn_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
+		lseg->end = (int)bg_vert_tree_add(tree, V3ARGS(v->vg_p->coord), tol_sq);
 		if (verbose) {
 		    bu_log("making sketch line seg from #%d (%g %g %g) to #%d (%g %g %g)\n",
 			   lseg->start, V3ARGS(&tree->the_array[lseg->start]),
@@ -3070,7 +3082,7 @@ nmg_wire_edges_to_sketch(struct model *m)
 	skt->curve.segment[idx] = ptr;
     }
 
-    bn_vert_tree_destroy(tree);
+    bg_vert_tree_destroy(tree);
     bu_ptbl_free(&segs);
 
     return skt;
@@ -3198,7 +3210,7 @@ main(int argc, char *argv[])
     else
 	name_len = ptr2 - ptr1;
 
-    base_name = (char *)bu_calloc((unsigned int)name_len + 1, 1, "base_name");
+    base_name = (char *)bu_calloc(name_len + 1, 1, "base_name");
     bu_strlcpy(base_name , ptr1 , name_len+1);
 
     mk_id(out_fp, base_name);
@@ -3264,7 +3276,7 @@ main(int argc, char *argv[])
     }
     layers[0]->name = bu_strdup("noname");
     layers[0]->color_number = 7;	/* default white */
-    layers[0]->vert_tree = bn_vert_tree_create();
+    layers[0]->vert_tree = bg_vert_tree_create();
     bu_ptbl_init(&layers[0]->solids, 8, "layers[curr_layer]->solids");
 
     curr_color = layers[0]->color_number;

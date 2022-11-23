@@ -38,7 +38,8 @@ Evalxform()
 {
 
     size_t i;
-    int j, xform;
+    size_t j;
+    long xform;
     struct list *ptr, *ptr1, *ptr_root;
     mat_t rot;
 
@@ -64,7 +65,7 @@ Evalxform()
 		    BU_ALLOC(ptr, struct list);
 		}
 		ptr->prev = ptr1;
-		ptr->index = xform;
+		ptr->index = (int)xform;
 		xform = dir[xform]->trans;
 	    }
 

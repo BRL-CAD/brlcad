@@ -30,6 +30,7 @@
 #include "bn.h"
 #include "rt/db5.h"
 #include "raytrace.h"
+#include "librt_private.h"
 
 
 int
@@ -147,7 +148,7 @@ db5_scan_inmem(
 	}
 	dp_copy = bu_malloc(raw.object_length, "db5_scan_inmem raw dp data");
 	memcpy(dp_copy, current_data, raw.object_length);
-	(*handler)(dbip, &raw, (b_off_t)dp_copy, client_data);
+	(*handler)(dbip, &raw, (b_off_t)(intptr_t)dp_copy, client_data);
 	nrec++;
 	addr += (b_off_t)raw.object_length;
     }
@@ -229,6 +230,13 @@ db_diradd5(
     dp->d_uses = 0;
     dp->d_forw = *headp;
     *headp = dp;
+
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	    (*cb->f)(dbip, dp, 1, cb->u_data);
+	}
+    }
 
     return dp;
 }
@@ -312,6 +320,13 @@ db5_diradd(struct db_i *dbip,
     dp->d_uses = 0;
     dp->d_forw = *headp;
     *headp = dp;
+
+    if (BU_PTBL_IS_INITIALIZED(&dbip->dbi_changed_clbks)) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&dbip->dbi_changed_clbks); i++) {
+	    struct dbi_changed_clbk *cb = (struct dbi_changed_clbk *)BU_PTBL_GET(&dbip->dbi_changed_clbks, i);
+	    (*cb->f)(dbip, dp, 1, cb->u_data);
+	}
+    }
 
     return dp;
 }

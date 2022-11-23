@@ -5,6 +5,10 @@ set(BU_INCLUDE_DIRS
   )
 
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+  # If this becomes a default we'll need to bundle libbson
+  # to ensure it is available - while it is not on by default,
+  # require a system version
+  find_package(BSON REQUIRED)
   set(BU_INCLUDE_DIRS ${BU_INCLUDE_DIRS} ${BSON_INCLUDE_DIR})
 endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
@@ -76,6 +80,7 @@ set(LIBBU_SOURCES
   getcwd.c
   gethostname.c
   getopt.c
+  glob.c
   globals.c
   hash.c
   heap.c

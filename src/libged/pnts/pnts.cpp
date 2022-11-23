@@ -59,7 +59,7 @@ _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale
     vect_t v1pp, v2pp, v3pp = {0.0, 0.0, 0.0};
     vect_t v1fp, v2fp, v3fp = {0.0, 0.0, 0.0};
     mat_t rot;
-    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    struct bn_tol btol = BN_TOL_INIT_TOL;
 
     VSET(n1, 0, 0, 1);
     VSET(v1, 0, ty1, 0);
@@ -84,7 +84,7 @@ _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale
     bot_ip->faces[pntcnt*3+2] = pntcnt*3+2;
 }
 
-/* TODO - need some generic version of this logic in libbn - 
+/* TODO - need some generic version of this logic in libbn -
  * used in libanalyze's NIRT as well */
 void _pnts_fastf_t_to_vls(struct bu_vls *o, fastf_t d, int p)
 {
@@ -145,7 +145,7 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
     bot_name = argv[1];
 
     /* get pnt */
-    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
@@ -303,7 +303,7 @@ _pnts_wn(struct ged *gedp, int argc, const char **argv)
     (void)bu_opt_fastf_t(NULL, 1, (const char **)&argv[3], (void *)&(qp[Z]));
 
     /* get pnt */
-    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
@@ -388,7 +388,7 @@ _pnts_to_wnmesh(struct ged *gedp, int argc, const char **argv)
     bot_name = argv[1];
 
     /* get pnt */
-    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
@@ -507,7 +507,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     int flags = 0;
     double avg_thickness = 0.0;
     struct rt_db_internal internal;
-    struct bn_tol btol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1e-6, 1.0 - 1e-6 };
+    struct bn_tol btol = BN_TOL_INIT_TOL;
     struct rt_pnts_internal *pnts = NULL;
     const char *pnt_prim= NULL;
     const char *obj_name = NULL;
@@ -554,7 +554,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     pnt_prim = argv[1];
 
     /* Sanity */
-    if (db_lookup(gedp->ged_wdbp->dbip, obj_name, LOOKUP_QUIET) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, obj_name, LOOKUP_QUIET) == RT_DIR_NULL) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s doesn't exist!\n", obj_name);
 	return BRLCAD_ERROR;
     }
@@ -580,7 +580,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 	point_t obj_min, obj_max;
 	VSETALL(rpp_min, INFINITY);
 	VSETALL(rpp_max, -INFINITY);
-	ged_get_obj_bounds(gedp, 1, (const char **)&obj_name, 0, obj_min, obj_max);
+	rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&obj_name, 0, obj_min, obj_max);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 	len_tol = DIST_PNT_PNT(rpp_max, rpp_min) * 0.01;
@@ -598,7 +598,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
     pnts->scale = 0.0;
     pnts->type = RT_PNT_TYPE_NRM;
 
-    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->ged_wdbp->dbip, obj_name, &btol, flags, max_pnts, max_time, 2)) {
+    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->dbip, obj_name, &btol, flags, max_pnts, max_time, 2)) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: point generation failed\n");
 	return BRLCAD_ERROR;
     }
@@ -724,7 +724,7 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, pnt_prim, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, pnt_prim, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_sprintf(gedp->ged_result_str, "Error: object %s already exists\n", pnt_prim);
 	bu_vls_free(&unit);
 	bu_vls_free(&fmt);
@@ -873,7 +873,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     }
 
     /* get pnt */
-    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
@@ -904,13 +904,13 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 	fprintf(fp, "property double y\n");
 	fprintf(fp, "property double z\n");
 	if (pnts->type == RT_PNT_TYPE_NRM || pnts->type == RT_PNT_TYPE_SCA_NRM
-		|| pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
+	   || pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
 	    fprintf(fp, "property double nx\n");
 	    fprintf(fp, "property double ny\n");
 	    fprintf(fp, "property double nz\n");
 	}
 	if (pnts->type == RT_PNT_TYPE_COL || pnts->type == RT_PNT_TYPE_COL_SCA
-		|| pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
+	   || pnts->type == RT_PNT_TYPE_COL_NRM || pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
 	    fprintf(fp, "property uchar red\n");
 	    fprintf(fp, "property uchar green\n");
 	    fprintf(fp, "property uchar blue\n");
@@ -1280,7 +1280,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     /* prompt for point-cloud name */
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[0]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     GED_CHECK_EXISTS(gedp, argv[1], LOOKUP_QUIET, BRLCAD_ERROR);
@@ -1288,13 +1288,13 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     /* prompt for data file name with path */
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[1]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     /* prompt for data file format */
     if (argc < 4) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[2]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     /* Validate 'point file data format string' and return point-cloud type. */
@@ -1306,7 +1306,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     /* prompt for data file units */
     if (argc < 5) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[3]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     /* Validate unit */
@@ -1321,7 +1321,7 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     /* prompt for default point size */
     if (argc < 6) {
 	bu_vls_printf(gedp->ged_result_str, "%s", prompt[4]);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     psize = strtod(argv[5], &endp);
@@ -1347,37 +1347,36 @@ ged_make_pnts_core(struct ged *gedp, int argc, const char *argv[])
     nargv[8] = argv[2];
     nargv[9] = argv[1];
 
-    return ged_pnts(gedp, 10, (const char **)nargv);
+    return ged_exec(gedp, 10, (const char **)nargv);
 }
 
-// Local Variables:
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl pnts_cmd_impl = { "pnts", ged_pnts_core, GED_CMD_DEFAULT };
-    const struct ged_cmd pnts_cmd = { &pnts_cmd_impl };
+struct ged_cmd_impl pnts_cmd_impl = { "pnts", ged_pnts_core, GED_CMD_DEFAULT };
+const struct ged_cmd pnts_cmd = { &pnts_cmd_impl };
 
-    struct ged_cmd_impl make_pnts_cmd_impl = { "make_pnts", ged_make_pnts_core, GED_CMD_DEFAULT };
-    const struct ged_cmd make_pnts_cmd = { &make_pnts_cmd_impl };
+struct ged_cmd_impl make_pnts_cmd_impl = { "make_pnts", ged_make_pnts_core, GED_CMD_DEFAULT };
+const struct ged_cmd make_pnts_cmd = { &make_pnts_cmd_impl };
 
-    const struct ged_cmd *pnts_cmds[] = { &make_pnts_cmd,  &pnts_cmd, NULL };
+const struct ged_cmd *pnts_cmds[] = { &make_pnts_cmd,  &pnts_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  pnts_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  pnts_cmds, 2 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

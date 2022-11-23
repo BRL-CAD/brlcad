@@ -138,10 +138,10 @@
 
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" width="4in" fileref="../../books/images/tutorial_series_volIII_fig01.png" format="PNG"/>
+	    <imagedata align="center" width="4in" fileref="../books/images/tutorial_series_volIII_fig01.png" format="PNG"/>
           </imageobject>
 	  <imageobject role="fo">
-	    <imagedata width="80%" scalefit="1" fileref="../../books/images/tutorial_series_volIII_fig01.png" format="PNG"/>
+	    <imagedata width="80%" scalefit="1" fileref="../books/images/tutorial_series_volIII_fig01.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </figure>
@@ -150,10 +150,10 @@
 
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" width="4in" fileref="../../books/images/tutorial_series_volIII_fig02.png" format="PNG"/>
+	    <imagedata align="center" width="4in" fileref="../books/images/tutorial_series_volIII_fig02.png" format="PNG"/>
           </imageobject>
 	  <imageobject role="fo">
-	    <imagedata width="80%" scalefit="1" fileref="../../books/images/tutorial_series_volIII_fig02.png" format="PNG"/>
+	    <imagedata width="80%" scalefit="1" fileref="../books/images/tutorial_series_volIII_fig02.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </figure>
@@ -231,10 +231,10 @@
 
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" width="4in" fileref="../../books/images/tutorial_series_volIII_fig03.png" format="PNG"/>
+	    <imagedata align="center" width="4in" fileref="../books/images/tutorial_series_volIII_fig03.png" format="PNG"/>
           </imageobject>
 	  <imageobject role="fo">
-	    <imagedata width="4in" scalefit="1" fileref="../../books/images/tutorial_series_volIII_fig03.png" format="PNG"/>
+	    <imagedata width="4in" scalefit="1" fileref="../books/images/tutorial_series_volIII_fig03.png" format="PNG"/>
 	  </imageobject>
 	</mediaobject>
       </figure>
@@ -289,8 +289,8 @@
 	      </para>
 	      <para>
 		<inlinemediaobject>
-                   <imageobject role="html"><imagedata width="1in" scalefit="1" fileref="../../books/images/tutorial_series_volIII_fig30.png"/></imageobject>
-                   <imageobject role="fo"><imagedata  fileref="../../books/images/tutorial_series_volIII_fig30.png"/></imageobject>
+                   <imageobject role="html"><imagedata width="1in" scalefit="1" fileref="../books/images/tutorial_series_volIII_fig30.png"/></imageobject>
+                   <imageobject role="fo"><imagedata  fileref="../books/images/tutorial_series_volIII_fig30.png"/></imageobject>
                 </inlinemediaobject>
 	      </para>
 	    </entry>
@@ -312,8 +312,8 @@
 	      </para>
 	      <para>
 		<inlinemediaobject>
-                    <imageobject role="html"><imagedata width="1in" scalefit="1" fileref="../../books/images/tutorial_series_volIII_fig21.png"/></imageobject>
-                    <imageobject role="fo"><imagedata fileref="../../books/images/tutorial_series_volIII_fig21.png"/></imageobject>
+                    <imageobject role="html"><imagedata width="1in" scalefit="1" fileref="../books/images/tutorial_series_volIII_fig21.png"/></imageobject>
+                    <imageobject role="fo"><imagedata fileref="../books/images/tutorial_series_volIII_fig21.png"/></imageobject>
                 </inlinemediaobject>
 	      </para>
 	    </entry>
@@ -333,8 +333,8 @@
 	      </para>
 	      <para>
 		<inlinemediaobject>
-                    <imageobject role="html"><imagedata width="1in" scalefit="1" fileref="../../books/images/tutorial_series_volIII_fig22.png"/></imageobject>
-                    <imageobject role="fo"><imagedata fileref="../../books/images/tutorial_series_volIII_fig22.png"/></imageobject>
+                    <imageobject role="html"><imagedata width="1in" scalefit="1" fileref="../books/images/tutorial_series_volIII_fig22.png"/></imageobject>
+                    <imageobject role="fo"><imagedata fileref="../books/images/tutorial_series_volIII_fig22.png"/></imageobject>
                 </inlinemediaobject>
 	      </para>
 	    </entry>
@@ -476,10 +476,10 @@
 
 		    <mediaobject>
 		       <imageobject role="html">
-			   <imagedata fileref="../../books/images/tutorial_series_volIII_table_image_1.png" format="PNG"/>
+			   <imagedata fileref="../books/images/tutorial_series_volIII_table_image_1.png" format="PNG"/>
 		       </imageobject>
 		       <imageobject role="fo">
-			   <imagedata fileref="../../books/images/tutorial_series_volIII_table_image_1.png" format="PNG"/>
+			   <imagedata fileref="../books/images/tutorial_series_volIII_table_image_1.png" format="PNG"/>
 		       </imageobject>
 		       <caption>
 			  <para>[a] Intersection and union symbols presented here
@@ -828,10 +828,10 @@ mvall oldname newname
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig04.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig04.png" format="PNG"/>
 	      </imageobject>
 	      <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig04.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig04.png" format="PNG"/>
 	      </imageobject>
 
 	    </mediaobject>
@@ -840,10 +840,10 @@ mvall oldname newname
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig05.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig05.png" format="PNG"/>
 	        </imageobject>
               <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig05.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig05.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1026,10 +1026,10 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject role="html">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig24.png" format="PNG"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig24.png" format="PNG"/>
  		          </imageobject>
 			  <imageobject role="fo">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig24.png" format="PNG"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig24.png" format="PNG"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1059,10 +1059,10 @@ mvall oldname newname
 			<para>
 				<inlinemediaobject>
 					<imageobject role="html">
-						<imagedata fileref="../../books/images/tutorial_series_volIII_fig23.png"/>
+						<imagedata fileref="../books/images/tutorial_series_volIII_fig23.png"/>
 					</imageobject>
 					<imageobject role="fo">
-						<imagedata fileref="../../books/images/tutorial_series_volIII_fig23.png"/>
+						<imagedata fileref="../books/images/tutorial_series_volIII_fig23.png"/>
 					</imageobject>
 				</inlinemediaobject>
 			</para>
@@ -1076,10 +1076,10 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject role="html">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig25.png" format="PNG"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig25.png" format="PNG"/>
 		          </imageobject>
 			  <imageobject role="fo">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig25.png" format="PNG"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig25.png" format="PNG"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1112,10 +1112,10 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject role="html">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig26.png" format="PNG"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig26.png" format="PNG"/>
 		          </imageobject>
 	                  <imageobject role="fo">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig26.png" format="PNG"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig26.png" format="PNG"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1157,10 +1157,10 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject role="html">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig27.png" format="PNG"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig27.png" format="PNG"/>
 		          </imageobject>
 			  <imageobject role="fo">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig27.png" format="PNG"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig27.png" format="PNG"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1208,10 +1208,10 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject role="html">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig28.png" format="PNG"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig28.png" format="PNG"/>
 		          </imageobject>
                           <imageobject role="fo">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig28.png" format="PNG"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig28.png" format="PNG"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1253,10 +1253,10 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject role="html">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig29.png"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig29.png"/>
 		          </imageobject>
 			  <imageobject role="fo">
-			    <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig29.png"/>
+			    <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig29.png"/>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1519,10 +1519,10 @@ mvall oldname newname
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig06.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig06.png" format="PNG"/>
 	      </imageobject>
 	      <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig06.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig06.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1530,10 +1530,10 @@ mvall oldname newname
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig07.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig07.png" format="PNG"/>
 	      </imageobject>
               <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig07.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig07.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1541,10 +1541,10 @@ mvall oldname newname
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig08.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig08.png" format="PNG"/>
 	      </imageobject>
               <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig08.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig08.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1552,10 +1552,10 @@ mvall oldname newname
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig09.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig09.png" format="PNG"/>
 	      </imageobject>
 	      <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig09.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig09.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1595,10 +1595,10 @@ mvall oldname newname
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig10.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig10.png" format="PNG"/>
 	      </imageobject>
 	      <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig10.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig10.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1607,10 +1607,10 @@ mvall oldname newname
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig11.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig11.png" format="PNG"/>
 	      </imageobject>
 	      <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig11.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig11.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1844,10 +1844,10 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig12.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig12.png" format="PNG"/>
  	      </imageobject>
 	      <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig12.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig12.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1855,10 +1855,10 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig13.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig13.png" format="PNG"/>
 	      </imageobject>
               <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig13.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig13.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1866,10 +1866,10 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig14.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig14.png" format="PNG"/>
 	      </imageobject>
               <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig14.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig14.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1907,10 +1907,10 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig15.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig15.png" format="PNG"/>
 	      </imageobject>
 	      <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig15.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig15.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	    </figure>
@@ -1971,10 +1971,10 @@ mged&gt;  dbconcat [-s, -p] filename.g [prefix]
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig16.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig16.png" format="PNG"/>
 	      </imageobject>
 	      <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig16.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig16.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -2063,10 +2063,10 @@ comb comb_name u a - b + c
 
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig17.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig17.png" format="PNG"/>
 	      </imageobject>
 	      <imageobject role="fo">
-		<imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig17.png" format="PNG"/>
+		<imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig17.png" format="PNG"/>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -2952,10 +2952,10 @@ comb comb_name u a - b + c
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig18.png" format="PNG"/>
+	  <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig18.png" format="PNG"/>
         </imageobject>
 	<imageobject role="fo">
-	  <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig18.png" format="PNG"/>
+	  <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig18.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -3029,10 +3029,10 @@ comb comb_name u a - b + c
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig19.png" format="PNG"/>
+	  <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig19.png" format="PNG"/>
         </imageobject>
 	<imageobject role="fo">
-	  <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig19.png" format="PNG"/>
+	  <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig19.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -3053,10 +3053,10 @@ comb comb_name u a - b + c
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig20.png" format="PNG"/>
+	  <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig20.png" format="PNG"/>
         </imageobject>
 	<imageobject role="fo">
-	  <imagedata align="center" fileref="../../books/images/tutorial_series_volIII_fig20.png" format="PNG"/>
+	  <imagedata align="center" fileref="../books/images/tutorial_series_volIII_fig20.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>

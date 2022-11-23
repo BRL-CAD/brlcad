@@ -39,7 +39,7 @@
   <example><title>End the current MGED session.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>quit</userinput>
+      <prompt>mged&gt; </prompt><userinput>quit</userinput>
     </para>
     <para>Quits the current MGED session.
 

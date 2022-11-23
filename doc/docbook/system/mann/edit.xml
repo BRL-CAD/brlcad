@@ -190,7 +190,7 @@
     arguments as well as their interpretation depends upon the
     subcommand. See the manual page for a given subcommand for more
     information on its usage:
-    <literallayout><prompt>&gt; </prompt> <userinput>man edit_<replaceable>subcommandName</replaceable></userinput></literallayout>
+    <literallayout><prompt>mged&gt; </prompt><userinput>man edit_<replaceable>subcommandName</replaceable></userinput></literallayout>
   </para>
 </refsection>
 

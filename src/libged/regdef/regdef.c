@@ -41,12 +41,13 @@ ged_regdef_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* Get region defaults */
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "ident %d air %d los %d material %d",
-		      gedp->ged_wdbp->wdb_item_default,
-		      gedp->ged_wdbp->wdb_air_default,
-		      gedp->ged_wdbp->wdb_los_default,
-		      gedp->ged_wdbp->wdb_mat_default);
+		      wdbp->wdb_item_default,
+		      wdbp->wdb_air_default,
+		      wdbp->wdb_los_default,
+		      wdbp->wdb_mat_default);
 	return BRLCAD_OK;
     }
 
@@ -59,38 +60,42 @@ ged_regdef_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
-    gedp->ged_wdbp->wdb_item_default = item;
+    wdbp->wdb_item_default = item;
 
-    if (argc == 2)
+    if (argc == 2) {
 	return BRLCAD_OK;
+    }
 
     if (sscanf(argv[2], "%d", &air) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
-    gedp->ged_wdbp->wdb_air_default = air;
+    wdbp->wdb_air_default = air;
     if (air) {
 	item = 0;
-	gedp->ged_wdbp->wdb_item_default = 0;
+	wdbp->wdb_item_default = 0;
     }
 
-    if (argc == 3)
+    if (argc == 3) {
 	return BRLCAD_OK;
+    }
 
     if (sscanf(argv[3], "%d", &los) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
-    gedp->ged_wdbp->wdb_los_default = los;
+    wdbp->wdb_los_default = los;
 
-    if (argc == 4)
+    if (argc == 4) {
 	return BRLCAD_OK;
+    }
 
     if (sscanf(argv[4], "%d", &mat) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
-    gedp->ged_wdbp->wdb_mat_default = mat;
+
+    wdbp->wdb_mat_default = mat;
 
     return BRLCAD_OK;
 }

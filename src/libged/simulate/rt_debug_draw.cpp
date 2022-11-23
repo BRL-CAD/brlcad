@@ -55,7 +55,7 @@ make_name(const db_i &db, const std::string &base)
     stream.exceptions(std::ostream::failbit | std::ostream::badbit);
 
     unsigned long object_number = static_cast<unsigned long>
-				  (drand48() * std::numeric_limits<unsigned long>::max() + 0.5);
+    (drand48() * std::numeric_limits<unsigned long>::max() + 0.5);
 
     do {
 	stream.str("");
@@ -102,7 +102,6 @@ RtDebugDraw::RtDebugDraw(db_i &db) :
     m_debug_mode(DBG_NoDebug)
 {
     RT_CK_DBI(&db);
-    RT_CK_WDB(m_db.dbi_wdbp);
 
     m_default_colors.m_aabb = btVector3(0.0, 0.75, 0.0);
 
@@ -128,8 +127,9 @@ RtDebugDraw::drawLine(const btVector3 &from, const btVector3 &to,
     const std::string name = make_name(m_db, "line");
     const point_t from_pt = {V3ARGS(from * world_to_application)};
     const vect_t height = {V3ARGS((to - from) * world_to_application)};
+    struct rt_wdb *wdbp = wdb_dbopen(&m_db, RT_WDB_TYPE_DB_INMEM);
 
-    if (mk_rcc(m_db.dbi_wdbp, name.c_str(), from_pt, height, 1.0e-8))
+    if (mk_rcc(wdbp, name.c_str(), from_pt, height, 1.0e-8))
 	bu_bomb("mk_rcc() failed");
 
     apply_color(m_db, name, color);
@@ -156,7 +156,8 @@ void RtDebugDraw::drawAabb(const btVector3 &from, const btVector3 &to,
     VMIN(min_pt, to * world_to_application);
     VMAX(max_pt, to * world_to_application);
 
-    if (mk_rpp(m_db.dbi_wdbp, name.c_str(), min_pt, max_pt))
+    struct rt_wdb *wdbp = wdb_dbopen(&m_db, RT_WDB_TYPE_DB_INMEM);
+    if (mk_rpp(wdbp, name.c_str(), min_pt, max_pt))
 	bu_bomb("mk_rpp() failed");
 
     apply_color(m_db, name, color);
@@ -171,7 +172,8 @@ RtDebugDraw::drawContactPoint(const btVector3 &point_on_b,
     const std::string name = make_name(m_db, "contact");
     const point_t point_on_b_pt = {V3ARGS(point_on_b * world_to_application)};
 
-    if (mk_sph(m_db.dbi_wdbp, name.c_str(), point_on_b_pt,
+    struct rt_wdb *wdbp = wdb_dbopen(&m_db, RT_WDB_TYPE_DB_INMEM);
+    if (mk_sph(wdbp, name.c_str(), point_on_b_pt,
 	       (distance / 10.0) * world_to_application))
 	bu_bomb("mk_sph() failed");
 

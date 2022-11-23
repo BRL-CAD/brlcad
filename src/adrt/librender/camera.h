@@ -92,7 +92,7 @@ typedef struct render_camera_thread_data_s
 } render_camera_thread_data_t;
 
 
-RENDER_EXPORT extern void render_camera_init(render_camera_t *camera, int threads);
+RENDER_EXPORT extern void render_camera_init(render_camera_t *camera, size_t threads);
 RENDER_EXPORT extern void render_camera_free(render_camera_t *camera);
 RENDER_EXPORT extern void render_camera_prep(render_camera_t *camera);
 RENDER_EXPORT extern void render_camera_render(render_camera_t *camera, struct tie_s *tie, camera_tile_t *tile, tienet_buffer_t *result);

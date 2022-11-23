@@ -349,7 +349,7 @@ under_sample(icv_image_t* bif, size_t factor)
     }
 
     widthstep = bif->width*bif->channels;
-    res_p = data_p = bif->data;
+    res_p = bif->data;
 
     for (y = 0; y < bif->height; y += factor) {
 	data_p = bif->data + widthstep*y;

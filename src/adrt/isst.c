@@ -147,7 +147,7 @@ isst_load_g(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc,
     }
 
     argv = (char **)malloc(sizeof(char *) * (strlen(Tcl_GetString(objv[3])) + 1));	/* allocate way too much. */
-    argc = bu_argv_from_string(argv, strlen(Tcl_GetString(objv[3])), Tcl_GetString(objv[3]));
+    argc = (int)bu_argv_from_string(argv, strlen(Tcl_GetString(objv[3])), Tcl_GetString(objv[3]));
 
     load_g(isst->tie, Tcl_GetString(objv[2]), argc, (const char **)argv, &(isst->meshes));
     free(argv);
@@ -547,14 +547,14 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 {
     char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
-    dmp = dm_open((void *)interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
+    dmp = dm_open(NULL, (void *)interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
 
     if (dmp == DM_NULL) {
 	printf("dm failed?\n");
 	return TCL_ERROR;
     }
 
-    dm_set_bg(dmp, 0, 0, 0x30);
+    dm_set_bg(dmp, 0, 0, 0x30, 0, 0, 0x30);
 
     return TCL_OK;
 

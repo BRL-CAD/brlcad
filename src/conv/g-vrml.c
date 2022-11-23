@@ -229,7 +229,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
     RT_CK_FULL_PATH(pathp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-    if (!(dp->d_flags & RT_DIR_COMB)) {
+    if (!dp || !(dp->d_flags & RT_DIR_COMB)) {
 	/* object is not a combination therefore can not be a light */
 	return 0;
     }
@@ -272,6 +272,8 @@ select_non_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *
 
     RT_CK_FULL_PATH(pathp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
+    if (!dp)
+	return 0;
 
     id = rt_db_get_internal(&intern, dp, dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
@@ -659,10 +661,10 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		bu_sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
+		bu_sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
 		NMG_debug = nmg_debug;
 		break;
 	    case 'u':
@@ -695,7 +697,7 @@ main(int argc, char **argv)
 
     if (out_file == NULL) {
 	fp_out = stdout;
-	setmode(fileno(fp_out), O_BINARY);
+	(void)setmode(fileno(fp_out), O_BINARY);
     } else {
 	if ((fp_out = fopen(out_file, "wb")) == NULL) {
 	    perror(argv[0]);
@@ -865,7 +867,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     RT_CK_FULL_PATH(pathp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-    if (!(dp->d_flags & RT_DIR_COMB)) {
+    if (!dp || !(dp->d_flags & RT_DIR_COMB)) {
 	return;
     }
 
@@ -884,7 +886,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     RT_CK_COMB(comb);
 
-    if (mater->ma_color_valid) {
+    if (mater && mater->ma_color_valid) {
 	r = mater->ma_color[0];
 	g = mater->ma_color[1];
 	b = mater->ma_color[2];
@@ -892,7 +894,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	r = g = b = 0.5;
     }
 
-    if (mater->ma_shader) {
+    if (mater && mater->ma_shader) {
 	tok = strtok(mater->ma_shader, tok_sep);
 	bu_strlcpy(mat.shader, tok, TXT_NAME_SIZE);
     } else {
@@ -907,7 +909,8 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     mat.tx_file[0] = '\0';
     mat.tx_w = -1;
     mat.tx_n = -1;
-    bu_vls_strcpy(&vls, &mater->ma_shader[strlen(mat.shader)]);
+    if (mater && mater->ma_shader)
+        bu_vls_strcpy(&vls, &mater->ma_shader[strlen(mat.shader)]);
     (void)bu_struct_parse(&vls, vrml_mat_parse, (char *)&mat, NULL);
 
     if (bu_strncmp("light", mat.shader, 5) == 0) {
@@ -976,7 +979,8 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		    fprintf(fp_out, "\t\t\t\t\trepeatS TRUE\n");
 		    fprintf(fp_out, "\t\t\t\t\trepeatT TRUE\n");
 		    fprintf(fp_out, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3);
-		    tex_len = mat.tx_w*mat.tx_n * 3;
+
+		    tex_len = (size_t)mat.tx_w*mat.tx_n * 3;
 		    while (bytes_read < tex_len) {
 			size_t nbytes;
 			long readval;
@@ -990,9 +994,8 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 			    if (readval < 0) {
 				perror("READ ERROR");
 				break;
-			    } else {
-				nbytes += readval;
 			    }
+			    nbytes += readval;
 			}
 			bytes_read += nbytes;
 			for (i = 0; i < nbytes; i += 3) {

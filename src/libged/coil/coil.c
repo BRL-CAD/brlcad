@@ -280,13 +280,13 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 	    mk_add_pipe_pnt(&head, pnt1, e_data->wd, 0.0, (e_data->od/2-e_data->wd/2));
 	    break;
 	case 1:
-	    last_pitch_pt = cap_squared(&head, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
+	    (void)cap_squared(&head, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
 	    break;
 	case 2:
-	    last_pitch_pt = cap_ground(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
+	    (void)cap_ground(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
 	    break;
 	case 3:
-	    last_pitch_pt = cap_squared_ground(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
+	    (void)cap_squared_ground(file, &head, prefix, &coil_subtractions, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);
 	    break;
 	default:
 	    break;
@@ -410,9 +410,10 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
 int
 ged_coil_core(struct ged *gedp, int argc, const char *argv[])
 {
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     struct bu_vls name;
-    struct rt_wdb *db_fp = gedp->ged_wdbp;
     fastf_t mean_outer_diameter, wire_diameter, overall_length, nominal_length;
     fastf_t helix_angle, pitch;
 
@@ -422,9 +423,6 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
     int nt; /* Number of turns */
     int start_cap_type, end_cap_type;
     int lhf; /* Winding flag */
-
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
-    GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_init(&name);
@@ -549,6 +547,7 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* do it. */
+    struct rt_wdb *db_fp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     make_coil(db_fp, bu_vls_addr(&name), &sections, start_cap_type, end_cap_type);
 
     bu_vls_free(&name);

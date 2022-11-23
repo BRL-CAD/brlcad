@@ -51,6 +51,10 @@ set(compare_status
 file(READ \"${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/final_src_contents.txt\" FINAL_SOURCE_LIST)
 string(STRIP \"\${INITIAL_SOURCE_LIST}\" INITIAL_SOURCE_LIST)
 string(STRIP \"\${FINAL_SOURCE_LIST}\" FINAL_SOURCE_LIST)
+# Ninja keeps a running log in .ninja_log - if we're using ninja itself to run the
+# tests, we can't clear this file. Ignore it, as it's not a sign of a problem with
+# the clean logic.
+list(REMOVE_ITEM FINAL_SOURCE_LIST .ninja_log)
 if(NOT \"\${INITIAL_SOURCE_LIST}\" STREQUAL \"\${FINAL_SOURCE_LIST}\")
   set(FINAL_FILES_NOT_IN_INITIAL \${FINAL_SOURCE_LIST})
   set(INITIAL_FILES_NOT_IN_FINAL \${INITIAL_SOURCE_LIST})

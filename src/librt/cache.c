@@ -254,6 +254,7 @@ cache_init(struct rt_cache *cache)
 {
     const char *dir = cache->dir;
     char path[MAXPATHLEN] = {0};
+    char dirsep[2] = {BU_DIR_SEPARATOR, '\0'};
 
     if (!bu_file_exists(dir, NULL)) {
 	cache_warn(cache, dir, "Directory does not exist.  Initializing.");
@@ -278,9 +279,12 @@ cache_init(struct rt_cache *cache)
 	cache->read_only = 1;
     }
 
-    /* make sure there's a format file */
+    /* make sure there's a cache/dir/format file */
 
-    snprintf(path, MAXPATHLEN, "%s%c%s", dir, BU_DIR_SEPARATOR, "format");
+    bu_strlcpy(path, dir, MAXPATHLEN);
+    bu_strlcat(path, dirsep, MAXPATHLEN);
+    bu_strlcat(path, "format", MAXPATHLEN);
+
     if (!bu_file_exists(path, NULL)) {
 	if (!cache_ensure_path(path, 1)) {
 	    cache_warn(cache, path, "Cannot create format file.  Caching disabled.");
@@ -316,7 +320,11 @@ cache_init(struct rt_cache *cache)
      * file, e.g.:
      * [CACHE_DIR]/.rt/objects/A8/A8D460B2-194F-5FA7-8FED-286A6C994B89
      */
-    snprintf(path, MAXPATHLEN, "%s%c%s", dir, BU_DIR_SEPARATOR, "objects");
+
+    bu_strlcpy(path, dir, MAXPATHLEN);
+    bu_strlcat(path, dirsep, MAXPATHLEN);
+    bu_strlcat(path, "objects", MAXPATHLEN);
+
     if (!bu_file_exists(path, NULL)) {
 	if (!cache_ensure_path(path, 0)) {
 	    cache_warn(cache, path, "Cannot create objects directory.  Caching disabled.");

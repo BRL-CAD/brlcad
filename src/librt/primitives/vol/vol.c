@@ -80,7 +80,7 @@ const struct bu_structparse rt_vol_parse[] = {
 
 
 extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
-			 mat_t mat, struct bu_list *vhead, struct rt_vol_internal *vip);
+			 mat_t mat, struct bu_list *vlfree, struct bu_list *vhead, struct rt_vol_internal *vip);
 extern int rt_retrieve_binunif(struct rt_db_internal *intern, const struct db_i *dbip, const char *name);
 extern int rt_binunif_describe(struct bu_vls  *str, const struct rt_db_internal *ip, int verbose, double mm2local);
 /*
@@ -138,9 +138,9 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     int igrid[3];/* Grid cell coordinates of cell (integerized) */
     vect_t P;	/* hit point */
     int inside;	/* inside/outside a solid flag */
-    int in_axis;
+    int in_axis = -INT_MAX;
     int axis_set = 0;
-    int out_axis;
+    int out_axis = -INT_MAX;
     int j;
     struct xray ideal_ray;
 
@@ -276,7 +276,8 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     if (!axis_set) bu_log("ERROR vol: no valid entry face found\n");
 
-    if (RT_G_DEBUG&RT_DEBUG_VOL)bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
+    if (RT_G_DEBUG&RT_DEBUG_VOL && in_axis != -INT_MAX)
+	bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
 
     /* Advance to next exits */
     t[X] += delta[X];
@@ -650,6 +651,9 @@ get_obj_data(struct rt_vol_internal *vip, const struct db_i *dbip)
     int ret;
     int nbytes;
 
+    if (!vip || !dbip)
+	return -1;
+
     BU_ALLOC(vip->bip, struct rt_db_internal);
 
     ret = rt_retrieve_binunif(vip->bip, dbip, vip->name);
@@ -727,22 +731,19 @@ static int
 get_vol_data(struct rt_vol_internal *vip, const mat_t mat, const struct db_i *dbip)
 {
   mat_t tmp;
-  char *p;
 
   /* Apply Modelling transform */
   bn_mat_mul(tmp, mat, vip->mat);
   MAT_COPY(vip->mat, tmp);
-  p = vip->name;
 
   switch (vip->datasrc) {
 case RT_VOL_SRC_FILE:
     /* Retrieve the data from an external file */
     if (RT_G_DEBUG & RT_DEBUG_HF)
-  bu_log("getting data from file \"%s\"\n", p);
+	bu_log("getting data from file \"%s\"\n", vip->name);
 
     if(vol_file_data(vip) != 0) {
       return 1;
-      p = "file";
     }
     else {
       return 0;
@@ -751,15 +752,14 @@ case RT_VOL_SRC_FILE:
 case RT_VOL_SRC_OBJ:
     /* Retrieve the data from an internal db object */
     if (RT_G_DEBUG & RT_DEBUG_HF)
-  bu_log("getting data from object \"%s\"\n", p);
+	bu_log("getting data from object \"%s\"\n", vip->name);
 
     if (get_obj_data(vip, dbip) != 0) {
-  p = "object";
-  return 1;
+	return 1;
     } else {
-  RT_CK_DB_INTERNAL(vip->bip);
-  RT_CK_BINUNIF(vip->bip->idb_ptr);
-  return 0;
+	RT_CK_DB_INTERNAL(vip->bip);
+	RT_CK_BINUNIF(vip->bip->idb_ptr);
+	return 0;
     }
     break;
 default:
@@ -768,7 +768,8 @@ bu_log("%s:%d Odd vol data src '%c' s/b '%c' or '%c'\n",
   RT_VOL_SRC_FILE, RT_VOL_SRC_OBJ);
   }
 
-  bu_log("%s", dbip->dbi_filename);
+  if (dbip)
+      bu_log("%s", dbip->dbi_filename);
   return 0; //temporary
 }
 
@@ -961,7 +962,7 @@ rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     /* Find bounding RPP of rotated local RPP */
     VSETALL(v1, 0);
     VSET(localspace, vip->xdim*vip->cellsize[0], vip->ydim*vip->cellsize[1], vip->zdim*vip->cellsize[2]);/* type conversion */
-    bn_rotate_bbox((*min), (*max), vip->mat, v1, localspace);
+    bg_rotate_bbox((*min), (*max), vip->mat, v1, localspace);
     return 0;
 }
 
@@ -1135,7 +1136,7 @@ rt_vol_free(struct soltab *stp)
 
 
 int
-rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     register struct rt_vol_internal *vip;
     int x, y, z;
@@ -1144,6 +1145,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
 
@@ -1173,7 +1175,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		/* End of run of edge.  One cell beyond. */
 		VSET(c, x+0.5, y-0.5, z+0.5);
 		VSET(d, x+0.5, y-0.5, z-0.5);
-		rt_vol_plate(a, b, c, d, vip->mat, vhead, vip);
+		rt_vol_plate(a, b, c, d, vip->mat, vlfree, vhead, vip);
 	    }
 	}
     }
@@ -1199,7 +1201,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		/* End of run of edge.  One cell beyond */
 		VSET(c, (x-0.5), (y+0.5), (z+0.5));
 		VSET(d, (x-0.5), (y+0.5), (z-0.5));
-		rt_vol_plate(a, b, c, d, vip->mat, vhead, vip);
+		rt_vol_plate(a, b, c, d, vip->mat, vlfree, vhead, vip);
 	    }
 	}
     }
@@ -1225,7 +1227,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 		/* End of run of edge.  One cell beyond */
 		VSET(c, (x+0.5), (y-0.5), (z+0.5));
 		VSET(d, (x-0.5), (y-0.5), (z+0.5));
-		rt_vol_plate(a, b, c, d, vip->mat, vhead, vip);
+		rt_vol_plate(a, b, c, d, vip->mat, vlfree, vhead, vip);
 	    }
 	}
     }
@@ -1234,7 +1236,7 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 
 
 void
-rt_vol_plate(point_t a, point_t b, point_t c, point_t d, register mat_t mat, register struct bu_list *vhead, register struct rt_vol_internal *vip)
+rt_vol_plate(point_t a, point_t b, point_t c, point_t d, register mat_t mat, struct bu_list *vlfree, register struct bu_list *vhead, register struct rt_vol_internal *vip)
 {
     point_t s;		/* scaled original point */
     point_t arot, prot;
@@ -1243,21 +1245,21 @@ rt_vol_plate(point_t a, point_t b, point_t c, point_t d, register mat_t mat, reg
 
     VELMUL(s, vip->cellsize, a);
     MAT4X3PNT(arot, mat, s);
-    RT_ADD_VLIST(vhead, arot, BN_VLIST_LINE_MOVE);
+    BV_ADD_VLIST(vlfree, vhead, arot, BV_VLIST_LINE_MOVE);
 
     VELMUL(s, vip->cellsize, b);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
     VELMUL(s, vip->cellsize, c);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
     VELMUL(s, vip->cellsize, d);
     MAT4X3PNT(prot, mat, s);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, prot, BV_VLIST_LINE_DRAW);
 
-    RT_ADD_VLIST(vhead, arot, BN_VLIST_LINE_DRAW);
+    BV_ADD_VLIST(vlfree, vhead, arot, BV_VLIST_LINE_DRAW);
 }
 
 

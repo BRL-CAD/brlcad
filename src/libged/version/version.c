@@ -46,7 +46,7 @@ ged_version_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    bu_vls_printf(gedp->ged_result_str, "%d", db_version(gedp->ged_wdbp->dbip));
+    bu_vls_printf(gedp->ged_result_str, "%d", db_version(gedp->dbip));
 
     return BRLCAD_OK;
 }

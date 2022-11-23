@@ -54,7 +54,7 @@ ged_lookat_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2 && argc != 4) {
@@ -87,7 +87,7 @@ ged_lookat_core(struct ged *gedp, int argc, const char *argv[])
 	VMOVE(look, scan);
     }
 
-    VSCALE(look, look, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(look, look, gedp->dbip->dbi_local2base);
 
     VSET(tmp, 0.0, 0.0, 1.0);
     MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, tmp);
@@ -97,12 +97,12 @@ ged_lookat_core(struct ged *gedp, int argc, const char *argv[])
     bn_ae_vec(&new_az, &new_el, dir);
 
     VSET(gedp->ged_gvp->gv_aet, new_az, new_el, gedp->ged_gvp->gv_aet[Z]);
-    _ged_mat_aet(gedp->ged_gvp);
+    bv_mat_aet(gedp->ged_gvp);
 
     VJOIN1(new_center, eye, -gedp->ged_gvp->gv_scale, dir);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_center);
 
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return BRLCAD_OK;
 }

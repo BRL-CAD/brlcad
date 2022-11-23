@@ -23,7 +23,7 @@
 
 
 int
-Extrudcirc(int entityno, int curve, vect_t evect)
+Extrudcirc(size_t entityno, int curve, vect_t evect)
     /* extrusion entity number */
     /* circular arc entity number */
     /* extrusion vector */

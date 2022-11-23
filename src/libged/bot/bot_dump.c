@@ -36,6 +36,7 @@
 #include "bu/cv.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -47,7 +48,7 @@
 
 #include "raytrace.h"
 
-#include "dm/bview.h"
+#include "bv/defines.h"
 #include "dm.h"
 
 #include "../ged_private.h"
@@ -586,7 +587,6 @@ stl_write_bot_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 	VMOVE(flt_ptr, B);
 	flt_ptr += 3;
 	VMOVE(flt_ptr, C);
-	flt_ptr += 3;
 
 	bu_cv_htonf(vert_buffer, (const unsigned char *)flts, 12);
 	for (j = 0; j < 12; j++) {
@@ -779,7 +779,7 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
     MAT_IDN(mat);
 
     /* get the internal form */
-    ret = rt_db_get_internal(&intern, dp, gbdcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
+    ret = rt_db_get_internal(&intern, dp, gbdcdp->gedp->dbip, mat, &rt_uniresource);
 
     if (ret < 0) {
 	bu_log("ged_bot_leaf: rt_get_internal failure %d on %s\n", ret, dp->d_namep);
@@ -793,7 +793,7 @@ bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
-    _ged_bot_dump(dp, pathp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_ext, gbdcdp->gedp->ged_wdbp->dbip->dbi_filename);
+    _ged_bot_dump(dp, pathp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_ext, gbdcdp->gedp->dbip->dbi_filename);
     rt_db_free_internal(&intern);
 
     return curtree;
@@ -804,6 +804,7 @@ static int
 bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
+    int specified_t = 0;
 
     output_type = OTYPE_STL;
     binary = 0;
@@ -844,6 +845,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 		    return BRLCAD_ERROR;
 		}
+		specified_t = 1;
 		break;
 	    case 'u':
 		cfactor = bu_units_conversion(bu_optarg);
@@ -856,6 +858,30 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 		return BRLCAD_ERROR;
+	}
+    }
+
+    /* try to be smart with the specified file extension, but warn
+     * when we default to stl
+     */
+    if (!specified_t) {
+	struct bu_vls ext = BU_VLS_INIT_ZERO;
+	if (!bu_path_component(&ext, output_file, BU_PATH_EXT)) {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "WARNING: no format type '-t' specified, defaulting to stl\n");
+	} else {
+	    if (BU_STR_EQUAL("dxf", bu_vls_cstr(&ext)))
+		output_type = OTYPE_DXF;
+	    else if (BU_STR_EQUAL("obj", bu_vls_cstr(&ext)))
+		output_type = OTYPE_OBJ;
+	    else if (BU_STR_EQUAL("sat", bu_vls_cstr(&ext)))
+		output_type = OTYPE_SAT;
+	    else if (BU_STR_EQUAL("stl", bu_vls_cstr(&ext)))
+		output_type = OTYPE_STL;
+	    else {
+		bu_vls_printf(gedp->ged_result_str,
+			      "WARNING: unrecognized filename type, defaulting to stl\n");
+	    }
 	}
     }
 
@@ -886,7 +912,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     using_dbot_dump = 0;
@@ -995,14 +1021,14 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < 1) {
 	/* dump all the bots */
-	FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
 
 	    /* we only dump BOT primitives, so skip some obvious exceptions */
 	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
 	    if (dp->d_flags & RT_DIR_COMB) continue;
 
 	    /* get the internal form */
-	    i = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
+	    i = rt_db_get_internal(&intern, dp, gedp->dbip, mat, &rt_uniresource);
 	    if (i < 0) {
 		fprintf(stderr, "%s: rt_get_internal failure %d on %s\n", cmd_name, i, dp->d_namep);
 		continue;
@@ -1013,7 +1039,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
+	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, gedp->dbip->dbi_filename);
 	    rt_db_free_internal(&intern);
 
 	} FOR_ALL_DIRECTORY_END;
@@ -1029,17 +1055,21 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	gbdcdp.fd = fd;
 	gbdcdp.file_ext = file_ext;
 
+	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	for (i = 0; i < argc; ++i) {
 	    av[0] = (char *)argv[i];
-	    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+	    ret = db_walk_tree(gedp->dbip,
 			       ac,
 			       (const char **)av,
 			       ncpu,
-			       &gedp->ged_wdbp->wdb_initial_tree_state,
+			       &wdbp->wdb_initial_tree_state,
 			       0,
 			       0,
 			       bot_dump_leaf,
 			       (void *)&gbdcdp);
+	    if (ret < 0) {
+		perror("db_walk_tree");
+	    }
 	}
     }
 
@@ -1082,7 +1112,7 @@ ged_bot_dump_core(struct ged *gedp, int argc, const char *argv[])
 
 
 static void
-write_data_arrows(struct bview_data_arrow_state *gdasp, FILE *fp, int sflag)
+write_data_arrows(struct bv_data_arrow_state *gdasp, FILE *fp, int sflag)
 {
     register int i;
 
@@ -1157,7 +1187,7 @@ write_data_arrows(struct bview_data_arrow_state *gdasp, FILE *fp, int sflag)
 
 
 static void
-write_data_axes(struct bview_data_axes_state *bndasp, FILE *fp, int sflag)
+write_data_axes(struct bv_data_axes_state *bndasp, FILE *fp, int sflag)
 {
     register int i;
 
@@ -1234,7 +1264,7 @@ write_data_axes(struct bview_data_axes_state *bndasp, FILE *fp, int sflag)
 
 
 static void
-write_data_lines(struct bview_data_line_state *gdlsp, FILE *fp, int sflag)
+write_data_lines(struct bv_data_line_state *gdlsp, FILE *fp, int sflag)
 {
     register int i;
 
@@ -1274,14 +1304,14 @@ write_data_lines(struct bview_data_line_state *gdlsp, FILE *fp, int sflag)
 static void
 obj_write_data(struct ged *gedp, FILE *fp)
 {
-    write_data_arrows(&gedp->ged_gvp->gv_data_arrows, fp, 0);
-    write_data_arrows(&gedp->ged_gvp->gv_sdata_arrows, fp, 1);
+    write_data_arrows(&gedp->ged_gvp->gv_tcl.gv_data_arrows, fp, 0);
+    write_data_arrows(&gedp->ged_gvp->gv_tcl.gv_sdata_arrows, fp, 1);
 
-    write_data_axes(&gedp->ged_gvp->gv_data_axes, fp, 0);
-    write_data_axes(&gedp->ged_gvp->gv_sdata_axes, fp, 1);
+    write_data_axes(&gedp->ged_gvp->gv_tcl.gv_data_axes, fp, 0);
+    write_data_axes(&gedp->ged_gvp->gv_tcl.gv_sdata_axes, fp, 1);
 
-    write_data_lines(&gedp->ged_gvp->gv_data_lines, fp, 0);
-    write_data_lines(&gedp->ged_gvp->gv_sdata_lines, fp, 1);
+    write_data_lines(&gedp->ged_gvp->gv_tcl.gv_data_lines, fp, 0);
+    write_data_lines(&gedp->ged_gvp->gv_tcl.gv_sdata_lines, fp, 1);
 }
 
 
@@ -1349,42 +1379,46 @@ dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file
     MAT_IDN(mat);
 
     for (BU_LIST_FOR(gdlp, display_list, hdlp)) {
-	struct solid *sp;
+	struct bv_scene_obj *sp;
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-	    struct directory *dp;
-	    struct rt_db_internal intern;
-	    struct rt_bot_internal *bot;
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
+		struct directory *dp;
+		struct rt_db_internal intern;
+		struct rt_bot_internal *bot;
 
-	    dp = sp->s_fullpath.fp_names[sp->s_fullpath.fp_len-1];
+		if (!sp->s_u_data)
+		    continue;
+		struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
-	    /* get the internal form */
-	    ret = rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource);
+		dp = bdata->s_fullpath.fp_names[bdata->s_fullpath.fp_len-1];
 
-	    if (ret < 0) {
-		bu_log("rt_get_internal failure %d on %s\n", ret, dp->d_namep);
-		continue;
-	    }
+		/* get the internal form */
+		ret = rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource);
 
-	    if (ret != ID_BOT) {
-		bu_log("%s is not a bot (ignored)\n", dp->d_namep);
+		if (ret < 0) {
+		    bu_log("rt_get_internal failure %d on %s\n", ret, dp->d_namep);
+		    continue;
+		}
+
+		if (ret != ID_BOT) {
+		    bu_log("%s is not a bot (ignored)\n", dp->d_namep);
+		    rt_db_free_internal(&intern);
+		    continue;
+		}
+
+		/* Write out object color */
+		if (out_type == OTYPE_OBJ) {
+		    (*red) = sp->s_color[0];
+		    (*green) = sp->s_color[1];
+		    (*blue) = sp->s_color[2];
+		    (*alpha) = sp->s_os->transparency;
+		}
+
+		bot = (struct rt_bot_internal *)intern.idb_ptr;
+		_ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, dbip->dbi_filename);
 		rt_db_free_internal(&intern);
-		continue;
 	    }
-
-	    /* Write out object color */
-	    if (out_type == OTYPE_OBJ) {
-		(*red) = sp->s_color[0];
-		(*green) = sp->s_color[1];
-		(*blue) = sp->s_color[2];
-		(*alpha) = sp->s_transparency;
-	    }
-
-	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, dbip->dbi_filename);
-	    rt_db_free_internal(&intern);
 	}
-    }
 
 }
 
@@ -1409,7 +1443,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, usage, argv[0]);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     using_dbot_dump = 1;
@@ -1575,7 +1609,7 @@ ged_dbot_dump_core(struct ged *gedp, int argc, const char *argv[])
 	fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
     }
 
-    dl_botdump(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, fp, fd, file_ext, output_type, &curr_obj_red, &curr_obj_green, &curr_obj_blue, &curr_obj_alpha);
+    dl_botdump(gedp->ged_gdp->gd_headDisplay, gedp->dbip, fp, fd, file_ext, output_type, &curr_obj_red, &curr_obj_green, &curr_obj_blue, &curr_obj_alpha);
 
     data_dump(gedp, fp);
 

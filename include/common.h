@@ -27,7 +27,7 @@
  * either detected via configure or hand crafted, as is the case for
  * the win32 platform.
  *
- * NOTE: In order to use compile-time API, applicaitons need to define
+ * NOTE: In order to use compile-time API, applications need to define
  * BRLCADBUILD and HAVE_CONFIG_H before including this header.
  *
  */
@@ -154,27 +154,32 @@ typedef unsigned short u_short;
 #endif
 
 /**
- * C99 does not provide a ssize_t even though it is provided by SUS97.
- * regardless, we use it so make sure it's declared by using the
+ * make sure ssize_t is provided.  C99 does not provide it even though it is
+ * defined in SUS97.  if not available, we create the type aligned with the
  * similar POSIX ptrdiff_t type.
  */
-#if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
-# ifndef HAVE_SSIZE_T
+#if defined(_MSC_VER) && !defined(HAVE_SSIZE_T)
 #  ifdef HAVE_SYS_TYPES_H
 #    include <sys/types.h>
 #  endif
 #  include <limits.h>
 #  include <stddef.h>
-#   ifndef SSIZE_MAX
 typedef ptrdiff_t ssize_t;
 #  define HAVE_SSIZE_T 1
-#    if defined(_WIN64)
+#  ifndef SSIZE_MAX
+#    if defined(LONG_MAX)
 #      define SSIZE_MAX LONG_MAX
-#    else
+#    elif defined(INT_MAX)
 #      define SSIZE_MAX INT_MAX
+#    elif defined(_POSIX_SSIZE_MAX)
+#      define SSIZE_MAX _POSIX_SSIZE_MAX
+#    else
+       /* Go with POSIX minimum acceptable value. This is smaller than
+        * we would like, but is a safe default value.
+	*/
+#      define SSIZE_MAX 32767
 #    endif
 #  endif
-#endif
 #endif
 
 /* make sure most of the C99 stdint types are provided including the
@@ -201,7 +206,7 @@ typedef ptrdiff_t ssize_t;
 
 /* off_t is 32 bit size even on 64 bit Windows. In the past we have tried to
  * force off_t to be 64 bit but this is failing on newer Windows/Visual Studio
- * verions in 2020 - therefore, we instead introduce the b_off_t define to
+ * versions in 2020 - therefore, we instead introduce the b_off_t define to
  * properly substitute the correct numerical type for the correct platform.  */
 #if defined(_WIN64)
 #  include <sys/stat.h>
@@ -396,6 +401,61 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 
+/**
+ * NORETURN declares that a function does not return.
+ *
+ * For portability, the attribute must precede the function, i.e., be
+ * declared on the left:
+ *
+ * NORETURN void function(void);
+ *
+ * Note that throwing an exception or calling longjmp() do not
+ * constitute a return.  Functions that (always) infinite loop can be
+ * considered functions that do not return.  Functions that do not
+ * return should have a void return type.  This option is a hint to
+ * compilers and static analyers, to reduce false positive reporting.
+ */
+#ifdef NORETURN
+#  undef NORETURN
+#  warning "NORETURN unexpectedly defined.  Ensure common.h is included first."
+#endif
+#if defined(HAVE_NORETURN_ATTRIBUTE)
+#  define NORETURN __attribute__((__noreturn__))
+#elif defined(HAVE_NORETURN_DECLSPEC)
+#  define NORETURN __declspec(noreturn)
+#else
+#  define NORETURN /* does not return */
+#endif
+
+
+/**
+ * FAUX_NORETURN declares a function should be treated as if it does
+ * not return, even though it can.
+ *
+ * As this label is (currently) Clang-specific, it can be declared on
+ * the left or right of a function declaration.  Left is recommended
+ * for consistency with other annotations, e.g.:
+ *
+ * FAUX_NORETURN void function(void);
+ *
+ * This annocation is almost identical to NORETURN except that it does
+ * not affect code generation and can be used on functions that
+ * actually return.  It's typically useful for annotating assertion
+ * handlers (e.g., assert()) that sometimes return and should not be
+ * used on NORETURN functions.  This annotation is primarily a hint to
+ * static analyzers.
+ */
+#ifdef FAUX_NORETURN
+#  undef FAUX_NORETURN
+#  warning "FAUX_NORETURN unexpectedly defined.  Ensure common.h is included first."
+#endif
+#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
+#  define FAUX_NORETURN __attribute__((analyzer_noreturn))
+#else
+#  define FAUX_NORETURN /* pretend does not return */
+#endif
+
+
 /* ActiveState Tcl doesn't include this catch in tclPlatDecls.h, so we
  * have to add it for them
  */
@@ -435,6 +495,15 @@ typedef _TCHAR TCHAR;
  * MSVC2005, behavior was to not initialize in some cases...
  */
 #  pragma warning( disable : 4351 )
+
+/* warning C5105: macro expansion producing 'defined' has undefined behavior
+ *
+ * this appears to be an erronous issue in the latest msvc
+ * pre-processor that has support for the new C17 standard, which
+ * triggers warnings in Windows SDK headers (e.g., winbase.h) that
+ * use the defined operator in certain macros.
+ */
+#  pragma warning( disable : 5105 )
 
 /* dubious warnings that are not yet intentionally disabled:
  *

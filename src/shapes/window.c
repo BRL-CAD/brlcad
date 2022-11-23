@@ -52,7 +52,7 @@ main(int argc, char **argv)
     char filemged[NAME_LEN+1] = {0};	/* Mged file create. */
     double hgt = 0.0;		/* Height, width, & depth of handle. */
     double wid = 0.0;
-    double dpt;
+    double dpt = 0.0;
     double rds = 0.0;		/* Radius of the corner of window. */
     point_t pts[8];		/* Eight points of arb8. */
     point_t bs;			/* Base of rcc. */
@@ -396,7 +396,7 @@ main(int argc, char **argv)
     }							/* START # 2 */
 
     /* Close file. */
-    wdb_close(fpw);
+    db_close(fpw->dbip);
 
     return 0;
 }							/* END # 1 */

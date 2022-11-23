@@ -122,10 +122,10 @@
       <varlistentry>
 	<term><option>-P#</option></term>
 	<listitem>
-	  <para>
-	    Specify the maximum number of processors (in a multi-processor system) to be
-	    used for this execution.  The default is 1.
-	  </para>
+          <para>Specify the maximum number of processor cores to be
+          used on multicore systems.  The default is the maximum
+          number of cores available for the machine.  Negative numbers
+          indicate using all except for the count specified.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>

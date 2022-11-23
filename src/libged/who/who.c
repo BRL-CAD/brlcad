@@ -25,6 +25,7 @@
 
 #include "ged.h"
 
+extern int ged_who2_core(struct ged *gedp, int argc, const char **argv);
 
 /*
  * List the objects currently prepped for drawing
@@ -36,6 +37,10 @@
 int
 ged_who_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_who2_core(gedp, argc, argv);
+
     struct display_list *gdlp;
     int skip_real, skip_phony;
     static const char *usage = "[r(eal)|p(hony)|b(oth)]";
@@ -90,13 +95,9 @@ ged_who_core(struct ged *gedp, int argc, const char *argv[])
 
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
-struct ged_cmd_impl who_cmd_impl = {
-    "who",
-    ged_who_core,
-    GED_CMD_DEFAULT
-};
-
+struct ged_cmd_impl who_cmd_impl = { "who", ged_who_core, GED_CMD_DEFAULT };
 const struct ged_cmd who_cmd = { &who_cmd_impl };
+
 const struct ged_cmd *who_cmds[] = { &who_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  who_cmds, 1 };

@@ -75,8 +75,8 @@ ged_aet_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    VMOVE(gedp->ged_gvp->gv_aet, aet);
 	}
-	_ged_mat_aet(gedp->ged_gvp);
-	bview_update(gedp->ged_gvp);
+	bv_mat_aet(gedp->ged_gvp);
+	bv_update(gedp->ged_gvp);
 
 	return BRLCAD_OK;
     }
@@ -110,8 +110,8 @@ ged_aet_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    VMOVE(gedp->ged_gvp->gv_aet, aet);
 	}
-	_ged_mat_aet(gedp->ged_gvp);
-	bview_update(gedp->ged_gvp);
+	bv_mat_aet(gedp->ged_gvp);
+	bv_update(gedp->ged_gvp);
 
 	return BRLCAD_OK;
     }

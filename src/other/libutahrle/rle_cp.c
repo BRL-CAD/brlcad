@@ -74,7 +74,7 @@ rle_hdr *the_hdr;
     register FILE *outfile = the_hdr->rle_file;
     char inst[2];
     short nc, buflen;
-    char *buffer;
+    char *buffer = NULL;
 
     /* Add in vertical skip from last scanline */
     if ( in_hdr->priv.get.vert_skip > 0 )
@@ -199,6 +199,8 @@ rle_hdr *the_hdr;
     /* Just in case the caller does something silly like calling rle_getrow. */
     in_hdr->priv.get.scan_y = in_hdr->ymax;
     in_hdr->priv.get.vert_skip = 0;
+    if (buffer)
+       free(buffer);
 
     return;
 }

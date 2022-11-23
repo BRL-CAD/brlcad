@@ -9,7 +9,7 @@ BRLCAD_INCLUDE_DIRS(AP203_INCLUDE_DIRS)
 
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
-set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203e2/ap203e2_mim_lf.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap203e2/ap203e2_mim_lf.exp)
 add_definitions(-DAP203e2)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} ap203e2g)
@@ -238,7 +238,7 @@ set(ap203e2g_LIBS
   )
 list(APPEND ap203e2g_LIBS ${ap203e2g_LIBS})
 
-BRLCAD_ADDEXEC(ap203e2-g "${ap203e2g_SOURCES}" "${ap203e2g_LIBS}" NO_STRICT)
+BRLCAD_ADDEXEC(ap203e2-g "${ap203e2g_SOURCES}" "${ap203e2g_LIBS}" NO_STRICT FOLDER Conv)
 add_dependencies(ap203e2-g step-express-${SCHEMA_NAME}-ap203e2g)
 
 if (HIDE_INTERNAL_SYMBOLS)

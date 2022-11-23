@@ -521,11 +521,10 @@ out:
 static int
 bundle_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-    register struct partition *pp;
     struct partition_bundle *bundle = (struct partition_bundle *)ap->a_uptr;
     struct partition_list *new_shotline;
 
-    if ((pp=PartHeadp->pt_forw) == PartHeadp) {
+    if (PartHeadp->pt_forw == PartHeadp) {
 	bundle->misses++;
 	return 0;		/* Nothing hit?? */
     }

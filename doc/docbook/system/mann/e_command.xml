@@ -58,7 +58,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>e object1 object2</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>e object1 object2</userinput></term>
 	   <listitem>
 	     <para>Draws <emphasis>object1</emphasis> and <emphasis>object2</emphasis> in the MGED display.</para>
 	   </listitem>
@@ -70,7 +70,7 @@
 	</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>e -A -o Comment {First comment} Comment {Second comment} </userinput>
+      <prompt>mged&gt; </prompt><userinput>e -A -o Comment {First comment} Comment {Second comment} </userinput>
     </para>
     <para>
        Draws objects that have a "Comment" attribute with a value of either "First

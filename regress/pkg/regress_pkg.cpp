@@ -303,9 +303,17 @@ client_main(int UNUSED(argc), const char **UNUSED(argv)) {
 
     /* server's done, send our own message back to it */
     bytes = pkg_send(MSG_DATA, "Message from client", 20, connection);
+    if (bytes < 0) {
+	bu_exit(-1, "Unable to cleanly send message from client, server %s, port %d.\n", server, port);
+    }
 
     /* let the server know we're done. */
     bytes = pkg_send(MSG_CIAO, "DONE", 5, connection);
+    if (bytes < 0) {
+	bu_exit(-1, "Unable to cleanly send DONE from client, server %s, port %d.\n", server, port);
+    }
+
+    /* wrap up */
     bytes = pkg_send(MSG_CIAO, "BYE", 4, connection);
     if (bytes < 0) {
 	bu_exit(-1, "Unable to cleanly disconnect from %s, port %d.\n", server, port);

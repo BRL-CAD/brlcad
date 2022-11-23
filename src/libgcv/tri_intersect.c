@@ -243,7 +243,7 @@ gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s 
     b=fabs(D[1]);
     c=fabs(D[2]);
     if (b>max) max=b, i=1;
-    if (c>max) max=c, i=2;
+    if (c > max) i=2;
 
     /* this is the simplified projection onto L*/
     vp0=lf->vert[0][i];

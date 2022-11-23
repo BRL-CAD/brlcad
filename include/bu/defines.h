@@ -46,21 +46,8 @@
 #  endif
 #endif
 
-/** All okay return code, not a maskable result.  Callers should not rely on
- * the numerical value. */
-#define BRLCAD_OK    0x0000
-
-/**
- * Possible maskable return codes from BRL-CAD functions.  Callers should not
- * rely on the actual values or exact numerical equalities but should instead
- * test via masking.
- */
-#define BRLCAD_ERROR   0x0001 /**< something went wrong, the action was not performed */
-#define BRLCAD_HELP    0x0002 /**< invalid specification, result contains usage */
-#define BRLCAD_MORE    0x0004 /**< incomplete specification, can specify again interactively */
-#define BRLCAD_QUIET   0x0008 /**< don't set or modify the result string */
-#define BRLCAD_UNKNOWN 0x0010 /**< argv[0] was not a known command */
-#define BRLCAD_EXIT    0x0020 /**< command is requesting a clean application shutdown */
+#define BRLCAD_OK    0x0000   /**< logic worked as expected */
+#define BRLCAD_ERROR 0x0001 /**< something went wrong */
 
 /**
  * @def BU_DIR_SEPARATOR
@@ -113,24 +100,6 @@
 #  define _BU_ATTR_SCANF23
 #endif
 
-/**
- * shorthand declaration of a function that doesn't return
- */
-#ifdef HAVE_NORETURN_ATTRIBUTE
-#  define _BU_ATTR_NORETURN __attribute__((__noreturn__))
-#else
-#  define _BU_ATTR_NORETURN
-#endif
-
-/* For the moment, we need to specially flag some functions
- * for clang.  It's not clear if we will always need to do
- * this, but for now this suppresses a lot of noise in the
- * reports */
-#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
-#  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
-#else
-#  define _BU_ATTR_ANALYZE_NORETURN
-#endif
 
 /**
  * shorthand declaration of a function that should always be inline
@@ -180,7 +149,7 @@
 
 /**
  * shorthand declaration of a function that doesn't accept NULL
- * pointer arugments.  if a null pointer is detected during
+ * pointer arguments.  if a null pointer is detected during
  * compilation, a warning/error can be emitted.
  */
 #ifdef HAVE_NONNULL_ATTRIBUTE

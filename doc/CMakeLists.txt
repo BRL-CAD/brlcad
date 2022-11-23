@@ -17,9 +17,12 @@ set(documentation_DATA
   description.txt
   notes/TODO.BREP
   notes/TODO.shaded_displays
+  notes/apitrace.txt
   notes/brep.txt
   notes/bu_opt_design_notes.txt
   notes/cvs.txt
+  notes/debugging_example.txt
+  notes/debugging_notes.txt
   notes/editors.txt
   notes/history.txt
   notes/hypot.txt
@@ -211,13 +214,15 @@ CMAKEFILES(
   STARTERS
   STRATEGY
   git/check.yml
+  git/diffing.txt
+  git/git2gource.cpp
   git/gitconfig
   git/gitk
-  git/git2gource.cpp
-  git/gource.txt
-  git/gource.sh
-  git/history.txt
   git/gitstats.txt
+  git/gource.sh
+  git/gource.txt
+  git/history.txt
+  git/merging.txt
   git/mime_types.txt
   notes/bsd_semaphore_bug.txt
   notes/cmake_paths/CMakeLists.txt

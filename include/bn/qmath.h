@@ -75,9 +75,6 @@ BN_EXPORT extern void quat_mat2quat(quat_t quat,
 
 /**
  *@brief  Convert Quaternion to Matrix.
- *
- * NB: This only works for UNIT quaternions.  We may get imaginary results
- *   otherwise.  We should normalize first (still yields same rotation).
  */
 BN_EXPORT extern void quat_quat2mat(mat_t mat,
 				    const quat_t quat);

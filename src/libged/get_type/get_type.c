@@ -48,7 +48,7 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
@@ -56,8 +56,10 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp) & BRLCAD_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path(gedp->ged_result_str, &intern, argv[1], wdbp) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
+    }
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	bu_vls_printf(gedp->ged_result_str, "unknown");
@@ -80,7 +82,7 @@ ged_get_type_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "superell");
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ARB8:
-	    type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
+	    type = rt_arb_std_type(&intern, &wdbp->wdb_tol);
 
 	    switch (type) {
 		case 4:

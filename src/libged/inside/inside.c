@@ -58,15 +58,15 @@ ged_inside_core(struct ged *gedp, int argc, const char *argv[])
 
     if (argc < arg+1) {
 	bu_vls_printf(gedp->ged_result_str, "Enter name of outside solid: ");
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
-    if ((outdp = db_lookup(gedp->ged_wdbp->dbip,  argv[arg], LOOKUP_QUIET)) == RT_DIR_NULL) {
+    if ((outdp = db_lookup(gedp->dbip,  argv[arg], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[arg]);
 	return BRLCAD_ERROR;
     }
     ++arg;
 
-    if (rt_db_get_internal(&intern, outdp, gedp->ged_wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, outdp, gedp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
     }

@@ -53,10 +53,10 @@ ged_hide_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
-    dbip = gedp->ged_wdbp->dbip;
+    dbip = gedp->dbip;
 
     if (db_version(dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str, "Database was created with a previous release of BRL-CAD.\nSelect \"Tools->Upgrade Database...\" to enable support for this feature.");

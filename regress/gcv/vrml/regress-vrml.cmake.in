@@ -1,0 +1,51 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(LOGFILE "${CBDIR}/regress-vrml.log")
+
+file(WRITE "${LOGFILE}" "Starting DEM conversion run\n")
+
+# The executable locations aren't know at CMake configure time, so one of them
+# is passed in via the EXEC variable at runtime.  De-quote it and assign it to
+# the appropriate variable.
+string(REPLACE "\\" "" GCV_EXEC "${EXEC}")
+if (NOT EXISTS "${GCV_EXEC}")
+  file(WRITE "${LOGFILE}" "gcv not found at location \"${GCV_EXEC}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find gcv, aborting.\nSee ${LOGFILE} for more details.")
+endif (NOT EXISTS "${GCV_EXEC}")
+
+# Clean up in case we've run before
+set(OUTPUT_FILES
+  "${CBDIR}/vrml_example.g"
+  )
+foreach(of ${OUTPUT_FILES})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach(of ${OUTPUT_FILES})
+
+# Run the converter
+set(vrml_g_log "Running: ${GCV_EXEC} ${CSDIR}/vrml_example.wrl ${CBDIR}/vrml_example.g\n")
+file(APPEND "${CBDIR}/regress-vrml.log" "${vrml_g_log}")
+
+execute_process(
+  COMMAND "${GCV_EXEC}" "${CSDIR}/vrml_example.wrl" "${CBDIR}/vrml_example.g"
+  RESULT_VARIABLE vrml_g_result OUTPUT_VARIABLE vrml_g_log ERROR_VARIABLE vrml_g_log
+  )
+file(APPEND "${CBDIR}/regress-vrml.log" "${vrml_g_log}")
+set(vrml_g_log)
+if(NOT EXISTS "${CBDIR}/vrml_example.g")
+  file(APPEND "${LOGFILE}" "Failure: ${vrml_g_result}")
+  message(FATAL_ERROR "Unable to convert ${CSDIR}/vrml_example.wrl to ${CBDIR}/vrml_example.g with ${GCV_EXEC}, aborting.\nSee ${LOGFILE} for more details.")
+endif(NOT EXISTS "${CBDIR}/vrml_example.g")
+
+# Cleanup
+foreach(of ${OUTPUT_FILES})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach(of ${OUTPUT_FILES})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

@@ -72,7 +72,7 @@ ged_qvrot_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -113,7 +113,7 @@ ged_qvrot_core(struct ged *gedp, int argc, const char *argv[])
 
     bn_mat_angles(gedp->ged_gvp->gv_rotation, 270.0 + el * RAD2DEG, 0.0, 270.0 - az * RAD2DEG);
     usejoy(gedp, 0.0, 0.0, theta*DEG2RAD);
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return BRLCAD_OK;
 }

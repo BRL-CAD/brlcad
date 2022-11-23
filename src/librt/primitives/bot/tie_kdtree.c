@@ -120,6 +120,8 @@ tie_kdtree_free_node(struct tie_kdtree_s *node)
     } else {
 	/* This node points to a geometry node, free it */
 	struct tie_geom_s *tmp;
+	if (!node)
+	    return;
 	tmp = (struct tie_geom_s *)node->data;
 	if (tmp) {
 	    if (tmp->tri_num > 0) {

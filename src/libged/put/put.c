@@ -52,7 +52,7 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3) {
@@ -62,7 +62,7 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
 
     name = (char *)argv[1];
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -94,7 +94,8 @@ ged_put_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;

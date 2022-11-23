@@ -28,6 +28,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "rt/defines.h"
+#include "rt/resource.h"
 
 __BEGIN_DECLS
 

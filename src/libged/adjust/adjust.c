@@ -51,7 +51,7 @@ ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 4) {
@@ -74,8 +74,9 @@ ged_adjust_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     status = intern.idb_meth->ft_adjust(gedp->ged_result_str, &intern, argc-2, argv+2);
-    if (status == BRLCAD_OK && wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
+    if (status == BRLCAD_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_export(%s) failure", name);
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;

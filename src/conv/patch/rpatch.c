@@ -51,14 +51,14 @@ static int fast3;
 double
 get_ftn_float(char *str, unsigned int start_col, char *format)
 {
-    char *ptr;
-    char tmp_str[MAXLINELEN];
-    int width, precision;
+    char *ptr = format;
+    char tmp_str[MAXLINELEN] = {0};
+    int width = 0;
+    int precision = 0;
     int leading_spaces=1;
-    int i;
+    int i = 0;
 
     /* Check that format is legal for floating point or double */
-    ptr = format;
     if (*ptr != 'F' && *ptr != 'f' && *ptr != 'E' && *ptr != 'e' && *ptr != 'D' && *ptr != 'd') {
 	fprintf(stderr, "Get_ftn_float(str=%s\n, start_col=%d, format=%s)\n",
 		str, start_col, ptr);
@@ -272,7 +272,6 @@ main(int argc, char **argv)
 	/* get space code */
 	work = hold * 10.0;
 	ity1 = work;
-	hold = work - ity1;
 
 	/* write output */
 	printf("%8.3f %8.3f %9.3f %c %2d %2d %1d %4d %11d ",

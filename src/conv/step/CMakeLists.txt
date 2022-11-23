@@ -15,22 +15,15 @@ CHECK_CXX_FLAG("wd4800") # implicit conversions to bool
 # Also quell a GCC warning for similar reasons.
 CHECK_CXX_FLAG("Wno-ignored-qualifiers")
 
+find_package(STEPCODE)
 
-set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
 set(STEP_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
-  ${STEPCODE_DIR}/include
-  ${STEPCODE_DIR}/src/base
-  ${STEPCODE_DIR}/src/clstepcore
-  ${STEPCODE_DIR}/src/cleditor
-  ${STEPCODE_DIR}/src/clutils
-  ${STEPCODE_DIR}/src/cldai
-  ${STEPCODE_DIR}/src/test
-  ${CMAKE_BINARY_DIR}/src/other/stepcode/include
+  ${STEPCODE_INCLUDE_DIRS}
   ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
 BRLCAD_INCLUDE_DIRS(STEP_INCLUDE_DIRS)
@@ -55,6 +48,8 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     set(express_srcs
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.cc
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.init.cc
+      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_entities.cc
+      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_types.cc
       ${SCHEMA_OUT_DIR}/SdaiAll.cc
       ${SCHEMA_OUT_DIR}/compstructs.cc
       ${SCHEMA_OUT_DIR}/schema.cc
@@ -65,14 +60,15 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     set(EXPRESS_OUTPUT
       ${express_srcs}
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
-      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Helpers.h
       ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Names.h
+      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_entities.h
+      ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}_unity_types.h
       ${SCHEMA_OUT_DIR}/Sdaiclasses.h
       ${SCHEMA_OUT_DIR}/schema.h
       )
 
     add_custom_command(OUTPUT ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
-      COMMAND ${EXP2CXX_EXEC} ARGS ${SCHEMA_FILE} > ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.log 2>&1
+      COMMAND ${EXP2CXX_EXECUTABLE} ARGS ${SCHEMA_FILE} > ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.log 2>&1
       COMMAND ${CMAKE_COMMAND} -E touch ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
       DEPENDS ${SCHEMA_FILE} ${EXP2CXX_EXECUTABLE_TARGET}
       WORKING_DIRECTORY ${SCHEMA_OUT_DIR}

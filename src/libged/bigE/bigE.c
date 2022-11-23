@@ -119,7 +119,7 @@ add_solid(const struct directory *dp,
     BU_ALLOC(eptr, union E_tree);
     eptr->magic = E_TREE_MAGIC;
 
-    id = rt_db_get_internal(&intern, dp, dgcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, dgcdp->gedp->dbip, mat, &rt_uniresource);
     if (id < 0) {
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "Failed to get internal form of %s\n", dp->d_namep);
 	eptr->l.m = (struct model *)NULL;
@@ -152,8 +152,8 @@ add_solid(const struct directory *dp,
 
 	if (!OBJ[id].ft_tessellate ||
 	    OBJ[id].ft_tessellate(&r, eptr->l.m, &intern,
-					 &dgcdp->gedp->ged_wdbp->wdb_ttol,
-					 &dgcdp->gedp->ged_wdbp->wdb_tol) < 0)
+					 &dgcdp->wdbp->wdb_ttol,
+					 &dgcdp->wdbp->wdb_tol) < 0)
 	{
 	    nmg_km(eptr->l.m);
 	    eptr->l.m = NULL;
@@ -182,7 +182,7 @@ add_solid(const struct directory *dp,
 
 	    if (solid_is_plate_mode_bot
 		|| !eptr->l.m
-		|| (bot = nmg_bot(s, &RTG.rtg_vlfree, &dgcdp->gedp->ged_wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
+		|| (bot = nmg_bot(s, &RTG.rtg_vlfree, &dgcdp->wdbp->wdb_tol)) == (struct rt_bot_internal *)NULL)
 	    {
 		eptr->l.stp->st_id = id;
 		eptr->l.stp->st_meth = &OBJ[id];
@@ -251,7 +251,7 @@ build_etree(union tree *tp,
 	    BU_LIST_INIT(&eptr->l.seghead);
 	    break;
 	case OP_DB_LEAF:
-	    dp = db_lookup(dgcdp->gedp->ged_wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY);
+	    dp = db_lookup(dgcdp->gedp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY);
 	    if (dp == RT_DIR_NULL) {
 	      break;
 	    }
@@ -877,7 +877,6 @@ eval_op(struct bu_list *A,
 			/* eliminate sega */
 			BU_LIST_DEQUEUE(&sega->l);
 			RT_FREE_SEG(sega, dgcdp->ap->a_resource);
-			sega = next;
 			break;
 		    }
 
@@ -1024,7 +1023,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 
     /* set up "ray_data" structure for nmg raytrace */
     rd.rp = &new_rp;
-    rd.tol = &dgcdp->gedp->ged_wdbp->wdb_tol;
+    rd.tol = &dgcdp->wdbp->wdb_tol;
     rd.ap = dgcdp->ap;
     rd.magic = NMG_RAY_DATA_MAGIC;
     rd.classifying_ray = 0;
@@ -1095,6 +1094,7 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 static void
 shoot_and_plot(point_t start_pt,
 	       vect_t dir,
+	       struct bu_list *vlfree,
 	       struct bu_list *vhead,
 	       fastf_t edge_len,
 	       int skip_leaf1,
@@ -1122,7 +1122,7 @@ shoot_and_plot(point_t start_pt,
 
     /* set up "ray_data" structure for nmg raytrace */
     rd.rp = &rp;
-    rd.tol = &dgcdp->gedp->ged_wdbp->wdb_tol;
+    rd.tol = &dgcdp->wdbp->wdb_tol;
     rd.ap = dgcdp->ap;
     rd.magic = NMG_RAY_DATA_MAGIC;
     rd.classifying_ray = 0;
@@ -1159,18 +1159,18 @@ shoot_and_plot(point_t start_pt,
 		    else if (!leaf->l.stp->st_matp &&
 			     bn_mat_is_equal(shoot->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->wdbp->wdb_tol))
 			dont_shoot = 1;
 		    else if (!shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->wdbp->wdb_tol))
 			dont_shoot = 1;
 		    else if (leaf->l.stp->st_matp &&
 			     shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     shoot->l.stp->st_matp,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->wdbp->wdb_tol))
 			dont_shoot = 1;
 		}
 	    }
@@ -1182,18 +1182,18 @@ shoot_and_plot(point_t start_pt,
 		    else if (!leaf->l.stp->st_matp &&
 			     bn_mat_is_equal(shoot->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->wdbp->wdb_tol))
 			dont_shoot = 1;
 		    else if (!shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     bn_mat_identity,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->wdbp->wdb_tol))
 			dont_shoot = 1;
 		    else if (leaf->l.stp->st_matp &&
 			     shoot->l.stp->st_matp &&
 			     bn_mat_is_equal(leaf->l.stp->st_matp,
 					     shoot->l.stp->st_matp,
-					     &dgcdp->gedp->ged_wdbp->wdb_tol))
+					     &dgcdp->wdbp->wdb_tol))
 			dont_shoot = 1;
 		}
 	    }
@@ -1281,14 +1281,14 @@ shoot_and_plot(point_t start_pt,
 	    bu_log("\t\tDRAW (%g %g %g)", V3ARGS(pt));
 #endif
 
-	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_MOVE);
 	    VJOIN1(pt, rp.r_pt, seg->seg_out.hit_dist, rp.r_dir);
 
 #ifdef debug
 	    bu_log("<->(%g %g %g)\n", V3ARGS(pt));
 #endif
 
-	    RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, pt, BV_VLIST_LINE_DRAW);
 	}
 
     }
@@ -1316,7 +1316,8 @@ Eplot(union E_tree *eptr,
     struct bu_list *result;
     struct bn_tol *tol;
 
-    tol = &dgcdp->gedp->ged_wdbp->wdb_tol;
+    tol = &dgcdp->wdbp->wdb_tol;
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
 
     CK_ETREE(eptr);
 
@@ -1370,7 +1371,7 @@ Eplot(union E_tree *eptr,
 		continue;
 	    inv_len = 1.0/edge_len;
 	    VSCALE(dir, dir, inv_len);
-	    shoot_and_plot(vg->coord, dir, vhead, edge_len, leaf_no, -1, eptr, ON_SURF, dgcdp);
+	    shoot_and_plot(vg->coord, dir, vlfree, vhead, edge_len, leaf_no, -1, eptr, ON_SURF, dgcdp);
 
 	}
     }
@@ -1438,7 +1439,7 @@ Eplot(union E_tree *eptr,
 
 		    NMG_GET_FU_PLANE(pl2, fu2);
 
-		    if (bn_coplanar(pl1, pl2, tol)) {
+		    if (bg_coplanar(pl1, pl2, tol)) {
 			continue;
 		    }
 
@@ -1455,7 +1456,7 @@ Eplot(union E_tree *eptr,
 
 			    /* find intersection of this edge with fu2 */
 
-			    if (bn_isect_line3_plane(&dist, vg1a->coord,
+			    if (bg_isect_line3_plane(&dist, vg1a->coord,
 						     dir, pl2,
 						     tol) < 1)
 				continue;
@@ -1483,7 +1484,7 @@ Eplot(union E_tree *eptr,
 
 			    /* find intersection of this edge with fu1 */
 
-			    if (bn_isect_line3_plane(&dist, vg2a->coord,
+			    if (bg_isect_line3_plane(&dist, vg2a->coord,
 						     dir, pl1,
 						     tol) < 1)
 				continue;
@@ -1560,9 +1561,7 @@ Eplot(union E_tree *eptr,
 
 		    /* sort the hits on face 2 */
 		    min_dist = MAX_FASTF;
-		    min_hit = -1;
 		    max_dist = -min_dist;
-		    max_hit = -1;
 		    for (i = 0; i < hit_count2; i++) {
 			VSUB2(vdiff, hits2[i], start_pt);
 			dists2[i] = MAGNITUDE(vdiff);
@@ -1570,11 +1569,9 @@ Eplot(union E_tree *eptr,
 			    dists2[i] = -dists2[i];
 			if (dists2[i] > max_dist) {
 			    max_dist = dists2[i];
-			    max_hit = i;
 			}
 			if (dists2[i] < min_dist) {
 			    min_dist = dists2[i];
-			    min_hit = i;
 			}
 		    }
 
@@ -1645,7 +1642,7 @@ Eplot(union E_tree *eptr,
 			point_t ray_start;
 
 			VJOIN1(ray_start, start_pt, aseg->seg_in.hit_dist, dir);
-			shoot_and_plot(ray_start, dir, vhead,
+			shoot_and_plot(ray_start, dir, vlfree, vhead,
 				       aseg->seg_out.hit_dist - aseg->seg_in.hit_dist,
 				       leaf_no, leaf2, eptr, ON_INT, dgcdp);
 		    }
@@ -1710,7 +1707,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
     size_t count=0;
     struct bn_tol *tol;
 
-    tol = &dgcdp->gedp->ged_wdbp->wdb_tol;
+    tol = &dgcdp->wdbp->wdb_tol;
 
     VSETALL(max, -INFINITY);
     VSETALL(min, INFINITY);
@@ -1831,7 +1828,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
 	    NMG_GET_FU_PLANE(pl, fu);
 
-	    if (bn_coplanar(pl, haf_pl, tol) > 0)
+	    if (bg_coplanar(pl, haf_pl, tol) > 0)
 		continue;
 
 	    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
@@ -1847,7 +1844,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
 		VSUB2(dir, v2g->coord, v1g->coord);
 
-		if (bn_isect_line3_plane(&dist, v1g->coord, dir, haf_pl, tol) < 1)
+		if (bg_isect_line3_plane(&dist, v1g->coord, dir, haf_pl, tol) < 1)
 		    continue;
 
 		if (dist < 0.0 || dist >=1.0)
@@ -1999,17 +1996,17 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* XXX: where is this released? */
     BU_ALLOC(dgcdp, struct _ged_client_data);
     dgcdp->gedp = gedp;
+    dgcdp->wdbp = wdb_dbopen(dgcdp->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     dgcdp->do_polysolids = 0;
-    dgcdp->wireframe_color_override = 0;
-    dgcdp->transparency = 0;
-    dgcdp->dmode = _GED_BOOL_EVAL;
-    dgcdp->freesolid = gedp->freesolid;
+    dgcdp->vs.color_override = 0;
+    dgcdp->vs.transparency = 0;
+    dgcdp->vs.s_dmode = _GED_BOOL_EVAL;
 
     /* Parse options. */
     bu_optind = 1;          /* re-init bu_getopt() */
@@ -2032,10 +2029,10 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 		    if (g < 0 || g > 255) g = 255;
 		    if (b < 0 || b > 255) b = 255;
 
-		    dgcdp->wireframe_color_override = 1;
-		    dgcdp->wireframe_color[0] = r;
-		    dgcdp->wireframe_color[1] = g;
-		    dgcdp->wireframe_color[2] = b;
+		    dgcdp->vs.color_override = 1;
+		    dgcdp->vs.color[0] = r;
+		    dgcdp->vs.color[1] = g;
+		    dgcdp->vs.color[2] = b;
 		}
 		break;
 	    case 's':
@@ -2054,7 +2051,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
     av[1] = (char *)0;
     for (i = 0; i < argc; ++i) {
 	dl_erasePathFromDisplay(gedp, argv[i], 0);
-	dgcdp->gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
+	dgcdp->gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->dbip, argv[i]);
 
 	BU_ALLOC(dgcdp->ap, struct application);
 	RT_APPLICATION_INIT(dgcdp->ap);
@@ -2065,8 +2062,8 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 
 	bu_ptbl_init(&dgcdp->leaf_list, 8, "leaf_list");
 
-	dgcdp->rtip = rt_new_rti(gedp->ged_wdbp->dbip);
-	dgcdp->rtip->rti_tol = gedp->ged_wdbp->wdb_tol;	/* struct copy */
+	dgcdp->rtip = rt_new_rti(gedp->dbip);
+	dgcdp->rtip->rti_tol = dgcdp->wdbp->wdb_tol;	/* struct copy */
 	dgcdp->rtip->useair = 1;
 	dgcdp->ap->a_rt_i = dgcdp->rtip;
 
@@ -2106,7 +2103,7 @@ ged_E_core(struct ged *gedp, int argc, const char *argv[])
 		free_etree(eptr, dgcdp);
 		bu_ptbl_reset(&dgcdp->leaf_list);
 		ts.ts_mater = rp->reg_mater;
-		db_string_to_path(&path, gedp->ged_wdbp->dbip, rp->reg_name);
+		db_string_to_path(&path, gedp->dbip, rp->reg_name);
 		_ged_drawH_part2(0, &vhead, &path, &ts, dgcdp);
 		db_free_full_path(&path);
 	    }

@@ -111,7 +111,7 @@ extern "C" int
 _brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname1> info C3 [[index][index-index]]";
-    const char *purpose_string = "3D parameter space geometric curves";
+    const char *purpose_string = "3D geometric curves";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
@@ -206,7 +206,7 @@ _brep_cmd_edge_info(void *bs, int argc, const char **argv)
 	    dump.Print("trim[%2d] ", edge.m_ti[i]);
 	}
 	dump.Print("\n");
-	dump.Print("v0(%2d) v1(%2d) 3d_curve(%2d) tolerance(%g, %g)\n", ei, edge.m_vi[0], edge.m_vi[1], edge.m_c3i, edge.m_tolerance);
+	dump.Print("v0(%2d) v1(%2d) 3d_curve(%2d) tolerance(%d, %g)\n", ei, edge.m_vi[0], edge.m_vi[1], edge.m_c3i, edge.m_tolerance);
 	dump.PushIndent();
 	if (c3) {
 	    edge_start = edge.PointAtStart();
@@ -490,10 +490,10 @@ _brep_cmd_surface_info(void *bs, int argc, const char **argv)
 	    if (!s)
 		s = "";
 	    bu_vls_printf(gib->vls, "surface[%2d]: %s u(%g, %g) v(%g, %g)\n",
-		    si, s,
-		    udom[0], udom[1],
-		    vdom[0], vdom[1]
-		    );
+			  si, s,
+			  udom[0], udom[1],
+			  vdom[0], vdom[1]
+			 );
 	    bu_vls_printf(gib->vls, "NURBS form of Surface:\n");
 	    ON_NurbsSurface *nsrf = ON_NurbsSurface::New();
 	    srf->GetNurbForm(*nsrf, 0.0);
@@ -555,10 +555,10 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 		s = "";
 	    }
 	    bu_vls_printf(gib->vls, "surface[%2d]: %s u(%g, %g) v(%g, %g)\n",
-		    si, s,
-		    udom[0], udom[1],
-		    vdom[0], vdom[1]
-		    );
+			  si, s,
+			  udom[0], udom[1],
+			  vdom[0], vdom[1]
+			 );
 	    ON_NurbsSurface *nsrf = ON_NurbsSurface::New();
 	    srf->GetNurbForm(*nsrf, 0.0);
 	    int knotlength0 = nsrf->m_order[0] + nsrf->m_cv_count[0] - 2;

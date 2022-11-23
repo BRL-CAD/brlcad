@@ -42,7 +42,7 @@ list_children(struct ged *gedp, struct directory *dp, int c_sep)
     if (!(dp->d_flags & RT_DIR_COMB))
 	return BRLCAD_OK;
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
     }
@@ -133,7 +133,7 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
@@ -156,7 +156,7 @@ ged_lt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return BRLCAD_ERROR;
     }

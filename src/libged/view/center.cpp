@@ -53,7 +53,7 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
     /* get view center */
     if (argc == 1) {
 	MAT_DELTAS_GET_NEG(center, gedp->ged_gvp->gv_center);
-	VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(center, center, gedp->dbip->dbi_base2local);
 	bn_encode_vect(gedp->ged_result_str, center, 1);
 
 	return BRLCAD_OK;
@@ -62,7 +62,7 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 2 && BU_STR_EQUAL(argv[1], "-v")) {
 	std::ostringstream ss;
 	MAT_DELTAS_GET_NEG(center, gedp->ged_gvp->gv_center);
-	VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(center, center, gedp->dbip->dbi_base2local);
 	ss << std::fixed << std::setprecision(std::numeric_limits<fastf_t>::max_digits10) << center[X];
 	ss << " ";
 	ss << std::fixed << std::setprecision(std::numeric_limits<fastf_t>::max_digits10) << center[Y];
@@ -143,20 +143,20 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
 	VMOVE(center, scan);
     }
 
-    VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(center, center, gedp->dbip->dbi_local2base);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return BRLCAD_OK;
 }
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

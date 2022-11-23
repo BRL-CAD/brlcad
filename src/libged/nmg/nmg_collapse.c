@@ -50,6 +50,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -57,7 +58,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 4) {
@@ -72,12 +73,12 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 
     new_name = (char *)argv[2];
 
-    if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists\n", new_name);
 	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
     if (dp == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
@@ -86,7 +87,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Failed to get internal form of %s!!!!\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -97,7 +98,7 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    tol_coll = atof(argv[3]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    tol_coll = atof(argv[3]) * gedp->dbip->dbi_local2base;
     if (tol_coll <= 0.0) {
 	bu_vls_printf(gedp->ged_result_str, "tolerance distance too small\n");
 	return BRLCAD_ERROR;
@@ -129,18 +130,18 @@ ged_nmg_collapse_core(struct ged *gedp, int argc, const char *argv[])
     bu_ptbl_free(&faces);
 
     /* triangulate model */
-    nmg_triangulate_model(m, &RTG.rtg_vlfree, &gedp->ged_wdbp->wdb_tol);
+    nmg_triangulate_model(m, &RTG.rtg_vlfree, &wdbp->wdb_tol);
 
-    count = (size_t)nmg_edge_collapse(m, &gedp->ged_wdbp->wdb_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
+    count = (size_t)nmg_edge_collapse(m, &wdbp->wdb_tol, tol_coll, min_angle, &RTG.rtg_vlfree);
 
-    dp = db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    dp = db_diradd(gedp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "Database write error, aborting.\n");
 	return BRLCAD_ERROR;

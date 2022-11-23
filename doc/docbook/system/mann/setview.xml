@@ -39,7 +39,7 @@
   <example><title>Set the current view in MGED.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>setview 90 180 90</userinput>
+      <prompt>mged&gt; </prompt><userinput>setview 90 180 90</userinput>
     </para>
     <para>Sets the current view to that set by <command>ae 0 0</command>.
     </para>

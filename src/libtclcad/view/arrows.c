@@ -49,7 +49,7 @@ go_data_arrows(Tcl_Interp *interp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 2 || 5 < argc) {
@@ -60,7 +60,7 @@ go_data_arrows(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     ret = to_data_arrows_func(interp, gedp, gdvp, argc, argv);
@@ -88,7 +88,7 @@ to_data_arrows(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
@@ -96,7 +96,7 @@ to_data_arrows(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    gdvp = ged_find_view(gedp, argv[1]);
+    gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return BRLCAD_ERROR;
@@ -119,12 +119,12 @@ to_data_arrows_func(Tcl_Interp *interp,
 		    int argc,
 		    const char *argv[])
 {
-    struct bview_data_arrow_state *gdasp;
+    struct bv_data_arrow_state *gdasp;
 
     if (argv[0][0] == 's')
-	gdasp = &gdvp->gv_sdata_arrows;
+	gdasp = &gdvp->gv_tcl.gv_sdata_arrows;
     else
-	gdasp = &gdvp->gv_data_arrows;
+	gdasp = &gdvp->gv_tcl.gv_data_arrows;
 
     if (BU_STR_EQUAL(argv[1], "draw")) {
 	if (argc == 2) {
@@ -309,88 +309,6 @@ to_data_arrows_func(Tcl_Interp *interp,
 
 bad:
     return BRLCAD_ERROR;
-}
-
-
-void
-go_dm_draw_arrows(struct dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
-{
-    register int i;
-    int saveLineWidth;
-    int saveLineStyle;
-
-    if (gdasp->gdas_num_points < 1)
-	return;
-
-    saveLineWidth = dm_get_linewidth(dmp);
-    saveLineStyle = dm_get_linestyle(dmp);
-
-    /* set color */
-    (void)dm_set_fg(dmp,
-		    gdasp->gdas_color[0],
-		    gdasp->gdas_color[1],
-		    gdasp->gdas_color[2], 1, 1.0);
-
-    /* set linewidth */
-    (void)dm_set_line_attr(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
-
-    (void)dm_draw_lines_3d(dmp,
-			   gdasp->gdas_num_points,
-			   gdasp->gdas_points, 0);
-
-    for (i = 0; i < gdasp->gdas_num_points; i += 2) {
-	point_t points[16];
-	point_t A, B;
-	point_t BmA;
-	point_t offset;
-	point_t perp1, perp2;
-	point_t a_base;
-	point_t a_pt1, a_pt2, a_pt3, a_pt4;
-
-	VMOVE(A, gdasp->gdas_points[i]);
-	VMOVE(B, gdasp->gdas_points[i+1]);
-	VSUB2(BmA, B, A);
-
-	VUNITIZE(BmA);
-	VSCALE(offset, BmA, -gdasp->gdas_tip_length * sf);
-
-	bn_vec_perp(perp1, BmA);
-	VUNITIZE(perp1);
-
-	VCROSS(perp2, BmA, perp1);
-	VUNITIZE(perp2);
-
-	VSCALE(perp1, perp1, gdasp->gdas_tip_width * sf);
-	VSCALE(perp2, perp2, gdasp->gdas_tip_width * sf);
-
-	VADD2(a_base, B, offset);
-	VADD2(a_pt1, a_base, perp1);
-	VADD2(a_pt2, a_base, perp2);
-	VSUB2(a_pt3, a_base, perp1);
-	VSUB2(a_pt4, a_base, perp2);
-
-	VMOVE(points[0], B);
-	VMOVE(points[1], a_pt1);
-	VMOVE(points[2], B);
-	VMOVE(points[3], a_pt2);
-	VMOVE(points[4], B);
-	VMOVE(points[5], a_pt3);
-	VMOVE(points[6], B);
-	VMOVE(points[7], a_pt4);
-	VMOVE(points[8], a_pt1);
-	VMOVE(points[9], a_pt2);
-	VMOVE(points[10], a_pt2);
-	VMOVE(points[11], a_pt3);
-	VMOVE(points[12], a_pt3);
-	VMOVE(points[13], a_pt4);
-	VMOVE(points[14], a_pt4);
-	VMOVE(points[15], a_pt1);
-
-	(void)dm_draw_lines_3d(dmp, 16, points, 0);
-    }
-
-    /* Restore the line attributes */
-    (void)dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
 }
 
 /*

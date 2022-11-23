@@ -76,7 +76,7 @@ void GeometryRenderer::onDatabaseUpdated() {
  */
 void GeometryRenderer::drawDatabase() {
     db_tree_state initState;
-    db_init_db_tree_state(&initState, r_database->rti_dbip, database->wdb_resp);
+    db_init_db_tree_state(&initState, r_database->rti_dbip, database->dbip->db_resp);
     initState.ts_ttol = &r_database->rti_ttol;
     initState.ts_tol = &r_database->rti_tol;
 
@@ -132,7 +132,7 @@ tree *GeometryRenderer::drawSolid(db_tree_state *tsp, const db_full_path *UNUSED
     }
 
     displayManager->setLineStyle(tsp->ts_sofar & (TS_SOFAR_MINUS | TS_SOFAR_INTER));
-    displayManager->drawVList(reinterpret_cast<bn_vlist *>(&vhead));
+    displayManager->drawVList(reinterpret_cast<bv_vlist *>(&vhead));
 
     if (!geometryRenderer->immediateMode) {
         displayManager->endDList();     // end display list --------------

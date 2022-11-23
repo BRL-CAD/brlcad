@@ -132,7 +132,8 @@ mem_open(struct fb *ifp, const char *file, int width, int height)
 	}
 
     /* build a local static info struct */
-    if ((MIL(ifp) = (char *)calloc(1, sizeof(struct mem_info))) == NULL) {
+    size_t msize = sizeof(struct mem_info);
+    if ((MIL(ifp) = (char *)calloc(1, msize)) == NULL) {
 	fb_log("mem_open:  mem_info malloc failed\n");
 	return -1;
     }
@@ -518,6 +519,10 @@ struct fb_impl memory_interface_impl =  {
     0L,			/* page_pixels */
     0,			/* debug */
     0,			/* refresh rate */
+    NULL,
+    NULL,
+    0,
+    NULL,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

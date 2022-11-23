@@ -55,7 +55,7 @@ ged_otranslate_cmd(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -68,7 +68,7 @@ ged_otranslate_cmd(struct ged *gedp, int argc, const char *argv[])
 
     dp = gtd.gtd_obj[gtd.gtd_objpos-1];
     if (!(dp->d_flags & RT_DIR_SOLID)) {
-	if (ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == BRLCAD_ERROR)
+	if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, argv+1, 1, rpp_min, rpp_max) == BRLCAD_ERROR)
 	    return BRLCAD_ERROR;
     }
 
@@ -88,7 +88,7 @@ ged_otranslate_cmd(struct ged *gedp, int argc, const char *argv[])
     }
 
     MAT_IDN(dmat);
-    VSCALE(delta, scan, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(delta, scan, gedp->dbip->dbi_local2base);
     MAT_DELTAS_VEC(dmat, delta);
 
     bn_mat_inv(invXform, gtd.gtd_xform);

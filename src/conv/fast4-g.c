@@ -45,7 +45,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 /* NOTE: there should be no space after comma */
@@ -872,7 +872,7 @@ Add_stragglers_to_groups(struct f4g_state *s)
 
 		new_cnt = lrint(ceil(s->region_id_max/1000.0));
 		new_head = (struct wmember *)bu_calloc(new_cnt, sizeof(struct wmember), "group_head list");
-		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%ld\n", ptr->region_id, s->region_id_max, new_cnt);
+		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%zd\n", ptr->region_id, s->region_id_max, new_cnt);
 
 		for (i = 0 ; i < new_cnt ; i++) {
 		    BU_LIST_INIT(&new_head[i].l);
@@ -2915,7 +2915,7 @@ main(int argc, char **argv)
     if (s.debug)
 	List_holes();
 
-    wdb_close(s.fpout);
+    db_close(s.fpout->dbip);
 
     if (!s.quiet)
 	bu_log("%d components converted\n", s.comp_count);

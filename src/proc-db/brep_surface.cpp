@@ -238,7 +238,7 @@ main(int argc, char** argv)
     unsigned char rgb[] = {255, 255, 255};
     mk_region1(outfp, regn_name, geom_name, "plastic", "", rgb);
 
-    wdb_close(outfp);
+    db_close(outfp->dbip);
     delete brep;
 
     ON::End();

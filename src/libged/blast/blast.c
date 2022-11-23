@@ -47,7 +47,7 @@ ged_blast_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* First, clear the screen */
@@ -56,12 +56,12 @@ ged_blast_core(struct ged *gedp, int argc, const char *argv[])
 
 	av[0] = "zap";
 	av[1] = (char *)0;
-	ged_zap(gedp, 1, av);
+	ged_exec(gedp, 1, av);
     }
 
     /* Draw the new object(s) */
     argv[0] = "draw";
-    return ged_draw(gedp, argc, argv);
+    return ged_exec(gedp, argc, argv);
 }
 
 

@@ -38,7 +38,7 @@
    <example><title>Break an NMG shape into its constituent shells.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>object.nmg</userinput>
+      <prompt>mged&gt; </prompt><userinput>object.nmg</userinput>
     </para>
     <para>Breaks the NMG shape named <emphasis>object.nmg</emphasis> into its constituent shells.
      </para>

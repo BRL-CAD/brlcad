@@ -84,7 +84,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
     if (!(dp->d_flags & RT_DIR_COMB))
 	return BRLCAD_OK;
 
-    id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot get records for %s\n", dp->d_namep);
 	return BRLCAD_ERROR;
@@ -117,7 +117,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
 	    path = (struct directory **)bu_realloc(path, sizeof(struct directory *) * path_capacity, "realloc path bigger");
 	}
 	path[pathpos] = dp;
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, wcodes_printnode,
+	db_tree_funcleaf(gedp->dbip, comb, comb->tree, wcodes_printnode,
 			 (void *)fp, (void *)&pathpos, (void *)gedp, (void *)gedp);
     }
 
@@ -145,7 +145,7 @@ ged_wcodes_core(struct ged *gedp, int argc, const char *argv[])
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	if (argc == 1)
-	    return BRLCAD_HELP;
+	    return GED_HELP;
 	return BRLCAD_ERROR;
     }
 
@@ -160,7 +160,7 @@ ged_wcodes_core(struct ged *gedp, int argc, const char *argv[])
     path_capacity = PATH_STEP;
 
     for (i = 2; i < argc; ++i) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 	    status = wcodes_printcodes(gedp, fp, dp, 0);
 
 	    if (status & BRLCAD_ERROR) {

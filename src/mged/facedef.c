@@ -361,7 +361,7 @@ get_3pts(fastf_t *plane, const char *argv[], const struct bn_tol *tol)
     for (i=0; i<3; i++)
 	c[i] = atof(argv[6+i]) * local2base;
 
-    if (bn_make_plane_3pnts(plane, a, b, c, tol) < 0) {
+    if (bg_make_plane_3pnts(plane, a, b, c, tol) < 0) {
 	Tcl_AppendResult(INTERP, "Facedef: not a plane\n", (char *)NULL);
 	return -1;		/* failure */
     }

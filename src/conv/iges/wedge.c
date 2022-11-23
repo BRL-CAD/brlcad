@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 int
-wedge(int entityno)
+wedge(size_t entityno)
 {
     fastf_t xscale = 0.0;
     fastf_t yscale = 0.0;

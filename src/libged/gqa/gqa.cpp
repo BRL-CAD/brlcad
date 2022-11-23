@@ -45,7 +45,7 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "analyze.h"
 
 #include "../ged_private.h"
@@ -68,6 +68,8 @@ const char *options_str = "[-A A|a|b|c|e|g|m|o|v|w] [-a az] [-d] [-e el] [-f den
 #define ANALYSIS_CENTROIDS      256
 #define ANALYSIS_MOMENTS        512
 #define ANALYSIS_PLOT_OVERLAPS 1024
+
+#define MAX_MATERIAL_ID  32768
 
 /* Note: struct parsing requires no space after the commas.  take care
  * when formatting this file.  if the compile breaks here, it means
@@ -166,13 +168,13 @@ struct cstate {
 
 
 struct ged_gqa_plot {
-    struct bn_vlblock *vbp;
+    struct bv_vlblock *vbp;
     struct bu_list *vhead;
 } ged_gqa_plot;
 
 /* summary data structure for objects specified on command line */
 static struct per_obj_data {
-    char *o_name;
+    const char *o_name;
     double *o_len;
     double *o_lenDensity;
     double *o_volume;
@@ -399,7 +401,6 @@ static const struct cvt_tab *units[3] = {
     &units_tab[2][0]	/* weight */
 };
 
-
 /**
  * _gqa_read_units_double
  *
@@ -478,15 +479,15 @@ parse_args(int ac, char *av[])
 			    case 'A' :
 				multiple_analyses = 1;
 				analysis_flags = analysis_flags \
-				    | ANALYSIS_ADJ_AIR \
-				    | ANALYSIS_BBOX \
-				    | ANALYSIS_CENTROIDS \
-				    | ANALYSIS_EXP_AIR \
-				    | ANALYSIS_GAPS \
-				    | ANALYSIS_MOMENTS \
-				    | ANALYSIS_OVERLAPS \
-				    | ANALYSIS_VOLUMES \
-				    | ANALYSIS_WEIGHTS;
+				| ANALYSIS_ADJ_AIR \
+				| ANALYSIS_BBOX \
+				| ANALYSIS_CENTROIDS \
+				| ANALYSIS_EXP_AIR \
+				| ANALYSIS_GAPS \
+				| ANALYSIS_MOMENTS \
+				| ANALYSIS_OVERLAPS \
+				| ANALYSIS_VOLUMES \
+				| ANALYSIS_WEIGHTS;
 				break;
 			    case 'a' :
 				if (analysis_flags)
@@ -584,7 +585,6 @@ parse_args(int ac, char *av[])
 	    case 'g':
 		{
 		    double value1, value2;
-		    i = 0;
 
 		    /* find out if we have two or one args; user can
 		     * separate them with , or - delimiter
@@ -763,10 +763,10 @@ parse_args(int ac, char *av[])
  */
 int
 _gqa_overlap(struct application *ap,
-	struct partition *pp,
-	struct region *reg1,
-	struct region *reg2,
-	struct partition *hp)
+	     struct partition *pp,
+	     struct region *reg1,
+	     struct region *reg2,
+	     struct partition *hp)
 {
     struct cstate *state = (struct cstate *)ap->A_STATE;
     struct xray *rp = &ap->a_ray;
@@ -803,8 +803,8 @@ _gqa_overlap(struct application *ap,
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	bu_semaphore_acquire(state->sem_worker);
-	BN_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ihit, BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ohit, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ihit, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ohit, BV_VLIST_LINE_DRAW);
 	bu_semaphore_release(state->sem_worker);
     }
 
@@ -856,8 +856,8 @@ logoverlap(struct application *ap,
 void _gqa_exposed_air(struct application *ap,
 		      struct partition *pp,
 		      point_t last_out_point,
-		      point_t pt,
-		      point_t opt)
+		      point_t in_pt,
+		      point_t out_pt)
 {
     struct cstate *state = (struct cstate *)ap->A_STATE;
 
@@ -865,16 +865,16 @@ void _gqa_exposed_air(struct application *ap,
 
     bu_semaphore_acquire(state->sem_lists);
     add_unique_pair(&exposedAirList,
-	    pp->pt_regionp,
-	    (struct region *)NULL,
-	    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist, /* thickness */
-	    last_out_point); /* location */
+		    pp->pt_regionp,
+		    (struct region *)NULL,
+		    DIST_PNT_PNT(in_pt, out_pt), /* thickness */
+		    last_out_point); /* location */
     bu_semaphore_release(state->sem_lists);
 
     if (plot_expair) {
 	bu_semaphore_acquire(state->sem_plot);
 	pl_color(plot_expair, V3ARGS(expAir_color));
-	pdv_3line(plot_expair, pt, opt);
+	pdv_3line(plot_expair, in_pt, out_pt);
 	bu_semaphore_release(state->sem_plot);
     }
 }
@@ -897,7 +897,6 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     int last_air = 0;  /* what was the aircode of the last item */
     int air_first = 1; /* are we in an air before a solid */
     double dist;       /* the thickness of the partition */
-    double gap_dist;
     double last_out_dist = -1.0;
     double val;
     struct cstate *state = (struct cstate *)ap->A_STATE;
@@ -921,24 +920,37 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
 	if (debug) {
 	    bu_semaphore_acquire(state->sem_worker);
-	    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s %g->%g\n", pp->pt_regionp->reg_name,
-			  pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s %g->%g\n",
+			  pp->pt_regionp->reg_name,
+			  pp->pt_inhit->hit_dist,
+			  pp->pt_outhit->hit_dist);
 	    bu_semaphore_release(state->sem_worker);
 	}
 
 	/* checking for air sticking out of the model.  This is done
 	 * here because there may be any number of air regions
-	 * sticking out of the model along the ray.
+	 * sticking out of the model along the ray.  This check only
+	 * tests the front exposure; and a second test below checks
+	 * the exit exposure.
 	 */
 	if (analysis_flags & ANALYSIS_EXP_AIR) {
 
-	    gap_dist = (pp->pt_inhit->hit_dist - last_out_dist);
-
-	    /* if air is first on the ray, or we're moving from void/gap to air
-	     * then this is exposed air
+	    /* FIXME: verify that the next partition is never
+	     * overlapping numerically with the current partition.
+	     * otherwise, we'll need to account for it. This debug
+	     * statement should be removed after confirming.
+	     * CSM@20220516
 	     */
-	    if (pp->pt_regionp->reg_aircode &&
-		(air_first || gap_dist > overlap_tolerance)) {
+	    if (pp->pt_forw != PartHeadp) {
+		double next_dist = pp->pt_forw->pt_inhit->hit_dist - pp->pt_inhit->hit_dist;
+		if (next_dist < dist) {
+		    bu_log("DEBUG: next partition's entry is prior to current partition's exit\n");
+		    VJOIN1(opt, ap->a_ray.r_pt, pp->pt_forw->pt_inhit->hit_dist, ap->a_ray.r_dir);
+		}
+	    }
+
+	    /* if air is first on the ray */
+	    if (pp->pt_regionp->reg_aircode && air_first) {
 		_gqa_exposed_air(ap, pp, last_out_point, pt, opt);
 	    } else {
 		air_first = 0;
@@ -948,6 +960,8 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	/* looking for voids in the model */
 	if (analysis_flags & ANALYSIS_GAPS) {
 	    if (pp->pt_back != PartHeadp) {
+		double gap_dist;
+
 		/* if this entry point is further than the previous
 		 * exit point then we have a void
 		 */
@@ -958,10 +972,10 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		    /* like overlaps, we only want to report unique pairs */
 		    bu_semaphore_acquire(state->sem_lists);
 		    add_unique_pair(&gapList,
-			    pp->pt_regionp,
-			    pp->pt_back->pt_regionp,
-			    gap_dist,
-			    pt);
+				    pp->pt_regionp,
+				    pp->pt_back->pt_regionp,
+				    gap_dist,
+				    pt);
 		    bu_semaphore_release(state->sem_lists);
 
 		    /* like overlaps, let's plot */
@@ -999,37 +1013,31 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		struct per_region_data *prd;
 		vect_t cmass;
 		vect_t lenTorque;
-		fastf_t Lx = state->span[0]/state->steps[0];
-		fastf_t Ly = state->span[1]/state->steps[1];
-		fastf_t Lz = state->span[2]/state->steps[2];
 		fastf_t Lx_sq;
 		fastf_t Ly_sq;
 		fastf_t Lz_sq;
-		fastf_t cell_area;
+		fastf_t cell_area = gridSpacing*gridSpacing;
 		int los;
 
 		switch (state->i_axis) {
 		    case 0:
 			Lx_sq = dist*pp->pt_regionp->reg_los*0.01;
 			Lx_sq *= Lx_sq;
-			Ly_sq = Ly*Ly;
-			Lz_sq = Lz*Lz;
-			cell_area = Ly_sq;
+			Ly_sq = cell_area;
+			Lz_sq = cell_area;
 			break;
 		    case 1:
-			Lx_sq = Lx*Lx;
+			Lx_sq = cell_area;
 			Ly_sq = dist*pp->pt_regionp->reg_los*0.01;
 			Ly_sq *= Ly_sq;
-			Lz_sq = Lz*Lz;
-			cell_area = Lx_sq;
+			Lz_sq = cell_area;
 			break;
 		    case 2:
 		    default:
-			Lx_sq = Lx*Lx;
-			Ly_sq = Ly*Ly;
+			Lx_sq = cell_area;
+			Ly_sq = cell_area;
 			Lz_sq = dist*pp->pt_regionp->reg_los*0.01;
 			Lz_sq *= Lz_sq;
-			cell_area = Lx_sq;
 			break;
 		}
 
@@ -1059,6 +1067,19 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		ap->A_LENDEN += val;
 
 		prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
+
+		// ensure we have an object and minimize reporting when we have errors
+		if (prd->optr == NULL) {
+		    static size_t reported = 0;
+		    if (reported < 20) {
+		    	bu_log("INTERNAL ERROR: %s does not have parent tracking\n", pp->pt_regionp->reg_name);
+		    } else if (reported == 20) {
+		        bu_log("INTERNAL ERROR: too many tracking errors, suppressing further reporting\n");
+		    }
+		    reported++;
+		    continue;
+		}
+
 		/* accumulate the per-region per-view weight values */
 		bu_semaphore_acquire(state->sem_stats);
 		prd->r_lenDensity[state->i_axis] += val;
@@ -1080,8 +1101,8 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		    VADD2(&state->m_lenTorque[state->i_axis*3], &state->m_lenTorque[state->i_axis*3], lenTorque);
 
 		    if (analysis_flags & ANALYSIS_MOMENTS) {
-			vectp_t moi;
-			vectp_t poi = &state->m_poi[state->i_axis*3];
+			vectp_t moi = NULL;
+			vectp_t poi = NULL;
 			fastf_t dx_sq = cmass[X]*cmass[X];
 			fastf_t dy_sq = cmass[Y]*cmass[Y];
 			fastf_t dz_sq = cmass[Z]*cmass[Z];
@@ -1119,6 +1140,18 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    ap->A_LEN += dist; /* add to total volume */
 	    {
+		// ensure we have an object and minimize reporting when we have errors
+		if (prd->optr == NULL) {
+		    static size_t reported = 0;
+		    if (reported < 20) {
+		    	bu_log("INTERNAL ERROR: %s does not have parent tracking\n", pp->pt_regionp->reg_name);
+		    } else if (reported == 20) {
+		        bu_log("INTERNAL ERROR: too many tracking errors, suppressing further reporting\n");
+		    }
+		    reported++;
+		    continue;
+		}
+
 		bu_semaphore_acquire(state->sem_stats);
 
 		/* add to region volume */
@@ -1164,7 +1197,6 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		add_unique_pair(&adjAirList, pp->pt_back->pt_regionp, pp->pt_regionp, 0.0, pt);
 		bu_semaphore_release(state->sem_lists);
 
-
 		d *= 0.25;
 		VJOIN1(aapt, pt, d, ap->a_ray.r_dir);
 
@@ -1184,10 +1216,11 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     }
 
 
+    /* This checks the last partition was exposed air.  A check above
+     * checks the partition entry for exposed air.
+     */
     if (analysis_flags & ANALYSIS_EXP_AIR && last_air) {
-	/* the last thing we hit was air.  Make a note of that */
 	pp = PartHeadp->pt_back;
-
 	_gqa_exposed_air(ap, pp, last_out_point, pt, opt);
     }
 
@@ -1286,7 +1319,7 @@ plane_worker(int cpu, void *ptr)
 	     */
 	    for (u=1; u < state->steps[state->u_axis]; u++) {
 		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
+		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
 		if (debug) {
@@ -1309,7 +1342,7 @@ plane_worker(int cpu, void *ptr)
 	     */
 	    for (u=1; u < state->steps[state->u_axis]; u+=2) {
 		ap.a_ray.r_pt[state->u_axis] = ap.a_rt_i->mdl_min[state->u_axis] + u*gridSpacing;
-		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
+		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v_coord;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
 		if (debug) {
@@ -1359,28 +1392,33 @@ plane_worker(int cpu, void *ptr)
 }
 
 
-int
-find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
+struct per_obj_data*
+find_cmd_line_obj(int objc, struct per_obj_data *obj_rpt, const char *name)
 {
+    /* name is full region path ie /a/b/c
+     * user specified either a or b or c or /a or /a/b or /a/b/c
+     */
     int i;
-    char *str = bu_strdup(name);
-    char *p;
 
-    p = strchr(str, '/');
-    if (p) {
-	*p = '\0';
+    for (i = 0; i < objc; i++) {
+    	const char* curr = name;
+
+	do {
+	    const char* oname = obj_rpt[i].o_name;
+	    if (oname[0] != '/') {
+		curr++;
+	    }
+	    int len = strlen(oname);
+	    int comp = bu_strncmp(curr, oname, len);
+	    if (comp == 0 && (curr[len] == '/' || curr[len] == '\0')) {
+		return &obj_rpt[i];
+	    }
+	} while ((curr = strchr(curr+1, '/')));
     }
 
-    for (i = 0; i < num_objects; i++) {
-	if (BU_STR_EQUAL(obj_rpt[i].o_name, str)) {
-	    bu_free(str, "");
-	    return i;
-	}
-    }
+    bu_vls_printf(_ged_current_gedp->ged_result_str, "INTERNAL ERROR: Didn't find object named \"%s\" in %d command line entries\n", name, objc);
 
-    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, num_objects);
-
-    return -1;
+    return NULL;
 }
 
 
@@ -1395,7 +1433,6 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     struct rt_i *rtip = state->rtip;
     int i;
     int m;
-    int index;
 
     if (start > ac) {
 	/* what? */
@@ -1435,7 +1472,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
      */
     obj_tbl = (struct per_obj_data *)bu_calloc(num_objects, sizeof(struct per_obj_data), "report tables");
     for (i = 0; i < num_objects; i++) {
-	obj_tbl[i].o_name = (char *)av[start+i];
+	obj_tbl[i].o_name = av[start+i];
 	obj_tbl[i].o_len = (double *)bu_calloc(num_views, sizeof(double), "o_len");
 	obj_tbl[i].o_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "o_lenDensity");
 	obj_tbl[i].o_volume = (double *)bu_calloc(num_views, sizeof(double), "o_volume");
@@ -1459,11 +1496,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
 
 	m = (int)strlen(regp->reg_name);
 	if (m > max_region_name_len) max_region_name_len = m;
-	index = find_cmd_line_obj(obj_tbl, &regp->reg_name[1]);
-	if (index == -1)
-	    reg_tbl[i].optr = NULL;
-	else
-	    reg_tbl[i].optr = &obj_tbl[index];
+	reg_tbl[i].optr = find_cmd_line_obj(num_objects, obj_tbl, regp->reg_name);
     }
 }
 
@@ -1527,6 +1560,43 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 		return BRLCAD_ERROR;
 	    }
 	}
+	// iterate through the db and find all materials
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    struct directory *dp = _ged_current_gedp->dbip->dbi_Head[i];
+	    if (dp != NULL) {
+		struct rt_db_internal intern;
+		struct rt_material_internal *material_ip;
+		if (rt_db_get_internal(&intern, dp, _ged_current_gedp->dbip, NULL, &rt_uniresource) >= 0) {
+		    if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+			// if the material has an id and density, add it to the density table
+			material_ip = (struct rt_material_internal *)intern.idb_ptr;
+
+			const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
+			if (id_string == NULL) {
+			    continue;
+			}
+			int id = strtol(id_string, NULL, 10);
+
+			const char *density_string = bu_avs_get(&material_ip->physicalProperties, "density");
+			if (density_string == NULL) {
+			    continue;
+			}
+			double density_double = strtod(density_string, NULL);
+			/* since BRL-CAD does computation in mm, but the table is in
+			 * grams / (cm^3) we convert the table on input
+			 */
+			density_double = density_double / 1000.0;
+
+			char *name = bu_vls_strdup(&material_ip->name);
+			struct bu_vls result_str = BU_VLS_INIT_ZERO;
+			if (analyze_densities_set(_gd_densities, id, density_double, name, &result_str) < 0) {
+			    bu_vls_printf(&result_str, "Error inserting density %d,%g,%s\n", id, density_double, name);
+			}
+			bu_vls_free(&result_str);
+		    }
+		}
+	    }
+	}
     }
     /* refine the grid spacing if the user has set a lower bound on
      * the number of rays per model axis
@@ -1542,10 +1612,10 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 
     if (!ZERO(newGridSpacing - gridSpacing)) {
 	bu_log("Initial grid spacing %g %s does not allow %g samples per axis.\n",
-		      gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
+	       gridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis - 1);
 
 	bu_log("Adjusted initial grid spacing to %g %s to get %g samples per model axis.\n",
-		      newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
+	       newGridSpacing / units[LINE]->val, units[LINE]->name, Samples_per_model_axis);
 
 	gridSpacing = newGridSpacing;
     }
@@ -1655,6 +1725,144 @@ options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 }
 
 
+int
+densities_prep(struct rt_i *rtip)
+{
+    analyze_densities_create(&_gd_densities);
+    int found_densities = 0;
+
+    /* figure out where the density values are coming from and get
+     * them.
+     */
+    if (analysis_flags & ANALYSIS_WEIGHTS) {
+	if (densityFileName) {
+	    DLOG(_ged_current_gedp->ged_result_str, "density from file\n");
+	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, densityFileName, 0) == BRLCAD_OK) {
+		found_densities = 1;
+	    }
+	} else {
+	    DLOG(_ged_current_gedp->ged_result_str, "density from db\n");
+	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, NULL, 0) == BRLCAD_OK) {
+		found_densities = 1;
+	    }
+	}
+
+	// iterate through the db and find all materials
+	int next_available_id = MAX_MATERIAL_ID - 1;
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    struct directory *dp = rtip->rti_dbip->dbi_Head[i];
+	    if (dp != NULL) {
+		struct rt_db_internal intern;
+		struct rt_material_internal *material_ip;
+		if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
+		    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+			if (intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+			    // if the material has a density, add it to the density table
+			    material_ip = (struct rt_material_internal *) intern.idb_ptr;
+
+			    const char *density_string = bu_avs_get(&material_ip->physicalProperties, "density");
+			    if (density_string == NULL) {
+				continue;
+			    }
+
+			    double density_double = strtod(density_string, NULL);
+			    /* since BRL-CAD does computation in mm, but the table is in
+			     * grams / (cm^3) we convert the table on input
+			     */
+			    density_double = density_double / 1000.0;
+			    found_densities = 1;
+
+			    const char *id_string = bu_avs_get(&material_ip->physicalProperties, "id");
+			    int id;
+			    if (id_string == NULL) {
+				// assign id for materials without ids in the density table
+				// start from the max material id and work backwards
+				id = next_available_id;
+				next_available_id--;
+			    } else {
+				id = strtol(id_string, NULL, 10);
+			    }
+
+			    char *density_table_name = bu_vls_strdup(&material_ip->name);
+			    if (analyze_densities_set(_gd_densities, id, density_double, density_table_name, _ged_current_gedp->ged_result_str) < 0) {
+				bu_vls_printf(_ged_current_gedp->ged_result_str, "Error inserting density %d,%g,%s\n", id, density_double, density_table_name);
+				analyze_densities_clear(_gd_densities);
+				return BRLCAD_ERROR;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+
+	if (!found_densities) {
+	    bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not find any density information.\n");
+	    analyze_densities_clear(_gd_densities);
+	    return BRLCAD_ERROR;
+	}
+
+	// look for objects with material_name set and set the material_id
+	// analyze_densities_get
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    struct directory *dp = rtip->rti_dbip->dbi_Head[i];
+	    if (dp != NULL) {
+		if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
+		    struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
+
+		    if (db5_get_attributes(rtip->rti_dbip, &avs, dp) == 0) {
+			const char *material_name = bu_avs_get(&avs, "material_name");
+
+			if (material_name != NULL && !BU_STR_EQUAL(material_name, "(null)") && !BU_STR_EQUAL(material_name, "del")) {
+			    struct directory *material_dp = db_lookup(rtip->rti_dbip, material_name, LOOKUP_QUIET);
+
+			    if (material_dp != NULL) {
+				struct rt_db_internal material_intern;
+				struct rt_material_internal *material_ip;
+				if (rt_db_get_internal(&material_intern, material_dp, rtip->rti_dbip, NULL, &rt_uniresource) >= 0) {
+				    if (material_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_MATERIAL) {
+					// the material_ip->name field is the name in the density table
+					// not just the material_name (they could be different)
+					material_ip = (struct rt_material_internal *) material_intern.idb_ptr;
+					char *density_table_name = bu_vls_strdup(&material_ip->name);
+					long int wids[1];
+
+					// get the id from the density table
+					analyze_densities_id((long int *)wids, 1, _gd_densities, density_table_name);
+
+					// update the region->reg_mater field for the given region
+					struct region *regp = REGION_NULL;
+					for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
+					    RT_CK_REGION(regp);
+
+					    // by default the regp->reg_name holds the path to the region
+					    // we just want the name so we remove the path before the name
+					    const char *reg_name = strrchr(regp->reg_name, '/') + 1;
+
+					    // if its the region we're looking for, set teh reg_mater field
+					    if (BU_STR_EQUAL(reg_name, dp->d_namep)) {
+						regp->reg_gmater = wids[0];
+					    }
+					}
+				    }
+				}
+			    } else {
+				bu_vls_printf(_ged_current_gedp->ged_result_str, "WARNING: material_name %s is not in the database\n", material_name);
+			    }
+			}
+		    } else {
+			bu_vls_printf(_ged_current_gedp->ged_result_str, "Error: failed to load attributes for %s\n", dp->d_namep);
+			analyze_densities_clear(_gd_densities);
+			return BRLCAD_ERROR;
+		    }
+		}
+	    }
+	}
+    }
+
+    return BRLCAD_OK;
+}
+
+
 void
 view_reports(struct cstate *state)
 {
@@ -1672,7 +1880,7 @@ view_reports(struct cstate *state)
 
 	    if (state->shots[view] > 0) {
 		val = obj_tbl[obj].o_volume[view] =
-		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
+		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
 
 		if (verbose)
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "\t%s volume %g %s\n",
@@ -1688,7 +1896,7 @@ view_reports(struct cstate *state)
 
 	for (obj = 0; obj < num_objects; obj++) {
 	    double grams_per_cu_mm = obj_tbl[obj].o_lenDensity[view] *
-		(state->area[view] / state->shots[view]);
+	    (state->area[view] / state->shots[view]);
 
 
 	    if (verbose)
@@ -1741,7 +1949,7 @@ weight_volume_terminate(struct cstate *state)
 	    tmp = 0.0;
 	    for (view = 0; view < num_views; view++) {
 		val = obj_tbl[obj].o_weight[view] =
-		    obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
+		obj_tbl[obj].o_lenDensity[view] * (state->area[view] / state->shots[view]);
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -1750,12 +1958,12 @@ weight_volume_terminate(struct cstate *state)
 
 	    if (verbose)
 		bu_vls_printf(_ged_current_gedp->ged_result_str,
-		    "\t%s running avg weight %g %s hi=(%g) low=(%g)\n",
-		    obj_tbl[obj].o_name,
-		    (tmp / num_views) / units[WGT]->val,
-		    units[WGT]->name,
-		    hi / units[WGT]->val,
-		    low / units[WGT]->val);
+			      "\t%s running avg weight %g %s hi=(%g) low=(%g)\n",
+			      obj_tbl[obj].o_name,
+			      (tmp / num_views) / units[WGT]->val,
+			      units[WGT]->name,
+			      hi / units[WGT]->val,
+			      low / units[WGT]->val);
 
 	    if (delta > weight_tolerance) {
 		/* this object differs too much in each view, so we
@@ -1789,7 +1997,7 @@ weight_volume_terminate(struct cstate *state)
 	    tmp = 0.0;
 	    for (view = 0; view < num_views; view++) {
 		val = obj_tbl[obj].o_volume[view] =
-		    obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
+		obj_tbl[obj].o_len[view] * (state->area[view] / state->shots[view]);
 		V_MIN(low, val);
 		V_MAX(hi, val);
 		tmp += val;
@@ -1798,11 +2006,11 @@ weight_volume_terminate(struct cstate *state)
 
 	    if (verbose)
 		bu_vls_printf(_ged_current_gedp->ged_result_str,
-		    "\t%s running avg volume %g %s hi=(%g) low=(%g)\n",
-		    obj_tbl[obj].o_name,
-		    (tmp / num_views) / units[VOL]->val, units[VOL]->name,
-		    hi / units[VOL]->val,
-		    low / units[VOL]->val);
+			      "\t%s running avg volume %g %s hi=(%g) low=(%g)\n",
+			      obj_tbl[obj].o_name,
+			      (tmp / num_views) / units[VOL]->val, units[VOL]->name,
+			      hi / units[VOL]->val,
+			      low / units[VOL]->val);
 
 	    if (delta > volume_tolerance) {
 		/* this object differs too much in each view, so we
@@ -1858,7 +2066,7 @@ terminate_check(struct cstate *state)
     /* if we've reached the grid limit, we're done, no matter what */
     if (gridSpacing < gridSpacingLimit) {
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "NOTE: Stopped, grid spacing refined to %g (below lower limit %g).\n",
-	    gridSpacing, gridSpacingLimit);
+		      gridSpacing, gridSpacingLimit);
 	return 0;
     }
 
@@ -2065,7 +2273,7 @@ summary_reports(struct cstate *state)
 		    wv = &((struct per_region_data *)regp->reg_udata)->r_weight[view];
 
 		    *wv = ((struct per_region_data *)regp->reg_udata)->r_lenDensity[view] *
-			(state->area[view]/state->shots[view]);
+		    (state->area[view]/state->shots[view]);
 
 		    *wv /= units[WGT]->val;
 
@@ -2089,8 +2297,8 @@ summary_reports(struct cstate *state)
 	avg_mass = 0.0;
 	for (view=0; view < num_views; view++) {
 	    avg_mass += state->m_weight[view] =
-		state->m_lenDensity[view] *
-		(state->area[view] / state->shots[view]);
+	    state->m_lenDensity[view] *
+	    (state->area[view] / state->shots[view]);
 	}
 
 	avg_mass /= num_views;
@@ -2192,7 +2400,7 @@ summary_reports(struct cstate *state)
 
 		    /* convert view length to a volume */
 		    *vv = ((struct per_region_data *)regp->reg_udata)->r_len[view] *
-			(state->area[view] / state->shots[view]);
+		    (state->area[view] / state->shots[view]);
 
 		    /* convert to user's units */
 		    *vv /= units[VOL]->val;
@@ -2220,7 +2428,7 @@ summary_reports(struct cstate *state)
 	avg_mass = 0.0;
 	for (view=0; view < num_views; view++) {
 	    avg_mass += state->m_volume[view] =
-		state->m_len[view] * (state->area[view] / state->shots[view]);
+	    state->m_len[view] * (state->area[view] / state->shots[view]);
 	}
 
 	avg_mass /= num_views;
@@ -2286,6 +2494,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -2293,13 +2502,13 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     _ged_current_gedp = gedp;
 
     analysis_flags = ANALYSIS_VOLUMES | ANALYSIS_OVERLAPS | ANALYSIS_WEIGHTS |
-	ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAPS | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
+    ANALYSIS_EXP_AIR | ANALYSIS_ADJ_AIR | ANALYSIS_GAPS | ANALYSIS_CENTROIDS | ANALYSIS_MOMENTS;
     multiple_analyses = 1;
     azimuth_deg = 0.0;
     elevation_deg = 0.0;
@@ -2315,7 +2524,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
      *
      * FIXME: should probably be based on the model size.
      */
-    gridSpacingLimit = 10.0 * gedp->ged_wdbp->wdb_tol.dist;
+    gridSpacingLimit = 10.0 * wdbp->wdb_tol.dist;
 
     makeOverlapAssemblies = 0;
     require_num_hits = 1;
@@ -2349,11 +2558,11 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
-	ged_gqa_plot.vbp = rt_vlblock_init();
-	ged_gqa_plot.vhead = bn_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
+	ged_gqa_plot.vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+	ged_gqa_plot.vhead = bv_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 
-    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    rtip = rt_new_rti(gedp->dbip);
     rtip->useair = use_air;
 
     start_objs = arg_count;
@@ -2377,6 +2586,8 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
     }
+
+    if (densities_prep(rtip) != BRLCAD_OK) return BRLCAD_ERROR;
 
     /* This gets the database ready for ray tracing.  (it precomputes
      * some values, sets up space partitioning, etc.)
@@ -2418,14 +2629,14 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	V_MAX(gridSpacing, gridSpacingLimit);
 
 	bu_log("Trying estimated initial grid spacing: %g %s\n",
-	    gridSpacing / units[LINE]->val, units[LINE]->name);
+	       gridSpacing / units[LINE]->val, units[LINE]->name);
     } else {
 	bu_log("Trying initial grid spacing: %g %s\n",
-	    gridSpacing / units[LINE]->val, units[LINE]->name);
+	       gridSpacing / units[LINE]->val, units[LINE]->name);
     }
 
     bu_log("Using grid spacing lower limit: %g %s\n",
-	    gridSpacingLimit / units[LINE]->val, units[LINE]->name);
+	   gridSpacingLimit / units[LINE]->val, units[LINE]->name);
 
     if (options_prep(rtip, state.span) != BRLCAD_OK) return BRLCAD_ERROR;
 
@@ -2444,13 +2655,16 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 	int view;
 
 	VSCALE(state.steps, state.span, inv_spacing);
+	state.steps[0] += 1;
+	state.steps[1] += 1;
+	state.steps[2] += 1;
 
 	bu_log("Processing with grid spacing %g %s %ld x %ld x %ld\n",
-		      gridSpacing / units[LINE]->val,
-		      units[LINE]->name,
-		      state.steps[0]-1,
-		      state.steps[1]-1,
-		      state.steps[2]-1);
+	       gridSpacing / units[LINE]->val,
+	       units[LINE]->name,
+	       state.steps[0]-1,
+	       state.steps[1]-1,
+	       state.steps[2]-1);
 
 
 	for (view=0; view < num_views; view++) {
@@ -2503,13 +2717,20 @@ aborted:
     if (!aborted) {
 	summary_reports(&state);
 
-	if (analysis_flags & ANALYSIS_PLOT_OVERLAPS)
-	    _ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
+	if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
+	    const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+	    if (BU_STR_EQUAL(nview, "1")) {
+		struct bview *view = gedp->ged_gvp;
+		bv_vlblock_obj(ged_gqa_plot.vbp, view, "gqa::overlaps");
+	    } else {
+		_ged_cvt_vlblock_to_solids(gedp, ged_gqa_plot.vbp, "OVERLAPS", 0);
+	    }
+	}
     } else
 	aborted = 0; /* reset flag */
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS)
-	bn_vlblock_free(ged_gqa_plot.vbp);
+	bv_vlblock_free(ged_gqa_plot.vbp);
 
     /* Clear out the lists */
     while (BU_LIST_WHILE (rp, region_pair, &overlapList.l)) {
@@ -2579,30 +2800,30 @@ aborted:
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl gqa_cmd_impl = {
-	"gqa",
-	ged_gqa_core,
-	GED_CMD_DEFAULT
-    };
+struct ged_cmd_impl gqa_cmd_impl = {
+    "gqa",
+    ged_gqa_core,
+    GED_CMD_DEFAULT
+};
 
-    const struct ged_cmd gqa_cmd = { &gqa_cmd_impl };
-    const struct ged_cmd *gqa_cmds[] = { &gqa_cmd, NULL };
+const struct ged_cmd gqa_cmd = { &gqa_cmd_impl };
+const struct ged_cmd *gqa_cmds[] = { &gqa_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  gqa_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  gqa_cmds, 1 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif /* GED_PLUGIN */
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

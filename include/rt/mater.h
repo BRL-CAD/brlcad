@@ -62,7 +62,7 @@ struct mater {
 
 RT_EXPORT extern void rt_region_color_map(struct region *regp);
 
-/* process ID_MATERIAL record */
+/* process ID_COLORTAB record */
 RT_EXPORT extern void rt_color_addrec(int low,
 				      int hi,
 				      int r,

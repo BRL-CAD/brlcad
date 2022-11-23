@@ -44,24 +44,36 @@
 using namespace std;
 
 
-Display::Display() {
+BRLCADDisplay::BRLCADDisplay() {
     camera = new OrthographicCamera();
     displayManager = new DisplayManager(this);
     geometryRenderer = new GeometryRenderer(displayManager);
     axesRenderer = new AxesRenderer();
 
+    resizeTimer = new QTimer(this);
+    resizeTimer->setSingleShot(true);
+    resizeTimer->setInterval(1); 
+    connect(resizeTimer, SIGNAL(timeout()), SLOT(enableResize()));
+
     renderers.push_back(geometryRenderer);
     renderers.push_back(axesRenderer);
 }
 
+void
+BRLCADDisplay::resizeEvent(QResizeEvent *e)
+{
+    resizeTimer->start();
+    //setUpdatesEnabled(false);
+    QOpenGLWidget::resizeEvent(e);
+}
 
-void Display::resizeGL(int w, int h) {
+void BRLCADDisplay::resizeGL(int w, int h) {
     camera->setWH(w,h);
     this->w = w;
     this->h = h;
 }
 
-void Display::paintGL() {
+void BRLCADDisplay::paintGL() {
     displayManager->drawBegin();
 
     displayManager->loadMatrix(camera->modelViewMatrix().data());
@@ -70,13 +82,13 @@ void Display::paintGL() {
     for (auto i:renderers) i->render();
 }
 
-void Display::refresh() {
+void BRLCADDisplay::refresh() {
     makeCurrent();
     update();
 }
 
 
-void Display::mouseMoveEvent(QMouseEvent *event) {
+void BRLCADDisplay::mouseMoveEvent(QMouseEvent *event) {
     int x = event->x();
     int y = event->y();
     int globalX = event->globalX();
@@ -136,17 +148,17 @@ void Display::mouseMoveEvent(QMouseEvent *event) {
     }
 }
 
-void Display::mousePressEvent(QMouseEvent *event) {
+void BRLCADDisplay::mousePressEvent(QMouseEvent *event) {
     prevMouseX = event->x();
     prevMouseY = event->y();
 }
 
-void Display::mouseReleaseEvent(QMouseEvent *UNUSED(event)) {
+void BRLCADDisplay::mouseReleaseEvent(QMouseEvent *UNUSED(event)) {
     prevMouseX = -1;
     prevMouseY = -1;
 }
 
-void Display::wheelEvent(QWheelEvent *event) {
+void BRLCADDisplay::wheelEvent(QWheelEvent *event) {
 
     if (event->phase() == Qt::NoScrollPhase || event->phase() == Qt::ScrollUpdate || event->phase() == Qt::ScrollMomentum) {
         camera->processZoomRequest(event->angleDelta().y() / 8);
@@ -154,7 +166,7 @@ void Display::wheelEvent(QWheelEvent *event) {
     }
 }
 
-void Display::keyPressEvent( QKeyEvent *k ) {
+void BRLCADDisplay::keyPressEvent( QKeyEvent *k ) {
     switch (k->key()) {
         case Qt::Key_Up:
             camera->processMoveRequest(0, keyPressSimulatedMouseMoveDistance);
@@ -175,19 +187,19 @@ void Display::keyPressEvent( QKeyEvent *k ) {
     }
 }
 
-void Display::onDatabaseUpdated() {
+void BRLCADDisplay::onDatabaseUpdated() {
     geometryRenderer->onDatabaseUpdated();
 }
 
-int Display::getW() const {
+int BRLCADDisplay::getW() const {
     return w;
 }
 
-int Display::getH() const {
+int BRLCADDisplay::getH() const {
     return h;
 }
 
-void Display::onDatabaseOpen() {
+void BRLCADDisplay::onDatabaseOpen() {
     makeCurrent();
     geometryRenderer->setDatabase(((CADApp *)qApp)->wdbp());
     onDatabaseUpdated();

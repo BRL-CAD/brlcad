@@ -96,7 +96,7 @@ nmg_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int d
 	    srf1->order[0];
 
 	srf1->ctl_points = (fastf_t *)
-	    nmg_malloc(sizeof(fastf_t) * srf1->s_size[0] *
+	    bu_malloc(sizeof(fastf_t) * srf1->s_size[0] *
 		      srf1->s_size[1] *
 		      RT_NURB_EXTRACT_COORDS(srf1->pt_type),
 		      "nmg_nurb_s_split: srf1 row mesh control points");
@@ -115,7 +115,7 @@ nmg_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int d
 	    srf2->order[0];
 
 	srf2->ctl_points = (fastf_t *)
-	    nmg_malloc(sizeof(fastf_t) * srf2->s_size[0] *
+	    bu_malloc(sizeof(fastf_t) * srf2->s_size[0] *
 		      srf2->s_size[1] *
 		      RT_NURB_EXTRACT_COORDS(srf2->pt_type),
 		      "nmg_nurb_s_split: srf2 row mesh control points");
@@ -177,7 +177,7 @@ nmg_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int d
 	    srf1->order[0];
 
 	srf1->ctl_points = (fastf_t *)
-	    nmg_malloc(sizeof(fastf_t) * srf1->s_size[0] *
+	    bu_malloc(sizeof(fastf_t) * srf1->s_size[0] *
 		      srf1->s_size[1] *
 		      RT_NURB_EXTRACT_COORDS(srf1->pt_type),
 		      "nmg_nurb_s_split: srf1 col mesh control points");
@@ -196,7 +196,7 @@ nmg_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int d
 	    srf2->order[0];
 
 	srf2->ctl_points = (fastf_t *)
-	    nmg_malloc(sizeof(fastf_t) * srf2->s_size[0] *
+	    bu_malloc(sizeof(fastf_t) * srf2->s_size[0] *
 		      srf2->s_size[1] *
 		      RT_NURB_EXTRACT_COORDS(srf2->pt_type),
 		      "nmg_nurb_s_split: srf2 col mesh control points");
@@ -232,7 +232,7 @@ nmg_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int d
     BU_LIST_APPEND(split_hd, &srf1->l);
 
     nmg_nurb_free_oslo(oslo);
-    nmg_free((char *)new_kv.knots, "nmg_nurb_s_split: new kv knots");
+    bu_free((char *)new_kv.knots, "nmg_nurb_s_split: new kv knots");
 
 }
 
@@ -292,7 +292,7 @@ nmg_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
     crv1->pt_type = crv->pt_type;
     crv1->c_size = crv1->k.k_size - crv1->order;
     crv1->ctl_points = (fastf_t *)
-	nmg_malloc(sizeof(fastf_t) * crv1->c_size *
+	bu_malloc(sizeof(fastf_t) * crv1->c_size *
 		  RT_NURB_EXTRACT_COORDS(crv1->pt_type),
 		  "nmg_nurb_c_split: crv1 control points");
 
@@ -302,7 +302,7 @@ nmg_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
     crv2->pt_type = crv->pt_type;
     crv2->c_size = crv2->k.k_size - crv2->order;
     crv2->ctl_points = (fastf_t *)
-	nmg_malloc(sizeof(fastf_t) * crv2->c_size *
+	bu_malloc(sizeof(fastf_t) * crv2->c_size *
 		  RT_NURB_EXTRACT_COORDS(crv2->pt_type),
 		  "nmg_nurb_s_split: crv2 mesh control points");
 
@@ -315,7 +315,7 @@ nmg_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 
     nmg_nurb_free_oslo(oslo);
 
-    nmg_free((char *) new_kv.knots, "nmg_nurb_c_split; new_kv.knots");
+    bu_free((char *) new_kv.knots, "nmg_nurb_c_split; new_kv.knots");
 
     /* Arrangement will be:  head, crv1, crv2 */
     BU_LIST_APPEND(split_hd, &crv2->l);

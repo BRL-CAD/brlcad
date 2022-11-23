@@ -36,6 +36,7 @@
 #endif
 #include "bio.h"
 
+#include <errno.h>
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
@@ -204,6 +205,9 @@ main(int argc, char *argv[])
     struct stat sf1;
     struct stat sf2;
 
+    memset(&sf1, 0, sizeof(struct stat));
+    memset(&sf2, 0, sizeof(struct stat));
+
     size_t matching = 0;
     size_t off1 = 0;
     size_t offmany = 0;
@@ -324,23 +328,29 @@ main(int argc, char *argv[])
 	bu_exit(OPTS_ERROR, "ERROR: cannot skip the same input stream by different amounts\n");
     }
 
-    fstat(fileno(f1), &sf1);
-    fstat(fileno(f2), &sf2);
+    errno = 0;
+    if (fstat(fileno(f1), &sf1)) {
+	bu_log("Warning - f1 fstat failed: %s\n", strerror(errno));
+    }
+    errno = 0;
+    if (fstat(fileno(f2), &sf2)) {
+	bu_log("Warning - f2 fstat failed: %s\n", strerror(errno));
+    }
 
     bu_log("FILE1_size(%zu) FILE1_skip(%zu) FILE2_size(%zu) FILE2_skip(%zu)\n", (size_t)sf1.st_size, f1_skip, (size_t)sf2.st_size, f2_skip);
 
     if (!quiet && ((sf1.st_size - f1_skip) != (sf2.st_size - f2_skip))) {
 	bu_log("WARNING: Different image sizes detected\n");
 	if (print_bytes) {
-	    bu_log("\t%s: %7llu bytes (%8llu bytes, skipping %7llu)\n",
-		   argv[0], (unsigned long long)(sf1.st_size - f1_skip), (unsigned long long)sf1.st_size, (unsigned long long)f1_skip);
-	    bu_log("\t%s: %7llu bytes (%8llu bytes, skipping %7llu)\n",
-		   argv[1], (unsigned long long)(sf2.st_size - f2_skip), (unsigned long long)sf2.st_size, (unsigned long long)f2_skip);
+	    bu_log("\t%s: %7zu bytes (%8zu bytes, skipping %7zu)\n",
+		   argv[0], (size_t)sf1.st_size - f1_skip, (size_t)sf1.st_size, f1_skip);
+	    bu_log("\t%s: %7zu bytes (%8zu bytes, skipping %7zu)\n",
+		   argv[1], (size_t)sf2.st_size - f2_skip, (size_t)sf2.st_size, f2_skip);
 	} else {
-	    bu_log("\t%s: %7llu pixels (%8llu bytes, skipping %7llu)\n",
-		   argv[0], (unsigned long long)((sf1.st_size - f1_skip)/3), (unsigned long long)sf1.st_size, (unsigned long long)f1_skip);
-	    bu_log("\t%s: %7llu pixels (%8llu bytes, skipping %7llu)\n",
-		   argv[1], (unsigned long long)((sf2.st_size - f2_skip)/3), (unsigned long long)sf2.st_size, (unsigned long long)f2_skip);
+	    bu_log("\t%s: %7zu pixels (%8zu bytes, skipping %7zu)\n",
+		   argv[0], ((size_t)sf1.st_size - f1_skip)/3, (size_t)sf1.st_size, f1_skip);
+	    bu_log("\t%s: %7zu pixels (%8zu bytes, skipping %7zu)\n",
+		   argv[1], ((size_t)sf2.st_size - f2_skip)/3, (size_t)sf2.st_size, f2_skip);
 	}
     }
 
@@ -365,7 +375,7 @@ main(int argc, char *argv[])
 	    for (skipped = 0; skipped < f1_skip; skipped++) {
 		(void)fgetc(f1);
 	    }
-	} else if (fseek(f1, f1_skip, SEEK_SET)) {
+	} else if (fseek(f1, (long)f1_skip, SEEK_SET)) {
 	    bu_log("ERROR: Unable to seek %zd %s%s in FILE1\n",
 		   f1_skip,
 		   print_bytes?"byte":"pixel",
@@ -382,7 +392,7 @@ main(int argc, char *argv[])
 	    for (skipped = 0; skipped < f2_skip; skipped++) {
 		(void)fgetc(f2);
 	    }
-	} else if (fseek(f2, f2_skip, SEEK_SET)) {
+	} else if (fseek(f2, (long)f2_skip, SEEK_SET)) {
 	    bu_log("ERROR: Unable to seek %zd %s%s in FILE2\n",
 		   f2_skip,
 		   print_bytes?"byte":"pixel",
@@ -404,8 +414,12 @@ main(int argc, char *argv[])
     /* iterate over the pixels/bytes in the files */
     while (bytes < stop_after) {
 	enum diff result;
-	int r1, r2, g1, g2, b1, b2;
-	r1 = r2 = g1 = g2 = b1 = b2 = -1;
+	int r1 = -1;
+	int r2 = -1;
+	int g1 = -1;
+	int g2 = -1;
+	int b1 = -1;
+	int b2 = -1;
 
 	/* bu_log("\tbytes[%zu] < stop[%zu\n", bytes, stop_after); */
 

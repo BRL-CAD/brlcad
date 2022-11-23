@@ -30,69 +30,79 @@
 #include "analyze.h"
 
 
-/* the largest material ID value that can be used in a density table */
-#define MAX_MATERIAL_ID  32768
-
-/* arbitrary upper limit just to prevent out-of-control behavior */
-#define MAX_MATERIAL_CNT 1000000
+/* extreme upper limit just to prevent overflow */
+#define MAX_MATERIAL_CNT (size_t)(LONG_MAX - 1L)
 
 
 struct analyze_densities_impl {
-    std::map<long int,std::string> id2name;
-    std::map<long int,fastf_t> id2density;
+    std::map<long int, std::string> id2name;
+    std::map<long int, fastf_t> id2density;
     std::multimap<std::string, long int> name2id;
 };
+
 
 extern "C" int
 analyze_densities_init(struct analyze_densities *a)
 {
-    if (!a) return -1;
+    if (!a)
+	return -1;
+
     a->i = new analyze_densities_impl;
+
     return (!a->i) ? -1 : 0;
 }
+
 
 extern "C" void
 analyze_densities_clear(struct analyze_densities *a)
 {
-    if (!a) return;
-    if (!a->i) return;
+    if (!a)
+	return;
+    if (!a->i)
+	return;
+
     a->i->id2name.clear();
     a->i->id2density.clear();
     a->i->name2id.clear();
     delete a->i;
 }
 
+
 extern "C" int
 analyze_densities_create(struct analyze_densities **a)
 {
-    if (!a) return -1;
+    if (!a)
+	return -1;
+
     (*a) = new analyze_densities;
+
     return analyze_densities_init(*a);
 }
+
+
 extern "C" void
 analyze_densities_destroy(struct analyze_densities *a)
 {
-    if (!a) return;
+    if (!a)
+	return;
+
     analyze_densities_clear(a);
     delete a;
 }
 
+
 extern "C" int
 analyze_densities_set(struct analyze_densities *a, long int id, fastf_t density, const char *name, struct bu_vls *msgs)
 {
-    if (!a || !a->i) return -1;
-    if (id < 0 || density < 0 || !name) return -1;
-
-    if (id > MAX_MATERIAL_ID) {
-	if (msgs) {
-	    bu_vls_printf(msgs, "ERROR: material ID %ld is larger than MAX_MATERIAL_ID (%d)\n", id, MAX_MATERIAL_ID);
-	}
+    if (!a || !a->i)
 	return -1;
-    }
+
+    if (id < 0 || density < 0 || !name)
+	return -1;
 
     if (a->i->id2density.size() >= MAX_MATERIAL_CNT) {
 	if (msgs) {
-	    bu_vls_printf(msgs, "ERROR: Maximum materials (%d) exceeded in density table.\n", MAX_MATERIAL_CNT);
+	    bu_vls_printf(msgs, "ERROR: Maximum materials (%zd) exceeded in density table.\n", MAX_MATERIAL_CNT);
 	}
 	return -1;
     }
@@ -100,8 +110,10 @@ analyze_densities_set(struct analyze_densities *a, long int id, fastf_t density,
     a->i->id2name[id] = std::string(name);
     a->i->id2density[id] = density;
     a->i->name2id.insert(std::pair<std::string, long int>(std::string(name), id));
+
     return 0;
 }
+
 
 static int
 parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, struct bu_vls *result_str)
@@ -122,25 +134,31 @@ parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, 
     p = buf;
 
     /* Skip initial whitespace */
-    while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
+    while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r'))
+	p++;
 
     /* Skip initial comments */
     while (*p == '#') {
 	/* Skip comment */
-	while (*p && *p != '\n') p++;
+	while (*p && *p != '\n') {
+	    p++;
+	}
     }
 
     /* Skip whitespace */
-    while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
+    while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r'))
+	p++;
 
     while (*p) {
 	/* Skip comments */
 	if (*p == '#') {
 	    /* Skip comment */
-	    while (*p && *p != '\n') p++;
+	    while (*p && *p != '\n')
+		p++;
 
 	    /* Skip whitespace */
-	    while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
+	    while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r'))
+		p++;
 
 	    continue;
 	}
@@ -189,7 +207,8 @@ parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, 
 	}
 
 	/* Skip tabs and spaces */
-	while (*p && (*p == '\t' || *p == ' ')) p++;
+	while (*p && (*p == '\t' || *p == ' '))
+	    p++;
 	if (!*p)
 	    break;
 
@@ -220,7 +239,8 @@ parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, 
 	p = q;
 
 	/* Skip whitespace */
-	while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r')) p++;
+	while (*p && (*p == '\t' || *p == ' ' || *p == '\n' || *p == '\r'))
+	    p++;
     }
 
     /* If the whole thing was a comment or empty, return 0 */
@@ -238,7 +258,7 @@ parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, 
     if (analyze_densities_set(a, material_id, density, name, result_str) < 0) {
 	bu_free(buf, "free buf copy");
 	if (result_str) {
-	    bu_vls_printf(result_str, "Error inserting density %ld,%g,%s\n", material_id, density, name);
+	    bu_vls_printf(result_str, "Error inserting density %ld, %g, %s\n", material_id, density, name);
 	}
 	bu_free(name, "free name copy");
 	return -1;
@@ -250,25 +270,33 @@ parse_densities_line(struct analyze_densities *a, const char *obuf, size_t len, 
     return 1;
 }
 
+
 extern "C" int
 analyze_densities_load(struct analyze_densities *a, const char *buff, struct bu_vls *msgs, int *ecnt)
 {
-    if (!a || !a->i || !buff) return 0;
+    if (!a || !a->i || !buff)
+	return 0;
+
     std::string dbuff(buff);
     std::istringstream ss(dbuff);
     std::string line;
     int dcnt = 0;
+
     while (std::getline(ss, line)) {
 	struct bu_vls lmsg = BU_VLS_INIT_ZERO;
+
 	int ret = parse_densities_line(a, line.c_str(), line.length(), &lmsg);
-	if (!ret) continue;
+
+	if (!ret)
+	    continue;
+
 	if (ret < 0) {
-	   if (msgs && bu_vls_strlen(&lmsg)) {
-	    bu_vls_printf(msgs, "%s", bu_vls_cstr(&lmsg));
-	   }
-	   if (ecnt) {
-	       (*ecnt)++;
-	   }
+	    if (msgs && bu_vls_strlen(&lmsg)) {
+		bu_vls_printf(msgs, "%s", bu_vls_cstr(&lmsg));
+	    }
+	    if (ecnt) {
+		(*ecnt)++;
+	    }
 	} else {
 	    dcnt++;
 	}
@@ -281,11 +309,13 @@ analyze_densities_load(struct analyze_densities *a, const char *buff, struct bu_
 extern "C" long int
 analyze_densities_write(char **buff, struct analyze_densities *a)
 {
-    if (!a || !a->i || !buff) return 0;
+    if (!a || !a->i || !buff)
+	return 0;
+
     std::string obuff;
     std::ostringstream os(obuff);
 
-    std::map<long int,std::string>::iterator id_it;
+    std::map<long int, std::string>::iterator id_it;
     for (id_it = a->i->id2name.begin(); id_it != a->i->id2name.end(); id_it++) {
 	long int nid = id_it->first;
 	std::string nname = id_it->second;
@@ -303,12 +333,15 @@ analyze_densities_write(char **buff, struct analyze_densities *a)
 extern "C" char *
 analyze_densities_name(struct analyze_densities *a, long int id)
 {
-    if (!a || !a->i || id < 0) return NULL;
-    if (a->i->id2name.find(id) == a->i->id2name.end()) {
+    if (!a || !a->i || id < 0)
 	return NULL;
-    }
+
+    if (a->i->id2name.find(id) == a->i->id2name.end())
+	return NULL;
+
     return bu_strdup(a->i->id2name[id].c_str());
 }
+
 
 extern "C" long int
 analyze_densities_id(long int *ids, long int max_ids, struct analyze_densities *a, const char *name)
@@ -316,15 +349,16 @@ analyze_densities_id(long int *ids, long int max_ids, struct analyze_densities *
     int mcnt = 0;
     std::multimap<std::string, long int>::iterator m_it;
     std::pair<std::multimap<std::string, long int>::iterator, std::multimap<std::string, long int>::iterator> eret;
-    if (!a || !a->i || !name) return -1;
+    if (!a || !a->i || !name)
+	return -1;
+
     eret = a->i->name2id.equal_range(std::string(name));
     for (m_it = eret.first; m_it != eret.second; m_it++) {
 	mcnt++;
     }
 
-    if (!ids || max_ids == 0) {
+    if (!ids || max_ids == 0)
 	return mcnt;
-    }
 
     /* Have an id buffer, return what we can */
     if (mcnt > 0) {
@@ -340,46 +374,55 @@ analyze_densities_id(long int *ids, long int max_ids, struct analyze_densities *
     return (mcnt > max_ids) ? (max_ids - mcnt) : mcnt;
 }
 
+
 extern "C" fastf_t
 analyze_densities_density(struct analyze_densities *a, long int id)
 {
-    if (!a || !a->i || id < 0) return -1.0;
-    if (a->i->id2density.find(id) == a->i->id2density.end()) {
+    if (!a || !a->i || id < 0)
 	return -1.0;
-    }
+
+    if (a->i->id2density.find(id) == a->i->id2density.end())
+	return -1.0;
+
     return a->i->id2density[id];
 }
+
 
 extern "C" long int
 analyze_densities_next(struct analyze_densities *a, long int id)
 {
-    if (!a || !a->i) return -1;
+    if (!a || !a->i)
+	return -1;
+
     if (id < 0) {
 	if (a->i->id2density.size()) {
-	    std::map<long int,fastf_t>::iterator i = a->i->id2density.begin();
+	    std::map<long int, fastf_t>::iterator i = a->i->id2density.begin();
 	    return i->first;
 	} else {
 	    return -1;
 	}
     }
-    std::map<long int,fastf_t>::iterator idc = a->i->id2density.find(id);
+
+    std::map<long int, fastf_t>::iterator idc = a->i->id2density.find(id);
     if (idc != a->i->id2density.end()) {
-	std::map<long int,fastf_t>::iterator idn = std::next(idc);
+	std::map<long int, fastf_t>::iterator idn = std::next(idc);
 	if (idn != a->i->id2density.end()) {
 	    return idn->first;
 	} else {
 	    return -1;
 	}
     }
+
     return -1;
 }
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

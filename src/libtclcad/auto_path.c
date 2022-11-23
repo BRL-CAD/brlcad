@@ -136,11 +136,10 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_vls_free(&buffer);
     }
 
-    /* Set up the subdirectories of interest.  Some are static, but some are
-     * version specific - we construct a table of all of them for easier
-     * use in subsequent testing. */
+    /* Set up the library subdirectories of interest.  Some are
+     * static, but some are version specific - we construct a table of
+     * all of them for easier use in subsequent testing. */
     struct bu_ptbl lib_subpaths = BU_PTBL_INIT_ZERO;
-    struct bu_ptbl data_subpaths = BU_PTBL_INIT_ZERO;
     {
 	const char *p = NULL;
 	struct bu_vls buffer = BU_VLS_INIT_ZERO;
@@ -176,46 +175,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 	p = bu_strdup(bu_vls_cstr(&buffer));
 	bu_ptbl_ins(&lib_subpaths, (long *)p);
 #endif
-
-	bu_vls_sprintf(&buffer, "tclscripts");
-	p = bu_strdup(bu_vls_cstr(&buffer));
-	bu_ptbl_ins(&data_subpaths, (long *)p);
-
-	bu_vls_sprintf(&buffer, "tclscripts%clib", BU_DIR_SEPARATOR);
-	p = bu_strdup(bu_vls_cstr(&buffer));
-	bu_ptbl_ins(&data_subpaths, (long *)p);
-
-	bu_vls_sprintf(&buffer, "tclscripts%cutil", BU_DIR_SEPARATOR);
-	p = bu_strdup(bu_vls_cstr(&buffer));
-	bu_ptbl_ins(&data_subpaths, (long *)p);
-
-	bu_vls_sprintf(&buffer, "tclscripts%cmged", BU_DIR_SEPARATOR);
-	p = bu_strdup(bu_vls_cstr(&buffer));
-	bu_ptbl_ins(&data_subpaths, (long *)p);
-
-	bu_vls_sprintf(&buffer, "tclscripts%cgeometree", BU_DIR_SEPARATOR);
-	p = bu_strdup(bu_vls_cstr(&buffer));
-	bu_ptbl_ins(&data_subpaths, (long *)p);
-
-	bu_vls_sprintf(&buffer, "tclscripts%crtwizard", BU_DIR_SEPARATOR);
-	p = bu_strdup(bu_vls_cstr(&buffer));
-	bu_ptbl_ins(&data_subpaths, (long *)p);
-
-	bu_vls_sprintf(&buffer, "tclscripts%carcher", BU_DIR_SEPARATOR);
-	p = bu_strdup(bu_vls_cstr(&buffer));
-	bu_ptbl_ins(&data_subpaths, (long *)p);
-
-	bu_vls_sprintf(&buffer, "tclscripts%cboteditor", BU_DIR_SEPARATOR);
-	p = bu_strdup(bu_vls_cstr(&buffer));
-	bu_ptbl_ins(&data_subpaths, (long *)p);
-
-	bu_vls_sprintf(&buffer, "tclscripts%cchecker", BU_DIR_SEPARATOR);
-	p = bu_strdup(bu_vls_cstr(&buffer));
-	bu_ptbl_ins(&data_subpaths, (long *)p);
-
-	bu_vls_sprintf(&buffer, "tclscripts%clod", BU_DIR_SEPARATOR);
-	p = bu_strdup(bu_vls_cstr(&buffer));
-	bu_ptbl_ins(&data_subpaths, (long *)p);
 
 	bu_vls_free(&buffer);
     }
@@ -253,24 +212,29 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_ptbl_free(&found_subpaths);
     }
 
-    // Now that we've looked for the libs, handle the data dirs.
-    char datadir[MAXPATHLEN] = {0};
-    bu_dir(datadir, MAXPATHLEN, BU_DIR_DATA, NULL);
-    if (strlen(datadir)) {
-	// Have a directory, see what's in it
-	struct bu_vls data_path = BU_VLS_INIT_ZERO;
-	for (size_t i = 0; i < BU_PTBL_LEN(&data_subpaths); i++) {
-	    const char *fname = (const char *)BU_PTBL_GET(&data_subpaths, i);
-	    bu_vls_sprintf(&data_path, "%s%c%s", datadir, BU_DIR_SEPARATOR, fname);
-	    if (bu_file_exists(bu_vls_cstr(&data_path), NULL)) {
-		// Have a path
-		const char *p = bu_strdup(bu_vls_cstr(&data_path));
-		bu_ptbl_ins(&paths, (long *)p);
-	    } else {
-		bu_log("Warning: data path %s is not present in directory %s\n", fname, datadir);
+    /* add all tclscript subdirs */
+    {
+	char tclscripts[MAXPATHLEN] = {0};
+	bu_dir(tclscripts, MAXPATHLEN, BU_DIR_DATA, "tclscripts", NULL);
+
+	if (bu_file_exists(tclscripts, NULL)) {
+
+	    const char *path = bu_strdup(tclscripts);
+	    bu_ptbl_ins(&paths, (long *)path);
+
+	    size_t i;
+	    char **listing = NULL;
+	    /* list all except any startng with a dot (e.g., "." and "..") */
+	    size_t count = bu_file_list(tclscripts, "[^.]*", &listing);
+	    for (i = 0; i < count; i++) {
+		char dirpath[MAXPATHLEN] = {0};
+		bu_dir(dirpath, MAXPATHLEN, tclscripts, listing[i], NULL);
+		if (bu_file_directory(dirpath)) {
+		    path = bu_strdup(dirpath);
+		    bu_ptbl_ins(&paths, (long *)path);
+		}
 	    }
 	}
-	bu_vls_free(&data_path);
     }
 
     /* Iterate over the paths set and modify the real Tcl auto_path */
@@ -367,11 +331,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 	bu_free(str, "subpath string");
     }
     bu_ptbl_free(&lib_subpaths);
-    for (size_t i = 0; i < BU_PTBL_LEN(&data_subpaths); i++) {
-	char *str = (char *)BU_PTBL_GET(&data_subpaths, i);
-	bu_free(str, "subpath string");
-    }
-    bu_ptbl_free(&data_subpaths);
+
     for (size_t i = 0; i < BU_PTBL_LEN(&paths); i++) {
 	char *str = (char *)BU_PTBL_GET(&paths, i);
 	bu_free(str, "subpath string");
@@ -380,6 +340,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     return;
 }
+
 
 /*
  * Local Variables:

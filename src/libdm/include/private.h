@@ -110,15 +110,11 @@ extern void *fb_backends;
 
 __BEGIN_DECLS
 
-int
-drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
-
 DM_EXPORT extern struct fb remote_interface; /* not in list[] */
 
 /* Always included */
-DM_EXPORT extern struct fb debug_interface, disk_interface, stk_interface;
-DM_EXPORT extern struct fb memory_interface, fb_null_interface;
-
+extern struct fb debug_interface, disk_interface, stk_interface;
+extern struct fb memory_interface, fb_null_interface;
 
 /* Shared memory (shmget et. al.) key common to multiple framebuffers */
 #define SHMEM_KEY 42
@@ -191,7 +187,7 @@ __END_DECLS
 /* dm-*.c macros for autogenerating common code */
 /************************************************/
 
-#define static_DM_FUNCTION_PROTOTYPES(_dmtype) \
+#define HIDDEN_DM_FUNCTION_PROTOTYPES(_dmtype) \
     static int _dmtype##_close(struct dm *dmp); \
     static int _dmtype##_drawBegin(struct dm *dmp); \
     static int _dmtype##_drawEnd(struct dm *dmp); \
@@ -204,8 +200,8 @@ __END_DECLS
     static int _dmtype##_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y); \
     static int _dmtype##_drawPoint3D(struct dm *dmp, point_t point); \
     static int _dmtype##_drawPoints3D(struct dm *dmp, int npoints, point_t *points); \
-    static int _dmtype##_drawVList(struct dm *dmp, struct bn_vlist *vp); \
-    static int _dmtype##_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data); \
+    static int _dmtype##_drawVList(struct dm *dmp, struct bv_vlist *vp); \
+    static int _dmtype##_draw(struct dm *dmp, struct bv_vlist *(*callback_function)(void *), void **data); \
     static int _dmtype##_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency); \
     static int _dmtype##_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b); \
     static int _dmtype##_setLineAttr(struct dm *dmp, int width, int style); \

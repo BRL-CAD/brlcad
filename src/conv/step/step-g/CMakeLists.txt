@@ -1,17 +1,15 @@
 set(AP203_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${OPENNURBS_INCLUDE_DIRS}
+  ${OPENNURBS_INCLUDE_DIR}
   ${STEPCODE_INCLUDE_DIRS}
   )
 BRLCAD_INCLUDE_DIRS(AP203_INCLUDE_DIRS)
 
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
-set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/stepcode/data/ap203/ap203.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap203/ap203.exp)
 add_definitions(-DAP203)
-#set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203e2/ap203e2_mim_lf.exp)
-#add_definitions(-DAP203e2)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} stepg)
 
@@ -469,7 +467,7 @@ if (BRLCAD_ENABLE_STEP)
     ${OPENNURBS_LIBRARIES}
     )
 
-  BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
+  BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT FOLDER Conv)
   add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
   set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
   target_compile_definitions(step-g PRIVATE SC_SCHEMA_DLL_EXPORTS)

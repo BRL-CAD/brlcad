@@ -147,7 +147,7 @@ nmg_region_v_unique(struct nmgregion *r1, struct bu_list *vlfree, const struct b
 	    vj = (struct vertex *)BU_PTBL_GET(&t, j);
 	    NMG_CK_VERTEX(vj);
 	    if (!vj->vg_p) continue;
-	    if (!bn_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
+	    if (!bg_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
 		continue;
 	    /* They are the same */
 	    bu_log("nmg_region_v_unique():  2 verts are the same, within tolerance\n");
@@ -159,6 +159,52 @@ nmg_region_v_unique(struct nmgregion *r1, struct bu_list *vlfree, const struct b
     bu_ptbl_free(&t);
 }
 
+
+/**
+ * For every element in t1, scan t2 for geometric duplications.
+ *
+ * Deleted elements in t2 are marked by a null vertex pointer,
+ * rather than bothering to do a BU_PTBL_RM, which will re-copy the
+ * list to compress it.
+ *
+ * Exists as a support routine for nmg_two_region_vertex_fuse()
+ */
+int
+nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_tol *tol)
+{
+    int count = 0;
+    int i;
+    int j;
+
+    /* Verify t2 is good to start with */
+    for (j = BU_PTBL_LEN(t2)-1; j >= 0; j--) {
+	register struct vertex *vj;
+	vj = (struct vertex *)BU_PTBL_GET(t2, j);
+	NMG_CK_VERTEX(vj);
+    }
+
+    for (i = BU_PTBL_LEN(t1)-1; i >= 0; i--) {
+	register struct vertex *vi;
+	vi = (struct vertex *)BU_PTBL_GET(t1, i);
+	NMG_CK_VERTEX(vi);
+	if (!vi->vg_p) continue;
+
+	for (j = BU_PTBL_LEN(t2)-1; j >= 0; j--) {
+	    register struct vertex *vj;
+	    vj = (struct vertex *)BU_PTBL_GET(t2, j);
+	    if (!vj) continue;
+	    NMG_CK_VERTEX(vj);
+	    if (!vj->vg_p) continue;
+	    if (!bg_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
+		continue;
+	    /* They are the same, fuse vj into vi */
+	    nmg_jv(vi, vj);
+	    BU_PTBL_GET(t2, j) = 0;
+	    count++;
+	}
+    }
+    return count;
+}
 
 /* compare function for bu_sort within function nmg_ptbl_vfuse */
 static int
@@ -183,7 +229,7 @@ x_comp(const void *p1, const void *p2, void *UNUSED(arg))
  *
  * Exists primarily as a support routine for nmg_vertex_fuse().
  */
-int
+static int
 nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
 {
     int count, fuse;
@@ -248,61 +294,6 @@ nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
     return count;
 }
 
-
-/**
- * For every element in t1, scan t2 for geometric duplications.
- *
- * Deleted elements in t2 are marked by a null vertex pointer,
- * rather than bothering to do a BU_PTBL_RM, which will re-copy the
- * list to compress it.
- *
- * Exists as a support routine for nmg_two_region_vertex_fuse()
- */
-int
-nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_tol *tol)
-{
-    int count = 0;
-    int i;
-    int j;
-
-    /* Verify t2 is good to start with */
-    for (j = BU_PTBL_LEN(t2)-1; j >= 0; j--) {
-	register struct vertex *vj;
-	vj = (struct vertex *)BU_PTBL_GET(t2, j);
-	NMG_CK_VERTEX(vj);
-    }
-
-    for (i = BU_PTBL_LEN(t1)-1; i >= 0; i--) {
-	register struct vertex *vi;
-	vi = (struct vertex *)BU_PTBL_GET(t1, i);
-	NMG_CK_VERTEX(vi);
-	if (!vi->vg_p) continue;
-
-	for (j = BU_PTBL_LEN(t2)-1; j >= 0; j--) {
-	    register struct vertex *vj;
-	    vj = (struct vertex *)BU_PTBL_GET(t2, j);
-	    if (!vj) continue;
-	    NMG_CK_VERTEX(vj);
-	    if (!vj->vg_p) continue;
-	    if (!bn_pnt3_pnt3_equal(vi->vg_p->coord, vj->vg_p->coord, tol))
-		continue;
-	    /* They are the same, fuse vj into vi */
-	    nmg_jv(vi, vj);
-	    BU_PTBL_GET(t2, j) = 0;
-	    count++;
-	}
-    }
-    return count;
-}
-
-
-/**
- * Fuse together any vertices that are geometrically identical, within
- * distance tolerance. This function may be passed a pointer to an NMG
- * object or a pointer to a bu_ptbl structure containing a list of
- * pointers to NMG vertex structures. If a bu_ptbl structure was passed
- * into this function, the calling function must free this structure.
- */
 int
 nmg_vertex_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
@@ -867,7 +858,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 
 	    nmg_eval_linear_trim_curve(snrb, uvw, xyz);
 
-	    if (bn_dist_pnt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
+	    if (bg_dist_pnt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
 		coincident = 0;
 		break;
 	    }
@@ -891,7 +882,7 @@ nmg_cnurb_lseg_coincident(const struct edgeuse *eu1, const struct edge_g_cnurb *
 
 	nmg_eval_trim_curve(cnrb, snrb, t, xyz);
 
-	if (bn_dist_pnt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
+	if (bg_dist_pnt3_lseg3(&dist, pca, pt1, pt2, xyz, tol) > 2) {
 	    coincident = 0;
 	    break;
 	}
@@ -1049,16 +1040,6 @@ v_ptr_comp(const void *p1, const void *p2, void *UNUSED(arg))
     return -1;
 }
 
-
-/**
- * Note: If a bu_ptbl structure is passed into this function, the
- *       structure must contain edgeuse. Vertices will then be fused
- *       at the shell level. If an NMG structure is passed into this
- *       function, if the structure is an NMG region or model, vertices
- *       will be fused at the model level. If the NMG structure passed
- *       in is a shell or anything lower, vertices will be fused at the
- *       shell level.
- */
 int
 nmg_edge_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_tol *tol)
 {
@@ -1110,7 +1091,7 @@ nmg_edge_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_t
     if (nelem == 0)
 	return 0;
 
-    edgeuse_vert_list = (edgeuse_vert_list_t)nmg_calloc(nelem, 2 * sizeof(size_t), "edgeuse_vert_list");
+    edgeuse_vert_list = (edgeuse_vert_list_t)bu_calloc(nelem, 2 * sizeof(size_t), "edgeuse_vert_list");
 
     j = 0;
     for (i = 0; i < (size_t)BU_PTBL_LEN(eu_list) ; i++) {
@@ -1165,7 +1146,7 @@ nmg_edge_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn_t
 	}
     }
 
-    nmg_free((char *)edgeuse_vert_list, "edgeuse_vert_list");
+    bu_free((char *)edgeuse_vert_list, "edgeuse_vert_list");
 
     /* if bu_ptbl was passed into this function don't free it here */
     if (*magic_p != BU_PTBL_MAGIC) {
@@ -1228,9 +1209,9 @@ nmg_edge_g_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn
 	return 0;
     }
 
-    sort_idx_xyp = (size_t *)nmg_calloc(etab_cnt, sizeof(size_t), "sort_idx_xyp");
+    sort_idx_xyp = (size_t *)bu_calloc(etab_cnt, sizeof(size_t), "sort_idx_xyp");
 
-    edge_rr = (fastf_t *)nmg_calloc(etab_cnt * 3, sizeof(fastf_t), "edge_rr_xyp");
+    edge_rr = (fastf_t *)bu_calloc(etab_cnt * 3, sizeof(fastf_t), "edge_rr_xyp");
     /* rise over run in xy plane */
     edge_rr_xyp = edge_rr;
     /* rise over run in xz plane */
@@ -1238,7 +1219,7 @@ nmg_edge_g_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn
     /* rise over run in yz plane */
     edge_rr_yzp = edge_rr + (etab_cnt * 2);
 
-    edge_sc = (char *)nmg_calloc(etab_cnt * 3, sizeof(char), "edge_sc_xyp");
+    edge_sc = (char *)bu_calloc(etab_cnt * 3, sizeof(char), "edge_sc_xyp");
     /* special cases in xy plane */
     edge_sc_xyp = edge_sc;
     /* special cases in xz plane */
@@ -1390,8 +1371,8 @@ nmg_edge_g_fuse(const uint32_t *magic_p, struct bu_list *vlfree, const struct bn
     }
 
     bu_ptbl_free(&etab);
-    nmg_free(edge_rr, "edge_rr,");
-    nmg_free(edge_sc, "edge_sc");
+    bu_free(edge_rr, "edge_rr,");
+    bu_free(edge_sc, "edge_sc");
 
     if (UNLIKELY(nmg_debug & NMG_DEBUG_BASIC && total > 0))
 	bu_log("nmg_edge_g_fuse(): %d edge_g_lseg's fused\n", total);
@@ -1753,17 +1734,17 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, struct bu_list *vlfre
 	va = eu->vu_p->v_p;
 	vb = eu->eumate_p->vu_p->v_p;
 
-	if (va == v || bn_pnt3_pnt3_equal(va->vg_p->coord, v->vg_p->coord, tol)) {
+	if (va == v || bg_pnt3_pnt3_equal(va->vg_p->coord, v->vg_p->coord, tol)) {
 	    continue;
 	}
-	if (vb == v || bn_pnt3_pnt3_equal(vb->vg_p->coord, v->vg_p->coord, tol)) {
+	if (vb == v || bg_pnt3_pnt3_equal(vb->vg_p->coord, v->vg_p->coord, tol)) {
 	    continue;
 	}
-	if (UNLIKELY(va == vb || bn_pnt3_pnt3_equal(va->vg_p->coord, vb->vg_p->coord, tol))) {
+	if (UNLIKELY(va == vb || bg_pnt3_pnt3_equal(va->vg_p->coord, vb->vg_p->coord, tol))) {
 	    bu_bomb("nmg_break_all_es_on_v(): found zero length edgeuse");
 	}
 
-	code = bn_isect_pnt_lseg(&dist, va->vg_p->coord, vb->vg_p->coord,
+	code = bg_isect_pnt_lseg(&dist, va->vg_p->coord, vb->vg_p->coord,
 				v->vg_p->coord, tol);
 
 	if (code < 1) continue;	/* missed */
@@ -1855,7 +1836,7 @@ nmg_break_e_on_v(const uint32_t *magic_p, struct bu_list *vlfree, const struct b
 		    continue;
 		}
 
-		code = bn_isect_pnt_lseg(&dist,
+		code = bg_isect_pnt_lseg(&dist,
 					va->vg_p->coord,
 					vb->vg_p->coord,
 					v->vg_p->coord, tol);
@@ -2279,9 +2260,11 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
     if (nmg_debug & NMG_DEBUG_MESH_EU) {
 	struct nmg_radial *next;
 
-	bu_log("amin=%g min_eu=%p, amax=%g max_eu=%p\n",
-	       rmin->ang * RAD2DEG, (void *)rmin->eu,
-	       rmax->ang * RAD2DEG, (void *)rmax->eu);
+	if (rmin && rmax) {
+	    bu_log("amin=%g min_eu=%p, amax=%g max_eu=%p\n",
+		    rmin->ang * RAD2DEG, (void *)rmin->eu,
+		    rmax->ang * RAD2DEG, (void *)rmax->eu);
+	}
 
 	for (BU_LIST_FOR(next, nmg_radial, hd))
 	    bu_log("%p: eu=%p, fu=%p, ang=%g\n", (void *)next, (void *)next->eu, (void *)next->fu, next->ang);
@@ -3218,7 +3201,7 @@ nmg_radial_join_eu_NEW(struct edgeuse *eu1, struct edgeuse *eu2, const struct bn
 
     if (eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p) bu_bomb("nmg_radial_join_eu_NEW(): 0 length edge (topology)\n");
 
-    if (bn_pnt3_pnt3_equal(eu1->vu_p->v_p->vg_p->coord,
+    if (bg_pnt3_pnt3_equal(eu1->vu_p->v_p->vg_p->coord,
 			 eu1->eumate_p->vu_p->v_p->vg_p->coord, tol))
 	bu_bomb("nmg_radial_join_eu_NEW(): 0 length edge (geometry)\n");
 

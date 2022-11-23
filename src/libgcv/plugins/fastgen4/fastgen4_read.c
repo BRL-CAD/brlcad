@@ -43,7 +43,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "gcv/api.h"
 
 
@@ -886,11 +886,11 @@ Add_stragglers_to_groups(struct conversion_state *pstate)
 
 		new_cnt = lrint(ceil(pstate->region_id_max/1000.0));
 		new_head = (struct wmember *)bu_calloc(new_cnt, sizeof(struct wmember), "group_head list");
-		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%ld\n", ptr->region_id, pstate->region_id_max, new_cnt);
+		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%zu\n", ptr->region_id, pstate->region_id_max, new_cnt);
 
 		for (i = 0 ; i < new_cnt ; i++) {
 		    BU_LIST_INIT(&new_head[i].l);
-		    if (i < pstate->group_head_cnt) {
+		    if (pstate->group_head && i < pstate->group_head_cnt) {
 			if (BU_LIST_NON_EMPTY(&pstate->group_head[i].l)) {
 			    list_first = BU_LIST_FIRST(bu_list, &pstate->group_head[i].l);
 			    BU_LIST_DEQUEUE(&pstate->group_head[i].l);
@@ -1319,7 +1319,6 @@ f4_do_ccone1(struct conversion_state *pstate)
 	fastf_t length;
 	fastf_t sin_ang;
 	fastf_t slant_len;
-	fastf_t r1a, r2a;
 	vect_t height_dir;
 
 	/* make outside TGC */
@@ -1338,11 +1337,10 @@ f4_do_ccone1(struct conversion_state *pstate)
 	sin_ang = length/slant_len;
 
 	if (end1 == END_OPEN) {
-	    r1a = r1;
 	    inner_r1 = r1 - thick/sin_ang;
 	    VMOVE(base, pstate->grid_points[pt1]);
 	} else {
-	    r1a = r1 + (r2 - r1)*thick/length;
+	    fastf_t r1a = r1 + (r2 - r1)*thick/length;
 	    inner_r1 = r1a - thick/sin_ang;
 	    VJOIN1(base, pstate->grid_points[pt1], thick, height_dir);
 	}
@@ -1358,11 +1356,10 @@ f4_do_ccone1(struct conversion_state *pstate)
 	}
 
 	if (end2 == END_OPEN) {
-	    r2a = r2;
 	    inner_r2 = r2 - thick/sin_ang;
 	    VMOVE(top, pstate->grid_points[pt2]);
 	} else {
-	    r2a = r2 + (r1 - r2)*thick/length;
+	    fastf_t r2a = r2 + (r1 - r2)*thick/length;
 	    inner_r2 = r2a - thick/sin_ang;
 	    VJOIN1(top, pstate->grid_points[pt2], -thick, height_dir);
 	}
@@ -2127,6 +2124,9 @@ make_bot_object(struct conversion_state *pstate)
     bot_ip.bot_flags = 0;
 
     count = rt_bot_vertex_fuse(&bot_ip, &pstate->fpout->wdb_tol);
+    if (count)
+	bu_log("WARNING: %d duplicate vertices eliminated from group %d component %d\n", count, pstate->group_id, pstate->comp_id);
+
     count = rt_bot_face_fuse(&bot_ip);
     if (count)
 	bu_log("WARNING: %d duplicate faces eliminated from group %d component %d\n", count, pstate->group_id, pstate->comp_id);
@@ -2886,7 +2886,7 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
     fg4_zero_conversion_state(&state);
     state.gcv_options = gcv_options;
 
-    state.fpout = context->dbip->dbi_wdbp;
+    state.fpout = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
 
     if (fg4_read_options->muves_path)
 	if ((state.fp_muves=fopen(fg4_read_options->muves_path, "wb")) == (FILE *)NULL) {

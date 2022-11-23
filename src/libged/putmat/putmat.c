@@ -53,7 +53,7 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
@@ -91,7 +91,7 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_strncpy(&name2, last_fs+1, (size_t)(end-last_fs));
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&name1), LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip, bu_vls_addr(&name1), LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], bu_vls_addr(&name1));
 	bu_vls_free(&name1);
 	bu_vls_free(&name2);
@@ -105,7 +105,7 @@ _getmat(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	bu_vls_free(&name1);
 	bu_vls_free(&name2);
@@ -192,7 +192,7 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc == 2)
@@ -241,7 +241,7 @@ ged_putmat_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (result != BRLCAD_ERROR)
-	result = ged_arced(gedp, 20, (const char **)newargv);
+	result = ged_exec(gedp, 20, (const char **)newargv);
 
     bu_vls_vlsfree(avp);
     return result;

@@ -155,6 +155,8 @@ main(int argc, char **argv)
 	    verbose++;
 	} else if (BU_STR_EQUAL(argv[1], "-S")) {
 	    scale = 1;
+	} else if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
+	    bu_exit(0, "%s", usage);
 	} else
 	    break;
 

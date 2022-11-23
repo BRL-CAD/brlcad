@@ -49,16 +49,15 @@ find_path (Appleseed_INCLUDE_DIR renderer/api/project.h
 	${Appleseed_ROOT}
 	PATH_SUFFIXES
    include
-	appleseed/include
 	)
 
 find_library (Appleseed_LIBRARY
-  	NAMES appleseed
+  	NAMES Appleseed
 	HINTS
 	${Appleseed_ROOT}
 	PATH_SUFFIXES
-  	lib64
   	lib
+		lib64
 	)
 
 # Handle the QUIETLY and REQUIRED arguments and set Appleseed_FOUND.

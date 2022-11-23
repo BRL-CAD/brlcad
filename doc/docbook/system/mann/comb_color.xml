@@ -36,7 +36,7 @@
     <example><title>Assign a color to a specific region.</title>
 
       <para>
-	<prompt>mged&gt;</prompt> <userinput>comb_color region1 0 255 0</userinput>
+	<prompt>mged&gt; </prompt><userinput>comb_color region1 0 255 0</userinput>
       </para>
       <para>
 	Assigns the color green to <emphasis>region1</emphasis>.

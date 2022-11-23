@@ -48,11 +48,11 @@ ged_cat_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     for (arg = 1; arg < argc; arg++) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((dp = db_lookup(gedp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 
 	_ged_do_list(gedp, dp, 0);	/* non-verbose */

@@ -28,12 +28,12 @@
 #include <math.h>
 #if defined _MSC_VER || defined __MINGW32__
 /* MS C-runtime has functions which can be used in order to determine if
-   a given floating-point variable contains NaN, (+-)INF. These are 
+   a given floating-point variable contains NaN, (+-)INF. These are
    preferred, because floating-point technology is considered propriatary
-   by MS and we can assume that their functions know more about their 
+   by MS and we can assume that their functions know more about their
    oddities than we do. */
 #include <float.h>
-/* Bjorn Reese figured a quite nice construct for isinf() using the 
+/* Bjorn Reese figured a quite nice construct for isinf() using the
    _fpclass() function. */
 #ifndef isinf
 #define isinf(d) ((_fpclass(d) == _FPCLASS_PINF) ? 1 \
@@ -77,16 +77,41 @@ static int isnan (double d) {
 #endif /* _MSC_VER */
 
 #include <direct.h>
+
+/* snprintf emulation taken from http://stackoverflow.com/a/8712996/1956010 */
+#if defined(_MSC_VER) && _MSC_VER < 1900
+
+#include <stdarg.h>
 #include <stdio.h>
-#if defined(_MSC_VER) || defined(__MINGW32__)
-  #define mkdir(p,m) _mkdir(p)
-  #if !defined(snprintf) && defined(_WIN32)
-    #define snprintf _snprintf
-  #endif
-  #if (_MSC_VER < 1500)
-    #define vsnprintf(b,c,f,a) _vsnprintf(b,c,f,a)
-  #endif
-#endif
+
+#define snprintf c99_snprintf
+#define vsnprintf c99_vsnprintf
+
+__inline int c99_vsnprintf(char *outBuf, size_t size, const char *format, va_list ap)
+{
+    int count = -1;
+
+    if (size != 0)
+        count = _vsnprintf_s(outBuf, size, _TRUNCATE, format, ap);
+    if (count == -1)
+        count = _vscprintf(format, ap);
+
+    return count;
+}
+
+__inline int c99_snprintf(char *outBuf, size_t size, const char *format, ...)
+{
+    int count;
+    va_list ap;
+
+    va_start(ap, format);
+    count = c99_vsnprintf(outBuf, size, format, ap);
+    va_end(ap);
+
+    return count;
+}
+
+#endif /* defined(_MSC_VER) && _MSC_VER < 1900 */
 
 #define HAVE_SYS_STAT_H
 #define HAVE__STAT

@@ -21,7 +21,7 @@
 #include <stdlib.h>
 
 #include "vmath.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/tol.h"
 
 /* TODO - need routines for 2D and 3D point sets that check for degeneracy - (dimension < 2 for a 2D
@@ -93,7 +93,7 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
 	    VUNITIZE(temp_vect);
 	    curr_vdot = fabs(VDOT(temp_vect, *u_axis));
 	    if (curr_vdot < vdot) {
-		if (!bn_make_plane_3pnts(plane, *origin_pnt, p_farthest, points_3d[i], &tol)) {
+		if (!bg_make_plane_3pnts(plane, *origin_pnt, p_farthest, points_3d[i], &tol)) {
 		    VSET(normal, plane[0], plane[1], plane[2]);
 		    have_normal = 1;
 		    vdot = curr_vdot;

@@ -41,7 +41,7 @@
 	</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rcc-tgc rcc.s tgc.s 0 2 4</userinput>
+      <prompt>mged&gt; </prompt><userinput>rcc-tgc rcc.s tgc.s 0 2 4</userinput>
     </para>
     <para>Creates a TGC shape named <emphasis>tgc.s</emphasis> with an apex at (0 2 4) from the base of 	<emphasis>rcc.s</emphasis>.
 

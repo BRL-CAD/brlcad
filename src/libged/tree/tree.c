@@ -63,6 +63,7 @@ _tree_print_node(struct ged *gedp,
     unsigned aflag = (flags & _GED_TREE_AFLAG);
     unsigned cflag = (flags & _GED_TREE_CFLAG);
     struct bu_vls tmp_str = BU_VLS_INIT_ZERO;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* cflag = don't show shapes, so return if this is not a combination */
     if (cflag && !(dp->d_flags & RT_DIR_COMB)) {
@@ -112,7 +113,7 @@ _tree_print_node(struct ged *gedp,
     if (aflag) {
 	struct bu_attribute_value_set avs;
 	bu_avs_init_empty(&avs);
-	if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot get attributes for object %s\n", dp->d_namep);
 	    /* need a bombing macro or set an error code here: return BRLCAD_ERROR; */
 	    bu_vls_free(&tmp_str);
@@ -120,7 +121,7 @@ _tree_print_node(struct ged *gedp,
 	}
 
 	/* FIXME: manually list all the attributes, if any.  should be
-	 * calling ged_attr() show so output formatting is consistent.
+	 * calling ged_exec(attr show) so output formatting is consistent.
 	 */
 	if (avs.count) {
 	    struct bu_attribute_value_pair *avpp;
@@ -153,7 +154,7 @@ _tree_print_node(struct ged *gedp,
      * Process all the arcs (e.g., directory members).
      */
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return;
     }
@@ -203,20 +204,20 @@ _tree_print_node(struct ged *gedp,
 		    break;
 	    }
 
-	    if ((nextdp = db_lookup(gedp->ged_wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+	    if ((nextdp = db_lookup(gedp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
 		size_t j;
 
 		for (j = 0; j < pathpos+1; j++)
 		    bu_vls_printf(gedp->ged_result_str, "\t");
 
-		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &gedp->ged_wdbp->wdb_tol))
+		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &wdbp->wdb_tol))
 		    bu_vls_printf(gedp->ged_result_str, "%s ", mlabel);
 		bu_vls_printf(gedp->ged_result_str, "%c ", op);
 		bu_vls_printf(gedp->ged_result_str, "%s\n", rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    } else {
 
 		int domprefix = 0;
-		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &gedp->ged_wdbp->wdb_tol)) {
+		if (verbosity && rt_tree_array[i].tl_tree->tr_l.tl_mat && !bn_mat_is_equal(rt_tree_array[i].tl_tree->tr_l.tl_mat, bn_mat_identity, &wdbp->wdb_tol)) {
 		    domprefix = 1;
 		}
 
@@ -312,11 +313,11 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
     /* tree of all displayed objects */
     if (argc == 1) {
 	char *whocmd[2] = {"who", NULL};
-	if (ged_who(gedp, 1, (const char **)whocmd) == BRLCAD_OK) {
+	if (ged_exec(gedp, 1, (const char **)whocmd) == BRLCAD_OK) {
 	    buffer = bu_strdup(bu_vls_addr(gedp->ged_result_str));
 	    bu_vls_trunc(gedp->ged_result_str, 0);
 
-	    argc += bu_argv_from_string(whoargv, WHOARGVMAX, buffer);
+	    argc += (int)bu_argv_from_string(whoargv, WHOARGVMAX, buffer);
 	}
     }
 
@@ -328,7 +329,7 @@ ged_tree_core(struct ged *gedp, int argc, const char *argv[])
 
 	if (j > 1)
 	    bu_vls_printf(gedp->ged_result_str, "\n");
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
+	if ((dp = db_lookup(gedp->dbip, next, LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	_tree_print_node(gedp, dp, 0, indentSize, 0, flags, displayDepth, 0, verbosity, 0);
     }

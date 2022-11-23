@@ -95,7 +95,7 @@ ged_saveview_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdname, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;
@@ -135,14 +135,14 @@ ged_saveview_core(struct ged *gedp, int argc, const char *argv[])
     }
     (void)bu_fchmod(fileno(fp), 0755);	/* executable */
 
-    if (!gedp->ged_wdbp->dbip->dbi_filename) {
+    if (!gedp->dbip->dbi_filename) {
 	bu_log("Error: geometry file is not specified\n");
 	fclose(fp);
 	return BRLCAD_ERROR;
     }
 
-    if (!bu_file_exists(gedp->ged_wdbp->dbip->dbi_filename, NULL)) {
-	bu_log("Error: %s does not exist\n", gedp->ged_wdbp->dbip->dbi_filename);
+    if (!bu_file_exists(gedp->dbip->dbi_filename, NULL)) {
+	bu_log("Error: %s does not exist\n", gedp->dbip->dbi_filename);
 	fclose(fp);
 	return BRLCAD_ERROR;
     }
@@ -166,7 +166,7 @@ ged_saveview_core(struct ged *gedp, int argc, const char *argv[])
 	fprintf(fp, "\\\n -o %s\\\n $*\\\n", outpix);
 
     if (inputg[0] == '\0') {
-	snprintf(inputg, 255, "%s", gedp->ged_wdbp->dbip->dbi_filename);
+	snprintf(inputg, 255, "%s", gedp->dbip->dbi_filename);
     }
     fprintf(fp, " '%s'\\\n ", inputg);
 

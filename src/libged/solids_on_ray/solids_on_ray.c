@@ -130,7 +130,7 @@ skewer_solids(struct ged *gedp, int argc, const char **argv, fastf_t *ray_orig, 
     }
 
     /* .inmem rt_gettrees .rt -i -u [who] */
-    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    rtip = rt_new_rti(gedp->dbip);
     rtip->useair = 1;
     rtip->rti_dont_instance = 1;	/* full paths to solids, too. */
     if (rt_gettrees(rtip, argc, argv, 1) == -1) {
@@ -205,7 +205,7 @@ ged_solids_on_ray_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 1 && argc != 3) {

@@ -1,0 +1,3 @@
+#!/bin/sh
+su - cadling -c "/usr/bin/tigervncserver -fg -localhost no -geometry 1200x600 -xstartup /xinit" &
+/usr/sbin/sshd -Dd

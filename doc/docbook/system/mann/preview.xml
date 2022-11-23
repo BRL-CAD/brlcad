@@ -41,7 +41,7 @@
   <example><title>Preview an animation script.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>preview -D 101 -K 237 script.rt</userinput>
+      <prompt>mged&gt; </prompt><userinput>preview -D 101 -K 237 script.rt</userinput>
     </para>
     <para>Displays the animation script stored in the file named <emphasis>script.rt</emphasis> from frame number 101 through frame number 237.
     </para>

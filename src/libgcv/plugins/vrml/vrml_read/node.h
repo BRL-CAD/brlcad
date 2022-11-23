@@ -129,7 +129,7 @@ public:
     vector<double> vertics;
 
 
-    NODE *createNewNode(int nodetype, NODE *node);
+    NODE *createNewNode(int nodetype);
     int copyNode(NODE *destnode, NODE *sourcenode);
     int copyNodeData(NODE *dnode, NODE *snode, int nodetype);
     int findFieldName(char *instring);

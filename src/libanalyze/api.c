@@ -1455,7 +1455,7 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     bu_list_free(&overlapList.l);
 
     if (state->densities != NULL) {
-	bu_free(state->densities, "densities");
+	analyze_densities_destroy(state->densities);
 	state->densities = NULL;
     }
 

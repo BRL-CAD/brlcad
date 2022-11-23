@@ -56,7 +56,7 @@
  * directly and export what we need from brep_debug.cpp which sucks.
  */
 extern "C" {
-    RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
+RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 }
 
 // Indices are specified for info and plot commands - parsing logic is common to both
@@ -179,7 +179,7 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
 
 
     // We've already looked up the first sold, get the second
-    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_NOISY);
+    struct directory *dp2 = db_lookup(gedp->dbip, argv[2], LOOKUP_NOISY);
     if (dp2 == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", argv[3]);
 	return BRLCAD_ERROR;
@@ -205,7 +205,8 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
     struct rt_db_internal intern_res;
     rt_brep_boolean(&intern_res, &gb->intern, &intern2, op);
     struct rt_brep_internal *bip = (struct rt_brep_internal *)intern_res.idb_ptr;
-    mk_brep(gedp->ged_wdbp, argv[3], (void *)(bip->brep));
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    mk_brep(wdbp, argv[3], (void *)(bip->brep));
     rt_db_free_internal(&intern2);
     rt_db_free_internal(&intern_res);
 
@@ -231,7 +232,7 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gb->gedp->ged_wdbp->wdb_ttol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gb->wdbp->wdb_ttol;
     struct rt_brep_internal *bi = (struct rt_brep_internal*)gb->intern.idb_ptr;
     struct bu_vls bname_bot = BU_VLS_INIT_ZERO;
 
@@ -249,7 +250,7 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
     int *face_normals = NULL;
     fastf_t *normals = NULL;
 
-    struct bg_tess_tol cdttol;
+    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
     cdttol.abs = ttol->abs;
     cdttol.rel = ttol->rel;
     cdttol.norm = ttol->norm;
@@ -281,7 +282,8 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
     bot->normals = normals;
     bot->face_normals = face_normals;
 
-    if (wdb_export(gedp->ged_wdbp, bot_name, (void *)bot, ID_BOT, 1.0)) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_export(wdbp, bot_name, (void *)bot, ID_BOT, 1.0)) {
 	bu_vls_free(&bname_bot);
 	return BRLCAD_ERROR;
     }
@@ -322,8 +324,8 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 
     double ovlp_max_smallest = DBL_MAX;
 
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol;
-    struct bg_tess_tol cdttol;
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gb->wdbp->wdb_ttol;
+    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
     cdttol.abs = ttol->abs;
     cdttol.rel = ttol->rel;
     cdttol.norm = ttol->norm;
@@ -337,7 +339,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 	struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_brep_internal* bi;
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, obj_names[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, obj_names[i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", obj_names[i]);
 	    return BRLCAD_ERROR;
 	}
@@ -406,7 +408,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 	bot->normals = normals;
 	bot->face_normals = face_normals;
 
-	if (wdb_export(gedp->ged_wdbp, bu_vls_cstr(&bot_name), (void *)bot, ID_BOT, 1.0)) {
+	if (wdb_export(gb->wdbp, bu_vls_cstr(&bot_name), (void *)bot, ID_BOT, 1.0)) {
 	    return BRLCAD_ERROR;
 	}
 	bu_vls_free(&bot_name);
@@ -451,7 +453,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	struct bu_vls bname_suffix;
 	bu_vls_init(&bname_suffix);
 	bu_vls_sprintf(&bname_suffix, "%s%s", gb->solid_name.c_str(), bu_vls_cstr(&suffix));
-	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&bname_suffix), LOOKUP_QUIET) != RT_DIR_NULL) {
+	if (db_lookup(gedp->dbip, bu_vls_cstr(&bname_suffix), LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_cstr(&bname_suffix));
 	    bu_vls_free(&bname);
 	    bu_vls_free(&suffix);
@@ -465,7 +467,8 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	GED_DB_GET_INTERNAL(gedp, &intern, gb->dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 	RT_CK_DB_INTERNAL(&intern);
 
-	brep_conversion_comb(&intern, bu_vls_cstr(&bname_suffix), bu_vls_cstr(&suffix), gedp->ged_wdbp, mk_conv2mm);
+	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	brep_conversion_comb(&intern, bu_vls_cstr(&bname_suffix), bu_vls_cstr(&suffix), wdbp, mk_conv2mm);
 	bu_vls_free(&bname_suffix);
 	bu_vls_free(&bname);
 	bu_vls_free(&suffix);
@@ -486,22 +489,23 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
     // Attempt to evalute to a single object
     struct rt_db_internal brep_db_internal;
     ON_Brep* brep;
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&bname), LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, bu_vls_cstr(&bname), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_cstr(&bname));
 	bu_vls_free(&bname);
 	return BRLCAD_OK;
     }
-    int ret = brep_conversion(&gb->intern, &brep_db_internal, gedp->ged_wdbp->dbip);
+    int ret = brep_conversion(&gb->intern, &brep_db_internal, gedp->dbip);
     if (ret == -1) {
 	bu_vls_printf(gedp->ged_result_str, "%s doesn't have a "
-		"brep-conversion function yet. Type: %s", gb->solid_name.c_str(),
-		gb->intern.idb_meth->ft_label);
+		      "brep-conversion function yet. Type: %s", gb->solid_name.c_str(),
+		      gb->intern.idb_meth->ft_label);
     } else if (ret == -2) {
 	bu_vls_printf(gedp->ged_result_str, "%s cannot be converted "
-		"to brep correctly.", gb->solid_name.c_str());
+		      "to brep correctly.", gb->solid_name.c_str());
     } else {
 	brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
-	ret = mk_brep(gedp->ged_wdbp, bu_vls_cstr(&bname), brep);
+	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	ret = mk_brep(wdbp, bu_vls_cstr(&bname), brep);
 	if (ret == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%s is made.", bu_vls_cstr(&bname));
 	}
@@ -526,7 +530,7 @@ _brep_cmd_csg(void *bs, int argc, const char **argv)
     struct bu_vls bname_csg;
     bu_vls_init(&bname_csg);
     bu_vls_sprintf(&bname_csg, "csg_%s", gb->solid_name.c_str());
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&bname_csg), LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, bu_vls_cstr(&bname_csg), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_cstr(&bname_csg));
 	bu_vls_free(&bname_csg);
 	return BRLCAD_OK;
@@ -563,11 +567,12 @@ _brep_cmd_flip(void *bs, int argc, const char **argv)
     av[0] = "kill";
     av[1] = ncpy;
     av[2] = NULL;
-    (void)ged_kill(gb->gedp, 2, (const char **)av);
+    (void)ged_exec(gb->gedp, 2, (const char **)av);
     bu_free(ncpy, "free name cpy");
 
     // Make the new one
-    if (mk_brep(gb->gedp->ged_wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -651,7 +656,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
     }
 
     // We've already looked up the first sold, get the second
-    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    struct directory *dp2 = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
     if (dp2 == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", argv[3]);
 	return BRLCAD_ERROR;
@@ -684,8 +689,14 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Invalid intersection type %s.\n", argv[6]);
     }
 
-    char namebuf[65];
-    _ged_cvt_vlblock_to_solids(gedp, gb->vbp, namebuf, 0);
+    const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(nview, "1")) {
+	struct bview *view = gedp->ged_gvp;
+	bv_vlblock_obj(gb->vbp, view, "brep_intersect");
+    } else {
+	char namebuf[65];
+	_ged_cvt_vlblock_to_solids(gedp, gb->vbp, namebuf, 0);
+    }
 
     rt_db_free_internal(&intern2);
 
@@ -746,7 +757,7 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 	double thickness;
 	int nocos;
 	rt_brep_plate_mode_getvals(&thickness, &nocos, &gb->intern);
-	thickness = gb->gedp->ged_wdbp->dbip->dbi_base2local * thickness;
+	thickness = gb->gedp->dbip->dbi_base2local * thickness;
 	if (nocos) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "%f (NOCOS)", thickness);
 	} else {
@@ -757,17 +768,17 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 
     const char *val = argv[1];
     struct bu_attribute_value_set avs;
-    double local2base = gb->gedp->ged_wdbp->dbip->dbi_local2base;
+    double local2base = gb->gedp->dbip->dbi_local2base;
 
     // Make sure we can get attributes
-    if (db5_get_attributes(gb->gedp->ged_wdbp->dbip, &avs, gb->dp)) {
+    if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	return BRLCAD_ERROR;
     };
 
     if (BU_STR_EQUIV(val, "cos")) {
 	(void)bu_avs_add(&avs, "_plate_mode_nocos", "0");
-	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->ged_wdbp->dbip)) {
+	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	    return BRLCAD_ERROR;
 	} else {
@@ -778,7 +789,7 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 
     if (BU_STR_EQUIV(val, "nocos")) {
 	(void)bu_avs_add(&avs, "_plate_mode_nocos", "1");
-	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->ged_wdbp->dbip)) {
+	if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
 	    bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	    return BRLCAD_ERROR;
 	} else {
@@ -804,7 +815,7 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
     ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
     std::string sd = ss.str();
     (void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
-    if (db5_replace_attributes(gb->dp, &avs, gb->gedp->ged_wdbp->dbip)) {
+    if (db5_replace_attributes(gb->dp, &avs, gb->gedp->dbip)) {
 	bu_vls_printf(gb->gedp->ged_result_str, "Error setting plate mode value\n");
 	return BRLCAD_ERROR;
     } else {
@@ -954,8 +965,8 @@ _brep_cmd_selection(void *bs, int argc, const char **argv)
 	    operation.parameters.tran.dy = atof(argv[3]);
 	    operation.parameters.tran.dz = atof(argv[4]);
 
-	    ret = ip->idb_meth->ft_process_selection(ip, gedp->ged_wdbp->dbip,
-		    (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
+	    ret = ip->idb_meth->ft_process_selection(ip, gedp->dbip,
+						     (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
 
 	    if (ret != 0) {
 		return BRLCAD_ERROR;
@@ -1017,11 +1028,12 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
     av[0] = "kill";
     av[1] = ncpy;
     av[2] = NULL;
-    (void)ged_kill(gb->gedp, 2, (const char **)av);
+    (void)ged_exec(gb->gedp, 2, (const char **)av);
     bu_free(ncpy, "free name cpy");
 
     // Make the new one
-    if (mk_brep(gb->gedp->ged_wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
+    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
@@ -1079,7 +1091,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	}
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s already exists.", bu_vls_cstr(&ocomb));
 	bu_vls_free(&ocomb);
 	return BRLCAD_ERROR;
@@ -1101,6 +1113,7 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 
     int valid_faces = 0;
     std::set<int>::iterator e_it;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
 	int f_id = *e_it;
 	ON_Brep *fbrep = orig_brep->SubBrep(1, &f_id);
@@ -1114,30 +1127,30 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 	    struct bu_vls fbrep_name = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fbrep_name, "%s.%d", gb->solid_name.c_str(), f_id);
 	    (void)mk_addmember(bu_vls_cstr(&fbrep_name), &(wcomb.l), NULL, DB_OP_UNION);
-	    mk_brep(gedp->ged_wdbp, bu_vls_cstr(&fbrep_name), fbrep);
+	    mk_brep(wdbp, bu_vls_cstr(&fbrep_name), fbrep);
 	    delete fbrep;
 	    if (thickness > 0) {
 		struct bu_attribute_value_set avs;
-		struct directory *ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&fbrep_name), LOOKUP_QUIET);
+		struct directory *ndp = db_lookup(gedp->dbip, bu_vls_cstr(&fbrep_name), LOOKUP_QUIET);
 		if (ndp == RT_DIR_NULL) {
 		    bu_vls_printf(gedp->ged_result_str, ": failed to create brep for face %d", f_id);
 		    bu_vls_free(&fbrep_name);
 		    bu_vls_free(&ocomb);
 		    return BRLCAD_ERROR;
 		}
-		if (db5_get_attributes(gb->gedp->ged_wdbp->dbip, &avs, gb->dp)) {
+		if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
 		    bu_vls_printf(gedp->ged_result_str, ": failed to get attributes from face brep  %s", bu_vls_cstr(&fbrep_name));
 		    bu_vls_free(&fbrep_name);
 		    bu_vls_free(&ocomb);
 		    return BRLCAD_ERROR;
 		};
-		double local2base = gb->gedp->ged_wdbp->dbip->dbi_local2base;
+		double local2base = gb->gedp->dbip->dbi_local2base;
 		double pthicknessmm = local2base * thickness;
 		std::ostringstream ss;
 		ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
 		std::string sd = ss.str();
 		(void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
-		if (db5_replace_attributes(ndp, &avs, gb->gedp->ged_wdbp->dbip)) {
+		if (db5_replace_attributes(ndp, &avs, gb->gedp->dbip)) {
 		    bu_vls_printf(gedp->ged_result_str, ": failed to set plate mode thickness for face %d", f_id);
 		    bu_vls_free(&fbrep_name);
 		    bu_vls_free(&ocomb);
@@ -1162,35 +1175,36 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
     int ret;
 
     if (!object_per_face) {
-	ret = mk_brep(gedp->ged_wdbp, bu_vls_cstr(&ocomb), brep);
+	ret = mk_brep(wdbp, bu_vls_cstr(&ocomb), brep);
 	if (thickness > 0) {
 	    struct bu_attribute_value_set avs;
-	    struct directory *ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET);
+	    struct directory *ndp = db_lookup(gedp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET);
 	    if (ndp == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to create brep");
 		bu_vls_free(&ocomb);
 		return BRLCAD_ERROR;
 	    }
-	    if (db5_get_attributes(gb->gedp->ged_wdbp->dbip, &avs, gb->dp)) {
+	    if (db5_get_attributes(gb->gedp->dbip, &avs, gb->dp)) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to get attributes from brep");
 		bu_vls_free(&ocomb);
 		return BRLCAD_ERROR;
 	    };
-	    double local2base = gb->gedp->ged_wdbp->dbip->dbi_local2base;
+	    double local2base = gb->gedp->dbip->dbi_local2base;
 	    double pthicknessmm = local2base * thickness;
 	    std::ostringstream ss;
 	    ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
 	    std::string sd = ss.str();
 	    (void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
-	    if (db5_replace_attributes(ndp, &avs, gb->gedp->ged_wdbp->dbip)) {
+	    if (db5_replace_attributes(ndp, &avs, gb->gedp->dbip)) {
 		bu_vls_printf(gedp->ged_result_str, ": failed to set plate mode thickness");
 		bu_vls_free(&ocomb);
 		return BRLCAD_ERROR;
 	    }
 	}
     } else {
-	ret = mk_lcomb(gedp->ged_wdbp, bu_vls_cstr(&ocomb), &wcomb, 0, NULL, NULL, NULL, 0);
+	ret = mk_lcomb(wdbp, bu_vls_cstr(&ocomb), &wcomb, 0, NULL, NULL, NULL, 0);
     }
+
     return ret;
 }
 
@@ -1198,7 +1212,7 @@ extern "C" int
 _brep_cmd_tikz(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> tikz <outfile>";
-    const char *purpose_string = "generate Tikz 3dplot of BRep object";
+    const char *purpose_string = "generate PGF/TikZ 3D plot of BRep object";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
@@ -1246,6 +1260,7 @@ _brep_cmd_valid(void *bs, int argc, const char **argv)
     return brep_valid(gedp->ged_result_str, &gb->intern, argc, argv);
 }
 
+#if 0
 extern "C" int
 _brep_cmd_weld(void *bs, int argc, const char **argv)
 {
@@ -1267,53 +1282,7 @@ _brep_cmd_weld(void *bs, int argc, const char **argv)
     bu_vls_printf(gb->gedp->ged_result_str, "UNIMPLEMENTED\n");
     return BRLCAD_ERROR;
 }
-
-extern "C" int
-_brep_cmd_help(void *bs, int argc, const char **argv)
-{
-    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-    if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
-	bu_vls_printf(gb->gedp->ged_result_str, "brep [options] <objname> subcommand [args]\n");
-	if (gb->gopts) {
-	    char *option_help = bu_opt_describe(gb->gopts, NULL);
-	    if (option_help) {
-		bu_vls_printf(gb->gedp->ged_result_str, "Options:\n%s\n", option_help);
-		bu_free(option_help, "help str");
-	    }
-	}
-	bu_vls_printf(gb->gedp->ged_result_str, "Available subcommands:\n");
-	const struct bu_cmdtab *ctp = NULL;
-	int ret;
-	const char *helpflag[2];
-	helpflag[1] = PURPOSEFLAG;
-	size_t maxcmdlen = 0;
-	for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    maxcmdlen = (maxcmdlen > strlen(ctp->ct_name)) ? maxcmdlen : strlen(ctp->ct_name);
-	}
-	for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "  %s%*s", ctp->ct_name, (int)(maxcmdlen - strlen(ctp->ct_name)) + 2, " ");
-	    if (!BU_STR_EQUAL(ctp->ct_name, "help")) {
-		helpflag[0] = ctp->ct_name;
-		bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
-	    } else {
-		bu_vls_printf(gb->gedp->ged_result_str, "print help and exit\n");
-	    }
-	}
-    } else {
-	int ret;
-	const char **helpargv = (const char **)bu_calloc(argc+1, sizeof(char *), "help argv");
-	helpargv[0] = argv[0];
-	helpargv[1] = HELPFLAG;
-	for (int i = 1; i < argc; i++) {
-	    helpargv[i+1] = argv[i];
-	}
-	bu_cmd(gb->cmds, argc+1, helpargv, 0, (void *)gb, &ret);
-	bu_free(helpargv, "help argv");
-	return ret;
-    }
-
-    return BRLCAD_OK;
-}
+#endif
 
 const struct bu_cmdtab _brep_cmds[] = {
     { "bool",            _brep_cmd_boolean},
@@ -1333,7 +1302,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "shrink_surfaces", _brep_cmd_shrink_surfaces},
     { "tikz",            _brep_cmd_tikz},
     { "valid",           _brep_cmd_valid},
-    { "weld",            _brep_cmd_weld},
+    //{ "weld",            _brep_cmd_weld},
     { (char *)NULL,      NULL}
 };
 
@@ -1352,6 +1321,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     int help = 0;
     struct _ged_brep_info gb;
     gb.gedp = gedp;
+    gb.wdbp = wdb_dbopen(gb.gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     gb.cmds = _brep_cmds;
     gb.verbosity = 0;
     struct bu_color *color = NULL;
@@ -1378,8 +1348,13 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 
     gb.gopts = d;
 
+
+    const char *bargs_help = "[options] <objname> subcommand [args]";
+    struct bu_opt_desc *bdesc = (struct bu_opt_desc *)d;
+    const struct bu_cmdtab *bcmds = (const struct bu_cmdtab *)_brep_cmds;
+
     if (!argc) {
-	_brep_cmd_help(&gb, 0, NULL);
+	_ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, 0, NULL);
 	return BRLCAD_OK;
     }
 
@@ -1402,9 +1377,9 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 	if (cmd_pos >= 0) {
 	    argc = argc - cmd_pos;
 	    argv = &argv[cmd_pos];
-	    _brep_cmd_help(&gb, argc, argv);
+	    _ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, argc, argv);
 	} else {
-	    _brep_cmd_help(&gb, 0, NULL);
+	    _ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, 0, NULL);
 	}
 	return BRLCAD_OK;
     }
@@ -1412,7 +1387,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     // Must have a subcommand
     if (cmd_pos == -1) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
-	_brep_cmd_help(&gb, 0, NULL);
+	_ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, 0, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -1431,7 +1406,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     gb.solid_name = std::string(argv[0]);
-    gb.dp = db_lookup(gedp->ged_wdbp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
+    gb.dp = db_lookup(gedp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
     if (gb.dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", gb.solid_name.c_str());
 	if (color) {
@@ -1453,7 +1428,7 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERNAL(gedp, &gb.intern, gb.dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
     RT_CK_DB_INTERNAL(&gb.intern);
 
-    gb.vbp = rt_vlblock_init();
+    gb.vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
     gb.color = color;
     gb.plotres = plotres;
 
@@ -1469,8 +1444,8 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
     }
 
-    bn_vlblock_free(gb.vbp);
-    gb.vbp = (struct bn_vlblock *)NULL;
+    bv_vlblock_free(gb.vbp);
+    gb.vbp = (struct bv_vlblock *)NULL;
     rt_db_free_internal(&gb.intern);
     return BRLCAD_ERROR;
 }
@@ -1479,18 +1454,18 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 extern "C" {
-    struct ged_cmd_impl brep_cmd_impl = { "brep", ged_brep_core, GED_CMD_DEFAULT };
-    const struct ged_cmd brep_cmd = { &brep_cmd_impl };
-    struct ged_cmd_impl dplot_cmd_impl = { "dplot", ged_dplot_core, GED_CMD_DEFAULT };
-    const struct ged_cmd dplot_cmd = { &dplot_cmd_impl };
-    const struct ged_cmd *brep_cmds[] = { &brep_cmd, &dplot_cmd, NULL };
+struct ged_cmd_impl brep_cmd_impl = { "brep", ged_brep_core, GED_CMD_DEFAULT };
+const struct ged_cmd brep_cmd = { &brep_cmd_impl };
+struct ged_cmd_impl dplot_cmd_impl = { "dplot", ged_dplot_core, GED_CMD_DEFAULT };
+const struct ged_cmd dplot_cmd = { &dplot_cmd_impl };
+const struct ged_cmd *brep_cmds[] = { &brep_cmd, &dplot_cmd, NULL };
 
-    static const struct ged_plugin pinfo = { GED_API,  brep_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  brep_cmds, 2 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
-    {
-	return &pinfo;
-    }
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+{
+    return &pinfo;
+}
 }
 #endif
 

@@ -1,3 +1,5 @@
+https://github.com/AcademySoftwareFoundation/OpenShadingLanguage
+
 Copyright (c) 2009-2010 Sony Pictures Imageworks Inc., et al.
 All Rights Reserved.
 
@@ -27,3 +29,4 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 file:/src/liboptical/oslexec_pvt.h
 file:/src/liboptical/constantpool.h
 file:/misc/osl_shaders/stdosl.h
+

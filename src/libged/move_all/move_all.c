@@ -48,9 +48,9 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
     /* check the old_name source and new_name target */
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, old_name, LOOKUP_NOISY);
+    dp = db_lookup(gedp->dbip, old_name, LOOKUP_NOISY);
 
-    if (dp && db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (dp && db_lookup(gedp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: already exists", new_name);
 	return BRLCAD_ERROR;
     }
@@ -69,7 +69,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	struct directory *dirp;
 
 	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dirp = gedp->ged_wdbp->dbip->dbi_Head[i]; dirp != RT_DIR_NULL; dirp = dirp->d_forw) {
+	    for (dirp = gedp->dbip->dbi_Head[i]; dirp != RT_DIR_NULL; dirp = dirp->d_forw) {
 		struct rt_extrude_internal *extrude;
 
 		if (dirp->d_major_type != DB5_MAJORTYPE_BRLCAD || \
@@ -77,7 +77,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		    continue;
 		}
 
-		if (rt_db_get_internal(&intern, dirp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		if (rt_db_get_internal(&intern, dirp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		    bu_log("WARNING: Can't get extrude %s?\n", dirp->d_namep);
 		    continue;
 		}
@@ -99,7 +99,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		bu_free(extrude->sketch_name, "sketch name");
 		extrude->sketch_name = bu_strdup(new_name);
 
-		if (rt_db_put_internal(dirp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+		if (rt_db_put_internal(dirp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 		    bu_log("INTERNAL ERROR: unable to write sketch [%s] during mvall\n", new_name);
 		} else {
 		    moved++;
@@ -111,18 +111,18 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
     if (!nflag && dp) {
 	/* Change object name in the directory. */
-	if (db_rename(gedp->ged_wdbp->dbip, dp, new_name) < 0) {
+	if (db_rename(gedp->dbip, dp, new_name) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "error in rename to %s, aborting", new_name);
 	    return BRLCAD_ERROR;
 	}
 
 	/* Change object name on disk */
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+	if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return BRLCAD_ERROR;
 	}
@@ -133,14 +133,13 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 
     /* Examine all COMB nodes */
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (nflag) {
 		union tree *comb_leaf;
-		int done=0;
 
 		if (!(dp->d_flags & RT_DIR_COMB))
 		    continue;
-		if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+		if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
 		    continue;
 
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -149,7 +148,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		/* visit each leaf in the combination */
 		comb_leaf = comb->tree;
 		if (comb_leaf) {
-		    while (!done) {
+		    while (1) {
 			while (comb_leaf->tr_op != OP_DB_LEAF) {
 			    bu_ptbl_ins(&stack, (long *)comb_leaf);
 			    comb_leaf = comb_leaf->tr_b.tb_left;
@@ -160,7 +159,6 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 			}
 
 			if (BU_PTBL_LEN(&stack) < 1) {
-			    done = 1;
 			    break;
 			}
 			comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_LEN(&stack)-1);
@@ -172,7 +170,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 		}
 		rt_db_free_internal(&intern);
 	    } else {
-		int comb_mvall_status = db_comb_mvall(dp, gedp->ged_wdbp->dbip, old_name, new_name, &stack);
+		int comb_mvall_status = db_comb_mvall(dp, gedp->dbip, old_name, new_name, &stack);
 		if (!comb_mvall_status)
 		    continue;
 		if (comb_mvall_status == 2) {
@@ -285,7 +283,7 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 4 < argc) {
@@ -293,7 +291,7 @@ ged_move_all_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (db_version(gedp->ged_wdbp->dbip) < 5 && (int)strlen(argv[2]) > NAMESIZE) {
+    if (db_version(gedp->dbip) < 5 && (int)strlen(argv[2]) > NAMESIZE) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: name length limited to %zu characters in v4 databases\n", strlen(argv[2]));
 	return BRLCAD_ERROR;
     }

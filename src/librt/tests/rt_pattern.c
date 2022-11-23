@@ -22,7 +22,7 @@
 
 #include "vmath.h"
 #include "bu/app.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "raytrace.h"
 
 int

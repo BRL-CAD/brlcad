@@ -54,10 +54,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_design.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_design.png" format="PNG"/>
 	  </imageobject>
           <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_design.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_design.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -120,10 +120,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_cab1s.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_cab1s.png" format="PNG"/>
 	  </imageobject>
           <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_cab1s.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_cab1s.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -224,10 +224,10 @@ caboff1.s:  ARB8
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_cab_cutoff.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_cab_cutoff.png" format="PNG"/>
 	  </imageobject>
           <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_cab_cutoff.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_cab_cutoff.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -269,10 +269,10 @@ caboff1.s:  ARB8
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_multipane_1stwheel.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_multipane_1stwheel.png" format="PNG"/>
 	  </imageobject>
           <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_multipane_1stwheel.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_multipane_1stwheel.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -336,10 +336,10 @@ caboff1.s:  ARB8
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_prim_ed_wheel_well.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_prim_ed_wheel_well.png" format="PNG"/>
 	  </imageobject>
           <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_prim_ed_wheel_well.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_prim_ed_wheel_well.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -361,10 +361,10 @@ caboff1.s:  ARB8
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_2nd_wheel_wheel_place.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_2nd_wheel_wheel_place.png" format="PNG"/>
 	  </imageobject>
           <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_2nd_wheel_wheel_place.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_2nd_wheel_wheel_place.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -462,10 +462,10 @@ caboff1.s:  ARB8
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_cab_body.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_cab_body.png" format="PNG"/>
 	  </imageobject>
           <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_cab_body.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_cab_body.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -489,10 +489,10 @@ caboff1.s:  ARB8
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_wheel_wells_wireframe.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_wheel_wells_wireframe.png" format="PNG"/>
 	  </imageobject>
           <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_wheel_wells_wireframe.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_wheel_wells_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -589,10 +589,10 @@ caboff1.s:  ARB8
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_wheels.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_wheels.png" format="PNG"/>
 	  </imageobject>
           <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_truck_wheels.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_truck_wheels.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -644,10 +644,10 @@ caboff1.s:  ARB8
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_cameo_shader.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_cameo_shader.png" format="PNG"/>
 	  </imageobject>
           <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged15_cameo_shader.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged15_cameo_shader.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>
@@ -828,12 +828,12 @@ caboff1.s:  ARB8
 	    <tbody>
 	      <row>
 		<entry><inlinemediaobject>
-                       <imageobject role="html"><imagedata fileref="../../lessons/images/mged15_truck_default_lighting.png"/></imageobject>
-                       <imageobject role="fo"><imagedata fileref="../../lessons/images/mged15_truck_default_lighting.png"/></imageobject>
+                       <imageobject role="html"><imagedata fileref="../lessons/images/mged15_truck_default_lighting.png"/></imageobject>
+                       <imageobject role="fo"><imagedata fileref="../lessons/images/mged15_truck_default_lighting.png"/></imageobject>
                 </inlinemediaobject></entry>
 		<entry><inlinemediaobject>
-                        <imageobject role="html"><imagedata fileref="../../lessons/images/mged15_truck_ambient_lighting.png"/></imageobject>
-                        <imageobject role="fo"><imagedata fileref="../../lessons/images/mged15_truck_ambient_lighting.png"/></imageobject>
+                        <imageobject role="html"><imagedata fileref="../lessons/images/mged15_truck_ambient_lighting.png"/></imageobject>
+                        <imageobject role="fo"><imagedata fileref="../lessons/images/mged15_truck_ambient_lighting.png"/></imageobject>
                  </inlinemediaobject></entry>
 	      </row>
 	      <row>

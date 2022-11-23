@@ -40,9 +40,14 @@
  * select [-b bot] [-p] [-z vminz] vx vy {vr | vw vh}
  *
  */
+extern int ged_select2_core(struct ged *gedp, int argc, const char *argv[]);
 int
 ged_select_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_select2_core(gedp, argc, argv);
+
     int c;
     double vx, vy, vw, vh, vr;
     static const char *usage = "[-b bot] [-p] [-z vminz] vx vy {vr | vw vh}";
@@ -60,6 +65,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     /* Get command line options. */
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, "b:pz:")) != -1) {
@@ -72,7 +78,7 @@ ged_select_core(struct ged *gedp, int argc, const char *argv[])
 	    if (botip != (struct rt_bot_internal *)NULL)
 		break;
 
-	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) & BRLCAD_ERROR) {
+	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, wdbp, mat) & BRLCAD_ERROR) {
 		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
 		return BRLCAD_ERROR;
 	    }
@@ -189,6 +195,8 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
     /* Get command line options. */
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, "b:pz:")) != -1) {
@@ -201,7 +209,7 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 	    if (botip != (struct rt_bot_internal *)NULL)
 		break;
 
-	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, gedp->ged_wdbp, mat) == BRLCAD_ERROR) {
+	    if (wdb_import_from_path2(gedp->ged_result_str, &intern, bu_optarg, wdbp, mat) == BRLCAD_ERROR) {
 		bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", cmd, bu_optarg);
 		return BRLCAD_ERROR;
 	    }
@@ -238,7 +246,6 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
 
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd, usage);
@@ -249,10 +256,10 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 	int ret;
 
 	ret = _ged_select_botpts(gedp, botip,
-				  gedp->ged_gvp->gv_rect.x,
-				  gedp->ged_gvp->gv_rect.y,
-				  gedp->ged_gvp->gv_rect.width,
-				  gedp->ged_gvp->gv_rect.height,
+				  gedp->ged_gvp->gv_s->gv_rect.x,
+				  gedp->ged_gvp->gv_s->gv_rect.y,
+				  gedp->ged_gvp->gv_s->gv_rect.width,
+				  gedp->ged_gvp->gv_s->gv_rect.height,
 				  vminz,
 				  0);
 
@@ -260,16 +267,16 @@ ged_rselect_core(struct ged *gedp, int argc, const char *argv[])
 	return ret;
     } else {
 	if (pflag)
-	    return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
-				     gedp->ged_gvp->gv_rect.y,
-				     gedp->ged_gvp->gv_rect.width,
-				     gedp->ged_gvp->gv_rect.height,
+	    return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_s->gv_rect.x,
+				     gedp->ged_gvp->gv_s->gv_rect.y,
+				     gedp->ged_gvp->gv_s->gv_rect.width,
+				     gedp->ged_gvp->gv_s->gv_rect.height,
 				     0);
 	else
-	    return dl_select(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
-			     gedp->ged_gvp->gv_rect.y,
-			     gedp->ged_gvp->gv_rect.width,
-			     gedp->ged_gvp->gv_rect.height,
+	    return dl_select(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_s->gv_rect.x,
+			     gedp->ged_gvp->gv_s->gv_rect.y,
+			     gedp->ged_gvp->gv_s->gv_rect.width,
+			     gedp->ged_gvp->gv_s->gv_rect.height,
 			     0);
     }
 }

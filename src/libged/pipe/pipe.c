@@ -68,7 +68,7 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
@@ -86,7 +86,7 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
@@ -97,7 +97,7 @@ ged_pipe_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to get internal for %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -153,7 +153,7 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3 && argc != 5) {
@@ -171,7 +171,7 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
 	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
@@ -191,8 +191,10 @@ ged_find_pipe_pnt_nearest_pnt_core(struct ged *gedp, int argc, const char *argv[
     /* convert from double to fastf_t */
     VMOVE(model_pt, scan);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & BRLCAD_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
+    }
 
     nearest = find_pipe_pnt_nearest_pnt(&((struct rt_pipe_internal *)intern.idb_ptr)->pipe_segs_head,
 				     model_pt, gedp->ged_gvp->gv_view2model);
@@ -233,7 +235,7 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 4 || 5 < argc) {
@@ -262,7 +264,7 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
@@ -277,10 +279,12 @@ ged_pipe_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[3]);
 	return BRLCAD_ERROR;
     }
-    VSCALE(ps_pt, scan, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(ps_pt, scan, gedp->dbip->dbi_local2base);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == BRLCAD_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) == BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
+    }
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE) {

@@ -40,7 +40,7 @@
   <example><title>Change the current view.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>qvrot 0 0 1 90</userinput>
+      <prompt>mged&gt; </prompt><userinput>qvrot 0 0 1 90</userinput>
     </para>
     <para>Sets the current view to the same as achieved by the <command>press top</command> command.
     </para>

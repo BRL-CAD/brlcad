@@ -222,7 +222,7 @@ dsk_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
     dest = ((y * ifp->i->if_width) + x) * sizeof(RGBpixel);
     if (ifp->i->if_seekpos != dest && bu_lseek(fd, dest, 0) == -1) {
-	fb_log("disk_buffer_read : seek to %ld failed.\n", dest);
+	fb_log("disk_buffer_read : seek to %zu failed.\n", dest);
 	return -1;
     }
     ifp->i->if_seekpos = dest;
@@ -242,7 +242,7 @@ dsk_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	    }
 	    if (fd != 0) {
 		/* This happens all the time reading from pipes */
-		fb_log("disk_buffer_read(fd=%d): y=%d read of %lu got %ld bytes\n",
+		fb_log("disk_buffer_read(fd=%d): y=%d read of %zu got %zu bytes\n",
 		       fd, y, todo, got);
 	    }
 	}
@@ -402,6 +402,10 @@ struct fb_impl disk_interface_impl = {
     0L,
     0,			/* debug */
     0,			/* refresh rate */
+    NULL,
+    NULL,
+    0,
+    NULL,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

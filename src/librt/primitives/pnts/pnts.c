@@ -37,7 +37,7 @@
 #include "vmath.h"
 
 
-extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct rt_view_info *);
+extern int rt_ell_plot(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct bview *);
 
 
 static unsigned char *
@@ -235,7 +235,6 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
     *(uint16_t *)buf = htons((unsigned short)pnts->type);
     buf += SIZEOF_NETWORK_SHORT;
     *(uint32_t *)buf = htonl(pnts->count);
-    buf += SIZEOF_NETWORK_LONG;
 
     if (pnts->count <= 0) {
 	/* no points to stash, we're done */
@@ -866,7 +865,7 @@ rt_pnts_print(register const struct soltab *stp)
  * Plot pnts collection as axes or spheres.
  */
 int
-rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
+rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct bview *UNUSED(info))
 {
     struct rt_pnts_internal *pnts;
     struct bu_list *head;
@@ -879,6 +878,7 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(internal);
 
+    struct bu_list *vlfree = &RTG.rtg_vlfree;
     pnts = (struct rt_pnts_internal *)internal->idb_ptr;
     RT_PNTS_CK_MAGIC(pnts);
 
@@ -916,20 +916,20 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
 	    /* draw first horizontal segment for this point */
 	    VSET(a, point->v[X] - hCoord, point->v[Y], point->v[Z]);
 	    VSET(b, point->v[X] + hCoord, point->v[Y], point->v[Z]);
-	    RT_ADD_VLIST(vhead, a, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, b, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, a, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, b, BV_VLIST_LINE_DRAW);
 
 	    /* draw perpendicular horizontal segment */
 	    VSET(a, point->v[X], point->v[Y] - hCoord, point->v[Z]);
 	    VSET(b, point->v[X], point->v[Y] + hCoord, point->v[Z]);
-	    RT_ADD_VLIST(vhead, a, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, b, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, a, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, b, BV_VLIST_LINE_DRAW);
 
 	    /* draw vertical segment */
 	    VSET(a, point->v[X], point->v[Y], point->v[Z] - vCoord);
 	    VSET(b, point->v[X], point->v[Y], point->v[Z] + vCoord);
-	    RT_ADD_VLIST(vhead, a, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, b, BN_VLIST_LINE_DRAW);
+	    BV_ADD_VLIST(vlfree, vhead, a, BV_VLIST_LINE_MOVE);
+	    BV_ADD_VLIST(vlfree, vhead, b, BV_VLIST_LINE_DRAW);
 	}
     }
 

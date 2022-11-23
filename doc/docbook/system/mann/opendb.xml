@@ -53,7 +53,7 @@
   <example><title>Close the current database and open another one.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>opendb model.g</userinput>
+      <prompt>mged&gt; </prompt><userinput>opendb model.g</userinput>
     </para>
     <para>Closes the current database file and opens <emphasis>model.g</emphasis>.
     </para>
@@ -62,7 +62,7 @@
   <example><title>Return the name of the current database file.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>opendb</userinput>
+      <prompt>mged&gt; </prompt><userinput>opendb</userinput>
     </para>
     <para>Returns the name of the current database file.
     </para>
@@ -71,8 +71,8 @@
   <example><title>Open and upgrade a binary-incompatible v4 file.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>opendb -f model.g</userinput>
-      <prompt>mged&gt;</prompt><userinput>dbupgrade</userinput>
+      <prompt>mged&gt; </prompt><userinput>opendb -f model.g</userinput>
+      <prompt>mged&gt; </prompt><userinput>dbupgrade</userinput>
     </para>
     <para>Closes any currently open database and
       opens <emphasis>model.g</emphasis> as a binary-incompatible v4

@@ -278,8 +278,12 @@ main(int argc, char **argv)
 	    subsc = 3* (yindex * scanlen + round(px) );
 	    value = buffer[ subsc ];
 	    ret = fwrite(&value, sizeof(value), 1, ofp);
+	    if (ret == 0)
+		perror("fwrite");
 	    value = buffer[ subsc+1 ];
 	    ret = fwrite(&value, sizeof(value), 1, ofp);
+	    if (ret == 0)
+		perror("fwrite");
 	    value = buffer[ subsc+2 ];
 	    ret = fwrite(&value, sizeof(value), 1, ofp);
 	    if (ret == 0)

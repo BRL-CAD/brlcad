@@ -63,6 +63,10 @@ editarb(vect_t pos_model)
 
     ret = arb_edit(arb, es_peqn, es_menu, newedge, pos_model, &mged_tol);
 
+    // arb_edit doesn't zero out our global any more as a library call, so
+    // reset once operation is complete.
+    newedge = 0;
+
     if (ret) {
 	es_edflag = IDLE;
     }

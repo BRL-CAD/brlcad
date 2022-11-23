@@ -48,7 +48,8 @@ wdb_fopen_v(const char *filename, int version)
     if ((dbip = db_create(filename, version)) == DBI_NULL)
 	return RT_WDB_NULL;
 
-    return wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    return wdbp;
 }
 
 
@@ -63,28 +64,33 @@ wdb_fopen(const char *filename)
 struct rt_wdb *
 wdb_dbopen(struct db_i *dbip, int mode)
 {
-    struct rt_wdb *wdbp;
-
     RT_CK_DBI(dbip);
-
-    if ((mode != RT_WDB_TYPE_DB_DISK) &&
-	(mode != RT_WDB_TYPE_DB_DISK_APPEND_ONLY) &&
-	(mode != RT_WDB_TYPE_DB_INMEM) &&
-	(mode != RT_WDB_TYPE_DB_INMEM_APPEND_ONLY))
-    {
-	bu_log("wdb_dbopen(%s) mode %d unknown\n",
-	       dbip->dbi_filename, mode);
-	return RT_WDB_NULL;
-    }
 
     if (rt_uniresource.re_magic != RESOURCE_MAGIC)
 	rt_init_resource(&rt_uniresource, 0, NULL);
 
-    BU_ALLOC(wdbp, struct rt_wdb);
-    wdb_init(wdbp, dbip, mode);
-
-    return wdbp;
-
+    switch(mode) {
+	case RT_WDB_TYPE_DB_DEFAULT:
+	    if (!dbip->dbi_wdbp)
+		return dbip->dbi_wdbp_inmem;
+	    return dbip->dbi_wdbp;
+	case RT_WDB_TYPE_DB_DEFAULT_APPEND_ONLY:
+	    if (!dbip->dbi_wdbp_a)
+		return dbip->dbi_wdbp_inmem_a;
+	    return dbip->dbi_wdbp_a;
+	case RT_WDB_TYPE_DB_DISK:
+	    return dbip->dbi_wdbp;
+	case RT_WDB_TYPE_DB_DISK_APPEND_ONLY:
+	    return dbip->dbi_wdbp_a;
+	case RT_WDB_TYPE_DB_INMEM:
+	    return dbip->dbi_wdbp_inmem;
+	case RT_WDB_TYPE_DB_INMEM_APPEND_ONLY:
+	    return dbip->dbi_wdbp_inmem_a;
+	default:
+	    bu_log("wdb_dbopen(%s) mode %d unknown\n",
+		    dbip->dbi_filename, mode);
+	    return RT_WDB_NULL;
+    }
 }
 
 
@@ -131,7 +137,25 @@ wdb_export_external(
 	return -4;
     }
 
-    switch (wdbp->type) {
+    // For export purposes, decode the default types if that's
+    // what we've been given
+    int wdb_type = wdbp->type;
+    if (wdb_type == RT_WDB_TYPE_DB_DEFAULT) {
+	if (!wdbp->dbip->dbi_wdbp) {
+	    wdb_type = RT_WDB_TYPE_DB_INMEM;
+	} else {
+	    wdb_type = RT_WDB_TYPE_DB_DISK;
+	}
+    }
+    if (wdb_type == RT_WDB_TYPE_DB_DEFAULT_APPEND_ONLY) {
+	if (!wdbp->dbip->dbi_wdbp_a) {
+	    wdb_type = RT_WDB_TYPE_DB_INMEM_APPEND_ONLY;
+	} else {
+	    wdb_type = RT_WDB_TYPE_DB_DISK_APPEND_ONLY;
+	}
+    }
+
+    switch (wdb_type) {
 
 	case RT_WDB_TYPE_DB_DISK:
 	    if (wdbp->dbip->dbi_read_only) {
@@ -301,19 +325,6 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 
     wdbp->type = mode;
     wdbp->dbip = dbip;
-    wdbp->dbip->dbi_wdbp = wdbp;
-
-    /* Provide the same default tolerance that librt/prep.c does */
-    wdbp->wdb_tol.magic = BN_TOL_MAGIC;
-    wdbp->wdb_tol.dist = 0.0005;
-    wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
-    wdbp->wdb_tol.perp = 1e-6;
-    wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
-
-    wdbp->wdb_ttol.magic = BG_TESS_TOL_MAGIC;
-    wdbp->wdb_ttol.abs = 0.0;
-    wdbp->wdb_ttol.rel = 0.01;
-    wdbp->wdb_ttol.norm = 0;
 
     bu_vls_init(&wdbp->wdb_name);
     bu_vls_init(&wdbp->wdb_prestr);
@@ -328,40 +339,16 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
     wdbp->wdb_air_default = 0;
     wdbp->wdb_mat_default = 1;
     wdbp->wdb_los_default = 100;
-
-    /* resource structure */
-    wdbp->wdb_resp = &rt_uniresource;
 }
 
 
 void
 wdb_close(struct rt_wdb *wdbp)
 {
-
+    if (!wdbp)
+	return;
     RT_CK_WDB(wdbp);
-
-    BU_LIST_DEQUEUE(&wdbp->l);
-    BU_LIST_MAGIC_SET(&wdbp->l, 0); /* sanity */
-
-    /* XXX Flush any unwritten "struct matter" records here */
-
-    if (wdbp->dbip) {
-	db_close(wdbp->dbip);
-	wdbp->dbip = NULL;
-    }
-
-    /* release allocated member memory */
-    bu_vls_free(&wdbp->wdb_name);
-    bu_vls_free(&wdbp->wdb_prestr);
-
-    /* sanity */
-    wdbp->type = 0;
-    wdbp->wdb_resp = NULL;
-    wdbp->wdb_interp = NULL;
-
-    /* release memory */
-    bu_free((void *)wdbp, "struct rt_wdb");
-    wdbp = NULL;
+    db_close(wdbp->dbip);
 }
 
 

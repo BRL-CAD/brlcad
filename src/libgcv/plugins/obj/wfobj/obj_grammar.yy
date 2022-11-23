@@ -247,7 +247,7 @@ statement ::= d_interp.
 statement ::= lod.
 
 coord(A) ::= FLOAT(B). { A.real = B.real; }
-coord(A) ::= INTEGER(B). { A.real = B.integer; }
+coord(A) ::= INTEGER(B). { A.real = (double)B.integer; }
 
 vertex ::= VERTEX coord(A) coord(B) coord(C) opt_color.
 {

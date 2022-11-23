@@ -62,7 +62,7 @@ int
 get_args(int argc, char **argv)
 {
     int c;
-    char *file_name;
+    char *file_name = "-";
 
     while ((c = bu_getopt(argc, argv, "ciF:s:w:n:g:#:h?")) != -1) {
 	switch (c) {
@@ -102,7 +102,6 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdout)))
 	    return 0;
-	file_name = "-";
 	outfp = stdout;
 	setmode(fileno(stdout), O_BINARY);
     } else {

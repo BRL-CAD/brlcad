@@ -162,7 +162,7 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc > 3) {
@@ -170,18 +170,19 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    bu_vls_trunc(&gedp->ged_wdbp->wdb_prestr, 0);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    bu_vls_trunc(&wdbp->wdb_prestr, 0);
     if (argc == 3)
-	(void)bu_vls_strcpy(&gedp->ged_wdbp->wdb_prestr, argv[2]);
+	(void)bu_vls_strcpy(&wdbp->wdb_prestr, argv[2]);
 
-    gedp->ged_wdbp->wdb_num_dups = 0;
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
-	if ((gedp->ged_wdbp->wdb_ncharadd = bu_vls_strlen(&gedp->ged_wdbp->wdb_prestr)) > 12) {
-	    gedp->ged_wdbp->wdb_ncharadd = 12;
-	    bu_vls_trunc(&gedp->ged_wdbp->wdb_prestr, 12);
+    wdbp->wdb_num_dups = 0;
+    if (db_version(gedp->dbip) < 5) {
+	if ((wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr)) > 12) {
+	    wdbp->wdb_ncharadd = 12;
+	    bu_vls_trunc(&wdbp->wdb_prestr, 12);
 	}
     } else {
-	gedp->ged_wdbp->wdb_ncharadd = bu_vls_strlen(&gedp->ged_wdbp->wdb_prestr);
+	wdbp->wdb_ncharadd = bu_vls_strlen(&wdbp->wdb_prestr);
     }
 
     /* open the input file */
@@ -193,23 +194,23 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_printf(gedp->ged_result_str,
 		  "\n*** Comparing %s with %s for duplicate names\n",
-		  gedp->ged_wdbp->dbip->dbi_filename, argv[1]);
-    if (gedp->ged_wdbp->wdb_ncharadd) {
+		  gedp->dbip->dbi_filename, argv[1]);
+    if (wdbp->wdb_ncharadd) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "  For comparison, all names in %s were prefixed with: %s\n",
-		      argv[1], bu_vls_addr(&gedp->ged_wdbp->wdb_prestr));
+		      argv[1], bu_vls_addr(&wdbp->wdb_prestr));
     }
 
     /* Get array to hold names of duplicates */
-    if ((dirp0 = _ged_getspace(gedp->ged_wdbp->dbip, 0)) == (struct directory **) 0) {
+    if ((dirp0 = _ged_getspace(gedp->dbip, 0)) == (struct directory **) 0) {
 	bu_vls_printf(gedp->ged_result_str, "f_dup: unable to get memory\n");
 	db_close(newdbp);
 	return BRLCAD_ERROR;
     }
 
     /* Scan new database for overlaps */
-    dcs.main_dbip = gedp->ged_wdbp->dbip;
-    dcs.wdbp = gedp->ged_wdbp;
+    dcs.main_dbip = gedp->dbip;
+    dcs.wdbp = wdbp;
     dcs.dup_dirp = dirp0;
     if (db_version(newdbp) < 5) {
 	if (db_scan(newdbp, dup_dir_check, 0, (void *)&dcs) < 0) {
@@ -229,7 +230,7 @@ ged_dup_core(struct ged *gedp, int argc, const char *argv[])
     rt_mempurge(&(newdbp->dbi_freep));        /* didn't really build a directory */
 
     _ged_vls_col_pr4v(gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0, 0);
-    bu_vls_printf(gedp->ged_result_str, "\n -----  %d duplicate names found  -----", gedp->ged_wdbp->wdb_num_dups);
+    bu_vls_printf(gedp->ged_result_str, "\n -----  %d duplicate names found  -----", wdbp->wdb_num_dups);
     bu_free((void *)dirp0, "_ged_getspace array");
     db_close(newdbp);
 

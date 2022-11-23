@@ -81,7 +81,7 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage2); /* paths */
 	}
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (BU_STR_EQUAL(argv[1], "-t") && gtd.gtd_flag == _GED_LISTEVAL) {
@@ -97,7 +97,7 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 	char *tok;
 	tok = strtok((char *)argv[pos_in], "/");
 	while (tok) {
-	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(gedp->ged_wdbp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((gtd.gtd_obj[gtd.gtd_objpos++] = db_lookup(gedp->dbip, tok, LOOKUP_NOISY)) == RT_DIR_NULL) {
 		return BRLCAD_ERROR;
 	    }
 	    tok = strtok((char *)NULL, "/");
@@ -106,7 +106,7 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 	gtd.gtd_objpos = argc - pos_in;
 	/* build directory pointer array for desired path */
 	for (i = 0; i < gtd.gtd_objpos; i++) {
-	    if ((gtd.gtd_obj[i] = db_lookup(gedp->ged_wdbp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	    if ((gtd.gtd_obj[i] = db_lookup(gedp->dbip, argv[pos_in+i], LOOKUP_NOISY)) == RT_DIR_NULL) {
 		return BRLCAD_ERROR;
 	    }
 	}

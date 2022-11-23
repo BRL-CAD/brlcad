@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #              U N C P O W E R P L A N T 2 G . S H
 # BRL-CAD
 #

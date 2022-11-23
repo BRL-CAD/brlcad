@@ -133,7 +133,7 @@ struct db_plan_t {
 
 
 typedef struct _option {
-    char *name;				/* option name */
+    const char *name;				/* option name */
     enum db_search_ntype token;			/* token type */
     int (*create)(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *, struct db_search_context *);	/* create function */
 #define O_NONE		0x01			/* no call required */

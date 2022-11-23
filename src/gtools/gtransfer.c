@@ -220,6 +220,7 @@ server_geom(struct pkg_conn *connection, char *buf)
 	/* first geometry received, initialize */
 	stash->DBIP = db_open_inmem();
     }
+    struct rt_wdb *wdbp = wdb_dbopen(stash->DBIP, RT_WDB_TYPE_DB_INMEM);
 
     if (db5_get_raw_internal_ptr(&raw, (const unsigned char *)buf) == NULL) {
 	bu_log("Corrupted serialized geometry?  Could not deserialize.\n");
@@ -234,7 +235,7 @@ server_geom(struct pkg_conn *connection, char *buf)
     ext.ext_buf = (uint8_t *)buf;
     ext.ext_nbytes = raw.object_length;
     flags = db_flags_raw_internal(&raw) | RT_DIR_INMEM;
-    wdb_export_external(stash->DBIP->dbi_wdbp, &ext, (const char *)raw.name.ext_buf, flags, raw.minor_type);
+    wdb_export_external(wdbp, &ext, (const char *)raw.name.ext_buf, flags, raw.minor_type);
 
     bu_log("Received %s (MAJOR=%d, MINOR=%d)\n", raw.name.ext_buf, raw.major_type, raw.minor_type);
 }
@@ -390,6 +391,7 @@ send_to_server(struct db_i *dbip, struct directory *dp, void *connection)
     bytes_sent = pkg_send(MSG_GEOM, (const char *)ext.ext_buf, ext.ext_nbytes, stash->connection);
     if (bytes_sent < 0) {
 	pkg_close(stash->connection);
+	stash->connection = NULL;
 	bu_log("Unable to successfully send %s to %s, port %d.\n", dp->d_namep, stash->server, stash->port);
 	return;
     }
@@ -475,14 +477,16 @@ run_client(const char *server, int port, struct db_i *dbip, int geomc, const cha
 	} FOR_ALL_DIRECTORY_END;
     }
 
-    /* let the server know we're done.  not necessary, but polite. */
-    bytes_sent = pkg_send(MSG_CIAO, "BYE", 4, stash.connection);
-    if (bytes_sent < 0) {
-	bu_log("Unable to cleanly disconnect from %s, port %d.\n", server, port);
-    }
+    if (stash.connection) {
+	/* let the server know we're done.  not necessary, but polite. */
+	bytes_sent = pkg_send(MSG_CIAO, "BYE", 4, stash.connection);
+	if (bytes_sent < 0) {
+	    bu_log("Unable to cleanly disconnect from %s, port %d.\n", server, port);
+	}
 
-    /* flush output and close */
-    pkg_close(stash.connection);
+	/* flush output and close */
+	pkg_close(stash.connection);
+    }
 
     return;
 }

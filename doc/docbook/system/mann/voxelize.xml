@@ -47,7 +47,7 @@ The <emphasis>-t</emphasis> option specifies the threshold volume to decide if v
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>voxelize -d 2 -s "0.5 0.5 0.5" -t 0.3 newregion.r oldregion.r </userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>voxelize -d 2 -s "0.5 0.5 0.5" -t 0.3 newregion.r oldregion.r </userinput></term>
 	   <listitem>
 	     <para>Creates a voxelized region corresponding to the original region <emphasis>oldregion.r</emphasis>.
 		     </para>

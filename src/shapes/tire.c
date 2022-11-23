@@ -59,10 +59,10 @@ int main(int ac, char *av[])
     GED_INIT(&ged, db_fp);
 
     /* create the tire */
-    ret = ged_tire(&ged, ac, (const char **)av);
+    ret = ged_exec(&ged, ac, (const char **)av);
 
     /* Close database */
-    wdb_close(db_fp);
+    db_close(db_fp->dbip);
     if (ret & BRLCAD_ERROR) {
 	bu_file_delete(filename);
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));

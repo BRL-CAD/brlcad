@@ -321,7 +321,7 @@ find_pipe_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t model_pt,
     for (BU_LIST_FOR(ps, wdb_pipe_pnt, pipe_hd)) {
 	fastf_t dist;
 
-	dist = bn_dist_line3_pnt3(model_pt, dir, ps->pp_coord);
+	dist = bg_dist_line3_pnt3(model_pt, dir, ps->pp_coord);
 	if (dist < min_dist) {
 	    min_dist = dist;
 	    nearest = ps;
@@ -597,7 +597,7 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
@@ -615,7 +615,7 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
 	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
@@ -628,8 +628,10 @@ _ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], stru
     /* convert from double to fastf_t */
     VMOVE(view_ps_pt, scan);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & BRLCAD_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
+    }
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE) {

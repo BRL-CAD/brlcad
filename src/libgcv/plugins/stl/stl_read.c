@@ -68,7 +68,7 @@ struct conversion_state
     struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
 
     struct wmember all_head;
-    struct bn_vert_tree *tree;
+    struct bg_vert_tree *tree;
     int *bot_faces;	        /* array of ints (indices into tree->the_array array) three per face */
 
     int id_no;	            	/* Ident numbers */
@@ -117,12 +117,9 @@ mk_unique_brlcad_name(struct conversion_state *pstate, struct bu_vls *name)
 
     len = bu_vls_strlen(name);
     while (db_lookup(pstate->fd_out->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
-	char suff[10];
-
 	bu_vls_trunc(name, len);
 	count++;
-	sprintf(suff, "_%d", count);
-	bu_vls_strcat(name, suff);
+	bu_vls_printf(name, "_%d", count);
     }
 }
 
@@ -267,7 +264,7 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 		    x *= pstate->gcv_options->scale_factor;
 		    y *= pstate->gcv_options->scale_factor;
 		    z *= pstate->gcv_options->scale_factor;
-		    tmp_face[vert_no++] = bn_vert_tree_add( pstate->tree,x, y, z, pstate->gcv_options->calculational_tolerance.dist_sq);
+		    tmp_face[vert_no++] = bg_vert_tree_add( pstate->tree,x, y, z, pstate->gcv_options->calculational_tolerance.dist_sq);
 		} else {
 		    bu_log("Unrecognized line: %s\n", line1);
 		}
@@ -319,7 +316,7 @@ Convert_part_ascii(struct conversion_state *pstate, char line[MAX_LINE_SIZE])
 
     mk_bot(pstate->fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, pstate->tree->curr_vert, pstate->bot_fcurr,
 	   pstate->tree->the_array, pstate->bot_faces, NULL, NULL);
-    bn_vert_tree_clean(pstate->tree);
+    bg_vert_tree_clean(pstate->tree);
 
     if (face_count && !solid_in_region) {
 	(void)mk_addmember(bu_vls_addr(&solid_name), &head.l, NULL, WMOP_UNION);
@@ -407,11 +404,11 @@ Convert_part_binary(struct conversion_state *pstate)
 
 	VMOVE(normal, flts);
 	VSCALE(pt, &flts[3], pstate->gcv_options->scale_factor);
-	tmp_face[0] = bn_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
+	tmp_face[0] = bg_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
 	VSCALE(pt, &flts[6], pstate->gcv_options->scale_factor);
-	tmp_face[1] = bn_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
+	tmp_face[1] = bg_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
 	VSCALE(pt, &flts[9], pstate->gcv_options->scale_factor);
-	tmp_face[2] = bn_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
+	tmp_face[2] = bg_vert_tree_add(pstate->tree, V3ARGS(pt), pstate->gcv_options->calculational_tolerance.dist_sq);
 
 	/* check for degenerate faces */
 	if (tmp_face[0] == tmp_face[1]) {
@@ -455,7 +452,7 @@ Convert_part_binary(struct conversion_state *pstate)
 
     mk_bot(pstate->fd_out, bu_vls_addr(&solid_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
 	   pstate->tree->curr_vert, pstate->bot_fcurr, pstate->tree->the_array, pstate->bot_faces, NULL, NULL);
-    bn_vert_tree_clean(pstate->tree);
+    bg_vert_tree_clean(pstate->tree);
 
     BU_LIST_INIT(&head.l);
     if (face_count) {
@@ -567,7 +564,8 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     state.stl_read_options = (struct stl_read_options *)options_data;
     state.id_no = state.stl_read_options->starting_id;
     state.input_file = source_path;
-    state.fd_out = context->dbip->dbi_wdbp;
+    struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
+    state.fd_out = wdbp;
 
     if ((state.fd_in = fopen(source_path, "rb")) == NULL) {
 	bu_log("Cannot open input file (%s)\n", source_path);
@@ -580,12 +578,12 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     BU_LIST_INIT(&state.all_head.l);
 
     /* create a tree structure to hold the input vertices */
-    state.tree = bn_vert_tree_create();
+    state.tree = bg_vert_tree_create();
 
     Convert_input(&state);
 
     /* make a top level group */
-    mk_lcomb(context->dbip->dbi_wdbp, "all", &state.all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
+    mk_lcomb(wdbp, "all", &state.all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
     fclose(state.fd_in);
 
@@ -606,14 +604,17 @@ stl_can_read(const char *data)
     FILE *fp;
     size_t fsize = 3*sizeof(float) + 3*3*sizeof(float) + sizeof(uint16_t);
     if(!data) return 0;
-    if (stat(data, &stat_buf)) return 0;
-
-    /* If it's too small, don't bother */
-    if (stat_buf.st_size < 15) return 0;
 
     /* First, try an ASCII file */
     fp = fopen(data, "r");
     if (!fp) return 0;
+
+    /* If it's too small, don't bother */
+    if (fstat(fileno(fp), &stat_buf) || stat_buf.st_size < 15) {
+	fclose(fp);
+	return 0;
+    }
+
     if (bu_fgets(ascii_header, 5, fp) != NULL && BU_STR_EQUAL(ascii_header, "solid")) {
 	/* We've got solid at the beginning, so look for "endsolid" later in the file.
 	 * If we find it, this is probably an ASCII file. */
@@ -645,9 +646,15 @@ stl_can_read(const char *data)
     {
 	uint32_t tri_cnt;
 	unsigned char buffer[1000];
-	if (!fread(buffer, 80, 1, fp)) return 0;
+	if (fread(buffer, 80, 1, fp) != 1) {
+	    fclose(fp);
+	    return 0;
+	}
 	/* Note: we're assuming little-endian... */
-	if (!fread(((void *)&tri_cnt), 4, 1, fp)) return 0;
+	if (fread(((void *)&tri_cnt), 4, 1, fp) != 1) {
+	    fclose(fp);
+	    return 0;
+	}
 	if ((size_t)stat_buf.st_size == (84 + (tri_cnt * fsize))) {
 	    fclose(fp);
 	    return 1;

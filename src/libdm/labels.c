@@ -28,7 +28,8 @@
 #include "raytrace.h"
 #include "nmg.h"
 #include "rt/geom.h"
-#include "rt/solid.h"
+#include "bv/defines.h"
+#define DM_WITH_RT
 #include "dm.h"
 #include "./include/private.h"
 
@@ -543,7 +544,7 @@ dm_label_primitive(struct rt_wdb *wdbp,
 
 
 int
-dm_draw_labels(struct dm *dmp,
+dm_draw_prim_labels(struct dm *dmp,
 	       struct rt_wdb *wdbp,
 	       const char *name,
 	       mat_t viewmat,

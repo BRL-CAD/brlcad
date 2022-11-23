@@ -191,6 +191,7 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     struct rt_bot_internal *input_bot;
 
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     dp_input = dp_output = RT_DIR_NULL;
 
@@ -200,15 +201,15 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s\n%s", usage_string, purpose_string);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* check that we are using a version 5 database */
-    if (db_version(gedp->ged_wdbp->dbip) < 5) {
+    if (db_version(gedp->dbip) < 5) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "ERROR: Unable to remesh the current (v%d) database.\n"
 		      "Use \"dbupgrade\" to upgrade this database to the current version.\n",
-		      db_version(gedp->ged_wdbp->dbip));
+		      db_version(gedp->dbip));
 	return BRLCAD_ERROR;
     }
 
@@ -251,18 +252,18 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	GED_DB_DIRADD(gedp, dp_output, output_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type, BRLCAD_ERROR);
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp_output, gb->intern, gedp->ged_wdbp->wdb_resp, BRLCAD_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp_output, gb->intern, wdbp->wdb_resp, BRLCAD_ERROR);
 
     return BRLCAD_OK;
 }
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

@@ -62,7 +62,8 @@ int master_compserv_active;
  */
 void compnet_connect(char *host, int port) {
     struct hostent hostent;
-    struct sockaddr_in compserv, master;
+    struct sockaddr_in compserv = {0};
+    struct sockaddr_in master = {0};
 
     master_compserv_active = 0;
 

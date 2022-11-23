@@ -53,6 +53,7 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
 
     const char *bin;
     char rt[256] = {0};
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
@@ -62,7 +63,16 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    args = argc + 7 + 2 + ged_who_argc(gedp);
+    if (!ged_who_argc(gedp)) {
+	bu_vls_printf(gedp->ged_result_str, "no objects displayed\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (BU_STR_EQUAL(cmd2, "1")) {
+	args = argc + 9 + 2 + (int)ged_who_argc(gedp);
+    } else {
+	args = argc + 7 + 2 + (int)ged_who_argc(gedp);
+    }
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_dir(NULL, 0, BU_DIR_BIN, NULL);
@@ -72,6 +82,13 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
 
     vp = &gd_rt_cmd[0];
     *vp++ = rt;
+
+    if (BU_STR_EQUAL(cmd2, "1")) {
+	*vp++ = "-F";
+	// TODO - look up dm type for this...
+	*vp++ = "/dev/qtgl";
+    }
+
     *vp++ = "-M";
 
     if (gedp->ged_gvp->gv_perspective > 0) {
@@ -97,7 +114,7 @@ ged_rt_core(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = "model";
     }
 
-    *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
+    *vp++ = gedp->dbip->dbi_filename;
     gd_rt_cmd_len = vp - gd_rt_cmd;
 
     ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]));
@@ -122,9 +139,12 @@ const struct ged_cmd rtedge_cmd = { &rtedge_cmd_impl };
 struct ged_cmd_impl rtweight_cmd_impl = {"rtweight", ged_rt_core, GED_CMD_DEFAULT};
 const struct ged_cmd rtweight_cmd = { &rtweight_cmd_impl };
 
-const struct ged_cmd *rt_cmds[] = { &rt_cmd, &rtarea_cmd, &rtedge_cmd, &rtweight_cmd, NULL };
+struct ged_cmd_impl art_cmd_impl = { "art", ged_rt_core, GED_CMD_DEFAULT };
+const struct ged_cmd art_cmd = { &art_cmd_impl };
 
-static const struct ged_plugin pinfo = { GED_API,  rt_cmds, 4 };
+const struct ged_cmd *rt_cmds[] = { &rt_cmd, &rtarea_cmd, &rtedge_cmd, &rtweight_cmd, &art_cmd, NULL };
+
+static const struct ged_plugin pinfo = { GED_API,  rt_cmds, 5 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 {

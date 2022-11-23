@@ -73,6 +73,7 @@
 #include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -144,10 +145,11 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 {
     static unsigned char *last, *cur=0, *next;
     static int linelen;
-    size_t result;
-    int newvalue;
-    int i, value;
-    int idx;
+    size_t result = 0;
+    int newvalue = 0;
+    int i = 0;
+    int value = 0;
+    int idx = 0;
 
 /*
  *	if no sharpening going on then just read from the file and exit.
@@ -180,20 +182,23 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
     if (!cur) {
 	linelen=num;
 	last = 0;
-	cur  = (unsigned char *)malloc(linelen);
-	next = (unsigned char *)malloc(linelen);
+	cur  = (unsigned char *)bu_calloc(linelen, 1, "cur");
 	result = fread(cur, 1, linelen, file);
 	for (i=0; i<linelen;i++) {
 	    idx = cur[i];
 	    CLAMP(idx, 0, size*num);
 	    cur[i] = Map[idx];
 	}
-	if (!result)
+	if (!result) {
+	    free(cur);
 	    return result;	/* nothing there! */
+	}
+	next = (unsigned char *)bu_calloc(linelen, 1, "next");
 	result = fread(next, 1, linelen, file);
 	if (!result) {
+	    free(cur);
 	    free(next);
-	    next = 0;
+	    return result;	/* nothing there! */
 	} else {
 	    for (i=0; i<linelen;i++) {
 		idx = cur[i];
@@ -559,7 +564,7 @@ tonescale(unsigned char *map, float Slope, float B, int (*eqptr) (/* ??? */))
  *		We need an extra cubic to make eq_cubic processing
  *		easier.
  */
-	EqCubics = (struct Cubic *)malloc(2*sizeof(struct Cubic));
+	EqCubics = (struct Cubic *)bu_calloc(2, sizeof(struct Cubic), "EqCubics");
 	EqCubics[0].x = 0.0;
 	EqCubics[0].A = B;
 	EqCubics[0].B = Slope;
@@ -669,7 +674,7 @@ cubic_init(int n, int *x, int *y)
     z = (double *) malloc(n*sizeof(double));
     l = (double *) malloc(n*sizeof(double));
 
-    EqCubics = (struct Cubic *) malloc(n*sizeof(struct Cubic));
+    EqCubics = (struct Cubic *)bu_calloc(n, sizeof(struct Cubic), "EqCubics");
 
     for (i=0; i<n-1; i++) {
 	h[i] = x[i+1] - x[i];

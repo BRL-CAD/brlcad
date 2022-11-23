@@ -35,7 +35,7 @@
 #include "bu/list.h"
 #include "bu/parse.h"
 #include "bu/vls.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 #include "bn/tol.h"
 #include "rt/defines.h"
 #include "rt/application.h"

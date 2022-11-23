@@ -112,7 +112,7 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
     /* incorrect arguments */
     if (argc < 3) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     sizeVoxel[0]  = 1.0;
@@ -137,9 +137,9 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 		    /* convert from double to fastf_t */
 		    VMOVE(sizeVoxel, scan);
 
-		    sizeVoxel[0] = sizeVoxel[0] * gedp->ged_wdbp->dbip->dbi_local2base;
-		    sizeVoxel[1] = sizeVoxel[1] * gedp->ged_wdbp->dbip->dbi_local2base;
-		    sizeVoxel[2] = sizeVoxel[2] * gedp->ged_wdbp->dbip->dbi_local2base;
+		    sizeVoxel[0] = sizeVoxel[0] * gedp->dbip->dbi_local2base;
+		    sizeVoxel[1] = sizeVoxel[1] * gedp->dbip->dbi_local2base;
+		    sizeVoxel[2] = sizeVoxel[2] * gedp->dbip->dbi_local2base;
 		}
 		break;
 
@@ -175,12 +175,12 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
     argc--;
     argv++;
 
-    if (db_lookup(gedp->ged_wdbp->dbip, voxDat.newname, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, voxDat.newname, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "error: solid '%s' already exists, aborting\n", voxDat.newname);
 	return BRLCAD_ERROR;
     }
 
-    rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    rtip = rt_new_rti(gedp->dbip);
     rtip->useair = 1;
 
     /* Walk trees.  Here we identify any object trees in the database
@@ -196,12 +196,13 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
 	argv++;
     }
 
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     voxDat.sizeVoxel[0] = sizeVoxel[0];
     voxDat.sizeVoxel[1] = sizeVoxel[1];
     voxDat.sizeVoxel[2] = sizeVoxel[2];
     voxDat.threshold = threshold;
-    voxDat.wdbp = gedp->ged_wdbp;
+    voxDat.wdbp = wdbp;
     voxDat.bbMin = rtip->mdl_min;
     BU_LIST_INIT(&voxDat.content.l);
 
@@ -210,7 +211,7 @@ ged_voxelize_core(struct ged *gedp, int argc, const char *argv[])
    /* voxelize function is called here with rtip(ray trace instance), userParameter and create_boxes function */
     voxelize(rtip, sizeVoxel, levelOfDetail, create_boxes, callBackData);
 
-    mk_comb(gedp->ged_wdbp, voxDat.newname, &voxDat.content.l, 1, "plastic", "sh=4 sp=0.5 di=0.5 re=0.1", 0, 1000, 0, 0, 100, 0, 0, 0);
+    mk_comb(wdbp, voxDat.newname, &voxDat.content.l, 1, "plastic", "sh=4 sp=0.5 di=0.5 re=0.1", 0, 1000, 0, 0, 100, 0, 0, 0);
 
     mk_freemembers(&voxDat.content.l);
     rt_free_rti(rtip);

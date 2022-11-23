@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 int
-cone(int entityno)
+cone(size_t entityno)
 {
     fastf_t rad1 = 0.0;
     fastf_t rad2;

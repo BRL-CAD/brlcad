@@ -48,7 +48,10 @@ main(int ac, char *av[])
     size_t allocalls = 0;
     size_t freecalls = 0;
 
-    bu_setprogname(av[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(av[0]);
 
     if (ac > 1) {
 	fprintf(stderr, "Usage: %s\n", av[0]);

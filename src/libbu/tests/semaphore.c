@@ -142,7 +142,10 @@ main(int argc, char *argv[])
     size_t ncpu = bu_avail_cpus();
     unsigned long ncpu_opt;
 
-    bu_setprogname(argv[0]);
+    // Normally this file is part of bu_test, so only set this if it looks like
+    // the program name is still unset.
+    if (bu_getprogname()[0] == '\0')
+	bu_setprogname(argv[0]);
 
     while ((c = bu_getopt(argc, argv, "n:P:")) != -1) {
 	switch (c) {

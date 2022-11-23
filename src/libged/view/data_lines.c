@@ -63,7 +63,7 @@
 
 struct view_dlines_state {
     struct ged *gedp;
-    struct bview_data_line_state *gdlsp;
+    struct bv_data_line_state *gdlsp;
 };
 
 static int
@@ -71,7 +71,7 @@ _view_dlines_cmd_draw(void *bs, int argc, const char **argv)
 {
     struct view_dlines_state *vs = (struct view_dlines_state *)bs;
     struct ged *gedp = vs->gedp;
-    struct bview_data_line_state *gdlsp = vs->gdlsp;
+    struct bv_data_line_state *gdlsp = vs->gdlsp;
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_draw);
 	return BRLCAD_OK;
@@ -98,7 +98,7 @@ _view_dlines_cmd_snap(void *bs, int argc, const char **argv)
     struct view_dlines_state *vs = (struct view_dlines_state *)bs;
     struct ged *gedp = vs->gedp;
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_snap_lines);
+	bu_vls_printf(gedp->ged_result_str, "%d", gedp->ged_gvp->gv_s->gv_snap_lines);
 	return BRLCAD_OK;
     }
 
@@ -107,7 +107,7 @@ _view_dlines_cmd_snap(void *bs, int argc, const char **argv)
 
 	if (bu_sscanf(argv[1], "%d", &i) != 1) return BRLCAD_ERROR;
 
-	gedp->ged_gvp->gv_snap_lines = (i) ? 1 : 0;
+	gedp->ged_gvp->gv_s->gv_snap_lines = (i) ? 1 : 0;
 
 	return BRLCAD_OK;
     }
@@ -120,7 +120,7 @@ _view_dlines_cmd_color(void *bs, int argc, const char **argv)
 {
     struct view_dlines_state *vs = (struct view_dlines_state *)bs;
     struct ged *gedp = vs->gedp;
-    struct bview_data_line_state *gdlsp = vs->gdlsp;
+    struct bv_data_line_state *gdlsp = vs->gdlsp;
 
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%d %d %d", V3ARGS(gdlsp->gdls_color));
@@ -157,7 +157,7 @@ _view_dlines_cmd_line_width(void *bs, int argc, const char **argv)
 {
     struct view_dlines_state *vs = (struct view_dlines_state *)bs;
     struct ged *gedp = vs->gedp;
-    struct bview_data_line_state *gdlsp = vs->gdlsp;
+    struct bv_data_line_state *gdlsp = vs->gdlsp;
 
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_line_width);
@@ -185,7 +185,7 @@ _view_dlines_cmd_points(void *bs, int argc, const char **argv)
 {
     struct view_dlines_state *vs = (struct view_dlines_state *)bs;
     struct ged *gedp = vs->gedp;
-    struct bview_data_line_state *gdlsp = vs->gdlsp;
+    struct bv_data_line_state *gdlsp = vs->gdlsp;
     int i;
 
     if (argc == 1) {
@@ -275,7 +275,7 @@ ged_view_data_lines(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (6 < argc) {
@@ -284,9 +284,9 @@ ged_view_data_lines(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argv[0][0] == 's') {
-	vs.gdlsp = &gedp->ged_gvp->gv_sdata_lines;
+	vs.gdlsp = &gedp->ged_gvp->gv_tcl.gv_sdata_lines;
     } else {
-	vs.gdlsp = &gedp->ged_gvp->gv_data_lines;
+	vs.gdlsp = &gedp->ged_gvp->gv_tcl.gv_data_lines;
     }
 
     argc--;argv++;

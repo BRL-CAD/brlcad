@@ -76,7 +76,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 #define MAX_INTERSECTS 1024
 
@@ -417,8 +417,8 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	    return -1;
 	}
 
-	if (!bn_3pnts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) ||
-	    bn_3pnts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
+	if (!bg_3pnts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) ||
+	    bg_3pnts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
 	    vi+=3;
 	    continue;
 	}

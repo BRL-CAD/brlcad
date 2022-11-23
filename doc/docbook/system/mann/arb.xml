@@ -45,7 +45,7 @@
     <example><title>Create <emphasis>new_arb</emphasis> with a specific rotation angle and fallback angle.</title>
 
 	 <para>
-	   <prompt>mged&gt; </prompt> <userinput>arb new_arb 35 25</userinput>
+	   <prompt>mged&gt; </prompt><userinput>arb new_arb 35 25</userinput>
 	 </para>
 	 <para>
 	   Create new_arb with a rotation angle of 35° and a fallback angle of 25°.

@@ -116,7 +116,7 @@ BU_EXPORT struct bu_glob_context *bu_glob_init();
 
 
 /**
- * release any resoures allocated during bu_glob(), including any
+ * release any resources allocated during bu_glob(), including any
  * returned paths
  */
 BU_EXPORT extern void bu_glob_free(struct bu_glob_context *);

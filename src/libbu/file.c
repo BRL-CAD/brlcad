@@ -404,7 +404,7 @@ int
 bu_file_delete(const char *path)
 {
     int ret = 0;
-    int fd = 0;
+    int fd = -1;
     struct stat sb;
 
     /* reject empty, special, or non-existent paths */
@@ -429,7 +429,9 @@ bu_file_delete(const char *path)
     }
 #endif
 
-    if (!bu_file_exists(path, &fd)) {
+    if (!bu_file_exists(path, &fd) || fd == -1) {
+	if (fd > -1)
+	    close(fd);
 	return 1;
     }
 

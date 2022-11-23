@@ -54,10 +54,10 @@ mged&gt; overlaps_tool -F [.overlaps file]
 	<screenshot>
 	  <mediaobject>
 	    <imageobject role="html">
-	      <imagedata align="left" fileref="../../articles/images/overlap_tool_fig01.gif" format="GIF" width="540"/>
+	      <imagedata align="left" fileref="../articles/images/overlap_tool_fig01.gif" format="GIF" width="540"/>
 	    </imageobject>
 	    <imageobject role="fo">
-	      <imagedata align="left" fileref="../../articles/images/overlap_tool_fig01.gif" format="GIF" width="540"/>
+	      <imagedata align="left" fileref="../articles/images/overlap_tool_fig01.gif" format="GIF" width="540"/>
 	    </imageobject>
 	  </mediaobject>
 	</screenshot>
@@ -75,10 +75,10 @@ mged&gt; overlaps_tool -F [.overlaps file]
 	  <screenshot>
 	    <mediaobject>
 	      <imageobject role="html">
-		<imagedata align="left" fileref="../../articles/images/overlap_tool_fig02.gif" format="GIF" width="636"/>
+		<imagedata align="left" fileref="../articles/images/overlap_tool_fig02.gif" format="GIF" width="636"/>
 	      </imageobject>
 	      <imageobject role="fo">
-		<imagedata align="left" fileref="../../articles/images/overlap_tool_fig02.gif" format="GIF" width="636"/>
+		<imagedata align="left" fileref="../articles/images/overlap_tool_fig02.gif" format="GIF" width="636"/>
 	      </imageobject>
 	    </mediaobject>
 	  </screenshot>
@@ -143,10 +143,10 @@ mged&gt; overlaps_tool -F [.overlaps file]
       <screenshot>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="left" fileref="../../articles/images/overlap_tool_fig03.png" format="PNG" width="549"/>
+	    <imagedata align="left" fileref="../articles/images/overlap_tool_fig03.png" format="PNG" width="549"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="left" fileref="../../articles/images/overlap_tool_fig03.png" format="PNG" width="549"/>
+	    <imagedata align="left" fileref="../articles/images/overlap_tool_fig03.png" format="PNG" width="549"/>
 	  </imageobject>
 	</mediaobject>
       </screenshot>

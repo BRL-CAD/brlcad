@@ -1,4 +1,5 @@
 set(cmake_ignore_files
+  BRLCAD_API_Flag.cmake
   BRLCAD_Build_Types.cmake
   BRLCAD_CPack.cmake
   BRLCAD_CPackOptions.cmake.in
@@ -26,18 +27,20 @@ set(cmake_ignore_files
   FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
   FindAppleseed.cmake
+  FindASSIMP.cmake
   FindBlosc.cmake
   FindBSON.cmake
   FindFontconfig.cmake
   FindGECODE.cmake
-  FindGL.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
+  FindLibUV.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOpenCL.cmake
+  FindOpenGL.cmake
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
@@ -63,8 +66,6 @@ set(cmake_ignore_files
   RPath_Setup.cmake
   ResetCache.cmake
   TCL_PKGINDEX.cmake
-  ThirdParty.cmake
-  ThirdParty_TCL.cmake
   compat/README
   compat/README.compat
   compat/README.compat.c99
@@ -102,8 +103,8 @@ set(cmake_ignore_files
   source_archive_setup.cmake.in
   tcltest.tcl.in
   scripts/printtime.cmake
-  scripts/timestamp.cmake
   scripts/tcl_mkindex.cmake
+  scripts/timestamp.cmake
   )
 CMAKEFILES(${cmake_ignore_files})
 
@@ -115,5 +116,3 @@ CMAKEFILES(NOTES)
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-
-

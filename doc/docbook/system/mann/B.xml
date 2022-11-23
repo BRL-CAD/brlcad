@@ -55,7 +55,7 @@
 
       <variablelist>
 	<varlistentry>
-	  <term><prompt>mged&gt;</prompt> <userinput>B some_object</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>B some_object</userinput></term>
 	  <listitem>
 	    <para>
 	      The display clears, and the object named <emphasis>some_object</emphasis> is displayed.
@@ -68,7 +68,7 @@
     <example><title>Draw objects having an attribute with a value </title>
 
       <para>
-	<prompt>mged&gt;</prompt><userinput>B -A -o Comment {First comment} Comment {Second comment}</userinput>
+	<prompt>mged&gt; </prompt><userinput>B -A -o Comment {First comment} Comment {Second comment}</userinput>
       </para>
       <para>
 	The display clears, then draws objects that have a "Comment" attribute with a value of either

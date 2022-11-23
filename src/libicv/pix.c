@@ -80,7 +80,6 @@ pix_read(const char* filename, size_t width, size_t height)
     ICV_IMAGE_INIT(bif);
     /* buffer pixel wise */
     if (width == 0 || height == 0) {
-	int status = 0;
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "pix_read : unsigned char data");
 
@@ -88,7 +87,7 @@ pix_read(const char* filename, size_t width, size_t height)
 	 * Better to read in big chunks, but then one has to handle
 	 * partial-reads better.  Below seems to ignore a read error.
 	 */
-	while ((status = fread(&data[size], 1, 3, fp))==3) {
+	while (fread(&data[size], 1, 3, fp)==3) {
 	    size+=3;
 	    if (size==buffsize) {
 		buffsize+=1024*3;

@@ -120,7 +120,13 @@ cyl_implicit_plane(const ON_Brep *brep, int lc, int *le, ON_SimpleArray<ON_Plane
 	    verts.insert(edge->m_vi[0]);
 	    verts.insert(edge->m_vi[1]);
 	}
+
+	// For a plane we need at least 3 unique points
+	if (verts.size() < 3)
+	    return -1;
+
 	ON_3dPointArray points;
+	points.SetCapacity(3);
 	for (c_it = verts.begin(); c_it != verts.end(); c_it++) {
 	    const ON_BrepVertex *v = &(brep->m_V[*c_it]);
 	    points.Append(v->Point());

@@ -27,7 +27,7 @@
 
 #include <set>
 
-#include "../../libbrep/cdt/RTree.h"
+#include "RTree.h"
 #include "opennurbs.h"
 #include "bu/cmd.h"
 #include "./ged_brep.h"
@@ -78,7 +78,7 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
     } else {
 	// If not explicitly specified, get the ray from GED
 	VSET(origin, -gedp->ged_gvp->gv_center[MDX], -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
-	VSCALE(origin, origin, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(origin, origin, gedp->dbip->dbi_base2local);
 	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
 	VSCALE(dir, dir, -1.0);
 	// Back outside the shape using the brep bounding box diagonal length
@@ -227,7 +227,7 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
     } else {
 	// If not explicitly specified, get the ray from GED
 	VSET(origin, -gedp->ged_gvp->gv_center[MDX], -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
-	VSCALE(origin, origin, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(origin, origin, gedp->dbip->dbi_base2local);
 	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
 	VSCALE(dir, dir, -1.0);
 	// Back outside the shape using the brep bounding box diagonal length
@@ -347,7 +347,6 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 	bu_log("%d sdist: %f\n", *a_it, sdist);
 
 	if (NEAR_ZERO(sdist, ON_ZERO_TOLERANCE)) {
-	    have_hit = true;
 	    double hdist = porigin.DistanceTo(s3d);
 	    bu_log("%d hdist: %f\n", *a_it, hdist);
 	    bu_log("center %f %f %f\n", s3d.x, s3d.y, s3d.z);
@@ -400,7 +399,7 @@ _brep_cmd_vertex_pick(void *bs, int argc, const char **argv)
     } else {
 	// If not explicitly specified, get the ray from GED
 	VSET(origin, -gedp->ged_gvp->gv_center[MDX], -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
-	VSCALE(origin, origin, gedp->ged_wdbp->dbip->dbi_base2local);
+	VSCALE(origin, origin, gedp->dbip->dbi_base2local);
 	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
 	VSCALE(dir, dir, -1.0);
 	// Back outside the shape using the brep bounding box diagonal length
@@ -511,7 +510,7 @@ _brep_pick_help(struct _ged_brep_ipick *bs, int argc, const char **argv)
 {
     struct _ged_brep_ipick *gb = (struct _ged_brep_ipick *)bs;
     if (!argc || !argv) {
-	bu_vls_printf(gb->vls, "brep [options] <objname> plot <subcommand> [args]\n");
+	bu_vls_printf(gb->vls, "brep [options] <objname> pick <subcommand> [args]\n");
 	bu_vls_printf(gb->vls, "Available subcommands:\n");
 	const struct bu_cmdtab *ctp = NULL;
 	int ret;

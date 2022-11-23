@@ -47,6 +47,15 @@ Be specific.
   but bear in mind that these are preliminary thoughts only and not a
   finished design that is ready to be implemented.
 
+  Consider inside/on/outside subcommands that report back where a
+  given point is with respect to another object.  Could use ray
+  tracing to determine result.
+
+  Consider a subcommand that reports distance to surface from a given
+  point.  Ray tracing method similar to gqa (shooting spherically
+  through point and in a gqa-style grid) would give an approximation
+  that could be adaptively refined to a specified tolerance.
+
 * 'array' command: to create a shallow copy of geometry in a
   rectangular or polar pattern.  similar to clone, perhaps mergeable
   with clone as an option.  takes #rows+dist and #cols+dist, or
@@ -178,6 +187,13 @@ Be specific.
   need option to crop, position, scale, and orient the image.  should
   default to a view-oriented "underlay" but permanently stored in the
   .g file as a proper image object (top-level TODO entry).
+
+* 'import' and 'export' commands: import/export image, text, csv, and
+  other file types.  possibly catch-all alternative to keep/dbconcat
+  that could also work for importing other data files as objects.  a
+  specific use-case needed is ability create/import combinations that
+  are described in a text file in some specific structured format
+  (e.g., sysdef or regmap) that would be good to generically support.
 
 * 'gsort' or 'tables' or 'filter' command.  Distinction is that this
   comamnd is object-aware and can process geometry by name in a given

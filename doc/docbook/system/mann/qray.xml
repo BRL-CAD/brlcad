@@ -115,7 +115,7 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
   <example><title>Print the usage message.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>qray</userinput>
+      <prompt>mged&gt; </prompt><userinput>qray</userinput>
     </para>
     <para>Prints the usage message.
     </para>
@@ -124,7 +124,7 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
  <example><title>Return the overlap format string.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>qray fmt o</userinput>
+      <prompt>mged&gt; </prompt><userinput>qray fmt o</userinput>
     </para>
     <para>Returns the overlap format string.
     </para>
@@ -133,7 +133,7 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
 <example><title>Return the rgb color used to color odd partitions.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>qray oddcolor</userinput>
+      <prompt>mged&gt; </prompt><userinput>qray oddcolor</userinput>
     </para>
     <para>Returns the rgb color used to color odd partitions.
     </para>
@@ -142,7 +142,7 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
 <example><title>Set the odd partition color to red.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>qray oddcolor 255 0 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>qray oddcolor 255 0 0</userinput>
     </para>
     <para>Sets the odd partition color to red.
      </para>

@@ -242,6 +242,7 @@ main(int argc, char **argv)
 		/* get _GLOBAL attributes */
 		if (db5_get_attributes(dbip, &g_avs, dp)) {
 		    bu_log("Failed to find any attributes on _GLOBAL\n");
+		    bu_avs_free(&g_avs);
 		    continue;
 		}
 
@@ -273,25 +274,26 @@ main(int argc, char **argv)
 		}
 
 		value = bu_avs_get(&g_avs, "regionid_colortable");
-		if (!value)
+		if (!value) {
+		    bu_avs_free(&g_avs);
 		    continue;
+		}
 		list = Tcl_NewStringObj(value, -1);
 		{
 		    int llen;
 		    if (Tcl_ListObjLength(interp, list, &llen) != TCL_OK) {
 			bu_log("Failed to get length of region color table!!\n");
+			bu_avs_free(&g_avs);
 			continue;
 		    }
 		    list_len = (size_t)llen;
 		}
 		for (i = 0; i < list_len; i++) {
 		    if (Tcl_ListObjIndex(interp, list, i, &obj) != TCL_OK) {
-			bu_log("Cannot get entry %d from the color table!!\n",
-				i);
+			bu_log("Cannot get entry %d from the color table!!\n", i);
 			continue;
 		    }
-		    fprintf(ofp, "color %s\n",
-			     Tcl_GetStringFromObj(obj, NULL));
+		    fprintf(ofp, "color %s\n", Tcl_GetStringFromObj(obj, NULL));
 		}
 		bu_avs_free(&g_avs);
 		continue;
@@ -393,7 +395,7 @@ top:
 	    case ID_IDENT:
 		idendump();
 		continue;
-	    case ID_MATERIAL:
+	    case ID_COLORTAB:
 		materdump();
 		continue;
 	    case DBID_PIPE:
@@ -877,7 +879,7 @@ arbn_dump(void)
 
     fprintf(ofp, "%c %.16s %lu\n", 'n', name, (unsigned long)arbn->neqn);
     for (i = 0; i < arbn->neqn; i++) {
-	fprintf(ofp, "n %26.20e %20.26e %26.20e %26.20e\n",
+	fprintf(ofp, "n %26.20e %26.20e %26.20e %26.20e\n",
 		arbn->eqn[i][X], arbn->eqn[i][Y],
 		arbn->eqn[i][Z], arbn->eqn[i][3]);
     }
@@ -990,17 +992,26 @@ combdump(void)	/* Print out Combination record information */
     /*
      *  Output the member records now
      */
-    while (BU_LIST_WHILE(mp, mchain, &head)) {
+    struct bu_list *p;
+    for (BU_LIST_FOR(p, bu_list, &head)) {
+	mp = (struct mchain *)p;
 	membdump(&mp->r);
-	BU_LIST_DEQUEUE(&mp->l);
-	BU_PUT(mp, struct mchain);
     }
 
+    /* Clean up (in the style of bu_list_free, but using BU_PUT since the
+     * memory was allocated with BU_GET) */
+    while (BU_LIST_WHILE(p, bu_list, &head)) {
+	BU_LIST_DEQUEUE(p);
+	BU_PUT(p, struct mchain);
+    }
+
+    /* ret_mp, if we have it, is not part of the list */
     if (ret_mp) {
 	memcpy((char *)&record, (char *)&ret_mp->r, sizeof(record));
 	BU_PUT(ret_mp, struct mchain);
 	return 1;
     }
+
     return 0;
 }
 

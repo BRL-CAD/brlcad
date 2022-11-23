@@ -45,7 +45,7 @@ to_autoview_func(struct ged *gedp,
 
     av[0] = "who";
     av[1] = (char *)0;
-    ret = ged_who(gedp, 1, (const char **)av);
+    ret = ged_exec(gedp, 1, (const char **)av);
 
     for (i = 1; i < (size_t)argc; ++i) {
 	if (argv[i][0] != '-') {
@@ -61,11 +61,12 @@ to_autoview_func(struct ged *gedp,
     if (!rflag && ret == BRLCAD_OK && strlen(bu_vls_addr(gedp->ged_result_str)) == 0)
 	aflag = 1;
 
-    for (i = 0; i < BU_PTBL_LEN(&current_top->to_gedp->ged_views); i++) {
-	gdvp = (struct bview *)BU_PTBL_GET(&current_top->to_gedp->ged_views, i);
+    struct bu_ptbl *views = bv_set_views(&current_top->to_gedp->ged_views);
+    for (i = 0; i < BU_PTBL_LEN(views); i++) {
+	gdvp = (struct bview *)BU_PTBL_GET(views, i);
 	if (to_is_viewable(gdvp)) {
-	    gedp->ged_gvp->gv_x_samples = dm_get_width((struct dm *)gdvp->dmp);
-	    gedp->ged_gvp->gv_y_samples = dm_get_height((struct dm *)gdvp->dmp);
+	    gedp->ged_gvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+	    gedp->ged_gvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
 	}
     }
 
@@ -116,7 +117,7 @@ to_more_args_func(struct ged *gedp,
 	av[i] = bu_strdup((char *)argv[i]);
     av[ac] = (char *)0;
 
-    while ((ret = (*func)(gedp, ac, (const char **)av)) & BRLCAD_MORE) {
+    while ((ret = (*func)(gedp, ac, (const char **)av)) & GED_MORE) {
 	int ac_more;
 	const char **avmp;
 	const char **av_more = NULL;
@@ -256,7 +257,7 @@ to_view_func_common(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (maxargs != TO_UNLIMITED && maxargs < argc) {
@@ -264,13 +265,11 @@ to_view_func_common(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    gdvp = ged_find_view(gedp, argv[1]);
+    gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return BRLCAD_ERROR;
     }
-
-    gedp->ged_dmp = (struct dm *)gdvp->dmp;
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp;
@@ -287,15 +286,15 @@ to_view_func_common(struct ged *gedp,
     /* Keep the view's perspective in sync with its corresponding display manager */
     dm_set_perspective((struct dm *)gdvp->dmp, gdvp->gv_perspective);
 
-    if (gdvp->gv_adaptive_plot &&
-	gdvp->gv_redraw_on_zoom)
+    if (gdvp->gv_s->adaptive_plot_csg &&
+	gdvp->gv_s->redraw_on_zoom)
     {
 	char *gr_av[] = {"redraw", NULL};
 
-	ged_redraw(gedp, 1, (const char **)gr_av);
+	ged_exec(gedp, 1, (const char **)gr_av);
 
-	gdvp->gv_x_samples = dm_get_width((struct dm *)gdvp->dmp);
-	gdvp->gv_y_samples = dm_get_height((struct dm *)gdvp->dmp);
+	gdvp->gv_width = dm_get_width((struct dm *)gdvp->dmp);
+	gdvp->gv_height = dm_get_height((struct dm *)gdvp->dmp);
     }
 
     if (ret == BRLCAD_OK) {
@@ -376,7 +375,7 @@ to_dm_func(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (maxargs != TO_UNLIMITED && maxargs < argc) {
@@ -384,7 +383,7 @@ to_dm_func(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    gdvp = ged_find_view(gedp, argv[1]);
+    gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return BRLCAD_ERROR;
@@ -392,7 +391,6 @@ to_dm_func(struct ged *gedp,
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp;
-    gedp->ged_dmp = (void *)gdvp->dmp;
     gedp->ged_refresh_clientdata = (void *)gdvp;
     av[0] = (char *)argv[0];
     ac = argc-1;

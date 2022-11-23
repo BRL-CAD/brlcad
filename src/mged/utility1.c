@@ -95,7 +95,7 @@ editit(const char *command, const char *tempfile) {
     av[4] = tempfile;
     av[5] = NULL;
 
-    ged_editit(GEDP, argc, (const char **)av);
+    ged_exec(GEDP, argc, (const char **)av);
 
     bu_vls_free(&editstring);
     return TCL_OK;
@@ -127,7 +127,7 @@ f_edcolor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
     }
     av[argc] = NULL;
 
-    ged_edcolor(GEDP, argc, (const char **)av);
+    ged_exec(GEDP, argc, (const char **)av);
 
     bu_vls_free(&editstring);
     bu_free((void *)av, "f_edcolor: av");
@@ -164,7 +164,7 @@ f_edcodes(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     }
     av[argc] = NULL;
 
-    ged_edcodes(GEDP, argc, (const char **)av);
+    ged_exec(GEDP, argc, (const char **)av);
 
     bu_vls_free(&editstring);
     bu_free((void *)av, "f_edcodes: av");
@@ -202,7 +202,7 @@ f_edmater(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     }
     av[argc] = NULL;
 
-    ged_edmater(GEDP, argc + 1, (const char **)av);
+    ged_exec(GEDP, argc + 1, (const char **)av);
 
     bu_vls_free(&editstring);
     bu_free((void *)av, "f_edmater: av");
@@ -236,7 +236,7 @@ f_red(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
     av[2] = bu_vls_addr(&editstring);
     av[3] = argv[1];
 
-    if ( ged_red(GEDP, 4, (const char **)av) & BRLCAD_ERROR ) {
+    if ( ged_exec(GEDP, 4, (const char **)av) & BRLCAD_ERROR ) {
 	Tcl_AppendResult(interpreter, "Error: ", bu_vls_addr(GEDP->ged_result_str), (char *)NULL);
     } else {
 	Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), (char *)NULL);

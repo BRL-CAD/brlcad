@@ -44,6 +44,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 			const fastf_t *const mat)
 {
     point_t mpt = VINIT_ZERO;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -106,7 +107,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		for (i = 0; i < arbn->neqn; i++) {
 		    for (j = i + 1; j < arbn->neqn; j++) {
 			for (k = j + 1; k < arbn->neqn; k++) {
-			    if (!bn_make_pnt_3planes(mpt, arbn->eqn[i],
+			    if (!bg_make_pnt_3planes(mpt, arbn->eqn[i],
 						    arbn->eqn[j],
 						    arbn->eqn[k])) {
 				size_t l;
@@ -118,7 +119,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 
 				    if (DIST_PNT_PLANE(mpt,
 					arbn->eqn[l]) >
-					gedp->ged_wdbp->wdb_tol.dist) {
+					wdbp->wdb_tol.dist) {
 					good_vert = 0;
 					break;
 				    }

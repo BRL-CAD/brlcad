@@ -37,7 +37,7 @@
   <example><title>Create an RCC shape at a specified face of an RPP.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rpp-arch rpp.s arch.s 1234</userinput>
+      <prompt>mged&gt; </prompt><userinput>rpp-arch rpp.s arch.s 1234</userinput>
     </para>
     <para>Creates an RCC shape named <emphasis>arch.s</emphasis> at the 1234 face of the RPP.
      </para>

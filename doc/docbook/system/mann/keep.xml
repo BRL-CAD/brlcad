@@ -36,7 +36,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>keep sample.g sample1 sample2</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>keep sample.g sample1 sample2</userinput></term>
 	   <listitem>
 	     <para>Creates <emphasis>sample.g</emphasis> file with objects <emphasis>sample1</emphasis> and 				<emphasis>sample2</emphasis> in it.
 	     </para>

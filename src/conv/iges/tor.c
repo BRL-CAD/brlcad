@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 int
-torus(int entityno)
+torus(size_t entityno)
 {
     fastf_t rad = 0.0;
     fastf_t rad2 = 0.0;	/* radius of disc */

@@ -39,7 +39,7 @@
   <example><title>Create a summary of regions contained in specified objects.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>regions regions_file group1 group2</userinput>
+      <prompt>mged&gt; </prompt><userinput>regions regions_file group1 group2</userinput>
     </para>
     <para>Places a summary of all the regions from <emphasis>group1</emphasis> and <emphasis>	group2</emphasis> in the file named <emphasis>regions_file</emphasis>.
     </para>

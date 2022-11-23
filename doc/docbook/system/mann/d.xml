@@ -46,7 +46,7 @@
     </para>
     <example><title>Delete a region and a shape from the <emphasis>mged</emphasis> display.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>d region1 shapea</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>d region1 shapea</userinput></para>
       <para>Deletes <emphasis>region1</emphasis> and <emphasis>shapea</emphasis> from
       the <emphasis>mged</emphasis> display.</para>
     </example>

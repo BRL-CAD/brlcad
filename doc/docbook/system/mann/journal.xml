@@ -39,7 +39,7 @@
 
     <variablelist>
       <varlistentry>
-	   <term><prompt>mged&gt;</prompt> <userinput>journal journal_file</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>journal journal_file</userinput></term>
 	   <listitem>
 	     <para>Starts journaling to <emphasis>journal_file</emphasis>.
 	      </para>

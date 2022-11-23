@@ -49,7 +49,7 @@
 
 using namespace brlcad;
 
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 #define BLUEVIOLET 138, 43, 226
 #define CADETBLUE 95, 159, 159
@@ -107,7 +107,7 @@ extern FILE* brep_plot_file(const char *pname = NULL);
 void plotsurfaceleafs(SurfaceTree* surf);
 void plotleaf3d(BBNode* bb,double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 void plotleafuv(BBNode* bb);
-void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp);
+void plottrim(ON_BrepFace &face, struct bv_vlblock *vbp);
 void plottrim(const ON_Curve &curve, double from, double to);
 void plottrim(ON_Curve &curve);
 

@@ -61,7 +61,7 @@ ged_oscale_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3 && argc != 6) {
@@ -80,7 +80,7 @@ ged_oscale_core(struct ged *gedp, int argc, const char *argv[])
 
 	dp = gtd.gtd_obj[gtd.gtd_objpos-1];
 	if (!(dp->d_flags & RT_DIR_SOLID)) {
-	    if (ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == BRLCAD_ERROR)
+	    if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, argv+1, 1, rpp_min, rpp_max) == BRLCAD_ERROR)
 		return BRLCAD_ERROR;
 	}
 
@@ -107,9 +107,9 @@ ged_oscale_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	VSCALE(keypoint, scan, gedp->ged_wdbp->dbip->dbi_local2base);
+	VSCALE(keypoint, scan, gedp->dbip->dbi_local2base);
 
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "%s: %s not found", argv[0], argv[1]);
 	    return BRLCAD_ERROR;
 	}

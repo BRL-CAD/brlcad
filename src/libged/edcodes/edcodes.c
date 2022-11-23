@@ -106,7 +106,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     if (!(dp->d_flags & RT_DIR_COMB))
 	return EDCODES_OK;
 
-    id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource);
+    id = rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource);
     if (id < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Cannot get records for %s\n", dp->d_namep);
@@ -128,7 +128,7 @@ edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     }
 
     if (comb->tree) {
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node, (void *)&pathpos, (void *)gedp, (void *)&status, (void *)NULL);
+	db_tree_funcleaf(gedp->dbip, comb, comb->tree, edcodes_traverse_node, (void *)&pathpos, (void *)gedp, (void *)&status, (void *)NULL);
     }
 
     intern.idb_meth->ft_ifree(&intern);
@@ -165,7 +165,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;
@@ -198,7 +198,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp;
 
 	for (i = 1; i < argc; ++i) {
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
+	    if ((dp = db_lookup(gedp->dbip, argv[i], LOOKUP_NOISY)) != RT_DIR_NULL) {
 		status = edcodes_collect_regnames(gedp, dp, 0);
 
 		if (status != EDCODES_OK) {
@@ -227,7 +227,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (ged_wcodes(gedp, argc + 1, (const char **)av) & BRLCAD_ERROR) {
+    if (ged_exec(gedp, argc + 1, (const char **)av) & BRLCAD_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "ged_edcodes_core av");
 	return BRLCAD_ERROR;
@@ -283,7 +283,7 @@ ged_edcodes_core(struct ged *gedp, int argc, const char *argv[])
     if (_ged_editit(editstring, tmpfil)) {
 	av[0] = "rcodes";
 	av[2] = NULL;
-	status = ged_rcodes(gedp, 2, (const char **)av);
+	status = ged_exec(gedp, 2, (const char **)av);
     } else
 	status = BRLCAD_ERROR;
 

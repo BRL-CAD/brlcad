@@ -41,63 +41,14 @@
 #include "tk.h"
 #define HAVE_X11_TYPES 1
 
-#include "bu/vls.h"
-
-#define CMAP_BASE 40
-
-/* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
-#define GED2IRIS(x)	(((float)(x))*0.00048828125)
-
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {    \
-        _shift = 24 - _shift;                           \
-        switch (_shift) {                               \
-            case 0:                                     \
-                _mask >>= 24;                           \
-                break;                                  \
-            case 8:                                     \
-                _mask >>= 8;                            \
-                break;                                  \
-            case 16:                                    \
-                _mask <<= 8;                            \
-                break;                                  \
-            case 24:                                    \
-                _mask <<= 24;                           \
-                break;                                  \
-        }                                               \
-    }
-
 extern struct dm dm_ogl;
 
-#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
-
-struct modifiable_ogl_vars {
-    struct dm *this_dm;
-    int cueing_on;
-    int zclipping_on;
-    int zbuffer_on;
-    int lighting_on;
-    int transparency_on;
-    int fastfog;
-    double fogdensity;
-    int zbuf;
-    int rgb;
-    int doublebuffer;
-    int depth;
-    int debug;
-    struct bu_vls log;
-    double bound;
-    int boundFlag;
-};
-
-struct ogl_vars {
+/* Private, platform specific OpenGL variables */
+struct pogl_vars {
     GLXContext glxc;
-    GLdouble faceplate_mat[16];
-    int face_flag;
-    int *perspective_mode;
     int fontOffset;
     int ovec;		/* Old color map entry number */
     char is_direct;
-    GLclampf r, g, b;
 };
 
 struct dm_glxvars {
@@ -113,12 +64,6 @@ struct dm_glxvars {
     int devbuttonpress;
     int devbuttonrelease;
 };
-
-__BEGIN_DECLS
-
-extern void ogl_fogHint();
-
-__END_DECLS
 
 #endif /* DM_OGL_H */
 

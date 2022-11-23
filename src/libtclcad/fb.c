@@ -48,10 +48,6 @@
 #include "./tclcad_private.h"
 #include "./view/view.h"
 
-/* defined in libfb/tcl.c */
-extern int fb_refresh(struct fb *ifp, int x, int y, int w, int h);
-
-
 #define FBO_CONSTRAIN(_v, _a, _b)		\
     ((_v > _a) ? (_v < _b ? _v : _b) : _a)
 
@@ -355,9 +351,16 @@ fbo_listen_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	if (port >= 0)
+	if (port >= 0) {
+	    //Set up fbo_fbs callbacks, then call fbs_open
+	    fbop->fbo_fbs.fbs_is_listening = &tclcad_is_listening;
+	    fbop->fbo_fbs.fbs_listen_on_port = &tclcad_listen_on_port;
+	    fbop->fbo_fbs.fbs_open_server_handler = &tclcad_open_server_handler;
+	    fbop->fbo_fbs.fbs_close_server_handler = &tclcad_close_server_handler;
+	    fbop->fbo_fbs.fbs_open_client_handler = &tclcad_open_client_handler;
+	    fbop->fbo_fbs.fbs_close_client_handler = &tclcad_close_client_handler;
 	    fbs_open(&fbop->fbo_fbs, port);
-	else {
+	} else {
 	    fbs_close(&fbop->fbo_fbs);
 	}
 	bu_vls_printf(&vls, "%d", fbop->fbo_fbs.fbs_listener.fbsl_port);
@@ -976,7 +979,7 @@ to_set_fb_mode(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {
@@ -984,7 +987,7 @@ to_set_fb_mode(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return BRLCAD_ERROR;
@@ -1032,7 +1035,7 @@ to_listen(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (3 < argc) {
@@ -1040,7 +1043,7 @@ to_listen(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    struct bview *gdvp = ged_find_view(gedp, argv[1]);
+    struct bview *gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return BRLCAD_ERROR;
@@ -1066,9 +1069,16 @@ to_listen(struct ged *gedp,
 	    return BRLCAD_ERROR;
 	}
 
-	if (port >= 0)
+	if (port >= 0) {
+	    // Set up fbo_fbs callbacks, then call fbs_open
+	    tvd->gdv_fbs.fbs_is_listening = &tclcad_is_listening;
+	    tvd->gdv_fbs.fbs_listen_on_port = &tclcad_listen_on_port;
+	    tvd->gdv_fbs.fbs_open_server_handler = &tclcad_open_server_handler;
+	    tvd->gdv_fbs.fbs_close_server_handler = &tclcad_close_server_handler;
+	    tvd->gdv_fbs.fbs_open_client_handler = &tclcad_open_client_handler;
+	    tvd->gdv_fbs.fbs_close_client_handler = &tclcad_close_client_handler;
 	    fbs_open(&tvd->gdv_fbs, port);
-	else {
+	} else {
 	    fbs_close(&tvd->gdv_fbs);
 	}
 	bu_vls_printf(gedp->ged_result_str, "%d", tvd->gdv_fbs.fbs_listener.fbsl_port);

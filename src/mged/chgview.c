@@ -127,7 +127,7 @@ cmd_center(ClientData UNUSED(clientData),
 	return TCL_OK;
     }
 
-    ret = ged_center(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
@@ -166,7 +166,7 @@ mged_center(point_t center)
     av[2] = ybuf;
     av[3] = zbuf;
     av[4] = (char *)0;
-    ged_center(GEDP, 4, (const char **)av);
+    ged_exec(GEDP, 4, (const char **)av);
     (void)mged_svbase();
     view_state->vs_flag = 1;
 }
@@ -184,16 +184,16 @@ cmd_size(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	return TCL_OK;
     }
 
-    ret = ged_size(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
     if (ret == BRLCAD_OK) {
-	view_state->vs_absolute_scale = 1.0 - view_state->vs_gvp->gv_scale / view_state->vs_i_Viewscale;
+	view_state->vs_gvp->gv_a_scale = 1.0 - view_state->vs_gvp->gv_scale / view_state->vs_gvp->gv_i_scale;
 
-	if (view_state->vs_absolute_scale < 0.0) {
-	    view_state->vs_absolute_scale /= 9.0;
+	if (view_state->vs_gvp->gv_a_scale < 0.0) {
+	    view_state->vs_gvp->gv_a_scale /= 9.0;
 	}
 
 	if (!ZERO(view_state->vs_absolute_tran[X])
@@ -230,8 +230,8 @@ size_reset(void)
 
     av[0] = "autoview";
     av[1] = (char *)0;
-    ged_autoview(GEDP, 1, (const char **)av);
-    view_state->vs_i_Viewscale = view_state->vs_gvp->gv_scale;
+    ged_exec(GEDP, 1, (const char **)av);
+    view_state->vs_gvp->gv_i_scale = view_state->vs_gvp->gv_scale;
     view_state->vs_flag = 1;
 }
 
@@ -241,8 +241,7 @@ size_reset(void)
  */
 int
 edit_com(int argc,
-	 const char *argv[],
-	 int kind)
+	 const char *argv[])
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;
@@ -267,7 +266,7 @@ edit_com(int argc,
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 	    initial_blank_screen = 0;
 	    break;
 	}
@@ -391,14 +390,14 @@ edit_com(int argc,
 	new_argv = (char **)bu_calloc(max_count + 1, sizeof(char *), "edit_com new_argv");
 	new_argc = bu_argv_from_string(new_argv, max_count, bu_vls_addr(&vls));
 
-	ret = ged_draw(GEDP, new_argc, (const char **)new_argv);
+	ret = ged_exec(GEDP, new_argc, (const char **)new_argv);
 
 	if (ret & BRLCAD_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(GEDP->ged_result_str));
 	    bu_vls_free(&vls);
 	    bu_free((char *)new_argv, "edit_com new_argv");
 	    return ret;
-	} else if (ret & BRLCAD_HELP) {
+	} else if (ret & GED_HELP) {
 	    bu_log("%s\n", bu_vls_addr(GEDP->ged_result_str));
 	    bu_vls_free(&vls);
 	    bu_free((char *)new_argv, "edit_com new_argv");
@@ -410,23 +409,12 @@ edit_com(int argc,
     } else {
 	bu_vls_free(&vls);
 
-	switch (kind) {
-	    default:
-	    case 1:
-		ret = ged_draw(GEDP, argc, (const char **)argv);
-		break;
-	    case 2:
-		ret = ged_E(GEDP, argc, (const char **)argv);
-		break;
-	    case 3:
-		ret = ged_ev(GEDP, argc, (const char **)argv);
-		break;
-	}
+	ret = ged_exec(GEDP, argc, (const char **)argv);
 
 	if (ret == BRLCAD_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(GEDP->ged_result_str));
 	    return TCL_ERROR;
-	} else if (ret == BRLCAD_HELP) {
+	} else if (ret == GED_HELP) {
 	    bu_log("%s\n", bu_vls_addr(GEDP->ged_result_str));
 	    return TCL_OK;
 	}
@@ -463,7 +451,7 @@ edit_com(int argc,
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	    if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 		non_empty = 1;
 		break;
 	    }
@@ -478,7 +466,7 @@ edit_com(int argc,
 
 	    av[0] = "autoview";
 	    av[1] = (char *)0;
-	    ged_autoview(GEDP, 1, (const char **)av);
+	    ged_exec(GEDP, 1, (const char **)av);
 
 	    (void)mged_svbase();
 
@@ -560,7 +548,7 @@ emuves_com(int argc, const char *argv[])
 	objs[i + num_opts + 1] = dp->d_namep;
     }
 
-    ret = edit_com((BU_PTBL_LEN(tbl) + 1), objs, 1);
+    ret = edit_com((BU_PTBL_LEN(tbl) + 1), objs);
     bu_ptbl_free(tbl);
     bu_free((char *)tbl, "tbl returned by wdb_get_by_attr");
     bu_free((char *)objs, "emuves_com objs");
@@ -618,7 +606,7 @@ cmd_autoview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const 
 		ac = 2;
 	    }
 
-	    ged_autoview(GEDP, ac, (const char **)av);
+	    ged_exec(GEDP, ac, (const char **)av);
 	    view_state->vs_flag = 1;
 	}
 	(void)mged_svbase();
@@ -684,7 +672,7 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 
     Tcl_AppendResult(interp, "regdebug=", debug_str, "\n", (char *)NULL);
 
-    dm_debug(DMP, regdebug);
+    dm_set_debug(DMP, regdebug);
 
     return TCL_OK;
 }
@@ -709,7 +697,7 @@ cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
 	button(BE_REJECT);
     }
 
-    ged_zap(GEDP, 1, (const char **)av);
+    ged_exec(GEDP, 1, (const char **)av);
 
     (void)chg_state(STATE, STATE, "zap");
     solid_list_callback();
@@ -850,8 +838,8 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     struct display_list *gdlp;
     struct display_list *next_gdlp;
     struct directory *dp;
-    struct solid *sp;
-    struct solid *lastfound = SOLID_NULL;
+    struct bv_scene_obj *sp;
+    struct bv_scene_obj *lastfound = NULL;
     int i, j;
     int nmatch;
     int c;
@@ -984,22 +972,25 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, &gdlp->dl_head_scene_obj)) {
 	    int a_new_match;
+	    if (!sp->s_u_data)
+		continue;
+	    struct ged_bv_data *bdata = (struct ged_bv_data *)sp->s_u_data;
 
-	    if (exact && nm_pieces != sp->s_fullpath.fp_len)
+	    if (exact && nm_pieces != bdata->s_fullpath.fp_len)
 		continue;
 
 	    /* XXX Could this make use of db_full_path_subset()? */
 	    if (nmatch == 0 || nmatch != ri) {
-		i = sp->s_fullpath.fp_len - 1;
+		i = bdata->s_fullpath.fp_len - 1;
 
-		if (DB_FULL_PATH_GET(&sp->s_fullpath, i) == dp) {
+		if (DB_FULL_PATH_GET(&bdata->s_fullpath, i) == dp) {
 		    a_new_match = 1;
 		    j = nm_pieces - 1;
 
 		    for (; a_new_match && (i >= 0) && (j >= 0); --i, --j) {
-			sname = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep;
+			sname = DB_FULL_PATH_GET(&bdata->s_fullpath, i)->d_namep;
 
 			if ((*sname != *(path_piece[j]))
 			    || !BU_STR_EQUAL(sname, path_piece[j])) {
@@ -1127,7 +1118,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 	    is_empty = 0;
 	    break;
 	}
@@ -1317,7 +1308,7 @@ mged_print_knobvals(Tcl_Interp *interp)
 	if (es_edclass == EDIT_CLASS_SCALE && mged_variables->mv_transform == 'e') {
 	    bu_vls_printf(&vls, "aS = %f\n", edit_absolute_scale);
 	} else {
-	    bu_vls_printf(&vls, "aS = %f\n", view_state->vs_absolute_scale);
+	    bu_vls_printf(&vls, "aS = %f\n", view_state->vs_gvp->gv_a_scale);
 	}
 
 	if (es_edclass == EDIT_CLASS_TRAN && mged_variables->mv_transform == 'e') {
@@ -1924,6 +1915,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				default:
 				    bu_log("unknown mv_coords\n");
 				    arp = larp = NULL;
+				    return TCL_ERROR;
 			    }
 
 			    if (arp[X] < -180.0) {
@@ -2030,6 +2022,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				default:
 				    bu_log("unknown mv_transform\n");
 				    arp = larp = NULL;
+				    return TCL_ERROR;
 			    }
 
 			    if (arp[Y] < -180.0) {
@@ -2136,6 +2129,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				default:
 				    bu_log("unknown mv_coords\n");
 				    arp = larp = NULL;
+				    return TCL_ERROR;
 			    }
 
 			    if (arp[Z] < -180.0) {
@@ -2345,7 +2339,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    oedit_abs_scale();
 				}
 			    } else {
-				view_state->vs_absolute_scale += f;
+				view_state->vs_gvp->gv_a_scale += f;
 				abs_zoom();
 			    }
 			} else {
@@ -2358,7 +2352,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 				    oedit_abs_scale();
 				}
 			    } else {
-				view_state->vs_absolute_scale = f;
+				view_state->vs_gvp->gv_a_scale = f;
 				abs_zoom();
 			    }
 			}
@@ -2546,28 +2540,28 @@ abs_zoom(void)
     char *av[3];
 
     /* Use initial Viewscale */
-    if (-SMALL_FASTF < view_state->vs_absolute_scale && view_state->vs_absolute_scale < SMALL_FASTF) {
-	view_state->vs_gvp->gv_scale = view_state->vs_i_Viewscale;
+    if (-SMALL_FASTF < view_state->vs_gvp->gv_a_scale && view_state->vs_gvp->gv_a_scale < SMALL_FASTF) {
+	view_state->vs_gvp->gv_scale = view_state->vs_gvp->gv_i_scale;
     } else {
 	/* if positive */
-	if (view_state->vs_absolute_scale > 0) {
+	if (view_state->vs_gvp->gv_a_scale > 0) {
 	    /* scale i_Viewscale by values in [0.0, 1.0] range */
-	    view_state->vs_gvp->gv_scale = view_state->vs_i_Viewscale * (1.0 - view_state->vs_absolute_scale);
+	    view_state->vs_gvp->gv_scale = view_state->vs_gvp->gv_i_scale * (1.0 - view_state->vs_gvp->gv_a_scale);
 	} else/* negative */
 	    /* scale i_Viewscale by values in [1.0, 10.0] range */
 	{
-	    view_state->vs_gvp->gv_scale = view_state->vs_i_Viewscale * (1.0 + (view_state->vs_absolute_scale * -9.0));
+	    view_state->vs_gvp->gv_scale = view_state->vs_gvp->gv_i_scale * (1.0 + (view_state->vs_gvp->gv_a_scale * -9.0));
 	}
     }
 
-    if (view_state->vs_gvp->gv_scale < RT_MINVIEWSIZE) {
-	view_state->vs_gvp->gv_scale = RT_MINVIEWSIZE;
+    if (view_state->vs_gvp->gv_scale < BV_MINVIEWSIZE) {
+	view_state->vs_gvp->gv_scale = BV_MINVIEWSIZE;
     }
 
     av[0] = "zoom";
     av[1] = "1.0";
     av[2] = (char *)0;
-    ged_zoom(GEDP, 2, (const char **)av);
+    ged_exec(GEDP, 2, (const char **)av);
 
     if (!ZERO(view_state->vs_absolute_tran[X])
 	|| !ZERO(view_state->vs_absolute_tran[Y])
@@ -2599,7 +2593,7 @@ mged_zoom(double val)
     av[1] = buf;
     av[2] = (char *)0;
 
-    ret = ged_zoom(GEDP, 2, (const char **)av);
+    ret = ged_exec(GEDP, 2, (const char **)av);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(INTERP, &ds);
@@ -2608,10 +2602,10 @@ mged_zoom(double val)
 	return TCL_ERROR;
     }
 
-    view_state->vs_absolute_scale = 1.0 - view_state->vs_gvp->gv_scale / view_state->vs_i_Viewscale;
+    view_state->vs_gvp->gv_a_scale = 1.0 - view_state->vs_gvp->gv_scale / view_state->vs_gvp->gv_i_scale;
 
-    if (view_state->vs_absolute_scale < 0.0) {
-	view_state->vs_absolute_scale /= 9.0;
+    if (view_state->vs_gvp->gv_a_scale < 0.0) {
+	view_state->vs_gvp->gv_a_scale /= 9.0;
     }
 
     if (!ZERO(view_state->vs_absolute_tran[X])
@@ -2622,8 +2616,8 @@ mged_zoom(double val)
     }
 
     ret = TCL_OK;
-    if (GEDP->ged_gvp && GEDP->ged_gvp->gv_adaptive_plot &&
-	GEDP->ged_gvp->gv_redraw_on_zoom)
+    if (GEDP->ged_gvp && GEDP->ged_gvp->gv_s->adaptive_plot_csg &&
+	GEDP->ged_gvp->gv_s->redraw_on_zoom)
     {
 	ret = redraw_visible_objects();
     }
@@ -2726,7 +2720,7 @@ cmd_setview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	return TCL_OK;
     }
 
-    ret = ged_setview(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
@@ -2767,7 +2761,7 @@ f_slewview(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_slew(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
@@ -2794,7 +2788,7 @@ int
 mged_svbase(void)
 {
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
-    view_state->vs_i_Viewscale = view_state->vs_gvp->gv_scale;
+    view_state->vs_gvp->gv_i_scale = view_state->vs_gvp->gv_scale;
 
     /* reset absolute slider values */
     VSETALL(view_state->vs_absolute_rotate, 0.0);
@@ -2805,7 +2799,7 @@ mged_svbase(void)
     VSETALL(view_state->vs_last_absolute_tran, 0.0);
     VSETALL(view_state->vs_absolute_model_tran, 0.0);
     VSETALL(view_state->vs_last_absolute_model_tran, 0.0);
-    view_state->vs_absolute_scale = 0.0;
+    view_state->vs_gvp->gv_a_scale = 0.0;
 
     if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
 	mged_curr_dm->dm_dirty = 1;
@@ -2910,7 +2904,7 @@ setview(double a1,
     av[2] = ybuf;
     av[3] = zbuf;
     av[4] = (char *)0;
-    ged_setview(GEDP, 4, (const char **)av);
+    ged_exec(GEDP, 4, (const char **)av);
 
     if (!ZERO(view_state->vs_absolute_tran[X])
 	|| !ZERO(view_state->vs_absolute_tran[Y])
@@ -2955,7 +2949,7 @@ slewview(vect_t view_pos)
     av[2] = ybuf;
     av[3] = zbuf;
     av[4] = (char *)0;
-    ged_slew(GEDP, 4, (const char **)av);
+    ged_exec(GEDP, 4, (const char **)av);
 
     /* all this for ModelDelta */
     MAT_DELTAS_GET_NEG(new_model_center, view_state->vs_gvp->gv_center);
@@ -3471,7 +3465,7 @@ cmd_mrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 	Tcl_DStringInit(&ds);
 
-	ret = ged_mrot(GEDP, argc, (const char **)argv);
+	ret = ged_exec(GEDP, argc, (const char **)argv);
 	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
@@ -3589,7 +3583,7 @@ cmd_vrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
     Tcl_DStringInit(&ds);
 
-    ret = ged_vrot(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
 
@@ -3632,7 +3626,7 @@ cmd_rot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 	Tcl_DStringInit(&ds);
 
-	ret = ged_rot(GEDP, argc, (const char **)argv);
+	ret = ged_exec(GEDP, argc, (const char **)argv);
 	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
@@ -3675,7 +3669,7 @@ cmd_arot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 
 	Tcl_DStringInit(&ds);
 
-	ret = ged_arot(GEDP, argc, (const char **)argv);
+	ret = ged_exec(GEDP, argc, (const char **)argv);
 	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
@@ -3833,7 +3827,7 @@ cmd_tra(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 	Tcl_DStringInit(&ds);
 
-	ret = ged_tra(GEDP, argc, (const char **)argv);
+	ret = ged_exec(GEDP, argc, (const char **)argv);
 	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
@@ -3967,16 +3961,16 @@ mged_vscale(fastf_t sfactor)
 
     view_state->vs_gvp->gv_scale *= sfactor;
 
-    if (view_state->vs_gvp->gv_scale < RT_MINVIEWSIZE) {
-	view_state->vs_gvp->gv_scale = RT_MINVIEWSIZE;
+    if (view_state->vs_gvp->gv_scale < BV_MINVIEWSIZE) {
+	view_state->vs_gvp->gv_scale = BV_MINVIEWSIZE;
     }
 
-    f = view_state->vs_gvp->gv_scale / view_state->vs_i_Viewscale;
+    f = view_state->vs_gvp->gv_scale / view_state->vs_gvp->gv_i_scale;
 
     if (f >= 1.0) {
-	view_state->vs_absolute_scale = (f - 1.0) / -9.0;
+	view_state->vs_gvp->gv_a_scale = (f - 1.0) / -9.0;
     } else {
-	view_state->vs_absolute_scale = 1.0 - f;
+	view_state->vs_gvp->gv_a_scale = 1.0 - f;
     }
 
     new_mats();
@@ -4053,7 +4047,7 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	fastf_t f;
 
 	Tcl_DStringInit(&ds);
-	ret = ged_scale(GEDP, argc, (const char **)argv);
+	ret = ged_exec(GEDP, argc, (const char **)argv);
 	Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
 	Tcl_DStringResult(interp, &ds);
 
@@ -4061,12 +4055,12 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 	    return TCL_ERROR;
 	}
 
-	f = view_state->vs_gvp->gv_scale / view_state->vs_i_Viewscale;
+	f = view_state->vs_gvp->gv_scale / view_state->vs_gvp->gv_i_scale;
 
 	if (f >= 1.0) {
-	    view_state->vs_absolute_scale = (f - 1.0) / -9.0;
+	    view_state->vs_gvp->gv_a_scale = (f - 1.0) / -9.0;
 	} else {
-	    view_state->vs_absolute_scale = 1.0 - f;
+	    view_state->vs_gvp->gv_a_scale = 1.0 - f;
 	}
 
 	view_state->vs_flag = 1;

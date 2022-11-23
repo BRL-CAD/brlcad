@@ -113,14 +113,14 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
     /* Handle tolerance */
     if (stol < DBL_MAX || stol < -DBL_MAX + 1) {
 	if (stol > -DBL_MAX) {
-	    gedp->ged_gvp->gv_snap_tol_factor = stol;
+	    gedp->ged_gvp->gv_s->gv_snap_tol_factor = stol;
 	    if (!opt_ret) {
-		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_snap_tol_factor);
+		bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_s->gv_snap_tol_factor);
 		return BRLCAD_OK;
 	    }
 	} else {
 	    // Report current tolerance
-	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_snap_tol_factor);
+	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_s->gv_snap_tol_factor);
 	    return BRLCAD_OK;
 	}
     }
@@ -178,7 +178,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 
     if (use_grid) {
 	// Grid operates on view space points
-	ged_snap_to_grid(gedp, &view_pt_2d[X], &view_pt_2d[Y]);
+	bv_snap_grid_2d(gedp->ged_gvp, &view_pt_2d[X], &view_pt_2d[Y]);
     }
 
     if (use_lines) {
@@ -187,7 +187,7 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	// It's OK if we have no lines close enough to snap to -
 	// in that case just pass back the view pt.  If we do
 	// have a snap, update the output
-	if (ged_snap_lines(&out_pt, gedp, &view_pt) == BRLCAD_OK) {
+	if (bv_snap_lines_3d(&out_pt, gedp->ged_gvp, &view_pt) == BRLCAD_OK) {
 	    MAT4X3PNT(vp, gedp->ged_gvp->gv_model2view, out_pt);
 	    V2SET(view_pt_2d, vp[0], vp[1]);
 	    VMOVE(view_pt, out_pt);

@@ -778,14 +778,17 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
     point_t rpp_max;
     size_t i;
 
+    if (!path || path->fp_len <= 0)
+	return BRLCAD_ERROR;
+
     if (ged_path_validate(gedp, path) & BRLCAD_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
-		      "the database", db_path_to_string(path));
+	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in the database", db_path_to_string(path));
 	return BRLCAD_ERROR;
     }
 
     /* sum the transformation matrices of each object in path */
     d = DB_FULL_PATH_ROOT_DIR(path);
+
     for (i = (size_t)0; i < path->fp_len - (size_t)1; ++i) {
 	d_next = DB_FULL_PATH_GET(path, i + (size_t)1);
 
@@ -817,7 +820,7 @@ edit_arg_to_apparent_coord(struct ged *gedp, const struct edit_arg *const arg,
 	    return BRLCAD_ERROR;
     } else {
 	BU_ASSERT(d->d_flags & (RT_DIR_REGION | RT_DIR_COMB));
-	if (ged_get_obj_bounds(gedp, 1, (const char **)&d->d_namep, 1,
+	if (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&d->d_namep, 1,
 				rpp_min, rpp_max) == BRLCAD_ERROR)
 	    return BRLCAD_ERROR;
     }
@@ -895,7 +898,7 @@ edit_arg_to_coord(struct ged *gedp, struct edit_arg *const arg, vect_t *coord)
  * certain meta_arg flags applied and/or consolidated with those of
  * the source objects. Objects + offsets are converted to coordinates.
  *
- * Set BRLCAD_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
+ * Set GED_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively.
  *
  * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
@@ -1355,12 +1358,15 @@ edit_translate(struct ged *gedp, const vect_t *from,
     struct rt_db_internal intern;
 
     VSUB2(delta, *to, *from);
-    VSCALE(delta, delta, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(delta, delta, gedp->dbip->dbi_local2base);
+
+    if (!path || path->fp_len <= 0)
+	return BRLCAD_ERROR;
+
     d_obj = DB_FULL_PATH_CUR_DIR(path);
 
-    if (ged_path_validate(gedp, path) == BRLCAD_ERROR) {
-	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in"
-		      "the database", db_path_to_string(path));
+    if (ged_path_validate(gedp, path) & BRLCAD_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "path \"%s\" does not exist in the database", db_path_to_string(path));
 	return BRLCAD_ERROR;
     }
 
@@ -1402,7 +1408,7 @@ edit_translate(struct ged *gedp, const vect_t *from,
 				 &gtd, rpp_min, rpp_max) == BRLCAD_ERROR)
 	    return BRLCAD_ERROR;
 	if (!(d_to_modify->d_flags & RT_DIR_SOLID) &&
-	    (ged_get_obj_bounds(gedp, 1, (const char **)&d_to_modify->d_namep,
+	    (rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&d_to_modify->d_namep,
 				 1, rpp_min, rpp_max) == BRLCAD_ERROR))
 	    return BRLCAD_ERROR;
 
@@ -1753,7 +1759,7 @@ edit(struct ged *gedp, union edit_cmd *const subcmd)
  * Converts a string to an existing edit_arg. See subcommand manuals
  * for examples of acceptable argument strings.
  *
- * Set BRLCAD_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
+ * Set GED_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively.
  *
  * Returns BRLCAD_ERROR on failure, and BRLCAD_OK on success.
@@ -1813,7 +1819,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 	}
 
 	/* it may still be an obj, so quietly check db for obj name */
-	if (db_lookup(gedp->ged_wdbp->dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
+	if (db_lookup(gedp->dbip, str, LOOKUP_QUIET) != RT_DIR_NULL)
 	    goto convert_obj;
     }
 
@@ -1871,7 +1877,7 @@ edit_str_to_arg(struct ged *gedp, const char *str, struct edit_arg *arg,
 convert_obj:
     /* convert string to path/object */
     BU_ALLOC(arg->object, struct db_full_path);
-    if (db_string_to_path(arg->object, gedp->ged_wdbp->dbip,
+    if (db_string_to_path(arg->object, gedp->dbip,
 			  str)) {
 	db_free_full_path(arg->object);
 	bu_free((void *)arg->object, "db_string_to_path");
@@ -1881,7 +1887,7 @@ convert_obj:
 			  " the path \"%s\" does not exist", str);
 	return BRLCAD_ERROR;
     }
-    if (ged_path_validate(gedp, arg->object) == BRLCAD_ERROR) {
+    if (ged_path_validate(gedp, arg->object) & BRLCAD_ERROR) {
 	db_free_full_path(arg->object);
 	bu_free((void *)arg->object, "db_string_to_path");
 	arg->object = (struct db_full_path *)NULL;
@@ -1900,7 +1906,7 @@ convert_obj:
  * arguments. See subcommand manuals for examples of acceptable
  * argument strings.
  *
- * Set BRLCAD_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
+ * Set GED_QUIET or BRLCAD_ERROR bits in 'flags' to suppress or enable
  * output to ged_result_str, respectively. Note that output is always
  * suppressed after the first string is successfully converted.
  *
@@ -1933,7 +1939,7 @@ edit_strs_to_arg(struct ged *gedp, int *argc, const char **argv[],
 	    break;
 
 	ret = BRLCAD_OK;
-	flags = BRLCAD_QUIET; /* only first conv attempt can be noisy */
+	flags = GED_QUIET; /* only first conv attempt can be noisy */
 	--(*argc);
 	++(*argv);
     }
@@ -2028,7 +2034,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	argv += 2;
     } else {
 	/* no subcommand was found */
-	ret = BRLCAD_HELP;
+	ret = GED_HELP;
 
 	if (argc > 1) {
 	    /* no arguments accepted without a subcommand */
@@ -2067,7 +2073,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		    if (edit_cmds[i].enabled)
 			bu_vls_printf(gedp->ged_result_str, "%s ",
 				      edit_cmds[i].name);
-		return BRLCAD_HELP;
+		return GED_HELP;
 	    } else {
 		/* get long usage string for a specific command */
 		for (i = 0; edit_cmds[i].name; ++i)
@@ -2095,7 +2101,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		/* no args to subcommand; must want usage */
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s [help] | %s",
 			      subcmd.cmd->name, subcmd.cmd->usage);
-		return BRLCAD_HELP;
+		return GED_HELP;
 	    }
 
 	    /* Handle "subcmd help" (identical to "help subcmd"),
@@ -2117,7 +2123,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 			  "Usage: %s [help] | %s\n\n%s [help] | %s",
 			  subcmd.cmd->name, subcmd.cmd->usage,
 			  subcmd.cmd->name, subcmd.cmd->help);
-	    return BRLCAD_HELP;
+	    return GED_HELP;
     }
 
     /* Now that the cmd type is known (and wasn't "help"), we can
@@ -2175,7 +2181,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
      */
 
     /* no options are required by default, so quietly look for args */
-    while (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, BRLCAD_QUIET) !=
+    while (edit_strs_to_arg(gedp, &argc, &argv, cur_arg, GED_QUIET) !=
 	   BRLCAD_ERROR) {
 	if (argc == 0) {
 	    if (edit_arg_is_empty(subcmd.cmd_line.args) == BRLCAD_OK) {
@@ -2252,7 +2258,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 	conv_flags = BRLCAD_ERROR;
 	switch (c) {
 	    case 'n': /* use natural coordinates of object */
-		conv_flags = BRLCAD_QUIET;
+		conv_flags = GED_QUIET;
 		allow_subopts = 0;
 		break;
 	    case 'x': /* singular coord specif. sub-opts */
@@ -2284,7 +2290,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 			case 'y':
 			case 'z':
 			    /* the only acceptable sub-options here */
-			    conv_flags = BRLCAD_QUIET;
+			    conv_flags = GED_QUIET;
 			    break;
 			default:
 			    if (!isdigit((int)bu_optarg[1]))
@@ -2304,7 +2310,7 @@ ged_edit_core(struct ged *gedp, int argc, const char *argv[])
 		    }
 
 		/* next element may be an arg */
-		conv_flags = BRLCAD_QUIET;
+		conv_flags = GED_QUIET;
 
 		/* record opt for validation/processing by subcmd */
 		cur_arg->cl_options[idx_cur_opt] = c;

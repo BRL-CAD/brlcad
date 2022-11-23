@@ -231,6 +231,10 @@ main(int argc, char *argv [])
     argc -= bu_optind;
     argv += bu_optind;
 
+    if (argc <= 0) {
+	bu_exit(BRLCAD_ERROR, "Need filename\n");
+    }
+
     BU_LIST_INIT(&iges_list.l);
 
     BU_ALLOC(curr_file, struct file_list);

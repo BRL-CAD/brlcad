@@ -46,6 +46,7 @@ ged_bot_vertex_fuse_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -53,7 +54,7 @@ ged_bot_vertex_fuse_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
@@ -61,7 +62,7 @@ ged_bot_vertex_fuse_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    GED_DB_LOOKUP(gedp, old_dp, argv[2], LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(gedp, old_dp, argv[2], LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gedp, &intern, old_dp, bn_mat_identity, &rt_uniresource, BRLCAD_ERROR);
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
@@ -72,7 +73,7 @@ ged_bot_vertex_fuse_core(struct ged *gedp, int argc, const char *argv[])
     bot = (struct rt_bot_internal *)intern.idb_ptr;
     RT_BOT_CK_MAGIC(bot);
 
-    count = rt_bot_vertex_fuse(bot, &gedp->ged_wdbp->wdb_tol);
+    count = rt_bot_vertex_fuse(bot, &wdbp->wdb_tol);
     bu_vls_printf(gedp->ged_result_str, "Fused %d vertices\n", count);
 
     GED_DB_DIRADD(gedp, new_dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type, BRLCAD_ERROR);

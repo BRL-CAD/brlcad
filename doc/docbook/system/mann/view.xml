@@ -52,7 +52,7 @@ subcommands:
   <example><title>Get the view center.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>view center</userinput>
+      <prompt>mged&gt; </prompt><userinput>view center</userinput>
     </para>
     <para>Gets the view center.
     </para>
@@ -60,7 +60,7 @@ subcommands:
   <example><title>Set the view center at the origin of model space.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>view center 0 0 0</userinput>
+      <prompt>mged&gt; </prompt><userinput>view center 0 0 0</userinput>
     </para>
     <para>Sets the view center at the origin of model space.
     </para>

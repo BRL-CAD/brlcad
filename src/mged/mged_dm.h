@@ -48,6 +48,9 @@
 
 #define SL_TOL 0.03125  /* size of dead spot - 64/2048 */
 
+#define LAST_SOLID(_sp)       DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
+#define FIRST_SOLID(_sp)      ((_sp)->s_fullpath.fp_names[0])
+
 #define AMM_IDLE 0
 #define AMM_ROT 1
 #define AMM_TRAN 2
@@ -221,7 +224,7 @@ struct _view_state {
     int		vs_rc;
     int		vs_flag;
 
-    struct bview	*vs_gvp;
+    struct bview *vs_gvp;
     fastf_t	vs_i_Viewscale;
     mat_t	vs_model2objview;
     mat_t	vs_objview2model;
@@ -426,7 +429,7 @@ struct mged_dm {
     struct _rubber_band	*dm_rubber_band;
     struct _mged_variables *dm_mged_variables;
     struct _color_scheme	*dm_color_scheme;
-    struct bview_grid_state *dm_grid_state;
+    struct bv_grid_state *dm_grid_state;
     struct _axes_state	*dm_axes_state;
     struct _dlist_state	*dm_dlist_state;
 

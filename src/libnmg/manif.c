@@ -272,7 +272,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
     NMG_CK_SHELL(sp);
 
     if (tbl == (char *)NULL)
-	tbl = (char *)nmg_calloc(sp->r_p->m_p->maxindex, 1, "manifold table");
+	tbl = (char *)bu_calloc(sp->r_p->m_p->maxindex, 1, "manifold table");
 
     /*
      * points in shells form 0-manifold objects.
@@ -353,8 +353,8 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
     if (nmg_debug & NMG_DEBUG_MANIF)
 	bu_log("starting to paint non-dangling faces\n");
 
-    paint_meaning = (char *)nmg_calloc(sp->r_p->m_p->maxindex, sizeof(char), "paint meaning table");
-    paint_table = (long *)nmg_calloc(sp->r_p->m_p->maxindex, sizeof(long), "paint table");
+    paint_meaning = (char *)bu_calloc(sp->r_p->m_p->maxindex, sizeof(char), "paint meaning table");
+    paint_table = (long *)bu_calloc(sp->r_p->m_p->maxindex, sizeof(long), "paint table");
     paint_color = 1;
 
     for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
@@ -395,8 +395,8 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 	}
     }
 
-    nmg_free(paint_meaning, "paint meaning table");
-    nmg_free(paint_table, "paint table");
+    bu_free(paint_meaning, "paint meaning table");
+    bu_free(paint_table, "paint table");
 
     for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
 	BU_LIST_LINK_CHECK(&fu_p->l);
@@ -421,7 +421,7 @@ nmg_manifolds(struct model *m)
     if (nmg_debug & NMG_DEBUG_MANIF)
 	bu_log("nmg_manifolds(%p)\n", (void *)m);
 
-    tbl = (char *)nmg_calloc(m->maxindex, 1, "manifold table");
+    tbl = (char *)bu_calloc(m->maxindex, 1, "manifold table");
 
 
     for (BU_LIST_FOR(rp, nmgregion, &m->r_hd)) {

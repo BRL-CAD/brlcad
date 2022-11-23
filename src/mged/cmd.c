@@ -169,7 +169,7 @@ cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
-    if (ret & BRLCAD_HELP)
+    if (ret & GED_HELP)
 	return TCL_OK;
 
     if (ret)
@@ -202,7 +202,7 @@ cmd_ged_simulate_wrapper(ClientData clientData, Tcl_Interp *interpreter, int arg
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
-    if (ret & BRLCAD_HELP)
+    if (ret & GED_HELP)
 	return TCL_OK;
 
     if (ret)
@@ -223,6 +223,7 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 {
     const char **av;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
+    struct ged_bv_data *bdata = NULL;
 
     if (GEDP == GED_NULL)
 	return TCL_OK;
@@ -235,10 +236,15 @@ cmd_ged_info_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	    argc = 2;
 	    av = (const char **)bu_malloc(sizeof(char *)*(argc + 1), "f_list: av");
 	    av[0] = (const char *)argv[0];
-	    av[1] = (const char *)LAST_SOLID(illump)->d_namep;
-	    av[argc] = (const char *)NULL;
-	    (void)(*ctp->ged_func)(GEDP, argc, (const char **)av);
-	    Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
+	    if (illump && illump->s_u_data) {
+		bdata = (struct ged_bv_data *)illump->s_u_data;
+		if (bdata->s_fullpath.fp_len > 0) {
+		    av[1] = (const char *)LAST_SOLID(bdata)->d_namep;
+		    av[argc] = (const char *)NULL;
+		    (void)(*ctp->ged_func)(GEDP, argc, (const char **)av);
+		    Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
+		}
+	    }
 	    bu_free((void *)av, "cmd_ged_info_wrapper: av");
 	} else {
 	    (void)(*ctp->ged_func)(GEDP, argc, (const char **)argv);
@@ -332,7 +338,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interpreter, int argc, const char
     bu_free(GEDP->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
     GEDP->ged_gdp->gd_rt_cmd = NULL;
 
-    if (ret & BRLCAD_HELP)
+    if (ret & GED_HELP)
 	return TCL_OK;
 
     if (ret)
@@ -385,18 +391,18 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
     argv += bu_optind-1;
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
-    if (ret & BRLCAD_MORE)
+    if (ret & GED_MORE)
 	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (dont_draw) {
-	if (ret & BRLCAD_HELP || ret == BRLCAD_OK)
+	if (ret & GED_HELP || ret == BRLCAD_OK)
 	    return TCL_OK;
 
 	return TCL_ERROR;
     }
 
-    if (ret & BRLCAD_HELP)
+    if (ret & GED_HELP)
 	return TCL_OK;
 
     if (ret)
@@ -428,7 +434,7 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
     int arg;
     const char *new_cmd[3];
     struct rt_db_internal intern;
-    struct directory *outdp;
+    struct ged_bv_data *bdata = NULL;
 
     if (GEDP == GED_NULL)
 	return TCL_OK;
@@ -443,8 +449,12 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
     if (STATE == ST_S_EDIT) {
 	/* solid edit mode */
 	/* apply es_mat editing to parameters */
+	struct directory *outdp = RT_DIR_NULL;
 	transform_editing_solid(&intern, es_mat, &es_int, 0);
-	outdp = LAST_SOLID(illump);
+	if (illump && illump->s_u_data) {
+	    bdata = (struct ged_bv_data *)illump->s_u_data;
+	    outdp = LAST_SOLID(bdata);
+	}
 
 	if (argc < 2) {
 	    Tcl_AppendResult(interpreter, "You are in Primitive Edit mode, using edited primitive as outside primitive: ", (char *)NULL);
@@ -453,12 +463,17 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	}
 
 	arg = 1;
-	ret = ged_inside_internal(GEDP, &intern, argc, argv, arg, outdp->d_namep);
+	if (outdp) {
+	    ret = ged_inside_internal(GEDP, &intern, argc, argv, arg, outdp->d_namep);
+	} else {
+	    ret = TCL_ERROR;
+	}
     }  else if (STATE == ST_O_EDIT) {
 	mat_t newmat;
+	struct directory *outdp = RT_DIR_NULL;
 
 	/* object edit mode */
-	if (illump->s_Eflag) {
+	if (illump->s_old.s_Eflag) {
 	    Tcl_AppendResult(interpreter, "Cannot find inside of a processed (E'd) region\n",
 			     (char *)NULL);
 	    (void)signal(SIGINT, SIG_IGN);
@@ -468,26 +483,33 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interpreter, int argc, const c
 	/* apply es_mat and modelchanges editing to parameters */
 	bn_mat_mul(newmat, modelchanges, es_mat);
 	transform_editing_solid(&intern, newmat, &es_int, 0);
-	outdp = LAST_SOLID(illump);
+	if (illump && illump->s_u_data) {
+	    bdata = (struct ged_bv_data *)illump->s_u_data;
+	    outdp = LAST_SOLID(bdata);
+	}
 
-	if (argc < 2) {
+	if (illump && argc < 2) {
 	    Tcl_AppendResult(interpreter, "You are in Object Edit mode, using key solid as outside solid: ", (char *)NULL);
 	    add_solid_path_to_result(interpreter, illump);
 	    Tcl_AppendResult(interpreter, "\n", (char *)NULL);
 	}
 
 	arg = 1;
-	ret = ged_inside_internal(GEDP, &intern, argc, argv, arg, outdp->d_namep);
+	if (outdp) {
+	    ret = ged_inside_internal(GEDP, &intern, argc, argv, arg, outdp->d_namep);
+	} else {
+	    ret = TCL_ERROR;
+	}
     } else {
 	arg = 2;
-	ret = ged_inside(GEDP, argc, (const char **)argv);
+	ret = ged_exec(GEDP, argc, (const char **)argv);
     }
 
-    if (ret & BRLCAD_MORE)
+    if (ret & GED_MORE)
 	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
-    if (ret & BRLCAD_HELP) {
+    if (ret & GED_HELP) {
 	(void)signal(SIGINT, SIG_IGN);
 	return TCL_OK;
     }
@@ -525,21 +547,24 @@ cmd_ged_more_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
 	return TCL_OK;
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
-    if (ret & BRLCAD_MORE)
+    if (ret & GED_MORE)
 	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
-    if (ret & BRLCAD_HELP)
+    if (ret & GED_HELP)
 	return TCL_OK;
 
     if (ret)
 	return TCL_ERROR;
 
-    /* draw the "inside" solid */
+    /* FIXME: this wrapper shouldn't be aware of individual commands.
+     * presently needed to draw the changed arg for a limited set of
+     * commands.
+     */
     new_cmd[0] = "draw";
-    if (ctp->ged_func == ged_3ptarb)
+    if (BU_STR_EQUAL(argv[0], "3ptarb"))
 	new_cmd[1] = argv[1];
-    else if (ctp->ged_func == ged_inside)
+    else if (BU_STR_EQUAL(argv[0], "inside"))
 	new_cmd[1] = argv[2];
     else {
 	(void)signal(SIGINT, SIG_IGN);
@@ -582,7 +607,7 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
     }
 #endif
 
-    if (ret & BRLCAD_MORE)
+    if (ret & GED_MORE)
 	Tcl_AppendResult(interpreter, MORE_ARGS_STR, NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
@@ -595,7 +620,7 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	/* Stash previous result string state so who cmd doesn't replace it */
 	bu_vls_sprintf(&rcache, "%s", bu_vls_addr(GEDP->ged_result_str));
 
-	who_ret = ged_who(GEDP, 1, who_cmd);
+	who_ret = ged_exec(GEDP, 1, who_cmd);
 	if (who_ret == BRLCAD_OK) {
 	    /* worst possible is a bunch of 1-char names, allocate and
 	     * split into an argv accordingly.
@@ -631,7 +656,7 @@ cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, 
 	bu_vls_free(&rcache);
     }
 
-    if (ret & BRLCAD_HELP || ret == BRLCAD_OK)
+    if (ret & GED_HELP || ret == BRLCAD_OK)
 	return TCL_OK;
 
     return TCL_ERROR;
@@ -653,7 +678,7 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, c
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
-    if (ret & BRLCAD_HELP)
+    if (ret & GED_HELP)
 	return TCL_OK;
 
     if (ret)
@@ -682,14 +707,14 @@ cmd_ged_dm_wrapper(ClientData clientData, Tcl_Interp *interpreter, int argc, con
 
     if (!GEDP->ged_gvp)
 	GEDP->ged_gvp = view_state->vs_gvp;
-    GEDP->ged_dmp = (void *)mged_curr_dm->dm_dmp;
+    GEDP->ged_gvp->dmp = (void *)mged_curr_dm->dm_dmp;
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     (void)signal(SIGINT, SIG_IGN);
 
-    if (ret & BRLCAD_HELP || ret == BRLCAD_OK)
+    if (ret & GED_HELP || ret == BRLCAD_OK)
 	return TCL_OK;
 
     return TCL_ERROR;
@@ -999,18 +1024,11 @@ cmdline(struct bu_vls *vp, int record)
     if (glob_compat_mode) {
 	const char **av;
 	struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
-	struct rt_wdb *tmpwdbp;
 	if (GEDP == GED_NULL)
 	    return CMD_BAD;
 
 	/* Cache the state bits we might change in GEDP */
-	tmpwdbp = GEDP->ged_wdbp;
 	bu_vls_sprintf(&tmpstr, "%s", bu_vls_addr(GEDP->ged_result_str));
-
-	/* Make sure wdbp and GEDP->ged_wdbp agree - if we're
-	 * in non-GUI mode GEDP may not be properly initialized */
-	if (WDBP != GEDP->ged_wdbp)
-	    GEDP->ged_wdbp = WDBP;
 
 	/* Run ged_glob */
 	av = (const char **)bu_malloc(sizeof(char *)*3, "ged_glob argv");
@@ -1019,7 +1037,7 @@ cmdline(struct bu_vls *vp, int record)
 	av[1] = bu_vls_addr(vp);
 	av[2] = NULL;
 
-	(void)ged_glob(GEDP, 2, (const char **)av);
+	(void)ged_exec(GEDP, 2, (const char **)av);
 	if (bu_vls_strlen(GEDP->ged_result_str) > 0) {
 	    bu_vls_sprintf(&globbed, "%s", bu_vls_addr(GEDP->ged_result_str));
 	} else {
@@ -1028,7 +1046,6 @@ cmdline(struct bu_vls *vp, int record)
 
 	/* put GEDP back where it was */
 	bu_vls_sprintf(GEDP->ged_result_str, "%s", bu_vls_addr(&tmpstr));
-	GEDP->ged_wdbp = tmpwdbp;
 
 	/* cleanup */
 	bu_vls_free(&tmpstr);
@@ -1708,7 +1725,7 @@ cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interpreter, int argc, const
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    ret = ged_nmg_collapse(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (ret)
@@ -1742,7 +1759,7 @@ cmd_units(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     }
 
     sf = DBIP->dbi_base2local;
-    ret = ged_units(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (ret)
@@ -1770,7 +1787,7 @@ cmd_search(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, con
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    ret = ged_search(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (ret)
@@ -1796,7 +1813,7 @@ cmd_tol(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    ret = ged_tol(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (ret)
@@ -1814,7 +1831,7 @@ cmd_tol(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 
 
 /* defined in chgview.c */
-extern int edit_com(int argc, const char *argv[], int kind);
+extern int edit_com(int argc, const char *argv[]);
 
 /**
  * Run ged_blast, then update the views
@@ -1828,7 +1845,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
     if (GEDP == GED_NULL)
 	return TCL_OK;
 
-    ret = ged_blast(GEDP, argc, argv);
+    ret = ged_exec(GEDP, argc, argv);
     if (ret)
 	return TCL_ERROR;
 
@@ -1856,7 +1873,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
+	    if (BU_LIST_NON_EMPTY(&gdlp->dl_head_scene_obj)) {
 		non_empty = 1;
 		break;
 	    }
@@ -1870,7 +1887,7 @@ cmd_blast(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int ar
 
 	    av[0] = "autoview";
 	    av[1] = (char *)0;
-	    ged_autoview(GEDP, 1, (const char **)av);
+	    ged_exec(GEDP, 1, (const char **)av);
 
 	    (void)mged_svbase();
 
@@ -1901,11 +1918,11 @@ cmd_draw(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
 	gvp = GEDP->ged_gvp;
 
     if (gvp && DMP) {
-	gvp->gv_x_samples = dm_get_width(DMP);
-	gvp->gv_y_samples = dm_get_height(DMP);
+	gvp->gv_width = dm_get_width(DMP);
+	gvp->gv_height = dm_get_height(DMP);
     }
 
-    return edit_com(argc, argv, 1);
+    return edit_com(argc, argv);
 }
 
 
@@ -1918,7 +1935,7 @@ cmd_ev(ClientData UNUSED(clientData),
        int argc,
        const char *argv[])
 {
-    return edit_com(argc, argv, 3);
+    return edit_com(argc, argv);
 }
 
 
@@ -1932,7 +1949,7 @@ cmd_E(ClientData UNUSED(clientData),
       int argc,
       const char *argv[])
 {
-    return edit_com(argc, argv, 2);
+    return edit_com(argc, argv);
 }
 
 
@@ -1961,7 +1978,7 @@ cmd_shaded_mode(ClientData UNUSED(clientData),
 	++argv;
     }
 
-    ret = ged_shaded_mode(GEDP, argc, (const char **)argv);
+    ret = ged_exec(GEDP, argc, (const char **)argv);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);
 
     if (ret)
@@ -1995,7 +2012,7 @@ cmd_ps(ClientData UNUSED(clientData),
     av[0] = "process";
     av[1] = "list";
     av[2] = NULL;
-    ret = ged_process(GEDP, 2, (const char **)av);
+    ret = ged_exec(GEDP, 2, (const char **)av);
     /* For the next couple releases, print a rename notice */
     Tcl_AppendResult(interpreter, "(Note: former 'ps' command has been renamed to 'postscript')\n", NULL);
     Tcl_AppendResult(interpreter, bu_vls_addr(GEDP->ged_result_str), NULL);

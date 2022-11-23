@@ -1,10 +1,10 @@
 set(embedded_licenses
   alphanum.txt
   apple.txt
-  appleseed.txt
   art.txt
   ayam.txt
   b64.txt
+  breeze_style.txt
   bullet.txt
   chull2d.txt
   clipper.txt
@@ -15,7 +15,6 @@ set(embedded_licenses
   delaunator.txt
   DejaVu_Fonts.txt
   earcut.txt
-  Eigen.txt
   fnmatch.txt
   fontstash.txt
   fort.txt
@@ -30,30 +29,31 @@ set(embedded_licenses
   hv3_combobox.txt
   hv3_snit.txt
   Inconsolata.txt
+  json.txt
   libtermlib.txt
+  lod.txt
   lseg_lseg.txt
   lseg_pt.txt
   lz4.txt
   marching_cubes.txt
   msinttypes.txt
   mt19937ar.txt
-  naca.txt
   normalize.txt
   obr.txt
   OpenNURBS.txt
-  osg.txt
   osl.txt
   ParaView.txt
   pbrt.txt
   point_in_polygon.txt
   polygonizer.txt
   pstdint.txt
+  qconsolelistener.txt
   qsort.txt
   QFlowLayout.txt
-  QtADS.txt
   QuickHull.txt
   rply.txt
   RTree.txt
+  sat.txt
   search.txt
   sha1.txt
   shapelib.txt
@@ -61,11 +61,13 @@ set(embedded_licenses
   sobolseq.txt
   SPSR.txt
   sscanf.txt
+  stb_image.txt
   stb_truetype.txt
   STIX_Font_License_2010.txt
   strnstr.txt
   tcl.txt
   tcllib.txt
+  tiny_gltf.txt
   tinythread.txt
   tkcon.txt
   tri_pt.txt
@@ -74,6 +76,7 @@ set(embedded_licenses
   whereami.txt
   winmmap.txt
   x24.txt
+  xxhash.txt
   y2038.txt
   )
 

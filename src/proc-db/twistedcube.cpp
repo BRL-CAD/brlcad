@@ -129,7 +129,6 @@ MakeTwistedCubeTrimmingLoop(ON_Brep& brep,
     // surface's domain, start at the south side
     ON_Curve* c2;
     int c2i, ei = 0, bRev3d = 0;
-    ON_2dPoint q;
 
     // flags for isoparametric curves
     ON_Surface::ISO iso = ON_Surface::not_iso;

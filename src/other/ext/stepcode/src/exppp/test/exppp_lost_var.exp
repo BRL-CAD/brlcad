@@ -1,0 +1,17 @@
+-- derived from ap235
+-- test file for exppp
+SCHEMA proc_with_var;
+    PROCEDURE range_max
+        (r : REAL;
+        incl : BOOLEAN;
+        VAR rmax : REAL;
+        VAR rmax_in : BOOLEAN );
+        IF rmax = r THEN
+        rmax_in := rmax_in OR incl;
+        END_IF;
+        IF rmax < r THEN
+        rmax := r;
+        rmax_in := incl;
+        END_IF;
+    END_PROCEDURE;
+END_SCHEMA;

@@ -191,12 +191,13 @@ int
 analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
        const char *left, const char *right, struct bn_tol *tol, int solidcheck)
 {
-    int ret, i, j;
+    size_t i;
+    int ret, j;
     fastf_t oldtime, currtime;
     int ind = 0;
     int count = 0;
     struct rt_i *rtip = NULL;
-    int ncpus = bu_avail_cpus();
+    size_t ncpus = bu_avail_cpus();
     fastf_t *rays = NULL;
     struct rt_gen_worker_vars *state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars ), "state");
     struct raydiff_container *local_state = (struct raydiff_container *)bu_calloc(ncpus+1, sizeof(struct raydiff_container), "local state");
@@ -220,7 +221,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	state[i].foverlap = raydiff_overlap;
 	state[i].resp = &resp[i];
 	state[i].ind_src = &ind;
-	rt_init_resource(state[i].resp, i, rtip);
+	rt_init_resource(state[i].resp, (int)i, rtip);
 	/* local */
 	local_state[i].tol = 0.5;
 	local_state[i].left_name = bu_strdup(left);
@@ -260,7 +261,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     }
 #endif
 
-    rt_prep_parallel(rtip, ncpus);
+    rt_prep_parallel(rtip, (int)ncpus);
 
     currtime = bu_gettime();
     bu_log("prep time: %.1f\n", (currtime - oldtime)/1e6);
@@ -291,7 +292,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 		bu_ptbl_ins(&test_tbl, BU_PTBL_GET(local_state[i].right, j));
 	    }
 	}
-	analyze_seg_filter(&test_tbl, &diff_ray, &diff_flag, rtip, resp, 0.5, ncpus);
+	analyze_seg_filter(&test_tbl, &diff_ray, &diff_flag, rtip, resp, 0.5, (int)ncpus);
     } else {
 	/* Not restricting to solids, all are valid */
 	for (i = 0; i < ncpus+1; i++) {

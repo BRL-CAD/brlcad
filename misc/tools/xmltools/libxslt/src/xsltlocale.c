@@ -19,16 +19,6 @@
 #include "xsltlocale.h"
 #include "xsltutils.h"
 
-#if defined(__GLIBC__) && __GLIBC__ == 2 && __GLIBC_MINOR__ <= 2
-#define newlocale __newlocale
-#define freelocale __freelocale
-#define strxfrm_l __strxfrm_l
-#endif
-
-#ifndef LC_COLLATE_MASK
-#  define LC_COLLATE_MASK (1 << LC_COLLATE)
-#endif
-
 #define TOUPPER(c) (c & ~0x20)
 #define TOLOWER(c) (c | 0x20)
 #define ISALPHA(c) ((unsigned)(TOUPPER(c) - 'A') < 26)
@@ -95,48 +85,48 @@ xsltFreeLocales(void) {
  */
 xsltLocale
 xsltNewLocale(const xmlChar *languageTag) {
-#ifdef XSLT_LOCALE_XLOCALE
+#ifdef XSLT_LOCALE_POSIX
     xsltLocale locale;
     char localeName[XSLTMAX_LANGTAGLEN+6]; /* 6 chars for ".utf8\0" */
     const xmlChar *p = languageTag;
     const char *region = NULL;
     char *q = localeName;
     int i, llen;
-    
+
     /* Convert something like "pt-br" to "pt_BR.utf8" */
-    
+
     if (languageTag == NULL)
-    	return(NULL);
-    
+	return(NULL);
+
     for (i=0; i<XSLTMAX_ISO639LANGLEN && ISALPHA(*p); ++i)
 	*q++ = TOLOWER(*p++);
-    
+
     if (i == 0)
-    	return(NULL);
-    
+	return(NULL);
+
     llen = i;
-    
+
     if (*p) {
-    	if (*p++ != '-')
-    	    return(NULL);
+	if (*p++ != '-')
+	    return(NULL);
         *q++ = '_';
-	
+
 	for (i=0; i<XSLTMAX_ISO3166CNTRYLEN && ISALPHA(*p); ++i)
 	    *q++ = TOUPPER(*p++);
-    
-    	if (i == 0 || *p)
-    	    return(NULL);
-    	
+
+	if (i == 0 || *p)
+	    return(NULL);
+
         memcpy(q, ".utf8", 6);
         locale = newlocale(LC_COLLATE_MASK, localeName, NULL);
         if (locale != NULL)
             return(locale);
-        
+
         /* Continue without using country code */
-        
+
         q = localeName + llen;
     }
-    
+
     /* Try locale without territory, e.g. for Esperanto (eo) */
 
     memcpy(q, ".utf8", 6);
@@ -145,21 +135,21 @@ xsltNewLocale(const xmlChar *languageTag) {
         return(locale);
 
     /* Try to find most common country for language */
-    
+
     if (llen != 2)
         return(NULL);
 
     region = (char *)xsltDefaultRegion((xmlChar *)localeName);
     if (region == NULL)
         return(NULL);
-     
+
     q = localeName + llen;
     *q++ = '_';
     *q++ = region[0];
     *q++ = region[1];
     memcpy(q, ".utf8", 6);
     locale = newlocale(LC_COLLATE_MASK, localeName, NULL);
-    
+
     return(locale);
 #endif
 
@@ -184,7 +174,7 @@ xsltNewLocale(const xmlChar *languageTag) {
     *q++ = '-';
     if (*p) { /*if country tag is given*/
 	if (*p++ != '-') goto end;
-	
+
 	for (i=0; i<XSLTMAX_ISO3166CNTRYLEN && ISALPHA(*p); ++i)
 	    *q++ = TOUPPER(*p++);
 	if (i == 0 || *p) goto end;
@@ -197,7 +187,7 @@ xsltNewLocale(const xmlChar *languageTag) {
     region = xsltDefaultRegion(localeName);
     if (region == NULL) goto end;
 
-    strcpy(localeName + llen + 1, region);
+    strcpy((char *) localeName + llen + 1, (char *) region);
     locale = xslt_locale_WINAPI(localeName);
 end:
     return(locale);
@@ -214,10 +204,10 @@ xsltDefaultRegion(const xmlChar *localeName) {
     xmlChar c;
     /* region should be xmlChar, but gcc warns on all string assignments */
     const char *region = NULL;
-    
+
     c = localeName[1];
     /* This is based on the locales from glibc 2.3.3 */
-    
+
     switch (localeName[0]) {
         case 'a':
             if (c == 'a' || c == 'm') region = "ET";
@@ -355,8 +345,9 @@ xsltDefaultRegion(const xmlChar *localeName) {
  */
 void
 xsltFreeLocale(xsltLocale locale) {
-#ifdef XSLT_LOCALE_XLOCALE
-    freelocale(locale);
+#ifdef XSLT_LOCALE_POSIX
+    if (locale != NULL)
+        freelocale(locale);
 #endif
 }
 
@@ -378,8 +369,8 @@ xsltStrxfrm(xsltLocale locale, const xmlChar *string)
 #else
     size_t xstrlen, r;
     xsltLocaleChar *xstr;
-    
-#ifdef XSLT_LOCALE_XLOCALE
+
+#ifdef XSLT_LOCALE_POSIX
     xstrlen = strxfrm_l(NULL, (const char *)string, 0, locale) + 1;
     xstr = (xsltLocaleChar *) xmlMalloc(xstrlen);
     if (xstr == NULL) {
@@ -392,7 +383,7 @@ xsltStrxfrm(xsltLocale locale, const xmlChar *string)
 #endif
 
 #ifdef XSLT_LOCALE_WINAPI
-    xstrlen = MultiByteToWideChar(CP_UTF8, 0, string, -1, NULL, 0);
+    xstrlen = MultiByteToWideChar(CP_UTF8, 0, (char *) string, -1, NULL, 0);
     if (xstrlen == 0) {
         xsltTransformError(NULL, NULL, NULL, "xsltStrxfrm : MultiByteToWideChar check failed\n");
         return(NULL);
@@ -402,7 +393,7 @@ xsltStrxfrm(xsltLocale locale, const xmlChar *string)
         xsltTransformError(NULL, NULL, NULL, "xsltStrxfrm : out of memory\n");
         return(NULL);
     }
-    r = MultiByteToWideChar(CP_UTF8, 0, string, -1, xstr, xstrlen);
+    r = MultiByteToWideChar(CP_UTF8, 0, (char *) string, -1, xstr, xstrlen);
     if (r == 0) {
         xsltTransformError(NULL, NULL, NULL, "xsltStrxfrm : MultiByteToWideChar failed\n");
         xmlFree(xstr);
@@ -489,9 +480,11 @@ xsltIterateSupportedLocales(LPSTR lcid) {
     k = sscanf(lcid, "%lx", (long*)&p->lcid);
     if (k < 1) goto end;
     /*don't count terminating null character*/
-    k = GetLocaleInfoA(p->lcid, LOCALE_SISO639LANGNAME , iso639lang , sizeof(iso639lang ));
+    k = GetLocaleInfoA(p->lcid, LOCALE_SISO639LANGNAME,
+                       (char *) iso639lang, sizeof(iso639lang));
     if (--k < 1) goto end;
-    l = GetLocaleInfoA(p->lcid, LOCALE_SISO3166CTRYNAME, iso3136ctry, sizeof(iso3136ctry));
+    l = GetLocaleInfoA(p->lcid, LOCALE_SISO3166CTRYNAME,
+                       (char *) iso3136ctry, sizeof(iso3136ctry));
     if (--l < 1) goto end;
 
     {  /*fill results*/

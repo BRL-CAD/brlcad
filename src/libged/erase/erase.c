@@ -31,6 +31,7 @@
 
 #include "../ged_private.h"
 
+extern int ged_erase2_core(struct ged *gedp, int argc, const char **argv);
 /*
  * Erase objects from the display.
  *
@@ -38,6 +39,10 @@
 int
 ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 {
+    const char *cmd2 = getenv("GED_TEST_NEW_CMD_FORMS");
+    if (BU_STR_EQUAL(cmd2, "1"))
+	return ged_erase2_core(gedp, argc, argv);
+
     size_t i;
     int flag_A_attr=0;
     int flag_o_nonunique=1;
@@ -56,7 +61,7 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdName, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* skip past cmd */
@@ -135,7 +140,7 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 	    i += 2;
 	}
 
-	tbl = db_lookup_by_attr(gedp->ged_wdbp->dbip, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB, &avs, flag_o_nonunique);
+	tbl = db_lookup_by_attr(gedp->dbip, RT_DIR_REGION | RT_DIR_SOLID | RT_DIR_COMB, &avs, flag_o_nonunique);
 	bu_avs_free(&avs);
 	if (!tbl) {
 	    bu_log("Error: db_lookup_by_attr() failed!!\n");

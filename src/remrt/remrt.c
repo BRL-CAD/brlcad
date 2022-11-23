@@ -180,7 +180,6 @@ struct frame {
     struct bu_vls fr_after_cmd;	/* local commands, after frame done */
 };
 
-
 struct servers {
     struct pkg_conn *sr_pc;		/* PKC_NULL means slot not in use */
     struct bu_list sr_work;
@@ -229,7 +228,7 @@ int detached = 0;		/* continue after EOF */
 fd_set clients;
 int print_on = 1;
 
-int save_overlaps = 0;
+
 /*
  * Scan the ihost table.  For all eligible hosts that don't
  * presently have a server running, try to start a server.
@@ -278,6 +277,23 @@ struct frame *FreeFrame;
 /*
  * Macros to manage lists of frames
  */
+
+#define INIT_FRAME(p) { \
+	(p)->fr_magic = FRAME_MAGIC; \
+	bu_vls_init(&(p)->fr_cmd); \
+	bu_vls_init(&(p)->fr_after_cmd); \
+	(p)->fr_forw = NULL; \
+	(p)->fr_back = NULL; \
+	(p)->fr_number = 0; \
+	(p)->fr_server = 0; \
+	(p)->fr_filename = NULL; \
+	(p)->fr_tempfile = 0; \
+	(p)->fr_width = 0; \
+	(p)->fr_height = 0; \
+	(p)->fr_nrays = 0; \
+	(p)->fr_cpu = 0.0; \
+	(p)->fr_needgettree = 0; \
+    }
 
 #define GET_FRAME(p) { \
 	if (((p)=FreeFrame) == FRAME_NULL) {\
@@ -378,13 +394,13 @@ char *allocate_method[] = {
 static char *
 stamp(void)
 {
-    static char buf[128];
+    static char buf[256];
     time_t now;
     struct tm *tmp;
 
     (void)time(&now);
     tmp = localtime(&now);
-    sprintf(buf, "%2.2d/%2.2d %2.2d:%2.2d:%2.2d",
+    snprintf(buf, sizeof(buf), "%2.2d/%2.2d %2.2d:%2.2d:%2.2d",
 	    tmp->tm_mon+1, tmp->tm_mday,
 	    tmp->tm_hour, tmp->tm_min, tmp->tm_sec);
 
@@ -421,7 +437,7 @@ state_to_string(int state)
 	case SRST_DOING_GETTREES:
 	    return "GetTrees";
     }
-    sprintf(buf, "UNKNOWN_x%x", state);
+    snprintf(buf, sizeof(buf), "UNKNOWN_x%x", state);
     return buf;
 }
 
@@ -560,7 +576,10 @@ interactive_cmd(FILE *fp)
 	/* The rest happens when the connections close */
 	return;
     }
-    if ((i=strlen(buf)) <= 0) return;
+
+    i = strlen(buf);
+    if (i <= 0)
+	return;
 
     /* Feeble allowance for comments */
     if (buf[0] == '#') return;
@@ -639,7 +658,8 @@ check_input(int waittime)
     for (i = 0; i <(int)MAXSERVERS; i++) {
 	pc = servers[i].sr_pc;
 	if (pc == PKC_NULL) continue;
-	if ((val = pkg_process(pc)) < 0)
+	val = pkg_process(pc);
+	if (val < 0)
 	    drop_server(&servers[i], "pkg_process() error");
     }
 
@@ -803,7 +823,7 @@ prep_frame(struct frame *fr)
     fr->fr_height = height;
 
     bu_vls_trunc(&fr->fr_cmd, 0);	/* Start fresh */
-    sprintf(buf, "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g -x%x -X%x -T%e/%e",
+    snprintf(buf, sizeof(buf), "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g -x%x -X%x -T%e/%e",
 	    fr->fr_width, fr->fr_height,
 	    hypersample, rt_perspective,
 	    use_air, jitter,
@@ -815,7 +835,7 @@ prep_frame(struct frame *fr)
     bu_vls_strcat(&fr->fr_cmd, buf);
     if (benchmark) bu_vls_strcat(&fr->fr_cmd, " -B");
     if (!EQUAL(aspect, 1.0)) {
-	sprintf(buf, " -V%g", aspect);
+	snprintf(buf, sizeof(buf), " -V%g", aspect);
 	bu_vls_strcat(&fr->fr_cmd, buf);
     }
     bu_vls_strcat(&fr->fr_cmd, ";");
@@ -853,21 +873,21 @@ read_matrix(FILE *fp, struct frame *fr)
     CHECK_FRAME(fr);
 
     /* Visible part is from -1 to +1 in view space */
-    if (fscanf(fp, "%128s", number) != 1) goto eof;
+    if (fscanf(fp, "%127s", number) != 1) goto eof;
     snprintf(cmd, sizeof(cmd), "viewsize %s; eye_pt ", number);
     bu_vls_strcat(&(fr->fr_cmd), cmd);
 
     for (i = 0; i < 3; i++) {
-	if (fscanf(fp, "%128s", number) != 1) goto out;
+	if (fscanf(fp, "%127s", number) != 1) goto out;
 	snprintf(cmd, sizeof(cmd), "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
     }
 
-    sprintf(cmd, "; viewrot ");
+    snprintf(cmd, sizeof(cmd), "; viewrot ");
     bu_vls_strcat(&fr->fr_cmd, cmd);
 
     for (i = 0; i < 16; i++) {
-	if (fscanf(fp, "%128s", number) != 1) goto out;
+	if (fscanf(fp, "%127s", number) != 1) goto out;
 	snprintf(cmd, sizeof(cmd), "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
     }
@@ -1022,10 +1042,10 @@ create_outputfilename(struct frame *fr)
 
     /* Always create a file name to write into */
     if (outputfile) {
-	snprintf(name, 512, "%s.%ld", outputfile, fr->fr_number);
+	snprintf(name, sizeof(name), "%s.%ld", outputfile, fr->fr_number);
 	fr->fr_tempfile = 0;
     } else {
-	sprintf(name, "remrt.pix.%ld", fr->fr_number);
+	snprintf(name, sizeof(name), "remrt.pix.%ld", fr->fr_number);
 	fr->fr_tempfile = 1;
     }
     fr->fr_filename = bu_strdup(name);
@@ -1570,7 +1590,7 @@ send_do_lines(struct servers *sp, int start, int stop, int framenum)
 
     if (sp->sr_pc == PKC_NULL) return;
 
-    sprintf(obuf, "%d %d %d", start, stop, framenum);
+    snprintf(obuf, sizeof(obuf), "%d %d %d", start, stop, framenum);
     if (pkg_send(MSG_LINES, obuf, strlen(obuf)+1, sp->sr_pc) < 0)
 	drop_server(sp, "MSG_LINES pkg_send error");
 
@@ -2121,6 +2141,7 @@ cd_movie(const int argc, const char **argv)
     int a, b;
     int i;
 
+
     if (argc < 4)
 	return 1;
 
@@ -2139,6 +2160,9 @@ cd_movie(const int argc, const char **argv)
 	perror(argv[1]);
 	return -1;
     }
+
+    INIT_FRAME(&dummy_frame);
+
     /* Skip over unwanted beginning frames */
     for (i = 0; i < a; i++) {
 	if (read_matrix(fp, &dummy_frame) <= 0) {
@@ -2400,7 +2424,7 @@ cd_stat(const int UNUSED(argc), const char **UNUSED(argv))
 	if (sp->sr_state != SRST_READY) {
 	    state = state_to_string(sp->sr_state);
 	} else {
-	    sprintf(buf, "Running%d",
+	    snprintf(buf, sizeof(buf), "Running%d",
 		    server_q_len(sp));
 	    state = buf;
 	}
@@ -2832,9 +2856,9 @@ start_servers(struct timeval *nowp)
 static void
 eat_script(FILE *fp)
 {
-    char *buf;
-    char *ebuf;
-    char *nsbuf;
+    char *buf = NULL;
+    char *ebuf = NULL;
+    char *nsbuf = NULL;
     int argc;
     char *argv[64+1];
     struct bu_vls prelude = BU_VLS_INIT_ZERO;
@@ -2846,14 +2870,15 @@ eat_script(FILE *fp)
     bu_log("%s Starting to scan animation script\n", stamp());
 
     /* Once only, collect up any prelude */
-    while ((buf = rt_read_cmd(fp)) != (char *)0) {
-	if (bu_strncmp(buf, "start", 5) == 0) break;
-
+    while ((buf = rt_read_cmd(fp)) != NULL) {
+	if (bu_strncmp(buf, "start", 5) == 0) {
+	    break;
+	}
 	bu_vls_strcat(&prelude, buf);
 	bu_vls_strcat(&prelude, ";");
 	bu_free(buf, "prelude line");
     }
-    if (buf == (char *)0) {
+    if (buf == NULL) {
 	bu_log("unexpected EOF while reading script for first frame 'start'\n");
 	bu_vls_free(&prelude);
 	return;
@@ -2864,9 +2889,10 @@ eat_script(FILE *fp)
 	int needtree;
 	needtree = 0;
 	/* Gobble until "end" keyword seen */
-	while ((ebuf = rt_read_cmd(fp)) != (char *)0) {
+	while ((ebuf = rt_read_cmd(fp)) != NULL) {
 	    if (bu_strncmp(ebuf, "end", 3) == 0) {
 		bu_free(ebuf, "end line");
+		ebuf = NULL;
 		break;
 	    }
 	    if (bu_strncmp(ebuf, "clean", 5) == 0) {
@@ -2887,6 +2913,8 @@ eat_script(FILE *fp)
 	/* Gobble trailer until next "start" keyword seen */
 	while ((nsbuf = rt_read_cmd(fp)) != (char *)0) {
 	    if (bu_strncmp(nsbuf, "start", 5) == 0) {
+		// Note - deliberately keeping nsbuf in this case
+		// for later use
 		break;
 	    }
 	    bu_vls_strcat(&finish, nsbuf);
@@ -2899,6 +2927,7 @@ eat_script(FILE *fp)
 	if (argc < 2) {
 	    bu_log("bad 'start' line\n");
 	    bu_free(buf, "bad start line");
+	    buf = NULL;
 	    goto out;
 	}
 	frame = atoi(argv[1]);
@@ -2932,6 +2961,10 @@ out:
     bu_vls_free(&prelude);
     bu_vls_free(&body);
     bu_vls_free(&finish);
+    if (nsbuf)
+	bu_free(nsbuf, "script start line");
+    if (buf)
+	bu_free(buf, "buf");
 
     /* For a few hundred frames, it all can take a little while */
     bu_log("%s Animation script loaded\n", stamp());
@@ -3170,7 +3203,6 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 	drop_server(sp, "bu_struct_import error");
 	goto out;
     }
-    i = (size_t)cnt;
 
     if (rem_debug) {
 	bu_log("%s %s %d/%d..%d, ray=%d, cpu=%.2g, el=%g\n",
@@ -3227,7 +3259,6 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     if (pc->pkc_len - ext.ext_nbytes < i) {
 	bu_log("short scanline, s/b=%zu, was=%zu\n",
 	       i, pc->pkc_len - ext.ext_nbytes);
-	i = pc->pkc_len - ext.ext_nbytes;
 	drop_server(sp, "short scanline");
 	goto out;
     }
@@ -3355,7 +3386,7 @@ out:
 static void
 host_helper(FILE *fp)
 {
-    char line[512];
+    char line[1024];
     char cmd[553];
     char host[128];
     char loc_db[128];
@@ -3374,7 +3405,7 @@ host_helper(FILE *fp)
 	loc_db[0] = '\0';
 	rem_db[0] = '\0';
 	rem_dir[0] = '\0';
-	cnt = sscanf(line, "%128s %d %128s %128s %128s",
+	cnt = sscanf(line, "%127s %d %127s %127s %127s",
 		     host, &port, rem_dir, loc_db, rem_db);
 	if (cnt != 3 && cnt != 5) {
 	    bu_log("host_helper: cnt=%d, aborting\n", cnt);
@@ -3559,11 +3590,11 @@ main(int argc, char *argv[])
     /* Listen for our PKG connections */
     int tcp_num = 0;
     if ((tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, remrt_log)) < 0) {
-	char num[8];
+	char num[128];
 	/* Do it by the numbers */
 	for (i = 0; i < 10; i++) {
 	    tcp_num = REMRT_TCP_DEFAULT_PORT+i;
-	    sprintf(num, "%d", tcp_num);
+	    snprintf(num, sizeof(num), "%d", tcp_num);
 	    if ((tcp_listen_fd = pkg_permserver(num, "tcp", 8, remrt_log)) < 0)
 		continue;
 	    break;
@@ -3637,11 +3668,11 @@ main(int argc, char *argv[])
 	/* Build queue of work to be done */
 	if (!matflag) {
 	    struct frame *fr;
-	    char buf[128];
+	    char buf[256];
 	    /* if not -M, queue off single az/el frame */
 	    GET_FRAME(fr);
 	    prep_frame(fr);
-	    sprintf(buf, "ae %g %g;", azimuth, elevation);
+	    snprintf(buf, sizeof(buf), "ae %g %g;", azimuth, elevation);
 	    bu_vls_strcat(&fr->fr_cmd, buf);
 	    if (create_outputfilename(fr) < 0) {
 		FREE_FRAME(fr);

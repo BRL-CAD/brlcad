@@ -77,7 +77,7 @@ find_metaball_pnt_nearest_pnt(const struct bu_list *metaball_hd, const point_t m
     for (BU_LIST_FOR(mbpp, wdb_metaball_pnt, metaball_hd)) {
 	fastf_t dist;
 
-	dist = bn_dist_line3_pnt3(model_pt, dir, mbpp->coord);
+	dist = bg_dist_line3_pnt3(model_pt, dir, mbpp->coord);
 	if (dist < min_dist) {
 	    min_dist = dist;
 	    nearest = mbpp;
@@ -111,7 +111,7 @@ ged_find_metaball_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[]
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3 && argc != 5) {
@@ -129,7 +129,7 @@ ged_find_metaball_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[]
 	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
@@ -149,8 +149,10 @@ ged_find_metaball_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[]
     /* convert from double to fastf_t */
     VMOVE(model_pt, scan);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) & BRLCAD_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) & BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
+    }
 
     nearest = find_metaball_pnt_nearest_pnt(&((struct rt_metaball_internal *)intern.idb_ptr)->metaball_ctrl_head,
 					    model_pt, gedp->ged_gvp->gv_view2model);
@@ -170,17 +172,14 @@ ged_find_metaball_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[]
 struct wdb_metaball_pnt *
 _ged_metaball_add_pnt(struct rt_metaball_internal *mbip, struct wdb_metaball_pnt *mbp, const point_t new_pt)
 {
-    struct wdb_metaball_pnt *last;
-    struct wdb_metaball_pnt *newmbp;
-
+    struct wdb_metaball_pnt *newmbp = NULL;
     RT_METABALL_CK_MAGIC(mbip);
 
     if (mbp) {
 	BU_CKMAG(mbp, WDB_METABALLPT_MAGIC, "metaball point");
-	last = mbp;
     } else {
 	/* add new point to end of metaball solid */
-	last = BU_LIST_LAST(wdb_metaball_pnt, &mbip->metaball_ctrl_head);
+	struct wdb_metaball_pnt *last = BU_LIST_LAST(wdb_metaball_pnt, &mbip->metaball_ctrl_head);
 
 	if (last->l.magic == BU_LIST_HEAD_MAGIC) {
 	    BU_GET(newmbp, struct wdb_metaball_pnt);
@@ -237,7 +236,7 @@ ged_metaball_add_pnt_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
@@ -255,7 +254,7 @@ ged_metaball_add_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
@@ -268,8 +267,10 @@ ged_metaball_add_pnt_core(struct ged *gedp, int argc, const char *argv[])
     /* convert from double to fastf_t */
     VMOVE(view_mb_pt, scan);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == BRLCAD_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) == BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
+    }
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_METABALL) {
@@ -371,7 +372,7 @@ ged_metaball_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 3) {
@@ -389,7 +390,7 @@ ged_metaball_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
@@ -400,7 +401,7 @@ ged_metaball_delete_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to get internal for %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -457,7 +458,7 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 4 || 5 < argc) {
@@ -486,7 +487,7 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, last, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, last, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: failed to find %s", argv[0], argv[1]);
 	return BRLCAD_ERROR;
@@ -501,10 +502,12 @@ ged_metaball_move_pnt_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "%s: bad point - %s", argv[0], argv[3]);
 	return BRLCAD_ERROR;
     }
-    VSCALE(mb_pt, scan, gedp->ged_wdbp->dbip->dbi_local2base);
+    VSCALE(mb_pt, scan, gedp->dbip->dbi_local2base);
 
-    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == BRLCAD_ERROR)
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], wdbp, mat) == BRLCAD_ERROR) {
 	return BRLCAD_ERROR;
+    }
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_METABALL) {

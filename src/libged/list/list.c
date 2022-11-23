@@ -57,7 +57,7 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
@@ -86,19 +86,26 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 	    tmp_argv[0] = listeval;
 	    if (verbose) {
 		tmp_argv[1] = (char *)argv[arg];
-		ged_pathsum(gedp, 2, (const char **)tmp_argv);
+		ged_exec(gedp, 2, (const char **)tmp_argv);
 	    } else {
 		tmp_argv[1] = terse_parm;
 		tmp_argv[2] = (char *)argv[arg];
-		ged_pathsum(gedp, 3, (const char **)tmp_argv);
+		ged_exec(gedp, 3, (const char **)tmp_argv);
 	    }
 	} else if (strchr(argv[arg], '/')) {
+	   // Still need to check if the slash containing string is an object first...
+	    if ((dp = db_lookup(gedp->dbip, argv[arg], LOOKUP_QUIET)) != RT_DIR_NULL) {
+		_ged_do_list(gedp, dp, verbose);	/* very verbose */
+		continue;
+	    }
+
 	    struct db_tree_state ts;
 	    struct db_full_path path;
 
 	    db_full_path_init(&path);
-	    ts = gedp->ged_wdbp->wdb_initial_tree_state;     /* struct copy */
-	    ts.ts_dbip = gedp->ged_wdbp->dbip;
+	    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+	    ts = wdbp->wdb_initial_tree_state;     /* struct copy */
+	    ts.ts_dbip = gedp->dbip;
 	    ts.ts_resp = &rt_uniresource;
 	    MAT_IDN(ts.ts_mat);
 
@@ -107,7 +114,7 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 
 	    dp = DB_FULL_PATH_CUR_DIR(&path);
 
-	    if ((id = rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, ts.ts_mat, &rt_uniresource)) < 0) {
+	    if ((id = rt_db_get_internal(&intern, dp, gedp->dbip, ts.ts_mat, &rt_uniresource)) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);
 		continue;
 	    }
@@ -117,14 +124,14 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "%s:  ", argv[arg]);
 
 	    if (!OBJ[id].ft_describe
-		|| OBJ[id].ft_describe(gedp->ged_result_str, &intern, verbose, gedp->ged_wdbp->dbip->dbi_base2local) < 0)
+		|| OBJ[id].ft_describe(gedp->ged_result_str, &intern, verbose, gedp->dbip->dbi_base2local) < 0)
 	    {
 		bu_vls_printf(gedp->ged_result_str, "%s: describe error", dp->d_namep);
 	    }
 
 	    rt_db_free_internal(&intern);
 	} else {
-	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((dp = db_lookup(gedp->dbip, argv[arg], LOOKUP_NOISY)) == RT_DIR_NULL)
 		continue;
 
 	    _ged_do_list(gedp, dp, verbose);	/* very verbose */

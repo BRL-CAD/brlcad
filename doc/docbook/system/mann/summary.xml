@@ -40,7 +40,7 @@
   <example><title>List a summary of primitive shapes and regions for the current database.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>summary sr</userinput>
+      <prompt>mged&gt; </prompt><userinput>summary sr</userinput>
     </para>
     <para>Lists a summary of primitive shapes and regions for the current database.
     </para>

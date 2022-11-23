@@ -49,7 +49,7 @@ summary_dir(struct ged *gedp,
 
     sol = comb = reg = 0;
     for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & RT_DIR_SOLID)
 		sol++;
 	    if (dp->d_flags & RT_DIR_COMB) {
@@ -72,14 +72,14 @@ summary_dir(struct ged *gedp,
     /* Print all names matching the flags parameter */
     /* THIS MIGHT WANT TO BE SEPARATED OUT BY CATEGORY */
 
-    dirp = _ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
+    dirp = _ged_dir_getspace(gedp->dbip, 0);
     dirp0 = dirp;
     /*
      * Walk the directory list adding pointers (to the directory entries
      * of interest) to the array
      */
     for (i = 0; i < RT_DBNHASH; i++)
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw)
 	    if (dp->d_flags & flag)
 		*dirp++ = dp;
 

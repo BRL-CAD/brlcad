@@ -93,7 +93,7 @@ icv_image_t *
 png_read(const char* filename)
 {
     size_t i;
-    FILE *fp;
+    FILE *fp = NULL;
     png_structp png_p;
     png_infop info_p;
     char header[8];
@@ -116,23 +116,27 @@ png_read(const char* filename)
 
     if (fread(header, 8, 1, fp) != 1) {
 	bu_log("png-pix: ERROR: Failed while reading file header!!!\n");
+	fclose(fp);
 	return NULL;
     }
 
     if (png_sig_cmp((png_bytep)header, 0, 8)) {
 	bu_log("png-pix: This is not a PNG file!!!\n");
+	fclose(fp);
 	return NULL;
     }
 
     png_p = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_p) {
 	bu_log("png-pix: png_create_read_struct() failed!!\n");
+	fclose(fp);
 	return NULL;
     }
 
     info_p = png_create_info_struct(png_p);
     if (!info_p) {
 	bu_log("png-pix: png_create_info_struct() failed!!\n");
+	fclose(fp);
 	return NULL;
     }
 

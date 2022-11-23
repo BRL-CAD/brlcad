@@ -259,12 +259,12 @@ Chop(void)					/* chop vectors into segments */
 		   internal to Intersect().	      */
 		i = Intersect(pp, segp);
 		if (i != NULL) {
-		    if ((!EndPoint(i, pp)
-			 && !Split(i, pp, &piecehead))
-			|| (!EndPoint(i, segp)
-			    && !Split(i, segp, &seghead))
-			)	/* out of memory */
+		    if ((!EndPoint(i, pp) && !Split(i, pp, &piecehead))
+			    || (!EndPoint(i, segp) && !Split(i, segp, &seghead))) {
+			/* out of memory */
+			Toss((void *)piecehead.links);
 			return 0;
+		    }
 
 		    break;	/* next `segp' */
 		}
@@ -404,6 +404,11 @@ Search(void)				/* output bounding polygon */
 #ifdef DEBUG
 	fprintf(stderr, "from %g", from);
 #endif
+
+	// If we don't have currentp, no way to proceed
+	if (!currentp)
+	    return 1;
+
 	endq = currentp->firstq;
 	if (endq == NULL) {
 	    if (vflag && !initial)

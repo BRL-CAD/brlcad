@@ -254,6 +254,7 @@ Copy_solid(struct ged *gedp,
 	   struct directory *dp,
 	   mat_t xform)
 {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct directory *found;
     struct rt_db_internal sol_int;
     struct object_use *use;
@@ -261,7 +262,7 @@ Copy_solid(struct ged *gedp,
     RT_CK_DIR(dp);
 
     /*
-    struct rt_i *rtip = rt_new_rti(gedp->ged_wdbp->dbip);
+    struct rt_i *rtip = rt_new_rti(gedp->dbip);
     if (rt_gettree(rtip, dp->d_namep) < 0) return NULL;
     rt_free_rti(rtip);
     */
@@ -284,7 +285,7 @@ Copy_solid(struct ged *gedp,
 
     /* Look for a copy that already has this transform matrix */
     for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
-	if (bn_mat_is_equal(xform, use->xform, &gedp->ged_wdbp->wdb_tol)) {
+	if (bn_mat_is_equal(xform, use->xform, &wdbp->wdb_tol)) {
 	    /* found a match, no need to make another copy */
 	    use->used = 1;
 	    return use->dp;
@@ -313,13 +314,13 @@ Copy_solid(struct ged *gedp,
 	return RT_DIR_NULL;
     }
 
-    if (rt_db_get_internal(&sol_int, dp, gedp->ged_wdbp->dbip, xform, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&sol_int, dp, gedp->dbip, xform, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot import solid %s\n", dp->d_namep);
 	return RT_DIR_NULL;
     }
 
     RT_CK_DB_INTERNAL(&sol_int);
-    if (rt_db_put_internal(found, gedp->ged_wdbp->dbip, &sol_int, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(found, gedp->dbip, &sol_int, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot write copy solid (%s) to database\n", found->d_namep);
 	return RT_DIR_NULL;
     }
@@ -333,6 +334,7 @@ Copy_comb(struct ged *gedp,
 	  struct directory *dp,
 	  mat_t xform)
 {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct object_use *use;
     struct directory *found;
     struct rt_db_internal intern;
@@ -342,7 +344,7 @@ Copy_comb(struct ged *gedp,
 
     /* Look for a copy that already has this transform matrix */
     for (BU_LIST_FOR (use, object_use, &dp->d_use_hd)) {
-	if (bn_mat_is_equal(xform, use->xform, &gedp->ged_wdbp->wdb_tol)) {
+	if (bn_mat_is_equal(xform, use->xform, &wdbp->wdb_tol)) {
 	    /* found a match, no need to make another copy */
 	    use->used = 1;
 	    return use->dp;
@@ -350,13 +352,13 @@ Copy_comb(struct ged *gedp,
     }
 
     /* if we can't get records for this combination, just leave it alone */
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
 	return dp;
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     /* copy members */
     if (comb->tree)
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_copy_membs,
+	db_tree_funcleaf(gedp->dbip, comb, comb->tree, Do_copy_membs,
 			 (void *)xform, (void *)gedp, (void *)0, (void *)NULL);
 
     /* Get a use of this object */
@@ -381,7 +383,7 @@ Copy_comb(struct ged *gedp,
 	return RT_DIR_NULL;
     }
 
-    if (rt_db_put_internal(found, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(found, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal failed for %s\n", dp->d_namep);
 	rt_db_free_internal(&intern);
 	return RT_DIR_NULL;
@@ -443,7 +445,7 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
@@ -452,7 +454,7 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* get directory pointer for arg */
-    if ((old_dp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
+    if ((old_dp = db_lookup(gedp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL)
 	return BRLCAD_ERROR;
 
     if (old_dp->d_flags & RT_DIR_SOLID) {
@@ -464,7 +466,7 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
@@ -474,26 +476,26 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Count uses in the tree being pushed (updates dp->d_uses) */
-    db_functree(gedp->ged_wdbp->dbip, old_dp, increment_uses, increment_uses, &rt_uniresource, NULL);
+    db_functree(gedp->dbip, old_dp, increment_uses, increment_uses, &rt_uniresource, NULL);
 
     /* Do a simple reference count to find top level objects */
     for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting.\n");
 		return BRLCAD_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    if (comb->tree)
-		db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_ref_incr,
+		db_tree_funcleaf(gedp->dbip, comb, comb->tree, Do_ref_incr,
 				 (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL);
 	    rt_db_free_internal(&intern);
 	}
@@ -504,7 +506,7 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_flags & RT_DIR_SOLID)
 		continue;
 
@@ -520,7 +522,7 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
 
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (!(dp->d_flags & (RT_DIR_SOLID | RT_DIR_COMB)))
 		continue;
 
@@ -533,43 +535,43 @@ ged_xpush_core(struct ged *gedp, int argc, const char *argv[])
 	struct directory *dp;
 
 	dp = (struct directory *)BU_PTBL_GET(&tops, i);
-	db_functree(gedp->ged_wdbp->dbip, dp, increment_nrefs, increment_nrefs, &rt_uniresource, NULL);
+	db_functree(gedp->dbip, dp, increment_nrefs, increment_nrefs, &rt_uniresource, NULL);
     }
 
     /* Free list of tree-tops */
     bu_ptbl_free(&tops);
 
     /* Make new names */
-    db_functree(gedp->ged_wdbp->dbip, old_dp, Make_new_name, Make_new_name, &rt_uniresource, (void *)gedp);
+    db_functree(gedp->dbip, old_dp, Make_new_name, Make_new_name, &rt_uniresource, (void *)gedp);
 
     MAT_IDN(xform);
 
     /* Make new objects */
-    if (rt_db_get_internal(&intern, old_dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, old_dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: cannot load %s feom the database!!!\n", old_dp->d_namep);
 	bu_vls_printf(gedp->ged_result_str, "\tNothing has been changed!!\n");
-	Free_uses(gedp->ged_wdbp->dbip);
+	Free_uses(gedp->dbip);
 	return BRLCAD_ERROR;
     }
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     if (!comb->tree) {
-	Free_uses(gedp->ged_wdbp->dbip);
+	Free_uses(gedp->dbip);
 	return BRLCAD_OK;
     }
 
-    db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_copy_membs,
+    db_tree_funcleaf(gedp->dbip, comb, comb->tree, Do_copy_membs,
 		     (void *)xform, (void *)gedp, (void *)0, (void *)NULL);
 
-    if (rt_db_put_internal(old_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(old_dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "rt_db_put_internal failed for %s\n", old_dp->d_namep);
 	rt_db_free_internal(&intern);
-	Free_uses(gedp->ged_wdbp->dbip);
+	Free_uses(gedp->dbip);
 	return BRLCAD_ERROR;
     }
 
     /* Free use lists and delete unused directory entries */
-    Free_uses(gedp->ged_wdbp->dbip);
+    Free_uses(gedp->dbip);
     return BRLCAD_OK;
 }
 

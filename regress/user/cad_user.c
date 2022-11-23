@@ -56,17 +56,15 @@ main(int ac, char *av[]) {
     gcmd[0] = "search";
     gcmd[1] = "/";
 
-    if (ged_search(gedp, 2, (const char **)gcmd) != BRLCAD_OK) {
+    if (ged_exec(gedp, 2, (const char **)gcmd) != BRLCAD_OK) {
 	goto user_test_fail;
     }
 
     ged_close(gedp);
-    BU_PUT(gedp, struct ged);
     return 0;
 
 user_test_fail:
     ged_close(gedp);
-    BU_PUT(gedp, struct ged);
     return 1;
 }
 

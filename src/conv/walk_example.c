@@ -272,7 +272,7 @@ int main(int ac, char *av[])
     arg_count++;
 
     init_state = rt_initial_tree_state;
-    db_walk_tree(rtip->rti_dbip, /* database instance */
+    int ret = db_walk_tree(rtip->rti_dbip, /* database instance */
 		 ac-arg_count,		/* number of trees to get from the database */
 		 (const char **)&av[arg_count],
 		 1, /* number of cpus to use */
@@ -284,7 +284,7 @@ int main(int ac, char *av[])
 
     /* at this point you can do things with the geometry you have obtained */
 
-    return 0;
+    return ret;
 }
 
 

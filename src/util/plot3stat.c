@@ -172,9 +172,11 @@ main(int argc, char **argv)
     }
 
     while ((c = getc(fp)) != EOF) {
+
 	/* look it up */
 	if (c < 'A' || c > 'z') {
-	    up = &uerror;
+	    fprintf(stderr, "Bad command '%c' (0x%02x)\n", c, c);
+	    continue;
 	} else {
 	    up = &letters[ c - 'A' ];
 	}

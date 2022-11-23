@@ -115,6 +115,7 @@ rt_in_rpp2(const double3 pt, const double3 invdir,
 #define ID_REC          7       /**< @brief Right Elliptical Cylinder [TGC special] */
 #define ID_SPH          10      /**< @brief Sphere */
 #define ID_EBM          12      /**< @brief Extruded bitmap solid */
+#define ID_ARBN         14      /**< @brief ARB with N faces */
 #define ID_PARTICLE     16      /**< @brief Particle system solid */
 #define ID_RPC          17      /**< @brief Right Parabolic Cylinder [TGC special] */
 #define ID_RHC          18      /**< @brief Right Hyperbolic Cylinder [TGC special] */
@@ -122,7 +123,10 @@ rt_in_rpp2(const double3 pt, const double3 invdir,
 #define ID_EHY          20      /**< @brief Elliptical Hyperboloid  */
 #define ID_ETO          21      /**< @brief Elliptical Torus  */
 #define ID_BOT          30      /**< @brief Bag o' triangles */
+#define ID_SUPERELL	35      /**< @brief Superellipsoid */
+#define ID_HYP		38      /**< @brief Hyperboloid */
 #define ID_HRT          43      /**< @brief Heart */
+
 
 
 inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, const int id, global const void *args)
@@ -135,6 +139,7 @@ inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const
     case ID_REC:	return rec_shot(res, r_pt, r_dir, idx, args);
     case ID_SPH:	return sph_shot(res, r_pt, r_dir, idx, args);
     case ID_EBM:	return ebm_shot(res, r_pt, r_dir, idx, args);
+    case ID_ARBN:	return arbn_shot(res, r_pt, r_dir, idx, args);
     case ID_PARTICLE:	return part_shot(res, r_pt, r_dir, idx, args);
     case ID_EHY:	return ehy_shot(res, r_pt, r_dir, idx, args);
     case ID_ARS:
@@ -144,6 +149,8 @@ inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const
     case ID_RHC:	return rhc_shot(res, r_pt, r_dir, idx, args);
     case ID_RPC:	return rpc_shot(res, r_pt, r_dir, idx, args);
     case ID_HRT:	return hrt_shot(res, r_pt, r_dir, idx, args);
+    case ID_SUPERELL:	return superell_shot(res, r_pt, r_dir, idx, args);
+    case ID_HYP:	return hyp_shot(res, r_pt, r_dir, idx, args);
     default:		return 0;
     };
 }
@@ -159,6 +166,7 @@ inline void norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, cons
     case ID_EHY:	ehy_norm(hitp, r_pt, r_dir, args);	break;
     case ID_SPH:	sph_norm(hitp, r_pt, r_dir, args);	break;
     case ID_EBM:	ebm_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_ARBN:	arbn_norm(hitp, r_pt, r_dir, args);	break;
     case ID_PARTICLE:	part_norm(hitp, r_pt, r_dir, args);	break;
     case ID_ARS:
     case ID_BOT:	bot_norm(hitp, r_pt, r_dir, args);	break;
@@ -167,6 +175,8 @@ inline void norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, cons
     case ID_RHC:	rhc_norm(hitp, r_pt, r_dir, args);	break;
     case ID_RPC:	rpc_norm(hitp, r_pt, r_dir, args);	break;
     case ID_HRT:	hrt_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_SUPERELL:	superell_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_HYP:	hyp_norm(hitp, r_pt, r_dir, args);	break;
     default:							break;
     };
 }
@@ -403,7 +413,7 @@ void do_segp(RESULT_TYPE *res, const uint idx,
 
 
 __kernel void
-do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
+do_pixel(global uchar *pixels, const uchar2 o, const int cur_pixel,
 	 const int last_pixel, const int width, global float *rand_halftab,
 	 const uint randhalftabsize, const uchar3 background,const uchar3 nonbackground,
 	 const double airdensity, const double3 haze, const double gamma,
@@ -544,14 +554,8 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
 
     if (o.s0 != o.s1) {
 	/* write color */
-	global uchar *colorp = (global uchar*)pixels+id*o.s2+o.s0;
+	global uchar *colorp = (global uchar*)pixels+id*o.s1+o.s0;
 	vstore3(rgb, 0, colorp);
-    }
-    if (o.s1 != o.s2) {
-	/* write depth */
-	ulong depth = bu_cv_htond(as_ulong(hitp->hit_dist));
-	global ulong *depthp = (global ulong*)pixels+id*o.s2+o.s1;
-	*depthp = depth;
     }
 }
 #else
@@ -625,7 +629,7 @@ store_segs(RESULT_TYPE segs, global uint *h,
 }
 
 __kernel void
-shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *head_partition,
+shade_segs(global uchar *pixels, const uchar2 o, RESULT_TYPE segs, global uint *head_partition,
          const int cur_pixel, const int last_pixel, const int width,
 	 global float *rand_halftab, const uint randhalftabsize,
 	 const uchar3 background, const uchar3 nonbackground,
@@ -768,14 +772,8 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
 
     if (o.s0 != o.s1) {
 	/* write color */
-	global uchar *colorp = (global uchar*)pixels+id*o.s2+o.s0;
+	global uchar *colorp = (global uchar*)pixels+id*o.s1+o.s0;
 	vstore3(rgb, 0, colorp);
-    }
-    if (o.s1 != o.s2) {
-	/* write depth */
-	ulong depth = bu_cv_htond(as_ulong(hitp.hit_dist));
-	global ulong *depthp = (global ulong*)pixels+id*o.s2+o.s1;
-	*depthp = depth;
     }
 }
 #endif

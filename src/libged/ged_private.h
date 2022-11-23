@@ -31,13 +31,15 @@
 #include <time.h>
 
 #include "bu/avs.h"
+#include "bu/cmd.h"
 #include "bu/opt.h"
 #include "bg/spsr.h"
 #include "bg/trimesh.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "rt/geom.h"
-#include "dm/bview_util.h"
+#include "bv/defines.h"
+#include "bv/util.h"
 #include "ged.h"
 
 __BEGIN_DECLS
@@ -64,7 +66,7 @@ __BEGIN_DECLS
 #define _GED_SHADED_MODE_BOTS   1
 #define _GED_SHADED_MODE_ALL    2
 #define _GED_BOOL_EVAL          3
-#define _GED_static_LINE        4
+#define _GED_HIDDEN_LINE        4
 #define _GED_SHADED_MODE_EVAL   5
 
 #define _GED_DRAW_WIREFRAME 1
@@ -89,11 +91,15 @@ __BEGIN_DECLS
 #define GED_CREATE_VLIST_DISPLAY_LIST_FUNC_NULL ((ged_create_vlist_display_list_func_t)0)
 #define GED_DESTROY_VLIST_FUNC_NULL ((ged_destroy_vlist_func_t)0)
 
+/* Common flags used by multiple GED commands for help printing */
+#define HELPFLAG "--print-help"
+#define PURPOSEFLAG "--print-purpose"
+
 // Private bookkeeping structure used by callback handlers
 struct ged_callback_state {
     int ged_refresh_handler_cnt;
     int ged_output_handler_cnt;
-    int ged_create_vlist_solid_callback_cnt;
+    int ged_create_vlist_scene_obj_callback_cnt;
     int ged_create_vlist_display_list_callback_cnt;
     int ged_destroy_vlist_callback_cnt;
     int ged_io_handler_callback_cnt;
@@ -105,13 +111,20 @@ struct ged_callback_state {
  */
 GED_EXPORT extern void ged_refresh_cb(struct ged *);
 GED_EXPORT extern void ged_output_handler_cb(struct ged *, char *);
-GED_EXPORT extern void ged_create_vlist_solid_cb(struct ged *, struct solid *);
+GED_EXPORT extern void ged_create_vlist_solid_cb(struct ged *, struct bv_scene_obj *);
 GED_EXPORT extern void ged_create_vlist_display_list_cb(struct ged *, struct display_list *);
 GED_EXPORT extern void ged_destroy_vlist_cb(struct ged *, unsigned int, int);
 GED_EXPORT extern void ged_io_handler_cb(struct ged *, void *, int);
 
-
-
+struct ged_solid_data {
+    struct display_list *gdlp;
+    int draw_solid_lines_only;
+    int wireframe_color_override;
+    int wireframe_color[3];
+    fastf_t transparency;
+    int dmode;
+    struct bview *v;
+};
 
 struct _ged_funtab {
     char *ft_name;
@@ -140,26 +153,14 @@ struct _ged_id_to_names {
 struct _ged_client_data {
     uint32_t magic;  /* add this so a pointer to the struct and a pointer to any of its active elements will differ */
     struct ged *gedp;
+    struct rt_wdb *wdbp;
     struct display_list *gdlp;
-    int wireframe_color_override;
-    int wireframe_color[3];
-    int draw_nmg_only;
-    int nmg_triangulate;
-    int draw_wireframes;
-    int draw_normals;
-    int draw_solid_lines_only;
-    int draw_no_surfaces;
-    int draw_non_subtract_only;
-    int shade_per_vertex_normals;
-    int draw_edge_uses;
     int fastpath_count;			/* statistics */
-    int do_not_draw_nmg_solids_during_debugging;
-    struct bn_vlblock *draw_edge_uses_vbp;
-    int shaded_mode_override;
-    fastf_t transparency;
-    int dmode;
-    int hiddenLine;
-    struct solid *freesolid;
+    struct bv_vlblock *draw_edge_uses_vbp;
+    struct bview *v;
+
+
+
     /* bigE related members */
     struct application *ap;
     struct bu_ptbl leaf_list;
@@ -170,9 +171,55 @@ struct _ged_client_data {
     int do_polysolids;
     int num_halfs;
     int autoview;
-    size_t bot_threshold;
+    int nmg_fast_wireframe_draw;
+
+    // Debugging plotting specific options.  These don't actually belong with
+    // the drawing routines at all - they are analogous to the brep debugging
+    // plotting routines, and belong with nmg/bot/etc. plot subcommands.
+    int draw_nmg_only;
+    int nmg_triangulate;
+    int draw_normals;
+    int draw_no_surfaces;
+    int shade_per_vertex_normals;
+    int draw_edge_uses;
+    int do_not_draw_nmg_solids_during_debugging;
+
+
+    struct bv_obj_settings vs;
 };
 
+
+/* Data for tree walk */
+struct draw_data_t {
+    struct db_i *dbip;
+    struct bv_scene_group *g;
+    struct bview *v;
+    struct bv_obj_settings *vs;
+    const struct bn_tol *tol;
+    const struct bg_tess_tol *ttol;
+    struct bu_color c;
+    int color_inherit;
+    int bool_op;
+    struct resource *res;
+    struct bg_mesh_lod_context *mesh_c;
+
+    /* To avoid the need for multiple subtree walking
+     * functions, we also set up to support a bounding
+     * only walk. */
+    int bound_only;
+    int skip_subtractions;
+    int have_bbox;
+    point_t min;
+    point_t max;
+#ifdef __cplusplus
+    std::map<struct directory *, fastf_t> *s_size;
+#endif
+};
+GED_EXPORT void draw_scene(struct bv_scene_obj *s, struct bview *v);
+GED_EXPORT void draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
+          void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
+          void *client_data, void *comb_inst_map);
+GED_EXPORT void draw_gather_paths(struct db_full_path *path, mat_t *curr_mat, void *client_data);
 
 GED_EXPORT void vls_col_item(struct bu_vls *str, const char *cp);
 GED_EXPORT void vls_col_eol(struct bu_vls *str);
@@ -219,7 +266,7 @@ GED_EXPORT extern union tree * append_solid_to_display_list(struct db_tree_state
 GED_EXPORT int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
 GED_EXPORT void dl_set_flag(struct bu_list *hdlp, int flag);
 GED_EXPORT void dl_set_wflag(struct bu_list *hdlp, int wflag);
-GED_EXPORT void dl_zap(struct ged *gedp, struct solid *freesolid);
+GED_EXPORT void dl_zap(struct ged *gedp);
 GED_EXPORT int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
 GED_EXPORT void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
 GED_EXPORT void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);
@@ -241,7 +288,7 @@ GED_EXPORT void dl_set_transparency(struct ged *gedp, struct directory **dpp, do
 
 /* defined in draw.c */
 GED_EXPORT extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
-				       struct bn_vlblock *vbp,
+				       struct bv_vlblock *vbp,
 				       const char *name,
 				       int copy);
 GED_EXPORT extern int _ged_drawtrees(struct ged *gedp,
@@ -460,7 +507,7 @@ GED_EXPORT extern int _ged_scale_tor(struct ged *gedp,
 /* defined in tops.c */
 GED_EXPORT struct directory **
 _ged_dir_getspace(struct db_i *dbip,
-		  int num_entries);
+		  size_t num_entries);
 
 /* defined in translate_extrude.c */
 GED_EXPORT extern int _ged_translate_extrude(struct ged *gedp,
@@ -477,7 +524,6 @@ GED_EXPORT extern int _ged_translate_tgc(struct ged *gedp,
 			      int rflag);
 
 /* defined in vutil.c */
-GED_EXPORT extern void _ged_mat_aet(struct bview *gvp);
 GED_EXPORT extern int _ged_do_rot(struct ged *gedp,
 		       char coord,
 		       mat_t rmat,
@@ -655,13 +701,22 @@ void
 _ged_facetize_log_default(struct _ged_facetize_opts *o);
 
 
-GED_EXPORT extern int ged_snap_lines(point_t *out_pt, struct ged *gedp, point_t *p);
-GED_EXPORT extern int ged_view_snap(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_view_data_lines(struct ged *gedp, int argc, const char *argv[]);
 
 
-GED_EXPORT extern void ged_push_solid(struct ged *gedp, struct solid *sp);
-GED_EXPORT extern struct solid *ged_pop_solid(struct ged *gedp);
+GED_EXPORT extern void ged_push_scene_obj(struct ged *gedp, struct bv_scene_obj *sp);
+GED_EXPORT extern struct bv_scene_obj *ged_pop_scene_obj(struct ged *gedp);
+
+GED_EXPORT extern int
+_ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds,
+	const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv);
+
+GED_EXPORT extern int
+_ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cmdtab *cmds,
+	const char *cmdname, const char *cmdargs, void *gd, int argc, const char **argv,
+       	int help, int cmd_pos);
+
+
 
 __END_DECLS
 

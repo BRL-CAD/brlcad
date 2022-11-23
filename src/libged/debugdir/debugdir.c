@@ -46,7 +46,7 @@ ged_debugdir_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    db_pr_dir(gedp->ged_wdbp->dbip);
+    db_pr_dir(gedp->dbip);
 
     return BRLCAD_OK;
 }

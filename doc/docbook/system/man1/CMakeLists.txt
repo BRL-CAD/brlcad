@@ -1,4 +1,5 @@
 set(man1_EN
+  3dm-g.xml
   ap-pix.xml
   alias-pix.xml
   asc-nmg.xml
@@ -38,7 +39,6 @@ set(man1_EN
   cv.xml
   db.xml
   dbclean.xml
-  dbcp.xml
   dbupgrade.xml
   decimate.xml
   dpix-pix.xml
@@ -165,6 +165,7 @@ set(man1_EN
   rt.xml
   rtarea.xml
   rtcheck.xml
+  rtdepth.xml
   rtedge.xml
   rtexample.xml
   rtg3.xml

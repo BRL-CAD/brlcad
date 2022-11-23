@@ -66,7 +66,7 @@
     <example><title>Create an opaque uniform binary object of characters with a specified name
       containing the contents of a particular file.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>bo -i u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>bo -i u c cmds /usr/brlcad/html/manuals/mged/mged_cmds.html</userinput></para>
       <para>
 	Creates an opaque uniform binary object of characters with the name <emphasis>cmds</emphasis>
 	that contains the contents of the file <emphasis>/usr/brlcad/html/manuals/mged/mged_cmds.html</emphasis>.
@@ -75,13 +75,13 @@
 
     <example><title>Import data for a displacement map (DSP) object</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>bo -i u S dsp.data /path/to/file.dsp</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>bo -i u S dsp.data /path/to/file.dsp</userinput></para>
       <para>This imports a file named <emphasis>file.dsp</emphasis> that contains DSP data, i.e., raw data in unsigned short (16-bit) format.  The data is saved in the .g database into an object named <emphasis>dsp.data</emphasis>.  When creating a DSP, this <emphasis>dsp.data</emphasis> object can be specified as the data source.</para>
     </example>
 
     <example><title>Copy the contents of a particular binary object into a specified file.</title>
 
-      <para><prompt>mged&gt;</prompt> <userinput>bo -o /home/jim/cmds.html cmds</userinput></para>
+      <para><prompt>mged&gt; </prompt><userinput>bo -o /home/jim/cmds.html cmds</userinput></para>
       <para>
 	Copies the contents of the binary object named <emphasis>cmds</emphasis> into the file named
 	<emphasis>/home/jim/cmds.html</emphasis>.

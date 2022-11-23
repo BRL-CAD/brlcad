@@ -36,7 +36,7 @@
 int
 to_axes(struct ged *gedp,
 	struct bview *gdvp,
-	struct bview_axes_state *gasp,
+	struct bv_axes *gasp,
 	int argc,
 	const char *argv[],
 	const char *usage)
@@ -457,7 +457,7 @@ go_data_axes(Tcl_Interp *interp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 2 || 5 < argc) {
@@ -468,7 +468,7 @@ go_data_axes(Tcl_Interp *interp,
     /* Don't allow go_refresh() to be called */
     if (current_top != NULL) {
 	struct tclcad_ged_data *tgd = (struct tclcad_ged_data *)current_top->to_gedp->u_data;
-	tgd->go_refresh_on = 0;
+	tgd->go_dmv.refresh_on = 0;
     }
 
     ret = to_data_axes_func(interp, gedp, gdvp, argc, argv);
@@ -495,7 +495,7 @@ to_data_axes(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
@@ -503,7 +503,7 @@ to_data_axes(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    gdvp = ged_find_view(gedp, argv[1]);
+    gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return BRLCAD_ERROR;
@@ -525,12 +525,12 @@ to_data_axes_func(Tcl_Interp *interp,
 		  int argc,
 		  const char *argv[])
 {
-    struct bview_data_axes_state *gdasp;
+    struct bv_data_axes_state *gdasp;
 
     if (argv[0][0] == 's')
-	gdasp = &gdvp->gv_sdata_axes;
+	gdasp = &gdvp->gv_tcl.gv_sdata_axes;
     else
-	gdasp = &gdvp->gv_data_axes;
+	gdasp = &gdvp->gv_tcl.gv_data_axes;
 
     if (BU_STR_EQUAL(argv[1], "draw")) {
 	if (argc == 2) {
@@ -706,7 +706,7 @@ to_model_axes(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
@@ -714,13 +714,13 @@ to_model_axes(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    gdvp = ged_find_view(gedp, argv[1]);
+    gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
         bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
         return BRLCAD_ERROR;
     }
 
-    return to_axes(gedp, gdvp, &gdvp->gv_model_axes, argc, argv, usage);
+    return to_axes(gedp, gdvp, &gdvp->gv_s->gv_model_axes, argc, argv, usage);
 }
 
 int
@@ -736,7 +736,7 @@ go_view_axes(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
@@ -744,7 +744,7 @@ go_view_axes(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    return to_axes(gedp, gdvp, &gdvp->gv_view_axes, argc, argv, usage);
+    return to_axes(gedp, gdvp, &gdvp->gv_s->gv_view_axes, argc, argv, usage);
 }
 
 
@@ -764,7 +764,7 @@ to_view_axes(struct ged *gedp,
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 3 || 6 < argc) {
@@ -772,13 +772,13 @@ to_view_axes(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    gdvp = ged_find_view(gedp, argv[1]);
+    gdvp = bv_set_find_view(&gedp->ged_views, argv[1]);
     if (!gdvp) {
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    return to_axes(gedp, gdvp, &gdvp->gv_view_axes, argc, argv, usage);
+    return to_axes(gedp, gdvp, &gdvp->gv_s->gv_view_axes, argc, argv, usage);
 }
 
 

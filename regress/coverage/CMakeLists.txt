@@ -30,7 +30,7 @@ if (O3_COMPILER_FLAG)
   # it - whether or not the standard build settings would add it.
   target_compile_options(covgcheck PRIVATE "-O3")
 endif (O3_COMPILER_FLAG)
-set_target_properties(covgcheck PROPERTIES FOLDER "BRL-CAD Regression Tests/repository")
+set_target_properties(covgcheck PROPERTIES FOLDER "BRL-CAD Regression Tests/coverage")
 
 #BRLCAD_REGRESSION_TEST(regress-coverage "covgcheck" EXEC covgcheck)
 DISTCLEAN(${LOG_FILE})

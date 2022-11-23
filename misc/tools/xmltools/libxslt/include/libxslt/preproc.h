@@ -22,17 +22,17 @@ extern "C" {
 /*
  * Interfaces
  */
-extern const xmlChar *xsltExtMarker;
+XSLTPUBVAR const xmlChar *xsltExtMarker;
 
-XSLTPUBFUN xsltElemPreCompPtr XSLTCALL 
+XSLTPUBFUN xsltElemPreCompPtr XSLTCALL
 		xsltDocumentComp	(xsltStylesheetPtr style,
 					 xmlNodePtr inst,
 					 xsltTransformFunction function);
 
-XSLTPUBFUN void XSLTCALL		
+XSLTPUBFUN void XSLTCALL
 		xsltStylePreCompute	(xsltStylesheetPtr style,
 					 xmlNodePtr inst);
-XSLTPUBFUN void XSLTCALL		
+XSLTPUBFUN void XSLTCALL
 		xsltFreeStylePreComps	(xsltStylesheetPtr style);
 
 #ifdef __cplusplus

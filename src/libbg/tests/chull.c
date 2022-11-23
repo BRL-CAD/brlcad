@@ -1,4 +1,4 @@
-/*                      B N _ C H U L L . C
+/*                      B G _ C H U L L . C
  * BRL-CAD
  *
  * Copyright (c) 2013-2022 United States Government as represented by
@@ -27,7 +27,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 static
 void plot_chull(int test_num, const point_t *pnt_array, int pnt_cnt)

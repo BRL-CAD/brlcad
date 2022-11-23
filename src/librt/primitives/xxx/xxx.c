@@ -105,7 +105,10 @@ rt_xxx_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct rt_xxx_internal *xxx_ip;
     struct xxx_specific *xxx;
 
-    if (stp) RT_CK_SOLTAB(stp);
+    if (!stp || !ip)
+	return -1;
+
+    RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(ip);
     if (rtip) RT_CK_RTI(rtip);
 
@@ -255,7 +258,7 @@ rt_xxx_free(struct soltab *stp)
 
 
 int
-rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
 {
     struct rt_xxx_internal *xxx_ip;
 

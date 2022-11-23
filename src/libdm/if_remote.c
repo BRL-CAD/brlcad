@@ -403,7 +403,7 @@ rem_read(register struct fb *ifp, int x, int y, unsigned char *pixelp, size_t nu
     /* Get response;  0 len means failure */
     ret = pkg_waitfor(MSG_RETURN, (char *)pixelp, num*sizeof(RGBpixel), PCP(ifp));
     if (ret <= 0) {
-	fb_log("rem_read: read %lu at <%d, %d> failed, ret=%ld.\n",
+	fb_log("rem_read: read %zu at <%d, %d> failed, ret=%zd.\n",
 	       num, x, y, ret);
 	return -3;
     }
@@ -830,6 +830,10 @@ struct fb_impl remote_interface_impl = {
     0L,
     0,			/* debug */
     0,			/* refresh rate */
+    NULL,
+    NULL,
+    0,
+    NULL,
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

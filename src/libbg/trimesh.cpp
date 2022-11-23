@@ -30,7 +30,7 @@
 #include "bu/malloc.h"
 #include "bu/sort.h"
 #include "bg/trimesh.h"
-#include "bn/plane.h"
+#include "bg/plane.h"
 
 #define TRIMESH_EDGE_EQUAL(e1, e2) ((e1).va == (e2).va && (e1).vb == (e2).vb)
 
@@ -359,10 +359,14 @@ bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges)
 
     if (bedges) {
 	int copy_cnt = 0;
-	struct bg_trimesh_solid_errors errors;
+	struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
 
 	bedge_cnt = bg_trimesh_solid2(vcnt, fcnt, v, f, &errors);
+
 	*bedges = (int *)bu_calloc(bedge_cnt * 2, sizeof(int), "bad edges");
+
+	if (!errors.unmatched.edges || !errors.unmatched.count)
+	    return 0;
 
 	memcpy(*bedges, errors.unmatched.edges, errors.unmatched.count * 2 * sizeof(int));
 	copy_cnt += errors.unmatched.count * 2;
@@ -595,11 +599,16 @@ static struct edge_list *
 get_parent_edge(struct bu_list *parent_options, struct edge_list *child)
 {
     struct edge_list *item;
+
+    if (!parent_options || !child)
+	return NULL;
+
     for (BU_LIST_FOR(item, edge_list, parent_options)) {
 	if (item->edge[1] == child->edge[0]) {
 	    return item;
 	}
     }
+
     return NULL;
 }
 
@@ -671,7 +680,6 @@ static struct bg_trimesh_edges *
 find_chain_with_endpoints(int endpoints[2], struct bg_trimesh_edges *edge_set, int max_chain_edges)
 {
     int i;
-    int found_chain;
     struct edge_list *terminal_edge;
     struct bg_trimesh_edges *chain_edges = NULL;
     struct bu_list *search_list = edges_to_list(edge_set);
@@ -680,14 +688,11 @@ find_chain_with_endpoints(int endpoints[2], struct bg_trimesh_edges *edge_set, i
     edge_options = (struct bu_list **)bu_calloc(max_chain_edges, sizeof(struct bu_list *), "edge options");
     edge_options[0] = get_edges_starting_from_endpoint(search_list, endpoints[0]);
 
-    found_chain = 0;
-
-    for (i = 1; i <= max_chain_edges && !found_chain; ++i) {
+    for (i = 1; i <= max_chain_edges; ++i) {
 	edge_options[i] = get_edges_that_follow_edges(search_list, edge_options[i - 1]);
 
 	terminal_edge = get_edge_ending_at_endpoint(edge_options[i], endpoints[1]);
 	if (terminal_edge != NULL) {
-	    found_chain = 1;
 	    chain_edges = get_edges_ending_at_edge(edge_options, i, terminal_edge);
 	    break;
 	}
@@ -721,7 +726,7 @@ distance_point_to_edge(int UNUSED(num_vertices), fastf_t *vertices, int point, i
     tol.perp = SMALL_FASTF;
     tol.para = 1 - SMALL_FASTF;
 
-    rc = bn_dist_pnt3_lseg3(&dist, pca, edge_pts[0], edge_pts[1], pt, &tol);
+    rc = bg_dist_pnt3_lseg3(&dist, pca, edge_pts[0], edge_pts[1], pt, &tol);
 
     return rc ? dist : 0.0;
 }
@@ -793,7 +798,7 @@ int bg_trimesh_hanging_nodes(int num_vertices, int num_faces, fastf_t *vertices,
 
 
 int
-bg_trimesh_aabb(point_t *min, point_t *max, int *faces, int num_faces, point_t *p, int num_pnts)
+bg_trimesh_aabb(point_t *min, point_t *max, const int *faces, size_t num_faces, const point_t *p, size_t num_pnts)
 {
     /* If we can't produce any output, there's no point in continuing */
     if (!min || !max)
@@ -807,20 +812,20 @@ bg_trimesh_aabb(point_t *min, point_t *max, int *faces, int num_faces, point_t *
     VSETALL((*max), -INFINITY);
 
     /* If inputs are insufficient, we can't produce a bbox */
-    if (!faces || num_faces <= 0 || !p || num_pnts <= 0)
+    if (!faces || num_faces == 0 || !p || num_pnts == 0)
 	return -1;
 
     /* First Pass: coherently iterate through all faces of the BoT and
      * mark vertices in a bit-vector that are referenced by a face. */
     struct bu_bitv *visit_vert = bu_bitv_new(num_pnts);
-    for (size_t tri_index = 0; tri_index < (size_t)num_faces; tri_index++) {
+    for (size_t tri_index = 0; tri_index < num_faces; tri_index++) {
 	BU_BITSET(visit_vert, faces[tri_index*3 + X]);
 	BU_BITSET(visit_vert, faces[tri_index*3 + Y]);
 	BU_BITSET(visit_vert, faces[tri_index*3 + Z]);
     }
 
     /* Second Pass: check max and min of vertices marked */
-    for(size_t vert_index = 0; vert_index < (size_t)num_pnts; vert_index++){
+    for(size_t vert_index = 0; vert_index < num_pnts; vert_index++){
 	if(BU_BITTEST(visit_vert,vert_index)){
 	    VMINMAX((*min), (*max), p[vert_index]);
 	}
@@ -918,7 +923,7 @@ bg_trimesh_3d_gc(int **ofaces, point_t **opnts, int *n_opnts,
     int nind = 0;
     std::set<int>::iterator ap;
     for (ap = active_pnts.begin(); ap != active_pnts.end(); ap++) {
-	V2MOVE(op[nind], in_pts[*ap]);
+	VMOVE(op[nind], in_pts[*ap]);
 	o2n[*ap] = nind;
 	nind++;
     }
@@ -939,12 +944,12 @@ bg_trimesh_3d_gc(int **ofaces, point_t **opnts, int *n_opnts,
 }
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

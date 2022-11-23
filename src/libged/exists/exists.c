@@ -370,7 +370,8 @@ binop(struct exists_data *ed)
     (void) t_lex(*++(ed->t_wp), ed);
     op = ed->t_wp_op;
 
-    if ((opnd2 = *++(ed->t_wp)) == NULL) {
+    opnd2 = *++(ed->t_wp);
+    if (opnd2 == NULL) {
 	bu_vls_printf(ed->message , "argument expected");
 	return 0;
     }
@@ -417,7 +418,7 @@ binop(struct exists_data *ed)
 int db_object_exists(struct exists_data *ed)
 {
     struct directory *dp = NULL;
-    dp = db_lookup(ed->gedp->ged_wdbp->dbip, *(ed->t_wp), LOOKUP_QUIET);
+    dp = db_lookup(ed->gedp->dbip, *(ed->t_wp), LOOKUP_QUIET);
     if (dp) return 1;
     return 0;
 }
@@ -459,7 +460,7 @@ ged_exists_core(struct ged *gedp, int argc, const char *argv_orig[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv_orig[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     ed.t_wp = &argv[1];

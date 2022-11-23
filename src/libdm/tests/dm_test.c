@@ -50,18 +50,16 @@ main(int UNUSED(argc), const char **argv)
     bu_log("X valid: %d\n", vtype);
     vtype = dm_valid_type("ogl", NULL);
     bu_log("ogl valid: %d\n", vtype);
-    vtype = dm_valid_type("osgl", NULL);
-    bu_log("osgl valid: %d\n", vtype);
     vtype = dm_valid_type("wgl", NULL);
     bu_log("wgl valid: %d\n", vtype);
 
     const char *av0 = "attach";
     struct dm *dmp;
-    dmp = dm_open(NULL, "nu", 1, &av0);
+    dmp = dm_open(NULL, NULL, "nu", 1, &av0);
     const char *name = dm_get_name(dmp);
     bu_log("dmp name: %s\n", (name)?name:"(NULL)");
     dm_close(dmp);
-    dmp = dm_open(NULL, "txt", 1, &av0);
+    dmp = dm_open(NULL, NULL, "txt", 1, &av0);
     name = dm_get_name(dmp);
     bu_log("dmp name: %s\n", (name)?name:"(NULL)");
     dm_close(dmp);

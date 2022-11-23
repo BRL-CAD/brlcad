@@ -96,18 +96,26 @@ Create_Rational_Curve_Aggregate(ON_NurbsCurve *ncurve, ON_Brep_Info_AP203 *info)
     /* Set knots */
     stepcomplex = complex_entity->EntityPart("b_spline_curve_with_knots");
     stepcomplex->ResetAttributes();
+    bool used_km = false;
+    bool used_k = false;
     IntAggregate *knot_multiplicities = new IntAggregate();
     RealAggregate *knots = new RealAggregate();
     ON_NurbsCurveKnots_to_Aggregates(knot_multiplicities, knots, ncurve);
     while ((attr = stepcomplex->NextAttribute()) != NULL) {
 	if (!bu_strcmp(attr->Name(), "knot_multiplicities")) {
 	    attr->ptr.a = knot_multiplicities;
+	    used_km = true;
 	}
 	if (!bu_strcmp(attr->Name(), "knots")) {
 	    attr->ptr.a = knots;
+	    used_k = true;
 	}
 	if (!bu_strcmp(attr->Name(), "knot_spec")) attr->ptr.e = new SdaiKnot_type_var(Knot_type__unspecified);
     }
+    if (!used_km)
+	delete knot_multiplicities;
+    if (!used_k)
+	delete knots;
 
     /* Set weights */
     stepcomplex = complex_entity->EntityPart("rational_b_spline_curve");

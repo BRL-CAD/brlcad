@@ -531,7 +531,7 @@ write_attribute_definition(FILE *fp_dir, FILE *fp_param)
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
-    bu_vls_printf(&str, "322,%ldH%s,5001,9", strlen(att_string), att_string);
+    bu_vls_printf(&str, "322,%zuH%s,5001,9", strlen(att_string), att_string);
     bu_vls_printf(&str, ",1,3,1"); /* material name */
     bu_vls_printf(&str, ",2,3,1"); /* material parameters */
     bu_vls_printf(&str, ",3,6,1"); /* region flag (logical value) */
@@ -667,14 +667,14 @@ w_start_global(
     bu_vls_free(&str);
 
     /* Write Global Section */
-    bu_vls_printf(&str, ",,%zdH%s", strlen(db_name), db_name);
+    bu_vls_printf(&str, ",,%zuH%s", strlen(db_name), db_name);
 
     if (output_file == NULL)
 	bu_vls_printf(&str, ",7Hstd_out");
     else
-	bu_vls_printf(&str, ",%zdH%s", strlen(output_file), output_file);
+	bu_vls_printf(&str, ",%zuH%s", strlen(output_file), output_file);
 
-    bu_vls_printf(&str, ",%zdH%s,%zdH%s,32,38,6,308,15,%zdH%s,1.0,2,2HMM,,1.0" ,
+    bu_vls_printf(&str, ",%zuH%s,%zuH%s,32,38,6,308,15,%zuH%s,1.0,2,2HMM,,1.0" ,
 		  strlen(version), version ,
 		  strlen(id), id,
 		  strlen(db_name), db_name);
@@ -795,7 +795,7 @@ nmgregion_to_iges(char *name,
 	    tmp_name = NULL;
 	    tmp_dependent = 1;
 
-	    for (j = BU_PTBL_LEN(shells[i])-1; j >= 0; j--) {
+	    for (j = (int)BU_PTBL_LEN(shells[i])-1; j >= 0; j--) {
 		s = (struct shell *)BU_PTBL_GET(shells[i], j);
 		nmg_mv_shell_to_region(s, new_r);
 	    }
@@ -1587,7 +1587,7 @@ write_shell_face_loop(char *name,
 	    for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		NMG_CK_LOOPUSE(lu);
 		if (lu->orientation == OT_SAME)
-		    exterior_loop = loop_count;
+		    exterior_loop = (long)loop_count;
 		loop_count++;
 	    }
 	    loop_list = (int *)bu_calloc(loop_count, sizeof(int), "loop_list");
@@ -1896,7 +1896,7 @@ write_name_entity(char *name,
     if (name_len >= NAMESIZE)
 	bu_vls_printf(&str, "406,1,16H%16.16s;", name);
     else
-	bu_vls_printf(&str, "406,1,%zdH%s;", strlen(name), name);
+	bu_vls_printf(&str, "406,1,%zuH%s;", strlen(name), name);
 
     /* remember where parameter data is going */
     dir_entry[2] = param_seq + 1;
@@ -2781,7 +2781,7 @@ has_non_union_ops(union tree *tp)
 void
 igs_tree(struct bu_vls *str,
 	 union tree *tp,
-	 int length,
+	 size_t length,
 	 int *de_pointers)
 {
     RT_CK_TREE(tp);
@@ -2817,13 +2817,13 @@ igs_tree(struct bu_vls *str,
 void
 write_igs_tree(struct bu_vls *str,
 	       struct rt_comb_internal *comb,
-	       int length,
+	       size_t length,
 	       int *de_pointers)
 {
     BU_CK_VLS(str);
     RT_CK_COMB(comb);
 
-    bu_vls_printf(str, "180,%d", 2*length-1);
+    bu_vls_printf(str, "180,%zu", 2*length-1);
 
     de_pointer_number = 0;
     igs_tree(str, comb->tree, length, de_pointers);

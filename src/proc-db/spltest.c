@@ -147,6 +147,7 @@ main(int argc, char *argv[])
     /* wdb_export */
     mk_export_fwrite(fp, "spltest", (void *)si, ID_BSPLINE);
 
+    db_close(fp->dbip);
     bu_log(" done.\n");
 
     return 0;

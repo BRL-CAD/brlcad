@@ -35,8 +35,8 @@ __BEGIN_DECLS
 
 /** Check if a database is open */
 #define GED_CHECK_DATABASE_OPEN(_gedp, _flags) \
-    if ((_gedp) == GED_NULL || (_gedp)->ged_wdbp == RT_WDB_NULL || (_gedp)->ged_wdbp->dbip == DBI_NULL) { \
-	int ged_check_database_open_quiet = (_flags) & BRLCAD_QUIET; \
+    if ((_gedp) == GED_NULL || (_gedp)->dbip == DBI_NULL) { \
+	int ged_check_database_open_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_database_open_quiet) { \
 	    if ((_gedp) != GED_NULL) { \
 		bu_vls_trunc((_gedp)->ged_result_str, 0); \
@@ -193,11 +193,6 @@ GED_EXPORT extern int ged_rcodes(struct ged *gedp, int argc, const char *argv[])
  * Change the default region ident codes: item air los mat
  */
 GED_EXPORT extern int ged_regdef(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Read material properties from a file.
- */
-GED_EXPORT extern int ged_rmater(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Interface to search functionality (i.e. Unix find for geometry)

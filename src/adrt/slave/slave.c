@@ -63,7 +63,7 @@ uint32_t adrt_slave_threads;
 adrt_slave_project_t adrt_workspace_list[ADRT_MAX_WORKSPACE_NUM];
 
 void
-adrt_slave_free()
+adrt_slave_free(void)
 {
     uint16_t i;
 
@@ -97,7 +97,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
     switch (op) {
 	case ADRT_WORK_INIT:
 	{
-	    render_camera_init (&adrt_workspace_list[wid].camera, adrt_slave_threads);
+	    render_camera_init (&adrt_workspace_list[wid].camera, (size_t)adrt_slave_threads);
 	    if ( slave_load (&adrt_workspace_list[wid].tie, (void *)work->data) != 0 )
 		bu_exit (1, "Failed to load geometry. Going into a flaming tailspin\n");
 	    TIE_PREP(&adrt_workspace_list[wid].tie);
@@ -126,7 +126,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	case ADRT_WORK_SELECT:
 	{
 	    uint8_t c;
-	    char string[255];
+	    char string[255] = { 0 };
 	    uint32_t n, i, num;
 
 	    ind = 1;	/* ind is too far in for some reason, force it back to 1? */
@@ -166,7 +166,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	{
 	    struct tie_ray_s ray;
 	    void *mesg;
-	    int dlen;
+	    size_t dlen;
 
 	    mesg = NULL;
 
@@ -174,7 +174,6 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    TCOPY(TIE_3, work->data, ind, ray.pos, 0);
 	    ind += sizeof (TIE_3);
 	    TCOPY(TIE_3, work->data, ind, ray.dir, 0);
-	    ind += sizeof (TIE_3);
 
 	    /* Fire the shot */
 	    ray.depth = 0;
@@ -244,7 +243,6 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    TCOPY(uint16_t, work->data, ind, &image_h, 0);
 	    ind += 2;
 	    TCOPY(uint16_t, work->data, ind, &image_format, 0);
-	    ind += 2;
 
 	    adrt_workspace_list[wid].camera.w = image_w;
 	    adrt_workspace_list[wid].camera.h = image_h;
@@ -301,7 +299,6 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 			/* Extract shot position and direction */
 			TCOPY(TIE_3, work->data, ind, &frag_pos, 0);
 			snprintf(buf, BUFSIZ, "#(%f %f %f)", V3ARGS(frag_pos.v));
-			ind += sizeof (TIE_3);
 			render_flos_init(&adrt_workspace_list[wid].camera.render, buf);
 		    }
 		    break;
@@ -340,7 +337,6 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 			ind += sizeof (TIE_3);
 
 			TCOPY(TFLOAT, work->data, ind, &angle, 0);
-			ind += sizeof (TFLOAT);
 
 			snprintf(buf, BUFSIZ, "(%g %g %g) (%g %g %g) %g", V3ARGS(shot_pos.v), V3ARGS(shot_dir.v), angle);
 
@@ -358,7 +354,6 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    /* The portion of the image to be rendered */
 	    ind = work->ind - sizeof (camera_tile_t);
 	    TCOPY(camera_tile_t, work->data, ind, &tile, 0);
-	    ind += sizeof (camera_tile_t);
 
 	    /* Update camera if different frame */
 	    if (tile.frame != adrt_workspace_list[wid].last_frame) {

@@ -58,7 +58,7 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 5 || argc > 9) {
@@ -128,7 +128,6 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    argc -= bu_optind;
     argv += bu_optind;
 
     /* make sure new solid does not already exist */
@@ -139,7 +138,8 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
 
     /* import the current solid */
     RT_DB_INTERNAL_INIT(&intern);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, gedp->ged_wdbp->wdb_resp, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, wdbp->wdb_resp, BRLCAD_ERROR);
 
     /* make sure this is a BOT solid */
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
@@ -154,18 +154,18 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
 
     /* convert maximum error, edge length, and feature size to mm */
     if (max_chord_error > 0.0) {
-	max_chord_error = max_chord_error * gedp->ged_wdbp->dbip->dbi_local2base;
+	max_chord_error = max_chord_error * gedp->dbip->dbi_local2base;
     }
 
     if (min_edge_length > 0.0) {
-	min_edge_length = min_edge_length * gedp->ged_wdbp->dbip->dbi_local2base;
+	min_edge_length = min_edge_length * gedp->dbip->dbi_local2base;
     }
 
     if (feature_size >= 0.0) {
 	/* use the new GCT decimator */
 	const size_t orig_num_faces = bot->num_faces;
 	size_t edges_removed;
-	feature_size *= gedp->ged_wdbp->dbip->dbi_local2base;
+	feature_size *= gedp->dbip->dbi_local2base;
 	edges_removed = rt_bot_decimate_gct(bot, feature_size);
 	bu_log("original face count = %zu\n", orig_num_faces);
 	bu_log("\tedges removed = %zu\n", edges_removed);
@@ -181,7 +181,7 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
 
     /* save the result to the database */
     /* XXX - should this be rt_db_put_internal() instead? */
-    if (wdb_put_internal(gedp->ged_wdbp, argv[0], &intern, 1.0) < 0) {
+    if (wdb_put_internal(wdbp, argv[0], &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to write decimated BOT back to database\n");
 	return BRLCAD_ERROR;

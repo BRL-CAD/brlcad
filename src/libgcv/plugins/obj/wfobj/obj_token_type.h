@@ -32,7 +32,7 @@ const int TOKEN_STRING_LEN = 80;
 
 typedef union YYSTYPE
 {
-    float real;
+    double real;
     int integer;
     int reference[3];
     unsigned char toggle;

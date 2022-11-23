@@ -127,7 +127,7 @@ static void* shot_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri
 
 
 void
-render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **data, int *dlen) {
+render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **data, size_t *dlen) {
     struct tie_id_s id;
     struct render_shotline_s shotline;
     uint32_t i;
@@ -178,7 +178,7 @@ render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **data,
 
 
 void
-render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray), TFLOAT UNUSED(angle), void **UNUSED(data), int *UNUSED(dlen)) {
+render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray), TFLOAT UNUSED(angle), void **UNUSED(data), size_t *UNUSED(dlen)) {
 #if 0
     shotline_t shotline;
     struct tie_ray_s sray;

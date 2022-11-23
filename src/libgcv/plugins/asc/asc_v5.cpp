@@ -17,139 +17,137 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file asc_v5.cpp
- *
- * Brief description
- *
- */
 
 #include "common.h"
 #include "vmath.h"
 
-#include <cstdio>
 #include <fstream>
-#include <regex>
 #include <sstream>
 #include <string>
+
+#include "bio.h"
 
 #include "bu/units.h"
 #include "raytrace.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
 
-#if 0
 
-// TODO:
-// This is the asc2g code that uses libtclcad
-// to read in v5 asc files as Tcl scripts.
-// It needs to be replaced with a non-Tcl based
-// parsing code that reads what g2asc writes.
-
-char *aliases[] = {
-    "attr",
-    "color",
-    "put",
-    "title",
-    "units",
-    "find",
-    "dbfind",
-    "rm",
-    (char *)0
-};
-
-Tcl_Interp *interp;
-Tcl_Interp *safe_interp;
-
-/* this is a Tcl script */
-
-rewind(ifp);
-bu_vls_trunc(&line, 0);
-BU_LIST_INIT(&RTG.rtg_headwdb.l);
-
-interp = Tcl_CreateInterp();
-Go_Init(interp);
-wdb_close(ofp);
-
+static int
+check_bracket_balance(int *ocnt, int *ccnt, std::string &s)
 {
-    int ac = 4;
-    const char *av[5];
-
-    av[0] = "to_open";
-    av[1] = db_name;
-    av[2] = "db";
-    av[3] = argv[2];
-    av[4] = (char *)0;
-
-    if (to_open_tcl((ClientData)0, interp, ac, av) != TCL_OK) {
-	fclose(ifp);
-	bu_log("Failed to initialize tclcad_obj!\n");
-	Tcl_Exit(1);
+    for (size_t i = 0; i < s.length(); i++) {
+	char c = s.at(i);
+	if (c == '{')
+	    (*ocnt)++;
+	if (c == '}')
+	    (*ccnt)++;
     }
+    return (*ocnt == *ccnt);
 }
 
-/* Create the safe interpreter */
-if ((safe_interp = Tcl_CreateSlave(interp, slave_name, 1)) == NULL) {
-    fclose(ifp);
-    bu_log("Failed to create safe interpreter");
-    Tcl_Exit(1);
-}
 
-/* Create aliases */
-{
-    int i;
-    int ac = 1;
-    const char *av[2];
-
-    av[1] = (char *)0;
-    for (i = 0; aliases[i] != (char *)0; ++i) {
-	av[0] = aliases[i];
-	Tcl_CreateAlias(safe_interp, aliases[i], interp, db_name, ac, av);
-    }
-    /* add "find" separately */
-    av[0] = "dbfind";
-    Tcl_CreateAlias(safe_interp, "find", interp, db_name, ac, av);
-}
-
-while ((gettclblock(&line, ifp)) >= 0) {
-    if (Tcl_Eval(safe_interp, (const char *)bu_vls_addr(&line)) != TCL_OK) {
-	fclose(ifp);
-	bu_log("Failed to process input file (%s)!\n", argv[1]);
-	bu_log("%s\n", Tcl_GetStringResult(safe_interp));
-	Tcl_Exit(1);
-    }
-    bu_vls_trunc(&line, 0);
-}
-
-/* free up our resources */
-bu_vls_free(&line);
-bu_vls_free(&str_title);
-bu_vls_free(&str_put);
-
-fclose(ifp);
-
-Tcl_Exit(0);
-#endif	
-
+/* Note - in its full generality, a "v5 ASCII BRL-CAD geometry file" may
+ * technically be a completely arbitrary Tcl script, given the way the
+ * traditional "asc2g" program is implemented.  However, real world practice is
+ * generally go use g2asc to output geometry and asc2g to read it back in,
+ * rather than constructing arbitrary procedural Tcl files to be read in by
+ * asc2g (such procedural routines are more properly the in the bailiwick of
+ * MGED.)  For the purposes of this plugin, the set of commands considered to
+ * be legal in a v5 ASCII file are those that can be written out by g2asc.  As
+ * of now, the known commands to handle are:
+ *
+ * color
+ * title
+ * units
+ * attr
+ * put
+ *
+ * The asc2g importer also defines the commands "find", "dbfind" and "rm" in
+ * its Tcl environment, but it is not clear that these are necessary to read
+ * g2asc exports - they do not appear to be written out by g2asc.  Until we
+ * find a real-world use case, those commands will not be supported in this
+ * plugin.
+ */
 int
 asc_read_v5(
-	struct gcv_context *UNUSED(c),
+	struct gcv_context *c,
        	const struct gcv_opts *UNUSED(o),
 	std::ifstream &fs
 	)
 {
     std::string sline;
     bu_log("Reading v5...\n");
-    /* Commands to handle:
-     *
-     * title
-     * units
-     * attr
-     * put
-     */
+    if (!c)
+	return -1;
+    struct bu_vls cur_line = BU_VLS_INIT_ZERO;
+    int ocnt = 0;
+    int ccnt = 0;
+    int balanced = 0;
+    struct rt_wdb *wdbp = wdb_dbopen(c->dbip, RT_WDB_TYPE_DB_INMEM);
+
     while (std::getline(fs, sline)) {
-	std::cout << sline << "\n";
+
+	bu_vls_printf(&cur_line, "%s\n", sline.c_str());
+
+	// If we don't have balanced brackets, we're either invalid or have
+	// a multi-line command.  Assume the latter and try to read another
+	// line.
+	balanced = check_bracket_balance(&ocnt, &ccnt, sline);
+	if (!balanced) {
+	    continue;
+	} else {
+	    ocnt = 0;
+	    ccnt = 0;
+	}
+
+	int list_c = 0;
+	char **list_v = NULL;
+	if (bu_argv_from_tcl_list(bu_vls_cstr(&cur_line), &list_c, (const char ***)&list_v) != 0 || list_c < 1) {
+	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
+	    continue;
+	}
+
+	if (BU_STR_EQUAL(list_v[0], "attr")) {
+	    rt_cmd_attr(NULL, c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
+	    continue;
+	}
+	if (BU_STR_EQUAL(list_v[0], "color")) {
+	    rt_cmd_color(NULL, c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
+	    continue;
+	}
+	if (BU_STR_EQUAL(list_v[0], "put")) {
+	    rt_cmd_put(NULL, wdbp, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
+	    continue;
+	}
+	if (BU_STR_EQUAL(list_v[0], "title")) {
+	    rt_cmd_title(NULL, c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
+	    continue;
+	}
+	if (BU_STR_EQUAL(list_v[0], "units")) {
+	    rt_cmd_units(NULL, c->dbip, list_c, (const char **)list_v);
+	    bu_free(list_v, "tcl argv list");
+	    bu_vls_trunc(&cur_line, 0);
+	    continue;
+	}
+
+	bu_log("Unknown command: %s\n", list_v[0]);
+	bu_free(list_v, "tcl argv list");
+	bu_vls_trunc(&cur_line, 0);
     }
-    return 1;
+
+    bu_vls_free(&cur_line);
+
+    return balanced;
 }
 
 
@@ -194,26 +192,29 @@ tclify_name(const char *name)
 
 int
 asc_write_v5(
-	    struct gcv_context *UNUSED(c),
+	    struct gcv_context *c,
 	    const struct gcv_opts *UNUSED(o),
 	    const char *dest_path
 	    )
 {
-    FILE    *v5ofp = NULL;
+    FILE *v5ofp = NULL;
     if (!dest_path) return 0;
 
-    struct db_i	*dbip;
+    struct db_i	*dbip = c->dbip;
     struct directory *dp;
     const char *u;
 
-    if ((dbip = db_open(dest_path, DB_OPEN_READONLY)) == NULL) {
-	bu_log("Unable to open geometry database file '%s', aborting\n", dest_path);
-	return 1;
+    // TODO - eventually we should be able to do this behind the scenes, but
+    // for a first cut don't add the extra complication
+    if (db_version(dbip) == 4) {
+	bu_log("Attempting to write v5 asc output with a v4 database - first run db_upgrade to produce a v5 file\n");
+	return 0;
     }
 
-    RT_CK_DBI(dbip);
-    if (db_dirbuild(dbip)) {
-	bu_exit(1, "db_dirbuild failed\n");
+    v5ofp = fopen(dest_path, "wb");
+    if (!v5ofp) {
+	bu_log("Could not open %s for writing.\n", dest_path);
+	return 0;
     }
 
     /* write out the title and units special */
@@ -353,6 +354,8 @@ asc_write_v5(
 	}
 	rt_db_free_internal(&intern);
     } FOR_ALL_DIRECTORY_END;
+
+    fclose(v5ofp);
 
     return 1;
 }

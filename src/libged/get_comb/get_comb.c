@@ -79,7 +79,7 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
@@ -87,7 +87,7 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
 
     if (dp != RT_DIR_NULL) {
 	if (!(dp->d_flags & RT_DIR_COMB)) {
@@ -95,7 +95,7 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting\n");
 	    return BRLCAD_ERROR;
 	}
@@ -177,12 +177,13 @@ ged_get_comb_core(struct ged *gedp, int argc, const char *argv[])
 	}
 
     } else {
+	struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 	bu_vls_printf(gedp->ged_result_str, "%s {} {} No {} Yes %d %d %d %d",
 		      argv[1],
-		      gedp->ged_wdbp->wdb_item_default,
-		      gedp->ged_wdbp->wdb_air_default,
-		      gedp->ged_wdbp->wdb_mat_default,
-		      gedp->ged_wdbp->wdb_los_default);
+		      wdbp->wdb_item_default,
+		      wdbp->wdb_air_default,
+		      wdbp->wdb_mat_default,
+		      wdbp->wdb_los_default);
     }
 
     return BRLCAD_OK;

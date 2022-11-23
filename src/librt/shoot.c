@@ -28,7 +28,7 @@
 #include "vmath.h"
 
 #include "raytrace.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 
 
 #define V3PT_DEPARTING_RPP(_step, _lo, _hi, _pt)			\
@@ -40,6 +40,16 @@
      ((_step)[Y] >= 0 && (_py) > (_hi)[Y]) ||			\
      ((_step)[Z] <= 0 && (_pz) < (_lo)[Z]) ||			\
      ((_step)[Z] >= 0 && (_pz) > (_hi)[Z]))
+
+
+static void
+shoot_setup_status(struct rt_shootray_status *ss, struct application *ap)
+{
+    ss->newray = ap->a_ray;		/* struct copy */
+    ss->odist_corr = ss->obox_start = ss->obox_end = -99;
+    ss->dist_corr = 0.0;
+    ss->box_num = 0;
+}
 
 
 void
@@ -830,9 +840,7 @@ rt_shootray(register struct application *ap)
 	    VMOVE(ss.curmin, rtip->mdl_min);
 	    VMOVE(ss.curmax, rtip->mdl_max);
 	    last_bool_start = BACKING_DIST;
-	    ss.newray = ap->a_ray;		/* struct copy */
-	    ss.odist_corr = ss.obox_start = ss.obox_end = -99;
-	    ss.dist_corr = 0.0;
+	    shoot_setup_status(&ss, ap);
 	    goto start_cell;
 	}
 	resp->re_nmiss_model++;
@@ -936,10 +944,7 @@ rt_shootray(register struct application *ap)
     }
 
     last_bool_start = BACKING_DIST;
-    ss.newray = ap->a_ray;		/* struct copy */
-    ss.odist_corr = ss.obox_start = ss.obox_end = -99;
-    ss.dist_corr = 0.0;
-    ss.box_num = 0;
+    shoot_setup_status(&ss, ap);
 
     /*
      * While the ray remains inside model space, push from box to box
@@ -1487,9 +1492,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
 	VMOVE(ss.curmax, rtip->mdl_max);
     }
 
-    ss.newray = ap->a_ray;		/* struct copy */
-    ss.odist_corr = ss.obox_start = ss.obox_end = -99;
-    ss.dist_corr = 0.0;
+    shoot_setup_status(&ss, ap);
 
     /*
      * While the ray remains inside model space, push from box to box

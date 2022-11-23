@@ -224,14 +224,14 @@ WFOBJ_EXPORT extern int obj_contents_destroy(obj_contents_t contents);
  * Copy a pointer to a multidimensional array of vertices contained in
  * 'contents' to the location pointed to by val_arr and return its length.
  *
- * The vertices are contained in an array of type const float[][4] and must
+ * The vertices are contained in an array of type const double[][4] and must
  * not be modified by the caller. The format of the second dimension is:
  * {x y z w} where w is 1.0 by default.
  *
  * Return value:
  * The length of the vertex list
  */
-WFOBJ_EXPORT extern int obj_vertices(obj_contents_t contents, const float (*val_arr[])[4]);
+WFOBJ_EXPORT extern int obj_vertices(obj_contents_t contents, const double (*val_arr[])[4]);
 
 /**
  * Obtain a list of all texture vertices contained in 'contents'.
@@ -239,14 +239,14 @@ WFOBJ_EXPORT extern int obj_vertices(obj_contents_t contents, const float (*val_
  * Copy a pointer to a multidimensional array of texture vertices contained in
  * 'contents' to the location pointed to by val_arr and return its length.
  *
- * The vertices are contained in an array of type const float[][3] and must
+ * The vertices are contained in an array of type const double[][3] and must
  * not be modified by the caller. The format of the second dimension is:
  * {u v w} where v and w 0 by default.
  *
  * Return value:
  * The length of the texture vertex list
  */
-WFOBJ_EXPORT extern int obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3]);
+WFOBJ_EXPORT extern int obj_texture_coord(obj_contents_t contents, const double (*val_arr[])[3]);
 
 /**
  * Obtain a list of all normals contained in 'contents'.
@@ -254,14 +254,14 @@ WFOBJ_EXPORT extern int obj_texture_coord(obj_contents_t contents, const float (
  * Copy a pointer to a multidimensional array of normals contained in
  * 'contents' to the location pointed to by val_arr and return its length.
  *
- * The normals are contained in an array of type const float[][3] and must
+ * The normals are contained in an array of type const double[][3] and must
  * not be modified by the caller. The format of the second dimension is:
  * {i j j}.
  *
  * Return value:
  * The length of the normal list
  */
-WFOBJ_EXPORT extern int obj_normals(obj_contents_t contents, const float (*val_arr[])[3]);
+WFOBJ_EXPORT extern int obj_normals(obj_contents_t contents, const double (*val_arr[])[3]);
 
 /**
  * Obtain a unique set of all group names contained in 'contents'

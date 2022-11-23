@@ -56,7 +56,7 @@ ged_rrt_core(struct ged *gedp, int argc, const char *argv[])
     vp = &gd_rt_cmd[0];
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
-    *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
+    *vp++ = gedp->dbip->dbi_filename;
 
     gd_rt_cmd_len = ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
 

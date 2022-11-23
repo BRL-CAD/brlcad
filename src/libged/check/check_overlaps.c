@@ -28,7 +28,7 @@
 #include "./check_private.h"
 
 struct ged_check_plot {
-    struct bn_vlblock *vbp;
+    struct bv_vlblock *vbp;
     struct bu_list *vhead;
 };
 
@@ -255,8 +255,8 @@ overlap(const struct xray *ray,
 
     if (context->overlaps_overlay_flag) {
 	bu_semaphore_acquire(context->sem_stats);
-	BN_ADD_VLIST(context->overlaps_overlay_plot->vbp->free_vlist_hd, context->overlaps_overlay_plot->vhead, ihit, BN_VLIST_LINE_MOVE);
-	BN_ADD_VLIST(context->overlaps_overlay_plot->vbp->free_vlist_hd, context->overlaps_overlay_plot->vhead, ohit, BN_VLIST_LINE_DRAW);
+	BV_ADD_VLIST(context->overlaps_overlay_plot->vbp->free_vlist_hd, context->overlaps_overlay_plot->vhead, ihit, BV_VLIST_LINE_MOVE);
+	BV_ADD_VLIST(context->overlaps_overlay_plot->vbp->free_vlist_hd, context->overlaps_overlay_plot->vhead, ohit, BV_VLIST_LINE_DRAW);
 	bu_semaphore_release(context->sem_stats);
     }
 
@@ -302,8 +302,8 @@ int check_overlaps(struct current_state *state,
     }
 
     if (options->overlaps_overlay_flag) {
-	check_plot.vbp = rt_vlblock_init();
-	check_plot.vhead = bn_vlblock_find(check_plot.vbp, 0xFF, 0xFF, 0x00);
+	check_plot.vbp = bv_vlblock_init(&RTG.rtg_vlfree, 32);
+	check_plot.vhead = bv_vlblock_find(check_plot.vbp, 0xFF, 0xFF, 0x00);
     }
 
     callbackdata.noverlaps = 0;
@@ -337,8 +337,14 @@ int check_overlaps(struct current_state *state,
     printOverlaps(&callbackdata, options);
 
     if (options->overlaps_overlay_flag) {
-	_ged_cvt_vlblock_to_solids(_ged_current_gedp, check_plot.vbp, "OVERLAPS", 0);
-	bn_vlblock_free(check_plot.vbp);
+	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+	if (BU_STR_EQUAL(nview, "1")) {
+	    struct bview *view = _ged_current_gedp->ged_gvp;
+	    bv_vlblock_obj(check_plot.vbp, view, "check::overlaps");
+	} else {
+	    _ged_cvt_vlblock_to_solids(_ged_current_gedp, check_plot.vbp, "OVERLAPS", 0);
+	}
+	bv_vlblock_free(check_plot.vbp);
     }
 
     if (plot_overlaps) {

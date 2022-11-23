@@ -32,7 +32,7 @@
 
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "bn/plot3.h"
+#include "bv/plot3.h"
 #include "raytrace.h"
 #include "optical.h"
 
@@ -347,7 +347,7 @@ plant_scale(struct plant *pl, double w)
 	CLAMP(pl->blades, 1, BLADE_LAST);
     }
 
-    for (blade=0; blade < pl->blades; blade++) {
+    for (blade=0; (blade < pl->blades && blade < BLADE_MAX); blade++) {
 	pl->b[blade].tot_len = 0.0;
 	if (blade != BLADE_LAST)
 	    pl->b[blade].width *= d;
@@ -720,7 +720,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 
 	BU_CKMAG(&bl->leaf[seg].magic, LEAF_MAGIC, "leaf");
 
-	cond = bn_dist_line3_line3(ldist, r->r.r_pt, r->r.r_dir,
+	cond = bg_dist_line3_line3(ldist, r->r.r_pt, r->r.r_dir,
 				   pt, bl->leaf[seg].blade, &r->tol);
 
 	if (optical_debug&OPTICAL_DEBUG_SHADE) {

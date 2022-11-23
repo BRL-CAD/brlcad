@@ -97,7 +97,7 @@ main(int argc, char **argv)
 	}
     } else {
 	outfp = stdout;
-	setmode(outfp, O_BINARY);
+	setmode(fileno(outfp), O_BINARY);
     }
 
     if (argc >= 4) {
@@ -107,7 +107,7 @@ main(int argc, char **argv)
 	}
     } else {
 	infp = stdin;
-	setmode(infp, O_BINARY);
+	setmode(fileno(infp), O_BINARY);
     }
 
     if (isatty(fileno(outfp))) {

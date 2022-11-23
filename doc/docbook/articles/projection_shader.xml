@@ -26,10 +26,10 @@
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig01.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig01.png" format="PNG"/>
 	</imageobject>
       <imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig01.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig01.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -172,10 +172,10 @@
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig02.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig02.png" format="PNG"/>
 	</imageobject>
       <imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig02.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig02.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -304,10 +304,10 @@ Diagrammed, this command breaks down as follows:
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig03.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig03.png" format="PNG"/>
 	</imageobject>
       <imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig03.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig03.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -345,10 +345,10 @@ Diagrammed, this command breaks down as follows:
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig04.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig04.png" format="PNG"/>
 	</imageobject>
       <imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig04.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig04.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -357,10 +357,10 @@ Diagrammed, this command breaks down as follows:
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig05.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig05.png" format="PNG"/>
 	</imageobject>
       <imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig05.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig05.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -385,10 +385,10 @@ prj_add circuitboard.prj circuit_front_950.pix 950 950
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig06.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig06.png" format="PNG"/>
 	</imageobject>
       <imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig06.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig06.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -401,10 +401,10 @@ prj_add circuitboard.prj circuit_front_950.pix 950 950
 
       <mediaobject>
 	<imageobject role="html">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig07.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig07.png" format="PNG"/>
 	</imageobject>
       <imageobject role="fo">
-	  <imagedata align="center" fileref="../../articles/images/projection_shader_fig07.png" format="PNG"/>
+	  <imagedata align="center" fileref="../articles/images/projection_shader_fig07.png" format="PNG"/>
 	</imageobject>
       </mediaobject>
     </figure>

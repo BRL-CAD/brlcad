@@ -48,7 +48,7 @@ accomplish the push without creating any new shapes.
   <example><title>Move effects of transformation matrices in a tree rooted at an object to the shape level.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>xpush group1</userinput>
+      <prompt>mged&gt; </prompt><userinput>xpush group1</userinput>
     </para>
     <para>Moves all the effects of the transformation matrices in the tree rooted at <emphasis>group1</emphasis>
 down to the shape level (creating new shapes if needed).

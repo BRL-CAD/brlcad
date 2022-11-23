@@ -55,10 +55,10 @@
     <screenshot>
       <mediaobject>
         <imageobject role="html">
-          <imagedata align="center" fileref="../../articles/images/oed_fig01.png" format="PNG"/>
+          <imagedata align="center" fileref="../articles/images/oed_fig01.png" format="PNG"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata align="center" fileref="../../articles/images/oed_fig01.png" format="PNG"/>
+          <imagedata align="center" fileref="../articles/images/oed_fig01.png" format="PNG"/>
         </imageobject>
       </mediaobject>
     </screenshot>
@@ -209,10 +209,10 @@ lollipop/
       <screenshot>
 	<mediaobject>
           <imageobject role="html">
-             <imagedata align="center" fileref="../../articles/images/oed_fig02.png" format="PNG"/>
+             <imagedata align="center" fileref="../articles/images/oed_fig02.png" format="PNG"/>
           </imageobject>
           <imageobject role="fo">
-             <imagedata align="center" fileref="../../articles/images/oed_fig02.png" format="PNG"/>
+             <imagedata align="center" fileref="../articles/images/oed_fig02.png" format="PNG"/>
           </imageobject>
         </mediaobject>
       </screenshot>
@@ -279,10 +279,10 @@ cube.s:  ARB8
       <screenshot>
 	<mediaobject>
           <imageobject role="html">
-            <imagedata align="center" fileref="../../articles/images/oed_fig03.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig03.png" format="PNG"/>
           </imageobject>
           <imageobject role="fo">
-            <imagedata align="center" fileref="../../articles/images/oed_fig03.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig03.png" format="PNG"/>
           </imageobject>
         </mediaobject>
       </screenshot>
@@ -299,10 +299,10 @@ cube.s:  ARB8
       <screenshot>
 	<mediaobject>
           <imageobject role="html">
-            <imagedata align="center" fileref="../../articles/images/oed_fig04.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig04.png" format="PNG"/>
           </imageobject>
           <imageobject role="fo">
-            <imagedata align="center" fileref="../../articles/images/oed_fig04.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig04.png" format="PNG"/>
           </imageobject>
         </mediaobject>
       </screenshot>
@@ -318,10 +318,10 @@ cube.s:  ARB8
       <screenshot>
 	<mediaobject>
           <imageobject role="html">
-            <imagedata align="center" fileref="../../articles/images/oed_fig05.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig05.png" format="PNG"/>
           </imageobject>
           <imageobject role="fo">
-            <imagedata align="center" fileref="../../articles/images/oed_fig05.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig05.png" format="PNG"/>
           </imageobject>
         </mediaobject>
       </screenshot>
@@ -376,10 +376,10 @@ cube.s:  ARB8
       <screenshot>
 	<mediaobject>
           <imageobject role="html">
-            <imagedata align="center" fileref="../../articles/images/oed_fig06.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig06.png" format="PNG"/>
           </imageobject>
           <imageobject role="fo">
-            <imagedata align="center" fileref="../../articles/images/oed_fig06.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig06.png" format="PNG"/>
           </imageobject>
         </mediaobject>
       </screenshot>
@@ -511,10 +511,10 @@ cube.s:  ARB8
       <screenshot>
 	<mediaobject>
           <imageobject role="html">
-            <imagedata align="center" fileref="../../articles/images/oed_fig07.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig07.png" format="PNG"/>
           </imageobject>
           <imageobject role="fo">
-            <imagedata align="center" fileref="../../articles/images/oed_fig07.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig07.png" format="PNG"/>
           </imageobject>
         </mediaobject>
       </screenshot>
@@ -559,10 +559,10 @@ cube.s:  ARB8
       <screenshot>
 	<mediaobject>
           <imageobject role="html">
-            <imagedata align="center" fileref="../../articles/images/oed_fig08.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig08.png" format="PNG"/>
           </imageobject>
           <imageobject role="fo">
-            <imagedata align="center" fileref="../../articles/images/oed_fig08.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig08.png" format="PNG"/>
           </imageobject>
         </mediaobject>
       </screenshot>
@@ -638,10 +638,10 @@ object2.c:  --
     <screenshot>
       <mediaobject>
         <imageobject role="html">
-          <imagedata align="center" fileref="../../articles/images/oed_fig09.png" format="PNG"/>
+          <imagedata align="center" fileref="../articles/images/oed_fig09.png" format="PNG"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata align="center" fileref="../../articles/images/oed_fig09.png" format="PNG"/>
+          <imagedata align="center" fileref="../articles/images/oed_fig09.png" format="PNG"/>
         </imageobject>
       </mediaobject>
     </screenshot>
@@ -682,10 +682,10 @@ object2.c:  --
       <screenshot>
 	<mediaobject>
           <imageobject role="html">
-            <imagedata align="center" fileref="../../articles/images/oed_fig10.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig10.png" format="PNG"/>
           </imageobject>
           <imageobject role="fo">
-            <imagedata align="center" fileref="../../articles/images/oed_fig10.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig10.png" format="PNG"/>
           </imageobject>
         </mediaobject>
       </screenshot>
@@ -739,10 +739,10 @@ object1.c:  --
       <screenshot>
 	<mediaobject>
           <imageobject role="html">
-            <imagedata align="center" fileref="../../articles/images/oed_fig11.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig11.png" format="PNG"/>
           </imageobject>
           <imageobject role="fo">
-            <imagedata align="center" fileref="../../articles/images/oed_fig11.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig11.png" format="PNG"/>
           </imageobject>
         </mediaobject>
       </screenshot>
@@ -761,10 +761,10 @@ object1.c:  --
       <screenshot>
 	<mediaobject>
           <imageobject role="html">
-            <imagedata align="center" fileref="../../articles/images/oed_fig12.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig12.png" format="PNG"/>
           </imageobject>
           <imageobject role="fo">
-            <imagedata align="center" fileref="../../articles/images/oed_fig12.png" format="PNG"/>
+            <imagedata align="center" fileref="../articles/images/oed_fig12.png" format="PNG"/>
           </imageobject>
         </mediaobject>
       </screenshot>
@@ -834,10 +834,10 @@ object1.c:  --
     <screenshot>
       <mediaobject>
         <imageobject role="html">
-          <imagedata align="center" fileref="../../articles/images/oed_fig13.png" format="PNG"/>
+          <imagedata align="center" fileref="../articles/images/oed_fig13.png" format="PNG"/>
         </imageobject>
         <imageobject role="fo">
-          <imagedata align="center" fileref="../../articles/images/oed_fig13.png" format="PNG"/>
+          <imagedata align="center" fileref="../articles/images/oed_fig13.png" format="PNG"/>
         </imageobject>
       </mediaobject>
     </screenshot>

@@ -65,19 +65,19 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
     /* check for less than three vertices or incomplete vertex coordinates */
     if (argc < ELEMENTS_PER_POINT * 3 + 2 || (argc - 2) % 3 != 0) {
        bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-       return BRLCAD_HELP;
+       return GED_HELP;
     }
 
     /* attempt to resolve and verify */
     name = argv[0];
 
-    dp = db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET);
+    dp = db_lookup(gedp->dbip, name, LOOKUP_QUIET);
     if (dp == RT_DIR_NULL) {
        bu_vls_printf(gedp->ged_result_str, "%s does not exist\n", name);
        return BRLCAD_ERROR;
     }
 
-    if (rt_db_get_internal(&internal, dp, gedp->ged_wdbp->dbip,
+    if (rt_db_get_internal(&internal, dp, gedp->dbip,
        bn_mat_identity, &rt_uniresource) < 0) {
        bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal() error\n");
        return BRLCAD_ERROR;
@@ -116,7 +116,7 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
 	face_verts[idx] = &verts[idx].v;
     }
 
-    fu = nmg_cmface( s, face_verts, num_verts );
+    nmg_cmface( s, face_verts, num_verts );
     bu_free((char *) face_verts, "face_verts");
 
     /* assign geometry for entire vertex list (if we have one) */
@@ -144,7 +144,8 @@ ged_nmg_cmface_core(struct ged *gedp, int argc, const char *argv[])
 
     nmg_rebound(m, &tol);
 
-    if ( wdb_put_internal(gedp->ged_wdbp, name, &internal, 1.0) < 0 ) {
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (wdb_put_internal(wdbp, name, &internal, 1.0) < 0 ) {
 	bu_vls_printf(gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
 	rt_db_free_internal(&internal);
 	return BRLCAD_ERROR;

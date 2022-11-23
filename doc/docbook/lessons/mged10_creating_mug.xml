@@ -337,10 +337,10 @@
       <informalfigure>
 	<mediaobject>
 	  <imageobject role="html">
-	    <imagedata align="center" fileref="../../lessons/images/mged10_mug_wireframe.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged10_mug_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <imageobject role="fo">
-	    <imagedata align="center" fileref="../../lessons/images/mged10_mug_wireframe.png" format="PNG"/>
+	    <imagedata align="center" fileref="../lessons/images/mged10_mug_wireframe.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
 	    <para>

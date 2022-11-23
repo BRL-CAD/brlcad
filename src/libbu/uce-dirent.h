@@ -302,7 +302,7 @@ static void rewinddir (DIR *dirp);
 /* use ffblk instead of _find_t if requested */
 #if defined(DIRENT_USE_FFBLK)
 # define _A_ARCH   (FA_ARCH)
-# define _A_static (FA_static)
+# define _A_static (FA_HIDDEN)
 # define _A_NORMAL (0)
 # define _A_RDONLY (FA_RDONLY)
 # define _A_SUBDIR (FA_DIREC)
@@ -620,7 +620,7 @@ _initdir (DIR *dirp)
 
 # elif defined(DIRENT_MSDOS_INTERFACE)
   if (_dos_findfirst (dirp->dirname,
-	  _A_SUBDIR | _A_RDONLY | _A_ARCH | _A_SYSTEM | _A_static,
+	  _A_SUBDIR | _A_RDONLY | _A_ARCH | _A_SYSTEM | _A_HIDDEN,
 	  &dirp->current.data) != 0)
   {
     /* _dos_findfirst and findfirst will set errno to ENOENT when no

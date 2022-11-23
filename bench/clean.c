@@ -46,7 +46,8 @@
 
 
 /* TODO: !!! needed */
-int bu_file_move(const char *fn1, const char *fn2) {if (!fn1 || !fn2) return -1; return 0;}
+//int bu_file_move(const char *fn1, const char *fn2) {if (!fn1 || !fn2) return -1; return 0;}
+
 extern int bu_file_copy(const char *fn1, const char *fn2);
 
 
@@ -69,7 +70,7 @@ clean_obstacles(const char *base_filename, int id)
 	if (bu_file_exists(bu_vls_cstr(&vpid), NULL)) {
 	    bu_file_delete(bu_vls_cstr(&vp));
 	}
-	bu_file_move(bu_vls_cstr(&vp), bu_vls_cstr(&vpid));
+	//bu_file_move(bu_vls_cstr(&vp), bu_vls_cstr(&vpid));
     }
 
     /* look for a log file */
@@ -79,7 +80,7 @@ clean_obstacles(const char *base_filename, int id)
 	if (bu_file_exists(bu_vls_cstr(&vpid), NULL)) {
 	    bu_file_delete(bu_vls_cstr(&vp));
 	}
-	bu_file_move(bu_vls_cstr(&vp), bu_vls_cstr(&vpid));
+	//bu_file_move(bu_vls_cstr(&vp), bu_vls_cstr(&vpid));
     }
 }
 

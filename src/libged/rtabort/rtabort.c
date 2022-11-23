@@ -64,8 +64,8 @@ ged_rtabort_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_trunc(&cmdroot, 0);
 	if (argcnt > 0 && bu_path_component(&cmdroot, cmd, BU_PATH_BASENAME_EXTLESS)) {
 	    if (BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rt") ||
-		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtwizard") ||
-		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtcheck")) {
+		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtwizard") || BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "art") ||
+		    BU_STR_EQUAL(bu_vls_cstr(&cmdroot), "rtcheck"))  {
 		bu_terminate(bu_process_pid(rrp->p));
 		rrp->aborted = 1;
 	    }

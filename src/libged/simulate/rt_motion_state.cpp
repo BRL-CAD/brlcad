@@ -115,11 +115,11 @@ apply_tree_matrix(db_i &db, const db_full_path &path,
     RT_DB_INTERNAL_INIT(&parent_internal);
 
     if (0 > rt_db_get_internal(&parent_internal, &parent_dir, &db, bn_mat_identity,
-			       &rt_uniresource))
+			      &rt_uniresource))
 	bu_bomb("rt_db_get_internal() failed");
 
     rt_comb_internal &comb = *static_cast<rt_comb_internal *>
-			     (parent_internal.idb_ptr);
+    (parent_internal.idb_ptr);
     RT_CK_COMB(&comb);
 
     tree * const leaf = db_find_named_leaf(comb.tree,

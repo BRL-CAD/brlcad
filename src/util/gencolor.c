@@ -132,7 +132,7 @@ main(int argc, char **argv)
     if (argc > 1) {
 	/* get values from the command line */
 	i = 0;
-	while (argc > 1 && i < MAX_BYTES) {
+	while (argc > 1 && i < MAX_BYTES - 1) {
 	    buf[i] = atoi(argv[i+1]);
 	    argc--;
 	    i++;

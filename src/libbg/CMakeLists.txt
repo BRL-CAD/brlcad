@@ -6,7 +6,10 @@ set(BG_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${POLY2TRI_INCLUDE_DIRS}
   ${SPSR_INCLUDE_DIR}
+  ${LMDB_INCLUDE_DIR}
+  ${BRLCAD_SOURCE_DIR}/src/other/ext/Eigen
   )
+
 BRLCAD_LIB_INCLUDE_DIRS(bg BG_INCLUDE_DIRS "")
 
 set(SPSR_srcs
@@ -55,14 +58,21 @@ set(LIBBG_SOURCES
   chull2.cpp
   QuickHull.cpp
   chull3d.cpp
+  clip.c
   clipper.cpp
+  lod.cpp
   lseg_lseg.c
   lseg_pt.c
   obr.c
+  plane.cpp
   polygon.c
+  polygon_bview.c
+  polygon_fill.cpp
   polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
+  sat.c
+  snap.c
   spsr.c
   ${SPSR_srcs}
   tri_pt.c
@@ -70,10 +80,14 @@ set(LIBBG_SOURCES
   tri_tri.c
   trimesh.cpp
   trimesh_isect.cpp
+  trimesh_plot3.cpp
+  trimesh_sync.cpp
+  trimesh_split.cpp
+  vert_tree.c
   util.c
   )
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbn;libbu;${POLY2TRI_LIBRARIES}")
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbv;libbn;libbu;${POLY2TRI_LIBRARIES};${LMDB_LIBRARIES}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (HIDE_INTERNAL_SYMBOLS)
   if (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)
@@ -85,6 +99,14 @@ if (HIDE_INTERNAL_SYMBOLS)
     endif (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)
   endif (TARGET libbg-obj)
 endif (HIDE_INTERNAL_SYMBOLS)
+
+# altivec vectorization is broken in our bundled version of eigen.
+# looks like it was fixed in upstream long time ago, so just disable
+# for now.  TODO: remove this / retest after next Eigen upgrade.
+set_property(TARGET libbg APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
+if (TARGET libbg-obj)
+  set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
+endif (TARGET libbg-obj)
 
 add_subdirectory(tests)
 

@@ -43,7 +43,7 @@ Object_To_STEP(struct directory *dp, struct rt_db_internal *intern, struct rt_wd
     if (sc->comb_to_step->find(dp) != sc->comb_to_step->end()) return;
     switch (intern->idb_minor_type) {
 	case DB5_MINORTYPE_BRLCAD_BREP:
-	    RT_BREP_TEST_MAGIC((struct rt_brep_internal *)(intern->idb_ptr));
+	    RT_BREP_CK_MAGIC((struct rt_brep_internal *)(intern->idb_ptr));
 	    (void)ON_BRep_to_STEP(dp, ((struct rt_brep_internal *)(intern->idb_ptr))->brep, sc, &brep_shape, &brep_product, &brep_manifold);
 	    (*sc->solid_to_step)[dp] = brep_product;
 	    (*sc->solid_to_step_shape)[dp] = brep_shape;

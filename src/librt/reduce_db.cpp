@@ -336,6 +336,8 @@ Combination::Combination(db_i &db, directory &dir) :
 
     for (std::size_t i = 0; i < avs.count; ++i)
 	m_attributes[avs.avp[i].name] = avs.avp[i].value;
+
+    bu_avs_free(&avs);
 }
 
 

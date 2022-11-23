@@ -20,18 +20,18 @@
 
 #include "common.h"
 
-#include "dm/bview_util.h"
+#include "bv/util.h"
 #include "ged.h"
 
 static int
 zoom(struct ged *gedp, double sf)
 {
     gedp->ged_gvp->gv_scale /= sf;
-    if (gedp->ged_gvp->gv_scale < RT_MINVIEWSCALE)
-	gedp->ged_gvp->gv_scale = RT_MINVIEWSCALE;
+    if (gedp->ged_gvp->gv_scale < BV_MINVIEWSCALE)
+	gedp->ged_gvp->gv_scale = BV_MINVIEWSCALE;
     gedp->ged_gvp->gv_size = 2.0 * gedp->ged_gvp->gv_scale;
     gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return BRLCAD_OK;
 }
@@ -52,7 +52,7 @@ ged_zoom_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc != 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s scale_factor", argv[0]);
-	return (argc == 1) ? BRLCAD_HELP : BRLCAD_ERROR;
+	return (argc == 1) ? GED_HELP : BRLCAD_ERROR;
     }
 
     /* get the scale factor */

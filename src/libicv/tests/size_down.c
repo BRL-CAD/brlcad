@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
     bu_log("File information width %zu height %zu\n", bif->width, bif->height);
 
     for (index = 0; index < 65536; index++)
-	bu_log("index = %ld, data = %f\n", index, bif->data[index]);
+	bu_log("index = %zu, data = %f\n", index, bif->data[index]);
 
 
     icv_write(bif,out_file, format);

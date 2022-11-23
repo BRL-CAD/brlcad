@@ -248,8 +248,8 @@ int m;
 int a[];
 long int *r;
 {
-    byte rho[9], J, sigma, tau,
-    	 sigmaT, tauT, tauT1 = 0, omega, omega1 = 0, alpha[9];
+    byte rho[9], J, sigma, tau, sigmaT, tauT, tauT1 = 0, omega, omega1 = 0;
+    byte alpha[9] = {0};
     register int i, b;
     int Jsum;
     long int rl;
@@ -257,19 +257,6 @@ long int *r;
     calctables(n);
 
     /* Unpack the coordinates into alpha[i]. */
-    /* First, zero out the alphas. */
-    switch ( m ) {
-    case 9: alpha[8] = 0;
-    case 8: alpha[7] = 0;
-    case 7: alpha[6] = 0;
-    case 6: alpha[5] = 0;
-    case 5: alpha[4] = 0;
-    case 4: alpha[3] = 0;
-    case 3: alpha[2] = 0;
-    case 2: alpha[1] = 0;
-    case 1: alpha[0] = 0;
-    }
-
     /* The loop that unpacks bits of a[b] into alpha[i] has been unrolled.
      * The high-order bit of a[b] has to go into alpha[0], so we pre-shift
      * a[b] so that its high-order bit is always in the 0x100 position.

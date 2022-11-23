@@ -32,7 +32,6 @@ Readstart()
 	    bu_exit(1, "End of file encountered\n");
 
 	if (card[72] != 'S') {
-	    done = 1;
 	    break;
 	}
 	card[72] = '\0';

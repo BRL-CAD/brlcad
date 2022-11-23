@@ -104,11 +104,13 @@ main(int argc, char *argv[])
     BRLCADWrapper *dotg  = new BRLCADWrapper();
     if (!dotg) {
 	std::cerr << "ERROR: unable to create BRL-CAD instance" << std::endl;
+	delete sc;
 	return 3;
     }
     if (!dotg->load(iflnm)) {
 	std::cerr << "ERROR: unable to open BRL-CAD input file [" << oflnm << "]" << std::endl;
 	delete dotg;
+	delete sc;
 	return 2;
     }
 
@@ -122,6 +124,7 @@ main(int argc, char *argv[])
 	if (!path_cnt) {
 	    std::cerr << "ERROR: no objects found in .g file" << "\n" << std::endl;
 	    delete dotg;
+	    delete sc;
 	    return 1;
 	}
     } else {
@@ -133,6 +136,7 @@ main(int argc, char *argv[])
 	    if (dp == RT_DIR_NULL) {
 		std::cerr << "ERROR: cannot find " << argv[i] << "\n" << std::endl;
 		delete dotg;
+		delete sc;
 		bu_free(paths, "free path memory");
 		return 1;
 	    } else {

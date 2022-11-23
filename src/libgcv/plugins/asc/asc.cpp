@@ -17,29 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file asc.cpp
- *
- * Brief description
- *
- */
 
 #include "common.h"
 #include "vmath.h"
 
-#include <cstdio>
 #include <fstream>
-#include <regex>
 #include <sstream>
 #include <string>
+
+#include "bio.h"
 
 #include "rt/db_io.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
 
+
 extern int asc_read_v4(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
 extern int asc_read_v5(struct gcv_context *c, const struct gcv_opts *o, std::ifstream &fs);
 extern int asc_write_v4(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
 extern int asc_write_v5(struct gcv_context *c, const struct gcv_opts *o, const char *dest_path);
+
 
 static int
 asc_can_read(const char *data)
@@ -48,6 +45,7 @@ asc_can_read(const char *data)
     bu_log("asc can read: %s\n", data);
     return 1;
 }
+
 
 static int
 asc_read(
@@ -59,13 +57,14 @@ asc_read(
 {
     struct bu_vls vline = BU_VLS_INIT_ZERO;
     int fmt = -1;
+    int ret = 1;
     if (!c || !o || !spath) return 0;
     std::string sline;
     std::ifstream fs;
     fs.open(spath);
     if (!fs.is_open()) {
 	std::cerr << "Unable to open " << spath << " for reading, skipping\n";
-	return 0;
+	return 1;
     }
 
     // asc2g checked for either title or put as the first line to denote a new
@@ -96,23 +95,29 @@ asc_read(
 	    switch (fmt) {
 		case 4:
 		    fs.seekg(0);
-		    asc_read_v4(c, o, fs);
+		    ret = asc_read_v4(c, o, fs);
+		    goto asc_cleanup;
 		    break;
 		case 5:
 		    fs.seekg(0);
-		    asc_read_v5(c, o, fs);
+		    ret = asc_read_v5(c, o, fs);
+		    goto asc_cleanup;
 		    break;
 		default:
 		    std::cerr << "Unknown asc format version: " << fmt << "\n";
-		    return 0;
 		    break;
 	    }
 	}
     }
 
+asc_cleanup:
     // Not yet implemented - always return failure until we have something working...
-    return 1;
+    bu_vls_free(&str_title);
+    bu_vls_free(&str_put);
+    bu_vls_free(&vline);
+    return ret;
 }
+
 
 static int
 asc_write(struct gcv_context *c, const struct gcv_opts *o,
@@ -126,6 +131,7 @@ asc_write(struct gcv_context *c, const struct gcv_opts *o,
     }
     return 1;
 }
+
 
 extern "C"
 {

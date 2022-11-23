@@ -140,7 +140,7 @@ bu_bomb(const char *str)
      */
     {
 	fd = open("/dev/tty", 1);
-	if (LIKELY(fd > 0)) {
+	if (LIKELY(fd >= 0)) {
 	    if (str && (strlen(str) > 0)) {
 		size_t len;
 		ssize_t ret;
@@ -193,7 +193,7 @@ bu_bomb(const char *str)
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
 	fd = open("/dev/tty", 1);
-	if (LIKELY(fd > 0)) {
+	if (LIKELY(fd >= 0)) {
 	    ssize_t ret;
 	    ret = write(fd, "Causing intentional core dump due to debug flag\n", 48);
 	    if (ret != 48)

@@ -40,7 +40,7 @@ database name and the list of currently displayed objects are added to the end o
   <example><title>Run the <emphasis>rtcheck</emphasis> program to fire rays from a uniform grid with the 	rays spaced a specified distance apart.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rtcheck -g10 -G10</userinput>
+      <prompt>mged&gt; </prompt><userinput>rtcheck -g10 -G10</userinput>
     </para>
     <para>Runs the <emphasis>rtcheck</emphasis> program with rays fired from a uniform grid with 	the rays spaced every 10 mm.
     </para>

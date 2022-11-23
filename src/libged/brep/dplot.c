@@ -76,7 +76,7 @@ struct dplot_info {
 
 #define RETURN_MORE \
     CLEANUP \
-    return BRLCAD_MORE;
+    return GED_MORE;
 
 #define RETURN_ERROR \
     CLEANUP \
@@ -100,7 +100,7 @@ dplot_overlay(
     if (name) {
 	cmd_av[3] = name;
     }
-    ret = ged_overlay(gedp, cmd_ac, cmd_av);
+    ret = ged_exec(gedp, cmd_ac, cmd_av);
     bu_vls_free(&overlay_name);
 
     if (ret != BRLCAD_OK) {
@@ -198,7 +198,7 @@ dplot_ssx(
     if (info->mode == DPLOT_SSX && info->ssx_idx < info->fdata.ssx_count) {
 	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show surface-"
 		"surface intersection %d", info->ssx_idx);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     return BRLCAD_OK;
 }
@@ -247,7 +247,7 @@ dplot_ssx_events(
     /* advance to next event, or return to initial state */
     if (++info->event_idx < info->event_count) {
 	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show next event\n");
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     info->mode = DPLOT_INITIAL;
     return BRLCAD_OK;
@@ -301,7 +301,7 @@ dplot_isocsx(
 	    bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show "
 		    "isocurve-surface intersection %d", info->isocsx_idx);
 	    info->mode = DPLOT_ISOCSX;
-	    return BRLCAD_MORE;
+	    return GED_MORE;
 	} else {
 	    info->mode = DPLOT_INITIAL;
 	}
@@ -345,7 +345,7 @@ dplot_isocsx_events(struct dplot_info *info)
     if (++info->event_idx < info->event_count) {
 	bu_vls_printf(info->gedp->ged_result_str,
 		"Press [Enter] to show next event\n");
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
 
     info->mode = DPLOT_INITIAL;
@@ -394,7 +394,7 @@ dplot_face_curves(struct dplot_info *info)
 	if (info->event_idx < info->event_count) {
 	    bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show the"
 		    " next curve.");
-	    return BRLCAD_MORE;
+	    return GED_MORE;
 	}
     }
 
@@ -455,7 +455,7 @@ dplot_split_faces(
 
 	split_face = info->fdata.face[info->event_idx];
 	bu_vls_printf(&name, "_split_face%d_outerloop_curve", info->event_idx);
-	for (i = 0; i < info->fdata.face[info->event_idx].outerloop_curves; ++i) {
+	for (i = 0; i < split_face.outerloop_curves; ++i) {
 	    bu_vls_trunc(&short_name, 0);
 	    bu_vls_printf(&short_name, "sfo%d", i);
 
@@ -466,7 +466,7 @@ dplot_split_faces(
 
 	bu_vls_trunc(&name, 0);
 	bu_vls_printf(&name, "_split_face%d_innerloop_curve", info->event_idx);
-	for (i = 0; i < info->fdata.face[info->event_idx].innerloop_curves; ++i) {
+	for (i = 0; i < split_face.innerloop_curves; ++i) {
 	    bu_vls_trunc(&short_name, 0);
 	    bu_vls_printf(&short_name, "sfi%d", i);
 
@@ -477,7 +477,7 @@ dplot_split_faces(
 
 	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show "
 		"split face %d", ++info->event_idx);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     return BRLCAD_OK;
 }
@@ -500,7 +500,7 @@ dplot_linked_curves(
 		info->event_idx, "linked_curve");
 	bu_vls_printf(info->gedp->ged_result_str, "Press [Enter] to show "
 		"linked curve %d", ++info->event_idx);
-	return BRLCAD_MORE;
+	return GED_MORE;
     }
     return BRLCAD_OK;
 }
@@ -603,7 +603,7 @@ ged_dplot_core(struct ged *gedp, int argc, const char *argv[])
 		"  lcurves     (show linked ssx curves used to split faces)\n");
 	bu_vls_printf(gedp->ged_result_str,
 		"    faces     (show split faces used to construct result)\n");
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
     filename = argv[1];
     cmd = argv[2];
@@ -724,7 +724,7 @@ ged_dplot_core(struct ged *gedp, int argc, const char *argv[])
     info.brep1_surf_count = info.fdata.brep1_surface_count;
     info.brep2_surf_count = info.fdata.brep2_surface_count;
 
-    if (info.mode == DPLOT_ISOCSX_EVENTS) {
+    if (info.mode == DPLOT_ISOCSX_EVENTS && info.fdata.ssx_count > 0) {
 	int *isocsx_events = info.fdata.ssx[info.ssx_idx].isocsx_events;
 
 	info.event_count = 0;
@@ -736,49 +736,49 @@ ged_dplot_core(struct ged *gedp, int argc, const char *argv[])
     ret = dplot_ssx(&info);
     if (ret == BRLCAD_ERROR) {
 	RETURN_ERROR;
-    } else if (ret == BRLCAD_MORE) {
+    } else if (ret == GED_MORE) {
 	RETURN_MORE;
     }
 
     ret = dplot_ssx_events(&info);
     if (ret == BRLCAD_ERROR) {
 	RETURN_ERROR;
-    } else if (ret == BRLCAD_MORE) {
+    } else if (ret == GED_MORE) {
 	RETURN_MORE;
     }
 
     ret = dplot_isocsx(&info);
     if (ret == BRLCAD_ERROR) {
 	RETURN_ERROR;
-    } else if (ret == BRLCAD_MORE) {
+    } else if (ret == GED_MORE) {
 	RETURN_MORE;
     }
 
     ret = dplot_isocsx_events(&info);
     if (ret == BRLCAD_ERROR) {
 	RETURN_ERROR;
-    } else if (ret == BRLCAD_MORE) {
+    } else if (ret == GED_MORE) {
 	RETURN_MORE;
     }
 
     ret = dplot_face_curves(&info);
     if (ret == BRLCAD_ERROR) {
 	RETURN_ERROR;
-    } else if (ret == BRLCAD_MORE) {
+    } else if (ret == GED_MORE) {
 	RETURN_MORE;
     }
 
     ret = dplot_split_faces(&info);
     if (ret == BRLCAD_ERROR) {
 	RETURN_ERROR;
-    } else if (ret == BRLCAD_MORE) {
+    } else if (ret == GED_MORE) {
 	RETURN_MORE;
     }
 
     ret = dplot_linked_curves(&info);
     if (ret == BRLCAD_ERROR) {
 	RETURN_ERROR;
-    } else if (ret == BRLCAD_MORE) {
+    } else if (ret == GED_MORE) {
 	RETURN_MORE;
     }
 

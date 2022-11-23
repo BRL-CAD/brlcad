@@ -53,7 +53,7 @@ ged_eac_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_vls_strcat(&v, "draw");
@@ -64,7 +64,7 @@ ged_eac_core(struct ged *gedp, int argc, const char *argv[])
 	if (item < 1)
 	    continue;
 
-	FOR_ALL_DIRECTORY_START(dp, gedp->ged_wdbp->dbip) {
+	FOR_ALL_DIRECTORY_START(dp, gedp->dbip) {
 	    struct rt_db_internal intern;
 	    struct rt_comb_internal *comb;
 
@@ -73,7 +73,7 @@ ged_eac_core(struct ged *gedp, int argc, const char *argv[])
 
 	    bu_vls_printf(gedp->ged_result_str, "%s: looking at %s\n", argv[0], dp->d_namep);
 
-	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(&intern, dp, gedp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "%s: Database read error, aborting\n", argv[0]);
 		return BRLCAD_ERROR;
 	    }
@@ -98,7 +98,7 @@ ged_eac_core(struct ged *gedp, int argc, const char *argv[])
 
 	new_argv = (char **)bu_calloc(lim+1, sizeof(char *), "ged_eac_core: new_argv");
 	new_argc = bu_argv_from_string(new_argv, lim, bu_vls_addr(&v));
-	retval = ged_draw(gedp, new_argc, (const char **)new_argv);
+	retval = ged_exec(gedp, new_argc, (const char **)new_argv);
 	bu_free((void *)new_argv, "ged_eac_core: new_argv");
 	bu_vls_free(&v);
 	return retval;

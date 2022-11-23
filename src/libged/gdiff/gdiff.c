@@ -46,6 +46,8 @@ check_walk_subtree(int *diff, struct bu_vls *msgs, struct db_i *dbip, struct db_
 {
     int idn1, idn2;
     struct directory *dp1, *dp2;
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct bn_tol *tol = &wdbp->wdb_tol;
 
     if (!diff)
        	return;
@@ -72,7 +74,7 @@ check_walk_subtree(int *diff, struct bu_vls *msgs, struct db_i *dbip, struct db_
 		return;
 	    }
 	    if (tp1->tr_l.tl_mat && tp2->tr_l.tl_mat) {
-		if (!bn_mat_is_equal(tp1->tr_l.tl_mat, tp2->tr_l.tl_mat, &dbip->dbi_wdbp->wdb_tol)) {
+		if (!bn_mat_is_equal(tp1->tr_l.tl_mat, tp2->tr_l.tl_mat, tol)) {
 		    (*diff) = 1;
 		    return;
 		}
@@ -175,7 +177,9 @@ check_walk(int *diff,
     }
 
     /* If we have two solids, use db_diff_dp */
-    int dr = db_diff_dp(dbip, dbip, dp1, dp2, &dbip->dbi_wdbp->wdb_tol, DB_COMPARE_ALL, NULL);
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct bn_tol *tol = &wdbp->wdb_tol;
+    int dr = db_diff_dp(dbip, dbip, dp1, dp2, tol, DB_COMPARE_ALL, NULL);
     if (dr != DIFF_UNCHANGED) {
 	char *p1s = db_path_to_string(p1);
 	char *p2s = db_path_to_string(p2);
@@ -192,9 +196,8 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 {
     size_t i;
     struct analyze_raydiff_results *results;
-    struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    struct bn_tol tol = BN_TOL_INIT_TOL;
 
-    long verbosity = 0;
     int structure_diff = 0;
     int view_left = 0;
     int view_right = 0;
@@ -209,7 +212,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     int ac = argc - 1;
     const char **av = argv+1;
 
-    struct bu_opt_desc d[9];
+    struct bu_opt_desc d[8];
     BU_OPT(d[0], "h", "help",         "",  NULL,            &print_help,   "Print help.");
     BU_OPT(d[1], "g", "grid-spacing", "#", &bu_opt_fastf_t, &len_tol,      "Controls spacing of test ray grids (units are mm.)");
     BU_OPT(d[2], "l", "view-left",    "",  NULL,            &view_left,    "Visualize volumes occurring only in the left object");
@@ -217,8 +220,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[4], "r", "view-right",   "",  NULL,            &view_right,   "Visualize volumes occurring only in the right object");
     BU_OPT(d[5], "G", "grazing",      "",  NULL,            &grazereport,  "Report differences in grazing hits");
     BU_OPT(d[6], "S", "structure",    "",  NULL,            &structure_diff,  "Do a diff of tree structures (matrices and objects, ignoring object names.)  This mode is not raytrace based.");
-    BU_OPT(d[7], "v", "verbosity",      "",  &bu_opt_incr_long, &verbosity,   "Increase output verbosity.");
-    BU_OPT_NULL(d[8]);
+    BU_OPT_NULL(d[7]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -258,17 +260,17 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	db_full_path_init(rp);
 
 	struct directory *dp1, *dp2;
-	if ((dp1 = db_lookup(gedp->ged_wdbp->dbip, left_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp1 = db_lookup(gedp->dbip, left_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    return BRLCAD_ERROR;
 	}
-	if ((dp2 = db_lookup(gedp->ged_wdbp->dbip, right_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp2 = db_lookup(gedp->dbip, right_obj, LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    return BRLCAD_ERROR;
 	}
 
 	db_add_node_to_full_path(lp, dp1);
 	db_add_node_to_full_path(rp, dp2);
 
-	check_walk(&diff, &smsgs, gedp->ged_wdbp->dbip, lp, rp);
+	check_walk(&diff, &smsgs, gedp->dbip, lp, rp);
 
 	db_free_full_path(lp);
 	BU_PUT(lp, struct db_full_path);
@@ -319,10 +321,10 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
      * specified, the argv environments will override use of the "current" .g environment.
      */
 
-    if (db_lookup(gedp->ged_wdbp->dbip, left_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, left_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
 	return BRLCAD_ERROR;
     }
-    if (db_lookup(gedp->ged_wdbp->dbip, right_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, right_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
 	return BRLCAD_ERROR;
     }
 
@@ -332,17 +334,17 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	point_t obj_min, obj_max;
 	VSETALL(rpp_min, INFINITY);
 	VSETALL(rpp_max, -INFINITY);
-	ged_get_obj_bounds(gedp, 1, (const char **)&left_obj, 0, obj_min, obj_max);
+	rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&left_obj, 0, obj_min, obj_max);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
-	ged_get_obj_bounds(gedp, 1, (const char **)&right_obj, 0, obj_min, obj_max);
+	rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&right_obj, 0, obj_min, obj_max);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
 	len_tol = DIST_PNT_PNT(rpp_max, rpp_min) * 0.01;
     }
     tol.dist = len_tol;
 
-    analyze_raydiff(&results, gedp->ged_wdbp->dbip, left_obj, right_obj, &tol, !grazereport);
+    analyze_raydiff(&results, gedp->dbip, left_obj, right_obj, &tol, !grazereport);
 
     /* TODO - may want to integrate with a "regular" diff and report intelligently.  Needs
      * some thought. */
@@ -364,17 +366,17 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 	/* Visualize the differences */
 	struct bu_list *vhead;
 	point_t a, b;
-	struct bn_vlblock *vbp;
+	struct bv_vlblock *vbp;
 	struct bu_list local_vlist;
 	BU_LIST_INIT(&local_vlist);
-	vbp = bn_vlblock_init(&local_vlist, 32);
+	vbp = bv_vlblock_init(&local_vlist, 32);
 
 	/* Clear any previous diff drawing */
-	if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualff", LOOKUP_QUIET) != RT_DIR_NULL)
+	if (db_lookup(gedp->dbip, "diff_visualff", LOOKUP_QUIET) != RT_DIR_NULL)
 	    dl_erasePathFromDisplay(gedp, "diff_visualff", 1);
-	if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualff0000", LOOKUP_QUIET) != RT_DIR_NULL)
+	if (db_lookup(gedp->dbip, "diff_visualff0000", LOOKUP_QUIET) != RT_DIR_NULL)
 	    dl_erasePathFromDisplay(gedp, "diff_visualff0000", 1);
-	if (db_lookup(gedp->ged_wdbp->dbip, "diff_visualffffff", LOOKUP_QUIET) != RT_DIR_NULL)
+	if (db_lookup(gedp->dbip, "diff_visualffffff", LOOKUP_QUIET) != RT_DIR_NULL)
 	    dl_erasePathFromDisplay(gedp, "diff_visualffffff", 1);
 
 	/* Draw left-only lines */
@@ -383,9 +385,9 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->left, i);
 		VMOVE(a, dseg->in_pt);
 		VMOVE(b, dseg->out_pt);
-		vhead = bn_vlblock_find(vbp, 255, 0, 0); /* should be red */
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+		vhead = bv_vlblock_find(vbp, 255, 0, 0); /* should be red */
+		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BV_VLIST_LINE_DRAW);
 	    }
 	}
 	/* Draw overlap lines */
@@ -394,9 +396,9 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->both, i);
 		VMOVE(a, dseg->in_pt);
 		VMOVE(b, dseg->out_pt);
-		vhead = bn_vlblock_find(vbp, 255, 255, 255); /* should be white */
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+		vhead = bv_vlblock_find(vbp, 255, 255, 255); /* should be white */
+		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BV_VLIST_LINE_DRAW);
 
 	    }
 	}
@@ -406,16 +408,22 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
 		struct diff_seg *dseg = (struct diff_seg *)BU_PTBL_GET(results->right, i);
 		VMOVE(a, dseg->in_pt);
 		VMOVE(b, dseg->out_pt);
-		vhead = bn_vlblock_find(vbp, 0, 0, 255); /* should be blue */
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
-		BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
+		vhead = bv_vlblock_find(vbp, 0, 0, 255); /* should be blue */
+		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BV_VLIST_LINE_MOVE);
+		BV_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BV_VLIST_LINE_DRAW);
 	    }
 	}
 
-	_ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
+	const char *nview = getenv("GED_TEST_NEW_CMD_FORMS");
+	if (BU_STR_EQUAL(nview, "1")) {
+	    struct bview *view = gedp->ged_gvp;
+	    bv_vlblock_obj(vbp, view, "gdiff");
+	} else {
+	    _ged_cvt_vlblock_to_solids(gedp, vbp, "diff_visual", 0);
+	}
 
-	bn_vlist_cleanup(&local_vlist);
-	bn_vlblock_free(vbp);
+	bv_vlist_cleanup(&local_vlist);
+	bv_vlblock_free(vbp);
     }
     analyze_raydiff_results_free(results);
 

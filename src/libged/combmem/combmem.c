@@ -326,7 +326,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 #define COMBMEM_GETCOMBTREE(_gedp, _cmd, _name, _dp, _intern, _ntp, _rt_tree_array, _node_count) { \
 	struct rt_comb_internal *_comb; \
 	\
-	if ((_dp = db_lookup((_gedp)->ged_wdbp->dbip, (_name), LOOKUP_NOISY)) == RT_DIR_NULL) { \
+	if ((_dp = db_lookup((_gedp)->dbip, (_name), LOOKUP_NOISY)) == RT_DIR_NULL) { \
 	    bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", (_cmd), (_name)); \
 	    return BRLCAD_ERROR; \
 	} \
@@ -336,7 +336,7 @@ combmem_vls_print_member_info(struct ged *gedp, char op, union tree *itp, enum e
 	    return BRLCAD_ERROR; \
 	} \
 	\
-	if (rt_db_get_internal(&(_intern), _dp, (_gedp)->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
+	if (rt_db_get_internal(&(_intern), _dp, (_gedp)->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
 	    bu_vls_printf((_gedp)->ged_result_str, "Database read error, aborting"); \
 	    return BRLCAD_ERROR; \
 	} \
@@ -418,7 +418,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 
 
 #define COMBMEM_SET_PART_I(_gedp, _argc, _cmd, _name, _num_params, _intern, _dp, _comb, _node_count, _rt_tree_array) { \
-	if (rt_db_get_internal(&(_intern), (_dp), (_gedp)->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
+	if (rt_db_get_internal(&(_intern), (_dp), (_gedp)->dbip, (matp_t)NULL, &rt_uniresource) < 0) { \
 	    bu_vls_printf((_gedp)->ged_result_str, "Database read error, aborting"); \
 	    return BRLCAD_ERROR;							\
 	}									\
@@ -480,7 +480,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		      (_intern).idb_ptr = (void *)(_comb); \
 		      (_comb)->tree = (_final_tree); \
 		      \
-		      if (rt_db_put_internal((_dp), (_gedp)->ged_wdbp->dbip, &(_intern), &rt_uniresource) < 0) { \
+		      if (rt_db_put_internal((_dp), (_gedp)->dbip, &(_intern), &rt_uniresource) < 0) { \
 			  bu_vls_printf((_gedp)->ged_result_str, "Unable to write new combination into database.\n"); \
 			  \
 			  rt_db_free_internal(&(_old_intern)); \
@@ -578,9 +578,9 @@ combmem_set(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 	    VSET(aetvec, az, el, tw);
 	    VSCALE(aetvec, aetvec, DEG2RAD);
 	    VSET(tvec, tx, ty, tz);
-	    VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(tvec, tvec, gedp->dbip->dbi_local2base);
 	    VSET(key_pt, kx, ky, kz);
-	    VSCALE(key_pt, key_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(key_pt, key_pt, gedp->dbip->dbi_local2base);
 	    QSET(svec, sx, sy, sz, sa);
 
 	    combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 1);
@@ -651,9 +651,13 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 
     tree_index = 0;
     for (i = 2; i < (size_t)argc; i += 8) {
-	mat_t mat;
-	double az, el, tw;
-	double kx, ky, kz;
+	mat_t mat = MAT_INIT_ZERO;
+	double az = 0.0;
+	double el = 0.0;
+	double tw = 0.0;
+	double kx = 0.0;
+	double ky = 0.0;
+	double kz = 0.0;
 	point_t key_pt = VINIT_ZERO;
 
 	COMBMEM_SET_PART_II(gedp, argv[i], rt_tree_array[tree_index], mat);
@@ -668,7 +672,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    mat_t mat_rot;
 
 	    VSET(key_pt, kx, ky, kz);
-	    VSCALE(key_pt, key_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(key_pt, key_pt, gedp->dbip->dbi_local2base);
 
 	    if (etype == ETYPES_ROT_AET) {
 		az *= DEG2RAD;
@@ -754,7 +758,7 @@ combmem_set_arb_rot(struct ged *gedp, int argc, const char *argv[], enum etypes 
 	    sscanf(argv[i+8], "%lf", &ang) == 1) {
 
 	    VSET(pt, px, py, pz);
-	    VSCALE(pt, pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(pt, pt, gedp->dbip->dbi_local2base);
 	    VSET(dir, dx, dy, dz);
 	    VUNITIZE(dir);
 	    ang *= DEG2RAD;
@@ -826,7 +830,7 @@ combmem_set_tra(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    sscanf(argv[i+4], "%lf", &tz) == 1) {
 
 	    VSET(tvec, tx, ty, tz);
-	    VSCALE(tvec, tvec, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(tvec, tvec, gedp->dbip->dbi_local2base);
 	    MAT_DELTAS_VEC(mat, tvec);
 	}
 
@@ -877,15 +881,18 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 
     tree_index = 0;
     for (i = 2; i < (size_t)argc; i += 9) {
-	mat_t mat;
-	double sa, sx, sy, sz;
-	double kx, ky, kz;
+	mat_t mat = MAT_INIT_ZERO;
+	double sa = 0.0;
+	double sx = 0.0;
+	double sy = 0.0;
+	double sz = 0.0;
+	double kx = 0.0;
+	double ky = 0.0;
+	double kz = 0.0;
 	hvect_t svec = HINIT_ZERO;
 	point_t key_pt = VINIT_ZERO;
 	vect_t aetvec = VINIT_ZERO;
 	vect_t tvec = VINIT_ZERO;
-
-	HSETALL(svec, 0);
 
 	COMBMEM_SET_PART_II(gedp, argv[i], rt_tree_array[tree_index], mat);
 
@@ -900,7 +907,7 @@ combmem_set_sca(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    VSETALL(aetvec, 0.0);
 	    VSETALL(tvec, 0.0);
 	    VSET(key_pt, kx, ky, kz);
-	    VSCALE(key_pt, key_pt, gedp->ged_wdbp->dbip->dbi_local2base);
+	    VSCALE(key_pt, key_pt, gedp->dbip->dbi_local2base);
 	    QSET(svec, sx, sy, sz, sa);
 
 	    combmem_assemble_mat(mat, aetvec, tvec, svec, key_pt, 1);
@@ -944,7 +951,7 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+    if ((dp = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -954,7 +961,7 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }									\
 
-    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, (matp_t)NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
 	return BRLCAD_ERROR;
     }
@@ -964,7 +971,7 @@ combmem_set_empty(struct ged *gedp, int argc, const char *argv[])
     db_free_tree(comb->tree, &rt_uniresource);
     comb->tree = NULL;
 
-    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to write combination into database - %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
@@ -991,7 +998,7 @@ ged_combmem_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_optind = 1;

@@ -45,7 +45,7 @@
 #  ADAPTAGRAMS_LIBRARIES      - List of libraries when using Adaptagrams.
 #  ADAPTAGRAMS_FOUND          - True if libavoid is found.
 
-find_path(AVOID_INCLUDE_DIR libavoid.h PATH_SUFFIXES libavoid)
+find_path(AVOID_INCLUDE_DIR libavoid/libavoid.h)
 find_library(AVOID_LIBRARY NAMES avoid)
 
 set(ADAPTAGRAMS_INCLUDE_DIRS ${AVOID_INCLUDE_DIR} CACHE STRING "Adaptagrams headers")

@@ -146,7 +146,7 @@ bu_ptbl_ins_unique(struct bu_ptbl *b, long int *p)
 	return -1;	/* To signal that it was added */
     }
 
-    b->buffer[k=b->end++] = p;
+    b->buffer[b->end++] = p;
     return -1;		/* To signal that it was added */
 }
 

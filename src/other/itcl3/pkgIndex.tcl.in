@@ -1,4 +1,0 @@
-# Tcl package index file, version 1.0
-
-if {![package vsatisfies [package provide Tcl] @TCL_VERSION@]} {return}
-package ifneeded Itcl @PACKAGE_VERSION@ [list load [file join $dir "@PKG_LIB_FILE@"] Itcl]

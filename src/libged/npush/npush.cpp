@@ -31,6 +31,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include <iterator>
 
 #include "bu/cmd.h"
 #include "bu/opt.h"
@@ -57,98 +58,98 @@
  * sorting and a uniqueness guarantee.)
  */
 class dp_i {
-    public:
-	struct directory *dp;              // Instance database object
-	struct directory *parent_dp;       // Parent object
-	mat_t mat;                         // Instance matrix
-	size_t ind;                        // Used for debugging
-	std::string iname = std::string(); // Container to hold instance name, if needed
-	const struct bn_tol *tol;       // Tolerance to use for matrix comparisons
+public:
+    struct directory *dp;              // Instance database object
+    struct directory *parent_dp;       // Parent object
+    mat_t mat;                         // Instance matrix
+    size_t ind;                        // Used for debugging
+    std::string iname = std::string(); // Container to hold instance name, if needed
+    const struct bn_tol *tol;       // Tolerance to use for matrix comparisons
 
-	bool push_obj = true;  // Flag to determine if this instance is being pushed
-	bool is_leaf = false;  // Flag to determine if this instance is a push leaf
+    bool push_obj = true;  // Flag to determine if this instance is being pushed
+    bool is_leaf = false;  // Flag to determine if this instance is a push leaf
 
-	// If an instance is being pushed, there is one step that can be taken
-	// beyond simply propagating the matrix down the tree - the solid
-	// associated with the instance can have its parameters updated to
-	// reflect the application of the matrix.  This completely "clears" all
-	// matrix applications from the comb tree instance.
-	bool apply_to_solid = false;
+    // If an instance is being pushed, there is one step that can be taken
+    // beyond simply propagating the matrix down the tree - the solid
+    // associated with the instance can have its parameters updated to
+    // reflect the application of the matrix.  This completely "clears" all
+    // matrix applications from the comb tree instance.
+    bool apply_to_solid = false;
 
-	// The key to the dp_i class is the less than operator, which is what
-	// allows C++ sets to distinguish between separate instances with the
-	// same dp pointer.  The first check is that dp pointer - if the current
-	// and other dp do not match, the sorting criteria is obvious.  Likewise,
-	// if one instance is instructed in the push to apply the matrix to a
-	// solid and another is not, even if they would otherwise be identical
-	// instances, it is necessary to distinguish them since those two
-	// definitions require different comb tree instances to represent.
-	//
-	// If instance definitions DO match in other respects, the uniqueness
-	// rests on the similarity of their matrices.  If they are equal within
-	// tolerance, the instances are equal as well.
-	//
-	// One additional refinement is made to the sorting for processing
-	// convenience - we make sure that any IDN instance is less than any
-	// non-IDN matrix in sorting behavior, even if the numerics of the
-	// matrices wouldn't otherwise reach that determination.
-	bool operator<(const dp_i &o) const {
+    // The key to the dp_i class is the less than operator, which is what
+    // allows C++ sets to distinguish between separate instances with the
+    // same dp pointer.  The first check is that dp pointer - if the current
+    // and other dp do not match, the sorting criteria is obvious.  Likewise,
+    // if one instance is instructed in the push to apply the matrix to a
+    // solid and another is not, even if they would otherwise be identical
+    // instances, it is necessary to distinguish them since those two
+    // definitions require different comb tree instances to represent.
+    //
+    // If instance definitions DO match in other respects, the uniqueness
+    // rests on the similarity of their matrices.  If they are equal within
+    // tolerance, the instances are equal as well.
+    //
+    // One additional refinement is made to the sorting for processing
+    // convenience - we make sure that any IDN instance is less than any
+    // non-IDN matrix in sorting behavior, even if the numerics of the
+    // matrices wouldn't otherwise reach that determination.
+    bool operator<(const dp_i &o) const {
 
-	    // First, check dp
-	    if (dp < o.dp) return true;
-	    if (o.dp < dp) return false;
+	// First, check dp
+	if (dp < o.dp) return true;
+	if (o.dp < dp) return false;
 
-	    // Important for multiple tests to know if matrices are IDN
-	    int tidn = bn_mat_is_equal(mat, bn_mat_identity, tol);;
-	    int oidn = bn_mat_is_equal(o.mat, bn_mat_identity, tol);
+	// Important for multiple tests to know if matrices are IDN
+	int tidn = bn_mat_is_equal(mat, bn_mat_identity, tol);
+	int oidn = bn_mat_is_equal(o.mat, bn_mat_identity, tol);
 
-	    /* If the dp didn't resolve the question, check the matrix. */
-	    if (!bn_mat_is_equal(mat, o.mat, tol)) {
-		// We want IDN matrices to be less than any others, regardless
-		// of the numerics.
-		if (tidn && !oidn) return true;
-		if (oidn && !tidn) return false;
+	/* If the dp didn't resolve the question, check the matrix. */
+	if (!bn_mat_is_equal(mat, o.mat, tol)) {
+	    // We want IDN matrices to be less than any others, regardless
+	    // of the numerics.
+	    if (tidn && !oidn) return true;
+	    if (oidn && !tidn) return false;
 
-		// If we don't have an IDN matrix involved, fall back on
-		// numerical sorting to order the instances.  We want this to
-		// be consistent, so avoid comparing numbers that are closer
-		// than SMALL_FASTF in size
-		for (int i = 0; i < 16; i++) {
-		    if (NEAR_EQUAL(mat[i], o.mat[i], SMALL_FASTF))
-			continue;
-		    if (mat[i] < o.mat[i]) {
-			return true;
-		    }
-		    if (mat[i] > o.mat[i]) {
-			return false;
-		    }
+	    // If we don't have an IDN matrix involved, fall back on
+	    // numerical sorting to order the instances.  We want this to
+	    // be consistent, so avoid comparing numbers that are closer
+	    // than SMALL_FASTF in size
+	    for (int i = 0; i < 16; i++) {
+		if (NEAR_EQUAL(mat[i], o.mat[i], SMALL_FASTF))
+		    continue;
+		if (mat[i] < o.mat[i]) {
+		    return true;
+		}
+		if (mat[i] > o.mat[i]) {
+		    return false;
 		}
 	    }
-
-	    // The application of the matrix to the solid may matter
-	    // when distinguishing dp_i instances, but only if one
-	    // of the matrices involved is non-IDN - otherwise, the
-	    // matrix applications are no-ops and we don't want them
-	    // to prompt multiple instances of objects.
-	    if (!(dp->d_flags & RT_DIR_COMB)) {
-		if ((!tidn || !oidn) && (apply_to_solid && !o.apply_to_solid))
-		    return true;
-	    }
-
-	    /* All attempt to find non-equalities failed */
-	    return false;
 	}
 
-	/* For convenience, we also define an equality operator */
-	bool operator==(const dp_i &o) const {
-	    if (dp != o.dp) return false;
-	    if (apply_to_solid != o.apply_to_solid) {
-		if (!bn_mat_is_equal(mat, bn_mat_identity, tol) ||
-		       	!bn_mat_is_equal(o.mat, bn_mat_identity, tol))
-		    return false;
-	    }
-	    return bn_mat_is_equal(mat, o.mat, tol);
+	// The application of the matrix to the solid may matter
+	// when distinguishing dp_i instances, but only if one
+	// of the matrices involved is non-IDN - otherwise, the
+	// matrix applications are no-ops and we don't want them
+	// to prompt multiple instances of objects.
+	if (!(dp->d_flags & RT_DIR_COMB)) {
+	    if ((!tidn || !oidn) && (apply_to_solid && !o.apply_to_solid))
+		return true;
 	}
+
+	/* All attempt to find non-equalities failed */
+	return false;
+    }
+
+    /* For convenience, we also define an equality operator */
+    bool operator==(const dp_i &o) const {
+	if (dp != o.dp) return false;
+	if (apply_to_solid != o.apply_to_solid) {
+	    if (!bn_mat_is_equal(mat, bn_mat_identity, tol) ||
+		!bn_mat_is_equal(o.mat, bn_mat_identity, tol))
+		return false;
+	}
+	return bn_mat_is_equal(mat, o.mat, tol);
+    }
 };
 
 // Slightly "looser" search operator, for use IFF a direct find lookup fails
@@ -159,48 +160,48 @@ class dp_i {
 // from https://stackoverflow.com/a/8054223/2037687
 struct mat_lfind
 {
-  mat_lfind( class dp_i *tdpi ) : test_dpi(tdpi) {}
-  bool operator()( const class dp_i& c ) const
-  {
-      // First, check dp
-      if (c.dp != test_dpi->dp) return false;
+    mat_lfind( class dp_i *tdpi ) : test_dpi(tdpi) {}
+    bool operator()( const class dp_i& c ) const
+    {
+	// First, check dp
+	if (c.dp != test_dpi->dp) return false;
 
-      // Important for multiple tests to know if matrices are IDN
-      int oidn = bn_mat_is_equal(c.mat, bn_mat_identity, c.tol);
-      int tidn = bn_mat_is_equal(test_dpi->mat, bn_mat_identity, test_dpi->tol);
-      if (oidn && tidn)
-	  return true;
+	// Important for multiple tests to know if matrices are IDN
+	int oidn = bn_mat_is_equal(c.mat, bn_mat_identity, c.tol);
+	int tidn = bn_mat_is_equal(test_dpi->mat, bn_mat_identity, test_dpi->tol);
+	if (oidn && tidn)
+	    return true;
 
-      /* If the dp didn't resolve the question, check the matrix. */
-      if (!bn_mat_is_equal(test_dpi->mat, c.mat, test_dpi->tol)) {
-	  // We want IDN matrices to be less than any others, regardless
-	  // of the numerics.
-	  if (tidn && !oidn) return true;
-	  if (oidn && !tidn) return false;
+	/* If the dp didn't resolve the question, check the matrix. */
+	if (!bn_mat_is_equal(test_dpi->mat, c.mat, test_dpi->tol)) {
+	    // We want IDN matrices to be less than any others, regardless
+	    // of the numerics.
+	    if (tidn && !oidn) return true;
+	    if (oidn && !tidn) return false;
 
-	  // If we don't have an IDN matrix involved, fall back on
-	  // numerical comparisons
-	  for (int i = 0; i < 16; i++) {
-	      if (!NEAR_EQUAL(test_dpi->mat[i], c.mat[i], VUNITIZE_TOL))
-		  return false;
-	  }
-      }
+	    // If we don't have an IDN matrix involved, fall back on
+	    // numerical comparisons
+	    for (int i = 0; i < 16; i++) {
+		if (!NEAR_EQUAL(test_dpi->mat[i], c.mat[i], VUNITIZE_TOL))
+		    return false;
+	    }
+	}
 
-      // The application of the matrix to the solid may matter
-      // when distinguishing dp_i instances, but only if one
-      // of the matrices involved is non-IDN - otherwise, the
-      // matrix applications are no-ops and we don't want them
-      // to prompt multiple instances of objects.
-      if (!(c.dp->d_flags & RT_DIR_COMB)) {
-	  if (test_dpi->apply_to_solid && !c.apply_to_solid)
-	      return false;
-      }
+	// The application of the matrix to the solid may matter
+	// when distinguishing dp_i instances, but only if one
+	// of the matrices involved is non-IDN - otherwise, the
+	// matrix applications are no-ops and we don't want them
+	// to prompt multiple instances of objects.
+	if (!(c.dp->d_flags & RT_DIR_COMB)) {
+	    if (test_dpi->apply_to_solid && !c.apply_to_solid)
+		return false;
+	}
 
-      // All tests pass, looks equal
-      return true;
-  }
+	// All tests pass, looks equal
+	return true;
+    }
 private:
-  class dp_i *test_dpi;
+    class dp_i *test_dpi;
 };
 
 
@@ -238,7 +239,7 @@ struct push_state {
     const struct bn_tol *tol = NULL;
 
     /* Database information */
-    struct rt_wdb *wdbp = RT_WDB_NULL;
+    struct db_i *dbip = NULL;
 
     /* Containers for finalized database objects, used to assemble and
      * store them prior to the database writing step. */
@@ -306,14 +307,14 @@ is_push_leaf(struct directory *dp, int depth, struct push_state *s, bool survey)
  * do a more comprehensive review if that proves worthwhile. */
 static void
 validate_walk(struct db_i *dbip,
-	struct db_full_path *dfp,
-	void *client_data);
+	      struct db_full_path *dfp,
+	      void *client_data);
 
 static void
 validate_walk_subtree(struct db_i *dbip,
-	            struct db_full_path *dfp,
-		    union tree *tp,
-		    void *client_data)
+		      struct db_full_path *dfp,
+		      union tree *tp,
+		      void *client_data)
 {
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
@@ -349,7 +350,10 @@ validate_walk_subtree(struct db_i *dbip,
 		    s->valid_push = false;
 		    if (s->msgs) {
 			char *ps = db_path_to_string(dfp);
-			bu_vls_printf(s->msgs, "W1[%s]: user specified push object %s is below user specified push object %s\n", ps, DB_FULL_PATH_CUR_DIR(dfp)->d_namep, dfp->fp_names[0]->d_namep);
+			struct directory *ldp = DB_FULL_PATH_CUR_DIR(dfp);
+			struct directory *rdp = dfp->fp_names[0];
+			if (ldp && rdp)
+			    bu_vls_printf(s->msgs, "W1[%s]: user specified push object %s is below user specified push object %s\n", ps, ldp->d_namep, rdp->d_namep);
 			bu_free(ps, "path string");
 		    }
 		    s->problem_obj = std::string(dp->d_namep);
@@ -383,8 +387,8 @@ validate_walk_subtree(struct db_i *dbip,
 
 static void
 validate_walk(struct db_i *dbip,
-	    struct db_full_path *dfp,
-	    void *client_data)
+	      struct db_full_path *dfp,
+	      void *client_data)
 {
     struct push_state *s = (struct push_state *)client_data;
     RT_CK_DBI(dbip);
@@ -392,14 +396,19 @@ validate_walk(struct db_i *dbip,
     if (!dfp || !s->valid_push)
 	return; /* nothing to do */
 
-    if (DB_FULL_PATH_CUR_DIR(dfp)->d_flags & RT_DIR_COMB) {
+    struct directory *dp = DB_FULL_PATH_CUR_DIR(dfp);
+    if (!dp) {
+	return; /* nothing to do */
+    }
+
+    if (dp->d_flags & RT_DIR_COMB) {
 
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
 	// Load the comb.  In the validation stage, if we can't do this report
 	// an error.
-	if (rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(dfp), dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal5(&in, dp, dbip, NULL, &rt_uniresource) < 0) {
 	    if (s->msgs) {
 		char *ps = db_path_to_string(dfp);
 		bu_vls_printf(s->msgs, "W1[%s]: rt_db_get_internal5 failure reading comb %s\n", ps, DB_FULL_PATH_CUR_DIR(dfp)->d_namep);
@@ -426,19 +435,19 @@ validate_walk(struct db_i *dbip,
  */
 static void
 push_walk(struct db_full_path *dfp,
-	int depth,
-	mat_t *curr_mat,
-	bool survey,
-	void *client_data);
+	  int depth,
+	  mat_t *curr_mat,
+	  bool survey,
+	  void *client_data);
 
 static void
 push_walk_subtree(
-	struct db_full_path *dfp,
-	union tree *tp,
-	int depth,
-	mat_t *curr_mat,
-	bool survey,
-	void *client_data)
+    struct db_full_path *dfp,
+    union tree *tp,
+    int depth,
+    mat_t *curr_mat,
+    bool survey,
+    void *client_data)
 {
     mat_t om, nm;
     struct push_state *s = (struct push_state *)client_data;
@@ -455,7 +464,7 @@ push_walk_subtree(
     if (!tp)
 	return;
 
-    RT_CHECK_DBI(s->wdbp->dbip);
+    RT_CHECK_DBI(s->dbip);
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {
@@ -464,7 +473,7 @@ push_walk_subtree(
 
 	    // Don't consider the leaf it if doesn't exist (TODO - is this always
 	    // what we want to do when pushing?)
-	    if ((dp=db_lookup(s->wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((dp=db_lookup(s->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
 
 	    /* Update current matrix state to reflect the new branch of
@@ -528,7 +537,7 @@ push_walk_subtree(
 		// the matrix to the primitive itself.  The comb reference will
 		// use the IDN matrix.
 		if (!survey && !(dp->d_flags & RT_DIR_COMB) &&
-			(!s->max_depth || depth+1 <= s->max_depth) && !s->stop_at_shapes) {
+		    (!s->max_depth || depth+1 <= s->max_depth) && !s->stop_at_shapes) {
 		    if (s->verbosity > 2 && s->msgs) {
 			char *ps = db_path_to_string(dfp);
 			bu_vls_printf(s->msgs, "W2[%s]: push leaf (finalize matrix or solid params): %s\n", ps, dp->d_namep);
@@ -632,10 +641,10 @@ push_walk_subtree(
 
 static void
 push_walk(struct db_full_path *dfp,
-	int depth,
-	mat_t *curr_mat,
-	bool survey,
-	void *client_data)
+	  int depth,
+	  mat_t *curr_mat,
+	  bool survey,
+	  void *client_data)
 {
     struct push_state *s = (struct push_state *)client_data;
 
@@ -643,12 +652,17 @@ push_walk(struct db_full_path *dfp,
 	return; /* nothing to do */
     }
 
-    if (DB_FULL_PATH_CUR_DIR(dfp)->d_flags & RT_DIR_COMB) {
+    struct directory *dp = DB_FULL_PATH_CUR_DIR(dfp);
+    if (!dp) {
+	return; /* nothing to do */
+    }
+
+    if (dp->d_flags & RT_DIR_COMB) {
 
 	struct rt_db_internal in;
 	struct rt_comb_internal *comb;
 
-	if (rt_db_get_internal5(&in, DB_FULL_PATH_CUR_DIR(dfp), s->wdbp->dbip, NULL, &rt_uniresource) < 0)
+	if (rt_db_get_internal5(&in, dp, s->dbip, NULL, &rt_uniresource) < 0)
 	    return;
 
 	comb = (struct rt_comb_internal *)in.idb_ptr;
@@ -663,22 +677,22 @@ push_walk(struct db_full_path *dfp,
  * updated and/or created to finalize the proper comb tree references. */
 static void
 tree_update_walk(
-	const dp_i &dpi,
-	struct db_full_path *dfp,
-	int depth,
-	mat_t *curr_mat,
-	void *client_data);
+    const dp_i &dpi,
+    struct db_full_path *dfp,
+    int depth,
+    mat_t *curr_mat,
+    void *client_data);
 
 static void
 tree_update_walk_subtree(
-	            const dp_i &parent_dpi,
-		    struct db_full_path *dfp,
-		    union tree *tp,
-		    union tree *wtp,
-		    int depth,
-		    mat_t *curr_mat,
-		    bool *tree_altered,
-		    void *client_data)
+    const dp_i &parent_dpi,
+    struct db_full_path *dfp,
+    union tree *tp,
+    union tree *wtp,
+    int depth,
+    mat_t *curr_mat,
+    bool *tree_altered,
+    void *client_data)
 {
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
@@ -697,7 +711,7 @@ tree_update_walk_subtree(
 
 	    // Don't consider the leaf it if doesn't exist (TODO - is this always
 	    // what we want to do when pushing?)
-	    if ((dp=db_lookup(s->wdbp->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    if ((dp=db_lookup(s->dbip, tp->tr_l.tl_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 		return;
 
 	    /* Update current matrix state to reflect the new branch of
@@ -889,11 +903,11 @@ tree_update_walk_subtree(
 
 static void
 tree_update_walk(
-	const dp_i &dpi,
-	struct db_full_path *dfp,
-	int depth,
-	mat_t *curr_mat,
-	void *client_data)
+    const dp_i &dpi,
+    struct db_full_path *dfp,
+    int depth,
+    mat_t *curr_mat,
+    void *client_data)
 {
     struct directory *dp;
     struct push_state *s = (struct push_state *)client_data;
@@ -904,7 +918,7 @@ tree_update_walk(
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	bool tree_altered = false;
-	if (rt_db_get_internal5(&intern, dpi.dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal5(&intern, dpi.dp, s->dbip, NULL, &rt_uniresource) < 0) {
 	    return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -913,7 +927,7 @@ tree_update_walk(
 	struct rt_db_internal *in;
 	struct rt_comb_internal *wcomb;
 	BU_GET(in, struct rt_db_internal);
-	if (rt_db_get_internal5(in, dpi.dp, s->wdbp->dbip, NULL, &rt_uniresource) < 0) {
+	if (rt_db_get_internal5(in, dpi.dp, s->dbip, NULL, &rt_uniresource) < 0) {
 	    BU_PUT(in, struct rt_db_internal);
 	    return;
 	}
@@ -945,7 +959,7 @@ tree_update_walk(
 	if (dpi.iname.length()) {
 
 	    // New name, new dp
-	    dp = db_lookup(s->wdbp->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
+	    dp = db_lookup(s->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
 
 	    if (dp != RT_DIR_NULL) {
 		// If we've already created the dp, we don't need to do so
@@ -961,7 +975,7 @@ tree_update_walk(
 	    // but don't (yet) alter the database by writing the internal
 	    // contents. That will be done with all other file changes at the
 	    // end of processing.
-	    dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
+	    dp = db_diradd(s->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
 	    if (dp == RT_DIR_NULL) {
 		bu_log("Unable to add %s to the database directory", dpi.iname.c_str());
 		rt_db_free_internal(in);
@@ -1033,7 +1047,7 @@ tree_update_walk(
 		bn_mat_print_vls(dpi.dp->d_namep, dpi.mat, s->msgs);
 		bn_mat_print_vls("curr_mat", *curr_mat, s->msgs);
 	    }
-	    if (rt_db_get_internal(in, dpi.dp, s->wdbp->dbip, dpi.mat, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(in, dpi.dp, s->dbip, dpi.mat, &rt_uniresource) < 0) {
 		if (s->msgs)
 		    bu_vls_printf(s->msgs, "Read error fetching '%s'\n", dpi.dp->d_namep);
 		BU_PUT(in, struct rt_db_internal);
@@ -1042,7 +1056,7 @@ tree_update_walk(
 	    }
 	} else {
 	    // If there is a non-IDN matrix, this is where we apply it
-	    if (rt_db_get_internal(in, dpi.dp, s->wdbp->dbip, bn_mat_identity, &rt_uniresource) < 0) {
+	    if (rt_db_get_internal(in, dpi.dp, s->dbip, bn_mat_identity, &rt_uniresource) < 0) {
 		if (s->msgs)
 		    bu_vls_printf(s->msgs, "Read error fetching '%s'\n", dpi.dp->d_namep);
 		BU_PUT(in, struct rt_db_internal);
@@ -1054,14 +1068,14 @@ tree_update_walk(
 
 	if (dpi.iname.length()) {
 	    // If we have an iname, we need a new directory pointer.
-	    dp = db_lookup(s->wdbp->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
+	    dp = db_lookup(s->dbip, dpi.iname.c_str(), LOOKUP_QUIET);
 	    if (dp != RT_DIR_NULL) {
 		// If we've already created this, we're done
 		rt_db_free_internal(in);
 		BU_PUT(in, struct rt_db_internal);
 		return;
 	    }
-	    dp = db_diradd(s->wdbp->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
+	    dp = db_diradd(s->dbip, dpi.iname.c_str(), RT_DIR_PHONY_ADDR, 0, dpi.dp->d_flags, (void *)&in->idb_type);
 	    if (dp == RT_DIR_NULL) {
 		if (s->msgs)
 		    bu_vls_printf(s->msgs, "Unable to add %s to the database directory\n", dpi.iname.c_str());
@@ -1144,7 +1158,8 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct db_i *dbip = gedp->dbip;
 
     /* Need nref current for db_ls to work */
     db_update_nref(dbip, &rt_uniresource);
@@ -1157,12 +1172,12 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
      * instances involved with matrices */
     struct push_state s;
     s.verbosity = verbosity;
-    s.tol = &gedp->ged_wdbp->wdb_tol;
+    s.tol = &wdbp->wdb_tol;
     s.max_depth = max_depth;
     s.stop_at_regions = (to_regions) ? true : false;
     s.stop_at_shapes = (to_solids) ? true : false;
     s.dry_run = (dry_run) ? true : false;
-    s.wdbp = gedp->ged_wdbp;
+    s.dbip = gedp->dbip;
     s.msgs = gedp->ged_result_str;
     for (int i = 0; i < argc; i++) {
 	s.target_objs.insert(std::string(argv[i]));
@@ -1198,7 +1213,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     // should not alter this top level list - any changes indicate a problem
     // with the logic.
     struct directory **all_paths;
-    int tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
+    int tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &all_paths);
     std::set<std::string> tops1;
     for (int i = 0; i < tops_cnt; i++) {
 	tops1.insert(std::string(all_paths[i]->d_namep));
@@ -1223,7 +1238,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
 	    /* Sanity - if we didn't end up with m back at the identity matrix,
 	     * something went wrong with the walk */
-	    if (!bn_mat_is_equal(m, bn_mat_identity, &gedp->ged_wdbp->wdb_tol)) {
+	    if (!bn_mat_is_equal(m, bn_mat_identity, &wdbp->wdb_tol)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error - initial tree walk down %s finished with non-IDN matrix.\n", dp->d_namep);
 		bu_free(all_paths, "free db_ls output");
 		return BRLCAD_ERROR;
@@ -1364,7 +1379,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
     std::set<std::string> dbnames;
     for (int i = 0; i < RT_DBNHASH; i++) {
 	struct directory *dp;
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	for (dp = gedp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
 	    if (dp->d_namep) {
 		std::string dpn(dp->d_namep);
 		dbnames.insert(dpn);
@@ -1494,7 +1509,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	    struct rt_db_internal *in = uf_it->second;
 	    rt_db_free_internal(in);
 	    BU_PUT(in, struct rt_db_internal);
-	    db_dirdelete(gedp->ged_wdbp->dbip, uf_it->first);
+	    db_dirdelete(gedp->dbip, uf_it->first);
 	}
 	return BRLCAD_ERROR;
     }
@@ -1513,7 +1528,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	struct rt_db_internal *in = u_it->second;
 	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->wdb_resp) < 0) {
+	    if (rt_db_put_internal(dp, s.dbip, in, wdbp->wdb_resp) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
 	    }
 	}
@@ -1527,13 +1542,13 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 	}
 	struct rt_db_internal *in = u_it->second;
 	if (!s.dry_run) {
-	    if (rt_db_put_internal(dp, s.wdbp->dbip, in, s.wdbp->wdb_resp) < 0) {
+	    if (rt_db_put_internal(dp, s.dbip, in, wdbp->wdb_resp) < 0) {
 		bu_log("Unable to store %s to the database", dp->d_namep);
 	    }
 	} else {
 	    // Delete the directory pointers we set up - dry run, so we're not
 	    // actually creating the objects.
-	    db_dirdelete(gedp->ged_wdbp->dbip, dp);
+	    db_dirdelete(gedp->dbip, dp);
 	}
 	rt_db_free_internal(in);
 	BU_PUT(in, struct rt_db_internal);
@@ -1564,7 +1579,7 @@ ged_npush_core(struct ged *gedp, int argc, const char *argv[])
 
 	// Repeat the db_ls call and verify it is consistent.
 	struct directory **final_paths;
-	int final_tops_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &final_paths);
+	int final_tops_cnt = db_ls(gedp->dbip, DB_LS_TOPS, NULL, &final_paths);
 	std::set<std::string> tops2;
 	for (int i = 0; i < final_tops_cnt; i++) {
 	    tops2.insert(std::string(final_paths[i]->d_namep));
@@ -1611,12 +1626,12 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 #endif /* GED_PLUGIN */
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

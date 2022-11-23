@@ -153,7 +153,7 @@ RT_EXPORT extern void db_free_anim(struct db_i *dbip);
  * 0 OK
  * -1 FAILURE
  */
-/* should be static */
+/* should be HIDDEN */
 RT_EXPORT extern void db_write_anim(FILE *fop,
 				    struct animate *anp);
 

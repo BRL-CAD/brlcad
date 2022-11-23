@@ -33,6 +33,7 @@
 
 extern "C" {
 #include "fort.h"
+#define ALPHANUM_IMPL
 #include "../alphanum.h"
 }
 
@@ -114,7 +115,7 @@ type_str(struct bu_vls *n, struct directory *dp, struct db_i *dbip)
 {
     int type;
     struct rt_db_internal intern;
-    const struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
+    const struct bn_tol arb_tol = BN_TOL_INIT_TOL;
     if (dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	bu_vls_sprintf(n, " ");
 	return;
@@ -322,7 +323,7 @@ dpath_sort(void *paths, int path_cnt, const char *col_order, struct ged *gedp)
 {
     struct cmp_dps_arg sarg;
     std::vector<std::string> keys;
-    sarg.dbip = gedp->ged_wdbp->dbip;
+    sarg.dbip = gedp->dbip;
     sarg.keys = &keys;
     if (!strlen(col_order)) {
 	keys.push_back(std::string("name"));
@@ -383,7 +384,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
 
     if (BU_STR_EQUAL(key, "type")) {
 	struct bu_vls tstr = BU_VLS_INIT_ZERO;
-	type_str(&tstr, dp, gedp->ged_wdbp->dbip);
+	type_str(&tstr, dp, gedp->dbip);
 	ft_write(table, bu_vls_cstr(&tstr));
 	bu_vls_free(&tstr);
 	return;
@@ -395,8 +396,8 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
 	} else {
 	    char hlen[6] = { '\0' };
 	    (void)bu_humanize_number(hlen, 5, (int64_t)dp->d_len, "",
-		    BU_HN_AUTOSCALE,
-		    BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
+				     BU_HN_AUTOSCALE,
+				     BU_HN_B | BU_HN_NOSPACE | BU_HN_DECIMAL);
 	    bu_vls_printf(&str,  "%s", hlen);
 	}
 	ft_write(table, bu_vls_cstr(&str));
@@ -407,7 +408,7 @@ stat_output(ft_table_t *table, struct ged *gedp, struct directory *dp, const cha
 
     // If we've gotten this far, we're after an attribute
     struct bu_attribute_value_set avs = BU_AVS_INIT_ZERO;
-    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+    if (db5_get_attributes(gedp->dbip, &avs, dp)) {
 	bu_log("Error: cannot get attributes for object %s\n", dp->d_namep);
 	return;
     }
@@ -469,7 +470,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls ofile = BU_VLS_INIT_ZERO;
     FILE *fp = NULL;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
-    struct db_i *dbip = gedp->ged_wdbp->dbip;
+    struct db_i *dbip = gedp->dbip;
     const char *pname = argv[0];
 
     // Stashed command name, increment and continue
@@ -508,7 +509,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&sort_str);
 	bu_vls_free(&keys_str);
 	bu_vls_free(&ofile);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     // If we have one or a series of patterns, process
@@ -599,7 +600,7 @@ ged_stat_core(struct ged *gedp, int argc, const char *argv[])
     for (int i = 0; i < argc; i++) {
 
 	struct directory **paths;
-	int path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_HIDDEN, argv[i], &paths);
+	int path_cnt = db_ls(gedp->dbip, DB_LS_HIDDEN, argv[i], &paths);
 
 
 	for (int j = 0; j < path_cnt; j++) {
@@ -670,12 +671,12 @@ COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
 
 
 
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

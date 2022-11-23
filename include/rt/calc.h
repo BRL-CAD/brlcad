@@ -118,6 +118,33 @@ RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
 				       point_t rpp_max);
 
 /**
+ * Given the info defining a comb tree instance, calculate its
+ * bounding box (using ft_plot methods as a fallback.)  This
+ * routine has its origins in the drawing code
+ */
+RT_EXPORT extern int
+rt_bound_instance(point_t *bmin, point_t *bmax,
+	struct directory *dp,
+	struct db_i *dbip,
+	const struct bg_tess_tol *ttol,
+	const struct bn_tol *tol,
+	mat_t *s_mat,
+	struct resource *res
+	);
+
+/**
+ * Given an argc/argv list of objects, calculate their collective
+ * bounding box */
+RT_EXPORT extern int
+rt_obj_bounds(struct bu_vls *msgs,
+                    struct db_i *dbip,
+                    int argc,
+                    const char *argv[],
+                    int use_air,
+                    point_t rpp_min,
+                    point_t rpp_max);
+
+/**
  *
  * Given a region, return a matrix which maps model coordinates into
  * region "shader space".  This is a space where points in the model

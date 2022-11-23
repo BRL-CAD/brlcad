@@ -40,7 +40,7 @@ combination.
   <example><title>Delete members of a given combination.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rm group1 regiona</userinput>
+      <prompt>mged&gt; </prompt><userinput>rm group1 regiona</userinput>
     </para>
     <para>Deletes <emphasis>regiona</emphasis> from <emphasis>group1</emphasis>.
 

@@ -85,7 +85,7 @@
 
   <example><title>Display help and available libraries</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>debug -h</userinput>
+    <prompt>mged&gt; </prompt><userinput>debug -h</userinput>
     <literallayout class="normal">
 debug [-h] [-l [lib]] [-C [lib]] [-V [lib] [val]] [lib [flag]]
 
@@ -100,7 +100,7 @@ Available libs:
 
   <example><title>List available flags for <emphasis>LIBBU</emphasis></title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>debug -l BU</userinput>
+    <prompt>mged&gt; </prompt><userinput>debug -l BU</userinput>
     <literallayout class="normal">
 BU flags:
       COREDUMP (0x00000001): bu_bomb() should dump core on exit 
@@ -119,13 +119,13 @@ BU flags:
 
   <example><title>Set <emphasis>LIBBU</emphasis> flags for bu_avs and path debugging</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>debug BU AVS</userinput>
+    <prompt>mged&gt; </prompt><userinput>debug BU AVS</userinput>
     <literallayout class="normal">
            AVS (0x00000400): bu_avs_() loggin
     </literallayout>
   </para>
   <para>
-    <prompt>mged&gt;</prompt><userinput>debug BU PATHS</userinput>
+    <prompt>mged&gt; </prompt><userinput>debug BU PATHS</userinput>
     <literallayout class="normal">
            AVS (0x00000400): bu_avs_() logging 
          PATHS (0x00001000): File and path debug logging 
@@ -135,7 +135,7 @@ BU flags:
 
   <example><title>Set <emphasis>LIBRT</emphasis> flag for rt_shootray processing</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>debug RT SHOOT</userinput>
+    <prompt>mged&gt; </prompt><userinput>debug RT SHOOT</userinput>
     <literallayout class="normal">
          SHOOT (0x00000004): 3 Info about rt_shootray() processing
     </literallayout>
@@ -144,14 +144,14 @@ BU flags:
 
   <example><title>List LIBBU's active debugging flags and all active debugging flags</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>debug BU</userinput>
+    <prompt>mged&gt; </prompt><userinput>debug BU</userinput>
     <literallayout class="normal">
            AVS (0x00000400): bu_avs_() logging 
          PATHS (0x00001000): File and path debug logging
     </literallayout>
   </para>
   <para>
-    <prompt>mged&gt;</prompt><userinput>debug</userinput>
+    <prompt>mged&gt; </prompt><userinput>debug</userinput>
     <literallayout class="normal">
 BU flags:
            AVS (0x00000400): bu_avs_() logging 
@@ -165,10 +165,10 @@ RT flags:
 
   <example><title>Clear LIBRT debug flags</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>debug -C RT</userinput>
+    <prompt>mged&gt; </prompt><userinput>debug -C RT</userinput>
     <literallayout class="normal">
     </literallayout>
-    <prompt>mged&gt;</prompt><userinput>debug</userinput>
+    <prompt>mged&gt; </prompt><userinput>debug</userinput>
     <literallayout class="normal">
 BU flags:
            AVS (0x00000400): bu_avs_() logging 
@@ -180,7 +180,7 @@ BU flags:
 
   <example><title>Clear all active debug flags for all libraries</title>
   <para>
-    <prompt>mged&gt;</prompt><userinput>debug -C</userinput>
+    <prompt>mged&gt; </prompt><userinput>debug -C</userinput>
   </para>
   </example>
 

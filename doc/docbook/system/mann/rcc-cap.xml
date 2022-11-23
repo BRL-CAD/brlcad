@@ -41,7 +41,7 @@
   <example><title>Round the base of a specified cylinder.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rcc-cap rcc.s cap.s 20</userinput>
+      <prompt>mged&gt; </prompt><userinput>rcc-cap rcc.s cap.s 20</userinput>
     </para>
     <para>Creates an ELL shape named <emphasis>cap.s</emphasis> with a radius of 20 units at the base 	of <emphasis>rcc.s</emphasis>.
     </para>
@@ -50,7 +50,7 @@
   <example><title>Round the top of a specified cylinder.</title>
 
     <para>
-      <prompt>mged&gt;</prompt><userinput>rcc-cap rcc.s cap.s 20 t</userinput>
+      <prompt>mged&gt; </prompt><userinput>rcc-cap rcc.s cap.s 20 t</userinput>
     </para>
     <para>Creates an ELL shape named <emphasis>cap.s</emphasis> with a radius of 20 units at the top	of <emphasis>rcc.s</emphasis>.
    </para>

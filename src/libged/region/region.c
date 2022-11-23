@@ -52,7 +52,7 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 4) {
@@ -60,8 +60,9 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    ident = gedp->ged_wdbp->wdb_item_default;
-    air = gedp->ged_wdbp->wdb_air_default;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    ident = wdbp->wdb_item_default;
+    air = wdbp->wdb_air_default;
 
     /* Check for even number of arguments */
     if (argc & 01) {
@@ -69,18 +70,18 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* will attempt to create the region */
-	if (gedp->ged_wdbp->wdb_item_default) {
-	    gedp->ged_wdbp->wdb_item_default++;
+	if (wdbp->wdb_item_default) {
+	    wdbp->wdb_item_default++;
 	    bu_vls_printf(gedp->ged_result_str, "Defaulting item number to %d\n",
-			  gedp->ged_wdbp->wdb_item_default);
+			  wdbp->wdb_item_default);
 	}
     }
 
     /* Get operation and solid name for each solid */
     for (i = 2; i < argc; i += 2) {
-	if ((dp = db_lookup(gedp->ged_wdbp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
+	if ((dp = db_lookup(gedp->dbip,  argv[i+1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	    bu_vls_printf(gedp->ged_result_str, "skipping %s\n", argv[i+1]);
 	    continue;
 	}
@@ -102,10 +103,10 @@ ged_region_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    if (db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
+    if (db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET) == RT_DIR_NULL) {
 	/* failed to create region */
-	if (gedp->ged_wdbp->wdb_item_default > 1)
-	    gedp->ged_wdbp->wdb_item_default--;
+	if (wdbp->wdb_item_default > 1)
+	    wdbp->wdb_item_default--;
 	return BRLCAD_ERROR;
     }
 

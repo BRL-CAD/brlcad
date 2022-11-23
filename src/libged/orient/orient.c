@@ -48,7 +48,7 @@ ged_orient_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2 && argc != 5) {
@@ -77,7 +77,7 @@ ged_orient_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     quat_quat2mat(gedp->ged_gvp->gv_rotation, quat);
-    bview_update(gedp->ged_gvp);
+    bv_update(gedp->ged_gvp);
 
     return BRLCAD_OK;
 }

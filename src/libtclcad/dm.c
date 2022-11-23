@@ -368,7 +368,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
     int lineWidth;
     int posOnly;
     int tripleColor;
-    struct bview_axes_state bnas;
+    struct bv_axes bnas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -383,7 +383,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    memset(&bnas, 0, sizeof(struct bview_axes_state));
+    memset(&bnas, 0, sizeof(struct bv_axes));
 
     if (dmo_parseAxesArgs(argc, argv, &viewSize, rmat, axesPos, &axesSize,
 			  axesColor, labelColor, &lineWidth,
@@ -401,7 +401,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
     bnas.pos_only = posOnly;
     bnas.triple_color = tripleColor;
 
-    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
+    dm_draw_hud_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
 
     bu_vls_free(&vls);
     return BRLCAD_OK;
@@ -584,7 +584,7 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
     fastf_t axesSize;
     int axesColor[3];
     int lineWidth;
-    struct bview_data_axes_state bndas;
+    struct bv_data_axes_state bndas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -614,15 +614,15 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    memset(&bndas, 0, sizeof(struct bview_data_axes_state));
+    point_t mapos = VINIT_ZERO;
+    memset(&bndas, 0, sizeof(struct bv_data_axes_state));
+    bndas.points = &mapos;
     VMOVE(bndas.points[0], modelAxesPos);
     bndas.size = axesSize;
     VMOVE(bndas.color, axesColor);
     bndas.line_width = lineWidth;
 
-    dm_draw_data_axes(dmop->dmo_dmp,
-		      viewSize,
-		      &bndas);
+    dm_draw_data_axes(dmop->dmo_dmp, viewSize, &bndas);
 
     bu_vls_free(&vls);
     return BRLCAD_OK;
@@ -810,7 +810,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
     int tickColor[3];
     int majorTickColor[3];
     int tickThreshold;
-    struct bview_axes_state bnas;
+    struct bv_axes bnas;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -842,7 +842,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
 
     MAT4X3PNT(viewAxesPos, model2view, modelAxesPos);
 
-    memset(&bnas, 0, sizeof(struct bview_axes_state));
+    memset(&bnas, 0, sizeof(struct bv_axes));
     VMOVE(bnas.axes_pos, viewAxesPos);
     bnas.axes_size = axesSize;
     VMOVE(bnas.axes_color, axesColor);
@@ -859,7 +859,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
     VMOVE(bnas.tick_major_color, majorTickColor);
     bnas.tick_threshold = tickThreshold;
 
-    dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
+    dm_draw_hud_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
 
     bu_vls_free(&vls);
     return BRLCAD_OK;
@@ -935,7 +935,7 @@ dmo_normal_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop || !dmop->interp)
 	return BRLCAD_ERROR;
 
-    return dm_normal(dmop->dmo_dmp);
+    return dm_hud_begin(dmop->dmo_dmp);
 }
 
 
@@ -1095,7 +1095,7 @@ static int
 dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
-    struct bn_vlist *vp;
+    struct bv_vlist *vp;
 
     if (!dmop || !dmop->interp)
 	return BRLCAD_ERROR;
@@ -1121,7 +1121,7 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    BN_CK_VLIST(vp);
+    BV_CK_VLIST(vp);
 
     return dm_draw_vlist(dmop->dmo_dmp, vp);
 }
@@ -1129,16 +1129,16 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 
 static void
 dmo_drawSolid(struct dm_obj *dmop,
-	      struct solid *sp)
+	      struct bv_scene_obj *sp)
 {
     if (sp->s_iflag == UP)
-	dm_set_fg(dmop->dmo_dmp, 255, 255, 255, 0, sp->s_transparency);
+	dm_set_fg(dmop->dmo_dmp, 255, 255, 255, 0, sp->s_os->transparency);
     else
 	dm_set_fg(dmop->dmo_dmp,
 		       (unsigned char)sp->s_color[0],
 		       (unsigned char)sp->s_color[1],
-		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
-    dm_draw_vlist(dmop->dmo_dmp, (struct bn_vlist *)&sp->s_vlist);
+		       (unsigned char)sp->s_color[2], 0, sp->s_os->transparency);
+    dm_draw_vlist(dmop->dmo_dmp, (struct bv_vlist *)&sp->s_vlist);
 }
 
 
@@ -1234,16 +1234,17 @@ static int
 dmo_drawSList(struct dm_obj *dmop,
 	      struct bu_list *hsp)
 {
-    struct solid *sp;
+    struct bv_scene_obj *sp;
     int linestyle = -1;
 
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    if (dmop->dmo_dmp->i->dm_transparency) {
+    int dm_transparency = dm_get_transparency(dmop->dmo_dmp);
+    if (dm_transparency) {
 	/* First, draw opaque stuff */
-	FOR_ALL_SOLIDS(sp, hsp) {
-	    if (sp->s_transparency < 1.0)
+	for (BU_LIST_FOR(sp, bv_scene_obj, hsp)) {
+	    if (sp->s_os->transparency < 1.0)
 		continue;
 
 	    if (linestyle != sp->s_soldash) {
@@ -1258,9 +1259,9 @@ dmo_drawSList(struct dm_obj *dmop,
 	dm_set_depth_mask(dmop->dmo_dmp, 0);
 
 	/* Second, draw transparent stuff */
-	FOR_ALL_SOLIDS(sp, hsp) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, hsp)) {
 	    /* already drawn above */
-	    if (ZERO(sp->s_transparency - 1.0))
+	    if (ZERO(sp->s_os->transparency - 1.0))
 		continue;
 
 	    if (linestyle != sp->s_soldash) {
@@ -1275,7 +1276,7 @@ dmo_drawSList(struct dm_obj *dmop,
 	dm_set_depth_mask(dmop->dmo_dmp, 1);
     } else {
 
-	FOR_ALL_SOLIDS(sp, hsp) {
+	for (BU_LIST_FOR(sp, bv_scene_obj, hsp)) {
 	    if (linestyle != sp->s_soldash) {
 		linestyle = sp->s_soldash;
 		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->i->dm_lineWidth, linestyle);
@@ -1423,9 +1424,9 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
     /* get background color */
     if (argc == 2) {
 	bu_vls_printf(&vls, "%d %d %d",
-		      dmop->dmo_dmp->i->dm_bg[0],
-		      dmop->dmo_dmp->i->dm_bg[1],
-		      dmop->dmo_dmp->i->dm_bg[2]);
+		      dmop->dmo_dmp->i->dm_bg1[0],
+		      dmop->dmo_dmp->i->dm_bg1[1],
+		      dmop->dmo_dmp->i->dm_bg1[2]);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1445,7 +1446,7 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
 	    goto bad_color;
 
 	bu_vls_free(&vls);
-	return dm_set_bg(dmop->dmo_dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b);
+	return dm_set_bg(dmop->dmo_dmp, (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)r, (unsigned char)g, (unsigned char)b);
     }
 
     /* wrong number of arguments */
@@ -1647,7 +1648,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 
     /* get zclip flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_zclip);
+	bu_vls_printf(&vls, "%d", dm_get_zclip(dmop->dmo_dmp));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1664,7 +1665,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	dmop->dmo_dmp->i->dm_zclip = zclip;
+	dm_set_zclip(dmop->dmo_dmp, zclip);
 	return BRLCAD_OK;
     }
 
@@ -1698,7 +1699,7 @@ dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
 
     /* get zbuffer flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_zbuffer);
+	bu_vls_printf(&vls, "%d", dm_get_zbuffer(dmop->dmo_dmp));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1749,7 +1750,7 @@ dmo_light_tcl(void *clientData, int argc, const char **argv)
 
     /* get light flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_light);
+	bu_vls_printf(&vls, "%d", dm_get_light(dmop->dmo_dmp));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1801,7 +1802,8 @@ dmo_transparency_tcl(void *clientData, int argc, const char **argv)
 
     /* get transparency flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_transparency);
+	int dm_transparency = dm_get_transparency(dmop->dmo_dmp);
+	bu_vls_printf(&vls, "%d", dm_transparency);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1945,9 +1947,9 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 	 * dm_clipmin and dm_clipmax.
 	 */
 	if (dmop->dmo_dmp->i->dm_clipmax[2] <= GED_MAX)
-	    dmop->dmo_dmp->i->dm_bound = 1.0;
+	    dm_set_bound(dmop->dmo_dmp, 1.0);
 	else
-	    dmop->dmo_dmp->i->dm_bound = GED_MAX / dmop->dmo_dmp->i->dm_clipmax[2];
+	    dm_set_bound(dmop->dmo_dmp, GED_MAX / dmop->dmo_dmp->i->dm_clipmax[2]);
 
 	return BRLCAD_OK;
     }
@@ -2146,7 +2148,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
 
     /* get debug level */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_debugLevel);
+	bu_vls_printf(&vls, "%d", dm_get_debug(dmop->dmo_dmp));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -2164,7 +2166,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	return dm_debug(dmop->dmo_dmp, level);
+	return dm_set_debug(dmop->dmo_dmp, level);
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);
@@ -2231,7 +2233,7 @@ dmo_flush_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    if (!dmop->dmo_dmp->i->dm_flush) {
+    if (dmop->dmo_dmp->i->dm_flush) {
 	dmop->dmo_dmp->i->dm_flush(dmop->dmo_dmp);
     }
 
@@ -2254,7 +2256,7 @@ dmo_sync_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    if (!dmop->dmo_dmp->i->dm_sync) {
+    if (dmop->dmo_dmp->i->dm_sync) {
 	dmop->dmo_dmp->i->dm_sync(dmop->dmo_dmp);
     }
 
@@ -2704,7 +2706,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	    av[i+newargs] = argv[i];
 	av[i+newargs] = (const char *)NULL;
 
-	if ((dmp = dm_open((void *)interp, type, ac, av)) == DM_NULL) {
+	if ((dmp = dm_open(NULL, (void *)interp, type, ac, av)) == DM_NULL) {
 	    if (Tcl_IsShared(obj))
 		obj = Tcl_DuplicateObj(obj);
 
