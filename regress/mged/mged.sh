@@ -100,7 +100,8 @@ check_command ( ) {
 }
 
 
-output="`$MGED -c ${RANDOM}.g quit 2>&1`"
+rm -f mged.g
+output="`$MGED -c mged.g quit 2>&1`"
 if test $? != 0 ; then
     log "Output: $output"
     log "Unable to run mged, aborting"
