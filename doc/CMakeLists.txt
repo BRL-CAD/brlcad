@@ -224,6 +224,7 @@ CMAKEFILES(
   git/history.txt
   git/merging.txt
   git/mime_types.txt
+  git/usability.txt
   notes/bsd_semaphore_bug.txt
   notes/cmake_paths/CMakeLists.txt
   notes/cmake_paths/README.txt
