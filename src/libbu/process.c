@@ -26,6 +26,7 @@
 
 #include <stdlib.h> /* exit */
 #include <sys/types.h>
+#include <string.h>
 #include "bio.h"
 #include "bnetwork.h"
 #include "bu/debug.h"
