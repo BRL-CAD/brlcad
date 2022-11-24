@@ -571,7 +571,7 @@ bu_interactive()
     }
 
     if (result == 0) {
-	if (!isatty(fileno(stdin)) || !isatty(fileno(stdout))) {
+	if (!isatty(fileno(stdin))) {
 	    interactive = 0;
 	}
     } else if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
