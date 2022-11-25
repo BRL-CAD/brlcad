@@ -572,7 +572,7 @@ bu_interactive()
 	}
     }
 
-    if (result == 0) {
+    if (result <= 0) {
 	if (!isatty(fileno(stdin))) {
 	    interactive = 0;
 	}
