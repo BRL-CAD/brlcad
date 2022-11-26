@@ -137,7 +137,25 @@ wdb_export_external(
 	return -4;
     }
 
-    switch (wdbp->type) {
+    // For export purposes, decode the default types if that's
+    // what we've been given
+    int wdb_type = wdbp->type;
+    if (wdb_type == RT_WDB_TYPE_DB_DEFAULT) {
+	if (!wdbp->dbip->dbi_wdbp) {
+	    wdb_type = RT_WDB_TYPE_DB_INMEM;
+	} else {
+	    wdb_type = RT_WDB_TYPE_DB_DISK;
+	}
+    }
+    if (wdb_type == RT_WDB_TYPE_DB_DEFAULT_APPEND_ONLY) {
+	if (!wdbp->dbip->dbi_wdbp_a) {
+	    wdb_type = RT_WDB_TYPE_DB_INMEM_APPEND_ONLY;
+	} else {
+	    wdb_type = RT_WDB_TYPE_DB_DISK_APPEND_ONLY;
+	}
+    }
+
+    switch (wdb_type) {
 
 	case RT_WDB_TYPE_DB_DISK:
 	    if (wdbp->dbip->dbi_read_only) {

@@ -205,6 +205,9 @@ main(int argc, char *argv[])
     struct stat sf1;
     struct stat sf2;
 
+    memset(&sf1, 0, sizeof(struct stat));
+    memset(&sf2, 0, sizeof(struct stat));
+
     size_t matching = 0;
     size_t off1 = 0;
     size_t offmany = 0;
@@ -339,15 +342,15 @@ main(int argc, char *argv[])
     if (!quiet && ((sf1.st_size - f1_skip) != (sf2.st_size - f2_skip))) {
 	bu_log("WARNING: Different image sizes detected\n");
 	if (print_bytes) {
-	    bu_log("\t%s: %7llu bytes (%8llu bytes, skipping %7llu)\n",
-		   argv[0], (unsigned long long)(sf1.st_size - f1_skip), (unsigned long long)sf1.st_size, (unsigned long long)f1_skip);
-	    bu_log("\t%s: %7llu bytes (%8llu bytes, skipping %7llu)\n",
-		   argv[1], (unsigned long long)(sf2.st_size - f2_skip), (unsigned long long)sf2.st_size, (unsigned long long)f2_skip);
+	    bu_log("\t%s: %7zu bytes (%8zu bytes, skipping %7zu)\n",
+		   argv[0], (size_t)sf1.st_size - f1_skip, (size_t)sf1.st_size, f1_skip);
+	    bu_log("\t%s: %7zu bytes (%8zu bytes, skipping %7zu)\n",
+		   argv[1], (size_t)sf2.st_size - f2_skip, (size_t)sf2.st_size, f2_skip);
 	} else {
-	    bu_log("\t%s: %7llu pixels (%8llu bytes, skipping %7llu)\n",
-		   argv[0], (unsigned long long)((sf1.st_size - f1_skip)/3), (unsigned long long)sf1.st_size, (unsigned long long)f1_skip);
-	    bu_log("\t%s: %7llu pixels (%8llu bytes, skipping %7llu)\n",
-		   argv[1], (unsigned long long)((sf2.st_size - f2_skip)/3), (unsigned long long)sf2.st_size, (unsigned long long)f2_skip);
+	    bu_log("\t%s: %7zu pixels (%8zu bytes, skipping %7zu)\n",
+		   argv[0], ((size_t)sf1.st_size - f1_skip)/3, (size_t)sf1.st_size, f1_skip);
+	    bu_log("\t%s: %7zu pixels (%8zu bytes, skipping %7zu)\n",
+		   argv[1], ((size_t)sf2.st_size - f2_skip)/3, (size_t)sf2.st_size, f2_skip);
 	}
     }
 

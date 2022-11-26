@@ -26,14 +26,22 @@
  */
 
 
+#if defined(__GNUC__) && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 3)) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#  pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
+
 #include "common.h"
 
-#include "meshdecimation.h"
+#include "meshoptimizer.h"
 
-#include "./util.h"
+#include "auxiliary/cc.h"
+#include "auxiliary/mm.h"
 #include "bu/tc.h"
 
-#include "bu/exit.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 
@@ -375,6 +383,8 @@ static moi moMeshBuildTrirefs(moMesh *mesh, moThreadData *tdata, int threadcount
     moTriangle *tri;
     moVertex *vertex;
 
+    score = 0.0;
+
     triperthread = (mesh->tricount / threadcount) + 1;
     triindex = tdata->threadid * triperthread;
     triindexmax = triindex + triperthread;
@@ -700,6 +710,7 @@ static mof moLookAheadScore(moMesh *mesh, moThreadData *tdata, moTriangle *tri)
 #endif
 	cacheorder = moCacheGetOrder(mesh, tdata, vertexindex);
 	score += mesh->cachescore[cacheorder];
+	vertex = &mesh->vertexlist[vertexindex];
     }
 
     return bestscore;
@@ -778,6 +789,8 @@ static moi moFindSeedTriangle(moMesh *mesh, moThreadData *tdata)
     moi trinext;
 #endif
 
+    score = 0.0;
+
     testcount = 16384;
 
     if (mesh->operationflags & MO_FLAGS_FAST_SEED_SELECT)
@@ -849,6 +862,8 @@ static moi moFindNextStep(moMesh *mesh, moThreadData *tdata)
 #ifndef MM_ATOMIC_SUPPORT
     moi trinext;
 #endif
+
+    score = 0.0;
 
     cacheordercap = mesh->vertexcachesize;
 
@@ -979,6 +994,8 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
     moi trinext;
 #endif
 
+    score = 0.0;
+
     for (entry = &scorebuffer[MO_LOOK_AHEAD_BEST_BUFFER_SIZE - 1]; entry >= scorebuffer; entry--) {
 	entry->triindex = -1;
 	entry->score = 0.0;
@@ -988,6 +1005,9 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
 
     if (mesh->operationflags & MO_FLAGS_ENABLE_LAZY_SEARCH)
 	cacheordercap = 4;
+
+    bestscore = 0.0;
+    besttriindex = -1;
 
     for (;;) {
 	cache = tdata->cachehash;
@@ -1093,12 +1113,12 @@ static moi moFindNextStepLookAhead(moMesh *mesh, moThreadData *tdata)
 
 static void moRebuildMesh(moMesh *mesh, moThreadData *tdata, moi seedindex)
 {
-    int axisindex=0, cacheorder=0, caheorderaddglobal=0;
-    uint32_t hashkey=0;
+    int axisindex, cacheorder, caheorderaddglobal;
+    uint32_t hashkey;
     moi besttriindex = -1;
-    moCacheEntry *cache=NULL;
-    moTriangle *tri=NULL, *trilast=NULL;
-    int cacheorderadd[MO_VERTEX_CACHE_SIZE_MAX] = {0};
+    moCacheEntry *cache;
+    moTriangle *tri, *trilast;
+    int cacheorderadd[MO_VERTEX_CACHE_SIZE_MAX];
     moi delindex, delcount;
     moi delbuffer[8];
     moi(*findnextstep)(moMesh * mesh, moThreadData * tdata);
@@ -1559,3 +1579,82 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     return 1;
 }
 
+
+/****/
+
+
+#define MO_EVAL_VERTEX_CACHE_MAX (256)
+
+static int moEvalCacheInsert(moi *vertexcache, int vertexcachesize, moi vertexindex)
+{
+    int cacheindex, pushlimit, cachemiss;
+    pushlimit = vertexcachesize - 1;
+    cachemiss = 1;
+
+    for (cacheindex = 0; cacheindex < vertexcachesize; cacheindex++) {
+	if (vertexcache[cacheindex] != vertexindex)
+	    continue;
+
+	pushlimit = cacheindex;
+	cachemiss = 0;
+	break;
+    }
+
+    for (cacheindex = pushlimit - 1; cacheindex >= 0; cacheindex--)
+	vertexcache[cacheindex + 1] = vertexcache[cacheindex + 0];
+
+    vertexcache[0] = vertexindex;
+    return cachemiss;
+}
+
+/*
+Returns the ACMR (Average Cache Miss Rate) for the mesh.
+ACMR is the sum of vertex cache miss divided by the number of triangles in the mesh.
+*/
+double moEvaluateMesh(size_t tricount, void *indices, int indiceswidth, size_t indicesstride, int vertexcachesize, int UNUSED(flags))
+{
+    int cacheindex, cachemiss;
+    size_t triindex;
+    void (*indicesUserToNative)(moi * dst, void *src);
+    moi vertexcache[MO_EVAL_VERTEX_CACHE_MAX];
+    moi triv[3];
+
+    switch (indiceswidth) {
+	case sizeof(uint8_t):
+	    indicesUserToNative = moIndicesInt8ToNative;
+	    break;
+
+	case sizeof(uint16_t):
+	    indicesUserToNative = moIndicesInt16ToNative;
+	    break;
+
+	case sizeof(uint32_t):
+	    indicesUserToNative = moIndicesInt32ToNative;
+	    break;
+
+	case sizeof(uint64_t):
+	    indicesUserToNative = moIndicesInt64ToNative;
+	    break;
+
+	default:
+	    return 0;
+    }
+
+    if (vertexcachesize > MO_EVAL_VERTEX_CACHE_MAX)
+	vertexcachesize = MO_EVAL_VERTEX_CACHE_MAX;
+
+    for (cacheindex = 0; cacheindex < vertexcachesize; cacheindex++)
+	vertexcache[cacheindex] = -1;
+
+    cachemiss = 0;
+
+    for (triindex = 0; triindex < tricount; triindex++) {
+	indicesUserToNative(triv, indices);
+	indices = ADDRESS(indices, indicesstride);
+	cachemiss += moEvalCacheInsert(vertexcache, vertexcachesize, triv[0]);
+	cachemiss += moEvalCacheInsert(vertexcache, vertexcachesize, triv[1]);
+	cachemiss += moEvalCacheInsert(vertexcache, vertexcachesize, triv[2]);
+    }
+
+    return (double)cachemiss / (double)tricount;
+}

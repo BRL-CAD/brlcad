@@ -459,12 +459,9 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_BOT_CK_MAGIC(bot_ip);
 
     rt_bot_mintie = RT_DEFAULT_MINTIE;
-    char *ebmintie = getenv("LIBRT_BOT_MINTIE");
-    char *bmintie = (ebmintie) ? bu_strdup(ebmintie) : NULL;
-    if (bmintie) {
+    const char *bmintie = getenv("LIBRT_BOT_MINTIE");
+    if (bmintie)
 	rt_bot_mintie = atoi(bmintie);
-	bu_free(bmintie, "LIBRT_BOT_MINTIE copy");
-    }
 
     if (rt_bot_bbox(ip, &(stp->st_min), &(stp->st_max), &(rtip->rti_tol))) return 1;
 
@@ -1179,8 +1176,8 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
 
-    bot_ip->num_vertices = bu_ntohl(*(uint32_t *)&rp->bot.bot_num_verts[0], 0, UINT_MAX - 1);
-    bot_ip->num_faces = bu_ntohl(*(uint32_t *)&rp->bot.bot_num_triangles[0], 0, UINT_MAX - 1);
+    bot_ip->num_vertices = ntohl(*(uint32_t *)&rp->bot.bot_num_verts[0]);
+    bot_ip->num_faces = ntohl(*(uint32_t *)&rp->bot.bot_num_triangles[0]);
     bot_ip->orientation = rp->bot.bot_orientation;
     bot_ip->mode = rp->bot.bot_mode;
     bot_ip->bot_flags = 0;
@@ -1201,9 +1198,9 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     for (i = 0; i < bot_ip->num_faces; i++) {
 	size_t idx=chars_used + i * 12;
 
-	bot_ip->faces[i*ELEMENTS_PER_POINT + 0] = bu_ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 0], 0, UINT_MAX - 1);
-	bot_ip->faces[i*ELEMENTS_PER_POINT + 1] = bu_ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 4], 0, UINT_MAX - 1);
-	bot_ip->faces[i*ELEMENTS_PER_POINT + 2] = bu_ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 8], 0, UINT_MAX - 1);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 0] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 0]);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 1] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 4]);
+	bot_ip->faces[i*ELEMENTS_PER_POINT + 2] = ntohl(*(uint32_t *)&rp->bot.bot_data[idx + 8]);
     }
 
     if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
@@ -1348,9 +1345,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bip->magic = RT_BOT_INTERNAL_MAGIC;
 
     cp = ep->ext_buf;
-    bip->num_vertices = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+    bip->num_vertices = ntohl(*(uint32_t *)&cp[0]);
     cp += SIZEOF_NETWORK_LONG;
-    bip->num_faces = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+    bip->num_faces = ntohl(*(uint32_t *)&cp[0]);
     cp += SIZEOF_NETWORK_LONG;
     bip->orientation = *cp++;
     bip->mode = *cp++;
@@ -1386,11 +1383,11 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     }
 
     for (i = 0; i < bip->num_faces; i++) {
-	bip->faces[i*3 + 0] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+	bip->faces[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->faces[i*3 + 1] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+	bip->faces[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->faces[i*3 + 2] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+	bip->faces[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
 	cp += SIZEOF_NETWORK_LONG;
     }
 
@@ -1413,9 +1410,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	/* must be double for import and export */
 	double tmp[ELEMENTS_PER_VECT];
 
-	bip->num_normals = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+	bip->num_normals = ntohl(*(uint32_t *)&cp[0]);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->num_face_normals = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+	bip->num_face_normals = ntohl(*(uint32_t *)&cp[0]);
 	cp += SIZEOF_NETWORK_LONG;
 
 	if (bip->num_normals <= 0) {
@@ -1437,11 +1434,11 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bip->face_normals = (int *)bu_calloc(bip->num_face_normals * 3, sizeof(int), "BOT face normals");
 
 	    for (i = 0; i < bip->num_face_normals; i++) {
-		bip->face_normals[i*3 + 0] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+		bip->face_normals[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_normals[i*3 + 1] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+		bip->face_normals[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_normals[i*3 + 2] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+		bip->face_normals[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
 		cp += SIZEOF_NETWORK_LONG;
 	    }
 	}
@@ -1456,9 +1453,9 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	/* must be double for import and export */
 	double tmp[ELEMENTS_PER_VECT];
 
-	bip->num_uvs = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+	bip->num_uvs = ntohl(*(uint32_t *)&cp[0]);
 	cp += SIZEOF_NETWORK_LONG;
-	bip->num_face_uvs = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+	bip->num_face_uvs = ntohl(*(uint32_t *)&cp[0]);
 	cp += SIZEOF_NETWORK_LONG;
 
 	if (bip->num_uvs <= 0) {
@@ -1480,11 +1477,11 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bip->face_uvs = (int *)bu_calloc(bip->num_face_uvs * 3, sizeof(int), "BOT face UVs");
 
 	    for (i = 0; i < bip->num_face_uvs; i++) {
-		bip->face_uvs[i*3 + 0] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+		bip->face_uvs[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_uvs[i*3 + 1] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+		bip->face_uvs[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
 		cp += SIZEOF_NETWORK_LONG;
-		bip->face_uvs[i*3 + 2] = bu_ntohl(*(uint32_t *)&cp[0], 0, UINT_MAX - 1);
+		bip->face_uvs[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
 		cp += SIZEOF_NETWORK_LONG;
 	    }
 	}
@@ -5123,8 +5120,10 @@ rt_bot_merge(size_t num_bots, const struct rt_bot_internal * const *bots)
 		result->faces[avail_face*3+face*3  ] = bots[i]->faces[face*3+2] + avail_vert;
 
 		if (result->mode == RT_BOT_PLATE || result->mode == RT_BOT_PLATE_NOCOS) {
-		    result->thickness[avail_face+face] = bots[i]->thickness[face];
-		    result->face_mode[avail_face+face] = bots[i]->face_mode[face];
+		    if (bots[i]->thickness)
+			result->thickness[avail_face+face] = bots[i]->thickness[face];
+		    if (bots[i]->face_mode)
+			result->face_mode[avail_face+face] = bots[i]->face_mode[face];
 		}
 	    }
 	} else {

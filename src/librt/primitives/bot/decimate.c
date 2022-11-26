@@ -39,6 +39,7 @@
 
 #if !defined(BRLCAD_DISABLE_GCT)
 #  include "./gct_decimation/meshdecimation.h"
+#  include "./gct_decimation/meshoptimization.h"
 #endif
 
 #include "./bot_edge.h"
@@ -483,13 +484,14 @@ rt_bot_decimate_gct(struct rt_bot_internal *UNUSED(bot), fastf_t UNUSED(feature_
     return 0;
 #else
 rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
+    const int opt_level = 3; /* maximum */
+    mdOperation mdop;
 
     RT_BOT_CK_MAGIC(bot);
 
     if (feature_size < 0.0)
 	bu_bomb("invalid feature_size");
 
-    mdOperation mdop;
     mdOperationInit(&mdop);
     mdOperationData(&mdop, bot->num_vertices, bot->vertices,
 		    sizeof(bot->vertices[0]), 3 * sizeof(bot->vertices[0]), bot->num_faces,
@@ -502,9 +504,7 @@ rt_bot_decimate_gct(struct rt_bot_internal *bot, fastf_t feature_size) {
     bot->num_vertices = mdop.vertexcount;
     bot->num_faces = mdop.tricount;
 
-    moOptimizeMesh(bot->num_vertices, bot->num_faces,
-	    bot->faces, sizeof(bot->faces[0]),
-	    3 * sizeof(bot->faces[0]), 0, 0, 32, 0);
+    mesh_optimization(bot->num_vertices, bot->num_faces, bot->faces, sizeof(bot->faces[0]), opt_level);
 
     return mdop.decimationcount;
 #endif

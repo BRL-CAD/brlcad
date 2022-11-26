@@ -162,6 +162,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"front", f_bv_front, GED_FUNC_PTR_NULL},
     {"g", cmd_ged_plain_wrapper, ged_exec},
     {"gdiff", cmd_ged_plain_wrapper, ged_exec},
+    {"garbage_collect", cmd_ged_plain_wrapper, ged_exec},
     {"get", cmd_ged_plain_wrapper, ged_exec},
     {"get_type", cmd_ged_plain_wrapper, ged_exec},
     {"get_autoview", cmd_ged_plain_wrapper, ged_exec},

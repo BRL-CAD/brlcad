@@ -297,9 +297,9 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
     cp = (unsigned char *)ep->ext_buf;
-    ari->ncurves = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+    ari->ncurves = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
-    ari->pts_per_curve = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+    ari->pts_per_curve = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
 
     /*
@@ -967,7 +967,7 @@ rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 void
-rt_ars_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+rt_ars_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
 {
     if (!ps || !ip)
 	return;
@@ -985,7 +985,6 @@ rt_ars_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct b
 	struct bv_label *la;
 	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
-	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);

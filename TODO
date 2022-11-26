@@ -18,26 +18,14 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* verify bot_dump -o file.obj generates valid obj files (see BUGS)
 
-* docs:
-  r72314 in CHANGES, minimally impacting
-  r72315 ps man page, NEWS
-  r78172 NEWS (mention tool(s), not libanalyze)
-  r76009 NEWS, CHANGES
-  r76019 NEWS, man page
-  r76021 NEWS, CHANGES
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
 
 * re-enable regress-asc and regress-weight
 
 * material infrastructure has regressions due to attr sync code that
   needs to be resolved.
-
-* document user-visible changes
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
 
 * dbconcat corrupted database / failed. created a top-level comb with
   invalid "1_[subcomb]/" to be created that result in error messages
@@ -129,6 +117,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* consider user interface and usability implications of gchecker
+  and/or overlap_tool as commands that kick off GUI.  need to consider
+  if there's a non-GUI output/utility and how the CLI pairs up with
+  other GUI-inducing commands like rtwizard, raytrace control panel,
+  geometree, etc.
+
+* Add manual page for 3dm-g
 
 * Attempt to update to use latest upstream poly2tri resulted in incorrect
   shading when trying to view the NIST2 example - many faces didn't

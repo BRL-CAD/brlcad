@@ -36,6 +36,7 @@
 #include "bu/cv.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
@@ -803,6 +804,7 @@ static int
 bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 {
     int c;
+    int specified_t = 0;
 
     output_type = OTYPE_STL;
     binary = 0;
@@ -843,6 +845,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 		    return BRLCAD_ERROR;
 		}
+		specified_t = 1;
 		break;
 	    case 'u':
 		cfactor = bu_units_conversion(bu_optarg);
@@ -855,6 +858,30 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 		return BRLCAD_ERROR;
+	}
+    }
+
+    /* try to be smart with the specified file extension, but warn
+     * when we default to stl
+     */
+    if (!specified_t) {
+	struct bu_vls ext = BU_VLS_INIT_ZERO;
+	if (!bu_path_component(&ext, output_file, BU_PATH_EXT)) {
+	    bu_vls_printf(gedp->ged_result_str,
+			  "WARNING: no format type '-t' specified, defaulting to stl\n");
+	} else {
+	    if (BU_STR_EQUAL("dxf", bu_vls_cstr(&ext)))
+		output_type = OTYPE_DXF;
+	    else if (BU_STR_EQUAL("obj", bu_vls_cstr(&ext)))
+		output_type = OTYPE_OBJ;
+	    else if (BU_STR_EQUAL("sat", bu_vls_cstr(&ext)))
+		output_type = OTYPE_SAT;
+	    else if (BU_STR_EQUAL("stl", bu_vls_cstr(&ext)))
+		output_type = OTYPE_STL;
+	    else {
+		bu_vls_printf(gedp->ged_result_str,
+			      "WARNING: unrecognized filename type, defaulting to stl\n");
+	    }
 	}
     }
 

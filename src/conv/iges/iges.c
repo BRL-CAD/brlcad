@@ -667,14 +667,14 @@ w_start_global(
     bu_vls_free(&str);
 
     /* Write Global Section */
-    bu_vls_printf(&str, ",,%zdH%s", strlen(db_name), db_name);
+    bu_vls_printf(&str, ",,%zuH%s", strlen(db_name), db_name);
 
     if (output_file == NULL)
 	bu_vls_printf(&str, ",7Hstd_out");
     else
-	bu_vls_printf(&str, ",%zdH%s", strlen(output_file), output_file);
+	bu_vls_printf(&str, ",%zuH%s", strlen(output_file), output_file);
 
-    bu_vls_printf(&str, ",%zdH%s,%zdH%s,32,38,6,308,15,%zdH%s,1.0,2,2HMM,,1.0" ,
+    bu_vls_printf(&str, ",%zuH%s,%zuH%s,32,38,6,308,15,%zuH%s,1.0,2,2HMM,,1.0" ,
 		  strlen(version), version ,
 		  strlen(id), id,
 		  strlen(db_name), db_name);
@@ -1896,7 +1896,7 @@ write_name_entity(char *name,
     if (name_len >= NAMESIZE)
 	bu_vls_printf(&str, "406,1,16H%16.16s;", name);
     else
-	bu_vls_printf(&str, "406,1,%zdH%s;", strlen(name), name);
+	bu_vls_printf(&str, "406,1,%zuH%s;", strlen(name), name);
 
     /* remember where parameter data is going */
     dir_entry[2] = param_seq + 1;
@@ -2823,7 +2823,7 @@ write_igs_tree(struct bu_vls *str,
     BU_CK_VLS(str);
     RT_CK_COMB(comb);
 
-    bu_vls_printf(str, "180,%zd", 2*length-1);
+    bu_vls_printf(str, "180,%zu", 2*length-1);
 
     de_pointer_number = 0;
     igs_tree(str, comb->tree, length, de_pointers);

@@ -7,8 +7,7 @@ set(BURST_INPUT_FILES
   )
 
 if (TARGET ktank.g)
-  BRLCAD_REGRESSION_TEST(regress-oburst "oburst;ktank.g" EXEC oburst)
-  BRLCAD_REGRESSION_TEST(regress-nburst "nburst;ktank.g" EXEC nburst)
+  BRLCAD_REGRESSION_TEST(regress-burst "burst;ktank.g" EXEC burst)
 
   set(BURST_CLEAN_FILES
     ktank_burst.plot
@@ -18,7 +17,6 @@ if (TARGET ktank.g)
     ktank_burst.shotlines
     burst_ktank.log
     regress-burst.log
-    regress-nburst.log
     )
   DISTCLEAN(${BURST_CLEAN_FILES})
 
@@ -31,8 +29,7 @@ endif (TARGET ktank.g)
 CMAKEFILES(
   CMakeLists.txt
   echo.b
-  regress-oburst.cmake.in
-  regress-nburst.cmake.in
+  regress-burst.cmake.in
   ${BURST_INPUT_FILES}
   )
 
