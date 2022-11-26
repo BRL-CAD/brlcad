@@ -1298,8 +1298,7 @@ DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned lon
 	struct bn_tol tol = BN_TOL_INIT_TOL;
 	mat_t m;
 	MAT_IDN(m);
-	int bret = rt_bound_instance(&bmin, &bmax, dp, dbip,
-		&ttol, &tol, &m, res, NULL);
+	int bret = rt_bound_instance(&bmin, &bmax, dp, dbip, &ttol, &tol, &m, res);
 	if (bret != -1) {
 	    have_bbox = true;
 
