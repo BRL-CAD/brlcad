@@ -1,3 +1,56 @@
+commit 72aca86c6abeac1ba23abf18de59ece35eca35fb
+Merge: 6eae7d24a4 c575918408
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Mon Nov 28 12:02:02 2022 -0500
+
+    merge of main c575918408a into RELEASE branch
+
+commit c5759184088c560bf80d1858fc76169b2a0ebea8
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Fri Nov 25 01:43:30 2022 -0500
+
+    add a -C non-classic mode flag.
+    
+    this essentially performs the opposite of the -c classic console mode flag.  It requests the GUI and interactivity.  note using the flag does not preclude non-GUI initialization if the command-line arguments indicate batch/scripting/redirection.
+
+commit 2184ef26ef9fd5b66cce3d12b40c5c9a36cea2a6
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Fri Nov 25 00:26:05 2022 -0500
+
+    check for select error, which should restore previous behavior on Windows
+
+commit 84a0f08af2dcc58efc3e3ea5f1aae46a2c3f9a2b
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Nov 24 12:30:24 2022 -0500
+
+    And need errno for errno..
+
+commit d72998b13cce41d6cad4a441553bdcb4783f241b
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Thu Nov 24 10:04:45 2022 -0500
+
+    Add string header for strerror
+
+commit d73c697158164dfe5e0fdb8f9172fb7f9949a05f
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Nov 23 19:15:58 2022 -0500
+
+    only check if stdin is a tty.
+    
+    just because stdout has been redirected doesn't necessarily mean we don't want a gui or don't want to be able to type commands.  it could be that mged's output is being redirected to a file for logging purposes, invoked via some wrapper, but we can still issue commands via stdin.
+
+commit 2f2908d66292909d34d7ef74a5f8a54150ce2c4c
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Wed Nov 23 19:06:12 2022 -0500
+
+    print the error when select fails
+
+commit 6eae7d24a412cca42b32cbcacd07f474202787ca
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Wed Nov 23 16:48:13 2022 -0500
+
+    Update log with commits since 2022-11-22
+
 commit d82e981c99a755e4615e5b9553c7be41c2703c60
 Merge: 5ea2cbbf4c 74a3a9b76a
 Author: f4alt <christopherjmacgregor@gmail.com>
