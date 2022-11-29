@@ -88,7 +88,13 @@ process_file(std::string f, std::map<std::string, std::vector<struct dentry>> &e
 			struct dentry nentry;
 			nentry.key = std::string(parsevar[2]);
 			nentry.hex = std::string(parsevar[3]);
-			nentry.info = std::string(parsevar[4]);
+			std::string info = std::string(parsevar[4]);
+			size_t brief_loc = info.find("@brief ");
+			if (brief_loc != std::string::npos) {
+			    // Scrub the doxygen tag out of the commment
+			    info.erase(brief_loc, 7);
+			}
+			nentry.info = info;
 			entries[std::string(parsevar[1])].push_back(nentry);
 		    }
 		}

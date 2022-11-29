@@ -1579,14 +1579,14 @@ get_seg_midpoint(void *seg, struct rt_sketch_internal *skt, point2d_t pt)
 		dir[0] = -s2m[1];
 		dir[1] = s2m[0];
 		s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
-		if (s2m_len_sq <= SMALL_FASTF) {
+		if (s2m_len_sq < SMALL_FASTF) {
 		    bu_log("start and end points are too close together in circular arc of sketch\n");
-		    return -1;
+		    s2m_len_sq = SMALL_FASTF;
 		}
 		len_sq = csg->radius*csg->radius - s2m_len_sq;
 		if (len_sq < 0.0) {
 		    bu_log("Impossible radius for specified start and end points in circular arc\n");
-		    return -1;
+		    len_sq = 0;
 		}
 		tmp_len = sqrt(dir[0]*dir[0] + dir[1]*dir[1]);
 		dir[0] = dir[0] / tmp_len;
@@ -2433,7 +2433,7 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
     MAT4X3VEC(extrude_ip->u_vec, mat, tmp_vec);
     bu_cv_ntohd((unsigned char *)tmp_vec, rp->extr.ex_vvec, ELEMENTS_PER_VECT);
     MAT4X3VEC(extrude_ip->v_vec, mat, tmp_vec);
-    extrude_ip->keypoint = bu_ntohl(*(uint32_t *)&rp->extr.ex_key[0], 0, UINT_MAX - 1);
+    extrude_ip->keypoint = ntohl(*(uint32_t *)&rp->extr.ex_key[0]);
 
     ptr = (char *)rp;
     ptr += sizeof(struct extr_rec);
@@ -2597,7 +2597,7 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     MAT4X3VEC(extrude_ip->u_vec, mat, tmp_vec[2]);
     MAT4X3VEC(extrude_ip->v_vec, mat, tmp_vec[3]);
     ptr += ELEMENTS_PER_VECT * 4 * SIZEOF_NETWORK_DOUBLE;
-    extrude_ip->keypoint = bu_ntohl(*(uint32_t *)ptr, 0, UINT_MAX - 1);
+    extrude_ip->keypoint = ntohl(*(uint32_t *)ptr);
     ptr += SIZEOF_NETWORK_LONG;
     extrude_ip->sketch_name = bu_strdup((const char *)ptr);
 

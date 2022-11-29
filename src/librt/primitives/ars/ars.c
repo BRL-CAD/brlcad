@@ -70,7 +70,7 @@ extern void rt_bot_ifree(struct rt_db_internal *ip);
  * allocated for holding the curve's fastf_t values.
  */
 static fastf_t *
-ars_rd_curve(union record *rp, size_t npts, int flip)
+ars_rd_curve(union record *rp, ssize_t npts, int flip)
 {
     size_t lim;
     fastf_t *base;
@@ -88,7 +88,7 @@ ars_rd_curve(union record *rp, size_t npts, int flip)
     for (; npts > 0; npts -= 8) {
 	rr = &rp[rec++];
 	if (rr->b.b_id != ID_ARS_B) {
-	    bu_log("ars_rd_curve(npts=%zu):  non-ARS_B record [%d]!\n", npts, rr->b.b_id);
+	    bu_log("ars_rd_curve(npts=%zd):  non-ARS_B record [%d]!\n", npts, rr->b.b_id);
 	    break;
 	}
 	lim = (npts>8) ? 8 : npts;
@@ -159,7 +159,7 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     currec = 1;
     int cflag = (dbip && dbip->dbi_version < 0) ? 1 : 0;
     for (i = 0; i < ari->ncurves; i++) {
-	ari->curves[i] = ars_rd_curve(&rp[currec], ari->pts_per_curve, cflag);
+	ari->curves[i] = ars_rd_curve(&rp[currec], (ssize_t)ari->pts_per_curve, cflag);
 	currec += (ari->pts_per_curve+7)/8;
     }
 
@@ -297,9 +297,9 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     ari->magic = RT_ARS_INTERNAL_MAGIC;
 
     cp = (unsigned char *)ep->ext_buf;
-    ari->ncurves = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+    ari->ncurves = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
-    ari->pts_per_curve = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+    ari->pts_per_curve = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
 
     /*
@@ -967,7 +967,7 @@ rt_ars_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 void
-rt_ars_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+rt_ars_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
 {
     if (!ps || !ip)
 	return;
@@ -985,7 +985,6 @@ rt_ars_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct b
 	struct bv_label *la;
 	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
-	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);

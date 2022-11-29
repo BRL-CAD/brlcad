@@ -10,29 +10,50 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2022-XX-XX  Release 7.34.X                                     ---
+--- 202X-XX-XX  Release 7.34.2                                     ---
 ----------------------------------------------------------------------
 
-This major release introduces a new method for managing third party
-library building - src/other/ext dependencies now use the native
-build system provided by the project, rather than having BRL-CAD
-rewrite it to match ours.
+----------------------------------------------------------------------
+--- 2022-11-23  Release 7.34.0                                     ---
+----------------------------------------------------------------------
 
+With development efforts spanning several years, this major update to
+BRL-CAD includes considerable progress on infrastructure for graphical
+user interface improvements, geometry conversion, and physically-based
+rendering.  It also includes hundreds of logic and memory management
+bug fixes, potential code vulnerability updates, and other issues
+reported by Coverity and Clang Static Analysis.
+
+This release also overhauls the way 3rd-party dependencies are managed
+in BRL-CAD.  Native build systems are now used in order for updates to
+be more readily applied, to reduce maintenance overhead, and to set
+the stage for the aforementioned major feature developments.
+
+* fixed perspective to orthogonal view toggling in archer - Cliff Yapp
+* removed 'nburst' rewrite with burst now deprecated - Cliff Yapp
+* fixed bot_merge with oriented plate mode bots - Sean Morrison
+* bot_dump infers output type from filename extension - Sean Morrison
+* readded MGED viewring, sweep, collab, & rateknob menus - Cliff Yapp
+* fixed a crash when shaded NURBS brep drawing fails - Cliff Yapp
+* added new man pages for brep, process, and ps commands - Cliff Yapp
+* added new man page for 3dm-g Rhino3D importer - Cliff Yapp
 * improved bot_dump default command help - Chris McGregor
-* fixed suffix for 3dm-g converted solids - Cliff Yapp
+* improved suffix handling for 3dm-g converted primitives - Cliff Yapp
 * added -N view obj name option to overlay command - Cliff Yapp
-* updated man pages for GED brep command - Cliff Yapp
 * added man page for MGED Overlaps Tool - Chris McGregor
 * major STEPcode updates, using unmodified upstream 0.8.1 - Cliff Yapp
 * added aircode reporting support to the lc command - Sean Morrison
-* fixed 3dm to g names converting alphabetized - Chris McGregor
+* 3dm-g now converts as encountered, not alphabetized - Chris McGregor
 * updated Tcl/Tk to version 8.6.12 - Cliff Yapp
 * updated netpbm to version 10.73.40 - Cliff Yapp
 * updated zlib to version 1.2.13 - Cliff Yapp
 * fixed mged -c 'unknown variable' warning dialogs - Sean Morrison
+* fixed and improved gqa grid spacing - Daniel Roßberg
 * improved mged & archer html command help formatting - Sean Morrison
 * fixed archer empty string ("") loading behavior - Cliff Yapp
 * rt* tools' -P option accepts negative #core counts - Sean Morrison
+* added text label size & rotation angle support to annotation objects
+	- Ali Haydar, Himanshu Nayak, and Daniel Roßberg
 * gqa -Ae exposed air report no longer has gapped air - Sean Morrison
 * fixed rt framebuffer bug with -g/-G cellsize options - Sean Morrison
 * added new idents(5) file format manual page - Sean Morrison
@@ -75,20 +96,21 @@ rewrite it to match ours.
 --- 2021-02-06  Release 7.32.2                                     ---
 ----------------------------------------------------------------------
 
+* updated Creo export plugin to work with latest Creo - Bill Chambers
+* fixed memory leak in MGED's gdiff command - Cliff Yapp
 * fixed OSX g-iges crash due to improper memory freeing - Cliff Yapp
 * fixed GQA multithreaded plotting file corruption - Cliff Yapp
 * added -S structural diff option to MGED gdiff command - Cliff Yapp
 * added -v verbosity option to MGED tree command - Cliff Yapp
 * added -? option to MGED which command - Cliff Yapp
-* updated Archer to set cwd=HOME when run without args - Cliff Yapp
-* updated rtwizard to set cwd=HOME when run without args - Cliff Yapp
-* updated MGED to set cwd=HOME when run without args - Cliff Yapp
+* MGED, Archer, rtwizard graphically launch with pwd=HOME - Cliff Yapp
 * fixed reporting of MGED "vars" command - Cliff Yapp
 * updated MGED to not open non-.g-files as databases - Cliff Yapp
 * fixed MGED I/O when running GED subcommands - Cliff Yapp
 * added decimation control examples to facetize man page - Cliff Yapp
 * changed gcv converter to append to existing .g files - Cliff Yapp
-* removed obscure MGED menu entries for unused features - Cliff Yapp
+* removed MGED collaboration and rateknob features - Cliff Yapp
+* removed MGED ViewRing menu and sweep rectangle features - Cliff Yapp
 * fixed crash when trying to shade invalid breps - Cliff Yapp
 * improved librt CPU timer behavior - Cliff Yapp
 * fixed example in saveview manual page - Sean Morrison
@@ -106,9 +128,7 @@ rewrite it to match ours.
 * added volume type to search -type filters - Cliff Yapp
 * applied shorter default title in fast4-g conversions - Cliff Yapp
 * improved pixcmp support for subset image comparisons - Sean Morrison
-* added subtract subcommand to MGED analyze command - Cliff Yapp
-* added intersect subcommand to MGED analyze command - Cliff Yapp
-* added summarize subcommand to MGED analyze command - Cliff Yapp
+* MGED analyze subtract, intersect, summarize subcommands - Cliff Yapp
 * added quiet (-q) flag to MGED kill command - Cliff Yapp
 * added MGED stat command for reporting of object info - Cliff Yapp
 * corrected examples in gdiff man page - Cliff Yapp
@@ -129,6 +149,7 @@ BRL-CAD's command-line utilities so they work properly on Windows.
 This is likely the last major release of BRL-CAD on Subversion
 infrastructure with BRL-CAD's imminent migration to Git.
 
+* added additional pre-defined MGED view key bindings - Cliff Yapp
 * added basic example to remrt man page - Cliff Yapp, Sean Morrison
 * added new 'nburst' version of classic burst tool - Cliff Yapp
 * added 'bot set' command for low level BoT manipulation - Cliff Yapp
@@ -203,6 +224,7 @@ infrastructure with BRL-CAD's imminent migration to Git.
 --- 2020-03-19  Release 7.30.6                                     ---
 ----------------------------------------------------------------------
 
+* fixed comgeom-g GIFT combination conversion - Daniel Roßberg
 * fixed transparent drawing in MGED - Nick Reed
 * fixed solid NURBS brep intersection testing - Cliff Yapp
 * removed extra blank line after commands in MGED GUI - Sean Morrison
@@ -217,6 +239,7 @@ infrastructure with BRL-CAD's imminent migration to Git.
 --- 2019-12-05  Release 7.30.4                                     ---
 ----------------------------------------------------------------------
 
+* improved Creo export plugin handling of color and shader - Nick Reed
 * enhanced attr list command to support reporting values - Cliff Yapp
 * updated FAA Generic Twin example FASTGEN model - Cliff Yapp
 * fixed handling of duplicate FASTGEN object names - Cliff Yapp
@@ -321,8 +344,8 @@ corrections.
 This major release of BRL-CAD incorporates a new feature for caching
 of raytrace acceleration structures used when working with explicit
 boundary representation (BREP) Non-uniform Rational Basis Spline
-(NURBS) solids.  This will result in significant improvements to
-run times when repeatedly raytracing BREP solids.
+(NURBS) objects.  This will result in significant improvements to run
+times when repeatedly raytracing BREP objects.
 
 Support for terrain import has been significantly expanded with the
 addition of a new Geospatial Data Abstraction Library (GDAL) based

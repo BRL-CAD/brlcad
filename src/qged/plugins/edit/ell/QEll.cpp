@@ -209,7 +209,7 @@ QEll::update_obj_wireframe()
 
     // When editing, we show the labels
     if (intern.idb_meth->ft_labels)
-	intern.idb_meth->ft_labels(p, &intern, p->s_v);
+	intern.idb_meth->ft_labels(p, &intern);
 
     p->s_flag = UP;
     // TODO - we should be able to set UP or DOWN on the various labels

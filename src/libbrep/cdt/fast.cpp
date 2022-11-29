@@ -2302,6 +2302,10 @@ brep_cdt_fast(int **faces, int *face_cnt, vect_t **pnt_norms, point_t **pnts, in
 	}
     }
 
+    /* If we got nothing, we're done here */
+    if (!all_faces.size() || !all_pnts.size() || !all_norms.size())
+	return BRLCAD_ERROR;
+
     (*face_cnt) = (int)all_faces.size()/3;
     (*pntcnt) = (int)all_pnts.size()/3;
     (*faces) = (int *)bu_calloc(all_faces.size(), sizeof(int), "faces");

@@ -26,7 +26,10 @@
 
 #include <stdlib.h> /* exit */
 #include <sys/types.h>
+#include <string.h>
+#include <errno.h>
 #include "bio.h"
+#include "bnetwork.h"
 #include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/list.h"
@@ -545,17 +548,10 @@ bu_interactive()
 {
     int interactive = 1;
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
     fd_set read_set;
     fd_set exception_set;
     int result;
-#endif
 
-
-#if defined(_WIN32) && !defined(CYGWIN)
-    if(!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
-	interactive = 0;
-#else
     struct timeval timeout;
 
     /* wait 1/10sec for input, in case we're piped */
@@ -569,11 +565,15 @@ bu_interactive()
     FD_ZERO(&read_set);
     FD_SET(fileno(stdin), &read_set);
     result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
-    if (bu_debug > 0)
+    if (bu_debug > 0) {
 	fprintf(stdout, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
+	if (result < 0) {
+	    fprintf(stdout, "DEBUG: select error: %s\n", strerror(errno));
+	}
+    }
 
-    if (result == 0) {
-	if (!isatty(fileno(stdin)) || !isatty(fileno(stdout))) {
+    if (result <= 0) {
+	if (!isatty(fileno(stdin))) {
 	    interactive = 0;
 	}
     } else if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
@@ -614,7 +614,6 @@ bu_interactive()
 	}
 
     } /* read_set */
-#endif
 
     return interactive;
 }

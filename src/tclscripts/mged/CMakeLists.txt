@@ -33,7 +33,6 @@ set(mged_TCLSCRIPTS
   facetize_all_regions.tcl
   font.tcl
   g2asc.tcl
-  garbage_collect.tcl
   get_regions.tcl
   grid.tcl
   grouper.tcl
