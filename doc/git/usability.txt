@@ -1,0 +1,11 @@
+When working with a git repository on the command line, there is (by
+default no visual indication of the current branch or state of the
+repository.)  The following has proven useful for bash command line
+workflows to know what a given repository's state is:
+
+https://github.com/git/git/blob/master/contrib/completion/git-prompt.sh
+
+One caveat - if you have multiple terminals open, and change branches
+in one of them, the other terminals will not automatically update their
+report until the next command is entered in each terminal individually.
+

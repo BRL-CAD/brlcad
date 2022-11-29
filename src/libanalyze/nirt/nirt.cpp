@@ -383,15 +383,17 @@ _nirt_get_obliq(fastf_t *ray, fastf_t *normal)
     fastf_t obliquity;
 
     cos_obl = fabs(VDOT(ray, normal) / (MAGNITUDE(normal) * MAGNITUDE(ray)));
-    if (cos_obl < 1.001) {
+    // tolerance added to capture calculation fuzz (within 0.05 degrees)
+    if (cos_obl < (1.0 + RT_DOT_TOL)) {
 	if (cos_obl > 1)
 	    cos_obl = 1;
 	obliquity = acos(cos_obl);
     } else {
 	fflush(stdout);
-	fprintf (stderr, "Error:  cos(obliquity) > 1 (%g)\n", cos_obl);
+	fprintf (stderr,
+		 "Warning: Unexpected grazing angle\n"
+		 "         cos(obliquity) = %g > 1\n", cos_obl);
 	return -1;
-	//bu_exit(1, NULL);
     }
 
     /* convert obliquity to degrees */

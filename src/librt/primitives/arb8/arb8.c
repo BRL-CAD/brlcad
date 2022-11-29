@@ -2533,7 +2533,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 }
 
 void
-rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
 {
     int i;
 
@@ -2553,7 +2553,6 @@ rt_arb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct b
 	struct bv_label *la;
 	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
-	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);

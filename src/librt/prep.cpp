@@ -1848,19 +1848,30 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	    }
 	    bu_ptbl_free(&objs->paths);
 	    bu_ptbl_free(&unprep_regions);
+
+	    db_free_db_tree_state(tree_state);
+	    bu_free((char *)tree_state, "tree_state");
 	    return 1;
 	}
 	db_free_full_path(&another_path);
+
+	/* sanity check, should be unreachable given prior lookup loop */
+	if (!path || path->fp_len <= 0) {
+	    db_free_db_tree_state(tree_state);
+	    bu_free((char *)tree_state, "tree_state");
+	    return 1;
+	}
 
 	/* walk tree starting from "unprepped" object, using the
 	 * appropriate tree_state.  unprep solids and regions along
 	 * the way
 	 */
-	if (!path || path->fp_len <= 0)
-	    return -1;
 	obj_name = DB_FULL_PATH_CUR_DIR(path)->d_namep;
-	if (!obj_name)
+	if (!obj_name) {
+	    db_free_db_tree_state(tree_state);
+	    bu_free((char *)tree_state, "tree_state");
 	    return 1;
+	}
 
 	if (db_walk_tree(rtip->rti_dbip, 1, (const char **)&obj_name, 1, tree_state,
 			 unprep_reg_start, unprep_reg_end, unprep_leaf,
@@ -1876,6 +1887,9 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	    }
 	    bu_ptbl_free(&objs->paths);
 	    bu_ptbl_free(&unprep_regions);
+
+	    db_free_db_tree_state(tree_state);
+	    bu_free((char *)tree_state, "tree_state");
 	    return 1;
 	}
 

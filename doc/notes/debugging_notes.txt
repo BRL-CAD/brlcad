@@ -1,0 +1,10 @@
+Random misc. useful notes for debugging
+
+
+When trying to debug the root cause behind a rendered framebuffer image
+disappearing, I got to the point where I wanted to watch one of the pixels in
+the buffer to see what was clearing it.  For that purpose, the following was a
+useful bit of gdb knowledge about the details of how to watch a specific array
+memory location using "watch -l":
+
+https://stackoverflow.com/a/42251209/2037687

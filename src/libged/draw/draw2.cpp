@@ -86,7 +86,7 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// Try for a bounding box, if the method is available.  Otherwise try the
 	// bounding the default plot.
 	point_t bmin, bmax;
-	int bbret = rt_bound_instance(&bmin, &bmax, DB_FULL_PATH_CUR_DIR(path), dd->dbip, dd->ttol, dd->tol, curr_mat, dd->res, dd->v);
+	int bbret = rt_bound_instance(&bmin, &bmax, DB_FULL_PATH_CUR_DIR(path), dd->dbip, dd->ttol, dd->tol, curr_mat, dd->res);
 	if (bbret >= 0) {
 
 	    // Got bounding box, use it to update sizing

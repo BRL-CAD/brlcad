@@ -1775,7 +1775,7 @@ rt_tor_centroid(point_t *cent, const struct rt_db_internal *ip)
 }
 
 void
-rt_tor_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+rt_tor_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
 {
     if (!ps || !ip)
 	return;
@@ -1790,7 +1790,6 @@ rt_tor_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct b
 	struct bv_label *la;
 	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
-	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);
