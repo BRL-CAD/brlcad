@@ -16,6 +16,7 @@ BRLCAD_ADDEXEC(ged_test_material test_material.c libged TEST)
 add_dependencies(ged_test_material ged_plugins)
 BRLCAD_ADD_TEST(NAME ged_test_material COMMAND ged_test_material "${CMAKE_CURRENT_BINARY_DIR}/ged_test_material.g")
 set_property(TEST ged_test_material APPEND PROPERTY ENVIRONMENT BRLCAD_ROOT=${CMAKE_BINARY_DIR})
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/ged_test_material.g)
 
 BRLCAD_ADDEXEC(ged_test_select test_select.c libged TEST)
 add_dependencies(ged_test_select ged_plugins)

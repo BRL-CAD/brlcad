@@ -126,7 +126,6 @@ if (BRLCAD_ENABLE_TK)
 
     ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${LIB_DIR}/itk${ITK_VERSION}
       pkgIndex.tcl
-      FIXPATH
       )
 
     set(ITK_LIBRARY itk CACHE STRING "Building bundled itk" FORCE)
