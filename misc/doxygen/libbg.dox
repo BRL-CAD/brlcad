@@ -33,9 +33,13 @@
 /**   @ingroup bg_aabb */
 /**   @defgroup bg_aabb_ray AABB/Ray Intersection Tests */
 /** @ingroup libbg */
+/**  @defgroup bg_sat Separating Axis Theorem Tests */
+/** @ingroup libbg */
 /**  @defgroup bg_chull Convex Hulls */
 /** @ingroup libbg */
 /**  @defgroup bg_surf_recon Surface Reconstruction */
 /**   @ingroup bg_surf_recon */
 /**   @defgroup bg_surf_recon_spsr Screened Poisson Surface Reconstruction */
+/** @ingroup libbg */
+/**  @defgroup bg_lod Level-of-Detail Geometry Generation */
 

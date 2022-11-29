@@ -150,12 +150,14 @@ set(mann_EN
   paths.xml
   permute.xml
   plot.xml
+  postscript.xml
   prcolor.xml
   prefix.xml
   press.xml
   preview.xml
   prj_add.xml
-  postscript.xml
+  process.xml
+  ps.xml
   pull.xml
   push.xml
   put_comb.xml

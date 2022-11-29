@@ -239,6 +239,7 @@ namespace eval ArcherCore {
 	method hide                {args}
 	method human               {args}
 	method g                   {args}
+	method garbage_collect     {args}
 	method get                 {args}
 	method group               {args}
 	method i                   {args}
@@ -588,7 +589,7 @@ namespace eval ArcherCore {
 	    brep brlman c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
 	    delete draw dsp e E edarb edcodes edcolor edcomb edit edmater env d erase ev exists \
-	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
+	    exit facetize fracture freezeGUI g garbage_collect get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
 	    killtree l lc ls make make_name make_pnts man mater mirror move \
 	    move_arb_edge move_arb_face mv mvall nmg_collapse \
@@ -6520,6 +6521,14 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::g {args} {
     eval group $args
+}
+
+::itcl::body ArcherCore::garbage_collect {args} {
+    if {$args == {}} {
+	return [gedCmd garbage_collect]
+    } else {
+	return [eval gedCmd garbage_collect $args]
+    }
 }
 
 ::itcl::body ArcherCore::get {args} {

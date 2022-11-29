@@ -180,7 +180,7 @@ host_lookup_by_addr(const struct sockaddr_in * from, int enter)
     }
 
     /* Host name is not known */
-    addr_tmp = bu_ntohl(addr_tmp, 0, UINT_MAX - 1);
+    addr_tmp = ntohl(addr_tmp);
     sprintf( name, "%ld.%ld.%ld.%ld",
 	     (addr_tmp>>24) & 0xff,
 	     (addr_tmp>>16) & 0xff,

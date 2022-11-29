@@ -208,6 +208,11 @@
   part -- Particle.
  </para>
 </listitem>
+<listitem>
+ <para>
+  ebm -- Extruded bitmap
+ </para>
+</listitem>
 </itemizedlist>
 
 </refsection>
@@ -228,7 +233,35 @@
       </varlistentry>
     </variablelist>
   </example>
-
+  <example><title>Creating ebm from bitmap file</title>
+  
+    <variablelist>
+      <varlistentry>
+      	  <term><prompt>mged&gt; </prompt><userinput>in new1.s ebm f image_name.bw 350 350 20</userinput></term>
+      	<listitem>
+      	    <para>
+      		Creates an <emphasis>ebm</emphasis> named <emphasis>new1.s</emphasis> using file image_name.bw, 
+		dimensions of image_name.bw (e.g. '350 350'), and the desired extrusion distance (e.g. '20').
+      	    </para>
+      	</listitem>
+      </varlistentry>
+    </variablelist>
+  </example>
+  <example><title>Creating ebm with database objects</title>
+  
+    <variablelist>
+      <varlistentry>
+      	  <term><prompt>mged&gt; </prompt><userinput>in new1.s ebm o dbobj 350 350 20</userinput></term>
+      	<listitem>
+      	    <para>
+      		Creates an <emphasis>ebm</emphasis> named <emphasis>new1.s</emphasis> using database object dbobj, 
+		dimensions of original bitmap image (e.g. '350 350'), and the desired extrusion distance (e.g. '20').
+		(see 'bo' command for creating database object).
+      	    </para>
+      	</listitem>
+      </varlistentry>
+    </variablelist>
+  </example>
 </refsection>
 
 <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>

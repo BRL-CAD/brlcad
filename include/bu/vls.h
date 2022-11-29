@@ -631,33 +631,28 @@ typedef int (*bu_vls_uniq_t)(struct bu_vls *v, void *data);
  *
  * @section bu_vls_incr_ex Examples
  *
- * So, we return to our engine_part.s example cases.  To generate the
- * initial pattern:
+ * To generate a suffix pattern, e.g.,:
  *
  * @verbatim
  * engine_part.s-1, engine_part.s-2, engine_part.s-3, ...
  * @endverbatim
  *
- *
- * The code is actually quite simple:
+ * Example code is as follows:
  *
  * @code
- * int i = 0;
- * const char *estr = "engine_part.s"
  * struct bu_vls name = BU_VLS_INIT_ZERO;
- * bu_vls_sprintf(&name, "%s", estr);
- * while (i < 10) {
+ * bu_vls_sprintf(&name, "engine_part.s");
+ * for (int i = 0; i < 10; i++) {
  *   bu_vls_incr(&name, NULL, "0:0:0:0:-", NULL, NULL);
- *   bu_log("%s\n", bu_vls_addr(&name));
+ *   bu_log("%s\n", bu_vls_cstr(&name));
  * }
  * bu_vls_free(&name);
  * @endcode
  *
- * The second case gets a bit more interesting, since there is no
- * number present in the original string, we want the number *before*
- * the .s suffix, we're incrementing by more than 1, we want four
- * numerical digits in the string, and we want an underscore prefix
- * spacer before the number:
+ * Here we show an infix case.  There is no number present in the
+ * original string, we want the number *before* the .s suffix, we're
+ * incrementing by more than 1, we want four numerical digits in the
+ * string, and we want an underscore prefix spacer before the number:
  *
  * @verbatim
  * engine_part_0010.s, engine_part_0020.s, engine_part_0030.s, ...
@@ -668,15 +663,14 @@ typedef int (*bu_vls_uniq_t)(struct bu_vls *v, void *data);
  * incrementer where we need it:
  *
  * @code
- * int i = 0;
  * const char *estr = "engine_part.s"
  * struct bu_vls name = BU_VLS_INIT_ZERO;
  * bu_vls_sprintf(&name, "%s0.%s",
  *                bu_path_component(estr, BU_PATH_EXTLESS),
  *                bu_path_component(estr, BU_PATH_EXT));
- * while (i < 10) {
+ * for (int i = 0; i < 10; i++) {
  *   bu_vls_incr(&name, NULL, "4:10:0:10:_", NULL, NULL);
- *   bu_log("%s\n", bu_vls_addr(&name));
+ *   bu_log("%s\n", bu_vls_cstr(&name));
  * }
  * bu_vls_free(&name);
  * @endcode

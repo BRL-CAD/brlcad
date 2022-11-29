@@ -131,11 +131,10 @@ removed at any time.
 
 7.32
 ----
-burst,nburst
+burst
 	Point Burst Damage Assessment Model (PDAM) input preparation
 	tool.  Obsolete, no longer in use by upstream tools,
-	scheduling for removal (both the original and the newer
-	nburst implementation.)
+	scheduling for removal
 
 include/bu/app.h
         bu_brlcad_root: replaced by bu_dir
@@ -150,11 +149,13 @@ include/bg/chull.h
         bg_3d_chull
 
 include/bu/exit.h
-        bu_backtrace and bu_crashreport will be replaced with versions
-        that take an optional parameter to pass in a full path from
-        the calling application.  (Currently available as
-        bu_backtrace_app and bu_crashreport_app, these will
-        replace existing versions after deprecation is complete.)
+        TODO: warrants discussion
+
+        considering replacing bu_backtrace and bu_crashreport with
+        versions that take an optional parameter to pass in a full
+        path from the calling application.  (Currently available as
+        bu_backtrace_app and bu_crashreport_app, these would replace
+        existing versions after deprecation is final.)
 
 MGED gui
 	The following will be removed from MGED's menu bar (unused
@@ -468,6 +469,7 @@ include/raytrace librt
 	db_regexp_match_all() -> db_ls() [deprecated 7.26]
 mged
 	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
+	ps command renamed to postscript [minimally impacting]
 include/bu.h
 	bu_parse_mm() [deprecated 7.22]
 
@@ -1671,8 +1673,6 @@ s/GED_ERROR/BRLCAD_ERROR/g
 s/GED_HELP/BRLCAD_HELP/g
 s/GED_MORE/BRLCAD_MORE/g
 s/GED_UNKNOWN/BRLCAD_UNKNOWN/g
-s/dm_draw_display_list/dm_draw_head_dl/g
-s/dm_draw_obj\(/dm_draw_display_list\(/g
 s/bu_whereis\(/bu_whence\(/g
 s/bu_which\(/bu_whence\(/g
 s/rt_gettree_muves\(/rt_gettrees_and_attrs\(/g

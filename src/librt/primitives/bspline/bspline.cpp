@@ -1076,7 +1076,7 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     cp = (unsigned char *)ep->ext_buf;
 
-    sip->nsrf = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+    sip->nsrf = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     sip->srfs = (struct face_g_snurb **) bu_calloc(sip->nsrf, sizeof(struct face_g_snurb *), "nurb srfs[]");
 
@@ -1092,19 +1092,19 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	double *vknots;
 	double *points;
 
-	pt_type = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+	pt_type = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	order[0] = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+	order[0] = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	order[1] = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+	order[1] = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	u_size = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+	u_size = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	v_size = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+	v_size = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	s_size[0] = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+	s_size[0] = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
-	s_size[1] = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+	s_size[1] = ntohl(*(uint32_t *)cp);
 	cp += SIZEOF_NETWORK_LONG;
 	if (pt_type == 3)
 	    pt_type = RT_NURB_MAKE_PT_TYPE(3, RT_NURB_PT_XYZ, RT_NURB_PT_NONRAT);
@@ -1437,7 +1437,7 @@ rt_nurb_params(struct pc_pc_set *, const struct rt_db_internal *)
 }
 
 extern "C" void
-rt_nurb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct bview *v)
+rt_nurb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip)
 {
     if (!ps || !ip)
 	return;
@@ -1452,7 +1452,6 @@ rt_nurb_labels(struct bv_scene_obj *ps, const struct rt_db_internal *ip, struct 
 	struct bv_label *la;
 	BU_GET(la, struct bv_label);
 	s->s_i_data = (void *)la;
-	s->s_v = v;
 
 	BU_LIST_INIT(&(s->s_vlist));
 	VSET(s->s_color, 255, 255, 0);

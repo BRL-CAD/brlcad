@@ -57,6 +57,11 @@
      @brief NMG debugging definitions.
  */
 /** @ingroup libnmg */
+/**  @defgroup nmg_io Input/Output*/
+/**  @addtogroup nmg_io
+     @brief Serialize and de-serialize NMG models.
+ */
+/** @ingroup libnmg */
 /**  @defgroup nmg_plot Plotting */
 /**  @addtogroup nmg_plot
      @brief NMG plotting routines.
