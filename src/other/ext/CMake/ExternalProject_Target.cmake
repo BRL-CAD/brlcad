@@ -131,14 +131,37 @@ function(ExternalProject_ByProducts etarg extproj extroot dir)
     fcfgcpy(FILE TOUT ${extproj} ${extroot} ${bpf} "${dir}" ${bpf})
     set(ALL_TOUT ${ALL_TOUT} ${TOUT})
 
+    #   The install(CODE) approach to file adjustment works well, with one
+    #   exception - RPM CPack generators cannot properly execute install(CODE)
+    #   instructions using CMAKE_INSTALL_PREFIX as of 11/30/2022 they target
+    #   the final install path or a default path, rather than the correct local
+    #   CPack directory.
+    #
+    #   if (NOT E_NOINSTALL)
+    #     # TODO - do we have executable byproducts?  If so we probably need to add a flag to ExternalProject_ByProducts
+    #     # and conditionalize this install - the PERMISSIONS setting here will not preserve pre-existing file modes...
+    #     install(FILES "${CMAKE_BINARY_ROOT}/${dir}/${bpf}" DESTINATION "${dir}/" PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ)
+    #     if (E_FIXPATH)
+    #       # Note - proper quoting for install(CODE) is extremely important for CPack, see
+    #       # https://stackoverflow.com/a/48487133
+    #       install(CODE "execute_process(COMMAND $<TARGET_FILE:buildpath_replace> \"\${CMAKE_INSTALL_PREFIX}/${dir}/${bpf}\")")
+    #     endif (E_FIXPATH)
+    #   endif (NOT E_NOINSTALL)
+
+    # In lieu of the more elegant install(CODE) approach, we fall back on making two copies of the
+    # E_FIXPATH files - one for the build directory, one for the install directory.
     if (NOT E_NOINSTALL)
-      # TODO - do we have executable byproducts?  If so we probably need to add a flag to ExternalProject_ByProducts
-      # and conditionalize this install - the PERMISSIONS setting here will not preserve pre-existing file modes...
-      install(FILES "${CMAKE_BINARY_ROOT}/${dir}/${bpf}" DESTINATION "${dir}/" PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ)
       if (E_FIXPATH)
-	# Note - proper quoting for install(CODE) is extremely important for CPack, see
-	# https://stackoverflow.com/a/48487133
-	install(CODE "execute_process(COMMAND $<TARGET_FILE:buildpath_replace> \"\${CMAKE_INSTALL_PREFIX}/${dir}/${bpf}\")")
+	add_custom_command(
+	  OUTPUT "${CMAKE_BINARY_ROOT}/${dir}/${bpf}_install"
+	  COMMAND ${CMAKE_COMMAND} -E copy ${TOUT} ${CMAKE_BINARY_DIR}/${dir}/${bpf}_install
+	  COMMAND $<TARGET_FILE:buildpath_replace> "${CMAKE_BINARY_ROOT}/${dir}/${bpf}_install"
+	  DEPENDS ${TOUT}
+	  )
+	set(ALL_TOUT ${ALL_TOUT} "${CMAKE_BINARY_ROOT}/${dir}/${bpf}_install")
+	install(FILES "${CMAKE_BINARY_ROOT}/${dir}/${bpf}_install" DESTINATION "${dir}/" RENAME ${bpf} PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ)
+      else()
+	install(FILES "${CMAKE_BINARY_ROOT}/${dir}/${bpf}" DESTINATION "${dir}/" PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ)
       endif (E_FIXPATH)
     endif (NOT E_NOINSTALL)
 
