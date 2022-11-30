@@ -19,7 +19,6 @@ int main(int argc, const char **argv)
     std::string bp_extended = bp_sanetized + std::string("/extinstall/[0-9A-Za-z_.-]+");
     std::regex ext_build_path_regex(bp_extended);
     std::string bp_build = bp_sanetized + std::string("/src/other/ext/[0-9A-Za-z_.-]+/src/[0-9A-Za-z_.-]+");
-    std::cout << "bp_build: " << bp_build << "\n";
     std::regex BLD_path_regex(bp_build);
 
     if (argc < 1) {
