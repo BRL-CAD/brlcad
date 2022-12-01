@@ -45,8 +45,7 @@ if (BRLCAD_ENABLE_TK)
 
     set(ITK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/ITK_BLD-prefix/src/ITK_BLD")
 
-    set(ITK_MAJOR_VERSION 3)
-    set(ITK_MINOR_VERSION 4)
+    VERSIONS("${CMAKE_CURRENT_SOURCE_DIR}/itk3/generic/itk.h" ITK_MAJOR_VERSION ITK_MINOR_VERSION ITK_PATCH_VERSION)
     set(ITK_VERSION ${ITK_MAJOR_VERSION}.${ITK_MINOR_VERSION} CACHE STRING "Itk version")
 
     set(ITK_DEPS)
@@ -127,7 +126,6 @@ if (BRLCAD_ENABLE_TK)
 
     ExternalProject_ByProducts(itk ITK_BLD ${ITK_INSTDIR} ${LIB_DIR}/itk${ITK_VERSION}
       pkgIndex.tcl
-      FIXPATH
       )
 
     set(ITK_LIBRARY itk CACHE STRING "Building bundled itk" FORCE)

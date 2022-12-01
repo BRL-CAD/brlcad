@@ -24,3 +24,4 @@ SOFTWARE.
 
 file:/src/libqtcad/QtConsoleListener.cpp
 file:/include/qtcad/QtConsoleListener.h
+

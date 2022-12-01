@@ -2011,7 +2011,6 @@ ged_tire_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&str);
     bu_vls_free(&name);
     bu_vls_free(&dimen);
-    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }

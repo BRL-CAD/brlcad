@@ -149,8 +149,8 @@ main(int ac, char *av[]) {
     gedp = ged_open("db", gname, 0);
 
     if (BU_STR_EQUAL(av[1], "dnull")) {
-	if (ged_exec(gedp, 2, (const char **)mater_cmd) != BRLCAD_HELP) {
-	    bu_log("Error: bare 'mater -d' doesn't return BRLCAD_HELP\n");
+	if (ged_exec(gedp, 2, (const char **)mater_cmd) != GED_HELP) {
+	    bu_log("Error: bare 'mater -d' doesn't return GED_HELP\n");
 	    goto ged_test_fail;
 	}
     }

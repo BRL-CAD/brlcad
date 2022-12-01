@@ -46,7 +46,8 @@ endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 BRLCAD_ADDEXEC(db5_size db5_size.c "librt" TEST)
 
 # datum testing
-BRLCAD_ADDEXEC(rt_datum rt_datum.c "librt" TEST)
+#BRLCAD_ADDEXEC(rt_datum rt_datum.c "librt" TEST)
+#BRLCAD_ADD_TEST(NAME rt_datum_basic COMMAND rt_datum)
 
 # cyclic path testing
 BRLCAD_ADDEXEC(rt_cyclic cyclic.c "librt" TEST)
@@ -73,6 +74,7 @@ set(distcheck_files
   nurbs_surfaces.g
   extreme_ssi_test.g
   binary_attribute.c
+  rt_datum.c
   )
 
 CMAKEFILES(${distcheck_files})

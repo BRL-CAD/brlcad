@@ -505,7 +505,7 @@ ged_rect_core(struct ged *gedp,
 
     if (BU_STR_EQUAL(parameter, "help")) {
 	usage(gedp, command);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     bu_vls_printf(gedp->ged_result_str, "%s: unrecognized command '%s'\n", command, parameter);

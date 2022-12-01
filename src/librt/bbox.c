@@ -408,8 +408,7 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
            const struct bg_tess_tol *ttol,
            const struct bn_tol *tol,
            mat_t *s_mat,
-           struct resource *res,
-           struct bview *v
+           struct resource *res
 	)
 {
     if (UNLIKELY(!bmin || !bmax || !dp || !dbip || !res))
@@ -437,15 +436,11 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
 	 */
 	struct bu_list vhead;
 	BU_LIST_INIT(&(vhead));
-	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, v) >= 0) {
+	if (ip->idb_meth->ft_plot(&vhead, ip, ttol, tol, NULL) >= 0) {
 	    if (bv_vlist_bbox(&vhead, bmin, bmax, NULL, NULL)) {
-		if (v)
-		    BV_FREE_VLIST(&v->gv_objs.gv_vlfree, &vhead);
 		rt_db_free_internal(&dbintern);
 		return -1;
 	    }
-	    if (v)
-		BV_FREE_VLIST(&v->gv_objs.gv_vlfree, &vhead);
 	    bbret = 0;
 	}
     }

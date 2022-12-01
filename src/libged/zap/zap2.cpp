@@ -69,7 +69,7 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
 
     if (print_help) {
 	_ged_cmd_help(gedp, usage, d);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc) {

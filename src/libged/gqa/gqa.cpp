@@ -174,7 +174,7 @@ struct ged_gqa_plot {
 
 /* summary data structure for objects specified on command line */
 static struct per_obj_data {
-    char *o_name;
+    const char *o_name;
     double *o_len;
     double *o_lenDensity;
     double *o_volume;
@@ -400,7 +400,6 @@ static const struct cvt_tab *units[3] = {
     &units_tab[1][0],	/* volume */
     &units_tab[2][0]	/* weight */
 };
-
 
 /**
  * _gqa_read_units_double
@@ -1068,6 +1067,19 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		ap->A_LENDEN += val;
 
 		prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
+
+		// ensure we have an object and minimize reporting when we have errors
+		if (prd->optr == NULL) {
+		    static size_t reported = 0;
+		    if (reported < 20) {
+		    	bu_log("INTERNAL ERROR: %s does not have parent tracking\n", pp->pt_regionp->reg_name);
+		    } else if (reported == 20) {
+		        bu_log("INTERNAL ERROR: too many tracking errors, suppressing further reporting\n");
+		    }
+		    reported++;
+		    continue;
+		}
+
 		/* accumulate the per-region per-view weight values */
 		bu_semaphore_acquire(state->sem_stats);
 		prd->r_lenDensity[state->i_axis] += val;
@@ -1128,6 +1140,18 @@ _gqa_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    ap->A_LEN += dist; /* add to total volume */
 	    {
+		// ensure we have an object and minimize reporting when we have errors
+		if (prd->optr == NULL) {
+		    static size_t reported = 0;
+		    if (reported < 20) {
+		    	bu_log("INTERNAL ERROR: %s does not have parent tracking\n", pp->pt_regionp->reg_name);
+		    } else if (reported == 20) {
+		        bu_log("INTERNAL ERROR: too many tracking errors, suppressing further reporting\n");
+		    }
+		    reported++;
+		    continue;
+		}
+
 		bu_semaphore_acquire(state->sem_stats);
 
 		/* add to region volume */
@@ -1368,28 +1392,33 @@ plane_worker(int cpu, void *ptr)
 }
 
 
-int
-find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
+struct per_obj_data*
+find_cmd_line_obj(int objc, struct per_obj_data *obj_rpt, const char *name)
 {
+    /* name is full region path ie /a/b/c
+     * user specified either a or b or c or /a or /a/b or /a/b/c
+     */
     int i;
-    char *str = bu_strdup(name);
-    char *p;
 
-    p = strchr(str, '/');
-    if (p) {
-	*p = '\0';
+    for (i = 0; i < objc; i++) {
+    	const char* curr = name;
+
+	do {
+	    const char* oname = obj_rpt[i].o_name;
+	    if (oname[0] != '/') {
+		curr++;
+	    }
+	    int len = strlen(oname);
+	    int comp = bu_strncmp(curr, oname, len);
+	    if (comp == 0 && (curr[len] == '/' || curr[len] == '\0')) {
+		return &obj_rpt[i];
+	    }
+	} while ((curr = strchr(curr+1, '/')));
     }
 
-    for (i = 0; i < num_objects; i++) {
-	if (BU_STR_EQUAL(obj_rpt[i].o_name, str)) {
-	    bu_free(str, "");
-	    return i;
-	}
-    }
+    bu_vls_printf(_ged_current_gedp->ged_result_str, "INTERNAL ERROR: Didn't find object named \"%s\" in %d command line entries\n", name, objc);
 
-    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s Didn't find object named \"%s\" in %d entries\n", CPP_FILELINE, name, num_objects);
-
-    return -1;
+    return NULL;
 }
 
 
@@ -1404,7 +1433,6 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     struct rt_i *rtip = state->rtip;
     int i;
     int m;
-    int index;
 
     if (start > ac) {
 	/* what? */
@@ -1444,7 +1472,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
      */
     obj_tbl = (struct per_obj_data *)bu_calloc(num_objects, sizeof(struct per_obj_data), "report tables");
     for (i = 0; i < num_objects; i++) {
-	obj_tbl[i].o_name = (char *)av[start+i];
+	obj_tbl[i].o_name = av[start+i];
 	obj_tbl[i].o_len = (double *)bu_calloc(num_views, sizeof(double), "o_len");
 	obj_tbl[i].o_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "o_lenDensity");
 	obj_tbl[i].o_volume = (double *)bu_calloc(num_views, sizeof(double), "o_volume");
@@ -1468,11 +1496,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
 
 	m = (int)strlen(regp->reg_name);
 	if (m > max_region_name_len) max_region_name_len = m;
-	index = find_cmd_line_obj(obj_tbl, &regp->reg_name[1]);
-	if (index == -1)
-	    reg_tbl[i].optr = NULL;
-	else
-	    reg_tbl[i].optr = &obj_tbl[index];
+	reg_tbl[i].optr = find_cmd_line_obj(num_objects, obj_tbl, regp->reg_name);
     }
 }
 
@@ -2470,6 +2494,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -2477,7 +2502,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], options_str, usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     _ged_current_gedp = gedp;
@@ -2499,7 +2524,7 @@ ged_gqa_core(struct ged *gedp, int argc, const char *argv[])
      *
      * FIXME: should probably be based on the model size.
      */
-    gridSpacingLimit = 10.0 * gedp->dbip->db_tol.dist;
+    gridSpacingLimit = 10.0 * wdbp->wdb_tol.dist;
 
     makeOverlapAssemblies = 0;
     require_num_hits = 1;

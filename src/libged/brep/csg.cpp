@@ -565,7 +565,6 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
 		*/
 		mk_lcomb(wdbp, bu_vls_addr(&comb_name), &pcomb, 0, NULL, NULL, NULL, 0);
 	    }
-	    wdb_close(wdbp);
 
 	    // Verify that the resulting csg tree and the original B-Rep pass a difference test.
 	    if (verify) {
@@ -720,7 +719,6 @@ comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set 
     if (comb_internal->tree == NULL) {
 	// Empty tree
 	(void)wdb_export(wdbp, bu_vls_addr(&comb_name), comb_internal, ID_COMBINATION, 1);
-	wdb_close(wdbp);
 	return 0;
     }
 
@@ -739,7 +737,6 @@ comb_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value_set 
 	bu_log("Error (brep/csg.cpp:%d) brep_csg_conversion_tree\n", __LINE__);
 
     (void)wdb_export(wdbp, bu_vls_addr(&comb_name), (void *)new_internal, ID_COMBINATION, 1);
-    wdb_close(wdbp);
 
     return 0;
 }

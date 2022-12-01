@@ -56,7 +56,7 @@ ged_lod_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc >= 2 && BU_STR_EQUAL(argv[1], "-h")) {
 	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     gvp = gedp->ged_gvp;

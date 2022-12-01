@@ -138,14 +138,21 @@ struct rt_wdb *WDBP = RT_WDB_NULL;
  */
 int update_views = 0;
 
-jmp_buf jmp_env;		/* For non-local gotos */
-double frametime;		/* time needed to draw last frame */
+jmp_buf jmp_env;	/* For non-local gotos */
+double frametime;	/* time needed to draw last frame */
 
 void (*cur_sigint)();	/* Current SIGINT status */
-int interactive = 1;	/* >0 means interactive */
-int cbreak_mode = 0;        /* >0 means in cbreak_mode */
 
-int classic_mged=1;
+int classic_mged = 1;   /* >0 means interactive. gets set to 0 if
+			 * there's libdm graphics support, and forced
+			 * with -c option.
+			 */
+int interactive = 0;	/* >0 means interactive, intentionally starts
+                         * 0 to know when interactive, e.g., via -C
+                         * option
+			 */
+int cbreak_mode = 0;    /* >0 means in cbreak_mode */
+
 
 /* The old mged gui is temporarily the default. */
 int old_mged_gui=1;
@@ -629,6 +636,7 @@ mged_process_char(char ch)
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	    /*XXX Nothing yet */
+	    bu_log("WARNING: not running cmdline(%s)\n", bu_vls_cstr(&input_str_prefix));
 #else
 	    if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 		curr_cmd_list = &head_cmd_list;
@@ -1061,7 +1069,7 @@ main(int argc, char *argv[])
 #endif
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:v?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:d:hbcCorx:X:v?")) != -1) {
 	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
@@ -1074,7 +1082,11 @@ main(int argc, char *argv[])
 		read_only_flag = 1;
 		break;
 	    case 'c':
-		classic_mged = 1;
+		classic_mged = 2; // >1 to indicate requested
+		break;
+	    case 'C':
+		classic_mged = 0;
+		interactive = 2; // >1 to indicate requested
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
@@ -1107,7 +1119,7 @@ main(int argc, char *argv[])
 		bu_log("Unrecognized option (%c)\n", bu_optopt);
 		/* fall through */
 	    case 'h':
-		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
+		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c|-C] [-f] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}
     }
 
@@ -1128,10 +1140,11 @@ main(int argc, char *argv[])
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
-	interactive = bu_interactive();
+	/* we init to 0, so if we're non-0 here, it was probably requested */
+	if (!interactive) {
+	    interactive = bu_interactive();
+	}
     } /* argc > 1 */
-
-    //bu_log("interactive: %d\n", interactive);
 
     if (bu_debug > 0)
 	fprintf(stdout, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, classic_mged);

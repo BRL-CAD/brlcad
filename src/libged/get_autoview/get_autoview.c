@@ -58,7 +58,7 @@ ged_get_core_autoview(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* Parse options. */

@@ -4335,7 +4335,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* get x, y counts */
     cp = (unsigned char *)ep->ext_buf;
 
-    dsp_ip->dsp_xcnt = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+    dsp_ip->dsp_xcnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_xcnt < 1) {
 	bu_log("%s:%d DSP X dimension (%u) < 1 \n",
@@ -4343,7 +4343,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	       dsp_ip->dsp_xcnt);
     }
 
-    dsp_ip->dsp_ycnt = bu_ntohl(*(uint32_t *)cp, 0, UINT_MAX - 1);
+    dsp_ip->dsp_ycnt = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_ycnt < 1) {
 	bu_log("%s:%d DSP Y dimension (%u) < 1 \n",
@@ -4364,7 +4364,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
     /* convert smooth flag */
-    dsp_ip->dsp_smooth = bu_ntohs(*(uint16_t *)cp, 0, UINT_MAX - 1);
+    dsp_ip->dsp_smooth = ntohs(*(uint16_t *)cp);
     cp += SIZEOF_NETWORK_SHORT;
 
     dsp_ip->dsp_datasrc = *cp;

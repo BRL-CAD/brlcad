@@ -691,7 +691,7 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
     bu_vls_trunc(from_gedp->ged_result_str, 0);
     bu_vls_trunc(to_gedp->ged_result_str, 0);
 
-    GED_DB_LOOKUP(from_gedp, from_dp, from, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+    GED_DB_LOOKUP(from_gedp, from_dp, from, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
 
     if (!fflag && db_lookup(to_gedp->dbip, to, LOOKUP_QUIET) != RT_DIR_NULL) {
 	bu_vls_printf(from_gedp->ged_result_str, "%s already exists.", to);
@@ -710,10 +710,8 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 	bu_vls_printf(from_gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
 		      to);
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     bu_free_external(&external);
 
@@ -723,7 +721,7 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 	struct bu_attribute_value_set avs;
 	const char *val;
 
-	GED_DB_LOOKUP(to_gedp, to_dp, to, LOOKUP_NOISY, BRLCAD_ERROR & BRLCAD_QUIET);
+	GED_DB_LOOKUP(to_gedp, to_dp, to, LOOKUP_NOISY, BRLCAD_ERROR & GED_QUIET);
 
 	bu_avs_init_empty(&avs);
 	if (db5_get_attributes(to_gedp->dbip, &avs, to_dp)) {
@@ -771,7 +769,7 @@ ged_rot_args(struct ged *gedp, int argc, const char *argv[], char *coord, mat_t 
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* process possible coord flag */
@@ -839,7 +837,7 @@ ged_arot_args(struct ged *gedp, int argc, const char *argv[], mat_t rmat)
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 5) {
@@ -889,7 +887,7 @@ ged_tra_args(struct ged *gedp, int argc, const char *argv[], char *coord, vect_t
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* process possible coord flag */
@@ -957,7 +955,7 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fas
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2 && argc != 4) {
@@ -1827,7 +1825,6 @@ _ged_combadd2(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "los=%d, material_id=%d\n",
 			  wdbp->wdb_los_default,
 			  wdbp->wdb_mat_default);
-	    wdb_close(wdbp);
 	} else {
 	    comb->region_flag = 0;
 	}

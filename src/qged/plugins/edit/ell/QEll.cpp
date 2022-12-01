@@ -195,8 +195,9 @@ QEll::update_obj_wireframe()
     intern.idb_meth = &OBJ[intern.idb_type];
     if (!intern.idb_meth->ft_plot)
 	return;
-    struct bn_tol *tol = &gedp->dbip->db_tol;
-    struct bg_tess_tol *ttol = &gedp->dbip->db_ttol;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct bn_tol *tol = &wdbp->wdb_tol;
+    struct bg_tess_tol *ttol = &wdbp->wdb_ttol;
     intern.idb_meth->ft_plot(&p->s_vlist, &intern, ttol, tol, p->s_v);
 
     // At least for now, mimic the MGED behavior and make editing wireframes white
@@ -208,7 +209,7 @@ QEll::update_obj_wireframe()
 
     // When editing, we show the labels
     if (intern.idb_meth->ft_labels)
-	intern.idb_meth->ft_labels(p, &intern, p->s_v);
+	intern.idb_meth->ft_labels(p, &intern);
 
     p->s_flag = UP;
     // TODO - we should be able to set UP or DOWN on the various labels

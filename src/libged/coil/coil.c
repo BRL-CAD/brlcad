@@ -414,7 +414,6 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
 
     struct bu_vls name;
-    struct rt_wdb *db_fp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     fastf_t mean_outer_diameter, wire_diameter, overall_length, nominal_length;
     fastf_t helix_angle, pitch;
 
@@ -548,9 +547,9 @@ ged_coil_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* do it. */
+    struct rt_wdb *db_fp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     make_coil(db_fp, bu_vls_addr(&name), &sections, start_cap_type, end_cap_type);
 
-    wdb_close(db_fp);
     bu_vls_free(&name);
 
     return BRLCAD_OK;

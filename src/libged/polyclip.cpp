@@ -160,10 +160,8 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, wdbp) & BRLCAD_ERROR) {
-	wdb_close(wdbp);
 	return (struct bg_polygon *)0;
     }
-    wdb_close(wdbp);
 
     sketch_ip = (rt_sketch_internal *)intern.idb_ptr;
     if (sketch_ip->vert_count < 3 || sketch_ip->curve.count < 1) {
@@ -294,8 +292,9 @@ ged_polygons_overlap(struct ged *gedp, struct bg_polygon *polyA, struct bg_polyg
 {
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
-    return bg_polygons_overlap(polyA, polyB, gedp->ged_gvp->gv_model2view, &gedp->dbip->db_tol, gedp->ged_gvp->gv_scale);
+    return bg_polygons_overlap(polyA, polyB, gedp->ged_gvp->gv_model2view, &wdbp->wdb_tol, gedp->ged_gvp->gv_scale);
 }
 
 static int
@@ -335,6 +334,7 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
     int tweakCount;
     static size_t isectSize = 8;
     static int maxTweaks = 10;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -396,7 +396,7 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
 		if ((ret = bg_isect_line2_lseg2(distvec,
 						pt_2d, vfilldir,
 						poly_2d.p_contour[i].pc_point[begin], pdir,
-					       &gedp->dbip->db_tol)) >= 0) {
+					       &wdbp->wdb_tol)) >= 0) {
 		    /* We have an intersection */
 		    V2JOIN1(pt, poly_2d.p_contour[i].pc_point[begin], distvec[1], pdir);
 
@@ -485,7 +485,7 @@ ged_polygon_fill_segments(struct ged *gedp, struct bg_polygon *poly, vect2d_t vf
 		if ((ret = bg_isect_line2_lseg2(distvec,
 						pt_2d, vfilldir,
 						poly_2d.p_contour[i].pc_point[begin], pdir,
-					       &gedp->dbip->db_tol)) >= 0) {
+					       &wdbp->wdb_tol)) >= 0) {
 		    /* We have an intersection */
 		    V2JOIN1(pt, poly_2d.p_contour[i].pc_point[begin], distvec[1], pdir);
 

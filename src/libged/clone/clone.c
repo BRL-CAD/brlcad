@@ -1002,7 +1002,7 @@ ged_clone_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	print_usage(gedp->ged_result_str);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* validate user options */

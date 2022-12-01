@@ -48,7 +48,8 @@ wdb_fopen_v(const char *filename, int version)
     if ((dbip = db_create(filename, version)) == DBI_NULL)
 	return RT_WDB_NULL;
 
-    return wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
+    return wdbp;
 }
 
 
@@ -136,7 +137,25 @@ wdb_export_external(
 	return -4;
     }
 
-    switch (wdbp->wdb_type) {
+    // For export purposes, decode the default types if that's
+    // what we've been given
+    int wdb_type = wdbp->type;
+    if (wdb_type == RT_WDB_TYPE_DB_DEFAULT) {
+	if (!wdbp->dbip->dbi_wdbp) {
+	    wdb_type = RT_WDB_TYPE_DB_INMEM;
+	} else {
+	    wdb_type = RT_WDB_TYPE_DB_DISK;
+	}
+    }
+    if (wdb_type == RT_WDB_TYPE_DB_DEFAULT_APPEND_ONLY) {
+	if (!wdbp->dbip->dbi_wdbp_a) {
+	    wdb_type = RT_WDB_TYPE_DB_INMEM_APPEND_ONLY;
+	} else {
+	    wdb_type = RT_WDB_TYPE_DB_DISK_APPEND_ONLY;
+	}
+    }
+
+    switch (wdb_type) {
 
 	case RT_WDB_TYPE_DB_DISK:
 	    if (wdbp->dbip->dbi_read_only) {
@@ -304,7 +323,7 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 {
     BU_LIST_INIT_MAGIC(&wdbp->l, RT_WDB_MAGIC);
 
-    wdbp->wdb_type = mode;
+    wdbp->type = mode;
     wdbp->dbip = dbip;
 
     bu_vls_init(&wdbp->wdb_name);
@@ -312,8 +331,8 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 
     /* initialize tree state */
     wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
-    wdbp->wdb_initial_tree_state.ts_ttol = &dbip->db_ttol;
-    wdbp->wdb_initial_tree_state.ts_tol = &dbip->db_tol;
+    wdbp->wdb_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
+    wdbp->wdb_initial_tree_state.ts_tol = &wdbp->wdb_tol;
 
     /* default region ident codes */
     wdbp->wdb_item_default = 1000;
@@ -326,10 +345,10 @@ wdb_init(struct rt_wdb *wdbp, struct db_i *dbip, int mode)
 void
 wdb_close(struct rt_wdb *wdbp)
 {
-
+    if (!wdbp)
+	return;
     RT_CK_WDB(wdbp);
-
-    // no-op - handled during db_close
+    db_close(wdbp->dbip);
 }
 
 

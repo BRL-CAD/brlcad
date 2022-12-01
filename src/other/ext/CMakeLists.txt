@@ -129,7 +129,7 @@ ext_build_rpath()
 
 
 #---------------------------------------------------------------------
-# By default, changes in src/superbuild files won't trigger a rebuild.  Setting
+# By default, changes in src/other/ext files won't trigger a rebuild.  Setting
 # this to 1 changes that, but at the expense of running the build step every
 # time.  This may be fast if there is nothing to update in the project, but it
 # will be slower than skipping the step completely.
@@ -224,6 +224,9 @@ set(LOG_OPTS)
 # Load some CMake macros to handle the special case of third party libraries.
 include(ThirdParty)
 include(ThirdPartyExecutable)
+
+# Routine to extract version info from a specified file
+include(Versions)
 
 # In case we need to pass some sort of reasonable parallel
 # flag to a build system, check our processor count
@@ -404,6 +407,7 @@ if (COMMAND CMAKEFILES)
     CMake/RPath_Setup.cmake
     CMake/ThirdParty.cmake
     CMake/ThirdPartyExecutable.cmake
+    CMake/Versions.cmake
     CMake/buildpath_replace.cxx.in
     CMake/rpath_replace.cxx.in
     CMake/tcl_replace.cxx.in

@@ -22,6 +22,7 @@ set(documentation_DATA
   notes/bu_opt_design_notes.txt
   notes/cvs.txt
   notes/debugging_example.txt
+  notes/debugging_notes.txt
   notes/editors.txt
   notes/history.txt
   notes/hypot.txt
@@ -223,6 +224,7 @@ CMAKEFILES(
   git/history.txt
   git/merging.txt
   git/mime_types.txt
+  git/usability.txt
   notes/bsd_semaphore_bug.txt
   notes/cmake_paths/CMakeLists.txt
   notes/cmake_paths/README.txt

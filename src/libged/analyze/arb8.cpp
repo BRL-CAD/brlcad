@@ -85,9 +85,10 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     const int arb_faces[5][24] = rt_arb_faces;
     RT_ARB_CK_MAGIC(arb);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* find the specific arb type, in GIFT order. */
-    if ((cgtype = rt_arb_std_type(ip, &gedp->dbip->db_tol)) == 0) {
+    if ((cgtype = rt_arb_std_type(ip, &wdbp->wdb_tol)) == 0) {
 	bu_vls_printf(gedp->ged_result_str, "analyze_arb: bad ARB\n");
 	return;
     }
@@ -122,7 +123,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 	}
 
 	/* find plane eqn for this face */
-	if (bg_make_plane_3pnts(face.plane_eqn, arb->pt[a], arb->pt[b], arb->pt[c], &gedp->dbip->db_tol) < 0) {
+	if (bg_make_plane_3pnts(face.plane_eqn, arb->pt[a], arb->pt[b], arb->pt[c], &wdbp->wdb_tol) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
 			  a+1, b+1, c+1, d+1);
 	    /* this row has 1 special fields */

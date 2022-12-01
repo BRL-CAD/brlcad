@@ -89,7 +89,7 @@ ged_which_core(struct ged *gedp, int argc, const char *argv[])
 	_ged_cmd_help(gedp, bu_vls_cstr(&usage), d);
 	bu_vls_free(&usage);
 	bu_vls_free(&root);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     /* parse standard options */

@@ -58,7 +58,7 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc < 5 || argc > 9) {
@@ -138,7 +138,8 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
 
     /* import the current solid */
     RT_DB_INTERNAL_INIT(&intern);
-    GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, gedp->dbip->db_resp, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    GED_DB_GET_INTERNAL(gedp, &intern, dp, NULL, wdbp->wdb_resp, BRLCAD_ERROR);
 
     /* make sure this is a BOT solid */
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
@@ -180,14 +181,11 @@ ged_bot_decimate_core(struct ged *gedp, int argc, const char *argv[])
 
     /* save the result to the database */
     /* XXX - should this be rt_db_put_internal() instead? */
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (wdb_put_internal(wdbp, argv[0], &intern, 1.0) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to write decimated BOT back to database\n");
-	wdb_close(wdbp);
 	return BRLCAD_ERROR;
     }
-    wdb_close(wdbp);
 
     return BRLCAD_OK;
 }

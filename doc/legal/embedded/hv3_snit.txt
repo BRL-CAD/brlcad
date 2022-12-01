@@ -1,4 +1,4 @@
-
+https://github.com/tcltk/tcllib/tree/master/modules/snit
 
 The license in this file applies to the unaltered snit code found
 in the file "snit.tcl" distributed with Tkhtml only. Other files
@@ -45,3 +45,4 @@ permission to use and distribute the software in accordance with the
 terms specified in this license.
 
 file:/src/tclscripts/hv3/snit.tcl
+

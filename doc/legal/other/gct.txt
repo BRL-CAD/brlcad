@@ -1,3 +1,5 @@
+NOTE: the BRL-CAD repository is the primary copy of this source code.
+
 Copyright (c) 2014 Alexis Naveros. All rights reserved.
 Copyright (c) 2014 SURVICE Engineering. All rights reserved.
 

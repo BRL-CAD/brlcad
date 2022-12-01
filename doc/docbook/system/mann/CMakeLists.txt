@@ -34,6 +34,10 @@ set(mann_EN
   bot_sync.xml
   bot_vertex_fuse.xml
   brep.xml
+  brep_info.xml
+  brep_intersect.xml
+  brep_plot.xml
+  brep_selection.xml
   build_region.xml
   c.xml
   cat.xml
@@ -139,18 +143,21 @@ set(mann_EN
   orientation.xml
   orot.xml
   oscale.xml
+  overlaps_tool.xml
   overlay.xml
   p.xml
   pathlist.xml
   paths.xml
   permute.xml
   plot.xml
+  postscript.xml
   prcolor.xml
   prefix.xml
   press.xml
   preview.xml
   prj_add.xml
-  postscript.xml
+  process.xml
+  ps.xml
   pull.xml
   push.xml
   put_comb.xml

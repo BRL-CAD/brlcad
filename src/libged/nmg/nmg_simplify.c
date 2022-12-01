@@ -60,6 +60,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -67,7 +68,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	/* must be wanting help */
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
-	ret = BRLCAD_HELP;
+	ret = GED_HELP;
 	goto out3;
     } else if (argc == 3) {
 	/* FIXME: if you use the default but have a TGC, the cleanup
@@ -171,7 +172,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 
 	r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 	s = BU_LIST_FIRST(shell, &r->s_hd);
-	nmg_shell_coplanar_face_merge(s, &gedp->dbip->db_tol, 0, &RTG.rtg_vlfree);
+	nmg_shell_coplanar_face_merge(s, &wdbp->wdb_tol, 0, &RTG.rtg_vlfree);
 	nmg_simplify_shell(s, &RTG.rtg_vlfree);
 
 	if (nmg_to_arb(m, arb_int)) {
@@ -198,7 +199,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_type = ID_TGC;
 	new_intern.idb_meth = &OBJ[ID_TGC];
 
-	if (nmg_to_tgc(m, tgc_int, &gedp->dbip->db_tol)) {
+	if (nmg_to_tgc(m, tgc_int, &wdbp->wdb_tol)) {
 	    success = 1;
 	    goto out1;
 	} else {
@@ -222,7 +223,7 @@ ged_nmg_simplify_core(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_type = ID_POLY;
 	new_intern.idb_meth = &OBJ[ID_POLY];
 
-	if (nmg_to_poly(m, poly_int, &RTG.rtg_vlfree, &gedp->dbip->db_tol)) {
+	if (nmg_to_poly(m, poly_int, &RTG.rtg_vlfree, &wdbp->wdb_tol)) {
 	    success = 1;
 	    goto out1;
 	} else {

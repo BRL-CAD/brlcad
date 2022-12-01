@@ -75,7 +75,6 @@ static int png_read(struct gcv_context *context, const struct gcv_opts *UNUSED(g
 
     mk_sph(wdbp, "test", center, radius);
 
-    wdb_close(wdbp);
     return 1;
 }
 

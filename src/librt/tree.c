@@ -473,8 +473,7 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
 	/* Not identity matrix */
 	mat = (matp_t)tsp->ts_mat;
     } else {
-	/* Identity matrix */
-	// TODO - should this be mat = (matp_t)bn_mat_identity; instead?
+	/* 0 == identity matrix */
 	mat = (matp_t)0;
     }
 

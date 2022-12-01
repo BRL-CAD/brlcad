@@ -86,7 +86,7 @@ _bound_fp(struct db_full_path *path, mat_t *curr_mat, void *client_data)
 	// Try for a bounding box, if the method is available.  Otherwise try the
 	// bounding the default plot.
 	point_t bmin, bmax;
-	int bbret = rt_bound_instance(&bmin, &bmax, DB_FULL_PATH_CUR_DIR(path), dd->dbip, dd->ttol, dd->tol, curr_mat, dd->res, dd->v);
+	int bbret = rt_bound_instance(&bmin, &bmax, DB_FULL_PATH_CUR_DIR(path), dd->dbip, dd->ttol, dd->tol, curr_mat, dd->res);
 	if (bbret >= 0) {
 
 	    // Got bounding box, use it to update sizing
@@ -136,6 +136,7 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 {
     struct db_i *dbip = gedp->dbip;
     struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS);
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct resource *local_res;
     BU_GET(local_res, struct resource);
     rt_init_resource(local_res, 0, NULL);
@@ -370,8 +371,8 @@ ged_update_objs(struct ged *gedp, struct bview *v, struct bv_obj_settings *vs, i
 	struct draw_data_t dd;
 	dd.dbip = gedp->dbip;
 	dd.v = v;
-	dd.tol = &gedp->dbip->db_tol;
-	dd.ttol = &gedp->dbip->db_ttol;
+	dd.tol = &wdbp->wdb_tol;
+	dd.ttol = &wdbp->wdb_ttol;
 	dd.mesh_c = gedp->ged_lod;
 	dd.color_inherit = 0;
 	dd.bound_only = 0;

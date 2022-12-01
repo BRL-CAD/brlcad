@@ -2375,7 +2375,7 @@ int main(int argc, char **argv)
 
     bu_free(verboseinput, "verboseinput");
 
-    wdb_close(fp);
+    db_close(fp->dbip);
     return errors;
 }
 

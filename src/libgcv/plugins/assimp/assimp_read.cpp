@@ -485,7 +485,6 @@ assimp_read(struct gcv_context *context, const struct gcv_opts* gcv_options, con
     mk_id_units(state.fd_out, "Conversion using Asset Importer Library (assimp)", "mm");
 
     int ret = convert_input(&state);
-    wdb_close(wdbp);
     return ret;
 }
 

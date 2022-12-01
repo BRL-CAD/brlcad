@@ -47,7 +47,7 @@ check_walk_subtree(int *diff, struct bu_vls *msgs, struct db_i *dbip, struct db_
     int idn1, idn2;
     struct directory *dp1, *dp2;
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
-    struct bn_tol *tol = &wdbp->dbip->db_tol;
+    struct bn_tol *tol = &wdbp->wdb_tol;
 
     if (!diff)
        	return;
@@ -178,7 +178,7 @@ check_walk(int *diff,
 
     /* If we have two solids, use db_diff_dp */
     struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
-    struct bn_tol *tol = &wdbp->dbip->db_tol;
+    struct bn_tol *tol = &wdbp->wdb_tol;
     int dr = db_diff_dp(dbip, dbip, dp1, dp2, tol, DB_COMPARE_ALL, NULL);
     if (dr != DIFF_UNCHANGED) {
 	char *p1s = db_path_to_string(p1);
@@ -198,7 +198,6 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     struct analyze_raydiff_results *results;
     struct bn_tol tol = BN_TOL_INIT_TOL;
 
-    long verbosity = 0;
     int structure_diff = 0;
     int view_left = 0;
     int view_right = 0;
@@ -213,7 +212,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     int ac = argc - 1;
     const char **av = argv+1;
 
-    struct bu_opt_desc d[9];
+    struct bu_opt_desc d[8];
     BU_OPT(d[0], "h", "help",         "",  NULL,            &print_help,   "Print help.");
     BU_OPT(d[1], "g", "grid-spacing", "#", &bu_opt_fastf_t, &len_tol,      "Controls spacing of test ray grids (units are mm.)");
     BU_OPT(d[2], "l", "view-left",    "",  NULL,            &view_left,    "Visualize volumes occurring only in the left object");
@@ -221,8 +220,7 @@ ged_gdiff_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[4], "r", "view-right",   "",  NULL,            &view_right,   "Visualize volumes occurring only in the right object");
     BU_OPT(d[5], "G", "grazing",      "",  NULL,            &grazereport,  "Report differences in grazing hits");
     BU_OPT(d[6], "S", "structure",    "",  NULL,            &structure_diff,  "Do a diff of tree structures (matrices and objects, ignoring object names.)  This mode is not raytrace based.");
-    BU_OPT(d[7], "v", "verbosity",      "",  &bu_opt_incr_long, &verbosity,   "Increase output verbosity.");
-    BU_OPT_NULL(d[8]);
+    BU_OPT_NULL(d[7]);
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);

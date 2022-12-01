@@ -382,7 +382,7 @@ Convert_part_binary(struct conversion_state *pstate)
     stl_read_lswap((unsigned int *)buf);
 
     /* now use our network to native host format conversion tools */
-    num_facets = bu_ntohl(*(uint32_t *)buf, 0, UINT_MAX - 1);
+    num_facets = ntohl(*(uint32_t *)buf);
 
     bu_log("\t%ld facets\n", num_facets);
     while (fread(buf, 48, 1, pstate->fd_in)) {
@@ -586,7 +586,6 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     mk_lcomb(wdbp, "all", &state.all_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
     fclose(state.fd_in);
-    wdb_close(wdbp);
 
     return 1;
 }

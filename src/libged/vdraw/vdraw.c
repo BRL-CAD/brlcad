@@ -132,7 +132,7 @@ vdraw_write(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (!gedp->ged_gdp->gd_currVHead) {
@@ -247,7 +247,7 @@ vdraw_insert(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (!gedp->ged_gdp->gd_currVHead) {
@@ -338,7 +338,7 @@ vdraw_delete(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (!gedp->ged_gdp->gd_currVHead) {
@@ -442,7 +442,7 @@ vdraw_read(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (!gedp->ged_gdp->gd_currVHead) {
@@ -565,7 +565,7 @@ vdraw_params(void *data, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argv[0], argv[1], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (!gedp->ged_gdp->gd_currVHead) {
@@ -682,7 +682,7 @@ vdraw_vlist(void *data, int argc, const char *argv[])
     /* must be needing help */
     if (argc < 3 || argc > 4) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s %s", argc>0?argv[0]:"vdraw", argc>1?argv[1]:"vlist", usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     switch  (argv[2][0]) {
@@ -755,7 +755,7 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
 

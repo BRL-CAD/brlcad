@@ -48,7 +48,7 @@ ged_dump_core(struct ged *gedp, int argc, const char *argv[])
     /* must be wanting help */
     if (argc == 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-	return BRLCAD_HELP;
+	return GED_HELP;
     }
 
     if (argc != 2) {
@@ -63,7 +63,7 @@ ged_dump_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     ret = db_dump(op, gedp->dbip);
-    wdb_close(op);
+    db_close(op->dbip);
 
     if (ret < 0) {
 	bu_vls_printf(gedp->ged_result_str, "dump: %s: db_dump() error", argv[1]);

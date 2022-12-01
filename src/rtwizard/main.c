@@ -471,7 +471,7 @@ opt_quat(struct bu_vls *msg, size_t argc, const char **argv, void *inq)
     size_t i = 0;
     size_t acnum = 0;
     char *str1 = NULL;
-    char *avnum[6] = {NULL, NULL, NULL, NULL, NULL, NULL};
+    char *avnum[5] = {NULL, NULL, NULL, NULL, NULL};
 
     quat_t *q = (quat_t *)inq;
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_int");
@@ -484,7 +484,7 @@ opt_quat(struct bu_vls *msg, size_t argc, const char **argv, void *inq)
 	if (str1[i] == ',' || str1[i] == '/') str1[i] = ' ';
 	i++;
     }
-    acnum = bu_argv_from_string(avnum, 5, str1);
+    acnum = bu_argv_from_string(avnum, 4, str1);
     if (acnum == 4) {
 	/* We might have four numbers - find out */
 	fastf_t q1, q2, q3, q4;

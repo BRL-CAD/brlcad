@@ -1,4 +1,5 @@
 set(man1_EN
+  3dm-g.xml
   ap-pix.xml
   alias-pix.xml
   asc-nmg.xml
