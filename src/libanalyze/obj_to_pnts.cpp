@@ -102,11 +102,15 @@ outer_pnts_hit(struct application *ap, struct partition *PartHeadp, struct seg *
 	out_pt = pnthickness_create();
 	VJOIN1(out_pt->pt->v, ap->a_ray.r_pt, out_part->pt_outhit->hit_dist, ap->a_ray.r_dir);
 	RT_HIT_NORMAL(out_pt->pt->n, out_part->pt_outhit, ostp, &(app->a_ray), out_part->pt_outflip);
-	bu_ptbl_ins(pnset, (long *)out_pt);
-
-	thickness = DIST_PNT_PNT(in_pt->pt->v, out_pt->pt->v) * 0.5;
-	in_pt->thickness = thickness;
-	out_pt->thickness = thickness;
+	// If we don't have a viable normal, we don't want the point
+	if (!VNEAR_ZERO(out_pt->pt->n, VUNITIZE_TOL)) {
+	    bu_ptbl_ins(pnset, (long *)out_pt);
+	    thickness = DIST_PNT_PNT(in_pt->pt->v, out_pt->pt->v) * 0.5;
+	    in_pt->thickness = thickness;
+	    out_pt->thickness = thickness;
+	} else {
+	    pnthickness_free(out_pt, 1);
+	}
     }
 
     return 0;
@@ -134,15 +138,26 @@ all_pnts_hit(struct application *app, struct partition *partH, struct seg *UNUSE
 	VJOIN1(in_pt->pt->v, app->a_ray.r_pt, pp->pt_inhit->hit_dist, app->a_ray.r_dir);
 	RT_HIT_NORMAL(in_pt->pt->n, pp->pt_inhit, stp, &(app->a_ray), pp->pt_inflip);
 	in_pt->thickness = 0.0;
-	bu_ptbl_ins(pnset, (long *)in_pt);
+	// If we don't have a viable normal, we don't want the point
+	if (!VNEAR_ZERO(in_pt->pt->n, VUNITIZE_TOL)) {
+	    bu_ptbl_ins(pnset, (long *)in_pt);
+	} else {
+	    pnthickness_free(in_pt, 1);
+	    continue;
+	}
 
 	/* add "out" hit point unless it's a half-space */
 	if (bu_strncmp("half", stp->st_meth->ft_label, 4) != 0) {
 	    out_pt = pnthickness_create();
 	    VJOIN1(out_pt->pt->v, app->a_ray.r_pt, pp->pt_outhit->hit_dist, app->a_ray.r_dir);
 	    RT_HIT_NORMAL(out_pt->pt->n, pp->pt_outhit, stp, &(app->a_ray), pp->pt_outflip);
-	    bu_ptbl_ins(pnset, (long *)out_pt);
-
+	    // If we don't have a viable normal, we don't want the point
+	    if (!VNEAR_ZERO(out_pt->pt->n, VUNITIZE_TOL)) {
+		bu_ptbl_ins(pnset, (long *)out_pt);
+	    } else {
+		pnthickness_free(out_pt, 1);
+		continue;
+	    }
 	    thickness = DIST_PNT_PNT(in_pt->pt->v, out_pt->pt->v) * 0.5;
 	    in_pt->thickness = thickness;
 	    out_pt->thickness = thickness;
@@ -426,7 +441,7 @@ analyze_obj_to_pnts(struct rt_pnts_internal *rpnts, fastf_t *avg_thickness, stru
 	    pntcnt_sobol += (int)BU_PTBL_LEN(sobol_pnts[i]);
 	}
     }
-    /* we probably dont' want to cap grid points, but cap the others */
+    /* we probably don't want to cap grid points, but cap the others */
     if (max_pnts && pntcnt_rand > max_pnts) pntcnt_rand = max_pnts;
     if (max_pnts && pntcnt_sobol > max_pnts) pntcnt_sobol = max_pnts;
 
