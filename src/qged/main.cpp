@@ -280,16 +280,25 @@ int main(int argc, char *argv[])
     // of them to have drawing commands connect properly to the 3D displays.
     QgModel *m = app.mdl;
     if (argc) {
+	char *fname = bu_strdup(bu_dir(NULL, 0, BU_DIR_CURR, argv[0], NULL));
+	if (!bu_file_exists(fname, NULL)) {
+	    // Current dir prefix didn't work - were we given a full path rather
+	    // than a relative path?
+	    bu_free(fname, "path");
+	    fname = bu_strdup(bu_path_normalize(argv[0]));
+	}
 	int ac = 2;
 	const char *av[3];
 	av[0] = "open";
-	av[1] = argv[0];
+	av[1] = fname;
 	av[2] = NULL;
 	int ret = m->run_cmd(m->gedp->ged_result_str, ac, (const char **)av);
 	if (ret != BRLCAD_OK) {
-	    bu_log("Error opening file %s\n", argv[0]);
+	    bu_log("Error opening file %s\n", av[1]);
+	    bu_free(fname, "path");
 	    return BRLCAD_ERROR;
 	}
+	bu_free(fname, "path");
     }
 
     // Connect I/O handlers
