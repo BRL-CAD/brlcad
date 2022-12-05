@@ -2,10 +2,10 @@
  *
  * Project:  GDAL Gridding API.
  * Purpose:  Implementation of GDAL scattered data gridder.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,7 @@
 #ifdef HAVE_AVX_AT_COMPILE_TIME
 #include <immintrin.h>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*         GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX()     */
@@ -52,14 +52,14 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     void* hExtraParamsIn )
 {
     size_t i = 0;
-    GDALGridExtraParameters* psExtraParams = (GDALGridExtraParameters*) hExtraParamsIn;
+    GDALGridExtraParameters* psExtraParams = static_cast<GDALGridExtraParameters*>(hExtraParamsIn);
     const float* pafX = psExtraParams->pafX;
     const float* pafY = psExtraParams->pafY;
     const float* pafZ = psExtraParams->pafZ;
 
     const float fEpsilon = 0.0000000000001f;
-    const float fXPoint = (float)dfXPoint;
-    const float fYPoint = (float)dfYPoint;
+    const float fXPoint = static_cast<float>(dfXPoint);
+    const float fYPoint = static_cast<float>(dfYPoint);
     const __m256 ymm_small = GDAL_mm256_load1_ps(fEpsilon);
     const __m256 ymm_x = GDAL_mm256_load1_ps(fXPoint);
     const __m256 ymm_y = GDAL_mm256_load1_ps(fYPoint);
@@ -73,7 +73,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     /* whereas we have 16 for 64bit */
 #define LOOP_SIZE   16
     size_t nPointsRound = (nPoints / LOOP_SIZE) * LOOP_SIZE;
-    for ( i = 0; i < nPointsRound; i += LOOP_SIZE )
+    for( i = 0; i < nPointsRound; i += LOOP_SIZE )
     {
         __m256 ymm_rx = _mm256_sub_ps(_mm256_load_ps(pafX + i), ymm_x);            /* rx = pafX[i] - fXPoint */
         __m256 ymm_rx_8 = _mm256_sub_ps(_mm256_load_ps(pafX + i + 8), ymm_x);
@@ -99,15 +99,15 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
 #else
 #define LOOP_SIZE   8
     size_t nPointsRound = (nPoints / LOOP_SIZE) * LOOP_SIZE;
-    for ( i = 0; i < nPointsRound; i += LOOP_SIZE )
+    for( i = 0; i < nPointsRound; i += LOOP_SIZE )
     {
-        __m256 ymm_rx = _mm256_sub_ps(_mm256_load_ps((float*)pafX + i), ymm_x);           /* rx = pafX[i] - fXPoint */
-        __m256 ymm_ry = _mm256_sub_ps(_mm256_load_ps((float*)pafY + i), ymm_y);           /* ry = pafY[i] - fYPoint */
+        __m256 ymm_rx = _mm256_sub_ps(_mm256_load_ps(const_cast<float*>(pafX) + i), ymm_x);           /* rx = pafX[i] - fXPoint */
+        __m256 ymm_ry = _mm256_sub_ps(_mm256_load_ps(const_cast<float*>(pafY) + i), ymm_y);           /* ry = pafY[i] - fYPoint */
         __m256 ymm_r2 = _mm256_add_ps(_mm256_mul_ps(ymm_rx, ymm_rx),              /* r2 = rx * rx + ry * ry */
                                    _mm256_mul_ps(ymm_ry, ymm_ry));
         __m256 ymm_invr2 = _mm256_rcp_ps(ymm_r2);                              /* invr2 = 1.0f / r2 */
         ymm_nominator = _mm256_add_ps(ymm_nominator,                           /* nominator += invr2 * pafZ[i] */
-                            _mm256_mul_ps(ymm_invr2, _mm256_load_ps((float*)pafZ + i)));
+                            _mm256_mul_ps(ymm_invr2, _mm256_load_ps(const_cast<float*>(pafZ) + i)));
         ymm_denominator = _mm256_add_ps(ymm_denominator, ymm_invr2);           /* denominator += invr2 */
         mask = _mm256_movemask_ps(_mm256_cmp_ps(ymm_r2, ymm_small, _CMP_LT_OS));            /* if( r2 < fEpsilon) */
         if( mask )
@@ -115,16 +115,16 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     }
 #endif
 
-    /* Find which i triggered r2 < fEpsilon */
+    // Find which i triggered r2 < fEpsilon.
     if( mask )
     {
-        for(int j = 0; j < LOOP_SIZE; j++ )
+        for( int j = 0; j < LOOP_SIZE; j++ )
         {
             if( mask & (1 << j) )
             {
                 (*pdfValue) = (pafZ)[i + j];
 
-                // GCC and MSVC need explicit zeroing
+                // GCC and MSVC need explicit zeroing.
 #if !defined(__clang__)
                 _mm256_zeroupper();
 #endif
@@ -134,13 +134,15 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
     }
 #undef LOOP_SIZE
 
-    /* Get back nominator and denominator values for YMM registers */
-    float afNominator[8], afDenominator[8];
+    // Get back nominator and denominator values for YMM registers.
+    float afNominator[8];
+    float afDenominator[8];
     _mm256_storeu_ps(afNominator, ymm_nominator);
     _mm256_storeu_ps(afDenominator, ymm_denominator);
 
-    // MSVC doesn't emit AVX afterwards but may use SSE, so clear upper bits
-    // Other compilers will continue using AVX for the below floating points operations
+    // MSVC doesn't emit AVX afterwards but may use SSE, so clear
+    // upper bits.  Other compilers will continue using AVX for the
+    // below floating points operations.
 #if defined(_MSC_FULL_VER)
     _mm256_zeroupper();
 #endif
@@ -154,8 +156,8 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
                          afDenominator[4] + afDenominator[5] +
                          afDenominator[6] + afDenominator[7];
 
-    /* Do the few remaining loop iterations */
-    for ( ; i < nPoints; i++ )
+    // Do the few remaining loop iterations.
+    for( ; i < nPoints; i++ )
     {
         const float fRX = pafX[i] - fXPoint;
         const float fRY = pafY[i] - fYPoint;
@@ -164,7 +166,7 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
 
         // If the test point is close to the grid node, use the point
         // value directly as a node value to avoid singularity.
-        if ( fR2 < 0.0000000000001 )
+        if( fR2 < 0.0000000000001 )
         {
             break;
         }
@@ -181,15 +183,15 @@ GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
         (*pdfValue) = pafZ[i];
     }
     else
-    if ( fDenominator == 0.0 )
+    if( fDenominator == 0.0 )
     {
         (*pdfValue) =
-            ((GDALGridInverseDistanceToAPowerOptions*)poOptions)->dfNoDataValue;
+            static_cast<const GDALGridInverseDistanceToAPowerOptions*>(poOptions)->dfNoDataValue;
     }
     else
         (*pdfValue) = fNominator / fDenominator;
 
-    // GCC needs explicit zeroing
+    // GCC needs explicit zeroing.
 #if defined(__GNUC__) && !defined(__clang__)
     _mm256_zeroupper();
 #endif

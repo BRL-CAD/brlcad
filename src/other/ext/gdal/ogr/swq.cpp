@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (C) 2001 Information Interoperability Institute (3i)
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission to use, copy, modify and distribute this software and
  * its documentation for any purpose and without fee is hereby granted,
@@ -20,8 +20,9 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
-#include "swq.h"
+#include "ogr_swq.h"
 
+#include <cassert>
 #include <cctype>
 #include <cmath>
 #include <cstddef>
@@ -31,6 +32,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <queue>
 #include <string>
 
 #include "cpl_error.h"
@@ -38,7 +40,7 @@
 #include "cpl_time.h"
 #include "swq_parser.hpp"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define YYSTYPE swq_expr_node *
 
@@ -76,7 +78,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 {
     const char *pszInput = context->pszNext;
 
-    *ppNode = NULL;
+    *ppNode = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Do we have a start symbol to return?                            */
@@ -198,6 +200,15 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
         }
         else
         {
+            if( osToken.size() > 19 ||
+                (osToken.size() >= 19 && osToken > "9223372036854775807") )
+            {
+                *ppNode = new swq_expr_node( CPLAtof(osToken) );
+                if( osToken == "9223372036854775808" )
+                    (*ppNode)->string_value = CPLStrdup(osToken);
+                return SWQT_FLOAT_NUMBER;
+            }
+
             GIntBig nVal = CPLAtoGIntBig(osToken);
             if( CPL_INT64_FITS_ON_INT32(nVal) )
                 *ppNode = new swq_expr_node( static_cast<int>(nVal) );
@@ -220,7 +231,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
 
         // collect text characters
         while( isalnum( *pszNext ) || *pszNext == '_'
-               || ((unsigned char) *pszNext) > 127 )
+               || static_cast<unsigned char>(*pszNext) > 127 )
             osToken += *(pszNext++);
 
         context->pszNext = pszNext;
@@ -230,7 +241,7 @@ int swqlex( YYSTYPE *ppNode, swq_parse_context *context )
         else if( EQUAL(osToken, "LIKE") )
             nReturn = SWQT_LIKE;
         else if( EQUAL(osToken, "ILIKE") )
-            nReturn = SWQT_LIKE;
+            nReturn = SWQT_ILIKE;
         else if( EQUAL(osToken, "ESCAPE") )
             nReturn = SWQT_ESCAPE;
         else if( EQUAL(osToken, "NULL") )
@@ -326,7 +337,7 @@ swq_select_summarize( swq_select *select_info,
         return "dest_column out of range in swq_select_summarize().";
 
     if( def->col_func == SWQCF_NONE && !def->distinct_flag )
-        return NULL;
+        return nullptr;
 
     if( select_info->query_mode == SWQM_DISTINCT_LIST &&
         select_info->order_specs > 0 )
@@ -381,6 +392,7 @@ swq_select_summarize( swq_select *select_info,
             select_info->column_summary[i].osMin = "9999/99/99 99:99:99";
             select_info->column_summary[i].osMax = "0000/00/00 00:00:00";
         }
+        assert( !select_info->column_summary.empty() );
     }
 
 /* -------------------------------------------------------------------- */
@@ -390,7 +402,7 @@ swq_select_summarize( swq_select *select_info,
 
     if( def->distinct_flag )
     {
-        if( value == NULL )
+        if( value == nullptr )
             value = SZ_OGR_NULL;
         try
         {
@@ -401,7 +413,7 @@ swq_select_summarize( swq_select *select_info,
                 if( select_info->order_specs == 0 )
                 {
                     // If not sorted, keep values in their original order
-                    summary.oVectorDistinctValues.push_back(value);
+                    summary.oVectorDistinctValues.emplace_back(value);
                 }
                 summary.count ++;
             }
@@ -411,7 +423,7 @@ swq_select_summarize( swq_select *select_info,
             return "Out of memory";
         }
 
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -421,7 +433,7 @@ swq_select_summarize( swq_select *select_info,
     switch( def->col_func )
     {
       case SWQCF_MIN:
-        if( value != NULL && value[0] != '\0' )
+        if( value != nullptr && value[0] != '\0' )
         {
             if( def->field_type == SWQ_DATE ||
                 def->field_type == SWQ_TIME ||
@@ -442,7 +454,7 @@ swq_select_summarize( swq_select *select_info,
         }
         break;
       case SWQCF_MAX:
-        if( value != NULL && value[0] != '\0' )
+        if( value != nullptr && value[0] != '\0' )
         {
             if( def->field_type == SWQ_DATE ||
                 def->field_type == SWQ_TIME ||
@@ -464,7 +476,7 @@ swq_select_summarize( swq_select *select_info,
         break;
       case SWQCF_AVG:
       case SWQCF_SUM:
-        if( value != NULL && value[0] != '\0' )
+        if( value != nullptr && value[0] != '\0' )
         {
             if( def->field_type == SWQ_DATE ||
                 def->field_type == SWQ_TIME ||
@@ -496,7 +508,7 @@ swq_select_summarize( swq_select *select_info,
         break;
 
       case SWQCF_COUNT:
-        if( value != NULL )
+        if( value != nullptr )
             summary.count++;
         break;
 
@@ -510,7 +522,7 @@ swq_select_summarize( swq_select *select_info,
         return "swq_select_summarize() - unexpected col_func";
     }
 
-    return NULL;
+    return nullptr;
 }
 /************************************************************************/
 /*                      sort comparison functions.                      */
@@ -580,12 +592,12 @@ int swq_identify_field_internal( const char* table_name,
                                  int bOneMoreTimeOK )
 
 {
-    if( table_name == NULL )
+    if( table_name == nullptr )
         table_name = "";
 
     int tables_enabled;
 
-    if( field_list->table_count > 0 && field_list->table_ids != NULL )
+    if( field_list->table_count > 0 && field_list->table_ids != nullptr )
         tables_enabled = TRUE;
     else
         tables_enabled = FALSE;
@@ -593,43 +605,49 @@ int swq_identify_field_internal( const char* table_name,
 /* -------------------------------------------------------------------- */
 /*      Search for matching field.                                      */
 /* -------------------------------------------------------------------- */
-    for( int i = 0; i < field_list->count; i++ )
+    for( int pass = 0; pass < 2; ++pass )
     {
-        if( !EQUAL( field_list->names[i], field_token ) )
-            continue;
-
-        int t_id = 0;
-
-        // Do the table specifications match?/
-        if( tables_enabled )
+        for( int i = 0; i < field_list->count; i++ )
         {
-            t_id = field_list->table_ids[i];
-            if( table_name[0] != '\0'
-                && !EQUAL(table_name, field_list->table_defs[t_id].table_alias))
+            if( (pass == 0 && strcmp( field_list->names[i], field_token ) != 0) ||
+                (pass == 1 && !EQUAL( field_list->names[i], field_token ) ) )
+            {
                 continue;
+            }
 
-            // if( t_id != 0 && table_name[0] == '\0' )
-            //     continue;
-        }
-        else if( table_name[0] != '\0' )
-            break;
+            int t_id = 0;
 
-        // We have a match, return various information.
-        if( this_type != NULL )
-        {
-            if( field_list->types != NULL )
-                *this_type = field_list->types[i];
+            // Do the table specifications match?/
+            if( tables_enabled )
+            {
+                t_id = field_list->table_ids[i];
+                if( table_name[0] != '\0'
+                    && !EQUAL(table_name, field_list->table_defs[t_id].table_alias))
+                    continue;
+
+                // if( t_id != 0 && table_name[0] == '\0' )
+                //     continue;
+            }
+            else if( table_name[0] != '\0' )
+                break;
+
+            // We have a match, return various information.
+            if( this_type != nullptr )
+            {
+                if( field_list->types != nullptr )
+                    *this_type = field_list->types[i];
+                else
+                    *this_type = SWQ_OTHER;
+            }
+
+            if( table_id != nullptr )
+                *table_id = t_id;
+
+            if( field_list->ids == nullptr )
+                return i;
             else
-                *this_type = SWQ_OTHER;
+                return field_list->ids[i];
         }
-
-        if( table_id != NULL )
-            *table_id = t_id;
-
-        if( field_list->ids == NULL )
-            return i;
-        else
-            return field_list->ids[i];
     }
 
 /* -------------------------------------------------------------------- */
@@ -658,7 +676,7 @@ int swq_identify_field_internal( const char* table_name,
             }
             if( i == field_list->count )
             {
-                int ret = swq_identify_field_internal( NULL,
+                int ret = swq_identify_field_internal( nullptr,
                                             osAggregatedName,
                                             field_list,
                                             this_type, table_id, FALSE );
@@ -679,7 +697,7 @@ int swq_identify_field_internal( const char* table_name,
             // it might be an error in providing it as being quoted where it
             // should not have been quoted.
             const char* pszDot = strchr(field_token, '.');
-            if( pszDot && strchr(pszDot+1, '.') == NULL )
+            if( pszDot && strchr(pszDot+1, '.') == nullptr )
             {
                 CPLString osTableName(field_token);
                 osTableName.resize(pszDot - field_token);
@@ -705,10 +723,10 @@ int swq_identify_field_internal( const char* table_name,
 /* -------------------------------------------------------------------- */
 /*      No match, return failure.                                       */
 /* -------------------------------------------------------------------- */
-    if( this_type != NULL )
+    if( this_type != nullptr )
         *this_type = SWQ_OTHER;
 
-    if( table_id != NULL )
+    if( table_id != nullptr )
         *table_id = 0;
 
     return -1;
@@ -732,14 +750,157 @@ CPLErr swq_expr_compile( const char *where_clause,
     field_list.count = field_count;
     field_list.names = field_names;
     field_list.types = field_types;
-    field_list.table_ids = NULL;
-    field_list.ids = NULL;
+    field_list.table_ids = nullptr;
+    field_list.ids = nullptr;
 
     field_list.table_count = 0;
-    field_list.table_defs = NULL;
+    field_list.table_defs = nullptr;
 
     return swq_expr_compile2( where_clause, &field_list,
                               bCheck, poCustomFuncRegistrar, expr_out );
+}
+
+/************************************************************************/
+/*                       swq_fixup_expression()                         */
+/************************************************************************/
+
+static void swq_fixup_expression(swq_expr_node* node)
+{
+    std::queue<swq_expr_node*> nodes;
+    nodes.push(node);
+    while( !nodes.empty() )
+    {
+        node = nodes.front();
+        nodes.pop();
+        if( node->eNodeType == SNT_OPERATION )
+        {
+            const swq_op eOp = node->nOperation;
+            if( (eOp == SWQ_OR || eOp == SWQ_AND) && node->nSubExprCount > 2 )
+            {
+                std::vector<swq_expr_node*> exprs;
+                for( int i = 0; i < node->nSubExprCount; i++ )
+                {
+                    swq_fixup_expression(node->papoSubExpr[i]);
+                    exprs.push_back(node->papoSubExpr[i]);
+                }
+                node->nSubExprCount = 0;
+                CPLFree( node->papoSubExpr );
+                node->papoSubExpr = nullptr;
+
+                while(exprs.size() > 2)
+                {
+                    std::vector<swq_expr_node*> new_exprs;
+                    for(size_t i = 0; i < exprs.size(); i++ )
+                    {
+                        if( i + 1 < exprs.size() )
+                        {
+                            auto cur_expr = new swq_expr_node( eOp );
+                            cur_expr->field_type = SWQ_BOOLEAN;
+                            cur_expr->PushSubExpression(exprs[i]);
+                            cur_expr->PushSubExpression(exprs[i+1]);
+                            i++;
+                            new_exprs.push_back(cur_expr);
+                        }
+                        else
+                        {
+                            new_exprs.push_back(exprs[i]);
+                        }
+                    }
+                    exprs = std::move(new_exprs);
+                }
+                CPLAssert(exprs.size() == 2);
+                node->PushSubExpression(exprs[0]);
+                node->PushSubExpression(exprs[1]);
+            }
+            else
+            {
+                for( int i = 0; i < node->nSubExprCount; i++ )
+                {
+                    nodes.push(node->papoSubExpr[i]);
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                       swq_fixup_expression()                         */
+/************************************************************************/
+
+void swq_fixup(swq_parse_context* psParseContext)
+{
+    if( psParseContext->poRoot )
+    {
+        swq_fixup_expression(psParseContext->poRoot);
+    }
+    auto psSelect = psParseContext->poCurSelect;
+    while( psSelect )
+    {
+        if( psSelect->where_expr )
+        {
+            swq_fixup_expression(psSelect->where_expr);
+        }
+        psSelect = psSelect->poOtherSelect;
+    }
+}
+
+/************************************************************************/
+/*                       swq_create_and_or_or()                         */
+/************************************************************************/
+
+swq_expr_node* swq_create_and_or_or(swq_op op, swq_expr_node* left, swq_expr_node* right)
+{
+    auto poNode = new swq_expr_node( op );
+    poNode->field_type = SWQ_BOOLEAN;
+
+    if( left->eNodeType == SNT_OPERATION &&
+        left->nOperation == op  )
+    {
+        // Temporary non-binary formulation
+        if( right->eNodeType == SNT_OPERATION &&
+            right->nOperation == op  )
+        {
+            poNode->nSubExprCount = left->nSubExprCount + right->nSubExprCount;
+            poNode->papoSubExpr = static_cast<swq_expr_node **>(
+                CPLRealloc( left->papoSubExpr, sizeof(swq_expr_node*) * poNode->nSubExprCount ));
+            memcpy(poNode->papoSubExpr + left->nSubExprCount,
+                   right->papoSubExpr,
+                   right->nSubExprCount * sizeof(swq_expr_node*));
+
+            right->nSubExprCount = 0;
+            right->papoSubExpr = nullptr;
+            delete right;
+        }
+        else
+        {
+            poNode->nSubExprCount = left->nSubExprCount;
+            poNode->papoSubExpr = left->papoSubExpr;
+            poNode->PushSubExpression( right );
+        }
+
+        left->nSubExprCount = 0;
+        left->papoSubExpr = nullptr;
+        delete left;
+    }
+    else if( right->eNodeType == SNT_OPERATION &&
+             right->nOperation == op  )
+    {
+        // Temporary non-binary formulation
+        poNode->nSubExprCount = right->nSubExprCount;
+        poNode->papoSubExpr = right->papoSubExpr;
+        poNode->PushSubExpression( left );
+
+        right->nSubExprCount = 0;
+        right->papoSubExpr = nullptr;
+        delete right;
+    }
+    else
+    {
+        poNode->PushSubExpression( left );
+        poNode->PushSubExpression( right );
+    }
+
+    return poNode;
 }
 
 /************************************************************************/
@@ -759,7 +920,7 @@ CPLErr swq_expr_compile2( const char *where_clause,
     context.pszNext = where_clause;
     context.pszLastValid = where_clause;
     context.nStartToken = SWQT_VALUE_START;
-    context.bAcceptCustomFuncs = poCustomFuncRegistrar != NULL;
+    context.bAcceptCustomFuncs = poCustomFuncRegistrar != nullptr;
 
     if( swqparse( &context ) == 0 &&
         bCheck &&
@@ -773,7 +934,7 @@ CPLErr swq_expr_compile2( const char *where_clause,
     else
     {
         delete context.poRoot;
-        *expr_out = NULL;
+        *expr_out = nullptr;
         return CE_Failure;
     }
 }
@@ -811,11 +972,9 @@ static const char* const apszSQLReservedKeywords[] = {
 
 int swq_is_reserved_keyword(const char* pszStr)
 {
-    for( int i = 0;
-         i < (int)(sizeof(apszSQLReservedKeywords) / sizeof(char*));
-         i++ )
+    for( const auto& pszKeyword: apszSQLReservedKeywords )
     {
-        if( EQUAL(pszStr, apszSQLReservedKeywords[i]) )
+        if( EQUAL(pszStr, pszKeyword) )
             return TRUE;
     }
     return FALSE;

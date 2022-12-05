@@ -1,2 +1,5 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(frmt_derived OBJECT deriveddataset.cpp derivedlist.c)
+add_gdal_driver(
+  TARGET gdal_Derived
+  SOURCES deriveddataset.cpp derivedlist.c derivedlist.h
+  BUILTIN)
+gdal_standard_includes(gdal_Derived)

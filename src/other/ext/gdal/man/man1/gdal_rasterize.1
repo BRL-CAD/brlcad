@@ -1,0 +1,316 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDAL_RASTERIZE" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdal_rasterize \- Burns vector geometries into a raster.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_rasterize [\-b band]* [\-i] [\-at]
+    {[\-burn value]* | [\-a attribute_name] | [\-3d]} [\-add]
+    [\-l layername]* [\-where expression] [\-sql select_statement]
+    [\-dialect dialect] [\-of format] [\-a_srs srs_def] [\-to NAME=VALUE]*
+    [\-co "NAME=VALUE"]* [\-a_nodata value] [\-init value]*
+    [\-te xmin ymin xmax ymax] [\-tr xres yres] [\-tap] [\-ts width height]
+    [\-ot {Byte/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
+            CInt16/CInt32/CFloat32/CFloat64}]
+    [\-optim {[AUTO]/VECTOR/RASTER}] [\-q]
+    <src_datasource> <dst_filename>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+This program burns vector geometries (points, lines, and polygons) into the
+raster band(s) of a raster image.  Vectors are read from OGR supported vector
+formats.
+.sp
+Note that on the fly reprojection of vector data to the coordinate system of the
+raster data is only supported since GDAL 2.1.0.
+.INDENT 0.0
+.TP
+.B \-b <band>
+The band(s) to burn values into.  Multiple \-b arguments may be used to burn
+into a list of bands.  The default is to burn into band 1.  Not used when
+creating a new raster.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-i
+Invert rasterization.  Burn the fixed burn value, or the burn value associated
+with the first feature into all parts of the image \fInot\fP inside the
+provided polygon.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-at
+Enables the ALL_TOUCHED rasterization option so that all pixels touched
+by lines or polygons will be updated, not just those on the line render path,
+or whose center point is within the polygon.  Defaults to disabled for normal
+rendering rules.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-burn <value>
+A fixed value to burn into a band for all objects.  A list of \fI\%\-burn\fP options
+can be supplied, one per band being written to.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a <attribute_name>
+Identifies an attribute field on the features to be used for a burn\-in value.
+The value will be burned into all output bands.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-3d
+Indicates that a burn value should be extracted from the "Z" values of the
+feature. Works with points and lines (linear interpolation along each segment).
+For polygons, works properly only if the are flat (same Z value for all
+vertices).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-add
+Instead of burning a new value, this adds the new value to the existing raster.
+Suitable for heatmaps for instance.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-l <layername>
+Indicates the layer(s) from the datasource that will be used for input
+features.  May be specified multiple times, but at least one layer name or a
+\fI\%\-sql\fP option must be specified.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-where <expression>
+An optional SQL WHERE style query expression to be applied to select features
+to burn in from the input layer(s).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-sql <select_statement>
+An SQL statement to be evaluated against the datasource to produce a
+virtual layer of features to be burned in.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-dialect <dialect>
+SQL dialect. In some cases can be used to use (unoptimized) OGR SQL instead of
+the native SQL of an RDBMS by passing OGRSQL. The
+"SQLITE" dialect can also be used with any datasource.
+.sp
+New in version 2.1.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-of <format>
+Select the output format. Starting with GDAL 2.3, if not specified, the
+format is guessed from the extension (previously was GTiff). Use the short
+format name.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_nodata <value>
+Assign a specified nodata value to output bands.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-init <value>
+Pre\-initialize the output image bands with these values.  However, it is not
+marked as the nodata value in the output file.  If only one value is given, the
+same value is used in all the bands.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_srs <srs_def>
+Override the projection for the output file. If not specified, the projection of
+the input vector file will be used if available. When using this option, no reprojection
+of features from the SRS of the input vector to the specified SRS of the output raster,
+so use only this option to correct an invalid source SRS.
+The <srs_def> may be any of the usual GDAL/OGR forms, complete WKT, PROJ.4,
+EPSG:n or a file containing the WKT.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-to NAME=VALUE
+set a transformer
+option suitable to pass to \fI\%GDALCreateGenImgProjTransformer2()\fP\&. This is
+used when converting geometries coordinates to target raster pixel space. For
+example this can be used to specify RPC related transformer options.
+.sp
+New in version 2.3.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-co <NAME=VALUE>
+Many formats have one or more optional creation options that can be
+used to control particulars about the file created. For instance,
+the GeoTIFF driver supports creation options to control compression,
+and whether the file should be tiled.
+.sp
+The creation options available vary by format driver, and some
+simple formats have no creation options at all. A list of options
+supported for a format can be listed with the
+\fI\%\-\-formats\fP
+command line option but the documentation for the format is the
+definitive source of information on driver creation options.
+See \fI\%Raster drivers\fP format
+specific documentation for legal creation options for each format.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-te <xmin> <ymin> <xmax> <ymax>
+Set georeferenced extents. The values must be expressed in georeferenced units.
+If not specified, the extent of the output file will be the extent of the vector
+layers.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-tr <xres> <yres>
+Set target resolution. The values must be expressed in georeferenced units.
+Both must be positive values.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-tap
+(target aligned pixels) Align
+the coordinates of the extent of the output file to the values of the \fI\%\-tr\fP,
+such that the aligned extent includes the minimum extent.
+Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ts <width> <height>
+Set output file size in pixels and lines. Note that \fI\%\-ts\fP cannot be used with
+\fI\%\-tr\fP
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ot <type>
+Force the output bands to be of the indicated data type. Defaults to \fBFloat64\fP
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-optim {[AUTO]/VECTOR/RASTER}}
+Force the algorithm used (results are identical). The raster mode is used in most cases and
+optimise read/write operations. The vector mode is useful with a decent amount of input
+features and optimise the CPU use. That mode have to be used with tiled images to be
+efficient. The auto mode (the default) will chose the algorithm based on input and output
+properties.
+.sp
+New in version 2.3.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-q
+Suppress progress monitor and other non\-error output.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <src_datasource>
+Any OGR supported readable datasource.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <dst_filename>
+The GDAL supported output file.  Must support update mode access.
+This file will be created (or overwritten if it already exists):option:\fI\-of\fP,
+\fI\%\-a_nodata\fP, \fI\%\-init\fP, \fI\%\-a_srs\fP, \fI\%\-co\fP, \fI\%\-te\fP,
+\fI\%\-tr\fP, \fI\%\-tap\fP, \fI\%\-ts\fP, or \fI\%\-ot\fP options are used.
+.UNINDENT
+.sp
+The program create a new target raster image when any of the \fI\%\-of\fP,
+\fI\%\-a_nodata\fP, \fI\%\-init\fP, \fI\%\-a_srs\fP, \fI\%\-co\fP, \fI\%\-te\fP,
+\fI\%\-tr\fP, \fI\%\-tap\fP, \fI\%\-ts\fP, or \fI\%\-ot\fP options are used.
+The resolution or size must be specified using the \fI\%\-tr\fP or \fI\%\-ts\fP option for all new
+rasters.  The target raster will be overwritten if it already exists and any of
+these creation\-related options are used.
+.SH C API
+.sp
+This utility is also callable from C with \fI\%GDALRasterize()\fP\&.
+.sp
+New in version 2.1.
+
+.SH EXAMPLE
+.sp
+The following would burn all polygons from mask.shp into the RGB TIFF
+file work.tif with the color red (RGB = 255,0,0).
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_rasterize \-b 1 \-b 2 \-b 3 \-burn 255 \-burn 0 \-burn 0 \-l mask mask.shp work.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The following would burn all "class A" buildings into the output elevation
+file, pulling the top elevation from the ROOF_H attribute.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_rasterize \-a ROOF_H \-where "class=\(aqA\(aq" \-l footprints footprints.shp city_dem.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+The following would burn all polygons from footprint.shp into a new 1000x1000
+rgb TIFF as the color red.  Note that \fI\%\-b\fP is not used; the order of the \fI\%\-burn\fP
+options determines the bands of the output raster.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_rasterize \-burn 255 \-burn 0 \-burn 0 \-ot Byte \-ts 1000 1000 \-l footprints footprints.shp mask.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Frank Warmerdam <warmerdam@pobox.com>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

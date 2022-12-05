@@ -43,13 +43,13 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /*=====================================================================
  *                      class TABMAPCoordBlock
  *====================================================================*/
 
-static const int MAP_COORD_HEADER_SIZE = 8;
+constexpr int MAP_COORD_HEADER_SIZE = 8;
 
 /**********************************************************************
  *                   TABMAPCoordBlock::TABMAPCoordBlock()
@@ -67,7 +67,7 @@ TABMAPCoordBlock::TABMAPCoordBlock( TABAccess eAccessMode /*= TABRead*/ ) :
     m_nMinY(1000000000),
     m_nMaxX(-1000000000),
     m_nMaxY(-1000000000),
-    m_poBlockManagerRef(NULL),
+    m_poBlockManagerRef(nullptr),
     m_nTotalDataSize(0),
     m_nFeatureDataSize(0),
     m_nFeatureXMin(1000000000),
@@ -119,7 +119,7 @@ int     TABMAPCoordBlock::InitBlockFromData(GByte *pabyBuf,
                  "InitBlockFromData(): Invalid Block Type: got %d expected %d",
                  m_nBlockType, TABMAP_COORD_BLOCK);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -134,7 +134,7 @@ int     TABMAPCoordBlock::InitBlockFromData(GByte *pabyBuf,
                  "TABMAPCoordBlock::InitBlockFromData(): m_numDataBytes=%d incompatible with block size %d",
                  m_numDataBytes, nBlockSize);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -170,7 +170,7 @@ int     TABMAPCoordBlock::CommitToFile()
 
     CPLErrorReset();
 
-    if ( m_pabyBuf == NULL )
+    if ( m_pabyBuf == nullptr )
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "CommitToFile(): Block has not been initialized yet!");
@@ -190,11 +190,11 @@ int     TABMAPCoordBlock::CommitToFile()
 
     WriteInt16(TABMAP_COORD_BLOCK);    // Block type code
     CPLAssert(m_nSizeUsed >= MAP_COORD_HEADER_SIZE && m_nSizeUsed < MAP_COORD_HEADER_SIZE + 32768);
-    WriteInt16((GInt16)(m_nSizeUsed - MAP_COORD_HEADER_SIZE)); // num. bytes used
+    WriteInt16(static_cast<GInt16>(m_nSizeUsed - MAP_COORD_HEADER_SIZE)); // num. bytes used
     WriteInt32(m_nNextCoordBlock);
 
     if( CPLGetLastErrorType() == CE_Failure )
-        nStatus = CPLGetLastErrorNo();
+        nStatus = -1;
 
     /*-----------------------------------------------------------------
      * OK, call the base class to write the block to disk.
@@ -361,7 +361,7 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
             panXY[i+1] = ReadInt16();
             TABSaturatedAdd(panXY[i], m_nComprOrgX);
             TABSaturatedAdd(panXY[i+1], m_nComprOrgY);
-            if (CPLGetLastErrorType() != 0)
+            if (CPLGetLastErrorType() == CE_Failure)
                 return -1;
         }
     }
@@ -371,7 +371,7 @@ int     TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
         {
             panXY[i]   = ReadInt32();
             panXY[i+1] = ReadInt32();
-            if (CPLGetLastErrorType() != 0)
+            if (CPLGetLastErrorType() == CE_Failure)
                 return -1;
         }
     }
@@ -434,8 +434,10 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
                  "Invalid numSections");
         return -1;
     }
-    int nTotalHdrSizeUncompressed = nSectionSize * numSections;
+    const int nTotalHdrSizeUncompressed = nSectionSize * numSections;
 
+    const int nVertexSize =
+                bCompressed ? 2 * sizeof(GUInt16) : 2 * sizeof(GUInt32);
     numVerticesTotal = 0;
 
     for( int i = 0;  i < numSections; i++ )
@@ -450,7 +452,9 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
             pasHdrs[i].numVertices = ReadInt32();
         else
             pasHdrs[i].numVertices = ReadInt16();
-        if( pasHdrs[i].numVertices < 0 )
+
+        if( pasHdrs[i].numVertices < 0 ||
+            pasHdrs[i].numVertices > INT_MAX / nVertexSize )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Invalid number of vertices for section %d", i);
@@ -479,7 +483,7 @@ int     TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed,
         if (CPLGetLastErrorType() != 0)
             return -1;
 
-        if( numVerticesTotal > INT_MAX - pasHdrs[i].numVertices )
+        if( numVerticesTotal > INT_MAX / nVertexSize - pasHdrs[i].numVertices )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Invalid number of vertices for section %d", i);
@@ -574,11 +578,11 @@ int     TABMAPCoordBlock::WriteCoordSecHdrs(int nVersion,
         if (nVersion >= 450)
             WriteInt32(pasHdrs[i].numVertices);
         else
-            WriteInt16((GInt16)pasHdrs[i].numVertices);
+            WriteInt16(static_cast<GInt16>(pasHdrs[i].numVertices));
         if (nVersion >= 800)
             WriteInt32(pasHdrs[i].numHoles);
         else
-            WriteInt16((GInt16)pasHdrs[i].numHoles);
+            WriteInt16(static_cast<GInt16>(pasHdrs[i].numHoles));
         WriteIntCoord(pasHdrs[i].nXMin, pasHdrs[i].nYMin, bCompressed);
         WriteIntCoord(pasHdrs[i].nXMax, pasHdrs[i].nYMax, bCompressed);
         WriteInt32(pasHdrs[i].nDataOffset);
@@ -605,8 +609,8 @@ int     TABMAPCoordBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
 {
 
     if ((!bCompressed && (WriteInt32(nX) != 0 || WriteInt32(nY) != 0 ) ) ||
-        (bCompressed && (WriteInt16((GInt16)(nX - m_nComprOrgX)) != 0 ||
-                         WriteInt16((GInt16)(nY - m_nComprOrgY)) != 0) ) )
+        (bCompressed && (WriteInt16(TABInt16Diff(nX, m_nComprOrgX)) != 0 ||
+                         WriteInt16(TABInt16Diff(nY, m_nComprOrgY)) != 0) ) )
     {
         return -1;
     }
@@ -651,7 +655,7 @@ int     TABMAPCoordBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
 void TABMAPCoordBlock::SetMAPBlockManagerRef(TABBinBlockManager *poBlockMgr)
 {
     m_poBlockManagerRef = poBlockMgr;
-};
+}
 
 /**********************************************************************
  *                   TABMAPCoordBlock::ReadBytes()
@@ -876,11 +880,11 @@ void TABMAPCoordBlock::GetFeatureMBR(GInt32 &nXMin, GInt32 &nYMin,
 
 void TABMAPCoordBlock::Dump(FILE *fpOut /*=NULL*/)
 {
-    if (fpOut == NULL)
+    if (fpOut == nullptr)
         fpOut = stdout;
 
     fprintf(fpOut, "----- TABMAPCoordBlock::Dump() -----\n");
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         fprintf(fpOut, "Block has not been initialized yet.");
     }

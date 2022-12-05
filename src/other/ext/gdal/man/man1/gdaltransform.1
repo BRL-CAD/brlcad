@@ -1,0 +1,241 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDALTRANSFORM" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdaltransform \- Transforms coordinates.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdaltransform [\-\-help\-general]
+    [\-i] [\-s_srs srs_def] [\-t_srs srs_def] [\-to "NAME=VALUE"]
+    [\-ct proj_string] [\-order n] [\-tps] [\-rpc] [\-geoloc]
+    [\-gcp pixel line easting northing [elevation]]* [\-output_xy]
+    [srcfile [dstfile]]
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+The gdaltransform utility reprojects a list of coordinates into any supported
+projection,including GCP\-based transformations.
+.INDENT 0.0
+.TP
+.B \-s_srs <srs_def>
+Set source spatial reference.
+The coordinate systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
+(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
+containing well known text.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-t_srs <srs_def>
+set target spatial reference.
+The coordinate systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
+(i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
+containing well known text.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ct <string>
+A PROJ string (single step operation or multiple step string
+starting with +proj=pipeline), a WKT2 string describing a CoordinateOperation,
+or a \fI\%urn:ogc:def:coordinateOperation:EPSG::XXXX\fP URN overriding the default
+transformation from the source to the target CRS. It must take into account the
+axis order of the source and target CRS.
+.sp
+New in version 3.0.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-to NAME=VALUE
+set a transformer option suitable to pass to \fI\%GDALCreateGenImgProjTransformer2()\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-order <n>
+order of polynomial used for warping (1 to 3). The default is to select a
+polynomial order based on the number of GCPs.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-tps
+Force use of thin plate spline transformer based on available GCPs.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-rpc
+Force use of RPCs.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-geoloc
+Force use of Geolocation Arrays.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-i
+Inverse transformation: from destination to source.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-gcp <pixel> <line> <easting> <northing> [<elevation>]
+Provide a GCP to be used for transformation (generally three or more are required)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-output_xy
+Restrict output to "x y" instead of "x y z"
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <srcfile>
+File with source projection definition or GCP\(aqs. If
+not given, source projection is read from the command\-line \fI\%\-s_srs\fP
+or \fI\%\-gcp\fP parameters
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <dstfile>
+File with destination projection definition.
+.UNINDENT
+.sp
+Coordinates are read as pairs, triples (for 3D,) or (since GDAL 3.0.0,) quadruplets
+(for X,Y,Z,time) of numbers per line from standard
+input, transformed, and written out to standard output in the same way. All
+transformations offered by gdalwarp are handled, including gcp\-based ones.
+.sp
+Note that input and output must always be in decimal form.  There is currently
+no support for DMS input or output.
+.sp
+If an input image file is provided, input is in pixel/line coordinates on that
+image.  If an output file is provided, output is in pixel/line coordinates
+on that image.
+.SH EXAMPLES
+.SS Reprojection Example
+.sp
+Simple reprojection from one projected coordinate system to another:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdaltransform \-s_srs EPSG:28992 \-t_srs EPSG:31370
+177502 311865
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Produces the following output in meters in the "Belge 1972 / Belgian Lambert
+72" projection:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+244510.77404604 166154.532871342 \-1046.79270555763
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Image RPC Example
+.sp
+The following command requests an RPC based transformation using the RPC
+model associated with the named file.  Because the \-i (inverse) flag is
+used, the transformation is from output georeferenced (WGS84) coordinates
+back to image coordinates.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdaltransform \-i \-rpc 06OCT20025052\-P2AS\-005553965230_01_P001.TIF
+125.67206 39.85307 50
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Produces this output measured in pixels and lines on the image:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+3499.49282422381 2910.83892848414 50
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS X,Y,Z,time transform
+.sp
+15\-term time\-dependent Helmert coordinate transformation from ITRF2000 to ITRF93
+for a coordinate at epoch 2000.0
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdaltransform \-ct "+proj=pipeline +step +proj=unitconvert +xy_in=deg \e
++xy_out=rad +step +proj=cart +step +proj=helmert +convention=position_vector \e
++x=0.0127 +dx=\-0.0029 +rx=\-0.00039 +drx=\-0.00011 +y=0.0065 +dy=\-0.0002 \e
++ry=0.00080 +dry=\-0.00019 +z=\-0.0209 +dz=\-0.0006 +rz=\-0.00114 +drz=0.00007 \e
++s=0.00195 +ds=0.00001 +t_epoch=1988.0 +step +proj=cart +inv +step \e
++proj=unitconvert +xy_in=rad +xy_out=deg"
+2 49 0 2000
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Produces this output measured in longitude degrees, latitude degrees and ellipsoid height in metre:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+2.0000005420366 49.0000003766711 \-0.0222802283242345
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Frank Warmerdam <warmerdam@pobox.com>, Jan Hartmann <j.l.h.hartmann@uva.nl>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

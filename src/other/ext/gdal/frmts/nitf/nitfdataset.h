@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Portions Copyright (c) Her majesty the Queen in right of Canada as
  * represented by the Minister of National Defence, 2006.
@@ -62,7 +62,7 @@ void NITFUpdateGCPsWithRPC( NITFRPC00BInfo *psRPCInfo,
 class NITFRasterBand;
 class NITFWrapperRasterBand;
 
-class NITFDataset : public GDALPamDataset
+class NITFDataset final: public GDALPamDataset
 {
     friend class NITFRasterBand;
     friend class NITFWrapperRasterBand;
@@ -72,6 +72,10 @@ class NITFDataset : public GDALPamDataset
 
     GDALDataset *poJ2KDataset;
     int         bJP2Writing;
+    vsi_l_offset m_nImageOffset = 0;
+    int         m_nIMIndex = 0;
+    int         m_nImageCount = 0;
+    vsi_l_offset m_nICOffset = 0;
 
     GDALDataset *poJPEGDataset;
 
@@ -88,9 +92,9 @@ class NITFDataset : public GDALPamDataset
 
 #ifdef ESRI_BUILD
     void         InitializeNITFDESMetadata();
-    void         InitializeNITFDESs();
     void         InitializeNITFTREs();
 #endif
+    void         InitializeNITFDESs();
     void         InitializeNITFMetadata();
     void         InitializeCGMMetadata();
     void         InitializeTextMetadata();
@@ -100,7 +104,7 @@ class NITFDataset : public GDALPamDataset
     GByte       *pabyJPEGBlock;
     int          nQLevel;
 
-    int          ScanJPEGQLevel( GUIntBig *pnDataStart );
+    int          ScanJPEGQLevel( GUIntBig *pnDataStart, bool *pbError );
     CPLErr       ScanJPEGBlocks();
     CPLErr       ReadJPEGBlock( int, int );
     void         CheckGeoSDEInfo();
@@ -114,6 +118,7 @@ class NITFDataset : public GDALPamDataset
 
     char       **papszTextMDToWrite;
     char       **papszCgmMDToWrite;
+    CPLStringList aosCreationOptions;
 
     int          bInLoadXML;
 
@@ -142,15 +147,30 @@ class NITFDataset : public GDALPamDataset
                               GSpacing nBandSpace,
                               GDALRasterIOExtraArg* psExtraArg ) override;
 
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr SetProjection( const char * ) override;
+    virtual const char *_GetProjectionRef() override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    virtual CPLErr _SetProjection( const char * ) override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
+
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
-    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
+    virtual CPLErr _SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
                             const char *pszGCPProjection ) override;
+    using GDALPamDataset::SetGCPs;
+    CPLErr SetGCPs( int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
+                    const OGRSpatialReference* poSRS ) override {
+        return OldSetGCPsFromNew(nGCPCountIn, pasGCPListIn, poSRS);
+    }
 
     virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
+    virtual const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
     virtual const GDAL_GCP *GetGCPs() override;
     virtual char **GetFileList() override;
 
@@ -158,13 +178,15 @@ class NITFDataset : public GDALPamDataset
     virtual char      **GetMetadata( const char * pszDomain = "" ) override;
     virtual const char *GetMetadataItem( const char * pszName,
                                          const char * pszDomain = "" ) override;
-    virtual void   FlushCache() override;
+    virtual void   FlushCache(bool bAtClosing) override;
     virtual CPLErr IBuildOverviews( const char *, int, int *,
                                     int, int *, GDALProgressFunc, void * ) override;
 
     static int          Identify( GDALOpenInfo * );
-    static GDALDataset *OpenInternal( GDALOpenInfo *, GDALDataset *poWritableJ2KDataset,
-                              int bOpenForCreate);
+    static NITFDataset *OpenInternal( GDALOpenInfo *,
+                                      GDALDataset *poWritableJ2KDataset,
+                                      bool bOpenForCreate,
+                                      int nIMIndex );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *
     NITFCreateCopy( const char *pszFilename, GDALDataset *poSrcDS,
@@ -182,7 +204,7 @@ class NITFDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class NITFRasterBand : public GDALPamRasterBand
+class NITFRasterBand final: public GDALPamRasterBand
 {
     friend class NITFDataset;
 
@@ -205,7 +227,7 @@ class NITFRasterBand : public GDALPamRasterBand
     virtual CPLErr SetColorInterpretation( GDALColorInterp ) override;
     virtual GDALColorTable *GetColorTable() override;
     virtual CPLErr SetColorTable( GDALColorTable * ) override;
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
 
     void Unpack(GByte* pData);
 };
@@ -221,7 +243,7 @@ class NITFRasterBand : public GDALPamRasterBand
 /* then to the underlying band if no value exist in PAM. The setters aren't */
 /* overridden, so they go to PAM */
 
-class NITFProxyPamRasterBand : public GDALPamRasterBand
+class NITFProxyPamRasterBand CPL_NON_FINAL: public GDALPamRasterBand
 {
     private:
         std::map<CPLString, char**> oMDMap;
@@ -248,11 +270,11 @@ class NITFProxyPamRasterBand : public GDALPamRasterBand
         /*virtual CPLErr      SetMetadataItem( const char * pszName,
                                             const char * pszValue,
                                             const char * pszDomain = "" );*/
-        virtual CPLErr FlushCache() override;
+        virtual CPLErr FlushCache(bool bAtClosing) override;
         /*virtual char **GetCategoryNames();*/
-        virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
-        virtual double GetMinimum( int *pbSuccess = NULL ) override;
-        virtual double GetMaximum(int *pbSuccess = NULL ) override;
+        virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
+        virtual double GetMinimum( int *pbSuccess = nullptr ) override;
+        virtual double GetMaximum(int *pbSuccess = nullptr ) override;
         /*virtual double GetOffset( int *pbSuccess = NULL );
         virtual double GetScale( int *pbSuccess = NULL );*/
         /*virtual const char *GetUnitType();*/
@@ -324,9 +346,9 @@ class NITFProxyPamRasterBand : public GDALPamRasterBand
 /* to make sure they keep the proper pointer to their "natural" dataset */
 /* This trick is no longer necessary with the NITFWrapperRasterBand */
 /* We just override the few specific methods where we want that */
-/* the NITFWrapperRasterBand behaviour differs from the JPEG/JPEG2000 one */
+/* the NITFWrapperRasterBand behavior differs from the JPEG/JPEG2000 one */
 
-class NITFWrapperRasterBand : public NITFProxyPamRasterBand
+class NITFWrapperRasterBand final: public NITFProxyPamRasterBand
 {
   GDALRasterBand* poBaseBand;
   GDALColorTable* poColorTable;

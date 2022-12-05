@@ -52,14 +52,18 @@ else
     TOL="rel 0.01"
 fi
 
-STATUS=1
+mged -c $1 <<EOF
+tol $TOL
+facetize -r $2 $2.bot
+EOF
+STATUS=$?
 
 # first make an attempt on all regions
 while [ X$STATUS != X0 ] ; do
 
     mged -c $1 <<EOF
     tol $TOL
-    facetize -r $2 $2.bot
+    facetize -r --resume $2 $2.bot
 EOF
 STATUS=$?
 

@@ -1,3 +1,19 @@
+/* $NoKeywords: $ */
+/*
+//
+// Copyright (c) 1993-2014 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//				
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
+
 #if !defined(OPENNURBS_EXTRUSION_INC_)
 #define OPENNURBS_EXTRUSION_INC_
 
@@ -14,7 +30,7 @@ Parameters:
   xform - [out]
     transformation that maps the profile curve to 3d world space
   scale2d - [out]
-    If not NULL, this is the scale part of the transformation.
+    If not nullptr, this is the scale part of the transformation.
     If there is no mitering, then this is the identity.
   rot2d - [out]
     If not null, this is the part of the transformation
@@ -47,32 +63,31 @@ public:
   //
   // overrides of virtual ON_Object functions
   // 
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
-  void Dump( ON_TextLog& ) const;
-  unsigned int SizeOf() const;
-  ON__UINT32 DataCRC( ON__UINT32 current_remainder ) const;
-  ON_BOOL32 Write( ON_BinaryArchive& binary_archive) const;
-  ON_BOOL32 Read( ON_BinaryArchive& binary_archive );
-  ON::object_type ObjectType() const;
+  void DestroyRuntimeCache( bool bDelete = true ) override;
+
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
+  void Dump( ON_TextLog& ) const override;
+  unsigned int SizeOf() const override;
+  ON__UINT32 DataCRC( ON__UINT32 current_remainder ) const override;
+  bool Write( ON_BinaryArchive& binary_archive) const override;
+  bool Read( ON_BinaryArchive& binary_archive ) override;
+  ON::object_type ObjectType() const override;
 
   ////////////////////////////////////////////////////////////
   //
   // overrides of virtual ON_Geometry functions
   // 
-  int Dimension() const;
-  ON_BOOL32 GetBBox(
-        double* boxmin,
-        double* boxmax,
-        int bGrowBox = false
-        ) const;
-	bool GetTightBoundingBox( 
-        ON_BoundingBox& tight_bbox, 
-        int bGrowBox = false,
-        const ON_Xform* xform = 0
-        ) const;
-  ON_BOOL32 Transform( 
+  int Dimension() const override;
+  
+  // virtual ON_Geometry GetBBox override		
+  bool GetBBox( double* boxmin, double* boxmax, bool bGrowBox = false ) const override;
+
+  // virtual ON_Geometry GetTightBoundingBox override		
+  bool GetTightBoundingBox( class ON_BoundingBox& tight_bbox, bool bGrowBox = false, const class ON_Xform* xform = nullptr ) const override;
+
+  bool Transform( 
         const ON_Xform& xform
-        );
+        ) override;
 
   /*
   Description:
@@ -90,8 +105,8 @@ public:
     If successful, a pointer to the brep form.  If unsuccessful, null.
   */
   ON_Brep* BrepForm(
-        ON_Brep* brep = NULL 
-        ) const;
+        ON_Brep* brep = nullptr 
+        ) const override;
 
   /*
   Description:
@@ -163,149 +178,209 @@ public:
     ON_COMPONENT_INDEX& brep_ci
     ) const;
 
+  bool GetBrepFormComponentIndex(
+    ON_COMPONENT_INDEX extrusion_ci,
+    double extrusion_profile_parameter,
+    const ON_Brep* brep_form,
+    ON_COMPONENT_INDEX& brep_ci
+    ) const;
+
   ////////////////////////////////////////////////////////////
   //
   // overrides of virtual ON_Surface functions
   // 
-  ON_BOOL32 SetDomain( 
+
+  bool SetDomain( 
         int dir,
         double t0, 
         double t1
-        );
+        ) override;
   ON_Interval Domain(
         int dir
-        ) const;
-  ON_BOOL32 GetSurfaceSize( 
+        ) const override;
+  bool GetSurfaceSize( 
         double* width, 
         double* height 
-        ) const;
+        ) const override;
   int SpanCount(
         int dir
-        ) const;
-  ON_BOOL32 GetSpanVector(
+        ) const override;
+  bool GetSpanVector(
         int dir,
         double* span_vector
-        ) const;
-  ON_BOOL32 GetSpanVectorIndex(
+        ) const override;
+  bool GetSpanVectorIndex(
         int dir,
         double t,
         int side,
         int* span_vector_index,
         ON_Interval* span_interval
-        ) const;
+        ) const override;
   int Degree(
         int dir
-        ) const; 
-  ON_BOOL32 GetParameterTolerance(
+        ) const override;
+  bool GetParameterTolerance(
          int dir,
          double t,
          double* tminus,
          double* tplus
-         ) const;
+         ) const override;
   ISO IsIsoparametric(
         const ON_Curve& curve,
-        const ON_Interval* curve_domain = NULL
-        ) const;
-  ON_BOOL32 IsPlanar(
-        ON_Plane* plane = NULL,
+        const ON_Interval* curve_domain = nullptr
+        ) const override;
+  bool IsPlanar(
+        ON_Plane* plane = nullptr,
         double tolerance = ON_ZERO_TOLERANCE
-        ) const;
-  ON_BOOL32 IsClosed(
+        ) const override;
+  bool IsClosed(
         int
-        ) const;
-  ON_BOOL32 IsPeriodic(
+        ) const override;
+  bool IsPeriodic(
         int
-        ) const;
+        ) const override;
   bool GetNextDiscontinuity( 
                   int dir,
                   ON::continuity c,
                   double t0,
                   double t1,
                   double* t,
-                  int* hint=NULL,
-                  int* dtype=NULL,
+                  int* hint=nullptr,
+                  int* dtype=nullptr,
                   double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
                   double curvature_tolerance=ON_SQRT_EPSILON
-                  ) const;
+                  ) const override;
   bool IsContinuous(
     ON::continuity c,
     double s, 
     double t, 
-    int* hint = NULL,
+    int* hint = nullptr,
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
     double d2_tolerance=ON_ZERO_TOLERANCE,
     double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
     double curvature_tolerance=ON_SQRT_EPSILON
-    ) const;
+    ) const override;
   ISO IsIsoparametric(
         const ON_BoundingBox& bbox
-        ) const;
-  ON_BOOL32 Reverse( int dir );
-  ON_BOOL32 Transpose();
-  ON_BOOL32 Evaluate(
+        ) const override;
+  bool Reverse( int dir ) override;
+  bool Transpose() override;
+  bool Evaluate(
          double u, double v,
          int num_der,
          int array_stride,
          double* der_array,
          int quadrant = 0,
          int* hint = 0
-         ) const;
+         ) const override;
   ON_Curve* IsoCurve(
          int dir,
          double c
-         ) const;
+         ) const override;
 
-  ON_BOOL32 Trim(
+
+  bool Trim(
          int dir,
          const ON_Interval& domain
-         );
+         ) override;
   bool Extend(
     int dir,
     const ON_Interval& domain
-    );
-  ON_BOOL32 Split(
+    ) override;
+  bool Split(
          int dir,
          double c,
          ON_Surface*& west_or_south_side,
          ON_Surface*& east_or_north_side
-         ) const;
+         ) const override;
 
-  bool GetClosestPoint( 
-          const ON_3dPoint& P,
-          double* s,
-          double* t,
-          double maximum_distance = 0.0,
-          const ON_Interval* sdomain = 0,
-          const ON_Interval* tdomain = 0
-          ) const;
-
-  ON_BOOL32 GetLocalClosestPoint( const ON_3dPoint&, // test_point
-          double,double,     // seed_parameters
-          double*,double*,   // parameters of local closest point returned here
-          const ON_Interval* = NULL, // first parameter sub_domain
-          const ON_Interval* = NULL  // second parameter sub_domain
-          ) const;
 
   //ON_Surface* Offset(
   //      double offset_distance, 
   //      double tolerance, 
-  //      double* max_deviation = NULL
+  //      double* max_deviation = nullptr
   //      ) const;
 
   int GetNurbForm(
         ON_NurbsSurface& nurbs_surface,
         double tolerance = 0.0
-        ) const;
-  int HasNurbForm() const;
+        ) const override;
+  int HasNurbForm() const override;
   bool GetSurfaceParameterFromNurbFormParameter(
         double nurbs_s, double nurbs_t,
         double* surface_s, double* surface_t
-        ) const;
+        ) const override;
   bool GetNurbFormParameterFromSurfaceParameter(
         double surface_s, double surface_t,
         double* nurbs_s,  double* nurbs_t
-        ) const;
+        ) const override;
+
+
+  ////////////////////////////////////////////////////////////
+  //
+  // ON_Extrusion mesh interface
+  // 
+
+  /*
+  Description:
+    Attach a mesh to the ON_Extrusion.
+  Parameters:
+    mt - [in]
+      type of mesh that is being attached.
+      If mt is ON::render_mesh, ON::analysis_mesh or ON::preview_mesh,
+      the mesh is attached as that type of mesh.
+      If mt is ON::default_mesh or ON::any_mesh, then 
+      nothing is done and false is returned.
+    mesh - [in]
+      * mesh to attach.  
+      * mesh must be on the heap because ~ON_Extrusion() 
+        will delete it.
+      * if there is already of mesh of the prescribed type,
+        it will be deleted.
+      * if mesh is null, any existing mesh is deleted and
+        nothing is attached.
+  Remarks:
+    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed chached meshes.
+  */
+  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed chached meshes")
+  bool SetMesh( ON::mesh_type mt, ON_Mesh* mesh );
+
+  /*
+  Description:
+    Get a mesh attached to the ON_Extrusion.
+  Parameters:
+    mt - [in]
+      type of mesh to get.
+      ON::render_mesh, ON::analysis_mesh and ON::preview_mesh 
+      remove the meshes of those types.
+      If mt is ON::default_mesh or ON::any_mesh, then 
+      the first non null mesh is returned.
+  Returns:
+    A pointer to a mesh on the ON_Extusion object.  
+    This mesh will be deleted by ~ON_Extrusion().
+    If a mesh of the requested type is not available,
+    then null is returned.
+  Remarks:
+    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed chached meshes.
+  */
+  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed chached meshes")
+  const ON_Mesh* Mesh( ON::mesh_type mt ) const;
+
+  /*
+  Description:
+    Destroy a mesh attached to the ON_Extrusion.
+  Parameters:
+    mt - [in] type of mesh to destroy
+      If mt is ON::default_mesh or ON::any_mesh, then 
+      all attached meshes of all types are destroyed.
+    bDeleteMesh - [in] if true, cached mesh is deleted.
+      If false, pointer to cached mesh is just set to null.
+  Remarks:
+    DEPRECATED. Use ON_Extrusion.m_mesh_cache to managed chached meshes.
+  */
+  ON_DEPRECATED_MSG("Use ON_Extrusion.m_mesh_cache to managed chached meshes")
+  void DestroyMesh( ON::mesh_type mt );
 
   ////////////////////////////////////////////////////////////
   //
@@ -374,7 +449,7 @@ public:
   Description:
     Set miter plane normal.
   Parameters:
-    N - [in] If ON_UNSET_VECTOR or N is parallel to the z-axis,
+    N - [in] If N = ON_3dVector::UnsetVector or N is parallel to the z-axis,
              then the miter plane is the default plane 
              perpendicular to the path.
              If N is valid and the z coordinate of a unitized
@@ -445,7 +520,8 @@ public:
     At this point it simply leads to confusion. See the Description
     function replacements.
   */
-  ON_DEPRECATED int FaceCount() const;
+  ON_DEPRECATED_MSG("Use CapCount(), ProfileCount(), or ProfileSmoothSegmentCount()")
+  int FaceCount() const;
 
   /*
   Description:
@@ -601,7 +677,7 @@ public:
       is returned. s = 0.0 returns the bottom profile
       and s = 1.0 returns the top profile.
   Returns:
-    NULL if the input parameters or the ON_Extrusion class is
+    nullptr if the input parameters or the ON_Extrusion class is
     not valid.  Otherwise a pointer to a 3d curve for 
     the requested profile. This curve is on the heap and
     the caller is responsible for deleting this curve.
@@ -613,7 +689,7 @@ public:
     ci - [in]
       component index identifying a 3d extrusion profile curve.
   Returns:
-    NULL if the component index or the ON_Extrusion class is
+    nullptr if the component index or the ON_Extrusion class is
     not valid.  Otherwise a pointer to a 3d curve for 
     the requested profile. This curve is on the heap and
     the caller is responsible for deleting this curve.
@@ -625,7 +701,7 @@ public:
     ci - [in]
       component index identifying a wall edge curve.
   Returns:
-    NULL if the component index or the ON_Extrusion class is
+    nullptr if the component index or the ON_Extrusion class is
     not valid.  Otherwise a pointer to a 3d curve for 
     the requested wall edge. This curve is on the heap and
     the caller is responsible for deleting this curve.
@@ -637,7 +713,7 @@ public:
     ci - [in]
       component index identifying a wall surface.
   Returns:
-    NULL if the component index or the ON_Extrusion class is
+    nullptr if the component index or the ON_Extrusion class is
     not valid.  Otherwise a pointer to a surface for 
     the requested wall surface. This curve is on the heap and
     the caller is responsible for deleting this curve.
@@ -702,6 +778,7 @@ public:
     smooth faces.
   */
   int GetProfileKinkParameters( int profile_index, ON_SimpleArray<double>& profile_kink_parameters ) const;
+  int GetProfileKinkParameters( int profile_index, ON_SimpleArray<double>* profile_kink_parameters ) const;
 
   /*
   Parameters:
@@ -789,6 +866,9 @@ public:
   // The length of the m_path line must be greater than
   // m_path_length_min
   static const double m_path_length_min; // ON_ZERO_TOLERANCE;
+
+  // Cached meshes used for rendering, analysis, ...
+  mutable ON_MeshCache m_mesh_cache = ON_MeshCache::Empty;
 
   /*
   Description:

@@ -10,7 +10,7 @@
  * Copyright (c) 2008 Paul Ramsey
  * Copyright (c) 2002 Refractions Research
  * Copyright (C) 2004-2008 René Nyffenegger
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * (see also part way down the file for license terms for René's code)
  *
@@ -40,14 +40,14 @@
 
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // Derived from MapServer's mappostgis.c.
 
 /*
 ** Decode a base64 character.
 */
-static const unsigned char CPLBase64DecodeChar[256] = {
+constexpr unsigned char CPLBase64DecodeChar[256] = {
     // Not Base64 characters.
     64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
     64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,64,
@@ -198,7 +198,7 @@ int CPLBase64DecodeInPlace( GByte* pszBase64 )
 
 char *CPLBase64Encode(int nDataLen, const GByte *pabyBytesToEncode)
 {
-    static const char base64Chars[] =
+    constexpr char base64Chars[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     const int kCharArray3Size = 3;

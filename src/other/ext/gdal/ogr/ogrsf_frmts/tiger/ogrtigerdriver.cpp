@@ -29,7 +29,7 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                                Open()                                */
@@ -39,12 +39,12 @@ static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !poOpenInfo->bStatOK )
-        return NULL;
+        return nullptr;
     char** papszSiblingFiles = poOpenInfo->GetSiblingFiles();
-    if( papszSiblingFiles != NULL )
+    if( papszSiblingFiles != nullptr )
     {
         bool bFoundCompatibleFile = false;
-        for( int i = 0; papszSiblingFiles[i] != NULL; i++ )
+        for( int i = 0; papszSiblingFiles[i] != nullptr; i++ )
         {
             int nLen = (int)strlen(papszSiblingFiles[i]);
             if( nLen > 4 &&
@@ -56,7 +56,7 @@ static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
             }
         }
         if( !bFoundCompatibleFile )
-            return NULL;
+            return nullptr;
     }
 
     OGRTigerDataSource  *poDS = new OGRTigerDataSource;
@@ -64,40 +64,18 @@ static GDALDataset *OGRTigerDriverOpen( GDALOpenInfo* poOpenInfo )
     if( !poDS->Open( poOpenInfo->pszFilename, TRUE ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
-    if( poDS != NULL && poOpenInfo->eAccess == GA_Update )
+    if( poDS != nullptr && poOpenInfo->eAccess == GA_Update )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Tiger Driver doesn't support update." );
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
-}
-
-/************************************************************************/
-/*                              Create()                                */
-/************************************************************************/
-
-static GDALDataset *OGRTigerDriverCreate( const char * pszName,
-                                          CPL_UNUSED int nBands,
-                                          CPL_UNUSED int nXSize,
-                                          CPL_UNUSED int nYSize,
-                                          CPL_UNUSED GDALDataType eDT,
-                                          char **papszOptions )
-{
-    OGRTigerDataSource *poDS = new OGRTigerDataSource();
-
-    if( poDS->Create( pszName, papszOptions ) )
-        return poDS;
-    else
-    {
-        delete poDS;
-        return NULL;
-    }
 }
 
 /************************************************************************/
@@ -107,7 +85,7 @@ static GDALDataset *OGRTigerDriverCreate( const char * pszName,
 void RegisterOGRTiger()
 
 {
-    if( GDALGetDriverByName( "TIGER" ) != NULL )
+    if( GDALGetDriverByName( "TIGER" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -115,11 +93,10 @@ void RegisterOGRTiger()
     poDriver->SetDescription( "TIGER" );
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "U.S. Census TIGER/Line" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_tiger.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/tiger.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = OGRTigerDriverOpen;
-    poDriver->pfnCreate = OGRTigerDriverCreate;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
 }

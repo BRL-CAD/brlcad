@@ -27,7 +27,7 @@
 
 #include "gdal_simplesurf.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -35,12 +35,7 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /************************************************************************/
 
-GDALIntegralImage::GDALIntegralImage()
-{
-    pMatrix = NULL;
-    nHeight = 0;
-    nWidth = 0;
-}
+GDALIntegralImage::GDALIntegralImage() = default;
 
 int GDALIntegralImage::GetHeight() { return nHeight; }
 
@@ -169,8 +164,8 @@ GDALOctaveLayer::GDALOctaveLayer( int nOctave, int nInterval ) :
     scale(static_cast<int>(pow(2.0, nOctave))),
     width(0),
     height(0),
-    detHessians(NULL),
-    signs(NULL)
+    detHessians(nullptr),
+    signs(nullptr)
 {}
 
 void GDALOctaveLayer::ComputeLayer( GDALIntegralImage *poImg )
@@ -188,10 +183,6 @@ void GDALOctaveLayer::ComputeLayer( GDALIntegralImage *poImg )
         signs[i] = new int[width];
     }
 
-    // Values of Fast Hessian filters.
-    double dxx = 0.0;
-    double dyy = 0.0;
-    double dxy = 0.0;
     // 1/3 of filter side.
     const int lobe = filterSize / 3;
 
@@ -205,15 +196,16 @@ void GDALOctaveLayer::ComputeLayer( GDALIntegralImage *poImg )
     for( int r = radius; r <= height - radius; r++ )
         for( int c = radius; c <= width - radius; c++ )
         {
-            dxx = poImg->GetRectangleSum(r - lobe + 1, c - radius,
+            // Values of Fast Hessian filters.
+            double dxx = poImg->GetRectangleSum(r - lobe + 1, c - radius,
                                          filterSize, longPart)
                 - 3 * poImg->GetRectangleSum(r - lobe + 1, c - (lobe - 1) / 2,
                                              lobe, longPart);
-            dyy = poImg->GetRectangleSum(r - radius, c - lobe - 1,
+            double dyy = poImg->GetRectangleSum(r - radius, c - lobe - 1,
                                          longPart, filterSize)
                 - 3 * poImg->GetRectangleSum(r - lobe + 1, c - lobe + 1,
                                              longPart, lobe);
-            dxy = poImg->GetRectangleSum(r - lobe, c - lobe, lobe, lobe)
+            double dxy = poImg->GetRectangleSum(r - lobe, c - lobe, lobe, lobe)
                 + poImg->GetRectangleSum(r + 1, c + 1, lobe, lobe)
                 - poImg->GetRectangleSum(r - lobe, c + 1, lobe, lobe)
                 - poImg->GetRectangleSum(r + 1, c - lobe, lobe, lobe);

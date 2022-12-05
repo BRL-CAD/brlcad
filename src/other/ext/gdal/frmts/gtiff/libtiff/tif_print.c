@@ -81,9 +81,8 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
     /* Print a user-friendly name for tags of relatively common use, but */
     /* which aren't registered by libtiff itself. */
     const char* field_name = fip->field_name;
-    if( strncmp(fip->field_name, "Tag ", 4) == 0 ) {
-        size_t i;
-        for( i = 0; i < NTAGS; ++i ) {
+    if( fip->field_name != NULL && strncmp(fip->field_name, "Tag ", 4) == 0 ) {
+        for( size_t i = 0; i < NTAGS; ++i ) {
             if( fip->field_tag == tagnames[i].tag ) {
                 field_name = tagnames[i].name;
                 break;
@@ -109,18 +108,22 @@ _TIFFPrintField(FILE* fd, const TIFFField *fip,
 			fprintf(fd, "%"PRId32, ((int32_t *) raw_data)[j]);
 		else if(fip->field_type == TIFF_IFD)
 			fprintf(fd, "0x%"PRIx32, ((uint32_t *) raw_data)[j]);
-		else if(fip->field_type == TIFF_RATIONAL
-			|| fip->field_type == TIFF_SRATIONAL
-			|| fip->field_type == TIFF_FLOAT)
-			fprintf(fd, "%f", ((float *) raw_data)[j]);
+		else if (fip->field_type == TIFF_RATIONAL
+			|| fip->field_type == TIFF_SRATIONAL) {
+			int tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
+			if(tv_size==8)
+				fprintf(fd, "%lf", ((double*)raw_data)[j]);
+			else
+				fprintf(fd, "%f", ((float *) raw_data)[j]);
+		}
+		else if(fip->field_type == TIFF_FLOAT)
+			fprintf(fd, "%f", ((float*)raw_data)[j]);
 		else if(fip->field_type == TIFF_LONG8)
 			fprintf(fd, "%"PRIu64, ((uint64_t *) raw_data)[j]);
 		else if(fip->field_type == TIFF_SLONG8)
 			fprintf(fd, "%"PRId64, ((int64_t *) raw_data)[j]);
 		else if(fip->field_type == TIFF_IFD8)
 			fprintf(fd, "0x%"PRIx64, ((uint64_t *) raw_data)[j]);
-		else if(fip->field_type == TIFF_FLOAT)
-			fprintf(fd, "%f", ((float *)raw_data)[j]);
 		else if(fip->field_type == TIFF_DOUBLE)
 			fprintf(fd, "%lf", ((double *) raw_data)[j]);
 		else if(fip->field_type == TIFF_ASCII) {
@@ -146,7 +149,7 @@ _TIFFPrettyPrintField(TIFF* tif, const TIFFField *fip, FILE* fd, uint32_t tag,
         (void) tif;
 
 	/* do not try to pretty print auto-defined fields */
-	if (strncmp(fip->field_name,"Tag ", 4) == 0) {
+	if (fip->field_name != NULL && strncmp(fip->field_name,"Tag ", 4) == 0) {
 		return 0;
 	}
         
@@ -239,7 +242,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 	char *sep;
 	long l, n;
 
-	fprintf(fd, "TIFF Directory at offset 0x%"PRIu64" (%"PRIx64")\n",
+	fprintf(fd, "TIFF Directory at offset 0x%"PRIx64" (%"PRIu64")\n",
 		tif->tif_diroff,
 		tif->tif_diroff);
 	if (TIFFFieldSet(tif,FIELD_SUBFILETYPE)) {
@@ -570,7 +573,8 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			const TIFFField *fip;
 			uint32_t value_count;
 			int mem_alloc = 0;
-			void *raw_data;
+			void *raw_data = NULL;
+			uint16_t dotrange[2]; /* must be kept in that scope and not moved in the below TIFFTAG_DOTRANGE specific case */
 
 			fip = TIFFFieldWithTag(tif, tag);
 			if(fip == NULL)
@@ -604,7 +608,6 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 					   handled this way ... likely best if we move it into
 					   the directory structure with an explicit field in 
 					   libtiff 4.1 and assign it a FIELD_ value */
-					static uint16_t dotrange[2];
 					raw_data = dotrange;
 					TIFFGetField(tif, tag, dotrange+0, dotrange+1);
 				} else if (fip->field_type == TIFF_ASCII
@@ -615,8 +618,10 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 					if(TIFFGetField(tif, tag, &raw_data) != 1)
 						continue;
 				} else {
+					/*--: Rational2Double: For Rationals evaluate "set_field_type" to determine internal storage size. */
+					int tv_size = _TIFFSetGetFieldSize(fip->set_field_type);
 					raw_data = _TIFFmalloc(
-					    _TIFFDataSize(fip->field_type)
+					    tv_size
 					    * value_count);
 					mem_alloc = 1;
 					if(TIFFGetField(tif, tag, raw_data) != 1) {
@@ -632,7 +637,7 @@ TIFFPrintDirectory(TIFF* tif, FILE* fd, long flags)
 			 * _TIFFPrettyPrintField() fall down and print it as
 			 * any other tag.
 			 */
-			if (!_TIFFPrettyPrintField(tif, fip, fd, tag, value_count, raw_data))
+			if (raw_data != NULL && !_TIFFPrettyPrintField(tif, fip, fd, tag, value_count, raw_data))
 				_TIFFPrintField(fd, fip, value_count, raw_data);
 
 			if(mem_alloc)

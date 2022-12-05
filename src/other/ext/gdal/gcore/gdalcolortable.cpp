@@ -6,7 +6,7 @@
  *
  **********************************************************************
  * Copyright (c) 2000, Frank Warmerdam
- * Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,7 +38,7 @@
 #include "cpl_error.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           GDALColorTable()                           */
@@ -69,7 +69,7 @@ GDALColorTable::GDALColorTable( GDALPaletteInterp eInterpIn ) :
 GDALColorTableH CPL_STDCALL GDALCreateColorTable( GDALPaletteInterp eInterp )
 
 {
-    return reinterpret_cast<GDALColorTableH>( new GDALColorTable( eInterp ) );
+    return GDALColorTable::ToHandle( new GDALColorTable( eInterp ) );
 }
 
 /************************************************************************/
@@ -82,7 +82,7 @@ GDALColorTableH CPL_STDCALL GDALCreateColorTable( GDALPaletteInterp eInterp )
  * This destructor is the same as the C GDALDestroyColorTable() function.
  */
 
-GDALColorTable::~GDALColorTable() {}
+GDALColorTable::~GDALColorTable() = default;
 
 /************************************************************************/
 /*                       GDALDestroyColorTable()                        */
@@ -96,7 +96,7 @@ GDALColorTable::~GDALColorTable() {}
 void CPL_STDCALL GDALDestroyColorTable( GDALColorTableH hTable )
 
 {
-    delete reinterpret_cast<GDALColorTable *>( hTable );
+    delete GDALColorTable::FromHandle( hTable );
 }
 
 /************************************************************************/
@@ -117,7 +117,7 @@ const GDALColorEntry *GDALColorTable::GetColorEntry( int i ) const
 
 {
     if( i < 0 || i >= static_cast<int>(aoEntries.size()) )
-        return NULL;
+        return nullptr;
 
     return &aoEntries[i];
 }
@@ -135,9 +135,9 @@ const GDALColorEntry * CPL_STDCALL
 GDALGetColorEntry( GDALColorTableH hTable, int i )
 
 {
-    VALIDATE_POINTER1( hTable, "GDALGetColorEntry", NULL );
+    VALIDATE_POINTER1( hTable, "GDALGetColorEntry", nullptr );
 
-    return reinterpret_cast<GDALColorTable *>( hTable )->GetColorEntry( i );
+    return GDALColorTable::FromHandle( hTable )->GetColorEntry( i );
 }
 
 /************************************************************************/
@@ -188,7 +188,7 @@ int CPL_STDCALL GDALGetColorEntryAsRGB( GDALColorTableH hTable, int i,
     VALIDATE_POINTER1( hTable, "GDALGetColorEntryAsRGB", 0 );
     VALIDATE_POINTER1( poEntry, "GDALGetColorEntryAsRGB", 0 );
 
-    return reinterpret_cast<GDALColorTable *>( hTable )->
+    return GDALColorTable::FromHandle( hTable )->
         GetColorEntryAsRGB( i, poEntry );
 }
 
@@ -249,7 +249,7 @@ void CPL_STDCALL GDALSetColorEntry( GDALColorTableH hTable, int i,
     VALIDATE_POINTER0( hTable, "GDALSetColorEntry" );
     VALIDATE_POINTER0( poEntry, "GDALSetColorEntry" );
 
-    reinterpret_cast<GDALColorTable *>( hTable )->SetColorEntry( i, poEntry );
+    GDALColorTable::FromHandle( hTable )->SetColorEntry( i, poEntry );
 }
 
 /************************************************************************/
@@ -280,10 +280,10 @@ GDALColorTable *GDALColorTable::Clone() const
 GDALColorTableH CPL_STDCALL GDALCloneColorTable( GDALColorTableH hTable )
 
 {
-    VALIDATE_POINTER1( hTable, "GDALCloneColorTable", NULL );
+    VALIDATE_POINTER1( hTable, "GDALCloneColorTable", nullptr );
 
-    return reinterpret_cast<GDALColorTableH>(
-        reinterpret_cast<GDALColorTable *>( hTable )->Clone() );
+    return GDALColorTable::ToHandle(
+        GDALColorTable::FromHandle( hTable )->Clone() );
 }
 
 /************************************************************************/
@@ -319,7 +319,7 @@ int CPL_STDCALL GDALGetColorEntryCount( GDALColorTableH hTable )
 {
     VALIDATE_POINTER1( hTable, "GDALGetColorEntryCount", 0 );
 
-    return reinterpret_cast<GDALColorTable *>( hTable )->GetColorEntryCount();
+    return GDALColorTable::FromHandle( hTable )->GetColorEntryCount();
 }
 
 /************************************************************************/
@@ -343,7 +343,7 @@ GDALPaletteInterp GDALColorTable::GetPaletteInterpretation() const
 }
 
 /************************************************************************/
-/*                    GDALGetPaltteInterpretation()                     */
+/*                    GDALGetPaletteInterpretation()                    */
 /************************************************************************/
 
 /**
@@ -358,7 +358,7 @@ GDALGetPaletteInterpretation( GDALColorTableH hTable )
 {
     VALIDATE_POINTER1( hTable, "GDALGetPaletteInterpretation", GPI_Gray );
 
-    return reinterpret_cast<GDALColorTable *>( hTable )->
+    return GDALColorTable::FromHandle( hTable )->
         GetPaletteInterpretation();
 }
 
@@ -391,7 +391,7 @@ int GDALColorTable::CreateColorRamp(
     }
 
     // Validate color entries.
-    if( psStartColor == NULL || psEndColor == NULL )
+    if( psStartColor == nullptr || psEndColor == nullptr )
     {
         return -1;
     }
@@ -450,7 +450,7 @@ GDALCreateColorRamp( GDALColorTableH hTable,
 {
     VALIDATE_POINTER0(hTable, "GDALCreateColorRamp");
 
-    reinterpret_cast<GDALColorTable *>( hTable )->
+    GDALColorTable::FromHandle( hTable )->
         CreateColorRamp( nStartIndex, psStartColor,
                          nEndIndex, psEndColor );
 }
@@ -473,4 +473,30 @@ int GDALColorTable::IsSame(const GDALColorTable* poOtherCT) const
            (aoEntries.empty() ||
             memcmp(&aoEntries[0], &poOtherCT->aoEntries[0], aoEntries.size()
                    * sizeof(GDALColorEntry)) == 0);
+}
+
+/************************************************************************/
+/*                          IsIdentity()                                */
+/************************************************************************/
+
+/**
+ * \brief Returns if the current color table is the identity, that is
+ * for each index i, colortable[i].c1 = .c2 = .c3 = i and .c4 = 255
+ *
+ * @since GDAL 3.4.1
+ */
+
+bool GDALColorTable::IsIdentity() const
+{
+    for( int i = 0; i < static_cast<int>(aoEntries.size()); ++i )
+    {
+        if( aoEntries[i].c1 != i ||
+            aoEntries[i].c2 != i ||
+            aoEntries[i].c3 != i ||
+            aoEntries[i].c4 != 255 )
+        {
+            return false;
+        }
+    }
+    return true;
 }

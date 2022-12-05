@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Intergraph Corporation
- * Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -55,9 +55,7 @@ CPL_CVSID("$Id$");
 HFAType::HFAType() :
     bInCompleteDefn(false),
     nBytes(0),
-    nFields(0),
-    papoFields(NULL),
-    pszTypeName(NULL)
+    pszTypeName(nullptr)
 {}
 
 /************************************************************************/
@@ -67,13 +65,6 @@ HFAType::HFAType() :
 HFAType::~HFAType()
 
 {
-    for( int i = 0; i < nFields; i++ )
-    {
-        delete papoFields[i];
-    }
-
-    CPLFree(papoFields);
-
     CPLFree(pszTypeName);
 }
 
@@ -94,38 +85,35 @@ const char *HFAType::Initialize( const char *pszInput )
             pszInput++;
 
         if( *pszInput == '\0' )
-            return NULL;
+            return nullptr;
     }
 
     pszInput++;
 
     // Read the field definitions.
-    while( pszInput != NULL && *pszInput != '}' )
+    while( pszInput != nullptr && *pszInput != '}' )
     {
-        HFAField *poNewField = new HFAField();
+        auto poNewField = cpl::make_unique<HFAField>();
 
         pszInput = poNewField->Initialize(pszInput);
-        if( pszInput != NULL )
+        if( pszInput != nullptr )
         {
-            papoFields = static_cast<HFAField **>(
-                CPLRealloc(papoFields, sizeof(void *) * (nFields + 1)));
-            papoFields[nFields++] = poNewField;
-        }
-        else
-        {
-            delete poNewField;
+            apoFields.emplace_back(std::move(poNewField));
         }
     }
 
-    if( pszInput == NULL )
-        return NULL;
+    if( pszInput == nullptr )
+        return nullptr;
 
     // Collect the name.
     pszInput++;  // Skip `}'
     int i = 0;  // Used after for.
     for( ; pszInput[i] != '\0' && pszInput[i] != ','; i++ ) {}
     if( pszInput[i] == '\0' )
-        return NULL;
+    {
+        pszTypeName = CPLStrdup(pszInput);
+        return nullptr;
+    }
 
     pszTypeName = static_cast<char *>(CPLMalloc(i + 1));
     strncpy(pszTypeName, pszInput, i);
@@ -140,36 +128,42 @@ const char *HFAType::Initialize( const char *pszInput )
 /*                            CompleteDefn()                            */
 /************************************************************************/
 
-void HFAType::CompleteDefn( HFADictionary * poDict )
+bool HFAType::CompleteDefn( HFADictionary * poDict )
 
 {
     // This may already be done, if an earlier object required this
     // object (as a field), and forced an early computation of the size.
     if( nBytes != 0 )
-        return;
+        return true;
 
     if( bInCompleteDefn )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Recursion detected in HFAType::CompleteDefn()");
-        return;
+        return false;
     }
     bInCompleteDefn = true;
 
     // Complete each of the fields, totaling up the sizes.  This
     // isn't really accurate for object with variable sized subobjects.
-    for( int i = 0; i < nFields; i++ )
+    bool bRet = true;
+    for( auto& poField: apoFields )
     {
-        papoFields[i]->CompleteDefn(poDict);
-        if( papoFields[i]->nBytes < 0 || nBytes == -1 )
+        if( !poField->CompleteDefn(poDict) )
+        {
+            bRet = false;
+            break;
+        }
+        if( poField->nBytes < 0 || nBytes == -1 )
             nBytes = -1;
-        else if( nBytes < INT_MAX - papoFields[i]->nBytes )
-            nBytes += papoFields[i]->nBytes;
+        else if( nBytes < INT_MAX - poField->nBytes )
+            nBytes += poField->nBytes;
         else
             nBytes = -1;
     }
 
     bInCompleteDefn = false;
+    return bRet;
 }
 
 /************************************************************************/
@@ -182,9 +176,9 @@ void HFAType::Dump( FILE * fp )
     CPL_IGNORE_RET_VAL(
         VSIFPrintf(fp, "HFAType %s/%d bytes\n", pszTypeName, nBytes));
 
-    for( int i = 0; i < nFields; i++ )
+    for( auto& poField: apoFields )
     {
-        papoFields[i]->Dump(fp);
+        poField->Dump(fp);
     }
 
     CPL_IGNORE_RET_VAL(VSIFPrintf(fp, "\n"));
@@ -202,11 +196,11 @@ HFAType::SetInstValue( const char *pszFieldPath,
 {
     int nArrayIndex = 0;
     int nNameLen = 0;
-    const char *pszRemainder = NULL;
+    const char *pszRemainder = nullptr;
 
     // Parse end of field name, possible index value and
     // establish where the remaining fields (if any) would start.
-    if( strchr(pszFieldPath, '[') != NULL )
+    if( strchr(pszFieldPath, '[') != nullptr )
     {
         const char *pszEnd = strchr(pszFieldPath, '[');
 
@@ -214,10 +208,10 @@ HFAType::SetInstValue( const char *pszFieldPath,
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
         pszRemainder = strchr(pszFieldPath, '.');
-        if( pszRemainder != NULL )
+        if( pszRemainder != nullptr )
             pszRemainder++;
     }
-    else if( strchr(pszFieldPath, '.') != NULL )
+    else if( strchr(pszFieldPath, '.') != nullptr )
     {
         const char *pszEnd = strchr(pszFieldPath, '.');
 
@@ -233,19 +227,21 @@ HFAType::SetInstValue( const char *pszFieldPath,
 
     // Find this field within this type, if possible.
     int nByteOffset = 0;
-    int iField = 0;
+    size_t iField = 0;
+    const size_t nFields = apoFields.size();
     for( ; iField < nFields && nByteOffset < nDataSize; iField++ )
     {
-        if( EQUALN(pszFieldPath, papoFields[iField]->pszFieldName, nNameLen)
-            && papoFields[iField]->pszFieldName[nNameLen] == '\0' )
+        if( EQUALN(pszFieldPath, apoFields[iField]->pszFieldName, nNameLen)
+            && apoFields[iField]->pszFieldName[nNameLen] == '\0' )
         {
             break;
         }
 
-        const int nInc = papoFields[iField]->GetInstBytes(
-            pabyData + nByteOffset, nDataSize - nByteOffset);
+        std::set<HFAField*> oVisitedFields;
+        const int nInc = apoFields[iField]->GetInstBytes(
+            pabyData + nByteOffset, nDataSize - nByteOffset, oVisitedFields);
 
-        if( nInc < 0 ||
+        if( nInc <= 0 ||
             nByteOffset > INT_MAX - nInc )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
@@ -259,7 +255,7 @@ HFAType::SetInstValue( const char *pszFieldPath,
         return CE_Failure;
 
     // Extract this field value, and return.
-    return papoFields[iField]->SetInstValue(pszRemainder, nArrayIndex,
+    return apoFields[iField]->SetInstValue(pszRemainder, nArrayIndex,
                                             pabyData + nByteOffset,
                                             nDataOffset + nByteOffset,
                                             nDataSize - nByteOffset,
@@ -282,7 +278,7 @@ HFAType::GetInstCount( const char *pszFieldPath,
 
     // Parse end of field name, possible index value and
     // establish where the remaining fields (if any) would start.
-    if( strchr(pszFieldPath, '[') != NULL )
+    if( strchr(pszFieldPath, '[') != nullptr )
     {
         const char *pszEnd = strchr(pszFieldPath, '[');
 
@@ -293,7 +289,7 @@ HFAType::GetInstCount( const char *pszFieldPath,
         // if( pszRemainder != NULL )
         //    pszRemainder++;
     }
-    else if( strchr(pszFieldPath, '.') != NULL )
+    else if( strchr(pszFieldPath, '.') != nullptr )
     {
         const char *pszEnd = strchr(pszFieldPath, '.');
 
@@ -309,19 +305,21 @@ HFAType::GetInstCount( const char *pszFieldPath,
 
     // Find this field within this type, if possible.
     int nByteOffset = 0;
-    int iField = 0;
+    size_t iField = 0;
+    const size_t nFields = apoFields.size();
     for( ; iField < nFields && nByteOffset < nDataSize; iField++ )
     {
-        if( EQUALN(pszFieldPath, papoFields[iField]->pszFieldName,nNameLen)
-            && papoFields[iField]->pszFieldName[nNameLen] == '\0' )
+        if( EQUALN(pszFieldPath, apoFields[iField]->pszFieldName,nNameLen)
+            && apoFields[iField]->pszFieldName[nNameLen] == '\0' )
         {
             break;
         }
 
-        const int nInc = papoFields[iField]->GetInstBytes(
-            pabyData + nByteOffset, nDataSize - nByteOffset);
+        std::set<HFAField*> oVisitedFields;
+        const int nInc = apoFields[iField]->GetInstBytes(
+            pabyData + nByteOffset, nDataSize - nByteOffset, oVisitedFields);
 
-        if( nInc < 0 || nByteOffset > INT_MAX - nInc )
+        if( nInc <= 0 || nByteOffset > INT_MAX - nInc )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
             return -1;
@@ -334,7 +332,7 @@ HFAType::GetInstCount( const char *pszFieldPath,
         return -1;
 
     // Extract this field value, and return.
-    return papoFields[iField]->GetInstCount(pabyData + nByteOffset,
+    return apoFields[iField]->GetInstCount(pabyData + nByteOffset,
                                             nDataSize - nByteOffset);
 }
 
@@ -365,15 +363,15 @@ HFAType::ExtractInstValue( const char *pszFieldPath,
 {
     int nArrayIndex = 0;
     int nNameLen = 0;
-    const char *pszRemainder = NULL;
+    const char *pszRemainder = nullptr;
 
     // Parse end of field name, possible index value and
     // establish where the remaining fields (if any) would start.
     const char *pszFirstArray = strchr(pszFieldPath, '[');
     const char *pszFirstDot = strchr(pszFieldPath, '.');
 
-    if( pszFirstArray != NULL
-        && (pszFirstDot == NULL
+    if( pszFirstArray != nullptr
+        && (pszFirstDot == nullptr
             || pszFirstDot > pszFirstArray) )
     {
         const char *pszEnd = pszFirstArray;
@@ -382,10 +380,10 @@ HFAType::ExtractInstValue( const char *pszFieldPath,
         nNameLen = static_cast<int>(pszEnd - pszFieldPath);
 
         pszRemainder = strchr(pszFieldPath, '.');
-        if( pszRemainder != NULL )
+        if( pszRemainder != nullptr )
             pszRemainder++;
     }
-    else if( pszFirstDot != NULL )
+    else if( pszFirstDot != nullptr )
     {
         const char *pszEnd = pszFirstDot;
 
@@ -396,24 +394,27 @@ HFAType::ExtractInstValue( const char *pszFieldPath,
     else
     {
         nNameLen = static_cast<int>(strlen(pszFieldPath));
-        pszRemainder = NULL;
+        pszRemainder = nullptr;
     }
 
     // Find this field within this type, if possible.
     int nByteOffset = 0;
-    int iField = 0;
+    size_t iField = 0;
+    const size_t nFields = apoFields.size();
     for( ; iField < nFields && nByteOffset < nDataSize; iField++ )
     {
-        if( EQUALN(pszFieldPath, papoFields[iField]->pszFieldName, nNameLen)
-            && papoFields[iField]->pszFieldName[nNameLen] == '\0' )
+        if( EQUALN(pszFieldPath, apoFields[iField]->pszFieldName, nNameLen)
+            && apoFields[iField]->pszFieldName[nNameLen] == '\0' )
         {
             break;
         }
 
-        const int nInc = papoFields[iField]->GetInstBytes(
-            pabyData + nByteOffset, nDataSize - nByteOffset);
+        std::set<HFAField*> oVisitedFields;
+        const int nInc = apoFields[iField]->GetInstBytes(
+            pabyData + nByteOffset, nDataSize - nByteOffset,
+            oVisitedFields);
 
-        if( nInc < 0 || nByteOffset > INT_MAX - nInc )
+        if( nInc <= 0 || nByteOffset > INT_MAX - nInc )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
             return false;
@@ -426,7 +427,7 @@ HFAType::ExtractInstValue( const char *pszFieldPath,
         return false;
 
     // Extract this field value, and return.
-    return papoFields[iField]->
+    return apoFields[iField]->
         ExtractInstValue(pszRemainder, nArrayIndex,
                          pabyData + nByteOffset,
                          nDataOffset + nByteOffset,
@@ -441,18 +442,21 @@ HFAType::ExtractInstValue( const char *pszFieldPath,
 
 void HFAType::DumpInstValue( FILE *fpOut,
                              GByte *pabyData, GUInt32 nDataOffset,
-                             int nDataSize, const char *pszPrefix )
+                             int nDataSize, const char *pszPrefix ) const
 
 {
-    for( int iField = 0; iField < nFields && nDataSize > 0; iField++ )
+    const size_t nFields = apoFields.size();
+    for( size_t iField = 0; iField < nFields && nDataSize > 0; iField++ )
     {
-        HFAField *poField = papoFields[iField];
+        auto& poField = apoFields[iField];
 
         poField->DumpInstValue(fpOut, pabyData, nDataOffset,
                                nDataSize, pszPrefix);
 
-        const int nInstBytes = poField->GetInstBytes(pabyData, nDataSize);
-        if( nInstBytes < 0 || nDataOffset > UINT_MAX - nInstBytes )
+        std::set<HFAField*> oVisitedFields;
+        const int nInstBytes = poField->GetInstBytes(pabyData, nDataSize,
+                                                     oVisitedFields);
+        if( nInstBytes <= 0 || nDataOffset > UINT_MAX - nInstBytes )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
             return;
@@ -470,21 +474,22 @@ void HFAType::DumpInstValue( FILE *fpOut,
 /*      How many bytes in this particular instance of this type?        */
 /************************************************************************/
 
-int HFAType::GetInstBytes( GByte *pabyData, int nDataSize )
+int HFAType::GetInstBytes( GByte *pabyData, int nDataSize,
+                           std::set<HFAField*>& oVisitedFields ) const
 
 {
     if( nBytes >= 0 )
         return nBytes;
 
     int nTotal = 0;
-
-    for( int iField = 0; iField < nFields && nTotal < nDataSize; iField++ )
+    const size_t nFields = apoFields.size();
+    for( size_t iField = 0; iField < nFields && nTotal < nDataSize; iField++ )
     {
-        HFAField *poField = papoFields[iField];
+        auto& poField = apoFields[iField];
 
         const int nInstBytes =
-            poField->GetInstBytes(pabyData, nDataSize - nTotal);
-        if( nInstBytes < 0 || nTotal > INT_MAX - nInstBytes )
+            poField->GetInstBytes(pabyData, nDataSize - nTotal, oVisitedFields);
+        if( nInstBytes <= 0 || nTotal > INT_MAX - nInstBytes )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid return value");
             return -1;

@@ -8,7 +8,7 @@
  *
  **********************************************************************
  * Copyright (c) 2007,  Geoconcept and IGN
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -260,24 +260,26 @@ static long GCIOAPI_CALL _read_GCIO (
                                       GCExportFileH* hGXT
                                     )
 {
-  FILE* h;
+  VSILFILE* h;
   long nread;
-  int c;
+  unsigned char c;
   char *result;
 
   h= GetGCHandle_GCIO(hGXT);
   nread= 0L;
   result= GetGCCache_GCIO(hGXT);
-  SetGCCurrentOffset_GCIO(hGXT, VSIFTell(h));/* keep offset of beginning of lines */
-  while ((c= VSIFGetc(h))!=EOF)
+  SetGCCurrentOffset_GCIO(hGXT, VSIFTellL(h));/* keep offset of beginning of lines */
+  while( VSIFReadL(&c, 1, 1, h) == 1)
   {
-    c= (0x00FF & (unsigned char)(c));
-
     if( c ==  '\r' )            /* PC '\r\n' line, MAC '\r' */
     {
-      if ((c= VSIFGetc(h))!='\n')
+      if( VSIFReadL(&c, 1, 1, h) != 1 )
       {
-        VSIUngetc(c,h);
+        c = '\n';
+      }
+      else if( c !='\n')
+      {
+        VSIFSeekL(h, VSIFTellL(h)-1, SEEK_SET);
         c= '\n';
       }
     }
@@ -302,20 +304,18 @@ static long GCIOAPI_CALL _read_GCIO (
     }/* switch */
   }/* while */
   *result= '\0';
-  if (c==EOF)
-  {
-    SetGCStatus_GCIO(hGXT, vEof_GCIO);
-    if (nread==0L)
-    {
-      return EOF;
-    }
-  }
 
+  SetGCStatus_GCIO(hGXT, vEof_GCIO);
+  if (nread==0L)
+  {
+    return EOF;
+  }
   return nread;
+
 }/* _read_GCIO */
 
 /* -------------------------------------------------------------------- */
-static long GCIOAPI_CALL _get_GCIO (
+static vsi_l_offset GCIOAPI_CALL _get_GCIO (
                                      GCExportFileH* hGXT
                                    )
 {
@@ -333,7 +333,7 @@ static long GCIOAPI_CALL _get_GCIO (
   if (_read_GCIO(hGXT)==EOF)
   {
     SetGCWhatIs_GCIO(hGXT, (GCTypeKind)vUnknownIO_ItemType_GCIO);
-    return EOF;
+    return (vsi_l_offset)EOF;
   }
   SetGCWhatIs_GCIO(hGXT, (GCTypeKind)vStdCol_GCIO);
   if (strstr(GetGCCache_GCIO(hGXT),kCom_GCIO)==GetGCCache_GCIO(hGXT))
@@ -545,23 +545,15 @@ static int GCIOAPI_CALL _findFieldByName_GCIO (
 
   if( fields )
   {
-    CPLList* e;
-    int n, i;
-    if( (n= CPLListCount(fields))>0 )
+    int i = 0;
+    CPLList* psIter = fields;
+    for(; psIter; psIter = psIter->psNext, i++ )
     {
-      for( i= 0; i<n; i++)
-      {
-        if( (e= CPLListGet(fields,i)) )
+        theField= (GCField*)psIter->pData;
+        if( EQUAL(GetFieldName_GCIO(theField),name) )
         {
-          if( (theField= (GCField*)CPLListGetData(e)) )
-          {
-            if( EQUAL(GetFieldName_GCIO(theField),name) )
-            {
               return i;
-            }
-          }
         }
-      }
     }
   }
   return -1;
@@ -595,7 +587,7 @@ static void GCIOAPI_CALL _InitSubType_GCIO (
   SetSubTypeDim_GCIO(theSubType, v2D_GCIO);
   SetSubTypeNbFields_GCIO(theSubType, -1);
   SetSubTypeNbFeatures_GCIO(theSubType, 0L);
-  SetSubTypeBOF_GCIO(theSubType, -1L);
+  SetSubTypeBOF_GCIO(theSubType, (vsi_l_offset)EOF);
   SetSubTypeBOFLinenum_GCIO(theSubType, 0L);
   SetSubTypeExtent_GCIO(theSubType, NULL);
   SetSubTypeHeaderWritten_GCIO(theSubType, FALSE);
@@ -1024,7 +1016,7 @@ static void GCIOAPI_CALL _ReInit_GCIO (
   }
   if( GetGCHandle_GCIO(hGXT) )
   {
-    VSIFClose(GetGCHandle_GCIO(hGXT));
+    VSIFCloseL(GetGCHandle_GCIO(hGXT));
   }
   if( GetGCExtension_GCIO(hGXT) )
   {
@@ -1050,7 +1042,7 @@ static void GCIOAPI_CALL _Destroy_GCIO (
 {
   if( delFile && GetGCMode_GCIO(*hGXT)==vWriteAccess_GCIO )
   {
-    VSIFClose(GetGCHandle_GCIO(*hGXT));
+    VSIFCloseL(GetGCHandle_GCIO(*hGXT));
     SetGCHandle_GCIO(*hGXT, NULL);
     VSIUnlink(CPLFormFilename(GetGCPath_GCIO(*hGXT),GetGCBasename_GCIO(*hGXT),GetGCExtension_GCIO(*hGXT)));
   }
@@ -1343,6 +1335,12 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
 
   if( (p= strstr(GetGCCache_GCIO(hGXT),kMetadataVERSION_GCIO))!=NULL )
   {
+    if( GetMetaVersion_GCIO(Meta) )
+    {
+        DestroyHeader_GCIO(&(GetGCMeta_GCIO(hGXT)));
+        return NULL;
+    }
+
     /* //$VERSION char* */
     p+= strlen(kMetadataVERSION_GCIO);
     while( isspace((unsigned char)*p) ) p++;
@@ -1437,6 +1435,13 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parsePragma_GCIO (
   {
     int v, z;
     GCSysCoord* syscoord;
+
+    if( GetMetaSysCoord_GCIO(Meta) )
+    {
+        DestroyHeader_GCIO(&(GetGCMeta_GCIO(hGXT)));
+        return NULL;
+    }
+
     /* //$SYSCOORD {Type: int} [ ; { TimeZone: TimeZoneValue } ] */
     v= -1;
     z= -1;
@@ -1766,7 +1771,7 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
                                                           GCExportFileMetadata* Meta,
                                                           GCSubType* theSubType,
                                                           int i,
-                                                          const char** pszFields,
+                                                          const char** papszFields,
                                                           int nbtp,
                                                           GCDim d,
                                                           OGREnvelope* bbox
@@ -1830,6 +1835,11 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
 
   if( gt==wkbPoint )
   {
+    if( i + 2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0) > nbtp )
+    {
+        OGR_G_DestroyGeometry(g);
+        return NULL;
+    }
     /*
      * More Graphics :
      * Angle
@@ -1837,13 +1847,13 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
      * displayed to represent the ponctual entity or angle of the text entity
      * NOT IMPLEMENTED
      */
-    x= CPLAtof(pszFields[i]);
+    x= CPLAtof(papszFields[i]);
     i++;
-    y= CPLAtof(pszFields[i]);
+    y= CPLAtof(papszFields[i]);
     i++;
     if( d==v3D_GCIO||d==v3DM_GCIO )
     {
-      z= CPLAtof(pszFields[i]);
+      z= CPLAtof(papszFields[i]);
       i++;
     }
     if( buildGeom )
@@ -1862,17 +1872,23 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
 
   if( gt==wkbLineString )
   {
+    if( i + 2 * (2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0)) + 1 > nbtp )
+    {
+        OGR_G_DestroyGeometry(g);
+        return NULL;
+    }
+
     /*
      * More Graphics :
      * XP<>YP[<>ZP]Nr points=k[<>X<>Y[<>Z]]k...
      */
-    x= CPLAtof(pszFields[i]);
+    x= CPLAtof(papszFields[i]);
     i++;
-    y= CPLAtof(pszFields[i]);
+    y= CPLAtof(papszFields[i]);
     i++;
     if( d==v3D_GCIO||d==v3DM_GCIO )
     {
-      z= CPLAtof(pszFields[i]);
+      z= CPLAtof(papszFields[i]);
       i++;
     }
     if( buildGeom )
@@ -1893,17 +1909,22 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
     {
       i++;
     }
-    np= atoi(pszFields[i]);
+    np= atoi(papszFields[i]);
     i++;
     for( ip= 1; ip<=np; ip++ )
     {
-      x= CPLAtof(pszFields[i]);
+      if( i + 2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0) > nbtp )
+      {
+        OGR_G_DestroyGeometry(g);
+        return NULL;
+      }
+      x= CPLAtof(papszFields[i]);
       i++;
-      y= CPLAtof(pszFields[i]);
+      y= CPLAtof(papszFields[i]);
       i++;
       if( d==v3D_GCIO || d==v3DM_GCIO )
       {
-        z= CPLAtof(pszFields[i]);
+        z= CPLAtof(papszFields[i]);
         i++;
       }
       if( buildGeom )
@@ -1936,6 +1957,10 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
 
     Lpo= e= NULL;
     outer= ring= NULL;
+    if( i + 2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0) + 1 > nbtp )
+    {
+        goto onError;
+    }
     if( buildGeom )
     {
       if( !(outer= OGR_G_CreateGeometry(wkbPolygon)) )
@@ -1958,13 +1983,13 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
         OGR_G_AssignSpatialReference(ring,GetMetaSRS_GCIO(Meta));
       }
     }
-    x= CPLAtof(pszFields[i]);
+    x= CPLAtof(papszFields[i]);
     i++;
-    y= CPLAtof(pszFields[i]);
+    y= CPLAtof(papszFields[i]);
     i++;
     if( d==v3D_GCIO||d==v3DM_GCIO )
     {
-      z= CPLAtof(pszFields[i]);
+      z= CPLAtof(papszFields[i]);
       i++;
     }
     if( buildGeom )
@@ -1978,17 +2003,25 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
     {
       MergeOGREnvelope_GCIO(bbox,x,y);
     }
-    np= atoi(pszFields[i]);
+    np= atoi(papszFields[i]);
     i++;
+    if( np < 0 ||
+        (np > 0 &&
+         i + (GIntBig)(2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0)) * np > nbtp) )
+    {
+        OGR_G_DestroyGeometry(outer);
+        OGR_G_DestroyGeometry(ring);
+        goto onError;
+    }
     for( ip= 1; ip<=np; ip++ )
     {
-      x= CPLAtof(pszFields[i]);
+      x= CPLAtof(papszFields[i]);
       i++;
-      y= CPLAtof(pszFields[i]);
+      y= CPLAtof(papszFields[i]);
       i++;
       if( d==v3D_GCIO||d==v3DM_GCIO )
       {
-        z= CPLAtof(pszFields[i]);
+        z= CPLAtof(papszFields[i]);
         i++;
       }
       if( buildGeom )
@@ -2019,10 +2052,14 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
     /* additional ring : either holes, or islands */
     if( i < nbtp-1 )
     {
-      npo= atoi(pszFields[i]);
+      npo= atoi(papszFields[i]);
       i++;
       for( ipo= 1; ipo<=npo; ipo++ )
       {
+        if( i + (2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0) + 1) > nbtp )
+        {
+            goto onError;
+        }
         if( buildGeom )
         {
           if( !(ring= OGR_G_CreateGeometry(wkbLinearRing)) )
@@ -2035,13 +2072,13 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
             OGR_G_AssignSpatialReference(ring,GetMetaSRS_GCIO(Meta));
           }
         }
-        x= CPLAtof(pszFields[i]);
+        x= CPLAtof(papszFields[i]);
         i++;
-        y= CPLAtof(pszFields[i]);
+        y= CPLAtof(papszFields[i]);
         i++;
         if( d==v3D_GCIO||d==v3DM_GCIO )
         {
-          z= CPLAtof(pszFields[i]);
+          z= CPLAtof(papszFields[i]);
           i++;
         }
         if( buildGeom )
@@ -2055,17 +2092,22 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
         {
           MergeOGREnvelope_GCIO(bbox,x,y);
         }
-        np= atoi(pszFields[i]);
+        np= atoi(papszFields[i]);
         i++;
         for( ip= 1; ip<=np; ip++ )
         {
-          x= CPLAtof(pszFields[i]);
+          if( i + (2 + (( d==v3D_GCIO||d==v3DM_GCIO ) ? 1 : 0)) > nbtp )
+          {
+              OGR_G_DestroyGeometry(ring);
+              goto onError;
+          }
+          x= CPLAtof(papszFields[i]);
           i++;
-          y= CPLAtof(pszFields[i]);
+          y= CPLAtof(papszFields[i]);
           i++;
           if( d==v3D_GCIO||d==v3DM_GCIO )
           {
-            z= CPLAtof(pszFields[i]);
+            z= CPLAtof(papszFields[i]);
             i++;
           }
           if( buildGeom )
@@ -2082,14 +2124,25 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
         }
         if( buildGeom )
         {
-          /* is the ring of hole or another polygon ? */
-          for( ilpo= 0; ilpo<CPLListCount(Lpo); ilpo++)
+          /* is the ring a hole or another polygon ? */
+          const int nListCount = CPLListCount(Lpo);
+          for( ilpo= 0; ilpo<nListCount; ilpo++)
           {
             if( (e= CPLListGet(Lpo,ilpo)) )
             {
               if( (outer= (OGRGeometryH)CPLListGetData(e)) )
               {
-                if( OGR_G_Contains(outer,ring) )
+                OGRGeometryH hPolyRing = OGR_G_CreateGeometry(wkbPolygon);
+                int bRes;
+                if(OGR_G_AddGeometryDirectly(hPolyRing, ring) != OGRERR_NONE )
+                {
+                  OGR_G_DestroyGeometry(hPolyRing);
+                  goto onError;
+                }
+                bRes = OGR_G_Contains(outer,hPolyRing) ;
+                OGR_G_RemoveGeometry(hPolyRing, 0, FALSE);
+                OGR_G_DestroyGeometry(hPolyRing);
+                if( bRes )
                 {
                   OGR_G_AddGeometryDirectly(outer,ring);
                   ring= NULL;
@@ -2098,7 +2151,7 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO (
               }
             }
           }
-          if( !ring )
+          if( ring )
           {
             /* new polygon */
             if( !(outer= OGR_G_CreateGeometry(wkbPolygon)) )
@@ -2177,7 +2230,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
                                                       )
 {
   GCExportFileMetadata* Meta;
-  char **pszFields, delim[2] = { 0 }, tdst[kItemSize_GCIO];
+  char **papszFields, delim[2] = { 0 }, tdst[kItemSize_GCIO];
   int whereClass, whereSubType, i, j, nbstf, nbf, nbtf, buildFeature;
   GCType* theClass;
   GCField* theField;
@@ -2185,7 +2238,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   OGRFeatureDefnH fd;
   OGRFeatureH f;
   OGRGeometryH g;
-  int bTokenBehaviour= CSLT_ALLOWEMPTYTOKENS;
+  int bTokenBehavior= CSLT_ALLOWEMPTYTOKENS;
 
   fd= NULL;
   f= NULL;
@@ -2227,48 +2280,48 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   /*         allow direct access !                        */
   if( GetMetaQuotedText_GCIO(Meta) )
   {
-    bTokenBehaviour|= CSLT_HONOURSTRINGS;
+    bTokenBehavior|= CSLT_HONOURSTRINGS;
   }
   CPLDebug("GEOCONCEPT","Cache=[%s] delim=[%s]", GetGCCache_GCIO(H), delim);
-  if( !(pszFields= CSLTokenizeString2(GetGCCache_GCIO(H),
+  if( !(papszFields= CSLTokenizeString2(GetGCCache_GCIO(H),
                                       delim,
-                                      bTokenBehaviour)) )
+                                      bTokenBehavior)) )
   {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Geoconcept line syntax is wrong.\n",
               GetGCCurrentLinenum_GCIO(H) );
     return NULL;
   }
-  if( (nbtf= CSLCount(pszFields)) <= 5 )
+  if( (nbtf= CSLCount(papszFields)) <= 5 )
   {
-    CSLDestroy(pszFields);
+    CSLDestroy(papszFields);
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Missing fields (at least 5 are expected, %d found).\n",
               GetGCCurrentLinenum_GCIO(H), nbtf );
     return NULL;
   }
   /* Class */
-  if( (whereClass = _findTypeByName_GCIO(H,pszFields[1]))==-1 )
+  if( (whereClass = _findTypeByName_GCIO(H,papszFields[1]))==-1 )
   {
     if( CPLListCount(GetMetaTypes_GCIO(Meta))==0 )
     {
       CPLError( CE_Failure, CPLE_AppDefined,
-                "Line %ld, %s%s pragma expected fro type definition before objects dump.",
+                "Line %ld, %s%s pragma expected from type definition before objects dump.",
                 GetGCCurrentLinenum_GCIO(H), kPragma_GCIO, kMetadataFIELDS_GCIO );
     }
     else
     {
       CPLError( CE_Failure, CPLE_AppDefined,
                 "Line %ld, Unknown type '%s'.\n",
-                GetGCCurrentLinenum_GCIO(H), pszFields[1] );
+                GetGCCurrentLinenum_GCIO(H), papszFields[1] );
     }
-    CSLDestroy(pszFields);
+    CSLDestroy(papszFields);
     return NULL;
   }
   theClass= _getType_GCIO(H,whereClass);
   if( theClass == NULL )
   {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       return NULL;
   }
   if( *theSubType )
@@ -2276,17 +2329,17 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     /* reading ... */
     if( !EQUAL(GetTypeName_GCIO(GetSubTypeType_GCIO(*theSubType)),GetTypeName_GCIO(theClass)) )
     {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       return NULL;
     }
   }
   /* Subclass */
-  if( (whereSubType= _findSubTypeByName_GCIO(theClass,pszFields[2]))==-1 )
+  if( (whereSubType= _findSubTypeByName_GCIO(theClass,papszFields[2]))==-1 )
   {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Unknown subtype found '%s' for type '%s'.\n",
-              GetGCCurrentLinenum_GCIO(H), pszFields[2], pszFields[1] );
-    CSLDestroy(pszFields);
+              GetGCCurrentLinenum_GCIO(H), papszFields[2], papszFields[1] );
+    CSLDestroy(papszFields);
     return NULL;
   }
   if( *theSubType )
@@ -2295,7 +2348,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     if( psSubType == NULL ||
         !EQUAL(GetSubTypeName_GCIO(psSubType),GetSubTypeName_GCIO(*theSubType)) )
     {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       return NULL;
     }
   }
@@ -2312,7 +2365,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, missing mandatory field %s for type '%s'.\n",
               GetGCCurrentLinenum_GCIO(H), kName_GCIO, tdst );
-    CSLDestroy(pszFields);
+    CSLDestroy(papszFields);
     return NULL;
   }
   nbf= 4;
@@ -2336,16 +2389,16 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Total number of fields differs with type definition '%s' (%d found, at least %d expected).\n",
               GetGCCurrentLinenum_GCIO(H), tdst, nbtf, 1+nbf+nbstf+1 );
-    CSLDestroy(pszFields);
+    CSLDestroy(papszFields);
     return NULL;
   }
-  i= atoi(pszFields[nbf]);
+  i= atoi(papszFields[nbf]);
   if( i!=nbstf )
   {
     CPLError( CE_Failure, CPLE_AppDefined,
               "Line %ld, Number of user's fields differs with type definition '%s' (%d found, %d expected).\n",
               GetGCCurrentLinenum_GCIO(H), tdst, i, nbstf );
-    CSLDestroy(pszFields);
+    CSLDestroy(papszFields);
     return NULL;
   }
   /*
@@ -2355,7 +2408,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   {
     if( !(fd= OGR_FD_Create(tdst)) )
     {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       return NULL;
     }
 
@@ -2399,7 +2452,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
         }
         break;
       default          :
-        CSLDestroy(pszFields);
+        CSLDestroy(papszFields);
         OGR_FD_Destroy(fd);
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Unknown Geoconcept type for '%s'.\n",
@@ -2411,7 +2464,7 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
       theField= GetSubTypeField_GCIO(*theSubType,i);
       if( !(fld= OGR_Fld_Create(GetFieldName_GCIO(theField),OFTString)) ) /* FIXME */
       {
-        CSLDestroy(pszFields);
+        CSLDestroy(papszFields);
         OGR_FD_Destroy(fd);
         return NULL;
       }
@@ -2430,10 +2483,10 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     {
       if( !GetSubTypeFeatureDefn_GCIO(*theSubType) )
         OGR_FD_Destroy(fd);
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       return NULL;
     }
-    OGR_F_SetFID(f, atol(pszFields[0])); /* FID */
+    OGR_F_SetFID(f, atol(papszFields[0])); /* FID */
     if( OGR_F_GetFID(f)==OGRNullFID )
     {
       OGR_F_SetFID(f, GetGCCurrentLinenum_GCIO(H));
@@ -2441,10 +2494,10 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     for( i= 1 + nbf, j= 0; i<1 + nbf + nbstf; i++, j++ )
     {
       /*theField= GetSubTypeField_GCIO(*theSubType,i); */ /* FIXME?*/
-      if( pszFields[i][0]=='\0' )
+      if( papszFields[i][0]=='\0' )
         OGR_F_UnsetField(f,j);
       else
-        OGR_F_SetFieldString(f,j,pszFields[i]);
+        OGR_F_SetFieldString(f,j,papszFields[i]);
     }
   }
   else
@@ -2452,14 +2505,14 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
     i= 1 + nbf + nbstf;
   }
   CPLDebug("GEOCONCEPT", "%d %d/%d/%d/%d\n", __LINE__, i, nbf, nbstf, nbtf);
-  if( !(g= _buildOGRGeometry_GCIO(Meta,*theSubType,i,(const char **)pszFields,nbtf,d,bbox)) )
+  if( !(g= _buildOGRGeometry_GCIO(Meta,*theSubType,i,(const char **)papszFields,nbtf,d,bbox)) )
   {
     /*
      * the Subclass is under reading via ReadNextFeature_GCIO
      */
     if( buildFeature )
     {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       if( f ) OGR_F_Destroy(f);
       return NULL;
     }
@@ -2468,12 +2521,12 @@ static OGRFeatureH GCIOAPI_CALL _buildOGRFeature_GCIO (
   {
     if( OGR_F_SetGeometryDirectly(f,g)!=OGRERR_NONE )
     {
-      CSLDestroy(pszFields);
+      CSLDestroy(papszFields);
       if( f ) OGR_F_Destroy(f);
       return NULL;
     }
   }
-  CSLDestroy(pszFields);
+  CSLDestroy(papszFields);
 
   /* Assign definition : */
   if( !GetSubTypeFeatureDefn_GCIO(*theSubType) )
@@ -2497,7 +2550,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parseObject_GCIO (
   GCExportFileMetadata* Meta;
   GCSubType* theSubType;
   GCDim d;
-  long coff;
+  vsi_l_offset coff;
   OGREnvelope bbox, *pszBbox= &bbox;
 
   Meta= GetGCMeta_GCIO(H);
@@ -2506,12 +2559,12 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parseObject_GCIO (
 
   d= vUnknown3D_GCIO;
   theSubType= NULL;
-  coff= -1L;
+  coff= (vsi_l_offset)EOF;
 reloop:
   /* TODO: Switch to C++ casts below. */
   if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(H) == vComType_GCIO )
   {
-    if( _get_GCIO(H)==-1 )
+    if( _get_GCIO(H)== (vsi_l_offset)EOF )
       return Meta;
     goto reloop;
   }
@@ -2540,22 +2593,22 @@ reloop:
       SetGCStatus_GCIO(H,vMemoStatus_GCIO);
       return Meta;
     }
-    if( _get_GCIO(H)==-1 )
+    if( _get_GCIO(H)== (vsi_l_offset)EOF )
       return Meta;
     goto reloop;
   }
-  if( coff==-1L) coff= GetGCCurrentOffset_GCIO(H);
+  if( coff==(vsi_l_offset)EOF) coff= GetGCCurrentOffset_GCIO(H);
   if( !_buildOGRFeature_GCIO(H,&theSubType,d,pszBbox) )
   {
     return NULL;
   }
-  if( GetSubTypeBOF_GCIO(theSubType)==-1L )
+  if( GetSubTypeBOF_GCIO(theSubType)== (vsi_l_offset)EOF )
   {
     SetSubTypeBOF_GCIO(theSubType,coff);/* Begin Of Features for the Class.Subclass */
     SetSubTypeBOFLinenum_GCIO(theSubType, GetGCCurrentLinenum_GCIO(H));
     CPLDebug("GEOCONCEPT","Feature Type [%s] starts at #%ld, line %ld\n",
                           GetSubTypeName_GCIO(theSubType),
-                          GetSubTypeBOF_GCIO(theSubType),
+                          (long)GetSubTypeBOF_GCIO(theSubType),
                           GetSubTypeBOFLinenum_GCIO(theSubType));
   }
   SetSubTypeNbFeatures_GCIO(theSubType, GetSubTypeNbFeatures_GCIO(theSubType)+1L);
@@ -2620,18 +2673,18 @@ GCExportFileH GCIOAPI_CALL1(*) Open_GCIO (
 
   if( GetGCMode_GCIO(hGXT)==vUpdateAccess_GCIO )
   {
-    FILE* h;
+    VSILFILE* h;
 
     /* file must exists ... */
-    if( !(h= VSIFOpen(CPLFormFilename(GetGCPath_GCIO(hGXT),GetGCBasename_GCIO(hGXT),GetGCExtension_GCIO(hGXT)), "rt")) )
+    if( !(h= VSIFOpenL(CPLFormFilename(GetGCPath_GCIO(hGXT),GetGCBasename_GCIO(hGXT),GetGCExtension_GCIO(hGXT)), "rt")) )
     {
       _Destroy_GCIO(&hGXT,FALSE);
       return NULL;
     }
-    VSIFClose(h);
+    VSIFCloseL(h);
   }
 
-  SetGCHandle_GCIO(hGXT, VSIFOpen(CPLFormFilename(GetGCPath_GCIO(hGXT),GetGCBasename_GCIO(hGXT),GetGCExtension_GCIO(hGXT)), mode));
+  SetGCHandle_GCIO(hGXT, VSIFOpenL(CPLFormFilename(GetGCPath_GCIO(hGXT),GetGCBasename_GCIO(hGXT),GetGCExtension_GCIO(hGXT)), mode));
   if( !GetGCHandle_GCIO(hGXT) )
   {
     _Destroy_GCIO(&hGXT,FALSE);
@@ -2646,7 +2699,7 @@ GCExportFileH GCIOAPI_CALL1(*) Open_GCIO (
       GCExportFileH* hGCT;
 
       hGCT= _Create_GCIO(gctPath,"gct","-");
-      SetGCHandle_GCIO(hGCT, VSIFOpen(CPLFormFilename(GetGCPath_GCIO(hGCT),GetGCBasename_GCIO(hGCT),GetGCExtension_GCIO(hGCT)), "r"));
+      SetGCHandle_GCIO(hGCT, VSIFOpenL(CPLFormFilename(GetGCPath_GCIO(hGCT),GetGCBasename_GCIO(hGCT),GetGCExtension_GCIO(hGCT)), "r"));
       if( !GetGCHandle_GCIO(hGCT) )
       {
         CPLError( CE_Failure, CPLE_NotSupported,
@@ -2723,12 +2776,12 @@ GCExportFileH GCIOAPI_CALL1(*) Rewind_GCIO (
     {
       if( !theSubType )
       {
-        VSIRewind(GetGCHandle_GCIO(hGXT));
+        VSIRewindL(GetGCHandle_GCIO(hGXT));
         SetGCCurrentLinenum_GCIO(hGXT, 0L);
       }
       else
       {
-        if( VSIFSeek(GetGCHandle_GCIO(hGXT), GetSubTypeBOF_GCIO(theSubType), SEEK_SET) == 0 )
+        if( VSIFSeekL(GetGCHandle_GCIO(hGXT), GetSubTypeBOF_GCIO(theSubType), SEEK_SET) == 0 )
             SetGCCurrentLinenum_GCIO(hGXT, GetSubTypeBOFLinenum_GCIO(theSubType));
       }
       SetGCStatus_GCIO(hGXT,vNoStatus_GCIO);
@@ -2746,7 +2799,7 @@ GCExportFileH GCIOAPI_CALL1(*) FFlush_GCIO (
   {
     if( GetGCHandle_GCIO(hGXT) )
     {
-      VSIFFlush(GetGCHandle_GCIO(hGXT));
+      VSIFFlushL(GetGCHandle_GCIO(hGXT));
     }
   }
   return hGXT;
@@ -2927,7 +2980,10 @@ GCField GCIOAPI_CALL1(*) AddTypeField_GCIO (
     return NULL;
   }
   theClass= _getType_GCIO(H,whereClass);
-
+  if( theClass == NULL )
+  {
+      return NULL;
+  }
   normName= _NormalizeFieldName_GCIO(name);
   if( _findFieldByName_GCIO(GetTypeFields_GCIO(theClass),normName)!=-1 )
   {
@@ -3004,6 +3060,10 @@ GCField GCIOAPI_CALL1(*) AddSubTypeField_GCIO (
     return NULL;
   }
   theSubType= _getSubType_GCIO(theClass,whereSubType);
+  if( theSubType == NULL )
+  {
+    return NULL;
+  }
 
   normName= _NormalizeFieldName_GCIO(name);
   if( _findFieldByName_GCIO(GetSubTypeFields_GCIO(theSubType),normName)!=-1 )
@@ -3067,7 +3127,7 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO (
   id= UNDEFINEDID_GCIO;
   knd= vUnknownItemType_GCIO;
   theField= NULL;
-  while( _get_GCIO(hGCT)!=EOF )
+  while( _get_GCIO(hGCT)!= (vsi_l_offset)EOF )
   {
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vComType_GCIO )
     {
@@ -3253,7 +3313,6 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
   char e[kExtraSize_GCIO] = {0};
   long id;
   GCTypeKind knd;
-  GCField* theField;
 
   bEOF= 0;
   n[0]= '\0';
@@ -3261,8 +3320,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
   e[0]= '\0';
   id= UNDEFINEDID_GCIO;
   knd= vUnknownItemType_GCIO;
-  theField= NULL;
-  while( _get_GCIO(hGCT)!=EOF ) {
+  while( _get_GCIO(hGCT)!= (vsi_l_offset)EOF ) {
     /* TODO: Switch to C++ casts below. */
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vComType_GCIO )
     {
@@ -3281,7 +3339,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO (
                     n[0]=='\0'? "Name": id==UNDEFINEDID_GCIO? "ID": "Kind");
           goto onError;
         }
-        if( (theField= AddTypeField_GCIO(hGCT,GetTypeName_GCIO(theClass),-1,n,id,knd,x,e))==NULL )
+        if( AddTypeField_GCIO(hGCT,GetTypeName_GCIO(theClass),-1,n,id,knd,x,e)==NULL )
         {
           goto onError;
         }
@@ -3432,7 +3490,6 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
   char e[kExtraSize_GCIO] = {0};
   long id;
   GCTypeKind knd;
-  GCField* theField;
 
   bEOF= 0;
   n[0]= '\0';
@@ -3440,8 +3497,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
   e[0]= '\0';
   id= UNDEFINEDID_GCIO;
   knd= vUnknownItemType_GCIO;
-  theField= NULL;
-  while( _get_GCIO(hGCT)!=EOF ) {
+  while( _get_GCIO(hGCT)!= (vsi_l_offset)EOF ) {
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vComType_GCIO )
     {
       continue;
@@ -3459,7 +3515,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO (
                     n[0]=='\0'? "Name": id==UNDEFINEDID_GCIO? "ID": "Kind");
           goto onError;
         }
-        if( (theField= AddSubTypeField_GCIO(hGCT,GetTypeName_GCIO(theClass),GetSubTypeName_GCIO(theSubType),-1,n,id,knd,x,e))==NULL )
+        if( AddSubTypeField_GCIO(hGCT,GetTypeName_GCIO(theClass),GetSubTypeName_GCIO(theSubType),-1,n,id,knd,x,e)==NULL )
         {
           goto onError;
         }
@@ -3616,7 +3672,7 @@ static OGRErr GCIOAPI_CALL _readConfigSubTypeType_GCIO (
   knd= vUnknownItemType_GCIO;
   sys= v2D_GCIO;
   theSubType= NULL;
-  while( _get_GCIO(hGCT)!=EOF ) {
+  while( _get_GCIO(hGCT)!= (vsi_l_offset)EOF ) {
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vComType_GCIO )
     {
       continue;
@@ -3790,7 +3846,7 @@ static OGRErr GCIOAPI_CALL _readConfigType_GCIO (
   n[0]= '\0';
   id= UNDEFINEDID_GCIO;
   theClass= NULL;
-  while( _get_GCIO(hGCT)!=EOF ) {
+  while( _get_GCIO(hGCT)!= (vsi_l_offset)EOF ) {
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vComType_GCIO )
     {
       continue;
@@ -3913,7 +3969,7 @@ static OGRErr GCIOAPI_CALL _readConfigMap_GCIO (
   char* k;
 
   eom= 0;
-  while( _get_GCIO(hGCT)!=EOF ) {
+  while( _get_GCIO(hGCT)!= (vsi_l_offset)EOF ) {
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vComType_GCIO )
     {
       continue;
@@ -3997,7 +4053,7 @@ GCExportFileMetadata GCIOAPI_CALL1(*) ReadConfig_GCIO (
   GCExportFileMetadata* Meta;
 
   eoc= 0;
-  if( _get_GCIO(hGCT)==EOF )
+  if( _get_GCIO(hGCT)== (vsi_l_offset)EOF )
   {
     return NULL;
   }
@@ -4014,7 +4070,7 @@ GCExportFileMetadata GCIOAPI_CALL1(*) ReadConfig_GCIO (
   {
     return NULL;
   }
-  while( _get_GCIO(hGCT)!=EOF )
+  while( _get_GCIO(hGCT)!= (vsi_l_offset)EOF )
   {
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) == vComType_GCIO )
     {
@@ -4431,9 +4487,9 @@ onError:
 }/* ReadConfig_GCIO */
 
 /* -------------------------------------------------------------------- */
-static FILE GCIOAPI_CALL1(*) _writeFieldsPragma_GCIO (
+static VSILFILE GCIOAPI_CALL1(*) _writeFieldsPragma_GCIO (
                                                        GCSubType* theSubType,
-                                                       FILE* gc,
+                                                       VSILFILE* gc,
                                                        char delim
                                                      )
 {
@@ -4441,7 +4497,7 @@ static FILE GCIOAPI_CALL1(*) _writeFieldsPragma_GCIO (
   GCField* theField;
   CPLList* e;
 
-  fprintf(gc,"%s%s Class=%s;Subclass=%s;Kind=%d;Fields=",
+  VSIFPrintfL(gc,"%s%s Class=%s;Subclass=%s;Kind=%d;Fields=",
              kPragma_GCIO, kMetadataFIELDS_GCIO,
              GetTypeName_GCIO(GetSubTypeType_GCIO(theSubType)),
              GetSubTypeName_GCIO(theSubType),
@@ -4454,20 +4510,20 @@ static FILE GCIOAPI_CALL1(*) _writeFieldsPragma_GCIO (
       {
         if( (theField= (GCField*)CPLListGetData(e)) )
         {
-          if (iF>0) fprintf(gc,"%c", delim);
+          if (iF>0) VSIFPrintfL(gc,"%c", delim);
           if( IsPrivateField_GCIO(theField) )
           {
-            fprintf(gc,"%s%s", kPrivate_GCIO, GetFieldName_GCIO(theField)+1);
+            VSIFPrintfL(gc,"%s%s", kPrivate_GCIO, GetFieldName_GCIO(theField)+1);
           }
           else
           {
-            fprintf(gc,"%s%s", kPublic_GCIO, GetFieldName_GCIO(theField));
+            VSIFPrintfL(gc,"%s%s", kPublic_GCIO, GetFieldName_GCIO(theField));
           }
         }
       }
     }
   }
-  fprintf(gc,"\n");
+  VSIFPrintfL(gc,"\n");
   SetSubTypeHeaderWritten_GCIO(theSubType,TRUE);
 
   return gc;
@@ -4483,7 +4539,7 @@ GCExportFileH GCIOAPI_CALL1(*) WriteHeader_GCIO (
   GCSubType* theSubType;
   GCType* theClass;
   CPLList* e;
-  FILE* gc;
+  VSILFILE* gc;
 
   /* FIXME : howto change default values ?                              */
   /*         there seems to be no ways in Geoconcept to change them ... */
@@ -4491,38 +4547,38 @@ GCExportFileH GCIOAPI_CALL1(*) WriteHeader_GCIO (
   gc= GetGCHandle_GCIO(H);
   if( GetMetaVersion_GCIO(Meta) )
   {
-    fprintf(gc,"%s%s %s\n", kPragma_GCIO, kMetadataVERSION_GCIO, GetMetaVersion_GCIO(Meta));
+    VSIFPrintfL(gc,"%s%s %s\n", kPragma_GCIO, kMetadataVERSION_GCIO, GetMetaVersion_GCIO(Meta));
   }
-  fprintf(gc,"%s%s \"%s\"\n", kPragma_GCIO, kMetadataDELIMITER_GCIO, _metaDelimiter2str_GCIO(GetMetaDelimiter_GCIO(Meta)));
-  fprintf(gc,"%s%s \"%s\"\n", kPragma_GCIO, kMetadataQUOTEDTEXT_GCIO, GetMetaQuotedText_GCIO(Meta)? "yes":"no");
-  fprintf(gc,"%s%s %s\n", kPragma_GCIO, kMetadataCHARSET_GCIO, GCCharset2str_GCIO(GetMetaCharset_GCIO(Meta)));
+  VSIFPrintfL(gc,"%s%s \"%s\"\n", kPragma_GCIO, kMetadataDELIMITER_GCIO, _metaDelimiter2str_GCIO(GetMetaDelimiter_GCIO(Meta)));
+  VSIFPrintfL(gc,"%s%s \"%s\"\n", kPragma_GCIO, kMetadataQUOTEDTEXT_GCIO, GetMetaQuotedText_GCIO(Meta)? "yes":"no");
+  VSIFPrintfL(gc,"%s%s %s\n", kPragma_GCIO, kMetadataCHARSET_GCIO, GCCharset2str_GCIO(GetMetaCharset_GCIO(Meta)));
   if( strcmp(GetMetaUnit_GCIO(Meta),"deg")==0     ||
       strcmp(GetMetaUnit_GCIO(Meta),"deg.min")==0 ||
       strcmp(GetMetaUnit_GCIO(Meta),"rad")==0     ||
       strcmp(GetMetaUnit_GCIO(Meta),"gr")==0 )
   {
-    fprintf(gc,"%s%s Angle:%s\n", kPragma_GCIO, kMetadataUNIT_GCIO, GetMetaUnit_GCIO(Meta));
+    VSIFPrintfL(gc,"%s%s Angle:%s\n", kPragma_GCIO, kMetadataUNIT_GCIO, GetMetaUnit_GCIO(Meta));
   }
   else
   {
-    fprintf(gc,"%s%s Distance:%s\n", kPragma_GCIO, kMetadataUNIT_GCIO, GetMetaUnit_GCIO(Meta));
+    VSIFPrintfL(gc,"%s%s Distance:%s\n", kPragma_GCIO, kMetadataUNIT_GCIO, GetMetaUnit_GCIO(Meta));
   }
-  fprintf(gc,"%s%s %d\n", kPragma_GCIO, kMetadataFORMAT_GCIO, GetMetaFormat_GCIO(Meta));
+  VSIFPrintfL(gc,"%s%s %d\n", kPragma_GCIO, kMetadataFORMAT_GCIO, GetMetaFormat_GCIO(Meta));
   if( GetMetaSysCoord_GCIO(Meta) )
   {
-    fprintf(gc,"%s%s {Type: %d}", kPragma_GCIO,
+    VSIFPrintfL(gc,"%s%s {Type: %d}", kPragma_GCIO,
                                   kMetadataSYSCOORD_GCIO,
                                   GetSysCoordSystemID_GCSRS(GetMetaSysCoord_GCIO(Meta)));
     if( GetSysCoordTimeZone_GCSRS(GetMetaSysCoord_GCIO(Meta))!=-1 )
     {
-      fprintf(gc,";{TimeZone: %d}", GetSysCoordTimeZone_GCSRS(GetMetaSysCoord_GCIO(Meta)));
+      VSIFPrintfL(gc,";{TimeZone: %d}", GetSysCoordTimeZone_GCSRS(GetMetaSysCoord_GCIO(Meta)));
     }
   }
   else
   {
-    fprintf(gc,"%s%s {Type: -1}", kPragma_GCIO, kMetadataSYSCOORD_GCIO);
+    VSIFPrintfL(gc,"%s%s {Type: -1}", kPragma_GCIO, kMetadataSYSCOORD_GCIO);
   }
-  fprintf(gc,"\n");
+  VSIFPrintfL(gc,"\n");
 
   if( (nT= CPLListCount(GetMetaTypes_GCIO(Meta)))>0 )
   {
@@ -4564,7 +4620,7 @@ GCExportFileMetadata GCIOAPI_CALL1(*) ReadHeader_GCIO (
 {
   GCExportFileMetadata* Meta;
 
-  if( _get_GCIO(hGXT)==EOF )
+  if( _get_GCIO(hGXT)== (vsi_l_offset)EOF )
   {
     return NULL;
   }
@@ -4582,7 +4638,7 @@ GCExportFileMetadata GCIOAPI_CALL1(*) ReadHeader_GCIO (
     return NULL;
   }
   SetMetaExtent_GCIO(Meta, CreateExtent_GCIO(HUGE_VAL,HUGE_VAL,-HUGE_VAL,-HUGE_VAL));
-  while( _get_GCIO(hGXT)!=EOF )
+  while( _get_GCIO(hGXT)!= (vsi_l_offset)EOF )
   {
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGXT)==vComType_GCIO )
     {
@@ -4718,7 +4774,7 @@ static char GCIOAPI_CALL1(*) _escapeString_GCIO (
     res= CPLStrdup(theString);
     return res;
   }
-  if( (res= (char *)CPLMalloc(l*2)) )
+  if( (res= (char *)CPLMalloc(l*2+1)) )
   {
     for (i= 0, o= 0; i<l; i++, o++)
     {
@@ -4751,7 +4807,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
                                                           )
 {
   GCExportFileH* H;
-  FILE *h;
+  VSILFILE *h;
   int n, i;
   GCField* theField;
   char* fieldName, *escapedValue, delim;
@@ -4773,7 +4829,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
   {
     if( GetSubTypeDim_GCIO(theSubType)==v3DM_GCIO )
     {
-      if( VSIFPrintf(h,"%s%s\n", kPragma_GCIO, k3DOBJECTMONO_GCIO)<=0 )
+      if( VSIFPrintfL(h,"%s%s\n", kPragma_GCIO, k3DOBJECTMONO_GCIO)<=0 )
       {
         CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
         return WRITEERROR_GCIO;
@@ -4782,7 +4838,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
     }
     else if( GetSubTypeDim_GCIO(theSubType)==v3D_GCIO )
     {
-      if( VSIFPrintf(h,"%s%s\n", kPragma_GCIO, k3DOBJECT_GCIO)<=0 )
+      if( VSIFPrintfL(h,"%s%s\n", kPragma_GCIO, k3DOBJECT_GCIO)<=0 )
       {
         CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
         return WRITEERROR_GCIO;
@@ -4822,7 +4878,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
     {
       /* long integer which GeoConcept may use as a key for the object it will create. */
       /* If set to '-1', it will be ignored.                                           */
-      if( VSIFPrintf(h,"%s%ld%s", quotes, id, quotes)<=0 )
+      if( VSIFPrintfL(h,"%s%ld%s", quotes, id, quotes)<=0 )
       {
         CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
         return WRITEERROR_GCIO;
@@ -4834,7 +4890,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
       {
         return WRITEERROR_GCIO;
       }
-      if( VSIFPrintf(h,"%s%s%s", quotes, escapedValue, quotes)<=0 )
+      if( VSIFPrintfL(h,"%s%s%s", quotes, escapedValue, quotes)<=0 )
       {
         CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
         CPLFree(escapedValue);
@@ -4848,7 +4904,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
       {
         return WRITEERROR_GCIO;
       }
-      if( VSIFPrintf(h,"%s%s%s", quotes, escapedValue, quotes)<=0 )
+      if( VSIFPrintfL(h,"%s%s%s", quotes, escapedValue, quotes)<=0 )
       {
         CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
         CPLFree(escapedValue);
@@ -4862,7 +4918,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
       {
         return WRITEERROR_GCIO;
       }
-      if( VSIFPrintf(h,"%s%s%s", quotes, escapedValue, quotes)<=0 )
+      if( VSIFPrintfL(h,"%s%s%s", quotes, escapedValue, quotes)<=0 )
       {
         CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
         CPLFree(escapedValue);
@@ -4872,7 +4928,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
     }
     else if( EQUAL(fieldName,kNbFields_GCIO) )
     {
-      if( VSIFPrintf(h,"%s%d%s", quotes, GetSubTypeNbFields_GCIO(theSubType), quotes)<=0 )
+      if( VSIFPrintfL(h,"%s%d%s", quotes, GetSubTypeNbFields_GCIO(theSubType), quotes)<=0 )
       {
         CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
         return WRITEERROR_GCIO;
@@ -4887,7 +4943,7 @@ static int GCIOAPI_CALL _findNextFeatureFieldToWrite_GCIO (
     }
     if( i!=n-1 )
     {
-      if( VSIFPrintf(h,"%c", delim)<=0 )
+      if( VSIFPrintfL(h,"%c", delim)<=0 )
       {
         CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
         return WRITEERROR_GCIO;
@@ -4907,7 +4963,7 @@ int GCIOAPI_CALL StartWritingFeature_GCIO (
   if( !IsSubTypeHeaderWritten_GCIO(theSubType) )
   {
     GCExportFileH* H;
-    FILE *h;
+    VSILFILE *h;
 
     H= GetSubTypeGCHandle_GCIO(theSubType);
     h= GetGCHandle_GCIO(H);
@@ -4922,7 +4978,7 @@ int GCIOAPI_CALL StartWritingFeature_GCIO (
 
 /* -------------------------------------------------------------------- */
 static int GCIOAPI_CALL _writePoint_GCIO (
-                                           FILE* h,
+                                           VSILFILE* h,
                                            const char* quotes,
                                            char delim,
                                            double x, double y, double z,
@@ -4938,7 +4994,7 @@ static int GCIOAPI_CALL _writePoint_GCIO (
   SetExtentLROrdinate_GCIO(e,y);
   if( dim==v3DM_GCIO || dim==v3D_GCIO )
   {
-    if( VSIFPrintf(h,"%s%.*f%s%c%s%.*f%s%c%s%.*f%s",
+    if( VSIFPrintfL(h,"%s%.*f%s%c%s%.*f%s%c%s%.*f%s",
                    quotes, pCS, x, quotes,
                    delim,
                    quotes, pCS, y, quotes,
@@ -4951,7 +5007,7 @@ static int GCIOAPI_CALL _writePoint_GCIO (
   }
   else
   {
-    if( VSIFPrintf(h,"%s%.*f%s%c%s%.*f%s",
+    if( VSIFPrintfL(h,"%s%.*f%s%c%s%.*f%s",
                    quotes, pCS, x, quotes,
                    delim,
                    quotes, pCS, y, quotes)<=0 )
@@ -4965,7 +5021,7 @@ static int GCIOAPI_CALL _writePoint_GCIO (
 
 /* -------------------------------------------------------------------- */
 static int GCIOAPI_CALL _writeLine_GCIO (
-                                           FILE* h,
+                                           VSILFILE* h,
                                            const char* quotes,
                                            char delim,
                                            OGRGeometryH poArc,
@@ -4988,7 +5044,7 @@ static int GCIOAPI_CALL _writeLine_GCIO (
   {
     return FALSE;
   }
-  if( VSIFPrintf(h,"%c", delim)<=0 )
+  if( VSIFPrintfL(h,"%c", delim)<=0 )
   {
     CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
     return FALSE;
@@ -5005,14 +5061,14 @@ static int GCIOAPI_CALL _writeLine_GCIO (
     {
       return FALSE;
     }
-    if( VSIFPrintf(h,"%c", delim)<=0 )
+    if( VSIFPrintfL(h,"%c", delim)<=0 )
     {
       CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
       return FALSE;
     }
   }
   /* number of remaining points : */
-  if( VSIFPrintf(h,"%s%d%s%c", quotes, nP-1, quotes, delim)<=0 )
+  if( VSIFPrintfL(h,"%s%d%s%c", quotes, nP-1, quotes, delim)<=0 )
   {
     CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
     return FALSE;
@@ -5042,7 +5098,7 @@ static int GCIOAPI_CALL _writeLine_GCIO (
     }
     if( iP!=nP-1 )
     {
-      if( VSIFPrintf(h,"%c", delim)<=0 )
+      if( VSIFPrintfL(h,"%c", delim)<=0 )
       {
         CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
         return FALSE;
@@ -5054,7 +5110,7 @@ static int GCIOAPI_CALL _writeLine_GCIO (
 
 /* -------------------------------------------------------------------- */
 static int GCIOAPI_CALL _writePolygon_GCIO (
-                                             FILE* h,
+                                             VSILFILE* h,
                                              const char* quotes,
                                              char delim,
                                              OGRGeometryH poPoly,
@@ -5086,7 +5142,7 @@ static int GCIOAPI_CALL _writePolygon_GCIO (
   /* number of interior rings : */
   if( nR>1 )
   {
-    if( VSIFPrintf(h,"%c%d%c", delim, nR-1, delim)<=0 )
+    if( VSIFPrintfL(h,"%c%d%c", delim, nR-1, delim)<=0 )
     {
       CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
       return FALSE;
@@ -5100,7 +5156,7 @@ static int GCIOAPI_CALL _writePolygon_GCIO (
       }
       if( iR!=nR-1 )
       {
-        if( VSIFPrintf(h,"%c", delim)<=0 )
+        if( VSIFPrintfL(h,"%c", delim)<=0 )
         {
           CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
           return FALSE;
@@ -5118,7 +5174,7 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
                                            )
 {
   GCExportFileH* H;
-  FILE *h;
+  VSILFILE *h;
   int n, i, iAn, pCS, hCS;
   const char *quotes;
   char delim;
@@ -5170,9 +5226,8 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
     SetMetaHeightFormat_GCIO(GetGCMeta_GCIO(H), hCS);
   }
 
-  switch( OGR_G_GetGeometryType(poGeom) ) {
+  switch( wkbFlatten(OGR_G_GetGeometryType(poGeom)) ) {
   case wkbPoint                 :
-  case wkbPoint25D              :
     if( !_writePoint_GCIO(h,quotes,delim,
                             OGR_G_GetX(poGeom,0),
                             OGR_G_GetY(poGeom,0),
@@ -5185,7 +5240,6 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
     }
     break;
   case wkbLineString            :
-  case wkbLineString25D         :
     if( !_writeLine_GCIO(h,quotes,delim,
                            poGeom,
                            vLine_GCIO,
@@ -5198,7 +5252,6 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
     }
     break;
   case wkbPolygon               :
-  case wkbPolygon25D            :
     if( !_writePolygon_GCIO(h,quotes,delim,
                               poGeom,
                               GetSubTypeDim_GCIO(theSubType),
@@ -5209,17 +5262,6 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
       return WRITEERROR_GCIO;
     }
     break;
-  case wkbMultiPoint            :
-  case wkbMultiPoint25D         :
-  case wkbMultiLineString       :
-  case wkbMultiLineString25D    :
-  case wkbMultiPolygon          :
-  case wkbMultiPolygon25D       :
-  case wkbUnknown               :
-  case wkbGeometryCollection    :
-  case wkbGeometryCollection25D :
-  case wkbNone                  :
-  case wkbLinearRing            :
   default                       :
     CPLError( CE_Warning, CPLE_AppDefined,
               "Geometry type %d not supported in Geoconcept, feature skipped.\n",
@@ -5229,7 +5271,7 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
   /* Angle= 0 !! */
   if( iAn!=-1 )
   {
-    if( VSIFPrintf(h,"%c%s%1d%s", delim, quotes, 0, quotes)<=0 )
+    if( VSIFPrintfL(h,"%c%s%1d%s", delim, quotes, 0, quotes)<=0 )
     {
       CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
       return WRITEERROR_GCIO;
@@ -5238,7 +5280,7 @@ int GCIOAPI_CALL WriteFeatureGeometry_GCIO (
   /* if it is not the last field ... */
   if( i!=n-1 )
   {
-    if( VSIFPrintf(h,"%c", delim)<=0 )
+    if( VSIFPrintfL(h,"%c", delim)<=0 )
     {
       CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
       return WRITEERROR_GCIO;
@@ -5257,7 +5299,7 @@ int GCIOAPI_CALL WriteFeatureFieldAsString_GCIO (
                                                 )
 {
   GCExportFileH* H;
-  FILE *h;
+  VSILFILE *h;
   int n;
   const char *quotes;
   char *escapedValue, delim;
@@ -5289,7 +5331,7 @@ int GCIOAPI_CALL WriteFeatureFieldAsString_GCIO (
   {
     return WRITEERROR_GCIO;
   }
-  if( VSIFPrintf(h,"%s%s%s", quotes, escapedValue, quotes)<=0 )
+  if( VSIFPrintfL(h,"%s%s%s", quotes, escapedValue, quotes)<=0 )
   {
     /* it is really an error if one of the parameters is not empty ... */
     if( *quotes!='\0' || *escapedValue!='\0')
@@ -5301,7 +5343,7 @@ int GCIOAPI_CALL WriteFeatureFieldAsString_GCIO (
   }
   if( iField!=n-1 )
   {
-    if( VSIFPrintf(h,"%c", delim)<=0 )
+    if( VSIFPrintfL(h,"%c", delim)<=0 )
     {
       CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
       CPLFree(escapedValue);
@@ -5321,7 +5363,7 @@ void GCIOAPI_CALL StopWritingFeature_GCIO (
   GCExportFileH* H;
 
   H= GetSubTypeGCHandle_GCIO(theSubType);
-  if( VSIFPrintf(GetGCHandle_GCIO(H),"\n")<=0 )
+  if( VSIFPrintfL(GetGCHandle_GCIO(H),"\n")<=0 )
   {
     CPLError( CE_Failure, CPLE_AppDefined, "Write failed.\n");
   }
@@ -5337,17 +5379,16 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO (
 {
   OGRFeatureH f;
   GCExportFileH* H;
-  GCExportFileMetadata* Meta;
   GCDim d;
 
   f= NULL;
   H= GetSubTypeGCHandle_GCIO(theSubType);
-  if( !(Meta= GetGCMeta_GCIO(H)) )
+  if( !(GetGCMeta_GCIO(H)) )
   {
     return NULL;
   }
   d= vUnknown3D_GCIO;
-  while( _get_GCIO(H)!=EOF )
+  while( _get_GCIO(H)!= (vsi_l_offset)EOF )
   {
     if( (enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(H) == vComType_GCIO )
     {

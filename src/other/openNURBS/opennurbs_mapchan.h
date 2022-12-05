@@ -65,13 +65,7 @@ public:
 };
 
 #if defined(ON_DLL_TEMPLATE)
-// This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
-// article ID Q168958 for details.
-#pragma warning( push )
-#pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_MappingChannel>;
-#pragma warning( pop )
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -111,7 +105,7 @@ public:
       ON_TextureMapping id
   Returns:
     A pointer to the plug-in's mapping channel, if there
-    is one. Otherwise NULL is returned.
+    is one. Otherwise nullptr is returned.
   */
   const ON_MappingChannel* MappingChannel( 
     int mapping_channel_id
@@ -201,6 +195,9 @@ public:
   ON_UUID m_material_backface_id; // Identifies an ON_Material
 
   ON::object_material_source MaterialSource() const;
+  void SetMaterialSource(
+    ON::object_material_source
+    );
   unsigned char m_material_source; // ON::object_material_source values
   unsigned char m_reserved1;
   unsigned char m_reserved2;
@@ -218,14 +215,8 @@ public:
 };
 
 #if defined(ON_DLL_TEMPLATE)
-// This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
-// article ID Q168958 for details.
-#pragma warning( push )
-#pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_MaterialRef>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_MappingRef>;
-#pragma warning( pop )
 #endif
 
 #endif

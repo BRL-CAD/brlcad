@@ -3,59 +3,52 @@
 
 #if defined(JPEG_DUAL_MODE_8_12)
 
-#  define TIFFInitJPEG TIFFInitJPEG_12
-#  define TIFFJPEGIsFullStripRequired TIFFJPEGIsFullStripRequired_12
+#define FROM_TIF_JPEG_12
 
-int
-TIFFInitJPEG_12(TIFF* tif, int scheme);
+#ifdef TIFFInitJPEG
+#undef TIFFInitJPEG
+#endif
+#define TIFFInitJPEG TIFFInitJPEG_12
 
-#  include LIBJPEG_12_PATH
+#ifdef TIFFJPEGIsFullStripRequired
+#undef TIFFJPEGIsFullStripRequired
+#endif
+#define TIFFJPEGIsFullStripRequired TIFFJPEGIsFullStripRequired_12
 
-#  include "tif_jpeg.c"
+int TIFFInitJPEG_12(TIFF *tif, int scheme);
 
-int TIFFReInitJPEG_12( TIFF *tif, int scheme, int is_encode )
+#include LIBJPEG_12_PATH
 
-{
-    JPEGState* sp;
+#include "tif_jpeg.c"
 
-    assert(scheme == COMPRESSION_JPEG);
+int TIFFReInitJPEG_12(TIFF *tif, const JPEGOtherSettings *otherSettings,
+                      int scheme, int is_encode) {
+  JPEGState *sp;
+  uint8_t *new_tif_data;
 
-    sp = JState(tif);
-    sp->tif = tif;				/* back link */
+  (void)scheme;
+  assert(scheme == COMPRESSION_JPEG);
 
-    /*
-     * Override parent get/set field methods.
-     */
-    tif->tif_tagmethods.vgetfield = JPEGVGetField; /* hook for codec tags */
-    tif->tif_tagmethods.vsetfield = JPEGVSetField; /* hook for codec tags */
-    tif->tif_tagmethods.printdir = JPEGPrintDir;   /* hook for codec tags */
+  new_tif_data = (uint8_t *)_TIFFrealloc(tif->tif_data, sizeof(JPEGState));
 
-    /*
-     * Install codec methods.
-     */
-    tif->tif_fixuptags = JPEGFixupTags;
-    tif->tif_setupdecode = JPEGSetupDecode;
-    tif->tif_predecode = JPEGPreDecode;
-    tif->tif_decoderow = JPEGDecode;
-    tif->tif_decodestrip = JPEGDecode;
-    tif->tif_decodetile = JPEGDecode;
-    tif->tif_setupencode = JPEGSetupEncode;
-    tif->tif_preencode = JPEGPreEncode;
-    tif->tif_postencode = JPEGPostEncode;
-    tif->tif_encoderow = JPEGEncode;
-    tif->tif_encodestrip = JPEGEncode;
-    tif->tif_encodetile = JPEGEncode;  
-    tif->tif_cleanup = JPEGCleanup;
-    tif->tif_defstripsize = JPEGDefaultStripSize;
-    tif->tif_deftilesize = JPEGDefaultTileSize;
-    tif->tif_flags |= TIFF_NOBITREV;	/* no bit reversal, please */
+  if (new_tif_data == NULL) {
+    TIFFErrorExt(tif->tif_clientdata, "TIFFReInitJPEG_12",
+                 "No space for JPEG state block");
+    return 0;
+  }
 
-    sp->cinfo_initialized = FALSE;
+  tif->tif_data = new_tif_data;
+  _TIFFmemset(tif->tif_data, 0, sizeof(JPEGState));
 
-    if( is_encode )
-        return JPEGSetupEncode(tif);
-    else
-        return JPEGSetupDecode(tif);
+  TIFFInitJPEGCommon(tif);
+
+  sp = JState(tif);
+  sp->otherSettings = *otherSettings;
+
+  if (is_encode)
+    return JPEGSetupEncode(tif);
+  else
+    return JPEGSetupDecode(tif);
 }
 
 #endif /* defined(JPEG_DUAL_MODE_8_12) */

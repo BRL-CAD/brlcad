@@ -29,7 +29,7 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 
@@ -37,21 +37,19 @@ CPL_CVSID("$Id$");
 /*                                OGRCurve()                            */
 /************************************************************************/
 
-OGRCurve::OGRCurve() {}
+OGRCurve::OGRCurve() = default;
 
 /************************************************************************/
 /*                               ~OGRCurve()                            */
 /************************************************************************/
 
-OGRCurve::~OGRCurve() {}
+OGRCurve::~OGRCurve() = default;
 
 /************************************************************************/
 /*                       OGRCurve( const OGRCurve& )                    */
 /************************************************************************/
 
-OGRCurve::OGRCurve( const OGRCurve& other ) :
-    OGRGeometry( other )
-{}
+OGRCurve::OGRCurve( const OGRCurve& ) = default;
 
 /************************************************************************/
 /*                       operator=( const OGRCurve& )                   */
@@ -87,6 +85,8 @@ int OGRCurve::getDimension() const
  * Tests if a curve is closed. A curve is closed if its start point is
  * equal to its end point.
  *
+ * For equality tests, the M dimension is ignored.
+ *
  * This method relates to the SFCOM ICurve::get_IsClosed() method.
  *
  * @return TRUE if closed, else FALSE.
@@ -101,33 +101,7 @@ int OGRCurve::get_IsClosed() const
     OGRPoint oEndPoint;
     EndPoint( &oEndPoint );
 
-    if (oStartPoint.IsMeasured() && oEndPoint.IsMeasured())
-    {
-        // XYZM type
-        if (oStartPoint.Is3D() && oEndPoint.Is3D())
-        {
-            if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY()
-                && oStartPoint.getZ() == oEndPoint.getZ() && oStartPoint.getM() == oEndPoint.getM())
-            {
-                return TRUE;
-            }
-            else
-                return FALSE;
-        }
-        // XYM type
-        else
-        {
-            if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY()
-                && oStartPoint.getM() == oEndPoint.getM())
-            {
-                return TRUE;
-            }
-            else
-                return FALSE;
-        }
-    }
-
-    else if (oStartPoint.Is3D() && oEndPoint.Is3D())
+    if (oStartPoint.Is3D() && oEndPoint.Is3D())
     {
         // XYZ type
         if( oStartPoint.getX() == oEndPoint.getX() && oStartPoint.getY() == oEndPoint.getY()
@@ -142,13 +116,6 @@ int OGRCurve::get_IsClosed() const
     // one of the points is 3D
     else if (((oStartPoint.Is3D() & oEndPoint.Is3D()) == 0) &&
              ((oStartPoint.Is3D() | oEndPoint.Is3D()) == 1))
-    {
-        return FALSE;
-    }
-
-    // one of the points is Measured
-    else if (((oStartPoint.IsMeasured() & oEndPoint.IsMeasured()) == 0) &&
-             ((oStartPoint.IsMeasured() | oEndPoint.IsMeasured()) == 1))
     {
         return FALSE;
     }
@@ -355,13 +322,13 @@ OGRBoolean OGRCurve::IsConvex() const
 OGRCompoundCurve* OGRCurve::CastToCompoundCurve( OGRCurve* poCurve )
 {
     OGRCompoundCurve* poCC = new OGRCompoundCurve();
-    if( poCurve->getGeometryType() == wkbLineString )
+    if( wkbFlatten(poCurve->getGeometryType()) == wkbLineString )
         poCurve = CastToLineString(poCurve);
     if( !poCurve->IsEmpty() && poCC->addCurveDirectly(poCurve) != OGRERR_NONE )
     {
         delete poCC;
         delete poCurve;
-        return NULL;
+        return nullptr;
     }
     poCC->assignSpatialReference(poCurve->getSpatialReference());
     return poCC;
@@ -426,7 +393,27 @@ OGRLinearRing* OGRCurve::CastToLinearRing( OGRCurve* poCurve )
  * @since GDAL 2.0
  */
 
-int OGRCurve::ContainsPoint( const OGRPoint* /* p */ ) const
+int OGRCurve::ContainsPoint( CPL_UNUSED const OGRPoint* p ) const
+{
+    return -1;
+}
+
+/************************************************************************/
+/*                         IntersectsPoint()                            */
+/************************************************************************/
+
+/**
+ * \brief Returns if a point intersects a (closed) curve.
+ *
+ * Final users should use OGRGeometry::Intersects() instead.
+ *
+ * @param p the point to test
+ * @return TRUE if it intersects the curve, FALSE otherwise or -1 if unknown.
+ *
+ * @since GDAL 2.3
+ */
+
+int OGRCurve::IntersectsPoint( CPL_UNUSED const OGRPoint* p ) const
 {
     return -1;
 }
@@ -435,7 +422,7 @@ int OGRCurve::ContainsPoint( const OGRPoint* /* p */ ) const
 /*                          ~OGRPointIterator()                         */
 /************************************************************************/
 
-OGRPointIterator::~OGRPointIterator() {}
+OGRPointIterator::~OGRPointIterator() = default;
 
 /**
  * \fn OGRBoolean OGRPointIterator::getNextPoint(OGRPoint* p);
@@ -461,4 +448,179 @@ OGRPointIterator::~OGRPointIterator() {}
 void OGRPointIterator::destroy( OGRPointIterator* poIter )
 {
     delete poIter;
+}
+
+/************************************************************************/
+/*                     OGRSimpleCurve::Iterator                         */
+/************************************************************************/
+
+struct OGRSimpleCurve::Iterator::Private
+{
+    CPL_DISALLOW_COPY_ASSIGN(Private)
+    Private() = default;
+
+    bool m_bUpdateChecked = true;
+    OGRPoint m_oPoint{};
+    OGRSimpleCurve* m_poSelf = nullptr;
+    int m_nPos = 0;
+};
+
+void OGRSimpleCurve::Iterator::update()
+{
+    if( !m_poPrivate->m_bUpdateChecked )
+    {
+        OGRPoint oPointBefore;
+        m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos, &oPointBefore);
+        if( oPointBefore != m_poPrivate->m_oPoint )
+        {
+            m_poPrivate->m_poSelf->setPoint(m_poPrivate->m_nPos,
+                                            &m_poPrivate->m_oPoint);
+        }
+        m_poPrivate->m_bUpdateChecked = true;
+    }
+}
+
+OGRSimpleCurve::Iterator::Iterator(OGRSimpleCurve* poSelf, int nPos):
+    m_poPrivate(new Private())
+{
+    m_poPrivate->m_poSelf = poSelf;
+    m_poPrivate->m_nPos = nPos;
+}
+
+OGRSimpleCurve::Iterator::~Iterator()
+{
+    update();
+}
+
+OGRPoint& OGRSimpleCurve::Iterator::operator*()
+{
+    update();
+    m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos, &m_poPrivate->m_oPoint);
+    m_poPrivate->m_bUpdateChecked = false;
+    return m_poPrivate->m_oPoint;
+}
+
+OGRSimpleCurve::Iterator& OGRSimpleCurve::Iterator::operator++()
+{
+    update();
+    ++m_poPrivate->m_nPos;
+    return *this;
+}
+
+bool OGRSimpleCurve::Iterator::operator!=(const Iterator& it) const
+{
+    return m_poPrivate->m_nPos != it.m_poPrivate->m_nPos;
+}
+
+OGRSimpleCurve::Iterator OGRSimpleCurve::begin()
+{
+    return {this, 0};
+}
+
+OGRSimpleCurve::Iterator OGRSimpleCurve::end()
+{
+    return {this, nPointCount};
+}
+
+/************************************************************************/
+/*                  OGRSimpleCurve::ConstIterator                       */
+/************************************************************************/
+
+struct OGRSimpleCurve::ConstIterator::Private
+{
+    CPL_DISALLOW_COPY_ASSIGN(Private)
+    Private() = default;
+
+    mutable OGRPoint m_oPoint{};
+    const OGRSimpleCurve* m_poSelf = nullptr;
+    int m_nPos = 0;
+};
+
+OGRSimpleCurve::ConstIterator::ConstIterator(const OGRSimpleCurve* poSelf, int nPos):
+    m_poPrivate(new Private())
+{
+    m_poPrivate->m_poSelf = poSelf;
+    m_poPrivate->m_nPos = nPos;
+}
+
+OGRSimpleCurve::ConstIterator::~ConstIterator() = default;
+
+const OGRPoint& OGRSimpleCurve::ConstIterator::operator*() const
+{
+    m_poPrivate->m_poSelf->getPoint(m_poPrivate->m_nPos, &m_poPrivate->m_oPoint);
+    return m_poPrivate->m_oPoint;
+}
+
+OGRSimpleCurve::ConstIterator& OGRSimpleCurve::ConstIterator::operator++()
+{
+    ++m_poPrivate->m_nPos;
+    return *this;
+}
+
+bool OGRSimpleCurve::ConstIterator::operator!=(const ConstIterator& it) const
+{
+    return m_poPrivate->m_nPos != it.m_poPrivate->m_nPos;
+}
+
+OGRSimpleCurve::ConstIterator OGRSimpleCurve::begin() const
+{
+    return {this, 0};
+}
+
+OGRSimpleCurve::ConstIterator OGRSimpleCurve::end() const
+{
+    return {this, nPointCount};
+}
+
+/************************************************************************/
+/*                     OGRCurve::ConstIterator                          */
+/************************************************************************/
+
+struct OGRCurve::ConstIterator::Private
+{
+    CPL_DISALLOW_COPY_ASSIGN(Private)
+    Private() = default;
+
+    OGRPoint m_oPoint{};
+    std::unique_ptr<OGRPointIterator> m_poIterator{};
+};
+
+OGRCurve::ConstIterator::ConstIterator(const OGRCurve* poSelf, bool bStart):
+    m_poPrivate(new Private())
+{
+    if( bStart )
+    {
+        m_poPrivate->m_poIterator.reset(poSelf->getPointIterator());
+        if( !m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint) )
+            m_poPrivate->m_poIterator.reset();
+    }
+}
+
+OGRCurve::ConstIterator::~ConstIterator() = default;
+
+const OGRPoint& OGRCurve::ConstIterator::operator*() const
+{
+    return m_poPrivate->m_oPoint;
+}
+
+OGRCurve::ConstIterator& OGRCurve::ConstIterator::operator++()
+{
+    if( !m_poPrivate->m_poIterator->getNextPoint(&m_poPrivate->m_oPoint) )
+        m_poPrivate->m_poIterator.reset();
+    return *this;
+}
+
+bool OGRCurve::ConstIterator::operator!=(const ConstIterator& it) const
+{
+    return m_poPrivate->m_poIterator.get() != it.m_poPrivate->m_poIterator.get();
+}
+
+OGRCurve::ConstIterator OGRCurve::begin() const
+{
+    return {this, true};
+}
+
+OGRCurve::ConstIterator OGRCurve::end() const
+{
+    return {this, false};
 }

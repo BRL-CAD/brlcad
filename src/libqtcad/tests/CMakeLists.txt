@@ -1,4 +1,4 @@
-include_directories(
+set(QG_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}
@@ -8,6 +8,7 @@ include_directories(
   ${RT_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
   )
+BRLCAD_INCLUDE_DIRS(QG_DIRS)
 
 if (BRLCAD_ENABLE_QT)
 

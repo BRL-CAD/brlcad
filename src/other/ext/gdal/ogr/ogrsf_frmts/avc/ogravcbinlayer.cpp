@@ -33,7 +33,9 @@
 
 #include <cstdlib>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
+
+constexpr int SERIAL_ACCESS_FID = INT_MIN;
 
 /************************************************************************/
 /*                           OGRAVCBinLayer()                           */
@@ -43,10 +45,10 @@ OGRAVCBinLayer::OGRAVCBinLayer( OGRAVCBinDataSource *poDSIn,
                                 AVCE00Section *psSectionIn ) :
     OGRAVCLayer( psSectionIn->eType, poDSIn ),
     m_psSection(psSectionIn),
-    hFile(NULL),
-    poArcLayer(NULL),
+    hFile(nullptr),
+    poArcLayer(nullptr),
     bNeedReset(false),
-    hTable(NULL),
+    hTable(nullptr),
     nTableBaseField(-1),
     nTableAttrIndex(-1),
     nNextFID(1)
@@ -88,7 +90,7 @@ OGRAVCBinLayer::OGRAVCBinLayer( OGRAVCBinDataSource *poDSIn,
 OGRAVCBinLayer::~OGRAVCBinLayer()
 
 {
-    ResetReading();
+    OGRAVCBinLayer::ResetReading();
 }
 
 /************************************************************************/
@@ -98,19 +100,20 @@ OGRAVCBinLayer::~OGRAVCBinLayer()
 void OGRAVCBinLayer::ResetReading()
 
 {
-    if( hFile != NULL )
+    if( hFile != nullptr )
     {
         AVCBinReadClose( hFile );
-        hFile = NULL;
+        hFile = nullptr;
     }
 
     bNeedReset = false;
     nNextFID = 1;
+    m_bEOF = false;
 
-    if( hTable != NULL )
+    if( hTable != nullptr )
     {
         AVCBinReadClose( hTable );
-        hTable = NULL;
+        hTable = nullptr;
     }
 }
 
@@ -122,12 +125,12 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 
 {
     if( !CPL_INT64_FITS_ON_INT32(nFID) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      If we haven't started yet, open the file now.                   */
 /* -------------------------------------------------------------------- */
-    if( hFile == NULL )
+    if( hFile == nullptr )
     {
         AVCE00ReadPtr psInfo
             = static_cast<OGRAVCBinDataSource *>( poDS )->GetInfo();
@@ -137,17 +140,19 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
                                psInfo->eCoverType,
                                m_psSection->eType,
                                psInfo->psDBCSInfo);
+        if( hFile == nullptr )
+            return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
-/*      Read the raw feature - the -3 fid is a special flag             */
+/*      Read the raw feature - the SERIAL_ACCESS_FID fid is a special flag */
 /*      indicating serial access.                                       */
 /* -------------------------------------------------------------------- */
-    void *pFeature = NULL;
+    void *pFeature = nullptr;
 
-    if( nFID == -3 )
+    if( nFID == SERIAL_ACCESS_FID )
     {
-        while( (pFeature = AVCBinReadNextObject( hFile )) != NULL
+        while( (pFeature = AVCBinReadNextObject( hFile )) != nullptr
                && !MatchesSpatialFilter( pFeature ) )
         {
             nNextFID++;
@@ -159,15 +164,15 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
         pFeature = AVCBinReadObject( hFile, (int)nFID );
     }
 
-    if( pFeature == NULL )
-        return NULL;
+    if( pFeature == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Translate the feature.                                          */
 /* -------------------------------------------------------------------- */
     OGRFeature *poFeature = TranslateFeature( pFeature );
-    if( poFeature == NULL )
-        return NULL;
+    if( poFeature == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      LAB's we have to assign the FID to directly, since it           */
@@ -175,7 +180,7 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 /* -------------------------------------------------------------------- */
     if( m_psSection->eType == AVCFileLAB )
     {
-        if( nFID == -3 )
+        if( nFID == SERIAL_ACCESS_FID )
             poFeature->SetFID( nNextFID++ );
         else
             poFeature->SetFID( nFID );
@@ -204,30 +209,33 @@ OGRFeature *OGRAVCBinLayer::GetFeature( GIntBig nFID )
 OGRFeature *OGRAVCBinLayer::GetNextFeature()
 
 {
+    if ( m_bEOF )
+        return nullptr;
+
     if( bNeedReset )
         ResetReading();
 
-    OGRFeature *poFeature = GetFeature( -3 );
+    OGRFeature *poFeature = GetFeature( SERIAL_ACCESS_FID );
 
     // Skip universe polygon.
-    if( poFeature != NULL && poFeature->GetFID() == 1
+    if( poFeature != nullptr && poFeature->GetFID() == 1
         && m_psSection->eType == AVCFilePAL )
     {
         OGRFeature::DestroyFeature( poFeature );
-        poFeature = GetFeature( -3 );
+        poFeature = GetFeature( SERIAL_ACCESS_FID );
     }
 
-    while( poFeature != NULL
-           && ((m_poAttrQuery != NULL
+    while( poFeature != nullptr
+           && ((m_poAttrQuery != nullptr
                 && !m_poAttrQuery->Evaluate( poFeature ) )
                || !FilterGeometry( poFeature->GetGeometryRef() ) ) )
     {
         OGRFeature::DestroyFeature( poFeature );
-        poFeature = GetFeature( -3 );
+        poFeature = GetFeature( SERIAL_ACCESS_FID );
     }
 
-    if( poFeature == NULL )
-        ResetReading();
+    if( poFeature == nullptr )
+        m_bEOF = true;
 
     return poFeature;
 }
@@ -260,7 +268,7 @@ bool OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
 /*      Try to find the corresponding ARC layer if not already          */
 /*      recorded.                                                       */
 /* -------------------------------------------------------------------- */
-    if( poArcLayer == NULL )
+    if( poArcLayer == nullptr )
     {
         for( int i = 0; i < poDS->GetLayerCount(); i++ )
         {
@@ -271,7 +279,7 @@ bool OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
                 poArcLayer = poLayer;
         }
 
-        if( poArcLayer == NULL )
+        if( poArcLayer == nullptr )
             return false;
     }
 
@@ -297,10 +305,10 @@ bool OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
         OGRFeature *poArc
             = poArcLayer->GetFeature( std::abs(psPAL->pasArcs[iArc].nArcId) );
 
-        if( poArc == NULL )
+        if( poArc == nullptr )
             return false;
 
-        if( poArc->GetGeometryRef() == NULL )
+        if( poArc->GetGeometryRef() == nullptr )
             return false;
 
         oArcs.addGeometry( poArc->GetGeometryRef() );
@@ -308,12 +316,15 @@ bool OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
     }
 
     OGRErr eErr;
-    OGRPolygon *poPolygon
-      = reinterpret_cast<OGRPolygon *>(
+    OGRGeometry *poPolygon
+      = reinterpret_cast<OGRGeometry *>(
         OGRBuildPolygonFromEdges( (OGRGeometryH) &oArcs, TRUE, FALSE,
                                   0.0, &eErr ) );
-    if( poPolygon != NULL )
+    if( poPolygon != nullptr )
+    {
+        poPolygon->assignSpatialReference( GetSpatialRef() );
         poFeature->SetGeometryDirectly( poPolygon );
+    }
 
     return eErr == OGRERR_NONE;
 }
@@ -322,7 +333,7 @@ bool OGRAVCBinLayer::FormPolygonGeometry( OGRFeature *poFeature,
 /*                          CheckSetupTable()                           */
 /*                                                                      */
 /*      Check if the named table exists, and if so, setup access to     */
-/*      it (open it), and add it's fields to the feature class          */
+/*      it (open it), and add its fields to the feature class           */
 /*      definition.                                                     */
 /************************************************************************/
 
@@ -337,27 +348,16 @@ bool OGRAVCBinLayer::CheckSetupTable()
 /* -------------------------------------------------------------------- */
     AVCE00ReadPtr psInfo
         = static_cast<OGRAVCBinDataSource *>( poDS )->GetInfo();
-    const size_t BUFSIZE = 32;
-    char szPaddedName[BUFSIZE+1] = { 0 };
 
-    // Fill szPaddedName with szTableName up to 32 chars and fill the remaining
-    // ones with ' '
-    strncpy( szPaddedName, szTableName, BUFSIZE );
-    if( strlen(szTableName) < BUFSIZE )
-    {
-        memset( szPaddedName + strlen(szTableName), ' ',
-                BUFSIZE - strlen(szTableName) );
-    }
-
-    AVCE00Section *l_psSection = NULL;
+    AVCE00Section *l_psSection = nullptr;
     for( int iSection = 0; iSection < psInfo->numSections; iSection++ )
     {
-        if( EQUAL(szPaddedName,psInfo->pasSections[iSection].pszName)
+        if( EQUAL(szTableName,CPLString(psInfo->pasSections[iSection].pszName).Trim())
             && psInfo->pasSections[iSection].eType == AVCFileTABLE )
             l_psSection = psInfo->pasSections + iSection;
     }
 
-    if( l_psSection == NULL )
+    if( l_psSection == nullptr )
     {
         szTableName[0] = '\0';
         return false;
@@ -370,7 +370,7 @@ bool OGRAVCBinLayer::CheckSetupTable()
                              psInfo->eCoverType, AVCFileTABLE,
                              psInfo->psDBCSInfo);
 
-    if( hTable == NULL )
+    if( hTable == nullptr )
     {
         szTableName[0] = '\0';
         return false;
@@ -388,7 +388,7 @@ bool OGRAVCBinLayer::CheckSetupTable()
 /* -------------------------------------------------------------------- */
     AVCBinReadClose( hTable );
 
-    hTable = NULL;
+    hTable = nullptr;
 
     return true;
 }
@@ -409,14 +409,14 @@ bool OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
 /* -------------------------------------------------------------------- */
 /*      Open the table if it is currently closed.                       */
 /* -------------------------------------------------------------------- */
-    if( hTable == NULL )
+    if( hTable == nullptr )
     {
         hTable = AVCBinReadOpen( psInfo->pszInfoPath,  szTableName,
                                  psInfo->eCoverType, AVCFileTABLE,
                                  psInfo->psDBCSInfo);
     }
 
-    if( hTable == NULL )
+    if( hTable == nullptr )
         return false;
 
 /* -------------------------------------------------------------------- */
@@ -433,7 +433,7 @@ bool OGRAVCBinLayer::AppendTableFields( OGRFeature *poFeature )
         : poFeature->GetFieldAsInteger( nTableAttrIndex );
 
     void *hRecord = AVCBinReadObject( hTable, nRecordId );
-    if( hRecord == NULL )
+    if( hRecord == nullptr )
         return false;
 
 /* -------------------------------------------------------------------- */

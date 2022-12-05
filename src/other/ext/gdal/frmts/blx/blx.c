@@ -1,7 +1,7 @@
 /* libblx - Magellan BLX topo reader/writer library
  *
  * Copyright (c) 2008, Henrik Johansson <henrik@johome.net>
- * Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2009, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -166,7 +166,7 @@ STATIC int uncompress_chunk(unsigned char *inbuf, int inlen, unsigned char *outb
     if (inlen < 4)
         return -1;
 
-    reg = *(inbuf+3) | (*(inbuf+2)<<8) | (*(inbuf+1)<<16) | (*(inbuf+0)<<24);
+    reg = *(inbuf+3) | (*(inbuf+2)<<8) | (*(inbuf+1)<<16) | ((unsigned)*(inbuf+0)<<24);
     inbuf+=4; inlen-=4;
 
     newdata = (reg>>19)&0x1fff;
@@ -341,7 +341,7 @@ typedef union
   unsigned short u;
 } unionshort;
 
-static int get_short_le(unsigned char **data) {
+static int get_short_le(const unsigned char **data) {
     /* We assume two's complement representation for this to work */
     unionshort result = { 0 };
     result.u = (unsigned short)(*(*data) | (*(*data+1)<<8));
@@ -349,7 +349,7 @@ static int get_short_le(unsigned char **data) {
     return result.s;
 }
 
-static int get_short_be(unsigned char **data) {
+static int get_short_be(const unsigned char **data) {
     /* We assume two's complement representation for this to work */
     unionshort result = { 0 };
     result.u = (unsigned short)(*(*data+1) | (*(*data)<<8));
@@ -374,7 +374,7 @@ static void put_short_be(short data, unsigned char **bufptr) {
 }
 
 
-static int get_unsigned_short_le(unsigned char **data) {
+static int get_unsigned_short_le(const unsigned char **data) {
     int result;
 
     result = *(*data) | (*(*data+1)<<8);
@@ -382,7 +382,7 @@ static int get_unsigned_short_le(unsigned char **data) {
     return result;
 }
 
-static int get_unsigned_short_be(unsigned char **data) {
+static int get_unsigned_short_be(const unsigned char **data) {
     int result;
 
     result = *(*data+1) | (*(*data)<<8);
@@ -400,7 +400,7 @@ static void put_unsigned_short_be(unsigned short data, unsigned char **bufptr) {
     *(*bufptr)++ = (unsigned char)(data & 0xff);
 }
 
-static int get_short(blxcontext_t *ctx, unsigned char **data) {
+static int get_short(blxcontext_t *ctx, const unsigned char **data) {
 
     if(ctx->endian == LITTLEENDIAN)
 	return get_short_le(data);
@@ -408,7 +408,7 @@ static int get_short(blxcontext_t *ctx, unsigned char **data) {
 	return get_short_be(data);
 }
 
-static int get_unsigned_short(blxcontext_t *ctx, unsigned char **data) {
+static int get_unsigned_short(blxcontext_t *ctx, const unsigned char **data) {
 
     if(ctx->endian == LITTLEENDIAN)
 	return get_unsigned_short_le(data);
@@ -436,14 +436,14 @@ typedef union
   unsigned int u;
 } unionint;
 
-static int get_int32(blxcontext_t *ctx, unsigned char **data) {
+static int get_int32(blxcontext_t *ctx, const unsigned char **data) {
     /* We assume two's complement representation for this to work */
     unionint result = { 0 };
 
     if(ctx->endian == LITTLEENDIAN)
-	result.u = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | (*(*data+3)<<24);
+	result.u = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | ((unsigned)*(*data+3)<<24);
     else
-	result.u = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | (*(*data)<<24);
+	result.u = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | ((unsigned)*(*data)<<24);
     *data+=4;
     return result.i;
 }
@@ -465,13 +465,13 @@ static void put_int32(blxcontext_t *ctx, int data, unsigned char **bufptr) {
     }
 }
 
-static int get_unsigned32(blxcontext_t *ctx, unsigned char **data) {
+static int get_unsigned32(blxcontext_t *ctx, const unsigned char **data) {
     int result;
 
     if(ctx->endian == LITTLEENDIAN)
-	result = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | (*(*data+3)<<24);
+	result = *(*data) | (*(*data+1)<<8) | (*(*data+2)<<16) | ((unsigned)*(*data+3)<<24);
     else
-	result = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | (*(*data)<<24);
+	result = *(*data+3) | (*(*data+2)<<8) | (*(*data+1)<<16) | ((unsigned)*(*data)<<24);
     *data+=4;
     return result;
 }
@@ -489,7 +489,7 @@ static double doubleSWAP(double df)
         return df;
 }
 
-static double get_double(blxcontext_t *ctx, unsigned char **data) {
+static double get_double(blxcontext_t *ctx, const unsigned char **data) {
     double result;
     memcpy(&result, *data, sizeof(double));
     if((is_big_endian() && ctx->endian == LITTLEENDIAN) ||
@@ -687,9 +687,9 @@ int blx_encode_celldata(blxcontext_t *ctx,
     return (int)(p-outbuf);
 }
 
-STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len, int *side, blxdata *outbuf, int outbufsize, int overviewlevel) {
-    unsigned char *inptr=inbuf;
-    int resolution,l_div,level,c,n,i,j,dpos,v,tmp,a,value,l_index,step,cellsize;
+STATIC blxdata *decode_celldata(blxcontext_t *ctx, const unsigned char *inbuf, int len, int *side, blxdata *outbuf, int outbufsize, int overviewlevel) {
+    const unsigned char *inptr=inbuf;
+    int resolution,l_div,level,c,n,i,j,dpos,tmp,a,value,l_index,step,cellsize;
     int baseside[12] = { 0 };
     blxdata *base, *diff;
     struct component_s linfo[MAXLEVELS][MAXCOMPONENTS];
@@ -725,6 +725,9 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 	BLXdebug0("==============================\n");
     }
 
+    /* Clear level info structure */
+    memset(linfo, 0, sizeof(linfo));
+
     base = BLXmalloc(2 * baseside[0] * baseside[0] * sizeof(blxdata));
     diff = BLXmalloc(2 * baseside[0] * baseside[0] * sizeof(blxdata));
     if (base == NULL || diff == NULL)
@@ -733,10 +736,7 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
         outbuf = NULL;
         goto error;
     }
-
-    /* Clear level info structure */
-    memset(linfo, 0, sizeof(linfo));
-
+ 
     for(level=0; level < 5; level++) {
 	for(c=1; c < 4; c++) {
             if (len < 1)
@@ -759,6 +759,12 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
 		for(i=0; i<n-1; i++)
 		    linfo[level][c].lut[i] = (blxdata)get_short_le(&inptr);
 		linfo[level][c].dlen = get_short_le(&inptr);
+                if( linfo[level][c].dlen < 0 )
+                {
+                    BLXerror0("Cell corrupt");
+                    outbuf = NULL;
+                    goto error;
+                }
                 len -= sizeof(short) * n;
 	    } else {
 		linfo[level][c].dlen = 0;
@@ -815,13 +821,14 @@ STATIC blxdata *decode_celldata(blxcontext_t *ctx, unsigned char *inbuf, int len
                     goto error;
                 }
 		for(i=0; i<linfo[level][c].dlen; i++) {
-		    v = *inptr++;
+		    unsigned char v = *inptr++;
 		    if(v >= linfo[level][c].n-1) {
                         if(dpos + 256-v > baseside[level]*baseside[level]) {
                             BLXerror0("Cell corrupt\n");
                             outbuf = NULL;
                             goto error;
                         }
+                        /* coverity[tainted_data] */
 			for(j=0; j<256-v; j++)
 			    linfo[level][c].data[dpos++] = 0;
 		    }
@@ -1109,7 +1116,7 @@ int blx_writecell(blxcontext_t *ctx, blxdata *cell, int cellrow, int cellcol) {
 }
 
 int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
-    unsigned char header[102],*hptr;
+    unsigned char header[102];
     int signature[2] = { 0 };
     int i,j;
     struct cellindex_s *ci;
@@ -1126,8 +1133,8 @@ int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
     if(ctx->fh == NULL)
 	goto error;
 
-    hptr = header;
     if(ctx->write) {
+        unsigned char* hptr = header;
 	blx_generate_header(ctx, header);
 
 	if(BLXfwrite(header, 1, 102, ctx->fh) != 102)
@@ -1149,6 +1156,8 @@ int blxopen(blxcontext_t *ctx, const char *filename, const char *rw) {
 	    }
 
     } else {
+        const unsigned char* hptr = header;
+
 	/* Read header */
 	if(BLXfread(header, 1, 102, ctx->fh) != 102)
 	    goto error;

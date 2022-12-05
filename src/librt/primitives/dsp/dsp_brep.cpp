@@ -460,7 +460,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
 	bezcurvarray[y] = new ON_3dPointArray(dsp_ip->dsp_xcnt);
 	for (unsigned int x = 0; x < dsp_ip->dsp_xcnt; x++) {
-	    bezcurvarray[y]->Append(bezsurf->CV(x, y));
+	    ON_3dPoint cv(bezsurf->CV(x, y));
+	    bezcurvarray[y]->Append(cv);
 	}
     }
     while (currentdegree && !exceedtol) {
@@ -493,7 +494,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     for (int x = 0; x < reducedsurf->m_order[0]; x++) {
 	bezcurvarray[x] = new ON_3dPointArray(dsp_ip->dsp_ycnt);
 	for (unsigned int y = 0; y < dsp_ip->dsp_ycnt; y++) {
-	    bezcurvarray[x]->Append(reducedsurf->CV(x, y));
+	    ON_3dPoint cv(reducedsurf->CV(x, y));
+	    bezcurvarray[x]->Append(cv);
 	}
     }
     while (currentdegree && !exceedtol) {

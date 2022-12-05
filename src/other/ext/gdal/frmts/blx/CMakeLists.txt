@@ -1,5 +1,3 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
-add_definitions(-DGDALDRIVER)
-
-add_library(frmt_blx OBJECT blxdataset.cpp blx.c)
+add_gdal_driver(TARGET gdal_BLX SOURCES blx.c blx.h blxdataset.cpp PLUGIN_CAPABLE NO_DEPS)
+gdal_standard_includes(gdal_BLX)
+target_compile_definitions(gdal_BLX PRIVATE -DGDALDRIVER)

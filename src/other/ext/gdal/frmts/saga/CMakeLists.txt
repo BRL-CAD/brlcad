@@ -1,2 +1,2 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(frmt_saga OBJECT sagadataset.cpp)
+add_gdal_driver(TARGET gdal_SAGA SOURCES sagadataset.cpp PLUGIN_CAPABLE NO_DEPS)
+gdal_standard_includes(gdal_SAGA)

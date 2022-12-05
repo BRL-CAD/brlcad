@@ -3,10 +3,10 @@
 *
 * Project:  OpenGIS Simple Features Reference Implementation
 * Purpose:  Implements Open FileGDB OGR driver.
-* Author:   Even Rouault, <even dot rouault at mines-dash paris dot org>
+* Author:   Even Rouault, <even dot rouault at spatialys.com>
 *
 ******************************************************************************
- * Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,7 @@
 
 #include "ogrsf_frmts.h"
 #include "filegdbtable.h"
-#include "swq.h"
+#include "ogr_swq.h"
 #include "cpl_quad_tree.h"
 
 #include <vector>
@@ -55,7 +55,7 @@ typedef enum
     SPI_INVALID,
 } SPIState;
 
-class OGROpenFileGDBLayer : public OGRLayer
+class OGROpenFileGDBLayer final: public OGRLayer
 {
     friend class OGROpenFileGDBGeomFieldDefn;
     friend class OGROpenFileGDBFeatureDefn;
@@ -71,21 +71,27 @@ class OGROpenFileGDBLayer : public OGRLayer
     OGRwkbGeometryType m_eGeomType;
     int               m_bValidLayerDefn;
     int               m_bEOF;
+    bool              m_bTimeInUTC = false;
 
     int               BuildLayerDefinition();
-    int               BuildGeometryColumnGDBv10();
+    int               BuildGeometryColumnGDBv10(const std::string& osParentDefinition);
     OGRFeature       *GetCurrentFeature();
 
     FileGDBOGRGeometryConverter* m_poGeomConverter;
 
     int               m_iFieldToReadAsBinary;
 
-    FileGDBIterator      *m_poIterator;
+    FileGDBIterator      *m_poAttributeIterator;
     int                   m_bIteratorSufficientToEvaluateFilter;
     FileGDBIterator*      BuildIteratorFromExprNode(swq_expr_node* poNode);
 
     FileGDBIterator*      m_poIterMinMax;
 
+    FileGDBSpatialIndexIterator* m_poSpatialIndexIterator = nullptr;
+    FileGDBIterator      *m_poCombinedIterator = nullptr;
+
+    // Legacy behavior prior to handling of .spx file
+    // To remove ultimately.
     SPIState            m_eSpatialIndexState;
     CPLQuadTree        *m_pQuadTree;
     void              **m_pahFilteredFeatures;
@@ -93,7 +99,9 @@ class OGROpenFileGDBLayer : public OGRLayer
     static void         GetBoundsFuncEx(const void* hFeature,
                                         CPLRectObj* pBounds,
                                         void* pQTUserData);
+
     void                TryToDetectMultiPatchKind();
+    void                BuildCombinedIterator();
 
 public:
 
@@ -101,13 +109,14 @@ public:
                                             const char* pszName,
                                             const std::string& osDefinition,
                                             const std::string& osDocumentation,
-                                            const char* pszGeomName = NULL,
-                                            OGRwkbGeometryType eGeomType = wkbUnknown);
+                                            const char* pszGeomName = nullptr,
+                                            OGRwkbGeometryType eGeomType = wkbUnknown,
+                                            const std::string& osParentDefinition = std::string());
   virtual              ~OGROpenFileGDBLayer();
 
   const std::string&    GetXMLDefinition() { return m_osDefinition; }
   const std::string&    GetXMLDocumentation() { return m_osDocumentation; }
-  int                   GetAttrIndexUse() { return (m_poIterator == NULL) ? 0 : (m_bIteratorSufficientToEvaluateFilter) ? 2 : 1; }
+  int                   GetAttrIndexUse() { return (m_poAttributeIterator == nullptr) ? 0 : (m_bIteratorSufficientToEvaluateFilter) ? 2 : 1; }
   const OGRField*       GetMinMaxValue(OGRFieldDefn* poFieldDefn, int bIsMin,
                                        int& eOutType);
   int                   GetMinMaxSumCount(OGRFieldDefn* poFieldDefn,
@@ -150,7 +159,7 @@ public:
 /*                       OGROpenFileGDBDataSource                       */
 /************************************************************************/
 
-class OGROpenFileGDBDataSource : public OGRDataSource
+class OGROpenFileGDBDataSource final: public OGRDataSource
 {
   char                          *m_pszName;
   CPLString                      m_osDirName;
@@ -158,6 +167,7 @@ class OGROpenFileGDBDataSource : public OGRDataSource
   std::vector <OGRLayer*>        m_apoHiddenLayers;
   char                         **m_papszFiles;
   std::map<std::string, int>     m_osMapNameToIdx;
+  std::shared_ptr<GDALGroup>     m_poRootGroup{};
 
   /* For debugging/testing */
   bool                           bLastSQLUsedOptimizedImplementation;
@@ -169,26 +179,29 @@ class OGROpenFileGDBDataSource : public OGRDataSource
                                      int nInterestTable);
 
   int                 FileExists(const char* pszFilename);
-  void                AddLayer( const CPLString& osName,
+  OGRLayer*           AddLayer( const CPLString& osName,
                                 int nInterestTable,
                                 int& nCandidateLayers,
                                 int& nLayersSDCOrCDF,
                                 const CPLString& osDefinition,
                                 const CPLString& osDocumentation,
                                 const char* pszGeomName,
-                                OGRwkbGeometryType eGeomType );
+                                OGRwkbGeometryType eGeomType,
+                                const std::string& osParentDefinition );
+  static bool         IsPrivateLayerName( const CPLString& osName );
 
 public:
            OGROpenFileGDBDataSource();
   virtual ~OGROpenFileGDBDataSource();
 
-  int                 Open(const char * );
+  int                 Open( const GDALOpenInfo* poOpenInfo );
 
   virtual const char* GetName() override { return m_pszName; }
   virtual int         GetLayerCount() override { return static_cast<int>(m_apoLayers.size()); }
 
   virtual OGRLayer*   GetLayer( int ) override;
   virtual OGRLayer*   GetLayerByName( const char* pszName ) override;
+  bool                IsLayerPrivate( int ) const override;
 
   virtual OGRLayer *  ExecuteSQL( const char *pszSQLCommand,
                                   OGRGeometry *poSpatialFilter,
@@ -198,8 +211,32 @@ public:
   virtual int         TestCapability( const char * ) override;
 
   virtual char      **GetFileList() override;
+
+  std::shared_ptr<GDALGroup> GetRootGroup() const override { return m_poRootGroup; }
 };
 
 int OGROpenFileGDBIsComparisonOp(int op);
+
+/************************************************************************/
+/*                   OGROpenFileGDBSingleFeatureLayer                   */
+/************************************************************************/
+
+class OGROpenFileGDBSingleFeatureLayer final: public OGRLayer
+{
+  private:
+    char               *pszVal;
+    OGRFeatureDefn     *poFeatureDefn;
+    int                 iNextShapeId;
+
+  public:
+                        OGROpenFileGDBSingleFeatureLayer( const char* pszLayerName,
+                                                          const char *pszVal );
+               virtual ~OGROpenFileGDBSingleFeatureLayer();
+
+    virtual void        ResetReading() override { iNextShapeId = 0; }
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRFeatureDefn *GetLayerDefn() override { return poFeatureDefn; }
+    virtual int         TestCapability( const char * ) override { return FALSE; }
+};
 
 #endif /* ndef OGR_OPENFILEGDB_H_INCLUDED */

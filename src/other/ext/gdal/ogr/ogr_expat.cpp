@@ -2,10 +2,10 @@
  *
  * Project:  OGR
  * Purpose:  Convenience function for parsing with Expat library
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,8 @@
 #ifdef HAVE_EXPAT
 
 #include "cpl_port.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
 #include "ogr_expat.h"
 
 #include <cstddef>
@@ -37,12 +39,33 @@
 #include "cpl_error.h"
 
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-static const size_t OGR_EXPAT_MAX_ALLOWED_ALLOC = 10000000;
+constexpr size_t OGR_EXPAT_MAX_ALLOWED_ALLOC = 10000000;
 
 static void* OGRExpatMalloc( size_t size ) CPL_WARN_UNUSED_RESULT;
 static void* OGRExpatRealloc( void *ptr, size_t size ) CPL_WARN_UNUSED_RESULT;
+
+/************************************************************************/
+/*                              CanAlloc()                              */
+/************************************************************************/
+
+static bool CanAlloc( size_t size )
+{
+    if( size < OGR_EXPAT_MAX_ALLOWED_ALLOC )
+        return true;
+
+    if( CPLTestBool(CPLGetConfigOption("OGR_EXPAT_UNLIMITED_MEM_ALLOC", "NO")) )
+        return true;
+
+    CPLError(CE_Failure, CPLE_OutOfMemory,
+             "Expat tried to malloc %d bytes. File probably corrupted. "
+             "This may also happen in case of a very big XML comment, in which case "
+             "you may define the OGR_EXPAT_UNLIMITED_MEM_ALLOC configuration "
+             "option to YES to remove that protection.",
+             static_cast<int>(size));
+    return false;
+}
 
 /************************************************************************/
 /*                          OGRExpatMalloc()                            */
@@ -50,13 +73,10 @@ static void* OGRExpatRealloc( void *ptr, size_t size ) CPL_WARN_UNUSED_RESULT;
 
 static void* OGRExpatMalloc( size_t size )
 {
-    if( size < OGR_EXPAT_MAX_ALLOWED_ALLOC )
+    if( CanAlloc(size) )
         return malloc(size);
 
-    CPLError(CE_Failure, CPLE_OutOfMemory,
-             "Expat tried to malloc %d bytes. File probably corrupted",
-             static_cast<int>(size));
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -64,16 +84,12 @@ static void* OGRExpatMalloc( size_t size )
 /************************************************************************/
 
 // Caller must replace the pointer with the returned pointer.
-// TODO(schwehr): Consider refactoring to be a void **ptr for safety.
 static void* OGRExpatRealloc( void *ptr, size_t size )
 {
-    if( size < OGR_EXPAT_MAX_ALLOWED_ALLOC )
+    if( CanAlloc(size) )
         return realloc(ptr, size);
 
-    CPLError(CE_Failure, CPLE_OutOfMemory,
-             "Expat tried to realloc %d bytes. File probably corrupted",
-             static_cast<int>(size));
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -172,9 +188,9 @@ static int OGRExpatUnknownEncodingHandler(
         return XML_STATUS_ERROR;
     }
 
-    info->data    = NULL;
-    info->convert = NULL;
-    info->release = NULL;
+    info->data    = nullptr;
+    info->convert = nullptr;
+    info->release = nullptr;
 
     return XML_STATUS_OK;
 }
@@ -189,11 +205,11 @@ XML_Parser OGRCreateExpatXMLParser()
     memsuite.malloc_fcn = OGRExpatMalloc;
     memsuite.realloc_fcn = OGRExpatRealloc;
     memsuite.free_fcn = free;
-    XML_Parser hParser = XML_ParserCreate_MM(NULL, &memsuite, NULL);
+    XML_Parser hParser = XML_ParserCreate_MM(nullptr, &memsuite, nullptr);
 
     XML_SetUnknownEncodingHandler(hParser,
                                   OGRExpatUnknownEncodingHandler,
-                                  NULL);
+                                  nullptr);
 
     return hParser;
 }

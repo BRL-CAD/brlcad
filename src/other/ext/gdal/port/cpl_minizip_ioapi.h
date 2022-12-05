@@ -4,7 +4,7 @@
       - change fill_fopen_filefunc to cpl_fill_fopen_filefunc
       - Add support for ZIP64
 
- * Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
 
    Original licence available in port/LICENCE_minizip
 */
@@ -79,6 +79,13 @@ void cpl_fill_fopen_filefunc (zlib_filefunc_def* pzlib_filefunc_def);
 #define ZSEEK(filefunc,filestream,pos,mode) ((*((filefunc).zseek_file))((filefunc).opaque,filestream,pos,mode))
 #define ZCLOSE(filefunc,filestream) ((*((filefunc).zclose_file))((filefunc).opaque,filestream))
 #define ZERROR(filefunc,filestream) ((*((filefunc).zerror_file))((filefunc).opaque,filestream))
+
+#define ZREAD64 ZREAD
+#define ZWRITE64 ZWRITE
+#define ZTELL64 ZTELL
+#define ZSEEK64 ZSEEK
+#define ZCLOSE64 ZCLOSE
+#define ZERROR64 ZERROR
 
 #ifdef __cplusplus
 }

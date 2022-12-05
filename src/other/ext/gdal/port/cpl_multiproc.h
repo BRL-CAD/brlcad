@@ -7,7 +7,7 @@
  *
  **********************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -85,6 +85,13 @@ void  CPL_DLL CPLCleanupMasterMutex( void );
 
 CPLCond  CPL_DLL *CPLCreateCond( void );
 void  CPL_DLL  CPLCondWait( CPLCond *hCond, CPLMutex* hMutex );
+typedef enum
+{
+    COND_TIMED_WAIT_COND,
+    COND_TIMED_WAIT_TIME_OUT,
+    COND_TIMED_WAIT_OTHER
+} CPLCondTimedWaitReason;
+CPLCondTimedWaitReason CPL_DLL CPLCondTimedWait( CPLCond *hCond, CPLMutex* hMutex, double dfWaitInSeconds );
 void  CPL_DLL  CPLCondSignal( CPLCond *hCond );
 void  CPL_DLL  CPLCondBroadcast( CPLCond *hCond );
 void  CPL_DLL  CPLDestroyCond( CPLCond *hCond );
@@ -122,39 +129,41 @@ void  CPL_DLL  CPLLockSetDebugPerf( CPLLock*, int bEnableIn ); /* only available
 
 CPL_C_END
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 /* Instantiates the mutex if not already done. The parameter x should be a (void**). */
-#define CPLMutexHolderD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
+#define CPLMutexHolderD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__)
 
 /* Instantiates the mutex with options if not already done. */
 /* The parameter x should be a (void**). */
-#define CPLMutexHolderExD(x, nOptions)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__,nOptions);
+#define CPLMutexHolderExD(x, nOptions)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__,nOptions)
 
 /* This variant assumes the mutex has already been created. If not, it will */
 /* be a no-op. The parameter x should be a (void*) */
-#define CPLMutexHolderOptionalLockD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__);
+#define CPLMutexHolderOptionalLockD(x)  CPLMutexHolder oHolder(x,1000.0,__FILE__,__LINE__)
 
 /** Object to hold a mutex */
 class CPL_DLL CPLMutexHolder
 {
   private:
-    CPLMutex   *hMutex;
+    CPLMutex   *hMutex = nullptr;
     // Only used for debugging.
-    const char *pszFile;
-    int         nLine;
+    const char *pszFile = nullptr;
+    int         nLine = 0;
+
+    CPL_DISALLOW_COPY_ASSIGN(CPLMutexHolder)
 
   public:
 
     /** Instantiates the mutex if not already done. */
-    CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds = 1000.0,
+    explicit CPLMutexHolder( CPLMutex **phMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__,
                     int nOptions = CPL_MUTEX_RECURSIVE);
 
     /** This variant assumes the mutex has already been created. If not, it will
      * be a no-op */
-    CPLMutexHolder( CPLMutex* hMutex, double dfWaitInSeconds = 1000.0,
+    explicit CPLMutexHolder( CPLMutex* hMutex, double dfWaitInSeconds = 1000.0,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__ );
 
@@ -172,9 +181,11 @@ class CPL_DLL CPLMutexHolder
 class CPL_DLL CPLLockHolder
 {
   private:
-    CPLLock    *hLock;
-    const char *pszFile;
-    int         nLine;
+    CPLLock    *hLock = nullptr;
+    const char *pszFile = nullptr;
+    int         nLine = 0;
+
+    CPL_DISALLOW_COPY_ASSIGN(CPLLockHolder)
 
   public:
 
@@ -185,7 +196,7 @@ class CPL_DLL CPLLockHolder
 
     /** This variant assumes the lock has already been created. If not, it will
      * be a no-op */
-    CPLLockHolder( CPLLock* hSpin,
+    explicit CPLLockHolder( CPLLock* hSpin,
                     const char *pszFile = __FILE__,
                     int nLine = __LINE__ );
 
@@ -203,10 +214,10 @@ class CPL_DLL CPLLockHolder
 #define CTLS_CSVTABLEPTR                 3         /* cpl_csv.cpp */
 #define CTLS_CSVDEFAULTFILENAME          4         /* cpl_csv.cpp */
 #define CTLS_ERRORCONTEXT                5         /* cpl_error.cpp */
-#define CTLS_GDALDATASET_REC_PROTECT_MAP 6        /* gdaldataset.cpp */
+#define CTLS_VSICURL_CACHEDCONNECTION    6         /* cpl_vsil_curl.cpp */
 #define CTLS_PATHBUF                     7         /* cpl_path.cpp */
-#define CTLS_UNUSED3                     8
-#define CTLS_UNUSED4                     9
+#define CTLS_ABSTRACTARCHIVE_SPLIT       8         /* cpl_vsil_abstract_archive.cpp */
+#define CTLS_GDALOPEN_ANTIRECURSION      9         /* gdaldataset.cpp */
 #define CTLS_CPLSPRINTF                 10         /* cpl_string.h */
 #define CTLS_RESPONSIBLEPID             11         /* gdaldataset.cpp */
 #define CTLS_VERSIONINFO                12         /* gdal_misc.cpp */
@@ -214,6 +225,10 @@ class CPL_DLL CPLLockHolder
 #define CTLS_CONFIGOPTIONS              14         /* cpl_conv.cpp */
 #define CTLS_FINDFILE                   15         /* cpl_findfile.cpp */
 #define CTLS_VSIERRORCONTEXT            16         /* cpl_vsi_error.cpp */
+#define CTLS_ERRORHANDLERACTIVEDATA     17         /* cpl_error.cpp */
+#define CTLS_PROJCONTEXTHOLDER          18         /* ogr_proj_p.cpp */
+#define CTLS_GDALDEFAULTOVR_ANTIREC     19         /* gdaldefaultoverviews.cpp */
+#define CTLS_HTTPFETCHCALLBACK          20         /* cpl_http.cpp */
 
 #define CTLS_MAX                        32
 

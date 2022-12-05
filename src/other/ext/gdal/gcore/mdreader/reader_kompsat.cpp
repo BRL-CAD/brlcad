@@ -36,10 +36,12 @@
 
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
+
 #include "gdal_mdreader.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**
  * GDALMDReaderKompsat()
@@ -83,7 +85,7 @@ bool GDALMDReaderKompsat::HasRequiredFiles() const
  */
 char** GDALMDReaderKompsat::GetMetadataFiles() const
 {
-    char **papszFileList = NULL;
+    char **papszFileList = nullptr;
     if(!m_osIMDSourceFilename.empty())
         papszFileList= CSLAddString( papszFileList, m_osIMDSourceFilename );
     if(!m_osRPBSourceFilename.empty())
@@ -116,19 +118,19 @@ void GDALMDReaderKompsat::LoadMetadata()
 
     const char* pszSatId1 = CSLFetchNameValue(m_papszIMDMD, "AUX_SATELLITE_NAME");
     const char* pszSatId2 = CSLFetchNameValue(m_papszIMDMD, "AUX_SATELLITE_SENSOR");
-    if(NULL != pszSatId1 && NULL != pszSatId2)
+    if(nullptr != pszSatId1 && nullptr != pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                            MD_NAME_SATELLITE, CPLSPrintf( "%s %s",
                            CPLStripQuotes(pszSatId1).c_str(),
                            CPLStripQuotes(pszSatId2).c_str()));
     }
-    else if(NULL != pszSatId1 && NULL == pszSatId2)
+    else if(nullptr != pszSatId1 && nullptr == pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_SATELLITE, CPLStripQuotes(pszSatId1));
     }
-    else if(NULL == pszSatId1 && NULL != pszSatId2)
+    else if(nullptr == pszSatId1 && nullptr != pszSatId2)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_SATELLITE, CPLStripQuotes(pszSatId2));
@@ -136,7 +138,7 @@ void GDALMDReaderKompsat::LoadMetadata()
 
     const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD,
                                                  "AUX_CLOUD_STATUS");
-    if(NULL != pszCloudCover)
+    if(nullptr != pszCloudCover)
     {
         int nCC = atoi(pszCloudCover);
         if(nCC > 100 || nCC < 0)
@@ -153,18 +155,19 @@ void GDALMDReaderKompsat::LoadMetadata()
 
     const char* pszDate = CSLFetchNameValue(m_papszIMDMD,
                                             "AUX_STRIP_ACQ_DATE_UT");
-    if(NULL != pszDate)
+    if(nullptr != pszDate)
     {
         const char* pszTime = CSLFetchNameValue(m_papszIMDMD,
                                                 "AUX_STRIP_ACQ_START_UT");
 
-        if(NULL == pszTime)
+        if(nullptr == pszTime)
             pszTime = "000000.000000";
 
         char buffer[80];
-        time_t timeMid = GetAcquisitionTimeFromString(CPLSPrintf( "%sT%s",
+        GIntBig timeMid = GetAcquisitionTimeFromString(CPLSPrintf( "%sT%s",
                                                      pszDate, pszTime));
-        strftime (buffer, 80, MD_DATETIMEFORMAT, localtime(&timeMid));
+        struct tm tmBuf;
+        strftime (buffer, 80, MD_DATETIMEFORMAT, CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                            MD_NAME_ACQDATETIME, buffer);
     }
@@ -176,23 +179,24 @@ void GDALMDReaderKompsat::LoadMetadata()
 char** GDALMDReaderKompsat::ReadTxtToList()
 {
     char** papszLines = CSLLoad(m_osIMDSourceFilename);
-    if(NULL == papszLines)
-        return NULL;
+    if(nullptr == papszLines)
+        return nullptr;
 
-    char** papszIMD = NULL;
+    char** papszIMD = nullptr;
     char szName[512];
     int i;
     size_t j;
     CPLString soGroupName;
 
-    for(i = 0; papszLines[i] != NULL; i++)
+    for(i = 0; papszLines[i] != nullptr; i++)
     {
         const char *pszLine = papszLines[i];
+        const size_t nLineLenLimited = CPLStrnlen(pszLine, 512);
 
         //check if this is begin block
         if(STARTS_WITH_CI(pszLine, "BEGIN_"))
         {
-            for(j = 6; j < CPLStrnlen(pszLine, 512); j++)
+            for(j = 6; j+1 < nLineLenLimited; j++)
             {
                 if(STARTS_WITH_CI(pszLine + j, "_BLOCK"))
                 {
@@ -201,6 +205,7 @@ char** GDALMDReaderKompsat::ReadTxtToList()
                 }
                 szName[j - 6] = pszLine[j];
             }
+            szName[j - 6] = '\0';
 
             soGroupName = szName;
 
@@ -215,7 +220,7 @@ char** GDALMDReaderKompsat::ReadTxtToList()
         }
 
         //get name and value
-        for(j = 0; j < CPLStrnlen(pszLine, 512); j++)
+        for(j = 0; j+1 < nLineLenLimited; j++)
         {
             if(pszLine[j] == '\t')
             {
@@ -232,6 +237,7 @@ char** GDALMDReaderKompsat::ReadTxtToList()
             }
             szName[j] = pszLine[j];
         }
+        szName[j] = '\0';
 
         // trim
         while( pszLine[j] == ' ' ) j++;
@@ -255,10 +261,10 @@ char** GDALMDReaderKompsat::ReadTxtToList()
 /**
  * GetAcqisitionTimeFromString()
  */
-time_t GDALMDReaderKompsat::GetAcquisitionTimeFromString(
+GIntBig GDALMDReaderKompsat::GetAcquisitionTimeFromString(
         const char* pszDateTime)
 {
-    if(NULL == pszDateTime)
+    if(nullptr == pszDateTime)
         return 0;
 
     int iYear;
@@ -283,5 +289,5 @@ time_t GDALMDReaderKompsat::GetAcquisitionTimeFromString(
     tmDateTime.tm_year = iYear - 1900;
     tmDateTime.tm_isdst = -1;
 
-    return mktime(&tmDateTime);
+    return CPLYMDHMSToUnixTime(&tmDateTime);
 }

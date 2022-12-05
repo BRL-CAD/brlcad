@@ -6,7 +6,7 @@
  * Author:   Even Rouault
  *
  ******************************************************************************
- * Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,7 @@
 
 #include "cpl_port.h"
 #include "gdal.h"
+#include "ogr_srs_api.h"
 
 CPL_C_START
 
@@ -40,7 +41,7 @@ CPLErr CPL_DLL GTIFMemBufFromWkt( const char *pszWKT,
                                   int nGCPCount, const GDAL_GCP *pasGCPList,
                                   int *pnSize, unsigned char **ppabyBuffer );
 
-CPLErr GTIFMemBufFromWktEx( const char *pszWKT,
+CPLErr GTIFMemBufFromSRS( OGRSpatialReferenceH hSRS,
                             const double *padfGeoTransform,
                             int nGCPCount, const GDAL_GCP *pasGCPList,
                             int *pnSize, unsigned char **ppabyBuffer,
@@ -51,10 +52,10 @@ CPLErr CPL_DLL GTIFWktFromMemBuf( int nSize, unsigned char *pabyBuffer,
                           int *pnGCPCount, GDAL_GCP **ppasGCPList );
 
 CPLErr GTIFWktFromMemBufEx( int nSize, unsigned char *pabyBuffer,
-                            char **ppszWKT, double *padfGeoTransform,
+                            OGRSpatialReferenceH* phSRS, double *padfGeoTransform,
                             int *pnGCPCount, GDAL_GCP **ppasGCPList,
                             int *pbPixelIsPoint, char*** ppapszRPCMD );
 
-CPL_C_END;
+CPL_C_END
 
 #endif // GT_WKT_SRS_FOR_GDAL_H_INCLUDED

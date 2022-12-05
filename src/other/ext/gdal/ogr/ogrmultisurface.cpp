@@ -37,7 +37,7 @@
 #include "ogr_core.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRMultiSurface()                           */
@@ -47,13 +47,13 @@ CPL_CVSID("$Id$");
  * \brief Create an empty multi surface collection.
  */
 
-OGRMultiSurface::OGRMultiSurface() {}
+OGRMultiSurface::OGRMultiSurface() = default;
 
 /************************************************************************/
 /*                         ~OGRMultiSurface()                           */
 /************************************************************************/
 
-OGRMultiSurface::~OGRMultiSurface() {}
+OGRMultiSurface::~OGRMultiSurface() = default;
 
 /************************************************************************/
 /*              OGRMultiSurface( const OGRMultiSurface& )               */
@@ -68,9 +68,7 @@ OGRMultiSurface::~OGRMultiSurface() {}
  * @since GDAL 2.1
  */
 
-OGRMultiSurface::OGRMultiSurface( const OGRMultiSurface& other ) :
-    OGRGeometryCollection(other)
-{}
+OGRMultiSurface::OGRMultiSurface( const OGRMultiSurface& ) = default;
 
 /************************************************************************/
 /*                  operator=( const OGRMultiCurve&)                    */
@@ -92,6 +90,16 @@ OGRMultiSurface& OGRMultiSurface::operator=( const OGRMultiSurface& other )
         OGRGeometryCollection::operator=( other );
     }
     return *this;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRMultiSurface *OGRMultiSurface::clone() const
+
+{
+    return new (std::nothrow) OGRMultiSurface(*this);
 }
 
 /************************************************************************/
@@ -138,7 +146,9 @@ const char * OGRMultiSurface::getGeometryName() const
 OGRBoolean
 OGRMultiSurface::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 {
-    return OGR_GT_IsSurface(eGeomType);
+    OGRwkbGeometryType eFlattenGeomType = wkbFlatten(eGeomType);
+    return eFlattenGeomType == wkbPolygon ||
+           eFlattenGeomType == wkbCurvePolygon;
 }
 
 /************************************************************************/
@@ -147,13 +157,13 @@ OGRMultiSurface::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 /*      Instantiate from well known text format.                        */
 /************************************************************************/
 
-OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
+OGRErr OGRMultiSurface::importFromWkt( const char ** ppszInput )
 
 {
     int bHasZ = FALSE;
     int bHasM = FALSE;
     bool bIsEmpty = false;
-    OGRErr eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    OGRErr eErr = importPreambleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
     if( eErr != OGRERR_NONE )
         return eErr;
@@ -174,9 +184,9 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
 /*      point list buffer from ring to ring to cut down on              */
 /*      allocate/deallocate overhead.                                   */
 /* ==================================================================== */
-    OGRRawPoint *paoPoints = NULL;
+    OGRRawPoint *paoPoints = nullptr;
     int          nMaxPoints = 0;
-    double      *padfZ = NULL;
+    double      *padfZ = nullptr;
 
     do
     {
@@ -186,7 +196,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
         const char* pszInputBefore = pszInput;
         pszInput = OGRWktReadToken( pszInput, szToken );
 
-        OGRSurface* poSurface = NULL;
+        OGRSurface* poSurface = nullptr;
 
     /* -------------------------------------------------------------------- */
     /*      Do the import.                                                  */
@@ -197,7 +207,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
             poSurface = poPolygon;
             pszInput = pszInputBefore;
             eErr = poPolygon->importFromWKTListOnly(
-                const_cast<char **>(&pszInput), bHasZ, bHasM,
+                &pszInput, bHasZ, bHasM,
                 paoPoints, nMaxPoints, padfZ );
         }
         else if( EQUAL(szToken, "EMPTY") )
@@ -206,20 +216,19 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
         }
         // We accept POLYGON() but this is an extension to the BNF, also
         // accepted by PostGIS.
-        else if( EQUAL(szToken, "POLYGON") ||
-                 EQUAL(szToken, "CURVEPOLYGON") )
+        else if( STARTS_WITH_CI(szToken, "POLYGON") ||
+                 STARTS_WITH_CI(szToken, "CURVEPOLYGON") )
         {
-            OGRGeometry* poGeom = NULL;
+            OGRGeometry* poGeom = nullptr;
             pszInput = pszInputBefore;
             eErr = OGRGeometryFactory::createFromWkt(
-                const_cast<char **>(&pszInput), NULL, &poGeom );
-            poSurface = dynamic_cast<OGRSurface*>(poGeom);
-            if( poSurface == NULL )
+                &pszInput, nullptr, &poGeom );
+            if( poGeom == nullptr )
             {
-                delete poGeom;
                 eErr = OGRERR_CORRUPT_DATA;
                 break;
             }
+            poSurface = poGeom->toSurface();
         }
         else
         {
@@ -256,7 +265,7 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
     if( szToken[0] != ')' )
         return OGRERR_CORRUPT_DATA;
 
-    *ppszInput = const_cast<char *>(pszInput);
+    *ppszInput = pszInput;
     return OGRERR_NONE;
 }
 
@@ -264,11 +273,11 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-OGRErr OGRMultiSurface::exportToWkt( char ** ppszDstText,
-                                     OGRwkbVariant /* eWkbVariant */ ) const
-
+std::string OGRMultiSurface::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 {
-    return exportToWktInternal( ppszDstText, wkbVariantIso, "POLYGON" );
+    OGRWktOptions optsModified(opts);
+    optsModified.variant = wkbVariantIso;
+    return exportToWktInternal(optsModified, err, "POLYGON");
 }
 
 /************************************************************************/
@@ -322,31 +331,17 @@ OGRErr OGRMultiSurface::PointOnSurface( OGRPoint * poPoint ) const
 
 OGRMultiPolygon* OGRMultiSurface::CastToMultiPolygon( OGRMultiSurface* poMS )
 {
-    for( int i = 0; i < poMS->nGeomCount; i++ )
+    for( auto&& poSubGeom: *poMS )
     {
-        OGRSurface* poSurface = dynamic_cast<OGRSurface *>(poMS->papoGeoms[i]);
-        if( poSurface == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRSurface.");
-            delete poMS;
-            return NULL;
-        }
-        poMS->papoGeoms[i] = OGRSurface::CastToPolygon(poSurface);
-        if( poMS->papoGeoms[i] == NULL )
+        poSubGeom = OGRSurface::CastToPolygon(poSubGeom);
+        if( poSubGeom == nullptr )
         {
             delete poMS;
-            return NULL;
+            return nullptr;
         }
     }
 
-    OGRGeometryCollection *poGC =
-           TransferMembersAndDestroy(poMS, new OGRMultiPolygon());
-    OGRMultiPolygon* poMultiPolygon = dynamic_cast<OGRMultiPolygon *>(poGC);
-    if( poMultiPolygon == NULL )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRMultiPolygon.");
-    }
-    return poMultiPolygon;
+    OGRMultiPolygon* poMP = new OGRMultiPolygon();
+    TransferMembersAndDestroy(poMS, poMP);
+    return poMP;
 }

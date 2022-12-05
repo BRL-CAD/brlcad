@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -87,12 +87,18 @@ const char CPL_DLL * OGRWktReadPointsM( const char * pszInput,
                                         int * pnReadPoints );
 
 void CPL_DLL OGRMakeWktCoordinate( char *, double, double, double, int );
+std::string CPL_DLL OGRMakeWktCoordinate(double, double, double, int, OGRWktOptions opts );
 void CPL_DLL OGRMakeWktCoordinateM( char *, double, double, double, double, OGRBoolean, OGRBoolean );
+std::string CPL_DLL OGRMakeWktCoordinateM( double, double, double, double, OGRBoolean, OGRBoolean, OGRWktOptions opts );
 
 #endif
 
-void OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
+void CPL_DLL OGRFormatDouble( char *pszBuffer, int nBufferLen, double dfVal,
                       char chDecimalSep, int nPrecision = 15, char chConversionSpecifier = 'f' );
+std::string CPL_DLL OGRFormatDouble(double val, const OGRWktOptions& opts);
+
+int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal,
+                   int nPrecision, char chConversionSpecifier);
 
 /* -------------------------------------------------------------------- */
 /*      Date-time parsing and processing functions                      */
@@ -107,6 +113,7 @@ int CPL_DLL OGRParseRFC822DateTime( const char* pszRFC822DateTime,
                                     OGRField* psField );
 char CPL_DLL * OGRGetRFC822DateTime(const OGRField* psField);
 char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField);
+char CPL_DLL * OGRGetXMLDateTime(const OGRField* psField, bool bAlwaysMillisecond);
 char CPL_DLL * OGRGetXML_UTF8_EscapedString(const char* pszString);
 
 int OGRCompareDate(const OGRField *psFirstTuple,
@@ -140,7 +147,7 @@ OGRErr CPL_DLL OSRGetEllipsoidInfo( int, char **, double *, double *);
 /* Fast atof function */
 double OGRFastAtof(const char* pszStr);
 
-OGRErr CPL_DLL OGRCheckPermutation(int* panPermutation, int nSize);
+OGRErr CPL_DLL OGRCheckPermutation(const int* panPermutation, int nSize);
 
 /* GML related */
 
@@ -167,9 +174,16 @@ char CPL_DLL * OGRGeometryToHexEWKB( OGRGeometry * poGeometry, int nSRSId,
 /*                        WKB Type Handling encoding                    */
 /************************************************************************/
 
-OGRErr OGRReadWKBGeometryType( unsigned char * pabyData,
+OGRErr CPL_DLL OGRReadWKBGeometryType( const unsigned char * pabyData,
                                OGRwkbVariant wkbVariant,
                                OGRwkbGeometryType *eGeometryType );
+
+/************************************************************************/
+/*                        WKT Type Handling encoding                    */
+/************************************************************************/
+
+OGRErr CPL_DLL OGRReadWKTGeometryType( const char* pszWKT,
+                                       OGRwkbGeometryType *peGeometryType );
 
 /************************************************************************/
 /*                            Other                                     */

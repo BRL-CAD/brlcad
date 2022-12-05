@@ -4,7 +4,7 @@
       - Remove old C style function prototypes
       - Add support for ZIP64
 
- * Copyright (c) 2008-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2010, Even Rouault <even dot rouault at spatialys.com>
 
    Original licence available in port/LICENCE_minizip
 */
@@ -33,14 +33,14 @@
 #include "zconf.h"
 #include "zlib.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static
 voidpf ZCALLBACK fopen_file_func ( voidpf /* opaque */ ,
                                    const char* filename, int mode )
 {
-    VSILFILE* file = NULL;
-    const char* mode_fopen = NULL;
+    VSILFILE* file = nullptr;
+    const char* mode_fopen = nullptr;
     if ((mode & ZLIB_FILEFUNC_MODE_READWRITEFILTER)==ZLIB_FILEFUNC_MODE_READ)
         mode_fopen = "rb";
     else
@@ -50,11 +50,11 @@ voidpf ZCALLBACK fopen_file_func ( voidpf /* opaque */ ,
     if (mode & ZLIB_FILEFUNC_MODE_CREATE)
     {
         mode_fopen = "wb";
-        if( filename != NULL )
+        if( filename != nullptr )
             return VSIFOpenExL(filename, mode_fopen, true);
     }
 
-    if ((filename!=NULL) && (mode_fopen != NULL))
+    if ((filename!=nullptr) && (mode_fopen != nullptr))
         file = VSIFOpenL(filename, mode_fopen);
     return file;
 }
@@ -83,7 +83,7 @@ static
 uLong64 ZCALLBACK ftell_file_func ( voidpf /* opaque */, voidpf stream )
 {
     uLong64 ret;
-    ret = VSIFTellL((VSILFILE *)stream);
+    ret = VSIFTellL(reinterpret_cast<VSILFILE*>(stream));
     return ret;
 }
 
@@ -105,13 +105,13 @@ long ZCALLBACK fseek_file_func ( voidpf /* opaque */, voidpf stream,
         break;
     default: return -1;
     }
-    return VSIFSeekL((VSILFILE *)stream, offset, fseek_origin);
+    return VSIFSeekL(reinterpret_cast<VSILFILE*>(stream), offset, fseek_origin);
 }
 
 static
 int ZCALLBACK fclose_file_func ( voidpf /* opaque */, voidpf stream )
 {
-    return VSIFCloseL((VSILFILE *)stream);
+    return VSIFCloseL(reinterpret_cast<VSILFILE*>(stream));
 }
 
 static
@@ -130,5 +130,5 @@ void cpl_fill_fopen_filefunc (zlib_filefunc_def*  pzlib_filefunc_def)
     pzlib_filefunc_def->zseek_file = fseek_file_func;
     pzlib_filefunc_def->zclose_file = fclose_file_func;
     pzlib_filefunc_def->zerror_file = ferror_file_func;
-    pzlib_filefunc_def->opaque = NULL;
+    pzlib_filefunc_def->opaque = nullptr;
 }

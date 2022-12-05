@@ -116,12 +116,14 @@ public:
       false: 
         The domain will be set to (0,2*pi)x(-pi/2,pi/2)
     srf - [in]
-      if not NULL, then this srf is used.
+      if not nullptr, then this srf is used.
   Result:
-    A surface of revolution or NULL if the sphere is not valid.
+    A surface of revolution or nullptr if the sphere is not valid.
   */
-  ON_RevSurface* RevSurfaceForm( bool bArcLengthParameterization, ON_RevSurface* srf = NULL ) const;
-  ON_DEPRECATED ON_RevSurface* RevSurfaceForm( ON_RevSurface* srf = NULL ) const;
+  ON_RevSurface* RevSurfaceForm( bool bArcLengthParameterization, ON_RevSurface* srf = nullptr ) const;
+
+  ON_DEPRECATED_MSG("Call RevSurfaceForm(false,srf)")
+  ON_RevSurface* RevSurfaceForm( ON_RevSurface* srf = nullptr ) const;
 };
 
 #endif

@@ -47,7 +47,7 @@
  * are recognized as special strings to name the standard output and error files).
  * The traced calls are outputted as a OGR Python script.
  *
- * Only calls that may have side-effects to the behaviour of drivers are traced.
+ * Only calls that may have side-effects to the behavior of drivers are traced.
  *
  * If a file-based datasource is open in update mode, a snapshot of its initial
  * state is stored in a 'snapshot' directory, and then a copy of it is made as
@@ -71,33 +71,35 @@ CPL_C_START
 
 extern int bOGRAPISpyEnabled;
 
+void OGRAPISpyDestroyMutex();
+
 int OGRAPISpyOpenTakeSnapshot(const char* pszName, int bUpdate);
 void OGRAPISpyOpen(const char* pszName, int bUpdate, int iSnapshot,
                    GDALDatasetH* phDS);
-void OGRAPISpyPreClose(OGRDataSourceH hDS);
+void OGRAPISpyPreClose(GDALDatasetH hDS);
 void OGRAPISpyPostClose();
 void OGRAPISpyCreateDataSource(OGRSFDriverH hDriver, const char* pszName,
                                char** papszOptions, OGRDataSourceH hDS);
 void OGRAPISpyDeleteDataSource(OGRSFDriverH hDriver, const char* pszName);
 
-void OGRAPISpy_DS_GetLayerCount( OGRDataSourceH hDS );
-void OGRAPISpy_DS_GetLayer( OGRDataSourceH hDS, int iLayer, OGRLayerH hLayer );
-void OGRAPISpy_DS_GetLayerByName( OGRDataSourceH hDS, const char* pszLayerName,
+void OGRAPISpy_DS_GetLayerCount( GDALDatasetH hDS );
+void OGRAPISpy_DS_GetLayer( GDALDatasetH hDS, int iLayer, OGRLayerH hLayer );
+void OGRAPISpy_DS_GetLayerByName( GDALDatasetH hDS, const char* pszLayerName,
                                   OGRLayerH hLayer );
-void OGRAPISpy_DS_ExecuteSQL( OGRDataSourceH hDS,
+void OGRAPISpy_DS_ExecuteSQL( GDALDatasetH hDS,
                               const char *pszStatement,
                               OGRGeometryH hSpatialFilter,
                               const char *pszDialect,
                               OGRLayerH hLayer);
-void OGRAPISpy_DS_ReleaseResultSet( OGRDataSourceH hDS, OGRLayerH hLayer);
+void OGRAPISpy_DS_ReleaseResultSet( GDALDatasetH hDS, OGRLayerH hLayer);
 
-void OGRAPISpy_DS_CreateLayer( OGRDataSourceH hDS,
+void OGRAPISpy_DS_CreateLayer( GDALDatasetH hDS,
                                const char * pszName,
                                OGRSpatialReferenceH hSpatialRef,
                                OGRwkbGeometryType eType,
                                char ** papszOptions,
                                OGRLayerH hLayer);
-void OGRAPISpy_DS_DeleteLayer( OGRDataSourceH hDS, int iLayer );
+void OGRAPISpy_DS_DeleteLayer( GDALDatasetH hDS, int iLayer );
 
 void OGRAPISpy_Dataset_StartTransaction( GDALDatasetH hDS, int bForce );
 void OGRAPISpy_Dataset_CommitTransaction( GDALDatasetH hDS );

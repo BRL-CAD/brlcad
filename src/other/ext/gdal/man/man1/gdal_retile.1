@@ -1,0 +1,198 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDAL_RETILE" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdal_retile \- Retiles a set of tiles and/or build tiled pyramid levels.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_retile.py [\-v] [\-co NAME=VALUE]* [\-of out_format] [\-ps pixelWidth pixelHeight]
+               [\-overlap val_in_pixel]
+               [\-ot  {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
+                       CInt16/CInt32/CFloat32/CFloat64}]\(aq
+               [ \-tileIndex tileIndexName [\-tileIndexField tileIndexFieldName]]
+               [ \-csv fileName [\-csvDelim delimiter]]
+               [\-s_srs srs_def]  [\-pyramidOnly]
+               [\-r {near/bilinear/cubic/cubicspline/lanczos}]
+               \-levels numberoflevels
+               [\-useDirForEachRow] [\-resume]
+               \-targetDir TileDirectory input_files
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+This utility will retile a set of input tile(s). All the input tile(s) must
+be georeferenced in the same coordinate system and have a matching number of bands.
+Optionally pyramid levels are generated. It  is  possible to generate  shape file(s) for the tiled output.
+.sp
+If your number of input tiles exhausts the command line buffer, use the general
+\fI\%\-\-optfile\fP option
+.INDENT 0.0
+.TP
+.B \-targetDir <directory>
+The directory where the tile result is created. Pyramids are stored
+in  sub\-directories  numbered  from  1. Created tile names have a numbering
+schema and contain the name of the source tiles(s)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-of <format>
+Select the output format. Starting with GDAL 2.3, if not specified, the
+format is guessed from the extension (previously was GTiff). Use the short
+format name.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-co <NAME=VALUE>
+Many formats have one or more optional creation options that can be
+used to control particulars about the file created. For instance,
+the GeoTIFF driver supports creation options to control compression,
+and whether the file should be tiled.
+.sp
+The creation options available vary by format driver, and some
+simple formats have no creation options at all. A list of options
+supported for a format can be listed with the
+\fI\%\-\-formats\fP
+command line option but the documentation for the format is the
+definitive source of information on driver creation options.
+See \fI\%Raster drivers\fP format
+specific documentation for legal creation options for each format.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ot <type>
+Force the output image bands to have a specific data type supported by the
+driver, which may be one of the following: \fBByte\fP, \fBUInt16\fP,
+\fBInt16\fP, \fBUInt32\fP, \fBInt32\fP, \fBFloat32\fP, \fBFloat64\fP, \fBCInt16\fP,
+\fBCInt32\fP, \fBCFloat32\fP or \fBCFloat64\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ps <pixelsize_x> <pixelsize_y>
+Pixel size to be used for the
+output file.  If not specified, 256 x 256 is the default
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-overlap< <val_in_pixel>
+Overlap in pixels between consecutive tiles. If not specified, 0 is the default
+.sp
+New in version 2.2.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-levels <numberOfLevels>
+Number of pyramids levels to build.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-v
+Generate verbose output of tile operations as they are done.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-pyramidOnly
+No retiling, build only the pyramids
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-r <algorithm>
+Resampling algorithm, default is near
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-s_srs <srs_def>
+Source spatial reference to use. The coordinate systems  that  can  be
+passed  are  anything  supported by the OGRSpatialReference.SetFromUserInput()  call,
+which  includes  EPSG, PCS, and GCSes (i.e. EPSG:4296), PROJ.4 declarations (as above),
+or the name of a .prj file containing well known text.
+If  no  srs_def  is  given,  the srs_def  of the source tiles is used (if there is any).
+The srs_def will be propagated to created tiles (if possible) and  to  the  optional
+shape file(s)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-tileIndex <tileIndexName>
+The name of shape file containing the result tile(s) index
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-tileIndexField <tileIndexFieldName>
+The name of the attribute containing the tile name
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-csv <csvFileName>
+The name of the csv file containing the tile(s) georeferencing information.
+The file contains 5 columns: tilename,minx,maxx,miny,maxy
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-csvDelim <column delimiter>
+The column delimiter used in the CSV file, default value is a semicolon ";"
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-useDirForEachRow
+Normally the tiles of the base image are stored as described in \fI\%\-targetDir\fP\&.
+For large images, some file systems have performance problems if the number of files
+in a directory is to big, causing gdal_retile not to finish in reasonable time.
+Using this parameter creates a different output structure. The tiles of the base image
+are stored in a sub\-directory called 0, the pyramids in sub\-directories numbered 1,2,....
+Within each of these directories another level of sub\-directories is created, numbered from
+0...n, depending of how many tile rows are needed for each level. Finally, a directory contains
+only the tiles for one row for a specific level. For large images a performance improvement
+of a factor N could be achieved.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-resume
+Resume mode. Generate only missing files.
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+gdal_retile.py is a Python script, and will only work if GDAL was built
+with Python support.
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Christian Mueller <christian.mueller@nvoe.at>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

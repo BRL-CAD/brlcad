@@ -14,10 +14,7 @@
 ////////////////////////////////////////////////////////////////
 */
 
-// uncomment the "ON_DLL_IMPORTS" define to use opennurbs as a Windows DLL
-//#define ON_DLL_IMPORTS
-#include "../opennurbs.h"
-#include "../examples_linking_pragmas.h"
+#include "../opennurbs_public_examples.h"
 
 #include "../opennurbs_gl.h"
 
@@ -187,7 +184,7 @@ CModel* glb_model = 0;
 //
 //////////////////////////////////////////////////////////////////////
 
-ON_BOOL32 myInitGL( const ON_Viewport&, GLUnurbsObj*& );
+bool myInitGL( const ON_Viewport&, GLUnurbsObj*& );
 
 void myBuildDisplayList( 
       GLuint,                  // display_list_number,
@@ -251,7 +248,7 @@ int main( int argc, const char *argv[] )
 
   ON_TextLog error_log;
 
-  ON_BOOL32 bOK;
+  bool bOK;
   int window_width  = 500;
   int window_height = 500;
   //double port_aspect = ((double)window_width)/((double)window_height);
@@ -415,7 +412,7 @@ void SetGLProjectionMatrix( ON_Viewport& viewport )
   ON_GL( viewport, pl, pr, pb, pt ); // updates GL projection matrix
 }
 
-ON_BOOL32 myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
+bool myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
 {
   // set the model view transform
   SetGLModelViewMatrix( viewport );
@@ -598,7 +595,7 @@ void MY_GL_CALLBACK myKeyViewExtents( void )
 
 static void myGLAUX_MouseEvent( GLint button, const AUX_EVENTREC* event )
 {
-  static ON_BOOL32 bMouseActive = false;
+  static bool bMouseActive = false;
   static int mx0, my0;
   int mx, my;
 
@@ -882,12 +879,12 @@ static void myDrawAxesSprite( const ON_Viewport& viewport, HDC hdc )
     y = (int)scr_coord[k][1];
     // use direction of screen vector to determine letter placement
     lx = x-x0; ly = y-y0;
-    if (abs(lx) > abs(ly)) {
+    if (std::abs(lx) > std::abs(ly)) {
       // center letter to right/left of axis end
       lx = (x >= x0) ? x + LXSIZE+LOFF : x - LXSIZE-LOFF;
       ly = y;
     }
-    else if (abs(ly) > abs(lx)) {
+    else if (std::abs(ly) > std::abs(lx)) {
       // center letter above/below axis end
       lx = x;
       ly = (y >= y0) ? y + LYSIZE+LOFF : y - LYSIZE-LOFF;

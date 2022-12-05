@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -41,7 +41,7 @@ CPL_CVSID("$Id$");
 
 class CEOSRasterBand;
 
-class CEOSDataset : public GDALPamDataset
+class CEOSDataset final: public GDALPamDataset
 {
     friend class CEOSRasterBand;
 
@@ -59,15 +59,14 @@ class CEOSDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class CEOSRasterBand : public GDALPamRasterBand
+class CEOSRasterBand final: public GDALPamRasterBand
 {
     friend class CEOSDataset;
 
   public:
+    CEOSRasterBand( CEOSDataset *, int );
 
-                CEOSRasterBand( CEOSDataset *, int );
-
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -112,7 +111,7 @@ CPLErr CEOSRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /************************************************************************/
 
 CEOSDataset::CEOSDataset() :
-    psCEOS(NULL)
+    psCEOS(nullptr)
 {}
 
 /************************************************************************/
@@ -122,7 +121,7 @@ CEOSDataset::CEOSDataset() :
 CEOSDataset::~CEOSDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
     if( psCEOS )
         CEOSClose( psCEOS );
 }
@@ -139,20 +138,20 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      record is in fact a CEOS file descriptor record.                */
 /* -------------------------------------------------------------------- */
     if( poOpenInfo->nHeaderBytes < 100 )
-        return NULL;
+        return nullptr;
 
     if( poOpenInfo->pabyHeader[4] != 0x3f
         || poOpenInfo->pabyHeader[5] != 0xc0
         || poOpenInfo->pabyHeader[6] != 0x12
         || poOpenInfo->pabyHeader[7] != 0x12 )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Try opening the dataset.                                        */
 /* -------------------------------------------------------------------- */
     CEOSImage *psCEOS = CEOSOpen( poOpenInfo->pszFilename, "rb" );
-    if( psCEOS == NULL )
-        return NULL;
+    if( psCEOS == nullptr )
+        return nullptr;
 
     if( psCEOS->nBitsPerPixel != 8 )
     {
@@ -160,14 +159,14 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                   "The CEOS driver cannot handle nBitsPerPixel = %d",
                   psCEOS->nBitsPerPixel );
         CEOSClose(psCEOS);
-        return NULL;
+        return nullptr;
     }
 
     if( !GDALCheckDatasetDimensions(psCEOS->nPixels, psCEOS->nBands) ||
         !GDALCheckBandCount(psCEOS->nBands, FALSE) )
     {
         CEOSClose( psCEOS );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -179,7 +178,7 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The CEOS driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -223,7 +222,7 @@ GDALDataset *CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_CEOS()
 
 {
-    if( GDALGetDriverByName( "CEOS" ) != NULL )
+    if( GDALGetDriverByName( "CEOS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -233,7 +232,7 @@ void GDALRegister_CEOS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "CEOS Image" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#CEOS" );
+                               "drivers/raster/ceos.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = CEOSDataset::Open;

@@ -698,15 +698,18 @@ _bot_cmd_stat(void *bs, int argc, const char **argv)
 }
 
 const struct bu_cmdtab _bot_cmds[] = {
-    { "extrude",    _bot_cmd_extrude},
-    { "get",        _bot_cmd_get},
     { "check",      _bot_cmd_check},
     { "chull",      _bot_cmd_chull},
+    { "decimate",   _bot_cmd_decimate},
+    { "extrude",    _bot_cmd_extrude},
+    { "get",        _bot_cmd_get},
     { "isect",      _bot_cmd_isect},
     { "remesh",     _bot_cmd_remesh},
     { "set",        _bot_cmd_set},
+    { "smooth",     _bot_cmd_smooth},
     { "split",      _bot_cmd_split},
     { "stat",       _bot_cmd_stat},
+    { "subd",       _bot_cmd_subd},
     { "sync",       _bot_cmd_sync},
     { (char *)NULL,      NULL}
 };

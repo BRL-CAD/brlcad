@@ -35,7 +35,7 @@
 #include <map>
 #include <sstream>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRWAsPLayer()                             */
@@ -58,7 +58,6 @@ OGRWAsPLayer::OGRWAsPLayer( const char * pszName,
 {
     SetDescription( poLayerDefn->GetName() );
     poLayerDefn->Reference();
-    poLayerDefn->SetGeomType( wkbLineString25D );
     poLayerDefn->GetGeomFieldDefn(0)->SetType( wkbLineString25D );
     poLayerDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSpatialReference );
     if( poSpatialReference ) poSpatialReference->Reference();
@@ -92,7 +91,10 @@ OGRWAsPLayer::OGRWAsPLayer( const char * pszName,
     pdfAdjacentPointTolerance(pdfAdjacentPointToleranceParam),
     pdfPointToCircleRadius(pdfPointToCircleRadiusParam)
 {
+    SetDescription( poLayerDefn->GetName() );
     poLayerDefn->Reference();
+    poLayerDefn->GetGeomFieldDefn(0)->SetType( wkbLineString25D );
+    poLayerDefn->GetGeomFieldDefn(0)->SetSpatialRef( poSpatialReference );
     if (poSpatialReference) poSpatialReference->Reference();
 }
 
@@ -156,7 +158,7 @@ OGRWAsPLayer::~OGRWAsPLayer()
                     startNeighbors[i] = j;
                 }
             }
-            if ( isEqual( p.dfRight, q.dfLeft) && isEqual( p.dfRight, q.dfLeft ) )
+            if ( isEqual( p.dfRight, q.dfLeft) && isEqual( p.dfLeft, q.dfRight ) )
             {
                 if ( startP.Equals( &startQ ) )
                 {
@@ -172,23 +174,61 @@ OGRWAsPLayer::~OGRWAsPLayer()
         }
 
         /* output all end lines (one neighbor only) and all their neighbors*/
-        std::vector<bool> oHasBeenMerged( oBoundaries.size(), false);
-        for ( size_t i = 0; i < oBoundaries.size(); i++)
+        if( !oBoundaries.empty() )
         {
-            if ( !oHasBeenMerged[i] && ( startNeighbors[i] < 0 || endNeighbors[i] < 0 ) )
+            std::vector<bool> oHasBeenMerged( oBoundaries.size(), false);
+            for ( size_t i = 0; i < oBoundaries.size(); i++)
             {
+                if ( !oHasBeenMerged[i] && ( startNeighbors[i] < 0 || endNeighbors[i] < 0 ) )
+                {
+                    oHasBeenMerged[i] = true;
+                    Boundary * p = &oBoundaries[i];
+                    int j =  startNeighbors[i] < 0 ? endNeighbors[i] : startNeighbors[i];
+                    if ( startNeighbors[i] >= 0 )
+                    {
+                        /* reverse the line and left/right */
+                        p->poLine->reversePoints();
+                        std::swap( p->dfLeft, p->dfRight );
+                    }
+                    while ( j >= 0 )
+                    {
+                        assert( !oHasBeenMerged[j] );
+                        oHasBeenMerged[j] = true;
+
+                        OGRLineString * other = oBoundaries[j].poLine;
+                        OGRPoint endP, startOther;
+                        p->poLine->EndPoint( &endP );
+                        other->StartPoint( &startOther );
+                        if ( !endP.Equals( &startOther ) ) other->reversePoints();
+                        p->poLine->addSubLineString( other, 1 );
+
+                        /* next neighbor */
+                        if ( endNeighbors[j] >= 0 && !oHasBeenMerged[endNeighbors[j]] )
+                            j = endNeighbors[j];
+                        else if ( startNeighbors[j] >= 0 && !oHasBeenMerged[startNeighbors[j]] )
+                            j = startNeighbors[j];
+                        else
+                            j = -1;
+                    }
+                    WriteRoughness( p->poLine, p->dfLeft, p->dfRight );
+                }
+            }
+            /* output all rings */
+            for ( size_t i = 0; i < oBoundaries.size(); i++)
+            {
+                if ( oHasBeenMerged[i] ) continue;
                 oHasBeenMerged[i] = true;
                 Boundary * p = &oBoundaries[i];
                 int j =  startNeighbors[i] < 0 ? endNeighbors[i] : startNeighbors[i];
+                assert( j != -1 );
                 if ( startNeighbors[i] >= 0 )
                 {
                     /* reverse the line and left/right */
                     p->poLine->reversePoints();
                     std::swap( p->dfLeft, p->dfRight );
                 }
-                while ( j >= 0 )
+                while ( !oHasBeenMerged[j] )
                 {
-                    assert( !oHasBeenMerged[j] );
                     oHasBeenMerged[j] = true;
 
                     OGRLineString * other = oBoundaries[j].poLine;
@@ -199,50 +239,15 @@ OGRWAsPLayer::~OGRWAsPLayer()
                     p->poLine->addSubLineString( other, 1 );
 
                     /* next neighbor */
-                    if ( endNeighbors[j] >= 0 && !oHasBeenMerged[endNeighbors[j]] )
+                    if ( endNeighbors[j] >= 0  )
                         j = endNeighbors[j];
-                    else if ( startNeighbors[j] >= 0 && !oHasBeenMerged[startNeighbors[j]] )
+                    else if ( startNeighbors[j] >= 0 )
                         j = startNeighbors[j];
                     else
-                        j = -1;
+                        assert(false); /* there must be a neighbor since it is a ring */
                 }
                 WriteRoughness( p->poLine, p->dfLeft, p->dfRight );
             }
-        }
-        /* output all rings */
-        for ( size_t i = 0; i < oBoundaries.size(); i++)
-        {
-            if ( oHasBeenMerged[i] ) continue;
-            oHasBeenMerged[i] = true;
-            Boundary * p = &oBoundaries[i];
-            int j =  startNeighbors[i] < 0 ? endNeighbors[i] : startNeighbors[i];
-            assert( j != -1 );
-            if ( startNeighbors[i] >= 0 )
-            {
-                /* reverse the line and left/right */
-                p->poLine->reversePoints();
-                std::swap( p->dfLeft, p->dfRight );
-            }
-            while ( !oHasBeenMerged[j] )
-            {
-                oHasBeenMerged[j] = true;
-
-                OGRLineString * other = oBoundaries[j].poLine;
-                OGRPoint endP, startOther;
-                p->poLine->EndPoint( &endP );
-                other->StartPoint( &startOther );
-                if ( !endP.Equals( &startOther ) ) other->reversePoints();
-                p->poLine->addSubLineString( other, 1 );
-
-                /* next neighbor */
-                if ( endNeighbors[j] >= 0  )
-                    j = endNeighbors[j];
-                else if ( startNeighbors[j] >= 0 )
-                    j = startNeighbors[j];
-                else
-                    assert(false); /* there must be a neighbor since it's a ring */
-            }
-            WriteRoughness( p->poLine, p->dfLeft, p->dfRight );
         }
     }
     else
@@ -265,12 +270,12 @@ OGRWAsPLayer::~OGRWAsPLayer()
 OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
 {
     if ( !line.getNumPoints() )
-        return  static_cast<OGRLineString *>( line.clone() );
+        return  line.clone();
 
-    UNIQUEPTR< OGRLineString > poLine(
-        static_cast<OGRLineString *>(
+    std::unique_ptr< OGRLineString > poLine(
+        (
             pdfTolerance.get() && *pdfTolerance > 0
-            ? line.Simplify( *pdfTolerance )
+            ? line.Simplify( *pdfTolerance )->toLineString()
             : line.clone() ) );
 
     OGRPoint startPt, endPt;
@@ -281,7 +286,7 @@ OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
     if ( pdfAdjacentPointTolerance.get() && *pdfAdjacentPointTolerance > 0)
     {
         /* remove consecutive points that are too close */
-        UNIQUEPTR< OGRLineString > newLine( new OGRLineString );
+        auto newLine = cpl::make_unique<OGRLineString>();
         const double dist = *pdfAdjacentPointTolerance;
         OGRPoint pt;
         poLine->StartPoint( &pt );
@@ -370,7 +375,7 @@ OGRLineString * OGRWAsPLayer::Simplify( const OGRLineString & line ) const
 OGRErr OGRWAsPLayer::WriteElevation( OGRLineString * poGeom, const double & dfZ )
 
 {
-    UNIQUEPTR< OGRLineString > poLine( Simplify( *poGeom ) );
+    std::unique_ptr< OGRLineString > poLine( Simplify( *poGeom ) );
 
     const int iNumPoints = poLine->getNumPoints();
     if ( !iNumPoints ) return OGRERR_NONE; /* empty geom */
@@ -394,14 +399,13 @@ OGRErr OGRWAsPLayer::WriteElevation( OGRGeometry * poGeom, const double & dfZ )
     {
     case wkbLineString:
     case wkbLineString25D:
-        return WriteElevation( static_cast<OGRLineString *>(poGeom), dfZ );
+        return WriteElevation( poGeom->toLineString(), dfZ );
     case wkbMultiLineString25D:
     case wkbMultiLineString:
     {
-        OGRGeometryCollection * collection =  static_cast<OGRGeometryCollection *>(poGeom);
-        for ( int i=0; i<collection->getNumGeometries(); i++ )
+        for( auto&& poMember: poGeom->toGeometryCollection() )
         {
-            const OGRErr err = WriteElevation( collection->getGeometryRef(i), dfZ );
+            const OGRErr err = WriteElevation( poMember, dfZ );
             if ( OGRERR_NONE != err ) return err;
         }
         return OGRERR_NONE;
@@ -445,7 +449,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                 case wkbLineString:
                 case wkbLineString25D:
                 {
-                    Boundary oB = {static_cast<OGRLineString *>(poIntersection->clone()), dfZ, oZones[i].dfZ };
+                    Boundary oB = { poIntersection->toLineString()->clone(), dfZ, oZones[i].dfZ };
                     oBoundaries.push_back( oB );
                 }
                 break;
@@ -453,34 +457,33 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                 case wkbMultiLineString25D:
                 {
                     /*TODO join the multilinestring into linestring*/
-                    OGRGeometryCollection * collection = static_cast<OGRGeometryCollection *>(poIntersection);
-                    OGRLineString * oLine = NULL;
-                    OGRPoint * oStart = new OGRPoint;
-                    OGRPoint * oEnd   = new OGRPoint;
-                    for ( int j=0; j<collection->getNumGeometries(); j++ )
+                    OGRLineString * poLine = nullptr;
+                    OGRPoint * poStart = new OGRPoint;
+                    OGRPoint * poEnd   = new OGRPoint;
+                    for( auto&& poSubLine: poIntersection->toMultiLineString() )
                     {
-                        OGRLineString * poLine = static_cast<OGRLineString *>(collection->getGeometryRef(j));
-                        assert(poLine);
-                        poLine->StartPoint( oStart );
+                        poSubLine->StartPoint( poStart );
 
-                        if ( !oLine || !oLine->getNumPoints() || oStart->Equals( oEnd ) )
+                        if( poLine == nullptr )
                         {
-                            if (oLine) oLine->addSubLineString ( poLine, 1 );
-                            else oLine = static_cast<OGRLineString *>( poLine->clone() );
-                            oLine->EndPoint( oEnd );
+                            poLine = poSubLine->clone();
+                        }
+                        else if ( poLine->getNumPoints() == 0 || poStart->Equals( poEnd ) )
+                        {
+                            poLine->addSubLineString ( poSubLine, 1 );
                         }
                         else
                         {
-                            Boundary oB = {oLine, dfZ, oZones[i].dfZ};
+                            Boundary oB = {poLine, dfZ, oZones[i].dfZ};
                             oBoundaries.push_back( oB );
-                            oLine = static_cast<OGRLineString *>( poLine->clone() );
-                            oLine->EndPoint( oEnd );
+                            poLine = poSubLine->clone();
                         }
+                        poLine->EndPoint( poEnd );
                     }
-                    Boundary oB = {oLine, dfZ, oZones[i].dfZ};
+                    Boundary oB = {poLine, dfZ, oZones[i].dfZ};
                     oBoundaries.push_back( oB );
-                    delete oStart;
-                    delete oEnd;
+                    delete poStart;
+                    delete poEnd;
                 }
                 break;
                 case wkbPolygon:
@@ -500,10 +503,9 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
                 case wkbGeometryCollection:
                 case wkbGeometryCollection25D:
                 {
-                    OGRGeometryCollection * collection = static_cast<OGRGeometryCollection *>(poIntersection);
-                    for ( int j=0; j<collection->getNumGeometries(); j++ )
+                    for( auto&& poMember: poIntersection->toGeometryCollection() )
                     {
-                        const OGRwkbGeometryType eType = collection->getGeometryRef(j)->getGeometryType();
+                        const OGRwkbGeometryType eType = poMember->getGeometryType();
                         if ( wkbFlatten(eType) == wkbPolygon )
                         {
                             OGREnvelope oErrorRegion = oZones[i].oEnvelope;
@@ -534,7 +536,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
         }
     }
 
-    Zone oZ =  { oEnvelope, static_cast<OGRPolygon *>(poGeom->clone()), dfZ };
+    Zone oZ =  { oEnvelope, poGeom->clone(), dfZ };
     oZones.push_back( oZ );
     return err;
 }
@@ -542,7 +544,7 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRPolygon * poGeom, const double & dfZ )
 OGRErr OGRWAsPLayer::WriteRoughness( OGRLineString * poGeom, const double & dfZleft,  const double & dfZright )
 
 {
-    UNIQUEPTR< OGRLineString > poLine( Simplify( *poGeom ) );
+    std::unique_ptr< OGRLineString > poLine( Simplify( *poGeom ) );
 
     const int iNumPoints = poLine->getNumPoints();
     if ( !iNumPoints ) return OGRERR_NONE; /* empty geom */
@@ -566,19 +568,18 @@ OGRErr OGRWAsPLayer::WriteRoughness( OGRGeometry * poGeom, const double & dfZlef
     {
     case wkbLineString:
     case wkbLineString25D:
-        return WriteRoughness( static_cast<OGRLineString *>(poGeom), dfZleft, dfZright );
+        return WriteRoughness( poGeom->toLineString(), dfZleft, dfZright );
     case wkbPolygon:
     case wkbPolygon25D:
-        return WriteRoughness( static_cast<OGRPolygon *>(poGeom), dfZleft );
+        return WriteRoughness( poGeom->toPolygon(), dfZleft );
     case wkbMultiPolygon:
     case wkbMultiPolygon25D:
     case wkbMultiLineString25D:
     case wkbMultiLineString:
     {
-        OGRGeometryCollection * collection =  static_cast<OGRGeometryCollection *>(poGeom);
-        for ( int i=0; i<collection->getNumGeometries(); i++ )
+        for( auto&& poMember: poGeom->toGeometryCollection() )
         {
-            const OGRErr err = WriteRoughness( collection->getGeometryRef(i), dfZleft, dfZright );
+            const OGRErr err = WriteRoughness( poMember, dfZleft, dfZright );
             if ( OGRERR_NONE != err ) return err;
         }
         return OGRERR_NONE;
@@ -703,7 +704,12 @@ OGRErr OGRWAsPLayer::CreateField( OGRFieldDefn *poField,
 OGRErr OGRWAsPLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
                                       CPL_UNUSED int bApproxOK )
 {
-    poLayerDefn->AddGeomFieldDefn( poGeomFieldIn, FALSE );
+    OGRGeomFieldDefn oFieldDefn(poGeomFieldIn);
+    if( oFieldDefn.GetSpatialRef() )
+    {
+        oFieldDefn.GetSpatialRef()->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    }
+    poLayerDefn->AddGeomFieldDefn( &oFieldDefn );
 
     /* Update geom field index */
     if ( -1 == iGeomFieldIdx )
@@ -715,46 +721,20 @@ OGRErr OGRWAsPLayer::CreateGeomField( OGRGeomFieldDefn *poGeomFieldIn,
 }
 
 /************************************************************************/
-/*                           GetNextFeature()                           */
-/************************************************************************/
-
-OGRFeature *OGRWAsPLayer::GetNextFeature()
-{
-    if ( READ_ONLY != eMode)
-    {
-        CPLError(CE_Failure, CPLE_IllegalArg , "Layer is open write only" );
-        return NULL;
-    }
-
-    GetLayerDefn();
-
-    while( true )
-    {
-        OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
-
-        if((m_poFilterGeom == NULL
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
-            || m_poAttrQuery->Evaluate( poFeature )) )
-        {
-            return poFeature;
-        }
-        else
-            delete poFeature;
-    }
-}
-
-/************************************************************************/
 /*                           GetNextRawFeature()                        */
 /************************************************************************/
 
 OGRFeature *OGRWAsPLayer::GetNextRawFeature()
 
 {
+    if ( READ_ONLY != eMode)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg , "Layer is open write only" );
+        return nullptr;
+    }
+
     const char * pszLine = CPLReadLineL( hFile );
-    if ( !pszLine ) return NULL;
+    if ( !pszLine ) return nullptr;
 
     double dfValues[4];
     int iNumValues = 0;
@@ -765,26 +745,35 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
         if ( iNumValues < 2 )
         {
             if (iNumValues) CPLError(CE_Failure, CPLE_FileIO, "No enough values" );
-            return NULL;
+            return nullptr;
         }
     }
 
     if( poLayerDefn->GetFieldCount() != iNumValues-1 )
     {
         CPLError(CE_Failure, CPLE_FileIO, "looking for %d values and found %d on line: %s", poLayerDefn->GetFieldCount(), iNumValues-1, pszLine );
-        return NULL;
+        return nullptr;
+    }
+    const double dfNumPairToRead = dfValues[iNumValues-1];
+    if( !(dfNumPairToRead >= 0 && dfNumPairToRead < 1000000) ||
+        static_cast<int>(dfNumPairToRead) != dfNumPairToRead )
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Invalid coordinate number: %f", dfNumPairToRead );
+        return nullptr;
     }
 
-    UNIQUEPTR< OGRFeature > poFeature( new OGRFeature( poLayerDefn ) );
+    auto poFeature = cpl::make_unique<OGRFeature>( poLayerDefn );
     poFeature->SetFID( ++iFeatureCount );
     for ( int i=0; i<iNumValues-1; i++ ) poFeature->SetField( i, dfValues[i] );
 
-    const int iNumValuesToRead = static_cast<int>(2*dfValues[iNumValues-1]);
+
+    const int iNumValuesToRead = static_cast<int>(2*dfNumPairToRead);
     int iReadValues = 0;
     std::vector<double> values(iNumValuesToRead);
     for ( pszLine = CPLReadLineL( hFile );
             pszLine;
-            pszLine = iNumValuesToRead > iReadValues ? CPLReadLineL( hFile ) : NULL )
+            pszLine = iNumValuesToRead > iReadValues ? CPLReadLineL( hFile ) : nullptr )
     {
         std::istringstream iss(pszLine);
         while ( iNumValuesToRead > iReadValues && (iss >> values[iReadValues] ) ){++iReadValues;}
@@ -792,9 +781,9 @@ OGRFeature *OGRWAsPLayer::GetNextRawFeature()
     if ( iNumValuesToRead != iReadValues )
     {
         CPLError(CE_Failure, CPLE_FileIO, "No enough values for linestring" );
-        return NULL;
+        return nullptr;
     }
-    UNIQUEPTR< OGRLineString > poLine( new OGRLineString );
+    auto poLine = cpl::make_unique<OGRLineString>();
     poLine->setCoordinateDimension(3);
     poLine->assignSpatialReference( poSpatialReference );
     for ( int i=0; i<iNumValuesToRead; i+=2 )

@@ -1,26 +1,28 @@
-include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/../shape
-	)
+# depend from frmts/aigrid
+add_gdal_driver(
+  TARGET ogr_AVC
+  DEF AVC_ENABLED
+  SOURCES avc_bin.cpp
+          avc_rawbin.cpp
+          avc_e00gen.cpp
+          avc_e00parse.cpp
+          avc_e00read.cpp
+          avc_mbyte.cpp
+          avc_misc.cpp
+          ogravcbindatasource.cpp
+          ogravcbindriver.cpp
+          ogravcbinlayer.cpp
+          ogravce00datasource.cpp
+          ogravcdatasource.cpp
+          ogravce00driver.cpp
+          ogravce00layer.cpp
+          ogravclayer.cpp
+          # avc_binwr.cpp avc_e00write.cpp
+  BUILTIN)
+gdal_standard_includes(ogr_AVC)
 
-set(avc_srcs
-	avc_bin.c
-	avc_binwr.c
-	avc_e00gen.c
-	avc_e00parse.c
-	avc_e00write.c
-	avc_e00read.c
-	avc_mbyte.c
-	avc_misc.c
-	avc_rawbin.c
-	ogravcbindriver.cpp
-	ogravcbindatasource.cpp
-	ogravcbinlayer.cpp
-	ogravclayer.cpp
-	ogravcdatasource.cpp
-	ogravce00layer.cpp
-	ogravce00datasource.cpp
-	ogravce00driver.cpp
-	)
-
-add_library(ogr_frmt_avc OBJECT ${avc_srcs})
+if (GDAL_USE_SHAPELIB_INTERNAL)
+  gdal_add_vendored_lib(ogr_AVC shapelib)
+else ()
+  gdal_target_link_libraries(ogr_AVC PRIVATE SHAPELIB::shp)
+endif ()

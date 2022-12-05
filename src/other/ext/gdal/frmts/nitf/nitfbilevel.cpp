@@ -6,7 +6,7 @@
  *
  **********************************************************************
  * Copyright (c) 2007, Frank Warmerdam
- * Copyright (c) 2009, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -43,7 +43,7 @@ CPL_C_START
 CPL_C_END
 #include "tifvsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       NITFUncompressBILEVEL()                        */
@@ -64,10 +64,10 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
     osFilename.Printf( "/vsimem/nitf-wrk-%ld.tif", (long) CPLGetPID() );
 
     VSILFILE* fpL = VSIFOpenL(osFilename, "w+");
-    if( fpL == NULL )
+    if( fpL == nullptr )
         return FALSE;
     TIFF *hTIFF = VSI_TIFFOpen( osFilename, "w+", fpL );
-    if (hTIFF == NULL)
+    if (hTIFF == nullptr)
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
         return FALSE;
@@ -99,7 +99,7 @@ int NITFUncompressBILEVEL( NITFImage *psImage,
     bool bResult = true;
 
     hTIFF = VSI_TIFFOpen( osFilename, "r", fpL );
-    if (hTIFF == NULL)
+    if (hTIFF == nullptr)
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpL));
         return FALSE;

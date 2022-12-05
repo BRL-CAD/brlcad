@@ -87,7 +87,7 @@ public:
      * nIndex should be within range from 0 to DESC_SIZE (in current version - 64)
      *
      * @return Reference to value of descriptor in 'nIndex' position.
-     * If index is out of range then behaviour is undefined.
+     * If index is out of range then behavior is undefined.
      */
     double& operator[](int nIndex);
 
@@ -187,6 +187,8 @@ private:
  */
 class GDALIntegralImage
 {
+    CPL_DISALLOW_COPY_ASSIGN(GDALIntegralImage)
+
 public:
     GDALIntegralImage();
     virtual ~GDALIntegralImage();
@@ -260,9 +262,9 @@ public:
     int GetWidth();
 
 private:
-    double **pMatrix;
-    int nWidth;
-    int nHeight;
+    double **pMatrix = nullptr;
+    int nWidth = 0;
+    int nHeight = 0;
 };
 
 /**
@@ -275,6 +277,8 @@ private:
  */
 class GDALOctaveLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(GDALOctaveLayer)
+
 public:
     GDALOctaveLayer();
 
@@ -424,12 +428,8 @@ private:
     class MatchedPointPairInfo
     {
     public:
-        MatchedPointPairInfo(int nInd_1, int nInd_2, double dfDist)
-            {
-                ind_1 = nInd_1;
-                ind_2 = nInd_2;
-                euclideanDist = dfDist;
-            }
+        MatchedPointPairInfo(int nInd_1, int nInd_2, double dfDist):
+            ind_1(nInd_1), ind_2(nInd_2), euclideanDist(dfDist) {}
 
         int ind_1;
         int ind_2;
@@ -504,17 +504,25 @@ public:
     ExtractFeaturePoints(GDALIntegralImage *poImg, double dfThreshold);
 
     /**
-     * Find corresponding points (equal points in two collections).
-     *
-     * @param poMatchPairs Resulting collection for matched points
-     * @param poFirstCollect Points on the first image
-     * @param poSecondCollect Points on the second image
-     * @param dfThreshold Value from 0 to 1. Threshold affects to number of
-     * matched points. If threshold is lower, amount of corresponding
-     * points is larger, and vice versa
-     *
-     * @return CE_None or CE_Failure if error occurs.
-     */
+    * Find corresponding points (equal points in two collections).
+    *
+    * @param poMatchPairs Resulting collection for matched points
+    * @param poFirstCollect Points on the first image
+    * @param poSecondCollect Points on the second image
+    * @param dfThreshold Value from 0 to 1. Threshold affects to number of
+    * matched points. If threshold is higher, amount of corresponding
+    * points is larger, and vice versa
+    *
+    * @note Typical threshold's value is 0,1. BUT it's a very approximate guide.
+    * It can be 0,001 or even 1. This threshold provides direct adjustment
+    * of point matching.
+    * NOTICE that if threshold is lower, matches are more robust and correct, but
+    * number of matched points is smaller. Therefore if algorithm performs many
+    * false detections and produces bad results, reduce threshold.  Otherwise, if
+    * algorithm finds nothing, increase threshold.
+    *
+    * @return CE_None or CE_Failure if error occurs.
+    */
     static CPLErr MatchFeaturePoints(
         std::vector<GDALFeaturePoint*> *poMatchPairs,
         std::vector<GDALFeaturePoint> *poFirstCollect,

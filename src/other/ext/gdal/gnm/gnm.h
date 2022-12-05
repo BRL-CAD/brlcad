@@ -32,7 +32,9 @@
 #ifndef GNM
 #define GNM
 
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 #include "ogrsf_frmts.h"
+#endif
 #include "gnmgraph.h"
 
 // Direction of an edge.
@@ -61,6 +63,8 @@ typedef enum
     /** Recursive Breadth-first search */   GATConnectedComponents
 } GNMGraphAlgorithmType;
 
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
 /**
  * General GNM class which represents a geography network of common format.
  *
@@ -74,8 +78,10 @@ public:
     virtual ~GNMNetwork();
 
     // GDALDataset Interface
-    virtual const char *GetProjectionRef(void) CPL_OVERRIDE;
-    virtual char      **GetFileList(void) CPL_OVERRIDE;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    virtual char      **GetFileList(void) override;
 
     // GNMNetwork Interface
 
@@ -165,6 +171,10 @@ protected:
     virtual int CheckNetworkExist( const char* pszFilename,
                                    char** papszOptions ) = 0;
 
+//! @cond Doxygen_Suppress
+    const char *_GetProjectionRef(void) override;
+//! @endcond
+
 protected:
 //! @cond Doxygen_Suppress
     CPLString m_soName;
@@ -189,25 +199,25 @@ public:
 
     // GDALDataset Interface
 
-    virtual int         GetLayerCount() CPL_OVERRIDE;
-    virtual OGRLayer    *GetLayer(int) CPL_OVERRIDE;
-    virtual OGRErr      DeleteLayer(int) CPL_OVERRIDE;
+    virtual int         GetLayerCount() override;
+    virtual OGRLayer    *GetLayer(int) override;
+    virtual OGRErr      DeleteLayer(int) override;
 
-    virtual int         TestCapability( const char * ) CPL_OVERRIDE;
+    virtual int         TestCapability( const char * ) override;
 
     virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer,
                                    const char *pszNewName,
-                                   char **papszOptions = NULL ) CPL_OVERRIDE;
+                                   char **papszOptions = nullptr ) override;
 
-    virtual int CloseDependentDatasets() CPL_OVERRIDE;
-    virtual void FlushCache(void) CPL_OVERRIDE;
+    virtual int CloseDependentDatasets() override;
+    virtual void FlushCache(bool bAtClosing) override;
 
     // GNMNetwork Interface
 
-    virtual CPLErr Create( const char* pszFilename, char** papszOptions ) CPL_OVERRIDE = 0;
-    virtual CPLErr Delete() CPL_OVERRIDE;
+    virtual CPLErr Create( const char* pszFilename, char** papszOptions ) override = 0;
+    virtual CPLErr Delete() override;
 
-    virtual int GetVersion() const CPL_OVERRIDE;
+    virtual int GetVersion() const override;
     /**
      * @brief GetNewGlobalFID increase the global ID counter.
      * @return New global feature ID.
@@ -240,7 +250,7 @@ public:
      * @param nConFID - connection feature identificator (-1 for virtual connection)
      * @param dfCost - cost moving from source to target (default 1)
      * @param dfInvCost - cost moving from target to source (default 1)
-     * @param eDir - direction, may be source to target, traget to source or both.
+     * @param eDir - direction, may be source to target, target to source or both.
      *               (default - both)
      * @return CE_None on success
      */
@@ -289,9 +299,9 @@ public:
                                       double dfInvCost = 1,
                                       GNMDirection eDir = GNM_EDGE_DIR_BOTH);
 
-    virtual CPLErr DisconnectAll() CPL_OVERRIDE;
+    virtual CPLErr DisconnectAll() override;
 
-    virtual OGRFeature *GetFeatureByGlobalFID(GNMGFID nFID) CPL_OVERRIDE;
+    virtual OGRFeature *GetFeatureByGlobalFID(GNMGFID nFID) override;
 
     /**
      * @brief Create network rule
@@ -397,7 +407,7 @@ public:
     virtual CPLErr ChangeAllBlockState (bool bIsBlock = false);
 
     virtual OGRLayer *GetPath (GNMGFID nStartFID, GNMGFID nEndFID,
-                     GNMGraphAlgorithmType eAlgorithm, char** papszOptions) CPL_OVERRIDE;
+                     GNMGraphAlgorithmType eAlgorithm, char** papszOptions) override;
 protected:
     /**
      * @brief Check or create layer OGR driver
@@ -474,7 +484,7 @@ protected:
 
 /**
  * GNM layer which represents a geography network layer of generic format.
- * The class CPL_OVERRIDE some OGRLayer methods to fulfill the network requirements.
+ * The class override some OGRLayer methods to fulfill the network requirements.
  *
  * @since GDAL 2.1
  */
@@ -487,76 +497,76 @@ public:
 
     // OGRLayer Interface
 
-    virtual OGRGeometry *GetSpatialFilter() CPL_OVERRIDE;
-    virtual void        SetSpatialFilter( OGRGeometry * ) CPL_OVERRIDE;
+    virtual OGRGeometry *GetSpatialFilter() override;
+    virtual void        SetSpatialFilter( OGRGeometry * ) override;
     virtual void        SetSpatialFilterRect( double dfMinX, double dfMinY,
-                                              double dfMaxX, double dfMaxY ) CPL_OVERRIDE;
+                                              double dfMaxX, double dfMaxY ) override;
 
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * ) CPL_OVERRIDE;
+    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * ) override;
     virtual void        SetSpatialFilterRect( int iGeomField,
                                             double dfMinX, double dfMinY,
-                                            double dfMaxX, double dfMaxY ) CPL_OVERRIDE;
+                                            double dfMaxX, double dfMaxY ) override;
 
-    virtual OGRErr      SetAttributeFilter( const char * ) CPL_OVERRIDE;
+    virtual OGRErr      SetAttributeFilter( const char * ) override;
 
-    virtual void        ResetReading() CPL_OVERRIDE;
-    virtual OGRFeature *GetNextFeature() CPL_OVERRIDE;
-    virtual OGRErr      SetNextByIndex( GIntBig nIndex ) CPL_OVERRIDE;
+    virtual void        ResetReading() override;
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRErr      SetNextByIndex( GIntBig nIndex ) override;
 
-    virtual OGRErr      DeleteFeature( GIntBig nFID ) CPL_OVERRIDE;
+    virtual OGRErr      DeleteFeature( GIntBig nFID ) override;
 
-    virtual const char *GetName() CPL_OVERRIDE;
-    virtual OGRwkbGeometryType GetGeomType() CPL_OVERRIDE;
-    virtual OGRFeatureDefn *GetLayerDefn() CPL_OVERRIDE;
-    virtual int         FindFieldIndex( const char *pszFieldName, int bExactMatch ) CPL_OVERRIDE;
+    virtual const char *GetName() override;
+    virtual OGRwkbGeometryType GetGeomType() override;
+    virtual OGRFeatureDefn *GetLayerDefn() override;
+    virtual int         FindFieldIndex( const char *pszFieldName, int bExactMatch ) override;
 
-    virtual OGRSpatialReference *GetSpatialRef() CPL_OVERRIDE;
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual GIntBig     GetFeatureCount( int bForce = TRUE ) CPL_OVERRIDE;
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) CPL_OVERRIDE;
+    virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
+    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent,
-                                  int bForce = TRUE) CPL_OVERRIDE;
+                                  int bForce = TRUE) override;
 
-    virtual int         TestCapability( const char * ) CPL_OVERRIDE;
+    virtual int         TestCapability( const char * ) override;
 
     virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE ) CPL_OVERRIDE;
-    virtual OGRErr      DeleteField( int iField ) CPL_OVERRIDE;
-    virtual OGRErr      ReorderFields( int* panMap ) CPL_OVERRIDE;
+                                     int bApproxOK = TRUE ) override;
+    virtual OGRErr      DeleteField( int iField ) override;
+    virtual OGRErr      ReorderFields( int* panMap ) override;
     virtual OGRErr      AlterFieldDefn( int iField, OGRFieldDefn* poNewFieldDefn,
-                                        int nFlagsIn ) CPL_OVERRIDE;
+                                        int nFlagsIn ) override;
 
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
-                                     int bApproxOK = TRUE ) CPL_OVERRIDE;
+                                     int bApproxOK = TRUE ) override;
 
-    virtual OGRErr      SyncToDisk() CPL_OVERRIDE;
+    virtual OGRErr      SyncToDisk() override;
 
-    virtual OGRStyleTable *GetStyleTable() CPL_OVERRIDE;
-    virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable ) CPL_OVERRIDE;
+    virtual OGRStyleTable *GetStyleTable() override;
+    virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable ) override;
 
-    virtual void        SetStyleTable(OGRStyleTable *poStyleTable) CPL_OVERRIDE;
+    virtual void        SetStyleTable(OGRStyleTable *poStyleTable) override;
 
-    virtual OGRErr      StartTransaction() CPL_OVERRIDE;
-    virtual OGRErr      CommitTransaction() CPL_OVERRIDE;
-    virtual OGRErr      RollbackTransaction() CPL_OVERRIDE;
+    virtual OGRErr      StartTransaction() override;
+    virtual OGRErr      CommitTransaction() override;
+    virtual OGRErr      RollbackTransaction() override;
 
-    virtual const char *GetFIDColumn() CPL_OVERRIDE;
-    virtual const char *GetGeometryColumn() CPL_OVERRIDE;
+    virtual const char *GetFIDColumn() override;
+    virtual const char *GetGeometryColumn() override;
 
-    virtual OGRErr      SetIgnoredFields( const char **papszFields ) CPL_OVERRIDE;
+    virtual OGRErr      SetIgnoredFields( const char **papszFields ) override;
 
     /** Intersection */
     OGRErr              Intersection( OGRLayer *pLayerMethod,
                                       OGRLayer *pLayerResult,
-                                      char** papszOptions = NULL,
-                                      GDALProgressFunc pfnProgress = NULL,
-                                      void * pProgressArg = NULL );
+                                      char** papszOptions = nullptr,
+                                      GDALProgressFunc pfnProgress = nullptr,
+                                      void * pProgressArg = nullptr );
     /** Union */
     OGRErr              Union( OGRLayer *pLayerMethod,
                                OGRLayer *pLayerResult,
-                               char** papszOptions = NULL,
-                               GDALProgressFunc pfnProgress = NULL,
-                               void * pProgressArg = NULL );
+                               char** papszOptions = nullptr,
+                               GDALProgressFunc pfnProgress = nullptr,
+                               void * pProgressArg = nullptr );
     /** SymDifference */
     OGRErr              SymDifference( OGRLayer *pLayerMethod,
                                        OGRLayer *pLayerResult,
@@ -566,27 +576,27 @@ public:
     /** Identity */
     OGRErr              Identity( OGRLayer *pLayerMethod,
                                   OGRLayer *pLayerResult,
-                                  char** papszOptions = NULL,
-                                  GDALProgressFunc pfnProgress = NULL,
-                                  void * pProgressArg = NULL );
+                                  char** papszOptions = nullptr,
+                                  GDALProgressFunc pfnProgress = nullptr,
+                                  void * pProgressArg = nullptr );
     /** Update */
     OGRErr              Update( OGRLayer *pLayerMethod,
                                 OGRLayer *pLayerResult,
-                                char** papszOptions = NULL,
-                                GDALProgressFunc pfnProgress = NULL,
-                                void * pProgressArg = NULL );
+                                char** papszOptions = nullptr,
+                                GDALProgressFunc pfnProgress = nullptr,
+                                void * pProgressArg = nullptr );
     /** Clip */
     OGRErr              Clip( OGRLayer *pLayerMethod,
                               OGRLayer *pLayerResult,
-                              char** papszOptions = NULL,
-                              GDALProgressFunc pfnProgress = NULL,
-                              void * pProgressArg = NULL );
+                              char** papszOptions = nullptr,
+                              GDALProgressFunc pfnProgress = nullptr,
+                              void * pProgressArg = nullptr );
     /** Erase */
     OGRErr              Erase( OGRLayer *pLayerMethod,
                                OGRLayer *pLayerResult,
-                               char** papszOptions = NULL,
-                               GDALProgressFunc pfnProgress = NULL,
-                               void * pProgressArg = NULL );
+                               char** papszOptions = nullptr,
+                               GDALProgressFunc pfnProgress = nullptr,
+                               void * pProgressArg = nullptr );
 
     /** GetFeaturesRead */
     GIntBig             GetFeaturesRead();
@@ -602,8 +612,8 @@ public:
 
 protected:
 //! @cond Doxygen_Suppress
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) CPL_OVERRIDE;
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) CPL_OVERRIDE;
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
 
 protected:
     CPLString m_soLayerName;
@@ -629,6 +639,10 @@ typedef enum
 
 class CPL_DLL GNMRule
 {
+    // to hopefully please Coverity Scan which complains about missing
+    // move assignment operator for performance reasons
+    GNMRule& operator==(GNMRule&&) = delete;
+
 public:
     /** Constructor */
     GNMRule();
@@ -638,6 +652,10 @@ public:
     explicit GNMRule(const char* pszRule);
     /** Constructor */
     GNMRule(const GNMRule &oRule);
+
+    /** Assignment operator */
+    GNMRule& operator=(const GNMRule&) = default;
+
     virtual ~GNMRule();
     /**
      * @brief  This function indicate if rule string was parsed successfully
@@ -683,9 +701,9 @@ protected:
     CPLString m_soSrcLayerName;
     CPLString m_soTgtLayerName;
     CPLString m_soConnLayerName;
-    bool m_bAllow;
-    bool m_bValid;
-    bool m_bAny;
+    bool m_bAllow = false;
+    bool m_bValid = false;
+    bool m_bAny = false;
     CPLString m_soRuleString;
 //! @endcond
 };
@@ -703,32 +721,34 @@ public:
     ~OGRGNMWrappedResultLayer();
 
     // OGRLayer
-    virtual void ResetReading() CPL_OVERRIDE;
-    virtual OGRFeature *GetNextFeature() CPL_OVERRIDE;
-    virtual OGRErr SetNextByIndex( GIntBig nIndex ) CPL_OVERRIDE;
-    virtual OGRFeature *GetFeature( GIntBig nFID ) CPL_OVERRIDE;
-    virtual OGRFeatureDefn *GetLayerDefn() CPL_OVERRIDE;
-    virtual GIntBig GetFeatureCount( int bForce = TRUE ) CPL_OVERRIDE;
-    virtual int TestCapability( const char * pszCap ) CPL_OVERRIDE;
-    virtual OGRErr CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE ) CPL_OVERRIDE;
+    virtual void ResetReading() override;
+    virtual OGRFeature *GetNextFeature() override;
+    virtual OGRErr SetNextByIndex( GIntBig nIndex ) override;
+    virtual OGRFeature *GetFeature( GIntBig nFID ) override;
+    virtual OGRFeatureDefn *GetLayerDefn() override;
+    virtual GIntBig GetFeatureCount( int bForce = TRUE ) override;
+    virtual int TestCapability( const char * pszCap ) override;
+    virtual OGRErr CreateField( OGRFieldDefn *poField, int bApproxOK = TRUE ) override;
     virtual OGRErr      CreateGeomField( OGRGeomFieldDefn *poField,
-                                     int bApproxOK = TRUE ) CPL_OVERRIDE;
-    virtual const char *GetFIDColumn() CPL_OVERRIDE;
-    virtual const char *GetGeometryColumn() CPL_OVERRIDE;
-    virtual OGRSpatialReference *GetSpatialRef() CPL_OVERRIDE;
+                                     int bApproxOK = TRUE ) override;
+    virtual const char *GetFIDColumn() override;
+    virtual const char *GetGeometryColumn() override;
+    virtual OGRSpatialReference *GetSpatialRef() override;
 
     // OGRGNMWrappedResultLayer
     virtual OGRErr InsertFeature(OGRFeature* poFeature,
                                 const CPLString &soLayerName, int nPathNo,
                                 bool bIsEdge);
 protected:
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) CPL_OVERRIDE;
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) CPL_OVERRIDE;
+    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
+    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
 protected:
 //! @cond Doxygen_Suppress
     GDALDataset *poDS;
     OGRLayer    *poLayer;
 //! @endcond
 };
+
+#endif // __cplusplus
 
 #endif // GNM

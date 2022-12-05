@@ -29,7 +29,7 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  *
- * $Log$
+ * $Log: avc.h,v $
  * Revision 1.25  2008/07/23 20:51:38  dmorissette
  * Fixed GCC 4.1.x compile warnings related to use of char vs unsigned char
  * (GDAL/OGR ticket http://trac.osgeo.org/gdal/ticket/2495)
@@ -119,6 +119,9 @@
 #include "cpl_string.h"
 
 #ifdef GDAL_COMPILATION
+#ifdef RENAME_INTERNAL_SHAPELIB_SYMBOLS
+#include "gdal_shapelib_symbol_rename.h"
+#endif
 #include "shapefil.h"
 #else
 #include "dbfopen.h"
@@ -394,7 +397,7 @@ typedef struct AVCField_t
 
 typedef struct AVCRawBinFile_t
 {
-    FILE        *fp;
+    VSILFILE    *fp;
     char        *pszFname;
     AVCAccess   eAccess;
     AVCByteOrder eByteOrder;
@@ -491,28 +494,28 @@ typedef struct AVCE00GenInfo_t
  * their buffer and their current state while parsing an object.
  *--------------------------------------------------------------------*/
 
-typedef struct AVCE00ParseInfo_t
+struct AVCE00ParseInfo
 {
-    AVCFileType eFileType;
-    int         nPrecision;     /* AVC_SINGLE/DOUBLE_PREC       */
-    int         iCurItem;
-    int         numItems;
-    int         nStartLineNum;
-    int         nCurLineNum;
+    AVCFileType eFileType = AVCFileUnknown;
+    int         nPrecision = 0;     /* AVC_SINGLE/DOUBLE_PREC       */
+    int         iCurItem = 0;
+    int         numItems = 0;
+    int         nStartLineNum = 0;
+    int         nCurLineNum = 0;
 
-    int         nCurObjectId;
-    GBool       bForceEndOfSection;  /* For sections that don't have an */
+    int         nCurObjectId = 0;
+    GBool       bForceEndOfSection = 0;  /* For sections that don't have an */
                                      /* explicit end-of-section line.   */
-    AVCFileType eSuperSectionType;/* For sections containing several files*/
-    char        *pszSectionHdrLine;  /* Used by supersection types      */
+    AVCFileType eSuperSectionType = AVCFileUnknown;/* For sections containing several files*/
+    char        *pszSectionHdrLine = nullptr;  /* Used by supersection types      */
 
-    union
+    struct
     {
-        AVCTableDef  *psTableDef;
-    }hdr;
-    GBool       bTableHdrComplete;   /* FALSE until table header is */
+        AVCTableDef  *psTableDef = nullptr;
+    } hdr;
+    GBool       bTableHdrComplete = 0;   /* FALSE until table header is */
                                      /* finished parsing */
-    int         nTableE00RecLength;
+    int         nTableE00RecLength = 0;
 
     /* cur.* : temp. storage used to store current object (ARC, PAL, ... or
      *         Table record) from the file.
@@ -527,12 +530,14 @@ typedef struct AVCE00ParseInfo_t
         AVCTxt       *psTxt;
         AVCRxp       *psRxp;
         AVCField     *pasFields;
-        char         **papszPrj;
     }cur;
+    CPLStringList aosPrj;
 
-    char        *pszBuf;        /* Buffer used only for TABLEs  */
-    int         nBufSize;
-}AVCE00ParseInfo;
+    char        *pszBuf = nullptr;        /* Buffer used only for TABLEs  */
+    int         nBufSize = 0;
+
+    AVCE00ParseInfo() { cur.psArc = nullptr; }
+};
 
 /*---------------------------------------------------------------------
  * Stuff related to the transparent binary -> E00 conversion
@@ -603,7 +608,7 @@ typedef struct AVCE00ReadInfoE00_t
 
     /* File handle of the E00 file currently being processed
      */
-    FILE          *hFile;
+    VSILFILE     *hFile;
 
 } *AVCE00ReadE00Ptr;
 
@@ -664,6 +669,7 @@ void        AVCRawBinClose(AVCRawBinFile *psInfo);
 void        AVCRawBinFSeek(AVCRawBinFile *psInfo, int nOffset, int nFrom);
 GBool       AVCRawBinEOF(AVCRawBinFile *psInfo);
 void        AVCRawBinSetFileDataSize(AVCRawBinFile *psInfo, int nDataSize);
+int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, vsi_l_offset nSize);
 
 void        AVCRawBinReadBytes(AVCRawBinFile *psInfo, int nBytesToRead,
                                GByte *pBuf);

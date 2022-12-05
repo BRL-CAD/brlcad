@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam
- * Copyright (c) 2007-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,7 +53,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 template<typename T> static T* HISTOGRAM( T *h, int n, int r, int g, int b )
 {
@@ -159,30 +159,31 @@ GDALComputeMedianCutPCT( GDALRasterBandH hRed,
     const int nYSize = GDALGetRasterBandYSize( hRed );
     if( nYSize == 0 )
         return CE_Failure;
-    if( static_cast<GUInt32>(nXSize) < UINT_MAX / static_cast<GUInt32>(nYSize) )
+    if( static_cast<GUInt32>(nXSize) < std::numeric_limits<GUInt32>::max() / static_cast<GUInt32>(nYSize) )
     {
         return GDALComputeMedianCutPCTInternal(hRed, hGreen, hBlue,
-                                               NULL, NULL, NULL,
+                                               nullptr, nullptr, nullptr,
                                                pfnIncludePixel, nColors,
                                                5,
-                                               static_cast<GUInt32 *>(NULL),
+                                               static_cast<GUInt32 *>(nullptr),
                                                hColorTable,
                                                pfnProgress, pProgressArg);
     }
     else
     {
-#ifdef CPL_HAS_GINT64
         return GDALComputeMedianCutPCTInternal(hRed, hGreen, hBlue,
-                                               NULL, NULL, NULL,
+                                               nullptr, nullptr, nullptr,
                                                pfnIncludePixel, nColors,
                                                5,
-                                               static_cast<GUIntBig * >(NULL),
+                                               static_cast<GUIntBig * >(nullptr),
                                                hColorTable,
                                                pfnProgress, pProgressArg);
-#else
-        return CE_Failure;
-#endif
     }
+}
+
+static inline bool IsColorCodeSet(GUInt32 nColorCode)
+{
+    return (nColorCode >> 31) == 0;
 }
 
 static inline int FindColorCount( const HashHistogram* psHashHistogram,
@@ -192,7 +193,7 @@ static inline int FindColorCount( const HashHistogram* psHashHistogram,
     GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
     while( true )
     {
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode) )
         {
             return 0;
         }
@@ -200,7 +201,7 @@ static inline int FindColorCount( const HashHistogram* psHashHistogram,
         {
             return psHashHistogram[nIdx].nCount;
         }
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode2) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode2) )
         {
             return 0;
         }
@@ -208,7 +209,7 @@ static inline int FindColorCount( const HashHistogram* psHashHistogram,
         {
             return psHashHistogram[nIdx].nCount2;
         }
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode3) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode3) )
         {
             return 0;
         }
@@ -223,11 +224,11 @@ static inline int FindColorCount( const HashHistogram* psHashHistogram,
             if( nIdx >= PRIME_FOR_65536 )
                 nIdx -= PRIME_FOR_65536;
         }
-        while( static_cast<int>(psHashHistogram[nIdx].nColorCode) >= 0 &&
+        while( IsColorCodeSet(psHashHistogram[nIdx].nColorCode) &&
                psHashHistogram[nIdx].nColorCode != nColorCode &&
-               static_cast<int>(psHashHistogram[nIdx].nColorCode2) >= 0 &&
+               IsColorCodeSet(psHashHistogram[nIdx].nColorCode2) &&
                psHashHistogram[nIdx].nColorCode2 != nColorCode&&
-               static_cast<int>(psHashHistogram[nIdx].nColorCode3) >= 0 &&
+               IsColorCodeSet(psHashHistogram[nIdx].nColorCode3) &&
                psHashHistogram[nIdx].nColorCode3 != nColorCode );
     }
 }
@@ -242,7 +243,7 @@ FindAndInsertColorCount( HashHistogram* psHashHistogram, GUInt32 nColorCode )
         {
             return &(psHashHistogram[nIdx].nCount);
         }
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode) )
         {
             psHashHistogram[nIdx].nColorCode = nColorCode;
             psHashHistogram[nIdx].nCount = 0;
@@ -252,7 +253,7 @@ FindAndInsertColorCount( HashHistogram* psHashHistogram, GUInt32 nColorCode )
         {
             return &(psHashHistogram[nIdx].nCount2);
         }
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode2) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode2) )
         {
             psHashHistogram[nIdx].nColorCode2 = nColorCode;
             psHashHistogram[nIdx].nCount2 = 0;
@@ -262,7 +263,7 @@ FindAndInsertColorCount( HashHistogram* psHashHistogram, GUInt32 nColorCode )
         {
             return &(psHashHistogram[nIdx].nCount3);
         }
-        if( static_cast<int>(psHashHistogram[nIdx].nColorCode3) < 0 )
+        if( !IsColorCodeSet(psHashHistogram[nIdx].nColorCode3) )
         {
             psHashHistogram[nIdx].nColorCode3 = nColorCode;
             psHashHistogram[nIdx].nCount3 = 0;
@@ -275,11 +276,11 @@ FindAndInsertColorCount( HashHistogram* psHashHistogram, GUInt32 nColorCode )
             if( nIdx >= PRIME_FOR_65536 )
                 nIdx -= PRIME_FOR_65536;
         }
-        while( static_cast<int>(psHashHistogram[nIdx].nColorCode) >= 0 &&
+        while( IsColorCodeSet(psHashHistogram[nIdx].nColorCode) &&
                psHashHistogram[nIdx].nColorCode != nColorCode &&
-               static_cast<int>(psHashHistogram[nIdx].nColorCode2) >= 0 &&
+               IsColorCodeSet(psHashHistogram[nIdx].nColorCode2) &&
                psHashHistogram[nIdx].nColorCode2 != nColorCode&&
-               static_cast<int>(psHashHistogram[nIdx].nColorCode3) >= 0 &&
+               IsColorCodeSet(psHashHistogram[nIdx].nColorCode3) &&
                psHashHistogram[nIdx].nColorCode3 != nColorCode );
     }
 }
@@ -324,7 +325,7 @@ GDALComputeMedianCutPCTInternal(
         return CE_Failure;
     }
 
-    if( pfnIncludePixel != NULL )
+    if( pfnIncludePixel != nullptr )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "GDALComputeMedianCutPCT() doesn't currently support "
@@ -351,7 +352,7 @@ GDALComputeMedianCutPCTInternal(
         return CE_Failure;
     }
 
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
 /* ==================================================================== */
@@ -366,8 +367,8 @@ GDALComputeMedianCutPCTInternal(
     }
 
     T nPixels = 0;
-    if( nBits == 8 && pabyRedBand != NULL && pabyGreenBand != NULL &&
-        pabyBlueBand != NULL &&
+    if( nBits == 8 && pabyRedBand != nullptr && pabyGreenBand != nullptr &&
+        pabyBlueBand != nullptr &&
         static_cast<GUInt32>(nXSize) <=
         std::numeric_limits<T>::max() / static_cast<GUInt32>(nYSize) )
     {
@@ -375,8 +376,8 @@ GDALComputeMedianCutPCTInternal(
     }
 
     const int nCLevels = 1 << nBits;
-    T* histogram = NULL;
-    HashHistogram* psHashHistogram = NULL;
+    T* histogram = nullptr;
+    HashHistogram* psHashHistogram = nullptr;
     if( panHistogram )
     {
         if( nBits == 8 && static_cast<GUIntBig>(nXSize) * nYSize <= 65536 )
@@ -384,8 +385,8 @@ GDALComputeMedianCutPCTInternal(
             // If the image is small enough, then the number of colors
             // will be limited and using a hashmap, rather than a full table
             // will be more efficient.
-            histogram = NULL;
-            psHashHistogram = (HashHistogram*)panHistogram;
+            histogram = nullptr;
+            psHashHistogram = reinterpret_cast<HashHistogram*>(panHistogram);
             memset(psHashHistogram,
                    0xFF,
                    sizeof(HashHistogram) * PRIME_FOR_65536);
@@ -400,7 +401,7 @@ GDALComputeMedianCutPCTInternal(
     {
         histogram = static_cast<T*>(
             VSI_CALLOC_VERBOSE(nCLevels * nCLevels * nCLevels, sizeof(T)));
-        if( histogram == NULL )
+        if( histogram == nullptr )
         {
             return CE_Failure;
         }
@@ -409,13 +410,13 @@ GDALComputeMedianCutPCTInternal(
         static_cast<Colorbox *>(CPLMalloc(nColors*sizeof (Colorbox)));
     Colorbox *freeboxes = box_list;
     freeboxes[0].next = &freeboxes[1];
-    freeboxes[0].prev = NULL;
+    freeboxes[0].prev = nullptr;
     for( int i = 1; i < nColors-1; ++i )
     {
         freeboxes[i].next = &freeboxes[i+1];
         freeboxes[i].prev = &freeboxes[i-1];
     }
-    freeboxes[nColors-1].next = NULL;
+    freeboxes[nColors-1].next = nullptr;
     freeboxes[nColors-1].prev = &freeboxes[nColors-2];
 
 /* ==================================================================== */
@@ -425,23 +426,20 @@ GDALComputeMedianCutPCTInternal(
 /* -------------------------------------------------------------------- */
 /*      Initialize the box datastructures.                              */
 /* -------------------------------------------------------------------- */
-    Colorbox *ptr = freeboxes;
-    freeboxes = ptr->next;
+    Colorbox *freeboxes_before = freeboxes;
+    freeboxes = freeboxes_before->next;
     if( freeboxes )
-        freeboxes->prev = NULL;
-    Colorbox *usedboxes = NULL;  // TODO(schwehr): What?
-    ptr->next = usedboxes;
-    usedboxes = ptr;
-    if( ptr->next )
-        ptr->next->prev = ptr;
+        freeboxes->prev = nullptr;
 
-    ptr->rmin = 999;
-    ptr->gmin = 999;
-    ptr->bmin = 999;
-    ptr->rmax = -1;
-    ptr->gmax = -1;
-    ptr->bmax = -1;
-    ptr->total = static_cast<GUIntBig>(nXSize) * static_cast<GUIntBig>(nYSize);
+    Colorbox *usedboxes = freeboxes_before;
+    usedboxes->next = nullptr;
+    usedboxes->rmin = 999;
+    usedboxes->gmin = 999;
+    usedboxes->bmin = 999;
+    usedboxes->rmax = -1;
+    usedboxes->gmax = -1;
+    usedboxes->bmax = -1;
+    usedboxes->total = static_cast<GUIntBig>(nXSize) * static_cast<GUIntBig>(nYSize);
 
 /* -------------------------------------------------------------------- */
 /*      Collect histogram.                                              */
@@ -458,9 +456,9 @@ GDALComputeMedianCutPCTInternal(
     GByte *pabyGreenLine = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
     GByte *pabyBlueLine = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nXSize));
 
-    if( pabyRedLine == NULL ||
-        pabyGreenLine == NULL ||
-        pabyBlueLine == NULL )
+    if( pabyRedLine == nullptr ||
+        pabyGreenLine == nullptr ||
+        pabyBlueLine == nullptr )
     {
         err = CE_Failure;
         goto end_and_cleanup;
@@ -493,12 +491,12 @@ GDALComputeMedianCutPCTInternal(
             const int nGreen = pabyGreenLine[iPixel] >> nColorShift;
             const int nBlue = pabyBlueLine[iPixel] >> nColorShift;
 
-            ptr->rmin = std::min(ptr->rmin, nRed);
-            ptr->gmin = std::min(ptr->gmin, nGreen);
-            ptr->bmin = std::min(ptr->bmin, nBlue);
-            ptr->rmax = std::max(ptr->rmax, nRed);
-            ptr->gmax = std::max(ptr->gmax, nGreen);
-            ptr->bmax = std::max(ptr->bmax, nBlue);
+            usedboxes->rmin = std::min(usedboxes->rmin, nRed);
+            usedboxes->gmin = std::min(usedboxes->gmin, nGreen);
+            usedboxes->bmin = std::min(usedboxes->bmin, nBlue);
+            usedboxes->rmax = std::max(usedboxes->rmax, nRed);
+            usedboxes->gmax = std::max(usedboxes->gmax, nGreen);
+            usedboxes->bmax = std::max(usedboxes->bmax, nBlue);
 
             bool bFirstOccurrence;
             if( psHashHistogram )
@@ -558,30 +556,32 @@ GDALComputeMedianCutPCTInternal(
 /*      STEP 3: continually subdivide boxes until no more free          */
 /*      boxes remain or until all colors assigned.                      */
 /* ==================================================================== */
-    while( freeboxes != NULL )
+    while( freeboxes != nullptr )
     {
-        ptr = largest_box(usedboxes);
-        if( ptr != NULL )
+        auto ptr = largest_box(usedboxes);
+        if( ptr != nullptr )
             splitbox(ptr, histogram, psHashHistogram, nCLevels,
                      &freeboxes, &usedboxes,
                      pabyRedBand, pabyGreenBand, pabyBlueBand, nPixels);
         else
-            freeboxes = NULL;
+            freeboxes = nullptr;
     }
 
 /* ==================================================================== */
 /*      STEP 4: assign colors to all boxes                              */
 /* ==================================================================== */
-    ptr = usedboxes;
-    for( int i = 0; ptr != NULL; ++i, ptr = ptr->next )
     {
-        const GDALColorEntry sEntry = {
-            static_cast<GByte>(((ptr->rmin + ptr->rmax) << nColorShift) / 2),
-            static_cast<GByte>(((ptr->gmin + ptr->gmax) << nColorShift) / 2),
-            static_cast<GByte>(((ptr->bmin + ptr->bmax) << nColorShift) / 2),
-            255
-        };
-        GDALSetColorEntry( hColorTable, i, &sEntry );
+        Colorbox* ptr = usedboxes;
+        for( int i = 0; ptr != nullptr; ++i, ptr = ptr->next )
+        {
+            const GDALColorEntry sEntry = {
+                static_cast<GByte>(((ptr->rmin + ptr->rmax) << nColorShift) / 2),
+                static_cast<GByte>(((ptr->gmin + ptr->gmax) << nColorShift) / 2),
+                static_cast<GByte>(((ptr->bmin + ptr->bmax) << nColorShift) / 2),
+                255
+            };
+            GDALSetColorEntry( hColorTable, i, &sEntry );
+        }
     }
 
 end_and_cleanup:
@@ -591,10 +591,10 @@ end_and_cleanup:
 
     // We're done with the boxes now.
     CPLFree(box_list);
-    freeboxes = NULL;
-    usedboxes = NULL;
+    freeboxes = nullptr;
+    usedboxes = nullptr;
 
-    if( panHistogram == NULL )
+    if( panHistogram == nullptr )
         CPLFree( histogram );
 
     return err;
@@ -607,12 +607,12 @@ end_and_cleanup:
 static Colorbox *
 largest_box( Colorbox *usedboxes )
 {
-    Colorbox *b = NULL;
+    Colorbox *b = nullptr;
 
-    for( Colorbox* p = usedboxes; p != NULL; p = p->next )
+    for( Colorbox* p = usedboxes; p != nullptr; p = p->next )
     {
         if( (p->rmax > p->rmin || p->gmax > p->gmin ||
-             p->bmax > p->bmin) && (b == NULL || p->total > b->total) )
+             p->bmax > p->bmin) && (b == nullptr || p->total > b->total) )
         {
             b = p;
         }
@@ -1025,7 +1025,7 @@ splitbox(Colorbox* ptr, const T* histogram,
     Colorbox *new_cb = *pfreeboxes;
     *pfreeboxes = new_cb->next;
     if( *pfreeboxes )
-        (*pfreeboxes)->prev = NULL;
+        (*pfreeboxes)->prev = nullptr;
     if( *pusedboxes )
         (*pusedboxes)->prev = new_cb;
     new_cb->next = *pusedboxes;
@@ -1072,7 +1072,7 @@ splitbox(Colorbox* ptr, const T* histogram,
         shrinkboxFromBand(new_cb, pabyRedBand, pabyGreenBand, pabyBlueBand,
                           nPixels);
     }
-    else if( psHashHistogram != NULL )
+    else if( psHashHistogram != nullptr )
     {
         shrinkboxFromHashHistogram(new_cb, psHashHistogram);
     }
@@ -1089,7 +1089,7 @@ splitbox(Colorbox* ptr, const T* histogram,
         shrinkboxFromBand(ptr, pabyRedBand, pabyGreenBand, pabyBlueBand,
                           nPixels);
     }
-    else if( psHashHistogram != NULL )
+    else if( psHashHistogram != nullptr )
     {
         shrinkboxFromHashHistogram(ptr, psHashHistogram);
     }

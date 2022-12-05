@@ -55,10 +55,10 @@ public:
 protected:
     virtual void LoadMetadata() override;
     char** ReadTxtToList();
-    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime) override;
+    virtual GIntBig GetAcquisitionTimeFromString(const char* pszDateTime) override;
 protected:
-    CPLString m_osIMDSourceFilename;
-    CPLString m_osRPBSourceFilename;
+    CPLString m_osIMDSourceFilename{};
+    CPLString m_osRPBSourceFilename{};
 };
 
 #endif // READER_KOMPSAT_H_INCLUDED

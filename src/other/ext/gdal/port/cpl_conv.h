@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -66,6 +66,8 @@ char CPL_DLL** CPLGetConfigOptions(void);
 void CPL_DLL   CPLSetConfigOptions(const char* const * papszConfigOptions);
 char CPL_DLL** CPLGetThreadLocalConfigOptions(void);
 void CPL_DLL   CPLSetThreadLocalConfigOptions(const char* const * papszConfigOptions);
+void CPL_DLL   CPLLoadConfigOptionsFromFile(const char* pszFilename, int bOverrideEnvVars);
+void CPL_DLL   CPLLoadConfigOptionsFromPredefinedFiles(void);
 
 /* -------------------------------------------------------------------- */
 /*      Safe malloc() API.  Thin cover over VSI functions with fatal    */
@@ -86,13 +88,8 @@ char CPL_DLL *CPLStrlwr( char *);
 char CPL_DLL *CPLFGets( char *, int, FILE *);
 const char CPL_DLL *CPLReadLine( FILE * );
 const char CPL_DLL *CPLReadLineL( VSILFILE * );
-#ifdef __cplusplus
-const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols,
-                                   const char * const * papszOptions );
-#else
-const char CPL_DLL *CPLReadLine2L( VSILFILE * , int nMaxCols,
-                                   char** papszOptions );
-#endif
+const char CPL_DLL *CPLReadLine2L( VSILFILE *, int, CSLConstList );
+const char CPL_DLL *CPLReadLine3L( VSILFILE *, int, int *, CSLConstList );
 
 /* -------------------------------------------------------------------- */
 /*      Convert ASCII string to floating point number                  */
@@ -174,13 +171,16 @@ int CPL_DLL CPLCheckForFile( char *pszFilename, char **papszSiblingList );
 
 const char CPL_DLL *CPLGenerateTempFilename( const char *pszStem ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
 const char CPL_DLL *CPLExpandTilde( const char *pszFilename ) CPL_WARN_UNUSED_RESULT CPL_RETURNS_NONNULL;
+const char CPL_DLL *CPLGetHomeDir(void) CPL_WARN_UNUSED_RESULT;
+const char CPL_DLL *CPLLaunderForFilename(const char* pszName,
+                                          const char* pszOutputPath ) CPL_WARN_UNUSED_RESULT;
 
 /* -------------------------------------------------------------------- */
 /*      Find File Function                                              */
 /* -------------------------------------------------------------------- */
 
 /** Callback for CPLPushFileFinder */
-typedef const char *(*CPLFileFinder)(const char *, const char *);
+typedef char const *(*CPLFileFinder)(const char *, const char *);
 
 const char    CPL_DLL *CPLFindFile(const char *pszClass,
                                    const char *pszBasename);
@@ -238,7 +238,7 @@ int CPL_DLL CPLUnlinkTree( const char * );
 int CPL_DLL CPLCopyFile( const char *pszNewPath, const char *pszOldPath );
 int CPL_DLL CPLCopyTree( const char *pszNewPath, const char *pszOldPath );
 int CPL_DLL CPLMoveFile( const char *pszNewPath, const char *pszOldPath );
-int CPL_DLL CPLSymlink( const char* pszOldPath, const char* pszNewPath, char** papszOptions );
+int CPL_DLL CPLSymlink( const char* pszOldPath, const char* pszNewPath, CSLConstList papszOptions );
 
 /* -------------------------------------------------------------------- */
 /*      ZIP Creation.                                                   */
@@ -270,7 +270,7 @@ void CPL_DLL *CPLZLibInflate( const void* ptr, size_t nBytes,
 /* -------------------------------------------------------------------- */
 int CPL_DLL CPLValidateXML(const char* pszXMLFilename,
                            const char* pszXSDFilename,
-                           char** papszOptions);
+                           CSLConstList papszOptions);
 
 /* -------------------------------------------------------------------- */
 /*      Locale handling. Prevents parallel executions of setlocale().   */
@@ -280,56 +280,135 @@ char* CPLsetlocale (int category, const char* locale);
 void CPLCleanupSetlocaleMutex(void);
 /*! @endcond */
 
+/*!
+    CPLIsPowerOfTwo()
+    @param i - tested number
+    @return TRUE if i is power of two otherwise return FALSE
+*/
+int CPL_DLL CPLIsPowerOfTwo( unsigned int i );
+
 CPL_C_END
 
 /* -------------------------------------------------------------------- */
 /*      C++ object for temporarily forcing a LC_NUMERIC locale to "C".  */
 /* -------------------------------------------------------------------- */
 
-/*! @cond Doxygen_Suppress */
+//! @cond Doxygen_Suppress
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
+extern "C++"
+{
 class CPL_DLL CPLLocaleC
 {
+    CPL_DISALLOW_COPY_ASSIGN(CPLLocaleC)
 public:
     CPLLocaleC();
     ~CPLLocaleC();
 
 private:
     char *pszOldLocale;
-
-    /* Make it non-copyable */
-    CPLLocaleC(const CPLLocaleC&);
-    CPLLocaleC& operator=(const CPLLocaleC&);
 };
 
-/* Does the same as CPLLocaleC except that, when available, it tries to
-   only affect the current thread. But code that would be dependent of
-   setlocale(LC_NUMERIC, NULL) returning "C", such as current proj.4 versions,
-   will not work depending on the actual implementation */
+// Does the same as CPLLocaleC except that, when available, it tries to
+// only affect the current thread. But code that would be dependent of
+// setlocale(LC_NUMERIC, NULL) returning "C", such as current proj.4 versions,
+// will not work depending on the actual implementation
+class CPLThreadLocaleCPrivate;
 class CPL_DLL CPLThreadLocaleC
 {
+    CPL_DISALLOW_COPY_ASSIGN(CPLThreadLocaleC)
+
 public:
     CPLThreadLocaleC();
     ~CPLThreadLocaleC();
 
 private:
-#ifdef HAVE_USELOCALE
-    locale_t nNewLocale;
-    locale_t nOldLocale;
-#else
-#if defined(_MSC_VER)
-    int   nOldValConfigThreadLocale;
-#endif
-    char *pszOldLocale;
-#endif
-
-    /* Make it non-copyable */
-    CPLThreadLocaleC(const CPLThreadLocaleC&);
-    CPLThreadLocaleC& operator=(const CPLThreadLocaleC&);
+    CPLThreadLocaleCPrivate* m_private;
 };
+}
 
 #endif /* def __cplusplus */
-/*! @endcond */
+//! @endcond
+
+
+
+/* -------------------------------------------------------------------- */
+/*      C++ object for temporarily forcing a config option              */
+/* -------------------------------------------------------------------- */
+
+//! @cond Doxygen_Suppress
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+extern "C++"
+{
+class CPL_DLL CPLConfigOptionSetter
+{
+    CPL_DISALLOW_COPY_ASSIGN(CPLConfigOptionSetter)
+public:
+    CPLConfigOptionSetter(const char* pszKey, const char* pszValue,
+                          bool bSetOnlyIfUndefined);
+    ~CPLConfigOptionSetter();
+
+private:
+    char* m_pszKey;
+    char *m_pszOldValue;
+    bool m_bRestoreOldValue;
+};
+}
+
+#endif /* def __cplusplus */
+//! @endcond
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+extern "C++"
+{
+
+#ifndef DOXYGEN_SKIP
+#include <type_traits> // for std::is_base_of
+#endif
+
+namespace cpl
+{
+    /** Use cpl::down_cast<Derived*>(pointer_to_base) as equivalent of
+     * static_cast<Derived*>(pointer_to_base) with safe checking in debug
+     * mode.
+     *
+     * Only works if no virtual inheritance is involved.
+     *
+     * @param f pointer to a base class
+     * @return pointer to a derived class
+     */
+    template<typename To, typename From> inline To down_cast(From* f)
+    {
+        static_assert(
+            (std::is_base_of<From,
+                            typename std::remove_pointer<To>::type>::value),
+            "target type not derived from source type");
+        CPLAssert(f == nullptr || dynamic_cast<To>(f) != nullptr);
+        return static_cast<To>(f);
+    }
+}
+} // extern "C++"
+
+#endif /* def __cplusplus */
+
+
+#if defined(__cplusplus) && defined(GDAL_COMPILATION)
+
+extern "C++"
+{
+#include <memory> // for std::unique_ptr
+namespace cpl
+{
+    /** std::make_unique<> implementation borrowed from C++14 */
+    template <typename T, typename... Args>
+    std::unique_ptr<T> make_unique(Args &&... args) {
+        return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+    }
+}
+} // extern "C++"
+
+#endif /* def __cplusplus */
 
 #endif /* ndef CPL_CONV_H_INCLUDED */

@@ -82,11 +82,17 @@ extern int ged_get_bot_edges_core(struct ged *gedp, int argc, const char *argv[]
 extern int ged_dbot_dump_core(struct ged *gedp, int argc, const char **argv);
 
 
+extern int _bot_cmd_decimate(void* bs, int argc, const char** argv);
+
 extern int _bot_cmd_extrude(void *bs, int argc, const char **argv);
 
 extern int _bot_cmd_check(void *bs, int argc, const char **argv);
 
 extern int _bot_cmd_remesh(void *bs, int argc, const char **argv);
+
+extern int _bot_cmd_smooth(void* bs, int argc, const char** argv);
+
+extern int _bot_cmd_subd(void* bs, int argc, const char** argv);
 
 __END_DECLS
 

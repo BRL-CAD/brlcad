@@ -64,13 +64,14 @@
 
 #include "cpl_vsi.h"
 #define uLong64 vsi_l_offset
+typedef vsi_l_offset ZPOS64_T;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #ifndef _ZLIB_H
-#include "zlib.h"
+#include "cpl_zlib_header.h" // to avoid warnings when including zlib.h
 #endif
 
 #ifndef CPL_MINIZIP_IOAPI_H_INCLUDED
@@ -234,7 +235,7 @@ extern int ZEXPORT cpl_zipCloseFileInZip (zipFile file);
 */
 
 extern int ZEXPORT cpl_zipCloseFileInZipRaw (zipFile file,
-                                             uLong uncompressed_size,
+                                             ZPOS64_T uncompressed_size,
                                              uLong crc32);
 /*
   Close the current file in the zipfile, for file opened with

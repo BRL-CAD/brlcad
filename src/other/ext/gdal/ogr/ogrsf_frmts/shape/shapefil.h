@@ -10,7 +10,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2012-2016, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2016, Even Rouault <even dot rouault at spatialys.com>
  *
  * This software is available under the following "MIT Style" license,
  * or at the option of the licensee under the LGPL (see COPYING).  This
@@ -36,22 +36,13 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
+ *
  */
 
 #include <stdio.h>
 
-#ifdef USE_DBMALLOC
-#include <dbmalloc.h>
-#endif
-
 #ifdef USE_CPL
 #include "cpl_conv.h"
-
-/* Hide shapelib symbols in GDAL builds --with-hide-internal-symbols */
-#if !defined(SHPAPI_CALL) && defined(USE_GCC_VISIBILITY_FLAG)
-#define SHPAPI_CALL
-#endif
-
 #endif
 
 #ifdef __cplusplus
@@ -498,6 +489,8 @@ typedef struct
     int         nUpdateDay; /* 1-31 */
 
     int         bWriteEndOfFileChar; /* defaults to TRUE */
+
+    int         bRequireNextWriteSeek;
 } DBFInfo;
 
 typedef DBFInfo * DBFHandle;
@@ -507,6 +500,7 @@ typedef enum {
   FTInteger,
   FTDouble,
   FTLogical,
+  FTDate,
   FTInvalid
 } DBFFieldType;
 

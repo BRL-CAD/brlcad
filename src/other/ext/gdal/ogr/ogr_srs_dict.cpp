@@ -34,11 +34,12 @@
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "ogr_core.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           importFromDict()                           */
@@ -70,24 +71,46 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
                                             const char *pszCode )
 
 {
+    CPLString osWKT(lookupInDict(pszDictFile, pszCode));
+    if( osWKT.empty() )
+        return OGRERR_UNSUPPORTED_SRS;
+
+    OGRErr eErr = importFromWkt( osWKT );
+    if( eErr == OGRERR_NONE && strstr(pszDictFile, "esri_") == nullptr )
+    {
+        morphFromESRI();
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                          lookupInDict()                              */
+/************************************************************************/
+
+CPLString OGRSpatialReference::lookupInDict( const char *pszDictFile,
+                                             const char *pszCode )
+
+{
 /* -------------------------------------------------------------------- */
 /*      Find and open file.                                             */
 /* -------------------------------------------------------------------- */
+    CPLString osDictFile(pszDictFile);
     const char *pszFilename = CPLFindFile( "gdal", pszDictFile );
-    if( pszFilename == NULL )
-        return OGRERR_UNSUPPORTED_SRS;
+    if( pszFilename == nullptr )
+        return CPLString();
 
     VSILFILE *fp = VSIFOpenL( pszFilename, "rb" );
-    if( fp == NULL )
-        return OGRERR_UNSUPPORTED_SRS;
+    if( fp == nullptr )
+        return CPLString();
 
 /* -------------------------------------------------------------------- */
 /*      Process lines.                                                  */
 /* -------------------------------------------------------------------- */
-    OGRErr eErr = OGRERR_UNSUPPORTED_SRS;
-    const char *pszLine = NULL;
+    CPLString osWKT;
+    const char *pszLine = nullptr;
 
-    while( (pszLine = CPLReadLineL(fp)) != NULL )
+    while( (pszLine = CPLReadLineL(fp)) != nullptr )
 
     {
         if( pszLine[0] == '#' )
@@ -95,21 +118,19 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
 
         if( STARTS_WITH_CI(pszLine, "include ") )
         {
-            eErr = importFromDict( pszLine + 8, pszCode );
-            if( eErr != OGRERR_UNSUPPORTED_SRS )
+            osWKT = lookupInDict( pszLine + 8, pszCode );
+            if( !osWKT.empty() )
                 break;
             continue;
         }
 
-        if( strstr(pszLine, ",") == NULL )
+        if( strstr(pszLine, ",") == nullptr )
             continue;
 
         if( EQUALN(pszLine, pszCode, strlen(pszCode))
             && pszLine[strlen(pszCode)] == ',' )
         {
-            char *pszWKT = const_cast<char *>(pszLine) + strlen(pszCode)+1;
-
-            eErr = importFromWkt( &pszWKT );
+            osWKT = pszLine + strlen(pszCode)+1;
             break;
         }
     }
@@ -119,7 +140,7 @@ OGRErr OGRSpatialReference::importFromDict( const char *pszDictFile,
 /* -------------------------------------------------------------------- */
     VSIFCloseL( fp );
 
-    return eErr;
+    return osWKT;
 }
 
 /************************************************************************/

@@ -32,7 +32,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -61,16 +61,16 @@ void NTFFileReader::EstablishRasterAccess()
 /* -------------------------------------------------------------------- */
 /*      Read the type 50 record.                                        */
 /* -------------------------------------------------------------------- */
-    NTFRecord *poRecord = NULL;
+    NTFRecord *poRecord = nullptr;
 
-    while( (poRecord = ReadRecord()) != NULL
+    while( (poRecord = ReadRecord()) != nullptr
            && poRecord->GetType() != NRT_GRIDHREC
            && poRecord->GetType() != NRT_VTR )
     {
         delete poRecord;
     }
 
-    if( poRecord == NULL ||
+    if( poRecord == nullptr ||
         poRecord->GetType() != NRT_GRIDHREC )
     {
         delete poRecord;
@@ -130,14 +130,15 @@ void NTFFileReader::EstablishRasterAccess()
     if( !GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize) )
         return;
 
-    panColumnOffset = (long *) CPLCalloc(sizeof(long),nRasterXSize);
+    panColumnOffset = static_cast<vsi_l_offset *>(
+        CPLCalloc(sizeof(vsi_l_offset), nRasterXSize));
 
-    GetFPPos( panColumnOffset+0, NULL );
+    GetFPPos( panColumnOffset+0, nullptr );
 
 /* -------------------------------------------------------------------- */
 /*      Create an OGRSFLayer for this file readers raster points.       */
 /* -------------------------------------------------------------------- */
-    if( poDS != NULL )
+    if( poDS != nullptr )
     {
         poRasterLayer = new OGRNTFRasterLayer( poDS, this );
         poDS->AddLayer( poRasterLayer );
@@ -163,7 +164,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
             {
                 CPLErr  eErr;
 
-                eErr = ReadRasterColumn( iPrev, NULL );
+                eErr = ReadRasterColumn( iPrev, nullptr );
                 if( eErr != CE_None )
                     return eErr;
             }
@@ -173,7 +174,7 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 /* -------------------------------------------------------------------- */
 /*      If the dataset isn't open, open it now.                         */
 /* -------------------------------------------------------------------- */
-    if( GetFP() == NULL )
+    if( GetFP() == nullptr )
         Open();
 
 /* -------------------------------------------------------------------- */
@@ -181,44 +182,56 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 /* -------------------------------------------------------------------- */
     SetFPPos( panColumnOffset[iColumn], iColumn );
     NTFRecord *poRecord = ReadRecord();
-    if( poRecord == NULL )
+    if( poRecord == nullptr )
         return CE_Failure;
 
+    CPLErr eErr = CE_None;
     if( iColumn < nRasterXSize-1 )
     {
-        GetFPPos( panColumnOffset+iColumn+1, NULL );
+        GetFPPos( panColumnOffset+iColumn+1, nullptr );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Handle LANDRANGER DTM columns.                                  */
 /* -------------------------------------------------------------------- */
-    if( pafElev != NULL && GetProductId() == NPC_LANDRANGER_DTM )
+    if( pafElev != nullptr && GetProductId() == NPC_LANDRANGER_DTM )
     {
         const double dfVOffset = atoi(poRecord->GetField(56,65));
         const double dfVScale = atoi(poRecord->GetField(66,75)) * 0.001;
 
         for( int iPixel = 0; iPixel < nRasterYSize; iPixel++ )
         {
+            const char* pszValue = poRecord->GetField(84+iPixel*4,87+iPixel*4);
+            if( pszValue[0] == '\0' || pszValue[0] == ' ' )
+            {
+                eErr = CE_Failure;
+                break;
+            }
             pafElev[iPixel] = (float) (dfVOffset + dfVScale *
-                atoi(poRecord->GetField(84+iPixel*4,87+iPixel*4)));
+                atoi(pszValue));
         }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Handle PROFILE                                                  */
 /* -------------------------------------------------------------------- */
-    else if( pafElev != NULL && GetProductId() == NPC_LANDFORM_PROFILE_DTM )
+    else if( pafElev != nullptr && GetProductId() == NPC_LANDFORM_PROFILE_DTM )
     {
         for( int iPixel = 0; iPixel < nRasterYSize; iPixel++ )
         {
-            pafElev[iPixel] = (float)
-           (atoi(poRecord->GetField(19+iPixel*5,23+iPixel*5)) * GetZMult());
+            const char* pszValue = poRecord->GetField(19+iPixel*5,23+iPixel*5);
+            if( pszValue[0] == '\0' || pszValue[0] == ' ' )
+            {
+                eErr = CE_Failure;
+                break;
+            }
+            pafElev[iPixel] = (float)(atoi(pszValue) * GetZMult());
         }
     }
 
     delete poRecord;
 
-    return CE_None;
+    return eErr;
 }
 
 /************************************************************************/
@@ -233,15 +246,15 @@ CPLErr NTFFileReader::ReadRasterColumn( int iColumn, float *pafElev )
 
 OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
                                       NTFFileReader * poReaderIn ) :
-    poFeatureDefn(NULL),
-    poFilterGeom(NULL),
+    poFeatureDefn(nullptr),
+    poFilterGeom(nullptr),
     poReader(poReaderIn),
     pafColumn(static_cast<float *>(
         CPLCalloc(sizeof(float), poReaderIn->GetRasterYSize()))),
     iColumnOffset(-1),
     iCurrentFC(1),
     // Check for DEM subsampling.
-    nDEMSample(poDSIn->GetOption( "DEM_SAMPLE" ) == NULL ?
+    nDEMSample(poDSIn->GetOption( "DEM_SAMPLE" ) == nullptr ?
                1 : std::max(1, atoi(poDSIn->GetOption("DEM_SAMPLE")))),
     nFeatureCount(0)
 {
@@ -252,12 +265,12 @@ OGRNTFRasterLayer::OGRNTFRasterLayer( OGRNTFDataSource *poDSIn,
 
     poFeatureDefn->Reference();
     poFeatureDefn->SetGeomType( wkbPoint25D );
-    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDSIn->GetSpatialRef());
+    poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poDSIn->DSGetSpatialRef());
 
     OGRFieldDefn oHeight( "HEIGHT", OFTReal );
     poFeatureDefn->AddFieldDefn( &oHeight );
 
-    nFeatureCount = (poReader->GetRasterXSize() / nDEMSample)
+    nFeatureCount = static_cast<GIntBig>(poReader->GetRasterXSize() / nDEMSample)
                   * (poReader->GetRasterYSize() / nDEMSample);
 }
 
@@ -272,7 +285,7 @@ OGRNTFRasterLayer::~OGRNTFRasterLayer()
     if( poFeatureDefn )
         poFeatureDefn->Release();
 
-    if( poFilterGeom != NULL )
+    if( poFilterGeom != nullptr )
         delete poFilterGeom;
 }
 
@@ -283,13 +296,13 @@ OGRNTFRasterLayer::~OGRNTFRasterLayer()
 void OGRNTFRasterLayer::SetSpatialFilter( OGRGeometry * poGeomIn )
 
 {
-    if( poFilterGeom != NULL )
+    if( poFilterGeom != nullptr )
     {
         delete poFilterGeom;
-        poFilterGeom = NULL;
+        poFilterGeom = nullptr;
     }
 
-    if( poGeomIn != NULL )
+    if( poGeomIn != nullptr )
         poFilterGeom = poGeomIn->clone();
 }
 
@@ -313,7 +326,7 @@ OGRFeature *OGRNTFRasterLayer::GetNextFeature()
     if( iCurrentFC > static_cast<GIntBig>(poReader->GetRasterXSize())*
                                           poReader->GetRasterYSize() )
     {
-        return NULL;
+        return nullptr;
     }
 
     OGRFeature* poFeature = GetFeature( iCurrentFC );
@@ -354,7 +367,7 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( GIntBig nFeatureId )
     if( nFeatureId < 1
         || nFeatureId > static_cast<GIntBig>(poReader->GetRasterXSize())*poReader->GetRasterYSize() )
     {
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -367,10 +380,10 @@ OGRFeature *OGRNTFRasterLayer::GetFeature( GIntBig nFeatureId )
     {
         iColumnOffset = iReqColumn;
         if( poReader->ReadRasterColumn( iReqColumn, pafColumn ) != CE_None )
-            return NULL;
+            return nullptr;
     }
     if( iReqRow < 0 || iReqRow >= poReader->GetRasterYSize() )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding feature.                                 */

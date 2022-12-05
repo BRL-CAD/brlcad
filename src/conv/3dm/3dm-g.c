@@ -38,7 +38,7 @@ int
 main(int argc, char **argv)
 {
     const char * const usage =
-	"Usage: 3dm-g [-r] [-v] [-h] -o output_file.g input_file.3dm\n";
+	"Usage: 3dm-g [-r] [-v] [-o output_file.g] [-h] input_file.3dm output_file.g\n";
 
     const struct gcv_filter *out_filter;
     const struct gcv_filter *in_filter;
@@ -47,37 +47,34 @@ main(int argc, char **argv)
     struct gcv_opts gcv_options;
     const char *output_path = NULL;
     const char *input_path;
-    int c;
+    int print_help = 0;
 
     bu_setprogname(argv[0]);
     gcv_opts_default(&gcv_options);
 
-    while ((c = bu_getopt(argc, argv, "o:rvh?")) != -1) {
-	switch (c) {
-	    case 'o':
-		output_path = bu_optarg;
-		break;
+    struct bu_opt_desc d[6];
+    BU_OPT(d[0], "r", "",          "", NULL,              &gcv_options.randomize_colors, "Randomize object colors");
+    BU_OPT(d[1], "v", "verbosity", "", &bu_opt_incr_long, &gcv_options.verbosity_level,  "Increase verbosity level");
+    BU_OPT(d[2], "o", "output",    "", &bu_opt_str,       &output_path,                  "Set output filename");
+    BU_OPT(d[3], "h", "help",      "", NULL,              &print_help,                   "Print help and exit");
+    BU_OPT(d[4], "?", "",          "", NULL,              &print_help,                   "");
+    BU_OPT_NULL(d[5]);
 
-	    case 'r':
-		gcv_options.randomize_colors = 1;
-		break;
+    /* parse standard options */
+    argc--; argv++;
+    int opt_ret = bu_opt_parse(NULL, argc, (const char**)argv, d);
 
-	    case 'v':
-		gcv_options.verbosity_level = 1;
-		break;
-
-	    default:
-		bu_log("%s", usage);
-		return 1;
-	}
-    }
-
-    if (bu_optind != argc - 1 || !output_path) {
-	bu_log("%s", usage);
+    /* requested help or bad usage */
+    if (print_help || (opt_ret == 1 && !output_path) || (opt_ret == 2 && output_path) || opt_ret < 1 || opt_ret > 2) {
+	char* help = bu_opt_describe(d, NULL);
+	bu_log("%s\nOptions:\n%s", usage, help);
+	if (help) bu_free(help, "help str");
 	return 1;
     }
 
-    input_path = argv[bu_optind];
+    input_path = argv[0];
+    if (!output_path)
+	output_path = argv[1];
 
     gcv_context_init(&context);
 

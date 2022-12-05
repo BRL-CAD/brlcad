@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Waypoint Information Technology
- * Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -84,8 +84,8 @@ typedef struct
 typedef struct
 {
     unsigned int nNumClassifiedItems;
-//  NWT_CLASSIFIED_ITEM *stClassifedItem[4096]; //hack - it could be up to 64K
-    NWT_CLASSIFIED_ITEM **stClassifedItem;    //hack - it could be up to 64K
+//  NWT_CLASSIFIED_ITEM *stClassifiedItem[4096]; //hack - it could be up to 64K
+    NWT_CLASSIFIED_ITEM **stClassifiedItem;    //hack - it could be up to 64K
 } NWT_CLASSIFIED_DICT;
 
 typedef struct {
@@ -126,8 +126,8 @@ typedef struct
     bool bHillShadeExists;
     bool bShowGradient;
     bool bShowHillShade;
-    char cHillShadeBrightness;
-    char cHillShadeContrast;
+    unsigned char cHillShadeBrightness;
+    unsigned char cHillShadeContrast;
     float fHillShadeAzimuth;
     float fHillShadeAngle;
     NWT_CLASSIFIED_DICT *stClassDict;
@@ -135,13 +135,13 @@ typedef struct
     RASTER_STYLE style;
 } NWT_GRID;
 
-int nwt_ParseHeader( NWT_GRID * pGrd, char *nwHeader );
+int nwt_ParseHeader( NWT_GRID * pGrd, const unsigned char *nwHeader );
 NWT_GRID *nwtOpenGrid( char *filename );
 void nwtCloseGrid( NWT_GRID * pGrd );
 void nwtPrintGridHeader( NWT_GRID * pGrd );
 int nwt_LoadColors( NWT_RGB * pMap, int mapSize, NWT_GRID * pGrd );
 void nwt_HillShade( unsigned char *r, unsigned char *g, unsigned char *b,
-                    char *h );
+                    unsigned char *h );
 
 void createIP( int index, unsigned char r, unsigned char g, unsigned char b,
                NWT_RGB * map, int *pnWarkerMark );

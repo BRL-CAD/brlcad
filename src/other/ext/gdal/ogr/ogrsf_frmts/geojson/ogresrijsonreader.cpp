@@ -3,10 +3,10 @@
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implementation of OGRESRIJSONReader class (OGR ESRIJSON Driver)
  *           to read ESRI Feature Service REST data
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2007, Mateusz Loskot
  * Copyright (c) 2013, Kyle Shannon <kyle at pobox dot com>
  *
@@ -50,15 +50,15 @@
 #include "ogrgeojsonutils.h"
 // #include "symbol_renames.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRESRIJSONReader()                         */
 /************************************************************************/
 
 OGRESRIJSONReader::OGRESRIJSONReader() :
-    poGJObject_(NULL),
-    poLayer_(NULL)
+    poGJObject_(nullptr),
+    poLayer_(nullptr)
 {}
 
 /************************************************************************/
@@ -67,13 +67,13 @@ OGRESRIJSONReader::OGRESRIJSONReader() :
 
 OGRESRIJSONReader::~OGRESRIJSONReader()
 {
-    if( NULL != poGJObject_ )
+    if( nullptr != poGJObject_ )
     {
         json_object_put(poGJObject_);
     }
 
-    poGJObject_ = NULL;
-    poLayer_ = NULL;
+    poGJObject_ = nullptr;
+    poLayer_ = nullptr;
 }
 
 /************************************************************************/
@@ -82,8 +82,8 @@ OGRESRIJSONReader::~OGRESRIJSONReader()
 
 OGRErr OGRESRIJSONReader::Parse( const char* pszText )
 {
-    json_object *jsobj = NULL;
-    if( NULL != pszText && !OGRJSonParse(pszText, &jsobj, true) )
+    json_object *jsobj = nullptr;
+    if( nullptr != pszText && !OGRJSonParse(pszText, &jsobj, true) )
     {
         return OGRERR_CORRUPT_DATA;
     }
@@ -98,11 +98,12 @@ OGRErr OGRESRIJSONReader::Parse( const char* pszText )
 /*                           ReadLayers()                               */
 /************************************************************************/
 
-void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
+void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS,
+                                    GeoJSONSourceType eSourceType )
 {
-    CPLAssert( NULL == poLayer_ );
+    CPLAssert( nullptr == poLayer_ );
 
-    if( NULL == poGJObject_ )
+    if( nullptr == poGJObject_ )
     {
         CPLDebug( "ESRIJSON",
                   "Missing parsed ESRIJSON data. Forgot to call Parse()?" );
@@ -111,10 +112,25 @@ void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
 
     OGRSpatialReference* poSRS = OGRESRIJSONReadSpatialReference( poGJObject_ );
 
-    poLayer_ = new OGRGeoJSONLayer( OGRGeoJSONLayer::DefaultName, poSRS,
-                                    OGRESRIJSONGetGeometryType(poGJObject_),
-                                    poDS );
-    if( poSRS != NULL )
+    const char* pszName = "ESRIJSON";
+    if( eSourceType == eGeoJSONSourceFile )
+    {
+        pszName = poDS->GetDescription();
+        if( STARTS_WITH_CI(pszName, "ESRIJSON:") )
+            pszName += strlen("ESRIJSON:");
+        pszName = CPLGetBasename(pszName);
+    }
+
+    auto eGeomType = OGRESRIJSONGetGeometryType(poGJObject_);
+    if( eGeomType == wkbNone && poSRS != nullptr )
+    {
+        eGeomType = wkbUnknown;
+    }
+
+    poLayer_ = new OGRGeoJSONLayer( pszName, poSRS,
+                                    eGeomType,
+                                    poDS, nullptr );
+    if( poSRS != nullptr )
         poSRS->Release();
 
     if( !GenerateLayerDefn() )
@@ -127,7 +143,7 @@ void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
     }
 
     OGRGeoJSONLayer *poThisLayer = ReadFeatureCollection( poGJObject_ );
-    if( poThisLayer == NULL )
+    if( poThisLayer == nullptr )
     {
         delete poLayer_;
         return;
@@ -135,6 +151,7 @@ void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
 
     CPLErrorReset();
 
+    poLayer_->DetectGeometryType();
     poDS->AddLayer(poLayer_);
 }
 
@@ -144,8 +161,8 @@ void OGRESRIJSONReader::ReadLayers( OGRGeoJSONDataSource* poDS )
 
 bool OGRESRIJSONReader::GenerateLayerDefn()
 {
-    CPLAssert( NULL != poGJObject_ );
-    CPLAssert( NULL != poLayer_->GetLayerDefn() );
+    CPLAssert( nullptr != poGJObject_ );
+    CPLAssert( nullptr != poLayer_->GetLayerDefn() );
     CPLAssert( 0 == poLayer_->GetLayerDefn()->GetFieldCount() );
 
     bool bSuccess = true;
@@ -153,17 +170,17 @@ bool OGRESRIJSONReader::GenerateLayerDefn()
 /* -------------------------------------------------------------------- */
 /*      Scan all features and generate layer definition.                */
 /* -------------------------------------------------------------------- */
-    json_object* poObjFeatures =
+    json_object* poFields =
         OGRGeoJSONFindMemberByName( poGJObject_, "fields" );
-    if( NULL != poObjFeatures &&
-        json_type_array == json_object_get_type( poObjFeatures ) )
+    if( nullptr != poFields &&
+        json_type_array == json_object_get_type( poFields ) )
     {
-        const int nFeatures = json_object_array_length( poObjFeatures );
-        for( int i = 0; i < nFeatures; ++i )
+        const auto nFeatures = json_object_array_length( poFields );
+        for( auto i = decltype(nFeatures){0}; i < nFeatures; ++i )
         {
-            json_object* poObjFeature =
-                json_object_array_get_idx( poObjFeatures, i );
-            if( !GenerateFeatureDefn( poObjFeature ) )
+            json_object* poField =
+                json_object_array_get_idx( poFields, i );
+            if( !ParseField( poField ) )
             {
                 CPLDebug( "GeoJSON", "Create feature schema failure." );
                 bSuccess = false;
@@ -172,17 +189,17 @@ bool OGRESRIJSONReader::GenerateLayerDefn()
     }
     else
     {
-        poObjFeatures = OGRGeoJSONFindMemberByName(
+        poFields = OGRGeoJSONFindMemberByName(
             poGJObject_, "fieldAliases" );
-        if( NULL != poObjFeatures &&
-            json_object_get_type(poObjFeatures) == json_type_object )
+        if( nullptr != poFields &&
+            json_object_get_type(poFields) == json_type_object )
         {
             OGRFeatureDefn* poDefn = poLayer_->GetLayerDefn();
             json_object_iter it;
-            it.key = NULL;
-            it.val = NULL;
-            it.entry = NULL;
-            json_object_object_foreachC( poObjFeatures, it )
+            it.key = nullptr;
+            it.val = nullptr;
+            it.entry = nullptr;
+            json_object_object_foreachC( poFields, it )
             {
                 OGRFieldDefn fldDefn( it.key, OFTString );
                 poDefn->AddFieldDefn( &fldDefn );
@@ -201,13 +218,13 @@ bool OGRESRIJSONReader::GenerateLayerDefn()
 }
 
 /************************************************************************/
-/*                        GenerateFeatureDefn()                         */
+/*                             ParseField()                             */
 /************************************************************************/
 
-bool OGRESRIJSONReader::GenerateFeatureDefn( json_object* poObj )
+bool OGRESRIJSONReader::ParseField( json_object* poObj )
 {
     OGRFeatureDefn* poDefn = poLayer_->GetLayerDefn();
-    CPLAssert( NULL != poDefn );
+    CPLAssert( nullptr != poDefn );
 
     bool bSuccess = false;
 
@@ -216,7 +233,7 @@ bool OGRESRIJSONReader::GenerateFeatureDefn( json_object* poObj )
 /* -------------------------------------------------------------------- */
     json_object* poObjName = OGRGeoJSONFindMemberByName( poObj, "name" );
     json_object* poObjType = OGRGeoJSONFindMemberByName( poObj, "type" );
-    if( NULL != poObjName && NULL != poObjType )
+    if( nullptr != poObjName && nullptr != poObjType )
     {
         OGRFieldType eFieldType = OFTString;
         if( EQUAL(json_object_get_string(poObjType), "esriFieldTypeOID") )
@@ -241,7 +258,7 @@ bool OGRESRIJSONReader::GenerateFeatureDefn( json_object* poObj )
 
         json_object * const poObjLength =
             OGRGeoJSONFindMemberByName( poObj, "length" );
-        if( poObjLength != NULL &&
+        if( poObjLength != nullptr &&
             json_object_get_type(poObjLength) == json_type_int )
         {
             const int nWidth = json_object_get_int(poObjLength);
@@ -265,7 +282,7 @@ bool OGRESRIJSONReader::GenerateFeatureDefn( json_object* poObj )
 
 bool OGRESRIJSONReader::AddFeature( OGRFeature* poFeature )
 {
-    if( NULL == poFeature )
+    if( nullptr == poFeature )
         return false;
 
     poLayer_->AddFeature( poFeature );
@@ -275,25 +292,51 @@ bool OGRESRIJSONReader::AddFeature( OGRFeature* poFeature )
 }
 
 /************************************************************************/
-/*                           ReadGeometry()                             */
+/*                       OGRESRIJSONReadGeometry()                      */
 /************************************************************************/
 
-OGRGeometry* OGRESRIJSONReader::ReadGeometry( json_object* poObj )
+OGRGeometry* OGRESRIJSONReadGeometry( json_object* poObj )
 {
-    OGRGeometry* poGeometry = NULL;
+    OGRGeometry* poGeometry = nullptr;
 
-    const OGRwkbGeometryType eType = poLayer_->GetGeomType();
-    if( eType == wkbPoint )
+    if( OGRGeoJSONFindMemberByName(poObj, "x") )
         poGeometry = OGRESRIJSONReadPoint( poObj );
-    else if( eType == wkbLineString )
+    else if( OGRGeoJSONFindMemberByName(poObj, "paths") )
         poGeometry = OGRESRIJSONReadLineString( poObj );
-    else if( eType == wkbPolygon )
+    else if( OGRGeoJSONFindMemberByName(poObj, "rings") )
         poGeometry = OGRESRIJSONReadPolygon( poObj );
-    else if( eType == wkbMultiPoint )
+    else if( OGRGeoJSONFindMemberByName(poObj, "points") )
         poGeometry = OGRESRIJSONReadMultiPoint( poObj );
 
     return poGeometry;
 }
+
+
+/************************************************************************/
+/*                     OGR_G_CreateGeometryFromEsriJson()               */
+/************************************************************************/
+
+/** Create a OGR geometry from a ESRIJson geometry object */
+OGRGeometryH OGR_G_CreateGeometryFromEsriJson( const char* pszJson )
+{
+    if( nullptr == pszJson )
+    {
+        // Translation failed.
+        return nullptr;
+    }
+
+    json_object *poObj = nullptr;
+    if( !OGRJSonParse(pszJson, &poObj) )
+        return nullptr;
+
+    OGRGeometry* poGeometry = OGRESRIJSONReadGeometry( poObj );
+
+    // Release JSON tree.
+    json_object_put( poObj );
+
+    return OGRGeometry::ToHandle(poGeometry);
+}
+
 
 /************************************************************************/
 /*                           ReadFeature()                              */
@@ -301,26 +344,25 @@ OGRGeometry* OGRESRIJSONReader::ReadGeometry( json_object* poObj )
 
 OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
 {
-    CPLAssert( NULL != poObj );
-    CPLAssert( NULL != poLayer_ );
+    CPLAssert( nullptr != poObj );
+    CPLAssert( nullptr != poLayer_ );
 
     OGRFeature* poFeature = new OGRFeature( poLayer_->GetLayerDefn() );
 
 /* -------------------------------------------------------------------- */
 /*      Translate ESRIJSON "attributes" object to feature attributes.   */
 /* -------------------------------------------------------------------- */
-    CPLAssert( NULL != poFeature );
+    CPLAssert( nullptr != poFeature );
 
-    json_object* poObjProps = NULL;
-    poObjProps = OGRGeoJSONFindMemberByName( poObj, "attributes" );
-    if( NULL != poObjProps &&
+    json_object* poObjProps = OGRGeoJSONFindMemberByName( poObj, "attributes" );
+    if( nullptr != poObjProps &&
         json_object_get_type(poObjProps) == json_type_object )
     {
-        OGRFieldDefn* poFieldDefn = NULL;
+        OGRFieldDefn* poFieldDefn = nullptr;
         json_object_iter it;
-        it.key = NULL;
-        it.val = NULL;
-        it.entry = NULL;
+        it.key = nullptr;
+        it.val = nullptr;
+        it.entry = nullptr;
         json_object_object_foreachC( poObjProps, it )
         {
             const int nField
@@ -328,7 +370,7 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
             if( nField >= 0 )
             {
                 poFieldDefn = poFeature->GetFieldDefnRef(nField);
-                if( poFieldDefn && it.val != NULL )
+                if( poFieldDefn && it.val != nullptr )
                 {
                     if( EQUAL( it.key,  poLayer_->GetFIDColumn() ) )
                         poFeature->SetFID( json_object_get_int( it.val ) );
@@ -355,17 +397,17 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
 /* -------------------------------------------------------------------- */
 /*      Translate geometry sub-object of ESRIJSON Feature.               */
 /* -------------------------------------------------------------------- */
-    json_object* poObjGeom = NULL;
+    json_object* poObjGeom = nullptr;
     json_object* poTmp = poObj;
     json_object_iter it;
-    it.key = NULL;
-    it.val = NULL;
-    it.entry = NULL;
+    it.key = nullptr;
+    it.val = nullptr;
+    it.entry = nullptr;
     json_object_object_foreachC(poTmp, it)
     {
         if( EQUAL( it.key, "geometry" ) )
         {
-            if( it.val != NULL )
+            if( it.val != nullptr )
                 poObjGeom = it.val;
             // We're done.  They had 'geometry':null.
             else
@@ -373,21 +415,13 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
         }
     }
 
-    if( NULL != poObjGeom )
+    if( nullptr != poObjGeom )
     {
-        OGRGeometry* poGeometry = ReadGeometry( poObjGeom );
-        if( NULL != poGeometry )
+        OGRGeometry* poGeometry = OGRESRIJSONReadGeometry( poObjGeom );
+        if( nullptr != poGeometry )
         {
             poFeature->SetGeometryDirectly( poGeometry );
         }
-    }
-    else
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Invalid Feature object. "
-                  "Missing \'geometry\' member." );
-        delete poFeature;
-        return NULL;
     }
 
     return poFeature;
@@ -400,26 +434,26 @@ OGRFeature* OGRESRIJSONReader::ReadFeature( json_object* poObj )
 OGRGeoJSONLayer*
 OGRESRIJSONReader::ReadFeatureCollection( json_object* poObj )
 {
-    CPLAssert( NULL != poLayer_ );
+    CPLAssert( nullptr != poLayer_ );
 
     json_object* poObjFeatures
         = OGRGeoJSONFindMemberByName( poObj, "features" );
-    if( NULL == poObjFeatures )
+    if( nullptr == poObjFeatures )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid FeatureCollection object. "
                   "Missing \'features\' member." );
-        return NULL;
+        return nullptr;
     }
 
     if( json_type_array == json_object_get_type( poObjFeatures ) )
     {
-        const int nFeatures = json_object_array_length( poObjFeatures );
-        for( int i = 0; i < nFeatures; ++i )
+        const auto nFeatures = json_object_array_length( poObjFeatures );
+        for( auto i = decltype(nFeatures){0}; i < nFeatures; ++i )
         {
             json_object* poObjFeature
                 = json_object_array_get_idx( poObjFeatures, i );
-            if( poObjFeature != NULL &&
+            if( poObjFeature != nullptr &&
                 json_object_get_type(poObjFeature) == json_type_object )
             {
                 OGRFeature* poFeature =
@@ -431,7 +465,7 @@ OGRESRIJSONReader::ReadFeatureCollection( json_object* poObj )
 
     // We're returning class member to follow the same pattern of
     // Read* functions call convention.
-    CPLAssert( NULL != poLayer_ );
+    CPLAssert( nullptr != poLayer_ );
     return poLayer_;
 }
 
@@ -441,12 +475,12 @@ OGRESRIJSONReader::ReadFeatureCollection( json_object* poObj )
 
 OGRwkbGeometryType OGRESRIJSONGetGeometryType( json_object* poObj )
 {
-    if( NULL == poObj )
+    if( nullptr == poObj )
         return wkbUnknown;
 
     json_object* poObjType =
         OGRGeoJSONFindMemberByName( poObj, "geometryType" );
-    if( NULL == poObjType )
+    if( nullptr == poObjType )
     {
         return wkbNone;
     }
@@ -497,7 +531,7 @@ static double OGRESRIJSONGetCoordinate( json_object* poObj,
                                         bool& bValid )
 {
     json_object* poObjCoord = OGRGeoJSONFindMemberByName( poObj, pszCoordName );
-    if( NULL == poObjCoord )
+    if( nullptr == poObjCoord )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
             "Invalid Point object. "
@@ -515,21 +549,21 @@ static double OGRESRIJSONGetCoordinate( json_object* poObj,
 
 OGRPoint* OGRESRIJSONReadPoint( json_object* poObj)
 {
-    CPLAssert( NULL != poObj );
+    CPLAssert( nullptr != poObj );
 
     bool bValid = true;
     const double dfX = OGRESRIJSONGetCoordinate(poObj, "x", bValid);
     const double dfY = OGRESRIJSONGetCoordinate(poObj, "y", bValid);
     if( !bValid )
-        return NULL;
+        return nullptr;
 
     json_object* poObjZ = OGRGeoJSONFindMemberByName( poObj, "z" );
-    if( NULL == poObjZ )
+    if( nullptr == poObjZ )
         return new OGRPoint(dfX, dfY);
 
     const double dfZ = OGRESRIJSONGetCoordinateToDouble(poObjZ, "z", bValid);
     if( !bValid )
-        return NULL;
+        return nullptr;
     return new OGRPoint(dfX, dfY, dfZ);
 }
 
@@ -540,14 +574,14 @@ OGRPoint* OGRESRIJSONReadPoint( json_object* poObj)
 static bool OGRESRIJSONReaderParseZM( json_object* poObj, bool *bHasZ,
                                       bool *bHasM )
 {
-    CPLAssert( NULL != poObj );
+    CPLAssert( nullptr != poObj );
     // The ESRI geojson spec states that geometries other than point can
     // have the attributes hasZ and hasM.  A geometry that has a z value
     // implies the 3rd number in the tuple is z.  if hasM is true, but hasZ
     // is not, it is the M value.
     bool bZ = false;
     json_object* poObjHasZ = OGRGeoJSONFindMemberByName( poObj, "hasZ" );
-    if( poObjHasZ != NULL )
+    if( poObjHasZ != nullptr )
     {
         if( json_object_get_type( poObjHasZ ) == json_type_boolean )
         {
@@ -557,16 +591,16 @@ static bool OGRESRIJSONReaderParseZM( json_object* poObj, bool *bHasZ,
 
     bool bM = false;
     json_object* poObjHasM = OGRGeoJSONFindMemberByName( poObj, "hasM" );
-    if( poObjHasM != NULL )
+    if( poObjHasM != nullptr )
     {
         if( json_object_get_type( poObjHasM ) == json_type_boolean )
         {
             bM = CPL_TO_BOOL(json_object_get_boolean( poObjHasM ));
         }
     }
-    if( bHasZ != NULL )
+    if( bHasZ != nullptr )
         *bHasZ = bZ;
-    if( bHasM != NULL )
+    if( bHasM != nullptr )
         *bHasM = bM;
     return true;
 }
@@ -581,7 +615,7 @@ static bool OGRESRIJSONReaderParseXYZMArray( json_object* poObjCoords,
                                              double* pdfZ, double* pdfM,
                                              int* pnNumCoords )
 {
-    if( poObjCoords == NULL )
+    if( poObjCoords == nullptr )
     {
         CPLDebug( "ESRIJSON",
                   "OGRESRIJSONReaderParseXYZMArray: got null object." );
@@ -595,7 +629,7 @@ static bool OGRESRIJSONReaderParseXYZMArray( json_object* poObjCoords,
         return false;
     }
 
-    int coordDimension = json_object_array_length( poObjCoords );
+    const auto coordDimension = json_object_array_length( poObjCoords );
 
     // Allow 4 coordinates if M is present, but it is eventually ignored.
     if( coordDimension < 2 || coordDimension > 4 )
@@ -608,7 +642,7 @@ static bool OGRESRIJSONReaderParseXYZMArray( json_object* poObjCoords,
 
     // Read X coordinate.
     json_object* poObjCoord = json_object_array_get_idx( poObjCoords, 0 );
-    if( poObjCoord == NULL )
+    if( poObjCoord == nullptr )
     {
         CPLDebug( "ESRIJSON",
                   "OGRESRIJSONReaderParseXYZMArray: got null object." );
@@ -620,7 +654,7 @@ static bool OGRESRIJSONReaderParseXYZMArray( json_object* poObjCoords,
 
     // Read Y coordinate.
     poObjCoord = json_object_array_get_idx( poObjCoords, 1 );
-    if( poObjCoord == NULL )
+    if( poObjCoord == nullptr )
     {
         CPLDebug( "ESRIJSON",
                   "OGRESRIJSONReaderParseXYZMArray: got null object." );
@@ -635,7 +669,7 @@ static bool OGRESRIJSONReaderParseXYZMArray( json_object* poObjCoords,
     if( coordDimension > 2)
     {
         poObjCoord = json_object_array_get_idx( poObjCoords, 2 );
-        if( poObjCoord == NULL )
+        if( poObjCoord == nullptr )
         {
             CPLDebug( "ESRIJSON",
                       "OGRESRIJSONReaderParseXYZMArray: got null object." );
@@ -646,14 +680,14 @@ static bool OGRESRIJSONReaderParseXYZMArray( json_object* poObjCoords,
                         (coordDimension > 3 || !bHasM) ? "z": "m", bValid);
         if( !bValid )
             return false;
-        if( pdfZ != NULL )
+        if( pdfZ != nullptr )
         {
             if (coordDimension > 3 || !bHasM)
                 *pdfZ = dfZorM;
             else
                 *pdfZ = 0.0;
         }
-        if( pdfM != NULL && coordDimension == 3 )
+        if( pdfM != nullptr && coordDimension == 3 )
         {
             if (bHasM)
                 *pdfM = dfZorM;
@@ -663,7 +697,7 @@ static bool OGRESRIJSONReaderParseXYZMArray( json_object* poObjCoords,
         if( coordDimension == 4 )
         {
             poObjCoord = json_object_array_get_idx( poObjCoords, 3 );
-            if( poObjCoord == NULL )
+            if( poObjCoord == nullptr )
             {
                 CPLDebug( "ESRIJSON",
                         "OGRESRIJSONReaderParseXYZMArray: got null object." );
@@ -674,23 +708,23 @@ static bool OGRESRIJSONReaderParseXYZMArray( json_object* poObjCoords,
                                                                 "m", bValid);
             if( !bValid )
                 return false;
-            if( pdfM != NULL )
+            if( pdfM != nullptr )
                 *pdfM = dfM;
         }
     }
     else
     {
-        if( pdfZ != NULL )
+        if( pdfZ != nullptr )
             *pdfZ = 0.0;
-        if( pdfM != NULL )
+        if( pdfM != nullptr )
             *pdfM = 0.0;
     }
 
-    if( pnNumCoords != NULL )
-        *pnNumCoords = coordDimension;
-    if( pdfX != NULL )
+    if( pnNumCoords != nullptr )
+        *pnNumCoords = static_cast<int>(coordDimension);
+    if( pdfX != nullptr )
         *pdfX = dfX;
-    if( pdfY != NULL )
+    if( pdfY != nullptr )
         *pdfY = dfY;
 
     return true;
@@ -702,7 +736,7 @@ static bool OGRESRIJSONReaderParseXYZMArray( json_object* poObjCoords,
 
 OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
 {
-    CPLAssert( NULL != poObj );
+    CPLAssert( nullptr != poObj );
 
     bool bHasZ = false;
     bool bHasM = false;
@@ -714,12 +748,12 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
     }
 
     json_object* poObjPaths = OGRGeoJSONFindMemberByName( poObj, "paths" );
-    if( NULL == poObjPaths )
+    if( nullptr == poObjPaths )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid LineString object. "
                   "Missing \'paths\' member." );
-        return NULL;
+        return nullptr;
     }
 
     if( json_type_array != json_object_get_type( poObjPaths ) )
@@ -727,21 +761,21 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid LineString object. "
                   "Invalid \'paths\' member." );
-        return NULL;
+        return nullptr;
     }
 
-    OGRMultiLineString* poMLS = NULL;
-    OGRGeometry* poRet = NULL;
-    const int nPaths = json_object_array_length( poObjPaths );
-    for( int iPath = 0; iPath < nPaths; iPath++ )
+    OGRMultiLineString* poMLS = nullptr;
+    OGRGeometry* poRet = nullptr;
+    const auto nPaths = json_object_array_length( poObjPaths );
+    for( auto iPath = decltype(nPaths){0}; iPath < nPaths; iPath++ )
     {
         json_object* poObjPath = json_object_array_get_idx( poObjPaths, iPath );
-        if( poObjPath == NULL ||
+        if( poObjPath == nullptr ||
             json_type_array != json_object_get_type( poObjPath ) )
         {
             delete poRet;
             CPLDebug( "ESRIJSON", "LineString: got non-array object." );
-            return NULL;
+            return nullptr;
         }
 
         OGRLineString* poLine = new OGRLineString();
@@ -758,8 +792,8 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
         {
             poRet = poLine;
         }
-        const int nPoints = json_object_array_length( poObjPath );
-        for( int i = 0; i < nPoints; i++ )
+        const auto nPoints = json_object_array_length( poObjPath );
+        for( auto i = decltype(nPoints){0}; i < nPoints; i++ )
         {
             int nNumCoords = 2;
             json_object* poObjCoords =
@@ -772,7 +806,7 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
               poObjCoords, bHasZ, bHasM, &dfX, &dfY, &dfZ, &dfM, &nNumCoords) )
             {
                 delete poRet;
-                return NULL;
+                return nullptr;
             }
 
             if( nNumCoords == 3 && !bHasM )
@@ -794,7 +828,7 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
         }
     }
 
-    if( poRet == NULL )
+    if( poRet == nullptr )
         poRet = new OGRLineString();
 
     return poRet;
@@ -806,7 +840,7 @@ OGRGeometry* OGRESRIJSONReadLineString( json_object* poObj )
 
 OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
 {
-    CPLAssert( NULL != poObj );
+    CPLAssert( nullptr != poObj );
 
     bool bHasZ = false;
     bool bHasM = false;
@@ -818,12 +852,12 @@ OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
     }
 
     json_object* poObjRings = OGRGeoJSONFindMemberByName( poObj, "rings" );
-    if( NULL == poObjRings )
+    if( nullptr == poObjRings )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
             "Invalid Polygon object. "
             "Missing \'rings\' member." );
-        return NULL;
+        return nullptr;
     }
 
     if( json_type_array != json_object_get_type( poObjRings ) )
@@ -831,32 +865,31 @@ OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
         CPLError( CE_Failure, CPLE_AppDefined,
             "Invalid Polygon object. "
             "Invalid \'rings\' member." );
-        return NULL;
+        return nullptr;
     }
 
-    const int nRings = json_object_array_length( poObjRings );
+    const auto nRings = json_object_array_length( poObjRings );
     OGRGeometry** papoGeoms = new OGRGeometry*[nRings];
-    for( int iRing = 0; iRing < nRings; iRing++ )
+    for( auto iRing = decltype(nRings){0}; iRing < nRings; iRing++ )
     {
         json_object* poObjRing = json_object_array_get_idx( poObjRings, iRing );
-        if( poObjRing == NULL ||
+        if( poObjRing == nullptr ||
             json_type_array != json_object_get_type( poObjRing ) )
         {
-            for( int j = 0; j < iRing; j++ )
+            for( auto j = decltype(iRing){0}; j < iRing; j++ )
                 delete papoGeoms[j];
             delete[] papoGeoms;
             CPLDebug( "ESRIJSON",
                     "Polygon: got non-array object." );
-            return NULL;
+            return nullptr;
         }
 
         OGRPolygon* poPoly = new OGRPolygon();
-        OGRLinearRing* poLine = new OGRLinearRing();
-        poPoly->addRingDirectly(poLine);
+        auto poLine = cpl::make_unique<OGRLinearRing>();
         papoGeoms[iRing] = poPoly;
 
-        const int nPoints = json_object_array_length( poObjRing );
-        for( int i = 0; i < nPoints; i++ )
+        const auto nPoints = json_object_array_length( poObjRing );
+        for( auto i = decltype(nPoints){0}; i < nPoints; i++ )
         {
             int nNumCoords = 2;
             json_object* poObjCoords =
@@ -868,10 +901,10 @@ OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
             if( !OGRESRIJSONReaderParseXYZMArray (
               poObjCoords, bHasZ, bHasM, &dfX, &dfY, &dfZ, &dfM, &nNumCoords) )
             {
-                for( int j = 0; j <= iRing; j++ )
+                for( auto j = decltype(iRing){0}; j <= iRing; j++ )
                     delete papoGeoms[j];
                 delete[] papoGeoms;
-                return NULL;
+                return nullptr;
             }
 
             if( nNumCoords == 3 && !bHasM )
@@ -891,12 +924,13 @@ OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
                 poLine->addPoint( dfX, dfY );
             }
         }
+        poPoly->addRingDirectly(poLine.release());
     }
 
     OGRGeometry* poRet = OGRGeometryFactory::organizePolygons( papoGeoms,
-                                                               nRings,
-                                                               NULL,
-                                                               NULL);
+                                                               static_cast<int>(nRings),
+                                                               nullptr,
+                                                               nullptr);
     delete[] papoGeoms;
 
     return poRet;
@@ -908,7 +942,7 @@ OGRGeometry* OGRESRIJSONReadPolygon( json_object* poObj)
 
 OGRMultiPoint* OGRESRIJSONReadMultiPoint( json_object* poObj)
 {
-    CPLAssert( NULL != poObj );
+    CPLAssert( nullptr != poObj );
 
     bool bHasZ = false;
     bool bHasM = false;
@@ -920,12 +954,12 @@ OGRMultiPoint* OGRESRIJSONReadMultiPoint( json_object* poObj)
     }
 
     json_object* poObjPoints = OGRGeoJSONFindMemberByName( poObj, "points" );
-    if( NULL == poObjPoints )
+    if( nullptr == poObjPoints )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid MultiPoint object. "
                   "Missing \'points\' member." );
-        return NULL;
+        return nullptr;
     }
 
     if( json_type_array != json_object_get_type( poObjPoints ) )
@@ -933,13 +967,13 @@ OGRMultiPoint* OGRESRIJSONReadMultiPoint( json_object* poObj)
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Invalid MultiPoint object. "
                   "Invalid \'points\' member." );
-        return NULL;
+        return nullptr;
     }
 
     OGRMultiPoint* poMulti = new OGRMultiPoint();
 
-    const int nPoints = json_object_array_length( poObjPoints );
-    for( int i = 0; i < nPoints; i++ )
+    const auto nPoints = json_object_array_length( poObjPoints );
+    for( auto i = decltype(nPoints){0}; i < nPoints; i++ )
     {
         int nNumCoords = 2;
         json_object* poObjCoords =
@@ -952,7 +986,7 @@ OGRMultiPoint* OGRESRIJSONReadMultiPoint( json_object* poObj)
             poObjCoords, bHasZ, bHasM, &dfX, &dfY, &dfZ, &dfM, &nNumCoords) )
         {
             delete poMulti;
-            return NULL;
+            return nullptr;
         }
 
         if( nNumCoords == 3 && !bHasM )
@@ -987,30 +1021,44 @@ OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj )
 /* -------------------------------------------------------------------- */
 /*      Read spatial reference definition.                              */
 /* -------------------------------------------------------------------- */
-    OGRSpatialReference* poSRS = NULL;
+    OGRSpatialReference* poSRS = nullptr;
 
     json_object* poObjSrs =
         OGRGeoJSONFindMemberByName( poObj, "spatialReference" );
-    if( NULL != poObjSrs )
+    if( nullptr != poObjSrs )
     {
         json_object* poObjWkid = OGRGeoJSONFindMemberByName( poObjSrs, "latestWkid" );
-        if( poObjWkid == NULL )
+        if( poObjWkid == nullptr )
             poObjWkid = OGRGeoJSONFindMemberByName( poObjSrs, "wkid" );
-        if( poObjWkid == NULL )
+        if( poObjWkid == nullptr )
         {
             json_object* poObjWkt =
                 OGRGeoJSONFindMemberByName( poObjSrs, "wkt" );
-            if( poObjWkt == NULL )
-                return NULL;
+            if( poObjWkt == nullptr )
+                return nullptr;
 
-            char* pszWKT =
-                const_cast<char*>(json_object_get_string( poObjWkt ));
+            const char* pszWKT = json_object_get_string( poObjWkt );
             poSRS = new OGRSpatialReference();
-            if( OGRERR_NONE != poSRS->importFromWkt( &pszWKT ) ||
-                poSRS->morphFromESRI() != OGRERR_NONE )
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            if( OGRERR_NONE != poSRS->importFromWkt( pszWKT ) )
             {
                 delete poSRS;
-                poSRS = NULL;
+                poSRS = nullptr;
+            }
+            else
+            {
+                int nEntries = 0;
+                int* panMatchConfidence = nullptr;
+                OGRSpatialReferenceH* pahSRS = poSRS->FindMatches(
+                    nullptr, &nEntries, &panMatchConfidence);
+                if( nEntries == 1 && panMatchConfidence[0] >= 70 )
+                {
+                    delete poSRS;
+                    poSRS = OGRSpatialReference::FromHandle(pahSRS[0])->Clone();
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                }
+                OSRFreeSRSArray(pahSRS);
+                CPLFree(panMatchConfidence);
             }
 
             return poSRS;
@@ -1019,10 +1067,11 @@ OGRSpatialReference* OGRESRIJSONReadSpatialReference( json_object* poObj )
         const int nEPSG = json_object_get_int( poObjWkid );
 
         poSRS = new OGRSpatialReference();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if( OGRERR_NONE != poSRS->importFromEPSG( nEPSG ) )
         {
             delete poSRS;
-            poSRS = NULL;
+            poSRS = nullptr;
         }
     }
 

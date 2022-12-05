@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,7 +49,7 @@
 
 class HFARasterBand;
 
-class HFADataset CPL_FINAL : public GDALPamDataset
+class HFADataset final : public GDALPamDataset
 {
     friend class HFARasterBand;
 
@@ -59,7 +59,7 @@ class HFADataset CPL_FINAL : public GDALPamDataset
 
     bool        bGeoDirty;
     double      adfGeoTransform[6];
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     bool        bIgnoreUTM;
 
@@ -94,7 +94,7 @@ class HFADataset CPL_FINAL : public GDALPamDataset
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
                                 int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszParmList );
+                                GDALDataType eType, char ** papszParamList );
     static GDALDataset *CreateCopy( const char * pszFilename,
                                     GDALDataset *poSrcDS,
                                     int bStrict, char ** papszOptions,
@@ -104,21 +104,21 @@ class HFADataset CPL_FINAL : public GDALPamDataset
 
     virtual char **GetFileList() override;
 
-    virtual const char *GetProjectionRef() override;
-    virtual CPLErr SetProjection( const char * ) override;
+    const OGRSpatialReference* GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override;
 
     virtual CPLErr GetGeoTransform( double * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
 
     virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
 
     virtual CPLErr SetMetadata( char **, const char * = "" ) override;
     virtual CPLErr SetMetadataItem( const char *, const char *,
                                     const char * = "" ) override;
 
-    virtual void   FlushCache() override;
+    virtual void   FlushCache(bool bAtClosing) override;
     virtual CPLErr IBuildOverviews( const char *pszResampling,
                                     int nOverviews, int *panOverviewList,
                                     int nListBands, int *panBandList,
@@ -132,7 +132,7 @@ class HFADataset CPL_FINAL : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class HFARasterBand CPL_FINAL : public GDALPamRasterBand
+class HFARasterBand final : public GDALPamRasterBand
 {
     friend class HFADataset;
     friend class HFARasterAttributeTable;
@@ -175,9 +175,9 @@ class HFARasterBand CPL_FINAL : public GDALPamRasterBand
     virtual int    GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview( int ) override;
 
-    virtual double GetMinimum( int *pbSuccess = NULL ) override;
-    virtual double GetMaximum( int *pbSuccess = NULL ) override;
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
+    virtual double GetMinimum( int *pbSuccess = nullptr ) override;
+    virtual double GetMaximum( int *pbSuccess = nullptr ) override;
+    virtual double GetNoDataValue( int *pbSuccess = nullptr ) override;
     virtual CPLErr SetNoDataValue( double dfValue ) override;
 
     virtual CPLErr SetMetadata( char **, const char * = "" ) override;
@@ -209,7 +209,7 @@ class HFAAttributeField
     bool              bConvertColors;  // Map 0-1 floats to 0-255 ints.
 };
 
-class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
+class HFARasterAttributeTable final : public GDALRasterAttributeTable
 {
   private:
     HFAHandle   hHFA;
@@ -224,6 +224,7 @@ class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
     bool bLinearBinning;
     double dfRow0Min;
     double dfBinSize;
+    GDALRATTableType eTableType;
 
     CPLString osWorkingResult;
 
@@ -258,7 +259,7 @@ class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
     HFARasterAttributeTable( HFARasterBand *poBand, const char *pszName );
     virtual ~HFARasterAttributeTable();
 
-    GDALDefaultRasterAttributeTable *Clone() const override;
+    GDALRasterAttributeTable *Clone() const override;
 
     virtual int           GetColumnCount() const override;
 
@@ -303,6 +304,10 @@ class HFARasterAttributeTable CPL_FINAL : public GDALRasterAttributeTable
                                             double *pdfBinSize ) const override;
 
     virtual CPLXMLNode   *Serialize() const override;
+
+    virtual CPLErr        SetTableType(const GDALRATTableType eInTableType) override;
+    virtual GDALRATTableType GetTableType() const override;
+    virtual void          RemoveStatistics() override;
 
 protected:
     CPLErr                ColorsIO( GDALRWFlag eRWFlag, int iField,

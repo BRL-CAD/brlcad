@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2003, Frank Warmerdam
- * Copyright (c) 2009-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,14 +53,19 @@ typedef enum {
   /*! Cubic Convolution Approximation (4x4 kernel) */  GRA_Cubic=2,
   /*! Cubic B-Spline Approximation (4x4 kernel) */     GRA_CubicSpline=3,
   /*! Lanczos windowed sinc interpolation (6x6 kernel) */ GRA_Lanczos=4,
-  /*! Average (computes the average of all non-NODATA contributing pixels) */ GRA_Average=5,
+  /*! Average (computes the weighted average of all non-NODATA contributing pixels) */ GRA_Average=5,
   /*! Mode (selects the value which appears most often of all the sampled points) */ GRA_Mode=6,
   /*  GRA_Gauss=7 reserved. */
   /*! Max (selects maximum of all non-NODATA contributing pixels) */ GRA_Max=8,
   /*! Min (selects minimum of all non-NODATA contributing pixels) */ GRA_Min=9,
   /*! Med (selects median of all non-NODATA contributing pixels) */ GRA_Med=10,
   /*! Q1 (selects first quartile of all non-NODATA contributing pixels) */ GRA_Q1=11,
-  /*! Q3 (selects third quartile of all non-NODATA contributing pixels) */ GRA_Q3=12
+  /*! Q3 (selects third quartile of all non-NODATA contributing pixels) */ GRA_Q3=12,
+  /*! Sum (weighed sum of all non-NODATA contributing pixels). Added in GDAL 3.1 */ GRA_Sum=13,
+  /*! RMS (weighted root mean square (quadratic mean) of all non-NODATA contributing pixels) */ GRA_RMS=14,
+/*! @cond Doxygen_Suppress */
+  GRA_LAST_VALUE=GRA_RMS
+/*! @endcond */
 } GDALResampleAlg;
 
 /*! GWKAverageOrMode Algorithm */
@@ -70,7 +75,9 @@ typedef enum {
     /*! Mode of GDT_Byte, GDT_UInt16, or GDT_Int16 */ GWKAOM_Imode=3,
     /*! Maximum */ GWKAOM_Max=4,
     /*! Minimum */ GWKAOM_Min=5,
-    /*! Quantile */ GWKAOM_Quant=6
+    /*! Quantile */ GWKAOM_Quant=6,
+    /*! Sum */ GWKAOM_Sum=7,
+    /*! RMS */ GWKAOM_RMS=8
 } GWKAverageOrModeAlg;
 
 /*! @cond Doxygen_Suppress */
@@ -155,13 +162,15 @@ typedef struct {
     /*! The "nodata" value real component for each input band, if NULL there isn't one */
     double             *padfSrcNoDataReal;
     /*! The "nodata" value imaginary component - may be NULL even if real
-      component is provided. */
+      component is provided. This value is not used to flag invalid values.
+      Only the real component is used. */
     double             *padfSrcNoDataImag;
 
     /*! The "nodata" value real component for each output band, if NULL there isn't one */
     double             *padfDstNoDataReal;
     /*! The "nodata" value imaginary component - may be NULL even if real
-      component is provided. */
+      component is provided. Note that warp operations only use real component
+      for flagging invalid data.*/
     double             *padfDstNoDataImag;
 
     /*! GDALProgressFunc() compatible progress reporting function, or NULL
@@ -225,6 +234,27 @@ void CPL_DLL CPL_STDCALL GDALDestroyWarpOptions( GDALWarpOptions * );
 GDALWarpOptions CPL_DLL * CPL_STDCALL
 GDALCloneWarpOptions( const GDALWarpOptions * );
 
+void CPL_DLL CPL_STDCALL
+GDALWarpInitDstNoDataReal( GDALWarpOptions *, double dNoDataReal );
+
+void CPL_DLL CPL_STDCALL
+GDALWarpInitSrcNoDataReal( GDALWarpOptions *, double dNoDataReal );
+
+void CPL_DLL CPL_STDCALL
+GDALWarpInitNoDataReal( GDALWarpOptions *, double dNoDataReal );
+
+void CPL_DLL CPL_STDCALL
+GDALWarpInitDstNoDataImag( GDALWarpOptions *, double dNoDataImag );
+
+void CPL_DLL CPL_STDCALL
+GDALWarpInitSrcNoDataImag( GDALWarpOptions *, double dNoDataImag );
+
+void CPL_DLL CPL_STDCALL
+GDALWarpResolveWorkingDataType( GDALWarpOptions * );
+
+void CPL_DLL CPL_STDCALL
+GDALWarpInitDefaultBandMapping( GDALWarpOptions *, int nBandCount );
+
 /*! @cond Doxygen_Suppress */
 CPLXMLNode CPL_DLL * CPL_STDCALL
       GDALSerializeWarpOptions( const GDALWarpOptions * );
@@ -264,6 +294,13 @@ GDALAutoCreateWarpedVRT( GDALDatasetH hSrcDS,
                          double dfMaxError, const GDALWarpOptions *psOptions );
 
 GDALDatasetH CPL_DLL CPL_STDCALL
+GDALAutoCreateWarpedVRTEx( GDALDatasetH hSrcDS,
+                           const char *pszSrcWKT, const char *pszDstWKT,
+                           GDALResampleAlg eResampleAlg,
+                           double dfMaxError, const GDALWarpOptions *psOptions,
+                           CSLConstList papszTransformerOptions );
+
+GDALDatasetH CPL_DLL CPL_STDCALL
 GDALCreateWarpedVRT( GDALDatasetH hSrcDS,
                      int nPixels, int nLines, double *padfGeoTransform,
                      GDALWarpOptions *psOptions );
@@ -274,7 +311,10 @@ GDALInitializeWarpedVRT( GDALDatasetH hDS,
 
 CPL_C_END
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+#include <vector>
+#include <utility>
 
 /************************************************************************/
 /*                            GDALWarpKernel                            */
@@ -296,6 +336,8 @@ CPL_C_END
  */
 class CPL_DLL GDALWarpKernel
 {
+    CPL_DISALLOW_COPY_ASSIGN(GDALWarpKernel)
+
 public:
     /** Warp options */
     char              **papszWarpOptions;
@@ -312,9 +354,9 @@ public:
     /** Height of the source image */
     int                 nSrcYSize;
     /** Extra pixels (included in nSrcXSize) reserved for filter window. Should be ignored in scale computation */
-    int                 nSrcXExtraSize;
+    double              dfSrcXExtraSize;
     /** Extra pixels (included in nSrcYSize) reserved for filter window. Should be ignored in scale computation */
-    int                 nSrcYExtraSize;
+    double              dfSrcYExtraSize;
     /** Array of nBands source images of size nSrcXSize * nSrcYSize. Each subarray must have WARP_EXTRA_ELTS at the end */
     GByte               **papabySrcImage;
 
@@ -384,6 +426,10 @@ public:
 /*! @cond Doxygen_Suppress */
     /** Per-thread data. Internally set */
     void                *psThreadData;
+
+    bool                bApplyVerticalShift = false;
+
+    double              dfMultFactorVerticalShift = 1.0;
 /*! @endcond */
 
                        GDALWarpKernel();
@@ -415,6 +461,9 @@ typedef struct _GDALWarpChunk GDALWarpChunk;
 /*! @endcond */
 
 class CPL_DLL GDALWarpOperation {
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALWarpOperation)
+
 private:
     GDALWarpOptions *psOptions;
 
@@ -425,8 +474,14 @@ private:
                                          int nDstXSize, int nDstYSize,
                                          int *pnSrcXOff, int *pnSrcYOff,
                                          int *pnSrcXSize, int *pnSrcYSize,
-                                         int *pnSrcXExtraSize, int *pnSrcYExtraSize,
+                                         double *pdfSrcXExtraSize, double *pdfSrcYExtraSize,
                                          double* pdfSrcFillRatio );
+
+    void            ComputeSourceWindowStartingFromSource(
+                                    int nDstXOff, int nDstYOff,
+                                    int nDstXSize, int nDstYSize,
+                                    double* padfSrcMinX, double* padfSrcMinY,
+                                    double* padfSrcMaxX, double* padfSrcMaxY);
 
     static CPLErr          CreateKernelMask( GDALWarpKernel *, int iBand,
                                       const char *pszType );
@@ -443,8 +498,16 @@ private:
 
     void           *psThreadData;
 
+    // Coordinates a few special points in target image space, to determine
+    // if ComputeSourceWindow() must use a grid based sampling.
+    std::vector<std::pair<double, double>> aDstXYSpecialPoints{};
+
+    bool m_bIsTranslationOnPixelBoundaries = false;
+
     void            WipeChunkList();
-    CPLErr          CollectChunkList( int nDstXOff, int nDstYOff,
+    CPLErr          CollectChunkListInternal( int nDstXOff, int nDstYOff,
+                                      int nDstXSize, int nDstYSize );
+    void            CollectChunkList( int nDstXOff, int nDstYOff,
                                       int nDstXSize, int nDstYSize );
     void            ReportTiming( const char * );
 
@@ -453,6 +516,9 @@ public:
     virtual        ~GDALWarpOperation();
 
     CPLErr          Initialize( const GDALWarpOptions *psNewOptions );
+    void*           CreateDestinationBuffer( int nDstXSize, int nDstYSize,
+                                             int *pbWasInitialized = nullptr );
+    static void     DestroyDestinationBuffer(void* pDstBuffer);
 
     const GDALWarpOptions         *GetOptions();
 
@@ -469,7 +535,7 @@ public:
                                 int nDstXSize, int nDstYSize,
                                 int nSrcXOff, int nSrcYOff,
                                 int nSrcXSize, int nSrcYSize,
-                                int nSrcXExtraSize, int nSrcYExtraSize,
+                                double dfSrcXExtraSize, double dfSrcYExtraSize,
                                 double dfProgressBase, double dfProgressScale);
     CPLErr          WarpRegionToBuffer( int nDstXOff, int nDstYOff,
                                         int nDstXSize, int nDstYSize,
@@ -484,7 +550,7 @@ public:
                                         GDALDataType eBufDataType,
                                         int nSrcXOff, int nSrcYOff,
                                         int nSrcXSize, int nSrcYSize,
-                                        int nSrcXExtraSize, int nSrcYExtraSize,
+                                        double dfSrcXExtraSize, double dfSrcYExtraSize,
                                         double dfProgressBase, double dfProgressScale);
 };
 

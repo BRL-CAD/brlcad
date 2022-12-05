@@ -44,6 +44,8 @@
  *====================================================================*/
 class OGRTABDataSource : public OGRDataSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRTABDataSource)
+
   private:
     char                *m_pszName;
     char                *m_pszDirectory;
@@ -56,8 +58,10 @@ class OGRTABDataSource : public OGRDataSource
     int                 m_bSingleFile;
     int                 m_bSingleLayerAlreadyCreated;
     GBool               m_bQuickSpatialIndexMode;
-    int                 m_bUpdate;
     int                 m_nBlockSize;
+    
+  private:  
+    inline bool         GetUpdate() const { return eAccess == GA_Update; }
 
   public:
                 OGRTABDataSource();
@@ -72,11 +76,15 @@ class OGRTABDataSource : public OGRDataSource
     int          TestCapability( const char * ) override;
 
     OGRLayer    *ICreateLayer(const char *,
-                             OGRSpatialReference * = NULL,
+                             OGRSpatialReference * = nullptr,
                              OGRwkbGeometryType = wkbUnknown,
-                             char ** = NULL ) override;
+                             char ** = nullptr ) override;
 
     char        **GetFileList() override;
+
+    virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
+                                    OGRGeometry *poSpatialFilter,
+                                    const char *pszDialect ) override;
 };
 
 void CPL_DLL RegisterOGRTAB();

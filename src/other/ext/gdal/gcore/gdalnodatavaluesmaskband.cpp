@@ -5,10 +5,10 @@
  *           a default band mask based on the NODATA_VALUES metadata item.
  *           A pixel is considered nodata in all bands if and only if all bands
  *           match the corresponding value in the NODATA_VALUES tuple
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot ogr>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2009, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
@@ -48,7 +48,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 
 GDALNoDataValuesMaskBand::GDALNoDataValuesMaskBand( GDALDataset* poDSIn ) :
-    padfNodataValues(NULL)
+    padfNodataValues(nullptr)
 {
     const char* pszNoDataValues = poDSIn->GetMetadataItem("NODATA_VALUES");
     char** papszNoDataValues =
@@ -81,6 +81,39 @@ GDALNoDataValuesMaskBand::~GDALNoDataValuesMaskBand()
 
 {
     CPLFree(padfNodataValues);
+}
+
+/************************************************************************/
+/*                            FillOutBuffer()                           */
+/************************************************************************/
+
+template<class T> static void FillOutBuffer(GPtrDiff_t nBlockOffsetPixels,
+                                            int nBands,
+                                            const void* pabySrc,
+                                            const double* padfNodataValues,
+                                            void* pImage)
+{
+    T* paNoData = static_cast<T*>(
+        CPLMalloc(nBands * sizeof(T)) );
+    for( int iBand = 0; iBand < nBands; ++iBand )
+    {
+        paNoData[iBand] = static_cast<T>(padfNodataValues[iBand]);
+    }
+
+    for( GPtrDiff_t i = 0; i < nBlockOffsetPixels; i++ )
+    {
+        int nCountNoData = 0;
+        for( int iBand = 0; iBand < nBands; ++iBand )
+        {
+            if( static_cast<const T *>(pabySrc)[i + iBand * nBlockOffsetPixels] ==
+                paNoData[iBand] )
+                ++nCountNoData;
+        }
+        static_cast<GByte *>(pImage)[i] =
+            nCountNoData == nBands ? 0 : 255;
+    }
+
+    CPLFree(paNoData);
 }
 
 /************************************************************************/
@@ -137,7 +170,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
     GByte *pabySrc = static_cast<GByte *>(
         VSI_MALLOC3_VERBOSE( nBands * GDALGetDataTypeSizeBytes(eWrkDT),
                              nBlockXSize, nBlockYSize ) );
-    if (pabySrc == NULL)
+    if (pabySrc == nullptr)
     {
         return CE_Failure;
     }
@@ -158,9 +191,9 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
                 nBlockXSize * nBlockYSize );
     }
 
-    int nBlockOffsetPixels = nBlockXSize * nBlockYSize;
-    const int nBandOffsetByte =
-        GDALGetDataTypeSizeBytes(eWrkDT) * nBlockXSize * nBlockYSize;
+    const GPtrDiff_t nBlockOffsetPixels = static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
+    const GPtrDiff_t nBandOffsetByte =
+        GDALGetDataTypeSizeBytes(eWrkDT) * nBlockOffsetPixels;
     for( int iBand = 0; iBand < nBands; ++iBand )
     {
         const CPLErr eErr =
@@ -174,8 +207,8 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
                 nXSizeRequest,
                 nYSizeRequest,
                 eWrkDT, 0,
-                nBlockXSize * GDALGetDataTypeSizeBytes(eWrkDT),
-                NULL );
+                static_cast<GSpacing>(nBlockXSize) * GDALGetDataTypeSizeBytes(eWrkDT),
+                nullptr );
         if( eErr != CE_None )
             return eErr;
     }
@@ -183,139 +216,45 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock( int nXBlockOff, int nYBlockOff,
 /* -------------------------------------------------------------------- */
 /*      Process different cases.                                        */
 /* -------------------------------------------------------------------- */
-    // TODO(schwehr): Cleanup casting.
     switch( eWrkDT )
     {
       case GDT_Byte:
       {
-          GByte* pabyNoData = static_cast<GByte*>(
-              CPLMalloc(nBands * sizeof(GByte)) );
-          for( int iBand = 0; iBand < nBands; ++iBand )
-          {
-              pabyNoData[iBand] = static_cast<GByte>(padfNodataValues[iBand]);
-          }
-
-          for( int i = nBlockXSize * nBlockYSize - 1; i >= 0; --i )
-          {
-              int nCountNoData = 0;
-              for( int iBand = 0; iBand < nBands; ++iBand )
-              {
-                  if( pabySrc[i + iBand * nBlockOffsetPixels] ==
-                      pabyNoData[iBand] )
-                      ++nCountNoData;
-              }
-              static_cast<GByte *>(pImage)[i] =
-                  nCountNoData == nBands ? 0 : 255;
-          }
-
-          CPLFree(pabyNoData);
+          FillOutBuffer<GByte> (nBlockOffsetPixels, nBands,
+                                pabySrc, padfNodataValues,
+                                pImage);
       }
       break;
 
       case GDT_UInt32:
       {
-          GUInt32* panNoData = static_cast<GUInt32 *>(
-              CPLMalloc(nBands * sizeof(GUInt32)) );
-          for( int iBand = 0; iBand < nBands; ++iBand )
-          {
-              panNoData[iBand] = (GUInt32)padfNodataValues[iBand];
-          }
-
-          for( int i = nBlockXSize * nBlockYSize - 1; i >= 0; --i )
-          {
-              int nCountNoData = 0;
-              for( int iBand = 0; iBand < nBands; ++iBand )
-              {
-                  if( reinterpret_cast<GUInt32 *>(pabySrc)[
-                          i + iBand * nBlockOffsetPixels] == panNoData[iBand] )
-                      ++nCountNoData;
-              }
-              static_cast<GByte *>(pImage)[i] = nCountNoData == nBands ? 0 :255;
-          }
-
-          CPLFree(panNoData);
+          FillOutBuffer<GUInt32>(nBlockOffsetPixels, nBands,
+                                 pabySrc, padfNodataValues,
+                                 pImage);
       }
       break;
 
       case GDT_Int32:
       {
-          GInt32* panNoData = static_cast<GInt32 *>(
-              CPLMalloc(nBands * sizeof(GInt32)) );
-          for( int iBand = 0; iBand < nBands; ++iBand )
-          {
-              // Intentional rounding.
-              panNoData[iBand] = static_cast<GInt32>(padfNodataValues[iBand]);
-          }
-
-          for( int i = nBlockXSize * nBlockYSize - 1; i >= 0; --i )
-          {
-              int nCountNoData = 0;
-              for( int iBand = 0; iBand < nBands; ++iBand )
-              {
-                  if( reinterpret_cast<GInt32 *>(pabySrc)[
-                          i + iBand * nBlockOffsetPixels] == panNoData[iBand] )
-                      ++nCountNoData;
-              }
-              static_cast<GByte *>(pImage)[i] =
-                  nCountNoData == nBands ? 0 : 255;
-          }
-
-          CPLFree(panNoData);
+          FillOutBuffer<GInt32>(nBlockOffsetPixels, nBands,
+                                pabySrc, padfNodataValues,
+                                pImage);
       }
       break;
 
       case GDT_Float32:
       {
-          float* pafNoData = static_cast<float *>(
-              CPLMalloc(nBands * sizeof(float)) );
-          for( int iBand = 0; iBand < nBands; ++iBand )
-          {
-              // Loss of precision.
-              pafNoData[iBand] = static_cast<float>(padfNodataValues[iBand]);
-          }
-
-          for( int i = nBlockXSize * nBlockYSize - 1; i >= 0; --i )
-          {
-              int nCountNoData = 0;
-              for( int iBand = 0; iBand < nBands; ++iBand )
-              {
-                  if( reinterpret_cast<float *>(pabySrc)[
-                          i + iBand * nBlockOffsetPixels] == pafNoData[iBand] )
-                      ++nCountNoData;
-              }
-              if (nCountNoData == nBands)
-                  static_cast<GByte *>(pImage)[i] = 0;
-              else
-                  static_cast<GByte *>(pImage)[i] = 255;
-          }
-
-          CPLFree(pafNoData);
+          FillOutBuffer<float> (nBlockOffsetPixels, nBands,
+                                pabySrc, padfNodataValues,
+                                pImage);
       }
       break;
 
       case GDT_Float64:
       {
-          double* padfNoData = static_cast<double*>(
-              CPLMalloc(nBands * sizeof(double)) );
-          for( int iBand = 0; iBand < nBands; ++iBand )
-          {
-              padfNoData[iBand] = padfNodataValues[iBand];
-          }
-
-          for( int i = nBlockXSize * nBlockYSize - 1; i >= 0; --i )
-          {
-              int nCountNoData = 0;
-              for( int iBand = 0; iBand < nBands; ++iBand )
-              {
-                  if( reinterpret_cast<double *>(pabySrc)[
-                          i + iBand * nBlockOffsetPixels] == padfNoData[iBand] )
-                      ++nCountNoData;
-              }
-              static_cast<GByte *>(pImage)[i] =
-                  nCountNoData == nBands ? 0 : 255;
-          }
-
-          CPLFree(padfNoData);
+          FillOutBuffer<double>(nBlockOffsetPixels, nBands,
+                                pabySrc, padfNodataValues,
+                                pImage);
       }
       break;
 

@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam
- * Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,6 +41,7 @@
 #include "gdal.h"
 #include "cpl_minixml.h"
 #include "ogr_api.h"
+#include <stdint.h>
 #endif
 
 CPL_C_START
@@ -154,6 +155,14 @@ GDALCreateGenImgProjTransformer3( const char *pszSrcWKT,
                                   const double *padfSrcGeoTransform,
                                   const char *pszDstWKT,
                                   const double *padfDstGeoTransform );
+
+void CPL_DLL *
+GDALCreateGenImgProjTransformer4( OGRSpatialReferenceH hSrcSRS,
+                                  const double *padfSrcGeoTransform,
+                                  OGRSpatialReferenceH hDstSRS,
+                                  const double *padfDstGeoTransform,
+                                  const char* const *papszOptions );
+
 void CPL_DLL GDALSetGenImgProjTransformerDstGeoTransform( void *,
                                                           const double * );
 void CPL_DLL GDALDestroyGenImgProjTransformer( void * );
@@ -162,11 +171,17 @@ int CPL_DLL GDALGenImgProjTransform(
     double *x, double *y, double *z, int *panSuccess );
 
 void GDALSetTransformerDstGeoTransform( void *, const double * );
+void GDALGetTransformerDstGeoTransform( void*, double* );
 
 /* Geo to geo reprojection transformer. */
 void CPL_DLL *
 GDALCreateReprojectionTransformer( const char *pszSrcWKT,
                                    const char *pszDstWKT );
+void CPL_DLL *
+GDALCreateReprojectionTransformerEx(
+                                   OGRSpatialReferenceH hSrcSRS,
+                                   OGRSpatialReferenceH hDstSRS,
+                                   const char* const *papszOptions);
 void CPL_DLL GDALDestroyReprojectionTransformer( void * );
 int CPL_DLL GDALReprojectionTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
@@ -198,15 +213,35 @@ int CPL_DLL GDALTPSTransform(
     double *x, double *y, double *z, int *panSuccess );
 
 /*! @cond Doxygen_Suppress */
-char CPL_DLL ** RPCInfoToMD( GDALRPCInfo *psRPCInfo );
+#ifdef GDAL_COMPILATION
+#define RPCInfoV1ToMD RPCInfoToMD
+#else
+#define RPCInfoToMD RPCInfoV2ToMD
+#endif
+char CPL_DLL ** RPCInfoV1ToMD( GDALRPCInfoV1 *psRPCInfo );
+char CPL_DLL ** RPCInfoV2ToMD( GDALRPCInfoV2 *psRPCInfo );
 /*! @endcond */
 
 /* RPC based transformer ... src is pixel/line/elev, dst is long/lat/elev */
 
+/*! @cond Doxygen_Suppress */
+#ifdef GDAL_COMPILATION
+#define GDALCreateRPCTransformerV1 GDALCreateRPCTransformer
+#else
+#define GDALCreateRPCTransformer GDALCreateRPCTransformerV2
+#endif
+
 void CPL_DLL *
-GDALCreateRPCTransformer( GDALRPCInfo *psRPC, int bReversed,
+GDALCreateRPCTransformerV1( GDALRPCInfoV1 *psRPC, int bReversed,
                           double dfPixErrThreshold,
                           char **papszOptions );
+/*! @endcond */
+
+void CPL_DLL *
+GDALCreateRPCTransformerV2( const GDALRPCInfoV2 *psRPC, int bReversed,
+                          double dfPixErrThreshold,
+                          char **papszOptions );
+
 void CPL_DLL GDALDestroyRPCTransformer( void *pTransformArg );
 int CPL_DLL GDALRPCTransform(
     void *pTransformArg, int bDstToSrc, int nPointCount,
@@ -305,6 +340,8 @@ typedef struct
     double adfGeoTransform[6];
 
     int    nElevField;
+    int    nElevFieldMin;
+    int    nElevFieldMax;
     int    nIDField;
     int    nNextID;
 } OGRContourWriterInfo;
@@ -315,11 +352,47 @@ OGRContourWriter( double, int, double *, double *, void *pInfo );
 
 CPLErr CPL_DLL
 GDALContourGenerate( GDALRasterBandH hBand,
-                            double dfContourInterval, double dfContourBase,
-                            int nFixedLevelCount, double *padfFixedLevels,
-                            int bUseNoData, double dfNoDataValue,
-                            void *hLayer, int iIDField, int iElevField,
-                            GDALProgressFunc pfnProgress, void *pProgressArg );
+                     double dfContourInterval, double dfContourBase,
+                     int nFixedLevelCount, double *padfFixedLevels,
+                     int bUseNoData, double dfNoDataValue,
+                     void *hLayer, int iIDField, int iElevField,
+                     GDALProgressFunc pfnProgress, void *pProgressArg );
+
+CPLErr CPL_DLL
+GDALContourGenerateEx( GDALRasterBandH hBand, void *hLayer,
+                       CSLConstList options,
+                       GDALProgressFunc pfnProgress, void *pProgressArg );
+
+/* -------------------------------------------------------------------- */
+/*      Viewshed Generation                                             */
+/* -------------------------------------------------------------------- */
+
+/** Viewshed Modes */
+typedef enum {
+    GVM_Diagonal = 1,
+    GVM_Edge = 2,
+    GVM_Max = 3,
+    GVM_Min = 4
+} GDALViewshedMode;
+
+/** Viewshed output types */
+typedef enum {
+    GVOT_NORMAL = 1,
+    GVOT_MIN_TARGET_HEIGHT_FROM_DEM = 2,
+    GVOT_MIN_TARGET_HEIGHT_FROM_GROUND = 3
+} GDALViewshedOutputType;
+
+GDALDatasetH CPL_DLL
+GDALViewshedGenerate(GDALRasterBandH hBand,
+                     const char* pszDriverName,
+                     const char* pszTargetRasterName,
+                     CSLConstList papszCreationOptions,
+                     double dfObserverX, double dfObserverY, double dfObserverHeight,
+                     double dfTargetHeight, double dfVisibleVal, double dfInvisibleVal,
+                     double dfOutOfRangeVal, double dfNoDataVal, double dfCurvCoeff,
+                     GDALViewshedMode eMode, double dfMaxDistance,
+                     GDALProgressFunc pfnProgress, void *pProgressArg,
+                     GDALViewshedOutputType heightMode, CSLConstList papszExtraOptions);
 
 /************************************************************************/
 /*      Rasterizer API - geometries burned into GDAL raster.            */
@@ -327,14 +400,26 @@ GDALContourGenerate( GDALRasterBandH hBand,
 
 CPLErr CPL_DLL
 GDALRasterizeGeometries( GDALDatasetH hDS,
-                         int nBandCount, int *panBandList,
-                         int nGeomCount, OGRGeometryH *pahGeometries,
+                         int nBandCount, const int *panBandList,
+                         int nGeomCount, const OGRGeometryH *pahGeometries,
                          GDALTransformerFunc pfnTransformer,
                          void *pTransformArg,
-                         double *padfGeomBurnValue,
-                         char **papszOptions,
+                         const double *padfGeomBurnValues,
+                         CSLConstList papszOptions,
                          GDALProgressFunc pfnProgress,
                          void * pProgressArg );
+
+CPLErr CPL_DLL
+GDALRasterizeGeometriesInt64( GDALDatasetH hDS,
+                         int nBandCount, const int *panBandList,
+                         int nGeomCount, const OGRGeometryH *pahGeometries,
+                         GDALTransformerFunc pfnTransformer,
+                         void *pTransformArg,
+                         const int64_t *panGeomBurnValues,
+                         CSLConstList papszOptions,
+                         GDALProgressFunc pfnProgress,
+                         void * pProgressArg );
+
 CPLErr CPL_DLL
 GDALRasterizeLayers( GDALDatasetH hDS,
                      int nBandCount, int *panBandList,
@@ -612,20 +697,35 @@ int CPL_DLL GDALTriangulationFindFacetDirected( const GDALTriangulation* psDT,
 void CPL_DLL GDALTriangulationFree(GDALTriangulation* psDT);
 
 /*! @cond Doxygen_Suppress */
-/* GDAL internal use only */
-void GDALTriangulationTerminate(void);
+#ifndef CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid
+#define CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid CPL_WARN_DEPRECATED
+#endif
 /*! @endcond */
 
 GDALDatasetH CPL_DLL GDALOpenVerticalShiftGrid(
                                         const char* pszProj4Geoidgrids,
-                                        int* pbError );
+                                        int* pbError )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED_GDALOpenVerticalShiftGrid("GDALOpenVerticalShiftGrid() will be removed in GDAL 4.0")
+/*! @endcond */
+    ;
+
+/*! @cond Doxygen_Suppress */
+#ifndef CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid
+#define CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid CPL_WARN_DEPRECATED
+#endif
+/*! @endcond */
 
 GDALDatasetH CPL_DLL GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
                                          GDALDatasetH hGridDataset,
                                          int bInverse,
                                          double dfSrcUnitToMeter,
                                          double dfDstUnitToMeter,
-                                         const char* const* papszOptions );
+                                         const char* const* papszOptions )
+/*! @cond Doxygen_Suppress */
+    CPL_WARN_DEPRECATED_GDALApplyVerticalShiftGrid("GDALApplyVerticalShiftGrid() will be removed in GDAL 4.0")
+/*! @endcond */
+    ;
 
 CPL_C_END
 

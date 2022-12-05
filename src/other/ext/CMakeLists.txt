@@ -335,8 +335,11 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/png.cmake)
 # lives in ext.
 include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
 
-# PROJ4 - generic coordinate transformation - https://proj.org/
-include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
+# SQLITE3 - embeddable database
+include(${CMAKE_CURRENT_SOURCE_DIR}/sqlite3.cmake)
+
+# PROJ - generic coordinate transformation - https://proj.org
+include(${CMAKE_CURRENT_SOURCE_DIR}/proj.cmake)
 
 # GDAL -  translator library for raster and vector geospatial data formats
 # https://gdal.org
@@ -350,7 +353,11 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 # Open Asset Import Library - library for supporting I/O for a number of
 # Geometry file formats
 # https://github.com/assimp/assimp
-#include(${CMAKE_CURRENT_SOURCE_DIR}/assimp.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/assimp.cmake)
+
+# OpenMesh Library - library for representing and manipulating polygonal meshes
+# https://www.graphics.rwth-aachen.de/software/openmesh/
+include(${CMAKE_CURRENT_SOURCE_DIR}/openmesh.cmake)
 
 # TCL - scripting language.  For Tcl/Tk builds we want
 # static lib building on so we get the stub libraries.
@@ -398,11 +405,13 @@ if (COMMAND CMAKEFILES)
     CMake/FindLEMON.cmake
     CMake/FindNETPBM.cmake
     CMake/FindOPENNURBS.cmake
+    CMake/FindOpenMesh.cmake
     CMake/FindPERPLEX.cmake
     CMake/FindPOLY2TRI.cmake
-    CMake/FindPROJ4.cmake
+    CMake/FindPROJ.cmake
     CMake/FindRE2C.cmake
     CMake/FindREGEX.cmake
+    CMake/FindSQLite3.cmake
     CMake/FindSTEPCODE.cmake
     CMake/FindTCL.cmake
     CMake/FindUTAHRLE.cmake
@@ -429,14 +438,18 @@ if (COMMAND CMAKEFILES)
     linenoise.dist
     netpbm.cmake
     netpbm.dist
+    openmesh.cmake
+    openmesh.dist
     perplex.cmake
     perplex.dist
     png.cmake
     png.dist
-    proj-4.dist
-    proj4.cmake
+    proj.dist
+    proj.cmake
     regex.cmake
     regex.dist
+    sqlite3.cmake
+    sqlite3.dist
     stepcode.cmake
     stepcode.dist
     tcl.cmake

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,17 +57,17 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-static const int SRSDIM_LOC_GEOMETRY = 1 << 0;
-static const int SRSDIM_LOC_POSLIST = 1 << 1;
+constexpr int SRSDIM_LOC_GEOMETRY = 1 << 0;
+constexpr int SRSDIM_LOC_POSLIST = 1 << 1;
 
-typedef enum
+enum GMLSRSNameFormat
 {
     SRSNAME_SHORT,
     SRSNAME_OGC_URN,
     SRSNAME_OGC_URL
-} GMLSRSNameFormat;
+};
 
 /************************************************************************/
 /*                        MakeGMLCoordinate()                           */
@@ -120,7 +120,7 @@ static void AppendString( char **ppszText, size_t *pnLength,
 /*                        AppendCoordinateList()                        */
 /************************************************************************/
 
-static void AppendCoordinateList( OGRLineString *poLine,
+static void AppendCoordinateList( const OGRLineString *poLine,
                                   char **ppszText, size_t *pnLength,
                                   size_t *pnMaxLength )
 
@@ -160,7 +160,7 @@ static void AppendCoordinateList( OGRLineString *poLine,
 /*                       OGR2GMLGeometryAppend()                        */
 /************************************************************************/
 
-static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
+static bool OGR2GMLGeometryAppend( const OGRGeometry *poGeometry,
                                    char **ppszText, size_t *pnLength,
                                    size_t *pnMaxLength,
                                    bool bIsSubGeometry,
@@ -177,26 +177,25 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
     szAttributes[0] = 0;
 
-    const OGRSpatialReference* poSRS = NULL;
-    poSRS = poGeometry->getSpatialReference();
+    const OGRSpatialReference* poSRS = poGeometry->getSpatialReference();
 
-    if( pszNamespaceDecl != NULL )
+    if( pszNamespaceDecl != nullptr )
     {
         snprintf( szAttributes + nAttrsLength,
                   sizeof(szAttributes) - nAttrsLength,
                   " xmlns:gml=\"%s\"",
                   pszNamespaceDecl );
         nAttrsLength += strlen(szAttributes + nAttrsLength);
-        pszNamespaceDecl = NULL;
+        pszNamespaceDecl = nullptr;
     }
 
-    if( NULL != poSRS && !bIsSubGeometry )
+    if( nullptr != poSRS && !bIsSubGeometry )
     {
         const char* pszTarget = poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
         const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
         const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
-        if( NULL != pszAuthName && strlen(pszAuthName) < 10 &&
-            NULL != pszAuthCode && strlen(pszAuthCode) < 10 )
+        if( nullptr != pszAuthName && strlen(pszAuthName) < 10 &&
+            nullptr != pszAuthCode && strlen(pszAuthCode) < 10 )
         {
             snprintf( szAttributes + nAttrsLength,
                         sizeof(szAttributes) - nAttrsLength,
@@ -215,12 +214,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     if( eType == wkbPoint )
     {
-        OGRPoint *poPoint = dynamic_cast<OGRPoint *>(poGeometry);
-        if( poPoint == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRPoint.");
-        }
+        const auto poPoint = poGeometry->toPoint();
 
         char szCoordinate[256] = {};
         MakeGMLCoordinate( szCoordinate,
@@ -241,12 +235,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eType == wkbPoint25D )
     {
-        OGRPoint *poPoint = dynamic_cast<OGRPoint *>(poGeometry);
-        if( poPoint == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRPoint.");
-        }
+        const auto poPoint = poGeometry->toPoint();
 
         char szCoordinate[256] = {};
         MakeGMLCoordinate( szCoordinate,
@@ -297,13 +286,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         // Free tag buffer.
         CPLFree( pszLineTagName );
 
-        OGRLineString *poLineString = dynamic_cast<OGRLineString *>(poGeometry);
-        if( poLineString == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRLineString.");
-        }
-
+        const auto poLineString = poGeometry->toLineString();
         AppendCoordinateList( poLineString, ppszText, pnLength, pnMaxLength );
 
         if( bRing )
@@ -319,12 +302,7 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbPolygon )
     {
-        OGRPolygon *poPolygon = dynamic_cast<OGRPolygon *>(poGeometry);
-        if( poPolygon == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRPolygon.");
-        }
+        const auto poPolygon = poGeometry->toPolygon();
 
         // Buffer for polygon tag name + srsName attribute if set.
         const size_t nPolyTagLength = 13;
@@ -343,17 +321,15 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
         CPLFree( pszPolyTagName );
 
         // Don't add srsName to polygon rings.
-        if( poPolygon->getExteriorRing() != NULL )
+        if( poPolygon->getExteriorRing() != nullptr )
         {
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:outerBoundaryIs>" );
 
-            if( !OGR2GMLGeometryAppend( poPolygon->getExteriorRing(),
+            CPL_IGNORE_RET_VAL(
+                OGR2GMLGeometryAppend( poPolygon->getExteriorRing(),
                                         ppszText, pnLength, pnMaxLength,
-                                        true, NULL ) )
-            {
-                return false;
-            }
+                                        true, nullptr ) );
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:outerBoundaryIs>" );
@@ -361,15 +337,14 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
         for( int iRing = 0; iRing < poPolygon->getNumInteriorRings(); iRing++ )
         {
-            OGRLinearRing *poRing = poPolygon->getInteriorRing(iRing);
+            const OGRLinearRing *poRing = poPolygon->getInteriorRing(iRing);
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:innerBoundaryIs>" );
 
-            if( !OGR2GMLGeometryAppend( poRing, ppszText, pnLength,
-                                        pnMaxLength, true, NULL ) )
-                return false;
-
+            CPL_IGNORE_RET_VAL(
+                OGR2GMLGeometryAppend( poRing, ppszText, pnLength,
+                                        pnMaxLength, true, nullptr ) );
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:innerBoundaryIs>" );
         }
@@ -386,18 +361,12 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
              || eFType == wkbMultiPoint
              || eFType == wkbGeometryCollection )
     {
-        OGRGeometryCollection *poGC =
-            dynamic_cast<OGRGeometryCollection *>(poGeometry);
-        if( poGC == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRGeometryCollection.");
-        }
-        const char *pszElemClose = NULL;
-        const char *pszMemberElem = NULL;
+        const auto poGC = poGeometry->toGeometryCollection();
+        const char *pszElemClose = nullptr;
+        const char *pszMemberElem = nullptr;
 
         // Buffer for opening tag + srsName attribute.
-        char* pszElemOpen = NULL;
+        char* pszElemOpen = nullptr;
 
         if( eFType == wkbMultiPolygon )
         {
@@ -442,15 +411,16 @@ static bool OGR2GMLGeometryAppend( OGRGeometry *poGeometry,
 
         for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++)
         {
-            OGRGeometry *poMember = poGC->getGeometryRef( iMember );
+            const auto poMember = poGC->getGeometryRef( iMember );
 
             AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
             AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
 
             if( !OGR2GMLGeometryAppend( poMember,
                                         ppszText, pnLength, pnMaxLength,
-                                        true, NULL ) )
+                                        true, nullptr ) )
             {
+                CPLFree(pszElemOpen);
                 return false;
             }
 
@@ -484,18 +454,16 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
 {
     OGREnvelope sEnvelope;
 
-    memset( &sEnvelope, 0, sizeof(sEnvelope) );
     reinterpret_cast<OGRGeometry *>(hGeometry)->getEnvelope( &sEnvelope );
 
-    if( sEnvelope.MinX == 0 && sEnvelope.MaxX == 0 &&
-        sEnvelope.MinY == 0 && sEnvelope.MaxY == 0 )
+    if( !sEnvelope.IsInit() )
     {
         // TODO: There is apparently a special way of representing a null box
         // geometry. Should use it here eventually.
-        return NULL;
+        return nullptr;
     }
 
-    CPLXMLNode *psBox = CPLCreateXMLNode( NULL, CXT_Element, "gml:Box" );
+    CPLXMLNode *psBox = CPLCreateXMLNode( nullptr, CXT_Element, "gml:Box" );
 
 /* -------------------------------------------------------------------- */
 /*      Add minxy coordinate.                                           */
@@ -508,11 +476,11 @@ CPLXMLNode *OGR_G_ExportEnvelopeToGMLTree( OGRGeometryH hGeometry )
     char *pszY = strstr(szCoordinate, ",");
     // There must be more after the comma or we have an internal consistency
     // bug in MakeGMLCoordinate.
-    if( pszY == NULL || strlen(pszY) < 2)
+    if( pszY == nullptr || strlen(pszY) < 2)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
                  "MakeGMLCoordinate failed." );
-        return NULL;
+        return nullptr;
     }
     *pszY = '\0';
     pszY++;
@@ -622,23 +590,23 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
     char szAttributes[256] = {};
     size_t nAttrsLength = 0;
 
-    if( pszNamespaceDecl != NULL )
+    if( pszNamespaceDecl != nullptr )
     {
         snprintf( szAttributes + nAttrsLength,
                   sizeof(szAttributes) - nAttrsLength,
                   " xmlns:gml=\"%s\"",
                   pszNamespaceDecl );
-        pszNamespaceDecl = NULL;
+        pszNamespaceDecl = nullptr;
         nAttrsLength += strlen(szAttributes + nAttrsLength);
     }
 
-    if( NULL != poSRS )
+    if( nullptr != poSRS )
     {
         const char* pszTarget = poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
         const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
         const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
-        if( NULL != pszAuthName && strlen(pszAuthName) < 10 &&
-            NULL != pszAuthCode && strlen(pszAuthCode) < 10 )
+        if( nullptr != pszAuthName && strlen(pszAuthName) < 10 &&
+            nullptr != pszAuthCode && strlen(pszAuthCode) < 10 )
         {
             if( !bIsSubGeometry )
             {
@@ -680,7 +648,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         nSRSDimensionLocFlags &= ~SRSDIM_LOC_GEOMETRY;
     }
 
-    if( pszGMLId != NULL &&
+    if( pszGMLId != nullptr &&
         nAttrsLength + 9 + strlen(pszGMLId) + 1 < sizeof(szAttributes) )
     {
         snprintf( szAttributes + nAttrsLength,
@@ -698,12 +666,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     if( eType == wkbPoint )
     {
-        const OGRPoint *poPoint = dynamic_cast<const OGRPoint *>(poGeometry);
-        if( poPoint == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRPoint.");
-        }
+        const auto poPoint = poGeometry->toPoint();
 
         char szCoordinate[256] = {};
         if( bCoordSwap )
@@ -727,13 +690,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eType == wkbPoint25D )
     {
-        const OGRPoint *poPoint = dynamic_cast<const OGRPoint *>(poGeometry);
-        if( poPoint == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRPoint.");
-            return false;
-        }
+        const auto poPoint = poGeometry->toPoint();
 
         char szCoordinate[256] = {};
         if( bCoordSwap )
@@ -771,13 +728,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                             szAttributes );
             AppendString( ppszText, pnLength, pnMaxLength,
                             "><gml:segments><gml:LineStringSegment>" );
-            const OGRLineString *poLineString =
-                dynamic_cast<const OGRLineString *>(poGeometry);
-            if( poLineString == NULL )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRLineString.");
-            }
+            const auto poLineString = poGeometry->toLineString();
             AppendGML3CoordinateList(
                 poLineString, bCoordSwap,
                 ppszText, pnLength, pnMaxLength, nSRSDimensionLocFlags );
@@ -811,14 +762,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
             // Free tag buffer.
             CPLFree( pszLineTagName );
 
-            const OGRLineString *poLineString =
-                dynamic_cast<const OGRLineString *>(poGeometry);
-            if( poLineString == NULL )
-            {
-                CPLError(CE_Fatal, CPLE_AppDefined,
-                         "dynamic_cast failed.  Expected OGRLineString.");
-                return false;
-            }
+            const auto poLineString = poGeometry->toLineString();
 
             AppendGML3CoordinateList( poLineString, bCoordSwap,
                                       ppszText, pnLength, pnMaxLength,
@@ -842,14 +786,8 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                         "<gml:Curve" );
         AppendString( ppszText, pnLength, pnMaxLength,
                         szAttributes );
-        const OGRSimpleCurve* poSC =
-            dynamic_cast<const OGRSimpleCurve *>(poGeometry);
-        if( poSC == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRSimpleCurve.");
-            return false;
-        }
+        const auto poSC = poGeometry->toCircularString();
+
         // SQL MM has a unique type for arc and circle, GML does not.
         if( poSC->getNumPoints() == 3 &&
             poSC->getX(0) == poSC->getX(2) &&
@@ -903,26 +841,20 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength, szAttributes );
         AppendString( ppszText, pnLength, pnMaxLength, ">");
 
-        const OGRCompoundCurve* poCC =
-            dynamic_cast<const OGRCompoundCurve *>(poGeometry);
-        if( poCC == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRCompoundCurve.");
-            return false;
-        }
+        const auto poCC = poGeometry->toCompoundCurve();
         for( int i = 0; i < poCC->getNumCurves(); i++ )
         {
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:curveMember>" );
-            if( !OGR2GML3GeometryAppend( poCC->getCurve(i), poSRS,
+            CPL_IGNORE_RET_VAL(
+                OGR2GML3GeometryAppend( poCC->getCurve(i), poSRS,
                                          ppszText, pnLength,
                                          pnMaxLength, true, eSRSNameFormat,
                                          bCoordSwap,
                                          bLineStringAsCurve,
-                                         NULL, nSRSDimensionLocFlags,
-                                         false, NULL, NULL) )
-                return false;
+                                         nullptr, nSRSDimensionLocFlags,
+                                         false, nullptr, nullptr) );
+
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:curveMember>" );
         }
@@ -935,14 +867,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbPolygon || eFType == wkbCurvePolygon )
     {
-        const OGRCurvePolygon *poCP =
-            dynamic_cast<const OGRCurvePolygon *>(poGeometry);
-        if( poCP == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRCurvePolygon.");
-            return false;
-        }
+        const auto poCP = poGeometry->toCurvePolygon();
 
         // Buffer for polygon tag name + srsName attribute if set.
         const char* pszElemName = pszOverriddenElementName ?
@@ -966,20 +891,18 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 
         // Don't add srsName to polygon rings.
 
-        if( poCP->getExteriorRingCurve() != NULL )
+        if( poCP->getExteriorRingCurve() != nullptr )
         {
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:exterior>" );
 
-            if( !OGR2GML3GeometryAppend( poCP->getExteriorRingCurve(), poSRS,
+            CPL_IGNORE_RET_VAL(
+                OGR2GML3GeometryAppend( poCP->getExteriorRingCurve(), poSRS,
                                          ppszText, pnLength, pnMaxLength,
                                          true, eSRSNameFormat, bCoordSwap,
                                          bLineStringAsCurve,
-                                         NULL, nSRSDimensionLocFlags,
-                                         true, NULL, NULL) )
-            {
-                return false;
-            }
+                                         nullptr, nSRSDimensionLocFlags,
+                                         true, nullptr, nullptr) );
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:exterior>" );
@@ -992,13 +915,13 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:interior>" );
 
-            if( !OGR2GML3GeometryAppend( poRing, poSRS, ppszText, pnLength,
+            CPL_IGNORE_RET_VAL(
+                OGR2GML3GeometryAppend( poRing, poSRS, ppszText, pnLength,
                                          pnMaxLength, true, eSRSNameFormat,
                                          bCoordSwap,
                                          bLineStringAsCurve,
-                                         NULL, nSRSDimensionLocFlags,
-                                         true, NULL, NULL) )
-                return false;
+                                         nullptr, nSRSDimensionLocFlags,
+                                         true, nullptr, nullptr) );
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:interior>" );
@@ -1014,32 +937,23 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
 /* -------------------------------------------------------------------- */
     else if( eFType == wkbTriangle )
     {
-        const OGRTriangle *poTri =
-                                dynamic_cast<const OGRTriangle *>(poGeometry);
-        if( poTri == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRTriangle.");
-            return false;
-        }
+        const auto poTri = poGeometry->toPolygon();
 
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:Triangle>" );
 
-        if( poTri->getExteriorRingCurve() != NULL )
+        if( poTri->getExteriorRingCurve() != nullptr )
         {
             AppendString( ppszText, pnLength, pnMaxLength,
                           "<gml:exterior>" );
 
-            if( !OGR2GML3GeometryAppend( poTri->getExteriorRingCurve(), poSRS,
+            CPL_IGNORE_RET_VAL(
+                OGR2GML3GeometryAppend( poTri->getExteriorRingCurve(), poSRS,
                                          ppszText, pnLength,
                                          pnMaxLength, true, eSRSNameFormat,
                                          bCoordSwap,
                                          bLineStringAsCurve,
-                                         NULL, nSRSDimensionLocFlags,
-                                         true, NULL, NULL) )
-            {
-                return false;
-            }
+                                         nullptr, nSRSDimensionLocFlags,
+                                         true, nullptr, nullptr) );
 
             AppendString( ppszText, pnLength, pnMaxLength,
                           "</gml:exterior>" );
@@ -1059,19 +973,12 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
              || eFType == wkbMultiPoint
              || eFType == wkbGeometryCollection )
     {
-        const OGRGeometryCollection *poGC =
-            dynamic_cast<const OGRGeometryCollection *>(poGeometry);
-        if( poGC == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRGeometryCollection.");
-            return false;
-        }
-        const char *pszElemClose = NULL;
-        const char *pszMemberElem = NULL;
+        const auto poGC = poGeometry->toGeometryCollection();
+        const char *pszElemClose = nullptr;
+        const char *pszMemberElem = nullptr;
 
         // Buffer for opening tag + srsName attribute.
-        char* pszElemOpen = NULL;
+        char* pszElemOpen = nullptr;
 
         if( eFType == wkbMultiPolygon || eFType == wkbMultiSurface )
         {
@@ -1113,6 +1020,9 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
         AppendString( ppszText, pnLength, pnMaxLength, pszElemOpen );
 
+        // Free tag buffer.
+        CPLFree( pszElemOpen );
+
         for( int iMember = 0; iMember < poGC->getNumGeometries(); iMember++ )
         {
             const OGRGeometry *poMember = poGC->getGeometryRef( iMember );
@@ -1120,8 +1030,8 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
             AppendString( ppszText, pnLength, pnMaxLength, "<gml:" );
             AppendString( ppszText, pnLength, pnMaxLength, pszMemberElem );
 
-            char* pszGMLIdSub = NULL;
-            if( pszGMLId != NULL )
+            char* pszGMLIdSub = nullptr;
+            if( pszGMLId != nullptr )
                 pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
 
             if( !OGR2GML3GeometryAppend( poMember, poSRS,
@@ -1129,7 +1039,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                          true, eSRSNameFormat, bCoordSwap,
                                          bLineStringAsCurve,
                                          pszGMLIdSub, nSRSDimensionLocFlags,
-                                         false, NULL, NULL ) )
+                                         false, nullptr, nullptr ) )
             {
                 CPLFree(pszGMLIdSub);
                 return false;
@@ -1144,8 +1054,6 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         AppendString( ppszText, pnLength, pnMaxLength, "</gml:" );
         AppendString( ppszText, pnLength, pnMaxLength, pszElemClose );
 
-        // Free tag buffer.
-        CPLFree( pszElemOpen );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1155,14 +1063,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
     {
         // The patches enclosed in a single <gml:polygonPatches> tag need to be co-planar.
         // TODO - enforce the condition within this implementation
-        const OGRPolyhedralSurface *poPS =
-            dynamic_cast<const OGRPolyhedralSurface *>(poGeometry);
-        if( poPS == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRPolyhedralSurface.");
-            return false;
-        }
+        const auto poPS = poGeometry->toPolyhedralSurface();
 
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:PolyhedralSurface" );
         AppendString( ppszText, pnLength, pnMaxLength, szAttributes );
@@ -1171,8 +1072,8 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         for( int iMember = 0; iMember < poPS->getNumGeometries(); iMember++)
         {
             const OGRGeometry *poMember = poPS->getGeometryRef( iMember );
-            char* pszGMLIdSub = NULL;
-            if (pszGMLId != NULL)
+            char* pszGMLIdSub = nullptr;
+            if (pszGMLId != nullptr)
                 pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
 
             if( !OGR2GML3GeometryAppend( poMember, poSRS,
@@ -1180,8 +1081,8 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
                                          pnMaxLength, true, eSRSNameFormat,
                                          bCoordSwap,
                                          bLineStringAsCurve,
-                                         NULL, nSRSDimensionLocFlags,
-                                         false, NULL, "PolygonPatch" ) )
+                                         nullptr, nSRSDimensionLocFlags,
+                                         false, nullptr, "PolygonPatch" ) )
             {
                 CPLFree(pszGMLIdSub);
                 return false;
@@ -1216,14 +1117,7 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         // </gml:TriangulatedSurface>
 
         // <gml:trianglePatches> is deprecated, so write feature is not enabled for <gml:trianglePatches>
-        const OGRTriangulatedSurface *poTIN =
-            dynamic_cast<const OGRTriangulatedSurface *>(poGeometry);
-        if( poTIN == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected OGRTriangulatedSurface.");
-            return false;
-        }
+        const auto poTIN = poGeometry->toPolyhedralSurface();
 
         AppendString( ppszText, pnLength, pnMaxLength, "<gml:TriangulatedSurface" );
         AppendString( ppszText, pnLength, pnMaxLength, szAttributes );
@@ -1233,21 +1127,18 @@ static bool OGR2GML3GeometryAppend( const OGRGeometry *poGeometry,
         {
             const OGRGeometry *poMember = poTIN->getGeometryRef( iMember );
 
-            char* pszGMLIdSub = NULL;
-            if (pszGMLId != NULL)
+            char* pszGMLIdSub = nullptr;
+            if (pszGMLId != nullptr)
                 pszGMLIdSub = CPLStrdup(CPLSPrintf("%s.%d", pszGMLId, iMember));
 
-            if( !OGR2GML3GeometryAppend( poMember, poSRS,
+            CPL_IGNORE_RET_VAL(
+                OGR2GML3GeometryAppend( poMember, poSRS,
                                          ppszText, pnLength,
                                          pnMaxLength, true, eSRSNameFormat,
                                          bCoordSwap,
                                          bLineStringAsCurve,
-                                         NULL, nSRSDimensionLocFlags,
-                                         false, NULL, NULL) )
-            {
-                CPLFree(pszGMLIdSub);
-                return false;
-            }
+                                         nullptr, nSRSDimensionLocFlags,
+                                         false, nullptr, nullptr) );
 
             CPLFree(pszGMLIdSub);
         }
@@ -1276,8 +1167,8 @@ CPLXMLNode *OGR_G_ExportToGMLTree( OGRGeometryH hGeometry )
 
 {
     char *pszText = OGR_G_ExportToGML( hGeometry );
-    if( pszText == NULL )
-        return NULL;
+    if( pszText == nullptr )
+        return nullptr;
 
     CPLXMLNode *psTree = CPLParseXMLString( pszText );
 
@@ -1306,7 +1197,7 @@ CPLXMLNode *OGR_G_ExportToGMLTree( OGRGeometryH hGeometry )
 char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
 
 {
-    return OGR_G_ExportToGMLEx(hGeometry, NULL);
+    return OGR_G_ExportToGMLEx(hGeometry, nullptr);
 }
 
 /************************************************************************/
@@ -1331,23 +1222,20 @@ char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
  *      SRSNAME_FORMAT in GDAL &gt;=2.2). Defaults to YES.
  *      If YES, SRS with EPSG authority will be written with the
  *      "urn:ogc:def:crs:EPSG::" prefix.
- *      In the case the SRS is a SRS without explicit AXIS order, but that the
- *      same SRS authority code
- *      imported with ImportFromEPSGA() should be treated as lat/long or
+ *      In the case the SRS should be treated as lat/long or
  *      northing/easting, then the function will take care of coordinate order
- *      swapping.
+ *      swapping if the data axis to CRS axis mapping indicates it.
  *      If set to NO, SRS with EPSG authority will be written with the "EPSG:"
  *      prefix, even if they are in lat/long order.
  * <li> SRSNAME_FORMAT=SHORT/OGC_URN/OGC_URL (Only valid for FORMAT=GML3, added
  *      in GDAL 2.2). Defaults to OGC_URN.  If SHORT, then srsName will be in
- *      the form AUTHORITY_NAME:AUTHORITY_CODE If OGC_URN, then srsName will be
- *      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE If OGC_URL,
+ *      the form AUTHORITY_NAME:AUTHORITY_CODE. If OGC_URN, then srsName will be
+ *      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE. If OGC_URL,
  *      then srsName will be in the form
- *      http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE For
- *      OGC_URN and OGC_URL, in the case the SRS is a SRS without explicit AXIS
- *      order, but that the same SRS authority code imported with
- *      ImportFromEPSGA() should be treated as lat/long or northing/easting,
- *      then the function will take care of coordinate order swapping.
+ *      http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE. For
+ *      OGC_URN and OGC_URL, in the case the SRS should be treated as lat/long or
+ *      northing/easting, then the function will take care of coordinate order
+ *      swapping if the data axis to CRS axis mapping indicates it.
  * <li> GMLID=astring. If specified, a gml:id attribute will be written in the
  *      top-level geometry element with the provided value.
  *      Required for GML 3.2 compatibility.
@@ -1378,7 +1266,7 @@ char *OGR_G_ExportToGML( OGRGeometryH hGeometry )
 char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
 
 {
-    if( hGeometry == NULL )
+    if( hGeometry == nullptr )
         return CPLStrdup( "" );
 
     // Do not use hGeometry after here.
@@ -1430,7 +1318,7 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
             eSRSNameFormat = SRSNAME_SHORT;
 
         const char* pszGMLId = CSLFetchNameValue(papszOptions, "GMLID");
-        if( pszGMLId == NULL && EQUAL(pszFormat, "GML32") )
+        if( pszGMLId == nullptr && EQUAL(pszFormat, "GML32") )
             CPLError(CE_Warning, CPLE_AppDefined,
                      "FORMAT=GML32 specified but not GMLID set");
         const char* pszSRSDimensionLoc =
@@ -1439,7 +1327,7 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
         char** papszSRSDimensionLoc =
             CSLTokenizeString2(pszSRSDimensionLoc, ",", 0);
         int nSRSDimensionLocFlags = 0;
-        for( int i = 0; papszSRSDimensionLoc[i] != NULL; i++ )
+        for( int i = 0; papszSRSDimensionLoc[i] != nullptr; i++ )
         {
             if( EQUAL(papszSRSDimensionLoc[i], "POSLIST") )
                 nSRSDimensionLocFlags |= SRSDIM_LOC_POSLIST;
@@ -1450,7 +1338,7 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
                          papszSRSDimensionLoc[i]);
         }
         CSLDestroy(papszSRSDimensionLoc);
-        const char* pszNamespaceDecl = NULL;
+        const char* pszNamespaceDecl = nullptr;
         if( bNamespaceDecl && EQUAL(pszFormat, "GML32") )
             pszNamespaceDecl = "http://www.opengis.net/gml/3.2";
         else if( bNamespaceDecl )
@@ -1467,46 +1355,32 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
         {
             const OGRSpatialReference* poSRS =
                 poGeometry->getSpatialReference();
-            if( poSRS != NULL )
+            if( poSRS != nullptr && eSRSNameFormat != SRSNAME_SHORT )
             {
-                const char* pszTarget =
-                    poSRS->IsProjected() ? "PROJCS" : "GEOGCS";
-                const char* pszAuthName = poSRS->GetAuthorityName( pszTarget );
-                const char* pszAuthCode = poSRS->GetAuthorityCode( pszTarget );
-                if( NULL != pszAuthName && NULL != pszAuthCode &&
-                    EQUAL( pszAuthName, "EPSG" ) &&
-                    eSRSNameFormat != SRSNAME_SHORT &&
-                    !(((OGRSpatialReference*)poSRS)->EPSGTreatsAsLatLong() ||
-                    ((OGRSpatialReference*)poSRS)->
-                          EPSGTreatsAsNorthingEasting()))
+                const auto& map = poSRS->GetDataAxisToSRSAxisMapping();
+                if( map.size() >= 2 && map[0] == 2 && map[1] == 1 )
                 {
-                    OGRSpatialReference oSRS;
-                    if (oSRS.importFromEPSGA(atoi(pszAuthCode)) == OGRERR_NONE)
-                    {
-                        if (oSRS.EPSGTreatsAsLatLong() ||
-                            oSRS.EPSGTreatsAsNorthingEasting())
-                            bCoordSwap = true;
-                    }
+                    bCoordSwap = true;
                 }
             }
         }
 
-        if( !OGR2GML3GeometryAppend( poGeometry, NULL, &pszText,
+        if( !OGR2GML3GeometryAppend( poGeometry, nullptr, &pszText,
                                      &nLength, &nMaxLength, false,
                                      eSRSNameFormat,
                                      bCoordSwap,
                                      bLineStringAsCurve, pszGMLId,
                                      nSRSDimensionLocFlags, false,
-                                     pszNamespaceDecl, NULL ))
+                                     pszNamespaceDecl, nullptr ))
         {
             CPLFree( pszText );
-            return NULL;
+            return nullptr;
         }
 
         return pszText;
     }
 
-    const char* pszNamespaceDecl = NULL;
+    const char* pszNamespaceDecl = nullptr;
     if( bNamespaceDecl )
         pszNamespaceDecl = "http://www.opengis.net/gml";
     if( !OGR2GMLGeometryAppend(
@@ -1515,7 +1389,7 @@ char *OGR_G_ExportToGMLEx( OGRGeometryH hGeometry, char** papszOptions )
             pszNamespaceDecl) )
     {
         CPLFree( pszText );
-        return NULL;
+        return nullptr;
     }
 
     return pszText;

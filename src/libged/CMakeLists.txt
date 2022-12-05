@@ -79,7 +79,6 @@ set(GED_INCLUDE_DIRS
 set(GED_LOCAL_INCLUDE_DIRS
   ${PNG_INCLUDE_DIRS}
   ${REGEX_INCLUDE_DIRS}
-  ${LIBGED_CMD_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbg
   ${CMAKE_CURRENT_BINARY_DIR}
   )
@@ -90,16 +89,7 @@ if(BRLCAD_ENABLE_BULLET)
   set(CADBULLET_LIBRARY cadbullet)
 endif(BRLCAD_ENABLE_BULLET)
 
-if (BRLCAD_ENABLE_OPENVDB)
-  include_directories(${OpenVDB_INCLUDE_DIRS})
-  include_directories(${Tbb_INCLUDE_DIRS})
-  include_directories(${IlmBase_INCLUDE_DIRS})
-  set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} "${OpenVDB_LIBRARIES};${IlmBase_LIBRARIES};${Tbb_LIBRARIES}")
-  # disable warnings due to unquellable issues in Boost and IlmBase/half headers
-  set_property(SOURCE bot_remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
-endif (BRLCAD_ENABLE_OPENVDB)
-
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libbv;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libbv;libbg;libbn;libbu;libicv;libanalyze;${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)

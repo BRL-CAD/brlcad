@@ -3,10 +3,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Defines OGRLMutexedLayer class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,6 +44,8 @@
  */
 class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRMutexedLayer)
+
   protected:
         CPLMutex          *m_hMutex;
 
@@ -117,6 +119,7 @@ class CPL_DLL OGRMutexedLayer : public OGRLayerDecorator
     virtual CPLErr      SetMetadataItem( const char * pszName,
                                          const char * pszValue,
                                          const char * pszDomain = "" ) override;
+    virtual OGRErr      Rename(const char* pszNewName) override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */

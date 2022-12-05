@@ -1,2 +1,3 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(ogr_frmt_wasp OBJECT ogrwaspdriver.cpp ogrwaspdatasource.cpp ogrwasplayer.cpp)
+add_gdal_driver(TARGET ogr_WAsP SOURCES ogrwasp.h ogrwaspdatasource.cpp ogrwaspdriver.cpp ogrwasplayer.cpp
+                                        PLUGIN_CAPABLE NO_DEPS)
+gdal_standard_includes(ogr_WAsP)

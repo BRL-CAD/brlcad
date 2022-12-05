@@ -66,13 +66,13 @@ public:
 
   /*
   Description:
-    Construct a plane from three non-colinear points.
+    Construct a plane from three non-collinear points.
   Parameters:
     origin - [in] point on the plane
     x_point - [in] second point in the plane.
         The xaxis will be parallel to x_point-origin.
     y_point - [in] third point on the plane that is
-        not colinear with the first two points.
+        not collinear with the first two points.
         yaxis*(y_point-origin) will be > 0.
   */
   ON_Plane(
@@ -91,6 +91,10 @@ public:
   */
   ON_Plane(
     const double equation[4]
+    );
+
+  ON_Plane(
+    const ON_PlaneEquation& plane_equation
     );
 
   ~ON_Plane();
@@ -137,13 +141,13 @@ public:
 
   /*
   Description:
-    Construct a plane from three non-colinear points.
+    Construct a plane from three non-collinear points.
   Parameters:
     origin - [in] point on the plane
     point_on_x - [in] second point in the plane.
         The xaxis will be parallel to x_point-origin.
     point_on - [in] third point on the plane that is
-        not colinear with the first two points.
+        not collinear with the first two points.
         yaxis*(y_point-origin) will be > 0.
   Returns:
     true if valid plane is created.
@@ -167,8 +171,72 @@ public:
   Returns:
     true if valid plane is created.
   */
-  bool CreateFromEquation( 
+  bool CreateFromEquation(
     const double equation[4]
+    );
+
+  bool CreateFromEquation(
+    const class ON_PlaneEquation& plane_equation
+    );
+
+  /*
+  Returns:
+    ON_Plane::UnsetPlane if input is not valid.
+  */
+  static ON_Plane FromPointList(
+    size_t point_list_count,
+    const ON_3dPoint* point_list
+    );
+
+  /*
+  Returns:
+    ON_Plane::UnsetPlane if input is not valid.
+  */
+  static ON_Plane FromPointList(
+    const ON_SimpleArray< ON_3dPoint >& point_list
+    );
+
+
+  /*
+  Returns:
+    ON_Plane::UnsetPlane if input is not valid.
+  */
+  static ON_Plane FromPointList(
+    size_t point_list_count,
+    const ON_3fPoint* point_list
+    );
+
+  /*
+  Returns:
+    ON_Plane::UnsetPlane if input is not valid.
+  */
+  static ON_Plane FromPointList(
+    const ON_SimpleArray< ON_3fPoint >& point_list
+    );
+
+  /*
+  Returns:
+    ON_Plane::UnsetPlane if input is not valid.
+  */
+  static ON_Plane FromPointList(
+    const class ON_3dPointListRef& point_list
+    );
+
+  /*
+  Returns:
+    ON_Plane::UnsetPlane if input is not valid.
+  */
+  static ON_Plane FromPointList(
+    size_t point_index_count,
+    const unsigned int* point_index_list,
+    const class ON_3dPointListRef& point_list
+    );
+
+  static ON_Plane FromPointList(
+    size_t point_index_count,
+    size_t point_index_stride,
+    const unsigned int* point_index_list,
+    const class ON_3dPointListRef& point_list
     );
 
   /*
@@ -343,6 +411,7 @@ public:
         const ON_Xform& xform
         );
 
+
   /*
   Description:
     Transform a plane by swapping coordinates.
@@ -443,9 +512,21 @@ public:
   */
   bool Flip();
 
-// world plane coordinate system ON_Plane(ON_origin, ON_xaxis, ON_yaxis); 
+  // world coordinate system ON_Plane(ON_3dPoint::Origin, ON_3dVector::XAxis, ON_3dVector::YAxis); 
+  const static ON_Plane World_xy;
+
+  // world coordinate system ON_Plane(ON_3dPoint::Origin, ON_3dVector::YAxis, ON_3dVector::ZAxis); 
+  const static ON_Plane World_yz;
+
+  // world coordinate system ON_Plane(ON_3dPoint::Origin, ON_3dVector::ZAxis, ON_3dVector::XAxis); 
+  const static ON_Plane World_zx;
+
+  // All values are ON_UNSET_VALUE.
 	const static
-	ON_Plane World_xy;	
+	ON_Plane UnsetPlane;
+
+  // All values are ON_DBL_QNAN.
+	const static ON_Plane NanPlane;
 
 public:
   // origin of plane
@@ -503,17 +584,9 @@ public:
 
 
 #if defined(ON_DLL_TEMPLATE)
-
-// This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
-// article ID Q168958 for details.
-#pragma warning( push )
-#pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Plane>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_ClippingPlane>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_ClippingPlaneInfo>;
-#pragma warning( pop )
-
 #endif
 
 extern ON_EXTERN_DECL const ON_Plane ON_xy_plane;
@@ -534,7 +607,7 @@ Parameters:
     every plane equation.
 Returns:
   Number of equations appended to hull[] array.
-  If 0, then the points are coincident or colinear.
+  If 0, then the points are coincident or collinear.
   If 2, then the points are coplanar and the returned
   planes are parallel.
   If >= 4, then the points are in a 3d convex hull.

@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam (warmerdam@pobox.com)
- * Copyright (c) 2007-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
  * Copyright (c) 2014, Kyle Shannon <kyle at pobox dot com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -66,7 +66,8 @@
 typedef enum
 {
     FORMAT_AAIG,
-    FORMAT_GRASSASCII
+    FORMAT_GRASSASCII,
+    FORMAT_ISG,
 } GridFormat;
 
 /************************************************************************/
@@ -77,7 +78,7 @@ typedef enum
 
 class AAIGRasterBand;
 
-class CPL_DLL AAIGDataset : public GDALPamDataset
+class AAIGDataset CPL_NON_FINAL: public GDALPamDataset
 {
     friend class AAIGRasterBand;
 
@@ -92,7 +93,7 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
     int         nOffsetInBuffer;
 
     char        Getc();
-    GUIntBig    Tell();
+    GUIntBig    Tell() const;
     int         Seek( GUIntBig nOffset );
 
   protected:
@@ -100,14 +101,15 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
     double      adfGeoTransform[6];
     bool        bNoDataSet;
     double      dfNoDataValue;
+    CPLString   osUnits{};
 
     virtual int ParseHeader(const char* pszHeader, const char* pszDataType);
 
   public:
-                AAIGDataset();
-       virtual ~AAIGDataset();
+    AAIGDataset();
+    ~AAIGDataset() override;
 
-    virtual char **GetFileList(void) override;
+    char **GetFileList(void) override;
 
     static GDALDataset *CommonOpen( GDALOpenInfo * poOpenInfo,
                                     GridFormat eFormat );
@@ -122,8 +124,11 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
                                     GDALProgressFunc pfnProgress,
                                     void * pProgressData );
 
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char *GetProjectionRef(void) override;
+    CPLErr GetGeoTransform( double * ) override;
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 };
 
 /************************************************************************/
@@ -132,13 +137,30 @@ class CPL_DLL AAIGDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GRASSASCIIDataset : public AAIGDataset
+class GRASSASCIIDataset final: public AAIGDataset
 {
-    virtual int ParseHeader(const char* pszHeader, const char* pszDataType) override;
+    int ParseHeader(const char* pszHeader, const char* pszDataType) override;
 
   public:
-                GRASSASCIIDataset() : AAIGDataset() {}
-       virtual ~GRASSASCIIDataset() {}
+    GRASSASCIIDataset() : AAIGDataset() {}
+    ~GRASSASCIIDataset() override {}
+
+    static GDALDataset *Open( GDALOpenInfo * );
+    static int          Identify( GDALOpenInfo * );
+};
+
+/************************************************************************/
+/* ==================================================================== */
+/*                           ISGDataset                                 */
+/* ==================================================================== */
+/************************************************************************/
+
+class ISGDataset final: public AAIGDataset
+{
+    int ParseHeader(const char* pszHeader, const char* pszDataType) override;
+
+  public:
+    ISGDataset() : AAIGDataset() {}
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int          Identify( GDALOpenInfo * );
@@ -150,20 +172,19 @@ class GRASSASCIIDataset : public AAIGDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class AAIGRasterBand : public GDALPamRasterBand
+class AAIGRasterBand final: public GDALPamRasterBand
 {
     friend class AAIGDataset;
 
     GUIntBig      *panLineOffset;
 
   public:
+    AAIGRasterBand( AAIGDataset *, int );
+    ~AAIGRasterBand() override;
 
-                   AAIGRasterBand( AAIGDataset *, int );
-    virtual       ~AAIGRasterBand();
-
-    virtual double GetNoDataValue( int * ) override;
-    virtual CPLErr SetNoDataValue( double ) override;
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    double GetNoDataValue( int * ) override;
+    CPLErr SetNoDataValue( double ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 #endif  // GDAL_FRMTS_AAIGRID_AAIGRIDDATASET_H_INCLUDED

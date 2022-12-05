@@ -1,30 +1,30 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
-set(tiger_srcs
-	ogrtigerdriver.cpp
-	ogrtigerdatasource.cpp
-	ogrtigerlayer.cpp
-	tigerfilebase.cpp
-	tigercompletechain.cpp
-	tigeraltname.cpp
-	tigerfeatureids.cpp
-	tigerzipcodes.cpp
-	tigerlandmarks.cpp
-	tigerarealandmarks.cpp
-	tigerkeyfeatures.cpp
-	tigerpolygon.cpp
-	tigerpolygoncorrections.cpp
-	tigerentitynames.cpp
-	tigerpolygoneconomic.cpp
-	tigeridhistory.cpp
-	tigerpolychainlink.cpp
-	tigerpip.cpp
-	tigerspatialmetadata.cpp
-	tigertlidrange.cpp
-	tigerzerocellid.cpp
-	tigeroverunder.cpp
-	tigerzipplus4.cpp
-	tigerpoint.cpp
-	)
-
-add_library(ogr_frmt_tiger OBJECT ${tiger_srcs})
+add_gdal_driver(
+  TARGET ogr_Tiger
+  SOURCES ogr_tiger.h
+          tigerarealandmarks.cpp
+          tigeridhistory.cpp
+          tigerpoint.cpp
+          tigerspatialmetadata.cpp
+          ogrtigerdatasource.cpp
+          tigercompletechain.cpp
+          tigerkeyfeatures.cpp
+          tigerpolychainlink.cpp
+          tigertlidrange.cpp
+          ogrtigerdriver.cpp
+          tigerentitynames.cpp
+          tigerlandmarks.cpp
+          tigerpolygon.cpp
+          tigerzerocellid.cpp
+          ogrtigerlayer.cpp
+          tigerfeatureids.cpp
+          tigeroverunder.cpp
+          tigerpolygoncorrections.cpp
+          tigerzipcodes.cpp
+          tigeraltname.cpp
+          tigerfilebase.cpp
+          tigerpip.cpp
+          tigerpolygoneconomic.cpp
+          tigerzipplus4.cpp
+          PLUGIN_CAPABLE
+          NO_DEPS)
+gdal_standard_includes(ogr_Tiger)

@@ -2166,10 +2166,17 @@ public:
      */
     uint8_t* CreateCopy() const;
 
+
 protected:
     size_t Read(size_t, void*);
     size_t Write(size_t, const void*);
     bool Flush();
+
+    ON__UINT64 Internal_CurrentPositionOverride() const;
+    bool Internal_SeekFromCurrentPositionOverride(int);
+    bool Internal_SeekToStartOverride();
+    size_t Internal_ReadOverride( size_t, void* );
+    size_t Internal_WriteOverride( size_t, const void* );
 
 private:
     size_t pos;
@@ -2178,13 +2185,13 @@ private:
 
 
 RT_MemoryArchive::RT_MemoryArchive()
-    : ON_BinaryArchive(ON::on_write3dm), pos(0), m_buffer()
+    : ON_BinaryArchive(ON::archive_mode::write3dm), pos(0), m_buffer()
 {
 }
 
 
 RT_MemoryArchive::RT_MemoryArchive(const void *memory, size_t len)
-    : ON_BinaryArchive(ON::on_read3dm), pos(0),
+    : ON_BinaryArchive(ON::archive_mode::read3dm), pos(0),
       m_buffer((char *)memory, (char *)memory + len)
 {
 }
@@ -2201,6 +2208,12 @@ RT_MemoryArchive::CurrentPosition() const
     return pos;
 }
 
+ON__UINT64
+RT_MemoryArchive::Internal_CurrentPositionOverride() const
+{
+    return pos;
+}
+
 
 bool
 RT_MemoryArchive::SeekFromCurrentPosition(int seek_to)
@@ -2211,6 +2224,18 @@ RT_MemoryArchive::SeekFromCurrentPosition(int seek_to)
     return true;
 }
 
+bool
+RT_MemoryArchive::Internal_SeekFromCurrentPositionOverride(int seek_to)
+{
+    return SeekFromCurrentPosition(seek_to);
+}
+
+bool
+RT_MemoryArchive::Internal_SeekToStartOverride()
+{
+    pos = 0;
+    return true;
+}
 
 bool
 RT_MemoryArchive::SeekFromStart(size_t seek_to)
@@ -2221,6 +2246,17 @@ RT_MemoryArchive::SeekFromStart(size_t seek_to)
     return true;
 }
 
+size_t
+RT_MemoryArchive::Internal_ReadOverride(size_t amount, void* buf)
+{
+    return Read(amount, buf);
+}
+
+size_t
+RT_MemoryArchive::Internal_WriteOverride(size_t amount, const void* buf)
+{
+    return Write(amount, buf);
+}
 
 bool
 RT_MemoryArchive::AtEnd() const
@@ -2277,6 +2313,7 @@ RT_MemoryArchive::Flush()
     return true;
 }
 
+#define ON_opennurbs4_id { 0x17b3ecda, 0x17ba, 0x4e45,{ 0x9e, 0x67, 0xa2, 0xb8, 0xd9, 0xbe, 0x52, 0xd } }
 
 static void
 brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
@@ -2284,32 +2321,36 @@ brep_dbi2on(const struct rt_db_internal *intern, ONX_Model& model)
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
+#if 0
     ON_Layer default_layer;
     default_layer.Default();
     default_layer.SetLayerIndex(0);
     default_layer.SetLayerName("Default");
     model.m_layer_table.Reserve(1);
     model.m_layer_table.Append(default_layer);
+#endif
+    model.AddDefaultLayer(L"Default", ON_Color::UnsetColor);
 
+#if 0
     ON_DimStyle default_style;
     default_style.SetDefaults();
     model.m_dimstyle_table.Reserve(1);
     model.m_dimstyle_table.Append(default_style);
 
     model.m_object_table.SetCapacity(1);
+#endif
 
-    ONX_Model_Object& mo = model.m_object_table.AppendNew();
-    mo.m_object = bi->brep;
-
-    /* XXX what to do about the version */
-    mo.m_attributes.m_layer_index = 0;
-    mo.m_attributes.m_name = "brep";
-    mo.m_attributes.m_uuid = ON_opennurbs4_id;
+    ON_3dmObjectAttributes* attributes = new ON_3dmObjectAttributes();
+    attributes->m_uuid = ON_opennurbs4_id;
+    attributes->m_name = "brep";
+    ON_ModelGeometryComponent *gc = ON_ModelGeometryComponent::CreateForExperts(true, ON_Geometry::Cast(bi->brep), true, attributes, NULL);
+    ON_ModelGeometryComponent ngc(*gc);
+    delete gc;
+    model.AddModelComponent(ngc);
 
     model.m_properties.m_RevisionHistory.NewRevision();
     model.m_properties.m_Application.m_application_name = "BRL-CAD B-Rep primitive";
-
-    model.Polish();
+    //model.Polish();
 }
 
 
@@ -2325,7 +2366,7 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	/* Create a serialized version for base-64 encoding */
 	RT_MemoryArchive archive;
 	ON_TextLog err(stderr);
-	bool ok = model.Write(archive, 4, "export5", &err);
+	bool ok = model.Write(archive, 4, &err);
 	if (ok) {
 	    void *archive_cp = archive.CreateCopy();
 	    signed char *brep64 = bu_b64_encode_block((const signed char *)archive_cp, archive.Size());
@@ -2354,8 +2395,8 @@ rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	RT_BREP_CK_MAGIC(bi);
 	model.Read(archive, &log);
 	bu_vls_printf(logstr, "%s", ON_String(wonstr).Array());
-	ONX_Model_Object mo = model.m_object_table[0];
-	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
+	ON_ModelGeometryComponent *mo = ON_ModelGeometryComponent::Cast(model.ImageFromIndex(0).ExclusiveModelComponent());
+	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo->Geometry(nullptr)));
 	return 0;
     }
     return -1;
@@ -2380,7 +2421,7 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 
     RT_MemoryArchive archive;
     ON_TextLog err(stderr);
-    bool ok = model.Write(archive, 4, "export5", &err);
+    bool ok = model.Write(archive, 4, &err);
     if (ok) {
 	ep->ext_nbytes = (long)archive.Size();
 	ep->ext_buf = archive.CreateCopy();
@@ -2412,11 +2453,21 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
     ONX_Model model;
     ON_TextLog err(stderr);
-    //archive.Dump3dmChunk(err);
-    model.Read(archive, &err);
+    unsigned int obj_filter = ON::brep_object;
+    model.Read(archive, 0, obj_filter, &err);
 
-    ONX_Model_Object mo = model.m_object_table[0];
-    bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
+    /* grab the first geometry item from the manifest */
+    const ON_ComponentManifestItem* geom = model.Manifest().FirstItem(ON_ModelComponent::Type::ModelGeometry);
+    /* sanity check */
+    if (model.Manifest().NextItem(geom) != nullptr)
+	bu_log("WARNING: geometry may be getting lost\n");
+
+    /* do the necessary API calls to get a usable geometry component from the manifest item */
+    ON_ModelComponentReference geom_ref = model.ModelGeometryFromId(geom->Id());
+    const ON_ModelGeometryComponent* geom_comp = ON_ModelGeometryComponent::Cast(geom_ref.ModelComponent());
+
+    bi->brep = ON_Brep::New(*ON_Brep::Cast(geom_comp->Geometry(NULL)));
+
     if (mat) {
 	ON_Xform xform(mat);
 
@@ -2439,8 +2490,6 @@ rt_brep_ifree(struct rt_db_internal *ip)
 
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
-    if (bi->brep != NULL)
-	delete bi->brep;
     bu_free(bi, "rt_brep_internal free");
     ip->idb_ptr = ((void *)0);
 }

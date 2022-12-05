@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,21 +46,23 @@
 class CPL_DLL GDALJP2Box
 {
 
-    VSILFILE   *fpVSIL;
+    VSILFILE   *fpVSIL = nullptr;
 
-    char        szBoxType[5];
+    char        szBoxType[5] {0, 0, 0, 0, 0};
 
-    GIntBig     nBoxOffset;
-    GIntBig     nBoxLength;
+    GIntBig     nBoxOffset = -1;
+    GIntBig     nBoxLength = 0;
 
-    GIntBig     nDataOffset;
+    GIntBig     nDataOffset = -1;
 
-    GByte       abyUUID[16];
+    GByte       abyUUID[16] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    GByte      *pabyData;
+    GByte      *pabyData = nullptr;
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALJP2Box)
 
 public:
-    explicit    GDALJP2Box( VSILFILE * = NULL );
+    explicit    GDALJP2Box( VSILFILE * = nullptr );
                 ~GDALJP2Box();
 
     int         SetOffset( GIntBig nNewOffset );
@@ -140,6 +142,8 @@ private:
                                        GDALDataset* poSrcDS,
                                        int bMainMDDomainOnly );
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALJP2Metadata)
+
 public:
     char  **papszGMLMetadata;
 
@@ -147,7 +151,7 @@ public:
     double  adfGeoTransform[6];
     bool    bPixelIsPoint;
 
-    char   *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
     int         nGCPCount;
     GDAL_GCP    *pasGCPList;
@@ -171,13 +175,13 @@ public:
 
     int     ReadAndParse( VSILFILE * fpVSIL,
                           int nGEOJP2Index = 0, int nGMLJP2Index = 1,
-                          int nMSIGIndex = 2, int *pnIndexUsed = NULL );
+                          int nMSIGIndex = 2, int *pnIndexUsed = nullptr );
     int     ReadAndParse( const char *pszFilename, int nGEOJP2Index = 0,
                           int nGMLJP2Index = 1, int nMSIGIndex = 2,
-                          int nWorldFileIndex = 3, int *pnIndexUsed = NULL );
+                          int nWorldFileIndex = 3, int *pnIndexUsed = nullptr );
 
     // Write oriented.
-    void    SetProjection( const char *pszWKT );
+    void    SetSpatialRef( const OGRSpatialReference *poSRS );
     void    SetGeoTransform( double * );
     void    SetGCPs( int, const GDAL_GCP * );
     void    SetRPCMD( char** papszRPCMDIn );

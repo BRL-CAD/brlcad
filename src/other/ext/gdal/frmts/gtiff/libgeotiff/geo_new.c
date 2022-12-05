@@ -14,6 +14,8 @@
  *
  **********************************************************************/
 
+#include <stdarg.h>
+
 #include "geotiffio.h"   /* public interface        */
 #include "geo_tiffp.h" /* external TIFF interface */
 #include "geo_keyp.h"  /* private interface       */
@@ -23,6 +25,21 @@
 static int ReadKey(GTIF* gt, TempKeyData* tempData,
                    KeyEntry* entptr, GeoKey* keyptr);
 
+
+static void GTIFErrorFunction(GTIF* gt, int level, const char* msg, ...)
+{
+    va_list list;
+    (void)gt;
+
+    va_start(list, msg);
+    if( level == LIBGEOTIFF_WARNING )
+        fprintf(stderr, "Warning: ");
+    else if( level == LIBGEOTIFF_ERROR )
+        fprintf(stderr, "Error: ");
+    vfprintf(stderr, msg, list);
+    fprintf(stderr, "\n");
+    va_end(list);
+}
 
 /**********************************************************************
  *
@@ -54,10 +71,18 @@ for new TIFF files that will have GeoTIFF tags written to them.<p>
 GTIF* GTIFNew(void *tif)
 
 {
+    return GTIFNewEx( tif, GTIFErrorFunction, NULL );
+}
+
+GTIF* GTIFNewEx(void *tif,
+                GTErrorCallback error_callback, void* user_data)
+
+{
     TIFFMethod default_methods;
     _GTIFSetDefaultTIFF( &default_methods );
 
-    return GTIFNewWithMethods( tif, &default_methods );
+    return GTIFNewWithMethodsEx( tif, &default_methods,
+                                 error_callback, user_data );
 }
 
 GTIF *GTIFNewSimpleTags( void *tif )
@@ -79,6 +104,12 @@ GTIF *GTIFNewSimpleTags( void *tif )
 
 GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
 {
+    return GTIFNewWithMethodsEx(tif, methods, GTIFErrorFunction, NULL);
+}
+
+GTIF* GTIFNewWithMethodsEx(void *tif, TIFFMethod* methods,
+                           GTErrorCallback error_callback, void* user_data)
+{
     GTIF* gt;
     int count,bufcount,nIndex;
     GeoKey *keyptr;
@@ -90,6 +121,8 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
     memset( &tempData, 0, sizeof(tempData) );
     gt = (GTIF*)_GTIFcalloc( sizeof(GTIF));
     if (!gt) goto failure;
+    gt->gt_error_callback = error_callback;
+    gt->gt_user_data = user_data;
 
     /* install TIFF file and I/O methods */
     gt->gt_tif = (tiff_t *)tif;
@@ -145,6 +178,8 @@ GTIF* GTIFNewWithMethods(void *tif, TIFFMethod* methods)
     }
     else
     {
+        if( gt->gt_ndoubles > MAX_VALUES )
+            goto failure;
         /* resize data array so it can be extended if needed */
         gt->gt_double = (double*) _GTIFrealloc(gt->gt_double,
                                                (MAX_VALUES)*sizeof(double));
@@ -232,21 +267,69 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
     {
         case GTIFF_LOCAL:
             /* store value into data value */
+            if (count != 1 )
+            {
+                if( gt->gt_error_callback )
+                {
+                    gt->gt_error_callback(
+                        gt,
+                        LIBGEOTIFF_ERROR,
+                        "Key %s of TIFFTagLocation=0 has count=%d, "
+                        "whereas only 1 is legal.",
+                        GTIFKeyName(keyptr->gk_key), count);
+                }
+                return 0;
+            }
             memcpy(&keyptr->gk_data, &(entptr->ent_val_offset), sizeof(pinfo_t));
             break;
         case GTIFF_GEOKEYDIRECTORY:
             keyptr->gk_data = (char *)(gt->gt_short+offset);
             if (gt->gt_nshorts < offset+count)
+            {
+                if( gt->gt_error_callback )
+                {
+                    gt->gt_error_callback(
+                        gt,
+                        LIBGEOTIFF_ERROR,
+                        "Key %s of type SHORT has offset=%d and count=%d, "
+                        "but the GeoKeyDirectory tag has only %d values.",
+                        GTIFKeyName(keyptr->gk_key),
+                        offset, count, gt->gt_nshorts);
+                }
                 return 0;
+            }
             break;
         case GTIFF_DOUBLEPARAMS:
             keyptr->gk_data = (char *)(gt->gt_double+offset);
             if (gt->gt_ndoubles < offset+count)
+            {
+                if( gt->gt_error_callback )
+                {
+                    gt->gt_error_callback(
+                        gt,
+                        LIBGEOTIFF_ERROR,
+                        "Key %s of type SHORT has offset=%d and count=%d, "
+                        "but the GeoDoubleParams tag has only %d values.",
+                        GTIFKeyName(keyptr->gk_key),
+                        offset, count, gt->gt_ndoubles);
+                }
                 return 0;
+            }
             break;
         case GTIFF_ASCIIPARAMS:
             if( tempData->tk_asciiParams == NULL )
+            {
+                if( gt->gt_error_callback )
+                {
+                    gt->gt_error_callback(
+                        gt,
+                        LIBGEOTIFF_ERROR,
+                        "Key %s is of type ASCII but GeoAsciiParams is "
+                        "missing or corrupted.",
+                        GTIFKeyName(keyptr->gk_key));
+                }
                 return 0;
+            }
             if( offset + count == tempData->tk_asciiParamsLength + 1
                 && count > 0 )
             {
@@ -259,11 +342,33 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
             else if (offset < tempData->tk_asciiParamsLength
                      && offset + count > tempData->tk_asciiParamsLength )
             {
+                if( gt->gt_error_callback )
+                {
+                    gt->gt_error_callback(
+                        gt,
+                        LIBGEOTIFF_WARNING,
+                        "Key %s of type ASCII has offset=%d and count=%d, but "
+                        "the GeoAsciiParams tag has only %d bytes. "
+                        "Truncating the value of the key.",
+                        GTIFKeyName(keyptr->gk_key), offset, count,
+                        tempData->tk_asciiParamsLength);
+                }
                 count = tempData->tk_asciiParamsLength - offset;
-                /* issue warning... if we could */
             }
             else if (offset + count > tempData->tk_asciiParamsLength)
+            {
+                if( gt->gt_error_callback )
+                {
+                    gt->gt_error_callback(
+                        gt,
+                        LIBGEOTIFF_ERROR,
+                        "Key %s of type ASCII has offset=%d and count=%d, "
+                        "but the GeoAsciiParams tag has only %d values.",
+                        GTIFKeyName(keyptr->gk_key), offset, count,
+                        tempData->tk_asciiParamsLength);
+                }
                 return 0;
+            }
 
             keyptr->gk_count = MAX(1,count+1);
             keyptr->gk_data = (char *) _GTIFcalloc (keyptr->gk_count);
@@ -279,9 +384,22 @@ static int ReadKey(GTIF* gt, TempKeyData* tempData,
                 keyptr->gk_data[MAX(0,count)] = '\0';
             break;
         default:
+            if( gt->gt_error_callback )
+            {
+                gt->gt_error_callback(
+                    gt,
+                    LIBGEOTIFF_ERROR,
+                    "Key %d of unknown type.",
+                    keyptr->gk_key);
+            }
             return 0; /* failure */
     }
     keyptr->gk_size = _gtiff_size[keyptr->gk_type];
 
     return 1; /* success */
+}
+
+void *GTIFGetUserData(GTIF *gtif)
+{
+    return gtif->gt_user_data;
 }

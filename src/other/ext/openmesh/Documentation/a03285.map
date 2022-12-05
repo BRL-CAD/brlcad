@@ -1,0 +1,4 @@
+<map id="OpenMesh::PropertyCreator" name="OpenMesh::PropertyCreator">
+<area shape="rect" id="node1" title="Base class for property creators." alt="" coords="5,5,191,32"/>
+<area shape="rect" id="node2" href="$a03290.html" title="Helper class that contains the implementation of the create_&lt;HandleT&gt;_property methods." alt="" coords="5,80,191,121"/>
+</map>

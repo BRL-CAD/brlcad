@@ -32,7 +32,7 @@
 #include "ogr_api.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             OGRTriangle()                            */
@@ -43,8 +43,7 @@ CPL_CVSID("$Id$");
  *
  */
 
-OGRTriangle::OGRTriangle()
-{ }
+OGRTriangle::OGRTriangle() = default;
 
 /************************************************************************/
 /*                             OGRTriangle()                            */
@@ -55,9 +54,7 @@ OGRTriangle::OGRTriangle()
  *
  */
 
-OGRTriangle::OGRTriangle(const OGRTriangle& other) :
-    OGRPolygon(other)
-{ }
+OGRTriangle::OGRTriangle(const OGRTriangle&) = default;
 
 /************************************************************************/
 /*                             OGRTriangle()                            */
@@ -79,7 +76,7 @@ OGRTriangle::OGRTriangle(const OGRPolygon& other, OGRErr &eErr)
     // If not, then eErr will contain the error description
     const OGRCurve *poCurve = other.getExteriorRingCurve();
     if (other.getNumInteriorRings() == 0 &&
-        poCurve != NULL && poCurve->get_IsClosed() &&
+        poCurve != nullptr && poCurve->get_IsClosed() &&
         poCurve->getNumPoints() == 4)
     {
         // everything is fine
@@ -123,9 +120,7 @@ OGRTriangle::OGRTriangle(const OGRPoint &p, const OGRPoint &q,
  *
  */
 
-OGRTriangle::~OGRTriangle()
-{
-}
+OGRTriangle::~OGRTriangle() = default;
 
 /************************************************************************/
 /*                    operator=( const OGRGeometry&)                    */
@@ -147,6 +142,16 @@ OGRTriangle& OGRTriangle::operator=( const OGRTriangle& other )
         OGRPolygon::operator=( other );
     }
     return *this;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRTriangle *OGRTriangle::clone() const
+
+{
+    return new (std::nothrow) OGRTriangle(*this);
 }
 
 /************************************************************************/
@@ -190,11 +195,13 @@ bool OGRTriangle::quickValidityCheck() const
 /*                           importFromWkb()                            */
 /************************************************************************/
 
-OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
-                                  int nSize,
-                                  OGRwkbVariant eWkbVariant )
+OGRErr OGRTriangle::importFromWkb( const unsigned char *pabyData,
+                                   size_t nSize,
+                                   OGRwkbVariant eWkbVariant,
+                                   size_t& nBytesConsumedOut )
 {
-    OGRErr eErr = OGRPolygon::importFromWkb( pabyData, nSize, eWkbVariant );
+    OGRErr eErr = OGRPolygon::importFromWkb( pabyData, nSize, eWkbVariant,
+                                             nBytesConsumedOut );
     if( eErr != OGRERR_NONE )
         return eErr;
 
@@ -215,7 +222,7 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
 /*      Instantiate from "((x y, x y, ...),(x y, ...),...)"             */
 /************************************************************************/
 
-OGRErr OGRTriangle::importFromWKTListOnly( char ** ppszInput,
+OGRErr OGRTriangle::importFromWKTListOnly( const char ** ppszInput,
                                           int bHasZ, int bHasM,
                                           OGRRawPoint*& paoPoints,
                                           int& nMaxPoints,
@@ -259,8 +266,16 @@ OGRErr OGRTriangle::addRingDirectly( OGRCurve * poNewRing )
 /*                      GetCasterToPolygon()                            */
 /************************************************************************/
 
+OGRPolygon* OGRTriangle::CasterToPolygon(OGRSurface* poSurface)
+{
+    OGRTriangle* poTriangle = poSurface->toTriangle();
+    OGRPolygon* poRet = new OGRPolygon( *poTriangle );
+    delete poTriangle;
+    return poRet;
+}
+
 OGRSurfaceCasterToPolygon OGRTriangle::GetCasterToPolygon() const {
-    return (OGRSurfaceCasterToPolygon) OGRTriangle::CastToPolygon;
+    return OGRTriangle::CasterToPolygon;
 }
 
 /************************************************************************/
@@ -269,7 +284,7 @@ OGRSurfaceCasterToPolygon OGRTriangle::GetCasterToPolygon() const {
 
 OGRGeometry* OGRTriangle::CastToPolygon(OGRGeometry* poGeom)
 {
-    OGRGeometry* poRet = new OGRPolygon( *(OGRPolygon*)poGeom );
+    OGRGeometry* poRet = new OGRPolygon( *(poGeom->toPolygon()) );
     delete poGeom;
     return poRet;
 }
