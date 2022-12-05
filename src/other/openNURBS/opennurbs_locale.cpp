@@ -35,7 +35,7 @@ static ON_CRT_locale_t ON_CRT_C_locale()
     ON_C_locale = _create_locale(LC_ALL, "C");
 #elif defined(ON_RUNTIME_APPLE)
     ON_C_locale = _c_locale;
-#elif defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+#elif defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_BSD)
     ON_C_locale = 0;
 #else
     ON_C_locale = _create_locale(category, locale);
@@ -104,7 +104,7 @@ static ON_CRT_locale_t ON_CRT_create_locale_ALL( const char * locale )
     }
   }
   return newlocale(LC_ALL_MASK, apple_name, ON_CRT_C_locale() );
-#elif defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+#elif defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_BSD)
   return 0;
 #else
   return _create_locale(category, locale);
@@ -1344,7 +1344,7 @@ public:
   static bool Validate_sprintf_l()
   {
 #if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
-#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_BSD)
     // Test formatted printing
     char buffer[64] = { 0 };
     // Testing C-runtime - do not using ON_String::FormatIntoBuffer
@@ -1369,7 +1369,7 @@ public:
   static bool Validate_sprintf_s_l()
   {
 #if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
-#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_BSD)
     // Test formatted printing
     char buffer[64] = { 0 };
     size_t buffer_capacity = (sizeof(buffer) / sizeof(buffer[0])) - 1;
@@ -1423,7 +1423,7 @@ public:
   static bool Validate_sscanf_l()
   {
 #if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
-#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_BSD)
     // Test formatted scanning
     double a = ON_UNSET_VALUE;
     // Testing C-runtime - do not using ON_String::Scan
@@ -1448,7 +1448,7 @@ public:
   static bool Validate_sscanf_s_l()
   {
 #if defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
-#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_BSD)
     // Test formatted scanning
     double a = ON_UNSET_VALUE;
     // Testing C-runtime - do not using ON_String::Scan

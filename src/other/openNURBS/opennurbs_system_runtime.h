@@ -60,6 +60,11 @@
 #define ON_RUNTIME_LINUX
 #endif
 
+#elif defined(__OpenBSD__) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(__bsdi__)
+#if !defined(ON_RUNTIME_BSD)
+#define ON_RUNTIME_BSD
+#endif
+
 #endif
 /*
 //
@@ -146,7 +151,7 @@
 #endif
 
 #if !defined(ON_LITTLE_ENDIAN)
-#if (defined(_M_X64) || defined(_M_ARM64) || defined(_M_IX86) || defined(__i386__) || defined(__x86_64__))
+#if (defined(_M_X64) || defined(_M_ARM64) || defined(_M_IX86) || defined(__i386__) || defined(__x86_64__) || defined(__x86_64))
 #define ON_LITTLE_ENDIAN
 #endif
 #endif
@@ -157,9 +162,9 @@
 #define ON_SIZEOF_WCHAR_T 4
 #endif
 
-#elif defined(ON_RUNTIME_LINUX)
+#elif defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_BSD)
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__x86_64)
 #define ON_64BIT_RUNTIME
 #else
 #define ON_32BIT_RUNTIME
@@ -171,7 +176,7 @@
 #endif
 
 #if !defined(ON_LITTLE_ENDIAN)
-#if defined( __x86_64__ )
+#if defined( __x86_64__ ) || defined(__x86_64)
 #define ON_LITTLE_ENDIAN
 #endif
 #endif

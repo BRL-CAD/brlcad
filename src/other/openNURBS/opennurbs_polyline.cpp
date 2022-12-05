@@ -453,7 +453,7 @@ bool ON_IsConvexPolyline(
   maxN = maxN.UnitVector();
   for (size_t i = 0; i < point_count; ++i)
   {
-#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX) || defined(ON_RUNTIME_BSD)
     double d = maxN * C[(unsigned int)i];
 #else
     double d = maxN * C[i];
