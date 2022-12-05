@@ -78,7 +78,11 @@ if (BRLCAD_SQLITE3_BUILD)
 
 else (BRLCAD_SQLITE3_BUILD)
 
+  set(SQLite3_LIBRARY "${SQLite3_LIBRARY}" CACHE STRING "Building bundled sqlite3" FORCE)
+  set(SQLite3_LIBRARIES ${SQLite3_LIBRARY} CACHE STRING "Building bundled sqlite3" FORCE)
+  set(SQLite3_INCLUDE_DIR "${SQLite3_INCLUDE_DIR}" CACHE STRING "Directory containing sqlite3 headers." FORCE)
   set(SQLite3_INCLUDE_DIRS "${SQLite3_INCLUDE_DIR}" CACHE STRING "SQLite3 include directory" FORCE)
+  set(SQLite3_EXECNAME "${SQLite3_EXECNAME}" CACHE STRING "Building bundled sqlite3" FORCE)
 
 endif (BRLCAD_SQLITE3_BUILD)
 

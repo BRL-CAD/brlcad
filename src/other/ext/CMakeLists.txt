@@ -405,7 +405,7 @@ if (COMMAND CMAKEFILES)
     CMake/FindOpenMesh.cmake
     CMake/FindPERPLEX.cmake
     CMake/FindPOLY2TRI.cmake
-    CMake/FindPROJ4.cmake
+    CMake/FindPROJ.cmake
     CMake/FindRE2C.cmake
     CMake/FindREGEX.cmake
     CMake/FindSQLite3.cmake
