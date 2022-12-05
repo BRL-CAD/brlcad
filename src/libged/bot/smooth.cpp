@@ -26,7 +26,23 @@
 
 #include "common.h"
 
+#include <vector>
+#include <unordered_map>
+
+#include "vmath.h"
+#include "bu/str.h"
+
+#include "rt/db5.h"
+#include "rt/db_internal.h"
+#include "rt/db_io.h"
+#include "rt/geom.h"
+#include "rt/wdb.h"
+
 #ifdef BUILD_OPENMESH_TOOLS
+// Getting this definition from opennurbs_subd.h
+#ifdef EdgeAttributes
+#  undef EdgeAttributes
+#endif
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic push /* start new diagnostic pragma */
@@ -49,16 +65,6 @@
 
 #endif /* BUILD_OPENMESH_TOOLS */
 
-#include <vector>
-#include <unordered_map>
-
-#include "vmath.h"
-#include "bu/str.h"
-#include "rt/db5.h"
-#include "rt/db_internal.h"
-#include "rt/db_io.h"
-#include "rt/geom.h"
-#include "rt/wdb.h"
 #include "ged/commands.h"
 #include "ged/database.h"
 #include "ged/objects.h"
