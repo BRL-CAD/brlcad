@@ -16,6 +16,14 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 
 ON_Localizer::ON_Localizer()
 {
@@ -244,7 +252,7 @@ bool ON_Localizer::CreateSphereLocalizer( ON_3dPoint P, double r0, double r1 )
        && r0 != r1 )
   {
     m_P = P;
-    m_V.Zero();
+    m_V = ON_3dVector::ZeroVector;
     m_d.Set(r0,r1);
     m_type = sphere_type;
   }
@@ -266,6 +274,7 @@ double ON_Localizer::Value(double t) const
 
 double ON_Localizer::Value(ON_3dPoint P) const
 {
+  
   double t = m_d.m_t[1];
 
   switch ( m_type )
@@ -396,8 +405,8 @@ bool ON_Localizer::IsZero( const ON_BoundingBox& bbox ) const
     if ( m_d[1] < m_d[0] && m_d[0] > 0.0 )
     {
       // function is zero outside loc_bbox + m_d[0]
-      double d = loc_bbox.MinimumDistanceTo(bbox);
-      if ( d > m_d[0] )
+      double d_bbox = loc_bbox.MinimumDistanceTo(bbox);
+      if ( d_bbox > m_d[0] )
         rc = true;
     }
     else if ( m_d[0] > 0.0 )
@@ -426,6 +435,7 @@ ON_SpaceMorph::ON_SpaceMorph()
 ON_SpaceMorph::~ON_SpaceMorph()
 {
 }
+
 
 double ON_SpaceMorph::Tolerance() const
 {
@@ -464,10 +474,11 @@ void ON_SpaceMorph::SetPreserveStructure( bool bPreserveStructure )
   m_bPreserveStructure = bPreserveStructure ? true : false;
 }
 
+
 bool ON_Mesh::EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) const
 {
   // virtual function default
-  P = ON_UNSET_POINT;
+  P = ON_3dPoint::UnsetPoint;
   ON_COMPONENT_INDEX ci = objref.m_component_index;
 
   switch ( ci.m_type )

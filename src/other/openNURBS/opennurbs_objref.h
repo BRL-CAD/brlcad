@@ -29,7 +29,7 @@ public:
   bool Read( ON_BinaryArchive& );
 
 
-  // If m_point != ON_UNSET_POINT and m_t_type != 0, then
+  // If m_point != ON_3dPoint::UnsetPoint and m_t_type != 0, then
   // m_t_type, m_t, and m_t_ci record the m_geometry evaluation
   // parameters of the m_point.
   //
@@ -93,16 +93,18 @@ private:
 public:
   double m_t[4];
   ON_Interval m_s[3]; // curve/surface/cage domains
-  ON_COMPONENT_INDEX m_t_ci; // Not necesarily the same as m_component_index
+  ON_COMPONENT_INDEX m_t_ci; // Not necessarily the same as m_component_index
                              // See comment above for details.
 };
 
 class ON_CLASS ON_ObjRef_IRefID
 {
 public:
-  ON_ObjRef_IRefID();
-  ~ON_ObjRef_IRefID();
-
+  ON_ObjRef_IRefID() = default;
+  ~ON_ObjRef_IRefID() = default;
+  ON_ObjRef_IRefID(const ON_ObjRef_IRefID&) = default;
+  ON_ObjRef_IRefID& operator=(const ON_ObjRef_IRefID&) = default;
+  
   bool Write(ON_BinaryArchive&) const;
   bool Read(ON_BinaryArchive&);
 
@@ -110,22 +112,22 @@ public:
 
   // m_iref_uuid is the CRhinoInstanceObject's uuid stored
   // in its ON_3dmObjectAttributes.m_uuid.
-  ON_UUID  m_iref_uuid;
+  ON_UUID  m_iref_uuid = ON_nil_uuid;
 
   // m_iref_xform is the value stored in ON_InstanceRef.m_xform.
-  ON_Xform m_iref_xform;
+  ON_Xform m_iref_xform = ON_Xform::ZeroTransformation;
 
   // m_idef_uuid is the instance definition id stored in
   // ON_InstanceRef.m_instance_definition_uuid and
   // ON_InstanceDefinition.m_uuid.
-  ON_UUID  m_idef_uuid;
+  ON_UUID  m_idef_uuid = ON_nil_uuid;
 
-  // m_geometry_index is the index of the uuid of the pertinant
+  // m_geometry_index is the index of the uuid of the pertinent
   // piece of geometry in the ON_InstanceRef.m_object_uuid[] 
   // array.  This index is identical to the index of the
   // geometry's CRhinoObject in the
   // CRhinoInstanceDefinition.m_objects[] array.
-  int m_idef_geometry_index;
+  int m_idef_geometry_index = 0;
 
   // m_geometry_xform is the transformation to map the
   // base geometry to world coordinates.  If the
@@ -134,7 +136,7 @@ public:
   // reference is nested, then
   //   m_geometry_xform = m_iref_xform * .... * T1
   // where the Ts are the transformations from the children.
-  ON_Xform m_geometry_xform;
+  ON_Xform m_geometry_xform = ON_Xform::ZeroTransformation;
 
   // If this ON_ObjRef_IRefID is the first entry in the 
   // ON_ObjRef.m__iref[] array, then it references a "real"
@@ -155,13 +157,7 @@ public:
 };
 
 #if defined(ON_DLL_TEMPLATE)
-// This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
-// article ID Q168958 for details.
-#pragma warning( push )
-#pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_ObjRef_IRefID>;
-#pragma warning( pop )
 #endif
 
 class ON_CLASS ON_ObjRef
@@ -226,7 +222,7 @@ public:
   // it generally changes if you save and reload an archive.
   unsigned int m_runtime_sn;
 
-  // If m_point != ON_UNSET_POINT, then the ObjRef resolves to 
+  // If m_point != ON_3dPoint::UnsetPoint, then the ObjRef resolves to 
   // a point location.  The point location is saved here so the
   // information can persist if the object itself vanishes.
   ON_3dPoint m_point;
@@ -235,7 +231,7 @@ public:
   // the object snap is recorded here. 
   ON::osnap_mode m_osnap_mode;
 
-  // If m_point != ON_UNSET_POINT and m_evp.m_t_type != 0, then
+  // If m_point != ON_3dPoint::UnsetPoint and m_evp.m_t_type != 0, then
   // m_evp records the records the m_geometry evaluation
   // parameters for the m_point.
   ON_ObjRefEvaluationParameter m_evp;
@@ -302,13 +298,13 @@ public:
 private:
   // In simple (and the most common) cases where m_geometry
   // is managed by something outside of the ON_ObjRef class,
-  // m__proxy_ref_count is NULL.  In this case, the m__proxy1
+  // m__proxy_ref_count is nullptr.  In this case, the m__proxy1
   // and m__proxy2 pointers may still be used to store 
   // references to a parent object.
   //
   // In cases when the referenced geometry pointed at by
   // m_geometry is not being managed by another class,
-  // m_proxy1 and m_proxy2 are not NULL and *m_proxy_ref_count 
+  // m_proxy1 and m_proxy2 are not nullptr and *m_proxy_ref_count 
   // counts the number of ON_ObjRef classes that refer to m__proxy1/2.
   // When the last ON_ObjRef is destroyed, m__proxy1/2 is deleted.
   // When the ON_ObjRef is using reference counting and managing
@@ -326,13 +322,7 @@ private:
 };
 
 #if defined(ON_DLL_TEMPLATE)
-// This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
-// article ID Q168958 for details.
-#pragma warning( push )
-#pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_ObjRef>;
-#pragma warning( pop )
 #endif
 
 #endif

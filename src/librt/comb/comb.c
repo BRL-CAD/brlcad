@@ -46,7 +46,6 @@
 #include <ctype.h>
 #include "bio.h"
 
-
 #include "bu/parse.h"
 #include "bu/cv.h"
 #include "vmath.h"
@@ -162,7 +161,7 @@ struct rt_comb_v5_serialize_state {
  */
 void
 rt_comb_v5_serialize(
-    const union tree *tp,
+    union tree *tp,
     struct rt_comb_v5_serialize_state *ssp)
 {
     size_t n;
@@ -171,85 +170,111 @@ rt_comb_v5_serialize(
     RT_CK_TREE(tp);
     RT_CK_COMB_V5_SERIALIZE_STATE(ssp);
 
-    switch (tp->tr_op) {
-	case OP_DB_LEAF:
-	    /*
-	     * Encoding of the leaf: A null-terminated name string,
-	     *and the matrix subscript.  -1 == identity.
-	     */
-	    n = strlen(tp->tr_l.tl_name) + 1;
-	    memcpy(ssp->leafp, tp->tr_l.tl_name, n);
-	    ssp->leafp += n;
+    /* setup stack for iterative traversal */
+    union tree** stack = (union tree**)0;
+    union tree** rev = (union tree**)0;
+    union tree* curr = NULL;
+    int size = 128;
+    int idx = 0;
+    int depth = 0;
+    stack = (union tree**)bu_malloc(sizeof(union tree*) * size, "init stack");
+    rev = (union tree**)bu_malloc(sizeof(union tree*) * size, "init rev");
+    stack[idx++] = TREE_NULL;
+    stack[idx++] = tp;
+    rev[depth] = TREE_NULL;
 
-	    if (tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat)) {
-		mi = ssp->mat_num++;
-	    } else {
-		mi = (ssize_t)-1;
-	    }
+    /* the first traversal gives us a reversed order */
+    while ((curr = stack[--idx]) != TREE_NULL) {
+        if (depth++ >= size - 1 || idx >= size - 3) {
+            size <<= 1;
+            stack = (union tree**)bu_realloc(stack, sizeof(union tree*) * size, "double stack");
+            rev = (union tree**)bu_realloc(rev, sizeof(union tree*) * size, "double rev");
+        }
+        rev[depth] = curr;
 
-	    BU_ASSERT(mi < (ssize_t)ssp->nmat);
+        if (curr->tr_b.tb_left && curr->tr_op != OP_DB_LEAF)
+            stack[idx++] = curr->tr_b.tb_left;
 
-	    /* there should be a better way than casting
-	     * 'mi' from ssize_t to size_t
-	     */
-	    n = (size_t)mi;
-	    ssp->leafp = db5_encode_length(ssp->leafp, n, ssp->wid);
-
-	    /* Encoding of the matrix */
-	    if (mi != (ssize_t)-1) {
-		/* must be double for import and export */
-		double scanmat[ELEMENTS_PER_MAT];
-
-		MAT_COPY(scanmat, tp->tr_l.tl_mat); /* convert fastf_t to double */
-		bu_cv_htond(ssp->matp, (const unsigned char *)scanmat, ELEMENTS_PER_MAT);
-		ssp->matp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
-	    }
-
-	    /* Encoding of the "leaf" operator */
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_LEAF;
-	    return;
-
-	case OP_NOT:
-	    /* Unary ops */
-	    rt_comb_v5_serialize(tp->tr_b.tb_left, ssp);
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_NOT;
-	    return;
-
-	case OP_UNION:
-	    /* This node is known to be a binary op */
-	    rt_comb_v5_serialize(tp->tr_b.tb_left, ssp);
-	    rt_comb_v5_serialize(tp->tr_b.tb_right, ssp);
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_UNION;
-	    return;
-	case OP_INTERSECT:
-	    /* This node is known to be a binary op */
-	    rt_comb_v5_serialize(tp->tr_b.tb_left, ssp);
-	    rt_comb_v5_serialize(tp->tr_b.tb_right, ssp);
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_INTERSECT;
-	    return;
-	case OP_SUBTRACT:
-	    /* This node is known to be a binary op */
-	    rt_comb_v5_serialize(tp->tr_b.tb_left, ssp);
-	    rt_comb_v5_serialize(tp->tr_b.tb_right, ssp);
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_SUBTRACT;
-	    return;
-	case OP_XOR:
-	    /* This node is known to be a binary op */
-	    rt_comb_v5_serialize(tp->tr_b.tb_left, ssp);
-	    rt_comb_v5_serialize(tp->tr_b.tb_right, ssp);
-	    if (ssp->exprp)
-		*ssp->exprp++ = DB5COMB_TOKEN_XOR;
-	    return;
-
-	default:
-	    bu_log("rt_comb_v5_serialize: bad op %d\n", tp->tr_op);
-	    bu_bomb("rt_comb_v5_serialize\n");
+        if (curr->tr_b.tb_right && curr->tr_op != OP_DB_LEAF)
+            stack[idx++] = curr->tr_b.tb_right;
     }
+    bu_free(stack, "free stack");
+    depth++;
+
+    /* actually do the serialize with the correct order */
+    while ((curr = rev[--depth]) != TREE_NULL) {
+        switch (curr->tr_op) {
+    	    case OP_DB_LEAF:
+    	        /*
+    	        * Encoding of the leaf: A null-terminated name string,
+    	        * and the matrix subscript.  -1 == identity.
+    	        */
+    	        n = strlen(curr->tr_l.tl_name) + 1;
+    	        memcpy(ssp->leafp, curr->tr_l.tl_name, n);
+    	        ssp->leafp += n;
+    
+    	        if (curr->tr_l.tl_mat && !bn_mat_is_identity(curr->tr_l.tl_mat)) {
+    		    mi = ssp->mat_num++;
+    	        } else {
+    		    mi = (ssize_t)-1;
+    	        }
+    
+    	        BU_ASSERT(mi < (ssize_t)ssp->nmat);
+    
+    	        /* there should be a better way than casting
+    	        * 'mi' from ssize_t to size_t
+    	        */
+    	        n = (size_t)mi;
+    	        ssp->leafp = db5_encode_length(ssp->leafp, n, ssp->wid);
+    
+    	        /* Encoding of the matrix */
+    	        if (mi != (ssize_t)-1) {
+    		    /* must be double for import and export */
+    		    double scanmat[ELEMENTS_PER_MAT];
+    
+    		    MAT_COPY(scanmat, curr->tr_l.tl_mat); /* convert fastf_t to double */
+    		    bu_cv_htond(ssp->matp, (const unsigned char *)scanmat, ELEMENTS_PER_MAT);
+    		    ssp->matp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
+    	        }
+    
+    	        /* Encoding of the "leaf" operator */
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_LEAF;
+    	        break;
+    
+    	    case OP_NOT:
+    	        /* Unary ops */
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_NOT;
+    	        break;
+    
+    	    case OP_UNION:
+    	        /* This node is known to be a binary op */
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_UNION;
+    	        break;
+    	    case OP_INTERSECT:
+    	        /* This node is known to be a binary op */
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_INTERSECT;
+    	        break;
+    	    case OP_SUBTRACT:
+    	        /* This node is known to be a binary op */
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_SUBTRACT;
+    	        break;
+    	    case OP_XOR:
+    	        /* This node is known to be a binary op */
+    	        if (ssp->exprp)
+    		    *ssp->exprp++ = DB5COMB_TOKEN_XOR;
+    	        break;
+    
+    	    default:
+    	        bu_log("rt_comb_v5_serialize: bad op %d\n", curr->tr_op);
+    	        bu_bomb("rt_comb_v5_serialize\n");
+        }
+    }
+    bu_free(rev, "free rev");
 }
 
 

@@ -61,9 +61,9 @@ extern BREP_EXPORT void ON_Plane_Plot(FILE *pf, ON_Plane &plane);
 extern BREP_EXPORT void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
 extern BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
-extern BREP_EXPORT ON_BOOL32 face_GetBoundingBox(const ON_BrepFace &face,ON_BoundingBox& bbox,ON_BOOL32 bGrowBox);
-extern BREP_EXPORT ON_BOOL32 surface_GetBoundingBox(const ON_Surface *surf,const ON_Interval &u_interval,const ON_Interval &v_interval,ON_BoundingBox& bbox,ON_BOOL32 bGrowBox);
-extern BREP_EXPORT ON_BOOL32 surface_EvNormal(const ON_Surface *surf,double s,double t,ON_3dPoint& point,ON_3dVector& normal,int side=0,int* hint=0);
+extern BREP_EXPORT bool face_GetBoundingBox(const ON_BrepFace &face,ON_BoundingBox& bbox,bool bGrowBox);
+extern BREP_EXPORT bool surface_GetBoundingBox(const ON_Surface *surf,const ON_Interval &u_interval,const ON_Interval &v_interval,ON_BoundingBox& bbox,bool bGrowBox);
+extern BREP_EXPORT bool surface_EvNormal(const ON_Surface *surf,double s,double t,ON_3dPoint& point,ON_3dVector& normal,int side=0,int* hint=0);
 
 extern BREP_EXPORT ON_Curve *interpolateCurve(ON_2dPointArray &samples);
 extern BREP_EXPORT ON_NurbsCurve *
@@ -72,6 +72,16 @@ interpolateLocalCubicCurve(const ON_3dPointArray &Q);
 extern BREP_EXPORT int
 ON_Curve_PolyLine_Approx(ON_Polyline *polyline, const ON_Curve *curve, double tol);
 
+extern BREP_EXPORT ON_Curve*
+ON_Surface_Pushup(
+	const ON_Surface *s,
+	const ON_Curve& curve_2d,
+	const ON_Interval* curve_2d_subdomain
+	);
+
+/* Report the object type as a string */
+extern BREP_EXPORT const char *
+ON_ObjectTypeToString(ON::object_type t);
 
 /* Experimental function to generate Tikz plotting information
  * from B-Rep objects.  This may or may not be something we

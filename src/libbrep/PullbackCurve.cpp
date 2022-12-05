@@ -123,7 +123,7 @@ seam_direction(ON_2dPoint uv1, ON_2dPoint uv2)
 }
 
 
-ON_BOOL32
+bool
 GetDomainSplits(
     const ON_Surface *surf,
     const ON_Interval &u_interval,
@@ -189,7 +189,7 @@ GetDomainSplits(
  * but not on edge of domain. If fails and at singularity this wrapper will
  * reevaluate at domain edge.
  */
-ON_BOOL32
+bool
 surface_EvNormal(// returns false if unable to evaluate
     const ON_Surface *surf,
     double s, double t, // evaluation parameters (s, t)
@@ -205,7 +205,7 @@ surface_EvNormal(// returns false if unable to evaluate
     //            repeated evaluations
     )
 {
-    ON_BOOL32 rc = false;
+    bool rc = false;
 
     if (!(rc=surf->EvNormal(s, t, point, normal, side, hint))) {
 	side = IsAtSingularity(surf, s, t, PBC_SEAM_TOL);// 0 = south, 1 = east, 2 = north, 3 = west
@@ -244,13 +244,13 @@ static ON_PlaneSurface *plane_surface[MAX_PSW] = {NULL};
 static ON_SumSurface *sum_surface[MAX_PSW] = {NULL};
 static ON_SurfaceProxy *proxy_surface[MAX_PSW] = {NULL};
 
-ON_BOOL32
+bool
 surface_GetBoundingBox(
     const ON_Surface *surf,
     const ON_Interval &u_interval,
     const ON_Interval &v_interval,
     ON_BoundingBox& bbox,
-    ON_BOOL32 bGrowBox
+    bool bGrowBox
     )
 {
     int p = bu_parallel_id();
@@ -339,11 +339,11 @@ surface_GetBoundingBox(
 }
 
 
-ON_BOOL32
+bool
 face_GetBoundingBox(
     const ON_BrepFace &face,
     ON_BoundingBox& bbox,
-    ON_BOOL32 bGrowBox
+    bool bGrowBox
     )
 {
     const ON_Surface *surf = face.SurfaceOf();
@@ -370,7 +370,7 @@ face_GetBoundingBox(
 }
 
 
-ON_BOOL32
+bool
 surface_GetIntervalMinMaxDistance(
     const ON_3dPoint& p,
     ON_BoundingBox &bbox,
@@ -384,7 +384,7 @@ surface_GetIntervalMinMaxDistance(
 }
 
 
-ON_BOOL32
+bool
 surface_GetIntervalMinMaxDistance(
     const ON_Surface *surf,
     const ON_3dPoint& p,

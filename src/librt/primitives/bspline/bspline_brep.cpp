@@ -65,7 +65,7 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	/* set control points */
 	for (j = 0; j < surface->s_size[0]; j++) {
 	    for (k = 0; k < surface->s_size[1]; k++) {
-		ON_3dPoint point = &RT_NURB_GET_CONTROL_POINT(surface, j, k);
+		ON_3dPoint point(&RT_NURB_GET_CONTROL_POINT(surface, j, k));
 		nurb->SetCV(k, j, point);
 	    }
 	}

@@ -16,6 +16,14 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 //////////////////////////////////////////////////////////////////////////////////////////
 //
 // ON_DecodeBase64
@@ -79,7 +87,7 @@ void ON_DecodeBase64::SetError()
   m_status = 1;
 }
 
-bool ON_DecodeBase64::Error() const
+const bool ON_DecodeBase64::Error() const
 {
   return (1 == m_status);
 }

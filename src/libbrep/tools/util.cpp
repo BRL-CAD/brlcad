@@ -270,6 +270,45 @@ brep_translate_scv(
     return 0;
 }
 
+const char *
+ON_ObjectTypeToString(ON::object_type t)
+{
+    switch(t)
+    {
+	case ON::object_type::point_object:         return "point_object";
+	case ON::object_type::pointset_object:      return "pointset_object";
+	case ON::object_type::curve_object:         return "curve_object";
+	case ON::object_type::surface_object:       return "surface_object";
+	case ON::object_type::brep_object:          return "brep_object";
+	case ON::object_type::mesh_object:          return "mesh_object";
+	case ON::object_type::layer_object:         return "layer_object";
+	case ON::object_type::material_object:      return "material_object";
+	case ON::object_type::light_object:         return "light_object";
+	case ON::object_type::annotation_object:    return "annotation_object";
+	case ON::object_type::userdata_object:      return "userdata_object";
+	case ON::object_type::instance_definition:  return "instance_definition";
+	case ON::object_type::instance_reference:   return "instance_reference";
+	case ON::object_type::text_dot:             return "text_dot";
+	case ON::object_type::grip_object:          return "grip_object";
+	case ON::object_type::detail_object:        return "detail_object";
+	case ON::object_type::hatch_object:         return "hatch_object";
+	case ON::object_type::morph_control_object: return "morph_control_object";
+	case ON::object_type::loop_object:          return "loop_object";
+	case ON::object_type::polysrf_filter:       return "polysrf_filter";
+	case ON::object_type::edge_filter:          return "edge_filter";
+	case ON::object_type::polyedge_filter:      return "polyedge_filter";
+	case ON::object_type::meshvertex_filter:    return "meshvertex_filter";
+	case ON::object_type::meshedge_filter:      return "meshedge_filter";
+	case ON::object_type::meshface_filter:      return "meshface_filter";
+	case ON::object_type::cage_object:          return "cage_object";
+	case ON::object_type::phantom_object:       return "phantom_object";
+	case ON::object_type::extrusion_object:     return "extrusion_object";
+	case ON::object_type::meshcomponent_reference: return "meshcomponent_reference";
+	default:
+	     return "unknown";
+    }
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

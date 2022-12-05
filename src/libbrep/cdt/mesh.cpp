@@ -2278,7 +2278,9 @@ cdt_mesh_t::uedge_polygon(uedge_t &ue)
     }
     bu_free(fpnts, "fitting points");
 
-    ON_Plane fit_plane(pcenter, pnorm);
+    ON_3dPoint opc(pcenter);
+    ON_3dPoint opn(pnorm);
+    ON_Plane fit_plane(opc, opn);
 
     // Build our polygon out of the two triangles.
 
@@ -4698,7 +4700,9 @@ cdt_mesh_t::best_fit_plane_reproject(cpolygon_t *polygon)
 	}
     }
 
-    ON_Plane fit_plane(pcenter, pnorm);
+    ON_3dPoint opc(pcenter);
+    ON_3dPoint opn(pnorm);
+    ON_Plane fit_plane(opc, opn);
 
     std::vector<std::pair<double, double> > pnts_2d_cached = polygon->pnts_2d;
 
@@ -4782,7 +4786,9 @@ cdt_mesh_t::best_fit_plane(std::set<triangle_t> &ts)
 	VSCALE(pnorm, pnorm, -1);
     }
 
-    ON_Plane fit_plane(pcenter, pnorm);
+    ON_3dPoint opc(pcenter);
+    ON_3dPoint opn(pnorm);
+    ON_Plane fit_plane(opc, opn);
 
     return fit_plane;
 }

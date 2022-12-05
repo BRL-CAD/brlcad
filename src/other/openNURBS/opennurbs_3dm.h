@@ -8,7 +8,7 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
@@ -32,20 +32,20 @@
    |        |
    |        +-- category:_000 0000 0000 0001  Legacy geometry    TCODE_LEGACY_GEOMETRY
    |                     _000 0000 0000 0010  openNURBS object   TCODE_OPENNURBS_OBJECT
-   |                     _000 0000 0000 0100  -- RESERVED - DO NOT USE (should be 0 in any typecode) --
-   |                     _000 0000 0000 1000  -- RESERVED - DO NOT USE (should be 0 in any typecode) --
+   |                     _000 0000 0000 0100  -- RESERVED - DO NOT USE (should be 0 in any typecode) -- 
+   |                     _000 0000 0000 1000  -- RESERVED - DO NOT USE (should be 0 in any typecode) --                     
    |                     _000 0000 0001 0000  Geometry           TCODE_GEOMETRY
    |                     _000 0000 0010 0000  Annotation
    |                     _000 0000 0100 0000  Display Attributes TCODE_DISPLAY
-   |                     _000 0000 1000 0000  Rendering          TCODE_RENDER
-   |                     _000 0001 0000 0000
-   |                     _000 0010 0000 0000  Interface          TCODE_INTERFACE
+   |                     _000 0000 1000 0000  Rendering          TCODE_RENDER     
+   |                     _000 0001 0000 0000                         
+   |                     _000 0010 0000 0000  Interface          TCODE_INTERFACE 
    |                     _000 0100 0000 0000  -- RESERVED - DO NOT USE (should be 0 in any typecode) --
    |                     _000 1000 0000 0000  Tolerances         TCODE_TOLERANCE
-   |                     _001 0000 0000 0000  Tables             TCODE_TABLE
+   |                     _001 0000 0000 0000  Tables             TCODE_TABLE    
    |                     _010 0000 0000 0000  Table record       TCODE_TABLEREC
    |                     _100 0000 0000 0000  User information   TCODE_USER
-   |
+   | 
    +-- format: 0 - data size in header  - data block follows    TCODE_SHORT
                1 - data in header - no data block follows
 
@@ -69,7 +69,7 @@
                                              // this typecode is returned when
                                              // a rogue eof marker is found
                                              // Some v1 3dm file writers put
-                                             // these markers in a "goo".
+                                             // these markers in a "goo". 
                                              // Simply skip these chunks and continue.
                                              */
 #define TCODE_LEGACY_GEOMETRY     0x00010000
@@ -87,7 +87,16 @@
 
 #define TCODE_CRC                 0x8000
 
-#define TCODE_ANONYMOUS_CHUNK     (TCODE_USER | TCODE_CRC | 0x0000 )
+#define TCODE_ANONYMOUS_CHUNK        (TCODE_USER | TCODE_CRC | 0x0000 )
+#define TCODE_UTF8_STRING_CHUNK      (TCODE_USER | TCODE_CRC | 0x0001 )
+#define TCODE_MODEL_ATTRIBUTES_CHUNK (TCODE_USER | TCODE_CRC | 0x0002 )
+
+#define TCODE_DICTIONARY             (TCODE_USER | TCODE_CRC   | 0x0010)
+#define TCODE_DICTIONARY_ID          (TCODE_USER | TCODE_CRC   | 0x0011)
+#define TCODE_DICTIONARY_ENTRY       (TCODE_USER | TCODE_CRC   | 0x0012)
+#define TCODE_DICTIONARY_END         (TCODE_USER | TCODE_SHORT | 0x0013)
+#define TCODE_XDATA                  (TCODE_USER | 0x0001)
+
 
 /* The openNURBS toolkit allows users to write all openNURBS classed that are
 // derived from ON_Object using using TCODE_OPENNURBS_CLASS chunks.
@@ -106,10 +115,10 @@
                                                       //   preview image
                                                       */
 #define TCODE_SETTINGS_TABLE   (TCODE_TABLE | 0x0015) /* file properties including,
-                                                      // units, tolerances,
-                                                      // annotation defaults,
-                                                      // render mesh defaults,
-                                                      // current layer,
+                                                      // units, tolerancess, 
+                                                      // annotation defaults, 
+                                                      // render mesh defaults, 
+                                                      // current layer, 
                                                       // current material,
                                                       // current color,
                                                       // named construction planes,
@@ -145,6 +154,7 @@
 #define TCODE_PROPERTIES_APPLICATION     (TCODE_TABLEREC | TCODE_CRC | 0x0024)
 #define TCODE_PROPERTIES_COMPRESSED_PREVIEWIMAGE (TCODE_TABLEREC | TCODE_CRC | 0x0025)
 #define TCODE_PROPERTIES_OPENNURBS_VERSION (TCODE_TABLEREC | TCODE_SHORT | 0x0026)
+#define TCODE_PROPERTIES_AS_FILE_NAME     (TCODE_TABLEREC | TCODE_CRC | 0x0027 )
 
 /* records in settings table */
 #define TCODE_SETTINGS_PLUGINLIST             (TCODE_TABLEREC | TCODE_CRC   | 0x0135)
@@ -167,7 +177,8 @@
 #define TCODE_SETTINGS_CURRENT_DIMSTYLE_INDEX (TCODE_TABLEREC | TCODE_SHORT | 0x0133)
 /* added 29 October 2002 as a chunk to hold new and future ON_3dmSettings information */
 #define TCODE_SETTINGS_ATTRIBUTES             (TCODE_TABLEREC | TCODE_CRC   | 0x0134)
-
+/* 2016-Nov-28 RH-33298 ON_3dmRenderSettings user data in ON_3dmSettings.m_RenderSettings */
+#define TCODE_SETTINGS_RENDER_USERDATA (TCODE_TABLEREC | TCODE_CRC | 0x0136)
 
 /* views are subrecords in the settings table */
 #define TCODE_VIEW_RECORD            (TCODE_TABLEREC | TCODE_CRC   | 0x003B)
@@ -181,7 +192,7 @@
 #define TCODE_VIEW_WALLPAPER         (TCODE_TABLEREC | TCODE_CRC   | 0x073B)
 #define TCODE_VIEW_WALLPAPER_V3      (TCODE_TABLEREC | TCODE_CRC   | 0x074B)
 #define TCODE_VIEW_TARGET            (TCODE_TABLEREC | TCODE_CRC   | 0x083B)
-#define TCODE_VIEW_DISPLAYMODE       (TCODE_TABLEREC | TCODE_SHORT | 0x093B)
+#define TCODE_VIEW_V3_DISPLAYMODE    (TCODE_TABLEREC | TCODE_SHORT | 0x093B)
 #define TCODE_VIEW_NAME              (TCODE_TABLEREC | TCODE_CRC   | 0x0A3B)
 #define TCODE_VIEW_POSITION          (TCODE_TABLEREC | TCODE_CRC   | 0x0B3B)
 
@@ -207,7 +218,7 @@
 
 #define TCODE_LIGHT_RECORD_END        (TCODE_INTERFACE | TCODE_SHORT | 0x006F)
 
-/* records in user table
+/* records in user table 
      Each user table entery has two top level chunks, a TCODE_USER_TABLE_UUID chunk
      and a TCODE_USER_RECORD chunk.
 */
@@ -221,7 +232,7 @@
 /* the user record header was added in 200910190 and is inside the TCODE_USER_TABLE_UUID chunk */
 #define TCODE_USER_TABLE_RECORD_HEADER (TCODE_TABLEREC | TCODE_CRC | 0x0082)
 /* information saved by the plug-in is in a TCODE_USER_RECORD chunk */
-#define TCODE_USER_RECORD              (TCODE_TABLEREC | 0x0081)
+#define TCODE_USER_RECORD              (TCODE_TABLEREC | 0x0081) 
 
 
 /* records in group table */
@@ -277,7 +288,7 @@
 //       value of ON_ClassId::m_uuid for this class
 //       4 byte CRC
 //     TCODE_OPENNURBS_CLASS_DATA
-//       4 byte length
+//       4 byte length 
 //       class specific data for geometry or annotation object
 //       4 byte CRC
 //     TCODE_OPENNURBS_CLASS_USERDATA (1 chunk per piece of user data)
@@ -321,12 +332,12 @@
 //     2 byte chunk version
 //     TCODE_OBJECT_RECORD_HISTORY_HEADER
 //       4 byte length
-//       2 byte chunk version
+//       2 byte chunk version 
 //       ...
 //       4 byte crc
 //     TCODE_OBJECT_RECORD_HISTORY_DATA
 //       4 byte length
-//       2 byte chunk version
+//       2 byte chunk version 
 //       ...
 //       4 byte crc
 //
@@ -466,13 +477,11 @@
 
 #define TCODE_SUMMARY             (TCODE_INTERFACE | 0x0013)
 #define TCODE_BITMAPPREVIEW       (TCODE_INTERFACE | 0x0014)
-#define TCODE_VIEWPORT_DISPLAY_MODE  (TCODE_SHORT | TCODE_INTERFACE | 0x0015)
+#define TCODE_VIEWPORT_V1_DISPLAYMODE  (TCODE_SHORT | TCODE_INTERFACE | 0x0015)
 
 
 #define TCODE_LAYERTABLE          (TCODE_SHORT   | TCODE_TABLE    | 0x0001) /* obsolete - do not use */
 #define TCODE_LAYERREF            (TCODE_SHORT   | TCODE_TABLEREC | 0x0001)
-
-#define TCODE_XDATA               (TCODE_USER | 0x0001)
 
 #define TCODE_RGB                 (TCODE_SHORT   | TCODE_DISPLAY | 0x0001)
 #define TCODE_TEXTUREMAP          (TCODE_DISPLAY | 0x0002)
@@ -519,10 +528,5 @@
 
 #define TCODE_LEGACY_TOL_FIT      (TCODE_TOLERANCE | 0x0001)
 #define TCODE_LEGACY_TOL_ANGLE    (TCODE_TOLERANCE | 0x0002)
-
-#define TCODE_DICTIONARY          (TCODE_USER | TCODE_CRC   | 0x0010)
-#define TCODE_DICTIONARY_ID       (TCODE_USER | TCODE_CRC   | 0x0011)
-#define TCODE_DICTIONARY_ENTRY    (TCODE_USER | TCODE_CRC   | 0x0012)
-#define TCODE_DICTIONARY_END      (TCODE_USER | TCODE_SHORT | 0x0013)
 
 #endif

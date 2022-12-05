@@ -1,4 +1,13 @@
 #include "opennurbs.h"
+
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 #include "opennurbs_polyedgecurve.h"
 
 ON_OBJECT_IMPLEMENT(ON_PolyEdgeSegment,ON_CurveProxy,"42F47A87-5B1B-4e31-AB87-4639D78325D6");
@@ -22,8 +31,8 @@ void ON_PolyEdgeSegment::Init()
   m_edge = 0;
   m_face = 0;
   m_surface = 0;
-  m_edge_domain.Destroy();
-  m_trim_domain.Destroy();
+  m_edge_domain = ON_Interval::EmptyInterval;
+  m_trim_domain = ON_Interval::EmptyInterval;
   ON_CurveProxy::SetProxyCurve(0);
 
   ClearEvalCacheHelper();
@@ -130,12 +139,12 @@ bool ON_PolyEdgeSegment::Create(
   return true;
 }
 
-const ON_BrepEdge* ON_PolyEdgeSegment::Edge() const
+const ON_BrepEdge* ON_PolyEdgeSegment::BrepEdge() const
 {
   return m_edge;
 }
 
-const ON_BrepTrim* ON_PolyEdgeSegment::Trim() const
+const ON_BrepTrim* ON_PolyEdgeSegment::BrepTrim() const
 {
   return m_trim;
 }
@@ -145,7 +154,7 @@ const ON_Brep* ON_PolyEdgeSegment::Brep() const
   return m_brep;
 }
 
-const ON_BrepFace* ON_PolyEdgeSegment::Face() const
+const ON_BrepFace* ON_PolyEdgeSegment::BrepFace() const
 {
   return m_face;
 }
@@ -170,6 +179,7 @@ ON_Interval ON_PolyEdgeSegment::TrimDomain() const
   return m_trim_domain;
 }
 
+
 void ON_PolyEdgeSegment::ClearEvalCacheHelper()
 {
   m_t = ON_UNSET_VALUE;
@@ -183,8 +193,9 @@ void ON_PolyEdgeSegment::ClearEvalCacheHelper()
   m_evsrf_hint[1] = 0;
   m_evsrf_uv[0] = ON_UNSET_VALUE;
   m_evsrf_uv[1] = ON_UNSET_VALUE;
-  m_evsrf_pt = ON_UNSET_POINT;
+  m_evsrf_pt = ON_3dPoint::UnsetPoint;
 }
+
 
 double ON_PolyEdgeSegment::EdgeParameter(double t) const
 {
@@ -221,6 +232,8 @@ double ON_PolyEdgeSegment::EdgeParameter(double t) const
 }
 
 
+
+
 ON_OBJECT_IMPLEMENT(ON_PolyEdgeCurve,ON_PolyCurve,"39FF3DD3-FE0F-4807-9D59-185F0D73C0E4");
 
 ON_PolyEdgeCurve::ON_PolyEdgeCurve()
@@ -231,17 +244,17 @@ ON_PolyEdgeCurve::~ON_PolyEdgeCurve()
 {
 }
 
-ON_BOOL32 ON_PolyEdgeCurve::SetStartPoint( ON_3dPoint start_point )
+bool ON_PolyEdgeCurve::SetStartPoint( ON_3dPoint start_point )
 {
-  return false; // cannot change edges
+  return ON_Curve::SetStartPoint(start_point); // cannot change edges
 }
 
-ON_BOOL32 ON_PolyEdgeCurve::SetEndPoint( ON_3dPoint end_point )
+bool ON_PolyEdgeCurve::SetEndPoint( ON_3dPoint end_point )
 {
-  return false; // cannot change edges
+  return ON_Curve::SetEndPoint(end_point); // cannot change edges
 }
 
-ON_BOOL32 ON_PolyEdgeCurve::ChangeClosedCurveSeam( double t )
+bool ON_PolyEdgeCurve::ChangeClosedCurveSeam( double t )
 {
   //int saved_is_closed_helper = m_is_closed_helper;
 
@@ -302,20 +315,20 @@ ON_BOOL32 ON_PolyEdgeCurve::ChangeClosedCurveSeam( double t )
 
   // ON_PolyCurve::ChangeClosedCurveSeam works fine on
   // two or more segments.
-  ON_BOOL32 rc = ON_PolyCurve::ChangeClosedCurveSeam(t);
+  bool rc = ON_PolyCurve::ChangeClosedCurveSeam(t);
   //if ( saved_is_closed_helper )
   //  m_is_closed_helper = saved_is_closed_helper;
 
   return rc;
 }
 
-ON_BOOL32 ON_PolyEdgeCurve::PrependAndMatch(ON_Curve*)
+bool ON_PolyEdgeCurve::PrependAndMatch(ON_Curve*)
 {
   return false; // cannot change edges
 }
 
 
-ON_BOOL32 ON_PolyEdgeCurve::AppendAndMatch(ON_Curve*)
+bool ON_PolyEdgeCurve::AppendAndMatch(ON_Curve*)
 {
   return false; // cannot change edges
 }
@@ -380,9 +393,9 @@ ON_Curve* ON_PolyEdgeCurve::DuplicateCurve() const
   // NO // return dup_crv;
 }
 
-ON_BOOL32 ON_PolyEdgeSegment::IsClosed(void) const
+bool ON_PolyEdgeSegment::IsClosed(void) const
 {
-  ON_BOOL32 rc = ON_CurveProxy::IsClosed();
+  bool rc = ON_CurveProxy::IsClosed();
   if ( !rc
        && m_edge
        && m_edge->m_vi[0] == m_edge->m_vi[1]
@@ -399,21 +412,21 @@ ON_BOOL32 ON_PolyEdgeSegment::IsClosed(void) const
 
 // 7-1-03 lw added override to unset cached closed flag
 // when a segment is removed
-ON_BOOL32 ON_PolyEdgeCurve::Remove( int segment_index )
+bool ON_PolyEdgeCurve::Remove( int segment_index )
 {
-  ON_BOOL32 rc = ON_PolyCurve::Remove( segment_index);
+  bool rc = ON_PolyCurve::Remove( segment_index);
   //if( rc)
   //  m_is_closed_helper = 0;  // Cached closed flag...
   return rc;
 }
-ON_BOOL32 ON_PolyEdgeCurve::Remove( )
+bool ON_PolyEdgeCurve::Remove( )
 {
   return Remove(Count()-1);
 }
 
-ON_BOOL32 ON_PolyEdgeCurve::IsClosed(void) const
+bool ON_PolyEdgeCurve::IsClosed(void) const
 {
-  ON_BOOL32 rc = ON_PolyCurve::IsClosed();
+  bool rc = ON_PolyCurve::IsClosed();
 
   if ( !rc && SegmentCount() > 1 )
   {
@@ -429,8 +442,8 @@ ON_BOOL32 ON_PolyEdgeCurve::IsClosed(void) const
     const ON_PolyEdgeSegment* seg0 = SegmentCurve(0);
     const ON_PolyEdgeSegment* seg1 = SegmentCurve(SegmentCount()-1);
 
-    const ON_BrepEdge* edge0 = seg0->Edge();
-    const ON_BrepEdge* edge1 = seg1->Edge();
+    const ON_BrepEdge* edge0 = seg0->BrepEdge();
+    const ON_BrepEdge* edge1 = seg1->BrepEdge();
     
     if ( edge0 && edge1 && edge0->Brep() == edge1->Brep() )
     {
@@ -543,10 +556,10 @@ void ON_PolyEdgeSegment::DestroyRuntimeCache( bool bDelete )
 }
 
 
-ON_BOOL32 ON_PolyEdgeCurve::Prepend( ON_PolyEdgeSegment* new_segment )
+bool ON_PolyEdgeCurve::Prepend( ON_PolyEdgeSegment* new_segment )
 {
   DestroyRuntimeCache();
-  ON_BOOL32 rc = false;
+  bool rc = false;
   if ( new_segment )
   {
     if ( Count() > 0 )
@@ -567,10 +580,10 @@ ON_BOOL32 ON_PolyEdgeCurve::Prepend( ON_PolyEdgeSegment* new_segment )
   return rc;
 }
 
-ON_BOOL32 ON_PolyEdgeCurve::Append( ON_PolyEdgeSegment* new_segment )
+bool ON_PolyEdgeCurve::Append( ON_PolyEdgeSegment* new_segment )
 {
   DestroyRuntimeCache();
-  ON_BOOL32 rc = false;
+  bool rc = false;
   if ( new_segment )
   {
     //m_is_closed_helper = 0;
@@ -592,13 +605,13 @@ ON_BOOL32 ON_PolyEdgeCurve::Append( ON_PolyEdgeSegment* new_segment )
   return rc;
 }
 
-ON_BOOL32 ON_PolyEdgeCurve::Insert( 
+bool ON_PolyEdgeCurve::Insert( 
          int segment_index,
          ON_PolyEdgeSegment* new_segment
          )
 {
   DestroyRuntimeCache();
-  ON_BOOL32 rc = false;
+  bool rc = false;
   if ( segment_index > 0 )
   {
     //m_is_closed_helper = 0;
@@ -622,13 +635,13 @@ ON_BOOL32 ON_PolyEdgeCurve::Insert(
 const ON_BrepEdge* ON_PolyEdgeCurve::EdgeAt(double t) const
 {
   ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
-  return seg ? seg->Edge() : 0;
+  return seg ? seg->BrepEdge() : 0;
 }
 
 const ON_BrepTrim* ON_PolyEdgeCurve::TrimAt(double t) const
 {
   ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
-  return seg ? seg->Trim() : 0;
+  return seg ? seg->BrepTrim() : 0;
 }
 
 const ON_Brep*     ON_PolyEdgeCurve::BrepAt(double t) const
@@ -640,7 +653,7 @@ const ON_Brep*     ON_PolyEdgeCurve::BrepAt(double t) const
 const ON_BrepFace* ON_PolyEdgeCurve::FaceAt(double t) const
 {
   ON_PolyEdgeSegment* seg = SegmentCurve( SegmentIndex(t) );
-  return seg ? seg->Face() : 0;
+  return seg ? seg->BrepFace() : 0;
 }
 
 const ON_Surface*  ON_PolyEdgeCurve::SurfaceAt(double t) const
@@ -675,6 +688,7 @@ double ON_PolyEdgeCurve::EdgeParameter(double t) const
   return edge_t;
 }
 
+
 // Test if there are any surface edges in the polyedge
 bool ON_PolyEdgeCurve::ContainsAnyEdges() const
 {
@@ -682,7 +696,7 @@ bool ON_PolyEdgeCurve::ContainsAnyEdges() const
   for( i = 0; i < count; i++)
   {
     ON_PolyEdgeSegment* segment = SegmentCurve(i);
-    if( 0 != segment && NULL != segment->Edge())
+    if( 0 != segment && nullptr != segment->BrepEdge())
     {
       return true;
     }
@@ -697,7 +711,7 @@ bool ON_PolyEdgeCurve::ContainsAllEdges() const
   for( i = 0; i < count; i++)
   {
     ON_PolyEdgeSegment* segment = SegmentCurve(i);
-    if( NULL == segment || NULL == segment->Edge())
+    if( nullptr == segment || nullptr == segment->BrepEdge())
     {
       return false;
     }
@@ -714,7 +728,7 @@ int ON_PolyEdgeCurve::FindEdge( const ON_BrepEdge* edge) const
     for( i = 0; i < count; i++)
     {
       ON_PolyEdgeSegment* segment = SegmentCurve(i);
-      if ( 0 != segment && edge == segment->Edge() )
+      if ( 0 != segment && edge == segment->BrepEdge() )
       {
         rc = i;
         break;
@@ -733,7 +747,7 @@ int ON_PolyEdgeCurve::FindTrim( const ON_BrepTrim* trim) const
     for( i = 0; i < count; i++)
     {
       ON_PolyEdgeSegment* segment = SegmentCurve(i);
-      if ( 0 != segment && trim == segment->Trim() )
+      if ( 0 != segment && trim == segment->BrepTrim() )
       {
         rc = i;
         break;
@@ -753,7 +767,7 @@ int ON_PolyEdgeCurve::FindCurve( const ON_Curve* curve) const
     {
       ON_PolyEdgeSegment* segment = SegmentCurve(i);
       if (    0 != segment 
-           && (curve == segment || curve == segment->ProxyCurve() || curve == segment->Edge()) )
+           && (curve == segment || curve == segment->ProxyCurve() || curve == segment->BrepEdge()) )
       {
         rc = i;
         break;
@@ -763,7 +777,7 @@ int ON_PolyEdgeCurve::FindCurve( const ON_Curve* curve) const
   return rc;
 }
 
-ON_BOOL32 ON_PolyEdgeSegment::Write( ON_BinaryArchive& archive ) const
+bool ON_PolyEdgeSegment::Write( ON_BinaryArchive& archive ) const
 {
   bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
   if (!rc)
@@ -793,7 +807,7 @@ ON_BOOL32 ON_PolyEdgeSegment::Write( ON_BinaryArchive& archive ) const
   return rc;
 }
 
-ON_BOOL32 ON_PolyEdgeSegment::Read( ON_BinaryArchive& archive )
+bool ON_PolyEdgeSegment::Read( ON_BinaryArchive& archive )
 {
   Init();
   int major_version = 0;

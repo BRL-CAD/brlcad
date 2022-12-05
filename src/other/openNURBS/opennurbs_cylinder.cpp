@@ -16,6 +16,14 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 ON_Cylinder::ON_Cylinder() 
 {
   height[0] = 0.0;
@@ -253,7 +261,7 @@ ON_RevSurface* ON_Cylinder::RevSurfaceForm( ON_RevSurface* srf ) const
 {
   if ( srf )
     srf->Destroy();
-  ON_RevSurface* pRevSurface = NULL;
+  ON_RevSurface* pRevSurface = nullptr;
   if ( IsFinite() && IsValid() )
   {
     ON_Line line;
@@ -328,7 +336,7 @@ ON_Brep* ON_Cylinder::BrepForm( ON_Brep* brep ) const
         pCapSurface->m_knot[0][1] =  fabs(radius);
         pCapSurface->m_knot[1][0] = pCapSurface->m_knot[0][0];
         pCapSurface->m_knot[1][1] = pCapSurface->m_knot[0][1];
-        circle.Create( ON_xy_plane, ON_origin, radius );
+        circle.Create( ON_xy_plane, ON_3dPoint::Origin, radius );
         ON_NurbsCurve* c2 = new ON_NurbsCurve();
         circle.GetNurbForm(*c2);
         c2->ChangeDimension(2);
