@@ -28,6 +28,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "gcv/api.h"
 #include "wdb.h"
@@ -108,51 +109,120 @@ aimatrix_to_arr16(aiMatrix4x4 aimat, fastf_t* ret)
     ret[15] = aimat.d4;
 }
 
+/* known shader names */
+std::unordered_set<std::string>brlcad_shaders { "bump", "bwtexture", "camo", "checker", 
+                                                "cloud", "envmap", "fbmbump", "fire", 
+                                                "glass", "gravel", "light", "marble", 
+                                                "mirror", "plastic", "rtrans", "scloud", 
+                                                "spm", "stack", "stxt", "texture", "turbump", 
+                                                "wood" };
+
+/* checks if in_name exists as a known shader keyword
+ * if it is, we assume any remaining string after a space are shader args
+ *
+ * returns 1 if shader properties are found and set in ret
+ * returns 0 otherwise
+ */
+static int
+check_brlcad_shader(std::string in_name, shader_properties_t* ret)
+{
+    std::string name, args = "";
+    size_t space = in_name.find(" ");
+
+    /* for brlcad shaders a space means we have additional shader params
+     * in the form "shader_name param1=x .."
+     */
+    if (space != std::string::npos) {
+        name = in_name.substr(0, space);
+        args = in_name.substr(space+1);
+    } else {
+        name = in_name;
+    }
+
+    if (brlcad_shaders.find(name) != brlcad_shaders.end()) {
+        ret->name = new char[name.size() + 1];
+        bu_strlcpy(ret->name, name.c_str(), name.size() + 1);
+        if (args != "") {
+            ret->args = new char[args.size() + 1];
+            bu_strlcpy(ret->args, args.c_str(), args.size() + 1);
+        }
+        return 1;
+    }
+
+    return 0;
+}
+
 static shader_properties_t*
 generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
 {
     shader_properties_t* ret = new shader_properties_t();
+    aiColor3D* mesh_color = (aiColor3D*)pstate->scene->mMeshes[mesh_idx]->mColors[0];
 
     /* check for material data */
     if (pstate->scene->HasMaterials()) {
 	unsigned int mat_idx = pstate->scene->mMeshes[mesh_idx]->mMaterialIndex;
 	aiMaterial* mat = pstate->scene->mMaterials[mat_idx];
 
-	/* for brlcad shaders, a space means we have additional shader params
-	 * in the form "shader_name param1=x .."
-	 */
-	std::string fmt = mat->GetName().data;
-	size_t space = fmt.find(" ");
-
-	if (space != std::string::npos) {
-	    ret->name = new char[space +1];
-	    ret->args = new char[fmt.size() - space];
-	    bu_strlcpy(ret->name, fmt.substr(0, space).c_str(), space +1);
-	    bu_strlcpy(ret->args, fmt.substr(space+1).c_str(), fmt.size() - space);
-	} else {
-	    ret->name = new char[fmt.size() +1];
-	    bu_strlcpy(ret->name, fmt.c_str(), fmt.size() +1);
-	}
-
-	/* TODO create shader arg string from set material data, not just name */
-	/* get material data used for phong shading */
-	aiColor3D diff (-1);
-	aiColor3D spec (-1);
-	aiColor3D amb (-1);
-	float s = -1.0;
-	mat->Get(AI_MATKEY_COLOR_DIFFUSE, diff);
-	mat->Get(AI_MATKEY_COLOR_SPECULAR, spec);
-	mat->Get(AI_MATKEY_COLOR_AMBIENT, amb);
-	mat->Get(AI_MATKEY_SHININESS_STRENGTH, s);
+        /* when shader names are written from a .g we use the raw name+args as the shader name 
+         * otherwise try to build up the shader manually 
+         */
+        if (!check_brlcad_shader(mat->GetName().data, ret)) {
+	    std::string name = "plastic";
+	    ret->name = new char[name.size() + 1];
+	    bu_strlcpy(ret->name, name.c_str(), name.size() + 1);
+    
+	    /* brlcad 'plastic' shader defaults */
+	    float tr = 0.0;		/* transparency */
+	    float re = 0.0;		/* mirror reflectance */
+	    float sp = 0.7;		/* specular reflectivity */
+	    float di = 0.3;		/* diffuse reflectivity */
+	    float ri = 1.0;		/* refractive index */
+	    float ex = 0.0;		/* extinction */
+	    float sh = 10.0;	        /* shininess */
+	    float em = 0.0;		/* emission */
+    
+	    /* gets value if key exists in material, otherwise leaves default */
+            /* NOTE: assimp seems to favor MATKEY_OPACITY over MATKEY_TRANSPARENCYFACTOR
+             * so we use 1-opacity for transparency
+             */
+	    mat->Get(AI_MATKEY_OPACITY, tr);
+	    mat->Get(AI_MATKEY_REFLECTIVITY, re);
+	    mat->Get(AI_MATKEY_SPECULAR_FACTOR, sp);
+	    mat->Get(AI_MATKEY_SHININESS_STRENGTH, di);
+	    mat->Get(AI_MATKEY_REFRACTI, ri);
+	    mat->Get(AI_MATKEY_ANISOTROPY_FACTOR, ex);
+	    mat->Get(AI_MATKEY_SHININESS, sh);
+	    mat->Get(AI_MATKEY_EMISSIVE_INTENSITY, em);
+    
+	    /* format values into args string */
+	    std::string args =
+	        "{ tr " + std::to_string(1-tr) +
+	         " re " + std::to_string(re) +
+	         " sp " + std::to_string(sp) +
+	         " di " + std::to_string(di) +
+	         " ri " + std::to_string(ri) +
+	         " ex " + std::to_string(ex) +
+	         " sh " + std::to_string(sh) +
+	         " em " + std::to_string(em) +
+	         " }";
+	    ret->args = new char[args.size() + 1];
+	    bu_strlcpy(ret->args, args.c_str(), args.size() + 1);
+        }
+    
+        /* check for vertex colors, otherwise try to use diffuse color */
+        if (!mesh_color) {
+            aiColor3D diff(1);	/* diffuse color -> defaults to white */
+            mat->Get(AI_MATKEY_COLOR_DIFFUSE, diff);
+            mesh_color = &diff;
+        }
     }
 
     /* set the color of the face using the first vertex color data we 
-     * find if such exists
-     * NOTE: we make two assumptions:
+     * find if such exists. If not, try to use the material diffuse color.
+     * NOTE: we make two assumptions when using the vertex[0] color:
      * 1) each vertex only has one set of colors
      * 2) each vertex in the triangle is the same color
      */
-    aiColor4D* mesh_color = pstate->scene->mMeshes[mesh_idx]->mColors[0];
     if (mesh_color) {
 	ret->rgb = new unsigned char[3];
 	ret->rgb[0] = (unsigned char)(mesh_color->r * 255);

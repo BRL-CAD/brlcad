@@ -200,7 +200,7 @@ option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstrac
 mark_as_advanced(BRLCAD_ENABLE_GDAL)
 
 # Enable features requiring Open Asset Import library
-option(BRLCAD_ENABLE_ASSIMP "Enable features requiring the Open Asset Import Library" OFF)
+option(BRLCAD_ENABLE_ASSIMP "Enable features requiring the Open Asset Import Library" ON)
 mark_as_advanced(BRLCAD_ENABLE_ASSIMP)
 
 # Enable features requiring STEPcode library

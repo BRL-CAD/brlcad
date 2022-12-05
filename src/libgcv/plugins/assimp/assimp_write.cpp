@@ -227,35 +227,69 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 
     /* set material data using shader string */
     if (tsp->ts_mater.ma_shader) {
-	std::string shader_name(tsp->ts_mater.ma_shader);
-	auto it = pstate->mat_names.find(shader_name);
+	std::string raw_shader(tsp->ts_mater.ma_shader);
+	auto it = pstate->mat_names.find(raw_shader);
 	if (it != pstate->mat_names.end()) {
 	    curr_mesh->mMaterialIndex = it->second;
 	} else {
-	    /* we create a new material and give it the name of the raw ma_shader
-	     * NOTE: this hack-ily handles any modifiers (re, sh, etc)
-	     * by stuffing them into the string rather than setting them properly
-	     * in the material properties. This works internally because assimp_read.cpp
-	     * re-sets the shader string but this will NOT work to relate material data
-	     * to other readers using the file format */
 	    aiMaterial* mat = new aiMaterial();
 
-	    aiString* str_to_aistr = new aiString(shader_name);
+	    /* for brlcad shaders, a space means we have additional shader params
+	    * in the form "shader_name param1=x .."
+	    */
+	    size_t space = raw_shader.find(" ");
+	    std::string mat_args = "";
+	    if (space != std::string::npos)
+		mat_args = raw_shader.substr(space + 1);
+
+	    /* 'plastic' defaults */
+	    std::map<std::string, float> def_args = {
+							{"tr", 0.0},
+							{"re", 0.0},
+							{"sp", 0.7},
+							{"di", 0.3},
+							{"ri", 1.0},
+							{"ex", 0.0},
+							{"sh", 10.0},
+							{"em", 0.0}
+						    };
+	    
+	    /* parse pairs, updating values in def_args map */
+	    size_t pos;
+	    while ((pos = mat_args.find(" ")) != std::string::npos) {
+		std::string curr = mat_args.substr(0, pos);
+		size_t eq;
+		if ((eq = curr.find("=")) != std::string::npos) {
+		    def_args[curr.substr(0, eq)] = std::stof(curr.substr(eq + 1));
+		}
+		mat_args.erase(0, pos + 1);
+	    }
+
+	    /* assign shader properties
+             * NOTE: all these attributes are not guaranteed to survive the export 
+             * depending on the output format 
+             */
+	    aiString* str_to_aistr = new aiString(raw_shader);
 	    mat->AddProperty(str_to_aistr, AI_MATKEY_NAME);
 
-	    /* TODO set properties the correct way */
-	    //     int blinn = aiShadingMode_Blinn;
-	    //     mat->AddProperty<int>(&blinn, 1, AI_MATKEY_SHADING_MODEL);
+            /* exporter seems to prefer opacity over transparency matkey */
+            float opacity = 1 - def_args["tr"];
+	    mat->AddProperty<float>(&opacity, 1, AI_MATKEY_OPACITY);
+	    mat->AddProperty<float>(&def_args["re"], 1, AI_MATKEY_REFLECTIVITY);
+	    mat->AddProperty<float>(&def_args["sp"], 1, AI_MATKEY_SPECULAR_FACTOR);
+	    mat->AddProperty<float>(&def_args["di"], 1, AI_MATKEY_SHININESS_STRENGTH);
+	    mat->AddProperty<float>(&def_args["ri"], 1, AI_MATKEY_REFRACTI);
+	    mat->AddProperty<float>(&def_args["ex"], 1, AI_MATKEY_ANISOTROPY_FACTOR);
+	    mat->AddProperty<float>(&def_args["sh"], 1, AI_MATKEY_SHININESS);
+	    mat->AddProperty<float>(&def_args["em"], 1, AI_MATKEY_EMISSIVE_INTENSITY);
 
-	    //     aiColor3D col(final_color->r, final_color->g, final_color->b);
-
-	    //     mat->AddProperty<aiColor3D>(&col, 1, AI_MATKEY_COLOR_DIFFUSE);
-	    //     aiTextureType_UNKNOWN for mat_code?
+            aiColor3D col(tsp->ts_mater.ma_color[0] * 255, tsp->ts_mater.ma_color[1] * 255, tsp->ts_mater.ma_color[2] * 255);
+            mat->AddProperty<aiColor3D>(&col, 1, AI_MATKEY_COLOR_DIFFUSE);
 
 	    /* add new material to map */
 	    pstate->mats.push_back(mat);
 	    curr_mesh->mMaterialIndex = pstate->mats.size();
-	    pstate->mat_names.emplace(shader_name, pstate->mats.size());
+	    pstate->mat_names.emplace(raw_shader, pstate->mats.size());
 	}
     } else {
 	curr_mesh->mMaterialIndex = 0;
@@ -313,7 +347,7 @@ static int
 assimp_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *dest_path)
 {
     assimp_write_state_t state;
-    struct gcv_region_end_data gcvwriter;
+    struct gcv_region_end_data gcvwriter { NULL, NULL };
     struct db_tree_state tree_state;
     int ret = 1;
 

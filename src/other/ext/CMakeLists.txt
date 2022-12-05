@@ -347,7 +347,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 # Open Asset Import Library - library for supporting I/O for a number of
 # Geometry file formats
 # https://github.com/assimp/assimp
-#include(${CMAKE_CURRENT_SOURCE_DIR}/assimp.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/assimp.cmake)
 
 # TCL - scripting language.  For Tcl/Tk builds we want
 # static lib building on so we get the stub libraries.
