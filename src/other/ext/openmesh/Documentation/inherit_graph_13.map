@@ -1,0 +1,9 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$a02794.html" title="Connectivity Class for Triangle Meshes." alt="" coords="5,5,187,32"/>
+<area shape="rect" id="node2" href="$a02418.html" title="Mesh kernel using arrays for mesh item storage." alt="" coords="253,31,415,57"/>
+<area shape="rect" id="node3" href="$a02618.html" title="Connectivity Class for polygonal meshes." alt="" coords="483,5,675,32"/>
+<area shape="rect" id="node4" href="$a02438.html" title="This class provides low&#45;level property management like adding/removing properties and access to prope..." alt="" coords="16,96,176,123"/>
+<area shape="rect" id="node5" href="$a03426.html" title=" " alt="" coords="237,81,431,137"/>
+<area shape="rect" id="node7" href="$a03426.html" title="Helper class, extending functionaliy of OpenMesh::BaseKernel to OpenSG specific property adaptors." alt="" coords="235,162,433,203"/>
+<area shape="rect" id="node6" href="$a03414.html" title="This class adds the standard properties to the mesh type." alt="" coords="481,89,676,130"/>
+</map>

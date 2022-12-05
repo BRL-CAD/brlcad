@@ -1,0 +1,9 @@
+<map id="OpenMesh::Subdivider::Uniform::CompositeLoopT&lt; MeshType, RealType &gt;" name="OpenMesh::Subdivider::Uniform::CompositeLoopT&lt; MeshType, RealType &gt;">
+<area shape="rect" id="node1" title="Uniform composite Loop subdivision algorithm." alt="" coords="812,49,995,105"/>
+<area shape="rect" id="node2" href="$a03678.html" title="This class provides the composite subdivision rules for the uniform case." alt="" coords="540,5,709,61"/>
+<area shape="rect" id="node3" href="$a03762.html" title="Abstract base class for uniform subdivision algorithms." alt="" coords="259,5,428,61"/>
+<area shape="rect" id="node4" href="$a02846.html" title="This class demonstrates the non copyable idiom." alt="" coords="5,20,209,47"/>
+<area shape="rect" id="node5" href="$a03706.html" title="Helper struct." alt="" coords="533,86,716,157"/>
+<area shape="rect" id="node6" href="$a03682.html" title="Abstract base class for coefficient functions." alt="" coords="316,96,371,123"/>
+<area shape="rect" id="node7" title=" " alt="" coords="270,147,417,173"/>
+</map>

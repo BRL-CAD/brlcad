@@ -352,6 +352,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 # https://github.com/assimp/assimp
 include(${CMAKE_CURRENT_SOURCE_DIR}/assimp.cmake)
 
+# OpenMesh Library - library for representing and manipulating polygonal meshes
+# https://www.graphics.rwth-aachen.de/software/openmesh/
+include(${CMAKE_CURRENT_SOURCE_DIR}/openmesh.cmake)
+
 # TCL - scripting language.  For Tcl/Tk builds we want
 # static lib building on so we get the stub libraries.
 set(BSL_CACHE ${BUILD_STATIC_LIBS})
@@ -398,6 +402,7 @@ if (COMMAND CMAKEFILES)
     CMake/FindLEMON.cmake
     CMake/FindNETPBM.cmake
     CMake/FindOPENNURBS.cmake
+    CMake/FindOpenMesh.cmake
     CMake/FindPERPLEX.cmake
     CMake/FindPOLY2TRI.cmake
     CMake/FindPROJ4.cmake
@@ -429,6 +434,8 @@ if (COMMAND CMAKEFILES)
     linenoise.dist
     netpbm.cmake
     netpbm.dist
+    openmesh.cmake
+    openmesh.dist
     perplex.cmake
     perplex.dist
     png.cmake
