@@ -63,7 +63,7 @@ while [ X$STATUS != X0 ] ; do
 
     mged -c $1 <<EOF
     tol $TOL
-    facetize -r --restart $2 $2.bot
+    facetize -r --resume $2 $2.bot
 EOF
 STATUS=$?
 
