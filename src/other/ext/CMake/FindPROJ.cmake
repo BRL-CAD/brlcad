@@ -5,7 +5,7 @@
 # PROJ_FOUND       = if the library found
 # PROJ_VERSION     = version number of PROJ found
 # PROJ_LIBRARIES   = full path to the library
-# PROJ_INCLUDE_DIR = where to find the library headers 
+# PROJ_INCLUDE_DIR = where to find the library headers
 # Also defined, but not for general use are
 # PROJ_LIBRARY, where to find the PROJ library.
 #
@@ -50,7 +50,6 @@ if (PROJ_INCLUDE_DIR)
 	file(STRINGS ${PROJ_INCLUDE_DIR}/proj.h PJ_PATCHSTR REGEX "#define[ ]+PROJ_VERSION_PATCH[ ]+[0-9]+")
 	string(REGEX MATCH "[0-9]+" PJ_PATCH ${PJ_PATCHSTR})
 	set(PROJ_VERSION ${PJ_MAJOR}.${PJ_MINOR}.${PJ_PATCH})
-	message("PROJ_VERSION: ${PROJ_VERSION}")
 endif()
 
 set(PROJ_NAMES ${PROJ_NAMES} proj proj_i)
@@ -71,3 +70,11 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PROJ DEFAULT_MSG
 	PROJ_LIBRARY
 	PROJ_INCLUDE_DIR)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+
