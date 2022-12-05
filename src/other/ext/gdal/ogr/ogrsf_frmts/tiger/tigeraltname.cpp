@@ -29,16 +29,16 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const char FILE_CODE[] = "4";
 
 static const TigerFieldInfo rt4_fields[] = {
-  // fieldname    fmt  type  OFTType         beg  end  len  bDefine bSet bWrite
-  { "MODULE",     ' ',  ' ', OFTString,        0,   0,   8,       1,   0,     0 },
-  { "TLID",       'R',  'N', OFTInteger,       6,  15,  10,       1,   1,     1 },
-  { "RTSQ",       'R',  'N', OFTInteger,      16,  18,   3,       1,   1,     1 },
-  { "FEAT",       ' ',  ' ', OFTIntegerList,   0,   0,   8,       1,   0,     0 }
+  // fieldname    fmt  type  OFTType         beg  end  len  bDefine bSet
+  { "MODULE",     ' ',  ' ', OFTString,        0,   0,   8,       1,   0 },
+  { "TLID",       'R',  'N', OFTInteger,       6,  15,  10,       1,   1 },
+  { "RTSQ",       'R',  'N', OFTInteger,      16,  18,   3,       1,   1 },
+  { "FEAT",       ' ',  ' ', OFTIntegerList,   0,   0,   8,       1,   0 }
   // Note: we don't mention the FEAT1, FEAT2, FEAT3, FEAT4, FEAT5 fields
   // here because they're handled separately in the code below; they correspond
   // to the FEAT array field here.
@@ -87,21 +87,21 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
         CPLError( CE_Failure, CPLE_FileIO,
                   "Request for out-of-range feature %d of %s4",
                   nRecordId, pszModule );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Read the raw record data from the file.                         */
 /* -------------------------------------------------------------------- */
-    if( fpPrimary == NULL )
-        return NULL;
+    if( fpPrimary == nullptr )
+        return nullptr;
 
     if( VSIFSeekL( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to %d of %s4",
                   nRecordId * nRecordLength, pszModule );
-        return NULL;
+        return nullptr;
     }
 
     // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
@@ -111,7 +111,7 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %s4",
                   nRecordId, pszModule );
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -136,36 +136,4 @@ OGRFeature *TigerAltName::GetFeature( int nRecordId )
     poFeature->SetField( "FEAT", nFeatCount, anFeatList );
 
     return poFeature;
-}
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-
-OGRErr TigerAltName::CreateFeature( OGRFeature *poFeature )
-
-{
-
-    if( !SetWriteModule( FILE_CODE, psRTInfo->nRecordLength+2, poFeature ) )
-        return OGRERR_FAILURE;
-
-    char szRecord[OGR_TIGER_RECBUF_LEN] = {};
-    memset( szRecord, ' ', psRTInfo->nRecordLength );
-
-    WriteFields( psRTInfo, poFeature, szRecord );
-
-    int nValueCount = 0;
-    const int *panValue =
-        poFeature->GetFieldAsIntegerList( "FEAT", &nValueCount );
-    for( int i = 0; i < nValueCount; i++ )
-    {
-        char szWork[9] = {};
-
-        snprintf( szWork, sizeof(szWork), "%8d", panValue[i] );
-        strncpy( szRecord + 18 + 8 * i, szWork, 8 );
-    }
-
-    WriteRecord( szRecord, psRTInfo->nRecordLength, FILE_CODE );
-
-    return OGRERR_NONE;
 }

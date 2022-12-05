@@ -1,2 +1,2 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(frmt_rs2 OBJECT rs2dataset.cpp)
+add_gdal_driver(TARGET gdal_RS2 SOURCES rs2dataset.cpp PLUGIN_CAPABLE NO_DEPS)
+gdal_standard_includes(gdal_RS2)

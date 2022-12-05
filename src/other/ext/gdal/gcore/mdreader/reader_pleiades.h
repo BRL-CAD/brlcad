@@ -46,7 +46,7 @@ Common metadata (from metadata filename):
 
 */
 
-class GDALMDReaderPleiades: public GDALMDReaderBase
+class CPL_DLL GDALMDReaderPleiades: public GDALMDReaderBase
 {
 public:
     GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
@@ -61,9 +61,9 @@ public:
 protected:
     virtual void LoadMetadata() override;
 protected:
-    CPLString m_osBaseFilename;
-    CPLString m_osIMDSourceFilename;
-    CPLString m_osRPBSourceFilename;
+    CPLString m_osBaseFilename{};
+    CPLString m_osIMDSourceFilename{};
+    CPLString m_osRPBSourceFilename{};
 private:
     GDALMDReaderPleiades();
 };

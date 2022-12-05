@@ -3,10 +3,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Defines OGRUnionLayer class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2012-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,17 +38,17 @@
 /*                      OGRUnionLayerGeomFieldDefn                      */
 /************************************************************************/
 
-class OGRUnionLayerGeomFieldDefn: public OGRGeomFieldDefn
+class CPL_DLL OGRUnionLayerGeomFieldDefn final: public OGRGeomFieldDefn
 {
     public:
 
-    int             bGeomTypeSet;
-    int             bSRSSet;
-    OGREnvelope     sStaticEnvelope;
+    int             bGeomTypeSet = false;
+    int             bSRSSet = false;
+    OGREnvelope     sStaticEnvelope{};
 
             OGRUnionLayerGeomFieldDefn(const char* pszName, OGRwkbGeometryType eType);
-   explicit OGRUnionLayerGeomFieldDefn(OGRGeomFieldDefn* poSrc);
-   explicit OGRUnionLayerGeomFieldDefn(OGRUnionLayerGeomFieldDefn* poSrc);
+   explicit OGRUnionLayerGeomFieldDefn(const OGRGeomFieldDefn* poSrc);
+   explicit OGRUnionLayerGeomFieldDefn(const OGRUnionLayerGeomFieldDefn* poSrc);
            ~OGRUnionLayerGeomFieldDefn();
 };
 
@@ -64,8 +64,10 @@ typedef enum
     FIELD_SPECIFIED,
 } FieldUnionStrategy;
 
-class OGRUnionLayer : public OGRLayer
+class CPL_DLL OGRUnionLayer final: public OGRLayer
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRUnionLayer)
+
   protected:
     CPLString           osName;
     int                 nSrcLayers;
@@ -78,7 +80,7 @@ class OGRUnionLayer : public OGRLayer
     int                 nGeomFields;
     OGRUnionLayerGeomFieldDefn **papoGeomFields;
     FieldUnionStrategy eFieldStrategy;
-    CPLString           osSourceLayerFieldName;
+    CPLString           osSourceLayerFieldName{};
 
     int                 bPreserveSrcFID;
 

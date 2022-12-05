@@ -1,5 +1,13 @@
-include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/../raw
-	)
-add_library(frmt_ceos2 OBJECT sar_ceosdataset.cpp ceosrecipe.c ceossar.c ceos.c link.c)
+add_gdal_driver(
+  TARGET gdal_SAR_CEOS
+  DEF FRMT_ceos2
+  SOURCES ceos.c
+          ceos.h
+          ceosrecipe.c
+          ceossar.c
+          link.c
+          sar_ceosdataset.cpp
+          PLUGIN_CAPABLE
+          NO_DEPS)
+gdal_standard_includes(gdal_SAR_CEOS)
+target_include_directories(gdal_SAR_CEOS PRIVATE $<TARGET_PROPERTY:gdal_raw,SOURCE_DIR>)

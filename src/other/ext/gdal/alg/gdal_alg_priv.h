@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2008, Andrey Kiselev <dron@ak4719.spb.edu>
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,7 +34,10 @@
 
 #ifndef DOXYGEN_SKIP
 
+#include <cstdint>
+
 #include "gdal_alg.h"
+#include "ogr_spatialref.h"
 
 CPL_C_START
 
@@ -56,10 +59,25 @@ typedef struct {
     int nYSize;
     int nBands;
     GDALDataType eType;
-    double *padfBurnValue;
+    int nPixelSpace;
+    GSpacing nLineSpace;
+    GSpacing nBandSpace;
+    GDALDataType eBurnValueType;
+    union
+    {
+        const std::int64_t* int64_values;
+        const double *double_values;
+    } burnValues;
     GDALBurnValueSrc eBurnValueSource;
     GDALRasterMergeAlg eMergeAlg;
 } GDALRasterizeInfo;
+
+typedef enum {
+    GRO_Raster = 0,
+    GRO_Vector = 1,
+    GRO_Auto = 2,
+} GDALRasterizeOptim;
+
 
 /************************************************************************/
 /*      Low level rasterizer API.                                       */
@@ -69,25 +87,28 @@ typedef void (*llScanlineFunc)( void *, int, int, int, double );
 typedef void (*llPointFunc)( void *, int, int, double );
 
 void GDALdllImagePoint( int nRasterXSize, int nRasterYSize,
-                        int nPartCount, int *panPartSize,
-                        double *padfX, double *padfY, double *padfVariant,
+                        int nPartCount, const int *panPartSize,
+                        const double *padfX, const double *padfY,
+                        const double *padfVariant,
                         llPointFunc pfnPointFunc, void *pCBData );
 
 void GDALdllImageLine( int nRasterXSize, int nRasterYSize,
-                       int nPartCount, int *panPartSize,
-                       double *padfX, double *padfY, double *padfVariant,
+                       int nPartCount, const int *panPartSize,
+                       const double *padfX, const double *padfY,
+                       const double *padfVariant,
                        llPointFunc pfnPointFunc, void *pCBData );
 
 void GDALdllImageLineAllTouched( int nRasterXSize, int nRasterYSize,
-                                 int nPartCount, int *panPartSize,
-                                 double *padfX, double *padfY,
-                                 double *padfVariant,
-                                 llPointFunc pfnPointFunc, void *pCBData );
+                                 int nPartCount, const int *panPartSize,
+                                 const double *padfX, const double *padfY,
+                                 const double *padfVariant,
+                                 llPointFunc pfnPointFunc, void *pCBData,
+                                 int bAvoidBurningSamePoints );
 
 void GDALdllImageFilledPolygon( int nRasterXSize, int nRasterYSize,
-                                int nPartCount, int *panPartSize,
-                                double *padfX, double *padfY,
-                                double *padfVariant,
+                                int nPartCount, const int *panPartSize,
+                                const double *padfX, const double *padfY,
+                                const double *padfVariant,
                                 llScanlineFunc pfnScanlineFunc, void *pCBData );
 
 CPL_C_END
@@ -105,15 +126,17 @@ private:
     void     MergePolygon( int nSrcId, int nDstId );
     int      NewPolygon( DataType nValue );
 
+    CPL_DISALLOW_COPY_ASSIGN(GDALRasterPolygonEnumeratorT)
+
 public:  // these are intended to be readonly.
 
-    GInt32   *panPolyIdMap;
-    DataType   *panPolyValue;
+    GInt32   *panPolyIdMap = nullptr;
+    DataType   *panPolyValue = nullptr;
 
-    int      nNextPolygonId;
-    int      nPolyAlloc;
+    int      nNextPolygonId = 0;
+    int      nPolyAlloc = 0;
 
-    int      nConnectedness;
+    int      nConnectedness = 0;
 
 public:
     explicit GDALRasterPolygonEnumeratorT( int nConnectedness=4 );
@@ -130,17 +153,17 @@ public:
 
 struct IntEqualityTest
 {
-    bool operator()(GInt32 a, GInt32 b) { return a == b; }
+    bool operator()(std::int64_t a, std::int64_t b) const { return a == b; }
 };
 
-typedef GDALRasterPolygonEnumeratorT<GInt32, IntEqualityTest> GDALRasterPolygonEnumerator;
+typedef GDALRasterPolygonEnumeratorT<std::int64_t, IntEqualityTest> GDALRasterPolygonEnumerator;
 
 typedef void* (*GDALTransformDeserializeFunc)( CPLXMLNode *psTree );
 
-void* GDALRegisterTransformDeserializer(const char* pszTransformName,
+void CPL_DLL *GDALRegisterTransformDeserializer(const char* pszTransformName,
                                        GDALTransformerFunc pfnTransformerFunc,
                                        GDALTransformDeserializeFunc pfnDeserializeFunc);
-void GDALUnregisterTransformDeserializer(void* pData);
+void CPL_DLL GDALUnregisterTransformDeserializer(void* pData);
 
 void GDALCleanupTransformDeserializerMutex();
 
@@ -150,6 +173,73 @@ void* GDALCreateTPSTransformerInt( int nGCPCount, const GDAL_GCP *pasGCPList,
                                    int bReversed, char** papszOptions );
 
 void CPL_DLL * GDALCloneTransformer( void *pTransformerArg );
+
+void GDALRefreshGenImgProjTransformer(void* hTransformArg);
+void GDALRefreshApproxTransformer(void* hTransformArg);
+
+int GDALTransformLonLatToDestGenImgProjTransformer(void* hTransformArg,
+                                                    double* pdfX,
+                                                    double* pdfY);
+int GDALTransformLonLatToDestApproxTransformer(void* hTransformArg,
+                                                    double* pdfX,
+                                                    double* pdfY);
+
+bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc pfnTransformer,
+                                                 void                *pTransformerArg);
+
+typedef struct _CPLQuadTree CPLQuadTree;
+
+typedef struct {
+    GDALTransformerInfo sTI;
+
+    bool        bReversed;
+    double      dfOversampleFactor;
+
+    // Map from target georef coordinates back to geolocation array
+    // pixel line coordinates.  Built only if needed.
+    int         nBackMapWidth;
+    int         nBackMapHeight;
+    double      adfBackMapGeoTransform[6];  // Maps georef to pixel/line.
+
+    bool        bUseArray;
+    void       *pAccessors;
+
+    // Geolocation bands.
+    GDALDatasetH     hDS_X;
+    GDALRasterBandH  hBand_X;
+    GDALDatasetH     hDS_Y;
+    GDALRasterBandH  hBand_Y;
+    int              bSwapXY;
+
+    // Located geolocation data.
+    int              nGeoLocXSize;
+    int              nGeoLocYSize;
+    double           dfMinX;
+    double           dfYAtMinX;
+    double           dfMinY;
+    double           dfXAtMinY;
+    double           dfMaxX;
+    double           dfYAtMaxX;
+    double           dfMaxY;
+    double           dfXAtMaxY;
+
+    int              bHasNoData;
+    double           dfNoDataX;
+
+    // Geolocation <-> base image mapping.
+    double           dfPIXEL_OFFSET;
+    double           dfPIXEL_STEP;
+    double           dfLINE_OFFSET;
+    double           dfLINE_STEP;
+
+    bool             bOriginIsTopLeftCorner;
+    bool             bGeographicSRSWithMinus180Plus180LongRange;
+    CPLQuadTree     *hQuadTree;
+
+    char **          papszGeolocationInfo;
+
+} GDALGeoLocTransformInfo;
+
 
 /************************************************************************/
 /*      Color table related                                             */
@@ -207,6 +297,31 @@ struct FloatEqualityTest
 {
     bool operator()(float a, float b) { return GDALFloatEquals(a,b) == TRUE; }
 };
+
+bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
+                               double adfGT[6],
+                               int nXSize,
+                               int nYSize,
+                               double& dfWestLongitudeDeg,
+                               double& dfSouthLatitudeDeg,
+                               double& dfEastLongitudeDeg,
+                               double& dfNorthLatitudeDeg );
+
+bool GDALComputeAreaOfInterest(OGRSpatialReference* poSRS,
+                               double dfX1,
+                               double dfY1,
+                               double dfX2,
+                               double dfY2,
+                               double& dfWestLongitudeDeg,
+                               double& dfSouthLatitudeDeg,
+                               double& dfEastLongitudeDeg,
+                               double& dfNorthLatitudeDeg );
+
+void *GDALCreateGeoLocTransformerEx( GDALDatasetH hBaseDS,
+                                     char **papszGeolocationInfo,
+                                     int bReversed,
+                                     const char* pszSourceDataset,
+                                     CSLConstList papszTransformOptions );
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

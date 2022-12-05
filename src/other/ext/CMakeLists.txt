@@ -332,8 +332,11 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/png.cmake)
 # lives in ext.
 include(${CMAKE_CURRENT_SOURCE_DIR}/stepcode.cmake)
 
-# PROJ4 - generic coordinate transformation - https://proj.org/
-include(${CMAKE_CURRENT_SOURCE_DIR}/proj4.cmake)
+# SQLITE3 - embeddable database
+include(${CMAKE_CURRENT_SOURCE_DIR}/sqlite3.cmake)
+
+# PROJ - generic coordinate transformation - https://proj.org
+include(${CMAKE_CURRENT_SOURCE_DIR}/proj.cmake)
 
 # GDAL -  translator library for raster and vector geospatial data formats
 # https://gdal.org
@@ -400,6 +403,7 @@ if (COMMAND CMAKEFILES)
     CMake/FindPROJ4.cmake
     CMake/FindRE2C.cmake
     CMake/FindREGEX.cmake
+    CMake/FindSQLite3.cmake
     CMake/FindSTEPCODE.cmake
     CMake/FindTCL.cmake
     CMake/FindUTAHRLE.cmake
@@ -429,10 +433,12 @@ if (COMMAND CMAKEFILES)
     perplex.dist
     png.cmake
     png.dist
-    proj-4.dist
-    proj4.cmake
+    proj.dist
+    proj.cmake
     regex.cmake
     regex.dist
+    sqlite3.cmake
+    sqlite3.dist
     stepcode.cmake
     stepcode.dist
     tcl.cmake

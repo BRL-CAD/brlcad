@@ -28,15 +28,15 @@
 
 #include "ogr_avc.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRAVCDataSource()                          */
 /************************************************************************/
 
 OGRAVCDataSource::OGRAVCDataSource() :
-    poSRS(NULL),
-    pszCoverageName(NULL)
+    poSRS(nullptr),
+    pszCoverageName(nullptr)
 {}
 
 /************************************************************************/
@@ -55,7 +55,7 @@ OGRAVCDataSource::~OGRAVCDataSource()
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRAVCDataSource::GetSpatialRef()
+OGRSpatialReference *OGRAVCDataSource::DSGetSpatialRef()
 
 {
     return poSRS;
@@ -68,7 +68,7 @@ OGRSpatialReference *OGRAVCDataSource::GetSpatialRef()
 const char *OGRAVCDataSource::GetCoverageName()
 
 {
-    if( pszCoverageName == NULL )
+    if( pszCoverageName == nullptr )
         return "";
 
     return pszCoverageName;

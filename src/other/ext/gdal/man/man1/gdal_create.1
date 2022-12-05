@@ -1,0 +1,208 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDAL_CREATE" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdal_create \- Create a raster file (without source dataset)
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_create [\-\-help\-general]
+   [\-of format]
+   [\-outsize xsize ysize]
+   [\-bands count]
+   [\-burn value]*
+   [\-ot {Byte/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
+         CInt16/CInt32/CFloat32/CFloat64}] [\-strict]
+   [\-a_srs srs_def] [\-a_ullr ulx uly lrx lry] [\-a_nodata value]
+   [\-mo "META\-TAG=VALUE"]* [\-q]
+   [\-co "NAME=VALUE"]*
+   [\-if input_dataset]
+   out_dataset
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+The \fBgdal_create\fP utility can be used to initialize a new raster file,
+from its dimensions, band count and set various parameters, such as CRS,
+geotransform, nodata value, metadata. It can be used also in special cases,
+like creating a PDF file from a XML composition file.
+.INDENT 0.0
+.TP
+.B \-ot <type>
+Force the output image bands to have a specific data type supported by the
+driver, which may be one of the following: \fBByte\fP, \fBUInt16\fP,
+\fBInt16\fP, \fBUInt32\fP, \fBInt32\fP, \fBFloat32\fP, \fBFloat64\fP, \fBCInt16\fP,
+\fBCInt32\fP, \fBCFloat32\fP or \fBCFloat64\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-of <format>
+Select the output format. Starting with GDAL 2.3, if not specified, the
+format is guessed from the extension (previously was GTiff). Use the short
+format name.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-outsize <xsize> <ysize>
+Set the size of the output file in pixels. First figure is width. Second one
+is height.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-bands <count>
+Number of bands. Defaults to 1 if \-outsize is specified, or 0 otherwise.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-burn <value>
+A fixed value to burn into a band for all objects.  A list of \fI\%\-burn\fP options
+can be supplied, one per band being written to.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_srs <srs_def>
+Override the projection for the output file.  The<srs_def> may be any of
+the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing
+the WKT. No reprojection is done.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_ullr <ulx> <uly> <lrx> <lry>
+Assign the georeferenced bounds of the output file.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_nodata <value>
+Assign a specified nodata value to output bands.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-mo META\-TAG=VALUE
+Passes a metadata key and value to set on the output dataset if possible.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-co <NAME=VALUE>
+Many formats have one or more optional creation options that can be
+used to control particulars about the file created. For instance,
+the GeoTIFF driver supports creation options to control compression,
+and whether the file should be tiled.
+.sp
+The creation options available vary by format driver, and some
+simple formats have no creation options at all. A list of options
+supported for a format can be listed with the
+\fI\%\-\-formats\fP
+command line option but the documentation for the format is the
+definitive source of information on driver creation options.
+See \fI\%Raster drivers\fP format
+specific documentation for legal creation options for each format.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-q
+Suppress progress monitor and other non\-error output.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-if <input_dataset>
+New in version 3.3.
+
+.sp
+Name of GDAL input dataset that serves as a template for default values of
+options \-outsize, \-bands, \-ot, \-a_srs, \-a_ullr and \-a_nodata.
+Note that the pixel values will \fInot\fP be copied.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <out_dataset>
+The destination file name.
+.UNINDENT
+.SH EXAMPLES
+.INDENT 0.0
+.IP \(bu 2
+Initialize a new GeoTIFF file with a uniform value of 10
+.INDENT 2.0
+.INDENT 3.5
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_create \-outsize 20 20 \-a_srs EPSG:4326 \-a_ullr 2 50 3 49 \-burn 10 out.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Create a PDF file from a XML composition file:
+.INDENT 2.0
+.INDENT 3.5
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_create \-co COMPOSITION_FILE=composition.xml out.pdf
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+Initialize a blank GeoTIFF file from an input one:
+.INDENT 2.0
+.INDENT 3.5
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_create \-if prototype.tif output.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Even Rouault <even.rouault@spatialys.com>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

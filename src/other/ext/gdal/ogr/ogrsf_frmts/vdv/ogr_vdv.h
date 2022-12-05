@@ -40,16 +40,19 @@ class OGRVDVDataSource;
 /*                        OGRIDFDataSource                              */
 /************************************************************************/
 
-class OGRIDFDataSource : public GDALDataset
+class OGRIDFDataSource final: public GDALDataset
 {
+    CPLString           m_osFilename;
     VSILFILE*           m_fpL;
     bool                m_bHasParsed;
-    GDALDataset        *m_poMemDS;
+    GDALDataset        *m_poTmpDS;
+    bool                m_bDestroyTmpDS = false;
 
     void                Parse();
 
   public:
-    explicit            OGRIDFDataSource(VSILFILE* fpL);
+    explicit            OGRIDFDataSource(const char* pszFilename,
+                                         VSILFILE* fpL);
                         virtual ~OGRIDFDataSource();
 
     virtual int                 GetLayerCount() override;
@@ -60,7 +63,7 @@ class OGRIDFDataSource : public GDALDataset
 /*                          OGRVDVLayer                                 */
 /************************************************************************/
 
-class OGRVDVLayer: public OGRLayer
+class OGRVDVLayer final: public OGRLayer
 {
     VSILFILE*           m_fpL;
     bool                m_bOwnFP;
@@ -130,7 +133,7 @@ class OGRVDV452Tables
 /*                          OGRVDVWriterLayer                           */
 /************************************************************************/
 
-class OGRVDVWriterLayer: public OGRLayer
+class OGRVDVWriterLayer final: public OGRLayer
 {
     OGRVDVDataSource*   m_poDS;
     OGRFeatureDefn*     m_poFeatureDefn;
@@ -151,7 +154,7 @@ class OGRVDVWriterLayer: public OGRLayer
                                           const char* pszName,
                                           VSILFILE* fpL,
                                           bool bOwnFP,
-                                          OGRVDV452Table* poVDV452Table = NULL,
+                                          OGRVDV452Table* poVDV452Table = nullptr,
                                           const CPLString& osVDV452Lang = "",
                                           bool bProfileStrict = false
                                           );
@@ -172,7 +175,7 @@ class OGRVDVWriterLayer: public OGRLayer
 /*                        OGRVDVDataSource                              */
 /************************************************************************/
 
-class OGRVDVDataSource : public GDALDataset
+class OGRVDVDataSource final: public GDALDataset
 {
     CPLString           m_osFilename;
     VSILFILE*           m_fpL;

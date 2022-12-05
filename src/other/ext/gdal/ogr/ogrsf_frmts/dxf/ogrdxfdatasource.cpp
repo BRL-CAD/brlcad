@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,16 +31,24 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+#include <algorithm>
+
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRDXFDataSource()                          */
 /************************************************************************/
 
 OGRDXFDataSource::OGRDXFDataSource() :
-    fp(NULL),
-    iEntitiesSectionOffset(0),
-    bInlineBlocks(false)
+    fp(nullptr),
+    iEntitiesOffset(0),
+    iEntitiesLineNumber(0),
+    bInlineBlocks(false),
+    bMergeBlockGeometries(false),
+    bTranslateEscapeSequences(false),
+    bIncludeRawCodeValues(false),
+    b3DExtensibleMode(false),
+    bHaveReadSolidData(false)
 {}
 
 /************************************************************************/
@@ -62,10 +70,10 @@ OGRDXFDataSource::~OGRDXFDataSource()
 /* -------------------------------------------------------------------- */
 /*      Close file.                                                     */
 /* -------------------------------------------------------------------- */
-    if( fp != NULL )
+    if( fp != nullptr )
     {
         VSIFCloseL( fp );
-        fp = NULL;
+        fp = nullptr;
     }
 }
 
@@ -86,7 +94,7 @@ OGRLayer *OGRDXFDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= (int) apoLayers.size() )
-        return NULL;
+        return nullptr;
     else
         return apoLayers[iLayer];
 }
@@ -104,6 +112,14 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 
     bInlineBlocks = CPLTestBool(
         CPLGetConfigOption( "DXF_INLINE_BLOCKS", "TRUE" ) );
+    bMergeBlockGeometries = CPLTestBool(
+        CPLGetConfigOption( "DXF_MERGE_BLOCK_GEOMETRIES", "TRUE" ) );
+    bTranslateEscapeSequences = CPLTestBool(
+        CPLGetConfigOption( "DXF_TRANSLATE_ESCAPE_SEQUENCES", "TRUE" ) );
+    bIncludeRawCodeValues = CPLTestBool(
+        CPLGetConfigOption( "DXF_INCLUDE_RAW_CODE_VALUES", "FALSE" ) );
+    b3DExtensibleMode = CPLTestBool(
+        CPLGetConfigOption( "DXF_3D_EXTENSIBLE_MODE", "FALSE" ) );
 
     if( CPLTestBool(
             CPLGetConfigOption( "DXF_HEADER_ONLY", "FALSE" ) ) )
@@ -113,7 +129,7 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
     fp = VSIFOpenL( pszFilename, "r" );
-    if( fp == NULL )
+    if( fp == nullptr )
         return FALSE;
 
     oReader.Initialize( fp );
@@ -294,7 +310,8 @@ int OGRDXFDataSource::Open( const char * pszFilename, int bHeaderOnly )
         return FALSE;
     }
 
-    iEntitiesSectionOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
+    iEntitiesOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
+    iEntitiesLineNumber = oReader.nLineNumber;
     apoLayers[0]->ResetReading();
 
     return TRUE;
@@ -317,7 +334,6 @@ bool OGRDXFDataSource::ReadTablesSection()
         if( nCode != 0 || !EQUAL(szLineBuf,"TABLE") )
             continue;
 
-        // Currently we are only interested in the LAYER table.
         nCode = ReadValue( szLineBuf, sizeof(szLineBuf) );
         if( nCode < 0 )
         {
@@ -341,6 +357,16 @@ bool OGRDXFDataSource::ReadTablesSection()
             if( nCode == 0 && EQUAL(szLineBuf,"LTYPE") )
             {
                 if( !ReadLineTypeDefinition() )
+                    return false;
+            }
+            if( nCode == 0 && EQUAL(szLineBuf,"STYLE") )
+            {
+                if( !ReadTextStyleDefinition() )
+                    return false;
+            }
+            if( nCode == 0 && EQUAL(szLineBuf,"DIMSTYLE") )
+            {
+                if( !ReadDimStyleDefinition() )
                     return false;
             }
         }
@@ -374,26 +400,34 @@ bool OGRDXFDataSource::ReadLayerDefinition()
         switch( nCode )
         {
           case 2:
-            osLayerName = ACTextUnescape(szLineBuf,GetEncoding());
+            osLayerName = CPLString(szLineBuf).Recode( GetEncoding(),
+                CPL_ENC_UTF8 );
             oLayerProperties["Exists"] = "1";
             break;
 
           case 6:
-            oLayerProperties["Linetype"] = ACTextUnescape(szLineBuf,
-                                                          GetEncoding());
+            oLayerProperties["Linetype"] = CPLString(szLineBuf).Recode(
+                GetEncoding(), CPL_ENC_UTF8 );
             break;
 
           case 62:
             oLayerProperties["Color"] = szLineBuf;
 
-            if( atoi(szLineBuf) < 0 ) // Is layer off?
+            // Is layer off?
+            if( atoi(szLineBuf) < 0 && oLayerProperties["Hidden"] != "2" )
                 oLayerProperties["Hidden"] = "1";
+            break;
+
+          case 420:
+            oLayerProperties["TrueColor"] = szLineBuf;
             break;
 
           case 70:
             oLayerProperties["Flags"] = szLineBuf;
-            if( atoi(szLineBuf) & 0x01 ) // Is layer frozen?
-                oLayerProperties["Hidden"] = "1";
+
+            // Is layer frozen?
+            if( atoi(szLineBuf) & 0x01 )
+                oLayerProperties["Hidden"] = "2";
             break;
 
           case 370:
@@ -427,13 +461,13 @@ const char *OGRDXFDataSource::LookupLayerProperty( const char *pszLayer,
                                                    const char *pszProperty )
 
 {
-    if( pszLayer == NULL )
-        return NULL;
+    if( pszLayer == nullptr )
+        return nullptr;
 
     try {
         return (oLayerTable[pszLayer])[pszProperty];
     } catch( ... ) {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -447,29 +481,35 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
     char szLineBuf[257];
     int nCode = 0;
     CPLString osLineTypeName;
-    CPLString osLineTypeDef;
+    std::vector<double> oLineTypeDef;
+    double dfThisValue;
 
     while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
     {
         switch( nCode )
         {
           case 2:
-            osLineTypeName = ACTextUnescape(szLineBuf,GetEncoding());
+            osLineTypeName = CPLString(szLineBuf).Recode( GetEncoding(),
+                CPL_ENC_UTF8 );
             break;
 
           case 49:
-          {
-              if( osLineTypeDef != "" )
-                  osLineTypeDef += " ";
+            dfThisValue = CPLAtof( szLineBuf );
 
-              if( szLineBuf[0] == '-' )
-                  osLineTypeDef += szLineBuf+1;
-              else
-                  osLineTypeDef += szLineBuf;
+            // Same sign as the previous entry? Continue the previous dash
+            // or gap by appending this length
+            if( oLineTypeDef.size() > 0 &&
+                ( dfThisValue < 0 ) == ( oLineTypeDef.back() < 0 ) )
+            {
+                oLineTypeDef.back() += dfThisValue;
+            }
+            // Otherwise, add a new entry
+            else
+            {
+                oLineTypeDef.push_back( dfThisValue );
+            }
 
-              osLineTypeDef += "g";
-          }
-          break;
+            break;
 
           default:
             break;
@@ -481,8 +521,26 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
         return false;
     }
 
-    if( osLineTypeDef != "" )
-        oLineTypeTable[osLineTypeName] = osLineTypeDef;
+    // Deal with an odd number of elements by adding the last element
+    // onto the first
+    if( oLineTypeDef.size() % 2 == 1 )
+    {
+        oLineTypeDef.front() += oLineTypeDef.back();
+        oLineTypeDef.pop_back();
+    }
+
+    if( oLineTypeDef.size() )
+    {
+        // If the first element is a gap, rotate the elements so the first
+        // element is a dash
+        if( oLineTypeDef.front() < 0 )
+        {
+            std::rotate( oLineTypeDef.begin(), oLineTypeDef.begin() + 1,
+                oLineTypeDef.end() );
+        }
+
+        oLineTypeTable[osLineTypeName] = oLineTypeDef;
+    }
 
     if( nCode == 0 )
         UnreadValue();
@@ -493,13 +551,237 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
 /*                           LookupLineType()                           */
 /************************************************************************/
 
-const char *OGRDXFDataSource::LookupLineType( const char *pszName )
+std::vector<double> OGRDXFDataSource::LookupLineType( const char *pszName )
 
 {
-    if( oLineTypeTable.count(pszName) > 0 )
+    if( pszName && oLineTypeTable.count(pszName) > 0 )
         return oLineTypeTable[pszName];
     else
-        return NULL;
+        return std::vector<double>(); // empty, represents a continuous line
+}
+
+/************************************************************************/
+/*                       ReadTextStyleDefinition()                      */
+/************************************************************************/
+
+bool OGRDXFDataSource::ReadTextStyleDefinition()
+
+{
+    char szLineBuf[257];
+    int nCode = 0;
+
+    CPLString osStyleHandle;
+    CPLString osStyleName;
+    bool bInsideAcadSection = false;
+
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
+    {
+        switch( nCode )
+        {
+          case 5:
+            osStyleHandle = szLineBuf;
+            break;
+
+          case 2:
+            osStyleName = CPLString(szLineBuf).Recode( GetEncoding(),
+                CPL_ENC_UTF8 ).toupper();
+            break;
+
+          case 70:
+            // If the LSB is set, this is not a text style
+            if( atoi(szLineBuf) & 1 )
+                return true;
+            break;
+
+          // Note: 40 and 41 group codes do not propagate from a text style
+          // down to TEXT objects. However, 41 does propagate down for MTEXT.
+
+          case 41:
+            oTextStyleTable[osStyleName]["Width"] = szLineBuf;
+            break;
+
+          case 1001:
+            bInsideAcadSection = EQUAL( szLineBuf, "ACAD" );
+            break;
+
+          case 1000:
+            if( bInsideAcadSection )
+                oTextStyleTable[osStyleName]["Font"] = szLineBuf;
+            break;
+
+          case 1071:
+            // bold and italic are kept in this undocumented bitfield
+            if( bInsideAcadSection )
+            {
+                const int nFontFlags = atoi( szLineBuf );
+                oTextStyleTable[osStyleName]["Bold"] =
+                    ( nFontFlags & 0x2000000 ) ? "1" : "0";
+                oTextStyleTable[osStyleName]["Italic"] =
+                    ( nFontFlags & 0x1000000 ) ? "1" : "0";
+            }
+            break;
+
+          default:
+            break;
+        }
+    }
+    if( nCode < 0 )
+    {
+        DXF_READER_ERROR();
+        return false;
+    }
+
+    if( nCode == 0 )
+        UnreadValue();
+
+    if( osStyleHandle != "" )
+        oTextStyleHandles[osStyleHandle] = osStyleName;
+
+    return true;
+}
+
+/************************************************************************/
+/*                           TextStyleExists()                          */
+/************************************************************************/
+
+bool OGRDXFDataSource::TextStyleExists( const char *pszTextStyle )
+
+{
+    if( !pszTextStyle )
+        return false;
+
+    CPLString osTextStyleUpper = pszTextStyle;
+    osTextStyleUpper.toupper();
+
+    return oTextStyleTable.count( osTextStyleUpper ) > 0;
+}
+
+/************************************************************************/
+/*                       LookupTextStyleProperty()                      */
+/************************************************************************/
+
+const char *OGRDXFDataSource::LookupTextStyleProperty(
+    const char *pszTextStyle, const char *pszProperty, const char *pszDefault )
+
+{
+    if( !pszTextStyle )
+        return pszDefault;
+
+    CPLString osTextStyleUpper = pszTextStyle;
+    osTextStyleUpper.toupper();
+
+    if( pszProperty &&
+        oTextStyleTable.count( osTextStyleUpper ) > 0 &&
+        oTextStyleTable[osTextStyleUpper].count( pszProperty ) > 0 )
+    {
+        return (oTextStyleTable[osTextStyleUpper])[pszProperty];
+    }
+    else
+    {
+        return pszDefault;
+    }
+}
+
+/************************************************************************/
+/*                      GetTextStyleNameByHandle()                      */
+/*                                                                      */
+/*      Find the name of the text style with the given STYLE table      */
+/*      handle. If there is no such style, an empty string is returned. */
+/************************************************************************/
+
+CPLString OGRDXFDataSource::GetTextStyleNameByHandle( const char *pszID )
+
+{
+    CPLString l_osID = pszID;
+
+    if( oTextStyleHandles.count( l_osID ) == 0 )
+        return "";
+    else
+        return oTextStyleHandles[l_osID];
+}
+
+/************************************************************************/
+/*                  PopulateDefaultDimStyleProperties()                 */
+/************************************************************************/
+
+void OGRDXFDataSource::PopulateDefaultDimStyleProperties(
+    std::map<CPLString, CPLString>& oDimStyleProperties)
+
+{
+    const int* piCode = ACGetKnownDimStyleCodes();
+    do
+    {
+        const char* pszProperty = ACGetDimStylePropertyName(*piCode);
+        oDimStyleProperties[pszProperty] =
+            ACGetDimStylePropertyDefault(*piCode);
+    } while ( *(++piCode) );
+}
+
+/************************************************************************/
+/*                       ReadDimStyleDefinition()                       */
+/************************************************************************/
+
+bool OGRDXFDataSource::ReadDimStyleDefinition()
+
+{
+    char szLineBuf[257];
+    int nCode = 0;
+    std::map<CPLString,CPLString> oDimStyleProperties;
+    CPLString osDimStyleName = "";
+
+    PopulateDefaultDimStyleProperties(oDimStyleProperties);
+
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) > 0 )
+    {
+        switch( nCode )
+        {
+          case 2:
+            osDimStyleName = CPLString(szLineBuf).Recode( GetEncoding(), CPL_ENC_UTF8 );
+            break;
+
+          default:
+            const char* pszProperty = ACGetDimStylePropertyName(nCode);
+            if( pszProperty )
+                oDimStyleProperties[pszProperty] = szLineBuf;
+            break;
+        }
+    }
+    if( nCode < 0 )
+    {
+        DXF_READER_ERROR();
+        return false;
+    }
+
+    if( !oDimStyleProperties.empty() )
+        oDimStyleTable[osDimStyleName] = oDimStyleProperties;
+
+    if( nCode == 0 )
+        UnreadValue();
+    return true;
+}
+
+/************************************************************************/
+/*                           LookupDimStyle()                           */
+/*                                                                      */
+/*      If the specified DIMSTYLE does not exist, a default set of      */
+/*      of style properties are copied into oDimStyleProperties and     */
+/*      false is returned.  Otherwise true is returned.                 */
+/************************************************************************/
+
+bool OGRDXFDataSource::LookupDimStyle( const char *pszDimStyle,
+    std::map<CPLString,CPLString>& oDimStyleProperties )
+
+{
+    if( pszDimStyle == nullptr || !oDimStyleTable.count(pszDimStyle) )
+    {
+        PopulateDefaultDimStyleProperties(oDimStyleProperties);
+        return false;
+    }
+
+    // make a copy of the DIMSTYLE properties, so no-one can mess around
+    // with our original copy
+    oDimStyleProperties = oDimStyleTable[pszDimStyle];
+    return true;
 }
 
 /************************************************************************/
@@ -597,8 +879,8 @@ bool OGRDXFDataSource::ReadHeaderSection()
         osEncoding = CPL_ENC_ISO8859_1;
     }
 
-    const char *pszEncoding = CPLGetConfigOption( "DXF_ENCODING", NULL );
-    if( pszEncoding != NULL )
+    const char *pszEncoding = CPLGetConfigOption( "DXF_ENCODING", nullptr );
+    if( pszEncoding != nullptr )
         osEncoding = pszEncoding;
 
     if( osEncoding != CPL_ENC_ISO8859_1 )
@@ -627,17 +909,24 @@ const char *OGRDXFDataSource::GetVariable( const char *pszName,
 /*                         AddStandardFields()                          */
 /************************************************************************/
 
-void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
-
+void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn,
+    const int nFieldModes )
 {
     OGRFieldDefn  oLayerField( "Layer", OFTString );
     poFeatureDefn->AddFieldDefn( &oLayerField );
 
+    OGRFieldDefn  oPaperSpaceField( "PaperSpace", OFTInteger );
+    oPaperSpaceField.SetSubType( OFSTBoolean );
+    poFeatureDefn->AddFieldDefn( &oPaperSpaceField );
+
     OGRFieldDefn  oClassField( "SubClasses", OFTString );
     poFeatureDefn->AddFieldDefn( &oClassField );
 
-    OGRFieldDefn  oExtendedField( "ExtendedEntity", OFTString );
-    poFeatureDefn->AddFieldDefn( &oExtendedField );
+    if( nFieldModes & ODFM_IncludeRawCodeValues )
+    {
+        OGRFieldDefn  oRawCodeField( "RawCodeValues", OFTStringList );
+        poFeatureDefn->AddFieldDefn( &oRawCodeField );
+    }
 
     OGRFieldDefn  oLinetypeField( "Linetype", OFTString );
     poFeatureDefn->AddFieldDefn( &oLinetypeField );
@@ -648,9 +937,180 @@ void OGRDXFDataSource::AddStandardFields( OGRFeatureDefn *poFeatureDefn )
     OGRFieldDefn  oTextField( "Text", OFTString );
     poFeatureDefn->AddFieldDefn( &oTextField );
 
-    if( !bInlineBlocks )
+    if( nFieldModes & ODFM_Include3DModeFields )
+    {
+        OGRFieldDefn  oASMBinaryField( "ASMData", OFTBinary );
+        poFeatureDefn->AddFieldDefn( &oASMBinaryField );
+
+        OGRFieldDefn  oASMTransformField( "ASMTransform", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oASMTransformField );
+    }
+
+    if( nFieldModes & ODFM_IncludeBlockFields )
     {
         OGRFieldDefn  oBlockNameField( "BlockName", OFTString );
         poFeatureDefn->AddFieldDefn( &oBlockNameField );
+
+        OGRFieldDefn  oScaleField( "BlockScale", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oScaleField );
+
+        OGRFieldDefn  oBlockAngleField( "BlockAngle", OFTReal );
+        poFeatureDefn->AddFieldDefn( &oBlockAngleField );
+
+        OGRFieldDefn  oBlockOCSNormalField( "BlockOCSNormal", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oBlockOCSNormalField );
+
+        OGRFieldDefn  oBlockOCSCoordsField( "BlockOCSCoords", OFTRealList );
+        poFeatureDefn->AddFieldDefn( &oBlockOCSCoordsField );
+
+        OGRFieldDefn  oBlockAttribsField( "BlockAttributes", OFTStringList );
+        poFeatureDefn->AddFieldDefn( &oBlockAttribsField );
+
+        // This field holds the name of the block on which the entity lies.
+        // The BlockName field was previously used for this purpose; this
+        // was changed because of the ambiguity with the BlockName field
+        // used by INSERT entities.
+        OGRFieldDefn  oBlockField( "Block", OFTString );
+        poFeatureDefn->AddFieldDefn( &oBlockField );
+
+        // Extra field to use with ATTDEF entities
+        OGRFieldDefn  oAttributeTagField( "AttributeTag", OFTString );
+        poFeatureDefn->AddFieldDefn( &oAttributeTagField );
     }
+}
+
+/************************************************************************/
+/*                    GetEntryFromAcDsDataSection()                     */
+/************************************************************************/
+
+size_t OGRDXFDataSource::GetEntryFromAcDsDataSection(
+    const char* pszEntityHandle, const GByte** pabyBuffer )
+
+{
+    if( !pszEntityHandle || !pabyBuffer )
+        return 0;
+
+    if( bHaveReadSolidData )
+    {
+        if( oSolidBinaryData.count( pszEntityHandle ) > 0 )
+        {
+            *pabyBuffer = oSolidBinaryData[pszEntityHandle].data();
+            return oSolidBinaryData[pszEntityHandle].size();
+        }
+        return 0;
+    }
+
+    // Keep track of our current position and line number in the file so we can
+    // return here later
+    int iPrevOffset = oReader.iSrcBufferFileOffset + oReader.iSrcBufferOffset;
+    int nPrevLineNumber = oReader.nLineNumber;
+
+    char szLineBuf[4096];
+    int nCode = 0;
+    bool bFound = false;
+
+    // Search for the ACDSDATA section
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) >= 0 )
+    {
+        // Check whether the ACDSDATA section starts here
+        if( nCode == 0 && EQUAL(szLineBuf, "SECTION") )
+        {
+            if( ( nCode = ReadValue( szLineBuf, sizeof(szLineBuf) ) ) < 0 )
+            {
+                break;
+            }
+
+            if( nCode == 2 && EQUAL(szLineBuf, "ACDSDATA") )
+            {
+                bFound = true;
+                break;
+            }
+        }
+    }
+
+    if( !bFound )
+    {
+        oReader.ResetReadPointer( iPrevOffset, nPrevLineNumber );
+        return 0;
+    }
+
+    bool bInAcDsRecord = false;
+    bool bGotAsmData = false;
+    CPLString osThisHandle;
+
+    // Search for the relevant ACDSRECORD and extract its binary data
+    while( (nCode = ReadValue( szLineBuf, sizeof(szLineBuf) )) >= 0 )
+    {
+        if( nCode == 0 && EQUAL(szLineBuf, "ENDSEC") )
+        {
+            // We've reached the end of the ACDSDATA section
+            break;
+        }
+        else if( nCode == 0 )
+        {
+            bInAcDsRecord = EQUAL(szLineBuf, "ACDSRECORD");
+            bGotAsmData = false;
+            osThisHandle.clear();
+        }
+        else if( bInAcDsRecord && nCode == 320 )
+        {
+            osThisHandle = szLineBuf;
+        }
+        else if( bInAcDsRecord && nCode == 2 )
+        {
+            bGotAsmData = EQUAL(szLineBuf, "ASM_Data");
+        }
+        else if( bInAcDsRecord && bGotAsmData && nCode == 94 )
+        {
+            // Group code 94 gives the length of the binary data that follows
+            int nLen = atoi( szLineBuf );
+            
+            // Enforce some limits (the upper limit is arbitrary)
+            if( nLen <= 0 || nLen > 1048576 )
+            {
+                CPLError( CE_Warning, CPLE_AppDefined,
+                    "ACDSRECORD data for entity %s is too long (more than "
+                    "1MB in size) and was skipped.", pszEntityHandle );
+                continue;
+            }
+
+            oSolidBinaryData[osThisHandle].resize( nLen );
+
+            // Read the binary data into the buffer
+            int nPos = 0;
+            while( ReadValue( szLineBuf, sizeof(szLineBuf) ) == 310 )
+            {
+                int nBytesRead;
+                GByte* pabyHex = CPLHexToBinary( szLineBuf, &nBytesRead );
+
+                if( nPos + nBytesRead > nLen )
+                {
+                    CPLError( CE_Warning, CPLE_AppDefined,
+                        "Too many bytes in ACDSRECORD data for entity %s. "
+                        "Is the length (group code 94) correct?",
+                        pszEntityHandle );
+                    break;
+                }
+                else
+                {
+                    std::copy_n( pabyHex, nBytesRead,
+                        oSolidBinaryData[osThisHandle].begin() + nPos );
+                    nPos += nBytesRead;
+                }
+
+                CPLFree( pabyHex );
+            }
+        }
+    }
+
+    oReader.ResetReadPointer( iPrevOffset, nPrevLineNumber );
+
+    bHaveReadSolidData = true;
+
+    if( oSolidBinaryData.count( pszEntityHandle ) > 0 )
+    {
+        *pabyBuffer = oSolidBinaryData[pszEntityHandle].data();
+        return oSolidBinaryData[pszEntityHandle].size();
+    }
+    return 0;
 }

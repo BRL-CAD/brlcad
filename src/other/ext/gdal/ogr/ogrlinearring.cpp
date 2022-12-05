@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,14 +39,14 @@
 #include "ogr_geometry.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           OGRLinearRing()                            */
 /************************************************************************/
 
 /** Constructor */
-OGRLinearRing::OGRLinearRing() {}
+OGRLinearRing::OGRLinearRing() = default;
 
 /************************************************************************/
 /*                  OGRLinearRing( const OGRLinearRing& )               */
@@ -61,15 +61,13 @@ OGRLinearRing::OGRLinearRing() {}
  * @since GDAL 2.1
  */
 
-OGRLinearRing::OGRLinearRing( const OGRLinearRing& other ) :
-    OGRLineString( other )
-{}
+OGRLinearRing::OGRLinearRing( const OGRLinearRing& ) = default;
 
 /************************************************************************/
 /*                          ~OGRLinearRing()                            */
 /************************************************************************/
 
-OGRLinearRing::~OGRLinearRing() {}
+OGRLinearRing::~OGRLinearRing() = default;
 
 /************************************************************************/
 /*                           OGRLinearRing()                            */
@@ -81,7 +79,7 @@ OGRLinearRing::~OGRLinearRing() {}
 OGRLinearRing::OGRLinearRing( OGRLinearRing * poSrcRing )
 
 {
-    if( poSrcRing == NULL )
+    if( poSrcRing == nullptr )
     {
         CPLDebug( "OGR",
                   "OGRLinearRing::OGRLinearRing(OGRLinearRing*poSrcRing) - "
@@ -139,7 +137,7 @@ const char * OGRLinearRing::getGeometryName() const
 /*      Disable this method.                                            */
 /************************************************************************/
 
-int OGRLinearRing::WkbSize() const
+size_t OGRLinearRing::WkbSize() const
 
 {
     return 0;
@@ -151,9 +149,10 @@ int OGRLinearRing::WkbSize() const
 /*      Disable method for this class.                                  */
 /************************************************************************/
 
-OGRErr OGRLinearRing::importFromWkb( CPL_UNUSED unsigned char *pabyData,
-                                     CPL_UNUSED int nSize,
-                                     CPL_UNUSED OGRwkbVariant eWkbVariant )
+OGRErr OGRLinearRing::importFromWkb( const unsigned char * /*pabyData*/,
+                                     size_t /*nSize*/,
+                                     OGRwkbVariant /*eWkbVariant*/,
+                                     size_t& /* nBytesConsumedOut */ )
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;
@@ -182,11 +181,13 @@ OGRErr OGRLinearRing::exportToWkb( CPL_UNUSED OGRwkbByteOrder eByteOrder,
 
 //! @cond Doxygen_Suppress
 OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
-                                      unsigned char * pabyData,
-                                      int nBytesAvailable )
+                                      const unsigned char * pabyData,
+                                      size_t nBytesAvailable,
+                                      size_t& nBytesConsumedOut )
 
 {
-    if( nBytesAvailable < 4 && nBytesAvailable != -1 )
+    nBytesConsumedOut = 0;
+    if( nBytesAvailable < 4 && nBytesAvailable != static_cast<size_t>(-1) )
         return OGRERR_NOT_ENOUGH_DATA;
 
 /* -------------------------------------------------------------------- */
@@ -202,18 +203,21 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
     // Check if the wkb stream buffer is big enough to store
     // fetched number of points.
     // 16, 24, or 32 - size of point structure.
-    int nPointSize = 0;
+    size_t nPointSize = 0;
     if( (_flags & OGR_G_3D) && (_flags & OGR_G_MEASURED) )
         nPointSize = 32;
     else if( (_flags & OGR_G_3D) || (_flags & OGR_G_MEASURED) )
         nPointSize = 24;
     else
         nPointSize = 16;
-    if( nNewNumPoints < 0 || nNewNumPoints > INT_MAX / nPointSize )
-        return OGRERR_CORRUPT_DATA;
-    int nBufferMinSize = nPointSize * nNewNumPoints;
 
-    if( nBytesAvailable != -1 && nBufferMinSize > nBytesAvailable - 4 )
+    if( nNewNumPoints < 0 ||
+        static_cast<size_t>(nNewNumPoints) > std::numeric_limits<size_t>::max() / nPointSize )
+    {
+        return OGRERR_CORRUPT_DATA;
+    }
+    const size_t nBufferMinSize = nPointSize * nNewNumPoints;
+    if( nBytesAvailable != static_cast<size_t>(-1) && nBufferMinSize > nBytesAvailable - 4 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Length of input WKB is too small" );
@@ -233,12 +237,15 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
     else
         RemoveM();
 
+
+    nBytesConsumedOut =  4 + nPointCount * nPointSize;
+
 /* -------------------------------------------------------------------- */
 /*      Get the vertices                                                */
 /* -------------------------------------------------------------------- */
     if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( &(paoPoints[i].x), pabyData + 4 + 32 * i, 8 );
             memcpy( &(paoPoints[i].y), pabyData + 4 + 32 * i + 8, 8 );
@@ -248,7 +255,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
     }
     else if( flags & OGR_G_MEASURED )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( &(paoPoints[i].x), pabyData + 4 + 24 * i, 8 );
             memcpy( &(paoPoints[i].y), pabyData + 4 + 24 * i + 8, 8 );
@@ -257,7 +264,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
     }
     else if( flags & OGR_G_3D )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( &(paoPoints[i].x), pabyData + 4 + 24 * i, 8 );
             memcpy( &(paoPoints[i].y), pabyData + 4 + 24 * i + 8, 8 );
@@ -266,7 +273,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
     }
     else
     {
-        memcpy( paoPoints, pabyData + 4, 16 * nPointCount );
+        memcpy( paoPoints, pabyData + 4, 16 * static_cast<size_t>(nPointCount) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -274,7 +281,7 @@ OGRErr OGRLinearRing::_importFromWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        for( int i = 0; i < nPointCount; i++ )
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             CPL_SWAPDOUBLE( &(paoPoints[i].x) );
             CPL_SWAPDOUBLE( &(paoPoints[i].y) );
@@ -313,19 +320,19 @@ OGRErr OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /* -------------------------------------------------------------------- */
 /*      Copy in the raw data.                                           */
 /* -------------------------------------------------------------------- */
-    int nWords = 0;
+    size_t nWords = 0;
     if( (_flags & OGR_G_3D) && (_flags & OGR_G_MEASURED) )
     {
-        nWords = 4 * nPointCount;
-        for( int i = 0; i < nPointCount; i++ )
+        nWords = 4 * static_cast<size_t>(nPointCount);
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( pabyData+4+i*32, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*32+8, &(paoPoints[i].y), 8 );
-            if( padfZ == NULL )
+            if( padfZ == nullptr )
                 memset( pabyData+4+i*32+16, 0, 8 );
             else
                 memcpy( pabyData+4+i*32+16, padfZ + i, 8 );
-            if( padfM == NULL )
+            if( padfM == nullptr )
                 memset( pabyData+4+i*32+24, 0, 8 );
             else
                 memcpy( pabyData+4+i*32+24, padfM + i, 8 );
@@ -333,12 +340,12 @@ OGRErr OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
     }
     else if( _flags & OGR_G_MEASURED )
     {
-        nWords = 3 * nPointCount;
-        for( int i = 0; i < nPointCount; i++ )
+        nWords = 3 * static_cast<size_t>(nPointCount);
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( pabyData+4+i*24, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*24+8, &(paoPoints[i].y), 8 );
-            if( padfM == NULL )
+            if( padfM == nullptr )
                 memset( pabyData+4+i*24+16, 0, 8 );
             else
                 memcpy( pabyData+4+i*24+16, padfM + i, 8 );
@@ -346,12 +353,12 @@ OGRErr OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
     }
     else if( _flags & OGR_G_3D )
     {
-        nWords = 3 * nPointCount;
-        for( int i = 0; i < nPointCount; i++ )
+        nWords = 3 * static_cast<size_t>(nPointCount);
+        for( size_t i = 0; i < static_cast<size_t>(nPointCount); i++ )
         {
             memcpy( pabyData+4+i*24, &(paoPoints[i].x), 8 );
             memcpy( pabyData+4+i*24+8, &(paoPoints[i].y), 8 );
-            if( padfZ == NULL )
+            if( padfZ == nullptr )
                 memset( pabyData+4+i*24+16, 0, 8 );
             else
                 memcpy( pabyData+4+i*24+16, padfZ + i, 8 );
@@ -359,8 +366,8 @@ OGRErr OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
     }
     else
     {
-        nWords = 2 * nPointCount;
-        memcpy( pabyData+4, paoPoints, 16 * nPointCount );
+        nWords = 2 * static_cast<size_t>(nPointCount);
+        memcpy( pabyData+4, paoPoints, 16 * static_cast<size_t>(nPointCount) );
     }
 
 /* -------------------------------------------------------------------- */
@@ -368,10 +375,10 @@ OGRErr OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /* -------------------------------------------------------------------- */
     if( OGR_SWAP( eByteOrder ) )
     {
-        int nCount = CPL_SWAP32( nPointCount );
+        const int nCount = CPL_SWAP32( nPointCount );
         memcpy( pabyData, &nCount, 4 );
 
-        for( int i = 0; i < nWords; i++ )
+        for( size_t i = 0; i < nWords; i++ )
         {
             CPL_SWAPDOUBLE( pabyData + 4 + 8 * i );
         }
@@ -386,15 +393,15 @@ OGRErr OGRLinearRing::_exportToWkb( OGRwkbByteOrder eByteOrder, int _flags,
 /*      Helper method for OGRPolygon.  NOT THE NORMAL WkbSize() METHOD. */
 /************************************************************************/
 
-int OGRLinearRing::_WkbSize( int _flags ) const
+size_t OGRLinearRing::_WkbSize( int _flags ) const
 
 {
     if( (_flags & OGR_G_3D) && (_flags & OGR_G_MEASURED) )
-        return 4 + 32 * nPointCount;
+        return 4 + 32 * static_cast<size_t>(nPointCount);
     else if( (_flags & OGR_G_3D) || (_flags & OGR_G_MEASURED) )
-        return 4 + 24 * nPointCount;
+        return 4 + 24 * static_cast<size_t>(nPointCount);
     else
-        return 4 + 16 * nPointCount;
+        return 4 + 16 * static_cast<size_t>(nPointCount);
 }
 //! @endcond
 
@@ -405,7 +412,7 @@ int OGRLinearRing::_WkbSize( int _flags ) const
 /*      correct virtual table.                                          */
 /************************************************************************/
 
-OGRGeometry *OGRLinearRing::clone() const
+OGRLinearRing *OGRLinearRing::clone() const
 
 {
     OGRLinearRing *poNewLinearRing = new OGRLinearRing();
@@ -421,11 +428,11 @@ OGRGeometry *OGRLinearRing::clone() const
 /*                            epsilonEqual()                            */
 /************************************************************************/
 
-static const double EPSILON = 1E-5;
+constexpr double EPSILON = 1.0E-5;
 
 static inline bool epsilonEqual(double a, double b, double eps)
 {
-    return (::fabs(a - b) < eps);
+    return ::fabs(a - b) < eps;
 }
 
 /************************************************************************/
@@ -588,19 +595,23 @@ void OGRLinearRing::closeRings()
 OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint,
                                         int bTestEnvelope) const
 {
-    if( NULL == poPoint )
+    if( nullptr == poPoint )
     {
         CPLDebug( "OGR",
                   "OGRLinearRing::isPointInRing(const OGRPoint* poPoint) - "
                   "passed point is NULL!" );
-        return 0;
+        return FALSE;
+    }
+    if( poPoint->IsEmpty() )
+    {
+        return FALSE;
     }
 
     const int iNumPoints = getNumPoints();
 
     // Simple validation
     if( iNumPoints < 4 )
-        return 0;
+        return FALSE;
 
     const double dfTestX = poPoint->getX();
     const double dfTestY = poPoint->getY();
@@ -613,7 +624,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint,
         if( !( dfTestX >= extent.MinX && dfTestX <= extent.MaxX
                && dfTestY >= extent.MinY && dfTestY <= extent.MaxY ) )
         {
-            return 0;
+            return FALSE;
         }
     }
 
@@ -665,7 +676,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint* poPoint,
 OGRBoolean OGRLinearRing::isPointOnRingBoundary( const OGRPoint* poPoint,
                                                  int bTestEnvelope ) const
 {
-    if( NULL == poPoint )
+    if( nullptr == poPoint )
     {
         CPLDebug( "OGR",
                   "OGRLinearRing::isPointOnRingBoundary(const OGRPoint* "
@@ -694,16 +705,16 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary( const OGRPoint* poPoint,
         }
     }
 
-    double prev_diff_x = getX(0) - dfTestX;
-    double prev_diff_y = getY(0) - dfTestY;
+    double prev_diff_x = dfTestX - getX(0);
+    double prev_diff_y = dfTestY - getY(0);
 
     for( int iPoint = 1; iPoint < iNumPoints; iPoint++ )
     {
-        const double x1 = getX(iPoint) - dfTestX;
-        const double y1 = getY(iPoint) - dfTestY;
+        const double dx1 = dfTestX - getX(iPoint);
+        const double dy1 = dfTestY - getY(iPoint);
 
-        const double x2 = prev_diff_x;
-        const double y2 = prev_diff_y;
+        const double dx2 = prev_diff_x;
+        const double dy2 = prev_diff_y;
 
         // If the point is on the segment, return immediately.
         // FIXME? If the test point is not exactly identical to one of
@@ -711,17 +722,29 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary( const OGRPoint* poPoint,
         // little chance that we get 0. So that should be tested against some
         // epsilon.
 
-        if( x1 * y2 - x2 * y1 == 0 )
+        if( dx1 * dy2 - dx2 * dy1 == 0 )
         {
             // If iPoint and iPointPrev are the same, go on.
-            if( !(x1 == x2 && y1 == y2) )
+            if( !(dx1 == dx2 && dy1 == dy2) )
             {
-                return 1;
+                const double dx_segment = getX(iPoint) - getX(iPoint-1);
+                const double dy_segment = getY(iPoint) - getY(iPoint-1);
+                const double crossproduct =
+                    dx2 * dx_segment + dy2 * dy_segment;
+                if( crossproduct >= 0 )
+                {
+                    const double sq_length_seg = dx_segment * dx_segment +
+                                                 dy_segment * dy_segment;
+                    if( crossproduct <= sq_length_seg )
+                    {
+                        return 1;
+                    }
+                }
             }
         }
 
-        prev_diff_x = x1;
-        prev_diff_y = y1;
+        prev_diff_x = dx1;
+        prev_diff_y = dy1;
     }
 
     return 0;
@@ -777,17 +800,27 @@ OGRLineString* OGRLinearRing::CastToLineString( OGRLinearRing* poLR )
 /*                     GetCasterToLineString()                          */
 /************************************************************************/
 
+OGRLineString* OGRLinearRing::CasterToLineString( OGRCurve* poCurve )
+{
+    return OGRLinearRing::CastToLineString(poCurve->toLinearRing());
+}
+
 OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const
 {
-    return (OGRCurveCasterToLineString) OGRLinearRing::CastToLineString;
+    return OGRLinearRing::CasterToLineString;
 }
 
 /************************************************************************/
 /*                        GetCasterToLinearRing()                       */
 /************************************************************************/
 
+static OGRLinearRing* CasterToLinearRing(OGRCurve* poCurve)
+{
+    return poCurve->toLinearRing();
+}
+
 OGRCurveCasterToLinearRing OGRLinearRing::GetCasterToLinearRing() const
 {
-    return (OGRCurveCasterToLinearRing) OGRGeometry::CastToIdentity;
+    return ::CasterToLinearRing;
 }
 //! @endcond

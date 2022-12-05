@@ -29,7 +29,7 @@
 #include "ogr_dxf.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                       OGRDXFDriverIdentify()                         */
@@ -38,7 +38,7 @@ CPL_CVSID("$Id$");
 static int OGRDXFDriverIdentify( GDALOpenInfo* poOpenInfo )
 
 {
-    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes == 0 )
+    if( poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes == 0 )
         return FALSE;
     if( EQUAL(CPLGetExtension(poOpenInfo->pszFilename),"dxf") )
         return TRUE;
@@ -83,14 +83,14 @@ static GDALDataset *OGRDXFDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( !OGRDXFDriverIdentify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
     OGRDXFDataSource *poDS = new OGRDXFDataSource();
 
     if( !poDS->Open( poOpenInfo->pszFilename ) )
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -114,7 +114,7 @@ static GDALDataset *OGRDXFDriverCreate( const char * pszName,
     else
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -125,7 +125,7 @@ static GDALDataset *OGRDXFDriverCreate( const char * pszName,
 void RegisterOGRDXF()
 
 {
-    if( GDALGetDriverByName( "DXF" ) != NULL )
+    if( GDALGetDriverByName( "DXF" ) != nullptr )
         return;
 
     GDALDriver  *poDriver = new GDALDriver();
@@ -134,7 +134,7 @@ void RegisterOGRDXF()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "AutoCAD DXF" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "dxf" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_dxf.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/dxf.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
@@ -147,6 +147,8 @@ void RegisterOGRDXF()
                                "<LayerCreationOptionList/>" );
 
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
 
     poDriver->pfnOpen = OGRDXFDriverOpen;
     poDriver->pfnIdentify = OGRDXFDriverIdentify;

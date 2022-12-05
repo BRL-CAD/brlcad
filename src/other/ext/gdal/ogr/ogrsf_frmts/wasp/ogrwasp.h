@@ -35,17 +35,11 @@
 #include <fstream>
 #include <vector>
 
-#if __cplusplus >= 201103L
-#define UNIQUEPTR       std::unique_ptr
-#else
-#define UNIQUEPTR       std::auto_ptr
-#endif
-
 /************************************************************************/
 /*                             OGRWAsPLayer                             */
 /************************************************************************/
 
-class OGRWAsPLayer : public OGRLayer
+class OGRWAsPLayer final: public OGRLayer, public OGRGetNextFeatureThroughRaw<OGRWAsPLayer>
 {
     /* stuff for polygon processing */
 
@@ -95,9 +89,9 @@ class OGRWAsPLayer : public OGRLayer
     enum OpenMode {READ_ONLY, WRITE_ONLY};
     OpenMode              eMode;
 
-    UNIQUEPTR<double> pdfTolerance;
-    UNIQUEPTR<double> pdfAdjacentPointTolerance;
-    UNIQUEPTR<double> pdfPointToCircleRadius;
+    std::unique_ptr<double> pdfTolerance;
+    std::unique_ptr<double> pdfAdjacentPointTolerance;
+    std::unique_ptr<double> pdfPointToCircleRadius;
 
     OGRErr                WriteRoughness( OGRLineString *,
                                           const double & dfZleft,
@@ -129,6 +123,8 @@ class OGRWAsPLayer : public OGRLayer
      *     lines that have been simplified to a point are converted to a 8 pt circle
      * */
     OGRLineString * Simplify( const OGRLineString & line ) const;
+
+    OGRFeature *GetNextRawFeature();
 
   public:
                         /* For writing */
@@ -163,10 +159,7 @@ class OGRWAsPLayer : public OGRLayer
 
     virtual OGRErr      ICreateFeature( OGRFeature * poFeature ) override;
 
-    virtual OGRFeature *GetNextFeature() override;
-    OGRFeature *GetNextRawFeature();
-    virtual OGRwkbGeometryType  GetGeomType() override { return wkbLineString25D; }
-    virtual OGRSpatialReference *GetSpatialRef() override { return poSpatialReference; }
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRWAsPLayer)
     virtual const char *GetName() override { return sName.c_str(); }
 };
 
@@ -174,11 +167,11 @@ class OGRWAsPLayer : public OGRLayer
 /*                           OGRWAsPDataSource                          */
 /************************************************************************/
 
-class OGRWAsPDataSource : public OGRDataSource
+class OGRWAsPDataSource final: public OGRDataSource
 {
     CPLString                     sFilename;
     VSILFILE *                    hFile;
-    UNIQUEPTR<OGRWAsPLayer>   oLayer;
+    std::unique_ptr<OGRWAsPLayer>   oLayer;
 
     void               GetOptions(CPLString & sFirstField,
                                   CPLString & sSecondField,
@@ -196,9 +189,9 @@ class OGRWAsPDataSource : public OGRDataSource
     virtual OGRLayer   *GetLayerByName( const char * ) override;
 
     virtual OGRLayer   *ICreateLayer( const char *pszName,
-                                     OGRSpatialReference *poSpatialRef = NULL,
+                                     OGRSpatialReference *poSpatialRef = nullptr,
                                      OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL ) override;
+                                     char ** papszOptions = nullptr ) override;
 
     virtual int        TestCapability( const char * ) override;
     OGRErr             Load( bool bSilent = false );
@@ -208,7 +201,7 @@ class OGRWAsPDataSource : public OGRDataSource
 /*                             OGRWAsPDriver                            */
 /************************************************************************/
 
-class OGRWAsPDriver : public OGRSFDriver
+class OGRWAsPDriver final: public OGRSFDriver
 {
 
   public:
@@ -218,7 +211,7 @@ class OGRWAsPDriver : public OGRSFDriver
     virtual OGRDataSource*      Open( const char *, int ) override;
 
     virtual OGRDataSource       *CreateDataSource( const char *pszName,
-                                                   char ** = NULL ) override;
+                                                   char ** = nullptr ) override;
 
     virtual OGRErr              DeleteDataSource (const char *pszName) override;
 

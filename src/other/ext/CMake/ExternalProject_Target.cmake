@@ -330,7 +330,7 @@ endfunction(ET_RPath)
 #
 function(ExternalProject_Target etype etarg extproj extroot fname)
 
-  cmake_parse_arguments(E "RPATH" "LINK_TARGET;LINK_TARGET_DEBUG;SUBDIR" "SYMLINKS" ${ARGN})
+  cmake_parse_arguments(E "RPATH" "LINK_TARGET;LINK_TARGET_DEBUG;SUBDIR;WIN_DIF_LIB_NAME" "SYMLINKS" ${ARGN})
 
   #message("etype: ${etype}")
   #message("etarg: ${etarg}")
@@ -405,7 +405,11 @@ function(ExternalProject_Target etype etarg extproj extroot fname)
 
     # On Windows, we need both a .dll and a .lib file to use a shared library for compilation
     if (MSVC)
-      string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${fname}")
+      if (E_WIN_DIF_LIB_NAME)
+        set(IMPLIB_FILE ${E_WIN_DIF_LIB_NAME})
+      else ()
+        string(REPLACE "${CMAKE_SHARED_LIBRARY_SUFFIX}" ".lib" IMPLIB_FILE "${fname}")
+      endif(E_WIN_DIF_LIB_NAME)
       fcfgcpy(FILE TOUT ${extproj} ${extroot} ${IMPLIB_FILE} ${LIB_DIR} ${IMPLIB_FILE})
     endif (MSVC)
 

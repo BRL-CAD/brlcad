@@ -30,16 +30,16 @@
 #include "cpl_string.h"
 #include "ogr_gmt.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                          OGRGmtDataSource()                          */
 /************************************************************************/
 
 OGRGmtDataSource::OGRGmtDataSource() :
-    papoLayers(NULL),
+    papoLayers(nullptr),
     nLayers(0),
-    pszName(NULL),
+    pszName(nullptr),
     bUpdate(false)
 {}
 
@@ -60,21 +60,25 @@ OGRGmtDataSource::~OGRGmtDataSource()
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRGmtDataSource::Open( const char *pszFilename, int bUpdateIn )
+int OGRGmtDataSource::Open( const char *pszFilename,
+                            VSILFILE* fp,
+                            const OGRSpatialReference* poSRS,
+                            int bUpdateIn )
 
 {
     bUpdate = CPL_TO_BOOL( bUpdateIn );
 
-    OGRGmtLayer *poLayer = new OGRGmtLayer( pszFilename, bUpdate );
+    OGRGmtLayer *poLayer = new OGRGmtLayer( pszFilename, fp, poSRS, bUpdate );
     if( !poLayer->bValidFile )
     {
         delete poLayer;
         return FALSE;
     }
 
-    nLayers = 1;
-    papoLayers = static_cast<OGRGmtLayer **>( CPLMalloc(sizeof(void*)) );
-    papoLayers[0] = poLayer;
+    papoLayers = static_cast<OGRGmtLayer **>( CPLRealloc( papoLayers,
+                                        (nLayers + 1) *sizeof(OGRGmtLayer*)) );
+    papoLayers[nLayers] = poLayer;
+    nLayers ++;
 
     CPLFree (pszName);
     pszName = CPLStrdup( pszFilename );
@@ -107,10 +111,13 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
                                 OGRwkbGeometryType eType,
                                 CPL_UNUSED char ** papszOptions )
 {
+    if( nLayers != 0 )
+        return nullptr;
+
 /* -------------------------------------------------------------------- */
 /*      Establish the geometry type.  Note this logic                   */
 /* -------------------------------------------------------------------- */
-    const char *pszGeom = NULL;
+    const char *pszGeom = nullptr;
 
     switch( wkbFlatten(eType) )
     {
@@ -142,60 +149,60 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
 /*      datasource name ends in .gmt we will override the provided      */
 /*      layer name with the name from the gmt.                          */
 /* -------------------------------------------------------------------- */
-    CPLString osPath = CPLGetPath( pszName );
-    CPLString osFilename;
 
-    if( EQUAL(CPLGetExtension(pszName),"gmt") )
-        osFilename = pszName;
-    else
+    CPLString osPath = CPLGetPath( pszName );
+    CPLString osFilename(pszName);
+    const char* pszFlags = "wb+";
+
+    if( osFilename == "/dev/stdout" )
+        osFilename = "/vsistdout";
+
+    if( STARTS_WITH(osFilename, "/vsistdout") )
+        pszFlags = "wb";
+    else if( !EQUAL(CPLGetExtension(pszName),"gmt") )
         osFilename = CPLFormFilename( osPath, pszLayerName, "gmt" );
 
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL( osFilename, "w" );
-    if( fp == NULL )
+    VSILFILE *fp = VSIFOpenL( osFilename, pszFlags );
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "open(%s) failed: %s",
                   osFilename.c_str(), VSIStrerror(errno) );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Write out header.                                               */
 /* -------------------------------------------------------------------- */
     VSIFPrintfL( fp, "# @VGMT1.0%s\n", pszGeom );
-    VSIFPrintfL( fp, "# REGION_STUB                                      "
-                 "                       \n" );
+    if( !STARTS_WITH(osFilename, "/vsistdout") )
+    {
+        VSIFPrintfL( fp, "# REGION_STUB                                      "
+                     "                       \n" );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Write the projection, if possible.                              */
 /* -------------------------------------------------------------------- */
-    if( poSRS != NULL )
+    if( poSRS != nullptr )
     {
-        if( poSRS->IsProjected()
-            && poSRS->GetAuthorityName("PROJCS")
-            && EQUAL(poSRS->GetAuthorityName("PROJCS"),"EPSG") )
+        if( poSRS->GetAuthorityName(nullptr)
+            && EQUAL(poSRS->GetAuthorityName(nullptr),"EPSG") )
         {
             VSIFPrintfL( fp, "# @Je%s\n",
-                         poSRS->GetAuthorityCode("PROJCS") );
-        }
-        else if( poSRS->IsGeographic()
-                 && poSRS->GetAuthorityName("GEOGCS")
-                 && EQUAL(poSRS->GetAuthorityName("GEOGCS"),"EPSG") )
-        {
-            VSIFPrintfL( fp, "# @Je%s\n",
-                         poSRS->GetAuthorityCode("GEOGCS") );
+                         poSRS->GetAuthorityCode(nullptr) );
         }
 
-        char *pszValue = NULL;
+        char *pszValue = nullptr;
         if( poSRS->exportToProj4( &pszValue ) == OGRERR_NONE )
         {
             VSIFPrintfL( fp, "# @Jp\"%s\"\n", pszValue );
-            CPLFree( pszValue );
-            pszValue = NULL;
         }
+        CPLFree( pszValue );
+        pszValue = nullptr;
 
         if( poSRS->exportToWkt( &pszValue ) == OGRERR_NONE )
         {
@@ -203,24 +210,26 @@ OGRGmtDataSource::ICreateLayer( const char * pszLayerName,
                                                    CPLES_BackslashQuotable );
 
             VSIFPrintfL( fp, "# @Jw\"%s\"\n", pszEscapedWkt );
-            CPLFree( pszValue );
             CPLFree( pszEscapedWkt );
-            pszValue = NULL;
         }
+        CPLFree( pszValue );
     }
-
-/* -------------------------------------------------------------------- */
-/*      Finish header and close.                                        */
-/* -------------------------------------------------------------------- */
-    VSIFCloseL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Return open layer handle.                                       */
 /* -------------------------------------------------------------------- */
-    if( Open( osFilename, TRUE ) )
-        return papoLayers[nLayers-1];
+    if( Open( osFilename, fp, poSRS, TRUE ) )
+    {
+        auto poLayer = papoLayers[nLayers-1];
+        if( strcmp(pszGeom, "") != 0 )
+        {
+            poLayer->GetLayerDefn()->SetGeomType(wkbFlatten(eType));
+        }
+        return poLayer;
+    }
 
-    return NULL;
+    VSIFCloseL(fp);
+    return nullptr;
 }
 
 /************************************************************************/
@@ -244,7 +253,7 @@ OGRLayer *OGRGmtDataSource::GetLayer( int iLayer )
 
 {
     if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+        return nullptr;
 
     return papoLayers[iLayer];
 }

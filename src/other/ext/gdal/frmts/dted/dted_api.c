@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2007-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 #include "dted_api.h"
 
 #ifndef AVOID_CPL
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 #endif
 
 static int bWarnedTwoComplement = FALSE;
@@ -40,6 +40,8 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo* psDInfo);
 
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 CPL_INLINE static void CPL_IGNORE_RET_VAL_SIZET(CPL_UNUSED size_t unused) {}
+
+#define DIGIT_ZERO '0'
 
 /************************************************************************/
 /*                            DTEDGetField()                            */
@@ -74,7 +76,7 @@ static const char* stripLeadingZeros(const char* buf)
 
     /* Go until we run out of characters  or hit something non-zero */
 
-    while( *ptr == '0' && *(ptr+1) != '\0' )
+    while( *ptr == DIGIT_ZERO && *(ptr+1) != '\0' )
     {
         ptr++;
     }
@@ -700,7 +702,7 @@ int DTEDReadProfileEx( DTEDInfo * psDInfo, int nColumnOffset,
         else if (fileCheckSum != nCheckSum)
         {
 #ifndef AVOID_CPL
-            CPLError( CE_Warning, CPLE_AppDefined,
+            CPLError( CE_Failure, CPLE_AppDefined,
 #else
             fprintf( stderr,
 #endif
@@ -1019,6 +1021,7 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
 {
     int nFieldLen;
     char *pszFieldSrc;
+    size_t nLenToCopy;
 
     if( !psDInfo->bUpdate )
         return FALSE;
@@ -1033,10 +1036,10 @@ int DTEDSetMetadata( DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
 /* -------------------------------------------------------------------- */
 /*      Update it, padding with spaces.                                 */
 /* -------------------------------------------------------------------- */
-    memset( pszFieldSrc, ' ', nFieldLen );
-    /* cppcheck-suppress redundantCopy */
-    strncpy( pszFieldSrc, pszNewValue,
-             MIN((size_t)nFieldLen,strlen(pszNewValue)) );
+    nLenToCopy = MIN((size_t)nFieldLen,strlen(pszNewValue));
+    memcpy( pszFieldSrc, pszNewValue, nLenToCopy);
+    if( nLenToCopy < (size_t)nFieldLen )
+        memset( pszFieldSrc + nLenToCopy, ' ', nFieldLen - nLenToCopy );
 
     /* Turn the flag on, so that the headers are rewritten at file */
     /* closing */

@@ -28,7 +28,7 @@
 
 #include "dgnlibp.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            DGNTestOpen()                             */
@@ -98,13 +98,13 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
 /*      Open the file.                                                  */
 /* -------------------------------------------------------------------- */
-    FILE *fp = VSIFOpen( pszFilename, bUpdate ? "rb+" : "rb");
-    if( fp == NULL )
+    VSILFILE *fp = VSIFOpenL( pszFilename, bUpdate ? "rb+" : "rb");
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Unable to open `%s' for read access.\n",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -112,17 +112,17 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 /* -------------------------------------------------------------------- */
     GByte abyHeader[512];
     const int nHeaderBytes =
-        static_cast<int>(VSIFRead( abyHeader, 1, sizeof(abyHeader), fp ));
+        static_cast<int>(VSIFReadL( abyHeader, 1, sizeof(abyHeader), fp ));
     if( !DGNTestOpen( abyHeader, nHeaderBytes ) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "File `%s' does not have expected DGN header.\n",
                   pszFilename );
-        VSIFClose( fp );
-        return NULL;
+        VSIFCloseL( fp );
+        return nullptr;
     }
 
-    VSIRewind( fp );
+    VSIRewindL( fp );
 
 /* -------------------------------------------------------------------- */
 /*      Create the info structure.                                      */
@@ -139,7 +139,7 @@ DGNHandle DGNOpen( const char * pszFilename, int bUpdate )
 
     psDGN->index_built = false;
     psDGN->element_count = 0;
-    psDGN->element_index = NULL;
+    psDGN->element_index = nullptr;
 
     psDGN->got_bounds = false;
 
@@ -286,7 +286,7 @@ void DGNClose( DGNHandle hDGN )
 {
     DGNInfo     *psDGN = (DGNInfo *) hDGN;
 
-    VSIFClose( psDGN->fp );
+    VSIFCloseL( psDGN->fp );
     CPLFree( psDGN->element_index );
     CPLFree( psDGN );
 }

@@ -37,8 +37,9 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**
  * GDALMDReaderLandsat()
@@ -67,19 +68,19 @@ GDALMDReaderLandsat::GDALMDReaderLandsat(const char *pszPath,
     // form metadata file name
     CPLStrlcpy(szMetadataName + i, "_MTL.txt", 9);
 
-    const char* pszIMDSourceFilename = CPLFormFilename( pszDirName,
-                                                        szMetadataName, NULL );
-    if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+    CPLString osIMDSourceFilename = CPLFormFilename( pszDirName,
+                                                        szMetadataName, nullptr );
+    if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osIMDSourceFilename = pszIMDSourceFilename;
+        m_osIMDSourceFilename = osIMDSourceFilename;
     }
     else
     {
         CPLStrlcpy(szMetadataName + i, "_MTL.TXT", 9);
-        pszIMDSourceFilename = CPLFormFilename( pszDirName, szMetadataName, NULL );
-        if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+        osIMDSourceFilename = CPLFormFilename( pszDirName, szMetadataName, nullptr );
+        if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = pszIMDSourceFilename;
+            m_osIMDSourceFilename = osIMDSourceFilename;
         }
     }
 
@@ -111,7 +112,7 @@ bool GDALMDReaderLandsat::HasRequiredFiles() const
  */
 char** GDALMDReaderLandsat::GetMetadataFiles() const
 {
-    char **papszFileList = NULL;
+    char **papszFileList = nullptr;
     if(!m_osIMDSourceFilename.empty())
         papszFileList= CSLAddString( papszFileList, m_osIMDSourceFilename );
 
@@ -142,7 +143,7 @@ void GDALMDReaderLandsat::LoadMetadata()
     // L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID
     const char* pszSatId = CSLFetchNameValue(m_papszIMDMD,
                             "L1_METADATA_FILE.PRODUCT_METADATA.SPACECRAFT_ID");
-    if(NULL != pszSatId)
+    if(nullptr != pszSatId)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
                                            CPLStripQuotes(pszSatId));
@@ -151,7 +152,7 @@ void GDALMDReaderLandsat::LoadMetadata()
     // L1_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER
     const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD,
                             "L1_METADATA_FILE.IMAGE_ATTRIBUTES.CLOUD_COVER");
-    if(NULL != pszCloudCover)
+    if(nullptr != pszCloudCover)
     {
         double fCC = CPLAtofM(pszCloudCover);
         if(fCC < 0)
@@ -174,28 +175,29 @@ void GDALMDReaderLandsat::LoadMetadata()
 
     const char* pszDate = CSLFetchNameValue(m_papszIMDMD,
                           "L1_METADATA_FILE.PRODUCT_METADATA.ACQUISITION_DATE");
-    if(NULL == pszDate)
+    if(nullptr == pszDate)
     {
         pszDate = CSLFetchNameValue(m_papszIMDMD,
                              "L1_METADATA_FILE.PRODUCT_METADATA.DATE_ACQUIRED");
     }
 
-    if(NULL != pszDate)
+    if(nullptr != pszDate)
     {
         const char* pszTime = CSLFetchNameValue(m_papszIMDMD,
                     "L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_SCAN_TIME");
-        if(NULL == pszTime)
+        if(nullptr == pszTime)
         {
             pszTime = CSLFetchNameValue(m_papszIMDMD,
                          "L1_METADATA_FILE.PRODUCT_METADATA.SCENE_CENTER_TIME");
         }
-        if(NULL == pszTime)
+        if(nullptr == pszTime)
             pszTime = "00:00:00.000000Z";
 
         char buffer[80];
-        time_t timeMid = GetAcquisitionTimeFromString(CPLSPrintf( "%sT%s",
+        GIntBig timeMid = GetAcquisitionTimeFromString(CPLSPrintf( "%sT%s",
                                                      pszDate, pszTime));
-        strftime (buffer, 80, MD_DATETIMEFORMAT, localtime(&timeMid));
+        struct tm tmBuf;
+        strftime (buffer, 80, MD_DATETIMEFORMAT, CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                            MD_NAME_ACQDATETIME, buffer);
     }

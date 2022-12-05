@@ -85,14 +85,14 @@
         band::GetUnitType() returns meters.
         band::GetScale() returns SCAL * (scale/65536)
         band::GetOffset() returns SCAL * offset
-        ds::GetProjectionRef() returns a local CS
+        ds::_GetProjectionRef() returns a local CS
                 using meters.
         ds::GetGeoTransform() returns a scale matrix
                 having SCAL sx,sy members.
 
         ds::SetGeoTransform() lets us establish the
                 size of ground pixels.
-        ds::SetProjection() lets us establish what
+        ds::_SetProjection() lets us establish what
                 units ground measures are in (also needed
                 to calc the size of ground pixels).
         band::SetUnitType() tells us what units
@@ -110,7 +110,7 @@
 
 #include <algorithm>
 
-// CPL_CVSID("$Id$");
+// CPL_CVSID("$Id$")
 
 const double kdEarthCircumPolar = 40007849;
 const double kdEarthCircumEquat = 40075004;
@@ -139,7 +139,7 @@ static bool approx_equal(double a, double b)
 
 class TerragenRasterBand;
 
-class TerragenDataset : public GDALPamDataset
+class TerragenDataset final: public GDALPamDataset
 {
     friend class TerragenRasterBand;
 
@@ -174,13 +174,19 @@ class TerragenDataset : public GDALPamDataset
 
     static GDALDataset* Open( GDALOpenInfo* );
     static GDALDataset* Create( const char* pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char** papszOptions );
 
     virtual CPLErr      GetGeoTransform( double* ) override;
-    virtual const char* GetProjectionRef(void) override;
-    virtual CPLErr SetProjection( const char * ) override;
+    virtual const char* _GetProjectionRef(void) override;
+    virtual CPLErr _SetProjection( const char * ) override;
     virtual CPLErr SetGeoTransform( double * ) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr SetSpatialRef(const OGRSpatialReference* poSRS) override {
+        return OldSetProjectionFromSetSpatialRef(poSRS);
+    }
 
  protected:
     bool get(GInt16&);
@@ -204,7 +210,7 @@ class TerragenDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class TerragenRasterBand : public GDALPamRasterBand
+class TerragenRasterBand final: public GDALPamRasterBand
 {
     friend class TerragenDataset;
 
@@ -216,15 +222,15 @@ public:
     explicit TerragenRasterBand(TerragenDataset*);
     virtual ~TerragenRasterBand()
     {
-        if(m_pvLine != NULL)
+        if(m_pvLine != nullptr)
             CPLFree(m_pvLine);
     }
 
     // Geomeasure support.
     virtual CPLErr IReadBlock( int, int, void * ) override;
     virtual const char* GetUnitType() override;
-    virtual double GetOffset(int* pbSuccess = NULL) override;
-    virtual double GetScale(int* pbSuccess = NULL) override;
+    virtual double GetOffset(int* pbSuccess = nullptr) override;
+    virtual double GetScale(int* pbSuccess = nullptr) override;
 
     virtual CPLErr IWriteBlock( int, int, void * ) override;
     virtual CPLErr SetUnitType( const char* ) override;
@@ -259,7 +265,7 @@ CPLErr TerragenRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 {
     //CPLAssert( sizeof(float) == sizeof(GInt32) );
     CPLAssert( nBlockXOff == 0  );
-    CPLAssert( pImage != NULL );
+    CPLAssert( pImage != nullptr );
 
     TerragenDataset& ds = *reinterpret_cast<TerragenDataset *>( poDS );
 
@@ -308,7 +314,7 @@ CPLErr TerragenRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 const char *TerragenRasterBand::GetUnitType()
 {
     // todo: Return elevation units.
-    // For Terragen documents, it's the same as the ground units.
+    // For Terragen documents, it is the same as the ground units.
     TerragenDataset *poGDS = reinterpret_cast<TerragenDataset *>( poDS );
 
     return poGDS->m_szUnits;
@@ -321,7 +327,7 @@ const char *TerragenRasterBand::GetUnitType()
 double TerragenRasterBand::GetScale(int* pbSuccess)
 {
     const TerragenDataset& ds = *reinterpret_cast<TerragenDataset *>( poDS );
-    if(pbSuccess != NULL)
+    if(pbSuccess != nullptr)
         *pbSuccess = TRUE;
 
     return ds.m_dScale;
@@ -334,7 +340,7 @@ double TerragenRasterBand::GetScale(int* pbSuccess)
 double TerragenRasterBand::GetOffset(int* pbSuccess)
 {
     const TerragenDataset& ds = *reinterpret_cast<TerragenDataset *>( poDS );
-    if(pbSuccess != NULL)
+    if(pbSuccess != nullptr)
         *pbSuccess = TRUE;
 
     return ds.m_dOffset;
@@ -352,8 +358,8 @@ CPLErr TerragenRasterBand::IWriteBlock
 )
 {
     CPLAssert( nBlockXOff == 0  );
-    CPLAssert( pImage != NULL );
-    CPLAssert( m_pvLine != NULL );
+    CPLAssert( pImage != nullptr );
+    CPLAssert( m_pvLine != nullptr );
 
     const size_t pixelsize = sizeof(GInt16);
 
@@ -428,13 +434,13 @@ TerragenDataset::TerragenDataset() :
     m_dSCAL(30.0),
     m_dGroundScale(0.0),
     m_dMetersPerGroundUnit(1.0),
-    m_dMetersPerElevUnit(0.0),
-    m_fp(NULL),
+    m_dMetersPerElevUnit(1.0),
+    m_fp(nullptr),
     m_nDataOffset(0),
     m_nHeightScale(0),
     m_nBaseHeight(0),
-    m_pszFilename(NULL),
-    m_pszProjection(NULL),
+    m_pszFilename(nullptr),
+    m_pszProjection(nullptr),
     m_bIsGeo(false)
 {
     m_dLogSpan[0] = 0.0;
@@ -460,12 +466,12 @@ TerragenDataset::TerragenDataset() :
 TerragenDataset::~TerragenDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     CPLFree(m_pszProjection);
     CPLFree(m_pszFilename);
 
-    if( m_fp != NULL )
+    if( m_fp != nullptr )
         VSIFCloseL( m_fp );
 }
 
@@ -481,7 +487,6 @@ bool TerragenDataset::write_header()
                   "Couldn't write to Terragen file %s.\n"
                   "Is file system full?",
                   m_pszFilename );
-        VSIFCloseL( m_fp );
 
         return false;
     }
@@ -571,7 +576,6 @@ bool TerragenDataset::write_header()
                   "Couldn't write to Terragen file %s.\n"
                   "Is file system full?",
                   m_pszFilename );
-        VSIFCloseL( m_fp );
 
         return false;
     }
@@ -630,7 +634,6 @@ bool TerragenDataset::write_header()
                   "Couldn't write to Terragen file %s.\n"
                   "Cannot find adequate heightscale/baseheight combination.",
                   m_pszFilename );
-        VSIFCloseL( m_fp );
 
         return false;
     }
@@ -842,7 +845,7 @@ int TerragenDataset::LoadFromFile()
 /*                           SetProjection()                            */
 /************************************************************************/
 
-CPLErr TerragenDataset::SetProjection( const char * pszNewProjection )
+CPLErr TerragenDataset::_SetProjection( const char * pszNewProjection )
 {
     // Terragen files aren't really georeferenced, but
     // we should get the projection's linear units so
@@ -882,9 +885,9 @@ CPLErr TerragenDataset::SetProjection( const char * pszNewProjection )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char* TerragenDataset::GetProjectionRef(void)
+const char* TerragenDataset::_GetProjectionRef(void)
 {
-    if(m_pszProjection == NULL )
+    if(m_pszProjection == nullptr )
         return "";
 
     return m_pszProjection;
@@ -921,7 +924,7 @@ CPLErr TerragenDataset::GetGeoTransform(double* padfTransform)
 GDALDataset* TerragenDataset::Create
 (
     const char* pszFilename,
-    int nXSize, int nYSize, int nBands,
+    int nXSize, int nYSize, int nBandsIn,
     GDALDataType eType, char** papszOptions
 )
 {
@@ -935,11 +938,11 @@ GDALDataset* TerragenDataset::Create
     //      Verify input options.
     // --------------------------------------------------------------------
     const char* pszValue = CSLFetchNameValue( papszOptions,"MINUSERPIXELVALUE");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
         poDS->m_dLogSpan[0] = CPLAtof( pszValue );
 
     pszValue = CSLFetchNameValue( papszOptions,"MAXUSERPIXELVALUE");
-    if( pszValue != NULL )
+    if( pszValue != nullptr )
         poDS->m_dLogSpan[1] = CPLAtof( pszValue );
 
     if( poDS->m_dLogSpan[1] <= poDS->m_dLogSpan[0] )
@@ -948,7 +951,7 @@ GDALDataset* TerragenDataset::Create
               "Inverted, flat, or unspecified span for Terragen file." );
 
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     if( eType != GDT_Float32 )
@@ -959,17 +962,17 @@ GDALDataset* TerragenDataset::Create
                   GDALGetDataTypeName(eType) );
 
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
-    if( nBands != 1 )
+    if( nBandsIn != 1 )
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "Terragen driver doesn't support %d bands. Must be 1.\n",
-                  nBands );
+                  nBandsIn );
 
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 // --------------------------------------------------------------------
@@ -978,13 +981,13 @@ GDALDataset* TerragenDataset::Create
 
     poDS->m_fp = VSIFOpenL( pszFilename, "wb+" );
 
-    if( poDS->m_fp == NULL )
+    if( poDS->m_fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.\n",
                   pszFilename );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     poDS->nRasterXSize = nXSize;
@@ -1014,33 +1017,20 @@ GDALDataset *TerragenDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     // The file should have at least 32 header bytes
-    if( poOpenInfo->nHeaderBytes < 32 )
-        return NULL;
+    if( poOpenInfo->nHeaderBytes < 32 || poOpenInfo->fpL == nullptr )
+        return nullptr;
 
     if( !EQUALN(reinterpret_cast<const char *>( poOpenInfo->pabyHeader ),
                 "TERRAGENTERRAIN ", 16) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     TerragenDataset *poDS = new TerragenDataset();
-
-    // Reopen for large file access.
-    if( poOpenInfo->eAccess == GA_Update )
-        poDS->m_fp = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-    else
-        poDS->m_fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-
-    if( poDS->m_fp == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to re-open %s within Terragen driver.\n",
-                  poOpenInfo->pszFilename );
-        delete poDS;
-        return NULL;
-    }
     poDS->eAccess = poOpenInfo->eAccess;
+    poDS->m_fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the file.                                                  */
@@ -1048,7 +1038,7 @@ GDALDataset *TerragenDataset::Open( GDALOpenInfo * poOpenInfo )
     if( !poDS->LoadFromFile() )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1079,7 +1069,7 @@ GDALDataset *TerragenDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_Terragen()
 
 {
-    if( GDALGetDriverByName( "Terragen" ) != NULL )
+    if( GDALGetDriverByName( "Terragen" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -1088,13 +1078,14 @@ void GDALRegister_Terragen()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ter" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "Terragen heightfield" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_terragen.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/terragen.html" );
 
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
 "<CreationOptionList>"
 "   <Option name='MINUSERPIXELVALUE' type='float' description='Lowest logical elevation'/>"
 "   <Option name='MAXUSERPIXELVALUE' type='float' description='Highest logical elevation'/>"
 "</CreationOptionList>" );
+    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = TerragenDataset::Open;
     poDriver->pfnCreate = TerragenDataset::Create;

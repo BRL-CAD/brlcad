@@ -3,10 +3,10 @@
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement CPLSystem().
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  **********************************************************************
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,7 @@ int CPL_DLL CPLSpawn( const char * const papszArgv[], VSILFILE* fin, VSILFILE* f
 #ifdef WIN32
 #include <windows.h>
 typedef HANDLE CPL_FILE_HANDLE;
-#define CPL_FILE_INVALID_HANDLE NULL
+#define CPL_FILE_INVALID_HANDLE CPL_NULLPTR
 typedef DWORD  CPL_PID;
 #else
 #include <sys/types.h>

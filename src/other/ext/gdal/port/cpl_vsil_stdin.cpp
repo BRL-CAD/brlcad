@@ -2,10 +2,10 @@
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement VSI large file api for stdin
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  **********************************************************************
- * Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,7 +52,7 @@
 #include <fcntl.h>
 #endif
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 // We buffer the first 1MB of standard input to enable drivers
 // to autodetect data. In the first MB, backward and forward seeking
@@ -60,7 +60,7 @@ CPL_CVSID("$Id$");
 // TODO(schwehr): Make BUFFER_SIZE a static const.
 #define BUFFER_SIZE (1024 * 1024)
 
-static GByte* pabyBuffer = NULL;
+static GByte* pabyBuffer = nullptr;
 static GUInt32 nBufferLen = 0;
 static GUIntBig nRealPos = 0;
 
@@ -70,7 +70,7 @@ static GUIntBig nRealPos = 0;
 
 static void VSIStdinInit()
 {
-    if( pabyBuffer == NULL )
+    if( pabyBuffer == nullptr )
     {
 #ifdef WIN32
         setmode( fileno( stdin ), O_BINARY );
@@ -85,18 +85,20 @@ static void VSIStdinInit()
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdinFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
+class VSIStdinFilesystemHandler final : public VSIFilesystemHandler
 {
-public:
-                              VSIStdinFilesystemHandler();
-    virtual                  ~VSIStdinFilesystemHandler();
+    CPL_DISALLOW_COPY_ASSIGN(VSIStdinFilesystemHandler)
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess,
-                                    bool bSetError ) override;
-    virtual int               Stat( const char *pszFilename,
-                                    VSIStatBufL *pStatBuf,
-                                    int nFlags ) override;
+  public:
+    VSIStdinFilesystemHandler();
+    ~VSIStdinFilesystemHandler() override;
+
+    VSIVirtualHandle *Open( const char *pszFilename,
+                            const char *pszAccess,
+                            bool bSetError,
+                            CSLConstList /* papszOptions */ ) override;
+    int Stat( const char *pszFilename, VSIStatBufL *pStatBuf,
+              int nFlags ) override;
 };
 
 /************************************************************************/
@@ -105,42 +107,25 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdinHandle CPL_FINAL : public VSIVirtualHandle
+class VSIStdinHandle final : public VSIVirtualHandle
 {
   private:
-    GUIntBig nCurOff;
+    CPL_DISALLOW_COPY_ASSIGN(VSIStdinHandle)
+
+    GUIntBig nCurOff = 0;
     int               ReadAndCache( void* pBuffer, int nToRead );
 
   public:
-                      VSIStdinHandle();
-    virtual          ~VSIStdinHandle();
+    VSIStdinHandle() = default;
+    ~VSIStdinHandle() override = default;
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize,
-                            size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize,
-                             size_t nMemb ) override;
-    virtual int       Eof() override;
-    virtual int       Close() override;
+    int Seek( vsi_l_offset nOffset, int nWhence ) override;
+    vsi_l_offset Tell() override;
+    size_t Read( void *pBuffer, size_t nSize, size_t nMemb ) override;
+    size_t Write( const void *pBuffer, size_t nSize, size_t nMemb ) override;
+    int Eof() override;
+    int Close() override;
 };
-
-/************************************************************************/
-/*                           VSIStdinHandle()                           */
-/************************************************************************/
-
-VSIStdinHandle::VSIStdinHandle()
-{
-    nCurOff = 0;
-}
-
-/************************************************************************/
-/*                          ~VSIStdinHandle()                           */
-/************************************************************************/
-
-VSIStdinHandle::~VSIStdinHandle()
-{
-}
 
 /************************************************************************/
 /*                              ReadAndCache()                          */
@@ -334,7 +319,7 @@ int VSIStdinHandle::Close()
 
 VSIStdinFilesystemHandler::VSIStdinFilesystemHandler()
 {
-    pabyBuffer = NULL;
+    pabyBuffer = nullptr;
     nBufferLen = 0;
     nRealPos = 0;
 }
@@ -346,7 +331,7 @@ VSIStdinFilesystemHandler::VSIStdinFilesystemHandler()
 VSIStdinFilesystemHandler::~VSIStdinFilesystemHandler()
 {
     CPLFree(pabyBuffer);
-    pabyBuffer = NULL;
+    pabyBuffer = nullptr;
 }
 
 /************************************************************************/
@@ -356,18 +341,27 @@ VSIStdinFilesystemHandler::~VSIStdinFilesystemHandler()
 VSIVirtualHandle *
 VSIStdinFilesystemHandler::Open( const char *pszFilename,
                                  const char *pszAccess,
-                                 bool /* bSetError */ )
+                                 bool /* bSetError */,
+                                 CSLConstList /* papszOptions */ )
 
 {
     if( strcmp(pszFilename, "/vsistdin/") != 0 )
-        return NULL;
+        return nullptr;
 
-    if( strchr(pszAccess, 'w') != NULL ||
-        strchr(pszAccess, '+') != NULL )
+    if( !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "YES")) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "/vsistdin/ disabled. Set CPL_ALLOW_VSISTDIN to YES to "
+                "enable it");
+        return nullptr;
+    }
+
+    if( strchr(pszAccess, 'w') != nullptr ||
+        strchr(pszAccess, '+') != nullptr )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Write or update mode not supported on /vsistdin");
-        return NULL;
+        return nullptr;
     }
 
     return new VSIStdinHandle;
@@ -386,6 +380,14 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
 
     if( strcmp(pszFilename, "/vsistdin/") != 0 )
         return -1;
+
+    if( !CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "YES")) )
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "/vsistdin/ disabled. Set CPL_ALLOW_VSISTDIN to YES to "
+                "enable it");
+        return -1;
+    }
 
     if( nFlags & VSI_STAT_SIZE_FLAG )
     {
@@ -407,16 +409,20 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
 /*                       VSIInstallStdinHandler()                       */
 /************************************************************************/
 
-/**
- * \brief Install /vsistdin/ file system handler
- *
- * A special file handler is installed that allows reading from the standard
- * input steam.
- *
- * The file operations available are of course limited to Read() and
- * forward Seek() (full seek in the first MB of a file).
- *
- * @since GDAL 1.8.0
+/*!
+ \brief Install /vsistdin/ file system handler
+
+ A special file handler is installed that allows reading from the standard
+ input stream.
+
+ The file operations available are of course limited to Read() and
+ forward Seek() (full seek in the first MB of a file).
+
+ \verbatim embed:rst
+ See :ref:`/vsistdin/ documentation <vsistdin>`
+ \endverbatim
+
+ @since GDAL 1.8.0
  */
 void VSIInstallStdinHandler()
 

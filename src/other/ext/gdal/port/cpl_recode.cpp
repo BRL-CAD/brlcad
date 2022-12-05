@@ -8,7 +8,7 @@
  **********************************************************************
  * Copyright (c) 2011, Andrey Kiselev <dron@ak4719.spb.edu>
  * Copyright (c) 2008, Frank Warmerdam
- * Copyright (c) 2011-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@
 
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifdef CPL_RECODE_ICONV
 extern void CPLClearRecodeIconvWarningFlags();
@@ -94,6 +94,29 @@ char CPL_DLL *CPLRecode( const char *pszSource,
              || EQUAL(pszDstEncoding, CPL_ENC_ISO8859_1) ) )
         return CPLStrdup(pszSource);
 
+/* -------------------------------------------------------------------- */
+/*      For ZIP file handling                                           */
+/*      (CP437 might be missing even on some iconv, like on Mac)        */
+/* -------------------------------------------------------------------- */
+    if( EQUAL(pszSrcEncoding, "CP437") &&
+        EQUAL(pszDstEncoding, CPL_ENC_UTF8) ) //
+    {
+        bool bIsAllPrintableASCII = true;
+        const size_t nCharCount = strlen(pszSource);
+        for( size_t i = 0; i <nCharCount; i++ )
+        {
+            if( pszSource[i] < 32 || pszSource[i] > 126 )
+            {
+                bIsAllPrintableASCII = false;
+                break;
+            }
+        }
+        if( bIsAllPrintableASCII )
+        {
+            return CPLStrdup(pszSource);
+        }
+    }
+
 #ifdef CPL_RECODE_ICONV
 /* -------------------------------------------------------------------- */
 /*      CPL_ENC_ISO8859_1 -> CPL_ENC_UTF8                               */
@@ -109,6 +132,17 @@ char CPL_DLL *CPLRecode( const char *pszSource,
     {
         return CPLRecodeStub( pszSource, pszSrcEncoding, pszDstEncoding );
     }
+#ifdef _WIN32
+    else if( ( (EQUAL(pszSrcEncoding, "CP_ACP") ||
+                EQUAL(pszSrcEncoding, "CP_OEMCP"))
+              && EQUAL(pszDstEncoding, CPL_ENC_UTF8) )
+            || ( EQUAL(pszSrcEncoding, CPL_ENC_UTF8)
+                 && (EQUAL(pszDstEncoding, "CP_ACP")||
+                     EQUAL(pszDstEncoding, "CP_OEMCP")) ) )
+    {
+        return CPLRecodeStub( pszSource, pszSrcEncoding, pszDstEncoding );
+    }
+#endif
     else
     {
         return CPLRecodeIconv( pszSource, pszSrcEncoding, pszDstEncoding );
@@ -369,4 +403,45 @@ int CPLStrlenUTF8( const char *pszUTF8Str )
             ++nCharacterCount;
     }
     return nCharacterCount;
+}
+
+/************************************************************************/
+/*                           CPLCanRecode()                             */
+/************************************************************************/
+
+/**
+ * Checks if it is possible to recode a string from one encoding to another.
+ *
+ * @param pszTestStr a NULL terminated string.
+ * @param pszSrcEncoding the source encoding.
+ * @param pszDstEncoding the destination encoding.
+ *
+ * @return a TRUE if recode is possible.
+ *
+ * @since GDAL 3.1.0
+ */
+int CPLCanRecode(const char *pszTestStr,
+                 const char *pszSrcEncoding,
+                 const char *pszDstEncoding)
+{
+    CPLClearRecodeWarningFlags();
+    CPLErrorReset();
+
+    CPLPushErrorHandler(CPLQuietErrorHandler);
+    char* pszRec( CPLRecode( pszTestStr, pszSrcEncoding, pszDstEncoding ) );
+    CPLPopErrorHandler();
+
+    if( pszRec == nullptr )
+    {
+        return FALSE;
+    }
+
+    CPLFree( pszRec );
+
+    if( CPLGetLastErrorType() != 0 )
+    {
+        return FALSE;
+    }
+
+    return TRUE;
 }

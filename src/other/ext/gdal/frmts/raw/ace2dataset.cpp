@@ -3,10 +3,10 @@
  * Project:  ACE2 Driver
  * Purpose:  Implementation of ACE2 elevation format read support.
  *           http://tethys.eaprs.cse.dmu.ac.uk/ACE2/shared/documentation
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2011-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static const char * const apszCategorySource[] =
 {
@@ -44,7 +44,7 @@ static const char * const apszCategorySource[] =
     "GLOBE/ACE data warped using combined altimetry (only above 60deg N)",
     "Pure altimetry data (derived from ERS-1 Geodetic Mission, ERS-2 and "
     "EnviSat data using Delaunay Triangulation",
-    NULL
+    nullptr
 };
 
 static const char * const apszCategoryQuality[] =
@@ -55,7 +55,7 @@ static const char * const apszCategoryQuality[] =
     "Accuracy between +/-10m - +/-5m",
     "Accuracy between +/-5m - +/-1m",
     "Accuracy between +/-1m",
-    NULL
+    nullptr
 };
 
 static const char * const apszCategoryConfidence[] =
@@ -82,7 +82,7 @@ static const char * const apszCategoryConfidence[] =
     "Inland water confidence",
     "Inland water confidence",
     "Inland water confidence",
-    NULL
+    nullptr
 };
 
 /************************************************************************/
@@ -91,18 +91,21 @@ static const char * const apszCategoryConfidence[] =
 /* ==================================================================== */
 /************************************************************************/
 
-class ACE2Dataset : public GDALPamDataset
+class ACE2Dataset final: public GDALPamDataset
 {
     friend class ACE2RasterBand;
 
     double       adfGeoTransform[6];
 
   public:
-                ACE2Dataset();
-    virtual ~ACE2Dataset() {}
+    ACE2Dataset();
+    ~ACE2Dataset() override {}
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr GetGeoTransform( double * ) override;
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
+    CPLErr GetGeoTransform( double * ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
     static int Identify( GDALOpenInfo * );
@@ -114,16 +117,16 @@ class ACE2Dataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ACE2RasterBand : public RawRasterBand
+class ACE2RasterBand final: public RawRasterBand
 {
   public:
-            ACE2RasterBand(VSILFILE* fpRaw,
-                           GDALDataType eDataType,
-                           int nXSize, int nYSize);
-    virtual ~ACE2RasterBand() {}
+    ACE2RasterBand( VSILFILE* fpRaw,
+                    GDALDataType eDataType,
+                    int nXSize, int nYSize );
+    ~ACE2RasterBand() override {}
 
-    virtual const char *GetUnitType() override;
-    virtual char **GetCategoryNames() override;
+    const char *GetUnitType() override;
+    char **GetCategoryNames() override;
 };
 
 /************************************************************************/
@@ -161,10 +164,10 @@ CPLErr ACE2Dataset::GetGeoTransform( double * padfTransform )
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *ACE2Dataset::GetProjectionRef()
+const char *ACE2Dataset::_GetProjectionRef()
 
 {
-    return SRS_WKT_WGS84;
+    return SRS_WKT_WGS84_LAT_LONG;
 }
 
 /************************************************************************/
@@ -176,7 +179,7 @@ ACE2RasterBand::ACE2RasterBand( VSILFILE* fpRawIn,
                                 int nXSize, int nYSize) :
     RawRasterBand( fpRawIn, 0, GDALGetDataTypeSizeBytes(eDataTypeIn),
                    nXSize * GDALGetDataTypeSizeBytes(eDataTypeIn), eDataTypeIn,
-                   CPL_IS_LSB, nXSize, nYSize, TRUE, TRUE )
+                   CPL_IS_LSB, nXSize, nYSize, RawRasterBand::OwnFP::YES )
 {}
 
 /************************************************************************/
@@ -198,7 +201,7 @@ const char *ACE2RasterBand::GetUnitType()
 char **ACE2RasterBand::GetCategoryNames()
 {
     if (eDataType != GDT_Int16)
-        return NULL;
+        return nullptr;
 
     const char* pszName = poDS->GetDescription();
 
@@ -209,7 +212,7 @@ char **ACE2RasterBand::GetCategoryNames()
     if (strstr(pszName, "_CONF_"))
         return const_cast<char **>( apszCategoryConfidence );
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -235,12 +238,12 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
     if (!Identify(poOpenInfo))
-        return NULL;
+        return nullptr;
 
     const char* pszBasename = CPLGetBasename(poOpenInfo->pszFilename);
 
     if (strlen(pszBasename) < 7)
-        return NULL;
+        return nullptr;
 
     /* Determine southwest coordinates from filename */
 
@@ -260,14 +263,14 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
     else if(pszBasename[2] == 'S' || pszBasename[2] == 's')
         southWestLat = southWestLat * -1;
     else
-        return NULL;
+        return nullptr;
 
     if(pszBasename[6] == 'E' || pszBasename[6] == 'e')
         /*southWestLon = southWestLon*/;
     else if(pszBasename[6] == 'W' || pszBasename[6] == 'w')
         southWestLon = southWestLon * -1;
     else
-        return NULL;
+        return nullptr;
 
     GDALDataType eDT = GDT_Unknown;
     if (strstr(pszBasename, "_CONF_") ||
@@ -290,7 +293,7 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
     /* Check file size otherwise */
     else if(VSIStatL(poOpenInfo->pszFilename, &sStat) != 0)
     {
-        return NULL;
+        return nullptr;
     }
 
     int nXSize = 0;
@@ -326,7 +329,7 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
         dfPixelSize = 3.0 / 3600;
     }
     else
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Open file.                                                      */
@@ -339,8 +342,8 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
         osFilename = "/vsigzip/" + osFilename;
 
     VSILFILE* fpImage = VSIFOpenL( osFilename, "rb+" );
-    if (fpImage == NULL)
-        return NULL;
+    if (fpImage == nullptr)
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create the dataset.                                             */
@@ -383,7 +386,7 @@ GDALDataset *ACE2Dataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_ACE2()
 
 {
-    if( GDALGetDriverByName( "ACE2" ) != NULL )
+    if( GDALGetDriverByName( "ACE2" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -391,7 +394,7 @@ void GDALRegister_ACE2()
     poDriver->SetDescription( "ACE2" );
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ACE2" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#ACE2" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/ace2.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "ACE2" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,7 +39,11 @@
 #include "cpl_config.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+#if !defined(va_copy) && defined(__va_copy)
+#define va_copy __va_copy
+#endif
+
+CPL_CVSID("$Id$")
 
 /*
  * The CPLString class is derived from std::string, so the vast majority
@@ -105,7 +109,7 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat),
     szModestBuffer[0] = '\0';
     int nPR = CPLvsnprintf( szModestBuffer, sizeof(szModestBuffer), pszFormat,
                              wrk_args );
-    if( nPR == -1 || nPR >= (int) sizeof(szModestBuffer)-1 )
+    if( nPR == -1 || nPR >= static_cast<int>(sizeof(szModestBuffer))-1 )
     {
         int nWorkBufferSize = 2000;
         char *pszWorkBuffer = static_cast<char *>(
@@ -169,7 +173,7 @@ CPLString &CPLString::vPrintf( CPL_FORMAT_STRING(const char *pszFormat),
 CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
 
 {
-    if( pszFormat == NULL )
+    if( pszFormat == nullptr )
         pszFormat = "%g";
 
     // presumably long enough for any number.
@@ -199,7 +203,7 @@ CPLString &CPLString::FormatC( double dfValue, const char *pszFormat )
 CPLString &CPLString::Trim()
 
 {
-    static const char szWhitespace[] = " \t\r\n";
+    constexpr char szWhitespace[] = " \t\r\n";
 
     const size_t iLeft = find_first_not_of( szWhitespace );
     const size_t iRight = find_last_not_of( szWhitespace );
@@ -224,9 +228,9 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
                               const char *pszDstEncoding )
 
 {
-    if( pszSrcEncoding == NULL )
+    if( pszSrcEncoding == nullptr )
         pszSrcEncoding = CPL_ENC_UTF8;
-    if( pszDstEncoding == NULL )
+    if( pszDstEncoding == nullptr )
         pszDstEncoding = CPL_ENC_UTF8;
 
     if( strcmp(pszSrcEncoding, pszDstEncoding) == 0 )
@@ -236,7 +240,7 @@ CPLString &CPLString::Recode( const char *pszSrcEncoding,
                                   pszSrcEncoding,
                                   pszDstEncoding );
 
-    if( pszRecoded == NULL )
+    if( pszRecoded == nullptr )
         return *this;
 
     assign( pszRecoded );
@@ -386,6 +390,23 @@ CPLString &CPLString::replaceAll( char chBefore,
     return replaceAll(std::string(&chBefore, 1), std::string(&chAfter, 1));
 }
 
+
+/************************************************************************/
+/*                             endsWith()                              */
+/************************************************************************/
+
+/**
+ * Returns whether the string ends with another string
+ * @param osStr other string.
+ * @return true if the string ends with osStr.
+ */
+bool CPLString::endsWith( const std::string& osStr ) const
+{
+    if( size() < osStr.size() )
+        return false;
+    return substr(size() - osStr.size()) == osStr;
+}
+
 /************************************************************************/
 /*                         CPLURLGetValue()                             */
 /************************************************************************/
@@ -435,7 +456,7 @@ CPLString CPLURLAddKVP(const char* pszURL, const char* pszKey,
                        const char* pszValue)
 {
     CPLString osURL(pszURL);
-    if( strchr(osURL, '?') == NULL )
+    if( strchr(osURL, '?') == nullptr )
         osURL += "?";
     pszURL = osURL.c_str();
 
@@ -506,4 +527,24 @@ CPLString CPLOvPrintf( CPL_FORMAT_STRING(const char *pszFormat), va_list args )
     CPLString osTarget;
     osTarget.vPrintf( pszFormat, args);
     return osTarget;
+}
+
+/************************************************************************/
+/*                            CPLQuotedSQLIdentifer()                   */
+/************************************************************************/
+
+/** Return a CPLString of the SQL quoted identifier */
+CPLString CPLQuotedSQLIdentifier(const char *pszIdent)
+
+{
+    CPLString osIdent;
+
+    if(pszIdent)
+    {
+        char *pszQuotedIdent = CPLEscapeString(pszIdent, -1, CPLES_SQLI);
+        osIdent.Printf("\"%s\"", pszQuotedIdent);
+        CPLFree(pszQuotedIdent);
+    }
+
+    return osIdent;
 }

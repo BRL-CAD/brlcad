@@ -40,6 +40,10 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 
+#if !defined(va_copy) && defined(__va_copy)
+#define va_copy __va_copy
+#endif
+
 // TODO(rouault): Why is this here?
 #if !defined(WIN32)
 #include <string.h>
@@ -48,9 +52,9 @@
 #define TIMESTAMP_DEBUG
 // #define MEMORY_DEBUG
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-static const int DEFAULT_LAST_ERR_MSG_SIZE =
+constexpr int DEFAULT_LAST_ERR_MSG_SIZE =
 #if !defined(HAVE_VSNPRINTF)
     20000
 #else
@@ -78,17 +82,17 @@ static VSIErrorContext *VSIGetErrorContext()
         reinterpret_cast<VSIErrorContext *>(
             CPLGetTLSEx( CTLS_VSIERRORCONTEXT, &bError ) );
     if( bError )
-        return NULL;
+        return nullptr;
 
-    if( psCtx == NULL )
+    if( psCtx == nullptr )
     {
         psCtx = static_cast<VSIErrorContext *>(
             VSICalloc( sizeof(VSIErrorContext), 1) );
-        if( psCtx == NULL )
+        if( psCtx == nullptr )
         {
             fprintf(stderr, /*ok*/
                     "Out of memory attempting to record a VSI error.\n");
-            return NULL;
+            return nullptr;
         }
         psCtx->nLastErrNo = VSIE_None;
         psCtx->nLastErrMsgMax = sizeof(psCtx->szLastErrMsg);
@@ -105,7 +109,7 @@ static VSIErrorContext *VSIGetErrorContext()
 static void VSIErrorV( VSIErrorNum err_no, const char *fmt, va_list args )
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == NULL )
+    if( psCtx == nullptr )
       return;
 
 /* -------------------------------------------------------------------- */
@@ -195,7 +199,7 @@ void VSIError( VSIErrorNum err_no, CPL_FORMAT_STRING(const char *fmt), ... )
 void CPL_STDCALL VSIErrorReset()
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == NULL )
+    if( psCtx == nullptr )
         return;
 
     psCtx->nLastErrNo = VSIE_None;
@@ -220,7 +224,7 @@ void CPL_STDCALL VSIErrorReset()
 VSIErrorNum CPL_STDCALL VSIGetLastErrorNo()
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == NULL )
+    if( psCtx == nullptr )
         return 0;
 
     return psCtx->nLastErrNo;
@@ -244,7 +248,7 @@ VSIErrorNum CPL_STDCALL VSIGetLastErrorNo()
 const char* CPL_STDCALL VSIGetLastErrorMsg()
 {
     VSIErrorContext *psCtx = VSIGetErrorContext();
-    if( psCtx == NULL )
+    if( psCtx == nullptr )
         return "";
 
     return psCtx->szLastErrMsg;
@@ -277,6 +281,10 @@ int CPL_DLL CPL_STDCALL VSIToCPLError( CPLErr eErrClass,
             break;
         case VSIE_HttpError:
             CPLError(eErrClass, CPLE_HttpResponse, "%s", VSIGetLastErrorMsg());
+            break;
+        case VSIE_AWSError:
+            CPLError(eErrClass, CPLE_AWSError,
+                     "%s", VSIGetLastErrorMsg());
             break;
         case VSIE_AWSAccessDenied:
             CPLError(eErrClass, CPLE_AWSAccessDenied,

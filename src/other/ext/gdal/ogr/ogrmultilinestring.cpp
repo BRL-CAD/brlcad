@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,7 @@
 #include "ogr_core.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        OGRMultiLineString()                          */
@@ -46,7 +46,7 @@ CPL_CVSID("$Id$");
  * \brief Create an empty multi line string collection.
  */
 
-OGRMultiLineString::OGRMultiLineString() {}
+OGRMultiLineString::OGRMultiLineString() = default;
 
 /************************************************************************/
 /*           OGRMultiLineString( const OGRMultiLineString& )            */
@@ -61,15 +61,13 @@ OGRMultiLineString::OGRMultiLineString() {}
  * @since GDAL 2.1
  */
 
-OGRMultiLineString::OGRMultiLineString( const OGRMultiLineString& other ) :
-    OGRMultiCurve(other)
-{}
+OGRMultiLineString::OGRMultiLineString( const OGRMultiLineString& ) = default;
 
 /************************************************************************/
 /*                       ~OGRMultiLineString()                          */
 /************************************************************************/
 
-OGRMultiLineString::~OGRMultiLineString() {}
+OGRMultiLineString::~OGRMultiLineString() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRMultiCurve&)                    */
@@ -92,6 +90,16 @@ OGRMultiLineString::operator=( const OGRMultiLineString& other )
         OGRMultiCurve::operator=( other );
     }
     return *this;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRMultiLineString *OGRMultiLineString::clone() const
+
+{
+    return new (std::nothrow) OGRMultiLineString(*this);
 }
 
 /************************************************************************/
@@ -135,11 +143,11 @@ OGRMultiLineString::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-OGRErr OGRMultiLineString::exportToWkt( char ** ppszDstText,
-                                        OGRwkbVariant eWkbVariant ) const
+std::string OGRMultiLineString::exportToWkt(const OGRWktOptions& opts,
+                                            OGRErr *err) const
 
 {
-    return exportToWktInternal( ppszDstText, eWkbVariant, "LINESTRING" );
+    return exportToWktInternal(opts, err, "LINESTRING");
 }
 
 /************************************************************************/
@@ -167,14 +175,7 @@ OGRBoolean OGRMultiLineString::hasCurveGeometry(
 
 OGRMultiCurve* OGRMultiLineString::CastToMultiCurve( OGRMultiLineString* poMLS )
 {
-    OGRMultiCurve *poMultiCurve = dynamic_cast<OGRMultiCurve *>(
-        TransferMembersAndDestroy(poMLS, new OGRMultiCurve()) );
-    if( poMultiCurve == NULL )
-    {
-        CPLError( CE_Fatal, CPLE_AppDefined,
-                  "OGRMultiCurve dynamic_cast failed." );
-        return NULL;
-    }
-
-    return poMultiCurve;
+    OGRMultiCurve* poMLC = new OGRMultiCurve();
+    TransferMembersAndDestroy(poMLS, poMLC);
+    return poMLC;
 }

@@ -32,7 +32,7 @@
 
 #include "mitab_ogr_driver.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                  OGRTABDriverIdentify()                              */
@@ -46,7 +46,7 @@ static int OGRTABDriverIdentify( GDALOpenInfo *poOpenInfo )
         return FALSE;
     if( poOpenInfo->bIsDirectory )
         return -1;  // Unsure.
-    if( poOpenInfo->fpL == NULL )
+    if( poOpenInfo->fpL == nullptr )
         return FALSE;
     if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MIF") ||
         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MID") )
@@ -57,7 +57,7 @@ static int OGRTABDriverIdentify( GDALOpenInfo *poOpenInfo )
     {
         for( int i = 0; i < poOpenInfo->nHeaderBytes; i++)
         {
-            const char *pszLine = (const char *)poOpenInfo->pabyHeader + i;
+            const char *pszLine = reinterpret_cast<const char *>(poOpenInfo->pabyHeader) + i;
             if (STARTS_WITH_CI(pszLine, "Fields"))
                 return TRUE;
             else if (STARTS_WITH_CI(pszLine, "create view"))
@@ -86,19 +86,19 @@ static GDALDataset *OGRTABDriverOpen( GDALOpenInfo *poOpenInfo )
 {
     if( OGRTABDriverIdentify(poOpenInfo) == FALSE )
     {
-        return NULL;
+        return nullptr;
     }
 
     if (EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MIF") ||
         EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "MID") )
     {
         if( poOpenInfo->eAccess == GA_Update )
-            return NULL;
+            return nullptr;
     }
 
 #ifdef DEBUG
     // For AFL, so that .cur_input is detected as the archive filename.
-    if( poOpenInfo->fpL != NULL &&
+    if( poOpenInfo->fpL != nullptr &&
         !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
         EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
     {
@@ -114,7 +114,7 @@ static GDALDataset *OGRTABDriverOpen( GDALOpenInfo *poOpenInfo )
     if( !poDS->Open(poOpenInfo, TRUE) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -136,7 +136,7 @@ static GDALDataset *OGRTABDriverCreate( const char *pszName,
     if( !poDS->Create(pszName, papszOptions) )
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -149,14 +149,14 @@ static GDALDataset *OGRTABDriverCreate( const char *pszName,
 static CPLErr OGRTABDriverDelete( const char *pszDataSource )
 
 {
-    GDALDataset *poDS = NULL;
+    GDALDataset *poDS = nullptr;
     {
         // Make sure that the file opened by GDALOpenInfo is closed
         // when the object goes out of scope
         GDALOpenInfo oOpenInfo(pszDataSource, GA_ReadOnly);
         poDS = OGRTABDriverOpen(&oOpenInfo);
     }
-    if( poDS == NULL )
+    if( poDS == nullptr )
         return CE_Failure;
     char **papszFileList = poDS->GetFileList();
     delete poDS;
@@ -194,7 +194,7 @@ static void OGRTABDriverUnload(CPL_UNUSED GDALDriver *poDriver)
 void RegisterOGRTAB()
 
 {
-    if( GDALGetDriverByName("MapInfo File") != NULL )
+    if( GDALGetDriverByName("MapInfo File") != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -203,11 +203,13 @@ void RegisterOGRTAB()
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "MapInfo File");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "tab mif mid");
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drv_mitab.html");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/mitab.html");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST,
 "<LayerCreationOptionList>"
 "  <Option name='BOUNDS' type='string' description='Custom bounds. Expect format is xmin,ymin,xmax,ymax'/>"
+"  <Option name='ENCODING' type='string' description='to override the encoding interpretation of the DAT/MID with any encoding supported by CPLRecode or to \"\" to avoid any recoding (Neutral charset)'/>"
+"  <Option name='DESCRIPTION' type='string' description='Friendly name of table. Only for tab format.'/>" // See https://support.pitneybowes.com/SearchArticles/VFP05_KnowledgeWithSidebarHowTo?id=kA180000000CtuHCAS&popup=false&lang=en_US
 "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
@@ -221,10 +223,12 @@ void RegisterOGRTAB()
 "    <Value>OPTIMIZED</Value>"
 "  </Option>"
 "  <Option name='BLOCKSIZE' type='int' description='.map block size' min='512' max='32256' default='512'/>"
+"  <Option name='ENCODING' type='string' description='to override the encoding interpretation of the DAT/MID with any encoding supported by CPLRecode or to \"\" to avoid any recoding (Neutral charset)'/>"
 "</CreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
                               "Integer Real String Date DateTime Time");
+    poDriver->SetMetadataItem( GDAL_DCAP_FEATURE_STYLES, "YES" );
 
     poDriver->pfnOpen = OGRTABDriverOpen;
     poDriver->pfnIdentify = OGRTABDriverIdentify;

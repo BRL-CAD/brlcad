@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,9 +41,9 @@
 #include "cpl_error.h"
 #include "cpl_vsi.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-static const int nLeaderSize = 24;
+constexpr int nLeaderSize = 24;
 
 /************************************************************************/
 /*                             DDFRecord()                              */
@@ -57,9 +57,9 @@ DDFRecord::DDFRecord( DDFModule * poModuleIn ) :
     _sizeFieldPos(5),
     _sizeFieldLength(5),
     nDataSize(0),
-    pachData(NULL),
+    pachData(nullptr),
     nFieldCount(0),
-    paoFields(NULL),
+    paoFields(nullptr),
     bIsClone(FALSE)
 {}
 
@@ -129,6 +129,8 @@ int DDFRecord::Read()
     {
         return ReadHeader();
     }
+    if( nFieldOffset < 0 )
+        return FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Otherwise we read just the data and carefully overlay it on     */
@@ -228,16 +230,16 @@ int DDFRecord::Write()
 void DDFRecord::Clear()
 
 {
-    if( paoFields != NULL )
+    if( paoFields != nullptr )
         delete[] paoFields;
 
-    paoFields = NULL;
+    paoFields = nullptr;
     nFieldCount = 0;
 
-    if( pachData != NULL )
+    if( pachData != nullptr )
         CPLFree( pachData );
 
-    pachData = NULL;
+    pachData = nullptr;
     nDataSize = 0;
     nReuseHeader = FALSE;
 }
@@ -267,13 +269,21 @@ int DDFRecord::ReadHeader()
     nReadBytes = static_cast<int>(VSIFReadL(achLeader,1,nLeaderSize,poModule->GetFP()));
     if( nReadBytes == 0 && VSIFEofL( poModule->GetFP() ) )
     {
+        nFieldOffset = -1;
+        return FALSE;
+    }
+    // The ASRP and USRP specifications mentions that 0x5E / ^ character can be
+    // used as a padding byte so that the file size is a multiple of 8192.
+    else if( achLeader[0] == '^' )
+    {
+        nFieldOffset = -1;
         return FALSE;
     }
     else if( nReadBytes != (int) nLeaderSize )
     {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Leader is short on DDF file." );
-
+        nFieldOffset = -1;
         return FALSE;
     }
 
@@ -291,12 +301,13 @@ int DDFRecord::ReadHeader()
     _sizeFieldPos = achLeader[21] - '0';
     _sizeFieldTag = achLeader[23] - '0';
 
-    if( _sizeFieldLength < 0 || _sizeFieldLength > 9
-        || _sizeFieldPos < 0 || _sizeFieldPos > 9
-        || _sizeFieldTag < 0 || _sizeFieldTag > 9 )
+    if( _sizeFieldLength <= 0 || _sizeFieldLength > 9
+        || _sizeFieldPos <= 0 || _sizeFieldPos > 9
+        || _sizeFieldTag <= 0 || _sizeFieldTag > 9 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "ISO8211 record leader appears to be corrupt." );
+        nFieldOffset = -1;
         return FALSE;
     }
 
@@ -315,7 +326,7 @@ int DDFRecord::ReadHeader()
                   "Data record appears to be corrupt on DDF file.\n"
                   " -- ensure that the files were uncompressed without modifying\n"
                   "carriage return/linefeeds (by default WINZIP does this)." );
-
+        nFieldOffset = -1;
         return FALSE;
     }
 
@@ -327,14 +338,15 @@ int DDFRecord::ReadHeader()
 /*      Read the remainder of the record.                               */
 /* -------------------------------------------------------------------- */
         nDataSize = _recLength - nLeaderSize;
-        pachData = (char *) CPLMalloc(nDataSize);
+        pachData = (char *) CPLMalloc(nDataSize+1);
+        pachData[nDataSize] = '\0';
 
         if( VSIFReadL( pachData, 1, nDataSize, poModule->GetFP()) !=
             (size_t) nDataSize )
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Data record is short on DDF file." );
-
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -342,27 +354,39 @@ int DDFRecord::ReadHeader()
 /*      If we don't find a field terminator at the end of the record    */
 /*      we will read extra bytes till we get to it.                     */
 /* -------------------------------------------------------------------- */
+        int nDataSizeAlloc = nDataSize;
         while( pachData[nDataSize-1] != DDF_FIELD_TERMINATOR
                && (nDataSize < 2 || pachData[nDataSize-2] != DDF_FIELD_TERMINATOR) )
         {
             nDataSize++;
-            pachData = (char *) CPLRealloc(pachData,nDataSize);
+            if( nDataSize > nDataSizeAlloc )
+            {
+                nDataSizeAlloc *= 2;
+                pachData = (char *) CPLRealloc(pachData,nDataSizeAlloc+1);
+            }
+            pachData[nDataSize] = '\0';
 
             if( VSIFReadL( pachData + nDataSize - 1, 1, 1, poModule->GetFP() )
                 != 1 )
             {
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Data record is short on DDF file." );
-
+                nFieldOffset = -1;
                 return FALSE;
             }
-            CPLDebug( "ISO8211",
+            static bool bFirstTime = true;
+            if( bFirstTime )
+            {
+                bFirstTime = false;
+                CPLDebug( "ISO8211",
                       "Didn't find field terminator, read one more byte." );
+            }
         }
 
         if( nFieldOffset >= nDataSize )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed, "nFieldOffset < nDataSize");
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -377,11 +401,12 @@ int DDFRecord::ReadHeader()
         {
             CPLError( CE_Failure, CPLE_FileIO,
                       "Invalid entry width = %d", nFieldEntryWidth);
+            nFieldOffset = -1;
             return FALSE;
         }
 
         nFieldCount = 0;
-        for( i = 0; i < nDataSize; i += nFieldEntryWidth )
+        for( i = 0; i + nFieldEntryWidth <= nDataSize; i += nFieldEntryWidth )
         {
             if( pachData[i] == DDF_FIELD_TERMINATOR )
                 break;
@@ -417,7 +442,7 @@ int DDFRecord::ReadHeader()
 /* -------------------------------------------------------------------- */
             DDFFieldDefn    *poFieldDefn = poModule->FindFieldDefn( szTag );
 
-            if( poFieldDefn == NULL || nFieldLength < 0 || nFieldPos < 0  )
+            if( poFieldDefn == nullptr || nFieldLength < 0 || nFieldPos < 0  )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Undefined field `%s' encountered in data record.",
@@ -431,6 +456,7 @@ int DDFRecord::ReadHeader()
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Not enough byte to initialize field `%s'.",
                           szTag );
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -461,7 +487,7 @@ int DDFRecord::ReadHeader()
         /*   Read the remainder of the record.                               */
         /* ----------------------------------------------------------------- */
         nDataSize = 0;
-        pachData = NULL;
+        pachData = nullptr;
 
         /* ----------------------------------------------------------------- */
         /*   Loop over the directory entries, making a pass counting them.   */
@@ -475,13 +501,15 @@ int DDFRecord::ReadHeader()
             CPLError( CE_Failure, CPLE_OutOfMemory,
                       "Invalid record buffer size : %d.",
                       nFieldEntryWidth );
+            nFieldOffset = -1;
             return FALSE;
         }
 
         char *tmpBuf = (char*)VSI_MALLOC_VERBOSE(nFieldEntryWidth);
 
-        if( tmpBuf == NULL )
+        if( tmpBuf == nullptr )
         {
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -494,12 +522,14 @@ int DDFRecord::ReadHeader()
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Data record is short on DDF file.");
                 CPLFree(tmpBuf);
+                nFieldOffset = -1;
                 return FALSE;
             }
 
             // move this temp buffer into more permanent storage:
-            char *newBuf = (char*)CPLMalloc(nDataSize+nFieldEntryWidth);
-            if(pachData!=NULL) {
+            char *newBuf = (char*)CPLMalloc(nDataSize+nFieldEntryWidth+1);
+            newBuf[nDataSize+nFieldEntryWidth] = '\0';
+            if(pachData!=nullptr) {
                 memcpy(newBuf, pachData, nDataSize);
                 CPLFree(pachData);
             }
@@ -509,12 +539,20 @@ int DDFRecord::ReadHeader()
 
             if(DDF_FIELD_TERMINATOR != tmpBuf[0]) {
                 nFieldCount++;
+                if( nFieldCount == 1000 )
+                {
+                    CPLError(CE_Failure, CPLE_FileIO,
+                         "Too many fields in DDF file.");
+                    CPLFree(tmpBuf);
+                    nFieldOffset = -1;
+                    return FALSE;
+                }
             }
         }
         while(DDF_FIELD_TERMINATOR != tmpBuf[0]);
 
         CPLFree(tmpBuf);
-        tmpBuf = NULL;
+        tmpBuf = nullptr;
 
         // --------------------------------------------------------------------
         // Now, rewind a little.  Only the TERMINATOR should have been read
@@ -533,11 +571,12 @@ int DDFRecord::ReadHeader()
             int nEntryOffset = (i*nFieldEntryWidth) + _sizeFieldTag;
             int nFieldLength = DDFScanInt(pachData + nEntryOffset,
                                           _sizeFieldLength);
-            tmpBuf = NULL;
+            tmpBuf = nullptr;
             if( nFieldLength >= 0 )
                 tmpBuf = (char*)VSI_MALLOC_VERBOSE(nFieldLength);
-            if( tmpBuf == NULL )
+            if( tmpBuf == nullptr )
             {
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -547,16 +586,19 @@ int DDFRecord::ReadHeader()
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Data record is short on DDF file.");
                 CPLFree(tmpBuf);
+                nFieldOffset = -1;
                 return FALSE;
             }
 
             // move this temp buffer into more permanent storage:
-            char *newBuf = (char*)VSI_MALLOC_VERBOSE(nDataSize+nFieldLength);
-            if( newBuf == NULL )
+            char *newBuf = (char*)VSI_MALLOC_VERBOSE(nDataSize+nFieldLength+1);
+            if( newBuf == nullptr )
             {
                 CPLFree(tmpBuf);
+                nFieldOffset = -1;
                 return FALSE;
             }
+            newBuf[nDataSize+nFieldLength] = '\0';
             memcpy(newBuf, pachData, nDataSize);
             CPLFree(pachData);
             memcpy(&newBuf[nDataSize], tmpBuf, nFieldLength);
@@ -568,6 +610,7 @@ int DDFRecord::ReadHeader()
         if( nFieldOffset >= nDataSize )
         {
             CPLError(CE_Failure, CPLE_AssertionFailed, "nFieldOffset < nDataSize");
+            nFieldOffset = -1;
             return FALSE;
         }
 
@@ -599,11 +642,12 @@ int DDFRecord::ReadHeader()
             /* ------------------------------------------------------------- */
             DDFFieldDefn    *poFieldDefn = poModule->FindFieldDefn( szTag );
 
-            if( poFieldDefn == NULL || nFieldLength < 0 || nFieldPos < 0 )
+            if( poFieldDefn == nullptr || nFieldLength < 0 || nFieldPos < 0 )
             {
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Undefined field `%s' encountered in data record.",
                           szTag );
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -613,6 +657,7 @@ int DDFRecord::ReadHeader()
                 CPLError( CE_Failure, CPLE_AppDefined,
                           "Not enough byte to initialize field `%s'.",
                           szTag );
+                nFieldOffset = -1;
                 return FALSE;
             }
 
@@ -652,7 +697,8 @@ DDFField * DDFRecord::FindField( const char * pszName, int iFieldIndex )
 {
     for( int i = 0; i < nFieldCount; i++ )
     {
-        if( EQUAL(paoFields[i].GetFieldDefn()->GetName(),pszName) )
+        DDFFieldDefn* poFieldDefn = paoFields[i].GetFieldDefn();
+        if( poFieldDefn && EQUAL(poFieldDefn->GetName(),pszName) )
         {
             if( iFieldIndex == 0 )
                 return paoFields + i;
@@ -661,7 +707,7 @@ DDFField * DDFRecord::FindField( const char * pszName, int iFieldIndex )
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -680,7 +726,7 @@ DDFField *DDFRecord::GetField( int i )
 
 {
     if( i < 0 || i >= nFieldCount )
-        return NULL;
+        return nullptr;
     else
         return paoFields + i;
 }
@@ -712,7 +758,7 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
 {
     int nDummyErr = FALSE;
 
-    if( pnSuccess == NULL )
+    if( pnSuccess == nullptr )
         pnSuccess = &nDummyErr;
 
     *pnSuccess = FALSE;
@@ -721,7 +767,7 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
 /*      Fetch the field. If this fails, return zero.                    */
 /* -------------------------------------------------------------------- */
     DDFField *poField = FindField( pszField, iFieldIndex );
-    if( poField == NULL )
+    if( poField == nullptr )
         return 0;
 
 /* -------------------------------------------------------------------- */
@@ -729,7 +775,7 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
-    if( poSFDefn == NULL )
+    if( poSFDefn == nullptr )
         return 0;
 
 /* -------------------------------------------------------------------- */
@@ -740,7 +786,7 @@ int DDFRecord::GetIntSubfield( const char * pszField, int iFieldIndex,
     const char *l_pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
                                                     iSubfieldIndex);
-    if( l_pachData == NULL )
+    if( l_pachData == nullptr )
         return 0;
 
 /* -------------------------------------------------------------------- */
@@ -786,7 +832,7 @@ double DDFRecord::GetFloatSubfield( const char * pszField, int iFieldIndex,
 {
     int nDummyErr = FALSE;
 
-    if( pnSuccess == NULL )
+    if( pnSuccess == nullptr )
         pnSuccess = &nDummyErr;
 
     *pnSuccess = FALSE;
@@ -795,7 +841,7 @@ double DDFRecord::GetFloatSubfield( const char * pszField, int iFieldIndex,
 /*      Fetch the field. If this fails, return zero.                    */
 /* -------------------------------------------------------------------- */
     DDFField *poField = FindField( pszField, iFieldIndex );
-    if( poField == NULL )
+    if( poField == nullptr )
         return 0;
 
 /* -------------------------------------------------------------------- */
@@ -803,7 +849,7 @@ double DDFRecord::GetFloatSubfield( const char * pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
-    if( poSFDefn == NULL )
+    if( poSFDefn == nullptr )
         return 0;
 
 /* -------------------------------------------------------------------- */
@@ -814,7 +860,7 @@ double DDFRecord::GetFloatSubfield( const char * pszField, int iFieldIndex,
     const char *l_pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
                                                     iSubfieldIndex);
-    if( l_pachData == NULL )
+    if( l_pachData == nullptr )
         return 0;
 
 /* -------------------------------------------------------------------- */
@@ -860,7 +906,7 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
 {
     int nDummyErr = FALSE;
 
-    if( pnSuccess == NULL )
+    if( pnSuccess == nullptr )
         pnSuccess = &nDummyErr;
 
     *pnSuccess = FALSE;
@@ -869,16 +915,16 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
 /*      Fetch the field. If this fails, return zero.                    */
 /* -------------------------------------------------------------------- */
     DDFField *poField = FindField( pszField, iFieldIndex );
-    if( poField == NULL )
-        return NULL;
+    if( poField == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Get the subfield definition                                     */
 /* -------------------------------------------------------------------- */
     DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
-    if( poSFDefn == NULL )
-        return NULL;
+    if( poSFDefn == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Get a pointer to the data.                                      */
@@ -888,15 +934,15 @@ DDFRecord::GetStringSubfield( const char * pszField, int iFieldIndex,
     const char *l_pachData = poField->GetSubfieldData(poSFDefn,
                                                     &nBytesRemaining,
                                                     iSubfieldIndex);
-    if( l_pachData == NULL )
-        return NULL;
+    if( l_pachData == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Return the extracted value.                                     */
 /* -------------------------------------------------------------------- */
     *pnSuccess = TRUE;
 
-    return poSFDefn->ExtractStringData( l_pachData, nBytesRemaining, NULL );
+    return poSFDefn->ExtractStringData( l_pachData, nBytesRemaining, nullptr );
 }
 
 /************************************************************************/
@@ -928,8 +974,9 @@ DDFRecord * DDFRecord::Clone()
     poNR->nFieldOffset = nFieldOffset;
 
     poNR->nDataSize = nDataSize;
-    poNR->pachData = (char *) CPLMalloc(nDataSize);
+    poNR->pachData = (char *) CPLMalloc(nDataSize + 1);
     memcpy( poNR->pachData, pachData, nDataSize );
+    poNR->pachData[nDataSize] = '\0';
 
     poNR->nFieldCount = nFieldCount;
     poNR->paoFields = new DDFField[nFieldCount];
@@ -984,8 +1031,8 @@ DDFRecord *DDFRecord::CloneOn( DDFModule *poTargetModule )
     {
         DDFFieldDefn    *poDefn = paoFields[i].GetFieldDefn();
 
-        if( poTargetModule->FindFieldDefn( poDefn->GetName() ) == NULL )
-            return NULL;
+        if( poTargetModule->FindFieldDefn( poDefn->GetName() ) == nullptr )
+            return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1121,7 +1168,10 @@ int DDFRecord::ResizeField( DDFField *poField, int nNewDataSize )
 
     // Don't realloc things smaller ... we will cut off some data.
     if( nBytesToAdd > 0 )
-        pachData = (char *) CPLRealloc(pachData, nDataSize + nBytesToAdd );
+    {
+        pachData = (char *) CPLRealloc(pachData, nDataSize + nBytesToAdd + 1);
+        pachData[nDataSize+nBytesToAdd] = '\0';
+    }
 
     nDataSize += nBytesToAdd;
 
@@ -1320,7 +1370,7 @@ DDFRecord::SetFieldRaw( DDFField *poField, int iIndexWithinField,
 /*      Get a pointer to the start of the existing data for this        */
 /*      iteration of the field.                                         */
 /* -------------------------------------------------------------------- */
-    const char *pachWrkData = NULL;
+    const char *pachWrkData = nullptr;
     int nInstanceSize = 0;
 
     // We special case this to avoid a lot of warnings when initializing
@@ -1478,12 +1528,13 @@ int DDFRecord::ResetDirectory()
     if( nDirSize != nFieldOffset )
     {
         const int nNewDataSize = nDataSize - nFieldOffset + nDirSize;
-        char *pachNewData = (char *) CPLMalloc(nNewDataSize);
+        char *pachNewData = (char *) CPLMalloc(nNewDataSize+1);
+        pachNewData[nNewDataSize] = '\0';
         memcpy( pachNewData + nDirSize,
                 pachData + nFieldOffset,
                 nNewDataSize - nDirSize );
 
-        for( iField = 0; paoFields != NULL && iField < nFieldCount; iField++ )
+        for( iField = 0; paoFields != nullptr && iField < nFieldCount; iField++ )
         {
             int nOffset;
             DDFField *poField = /*GetField( iField )*/ paoFields + iField;
@@ -1503,7 +1554,7 @@ int DDFRecord::ResetDirectory()
 /* -------------------------------------------------------------------- */
 /*      Now set each directory entry.                                   */
 /* -------------------------------------------------------------------- */
-    for( iField = 0; paoFields != NULL && iField < nFieldCount; iField++ )
+    for( iField = 0; paoFields != nullptr && iField < nFieldCount; iField++ )
     {
         DDFField *poField = /*GetField( iField )*/ paoFields + iField;
         DDFFieldDefn *poDefn = poField->GetFieldDefn();
@@ -1551,7 +1602,7 @@ int DDFRecord::CreateDefaultFieldInstance( DDFField *poField,
 {
     int nRawSize = 0;
     char *pachRawData = poField->GetFieldDefn()->GetDefaultValue( &nRawSize );
-    if( pachRawData == NULL )
+    if( pachRawData == nullptr )
         return FALSE;
 
     const int nSuccess =
@@ -1593,7 +1644,7 @@ int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex,
 /*      Fetch the field. If this fails, return zero.                    */
 /* -------------------------------------------------------------------- */
     DDFField *poField = FindField( pszField, iFieldIndex );
-    if( poField == NULL )
+    if( poField == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1601,7 +1652,7 @@ int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
-    if( poSFDefn == NULL )
+    if( poSFDefn == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1609,7 +1660,7 @@ int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     int nFormattedLen;
 
-    if( !poSFDefn->FormatStringValue( NULL, 0, &nFormattedLen, pszValue,
+    if( !poSFDefn->FormatStringValue( nullptr, 0, &nFormattedLen, pszValue,
                                       nValueLength ) )
         return FALSE;
 
@@ -1620,7 +1671,7 @@ int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex,
     char *pachSubfieldData = (char *)
         poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                  iSubfieldIndex);
-    if( pachSubfieldData == NULL )
+    if( pachSubfieldData == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1635,7 +1686,7 @@ int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex,
         pachSubfieldData = (char *)
             poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                      iSubfieldIndex);
-        if( pachSubfieldData == NULL )
+        if( pachSubfieldData == nullptr )
             return FALSE;
     }
 
@@ -1650,7 +1701,7 @@ int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex,
     if( nExistingLength == nFormattedLen )
     {
         return poSFDefn->FormatStringValue( pachSubfieldData, nFormattedLen,
-                                            NULL, pszValue, nValueLength );
+                                            nullptr, pszValue, nValueLength );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1665,7 +1716,7 @@ int DDFRecord::SetStringSubfield( const char *pszField, int iFieldIndex,
         static_cast<int>(pachSubfieldData - pachFieldInstData);
 
     char *pachNewData = (char *) CPLMalloc(nFormattedLen);
-    poSFDefn->FormatStringValue( pachNewData, nFormattedLen, NULL,
+    poSFDefn->FormatStringValue( pachNewData, nFormattedLen, nullptr,
                                  pszValue, nValueLength );
 
     const int nSuccess =
@@ -1706,7 +1757,7 @@ int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex,
 /*      Fetch the field. If this fails, return zero.                    */
 /* -------------------------------------------------------------------- */
     DDFField *poField = FindField( pszField, iFieldIndex );
-    if( poField == NULL )
+    if( poField == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1714,7 +1765,7 @@ int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
-    if( poSFDefn == NULL )
+    if( poSFDefn == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1722,7 +1773,7 @@ int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     int nFormattedLen;
 
-    if( !poSFDefn->FormatIntValue( NULL, 0, &nFormattedLen, nNewValue ) )
+    if( !poSFDefn->FormatIntValue( nullptr, 0, &nFormattedLen, nNewValue ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1732,7 +1783,7 @@ int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex,
     char *pachSubfieldData = (char *)
         poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                  iSubfieldIndex);
-    if( pachSubfieldData == NULL )
+    if( pachSubfieldData == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1747,7 +1798,7 @@ int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex,
         pachSubfieldData = (char *)
             poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                      iSubfieldIndex);
-        if( pachSubfieldData == NULL )
+        if( pachSubfieldData == nullptr )
             return FALSE;
     }
 
@@ -1762,7 +1813,7 @@ int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex,
     if( nExistingLength == nFormattedLen )
     {
         return poSFDefn->FormatIntValue( pachSubfieldData, nFormattedLen,
-                                         NULL, nNewValue );
+                                         nullptr, nNewValue );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1777,7 +1828,7 @@ int DDFRecord::SetIntSubfield( const char *pszField, int iFieldIndex,
         static_cast<int>(pachSubfieldData - pachFieldInstData);
 
     char *pachNewData = (char *) CPLMalloc(nFormattedLen);
-    poSFDefn->FormatIntValue( pachNewData, nFormattedLen, NULL,
+    poSFDefn->FormatIntValue( pachNewData, nFormattedLen, nullptr,
                               nNewValue );
 
     const int nSuccess =
@@ -1818,7 +1869,7 @@ int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex,
 /*      Fetch the field. If this fails, return zero.                    */
 /* -------------------------------------------------------------------- */
     DDFField *poField = FindField( pszField, iFieldIndex );
-    if( poField == NULL )
+    if( poField == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1826,7 +1877,7 @@ int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     DDFSubfieldDefn *poSFDefn =
         poField->GetFieldDefn()->FindSubfieldDefn( pszSubfield );
-    if( poSFDefn == NULL )
+    if( poSFDefn == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1834,7 +1885,7 @@ int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex,
 /* -------------------------------------------------------------------- */
     int nFormattedLen;
 
-    if( !poSFDefn->FormatFloatValue( NULL, 0, &nFormattedLen, dfNewValue ) )
+    if( !poSFDefn->FormatFloatValue( nullptr, 0, &nFormattedLen, dfNewValue ) )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1844,7 +1895,7 @@ int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex,
     char *pachSubfieldData = (char *)
         poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                  iSubfieldIndex);
-    if( pachSubfieldData == NULL )
+    if( pachSubfieldData == nullptr )
         return FALSE;
 
 /* -------------------------------------------------------------------- */
@@ -1859,7 +1910,7 @@ int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex,
         pachSubfieldData = (char *)
             poField->GetSubfieldData(poSFDefn, &nMaxBytes,
                                      iSubfieldIndex);
-        if( pachSubfieldData == NULL )
+        if( pachSubfieldData == nullptr )
             return FALSE;
     }
 
@@ -1874,7 +1925,7 @@ int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex,
     if( nExistingLength == nFormattedLen )
     {
         return poSFDefn->FormatFloatValue( pachSubfieldData, nFormattedLen,
-                                         NULL, dfNewValue );
+                                         nullptr, dfNewValue );
     }
 
 /* -------------------------------------------------------------------- */
@@ -1888,7 +1939,7 @@ int DDFRecord::SetFloatSubfield( const char *pszField, int iFieldIndex,
     const int nStartOffset = (int) (pachSubfieldData - pachFieldInstData);
 
     char *pachNewData = (char *) CPLMalloc(nFormattedLen);
-    poSFDefn->FormatFloatValue( pachNewData, nFormattedLen, NULL,
+    poSFDefn->FormatFloatValue( pachNewData, nFormattedLen, nullptr,
                               dfNewValue );
 
     const int nSuccess =

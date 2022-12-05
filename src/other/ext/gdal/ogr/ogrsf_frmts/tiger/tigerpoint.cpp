@@ -29,15 +29,14 @@
 #include "ogr_tiger.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                             TigerPoint()                             */
 /************************************************************************/
-TigerPoint::TigerPoint( int bRequireGeomIn, const TigerRecordInfo *psRTInfoIn,
+TigerPoint::TigerPoint( const TigerRecordInfo *psRTInfoIn,
                         const char *m_pszFileCodeIn ) :
-    TigerFileBase(psRTInfoIn, m_pszFileCodeIn),
-    bRequireGeom(bRequireGeomIn)
+    TigerFileBase(psRTInfoIn, m_pszFileCodeIn)
 {}
 
 /************************************************************************/
@@ -53,21 +52,21 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
         CPLError( CE_Failure, CPLE_FileIO,
                   "Request for out-of-range feature %d of %sP",
                   nRecordId, pszModule );
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Read the raw record data from the file.                         */
     /* -------------------------------------------------------------------- */
 
-    if( fpPrimary == NULL )
-        return NULL;
+    if( fpPrimary == nullptr )
+        return nullptr;
 
     if( VSIFSeekL( fpPrimary, nRecordId * nRecordLength, SEEK_SET ) != 0 ) {
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to seek to %d of %sP",
                   nRecordId * nRecordLength, pszModule );
-        return NULL;
+        return nullptr;
     }
 
     // Overflow cannot happen since psRTInfo->nRecordLength is unsigned
@@ -76,7 +75,7 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
         CPLError( CE_Failure, CPLE_FileIO,
                   "Failed to read record %d of %sP",
                   nRecordId, pszModule );
-        return NULL;
+        return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -99,36 +98,4 @@ OGRFeature *TigerPoint::GetFeature( int nRecordId,
     }
 
     return poFeature;
-}
-
-/************************************************************************/
-/*                           CreateFeature()                            */
-/************************************************************************/
-OGRErr TigerPoint::CreateFeature( OGRFeature *poFeature,
-                                  int pointIndex)
-
-{
-    char        szRecord[OGR_TIGER_RECBUF_LEN];
-    OGRPoint    *poPoint = (OGRPoint *) poFeature->GetGeometryRef();
-
-    if( !SetWriteModule( m_pszFileCode, psRTInfo->nRecordLength+2, poFeature ) )
-        return OGRERR_FAILURE;
-
-    memset( szRecord, ' ', psRTInfo->nRecordLength );
-
-    WriteFields( psRTInfo, poFeature, szRecord );
-
-    if( poPoint != NULL
-        && (poPoint->getGeometryType() == wkbPoint
-            || poPoint->getGeometryType() == wkbPoint25D) ) {
-        WritePoint( szRecord, pointIndex, poPoint->getX(), poPoint->getY() );
-    } else {
-        if (bRequireGeom) {
-            return OGRERR_FAILURE;
-        }
-    }
-
-    WriteRecord( szRecord, psRTInfo->nRecordLength, m_pszFileCode );
-
-    return OGRERR_NONE;
 }

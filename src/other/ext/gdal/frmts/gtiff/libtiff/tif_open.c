@@ -354,6 +354,7 @@ TIFFClientOpen(
 		if (!TIFFDefaultDirectory(tif))
 			goto bad;
 		tif->tif_diroff = 0;
+		tif->tif_lastdiroff = 0;
 		tif->tif_dirlist = NULL;
 		tif->tif_dirlistsize = 0;
 		tif->tif_dirnumber = 0;
@@ -481,8 +482,6 @@ TIFFClientOpen(
 			 * Setup initial directory.
 			 */
 			if (TIFFReadDirectory(tif)) {
-				tif->tif_rawcc = (tmsize_t)-1;
-				tif->tif_flags |= TIFF_BUFFERSETUP;
 				return (tif);
 			}
 			break;

@@ -1,12 +1,12 @@
 /******************************************************************************
  *
  * Project:  PNM Driver
- * Purpose:  Portable anymap file format imlementation
+ * Purpose:  Portable anymap file format implementation
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
  * Copyright (c) 2001, Frank Warmerdam
- * Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,7 @@
 #include "rawdataset.h"
 #include <cctype>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -40,23 +40,25 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /************************************************************************/
 
-class PNMDataset : public RawDataset
+class PNMDataset final: public RawDataset
 {
     VSILFILE   *fpImage;  // Image data file.
 
     bool        bGeoTransformValid;
     double      adfGeoTransform[6];
 
+    CPL_DISALLOW_COPY_ASSIGN(PNMDataset)
+
   public:
                 PNMDataset();
-    virtual ~PNMDataset();
+    ~PNMDataset() override;
 
-    virtual CPLErr GetGeoTransform( double * ) override;
+    CPLErr GetGeoTransform( double * ) override;
 
     static int          Identify( GDALOpenInfo * );
     static GDALDataset *Open( GDALOpenInfo * );
     static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
+                                int nXSize, int nYSize, int nBandsIn,
                                 GDALDataType eType, char ** papszOptions );
 };
 
@@ -65,7 +67,7 @@ class PNMDataset : public RawDataset
 /************************************************************************/
 
 PNMDataset::PNMDataset() :
-    fpImage(NULL),
+    fpImage(nullptr),
     bGeoTransformValid(false)
 {
     adfGeoTransform[0] = 0.0;
@@ -83,8 +85,8 @@ PNMDataset::PNMDataset() :
 PNMDataset::~PNMDataset()
 
 {
-    FlushCache();
-    if( fpImage != NULL && VSIFCloseL( fpImage ) != 0 )
+    FlushCache(true);
+    if( fpImage != nullptr && VSIFCloseL( fpImage ) != 0 )
     {
         CPLError(CE_Failure, CPLE_FileIO, "I/O error" );
     }
@@ -117,7 +119,7 @@ int PNMDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*      Verify that this is a _raw_ ppm or pgm file.  Note, we don't    */
 /*      support ascii files, or pbm (1bit) files.                       */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 10 )
+    if( poOpenInfo->nHeaderBytes < 10 || poOpenInfo->fpL == nullptr )
         return FALSE;
 
     if( poOpenInfo->pabyHeader[0] != 'P'  ||
@@ -146,7 +148,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      support ascii files, or pbm (1bit) files.                       */
 /* -------------------------------------------------------------------- */
     if( !Identify( poOpenInfo ) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Parse out the tokens from the header.                           */
@@ -201,7 +203,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
               nWidth, nHeight, nMaxValue );
 
     if( iToken != 3 || nWidth < 1 || nHeight < 1 || nMaxValue < 1 )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -214,22 +216,9 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
     poDS->nRasterXSize = nWidth;
     poDS->nRasterYSize = nHeight;
 
-/* -------------------------------------------------------------------- */
-/*      Open file                                                       */
-/* -------------------------------------------------------------------- */
-
-    if( poOpenInfo->eAccess == GA_Update )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb+" );
-    else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-
-    if( poDS->fpImage == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to re-open %s within PNM driver.",
-                  poOpenInfo->pszFilename );
-        return NULL;
-    }
+    // Borrow file pointer
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
     poDS->eAccess = poOpenInfo->eAccess;
 
@@ -257,12 +246,12 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Int overflow occurred.");
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         poDS->SetBand(
             1, new RawRasterBand( poDS, 1, poDS->fpImage, iIn, iPixelSize,
                                   nWidth*iPixelSize, eDataType, bMSBFirst,
-                                  TRUE ) );
+                                  RawRasterBand::OwnFP::NO ) );
         poDS->GetRasterBand(1)->SetColorInterpretation( GCI_GrayIndex );
     }
     else
@@ -272,20 +261,22 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Int overflow occurred.");
             delete poDS;
-            return NULL;
+            return nullptr;
         }
         poDS->SetBand(
             1, new RawRasterBand( poDS, 1, poDS->fpImage, iIn, 3*iPixelSize,
                                   nWidth*3*iPixelSize, eDataType, bMSBFirst,
-                                  TRUE ));
+                                  RawRasterBand::OwnFP::NO ));
         poDS->SetBand(
             2, new RawRasterBand( poDS, 2, poDS->fpImage, iIn+iPixelSize,
                                   3*iPixelSize, nWidth*3*iPixelSize,
-                                  eDataType, bMSBFirst, TRUE ));
+                                  eDataType, bMSBFirst,
+                                  RawRasterBand::OwnFP::NO ));
         poDS->SetBand(
             3, new RawRasterBand( poDS, 3, poDS->fpImage, iIn+2*iPixelSize,
                                   3*iPixelSize, nWidth*3*iPixelSize,
-                                  eDataType, bMSBFirst, TRUE ));
+                                  eDataType, bMSBFirst,
+                                  RawRasterBand::OwnFP::NO ));
 
         poDS->GetRasterBand(1)->SetColorInterpretation( GCI_RedBand );
         poDS->GetRasterBand(2)->SetColorInterpretation( GCI_GreenBand );
@@ -319,7 +310,7 @@ GDALDataset *PNMDataset::Open( GDALOpenInfo * poOpenInfo )
 /************************************************************************/
 
 GDALDataset *PNMDataset::Create( const char * pszFilename,
-                                 int nXSize, int nYSize, int nBands,
+                                 int nXSize, int nYSize, int nBandsIn,
                                  GDALDataType eType,
                                  char ** papszOptions )
 
@@ -334,29 +325,46 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
               "data type (%s), only Byte and UInt16 supported.",
               GDALGetDataTypeName(eType) );
 
-        return NULL;
+        return nullptr;
     }
 
-    if( nBands != 1 && nBands != 3 )
+    if( nBandsIn != 1 && nBandsIn != 3 )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to create PNM dataset with an illegal number"
                   "of bands (%d).  Must be 1 (greyscale) or 3 (RGB).",
-                  nBands );
+                  nBandsIn );
 
-        return NULL;
+        return nullptr;
+    }
+    const CPLString osExt( CPLGetExtension(pszFilename) );
+    if( nBandsIn == 1 )
+    {
+        if( !EQUAL(osExt, "PGM") )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Extension for a 1-band netpbm file should be .pgm");
+        }
+    }
+    else /* if( nBands == 3 ) */
+    {
+        if( !EQUAL(osExt, "PPM") )
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Extension for a 3-band netpbm file should be .ppm");
+        }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Try to create the file.                                         */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( pszFilename, "wb" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file `%s' failed.",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -383,7 +391,7 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
 
     char szHeader[500] = { '\0' };
 
-    if( nBands == 3 )
+    if( nBandsIn == 3 )
         snprintf( szHeader, sizeof(szHeader),
                   "P6\n%d %d\n%d\n", nXSize, nYSize, nMaxValue );
     else
@@ -395,9 +403,10 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
         bOK = false;
 
     if( !bOK )
-        return NULL;
-    return
-        reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_Update ) );
+        return nullptr;
+
+    GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
+    return Open(&oOpenInfo);
 }
 
 /************************************************************************/
@@ -407,7 +416,7 @@ GDALDataset *PNMDataset::Create( const char * pszFilename,
 void GDALRegister_PNM()
 
 {
-    if( GDALGetDriverByName( "PNM" ) != NULL )
+    if( GDALGetDriverByName( "PNM" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -416,8 +425,11 @@ void GDALRegister_PNM()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Portable Pixmap Format (netpbm)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#PNM" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "pnm" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/pnm.html" );
+    // pgm : grey
+    // ppm : RGB
+    // pnm : ??
+    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "pgm ppm pnm" );
     poDriver->SetMetadataItem( GDAL_DMD_MIMETYPE, "image/x-portable-anymap" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES, "Byte UInt16" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,

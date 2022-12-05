@@ -29,7 +29,7 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -138,7 +138,7 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
     GDALRasterBand *red, GDALRasterBand *green, GDALRasterBand *blue,
     int nXSize, int nYSize, double **padfImg, int nHeight, int nWidth )
 {
-    if( red == NULL || green == NULL || blue == NULL )
+    if( red == nullptr || green == nullptr || blue == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Raster bands are not specified");
@@ -152,7 +152,7 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
         return CE_Failure;
     }
 
-    if( padfImg == NULL )
+    if( padfImg == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Buffer isn't specified");
         return CE_Failure;
@@ -175,13 +175,13 @@ CPLErr GDALSimpleSURF::ConvertRGBToLuminosity(
     void *paBlueLayer = CPLMalloc(dataBlueSize * nWidth * nHeight);
 
     CPLErr eErr = red->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paRedLayer,
-                                nWidth, nHeight, eRedType, 0, 0, NULL);
+                                nWidth, nHeight, eRedType, 0, 0, nullptr);
     if( eErr == CE_None )
         eErr = green->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paGreenLayer,
-                               nWidth, nHeight, eGreenType, 0, 0, NULL);
+                               nWidth, nHeight, eGreenType, 0, 0, nullptr);
     if( eErr == CE_None )
         eErr = blue->RasterIO(GF_Read, 0, 0, nXSize, nYSize, paBlueLayer,
-                              nWidth, nHeight, eBlueType, 0, 0, NULL);
+                              nWidth, nHeight, eBlueType, 0, 0, nullptr);
 
     double maxValue = 255.0;
     for( int row = 0; row < nHeight && eErr == CE_None; row++ )
@@ -341,26 +341,6 @@ void GDALSimpleSURF::SetDescriptor(
 // TODO(schwehr): What does "value is 0,1." mean?  Is that 0 to 1 or 0.1?
 // TODO(schwehr): 0,001?
 
-/**
- * Find corresponding points (equal points in two collections).
- *
- * @param poMatchPairs Resulting collection for matched points
- * @param poFirstCollect Points on the first image
- * @param poSecondCollect Points on the second image
- * @param dfThreshold Value from 0 to 1. Threshold affects to number of
- * matched points. If threshold is higher, amount of corresponding
- * points is larger, and vice versa
- *
- * @note Typical threshold's value is 0,1. BUT it's a very approximate guide.
- * It can be 0,001 or even 1. This threshold provides direct adjustment
- * of point matching.
- * NOTICE that if threshold is lower, matches are more robust and correct, but
- * number of matched points is smaller. Therefore if algorithm performs many
- * false detections and produces bad results, reduce threshold.  Otherwise, if
- * algorithm finds nothing, increase threshold.
- *
- * @return CE_None or CE_Failure if error occurs.
- */
 
 CPLErr GDALSimpleSURF::MatchFeaturePoints(
     std::vector<GDALFeaturePoint*> *poMatchPairs,
@@ -371,14 +351,14 @@ CPLErr GDALSimpleSURF::MatchFeaturePoints(
 /* -------------------------------------------------------------------- */
 /*      Validate parameters.                                            */
 /* -------------------------------------------------------------------- */
-    if( poMatchPairs == NULL )
+    if( poMatchPairs == nullptr )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Matched points collection isn't specified" );
         return CE_Failure;
     }
 
-    if( poFirstCollect == NULL || poSecondCollect == NULL )
+    if( poFirstCollect == nullptr || poSecondCollect == nullptr )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Feature point collections are not specified");

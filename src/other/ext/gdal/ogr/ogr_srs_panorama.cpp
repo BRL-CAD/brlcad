@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2005, Andrey Kiselev <dron@ak4719.spb.edu>
- * Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,10 +33,12 @@
 #include "cpl_csv.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+#include <cmath>
 
-static const double TO_DEGREES = 57.2957795130823208766;
-static const double TO_RADIANS = 0.017453292519943295769;
+CPL_CVSID("$Id$")
+
+constexpr double TO_DEGREES = 57.2957795130823208766;
+constexpr double TO_RADIANS = 0.017453292519943295769;
 
 // XXX: this macro computes zone number from the central meridian parameter.
 // Note, that "Panorama" parameters are set in radians.
@@ -54,52 +56,54 @@ static int TO_ZONE( double x )
 /*  "Panorama" projection codes.                                        */
 /************************************************************************/
 
-static const long PAN_PROJ_NONE   = -1L;
-static const long PAN_PROJ_TM     = 1L;   // Gauss-Kruger (Transverse Mercator)
-static const long PAN_PROJ_LCC    = 2L;   // Lambert Conformal Conic 2SP
-static const long PAN_PROJ_STEREO = 5L;   // Stereographic
-static const long PAN_PROJ_AE     = 6L;   // Azimuthal Equidistant (Postel)
-static const long PAN_PROJ_MERCAT = 8L;   // Mercator
-static const long PAN_PROJ_POLYC  = 10L;  // Polyconic
-static const long PAN_PROJ_PS     = 13L;  // Polar Stereographic
-static const long PAN_PROJ_GNOMON = 15L;  // Gnomonic
-static const long PAN_PROJ_UTM    = 17L;  // Universal Transverse Mercator (UTM)
-static const long PAN_PROJ_WAG1   = 18L;  // Wagner I (Kavraisky VI)
-static const long PAN_PROJ_MOLL   = 19L;  // Mollweide
-static const long PAN_PROJ_EC     = 20L;  // Equidistant Conic
-static const long PAN_PROJ_LAEA   = 24L;  // Lambert Azimuthal Equal Area
-static const long PAN_PROJ_EQC    = 27L;  // Equirectangular
-static const long PAN_PROJ_CEA    = 28L;  // Cylindrical Equal Area (Lambert)
-static const long PAN_PROJ_IMWP   = 29L;  // International Map of the World Polyconic
-static const long PAN_PROJ_MILLER = 34L;  // Miller
+constexpr long PAN_PROJ_NONE   = -1L;
+constexpr long PAN_PROJ_TM     = 1L;   // Gauss-Kruger (Transverse Mercator)
+constexpr long PAN_PROJ_LCC    = 2L;   // Lambert Conformal Conic 2SP
+constexpr long PAN_PROJ_STEREO = 5L;   // Stereographic
+constexpr long PAN_PROJ_AE     = 6L;   // Azimuthal Equidistant (Postel)
+constexpr long PAN_PROJ_MERCAT = 8L;   // Mercator
+constexpr long PAN_PROJ_POLYC  = 10L;  // Polyconic
+constexpr long PAN_PROJ_PS     = 13L;  // Polar Stereographic
+constexpr long PAN_PROJ_GNOMON = 15L;  // Gnomonic
+constexpr long PAN_PROJ_UTM    = 17L;  // Universal Transverse Mercator (UTM)
+constexpr long PAN_PROJ_WAG1   = 18L;  // Wagner I (Kavraisky VI)
+constexpr long PAN_PROJ_MOLL   = 19L;  // Mollweide
+constexpr long PAN_PROJ_EC     = 20L;  // Equidistant Conic
+constexpr long PAN_PROJ_LAEA   = 24L;  // Lambert Azimuthal Equal Area
+constexpr long PAN_PROJ_EQC    = 27L;  // Equirectangular
+constexpr long PAN_PROJ_CEA    = 28L;  // Cylindrical Equal Area (Lambert)
+constexpr long PAN_PROJ_IMWP   = 29L;  // International Map of the World Polyconic
+constexpr long PAN_PROJ_MILLER = 34L;  // Miller
 /************************************************************************/
 /*  "Panorama" datum codes.                                             */
 /************************************************************************/
 
-static const long PAN_DATUM_NONE      = -1L;
-static const long PAN_DATUM_PULKOVO42 = 1L;  // Pulkovo 1942
-static const long PAN_DATUM_WGS84     = 2L;  // WGS84
+constexpr long PAN_DATUM_NONE      = -1L;
+constexpr long PAN_DATUM_PULKOVO42 = 1L;  // Pulkovo 1942
+constexpr long PAN_DATUM_WGS84     = 2L;  // WGS84
 
 /************************************************************************/
 /*  "Panorama" ellipsoid codes.                                         */
 /************************************************************************/
 
-static const long PAN_ELLIPSOID_NONE        = -1L;
-static const long PAN_ELLIPSOID_KRASSOVSKY  = 1L;  // Krassovsky, 1940
-// static const long PAN_ELLIPSOID_WGS72       = 2L;  // WGS, 1972
-// static const long PAN_ELLIPSOID_INT1924     = 3L;  // International, 1924 (Hayford, 1909)
-// static const long PAN_ELLIPSOID_CLARCKE1880 = 4L;  // Clarke, 1880
-// static const long PAN_ELLIPSOID_CLARCKE1866 = 5L;  // Clarke, 1866 (NAD1927)
-// static const long PAN_ELLIPSOID_EVEREST1830 = 6L;  // Everest, 1830
-// static const long PAN_ELLIPSOID_BESSEL1841  = 7L;  // Bessel, 1841
-// static const long PAN_ELLIPSOID_AIRY1830    = 8L;  // Airy, 1830
-static const long PAN_ELLIPSOID_WGS84       = 9L;  // WGS, 1984 (GPS)
+constexpr long PAN_ELLIPSOID_NONE        = -1L;
+constexpr long PAN_ELLIPSOID_KRASSOVSKY  = 1L;  // Krassovsky, 1940
+// constexpr long PAN_ELLIPSOID_WGS72       = 2L;  // WGS, 1972
+// constexpr long PAN_ELLIPSOID_INT1924     = 3L;  // International, 1924 (Hayford, 1909)
+// constexpr long PAN_ELLIPSOID_CLARCKE1880 = 4L;  // Clarke, 1880
+// constexpr long PAN_ELLIPSOID_CLARCKE1866 = 5L;  // Clarke, 1866 (NAD1927)
+// constexpr long PAN_ELLIPSOID_EVEREST1830 = 6L;  // Everest, 1830
+// constexpr long PAN_ELLIPSOID_BESSEL1841  = 7L;  // Bessel, 1841
+// constexpr long PAN_ELLIPSOID_AIRY1830    = 8L;  // Airy, 1830
+constexpr long PAN_ELLIPSOID_WGS84       = 9L;  // WGS, 1984 (GPS)
+constexpr long PAN_ELLIPSOID_GSK2011     = 46L;   // GSK-2011
+constexpr long PAN_ELLIPSOID_PZ90        = 47L;   // PZ90
 
 /************************************************************************/
 /*  Correspondence between "Panorama" and EPSG datum codes.             */
 /************************************************************************/
 
-static const int aoDatums[] =
+constexpr int aoDatums[] =
 {
     0,
     4284,   // Pulkovo, 1942
@@ -113,13 +117,13 @@ static const int aoDatums[] =
     4200    // Pulkovo, 1995
 };
 
-#define NUMBER_OF_DATUMS        (long)(sizeof(aoDatums)/sizeof(aoDatums[0]))
+#define NUMBER_OF_DATUMS        static_cast<long>(CPL_ARRAYSIZE(aoDatums))
 
 /************************************************************************/
 /*  Correspondence between "Panorama" and EPSG ellipsoid codes.         */
 /************************************************************************/
 
-static const int aoEllips[] =
+constexpr int aoEllips[] =
 {
     0,
     7024,   // Krassovsky, 1940
@@ -144,8 +148,45 @@ static const int aoEllips[] =
     7003   // Australian National, 1965
 };
 
-static const int NUMBER_OF_ELLIPSOIDS =
-    static_cast<int>(sizeof(aoEllips)/sizeof(aoEllips[0]));
+constexpr int NUMBER_OF_ELLIPSOIDS = static_cast<int>(CPL_ARRAYSIZE(aoEllips));
+
+/************************************************************************/
+/*  Correspondence between "Panorama" and EPSG vertical CS.             */
+/************************************************************************/
+
+constexpr int aoVCS[] =
+{
+    0,
+    8357,   //1
+    5711,   //2
+    0,      //3
+    5710,   //4
+    5710,   //5
+    0,      //6
+    0,      //7
+    0,      //8
+    0,      //9
+    5716,   //10
+    5733,   //11
+    0,      //12
+    0,      //13
+    0,      //14
+    0,      //15
+    5709,   //16
+    5776,   //17
+    0,      //18
+    0,      //19
+    5717,   //20
+    5613,   //21
+    0,      //22
+    5775,   //23
+    5702,   //24
+    5705,   //25
+    0,      //26
+    5714    //27
+};
+
+constexpr int NUMBER_OF_VERTICALCS = (sizeof(aoVCS)/sizeof(aoVCS[0]));
 
 /************************************************************************/
 /*                        OSRImportFromPanorama()                       */
@@ -183,63 +224,63 @@ OGRErr OSRImportFromPanorama( OGRSpatialReferenceH hSRS,
  *
  * @param iProjSys Input projection system code, used in GIS "Panorama".
  *
- *      <h4>Supported Projections</h4>
- * <pre>
- *      1:  Gauss-Kruger (Transverse Mercator)
- *      2:  Lambert Conformal Conic 2SP
- *      5:  Stereographic
- *      6:  Azimuthal Equidistant (Postel)
- *      8:  Mercator
- *      10: Polyconic
- *      13: Polar Stereographic
- *      15: Gnomonic
- *      17: Universal Transverse Mercator (UTM)
- *      18: Wagner I (Kavraisky VI)
- *      19: Mollweide
- *      20: Equidistant Conic
- *      24: Lambert Azimuthal Equal Area
- *      27: Equirectangular
- *      28: Cylindrical Equal Area (Lambert)
- *      29: International Map of the World Polyconic
- * </pre>
+ * Supported Projections are:
+ * <ul>
+ * <li>1:  Gauss-Kruger (Transverse Mercator)</li>
+ * <li>2:  Lambert Conformal Conic 2SP</li>
+ * <li>5:  Stereographic</li>
+ * <li>6:  Azimuthal Equidistant (Postel)</li>
+ * <li>8:  Mercator</li>
+ * <li>10: Polyconic</li>
+ * <li>13: Polar Stereographic</li>
+ * <li>15: Gnomonic</li>
+ * <li>17: Universal Transverse Mercator (UTM)</li>
+ * <li>18: Wagner I (Kavraisky VI)</li>
+ * <li>19: Mollweide</li>
+ * <li>20: Equidistant Conic</li>
+ * <li>24: Lambert Azimuthal Equal Area</li>
+ * <li>27: Equirectangular</li>
+ * <li>28: Cylindrical Equal Area (Lambert)</li>
+ * <li>29: International Map of the World Polyconic</li>
+ * </ul>
  *
  * @param iDatum Input coordinate system.
  *
- *      <h4>Supported Datums</h4>
- * <pre>
- *       1: Pulkovo, 1942
- *       2: WGS, 1984
- *       3: OSGB 1936 (British National Grid)
- *       9: Pulkovo, 1995
- * </pre>
+ * Supported Datums are:
+ * <ul>
+ * <li>1: Pulkovo, 1942</li>
+ * <li>2: WGS, 1984</li>
+ * <li>3: OSGB 1936 (British National Grid)</li>
+ * <li>9: Pulkovo, 1995</li>
+ * </ul>
  *
  * @param iEllips Input spheroid.
  *
- *      <h4>Supported Spheroids</h4>
- * <pre>
- *       1: Krassovsky, 1940
- *       2: WGS, 1972
- *       3: International, 1924 (Hayford, 1909)
- *       4: Clarke, 1880
- *       5: Clarke, 1866 (NAD1927)
- *       6: Everest, 1830
- *       7: Bessel, 1841
- *       8: Airy, 1830
- *       9: WGS, 1984 (GPS)
- * </pre>
+ * Supported Spheroids are:
+ * <ul>
+ * <li>1: Krassovsky, 1940</li>
+ * <li>2: WGS, 1972</li>
+ * <li>3: International, 1924 (Hayford, 1909)</li>
+ * <li>4: Clarke, 1880</li>
+ * <li>5: Clarke, 1866 (NAD1927)</li>
+ * <li>6: Everest, 1830</li>
+ * <li>7: Bessel, 1841</li>
+ * <li>8: Airy, 1830</li>
+ * <li>9: WGS, 1984 (GPS)</li>
+ * </ul>
  *
  * @param padfPrjParams Array of 8 coordinate system parameters:
  *
- * <pre>
- *      [0]  Latitude of the first standard parallel (radians)
- *      [1]  Latitude of the second standard parallel (radians)
- *      [2]  Latitude of center of projection (radians)
- *      [3]  Longitude of center of projection (radians)
- *      [4]  Scaling factor
- *      [5]  False Easting
- *      [6]  False Northing
- *      [7]  Zone number
- * </pre>
+ * <ul>
+ * <li>[0]  Latitude of the first standard parallel (radians)</li>
+ * <li>[1]  Latitude of the second standard parallel (radians)</li>
+ * <li>[2]  Latitude of center of projection (radians)</li>
+ * <li>[3]  Longitude of center of projection (radians)</li>
+ * <li>[4]  Scaling factor</li>
+ * <li>[5]  False Easting</li>
+ * <li>[6]  False Northing</li>
+ * <li>[7]  Zone number</li>
+ * </ul>
  *
  * Particular projection uses different parameters, unused ones may be set to
  * zero. If NULL supplied instead of array pointer default values will be used
@@ -260,7 +301,7 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
 /* -------------------------------------------------------------------- */
     bool bProjAllocated = false;
 
-    if( padfPrjParams == NULL )
+    if( padfPrjParams == nullptr )
     {
         padfPrjParams = static_cast<double *>(CPLMalloc(8 * sizeof(double)));
         if( !padfPrjParams )
@@ -435,11 +476,23 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
             oGCS.importFromEPSG( aoDatums[iDatum] );
             CopyGeogCSFrom( &oGCS );
         }
+        else if( iEllips == PAN_ELLIPSOID_GSK2011 )
+        {
+            OGRSpatialReference oGCS;
+            oGCS.importFromEPSG( 7683 );
+            CopyGeogCSFrom( &oGCS );
+        }
+        else if( iEllips == PAN_ELLIPSOID_PZ90 )
+        {
+            SetGeogCS( "PZ-90.11", "Parametry_Zemli_1990_11",
+                       "PZ-90", 6378136, 298.257839303);
+            SetAuthority( "SPHEROID", "EPSG", 7054 );
+        }
         else if( iEllips > 0
                  && iEllips < NUMBER_OF_ELLIPSOIDS
                  && aoEllips[iEllips] )
         {
-            char *pszName = NULL;
+            char *pszName = nullptr;
             double dfSemiMajor = 0.0;
             double dfInvFlattening = 0.0;
 
@@ -454,15 +507,14 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
                    CPLString().Printf(
                        "Not specified (based on %s spheroid)", pszName ),
                    pszName, dfSemiMajor, dfInvFlattening,
-                   NULL, 0.0, NULL, 0.0 );
+                   nullptr, 0.0, nullptr, 0.0 );
                 SetAuthority( "SPHEROID", "EPSG", aoEllips[iEllips] );
             }
             else
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to lookup ellipsoid code %ld, likely due to "
-                          "missing GDAL gcs.csv "
-                          "file.  Falling back to use Pulkovo 42.", iEllips );
+                          "Failed to lookup ellipsoid code %ld. "
+                          "Falling back to use Pulkovo 42.", iEllips );
                 SetWellKnownGeogCS( "EPSG:4284" );
             }
 
@@ -484,11 +536,79 @@ OGRErr OGRSpatialReference::importFromPanorama( long iProjSys, long iDatum,
     if( IsLocal() || IsProjected() )
         SetLinearUnits( SRS_UL_METER, 1.0 );
 
-    FixupOrdering();
-
     if( bProjAllocated && padfPrjParams )
         CPLFree( padfPrjParams );
 
+    return OGRERR_NONE;
+}
+
+/**
+ * Import vertical coordinate system from "Panorama" GIS projection definition.
+ *
+ * @param iVCS Input vertical coordinate system ID.
+ *
+ * Supported VCS are:
+ * <ul>
+ * <li>1: Baltic 1977 height (EPSG:5705)</li>
+ * <li>2: AHD height (EPSG:5711)</li>
+ * <li>4: Ostend height (EPSG:5710)</li>
+ * <li>5: Ostend height (EPSG:5710)</li>
+ * <li>10: Piraeus height (EPSG:5716)</li>
+ * <li>11: DNN height (EPSG:5733)</li>
+ * <li>16: NAP height (EPSG:5709)</li>
+ * <li>17: NN54 height (EPSG:5776)</li>
+ * <li>20: N60 height (EPSG:5717)</li>
+ * <li>21: RH2000 height (EPSG:5613)</li>
+ * <li>23: Antalya height (EPSG:5775)</li>
+ * <li>24: NGVD29 height (ftUS) (EPSG:5702)</li>
+ * <li>25: Baltic 1977 height (EPSG:5705)</li>
+ * <li>27: MSL height (EPSG:5714)</li>
+ * </ul>
+ */
+OGRErr OGRSpatialReference::importVertCSFromPanorama(int iVCS)
+{
+    if(iVCS < 0 || iVCS >= NUMBER_OF_VERTICALCS)
+    {
+        return OGRERR_CORRUPT_DATA;
+    }
+
+    const int nEPSG = aoVCS[iVCS];
+
+    if(nEPSG == 0 )
+    {
+        CPLError(CE_Warning, CPLE_NotSupported,
+                 "Vertical coordinate system (Panorama index %d) not supported", iVCS);
+        return OGRERR_UNSUPPORTED_SRS;
+    }
+
+    OGRSpatialReference sr;
+    sr.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    OGRErr eImportFromEPSGErr = sr.importFromEPSG(nEPSG);
+    if(eImportFromEPSGErr != OGRERR_NONE)
+    {
+        CPLError(CE_Warning, CPLE_None,
+                 "Vertical coordinate system (Panorama index %d, EPSG %d) "
+                 "import from EPSG error", iVCS, nEPSG);
+        return OGRERR_UNSUPPORTED_SRS;
+    }
+
+    if(sr.IsVertical() != 1)
+    {
+        CPLError(CE_Warning, CPLE_None,
+                 "Coordinate system (Panorama index %d, EPSG %d) "
+                 "is not Vertical", iVCS, nEPSG);
+        return OGRERR_UNSUPPORTED_SRS;
+    }
+
+    OGRErr eSetVertCSErr = SetVertCS(sr.GetAttrValue("VERT_CS"),
+                                     sr.GetAttrValue("VERT_DATUM"));
+    if(eSetVertCSErr != OGRERR_NONE)
+    {
+        CPLError(CE_Warning, CPLE_None,
+                "Vertical coordinate system (Panorama index %d, EPSG %d) "
+                "set error", iVCS, nEPSG);
+        return eSetVertCSErr;
+    }
     return OGRERR_NONE;
 }
 
@@ -572,7 +692,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
     {
         *piProjSys = PAN_PROJ_NONE;
     }
-    else if( pszProjection == NULL )
+    else if( pszProjection == nullptr )
     {
 #ifdef DEBUG
         CPLDebug( "OSR_Panorama",
@@ -768,7 +888,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
 /* -------------------------------------------------------------------- */
     const char *pszDatum = GetAttrValue( "DATUM" );
 
-    if( pszDatum == NULL )
+    if( pszDatum == nullptr )
     {
         *piDatum = PAN_DATUM_NONE;
         *piEllips = PAN_ELLIPSOID_NONE;
@@ -804,10 +924,10 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
                 double dfSM = 0.0;
                 double dfIF = 1.0;
 
-                if( OSRGetEllipsoidInfo( aoEllips[i], NULL,
+                if( OSRGetEllipsoidInfo( aoEllips[i], nullptr,
                                          &dfSM, &dfIF ) == OGRERR_NONE
-                    && CPLIsEqual(dfSemiMajor, dfSM)
-                    && CPLIsEqual(dfInvFlattening, dfIF) )
+                    && std::abs(dfSemiMajor - dfSM) < 1e-10 * dfSemiMajor
+                    && std::abs(dfInvFlattening - dfIF) < 1e-10 * dfInvFlattening )
                 {
                     *piEllips = i;
                     break;
@@ -819,7 +939,7 @@ OGRErr OGRSpatialReference::exportToPanorama( long *piProjSys, long *piDatum,
         {
 #ifdef DEBUG
             CPLDebug( "OSR_Panorama",
-                      "Ellipsoid \"%s\" unsupported by \"Panorama\" GIS.",
+                      R"(Ellipsoid "%s" unsupported by "Panorama" GIS.)",
                       pszDatum );
 #endif
             *piDatum = PAN_DATUM_NONE;

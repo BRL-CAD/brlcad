@@ -27,14 +27,17 @@
 */
 
 /*
- *  Original code is derived from the author:
+ *  Original code (for SHA256 computation only) is derived from the author:
  *  Allan Saddi
  */
 
 #include <string.h>
+#include "cpl_conv.h"
+#include "cpl_error.h"
 #include "cpl_sha256.h"
+#include "cpl_string.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #define ROTL(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 #define ROTR(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
@@ -47,8 +50,8 @@ CPL_CVSID("$Id$");
 #define sigma1(x) (ROTR((x), 17) ^ ROTR((x), 19) ^ ((x) >> 10))
 
 #define DO_ROUND() {                                                    \
-                t1 = h + SIGMA1(e) + Ch(e, f, g) + *(Kp++) + *(W++);    \
-                t2 = SIGMA0(a) + Maj(a, b, c);                          \
+                GUInt32 t1 = h + SIGMA1(e) + Ch(e, f, g) + *(Kp++) + *(W++);    \
+                GUInt32 t2 = SIGMA0(a) + Maj(a, b, c);                          \
                 h = g;                                                  \
                 g = f;                                                  \
                 f = e;                                                  \
@@ -59,7 +62,7 @@ CPL_CVSID("$Id$");
                 a = t1 + t2;                                            \
         }
 
-static const GUInt32 K[64] = {
+constexpr GUInt32 K[64] = {
     0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U,
     0x3956c25bU, 0x59f111f1U, 0x923f82a4U, 0xab1c5ed5U,
     0xd807aa98U, 0x12835b01U, 0x243185beU, 0x550c7dc3U,
@@ -100,7 +103,7 @@ static inline GUInt64 _byteswap64(GUInt64 x)
 
 #endif /* !(WORDS_BIGENDIAN) */
 
-static const GByte padding[64] = {
+constexpr GByte padding[64] = {
         0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -133,17 +136,16 @@ static GUInt32 burnStack( int size )
     memset(buf, static_cast<GByte>(size & 0xff), sizeof(buf));
     for( size_t i = 0; i < sizeof(buf); i++ )
         ret += ret * buf[i];
-    size -= sizeof(buf);
+    size -= static_cast<int>(sizeof(buf));
     if( size > 0 )
         ret += burnStack(size);
     return ret;
 }
 
+CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static void CPL_SHA256Guts(CPL_SHA256Context * sc, const GUInt32 * cbuf)
 {
         GUInt32 buf[64] = {};
-        GUInt32 t1 = 0;
-        GUInt32 t2 = 0;
 
         GUInt32 *W = buf;
 
@@ -423,7 +425,7 @@ void CPL_SHA256Final( CPL_SHA256Context * sc, GByte hash[CPL_SHA256_HASH_SIZE] )
     {
         for( int i = 0; i < CPL_SHA256_HASH_WORDS; i++ )
         {
-            *((GUInt32 *) hash) = BYTESWAP(sc->hash[i]);
+            *reinterpret_cast<GUInt32 *>(hash) = BYTESWAP(sc->hash[i]);
             hash += 4;
         }
     }
@@ -477,4 +479,276 @@ void CPL_HMAC_SHA256( const void *pKey, size_t nKeyLen,
 
     memset(&sSHA256Ctxt, 0, sizeof(sSHA256Ctxt));
     memset(abyPad, 0, CPL_HMAC_SHA256_BLOCKSIZE);
+}
+
+
+#ifdef HAVE_CRYPTOPP
+
+/* Begin of crypto++ headers */
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4189 )
+#pragma warning( disable : 4512 )
+#pragma warning( disable : 4244 )
+#endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weffc++"
+#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
+
+#ifdef USE_ONLY_CRYPTODLL_ALG
+#include "cryptopp/dll.h"
+#else
+#include "cryptopp/rsa.h"
+#include "cryptopp/queue.h"
+#endif
+
+#include "cryptopp/base64.h"
+#include "cryptopp/osrng.h"
+
+// Fix compatibility with Crypto++
+#if CRYPTOPP_VERSION >= 600
+typedef CryptoPP::byte cryptopp_byte;
+#else
+typedef byte cryptopp_byte;
+#endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
+
+#endif // HAVE_CRYPTOPP
+
+#ifdef HAVE_OPENSSL_CRYPTO
+
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+#endif
+
+
+/************************************************************************/
+/*                  CPLOpenSSLNullPassphraseCallback()                  */
+/************************************************************************/
+
+#if defined(HAVE_OPENSSL_CRYPTO)
+static int CPLOpenSSLNullPassphraseCallback(char * /*buf*/,
+                                            int /*size*/,
+                                            int /*rwflag*/, void * /*u*/)
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "A passphrase was required for this private key, "
+             "but this is not supported");
+    return 0;
+}
+
+#endif
+
+/************************************************************************/
+/*                         CPL_RSA_SHA256_Sign()                        */
+/************************************************************************/
+
+GByte* CPL_RSA_SHA256_Sign(const char* pszPrivateKey,
+                                  const void* pabyData,
+                                  unsigned int nDataLen,
+                                  unsigned int* pnSignatureLen)
+{
+    *pnSignatureLen = 0;
+
+#ifdef HAVE_CRYPTOPP
+  if( EQUAL(CPLGetConfigOption("CPL_RSA_SHA256_Sign", "CRYPTOPP"), "CRYPTOPP") )
+  {
+    // See https://www.cryptopp.com/wiki/RSA_Cryptography
+    // https://www.cryptopp.com/wiki/RSA_Signature_Schemes#RSA_Signature_Scheme_.28PKCS_v1.5.29
+    // https://www.cryptopp.com/wiki/Keys_and_Formats#PEM_Encoded_Keys
+
+    CPLString osRSAPrivKey(pszPrivateKey);
+    static std::string HEADER = "-----BEGIN PRIVATE KEY-----";
+    static std::string HEADER_RSA = "-----BEGIN RSA PRIVATE KEY-----";
+    static std::string HEADER_ENCRYPTED = "-----BEGIN ENCRYPTED PRIVATE KEY-----";
+    static std::string FOOTER = "-----END PRIVATE KEY-----";
+
+    size_t pos1, pos2;
+    pos1 = osRSAPrivKey.find(HEADER);
+    if(pos1 == std::string::npos)
+    {
+        if( osRSAPrivKey.find(HEADER_RSA) != std::string::npos )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "'Traditional' PEM header found, whereas PKCS#8 is "
+                     "expected. You can use for example "
+                     "'openssl pkcs8 -topk8 -inform pem -in file.key "
+                     "-outform pem -nocrypt -out file.pem' to generate "
+                     "a compatible PEM file");
+        }
+        else if( osRSAPrivKey.find(HEADER_ENCRYPTED) != std::string::npos )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Encrypted PEM header found. Only PKCS#8 unencrypted "
+                     "private keys are supported");
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "PEM header not found");
+        }
+        return nullptr;
+    }
+
+    pos2 = osRSAPrivKey.find(FOOTER, pos1+1);
+    if(pos2 == std::string::npos)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "PEM footer not found");
+        return nullptr;
+    }
+
+    // Strip header and footer to get the base64-only portion
+    pos1 = pos1 + HEADER.size();
+    std::string osKeyB64 = osRSAPrivKey.substr(pos1, pos2 - pos1);
+
+    // Base64 decode, place in a ByteQueue
+    CryptoPP::ByteQueue queue;
+    CryptoPP::Base64Decoder decoder;
+
+    decoder.Attach(new CryptoPP::Redirector(queue));
+    decoder.Put(reinterpret_cast<const cryptopp_byte*>(osKeyB64.data()), osKeyB64.length());
+    decoder.MessageEnd();
+
+    CryptoPP::RSA::PrivateKey rsaPrivate;
+    try
+    {
+        rsaPrivate.BERDecode(queue);
+    }
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Exception while decoding private key: %s", e.what());
+        return nullptr;
+    }
+
+    // Check that we have consumed all bytes.
+    if( !queue.IsEmpty() )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid private key: extraneous trailing bytes");
+        return nullptr;
+    }
+
+    CryptoPP::AutoSeededRandomPool prng;
+    bool valid = rsaPrivate.Validate(prng, 3);
+    if(!valid)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Invalid private key: validation failed");
+        return nullptr;
+    }
+
+    std::string signature;
+    try
+    {
+        typedef CryptoPP::RSASS<CryptoPP::PKCS1v15,
+                                CryptoPP::SHA256>::Signer
+                                            RSASSA_PKCS1v15_SHA256_Signer;
+        RSASSA_PKCS1v15_SHA256_Signer signer(rsaPrivate);
+
+        std::string message;
+        message.assign(static_cast<const char*>(pabyData), nDataLen);
+
+        CryptoPP::StringSource stringSource(message, true,
+            new CryptoPP::SignerFilter(prng, signer,
+                new CryptoPP::StringSink(signature)));
+    }
+    catch( const std::exception& e )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Exception while signing: %s", e.what());
+        return nullptr;
+    }
+
+    *pnSignatureLen = static_cast<unsigned int>(signature.size());
+    GByte* pabySignature = static_cast<GByte*>(CPLMalloc(signature.size()));
+    memcpy(pabySignature, signature.c_str(), signature.size());
+    return pabySignature;
+  }
+#endif
+
+#if defined(HAVE_OPENSSL_CRYPTO)
+  if( EQUAL(CPLGetConfigOption("CPL_RSA_SHA256_Sign", "OPENSSL"), "OPENSSL") )
+  {
+    const EVP_MD* digest = EVP_sha256();
+    if( digest == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "EVP_sha256() failed");
+        return nullptr;
+    }
+
+    // Old versions expect a void*, newer a const void*
+    BIO* bio = BIO_new_mem_buf(const_cast<void*>(static_cast<const void*>(pszPrivateKey)),
+                               static_cast<int>(strlen(pszPrivateKey)));
+    if( bio == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "BIO_new_mem_buf() failed");
+        return nullptr;
+    }
+    EVP_PKEY* pkey = PEM_read_bio_PrivateKey(bio, nullptr,
+                                             CPLOpenSSLNullPassphraseCallback,
+                                             nullptr);
+    BIO_free(bio);
+    if( pkey == nullptr )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "PEM_read_bio_PrivateKey() failed");
+        return nullptr;
+    }
+    EVP_MD_CTX* md_ctx = EVP_MD_CTX_create();
+    CPLAssert(md_ctx != nullptr);
+    int ret = EVP_SignInit(md_ctx, digest);
+    CPLAssert(ret == 1);
+    ret = EVP_SignUpdate(md_ctx, pabyData, nDataLen);
+    CPLAssert(ret == 1);
+    const int nPKeyLength = EVP_PKEY_size(pkey);
+    CPLAssert(nPKeyLength > 0);
+    GByte* abyBuffer = static_cast<GByte*>(CPLMalloc(nPKeyLength));
+    ret = EVP_SignFinal(md_ctx, abyBuffer, pnSignatureLen, pkey);
+    if( ret != 1 )
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "EVP_SignFinal() failed");
+        EVP_MD_CTX_destroy(md_ctx);
+        EVP_PKEY_free(pkey);
+        CPLFree(abyBuffer);
+        return nullptr;
+    }
+
+    EVP_MD_CTX_destroy(md_ctx);
+    EVP_PKEY_free(pkey);
+    return abyBuffer;
+  }
+#endif
+
+    CPL_IGNORE_RET_VAL(pszPrivateKey);
+    CPL_IGNORE_RET_VAL(pabyData);
+    CPL_IGNORE_RET_VAL(nDataLen);
+
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "CPLRSASHA256Sign() not implemented: "
+             "GDAL must be built against libcrypto++ or libcrypto (openssl)");
+    return nullptr;
 }

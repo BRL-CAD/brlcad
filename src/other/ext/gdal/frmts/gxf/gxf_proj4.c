@@ -30,7 +30,7 @@
 
 #include "gxfopen.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 
 #define SAFE_strcat(x,y) snprintf(x + strlen(x),sizeof(x) - strlen(x), "%s", y)
@@ -93,10 +93,6 @@ char *GXFGetMapProjectionAsPROJ4( GXFHandle hGXF )
         papszMethods = CSLTokenizeStringComplex(psGXF->papszMapProjection[2],
                                                 ",", TRUE, TRUE );
     }
-
-#ifdef DBMALLOC
-    malloc_chain_check(1);
-#endif
 
     if( papszMethods == NULL
         || papszMethods[0] == NULL

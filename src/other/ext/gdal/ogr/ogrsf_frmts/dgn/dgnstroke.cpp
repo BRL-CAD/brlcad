@@ -29,9 +29,9 @@
 #include "dgnlibp.h"
 #include <cmath>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
-static const double DEG_TO_RAD = M_PI / 180.0;
+constexpr double DEG_TO_RAD = M_PI / 180.0;
 
 /************************************************************************/
 /*                         ComputePointOnArc()                          */

@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2008, Xiuguang Zhou (ESRI)
- * Copyright (c) 2010-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,6 +36,9 @@
 #include "geo_normalize.h"
 #include "ogr_spatialref.h"
 
+#include <string>
+#include <map>
+
 char* ImagineCitationTranslation( char* psCitation, geokey_t keyID );
 char** CitationStringParse( char* psCitation, geokey_t keyID );
 
@@ -57,11 +60,13 @@ OGRBoolean CheckCitationKeyForStatePlaneUTM( GTIF* hGTIF,
                                              GTIFDefn* psDefn,
                                              OGRSpatialReference* poSRS,
                                              OGRBoolean* pLinearUnitIsSet );
-// char* ImagineCitationTranslation( char* psCitation, geokey_t keyID );
-// char** CitationStringParse( char* psCitation, geokey_t keyID );
-void SetLinearUnitCitation( GTIF* psGTIF, char* pszLinearUOMName );
-void SetGeogCSCitation( GTIF * psGTIF, OGRSpatialReference *poSRS,
-                        char* angUnitName, int nDatum, short nSpheroid );
+
+void SetLinearUnitCitation( std::map<geokey_t, std::string>& oMapAsciiKeys,
+                            const char* pszLinearUOMName );
+void SetGeogCSCitation( GTIF * psGTIF,
+                        std::map<geokey_t, std::string>& oMapAsciiKeys,
+                        const OGRSpatialReference *poSRS,
+                        const char* angUnitName, int nDatum, short nSpheroid );
 OGRBoolean SetCitationToSRS(GTIF* hGTIF, char* szCTString, int nCTStringLen,
                             geokey_t geoKey, OGRSpatialReference* poSRS,
                             OGRBoolean* linearUnitIsSet );

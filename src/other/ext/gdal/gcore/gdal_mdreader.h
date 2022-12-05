@@ -51,6 +51,8 @@
  * RPC/RPB specific defines
  */
 
+#define RPC_ERR_BIAS        "ERR_BIAS"
+#define RPC_ERR_RAND        "ERR_RAND"
 #define RPC_LINE_OFF        "LINE_OFF"
 #define RPC_SAMP_OFF        "SAMP_OFF"
 #define RPC_LAT_OFF         "LAT_OFF"
@@ -65,6 +67,18 @@
 #define RPC_LINE_DEN_COEFF  "LINE_DEN_COEFF"
 #define RPC_SAMP_NUM_COEFF  "SAMP_NUM_COEFF"
 #define RPC_SAMP_DEN_COEFF  "SAMP_DEN_COEFF"
+
+/* Optional */
+#define RPC_MIN_LONG        "MIN_LONG"
+#define RPC_MIN_LAT         "MIN_LAT"
+#define RPC_MAX_LONG        "MAX_LONG"
+#define RPC_MAX_LAT         "MAX_LAT"
+
+/* Pleiades Neo nomenclature */
+#define RPC_LAT_NUM_COEFF  "LAT_NUM_COEFF"
+#define RPC_LAT_DEN_COEFF  "LAT_DEN_COEFF"
+#define RPC_LON_NUM_COEFF  "LON_NUM_COEFF"
+#define RPC_LON_DEN_COEFF  "LON_DEN_COEFF"
 
 /**
  * Enumerator of metadata readers
@@ -90,7 +104,10 @@ typedef enum {
 /**
  * The base class for all metadata readers
  */
-class GDALMDReaderBase{
+class CPL_DLL GDALMDReaderBase{
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALMDReaderBase)
+
 public:
     GDALMDReaderBase(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderBase();
@@ -128,9 +145,9 @@ protected:
     /**
      * @brief Convert string like 2012-02-25T00:25:59.9440000Z to time
      * @param pszDateTime String to convert
-     * @return value in time_t
+     * @return value in second sinc epoch 1970-01-01 00:00:00
      */
-    virtual time_t GetAcquisitionTimeFromString(const char* pszDateTime);
+    virtual GIntBig GetAcquisitionTimeFromString(const char* pszDateTime);
     /**
      * @brief ReadXMLToList Transform xml to list of NULL terminated name=value
      *        strings
@@ -155,11 +172,11 @@ protected:
                                          const char *pszValue);
 protected:
 //! @cond Doxygen_Suppress
-    char **m_papszIMDMD;
-    char **m_papszRPCMD;
-    char **m_papszIMAGERYMD;
-    char **m_papszDEFAULTMD;
-    bool m_bIsMetadataLoad;
+    char **m_papszIMDMD = nullptr;
+    char **m_papszRPCMD = nullptr;
+    char **m_papszIMAGERYMD = nullptr;
+    char **m_papszDEFAULTMD = nullptr;
+    bool m_bIsMetadataLoad = false;
 //! @endcond
 };
 
@@ -169,6 +186,9 @@ protected:
  * for provided path.
  */
 class CPL_DLL GDALMDReaderManager{
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALMDReaderManager)
+
 public:
     GDALMDReaderManager();
     virtual ~GDALMDReaderManager();
@@ -188,7 +208,7 @@ public:
                                         GUInt32 nType = MDR_ANY);
 protected:
 //! @cond Doxygen_Suppress
-    GDALMDReaderBase *m_pReader;
+    GDALMDReaderBase *m_pReader = nullptr;
 //! @endcond
 };
 

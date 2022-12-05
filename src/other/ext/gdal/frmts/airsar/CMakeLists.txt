@@ -1,2 +1,4 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(frmt_airsar OBJECT airsardataset.cpp)
+# CMake4GDAL project is distributed under MIT license. See accompanying file LICENSE.txt.
+
+add_gdal_driver(TARGET gdal_AirSAR SOURCES airsardataset.cpp PLUGIN_CAPABLE NO_DEPS)
+gdal_standard_includes(gdal_AirSAR)

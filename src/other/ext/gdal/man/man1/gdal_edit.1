@@ -1,0 +1,285 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDAL_EDIT" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdal_edit \- Edit in place various information of an existing GDAL dataset.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_edit [\-\-help\-general] [\-ro] [\-a_srs srs_def]
+        [\-a_ullr ulx uly lrx lry] [\-a_ulurll ulx uly urx ury llx lly]
+        [\-tr xres yres] [\-unsetgt] [\-unsetrpc] [\-a_nodata value] [\-unsetnodata]
+        [\-unsetstats] [\-stats] [\-approx_stats]
+        [\-setstats min max mean stddev]
+        [\-scale value] [\-offset value] [\-units value]
+        [\-colorinterp_X red|green|blue|alpha|gray|undefined]*
+        [\-gcp pixel line easting northing [elevation]]*
+        [\-unsetmd] [\-oo NAME=VALUE]* [\-mo "META\-TAG=VALUE"]*  datasetname
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+The \fBgdal_edit.py\fP script can be used to edit in place various
+information of an existing GDAL dataset (projection, geotransform,
+nodata, metadata).
+.sp
+It works only with raster formats that support update access to existing datasets.
+.sp
+\fBCAUTION:\fP
+.INDENT 0.0
+.INDENT 3.5
+Depending on the format, older values of the updated information might
+still be found in the file in a "ghost" state, even if no longer accessible
+through the GDAL API. This is for example the case of the \fI\%GTiff \-\- GeoTIFF File Format\fP
+format (this is not a exhaustive list).
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-help\-general
+Gives a brief usage message for the generic GDAL commandline options and exit.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ro
+Open the dataset in read\-only. Might be useful for drivers refusing to use
+the dataset in update\-mode. In which case, updated information will go into
+PAM \fB\&.aux.xml\fP files.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_srs <srs_def>
+Defines the target coordinate system.
+This coordinate system will be written to the dataset.
+If the empty string or None is specified, then the existing
+coordinate system will be removed (for TIFF/GeoTIFF, might not be well
+supported besides that).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_ullr ulx uly lrx lry:
+Assign/override the georeferenced bounds of the dataset.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_ulurll ulx uly urx ury llx lly:
+Assign/override the georeferenced bounds of the dataset from three points:
+upper\-left, upper\-right and lower\-left. Unlike \fI\%\-a_ullr\fP, this also
+supports rotated datasets (edges not parallel to coordinate system axes).
+.sp
+New in version 3.1.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-tr <xres> <yres>
+Set target resolution. The values must be expressed in georeferenced units.
+Both must be positive values.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-unsetgt
+Remove the georeference information.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-unsetrpc
+Remove RPC information.
+.sp
+New in version 2.4.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-unsetstats
+Remove band statistics information.
+.sp
+New in version 2.0.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-stats
+Calculate and store band statistics.
+.sp
+New in version 2.0.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-setstats min max mean stddev
+Store user\-defined values for band statistics (minimum, maximum,
+mean and standard deviation). If any of the values is set to None,
+the real statistics are calclulated from the file and the ones set
+to None are used from the real statistics.
+.sp
+New in version 2.4.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-approx_stats
+Calculate and store approximate band statistics.
+.sp
+New in version 2.0.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_nodata <value>
+Assign a specified nodata value to output bands.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-unsetnodata
+Remove existing nodata values.
+.sp
+New in version 2.1.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-scale <value>
+Assign a specified scale value to output bands.
+If a single scale value is provided it will be set for all bands.
+Alternatively one scale value per band can be provided, in which case
+the number of scale values must match the number of bands.
+If no scale is needed, it it recommended to set the value to 1.
+Scale and Offset are generally used together. For example, scale and
+offset might be used to store elevations in a unsigned 16bit integer
+file with a precision of 0.1, and starting from \-100. True values
+would be calculated as: true_value = (pixel_value * scale) + offset
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+These values can be applied using \-unscale during a \fBgdal_translate\fP run.
+.UNINDENT
+.UNINDENT
+.sp
+New in version 2.2.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-offset <value>
+Assign a specified offset value to output bands.
+If a single offset value is provided it will be set for all bands.
+Alternatively one offset value per band can be provided, in which case
+the number of offset values must match the number of bands.
+If no offset is needed, it recommended to set the value to 0.
+For more see scale.
+.sp
+New in version 2.2.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-units <value>
+Assign a unit to output band(s).
+.sp
+New in version 3.1.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-colorinterp_X red|green|blue|alpha|gray|undefined
+Change the color interpretation of band X (where X is a valid band
+number, starting at 1).
+.sp
+New in version 2.3.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-gcp pixel line easting northing [elevation]
+Add the indicated ground control point to the dataset.
+This option may be provided multiple times to provide a set of GCPs.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-unsetmd
+Remove existing metadata (in the default metadata domain).
+Can be combined with \fI\%\-mo\fP\&.
+.sp
+New in version 2.0.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-mo META\-TAG=VALUE
+Passes a metadata key and value to set on the output dataset if possible.
+This metadata is added to the existing metadata items, unless \fI\%\-unsetmd\fP
+is also specified.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-oo NAME=VALUE
+Open option (format specific).
+.sp
+New in version 2.0.
+
+.UNINDENT
+.sp
+The \fI\%\-a_ullr\fP, \fI\%\-a_ulurll\fP, \fI\%\-tr\fP and \fI\%\-unsetgt\fP options are exclusive.
+.sp
+The \fI\%\-unsetstats\fP and either \fI\%\-stats\fP or \fI\%\-approx_stats\fP options are exclusive.
+.SH EXAMPLE
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_edit \-mo DATUM=WGS84 \-mo PROJ=GEODETIC \-a_ullr 7 47 8 46 test.ecw
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_edit \-scale 1e3 1e4 \-offset 0 10 twoBand.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Even Rouault <even.rouault@spatialys.com>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

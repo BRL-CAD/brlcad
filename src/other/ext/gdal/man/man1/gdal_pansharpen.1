@@ -1,0 +1,217 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDAL_PANSHARPEN" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdal_pansharpen \-  Perform a pansharpen operation.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_pansharpen [\-\-help\-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset
+                [\-of format] [\-b band]* [\-w weight_val]*
+                [\-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]
+                [\-threads {ALL_CPUS|number}] [\-bitdepth val] [\-nodata val]
+                [\-spat_adjust {union,intersection,none,nonewithoutwarning}]
+                [\-co NAME=VALUE]* [\-q]
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+The \fBgdal_pansharpen.py\fP script performs a pan\-sharpening operation. It
+can create a "classic" output dataset (such as GeoTIFF), or a VRT
+dataset describing the pan\-sharpening operation.
+.sp
+More details can be found in the \fI\%Pansharpened VRT\fP section.
+.INDENT 0.0
+.TP
+.B \-of <format>:
+Select the output format. Starting with GDAL 2.3, if not specified,
+the format is guessed from the extension (previously was \fBGTiff\fP). Use
+the short format name. \fBVRT\fP can also be used.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-b <band>
+Select band \fIband\fP from the input spectral bands for output. Bands
+are numbered from 1 in the order spectral bands are specified.
+Multiple \fB\-b\fP switches may be used. When no \-b switch is used, all
+input spectral bands are set for output.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-w <weight_val>
+Specify a weight for the computation of the pseudo panchromatic
+value. There must be as many \-w switches as input spectral bands.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-r {nearest,bilinear,cubic (default),cubicspline,lanczos,average}
+Select a resampling algorithm.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-threads {ALL_CPUS,number}
+Specify number of threads to use to do the resampling and
+pan\-sharpening itself. Can be an integer number or ALL_CPUS.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-bitdepth <val>
+Specify the bit depth of the panchromatic and spectral bands (e.g.
+12). If not specified, the NBITS metadata item from the panchromatic
+band will be used if it exists.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-nodata <val>
+Specify nodata value for bands. Used for the resampling and
+pan\-sharpening computation itself. If not set, deduced from the
+input bands, provided they have a consistent setting.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-spat_adjust {union(default),intersection,none,nonewithoutwarning}
+Select behavior when bands have not the same extent. See
+\fISpatialExtentAdjustment\fP documentation in \fI\%Pansharpened VRT\fP
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-co <NAME=VALUE>
+Many formats have one or more optional creation options that can be
+used to control particulars about the file created. For instance,
+the GeoTIFF driver supports creation options to control compression,
+and whether the file should be tiled.
+.sp
+The creation options available vary by format driver, and some
+simple formats have no creation options at all. A list of options
+supported for a format can be listed with the
+\fI\%\-\-formats\fP
+command line option but the documentation for the format is the
+definitive source of information on driver creation options.
+See \fI\%Raster drivers\fP format
+specific documentation for legal creation options for each format.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-q
+Suppress progress monitor and other non\-error output.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <pan_dataset>
+Dataset with panchromatic band (first band will be used).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <spectral_dataset>[,band=num]
+Dataset with one or several spectral bands. If the band option is
+not specified, all bands of the datasets are taken into account.
+Otherwise, only the specified (num)th band. The same dataset can be
+repeated several times.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <out_dataset>
+Output dataset
+.UNINDENT
+.sp
+Bands should be in the same projection.
+.SH EXAMPLE
+.sp
+With spectral bands in a single dataset :
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_pansharpen.py panchro.tif multispectral.tif pansharpened_out.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+With a few spectral bands from a single dataset, reordered :
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_pansharpen.py panchro.tif multispectral.tif,band=3 multispectral.tif,band=2 multispectral.tif,band=1 pansharpened_out.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+With spectral bands in several datasets :
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_pansharpen.py panchro.tif band1.tif band2.tif band3.tif pansharpened_out.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Specify weights:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_pansharpen.py \-w 0.7 \-w 0.2 \-w 0.1 panchro.tif multispectral.tif pansharpened_out.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Specify RGB bands from a RGBNir multispectral dataset while computing
+the pseudo panchromatic intensity on the 4 RGBNir bands:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_pansharpen.py \-b 1 \-b 2 \-b 3 panchro.tif rgbnir.tif pansharpened_out.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Even Rouault <even.rouault@spatialys.com>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

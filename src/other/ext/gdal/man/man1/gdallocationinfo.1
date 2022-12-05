@@ -1,0 +1,222 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDALLOCATIONINFO" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdallocationinfo \- Raster query tool.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+Usage: gdallocationinfo [\-\-help\-general] [\-xml] [\-lifonly] [\-valonly]
+                        [\-b band]* [\-overview overview_level]
+                        [\-l_srs srs_def] [\-geoloc] [\-wgs84]
+                        [\-oo NAME=VALUE]* srcfile [x y]
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+The \fBgdallocationinfo\fP utility provide a mechanism to query information about
+a pixel given its location in one of a variety of coordinate systems.  Several
+reporting options are provided.
+.INDENT 0.0
+.TP
+.B \-xml
+The output report will be XML formatted for convenient post processing.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-lifonly
+The only output is filenames production from the LocationInfo request
+against the database (i.e. for identifying impacted file from VRT).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-valonly
+The only output is the pixel values of the selected pixel on each of
+the selected bands.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-b <band>
+Selects a band to query.  Multiple bands can be listed.  By default all
+bands are queried.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-overview <overview_level>
+Query the (overview_level)th overview (overview_level=1 is the 1st overview),
+instead of the base band. Note that the x,y location (if the coordinate system is
+pixel/line) must still be given with respect to the base band.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-l_srs <srs_def>
+The coordinate system of the input x, y location.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-geoloc
+Indicates input x,y points are in the georeferencing system of the image.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-wgs84
+Indicates input x,y points are WGS84 long, lat.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-oo NAME=VALUE
+Dataset open option (format specific)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <srcfile>
+The source GDAL raster datasource name.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <x>
+X location of target pixel.  By default the
+coordinate system is pixel/line unless \-l_srs, \-wgs84 or \-geoloc supplied.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B <y>
+Y location of target pixel.  By default the
+coordinate system is pixel/line unless \-l_srs, \-wgs84 or \-geoloc supplied.
+.UNINDENT
+.sp
+This utility is intended to provide a variety of information about a
+pixel.  Currently it reports:
+.INDENT 0.0
+.IP \(bu 2
+The location of the pixel in pixel/line space.
+.IP \(bu 2
+The result of a LocationInfo metadata query against the datasource.
+This is implement for VRT files which will report the
+file(s) used to satisfy requests for that pixel, and by the
+\fI\%MBTiles\fP driver
+.IP \(bu 2
+The raster pixel value of that pixel for all or a subset of the bands.
+.IP \(bu 2
+The unscaled pixel value if a Scale and/or Offset apply to the band.
+.UNINDENT
+.sp
+The pixel selected is requested by x/y coordinate on the command line, or read
+from stdin. More than one coordinate pair can be supplied when reading
+coordinates from stdin. By default pixel/line coordinates are expected.
+However with use of the \fI\%\-geoloc\fP, \fI\%\-wgs84\fP, or \fI\%\-l_srs\fP switches it is possible
+to specify the location in other coordinate systems.
+.sp
+The default report is in a human readable text format.  It is possible to
+instead request xml output with the \-xml switch.
+.sp
+For scripting purposes, the \-valonly and \-lifonly switches are provided to
+restrict output to the actual pixel values, or the LocationInfo files
+identified for the pixel.
+.sp
+It is anticipated that additional reporting capabilities will be added to
+gdallocationinfo in the future.
+.SH EXAMPLES
+.sp
+Simple example reporting on pixel (256,256) on the file utm.tif.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ gdallocationinfo utm.tif 256 256
+Report:
+Location: (256P,256L)
+Band 1:
+    Value: 115
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Query a VRT file providing the location in WGS84, and getting the result in xml.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ gdallocationinfo \-xml \-wgs84 utm.vrt \-117.5 33.75
+<Report pixel="217" line="282">
+    <BandReport band="1">
+        <LocationInfo>
+        <File>utm.tif</File>
+        </LocationInfo>
+        <Value>16</Value>
+    </BandReport>
+</Report>
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Reading location from stdin.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+$ cat coordinates.txt
+443020 3748359
+441197 3749005
+443852 3747743
+
+$ cat coordinates.txt | gdallocationinfo \-geoloc utmsmall.tif
+Report:
+  Location: (38P,49L)
+  Band 1:
+    Value: 214
+Report:
+  Location: (7P,38L)
+  Band 1:
+    Value: 107
+Report:
+  Location: (52P,59L)
+  Band 1:
+    Value: 148
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Frank Warmerdam <warmerdam@pobox.com>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

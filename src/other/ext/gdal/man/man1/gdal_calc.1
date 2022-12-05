@@ -1,0 +1,392 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDAL_CALC" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdal_calc \- Command line raster calculator with numpy syntax.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-\-calc=expression \-\-outfile=out_filename [\-A filename]
+             [\-\-A_band=n] [\-B...\-Z filename] [other_options]
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+DESCRIPTION
+.sp
+Command line raster calculator with numpy syntax. Use any basic
+arithmetic supported by numpy arrays such as \fB+\fP, \fB\-\fP, \fB*\fP, and
+\fB\e\fP along with logical operators such as \fB>\fP\&.
+Note that all files must have the same dimensions (unless extent option is used),
+but no projection checking is performed (unless projectionCheck option is used).
+.INDENT 0.0
+.TP
+.B \-\-help
+Show this help message and exit
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-h
+The same as \fI\%\-\-help\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-calc=expression
+Calculation in numpy syntax using \fB+\fP, \fB\-\fP, \fB/\fP, \fB*\fP, or any numpy array functions (i.e. \fBlog10()\fP).
+Multiple \fB\-\-calc\fP options can be listed to produce a multiband file (GDAL >= 3.2).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-A <filename>
+Input gdal raster file, you can use any letter (a\-z, A\-Z).  (lower case supported since GDAL 3.3)
+.sp
+A letter may be repeated, or several values (separated by space) can be provided (GDAL >= 3.3).
+Since GDAL 3.5, wildcard exceptions (using ?, *) are supported for all shells/platforms.
+The effect will be to create a 3\-dim numpy array.
+In such a case, the calculation formula must use this input as a 3\-dim array and must return a 2D array (see examples below).
+In case the calculation does not return a 2D array an error would be generated.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-A_band=<n>
+Number of raster band for file A (default 1).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-outfile=<filename>
+Output file to generate or fill.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-NoDataValue=<value>
+Output NoDataValue (default datatype specific value).
+To indicate not setting a NoDataValue use \-\-NoDataValue=none (GDAL >= 3.3)
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+Using the Python API:
+\fBNone\fP value will indicate default datatype specific value.
+\fB\(aqnone\(aq\fP value will indicate not setting a NoDataValue.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-hideNoData
+New in version 3.3.
+
+.sp
+Ignores the input bands NoDataValue.
+By default, the input bands NoDataValue are not participating in the calculation.
+By setting this setting \- no special treatment will be performed on the input NoDataValue. and they will be participating in the calculation as any other value.
+The output will not have a set NoDataValue, unless you explicitly specified a specific value by setting \-\-NoDataValue=<value>.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-type=<datatype>
+Output datatype, must be one of [\fBInt32\fP, \fBInt16\fP, \fBFloat64\fP, \fBUInt16\fP, \fBByte\fP, \fBUInt32\fP, \fBFloat32\fP].
+.sp
+\fBNOTE:\fP
+.INDENT 7.0
+.INDENT 3.5
+Despite the datatype set using \fB\-\-type\fP, when doing intermediate aritmethic operations using operands of the
+same type, the operation result will honor the original datatype. This may lead into unexpected results in the final result.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-format=<gdal_format>
+GDAL format for output file.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-color\-table=<filename>
+Allows specifying a filename of a color table (or a ColorTable object) (with Palette Index interpretation) to be used for the output raster.
+Supported formats: txt (i.e. like gdaldem, but color names are not supported), qlr, qml (i.e. exported from QGIS)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-extent=<option>
+New in version 3.3.
+
+.sp
+This option determines how to handle rasters with different extents.
+This option is mutually exclusive with the \fIprojwin\fP option, which is used for providing a custom extent.
+.sp
+For all the options below the pixel size (resolution) and SRS (Spatial Reference System) of all the input rasters must be the same.
+.sp
+\fBignore\fP (default) \- only the dimensions of the rasters are compared. if the dimensions do not agree the operation will fail.
+.sp
+\fBfail\fP \- the dimensions and the extent (bounds) of the rasters must agree, otherwise the operation will fail.
+.sp
+\fBunion\fP \- the extent (bounds) of the output will be the minimal rectangle that contains all the input extents.
+.sp
+\fBintersect\fP \- the extent (bounds) of the output will be the maximal rectangle that is contained in all the input extents.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-projwin <ulx> <uly> <lrx> <lry>
+New in version 3.3.
+
+.sp
+This option provides a custom extent for the output, it is mutually exclusive with the \fIextent\fP option.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-projectionCheck
+New in version 3.3.
+
+.sp
+By default, no projection checking will be performed.
+By setting this option, if the projection is not the same for all bands then the operation will fail.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-creation\-option=<option>
+Passes a creation option to the output format driver.  Multiple
+options may be listed. See format specific documentation for legal
+creation options for each format.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-co=<option>
+The same as \fI\%creation\-option\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-allBands=[a\-z, A\-Z]
+Process all bands of given raster (a\-z, A\-Z). Requires a single calc for all bands.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-overwrite
+Overwrite output file if it already exists. Overwriting must be understood
+here as deleting and recreating the file from scratch. Note that if this option
+is \fInot\fP specified and the output file already exists, it will be updated in
+place.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-debug
+Print debugging information.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-\-quiet
+Suppress progress messages.
+.UNINDENT
+.SH PYTHON OPTIONS
+.sp
+New in version 3.3.
+
+.sp
+The following options are available by using function the python interface of gdal_calc.
+They are not available using the command prompt.
+.INDENT 0.0
+.TP
+.B user_namespace
+A dictionary of custom functions or other names to be available for use in the Calc expression.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B return_ds
+If enabled, the output dataset would be returned from the function and not closed.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B color_table
+Allows specifying a ColorTable object (with Palette Index interpretation) to be used for the output raster.
+.UNINDENT
+.SH EXAMPLE
+.sp
+Add two files together:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input1.tif \-B input2.tif \-\-outfile=result.tif \-\-calc="A+B"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Average of two layers:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input1.tif \-B input2.tif \-\-outfile=result.tif \-\-calc="(A+B)/2"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+In the previous example, beware that if A and B inputs are of the same datatype, for example integers, you
+may need to force the conversion of one of the operands before the division operation.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input.tif \-B input2.tif \-\-outfile=result.tif \-\-calc="(A.astype(numpy.float64) + B) / 2"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.sp
+Add three files together (two options with the same result):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input1.tif \-B input2.tif \-C input3.tif \-\-outfile=result.tif \-\-calc="A+B+C"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+New in version 3.3.
+
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input1.tif \-A input2.tif \-A input3.tif \-\-outfile=result.tif \-\-calc="numpy.sum(A,axis=0)".
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Average of three layers (two options with the same result):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input1.tif \-B input2.tif \-C input3.tif \-\-outfile=result.tif \-\-calc="(A+B+C)/3"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+New in version 3.3.
+
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input1.tif input2.tif input3.tif \-\-outfile=result.tif \-\-calc="numpy.average(a,axis=0)".
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Maximum of three layers  (two options with the same result):
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input1.tif \-B input2.tif \-C input3.tif \-\-outfile=result.tif \-\-calc="numpy.max((A,B,C),axis=0)"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+New in version 3.3.
+
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input1.tif input2.tif input3.tif \-\-outfile=result.tif \-\-calc="numpy.max(A,axis=0)"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Set values of zero and below to null:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input.tif \-\-outfile=result.tif \-\-calc="A*(A>0)" \-\-NoDataValue=0
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Using logical operator to keep a range of values from input:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input.tif \-\-outfile=result.tif \-\-calc="A*logical_and(A>100,A<150)"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Work with multiple bands:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_calc.py \-A input.tif \-\-A_band=1 \-B input.tif \-\-B_band=2 \-\-outfile=result.tif \-\-calc="(A+B)/2" \-\-calc="B*logical_and(A>100,A<150)"
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Chris Yesson <chris dot yesson at ioz dot ac dot uk>, Etienne Tourigny <etourigny dot dev at gmail dot com>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

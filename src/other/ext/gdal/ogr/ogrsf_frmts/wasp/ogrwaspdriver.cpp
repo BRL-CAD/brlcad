@@ -30,7 +30,7 @@
 #include "cpl_conv.h"
 #include <cassert>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                                Open()                                */
@@ -41,25 +41,25 @@ OGRDataSource *OGRWAsPDriver::Open( const char * pszFilename, int bUpdate )
 {
     if (bUpdate)
     {
-        return NULL;
+        return nullptr;
     }
 
     if (!EQUAL(CPLGetExtension(pszFilename), "map"))
     {
-        return NULL;
+        return nullptr;
     }
 
     VSILFILE * fh = VSIFOpenL( pszFilename, "r" );
     if ( !fh )
     {
         /*CPLError( CE_Failure, CPLE_FileIO, "cannot open file %s", pszFilename );*/
-        return NULL;
+        return nullptr;
     }
-    UNIQUEPTR<OGRWAsPDataSource> pDataSource( new OGRWAsPDataSource( pszFilename, fh ));
+    auto pDataSource = cpl::make_unique<OGRWAsPDataSource>( pszFilename, fh );
 
     if ( pDataSource->Load(true) != OGRERR_NONE )
     {
-        return NULL;
+        return nullptr;
     }
     return pDataSource.release();
 }
@@ -86,7 +86,7 @@ OGRDataSource * OGRWAsPDriver::CreateDataSource( const char *pszName, char ** )
     if ( !fh )
     {
         CPLError( CE_Failure, CPLE_FileIO, "cannot open file %s", pszName );
-        return NULL;
+        return nullptr;
     }
     return new OGRWAsPDataSource( pszName, fh );
 }
@@ -112,7 +112,7 @@ void RegisterOGRWAsP()
 
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "WAsP .map format" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "map" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_wasp.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/wasp.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);

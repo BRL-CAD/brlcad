@@ -29,10 +29,9 @@
 #ifndef OGR_GEOJSONUTILS_H_INCLUDED
 #define OGR_GEOJSONUTILS_H_INCLUDED
 
-#include <ogr_core.h>
+#include "ogr_core.h"
 
-#include "ogr_json_header.h"
-
+#include "cpl_json_header.h"
 #include "cpl_vsi.h"
 #include "gdal_priv.h"
 
@@ -51,32 +50,24 @@ enum GeoJSONSourceType
 };
 
 GeoJSONSourceType GeoJSONGetSourceType( GDALOpenInfo* poOpenInfo );
-
-/************************************************************************/
-/*                           GeoJSONProtocolType                        */
-/************************************************************************/
-
-enum GeoJSONProtocolType
-{
-    eGeoJSONProtocolUnknown = 0,
-    eGeoJSONProtocolHTTP,
-    eGeoJSONProtocolHTTPS,
-    eGeoJSONProtocolFTP,
-};
-
-GeoJSONProtocolType GeoJSONGetProtocolType( const char* pszSource );
+GeoJSONSourceType GeoJSONSeqGetSourceType( GDALOpenInfo* poOpenInfo );
+GeoJSONSourceType ESRIJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo );
+GeoJSONSourceType TopoJSONDriverGetSourceType( GDALOpenInfo* poOpenInfo );
 
 /************************************************************************/
 /*                           GeoJSONIsObject                            */
 /************************************************************************/
 
 bool GeoJSONIsObject( const char* pszText );
+bool GeoJSONSeqIsObject( const char* pszText );
+bool ESRIJSONIsObject(const char *pszText);
+bool TopoJSONIsObject(const char *pszText);
 
 /************************************************************************/
 /*                           GeoJSONPropertyToFieldType                 */
 /************************************************************************/
 
-OGRFieldType GeoJSONPropertyToFieldType( json_object* poObject,
+OGRFieldType CPL_DLL GeoJSONPropertyToFieldType( json_object* poObject,
                                          OGRFieldSubType& eSubType,
                                          bool bArrayAsString = false );
 

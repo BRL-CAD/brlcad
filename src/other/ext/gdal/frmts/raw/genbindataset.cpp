@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,12 +34,12 @@
 
 #include <cstdlib>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* ==================================================================== */
 /*      Table relating USGS and ESRI state plane zones.                 */
 /* ==================================================================== */
-static const int anUsgsEsriZones[] =
+constexpr int anUsgsEsriZones[] =
 {
   101, 3101,
   102, 3126,
@@ -189,7 +189,7 @@ static const int anUsgsEsriZones[] =
 /* ==================================================================== */
 /************************************************************************/
 
-class GenBinDataset : public RawDataset
+class GenBinDataset final: public RawDataset
 {
     friend class GenBinBitRasterBand;
 
@@ -203,14 +203,19 @@ class GenBinDataset : public RawDataset
 
     void        ParseCoordinateSystem( char ** );
 
+    CPL_DISALLOW_COPY_ASSIGN(GenBinDataset)
+
   public:
     GenBinDataset();
-    virtual ~GenBinDataset();
+    ~GenBinDataset() override;
 
-    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual const char *GetProjectionRef(void) override;
+    CPLErr GetGeoTransform( double * padfTransform ) override;
+    const char *_GetProjectionRef(void) override;
+    const OGRSpatialReference* GetSpatialRef() const override {
+        return GetSpatialRefFromOldGetProjectionRef();
+    }
 
-    virtual char **GetFileList() override;
+    char **GetFileList() override;
 
     static GDALDataset *Open( GDALOpenInfo * );
 };
@@ -221,15 +226,17 @@ class GenBinDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class GenBinBitRasterBand : public GDALPamRasterBand
+class GenBinBitRasterBand final: public GDALPamRasterBand
 {
     int            nBits;
 
+    CPL_DISALLOW_COPY_ASSIGN(GenBinBitRasterBand)
+
   public:
     GenBinBitRasterBand( GenBinDataset *poDS, int nBits );
-    virtual ~GenBinBitRasterBand() {}
+    ~GenBinBitRasterBand() override {}
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -342,10 +349,10 @@ CPLErr GenBinBitRasterBand::IReadBlock( int /* nBlockXOff */,
 /************************************************************************/
 
 GenBinDataset::GenBinDataset() :
-    fpImage(NULL),
+    fpImage(nullptr),
     bGotTransform(false),
     pszProjection(CPLStrdup("")),
-    papszHDR(NULL)
+    papszHDR(nullptr)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -362,9 +369,9 @@ GenBinDataset::GenBinDataset() :
 GenBinDataset::~GenBinDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
-    if( fpImage != NULL )
+    if( fpImage != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 
     CPLFree( pszProjection );
@@ -375,13 +382,13 @@ GenBinDataset::~GenBinDataset()
 /*                          GetProjectionRef()                          */
 /************************************************************************/
 
-const char *GenBinDataset::GetProjectionRef()
+const char *GenBinDataset::_GetProjectionRef()
 
 {
     if (pszProjection && strlen(pszProjection) > 0)
         return pszProjection;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::_GetProjectionRef();
 }
 
 /************************************************************************/
@@ -428,7 +435,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
 
 {
     const char *pszProjName = CSLFetchNameValue( papszHdr, "PROJECTION_NAME" );
-    if( pszProjName == NULL )
+    if( pszProjName == nullptr )
         return;
 
 /* -------------------------------------------------------------------- */
@@ -440,14 +447,14 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
 
 #if 0
     // TODO(schwehr): Why was this being done but not used?
-    double adfProjParms[15] = { 0.0 };
+    double adfProjParams[15] = { 0.0 };
     if( CSLFetchNameValue( papszHdr, "PROJECTION_PARAMETERS" ) )
     {
         char **papszTokens = CSLTokenizeString(
             CSLFetchNameValue( papszHdr, "PROJECTION_PARAMETERS" ) );
 
         for( int i = 0; i < 15 && papszTokens[i] != NULL; i++ )
-            adfProjParms[i] = CPLAtofM( papszTokens[i] );
+            adfProjParams[i] = CPLAtofM( papszTokens[i] );
 
         CSLDestroy( papszTokens );
     }
@@ -478,44 +485,48 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
             }
         }
 
-        const char *pszUnits = CSLFetchNameValue( papszHdr, "MAP_UNITS" );
+        const char *pszUnits = CSLFetchNameValueDef( papszHdr, "MAP_UNITS", "" );
         double dfUnits = 0.0;
         if( EQUAL(pszUnits,"feet") )
             dfUnits = CPLAtofM(SRS_UL_US_FOOT_CONV);
         else if( STARTS_WITH_CI(pszUnits, "MET") )
             dfUnits = 1.0;
         else
-            pszUnits = NULL;
+            pszUnits = nullptr;
 
         oSRS.SetStatePlane( std::abs(nZone),
-                            pszDatumName==NULL || !EQUAL(pszDatumName,"NAD27"),
+                            pszDatumName==nullptr || !EQUAL(pszDatumName,"NAD27"),
                             pszUnits, dfUnits );
     }
 
 /* -------------------------------------------------------------------- */
 /*      Setup the geographic coordinate system.                         */
 /* -------------------------------------------------------------------- */
-    if( oSRS.GetAttrNode( "GEOGCS" ) == NULL )
+    if( oSRS.GetAttrNode( "GEOGCS" ) == nullptr )
     {
-        if( pszDatumName != NULL
+        const char* pszSpheroidName =
+            CSLFetchNameValue( papszHdr, "SPHEROID_NAME" );
+        const char* pszSemiMajor =
+            CSLFetchNameValue( papszHdr, "SEMI_MAJOR_AXIS");
+        const char* pszSemiMinor =
+            CSLFetchNameValue( papszHdr, "SEMI_MINOR_AXIS");
+        if( pszDatumName != nullptr
             && oSRS.SetWellKnownGeogCS( pszDatumName ) == OGRERR_NONE )
         {
             // good
         }
-        else if( CSLFetchNameValue( papszHdr, "SPHEROID_NAME" )
-                 && CSLFetchNameValue( papszHdr, "SEMI_MAJOR_AXIS" )
-                 && CSLFetchNameValue( papszHdr, "SEMI_MINOR_AXIS" ) )
+        else if( pszSpheroidName && pszSemiMajor && pszSemiMinor )
         {
-            const double dfSemiMajor
-                = CPLAtofM(CSLFetchNameValue( papszHdr, "SEMI_MAJOR_AXIS"));
-            const double dfSemiMinor
-                = CPLAtofM(CSLFetchNameValue( papszHdr, "SEMI_MINOR_AXIS"));
+            const double dfSemiMajor = CPLAtofM(pszSemiMajor);
+            const double dfSemiMinor = CPLAtofM(pszSemiMinor);
 
-            oSRS.SetGeogCS( CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
-                            CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
-                            CSLFetchNameValue( papszHdr, "SPHEROID_NAME" ),
+            oSRS.SetGeogCS( pszSpheroidName,
+                            pszSpheroidName,
+                            pszSpheroidName,
                             dfSemiMajor,
-                            1.0 / (1.0 - dfSemiMinor/dfSemiMajor) );
+                            (dfSemiMajor == 0.0 ||
+                             dfSemiMajor == dfSemiMinor) ? 0.0 :
+                                1.0 / (1.0 - dfSemiMinor/dfSemiMajor) );
         }
         else // fallback default.
             oSRS.SetWellKnownGeogCS( "WGS84" );
@@ -525,7 +536,7 @@ void GenBinDataset::ParseCoordinateSystem( char **papszHdr )
 /*      Convert to WKT.                                                 */
 /* -------------------------------------------------------------------- */
     CPLFree( pszProjection );
-    pszProjection = NULL;
+    pszProjection = nullptr;
 
     oSRS.exportToWkt( &pszProjection );
 }
@@ -540,8 +551,8 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      We assume the user is pointing to the binary (i.e. .bil) file.  */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 2 )
-        return NULL;
+    if( poOpenInfo->nHeaderBytes < 2 || poOpenInfo->fpL == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Now we need to tear apart the filename to form a .HDR           */
@@ -555,12 +566,12 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     if( papszSiblingFiles )
     {
         const int iFile = CSLFindString(
-            papszSiblingFiles, CPLFormFilename( NULL, osName, "hdr" ) );
+            papszSiblingFiles, CPLFormFilename( nullptr, osName, "hdr" ) );
         if( iFile < 0 ) // return if there is no corresponding .hdr file
-            return NULL;
+            return nullptr;
 
         osHDRFilename =
-            CPLFormFilename( osPath, papszSiblingFiles[iFile], NULL );
+            CPLFormFilename( osPath, papszSiblingFiles[iFile], nullptr );
     }
     else
     {
@@ -573,9 +584,9 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Do we have a .hdr file?                                         */
 /* -------------------------------------------------------------------- */
     VSILFILE *fp = VSIFOpenL( osHDRFilename, "r" );
-    if( fp == NULL )
+    if( fp == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -588,12 +599,12 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     achHeader[nRead] = '\0';
     CPL_IGNORE_RET_VAL(VSIFSeekL( fp, 0, SEEK_SET ));
 
-    if( strstr( achHeader, "BANDS:" ) == NULL
-        || strstr( achHeader, "ROWS:" ) == NULL
-        || strstr( achHeader, "COLS:" ) == NULL )
+    if( strstr( achHeader, "BANDS:" ) == nullptr
+        || strstr( achHeader, "ROWS:" ) == nullptr
+        || strstr( achHeader, "COLS:" ) == nullptr )
     {
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -609,23 +620,23 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
             "the raw data file corresponding to the header file: %s",
             poOpenInfo->pszFilename );
         CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Read the .hdr file.                                             */
 /* -------------------------------------------------------------------- */
-    char **papszHdr = NULL;
+    char **papszHdr = nullptr;
     const char *pszLine = CPLReadLineL( fp );
 
-    while( pszLine != NULL )
+    while( pszLine != nullptr )
     {
         if( EQUAL(pszLine,"PROJECTION_PARAMETERS:") )
         {
             CPLString osPP = pszLine;
 
             pszLine = CPLReadLineL(fp);
-            while( pszLine != NULL
+            while( pszLine != nullptr
                    && (*pszLine == '\t' || *pszLine == ' ') )
             {
                 osPP += pszLine;
@@ -635,11 +646,15 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         }
         else
         {
-            char *pszName = NULL;
-            CPLString osValue = CPLParseNameValue( pszLine, &pszName );
-            osValue.Trim();
+            char *pszName = nullptr;
+            const char* pszKey = CPLParseNameValue( pszLine, &pszName );
+            if( pszKey && pszName )
+            {
+                CPLString osValue = pszKey;
+                osValue.Trim();
 
-            papszHdr = CSLSetNameValue( papszHdr, pszName, osValue );
+                papszHdr = CSLSetNameValue( papszHdr, pszName, osValue );
+            }
             CPLFree( pszName );
 
             pszLine = CPLReadLineL( fp );
@@ -648,12 +663,12 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 
     CPL_IGNORE_RET_VAL(VSIFCloseL( fp ));
 
-    if( CSLFetchNameValue( papszHdr, "COLS" ) == NULL
-        || CSLFetchNameValue( papszHdr, "ROWS" ) == NULL
-        || CSLFetchNameValue( papszHdr, "BANDS" ) == NULL )
+    if( CSLFetchNameValue( papszHdr, "COLS" ) == nullptr
+        || CSLFetchNameValue( papszHdr, "ROWS" ) == nullptr
+        || CSLFetchNameValue( papszHdr, "BANDS" ) == nullptr )
     {
         CSLDestroy( papszHdr );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -674,26 +689,11 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         !GDALCheckBandCount(nBands, FALSE))
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Open target binary file.                                        */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    else
-        poDS->fpImage = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
-
-    if( poDS->fpImage == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Failed to open %s with write permission.\n%s",
-                  osName.c_str(), VSIStrerror( errno ) );
-        delete poDS;
-        return NULL;
-    }
-
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
     poDS->eAccess = poOpenInfo->eAccess;
 
 /* -------------------------------------------------------------------- */
@@ -703,7 +703,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     GDALDataType eDataType = GDT_Unknown;
     int nBits = -1; // Only needed for partial byte types
 
-    if( pszDataType == NULL )
+    if( pszDataType == nullptr )
         eDataType = GDT_Byte;
     else if( EQUAL(pszDataType,"U16") )
         eDataType = GDT_UInt16;
@@ -726,7 +726,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
             CPLError( CE_Failure, CPLE_OpenFailed,
                       "Only one band is supported for U1/U2/U4 data type" );
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
     else
@@ -743,7 +743,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     const char *pszBYTE_ORDER = CSLFetchNameValue(papszHdr,"BYTE_ORDER");
     bool bNative = true;
 
-    if( pszBYTE_ORDER != NULL )
+    if( pszBYTE_ORDER != nullptr )
     {
 #ifdef CPL_LSB
         bNative = STARTS_WITH_CI(pszBYTE_ORDER, "LSB");
@@ -762,7 +762,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
     bool bIntOverflow = false;
 
     const char *pszInterleaving = CSLFetchNameValue(papszHdr, "INTERLEAVING");
-    if( pszInterleaving == NULL )
+    if( pszInterleaving == nullptr )
         pszInterleaving = "BIL";
 
     if( EQUAL(pszInterleaving,"BSQ") || EQUAL(pszInterleaving,"NA") )
@@ -770,17 +770,23 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         nPixelOffset = nItemSize;
         if( poDS->nRasterXSize > INT_MAX / nItemSize )
             bIntOverflow = true;
-        nLineOffset = nItemSize * poDS->nRasterXSize;
-        nBandOffset =
-            nLineOffset * static_cast<vsi_l_offset>(poDS->nRasterYSize);
+        else
+        {
+            nLineOffset = nItemSize * poDS->nRasterXSize;
+            nBandOffset =
+                nLineOffset * static_cast<vsi_l_offset>(poDS->nRasterYSize);
+        }
     }
     else if( EQUAL(pszInterleaving,"BIP") )
     {
         nPixelOffset = nItemSize * nBands;
-        if( poDS->nRasterXSize > INT_MAX / nPixelOffset )
+        if( nPixelOffset == 0 || poDS->nRasterXSize > INT_MAX / nPixelOffset )
             bIntOverflow = true;
-        nLineOffset = nPixelOffset * poDS->nRasterXSize;
-        nBandOffset = nItemSize;
+        else
+        {
+            nLineOffset = nPixelOffset * poDS->nRasterXSize;
+            nBandOffset = nItemSize;
+        }
     }
     else
     {
@@ -790,10 +796,14 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
                       pszInterleaving );
 
         nPixelOffset = nItemSize;
-        if( poDS->nRasterXSize > INT_MAX / (nPixelOffset * nBands) )
+        if( nPixelOffset == 0 || nBands == 0 ||
+            poDS->nRasterXSize > INT_MAX / (nPixelOffset * nBands) )
             bIntOverflow = true;
-        nLineOffset = nPixelOffset * nBands * poDS->nRasterXSize;
-        nBandOffset = nItemSize * static_cast<vsi_l_offset>(poDS->nRasterXSize);
+        else
+        {
+            nLineOffset = nPixelOffset * nBands * poDS->nRasterXSize;
+            nBandOffset = nItemSize * static_cast<vsi_l_offset>(poDS->nRasterXSize);
+        }
     }
 
     if (bIntOverflow)
@@ -801,7 +811,18 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
         delete poDS;
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Int overflow occurred." );
-        return NULL;
+        return nullptr;
+    }
+
+    if( nBits < 0 &&
+        !RAWDatasetCheckMemoryUsage(
+                        poDS->nRasterXSize, poDS->nRasterYSize, nBands,
+                        nItemSize,
+                        nPixelOffset, nLineOffset, 0, nBandOffset,
+                        poDS->fpImage) )
+    {
+        delete poDS;
+        return nullptr;
     }
 
     poDS->SetDescription( poOpenInfo->pszFilename );
@@ -823,17 +844,20 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
                 i+1,
                 new RawRasterBand( poDS, i+1, poDS->fpImage,
                                    nBandOffset * i, nPixelOffset, nLineOffset,
-                                   eDataType, bNative, TRUE ) );
+                                   eDataType, bNative,
+                                   RawRasterBand::OwnFP::NO ) );
         }
     }
 
 /* -------------------------------------------------------------------- */
 /*      Get geotransform.                                               */
 /* -------------------------------------------------------------------- */
-    if( CSLFetchNameValue(papszHdr,"UL_X_COORDINATE") != NULL
-        && CSLFetchNameValue(papszHdr,"UL_Y_COORDINATE") != NULL
-        && CSLFetchNameValue(papszHdr,"LR_X_COORDINATE") != NULL
-        && CSLFetchNameValue(papszHdr,"LR_Y_COORDINATE") != NULL )
+    if( poDS->nRasterXSize > 1 &&
+        poDS->nRasterYSize > 1 &&
+        CSLFetchNameValue(papszHdr,"UL_X_COORDINATE") != nullptr
+        && CSLFetchNameValue(papszHdr,"UL_Y_COORDINATE") != nullptr
+        && CSLFetchNameValue(papszHdr,"LR_X_COORDINATE") != nullptr
+        && CSLFetchNameValue(papszHdr,"LR_Y_COORDINATE") != nullptr )
     {
         const double dfULX =
             CPLAtofM(CSLFetchNameValue(papszHdr,"UL_X_COORDINATE"));
@@ -880,7 +904,7 @@ GDALDataset *GenBinDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_GenBin()
 
 {
-    if( GDALGetDriverByName( "GenBin" ) != NULL )
+    if( GDALGetDriverByName( "GenBin" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -890,7 +914,7 @@ void GDALRegister_GenBin()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Generic Binary (.hdr Labelled)" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#GenBin" );
+                               "drivers/raster/genbin.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = GenBinDataset::Open;

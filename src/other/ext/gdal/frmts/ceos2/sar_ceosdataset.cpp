@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2000, Atlantis Scientific Inc.
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,7 +34,7 @@
 #include "rawdataset.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 static GInt16 CastToGInt16(float val)
 {
@@ -74,8 +74,11 @@ static const char * const CeosExtension[][6] = {
 /* Radarsat-1 per #2051 */
 { "vol", "sarl", "sard", "sart", "nvol", "ext" },
 
+/* Radarsat-1 ASF */
+{ "", "L", "D", "", "", "ext" },
+
 /* end marker */
-{ NULL, NULL, NULL, NULL, NULL, NULL }
+{ nullptr, nullptr, nullptr, nullptr, nullptr, nullptr }
 };
 
 static int
@@ -107,6 +110,11 @@ static CeosTypeCode_t QuadToTC( int a, int b, int c, int d )
 /* see CEOS-SAR-CCT Iss/Rev: 2/0 February 10, 1989 */
 #define LEADER_MAP_PROJ_RECORD_JERS_TC         QuadToTC( 18, 20, 18, 20 )
 
+/* Leader from ASF has different identifiers */
+#define LEADER_MAP_PROJ_RECORD_ASF_TC      QuadToTC( 10, 20, 18, 20 )
+#define LEADER_DATASET_SUMMARY_ASF_TC      QuadToTC( 10, 10, 18, 20 )
+#define LEADER_FACILITY_ASF_TC             QuadToTC( 90, 210, 18, 61 )
+
 /* For ERS calibration and incidence angle information */
 #define ERS_GENERAL_FACILITY_DATA_TC  QuadToTC( 10, 200, 31, 50 )
 #define ERS_GENERAL_FACILITY_DATA_ALT_TC QuadToTC( 10, 216, 31, 50 )
@@ -123,7 +131,7 @@ class SAR_CEOSRasterBand;
 class CCPRasterBand;
 class PALSARRasterBand;
 
-class SAR_CEOSDataset : public GDALPamDataset
+class SAR_CEOSDataset final: public GDALPamDataset
 {
     friend class SAR_CEOSRasterBand;
     friend class CCPRasterBand;
@@ -141,19 +149,24 @@ class SAR_CEOSDataset : public GDALPamDataset
     void        ScanForGCPs();
     void        ScanForMetadata();
     int         ScanForMapProjection();
+    char        **papszExtraFiles;
 
   public:
-                SAR_CEOSDataset();
-    virtual ~SAR_CEOSDataset();
+    SAR_CEOSDataset();
+    ~SAR_CEOSDataset() override;
 
-    virtual int    GetGCPCount() override;
-    virtual const char *GetGCPProjection() override;
-    virtual const GDAL_GCP *GetGCPs() override;
+    int GetGCPCount() override;
+    const char *_GetGCPProjection() override;
+    const OGRSpatialReference* GetGCPSpatialRef() const override {
+        return GetGCPSpatialRefFromOldGetGCPProjection();
+    }
+    const GDAL_GCP *GetGCPs() override;
 
-    virtual char      **GetMetadataDomainList() override;
-    virtual char **GetMetadata( const char * pszDomain ) override;
+    char **GetMetadataDomainList() override;
+    char **GetMetadata( const char * pszDomain ) override;
 
     static GDALDataset *Open( GDALOpenInfo * );
+    virtual char **GetFileList(void) override;
 };
 
 /************************************************************************/
@@ -162,14 +175,14 @@ class SAR_CEOSDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class CCPRasterBand : public GDALPamRasterBand
+class CCPRasterBand final: public GDALPamRasterBand
 {
     friend class SAR_CEOSDataset;
 
   public:
-                   CCPRasterBand( SAR_CEOSDataset *, int, GDALDataType );
+    CCPRasterBand( SAR_CEOSDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -178,14 +191,14 @@ class CCPRasterBand : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class PALSARRasterBand : public GDALPamRasterBand
+class PALSARRasterBand final: public GDALPamRasterBand
 {
     friend class SAR_CEOSDataset;
 
   public:
-                   PALSARRasterBand( SAR_CEOSDataset *, int );
+    PALSARRasterBand( SAR_CEOSDataset *, int );
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -194,14 +207,14 @@ class PALSARRasterBand : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class SAR_CEOSRasterBand : public GDALPamRasterBand
+class SAR_CEOSRasterBand final: public GDALPamRasterBand
 {
     friend class SAR_CEOSDataset;
 
   public:
-                   SAR_CEOSRasterBand( SAR_CEOSDataset *, int, GDALDataType );
+    SAR_CEOSRasterBand( SAR_CEOSDataset *, int, GDALDataType );
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock( int, int, void * ) override;
 };
 
 /************************************************************************/
@@ -235,7 +248,7 @@ CPLErr SAR_CEOSRasterBand::IReadBlock( int /* nBlockXOff */,
 
     int offset;
     CalcCeosSARImageFilePosition( &(poGDS->sVolume), nBand,
-                                  nBlockYOff + 1, NULL, &offset );
+                                  nBlockYOff + 1, nullptr, &offset );
 
     offset += ImageDesc->ImageDataStart;
 
@@ -625,10 +638,11 @@ CPLErr PALSARRasterBand::IReadBlock( int /* nBlockXOff */,
 /************************************************************************/
 
 SAR_CEOSDataset::SAR_CEOSDataset() :
-    fpImage(NULL),
-    papszTempMD(NULL),
+    fpImage(nullptr),
+    papszTempMD(nullptr),
     nGCPCount(0),
-    pasGCPList(NULL)
+    pasGCPList(nullptr),
+    papszExtraFiles(nullptr)
 {
     sVolume.Flavor = 0;
     sVolume.Sensor = 0;
@@ -662,7 +676,7 @@ SAR_CEOSDataset::SAR_CEOSDataset() :
     sVolume.ImageDesc.LineOrder = 0;
     sVolume.ImageDesc.PixelDataBytesPerRecord = 0;
 
-    sVolume.RecordList = NULL;
+    sVolume.RecordList = nullptr;
 }
 
 /************************************************************************/
@@ -672,34 +686,35 @@ SAR_CEOSDataset::SAR_CEOSDataset() :
 SAR_CEOSDataset::~SAR_CEOSDataset()
 
 {
-    FlushCache();
+    FlushCache(true);
 
     CSLDestroy( papszTempMD );
 
-    if( fpImage != NULL )
+    if( fpImage != nullptr )
         CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
 
     if( nGCPCount > 0 )
     {
         GDALDeinitGCPs( nGCPCount, pasGCPList );
-        CPLFree( pasGCPList );
     }
+    CPLFree( pasGCPList );
 
     if( sVolume.RecordList )
     {
         for(Link_t *Links = sVolume.RecordList;
-            Links != NULL;
+            Links != nullptr;
             Links = Links->next)
         {
             if(Links->object)
             {
                 DeleteCeosRecord( (CeosRecord_t *) Links->object );
-                Links->object = NULL;
+                Links->object = nullptr;
             }
         }
         DestroyList( sVolume.RecordList );
     }
     FreeRecipes();
+    CSLDestroy( papszExtraFiles );
 }
 
 /************************************************************************/
@@ -716,11 +731,11 @@ int SAR_CEOSDataset::GetGCPCount()
 /*                          GetGCPProjection()                          */
 /************************************************************************/
 
-const char *SAR_CEOSDataset::GetGCPProjection()
+const char *SAR_CEOSDataset::_GetGCPProjection()
 
 {
     if( nGCPCount > 0 )
-        return SRS_WKT_WGS84;
+        return SRS_WKT_WGS84_LAT_LONG;
 
     return "";
 }
@@ -767,7 +782,7 @@ char **SAR_CEOSDataset::GetMetadataDomainList()
 char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
 
 {
-    if( pszDomain == NULL || !STARTS_WITH_CI(pszDomain, "ceos-") )
+    if( pszDomain == nullptr || !STARTS_WITH_CI(pszDomain, "ceos-") )
         return GDALDataset::GetMetadata( pszDomain );
 
 /* -------------------------------------------------------------------- */
@@ -796,7 +811,7 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
         nFileId = CEOS_NULL_VOL_FILE;
     }
     else
-        return NULL;
+        return nullptr;
 
     pszDomain += 8;
 
@@ -810,7 +825,7 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
         && sscanf( pszDomain, "-%d-%d-%d-%d",
                    &a, &b, &c, &d ) != 4 )
     {
-        return NULL;
+        return nullptr;
     }
 
     CeosTypeCode_t sTypeCode = QuadToTC( a, b, c, d );
@@ -822,8 +837,8 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
         FindCeosRecord( sVolume.RecordList, sTypeCode, nFileId,
                         -1, nRecordIndex );
 
-    if( record == NULL )
-        return NULL;
+    if( record == nullptr )
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Massage the data into a safe textual format.  The RawRecord     */
@@ -839,7 +854,7 @@ char **SAR_CEOSDataset::GetMetadata( const char * pszDomain )
     char *pszSafeCopy = CPLEscapeString( (char *) record->Buffer,
                                          record->Length,
                                          CPLES_BackslashQuotable );
-    papszTempMD = CSLSetNameValue( NULL, "EscapedRecord", pszSafeCopy );
+    papszTempMD = CSLSetNameValue( nullptr, "EscapedRecord", pszSafeCopy );
     CPLFree( pszSafeCopy );
 
     // Copy with '\0' replaced by spaces.
@@ -876,7 +891,7 @@ void SAR_CEOSDataset::ScanForMetadata()
     szVolId[0] = '\0';
     char szField[128];
     szField[0] = '\0';
-    if( record != NULL )
+    if( record != nullptr )
     {
         szVolId[16] = '\0';
 
@@ -952,16 +967,20 @@ void SAR_CEOSDataset::ScanForMetadata()
     record = FindCeosRecord( sVolume.RecordList, LEADER_DATASET_SUMMARY_TC,
                              CEOS_LEADER_FILE, -1, -1 );
 
-    if( record == NULL )
+    if( record == nullptr )
+        record = FindCeosRecord( sVolume.RecordList, LEADER_DATASET_SUMMARY_ASF_TC,
+                                 CEOS_LEADER_FILE, -1, -1 );
+
+    if( record == nullptr )
         record = FindCeosRecord( sVolume.RecordList, LEADER_DATASET_SUMMARY_TC,
                                  CEOS_TRAILER_FILE, -1, -1 );
 
-    if( record == NULL )
+    if( record == nullptr )
         record = FindCeosRecord( sVolume.RecordList,
                                  LEADER_DATASET_SUMMARY_ERS2_TC,
                                  CEOS_LEADER_FILE, -1, -1 );
 
-    if( record != NULL )
+    if( record != nullptr )
     {
 /* -------------------------------------------------------------------- */
 /*      Get the acquisition date.                                       */
@@ -979,7 +998,7 @@ void SAR_CEOSDataset::ScanForMetadata()
         GetCeosField( record, 101, "A16", szField );
         szField[16] = '\0';
 
-        if( strstr(szVolId,"RSAT") != NULL
+        if( strstr(szVolId,"RSAT") != nullptr
             && !STARTS_WITH_CI(szField, "                ") )
             SetMetadataItem( "CEOS_ASC_DES", szField );
 
@@ -1107,6 +1126,14 @@ void SAR_CEOSDataset::ScanForMetadata()
             SetMetadataItem( "CEOS_INC_ANGLE", szField );
 
 /* -------------------------------------------------------------------- */
+/*      Facility                                                         */
+/* -------------------------------------------------------------------- */
+        GetCeosField( record, 1047, "A16", szField );
+        szField[16] = '\0';
+
+        if( !STARTS_WITH_CI(szField, "                ") )
+            SetMetadataItem( "CEOS_FACILITY", szField );
+/* -------------------------------------------------------------------- */
 /*      Pixel time direction indicator                                  */
 /* -------------------------------------------------------------------- */
         GetCeosField( record, 1527, "A8", szField );
@@ -1140,7 +1167,7 @@ void SAR_CEOSDataset::ScanForMetadata()
                              LEADER_RADIOMETRIC_COMPENSATION_TC,
                              CEOS_LEADER_FILE, -1, -1 );
 
-    if( strstr(szVolId,"RSAT") != NULL && record != NULL )
+    if( strstr(szVolId,"RSAT") != nullptr && record != nullptr )
     {
         szField[16] = '\0';
 
@@ -1155,22 +1182,22 @@ void SAR_CEOSDataset::ScanForMetadata()
     record = FindCeosRecord( sVolume.RecordList, ERS_GENERAL_FACILITY_DATA_TC,
                              CEOS_LEADER_FILE, -1, -1 );
 
-    if( record == NULL )
+    if( record == nullptr )
         record = FindCeosRecord( sVolume.RecordList,
                                  ERS_GENERAL_FACILITY_DATA_ALT_TC,
                                  CEOS_LEADER_FILE, -1, -1 );
 
-    if( record != NULL )
+    if( record != nullptr )
     {
         GetCeosField( record, 13 , "A64", szField );
         szField[64] = '\0';
 
         /* Avoid PCS records, which don't contain necessary info */
-        if( strstr( szField, "GENERAL") == NULL )
-            record = NULL;
+        if( strstr( szField, "GENERAL") == nullptr )
+            record = nullptr;
     }
 
-    if( record != NULL )
+    if( record != nullptr )
     {
         GetCeosField( record, 583 , "A16", szField );
         szField[16] = '\0';
@@ -1226,11 +1253,11 @@ void SAR_CEOSDataset::ScanForMetadata()
     record = FindCeosRecord( sVolume.RecordList, RSAT_PROC_PARAM_TC,
                              CEOS_LEADER_FILE, -1, -1 );
 
-    if( record == NULL )
+    if( record == nullptr )
         record = FindCeosRecord( sVolume.RecordList, RSAT_PROC_PARAM_TC,
                              CEOS_TRAILER_FILE, -1, -1 );
 
-    if( record != NULL )
+    if( record != nullptr )
     {
         GetCeosField( record, 192, "A21", szField );
         szField[21] = '\0';
@@ -1342,7 +1369,7 @@ void SAR_CEOSDataset::ScanForMetadata()
                              IMAGE_HEADER_RECORD_TC,
                              CEOS_IMAGRY_OPT_FILE, -1, -1 );
 
-    if( record != NULL )
+    if( record != nullptr )
     {
         GetCeosField( record, 449, "A4", szField );
         szField[4] = '\0';
@@ -1407,12 +1434,12 @@ void SAR_CEOSDataset::ScanForMetadata()
                              LEADER_RADIOMETRIC_DATA_RECORD_TC,
                              CEOS_LEADER_FILE, -1, -1 );
 
-    if( record == NULL )
+    if( record == nullptr )
         record = FindCeosRecord( sVolume.RecordList,
                              LEADER_RADIOMETRIC_DATA_RECORD_TC,
                              CEOS_TRAILER_FILE, -1, -1 );
 
-    if( record != NULL )
+    if( record != nullptr )
     {
         GetCeosField( record, 8317, "A16", szField );
         szField[16] = '\0';
@@ -1429,7 +1456,7 @@ void SAR_CEOSDataset::ScanForMetadata()
     record = FindCeosRecord( sVolume.RecordList,
                              QuadToTC( 0x3f, 0x24, 0x12, 0x09 ),
                              CEOS_LEADER_FILE, -1, -1 );
-    if( record != NULL )
+    if( record != nullptr )
     {
         GetCeosField( record, 29, "A20", szField );
         szField[20] = '\0';
@@ -1451,7 +1478,7 @@ void SAR_CEOSDataset::ScanForMetadata()
     record = FindCeosRecord( sVolume.RecordList,
                              QuadToTC( 0x12, 0x12, 0x12, 0x09 ),
                              CEOS_LEADER_FILE, -1, -1 );
-    if( record != NULL )
+    if( record != nullptr )
     {
         GetCeosField( record, 1486, "A1", szField );
         szField[1] = '\0';
@@ -1479,24 +1506,54 @@ int SAR_CEOSDataset::ScanForMapProjection()
                                            LEADER_MAP_PROJ_RECORD_TC,
                                            CEOS_LEADER_FILE, -1, -1 );
 
+    int gcp_ordering_mode = CEOS_STD_MAPREC_GCP_ORDER;
     /* JERS from Japan */
-    if( record == NULL )
+    if( record == nullptr )
         record = FindCeosRecord( sVolume.RecordList,
                              LEADER_MAP_PROJ_RECORD_JERS_TC,
                              CEOS_LEADER_FILE, -1, -1 );
 
-    if( record == NULL )
+    if( record == nullptr ) {
+        record = FindCeosRecord( sVolume.RecordList,
+                             LEADER_MAP_PROJ_RECORD_ASF_TC,
+                             CEOS_LEADER_FILE, -1, -1 );
+        gcp_ordering_mode = CEOS_ASF_MAPREC_GCP_ORDER;
+    }
+    if( record == nullptr ) {
+        record = FindCeosRecord( sVolume.RecordList,
+                             LEADER_FACILITY_ASF_TC,
+                             CEOS_LEADER_FILE, -1, -1 );
+        gcp_ordering_mode = CEOS_ASF_FACREC_GCP_ORDER;
+    }
+
+    if( record == nullptr )
         return FALSE;
 
     char szField[100];
     memset( szField, 0, 17 );
     GetCeosField( record, 29, "A16", szField );
 
-    if( !STARTS_WITH_CI(szField, "Slant Range") && !STARTS_WITH_CI(szField, "Ground Range")
-        && !STARTS_WITH_CI(szField, "GEOCODED") )
-        return FALSE;
+    int GCPFieldSize = 16;
+    int GCPOffset = 1073;
 
-    GetCeosField( record, 1073, "A16", szField );
+    if( !STARTS_WITH_CI(szField, "Slant Range") &&
+        !STARTS_WITH_CI(szField, "Ground Range")
+        && !STARTS_WITH_CI(szField, "GEOCODED") ) {
+        /* detect ASF map projection record */
+        GetCeosField( record, 1079, "A7", szField );
+        if( !STARTS_WITH_CI(szField, "Slant") &&
+            !STARTS_WITH_CI(szField, "Ground") ) {
+            return FALSE;
+        } else {
+            GCPFieldSize = 17;
+            GCPOffset = 157;
+        }
+    }
+
+    char FieldSize[4];
+    snprintf(FieldSize,sizeof(FieldSize),"A%d",GCPFieldSize);
+
+    GetCeosField( record, GCPOffset, FieldSize, szField );
     if( STARTS_WITH_CI(szField, "        ") )
         return FALSE;
 
@@ -1515,24 +1572,55 @@ int SAR_CEOSDataset::ScanForMapProjection()
         snprintf( szId, sizeof(szId), "%d", i+1 );
         pasGCPList[i].pszId = CPLStrdup( szId );
 
-        GetCeosField( record, 1073+32*i, "A16", szField );
+        GetCeosField( record, GCPOffset+(GCPFieldSize*2)*i, FieldSize, szField );
         pasGCPList[i].dfGCPY = CPLAtof(szField);
-        GetCeosField( record, 1089+32*i, "A16", szField );
+        GetCeosField( record, GCPOffset+GCPFieldSize+(GCPFieldSize*2)*i, FieldSize, szField );
         pasGCPList[i].dfGCPX = CPLAtof(szField);
         pasGCPList[i].dfGCPZ = 0.0;
     }
 
+    /* Map Projection Record has the order UL UR LR LL
+     ASF Facility Data Record has the order UL,LL,UR,LR
+     ASF Map Projection Record has the order LL, LR, UR, UL */
+
     pasGCPList[0].dfGCPLine = 0.5;
     pasGCPList[0].dfGCPPixel = 0.5;
 
-    pasGCPList[1].dfGCPLine = 0.5;
-    pasGCPList[1].dfGCPPixel = nRasterXSize-0.5;
+    switch(gcp_ordering_mode) {
+        case CEOS_ASF_FACREC_GCP_ORDER:
+            pasGCPList[1].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[1].dfGCPPixel = 0.5;
 
-    pasGCPList[2].dfGCPLine = nRasterYSize-0.5;
-    pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
+            pasGCPList[2].dfGCPLine = 0.5;
+            pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
 
-    pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
-    pasGCPList[3].dfGCPPixel = 0.5;
+            pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[3].dfGCPPixel = nRasterXSize-0.5;
+            break;
+        case CEOS_STD_MAPREC_GCP_ORDER:
+            pasGCPList[1].dfGCPLine = 0.5;
+            pasGCPList[1].dfGCPPixel = nRasterXSize-0.5;
+
+            pasGCPList[2].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
+
+            pasGCPList[3].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[3].dfGCPPixel = 0.5;
+            break;
+        case CEOS_ASF_MAPREC_GCP_ORDER:
+            pasGCPList[0].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[0].dfGCPPixel = 0.5;
+
+            pasGCPList[1].dfGCPLine = nRasterYSize-0.5;
+            pasGCPList[1].dfGCPPixel = nRasterXSize-0.5;
+
+            pasGCPList[2].dfGCPLine = 0.5;
+            pasGCPList[2].dfGCPPixel = nRasterXSize-0.5;
+
+            pasGCPList[3].dfGCPLine = 0.5;
+            pasGCPList[3].dfGCPPixel = 0.5;
+            break;
+    }
 
     return TRUE;
 }
@@ -1555,6 +1643,14 @@ void SAR_CEOSDataset::ScanForGCPs()
         return;
     }
 
+    /* ASF L1 products do not have valid data
+       in the lat/long first/mid/last fields */
+    const char *pszValue = GetMetadataItem("CEOS_FACILITY");
+    if( (pszValue != nullptr) && (strncmp(pszValue,"ASF",3) == 0) ) {
+        ScanForMapProjection();
+        return;
+    }
+
 /* -------------------------------------------------------------------- */
 /*      Just sample fix scanlines through the image for GCPs, to        */
 /*      return 15 GCPs.  That is an adequate coverage for most          */
@@ -1572,7 +1668,7 @@ void SAR_CEOSDataset::ScanForGCPs()
             break;
 
         int nFileOffset;
-        CalcCeosSARImageFilePosition( &sVolume, 1, iScanline+1, NULL,
+        CalcCeosSARImageFilePosition( &sVolume, 1, iScanline+1, nullptr,
                                       &nFileOffset );
 
         GInt32 anRecord[192/4];
@@ -1634,21 +1730,21 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
 /*      Does this appear to be a valid ceos leader record?              */
 /* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < CEOS_HEADER_LENGTH )
-        return NULL;
+    if( poOpenInfo->nHeaderBytes < CEOS_HEADER_LENGTH || poOpenInfo->fpL == nullptr )
+        return nullptr;
 
     if( (poOpenInfo->pabyHeader[4] != 0x3f
          && poOpenInfo->pabyHeader[4] != 0x32)
         || poOpenInfo->pabyHeader[5] != 0xc0
         || poOpenInfo->pabyHeader[6] != 0x12
         || poOpenInfo->pabyHeader[7] != 0x12 )
-        return NULL;
+        return nullptr;
 
     // some products (#1862) have byte swapped record length/number
     // values and will blow stuff up -- explicitly ignore if record index
     // value appears to be little endian.
     if( poOpenInfo->pabyHeader[0] != 0 )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -1658,15 +1754,11 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The SAR_CEOS driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Open the file.                                                  */
-/* -------------------------------------------------------------------- */
-    VSILFILE *fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    if( fp == NULL )
-        return NULL;
+    VSILFILE *fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Create a corresponding GDALDataset.                             */
@@ -1685,7 +1777,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         delete poDS;
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1708,9 +1800,9 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             continue;
 
         int e = 0;
-        while( CeosExtension[e][iFile] != NULL )
+        while( CeosExtension[e][iFile] != nullptr )
         {
-            char *pszFilename = NULL;
+            char *pszFilename = nullptr;
 
             /* build filename */
             if( EQUAL(CeosExtension[e][5],"base") )
@@ -1751,15 +1843,15 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                     CPLFormFilename(pszPath,pszBasename,szThisExtension));
             }
 
-            CPLAssert( pszFilename != NULL );
-            if( pszFilename == NULL )
-                return NULL;
+            CPLAssert( pszFilename != nullptr );
+            if( pszFilename == nullptr )
+                return nullptr;
 
             /* try to open */
             VSILFILE *process_fp = VSIFOpenL( pszFilename, "rb" );
 
             /* try upper case */
-            if( process_fp == NULL )
+            if( process_fp == nullptr )
             {
                 for( int i = static_cast<int>(strlen(pszFilename))-1;
                      i >= 0 && pszFilename[i] != '/' && pszFilename[i] != '\\';
@@ -1772,9 +1864,12 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                 process_fp = VSIFOpenL( pszFilename, "rb" );
             }
 
-            if( process_fp != NULL )
+            if( process_fp != nullptr )
             {
                 CPLDebug( "CEOS", "Opened %s.\n", pszFilename );
+
+                poDS->papszExtraFiles =
+                    CSLAddString( poDS->papszExtraFiles, pszFilename );
 
                 CPL_IGNORE_RET_VAL(VSIFSeekL( process_fp, 0, SEEK_END ));
                 if( ProcessData( process_fp, iFile, psVolume, -1,
@@ -1826,7 +1921,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 
         CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
 
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1880,13 +1975,13 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
                   "Unsupported CEOS image data type %d.\n",
                   psImageDesc->DataType );
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Capture some information from the file that is of interest.     */
 /* -------------------------------------------------------------------- */
-    poDS->nRasterXSize = psImageDesc->PixelsPerLine;
+    poDS->nRasterXSize = psImageDesc->PixelsPerLine + psImageDesc->LeftBorderPixels + psImageDesc->RightBorderPixels;
     poDS->nRasterYSize = psImageDesc->Lines;
 
     const int bNative =
@@ -1955,13 +2050,13 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
     else
     {
         int StartData;
-        CalcCeosSARImageFilePosition( psVolume, 1, 1, NULL, &StartData );
+        CalcCeosSARImageFilePosition( psVolume, 1, 1, nullptr, &StartData );
 
         /*StartData += psImageDesc->ImageDataStart; */
 
         int nLineSize, nLineSize2;
-        CalcCeosSARImageFilePosition( psVolume, 1, 1, NULL, &nLineSize );
-        CalcCeosSARImageFilePosition( psVolume, 1, 2, NULL, &nLineSize2 );
+        CalcCeosSARImageFilePosition( psVolume, 1, 1, nullptr, &nLineSize );
+        CalcCeosSARImageFilePosition( psVolume, 1, 2, nullptr, &nLineSize2 );
 
         nLineSize = nLineSize2 - nLineSize;
 
@@ -1971,7 +2066,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
 
             if( psImageDesc->ChannelInterleaving == CEOS_IL_PIXEL )
             {
-                CalcCeosSARImageFilePosition(psVolume,1,1,NULL,&nStartData);
+                CalcCeosSARImageFilePosition(psVolume,1,1,nullptr,&nStartData);
 
                 nStartData += psImageDesc->ImageDataStart;
                 nStartData += psImageDesc->BytesPerPixel * iBand;
@@ -1982,7 +2077,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             else if( psImageDesc->ChannelInterleaving == CEOS_IL_LINE )
             {
-                CalcCeosSARImageFilePosition(psVolume, iBand+1, 1, NULL,
+                CalcCeosSARImageFilePosition(psVolume, iBand+1, 1, nullptr,
                                              &nStartData);
 
                 nStartData += psImageDesc->ImageDataStart;
@@ -1991,7 +2086,7 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             }
             else if( psImageDesc->ChannelInterleaving == CEOS_IL_BAND )
             {
-                CalcCeosSARImageFilePosition(psVolume, iBand+1, 1, NULL,
+                CalcCeosSARImageFilePosition(psVolume, iBand+1, 1, nullptr,
                                              &nStartData);
 
                 nStartData += psImageDesc->ImageDataStart;
@@ -2001,14 +2096,14 @@ GDALDataset *SAR_CEOSDataset::Open( GDALOpenInfo * poOpenInfo )
             else
             {
                 CPLAssert( false );
-                return NULL;
+                return nullptr;
             }
 
             poDS->SetBand( poDS->nBands+1,
                     new RawRasterBand(
                         poDS, poDS->nBands+1, fp,
                         nStartData, nPixelOffset, nLineOffset,
-                        eType, bNative, TRUE ) );
+                        eType, bNative, RawRasterBand::OwnFP::NO ) );
         }
     }
 
@@ -2050,7 +2145,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
 
 {
     unsigned char      temp_buffer[CEOS_HEADER_LENGTH];
-    unsigned char      *temp_body = NULL;
+    unsigned char      *temp_body = nullptr;
     int                start = 0;
     int                CurrentBodyLength = 0;
     int                CurrentType = 0;
@@ -2110,7 +2205,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
         {
             unsigned char* temp_body_new = (unsigned char *)
                     VSI_REALLOC_VERBOSE( temp_body, record->Length );
-            if( temp_body_new == NULL )
+            if( temp_body_new == nullptr )
             {
                 CPLFree(record);
                 CPLFree(temp_body);
@@ -2154,7 +2249,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
 
         Link_t *TheLink = ceos2CreateLink( record );
 
-        if( sar->RecordList == NULL )
+        if( sar->RecordList == nullptr )
             sar->RecordList = TheLink;
         else
             sar->RecordList = InsertLink( sar->RecordList, TheLink );
@@ -2187,7 +2282,7 @@ ProcessData( VSILFILE *fp, int fileid, CeosSARVolume_t *sar, int max_records,
 void GDALRegister_SAR_CEOS()
 
 {
-    if( GDALGetDriverByName( "SAR_CEOS" ) != NULL )
+    if( GDALGetDriverByName( "SAR_CEOS" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -2197,10 +2292,24 @@ void GDALRegister_SAR_CEOS()
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "CEOS SAR Image" );
     poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#SAR_CEOS" );
+                               "drivers/raster/sar_ceos.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
 
     poDriver->pfnOpen = SAR_CEOSDataset::Open;
 
     GetGDALDriverManager()->RegisterDriver( poDriver );
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **SAR_CEOSDataset::GetFileList()
+
+{
+    char **papszFileList = GDALPamDataset::GetFileList();
+
+    papszFileList = CSLInsertStrings( papszFileList, -1, papszExtraFiles );
+
+    return papszFileList;
 }

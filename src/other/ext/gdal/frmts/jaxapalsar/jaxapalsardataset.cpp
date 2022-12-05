@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Philippe P. Vachon <philippe@cowpig.ca>
- * Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #if defined(WIN32)
 #define SEP_STRING "\\"
@@ -132,6 +132,7 @@ CPL_CVSID("$Id$");
 #define BOTTOM_LEFT_LAT_OFFSET 1168
 #define BOTTOM_LEFT_LON_OFFSET 1184
 
+namespace {
 /* a few useful enums */
 enum eFileType {
     level_11 = 0,
@@ -146,6 +147,7 @@ enum ePolarization {
     vh,
     vv
 };
+} // namespace
 
 /************************************************************************/
 /* ==================================================================== */
@@ -155,7 +157,7 @@ enum ePolarization {
 
 class PALSARJaxaRasterBand;
 
-class PALSARJaxaDataset : public GDALPamDataset {
+class PALSARJaxaDataset final: public GDALPamDataset {
     friend class PALSARJaxaRasterBand;
 private:
     GDAL_GCP *pasGCPList;
@@ -174,7 +176,7 @@ public:
 };
 
 PALSARJaxaDataset::PALSARJaxaDataset() :
-    pasGCPList(NULL),
+    pasGCPList(nullptr),
     nGCPCount(0),
     nFileType(level_unknown)
 {}
@@ -194,7 +196,7 @@ PALSARJaxaDataset::~PALSARJaxaDataset()
 /* ==================================================================== */
 /************************************************************************/
 
-class PALSARJaxaRasterBand : public GDALRasterBand {
+class PALSARJaxaRasterBand final: public GDALRasterBand {
     VSILFILE *fp;
     ePolarization nPolarization;
     eFileType nFileType;
@@ -358,7 +360,7 @@ const GDAL_GCP *PALSARJaxaDataset::GetGCPs() {
 /************************************************************************/
 
 void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
-    /* seek to the end fo the leader file descriptor */
+    /* seek to the end of the leader file descriptor */
     VSIFSeekL( fp, LEADER_FILE_DESCRIPTOR_LENGTH, SEEK_SET );
     if (poDS->nFileType == level_10) {
         poDS->SetMetadataItem( "PRODUCT_LEVEL", "1.0" );
@@ -470,8 +472,19 @@ void PALSARJaxaDataset::ReadMetadata( PALSARJaxaDataset *poDS, VSILFILE *fp ) {
 /*                              Identify()                              */
 /************************************************************************/
 
+static void ReadWord(VSILFILE* fp, int* pVal)
+{
+    READ_WORD(fp, *pVal);
+}
+
+static void ReadByte(VSILFILE* fp, int* pVal)
+{
+    READ_BYTE(fp, *pVal);
+}
+
+
 int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
-    if ( poOpenInfo->nHeaderBytes < 360 )
+    if ( poOpenInfo->nHeaderBytes < 360 || poOpenInfo->fpL == nullptr )
         return 0;
 
     /* First, check that this is a PALSAR image indeed */
@@ -481,10 +494,6 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
         return 0;
     }
 
-    VSILFILE *fpL = VSIFOpenL( poOpenInfo->pszFilename, "r" );
-    if( fpL == NULL )
-        return FALSE;
-
     /* Check that this is a volume directory file */
     int nRecordSeq = 0;
     int nRecordSubtype = 0;
@@ -493,16 +502,16 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
     int nThirdSubtype = 0;
     int nLengthRecord = 0;
 
-    VSIFSeekL(fpL, 0, SEEK_SET);
+    VSIFSeekL(poOpenInfo->fpL, 0, SEEK_SET);
 
-    READ_WORD(fpL, nRecordSeq);
-    READ_BYTE(fpL, nRecordSubtype);
-    READ_BYTE(fpL, nRecordType);
-    READ_BYTE(fpL, nSecondSubtype);
-    READ_BYTE(fpL, nThirdSubtype);
-    READ_WORD(fpL, nLengthRecord);
+    ReadWord(poOpenInfo->fpL, &nRecordSeq);
+    ReadByte(poOpenInfo->fpL, &nRecordSubtype);
+    ReadByte(poOpenInfo->fpL, &nRecordType);
+    ReadByte(poOpenInfo->fpL, &nSecondSubtype);
+    ReadByte(poOpenInfo->fpL, &nThirdSubtype);
+    ReadWord(poOpenInfo->fpL, &nLengthRecord);
 
-    VSIFCloseL( fpL );
+    VSIFSeekL(poOpenInfo->fpL, 0, SEEK_SET);
 
     /* Check that we have the right record */
     if ( nRecordSeq == 1 && nRecordSubtype == 192 && nRecordType == 192 &&
@@ -520,7 +529,7 @@ int PALSARJaxaDataset::Identify( GDALOpenInfo *poOpenInfo ) {
 GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     /* Check that this actually is a JAXA PALSAR product */
     if ( !PALSARJaxaDataset::Identify(poOpenInfo) )
-        return NULL;
+        return nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Confirm the requested access is supported.                      */
@@ -530,7 +539,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "The JAXAPALSAR driver does not support update access to existing"
                   " datasets.\n" );
-        return NULL;
+        return nullptr;
     }
 
     PALSARJaxaDataset *poDS = new PALSARJaxaDataset();
@@ -551,7 +560,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HH%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     VSILFILE *fpHH = VSIFOpenL( pszImgFile, "rb" );
-    if (fpHH != NULL) {
+    if (fpHH != nullptr) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 0, fpHH ) );
         nBandNum++;
     }
@@ -560,7 +569,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     snprintf( pszImgFile, nImgFileLen, "%s%sIMG-HV%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     VSILFILE *fpHV = VSIFOpenL( pszImgFile, "rb" );
-    if (fpHV != NULL) {
+    if (fpHV != nullptr) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 1, fpHV ) );
         nBandNum++;
     }
@@ -569,7 +578,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     snprintf( pszImgFile, nImgFileLen, "%s%sIMG-VH%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     VSILFILE *fpVH = VSIFOpenL( pszImgFile, "rb" );
-    if (fpVH != NULL) {
+    if (fpVH != nullptr) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 2, fpVH ) );
         nBandNum++;
     }
@@ -578,7 +587,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     snprintf( pszImgFile, nImgFileLen, "%s%sIMG-VV%s",
              CPLGetDirname(poOpenInfo->pszFilename), SEP_STRING, pszSuffix );
     VSILFILE *fpVV = VSIFOpenL( pszImgFile, "rb" );
-    if (fpVV != NULL) {
+    if (fpVV != nullptr) {
         poDS->SetBand( nBandNum, new PALSARJaxaRasterBand( poDS, 3, fpVV ) );
         /* nBandNum++; */
     }
@@ -586,12 +595,12 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
     VSIFree( pszImgFile );
 
     /* did we get at least one band? */
-    if (fpVV == NULL && fpVH == NULL && fpHV == NULL && fpHH == NULL) {
+    if (fpVV == nullptr && fpVH == nullptr && fpHV == nullptr && fpHH == nullptr) {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Unable to find any image data. Aborting opening as PALSAR image.");
         delete poDS;
         VSIFree( pszSuffix );
-        return NULL;
+        return nullptr;
     }
 
     /* Level 1.0 products are not supported */
@@ -600,7 +609,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
                   "ALOS PALSAR Level 1.0 products are not supported. Aborting opening as PALSAR image.");
         delete poDS;
         VSIFree( pszSuffix );
-        return NULL;
+        return nullptr;
     }
 
     /* read metadata from Leader file. */
@@ -612,7 +621,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 
     VSILFILE *fpLeader = VSIFOpenL( pszLeaderFilename, "rb" );
     /* check if the leader is actually present */
-    if (fpLeader != NULL) {
+    if (fpLeader != nullptr) {
         ReadMetadata(poDS, fpLeader);
         VSIFCloseL(fpLeader);
     }
@@ -642,7 +651,7 @@ GDALDataset *PALSARJaxaDataset::Open( GDALOpenInfo * poOpenInfo ) {
 void GDALRegister_PALSARJaxa()
 
 {
-    if( GDALGetDriverByName( "JAXAPALSAR" ) != NULL )
+    if( GDALGetDriverByName( "JAXAPALSAR" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -651,7 +660,7 @@ void GDALRegister_PALSARJaxa()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "JAXA PALSAR Product Reader (Level 1.1/1.5)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_palsar.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/palsar.html" );
 
     poDriver->pfnOpen = PALSARJaxaDataset::Open;
     poDriver->pfnIdentify = PALSARJaxaDataset::Identify;

@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2004, Andrey Kiselev <dron@ak4719.spb.edu>
- * Copyright (c) 2008-2009, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2009, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,81 +42,81 @@
 #include "ogr_p.h"
 #include "ogr_spatialref.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*  GCTP projection codes.                                              */
 /************************************************************************/
 
-static const long GEO    = 0L;   // Geographic
-static const long UTM    = 1L;   // Universal Transverse Mercator (UTM)
-static const long SPCS   = 2L;   // State Plane Coordinates
-static const long ALBERS = 3L;   // Albers Conical Equal Area
-static const long LAMCC  = 4L;   // Lambert Conformal Conic
-static const long MERCAT = 5L;   // Mercator
-static const long PS     = 6L;   // Polar Stereographic
-static const long POLYC  = 7L;   // Polyconic
-static const long EQUIDC = 8L;   // Equidistant Conic
-static const long TM     = 9L;   // Transverse Mercator
-static const long STEREO = 10L;  // Stereographic
-static const long LAMAZ  = 11L;  // Lambert Azimuthal Equal Area
-static const long AZMEQD = 12L;  // Azimuthal Equidistant
-static const long GNOMON = 13L;  // Gnomonic
-static const long ORTHO  = 14L;  // Orthographic
-// static const long GVNSP  = 15L;  // General Vertical Near-Side Perspective
-static const long SNSOID = 16L;  // Sinusiodal
-static const long EQRECT = 17L;  // Equirectangular
-static const long MILLER = 18L;  // Miller Cylindrical
-static const long VGRINT = 19L;  // Van der Grinten
-static const long HOM    = 20L;  // (Hotine) Oblique Mercator
-static const long ROBIN  = 21L;  // Robinson
-// static const long SOM    = 22L;  // Space Oblique Mercator (SOM)
-// static const long ALASKA = 23L;  // Alaska Conformal
-// static const long GOODE  = 24L;  // Interrupted Goode Homolosine
-static const long MOLL   = 25L;  // Mollweide
-// static const long IMOLL  = 26L;  // Interrupted Mollweide
-// static const long HAMMER = 27L;  // Hammer
-static const long WAGIV  = 28L;  // Wagner IV
-static const long WAGVII = 29L;  // Wagner VII
-// static const long OBEQA  = 30L;  // Oblated Equal Area
-// static const long ISINUS1 = 31L; // Integerized Sinusoidal Grid (the same as 99)
-// static const long CEA    = 97L;  // Cylindrical Equal Area (Grid corners set
+constexpr long GEO    = 0L;   // Geographic
+constexpr long UTM    = 1L;   // Universal Transverse Mercator (UTM)
+constexpr long SPCS   = 2L;   // State Plane Coordinates
+constexpr long ALBERS = 3L;   // Albers Conical Equal Area
+constexpr long LAMCC  = 4L;   // Lambert Conformal Conic
+constexpr long MERCAT = 5L;   // Mercator
+constexpr long PS     = 6L;   // Polar Stereographic
+constexpr long POLYC  = 7L;   // Polyconic
+constexpr long EQUIDC = 8L;   // Equidistant Conic
+constexpr long TM     = 9L;   // Transverse Mercator
+constexpr long STEREO = 10L;  // Stereographic
+constexpr long LAMAZ  = 11L;  // Lambert Azimuthal Equal Area
+constexpr long AZMEQD = 12L;  // Azimuthal Equidistant
+constexpr long GNOMON = 13L;  // Gnomonic
+constexpr long ORTHO  = 14L;  // Orthographic
+// constexpr long GVNSP  = 15L;  // General Vertical Near-Side Perspective
+constexpr long SNSOID = 16L;  // Sinusiodal
+constexpr long EQRECT = 17L;  // Equirectangular
+constexpr long MILLER = 18L;  // Miller Cylindrical
+constexpr long VGRINT = 19L;  // Van der Grinten
+constexpr long HOM    = 20L;  // (Hotine) Oblique Mercator
+constexpr long ROBIN  = 21L;  // Robinson
+// constexpr long SOM    = 22L;  // Space Oblique Mercator (SOM)
+// constexpr long ALASKA = 23L;  // Alaska Conformal
+// constexpr long GOODE  = 24L;  // Interrupted Goode Homolosine
+constexpr long MOLL   = 25L;  // Mollweide
+// constexpr long IMOLL  = 26L;  // Interrupted Mollweide
+// constexpr long HAMMER = 27L;  // Hammer
+constexpr long WAGIV  = 28L;  // Wagner IV
+constexpr long WAGVII = 29L;  // Wagner VII
+// constexpr long OBEQA  = 30L;  // Oblated Equal Area
+// constexpr long ISINUS1 = 31L; // Integerized Sinusoidal Grid (the same as 99)
+// constexpr long CEA    = 97L;  // Cylindrical Equal Area (Grid corners set
                                  // in meters for EASE grid)
-// static const long BCEA   = 98L;  // Cylindrical Equal Area (Grid corners set
+// constexpr long BCEA   = 98L;  // Cylindrical Equal Area (Grid corners set
                                  // in DMS degs for EASE grid)
-// static const long ISINUS = 99L;  // Integerized Sinusoidal Grid
+// constexpr long ISINUS = 99L;  // Integerized Sinusoidal Grid
                                  // (added by Raj Gejjagaraguppe ARC for MODIS)
 
 /************************************************************************/
 /*  GCTP ellipsoid codes.                                               */
 /************************************************************************/
 
-static const long CLARKE1866         = 0L;
-// static const long CLARKE1880         = 1L;
-// static const long BESSEL             = 2L;
-// static const long INTERNATIONAL1967  = 3L;
-// static const long INTERNATIONAL1909  = 4L;
-// static const long WGS72              = 5L;
-// static const long EVEREST            = 6L;
-// static const long WGS66              = 7L;
-static const long GRS1980            = 8L;
-// static const long AIRY               = 9L;
-// static const long MODIFIED_EVEREST   = 10L;
-// static const long MODIFIED_AIRY      = 11L;
-static const long WGS84              = 12L;
-// static const long SOUTHEAST_ASIA     = 13L;
-// static const long AUSTRALIAN_NATIONAL= 14L;
-// static const long KRASSOVSKY         = 15L;
-// static const long HOUGH              = 16L;
-// static const long MERCURY1960        = 17L;
-// static const long MODIFIED_MERCURY   = 18L;
-// static const long SPHERE             = 19L;
+constexpr long CLARKE1866         = 0L;
+// constexpr long CLARKE1880         = 1L;
+// constexpr long BESSEL             = 2L;
+// constexpr long INTERNATIONAL1967  = 3L;
+// constexpr long INTERNATIONAL1909  = 4L;
+// constexpr long WGS72              = 5L;
+// constexpr long EVEREST            = 6L;
+// constexpr long WGS66              = 7L;
+constexpr long GRS1980            = 8L;
+// constexpr long AIRY               = 9L;
+// constexpr long MODIFIED_EVEREST   = 10L;
+// constexpr long MODIFIED_AIRY      = 11L;
+constexpr long WGS84              = 12L;
+// constexpr long SOUTHEAST_ASIA     = 13L;
+// constexpr long AUSTRALIAN_NATIONAL= 14L;
+// constexpr long KRASSOVSKY         = 15L;
+// constexpr long HOUGH              = 16L;
+// constexpr long MERCURY1960        = 17L;
+// constexpr long MODIFIED_MERCURY   = 18L;
+// constexpr long SPHERE             = 19L;
 
 /************************************************************************/
 /*  Correspondence between GCTP and EPSG ellipsoid codes.               */
 /************************************************************************/
 
-static const int aoEllips[] =
+constexpr int aoEllips[] =
 {
     7008,   // Clarke, 1866 (NAD1927)
     7034,   // Clarke, 1880
@@ -151,7 +151,7 @@ static const int aoEllips[] =
     0       // FIXME: WGS 60 --- skipped
 };
 
-#define NUMBER_OF_ELLIPSOIDS    (int)(sizeof(aoEllips)/sizeof(aoEllips[0]))
+#define NUMBER_OF_ELLIPSOIDS    static_cast<int>(CPL_ARRAYSIZE(aoEllips))
 
 /************************************************************************/
 /*                         OSRImportFromUSGS()                          */
@@ -168,7 +168,7 @@ OGRErr OSRImportFromUSGS( OGRSpatialReferenceH hSRS, long iProjsys,
 {
     VALIDATE_POINTER1( hSRS, "OSRImportFromUSGS", OGRERR_FAILURE );
 
-    return ((OGRSpatialReference *) hSRS)->importFromUSGS( iProjsys, iZone,
+    return OGRSpatialReference::FromHandle(hSRS)->importFromUSGS( iProjsys, iZone,
                                                            padfPrjParams,
                                                            iDatum );
 }
@@ -188,234 +188,235 @@ static double OGRSpatialReferenceUSGSUnpackRadian( double dfVal )
 /************************************************************************/
 
 /**
- * \brief Import coordinate system from USGS projection definition.
+\brief Import coordinate system from USGS projection definition.
+
+This method will import projection definition in style, used by USGS GCTP
+software. GCTP operates on angles in packed DMS format (see
+CPLDecToPackedDMS() function for details), so all angle values (latitudes,
+longitudes, azimuths, etc.) specified in the padfPrjParams array should
+be in the packed DMS format, unless bAnglesInPackedDMSFormat is set to FALSE.
  *
- * This method will import projection definition in style, used by USGS GCTP
- * software. GCTP operates on angles in packed DMS format (see
- * CPLDecToPackedDMS() function for details), so all angle values (latitudes,
- * longitudes, azimuths, etc.) specified in the padfPrjParams array should
- * be in the packed DMS format, unless bAnglesInPackedDMSFormat is set to FALSE.
- *
- * This function is the equivalent of the C function OSRImportFromUSGS().
- * Note that the bAnglesInPackedDMSFormat parameter is only present in the C++
- * method. The C function assumes bAnglesInPackedFormat = TRUE.
- *
- * @param iProjSys Input projection system code, used in GCTP.
- *
- * @param iZone Input zone for UTM and State Plane projection systems. For
- * Southern Hemisphere UTM use a negative zone code. iZone ignored for all
- * other projections.
- *
- * @param padfPrjParams Array of 15 coordinate system parameters. These
- * parameters differs for different projections.
- *
- *        <h4>Projection Transformation Package Projection Parameters</h4>
- * <pre>
- * ----------------------------------------------------------------------------
- *                         |                    Array Element
- *  Code & Projection Id   |---------------------------------------------------
- *                         |   0  |   1  |  2   |  3   |   4   |    5    |6 | 7
- * ----------------------------------------------------------------------------
- *  0 Geographic           |      |      |      |      |       |         |  |
- *  1 U T M                |Lon/Z |Lat/Z |      |      |       |         |  |
- *  2 State Plane          |      |      |      |      |       |         |  |
- *  3 Albers Equal Area    |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
- *  4 Lambert Conformal C  |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
- *  5 Mercator             |SMajor|SMinor|      |      |CentMer|TrueScale|FE|FN
- *  6 Polar Stereographic  |SMajor|SMinor|      |      |LongPol|TrueScale|FE|FN
- *  7 Polyconic            |SMajor|SMinor|      |      |CentMer|OriginLat|FE|FN
- *  8 Equid. Conic A       |SMajor|SMinor|STDPAR|      |CentMer|OriginLat|FE|FN
- *    Equid. Conic B       |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
- *  9 Transverse Mercator  |SMajor|SMinor|Factor|      |CentMer|OriginLat|FE|FN
- * 10 Stereographic        |Sphere|      |      |      |CentLon|CenterLat|FE|FN
- * 11 Lambert Azimuthal    |Sphere|      |      |      |CentLon|CenterLat|FE|FN
- * 12 Azimuthal            |Sphere|      |      |      |CentLon|CenterLat|FE|FN
- * 13 Gnomonic             |Sphere|      |      |      |CentLon|CenterLat|FE|FN
- * 14 Orthographic         |Sphere|      |      |      |CentLon|CenterLat|FE|FN
- * 15 Gen. Vert. Near Per  |Sphere|      |Height|      |CentLon|CenterLat|FE|FN
- * 16 Sinusoidal           |Sphere|      |      |      |CentMer|         |FE|FN
- * 17 Equirectangular      |Sphere|      |      |      |CentMer|TrueScale|FE|FN
- * 18 Miller Cylindrical   |Sphere|      |      |      |CentMer|         |FE|FN
- * 19 Van der Grinten      |Sphere|      |      |      |CentMer|OriginLat|FE|FN
- * 20 Hotin Oblique Merc A |SMajor|SMinor|Factor|      |       |OriginLat|FE|FN
- *    Hotin Oblique Merc B |SMajor|SMinor|Factor|AziAng|AzmthPt|OriginLat|FE|FN
- * 21 Robinson             |Sphere|      |      |      |CentMer|         |FE|FN
- * 22 Space Oblique Merc A |SMajor|SMinor|      |IncAng|AscLong|         |FE|FN
- *    Space Oblique Merc B |SMajor|SMinor|Satnum|Path  |       |         |FE|FN
- * 23 Alaska Conformal     |SMajor|SMinor|      |      |       |         |FE|FN
- * 24 Interrupted Goode    |Sphere|      |      |      |       |         |  |
- * 25 Mollweide            |Sphere|      |      |      |CentMer|         |FE|FN
- * 26 Interrupt Mollweide  |Sphere|      |      |      |       |         |  |
- * 27 Hammer               |Sphere|      |      |      |CentMer|         |FE|FN
- * 28 Wagner IV            |Sphere|      |      |      |CentMer|         |FE|FN
- * 29 Wagner VII           |Sphere|      |      |      |CentMer|         |FE|FN
- * 30 Oblated Equal Area   |Sphere|      |Shapem|Shapen|CentLon|CenterLat|FE|FN
- * ----------------------------------------------------------------------------
- *
- *       ----------------------------------------------------
- *                               |      Array Element       |
- *         Code & Projection Id  |---------------------------
- *                               |  8  |  9 |  10 | 11 | 12 |
- *       ----------------------------------------------------
- *        0 Geographic           |     |    |     |    |    |
- *        1 U T M                |     |    |     |    |    |
- *        2 State Plane          |     |    |     |    |    |
- *        3 Albers Equal Area    |     |    |     |    |    |
- *        4 Lambert Conformal C  |     |    |     |    |    |
- *        5 Mercator             |     |    |     |    |    |
- *        6 Polar Stereographic  |     |    |     |    |    |
- *        7 Polyconic            |     |    |     |    |    |
- *        8 Equid. Conic A       |zero |    |     |    |    |
- *          Equid. Conic B       |one  |    |     |    |    |
- *        9 Transverse Mercator  |     |    |     |    |    |
- *       10 Stereographic        |     |    |     |    |    |
- *       11 Lambert Azimuthal    |     |    |     |    |    |
- *       12 Azimuthal            |     |    |     |    |    |
- *       13 Gnomonic             |     |    |     |    |    |
- *       14 Orthographic         |     |    |     |    |    |
- *       15 Gen. Vert. Near Per  |     |    |     |    |    |
- *       16 Sinusoidal           |     |    |     |    |    |
- *       17 Equirectangular      |     |    |     |    |    |
- *       18 Miller Cylindrical   |     |    |     |    |    |
- *       19 Van der Grinten      |     |    |     |    |    |
- *       20 Hotin Oblique Merc A |Long1|Lat1|Long2|Lat2|zero|
- *          Hotin Oblique Merc B |     |    |     |    |one |
- *       21 Robinson             |     |    |     |    |    |
- *       22 Space Oblique Merc A |PSRev|LRat|PFlag|    |zero|
- *          Space Oblique Merc B |     |    |     |    |one |
- *       23 Alaska Conformal     |     |    |     |    |    |
- *       24 Interrupted Goode    |     |    |     |    |    |
- *       25 Mollweide            |     |    |     |    |    |
- *       26 Interrupt Mollweide  |     |    |     |    |    |
- *       27 Hammer               |     |    |     |    |    |
- *       28 Wagner IV            |     |    |     |    |    |
- *       29 Wagner VII           |     |    |     |    |    |
- *       30 Oblated Equal Area   |Angle|    |     |    |    |
- *       ----------------------------------------------------
- *
- *   where
- *
- *    Lon/Z     Longitude of any point in the UTM zone or zero.  If zero,
- *              a zone code must be specified.
- *    Lat/Z     Latitude of any point in the UTM zone or zero.  If zero, a
- *              zone code must be specified.
- *    SMajor    Semi-major axis of ellipsoid.  If zero, Clarke 1866 in meters
- *              is assumed.
- *    SMinor    Eccentricity squared of the ellipsoid if less than zero,
- *              if zero, a spherical form is assumed, or if greater than
- *              zero, the semi-minor axis of ellipsoid.
- *    Sphere    Radius of reference sphere.  If zero, 6370997 meters is used.
- *    STDPAR    Latitude of the standard parallel
- *    STDPR1    Latitude of the first standard parallel
- *    STDPR2    Latitude of the second standard parallel
- *    CentMer   Longitude of the central meridian
- *    OriginLat Latitude of the projection origin
- *    FE        False easting in the same units as the semi-major axis
- *    FN        False northing in the same units as the semi-major axis
- *    TrueScale Latitude of true scale
- *    LongPol   Longitude down below pole of map
- *    Factor    Scale factor at central meridian (Transverse Mercator) or
- *              center of projection (Hotine Oblique Mercator)
- *    CentLon   Longitude of center of projection
- *    CenterLat Latitude of center of projection
- *    Height    Height of perspective point
- *    Long1     Longitude of first point on center line (Hotine Oblique
- *              Mercator, format A)
- *    Long2     Longitude of second point on center line (Hotine Oblique
- *              Mercator, format A)
- *    Lat1      Latitude of first point on center line (Hotine Oblique
- *              Mercator, format A)
- *    Lat2      Latitude of second point on center line (Hotine Oblique
- *              Mercator, format A)
- *    AziAng    Azimuth angle east of north of center line (Hotine Oblique
- *              Mercator, format B)
- *    AzmthPt   Longitude of point on central meridian where azimuth occurs
- *              (Hotine Oblique Mercator, format B)
- *    IncAng    Inclination of orbit at ascending node, counter-clockwise
- *              from equator (SOM, format A)
- *    AscLong   Longitude of ascending orbit at equator (SOM, format A)
- *    PSRev     Period of satellite revolution in minutes (SOM, format A)
- *    LRat      Landsat ratio to compensate for confusion at northern end
- *              of orbit (SOM, format A -- use 0.5201613)
- *    PFlag     End of path flag for Landsat:  0 = start of path,
- *              1 = end of path (SOM, format A)
- *    Satnum    Landsat Satellite Number (SOM, format B)
- *    Path      Landsat Path Number (Use WRS-1 for Landsat 1, 2 and 3 and
- *              WRS-2 for Landsat 4, 5 and 6.)  (SOM, format B)
- *    Shapem    Oblated Equal Area oval shape parameter m
- *    Shapen    Oblated Equal Area oval shape parameter n
- *    Angle     Oblated Equal Area oval rotation angle
- *
- * Array elements 13 and 14 are set to zero. All array elements with blank
- * fields are set to zero too.
- * </pre>
- *
- * @param iDatum Input spheroid.<p>
- *
- * If the datum code is negative, the first two values in the parameter array
- * (parm) are used to define the values as follows:
- *
- * <ul>
- *
- * <li> If padfPrjParams[0] is a non-zero value and padfPrjParams[1] is
- * greater than one, the semimajor axis is set to padfPrjParams[0] and
- * the semiminor axis is set to padfPrjParams[1].
- *
- * <li> If padfPrjParams[0] is nonzero and padfPrjParams[1] is greater than
- * zero but less than or equal to one, the semimajor axis is set to
- * padfPrjParams[0] and the semiminor axis is computed from the eccentricity
- * squared value padfPrjParams[1]:<p>
- *
- * semiminor = sqrt(1.0 - ES) * semimajor<p>
- *
- * where<p>
- *
- * ES = eccentricity squared
- *
- * <li> If padfPrjParams[0] is nonzero and padfPrjParams[1] is equal to zero,
- * the semimajor axis and semiminor axis are set to padfPrjParams[0].
- *
- * <li> If padfPrjParams[0] equals zero and padfPrjParams[1] is greater than
- * zero, the default Clarke 1866 is used to assign values to the semimajor
- * axis and semiminor axis.
- *
- * <li> If padfPrjParams[0] and padfPrjParams[1] equals zero, the semimajor
- * axis is set to 6370997.0 and the semiminor axis is set to zero.
- *
- * </ul>
- *
- * If a datum code is zero or greater, the semimajor and semiminor axis are
- * defined by the datum code as found in the following table:
- *
- *      <h4>Supported Datums</h4>
- * <pre>
- *       0: Clarke 1866 (default)
- *       1: Clarke 1880
- *       2: Bessel
- *       3: International 1967
- *       4: International 1909
- *       5: WGS 72
- *       6: Everest
- *       7: WGS 66
- *       8: GRS 1980/WGS 84
- *       9: Airy
- *      10: Modified Everest
- *      11: Modified Airy
- *      12: Walbeck
- *      13: Southeast Asia
- *      14: Australian National
- *      15: Krassovsky
- *      16: Hough
- *      17: Mercury 1960
- *      18: Modified Mercury 1968
- *      19: Sphere of Radius 6370997 meters
- * </pre>
- *
- * @param nUSGSAngleFormat one of USGS_ANGLE_DECIMALDEGREES,
- *    USGS_ANGLE_PACKEDDMS, or USGS_ANGLE_RADIANS (default is
- *    USGS_ANGLE_PACKEDDMS).
- *
- * @return OGRERR_NONE on success or an error code in case of failure.
+This function is the equivalent of the C function OSRImportFromUSGS().
+Note that the bAnglesInPackedDMSFormat parameter is only present in the C++
+method. The C function assumes bAnglesInPackedFormat = TRUE.
+
+@param iProjSys Input projection system code, used in GCTP.
+
+@param iZone Input zone for UTM and State Plane projection systems. For
+Southern Hemisphere UTM use a negative zone code. iZone ignored for all
+other projections.
+
+@param padfPrjParams Array of 15 coordinate system parameters. These
+parameters differs for different projections.
+
+\verbatim
+Projection Transformation Package Projection Parameters:
+
+----------------------------------------------------------------------------
+                        |                    Array Element
+ Code & Projection Id   |---------------------------------------------------
+                        |   0  |   1  |  2   |  3   |   4   |    5    |6 | 7
+----------------------------------------------------------------------------
+ 0 Geographic           |      |      |      |      |       |         |  |
+ 1 U T M                |Lon/Z |Lat/Z |      |      |       |         |  |
+ 2 State Plane          |      |      |      |      |       |         |  |
+ 3 Albers Equal Area    |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
+ 4 Lambert Conformal C  |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
+ 5 Mercator             |SMajor|SMinor|      |      |CentMer|TrueScale|FE|FN
+ 6 Polar Stereographic  |SMajor|SMinor|      |      |LongPol|TrueScale|FE|FN
+ 7 Polyconic            |SMajor|SMinor|      |      |CentMer|OriginLat|FE|FN
+ 8 Equid. Conic A       |SMajor|SMinor|STDPAR|      |CentMer|OriginLat|FE|FN
+   Equid. Conic B       |SMajor|SMinor|STDPR1|STDPR2|CentMer|OriginLat|FE|FN
+ 9 Transverse Mercator  |SMajor|SMinor|Factor|      |CentMer|OriginLat|FE|FN
+10 Stereographic        |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+11 Lambert Azimuthal    |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+12 Azimuthal            |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+13 Gnomonic             |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+14 Orthographic         |Sphere|      |      |      |CentLon|CenterLat|FE|FN
+15 Gen. Vert. Near Per  |Sphere|      |Height|      |CentLon|CenterLat|FE|FN
+16 Sinusoidal           |Sphere|      |      |      |CentMer|         |FE|FN
+17 Equirectangular      |Sphere|      |      |      |CentMer|TrueScale|FE|FN
+18 Miller Cylindrical   |Sphere|      |      |      |CentMer|         |FE|FN
+19 Van der Grinten      |Sphere|      |      |      |CentMer|OriginLat|FE|FN
+20 Hotin Oblique Merc A |SMajor|SMinor|Factor|      |       |OriginLat|FE|FN
+   Hotin Oblique Merc B |SMajor|SMinor|Factor|AziAng|AzmthPt|OriginLat|FE|FN
+21 Robinson             |Sphere|      |      |      |CentMer|         |FE|FN
+22 Space Oblique Merc A |SMajor|SMinor|      |IncAng|AscLong|         |FE|FN
+   Space Oblique Merc B |SMajor|SMinor|Satnum|Path  |       |         |FE|FN
+23 Alaska Conformal     |SMajor|SMinor|      |      |       |         |FE|FN
+24 Interrupted Goode    |Sphere|      |      |      |       |         |  |
+25 Mollweide            |Sphere|      |      |      |CentMer|         |FE|FN
+26 Interrupt Mollweide  |Sphere|      |      |      |       |         |  |
+27 Hammer               |Sphere|      |      |      |CentMer|         |FE|FN
+28 Wagner IV            |Sphere|      |      |      |CentMer|         |FE|FN
+29 Wagner VII           |Sphere|      |      |      |CentMer|         |FE|FN
+30 Oblated Equal Area   |Sphere|      |Shapem|Shapen|CentLon|CenterLat|FE|FN
+----------------------------------------------------------------------------
+
+      ----------------------------------------------------
+                              |      Array Element       |
+        Code & Projection Id  |---------------------------
+                              |  8  |  9 |  10 | 11 | 12 |
+      ----------------------------------------------------
+       0 Geographic           |     |    |     |    |    |
+       1 U T M                |     |    |     |    |    |
+       2 State Plane          |     |    |     |    |    |
+       3 Albers Equal Area    |     |    |     |    |    |
+       4 Lambert Conformal C  |     |    |     |    |    |
+       5 Mercator             |     |    |     |    |    |
+       6 Polar Stereographic  |     |    |     |    |    |
+       7 Polyconic            |     |    |     |    |    |
+       8 Equid. Conic A       |zero |    |     |    |    |
+         Equid. Conic B       |one  |    |     |    |    |
+       9 Transverse Mercator  |     |    |     |    |    |
+      10 Stereographic        |     |    |     |    |    |
+      11 Lambert Azimuthal    |     |    |     |    |    |
+      12 Azimuthal            |     |    |     |    |    |
+      13 Gnomonic             |     |    |     |    |    |
+      14 Orthographic         |     |    |     |    |    |
+      15 Gen. Vert. Near Per  |     |    |     |    |    |
+      16 Sinusoidal           |     |    |     |    |    |
+      17 Equirectangular      |     |    |     |    |    |
+      18 Miller Cylindrical   |     |    |     |    |    |
+      19 Van der Grinten      |     |    |     |    |    |
+      20 Hotin Oblique Merc A |Long1|Lat1|Long2|Lat2|zero|
+         Hotin Oblique Merc B |     |    |     |    |one |
+      21 Robinson             |     |    |     |    |    |
+      22 Space Oblique Merc A |PSRev|LRat|PFlag|    |zero|
+         Space Oblique Merc B |     |    |     |    |one |
+      23 Alaska Conformal     |     |    |     |    |    |
+      24 Interrupted Goode    |     |    |     |    |    |
+      25 Mollweide            |     |    |     |    |    |
+      26 Interrupt Mollweide  |     |    |     |    |    |
+      27 Hammer               |     |    |     |    |    |
+      28 Wagner IV            |     |    |     |    |    |
+      29 Wagner VII           |     |    |     |    |    |
+      30 Oblated Equal Area   |Angle|    |     |    |    |
+      ----------------------------------------------------
+
+  where
+
+   Lon/Z     Longitude of any point in the UTM zone or zero.  If zero,
+             a zone code must be specified.
+   Lat/Z     Latitude of any point in the UTM zone or zero.  If zero, a
+             zone code must be specified.
+   SMajor    Semi-major axis of ellipsoid.  If zero, Clarke 1866 in meters
+             is assumed.
+   SMinor    Eccentricity squared of the ellipsoid if less than zero,
+             if zero, a spherical form is assumed, or if greater than
+             zero, the semi-minor axis of ellipsoid.
+   Sphere    Radius of reference sphere.  If zero, 6370997 meters is used.
+   STDPAR    Latitude of the standard parallel
+   STDPR1    Latitude of the first standard parallel
+   STDPR2    Latitude of the second standard parallel
+   CentMer   Longitude of the central meridian
+   OriginLat Latitude of the projection origin
+   FE        False easting in the same units as the semi-major axis
+   FN        False northing in the same units as the semi-major axis
+   TrueScale Latitude of true scale
+   LongPol   Longitude down below pole of map
+   Factor    Scale factor at central meridian (Transverse Mercator) or
+             center of projection (Hotine Oblique Mercator)
+   CentLon   Longitude of center of projection
+   CenterLat Latitude of center of projection
+   Height    Height of perspective point
+   Long1     Longitude of first point on center line (Hotine Oblique
+             Mercator, format A)
+   Long2     Longitude of second point on center line (Hotine Oblique
+             Mercator, format A)
+   Lat1      Latitude of first point on center line (Hotine Oblique
+             Mercator, format A)
+   Lat2      Latitude of second point on center line (Hotine Oblique
+             Mercator, format A)
+   AziAng    Azimuth angle east of north of center line (Hotine Oblique
+             Mercator, format B)
+   AzmthPt   Longitude of point on central meridian where azimuth occurs
+             (Hotine Oblique Mercator, format B)
+   IncAng    Inclination of orbit at ascending node, counter-clockwise
+             from equator (SOM, format A)
+   AscLong   Longitude of ascending orbit at equator (SOM, format A)
+   PSRev     Period of satellite revolution in minutes (SOM, format A)
+   LRat      Landsat ratio to compensate for confusion at northern end
+             of orbit (SOM, format A -- use 0.5201613)
+   PFlag     End of path flag for Landsat:  0 = start of path,
+             1 = end of path (SOM, format A)
+   Satnum    Landsat Satellite Number (SOM, format B)
+   Path      Landsat Path Number (Use WRS-1 for Landsat 1, 2 and 3 and
+             WRS-2 for Landsat 4, 5 and 6.)  (SOM, format B)
+   Shapem    Oblated Equal Area oval shape parameter m
+   Shapen    Oblated Equal Area oval shape parameter n
+   Angle     Oblated Equal Area oval rotation angle
+
+Array elements 13 and 14 are set to zero. All array elements with blank
+fields are set to zero too.
+\endverbatim
+
+@param iDatum Input spheroid.<p>
+
+If the datum code is negative, the first two values in the parameter array
+(param) are used to define the values as follows:
+
+<ul>
+
+<li> If padfPrjParams[0] is a non-zero value and padfPrjParams[1] is
+greater than one, the semimajor axis is set to padfPrjParams[0] and
+the semiminor axis is set to padfPrjParams[1].
+
+<li> If padfPrjParams[0] is nonzero and padfPrjParams[1] is greater than
+zero but less than or equal to one, the semimajor axis is set to
+padfPrjParams[0] and the semiminor axis is computed from the eccentricity
+squared value padfPrjParams[1]:<p>
+
+semiminor = sqrt(1.0 - ES)semimajor<p>
+
+where<p>
+
+ES = eccentricity squared
+
+<li> If padfPrjParams[0] is nonzero and padfPrjParams[1] is equal to zero,
+the semimajor axis and semiminor axis are set to padfPrjParams[0].
+
+<li> If padfPrjParams[0] equals zero and padfPrjParams[1] is greater than
+zero, the default Clarke 1866 is used to assign values to the semimajor
+axis and semiminor axis.
+
+<li> If padfPrjParams[0] and padfPrjParams[1] equals zero, the semimajor
+axis is set to 6370997.0 and the semiminor axis is set to zero.
+
+</ul>
+
+If a datum code is zero or greater, the semimajor and semiminor axis are
+defined by the datum code as found in the following table:
+
+Supported Datums are:
+<ul>
+<li>0: Clarke 1866 (default)
+<li>1: Clarke 1880
+<li>2: Bessel
+<li>3: International 1967
+<li>4: International 1909
+<li>5: WGS 72
+<li>6: Everest
+<li>7: WGS 66
+<li>8: GRS 1980/WGS 84
+<li>9: Airy
+<li>10: Modified Everest
+<li>11: Modified Airy
+<li>12: WGS 84
+<li>13: Southeast Asia
+<li>14: Australian National
+<li>15: Krassovsky
+<li>16: Hough
+<li>17: Mercury 1960
+<li>18: Modified Mercury 1968
+<li>19: Sphere of Radius 6370997 meters
+</ul>
+
+@param nUSGSAngleFormat one of USGS_ANGLE_DECIMALDEGREES,
+   USGS_ANGLE_PACKEDDMS, or USGS_ANGLE_RADIANS (default is
+   USGS_ANGLE_PACKEDDMS).
+
+@return OGRERR_NONE on success or an error code in case of failure.
  */
 
 OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
@@ -427,7 +428,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
     if( !padfPrjParams )
         return OGRERR_CORRUPT_DATA;
 
-    double (*pfnUnpackAnglesFn)(double) = NULL;
+    double (*pfnUnpackAnglesFn)(double) = nullptr;
 
     if( nUSGSAngleFormat == USGS_ANGLE_DECIMALDEGREES )
         pfnUnpackAnglesFn = OGRSpatialReferenceUSGSUnpackNoOp;
@@ -465,6 +466,9 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                             bNorth = FALSE;
                     }
                 }
+
+                if( iZone < -60 || iZone > 60 )
+                    return OGRERR_CORRUPT_DATA;
 
                 if( iZone < 0 )
                 {
@@ -676,7 +680,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
 
     if( !IsLocal() )
     {
-        char *pszName = NULL;
+        char *pszName = nullptr;
         double dfSemiMajor = 0.0;
         double dfInvFlattening = 0.0;
 
@@ -702,7 +706,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                 SetGeogCS( "Unknown datum based upon the custom spheroid",
                            "Not specified (based on custom spheroid)",
                            "Custom spheroid", padfPrjParams[0], dfInvFlattening,
-                           NULL, 0, NULL, 0 );
+                           nullptr, 0, nullptr, 0 );
             }
             else if( padfPrjParams[1] > 0.0 )  // Clarke 1866.
             {
@@ -716,7 +720,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                                     "Not specified (based on %s spheroid)",
                                     pszName ),
                                pszName, dfSemiMajor, dfInvFlattening,
-                               NULL, 0.0, NULL, 0.0 );
+                               nullptr, 0.0, nullptr, 0.0 );
                     SetAuthority( "SPHEROID", "EPSG", 7008 );
                 }
             }
@@ -732,7 +736,7 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                                     "Not specified (based on %s spheroid)",
                                     pszName ),
                                pszName, dfSemiMajor, dfInvFlattening,
-                               NULL, 0.0, NULL, 0.0 );
+                               nullptr, 0.0, nullptr, 0.0 );
                     SetAuthority( "SPHEROID", "EPSG", 7047 );
                 }
             }
@@ -750,14 +754,13 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
                                "Not specified (based on %s spheroid)",
                                pszName),
                            pszName, dfSemiMajor, dfInvFlattening,
-                           NULL, 0.0, NULL, 0.0 );
+                           nullptr, 0.0, nullptr, 0.0 );
                 SetAuthority( "SPHEROID", "EPSG", aoEllips[iDatum] );
             }
             else
             {
                 CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to lookup datum code %d, likely due to "
-                          "missing GDAL gcs.csv file.  "
+                          "Failed to lookup datum code %d. "
                           "Falling back to use WGS84.",
                           static_cast<int>(iDatum) );
                 SetWellKnownGeogCS("WGS84");
@@ -781,8 +784,6 @@ OGRErr OGRSpatialReference::importFromUSGS( long iProjSys, long iZone,
     if( IsLocal() || IsProjected() )
         SetLinearUnits( SRS_UL_METER, 1.0 );
 
-    FixupOrdering();
-
     return OGRERR_NONE;
 }
 
@@ -802,9 +803,9 @@ OGRErr OSRExportToUSGS( OGRSpatialReferenceH hSRS,
 {
     VALIDATE_POINTER1( hSRS, "OSRExportToUSGS", OGRERR_FAILURE );
 
-    *ppadfPrjParams = NULL;
+    *ppadfPrjParams = nullptr;
 
-    return ((OGRSpatialReference *) hSRS)->exportToUSGS( piProjSys, piZone,
+    return OGRSpatialReference::FromHandle(hSRS)->exportToUSGS( piProjSys, piZone,
                                                          ppadfPrjParams,
                                                          piDatum );
 }
@@ -856,7 +857,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
     if( IsLocal() )
         *piProjSys = GEO;
 
-    else if( pszProjection == NULL )
+    else if( pszProjection == nullptr )
     {
 #ifdef DEBUG
         CPLDebug( "OSR_USGS",
@@ -1178,7 +1179,7 @@ OGRErr OGRSpatialReference::exportToUSGS( long *piProjSys, long *piZone,
                 double dfSM = 0.0;
                 double dfIF = 0.0;
 
-                if( OSRGetEllipsoidInfo( aoEllips[i], NULL,
+                if( OSRGetEllipsoidInfo( aoEllips[i], nullptr,
                                          &dfSM, &dfIF ) == OGRERR_NONE
                     && CPLIsEqual( dfSemiMajor, dfSM )
                     && CPLIsEqual( dfInvFlattening, dfIF ) )

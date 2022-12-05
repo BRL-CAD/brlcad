@@ -1,0 +1,196 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDAL_MERGE" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdal_merge \- Mosaics a set of images.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_merge.py [\-o out_filename] [\-of out_format] [\-co NAME=VALUE]*
+              [\-ps pixelsize_x pixelsize_y] [\-tap] [\-separate] [\-q] [\-v] [\-pct]
+              [\-ul_lr ulx uly lrx lry] [\-init "value [value...]"]
+              [\-n nodata_value] [\-a_nodata output_nodata_value]
+              [\-ot datatype] [\-createonly] input_files
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+This utility will automatically mosaic a set of images.  All the images must
+be in the same coordinate system and have a matching number of bands, but
+they may be overlapping, and at different resolutions. In areas of overlap,
+the last image will be copied over earlier ones. Nodata/transparency values
+are considered on a band by band level, i.e. a nodata/transparent pixel on
+one source band will not set a nodata/transparent value on all bands for the
+target pixel in the resulting raster nor will it overwrite a valid pixel value.
+.INDENT 0.0
+.TP
+.B \-o <out_filename>
+The name of the output file,
+which will be created if it does not already exist (defaults to "out.tif").
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-of <format>
+Select the output format. Starting with GDAL 2.3, if not specified, the
+format is guessed from the extension (previously was GTiff). Use the short
+format name.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-co <NAME=VALUE>
+Many formats have one or more optional creation options that can be
+used to control particulars about the file created. For instance,
+the GeoTIFF driver supports creation options to control compression,
+and whether the file should be tiled.
+.sp
+The creation options available vary by format driver, and some
+simple formats have no creation options at all. A list of options
+supported for a format can be listed with the
+\fI\%\-\-formats\fP
+command line option but the documentation for the format is the
+definitive source of information on driver creation options.
+See \fI\%Raster drivers\fP format
+specific documentation for legal creation options for each format.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ot <type>
+Force the output image bands to have a specific data type supported by the
+driver, which may be one of the following: \fBByte\fP, \fBUInt16\fP,
+\fBInt16\fP, \fBUInt32\fP, \fBInt32\fP, \fBFloat32\fP, \fBFloat64\fP, \fBCInt16\fP,
+\fBCInt32\fP, \fBCFloat32\fP or \fBCFloat64\fP\&.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ps <pixelsize_x> <pixelsize_y>
+Pixel size to be used for the
+output file.  If not specified the resolution of the first input file will
+be used.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-tap
+(target aligned pixels) align
+the coordinates of the extent of the output file to the values of the \-tr,
+such that the aligned extent includes the minimum extent.
+Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-ul_lr <ulx> <uly> <lrx> <lry>
+The extents of the output file.
+If not specified the aggregate extents of all input files will be
+used.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-v
+Generate verbose output of mosaicing operations as they are done.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-separate
+Place each input file into a separate band.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-pct
+Grab a pseudo\-color table from the first input image, and use it for the output.
+Merging pseudo\-colored images this way assumes that all input files use the same
+color table.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-n <nodata_value>
+Ignore pixels from files being merged in with this pixel value.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_nodata <output_nodata_value>
+Assign a specified nodata value to output bands.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-init <"value(s)">
+Pre\-initialize the output image bands with these values.  However, it is not
+marked as the nodata value in the output file.  If only one value is given, the
+same value is used in all the bands.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-createonly
+The output file is created (and potentially pre\-initialized) but no input
+image data is copied into it.
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+gdal_merge.py is a Python script, and will only work if GDAL was built
+with Python support.
+.UNINDENT
+.UNINDENT
+.SH EXAMPLE
+.sp
+Create an image with the pixels in all bands initialized to 255.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_merge.py \-init 255 \-o out.tif in1.tif in2.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.sp
+Create an RGB image that shows blue in pixels with no data. The first two bands
+will be initialized to 0 and the third band will be initialized to 255.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdal_merge.py \-init "0 0 255" \-o out.tif in1.tif in2.tif
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Frank Warmerdam <warmerdam@pobox.com>, Silke Reimer <silke@intevation.de>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

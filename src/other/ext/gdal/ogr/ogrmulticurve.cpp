@@ -36,7 +36,7 @@
 #include "ogr_core.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                            OGRMultiCurve()                           */
@@ -46,7 +46,7 @@ CPL_CVSID("$Id$");
  * \brief Create an empty multi curve collection.
  */
 
-OGRMultiCurve::OGRMultiCurve() {}
+OGRMultiCurve::OGRMultiCurve() = default;
 
 /************************************************************************/
 /*                OGRMultiCurve( const OGRMultiCurve& )                 */
@@ -61,15 +61,13 @@ OGRMultiCurve::OGRMultiCurve() {}
  * @since GDAL 2.1
  */
 
-OGRMultiCurve::OGRMultiCurve( const OGRMultiCurve& other ) :
-    OGRGeometryCollection(other)
-{}
+OGRMultiCurve::OGRMultiCurve( const OGRMultiCurve& ) = default;
 
 /************************************************************************/
 /*                           ~OGRMultiCurve()                           */
 /************************************************************************/
 
-OGRMultiCurve::~OGRMultiCurve() {}
+OGRMultiCurve::~OGRMultiCurve() = default;
 
 /************************************************************************/
 /*                  operator=( const OGRMultiCurve&)                    */
@@ -91,6 +89,16 @@ OGRMultiCurve& OGRMultiCurve::operator=( const OGRMultiCurve& other )
         OGRGeometryCollection::operator=( other );
     }
     return *this;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRMultiCurve *OGRMultiCurve::clone() const
+
+{
+    return new (std::nothrow) OGRMultiCurve(*this);
 }
 
 /************************************************************************/
@@ -148,12 +156,7 @@ OGRBoolean OGRMultiCurve::isCompatibleSubType(
 OGRErr OGRMultiCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
                                                OGRCurve* poCurve )
 {
-    OGRMultiCurve *poGeometry = dynamic_cast<OGRMultiCurve *>(poSelf);
-    if( poGeometry == NULL )
-    {
-        return OGRERR_FAILURE;
-    }
-    return poGeometry->addGeometryDirectly(poCurve);
+    return poSelf->toMultiCurve()->addGeometryDirectly(poCurve);
 }
 /*! @endcond */
 
@@ -163,7 +166,7 @@ OGRErr OGRMultiCurve::addCurveDirectlyFromWkt( OGRGeometry* poSelf,
 /*      Instantiate from well known text format.                        */
 /************************************************************************/
 
-OGRErr OGRMultiCurve::importFromWkt( char ** ppszInput )
+OGRErr OGRMultiCurve::importFromWkt( const char ** ppszInput )
 
 {
     const bool bIsMultiCurve = wkbFlatten(getGeometryType()) == wkbMultiCurve;
@@ -179,11 +182,11 @@ OGRErr OGRMultiCurve::importFromWkt( char ** ppszInput )
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-OGRErr OGRMultiCurve::exportToWkt( char ** ppszDstText,
-                                   OGRwkbVariant /* eWkbVariant */ ) const
-
+std::string OGRMultiCurve::exportToWkt(const OGRWktOptions& opts, OGRErr *err) const
 {
-    return exportToWktInternal( ppszDstText, wkbVariantIso, "LINESTRING" );
+    OGRWktOptions optsModified(opts);
+    optsModified.variant = wkbVariantIso;
+    return exportToWktInternal(optsModified, err, "LINESTRING");
 }
 
 /************************************************************************/
@@ -218,21 +221,16 @@ OGRBoolean OGRMultiCurve::hasCurveGeometry( int bLookForNonLinear ) const
 
 OGRMultiLineString* OGRMultiCurve::CastToMultiLineString( OGRMultiCurve* poMC )
 {
-    for( int i = 0; i < poMC->nGeomCount; ++i )
+    for( auto&& poSubGeom: *poMC )
     {
-        OGRCurve * const poCurve = dynamic_cast<OGRCurve *>(poMC->papoGeoms[i]);
-        if( poCurve == NULL ) {
-            CPLError(
-                  CE_Fatal, CPLE_AssertionFailed, "dynamic_cast failed." );
-            continue;
-        }
-        poMC->papoGeoms[i] = OGRCurve::CastToLineString( poCurve );
-        if( poMC->papoGeoms[i] == NULL )
+        poSubGeom = OGRCurve::CastToLineString( poSubGeom );
+        if( poSubGeom == nullptr )
         {
             delete poMC;
-            return NULL;
+            return nullptr;
         }
     }
-    return dynamic_cast<OGRMultiLineString *>(
-        TransferMembersAndDestroy(poMC, new OGRMultiLineString()) );
+    OGRMultiLineString* poMLS = new OGRMultiLineString();
+    TransferMembersAndDestroy(poMC, poMLS);
+    return poMLS;
 }

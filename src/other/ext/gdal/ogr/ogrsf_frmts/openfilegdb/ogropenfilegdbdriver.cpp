@@ -2,10 +2,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Implements Open FileGDB OGR driver.
- * Author:   Even Rouault, <even dot rouault at mines-dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,9 +26,19 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogr_openfilegdb.h"
 
-CPL_CVSID("$Id$");
+#include <cstddef>
+#include <cstring>
+
+#include "cpl_conv.h"
+#include "cpl_vsi.h"
+#include "gdal.h"
+#include "gdal_priv.h"
+#include "ogr_core.h"
+
+CPL_CVSID("$Id$")
 
 // g++ -O2 -Wall -Wextra -g -shared -fPIC ogr/ogrsf_frmts/openfilegdb/*.cpp
 // -o ogr_OpenFileGDB.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts
@@ -81,8 +91,8 @@ static GDALIdentifyEnum OGROpenFileGDBDriverIdentifyInternal( GDALOpenInfo* poOp
              ENDS_WITH(pszFilename, nLen, ".gdb.tar") ||
                 /* Canvec GBs */
              (ENDS_WITH(pszFilename, nLen, ".zip") &&
-              (strstr(pszFilename, "_gdb") != NULL ||
-               strstr(pszFilename, "_GDB") != NULL)) )
+              (strstr(pszFilename, "_gdb") != nullptr ||
+               strstr(pszFilename, "_GDB") != nullptr)) )
     {
         return GDAL_IDENTIFY_TRUE;
     }
@@ -155,14 +165,14 @@ static GDALDataset* OGROpenFileGDBDriverOpen( GDALOpenInfo* poOpenInfo )
 
 {
     if( poOpenInfo->eAccess == GA_Update )
-        return NULL;
+        return nullptr;
 
     const char* pszFilename = poOpenInfo->pszFilename;
 #ifdef FOR_FUSIL
     CPLString osOrigFilename(pszFilename);
 #endif
     if( OGROpenFileGDBDriverIdentifyInternal( poOpenInfo, pszFilename ) == GDAL_IDENTIFY_FALSE )
-        return NULL;
+        return nullptr;
 
 #ifdef FOR_FUSIL
     const char* pszSrcDir = CPLGetConfigOption("FUSIL_SRC_DIR", NULL);
@@ -190,7 +200,7 @@ static GDALDataset* OGROpenFileGDBDriverOpen( GDALOpenInfo* poOpenInfo )
 
 #ifdef DEBUG
     /* For AFL, so that .cur_input is detected as the archive filename */
-    if( poOpenInfo->fpL != NULL &&
+    if( poOpenInfo->fpL != nullptr &&
         !STARTS_WITH(poOpenInfo->pszFilename, "/vsitar/") &&
         EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input") )
     {
@@ -203,13 +213,13 @@ static GDALDataset* OGROpenFileGDBDriverOpen( GDALOpenInfo* poOpenInfo )
 #endif
 
     OGROpenFileGDBDataSource* poDS = new OGROpenFileGDBDataSource();
-    if( poDS->Open( pszFilename ) )
+    if( poDS->Open( poOpenInfo ) )
     {
         return poDS;
     }
 
     delete poDS;
-    return NULL;
+    return nullptr;
 }
 
 /***********************************************************************/
@@ -222,7 +232,7 @@ void RegisterOGROpenFileGDB()
     if( !GDAL_CHECK_VERSION("OGR OpenFileGDB") )
         return;
 
-    if( GDALGetDriverByName( "OpenFileGDB" ) != NULL )
+    if( GDALGetDriverByName( "OpenFileGDB" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -231,8 +241,17 @@ void RegisterOGROpenFileGDB()
     poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME, "ESRI FileGDB" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "gdb" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_openfilegdb.html" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/vector/openfilegdb.html" );
     poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES" );
+    poDriver->SetMetadataItem( GDAL_DCAP_FIELD_DOMAINS, "YES" );
+
+    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList>"
+"  <Option name='LIST_ALL_TABLES' type='string-select' scope='vector' description='Whether all tables, including system and internal tables (such as GDB_* tables) should be listed' default='NO'>"
+"    <Value>YES</Value>"
+"    <Value>NO</Value>"
+"  </Option>"
+"</OpenOptionList>");
 
     poDriver->pfnOpen = OGROpenFileGDBDriverOpen;
     poDriver->pfnIdentify = OGROpenFileGDBDriverIdentify;

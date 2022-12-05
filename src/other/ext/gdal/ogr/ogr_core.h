@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2007-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,9 @@
 #define OGR_CORE_H_INCLUDED
 
 #include "cpl_port.h"
+#if defined(GDAL_COMPILATION)
+#define DO_NOT_DEFINE_GDAL_DATE_NAME
+#endif
 #include "gdal_version.h"
 
 /**
@@ -40,20 +43,21 @@
  * Core portability services for cross-platform OGR code.
  */
 
-/**
- * Simple container for a bounding region.
- */
-
-/*! @cond Doxygen_Suppress */
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 extern "C++"
 {
+#if !defined(DOXYGEN_SKIP)
 #include <limits>
+#endif
 
+/**
+ * Simple container for a bounding region (rectangle)
+ */
 class CPL_DLL OGREnvelope
 {
   public:
+        /** Default constructor. Defines an empty rectangle  */
         OGREnvelope() : MinX(std::numeric_limits<double>::infinity()),
                         MaxX(-std::numeric_limits<double>::infinity()),
                         MinY(std::numeric_limits<double>::infinity()),
@@ -61,26 +65,39 @@ class CPL_DLL OGREnvelope
         {
         }
 
+        /** Copy constructor */
         OGREnvelope(const OGREnvelope& oOther) :
             MinX(oOther.MinX),MaxX(oOther.MaxX), MinY(oOther.MinY), MaxY(oOther.MaxY)
         {
         }
 
+        /** Assignment operator */
+        OGREnvelope& operator=(const OGREnvelope&) = default;
+
+    /** Minimum X value */
     double      MinX;
+
+    /** Maximum X value */
     double      MaxX;
+
+    /** Minimum Y value */
     double      MinY;
+
+    /** Maximum Y value */
     double      MaxY;
 
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
+    /** Return whether the object has been initialized, that is, is non empty */
     int  IsInit() const { return MinX != std::numeric_limits<double>::infinity(); }
 
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
 
+    /** Update the current object by computing its union with the other rectangle */
     void Merge( OGREnvelope const& sOther ) {
         MinX = MIN(MinX,sOther.MinX);
         MaxX = MAX(MaxX,sOther.MaxX);
@@ -88,6 +105,7 @@ class CPL_DLL OGREnvelope
         MaxY = MAX(MaxY,sOther.MaxY);
     }
 
+    /** Update the current object by computing its union with the provided point */
     void Merge( double dfX, double dfY ) {
         MinX = MIN(MinX,dfX);
         MaxX = MAX(MaxX,dfX);
@@ -95,6 +113,7 @@ class CPL_DLL OGREnvelope
         MaxY = MAX(MaxY,dfY);
     }
 
+    /** Update the current object by computing its intersection with the other rectangle */
     void Intersect( OGREnvelope const& sOther ) {
         if(Intersects(sOther))
         {
@@ -119,20 +138,45 @@ class CPL_DLL OGREnvelope
         }
     }
 
+    /** Return whether the current object intersects with the other rectangle */
     int Intersects(OGREnvelope const& other) const
     {
         return MinX <= other.MaxX && MaxX >= other.MinX &&
                MinY <= other.MaxY && MaxY >= other.MinY;
     }
 
+    /** Return whether the current object contains the other rectangle */
     int Contains(OGREnvelope const& other) const
     {
         return MinX <= other.MinX && MinY <= other.MinY &&
                MaxX >= other.MaxX && MaxY >= other.MaxY;
     }
+
+    /** Return whether the current rectangle is equal to the other rectangle */
+    bool operator== (const OGREnvelope& other) const
+    {
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfloat-equal"
+#endif
+        return MinX == other.MinX &&
+               MinY == other.MinY &&
+               MaxX == other.MaxX &&
+               MaxY == other.MaxY;
+
+#ifdef HAVE_GCC_DIAGNOSTIC_PUSH
+#pragma GCC diagnostic pop
+#endif
+    }
+
+    /** Return whether the current rectangle is not equal to the other rectangle */
+    bool operator!= (const OGREnvelope& other) const
+    {
+        return !(*this == other);
+    }
 };
 
-} /* extern "C++" */
+} // extern "C++"
 
 #else
 typedef struct
@@ -144,41 +188,50 @@ typedef struct
 } OGREnvelope;
 #endif
 
-/**
- * Simple container for a bounding region in 3D.
- */
-
-#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS) && !defined(DOXYGEN_SKIP)
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 
 extern "C++" {
 
+/**
+ * Simple container for a bounding region in 3D.
+ */
 class CPL_DLL OGREnvelope3D : public OGREnvelope
 {
   public:
+        /** Default constructor. Defines an empty rectangle  */
         OGREnvelope3D() : OGREnvelope(),
                           MinZ(std::numeric_limits<double>::infinity()),
                           MaxZ(-std::numeric_limits<double>::infinity())
         {
         }
 
+        /** Copy constructor */
         OGREnvelope3D(const OGREnvelope3D& oOther) :
                             OGREnvelope(oOther),
                             MinZ(oOther.MinZ), MaxZ(oOther.MaxZ)
         {
         }
 
+        /** Assignment operator */
+        OGREnvelope3D& operator=(const OGREnvelope3D&) = default;
+
+    /** Minimum Z value */
     double      MinZ;
+
+    /** Maximum Z value */
     double      MaxZ;
 
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
+    /** Return whether the object has been initialized, that is, is non empty */
     int  IsInit() const { return MinX != std::numeric_limits<double>::infinity(); }
 #ifdef HAVE_GCC_DIAGNOSTIC_PUSH
 #pragma GCC diagnostic pop
 #endif
 
+    /** Update the current object by computing its union with the other rectangle */
     void Merge( OGREnvelope3D const& sOther ) {
         MinX = MIN(MinX,sOther.MinX);
         MaxX = MAX(MaxX,sOther.MaxX);
@@ -188,6 +241,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
         MaxZ = MAX(MaxZ,sOther.MaxZ);
     }
 
+    /** Update the current object by computing its union with the provided point */
     void Merge( double dfX, double dfY, double dfZ ) {
         MinX = MIN(MinX,dfX);
         MaxX = MAX(MaxX,dfX);
@@ -197,6 +251,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
         MaxZ = MAX(MaxZ,dfZ);
     }
 
+    /** Update the current object by computing its intersection with the other rectangle */
     void Intersect( OGREnvelope3D const& sOther ) {
         if(Intersects(sOther))
         {
@@ -225,6 +280,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
         }
     }
 
+    /** Return whether the current object intersects with the other rectangle */
     int Intersects(OGREnvelope3D const& other) const
     {
         return MinX <= other.MaxX && MaxX >= other.MinX &&
@@ -232,6 +288,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
                MinZ <= other.MaxZ && MaxZ >= other.MinZ;
     }
 
+    /** Return whether the current object contains the other rectangle */
     int Contains(OGREnvelope3D const& other) const
     {
         return MinX <= other.MinX && MinY <= other.MinY &&
@@ -240,7 +297,7 @@ class CPL_DLL OGREnvelope3D : public OGREnvelope
     }
 };
 
-} /* extern "C++" */
+} // extern "C++"
 
 #else
 typedef struct
@@ -253,7 +310,6 @@ typedef struct
     double      MaxZ;
 } OGREnvelope3D;
 #endif
-/*! @endcond */
 
 CPL_C_START
 
@@ -336,10 +392,10 @@ typedef enum
     wkbCurve = 13,          /**< Curve (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbSurface = 14,        /**< Surface (abstract type). ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbPolyhedralSurface = 15,/**< a contiguous collection of polygons, which share common boundary segments,
-                               *   ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+                               *   ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
     wkbTIN = 16,              /**< a PolyhedralSurface consisting only of Triangle patches
-                               *    ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTriangle = 17,         /**< a Triangle. ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+                               *    ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTriangle = 17,         /**< a Triangle. ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
 
     wkbNone = 100,          /**< non-standard, for pure attribute records */
     wkbLinearRing = 101,    /**< non-standard, just for createGeometry() */
@@ -351,9 +407,9 @@ typedef enum
     wkbMultiSurfaceZ = 1012,    /**< wkbMultiSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.0 */
     wkbCurveZ = 1013,           /**< wkbCurve with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbSurfaceZ = 1014,         /**< wkbSurface with Z component. ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTriangleZ = 1017,           /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbPolyhedralSurfaceZ = 1015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTINZ = 1016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTriangleZ = 1017,           /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
 
     wkbPointM = 2001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbLineStringM = 2002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -369,9 +425,9 @@ typedef enum
     wkbMultiSurfaceM = 2012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbCurveM = 2013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbSurfaceM = 2014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTINM = 2016,                /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTriangleM = 2017,           /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbPolyhedralSurfaceM = 2015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTINM = 2016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTriangleM = 2017,           /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
 
     wkbPointZM = 3001,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbLineStringZM = 3002,         /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
@@ -387,10 +443,20 @@ typedef enum
     wkbMultiSurfaceZM = 3012,       /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbCurveZM = 3013,              /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
     wkbSurfaceZM = 3014,            /**< ISO SQL/MM Part 3. GDAL &gt;= 2.1 */
-    wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
-    wkbTriangleZM = 3017,           /**< ISO SQL/MM Part 3. Reserved in GDAL &gt;= 2.1 but not yet implemented */
+    wkbPolyhedralSurfaceZM = 3015,  /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTINZM = 3016,                /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
+    wkbTriangleZM = 3017,           /**< ISO SQL/MM Part 3. GDAL &gt;= 2.3 */
 
+#if defined(DOXYGEN_SKIP)
+    // Sphinx doesn't like 0x8000000x constants
+    wkbPoint25D = -2147483647, /**< 2.5D extension as per 99-402 */
+    wkbLineString25D = -2147483646, /**< 2.5D extension as per 99-402 */
+    wkbPolygon25D = -2147483645, /**< 2.5D extension as per 99-402 */
+    wkbMultiPoint25D = -2147483644, /**< 2.5D extension as per 99-402 */
+    wkbMultiLineString25D = -2147483643, /**< 2.5D extension as per 99-402 */
+    wkbMultiPolygon25D = -2147483642, /**< 2.5D extension as per 99-402 */
+    wkbGeometryCollection25D = -2147483641 /**< 2.5D extension as per 99-402 */
+#else
     wkbPoint25D = 0x80000001, /**< 2.5D extension as per 99-402 */
     wkbLineString25D = 0x80000002, /**< 2.5D extension as per 99-402 */
     wkbPolygon25D = 0x80000003, /**< 2.5D extension as per 99-402 */
@@ -398,7 +464,7 @@ typedef enum
     wkbMultiLineString25D = 0x80000005, /**< 2.5D extension as per 99-402 */
     wkbMultiPolygon25D = 0x80000006, /**< 2.5D extension as per 99-402 */
     wkbGeometryCollection25D = 0x80000007 /**< 2.5D extension as per 99-402 */
-
+#endif
 } OGRwkbGeometryType;
 
 /**
@@ -427,8 +493,13 @@ typedef enum
 #define wkb25DBit 0x80000000
 #endif
 
+#ifndef __cplusplus
 /** Return the 2D geometry type corresponding to the specified geometry type */
 #define wkbFlatten(x)  OGR_GT_Flatten((OGRwkbGeometryType)(x))
+#else
+/** Return the 2D geometry type corresponding to the specified geometry type */
+#define wkbFlatten(x)  OGR_GT_Flatten(static_cast<OGRwkbGeometryType>(x))
+#endif
 
 /** Return if the geometry type is a 3D geometry type
   * @since GDAL 2.0
@@ -478,7 +549,7 @@ OGRwkbGeometryType CPL_DLL OGR_GT_GetLinear( OGRwkbGeometryType eType );
 /** Enumeration to describe byte order */
 typedef enum
 {
-    wkbXDR = 0,         /**< MSB/Sun/Motoroloa: Most Significant Byte First   */
+    wkbXDR = 0,         /**< MSB/Sun/Motorola: Most Significant Byte First   */
     wkbNDR = 1          /**< LSB/Intel/Vax: Least Significant Byte First      */
 } OGRwkbByteOrder;
 
@@ -490,7 +561,7 @@ typedef enum
 
 #ifdef HACK_FOR_IBM_DB2_V72
 #  define DB2_V72_FIX_BYTE_ORDER(x) ((((x) & 0x31) == (x)) ? ((x) & 0x1) : (x))
-#  define DB2_V72_UNFIX_BYTE_ORDER(x) ((unsigned char) (OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER ? ((x) | 0x30) : (x)))
+#  define DB2_V72_UNFIX_BYTE_ORDER(x) CPL_STATIC_CAST(unsigned char, OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER ? ((x) | 0x30) : (x))
 #else
 #  define DB2_V72_FIX_BYTE_ORDER(x) (x)
 #  define DB2_V72_UNFIX_BYTE_ORDER(x) (x)
@@ -525,10 +596,23 @@ typedef enum
  */
 #define ALTER_DEFAULT_FLAG         0x10
 
+/** Alter field UNIQUE constraint.
+ * Used by OGR_L_AlterFieldDefn().
+ * @since GDAL 3.2
+ */
+#define ALTER_UNIQUE_FLAG         0x20
+
+/** Alter field domain name.
+ * Used by OGR_L_AlterFieldDefn().
+ * @since GDAL 3.3
+ */
+#define ALTER_DOMAIN_FLAG         0x40
+
+
 /** Alter all parameters of field definition.
  * Used by OGR_L_AlterFieldDefn().
  */
-#define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG | ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG)
+#define ALTER_ALL_FLAG             (ALTER_NAME_FLAG | ALTER_TYPE_FLAG | ALTER_WIDTH_PRECISION_FLAG | ALTER_NULLABLE_FLAG | ALTER_DEFAULT_FLAG | ALTER_UNIQUE_FLAG | ALTER_DOMAIN_FLAG)
 
 /** Validate that fields respect not-null constraints.
  * Used by OGR_F_Validate().
@@ -618,7 +702,15 @@ typedef enum
                                                         OFSTInt16 = 2,
     /** Single precision (32 bit) floating point. Only valid for OFTReal and OFTRealList. */
                                                         OFSTFloat32 = 3,
-                                                        OFSTMaxSubType = 3
+    /** JSON content. Only valid for OFTString.
+     * @since GDAL 2.4
+     */
+                                                        OFSTJSON = 4,
+    /** UUID string representation. Only valid for OFTString.
+     * @since GDAL 3.3
+     */
+                                                        OFSTUUID = 5,
+                                                        OFSTMaxSubType = 5
 } OGRFieldSubType;
 
 /**
@@ -634,6 +726,14 @@ typedef enum
 
 /** Special value for a unset FID */
 #define OGRNullFID            -1
+
+/* Special value for an unknown field type. This should only be used
+ * while reading a file. At the end of file any unknown types should
+ * be set to OFTString.
+*/
+/*! @cond Doxygen_Suppress */
+#define OGRUnknownType        static_cast<OGRFieldType>(-1)
+/*! @endcond */
 
 /** Special value set in OGRField.Set.nMarker1, nMarker2 and nMarker3 for
  *  a unset field.
@@ -710,8 +810,16 @@ typedef union {
 /*! @endcond */
 } OGRField;
 
+#ifdef __cplusplus
 /** Return the number of milliseconds from a datetime with decimal seconds */
-#define OGR_GET_MS(floatingpoint_sec)   (int)(((floatingpoint_sec) - (int)(floatingpoint_sec)) * 1000 + 0.5)
+inline int OGR_GET_MS(float fSec) {
+  if( CPLIsNan(fSec) ) return 0;
+  if( fSec >= 999 ) return 999;
+  if( fSec <= 0 ) return 0;
+  const float fValue = (fSec - static_cast<int>(fSec)) * 1000 + 0.5f;
+  return static_cast<int>(fValue);
+}
+#endif  // __cplusplus
 
 int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
                           int nOptions );
@@ -737,16 +845,22 @@ int CPL_DLL OGRParseDate( const char *pszInput, OGRField *psOutput,
 #define OLCCreateGeomField     "CreateGeomField"    /**< Layer capability for geometry field creation */
 #define OLCCurveGeometries     "CurveGeometries"    /**< Layer capability for curve geometries support */
 #define OLCMeasuredGeometries  "MeasuredGeometries" /**< Layer capability for measured geometries support */
+#define OLCRename              "Rename"             /**< Layer capability for a layer that supports Rename() */
 
 #define ODsCCreateLayer        "CreateLayer"        /**< Dataset capability for layer creation */
 #define ODsCDeleteLayer        "DeleteLayer"        /**< Dataset capability for layer deletion */
+/* Reserved:                   "RenameLayer" */
 #define ODsCCreateGeomFieldAfterCreateLayer   "CreateGeomFieldAfterCreateLayer" /**< Dataset capability for geometry field creation support */
 #define ODsCCurveGeometries    "CurveGeometries"    /**< Dataset capability for curve geometries support */
 #define ODsCTransactions       "Transactions"       /**< Dataset capability for dataset transcations */
 #define ODsCEmulatedTransactions "EmulatedTransactions" /**< Dataset capability for emulated dataset transactions */
 #define ODsCMeasuredGeometries "MeasuredGeometries"     /**< Dataset capability for measured geometries support */
 #define ODsCRandomLayerRead     "RandomLayerRead"   /**< Dataset capability for GetNextFeature() returning features from random layers */
+/* Note the unfortunate trailing space at the end of the string */
 #define ODsCRandomLayerWrite    "RandomLayerWrite " /**< Dataset capability for supporting CreateFeature on layer in random order */
+#define ODsCAddFieldDomain     "AddFieldDomain"     /**< Dataset capability for supporting AddFieldDomain() (at least partially) */
+#define ODsCDeleteFieldDomain  "DeleteFieldDomain"  /**< Dataset capability for supporting DeleteFieldDomain()*/
+#define ODsCUpdateFieldDomain  "UpdateFieldDomain"  /**< Dataset capability for supporting UpdateFieldDomain()*/
 
 #define ODrCCreateDataSource   "CreateDataSource"   /**< Driver capability for datasource creation */
 #define ODrCDeleteDataSource   "DeleteDataSource"   /**< Driver capability for datasource deletion */
@@ -872,14 +986,79 @@ typedef enum ogr_style_tool_param_label_id
     OGRSTLabelPriority  = 14, /**< Priority */
     OGRSTLabelStrikeout = 15, /**< Strike out */
     OGRSTLabelStretch   = 16, /**< Stretch */
-    OGRSTLabelAdjHor    = 17, /**< Horizontal adjustment */
-    OGRSTLabelAdjVert   = 18, /**< Vectical adjustment */
+    OGRSTLabelAdjHor    = 17, /**< OBSOLETE; do not use */
+    OGRSTLabelAdjVert   = 18, /**< OBSOLETE; do not use */
     OGRSTLabelHColor    = 19, /**< Highlight color */
     OGRSTLabelOColor    = 20, /**< Outline color */
 #ifndef DOXYGEN_SKIP
     OGRSTLabelLast      = 21
 #endif
 } OGRSTLabelParam;
+
+/* -------------------------------------------------------------------- */
+/*                          Field domains                               */
+/* -------------------------------------------------------------------- */
+
+/** Associates a code and a value
+ *
+ * @since GDAL 3.3
+ */
+typedef struct
+{
+    /** Code. Content should be of the type of the OGRFieldDomain */
+    char* pszCode;
+
+    /** Value. Might be NULL */
+    char* pszValue;
+} OGRCodedValue;
+
+/** Type of field domain.
+ *
+ * @since GDAL 3.3
+ */
+typedef enum
+{
+    /** Coded */
+    OFDT_CODED,
+    /** Range (min/max) */
+    OFDT_RANGE,
+    /** Glob (used by GeoPackage) */
+    OFDT_GLOB
+} OGRFieldDomainType;
+
+/** Split policy for field domains.
+ *
+ * When a feature is split in two, defines how the value of attributes
+ * following the domain are computed.
+ *
+ * @since GDAL 3.3
+ */
+typedef enum
+{
+    /** Default value */
+    OFDSP_DEFAULT_VALUE,
+    /** Duplicate */
+    OFDSP_DUPLICATE,
+    /** New values are computed by the ratio of their area/length compared to the area/length of the original feature */
+    OFDSP_GEOMETRY_RATIO
+} OGRFieldDomainSplitPolicy;
+
+/** Merge policy for field domains.
+ *
+ * When a feature is built by merging two features, defines how the value of
+ * attributes following the domain are computed.
+ *
+ * @since GDAL 3.3
+ */
+typedef enum
+{
+    /** Default value */
+    OFDMP_DEFAULT_VALUE,
+    /** Sum */
+    OFDMP_SUM,
+    /** New values are computed as the weighted average of the source values. */
+    OFDMP_GEOMETRY_WEIGHTED
+} OGRFieldDomainMergePolicy;
 
 /* ------------------------------------------------------------------- */
 /*                        Version checking                             */

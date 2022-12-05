@@ -3,10 +3,10 @@
  * Name:     cpl_virtualmem.cpp
  * Project:  CPL - Common Portability Library
  * Purpose:  Virtual memory
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  **********************************************************************
- * Copyright (c) 2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,7 +48,7 @@
 #include "cpl_error.h"
 #include "cpl_multiproc.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 #ifdef NDEBUG
 // Non NDEBUG: Ignore the result.
@@ -135,8 +135,8 @@ struct CPLVirtualMem
    - other things I've not identified
 */
 
-#define ALIGN_DOWN(p,pagesize) (void*)(((GUIntptr_t)(p)) / (pagesize) * (pagesize))
-#define ALIGN_UP(p,pagesize) (void*)(((GUIntptr_t)(p) + (pagesize) - 1) / (pagesize) * (pagesize))
+#define ALIGN_DOWN(p,pagesize) reinterpret_cast<void*>((reinterpret_cast<GUIntptr_t>(p)) / (pagesize) * (pagesize))
+#define ALIGN_UP(p,pagesize) reinterpret_cast<void*>((reinterpret_cast<GUIntptr_t>(p) + (pagesize) - 1) / (pagesize) * (pagesize))
 
 #define DEFAULT_PAGE_SIZE       (256*256)
 #define MAXIMUM_PAGE_SIZE       (32*1024*1024)
@@ -144,7 +144,7 @@ struct CPLVirtualMem
 // Linux Kernel limit.
 #define MAXIMUM_COUNT_OF_MAPPINGS   65536
 
-#define BYEBYE_ADDR             ((void*)(~static_cast<size_t>(0)))
+#define BYEBYE_ADDR             (reinterpret_cast<void*>(~static_cast<size_t>(0)))
 
 #define MAPPING_FOUND           "yeah"
 #define MAPPING_NOT_FOUND       "doh!"
@@ -201,6 +201,7 @@ typedef struct
     int              pipefd_wait_thread[2];
     CPLJoinableThread *hHelperThread;
 
+    // Using sigaction without testing HAVE_SIGACTION since we are in a Linux specific code path
     struct sigaction oldact;
 } CPLVirtualMemManager;
 
@@ -212,8 +213,8 @@ typedef struct
 } CPLVirtualMemMsgToWorkerThread;
 
 // TODO: Singletons.
-static CPLVirtualMemManager* pVirtualMemManager = NULL;
-static CPLMutex* hVirtualMemManagerMutex = NULL;
+static CPLVirtualMemManager* pVirtualMemManager = nullptr;
+static CPLMutex* hVirtualMemManagerMutex = nullptr;
 
 static bool CPLVirtualMemManagerInit();
 
@@ -273,7 +274,7 @@ static bool CPLVirtualMemManagerRegisterVirtualMem( CPLVirtualMemVMA* ctxt )
             pVirtualMemManager->pasVirtualMem,
             sizeof(CPLVirtualMemVMA *) *
             (pVirtualMemManager->nVirtualMemCount + 1)));
-    if( pasVirtualMemNew == NULL )
+    if( pasVirtualMemNew == nullptr )
     {
         bSuccess = false;
     }
@@ -334,7 +335,7 @@ CPLVirtualMem* CPLVirtualMemNew( size_t nSize,
     size_t nPageSize = DEFAULT_PAGE_SIZE;
 
     IGNORE_OR_ASSERT_IN_DEBUG(nSize > 0);
-    IGNORE_OR_ASSERT_IN_DEBUG(pfnCachePage != NULL);
+    IGNORE_OR_ASSERT_IN_DEBUG(pfnCachePage != nullptr);
 
     if( nPageSizeHint >= nMinPageSize && nPageSizeHint <= MAXIMUM_PAGE_SIZE )
     {
@@ -368,10 +369,10 @@ CPLVirtualMem* CPLVirtualMemNew( size_t nSize,
     // Linux specific:
     // Count the number of existing memory mappings.
     FILE* f = fopen("/proc/self/maps", "rb");
-    if( f != NULL )
+    if( f != nullptr )
     {
         char buffer[80] = {};
-        while( fgets(buffer, sizeof(buffer), f) != NULL )
+        while( fgets(buffer, sizeof(buffer), f) != nullptr )
             nMappings++;
         fclose(f);
     }
@@ -390,17 +391,20 @@ CPLVirtualMem* CPLVirtualMemNew( size_t nSize,
     }
     size_t nRoundedMappingSize =
         ((nSize + 2 * nPageSize - 1) / nPageSize) * nPageSize;
-    void* pData = mmap(NULL, nRoundedMappingSize, PROT_NONE,
+    void* pData = mmap(nullptr, nRoundedMappingSize, PROT_NONE,
                        MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if( pData == MAP_FAILED )
     {
         perror("mmap");
-        return NULL;
+        return nullptr;
     }
     CPLVirtualMemVMA* ctxt = static_cast<CPLVirtualMemVMA *>(
         VSI_CALLOC_VERBOSE(1, sizeof(CPLVirtualMemVMA)));
-    if( ctxt == NULL )
-        return NULL;
+    if( ctxt == nullptr )
+    {
+        munmap(pData, nRoundedMappingSize);
+        return nullptr;
+    }
     ctxt->sBase.nRefCount = 1;
     ctxt->sBase.eType = VIRTUAL_MEM_TYPE_VMA;
     ctxt->sBase.eAccessMode = eAccessMode;
@@ -414,30 +418,30 @@ CPLVirtualMem* CPLVirtualMemNew( size_t nSize,
 
     ctxt->pabitMappedPages = static_cast<GByte *>(
         VSI_CALLOC_VERBOSE(1, (nRoundedMappingSize / nPageSize + 7) / 8));
-    if( ctxt->pabitMappedPages == NULL )
+    if( ctxt->pabitMappedPages == nullptr )
     {
         CPLVirtualMemFreeFileMemoryMapped(ctxt);
         CPLFree(ctxt);
-        return NULL;
+        return nullptr;
     }
     ctxt->pabitRWMappedPages = static_cast<GByte*>(
         VSI_CALLOC_VERBOSE(1, (nRoundedMappingSize / nPageSize + 7) / 8));
-    if( ctxt->pabitRWMappedPages == NULL )
+    if( ctxt->pabitRWMappedPages == nullptr )
     {
         CPLVirtualMemFreeFileMemoryMapped(ctxt);
         CPLFree(ctxt);
-        return NULL;
+        return nullptr;
     }
     // Need at least 2 pages in case for a rep movs instruction
     // that operate in the view.
     ctxt->nCacheMaxSizeInPages = static_cast<int>(nCacheMaxSizeInPages);
     ctxt->panLRUPageIndices = static_cast<int*>(
         VSI_MALLOC_VERBOSE(ctxt->nCacheMaxSizeInPages * sizeof(int)));
-    if( ctxt->panLRUPageIndices == NULL )
+    if( ctxt->panLRUPageIndices == nullptr )
     {
         CPLVirtualMemFreeFileMemoryMapped(ctxt);
         CPLFree(ctxt);
-        return NULL;
+        return nullptr;
     }
     ctxt->iLRUStart = 0;
     ctxt->nLRUSize = 0;
@@ -450,10 +454,10 @@ CPLVirtualMem* CPLVirtualMemNew( size_t nSize,
     if( !ctxt->sBase.bSingleThreadUsage )
     {
         ctxt->hMutexThreadArray = CPLCreateMutex();
-        IGNORE_OR_ASSERT_IN_DEBUG(ctxt->hMutexThreadArray != NULL);
+        IGNORE_OR_ASSERT_IN_DEBUG(ctxt->hMutexThreadArray != nullptr);
         CPLReleaseMutex(ctxt->hMutexThreadArray);
         ctxt->nThreads = 0;
-        ctxt->pahThreads = NULL;
+        ctxt->pahThreads = nullptr;
     }
 #endif
 
@@ -461,10 +465,10 @@ CPLVirtualMem* CPLVirtualMemNew( size_t nSize,
     {
         CPLVirtualMemFreeFileMemoryMapped(ctxt);
         CPLFree(ctxt);
-        return NULL;
+        return nullptr;
     }
 
-    return (CPLVirtualMem*) ctxt;
+    return reinterpret_cast<CPLVirtualMem*>(ctxt);
 }
 
 /************************************************************************/
@@ -479,8 +483,8 @@ static void CPLVirtualMemFreeFileMemoryMapped(CPLVirtualMemVMA* ctxt)
         ((ctxt->sBase.nSize + 2 * ctxt->sBase.nPageSize - 1) /
          ctxt->sBase.nPageSize) * ctxt->sBase.nPageSize;
     if( ctxt->sBase.eAccessMode == VIRTUALMEM_READWRITE &&
-        ctxt->pabitRWMappedPages != NULL &&
-        ctxt->pfnUnCachePage != NULL )
+        ctxt->pabitRWMappedPages != nullptr &&
+        ctxt->pfnUnCachePage != nullptr )
     {
         for( size_t i = 0;
              i < nRoundedMappingSize / ctxt->sBase.nPageSize;
@@ -488,8 +492,8 @@ static void CPLVirtualMemFreeFileMemoryMapped(CPLVirtualMemVMA* ctxt)
         {
             if( TEST_BIT(ctxt->pabitRWMappedPages, i) )
             {
-                void* addr = (char*)ctxt->sBase.pData + i * ctxt->sBase.nPageSize;
-                ctxt->pfnUnCachePage((CPLVirtualMem*)ctxt,
+                void* addr = static_cast<char*>(ctxt->sBase.pData) + i * ctxt->sBase.nPageSize;
+                ctxt->pfnUnCachePage(reinterpret_cast<CPLVirtualMem*>(ctxt),
                                  i * ctxt->sBase.nPageSize,
                                  addr,
                                  ctxt->sBase.nPageSize,
@@ -549,7 +553,7 @@ void CPLVirtualMemDeclareThread( CPLVirtualMem* ctxt )
     if( ctxt->eType == VIRTUAL_MEM_TYPE_FILE_MEMORY_MAPPED )
         return;
 #ifndef HAVE_5ARGS_MREMAP
-    CPLVirtualMemVMA* ctxtVMA = (CPLVirtualMemVMA* )ctxt;
+    CPLVirtualMemVMA* ctxtVMA = reinterpret_cast<CPLVirtualMemVMA *>(ctxt);
     IGNORE_OR_ASSERT_IN_DEBUG( !ctxt->bSingleThreadUsage );
     CPLAcquireMutex(ctxtVMA->hMutexThreadArray, 1000.0);
     ctxtVMA->pahThreads = static_cast<pthread_t *>(
@@ -571,7 +575,7 @@ void CPLVirtualMemUnDeclareThread( CPLVirtualMem* ctxt )
     if( ctxt->eType == VIRTUAL_MEM_TYPE_FILE_MEMORY_MAPPED )
         return;
 #ifndef HAVE_5ARGS_MREMAP
-    CPLVirtualMemVMA* ctxtVMA = (CPLVirtualMemVMA* )ctxt;
+    CPLVirtualMemVMA* ctxtVMA = reinterpret_cast<CPLVirtualMemVMA *>(ctxt);
     pthread_t self = pthread_self();
     IGNORE_OR_ASSERT_IN_DEBUG( !ctxt->bSingleThreadUsage );
     CPLAcquireMutex(ctxtVMA->hMutexThreadArray, 1000.0);
@@ -601,7 +605,7 @@ static
 void* CPLVirtualMemGetPageToFill( CPLVirtualMemVMA* ctxt,
                                   void* start_page_addr )
 {
-    void* pPageToFill = NULL;
+    void* pPageToFill = nullptr;
 
     if( ctxt->sBase.bSingleThreadUsage )
     {
@@ -628,7 +632,7 @@ void* CPLVirtualMemGetPageToFill( CPLVirtualMemVMA* ctxt,
         {
             // Allocate a temporary writable page that the user
             // callback can fill.
-            pPageToFill = mmap(NULL, ctxt->sBase.nPageSize,
+            pPageToFill = mmap(nullptr, ctxt->sBase.nPageSize,
                                 PROT_READ | PROT_WRITE,
                                 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
             IGNORE_OR_ASSERT_IN_DEBUG(pPageToFill != MAP_FAILED);
@@ -647,25 +651,25 @@ void CPLVirtualMemAddPage( CPLVirtualMemVMA* ctxt, void* target_addr,
                            OpType opType, pthread_t hRequesterThread )
 {
     const int iPage = static_cast<int>(
-       ((char*)target_addr - (char*)ctxt->sBase.pData) / ctxt->sBase.nPageSize);
+       (static_cast<char*>(target_addr) - static_cast<char*>(ctxt->sBase.pData)) / ctxt->sBase.nPageSize);
     if( ctxt->nLRUSize == ctxt->nCacheMaxSizeInPages )
     {
 #if defined DEBUG_VIRTUALMEM && defined DEBUG_VERBOSE
         fprintfstderr("uncaching page %d\n", iPage);
 #endif
         int nOldPage = ctxt->panLRUPageIndices[ctxt->iLRUStart];
-        void* addr = (char*)ctxt->sBase.pData + nOldPage * ctxt->sBase.nPageSize;
+        void* addr = static_cast<char*>(ctxt->sBase.pData) + nOldPage * ctxt->sBase.nPageSize;
         if( ctxt->sBase.eAccessMode == VIRTUALMEM_READWRITE &&
-            ctxt->pfnUnCachePage != NULL &&
+            ctxt->pfnUnCachePage != nullptr &&
             TEST_BIT(ctxt->pabitRWMappedPages, nOldPage) )
         {
             size_t nToBeEvicted = ctxt->sBase.nPageSize;
-            if( (char*)addr + nToBeEvicted >=
-                (char*)ctxt->sBase.pData + ctxt->sBase.nSize )
+            if( static_cast<char*>(addr) + nToBeEvicted >=
+                static_cast<char*>(ctxt->sBase.pData) + ctxt->sBase.nSize )
                 nToBeEvicted =
-                    (char*)ctxt->sBase.pData + ctxt->sBase.nSize - (char*)addr;
+                    static_cast<char*>(ctxt->sBase.pData) + ctxt->sBase.nSize - static_cast<char*>(addr);
 
-            ctxt->pfnUnCachePage((CPLVirtualMem*)ctxt,
+            ctxt->pfnUnCachePage(reinterpret_cast<CPLVirtualMem*>(ctxt),
                                  nOldPage * ctxt->sBase.nPageSize,
                                  addr,
                                  nToBeEvicted,
@@ -679,6 +683,7 @@ void CPLVirtualMemAddPage( CPLVirtualMemVMA* ctxt, void* target_addr,
         const void * const pRet = mmap(addr, ctxt->sBase.nPageSize, PROT_NONE,
                     MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
         IGNORE_OR_ASSERT_IN_DEBUG(pRet == addr);
+        // cppcheck-suppress memleak
     }
     ctxt->panLRUPageIndices[ctxt->iLRUStart] = iPage;
     ctxt->iLRUStart = (ctxt->iLRUStart + 1) % ctxt->nCacheMaxSizeInPages;
@@ -764,7 +769,7 @@ void CPLVirtualMemAddPage( CPLVirtualMemVMA* ctxt, void* target_addr,
                 usleep(1);
 
             /* Restore old SIGUSR1 signal handler */
-            IGNORE_OR_ASSERT_IN_DEBUG(sigaction(SIGUSR1, &oldact, NULL) == 0);
+            IGNORE_OR_ASSERT_IN_DEBUG(sigaction(SIGUSR1, &oldact, nullptr) == 0);
 
             int nRet = mprotect( target_addr, ctxt->sBase.nPageSize,
                                  PROT_READ | PROT_WRITE );
@@ -815,6 +820,7 @@ void CPLVirtualMemAddPage( CPLVirtualMemVMA* ctxt, void* target_addr,
         CPLReleaseMutex(ctxt->hMutexThreadArray);
 #endif
     }
+    // cppcheck-suppress memleak
 }
 
 /************************************************************************/
@@ -1583,12 +1589,12 @@ void CPLVirtualMemPin( CPLVirtualMem* ctxt,
     msg.hRequesterThread = pthread_self();
     msg.opType = (bWriteOp) ? OP_STORE : OP_LOAD;
 
-    char* pBase = (char*)ALIGN_DOWN(pAddr, ctxt->nPageSize);
+    char* pBase = reinterpret_cast<char*>(ALIGN_DOWN(pAddr, ctxt->nPageSize));
     const size_t n =
-        ((char*)pAddr - pBase + nSize + ctxt->nPageSize - 1) / ctxt->nPageSize;
+        (reinterpret_cast<char*>(pAddr) - pBase + nSize + ctxt->nPageSize - 1) / ctxt->nPageSize;
     for( size_t i = 0; i < n; i++ )
     {
-        msg.pFaultAddr = (char*) pBase + i * ctxt->nPageSize;
+        msg.pFaultAddr = reinterpret_cast<char*>(pBase) + i * ctxt->nPageSize;
         CPLVirtualMemManagerPinAddrInternal(&msg);
     }
 }
@@ -1623,7 +1629,7 @@ static void CPLVirtualMemManagerSIGSEGVHandler( int the_signal,
 
 #if defined(__x86_64__) || defined(__i386__)
     ucontext_t* the_ucontext = static_cast<ucontext_t *>(the_ctxt);
-    const GByte* rip = (const GByte*)the_ucontext->uc_mcontext.gregs[REG_IP];
+    const GByte* rip = reinterpret_cast<const GByte*>(the_ucontext->uc_mcontext.gregs[REG_IP]);
     msg.opType = CPLVirtualMemGetOpType(rip);
 #if defined DEBUG_VIRTUALMEM && defined DEBUG_VERBOSE
     fprintfstderr("at rip %p, bytes: %02x %02x %02x %02x\n",
@@ -1631,8 +1637,8 @@ static void CPLVirtualMemManagerSIGSEGVHandler( int the_signal,
 #endif
     if( msg.opType == OP_MOVS_RSI_RDI )
     {
-        void* rsi = (void*)the_ucontext->uc_mcontext.gregs[REG_SI];
-        void* rdi = (void*)the_ucontext->uc_mcontext.gregs[REG_DI];
+        void* rsi = reinterpret_cast<void*>(the_ucontext->uc_mcontext.gregs[REG_SI]);
+        void* rdi = reinterpret_cast<void*>(the_ucontext->uc_mcontext.gregs[REG_DI]);
 
 #if defined DEBUG_VIRTUALMEM && defined DEBUG_VERBOSE
         fprintfstderr("fault=%p rsi=%p rsi=%p\n", msg.pFaultAddr, rsi, rdi);
@@ -1700,7 +1706,7 @@ static void CPLVirtualMemManagerThread( void* /* unused_param */ )
     while( true )
     {
         char i_m_ready = 1;
-        CPLVirtualMemVMA* ctxt = NULL;
+        CPLVirtualMemVMA* ctxt = nullptr;
         bool bMappingFound = false;
         CPLVirtualMemMsgToWorkerThread msg;
 
@@ -1725,9 +1731,9 @@ static void CPLVirtualMemManagerThread( void* /* unused_param */ )
         for( int i=0; i < pVirtualMemManager->nVirtualMemCount; i++ )
         {
             ctxt = pVirtualMemManager->pasVirtualMem[i];
-            if( (char*)msg.pFaultAddr >= (char*) ctxt->sBase.pData &&
-                (char*)msg.pFaultAddr <
-                (char*)ctxt->sBase.pData + ctxt->sBase.nSize )
+            if( static_cast<char*>(msg.pFaultAddr) >= static_cast<char*>(ctxt->sBase.pData) &&
+                static_cast<char*>(msg.pFaultAddr) <
+                static_cast<char*>(ctxt->sBase.pData) + ctxt->sBase.nSize )
             {
                 bMappingFound = true;
                 break;
@@ -1738,11 +1744,11 @@ static void CPLVirtualMemManagerThread( void* /* unused_param */ )
         if( bMappingFound )
         {
             char * const start_page_addr =
-                reinterpret_cast<char*>(
+                static_cast<char*>(
                     ALIGN_DOWN(msg.pFaultAddr, ctxt->sBase.nPageSize));
             const int iPage = static_cast<int>(
-                ((char*)start_page_addr -
-                 (char*)ctxt->sBase.pData) / ctxt->sBase.nPageSize);
+                (static_cast<char*>(start_page_addr) -
+                 static_cast<char*>(ctxt->sBase.pData)) / ctxt->sBase.nPageSize);
 
             if( iPage == ctxt->iLastPage )
             {
@@ -1820,16 +1826,16 @@ static void CPLVirtualMemManagerThread( void* /* unused_param */ )
 
                     size_t nToFill = ctxt->sBase.nPageSize;
                     if( start_page_addr + nToFill >=
-                        (char*) ctxt->sBase.pData + ctxt->sBase.nSize )
+                        static_cast<char*>(ctxt->sBase.pData) + ctxt->sBase.nSize )
                     {
                         nToFill =
-                            (char*) ctxt->sBase.pData +
+                            static_cast<char*>(ctxt->sBase.pData) +
                             ctxt->sBase.nSize - start_page_addr;
                     }
 
                     ctxt->pfnCachePage(
-                            (CPLVirtualMem*)ctxt,
-                            start_page_addr - (char*) ctxt->sBase.pData,
+                            reinterpret_cast<CPLVirtualMem*>(ctxt),
+                            start_page_addr - static_cast<char*>(ctxt->sBase.pData),
                             pPageToFill,
                             nToFill,
                             ctxt->sBase.pCbkUserData);
@@ -1867,15 +1873,15 @@ static void CPLVirtualMemManagerThread( void* /* unused_param */ )
 static bool CPLVirtualMemManagerInit()
 {
     CPLMutexHolderD(&hVirtualMemManagerMutex);
-    if( pVirtualMemManager != NULL )
+    if( pVirtualMemManager != nullptr )
         return true;
 
     struct sigaction act;
     pVirtualMemManager = static_cast<CPLVirtualMemManager *>(
         VSI_MALLOC_VERBOSE(sizeof(CPLVirtualMemManager)) );
-    if( pVirtualMemManager == NULL )
+    if( pVirtualMemManager == nullptr )
         return false;
-    pVirtualMemManager->pasVirtualMem = NULL;
+    pVirtualMemManager->pasVirtualMem = nullptr;
     pVirtualMemManager->nVirtualMemCount = 0;
     int nRet = pipe(pVirtualMemManager->pipefd_to_thread);
     IGNORE_OR_ASSERT_IN_DEBUG(nRet == 0);
@@ -1893,11 +1899,11 @@ static bool CPLVirtualMemManagerInit()
 
     // Starts the helper thread.
     pVirtualMemManager->hHelperThread =
-            CPLCreateJoinableThread(CPLVirtualMemManagerThread, NULL);
-    if( pVirtualMemManager->hHelperThread == NULL )
+            CPLCreateJoinableThread(CPLVirtualMemManagerThread, nullptr);
+    if( pVirtualMemManager->hHelperThread == nullptr )
     {
         VSIFree(pVirtualMemManager);
-        pVirtualMemManager = NULL;
+        pVirtualMemManager = nullptr;
         return false;
     }
     return true;
@@ -1909,7 +1915,7 @@ static bool CPLVirtualMemManagerInit()
 
 void CPLVirtualMemManagerTerminate(void)
 {
-    if( pVirtualMemManager == NULL )
+    if( pVirtualMemManager == nullptr )
         return;
 
     CPLVirtualMemMsgToWorkerThread msg;
@@ -1934,8 +1940,8 @@ void CPLVirtualMemManagerTerminate(void)
     // Cleanup everything.
     while( pVirtualMemManager->nVirtualMemCount > 0 )
         CPLVirtualMemFree(
-            (CPLVirtualMem*)pVirtualMemManager->
-                pasVirtualMem[pVirtualMemManager->nVirtualMemCount - 1]);
+            reinterpret_cast<CPLVirtualMem*>(pVirtualMemManager->
+                pasVirtualMem[pVirtualMemManager->nVirtualMemCount - 1]));
     CPLFree(pVirtualMemManager->pasVirtualMem);
 
     close(pVirtualMemManager->pipefd_to_thread[0]);
@@ -1946,13 +1952,13 @@ void CPLVirtualMemManagerTerminate(void)
     close(pVirtualMemManager->pipefd_wait_thread[1]);
 
     // Restore previous handler.
-    sigaction(SIGSEGV, &pVirtualMemManager->oldact, NULL);
+    sigaction(SIGSEGV, &pVirtualMemManager->oldact, nullptr);
 
     CPLFree(pVirtualMemManager);
-    pVirtualMemManager = NULL;
+    pVirtualMemManager = nullptr;
 
     CPLDestroyMutex(hVirtualMemManagerMutex);
-    hVirtualMemManagerMutex = NULL;
+    hVirtualMemManagerMutex = nullptr;
 }
 
 #else  // HAVE_VIRTUAL_MEM_VMA
@@ -1971,7 +1977,7 @@ CPLVirtualMem *CPLVirtualMemNew(
     CPLError(CE_Failure, CPLE_NotSupported,
              "CPLVirtualMemNew() unsupported on "
              "this operating system / configuration");
-    return NULL;
+    return nullptr;
 }
 
 void CPLVirtualMemDeclareThread( CPLVirtualMem* /* ctxt */ ) {}
@@ -1997,7 +2003,7 @@ void CPLVirtualMemManagerTerminate( void ) {}
 static void CPLVirtualMemFreeFileMemoryMapped( CPLVirtualMem* ctxt )
 {
     const size_t nMappingSize =
-        ctxt->nSize + (GByte*)ctxt->pData - (GByte*)ctxt->pDataToFree;
+        ctxt->nSize + static_cast<GByte*>(ctxt->pData) - static_cast<GByte*>(ctxt->pDataToFree);
     const int nRet = munmap(ctxt->pDataToFree, nMappingSize);
     IGNORE_OR_ASSERT_IN_DEBUG(nRet == 0);
 }
@@ -2021,7 +2027,7 @@ CPLVirtualMemFileMapNew( VSILFILE* fp,
             CE_Failure, CPLE_AppDefined,
             "nLength = " CPL_FRMT_GUIB " incompatible with 32 bit architecture",
             nLength);
-        return NULL;
+        return nullptr;
     }
     if( nOffset + CPLGetPageSize() !=
         static_cast<vsi_l_offset>(
@@ -2031,28 +2037,28 @@ CPLVirtualMemFileMapNew( VSILFILE* fp,
                  "nOffset = " CPL_FRMT_GUIB
                  " incompatible with 32 bit architecture",
                  nOffset);
-        return NULL;
+        return nullptr;
     }
 #endif
 
-    int fd = static_cast<int>((GUIntptr_t) VSIFGetNativeFileDescriptorL(fp));
+    int fd = static_cast<int>(reinterpret_cast<GUIntptr_t>(VSIFGetNativeFileDescriptorL(fp)));
     if( fd == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot operate on a virtual file");
-        return NULL;
+        return nullptr;
     }
 
     const off_t nAlignedOffset =
         static_cast<off_t>((nOffset / CPLGetPageSize()) * CPLGetPageSize());
-    size_t nAligment = static_cast<size_t>(nOffset - nAlignedOffset);
-    size_t nMappingSize = static_cast<size_t>(nLength + nAligment);
+    size_t nAlignment = static_cast<size_t>(nOffset - nAlignedOffset);
+    size_t nMappingSize = static_cast<size_t>(nLength + nAlignment);
 
     // Need to ensure that the requested extent fits into the file size
     // otherwise SIGBUS errors will occur when using the mapping.
     vsi_l_offset nCurPos = VSIFTellL(fp);
     if( VSIFSeekL(fp, 0, SEEK_END) != 0 )
-        return NULL;
+        return nullptr;
     vsi_l_offset nFileSize = VSIFTellL(fp);
     if( nFileSize < nOffset + nLength )
     {
@@ -2061,7 +2067,7 @@ CPLVirtualMemFileMapNew( VSILFILE* fp,
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Trying to map an extent outside of the file");
             CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nCurPos, SEEK_SET));
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -2072,19 +2078,19 @@ CPLVirtualMemFileMapNew( VSILFILE* fp,
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Cannot extend file to mapping size");
                 CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nCurPos, SEEK_SET));
-                return NULL;
+                return nullptr;
             }
         }
     }
     if( VSIFSeekL(fp, nCurPos, SEEK_SET) != 0 )
-        return NULL;
+        return nullptr;
 
     CPLVirtualMem* ctxt = static_cast<CPLVirtualMem *>(
         VSI_CALLOC_VERBOSE(1, sizeof(CPLVirtualMem)));
-    if( ctxt == NULL )
-        return NULL;
+    if( ctxt == nullptr )
+        return nullptr;
 
-    void* addr = mmap(NULL, nMappingSize,
+    void* addr = mmap(nullptr, nMappingSize,
                       eAccessMode == VIRTUALMEM_READWRITE
                       ? PROT_READ | PROT_WRITE : PROT_READ,
                       MAP_SHARED, fd, nAlignedOffset);
@@ -2096,13 +2102,13 @@ CPLVirtualMemFileMapNew( VSILFILE* fp,
         VSIFree(ctxt);
         // cppcheck thinks we are leaking addr.
         // cppcheck-suppress memleak
-        return NULL;
+        return nullptr;
     }
 
     ctxt->eType = VIRTUAL_MEM_TYPE_FILE_MEMORY_MAPPED;
     ctxt->nRefCount = 1;
     ctxt->eAccessMode = eAccessMode;
-    ctxt->pData = static_cast<GByte *>(addr) + nAligment;
+    ctxt->pData = static_cast<GByte *>(addr) + nAlignment;
     ctxt->pDataToFree = addr;
     ctxt->nSize = static_cast<size_t>(nLength);
     ctxt->nPageSize = CPLGetPageSize();
@@ -2126,7 +2132,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew(
     CPLError(CE_Failure, CPLE_NotSupported,
              "CPLVirtualMemFileMapNew() unsupported on this "
              "operating system / configuration");
-    return NULL;
+    return nullptr;
 }
 
 #endif  // HAVE_MMAP
@@ -2163,13 +2169,13 @@ int CPLIsVirtualMemFileMapAvailable( void )
 
 void CPLVirtualMemFree( CPLVirtualMem* ctxt )
 {
-    if( ctxt == NULL || --(ctxt->nRefCount) > 0 )
+    if( ctxt == nullptr || --(ctxt->nRefCount) > 0 )
         return;
 
-    if( ctxt->pVMemBase != NULL )
+    if( ctxt->pVMemBase != nullptr )
     {
         CPLVirtualMemFree(ctxt->pVMemBase);
-        if( ctxt->pfnFreeUserData != NULL )
+        if( ctxt->pfnFreeUserData != nullptr )
             ctxt->pfnFreeUserData(ctxt->pCbkUserData);
         CPLFree(ctxt);
         return;
@@ -2185,7 +2191,7 @@ void CPLVirtualMemFree( CPLVirtualMem* ctxt )
           reinterpret_cast<CPLVirtualMemVMA*>(ctxt));
 #endif
 
-    if( ctxt->pfnFreeUserData != NULL )
+    if( ctxt->pfnFreeUserData != nullptr )
         ctxt->pfnFreeUserData(ctxt->pCbkUserData);
     CPLFree(ctxt);
 }
@@ -2256,12 +2262,12 @@ CPLVirtualMem *CPLVirtualMemDerivedNew(
     void *pCbkUserData )
 {
     if( nOffset + nSize > pVMemBase->nSize )
-        return NULL;
+        return nullptr;
 
     CPLVirtualMem* ctxt = static_cast<CPLVirtualMem *>(
         VSI_CALLOC_VERBOSE(1, sizeof(CPLVirtualMem)));
-    if( ctxt == NULL )
-        return NULL;
+    if( ctxt == nullptr )
+        return nullptr;
 
     ctxt->eType = pVMemBase->eType;
     ctxt->nRefCount = 1;
@@ -2269,7 +2275,7 @@ CPLVirtualMem *CPLVirtualMemDerivedNew(
     pVMemBase->nRefCount++;
     ctxt->eAccessMode = pVMemBase->eAccessMode;
     ctxt->pData = static_cast<GByte *>(pVMemBase->pData) + nOffset;
-    ctxt->pDataToFree = NULL;
+    ctxt->pDataToFree = nullptr;
     ctxt->nSize = static_cast<size_t>(nSize);
     ctxt->nPageSize = pVMemBase->nPageSize;
     ctxt->bSingleThreadUsage = CPL_TO_BOOL(pVMemBase->bSingleThreadUsage);

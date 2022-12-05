@@ -1,0 +1,262 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "GDALINFO" "1" "Jun 30, 2022" "" "GDAL"
+.SH NAME
+gdalinfo \- Lists various information about a GDAL supported raster dataset
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdalinfo [\-\-help\-general] [\-json] [\-mm] [\-stats | \-approx_stats] [\-hist] [\-nogcp] [\-nomd]
+         [\-norat] [\-noct] [\-nofl] [\-checksum] [\-proj4]
+         [\-listmdd] [\-mdd domain|\(gaall\(ga]* [\-wkt_format WKT1|WKT2|...]
+         [\-sd subdataset] [\-oo NAME=VALUE]* [\-if format]* datasetname
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+\fBgdalinfo\fP program lists various information about a GDAL supported
+raster dataset.
+.sp
+The following command line parameters can appear in any order
+.INDENT 0.0
+.TP
+.B \-json
+Display the output in json format.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-mm
+Force computation of the actual min/max values for each band in the
+dataset.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-stats
+Read and display image statistics. Force computation if no
+statistics are stored in an image.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-approx_stats
+Read and display image statistics. Force computation if no
+statistics are stored in an image. However, they may be computed
+based on overviews or a subset of all tiles. Useful if you are in a
+hurry and don\(aqt want precise stats.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-hist
+Report histogram information for all bands.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-nogcp
+Suppress ground control points list printing. It may be useful for
+datasets with huge amount of GCPs, such as L1B AVHRR or HDF4 MODIS
+which contain thousands of them.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-nomd
+Suppress metadata printing. Some datasets may contain a lot of
+metadata strings.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-norat
+Suppress printing of raster attribute table.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-noct
+Suppress printing of color table.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-checksum
+Force computation of the checksum for each band in the dataset.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-listmdd
+List all metadata domains available for the dataset.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-mdd <domain>|all
+adds metadata using:
+.sp
+\fBdomain\fP Report metadata for the specified domain.
+.sp
+\fBall\fP Report metadata for all domains.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-nofl
+Only display the first file of the file list.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-wkt_format WKT1|WKT2|WKT2_2015|WKT2_2018
+WKT format used to display the SRS.
+Currently the supported values are:
+.sp
+\fBWKT1\fP
+.sp
+\fBWKT2\fP (latest WKT version, currently \fIWKT2_2018\fP)
+.sp
+\fBWKT2_2015\fP
+.sp
+\fBWKT2_2018\fP
+.sp
+New in version 3.0.0.
+
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-sd <n>
+If the input dataset contains several subdatasets read and display
+a subdataset with specified \fBn\fP number (starting from 1).
+This is an alternative of giving the full subdataset name.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-proj4
+Report a PROJ.4 string corresponding to the file\(aqs coordinate system.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-oo <NAME=VALUE>
+Dataset open option (format specific).
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-if <format>
+Format/driver name to be attempted to open the input file(s). It is generally
+not necessary to specify it, but it can be used to skip automatic driver
+detection, when it fails to select the appropriate driver.
+This option can be repeated several times to specify several candidate drivers.
+.sp
+New in version 3.2.
+
+.UNINDENT
+.sp
+The gdalinfo will report all of the following (if known):
+.INDENT 0.0
+.IP \(bu 2
+The format driver used to access the file.
+.IP \(bu 2
+Raster size (in pixels and lines).
+.IP \(bu 2
+The coordinate system for the file (in OGC WKT).
+.IP \(bu 2
+The geotransform associated with the file (rotational coefficients
+are currently not reported).
+.IP \(bu 2
+Corner coordinates in georeferenced, and if possible lat/long based
+on the full geotransform (but not GCPs).
+.IP \(bu 2
+Ground control points.
+.IP \(bu 2
+File wide (including subdatasets) metadata.
+.IP \(bu 2
+Band data types.
+.IP \(bu 2
+Band color interpretations.
+.IP \(bu 2
+Band block size.
+.IP \(bu 2
+Band descriptions.
+.IP \(bu 2
+Band min/max values (internally known and possibly computed).
+.IP \(bu 2
+Band checksum (if computation asked).
+.IP \(bu 2
+Band NODATA value.
+.IP \(bu 2
+Band overview resolutions available.
+.IP \(bu 2
+Band unit type (i.e.. "meters" or "feet" for elevation bands).
+.IP \(bu 2
+Band pseudo\-color tables.
+.UNINDENT
+.SH C API
+.sp
+This utility is also callable from C with \fI\%GDALInfo()\fP\&.
+.sp
+New in version 2.1.
+
+.SH EXAMPLE
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+gdalinfo ~/openev/utm.tif
+Driver: GTiff/GeoTIFF
+Size is 512, 512
+Coordinate System is:
+PROJCS["NAD27 / UTM zone 11N",
+    GEOGCS["NAD27",
+        DATUM["North_American_Datum_1927",
+            SPHEROID["Clarke 1866",6378206.4,294.978698213901]],
+        PRIMEM["Greenwich",0],
+        UNIT["degree",0.0174532925199433]],
+    PROJECTION["Transverse_Mercator"],
+    PARAMETER["latitude_of_origin",0],
+    PARAMETER["central_meridian",\-117],
+    PARAMETER["scale_factor",0.9996],
+    PARAMETER["false_easting",500000],
+    PARAMETER["false_northing",0],
+    UNIT["metre",1]]
+Origin = (440720.000000,3751320.000000)
+Pixel Size = (60.000000,\-60.000000)
+Corner Coordinates:
+Upper Left  (  440720.000, 3751320.000) (117d38\(aq28.21"W, 33d54\(aq8.47"N)
+Lower Left  (  440720.000, 3720600.000) (117d38\(aq20.79"W, 33d37\(aq31.04"N)
+Upper Right (  471440.000, 3751320.000) (117d18\(aq32.07"W, 33d54\(aq13.08"N)
+Lower Right (  471440.000, 3720600.000) (117d18\(aq28.50"W, 33d37\(aq35.61"N)
+Center      (  456080.000, 3735960.000) (117d28\(aq27.39"W, 33d45\(aq52.46"N)
+Band 1 Block=512x16 Type=Byte, ColorInterp=Gray
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH AUTHOR
+Frank Warmerdam <warmerdam@pobox.com>
+.SH COPYRIGHT
+1998-2022
+.\" Generated by docutils manpage writer.
+.

@@ -2,10 +2,10 @@
  *
  * Project:  GDAL Utilities
  * Purpose:  Common utility routines
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2011-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,7 +37,7 @@
 #include "cpl_string.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /* -------------------------------------------------------------------- */
 /*                   DoesDriverHandleExtension()                        */
@@ -47,7 +47,7 @@ static bool DoesDriverHandleExtension( GDALDriverH hDriver, const char* pszExt )
 {
     bool bRet = false;
     const char* pszDriverExtensions =
-        GDALGetMetadataItem( hDriver, GDAL_DMD_EXTENSIONS, NULL );
+        GDALGetMetadataItem( hDriver, GDAL_DMD_EXTENSIONS, nullptr );
     if( pszDriverExtensions )
     {
         char** papszTokens = CSLTokenizeString( pszDriverExtensions );
@@ -65,52 +65,97 @@ static bool DoesDriverHandleExtension( GDALDriverH hDriver, const char* pszExt )
 }
 
 /* -------------------------------------------------------------------- */
-/*                      CheckExtensionConsistency()                     */
-/*                                                                      */
-/*      Check that the target file extension is consistent with the     */
-/*      requested driver. Actually, we only warn in cases where the     */
-/*      inconsistency is blatant (use of an extension declared by one   */
-/*      or several drivers, and not by the selected one)                */
+/*                         GetOutputDriversFor()                        */
 /* -------------------------------------------------------------------- */
 
-void CheckExtensionConsistency(const char* pszDestFilename,
-                               const char* pszDriverName)
+std::vector<CPLString> GetOutputDriversFor(const char* pszDestFilename,
+                                           int nFlagRasterVector)
 {
+    std::vector<CPLString> aoDriverList;
 
     CPLString osExt = CPLGetExtension(pszDestFilename);
-    if( !osExt.empty() )
+    if( EQUAL(osExt, "zip") &&
+            (CPLString(pszDestFilename).endsWith(".shp.zip") ||
+             CPLString(pszDestFilename).endsWith(".SHP.ZIP")) )
     {
-        GDALDriverH hThisDrv = GDALGetDriverByName(pszDriverName);
-        if( hThisDrv != NULL && DoesDriverHandleExtension(hThisDrv, osExt) )
-            return;
-
-        const int nDriverCount = GDALGetDriverCount();
-        CPLString osConflictingDriverList;
-        for( int i = 0; i < nDriverCount; i++ )
+        osExt = "shp.zip";
+    }
+    const int nDriverCount = GDALGetDriverCount();
+    for( int i = 0; i < nDriverCount; i++ )
+    {
+        GDALDriverH hDriver = GDALGetDriver(i);
+        if( (GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, nullptr ) != nullptr ||
+             GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, nullptr ) != nullptr ) &&
+            (((nFlagRasterVector & GDAL_OF_RASTER) &&
+                GDALGetMetadataItem( hDriver, GDAL_DCAP_RASTER, nullptr ) != nullptr) ||
+            ((nFlagRasterVector & GDAL_OF_VECTOR) &&
+                GDALGetMetadataItem( hDriver, GDAL_DCAP_VECTOR, nullptr ) != nullptr)) )
         {
-            GDALDriverH hDriver = GDALGetDriver(i);
-            if( hDriver != hThisDrv &&
-                DoesDriverHandleExtension(hDriver, osExt) )
+            if( !osExt.empty() && DoesDriverHandleExtension(hDriver, osExt) )
             {
-                if (!osConflictingDriverList.empty() )
-                    osConflictingDriverList += ", ";
-                osConflictingDriverList += GDALGetDriverShortName(hDriver);
+                aoDriverList.push_back( GDALGetDriverShortName(hDriver) );
+            }
+            else
+            {
+                const char* pszPrefix = GDALGetMetadataItem(hDriver,
+                    GDAL_DMD_CONNECTION_PREFIX, nullptr);
+                if( pszPrefix && STARTS_WITH_CI(pszDestFilename, pszPrefix) )
+                {
+                    aoDriverList.push_back( GDALGetDriverShortName(hDriver) );
+                }
             }
         }
-        if (!osConflictingDriverList.empty() )
+    }
+
+    // GMT is registered before netCDF for opening reasons, but we want
+    // netCDF to be used by default for output.
+    if( EQUAL(osExt, "nc") && aoDriverList.size() == 2 &&
+        EQUAL(aoDriverList[0], "GMT") && EQUAL(aoDriverList[1], "NETCDF") )
+    {
+        aoDriverList.clear();
+        aoDriverList.push_back("NETCDF");
+        aoDriverList.push_back("GMT");
+    }
+
+    return aoDriverList;
+}
+
+/* -------------------------------------------------------------------- */
+/*                      GetOutputDriverForRaster()                      */
+/* -------------------------------------------------------------------- */
+
+CPLString GetOutputDriverForRaster(const char* pszDestFilename)
+{
+    CPLString osFormat;
+    std::vector<CPLString> aoDrivers =
+        GetOutputDriversFor(pszDestFilename, GDAL_OF_RASTER);
+    CPLString osExt(CPLGetExtension(pszDestFilename));
+    if( aoDrivers.empty() )
+    {
+        if( osExt.empty() )
         {
-            fprintf(
-                stderr,
-                "Warning: The target file has a '%s' extension, "
-                "which is normally used by the %s driver%s, "
-                "but the requested output driver is %s. "
-                "Is it really what you want?\n",
-                osExt.c_str(),
-                osConflictingDriverList.c_str(),
-                strchr(osConflictingDriverList.c_str(), ',') ? "s" : "",
-                pszDriverName);
+            osFormat = "GTiff";
+        }
+        else
+        {
+            CPLError( CE_Failure, CPLE_AppDefined,
+                    "Cannot guess driver for %s", pszDestFilename);
+            return "";
         }
     }
+    else
+    {
+        if( aoDrivers.size() > 1 )
+        {
+            CPLError( CE_Warning, CPLE_AppDefined,
+                      "Several drivers matching %s extension. Using %s",
+                      osExt.c_str(),
+                      aoDrivers[0].c_str() );
+        }
+        osFormat = aoDrivers[0];
+    }
+    CPLDebug("GDAL", "Using %s driver", osFormat.c_str());
+    return osFormat;
 }
 
 /* -------------------------------------------------------------------- */
@@ -125,11 +170,7 @@ void EarlySetConfigOptions( int argc, char ** argv )
     // registered for the --format or --formats options.
     for( int i = 1; i < argc; i++ )
     {
-        if( EQUAL(argv[i],"--config") && i + 2 < argc &&
-            (EQUAL(argv[i + 1], "GDAL_SKIP") ||
-             EQUAL(argv[i + 1], "GDAL_DRIVER_PATH") ||
-             EQUAL(argv[i + 1], "OGR_SKIP") ||
-             EQUAL(argv[i + 1], "OGR_DRIVER_PATH")) )
+        if( EQUAL(argv[i],"--config") && i + 2 < argc )
         {
             CPLSetConfigOption( argv[i+1], argv[i+2] );
 

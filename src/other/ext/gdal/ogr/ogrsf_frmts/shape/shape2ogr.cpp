@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,15 +28,28 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_port.h"
 #include "ogrshape.h"
 
-#include "cpl_conv.h"
-#include "ogrpgeogeometry.h"
-
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <algorithm>
 #include <limits>
+#include <memory>
 
-CPL_CVSID("$Id$");
+#include "cpl_conv.h"
+#include "cpl_error.h"
+#include "cpl_string.h"
+#include "ogr_core.h"
+#include "ogr_feature.h"
+#include "ogr_geometry.h"
+#include "ogrpgeogeometry.h"
+#include "ogrshape.h"
+#include "shapefil.h"
+
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        RingStartEnd                                  */
@@ -44,7 +57,7 @@ CPL_CVSID("$Id$");
 /************************************************************************/
 static void RingStartEnd( SHPObject *psShape, int ring, int *start, int *end )
 {
-    if( psShape->panPartStart == NULL )
+    if( psShape->panPartStart == nullptr )
     {
         *start = 0;
         *end = psShape->nVertices - 1;
@@ -81,12 +94,12 @@ static OGRLinearRing * CreateLinearRing(
             nRingPoints, psShape->padfX + nRingStart,
             psShape->padfY + nRingStart,
             psShape->padfZ + nRingStart,
-            psShape->padfM ? psShape->padfM + nRingStart : NULL );
+            psShape->padfM ? psShape->padfM + nRingStart : nullptr );
     else if( bHasM )
         poRing->setPointsM(
             nRingPoints, psShape->padfX + nRingStart,
             psShape->padfY + nRingStart,
-            psShape->padfM ? psShape->padfM + nRingStart :NULL );
+            psShape->padfM ? psShape->padfM + nRingStart :nullptr );
     else
         poRing->setPoints(
             nRingPoints, psShape->padfX + nRingStart,
@@ -108,15 +121,15 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
     CPLDebug( "Shape", "SHPReadOGRObject( iShape=%d )", iShape );
 #endif
 
-    if( psShape == NULL )
+    if( psShape == nullptr )
         psShape = SHPReadObject( hSHP, iShape );
 
-    if( psShape == NULL )
+    if( psShape == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
-    OGRGeometry *poOGR = NULL;
+    OGRGeometry *poOGR = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Point.                                                          */
@@ -153,7 +166,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
     {
         if( psShape->nVertices == 0 )
         {
-            poOGR = NULL;
+            poOGR = nullptr;
         }
         else
         {
@@ -161,7 +174,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 
             for( int i = 0; i < psShape->nVertices; i++ )
             {
-                OGRPoint *poPoint = NULL;
+                OGRPoint *poPoint = nullptr;
 
                 if( psShape->nSHPType == SHPT_MULTIPOINTZ )
                 {
@@ -211,7 +224,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
     {
         if( psShape->nParts == 0 )
         {
-            poOGR = NULL;
+            poOGR = nullptr;
         }
         else if( psShape->nParts == 1 )
         {
@@ -242,7 +255,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 
                 OGRLineString *poLine = new OGRLineString();
 
-                if( psShape->panPartStart == NULL )
+                if( psShape->panPartStart == nullptr )
                 {
                     nRingPoints = psShape->nVertices;
                     nRingStart = 0;
@@ -264,9 +277,9 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
                         psShape->padfX + nRingStart,
                         psShape->padfY + nRingStart,
                         psShape->padfZ + nRingStart,
-                        psShape->padfM ? psShape->padfM + nRingStart : NULL );
+                        psShape->padfM ? psShape->padfM + nRingStart : nullptr );
                 else if( psShape->nSHPType == SHPT_ARCM &&
-                         psShape->padfM != NULL )
+                         psShape->padfM != nullptr )
                     poLine->setPointsM( nRingPoints,
                                         psShape->padfX + nRingStart,
                                         psShape->padfY + nRingStart,
@@ -300,7 +313,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 
         if( psShape->nParts == 0 )
         {
-            poOGR = NULL;
+            poOGR = nullptr;
         }
         else if( psShape->nParts == 1 )
         {
@@ -323,7 +336,7 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
             }
 
             int isValidGeometry = FALSE;
-            const char* papszOptions[] = { "METHOD=ONLY_CCW", NULL };
+            const char* papszOptions[] = { "METHOD=ONLY_CCW", nullptr };
             OGRGeometry **tabGeom =
                 reinterpret_cast<OGRGeometry**>(tabPolygons);
             poOGR = OGRGeometryFactory::organizePolygons(
@@ -379,21 +392,52 @@ OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape )
 }
 
 /************************************************************************/
+/*                      CheckNonFiniteCoordinates()                     */
+/************************************************************************/
+
+static bool CheckNonFiniteCoordinates(const double* v, size_t vsize)
+{
+    static bool bAllowNonFiniteCoordinates =
+        CPLTestBool(CPLGetConfigOption("OGR_SHAPE_ALLOW_NON_FINITE_COORDINATES", "NO"));
+    // Do not document this. Only for edge case testing
+    if( bAllowNonFiniteCoordinates )
+    {
+        return true;
+    }
+    for( size_t i = 0; i < vsize; ++i )
+    {
+        if( !std::isfinite(v[i]) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                         "Coordinates with non-finite values are not allowed");
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool CheckNonFiniteCoordinates(const std::vector<double>& v)
+{
+    return CheckNonFiniteCoordinates(v.data(), v.size());
+}
+
+/************************************************************************/
 /*                         SHPWriteOGRObject()                          */
 /************************************************************************/
 static
-OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
+OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape,
+                          const OGRGeometry *poGeom,
                           bool bRewind, OGRwkbGeometryType eLayerGeomType )
 
 {
 /* ==================================================================== */
 /*      Write "shape" with no geometry or with empty geometry           */
 /* ==================================================================== */
-    if( poGeom == NULL || poGeom->IsEmpty() )
+    if( poGeom == nullptr || poGeom->IsEmpty() )
     {
         SHPObject *psShape =
-            SHPCreateObject( SHPT_NULL, -1, 0, NULL, NULL, 0,
-                             NULL, NULL, NULL, NULL );
+            SHPCreateObject( SHPT_NULL, -1, 0, nullptr, nullptr, 0,
+                             nullptr, nullptr, nullptr, nullptr );
         const int nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
         if( nReturnedShapeID == -1 )
@@ -420,32 +464,30 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
-        OGRPoint *poPoint = dynamic_cast<OGRPoint *>( poGeom );
-        if( poPoint == NULL )
-        {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                     "dynamic_cast failed.  Expected a point." );
-            return OGRERR_FAILURE;
-        }
-
+        const OGRPoint *poPoint = poGeom->toPoint();
         const double dfX = poPoint->getX();
         const double dfY = poPoint->getY();
         const double dfZ = poPoint->getZ();
-        double dfM = 0.0;
-        double *pdfM = NULL;
+        double dfM = -std::numeric_limits<double>::max();
+        double *pdfM = nullptr;
         if( wkbHasM(eLayerGeomType) &&
             (hSHP->nShapeType == SHPT_POINTM ||
              hSHP->nShapeType == SHPT_POINTZ) )
         {
             if( poGeom->IsMeasured() )
                 dfM = poPoint->getM();
-            else
-                dfM = -std::numeric_limits<double>::max();
             pdfM = &dfM;
         }
-
+        if( (!std::isfinite(dfX) || !std::isfinite(dfY) ||
+             !std::isfinite(dfZ) || (pdfM && !std::isfinite(*pdfM))) &&
+            !CPLTestBool(CPLGetConfigOption("OGR_SHAPE_ALLOW_NON_FINITE_COORDINATES", "NO")) )
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Coordinates with non-finite values are not allowed");
+            return OGRERR_FAILURE;
+        }
         SHPObject *psShape =
-            SHPCreateObject( hSHP->nShapeType, -1, 0, NULL, NULL, 1,
+            SHPCreateObject( hSHP->nShapeType, -1, 0, nullptr, nullptr, 1,
                              &dfX, &dfY, &dfZ, pdfM );
         const int nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
@@ -469,52 +511,49 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
 
-        OGRMultiPoint   *poMP = (OGRMultiPoint *) poGeom;
-        double *padfX = static_cast<double *>(
-            CPLMalloc(sizeof(double) * poMP->getNumGeometries()));
-        double *padfY = static_cast<double *>(
-            CPLMalloc(sizeof(double) * poMP->getNumGeometries()));
-        // TODO(schwehr): Why a calloc for padfZ?
-        double *padfZ = static_cast<double *>(
-            CPLCalloc(sizeof(double), poMP->getNumGeometries()));
-        double *padfM = NULL;
-        if( wkbHasM(eLayerGeomType) &&
-            (hSHP->nShapeType == SHPT_MULTIPOINTM ||
-             hSHP->nShapeType == SHPT_MULTIPOINTZ) )
-            padfM = static_cast<double *>(
-                CPLCalloc(sizeof(double), poMP->getNumGeometries()));
+        const OGRMultiPoint   *poMP = poGeom->toMultiPoint();
+        const int nNumGeometries = poMP->getNumGeometries();
+        const bool bHasZ = (hSHP->nShapeType == SHPT_MULTIPOINTM ||
+                            hSHP->nShapeType == SHPT_MULTIPOINTZ);
+        const bool bHasM = wkbHasM(eLayerGeomType) && bHasZ;
+        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
 
-        int iDstPoints = 0;
-        for( int iPoint = 0; iPoint < poMP->getNumGeometries(); iPoint++ )
+        std::vector<double> adfX;
+        std::vector<double> adfY;
+        std::vector<double> adfZ;
+        std::vector<double> adfM;
+        try
         {
-            OGRPoint *poPoint =
-                dynamic_cast<OGRPoint *>(poMP->getGeometryRef(iPoint));
-            if( poPoint == NULL )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "dynamic_cast failed.  "
-                          "Expected point within multi-point." );
-                CPLFree( padfX );
-                CPLFree( padfY );
-                CPLFree( padfZ );
-                CPLFree( padfM );
-                return OGRERR_FAILURE;
-            }
+            adfX.reserve(nNumGeometries);
+            adfY.reserve(nNumGeometries);
+            if( bHasZ )
+                adfZ.reserve(nNumGeometries);
+            if( bHasM )
+                adfM.reserve(nNumGeometries);
+        }
+        catch( const std::exception& e )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            return OGRERR_FAILURE;
+        }
 
+
+        for( const OGRPoint *poPoint: *poMP )
+        {
             // Ignore POINT EMPTY.
             if( !poPoint->IsEmpty() )
             {
-                padfX[iDstPoints] = poPoint->getX();
-                padfY[iDstPoints] = poPoint->getY();
-                padfZ[iDstPoints] = poPoint->getZ();
-                if( padfM )
+                adfX.push_back(poPoint->getX());
+                adfY.push_back(poPoint->getY());
+                if( bHasZ )
+                    adfZ.push_back(poPoint->getZ());
+                if( bHasM )
                 {
-                    if( poGeom->IsMeasured() )
-                        padfM[iDstPoints] = poPoint->getM();
+                    if( bIsGeomMeasured )
+                        adfM.push_back(poPoint->getM());
                     else
-                        padfM[iDstPoints] = -std::numeric_limits<double>::max();
+                        adfM.push_back(-std::numeric_limits<double>::max());
                 }
-                iDstPoints++;
             }
             else
             {
@@ -524,18 +563,23 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                     "writer." );
             }
         }
+        if( !CheckNonFiniteCoordinates(adfX) ||
+            !CheckNonFiniteCoordinates(adfY) ||
+            !CheckNonFiniteCoordinates(adfZ) ||
+            !CheckNonFiniteCoordinates(adfM) )
+        {
+            return OGRERR_FAILURE;
+        }
 
         SHPObject *psShape =
-            SHPCreateObject( hSHP->nShapeType, -1, 0, NULL, NULL,
-                             iDstPoints,
-                             padfX, padfY, padfZ, padfM );
+            SHPCreateObject( hSHP->nShapeType, -1, 0, nullptr, nullptr,
+                             static_cast<int>(adfX.size()),
+                             adfX.data(), adfY.data(),
+                             bHasZ ? adfZ.data() : nullptr,
+                             bHasM ? adfM.data() : nullptr );
         const int nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
-        CPLFree( padfX );
-        CPLFree( padfY );
-        CPLFree( padfZ );
-        CPLFree( padfM );
         if( nReturnedShapeID == -1 )
             return OGRERR_FAILURE;
     }
@@ -548,52 +592,62 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
               || hSHP->nShapeType == SHPT_ARCZ)
              && wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
     {
-        OGRLineString *poArc = dynamic_cast<OGRLineString *>(poGeom);
-        if( poArc == NULL )
+        const OGRLineString *poArc = poGeom->toLineString();
+        const int nNumPoints = poArc->getNumPoints();
+        const bool bHasZ = (hSHP->nShapeType == SHPT_ARCM ||
+                            hSHP->nShapeType == SHPT_ARCZ);
+        const bool bHasM = wkbHasM(eLayerGeomType) && bHasZ;
+        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
+        std::vector<double> adfX;
+        std::vector<double> adfY;
+        std::vector<double> adfZ;
+        std::vector<double> adfM;
+        try
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "dynamic_cast failed.  Expected line string for arc." );
+            adfX.reserve(nNumPoints);
+            adfY.reserve(nNumPoints);
+            if( bHasZ )
+                adfZ.reserve(nNumPoints);
+            if( bHasM )
+                adfM.reserve(nNumPoints);
+        }
+        catch( const std::exception& e )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "%s", e.what());
             return OGRERR_FAILURE;
         }
 
-        double *padfX = static_cast<double *>(
-            CPLMalloc(sizeof(double) * poArc->getNumPoints()));
-        double *padfY = static_cast<double *>(
-            CPLMalloc(sizeof(double)*poArc->getNumPoints()));
-        double *padfZ = static_cast<double *>(
-            CPLCalloc(sizeof(double), poArc->getNumPoints()));
-        double *padfM = NULL;
-        if( wkbHasM(eLayerGeomType) &&
-            (hSHP->nShapeType == SHPT_ARCM ||
-             hSHP->nShapeType == SHPT_ARCZ) )
-            padfM = static_cast<double *>(
-                CPLCalloc(sizeof(double),poArc->getNumPoints()));
-
-        for( int iPoint = 0; iPoint < poArc->getNumPoints(); iPoint++ )
+        for( int iPoint = 0; iPoint < nNumPoints; iPoint++ )
         {
-            padfX[iPoint] = poArc->getX( iPoint );
-            padfY[iPoint] = poArc->getY( iPoint );
-            padfZ[iPoint] = poArc->getZ( iPoint );
-            if( padfM )
+            adfX.push_back(poArc->getX( iPoint ));
+            adfY.push_back(poArc->getY( iPoint ));
+            if( bHasZ )
+                adfZ.push_back(poArc->getZ( iPoint ));
+            if( bHasM )
             {
-                if( poGeom->IsMeasured() )
-                    padfM[iPoint] = poArc->getM( iPoint );
+                if( bIsGeomMeasured )
+                    adfM.push_back(poArc->getM( iPoint ));
                 else
-                    padfM[iPoint] = -std::numeric_limits<double>::max();
+                    adfM.push_back(-std::numeric_limits<double>::max());
             }
+        }
+        if( !CheckNonFiniteCoordinates(adfX) ||
+            !CheckNonFiniteCoordinates(adfY) ||
+            !CheckNonFiniteCoordinates(adfZ) ||
+            !CheckNonFiniteCoordinates(adfM) )
+        {
+            return OGRERR_FAILURE;
         }
 
         SHPObject *psShape =
-            SHPCreateObject( hSHP->nShapeType, -1, 0, NULL, NULL,
-                             poArc->getNumPoints(),
-                             padfX, padfY, padfZ, padfM );
+            SHPCreateObject( hSHP->nShapeType, -1, 0, nullptr, nullptr,
+                             static_cast<int>(adfX.size()),
+                             adfX.data(), adfY.data(),
+                             bHasZ ? adfZ.data() : nullptr,
+                             bHasM ? adfM.data() : nullptr );
         const int nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
-        CPLFree( padfX );
-        CPLFree( padfY );
-        CPLFree( padfZ );
-        CPLFree( padfM );
         if( nReturnedShapeID == -1 )
             return OGRERR_FAILURE;
     }
@@ -604,12 +658,11 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
              || hSHP->nShapeType == SHPT_ARCM
              || hSHP->nShapeType == SHPT_ARCZ )
     {
-        OGRGeometry *poForcedGeom =
-            OGRGeometryFactory::forceToMultiLineString( poGeom->clone() );
+        auto poForcedGeom = std::unique_ptr<OGRGeometry>(
+            OGRGeometryFactory::forceToMultiLineString( poGeom->clone() ));
 
         if( wkbFlatten(poForcedGeom->getGeometryType()) != wkbMultiLineString )
         {
-            delete poForcedGeom;
             CPLError( CE_Failure, CPLE_AppDefined,
                       "Attempt to write non-linestring (%s) geometry to "
                       "ARC type shapefile.",
@@ -617,43 +670,58 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
 
             return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
         }
-        OGRMultiLineString *poML =
-            dynamic_cast<OGRMultiLineString *>(poForcedGeom);
-        if( poML == NULL )
+        const OGRMultiLineString *poML = poForcedGeom->toMultiLineString();
+        const int nNumGeometries = poML->getNumGeometries();
+
+        int nTotalPoints = 0;
+        for( const auto poArc: poML )
         {
-            delete poForcedGeom;
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "dynamic_cast failed.  Expected multi-line string." );
+            const int nNumPoints = poArc->getNumPoints();
+            if( nTotalPoints > std::numeric_limits<int>::max() - nNumPoints )
+            {
+                CPLError( CE_Failure, CPLE_AppDefined, "Too big geometry");
+                return OGRERR_FAILURE;
+            }
+            nTotalPoints += nNumPoints;
+        }
+
+        std::vector<int> anRingStart;
+        std::vector<double> adfX;
+        std::vector<double> adfY;
+        std::vector<double> adfZ;
+        std::vector<double> adfM;
+        const bool bHasZ = (hSHP->nShapeType == SHPT_ARCM ||
+                            hSHP->nShapeType == SHPT_ARCZ);
+        const bool bHasM = wkbHasM(eLayerGeomType) && bHasZ;
+        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
+
+        try
+        {
+            anRingStart.reserve(nNumGeometries);
+
+            adfX.reserve(nTotalPoints);
+            adfY.reserve(nTotalPoints);
+            if( bHasZ )
+            {
+                adfZ.reserve(nTotalPoints);
+            }
+            if( bHasM )
+            {
+                adfM.reserve(nTotalPoints);
+            }
+        }
+        catch( const std::exception& e )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "%s", e.what());
             return OGRERR_FAILURE;
         }
 
-        int *panRingStart = static_cast<int *>(
-            CPLMalloc(sizeof(int) * poML->getNumGeometries()) );
-
-        double *padfX = NULL;
-        double *padfY = NULL;
-        double *padfZ = NULL;
-        double *padfM = NULL;
-        int nPointCount = 0;
-        int nParts = 0;
-        const bool bSupportMeasures =
-            wkbHasM(eLayerGeomType) && (hSHP->nShapeType == SHPT_ARCM ||
-                                            hSHP->nShapeType == SHPT_ARCZ);
-
-        for( int iGeom = 0; iGeom < poML->getNumGeometries(); iGeom++ )
+        for( const auto poArc: poML )
         {
-            OGRLineString *poArc = dynamic_cast<OGRLineString *>(
-                poML->getGeometryRef(iGeom));
-            if( poArc == NULL )
-            {
-                CPLError( CE_Failure, CPLE_AppDefined,
-                          "dynamic_cast failed. Expected line string for arc.");
-                continue;
-            }
-            const int nNewPoints = poArc->getNumPoints();
+            const int nNumPoints = poArc->getNumPoints();
 
             // Ignore LINESTRING EMPTY.
-            if( nNewPoints == 0 )
+            if( nNumPoints == 0 )
             {
                 CPLDebug(
                     "OGR",
@@ -662,50 +730,44 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                 continue;
             }
 
-            panRingStart[nParts++] = nPointCount;
+            anRingStart.push_back(static_cast<int>(adfX.size()));
 
-            padfX = static_cast<double *>(
-                CPLRealloc( padfX, sizeof(double)*(nNewPoints+nPointCount) ));
-            padfY = static_cast<double *>(
-                CPLRealloc( padfY, sizeof(double)*(nNewPoints+nPointCount) ));
-            padfZ = static_cast<double *>(
-                CPLRealloc( padfZ, sizeof(double)*(nNewPoints+nPointCount) ));
-            if( bSupportMeasures )
+            for( int iPoint = 0; iPoint < nNumPoints; iPoint++ )
             {
-                padfM = static_cast<double *>(
-                    CPLRealloc(padfM, sizeof(double)*(nNewPoints+nPointCount)));
-            }
-
-            for( int iPoint = 0; iPoint < nNewPoints; iPoint++ )
-            {
-                padfX[nPointCount] = poArc->getX( iPoint );
-                padfY[nPointCount] = poArc->getY( iPoint );
-                padfZ[nPointCount] = poArc->getZ( iPoint );
-                if( bSupportMeasures )
-                    padfM[nPointCount] = poGeom->IsMeasured() ?
-                        poArc->getM( iPoint ) :
-                        -std::numeric_limits<double>::max();
-                nPointCount++;
+                adfX.push_back(poArc->getX( iPoint ));
+                adfY.push_back(poArc->getY( iPoint ));
+                if( bHasZ )
+                {
+                    adfZ.push_back(poArc->getZ( iPoint ));
+                }
+                if( bHasM )
+                {
+                    if( bIsGeomMeasured )
+                        adfM.push_back(poArc->getM( iPoint ));
+                    else
+                        adfM.push_back(-std::numeric_limits<double>::max());
+                }
             }
         }
-
-        CPLAssert(nParts != 0);
+        if( !CheckNonFiniteCoordinates(adfX) ||
+            !CheckNonFiniteCoordinates(adfY) ||
+            !CheckNonFiniteCoordinates(adfZ) ||
+            !CheckNonFiniteCoordinates(adfM) )
+        {
+            return OGRERR_FAILURE;
+        }
 
         SHPObject *psShape =
             SHPCreateObject( hSHP->nShapeType, iShape,
-                             nParts,
-                             panRingStart, NULL,
-                             nPointCount, padfX, padfY, padfZ, padfM );
+                             static_cast<int>(anRingStart.size()),
+                             anRingStart.data(), nullptr,
+                             static_cast<int>(adfX.size()),
+                             adfX.data(), adfY.data(),
+                             bHasZ ? adfZ.data() : nullptr,
+                             bHasM ? adfM.data() : nullptr );
         const int nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
 
-        CPLFree( panRingStart );
-        CPLFree( padfX );
-        CPLFree( padfY );
-        CPLFree( padfZ );
-        CPLFree( padfM );
-
-        delete poML;
         if( nReturnedShapeID == -1 )
             return OGRERR_FAILURE;
     }
@@ -717,16 +779,15 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
              || hSHP->nShapeType == SHPT_POLYGONM
              || hSHP->nShapeType == SHPT_POLYGONZ )
     {
-        OGRLinearRing **papoRings = NULL;
-        int nRings = 0;
+        std::vector<const OGRLinearRing *> apoRings;
         const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
-        OGRGeometry* poGeomToDelete = NULL;
+        std::unique_ptr<OGRGeometry> poGeomToDelete;
 
         if( eType == wkbPolygon || eType == wkbTriangle )
         {
-            OGRPolygon* poPoly = (OGRPolygon *) poGeom;
+            const OGRPolygon* poPoly = poGeom->toPolygon();
 
-            if( poPoly->getExteriorRing() == NULL ||
+            if( poPoly->getExteriorRing() == nullptr ||
                 poPoly->getExteriorRing()->IsEmpty() )
             {
                 CPLDebug( "OGR",
@@ -735,23 +796,23 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
             else
             {
                 const int nSrcRings = poPoly->getNumInteriorRings()+1;
-                papoRings = static_cast<OGRLinearRing **>(
-                    CPLMalloc(sizeof(void*)*nSrcRings));
-                for( int iRing = 0; iRing < nSrcRings; iRing++ )
+                apoRings.reserve(nSrcRings);
+                for(const auto poRing: poPoly)
                 {
-                    if( iRing == 0 )
-                        papoRings[nRings] = poPoly->getExteriorRing();
-                    else
-                        papoRings[nRings] = poPoly->getInteriorRing( iRing-1 );
+                    const int nNumPoints = poRing->getNumPoints();
 
                     // Ignore LINEARRING EMPTY.
-                    if( papoRings[nRings]->getNumPoints() != 0 )
-                        nRings++;
+                    if( nNumPoints != 0 )
+                    {
+                        apoRings.push_back(poRing);
+                    }
                     else
+                    {
                         CPLDebug(
                             "OGR",
                             "Ignore LINEARRING EMPTY inside POLYGON in "
                             "shapefile writer." );
+                    }
                 }
             }
         }
@@ -760,29 +821,28 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                  eType == wkbPolyhedralSurface ||
                  eType == wkbTIN)
         {
-            OGRMultiPolygon *poMultiPolygon = NULL;
-            OGRGeometryCollection *poGC;
+            const OGRGeometryCollection *poGC;
             // for PolyhedralSurface and TIN
             if (eType == wkbPolyhedralSurface || eType == wkbTIN)
             {
-                poGeomToDelete = OGRGeometryFactory::forceTo(poGeom->clone(),
+                poGeomToDelete = std::unique_ptr<OGRGeometry>(
+                    OGRGeometryFactory::forceTo(poGeom->clone(),
                                                              wkbMultiPolygon,
-                                                             NULL);
-                poMultiPolygon = dynamic_cast<OGRMultiPolygon*>(poGeomToDelete);
-                poGC = poMultiPolygon;
+                                                             nullptr));
+                poGC = poGeomToDelete->toGeometryCollection();
             }
 
             else
-                poGC = (OGRGeometryCollection *) poGeom;
+                poGC = poGeom->toGeometryCollection();
 
-            for( int iGeom=0; poGC != NULL &&
-                              iGeom < poGC->getNumGeometries(); iGeom++ )
+            // Shouldn't happen really, but to please x86_64-w64-mingw32-g++ -O2 -Wnull-dereference
+            if( poGC == nullptr )
+                return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
+
+            for( const auto poSubGeom: poGC )
             {
-                OGRGeometry* poSubGeom = poGC->getGeometryRef( iGeom );
-
                 if( wkbFlatten(poSubGeom->getGeometryType()) != wkbPolygon )
                 {
-                    CPLFree( papoRings );
                     CPLError( CE_Failure, CPLE_AppDefined,
                               "Attempt to write non-polygon (%s) geometry to "
                               "POLYGON type shapefile.",
@@ -790,10 +850,10 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
 
                     return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
                 }
-                OGRPolygon* poPoly =  (OGRPolygon *) poSubGeom;
+                const OGRPolygon* poPoly = poSubGeom->toPolygon();
 
                 // Ignore POLYGON EMPTY.
-                if( poPoly->getExteriorRing() == NULL ||
+                if( poPoly->getExteriorRing() == nullptr ||
                     poPoly->getExteriorRing()->IsEmpty() )
                 {
                     CPLDebug(
@@ -803,28 +863,24 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
                     continue;
                 }
 
-                papoRings = static_cast<OGRLinearRing **>(
-                    CPLRealloc(papoRings,
-                               sizeof(void*) *
-                               (nRings+poPoly->getNumInteriorRings() + 1)) );
-                for( int iRing = 0;
-                     iRing < poPoly->getNumInteriorRings()+1;
-                     iRing++ )
+                const int nNumInteriorRings = poPoly->getNumInteriorRings();
+                apoRings.reserve(apoRings.size() + nNumInteriorRings + 1);
+                for(const auto poRing: poPoly)
                 {
-                    if( iRing == 0 )
-                        papoRings[nRings] = poPoly->getExteriorRing();
-                    else
-                        papoRings[nRings] =
-                            poPoly->getInteriorRing( iRing - 1 );
+                    const int nNumPoints = poRing->getNumPoints();
 
                     // Ignore LINEARRING EMPTY.
-                    if( papoRings[nRings]->getNumPoints() != 0 )
-                        nRings++;
+                    if( nNumPoints != 0 )
+                    {
+                        apoRings.push_back(poRing);
+                    }
                     else
+                    {
                         CPLDebug(
                             "OGR",
                             "Ignore LINEARRING EMPTY inside POLYGON in "
                             "shapefile writer." );
+                    }
                 }
             }
         }
@@ -842,16 +898,14 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
 /*      If we only had emptypolygons or unacceptable geometries         */
 /*      write NULL geometry object.                                     */
 /* -------------------------------------------------------------------- */
-        if( nRings == 0 )
+        if( apoRings.empty() )
         {
             SHPObject *psShape =
-                SHPCreateObject( SHPT_NULL, -1, 0, NULL, NULL,
-                                 0, NULL, NULL, NULL, NULL );
+                SHPCreateObject( SHPT_NULL, -1, 0, nullptr, nullptr,
+                                 0, nullptr, nullptr, nullptr, nullptr );
             const int nReturnedShapeID =
                 SHPWriteObject( hSHP, iShape, psShape );
             SHPDestroyObject( psShape );
-
-            delete poGeomToDelete;
 
             if( nReturnedShapeID == -1 )
                 return OGRERR_FAILURE;
@@ -861,63 +915,75 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
 
         // Count vertices.
         int nVertex = 0;
-        for( int iRing = 0; iRing < nRings; iRing++ )
-            nVertex += papoRings[iRing]->getNumPoints();
+        for( const auto& poRing: apoRings )
+            nVertex += poRing->getNumPoints();
 
-        int *panRingStart =
-            static_cast<int *>( CPLMalloc(sizeof(int) * nRings) );
-        double *padfX =
-            static_cast<double *>( CPLMalloc(sizeof(double) * nVertex) );
-        double *padfY =
-            static_cast<double *>( CPLMalloc(sizeof(double) * nVertex) );
-        double *padfZ =
-            static_cast<double *>( CPLMalloc(sizeof(double) * nVertex) );
+        const bool bHasZ = (hSHP->nShapeType == SHPT_POLYGONM ||
+                            hSHP->nShapeType == SHPT_POLYGONZ);
+        const bool bHasM = wkbHasM(eLayerGeomType) && bHasZ;
+        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
 
-        double *padfM = NULL;
-        if( wkbHasM(eLayerGeomType) &&
-            (hSHP->nShapeType == SHPT_POLYGONM ||
-             hSHP->nShapeType == SHPT_POLYGONZ) )
-            padfM = static_cast<double *>(
-                CPLMalloc(sizeof(double) * nVertex));
+        std::vector<int> anRingStart;
+        std::vector<double> adfX;
+        std::vector<double> adfY;
+        std::vector<double> adfZ;
+        std::vector<double> adfM;
+        try
+        {
+            anRingStart.reserve( apoRings.size() );
+            adfX.reserve( nVertex );
+            adfY.reserve( nVertex );
+            if( bHasZ )
+                adfZ.reserve( nVertex );
+            if( bHasM )
+                adfM.reserve( nVertex );
+        }
+        catch( const std::exception& e )
+        {
+            CPLError( CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            return OGRERR_FAILURE;
+        }
 
         // Collect vertices.
-        nVertex = 0;
-        for( int iRing = 0; iRing < nRings; iRing++ )
+        for( const auto& poRing: apoRings )
         {
-            OGRLinearRing *poRing = papoRings[iRing];
-            panRingStart[iRing] = nVertex;
+            anRingStart.push_back(static_cast<int>(adfX.size()));
 
-            for( int iPoint = 0; iPoint < poRing->getNumPoints(); iPoint++ )
+            const int nNumPoints = poRing->getNumPoints();
+            for( int iPoint = 0; iPoint < nNumPoints; iPoint++ )
             {
-                padfX[nVertex] = poRing->getX( iPoint );
-                padfY[nVertex] = poRing->getY( iPoint );
-                padfZ[nVertex] = poRing->getZ( iPoint );
-                if( padfM )
+                adfX.push_back(poRing->getX( iPoint ));
+                adfY.push_back(poRing->getY( iPoint ));
+                if( bHasZ )
+                    adfZ.push_back(poRing->getZ( iPoint ));
+                if( bHasM )
                 {
-                    padfM[nVertex] = poGeom->IsMeasured() ?
+                    adfM.push_back(bIsGeomMeasured ?
                         poRing->getM( iPoint ) :
-                        -std::numeric_limits<double>::max();
+                        -std::numeric_limits<double>::max());
                 }
-                nVertex++;
             }
+        }
+        if( !CheckNonFiniteCoordinates(adfX) ||
+            !CheckNonFiniteCoordinates(adfY) ||
+            !CheckNonFiniteCoordinates(adfZ) ||
+            !CheckNonFiniteCoordinates(adfM) )
+        {
+            return OGRERR_FAILURE;
         }
 
         SHPObject* psShape =
-            SHPCreateObject( hSHP->nShapeType, iShape, nRings, panRingStart,
-                             NULL, nVertex, padfX, padfY, padfZ, padfM );
+            SHPCreateObject( hSHP->nShapeType, iShape,
+                             static_cast<int>(anRingStart.size()),
+                             anRingStart.data(), nullptr,
+                             static_cast<int>(adfX.size()),
+                             adfX.data(), adfY.data(),
+                             bHasZ ? adfZ.data() : nullptr,
+                             bHasM ? adfM.data() : nullptr );
         if( bRewind )
             SHPRewindObject( hSHP, psShape );
         const int nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
         SHPDestroyObject( psShape );
-
-        CPLFree( papoRings );
-        CPLFree( panRingStart );
-        CPLFree( padfX );
-        CPLFree( padfY );
-        CPLFree( padfZ );
-        CPLFree( padfM );
-
-        delete poGeomToDelete;
 
         if( nReturnedShapeID == -1 )
             return OGRERR_FAILURE;
@@ -929,11 +995,11 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
     else if( hSHP->nShapeType == SHPT_MULTIPATCH )
     {
         int nParts = 0;
-        int* panPartStart = NULL;
-        int* panPartType = NULL;
+        int* panPartStart = nullptr;
+        int* panPartType = nullptr;
         int nPoints = 0;
-        OGRRawPoint* poPoints = NULL;
-        double* padfZ = NULL;
+        OGRRawPoint* poPoints = nullptr;
+        double* padfZ = nullptr;
         OGRErr eErr = OGRCreateMultiPatch( poGeom,
                                            FALSE, // no SHPP_TRIANGLES
                                            nParts,
@@ -956,9 +1022,21 @@ OGRErr SHPWriteOGRObject( SHPHandle hSHP, int iShape, OGRGeometry *poGeom,
         }
         CPLFree(poPoints);
 
+        if( !CheckNonFiniteCoordinates(padfX, nPoints) ||
+            !CheckNonFiniteCoordinates(padfY, nPoints) ||
+            !CheckNonFiniteCoordinates(padfZ, nPoints) )
+        {
+            CPLFree(panPartStart);
+            CPLFree(panPartType);
+            CPLFree(padfX);
+            CPLFree(padfY);
+            CPLFree(padfZ);
+            return OGRERR_FAILURE;
+        }
+
         SHPObject* psShape =
             SHPCreateObject( hSHP->nShapeType, iShape, nParts, panPartStart,
-                             panPartType, nPoints, padfX, padfY, padfZ, NULL );
+                             panPartType, nPoints, padfX, padfY, padfZ, nullptr );
         if( bRewind )
             SHPRewindObject( hSHP, psShape );
         const int nReturnedShapeID = SHPWriteObject( hSHP, iShape, psShape );
@@ -1023,19 +1101,13 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         oField.SetWidth( nWidth );
         oField.SetPrecision( nPrecision );
 
-        const char chNativeType = DBFGetNativeFieldType( hDBF, iField );
-        if( chNativeType == 'D' )
+        if( eDBFType == FTDate )
         {
-            // TODO(mloskot): Shapefile date has following 8-chars long format:
+            // Shapefile date has following 8-chars long format:
             //
             //     20060101.
             //
             // Split as YYYY/MM/DD, so 2 additional characters are required.
-            //
-            // Is this a correct assumption? What about time part of date?
-            // Should this format look as datetime: YYYY/MM/DD HH:MM:SS with 4
-            // additional characters?
-
             oField.SetWidth( nWidth + 2 );
             oField.SetType( OFTDate );
         }
@@ -1110,7 +1182,7 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
         CPLFree(panAdjustableField);
     }
 
-    if( hSHP == NULL )
+    if( hSHP == nullptr )
     {
         poDefn->SetGeomType( wkbNone );
     }
@@ -1185,13 +1257,13 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
 {
     if( iShape < 0
-        || (hSHP != NULL && iShape >= hSHP->nRecords)
-        || (hDBF != NULL && iShape >= hDBF->nRecords) )
+        || (hSHP != nullptr && iShape >= hSHP->nRecords)
+        || (hDBF != nullptr && iShape >= hDBF->nRecords) )
     {
         CPLError( CE_Failure, CPLE_AppDefined,
                   "Attempt to read shape with feature id (%d) out of available"
                   " range.", iShape );
-        return NULL;
+        return nullptr;
     }
 
     if( hDBF && DBFIsRecordDeleted( hDBF, iShape ) )
@@ -1200,9 +1272,9 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                   "Attempt to read shape with feature id (%d), "
                   "but it is marked deleted.",
                   iShape );
-        if( psShape != NULL )
+        if( psShape != nullptr )
             SHPDestroyObject(psShape);
-        return NULL;
+        return nullptr;
     }
 
     OGRFeature  *poFeature = new OGRFeature( poDefn );
@@ -1210,12 +1282,12 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
 /*      Fetch geometry from Shapefile to OGRFeature.                    */
 /* -------------------------------------------------------------------- */
-    if( hSHP != NULL )
+    if( hSHP != nullptr )
     {
         if( !poDefn->IsGeometryIgnored() )
         {
-            OGRGeometry* poGeometry = NULL;
-            poGeometry = SHPReadOGRObject( hSHP, iShape, psShape );
+            OGRGeometry* poGeometry =
+                SHPReadOGRObject( hSHP, iShape, psShape );
 
             // Two possibilities are expected here (both are tested by
             // GDAL Autotests):
@@ -1256,7 +1328,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
             poFeature->SetGeometryDirectly( poGeometry );
         }
-        else if( psShape != NULL )
+        else if( psShape != nullptr )
         {
             SHPDestroyObject( psShape );
         }
@@ -1267,7 +1339,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
 
     for( int iField = 0;
-         hDBF != NULL && iField < poDefn->GetFieldCount();
+         hDBF != nullptr && iField < poDefn->GetFieldCount();
          iField++ )
     {
         const OGRFieldDefn * const poFieldDefn = poDefn->GetFieldDefn(iField);
@@ -1280,7 +1352,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
           {
               const char * const pszFieldVal =
                   DBFReadStringAttribute( hDBF, iShape, iField );
-              if( pszFieldVal != NULL && pszFieldVal[0] != '\0' )
+              if( pszFieldVal != nullptr && pszFieldVal[0] != '\0' )
               {
                 if( pszSHPEncoding[0] != '\0' )
                 {
@@ -1358,7 +1430,7 @@ OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
         }
     }
 
-    if( poFeature != NULL )
+    if( poFeature != nullptr )
         poFeature->SetFID( iShape );
 
     return poFeature;
@@ -1408,24 +1480,10 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
                            bool bRewind )
 
 {
-#if DEBUG_VERBOSE
-/* -------------------------------------------------------------------- */
-/*      Don't write objects with missing geometry.                      */
-/* -------------------------------------------------------------------- */
-    if( poFeature->GetGeometryRef() == NULL && hSHP != NULL )
-    {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "Attempt to write feature without geometry not supported "
-                  "for shapefile driver." );
-
-        return OGRERR_UNSUPPORTED_GEOMETRY_TYPE;
-    }
-#endif
-
 /* -------------------------------------------------------------------- */
 /*      Write the geometry.                                             */
 /* -------------------------------------------------------------------- */
-    if( hSHP != NULL )
+    if( hSHP != nullptr )
     {
         const OGRErr eErr =
             SHPWriteOGRObject( hSHP, static_cast<int>(poFeature->GetFID()),
@@ -1439,19 +1497,19 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 /* -------------------------------------------------------------------- */
 /*      If there is no DBF, the job is done now.                        */
 /* -------------------------------------------------------------------- */
-    if( hDBF == NULL )
+    if( hDBF == nullptr )
     {
 /* -------------------------------------------------------------------- */
-/*      If this is a new feature, establish it's feature id.            */
+/*      If this is a new feature, establish its feature id.             */
 /* -------------------------------------------------------------------- */
-        if( hSHP != NULL && poFeature->GetFID() == OGRNullFID )
+        if( hSHP != nullptr && poFeature->GetFID() == OGRNullFID )
             poFeature->SetFID( hSHP->nRecords - 1 );
 
         return OGRERR_NONE;
     }
 
 /* -------------------------------------------------------------------- */
-/*      If this is a new feature, establish it's feature id.            */
+/*      If this is a new feature, establish its feature id.             */
 /* -------------------------------------------------------------------- */
     if( poFeature->GetFID() == OGRNullFID )
         poFeature->SetFID( DBFGetRecordCount( hDBF ) );
@@ -1499,8 +1557,8 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
           case OFTString:
           {
               const char *pszStr = poFeature->GetFieldAsString(iField);
-              char *pszEncoded = NULL;
-              if( strlen(pszSHPEncoding) > 0 )
+              char *pszEncoded = nullptr;
+              if( pszSHPEncoding[0] != '\0' )
               {
                   pszEncoded =
                       CPLRecode( pszStr, CPL_ENC_UTF8, pszSHPEncoding );
@@ -1525,21 +1583,23 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
 
                   nStrLen = OGR_DBF_MAX_FIELD_WIDTH;
 
-                  if( pszEncoded != NULL &&  // For Coverity.
+                  if( pszEncoded != nullptr &&  // For Coverity.
                       EQUAL(pszSHPEncoding, CPL_ENC_UTF8))
                   {
-                      // TODO(schwehr): Provide a comment about what this does.
+                      // Truncate string by making sure we don't cut in the
+                      // middle of a UTF-8 multibyte character
+                      // Continuation bytes of such characters are of the form
+                      // 10xxxxxx (0x80), whereas single-byte are 0xxxxxxx
+                      // and the start of a multi-byte is 11xxxxxx
                       const char *p = pszStr + nStrLen;
-                      int byteCount = nStrLen;
-                      while( byteCount > 0 )
+                      while( nStrLen > 0 )
                       {
                           if( (*p & 0xc0) != 0x80 )
                           {
-                              nStrLen = byteCount;
                               break;
                           }
 
-                          byteCount--;
+                          nStrLen--;
                           p--;
                       }
 
@@ -1566,13 +1626,11 @@ OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
           case OFTInteger:
           case OFTInteger64:
           {
-              char szFormat[20] = {};
               char szValue[32] = {};
-              int nFieldWidth = poFieldDefn->GetWidth();
-              snprintf(szFormat, sizeof(szFormat),
-                       "%%%d" CPL_FRMT_GB_WITHOUT_PREFIX "d",
-                       std::min(nFieldWidth, static_cast<int>(sizeof(szValue)) - 1));
-              snprintf(szValue, sizeof(szValue), szFormat,
+              const int nFieldWidth = poFieldDefn->GetWidth();
+              snprintf(szValue, sizeof(szValue),
+                       "%*" CPL_FRMT_GB_WITHOUT_PREFIX "d",
+                       std::min(nFieldWidth, static_cast<int>(sizeof(szValue)) - 1),
                        poFeature->GetFieldAsInteger64(iField));
 
               const int nStrLen = static_cast<int>(strlen(szValue));

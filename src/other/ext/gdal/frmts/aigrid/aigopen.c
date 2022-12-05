@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,7 @@
 
 #include "aigrid.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 
@@ -74,6 +74,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 /* -------------------------------------------------------------------- */
     psInfo = (AIGInfo_t *) CPLCalloc(sizeof(AIGInfo_t),1);
     psInfo->bHasWarned = FALSE;
+    psInfo->nFailedOpenings = 0;
     psInfo->pszCoverName = pszCoverName;
 
 /* -------------------------------------------------------------------- */
@@ -151,9 +152,11 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
     psInfo->nTilesPerRow = (psInfo->nPixels-1) / psInfo->nTileXSize + 1;
     psInfo->nTilesPerColumn = (psInfo->nLines-1) / psInfo->nTileYSize + 1;
 
-    if (psInfo->nTilesPerRow > INT_MAX / psInfo->nTilesPerColumn)
+    /* Each tile map to a file and there are only 3 characters in the */
+    /* filename for the X and Y components. */
+    if (psInfo->nTilesPerRow > 1000 * 1000 / psInfo->nTilesPerColumn)
     {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "Too many tiles");
+        CPLError(CE_Failure, CPLE_AppDefined, "Too many tiles");
         psInfo->nTilesPerRow = 0; /* to avoid int32 overflow in AIGClose() */
         psInfo->nTilesPerColumn = 0;
         AIGClose( psInfo );
@@ -191,7 +194,7 @@ AIGInfo_t *AIGOpen( const char * pszInputName, const char * pszAccess )
 CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
 
 {
-    char szBasename[20];
+    char szBasename[32];
     char *pszFilename;
     AIGTileInfo *psTInfo;
     const size_t nFilenameLen = strlen(psInfo->pszCoverName)+40;
@@ -208,8 +211,17 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
 
     psTInfo = psInfo->pasTileInfo + iTileX + iTileY * psInfo->nTilesPerRow;
 
-    if( psTInfo->fpGrid != NULL || psTInfo->bTriedToLoad )
+    if( psTInfo->fpGrid != NULL )
+        return psTInfo->panBlockOffset != NULL ? CE_None : CE_Failure;
+
+    if( psTInfo->bTriedToLoad )
         return CE_None;
+
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /* After a significant number of failed openings, don't even try further */
+    if( psInfo->nFailedOpenings == 1000 )
+        return CE_None;
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Compute the basename.                                           */
@@ -232,9 +244,14 @@ CPLErr AIGAccessTile( AIGInfo_t *psInfo, int iTileX, int iTileY )
 
     if( psTInfo->fpGrid == NULL )
     {
-        CPLError( CE_Warning, CPLE_OpenFailed,
-                  "Failed to open grid file, assuming region is nodata:\n%s\n",
-                  pszFilename );
+        psInfo->nFailedOpenings ++;
+        if( psInfo->nFailedOpenings < 100 )
+        {
+            CPLError( CE_Warning, CPLE_OpenFailed,
+                    "Failed to open grid file, assuming region is nodata:\n%s\n",
+                    pszFilename );
+        }
+
         CPLFree( pszFilename );
         return CE_Warning;
     }

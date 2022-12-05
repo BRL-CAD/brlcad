@@ -6,7 +6,7 @@
  *
  * ****************************************************************************
  * Copyright (c) 2006, MapShots Inc (www.mapshots.com)
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,9 @@
 #include "cpl_port.h"
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
+#include "commonutils.h"
 
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
 
@@ -44,14 +46,14 @@
 #include "cpl_string.h"
 #include "gdal.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 typedef std::vector<int> Color;
 typedef std::vector< Color > Colors;
 
 struct GDALNearblackOptions
 {
-    /*! output format. The default is GeoTIFF(GTiff). Use the short format name. */
+    /*! output format. Use the short format name. */
     char *pszFormat;
 
     /*! the progress function to use */
@@ -62,9 +64,9 @@ struct GDALNearblackOptions
 
     int nMaxNonBlack;
     int nNearDist;
-    int bNearWhite;
-    int bSetAlpha;
-    int bSetMask;
+    bool bNearWhite;
+    bool bSetAlpha;
+    bool bSetMask;
 
     Colors oColors;
 
@@ -73,9 +75,9 @@ struct GDALNearblackOptions
 
 static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
                          int iEnd, int nSrcBands, int nDstBands, int nNearDist,
-                         int nMaxNonBlack, int bNearWhite, Colors *poColors,
-                         int *panLastLineCounts, int bDoHorizontalCheck,
-                         int bDoVerticalCheck, int bBottomUp);
+                         int nMaxNonBlack, bool bNearWhite, Colors *poColors,
+                         int *panLastLineCounts, bool bDoHorizontalCheck,
+                         bool bDoVerticalCheck, bool bBottomUp );
 
 /************************************************************************/
 /*                            GDALNearblack()                           */
@@ -84,7 +86,7 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 /**
  * Convert nearly black/white borders to exact value.
  *
- * This is the equivalent of the <a href="nearblack.html">nearblack</a> utility.
+ * This is the equivalent of the <a href="/programs/nearblack.html">nearblack</a> utility.
  *
  * GDALNearblackOptions* must be allocated and freed with GDALNearblackOptionsNew()
  * and GDALNearblackOptionsFree() respectively.
@@ -97,8 +99,8 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
  * @param hDstDS the destination dataset or NULL. Might be equal to hSrcDataset.
  * @param hSrcDataset the source dataset handle.
  * @param psOptionsIn the options struct returned by GDALNearblackOptionsNew() or NULL.
- * @param pbUsageError the pointer to int variable to determine any usage error has occurred or NULL.
- * @return the output dataset (new dataset that must be closed using GDALClose(), or hDstDS is not NULL) or NULL in case of error.
+ * @param pbUsageError pointer to a integer output variable to store if any usage error has occurred or NULL.
+ * @return the output dataset (new dataset that must be closed using GDALClose(), or hDstDS when it is not NULL) or NULL in case of error.
  *
  * @since GDAL 2.1
  */
@@ -108,202 +110,228 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
                                     const GDALNearblackOptions *psOptionsIn, int *pbUsageError )
 
 {
-    if( pszDest == NULL && hDstDS == NULL )
+    if( pszDest == nullptr && hDstDS == nullptr )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "pszDest == NULL && hDstDS == NULL");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "pszDest == NULL && hDstDS == NULL");
 
-        if(pbUsageError)
+        if( pbUsageError )
             *pbUsageError = TRUE;
-        return NULL;
+        return nullptr;
     }
-    if( hSrcDataset == NULL )
+    if( hSrcDataset == nullptr )
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "hSrcDataset== NULL");
+        CPLError(CE_Failure, CPLE_AppDefined, "hSrcDataset== NULL");
 
-        if(pbUsageError)
+        if( pbUsageError )
             *pbUsageError = TRUE;
-        return NULL;
+        return nullptr;
     }
 
-    GDALNearblackOptions* psOptionsToFree = NULL;
+    GDALNearblackOptions* psOptionsToFree = nullptr;
     const GDALNearblackOptions* psOptions;
     if( psOptionsIn )
+    {
         psOptions = psOptionsIn;
+    }
     else
     {
-        psOptionsToFree = GDALNearblackOptionsNew(NULL, NULL);
+        psOptionsToFree = GDALNearblackOptionsNew(nullptr, nullptr);
         psOptions = psOptionsToFree;
     }
 
-    int bCloseOutDSOnError = (hDstDS == NULL);
-    if( pszDest == NULL )
+    const bool bCloseOutDSOnError = hDstDS == nullptr;
+    if( pszDest == nullptr )
         pszDest = GDALGetDescription(hDstDS);
 
-    int nXSize = GDALGetRasterXSize( hSrcDataset );
-    int nYSize = GDALGetRasterYSize( hSrcDataset );
-    int nBands = GDALGetRasterCount( hSrcDataset );
+    const int nXSize = GDALGetRasterXSize(hSrcDataset);
+    const int nYSize = GDALGetRasterYSize(hSrcDataset);
+    int nBands = GDALGetRasterCount(hSrcDataset);
     int nDstBands = nBands;
 
-    int nMaxNonBlack = psOptions->nMaxNonBlack;
-    int nNearDist = psOptions->nNearDist;
-    int bNearWhite = psOptions->bNearWhite;
-    int bSetAlpha = psOptions->bSetAlpha;
-    int bSetMask = psOptions->bSetMask;
+    const int nMaxNonBlack = psOptions->nMaxNonBlack;
+    const int nNearDist = psOptions->nNearDist;
+    const bool bNearWhite = psOptions->bNearWhite;
+    const bool bSetAlpha = psOptions->bSetAlpha;
+    bool bSetMask = psOptions->bSetMask;
     Colors oColors = psOptions->oColors;
 
 /* -------------------------------------------------------------------- */
 /*      Do we need to create output file?                               */
 /* -------------------------------------------------------------------- */
-    if( hDstDS == NULL )
+
+    if( hDstDS == nullptr )
     {
-        GDALDriverH hDriver = GDALGetDriverByName( psOptions->pszFormat );
-        if (hDriver == NULL)
+        CPLString osFormat;
+        if( psOptions->pszFormat == nullptr )
         {
-            GDALNearblackOptionsFree(psOptionsToFree);
-            return NULL;
+            osFormat = GetOutputDriverForRaster(pszDest);
+            if( osFormat.empty() )
+            {
+                GDALNearblackOptionsFree(psOptionsToFree);
+                return nullptr;
+            }
+        }
+        else
+        {
+            osFormat = psOptions->pszFormat;
         }
 
-        if (bSetAlpha)
+        GDALDriverH hDriver = GDALGetDriverByName(osFormat);
+        if( hDriver == nullptr )
         {
-            /***** FIXME there should be a way to preserve alpha band data not in the collar *****/
-            if (nBands == 4)
-                nBands --;
+            GDALNearblackOptionsFree(psOptionsToFree);
+            return nullptr;
+        }
+
+        if( bSetAlpha )
+        {
+            // TODO(winkey): There should be a way to preserve alpha
+            // band data not in the collar.
+            if( nBands == 4 )
+                nBands--;
             else
-                nDstBands ++;
+                nDstBands++;
         }
 
-        if (bSetMask)
+        if( bSetMask )
         {
-            if (nBands == 4)
-                nDstBands = nBands = 3;
+            if( nBands == 4 )
+            {
+                nDstBands = 3;
+                nBands = 3;
+            }
         }
 
-        hDstDS = GDALCreate( hDriver, pszDest,
-                             nXSize, nYSize, nDstBands, GDT_Byte,
-                             psOptions->papszCreationOptions );
-        if( hDstDS == NULL )
+        hDstDS = GDALCreate(hDriver, pszDest,
+                            nXSize, nYSize, nDstBands, GDT_Byte,
+                            psOptions->papszCreationOptions);
+        if( hDstDS == nullptr )
         {
             GDALNearblackOptionsFree(psOptionsToFree);
-            return NULL;
+            return nullptr;
         }
 
-        double adfGeoTransform[6];
+        double adfGeoTransform[6] = {};
 
-        if( GDALGetGeoTransform( hSrcDataset, adfGeoTransform ) == CE_None )
+        if( GDALGetGeoTransform(hSrcDataset, adfGeoTransform) == CE_None )
         {
-            GDALSetGeoTransform( hDstDS, adfGeoTransform );
-            GDALSetProjection( hDstDS, GDALGetProjectionRef( hSrcDataset ) );
+            GDALSetGeoTransform(hDstDS, adfGeoTransform);
+            GDALSetProjection(hDstDS, GDALGetProjectionRef(hSrcDataset));
         }
     }
     else
     {
-        if( psOptions->papszCreationOptions != NULL)
+        if( psOptions->papszCreationOptions != nullptr)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                    "Warning: creation options are ignored when writing to an existing file.");
+                     "Warning: creation options are ignored when writing to "
+                     "an existing file.");
         }
 
         /***** check the input and output datasets are the same size *****/
-        if (GDALGetRasterXSize(hDstDS) != nXSize ||
-            GDALGetRasterYSize(hDstDS) != nYSize)
+        if( GDALGetRasterXSize(hDstDS) != nXSize ||
+            GDALGetRasterYSize(hDstDS) != nYSize )
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                    "The dimensions of the output dataset don't match "
-                    "the dimensions of the input dataset.");
+                     "The dimensions of the output dataset don't match "
+                     "the dimensions of the input dataset.");
             GDALNearblackOptionsFree(psOptionsToFree);
-            return NULL;
+            return nullptr;
         }
 
-        if (bSetAlpha)
+        if( bSetAlpha )
         {
-            if (nBands != 4 &&
+            if( nBands != 4 &&
                 (nBands < 2 ||
-                 GDALGetRasterColorInterpretation(GDALGetRasterBand(hDstDS, nBands)) != GCI_AlphaBand))
+                 GDALGetRasterColorInterpretation(
+                     GDALGetRasterBand(hDstDS, nBands)) != GCI_AlphaBand))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                        "Last band is not an alpha band.");
+                         "Last band is not an alpha band.");
                 GDALNearblackOptionsFree(psOptionsToFree);
-                return NULL;
+                return nullptr;
             }
 
-            nBands --;
+            nBands--;
         }
 
-        if (bSetMask)
+        if( bSetMask )
         {
-            if (nBands == 4)
-                nDstBands = nBands = 3;
+            if( nBands == 4 )
+            {
+                nDstBands = 3;
+                nBands = 3;
+            }
         }
     }
 
     /***** set a color if there are no colors set? *****/
 
-    if ( oColors.empty()) {
+    if( oColors.empty() )
+    {
         Color oColor;
 
         /***** loop over the bands to get the right number of values *****/
-
-        int iBand;
-        for (iBand = 0; iBand < nBands ; iBand++) {
-
-            /***** black or white? *****/
-
-            if (bNearWhite)
-                oColor.push_back(255);
-            else
-                oColor.push_back(0);
+        for( int iBand = 0; iBand < nBands ; iBand++ )
+        {
+            // black or white?
+            oColor.push_back(bNearWhite ? 255 : 0);
         }
 
         /***** add the color to the colors *****/
-
         oColors.push_back(oColor);
+        assert( !oColors.empty() );
     }
 
     /***** does the number of bands match the number of color values? *****/
 
-    if ( (int)oColors.front().size() != nBands ) {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "-color args must have the same number of values as the non alpha input band count.\n" );
+    if ( static_cast<int>(oColors.front().size()) != nBands ) {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "-color args must have the same number of values as "
+                 "the non alpha input band count.\n" );
         GDALNearblackOptionsFree(psOptionsToFree);
         if( bCloseOutDSOnError )
             GDALClose(hDstDS);
-        return NULL;
+        return nullptr;
     }
 
-    int iBand;
-    for( iBand = 0; iBand < nBands; iBand++ )
+    for( int iBand = 0; iBand < nBands; iBand++ )
     {
         GDALRasterBandH hBand = GDALGetRasterBand(hSrcDataset, iBand+1);
-        if (GDALGetRasterDataType(hBand) != GDT_Byte)
+        if( GDALGetRasterDataType(hBand) != GDT_Byte )
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Band %d is not of type GDT_Byte. It can lead to unexpected results.", iBand+1);
-        }
-        if (GDALGetRasterColorTable(hBand) != NULL)
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Band %d has a color table, which is ignored by nearblack. "
+                     "Band %d is not of type GDT_Byte. "
                      "It can lead to unexpected results.", iBand+1);
+        }
+        if( GDALGetRasterColorTable(hBand) != nullptr )
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Band %d has a color table, which is ignored by nearblack. "
+                "It can lead to unexpected results.", iBand + 1);
         }
     }
 
-    GDALRasterBandH hMaskBand = NULL;
+    GDALRasterBandH hMaskBand = nullptr;
 
-    if (bSetMask) {
-
-        /***** if there isn't already a mask band on the output file create one *****/
-
-        if ( GMF_PER_DATASET != GDALGetMaskFlags( GDALGetRasterBand(hDstDS, 1) ) )
+    if( bSetMask )
+    {
+        // If there isn't already a mask band on the output file create one.
+        if ( GMF_PER_DATASET != GDALGetMaskFlags(GDALGetRasterBand(hDstDS, 1)) )
         {
 
-            if ( CE_None != GDALCreateDatasetMaskBand(hDstDS, GMF_PER_DATASET) ) {
+            if( CE_None != GDALCreateDatasetMaskBand(hDstDS, GMF_PER_DATASET) )
+            {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Failed to create mask band on output DS");
-                bSetMask = FALSE;
+                bSetMask = false;
             }
         }
 
-        if (bSetMask) {
+        if( bSetMask )
+        {
             hMaskBand = GDALGetMaskBand(GDALGetRasterBand(hDstDS, 1));
         }
     }
@@ -311,17 +339,14 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
 /*      Allocate a line buffer.                                         */
 /* -------------------------------------------------------------------- */
-    GByte *pabyLine;
-    GByte *pabyMask=NULL;
 
-    int   *panLastLineCounts;
+    GByte *pabyLine = static_cast<GByte *>(CPLMalloc(nXSize * nDstBands));
 
-    pabyLine = (GByte *) CPLMalloc(nXSize * nDstBands);
+    GByte *pabyMask = nullptr;
+    if( bSetMask )
+        pabyMask = static_cast<GByte *>(CPLMalloc(nXSize));
 
-    if (bSetMask)
-        pabyMask = (GByte *) CPLMalloc(nXSize);
-
-    panLastLineCounts = (int *) CPLCalloc(sizeof(int),nXSize);
+    int *panLastLineCounts = static_cast<int *>(CPLCalloc(sizeof(int), nXSize));
 
 /* -------------------------------------------------------------------- */
 /*      Processing data one line at a time.                             */
@@ -330,87 +355,88 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 
     for( iLine = 0; iLine < nYSize; iLine++ )
     {
-        CPLErr eErr;
-
-        eErr = GDALDatasetRasterIO( hSrcDataset, GF_Read, 0, iLine, nXSize, 1,
-                                    pabyLine, nXSize, 1, GDT_Byte,
-                                    nBands, NULL, nDstBands, nXSize * nDstBands, 1 );
+        CPLErr eErr =
+            GDALDatasetRasterIO(hSrcDataset, GF_Read, 0, iLine, nXSize, 1,
+                                pabyLine, nXSize, 1, GDT_Byte,
+                                nBands, nullptr, nDstBands,
+                                nXSize * nDstBands, 1);
         if( eErr != CE_None )
         {
             if( bCloseOutDSOnError )
                 GDALClose(hDstDS);
-            hDstDS = NULL;
+            hDstDS = nullptr;
             break;
         }
 
-        if (bSetAlpha)
+        if( bSetAlpha )
         {
-            int iCol;
-            for(iCol = 0; iCol < nXSize; iCol ++)
+            for( int iCol = 0; iCol < nXSize; iCol++ )
             {
                 pabyLine[iCol * nDstBands + nDstBands - 1] = 255;
             }
         }
 
-        if (bSetMask)
+        if( bSetMask )
         {
-            int iCol;
-            for(iCol = 0; iCol < nXSize; iCol ++)
+            for( int iCol = 0; iCol < nXSize; iCol ++ )
             {
                 pabyMask[iCol] = 255;
             }
         }
 
-        ProcessLine( pabyLine, pabyMask, 0, nXSize-1, nBands, nDstBands,
-                     nNearDist, nMaxNonBlack, bNearWhite, &oColors,
-                     panLastLineCounts,
-                     TRUE, // bDoHorizontalCheck
-                     TRUE, // bDoVerticalCheck
-                     FALSE // bBottomUp
+        ProcessLine(pabyLine, pabyMask, 0, nXSize-1, nBands, nDstBands,
+                    nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                    panLastLineCounts,
+                    true, // bDoHorizontalCheck
+                    true, // bDoVerticalCheck
+                    false // bBottomUp
                     );
-        ProcessLine( pabyLine, pabyMask, nXSize-1, 0, nBands, nDstBands,
-                     nNearDist, nMaxNonBlack, bNearWhite, &oColors,
-                     panLastLineCounts,
-                     TRUE,  // bDoHorizontalCheck
-                     FALSE, // bDoVerticalCheck
-                     FALSE  // bBottomUp
+        ProcessLine(pabyLine, pabyMask, nXSize-1, 0, nBands, nDstBands,
+                    nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                    panLastLineCounts,
+                    true,  // bDoHorizontalCheck
+                    false, // bDoVerticalCheck
+                    false  // bBottomUp
                     );
 
-        eErr = GDALDatasetRasterIO( hDstDS, GF_Write, 0, iLine, nXSize, 1,
-                                    pabyLine, nXSize, 1, GDT_Byte,
-                                    nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
+        eErr = GDALDatasetRasterIO(hDstDS, GF_Write, 0, iLine, nXSize, 1,
+                                   pabyLine, nXSize, 1, GDT_Byte,
+                                   nDstBands, nullptr, nDstBands,
+                                   nXSize * nDstBands, 1);
 
         if( eErr != CE_None )
         {
             if( bCloseOutDSOnError )
                 GDALClose(hDstDS);
-            hDstDS = NULL;
+            hDstDS = nullptr;
             break;
         }
 
         /***** write out the mask band line *****/
 
-        if (bSetMask) {
-
-            eErr = GDALRasterIO ( hMaskBand, GF_Write, 0, iLine, nXSize, 1,
-                                  pabyMask, nXSize, 1, GDT_Byte,
-                                  0, 0 );
+        if( bSetMask )
+        {
+            eErr = GDALRasterIO (hMaskBand, GF_Write, 0, iLine, nXSize, 1,
+                                 pabyMask, nXSize, 1, GDT_Byte,
+                                 0, 0);
             if( eErr != CE_None )
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "ERROR writing out line to mask band.");
                 if( bCloseOutDSOnError )
                     GDALClose(hDstDS);
-                hDstDS = NULL;
+                hDstDS = nullptr;
                 break;
             }
         }
 
-        if( !(psOptions->pfnProgress( 0.5 * ((iLine+1) / (double) nYSize), NULL, psOptions->pProgressData )) )
+        if( !(psOptions->pfnProgress(
+                  0.5 * ((iLine+1) / static_cast<double>(nYSize)), nullptr,
+                  psOptions->pProgressData)) )
         {
             if( bCloseOutDSOnError )
                 GDALClose(hDstDS);
-            hDstDS = NULL;
+            hDstDS = nullptr;
             break;
         }
     }
@@ -418,95 +444,98 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 /* -------------------------------------------------------------------- */
 /*      Now process from the bottom back up                            .*/
 /* -------------------------------------------------------------------- */
-    memset( panLastLineCounts, 0, sizeof(int) * nXSize);
+    memset(panLastLineCounts, 0, sizeof(int) * nXSize);
 
-    for( iLine = nYSize-1; hDstDS != NULL && iLine >= 0; iLine-- )
+    for( iLine = nYSize-1; hDstDS != nullptr && iLine >= 0; iLine-- )
     {
-        CPLErr eErr;
-
-        eErr = GDALDatasetRasterIO( hDstDS, GF_Read, 0, iLine, nXSize, 1,
-                                    pabyLine, nXSize, 1, GDT_Byte,
-                                    nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
+        CPLErr eErr =
+            GDALDatasetRasterIO(hDstDS, GF_Read, 0, iLine, nXSize, 1,
+                                pabyLine, nXSize, 1, GDT_Byte,
+                                nDstBands, nullptr, nDstBands,
+                                nXSize * nDstBands, 1 );
         if( eErr != CE_None )
         {
             if( bCloseOutDSOnError )
                 GDALClose(hDstDS);
-            hDstDS = NULL;
+            hDstDS = nullptr;
             break;
         }
 
         /***** read the mask band line back in *****/
 
-        if (bSetMask) {
-
-            eErr = GDALRasterIO ( hMaskBand, GF_Read, 0, iLine, nXSize, 1,
-                                  pabyMask, nXSize, 1, GDT_Byte,
-                                  0, 0 );
+        if( bSetMask )
+        {
+            eErr = GDALRasterIO(hMaskBand, GF_Read, 0, iLine, nXSize, 1,
+                                pabyMask, nXSize, 1, GDT_Byte,
+                                0, 0);
             if( eErr != CE_None )
             {
                 if( bCloseOutDSOnError )
                     GDALClose(hDstDS);
-                hDstDS = NULL;
+                hDstDS = nullptr;
                 break;
             }
         }
 
-        ProcessLine( pabyLine, pabyMask, 0, nXSize-1, nBands, nDstBands,
-                     nNearDist, nMaxNonBlack, bNearWhite, &oColors,
-                     panLastLineCounts,
-                     TRUE, // bDoHorizontalCheck
-                     TRUE, // bDoVerticalCheck
-                     TRUE  // bBottomUp
-                   );
-        ProcessLine( pabyLine, pabyMask, nXSize-1, 0, nBands, nDstBands,
-                     nNearDist, nMaxNonBlack, bNearWhite, &oColors,
-                     panLastLineCounts,
-                     TRUE,  // bDoHorizontalCheck
-                     FALSE, // bDoVerticalCheck
-                     TRUE   // bBottomUp
+        ProcessLine(pabyLine, pabyMask, 0, nXSize-1, nBands, nDstBands,
+                    nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                    panLastLineCounts,
+                    true, // bDoHorizontalCheck
+                    true, // bDoVerticalCheck
+                    true  // bBottomUp
+                    );
+        ProcessLine(pabyLine, pabyMask, nXSize-1, 0, nBands, nDstBands,
+                    nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                    panLastLineCounts,
+                    true,  // bDoHorizontalCheck
+                    false, // bDoVerticalCheck
+                    true   // bBottomUp
                     );
 
-        eErr = GDALDatasetRasterIO( hDstDS, GF_Write, 0, iLine, nXSize, 1,
-                                    pabyLine, nXSize, 1, GDT_Byte,
-                                    nDstBands, NULL, nDstBands, nXSize * nDstBands, 1 );
+        eErr = GDALDatasetRasterIO(hDstDS, GF_Write, 0, iLine, nXSize, 1,
+                                   pabyLine, nXSize, 1, GDT_Byte,
+                                   nDstBands, nullptr, nDstBands,
+                                   nXSize * nDstBands, 1);
         if( eErr != CE_None )
         {
             if( bCloseOutDSOnError )
                 GDALClose(hDstDS);
-            hDstDS = NULL;
+            hDstDS = nullptr;
             break;
         }
 
         /***** write out the mask band line *****/
 
-        if (bSetMask) {
-
-            eErr = GDALRasterIO ( hMaskBand, GF_Write, 0, iLine, nXSize, 1,
-                                  pabyMask, nXSize, 1, GDT_Byte,
-                                  0, 0 );
+        if( bSetMask )
+        {
+            eErr = GDALRasterIO (hMaskBand, GF_Write, 0, iLine, nXSize, 1,
+                                 pabyMask, nXSize, 1, GDT_Byte,
+                                 0, 0);
             if( eErr != CE_None )
             {
                 if( bCloseOutDSOnError )
                     GDALClose(hDstDS);
-                hDstDS = NULL;
+                hDstDS = nullptr;
                 break;
             }
         }
 
-        if( !(psOptions->pfnProgress( 0.5 + 0.5 * (nYSize-iLine) / (double) nYSize, NULL, psOptions->pProgressData )) )
+        if( !(psOptions->pfnProgress( 0.5 + 0.5 * (nYSize-iLine) /
+            static_cast<double>(nYSize), nullptr, psOptions->pProgressData )) )
         {
             if( bCloseOutDSOnError )
                 GDALClose(hDstDS);
-            hDstDS = NULL;
+            hDstDS = nullptr;
             break;
         }
     }
 
     CPLFree(pabyLine);
-    if (bSetMask)
+    if( bSetMask )
         CPLFree(pabyMask);
 
     CPLFree( panLastLineCounts );
+    GDALNearblackOptionsFree(psOptionsToFree);
 
     return hDstDS;
 }
@@ -518,15 +547,12 @@ GDALDatasetH CPL_DLL GDALNearblack( const char *pszDest, GDALDatasetH hDstDS,
 /************************************************************************/
 
 static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
-                        int iEnd, int nSrcBands, int nDstBands, int nNearDist,
-                        int nMaxNonBlack, int bNearWhite, Colors *poColors,
-                        int *panLastLineCounts, int bDoHorizontalCheck,
-                        int bDoVerticalCheck, int bBottomUp )
+                         int iEnd, int nSrcBands, int nDstBands, int nNearDist,
+                         int nMaxNonBlack, bool bNearWhite, Colors *poColors,
+                         int *panLastLineCounts, bool bDoHorizontalCheck,
+                         bool bDoVerticalCheck, bool bBottomUp )
 {
-    int iDir, i;
-    GByte nReplacevalue = 0;
-    if( bNearWhite )
-        nReplacevalue = 255;
+    const GByte nReplacevalue = bNearWhite ? 255 : 0;
 
     /* -------------------------------------------------------------------- */
     /*      Vertical checking.                                              */
@@ -536,47 +562,45 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
     {
         const int nXSize = std::max(iStart + 1, iEnd + 1);
 
-        for( i = 0; i < nXSize; i++ )
+        for( int i = 0; i < nXSize; i++ )
         {
-
             // are we already terminated for this column?
-
             if( panLastLineCounts[i] > nMaxNonBlack )
                 continue;
 
             /***** is the pixel valid data? ****/
 
-            int bIsNonBlack = FALSE;
+            bool bIsNonBlack = false;
 
             /***** loop over the colors *****/
 
-            int iColor;
-            for (iColor = 0; iColor < (int)poColors->size(); iColor++) {
+            for( int iColor = 0; iColor < static_cast<int>(poColors->size() );
+                 iColor++) {
 
                 Color oColor = (*poColors)[iColor];
 
-                bIsNonBlack = FALSE;
+                bIsNonBlack = false;
 
                 /***** loop over the bands *****/
 
-                int iBand;
-                for( iBand = 0; iBand < nSrcBands; iBand++ )
+                for( int iBand = 0; iBand < nSrcBands; iBand++ )
                 {
-                    int nPix = pabyLine[i * nDstBands + iBand];
+                    const int nPix = pabyLine[i * nDstBands + iBand];
 
                     if( oColor[iBand] - nPix > nNearDist ||
-                       nPix > nNearDist + oColor[iBand] )
+                        nPix > nNearDist + oColor[iBand] )
                     {
-                        bIsNonBlack = TRUE;
+                        bIsNonBlack = true;
                         break;
                     }
                 }
 
-                if (bIsNonBlack == FALSE)
+                if( !bIsNonBlack )
                     break;
             }
 
-            if (bIsNonBlack) {
+            if( bIsNonBlack )
+            {
                 panLastLineCounts[i]++;
 
                 if( panLastLineCounts[i] > nMaxNonBlack )
@@ -586,19 +610,15 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
             //  panLastLineCounts[i] = 0; // not sure this even makes sense
 
             /***** replace the pixel values *****/
-
-            int iBand;
-            for( iBand = 0; iBand < nSrcBands; iBand++ )
+            for( int iBand = 0; iBand < nSrcBands; iBand++ )
                 pabyLine[i * nDstBands + iBand] = nReplacevalue;
 
             /***** alpha *****/
-
             if( nDstBands > nSrcBands )
                 pabyLine[i * nDstBands + nDstBands - 1] = 0;
 
             /***** mask *****/
-
-            if (pabyMask != NULL)
+            if (pabyMask != nullptr)
                 pabyMask[i] = 0;
         }
     }
@@ -613,56 +633,52 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 
         /***** on a bottom up pass assume nMaxNonBlack is 0 *****/
 
-        if (bBottomUp)
+        if( bBottomUp )
             nMaxNonBlack = 0;
 
-        if( iStart < iEnd )
-            iDir = 1;
-        else
-            iDir = -1;
-        int bDoTest = TRUE;
+        const int iDir = iStart < iEnd ? 1 : -1;
 
-        for( i = iStart; i != iEnd; i += iDir )
+        bool bDoTest = TRUE;
+
+        for( int i = iStart; i != iEnd; i += iDir )
         {
-
             /***** not seen any valid data? *****/
 
-            if ( bDoTest ) {
-
+            if( bDoTest )
+            {
                 /***** is the pixel valid data? ****/
 
-                int bIsNonBlack = FALSE;
+                bool bIsNonBlack = false;
 
                 /***** loop over the colors *****/
 
-                int iColor;
-                for (iColor = 0; iColor < (int)poColors->size(); iColor++) {
+                for( int iColor = 0;
+                     iColor < static_cast<int>(poColors->size()); iColor++ ) {
 
                     Color oColor = (*poColors)[iColor];
 
-                    bIsNonBlack = FALSE;
+                    bIsNonBlack = false;
 
                     /***** loop over the bands *****/
 
-                    int iBand;
-                    for( iBand = 0; iBand < nSrcBands; iBand++ )
+                    for( int iBand = 0; iBand < nSrcBands; iBand++ )
                     {
-                        int nPix = pabyLine[i * nDstBands + iBand];
+                        const int nPix = pabyLine[i * nDstBands + iBand];
 
                         if( oColor[iBand] - nPix > nNearDist ||
-                           nPix > nNearDist + oColor[iBand] )
+                            nPix > nNearDist + oColor[iBand] )
                         {
-                            bIsNonBlack = TRUE;
+                            bIsNonBlack = true;
                             break;
                         }
                     }
 
-                    if (bIsNonBlack == FALSE)
+                    if( bIsNonBlack == false )
                         break;
                 }
 
-                if (bIsNonBlack) {
-
+                if( bIsNonBlack )
+                {
                     /***** use nNonBlackPixels in grey areas  *****/
                     /***** from the vertical pass's grey areas ****/
 
@@ -673,14 +689,13 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
                 }
 
                 if( nNonBlackPixels > nMaxNonBlack ) {
-                    bDoTest = FALSE;
+                    bDoTest = false;
                     continue;
                 }
 
                 /***** replace the pixel values *****/
 
-                int iBand;
-                for( iBand = 0; iBand < nSrcBands; iBand++ )
+                for( int iBand = 0; iBand < nSrcBands; iBand++ )
                     pabyLine[i * nDstBands + iBand] = nReplacevalue;
 
                 /***** alpha *****/
@@ -690,15 +705,16 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 
                 /***** mask *****/
 
-                if (pabyMask != NULL)
+                if (pabyMask != nullptr)
                     pabyMask[i] = 0;
             }
 
             /***** seen valid data but test if the *****/
             /***** vertical pass saw any non valid data *****/
 
-            else if( panLastLineCounts[i] == 0 ) {
-                bDoTest = TRUE;
+            else if( panLastLineCounts[i] == 0 )
+            {
+                bDoTest = true;
                 nNonBlackPixels = 0;
             }
         }
@@ -709,22 +725,22 @@ static void ProcessLine( GByte *pabyLine, GByte *pabyMask, int iStart,
 /*                            IsInt()                                   */
 /************************************************************************/
 
-static int IsInt( const char *pszArg )
+static bool IsInt( const char *pszArg )
 {
     if( pszArg[0] == '-' )
         pszArg++;
 
     if( *pszArg == '\0' )
-        return FALSE;
+        return false;
 
     while( *pszArg != '\0' )
     {
         if( *pszArg < '0' || *pszArg > '9' )
-            return FALSE;
+            return false;
         pszArg++;
     }
 
-    return TRUE;
+    return true;
 }
 
 /************************************************************************/
@@ -735,7 +751,7 @@ static int IsInt( const char *pszArg )
  * Allocates a GDALNearblackOptions struct.
  *
  * @param papszArgv NULL terminated list of options (potentially including filename and open options too), or NULL.
- *                  The accepted options are the ones of the <a href="nearblack.html">nearblack</a> utility.
+ *                  The accepted options are the ones of the <a href="/programs/nearblack.html">nearblack</a> utility.
  * @param psOptionsForBinary (output) may be NULL (and should generally be NULL),
  *                           otherwise (gdal_translate_bin.cpp use case) must be allocated with
  *                           GDALNearblackOptionsForBinaryNew() prior to this function. Will be
@@ -745,48 +761,47 @@ static int IsInt( const char *pszArg )
  * @since GDAL 2.1
  */
 
-GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
-                                                      GDALNearblackOptionsForBinary* psOptionsForBinary)
+GDALNearblackOptions *GDALNearblackOptionsNew(
+    char** papszArgv,
+    GDALNearblackOptionsForBinary* psOptionsForBinary )
 {
     GDALNearblackOptions *psOptions = new GDALNearblackOptions;
 
-    psOptions->pszFormat = CPLStrdup("HFA");
+    psOptions->pszFormat = nullptr;
     psOptions->pfnProgress = GDALDummyProgress;
-    psOptions->pProgressData = NULL;
-    psOptions->papszCreationOptions = NULL;
+    psOptions->pProgressData = nullptr;
+    psOptions->papszCreationOptions = nullptr;
     psOptions->nMaxNonBlack = 2;
     psOptions->nNearDist = 15;
-    psOptions->bNearWhite = FALSE;
-    psOptions->bSetAlpha = FALSE;
-    psOptions->bSetMask = FALSE;
+    psOptions->bNearWhite = false;
+    psOptions->bSetAlpha = false;
+    psOptions->bSetMask = false;
 
 /* -------------------------------------------------------------------- */
 /*      Handle command line arguments.                                  */
 /* -------------------------------------------------------------------- */
-    int argc = CSLCount(papszArgv);
-    for( int i = 0; papszArgv != NULL && i < argc; i++ )
+    const int argc = CSLCount(papszArgv);
+    for( int i = 0; papszArgv != nullptr && i < argc; i++ )
     {
-        if( EQUAL(papszArgv[i],"-of") && i < argc-1 )
+        if( i < argc - 1 && (EQUAL(papszArgv[i], "-of") ||
+                             EQUAL(papszArgv[i], "-f")) )
         {
             ++i;
             CPLFree(psOptions->pszFormat);
             psOptions->pszFormat = CPLStrdup(papszArgv[i]);
-            if( psOptionsForBinary )
-            {
-                psOptionsForBinary->bFormatExplicitlySet = TRUE;
-            }
         }
 
-        else if( EQUAL(papszArgv[i],"-q") || EQUAL(papszArgv[i],"-quiet") )
+        else if( EQUAL(papszArgv[i], "-q") || EQUAL(papszArgv[i], "-quiet") )
         {
             if( psOptionsForBinary )
                 psOptionsForBinary->bQuiet = TRUE;
         }
-        else if( EQUAL(papszArgv[i],"-co") && i+1<argc )
+        else if( i + 1 < argc && EQUAL(papszArgv[i], "-co")  )
         {
-            psOptions->papszCreationOptions = CSLAddString( psOptions->papszCreationOptions, papszArgv[++i] );
+            psOptions->papszCreationOptions =
+                CSLAddString(psOptions->papszCreationOptions, papszArgv[++i]);
         }
-        else if( EQUAL(papszArgv[i], "-o") && i+1<argc )
+        else if( i + 1 < argc && EQUAL(papszArgv[i], "-o") )
         {
             i++;
             if( psOptionsForBinary )
@@ -796,78 +811,84 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
             }
         }
         else if( EQUAL(papszArgv[i], "-white") ) {
-            psOptions->bNearWhite = TRUE;
+            psOptions->bNearWhite = true;
         }
 
         /***** -color c1,c2,c3...cn *****/
 
-        else if( EQUAL(papszArgv[i], "-color") && i+1<argc )
+        else if( i + 1 < argc && EQUAL(papszArgv[i], "-color") )
         {
             Color oColor;
 
             /***** tokenize the arg on , *****/
 
-            char **papszTokens;
-            papszTokens = CSLTokenizeString2( papszArgv[++i], ",", 0 );
+            char **papszTokens = CSLTokenizeString2( papszArgv[++i], ",", 0 );
 
             /***** loop over the tokens *****/
 
-            int iToken;
-            for( iToken = 0; papszTokens && papszTokens[iToken]; iToken++ )
+            for( int iToken = 0; papszTokens && papszTokens[iToken]; iToken++ )
             {
 
                 /***** ensure the token is an int and add it to the color *****/
 
-                if ( IsInt( papszTokens[iToken] ) )
+                if( IsInt(papszTokens[iToken]) )
+                {
                     oColor.push_back( atoi( papszTokens[iToken] ) );
-                else {
+                }
+                else
+                {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Colors must be valid integers." );
-                    CSLDestroy( papszTokens );
+                    CSLDestroy(papszTokens);
 
                     GDALNearblackOptionsFree(psOptions);
-                    return NULL;
+                    return nullptr;
                 }
             }
 
-            CSLDestroy( papszTokens );
+            CSLDestroy(papszTokens);
 
             /***** check if the number of bands is consistent *****/
 
             if ( !psOptions->oColors.empty() &&
                  psOptions->oColors.front().size() != oColor.size() )
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "all -color args must have the same number of values.\n" );
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "all -color args must have the same number of values.\n");
                 GDALNearblackOptionsFree(psOptions);
-                return NULL;
+                return nullptr;
             }
 
             /***** add the color to the colors *****/
 
             psOptions->oColors.push_back( oColor );
         }
-
-        else if( EQUAL(papszArgv[i], "-nb") && i+1<argc )
+        else if( i+1<argc && EQUAL(papszArgv[i], "-nb") )
         {
             psOptions->nMaxNonBlack = atoi(papszArgv[++i]);
         }
-        else if( EQUAL(papszArgv[i], "-near") && i+1<argc )
+        else if( i+1<argc && EQUAL(papszArgv[i], "-near") )
         {
             psOptions->nNearDist = atoi(papszArgv[++i]);
         }
         else if( EQUAL(papszArgv[i], "-setalpha") )
-            psOptions->bSetAlpha = TRUE;
+        {
+            psOptions->bSetAlpha = true;
+        }
         else if( EQUAL(papszArgv[i], "-setmask") )
-            psOptions->bSetMask = TRUE;
+        {
+            psOptions->bSetMask = true;
+        }
         else if( papszArgv[i][0] == '-' )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Unknown option name '%s'", papszArgv[i]);
             GDALNearblackOptionsFree(psOptions);
-            return NULL;
+            return nullptr;
         }
-        else if( psOptionsForBinary && psOptionsForBinary->pszInFile == NULL )
+        else if( psOptionsForBinary &&
+                 psOptionsForBinary->pszInFile == nullptr )
         {
             psOptionsForBinary->pszInFile = CPLStrdup(papszArgv[i]);
         }
@@ -876,13 +897,8 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too many command options '%s'", papszArgv[i]);
             GDALNearblackOptionsFree(psOptions);
-            return NULL;
+            return nullptr;
         }
-    }
-
-    if( psOptionsForBinary )
-    {
-        psOptionsForBinary->pszFormat = CPLStrdup(psOptions->pszFormat);
     }
 
     return psOptions;
@@ -900,15 +916,14 @@ GDALNearblackOptions *GDALNearblackOptionsNew(char** papszArgv,
  * @since GDAL 2.1
  */
 
-void GDALNearblackOptionsFree(GDALNearblackOptions *psOptions)
+void GDALNearblackOptionsFree( GDALNearblackOptions *psOptions )
 {
-    if( psOptions )
-    {
-        CPLFree(psOptions->pszFormat);
-        CSLDestroy(psOptions->papszCreationOptions);
+    if( psOptions == nullptr ) return;
 
-        delete psOptions;
-    }
+    CPLFree(psOptions->pszFormat);
+    CSLDestroy(psOptions->papszCreationOptions);
+
+    delete psOptions;
 }
 
 /************************************************************************/
@@ -926,7 +941,8 @@ void GDALNearblackOptionsFree(GDALNearblackOptions *psOptions)
  */
 
 void GDALNearblackOptionsSetProgress( GDALNearblackOptions *psOptions,
-                                      GDALProgressFunc pfnProgress, void *pProgressData )
+                                      GDALProgressFunc pfnProgress,
+                                      void *pProgressData )
 {
     psOptions->pfnProgress = pfnProgress ? pfnProgress : GDALDummyProgress;
     psOptions->pProgressData = pProgressData;

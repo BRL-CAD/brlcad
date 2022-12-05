@@ -5,11 +5,11 @@
  * Purpose:  Implementation of quadtree building and searching functions.
  *           Derived from shapelib and mapserver implementations
  * Author:   Frank Warmerdam, warmerdam@pobox.com
- *           Even Rouault, <even dot rouault at mines dash paris dot org>
+ *           Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
  * Copyright (c) 1999-2008, Frank Warmerdam
- * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,6 +34,8 @@
 #define CPL_QUAD_TREE_H_INCLUDED
 
 #include "cpl_port.h"
+
+#include <stdbool.h>
 
 /**
  * \file cpl_quad_tree.h
@@ -63,6 +65,8 @@ typedef struct _CPLQuadTree CPLQuadTree;
 
 /** CPLQuadTreeGetBoundsFunc */
 typedef void         (*CPLQuadTreeGetBoundsFunc)(const void* hFeature, CPLRectObj* pBounds);
+/** CPLQuadTreeGetBoundsExFunc */
+typedef void         (*CPLQuadTreeGetBoundsExFunc)(const void* hFeature, void* pUserData, CPLRectObj* pBounds);
 /** CPLQuadTreeForeachFunc */
 typedef int          (*CPLQuadTreeForeachFunc)(void* pElt, void* pUserData);
 /** CPLQuadTreeDumpFeatureFunc */
@@ -72,10 +76,14 @@ typedef void         (*CPLQuadTreeDumpFeatureFunc)(const void* hFeature, int nIn
 
 CPLQuadTree CPL_DLL  *CPLQuadTreeCreate(const CPLRectObj* pGlobalBounds,
                                         CPLQuadTreeGetBoundsFunc pfnGetBounds);
+CPLQuadTree CPL_DLL  *CPLQuadTreeCreateEx(const CPLRectObj* pGlobalBounds,
+                                          CPLQuadTreeGetBoundsExFunc pfnGetBounds,
+                                          void* pUserData);
 void        CPL_DLL   CPLQuadTreeDestroy(CPLQuadTree *hQuadtree);
 
 void        CPL_DLL   CPLQuadTreeSetBucketCapacity(CPLQuadTree *hQuadtree,
                                                    int nBucketCapacity);
+void        CPL_DLL   CPLQuadTreeForceUseOfSubNodes(CPLQuadTree *hQuadTree);
 int         CPL_DLL   CPLQuadTreeGetAdvisedMaxDepth(int nExpectedFeatures);
 void        CPL_DLL   CPLQuadTreeSetMaxDepth(CPLQuadTree *hQuadtree,
                                              int nMaxDepth);
@@ -85,6 +93,10 @@ void        CPL_DLL   CPLQuadTreeInsert(CPLQuadTree *hQuadtree,
 void        CPL_DLL   CPLQuadTreeInsertWithBounds(CPLQuadTree *hQuadtree,
                                                   void* hFeature,
                                                   const CPLRectObj* psBounds);
+
+void        CPL_DLL   CPLQuadTreeRemove(CPLQuadTree *hQuadtree,
+                                        void* hFeature,
+                                        const CPLRectObj* psBounds);
 
 void        CPL_DLL **CPLQuadTreeSearch(const CPLQuadTree *hQuadtree,
                                         const CPLRectObj* pAoi,

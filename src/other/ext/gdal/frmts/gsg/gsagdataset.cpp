@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2006, Kevin Locke <kwl7@cornell.edu>
- * Copyright (c) 2008-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,27 +30,16 @@
 
 #include "cpl_conv.h"
 
-#include <sstream>
+#include <assert.h>
 #include <float.h>
 #include <limits.h>
-#include <assert.h>
+#include <limits>
+#include <sstream>
 
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
-CPL_CVSID("$Id$");
-
-#ifndef DBL_MAX
-# ifdef __DBL_MAX__
-#  define DBL_MAX __DBL_MAX__
-# else
-#  define DBL_MAX 1.7976931348623157E+308
-# endif /* __DBL_MAX__ */
-#endif /* DBL_MAX */
-
-#ifndef INT_MAX
-# define INT_MAX 2147483647
-#endif /* INT_MAX */
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /* ==================================================================== */
@@ -60,7 +49,7 @@ CPL_CVSID("$Id$");
 
 class GSAGRasterBand;
 
-class GSAGDataset : public GDALPamDataset
+class GSAGDataset final: public GDALPamDataset
 {
     friend class GSAGRasterBand;
 
@@ -104,7 +93,7 @@ const size_t GSAGDataset::nMAX_HEADER_SIZE = 200;
 /* ==================================================================== */
 /************************************************************************/
 
-class GSAGRasterBand : public GDALPamRasterBand
+class GSAGRasterBand final: public GDALPamRasterBand
 {
     friend class GSAGDataset;
 
@@ -134,9 +123,9 @@ class GSAGRasterBand : public GDALPamRasterBand
     CPLErr IReadBlock( int, int, void * ) override;
     CPLErr IWriteBlock( int, int, void * ) override;
 
-    double GetNoDataValue( int *pbSuccess = NULL ) override;
-    double GetMinimum( int *pbSuccess = NULL ) override;
-    double GetMaximum( int *pbSuccess = NULL ) override;
+    double GetNoDataValue( int *pbSuccess = nullptr ) override;
+    double GetMinimum( int *pbSuccess = nullptr ) override;
+    double GetMaximum( int *pbSuccess = nullptr ) override;
 };
 
 /************************************************************************/
@@ -146,7 +135,7 @@ class GSAGRasterBand : public GDALPamRasterBand
 /* See http://gcc.gnu.org/ml/gcc/2003-08/msg01195.html for some         */
 /* explanation.                                                         */
 /************************************************************************/
-
+    
 static bool AlmostEqual( double dfVal1, double dfVal2 )
 
 {
@@ -168,10 +157,11 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDSIn, int nBandIn,
     dfMaxY(0.0),
     dfMinZ(0.0),
     dfMaxZ(0.0),
+    panLineOffset(nullptr),
     nLastReadLine(poDSIn->nRasterYSize),
     nMaxLineSize(128),
-    padfRowMinZ(NULL),
-    padfRowMaxZ(NULL),
+    padfRowMinZ(nullptr),
+    padfRowMaxZ(nullptr),
     nMinZRow(-1),
     nMaxZRow(-1)
 {
@@ -183,9 +173,20 @@ GSAGRasterBand::GSAGRasterBand( GSAGDataset *poDSIn, int nBandIn,
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
+    if( poDSIn->nRasterYSize > 1000000 )
+    {
+        // Sanity check to avoid excessive memory allocations
+        VSIFSeekL( poDSIn->fp, 0, SEEK_END );
+        vsi_l_offset nFileSize = VSIFTellL(poDSIn->fp);
+        if( static_cast<vsi_l_offset>(poDSIn->nRasterYSize) > nFileSize )
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Truncated file");
+            return;
+        }
+    }
     panLineOffset = static_cast<vsi_l_offset *>(
         VSI_CALLOC_VERBOSE( poDSIn->nRasterYSize+1, sizeof(vsi_l_offset) ));
-    if( panLineOffset == NULL )
+    if( panLineOffset == nullptr )
     {
         return;
     }
@@ -212,13 +213,13 @@ CPLErr GSAGRasterBand::ScanForMinMaxZ()
 
 {
     double *padfRowValues = (double *)VSI_MALLOC2_VERBOSE( nBlockXSize, sizeof(double) );
-    if( padfRowValues == NULL )
+    if( padfRowValues == nullptr )
     {
         return CE_Failure;
     }
 
-    double dfNewMinZ = DBL_MAX;
-    double dfNewMaxZ = -DBL_MAX;
+    double dfNewMinZ = std::numeric_limits<double>::max();
+    double dfNewMaxZ = std::numeric_limits<double>::lowest();
     int nNewMinZRow = 0;
     int nNewMaxZRow = 0;
 
@@ -235,8 +236,8 @@ CPLErr GSAGRasterBand::ScanForMinMaxZ()
             return eErr;
         }
 
-        padfRowMinZ[iRow] = DBL_MAX;
-        padfRowMaxZ[iRow] = -DBL_MAX;
+        padfRowMinZ[iRow] = std::numeric_limits<double>::max();
+        padfRowMaxZ[iRow] = std::numeric_limits<double>::lowest();
         for( int iCell=0; iCell<nRasterXSize; iCell++ )
         {
             if( AlmostEqual(padfRowValues[iCell], GSAGDataset::dfNODATA_VALUE) )
@@ -297,7 +298,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                                    void * pImage )
 {
     GSAGDataset *poGDS = (GSAGDataset *)poDS;
-    assert( poGDS != NULL );
+    assert( poGDS != nullptr );
 
     double *pdfImage = (double *)pImage;
 
@@ -309,7 +310,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         // Discover the last read block
         for ( int iFoundLine = nLastReadLine - 1; iFoundLine > nBlockYOff; iFoundLine--)
         {
-            if( IReadBlock( nBlockXOff, iFoundLine, NULL) != CE_None )
+            if( IReadBlock( nBlockXOff, iFoundLine, nullptr) != CE_None )
                 return CE_Failure;
         }
     }
@@ -334,7 +335,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     }
 
     char *szLineBuf = (char *)VSI_MALLOC_VERBOSE( nLineBufSize );
-    if( szLineBuf == NULL )
+    if( szLineBuf == nullptr )
     {
         return CE_Failure;
     }
@@ -355,26 +356,29 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
     char *szEnd = szStart;
     for( int iCell=0; iCell<nBlockXSize; szStart = szEnd )
     {
+        while( isspace( (unsigned char)*szStart ) )
+            szStart++;
+
         double dfValue = CPLStrtod( szStart, &szEnd );
         if( szStart == szEnd )
         {
             /* No number found */
             if( *szStart == '.' )
             {
-                CPLError( CE_Warning, CPLE_FileIO,
+                CPLError( CE_Failure, CPLE_FileIO,
                           "Unexpected value in grid row %d (expected floating "
                           "point value, found \"%s\").\n",
                           nBlockYOff, szStart );
+                VSIFree( szLineBuf );
                 return CE_Failure;
             }
 
             /* Check if this was an expected failure */
-            while( isspace( (unsigned char)*szStart ) )
-                szStart++;
 
             /* Found sign at end of input, seek back to re-read it */
             bool bOnlySign = false;
-            if ( (*szStart == '-' || *szStart == '+') && *(szStart+1) == '\0' )
+            if ( (*szStart == '-' || *szStart == '+') &&
+                 static_cast<size_t>(szStart + 1 - szLineBuf) == nCharsRead )
             {
                 if( VSIFSeekL( poGDS->fp,
                                VSIFTellL( poGDS->fp)-1,
@@ -464,7 +468,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
                           "Unexpected ASCII null-character in grid row %d at "
                           "offset %ld.\n",
                           nBlockYOff,
-                          (long) (szStart - szLineBuf) );
+                          (long) (szEnd - szLineBuf) );
 
                 while( *szEnd == '\0' &&
                        static_cast<size_t>(szEnd - szLineBuf) < nCharsRead )
@@ -508,7 +512,7 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
             szEnd = szLineBuf + nCharsRead;
         }
 
-        if( pdfImage != NULL )
+        if( pdfImage != nullptr )
         {
             *(pdfImage+iCell) = dfValue;
         }
@@ -532,8 +536,22 @@ CPLErr GSAGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
         nMaxLineSize = nCharsExamined + 1;
 
     if( nBlockYOff > 0 )
-        panLineOffset[nBlockYOff - 1] =
+    {
+        vsi_l_offset nNewOffset =
             panLineOffset[nBlockYOff] + nCharsExamined;
+        if( panLineOffset[nBlockYOff - 1] == 0 )
+        {
+            panLineOffset[nBlockYOff - 1] = nNewOffset;
+        }
+        else if( panLineOffset[nBlockYOff - 1] != nNewOffset )
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Coding error: previous offset for line %d was "
+                     CPL_FRMT_GUIB ", new offset would be " CPL_FRMT_GUIB,
+                     nBlockYOff - 1,
+                     panLineOffset[nBlockYOff - 1], nNewOffset );
+        }
+    }
 
     nLastReadLine = nBlockYOff;
 
@@ -561,22 +579,22 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
         return CE_Failure;
 
     GSAGDataset *poGDS = (GSAGDataset *)poDS;
-    assert( poGDS != NULL );
+    assert( poGDS != nullptr );
 
-    if( padfRowMinZ == NULL || padfRowMaxZ == NULL
+    if( padfRowMinZ == nullptr || padfRowMaxZ == nullptr
         || nMinZRow < 0 || nMaxZRow < 0 )
     {
         padfRowMinZ = (double *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(double) );
-        if( padfRowMinZ == NULL )
+        if( padfRowMinZ == nullptr )
         {
             return CE_Failure;
         }
 
         padfRowMaxZ = (double *)VSI_MALLOC2_VERBOSE( nRasterYSize,sizeof(double) );
-        if( padfRowMaxZ == NULL )
+        if( padfRowMaxZ == nullptr )
         {
             VSIFree( padfRowMinZ );
-            padfRowMinZ = NULL;
+            padfRowMinZ = nullptr;
             return CE_Failure;
         }
 
@@ -586,7 +604,7 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     }
 
     if( panLineOffset[nBlockYOff+1] == 0 )
-        IReadBlock( nBlockXOff, nBlockYOff, NULL );
+        IReadBlock( nBlockXOff, nBlockYOff, nullptr );
 
     if( panLineOffset[nBlockYOff+1] == 0 || panLineOffset[nBlockYOff] == 0 )
         return CE_Failure;
@@ -596,8 +614,8 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     ssOutBuf.setf( std::ios::uppercase );
 
     double *pdfImage = (double *)pImage;
-    padfRowMinZ[nBlockYOff] = DBL_MAX;
-    padfRowMaxZ[nBlockYOff] = -DBL_MAX;
+    padfRowMinZ[nBlockYOff] = std::numeric_limits<double>::max();
+    padfRowMaxZ[nBlockYOff] = std::numeric_limits<double>::lowest();
     for( int iCell=0; iCell<nBlockXSize; )
     {
         for( int iCol=0; iCol<10 && iCell<nBlockXSize; iCol++, iCell++ )
@@ -657,7 +675,7 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
     bool bHeaderNeedsUpdate = false;
     if( nMinZRow == nBlockYOff && padfRowMinZ[nBlockYOff] > dfMinZ )
     {
-        double dfNewMinZ = -DBL_MAX;
+        double dfNewMinZ = std::numeric_limits<double>::lowest();
         for( int iRow=0; iRow<nRasterYSize; iRow++ )
         {
             if( padfRowMinZ[iRow] < dfNewMinZ )
@@ -676,7 +694,7 @@ CPLErr GSAGRasterBand::IWriteBlock( int nBlockXOff, int nBlockYOff,
 
     if( nMaxZRow == nBlockYOff && padfRowMaxZ[nBlockYOff] < dfMaxZ )
     {
-        double dfNewMaxZ = -DBL_MAX;
+        double dfNewMaxZ = std::numeric_limits<double>::lowest();
         for( int iRow=0; iRow<nRasterYSize; iRow++ )
         {
             if( padfRowMaxZ[iRow] > dfNewMaxZ )
@@ -766,10 +784,10 @@ double GSAGRasterBand::GetMaximum( int *pbSuccess )
 /************************************************************************/
 
 GSAGDataset::GSAGDataset( const char *pszEOL ) :
-    fp(NULL),
+    fp(nullptr),
     nMinMaxZOffset(0)
 {
-    if( pszEOL == NULL || EQUAL(pszEOL, "") )
+    if( pszEOL == nullptr || EQUAL(pszEOL, "") )
     {
         CPLDebug( "GSAG", "GSAGDataset() created with invalid EOL string.\n" );
         szEOL[0] = '\x0D';
@@ -788,8 +806,8 @@ GSAGDataset::GSAGDataset( const char *pszEOL ) :
 GSAGDataset::~GSAGDataset()
 
 {
-    FlushCache();
-    if( fp != NULL )
+    FlushCache(true);
+    if( fp != nullptr )
         VSIFCloseL( fp );
 }
 
@@ -818,9 +836,9 @@ int GSAGDataset::Identify( GDALOpenInfo * poOpenInfo )
 GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 
 {
-    if( !Identify(poOpenInfo) )
+    if( !Identify(poOpenInfo) || poOpenInfo->fpL == nullptr )
     {
-        return NULL;
+        return nullptr;
     }
 
     /* Identify the end of line marker (should be \x0D\x0A, but try some others)
@@ -836,30 +854,14 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 /*      Create a corresponding GDALDataset.                             */
 /* -------------------------------------------------------------------- */
     GSAGDataset *poDS = new GSAGDataset( szEOL );
-
-/* -------------------------------------------------------------------- */
-/*      Open file with large file API.                                  */
-/* -------------------------------------------------------------------- */
-
     poDS->eAccess = poOpenInfo->eAccess;
-    if( poOpenInfo->eAccess == GA_ReadOnly )
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "rb" );
-    else
-        poDS->fp = VSIFOpenL( poOpenInfo->pszFilename, "r+b" );
-
-    if( poDS->fp == NULL )
-    {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "VSIFOpenL(%s) failed unexpectedly.",
-                  poOpenInfo->pszFilename );
-        delete poDS;
-        return NULL;
-    }
+    poDS->fp = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
 /* -------------------------------------------------------------------- */
 /*      Read the header.                                                */
 /* -------------------------------------------------------------------- */
-    char *pabyHeader = NULL;
+    char *pabyHeader = nullptr;
     bool bMustFreeHeader = false;
     if( poOpenInfo->nHeaderBytes >= static_cast<int>(nMAX_HEADER_SIZE) )
     {
@@ -869,19 +871,19 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
     {
         bMustFreeHeader = true;
         pabyHeader = (char *)VSI_MALLOC_VERBOSE( nMAX_HEADER_SIZE );
-        if( pabyHeader == NULL )
+        if( pabyHeader == nullptr )
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         size_t nRead = VSIFReadL( pabyHeader, 1, nMAX_HEADER_SIZE-1, poDS->fp );
         pabyHeader[nRead] = '\0';
     }
 
-    const char *szErrorMsg = NULL;
+    const char *szErrorMsg = nullptr;
     const char *szStart = pabyHeader + 5;
-    char *szEnd = NULL;
+    char *szEnd = nullptr;
     double dfTemp;
 
     /* Parse number of X axis grid rows */
@@ -891,11 +893,11 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
         szErrorMsg = "Unable to parse the number of X axis grid columns.\n";
         goto error;
     }
-    else if( nTemp > INT_MAX )
+    else if( nTemp > std::numeric_limits<int>::max() )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Number of X axis grid columns not representable.\n" );
-        poDS->nRasterXSize = INT_MAX;
+        poDS->nRasterXSize = std::numeric_limits<int>::max();
     }
     else if ( nTemp == 0 )
     {
@@ -915,11 +917,11 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
         szErrorMsg = "Unable to parse the number of Y axis grid rows.\n";
         goto error;
     }
-    else if( nTemp > INT_MAX - 1 )
+    else if( nTemp > std::numeric_limits<int>::max() - 1 )
     {
         CPLError( CE_Warning, CPLE_AppDefined,
                   "Number of Y axis grid rows not representable.\n" );
-        poDS->nRasterYSize = INT_MAX - 1;
+        poDS->nRasterYSize = std::numeric_limits<int>::max() - 1;
     }
     else if ( nTemp == 0)
     {
@@ -1027,7 +1029,7 @@ GDALDataset *GSAGDataset::Open( GDALOpenInfo * poOpenInfo )
 /* -------------------------------------------------------------------- */
     {
     GSAGRasterBand *poBand = new GSAGRasterBand( poDS, 1, szEnd-pabyHeader );
-    if( poBand->panLineOffset == NULL )
+    if( poBand->panLineOffset == nullptr )
     {
         delete poBand;
         goto error;
@@ -1071,7 +1073,7 @@ error:
 
     if (szErrorMsg)
         CPLError( CE_Failure, CPLE_AppDefined, "%s", szErrorMsg );
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
@@ -1080,19 +1082,17 @@ error:
 
 CPLErr GSAGDataset::GetGeoTransform( double *padfGeoTransform )
 {
-    if( padfGeoTransform == NULL )
-        return CE_Failure;
+    padfGeoTransform[0] = 0;
+    padfGeoTransform[1] = 1;
+    padfGeoTransform[2] = 0;
+    padfGeoTransform[3] = 0;
+    padfGeoTransform[4] = 0;
+    padfGeoTransform[5] = 1;
 
     GSAGRasterBand *poGRB = (GSAGRasterBand *)GetRasterBand( 1 );
 
-    if( poGRB == NULL )
+    if( poGRB == nullptr )
     {
-        padfGeoTransform[0] = 0;
-        padfGeoTransform[1] = 1;
-        padfGeoTransform[2] = 0;
-        padfGeoTransform[3] = 0;
-        padfGeoTransform[4] = 0;
-        padfGeoTransform[5] = 1;
         return CE_Failure;
     }
 
@@ -1103,6 +1103,9 @@ CPLErr GSAGDataset::GetGeoTransform( double *padfGeoTransform )
 
     if( eErr == CE_None )
         return CE_None;
+
+    if( nRasterXSize == 1 || nRasterYSize == 1 )
+        return CE_Failure;
 
     /* calculate pixel size first */
     padfGeoTransform[1] = (poGRB->dfMaxX - poGRB->dfMinX)/(nRasterXSize - 1);
@@ -1134,7 +1137,7 @@ CPLErr GSAGDataset::SetGeoTransform( double *padfGeoTransform )
 
     GSAGRasterBand *poGRB = (GSAGRasterBand *)GetRasterBand( 1 );
 
-    if( poGRB == NULL || padfGeoTransform == NULL)
+    if( poGRB == nullptr || padfGeoTransform == nullptr)
         return CE_Failure;
 
     /* non-zero transform 2 or 4 or negative 1 or 5 not supported natively */
@@ -1204,25 +1207,7 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
             if( nShiftStart + nShiftSize >= nOldEnd )
                 return CE_None;
 
-            if( VSIFSeekL( fp, nShiftStart + nShiftSize, SEEK_SET ) != 0 )
-            {
-                CPLError( CE_Failure, CPLE_FileIO,
-                          "Unable to seek near end of file.\n" );
-                return CE_Failure;
-            }
-
-            /* ftruncate()? */
-            for( vsi_l_offset nPos = nShiftStart + nShiftSize;
-                 nPos > nOldEnd; nPos++ )
-            {
-                if( VSIFWriteL( (void *)" ", 1, 1, fp ) != 1 )
-                {
-                    CPLError( CE_Failure, CPLE_FileIO,
-                              "Unable to write padding to grid file "
-                              "(Out of space?).\n" );
-                    return CE_Failure;
-                }
-            }
+            VSIFTruncateL( fp, nShiftStart + nShiftSize );
 
             return CE_None;
         }
@@ -1246,7 +1231,7 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
     /* prepare buffer for real shifting */
     size_t nBufferSize = (1024 >= abs(nShiftSize)*2) ? 1024 : abs(nShiftSize)*2;
     char *pabyBuffer = (char *)VSI_MALLOC_VERBOSE( nBufferSize );
-    if( pabyBuffer == NULL)
+    if( pabyBuffer == nullptr)
     {
         return CE_Failure;
     }
@@ -1331,8 +1316,10 @@ CPLErr GSAGDataset::ShiftFileContents( VSILFILE *fp, vsi_l_offset nShiftStart,
         }
 
         /* FIXME:  Should use SEEK_CUR, review integer promotions... */
-        if( VSIFSeekL( fp, VSIFTellL(fp)-nRead+nShiftSize-nOverlap,
-                       SEEK_SET ) != 0 )
+        vsi_l_offset nNewPos = (nShiftSize >= 0 ) ?
+            VSIFTellL(fp)+nShiftSize-nRead-nOverlap :
+            VSIFTellL(fp) - (-nShiftSize) -nRead-nOverlap;
+        if( VSIFSeekL( fp, nNewPos, SEEK_SET ) != 0 )
         {
             VSIFree( pabyBuffer );
             CPLError( CE_Failure, CPLE_FileIO,
@@ -1423,7 +1410,7 @@ CPLErr GSAGDataset::UpdateHeader()
 
 {
     GSAGRasterBand *poBand = (GSAGRasterBand *)GetRasterBand( 1 );
-    if( poBand == NULL )
+    if( poBand == nullptr )
     {
         CPLError( CE_Failure, CPLE_FileIO, "Unable to open raster band.\n" );
         return CE_Failure;
@@ -1496,7 +1483,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData )
 {
-    if( pfnProgress == NULL )
+    if( pfnProgress == nullptr )
         pfnProgress = GDALDummyProgress;
 
     int nBands = poSrcDS->GetRasterCount();
@@ -1504,7 +1491,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
     {
         CPLError( CE_Failure, CPLE_NotSupported,
                   "GSAG driver does not support source dataset with zero band.\n");
-        return NULL;
+        return nullptr;
     }
     else if (nBands > 1)
     {
@@ -1513,7 +1500,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
             CPLError( CE_Failure, CPLE_NotSupported,
                       "Unable to create copy, Golden Software ASCII Grid "
                       "format only supports one raster band.\n" );
-            return NULL;
+            return nullptr;
         }
         else
             CPLError( CE_Warning, CPLE_NotSupported,
@@ -1521,20 +1508,20 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
                       "raster band, first band will be copied.\n" );
     }
 
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    if( !pfnProgress( 0.0, nullptr, pProgressData ) )
     {
         CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated\n" );
-        return NULL;
+        return nullptr;
     }
 
     VSILFILE *fp = VSIFOpenL( pszFilename, "w+b" );
 
-    if( fp == NULL )
+    if( fp == nullptr )
     {
         CPLError( CE_Failure, CPLE_OpenFailed,
                   "Attempt to create file '%s' failed.\n",
                   pszFilename );
-        return NULL;
+        return nullptr;
     }
 
     const int nXSize = poSrcDS->GetRasterXSize();
@@ -1565,7 +1552,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
         VSIFCloseL( fp );
         CPLError( CE_Failure, CPLE_FileIO,
                   "Unable to create copy, writing header failed.\n" );
-        return NULL;
+        return nullptr;
     }
 
     /* Save the location and write placeholders for the min/max Z value */
@@ -1578,35 +1565,35 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
         VSIFCloseL( fp );
         CPLError( CE_Failure, CPLE_FileIO,
                   "Unable to create copy, writing header failed.\n" );
-        return NULL;
+        return nullptr;
     }
 
 /* -------------------------------------------------------------------- */
 /*      Copy band data.                                                 */
 /* -------------------------------------------------------------------- */
     double *pdfData = (double *)VSI_MALLOC2_VERBOSE( nXSize, sizeof( double ) );
-    if( pdfData == NULL )
+    if( pdfData == nullptr )
     {
         VSIFCloseL( fp );
-        return NULL;
+        return nullptr;
     }
 
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
     int bSrcHasNDValue;
     double dfSrcNoDataValue = poSrcBand->GetNoDataValue( &bSrcHasNDValue );
-    double dfMin = DBL_MAX;
-    double dfMax = -DBL_MAX;
+    double dfMin = std::numeric_limits<double>::max();
+    double dfMax = std::numeric_limits<double>::lowest();
     for( int iRow=0; iRow<nYSize; iRow++ )
     {
         CPLErr eErr = poSrcBand->RasterIO( GF_Read, 0, nYSize-iRow-1,
                                            nXSize, 1, pdfData,
-                                           nXSize, 1, GDT_Float64, 0, 0, NULL );
+                                           nXSize, 1, GDT_Float64, 0, 0, nullptr );
 
         if( eErr != CE_None )
         {
             VSIFCloseL( fp );
             VSIFree( pdfData );
-            return NULL;
+            return nullptr;
         }
 
         for( int iCol=0; iCol<nXSize; )
@@ -1643,7 +1630,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
                     VSIFree( pdfData );
                     CPLError( CE_Failure, CPLE_FileIO,
                               "Unable to write grid cell.  Disk full?\n" );
-                    return NULL;
+                    return nullptr;
                 }
             }
 
@@ -1653,7 +1640,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
                 VSIFree( pdfData );
                 CPLError( CE_Failure, CPLE_FileIO,
                           "Unable to finish write of grid line. Disk full?\n" );
-                return NULL;
+                return nullptr;
             }
         }
 
@@ -1663,16 +1650,16 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
             VSIFree( pdfData );
             CPLError( CE_Failure, CPLE_FileIO,
                       "Unable to finish write of grid row. Disk full?\n" );
-            return NULL;
+            return nullptr;
         }
 
         if( !pfnProgress( static_cast<double>(iRow + 1)/nYSize,
-                          NULL, pProgressData ) )
+                          nullptr, pProgressData ) )
         {
             VSIFCloseL( fp );
             VSIFree( pdfData );
             CPLError( CE_Failure, CPLE_UserInterrupt, "User terminated" );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1685,14 +1672,15 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
     ssRange << dfMin << " " << dfMax << "\x0D\x0A";
     if( ssRange.str().length() != nDummyRangeLen )
     {
-        int nShiftSize = static_cast<int>(ssRange.str().length() - nDummyRangeLen);
+        int nShiftSize = static_cast<int>(ssRange.str().length()) -
+                         static_cast<int>(nDummyRangeLen);
         if( ShiftFileContents( fp, nRangeStart + nDummyRangeLen,
                                nShiftSize, "\x0D\x0A" ) != CE_None )
         {
             VSIFCloseL( fp );
             CPLError( CE_Failure, CPLE_FileIO,
                       "Unable to shift file contents.\n" );
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -1701,7 +1689,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
         VSIFCloseL( fp );
         CPLError( CE_Failure, CPLE_FileIO,
                   "Unable to seek to start of grid file copy.\n" );
-        return NULL;
+        return nullptr;
     }
 
     if( VSIFWriteL( (void *)ssRange.str().c_str(), 1, ssRange.str().length(),
@@ -1710,7 +1698,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
         VSIFCloseL( fp );
         CPLError( CE_Failure, CPLE_FileIO,
                   "Unable to write range information.\n" );
-        return NULL;
+        return nullptr;
     }
 
     VSIFCloseL( fp );
@@ -1731,7 +1719,7 @@ GDALDataset *GSAGDataset::CreateCopy( const char *pszFilename,
 void GDALRegister_GSAG()
 
 {
-    if( GDALGetDriverByName( "GSAG" ) != NULL )
+    if( GDALGetDriverByName( "GSAG" ) != nullptr )
         return;
 
     GDALDriver *poDriver = new GDALDriver();
@@ -1740,7 +1728,7 @@ void GDALRegister_GSAG()
     poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
     poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
                                "Golden Software ASCII Grid (.grd)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "frmt_various.html#GSAG" );
+    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/gsag.html" );
     poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "grd" );
     poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
                                "Byte Int16 UInt16 Int32 UInt32 "

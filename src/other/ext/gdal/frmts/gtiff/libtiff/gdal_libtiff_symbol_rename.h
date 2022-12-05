@@ -58,9 +58,11 @@
 #define gtTileSeparate gdal_gtTileSeparate
 #define horAcc16 gdal_horAcc16
 #define horAcc32 gdal_horAcc32
+#define horAcc64 gdal_horAcc64
 #define horAcc8 gdal_horAcc8
 #define horDiff16 gdal_horDiff16
 #define horDiff32 gdal_horDiff32
+#define horDiff64 gdal_horDiff64
 #define horDiff8 gdal_horDiff8
 #define horizontalAccumulate11 gdal_horizontalAccumulate11
 #define horizontalAccumulate12 gdal_horizontalAccumulate12
@@ -301,8 +303,10 @@
 #define SetupUncompressedBuffer gdal_SetupUncompressedBuffer
 #define swabHorAcc16 gdal_swabHorAcc16
 #define swabHorAcc32 gdal_swabHorAcc32
+#define swabHorAcc64 gdal_swabHorAcc64
 #define swabHorDiff16 gdal_swabHorDiff16
 #define swabHorDiff32 gdal_swabHorDiff32
+#define swabHorDiff64 gdal_swabHorDiff64
 #define tagCompare gdal_tagCompare
 #define tagNameCompare gdal_tagNameCompare
 #define td_lfind gdal_td_lfind
@@ -807,6 +811,7 @@
 #define predictFields gdal_predictFields
 #define photoNames gdal_photoNames
 #define orientNames gdal_orientNames
+#define tagnames gdal_tagnames
 #define TWebPFields gdal_TWebPFields
 #define zipFields gdal_zipFields
 #define ZSTDFields gdal_ZSTDFields
@@ -824,8 +829,6 @@
 #define DISABLE_CHECK_TIFFSWABMACROS
 
 #define TIFFInitDumpMode gdal_TIFFInitDumpMode
-#define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12
-#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12
 #ifdef LZW_SUPPORT
 #define TIFFInitLZW gdal_TIFFInitLZW
 #endif
@@ -840,6 +843,9 @@
 #endif
 #ifdef JPEG_SUPPORT
 #define TIFFInitJPEG gdal_TIFFInitJPEG
+#define TIFFJPEGIsFullStripRequired gdal_TIFFJPEGIsFullStripRequired
+#define TIFFReInitJPEG_12 gdal_TIFFReInitJPEG_12
+#define TIFFJPEGIsFullStripRequired_12 gdal_TIFFJPEGIsFullStripRequired_12
 #define TIFFInitJPEG_12 gdal_TIFFInitJPEG_12
 #endif
 #ifdef OJPEG_SUPPORT

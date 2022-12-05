@@ -35,8 +35,9 @@
 #include "cpl_error.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /**
  * GDALMDReaderRapidEye()
@@ -47,21 +48,21 @@ GDALMDReaderRapidEye::GDALMDReaderRapidEye(const char *pszPath,
     const char* pszDirName = CPLGetDirname(pszPath);
     const char* pszBaseName = CPLGetBasename(pszPath);
 
-    const char* pszIMDSourceFilename = CPLFormFilename( pszDirName,
+    CPLString osIMDSourceFilename = CPLFormFilename( pszDirName,
                                                         CPLSPrintf("%s_metadata",
                                                         pszBaseName), "xml" );
-    if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+    if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osXMLSourceFilename = pszIMDSourceFilename;
+        m_osXMLSourceFilename = osIMDSourceFilename;
     }
     else
     {
-        pszIMDSourceFilename = CPLFormFilename( pszDirName,
+        osIMDSourceFilename = CPLFormFilename( pszDirName,
                                                 CPLSPrintf("%s_METADATA",
                                                 pszBaseName), "XML" );
-        if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+        if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osXMLSourceFilename = pszIMDSourceFilename;
+            m_osXMLSourceFilename = osIMDSourceFilename;
         }
     }
 
@@ -95,7 +96,7 @@ bool GDALMDReaderRapidEye::HasRequiredFiles() const
  */
 char** GDALMDReaderRapidEye::GetMetadataFiles() const
 {
-    char **papszFileList = NULL;
+    char **papszFileList = nullptr;
     if(!m_osXMLSourceFilename.empty())
         papszFileList= CSLAddString( papszFileList, m_osXMLSourceFilename );
 
@@ -112,11 +113,11 @@ void GDALMDReaderRapidEye::LoadMetadata()
 
     CPLXMLNode* psNode = CPLParseXMLFile(m_osXMLSourceFilename);
 
-    if(psNode != NULL)
+    if(psNode != nullptr)
     {
         CPLXMLNode* pRootNode = CPLSearchXMLNode(psNode, "=re:EarthObservation");
 
-        if(pRootNode != NULL)
+        if(pRootNode != nullptr)
         {
             m_papszIMDMD = ReadXMLToList(pRootNode->psChild, m_papszIMDMD);
         }
@@ -127,7 +128,7 @@ void GDALMDReaderRapidEye::LoadMetadata()
 
     m_bIsMetadataLoad = true;
 
-    if(NULL == m_papszIMDMD)
+    if(nullptr == m_papszIMDMD)
     {
         return;
     }
@@ -135,7 +136,7 @@ void GDALMDReaderRapidEye::LoadMetadata()
     //extract imagery metadata
     const char* pszSatId = CSLFetchNameValue(m_papszIMDMD,
     "gml:using.eop:EarthObservationEquipment.eop:platform.eop:Platform.eop:serialIdentifier");
-    if(NULL != pszSatId)
+    if(nullptr != pszSatId)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_SATELLITE, CPLStripQuotes(pszSatId));
@@ -143,18 +144,19 @@ void GDALMDReaderRapidEye::LoadMetadata()
 
     const char* pszDateTime = CSLFetchNameValue(m_papszIMDMD,
     "gml:using.eop:EarthObservationEquipment.eop:acquisitionParameters.re:Acquisition.re:acquisitionDateTime");
-    if(NULL != pszDateTime)
+    if(nullptr != pszDateTime)
     {
         char buffer[80];
-        time_t timeMid = GetAcquisitionTimeFromString(pszDateTime);
-        strftime (buffer, 80, MD_DATETIMEFORMAT, localtime(&timeMid));
+        GIntBig timeMid = GetAcquisitionTimeFromString(pszDateTime);
+        struct tm tmBuf;
+        strftime (buffer, 80, MD_DATETIMEFORMAT, CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                            MD_NAME_ACQDATETIME, buffer);
     }
 
     const char* pszCC = CSLFetchNameValue(m_papszIMDMD,
     "gml:resultOf.re:EarthObservationResult.opt:cloudCoverPercentage");
-    if(NULL != pszSatId)
+    if(nullptr != pszSatId)
     {
         m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
                                 MD_NAME_CLOUDCOVER, pszCC);

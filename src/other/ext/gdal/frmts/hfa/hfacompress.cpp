@@ -37,7 +37,7 @@
 #include "cpl_vsi.h"
 #include "hfa.h"
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, EPTType eDataType ) :
     m_pData(pData),
@@ -45,11 +45,11 @@ HFACompress::HFACompress( void *pData, GUInt32 nBlockSize, EPTType eDataType ) :
     m_nBlockCount((nBlockSize * 8) / HFAGetDataTypeBits(eDataType)),
     m_eDataType(eDataType),
     m_nDataTypeNumBits(HFAGetDataTypeBits(eDataType)),
-    m_pCounts(NULL),
-    m_pCurrCount(NULL),
+    m_pCounts(nullptr),
+    m_pCurrCount(nullptr),
     m_nSizeCounts(0),
-    m_pValues(NULL),
-    m_pCurrValues(NULL),
+    m_pValues(nullptr),
+    m_pCurrValues(nullptr),
     m_nSizeValues(0),
     m_nMin(0),
     m_nNumRuns(0),
@@ -133,7 +133,7 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
     else
     {
         // Should not get to here.  Check in compressBlock() should return false
-        // if we can't compress this blcok because we don't know about the type.
+        // if we can't compress this block because we don't know about the type.
         CPLError(CE_Failure, CPLE_FileIO,
                  "Imagine Datatype 0x%x (0x%x bits) not supported",
                  m_eDataType,
@@ -145,7 +145,7 @@ GUInt32 HFACompress::valueAsUInt32( GUInt32 iPixel )
 }
 
 // Finds the minimum value in a type specific fashion. This value is
-// subtracted from each value in the compressed dataset. The maxmimum
+// subtracted from each value in the compressed dataset. The maximum
 // value is also found and the number of bits that the range can be stored
 // is also returned.
 //
@@ -182,14 +182,14 @@ void HFACompress::makeCount( GUInt32 count, GByte *pCounter,
         pCounter[0] = static_cast<GByte>(count);
         *pnSizeCount = 1;
     }
-    else if( count < 0x8000 )
+    else if( count < 0x4000 )
     {
         pCounter[1] = count & 0xff;
         count /= 256;
         pCounter[0] = static_cast<GByte>(count | 0x40);
         *pnSizeCount = 2;
     }
-    else if( count < 0x800000 )
+    else if( count < 0x400000 )
     {
         pCounter[2] = count & 0xff;
         count /= 256;

@@ -1,5 +1,5 @@
 /**********************************************************************
- * $Id$
+ * $Id: geoconcept.h$
  *
  * Name:     geoconcept.h
  * Project:  OpenGIS Simple Features Reference Implementation
@@ -8,7 +8,7 @@
  *
  **********************************************************************
  * Copyright (c) 2007,  Geoconcept and IGN
- * Copyright (c) 2008, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -261,7 +261,7 @@ struct _tSubType_GCIO {
   GCExtent*       frame;
   OGRFeatureDefnH _poFeaDefn;
   long            id;
-  long            _foff;     /* offset 1st feature */
+  vsi_l_offset    _foff;     /* offset 1st feature */
   unsigned long   _flin;     /* 1st ligne 1st feature */
   unsigned long   _nFeatures;
   GCTypeKind      knd;
@@ -299,9 +299,9 @@ struct _GCExportFileH {
   char*                 path;
   char*                 bn;
   char*                 ext;
-  FILE*                 H;
+  VSILFILE*                 H;
   GCExportFileMetadata* header;
-  long                  coff;
+  vsi_l_offset          coff;
   unsigned long         clin;
   unsigned long         nbObjects;
   GCAccessMode          mode;
