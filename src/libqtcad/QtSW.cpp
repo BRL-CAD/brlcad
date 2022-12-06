@@ -35,6 +35,16 @@ extern "C" {
 #include "bindings.h"
 #include "qtcad/QtSW.h"
 
+// Using the full GED_MIN/GED_MAX was causing drawing artifacts with moss I
+// in shaded mode (I think I was seeing the "Z-fighting" problem:
+// https://www.sjbaker.org/steve/omniv/love_your_z_buffer.html )
+//
+// Setting to (-1,1) clips geometry too quickly as we start to zoom in.
+// -100,100 seems to work, but may need a better long term solution to
+// this... maybe basing it on the currently visible object bounds?
+#define QTSW_ZMIN -100
+#define QTSW_ZMAX 100
+
 QtSW::QtSW(QWidget *parent, struct fb *fbp)
     : QWidget(parent), ifp(fbp)
 {
@@ -114,14 +124,7 @@ void QtSW::paintEvent(QPaintEvent *e)
 	dm_set_pathname(dmp, "SWDM");
 	dm_set_zbuffer(dmp, 1);
 
-	// Using the full GED_MIN/GED_MAX was causing drawing artifacts with moss I
-	// in shaded mode (I think I was seeing the "Z-fighting" problem:
-	// https://www.sjbaker.org/steve/omniv/love_your_z_buffer.html )
-	//
-	// Setting to (-1,1) clips geometry too quickly as we start to zoom in.
-	// -100,100 seems to work, but may need a better long term solution to
-	// this... maybe basing it on the currently visible object bounds?
-	fastf_t windowbounds[6] = { -1, 1, -1, 1, -100, 100 };
+	fastf_t windowbounds[6] = { -1, 1, -1, 1, QTSW_ZMIN, QTSW_ZMAX };
 	dm_set_win_bounds(dmp, windowbounds);
 
 	// Associate the view scale with the dmp
