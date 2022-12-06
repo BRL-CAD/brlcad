@@ -279,16 +279,16 @@ extern void vdsRenderTree(vdsNode *node, vdsRenderFunction render,
 	vdsVisibilityFunction visible, void *udata);
 
 /* Routines for building the vertex tree (build.c) */
-extern void vdsBeginVertexTree();
-extern void vdsBeginGeometry();
+extern void vdsBeginVertexTree(struct vdsState *s);
+extern void vdsBeginGeometry(struct vdsState *s);
 extern vdsNode *vdsAddNode(struct vdsState *s, vdsFloat x, vdsFloat y, vdsFloat z);
 extern vdsTri *vdsAddTri(struct vdsState *s, int v0, int v1, int v2,
 	vdsVec3 n0, vdsVec3 n1, vdsVec3 n2,
 	vdsByte3 c0, vdsByte3 c1, vdsByte3 c2);
-extern vdsNode *vdsEndGeometry();
+extern vdsNode *vdsEndGeometry(struct vdsState *s);
 extern vdsNode *vdsClusterNodes(int nnodes, vdsNode **nodes,
 	vdsFloat x, vdsFloat y, vdsFloat z);
-extern vdsNode *vdsEndVertexTree();
+extern vdsNode *vdsEndVertexTree(struct vdsState *s);
 
 /* Assorted useful routines (util.c) */
 extern vdsNode *vdsFindNode(vdsNodeId id, vdsNode *root);

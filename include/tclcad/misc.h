@@ -217,7 +217,7 @@ struct tclcad_io_data {
     void *state;
 };
 TCLCAD_EXPORT struct tclcad_io_data *
-tclcad_create_io_data();
+tclcad_create_io_data(void);
 TCLCAD_EXPORT void
 tclcad_destroy_io_data(struct tclcad_io_data *d);
 

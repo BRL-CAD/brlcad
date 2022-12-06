@@ -1204,8 +1204,8 @@ _ged_editit(const char *editstring, const char *filename)
     const char *file = (const char *)filename;
 
 #if defined(SIGINT) && defined(SIGQUIT)
-    void (*s2)();
-    void (*s3)();
+    void (*s2)(int);
+    void (*s3)(int);
 #endif
 
     if (!file) {

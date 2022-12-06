@@ -1321,7 +1321,7 @@ Find_pt_in_fu(struct faceuse *fu, point_t pt, vect_t norm)
 
 
 void
-Convtrimsurfs()
+Convtrimsurfs(void)
 {
 
     size_t i;

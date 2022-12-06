@@ -96,17 +96,6 @@ int Levels=1;		/* Number of levels */
 int Debug=0;
 struct bn_unif *RandomFlag=0;	/* Use random numbers ? */
 
-#if 0
-void cubic_init(int n, int *x, int *y);
-void tonescale(unsigned char *map, float Slope, float B, int (*eqptr)() );
-int sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map);
-int tone_floyd(int pix, int x, int y, int nx, int ny, int newrow);
-int tone_folly(int pix, int x, int y, int nx, int ny, int newrow);
-int tone_simple(int pix, int x, int y, int nx, int ny, int newrow);
-int tone_classic(int pix, int x, int y, int nx, int ny, int newrow);
-#endif
-
-
 /**
  * return a sharpened tone mapped buffer.
  *
@@ -546,7 +535,7 @@ static struct Cubic	*EqCubics=0;
 int eq_cubic(int x);
 
 void
-tonescale(unsigned char *map, float Slope, float B, int (*eqptr) (/* ??? */))
+tonescale(unsigned char *map, float Slope, float B, int (*eqptr)(int))
 {
     int i, result;
 

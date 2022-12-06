@@ -48,9 +48,9 @@
 char buf[3*16*1024];
 
 void
-printusage ()
+printusage(void)
 {
-	bu_exit(1, "Usage: pixsaturate saturation < infile.pix > outfile.pix\n");
+    bu_exit(1, "Usage: pixsaturate saturation < infile.pix > outfile.pix\n");
 }
 
 int

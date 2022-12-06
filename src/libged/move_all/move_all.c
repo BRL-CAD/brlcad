@@ -344,7 +344,7 @@ const struct ged_cmd *move_all_cmds[] = { &move_all_cmd, &mvall_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  move_all_cmds, 2 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

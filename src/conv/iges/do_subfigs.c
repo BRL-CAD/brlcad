@@ -23,7 +23,7 @@
 
 
 void
-Do_subfigs()
+Do_subfigs(void)
 {
     size_t i;
     int j;

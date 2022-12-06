@@ -37,7 +37,6 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     int i;
-    int num_deleted;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     int ret;
@@ -79,7 +78,6 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
     RT_CK_COMB(comb);
 
     /* Process each argument */
-    num_deleted = 0;
     ret = BRLCAD_OK;
     for (i = 2; i < argc; i++) {
 	if (db_tree_del_dbleaf(&(comb->tree), argv[i], &rt_uniresource, 0) < 0) {
@@ -92,7 +90,6 @@ ged_remove_core(struct ged *gedp, int argc, const char *argv[])
 	    _dl_eraseAllPathsFromDisplay(gedp, bu_vls_addr(&path), 0);
 	    bu_vls_free(&path);
 	    bu_vls_printf(gedp->ged_result_str, "deleted %s/%s\n", dp->d_namep, argv[i]);
-	    num_deleted++;
 	}
     }
 
@@ -120,7 +117,7 @@ const struct ged_cmd *remove_cmds[] = { &remove_cmd, &rm_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  remove_cmds, 2 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

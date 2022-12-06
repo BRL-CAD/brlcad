@@ -28,7 +28,7 @@ Readtree(mat_t *matp)
     int i = 0;
     int k = 0;
     int op = 0;
-    union tree *ptr, *Pop();
+    union tree *ptr, *Pop(void);
     mat_t *new_mat;
 
     Readint(&i, "");

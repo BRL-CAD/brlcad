@@ -69,7 +69,7 @@ Usage: bwcrop in.bw out.bw (I prompt!)\n\
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer()
+init_buffer(void)
 {
     ssize_t max;
 

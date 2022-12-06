@@ -123,7 +123,7 @@ struct bu_tbl;
  * always returns a pointer to a newly allocated table
  */
 BU_EXPORT extern struct bu_tbl *
-bu_tbl_create();
+bu_tbl_create(void);
 
 
 /**

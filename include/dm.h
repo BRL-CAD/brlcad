@@ -166,7 +166,7 @@ DM_EXPORT extern const char *dm_version(void);
 
 /* Plugin related functions */
 DM_EXPORT extern int dm_valid_type(const char *name, const char *dpy_string);
-DM_EXPORT const char * dm_init_msgs();
+DM_EXPORT const char * dm_init_msgs(void);
 DM_EXPORT extern struct dm *dm_open(void *ctx,
 	                     void *interp,
 			     const char *type,
@@ -174,7 +174,7 @@ DM_EXPORT extern struct dm *dm_open(void *ctx,
 			     const char *argv[]);
 DM_EXPORT extern void dm_list_types(struct bu_vls *list, const char *separator);
 DM_EXPORT const char *dm_bestXType(const char *dpy_string);
-DM_EXPORT extern int dm_have_graphics();
+DM_EXPORT extern int dm_have_graphics(void);
 
 /* This reports the graphics system associated with the specified dm type (returned values
  * right now would be NULL, Tk or Qt - another eventual possibility is GLFW...) */
@@ -323,7 +323,7 @@ DM_EXPORT extern int dm_set_hook(const struct bu_structparse_map *map,
 DM_EXPORT extern struct bu_structparse *dm_get_vparse(struct dm *dmp);
 DM_EXPORT extern void *dm_get_mvars(struct dm *dmp);
 
-DM_EXPORT extern const char *dm_default_type();
+DM_EXPORT extern const char *dm_default_type(void);
 
 /*
  * Needed for fd_set, avoid including sys/select.h outright since it
@@ -382,7 +382,7 @@ typedef struct {
 
 /* Library entry points */
 
-DM_EXPORT struct fb *fb_get();
+DM_EXPORT struct fb *fb_get(void);
 DM_EXPORT struct fb *fb_raw(const char *type);
 DM_EXPORT void  fb_put(struct fb *ifp);
 DM_EXPORT struct dm *fb_get_dm(struct fb *ifp);
@@ -508,7 +508,7 @@ typedef struct fb_internal FBIO;
 #define MSG_FBCLEAR       3
 #define MSG_FBREAD        4
 #define MSG_FBWRITE       5
-#define MSG_FBCURSOR      6             /**< @brief fb_cursor() */
+#define MSG_FBCURSOR      6             /**< @brief fb_cursor(void) */
 #define MSG_FBWINDOW      7             /**< @brief OLD */
 #define MSG_FBZOOM        8             /**< @brief OLD */
 #define MSG_FBSCURSOR     9             /**< @brief OLD */

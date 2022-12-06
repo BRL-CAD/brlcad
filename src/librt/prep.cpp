@@ -1094,7 +1094,6 @@ struct bu_bitv *
 rt_get_solidbitv(size_t nbits, struct resource *resp)
 {
     struct bu_bitv *solidbits;
-    int counter=0;
 
     if (resp && resp->re_solid_bitv.magic != BU_LIST_HEAD_MAGIC) {
 	bu_bomb("Bad magic number in re_solid_btiv list\n");
@@ -1110,7 +1109,6 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
 		bu_bitv_clear(solidbits);
 		break;
 	    }
-	    counter++;
 	}
 	/* no match, allocate a new one */
 	if (solidbits == (struct bu_bitv *)&resp->re_solid_bitv) {

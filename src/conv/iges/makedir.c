@@ -32,7 +32,7 @@
 #define CR '\015'
 
 void
-Makedir()
+Makedir(void)
 {
     size_t i;
     int found, saverec, entcount = (-1), paramptr = 0, paramguess = 0;

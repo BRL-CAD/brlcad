@@ -60,7 +60,7 @@ main(int argc, char **argv)
     int in_arg;
     int out_arg;
     int in_version;
-    long errors = 0, skipped = 0;
+    long errors = 0;
     struct bn_tol tol;
     struct bu_vls colortab = BU_VLS_INIT_ZERO;
     struct db_i *dbip4 = NULL;
@@ -179,7 +179,6 @@ main(int argc, char **argv)
 	if (flag_revert && dp->d_major_type != DB5_MAJORTYPE_BRLCAD) {
 	    bu_log("\t%s not supported in version 4 databases, not converted\n",
 		   dp->d_namep);
-	    skipped++;
 	    continue;
 	}
 	id = rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource);

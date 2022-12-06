@@ -696,7 +696,7 @@ const struct ged_cmd *check_cmds[] = { &check_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  check_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

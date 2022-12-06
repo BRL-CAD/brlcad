@@ -135,7 +135,7 @@ const struct ged_cmd *ocenter_cmds[] = { &ocenter_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  ocenter_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

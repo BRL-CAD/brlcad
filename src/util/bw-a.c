@@ -114,7 +114,6 @@ main(int argc, char **argv)
 {
     int c;
     long int cur_width = 0;
-    long int cur_height = 0;
 
     bu_setprogname(argv[0]);
 
@@ -145,7 +144,6 @@ main(int argc, char **argv)
 	if (++cur_width >= file_width) {
 	    putchar('\n');
 	    cur_width=0L;
-	    cur_height++;
 	}
     }
     return 0;

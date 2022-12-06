@@ -87,7 +87,7 @@ const struct ged_cmd *grid2model_lu_cmds[] = { &grid2model_lu_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  grid2model_lu_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

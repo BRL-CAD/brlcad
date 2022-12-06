@@ -94,7 +94,7 @@ const struct ged_cmd *shaded_mode_cmds[] = { &shaded_mode_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  shaded_mode_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

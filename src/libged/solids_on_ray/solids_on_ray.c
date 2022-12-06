@@ -306,7 +306,7 @@ const struct ged_cmd *solids_on_ray_cmds[] = { &solids_on_ray_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  solids_on_ray_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

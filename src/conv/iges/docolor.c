@@ -39,7 +39,7 @@ unsigned char colortab[9][4] = {
     { 8, 255, 255, 255 }};
 
 void
-Docolor()
+Docolor(void)
 {
 
     size_t i;

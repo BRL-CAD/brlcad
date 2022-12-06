@@ -119,7 +119,7 @@ const struct ged_cmd *item_cmds[] = { &item_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  item_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

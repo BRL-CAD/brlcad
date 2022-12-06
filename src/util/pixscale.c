@@ -324,7 +324,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer()
+init_buffer(void)
 {
     ssize_t max;
 

@@ -56,16 +56,13 @@
 
 
 extern int doMotion;			/* defined in buttons.c */
-extern void rect_view2image();		/* defined in rect.c */
-extern void rect_image2view();
-extern void rb_set_dirty_flag();
 
 #ifdef HAVE_X11_TYPES
-static void motion_event_handler();
+static void motion_event_handler(XMotionEvent *);
 #endif
 
 #ifdef IR_KNOBS
-static void dials_event_handler();
+static void dials_event_handler(XDeviceMotionEvent *);
 #endif
 
 #ifdef IR_KNOBS
@@ -73,7 +70,7 @@ static void dials_event_handler();
 #endif
 
 #ifdef IR_BUTTONS
-static void buttons_event_handler();
+static void buttons_event_handler(XDeviceButtonEvent *);
 /*
  * Map SGI Button numbers to MGED button functions.
  * The layout of this table is suggestive of the actual button box layout.

@@ -30,7 +30,7 @@
 
 struct menu_item {
     char *menu_string;
-    void (*menu_func)();
+    void (*menu_func)(int, int, int);
     int menu_arg;
 };
 

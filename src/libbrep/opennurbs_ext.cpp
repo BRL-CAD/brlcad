@@ -2224,7 +2224,6 @@ get_closest_point(ON_2dPoint& outpt,
     // 2. if the gradient diverges
     // 3. iterated MAX_FCP_ITERATIONS
 try_again:
-    int diverge_count = 0;
     for (int i = 0; i < BREP_MAX_FCP_ITERATIONS; i++) {
 	assert(gcp_gradient(curr_grad, data, uv));
 
@@ -2236,7 +2235,6 @@ try_again:
 	    found = true; break;
 	} else if (d > d_last) {
 	    TRACE("diverged!");
-	    diverge_count++;
 	}
 	if (gcp_newton_iteration(new_uv, data, curr_grad, uv)) {
 	    move(uv, new_uv);

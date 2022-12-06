@@ -442,7 +442,7 @@ static void info(int UNUSED(sig))
     return;
 }
 
-static void help()
+static void help(void)
 {
     fprintf(stderr,"%s\n", ADRT_VER_DETAIL);
     fprintf(stderr,"%s", "Usage: adrt_slave [options] [host]\n\

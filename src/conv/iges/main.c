@@ -102,7 +102,7 @@ Try the '-t' option to convert all the trimmed surfaces into one BRL-CAD solid.\
 'iges-g -t -o file.g %s'\n";
 
 void
-Suggestions()
+Suggestions(void)
 {
     int i;
     int csg = 0;

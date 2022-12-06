@@ -622,7 +622,7 @@ pars_Argv(int argc, char **argv)
 
 
 static void
-usage()
+usage(void)
 {
     (void) fprintf(stderr, "Usage: fbcmap [-F framebuffer]\n");
     (void) fprintf(stderr, "	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");

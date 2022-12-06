@@ -47,7 +47,7 @@
 struct rt_db_internal source_obj;
 
 
-void usage() {
+void usage(void) {
     bu_exit(1, "Usage: %s [options] db.g object\nOptions:\n -p #\t\tPopulation size\n -g #\t\tNumber of generations\n -r #\t\tResolution \n -u #\t\tUpper percent of individuals to keep\n -l #\t\tLower percent of individuals to kill\n", bu_getprogname());
 }
 

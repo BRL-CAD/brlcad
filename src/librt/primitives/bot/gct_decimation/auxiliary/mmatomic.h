@@ -84,13 +84,13 @@ typedef struct {
 
 
 /* Do nothing, prevent compiler reordering */
-static inline void mmBarrier()
+static inline void mmBarrier(void)
 {
     __asm__ __volatile__("":::"memory");
 }
 
 
-static inline void mmAtomicPause()
+static inline void mmAtomicPause(void)
 {
     __asm__ __volatile__(
 	"rep; nop"

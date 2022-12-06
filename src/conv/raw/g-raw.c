@@ -102,7 +102,6 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     struct shell *s;
     struct vertex *v;
     char *region_name;
-    int region_polys=0;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -198,7 +197,6 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 		    continue;
 
 		tot_polygons++;
-		region_polys++;
 	    }
 	}
     }

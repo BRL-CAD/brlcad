@@ -1364,7 +1364,7 @@ const struct ged_cmd *pnts_cmds[] = { &make_pnts_cmd,  &pnts_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  pnts_cmds, 2 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

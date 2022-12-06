@@ -27,7 +27,7 @@
 #include "bu/simd.h"
 
 int
-bu_simd_level()
+bu_simd_level(void)
 {
 #if defined(__GNUC__) && defined(__SSE__)
     int c=0, d=0;

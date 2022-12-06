@@ -1351,7 +1351,7 @@ const struct ged_cmd *draw_cmds[] = { &draw_cmd, &e_cmd, &ev_cmd, &redraw_cmd, &
 
 static const struct ged_plugin pinfo = { GED_API,  draw_cmds, 6 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

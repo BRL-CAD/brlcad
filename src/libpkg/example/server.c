@@ -73,7 +73,7 @@ server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 }
 
 int
-main() {
+main(void) {
     int port = 2000;
     struct pkg_conn *client;
     int netfd;

@@ -82,7 +82,7 @@ unsigned char *scanbuf = NULL;
 /***** end of sharing with viewing model *****/
 
 extern int grid_setup(struct bu_vls *err);
-extern void worker();
+extern void worker(int, void *);
 extern void application_init(void);
 
 /***** variables shared with worker() ******/

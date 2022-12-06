@@ -121,7 +121,7 @@ const struct ged_cmd *unhide_cmds[] = { &unhide_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  unhide_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

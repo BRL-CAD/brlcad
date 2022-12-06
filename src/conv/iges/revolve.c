@@ -27,8 +27,6 @@
 #include "./iges_extern.h"
 #include "vmath.h"
 
-void Addsub();
-
 
 struct subtracts
 {
@@ -48,6 +46,9 @@ struct trclist
     struct subtracts *subtr;
     struct trclist *next, *prev;
 };
+
+
+void Addsub(struct trclist *, struct trclist *);
 
 
 int

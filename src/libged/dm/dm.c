@@ -710,7 +710,7 @@ const struct ged_cmd *dm_cmds[] = { &screen_grab_cmd, &screengrab_cmd, &dm_cmd, 
 
 static const struct ged_plugin pinfo = { GED_API,  dm_cmds, 4 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

@@ -45,7 +45,7 @@ extern pid_t wait(int *);
 
 
 int
-bu_process_id()
+bu_process_id(void)
 {
 #ifdef HAVE_UNISTD_H
     return getpid();
@@ -544,7 +544,7 @@ bu_process_wait(
 #endif
 
 int
-bu_interactive()
+bu_interactive(void)
 {
     int interactive = 1;
 

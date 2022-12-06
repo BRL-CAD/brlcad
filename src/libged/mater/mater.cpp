@@ -1286,7 +1286,6 @@ mater_try_densities_load(struct ged *gedp, struct analyze_densities **pa, std::s
 			 std::map<std::string, std::string> &listed_to_defined, const char *fname)
 {
     long int curr_id = -1;
-    long int id_cnt = 0;
     int dcnt = 0;
     int ecnt = 0;
     struct analyze_densities *densities;
@@ -1316,7 +1315,6 @@ mater_try_densities_load(struct ged *gedp, struct analyze_densities **pa, std::s
     bu_close_mapped_file(ifile);
     (*pa) = densities;
     while ((curr_id = analyze_densities_next((*pa), curr_id)) != -1) {
-	id_cnt++;
 	char *cname = analyze_densities_name((*pa), curr_id);
 	listed_to_defined.insert(std::pair<std::string, std::string>(std::string(cname), std::string(cname)));
 	defined_materials.insert(std::string(cname));
@@ -1348,7 +1346,6 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
     struct bu_mapped_file *mfile = NULL;
     char *mbuff = NULL;
     long int curr_id = -1;
-    long int id_cnt = 0;
     struct bu_attribute_value_set *avs;
     const char *mat_id;
     const char *oname;
@@ -1450,9 +1447,7 @@ mater_mat_id(struct ged *gedp, size_t argc, const char *argv[])
 	    }
 
 	    curr_id = -1;
-	    id_cnt = 0;
 	    while ((curr_id = analyze_densities_next(a, curr_id)) != -1) {
-		id_cnt++;
 		char *cname = analyze_densities_name(a, curr_id);
 		listed_to_defined.insert(std::pair<std::string, std::string>(std::string(cname), std::string(cname)));
 		defined_materials.insert(std::string(cname));
@@ -1734,7 +1729,7 @@ const struct ged_cmd *mater_cmds[] = { &mater_cmd,  NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  mater_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

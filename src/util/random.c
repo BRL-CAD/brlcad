@@ -41,9 +41,9 @@
 const char *usage = "Usage: random [-u] [-g [-c center]] [-s seed] [-v] low high";
 
 void
-printusage()
+printusage(void)
 {
-	bu_log("%s\n", usage);
+    bu_log("%s\n", usage);
 }
 
 int

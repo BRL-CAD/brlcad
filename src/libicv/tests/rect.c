@@ -34,7 +34,7 @@
 #include "bu/getopt.h"
 #include "icv.h"
 
-void usage()
+void usage(void)
 {
     bu_log("[-s squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
 		    [-b -p -d -m] \n\

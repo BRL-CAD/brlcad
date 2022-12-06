@@ -498,7 +498,7 @@ HitRef(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(f
     return 1;
 }
 
-
+//#define PHIT_DEBUG
 /* Callback for Photon Hit, The 'current' photon is Emit[PMap->StoredPhotons] */
 int
 PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(finished_segs))
@@ -506,17 +506,25 @@ PHit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(fin
     struct partition *part;
     vect_t pt, normal, color, spec, power;
     fastf_t refi, transmit, prob, prob_diff, prob_spec, prob_ref;
+#ifdef PHIT_DEBUG
     int hit;
+#endif
 
 
     /* Move ptr forward to next region and call Hit recursively until reaching a region this is either
        not a light or none at all */
+#ifdef PHIT_DEBUG
     hit = 0;
+#endif
     for (BU_LIST_FOR(part, partition, (struct bu_list *)PartHeadp)) {
 	if (part != PartHeadp) {
+#ifdef PHIT_DEBUG
 	    hit++;
+#endif
 	    VJOIN1(pt, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);
-	    /* printf("pt[%d][%d]: --- [%.3f, %.3f, %.3f], %s\n", hit, CheckMaterial("light", part->pt_regionp->reg_mater.ma_shader), pt[0], pt[1], pt[2], part->pt_regionp->reg_mater.ma_shader);*/
+#ifdef PHIT_DEBUG
+	    printf("pt[%d][%d]: --- [%.3f, %.3f, %.3f], %s\n", hit, CheckMaterial("light", part->pt_regionp->reg_mater.ma_shader), pt[0], pt[1], pt[2], part->pt_regionp->reg_mater.ma_shader);
+#endif
 
 	    if (!CheckMaterial("light", part->pt_regionp->reg_mater.ma_shader)) {
 		/* bu_log("  Found object!\n");*/

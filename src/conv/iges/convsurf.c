@@ -30,7 +30,7 @@
 
 
 void
-Convsurfs()
+Convsurfs(void)
 {
 
     size_t i;

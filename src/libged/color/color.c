@@ -370,7 +370,7 @@ const struct ged_cmd *color_cmds[] = { &color_cmd, &edcolor_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  color_cmds, 2 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

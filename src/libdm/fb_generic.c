@@ -54,7 +54,7 @@
 #include "icv.h"
 #include "dm.h"
 
-struct fb *fb_get()
+struct fb *fb_get(void)
 {
     struct fb *new_fb = FB_NULL;
     BU_GET(new_fb, struct fb);

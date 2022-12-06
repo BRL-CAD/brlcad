@@ -160,7 +160,7 @@ obj_get_material(int red, int green, int blue, fastf_t transparency)
 
 
 static void
-obj_free_materials() {
+obj_free_materials(void) {
     struct _ged_obj_material *gomp;
 
     while (BU_LIST_WHILE(gomp, _ged_obj_material, &HeadObjMaterials)) {

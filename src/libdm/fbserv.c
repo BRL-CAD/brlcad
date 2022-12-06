@@ -751,7 +751,7 @@ fbs_close(struct fbserv_obj *fbsp)
 }
 
 struct pkg_switch *
-fbs_pkg_switch()
+fbs_pkg_switch(void)
 {
     static struct pkg_switch pswitch[] = {
 	{ MSG_FBOPEN, fbs_rfbopen, "Open Framebuffer", NULL },

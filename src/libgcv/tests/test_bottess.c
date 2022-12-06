@@ -70,7 +70,7 @@ test_intersection(int should, point_t *t1, point_t *t2, point_t p1, point_t p2)
 
 
 int
-test_tri_intersections()
+test_tri_intersections(void)
 {
     int count = 0;
 #define TRY(suc, t00x, t00y, t00z, t01x, t01y, t01z, t02x, t02y, t02z, t10x, t10y, t10z, t11x, t11y, t11z, t12x, t12y, t12z, p0x, p0y, p0z, p1x, p1y, p1z) { \
@@ -103,9 +103,9 @@ find_tri(struct soup_s *s, struct face_s *f, struct bn_tol *t) {
 
 
 int
-test_face_split_single()
+test_face_split_single(void)
 {
-    unsigned long int i, tcount = 0, count = 0, nsplt;
+    unsigned long int i, count = 0, nsplt;
     struct soup_s s;
     struct face_s f;
     struct bn_tol t;
@@ -124,9 +124,8 @@ test_face_split_single()
     {                                                             \
 	point_t isectpt[2];                                         \
 	int urf[_nsplt+1];                                          \
-	unsigned long int failure = 0, numsplit = _nsplt;           \
+	unsigned long int numsplit = _nsplt;           \
 	for (i = 0; i < _nsplt + 1; ++i) urf[i] = 0;                \
-	tcount++;                                                   \
 	VSET(isectpt[0], ispt00, ispt01, ispt02);                      \
 	VSET(isectpt[1], ispt10, ispt11, ispt12);                      \
 	s.magic = SOUP_MAGIC;                                       \
@@ -152,7 +151,6 @@ test_face_split_single()
 	VSET(f.vert[1], _splits[i][3], _splits[i][4], _splits[i][5]);        \
 	VSET(f.vert[2], _splits[i][6], _splits[i][7], _splits[i][8]);        \
 	urf[i] = find_tri(&s, &f, &t);                                      \
-	if (urf[i] == -1) failure++;                                      \
     }                                                                   \
     if (nsplt != 2 && urf[0] == -1 && urf[1] == -1) {                   \
 	printf("\033[1;31mFAILURE "name"\033[m\n");                       \
@@ -196,7 +194,7 @@ test_face_split_single()
 
 
 int
-test_face_splits()
+test_face_splits(void)
 {
     int count = 0;
 
@@ -238,13 +236,13 @@ test_face_splits()
 }
 
 
-int test_invert()
+int test_invert(void)
 {
     return -1;
 }
 
 
-int test_compose()
+int test_compose(void)
 {
     int rval = 0;
     unsigned int i;
@@ -310,7 +308,7 @@ int test_compose()
 }
 
 
-int test_evaluate()
+int test_evaluate(void)
 {
     return -1;
 }

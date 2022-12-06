@@ -35,7 +35,7 @@
 #include "bu/str.h"
 #include "icv.h"
 
-void usage()
+void usage(void)
 {
     bu_log("\
 	    [ -O +|-|/|* ]\n\

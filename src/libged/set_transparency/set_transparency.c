@@ -96,7 +96,7 @@ const struct ged_cmd *set_transparency_cmds[] = { &set_transparency_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  set_transparency_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

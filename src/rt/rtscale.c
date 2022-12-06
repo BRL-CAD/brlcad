@@ -80,7 +80,6 @@ int	layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int
 int	read_rt_file(FILE *infp, char *name, fastf_t *model2view);
 int	drawscale(FILE *outfp, fastf_t *startpt, fastf_t len, fastf_t hgt, fastf_t *lenv, fastf_t *hgtv, fastf_t *inv_hgtv);
 int	drawticks(FILE *outfp, fastf_t *centerpt, fastf_t *hgtv, fastf_t hgt, fastf_t *inv_hgtv);
-int	overlay();
 void	make_border(FILE *outfp, fastf_t *v2mod);
 void	make_bounding_rpp(FILE *outfp, fastf_t *v2mod);
 

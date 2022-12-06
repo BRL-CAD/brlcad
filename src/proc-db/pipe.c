@@ -302,7 +302,7 @@ Pipes(void)
     vect_t ht;
     struct points *ptr;
     fastf_t len;
-    int comblen;
+    //int comblen;
     struct wmember head;
 
     BU_LIST_INIT(&head.l);
@@ -340,11 +340,11 @@ Pipes(void)
 		mk_half(fdout, ptr->cut, ptr->mnorm, len);
 	    }
 
-	    comblen = 4 - cable;
+	    //comblen = 4 - cable;
 	    if (ptr->next->next == NULL)
-		comblen--;
+		//comblen--;
 	    if (ptr->prev == NULL)
-		comblen--;
+		//comblen--;
 
 	    mk_addmember(ptr->tube, &head.l, NULL, WMOP_UNION);	/* make 'u' member record */
 
@@ -362,11 +362,11 @@ Pipes(void)
 	    if (!cable) {
 		/* Make fluid region */
 
-		comblen = 3;
+		//comblen = 3;
 		if (ptr->next->next == NULL)
-		    comblen--;
+		    //comblen--;
 		if (ptr->prev == NULL)
-		    comblen--;
+		    //comblen--;
 
 		mk_addmember(ptr->tubflu, &head.l, NULL, WMOP_UNION);	/* make 'u' member record */
 
@@ -381,13 +381,13 @@ Pipes(void)
 	} else if (sphere) {
 
 	    /* make REGION comb record for tube */
-	    comblen = 2;
+	    //comblen = 2;
 	    if (cable)
-		comblen--;
+		//comblen--;
 	    if (ptr->next->tube[0] != '\0')
-		comblen++;
+		//comblen++;
 	    if (!cable && ptr->prev != NULL)
-		comblen++;
+		//comblen++;
 
 	    /* make 'u' member record */
 
@@ -419,13 +419,13 @@ Pipes(void)
 	} else if (nothing) {
 
 	    /* make REGION comb record for tube */
-	    comblen = 2;
+	    //comblen = 2;
 	    if (cable)
-		comblen--;
+		//comblen--;
 	    if (ptr->next->tube[0] != '\0')
-		comblen++;
+		//comblen++;
 	    if (!cable && ptr->prev != NULL)
-		comblen++;
+		//comblen++;
 
 	    /* make 'u' member record */
 

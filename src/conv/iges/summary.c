@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 void
-Summary()
+Summary(void)
 {
     size_t i;
     size_t indep_entities = 0;
@@ -45,7 +45,7 @@ Summary()
 
 
 void
-Zero_counts()
+Zero_counts(void)
 {
     size_t i;
 

@@ -289,7 +289,7 @@ const struct ged_cmd *help_cmds[] = { &help_cmd,  &apropos_cmd,  &info_cmd,  &ma
 
 static const struct ged_plugin pinfo = { GED_API,  help_cmds, 5 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

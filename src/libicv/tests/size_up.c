@@ -36,7 +36,7 @@
 #include "bu/str.h"
 #include "icv.h"
 
-void usage()
+void usage(void)
 {
     bu_log("\
 	    [-s squaresize] [-w width] [-n height] \n\

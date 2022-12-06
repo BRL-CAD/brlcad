@@ -39,7 +39,7 @@ struct solid_list
 
 
 void
-Convassem()
+Convassem(void)
 {
     size_t i;
     int j = 0;

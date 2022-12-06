@@ -187,7 +187,7 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
 }
 
 
-void tienet_master_free()
+void tienet_master_free(void)
 {
     int i;
     tienet_master_socket_t *sock;
@@ -277,20 +277,20 @@ void tienet_master_push(const void *data, size_t size)
 }
 
 
-void tienet_master_begin()
+void tienet_master_begin(void)
 {
     if (!tienet_master_sem_app.val)
 	tienet_master_endflag = 0;
 }
 
 
-void tienet_master_end()
+void tienet_master_end(void)
 {
     tienet_master_endflag = 1;
 }
 
 
-void tienet_master_wait()
+void tienet_master_wait(void)
 {
     tienet_sem_wait(&tienet_master_sem_app);
 }
@@ -735,7 +735,7 @@ void tienet_master_result(tienet_master_socket_t *sock)
 }
 
 
-void tienet_master_shutdown()
+void tienet_master_shutdown(void)
 {
     short op;
     tienet_master_socket_t *tsocket;

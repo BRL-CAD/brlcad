@@ -98,7 +98,7 @@ struct rtwizard_settings {
 
 
 struct rtwizard_settings *
-rtwizard_settings_create()
+rtwizard_settings_create(void)
 {
     struct rtwizard_settings *s;
     unsigned char white[3] = {255, 255, 255};

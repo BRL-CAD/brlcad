@@ -364,7 +364,7 @@ void lswap(unsigned int *v)
 }
 
 static void
-Convert_part_binary()
+Convert_part_binary(void)
 {
     unsigned char buf[51];
     unsigned long num_facets=0;
@@ -494,7 +494,7 @@ Convert_part_binary()
 
 
 static void
-Convert_input()
+Convert_input(void)
 {
     char line[ MAX_LINE_SIZE ];
 

@@ -1275,7 +1275,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	// remove grazing hits with with normal to ray dot less than
 	// BREP_GRAZING_DOT_TOL (>= 89.999 degrees obliq)
 	TRACE("-- Remove grazing hits --");
-	int num = 0;
+	//int num = 0;
 	for (std::list<brep_hit>::iterator i = hits.begin(); i != hits.end(); ++i) {
 	    const brep_hit &curr_hit = *i;
 	    if ((curr_hit.trimmed && !curr_hit.closeToEdge) || curr_hit.oob || NEAR_ZERO(VDOT(curr_hit.normal, rp->r_dir), BREP_GRAZING_DOT_TOL)) {
@@ -1291,8 +1291,8 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 		continue;
 	    }
-	    TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal, rp->r_dir) << "]");
-	    ++num;
+	    //TRACE("hit " << num << ": " << PT(i->point) << " [" << VDOT(i->normal, rp->r_dir) << "]");
+	    //++num;
 	}
     }
 

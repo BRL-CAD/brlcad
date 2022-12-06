@@ -141,7 +141,7 @@ static struct bu_vls *report = NULL;
  * Tk_Main never returns
  */
 static void
-_free_report_memory()
+_free_report_memory(void)
 {
     /* release our report string */
     if (report) {

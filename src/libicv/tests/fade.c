@@ -35,7 +35,7 @@
 #include "bu/getopt.h"
 #include "icv.h"
 
-void usage()
+void usage(void)
 {
     bu_log("\n\
 	    [-b -p -d -m]\n\

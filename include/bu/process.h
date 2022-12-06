@@ -157,7 +157,7 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
  *
  * Returns 1 if interactive, else 0
  */
-BU_EXPORT extern int bu_interactive();
+BU_EXPORT extern int bu_interactive(void);
 
 /** @} */
 

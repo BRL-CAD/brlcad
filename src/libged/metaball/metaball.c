@@ -566,7 +566,7 @@ const struct ged_cmd *metaball_cmds[] = { &metaball_delete_pnt_cmd, &metaball_mo
 
 static const struct ged_plugin pinfo = { GED_API,  metaball_cmds, 4 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

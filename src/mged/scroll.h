@@ -28,7 +28,7 @@
 
 struct scroll_item {
     char *scroll_string;
-    void (*scroll_func)();
+    void (*scroll_func)(struct scroll_item *, double);
     int scroll_val;
     char *scroll_cmd;
 };

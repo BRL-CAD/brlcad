@@ -99,7 +99,7 @@ static const struct gcv_filter * const filters[] = {&gcv_conv_png_read, NULL};
 
 const struct gcv_plugin gcv_plugin_info_s = {filters};
 
-COMPILER_DLLEXPORT const struct gcv_plugin *gcv_plugin_info()
+COMPILER_DLLEXPORT const struct gcv_plugin *gcv_plugin_info(void)
 {
     return &gcv_plugin_info_s;
 }
