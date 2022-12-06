@@ -292,7 +292,6 @@ if (NOT HAVE_UUID_GENERATE)
     android_uuid/parse.c
     android_uuid/unpack.c
     android_uuid/unparse.c
-    android_uuid/uuid_time.c
     )
   if (WIN32)
     set(OPENNURBS_SOURCES ${OPENNURBS_SOURCES}
@@ -301,6 +300,7 @@ if (NOT HAVE_UUID_GENERATE)
   else ()
     set(OPENNURBS_SOURCES ${OPENNURBS_SOURCES}
       android_uuid/gen_uuid.c
+      android_uuid/uuid_time.c
       )
   endif (WIN32)
 endif (NOT HAVE_UUID_GENERATE)
