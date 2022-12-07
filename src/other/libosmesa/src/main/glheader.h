@@ -97,35 +97,9 @@
 #endif /* WIN32 / CYGWIN bracket */
 
 
-/*
- * Either define MESA_BIG_ENDIAN or MESA_LITTLE_ENDIAN.
- * Do not use them unless absolutely necessary!
- * Try to use a runtime test instead.
- * For now, only used by some DRI hardware drivers for color/texel packing.
- */
-#if defined(BYTE_ORDER) && defined(BIG_ENDIAN) && BYTE_ORDER == BIG_ENDIAN
-#if defined(__linux__)
-#include <byteswap.h>
-#define CPU_TO_LE32( x )	bswap_32( x )
-#else /*__linux__*/
-#define CPU_TO_LE32( x )	( x )  /* fix me for non-Linux big-endian! */
-#endif /*__linux__*/
-#define MESA_BIG_ENDIAN 1
-#else
-#define CPU_TO_LE32( x )	( x )
-#define MESA_LITTLE_ENDIAN 1
-#endif
-#define LE32_TO_CPU( x )	CPU_TO_LE32( x )
-
-
 #define GL_GLEXT_PROTOTYPES
 #include "OSMesa/gl.h"
 #include "OSMesa/glext.h"
-
-
-#if !defined(CAPI) && defined(WIN32)
-#define CAPI _cdecl
-#endif
 
 
 /* This is a macro on IRIX */
@@ -171,8 +145,6 @@
 #  define INLINE __inline
 #elif defined(__INTEL_COMPILER)
 #  define INLINE inline
-#elif defined(__WATCOMC__) && (__WATCOMC__ >= 1100)
-#  define INLINE __inline
 #else
 #  define INLINE
 #endif
