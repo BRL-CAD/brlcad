@@ -215,7 +215,7 @@ static GLboolean init_vertex_stage(GLcontext *ctx,
     struct vertex_stage_data *store;
     GLuint size = VB->Size;
 
-    stage->privatePtr = CALLOC(sizeof(*store));
+    stage->privatePtr = _mesa_calloc(sizeof(*store));
     store = VERTEX_STAGE_DATA(stage);
     if (!store)
 	return GL_FALSE;

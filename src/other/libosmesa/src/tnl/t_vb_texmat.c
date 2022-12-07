@@ -91,7 +91,7 @@ static GLboolean alloc_texmat_data(GLcontext *ctx,
     struct texmat_stage_data *store;
     GLuint i;
 
-    stage->privatePtr = CALLOC(sizeof(*store));
+    stage->privatePtr = _mesa_calloc(sizeof(*store));
     store = TEXMAT_STAGE_DATA(stage);
     if (!store)
 	return GL_FALSE;

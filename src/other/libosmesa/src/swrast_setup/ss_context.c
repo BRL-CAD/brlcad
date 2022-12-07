@@ -48,7 +48,7 @@
 GLboolean
 _swsetup_CreateContext(GLcontext *ctx)
 {
-    SScontext *swsetup = (SScontext *)CALLOC(sizeof(SScontext));
+    SScontext *swsetup = (SScontext *)_mesa_calloc(sizeof(SScontext));
 
     if (!swsetup)
 	return GL_FALSE;

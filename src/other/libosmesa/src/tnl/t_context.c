@@ -47,7 +47,7 @@ _tnl_CreateContext(GLcontext *ctx)
 
     /* Create the TNLcontext structure
      */
-    ctx->swtnl_context = tnl = (TNLcontext *) CALLOC(sizeof(TNLcontext));
+    ctx->swtnl_context = tnl = (TNLcontext *) _mesa_calloc(sizeof(TNLcontext));
 
     if (!tnl) {
 	return GL_FALSE;

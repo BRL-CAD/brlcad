@@ -747,7 +747,7 @@ GLboolean
 _swrast_CreateContext(GLcontext *ctx)
 {
     GLuint i;
-    SWcontext *swrast = (SWcontext *)CALLOC(sizeof(SWcontext));
+    SWcontext *swrast = (SWcontext *)_mesa_calloc(sizeof(SWcontext));
 
     if (SWRAST_DEBUG) {
 	_mesa_debug(ctx, "_swrast_CreateContext\n");
