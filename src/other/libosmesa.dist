@@ -69,7 +69,6 @@ src/main/enums.c
 src/main/enums.h
 src/main/eval.c
 src/main/eval.h
-src/main/execmem.c
 src/main/extensions.c
 src/main/extensions.h
 src/main/fbobject.c
