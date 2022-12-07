@@ -48,9 +48,9 @@ typedef struct shader_properties {
 	rgb = NULL;
     }
     ~shader_properties() {
-	delete name;
-	delete args;
-	delete rgb;
+	delete[] name;
+	delete[] args;
+	delete[] rgb;
     }
 } shader_properties_t;
 
@@ -155,22 +155,25 @@ check_brlcad_shader(std::string in_name, shader_properties_t* ret)
 static shader_properties_t*
 generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
 {
-    shader_properties_t* ret = new shader_properties_t();
     aiColor3D* mesh_color = (aiColor3D*)pstate->scene->mMeshes[mesh_idx]->mColors[0];
+    if (!pstate->scene->HasMaterials() && !mesh_color)
+	return NULL;
+
+    shader_properties_t* ret = new shader_properties_t();
 
     /* check for material data */
     if (pstate->scene->HasMaterials()) {
 	unsigned int mat_idx = pstate->scene->mMeshes[mesh_idx]->mMaterialIndex;
 	aiMaterial* mat = pstate->scene->mMaterials[mat_idx];
 
-        /* when shader names are written from a .g we use the raw name+args as the shader name 
+        /* when shader names are written from a .g we use the raw name+args as the shader name
          * otherwise try to build up the shader manually 
          */
         if (!check_brlcad_shader(mat->GetName().data, ret)) {
 	    std::string name = "plastic";
 	    ret->name = new char[name.size() + 1];
 	    bu_strlcpy(ret->name, name.c_str(), name.size() + 1);
-    
+
 	    /* brlcad 'plastic' shader defaults */
 	    float tr = 0.0;		/* transparency */
 	    float re = 0.0;		/* mirror reflectance */
@@ -180,7 +183,7 @@ generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
 	    float ex = 0.0;		/* extinction */
 	    float sh = 10.0;	        /* shininess */
 	    float em = 0.0;		/* emission */
-    
+
 	    /* gets value if key exists in material, otherwise leaves default */
             /* NOTE: assimp seems to favor MATKEY_OPACITY over MATKEY_TRANSPARENCYFACTOR
              * so we use 1-opacity for transparency
@@ -193,7 +196,7 @@ generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
 	    mat->Get(AI_MATKEY_ANISOTROPY_FACTOR, ex);
 	    mat->Get(AI_MATKEY_SHININESS, sh);
 	    mat->Get(AI_MATKEY_EMISSIVE_INTENSITY, em);
-    
+
 	    /* format values into args string */
 	    std::string args =
 	        "{ tr " + std::to_string(1-tr) +
@@ -208,8 +211,8 @@ generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
 	    ret->args = new char[args.size() + 1];
 	    bu_strlcpy(ret->args, args.c_str(), args.size() + 1);
         }
-    
-        /* check for vertex colors, otherwise try to use diffuse color */
+
+	/* check for vertex colors, otherwise try to use diffuse color */
         if (!mesh_color) {
             aiColor3D diff(1);	/* diffuse color -> defaults to white */
             mat->Get(AI_MATKEY_COLOR_DIFFUSE, diff);
@@ -217,7 +220,7 @@ generate_shader(assimp_read_state_t* pstate, unsigned int mesh_idx)
         }
     }
 
-    /* set the color of the face using the first vertex color data we 
+    /* set the color of the face using the first vertex color data we
      * find if such exists. If not, try to use the material diffuse color.
      * NOTE: we make two assumptions when using the vertex[0] color:
      * 1) each vertex only has one set of colors
@@ -279,17 +282,17 @@ generate_unique_name(const char* curr_name, unsigned int def_idx, bool is_mesh)
 static void
 generate_geometry(assimp_read_state_t* pstate, wmember &region, unsigned int mesh_idx)
 {
-    aiMesh* mesh = pstate->scene->mMeshes[mesh_idx];
-    int* faces = new int[mesh->mNumFaces * 3];
-    double* vertices = new double[mesh->mNumVertices * 3];
-
     /* make sure we are dealing with only triangles 
      * TODO: support polygons by splitting into triangles 
      */
+    aiMesh* mesh = pstate->scene->mMeshes[mesh_idx];
     if (mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
 	bu_log("WARNING: unknown primitive in mesh[%d] -- skipping\n", mesh_idx);
 	return;
     }
+
+    int* faces = new int[mesh->mNumFaces * 3];
+    double* vertices = new double[mesh->mNumVertices * 3];
 
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
 	bu_log("mesh[%d] num Faces: %d\n", mesh_idx, mesh->mNumFaces);
@@ -326,7 +329,7 @@ generate_geometry(assimp_read_state_t* pstate, wmember &region, unsigned int mes
 static void
 handle_node(assimp_read_state_t* pstate, aiNode* curr, struct wmember &regions)
 {
-    shader_properties_t shader_prop;
+    shader_properties_t *shader_prop = NULL;
     std::string region_name = generate_unique_name(curr->mName.data, pstate->dfs, 0);
 
     if (pstate->gcv_options->verbosity_level || pstate->assimp_read_options->verbose) {
@@ -362,7 +365,9 @@ handle_node(assimp_read_state_t* pstate, aiNode* curr, struct wmember &regions)
 	 * this assumes all mesh under a region are using the same material data.
 	 * if they're not, we're just using the last one
 	 */
-	shader_prop = *generate_shader(pstate, mesh_idx);
+	if (shader_prop)
+	    delete shader_prop;
+	shader_prop = generate_shader(pstate, mesh_idx);
     }
     if (curr->mNumMeshes) {
 	/* apply parent transformations */
@@ -370,7 +375,7 @@ handle_node(assimp_read_state_t* pstate, aiNode* curr, struct wmember &regions)
 	aimatrix_to_arr16(curr->mTransformation, tra);
 
 	/* make region with all meshes */
-	mk_lrcomb(pstate->fd_out, region_name.c_str(), &mesh, 1, shader_prop.name, shader_prop.args, shader_prop.rgb, pstate->id_no, 0, pstate->assimp_read_options->mat_code, 100, 0);
+	mk_lrcomb(pstate->fd_out, region_name.c_str(), &mesh, 1, shader_prop->name, shader_prop->args, shader_prop->rgb, pstate->id_no, 0, pstate->assimp_read_options->mat_code, 100, 0);
 	(void)mk_addmember(region_name.c_str(), &mesh.l, tra, WMOP_UNION);
 
 	if (!pstate->assimp_read_options->const_id)
@@ -385,6 +390,9 @@ handle_node(assimp_read_state_t* pstate, aiNode* curr, struct wmember &regions)
     for (size_t i = 0; i < curr->mNumChildren; i++) {
 	handle_node(pstate, curr->mChildren[i], regions);
     }
+
+    if (shader_prop)
+	delete shader_prop;
 }
 
 static int
