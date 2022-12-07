@@ -32,15 +32,15 @@
 #include "grammar_mesa.h"
 #include "slang_preprocess.h"
 
-__extension__ static const char *slang_pp_directives_syn =
+LONGSTRING static const char *slang_pp_directives_syn =
 #include "library/slang_pp_directives_syn.h"
     ;
 
-__extension__ static const char *slang_pp_expression_syn =
+LONGSTRING static const char *slang_pp_expression_syn =
 #include "library/slang_pp_expression_syn.h"
     ;
 
-__extension__ static const char *slang_pp_version_syn =
+LONGSTRING static const char *slang_pp_version_syn =
 #include "library/slang_pp_version_syn.h"
     ;
 

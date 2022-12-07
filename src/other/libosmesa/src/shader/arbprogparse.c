@@ -168,7 +168,7 @@ typedef GLubyte *production;
 /**
  * This is the text describing the rules to parse the grammar
  */
-__extension__ static char arb_grammar_text[] =
+LONGSTRING static char arb_grammar_text[] =
 #include "arbprogram_syn.h"
     ;
 
@@ -3533,7 +3533,7 @@ parse_instructions(GLcontext * ctx, const GLubyte * inst,
 
 
 /* XXX temporary */
-__extension__ static char core_grammar_text[] =
+LONGSTRING static char core_grammar_text[] =
 #include "grammar_syn.h"
     ;
 

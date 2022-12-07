@@ -1959,7 +1959,7 @@ compile_with_grammar(grammar id, const char *source, slang_code_unit * unit,
     return GL_TRUE;
 }
 
-__extension__ static const char *slang_shader_syn =
+LONGSTRING static const char *slang_shader_syn =
 #include "library/slang_shader_syn.h"
     ;
 
