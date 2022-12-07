@@ -217,7 +217,7 @@ static struct instruction_pattern
     struct instruction_pattern result = {NULL, (enum prog_opcode) -1, 0, 0, 0};
 
     for (inst = Instructions; inst->name; inst++) {
-	if (_mesa_strncmp((const char *) token, inst->name, 3) == 0) {
+	if (strncmp((const char *) token, inst->name, 3) == 0) {
 	    /* matched! */
 	    int i = 3;
 	    result = *inst;
@@ -368,7 +368,7 @@ Peek_Token(struct parse_state *parseState, GLubyte *token)
 	parseState->pos += (-i);
 	return GL_FALSE;
     }
-    len = (GLint)_mesa_strlen((const char *) token);
+    len = (GLint)strlen((const char *) token);
     parseState->pos += (i - len);
     return GL_TRUE;
 }
@@ -455,7 +455,7 @@ Parse_ScalarConstant(struct parse_state *parseState, GLfloat *number)
 {
     char *end = NULL;
 
-    *number = (GLfloat) _mesa_strtod((const char *) parseState->pos, &end);
+    *number = (GLfloat) strtod((const char *) parseState->pos, &end);
 
     if (end && end > (char *) parseState->pos) {
 	/* got a number */
@@ -585,7 +585,7 @@ Parse_TextureImageId(struct parse_state *parseState,
 	imageSrc[2] != 'X') {
 	RETURN_ERROR1("Expected TEX# source");
     }
-    unit = _mesa_atoi((const char *) imageSrc + 3);
+    unit = atoi((const char *) imageSrc + 3);
     if ((unit < 0 || unit > MAX_TEXTURE_IMAGE_UNITS) ||
 	(unit == 0 && (imageSrc[3] != '0' || imageSrc[4] != 0))) {
 	RETURN_ERROR1("Invalied TEX# source index");
@@ -716,7 +716,7 @@ Parse_TempReg(struct parse_state *parseState, GLint *tempRegNum)
 	RETURN_ERROR1("Expected R## or H##");
 
     if (IsDigit(token[1])) {
-	GLint reg = _mesa_atoi((const char *)(token + 1));
+	GLint reg = atoi((const char *)(token + 1));
 	if (token[0] == 'H')
 	    reg += 32;
 	if (reg >= MAX_NV_FRAGMENT_PROGRAM_TEMPS)
@@ -764,7 +764,7 @@ Parse_ProgramParamReg(struct parse_state *parseState, GLint *regNum)
 
     if (IsDigit(token[0])) {
 	/* a numbered program parameter register */
-	GLint reg = _mesa_atoi((const char *) token);
+	GLint reg = atoi((const char *) token);
 	if (reg >= MAX_NV_FRAGMENT_PROGRAM_PARAMS)
 	    RETURN_ERROR1("Invalid constant program number");
 	*regNum = reg;
@@ -797,7 +797,7 @@ Parse_FragReg(struct parse_state *parseState, GLint *tempRegNum)
 	RETURN_ERROR;
     }
     for (j = 0; InputRegisters[j]; j++) {
-	if (_mesa_strcmp((const char *) token, InputRegisters[j]) == 0) {
+	if (strcmp((const char *) token, InputRegisters[j]) == 0) {
 	    *tempRegNum = j;
 	    parseState->inputsRead |= (1 << j);
 	    break;
@@ -832,7 +832,7 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
 
     /* try to match an output register name */
     for (j = 0; OutputRegisters[j]; j++) {
-	if (_mesa_strcmp((const char *) token, OutputRegisters[j]) == 0) {
+	if (strcmp((const char *) token, OutputRegisters[j]) == 0) {
 	    static GLuint bothColors = (1 << FRAG_RESULT_COLR) | (1 << FRAG_RESULT_COLH);
 	    *outputRegNum = j;
 	    parseState->outputsWritten |= (1 << j);
@@ -864,8 +864,8 @@ Parse_MaskedDstReg(struct parse_state *parseState,
     if (!Peek_Token(parseState, token))
 	RETURN_ERROR;
 
-    if (_mesa_strcmp((const char *) token, "RC") == 0 ||
-	_mesa_strcmp((const char *) token, "HC") == 0) {
+    if (strcmp((const char *) token, "RC") == 0 ||
+	strcmp((const char *) token, "HC") == 0) {
 	/* a write-only register */
 	dstReg->File = PROGRAM_WRITE_ONLY;
 	if (!Parse_DummyReg(parseState, &idx))
@@ -1453,10 +1453,10 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
     _mesa_set_program_error(ctx, -1, NULL);
 
     /* check the program header */
-    if (_mesa_strncmp((const char *) programString, "!!FP1.0", 7) == 0) {
+    if (strncmp((const char *) programString, "!!FP1.0", 7) == 0) {
 	target = GL_FRAGMENT_PROGRAM_NV;
 	parseState.pos = programString + 7;
-    } else if (_mesa_strncmp((const char *) programString, "!!FCP1.0", 8) == 0) {
+    } else if (strncmp((const char *) programString, "!!FCP1.0", 8) == 0) {
 	/* fragment / register combiner program - not supported */
 	_mesa_set_program_error(ctx, 0, "Invalid fragment program header");
 	_mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV(bad header)");

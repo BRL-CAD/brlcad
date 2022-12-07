@@ -500,23 +500,14 @@ _mesa_memset16(unsigned short *dst, unsigned short val, size_t n);
 extern void
 _mesa_bzero(void *dst, size_t n);
 
-extern double
-_mesa_sin(double a);
-
 extern float
 _mesa_sinf(float a);
-
-extern double
-_mesa_cos(double a);
 
 extern float
 _mesa_asinf(float x);
 
 extern float
 _mesa_atanf(float x);
-
-extern double
-_mesa_sqrtd(double x);
 
 extern float
 _mesa_sqrtf(float x);
@@ -526,9 +517,6 @@ _mesa_inv_sqrtf(float x);
 
 extern void
 _mesa_init_sqrt_table(void);
-
-extern double
-_mesa_pow(double x, double y);
 
 extern int
 _mesa_ffs(int i);
@@ -549,52 +537,17 @@ _mesa_float_to_half(float f);
 extern float
 _mesa_half_to_float(GLhalfARB h);
 
-
-extern void *
-_mesa_bsearch(const void *key, const void *base, size_t nmemb, size_t size,
-	      int (*compar)(const void *, const void *));
-
 extern char *
 _mesa_getenv(const char *var);
 
 extern char *
-_mesa_strstr(const char *haystack, const char *needle);
-
-extern char *
-_mesa_strncat(char *dest, const char *src, size_t n);
-
-extern char *
-_mesa_strcpy(char *dest, const char *src);
-
-extern char *
-_mesa_strncpy(char *dest, const char *src, size_t n);
-
-extern size_t
-_mesa_strlen(const char *s);
-
-extern int
-_mesa_strcmp(const char *s1, const char *s2);
-
-extern int
-_mesa_strncmp(const char *s1, const char *s2, size_t n);
-
-extern char *
 _mesa_strdup(const char *s);
-
-extern int
-_mesa_atoi(const char *s);
-
-extern double
-_mesa_strtod(const char *s, char **end);
 
 extern int
 _mesa_sprintf(char *str, const char *fmt, ...);
 
 extern void
 _mesa_printf(const char *fmtString, ...);
-
-extern int
-_mesa_vsprintf(char *str, const char *fmt, va_list args);
 
 
 extern void

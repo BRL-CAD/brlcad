@@ -244,25 +244,11 @@ _mesa_bzero(void *dst, size_t n)
 /** \name Math */
 /*@{*/
 
-/** Wrapper around sin() */
-double
-_mesa_sin(double a)
-{
-    return sin(a);
-}
-
 /** Single precision wrapper around sin() */
 float
 _mesa_sinf(float a)
 {
     return (float) sin((double) a);
-}
-
-/** Wrapper around cos() */
-double
-_mesa_cos(double a)
-{
-    return cos(a);
 }
 
 /** Single precision wrapper around asin() */
@@ -277,13 +263,6 @@ float
 _mesa_atanf(float x)
 {
     return (float) atan((double) x);
-}
-
-/** Wrapper around sqrt() */
-double
-_mesa_sqrtd(double x)
-{
-    return sqrt(x);
 }
 
 
@@ -318,7 +297,7 @@ _mesa_init_sqrt_table(void)
 	 */
 
 	fi.i = (i << 16) | (127 << 23);
-	fi.f = _mesa_sqrtd(fi.f);
+	fi.f = sqrt(fi.f);
 
 	/*
 	 * Take the square root then strip the first 7 bits of
@@ -376,7 +355,7 @@ _mesa_sqrtf(float x)
 
     return num.f;
 #else
-    return (float) _mesa_sqrtd((double) x);
+    return (float) sqrt((double) x);
 #endif
 }
 
@@ -488,14 +467,6 @@ _mesa_inv_sqrtf(float n)
 #else
     return (float)(1.0 / sqrt(n));
 #endif
-}
-
-
-/** Wrapper around pow() */
-double
-_mesa_pow(double x, double y)
-{
-    return pow(x, y);
 }
 
 
@@ -730,23 +701,6 @@ _mesa_half_to_float(GLhalfARB val)
 
 
 /**********************************************************************/
-/** \name Sort & Search */
-/*@{*/
-
-/**
- * Wrapper for bsearch().
- */
-void *
-_mesa_bsearch(const void *key, const void *base, size_t nmemb, size_t size,
-	      int (*compar)(const void *, const void *))
-{
-    return bsearch(key, base, nmemb, size, compar);
-}
-
-/*@}*/
-
-
-/**********************************************************************/
 /** \name Environment vars */
 /*@{*/
 
@@ -770,55 +724,6 @@ _mesa_getenv(const char *var)
 /** \name String */
 /*@{*/
 
-/** Wrapper around strstr() */
-char *
-_mesa_strstr(const char *haystack, const char *needle)
-{
-    return strstr(haystack, needle);
-}
-
-/** Wrapper around strncat() */
-char *
-_mesa_strncat(char *dest, const char *src, size_t n)
-{
-    return strncat(dest, src, n);
-}
-
-/** Wrapper around strcpy() */
-char *
-_mesa_strcpy(char *dest, const char *src)
-{
-    return strcpy(dest, src);
-}
-
-/** Wrapper around strncpy() */
-char *
-_mesa_strncpy(char *dest, const char *src, size_t n)
-{
-    return strncpy(dest, src, n);
-}
-
-/** Wrapper around strlen() */
-size_t
-_mesa_strlen(const char *s)
-{
-    return strlen(s);
-}
-
-/** Wrapper around strcmp() */
-int
-_mesa_strcmp(const char *s1, const char *s2)
-{
-    return strcmp(s1, s2);
-}
-
-/** Wrapper around strncmp() */
-int
-_mesa_strncmp(const char *s1, const char *s2, size_t n)
-{
-    return strncmp(s1, s2, n);
-}
-
 /**
  * Implemented using malloc() and _mesa_strcpy.
  * Note that NULL is handled accordingly.
@@ -827,28 +732,14 @@ char *
 _mesa_strdup(const char *s)
 {
     if (s) {
-	size_t l = _mesa_strlen(s);
+	size_t l = strlen(s);
 	char *s2 = (char *) malloc(l + 1);
 	if (s2)
-	    _mesa_strcpy(s2, s);
+	    strcpy(s2, s);
 	return s2;
     } else {
 	return NULL;
     }
-}
-
-/** Wrapper around atoi() */
-int
-_mesa_atoi(const char *s)
-{
-    return atoi(s);
-}
-
-/** Wrapper around strtod() */
-double
-_mesa_strtod(const char *s, char **end)
-{
-    return strtod(s, end);
 }
 
 /*@}*/
@@ -880,13 +771,6 @@ _mesa_printf(const char *fmtString, ...)
     vsnprintf(s, MAXSTRING, fmtString, args);
     va_end(args);
     fprintf(stderr,"%s", s);
-}
-
-/** Wrapper around vsprintf() */
-int
-_mesa_vsprintf(char *str, const char *fmt, va_list args)
-{
-    return vsprintf(str, fmt, args);
 }
 
 /*@}*/
@@ -966,7 +850,7 @@ _mesa_error(GLcontext *ctx, GLenum error, const char *fmtString, ...)
     debugEnv = _mesa_getenv("MESA_DEBUG");
 
 #ifdef DEBUG
-    if (debugEnv && _mesa_strstr(debugEnv, "silent"))
+    if (debugEnv && strstr(debugEnv, "silent"))
 	debug = GL_FALSE;
     else
 	debug = GL_TRUE;

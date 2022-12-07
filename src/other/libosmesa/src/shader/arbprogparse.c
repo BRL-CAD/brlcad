@@ -583,7 +583,7 @@ var_cache_find(struct var_cache *va, const GLubyte * name)
     /*struct var_cache *first = va;*/
 
     while (va) {
-	if (!_mesa_strcmp((const char*) name, (const char*) va->name)) {
+	if (!strcmp((const char*) name, (const char*) va->name)) {
 	    if (va->type == vt_alias)
 		return va->alias_binding;
 	    return va;
@@ -609,9 +609,9 @@ program_error(GLcontext *ctx, GLint position, const char *descrip)
 {
     if (descrip) {
 	const char *prefix = "glProgramString(", *suffix = ")";
-	char *str = (char *) malloc(_mesa_strlen(descrip) +
-					  _mesa_strlen(prefix) +
-					  _mesa_strlen(suffix) + 1);
+	char *str = (char *) malloc(strlen(descrip) +
+					  strlen(prefix) +
+					  strlen(suffix) + 1);
 	if (str) {
 	    _mesa_sprintf(str, "%s%s%s", prefix, descrip, suffix);
 	    _mesa_error(ctx, GL_INVALID_OPERATION, str);
@@ -631,20 +631,20 @@ program_error2(GLcontext *ctx, GLint position, const char *descrip,
 {
     if (descrip) {
 	const char *prefix = "glProgramString(", *suffix = ")";
-	char *str = (char *) malloc(_mesa_strlen(descrip) +
-					  _mesa_strlen(": ") +
-					  _mesa_strlen(var) +
-					  _mesa_strlen(prefix) +
-					  _mesa_strlen(suffix) + 1);
+	char *str = (char *) malloc(strlen(descrip) +
+					  strlen(": ") +
+					  strlen(var) +
+					  strlen(prefix) +
+					  strlen(suffix) + 1);
 	if (str) {
 	    _mesa_sprintf(str, "%s%s: %s%s", prefix, descrip, var, suffix);
 	    _mesa_error(ctx, GL_INVALID_OPERATION, str);
 	    free(str);
 	}
 
-	str = (char *) malloc(_mesa_strlen(descrip) +
-					  _mesa_strlen(": ") +
-					  _mesa_strlen(var) + 1);
+	str = (char *) malloc(strlen(descrip) +
+					  strlen(": ") +
+					  strlen(var) + 1);
 	if (str) {
 	    _mesa_sprintf(str, "%s: %s", descrip, var);
 	    _mesa_set_program_error(ctx, position, str);
@@ -688,7 +688,7 @@ parse_string(const GLubyte ** inst, struct var_cache **vc_head,
     struct var_cache *va = NULL;
     (void) Program;
 
-    *inst += _mesa_strlen((char *) i) + 1;
+    *inst += strlen((char *) i) + 1;
 
     va = var_cache_find(*vc_head, i);
 
@@ -712,7 +712,7 @@ parse_string_without_adding(const GLubyte ** inst, struct arb_program *Program)
     const GLubyte *i = *inst;
     (void) Program;
 
-    *inst += _mesa_strlen((char *) i) + 1;
+    *inst += strlen((char *) i) + 1;
 
     return (char *) i;
 }
@@ -759,7 +759,7 @@ parse_integer(const GLubyte ** inst, struct arb_program *Program)
     }
 
     /* parse the integer as you normally would do it */
-    value = _mesa_atoi(parse_string_without_adding(inst, Program));
+    value = atoi(parse_string_without_adding(inst, Program));
 
     /* now, after terminating 0 there is a position
      * to parse it - parse_position()
@@ -822,7 +822,7 @@ parse_float(const GLubyte ** inst, struct arb_program *Program)
 
     /* Assemble parts of floating-point number: */
     return (GLfloat)((whole + fraction / fracScale) *
-		     _mesa_pow(10.0, (GLfloat) exponent));
+		     pow(10.0, (GLfloat) exponent));
 }
 
 
