@@ -40,7 +40,6 @@ set(osmesa_srcs
   main/enable.c
   main/enums.c
   main/eval.c
-  main/execmem.c
   main/extensions.c
   main/fbobject.c
   main/feedback.c
