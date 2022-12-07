@@ -184,7 +184,7 @@
 #  define __builtin_expect(x, y) x
 #endif
 
-#include "config.h"
+#include "gllimits.h"
 
 #endif /* GLHEADER_H */
 

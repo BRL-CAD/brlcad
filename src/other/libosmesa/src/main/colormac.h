@@ -34,7 +34,7 @@
 
 
 #include "imports.h"
-#include "config.h"
+#include "gllimits.h"
 #include "macros.h"
 
 

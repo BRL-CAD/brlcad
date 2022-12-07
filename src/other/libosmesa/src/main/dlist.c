@@ -32,7 +32,7 @@
 #include "imports.h"
 #include "api_arrayelt.h"
 #include "api_loopback.h"
-#include "config.h"
+#include "gllimits.h"
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 #include "arbprogram.h"
 #include "program.h"

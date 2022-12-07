@@ -47,7 +47,6 @@ src/main/clip.h
 src/main/colormac.h
 src/main/colortab.c
 src/main/colortab.h
-src/main/config.h
 src/main/context.c
 src/main/context.h
 src/main/convolve.c
@@ -85,6 +84,7 @@ src/main/get.c
 src/main/get.h
 src/main/getstring.c
 src/main/glheader.h
+src/main/gllimits.h
 src/main/hash.c
 src/main/hash.h
 src/main/hint.c

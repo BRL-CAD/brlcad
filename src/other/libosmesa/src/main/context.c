@@ -791,7 +791,7 @@ init_natives(struct gl_program_constants *prog)
 
 /**
  * Initialize fields of gl_constants (aka ctx->Const.*).
- * Use defaults from config.h.  The device drivers will often override
+ * Use defaults from gllimits.h.  The device drivers will often override
  * some of these values (such as number of texture units).
  */
 static void
