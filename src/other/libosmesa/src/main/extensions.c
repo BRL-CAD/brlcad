@@ -538,7 +538,7 @@ _mesa_make_extension_string(GLcontext *ctx)
 	if (!default_extensions[i].flag_offset ||
 	    *(base + default_extensions[i].flag_offset)) {
 	    GLuint len = (GLuint)_mesa_strlen(default_extensions[i].name);
-	    _mesa_memcpy(s + extStrLen, default_extensions[i].name, len);
+	    memcpy(s + extStrLen, default_extensions[i].name, len);
 	    extStrLen += len;
 	    s[extStrLen] = (GLubyte) ' ';
 	    extStrLen++;

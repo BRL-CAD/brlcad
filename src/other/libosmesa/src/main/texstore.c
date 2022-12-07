@@ -1122,7 +1122,7 @@ _mesa_texstore_rgba(TEXSTORE_PARAMS)
 			      + dstYoffset * dstRowStride
 			      + dstXoffset * dstFormat->TexelBytes;
 	    for (row = 0; row < srcHeight; row++) {
-		_mesa_memcpy(dstRow, src, bytesPerRow);
+		memcpy(dstRow, src, bytesPerRow);
 		dstRow += dstRowStride;
 		src += srcWidth * components;
 	    }
@@ -2467,7 +2467,7 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
 			      + dstYoffset * dstRowStride
 			      + dstXoffset * dstFormat->TexelBytes;
 	    for (row = 0; row < srcHeight; row++) {
-		_mesa_memcpy(dstRow, srcRow, bytesPerRow);
+		memcpy(dstRow, srcRow, bytesPerRow);
 		dstRow += dstRowStride;
 		srcRow += srcWidth * components;
 	    }
@@ -3324,7 +3324,7 @@ _mesa_store_compressed_teximage2d(GLcontext *ctx, GLenum target, GLint level,
 
     /* copy the data */
     ASSERT(texImage->CompressedSize == (GLuint) imageSize);
-    MEMCPY(texImage->Data, data, imageSize);
+    memcpy(texImage->Data, data, imageSize);
 
     /* GL_SGIS_generate_mipmap */
     if (level == texObj->BaseLevel && texObj->GenerateMipmap) {
@@ -3440,7 +3440,7 @@ _mesa_store_compressed_texsubimage2d(GLcontext *ctx, GLenum target,
     rows = height / 4;
 
     for (i = 0; i < rows; i++) {
-	MEMCPY(dest, src, bytesPerRow);
+	memcpy(dest, src, bytesPerRow);
 	dest += destRowStride;
 	src += srcRowStride;
     }
@@ -3596,14 +3596,14 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
 		    /* XXX Note: we're bypassing texImage->FetchTexel()! */
 		    const GLuint *src = (const GLuint *) texImage->Data;
 		    src += width * row + width * height * img;
-		    _mesa_memcpy(dest, src, width * sizeof(GLuint));
+		    memcpy(dest, src, width * sizeof(GLuint));
 		    if (ctx->Pack.SwapBytes) {
 			_mesa_swap4((GLuint *) dest, width);
 		    }
 		} else if (format == GL_YCBCR_MESA) {
 		    /* No pixel transfer */
 		    const GLint rowstride = texImage->RowStride;
-		    MEMCPY(dest,
+		    memcpy(dest,
 			   (const GLushort *) texImage->Data + row * rowstride,
 			   width * sizeof(GLushort));
 		    /* check for byte swapping */
@@ -3622,7 +3622,7 @@ _mesa_get_teximage(GLcontext *ctx, GLenum target, GLint level,
 		    /* no pixel transfer and no non-linear to linear conversion */
 		    const GLint comps = texImage->TexFormat->TexelBytes;
 		    const GLint rowstride = comps * texImage->RowStride;
-		    MEMCPY(dest,
+		    memcpy(dest,
 			   (const GLubyte *) texImage->Data + row * rowstride,
 			   comps * width * sizeof(GLubyte));
 		}
@@ -3708,7 +3708,7 @@ _mesa_get_compressed_teximage(GLcontext *ctx, GLenum target, GLint level,
 					 texImage->TexFormat->MesaFormat);
 
     /* just memcpy, no pixelstore or pixel transfer */
-    _mesa_memcpy(img, texImage->Data, size);
+    memcpy(img, texImage->Data, size);
 
     if (ctx->Pack.BufferObj->Name) {
 	ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_PACK_BUFFER_EXT,

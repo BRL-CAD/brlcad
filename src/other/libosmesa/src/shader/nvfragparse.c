@@ -1201,7 +1201,7 @@ Parse_PrintInstruction(struct parse_state *parseState,
     parseState->pos += len + 1;
     msg = (GLubyte*) malloc(len + 1);
 
-    _mesa_memcpy(msg, str, len);
+    memcpy(msg, str, len);
     msg[len] = 0;
     inst->Data = msg;
 
@@ -1437,7 +1437,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
 	return;
     }
-    MEMCPY(programString, str, len);
+    memcpy(programString, str, len);
     programString[len] = 0;
 
     /* Get ready to parse */

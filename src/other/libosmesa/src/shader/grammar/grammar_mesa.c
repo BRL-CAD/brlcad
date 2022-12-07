@@ -52,7 +52,7 @@ void *grammar_alloc_realloc(void *ptr, size_t old_size, size_t size)
 
 void *grammar_memory_copy(void *dst, const void * src, size_t size)
 {
-    return _mesa_memcpy(dst, src, size);
+    return memcpy(dst, src, size);
 }
 
 int grammar_string_compare(const byte *str1, const byte *str2)

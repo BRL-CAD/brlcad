@@ -3731,7 +3731,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
 	grammar_destroy(arbprogram_syn_id);
 	return GL_FALSE;
     }
-    _mesa_memcpy(strz, str, len);
+    memcpy(strz, str, len);
     strz[len] = '\0';
 
     /* do a fast check on program string - initial production buffer is 4K */

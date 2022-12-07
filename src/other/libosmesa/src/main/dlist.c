@@ -2565,7 +2565,7 @@ save_PixelMapfv(GLenum map, GLint mapsize, const GLfloat *values)
 	n[1].e = map;
 	n[2].i = mapsize;
 	n[3].data = (void *) malloc(mapsize * sizeof(GLfloat));
-	MEMCPY(n[3].data, (void *) values, mapsize * sizeof(GLfloat));
+	memcpy(n[3].data, (void *) values, mapsize * sizeof(GLfloat));
     }
     if (ctx->ExecuteFlag) {
 	CALL_PixelMapfv(ctx->Exec, (map, mapsize, values));
@@ -3974,7 +3974,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage1DARB");
 	    return;
 	}
-	MEMCPY(image, data, imageSize);
+	memcpy(image, data, imageSize);
 	n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_IMAGE_1D, 7);
 	n[1].e = target;
 	n[2].i = level;
@@ -4014,7 +4014,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2DARB");
 	    return;
 	}
-	MEMCPY(image, data, imageSize);
+	memcpy(image, data, imageSize);
 	n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_IMAGE_2D, 8);
 	n[1].e = target;
 	n[2].i = level;
@@ -4055,7 +4055,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage3DARB");
 	    return;
 	}
-	MEMCPY(image, data, imageSize);
+	memcpy(image, data, imageSize);
 	n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_IMAGE_3D, 9);
 	n[1].e = target;
 	n[2].i = level;
@@ -4093,7 +4093,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage1DARB");
 	return;
     }
-    MEMCPY(image, data, imageSize);
+    memcpy(image, data, imageSize);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D, 7);
     n[1].e = target;
     n[2].i = level;
@@ -4128,7 +4128,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage2DARB");
 	return;
     }
-    MEMCPY(image, data, imageSize);
+    memcpy(image, data, imageSize);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D, 9);
     n[1].e = target;
     n[2].i = level;
@@ -4165,7 +4165,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage3DARB");
 	return;
     }
-    MEMCPY(image, data, imageSize);
+    memcpy(image, data, imageSize);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D, 11);
     n[1].e = target;
     n[2].i = level;
@@ -4333,7 +4333,7 @@ save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
 	return;
     }
-    _mesa_memcpy(programCopy, program, len);
+    memcpy(programCopy, program, len);
 
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, programCopy);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_LOAD_PROGRAM_NV, 4);
@@ -4359,7 +4359,7 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint * ids)
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glRequestResidentProgramsNV");
 	return;
     }
-    _mesa_memcpy(idCopy, ids, num * sizeof(GLuint));
+    memcpy(idCopy, ids, num * sizeof(GLuint));
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, idCopy);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_TRACK_MATRIX_NV, 2);
     if (n) {
@@ -4528,7 +4528,7 @@ save_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte * name,
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramNamedParameter4fNV");
 	return;
     }
-    _mesa_memcpy(nameCopy, name, len);
+    memcpy(nameCopy, name, len);
 
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, nameCopy);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_PROGRAM_NAMED_PARAMETER_NV, 6);
@@ -4628,7 +4628,7 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
 	return;
     }
-    _mesa_memcpy(programCopy, string, len);
+    memcpy(programCopy, string, len);
 
     ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, programCopy);
     n = ALLOC_INSTRUCTION(ctx, OPCODE_PROGRAM_STRING_ARB, 4);

@@ -162,7 +162,7 @@ copy_conv_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 	    GLvoid *rgba = (GLvoid *) span.array->attribs[FRAG_ATTRIB_COL0];
 
 	    /* copy convolved colors into span array */
-	    _mesa_memcpy(rgba, src, width * 4 * sizeof(GLfloat));
+	    memcpy(rgba, src, width * 4 * sizeof(GLfloat));
 
 	    /* write span */
 	    span.x = destx;
@@ -277,7 +277,7 @@ copy_rgba_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 	/* Get row/span of source pixels */
 	if (overlapping) {
 	    /* get from buffered image */
-	    _mesa_memcpy(rgba, p, width * sizeof(GLfloat) * 4);
+	    memcpy(rgba, p, width * sizeof(GLfloat) * 4);
 	    p += width * 4;
 	} else {
 	    /* get from framebuffer */
@@ -376,7 +376,7 @@ copy_ci_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
     for (j = 0; j < height; j++, sy += stepy, dy += stepy) {
 	/* Get color indexes */
 	if (overlapping) {
-	    _mesa_memcpy(span.array->index, p, width * sizeof(GLuint));
+	    memcpy(span.array->index, p, width * sizeof(GLuint));
 	    p += width;
 	} else {
 	    _swrast_read_index_span(ctx, ctx->ReadBuffer->_ColorReadBuffer,
@@ -515,7 +515,7 @@ copy_depth_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 	GLfloat depth[MAX_WIDTH];
 	/* get depth values */
 	if (overlapping) {
-	    _mesa_memcpy(depth, p, width * sizeof(GLfloat));
+	    memcpy(depth, p, width * sizeof(GLfloat));
 	    p += width;
 	} else {
 	    _swrast_read_depth_span_float(ctx, readRb, width, srcx, sy, depth);
@@ -608,7 +608,7 @@ copy_stencil_pixels(GLcontext *ctx, GLint srcx, GLint srcy,
 
 	/* Get stencil values */
 	if (overlapping) {
-	    _mesa_memcpy(stencil, p, width * sizeof(GLstencil));
+	    memcpy(stencil, p, width * sizeof(GLstencil));
 	    p += width;
 	} else {
 	    _swrast_read_stencil_span(ctx, rb, width, srcx, sy, stencil);
@@ -728,7 +728,7 @@ copy_depth_stencil_pixels(GLcontext *ctx,
 
 	    /* Get stencil values */
 	    if (overlapping) {
-		_mesa_memcpy(stencil, stencilPtr, width * sizeof(GLstencil));
+		memcpy(stencil, stencilPtr, width * sizeof(GLstencil));
 		stencilPtr += width;
 	    } else {
 		_swrast_read_stencil_span(ctx, stencilReadRb,
@@ -755,7 +755,7 @@ copy_depth_stencil_pixels(GLcontext *ctx,
 
 	    /* get depth values */
 	    if (overlapping) {
-		_mesa_memcpy(depth, depthPtr, width * sizeof(GLfloat));
+		memcpy(depth, depthPtr, width * sizeof(GLfloat));
 		depthPtr += width;
 	    } else {
 		_swrast_read_depth_span_float(ctx, depthReadRb,

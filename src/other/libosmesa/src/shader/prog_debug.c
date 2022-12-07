@@ -116,7 +116,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
 
     /* make null-terminated copy of registerName */
     len = MIN2((unsigned int) len, sizeof(reg) - 1);
-    _mesa_memcpy(reg, registerName, len);
+    memcpy(reg, registerName, len);
     reg[len] = 0;
 
     switch (target) {

@@ -410,7 +410,7 @@ pp_symbols_erase(pp_symbols *self, pp_symbol *symbol)
     self->count--;
     pp_symbol_free(symbol);
     if (symbol < self->symbols + self->count)
-	_mesa_memcpy(symbol, symbol + 1, sizeof(pp_symbol) * (self->symbols + self->count - symbol));
+	memcpy(symbol, symbol + 1, sizeof(pp_symbol) * (self->symbols + self->count - symbol));
     self->symbols = (pp_symbol *)(_mesa_realloc(self->symbols, (self->count + 1) * sizeof(pp_symbol),
 				  self->count * sizeof(pp_symbol)));
     return self->symbols != NULL;

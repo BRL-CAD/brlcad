@@ -87,8 +87,6 @@ extern "C" {
 /** Free aligned memory */
 #define ALIGN_FREE(PTR)            _mesa_align_free(PTR)
 
-/** Copy \p BYTES bytes from \p SRC into \p DST */
-#define MEMCPY( DST, SRC, BYTES)   _mesa_memcpy(DST, SRC, BYTES)
 /** Set \p N bytes in \p DST to \p VAL */
 #define MEMSET( DST, VAL, N )      _mesa_memset(DST, VAL, N)
 
@@ -580,7 +578,7 @@ extern void *
 _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize);
 
 extern void *
-_mesa_memcpy(void *dest, const void *src, size_t n);
+memcpy(void *dest, const void *src, size_t n);
 
 extern void
 _mesa_memset(void *dst, int val, size_t n);
