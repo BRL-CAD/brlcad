@@ -50,11 +50,6 @@
 
 extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
-extern int scroll_select();		/* defined in scroll.c */
-extern int menu_select();		/* defined in menu.c */
-extern void rect_view2image();		/* defined in rect.c */
-extern void rb_set_dirty_flag();
-
 
 int
 common_dm(int argc, const char *argv[])

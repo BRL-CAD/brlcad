@@ -141,7 +141,7 @@ int update_views = 0;
 jmp_buf jmp_env;	/* For non-local gotos */
 double frametime;	/* time needed to draw last frame */
 
-void (*cur_sigint)();	/* Current SIGINT status */
+void (*cur_sigint)(int);	/* Current SIGINT status */
 
 int classic_mged = 1;   /* >0 means interactive. gets set to 0 if
 			 * there's libdm graphics support, and forced
@@ -261,8 +261,10 @@ pr_beep(void)
 
 /* so the Windows-specific calls blend in */
 #if !defined(_WIN32) || defined(__CYGWIN__)
-void _set_invalid_parameter_handler(void (*callback)()) { if (callback) return; }
+void _set_invalid_parameter_handler(void (*callback)(const wchar_t*, const wchar_t*, const wchar_t*, unsigned int, uintptr_t)) { if (callback) return; }
 #endif
+
+
 
 
 /*
@@ -296,7 +298,7 @@ mged_notify(int UNUSED(i))
 
 
 void
-reset_input_strings()
+reset_input_strings(void)
 {
     if (BU_LIST_IS_HEAD(curr_cmd_list, &head_cmd_list.l)) {
 	/* Truncate input string */
@@ -505,7 +507,7 @@ mged_insert_char(char ch)
 
 
 static void
-do_tab_expansion()
+do_tab_expansion(void)
 {
     int ret;
     Tcl_Obj *result;
@@ -1944,7 +1946,6 @@ event_check(int non_blocking)
 {
     struct mged_dm *save_dm_list;
     int save_edflag;
-    int handled = 0;
 
     /* Let cool Tk event handler do most of the work */
 
@@ -1956,7 +1957,6 @@ event_check(int non_blocking)
 	 */
 
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
-	    handled++;
 	}
     } else {
 	/* Wait for an event, then handle it */
@@ -1964,7 +1964,6 @@ event_check(int non_blocking)
 
 	/* Handle any other events in the queue */
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
-	    handled++;
 	}
     }
 

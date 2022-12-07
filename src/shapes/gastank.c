@@ -42,7 +42,7 @@
 #include "wdb.h"
 
 void
-explain()
+explain(void)
 {
 	fprintf(stderr,"This program constructs a solid gas tank with all\n");
 	fprintf(stderr,"edges and corners rounded.  If not used interactively:\n");

@@ -480,7 +480,7 @@ end:
 #endif
 
 
-void mmInit()
+void mmInit(void)
 {
     int64_t sysmemory;
 

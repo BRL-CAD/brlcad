@@ -30,7 +30,7 @@
 
 void compnet_connect(char *host, int port);
 void compnet_update(char *string, char status);
-void compnet_reset();
+void compnet_reset(void);
 
 #endif
 

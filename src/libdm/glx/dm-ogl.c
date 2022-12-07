@@ -1534,7 +1534,7 @@ struct dm dm_ogl = { DM_MAGIC, &dm_ogl_impl, 0 };
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_ogl };
 
-COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info(void)
 {
     return &pinfo;
 }

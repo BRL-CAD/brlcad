@@ -48,7 +48,7 @@
 
 struct cmdtab {
     char *ct_name;
-    int (*ct_func)();
+    int (*ct_func)(void *, struct Tcl_Interp *, int, char **);
 };
 
 
@@ -68,7 +68,7 @@ fastf_t Viewscale;
 
 int mouse_mode = MOUSE_MODE_IDLE;
 int omx, omy;
-int (*cmd_hook)();
+int (*cmd_hook)(int, char **);
 
 
 struct plot_list{
@@ -165,7 +165,7 @@ get_args(int argc, char **argv)
  */
 
 static void
-refresh() {
+refresh(void) {
     size_t i;
     struct plot_list *plp;
 
@@ -329,7 +329,7 @@ vrot(double x, double y, double z)
  * Centralized here to simplify things.
  */
 static void
-new_mats()
+new_mats(void)
 {
     bn_mat_mul(model2view, Viewrot, toViewcenter);
     model2view[15] = Viewscale;
@@ -487,7 +487,7 @@ X_dm(int argc, char *argv[])
  * Caller is responsible for calling new_mats().
  */
 static void
-size_reset()
+size_reset(void)
 {
     size_t i;
     struct bv_vlist *tvp;
@@ -1031,7 +1031,7 @@ static struct cmdtab cmdtab[] = {
     {"t", cmd_list},
     {"vrot", cmd_vrot},
     {"zoom", cmd_zoom},
-    {(char *)NULL, (int (*)())NULL}
+    {NULL, NULL}
 };
 
 
@@ -1039,7 +1039,7 @@ static struct cmdtab cmdtab[] = {
  * Open an X display manager.
  */
 static int
-X_dmInit()
+X_dmInit(void)
 {
     fastf_t windowbounds[6] = { -2048.0, 2047.0, -2048.0, 2047.0, -2048.0, 2047.0 };
     const char *av[4];
@@ -1065,7 +1065,7 @@ X_dmInit()
  * Open an OGL display manager.
  */
 static int
-Ogl_dmInit()
+Ogl_dmInit(void)
 {
     fastf_t windowbounds[6] = { -2048.0, 2047.0, -2048.0, 2047.0, -2048.0, 2047.0 };
     char *av[4];

@@ -18,7 +18,7 @@
  * file is used to provide a db_dir_info build target to reference in CMake.
  */
 
-int main() {
+int main(void) {
 }
 
 /*

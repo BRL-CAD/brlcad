@@ -337,7 +337,6 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
     struct partition *pp;
     register struct xray *rp = &ap->a_ray;
     void *addp;
-    int part_count = 0;
 
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	register struct region *reg = pp->pt_regionp;
@@ -356,7 +355,6 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 	VJOIN1(ohitp->hit_point, rp->r_pt, ohitp->hit_dist, rp->r_dir);
 	depth = ohitp->hit_dist - ihitp->hit_dist;
 
-	part_count++;
 	/* add the datapoint structure in and then calculate it
 	   in parallel, the region structures are a shared resource */
 	BU_ALLOC(dp, struct datapoint);

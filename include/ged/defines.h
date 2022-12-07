@@ -758,7 +758,7 @@ struct ged_plugin {
 
 /* Report any messages from libged when plugins were initially loaded.
  * Can be important when diagnosing command errors. */
-GED_EXPORT const char * ged_init_msgs();
+GED_EXPORT const char * ged_init_msgs(void);
 
 
 __END_DECLS

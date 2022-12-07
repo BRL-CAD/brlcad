@@ -321,7 +321,6 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
     struct wmember ucomb;
     struct wmember scomb;
 
-    int failed = 0;
     const char *un = "u";
     const char *sub = "-";
     const char *isect = "+"; // UNUSED here, for BOOL_RESOLVE macro.
@@ -360,7 +359,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	n_bool_op = &(data->local_brep_bool_op);
     } else {
 	subbrep_obj_name(data->nucleus->shoal_type, data->nucleus->shoal_id, rname, &shoal_name);
-	if (!make_shoal(msgs, data->nucleus, wdbp, rname)) failed++;
+	make_shoal(msgs, data->nucleus, wdbp, rname);
     }
 
     // In a comb, the first element is always unioned.  The nucleus bool op is applied
@@ -380,7 +379,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    //if (*n_bool_op == 'u') {
 	    //  bu_log("  unioning: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
 	    //}
-	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
+	    make_shoal(msgs, d, wdbp, rname);
 	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(ucomb.l), NULL, db_str2op(bool_op));
 	    union_shoal_cnt++;
 	}
@@ -401,7 +400,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	    //if (*n_bool_op == 'u') {
 	    //bu_log("  subtracting: %s: %s\n", bu_vls_addr(&island_name), bu_vls_addr(&shoal_name));
 	    //}
-	    if (!make_shoal(msgs, d, wdbp, rname)) failed++;
+	    make_shoal(msgs, d, wdbp, rname);
 	    /* FIXME: should this be WMOP_SUBTRACT */
 	    (void)mk_addmember(bu_vls_addr(&shoal_name), &(scomb.l), NULL, WMOP_UNION);
 	    subtraction_shoal_cnt++;

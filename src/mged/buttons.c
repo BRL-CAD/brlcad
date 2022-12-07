@@ -42,37 +42,37 @@ extern void set_absolute_tran(void);	/* defined in set.c */
 extern void adc_set_scroll(void);	/* defined in adc.c */
 
 /* forward declarations for the buttons table */
-int be_accept();
-int be_o_illuminate();
-int be_o_rotate();
-int be_o_scale();
-int be_o_x();
-int be_o_xscale();
-int be_o_xy();
-int be_o_y();
-int be_o_yscale();
-int be_o_zscale();
-int be_reject();
-int be_s_edit();
-int be_s_illuminate();
-int be_s_rotate();
-int be_s_scale();
-int be_s_trans();
-int bv_35_25();
-int bv_45_45();
-int bv_adcursor();
-int bv_bottom();
-int bv_front();
-int bv_left();
-int bv_rate_toggle();
-int bv_rear();
-int bv_reset();
-int bv_right();
-int bv_top();
-int bv_vrestore();
-int bv_vsave();
-int bv_zoomin();
-int bv_zoomout();
+int be_accept(ClientData, Tcl_Interp *, int, char **);
+int be_o_illuminate(ClientData, Tcl_Interp *, int, char **);
+int be_o_rotate(ClientData, Tcl_Interp *, int, char **);
+int be_o_scale(ClientData, Tcl_Interp *, int, char **);
+int be_o_x(ClientData, Tcl_Interp *, int, char **);
+int be_o_xscale(ClientData, Tcl_Interp *, int, char **);
+int be_o_xy(ClientData, Tcl_Interp *, int, char **);
+int be_o_y(ClientData, Tcl_Interp *, int, char **);
+int be_o_yscale(ClientData, Tcl_Interp *, int, char **);
+int be_o_zscale(ClientData, Tcl_Interp *, int, char **);
+int be_reject(ClientData, Tcl_Interp *, int, char **);
+int be_s_edit(ClientData, Tcl_Interp *, int, char **);
+int be_s_illuminate(ClientData, Tcl_Interp *, int, char **);
+int be_s_rotate(ClientData, Tcl_Interp *, int, char **);
+int be_s_scale(ClientData, Tcl_Interp *, int, char **);
+int be_s_trans(ClientData, Tcl_Interp *, int, char **);
+int bv_35_25(ClientData, Tcl_Interp *, int, char **);
+int bv_45_45(ClientData, Tcl_Interp *, int, char **);
+int bv_adcursor(ClientData, Tcl_Interp *, int, char **);
+int bv_bottom(ClientData, Tcl_Interp *, int, char **);
+int bv_front(ClientData, Tcl_Interp *, int, char **);
+int bv_left(ClientData, Tcl_Interp *, int, char **);
+int bv_rate_toggle(ClientData, Tcl_Interp *, int, char **);
+int bv_rear(ClientData, Tcl_Interp *, int, char **);
+int bv_reset(ClientData, Tcl_Interp *, int, char **);
+int bv_right(ClientData, Tcl_Interp *, int, char **);
+int bv_top(ClientData, Tcl_Interp *, int, char **);
+int bv_vrestore(ClientData, Tcl_Interp *, int, char **);
+int bv_vsave(ClientData, Tcl_Interp *, int, char **);
+int bv_zoomin(ClientData, Tcl_Interp *, int, char **);
+int bv_zoomout(ClientData, Tcl_Interp *, int, char **);
 
 
 /*
@@ -108,7 +108,7 @@ int doMotion = 0;
 struct buttons {
     int bu_code;	/* dm_values.dv_button */
     char *bu_name;	/* keyboard string */
-    int (*bu_func)();	/* function to call */
+    int (*bu_func)(ClientData, Tcl_Interp *, int, char **);	/* function to call */
 }  button_table[] = {
     {BV_35_25,		"35,25",	bv_35_25},
     {BV_45_45,		"45,45",	bv_45_45},
@@ -150,15 +150,15 @@ static fastf_t sav_vscale;
 static int vsaved = 0;	/* set if view saved */
 
 extern void mged_color_soltab(void);
-extern void sl_halt_scroll(void);	/* in scroll.c */
-extern void sl_toggle_scroll(void);
+extern void sl_halt_scroll(int, int, int);	/* in scroll.c */
+extern void sl_toggle_scroll(int, int, int);
 
 void btn_head_menu(int i, int menu, int item);
 void btn_item_hit(int arg, int menu, int item);
 
 static struct menu_item first_menu[] = {
     { "BUTTON MENU", btn_head_menu, 1 },		/* chg to 2nd menu */
-    { "", (void (*)())NULL, 0 }
+    { "", NULL, 0 }
 };
 struct menu_item second_menu[] = {
     { "BUTTON MENU", btn_head_menu, 0 },	/* chg to 1st menu */
@@ -180,7 +180,7 @@ struct menu_item second_menu[] = {
     { "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
     { "Primitive Illum", btn_item_hit, BE_S_ILLUMINATE },
     { "Matrix Illum", btn_item_hit, BE_O_ILLUMINATE },
-    { "", (void (*)())NULL, 0 }
+    { "", NULL, 0 }
 };
 struct menu_item sed_menu[] = {
     { "*PRIMITIVE EDIT*", btn_head_menu, 2 },
@@ -188,7 +188,7 @@ struct menu_item sed_menu[] = {
     { "Rotate", btn_item_hit, BE_S_ROTATE },
     { "Translate", btn_item_hit, BE_S_TRANS },
     { "Scale", btn_item_hit, BE_S_SCALE },
-    { "", (void (*)())NULL, 0 }
+    { "", NULL, 0 }
 };
 
 
@@ -202,7 +202,7 @@ struct menu_item oed_menu[] = {
     { "Scale X", btn_item_hit, BE_O_XSCALE },
     { "Scale Y", btn_item_hit, BE_O_YSCALE },
     { "Scale Z", btn_item_hit, BE_O_ZSCALE },
-    { "", (void (*)())NULL, 0 }
+    { "", NULL, 0 }
 };
 
 
@@ -239,7 +239,7 @@ int
 f_press(ClientData clientData,
 	Tcl_Interp *interp,
 	int argc,
-	const char *argv[])
+	char *argv[])
 {
     int i;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -297,7 +297,7 @@ f_press(ClientData clientData,
 		menu_state->ms_flag = 1;
 		/* It's up to the menu_func to set menu_state->ms_flag = 0
 		 * if no arrow is desired */
-		if (mptr->menu_func != ((void (*)())0))
+		if (mptr->menu_func != NULL)
 		    (*(mptr->menu_func))(mptr->menu_arg, menu, item);
 
 		goto next;
@@ -342,7 +342,7 @@ label_button(int bnum)
 
 
 int
-bv_zoomin()
+bv_zoomin(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     (void)mged_zoom(2.0);
     return TCL_OK;
@@ -350,7 +350,7 @@ bv_zoomin()
 
 
 int
-bv_zoomout()
+bv_zoomout(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     (void)mged_zoom(0.5);
     return TCL_OK;
@@ -358,7 +358,7 @@ bv_zoomout()
 
 
 int
-bv_rate_toggle()
+bv_rate_toggle(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     mged_variables->mv_rateknobs = !mged_variables->mv_rateknobs;
 
@@ -376,7 +376,7 @@ bv_rate_toggle()
 
 
 int
-bv_top()
+bv_top(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* Top view */
     setview(0.0, 0.0, 0.0);
@@ -385,7 +385,7 @@ bv_top()
 
 
 int
-bv_bottom()
+bv_bottom(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* Bottom view */
     setview(180.0, 0.0, 0.0);
@@ -394,7 +394,7 @@ bv_bottom()
 
 
 int
-bv_right()
+bv_right(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* Right view */
     setview(270.0, 0.0, 0.0);
@@ -403,7 +403,7 @@ bv_right()
 
 
 int
-bv_left()
+bv_left(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* Left view */
     setview(270.0, 0.0, 180.0);
@@ -412,7 +412,7 @@ bv_left()
 
 
 int
-bv_front()
+bv_front(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* Front view */
     setview(270.0, 0.0, 270.0);
@@ -421,7 +421,7 @@ bv_front()
 
 
 int
-bv_rear()
+bv_rear(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* Rear view */
     setview(270.0, 0.0, 90.0);
@@ -430,7 +430,7 @@ bv_rear()
 
 
 int
-bv_vrestore()
+bv_vrestore(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* restore to saved view */
     if (vsaved) {
@@ -447,7 +447,7 @@ bv_vrestore()
 
 
 int
-bv_vsave()
+bv_vsave(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* save current view */
     sav_vscale = view_state->vs_gvp->gv_scale;
@@ -465,7 +465,7 @@ bv_vsave()
  * can't be bound as "adc", only as "press adc".
  */
 int
-bv_adcursor()
+bv_adcursor(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (adc_state->adc_draw) {
 	/* Was on, turn off */
@@ -481,7 +481,7 @@ bv_adcursor()
 
 
 int
-bv_reset() {
+bv_reset(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[])) {
     /* Reset view such that all solids can be seen */
     size_reset();
     setview(0.0, 0.0, 0.0);
@@ -491,14 +491,14 @@ bv_reset() {
 
 
 int
-bv_45_45() {
+bv_45_45(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[])) {
     setview(270.0+45.0, 0.0, 270.0-45.0);
     return TCL_OK;
 }
 
 
 int
-bv_35_25() {
+bv_35_25(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[])) {
     /* Use Azimuth=35, Elevation=25 in GIFT's backwards space */
     setview(270.0+25.0, 0.0, 270.0-35.0);
     return TCL_OK;
@@ -543,7 +543,7 @@ ill_common(void) {
 
 
 int
-be_o_illuminate()
+be_o_illuminate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (not_state(ST_VIEW, "Matrix Illuminate"))
 	return TCL_ERROR;
@@ -561,7 +561,7 @@ be_o_illuminate()
 
 
 int
-be_s_illuminate()
+be_s_illuminate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (not_state(ST_VIEW, "Primitive Illuminate"))
 	return TCL_ERROR;
@@ -574,7 +574,7 @@ be_s_illuminate()
 
 
 int
-be_o_scale()
+be_o_scale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (not_state(ST_O_EDIT, "Matrix Scale"))
 	return TCL_ERROR;
@@ -593,7 +593,7 @@ be_o_scale()
 
 
 int
-be_o_xscale()
+be_o_xscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (not_state(ST_O_EDIT, "Matrix Local X Scale"))
 	return TCL_ERROR;
@@ -612,7 +612,7 @@ be_o_xscale()
 
 
 int
-be_o_yscale()
+be_o_yscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (not_state(ST_O_EDIT, "Matrix Local Y Scale"))
 	return TCL_ERROR;
@@ -631,7 +631,7 @@ be_o_yscale()
 
 
 int
-be_o_zscale()
+be_o_zscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (not_state(ST_O_EDIT, "Matrix Local Z Scale"))
 	return TCL_ERROR;
@@ -650,7 +650,7 @@ be_o_zscale()
 
 
 int
-be_o_x()
+be_o_x(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (not_state(ST_O_EDIT, "Matrix X Motion"))
 	return TCL_ERROR;
@@ -665,7 +665,7 @@ be_o_x()
 
 
 int
-be_o_y()
+be_o_y(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (not_state(ST_O_EDIT, "Matrix Y Motion"))
 	return TCL_ERROR;
@@ -680,7 +680,7 @@ be_o_y()
 
 
 int
-be_o_xy()
+be_o_xy(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (not_state(ST_O_EDIT, "Matrix XY Motion"))
 	return TCL_ERROR;
@@ -695,7 +695,7 @@ be_o_xy()
 
 
 int
-be_o_rotate()
+be_o_rotate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (not_state(ST_O_EDIT, "Matrix Rotation"))
 	return TCL_ERROR;
@@ -710,7 +710,7 @@ be_o_rotate()
 
 
 int
-be_accept()
+be_accept(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     if (STATE == ST_S_EDIT) {
 	/* Accept a solid edit */
@@ -764,7 +764,7 @@ be_accept()
 
 
 int
-be_reject()
+be_reject(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     update_views = 1;
     dm_set_dirty(DMP, 1);
@@ -829,7 +829,7 @@ be_reject()
 
 
 int
-be_s_edit()
+be_s_edit(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* solid editing */
     if (not_state(ST_S_EDIT, "Primitive Edit (Menu)"))
@@ -842,7 +842,7 @@ be_s_edit()
 
 
 int
-be_s_rotate()
+be_s_rotate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* rotate solid */
     if (not_state(ST_S_EDIT, "Primitive Rotate"))
@@ -858,7 +858,7 @@ be_s_rotate()
 
 
 int
-be_s_trans()
+be_s_trans(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* translate solid */
     if (not_state(ST_S_EDIT, "Primitive Translate"))
@@ -875,7 +875,7 @@ be_s_trans()
 
 
 int
-be_s_scale()
+be_s_scale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
 {
     /* scale solid */
     if (not_state(ST_S_EDIT, "Primitive Scale"))
@@ -1061,212 +1061,212 @@ chg_l2menu(int i) {
 
 
 int
-f_be_accept(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_accept();
+    return be_accept(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_o_illuminate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_o_illuminate();
+    return be_o_illuminate(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_o_rotate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_o_rotate();
+    return be_o_rotate(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_o_scale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_o_scale(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_o_scale();
+    return be_o_scale(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_o_x(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_o_x(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_o_x();
+    return be_o_x(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_o_xscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_o_xscale();
+    return be_o_xscale(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_o_xy(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_o_xy();
+    return be_o_xy(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_o_y(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_o_y(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_o_y();
+    return be_o_y(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_o_yscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_o_yscale();
+    return be_o_yscale(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_o_zscale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_o_zscale();
+    return be_o_zscale(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_reject(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_reject();
+    return be_reject(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_s_edit(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_s_edit();
+    return be_s_edit(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_s_illuminate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_s_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_s_illuminate();
+    return be_s_illuminate(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_s_rotate(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_s_rotate();
+    return be_s_rotate(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_s_scale(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_s_scale();
+    return be_s_scale(clientData, interp, argc, argv);
 }
 
 
 int
-f_be_s_trans(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_s_trans();
+    return be_s_trans(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_35_25(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_s_trans();
+    return be_s_trans(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_45_45(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_45_45(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return be_s_trans();
+    return be_s_trans(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_bottom(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_bottom(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_bottom();
+    return bv_bottom(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_front(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_front(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_front();
+    return bv_front(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_left(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_left(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_left();
+    return bv_left(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_rate_toggle(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_rate_toggle(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_rate_toggle();
+    return bv_rate_toggle(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_rear(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_rear(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_rear();
+    return bv_rear(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_reset(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_reset(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_reset();
+    return bv_reset(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_right(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_right(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_right();
+    return bv_right(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_top(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_top(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_top();
+    return bv_top(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_vrestore(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_vrestore(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_vrestore();
+    return bv_vrestore(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_vsave(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_vsave(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_vsave();
+    return bv_vsave(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_zoomin(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_zoomin(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_zoomin();
+    return bv_zoomin(clientData, interp, argc, argv);
 }
 
 
 int
-f_bv_zoomout(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char *UNUSED(argv[]))
+f_bv_zoomout(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
 {
-    return bv_zoomout();
+    return bv_zoomout(clientData, interp, argc, argv);
 }
 
 

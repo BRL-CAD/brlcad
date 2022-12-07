@@ -182,7 +182,7 @@ const struct ged_cmd *pscale_cmds[] = { &pscale_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  pscale_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

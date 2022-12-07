@@ -246,7 +246,7 @@ const struct ged_cmd *keep_cmds[] = { &keep_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  keep_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

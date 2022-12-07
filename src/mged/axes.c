@@ -96,7 +96,7 @@ ax_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 
 
 void
-draw_e_axes()
+draw_e_axes(void)
 {
     point_t v_ap1;                 /* axes position in view coordinates */
     point_t v_ap2;                 /* axes position in view coordinates */
@@ -139,7 +139,7 @@ draw_e_axes()
 
 
 void
-draw_m_axes()
+draw_m_axes(void)
 {
     point_t m_ap;			/* axes position in model coordinates, mm */
     point_t v_ap;			/* axes position in view coordinates */
@@ -161,7 +161,7 @@ draw_m_axes()
 
 
 void
-draw_v_axes()
+draw_v_axes(void)
 {
     point_t v_ap;			/* axes position in view coordinates */
     struct bv_axes gas;

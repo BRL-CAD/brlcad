@@ -34,7 +34,7 @@ uint32_t slave_load_mesh_num;
 adrt_mesh_t *slave_load_mesh_list;
 
 void
-slave_load_free()
+slave_load_free(void)
 {
 #if 0
     int i;

@@ -611,7 +611,7 @@ void view_eol(struct application *UNUSED(ap))
  * is so we can display the larger unit consistently in parenthesis.
  */
 static double
-alternative_display_factor() {
+alternative_display_factor(void) {
 if (ZERO(units - 1.0))
 	return bu_units_conversion("m");
     else if (ZERO(units - 10.0))
@@ -1176,7 +1176,7 @@ void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
 void
-application_init () {
+application_init (void) {
     option("", "-u units", "Set the display units (default=mm)", 0);
     option("", "-U #", "Set use_air boolean to # (default=1)", 0);
     option("", "-c", "Auxiliary commands (see rtarea manual)", 0);

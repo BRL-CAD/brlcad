@@ -29,12 +29,12 @@
 #include "./iges_extern.h"
 
 
-union tree *Readtree();
-union tree *Copytree();
+union tree *Readtree(mat_t *);
+union tree *Copytree(struct node *, struct node *);
 
 
 void
-Convtree()
+Convtree(void)
 {
 
     int conv = 0;

@@ -32,7 +32,7 @@
 #include "./iges_extern.h"
 
 int
-Findp()
+Findp(void)
 {
     int saverec, rec2;
     size_t i;
@@ -92,7 +92,7 @@ Findp()
 
 
 void
-Free_dir()
+Free_dir(void)
 {
     size_t i;
 

@@ -34,7 +34,7 @@
 #include "bu/getopt.h"
 #include "icv.h"
 
-void usage()
+void usage(void)
 {
     bu_log("\
 	    [-f fraction ]\n\

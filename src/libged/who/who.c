@@ -102,7 +102,7 @@ const struct ged_cmd *who_cmds[] = { &who_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  who_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

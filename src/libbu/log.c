@@ -91,7 +91,7 @@ bu_log_hook_save_all(struct bu_hook_list *save_hlp)
 
 
 void
-bu_log_hook_delete_all()
+bu_log_hook_delete_all(void)
 {
     bu_hook_delete_all(&log_hook_list);
 }

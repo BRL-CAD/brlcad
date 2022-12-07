@@ -3176,7 +3176,7 @@ Middle:
 
 
 static int
-joint_solve(struct ged *gedp, int argc, char *argv[])
+joint_solve(struct ged *gedp, int argc, const char *argv[])
 {
     struct hold *hp;
     int loops, count;
@@ -3199,7 +3199,7 @@ joint_solve(struct ged *gedp, int argc, char *argv[])
 	bu_strlcpy(myargv[count], argv[count], strlen(argv[count])+1);
     }
 
-    argv=myargv;
+    /* argv = myargv; */
     /* argc = myargc; */
 
     /* these are the defaults.  Domesh will change to not at a later
@@ -3593,7 +3593,7 @@ const struct ged_cmd *joint_cmds[] = { &joint_pcmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  joint_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

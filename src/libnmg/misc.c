@@ -4225,7 +4225,7 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 	shells_at_edge = (int *)bu_calloc(no_of_shells+1, sizeof(int), "nmg_decompose_shell: shells_at_edge");
 
 	for (i=0; i<BU_PTBL_LEN(&shared_edges); i++) {
-	    int faces_at_edge=0;
+	    //int faces_at_edge=0;
 	    size_t k;
 
 	    /* Construct a list of shells for this edge.
@@ -4248,7 +4248,7 @@ nmg_decompose_shell(struct shell *s, struct bu_list *vlfree, const struct bn_tol
 
 		fu_of_eu = nmg_find_fu_of_eu(eu1);
 
-		faces_at_edge++;
+		//faces_at_edge++;
 		if (!NMG_INDEX_TEST(flags, fu_of_eu))
 		    unassigned_eu = eu1;
 		shells_at_edge[ NMG_INDEX_GET(flags, fu_of_eu) ]++;

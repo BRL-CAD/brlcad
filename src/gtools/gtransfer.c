@@ -86,7 +86,7 @@ typedef struct _server_data_ {
 
 
 server_data*
-init_srv_data()
+init_srv_data(void)
 {
     server_data *stash = (server_data *)bu_malloc(sizeof *stash, "server data memory");
     stash->DBIP = NULL;

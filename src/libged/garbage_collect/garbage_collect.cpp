@@ -384,7 +384,7 @@ extern "C" {
 
     static const struct ged_plugin pinfo = { GED_API,  garbage_collect_cmds, 1 };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
     {
 	return &pinfo;
     }

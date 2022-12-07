@@ -581,7 +581,7 @@ struct dm dm_txt = { DM_MAGIC, &dm_txt_impl, 0 };
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_txt };
 
-COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info(void)
 {
     return &pinfo;
 }

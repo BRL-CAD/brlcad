@@ -194,7 +194,7 @@ const struct ged_cmd *erase_cmds[] = { &erase_cmd, &d_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  erase_cmds, 2 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

@@ -1020,7 +1020,7 @@ struct fb qtgl_interface = { &qtgl_interface_impl };
 static const struct fb_plugin finfo = { &qtgl_interface };
 
 extern "C" {
-COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info()
+COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info(void)
 {
     return &finfo;
 }

@@ -63,7 +63,7 @@ typedef void tienet_slave_fcb_work_t(tienet_buffer_t *work, tienet_buffer_t *res
 tienet_slave_fcb_work_t	*tienet_slave_fcb_work;
 
 /* free function callback */
-typedef void tienet_slave_fcb_free_t();
+typedef void tienet_slave_fcb_free_t(void);
 tienet_slave_fcb_free_t	*tienet_slave_fcb_free;
 
 void tienet_slave_init(int port, char *host,
@@ -91,7 +91,7 @@ void tienet_slave_init(int port, char *host,
 }
 
 
-void tienet_slave_free()
+void tienet_slave_free(void)
 {
 }
 

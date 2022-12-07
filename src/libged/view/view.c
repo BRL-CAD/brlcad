@@ -849,7 +849,7 @@ const struct ged_cmd *view_cmds[] = {
 
 static const struct ged_plugin pinfo = { GED_API,  view_cmds, 13 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

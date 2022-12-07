@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 void
-Convinst()
+Convinst(void)
 {
 
     size_t i = 0;

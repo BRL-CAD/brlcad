@@ -42,7 +42,7 @@ ged_tra_core(struct ged *gedp, int argc, const char *argv[])
     if ((ret = ged_tra_args(gedp, argc, argv, &coord, tvec)) != BRLCAD_OK)
 	return ret;
 
-    return _ged_do_tra(gedp, coord, tvec, (int (*)())0);
+    return _ged_do_tra(gedp, coord, tvec, NULL);
 }
 
 
@@ -59,7 +59,7 @@ const struct ged_cmd *tra_cmds[] = { &tra_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  tra_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

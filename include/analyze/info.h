@@ -170,7 +170,7 @@ perform_raytracing(struct current_state *context, struct db_i *dbip, char *names
  * functions to initialize and clear current_state struct
  */
 ANALYZE_EXPORT extern
-struct current_state * analyze_current_state_init();
+struct current_state * analyze_current_state_init(void);
 
 ANALYZE_EXPORT extern void
 analyze_free_current_state(struct current_state *context);

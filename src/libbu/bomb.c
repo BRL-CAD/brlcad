@@ -92,7 +92,7 @@ bu_bomb_save_all_hooks(struct bu_hook_list *save_hlp)
 }
 
 void
-bu_bomb_delete_all_hooks()
+bu_bomb_delete_all_hooks(void)
 {
     bu_hook_delete_all(&bomb_hook_list);
 }

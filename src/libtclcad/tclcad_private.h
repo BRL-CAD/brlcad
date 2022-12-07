@@ -73,7 +73,7 @@ extern int Rt_Init(Tcl_Interp *interp);
 
 /* Fb functions */
 extern int to_close_fbs(struct bview *gdvp);
-extern void to_fbs_callback();
+extern void to_fbs_callback(void *);
 extern int to_open_fbs(struct bview *gdvp, Tcl_Interp *interp);
 extern int to_set_fb_mode(struct ged *gedp,
 			  int argc,

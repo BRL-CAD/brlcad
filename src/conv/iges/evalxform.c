@@ -34,7 +34,7 @@ struct list /* simple linked list for remembering a matrix sequence */
 
 
 void
-Evalxform()
+Evalxform(void)
 {
 
     size_t i;

@@ -1185,7 +1185,6 @@ Face::LoadONBrep(ON_Brep *brep)
     //TODO: Check for Outer bound if none check for
     // direction perhaps offer input option possibly
     // check for outer spanning to bounds
-    int cnt = 0;
     LIST_OF_FACE_BOUNDS::iterator i;
     for (i = bounds.begin(); i != bounds.end(); i++) {
 	(*i)->SetFaceIndex(ON_id);
@@ -1193,7 +1192,6 @@ Face::LoadONBrep(ON_Brep *brep)
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
-	cnt++;
     }
     return true;
 }

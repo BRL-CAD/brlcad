@@ -309,7 +309,6 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     struct bu_ptbl norms = BU_PTBL_INIT_ZERO;
     char *region_name = NULL;
     size_t numverts = 0;		/* Number of vertices to output */
-    size_t numtri   = 0;		/* Number of triangles to output */
     size_t i = 0;
 
     NMG_CK_REGION(r);
@@ -388,7 +387,6 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		} else if (vert_count < 3)
 		    continue;
-		numtri++;
 	    }
 	}
     }

@@ -42,7 +42,7 @@
 #include "wdb.h"
 
 void
-printusage()
+printusage(void)
 {
     printf("Usage: handle  <-- (if no arguments, go into interactive mode)\n");
     printf("or\n");

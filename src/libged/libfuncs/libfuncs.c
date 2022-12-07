@@ -163,7 +163,7 @@ const struct ged_cmd *mat4x3pnt_cmds[] = { &mat4x3pnt_cmd, &mat_ae_cmd, &mat_mul
 
 static const struct ged_plugin pinfo = { GED_API,  mat4x3pnt_cmds, 4 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

@@ -114,7 +114,7 @@ void mesh_tracker(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 }
 
 
-void dealloc_mesh_list()
+void dealloc_mesh_list(void)
 {
     struct mesh* tmp;
     curr = head;
@@ -251,7 +251,7 @@ void get_normals(struct rt_bot_internal *bot, float *dest)
 }
 
 
-void write_mesh_data()
+void write_mesh_data(void)
 {
     size_t ret;
 

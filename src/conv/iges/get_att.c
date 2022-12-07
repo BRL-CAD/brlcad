@@ -27,7 +27,7 @@
  * definition.
  */
 void
-Get_att()
+Get_att(void)
 {
     size_t i;
     int j = 0;

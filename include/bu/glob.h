@@ -112,7 +112,7 @@ typedef struct bu_glob_context bu_glob_t;
 /**
  * initialize a globbing context for use prior to calling bu_glob()
  */
-BU_EXPORT struct bu_glob_context *bu_glob_init();
+BU_EXPORT struct bu_glob_context *bu_glob_init(void);
 
 
 /**

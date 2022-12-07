@@ -52,7 +52,7 @@ struct kernels_info {
 };
 
 
-void usage()
+void usage(void)
 {
     int i;
 

@@ -68,7 +68,7 @@ client_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 }
 
 int
-main() {
+main(void) {
     int port = 2000;
     const char *server = "127.0.0.1";
     struct bu_vls all_msgs = BU_VLS_INIT_ZERO;

@@ -155,38 +155,192 @@ struct soltab	sol_hd;
 
 struct db_i	*dbip;		/* Database instance ptr */
 
+extern int parsArg(int, char **);
+extern int insert(char **, int);
+extern int col_prt(char **, size_t);
+extern int match(char *, char *);
+extern int delete_obj(char **);
+extern int
+cgarbs(int *cgtype,
+	const struct rt_arb_internal *gp,
+	int uniq[8],           /* array of unique pt subscripts */
+	int svec[11],          /* array of like pt subscripts */
+	const double dist_tol
+      );
+extern int
+redoarb(
+	point_t pts[8],
+	const struct rt_arb_internal *gp,
+	int uniq[8],
+	int svec[11],
+	const int numvec,
+	const int cgtype
+       );
 
-extern void		menu();
-extern void		quit();
+/**
+ * Convert integer to ascii  wd format.
+ */
+void
+vls_itoa(struct bu_vls *v, int n, int w)
+{
+    int	 c, i, j, sign;
+    char *s;
 
-char			getarg();
-void			quit(), abort_sig();
+    BU_CK_VLS(v);
+    bu_vls_strncat(v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
+    s = bu_vls_addr(v)+bu_vls_strlen(v)-w;
 
-int			getcmd();
-void			prompt();
+    if ((sign = n) < 0)	n = -n;
+    i = 0;
+    do
+	s[i++] = n % 10 + '0';
+    while ((n /= 10) > 0);
+    if (sign < 0) s[i++] = '-';
 
-void			addarb();
-void			addtgc();
-void			addtor();
-void			addhalf();
-void			addarbn();
-void			addell();
-void			addars();
-void			deck();
-static void		vdeck_itoa();
-void			vls_blanks();
-void			vls_itoa();
-void			vls_ftoa_vec_cvt();
-void			vls_ftoa_vec();
-void			vls_ftoa_cvt();
-void			vls_ftoa();
-extern int		parsArg();
-extern int		insert();
-extern int		col_prt();
-extern int		match();
-extern int		delete_obj();
-extern int		cgarbs();
-extern int		redoarb();
+    /* Blank fill array. */
+    for (j = i; j < w; j++) s[j] = ' ';
+    if (i > w) {
+	s[w-1] = (s[w]-1-'0')*10 + (s[w-1]-'0')  + 'A';
+    }
+    s[w] = '\0';
+
+    /* Reverse the array. */
+    for (i = 0, j = w - 1; i < j; i++, j--) {
+	c    = s[i];
+	s[i] = s[j];
+	s[j] =    c;
+    }
+}
+
+
+/**
+ * Convert integer to ascii  wd format.
+ */
+static void
+vdeck_itoa(int n, char *s, int w)
+{
+    int	 c, i, j, sign;
+
+    if ((sign = n) < 0)	n = -n;
+    i = 0;
+    do
+	s[i++] = n % 10 + '0';
+    while ((n /= 10) > 0);
+    if (sign < 0)	s[i++] = '-';
+
+    /* Blank fill array.					*/
+    for (j = i; j < w; j++)	s[j] = ' ';
+    if (i > w) {
+	s[w-1] = (s[w]-1-'0')*10 + (s[w-1]-'0')  + 'A';
+    }
+    s[w] = '\0';
+
+    /* Reverse the array.					*/
+    for (i = 0, j = w - 1; i < j; i++, j--) {
+	c    = s[i];
+	s[i] = s[j];
+	s[j] =    c;
+    }
+}
+
+
+void
+vls_blanks(struct bu_vls *v, int n)
+{
+    BU_CK_VLS(v);
+    /* 128 spaces */
+    bu_vls_strncat(v, "                                                                                                                                ",
+		   n);
+}
+
+
+/**
+ * Convert float to ascii  w.df format.
+ */
+void
+vls_ftoa(struct bu_vls *v, double f, int w, int d)
+{
+    char	*s;
+    int	c, i, j;
+    long	n, sign;
+
+    BU_CK_VLS(v);
+    bu_vls_strncat(v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
+    s = bu_vls_addr(v)+bu_vls_strlen(v)-w;
+
+    if (w <= d + 2) {
+	(void) fprintf(stderr,
+		       "ftoascii: incorrect format  need w.df  stop"
+	   );
+	bu_exit(10, NULL);
+    }
+    for (i = 1; i <= d; i++)
+	f = f * 10.0;
+
+    /* round up */
+    if (f < 0.0)
+	f -= 0.5;
+    else
+	f += 0.5;
+    n = f;
+    if ((sign = n) < 0)
+	n = -n;
+    i = 0;
+    do	{
+	s[i++] = n % 10 + '0';
+	if (i == d)
+	    s[i++] = '.';
+    }	while ((n /= 10) > 0);
+
+    /* Zero fill the d field if necessary.				*/
+    if (i < d) {
+	for (j = i; j < d; j++)
+	    s[j] = '0';
+	s[j++] = '.';
+	i = j;
+    }
+    if (sign < 0)
+	s[i++] = '-';
+
+    /* Blank fill rest of field.					*/
+    for (j = i; j < w; j++)
+	s[j] = ' ';
+    if (i > w)
+	(void) fprintf(stderr, "Ftoascii: field length too small\n");
+    s[w] = '\0';
+
+    /* Reverse the array.						*/
+    for (i = 0, j = w - 1; i < j; i++, j--) {
+	c    = s[i];
+	s[i] = s[j];
+	s[j] =    c;
+    }
+}
+
+void
+vls_ftoa_vec_cvt(struct bu_vls *v, const vect_t vec, int w, int d)
+{
+    vls_ftoa(v, vec[X]*dbip->dbi_base2local, w, d);
+    vls_ftoa(v, vec[Y]*dbip->dbi_base2local, w, d);
+    vls_ftoa(v, vec[Z]*dbip->dbi_base2local, w, d);
+}
+
+
+void
+vls_ftoa_vec(struct bu_vls *v, const vect_t vec, int w, int d)
+{
+    vls_ftoa(v, vec[X], w, d);
+    vls_ftoa(v, vec[Y], w, d);
+    vls_ftoa(v, vec[Z], w, d);
+}
+
+
+void
+vls_ftoa_cvt(struct bu_vls *v, double f, int w, int d)
+{
+    vls_ftoa(v, f*dbip->dbi_base2local, w, d);
+}
+
 
 
 /**
@@ -238,116 +392,6 @@ sortFunc(const void *a, const void *b, void *UNUSED(arg))
     const char **rhs = (const char **)b;
 
     return bu_strcmp(*lhs, *rhs);
-}
-
-
-int
-main(int argc, char *argv[])
-{
-    bu_setprogname(argv[0]);
-
-    setbuf(stdout, (char *)bu_malloc(BUFSIZ, "stdout buffer"));
-    BU_LIST_INIT(&(sol_hd.l));
-
-    if (! parsArg(argc, argv)) {
-	menu(usage);
-	return 1;
-    }
-
-    /* Build directory from object file.	 	*/
-    if (db_dirbuild(dbip) < 0) {
-	fprintf(stderr, "db_dirbuild() failure\n");
-	return 1;
-    }
-
-    toc();		/* Build table of contents from directory.	*/
-
-    /***********************
-     * Command Interpreter *
-     ***********************/
-    (void) setjmp(env);/* Point of re-entry from aborted command.	*/
-    prompt(CMD_PROMPT);
-    while (1) {
-	/* Return to default interrupt handler after every command,
-	   allows exit from program only while command interpreter
-	   is waiting for input from keyboard.
-	*/
-	(void) signal(SIGINT, quit);
-
-	switch (getcmd(arg_list, 0)) {
-	    case DECK :
-		deck(arg_list[1]);
-		break;
-	    case ERASE :
-		while (curr_ct > 0)
-		    bu_free(curr_list[--curr_ct], "curr_list[ct]");
-		break;
-	    case INSERT :
-		if (arg_list[1] == 0) {
-		    prompt("enter object[s] to insert: ");
-		    (void) getcmd(arg_list, arg_ct);
-		}
-		(void) insert(arg_list, arg_ct);
-		break;
-	    case LIST :
-		{
-		    int	i;
-		    if (arg_list[1] == 0) {
-			(void) col_prt(curr_list, (size_t)curr_ct);
-			break;
-		    }
-		    for (tmp_ct = 0, i = 0; i < curr_ct; i++)
-			if (match(arg_list[1], curr_list[i]))
-			    tmp_list[tmp_ct++] = curr_list[i];
-		    (void) col_prt(tmp_list, tmp_ct);
-		    break;
-		}
-	    case MENU :
-		menu(cmd);
-		prompt(PROMPT);
-		continue;
-	    case NUMBER :
-		if (arg_list[1] == 0) {
-		    prompt("enter number of 1st solid: ");
-		    (void) getcmd(arg_list, arg_ct);
-		    prompt("enter number of 1st region: ");
-		    (void) getcmd(arg_list, arg_ct);
-		}
-		if (arg_list[1])
-		    delsol = atoi(arg_list[1]) - 1;
-		if (arg_list[2])
-		    delreg = atoi(arg_list[2]) - 1;
-		break;
-	    case REMOVE :
-		if (arg_list[1] == 0) {
-		    prompt("enter object[s] to remove: ");
-		    (void) getcmd(arg_list, arg_ct);
-		}
-		(void) delete_obj(arg_list);
-		break;
-	    case RETURN :
-		prompt(PROMPT);
-		continue;
-	    case SORT_TOC :
-		bu_sort((void *)toc_list, (unsigned)ndir,
-			sizeof(char *), sortFunc, NULL);
-		break;
-	    case TOC :
-		list_toc(arg_list);
-		break;
-	    case EOF :
-	    case QUIT :
-		(void) printf("quitting...\n");
-		goto out;
-	    default :
-		(void) printf("Invalid command\n");
-		prompt(PROMPT);
-		continue;
-	}
-	prompt(CMD_PROMPT);
-    }
-out:
-    return 0;
 }
 
 
@@ -553,168 +597,6 @@ region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tr
      */
     /* XXX Should make list of "regions" (trees) here */
     return  (union tree *)0;
-}
-
-
-/**
- * Re-use the librt "soltab" structures here, for our own purposes.
- */
-union tree *
-gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
-{
-    fastf_t	f;
-    struct soltab	*stp;
-    union tree		*curtree;
-    struct directory	*dp;
-    struct bu_vls sol = BU_VLS_INIT_ZERO;
-    int		i;
-    matp_t		mat;
-
-    RT_CK_DB_INTERNAL(ip);
-    dp = DB_FULL_PATH_CUR_DIR(pathp);
-
-    /* Determine if this matrix is an identity matrix */
-    for (i = 0; i < 16; i++) {
-	f = tsp->ts_mat[i] - bn_mat_identity[i];
-	if (!NEAR_ZERO(f, 0.0001))
-	    break;
-    }
-    if (i < 16) {
-	/* Not identity matrix */
-	mat = tsp->ts_mat;
-    } else {
-	/* Identity matrix */
-	mat = (matp_t)0;
-    }
-
-    /*
-     *  Check to see if this exact solid has already been processed.
-     *  Match on leaf name and matrix.
-     */
-    for (BU_LIST_FOR(stp, soltab, &(sol_hd.l))) {
-	RT_CHECK_SOLTAB(stp);				/* debug */
-
-	/* Leaf solids must be the same */
-	if (dp != stp->st_dp)  continue;
-
-	if (mat == (matp_t)0) {
-	    if (stp->st_matp == (matp_t)0) {
-		if (debug)
-		    bu_log("rt_gettree_leaf:  %s re-referenced (ident)\n",
-			   dp->d_namep);
-		goto found_it;
-	    }
-	    goto next_one;
-	}
-	if (stp->st_matp == (matp_t)0)  goto next_one;
-
-	for (i = 0; i < 16; i++) {
-	    f = mat[i] - stp->st_matp[i];
-	    if (!NEAR_ZERO(f, 0.0001))
-		goto next_one;
-	}
-	/* Success, we have a match! */
-	if (debug) {
-	    bu_log("rt_gettree_leaf:  %s re-referenced\n",
-		   dp->d_namep);
-	}
-	goto found_it;
-    next_one:
-	;
-    }
-
-    BU_ALLOC(stp, struct soltab);
-    stp->l.magic = RT_SOLTAB_MAGIC;
-    stp->st_id = ip->idb_type;
-    stp->st_dp = dp;
-    if (mat) {
-	/* stupid matp_t */
-	stp->st_matp = (matp_t)bu_malloc(sizeof(mat_t), "st_matp");
-	MAT_COPY(stp->st_matp, mat);
-    } else {
-	stp->st_matp = mat;
-    }
-    stp->st_specific = (void *)0;
-
-    /* init solid's maxima and minima */
-    VSETALL(stp->st_max, -INFINITY);
-    VSETALL(stp->st_min,  INFINITY);
-
-    RT_CK_DB_INTERNAL(ip);
-
-    if (debug) {
-	struct bu_vls str = BU_VLS_INIT_ZERO;
-	/* verbose = 1, mm2local = 1.0 */
-	if (ip->idb_meth->ft_describe(&str, ip, 1, 1.0) < 0) {
-	    bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
-		   dp->d_namep);
-	}
-	bu_log("%s:  %s", dp->d_namep, bu_vls_addr(&str));
-	bu_vls_free(&str);
-    }
-
-    /* For now, just link them all onto the same list */
-    BU_LIST_INSERT(&(sol_hd.l), &(stp->l));
-
-    stp->st_bit = ++nns;
-
-    /* Solid number is stp->st_bit + delsol */
-
-    /* Process appropriate solid type.				*/
-    switch (ip->idb_type) {
-	case ID_TOR:
-	    addtor(&sol, (struct rt_tor_internal *)ip->idb_ptr,
-		    dp->d_namep, stp->st_bit+delsol);
-	    break;
-	case ID_ARB8:
-	    addarb(&sol, (struct rt_arb_internal *)ip->idb_ptr,
-		    dp->d_namep, stp->st_bit+delsol);
-	    break;
-	case ID_ELL:
-	    addell(&sol, (struct rt_ell_internal *)ip->idb_ptr,
-		    dp->d_namep, stp->st_bit+delsol);
-	    break;
-	case ID_TGC:
-	    addtgc(&sol, (struct rt_tgc_internal *)ip->idb_ptr,
-		    dp->d_namep, stp->st_bit+delsol);
-	    break;
-	case ID_ARS:
-	    addars(&sol, (struct rt_ars_internal *)ip->idb_ptr,
-		    dp->d_namep, stp->st_bit+delsol);
-	    break;
-	case ID_HALF:
-	    addhalf(&sol, (struct rt_half_internal *)ip->idb_ptr,
-		     dp->d_namep, stp->st_bit+delsol);
-	    break;
-	case ID_ARBN:
-	    addarbn(&sol, (struct rt_arbn_internal *)ip->idb_ptr,
-		     dp->d_namep, stp->st_bit+delsol);
-	    break;
-	case ID_PIPE:
-	    /* XXX */
-	default:
-	    (void) fprintf(stderr,
-			   "vdeck: '%s' Primitive type %s has no corresponding COMGEOM primitive, skipping\n",
-			   dp->d_namep, ip->idb_meth->ft_name);
-	    vls_itoa(&sol, stp->st_bit+delsol, 5);
-	    bu_vls_strcat(&sol, ip->idb_meth->ft_name);
-	    vls_blanks(&sol, 5*10);
-	    bu_vls_strcat(&sol, dp->d_namep);
-	    bu_vls_strcat(&sol, "\n");
-	    break;
-    }
-
-    bu_vls_fwrite(solfp, &sol);
-    bu_vls_free(&sol);
-
-found_it:
-    BU_ALLOC(curtree, union tree);
-    RT_TREE_INIT(curtree);
-    curtree->tr_op = OP_SOLID;
-    curtree->tr_a.tu_stp = stp;
-    curtree->tr_a.tu_regionp = (struct region *)0;
-
-    return curtree;
 }
 
 
@@ -1188,124 +1070,11 @@ addars(struct bu_vls *v, struct rt_ars_internal *gp, char *name, int num)
 
 
 /**
- * make a COMGEOM deck for current list of objects
- */
-void
-deck(char *prefix)
-{
-    nns = nnr = 0;
-
-    /* Create file for solid table.					*/
-    if (prefix != 0) {
-	(void) bu_vls_strcpy(&st_vls, prefix);
-	(void) bu_vls_strcat(&st_vls, ".st");
-    }
-    else
-	(void) bu_vls_strcpy(&st_vls, "solids");
-    st_file = bu_vls_addr(&st_vls);
-    if ((solfp = fopen(st_file, "w")) == NULL) {
-	perror(st_file);
-	bu_exit(10, NULL);
-    }
-
-
-    /* Target units (a2, 3x)						*/
-    ewrite(solfp, bu_units_string(dbip->dbi_local2base), 2);
-    blank_fill(solfp, 3);
-
-    /* Title							*/
-    if (dbip->dbi_title == NULL)
-	ewrite(solfp, objfile, (unsigned) strlen(objfile));
-    else
-	ewrite(solfp, dbip->dbi_title, (unsigned) strlen(dbip->dbi_title));
-    ewrite(solfp, LF, 1);
-
-    /* Save space for number of solids and regions.			*/
-    savsol = bu_ftell(solfp);
-    if (savsol < 0) {
-	perror("ftell");
-    }
-
-    blank_fill(solfp, 10);
-    ewrite(solfp, LF, 1);
-
-    /* Create file for region table.				*/
-    if (prefix != 0) {
-	(void) bu_vls_strcpy(&bu_vls, prefix);
-	(void) bu_vls_strcat(&bu_vls, ".rt");
-    }
-    else
-	(void) bu_vls_strcpy(&bu_vls, "regions");
-    rt_file = bu_vls_addr(&bu_vls);
-    if ((regfp = fopen(rt_file, "w")) == NULL) {
-	perror(rt_file);
-	bu_exit(10, NULL);
-    }
-
-    /* create file for region ident table
-     */
-    if (prefix != 0) {
-	(void) bu_vls_strcpy(&id_vls, prefix);
-	(void) bu_vls_strcat(&id_vls, ".id");
-    }
-    else
-	(void) bu_vls_strcpy(&id_vls, "region_ids");
-    id_file = bu_vls_addr(&id_vls);
-    if ((ridfp = fopen(id_file, "w")) == NULL) {
-	perror(id_file);
-	bu_exit(10, NULL);
-    }
-    vdeck_itoa(-1, buff, 5);
-    ewrite(ridfp, buff, 5);
-    ewrite(ridfp, LF, 1);
-
-    /* Initialize matrices.						*/
-    MAT_IDN(identity);
-
-    if (!sol_hd.l.magic)  BU_LIST_INIT(&sol_hd.l);
-
-    /*  Build the whole card deck.	*/
-    /*  '1' indicates one CPU.  This code isn't ready for parallelism */
-    if (db_walk_tree(dbip, curr_ct, (const char **)curr_list,
-		     1, &rt_initial_tree_state,
-		     0, region_end, gettree_leaf, (void *)NULL) < 0) {
-	fprintf(stderr, "Unable to treewalk any trees!\n");
-	bu_exit(11, NULL);
-    }
-
-    /* Go back, and add number of solids and regions on second card. */
-    if (savsol >= 0)
-	bu_fseek(solfp, savsol, 0);
-
-    vdeck_itoa(nns, buff, 5);
-    ewrite(solfp, buff, 5);
-    vdeck_itoa(nnr, buff, 5);
-    ewrite(solfp, buff, 5);
-
-    /* Finish region id table.					*/
-    ewrite(ridfp, LF, 1);
-
-    (void) printf("====================================================\n");
-    (void) printf("O U T P U T    F I L E S :\n\n");
-    (void) printf("solid table = \"%s\"\n", st_file);
-    (void) printf("region table = \"%s\"\n", rt_file);
-    (void) printf("region identification table = \"%s\"\n", id_file);
-    (void) fclose(solfp);
-    (void) fclose(regfp);
-    (void) fclose(ridfp);
-
-    /* reset starting numbers for solids and regions
-     */
-    delsol = delreg = 0;
-    /* XXX should free soltab list */
-}
-
-/**
  * Build a sorted list of names of all the objects accessible in the
  * object file.
  */
 void
-toc()
+toc(void)
 {
     struct directory *dp;
     int		count;
@@ -1460,200 +1229,283 @@ delete_obj(char *args[])
     return curr_ct;
 }
 
-
 /**
- * Convert integer to ascii  wd format.
+ * Re-use the librt "soltab" structures here, for our own purposes.
  */
-static void
-vdeck_itoa(int n, char *s, int w)
+union tree *
+gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
-    int	 c, i, j, sign;
+    fastf_t	f;
+    struct soltab	*stp;
+    union tree		*curtree;
+    struct directory	*dp;
+    struct bu_vls sol = BU_VLS_INIT_ZERO;
+    int		i;
+    matp_t		mat;
 
-    if ((sign = n) < 0)	n = -n;
-    i = 0;
-    do
-	s[i++] = n % 10 + '0';
-    while ((n /= 10) > 0);
-    if (sign < 0)	s[i++] = '-';
+    RT_CK_DB_INTERNAL(ip);
+    dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-    /* Blank fill array.					*/
-    for (j = i; j < w; j++)	s[j] = ' ';
-    if (i > w) {
-	s[w-1] = (s[w]-1-'0')*10 + (s[w-1]-'0')  + 'A';
-    }
-    s[w] = '\0';
-
-    /* Reverse the array.					*/
-    for (i = 0, j = w - 1; i < j; i++, j--) {
-	c    = s[i];
-	s[i] = s[j];
-	s[j] =    c;
-    }
-}
-
-
-void
-vls_blanks(struct bu_vls *v, int n)
-{
-    BU_CK_VLS(v);
-    /* 128 spaces */
-    bu_vls_strncat(v, "                                                                                                                                ",
-		   n);
-}
-
-
-/**
- * Convert integer to ascii  wd format.
- */
-void
-vls_itoa(struct bu_vls *v, int n, int w)
-{
-    int	 c, i, j, sign;
-    char *s;
-
-    BU_CK_VLS(v);
-    bu_vls_strncat(v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
-    s = bu_vls_addr(v)+bu_vls_strlen(v)-w;
-
-    if ((sign = n) < 0)	n = -n;
-    i = 0;
-    do
-	s[i++] = n % 10 + '0';
-    while ((n /= 10) > 0);
-    if (sign < 0) s[i++] = '-';
-
-    /* Blank fill array. */
-    for (j = i; j < w; j++) s[j] = ' ';
-    if (i > w) {
-	s[w-1] = (s[w]-1-'0')*10 + (s[w-1]-'0')  + 'A';
-    }
-    s[w] = '\0';
-
-    /* Reverse the array. */
-    for (i = 0, j = w - 1; i < j; i++, j--) {
-	c    = s[i];
-	s[i] = s[j];
-	s[j] =    c;
-    }
-}
-
-
-void
-vls_ftoa_vec_cvt(struct bu_vls *v, const vect_t vec, int w, int d)
-{
-    vls_ftoa(v, vec[X]*dbip->dbi_base2local, w, d);
-    vls_ftoa(v, vec[Y]*dbip->dbi_base2local, w, d);
-    vls_ftoa(v, vec[Z]*dbip->dbi_base2local, w, d);
-}
-
-
-void
-vls_ftoa_vec(struct bu_vls *v, const vect_t vec, int w, int d)
-{
-    vls_ftoa(v, vec[X], w, d);
-    vls_ftoa(v, vec[Y], w, d);
-    vls_ftoa(v, vec[Z], w, d);
-}
-
-
-void
-vls_ftoa_cvt(struct bu_vls *v, double f, int w, int d)
-{
-    vls_ftoa(v, f*dbip->dbi_base2local, w, d);
-}
-
-
-/**
- * Convert float to ascii  w.df format.
- */
-void
-vls_ftoa(struct bu_vls *v, double f, int w, int d)
-{
-    char	*s;
-    int	c, i, j;
-    long	n, sign;
-
-    BU_CK_VLS(v);
-    bu_vls_strncat(v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
-    s = bu_vls_addr(v)+bu_vls_strlen(v)-w;
-
-    if (w <= d + 2) {
-	(void) fprintf(stderr,
-		       "ftoascii: incorrect format  need w.df  stop"
-	   );
-	bu_exit(10, NULL);
-    }
-    for (i = 1; i <= d; i++)
-	f = f * 10.0;
-
-    /* round up */
-    if (f < 0.0)
-	f -= 0.5;
-    else
-	f += 0.5;
-    n = f;
-    if ((sign = n) < 0)
-	n = -n;
-    i = 0;
-    do	{
-	s[i++] = n % 10 + '0';
-	if (i == d)
-	    s[i++] = '.';
-    }	while ((n /= 10) > 0);
-
-    /* Zero fill the d field if necessary.				*/
-    if (i < d) {
-	for (j = i; j < d; j++)
-	    s[j] = '0';
-	s[j++] = '.';
-	i = j;
-    }
-    if (sign < 0)
-	s[i++] = '-';
-
-    /* Blank fill rest of field.					*/
-    for (j = i; j < w; j++)
-	s[j] = ' ';
-    if (i > w)
-	(void) fprintf(stderr, "Ftoascii: field length too small\n");
-    s[w] = '\0';
-
-    /* Reverse the array.						*/
-    for (i = 0, j = w - 1; i < j; i++, j--) {
-	c    = s[i];
-	s[i] = s[j];
-	s[j] =    c;
-    }
-}
-
-
-/**
- * Return first character read from keyboard, copy command into
- * args[0] and arguments into args[1]...args[n].
- */
-int
-getcmd(char *args[], int ct)
-{
-    /* Get arguments.						 */
-    if (ct == 0)
-	while (--arg_ct >= 0)
-	    bu_free(args[arg_ct], "args[arg_ct]");
-    for (arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct) {
-	args[arg_ct] = (char *)bu_malloc(MAXLN, "getcmd buffer");
-	if (! getarg(args[arg_ct], MAXLN))
+    /* Determine if this matrix is an identity matrix */
+    for (i = 0; i < 16; i++) {
+	f = tsp->ts_mat[i] - bn_mat_identity[i];
+	if (!NEAR_ZERO(f, 0.0001))
 	    break;
     }
-    ++arg_ct;
-    args[arg_ct] = 0;
+    if (i < 16) {
+	/* Not identity matrix */
+	mat = tsp->ts_mat;
+    } else {
+	/* Identity matrix */
+	mat = (matp_t)0;
+    }
 
-    /* Before returning to command interpreter,
-     * set up interrupt handler for commands...
-     * trap interrupts such that command is aborted cleanly and
-     * command line is restored rather than terminating program
+    /*
+     *  Check to see if this exact solid has already been processed.
+     *  Match on leaf name and matrix.
      */
-    (void) signal(SIGINT, abort_sig);
-    return	(args[0])[0];
+    for (BU_LIST_FOR(stp, soltab, &(sol_hd.l))) {
+	RT_CHECK_SOLTAB(stp);				/* debug */
+
+	/* Leaf solids must be the same */
+	if (dp != stp->st_dp)  continue;
+
+	if (mat == (matp_t)0) {
+	    if (stp->st_matp == (matp_t)0) {
+		if (debug)
+		    bu_log("rt_gettree_leaf:  %s re-referenced (ident)\n",
+			   dp->d_namep);
+		goto found_it;
+	    }
+	    goto next_one;
+	}
+	if (stp->st_matp == (matp_t)0)  goto next_one;
+
+	for (i = 0; i < 16; i++) {
+	    f = mat[i] - stp->st_matp[i];
+	    if (!NEAR_ZERO(f, 0.0001))
+		goto next_one;
+	}
+	/* Success, we have a match! */
+	if (debug) {
+	    bu_log("rt_gettree_leaf:  %s re-referenced\n",
+		   dp->d_namep);
+	}
+	goto found_it;
+    next_one:
+	;
+    }
+
+    BU_ALLOC(stp, struct soltab);
+    stp->l.magic = RT_SOLTAB_MAGIC;
+    stp->st_id = ip->idb_type;
+    stp->st_dp = dp;
+    if (mat) {
+	/* stupid matp_t */
+	stp->st_matp = (matp_t)bu_malloc(sizeof(mat_t), "st_matp");
+	MAT_COPY(stp->st_matp, mat);
+    } else {
+	stp->st_matp = mat;
+    }
+    stp->st_specific = (void *)0;
+
+    /* init solid's maxima and minima */
+    VSETALL(stp->st_max, -INFINITY);
+    VSETALL(stp->st_min,  INFINITY);
+
+    RT_CK_DB_INTERNAL(ip);
+
+    if (debug) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	/* verbose = 1, mm2local = 1.0 */
+	if (ip->idb_meth->ft_describe(&str, ip, 1, 1.0) < 0) {
+	    bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
+		   dp->d_namep);
+	}
+	bu_log("%s:  %s", dp->d_namep, bu_vls_addr(&str));
+	bu_vls_free(&str);
+    }
+
+    /* For now, just link them all onto the same list */
+    BU_LIST_INSERT(&(sol_hd.l), &(stp->l));
+
+    stp->st_bit = ++nns;
+
+    /* Solid number is stp->st_bit + delsol */
+
+    /* Process appropriate solid type.				*/
+    switch (ip->idb_type) {
+	case ID_TOR:
+	    addtor(&sol, (struct rt_tor_internal *)ip->idb_ptr,
+		    dp->d_namep, stp->st_bit+delsol);
+	    break;
+	case ID_ARB8:
+	    addarb(&sol, (struct rt_arb_internal *)ip->idb_ptr,
+		    dp->d_namep, stp->st_bit+delsol);
+	    break;
+	case ID_ELL:
+	    addell(&sol, (struct rt_ell_internal *)ip->idb_ptr,
+		    dp->d_namep, stp->st_bit+delsol);
+	    break;
+	case ID_TGC:
+	    addtgc(&sol, (struct rt_tgc_internal *)ip->idb_ptr,
+		    dp->d_namep, stp->st_bit+delsol);
+	    break;
+	case ID_ARS:
+	    addars(&sol, (struct rt_ars_internal *)ip->idb_ptr,
+		    dp->d_namep, stp->st_bit+delsol);
+	    break;
+	case ID_HALF:
+	    addhalf(&sol, (struct rt_half_internal *)ip->idb_ptr,
+		     dp->d_namep, stp->st_bit+delsol);
+	    break;
+	case ID_ARBN:
+	    addarbn(&sol, (struct rt_arbn_internal *)ip->idb_ptr,
+		     dp->d_namep, stp->st_bit+delsol);
+	    break;
+	case ID_PIPE:
+	    /* XXX */
+	default:
+	    (void) fprintf(stderr,
+			   "vdeck: '%s' Primitive type %s has no corresponding COMGEOM primitive, skipping\n",
+			   dp->d_namep, ip->idb_meth->ft_name);
+	    vls_itoa(&sol, stp->st_bit+delsol, 5);
+	    bu_vls_strcat(&sol, ip->idb_meth->ft_name);
+	    vls_blanks(&sol, 5*10);
+	    bu_vls_strcat(&sol, dp->d_namep);
+	    bu_vls_strcat(&sol, "\n");
+	    break;
+    }
+
+    bu_vls_fwrite(solfp, &sol);
+    bu_vls_free(&sol);
+
+found_it:
+    BU_ALLOC(curtree, union tree);
+    RT_TREE_INIT(curtree);
+    curtree->tr_op = OP_SOLID;
+    curtree->tr_a.tu_stp = stp;
+    curtree->tr_a.tu_regionp = (struct region *)0;
+
+    return curtree;
 }
+
+
+/**
+ * make a COMGEOM deck for current list of objects
+ */
+void
+deck(char *prefix)
+{
+    nns = nnr = 0;
+
+    /* Create file for solid table.					*/
+    if (prefix != 0) {
+	(void) bu_vls_strcpy(&st_vls, prefix);
+	(void) bu_vls_strcat(&st_vls, ".st");
+    }
+    else
+	(void) bu_vls_strcpy(&st_vls, "solids");
+    st_file = bu_vls_addr(&st_vls);
+    if ((solfp = fopen(st_file, "w")) == NULL) {
+	perror(st_file);
+	bu_exit(10, NULL);
+    }
+
+
+    /* Target units (a2, 3x)						*/
+    ewrite(solfp, bu_units_string(dbip->dbi_local2base), 2);
+    blank_fill(solfp, 3);
+
+    /* Title							*/
+    if (dbip->dbi_title == NULL)
+	ewrite(solfp, objfile, (unsigned) strlen(objfile));
+    else
+	ewrite(solfp, dbip->dbi_title, (unsigned) strlen(dbip->dbi_title));
+    ewrite(solfp, LF, 1);
+
+    /* Save space for number of solids and regions.			*/
+    savsol = bu_ftell(solfp);
+    if (savsol < 0) {
+	perror("ftell");
+    }
+
+    blank_fill(solfp, 10);
+    ewrite(solfp, LF, 1);
+
+    /* Create file for region table.				*/
+    if (prefix != 0) {
+	(void) bu_vls_strcpy(&bu_vls, prefix);
+	(void) bu_vls_strcat(&bu_vls, ".rt");
+    }
+    else
+	(void) bu_vls_strcpy(&bu_vls, "regions");
+    rt_file = bu_vls_addr(&bu_vls);
+    if ((regfp = fopen(rt_file, "w")) == NULL) {
+	perror(rt_file);
+	bu_exit(10, NULL);
+    }
+
+    /* create file for region ident table
+     */
+    if (prefix != 0) {
+	(void) bu_vls_strcpy(&id_vls, prefix);
+	(void) bu_vls_strcat(&id_vls, ".id");
+    }
+    else
+	(void) bu_vls_strcpy(&id_vls, "region_ids");
+    id_file = bu_vls_addr(&id_vls);
+    if ((ridfp = fopen(id_file, "w")) == NULL) {
+	perror(id_file);
+	bu_exit(10, NULL);
+    }
+    vdeck_itoa(-1, buff, 5);
+    ewrite(ridfp, buff, 5);
+    ewrite(ridfp, LF, 1);
+
+    /* Initialize matrices.						*/
+    MAT_IDN(identity);
+
+    if (!sol_hd.l.magic)  BU_LIST_INIT(&sol_hd.l);
+
+    /*  Build the whole card deck.	*/
+    /*  '1' indicates one CPU.  This code isn't ready for parallelism */
+    if (db_walk_tree(dbip, curr_ct, (const char **)curr_list,
+		     1, &rt_initial_tree_state,
+		     0, region_end, gettree_leaf, (void *)NULL) < 0) {
+	fprintf(stderr, "Unable to treewalk any trees!\n");
+	bu_exit(11, NULL);
+    }
+
+    /* Go back, and add number of solids and regions on second card. */
+    if (savsol >= 0)
+	bu_fseek(solfp, savsol, 0);
+
+    vdeck_itoa(nns, buff, 5);
+    ewrite(solfp, buff, 5);
+    vdeck_itoa(nnr, buff, 5);
+    ewrite(solfp, buff, 5);
+
+    /* Finish region id table.					*/
+    ewrite(ridfp, LF, 1);
+
+    (void) printf("====================================================\n");
+    (void) printf("O U T P U T    F I L E S :\n\n");
+    (void) printf("solid table = \"%s\"\n", st_file);
+    (void) printf("region table = \"%s\"\n", rt_file);
+    (void) printf("region identification table = \"%s\"\n", id_file);
+    (void) fclose(solfp);
+    (void) fclose(regfp);
+    (void) fclose(ridfp);
+
+    /* reset starting numbers for solids and regions
+     */
+    delsol = delreg = 0;
+    /* XXX should free soltab list */
+}
+
+
+
 
 
 /**
@@ -1701,6 +1553,36 @@ getarg(char *str, size_t maxchars)
 
 
 /**
+ * Return first character read from keyboard, copy command into
+ * args[0] and arguments into args[1]...args[n].
+ */
+int
+getcmd(char *args[], int ct)
+{
+    /* Get arguments.						 */
+    if (ct == 0)
+	while (--arg_ct >= 0)
+	    bu_free(args[arg_ct], "args[arg_ct]");
+    for (arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct) {
+	args[arg_ct] = (char *)bu_malloc(MAXLN, "getcmd buffer");
+	if (! getarg(args[arg_ct], MAXLN))
+	    break;
+    }
+    ++arg_ct;
+    args[arg_ct] = 0;
+
+    /* Before returning to command interpreter,
+     * set up interrupt handler for commands...
+     * trap interrupts such that command is aborted cleanly and
+     * command line is restored rather than terminating program
+     */
+    (void) signal(SIGINT, abort_sig);
+    return	(args[0])[0];
+}
+
+
+
+/**
  * Display menu stored at address 'addr'.
  */
 void
@@ -1737,6 +1619,116 @@ quit(int UNUSED(sig))
     (void) fprintf(stdout, "quitting...\n");
     bu_exit(0, NULL);
 }
+
+int
+main(int argc, char *argv[])
+{
+    bu_setprogname(argv[0]);
+
+    setbuf(stdout, (char *)bu_malloc(BUFSIZ, "stdout buffer"));
+    BU_LIST_INIT(&(sol_hd.l));
+
+    if (! parsArg(argc, argv)) {
+	menu(usage);
+	return 1;
+    }
+
+    /* Build directory from object file.	 	*/
+    if (db_dirbuild(dbip) < 0) {
+	fprintf(stderr, "db_dirbuild() failure\n");
+	return 1;
+    }
+
+    toc();		/* Build table of contents from directory.	*/
+
+    /***********************
+     * Command Interpreter *
+     ***********************/
+    (void) setjmp(env);/* Point of re-entry from aborted command.	*/
+    prompt(CMD_PROMPT);
+    while (1) {
+	/* Return to default interrupt handler after every command,
+	   allows exit from program only while command interpreter
+	   is waiting for input from keyboard.
+	*/
+	(void) signal(SIGINT, quit);
+
+	switch (getcmd(arg_list, 0)) {
+	    case DECK :
+		deck(arg_list[1]);
+		break;
+	    case ERASE :
+		while (curr_ct > 0)
+		    bu_free(curr_list[--curr_ct], "curr_list[ct]");
+		break;
+	    case INSERT :
+		if (arg_list[1] == 0) {
+		    prompt("enter object[s] to insert: ");
+		    (void) getcmd(arg_list, arg_ct);
+		}
+		(void) insert(arg_list, arg_ct);
+		break;
+	    case LIST :
+		{
+		    int	i;
+		    if (arg_list[1] == 0) {
+			(void) col_prt(curr_list, (size_t)curr_ct);
+			break;
+		    }
+		    for (tmp_ct = 0, i = 0; i < curr_ct; i++)
+			if (match(arg_list[1], curr_list[i]))
+			    tmp_list[tmp_ct++] = curr_list[i];
+		    (void) col_prt(tmp_list, tmp_ct);
+		    break;
+		}
+	    case MENU :
+		menu(cmd);
+		prompt(PROMPT);
+		continue;
+	    case NUMBER :
+		if (arg_list[1] == 0) {
+		    prompt("enter number of 1st solid: ");
+		    (void) getcmd(arg_list, arg_ct);
+		    prompt("enter number of 1st region: ");
+		    (void) getcmd(arg_list, arg_ct);
+		}
+		if (arg_list[1])
+		    delsol = atoi(arg_list[1]) - 1;
+		if (arg_list[2])
+		    delreg = atoi(arg_list[2]) - 1;
+		break;
+	    case REMOVE :
+		if (arg_list[1] == 0) {
+		    prompt("enter object[s] to remove: ");
+		    (void) getcmd(arg_list, arg_ct);
+		}
+		(void) delete_obj(arg_list);
+		break;
+	    case RETURN :
+		prompt(PROMPT);
+		continue;
+	    case SORT_TOC :
+		bu_sort((void *)toc_list, (unsigned)ndir,
+			sizeof(char *), sortFunc, NULL);
+		break;
+	    case TOC :
+		list_toc(arg_list);
+		break;
+	    case EOF :
+	    case QUIT :
+		(void) printf("quitting...\n");
+		goto out;
+	    default :
+		(void) printf("Invalid command\n");
+		prompt(PROMPT);
+		continue;
+	}
+	prompt(CMD_PROMPT);
+    }
+out:
+    return 0;
+}
+
 
 
 /*

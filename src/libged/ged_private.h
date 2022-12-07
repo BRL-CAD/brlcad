@@ -130,7 +130,7 @@ struct _ged_funtab {
     char *ft_name;
     char *ft_parms;
     char *ft_comment;
-    int (*ft_func)();
+    int (*ft_func)(void);
     int ft_min;
     int ft_max;
     int tcl_converted;
@@ -526,13 +526,13 @@ GED_EXPORT extern int _ged_translate_tgc(struct ged *gedp,
 GED_EXPORT extern int _ged_do_rot(struct ged *gedp,
 		       char coord,
 		       mat_t rmat,
-		       int (*func)());
+		       int (*func)(struct ged *, char, char, mat_t));
 GED_EXPORT extern int _ged_do_slew(struct ged *gedp,
 			vect_t svec);
 GED_EXPORT extern int _ged_do_tra(struct ged *gedp,
 		       char coord,
 		       vect_t tvec,
-		       int (*func)());
+		       int (*func)(struct ged *, char, vect_t));
 
 /* Internal implementation of ged_results - since the
  * details of the struct are not for public access,

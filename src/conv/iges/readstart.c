@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 void
-Readstart()
+Readstart(void)
 {
 
     int i = 0, done = 0;

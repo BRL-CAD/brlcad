@@ -3615,7 +3615,7 @@ static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage, md
 /********/
 
 
-void mdInit()
+void mdInit(void)
 {
     mmInit();
     mdInitFlag = 1;

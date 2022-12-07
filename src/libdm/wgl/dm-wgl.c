@@ -1262,7 +1262,7 @@ struct dm dm_wgl = { DM_MAGIC, &dm_wgl_impl, 0 };
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_wgl };
 
-COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info(void)
 {
     return &pinfo;
 }

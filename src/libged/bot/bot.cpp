@@ -926,7 +926,7 @@ extern "C" {
 
     static const struct ged_plugin pinfo = { GED_API, bot_cmds, sizeof(bot_cmds)/sizeof(bot_cmds[0]) };
 
-    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+    COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
     {
 	return &pinfo;
     }

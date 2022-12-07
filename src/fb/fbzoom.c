@@ -147,7 +147,7 @@ main(int argc, char **argv)
 #define ctl(x)	(x&037)
 
 static void
-printUsage()
+printUsage(void)
 {
     bu_log("\n\nBoth VI and EMACS motions work.\r\n");
     bu_log("b ^V	zoom Bigger (*2) s	zoom Smaller (*0.5)\n");

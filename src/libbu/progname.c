@@ -66,7 +66,7 @@ static char bu_progname[MAXPATHLEN] = {0};
 const char *DEFAULT_PROGNAME = "(" PACKAGE_NAME ")";
 
 const char *
-_bu_progname_raw()
+_bu_progname_raw(void)
 {
     return (const char *)bu_progname;
 }

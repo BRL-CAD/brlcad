@@ -319,7 +319,7 @@ bu_units_string(register const double mm)
 
 
 struct bu_vls *
-bu_units_strings_vls()
+bu_units_strings_vls(void)
 {
     register const struct cvt_tab *tp;
     struct bu_vls *vlsp;

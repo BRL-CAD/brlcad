@@ -113,7 +113,7 @@ Add_solid(int comp_code_num)
  * Converts "tankill" format geometry to BRL-CAD model
  */
 static void
-usage()
+usage(void)
 {
     bu_log("Usage: tankill-g [-v] [-p] [-k] [-t tolerance] [-x lvl] [-X lvl] [-i input_tankill_file] [-o output_brlcad_model]\n");
     bu_log("    where tolerance is the minimum distance (mm) between distinct vertices,\n");

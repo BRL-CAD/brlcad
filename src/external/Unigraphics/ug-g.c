@@ -5357,7 +5357,6 @@ int
 parse_args(struct ug_state *s, int ac, char *av[])
 {
     int  c;
-    char *strrchr();
 
     if (  ! (progname=strrchr(*av, '/'))  )
 	progname = *av;

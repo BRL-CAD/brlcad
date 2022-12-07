@@ -103,7 +103,7 @@ bu_dlerror(void)
 
 
 int
-bu_dlunload()
+bu_dlunload(void)
 {
     int ret = 0;
     while (n_handles) {

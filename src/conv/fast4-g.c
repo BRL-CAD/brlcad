@@ -297,7 +297,7 @@ void f4g_init(struct f4g_state *s)
 }
 
 static void
-usage() {
+usage(void) {
     bu_log("Usage: fast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n");
     bu_log("	d - print debugging info\n");
     bu_log("	q - quiet mode (don't say anything except error messages)\n");

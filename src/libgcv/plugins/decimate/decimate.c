@@ -102,7 +102,7 @@ static const struct gcv_filter * const filters[] = {&gcv_filter_decimate, NULL};
 const struct gcv_plugin gcv_plugin_info_s = {filters};
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
-	gcv_plugin_info(){ return &gcv_plugin_info_s; }
+	gcv_plugin_info(void){ return &gcv_plugin_info_s; }
 
 /*
  * Local Variables:

@@ -77,7 +77,7 @@ static int ps_close(struct dm *dmp);
  *
  */
 struct dm *
-ps_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
+ps_open(void *UNUSED(ctx), void *vinterp, int UNUSED(argc), const char *argv[])
 {
     static int count = 0;
     struct dm *dmp;
@@ -126,7 +126,7 @@ ps_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->linewidth = 4;
 
     /* skip first argument */
-    --argc; ++argv;
+    ++argv;
 
     /* Process any options */
     while (argv[0] != (char *)0 && argv[0][0] == '-') {
@@ -953,7 +953,7 @@ struct dm dm_ps = { DM_MAGIC, &dm_ps_impl, 0 };
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_ps };
 
-COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info(void)
 {
     return &pinfo;
 }

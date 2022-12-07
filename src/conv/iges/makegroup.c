@@ -28,7 +28,7 @@
 #include "./iges_extern.h"
 
 void
-Makegroup()
+Makegroup(void)
 {
 
     size_t i;

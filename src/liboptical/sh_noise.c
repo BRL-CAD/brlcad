@@ -284,7 +284,7 @@ noise_free(void *cp)
  * Apply a noise function to the surface normal
  */
 static void
-norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*func) (/* ??? */), struct shadework *swp, int rescale)
+norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*func)(point_t, double, double, double), struct shadework *swp, int rescale)
 /* defined in material.h */
 {
     vect_t N, tmp;

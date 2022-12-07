@@ -469,7 +469,7 @@ copyTokenText(perplex_t scanner) {
 }
 
 static perplex_t
-newScanner()
+newScanner(void)
 {
     perplex_t scanner;
     scanner = (perplex_t)calloc(1, sizeof(struct perplex));

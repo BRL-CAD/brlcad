@@ -39,7 +39,7 @@ read_pdb(char *fileName)
 
 
 void
-mk_protein()
+mk_protein(void)
 {
     return;
 }

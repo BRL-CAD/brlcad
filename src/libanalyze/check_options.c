@@ -29,7 +29,7 @@
  * initializes the current state with meaningful defaults for raytracing.
  */
 struct current_state *
-analyze_current_state_init()
+analyze_current_state_init(void)
 {
     struct current_state *state;
     BU_ALLOC(state, struct current_state);

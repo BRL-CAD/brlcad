@@ -376,7 +376,7 @@ const struct ged_cmd *pipe_cmds[] = {
 
 static const struct ged_plugin pinfo = { GED_API,  pipe_cmds, 8 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

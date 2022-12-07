@@ -3704,15 +3704,12 @@ find_closest_face(fastf_t **centers, int *piece, int *old_faces, size_t num_face
     size_t min_face=-1;
 
     if ((*centers) == NULL) {
-	int count_centers = 0;
-
 	/* need to build the centers array */
 	(*centers) = (fastf_t *)bu_malloc(num_faces * 3 * sizeof(fastf_t), "center");
 	for (i = 0; i < num_faces; i++) {
 	    if (old_faces[i*3] == -1) {
 		continue;
 	    }
-	    count_centers++;
 	    v0 = &vertices[old_faces[i*3+0]*3];
 	    v1 = &vertices[old_faces[i*3+1]*3];
 	    v2 = &vertices[old_faces[i*3+2]*3];

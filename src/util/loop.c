@@ -52,9 +52,9 @@
 #define CHAR 2
 
 void
-usage()
+usage(void)
 {
-	bu_log("Usage: loop [-c] start finish [incr]\n       -c used for character (char) looping\n");
+    bu_log("Usage: loop [-c] start finish [incr]\n       -c used for character (char) looping\n");
 }
 
 int

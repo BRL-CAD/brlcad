@@ -127,7 +127,7 @@ void compnet_update(char *string, char status) {
 }
 
 
-void compnet_reset() {
+void compnet_reset(void) {
     char message;
 
     if (!master_compserv_active)

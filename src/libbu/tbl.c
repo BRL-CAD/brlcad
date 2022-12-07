@@ -39,7 +39,7 @@ struct bu_tbl {
 
 
 struct bu_tbl *
-bu_tbl_create()
+bu_tbl_create(void)
 {
     struct bu_tbl *tbl = NULL;
 

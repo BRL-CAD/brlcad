@@ -479,7 +479,7 @@ make_2manifold_bits(struct bn_tol *tol)
 
 
 void
-make_1manifold_bits()
+make_1manifold_bits(void)
 {
     struct edgeuse *eu;
 
@@ -496,7 +496,7 @@ make_1manifold_bits()
 
 
 void
-make_0manifold_bits()
+make_0manifold_bits(void)
 {
     struct shell *sp;
 

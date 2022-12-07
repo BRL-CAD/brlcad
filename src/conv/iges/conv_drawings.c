@@ -722,7 +722,7 @@ Get_drawing(size_t entno, struct bu_ptbl *view_vis_list)
 	}
 
 void
-Conv_drawings()
+Conv_drawings(void)
 {
     size_t i;
     int tot_drawings = 0;

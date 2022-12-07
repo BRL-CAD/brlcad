@@ -29,7 +29,7 @@
 #include "./iges_extern.h"
 
 void
-Convsolids()
+Convsolids(void)
 {
 
     size_t i;

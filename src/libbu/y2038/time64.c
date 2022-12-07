@@ -63,7 +63,7 @@ static struct tm SYSTEM_MKTIME_MIN;
 
 static int mktime_maxmin_initialized = 0;
 
-void initialize_mktime_maxmin()
+void initialize_mktime_maxmin(void)
 {
   SYSTEM_MKTIME_MAX.tm_sec = 7;
   SYSTEM_MKTIME_MAX.tm_min = 14;

@@ -88,7 +88,6 @@ void usage(const char *name, const char *str)
 int parse_args(int ac, char *av[])
 {
     int c;
-    char *strrchr();
     char tmp_basename[MAXPATHLEN] = {0};
 
     /* Turn off bu_getopt's error messages */
