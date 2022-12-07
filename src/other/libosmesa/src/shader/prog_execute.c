@@ -64,9 +64,6 @@
 #define SET_NEG_INFINITY(x)  x = (GLfloat) -HUGE_VAL
 #endif
 
-#define SET_FLOAT_BITS(x, bits) ((fi_type *) (void *) &(x))->i = bits
-
-
 static const GLfloat ZeroVec[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
 
 

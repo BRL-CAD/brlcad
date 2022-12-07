@@ -175,19 +175,6 @@ typedef union {
  *** LOG2: Log base 2 of float
  ***/
 #ifdef USE_IEEE
-#if 0
-/* This is pretty fast, but not accurate enough (only 2 fractional bits).
- * Based on code from http://www.stereopsis.com/log2.html
- */
-static INLINE GLfloat LOG2(GLfloat x)
-{
-    const GLfloat y = x * x * x * x;
-    const GLuint ix = *((GLuint *) &y);
-    const GLuint exp = (ix >> 23) & 0xFF;
-    const GLint log2 = ((GLint) exp) - 127;
-    return (GLfloat) log2 * (1.0 / 4.0);  /* 4, because of x^4 above */
-}
-#endif
 /* Pretty fast, and accurate.
  * Based on code from http://www.flipcode.com/totd/
  */
@@ -293,28 +280,7 @@ static INLINE int GET_FLOAT_BITS(float x)
 /***
  *** IROUND: return (as an integer) float rounded to nearest integer
  ***/
-#if   defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__) && \
-			(!defined(__BEOS__) || (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)))
-static INLINE int iround(float f)
-{
-    int r;
-    __asm__("fistpl %0" : "=m"(r) : "t"(f) : "st");
-    return r;
-}
-#define IROUND(x)  iround(x)
-#elif defined(__WATCOMC__) && defined(__386__)
-long iround(float f);
-#pragma aux iround =                    \
-	"push   eax"                        \
-	"fistp  dword ptr [esp]"            \
-	"pop    eax"                        \
-	parm [8087]                         \
-	value [eax]                         \
-	modify exact [eax];
-#define IROUND(x)  iround(x)
-#else
 #define IROUND(f)  ((int) (((f) >= 0.0F) ? ((f) + 0.5F) : ((f) - 0.5F)))
-#endif
 
 
 /***
