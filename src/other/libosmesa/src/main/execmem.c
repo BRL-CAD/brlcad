@@ -107,7 +107,7 @@ _mesa_exec_malloc(GLuint size)
 void *
 _mesa_exec_malloc(GLuint size)
 {
-    return _mesa_malloc(size);
+    return malloc(size);
 }
 
 #endif

@@ -198,7 +198,7 @@ static void free_vertex_store(GLcontext *ctx, struct vbo_save_vertex_store *vert
     if (vertex_store->bufferobj)
 	ctx->Driver.DeleteBuffer(ctx, vertex_store->bufferobj);
 
-    _mesa_free(vertex_store);
+    free(vertex_store);
 }
 
 static GLfloat *map_vertex_store(GLcontext *ctx, struct vbo_save_vertex_store *vertex_store)
@@ -1095,7 +1095,7 @@ static void vbo_destroy_vertex_list(GLcontext *ctx, void *data)
 	free_vertex_store(ctx, node->vertex_store);
 
     if (--node->prim_store->refcount == 0)
-	_mesa_free(node->prim_store);
+	free(node->prim_store);
 }
 
 

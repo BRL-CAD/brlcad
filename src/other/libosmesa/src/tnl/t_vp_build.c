@@ -1485,7 +1485,7 @@ static void rehash(struct tnl_cache *cache)
     GLuint size, i;
 
     size = cache->size * 3;
-    items = (struct tnl_cache_item**) _mesa_malloc(size * sizeof(*items));
+    items = (struct tnl_cache_item**) malloc(size * sizeof(*items));
     _mesa_memset(items, 0, size * sizeof(*items));
 
     for (i = 0; i < cache->size; i++)
@@ -1495,7 +1495,7 @@ static void rehash(struct tnl_cache *cache)
 	    items[c->hash % size] = c;
 	}
 
-    _mesa_free(cache->items);
+    free(cache->items);
     cache->items = items;
     cache->size = size;
 }
@@ -1505,7 +1505,7 @@ static void cache_item(struct tnl_cache *cache,
 		       void *key,
 		       void *data)
 {
-    struct tnl_cache_item *c = (struct tnl_cache_item*) _mesa_malloc(sizeof(*c));
+    struct tnl_cache_item *c = (struct tnl_cache_item*) malloc(sizeof(*c));
     c->hash = hash;
     c->key = key;
     c->data = data;
@@ -1567,7 +1567,7 @@ void _tnl_UpdateFixedFunctionProgram(GLcontext *ctx)
 
 	    cache_item(tnl->vp_cache, hash, key, ctx->VertexProgram._TnlProgram);
 	} else {
-	    _mesa_free(key);
+	    free(key);
 	    if (0)
 		_mesa_printf("Found existing TNL program for key %x\n", hash);
 	}
@@ -1587,11 +1587,11 @@ void _tnl_ProgramCacheInit(GLcontext *ctx)
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-    tnl->vp_cache = (struct tnl_cache *) _mesa_malloc(sizeof(*tnl->vp_cache));
+    tnl->vp_cache = (struct tnl_cache *) malloc(sizeof(*tnl->vp_cache));
     tnl->vp_cache->size = 17;
     tnl->vp_cache->n_items = 0;
     tnl->vp_cache->items = (struct tnl_cache_item**)
-			   _mesa_calloc(tnl->vp_cache->size * sizeof(*tnl->vp_cache->items));
+			   calloc(1,tnl->vp_cache->size * sizeof(*tnl->vp_cache->items));
 }
 
 void _tnl_ProgramCacheDestroy(GLcontext *ctx)
@@ -1603,13 +1603,13 @@ void _tnl_ProgramCacheDestroy(GLcontext *ctx)
     for (i = 0; i < tnl->vp_cache->size; i++)
 	for (c = tnl->vp_cache->items[i]; c; c = next) {
 	    next = c->next;
-	    _mesa_free(c->key);
-	    _mesa_free(c->data);
-	    _mesa_free(c);
+	    free(c->key);
+	    free(c->data);
+	    free(c);
 	}
 
-    _mesa_free(tnl->vp_cache->items);
-    _mesa_free(tnl->vp_cache);
+    free(tnl->vp_cache->items);
+    free(tnl->vp_cache);
 }
 
 /*

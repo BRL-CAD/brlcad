@@ -102,7 +102,7 @@ _mesa_insert_mvp_code(GLcontext *ctx, struct gl_vertex_program *vprog)
     _mesa_copy_instructions(newInst + 4, vprog->Base.Instructions, origLen);
 
     /* free old instructions */
-    _mesa_free(vprog->Base.Instructions);
+    free(vprog->Base.Instructions);
 
     /* install new instructions */
     vprog->Base.Instructions = newInst;
@@ -274,7 +274,7 @@ _mesa_append_fog_code(GLcontext *ctx, struct gl_fragment_program *fprog)
     inst++;
 
     /* free old instructions */
-    _mesa_free(fprog->Base.Instructions);
+    free(fprog->Base.Instructions);
 
     /* install new instructions */
     fprog->Base.Instructions = newInst;

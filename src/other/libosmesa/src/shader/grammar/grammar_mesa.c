@@ -37,12 +37,12 @@
 
 void grammar_alloc_free(void *ptr)
 {
-    _mesa_free(ptr);
+    free(ptr);
 }
 
 void *grammar_alloc_malloc(size_t size)
 {
-    return _mesa_malloc(size);
+    return malloc(size);
 }
 
 void *grammar_alloc_realloc(void *ptr, size_t old_size, size_t size)

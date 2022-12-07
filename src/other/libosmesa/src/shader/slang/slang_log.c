@@ -45,7 +45,7 @@ slang_info_log_destruct(slang_info_log * log)
 #if 0
 	slang_alloc_free(log->text);
 #else
-	_mesa_free(log->text);
+	free(log->text);
 #endif
 }
 
@@ -72,7 +72,7 @@ slang_info_log_message(slang_info_log * log, const char *prefix,
 #if 0
 	log->text = (char *)(slang_alloc_malloc(size));
 #else
-	log->text = (char *)(_mesa_malloc(size));
+	log->text = (char *)(malloc(size));
 #endif
 	if (log->text != NULL)
 	    log->text[0] = '\0';

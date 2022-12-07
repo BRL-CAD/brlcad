@@ -143,12 +143,12 @@ do {									\
  *
  * \param ctx GL context.
  */
-#define ASSERT_OUTSIDE_SAVE_BEGIN_END__mesa_free(ctx, _tofree)			\
+#define ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE(ctx, _tofree)			\
 do {									\
    if (ctx->Driver.CurrentSavePrimitive <= GL_POLYGON ||		\
        ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
       _mesa_compile_error( ctx, GL_INVALID_OPERATION, "begin/end" );	\
-      _mesa_free(_tofree);						\
+      free(_tofree);						\
       return;								\
    }									\
 } while (0)
@@ -174,7 +174,7 @@ do {									\
  */
 #define ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, _tofree)	\
 do {									\
-   ASSERT_OUTSIDE_SAVE_BEGIN_END__mesa_free(ctx, _tofree);			\
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE(ctx, _tofree);			\
    SAVE_FLUSH_VERTICES(ctx);						\
 } while (0)
 
@@ -448,7 +448,7 @@ make_list(GLuint list, GLuint count)
 {
     struct mesa_display_list *dlist = CALLOC_STRUCT(mesa_display_list);
     dlist->id = list;
-    dlist->node = (Node *) _mesa_malloc(sizeof(Node) * count);
+    dlist->node = (Node *) malloc(sizeof(Node) * count);
     dlist->node[0].opcode = OPCODE_END_OF_LIST;
     return dlist;
 }
@@ -491,118 +491,118 @@ _mesa_delete_list(GLcontext *ctx, struct mesa_display_list *dlist)
 	    switch (n[0].opcode) {
 		/* for some commands, we need to free malloc'd memory */
 		case OPCODE_MAP1:
-		    _mesa_free(n[6].data);
+		    free(n[6].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_MAP2:
-		    _mesa_free(n[10].data);
+		    free(n[10].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_DRAW_PIXELS:
-		    _mesa_free(n[5].data);
+		    free(n[5].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_BITMAP:
-		    _mesa_free(n[7].data);
+		    free(n[7].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_COLOR_TABLE:
-		    _mesa_free(n[6].data);
+		    free(n[6].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_COLOR_SUB_TABLE:
-		    _mesa_free(n[6].data);
+		    free(n[6].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_CONVOLUTION_FILTER_1D:
-		    _mesa_free(n[6].data);
+		    free(n[6].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_CONVOLUTION_FILTER_2D:
-		    _mesa_free(n[7].data);
+		    free(n[7].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_POLYGON_STIPPLE:
-		    _mesa_free(n[1].data);
+		    free(n[1].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_TEX_IMAGE1D:
-		    _mesa_free(n[8].data);
+		    free(n[8].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_TEX_IMAGE2D:
-		    _mesa_free(n[9].data);
+		    free(n[9].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_TEX_IMAGE3D:
-		    _mesa_free(n[10].data);
+		    free(n[10].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_TEX_SUB_IMAGE1D:
-		    _mesa_free(n[7].data);
+		    free(n[7].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_TEX_SUB_IMAGE2D:
-		    _mesa_free(n[9].data);
+		    free(n[9].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_TEX_SUB_IMAGE3D:
-		    _mesa_free(n[11].data);
+		    free(n[11].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_COMPRESSED_TEX_IMAGE_1D:
-		    _mesa_free(n[7].data);
+		    free(n[7].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_COMPRESSED_TEX_IMAGE_2D:
-		    _mesa_free(n[8].data);
+		    free(n[8].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_COMPRESSED_TEX_IMAGE_3D:
-		    _mesa_free(n[9].data);
+		    free(n[9].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_COMPRESSED_TEX_SUB_IMAGE_1D:
-		    _mesa_free(n[7].data);
+		    free(n[7].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_COMPRESSED_TEX_SUB_IMAGE_2D:
-		    _mesa_free(n[9].data);
+		    free(n[9].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_COMPRESSED_TEX_SUB_IMAGE_3D:
-		    _mesa_free(n[11].data);
+		    free(n[11].data);
 		    n += InstSize[n[0].opcode];
 		    break;
 #if FEATURE_NV_vertex_program
 		case OPCODE_LOAD_PROGRAM_NV:
-		    _mesa_free(n[4].data);      /* program string */
+		    free(n[4].data);      /* program string */
 		    n += InstSize[n[0].opcode];
 		    break;
 		case OPCODE_REQUEST_RESIDENT_PROGRAMS_NV:
-		    _mesa_free(n[2].data);      /* array of program ids */
+		    free(n[2].data);      /* array of program ids */
 		    n += InstSize[n[0].opcode];
 		    break;
 #endif
 #if FEATURE_NV_fragment_program
 		case OPCODE_PROGRAM_NAMED_PARAMETER_NV:
-		    _mesa_free(n[3].data);      /* parameter name */
+		    free(n[3].data);      /* parameter name */
 		    n += InstSize[n[0].opcode];
 		    break;
 #endif
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program
 		case OPCODE_PROGRAM_STRING_ARB:
-		    _mesa_free(n[4].data);      /* program string */
+		    free(n[4].data);      /* program string */
 		    n += InstSize[n[0].opcode];
 		    break;
 #endif
 		case OPCODE_CONTINUE:
 		    n = (Node *) n[1].next;
-		    _mesa_free(block);
+		    free(block);
 		    block = n;
 		    break;
 		case OPCODE_END_OF_LIST:
-		    _mesa_free(block);
+		    free(block);
 		    done = GL_TRUE;
 		    break;
 		default:
@@ -613,7 +613,7 @@ _mesa_delete_list(GLcontext *ctx, struct mesa_display_list *dlist)
 	}
     }
 
-    _mesa_free(dlist);
+    free(dlist);
 }
 
 
@@ -754,7 +754,7 @@ _mesa_alloc_instruction(GLcontext *ctx, GLuint opcode, GLuint bytes)
 	    return NULL;
 #endif
 	n[0].opcode = OPCODE_CONTINUE;
-	newblock = (Node *) _mesa_malloc(sizeof(Node) * BLOCK_SIZE);
+	newblock = (Node *) malloc(sizeof(Node) * BLOCK_SIZE);
 	if (!newblock) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "Building display list");
 	    return NULL;
@@ -2564,7 +2564,7 @@ save_PixelMapfv(GLenum map, GLint mapsize, const GLfloat *values)
     if (n) {
 	n[1].e = map;
 	n[2].i = mapsize;
-	n[3].data = (void *) _mesa_malloc(mapsize * sizeof(GLfloat));
+	n[3].data = (void *) malloc(mapsize * sizeof(GLfloat));
 	MEMCPY(n[3].data, (void *) values, mapsize * sizeof(GLfloat));
     }
     if (ctx->ExecuteFlag) {
@@ -3969,7 +3969,7 @@ save_CompressedTexImage1DARB(GLenum target, GLint level,
 	GLvoid *image;
 	ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 	/* make copy of image */
-	image = _mesa_malloc(imageSize);
+	image = malloc(imageSize);
 	if (!image) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage1DARB");
 	    return;
@@ -4009,7 +4009,7 @@ save_CompressedTexImage2DARB(GLenum target, GLint level,
 	GLvoid *image;
 	ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 	/* make copy of image */
-	image = _mesa_malloc(imageSize);
+	image = malloc(imageSize);
 	if (!image) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage2DARB");
 	    return;
@@ -4050,7 +4050,7 @@ save_CompressedTexImage3DARB(GLenum target, GLint level,
 	GLvoid *image;
 	ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 	/* make copy of image */
-	image = _mesa_malloc(imageSize);
+	image = malloc(imageSize);
 	if (!image) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexImage3DARB");
 	    return;
@@ -4088,7 +4088,7 @@ save_CompressedTexSubImage1DARB(GLenum target, GLint level, GLint xoffset,
     ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
     /* make copy of image */
-    image = _mesa_malloc(imageSize);
+    image = malloc(imageSize);
     if (!image) {
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage1DARB");
 	return;
@@ -4123,7 +4123,7 @@ save_CompressedTexSubImage2DARB(GLenum target, GLint level, GLint xoffset,
     ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
     /* make copy of image */
-    image = _mesa_malloc(imageSize);
+    image = malloc(imageSize);
     if (!image) {
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage2DARB");
 	return;
@@ -4160,7 +4160,7 @@ save_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
     ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
 
     /* make copy of image */
-    image = _mesa_malloc(imageSize);
+    image = malloc(imageSize);
     if (!image) {
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glCompressedTexSubImage3DARB");
 	return;
@@ -4328,7 +4328,7 @@ save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
     Node *n;
     GLubyte *programCopy;
 
-    programCopy = (GLubyte *) _mesa_malloc(len);
+    programCopy = (GLubyte *) malloc(len);
     if (!programCopy) {
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
 	return;
@@ -4354,7 +4354,7 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint * ids)
 {
     GET_CURRENT_CONTEXT(ctx);
     Node *n;
-    GLuint *idCopy = (GLuint *) _mesa_malloc(num * sizeof(GLuint));
+    GLuint *idCopy = (GLuint *) malloc(num * sizeof(GLuint));
     if (!idCopy) {
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glRequestResidentProgramsNV");
 	return;
@@ -4523,7 +4523,7 @@ save_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte * name,
 {
     GET_CURRENT_CONTEXT(ctx);
     Node *n;
-    GLubyte *nameCopy = (GLubyte *) _mesa_malloc(len);
+    GLubyte *nameCopy = (GLubyte *) malloc(len);
     if (!nameCopy) {
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramNamedParameter4fNV");
 	return;
@@ -4623,7 +4623,7 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
     Node *n;
     GLubyte *programCopy;
 
-    programCopy = (GLubyte *) _mesa_malloc(len);
+    programCopy = (GLubyte *) malloc(len);
     if (!programCopy) {
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
 	return;

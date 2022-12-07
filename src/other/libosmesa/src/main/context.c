@@ -213,7 +213,7 @@ _mesa_create_visual(GLboolean rgbFlag,
 		    GLint accumAlphaBits,
 		    GLint numSamples)
 {
-    GLvisual *vis = (GLvisual *) _mesa_calloc(sizeof(GLvisual));
+    GLvisual *vis = (GLvisual *) calloc(1,sizeof(GLvisual));
     if (vis) {
 	if (!_mesa_initialize_visual(vis, rgbFlag, dbFlag, stereoFlag,
 				     redBits, greenBits, blueBits, alphaBits,
@@ -221,7 +221,7 @@ _mesa_create_visual(GLboolean rgbFlag,
 				     accumRedBits, accumGreenBits,
 				     accumBlueBits, accumAlphaBits,
 				     numSamples)) {
-	    _mesa_free(vis);
+	    free(vis);
 	    return NULL;
 	}
     }
@@ -311,7 +311,7 @@ _mesa_initialize_visual(GLvisual *vis,
 void
 _mesa_destroy_visual(GLvisual *vis)
 {
-    _mesa_free(vis);
+    free(vis);
 }
 
 /*@}*/
@@ -530,7 +530,7 @@ cleanup:
     if (ss->DefaultRect)
 	(*ctx->Driver.DeleteTexture)(ctx, ss->DefaultRect);
     if (ss)
-	_mesa_free(ss);
+	free(ss);
     return GL_FALSE;
 }
 
@@ -745,7 +745,7 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *ss)
 
     _glthread_DESTROY_MUTEX(ss->Mutex);
 
-    _mesa_free(ss);
+    free(ss);
 }
 
 
@@ -1023,7 +1023,7 @@ alloc_dispatch_table(void)
     GLint numEntries = MAX2(_glapi_get_dispatch_table_size(),
 			    sizeof(struct _glapi_table) / sizeof(_glapi_proc));
     struct _glapi_table *table =
-	(struct _glapi_table *) _mesa_malloc(numEntries * sizeof(_glapi_proc));
+	(struct _glapi_table *) malloc(numEntries * sizeof(_glapi_proc));
     if (table) {
 	_glapi_proc *entry = (_glapi_proc *) table;
 	GLint i;
@@ -1113,7 +1113,7 @@ _mesa_initialize_context(GLcontext *ctx,
     if (!ctx->Exec || !ctx->Save) {
 	free_shared_state(ctx, ctx->Shared);
 	if (ctx->Exec) {
-	    _mesa_free(ctx->Exec);
+	    free(ctx->Exec);
 	    ctx->Exec = NULL;
 	}
     }
@@ -1170,7 +1170,7 @@ _mesa_create_context(const GLvisual *visual,
     ASSERT(visual);
     ASSERT(driverContext);
 
-    ctx = (GLcontext *) _mesa_calloc(sizeof(GLcontext));
+    ctx = (GLcontext *) calloc(1,sizeof(GLcontext));
     if (!ctx)
 	return NULL;
 
@@ -1178,7 +1178,7 @@ _mesa_create_context(const GLvisual *visual,
 				 driverFunctions, driverContext)) {
 	return ctx;
     } else {
-	_mesa_free(ctx);
+	free(ctx);
 	return NULL;
     }
 }
@@ -1224,8 +1224,8 @@ _mesa_free_context_data(GLcontext *ctx)
     _mesa_delete_array_object(ctx, ctx->Array.DefaultArrayObj);
 
     /* free dispatch tables */
-    _mesa_free(ctx->Exec);
-    _mesa_free(ctx->Save);
+    free(ctx->Exec);
+    free(ctx->Save);
 
     /* Shared context state (display lists, textures, etc) */
     _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
@@ -1238,7 +1238,7 @@ _mesa_free_context_data(GLcontext *ctx)
     }
 
     if (ctx->Extensions.String)
-	_mesa_free((void *) ctx->Extensions.String);
+	free((void *) ctx->Extensions.String);
 
     /* unbind the context if it's currently bound */
     if (ctx == _mesa_get_current_context()) {
@@ -1259,7 +1259,7 @@ _mesa_destroy_context(GLcontext *ctx)
 {
     if (ctx) {
 	_mesa_free_context_data(ctx);
-	_mesa_free((void *) ctx);
+	free((void *) ctx);
     }
 }
 

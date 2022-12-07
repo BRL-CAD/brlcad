@@ -170,7 +170,7 @@ record_error(struct parse_state *parseState, const char *msg, int lineNo)
     _mesa_debug(parseState->ctx,
 		"nvfragparse.c(%d): line %d, column %d:%s (%s)\n",
 		lineNo, line, column, (char *) lineStr, msg);
-    _mesa_free((void *) lineStr);
+    free((void *) lineStr);
 #else
     (void) lineNo;
 #endif
@@ -1199,7 +1199,7 @@ Parse_PrintInstruction(struct parse_state *parseState,
     for (len = 0; str[len] != '\''; len++) /* find closing quote */
 	;
     parseState->pos += len + 1;
-    msg = (GLubyte*) _mesa_malloc(len + 1);
+    msg = (GLubyte*) malloc(len + 1);
 
     _mesa_memcpy(msg, str, len);
     msg[len] = 0;
@@ -1432,7 +1432,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
     GLubyte *programString;
 
     /* Make a null-terminated copy of the program string */
-    programString = (GLubyte *) _mesa_malloc(len + 1);
+    programString = (GLubyte *) malloc(len + 1);
     if (!programString) {
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
 	return;
@@ -1499,12 +1499,12 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
 	/* install the program */
 	program->Base.Target = target;
 	if (program->Base.String) {
-	    _mesa_free(program->Base.String);
+	    free(program->Base.String);
 	}
 	program->Base.String = programString;
 	program->Base.Format = GL_PROGRAM_FORMAT_ASCII_ARB;
 	if (program->Base.Instructions) {
-	    _mesa_free(program->Base.Instructions);
+	    free(program->Base.Instructions);
 	}
 	program->Base.Instructions = newInst;
 	program->Base.NumInstructions = parseState.numInst;

@@ -239,7 +239,7 @@ void _vbo_DestroyContext(GLcontext *ctx)
 
     vbo_exec_destroy(ctx);
     vbo_save_destroy(ctx);
-    _mesa_free(vbo_context(ctx));
+    free(vbo_context(ctx));
     ctx->swtnl_im = NULL;
 }
 

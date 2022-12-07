@@ -388,7 +388,7 @@ pp_symbols_free(pp_symbols *self)
 
     for (i = 0; i < self->count; i++)
 	pp_symbol_free(&self->symbols[i]);
-    _mesa_free(self->symbols);
+    free(self->symbols);
 }
 
 static pp_symbol *

@@ -53,12 +53,12 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
     GLuint i;
     for (i = 0; i < paramList->NumParameters; i++) {
 	if (paramList->Parameters[i].Name)
-	    _mesa_free((void *) paramList->Parameters[i].Name);
+	    free((void *) paramList->Parameters[i].Name);
     }
-    _mesa_free(paramList->Parameters);
+    free(paramList->Parameters);
     if (paramList->ParameterValues)
 	_mesa_align_free(paramList->ParameterValues);
-    _mesa_free(paramList);
+    free(paramList);
 }
 
 
@@ -410,7 +410,7 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
     paramList->StateFlags |= _mesa_program_state_flags(stateTokens);
 
     /* free name string here since we duplicated it in add_parameter() */
-    _mesa_free((void *) name);
+    free((void *) name);
 
     return index;
 }

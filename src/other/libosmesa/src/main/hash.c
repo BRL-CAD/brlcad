@@ -106,12 +106,12 @@ _mesa_DeleteHashTable(struct _mesa_HashTable *table)
 		_mesa_problem(NULL,
 			      "In _mesa_DeleteHashTable, found non-freed data");
 	    }
-	    _mesa_free(entry);
+	    free(entry);
 	    entry = next;
 	}
     }
     _glthread_DESTROY_MUTEX(table->Mutex);
-    _mesa_free(table);
+    free(table);
 }
 
 
@@ -236,7 +236,7 @@ _mesa_HashRemove(struct _mesa_HashTable *table, GLuint key)
 	    } else {
 		table->Table[pos] = entry->Next;
 	    }
-	    _mesa_free(entry);
+	    free(entry);
 	    _glthread_UNLOCK_MUTEX(table->Mutex);
 	    return;
 	}
@@ -273,7 +273,7 @@ _mesa_HashDeleteAll(struct _mesa_HashTable *table,
 	for (entry = table->Table[pos]; entry; entry = next) {
 	    callback(entry->Key, entry->Data, userData);
 	    next = entry->Next;
-	    _mesa_free(entry);
+	    free(entry);
 	}
 	table->Table[pos] = NULL;
     }

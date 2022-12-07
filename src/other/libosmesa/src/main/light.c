@@ -1373,9 +1373,9 @@ _mesa_free_lighting_data(GLcontext *ctx)
 
     /* Free lighting shininess exponentiation table */
     foreach_s(s, tmps, ctx->_ShineTabList) {
-	_mesa_free(s);
+	free(s);
     }
-    _mesa_free(ctx->_ShineTabList);
+    free(ctx->_ShineTabList);
 }
 
 /*

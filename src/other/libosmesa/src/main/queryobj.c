@@ -61,7 +61,7 @@ _mesa_new_query_object(GLcontext *ctx, GLuint id)
 static void
 delete_query_object(struct gl_query_object *q)
 {
-    _mesa_free(q);
+    free(q);
 }
 
 

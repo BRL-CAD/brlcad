@@ -1193,7 +1193,7 @@ static void rehash(struct texenvprog_cache *cache)
     GLuint size, i;
 
     size = cache->size * 3;
-    items = (struct texenvprog_cache_item**) _mesa_malloc(size * sizeof(*items));
+    items = (struct texenvprog_cache_item**) malloc(size * sizeof(*items));
     _mesa_memset(items, 0, size * sizeof(*items));
 
     for (i = 0; i < cache->size; i++)
@@ -1203,7 +1203,7 @@ static void rehash(struct texenvprog_cache *cache)
 	    items[c->hash % size] = c;
 	}
 
-    _mesa_free(cache->items);
+    free(cache->items);
     cache->items = items;
     cache->size = size;
 }
@@ -1216,10 +1216,10 @@ static void clear_cache(struct texenvprog_cache *cache)
     for (i = 0; i < cache->size; i++) {
 	for (c = cache->items[i]; c; c = next) {
 	    next = c->next;
-	    _mesa_free(c->key);
+	    free(c->key);
 	    cache->ctx->Driver.DeleteProgram(cache->ctx,
 					     (struct gl_program *) c->data);
-	    _mesa_free(c);
+	    free(c);
 	}
 	cache->items[i] = NULL;
     }
@@ -1234,10 +1234,10 @@ static void cache_item(struct texenvprog_cache *cache,
 		       const struct state_key *key,
 		       void *data)
 {
-    struct texenvprog_cache_item *c = (struct texenvprog_cache_item *) _mesa_malloc(sizeof(*c));
+    struct texenvprog_cache_item *c = (struct texenvprog_cache_item *) malloc(sizeof(*c));
     c->hash = hash;
 
-    c->key = _mesa_malloc(sizeof(*key));
+    c->key = malloc(sizeof(*key));
     memcpy(c->key, key, sizeof(*key));
 
     c->data = (struct gl_fragment_program *) data;
@@ -1339,7 +1339,7 @@ void _mesa_TexEnvProgramCacheInit(GLcontext *ctx)
     ctx->Texture.env_fp_cache.size = 17;
     ctx->Texture.env_fp_cache.n_items = 0;
     ctx->Texture.env_fp_cache.items = (struct texenvprog_cache_item **)
-				      _mesa_calloc(ctx->Texture.env_fp_cache.size *
+				      calloc(1,ctx->Texture.env_fp_cache.size *
 					      sizeof(struct texenvprog_cache_item *));
 }
 
@@ -1347,7 +1347,7 @@ void _mesa_TexEnvProgramCacheInit(GLcontext *ctx)
 void _mesa_TexEnvProgramCacheDestroy(GLcontext *ctx)
 {
     clear_cache(&ctx->Texture.env_fp_cache);
-    _mesa_free(ctx->Texture.env_fp_cache.items);
+    free(ctx->Texture.env_fp_cache.items);
 }
 
 /*

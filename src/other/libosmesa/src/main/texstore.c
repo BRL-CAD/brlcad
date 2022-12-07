@@ -352,16 +352,16 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
 	GLfloat *convImage;
 
 	/* pre-convolution image buffer (3D) */
-	tempImage = (GLfloat *) _mesa_malloc(srcWidth * srcHeight * srcDepth
+	tempImage = (GLfloat *) malloc(srcWidth * srcHeight * srcDepth
 					     * 4 * sizeof(GLfloat));
 	if (!tempImage)
 	    return NULL;
 
 	/* post-convolution image buffer (2D) */
-	convImage = (GLfloat *) _mesa_malloc(srcWidth * srcHeight
+	convImage = (GLfloat *) malloc(srcWidth * srcHeight
 					     * 4 * sizeof(GLfloat));
 	if (!convImage) {
-	    _mesa_free(tempImage);
+	    free(tempImage);
 	    return NULL;
 	}
 
@@ -419,7 +419,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
 	    }
 	} /* loop over 3D image slices */
 
-	_mesa_free(convImage);
+	free(convImage);
 
 	/* might need these below */
 	srcWidth = convWidth;
@@ -432,7 +432,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
 	GLfloat *dst;
 	GLint img, row;
 
-	tempImage = (GLfloat *) _mesa_malloc(srcWidth * srcHeight * srcDepth
+	tempImage = (GLfloat *) malloc(srcWidth * srcHeight * srcDepth
 					     * components * sizeof(GLfloat));
 	if (!tempImage)
 	    return NULL;
@@ -471,10 +471,10 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
 	 */
 	ASSERT(texComponents >= logComponents);
 
-	newImage = (GLfloat *) _mesa_malloc(srcWidth * srcHeight * srcDepth
+	newImage = (GLfloat *) malloc(srcWidth * srcHeight * srcDepth
 					    * texComponents * sizeof(GLfloat));
 	if (!newImage) {
-	    _mesa_free(tempImage);
+	    free(tempImage);
 	    return NULL;
 	}
 
@@ -494,7 +494,7 @@ make_temp_float_image(GLcontext *ctx, GLuint dims,
 	    }
 	}
 
-	_mesa_free(tempImage);
+	free(tempImage);
 	tempImage = newImage;
     }
 
@@ -580,11 +580,11 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
     }
 
     /* unpack and transfer the source image */
-    tempImage = (GLchan *) _mesa_malloc(srcWidth * srcHeight * srcDepth
+    tempImage = (GLchan *) malloc(srcWidth * srcHeight * srcDepth
 					* components * sizeof(GLchan));
     if (!tempImage) {
 	if (convImage)
-	    _mesa_free(convImage);
+	    free(convImage);
 	return NULL;
     }
 
@@ -609,7 +609,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
 
     /* If we made a temporary image for convolution, free it here */
     if (freeSrcImage) {
-	_mesa_free((void *) srcAddr);
+	free((void *) srcAddr);
     }
 
     if (logicalBaseFormat != textureBaseFormat) {
@@ -629,10 +629,10 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
 	 */
 	ASSERT(texComponents >= logComponents);
 
-	newImage = (GLchan *) _mesa_malloc(srcWidth * srcHeight * srcDepth
+	newImage = (GLchan *) malloc(srcWidth * srcHeight * srcDepth
 					   * texComponents * sizeof(GLchan));
 	if (!newImage) {
-	    _mesa_free(tempImage);
+	    free(tempImage);
 	    return NULL;
 	}
 
@@ -652,7 +652,7 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
 	    }
 	}
 
-	_mesa_free(tempImage);
+	free(tempImage);
 	tempImage = newImage;
     }
 
@@ -1128,7 +1128,7 @@ _mesa_texstore_rgba(TEXSTORE_PARAMS)
 	    }
 	}
 
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -1322,7 +1322,7 @@ _mesa_texstore_rgb565(TEXSTORE_PARAMS)
 		dstRow += dstRowStride;
 	    }
 	}
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -1443,7 +1443,7 @@ _mesa_texstore_rgba8888(TEXSTORE_PARAMS)
 		dstRow += dstRowStride;
 	    }
 	}
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -1654,7 +1654,7 @@ _mesa_texstore_argb8888(TEXSTORE_PARAMS)
 		dstRow += dstRowStride;
 	    }
 	}
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -1775,7 +1775,7 @@ _mesa_texstore_rgb888(TEXSTORE_PARAMS)
 		dstRow += dstRowStride;
 	    }
 	}
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -1878,7 +1878,7 @@ _mesa_texstore_bgr888(TEXSTORE_PARAMS)
 		dstRow += dstRowStride;
 	    }
 	}
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -1944,7 +1944,7 @@ _mesa_texstore_argb4444(TEXSTORE_PARAMS)
 		dstRow += dstRowStride;
 	    }
 	}
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -2011,7 +2011,7 @@ _mesa_texstore_argb1555(TEXSTORE_PARAMS)
 		dstRow += dstRowStride;
 	    }
 	}
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -2108,7 +2108,7 @@ _mesa_texstore_al88(TEXSTORE_PARAMS)
 		dstRow += dstRowStride;
 	    }
 	}
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -2159,7 +2159,7 @@ _mesa_texstore_rgb332(TEXSTORE_PARAMS)
 		dstRow += dstRowStride;
 	    }
 	}
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -2240,7 +2240,7 @@ _mesa_texstore_a8(TEXSTORE_PARAMS)
 		src += srcWidth;
 	    }
 	}
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -2473,7 +2473,7 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
 	    }
 	}
 
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }
@@ -2541,7 +2541,7 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
 	    }
 	}
 
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
     }
     return GL_TRUE;
 }

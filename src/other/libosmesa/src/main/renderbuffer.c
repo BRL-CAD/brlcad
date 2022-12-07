@@ -1178,13 +1178,13 @@ _mesa_soft_renderbuffer_storage(GLcontext *ctx, struct gl_renderbuffer *rb,
 
     /* free old buffer storage */
     if (rb->Data) {
-	_mesa_free(rb->Data);
+	free(rb->Data);
 	rb->Data = NULL;
     }
 
     if (width > 0 && height > 0) {
 	/* allocate new buffer storage */
-	rb->Data = _mesa_malloc(width * height * pixelSize);
+	rb->Data = malloc(width * height * pixelSize);
 	if (rb->Data == NULL) {
 	    rb->Width = 0;
 	    rb->Height = 0;
@@ -1233,10 +1233,10 @@ alloc_storage_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb,
 
     /* next, resize my alpha buffer */
     if (arb->Data) {
-	_mesa_free(arb->Data);
+	free(arb->Data);
     }
 
-    arb->Data = _mesa_malloc(width * height * sizeof(GLubyte));
+    arb->Data = malloc(width * height * sizeof(GLubyte));
     if (arb->Data == NULL) {
 	arb->Width = 0;
 	arb->Height = 0;
@@ -1258,13 +1258,13 @@ static void
 delete_renderbuffer_alpha8(struct gl_renderbuffer *arb)
 {
     if (arb->Data) {
-	_mesa_free(arb->Data);
+	free(arb->Data);
     }
     ASSERT(arb->Wrapped);
     ASSERT(arb != arb->Wrapped);
     arb->Wrapped->Delete(arb->Wrapped);
     arb->Wrapped = NULL;
-    _mesa_free(arb);
+    free(arb);
 }
 
 
@@ -1517,9 +1517,9 @@ void
 _mesa_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
     if (rb->Data) {
-	_mesa_free(rb->Data);
+	free(rb->Data);
     }
-    _mesa_free(rb);
+    free(rb);
 }
 
 

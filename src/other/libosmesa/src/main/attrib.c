@@ -331,7 +331,7 @@ _mesa_PushAttrib(GLbitfield mask)
 
     if (mask & GL_POLYGON_STIPPLE_BIT) {
 	GLuint *stipple;
-	stipple = (GLuint *) _mesa_malloc(32*sizeof(GLuint));
+	stipple = (GLuint *) malloc(32*sizeof(GLuint));
 	MEMCPY(stipple, ctx->PolygonStipple, 32*sizeof(GLuint));
 	newnode = new_attrib_node(GL_POLYGON_STIPPLE_BIT);
 	newnode->data = stipple;
@@ -1231,8 +1231,8 @@ _mesa_PopAttrib(void)
 	}
 
 	next = attr->next;
-	_mesa_free(attr->data);
-	_mesa_free(attr);
+	free(attr->data);
+	free(attr);
 	attr = next;
     }
 }
@@ -1403,7 +1403,7 @@ _mesa_PopClientAttrib(void)
 		MEMCPY(ctx->Array.ArrayObj, data->ArrayObj,
 		       sizeof(struct gl_array_object));
 
-		_mesa_free(data->ArrayObj);
+		free(data->ArrayObj);
 
 		/* FIXME: Should some bits in ctx->Array->NewState also be set
 		 * FIXME: here?  It seems like it should be set to inclusive-or
@@ -1419,8 +1419,8 @@ _mesa_PopClientAttrib(void)
 	}
 
 	next = attr->next;
-	_mesa_free(attr->data);
-	_mesa_free(attr);
+	free(attr->data);
+	free(attr);
 	attr = next;
     }
 }
@@ -1452,8 +1452,8 @@ _mesa_free_attrib_data(GLcontext *ctx)
 	    }
 
 	    next = attr->next;
-	    _mesa_free(attr->data);
-	    _mesa_free(attr);
+	    free(attr->data);
+	    free(attr);
 	    attr = next;
 	}
     }

@@ -88,7 +88,7 @@ void _tnl_register_fastpath(struct tnl_clipspace *vtx,
     fastpath->match_strides = match_strides;
     fastpath->func = vtx->emit;
     fastpath->attr = (struct tnl_attr_type *)
-		     _mesa_malloc(vtx->attr_count * sizeof(fastpath->attr[0]));
+		     malloc(vtx->attr_count * sizeof(fastpath->attr[0]));
 
     for (i = 0; i < vtx->attr_count; i++) {
 	fastpath->attr[i].format = vtx->attr[i].format;
@@ -501,8 +501,8 @@ void _tnl_free_vertices(GLcontext *ctx)
 
     for (fp = vtx->fastpath ; fp ; fp = tmp) {
 	tmp = fp->next;
-	_mesa_free(fp->attr);
-	_mesa_free(fp);
+	free(fp->attr);
+	free(fp);
     }
 
     vtx->fastpath = NULL;

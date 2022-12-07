@@ -165,8 +165,8 @@ _mesa_delete_buffer_object(GLcontext *ctx, struct gl_buffer_object *bufObj)
     (void) ctx;
 
     if (bufObj->Data)
-	_mesa_free(bufObj->Data);
-    _mesa_free(bufObj);
+	free(bufObj->Data);
+    free(bufObj);
 }
 
 

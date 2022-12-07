@@ -142,7 +142,7 @@ zoom_span(GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
 
     if (!swrast->ZoomedArrays) {
 	/* allocate on demand */
-	swrast->ZoomedArrays = (SWspanarrays *) _mesa_calloc(sizeof(SWspanarrays));
+	swrast->ZoomedArrays = (SWspanarrays *) calloc(1,sizeof(SWspanarrays));
 	if (!swrast->ZoomedArrays)
 	    return;
     }

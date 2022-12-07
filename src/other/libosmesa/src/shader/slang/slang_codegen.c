@@ -3082,7 +3082,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 
     /* free codegen context */
     /*
-    _mesa_free(A->codegen);
+    free(A->codegen);
     */
 
     return success;

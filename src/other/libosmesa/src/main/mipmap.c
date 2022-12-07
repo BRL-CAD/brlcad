@@ -620,12 +620,12 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
     (void) srcDepthNB; /* silence warnings */
 
     /* Need two temporary row buffers */
-    tmpRowA = _mesa_malloc(srcWidth * bpt);
+    tmpRowA = malloc(srcWidth * bpt);
     if (!tmpRowA)
 	return;
-    tmpRowB = _mesa_malloc(srcWidth * bpt);
+    tmpRowB = malloc(srcWidth * bpt);
     if (!tmpRowB) {
-	_mesa_free(tmpRowA);
+	free(tmpRowA);
 	return;
     }
 
@@ -692,8 +692,8 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
 	}
     }
 
-    _mesa_free(tmpRowA);
-    _mesa_free(tmpRowB);
+    free(tmpRowA);
+    free(tmpRowB);
 
     /* Luckily we can leverage the make_2d_mipmap() function here! */
     if (border > 0) {
@@ -824,15 +824,15 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	size = _mesa_bytes_per_pixel(srcImage->_BaseFormat, CHAN_TYPE)
 	       * srcImage->Width * srcImage->Height * srcImage->Depth + 20;
 	/* 20 extra bytes, just be safe when calling last FetchTexel */
-	srcData = (GLubyte *) _mesa_malloc(size);
+	srcData = (GLubyte *) malloc(size);
 	if (!srcData) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
 	    return;
 	}
-	dstData = (GLubyte *) _mesa_malloc(size / 2);  /* 1/4 would probably be OK */
+	dstData = (GLubyte *) malloc(size / 2);  /* 1/4 would probably be OK */
 	if (!dstData) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
-	    _mesa_free((void *) srcData);
+	    free((void *) srcData);
 	    return;
 	}
 
@@ -889,9 +889,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	    dstDepth == srcDepth) {
 	    /* all done */
 	    if (srcData)
-		_mesa_free((void *)srcData);
+		free((void *)srcData);
 	    if (dstData)
-		_mesa_free(dstData);
+		free(dstData);
 	    return;
 	}
 
@@ -903,7 +903,7 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	}
 
 	if (dstImage->ImageOffsets)
-	    _mesa_free(dstImage->ImageOffsets);
+	    free(dstImage->ImageOffsets);
 
 	/* Free old image data */
 	if (dstImage->Data)
@@ -938,9 +938,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	    if (!dstImage->Data) {
 		_mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
 		if (srcData)
-		    _mesa_free((void *)srcData);
+		    free((void *)srcData);
 		if (dstData)
-		    _mesa_free(dstData);
+		    free(dstData);
 		return;
 	    }
 	    /* srcData and dstData are already set */
@@ -955,9 +955,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	    /* If we're assigning these below, free up anything which has
 	     * been allocated first so we don't leak it */
 	    if (srcData)
-		_mesa_free((void *)srcData);
+		free((void *)srcData);
 	    if (dstData)
-		_mesa_free(dstData);
+		free(dstData);
 
 	    if (!dstImage->Data) {
 		_mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
@@ -999,9 +999,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	    default:
 		_mesa_problem(ctx, "bad dimensions in _mesa_generate_mipmaps");
 		if (srcData)
-		    _mesa_free((void *)srcData);
+		    free((void *)srcData);
 		if (dstData)
-		    _mesa_free(dstData);
+		    free(dstData);
 		return;
 	}
 
@@ -1030,9 +1030,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
     } /* loop over mipmap levels */
 
     if (srcData)
-	_mesa_free((void *)srcData);
+	free((void *)srcData);
     if (dstData)
-	_mesa_free(dstData);
+	free(dstData);
 }
 
 

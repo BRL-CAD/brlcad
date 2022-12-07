@@ -170,7 +170,7 @@ void vbo_rebase_prims(GLcontext *ctx,
     } else {
 	/* Otherwise the primitives need adjustment.
 	 */
-	tmp_prims = (struct _mesa_prim *)_mesa_malloc(sizeof(*prim) * nr_prims);
+	tmp_prims = (struct _mesa_prim *)malloc(sizeof(*prim) * nr_prims);
 
 	for (i = 0; i < nr_prims; i++) {
 	    /* If this fails, it could indicate an application error:
@@ -211,10 +211,10 @@ void vbo_rebase_prims(GLcontext *ctx,
 	 max_index - min_index);
 
     if (tmp_indices)
-	_mesa_free(tmp_indices);
+	free(tmp_indices);
 
     if (tmp_prims)
-	_mesa_free(tmp_prims);
+	free(tmp_prims);
 }
 
 

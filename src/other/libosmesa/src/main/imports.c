@@ -61,27 +61,6 @@ extern int vsnprintf(char *str, size_t count, const char *fmt, va_list arg);
 /** \name Memory */
 /*@{*/
 
-/** Wrapper around malloc() */
-void *
-_mesa_malloc(size_t bytes)
-{
-    return malloc(bytes);
-}
-
-/** Wrapper around calloc() */
-void *
-_mesa_calloc(size_t bytes)
-{
-    return calloc(1, bytes);
-}
-
-/** Wrapper around free() */
-void
-_mesa_free(void *ptr)
-{
-    free(ptr);
-}
-
 /**
  * Allocate aligned memory.
  *
@@ -108,7 +87,7 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 
     ASSERT(alignment > 0);
 
-    ptr = (uintptr_t) _mesa_malloc(bytes + alignment + sizeof(void *));
+    ptr = (uintptr_t) malloc(bytes + alignment + sizeof(void *));
     if (!ptr)
 	return NULL;
 
@@ -128,8 +107,8 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 }
 
 /**
- * Same as _mesa_align_malloc(), but using _mesa_calloc() instead of
- * _mesa_malloc()
+ * Same as _mesa_align_malloc(), but using calloc(1,) instead of
+ * malloc()
  */
 void *
 _mesa_align_calloc(size_t bytes, unsigned long alignment)
@@ -157,7 +136,7 @@ _mesa_align_calloc(size_t bytes, unsigned long alignment)
 
     ASSERT(alignment > 0);
 
-    ptr = (uintptr_t) _mesa_calloc(bytes + alignment + sizeof(void *));
+    ptr = (uintptr_t) calloc(1,bytes + alignment + sizeof(void *));
     if (!ptr)
 	return NULL;
 
@@ -193,7 +172,7 @@ _mesa_align_free(void *ptr)
 #else
     void **cubbyHole = (void **)((char *) ptr - sizeof(void *));
     void *realAddr = *cubbyHole;
-    _mesa_free(realAddr);
+    free(realAddr);
 #endif /* defined(HAVE_POSIX_MEMALIGN) */
 }
 
@@ -226,11 +205,11 @@ void *
 _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize)
 {
     const size_t copySize = (oldSize < newSize) ? oldSize : newSize;
-    void *newBuffer = _mesa_malloc(newSize);
+    void *newBuffer = malloc(newSize);
     if (newBuffer && oldBuffer && copySize > 0)
 	_mesa_memcpy(newBuffer, oldBuffer, copySize);
     if (oldBuffer)
-	_mesa_free(oldBuffer);
+	free(oldBuffer);
     return newBuffer;
 }
 
@@ -874,7 +853,7 @@ _mesa_strncmp(const char *s1, const char *s2, size_t n)
 }
 
 /**
- * Implemented using _mesa_malloc() and _mesa_strcpy.
+ * Implemented using malloc() and _mesa_strcpy.
  * Note that NULL is handled accordingly.
  */
 char *
@@ -882,7 +861,7 @@ _mesa_strdup(const char *s)
 {
     if (s) {
 	size_t l = _mesa_strlen(s);
-	char *s2 = (char *) _mesa_malloc(l + 1);
+	char *s2 = (char *) malloc(l + 1);
 	if (s2)
 	    _mesa_strcpy(s2, s);
 	return s2;

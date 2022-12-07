@@ -2139,7 +2139,7 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 
     /* free shader's prev info log */
     if (shader->InfoLog) {
-	_mesa_free(shader->InfoLog);
+	free(shader->InfoLog);
 	shader->InfoLog = NULL;
     }
 
