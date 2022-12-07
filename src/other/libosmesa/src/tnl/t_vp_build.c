@@ -1587,7 +1587,7 @@ void _tnl_ProgramCacheInit(GLcontext *ctx)
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-    tnl->vp_cache = (struct tnl_cache *) MALLOC(sizeof(*tnl->vp_cache));
+    tnl->vp_cache = (struct tnl_cache *) _mesa_malloc(sizeof(*tnl->vp_cache));
     tnl->vp_cache->size = 17;
     tnl->vp_cache->n_items = 0;
     tnl->vp_cache->items = (struct tnl_cache_item**)

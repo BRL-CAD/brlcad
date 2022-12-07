@@ -1234,7 +1234,7 @@ static void cache_item(struct texenvprog_cache *cache,
 		       const struct state_key *key,
 		       void *data)
 {
-    struct texenvprog_cache_item *c = (struct texenvprog_cache_item *) MALLOC(sizeof(*c));
+    struct texenvprog_cache_item *c = (struct texenvprog_cache_item *) _mesa_malloc(sizeof(*c));
     c->hash = hash;
 
     c->key = _mesa_malloc(sizeof(*key));

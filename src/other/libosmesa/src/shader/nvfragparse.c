@@ -1432,7 +1432,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
     GLubyte *programString;
 
     /* Make a null-terminated copy of the program string */
-    programString = (GLubyte *) MALLOC(len + 1);
+    programString = (GLubyte *) _mesa_malloc(len + 1);
     if (!programString) {
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
 	return;

@@ -1029,7 +1029,7 @@ make_null_texture(GLint width, GLint height, GLint depth, GLenum format)
 {
     const GLint components = _mesa_components_in_format(format);
     const GLint numPixels = width * height * depth;
-    GLubyte *data = (GLubyte *) MALLOC(numPixels * components * sizeof(GLubyte));
+    GLubyte *data = (GLubyte *) _mesa_malloc(numPixels * components * sizeof(GLubyte));
 
 #ifdef DEBUG
     /*

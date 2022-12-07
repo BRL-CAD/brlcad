@@ -237,7 +237,7 @@ alloc_fog_data(GLcontext *ctx, struct tnl_pipeline_stage *stage)
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
     struct fog_stage_data *store;
-    stage->privatePtr = MALLOC(sizeof(*store));
+    stage->privatePtr = _mesa_malloc(sizeof(*store));
     store = FOG_STAGE_DATA(stage);
     if (!store)
 	return GL_FALSE;

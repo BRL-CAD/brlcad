@@ -71,8 +71,6 @@ extern "C" {
 /** Memory macros */
 /*@{*/
 
-/** Allocate \p BYTES bytes */
-#define MALLOC(BYTES)      _mesa_malloc(BYTES)
 /** Allocate and zero \p BYTES bytes */
 #define CALLOC(BYTES)      _mesa_calloc(BYTES)
 /** Allocate a structure of type \p T */

@@ -331,7 +331,7 @@ _mesa_PushAttrib(GLbitfield mask)
 
     if (mask & GL_POLYGON_STIPPLE_BIT) {
 	GLuint *stipple;
-	stipple = (GLuint *) MALLOC(32*sizeof(GLuint));
+	stipple = (GLuint *) _mesa_malloc(32*sizeof(GLuint));
 	MEMCPY(stipple, ctx->PolygonStipple, 32*sizeof(GLuint));
 	newnode = new_attrib_node(GL_POLYGON_STIPPLE_BIT);
 	newnode->data = stipple;

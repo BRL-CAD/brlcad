@@ -471,7 +471,7 @@ init_vp(GLcontext *ctx, struct tnl_pipeline_stage *stage)
     const GLuint size = VB->Size;
     GLuint i;
 
-    stage->privatePtr = MALLOC(sizeof(*store));
+    stage->privatePtr = _mesa_malloc(sizeof(*store));
     store = VP_STAGE_DATA(stage);
     if (!store)
 	return GL_FALSE;
