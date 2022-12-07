@@ -71,7 +71,7 @@ _swsetup_DestroyContext(GLcontext *ctx)
     SScontext *swsetup = SWSETUP_CONTEXT(ctx);
 
     if (swsetup) {
-	FREE(swsetup);
+	_mesa_free(swsetup);
 	ctx->swsetup_context = 0;
     }
 

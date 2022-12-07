@@ -75,8 +75,6 @@ extern "C" {
 #define MALLOC_STRUCT(T)   (struct T *) _mesa_malloc(sizeof(struct T))
 /** Allocate and zero a structure of type \p T */
 #define CALLOC_STRUCT(T)   (struct T *) _mesa_calloc(sizeof(struct T))
-/** Free memory */
-#define FREE(PTR)          _mesa_free(PTR)
 
 /** Allocate \p BYTES aligned at \p N bytes */
 #define ALIGN_MALLOC(BYTES, N)     _mesa_align_malloc(BYTES, N)

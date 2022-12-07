@@ -1063,7 +1063,7 @@ GLboolean _ae_create_context(GLcontext *ctx)
 void _ae_destroy_context(GLcontext *ctx)
 {
     if (AE_CONTEXT(ctx)) {
-	FREE(ctx->aelt_context);
+	_mesa_free(ctx->aelt_context);
 	ctx->aelt_context = NULL;
     }
 }

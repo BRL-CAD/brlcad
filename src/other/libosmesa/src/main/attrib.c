@@ -1231,8 +1231,8 @@ _mesa_PopAttrib(void)
 	}
 
 	next = attr->next;
-	FREE(attr->data);
-	FREE(attr);
+	_mesa_free(attr->data);
+	_mesa_free(attr);
 	attr = next;
     }
 }
@@ -1403,7 +1403,7 @@ _mesa_PopClientAttrib(void)
 		MEMCPY(ctx->Array.ArrayObj, data->ArrayObj,
 		       sizeof(struct gl_array_object));
 
-		FREE(data->ArrayObj);
+		_mesa_free(data->ArrayObj);
 
 		/* FIXME: Should some bits in ctx->Array->NewState also be set
 		 * FIXME: here?  It seems like it should be set to inclusive-or
@@ -1419,8 +1419,8 @@ _mesa_PopClientAttrib(void)
 	}
 
 	next = attr->next;
-	FREE(attr->data);
-	FREE(attr);
+	_mesa_free(attr->data);
+	_mesa_free(attr);
 	attr = next;
     }
 }

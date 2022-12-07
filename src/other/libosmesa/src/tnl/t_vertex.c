@@ -501,8 +501,8 @@ void _tnl_free_vertices(GLcontext *ctx)
 
     for (fp = vtx->fastpath ; fp ; fp = tmp) {
 	tmp = fp->next;
-	FREE(fp->attr);
-	FREE(fp);
+	_mesa_free(fp->attr);
+	_mesa_free(fp);
     }
 
     vtx->fastpath = NULL;

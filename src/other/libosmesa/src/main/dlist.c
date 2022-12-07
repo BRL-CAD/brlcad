@@ -143,7 +143,7 @@ do {									\
  *
  * \param ctx GL context.
  */
-#define ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE(ctx, _tofree)			\
+#define ASSERT_OUTSIDE_SAVE_BEGIN_END__mesa_free(ctx, _tofree)			\
 do {									\
    if (ctx->Driver.CurrentSavePrimitive <= GL_POLYGON ||		\
        ctx->Driver.CurrentSavePrimitive == PRIM_INSIDE_UNKNOWN_PRIM) {	\
@@ -174,7 +174,7 @@ do {									\
  */
 #define ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE_AND_FLUSH(ctx, _tofree)	\
 do {									\
-   ASSERT_OUTSIDE_SAVE_BEGIN_END_FREE(ctx, _tofree);			\
+   ASSERT_OUTSIDE_SAVE_BEGIN_END__mesa_free(ctx, _tofree);			\
    SAVE_FLUSH_VERTICES(ctx);						\
 } while (0)
 

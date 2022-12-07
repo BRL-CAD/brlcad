@@ -244,7 +244,7 @@ static void dtr(struct tnl_pipeline_stage *stage)
 	_mesa_vector4f_free(&store->clip);
 	_mesa_vector4f_free(&store->proj);
 	ALIGN_FREE(store->clipmask);
-	FREE(store);
+	_mesa_free(store);
 	stage->privatePtr = NULL;
 	stage->run = init_vertex_stage;
     }

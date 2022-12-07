@@ -257,7 +257,7 @@ free_fog_data(struct tnl_pipeline_stage *stage)
     struct fog_stage_data *store = FOG_STAGE_DATA(stage);
     if (store) {
 	_mesa_vector4f_free(&store->fogcoord);
-	FREE(store);
+	_mesa_free(store);
 	stage->privatePtr = NULL;
     }
 }

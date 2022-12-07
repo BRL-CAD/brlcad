@@ -93,7 +93,7 @@ _tnl_DestroyContext(GLcontext *ctx)
     if (ctx->VertexProgram._MaintainTnlProgram)
 	_tnl_ProgramCacheDestroy(ctx);
 
-    FREE(tnl);
+    _mesa_free(tnl);
     ctx->swtnl_context = NULL;
 }
 

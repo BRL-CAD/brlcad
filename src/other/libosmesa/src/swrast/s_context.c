@@ -784,7 +784,7 @@ _swrast_CreateContext(GLcontext *ctx)
 
     swrast->SpanArrays = MALLOC_STRUCT(sw_span_arrays);
     if (!swrast->SpanArrays) {
-	FREE(swrast);
+	_mesa_free(swrast);
 	return GL_FALSE;
     }
     swrast->SpanArrays->ChanType = CHAN_TYPE;
@@ -808,8 +808,8 @@ _swrast_CreateContext(GLcontext *ctx)
     swrast->TexelBuffer = (GLchan *) _mesa_malloc(ctx->Const.MaxTextureImageUnits *
 					    MAX_WIDTH * 4 * sizeof(GLchan));
     if (!swrast->TexelBuffer) {
-	FREE(swrast->SpanArrays);
-	FREE(swrast);
+	_mesa_free(swrast->SpanArrays);
+	_mesa_free(swrast);
 	return GL_FALSE;
     }
 
@@ -827,11 +827,11 @@ _swrast_DestroyContext(GLcontext *ctx)
 	_mesa_debug(ctx, "_swrast_DestroyContext\n");
     }
 
-    FREE(swrast->SpanArrays);
+    _mesa_free(swrast->SpanArrays);
     if (swrast->ZoomedArrays)
-	FREE(swrast->ZoomedArrays);
-    FREE(swrast->TexelBuffer);
-    FREE(swrast);
+	_mesa_free(swrast->ZoomedArrays);
+    _mesa_free(swrast->TexelBuffer);
+    _mesa_free(swrast);
 
     ctx->swrast_context = 0;
 }

@@ -589,9 +589,9 @@ static void free_texgen_data(struct tnl_pipeline_stage *stage)
 		_mesa_vector4f_free(&store->texcoord[i]);
 
 
-	if (store->tmp_f) FREE(store->tmp_f);
-	if (store->tmp_m) FREE(store->tmp_m);
-	FREE(store);
+	if (store->tmp_f) _mesa_free(store->tmp_f);
+	if (store->tmp_m) _mesa_free(store->tmp_m);
+	_mesa_free(store);
 	stage->privatePtr = NULL;
     }
 }

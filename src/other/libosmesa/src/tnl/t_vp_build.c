@@ -1495,7 +1495,7 @@ static void rehash(struct tnl_cache *cache)
 	    items[c->hash % size] = c;
 	}
 
-    FREE(cache->items);
+    _mesa_free(cache->items);
     cache->items = items;
     cache->size = size;
 }
@@ -1567,7 +1567,7 @@ void _tnl_UpdateFixedFunctionProgram(GLcontext *ctx)
 
 	    cache_item(tnl->vp_cache, hash, key, ctx->VertexProgram._TnlProgram);
 	} else {
-	    FREE(key);
+	    _mesa_free(key);
 	    if (0)
 		_mesa_printf("Found existing TNL program for key %x\n", hash);
 	}
@@ -1603,13 +1603,13 @@ void _tnl_ProgramCacheDestroy(GLcontext *ctx)
     for (i = 0; i < tnl->vp_cache->size; i++)
 	for (c = tnl->vp_cache->items[i]; c; c = next) {
 	    next = c->next;
-	    FREE(c->key);
-	    FREE(c->data);
-	    FREE(c);
+	    _mesa_free(c->key);
+	    _mesa_free(c->data);
+	    _mesa_free(c);
 	}
 
-    FREE(tnl->vp_cache->items);
-    FREE(tnl->vp_cache);
+    _mesa_free(tnl->vp_cache->items);
+    _mesa_free(tnl->vp_cache);
 }
 
 /*
