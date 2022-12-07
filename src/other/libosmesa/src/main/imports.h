@@ -26,9 +26,6 @@
 /**
  * \file imports.h
  * Standard C library function wrappers.
- *
- * This file provides wrappers for all the standard C library functions
- * like malloc(), free(), printf(), getenv(), etc.
  */
 
 
@@ -53,15 +50,6 @@ extern "C" {
 
 #ifndef NULL
 #define NULL 0
-#endif
-
-
-/** gcc -pedantic warns about long string literals, LONGSTRING silences that */
-#if !defined(__GNUC__) || (__GNUC__ < 2) || \
-    ((__GNUC__ == 2) && (__GNUC_MINOR__ <= 7))
-# define LONGSTRING
-#else
-# define LONGSTRING __extension__
 #endif
 
 /*@}*/
