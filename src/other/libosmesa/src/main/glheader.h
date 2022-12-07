@@ -69,11 +69,6 @@
 #  define finite _finite
 #endif
 
-#if defined(__WATCOMC__)
-#  define finite _finite
-#  pragma disable_message(201) /* Disable unreachable code warnings */
-#endif
-
 #ifdef WGLAPI
 #	undef WGLAPI
 #endif
