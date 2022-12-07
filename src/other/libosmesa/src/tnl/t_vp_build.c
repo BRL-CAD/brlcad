@@ -1471,7 +1471,7 @@ static void *search_cache(struct tnl_cache *cache,
     struct tnl_cache_item *c;
 
     for (c = cache->items[hash % cache->size]; c; c = c->next) {
-	if (c->hash == hash && _mesa_memcmp(c->key, key, keysize) == 0)
+	if (c->hash == hash && memcmp(c->key, key, keysize) == 0)
 	    return c->data;
     }
 
