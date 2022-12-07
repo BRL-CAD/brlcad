@@ -1052,7 +1052,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
     GLuint unit;
     struct ureg cf, out;
 
-    _mesa_memset(&p, 0, sizeof(p));
+    memset(&p, 0, sizeof(p));
     p.ctx = ctx;
     p.state = key;
     p.program = program;
@@ -1194,7 +1194,7 @@ static void rehash(struct texenvprog_cache *cache)
 
     size = cache->size * 3;
     items = (struct texenvprog_cache_item**) malloc(size * sizeof(*items));
-    _mesa_memset(items, 0, size * sizeof(*items));
+    memset(items, 0, size * sizeof(*items));
 
     for (i = 0; i < cache->size; i++)
 	for (c = cache->items[i]; c; c = next) {

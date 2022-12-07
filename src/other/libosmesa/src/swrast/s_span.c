@@ -916,7 +916,7 @@ _swrast_write_index_span(GLcontext *ctx, SWspan *span)
 	/* mask was initialized by caller, probably glBitmap */
 	span->writeAll = GL_FALSE;
     } else {
-	_mesa_memset(span->array->mask, 1, span->end);
+	memset(span->array->mask, 1, span->end);
 	span->writeAll = GL_TRUE;
     }
 
@@ -1404,7 +1404,7 @@ _swrast_write_rgba_span(GLcontext *ctx, SWspan *span)
 	/* mask was initialized by caller, probably glBitmap */
 	span->writeAll = GL_FALSE;
     } else {
-	_mesa_memset(span->array->mask, 1, span->end);
+	memset(span->array->mask, 1, span->end);
 	span->writeAll = GL_TRUE;
     }
 

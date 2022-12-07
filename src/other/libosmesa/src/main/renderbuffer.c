@@ -539,7 +539,7 @@ put_mono_row_ubyte3(GLcontext *ctx, struct gl_renderbuffer *rb, GLuint count,
     ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
     if (!mask && val0 == val1 && val1 == val2) {
 	/* optimized case */
-	_mesa_memset(dst, val0, 3 * count);
+	memset(dst, val0, 3 * count);
     } else {
 	GLuint i;
 	for (i = 0; i < count; i++) {
@@ -1372,7 +1372,7 @@ put_mono_row_alpha8(GLcontext *ctx, struct gl_renderbuffer *arb, GLuint count,
 	    }
 	}
     } else {
-	_mesa_memset(dst, val, count);
+	memset(dst, val, count);
     }
 }
 

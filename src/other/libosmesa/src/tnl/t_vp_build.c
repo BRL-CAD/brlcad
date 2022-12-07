@@ -1436,7 +1436,7 @@ create_new_program(const struct state_key *key,
 {
     struct tnl_program p;
 
-    _mesa_memset(&p, 0, sizeof(p));
+    memset(&p, 0, sizeof(p));
     p.state = key;
     p.program = program;
     p.eye_position = undef;
@@ -1486,7 +1486,7 @@ static void rehash(struct tnl_cache *cache)
 
     size = cache->size * 3;
     items = (struct tnl_cache_item**) malloc(size * sizeof(*items));
-    _mesa_memset(items, 0, size * sizeof(*items));
+    memset(items, 0, size * sizeof(*items));
 
     for (i = 0; i < cache->size; i++)
 	for (c = cache->items[i]; c; c = next) {

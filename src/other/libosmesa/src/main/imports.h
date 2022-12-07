@@ -87,9 +87,6 @@ extern "C" {
 /** Free aligned memory */
 #define ALIGN_FREE(PTR)            _mesa_align_free(PTR)
 
-/** Set \p N bytes in \p DST to \p VAL */
-#define MEMSET( DST, VAL, N )      _mesa_memset(DST, VAL, N)
-
 /*@}*/
 
 
@@ -576,12 +573,6 @@ _mesa_exec_malloc(GLuint size);
 
 extern void *
 _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize);
-
-extern void *
-memcpy(void *dest, const void *src, size_t n);
-
-extern void
-_mesa_memset(void *dst, int val, size_t n);
 
 extern void
 _mesa_memset16(unsigned short *dst, unsigned short val, size_t n);

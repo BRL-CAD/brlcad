@@ -116,7 +116,7 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
 
 	paramList->NumParameters = oldNum + sz4;
 
-	_mesa_memset(&paramList->Parameters[oldNum], 0,
+	memset(&paramList->Parameters[oldNum], 0,
 		     sz4 * sizeof(struct gl_program_parameter));
 
 	for (i = 0; i < sz4; i++) {
