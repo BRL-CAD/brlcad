@@ -138,8 +138,10 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 
 		NMG_CK_LOOPUSE(lu);
 
-		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+		    delete curr_face;
 		    continue;
+		}
 
 		/* check vertex numbers for each triangle */
 		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
@@ -156,6 +158,9 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 			 */
 			bu_ptbl_free(&verts);
 			bu_log("ERROR: bad vertex location (%zu)!\n", loc);
+			delete curr_face;
+			delete curr_mesh;
+			delete curr_node;
 			return;
 		    }
 
@@ -170,11 +175,14 @@ nmg_to_assimp(struct nmgregion *r, const struct db_full_path *pathp, struct db_t
 		// TODO ai handles polygons
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
+		    delete curr_face;
 		    bu_log("ERROR: LU is not a triangle -- ");
 		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    return;
-		} else if (vert_count < 3)      // TODO same here
+		} else if (vert_count < 3) {     // TODO same here
+		    delete curr_face;
 		    continue;
+		}
 
 		/* if we have a triangle, we're good to add the face */
 		curr_face->mNumIndices = 3;

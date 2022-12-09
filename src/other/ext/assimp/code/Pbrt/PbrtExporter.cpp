@@ -83,7 +83,7 @@ Other:
 #include <sstream>
 #include <string>
 
-#include "stb/stb_image.h"
+#include "Common/StbCommon.h"
 
 using namespace Assimp;
 
@@ -162,9 +162,7 @@ PbrtExporter::PbrtExporter(
 }
 
 // Destructor
-PbrtExporter::~PbrtExporter() {
-    // Empty
-}
+PbrtExporter::~PbrtExporter() = default;
 
 void PbrtExporter::WriteMetaData() {
     mOutput << "#############################\n";
