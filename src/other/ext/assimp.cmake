@@ -42,7 +42,7 @@ if (BRLCAD_ASSIMP_BUILD)
   else (MSVC)
     set(ASSIMP_BASENAME assimp)
   endif (MSVC)
-  set_lib_vars(ASSIMP ${ASSIMP_BASENAME} "5" "2" "0")
+  set_lib_vars(ASSIMP ${ASSIMP_BASENAME} "5" "2" "4")
 
   set(ASSIMP_INSTDIR ${CMAKE_BINARY_INSTALL_ROOT}/assimp)
 
