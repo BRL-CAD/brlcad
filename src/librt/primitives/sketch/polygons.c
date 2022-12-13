@@ -111,15 +111,8 @@ db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *d
     }
 
     // Have a sketch - create an empty polygon
-    struct bv_scene_obj *s = bv_create_polygon(sv, flags, BV_POLYGON_GENERAL, 0, 0);
-    if (!s) {
-	rt_db_free_internal(&intern);
-	return NULL;
-    }
-    bu_vls_init(&s->s_uuid);
-    bu_vls_printf(&s->s_uuid, "%s", sname);
-    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-    bg_polygon_free(&p->polygon);
+    struct bv_polygon *p;
+    BU_GET(p, struct bv_polygon);
 
     /* Start translating the sketch info into a polygon */
     all_segment_nodes = (struct segment_node *)bu_calloc(sketch_ip->curve.count, sizeof(struct segment_node), "all_segment_nodes");
@@ -225,6 +218,16 @@ end:
 
     /* Clean up */
     bu_free((void *)all_segment_nodes, "all_segment_nodes");
+
+    /* Create the scene object here so we can read a default color */
+    struct bv_scene_obj *s = bv_create_polygon_obj(sv, flags, p);
+    if (!s) {
+	bg_polygon_free(&p->polygon);
+	BU_PUT(p, struct bv_polygon);
+	return NULL;
+    }
+    bu_vls_init(&s->s_uuid);
+    bu_vls_printf(&s->s_uuid, "%s", sname);
 
     // check attributes for visual properties
     int have_view = 1;

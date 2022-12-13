@@ -165,17 +165,11 @@ bv_polygon_vlist(struct bv_scene_obj *s)
 }
 
 struct bv_scene_obj *
-bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
+bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p)
 {
     struct bv_scene_obj *s = bv_obj_get(v, flags);
     s->s_type_flags |= BV_POLYGONS;
     s->s_type_flags |= BV_VIEWONLY;
-
-    struct bv_polygon *p;
-    BU_GET(p, struct bv_polygon);
-    p->type = type;
-    p->curr_contour_i = -1;
-    p->curr_point_i = -1;
 
     // Save the current view for later processing
     bv_sync(&p->v, s->s_v);
@@ -186,6 +180,25 @@ bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
     s->s_color[2] = 0;
     s->s_i_data = (void *)p;
     s->s_update_callback = &bv_update_polygon;
+
+    /* Have new polygon, now update view object vlist */
+    bv_polygon_vlist(s);
+
+    /* updated */
+    s->s_changed++;
+
+    return s;
+}
+
+struct bv_scene_obj *
+bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
+{
+
+    struct bv_polygon *p;
+    BU_GET(p, struct bv_polygon);
+    p->type = type;
+    p->curr_contour_i = -1;
+    p->curr_point_i = -1;
 
     // Set default fill color to blue
     unsigned char frgb[3] = {0, 0, 255};
@@ -199,7 +212,6 @@ bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
     fastf_t fx, fy;
     if (bv_screen_to_view(v, &fx, &fy, x, y) < 0) {
 	BU_PUT(p, struct bv_polygon);
-	BU_PUT(s, struct bv_scene_obj);
 	return NULL;
     }
     int snapped = 0;
@@ -246,12 +258,10 @@ bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
     if (type == BV_POLYGON_GENERAL)
 	p->polygon.contour[0].open = 1;
 
-    /* Have new polygon, now update view object vlist */
-    bv_polygon_vlist(s);
-
-    /* updated */
-    s->s_changed++;
-
+    // Have polygon, now make scene object
+    struct bv_scene_obj *s = bv_create_polygon_obj(v, flags, p);
+    if (!s)
+	BU_PUT(p, struct bv_polygon);
     return s;
 }
 

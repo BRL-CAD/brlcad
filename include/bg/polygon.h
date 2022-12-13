@@ -342,11 +342,16 @@ struct bv_polygon {
     void *u_data;
 };
 
+// Given a polygon, create a scene object
+BG_EXPORT extern struct bv_scene_obj *bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p);
+
 // Note - for these functions it is important that the bv
 // gv_width and gv_height values are current!  I.e.:
 //
 //  v->gv_width  = dm_get_width((struct dm *)v->dmp);
 //  v->gv_height = dm_get_height((struct dm *)v->dmp);
+
+// Creates a scene object with a default polygon
 BG_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int flags, int type, int x, int y);
 
 // Various update modes have similar logic - we pass in the flags to the update
