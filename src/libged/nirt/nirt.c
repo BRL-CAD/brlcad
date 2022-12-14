@@ -76,10 +76,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     int i;
     int j;
     char line[RT_MAXLINE] = {0};
-    char *val = NULL;
-    struct bu_vls o_vls = BU_VLS_INIT_ZERO;
     struct bu_vls p_vls = BU_VLS_INIT_ZERO;
-    struct bu_vls t_vls = BU_VLS_INIT_ZERO;
     struct bv_vlblock *vbp = NULL;
     struct qray_dataList *ndlp = NULL;
     struct qray_dataList HeadQRayData;
@@ -175,8 +172,27 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 		  dir[X], dir[Y], dir[Z]);
 
     i = 0;
-    if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
+    /* include nirt script string */
+    if (bu_vls_strlen(&gedp->ged_gdp->gd_qray_script)) {
+	*vp++ = "-e";
+	*vp++ = bu_vls_addr(&gedp->ged_gdp->gd_qray_script);
+    }
 
+    if (DG_QRAY_TEXT(gedp->ged_gdp)) {
+	/* setup default print formatting
+	 * NOTE: user specified -f will come later in succession and trump this
+	 */
+	*vp++ = "-f";
+	*vp++ = "default";
+    }
+    /* first ray: start, direction, and 's' command -> used for printing
+     * printing is formatted with either nirt default or user specified '-f fmt'
+     */
+    *vp++ = "-e";
+    *vp++ = bu_vls_addr(&p_vls);
+
+    if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
+	/* wipe formatting */
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_NULL;
 
@@ -184,7 +200,10 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_P;
 
-	/* first ray: start, direction, and 's' command */
+	*vp++ = "-e";
+	*vp++ = "fmt r \"MGED-PARTITION-REPORT\\n\"";
+
+	/* second ray: start, direction, and 's' command -> used for partion report */
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&p_vls);
 
@@ -192,78 +211,15 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_O;
 
-	/* second ray: start, direction, and 's' command */
+	*vp++ = "-e";
+	*vp++ = "fmt r \"MGED-OVERLAP-REPORT\\n\"";
+
+	/* third ray: start, direction, and 's' command -> used for overlap report */
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&p_vls);
-
-	if (DG_QRAY_TEXT(gedp->ged_gdp)) {
-	    char *cp;
-	    int count = 0;
-
-	    /* get 'r' format now; prepend its format string with a newline */
-	    val = bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[0].fmt);
-
-	    /* find first '"' */
-	    while (*val != '"' && *val != '\0')
-		++val;
-
-	    if (*val == '\0')
-		goto done;
-	    else
-		++val;	    /* skip first '"' */
-
-	    /* find last '"' */
-	    cp = (char *)strrchr(val, '"');
-
-	    if (cp != (char *)NULL) /* found it */
-		count = cp - val;
-
-	done:
-	    if (*val == '\0')
-		bu_vls_printf(&o_vls, " fmt r \"\\n\" ");
-	    else {
-		struct bu_vls tmp = BU_VLS_INIT_ZERO;
-		bu_vls_strncpy(&tmp, val, count);
-		bu_vls_printf(&o_vls, " fmt r \"\\n%s\" ", bu_vls_addr(&tmp));
-		bu_vls_free(&tmp);
-
-		if (count)
-		    val += count + 1;
-		bu_vls_printf(&o_vls, "%s", val);
-	    }
-
-	    i = 1;
-
-	    *vp++ = "-e";
-	    *vp++ = bu_vls_addr(&o_vls);
-	}
     }
 
-    if (DG_QRAY_TEXT(gedp->ged_gdp)) {
-
-	/* load vp with formats for printing */
-	for (; gedp->ged_gdp->gd_qray_fmts[i].type != (char)0; ++i)
-	    bu_vls_printf(&t_vls, "fmt %c %s; ",
-			  gedp->ged_gdp->gd_qray_fmts[i].type,
-			  bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[i].fmt));
-
-	*vp++ = "-e";
-	*vp++ = bu_vls_addr(&t_vls);
-
-	/* nirt does not like the trailing ';' */
-	bu_vls_trunc(&t_vls, -2);
-    }
-
-    /* include nirt script string */
-    if (bu_vls_strlen(&gedp->ged_gdp->gd_qray_script)) {
-	*vp++ = "-e";
-	*vp++ = bu_vls_addr(&gedp->ged_gdp->gd_qray_script);
-    }
-
-    /* third ray: start, direction, and 's' command */
-    *vp++ = "-e";
-    *vp++ = bu_vls_addr(&p_vls);
-
+    /* load user args */
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->dbip->dbi_filename;
@@ -298,15 +254,11 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     av[0] = gd_rt_cmd[0];
     av[j++] = "-X";
     av[j++] = "ged";
-    int format_override = 0;
     for (i = 1; i < gd_rt_cmd_len; i++) {
 	/* skip commands */
 	if (BU_STR_EQUAL(gd_rt_cmd[i], "-e")) {
 	    i++;	// skip script too
 	} else {
-	    if (BU_STR_EQUAL(gd_rt_cmd[i], "-f")) {
-                format_override = 1;
-            }
 	    av[j] = gd_rt_cmd[i];
 	    j++;
 	}
@@ -331,10 +283,6 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     /* send commands down the pipe */
     for (i = 1; i < gd_rt_cmd_len - 2; i++) {
 	if (gd_rt_cmd[i] != NULL && BU_STR_EQUAL(gd_rt_cmd[i], "-e")) {
-	    // user manually specified format
-            if (format_override && strstr(gd_rt_cmd[i+1], "fmt ") != NULL) {
-                continue;
-            }
 	    fprintf(fp_in, "%s\n", gd_rt_cmd[++i]);
 	}
     }
@@ -350,18 +298,27 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     bu_process_close(p, BU_PROCESS_STDIN);
 
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
+
+print:
+    if (DG_QRAY_TEXT(gedp->ged_gdp)) {
+	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
+	    if (BU_STR_EQUAL(line, "MGED-PARTITION-REPORT") || 
+		BU_STR_EQUAL(line, "MGED-PARTITION-REPORT\r"))	// ugh, windows
+		break;
+	    bu_vls_strcpy(&v, line);
+	    bu_vls_trimspace(&v);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+	}
+    }
+
     if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
-
-	if (DG_QRAY_TEXT(gedp->ged_gdp))
-	    bu_vls_free(&o_vls); /* used to form "overlap" part of nirt command above */
-
 	BU_LIST_INIT(&HeadQRayData.l);
 
 	/* handle partitions */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    if (strstr(line, "Usage") == line) {
-                break;
-            }
+	    if (BU_STR_EQUAL(line, "MGED-OVERLAP-REPORT") || 
+		BU_STR_EQUAL(line, "MGED-OVERLAP-REPORT\r"))	// ugh, windows
+		break;
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
 
@@ -400,9 +357,6 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 
 	/* handle overlaps */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    if (strstr(line, "Usage") == line) {
-                break;
-            }
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
 
@@ -430,17 +384,6 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	bv_vlblock_free(vbp);
-    }
-
-print:
-    if (DG_QRAY_TEXT(gedp->ged_gdp)) {
-	bu_vls_free(&t_vls);
-
-	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    bu_vls_strcpy(&v, line);
-	    bu_vls_trimspace(&v);
-	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
-	}
     }
 
     while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
