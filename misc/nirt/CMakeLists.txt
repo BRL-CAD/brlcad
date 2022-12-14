@@ -2,6 +2,7 @@ set(nirt_format_files
   csv.nrt
   csv-gap.nrt
   default.nrt
+  default-ged.nrt
   diff.nrt
   entryexit.nrt
   gap1.nrt
