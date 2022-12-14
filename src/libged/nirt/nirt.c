@@ -183,7 +183,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	 * NOTE: user specified -f will come later in succession and trump this
 	 */
 	*vp++ = "-f";
-	*vp++ = "default";
+	*vp++ = "default-ged";
     }
     /* first ray: start, direction, and 's' command -> used for printing
      * printing is formatted with either nirt default or user specified '-f fmt'
