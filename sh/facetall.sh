@@ -52,6 +52,13 @@ else
     TOL="rel 0.01"
 fi
 
+# check for mged in path
+if ! command -v mged
+then
+    echo "mged not found; make sure it is in the path"
+    exit -1
+fi
+
 mged -c $1 <<EOF
 tol $TOL
 facetize -r $2 $2.bot
