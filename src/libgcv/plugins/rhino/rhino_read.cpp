@@ -287,47 +287,48 @@ chk_name(const ON_wString& _name, std::unordered_map <std::string, int>& used_na
 }
 
 /* loads model and then checks and updates layer to be unique */
-static std::vector<int>
+std::unordered_map <std::string, std::string>
 load_model(const char* default_name, const std::string& path, ONX_Model& model)
 {
     if (!model.Read(path.c_str()))
 	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
 
-    std::unordered_map <std::string, int> used_names;			/* used names, times used */
-    std::vector<std::pair<ON_UUID, ON_ModelComponent*>>to_remove;	/* remove ID, replacing copy */
-    ON_ModelComponent::Type type = ON_ModelComponent::Type::Layer;
+    std::unordered_map <std::string, std::string> uuid_to_name;
+    //std::unordered_map <std::string, int> used_names;			/* used names, times used */
+    //std::vector<std::pair<ON_UUID, ON_ModelComponent*>>to_remove;	/* remove ID, replacing copy */
+    //ON_ModelComponent::Type type = ON_ModelComponent::Type::Layer;
 
     /* init vector for all layers */
-    std::vector<int> moved_layers(model.ActiveComponentCount(type));
+    /*std::vector<int> moved_layers(model.ActiveComponentCount(type));
     for (size_t i = 0; i < moved_layers.size(); i++)
-        moved_layers[i] = i;
+        moved_layers[i] = i;*/
 
-    ONX_ModelComponentIterator it(model, type);    
-    for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference()) {
-        std::string ret = chk_name(cr.ModelComponent()->Name(), used_names, default_name);
-        if (ret.length() > 0) {
-            /* make a copy of the component with the non-conflicting name */
-            ON_ModelComponent* cpy = cr.ModelComponent()->Duplicate();
-            cpy->SetName(ON_wString(ret.c_str()));
-        
-            /* this is a linked list iteration, so we cannot add/delete inside the loop.
-             * keep track of offender/copy for clean up later
-             */
-            to_remove.push_back(std::make_pair(cr.ModelComponent()->Id(), cpy));
-        }      
-    }
+    //ONX_ModelComponentIterator it(model, type);    
+    //for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference()) {
+    //    std::string ret = chk_name(cr.ModelComponent()->Name(), used_names, default_name);
+    //    if (ret.length() > 0) {
+    //        /* make a copy of the component with the non-conflicting name */
+    //        ON_ModelComponent* cpy = cr.ModelComponent()->Duplicate();
+    //        cpy->SetName(ON_wString(ret.c_str()));
+    //    
+    //        /* this is a linked list iteration, so we cannot add/delete inside the loop.
+    //         * keep track of offender/copy for clean up later
+    //         */
+    //        to_remove.push_back(std::make_pair(cr.ModelComponent()->Id(), cpy));
+    //    }      
+    //}
     
     /* do the removes and replacing additions */
-    for (size_t k = 0; k < to_remove.size(); k++) {
-        model.RemoveModelComponent(type, to_remove[k].first);
-        /* internally, the layer's index is updated to match the geometry attributes m_layer_index.
-         * to maintain a handle on the layer we disturbed we force the identity index to stay the 
-         * same and map it to the new index with 'moved_layers' */
-        model.AddModelComponentForExperts(to_remove[k].second, true, false, false);
-        moved_layers[to_remove[k].second->Index()] = model.Manifest().ComponentIndexLimit(type) - 1;
-    }
+    //for (size_t k = 0; k < to_remove.size(); k++) {
+    //    model.RemoveModelComponent(type, to_remove[k].first);
+    //    /* internally, the layer's index is updated to match the geometry attributes m_layer_index.
+    //     * to maintain a handle on the layer we disturbed we force the identity index to stay the 
+    //     * same and map it to the new index with 'moved_layers' */
+    //    model.AddModelComponentForExperts(to_remove[k].second, true, false, false);
+    //    moved_layers[to_remove[k].second->Index()] = model.Manifest().ComponentIndexLimit(type) - 1;
+    //}
 
-    return moved_layers;
+    return uuid_to_name;
 }
 
 void
@@ -442,8 +443,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Mesh &in_mesh)
 
 /* filters acceptable geometry types and writes accordingly
  * RETURNS: 1 when geometry is written
- *          0 when geometry is valid, but no new geometry is written - ie InstanceRef's
- *         -1 when geoemtry is not written
+ *          0 when geometry is not
  */
 int
 write_geometry(rt_wdb &wdb, const std::string &name, const ON_Geometry *geometry)
@@ -455,11 +455,6 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Geometry *geometry
     } else if (geometry->HasBrepForm()) {
 	AutoPtr<ON_Brep, autoptr_wrap_delete> temp(geometry->BrepForm());
 	write_geometry(wdb, name, *temp.ptr);
-    } else if (ON_InstanceRef::Cast(geometry)) {
-        /* InstanceRef are valid geometry but their referenced geometry is already written.
-         * ie do nothing here
-         */
-        return 0;
     } else if (const ON_SubD* subd = ON_SubD::Cast(geometry)) {
 	/* NOTE: pending proper support for subdivision surfaces, 
 	 * this is a very poor approximation just to have *something*
@@ -480,7 +475,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, const ON_Geometry *geometry
 	    delete new_subd;
 	}
     } else {
-        return -1;
+        return 0;
     }
 
     return 1;
@@ -626,20 +621,21 @@ import_object(rt_wdb &wdb, const std::string &name,
 	    matrix[4 * i + j] = iref->m_xform[i][j];
 
     std::set<std::string> members;
-    members.insert(ON_String(idef->Name()).Array());
+    ON_String id;
+    ON_UuidToString(idef->Id(), id);
+    members.insert(std::string(id.Array()));
 
     write_comb(wdb, name, members, matrix, shader_name, shader_options, rgb);
 }
 
 void
-import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
-		     ONX_Model &model, const std::vector<int>& moved_layers)
+import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model)
 {
     size_t total_count = 0;
     size_t success_count = 0;
-    std::unordered_map <std::string, int> used_names;			/* used names, times used */
+    //std::unordered_map <std::string, int> used_names;			/* used names, times used */
     std::unordered_map<std::string, ON_UUID>to_remove;
-    std::vector<std::pair<ON_UUID, ON_ModelComponent*>>to_replace;	/* remove ID, replacing copy */
+    //std::vector<std::pair<ON_UUID, ON_ModelComponent*>>to_replace;	/* remove ID, replacing copy */
     ON_ModelComponent::Type type = ON_ModelComponent::Type::ModelGeometry;
     ONX_ModelComponentIterator it(model, type);
 
@@ -659,33 +655,42 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	get_object_material(attributes, model, shader, rgb, own_shader, own_rgb);
 
         /* use parent layer name as name if no explicit object name is given */
-	const ON_ModelComponent* layer = model.LayerFromIndex(moved_layers[attributes->m_layer_index]).ModelComponent();
+	/*const ON_ModelComponent* layer = model.LayerFromIndex(moved_layers[attributes->m_layer_index]).ModelComponent();
 	std::string layer_name = std::string(ON_String(layer->Name()).Array());
         std::string name = chk_name(ON_String(mg->Name()).Array(), used_names, layer_name.c_str());
-        const std::string member_name = name + ".s";
+        const std::string member_name = name + ".s";*/
 
         /* create a copy of the component with updated name (non-conflicting and/or + ".s") */
-        ON_ModelComponent* cpy = cr.ModelComponent()->Duplicate();
+        /*ON_ModelComponent* cpy = cr.ModelComponent()->Duplicate();
         cpy->SetName(ON_wString(member_name.c_str()));
-        to_replace.push_back(std::make_pair(cr.ModelComponent()->Id(), cpy));
+        to_replace.push_back(std::make_pair(cr.ModelComponent()->Id(), cpy));*/
 
 	const ON_Geometry *g = mg->Geometry(nullptr);
+	ON_String id;
+	ON_UuidToString(mg->Id(), id);
 	if (g) {
-            if (write_geometry(wdb, member_name, g) >= 0)
+	    std::string member_name = std::string(id.Array()) + ".s";
+	    if (const ON_InstanceRef* const iref = ON_InstanceRef::Cast(g)) {
+		++success_count;
+		import_object(wdb, std::string(id.Array()), iref, model, own_shader ? shader.first.c_str() : NULL, own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
+	    } else if (write_geometry(wdb, member_name, g)) {
                 ++success_count;
-            else
+		std::set<std::string> member;
+		member.insert(member_name);
+		write_comb(wdb, std::string(id.Array()), member, NULL, own_shader ? shader.first.c_str() : NULL, own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
+	    } else
                 to_remove.insert(std::make_pair(member_name, mg->Id()));
 	} else {
 	    if (gcv_options.verbosity_level)
-		std::cerr << "skipped " << name << ", no geometry associated with ModelGeometryComponent (?)\n";
+		std::cerr << "skipped " << id.Array() << ", no geometry associated with ModelGeometryComponent (?)\n";
 	}
     }
 
     /* replace geometry with updated names */
-    for (size_t k = 0; k < to_replace.size(); k++) {
+    /*for (size_t k = 0; k < to_replace.size(); k++) {
         model.RemoveModelComponent(type, to_replace[k].first);
         model.AddManagedModelComponent(to_replace[k].second);
-    }
+    }*/
 
     /* cleanup the geometry not written */
     for (auto itr : to_remove) {
@@ -701,7 +706,7 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 }
 
 void
-import_idef(rt_wdb &wdb, std::string &name, const ON_InstanceDefinition *idef, const ONX_Model &model)
+import_idef(rt_wdb &wdb, const ON_InstanceDefinition *idef, const ONX_Model &model)
 {
     // TODO - I think this needs to eventually be translated into a scale
     // matrix component over the members, if we have anything other than the
@@ -709,25 +714,28 @@ import_idef(rt_wdb &wdb, std::string &name, const ON_InstanceDefinition *idef, c
     //double munit = idef->UnitSystem().MillimetersPerUnit(ON_DBL_QNAN);
     //std::cout << name << " units: " << bu_units_string(munit) << "\n";
 
-    std::unordered_map<std::string, std::vector<fastf_t*>> members;
+    std::set<std::string> members;
     const ON_SimpleArray<ON_UUID>& g_ids = idef->InstanceGeometryIdList();
     for (int i = 0; i < g_ids.Count(); i++) {
 	const ON_ModelComponentReference& m_cr = model.ComponentFromId(ON_ModelComponent::Type::ModelGeometry, g_ids[i]);
 	const ON_ModelGeometryComponent* mg = ON_ModelGeometryComponent::Cast(m_cr.ModelComponent());
 	if (!mg)
 	    continue;
-	const ON_3dmObjectAttributes* attributes = mg->Attributes(nullptr);
-	if (!attributes)
-	    continue;
-	const char *nstr = ON_String(attributes->Name()).Array();
-	members[std::string(nstr)].push_back(nullptr);
+
+	ON_String id;
+	ON_UuidToString(mg->Id(), id);
+	members.insert(std::string(id.Array()));
     }
 
-//     write_layer_comb(wdb, name, members);
-    ON_String nsu;
-    const char *uuidstr = ON_UuidToString(idef->Id(), nsu);
+    ON_String id;
+    ON_UuidToString(idef->Id(), id);
+    write_comb(wdb, id.Array(), members);
+    // TODO fixme
+    /*ON_String nsu;
+    const char *uuidstr = ON_UuidToString(idef->Id(), nsu);*/
+    std::string name = std::string(id.Array());
     int ret1 = db5_update_attribute(name.c_str(), "rhino::type", idef->ClassId()->ClassName(), wdb.dbip);
-    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", uuidstr, wdb.dbip);
+    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", name.c_str(), wdb.dbip);
     if (ret1 || ret2)
 	bu_bomb("db5_update_attribute() failed");
 }
@@ -747,8 +755,8 @@ import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 	    continue;
 	}
 
-	std::string name(ON_String(idef->Name().Array()));
-	import_idef(wdb, name, idef, model);
+	//std::string name(ON_String(idef->Name().Array()));
+	import_idef(wdb, idef, model);
     }
 }
 
@@ -765,17 +773,17 @@ get_all_idef_members(const ONX_Model &model)
 	const ON_InstanceDefinition *idef = ON_InstanceDefinition::Cast(cr.ModelComponent());
 	if (!idef)
 	    continue;
-	ON_String iname = ON_String(idef->Name());
+	/*ON_String iname = ON_String(idef->Name());
 	const char *istr = iname.Array();
 	ON_String nsu;
 	const char *uuidstr = ON_UuidToString(idef->Id(), nsu);
-	std::cout << "Reading idef instance " << uuidstr << ": " << istr << "\n";
+	std::cout << "Reading idef instance " << uuidstr << ": " << istr << "\n";*/
 
-	ON_SHA1_Hash chash = idef->ContentHash();
+	/*ON_SHA1_Hash chash = idef->ContentHash();
 	ON_wString whstr = chash.ToString(false);
 	ON_String hstr = ON_String(whstr);
 	const char *ch = hstr.Array();
-	std::cout << "Content hash: " << ch << "\n";
+	std::cout << "Content hash: " << ch << "\n";*/
 
 	const ON_SimpleArray<ON_UUID>& g_ids = idef->InstanceGeometryIdList();
 	for (int i = 0; i < g_ids.Count(); i++) {
@@ -783,7 +791,9 @@ get_all_idef_members(const ONX_Model &model)
 	    const ON_ModelGeometryComponent* mg = ON_ModelGeometryComponent::Cast(m_cr.ModelComponent());
 	    if (!mg)
 		continue;
-	    result.insert(std::string(ON_String(mg->Name()).Array()));
+	    ON_String id;
+	    ON_UuidToString(mg->Id(), id);
+	    result.insert(std::string(id.Array()));
 	}
     }
 
@@ -874,13 +884,13 @@ unpack_iref(const ONX_Model& model, const ON_InstanceRef* iref, std::pair<int, i
 // .g file.
 //
 // TODO - should we also be doing something for the Group type?
-std::vector<std::pair<std::string, std::vector<fastf_t*>>>
+std::set<std::string>
 get_layer_members(const ON_Layer *layer, const ONX_Model &model, 
-                  const std::set<std::string> &UNUSED(model_idef_members), 
-                  const std::vector<int>& moved_layers)
+                  const std::set<std::string>& model_idef_members)
 {
-        std::vector<std::pair<std::string, std::vector<fastf_t*>>> members;
-        std::unordered_map<std::string, int> member_vector_positions;   /* keep track of members we've already encountered for irefs */
+    std::set<std::string> members;
+        //std::vector<std::pair<std::string, std::vector<fastf_t*>>> members;
+        //std::unordered_map<std::string, int> member_vector_positions;   /* keep track of members we've already encountered for irefs */
     {
 	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::Layer);
 	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
@@ -889,9 +899,12 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 	    if (!cl)
 		continue;
 	    if (cl->ParentLayerId() == layer->ModelObjectId()) {
-                std::string cleaned_name = clean_name(cl->Name());
+                ON_String id;
+		ON_UuidToString(cl->Id(), id);
+		members.insert(std::string(id.Array()));
+		/*std::string cleaned_name = clean_name(cl->Name());
                 member_vector_positions[cleaned_name] = members.size();
-                members.push_back(std::make_pair(cleaned_name, std::vector<fastf_t*>(1, nullptr)));
+                members.push_back(std::make_pair(cleaned_name, std::vector<fastf_t*>(1, nullptr)));*/
 	    }
 	}
     }
@@ -909,42 +922,50 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 	    if (!attributes)
 		continue;
             /* if the layer has refs, add them in accordingly */
-	    if (const ON_InstanceRef* iref = ON_InstanceRef::Cast(mg->Geometry(nullptr))) {
+	    /*if (const ON_InstanceRef* iref = ON_InstanceRef::Cast(mg->Geometry(nullptr))) {
                 unpack_iref(model, iref, std::make_pair(moved_layers[layer->Index()], layer->Index()), members, member_vector_positions);
                 continue;
-            }
-            ON_String ns(attributes->Name());
+            }*/
+            /*ON_String ns(attributes->Name());
 	    const char *gname = ns.Array();
 	    ON_String nsu;
 	    const char *uuidstr = ON_UuidToString(attributes->m_uuid, nsu);
 	    if (!gname) {
 		gname = uuidstr;
-	    }
-	    if (attributes->m_layer_index == moved_layers[layer->Index()] || attributes->m_layer_index == layer->Index()) {
-                std::string str_gname = std::string(gname);
+	    }*/
+	    if (attributes->m_layer_index == layer->Index()) {
+		ON_String id;
+		ON_UuidToString(mg->Id(), id);
+		members.insert(std::string(id.Array()));
+                /*std::string str_gname = std::string(gname);
                 if (member_vector_positions.find(str_gname) != member_vector_positions.end())
                     members[member_vector_positions[str_gname]].second.push_back(nullptr);
                 else {
                     member_vector_positions[str_gname] = members.size();
                     members.push_back(std::make_pair(str_gname, std::vector<fastf_t*>(1, nullptr)));
-                }
+                }*/
 	    }
 	}
     }
 
-    return members;
+    std::set<std::string> result;
+    std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
+			model_idef_members.end(), std::inserter(result, result.end()));
+
+    return result;
 }
 
 
 // Each openNURBS layer is imported into the .g file as a comb
 void
 import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model, 
-             const std::set<std::string> &model_idef_members, 
-             const std::vector<int>& moved_layers)
+             const std::set<std::string> &model_idef_members)
 {
-    const std::string name = clean_name(l->Name());
+    /*const std::string name = clean_name(l->Name());
     ON_String lid;
-    const char *lid_str = ON_UuidToString(l->Id(), lid);
+    const char *lid_str = ON_UuidToString(l->Id(), lid);*/
+    ON_String id;
+    ON_UuidToString(l->Id(), id);
     ON_Color wc = (l->Color() == ON_UNSET_COLOR) ? l->PlotColor() : l->Color();
     ON_ModelComponentReference mref = model.RenderMaterialFromIndex(l->RenderMaterialIndex());
     const ON_Material *mp = ON_Material::Cast(mref.ModelComponent());
@@ -957,11 +978,13 @@ import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model,
 
     const Shader shader = get_shader(mp);
 
-    auto layer_children = get_layer_members(l, model, model_idef_members, moved_layers);
+    auto layer_children = get_layer_members(l, model, model_idef_members);
 
-    write_layer_comb(wdb, name, layer_children, shader.first.c_str(), shader.second.c_str(), rgb);
+    write_comb(wdb, std::string(id.Array()), layer_children, NULL, shader.first.c_str(), shader.second.c_str(), rgb);
+    // TODO fixme
+    std::string name = std::string(id.Array());
     int ret1 = db5_update_attribute(name.c_str(), "rhino::type", l->ClassId()->ClassName(), wdb.dbip);
-    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", lid_str, wdb.dbip);
+    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", name.c_str(), wdb.dbip);
     if (ret1 || ret2)
 	bu_bomb("db5_update_attribute() failed");
 
@@ -999,9 +1022,7 @@ import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model,
 void
 import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 		    const std::string &root_name,
-	            const std::set<std::string> &model_idef_members,
-                    const std::vector<int>& moved_layers
-       	            )
+	            const std::set<std::string> &model_idef_members)
 {
 
     ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::Layer);
@@ -1011,13 +1032,13 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 	if (!p)
 	    continue;
         // bu_log("layer: %s -> index: %d\n", std::string(ON_String(p->Name().Array())).c_str(), p->Index());
-	import_layer(wdb, p, model, model_idef_members, moved_layers);
+	import_layer(wdb, p, model, model_idef_members);
     }
 
     ON_Layer root_layer;
-    ON_wString rname(root_name.c_str());
-    root_layer.SetName(rname.Array());
-    import_layer(wdb, &root_layer, model, model_idef_members, moved_layers);
+    /*ON_wString rname(root_name.c_str());
+    root_layer.SetName(rname.Array());*/
+    import_layer(wdb, &root_layer, model, model_idef_members);
 }
 
 
@@ -1088,20 +1109,21 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     try {
 	// Use the openNURBS extenstion to read the whole 3dm file into memory.
 	ONX_Model model;
-	std::vector<int> moved_layers = load_model(gcv_options->default_name, source_path, model);
+	std::unordered_map <std::string, std::string> uuid_to_names;
+	uuid_to_names = load_model(gcv_options->default_name, source_path, model);
 
-	import_model_objects(*gcv_options, *wdbp, model, moved_layers);
+	import_model_objects(*gcv_options, *wdbp, model);
 	// The idef member set is static, but is used many times - generate it
 	// once up front.
-	const std::set<std::string> model_idef_members; // = get_all_idef_members(model);
-	import_model_layers(*wdbp, model, root_name, model_idef_members, moved_layers);
-	//import_model_idefs(*wdbp, model, model_idef_members);
+	const std::set<std::string> model_idef_members = get_all_idef_members(model);
+	import_model_idefs(*wdbp, model);
+	import_model_layers(*wdbp, model, root_name, model_idef_members);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
 	return 0;
     }
 
-    polish_output(*gcv_options, *context->dbip);
+    //polish_output(*gcv_options, *context->dbip);
 
     return 1;
 }
