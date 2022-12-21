@@ -528,14 +528,14 @@ get_object_material(const ON_3dmObjectAttributes *attributes,
 
 void
 write_comb(rt_wdb &wdb, const std::string &name,
-	   const std::set<std::string> &members, const mat_t matrix = NULL,
+	   const std::vector<std::string> &members, const mat_t matrix = NULL,
 	   const char *shader_name = NULL, const char *shader_options = NULL,
 	   const unsigned char *rgb = NULL)
 {
     wmember wmembers;
     BU_LIST_INIT(&wmembers.l);
 
-    for (std::set<std::string>::const_iterator it = members.begin();
+    for (std::vector<std::string>::const_iterator it = members.begin();
 	 it != members.end(); ++it)
 	mk_addmember(it->c_str(), &wmembers.l, const_cast<fastf_t *>(matrix),
 		     WMOP_UNION);
@@ -563,11 +563,11 @@ import_object(rt_wdb &wdb, const std::string &name,
 	for (std::size_t j = 0; j < 4; ++j)
 	    matrix[4 * i + j] = iref->m_xform[i][j];
 
-    std::set<std::string> members;
     ON_String id;
     ON_UuidToString(idef->Id(), id);
     std::string mem_name = uuid_to_names[std::string(id.Array())];
-    members.insert(mem_name);
+    std::vector<std::string> members;
+    members.push_back(mem_name);
 
     write_comb(wdb, name, members, matrix, shader_name, shader_options, rgb);
 }
@@ -608,9 +608,9 @@ import_model_objects(const gcv_opts& gcv_options, rt_wdb& wdb, ONX_Model& model,
 		import_object(wdb, name, iref, model, own_shader ? shader.first.c_str() : NULL, own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL, uuid_to_names);
 	    } else if (write_geometry(wdb, member_name, g)) {
                 ++success_count;
-		std::set<std::string> member;
-		member.insert(member_name);
-		write_comb(wdb, name, member, NULL, own_shader ? shader.first.c_str() : NULL, own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
+		std::vector<std::string> members_vec;
+		members_vec.push_back(member_name);
+		write_comb(wdb, name, members_vec, NULL, own_shader ? shader.first.c_str() : NULL, own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
 	    } else
                 to_remove.insert(std::make_pair(member_name, mg->Id()));
 	} else {
@@ -642,7 +642,7 @@ import_idef(rt_wdb &wdb, const ON_InstanceDefinition *idef, const ONX_Model &mod
     //double munit = idef->UnitSystem().MillimetersPerUnit(ON_DBL_QNAN);
     //std::cout << name << " units: " << bu_units_string(munit) << "\n";
 
-    std::set<std::string> members;
+    std::vector<std::string> members_vec;
     const ON_SimpleArray<ON_UUID>& g_ids = idef->InstanceGeometryIdList();
     for (int i = 0; i < g_ids.Count(); i++) {
 	const ON_ModelComponentReference& m_cr = model.ComponentFromId(ON_ModelComponent::Type::ModelGeometry, g_ids[i]);
@@ -653,13 +653,13 @@ import_idef(rt_wdb &wdb, const ON_InstanceDefinition *idef, const ONX_Model &mod
 	ON_String id;
 	ON_UuidToString(mg->Id(), id);
 	std::string name = uuid_to_names[std::string(id.Array())];
-	members.insert(name);
+	members_vec.push_back(name);
     }
 
     ON_String id;
     ON_UuidToString(idef->Id(), id);
     std::string name = uuid_to_names[std::string(id.Array())];
-    write_comb(wdb, name, members);
+    write_comb(wdb, name, members_vec);
     int ret1 = db5_update_attribute(name.c_str(), "rhino::type", idef->ClassId()->ClassName(), wdb.dbip);
     int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", name.c_str(), wdb.dbip);
     if (ret1 || ret2)
@@ -755,12 +755,13 @@ get_all_idef_members(const ONX_Model &model, std::unordered_map<std::string, std
 // .g file.
 //
 // TODO - should we also be doing something for the Group type?
-std::set<std::string>
+std::vector<std::string>
 get_layer_members(const ON_Layer *layer, const ONX_Model &model, 
                   const std::set<std::string>& model_idef_members,
 		  std::unordered_map<std::string, std::string>& uuid_to_names)
 {
     std::set<std::string> members;
+    std::map<std::string, std::size_t> members_pos; /* member name, order encountered */
     {
 	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::Layer);
 	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
@@ -772,7 +773,8 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
                 ON_String id;
 		ON_UuidToString(cl->Id(), id);
 		std::string name = uuid_to_names[std::string(id.Array())];
-		members.insert(name);
+		if (members.insert(name).second)
+		    members_pos.emplace(name, members.size()-1);
 	    }
 	}
     }
@@ -794,7 +796,8 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 		ON_String id;
 		ON_UuidToString(mg->Id(), id);
 		std::string name = uuid_to_names[std::string(id.Array())];
-		members.insert(name);
+		if (members.insert(name).second)
+		    members_pos.emplace(name, members.size()-1);
 	    }
 	}
     }
@@ -803,7 +806,20 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
     std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
 			model_idef_members.end(), std::inserter(result, result.end()));
 
-    return result;
+    /* add results to vector in order encountered */
+    std::vector<std::string> members_vec(members.size(), "");
+    for (auto& itr : result) {
+	members_vec[members_pos[itr]] = itr;
+    }
+    /* if any were removed by set_difference, erase the empty location in vector */
+    if (result.size() != members.size()) {
+	for (int i = members_vec.size() - 1; i >= 0; i--) {
+	    if (members_vec[i] == "")
+		members_vec.erase(members_vec.begin() + i);
+	}
+    }
+
+    return members_vec;
 }
 
 
@@ -986,7 +1002,13 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
 		    if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")
 			|| (bu_path_match(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
 			    && bu_path_match("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
-			const std::string prefix = (*entry)->fp_names[i]->d_namep;
+
+			// If we have a .r suffix, we don't want to incorporate it into the solid name
+			struct bu_vls basename = BU_VLS_INIT_ZERO;
+			bu_path_component(&basename, (*entry)->fp_names[i]->d_namep, BU_PATH_EXTLESS);
+			const std::string prefix = bu_vls_cstr(&basename);
+			bu_vls_free(&basename);
+
 			std::string suffix = ".s";
 			std::size_t num = 0;
 
@@ -1028,6 +1050,11 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
 	db_full_path **entry;
 
 	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
+
+	    // Sanity
+	    if (!(*entry) || (*entry)->fp_len <= 0)
+		continue;
+
 	    std::string prefix = DB_FULL_PATH_CUR_DIR(*entry)->d_namep;
 	    std::string suffix = ".r";
 
@@ -1051,9 +1078,9 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
 		    bu_bomb("db_comb_mvall() failed");
 	    }
 
-	    std::set<std::string> members;
-	    members.insert(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
-	    write_comb(wdb, region_name, members);
+	    std::vector<std::string> members_vec;
+	    members_vec.push_back(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
+	    write_comb(wdb, region_name, members_vec);
 
 	    comb_to_region(db, region_name);
 
