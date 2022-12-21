@@ -661,7 +661,7 @@ import_idef(rt_wdb &wdb, const ON_InstanceDefinition *idef, const ONX_Model &mod
     std::string name = uuid_to_names[std::string(id.Array())];
     write_comb(wdb, name, members_vec);
     int ret1 = db5_update_attribute(name.c_str(), "rhino::type", idef->ClassId()->ClassName(), wdb.dbip);
-    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", name.c_str(), wdb.dbip);
+    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", id.Array(), wdb.dbip);
     if (ret1 || ret2)
 	bu_bomb("db5_update_attribute() failed");
 }
@@ -848,7 +848,7 @@ import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model,
 
     write_comb(wdb, name, layer_children, NULL, shader.first.c_str(), shader.second.c_str(), rgb);
     int ret1 = db5_update_attribute(name.c_str(), "rhino::type", l->ClassId()->ClassName(), wdb.dbip);
-    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", name.c_str(), wdb.dbip);
+    int ret2 = db5_update_attribute(name.c_str(), "rhino::uuid", id.Array(), wdb.dbip);
     if (ret1 || ret2)
 	bu_bomb("db5_update_attribute() failed");
 
