@@ -760,8 +760,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
                   const std::set<std::string>& model_idef_members,
 		  std::unordered_map<std::string, std::string>& uuid_to_names)
 {
-    std::set<std::string> members;
-    std::map<std::string, std::size_t> members_pos; /* member name, order encountered */
+    std::vector<std::string> members_vec;
     {
 	ONX_ModelComponentIterator it(model, ON_ModelComponent::Type::Layer);
 	for (ON_ModelComponentReference cr = it.FirstComponentReference(); false == cr.IsEmpty(); cr = it.NextComponentReference())
@@ -773,8 +772,7 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
                 ON_String id;
 		ON_UuidToString(cl->Id(), id);
 		std::string name = uuid_to_names[std::string(id.Array())];
-		if (members.insert(name).second)
-		    members_pos.emplace(name, members.size()-1);
+		members_vec.push_back(name);
 	    }
 	}
     }
@@ -796,26 +794,9 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 		ON_String id;
 		ON_UuidToString(mg->Id(), id);
 		std::string name = uuid_to_names[std::string(id.Array())];
-		if (members.insert(name).second)
-		    members_pos.emplace(name, members.size()-1);
+		if (!mg->IsInstanceDefinitionGeometry())
+		    members_vec.push_back(name);
 	    }
-	}
-    }
-
-    std::set<std::string> result;
-    std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
-			model_idef_members.end(), std::inserter(result, result.end()));
-
-    /* add results to vector in order encountered */
-    std::vector<std::string> members_vec(members.size(), "");
-    for (auto& itr : result) {
-	members_vec[members_pos[itr]] = itr;
-    }
-    /* if any were removed by set_difference, erase the empty location in vector */
-    if (result.size() != members.size()) {
-	for (int i = members_vec.size() - 1; i >= 0; i--) {
-	    if (members_vec[i] == "")
-		members_vec.erase(members_vec.begin() + i);
 	}
     }
 
