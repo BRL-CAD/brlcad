@@ -944,6 +944,8 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
     if (BU_PTBL_LEN(&found_instances)) {
 	db_full_path **entry;
 	for (BU_PTBL_FOR(entry, (db_full_path **), &found_instances)) {
+	    if ((*entry)->fp_len < 2)	/* orphaned idefs at top level */
+		continue;
 	    struct directory *ec = DB_FULL_PATH_CUR_DIR(*entry);
 	    struct directory *ep = (*entry)->fp_names[(*entry)->fp_len - 2];
 	    std::map<const directory *, std::string>::iterator rentry = renamed.find(ec);
@@ -1019,6 +1021,24 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
 	}
     }
 
+    /* instanceDefinitions still at the top level are not being used currently in the model - group them up */
+    db_search_free(&found);
+    BU_PTBL_INIT(&found);
+
+    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP, 
+		      "-attr rhino::type=ON_InstanceDefinition -not -below -type comb", 0, NULL, &db, NULL))
+	bu_bomb("db_search() failed");
+
+    if (BU_PTBL_LEN(&found)) {
+	std::vector<std::string> members_vec;
+	directory **entry;
+	for (BU_PTBL_FOR(entry, (directory **), &found)) {
+	    members_vec.push_back((*entry)->d_namep);
+	}
+	write_comb(wdb, "unused_model_idefs", members_vec);
+    }
+
+#if 0
     // ensure that all solids are below regions
     db_search_free(&found);
     BU_PTBL_INIT(&found);
@@ -1094,6 +1114,7 @@ polish_output(const gcv_opts& gcv_options, db_i& db, rt_wdb& wdb)
 	    }
 	}
     }
+#endif
 }
 
 
