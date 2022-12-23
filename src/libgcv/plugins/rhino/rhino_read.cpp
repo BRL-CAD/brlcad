@@ -757,7 +757,6 @@ get_all_idef_members(const ONX_Model &model, std::unordered_map<std::string, std
 // TODO - should we also be doing something for the Group type?
 std::vector<std::string>
 get_layer_members(const ON_Layer *layer, const ONX_Model &model, 
-                  const std::set<std::string>& model_idef_members,
 		  std::unordered_map<std::string, std::string>& uuid_to_names)
 {
     std::vector<std::string> members_vec;
@@ -807,7 +806,6 @@ get_layer_members(const ON_Layer *layer, const ONX_Model &model,
 // Each openNURBS layer is imported into the .g file as a comb
 void
 import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model, 
-             const std::set<std::string> &model_idef_members, 
 	     std::unordered_map<std::string, std::string>& uuid_to_names)
 {
     ON_String id;
@@ -825,7 +823,7 @@ import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model,
 
     const Shader shader = get_shader(mp);
 
-    auto layer_children = get_layer_members(l, model, model_idef_members, uuid_to_names);
+    auto layer_children = get_layer_members(l, model, uuid_to_names);
 
     write_comb(wdb, name, layer_children, NULL, shader.first.c_str(), shader.second.c_str(), rgb);
     int ret1 = db5_update_attribute(name.c_str(), "rhino::type", l->ClassId()->ClassName(), wdb.dbip);
@@ -866,7 +864,6 @@ import_layer(rt_wdb &wdb, const ON_Layer *l, const ONX_Model &model,
 
 void
 import_model_layers(rt_wdb &wdb, const ONX_Model &model,
-	            const std::set<std::string> &model_idef_members,
 		    std::unordered_map<std::string, std::string>& uuid_to_names)
 {
 
@@ -877,11 +874,11 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 	if (!p)
 	    continue;
 
-	import_layer(wdb, p, model, model_idef_members, uuid_to_names);
+	import_layer(wdb, p, model, uuid_to_names);
     }
 
     ON_Layer root_layer;
-    import_layer(wdb, &root_layer, model, model_idef_members, uuid_to_names);
+    import_layer(wdb, &root_layer, model, uuid_to_names);
 }
 
 
@@ -1146,10 +1143,8 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	uuid_to_names.insert({"00000000-0000-0000-0000-000000000000", root_name});
 
 	import_model_objects(*gcv_options, *wdbp, model, uuid_to_names);
-	/* The idef member set is static, but is used many times - generate it once up front. */
-	const std::set<std::string> model_idef_members = get_all_idef_members(model, uuid_to_names);
 	import_model_idefs(*wdbp, model, uuid_to_names);
-	import_model_layers(*wdbp, model, model_idef_members, uuid_to_names);
+	import_model_layers(*wdbp, model, uuid_to_names);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
 	return 0;
