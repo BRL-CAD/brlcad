@@ -138,9 +138,9 @@ do
                                   shift;;
      --disable-gdal)                options="$options -DBRLCAD_GDAL=SYSTEM";
                                   shift;;
-     --enable-assimp)                options="$options -DBRLCAD_ASSIMP=BUNDLED";
+     --enable-assetimport)                options="$options -DBRLCAD_ASSETIMPORT=BUNDLED";
                                   shift;;
-     --disable-assimp)                options="$options -DBRLCAD_ASSIMP=SYSTEM";
+     --disable-assetimport)                options="$options -DBRLCAD_ASSETIMPORT=SYSTEM";
                                   shift;;
      --enable-openmesh)                options="$options -DBRLCAD_OPENMESH=BUNDLED";
                                   shift;;

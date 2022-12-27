@@ -350,7 +350,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/gdal.cmake)
 # Open Asset Import Library - library for supporting I/O for a number of
 # Geometry file formats
 # https://github.com/assimp/assimp
-include(${CMAKE_CURRENT_SOURCE_DIR}/assimp.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/assetimport.cmake)
 
 # OpenMesh Library - library for representing and manipulating polygonal meshes
 # https://www.graphics.rwth-aachen.de/software/openmesh/
@@ -397,7 +397,7 @@ if (COMMAND CMAKEFILES)
   CMAKEFILES(
     CMakeLists.txt
     CMake/ExternalProject_Target.cmake
-    CMake/FindASSIMP.cmake
+    CMake/FindASSETIMPORT.cmake
     CMake/FindITCL.cmake
     CMake/FindLEMON.cmake
     CMake/FindNETPBM.cmake
@@ -421,8 +421,8 @@ if (COMMAND CMAKEFILES)
     CMake/rpath_replace.cxx.in
     CMake/tcl_replace.cxx.in
     Eigen.dist
-    assimp.cmake
-    assimp.dist
+    assetimport.cmake
+    assetimport.dist
     gdal.cmake
     gdal.dist
     itcl.cmake
