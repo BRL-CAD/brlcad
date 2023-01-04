@@ -738,40 +738,32 @@ avs_check(const char *keystr, const char *value, int checkval, int strcomparison
 
 
 		/* Numerical Comparisons */
-		if ((checkval == 1) && (strcomparison == 0)) {
-		    if (atol(value) == atol(avpp->value)) {
+		if (strcomparison == 0 && checkval <= 5) {
+		    char* val_buf = NULL;
+		    char* avpp_val_buf = NULL;
+
+		    const long val_conv = strtol(value, &val_buf, 10);
+		    const long avpp_val_conv = strtol(avpp->value, &avpp_val_buf, 10);
+
+		    /* error checking */
+		    if (value == val_buf || avpp->value == avpp_val_buf)
+			return 0;   /* string did not convert to long */
+		    if (val_conv > LONG_MAX || 
+			val_conv < LONG_MIN || 
+			avpp_val_conv < LONG_MIN || 
+			avpp_val_conv > LONG_MAX)
+			return 0;   /* conversion is out of range for long */
+
+		    if ((checkval == 1) && (val_conv == avpp_val_conv))
 			return 1;
-		    } else {
-			return 0;
-		    }
-		}
-		if ((checkval == 2) && (strcomparison == 0)) {
-		    if (atol(value) < atol(avpp->value)) {
+		    if ((checkval == 2) && (val_conv < avpp_val_conv))
 			return 1;
-		    } else {
-			return 0;
-		    }
-		}
-		if ((checkval == 3) && (strcomparison == 0)) {
-		    if (atol(value) > atol(avpp->value)) {
+		    if ((checkval == 3) && (val_conv > avpp_val_conv))
 			return 1;
-		    } else {
-			return 0;
-		    }
-		}
-		if ((checkval == 4) && (strcomparison == 0)) {
-		    if (atol(value) <= atol(avpp->value)) {
+		    if ((checkval == 4) && (val_conv <= avpp_val_conv))
 			return 1;
-		    } else {
-			return 0;
-		    }
-		}
-		if ((checkval == 5) && (strcomparison == 0)) {
-		    if (atol(value) >= atol(avpp->value)) {
+		    if ((checkval == 5) && (val_conv >= avpp_val_conv))
 			return 1;
-		    } else {
-			return 0;
-		    }
 		}
 		return 0;
 	    } else {
