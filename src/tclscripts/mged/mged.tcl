@@ -175,6 +175,7 @@ proc do_New { id } {
     set filename [tk_getSaveFile -parent .$id \
 				 -filetypes $ftypes \
 				 -initialdir $mged_gui(databaseDir) \
+				 -defaultextension {}\
 				 -title "Create a New Database"]
 
     if {$filename != ""} {
