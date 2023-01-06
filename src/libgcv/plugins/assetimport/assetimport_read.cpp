@@ -253,17 +253,15 @@ generate_unique_name(const char* curr_name, unsigned int def_idx, bool is_mesh)
 	name = ++trim;
 
     if (is_mesh) {
-	prefix = "mesh";
-	suffix = ".MESH";
+	prefix = "solid";
+	suffix = ".s";
 
 	/* get rid of .r if it is at end of name but regions have no enforced pattern
 	 * to discern them from underlying meshes when importing names. 
-	 * add '.MESH' at end to reduce collisions */
+	 * add '.s' at end to reduce collisions and notate being a solid */
 	size_t dotr = name.find(".r\0");
 	if (dotr != std::string::npos)
 	    name = name.substr(0, dotr);
-
-	name.append(suffix);
     }
 
     /* if curr_name is empty, give a generic name */
@@ -271,9 +269,12 @@ generate_unique_name(const char* curr_name, unsigned int def_idx, bool is_mesh)
 	name = prefix + "_" + std::to_string(def_idx) + suffix;
 
     /* check for name collisions */
-    auto it = used_names.find(name);
-    if (it != used_names.end())
-	name.append("_DUP" + std::to_string(it->second++));
+    auto handle = used_names.find(name);
+    while (used_names.find(name + "_" + std::to_string(++handle->second)) != used_names.end())
+        ;
+    name.append("_" + std::to_string(handle->second));
+
+    name.append(suffix);
     used_names.emplace(name, 0);
 
     return name;
