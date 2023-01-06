@@ -302,8 +302,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 print:
     if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    if (BU_STR_EQUAL(line, "MGED-PARTITION-REPORT") || 
-		BU_STR_EQUAL(line, "MGED-PARTITION-REPORT\r"))	// ugh, windows
+	    if (bu_strncmp(line, "MGED-PARTITION-REPORT", 21) == 0)
 		break;
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
@@ -316,8 +315,7 @@ print:
 
 	/* handle partitions */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    if (BU_STR_EQUAL(line, "MGED-OVERLAP-REPORT") || 
-		BU_STR_EQUAL(line, "MGED-OVERLAP-REPORT\r"))	// ugh, windows
+	    if (bu_strncmp(line, "MGED-OVERLAP-REPORT", 19) == 0)
 		break;
 	    bu_vls_strcpy(&v, line);
 	    bu_vls_trimspace(&v);
