@@ -300,6 +300,12 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
 
 print:
+    while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
+	bu_vls_strcpy(&v, line);
+	bu_vls_trimspace(&v);
+	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+    }
+
     if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
 	    if (bu_strncmp(line, "MGED-PARTITION-REPORT", 21) == 0)
@@ -382,12 +388,6 @@ print:
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	bv_vlblock_free(vbp);
-    }
-
-    while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
-	bu_vls_strcpy(&v, line);
-	bu_vls_trimspace(&v);
-	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
     }
 
     bu_vls_free(&v);
