@@ -67,7 +67,7 @@ namespace eval re_procs {
 proc reair { args } {
     if { [catch {re_procs::chk_cmds}] } { return }
     if { [catch {re_procs::usage [llength $args] "air"}] } { return }
-    if { [catch {re_procs::driver $args "air"}] } { return }
+    if { [catch {re_procs::driver $args "aircode"}] } { return }
 }
 
 # assign region IDs to all regions under some assembly starting at
