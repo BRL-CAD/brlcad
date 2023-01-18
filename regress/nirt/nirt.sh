@@ -95,15 +95,15 @@ LOGFILE=`pwd`/nirt.out.raw
 
 
 log "*** Test 1 - shot command ***"
-run $NIRT -v -H 0 -e "s;q" nirt.g center_cube.r
+run $NIRT -v -H 0 -c -e "s;q" nirt.g center_cube.r
 log "*** Test 2 - xyz command ***"
-run $NIRT -v -H 0 -e "xyz;xyz 0 0 .5;s;q" nirt.g center_cube.r
+run $NIRT -v -H 0 -c -e "xyz;xyz 0 0 .5;s;q" nirt.g center_cube.r
 log "*** Test 3 - backout command ***"
-run $NIRT -v -H 0 -e "s;backout 1;s;q" nirt.g left_and_right_cubes.r
+run $NIRT -v -H 0 -c -e "s;backout 1;s;q" nirt.g left_and_right_cubes.r
 log "*** Test 4 - backout/xyz interaction ***"
 run $NIRT -v -H 0 -e "backout 0;xyz;xyz 0 0 .5;s;backout 1;xyz;backout 0;xyz;backout 1;xyz 0 0 .8;s;backout 0;s;q" nirt.g left_and_right_cubes.r
 log "*** Test 5 - dir command***"
-run $NIRT -v -H 0 -e "xyz 0 0 0;dir;s;dir -1 -.5 0;dir;s;dir 0 0 1;s;q" nirt.g left_and_right_cubes.r
+run $NIRT -v -H 0 -c -e "xyz 0 0 0;dir;s;dir -1 -.5 0;dir;s;dir 0 0 1;s;q" nirt.g left_and_right_cubes.r
 log "*** Test 6 - reporting of overlaps ***"
 run $NIRT -v -H 0 -e "backout 1;s;dir 0 0 -1;s;q" nirt.g overlap_example
 log "*** Test 7 - output formatting ***"
@@ -123,8 +123,8 @@ run $NIRT -v -H 0 -b -e "s;q" nirt.g left_cube.r center_cube_air
 run $NIRT -v -H 0 -b -u 0 -e "s;q" nirt.g left_cube.r center_cube_air
 run $NIRT -v -H 0 -b -u 1 -e "s;q" nirt.g left_cube.r center_cube_air
 log "*** Test 11 - parsing with spaces before semicolon, Patch #314 ***"
-run $NIRT -v -H 0 -e "xyz 0.5 1.5 0.5; dir 0 -1 0; s; q" nirt.g center_cube.r
-run $NIRT -v -H 0 -e "xyz 0.5 1.5 0.5 ; dir 0 -1 0; s; q;" nirt.g center_cube.r
+run $NIRT -v -H 0 -c -e "xyz 0.5 1.5 0.5; dir 0 -1 0; s; q" nirt.g center_cube.r
+run $NIRT -v -H 0 -c -e "xyz 0.5 1.5 0.5 ; dir 0 -1 0; s; q;" nirt.g center_cube.r
 
 # restore for final printing
 LOGFILE="$logfile_saved"
@@ -143,7 +143,7 @@ fi
 rm -f nirt.ref
 cat >> nirt.ref <<EOF
 *** Test 1 - shot command ***
-... running nirt -v -H 0 -e s;q nirt.g center_cube.r
+... running nirt -v -H 0 -c -e s;q nirt.g center_cube.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: [LIST]
 Database file:  'nirt.g'
@@ -160,7 +160,7 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
 center_cube.r        (   1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
 *** Test 2 - xyz command ***
-... running nirt -v -H 0 -e xyz;xyz 0 0 .5;s;q nirt.g center_cube.r
+... running nirt -v -H 0 -c -e xyz;xyz 0 0 .5;s;q nirt.g center_cube.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: [LIST]
 Database file:  'nirt.g'
@@ -178,7 +178,7 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
 center_cube.r        (   1.0000    0.0000    0.5000)   2.0000   0.0000 
 Quitting...
 *** Test 3 - backout command ***
-... running nirt -v -H 0 -e s;backout 1;s;q nirt.g left_and_right_cubes.r
+... running nirt -v -H 0 -c -e s;backout 1;s;q nirt.g left_and_right_cubes.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: [LIST]
 Database file:  'nirt.g'
@@ -229,7 +229,7 @@ Direction (x y z) = (-1.00000000 0.00000000 0.00000000)  (az el) = (0.00000000 0
 left_and_right_cubes.r (  -1.0000    0.0000    0.8000)   2.0000   0.0000 
 Quitting...
 *** Test 5 - dir command***
-... running nirt -v -H 0 -e xyz 0 0 0;dir;s;dir -1 -.5 0;dir;s;dir 0 0 1;s;q nirt.g left_and_right_cubes.r
+... running nirt -v -H 0 -c -e xyz 0 0 0;dir;s;dir -1 -.5 0;dir;s;dir 0 0 1;s;q nirt.g left_and_right_cubes.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: [LIST]
 Database file:  'nirt.g'
@@ -530,7 +530,7 @@ center_cube_air      (   1.0000    0.0000    0.0000)   2.0000   0.0000
 left_cube.r          (  -1.0000    0.0000    0.0000)   2.0000   0.0000 
 Quitting...
 *** Test 11 - parsing with spaces before semicolon, Patch #314 ***
-... running nirt -v -H 0 -e xyz 0.5 1.5 0.5; dir 0 -1 0; s; q nirt.g center_cube.r
+... running nirt -v -H 0 -c -e xyz 0.5 1.5 0.5; dir 0 -1 0; s; q nirt.g center_cube.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: [LIST]
 Database file:  'nirt.g'
@@ -546,7 +546,7 @@ Direction (x y z) = (0.00000000 -1.00000000 0.00000000)  (az el) = (90.00000000 
     Region Name               Entry (x y z)              LOS  Obliq_in Attrib
 center_cube.r        (   0.5000    1.0000    0.5000)   2.0000   0.0000 
 Quitting...
-... running nirt -v -H 0 -e xyz 0.5 1.5 0.5 ; dir 0 -1 0; s; q; nirt.g center_cube.r
+... running nirt -v -H 0 -c -e xyz 0.5 1.5 0.5 ; dir 0 -1 0; s; q; nirt.g center_cube.r
 Output format: default (specify -L option for descriptive listing)
 Formats available: [LIST]
 Database file:  'nirt.g'
