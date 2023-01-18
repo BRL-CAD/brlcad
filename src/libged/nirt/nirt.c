@@ -171,7 +171,6 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&p_vls, "dir %lf %lf %lf; s",
 		  dir[X], dir[Y], dir[Z]);
 
-    i = 0;
     /* include nirt script string */
     if (bu_vls_strlen(&gedp->ged_gdp->gd_qray_script)) {
 	*vp++ = "-e";
