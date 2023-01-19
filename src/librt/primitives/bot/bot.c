@@ -1767,8 +1767,11 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	}
     }
 
-    if (!verbose)
+    /* NOTE: this value is not arbitrary, but is dependent on the init in libged/list/list.c */
+    if (verbose <= 99) {
+	bu_vls_strcat(str, "    use -v (verbose) for all data\n");
 	return 0;
+    }
 
     for (i = 0; i < bot_ip->num_faces; i++) {
 	size_t j, k;

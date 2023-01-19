@@ -962,7 +962,9 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 
     bu_vls_strcat(str, "Point Cloud (PNTS)\n");
 
-    if (!verbose) {
+    /* NOTE: this value is not arbitrary, but is dependent on the init in libged/list/list.c */
+    if (verbose <= 99) {
+	bu_vls_strcat(str, "    use -v (verbose) for all data\n");
 	return 1;
     }
 
