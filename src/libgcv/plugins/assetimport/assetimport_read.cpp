@@ -239,40 +239,34 @@ generate_shader(assetimport_read_state_t* pstate, unsigned int mesh_idx)
 }
 
 static std::string
-generate_unique_name(const char* curr_name, unsigned int def_idx, bool is_mesh)
+generate_unique_name(const char* curr_name, const char* def_name, bool is_mesh)
 {
     static std::unordered_map<std::string, int>used_names; /* used names in db */
 
     std::string name(curr_name);
-    std::string prefix("region");
-    std::string suffix(".r");
+    std::string suffix = is_mesh ? ".s" : ".r";
 
     /* get last instance of '/' and keep everything after it */
     const char* trim = strrchr(curr_name, '/');
     if (trim)
 	name = ++trim;
 
-    if (is_mesh) {
-	prefix = "solid";
-	suffix = ".s";
-
-	/* get rid of .r if it is at end of name but regions have no enforced pattern
-	 * to discern them from underlying meshes when importing names. 
-	 * add '.s' at end to reduce collisions and notate being a solid */
-	size_t dotr = name.find(".r\0");
-	if (dotr != std::string::npos)
-	    name = name.substr(0, dotr);
-    }
+    /* strip .r at end if it exists */
+    size_t dotr = name.find(".r\0");
+    if (dotr != std::string::npos)
+        name = name.substr(0, dotr);
 
     /* if curr_name is empty, give a generic name */
     if (!name.size())
-	name = prefix + "_" + std::to_string(def_idx) + suffix;
+	name = def_name;
 
     /* check for name collisions */
     auto handle = used_names.find(name);
-    while (used_names.find(name + "_" + std::to_string(++handle->second)) != used_names.end())
-        ;
-    name.append("_" + std::to_string(handle->second));
+    if (handle != used_names.end()) {
+        while (used_names.find(name + "_" + std::to_string(++handle->second)) != used_names.end())
+            ;
+        name.append("_" + std::to_string(handle->second));
+    }
 
     name.append(suffix);
     used_names.emplace(name, 0);
@@ -315,7 +309,7 @@ generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned in
     }
 
     /* add mesh to region list */
-    std::string mesh_name = generate_unique_name(pstate->scene->mMeshes[mesh_idx]->mName.data, pstate->converted, 1);
+    std::string mesh_name = generate_unique_name(pstate->scene->mMeshes[mesh_idx]->mName.data, pstate->gcv_options->default_name, 1);
     mk_bot(pstate->fd_out, mesh_name.c_str(), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, (fastf_t*)NULL, (struct bu_bitv*)NULL);
     (void)mk_addmember(mesh_name.c_str(), &region.l, NULL, WMOP_UNION);
 
@@ -331,7 +325,7 @@ static void
 handle_node(assetimport_read_state_t* pstate, aiNode* curr, struct wmember &regions)
 {
     shader_properties_t *shader_prop = NULL;
-    std::string region_name = generate_unique_name(curr->mName.data, pstate->dfs, 0);
+    std::string region_name = generate_unique_name(curr->mName.data, pstate->gcv_options->default_name, 0);
 
     if (pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose) {
 	bu_log("\nCurr node name | dfs index: %s | %d\n", curr->mName.data, pstate->dfs);
