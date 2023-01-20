@@ -447,8 +447,12 @@ rt_datum_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
     RT_DATUM_CK_MAGIC(datum_ip);
 
     bu_vls_strcat(str, "Datum Set (DATUM)\n");
-    if (!verbose)
+
+    /* NOTE: this value is not arbitrary, but is dependent on the init in libged/list/list.c */
+    if (verbose <= 99) {
+	bu_vls_strcat(str, "    use -v (verbose) for all data\n");
 	return 0;
+    }
 
     while (datum_ip) {
 	if (!ZERO(datum_ip->w)) {

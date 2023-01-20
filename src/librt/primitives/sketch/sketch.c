@@ -1870,8 +1870,11 @@ rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verb
 	    (long unsigned)sketch_ip->vert_count);
     bu_vls_strcat(str, buf);
 
-    if (!verbose)
+    /* NOTE: this value is not arbitrary, but is dependent on the init in libged/list/list.c */
+    if (verbose <= 99) {
+	bu_vls_strcat(str, "    use -v (verbose) for all data\n");
 	return 0;
+    }
 
     if (sketch_ip->vert_count) {
 	bu_vls_strcat(str, "\tVertices:\n\t");

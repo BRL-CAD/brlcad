@@ -599,27 +599,28 @@ main(int argc, const char **argv)
     mat_t q;
     /* These bu_opt_desc_opts settings approximate the old struct nirt_state help formatting */
     struct bu_opt_desc_opts dopts = { BU_OPT_ASCII, 1, 15, 65, NULL, NULL, NULL, 1, NULL, NULL };
-    struct bu_opt_desc d[19] = {BU_OPT_DESC_NULL};
+    struct bu_opt_desc d[20] = {BU_OPT_DESC_NULL};
 
     BU_OPT(d[0],  "?", "",     "",       NULL,             &print_help,     "print help and exit");
     BU_OPT(d[1],  "h", "help", "",       NULL,             &print_help,     "print help and exit");
     BU_OPT(d[2],  "A", "",     "n",      &enqueue_attrs,   &attrs,          "add attribute_name=n");
     BU_OPT(d[3],  "M", "",     "",       NULL,             &read_matrix,    "read matrix, cmds on stdin");
-    BU_OPT(d[4],  "b", "",     "",       NULL,             &backout,        "back out of geometry before first shot");
-    BU_OPT(d[5],  "B", "",     "n",      &bu_opt_int,      &minpieces,      "set rt_bot_minpieces=n");
-    BU_OPT(d[6],  "T", "",     "n",      &bu_opt_int,      &bot_mintie,     "set rt_bot_mintie=n (deprecated, use LIBRT_BOT_MINTIE instead)");
-    BU_OPT(d[7],  "e", "",     "script", &enqueue_script,  &init_scripts,   "run script before interacting");
-    BU_OPT(d[8],  "f", "",     "format", &enqueue_format,  &sfd,            "load predefined format (see -L) or file");
-    BU_OPT(d[9],  "E", "",     "",       &dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
-    BU_OPT(d[10], "L", "",     "",       NULL,             &show_formats,   "list output formatting options");
-    BU_OPT(d[11], "s", "",     "",       NULL,             &silent_mode,    "run in silent (non-verbose) mode");
-    BU_OPT(d[12], "v", "",     "",       NULL,             &verbose_mode,   "run in verbose mode");
-    BU_OPT(d[13], "H", "",     "n",      &bu_opt_int,      &header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
-    BU_OPT(d[14], "u", "",     "n",      &bu_opt_int,      &use_air,        "set use_air=n (default 0)");
-    BU_OPT(d[15], "O", "",     "action", &decode_overlap,  &overlap_claims, "handle overlap claims via action");
-    BU_OPT(d[16], "x", "",     "v",      &bu_opt_int,      &rt_debug,      "set librt(3) diagnostic flag=v");
-    BU_OPT(d[17], "X", "",     "v",      &bu_opt_vls,      &nirt_debug,     "set nirt diagnostic flag=v");
-    BU_OPT_NULL(d[18]);
+    BU_OPT(d[4],  "b", "",     "",       NULL,             NULL,            "back out of geometry before first shot (deprecated, default behavior)");
+    BU_OPT(d[5],  "c", "",     "",       NULL,             &backout,        "shoot ray from current center");
+    BU_OPT(d[6],  "B", "",     "n",      &bu_opt_int,      &minpieces,      "set rt_bot_minpieces=n");
+    BU_OPT(d[7],  "T", "",     "n",      &bu_opt_int,      &bot_mintie,     "set rt_bot_mintie=n (deprecated, use LIBRT_BOT_MINTIE instead)");
+    BU_OPT(d[8],  "e", "",     "script", &enqueue_script,  &init_scripts,   "run script before interacting");
+    BU_OPT(d[9],  "f", "",     "format", &enqueue_format,  &sfd,            "load predefined format (see -L) or file");
+    BU_OPT(d[10], "E", "",     "",       &dequeue_scripts, &init_scripts,   "ignore any -e or -f options specified earlier on the command line");
+    BU_OPT(d[11], "L", "",     "",       NULL,             &show_formats,   "list output formatting options");
+    BU_OPT(d[12], "s", "",     "",       NULL,             &silent_mode,    "run in silent (non-verbose) mode");
+    BU_OPT(d[13], "v", "",     "",       NULL,             &verbose_mode,   "run in verbose mode");
+    BU_OPT(d[14], "H", "",     "n",      &bu_opt_int,      &header_mode,    "flag (n) for enable/disable informational header - (n=1 [on] by default, always off in silent mode)");
+    BU_OPT(d[15], "u", "",     "n",      &bu_opt_int,      &use_air,        "set use_air=n (default 0)");
+    BU_OPT(d[16], "O", "",     "action", &decode_overlap,  &overlap_claims, "handle overlap claims via action");
+    BU_OPT(d[17], "x", "",     "v",      &bu_opt_int,      &rt_debug,      "set librt(3) diagnostic flag=v");
+    BU_OPT(d[18], "X", "",     "v",      &bu_opt_vls,      &nirt_debug,     "set nirt diagnostic flag=v");
+    BU_OPT_NULL(d[19]);
 
     if (argc == 0 || !argv)
 	return -1;
@@ -810,7 +811,7 @@ main(int argc, const char **argv)
     }
 
     if (backout) {
-	(void)nirt_exec(ns, "backout 1");
+	(void)nirt_exec(ns, "backout 0");
     }
 
     if (use_air) {

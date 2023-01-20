@@ -1,6 +1,6 @@
 set(other_licenses
   Eigen.txt
-  assimp.txt
+  assetimport.txt
   openNURBS.txt
   gct.txt
   gdal.txt

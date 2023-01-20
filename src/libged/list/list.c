@@ -46,7 +46,7 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
     char *terse_parm = "-t";
     char *listeval = "listeval";
     struct rt_db_internal intern;
-    static const char *usage = "[-r] [-t] <objects>";
+    static const char *usage = "[-r] [-t] [-v] <objects>";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -61,13 +61,16 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;      /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "rt")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "rtv")) != -1) {
 	switch (c) {
 	    case 'r':
 		recurse = 1;
 		break;
 	    case 't': /* terse */
 		verbose = 0;
+		break;
+	    case 'v': /* verbose */
+		verbose++;
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", c);

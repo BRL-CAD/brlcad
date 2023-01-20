@@ -18,6 +18,7 @@
   <cmdsynopsis sepchar=" ">
     <command>l</command>
     <arg choice="opt" rep="norepeat">-t</arg>
+    <arg choice="opt" rep="norepeat">-v</arg>
     <arg choice="opt" rep="norepeat">-r</arg>
     <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
   </cmdsynopsis>
@@ -46,8 +47,18 @@
 	<listitem>
 	  <para>
 	     The <emphasis>-t</emphasis> (terse) option forces a shorter
-	     list of primitive shape parameters. This option is useful for
-	     primitives with potentially long parameter lists, such as BOTs.
+	     list of primitive shape parameters. This option is default for
+	     primitives with potentially long parameter lists, such as BoTs.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-v</option></term>
+	<listitem>
+	  <para>
+	     The <emphasis>-v</emphasis> (verbose) option gives all data for
+	     explicit shapes (BoT, BREP, datum, NMG, pnts, sketch) which are 
+	     terse by default.
 	  </para>
 	</listitem>
       </varlistentry>

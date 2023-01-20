@@ -2513,8 +2513,11 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     ON_String onstr = ON_String(wonstr);
     bu_vls_strcat(str, "Boundary Representation (BREP) object\n");
 
-    if (!verbose)
+    /* NOTE: this value is not arbitrary, but is dependent on the init in libged/list/list.c */
+    if (verbose <= 99) {
+	bu_vls_strcat(str, "    use -v (verbose) for all data\n");
 	return 0;
+    }
 
     const char *description = onstr.Array();
     // skip the first "ON_Brep:" line
