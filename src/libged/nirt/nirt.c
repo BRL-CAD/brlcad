@@ -82,6 +82,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     struct qray_dataList HeadQRayData;
     char **gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
+    int skip_drawn = 0;
 
     const char *nirt = NULL;
     char nirtcmd[MAXPATHLEN] = {0};
@@ -218,15 +219,22 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = bu_vls_addr(&p_vls);
     }
 
+    *vp++ = gedp->dbip->dbi_filename;
     /* load user args */
     for (i = 1; i < argc; i++)
 	*vp++ = (char *)argv[i];
-    *vp++ = gedp->dbip->dbi_filename;
+
+    /* check if user reqested objects other than what is drawn */
+    if (argc > 1 && argv[argc-1][0] != '-') {	/* ignore obvious trailing flag */
+	if (db_lookup(gedp->dbip, argv[argc-1], 0) != RT_DIR_NULL)
+	    skip_drawn = 1;
+    }
 
     gd_rt_cmd_len = vp - gd_rt_cmd;
-
-    /* Note - ged_who_argv sets the last vp to (char *)0 */
-    gd_rt_cmd_len += ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
+    if (!skip_drawn) {
+        /* Note - ged_who_argv sets the last vp to (char *)0 */
+        gd_rt_cmd_len += ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
+    }
 
     if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
@@ -315,7 +323,7 @@ print:
 	}
     }
 
-    if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
+    if (!skip_drawn && DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
 	BU_LIST_INIT(&HeadQRayData.l);
 
 	/* handle partitions */
