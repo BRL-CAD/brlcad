@@ -89,7 +89,7 @@ jobs:
 
   linux:
     name: Ubuntu Latest GCC
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: true
     steps:
