@@ -690,7 +690,7 @@ main(int argc, const char **argv)
          */
         if (bu_vls_strlen(&nirt_debug) > 0) {
             dopts.reject = "M"; // reject 'M' option when printing within libged
-            bu_vls_sprintf(&msg, "Usage: nirt [options]...\n\nOptions:\n%s\n", help);
+            bu_vls_sprintf(&msg, "Usage: nirt [options] [objects] [x y z]...\n\nOptions:\n%s\n", help);
         } else {
             bu_vls_sprintf(&msg, "Usage: nirt [options] model.g objects...\n\nNote: by default NIRT is using a new implementation which may have behavior changes.  During migration, old behavior can be enabled by adding the option \"--old\" as the first option to the nirt program.\n\nOptions:\n%s\n", help);
         }

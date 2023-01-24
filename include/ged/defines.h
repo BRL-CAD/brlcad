@@ -99,7 +99,6 @@ struct ged_callback_state;
 
 #define GED_INIT(_gedp, _wdbp) { \
     ged_init((_gedp)); \
-    ged_init((_gedp)); \
     (_gedp)->dbip = NULL; \
     if ((struct rt_wdb *)(_wdbp) != NULL) {\
 	(_gedp)->dbip = ((struct rt_wdb *)(_wdbp))->dbip; \
