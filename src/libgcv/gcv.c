@@ -71,7 +71,7 @@ _gcv_brlcad_read(struct gcv_context *context,
     }
 
     if (db_version(in_dbip) > 4) {
-	struct rt_wdb *wdbp = wdb_dbopen(in_dbip, RT_WDB_TYPE_DB_INMEM);
+	struct rt_wdb *wdbp = wdb_dbopen(context->dbip, RT_WDB_TYPE_DB_INMEM);
 	if (db_dump(wdbp, in_dbip)) {
 	    bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
 	    db_close(in_dbip);
