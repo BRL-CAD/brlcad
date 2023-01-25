@@ -431,7 +431,9 @@ handle_node(assetimport_read_state_t* pstate, aiNode* curr, struct wmember &regi
 
     /* recursive call all children */
     for (size_t i = 0; i < curr->mNumChildren; i++) {
-	handle_node(pstate, curr->mChildren[i], regions);
+	/* skip children with no meshes under them (cameras, etc) */
+	if (curr->mChildren[i]->mNumChildren || curr->mChildren[i]->mNumMeshes)
+	    handle_node(pstate, curr->mChildren[i], regions);
     }
 
     if (shader_prop)
