@@ -284,10 +284,9 @@ generate_unique_name(const char* curr_name, const char* def_name, bool is_mesh)
 static void
 generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned int mesh_idx)
 {
-    /* make sure we are dealing with only triangles 
-     * TODO: support polygons by splitting into triangles 
-     */
     aiMesh* mesh = pstate->scene->mMeshes[mesh_idx];
+    /* sanity check: importer handles triangulation but make sure
+       we are dealing with only triangles */
     if (mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
 	bu_log("WARNING: unknown primitive in mesh[%d] -- skipping\n", mesh_idx);
 	return;
@@ -442,12 +441,19 @@ handle_node(assetimport_read_state_t* pstate, aiNode* curr, struct wmember &regi
 static int
 convert_input(assetimport_read_state_t* pstate)
 {
+    /* have importer remove points and lines as we can't do anything with them */
+    aiPropertyStore* props = aiCreatePropertyStore();
+    aiSetImportPropertyInteger(props, AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
     /* we are taking one of the postprocessing presets to have
      * max quality with reasonable render times. But, we must keep 
      * seemingly redundant materials as we use the names for BRLCAD shaders
      */
-    pstate->scene = aiImportFile(pstate->input_file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality & ~aiProcess_RemoveRedundantMaterials);
-
+    unsigned int import_flags = aiProcessPreset_TargetRealtime_MaxQuality & ~aiProcess_RemoveRedundantMaterials;
+    pstate->scene = aiImportFileExWithProperties(pstate->input_file.c_str(),
+						 import_flags,
+						 NULL,
+						 props);
+    
     if (!pstate->scene) {
 	bu_log("ERROR: bad scene conversion\n");
 	return 0;
@@ -471,8 +477,12 @@ convert_input(assetimport_read_state_t* pstate)
     /* make a top level 'all.g' */
     mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
-    /* TODO FIXME: bad generation logs extra converted and mesh */
+    /* import handles triangulation and scrubs extra shapes - this should *in theory* always report 100% */
     bu_log("Converted ( %d / %d ) meshes ... %.2f%%\n", pstate->converted, pstate->scene->mNumMeshes, (float)pstate->converted / (float)pstate->scene->mNumMeshes * 100.0);
+
+    /* cleanup */
+    aiReleaseImport(pstate->scene);
+    aiReleasePropertyStore(props);
 
     return 1;
 }
