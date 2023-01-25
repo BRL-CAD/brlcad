@@ -32,6 +32,7 @@
 
 #include "gcv/api.h"
 #include "wdb.h"
+#include "bg/trimesh.h"
 
 /* assimp headers */
 #include <assimp/cimport.h>
@@ -288,6 +289,9 @@ generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned in
 
     int* faces = new int[mesh->mNumFaces * 3];
     double* vertices = new double[mesh->mNumVertices * 3];
+    fastf_t* normals = NULL;
+    fastf_t* thickness = NULL;
+    bu_bitv* bitv = NULL;
 
     if (pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose) {
 	bu_log("mesh[%d] num Faces: %d\n", mesh_idx, mesh->mNumFaces);
@@ -308,9 +312,44 @@ generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned in
 	vertices[i * 3 +2] = mesh->mVertices[i].z * pstate->gcv_options->scale_factor;
     }
 
+    /* check bot mode */
+    unsigned char orientation = RT_BOT_CCW; /* default ccw https://assimp.sourceforge.net/lib_html/data.html*/
+    unsigned char mode = RT_BOT_SURFACE;
+    {
+	rt_bot_internal bot;
+	std::memset(&bot, 0, sizeof(bot));
+	bot.magic = RT_BOT_INTERNAL_MAGIC;
+	bot.orientation = orientation;
+	bot.num_vertices = mesh->mNumVertices;
+	bot.num_faces = mesh->mNumFaces;
+	bot.vertices = vertices;
+	bot.faces = faces;
+	/* TODO this generates a lot of false plate modes */
+	mode = bg_trimesh_solid((int)bot.num_vertices, (int)bot.num_faces, bot.vertices, bot.faces, NULL) ? RT_BOT_PLATE : RT_BOT_SOLID;
+    }
+
+    if (mode == RT_BOT_PLATE) {
+	const fastf_t plate_thickness = 1.0;
+	bitv = bu_bitv_new(mesh->mNumFaces * 3);
+	thickness = new fastf_t[mesh->mNumFaces * 3] {plate_thickness};
+    }
+
     /* add mesh to region list */
     std::string mesh_name = generate_unique_name(pstate->scene->mMeshes[mesh_idx]->mName.data, pstate->gcv_options->default_name, 1);
-    mk_bot(pstate->fd_out, mesh_name.c_str(), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, (fastf_t*)NULL, (struct bu_bitv*)NULL);
+    /* check for normals */
+    if (mesh->HasNormals()) {
+	normals = new fastf_t[mesh->mNumVertices * 3];
+	for (size_t i = 0; i < mesh->mNumVertices; i++) {
+	    aiVector3D normalized = mesh->mNormals[i].Normalize();
+	    normals[i * 3   ] = normalized.x;
+	    normals[i * 3 +1] = normalized.y;
+	    normals[i * 3 +2] = normalized.z;
+	}
+
+	mk_bot_w_normals(pstate->fd_out, mesh_name.c_str(), mode, orientation, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, thickness, bitv, mesh->mNumVertices, normals, faces);
+    } else {
+	mk_bot(pstate->fd_out, mesh_name.c_str(), mode, orientation, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, thickness, bitv);
+    }
     (void)mk_addmember(mesh_name.c_str(), &region.l, NULL, WMOP_UNION);
 
     /* book keeping to log converted meshes */
@@ -319,6 +358,10 @@ generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned in
     /* cleanup memory */
     delete[] faces;
     delete[] vertices;
+    delete[] normals;
+    delete[] thickness;
+    if (bitv)
+        bu_bitv_free(bitv);
 }
 
 static void
