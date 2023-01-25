@@ -426,8 +426,12 @@ handle_node(assetimport_read_state_t* pstate, aiNode* curr, struct wmember &regi
     }
 
     /* when we're done adding children, add to top level */
-    if (!curr->mNumChildren)
-	(void)mk_addmember(region_name.c_str(), &regions.l, NULL, WMOP_UNION);
+    if (!curr->mNumChildren) {
+	/* apply child's transformations */
+	fastf_t tra[16];
+	aimatrix_to_arr16(curr->mTransformation, tra);
+	(void)mk_addmember(region_name.c_str(), &regions.l, tra, WMOP_UNION);
+    }
 
     /* recursive call all children */
     for (size_t i = 0; i < curr->mNumChildren; i++) {
