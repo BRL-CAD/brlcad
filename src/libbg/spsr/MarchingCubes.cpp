@@ -495,7 +495,9 @@ int MarchingSquares::AddEdgeIndices( unsigned char mcIndex , int* isoIndices )
 }
 int MarchingSquares::AddEdgeIndices( const double v[Square::CORNERS] , double iso , int* isoIndices ){ return AddEdgeIndices( GetIndex( v , iso ) , isoIndices ); }
 void MarchingSquares::SetVertex(int e,const double values[Square::CORNERS],double iso){
-	int o,i,c1,c2;
+	int o = 0;
+	int i = 0;
+	int c1,c2;
 	Square::FactorEdgeIndex(e,o,i);
 	Square::EdgeCorners(e,c1,c2);
 	switch(o){
