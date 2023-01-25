@@ -261,6 +261,12 @@ generate_unique_name(const char* curr_name, const char* def_name, bool is_mesh)
     if (!name.size())
 	name = def_name;
 
+    /* cleanup name - remove spaces, slashes and non-standard characters */
+    bu_vls scrub = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&scrub, "%s", name.c_str());
+    bu_vls_simplify(&scrub, nullptr, " _\0", " _\0");
+    name = scrub.vls_len > 0 ? std::string(bu_vls_cstr(&scrub)) : def_name;   /* somemtimes we scrub out the entire name */
+
     /* check for name collisions */
     auto handle = used_names.find(name);
     if (handle != used_names.end()) {
@@ -269,8 +275,8 @@ generate_unique_name(const char* curr_name, const char* def_name, bool is_mesh)
         name.append("_" + std::to_string(handle->second));
     }
 
-    name.append(suffix);
     used_names.emplace(name, 0);
+    name.append(suffix);
 
     return name;
 }
