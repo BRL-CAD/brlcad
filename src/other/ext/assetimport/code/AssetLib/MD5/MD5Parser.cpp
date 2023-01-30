@@ -102,7 +102,7 @@ MD5Parser::MD5Parser(char *_buffer, unsigned int _fileSize) {
 // Report warning to the log stream
 /*static*/ void MD5Parser::ReportWarning(const char *warn, unsigned int line) {
     char szBuffer[1024];
-    ::sprintf(szBuffer, "[MD5] Line %u: %s", line, warn);
+    ::snprintf(szBuffer, 1024, "[MD5] Line %u: %s", line, warn);
     ASSIMP_LOG_WARN(szBuffer);
 }
 
