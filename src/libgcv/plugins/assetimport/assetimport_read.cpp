@@ -1,7 +1,7 @@
 /*               A S S E T I M P O R T _ R E A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022 United States Government as represented by
+ * Copyright (c) 2022-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
