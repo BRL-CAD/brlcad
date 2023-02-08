@@ -60,6 +60,18 @@
  */
 #if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 6)
 #define Tcl_GetErrorLine(interp) ((interp)->errorLine)
+#define TclInitRewriteEnsemble(interp, remove, insert, objv) {	\
+    Interp *iPtr = (Interp *)(interp); 				\
+    iPtr->ensembleRewrite.sourceObjs = (objv); 			\
+    iPtr->ensembleRewrite.numRemovedObjs = (remove);		\
+    iPtr->ensembleRewrite.numInsertedObjs = (insert);		\
+}
+#define TclResetRewriteEnsemble(interp, root) {			\
+    Interp *iPtr = (Interp *)(interp); 				\
+    iPtr->ensembleRewrite.sourceObjs = NULL; 			\
+    iPtr->ensembleRewrite.numRemovedObjs = 0;			\
+    iPtr->ensembleRewrite.numInsertedObjs = 0;			\
+}
 #endif
 
 #define ITCL_TCL_PRE_8_5 (TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION < 5)
@@ -248,6 +260,10 @@ extern int itclVarValueOffset;
 MODULE_SCOPE Var * ItclVarHashCreateVar (TclVarHashTable * tablePtr, 
 				const char * key, int * newPtr);
 
+#undef TclInitRewriteEnsemble
+#undef TclResetRewriteEnsemble
+#define TclInitRewriteEnsemble(interp, remove, insert, objv)
+#define TclResetRewriteEnsemble(interp, root)
 #endif /* Version dependent defs and macros */
 
 
