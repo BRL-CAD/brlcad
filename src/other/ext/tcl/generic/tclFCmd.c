@@ -1006,7 +1006,7 @@ TclFileAttrsCmd(
 	 * Use objStrings as a list object.
 	 */
 
-	if (Tcl_ListObjLength(interp, objStrings, &numObjStrings) != TCL_OK) {
+	if (TclListObjLength(interp, objStrings, &numObjStrings) != TCL_OK) {
 	    goto end;
 	}
 	attributeStringsAllocated = (const char **)

@@ -558,6 +558,8 @@ EXTERN void		TkpRedrawWidget(Tk_Window tkwin);
 /* 186 */
 EXTERN int		TkpWillDrawWidget(Tk_Window tkwin);
 #endif /* MACOSX */
+/* 187 */
+EXTERN void		TkUnusedStubEntry(void);
 
 typedef struct TkIntStubs {
     int magic;
@@ -793,6 +795,7 @@ typedef struct TkIntStubs {
 #ifdef MAC_OSX_TCL /* MACOSX */
     int (*tkpWillDrawWidget) (Tk_Window tkwin); /* 186 */
 #endif /* MACOSX */
+    void (*tkUnusedStubEntry) (void); /* 187 */
 } TkIntStubs;
 
 extern const TkIntStubs *tkIntStubsPtr;
@@ -1173,6 +1176,8 @@ extern const TkIntStubs *tkIntStubsPtr;
 #define TkpWillDrawWidget \
 	(tkIntStubsPtr->tkpWillDrawWidget) /* 186 */
 #endif /* MACOSX */
+#define TkUnusedStubEntry \
+	(tkIntStubsPtr->tkUnusedStubEntry) /* 187 */
 
 #endif /* defined(USE_TK_STUBS) */
 
@@ -1223,6 +1228,8 @@ extern const TkIntStubs *tkIntStubsPtr;
 #   define TkpWillDrawWidget(w) 0
 #   define TkpRedrawWidget(w)
 #endif
+
+#undef TkUnusedStubEntry
 
 #endif /* _TKINTDECLS */
 

@@ -1218,7 +1218,8 @@ in the \fBCOORDINATES\fR section above.
 \fB\-disabledfill \fIcolor\fR
 .
 Specifies the color to be used to fill item's area.
-in its normal, active, and disabled states,
+in its normal, active, and disabled states.
+The even-odd fill rule is used.
 \fIColor\fR may have any of the forms accepted by \fBTk_GetColor\fR.
 For the line item, it specifies the color of the line drawn.
 For the text item, it specifies the foreground color of the text.
@@ -1696,7 +1697,7 @@ should also be drawn as a curve but where the list of coordinates is
 such that the first coordinate pair (and every third coordinate pair
 thereafter) is a knot point on a cubic Bezier curve, and the other
 coordinates are control points on the cubic Bezier curve. Straight
-line segments can be venerated within a curve by making control points
+line segments can be generated within a curve by making control points
 equal to their neighbouring knot points. If the last point is not the
 second point of a pair of control points, the point is repeated (one or two
 times) so that it also becomes the second point of a pair of control

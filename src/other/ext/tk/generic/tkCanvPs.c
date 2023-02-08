@@ -904,6 +904,18 @@ PostscriptBitmap(
     imagePtr = XGetImage(Tk_Display(tkwin), bitmap, 0, 0,
 	    totalWidth, totalHeight, 1, XYPixmap);
 
+
+    if (!imagePtr) {
+	/*
+	 * The XGetImage() function is apparently not implemented on this
+	 * system. Just skip the pixels, the Postscript will still be
+	 * syntactically correct.
+	 */
+
+        Tcl_AppendToObj(psObj, "<>", -1);
+	return;
+    }
+
     Tcl_AppendToObj(psObj, "<", -1);
     mask = 0x80;
     value = 0;

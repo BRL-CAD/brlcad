@@ -548,7 +548,7 @@ appropriate place to drain the main NSAutoreleasePool and replace it
 with a new pool.  This is done by calling the method [NSApp
 _resetAutoreleasePool], where _resetAutoreleasePool is a method which
 we define for the subclass.  Unfortunately, by itself this is not
-sufficient for safe memory managememt because, as was made painfully
+sufficient for safe memory management because, as was made painfully
 evident with the release of OS X 10.13, it is possible for calls to
 TclDoOneEvent, and hence to CheckProc, to be nested.  Draining the
 autorelease pool in a nested call leads to crashes as objects in use

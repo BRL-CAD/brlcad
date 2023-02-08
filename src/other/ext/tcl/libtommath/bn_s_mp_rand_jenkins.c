@@ -27,10 +27,10 @@ static uint64_t s_rand_jenkins_val(void)
 
 void s_mp_rand_jenkins_init(uint64_t seed)
 {
-   uint64_t i;
+   int i;
    jenkins_x.a = 0xf1ea5eedULL;
    jenkins_x.b = jenkins_x.c = jenkins_x.d = seed;
-   for (i = 0uLL; i < 20uLL; ++i) {
+   for (i = 0; i < 20; ++i) {
       (void)s_rand_jenkins_val();
    }
 }

@@ -607,36 +607,49 @@ been set explicitly to \fBprogram\fR.
 .TP
 \fBwm protocol \fIwindow\fR ?\fIname\fR? ?\fIcommand\fR?
 .
-This command is used to manage window manager protocols such as
-\fBWM_DELETE_WINDOW\fR.
-\fIName\fR is the name of an atom corresponding to a window manager
-protocol, such as \fBWM_DELETE_WINDOW\fR or \fBWM_SAVE_YOURSELF\fR
-or \fBWM_TAKE_FOCUS\fR.
-If both \fIname\fR and \fIcommand\fR are specified, then \fIcommand\fR
-is associated with the protocol specified by \fIname\fR.
-\fIName\fR will be added to \fIwindow\fR's \fBWM_PROTOCOLS\fR
-property to tell the window manager that the application has a
-protocol handler for \fIname\fR, and \fIcommand\fR will
-be invoked in the future whenever the window manager sends a
-message to the client for that protocol.
-In this case the command returns an empty string.
-If \fIname\fR is specified but \fIcommand\fR is not, then the current
-command for \fIname\fR is returned, or an empty string if there
-is no handler defined for \fIname\fR.
-If \fIcommand\fR is specified as an empty string then the current
-handler for \fIname\fR is deleted and it is removed from the
-\fBWM_PROTOCOLS\fR property on \fIwindow\fR;  an empty string is
-returned.
-Lastly, if neither \fIname\fR nor \fIcommand\fR is specified, the
-command returns a list of all the protocols for which handlers
-are currently defined for \fIwindow\fR.
+This command is used to manage window manager protocols. The \fIname\fR
+argument in the \fBwm protocol\fR command is the name of an atom corresponding
+to a window manager protocol.  Examples include \fBWM_DELETE_WINDOW\fR or
+\fBWM_SAVE_YOURSELF\fR or \fBWM_TAKE_FOCUS\fR.
 .RS
 .PP
-Tk always defines a protocol handler for \fBWM_DELETE_WINDOW\fR, even if
-you have not asked for one with \fBwm protocol\fR.
-If a \fBWM_DELETE_WINDOW\fR message arrives when you have not defined
-a handler, then Tk handles the message by destroying the window for
-which it was received.
+A \fIwindow manager protocol\fR is a class of messages sent from a window
+manager to a Tk application outside of the normal event processing system. The
+main example is the \fBWM_DELETE_WINDOW\fR protocol; these messages are sent
+when the user clicks the close widget in the title bar of a window.  Handlers
+for window manager protocols are installed with the \fBwm protocol\fR
+command. As a rule, if no handler has been installed for a protocol by the
+\fBwm protocol\fR command then all messages of that protocol are ignored. The
+\fBWM_DELETE_WINDOW\fR protocol is an exception to this rule. At start-up Tk
+installs a handler for this protocol, which responds by destroying the
+window. The \fBwm protocol\fR command can be used to replace this default
+handler by one which responds differently.
+.RE
+.RS
+.PP
+The list of available window manager protocols depends on the window manager,
+but all window managers supported by Tk provide \fBWM_DELETE_WINDOW\fR. On the
+Windows platform, a \fBWM_SAVE_YOURSELF\fR message is sent on user logout
+or system restart.
+.RE
+.RS
+.PP
+If both \fIname\fR and \fIcommand\fR are specified, then \fIcommand\fR becomes
+the handler for the protocol specified by \fIname\fR. The atom for \fIname\fR
+will be added to \fIwindow\fR's \fBWM_PROTOCOLS\fR property to tell the window
+manager that the application has a handler for the protocol specified by
+\fIname\fR, and \fIcommand\fR will be invoked in the future whenever the
+window manager sends a message of that protocol to the Tk application.  In
+this case the \fBwm protocol\fR command returns an empty string.  If
+\fIname\fR is specified but \fIcommand\fR is not, then the current handler for
+\fIname\fR is returned, or an empty string if there is no handler defined for
+\fIname\fR (as a special case, the default handler for \fBWM_DELETE_WINDOW\fR
+is not returned).  If \fIcommand\fR is specified as an empty string then the
+atom for \fIname\fR is removed from the \fBWM_PROTOCOLS\fR property of
+\fIwindow\fR and the handler is destroyed; an empty string is returned.
+Lastly, if neither \fIname\fR nor \fIcommand\fR is specified, the
+\fBwm protocol\fR command returns a list of all of the protocols for which
+handlers are currently defined for \fIwindow\fR.
 .RE
 .TP
 \fBwm resizable \fIwindow\fR ?\fIwidth height\fR?

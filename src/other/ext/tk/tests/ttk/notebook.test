@@ -96,11 +96,11 @@ test notebook-5.1 "Virtual events" -body {
     bind .t <<NotebookTabChanged>> { lappend events changed %W }
 
     pack [set nb [ttk::notebook .t.nb]] -expand true -fill both; update
-    $nb add [frame $nb.f1]
+    $nb add [frame $nb.f1] ;  # triggers <<NotebookTabChanged>> (first tab gets autoselected)
     $nb add [frame $nb.f2]
     $nb add [frame $nb.f3]
-
-    $nb select $nb.f1
+    update
+    $nb select $nb.f1 ; # does not trigger <<NotebookTabChanged>> (tab to select is already selected)
     update; set events
 } -result [list changed .t.nb]
 
@@ -156,8 +156,9 @@ test notebook-6.1 "Hide selected tab" -setup {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f2]
     $nb hide $nb.f2
+    update idletasks
     lappend result [$nb index current] [winfo ismapped $nb.f2]
-    update idletasks; lappend result [winfo ismapped $nb.f3]
+    lappend result [winfo ismapped $nb.f3]
 } -result [list 1 1 2 0 1]
 
 # See 1370833
@@ -187,6 +188,7 @@ test notebook-6.3 "Hide first tab when it's the current" -setup {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f1]
     $nb hide $nb.f1
+    update idletasks
     lappend result [$nb index current] [winfo ismapped $nb.f1]
 } -result [list 0 1 1 0]
 
@@ -202,6 +204,7 @@ test notebook-6.4 "Forget first tab when it's the current" -setup {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f1]
     $nb forget $nb.f1
+    update idletasks
     lappend result [$nb index current] [winfo ismapped $nb.f1]
 } -result [list 0 1 0 0]
 
@@ -217,6 +220,7 @@ test notebook-6.5 "Hide last tab when it's the current" -setup {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f3]
     $nb hide $nb.f3
+    update idletasks
     lappend result [$nb index current] [winfo ismapped $nb.f3]
 } -result [list 2 1 1 0]
 
@@ -232,6 +236,7 @@ test notebook-6.6 "Forget a middle tab when it's the current" -setup {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f2]
     $nb forget $nb.f2
+    update idletasks
     lappend result [$nb index current] [winfo ismapped $nb.f2]
 } -result [list 1 1 1 0]
 
@@ -247,6 +252,7 @@ test notebook-6.7 "Hide a middle tab when it's the current" -setup {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f2]
     $nb hide $nb.f2
+    update idletasks
     lappend result [$nb index current] [winfo ismapped $nb.f2]
 } -result [list 1 1 2 0]
 
@@ -262,6 +268,7 @@ test notebook-6.8 "Forget a non-current tab < current" -setup {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f2]
     $nb forget $nb.f1
+    update idletasks
     lappend result [$nb index current] [winfo ismapped $nb.f2]
 } -result [list 1 1 0 1]
 
@@ -277,6 +284,7 @@ test notebook-6.9 "Hide a non-current tab < current" -setup {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f2]
     $nb hide $nb.f1
+    update idletasks
     lappend result [$nb index current] [winfo ismapped $nb.f2]
 } -result [list 1 1 1 1]
 
@@ -292,6 +300,7 @@ test notebook-6.10 "Forget a non-current tab > current" -setup {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f2]
     $nb forget $nb.f3
+    update idletasks
     lappend result [$nb index current] [winfo ismapped $nb.f2]
 } -result [list 1 1 1 1]
 
@@ -307,6 +316,7 @@ test notebook-6.11 "Hide a non-current tab > current" -setup {
     set result [list]
     lappend result [$nb index current] [winfo ismapped $nb.f2]
     $nb hide $nb.f3
+    update idletasks
     lappend result [$nb index current] [winfo ismapped $nb.f2]
 } -result [list 1 1 1 1]
 
@@ -322,8 +332,10 @@ test notebook-6.12 "Hide and re-add a tab" -setup {
     set result [list]
     lappend result [$nb index current] [$nb tab $nb.f2 -state]
     $nb hide $nb.f2
+    update idletasks
     lappend result [$nb index current] [$nb tab $nb.f2 -state]
     $nb add $nb.f2
+    update idletasks
     lappend result [$nb index current] [$nb tab $nb.f2 -state]
 } -result [list 1 normal 2 hidden 2 normal]
 

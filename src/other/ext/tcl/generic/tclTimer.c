@@ -949,13 +949,14 @@ Tcl_AfterObjCmd(
 	break;
     case AFTER_INFO:
 	if (objc == 2) {
-            Tcl_Obj *resultObj = Tcl_NewObj();
+	    Tcl_Obj *resultObj;
 
+	    TclNewObj(resultObj);
 	    for (afterPtr = assocPtr->firstAfterPtr; afterPtr != NULL;
 		    afterPtr = afterPtr->nextPtr) {
 		if (assocPtr->interp == interp) {
-                    Tcl_ListObjAppendElement(NULL, resultObj, Tcl_ObjPrintf(
-                            "after#%d", afterPtr->id));
+		    Tcl_ListObjAppendElement(NULL, resultObj, Tcl_ObjPrintf(
+			    "after#%d", afterPtr->id));
 		}
 	    }
             Tcl_SetObjResult(interp, resultObj);
@@ -974,14 +975,15 @@ Tcl_AfterObjCmd(
             Tcl_SetErrorCode(interp, "TCL","LOOKUP","EVENT", eventStr, NULL);
 	    return TCL_ERROR;
 	} else {
-            Tcl_Obj *resultListPtr = Tcl_NewObj();
+	    Tcl_Obj *resultListPtr;
 
-            Tcl_ListObjAppendElement(interp, resultListPtr,
-                    afterPtr->commandPtr);
-            Tcl_ListObjAppendElement(interp, resultListPtr, Tcl_NewStringObj(
+	    TclNewObj(resultListPtr);
+	    Tcl_ListObjAppendElement(interp, resultListPtr,
+		    afterPtr->commandPtr);
+	    Tcl_ListObjAppendElement(interp, resultListPtr, Tcl_NewStringObj(
 		    (afterPtr->token == NULL) ? "idle" : "timer", -1));
             Tcl_SetObjResult(interp, resultListPtr);
-        }
+	}
 	break;
     default:
 	Tcl_Panic("Tcl_AfterObjCmd: bad subcommand index to afterSubCmds");

@@ -1019,7 +1019,7 @@ PolygonInsert(
     Tcl_Obj *obj)		/* New coordinates to be inserted. */
 {
     PolygonItem *polyPtr = (PolygonItem *) itemPtr;
-    int length, objc, i;
+    int length, oriNumPoints, objc, nbInsPoints, i;
     Tcl_Obj **objv;
     double *newCoordPtr;
     Tk_State state = itemPtr->state;
@@ -1032,7 +1032,9 @@ PolygonInsert(
 	    || !objc || objc&1) {
 	return;
     }
+    oriNumPoints = polyPtr->numPoints - polyPtr->autoClosed;
     length = 2*(polyPtr->numPoints - polyPtr->autoClosed);
+    nbInsPoints = objc / 2;
     while (beforeThis > length) {
 	beforeThis -= length;
     }
@@ -1090,6 +1092,8 @@ PolygonInsert(
 	 * the general canvas code not to redraw the whole object. If this
 	 * flag is not set, the canvas will do the redrawing, otherwise I have
 	 * to do it here.
+	 * Rationale for the optimization code can be found in Tk ticket
+	 * [5fb8145997].
 	 */
 
     	double width;
@@ -1106,42 +1110,76 @@ PolygonInsert(
 
 	itemPtr->x1 = itemPtr->x2 = (int) polyPtr->coordPtr[beforeThis];
 	itemPtr->y1 = itemPtr->y2 = (int) polyPtr->coordPtr[beforeThis+1];
+
 	beforeThis -= 2;
 	objc += 4;
+
 	if (polyPtr->smooth) {
-	    beforeThis -= 2;
-	    objc += 4;
+	    if (!strcmp(polyPtr->smooth->name, "true")) {
+		/*
+		 * Quadratic Bezier splines.
+		 */
+
+		beforeThis -= 2;
+		objc += 4;
+
+	    } else if (!strcmp(polyPtr->smooth->name, "raw")) {
+		/*
+		 * Cubic Bezier splines.
+		 */
+
+		if ((oriNumPoints % 3) || (nbInsPoints % 3)) {
+		    /*
+		     * No optimization for "degenerate" polygons or when inserting
+		     * something else than a multiple of 3 points.
+		     */
+
+		    itemPtr->redraw_flags &= ~TK_ITEM_DONT_REDRAW;
+		} else {
+		    beforeThis -= abs(beforeThis) % 6;
+		    objc += 4;
+		}
+
+	    } else {
+		/*
+		 * Custom smoothing method. No optimization is possible.
+		 */
+
+		itemPtr->redraw_flags &= ~TK_ITEM_DONT_REDRAW;
+	    }
 	}
 
-	/*
-	 * Be careful; beforeThis could now be negative
-	 */
+	if (itemPtr->redraw_flags & TK_ITEM_DONT_REDRAW) {
+	    /*
+	     * Be careful; beforeThis could now be negative
+	     */
 
-	for (i=beforeThis; i<beforeThis+objc; i+=2) {
-	    j = i;
-	    if (j < 0) {
-		j += length;
-	    } else if (j >= length) {
-		j -= length;
+	    for (i=beforeThis; i<beforeThis+objc; i+=2) {
+		j = i;
+		if (j < 0) {
+		    j += length;
+		} else if (j >= length) {
+		    j -= length;
+		}
+		TkIncludePoint(itemPtr, polyPtr->coordPtr+j);
 	    }
-	    TkIncludePoint(itemPtr, polyPtr->coordPtr+j);
+	    width = polyPtr->outline.width;
+	    if (Canvas(canvas)->currentItemPtr == itemPtr) {
+		if (polyPtr->outline.activeWidth > width) {
+		    width = polyPtr->outline.activeWidth;
+		}
+	    } else if (state == TK_STATE_DISABLED) {
+		if (polyPtr->outline.disabledWidth > 0.0) {
+		    width = polyPtr->outline.disabledWidth;
+		}
+	    }
+	    itemPtr->x1 -= (int) width;
+	    itemPtr->y1 -= (int) width;
+	    itemPtr->x2 += (int) width;
+	    itemPtr->y2 += (int) width;
+	    Tk_CanvasEventuallyRedraw(canvas,
+		    itemPtr->x1, itemPtr->y1, itemPtr->x2, itemPtr->y2);
 	}
-	width = polyPtr->outline.width;
-	if (Canvas(canvas)->currentItemPtr == itemPtr) {
-	    if (polyPtr->outline.activeWidth > width) {
-		width = polyPtr->outline.activeWidth;
-	    }
-	} else if (state == TK_STATE_DISABLED) {
-	    if (polyPtr->outline.disabledWidth > 0.0) {
-		width = polyPtr->outline.disabledWidth;
-	    }
-	}
-	itemPtr->x1 -= (int) width;
-	itemPtr->y1 -= (int) width;
-	itemPtr->x2 += (int) width;
-	itemPtr->y2 += (int) width;
-	Tk_CanvasEventuallyRedraw(canvas,
-		itemPtr->x1, itemPtr->y1, itemPtr->x2, itemPtr->y2);
     }
 
     ComputePolygonBbox(canvas, polyPtr);

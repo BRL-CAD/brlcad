@@ -18,12 +18,8 @@ if {"::tcltest" ni [namespace children]} {
     package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
+source [file join [file dirname [info script]] tcltests.tcl]
 
-package require tcltests
-
-# All tests require the "exec" command.
-# Skip them if exec is not defined.
-testConstraint exec [llength [info commands exec]]
 # Some skips when running in a macOS CI environment
 testConstraint noosxCI [expr {![info exists ::env(MAC_CI)]}]
 

@@ -8,7 +8,7 @@
 #
 # Copyright (c) 1991-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
-# Copyright (c) 1998-1999 by Scriptics Corporation.
+# Copyright (c) 1998-1999 Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -34,7 +34,7 @@ namespace eval ::tcl::test::io {
 	package require -exact Tcltest [info patchlevel]
 	set ::tcltestlib [lindex [package ifneeded Tcltest [info patchlevel]] 1]
     }
-    package require tcltests
+    source [file join [file dirname [info script]] tcltests.tcl]
 
 testConstraint testbytestring [llength [info commands testbytestring]]
 testConstraint testchannel      [llength [info commands testchannel]]
@@ -108,17 +108,17 @@ set path(test1) [makeFile {} test1]
 test io-1.6 {Tcl_WriteChars: WriteBytes} {
     set f [open $path(test1) w]
     fconfigure $f -encoding binary
-    puts -nonewline $f "a\u4e4d\0"
+    puts -nonewline $f "a\u4E4D\x00"
     close $f
     contents $path(test1)
-} "a\x4d\x00"
+} "a\x4D\x00"
 test io-1.7 {Tcl_WriteChars: WriteChars} {
     set f [open $path(test1) w]
     fconfigure $f -encoding shiftjis
-    puts -nonewline $f "a\u4e4d\0"
+    puts -nonewline $f "a\u4e4d\x00"
     close $f
     contents $path(test1)
-} "a\x93\xe1\x00"
+} "a\x93\xE1\x00"
 set path(test2) [makeFile {} test2]
 test io-1.8 {Tcl_WriteChars: WriteChars} {
     # This test written for SF bug #506297.
@@ -132,7 +132,7 @@ test io-1.8 {Tcl_WriteChars: WriteChars} {
     puts -nonewline $f [format %s%c [string repeat " " 4] 12399]
     close           $f
     contents $path(test2)
-} "    \x1b\$B\$O\x1b(B"
+} "    \x1B\$B\$O\x1B(B"
 
 test io-1.9 {Tcl_WriteChars: WriteChars} {
     # When closing a channel with an encoding that appends
@@ -268,7 +268,7 @@ test io-3.3 {WriteChars: compatibility with WriteBytes: flush on line} {
     close $f
     set x
 } "\r\n12"
-test io-3.4 {WriteChars: loop over stage buffer} {
+test io-3.4 {WriteChars: loop over stage buffer} -body {
     # stage buffer maps to more than can be queued at once.
 
     set f [open $path(test1) w]
@@ -277,8 +277,10 @@ test io-3.4 {WriteChars: loop over stage buffer} {
     set x [list [contents $path(test1)]]
     close $f
     lappend x [contents $path(test1)]
-} [list "!)!)!)!)!)!)!)!)" "!)!)!)!)!)!)!)!)!)!)!)!)!)!)!)"]
-test io-3.5 {WriteChars: saved != 0} {
+} -cleanup {
+    catch {close $f}
+} -result [list "!)!)!)!)!)!)!)!)" "!)!)!)!)!)!)!)!)!)!)!)!)!)!)!)"]
+test io-3.5 {WriteChars: saved != 0} -body {
     # Bytes produced by UtfToExternal from end of last channel buffer
     # had to be moved to beginning of next channel buffer to preserve
     # requested buffersize.
@@ -289,25 +291,27 @@ test io-3.5 {WriteChars: saved != 0} {
     set x [list [contents $path(test1)]]
     close $f
     lappend x [contents $path(test1)]
-} [list "!)!)!)!)!)!)!)!)!" "!)!)!)!)!)!)!)!)!)!)!)!)!)!)!)"]
+} -cleanup {
+    catch {close $f}
+} -result [list "!)!)!)!)!)!)!)!)!" "!)!)!)!)!)!)!)!)!)!)!)!)!)!)!)"]
 test io-3.6 {WriteChars: (stageRead + dstWrote == 0)} {
     # One incomplete UTF-8 character at end of staging buffer.  Backup
     # in src to the beginning of that UTF-8 character and try again.
     #
     # Translate the first 16 bytes, produce 14 bytes of output, 2 left over
-    # (first two bytes of \uff21 in UTF-8).  Given those two bytes try
+    # (first two bytes of \uFF21 in UTF-8).  Given those two bytes try
     # translating them again, find that no bytes are read produced, and break
     # to outer loop where those two bytes will have the remaining 4 bytes
-    # (the last byte of \uff21 plus the all of \uff22) appended.
+    # (the last byte of \uFF21 plus the all of \uFF22) appended.
 
     set f [open $path(test1) w]
     fconfigure $f -encoding shiftjis -buffersize 16
-    puts -nonewline $f "12345678901234\uff21\uff22"
+    puts -nonewline $f "12345678901234\uFF21\uFF22"
     set x [list [contents $path(test1)]]
     close $f
     lappend x [contents $path(test1)]
 } [list "12345678901234\x82\x60" "12345678901234\x82\x60\x82\x61"]
-test io-3.7 {WriteChars: (bufPtr->nextAdded > bufPtr->length)} {
+test io-3.7 {WriteChars: (bufPtr->nextAdded > bufPtr->length)} -body {
     # When translating UTF-8 to external, the produced bytes went past end
     # of the channel buffer.  This is done purpose -- we then truncate the
     # bytes at the end of the partial character to preserve the requested
@@ -320,7 +324,9 @@ test io-3.7 {WriteChars: (bufPtr->nextAdded > bufPtr->length)} {
     set x [list [contents $path(test1)]]
     close $f
     lappend x [contents $path(test1)]
-} [list "!)!)!)!)!)!)!)!)!" "!)!)!)!)!)!)!)!)!)!)!)!)!)!)!)"]
+} -cleanup {
+    catch {close $f}
+} -result [list "!)!)!)!)!)!)!)!)!" "!)!)!)!)!)!)!)!)!)!)!)!)!)!)!)"]
 test io-3.8 {WriteChars: reset sawLF after each buffer} {
     set f [open $path(test1) w]
     fconfigure $f -encoding ascii -buffering line -translation lf \
@@ -330,6 +336,15 @@ test io-3.8 {WriteChars: reset sawLF after each buffer} {
     close $f
     lappend x [contents $path(test1)]
 } [list "abcdefg\nhijklmno" "abcdefg\nhijklmnopqrstuvwxyz"]
+test io-3.9 {Write: flush line-buffered channels when crlf is split over two buffers} -body {
+    # https://core.tcl-lang.org/tcllib/tktedit?name=c9d8a52fe
+    set f [open $path(test1) w]
+    fconfigure $f -buffering line -translation crlf -buffersize 8
+    puts $f "1234567"
+    string map {"\r" "<cr>" "\n" "<lf>"} [contents $path(test1)]
+} -cleanup {
+    close $f
+} -result "1234567<cr><lf>"
 
 test io-4.1 {TranslateOutputEOL: lf} {
     # search for \n
@@ -451,7 +466,7 @@ test io-6.3 {Tcl_GetsObj: how many have we used?} {
 test io-6.4 {Tcl_GetsObj: encoding == NULL} {
     set f [open $path(test1) w]
     fconfigure $f -translation binary
-    puts $f "\x81\u1234\0"
+    puts $f "\x81\u1234\x00"
     close $f
     set f [open $path(test1)]
     fconfigure $f -translation binary
@@ -462,14 +477,14 @@ test io-6.4 {Tcl_GetsObj: encoding == NULL} {
 test io-6.5 {Tcl_GetsObj: encoding != NULL} {
     set f [open $path(test1) w]
     fconfigure $f -translation binary
-    puts $f "\x88\xea\x92\x9a"
+    puts $f "\x88\xEA\x92\x9A"
     close $f
     set f [open $path(test1)]
     fconfigure $f -encoding shiftjis
     set x [list [gets $f line] $line]
     close $f
     set x
-} [list 2 "\u4e00\u4e01"]
+} [list 2 "\u4E00\u4E01"]
 set a "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 append a $a
 append a $a
@@ -509,7 +524,7 @@ test io-6.8 {Tcl_GetsObj: remember if EOF is seen} {
 } {6 abcdef -1 {}}
 test io-6.9 {Tcl_GetsObj: remember if EOF is seen} {
     set f [open $path(test1) w]
-    puts $f "abcdefghijk\nwom\u001abat"
+    puts $f "abcdefghijk\nwom\u001Abat"
     close $f
     set f [open $path(test1)]
     fconfigure $f -eofchar \x1A
@@ -1052,14 +1067,14 @@ test io-6.55 {Tcl_GetsObj: overconverted} {
 
     set f [open $path(test1) w]
     fconfigure $f -encoding iso2022-jp
-    puts $f "there\u4e00ok\n\u4e01more bytes\nhere"
+    puts $f "there\u4E00ok\n\u4E01more bytes\nhere"
     close $f
     set f [open $path(test1)]
     fconfigure $f -encoding iso2022-jp
     set x [list [gets $f line] $line [gets $f line] $line [gets $f line] $line]
     close $f
     set x
-} [list 8 "there\u4e00ok" 11 "\u4e01more bytes" 4 "here"]
+} [list 8 "there\u4E00ok" 11 "\u4E01more bytes" 4 "here"]
 test io-6.56 {Tcl_GetsObj: incomplete lines should disable file events} {stdio fileevent} {
     update
     set f [open "|[list [interpreter] $path(cat)]" w+]
@@ -1086,20 +1101,20 @@ test io-7.1 {FilterInputBytes: split up character at end of buffer} {
 
     set f [open $path(test1) w]
     fconfigure $f -encoding shiftjis
-    puts $f "1234567890123\uff10\uff11\uff12\uff13\uff14\nend"
+    puts $f "1234567890123\uFF10\uFF11\uFF12\uFF13\uFF14\nend"
     close $f
     set f [open $path(test1)]
     fconfigure $f -encoding shiftjis -buffersize 16
     set x [gets $f]
     close $f
     set x
-} "1234567890123\uff10\uff11\uff12\uff13\uff14"
+} "1234567890123\uFF10\uFF11\uFF12\uFF13\uFF14"
 test io-7.2 {FilterInputBytes: split up character in middle of buffer} {
     # (bufPtr->nextAdded < bufPtr->bufLength)
 
     set f [open $path(test1) w]
     fconfigure $f -encoding binary
-    puts -nonewline $f "1234567890\n123\x82\x4f\x82\x50\x82"
+    puts -nonewline $f "1234567890\n123\x82\x4F\x82\x50\x82"
     close $f
     set f [open $path(test1)]
     fconfigure $f -encoding shiftjis
@@ -1110,7 +1125,7 @@ test io-7.2 {FilterInputBytes: split up character in middle of buffer} {
 test io-7.3 {FilterInputBytes: split up character at EOF} {testchannel} {
     set f [open $path(test1) w]
     fconfigure $f -encoding binary
-    puts -nonewline $f "1234567890123\x82\x4f\x82\x50\x82"
+    puts -nonewline $f "1234567890123\x82\x4F\x82\x50\x82"
     close $f
     set f [open $path(test1)]
     fconfigure $f -encoding shiftjis
@@ -1119,11 +1134,11 @@ test io-7.3 {FilterInputBytes: split up character at EOF} {testchannel} {
     lappend x [gets $f line] $line
     close $f
     set x
-} [list 15 "1234567890123\uff10\uff11" 18 0 1 -1 ""]
+} [list 15 "1234567890123\uFF10\uFF11" 18 0 1 -1 ""]
 test io-7.4 {FilterInputBytes: recover from split up character} {stdio fileevent} {
     set f [open "|[list [interpreter] $path(cat)]" w+]
     fconfigure $f -encoding binary -buffering none
-    puts -nonewline $f "1234567890123\x82\x4f\x82\x50\x82"
+    puts -nonewline $f "1234567890123\x82\x4F\x82\x50\x82"
     fconfigure $f -encoding shiftjis -blocking 0
     fileevent $f read [namespace code "ready $f"]
     variable x {}
@@ -1138,7 +1153,7 @@ test io-7.4 {FilterInputBytes: recover from split up character} {stdio fileevent
     vwait [namespace which -variable x]
     close $f
     set x
-} [list -1 "" 1 17 "1234567890123\uff10\uff11\uff12\uff13" 0]
+} [list -1 "" 1 17 "1234567890123\uFF10\uFF11\uFF12\uFF13" 0]
 
 test io-8.1 {PeekAhead: only go to device if no more cached data} {testchannel} {
     # (bufPtr->nextPtr == NULL)
@@ -1415,19 +1430,19 @@ test io-12.4 {ReadChars: split-up char} {stdio testchannel fileevent} {
     fconfigure $f -encoding shiftjis
     vwait [namespace which -variable x]
     fconfigure $f -encoding binary -blocking 1
-    puts -nonewline $f "\x7b"
+    puts -nonewline $f "\x7B"
     after 500			;# Give the cat process time to catch up
     fconfigure $f -encoding shiftjis -blocking 0
     vwait [namespace which -variable x]
     close $f
     set x
-} [list "123456789012345" 1 "\u672c" 0]
+} [list "123456789012345" 1 "\u672C" 0]
 test io-12.5 {ReadChars: fileevents on partial characters} {stdio fileevent} {
     set path(test1) [makeFile {
 	fconfigure stdout -encoding binary -buffering none
-	gets stdin; puts -nonewline "\xe7"
+	gets stdin; puts -nonewline "\xE7"
 	gets stdin; puts -nonewline "\x89"
-	gets stdin; puts -nonewline "\xa6"
+	gets stdin; puts -nonewline "\xA6"
     } test1]
     set f [open "|[list [interpreter] $path(test1)]" r+]
     fileevent $f readable [namespace code {
@@ -1524,7 +1539,7 @@ test io-12.7 {ReadChars: too many chars read [bc5b790099]} {
 test io-12.8 {ReadChars: multibyte chars split} {
     set f [open $path(test1) w]
     fconfigure $f -translation binary
-    puts -nonewline $f [string repeat a 9]\xc2\xa0
+    puts -nonewline $f [string repeat a 9]\xC2\xA0
     close $f
     set f [open $path(test1)]
     fconfigure $f -encoding utf-8 -buffersize 10
@@ -1532,28 +1547,32 @@ test io-12.8 {ReadChars: multibyte chars split} {
     close $f
     scan [string index $in end] %c
 } 160
-test io-12.9 {ReadChars: multibyte chars split} {
+test io-12.9 {ReadChars: multibyte chars split} -body {
     set f [open $path(test1) w]
     fconfigure $f -translation binary
-    puts -nonewline $f [string repeat a 9]\xc2
+    puts -nonewline $f [string repeat a 9]\xC2
     close $f
     set f [open $path(test1)]
     fconfigure $f -encoding utf-8 -buffersize 10
     set in [read $f]
     close $f
     scan [string index $in end] %c
-} 194
-test io-12.10 {ReadChars: multibyte chars split} {
+} -cleanup {
+    catch {close $f}
+} -result 194
+test io-12.10 {ReadChars: multibyte chars split} -body {
     set f [open $path(test1) w]
     fconfigure $f -translation binary
-    puts -nonewline $f [string repeat a 9]\xc2
+    puts -nonewline $f [string repeat a 9]\xC2
     close $f
     set f [open $path(test1)]
     fconfigure $f -encoding utf-8 -buffersize 11
     set in [read $f]
     close $f
     scan [string index $in end] %c
-} 194
+} -cleanup {
+    catch {close $f}
+} -result 194
 
 test io-13.1 {TranslateInputEOL: cr mode} {} {
     set f [open $path(test1) w]
@@ -1732,7 +1751,7 @@ test io-13.10 {TranslateInputEOL: auto mode: \n} {
     set x
 } "abcd\ndef"
 test io-13.11 {TranslateInputEOL: EOF char} {
-    # (*chanPtr->inEofChar != '\0')
+    # (*chanPtr->inEofChar != '\x00')
 
     set f [open $path(test1) w]
     fconfigure $f -translation lf
@@ -1745,7 +1764,7 @@ test io-13.11 {TranslateInputEOL: EOF char} {
     set x
 } "abcd\nd"
 test io-13.12 {TranslateInputEOL: find EOF char in src} {
-    # (*chanPtr->inEofChar != '\0')
+    # (*chanPtr->inEofChar != '\x00')
 
     set f [open $path(test1) w]
     fconfigure $f -translation lf
@@ -2346,9 +2365,9 @@ test io-28.3 {CloseChannel, not called before output queue is empty} \
         set result ok
     }
 } ok
-test io-28.4 {Tcl_Close} {testchannel} {
+test io-28.4 Tcl_Close testchannel {
     file delete $path(test1)
-    set l ""
+    set l {}
     lappend l [lsort [testchannel open]]
     set f [open $path(test1) w]
     lappend l [lsort [testchannel open]]
@@ -2989,6 +3008,99 @@ test io-29.35 {Tcl_Close vs fileevent vs multiple interpreters} {socket tempNotM
     interp delete y
 } ""
 
+test io-29.36.1 {gets on translation auto with "\r" in QA communication mode, possible regression, bug [b3977d199b]} -constraints {
+    socket tempNotMac fileevent
+} -setup {
+    set s [open "|[list [interpreter] << {
+    proc accept {so args} {
+	fconfigure $so -translation binary
+	puts -nonewline $so "who are you?\r"; flush $so
+	set a [gets $so]
+	puts -nonewline $so "really $a?\r"; flush $so
+	set a [gets $so]
+	close $so
+	set ::done $a
+    }
+    set s [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
+    puts [lindex [fconfigure $s -sockname] 2]
+    foreach c {1 2} {
+	vwait ::done
+	puts $::done
+    }
+    }]" r]
+    set c {}
+    set result {}
+} -body {
+    set port [gets $s]
+    foreach t {{cr lf} {auto lf}} {
+	set c [socket 127.0.0.1 $port]
+	fconfigure $c -buffering line -translation $t
+	lappend result $t
+	while {1} {
+	    set q [gets $c]
+	    switch -- $q {
+		"who are you?"   {puts $c "client"}
+		"really client?" {puts $c "yes"; lappend result $q; break}
+		default {puts $c "wrong"; lappend result "unexpected input \"$q\""; break}
+	    }
+	}
+	lappend result [gets $s]
+	close $c; set c {}
+    }
+    set result
+} -cleanup {
+    close $s
+    if {$c ne {}} { close $c }
+    unset -nocomplain s c port t q
+} -result [list {cr lf} "really client?" yes {auto lf} "really client?" yes]
+test io-29.36.2 {gets on translation auto with "\r\n" in different buffers, bug [b3977d199b]} -constraints {
+    socket tempNotMac fileevent
+} -setup {
+    set s [socket -server [namespace code accept] -myaddr 127.0.0.1 0]
+    set c {}
+} -body {
+    set ::cnt 0
+    proc accept {so args} {
+	fconfigure $so -translation binary
+	puts -nonewline $so "1 line\r"
+	puts -nonewline $so "\n2 li"
+	flush $so
+	# now force separate packets
+	puts -nonewline $so "ne\r"
+	flush $so
+	if {$::cnt & 1} {
+	    vwait ::cli; # simulate short delay (so client can process events, just wait for it)
+	} else {
+	    # we don't have a delay, so client would get the lines as single chunk
+	}
+	# we'll try with "\r" and without "\r" (to cover both branches, where "\r" and "eof" causes exit from [gets] by 3rd line)
+	puts -nonewline $so "\n3 line"
+	if {!($::cnt % 3)} {
+	    puts -nonewline $so "\r"
+	}
+	flush $so
+	close $so
+    }
+    while {$::cnt < 6} { incr ::cnt
+	set c [socket 127.0.0.1 [lindex [fconfigure $s -sockname] 2]]
+	fconfigure $c -blocking 0 -buffering line -translation auto
+	fileevent $c readable [list apply {c {
+	    if {[gets $c line] >= 0} {
+		lappend ::cli <$line>
+	    } elseif {[eof $c]} {
+		set ::done 1
+	    }
+	}} $c]
+	vwait ::done
+	close $c; set c {}
+    }
+    set ::cli
+} -cleanup {
+    close $s
+    if {$c ne {}} { close $c }
+    unset -nocomplain ::done ::cli ::cnt s c
+} -result [lrepeat 6 {<1 line>} {<2 line>} {<3 line>}]
+
 # Test end of line translations. Procedures tested are Tcl_Write, Tcl_Read.
 
 test io-30.1 {Tcl_Write lf, Tcl_Read lf} {
@@ -3202,7 +3314,7 @@ test io-30.16 {Tcl_Write ^Z at end, Tcl_Read auto} {
     puts -nonewline $f hello\nthere\nand\rhere\n\x1A
     close $f
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation auto
+    fconfigure $f -translation auto -eofchar \x1A
     set c [read $f]
     close $f
     set c
@@ -3214,11 +3326,11 @@ here
 test io-30.17 {Tcl_Write, implicit ^Z at end, Tcl_Read auto} {win} {
     file delete $path(test1)
     set f [open $path(test1) w]
-    fconfigure $f -eofchar \x1A -translation lf
+    fconfigure $f -translation lf -eofchar \x1A
     puts $f hello\nthere\nand\rhere
     close $f
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation auto
+    fconfigure $f -translation auto -eofchar \x1A
     set c [read $f]
     close $f
     set c
@@ -3235,7 +3347,7 @@ test io-30.18 {Tcl_Write, ^Z in middle, Tcl_Read auto} {
     puts $f $s
     close $f
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation auto
+    fconfigure $f -translation auto -eofchar \x1A
     set l ""
     lappend l [gets $f]
     lappend l [gets $f]
@@ -3255,7 +3367,7 @@ test io-30.19 {Tcl_Write, ^Z no newline in middle, Tcl_Read auto} {
     puts $f $s
     close $f
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation auto
+    fconfigure $f -translation auto -eofchar \x1A
     set l ""
     lappend l [gets $f]
     lappend l [gets $f]
@@ -3736,7 +3848,7 @@ test io-31.18 {Tcl_Write ^Z at end, Tcl_Gets auto} {
     puts $f $s
     close $f
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation auto
+    fconfigure $f -translation auto -eofchar \x1A
     set l ""
     lappend l [gets $f]
     lappend l [gets $f]
@@ -3751,11 +3863,11 @@ test io-31.18 {Tcl_Write ^Z at end, Tcl_Gets auto} {
 test io-31.19 {Tcl_Write, implicit ^Z at end, Tcl_Gets auto} {
     file delete $path(test1)
     set f [open $path(test1) w]
-    fconfigure $f -eofchar \x1A -translation lf
+    fconfigure $f -translation lf -eofchar \x1A
     puts $f hello\nthere\nand\rhere
     close $f
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation auto
+    fconfigure $f -translation auto -eofchar \x1A
     set l ""
     lappend l [gets $f]
     lappend l [gets $f]
@@ -3775,8 +3887,7 @@ test io-31.20 {Tcl_Write, ^Z in middle, Tcl_Gets auto, eofChar} {
     puts $f $s
     close $f
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A
-    fconfigure $f -translation auto
+    fconfigure $f -translation auto -eofchar \x1A
     set l ""
     lappend l [gets $f]
     lappend l [gets $f]
@@ -3794,7 +3905,7 @@ test io-31.21 {Tcl_Write, no newline ^Z in middle, Tcl_Gets auto, eofChar} {
     puts $f $s
     close $f
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation auto
+    fconfigure $f -translation auto -eofchar \x1A
     set l ""
     lappend l [gets $f]
     lappend l [gets $f]
@@ -5311,9 +5422,6 @@ test io-39.1 {Tcl_GetChannelOption} {
     close $f1
     set x
 } 1
-#
-# Test 17.2 was removed.
-#
 test io-39.2 {Tcl_GetChannelOption} {
     file delete $path(test1)
     set f1 [open $path(test1) w]
@@ -5479,7 +5587,7 @@ test io-39.14 {Tcl_SetChannelOption: -encoding, binary & utf-8} {
     file delete $path(test1)
     set f [open $path(test1) w]
     fconfigure $f -encoding {}
-    puts -nonewline $f \xe7\x89\xa6
+    puts -nonewline $f \xE7\x89\xA6
     close $f
     set f [open $path(test1) r]
     fconfigure $f -encoding utf-8
@@ -5491,7 +5599,7 @@ test io-39.15 {Tcl_SetChannelOption: -encoding, binary & utf-8} {
     file delete $path(test1)
     set f [open $path(test1) w]
     fconfigure $f -encoding binary
-    puts -nonewline $f \xe7\x89\xa6
+    puts -nonewline $f \xE7\x89\xA6
     close $f
     set f [open $path(test1) r]
     fconfigure $f -encoding utf-8
@@ -5509,7 +5617,7 @@ test io-39.16 {Tcl_SetChannelOption: -encoding, errors} {
 test io-39.17 {Tcl_SetChannelOption: -encoding, clearing CHANNEL_NEED_MORE_DATA} {stdio fileevent} {
     set f [open "|[list [interpreter] $path(cat)]" r+]
     fconfigure $f -encoding binary
-    puts -nonewline $f "\xe7"
+    puts -nonewline $f "\xE7"
     flush $f
     fconfigure $f -encoding utf-8 -blocking 0
     variable x {}
@@ -5527,7 +5635,7 @@ test io-39.17 {Tcl_SetChannelOption: -encoding, clearing CHANNEL_NEED_MORE_DATA}
     vwait [namespace which -variable x]
     close $f
     set x
-} "{} timeout {} timeout \xe7 timeout"
+} "{} timeout {} timeout \xE7 timeout"
 test io-39.18 {Tcl_SetChannelOption, setting read mode independently} \
 	{socket} {
     proc accept {s a p} {close $s}
@@ -5655,8 +5763,8 @@ test io-40.3 {POSIX open access modes: CREAT} {unix umask} {
     set f [open $path(test3) {WRONLY CREAT}]
     close $f
     file stat $path(test3) stats
-    format "0o%03o" [expr {$stats(mode)&0o777}]
-} [format "0o%03o" [expr {0o666 & ~ $umaskValue}]]
+    format 0o%03o [expr {$stats(mode)&0o777}]
+} [format 0o%03o [expr {0o666 & ~ $umaskValue}]]
 test io-40.4 {POSIX open access modes: CREAT} {
     file delete $path(test3)
     set f [open $path(test3) w]
@@ -5830,11 +5938,11 @@ test io-42.2 {Tcl_FileeventCmd: replacing} {fileevent} {
 } {{first script} {new script} {yet another} {}}
 test io-42.3 {Tcl_FileeventCmd: replacing, with NULL chars in script} {fileevent} {
     set result {}
-    fileevent $f r "first scr\0ipt"
+    fileevent $f r "first scr\x00ipt"
     lappend result [string length [fileevent $f readable]]
-    fileevent $f r "new scr\0ipt"
+    fileevent $f r "new scr\x00ipt"
     lappend result [string length [fileevent $f readable]]
-    fileevent $f r "yet ano\0ther"
+    fileevent $f r "yet ano\x00ther"
     lappend result [string length [fileevent $f readable]]
     fileevent $f r ""
     lappend result [fileevent $f readable]
@@ -6327,7 +6435,7 @@ test io-48.5 {lf write, testing readability, ^Z in middle, auto read mode} {file
     set c 0
     set l ""
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation auto
+    fconfigure $f -translation auto -eofchar \x1A
     fileevent $f readable [namespace code [list consume $f]]
     variable x
     vwait [namespace which -variable x]
@@ -6383,7 +6491,7 @@ test io-48.7 {cr write, testing readability, ^Z in middle, auto read mode} {file
     set c 0
     set l ""
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation auto
+    fconfigure $f -translation auto -eofchar \x1A
     fileevent $f readable [namespace code [list consume $f]]
     variable x
     vwait [namespace which -variable x]
@@ -6439,7 +6547,7 @@ test io-48.9 {crlf write, testing readability, ^Z in middle, auto read mode} {fi
     set c 0
     set l ""
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation auto
+    fconfigure $f -translation auto -eofchar \x1A
     fileevent $f readable [namespace code [list consume $f]]
     variable x
     vwait [namespace which -variable x]
@@ -6467,7 +6575,7 @@ test io-48.10 {lf write, testing readability, ^Z in middle, lf read mode} {filee
     set c 0
     set l ""
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation lf
+    fconfigure $f -translation lf -eofchar \x1A
     fileevent $f readable [namespace code [list consume $f]]
     variable x
     vwait [namespace which -variable x]
@@ -6523,7 +6631,7 @@ test io-48.12 {cr write, testing readability, ^Z in middle, cr read mode} {filee
     set c 0
     set l ""
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation cr
+    fconfigure $f -translation cr -eofchar \x1A
     fileevent $f readable [namespace code [list consume $f]]
     variable x
     vwait [namespace which -variable x]
@@ -6579,7 +6687,7 @@ test io-48.14 {crlf write, testing readability, ^Z in middle, crlf read mode} {f
     set c 0
     set l ""
     set f [open $path(test1) r]
-    fconfigure $f -eofchar \x1A -translation crlf
+    fconfigure $f -translation crlf -eofchar \x1A
     fileevent $f readable [namespace code [list consume $f]]
     variable x
     vwait [namespace which -variable x]
@@ -8326,7 +8434,7 @@ test io-60.1 {writing illegal utf sequences} {fileevent testbytestring} {
     set out [open $path(script) w]
     puts $out "catch {load $::tcltestlib Tcltest}"
     puts $out {
-	puts [testbytestring \xe2]
+	puts ABC[testbytestring \xE2]
 	exit 1
     }
     proc readit {pipe} {
@@ -8350,7 +8458,7 @@ test io-60.1 {writing illegal utf sequences} {fileevent testbytestring} {
     # cut of the remainder of the error stack, especially the filename
     set result [lreplace $result 3 3 [lindex [split [lindex $result 3] \n] 0]]
     list $x $result
-} {1 {gets {} catch {error writing "stdout": invalid argument}}}
+} {1 {gets ABC catch {error writing "stdout": invalid argument}}}
 
 test io-61.1 {Reset eof state after changing the eof char} -setup {
     set datafile [makeFile {} eofchar]
@@ -8684,7 +8792,7 @@ test io-73.5 {effect of eof on encoding end flags} -setup {
     read $rfd
 } -body {
     set result [eof $rfd]
-    puts -nonewline $wfd "more\u00c2\u00a0data"
+    puts -nonewline $wfd "more\u00C2\u00A0data"
     lappend result [eof $rfd]
     lappend result [read $rfd]
     lappend result [eof $rfd]
@@ -8692,7 +8800,7 @@ test io-73.5 {effect of eof on encoding end flags} -setup {
     close $wfd
     close $rfd
     removeFile io-73.5
-} -result [list 1 1 more\u00a0data 1]
+} -result [list 1 1 more\u00A0data 1]
 
 test io-74.1 {[104f2885bb] improper cache validity check} -setup {
     set fn [makeFile {} io-74.1]
@@ -8711,6 +8819,102 @@ test io-74.1 {[104f2885bb] improper cache validity check} -setup {
     testobj freeallvars
     removeFile io-74.1
 } -returnCodes error -match glob -result {can not find channel named "*"}
+
+# The following tests 75.1 to 75.5 exercise strict or tolerant channel
+# encoding.
+# TCL 8.6 only offers tolerant channel encoding, what is tested here.
+test io-75.1 {multibyte encoding error read results in raw bytes} -setup {
+    set fn [makeFile {} io-75.1]
+    set f [open $fn w+]
+    fconfigure $f -encoding binary
+    # In UTF-8, a byte 0xCx starts a multibyte sequence and must be followed
+    # by a byte > 0x7F. This is violated to get an invalid sequence.
+    puts -nonewline $f "A\xC0\x40"
+    flush $f
+    seek $f 0
+    fconfigure $f -encoding utf-8 -buffering none
+} -body {
+    set d [read $f]
+    binary scan $d H* hd
+    set hd
+} -cleanup {
+    close $f
+    removeFile io-75.1
+} -result "41c040"
+
+test io-75.2 {unrepresentable character write passes and is replaced by ?} -setup {
+    set fn [makeFile {} io-75.2]
+    set f [open $fn w+]
+    fconfigure $f -encoding iso8859-1
+} -body {
+    puts -nonewline $f "A\u2022"
+    flush $f
+    seek $f 0
+    read $f
+} -cleanup {
+    close $f
+    removeFile io-75.2
+} -result "A?"
+
+# Incomplete sequence test.
+# This error may IMHO only be detected with the close.
+# But the read already returns the incomplete sequence.
+test io-75.3 {incomplete multibyte encoding read is ignored} -setup {
+    set fn [makeFile {} io-75.3]
+    set f [open $fn w+]
+    fconfigure $f -encoding binary
+    puts -nonewline $f "A\xC0"
+    flush $f
+    seek $f 0
+    fconfigure $f -encoding utf-8 -buffering none
+} -body {
+    set d [read $f]
+    close $f
+    binary scan $d H* hd
+    set hd
+} -cleanup {
+    removeFile io-75.3
+} -result "41c0"
+
+# As utf-8 has a special treatment in multi-byte decoding, also test another
+# one.
+test io-75.4 {shiftjis encoding error read results in raw bytes} -setup {
+    set fn [makeFile {} io-75.4]
+    set f [open $fn w+]
+    fconfigure $f -encoding binary
+    # In shiftjis, \x81 starts a two-byte sequence.
+    # But 2nd byte \xFF is not allowed
+    puts -nonewline $f "A\x81\xFFA"
+    flush $f
+    seek $f 0
+    fconfigure $f -encoding shiftjis -buffering none -eofchar "" -translation lf
+} -body {
+    set d [read $f]
+    binary scan $d H* hd
+    set hd
+} -cleanup {
+    close $f
+    removeFile io-75.4
+} -result "4181ff41"
+
+test io-75.5 {incomplete shiftjis encoding read is ignored} -setup {
+    set fn [makeFile {} io-75.5]
+    set f [open $fn w+]
+    fconfigure $f -encoding binary
+    # \x81 announces a two byte sequence.
+    puts -nonewline $f "A\x81"
+    flush $f
+    seek $f 0
+    fconfigure $f -encoding utf-8 -buffering none -eofchar "" -translation lf
+} -body {
+    set d [read $f]
+    close $f
+    binary scan $d H* hd
+    set hd
+} -cleanup {
+    removeFile io-75.5
+} -result "4181"
+
 
 # ### ### ### ######### ######### #########
 

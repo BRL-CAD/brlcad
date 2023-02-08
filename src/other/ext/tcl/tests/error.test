@@ -351,6 +351,13 @@ test error-9.4 {try (ok, non-empty result) with on handler} {
 test error-9.5 {try (ok, non-empty result) with on ok handler} {
     try { list a b c } on ok {} { list d e f }
 } {d e f}
+test error-9.6 {try (compilation of simple finaly token only, bug [27520c9b17])} -body {
+    set b {}; set l {}
+    try {lappend l error} finally [lappend l set b]
+    list $l $b
+} -cleanup {
+    unset -nocomplain b l
+} -result {{set b error} {}}
 
 # simple try tests - "on" handler matching
 

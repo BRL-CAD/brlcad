@@ -953,8 +953,6 @@ EntryWidgetObjCmd(
 	    index = entryPtr->leftIndex;
 	    switch (Tk_GetScrollInfoObj(interp, objc, objv, &fraction,
 		    &count)) {
-	    case TK_SCROLL_ERROR:
-		goto error;
 	    case TK_SCROLL_MOVETO:
 		index = (int) ((fraction * entryPtr->numChars) + 0.5);
 		break;
@@ -972,6 +970,8 @@ EntryWidgetObjCmd(
 	    case TK_SCROLL_UNITS:
 		index += count;
 		break;
+	    default:
+		goto error;
 	    }
 	}
 	if (index >= entryPtr->numChars) {
@@ -4181,8 +4181,6 @@ SpinboxWidgetObjCmd(
 	    index = entryPtr->leftIndex;
 	    switch (Tk_GetScrollInfoObj(interp, objc, objv, &fraction,
 		    &count)) {
-	    case TK_SCROLL_ERROR:
-		goto error;
 	    case TK_SCROLL_MOVETO:
 		index = (int) ((fraction * entryPtr->numChars) + 0.5);
 		break;
@@ -4201,6 +4199,8 @@ SpinboxWidgetObjCmd(
 	    case TK_SCROLL_UNITS:
 		index += count;
 		break;
+	    default:
+		goto error;
 	    }
 	}
 	if (index >= entryPtr->numChars) {

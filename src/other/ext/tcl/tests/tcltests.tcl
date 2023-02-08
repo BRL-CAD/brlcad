@@ -1,5 +1,8 @@
 #! /usr/bin/env tclsh
 
+# Don't overwrite tcltests facilities already present
+if {[package provide tcltests] ne {}} return
+
 package require tcltest 2.5
 namespace import ::tcltest::*
 

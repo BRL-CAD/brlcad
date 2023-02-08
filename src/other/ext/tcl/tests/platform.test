@@ -10,7 +10,7 @@
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 package require tcltest 2.5
-package require tcltests
+source [file join [file dirname [info script]] tcltests.tcl]
 
 namespace eval ::tcl::test::platform {
     namespace import ::tcltest::testConstraint

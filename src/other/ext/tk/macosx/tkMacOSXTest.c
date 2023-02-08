@@ -22,15 +22,11 @@
  */
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1080
-static int		DebuggerObjCmd (ClientData dummy, Tcl_Interp *interp,
-					int objc, Tcl_Obj *const objv[]);
+static Tcl_ObjCmdProc DebuggerObjCmd;
 #endif
-static int		PressButtonObjCmd (ClientData dummy, Tcl_Interp *interp,
-					int objc, Tcl_Obj *const *objv);
-static int		InjectKeyEventObjCmd (ClientData dummy, Tcl_Interp *interp,
-					int objc, Tcl_Obj *const *objv);
-static int		MenuBarHeightObjCmd (ClientData dummy, Tcl_Interp *interp,
-					int objc, Tcl_Obj *const *objv);
+static Tcl_ObjCmdProc PressButtonObjCmd;
+static Tcl_ObjCmdProc InjectKeyEventObjCmd;
+static Tcl_ObjCmdProc MenuBarHeightObjCmd;
 
 
 /*
@@ -87,10 +83,10 @@ TkplatformtestInit(
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1080
 static int
 DebuggerObjCmd(
-    ClientData clientData,		/* Not used. */
-    Tcl_Interp *interp,			/* Not used. */
-    int objc,				/* Not used. */
-    Tcl_Obj *const objv[])			/* Not used. */
+    TCL_UNUSED(void *),		/* Not used. */
+    TCL_UNUSED(Tcl_Interp *),			/* Not used. */
+    TCL_UNUSED(int),				/* Not used. */
+    TCL_UNUSED(Tcl_Obj *const *)			/* Not used. */
 {
     Debugger();
     return TCL_OK;
@@ -178,7 +174,7 @@ TkTestLogDisplay(
  *      location.  It injects NSEvents into the NSApplication event queue, as
  *      opposed to adding events to the Tcl queue as event generate would do.
  *      One application is for testing the grab command. These events have
- *      their unused context property set to 1 as a signal indicating that they
+ *      their timestamp property set to 0 as a signal indicating that they
  *      should not be ignored by [NSApp tkProcessMouseEvent].
  *
  * Results:
@@ -198,7 +194,6 @@ PressButtonObjCmd(
     Tcl_Obj *const objv[])
 {
     int x = 0, y = 0, i, value;
-    NSInteger signal = -1;
     CGPoint pt;
     NSPoint loc;
     NSEvent *motion, *press, *release;
@@ -234,40 +229,39 @@ PressButtonObjCmd(
     loc.y = ScreenHeight - y;
 
     /*
-     *  We set the window number and the eventNumber to -1 as a signal to
-     *  processMouseEvent.
+     *  We set the timestamp to 0 as a signal to tkProcessMouseEvent.
      */
 
     CGWarpMouseCursorPosition(pt);
     motion = [NSEvent mouseEventWithType:NSMouseMoved
 	location:loc
 	modifierFlags:0
-	timestamp:GetCurrentEventTime()
-	windowNumber:signal
+	timestamp:0
+	windowNumber:0
 	context:nil
-	eventNumber:signal
+	eventNumber:0
 	clickCount:1
-	pressure:0.0];
+	pressure:0];
     [NSApp postEvent:motion atStart:NO];
     press = [NSEvent mouseEventWithType:NSLeftMouseDown
 	location:loc
 	modifierFlags:0
-	timestamp:GetCurrentEventTime()
-	windowNumber:signal
+	timestamp:0
+	windowNumber:0
 	context:nil
-	eventNumber:signal
+	eventNumber:0
 	clickCount:1
-	pressure:0.0];
+	pressure:0];
     [NSApp postEvent:press atStart:NO];
     release = [NSEvent mouseEventWithType:NSLeftMouseUp
 	location:loc
 	modifierFlags:0
-	timestamp:GetCurrentEventTime()
-	windowNumber:signal
+	timestamp:0
+	windowNumber:0
 	context:nil
-	eventNumber:signal
+	eventNumber:0
 	clickCount:1
-	pressure:-1.0];
+	pressure:0];
     [NSApp postEvent:release atStart:NO];
     return TCL_OK;
 }
@@ -297,8 +291,8 @@ InjectKeyEventObjCmd(
         Tcl_WrongNumArgs(interp, 1, objv, "option keysym ?arg?");
         return TCL_ERROR;
     }
-    if (Tcl_GetIndexFromObj(interp, objv[1], optionStrings, "option", 0,
-            &index) != TCL_OK) {
+    if (Tcl_GetIndexFromObjStruct(interp, objv[1], optionStrings,
+            sizeof(char *), "option", 0, &index) != TCL_OK) {
         return TCL_ERROR;
     }
     type = types[index];

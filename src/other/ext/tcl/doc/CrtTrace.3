@@ -99,11 +99,7 @@ the Tcl interpreter will invoke the command.  Any other return code
 is treated as if the command returned that status, and the command is
 \fInot\fR invoked.
 .PP
-The \fIobjProc\fR callback must not modify \fIobjv\fR in any way.  It
-is, however, permissible to change the command by calling
-\fBTcl_SetCommandTokenInfo\fR prior to returning.  Any such change
-takes effect immediately, and the command is invoked with the new
-information.
+The \fIobjProc\fR callback must not modify \fIobjv\fR in any way.
 .PP
 Tracing will only occur for commands at nesting level less than
 or equal to the \fIlevel\fR parameter (i.e. the \fIlevel\fR

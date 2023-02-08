@@ -75,10 +75,10 @@ extern "C" {
 #define TK_MAJOR_VERSION	8
 #define TK_MINOR_VERSION	6
 #define TK_RELEASE_LEVEL	TCL_FINAL_RELEASE
-#define TK_RELEASE_SERIAL	12
+#define TK_RELEASE_SERIAL	13
 
 #define TK_VERSION		"8.6"
-#define TK_PATCH_LEVEL		"8.6.12"
+#define TK_PATCH_LEVEL		"8.6.13"
 
 /*
  * A special definition used to allow this header file to be included from
@@ -1012,12 +1012,12 @@ typedef int	(Tk_ItemCoordProc)(Tcl_Interp *interp, Tk_Canvas canvas,
 		    Tk_Item *itemPtr, int argc, char **argv);
 #else
 typedef int	(Tk_ItemCreateProc)(Tcl_Interp *interp, Tk_Canvas canvas,
-		    Tk_Item *itemPtr, int argc, Tcl_Obj *const objv[]);
+		    Tk_Item *itemPtr, int objc, Tcl_Obj *const objv[]);
 typedef int	(Tk_ItemConfigureProc)(Tcl_Interp *interp, Tk_Canvas canvas,
-		    Tk_Item *itemPtr, int argc, Tcl_Obj *const objv[],
+		    Tk_Item *itemPtr, int objc, Tcl_Obj *const objv[],
 		    int flags);
 typedef int	(Tk_ItemCoordProc)(Tcl_Interp *interp, Tk_Canvas canvas,
-		    Tk_Item *itemPtr, int argc, Tcl_Obj *const argv[]);
+		    Tk_Item *itemPtr, int objc, Tcl_Obj *const objv[]);
 #endif /* USE_OLD_CANVAS */
 typedef void	(Tk_ItemDeleteProc)(Tk_Canvas canvas, Tk_Item *itemPtr,
 		    Display *display);

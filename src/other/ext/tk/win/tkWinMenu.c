@@ -882,13 +882,6 @@ TkpPostTearoffMenu(
     int result;
     (void)dummy;
 
-    if (index >= menuPtr->numEntries) {
-	index = menuPtr->numEntries - 1;
-    }
-    if (index >= 0) {
-	y -= menuPtr->entries[index]->y;
-    }
-
     TkActivateMenuEntry(menuPtr, -1);
     TkRecomputeMenu(menuPtr);
     result = TkPostCommand(menuPtr);
@@ -905,7 +898,19 @@ TkpPostTearoffMenu(
     	return TCL_OK;
     }
 
-    /*
+     /*
+     * Adjust the menu y position so that the specified entry will be located
+     * at the given coordinates.
+     */
+
+    if (index >= menuPtr->numEntries) {
+	index = menuPtr->numEntries - 1;
+    }
+    if (index >= 0) {
+	y -= menuPtr->entries[index]->y;
+    }
+
+   /*
      * Adjust the position of the menu if necessary to keep it visible on the
      * screen. There are two special tricks to make this work right:
      *

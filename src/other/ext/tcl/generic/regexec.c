@@ -237,10 +237,11 @@ exec(
     v->err = 0;
     assert(v->g->ntree >= 0);
     n = (size_t) v->g->ntree;
-    if (n <= LOCALDFAS)
+    if (n <= LOCALDFAS) {
 	v->subdfas = subdfas;
-    else
+    } else {
 	v->subdfas = (struct dfa **) MALLOC(n * sizeof(struct dfa *));
+    }
     if (v->subdfas == NULL) {
 	if (v->pmatch != pmatch && v->pmatch != mat)
 	    FREE(v->pmatch);
@@ -641,10 +642,11 @@ cdissect(
 	break;
     case '.':			/* concatenation */
 	assert(t->left != NULL && t->right != NULL);
-	if (t->left->flags & SHORTER) /* reverse scan */
+	if (t->left->flags & SHORTER) {/* reverse scan */
 	    er = crevcondissect(v, t, begin, end);
-	else
+	} else {
 	    er = ccondissect(v, t, begin, end);
+	}
 	break;
     case '|':			/* alternation */
 	assert(t->left != NULL);
@@ -652,10 +654,11 @@ cdissect(
 	break;
     case '*':			/* iteration */
 	assert(t->left != NULL);
-	if (t->left->flags & SHORTER) /* reverse scan */
+	if (t->left->flags & SHORTER) {/* reverse scan */
 	    er = creviterdissect(v, t, begin, end);
-	else
+	} else {
 	    er = citerdissect(v, t, begin, end);
+	}
 	break;
     case '(':			/* capturing */
 	assert(t->left != NULL && t->right == NULL);

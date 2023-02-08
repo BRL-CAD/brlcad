@@ -79,13 +79,16 @@ The \fB\-border\fR divides the image into 9 regions:
 four fixed corners, top and left edges (which may be tiled horizontally),
 left and right edges (which may be tiled vertically),
 and the central area (which may be tiled in both directions).
+.PP
+An image element that is not meant to claim any space (for example when used
+as a background image) should use \fB\-width 0\fR and \fB\-height 0\fR.
 .SH "EXAMPLE"
 .PP
 .CS
 set img1 [image create photo \-file button.png]
 set img2 [image create photo \-file button-pressed.png]
 set img3 [image create photo \-file button-active.png]
-style element create Button.button image \e
+ttk::style element create Button.button image \e
     [list $img1  pressed $img2  active $img3] \e
     \-border {2 4} \-sticky we
 .CE

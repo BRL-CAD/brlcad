@@ -3,14 +3,14 @@
 # tclZIC.tcl --
 #
 #	Take the time zone data source files from Arthur Olson's
-#	repository at elsie.nci.nih.gov, and prepare time zone
+#	repository at https://www.iana.org/time-zones, and prepare time zone
 #	information files for Tcl.
 #
 # Usage:
 #	tclsh tclZIC.tcl inputDir outputDir
 #
 # Parameters:
-#	inputDir - Directory (e.g., tzdata2003e) where Olson's source
+#	inputDir - Directory (e.g., tzdata2022a) where Olson's source
 #		   files are to be found.
 #	outputDir - Directory (e.g., ../library/tzdata) where
 #		    the time zone information files are to be placed.

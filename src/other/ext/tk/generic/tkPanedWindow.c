@@ -275,92 +275,92 @@ static const Tk_ObjCustomOption stickyOption = {
 
 static const Tk_OptionSpec optionSpecs[] = {
     {TK_OPTION_BORDER, "-background", "background", "Background",
-	 DEF_PANEDWINDOW_BG_COLOR, -1, Tk_Offset(PanedWindow, background), 0,
-	 DEF_PANEDWINDOW_BG_MONO, 0},
+	DEF_PANEDWINDOW_BG_COLOR, -1, Tk_Offset(PanedWindow, background), 0,
+	DEF_PANEDWINDOW_BG_MONO, 0},
     {TK_OPTION_SYNONYM, "-bd", NULL, NULL,
-	 NULL, 0, -1, 0, "-borderwidth", 0},
+	NULL, 0, -1, 0, "-borderwidth", 0},
     {TK_OPTION_SYNONYM, "-bg", NULL, NULL,
-	 NULL, 0, -1, 0, "-background", 0},
+	NULL, 0, -1, 0, "-background", 0},
     {TK_OPTION_PIXELS, "-borderwidth", "borderWidth", "BorderWidth",
-	 DEF_PANEDWINDOW_BORDERWIDTH, -1, Tk_Offset(PanedWindow, borderWidth),
-	 0, 0, GEOMETRY},
+	DEF_PANEDWINDOW_BORDERWIDTH, -1, Tk_Offset(PanedWindow, borderWidth),
+	0, 0, GEOMETRY},
     {TK_OPTION_CURSOR, "-cursor", "cursor", "Cursor",
-	 DEF_PANEDWINDOW_CURSOR, -1, Tk_Offset(PanedWindow, cursor),
-	 TK_OPTION_NULL_OK, 0, 0},
+	DEF_PANEDWINDOW_CURSOR, -1, Tk_Offset(PanedWindow, cursor),
+	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_PIXELS, "-handlepad", "handlePad", "HandlePad",
-	 DEF_PANEDWINDOW_HANDLEPAD, -1, Tk_Offset(PanedWindow, handlePad),
-	 0, 0, GEOMETRY},
+	DEF_PANEDWINDOW_HANDLEPAD, -1, Tk_Offset(PanedWindow, handlePad),
+	0, 0, GEOMETRY},
     {TK_OPTION_PIXELS, "-handlesize", "handleSize", "HandleSize",
-	 DEF_PANEDWINDOW_HANDLESIZE, Tk_Offset(PanedWindow, handleSizePtr),
-	 Tk_Offset(PanedWindow, handleSize), 0, 0, GEOMETRY},
+	DEF_PANEDWINDOW_HANDLESIZE, Tk_Offset(PanedWindow, handleSizePtr),
+	Tk_Offset(PanedWindow, handleSize), 0, 0, GEOMETRY},
     {TK_OPTION_PIXELS, "-height", "height", "Height",
-	 DEF_PANEDWINDOW_HEIGHT, Tk_Offset(PanedWindow, heightPtr),
-	 Tk_Offset(PanedWindow, height), TK_OPTION_NULL_OK, 0, GEOMETRY},
+	DEF_PANEDWINDOW_HEIGHT, Tk_Offset(PanedWindow, heightPtr),
+	Tk_Offset(PanedWindow, height), TK_OPTION_NULL_OK, 0, GEOMETRY},
     {TK_OPTION_BOOLEAN, "-opaqueresize", "opaqueResize", "OpaqueResize",
-	 DEF_PANEDWINDOW_OPAQUERESIZE, -1,
-	 Tk_Offset(PanedWindow, resizeOpaque), 0, 0, 0},
+	DEF_PANEDWINDOW_OPAQUERESIZE, -1,
+	Tk_Offset(PanedWindow, resizeOpaque), 0, 0, 0},
     {TK_OPTION_STRING_TABLE, "-orient", "orient", "Orient",
-	 DEF_PANEDWINDOW_ORIENT, -1, Tk_Offset(PanedWindow, orient),
-	 0, orientStrings, GEOMETRY},
+	DEF_PANEDWINDOW_ORIENT, -1, Tk_Offset(PanedWindow, orient),
+	TK_OPTION_ENUM_VAR, orientStrings, GEOMETRY},
     {TK_OPTION_BORDER, "-proxybackground", "proxyBackground", "ProxyBackground",
-	 0, -1, Tk_Offset(PanedWindow, proxyBackground), TK_OPTION_NULL_OK,
-	 (ClientData) DEF_PANEDWINDOW_BG_MONO, 0},
+	0, -1, Tk_Offset(PanedWindow, proxyBackground),
+	TK_OPTION_NULL_OK, (ClientData) DEF_PANEDWINDOW_BG_MONO, 0},
     {TK_OPTION_PIXELS, "-proxyborderwidth", "proxyBorderWidth", "ProxyBorderWidth",
-	 DEF_PANEDWINDOW_PROXYBORDER, Tk_Offset(PanedWindow, proxyBorderWidthPtr),
-	 Tk_Offset(PanedWindow, proxyBorderWidth), 0, 0, GEOMETRY},
+	DEF_PANEDWINDOW_PROXYBORDER, Tk_Offset(PanedWindow, proxyBorderWidthPtr),
+	Tk_Offset(PanedWindow, proxyBorderWidth), 0, 0, GEOMETRY},
     {TK_OPTION_RELIEF, "-proxyrelief", "proxyRelief", "Relief",
-	 0, -1, Tk_Offset(PanedWindow, proxyRelief),
-	 TK_OPTION_NULL_OK, 0, 0},
+	0, -1, Tk_Offset(PanedWindow, proxyRelief),
+	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_RELIEF, "-relief", "relief", "Relief",
-	 DEF_PANEDWINDOW_RELIEF, -1, Tk_Offset(PanedWindow, relief), 0, 0, 0},
+	DEF_PANEDWINDOW_RELIEF, -1, Tk_Offset(PanedWindow, relief), 0, 0, 0},
     {TK_OPTION_CURSOR, "-sashcursor", "sashCursor", "Cursor",
-	 DEF_PANEDWINDOW_SASHCURSOR, -1, Tk_Offset(PanedWindow, sashCursor),
-	 TK_OPTION_NULL_OK, 0, 0},
+	DEF_PANEDWINDOW_SASHCURSOR, -1, Tk_Offset(PanedWindow, sashCursor),
+	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_PIXELS, "-sashpad", "sashPad", "SashPad",
-	 DEF_PANEDWINDOW_SASHPAD, -1, Tk_Offset(PanedWindow, sashPad),
-	 0, 0, GEOMETRY},
+	DEF_PANEDWINDOW_SASHPAD, -1, Tk_Offset(PanedWindow, sashPad),
+	0, 0, GEOMETRY},
     {TK_OPTION_RELIEF, "-sashrelief", "sashRelief", "Relief",
-	 DEF_PANEDWINDOW_SASHRELIEF, -1, Tk_Offset(PanedWindow, sashRelief),
-	 0, 0, 0},
+	DEF_PANEDWINDOW_SASHRELIEF, -1, Tk_Offset(PanedWindow, sashRelief),
+	0, 0, 0},
     {TK_OPTION_PIXELS, "-sashwidth", "sashWidth", "Width",
-	 DEF_PANEDWINDOW_SASHWIDTH, Tk_Offset(PanedWindow, sashWidthPtr),
-	 Tk_Offset(PanedWindow, sashWidth), 0, 0, GEOMETRY},
+	DEF_PANEDWINDOW_SASHWIDTH, Tk_Offset(PanedWindow, sashWidthPtr),
+	Tk_Offset(PanedWindow, sashWidth), 0, 0, GEOMETRY},
     {TK_OPTION_BOOLEAN, "-showhandle", "showHandle", "ShowHandle",
-	 DEF_PANEDWINDOW_SHOWHANDLE, -1, Tk_Offset(PanedWindow, showHandle),
-	 0, 0, GEOMETRY},
+	DEF_PANEDWINDOW_SHOWHANDLE, -1, Tk_Offset(PanedWindow, showHandle),
+	0, 0, GEOMETRY},
     {TK_OPTION_PIXELS, "-width", "width", "Width",
-	 DEF_PANEDWINDOW_WIDTH, Tk_Offset(PanedWindow, widthPtr),
-	 Tk_Offset(PanedWindow, width), TK_OPTION_NULL_OK, 0, GEOMETRY},
+	DEF_PANEDWINDOW_WIDTH, Tk_Offset(PanedWindow, widthPtr),
+	Tk_Offset(PanedWindow, width), TK_OPTION_NULL_OK, 0, GEOMETRY},
     {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0}
 };
 
 static const Tk_OptionSpec paneOptionSpecs[] = {
     {TK_OPTION_WINDOW, "-after", NULL, NULL,
-	 DEF_PANEDWINDOW_PANE_AFTER, -1, Tk_Offset(Pane, after),
-	 TK_OPTION_NULL_OK, 0, 0},
+	DEF_PANEDWINDOW_PANE_AFTER, -1, Tk_Offset(Pane, after),
+	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_WINDOW, "-before", NULL, NULL,
-	 DEF_PANEDWINDOW_PANE_BEFORE, -1, Tk_Offset(Pane, before),
-	 TK_OPTION_NULL_OK, 0, 0},
+	DEF_PANEDWINDOW_PANE_BEFORE, -1, Tk_Offset(Pane, before),
+	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_PIXELS, "-height", NULL, NULL,
-	 DEF_PANEDWINDOW_PANE_HEIGHT, Tk_Offset(Pane, heightPtr),
-	 Tk_Offset(Pane, height), TK_OPTION_NULL_OK, 0, 0},
+	DEF_PANEDWINDOW_PANE_HEIGHT, Tk_Offset(Pane, heightPtr),
+	Tk_Offset(Pane, height), TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_BOOLEAN, "-hide", "hide", "Hide",
-	 DEF_PANEDWINDOW_PANE_HIDE, -1, Tk_Offset(Pane, hide), 0,0,GEOMETRY},
+	DEF_PANEDWINDOW_PANE_HIDE, -1, Tk_Offset(Pane, hide), 0,0,GEOMETRY},
     {TK_OPTION_PIXELS, "-minsize", NULL, NULL,
-	 DEF_PANEDWINDOW_PANE_MINSIZE, -1, Tk_Offset(Pane, minSize), 0, 0, 0},
+	DEF_PANEDWINDOW_PANE_MINSIZE, -1, Tk_Offset(Pane, minSize), 0, 0, 0},
     {TK_OPTION_PIXELS, "-padx", NULL, NULL,
-	 DEF_PANEDWINDOW_PANE_PADX, -1, Tk_Offset(Pane, padx), 0, 0, 0},
+	DEF_PANEDWINDOW_PANE_PADX, -1, Tk_Offset(Pane, padx), 0, 0, 0},
     {TK_OPTION_PIXELS, "-pady", NULL, NULL,
-	 DEF_PANEDWINDOW_PANE_PADY, -1, Tk_Offset(Pane, pady), 0, 0, 0},
+	DEF_PANEDWINDOW_PANE_PADY, -1, Tk_Offset(Pane, pady), 0, 0, 0},
     {TK_OPTION_CUSTOM, "-sticky", NULL, NULL,
-	 DEF_PANEDWINDOW_PANE_STICKY, -1, Tk_Offset(Pane, sticky), 0,
-	 &stickyOption, 0},
+	DEF_PANEDWINDOW_PANE_STICKY, -1, Tk_Offset(Pane, sticky),
+	0, &stickyOption, 0},
     {TK_OPTION_STRING_TABLE, "-stretch", "stretch", "Stretch",
-	DEF_PANEDWINDOW_PANE_STRETCH, -1, Tk_Offset(Pane, stretch), 0,
-	(ClientData) stretchStrings, 0},
+	DEF_PANEDWINDOW_PANE_STRETCH, -1, Tk_Offset(Pane, stretch),
+	TK_OPTION_ENUM_VAR, stretchStrings, 0},
     {TK_OPTION_PIXELS, "-width", NULL, NULL,
-	 DEF_PANEDWINDOW_PANE_WIDTH, Tk_Offset(Pane, widthPtr),
-	 Tk_Offset(Pane, width), TK_OPTION_NULL_OK, 0, 0},
+	DEF_PANEDWINDOW_PANE_WIDTH, Tk_Offset(Pane, widthPtr),
+	Tk_Offset(Pane, width), TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0}
 };
 
@@ -410,7 +410,7 @@ Tk_PanedWindowObjCmd(
 	/*
 	 * The first time this function is invoked, the option tables will be
 	 * NULL. We then create the option tables from the templates and store
-	 * a pointer to the tables as the command's clinical so we'll have
+	 * a pointer to the tables as the command's clientData so we'll have
 	 * easy access to it in the future.
 	 */
 
@@ -1015,10 +1015,14 @@ ConfigurePanes(
 	/*
 	 * If none of the existing panes have to be moved, just copy the old
 	 * and append the new.
+	 * Be careful about the case pwPtr->numPanes == 0 since in this case
+	 * pwPtr->panes is NULL, and the memcpy would have undefined behavior.
 	 */
-	memcpy((void *)&(newPanes[0]), pwPtr->panes,
-		sizeof(Pane *) * pwPtr->numPanes);
-	memcpy((void *)&(newPanes[pwPtr->numPanes]), inserts,
+	if (pwPtr->numPanes) {
+	    memcpy(newPanes, pwPtr->panes,
+		    sizeof(Pane *) * pwPtr->numPanes);
+	}
+	memcpy(&newPanes[pwPtr->numPanes], inserts,
 		sizeof(Pane *) * numNewPanes);
     } else {
 	/*
@@ -1037,7 +1041,7 @@ ConfigurePanes(
 	    }
 	}
 
-	memcpy((void *)&(newPanes[j]), inserts, sizeof(Pane *)*insertIndex);
+	memcpy(&newPanes[j], inserts, sizeof(Pane *)*insertIndex);
 	j += firstOptionArg - 2;
 
 	for (i = index; i < pwPtr->numPanes; i++) {

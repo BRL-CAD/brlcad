@@ -166,7 +166,7 @@ Tk_GetSaveFileObjCmd(
  *	See user documentation.
  *
  * Side effects:
- *	None. The MessageBox window will be destroy before this procedure
+ *	None. The MessageBox window will be destroyed before this procedure
  *	returns.
  *
  *----------------------------------------------------------------------

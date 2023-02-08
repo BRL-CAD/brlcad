@@ -472,6 +472,9 @@ Again, \fBcolumn #0 always refers to the tree column\fR.
 The treeview widget generates the following virtual events.
 .IP <<TreeviewSelect>>
 Generated whenever the selection changes.
+It might also be generated when selection is affected but not actually changed.
+Further, multiple selection changes could happen before events can be processed
+leading to multiple events with the same visible selection.
 .IP <<TreeviewOpen>>
 Generated just before setting the focus item to \fB\-open true\fR.
 .IP <<TreeviewClose>>

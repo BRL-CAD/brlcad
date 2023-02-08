@@ -143,7 +143,7 @@ EXTERN int		TclGetNamespaceForQualName(Tcl_Interp *interp,
 				Namespace **actualCxtPtrPtr,
 				const char **simpleNamePtr);
 /* 39 */
-EXTERN TclObjCmdProcType TclGetObjInterpProc(void);
+EXTERN Tcl_ObjCmdProc *	 TclGetObjInterpProc(void);
 /* 40 */
 EXTERN int		TclGetOpenMode(Tcl_Interp *interp, const char *str,
 				int *seekFlagPtr);
@@ -645,7 +645,8 @@ EXTERN void		TclStaticPackage(Tcl_Interp *interp,
 				Tcl_PackageInitProc *safeInitProc);
 /* Slot 258 is reserved */
 /* Slot 259 is reserved */
-/* 260 */
+/* Slot 260 is reserved */
+/* 261 */
 EXTERN void		TclUnusedStubEntry(void);
 
 typedef struct TclIntStubs {
@@ -691,7 +692,7 @@ typedef struct TclIntStubs {
     void (*reserved36)(void);
     int (*tclGetLoadedPackages) (Tcl_Interp *interp, const char *targetName); /* 37 */
     int (*tclGetNamespaceForQualName) (Tcl_Interp *interp, const char *qualName, Namespace *cxtNsPtr, int flags, Namespace **nsPtrPtr, Namespace **altNsPtrPtr, Namespace **actualCxtPtrPtr, const char **simpleNamePtr); /* 38 */
-    TclObjCmdProcType (*tclGetObjInterpProc) (void); /* 39 */
+    Tcl_ObjCmdProc * (*tclGetObjInterpProc) (void); /* 39 */
     int (*tclGetOpenMode) (Tcl_Interp *interp, const char *str, int *seekFlagPtr); /* 40 */
     Tcl_Command (*tclGetOriginalCommand) (Tcl_Command command); /* 41 */
     CONST86 char * (*tclpGetUserHome) (const char *name, Tcl_DString *bufferPtr); /* 42 */
@@ -912,7 +913,8 @@ typedef struct TclIntStubs {
     void (*tclStaticPackage) (Tcl_Interp *interp, const char *prefix, Tcl_PackageInitProc *initProc, Tcl_PackageInitProc *safeInitProc); /* 257 */
     void (*reserved258)(void);
     void (*reserved259)(void);
-    void (*tclUnusedStubEntry) (void); /* 260 */
+    void (*reserved260)(void);
+    void (*tclUnusedStubEntry) (void); /* 261 */
 } TclIntStubs;
 
 extern const TclIntStubs *tclIntStubsPtr;
@@ -1358,8 +1360,9 @@ extern const TclIntStubs *tclIntStubsPtr;
 	(tclIntStubsPtr->tclStaticPackage) /* 257 */
 /* Slot 258 is reserved */
 /* Slot 259 is reserved */
+/* Slot 260 is reserved */
 #define TclUnusedStubEntry \
-	(tclIntStubsPtr->tclUnusedStubEntry) /* 260 */
+	(tclIntStubsPtr->tclUnusedStubEntry) /* 261 */
 
 #endif /* defined(USE_TCL_STUBS) */
 
@@ -1374,6 +1377,8 @@ extern const TclIntStubs *tclIntStubsPtr;
 #undef TclSetStartupScriptPath
 #undef TclBackgroundException
 #undef TclUnusedStubEntry
+#undef TclObjInterpProc
+#define TclObjInterpProc TclGetObjInterpProc()
 
 #if defined(USE_TCL_STUBS) && defined(TCL_NO_DEPRECATED)
 #   undef Tcl_SetStartupScript

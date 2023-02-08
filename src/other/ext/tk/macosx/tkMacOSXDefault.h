@@ -69,7 +69,7 @@
 #define DEF_BUTTON_DISABLED_FG_COLOR	DISABLED
 #define DEF_BUTTON_DISABLED_FG_MONO	""
 #define DEF_BUTTON_FG			BLACK
-#define DEF_LABEL_FG                    NORMAL_FG
+#define DEF_LABEL_FG			NORMAL_FG
 #define DEF_CHKRAD_FG			DEF_LABEL_FG
 #define DEF_BUTTON_FONT			"TkDefaultFont"
 #define DEF_BUTTON_HEIGHT		"0"

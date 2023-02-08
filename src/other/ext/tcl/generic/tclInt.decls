@@ -175,7 +175,7 @@ declare 38 {
 	    const char **simpleNamePtr)
 }
 declare 39 {
-    TclObjCmdProcType TclGetObjInterpProc(void)
+    Tcl_ObjCmdProc *TclGetObjInterpProc(void)
 }
 declare 40 {
     int TclGetOpenMode(Tcl_Interp *interp, const char *str, int *seekFlagPtr)
@@ -1044,7 +1044,7 @@ declare 257 {
 	    Tcl_PackageInitProc *initProc, Tcl_PackageInitProc *safeInitProc)
 }
 
-declare 260 {
+declare 261 {
     void TclUnusedStubEntry(void)
 }
 

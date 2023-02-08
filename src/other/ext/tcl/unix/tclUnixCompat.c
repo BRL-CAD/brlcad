@@ -1003,14 +1003,15 @@ TclWinCPUID(
                  "xchgq %%rsi, %%rbx   \n\t" /* restore the old %rbx */
                  : "=a"(regsPtr[0]), "=S"(regsPtr[1]), "=c"(regsPtr[2]), "=d"(regsPtr[3])
                  : "a"(index));
-#else
+    status = TCL_OK;
+#elif defined(__i386__) || defined(_M_IX86)
     __asm__ __volatile__("mov %%ebx, %%esi     \n\t" /* save %ebx */
                  "cpuid            \n\t"
                  "xchg %%esi, %%ebx   \n\t" /* restore the old %ebx */
                  : "=a"(regsPtr[0]), "=S"(regsPtr[1]), "=c"(regsPtr[2]), "=d"(regsPtr[3])
                  : "a"(index));
-#endif
     status = TCL_OK;
+#endif
 #endif
     return status;
 }

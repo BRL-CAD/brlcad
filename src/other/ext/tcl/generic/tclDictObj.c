@@ -265,7 +265,7 @@ DeleteChainTable(
     ChainEntry *cPtr;
 
     for (cPtr=dict->entryChainHead ; cPtr!=NULL ; cPtr=cPtr->nextPtr) {
-	Tcl_Obj *valuePtr = Tcl_GetHashValue(&cPtr->entry);
+	Tcl_Obj *valuePtr = (Tcl_Obj *)Tcl_GetHashValue(&cPtr->entry);
 
 	TclDecrRefCount(valuePtr);
     }
@@ -312,7 +312,7 @@ DeleteChainEntry(
     if (cPtr == NULL) {
 	return 0;
     } else {
-	Tcl_Obj *valuePtr = Tcl_GetHashValue(&cPtr->entry);
+	Tcl_Obj *valuePtr = (Tcl_Obj *)Tcl_GetHashValue(&cPtr->entry);
 
 	TclDecrRefCount(valuePtr);
     }
@@ -364,7 +364,7 @@ DupDictInternalRep(
     Tcl_Obj *copyPtr)
 {
     Dict *oldDict = DICT(srcPtr);
-    Dict *newDict = ckalloc(sizeof(Dict));
+    Dict *newDict = (Dict *)ckalloc(sizeof(Dict));
     ChainEntry *cPtr;
 
     /*
@@ -373,8 +373,8 @@ DupDictInternalRep(
 
     InitChainTable(newDict);
     for (cPtr=oldDict->entryChainHead ; cPtr!=NULL ; cPtr=cPtr->nextPtr) {
-	Tcl_Obj *key = Tcl_GetHashKey(&oldDict->table, &cPtr->entry);
-	Tcl_Obj *valuePtr = Tcl_GetHashValue(&cPtr->entry);
+	Tcl_Obj *key = (Tcl_Obj *)Tcl_GetHashKey(&oldDict->table, &cPtr->entry);
+	Tcl_Obj *valuePtr = (Tcl_Obj *)Tcl_GetHashValue(&cPtr->entry);
 	int n;
 	Tcl_HashEntry *hPtr = CreateChainEntry(newDict, key, &n);
 
@@ -492,7 +492,8 @@ UpdateStringOfDict(
     Dict *dict = DICT(dictPtr);
     ChainEntry *cPtr;
     Tcl_Obj *keyPtr, *valuePtr;
-    int i, length, bytesNeeded = 0;
+    int i, length;
+    unsigned int bytesNeeded = 0;
     const char *elem;
     char *dst;
 
@@ -517,7 +518,7 @@ UpdateStringOfDict(
     if (numElems <= LOCAL_SIZE) {
 	flagPtr = localFlags;
     } else {
-	flagPtr = ckalloc(numElems);
+	flagPtr = (char *)ckalloc(numElems);
     }
     for (i=0,cPtr=dict->entryChainHead; i<numElems; i+=2,cPtr=cPtr->nextPtr) {
 	/*
@@ -526,22 +527,22 @@ UpdateStringOfDict(
 	 */
 
 	flagPtr[i] = ( i ? TCL_DONT_QUOTE_HASH : 0 );
-	keyPtr = Tcl_GetHashKey(&dict->table, &cPtr->entry);
+	keyPtr = (Tcl_Obj *)Tcl_GetHashKey(&dict->table, &cPtr->entry);
 	elem = TclGetStringFromObj(keyPtr, &length);
 	bytesNeeded += TclScanElement(elem, length, flagPtr+i);
-	if (bytesNeeded < 0) {
+	if (bytesNeeded > INT_MAX) {
 	    Tcl_Panic("max size for a Tcl value (%d bytes) exceeded", INT_MAX);
 	}
 
 	flagPtr[i+1] = TCL_DONT_QUOTE_HASH;
-	valuePtr = Tcl_GetHashValue(&cPtr->entry);
+	valuePtr = (Tcl_Obj *)Tcl_GetHashValue(&cPtr->entry);
 	elem = TclGetStringFromObj(valuePtr, &length);
 	bytesNeeded += TclScanElement(elem, length, flagPtr+i+1);
-	if (bytesNeeded < 0) {
+	if (bytesNeeded > INT_MAX) {
 	    Tcl_Panic("max size for a Tcl value (%d bytes) exceeded", INT_MAX);
 	}
     }
-    if (bytesNeeded > INT_MAX - numElems + 1) {
+    if (bytesNeeded + numElems > INT_MAX + 1U) {
 	Tcl_Panic("max size for a Tcl value (%d bytes) exceeded", INT_MAX);
     }
     bytesNeeded += numElems;
@@ -555,13 +556,13 @@ UpdateStringOfDict(
     dst = dictPtr->bytes;
     for (i=0,cPtr=dict->entryChainHead; i<numElems; i+=2,cPtr=cPtr->nextPtr) {
 	flagPtr[i] |= ( i ? TCL_DONT_QUOTE_HASH : 0 );
-	keyPtr = Tcl_GetHashKey(&dict->table, &cPtr->entry);
+	keyPtr = (Tcl_Obj *)Tcl_GetHashKey(&dict->table, &cPtr->entry);
 	elem = TclGetStringFromObj(keyPtr, &length);
 	dst += TclConvertElement(elem, length, dst, flagPtr[i]);
 	*dst++ = ' ';
 
 	flagPtr[i+1] |= TCL_DONT_QUOTE_HASH;
-	valuePtr = Tcl_GetHashValue(&cPtr->entry);
+	valuePtr = (Tcl_Obj *)Tcl_GetHashValue(&cPtr->entry);
 	elem = TclGetStringFromObj(valuePtr, &length);
 	dst += TclConvertElement(elem, length, dst, flagPtr[i+1]);
 	*dst++ = ' ';
@@ -600,7 +601,7 @@ SetDictFromAny(
 {
     Tcl_HashEntry *hPtr;
     int isNew;
-    Dict *dict = ckalloc(sizeof(Dict));
+    Dict *dict = (Dict *)ckalloc(sizeof(Dict));
 
     InitChainTable(dict);
 
@@ -625,7 +626,7 @@ SetDictFromAny(
 	    /* Store key and value in the hash table we're building. */
 	    hPtr = CreateChainEntry(dict, objv[i], &isNew);
 	    if (!isNew) {
-		Tcl_Obj *discardedValue = Tcl_GetHashValue(hPtr);
+		Tcl_Obj *discardedValue = (Tcl_Obj *)Tcl_GetHashValue(hPtr);
 
 		/*
 		 * Not really a well-formed dictionary as there are duplicate
@@ -690,7 +691,7 @@ SetDictFromAny(
 	    /* Store key and value in the hash table we're building. */
 	    hPtr = CreateChainEntry(dict, keyPtr, &isNew);
 	    if (!isNew) {
-		Tcl_Obj *discardedValue = Tcl_GetHashValue(hPtr);
+		Tcl_Obj *discardedValue = (Tcl_Obj *)Tcl_GetHashValue(hPtr);
 
 		TclDecrRefCount(keyPtr);
 		TclDecrRefCount(discardedValue);
@@ -809,7 +810,7 @@ TclTraceDictPath(
 	    Tcl_IncrRefCount(tmpObj);
 	    Tcl_SetHashValue(hPtr, tmpObj);
 	} else {
-	    tmpObj = Tcl_GetHashValue(hPtr);
+	    tmpObj = (Tcl_Obj *)Tcl_GetHashValue(hPtr);
 	    if (tmpObj->typePtr != &tclDictType
 		    && SetDictFromAny(interp, tmpObj) != TCL_OK) {
 		return NULL;
@@ -919,7 +920,7 @@ Tcl_DictObjPut(
     hPtr = CreateChainEntry(dict, keyPtr, &isNew);
     Tcl_IncrRefCount(valuePtr);
     if (!isNew) {
-	Tcl_Obj *oldValuePtr = Tcl_GetHashValue(hPtr);
+	Tcl_Obj *oldValuePtr = (Tcl_Obj *)Tcl_GetHashValue(hPtr);
 
 	TclDecrRefCount(oldValuePtr);
     }
@@ -969,7 +970,7 @@ Tcl_DictObjGet(
     if (hPtr == NULL) {
 	*valuePtrPtr = NULL;
     } else {
-	*valuePtrPtr = Tcl_GetHashValue(hPtr);
+	*valuePtrPtr = (Tcl_Obj *)Tcl_GetHashValue(hPtr);
     }
     return TCL_OK;
 }
@@ -1115,10 +1116,10 @@ Tcl_DictObjFirst(
 	searchPtr->next = cPtr->nextPtr;
 	dict->refCount++;
 	if (keyPtrPtr != NULL) {
-	    *keyPtrPtr = Tcl_GetHashKey(&dict->table, &cPtr->entry);
+	    *keyPtrPtr = (Tcl_Obj *)Tcl_GetHashKey(&dict->table, &cPtr->entry);
 	}
 	if (valuePtrPtr != NULL) {
-	    *valuePtrPtr = Tcl_GetHashValue(&cPtr->entry);
+	    *valuePtrPtr = (Tcl_Obj *)Tcl_GetHashValue(&cPtr->entry);
 	}
     }
     return TCL_OK;
@@ -1181,7 +1182,7 @@ Tcl_DictObjNext(
 	Tcl_Panic("concurrent dictionary modification and search");
     }
 
-    cPtr = searchPtr->next;
+    cPtr = (ChainEntry *)searchPtr->next;
     if (cPtr == NULL) {
 	Tcl_DictObjDone(searchPtr);
 	*donePtr = 1;
@@ -1191,11 +1192,11 @@ Tcl_DictObjNext(
     searchPtr->next = cPtr->nextPtr;
     *donePtr = 0;
     if (keyPtrPtr != NULL) {
-	*keyPtrPtr = Tcl_GetHashKey(
+	*keyPtrPtr = (Tcl_Obj *)Tcl_GetHashKey(
 		&((Dict *)searchPtr->dictionaryPtr)->table, &cPtr->entry);
     }
     if (valuePtrPtr != NULL) {
-	*valuePtrPtr = Tcl_GetHashValue(&cPtr->entry);
+	*valuePtrPtr = (Tcl_Obj *)Tcl_GetHashValue(&cPtr->entry);
     }
 }
 
@@ -3257,7 +3258,7 @@ FinalizeDictUpdate(
      * an instruction to remove the key.
      */
 
-    Tcl_ListObjGetElements(NULL, argsObj, &objc, &objv);
+    TclListObjGetElements(NULL, argsObj, &objc, &objv);
     for (i=0 ; i<objc ; i+=2) {
 	objPtr = Tcl_ObjGetVar2(interp, objv[i+1], NULL, 0);
 	if (objPtr == NULL) {
@@ -3381,7 +3382,7 @@ FinalizeDictWith(
 
     state = Tcl_SaveInterpState(interp, result);
     if (pathPtr != NULL) {
-	Tcl_ListObjGetElements(NULL, pathPtr, &pathc, &pathv);
+	TclListObjGetElements(NULL, pathPtr, &pathc, &pathv);
     } else {
 	pathc = 0;
 	pathv = NULL;

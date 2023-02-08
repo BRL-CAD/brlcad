@@ -889,7 +889,7 @@ Tcl_ListObjReplace(
     }
     if (count < 0) {
 	count = 0;
-    } else if (first > INT_MAX - count /* Handle integer overflow */
+    } else if (count > LIST_MAX /* Handle integer overflow */
 	    || numElems < first+count) {
 
 	count = numElems - first;
@@ -1945,7 +1945,8 @@ UpdateStringOfList(
     char localFlags[LOCAL_SIZE], *flagPtr = NULL;
     List *listRepPtr = ListRepPtr(listPtr);
     int numElems = listRepPtr->elemCount;
-    int i, length, bytesNeeded = 0;
+    int i, length;
+    unsigned int bytesNeeded = 0;
     const char *elem;
     char *dst;
     Tcl_Obj **elemPtrs;
@@ -1986,11 +1987,11 @@ UpdateStringOfList(
 	flagPtr[i] = (i ? TCL_DONT_QUOTE_HASH : 0);
 	elem = TclGetStringFromObj(elemPtrs[i], &length);
 	bytesNeeded += TclScanElement(elem, length, flagPtr+i);
-	if (bytesNeeded < 0) {
+	if (bytesNeeded > INT_MAX) {
 	    Tcl_Panic("max size for a Tcl value (%d bytes) exceeded", INT_MAX);
 	}
     }
-    if (bytesNeeded > INT_MAX - numElems + 1) {
+    if (bytesNeeded + numElems > INT_MAX + 1U) {
 	Tcl_Panic("max size for a Tcl value (%d bytes) exceeded", INT_MAX);
     }
     bytesNeeded += numElems;

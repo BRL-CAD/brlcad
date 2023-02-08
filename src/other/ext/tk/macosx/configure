@@ -2289,7 +2289,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 TK_VERSION=8.6
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=6
-TK_PATCH_LEVEL=".12"
+TK_PATCH_LEVEL=".13"
 VERSION=${TK_VERSION}
 LOCALES="cs da de el en en_gb eo es fr hu it nl pl pt ru sv"
 
@@ -5424,7 +5424,7 @@ fi
 fi
 	    ;;
 	Darwin-*)
-	    CFLAGS_OPTIMIZE="-Os"
+	    CFLAGS_OPTIMIZE="-O2"
 	    SHLIB_CFLAGS="-fno-common"
 	    # To avoid discrepancies between what headers configure sees during
 	    # preprocessing tests and compiling tests, move any -isysroot and
@@ -5475,7 +5475,7 @@ $as_echo "$tcl_cv_cc_arch_ppc64" >&6; }
 			    do64bit_ok=yes
 
 fi;;
-		    i386)
+		    i386|x86_64)
 			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler accepts -arch x86_64 flag" >&5
 $as_echo_n "checking if compiler accepts -arch x86_64 flag... " >&6; }
 if ${tcl_cv_cc_arch_x86_64+:} false; then :
@@ -5512,6 +5512,43 @@ $as_echo "$tcl_cv_cc_arch_x86_64" >&6; }
 			    do64bit_ok=yes
 
 fi;;
+		    arm64|arm64e)
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if compiler accepts -arch arm64e flag" >&5
+$as_echo_n "checking if compiler accepts -arch arm64e flag... " >&6; }
+if ${tcl_cv_cc_arch_arm64e+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+			    hold_cflags=$CFLAGS
+			    CFLAGS="$CFLAGS -arch arm64e"
+			    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  tcl_cv_cc_arch_arm64e=yes
+else
+  tcl_cv_cc_arch_arm64e=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+			    CFLAGS=$hold_cflags
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tcl_cv_cc_arch_arm64e" >&5
+$as_echo "$tcl_cv_cc_arch_arm64e" >&6; }
+			if test $tcl_cv_cc_arch_arm64e = yes; then :
+
+			    CFLAGS="$CFLAGS -arch arm64e"
+			    do64bit_ok=yes
+
+fi;;
 		    *)
 			{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Don't know how enable 64-bit on architecture \`arch\`" >&5
 $as_echo "$as_me: WARNING: Don't know how enable 64-bit on architecture \`arch\`" >&2;};;
@@ -5520,7 +5557,7 @@ $as_echo "$as_me: WARNING: Don't know how enable 64-bit on architecture \`arch\`
 else
 
 		# Check for combined 32-bit and 64-bit fat build
-		if echo "$CFLAGS " |grep -E -q -- '-arch (ppc64|x86_64) ' \
+		if echo "$CFLAGS " |grep -E -q -- '-arch (ppc64|x86_64|arm64e) ' \
 		    && echo "$CFLAGS " |grep -E -q -- '-arch (ppc|i386) '; then :
 
 		    fat_32_64=yes
@@ -5786,11 +5823,11 @@ fi
 	    SHLIB_CFLAGS=""
 	    if test "$SHARED_BUILD" = 1; then :
 
-	        SHLIB_LD='ld -shared -expect_unresolved "*"'
+	        SHLIB_LD='${CC} -shared'
 
 else
 
-	        SHLIB_LD='ld -non_shared -expect_unresolved "*"'
+	        SHLIB_LD='${CC} -non_shared'
 
 fi
 	    SHLIB_SUFFIX=".so"
@@ -7631,6 +7668,9 @@ if test $tk_aqua = yes; then
 $as_echo "#define MAC_OSX_TK 1" >>confdefs.h
 
     LIBS="$LIBS -framework Cocoa -framework Carbon -framework IOKit -framework QuartzCore"
+    if test -d "/System/Library/Frameworks/UniformTypeIdentifiers.framework"; then
+        LIBS="$LIBS -framework UniformTypeIdentifiers"
+    fi
     EXTRA_CC_SWITCHES='-std=gnu99 -x objective-c'
     TK_WINDOWINGSYSTEM=AQUA
     if test -n "${enable_symbols}" -a "${enable_symbols}" != no; then

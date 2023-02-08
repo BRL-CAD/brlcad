@@ -364,6 +364,17 @@ proc ::platform::patterns {id} {
 		    foreach {major minor} [split $v .] break
 
 		    set res {}
+		    if {$major eq 13} {
+			# Add 13.0 to 13.minor to patterns.
+			for {set j $minor} {$j >= 0} {incr j -1} {
+			    lappend res macosx${major}.${j}-${cpu}
+			    foreach a $alt {
+				lappend res macosx${major}.${j}-$a
+			    }
+			}
+			set major 12
+			set minor 5
+		    }
 		    if {$major eq 12} {
 			# Add 12.0 to 12.minor to patterns.
 			for {set j $minor} {$j >= 0} {incr j -1} {
@@ -420,7 +431,7 @@ proc ::platform::patterns {id} {
 # ### ### ### ######### ######### #########
 ## Ready
 
-package provide platform 1.0.18
+package provide platform 1.0.19
 
 # ### ### ### ######### ######### #########
 ## Demo application

@@ -743,7 +743,7 @@ TclPathPart(
 		    (Tcl_FSGetPathType(pathPtr) == TCL_PATH_RELATIVE))) {
 		Tcl_ListObjIndex(NULL, splitPtr, splitElements-1, &resultPtr);
 	    } else {
-		resultPtr = Tcl_NewObj();
+		TclNewObj(resultPtr);
 	    }
 	} else {
 	    /*
@@ -781,7 +781,7 @@ GetExtension(
     tail = TclGetString(pathPtr);
     extension = TclGetExtension(tail);
     if (extension == NULL) {
-	ret = Tcl_NewObj();
+	TclNewObj(ret);
     } else {
 	ret = Tcl_NewStringObj(extension, -1);
     }
@@ -833,12 +833,12 @@ Tcl_FSJoinPath(
     int objc;
     Tcl_Obj **objv;
 
-    if (Tcl_ListObjLength(NULL, listObj, &objc) != TCL_OK) {
+    if (TclListObjLength(NULL, listObj, &objc) != TCL_OK) {
 	return NULL;
     }
 
     elements = ((elements >= 0) && (elements <= objc)) ? elements : objc;
-    Tcl_ListObjGetElements(NULL, listObj, &objc, &objv);
+    TclListObjGetElements(NULL, listObj, &objc, &objv);
     res = TclJoinPath(elements, objv, 0);
     return res;
 }
@@ -857,7 +857,8 @@ TclJoinPath(
     assert ( elements >= 0 );
 
     if (elements == 0) {
-	return Tcl_NewObj();
+	TclNewObj(res);
+	return res;
     }
 
     assert ( elements > 0 );
@@ -1056,7 +1057,7 @@ TclJoinPath(
 
     noQuickReturn:
 	if (res == NULL) {
-	    res = Tcl_NewObj();
+	    TclNewObj(res);
 	    ptr = Tcl_GetStringFromObj(res, &length);
 	} else {
 	    ptr = Tcl_GetStringFromObj(res, &length);
@@ -1317,7 +1318,7 @@ TclNewFSPathObj(
 	return pathPtr;
     }
 
-    pathPtr = Tcl_NewObj();
+    TclNewObj(pathPtr);
     fsPathPtr = ckalloc(sizeof(FsPath));
 
     /*
@@ -2448,7 +2449,7 @@ SetFsPathFromAny(
 		Tcl_Obj **objv;
 		Tcl_Obj *parts = TclpNativeSplitPath(pathPtr, NULL);
 
-		Tcl_ListObjGetElements(NULL, parts, &objc, &objv);
+		TclListObjGetElements(NULL, parts, &objc, &objv);
 
 		/*
 		 * Skip '~'. It's replaced by its expansion.

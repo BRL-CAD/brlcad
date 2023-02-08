@@ -1509,22 +1509,22 @@ MODULE_SCOPE int	TclPushProcCallFrame(ClientData clientData,
 #   define TclGetInt1AtPtr(p) ((int) *((signed char *) p))
 #else
 #   define TclGetInt1AtPtr(p) \
-    (((int) *((char *) p)) | ((*(p) & 0200) ? (-256) : 0))
+    ((int) ((*((char *) p)) | ((*(p) & 0200) ? (-256) : 0)))
 #endif
 
 #define TclGetInt4AtPtr(p) \
-    (((int) (TclGetUInt1AtPtr(p) << 24)) |				\
-		     (*((p)+1) << 16) |				\
-		     (*((p)+2) <<  8) |				\
-		     (*((p)+3)))
+    ((int) ((TclGetUInt1AtPtr(p) << 24) |			\
+		       (*((p)+1) << 16) |			\
+		       (*((p)+2) <<  8) |			\
+		       (*((p)+3))))
 
 #define TclGetUInt1AtPtr(p) \
     ((unsigned int) *(p))
 #define TclGetUInt4AtPtr(p) \
-    ((unsigned int) (*(p)     << 24) |				\
-		    (*((p)+1) << 16) |				\
-		    (*((p)+2) <<  8) |				\
-		    (*((p)+3)))
+    ((unsigned int) ((*(p)     << 24) |				\
+		     (*((p)+1) << 16) |				\
+		     (*((p)+2) <<  8) |				\
+		     (*((p)+3))))
 
 /*
  * Macros used to compute the minimum and maximum of two integers. The ANSI C

@@ -759,7 +759,7 @@ dumpcolors(
     struct colordesc *end;
     color co;
     chr c;
-    char *has;
+    const char *has;
 
     fprintf(f, "max %ld\n", (long) cm->max);
     if (NBYTS > 1) {

@@ -60,14 +60,14 @@ static Tk_OptionSpec TabOptionSpecs[] =
 {
     {TK_OPTION_STRING_TABLE, "-state", "", "",
 	"normal", -1,Tk_Offset(Tab,state),
-	0, (void *)TabStateStrings, 0 },
+	TK_OPTION_ENUM_VAR, TabStateStrings, 0 },
     {TK_OPTION_STRING, "-text", "text", "Text", "",
 	Tk_Offset(Tab,textObj), -1, 0,0,GEOMETRY_CHANGED },
     {TK_OPTION_STRING, "-image", "image", "Image", NULL/*default*/,
 	Tk_Offset(Tab,imageObj), -1, TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
     {TK_OPTION_STRING_TABLE, "-compound", "compound", "Compound",
 	NULL, Tk_Offset(Tab,compoundObj), -1,
-	TK_OPTION_NULL_OK, (void *)ttkCompoundStrings, GEOMETRY_CHANGED },
+	TK_OPTION_NULL_OK, ttkCompoundStrings, GEOMETRY_CHANGED },
     {TK_OPTION_INT, "-underline", "underline", "Underline", "-1",
 	Tk_Offset(Tab,underlineObj), -1, 0,0,GEOMETRY_CHANGED },
     {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0 }
@@ -1040,9 +1040,9 @@ static int NotebookHideCommand(
     tab->state = TAB_STATE_HIDDEN;
     if (index == nb->notebook.currentIndex) {
 	SelectNearestTab(nb);
+    } else {
+        TtkRedisplayWidget(&nb->core);
     }
-
-    TtkRedisplayWidget(&nb->core);
 
     return TCL_OK;
 }
@@ -1053,7 +1053,7 @@ static int NotebookHideCommand(
 static int NotebookIdentifyCommand(
     void *recordPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
-    static const char *whatTable[] = { "element", "tab", NULL };
+    static const char *const whatTable[] = { "element", "tab", NULL };
     enum { IDENTIFY_ELEMENT, IDENTIFY_TAB };
     int what = IDENTIFY_ELEMENT;
     Notebook *nb = (Notebook *)recordPtr;

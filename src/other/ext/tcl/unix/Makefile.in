@@ -242,6 +242,8 @@ ZLIB_INCLUDE		= @ZLIB_INCLUDE@
 TOMMATH_DIR		= $(TOP_DIR)/libtommath
 
 CC			= @CC@
+OBJEXT			= @OBJEXT@
+
 #CC			= purify -best-effort @CC@ -DPURIFY
 
 # Flags to be passed to installManPage to control how the manpages should be
@@ -259,11 +261,13 @@ INSTALL_TZDATA		= @INSTALL_TZDATA@
 #--------------------------------------------------------------------------
 
 GDB			= gdb
+LLDB			= lldb
 TRACE			= strace
 TRACE_OPTS		=
 VALGRIND		= valgrind
 VALGRINDARGS		= --tool=memcheck --num-callers=24 \
 	--leak-resolution=high --leak-check=yes --show-reachable=yes -v \
+	--keep-debuginfo=yes \
 	--suppressions=$(TOOL_DIR)/valgrind_suppress
 
 #--------------------------------------------------------------------------
@@ -363,7 +367,7 @@ ZLIB_OBJS = Zadler32.o Zcompress.o Zcrc32.o Zdeflate.o Zinfback.o \
 TCL_OBJS = ${GENERIC_OBJS} ${UNIX_OBJS} ${NOTIFY_OBJS} ${COMPAT_OBJS} \
 	${OO_OBJS} @DL_OBJS@ @PLAT_OBJS@
 
-OBJS = ${TCL_OBJS} ${TOMMATH_OBJS} @DTRACE_OBJ@ @ZLIB_OBJS@
+OBJS = ${TCL_OBJS} @DTRACE_OBJ@ @ZLIB_OBJS@ ${TOMMATH_OBJS}
 
 TCL_DECLS = \
 	$(GENERIC_DIR)/tcl.decls \
@@ -702,8 +706,8 @@ ZLIB_SRCS = \
 # won't compile on the current machine, and they will cause problems for
 # things like "make depend".
 
-SRCS = $(GENERIC_SRCS) $(TOMMATH_SRCS) $(UNIX_SRCS) $(NOTIFY_SRCS) \
-	$(OO_SRCS) $(STUB_SRCS) @PLAT_SRCS@ @ZLIB_SRCS@
+SRCS = $(GENERIC_SRCS) $(UNIX_SRCS) $(NOTIFY_SRCS) \
+	$(OO_SRCS) $(STUB_SRCS) @PLAT_SRCS@ @ZLIB_SRCS@ $(TOMMATH_SRCS)
 
 #--------------------------------------------------------------------------
 # Start of rules
@@ -756,12 +760,12 @@ Makefile: $(UNIX_DIR)/Makefile.in $(DLTEST_DIR)/Makefile.in
 clean: clean-packages
 	rm -rf *.a *.o libtcl* core errs *~ \#* TAGS *.E a.out \
 		errors ${TCL_EXE} ${TCLTEST_EXE} lib.exp Tcl @DTRACE_HDR@ \
-		*.zip *.vfs
+		minizip${HOST_EXEEXT} *.${HOST_OBJEXT} *.zip *.vfs
 	(cd dltest ; $(MAKE) clean)
 
 distclean: distclean-packages clean
 	rm -rf Makefile config.status config.cache config.log tclConfig.sh \
-		tclConfig.h *.plist Tcl.framework tcl.pc
+		tclConfig.h *.plist Tcl.framework tcl.pc tclUuid.h
 	(cd dltest ; $(MAKE) distclean)
 
 depend:
@@ -850,6 +854,9 @@ shell: ${TCL_EXE}
 gdb: ${TCL_EXE}
 	$(SHELL_ENV) $(GDB) ./${TCL_EXE}
 
+lldb: ${TCL_EXE}
+	$(SHELL_ENV) $(LLDB) ./${TCL_EXE}
+
 valgrind: ${TCL_EXE} ${TCLTEST_EXE}
 	$(SHELL_ENV) $(VALGRIND) $(VALGRINDARGS) ./${TCLTEST_EXE} \
 		$(TOP_DIR)/tests/all.tcl -singleproc 1 -constraints valgrind \
@@ -916,8 +923,7 @@ install-libraries: libraries
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		$(INSTALL_DATA_DIR) "$$i"; \
-		else true; \
-		fi; \
+	    fi; \
 	    done;
 	@for i in opt0.4 http1.0 encoding; \
 	    do \
@@ -932,35 +938,34 @@ install-libraries: libraries
 	    if [ ! -d "$(MODULE_INSTALL_DIR)/$$i" ] ; then \
 		echo "Making directory $(MODULE_INSTALL_DIR)/$$i"; \
 		$(INSTALL_DATA_DIR) "$(MODULE_INSTALL_DIR)/$$i"; \
-		else true; \
-		fi; \
+	    fi; \
 	    done;
-	@echo "Installing library files to $(SCRIPT_INSTALL_DIR)/";
+	@echo "Installing library files to $(SCRIPT_INSTALL_DIR)/"
 	@for i in $(TOP_DIR)/library/*.tcl $(TOP_DIR)/library/tclIndex \
-		$(UNIX_DIR)/tclAppInit.c @LDAIX_SRC@ @DTRACE_SRC@; \
-	    do \
+		$(UNIX_DIR)/tclAppInit.c @LDAIX_SRC@ @DTRACE_SRC@ ; do \
 	    $(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)"; \
-	    done;
-	@echo "Installing package http1.0 files to $(SCRIPT_INSTALL_DIR)/http1.0/";
+	done;
+	@echo "Installing package http1.0 files to $(SCRIPT_INSTALL_DIR)/http1.0/"
 	@for i in $(TOP_DIR)/library/http1.0/*.tcl ; \
 	    do \
 	    $(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)/http1.0"; \
 	    done
-	@echo "Installing package http 2.9.5 as a Tcl Module";
-	@$(INSTALL_DATA) $(TOP_DIR)/library/http/http.tcl "$(MODULE_INSTALL_DIR)/8.6/http-2.9.5.tm"
-	@echo "Installing package opt0.4 files to $(SCRIPT_INSTALL_DIR)/opt0.4/";
+	@echo "Installing package http 2.9.8 as a Tcl Module";
+	@$(INSTALL_DATA) $(TOP_DIR)/library/http/http.tcl \
+		"$(MODULE_INSTALL_DIR)/8.6/http-2.9.8.tm"
+	@echo "Installing package opt0.4 files to $(SCRIPT_INSTALL_DIR)/opt0.4/"
 	@for i in $(TOP_DIR)/library/opt/*.tcl; do \
 	    $(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)/opt0.4"; \
 	done
 	@echo "Installing package msgcat 1.6.1 as a Tcl Module"
 	@$(INSTALL_DATA) $(TOP_DIR)/library/msgcat/msgcat.tcl \
 		"$(MODULE_INSTALL_DIR)/8.5/msgcat-1.6.1.tm"
-	@echo "Installing package tcltest 2.5.3 as a Tcl Module"
+	@echo "Installing package tcltest 2.5.5 as a Tcl Module"
 	@$(INSTALL_DATA) $(TOP_DIR)/library/tcltest/tcltest.tcl \
-		"$(MODULE_INSTALL_DIR)/8.5/tcltest-2.5.3.tm"
-	@echo "Installing package platform 1.0.18 as a Tcl Module"
+		"$(MODULE_INSTALL_DIR)/8.5/tcltest-2.5.5.tm"
+	@echo "Installing package platform 1.0.19 as a Tcl Module"
 	@$(INSTALL_DATA) $(TOP_DIR)/library/platform/platform.tcl \
-		"$(MODULE_INSTALL_DIR)/8.4/platform-1.0.18.tm"
+		"$(MODULE_INSTALL_DIR)/8.4/platform-1.0.19.tm"
 	@echo "Installing package platform::shell 1.1.4 as a Tcl Module"
 	@$(INSTALL_DATA) $(TOP_DIR)/library/platform/shell.tcl \
 		"$(MODULE_INSTALL_DIR)/8.4/platform/shell-1.1.4.tm"
@@ -1215,7 +1220,7 @@ tclEnsemble.o: $(GENERIC_DIR)/tclEnsemble.c $(COMPILEHDR)
 tclEnv.o: $(GENERIC_DIR)/tclEnv.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tclEnv.c
 
-tclEvent.o: $(GENERIC_DIR)/tclEvent.c
+tclEvent.o: $(GENERIC_DIR)/tclEvent.c tclUuid.h
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tclEvent.c
 
 tclExecute.o: $(GENERIC_DIR)/tclExecute.c $(COMPILEHDR) $(MATHHDRS) $(NREHDR)
@@ -1371,7 +1376,6 @@ tclPkgConfig.o: $(GENERIC_DIR)/tclPkgConfig.c
 		-DCFG_RUNTIME_INCDIR="\"$(includedir)\"" \
 		-DCFG_RUNTIME_DOCDIR="\"$(mandir)\"" \
 		-DCFG_RUNTIME_DLLFILE="\"$(TCL_LIB_FILE)\"" \
-		-DCFG_RUNTIME_ZIPFILE="\"$(TCL_ZIP_FILE)\"" \
 		$(GENERIC_DIR)/tclPkgConfig.c
 
 tclPosixStr.o: $(GENERIC_DIR)/tclPosixStr.c
@@ -1976,8 +1980,9 @@ checkstubs: $(TCL_LIB_FILE)
 
 checkdoc: $(TCL_LIB_FILE)
 	-@for i in `nm -p $(TCL_LIB_FILE) | awk '$$3 ~ /Tcl_/ { print $$3 }' \
-		| grep -v 'Cmd$$' | sort -n`; do \
+		| grep -Fv . | grep -v 'Cmd$$' | sort -n`; do \
 	    match=0; \
+	    i=`echo $$i | sed 's/^_//'`; \
 	    for j in $(TOP_DIR)/doc/*.3; do \
 		if [ `grep '\-' $$j | grep -c $$i` -gt 0 ]; then \
 		    match=1; \
@@ -2036,6 +2041,8 @@ DISTROOT = /tmp/dist
 DISTNAME = tcl${VERSION}${PATCH_LEVEL}
 ZIPNAME	 = tcl${MAJOR_VERSION}${MINOR_VERSION}${PATCH_LEVEL}-src.zip
 DISTDIR	 = $(DISTROOT)/$(DISTNAME)
+BUILTIN_PACKAGE_LIST = http1.0 http opt msgcat reg dde tcltest platform
+
 $(UNIX_DIR)/configure: $(UNIX_DIR)/configure.in $(UNIX_DIR)/tcl.m4 \
 		$(UNIX_DIR)/aclocal.m4
 	cd $(UNIX_DIR); autoconf
@@ -2044,11 +2051,20 @@ $(MAC_OSX_DIR)/configure: $(MAC_OSX_DIR)/configure.ac $(UNIX_DIR)/configure
 $(UNIX_DIR)/tclConfig.h.in: $(MAC_OSX_DIR)/configure
 	cd $(MAC_OSX_DIR); autoheader; touch $@
 
-$(TOP_DIR)/manifest.uuid:
-	printf "git." >$(TOP_DIR)/manifest.uuid
-	git rev-parse HEAD >>$(TOP_DIR)/manifest.uuid
+tclUuid.h: $(TOP_DIR)/manifest.uuid
+	echo "#define TCL_VERSION_UUID \\" >$@
+	cat $(TOP_DIR)/manifest.uuid >>$@
+	echo "" >>$@
 
-dist: $(UNIX_DIR)/configure $(UNIX_DIR)/tclConfig.h.in $(UNIX_DIR)/tcl.pc.in $(MAC_OSX_DIR)/configure $(TOP_DIR)/manifest.uuid genstubs dist-packages ${NATIVE_TCLSH}
+$(TOP_DIR)/manifest.uuid:
+	printf "git-" >$(TOP_DIR)/manifest.uuid
+	(cd $(TOP_DIR); git rev-parse HEAD >>$(TOP_DIR)/manifest.uuid || \
+	    (printf "svn-r" >$(TOP_DIR)/manifest.uuid ; \
+	    svn info --show-item last-changed-revision >>$(TOP_DIR)/manifest.uuid) || \
+	    printf "unknown" >$(TOP_DIR)/manifest.uuid)
+
+dist: $(UNIX_DIR)/configure $(UNIX_DIR)/tclConfig.h.in $(UNIX_DIR)/tcl.pc.in genstubs \
+		$(MAC_OSX_DIR)/configure $(TOP_DIR)/manifest.uuid dist-packages ${NATIVE_TCLSH}
 	rm -rf $(DISTDIR)
 	mkdir -p $(DISTDIR)/unix
 	cp -p $(TOP_DIR)/manifest.uuid $(DISTDIR)
@@ -2075,7 +2091,7 @@ dist: $(UNIX_DIR)/configure $(UNIX_DIR)/tclConfig.h.in $(UNIX_DIR)/tcl.pc.in $(M
 	@mkdir $(DISTDIR)/library
 	cp -p $(TOP_DIR)/license.terms $(TOP_DIR)/library/*.tcl \
 		$(TOP_DIR)/library/tclIndex $(DISTDIR)/library
-	@for i in http1.0 http opt msgcat reg dde tcltest platform; do \
+	@for i in $(BUILTIN_PACKAGE_LIST); do \
 	    mkdir $(DISTDIR)/library/$$i;\
 	    cp -p $(TOP_DIR)/library/$$i/*.tcl $(DISTDIR)/library/$$i; \
 	done
@@ -2123,8 +2139,10 @@ dist: $(UNIX_DIR)/configure $(UNIX_DIR)/tclConfig.h.in $(UNIX_DIR)/tcl.pc.in $(M
 	cp -p $(TOP_DIR)/win/configure.in $(TOP_DIR)/win/configure \
 		$(TOP_DIR)/win/tclConfig.sh.in $(TOP_DIR)/win/tclooConfig.sh \
 		$(TOP_DIR)/win/tcl.m4 $(TOP_DIR)/win/aclocal.m4 \
-		$(TOP_DIR)/win/tclsh.exe.manifest.in \
-		$(DISTDIR)/win
+		$(TOP_DIR)/win/tclsh.exe.manifest.in $(TOP_DIR)/win/tclUuid.h.in \
+		$(TOP_DIR)/win/gitmanifest.in $(TOP_DIR)/win/svnmanifest.in \
+		$(TOP_DIR)/win/x86_64-w64-mingw32-nmakehlp.exe $(DISTDIR)/win
+	chmod 775 $(DISTDIR)/win/x86_64-w64-mingw32-nmakehlp.exe
 	cp -p $(TOP_DIR)/win/*.[ch] $(TOP_DIR)/win/*.ico $(TOP_DIR)/win/*.rc \
 		$(DISTDIR)/win
 	cp -p $(TOP_DIR)/win/*.bat $(DISTDIR)/win

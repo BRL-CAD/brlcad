@@ -18,7 +18,6 @@ positionWindow $w
 
 label $w.msg -font $font -wraplength 4i -justify left
 if {[tk windowingsystem] eq "aqua"} {
-    catch {set origUseCustomMDEF $::tk::mac::useCustomMDEF; set ::tk::mac::useCustomMDEF 1}
     $w.msg configure -text "This window has a menubar with cascaded menus.  You can invoke entries with an accelerator by typing Command+x, where \"x\" is the character next to the command key symbol. The rightmost menu can be torn off into a palette by selecting the first item in the menu."
 } else {
     $w.msg configure -text "This window contains a menubar with cascaded menus.  You can post a menu from the keyboard by typing Alt+x, where \"x\" is the character underlined on the menu.  You can then traverse among the menus using the arrow keys.  When a menu is posted, you can invoke the current entry by typing space, or you can invoke any entry by typing its underlined character.  If a menu entry has an accelerator, you can invoke the entry without posting the menu just by typing the accelerator. The rightmost menu can be torn off into a palette by selecting the first item in the menu."
@@ -56,7 +55,7 @@ menu $m -tearoff 0
 $m add command -label "Long entry that does nothing"
 if {[tk windowingsystem] eq "aqua"} {
     set modifier Command
-} elseif {[tk windowingsystem] == "win32"} {
+} elseif {[tk windowingsystem] eq "win32"} {
     set modifier Control
 } else {
     set modifier Meta
@@ -176,5 +175,3 @@ bind Menu <<MenuSelect>> {
     set menustatus $label
     update idletasks
 }
-
-if {[tk windowingsystem] eq "aqua"} {catch {set ::tk::mac::useCustomMDEF $origUseCustomMDEF}}

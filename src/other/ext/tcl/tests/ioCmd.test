@@ -17,11 +17,10 @@ if {"::tcltest" ni [namespace children]} {
     package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
+source [file join [file dirname [info script]] tcltests.tcl]
 
 ::tcltest::loadTestedCommands
 catch [list package require -exact Tcltest [info patchlevel]]
-
-package require tcltests
 
 # Custom constraints used in this file
 testConstraint testchannel	[llength [info commands testchannel]]
