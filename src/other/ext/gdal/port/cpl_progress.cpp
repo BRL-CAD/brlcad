@@ -35,8 +35,6 @@
 
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
-
 /************************************************************************/
 /*                         GDALDummyProgress()                          */
 /************************************************************************/
@@ -50,9 +48,9 @@ CPL_CVSID("$Id$")
  * to use one of the other progress functions that actually do something.
  */
 
-int CPL_STDCALL GDALDummyProgress( double /* dfComplete */ ,
-                                   const char * /* pszMessage */ ,
-                                   void * /* pData */ )
+int CPL_STDCALL GDALDummyProgress(double /* dfComplete */,
+                                  const char * /* pszMessage */,
+                                  void * /* pData */)
 {
     return TRUE;
 }
@@ -60,7 +58,8 @@ int CPL_STDCALL GDALDummyProgress( double /* dfComplete */ ,
 /************************************************************************/
 /*                         GDALScaledProgress()                         */
 /************************************************************************/
-typedef struct {
+typedef struct
+{
     GDALProgressFunc pfnProgress;
     void *pData;
     double dfMin;
@@ -74,21 +73,21 @@ typedef struct {
  * callback data returned by GDALCreateScaledProgress().
  */
 
-int CPL_STDCALL GDALScaledProgress( double dfComplete, const char *pszMessage,
-                                    void *pData )
+int CPL_STDCALL GDALScaledProgress(double dfComplete, const char *pszMessage,
+                                   void *pData)
 
 {
-    GDALScaledProgressInfo *psInfo
-        = reinterpret_cast<GDALScaledProgressInfo *>( pData );
+    GDALScaledProgressInfo *psInfo =
+        reinterpret_cast<GDALScaledProgressInfo *>(pData);
 
     // Optimization if GDALCreateScaledProgress() provided with
     // GDALDummyProgress.
-    if( psInfo == nullptr )
+    if (psInfo == nullptr)
         return TRUE;
 
-    return psInfo->pfnProgress( dfComplete * (psInfo->dfMax - psInfo->dfMin)
-                                + psInfo->dfMin,
-                                pszMessage, psInfo->pData );
+    return psInfo->pfnProgress(dfComplete * (psInfo->dfMax - psInfo->dfMin) +
+                                   psInfo->dfMin,
+                               pszMessage, psInfo->pData);
 }
 
 /************************************************************************/
@@ -139,19 +138,18 @@ int CPL_STDCALL GDALScaledProgress( double dfComplete, const char *pszMessage,
  * \endcode
  */
 
-void * CPL_STDCALL GDALCreateScaledProgress( double dfMin, double dfMax,
-                                             GDALProgressFunc pfnProgress,
-                                             void * pData )
+void *CPL_STDCALL GDALCreateScaledProgress(double dfMin, double dfMax,
+                                           GDALProgressFunc pfnProgress,
+                                           void *pData)
 
 {
-    if( pfnProgress == nullptr || pfnProgress == GDALDummyProgress )
+    if (pfnProgress == nullptr || pfnProgress == GDALDummyProgress)
         return nullptr;
 
-    GDALScaledProgressInfo *psInfo =
-        static_cast<GDALScaledProgressInfo *>(
-            CPLCalloc( sizeof(GDALScaledProgressInfo), 1 ) );
+    GDALScaledProgressInfo *psInfo = static_cast<GDALScaledProgressInfo *>(
+        CPLCalloc(sizeof(GDALScaledProgressInfo), 1));
 
-    if( std::abs(dfMin-dfMax) < 0.0000001 )
+    if (std::abs(dfMin - dfMax) < 0.0000001)
         dfMax = dfMin + 0.01;
 
     psInfo->pData = pData;
@@ -159,7 +157,7 @@ void * CPL_STDCALL GDALCreateScaledProgress( double dfMin, double dfMax,
     psInfo->dfMin = dfMin;
     psInfo->dfMax = dfMax;
 
-    return static_cast<void *>( psInfo );
+    return static_cast<void *>(psInfo);
 }
 
 /************************************************************************/
@@ -175,10 +173,10 @@ void * CPL_STDCALL GDALCreateScaledProgress( double dfMin, double dfMax,
  * @param pData scaled progress handle returned by GDALCreateScaledProgress().
  */
 
-void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
+void CPL_STDCALL GDALDestroyScaledProgress(void *pData)
 
 {
-    CPLFree( pData );
+    CPLFree(pData);
 }
 
 /************************************************************************/
@@ -214,34 +212,34 @@ void CPL_STDCALL GDALDestroyScaledProgress( void * pData )
  * @return Always returns TRUE indicating the process should continue.
  */
 
-int CPL_STDCALL GDALTermProgress( double dfComplete,
-                                  CPL_UNUSED const char * pszMessage,
-                                  CPL_UNUSED void * pProgressArg )
+int CPL_STDCALL GDALTermProgress(double dfComplete,
+                                 CPL_UNUSED const char *pszMessage,
+                                 CPL_UNUSED void *pProgressArg)
 {
-    const int nThisTick = std::min(40, std::max(0,
-        static_cast<int>(dfComplete * 40.0) ));
+    const int nThisTick =
+        std::min(40, std::max(0, static_cast<int>(dfComplete * 40.0)));
 
     // Have we started a new progress run?
     static int nLastTick = -1;
-    if( nThisTick < nLastTick && nLastTick >= 39 )
+    if (nThisTick < nLastTick && nLastTick >= 39)
         nLastTick = -1;
 
-    if( nThisTick <= nLastTick )
+    if (nThisTick <= nLastTick)
         return TRUE;
 
-    while( nThisTick > nLastTick )
+    while (nThisTick > nLastTick)
     {
         ++nLastTick;
-        if( nLastTick % 4 == 0 )
-            fprintf( stdout, "%d", (nLastTick / 4) * 10 );
+        if (nLastTick % 4 == 0)
+            fprintf(stdout, "%d", (nLastTick / 4) * 10);
         else
-            fprintf( stdout, "." );
+            fprintf(stdout, ".");
     }
 
-    if( nThisTick == 40 )
-        fprintf( stdout, " - done.\n" );
+    if (nThisTick == 40)
+        fprintf(stdout, " - done.\n");
     else
-        fflush( stdout );
+        fflush(stdout);
 
     return TRUE;
 }

@@ -29,8 +29,6 @@
 
 #include "ogrsf_frmts.h"
 
-CPL_CVSID("$Id$")
-
 /************************************************************************/
 /*                           OGRRegisterAll()                           */
 /************************************************************************/
@@ -243,7 +241,7 @@ void OGRRegisterAllInternal()
 #endif
 #ifdef NGW_ENABLED
     RegisterOGRNGW();
-#endif // NGW_ENABLED
+#endif  // NGW_ENABLED
 #ifdef MAPML_ENABLED
     RegisterOGRMapML();
 #endif
@@ -270,6 +268,5 @@ void OGRRegisterAllInternal()
     RegisterOGRAVCBin();
     RegisterOGRAVCE00();
 #endif
-
 
 } /* OGRRegisterAll */

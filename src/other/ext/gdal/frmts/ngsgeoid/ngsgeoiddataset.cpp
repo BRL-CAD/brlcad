@@ -32,8 +32,6 @@
 #include "gdal_pam.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$")
-
 #define HEADER_SIZE (4 * 8 + 3 * 4)
 
 /************************************************************************/
@@ -44,33 +42,27 @@ CPL_CVSID("$Id$")
 
 class NGSGEOIDRasterBand;
 
-class NGSGEOIDDataset final: public GDALPamDataset
+class NGSGEOIDDataset final : public GDALPamDataset
 {
     friend class NGSGEOIDRasterBand;
 
-    VSILFILE   *fp;
-    double      adfGeoTransform[6];
-    int         bIsLittleEndian;
-    CPLString   osProjection{};
+    VSILFILE *fp;
+    double adfGeoTransform[6];
+    int bIsLittleEndian;
+    mutable OGRSpatialReference m_oSRS{};
 
-    static int   GetHeaderInfo( const GByte* pBuffer,
-                                double* padfGeoTransform,
-                                int* pnRows,
-                                int* pnCols,
-                                int* pbIsLittleEndian );
+    static int GetHeaderInfo(const GByte *pBuffer, double *padfGeoTransform,
+                             int *pnRows, int *pnCols, int *pbIsLittleEndian);
 
   public:
-                 NGSGEOIDDataset();
-    virtual     ~NGSGEOIDDataset();
+    NGSGEOIDDataset();
+    virtual ~NGSGEOIDDataset();
 
-    virtual CPLErr GetGeoTransform( double * ) override;
-    virtual const char* _GetProjectionRef() override;
-    const OGRSpatialReference* GetSpatialRef() const override {
-        return GetSpatialRefFromOldGetProjectionRef();
-    }
+    virtual CPLErr GetGeoTransform(double *) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
-    static GDALDataset *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
+    static int Identify(GDALOpenInfo *);
 };
 
 /************************************************************************/
@@ -79,22 +71,25 @@ class NGSGEOIDDataset final: public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class NGSGEOIDRasterBand final: public GDALPamRasterBand
+class NGSGEOIDRasterBand final : public GDALPamRasterBand
 {
     friend class NGSGEOIDDataset;
 
   public:
-                explicit NGSGEOIDRasterBand( NGSGEOIDDataset * );
+    explicit NGSGEOIDRasterBand(NGSGEOIDDataset *);
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
-    virtual const char* GetUnitType() override { return "m"; }
+    virtual CPLErr IReadBlock(int, int, void *) override;
+    virtual const char *GetUnitType() override
+    {
+        return "m";
+    }
 };
 
 /************************************************************************/
 /*                        NGSGEOIDRasterBand()                          */
 /************************************************************************/
 
-NGSGEOIDRasterBand::NGSGEOIDRasterBand( NGSGEOIDDataset *poDSIn )
+NGSGEOIDRasterBand::NGSGEOIDRasterBand(NGSGEOIDDataset *poDSIn)
 
 {
     poDS = poDSIn;
@@ -110,33 +105,35 @@ NGSGEOIDRasterBand::NGSGEOIDRasterBand( NGSGEOIDDataset *poDSIn )
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr NGSGEOIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
-                                       int nBlockYOff,
-                                       void * pImage )
+CPLErr NGSGEOIDRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
+                                      void *pImage)
 
 {
-    NGSGEOIDDataset *poGDS = reinterpret_cast<NGSGEOIDDataset *>( poDS );
+    NGSGEOIDDataset *poGDS = reinterpret_cast<NGSGEOIDDataset *>(poDS);
 
-    /* First values in the file corresponds to the south-most line of the imagery */
+    /* First values in the file corresponds to the south-most line of the
+     * imagery */
     VSIFSeekL(poGDS->fp,
-              HEADER_SIZE + static_cast<vsi_l_offset>(nRasterYSize - 1 - nBlockYOff) * nRasterXSize * 4,
+              HEADER_SIZE +
+                  static_cast<vsi_l_offset>(nRasterYSize - 1 - nBlockYOff) *
+                      nRasterXSize * 4,
               SEEK_SET);
 
-    if (static_cast<int>(
-            VSIFReadL(pImage, 4, nRasterXSize, poGDS->fp)) != nRasterXSize )
+    if (static_cast<int>(VSIFReadL(pImage, 4, nRasterXSize, poGDS->fp)) !=
+        nRasterXSize)
         return CE_Failure;
 
 #ifdef CPL_MSB
     if (poGDS->bIsLittleEndian)
     {
-        GDALSwapWords( pImage, 4, nRasterXSize, 4 );
+        GDALSwapWords(pImage, 4, nRasterXSize, 4);
     }
 #endif
 
 #ifdef CPL_LSB
-    if ( !poGDS->bIsLittleEndian )
+    if (!poGDS->bIsLittleEndian)
     {
-        GDALSwapWords( pImage, 4, nRasterXSize, 4 );
+        GDALSwapWords(pImage, 4, nRasterXSize, 4);
     }
 #endif
 
@@ -147,10 +144,9 @@ CPLErr NGSGEOIDRasterBand::IReadBlock( CPL_UNUSED int nBlockXOff,
 /*                          ~NGSGEOIDDataset()                          */
 /************************************************************************/
 
-NGSGEOIDDataset::NGSGEOIDDataset() :
-    fp(nullptr),
-    bIsLittleEndian(TRUE)
+NGSGEOIDDataset::NGSGEOIDDataset() : fp(nullptr), bIsLittleEndian(TRUE)
 {
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
     adfGeoTransform[2] = 0;
@@ -175,11 +171,9 @@ NGSGEOIDDataset::~NGSGEOIDDataset()
 /*                            GetHeaderInfo()                           */
 /************************************************************************/
 
-int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
-                                    double* padfGeoTransform,
-                                    int* pnRows,
-                                    int* pnCols,
-                                    int* pbIsLittleEndian )
+int NGSGEOIDDataset::GetHeaderInfo(const GByte *pBuffer,
+                                   double *padfGeoTransform, int *pnRows,
+                                   int *pnCols, int *pbIsLittleEndian)
 {
     /* First check IKIND marker to determine if the file */
     /* is in little or big-endian order, and if it is a valid */
@@ -277,15 +271,16 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
     }
     /*pBuffer += 4;*/
 
-    /*CPLDebug("NGSGEOID", "SLAT=%f, WLON=%f, DLAT=%f, DLON=%f, NLAT=%d, NLON=%d, IKIND=%d",
-             dfSLAT, dfWLON, dfDLAT, dfDLON, nNLAT, nNLON, nIKIND);*/
+    /*CPLDebug("NGSGEOID", "SLAT=%f, WLON=%f, DLAT=%f, DLON=%f, NLAT=%d,
+       NLON=%d, IKIND=%d", dfSLAT, dfWLON, dfDLAT, dfDLON, nNLAT, nNLON,
+       nIKIND);*/
 
     if (nNLAT <= 0 || nNLON <= 0 || dfDLAT <= 1e-15 || dfDLON <= 1e-15)
         return FALSE;
 
     /* Grids go over +180 in longitude */
-    if (dfSLAT < -90.0 || dfSLAT + nNLAT * dfDLAT > 90.0 ||
-        dfWLON < -180.0 || dfWLON + nNLON * dfDLON > 360.0)
+    if (dfSLAT < -90.0 || dfSLAT + nNLAT * dfDLAT > 90.0 || dfWLON < -180.0 ||
+        dfWLON + nNLON * dfDLON > 360.0)
         return FALSE;
 
     padfGeoTransform[0] = dfWLON - dfDLON / 2;
@@ -305,7 +300,7 @@ int NGSGEOIDDataset::GetHeaderInfo( const GByte* pBuffer,
 /*                             Identify()                               */
 /************************************************************************/
 
-int NGSGEOIDDataset::Identify( GDALOpenInfo * poOpenInfo )
+int NGSGEOIDDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->nHeaderBytes < HEADER_SIZE)
         return FALSE;
@@ -313,9 +308,8 @@ int NGSGEOIDDataset::Identify( GDALOpenInfo * poOpenInfo )
     double adfGeoTransform[6];
     int nRows, nCols;
     int bIsLittleEndian;
-    if ( !GetHeaderInfo( poOpenInfo->pabyHeader,
-                         adfGeoTransform,
-                         &nRows, &nCols, &bIsLittleEndian ) )
+    if (!GetHeaderInfo(poOpenInfo->pabyHeader, adfGeoTransform, &nRows, &nCols,
+                       &bIsLittleEndian))
         return FALSE;
 
     return TRUE;
@@ -325,7 +319,7 @@ int NGSGEOIDDataset::Identify( GDALOpenInfo * poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *NGSGEOIDDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *NGSGEOIDDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
     if (!Identify(poOpenInfo) || poOpenInfo->fpL == nullptr)
@@ -333,44 +327,42 @@ GDALDataset *NGSGEOIDDataset::Open( GDALOpenInfo * poOpenInfo )
 
     if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "The NGSGEOID driver does not support update access to existing"
-                  " datasets.\n" );
+        CPLError(
+            CE_Failure, CPLE_NotSupported,
+            "The NGSGEOID driver does not support update access to existing"
+            " datasets.\n");
         return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create a corresponding GDALDataset.                             */
+    /* -------------------------------------------------------------------- */
     NGSGEOIDDataset *poDS = new NGSGEOIDDataset();
     poDS->fp = poOpenInfo->fpL;
     poOpenInfo->fpL = nullptr;
 
     int nRows = 0, nCols = 0;
-    GetHeaderInfo( poOpenInfo->pabyHeader,
-                   poDS->adfGeoTransform,
-                   &nRows,
-                   &nCols,
-                   &poDS->bIsLittleEndian );
+    GetHeaderInfo(poOpenInfo->pabyHeader, poDS->adfGeoTransform, &nRows, &nCols,
+                  &poDS->bIsLittleEndian);
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
 
-/* -------------------------------------------------------------------- */
-/*      Create band information objects.                                */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create band information objects.                                */
+    /* -------------------------------------------------------------------- */
     poDS->nBands = 1;
-    poDS->SetBand( 1, new NGSGEOIDRasterBand( poDS ) );
+    poDS->SetBand(1, new NGSGEOIDRasterBand(poDS));
 
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Initialize any PAM information.                                 */
+    /* -------------------------------------------------------------------- */
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-/* -------------------------------------------------------------------- */
-/*      Support overviews.                                              */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Support overviews.                                              */
+    /* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
     return poDS;
 }
 
@@ -378,7 +370,7 @@ GDALDataset *NGSGEOIDDataset::Open( GDALOpenInfo * poOpenInfo )
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr NGSGEOIDDataset::GetGeoTransform( double * padfTransform )
+CPLErr NGSGEOIDDataset::GetGeoTransform(double *padfTransform)
 
 {
     memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
@@ -387,14 +379,14 @@ CPLErr NGSGEOIDDataset::GetGeoTransform( double * padfTransform )
 }
 
 /************************************************************************/
-/*                         GetProjectionRef()                           */
+/*                         GetSpatialRef()                              */
 /************************************************************************/
 
-const char* NGSGEOIDDataset::_GetProjectionRef()
+const OGRSpatialReference *NGSGEOIDDataset::GetSpatialRef() const
 {
-    if( !osProjection.empty() )
+    if (!m_oSRS.IsEmpty())
     {
-        return osProjection.c_str();
+        return &m_oSRS;
     }
 
     CPLString osFilename(CPLGetBasename(GetDescription()));
@@ -403,52 +395,47 @@ const char* NGSGEOIDDataset::_GetProjectionRef()
     // See https://www.ngs.noaa.gov/GEOID/GEOID12B/faq_2012B.shtml
 
     // GEOID2012 files ?
-    if( STARTS_WITH(osFilename, "g2012") && osFilename.size() >= 7 )
+    if (STARTS_WITH(osFilename, "g2012") && osFilename.size() >= 7)
     {
-        OGRSpatialReference oSRS;
-        if( osFilename[6] == 'h' /* Hawai */ ||
-            osFilename[6] == 's' /* Samoa */ )
+        if (osFilename[6] == 'h' /* Hawai */ ||
+            osFilename[6] == 's' /* Samoa */)
         {
             // NAD83 (PA11)
-            oSRS.importFromEPSG(6322);
+            m_oSRS.importFromEPSG(6322);
         }
-        else if( osFilename[6] == 'g' /* Guam */ )
+        else if (osFilename[6] == 'g' /* Guam */)
         {
             // NAD83 (MA11)
-            oSRS.importFromEPSG(6325);
+            m_oSRS.importFromEPSG(6325);
         }
         else
         {
             // NAD83 (2011)
-            oSRS.importFromEPSG(6318);
+            m_oSRS.importFromEPSG(6318);
         }
 
-        char* pszProjection = nullptr;
-        oSRS.exportToWkt(&pszProjection);
-        if( pszProjection )
-            osProjection = pszProjection;
-        CPLFree(pszProjection);
-        return osProjection.c_str();
+        return &m_oSRS;
     }
 
     // USGG2012 files ? We should return IGS08, but there is only a
     // geocentric CRS in EPSG, so manually forge a geographic one from it
-    if(  STARTS_WITH(osFilename, "s2012") )
+    if (STARTS_WITH(osFilename, "s2012"))
     {
-        osProjection =
-"GEOGCS[\"IGS08\",\n"
-"    DATUM[\"IGS08\",\n"
-"        SPHEROID[\"GRS 1980\",6378137,298.257222101,\n"
-"            AUTHORITY[\"EPSG\",\"7019\"]],\n"
-"        AUTHORITY[\"EPSG\",\"1141\"]],\n"
-"    PRIMEM[\"Greenwich\",0,\n"
-"        AUTHORITY[\"EPSG\",\"8901\"]],\n"
-"    UNIT[\"degree\",0.0174532925199433,\n"
-"        AUTHORITY[\"EPSG\",\"9122\"]]]";
-        return osProjection.c_str();
+        m_oSRS.importFromWkt(
+            "GEOGCS[\"IGS08\",\n"
+            "    DATUM[\"IGS08\",\n"
+            "        SPHEROID[\"GRS 1980\",6378137,298.257222101,\n"
+            "            AUTHORITY[\"EPSG\",\"7019\"]],\n"
+            "        AUTHORITY[\"EPSG\",\"1141\"]],\n"
+            "    PRIMEM[\"Greenwich\",0,\n"
+            "        AUTHORITY[\"EPSG\",\"8901\"]],\n"
+            "    UNIT[\"degree\",0.0174532925199433,\n"
+            "        AUTHORITY[\"EPSG\",\"9122\"]]]");
+        return &m_oSRS;
     }
 
-    return SRS_WKT_WGS84_LAT_LONG;
+    m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
+    return &m_oSRS;
 }
 
 /************************************************************************/
@@ -458,22 +445,22 @@ const char* NGSGEOIDDataset::_GetProjectionRef()
 void GDALRegister_NGSGEOID()
 
 {
-    if( GDALGetDriverByName( "NGSGEOID" ) != nullptr )
+    if (GDALGetDriverByName("NGSGEOID") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "NGSGEOID" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "NOAA NGS Geoid Height Grids" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drivers/raster/ngsgeoid.html" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "bin" );
+    poDriver->SetDescription("NGSGEOID");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "NOAA NGS Geoid Height Grids");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC,
+                              "drivers/raster/ngsgeoid.html");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "bin");
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = NGSGEOIDDataset::Open;
     poDriver->pfnIdentify = NGSGEOIDDataset::Identify;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

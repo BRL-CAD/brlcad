@@ -378,21 +378,24 @@ public:
   int BuildOverviews( const char *resampling,
                       int overviewlist, int *pOverviews,
                       GDALProgressFunc callback = NULL,
-                      void* callback_data=NULL ) {
+                      void* callback_data=NULL,
+                      char** options = NULL ) {
 #else
   int BuildOverviews( const char *resampling = "NEAREST",
                       int overviewlist = 0 , int *pOverviews = 0,
                       GDALProgressFunc callback = NULL,
-                      void* callback_data=NULL ) {
+                      void* callback_data=NULL,
+                      char** options = NULL ) {
 #endif
-    return GDALBuildOverviews(  self,
+    return GDALBuildOverviewsEx(  self,
                                 resampling ? resampling : "NEAREST",
                                 overviewlist,
                                 pOverviews,
                                 0,
                                 0,
                                 callback,
-                                callback_data);
+                                callback_data,
+                                options);
   }
 #ifndef SWIGCSHARP
 %clear (int overviewlist, int *pOverviews);
@@ -940,6 +943,41 @@ OGRErr AbortSQL() {
       return GDALDatasetUpdateFieldDomain(self, (OGRFieldDomainH)fieldDomain, NULL);
   }
   %clear OGRFieldDomainShadow* fieldDomain;
+
+%apply (char **CSL) {char **};
+  char **GetRelationshipNames(char** options = 0)
+  {
+    return GDALDatasetGetRelationshipNames(self, options);
+  }
+%clear char **;
+
+  %apply Pointer NONNULL {const char* name};
+  GDALRelationshipShadow* GetRelationship(const char* name)
+  {
+    return (GDALRelationshipShadow*) GDALDatasetGetRelationship(self, name);
+  }
+  %clear const char* name;
+
+  %apply Pointer NONNULL {GDALRelationshipShadow* relationship};
+  bool AddRelationship(GDALRelationshipShadow* relationship)
+  {
+      return GDALDatasetAddRelationship(self, (GDALRelationshipH)relationship, NULL);
+  }
+  %clear GDALRelationshipShadow* relationship;
+
+  %apply Pointer NONNULL {const char* name};
+  bool DeleteRelationship(const char* name)
+  {
+      return GDALDatasetDeleteRelationship(self, name, NULL);
+  }
+  %clear const char* name;
+
+  %apply Pointer NONNULL {GDALRelationshipShadow* relationship};
+  bool UpdateRelationship(GDALRelationshipShadow* relationship)
+  {
+      return GDALDatasetUpdateRelationship(self, (GDALRelationshipH)relationship, NULL);
+  }
+  %clear GDALRelationshipShadow* relationship;
 
 } /* extend */
 }; /* GDALDatasetShadow */

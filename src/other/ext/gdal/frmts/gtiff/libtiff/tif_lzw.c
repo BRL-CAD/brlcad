@@ -39,6 +39,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* Select the plausible largest natural integer type for the architecture */
 #define SIZEOF_WORDTYPE SIZEOF_SIZE_T
@@ -140,7 +141,7 @@ typedef struct {
 	code_t* dec_free_entp;		/* next free entry */
 	code_t* dec_maxcodep;		/* max available entry */
 	code_t* dec_codetab;		/* kept separate for small machines */
-	int     read_error;         /* whether a read error has occured, and which should cause further reads in the same strip/tile to be aborted */
+	int     read_error;         /* whether a read error has occurred, and which should cause further reads in the same strip/tile to be aborted */
 
 	/* Encoding specific data */
 	int     enc_oldcode;		/* last code encountered */

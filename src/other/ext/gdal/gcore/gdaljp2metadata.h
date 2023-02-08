@@ -46,70 +46,107 @@
 class CPL_DLL GDALJP2Box
 {
 
-    VSILFILE   *fpVSIL = nullptr;
+    VSILFILE *fpVSIL = nullptr;
 
-    char        szBoxType[5] {0, 0, 0, 0, 0};
+    char szBoxType[5]{0, 0, 0, 0, 0};
 
-    GIntBig     nBoxOffset = -1;
-    GIntBig     nBoxLength = 0;
+    GIntBig nBoxOffset = -1;
+    GIntBig nBoxLength = 0;
 
-    GIntBig     nDataOffset = -1;
+    GIntBig nDataOffset = -1;
 
-    GByte       abyUUID[16] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    GByte abyUUID[16]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    GByte      *pabyData = nullptr;
+    GByte *pabyData = nullptr;
+
+    bool m_bAllowGetFileSize = true;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALJP2Box)
 
-public:
-    explicit    GDALJP2Box( VSILFILE * = nullptr );
-                ~GDALJP2Box();
+  public:
+    explicit GDALJP2Box(VSILFILE * = nullptr);
+    ~GDALJP2Box();
 
-    int         SetOffset( GIntBig nNewOffset );
-    int         ReadBox();
+    void SetAllowGetFileSize(bool b)
+    {
+        m_bAllowGetFileSize = b;
+    }
 
-    int         ReadFirst();
-    int         ReadNext();
+    int SetOffset(GIntBig nNewOffset);
+    int ReadBox();
 
-    int         ReadFirstChild( GDALJP2Box *poSuperBox );
-    int         ReadNextChild( GDALJP2Box *poSuperBox );
+    int ReadFirst();
+    int ReadNext();
 
-    GIntBig     GetBoxOffset() const { return nBoxOffset; }
-    GIntBig     GetBoxLength() const { return nBoxLength; }
+    int ReadFirstChild(GDALJP2Box *poSuperBox);
+    int ReadNextChild(GDALJP2Box *poSuperBox);
 
-    GIntBig     GetDataOffset() const { return nDataOffset; }
-    GIntBig     GetDataLength();
+    GIntBig GetBoxOffset() const
+    {
+        return nBoxOffset;
+    }
+    GIntBig GetBoxLength() const
+    {
+        return nBoxLength;
+    }
 
-    const char *GetType() { return szBoxType; }
+    GIntBig GetDataOffset() const
+    {
+        return nDataOffset;
+    }
+    GIntBig GetDataLength() const;
 
-    GByte      *ReadBoxData();
+    const char *GetType()
+    {
+        return szBoxType;
+    }
 
-    int         IsSuperBox();
+    GByte *ReadBoxData();
 
-    int         DumpReadable( FILE *, int nIndentLevel = 0 );
+    int IsSuperBox();
 
-    VSILFILE   *GetFILE() { return fpVSIL; }
+    int DumpReadable(FILE *, int nIndentLevel = 0);
 
-    const GByte *GetUUID() { return abyUUID; }
+    VSILFILE *GetFILE()
+    {
+        return fpVSIL;
+    }
+
+    const GByte *GetUUID()
+    {
+        return abyUUID;
+    }
 
     // write support
-    void        SetType( const char * );
-    void        SetWritableData( int nLength, const GByte *pabyData );
-    void        AppendWritableData( int nLength, const void *pabyDataIn );
-    void        AppendUInt32( GUInt32 nVal );
-    void        AppendUInt16( GUInt16 nVal );
-    void        AppendUInt8( GByte nVal );
-    const GByte*GetWritableData() { return pabyData; }
+    void SetType(const char *);
+    void SetWritableData(int nLength, const GByte *pabyData);
+    void AppendWritableData(int nLength, const void *pabyDataIn);
+    void AppendUInt32(GUInt32 nVal);
+    void AppendUInt16(GUInt16 nVal);
+    void AppendUInt8(GByte nVal);
+    const GByte *GetWritableData() const
+    {
+        return pabyData;
+    }
+    GByte *GetWritableBoxData() const;
 
     // factory methods.
-    static GDALJP2Box *CreateSuperBox( const char* pszType,
-                                       int nCount, GDALJP2Box **papoBoxes );
-    static GDALJP2Box *CreateAsocBox( int nCount, GDALJP2Box **papoBoxes );
-    static GDALJP2Box *CreateLblBox( const char *pszLabel );
-    static GDALJP2Box *CreateLabelledXMLAssoc( const char *pszLabel,
-                                               const char *pszXML );
-    static GDALJP2Box *CreateUUIDBox( const GByte *pabyUUID,
-                                      int nDataSize, const GByte *pabyData );
+    static GDALJP2Box *CreateSuperBox(const char *pszType, int nCount,
+                                      const GDALJP2Box *const *papoBoxes);
+    static GDALJP2Box *CreateAsocBox(int nCount,
+                                     const GDALJP2Box *const *papoBoxes);
+    static GDALJP2Box *CreateLblBox(const char *pszLabel);
+    static GDALJP2Box *CreateLabelledXMLAssoc(const char *pszLabel,
+                                              const char *pszXML);
+    static GDALJP2Box *CreateUUIDBox(const GByte *pabyUUID, int nDataSize,
+                                     const GByte *pabyData);
+
+    // JUMBF boxes (ISO/IEC 19566-5:2019)
+    static GDALJP2Box *CreateJUMBFDescriptionBox(const GByte *pabyUUIDType,
+                                                 const char *pszLabel);
+    static GDALJP2Box *CreateJUMBFBox(const GDALJP2Box *poJUMBFDescriptionBox,
+                                      int nCount,
+                                      const GDALJP2Box *const *papoBoxes);
 };
 
 /************************************************************************/
@@ -121,88 +158,90 @@ typedef struct _GDALJP2GeoTIFFBox GDALJP2GeoTIFFBox;
 class CPL_DLL GDALJP2Metadata
 
 {
-private:
-    void    CollectGMLData( GDALJP2Box * );
-    int     GMLSRSLookup( const char *pszURN );
+  private:
+    void CollectGMLData(GDALJP2Box *);
+    int GMLSRSLookup(const char *pszURN);
 
-    int    nGeoTIFFBoxesCount;
-    GDALJP2GeoTIFFBox  *pasGeoTIFFBoxes;
+    int nGeoTIFFBoxesCount;
+    GDALJP2GeoTIFFBox *pasGeoTIFFBoxes;
 
-    int    nMSIGSize;
-    GByte  *pabyMSIGData;
+    int nMSIGSize;
+    GByte *pabyMSIGData;
 
-    int      GetGMLJP2GeoreferencingInfo( int& nEPSGCode,
-                                          double adfOrigin[2],
-                                          double adfXVector[2],
-                                          double adfYVector[2],
-                                          const char*& pszComment,
-                                          CPLString& osDictBox,
-                                          int& bNeedAxisFlip );
-    static CPLXMLNode* CreateGDALMultiDomainMetadataXML(
-                                       GDALDataset* poSrcDS,
-                                       int bMainMDDomainOnly );
+    int GetGMLJP2GeoreferencingInfo(int &nEPSGCode, double adfOrigin[2],
+                                    double adfXVector[2], double adfYVector[2],
+                                    const char *&pszComment,
+                                    CPLString &osDictBox, int &bNeedAxisFlip);
+    static CPLXMLNode *CreateGDALMultiDomainMetadataXML(GDALDataset *poSrcDS,
+                                                        int bMainMDDomainOnly);
 
     CPL_DISALLOW_COPY_ASSIGN(GDALJP2Metadata)
 
-public:
-    char  **papszGMLMetadata;
+  public:
+    char **papszGMLMetadata;
 
-    bool    bHaveGeoTransform;
-    double  adfGeoTransform[6];
-    bool    bPixelIsPoint;
+    bool bHaveGeoTransform;
+    double adfGeoTransform[6];
+    bool bPixelIsPoint;
 
     OGRSpatialReference m_oSRS{};
 
-    int         nGCPCount;
-    GDAL_GCP    *pasGCPList;
+    int nGCPCount;
+    GDAL_GCP *pasGCPList;
 
     char **papszRPCMD;
 
-    char  **papszMetadata; /* TIFFTAG_?RESOLUTION* for now from resd box */
-    char   *pszXMPMetadata;
-    char   *pszGDALMultiDomainMetadata; /* as serialized XML */
-    char   *pszXMLIPR; /* if an IPR box with XML content has been found */
+    char **papszMetadata; /* TIFFTAG_?RESOLUTION* for now from resd box */
+    char *pszXMPMetadata;
+    char *pszGDALMultiDomainMetadata; /* as serialized XML */
+    char *pszXMLIPR; /* if an IPR box with XML content has been found */
 
-public:
-            GDALJP2Metadata();
-            ~GDALJP2Metadata();
+    void ReadBox(VSILFILE *fpVSIL, GDALJP2Box &oBox, int &iBox);
 
-    int     ReadBoxes( VSILFILE * fpVSIL );
+  public:
+    GDALJP2Metadata();
+    ~GDALJP2Metadata();
 
-    int     ParseJP2GeoTIFF();
-    int     ParseMSIG();
-    int     ParseGMLCoverageDesc();
+    int ReadBoxes(VSILFILE *fpVSIL);
 
-    int     ReadAndParse( VSILFILE * fpVSIL,
-                          int nGEOJP2Index = 0, int nGMLJP2Index = 1,
-                          int nMSIGIndex = 2, int *pnIndexUsed = nullptr );
-    int     ReadAndParse( const char *pszFilename, int nGEOJP2Index = 0,
-                          int nGMLJP2Index = 1, int nMSIGIndex = 2,
-                          int nWorldFileIndex = 3, int *pnIndexUsed = nullptr );
+    int ParseJP2GeoTIFF();
+    int ParseMSIG();
+    int ParseGMLCoverageDesc();
+
+    int ReadAndParse(VSILFILE *fpVSIL, int nGEOJP2Index = 0,
+                     int nGMLJP2Index = 1, int nMSIGIndex = 2,
+                     int *pnIndexUsed = nullptr);
+    int ReadAndParse(const char *pszFilename, int nGEOJP2Index = 0,
+                     int nGMLJP2Index = 1, int nMSIGIndex = 2,
+                     int nWorldFileIndex = 3, int *pnIndexUsed = nullptr);
 
     // Write oriented.
-    void    SetSpatialRef( const OGRSpatialReference *poSRS );
-    void    SetGeoTransform( double * );
-    void    SetGCPs( int, const GDAL_GCP * );
-    void    SetRPCMD( char** papszRPCMDIn );
+    void SetSpatialRef(const OGRSpatialReference *poSRS);
+    void SetGeoTransform(double *);
+    void SetGCPs(int, const GDAL_GCP *);
+    void SetRPCMD(char **papszRPCMDIn);
 
     GDALJP2Box *CreateJP2GeoTIFF();
-    GDALJP2Box *CreateGMLJP2( int nXSize, int nYSize );
-    GDALJP2Box *CreateGMLJP2V2( int nXSize, int nYSize,
-                                const char* pszDefFilename,
-                                GDALDataset* poSrcDS );
+    GDALJP2Box *CreateGMLJP2(int nXSize, int nYSize);
+    GDALJP2Box *CreateGMLJP2V2(int nXSize, int nYSize,
+                               const char *pszDefFilename,
+                               GDALDataset *poSrcDS);
 
-    static GDALJP2Box* CreateGDALMultiDomainMetadataXMLBox(
-                                       GDALDataset* poSrcDS,
-                                       int bMainMDDomainOnly );
-    static GDALJP2Box** CreateXMLBoxes( GDALDataset* poSrcDS,
-                                        int* pnBoxes );
-    static GDALJP2Box *CreateXMPBox ( GDALDataset* poSrcDS );
-    static GDALJP2Box *CreateIPRBox ( GDALDataset* poSrcDS );
-    static int   IsUUID_MSI(const GByte *abyUUID);
-    static int   IsUUID_XMP(const GByte *abyUUID);
+    static GDALJP2Box *
+    CreateGDALMultiDomainMetadataXMLBox(GDALDataset *poSrcDS,
+                                        int bMainMDDomainOnly);
+    static GDALJP2Box **CreateXMLBoxes(GDALDataset *poSrcDS, int *pnBoxes);
+    static GDALJP2Box *CreateXMPBox(GDALDataset *poSrcDS);
+    static GDALJP2Box *CreateIPRBox(GDALDataset *poSrcDS);
+    static int IsUUID_MSI(const GByte *abyUUID);
+    static int IsUUID_XMP(const GByte *abyUUID);
 };
 
+CPLXMLNode *GDALGetJPEG2000Structure(const char *pszFilename, VSILFILE *fp,
+                                     CSLConstList papszOptions);
+
+const char CPL_DLL *GDALGetJPEG2000Reversibility(const char *pszFilename,
+                                                 VSILFILE *fp);
 #endif /* #ifndef DOXYGEN_SKIP */
 
 #endif /* ndef GDAL_JP2READER_H_INCLUDED */

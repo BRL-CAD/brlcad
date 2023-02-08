@@ -64,15 +64,15 @@ static const TIFFFieldArray gpsFieldArray;
 static const TIFFField
 tiffFields[] = {
 	{ TIFFTAG_SUBFILETYPE, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UNDEFINED, FIELD_SUBFILETYPE, 1, 0, "SubfileType", NULL },
-	{ TIFFTAG_OSUBFILETYPE, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_SUBFILETYPE, 1, 0, "OldSubfileType", NULL },
+	{ TIFFTAG_OSUBFILETYPE, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_IGNORE, 1, 0, "OldSubfileType", NULL },
 	{ TIFFTAG_IMAGEWIDTH, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UNDEFINED, FIELD_IMAGEDIMENSIONS, 0, 0, "ImageWidth", NULL },
 	{ TIFFTAG_IMAGELENGTH, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UNDEFINED, FIELD_IMAGEDIMENSIONS, 1, 0, "ImageLength", NULL },
-	{ TIFFTAG_BITSPERSAMPLE, -1, -1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_BITSPERSAMPLE, 0, 0, "BitsPerSample", NULL },
-	{ TIFFTAG_COMPRESSION, -1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_COMPRESSION, 0, 0, "Compression", NULL },
+	{ TIFFTAG_BITSPERSAMPLE, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_BITSPERSAMPLE, 0, 0, "BitsPerSample", NULL },
+	{ TIFFTAG_COMPRESSION, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_COMPRESSION, 0, 0, "Compression", NULL },
 	{ TIFFTAG_PHOTOMETRIC, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_PHOTOMETRIC, 0, 0, "PhotometricInterpretation", NULL },
 	{ TIFFTAG_THRESHHOLDING, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_THRESHHOLDING, 1, 0, "Threshholding", NULL },
-	{ TIFFTAG_CELLWIDTH, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_IGNORE, 1, 0, "CellWidth", NULL },
-	{ TIFFTAG_CELLLENGTH, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_IGNORE, 1, 0, "CellLength", NULL },
+	{ TIFFTAG_CELLWIDTH, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "CellWidth", NULL },
+	{ TIFFTAG_CELLLENGTH, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "CellLength", NULL },
 	{ TIFFTAG_FILLORDER, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_FILLORDER, 0, 0, "FillOrder", NULL },
 	{ TIFFTAG_DOCUMENTNAME, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "DocumentName", NULL },
 	{ TIFFTAG_IMAGEDESCRIPTION, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "ImageDescription", NULL },
@@ -114,17 +114,16 @@ tiffFields[] = {
 	{ TIFFTAG_SUBIFD, -1, -1, TIFF_IFD8, 0, TIFF_SETGET_C16_IFD8, TIFF_SETGET_UNDEFINED, FIELD_SUBIFD, 1, 1, "SubIFD", (TIFFFieldArray*) &tiffFieldArray },
 	{ TIFFTAG_INKSET, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "InkSet", NULL },
 	{ TIFFTAG_INKNAMES, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_C16_ASCII, TIFF_SETGET_UNDEFINED, FIELD_INKNAMES, 1, 1, "InkNames", NULL },
-	{ TIFFTAG_NUMBEROFINKS, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "NumberOfInks", NULL },
+	{ TIFFTAG_NUMBEROFINKS, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_NUMBEROFINKS, 1, 0, "NumberOfInks", NULL },
 	{ TIFFTAG_DOTRANGE, 2, 2, TIFF_SHORT, 0, TIFF_SETGET_UINT16_PAIR, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "DotRange", NULL },
 	{ TIFFTAG_TARGETPRINTER, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "TargetPrinter", NULL },
 	{ TIFFTAG_EXTRASAMPLES, -1, -1, TIFF_SHORT, 0, TIFF_SETGET_C16_UINT16, TIFF_SETGET_UNDEFINED, FIELD_EXTRASAMPLES, 0, 1, "ExtraSamples", NULL },
 	{ TIFFTAG_SAMPLEFORMAT, -1, -1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_SAMPLEFORMAT, 0, 0, "SampleFormat", NULL },
 	{ TIFFTAG_SMINSAMPLEVALUE, -2, -1, TIFF_ANY, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_SMINSAMPLEVALUE, 1, 0, "SMinSampleValue", NULL },
 	{ TIFFTAG_SMAXSAMPLEVALUE, -2, -1, TIFF_ANY, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_SMAXSAMPLEVALUE, 1, 0, "SMaxSampleValue", NULL },
-	{ TIFFTAG_CLIPPATH, -1, -3, TIFF_BYTE, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "ClipPath", NULL },
-	{ TIFFTAG_XCLIPPATHUNITS, 1, 1, TIFF_SLONG, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "XClipPathUnits", NULL },
-	{ TIFFTAG_XCLIPPATHUNITS, 1, 1, TIFF_SBYTE, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "XClipPathUnits", NULL },
-	{ TIFFTAG_YCLIPPATHUNITS, 1, 1, TIFF_SLONG, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "YClipPathUnits", NULL },
+	{ TIFFTAG_CLIPPATH, -3, -3, TIFF_BYTE, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 1, "ClipPath", NULL },
+	{ TIFFTAG_XCLIPPATHUNITS, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "XClipPathUnits", NULL },
+	{ TIFFTAG_YCLIPPATHUNITS, 1, 1, TIFF_LONG, 0, TIFF_SETGET_UINT32, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "YClipPathUnits", NULL },
 	{ TIFFTAG_YCBCRCOEFFICIENTS, 3, 3, TIFF_RATIONAL, 0, TIFF_SETGET_C0_FLOAT, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "YCbCrCoefficients", NULL },
 	{ TIFFTAG_YCBCRSUBSAMPLING, 2, 2, TIFF_SHORT, 0, TIFF_SETGET_UINT16_PAIR, TIFF_SETGET_UNDEFINED, FIELD_YCBCRSUBSAMPLING, 0, 0, "YCbCrSubsampling", NULL },
 	{ TIFFTAG_YCBCRPOSITIONING, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_YCBCRPOSITIONING, 0, 0, "YCbCrPositioning", NULL },
@@ -163,7 +162,7 @@ tiffFields[] = {
 	{ TIFFTAG_FAXDCS, -1, -1, TIFF_ASCII, 0, TIFF_SETGET_ASCII, TIFF_SETGET_ASCII, FIELD_CUSTOM, TRUE, FALSE, "FaxDcs", NULL },
 	{ TIFFTAG_STONITS, 1, 1, TIFF_DOUBLE, 0, TIFF_SETGET_DOUBLE, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "StoNits", NULL },
 	{ TIFFTAG_IMAGESOURCEDATA, -3, -3, TIFF_UNDEFINED, 0, TIFF_SETGET_C32_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 1, "Adobe Photoshop Document Data Block", NULL },
-	{ TIFFTAG_INTEROPERABILITYIFD, 1, 1, TIFF_IFD8, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "InteroperabilityIFDOffset", NULL },
+	{ TIFFTAG_INTEROPERABILITYIFD, 1, 1, TIFF_IFD8, 0, TIFF_SETGET_IFD8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "InteroperabilityIFDOffset", NULL },
 	/* begin DNG tags */
 	{ TIFFTAG_DNGVERSION, 4, 4, TIFF_BYTE, 0, TIFF_SETGET_C0_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "DNGVersion", NULL },
 	{ TIFFTAG_DNGBACKWARDVERSION, 4, 4, TIFF_BYTE, 0, TIFF_SETGET_C0_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 0, 0, "DNGBackwardVersion", NULL },
@@ -422,8 +421,11 @@ _TIFFSetupFields(TIFF* tif, const TIFFFieldArray* fieldarray)
 			TIFFField *fld = tif->tif_fields[i];
 			if (fld->field_name != NULL) {
 				if (fld->field_bit == FIELD_CUSTOM &&
-					strncmp("Tag ", fld->field_name, 4) == 0) {
+					TIFFFieldIsAnonymous(fld)) {
 					_TIFFfree(fld->field_name);
+					/* caution: tif_fields[i] must not be the beginning of a fields-array. 
+					 *          Otherwise the following tags are also freed with the first free().
+					 */
 					_TIFFfree(fld);
 				}
 			}
@@ -566,55 +568,29 @@ TIFFDataWidth(TIFFDataType type)
 	}
 }
 
-/*
- * Return size of TIFFDataType in bytes.
- *
- * XXX: We need a separate function to determine the space needed
- * to store the value. For TIFF_RATIONAL values TIFFDataWidth() returns 8,
- * but we use 4-byte float to represent rationals.
- */
-int
-_TIFFDataSize(TIFFDataType type)
-{
-	switch (type)
-	{
-		case TIFF_BYTE:
-		case TIFF_SBYTE:
-		case TIFF_ASCII:
-		case TIFF_UNDEFINED:
-		    return 1;
-		case TIFF_SHORT:
-		case TIFF_SSHORT:
-		    return 2;
-		case TIFF_LONG:
-		case TIFF_SLONG:
-		case TIFF_FLOAT:
-		case TIFF_IFD:
-		case TIFF_RATIONAL:
-		case TIFF_SRATIONAL:
-		    return 4;
-		case TIFF_DOUBLE:
-		case TIFF_LONG8:
-		case TIFF_SLONG8:
-		case TIFF_IFD8:
-		    return 8;
-		default:
-		    return 0;
-	}
-}
 
-/*
- * Rational2Double: 
- * Return size of TIFFSetGetFieldType for internal storage in bytes.
- *
- * XXX: TIFF_RATIONAL values for FIELD_CUSTOM are stored internally as 4-byte float.
- * However, some of them should be stored internally as 8-byte double. 
- * This is now managed by the SetGetField of the tag-definition!
+/* 
+ * Return internal storage size of TIFFSetGetFieldType in bytes.
+ * TIFFSetField() and TIFFGetField() have to provide the parameter accordingly.
+ * Replaces internal functions _TIFFDataSize() and _TIFFSetGetFieldSize() 
+ * with now extern available function TIFFFieldSetGetSize().
  */
-int
-_TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype)
+int 
+TIFFFieldSetGetSize(const TIFFField* fip)
 {
-	switch (setgettype)
+/*
+ * TIFFSetField() and TIFFGetField() must provide the parameter accordingly to
+ * the definition of "set_field_type" of the tag definition in dir_info.c.
+ * This function returns the data size for that purpose.
+ * 
+ * Furthermore, this data size is also used for the internal storage,
+ * even for TIFF_RATIONAL values for FIELD_CUSTOM, which are stored internally as 4-byte float,
+ * but some of them should be stored internally as 8-byte double,
+ * depending on the "set_field_type" _FLOAT_ or _DOUBLE_.
+*/
+	if (fip == NULL) return 0;
+
+	switch (fip->set_field_type)
 	{
 		case TIFF_SETGET_UNDEFINED:
 		case TIFF_SETGET_ASCII:
@@ -676,7 +652,48 @@ _TIFFSetGetFieldSize(TIFFSetGetFieldType setgettype)
 		default:
 		    return 0;
 	}
-} /*-- _TIFFSetGetFieldSize --- */
+} /*-- TIFFFieldSetGetSize() --- */
+
+/*
+ * Return size of count parameter of TIFFSetField() and TIFFGetField()
+ * and also if it is required:  0=none, 2=uint16_t, 4=uint32_t 
+ */
+int
+TIFFFieldSetGetCountSize(const TIFFField* fip)
+{
+	if (fip == NULL) return 0;
+
+	switch (fip->set_field_type) {
+		case TIFF_SETGET_C16_ASCII:
+		case TIFF_SETGET_C16_UINT8:
+		case TIFF_SETGET_C16_SINT8:
+		case TIFF_SETGET_C16_UINT16:
+		case TIFF_SETGET_C16_SINT16:
+		case TIFF_SETGET_C16_UINT32:
+		case TIFF_SETGET_C16_SINT32:
+		case TIFF_SETGET_C16_FLOAT:
+		case TIFF_SETGET_C16_UINT64:
+		case TIFF_SETGET_C16_SINT64:
+		case TIFF_SETGET_C16_DOUBLE:
+		case TIFF_SETGET_C16_IFD8:
+			return 2;
+		case TIFF_SETGET_C32_ASCII:
+		case TIFF_SETGET_C32_UINT8:
+		case TIFF_SETGET_C32_SINT8:
+		case TIFF_SETGET_C32_UINT16:
+		case TIFF_SETGET_C32_SINT16:
+		case TIFF_SETGET_C32_UINT32:
+		case TIFF_SETGET_C32_SINT32:
+		case TIFF_SETGET_C32_FLOAT:
+		case TIFF_SETGET_C32_UINT64:
+		case TIFF_SETGET_C32_SINT64:
+		case TIFF_SETGET_C32_DOUBLE:
+		case TIFF_SETGET_C32_IFD8:
+			return 4;
+		default:
+			return 0;
+	}
+} /*-- TIFFFieldSetGetCountSize() --- */
 
 
 const TIFFField*
@@ -791,6 +808,12 @@ TIFFFieldWriteCount(const TIFFField* fip)
 	return fip->field_writecount;
 }
 
+int
+TIFFFieldIsAnonymous(const TIFFField *fip)
+{
+	return fip->field_anonymous;
+}
+
 const TIFFField*
 _TIFFFindOrRegisterField(TIFF *tif, uint32_t tag, TIFFDataType dt)
 
@@ -822,7 +845,7 @@ _TIFFCreateAnonField(TIFF *tif, uint32_t tag, TIFFDataType field_type)
 	fld->field_readcount = TIFF_VARIABLE2;
 	fld->field_writecount = TIFF_VARIABLE2;
 	fld->field_type = field_type;
-	fld->reserved = 0;
+	fld->field_anonymous = 1;    /* indicate that this is an anonymous / unknown tag */
 	switch (field_type)
 	{
 		case TIFF_BYTE:
@@ -895,6 +918,8 @@ _TIFFCreateAnonField(TIFF *tif, uint32_t tag, TIFFDataType field_type)
 	/* 
 	 * note that this name is a special sign to TIFFClose() and
 	 * _TIFFSetupFields() to free the field
+	 * Update:
+	 *   This special sign is replaced by fld->field_anonymous  flag.
 	 */
 	(void) snprintf(fld->field_name, 32, "Tag %d", (int) tag);
 
@@ -1105,7 +1130,7 @@ TIFFMergeFieldInfo(TIFF* tif, const TIFFFieldInfo info[], uint32_t n)
 		tp->field_readcount = info[i].field_readcount;
 		tp->field_writecount = info[i].field_writecount;
 		tp->field_type = info[i].field_type;
-		tp->reserved = 0;
+		tp->field_anonymous = 0;
 		tp->set_field_type =
 		     _TIFFSetGetType(info[i].field_type,
 				info[i].field_readcount,
@@ -1164,6 +1189,9 @@ _TIFFCheckFieldIsValidForCodec(TIFF *tif, ttag_t tag)
 		break;
 	    default:
 		return 1;
+	}
+	if( !TIFFIsCODECConfigured(tif->tif_dir.td_compression) ) {
+		return 0;
 	}
 	/* Check if codec specific tags are allowed for the current
 	 * compression scheme (codec) */

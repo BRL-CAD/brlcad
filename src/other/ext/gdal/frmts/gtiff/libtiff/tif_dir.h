@@ -117,6 +117,7 @@ typedef struct {
 	/* CMYK parameters */
 	int     td_inknameslen;
 	char*   td_inknames;
+	uint16_t td_numberofinks;                 /* number of inks in InkNames string */
 
 	int     td_customValueCount;
         TIFFTagValue *td_customValues;
@@ -174,6 +175,7 @@ typedef struct {
 #define FIELD_TRANSFERFUNCTION         44
 #define FIELD_INKNAMES                 46
 #define FIELD_SUBIFD                   49
+#define FIELD_NUMBEROFINKS             50
 /*      FIELD_CUSTOM (see tiffio.h)    65 */
 /* end of support for well-known tags; codec-private tags follow */
 #define FIELD_CODEC                    66  /* base of codec-private tags */
@@ -282,11 +284,11 @@ struct _TIFFFieldArray {
 };
 
 struct _TIFFField {
-	uint32_t field_tag;                       /* field's tag */
+	uint32_t field_tag;                     /* field's tag */
 	short field_readcount;                  /* read count/TIFF_VARIABLE/TIFF_SPP */
 	short field_writecount;                 /* write count/TIFF_VARIABLE */
 	TIFFDataType field_type;                /* type of associated data */
-	uint32_t reserved;                        /* reserved for future extension */
+	uint32_t field_anonymous;               /* if true, this is a unknown / anonymous tag */
 	TIFFSetGetFieldType set_field_type;     /* type to be passed to TIFFSetField */
 	TIFFSetGetFieldType get_field_type;     /* type to be passed to TIFFGetField */
 	unsigned short field_bit;               /* bit in fieldsset bit vector */
@@ -300,6 +302,8 @@ extern int _TIFFMergeFields(TIFF*, const TIFFField[], uint32_t);
 extern const TIFFField* _TIFFFindOrRegisterField(TIFF *, uint32_t, TIFFDataType);
 extern  TIFFField* _TIFFCreateAnonField(TIFF *, uint32_t, TIFFDataType);
 extern int _TIFFCheckFieldIsValidForCodec(TIFF *tif, ttag_t tag);
+extern int _TIFFCheckDirNumberAndOffset(TIFF *tif, uint16_t dirn, uint64_t diroff);
+extern int _TIFFGetDirNumberFromOffset(TIFF *tif, uint64_t diroff, uint16_t *dirn);
 
 #if defined(__cplusplus)
 }

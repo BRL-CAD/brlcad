@@ -34,24 +34,19 @@
 #include "ogr_core.h"
 #include "ogr_feature.h"
 
-CPL_CVSID("$Id$")
-
 /************************************************************************/
 /*                    OGRSQLiteSingleFeatureLayer()                     */
 /************************************************************************/
 
 OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
-    const char* pszLayerName,
-    int nValIn ) :
-    nVal(nValIn),
-    pszVal(nullptr),
-    poFeatureDefn(new OGRFeatureDefn( "SELECT" )),
-    iNextShapeId(0)
+    const char *pszLayerName, int nValIn)
+    : nVal(nValIn), pszVal(nullptr),
+      poFeatureDefn(new OGRFeatureDefn("SELECT")), iNextShapeId(0)
 {
-    SetDescription( poFeatureDefn->GetName() );
+    SetDescription(poFeatureDefn->GetName());
     poFeatureDefn->Reference();
-    OGRFieldDefn oField( pszLayerName, OFTInteger );
-    poFeatureDefn->AddFieldDefn( &oField );
+    OGRFieldDefn oField(pszLayerName, OFTInteger);
+    poFeatureDefn->AddFieldDefn(&oField);
 }
 
 /************************************************************************/
@@ -59,16 +54,13 @@ OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
 /************************************************************************/
 
 OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
-    const char* pszLayerName,
-    const char *pszValIn ) :
-    nVal(0),
-    pszVal(CPLStrdup(pszValIn)),
-    poFeatureDefn(new OGRFeatureDefn( "SELECT" )),
-    iNextShapeId(0)
+    const char *pszLayerName, const char *pszValIn)
+    : nVal(0), pszVal(CPLStrdup(pszValIn)),
+      poFeatureDefn(new OGRFeatureDefn("SELECT")), iNextShapeId(0)
 {
     poFeatureDefn->Reference();
-    OGRFieldDefn oField( pszLayerName, OFTString );
-    poFeatureDefn->AddFieldDefn( &oField );
+    OGRFieldDefn oField(pszLayerName, OFTString);
+    poFeatureDefn->AddFieldDefn(&oField);
 }
 
 /************************************************************************/
@@ -77,7 +69,7 @@ OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
 
 OGRSQLiteSingleFeatureLayer::~OGRSQLiteSingleFeatureLayer()
 {
-    if( poFeatureDefn != nullptr )
+    if (poFeatureDefn != nullptr)
     {
         poFeatureDefn->Release();
         poFeatureDefn = nullptr;
@@ -98,17 +90,17 @@ void OGRSQLiteSingleFeatureLayer::ResetReading()
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-OGRFeature * OGRSQLiteSingleFeatureLayer::GetNextFeature()
+OGRFeature *OGRSQLiteSingleFeatureLayer::GetNextFeature()
 {
     if (iNextShapeId != 0)
         return nullptr;
 
-    OGRFeature* poFeature = new OGRFeature(poFeatureDefn);
+    OGRFeature *poFeature = new OGRFeature(poFeatureDefn);
     if (pszVal)
         poFeature->SetField(0, pszVal);
     else
         poFeature->SetField(0, nVal);
-    poFeature->SetFID(iNextShapeId ++);
+    poFeature->SetFID(iNextShapeId++);
     return poFeature;
 }
 
@@ -116,7 +108,7 @@ OGRFeature * OGRSQLiteSingleFeatureLayer::GetNextFeature()
 /*                            GetLayerDefn()                            */
 /************************************************************************/
 
-OGRFeatureDefn * OGRSQLiteSingleFeatureLayer::GetLayerDefn()
+OGRFeatureDefn *OGRSQLiteSingleFeatureLayer::GetLayerDefn()
 {
     return poFeatureDefn;
 }
@@ -125,7 +117,7 @@ OGRFeatureDefn * OGRSQLiteSingleFeatureLayer::GetLayerDefn()
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRSQLiteSingleFeatureLayer::TestCapability( const char * )
+int OGRSQLiteSingleFeatureLayer::TestCapability(const char *)
 {
     return FALSE;
 }

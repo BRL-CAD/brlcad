@@ -29,8 +29,6 @@
 #include "ogr_attrind.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$")
-
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
@@ -43,10 +41,9 @@ CPL_CVSID("$Id$")
 /*                         OGRLayerAttrIndex()                          */
 /************************************************************************/
 
-OGRLayerAttrIndex::OGRLayerAttrIndex() :
-    poLayer(nullptr),
-    pszIndexPath(nullptr)
-{}
+OGRLayerAttrIndex::OGRLayerAttrIndex() : poLayer(nullptr), pszIndexPath(nullptr)
+{
+}
 
 /************************************************************************/
 /*                         ~OGRLayerAttrIndex()                         */
@@ -55,7 +52,7 @@ OGRLayerAttrIndex::OGRLayerAttrIndex() :
 OGRLayerAttrIndex::~OGRLayerAttrIndex()
 
 {
-    CPLFree( pszIndexPath );
+    CPLFree(pszIndexPath);
     pszIndexPath = nullptr;
 }
 
@@ -69,12 +66,16 @@ OGRLayerAttrIndex::~OGRLayerAttrIndex()
 /*                            OGRAttrIndex()                            */
 /************************************************************************/
 
-OGRAttrIndex::OGRAttrIndex() {}
+OGRAttrIndex::OGRAttrIndex()
+{
+}
 
 /************************************************************************/
 /*                           ~OGRAttrIndex()                            */
 /************************************************************************/
 
-OGRAttrIndex::~OGRAttrIndex() {}
+OGRAttrIndex::~OGRAttrIndex()
+{
+}
 
 //! @endcond

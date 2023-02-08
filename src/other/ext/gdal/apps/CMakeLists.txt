@@ -125,7 +125,11 @@ if (BUILD_APPS)
       set_target_properties(${UTILCMD} PROPERTIES LINK_FLAGS "wsetargv.obj")
     endif ()
     if (MINGW)
-      target_link_options(${UTILCMD} PRIVATE -municode)
+        if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.13)
+            target_link_options(${UTILCMD} PRIVATE -municode)
+        else()
+            target_link_libraries(${UTILCMD} PRIVATE -municode)
+        endif()
     endif ()
     if (MSVC OR MINGW)
       target_compile_definitions(${UTILCMD} PRIVATE -DSUPPORTS_WMAIN)
@@ -144,6 +148,8 @@ if (BUILD_APPS)
   add_executable(multireadtest EXCLUDE_FROM_ALL multireadtest.cpp)
   add_executable(test_ogrsf test_ogrsf.cpp)
   add_executable(testreprojmulti EXCLUDE_FROM_ALL testreprojmulti.cpp)
+  add_executable(bench_ogr_batch EXCLUDE_FROM_ALL bench_ogr_batch.cpp)
+  add_executable(bench_ogr_c_api EXCLUDE_FROM_ALL bench_ogr_c_api.cpp)
 
   foreach (
     UTILCMD IN
@@ -155,7 +161,9 @@ if (BUILD_APPS)
           gdalwarpsimple
           multireadtest
           test_ogrsf
-          testreprojmulti)
+          testreprojmulti
+          bench_ogr_batch
+          bench_ogr_c_api)
     if (WIN32)
         target_sources(${UTILCMD} PRIVATE longpathaware.manifest)
     endif()
@@ -169,7 +177,11 @@ if (BUILD_APPS)
       target_compile_definitions(${UTILCMD} PRIVATE -DSUPPORTS_WMAIN)
     endif ()
     if (MINGW)
-      target_link_options(${UTILCMD} PRIVATE -municode)
+        if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.13)
+            target_link_options(${UTILCMD} PRIVATE -municode)
+        else()
+            target_link_libraries(${UTILCMD} PRIVATE -municode)
+        endif()
     endif ()
     # Windows(Mingw/MSVC) link libraries
     if (CMAKE_SYSTEM_NAME MATCHES "Windows")

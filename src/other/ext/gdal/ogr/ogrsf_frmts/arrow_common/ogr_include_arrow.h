@@ -34,14 +34,18 @@
 #endif
 
 #ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4244 )  /*  warning 4244: 'initializing': conversion from 'int32_t' to 'int16_t', possible loss of data */
-#pragma warning( disable : 4458 )  /*  warning 4458: declaration of 'type_id' hides class member */
+#pragma warning(push)
+// warning 4244: 'initializing': conversion from 'int32_t' to 'int16_t',
+// possible loss of data
+#pragma warning(disable : 4244)
+// warning 4458: declaration of 'type_id' hides class member
+#pragma warning(disable : 4458)
 #endif
 
 #include "arrow/array.h"
 #include "arrow/builder.h"
 #include "arrow/array/array_dict.h"
+#include "arrow/c/bridge.h"
 #include "arrow/ipc/reader.h"
 #include "arrow/ipc/writer.h"
 #include "arrow/io/file.h"
@@ -51,7 +55,7 @@
 #include "arrow/util/key_value_metadata.h"
 
 #ifdef _MSC_VER
-#pragma warning( pop )
+#pragma warning(pop)
 #endif
 
 #endif
