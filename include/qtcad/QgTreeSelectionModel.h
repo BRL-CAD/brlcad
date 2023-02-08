@@ -1,7 +1,7 @@
 /*             Q G T R E E S E L E C T I O N M O D E L . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2022 United States Government as represented by
+ * Copyright (c) 2014-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or

@@ -1,7 +1,7 @@
 /*               A S S E T I M P O R T _ R E A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022 United States Government as represented by
+ * Copyright (c) 2022-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 
 #include "gcv/api.h"
 #include "wdb.h"
+#include "bg/trimesh.h"
 
 /* assimp headers */
 #include <assimp/cimport.h>
@@ -260,6 +261,12 @@ generate_unique_name(const char* curr_name, const char* def_name, bool is_mesh)
     if (!name.size())
 	name = def_name;
 
+    /* cleanup name - remove spaces, slashes and non-standard characters */
+    bu_vls scrub = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&scrub, "%s", name.c_str());
+    bu_vls_simplify(&scrub, nullptr, " _\0", " _\0");
+    name = scrub.vls_len > 0 ? std::string(bu_vls_cstr(&scrub)) : def_name;   /* somemtimes we scrub out the entire name */
+
     /* check for name collisions */
     auto handle = used_names.find(name);
     if (handle != used_names.end()) {
@@ -268,8 +275,8 @@ generate_unique_name(const char* curr_name, const char* def_name, bool is_mesh)
         name.append("_" + std::to_string(handle->second));
     }
 
-    name.append(suffix);
     used_names.emplace(name, 0);
+    name.append(suffix);
 
     return name;
 }
@@ -277,10 +284,9 @@ generate_unique_name(const char* curr_name, const char* def_name, bool is_mesh)
 static void
 generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned int mesh_idx)
 {
-    /* make sure we are dealing with only triangles 
-     * TODO: support polygons by splitting into triangles 
-     */
     aiMesh* mesh = pstate->scene->mMeshes[mesh_idx];
+    /* sanity check: importer handles triangulation but make sure
+       we are dealing with only triangles */
     if (mesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
 	bu_log("WARNING: unknown primitive in mesh[%d] -- skipping\n", mesh_idx);
 	return;
@@ -288,6 +294,9 @@ generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned in
 
     int* faces = new int[mesh->mNumFaces * 3];
     double* vertices = new double[mesh->mNumVertices * 3];
+    fastf_t* normals = NULL;
+    fastf_t* thickness = NULL;
+    bu_bitv* bitv = NULL;
 
     if (pstate->gcv_options->verbosity_level || pstate->assetimport_read_options->verbose) {
 	bu_log("mesh[%d] num Faces: %d\n", mesh_idx, mesh->mNumFaces);
@@ -308,9 +317,44 @@ generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned in
 	vertices[i * 3 +2] = mesh->mVertices[i].z * pstate->gcv_options->scale_factor;
     }
 
+    /* check bot mode */
+    unsigned char orientation = RT_BOT_CCW; /* default ccw https://assimp.sourceforge.net/lib_html/data.html*/
+    unsigned char mode = RT_BOT_SURFACE;
+    {
+	rt_bot_internal bot;
+	std::memset(&bot, 0, sizeof(bot));
+	bot.magic = RT_BOT_INTERNAL_MAGIC;
+	bot.orientation = orientation;
+	bot.num_vertices = mesh->mNumVertices;
+	bot.num_faces = mesh->mNumFaces;
+	bot.vertices = vertices;
+	bot.faces = faces;
+	/* TODO this generates a lot of false plate modes */
+	mode = bg_trimesh_solid((int)bot.num_vertices, (int)bot.num_faces, bot.vertices, bot.faces, NULL) ? RT_BOT_PLATE : RT_BOT_SOLID;
+    }
+
+    if (mode == RT_BOT_PLATE) {
+	const fastf_t plate_thickness = 1.0;
+	bitv = bu_bitv_new(mesh->mNumFaces * 3);
+	thickness = new fastf_t[mesh->mNumFaces * 3] {plate_thickness};
+    }
+
     /* add mesh to region list */
     std::string mesh_name = generate_unique_name(pstate->scene->mMeshes[mesh_idx]->mName.data, pstate->gcv_options->default_name, 1);
-    mk_bot(pstate->fd_out, mesh_name.c_str(), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, (fastf_t*)NULL, (struct bu_bitv*)NULL);
+    /* check for normals */
+    if (mesh->HasNormals()) {
+	normals = new fastf_t[mesh->mNumVertices * 3];
+	for (size_t i = 0; i < mesh->mNumVertices; i++) {
+	    aiVector3D normalized = mesh->mNormals[i].Normalize();
+	    normals[i * 3   ] = normalized.x;
+	    normals[i * 3 +1] = normalized.y;
+	    normals[i * 3 +2] = normalized.z;
+	}
+
+	mk_bot_w_normals(pstate->fd_out, mesh_name.c_str(), mode, orientation, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, thickness, bitv, mesh->mNumVertices, normals, faces);
+    } else {
+	mk_bot(pstate->fd_out, mesh_name.c_str(), mode, orientation, 0, mesh->mNumVertices, mesh->mNumFaces, vertices, faces, thickness, bitv);
+    }
     (void)mk_addmember(mesh_name.c_str(), &region.l, NULL, WMOP_UNION);
 
     /* book keeping to log converted meshes */
@@ -319,6 +363,10 @@ generate_geometry(assetimport_read_state_t* pstate, wmember &region, unsigned in
     /* cleanup memory */
     delete[] faces;
     delete[] vertices;
+    delete[] normals;
+    delete[] thickness;
+    if (bitv)
+        bu_bitv_free(bitv);
 }
 
 static void
@@ -378,12 +426,18 @@ handle_node(assetimport_read_state_t* pstate, aiNode* curr, struct wmember &regi
     }
 
     /* when we're done adding children, add to top level */
-    if (!curr->mNumChildren)
-	(void)mk_addmember(region_name.c_str(), &regions.l, NULL, WMOP_UNION);
+    if (!curr->mNumChildren) {
+	/* apply child's transformations */
+	fastf_t tra[16];
+	aimatrix_to_arr16(curr->mTransformation, tra);
+	(void)mk_addmember(region_name.c_str(), &regions.l, tra, WMOP_UNION);
+    }
 
     /* recursive call all children */
     for (size_t i = 0; i < curr->mNumChildren; i++) {
-	handle_node(pstate, curr->mChildren[i], regions);
+	/* skip children with no meshes under them (cameras, etc) */
+	if (curr->mChildren[i]->mNumChildren || curr->mChildren[i]->mNumMeshes)
+	    handle_node(pstate, curr->mChildren[i], regions);
     }
 
     if (shader_prop)
@@ -393,12 +447,19 @@ handle_node(assetimport_read_state_t* pstate, aiNode* curr, struct wmember &regi
 static int
 convert_input(assetimport_read_state_t* pstate)
 {
+    /* have importer remove points and lines as we can't do anything with them */
+    aiPropertyStore* props = aiCreatePropertyStore();
+    aiSetImportPropertyInteger(props, AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_LINE | aiPrimitiveType_POINT);
     /* we are taking one of the postprocessing presets to have
      * max quality with reasonable render times. But, we must keep 
      * seemingly redundant materials as we use the names for BRLCAD shaders
      */
-    pstate->scene = aiImportFile(pstate->input_file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality & ~aiProcess_RemoveRedundantMaterials);
-
+    unsigned int import_flags = aiProcessPreset_TargetRealtime_MaxQuality & ~aiProcess_RemoveRedundantMaterials;
+    pstate->scene = aiImportFileExWithProperties(pstate->input_file.c_str(),
+						 import_flags,
+						 NULL,
+						 props);
+    
     if (!pstate->scene) {
 	bu_log("ERROR: bad scene conversion\n");
 	return 0;
@@ -422,8 +483,12 @@ convert_input(assetimport_read_state_t* pstate)
     /* make a top level 'all.g' */
     mk_lcomb(pstate->fd_out, "all.g", &pstate->all, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0);
 
-    /* TODO FIXME: bad generation logs extra converted and mesh */
+    /* import handles triangulation and scrubs extra shapes - this should *in theory* always report 100% */
     bu_log("Converted ( %d / %d ) meshes ... %.2f%%\n", pstate->converted, pstate->scene->mNumMeshes, (float)pstate->converted / (float)pstate->scene->mNumMeshes * 100.0);
+
+    /* cleanup */
+    aiReleaseImport(pstate->scene);
+    aiReleasePropertyStore(props);
 
     return 1;
 }

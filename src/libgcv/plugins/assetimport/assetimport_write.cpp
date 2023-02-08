@@ -1,7 +1,7 @@
 /*                A S S I M P _ W R I T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022 United States Government as represented by
+ * Copyright (c) 2022-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ typedef struct assetimport_write_state {
     std::vector<aiNode*> children;      /* dynamically keeps track of children while walking */
     std::vector<aiMesh*> meshes;        /* dynamically keeps track of bot meshes while walking */
     std::vector<aiMaterial*> mats;      /* dynamically keeps track of materials (shaders) */
-    std::unordered_map<std::string, int> mat_names;     /* maps material to vector index */
+    std::unordered_map<std::string, size_t> mat_names;     /* maps material to vector index */
     assetimport_write_state() {
 	gcv_options = NULL;
 	assetimport_write_options = NULL;
@@ -197,7 +197,7 @@ nmg_to_assetimport(struct nmgregion *r, const struct db_full_path *pathp, struct
     /* generate mesh */
     char* region_name = strip_at_char(db_path_to_string(pathp), '/');
     if (!region_name)
-	sprintf(region_name, "region_%lu", pstate->meshes.size());
+	sprintf(region_name, "region_%zu", pstate->meshes.size());
     curr_mesh->mName = aiString(region_name);
     curr_mesh->mPrimitiveTypes |= aiPrimitiveType_TRIANGLE;
     curr_mesh->mNumVertices = numverts;
@@ -453,7 +453,7 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     /* export */
     aiReturn airet = exporter.Export(state.scene, fmt_desc->id, dest_path, state.scene->mFlags);
     if (airet != AI_SUCCESS) {
-	bu_log("ERROR: %s", exporter.GetErrorString());
+	bu_log("ERROR: %s\n", exporter.GetErrorString());
 	ret = 0;
     }
 
