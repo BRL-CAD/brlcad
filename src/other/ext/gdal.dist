@@ -1,5 +1,4 @@
 set(gdal_ignore_files
-.clang-format
 .cmake-format.py
 .editorconfig
 .gitattributes
