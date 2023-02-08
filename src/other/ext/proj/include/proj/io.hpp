@@ -247,6 +247,9 @@ class PROJ_GCC_DLL WKTFormatter {
     setAllowEllipsoidalHeightAsVerticalCRS(bool allow) noexcept;
     PROJ_DLL bool isAllowedEllipsoidalHeightAsVerticalCRS() const noexcept;
 
+    PROJ_DLL WKTFormatter &setAllowLINUNITNode(bool allow) noexcept;
+    PROJ_DLL bool isAllowedLINUNITNode() const noexcept;
+
     PROJ_DLL const std::string &toString() const;
 
     PROJ_PRIVATE :
@@ -310,6 +313,10 @@ class PROJ_GCC_DLL WKTFormatter {
 
     PROJ_INTERNAL void setHDatumExtension(const std::string &filename);
     PROJ_INTERNAL const std::string &getHDatumExtension() const;
+
+    PROJ_INTERNAL void
+    setGeogCRSOfCompoundCRS(const crs::GeographicCRSPtr &crs);
+    PROJ_INTERNAL const crs::GeographicCRSPtr &getGeogCRSOfCompoundCRS() const;
 
     PROJ_INTERNAL static std::string morphNameToESRI(const std::string &name);
 
@@ -440,11 +447,17 @@ class PROJ_GCC_DLL PROJStringFormatter {
     PROJ_INTERNAL void setTOWGS84Parameters(const std::vector<double> &params);
     PROJ_INTERNAL const std::vector<double> &getTOWGS84Parameters() const;
 
-    PROJ_INTERNAL void setVDatumExtension(const std::string &filename);
+    PROJ_INTERNAL void setVDatumExtension(const std::string &filename,
+                                          const std::string &geoidCRSValue);
     PROJ_INTERNAL const std::string &getVDatumExtension() const;
+    PROJ_INTERNAL const std::string &getGeoidCRSValue() const;
 
     PROJ_INTERNAL void setHDatumExtension(const std::string &filename);
     PROJ_INTERNAL const std::string &getHDatumExtension() const;
+
+    PROJ_INTERNAL void
+    setGeogCRSOfCompoundCRS(const crs::GeographicCRSPtr &crs);
+    PROJ_INTERNAL const crs::GeographicCRSPtr &getGeogCRSOfCompoundCRS() const;
 
     PROJ_INTERNAL void setOmitProjLongLatIfPossible(bool omit);
     PROJ_INTERNAL bool omitProjLongLatIfPossible() const;
@@ -465,6 +478,8 @@ class PROJ_GCC_DLL PROJStringFormatter {
     PROJ_INTERNAL const DatabaseContextPtr &databaseContext() const;
 
     PROJ_INTERNAL Convention convention() const;
+
+    PROJ_INTERNAL size_t getStepCount() const;
 
     //! @endcond
 
@@ -544,7 +559,7 @@ class PROJ_GCC_DLL JSONFormatter {
     PROJ_INTERNAL bool
     outputUsage(bool calledBeforeObjectContext = false) const;
 
-    PROJ_INTERNAL static const char *PROJJSON_v0_4;
+    PROJ_INTERNAL static const char *PROJJSON_v0_5;
 
     //! @endcond
 
@@ -762,6 +777,8 @@ class PROJ_GCC_DLL WKTParser {
 
     PROJ_DLL WKTParser &setStrict(bool strict);
     PROJ_DLL std::list<std::string> warningList() const;
+
+    PROJ_DLL WKTParser &setUnsetIdentifiersIfIncompatibleDef(bool unset);
 
     PROJ_DLL util::BaseObjectNNPtr
     createFromWKT(const std::string &wkt); // throw(ParsingException)

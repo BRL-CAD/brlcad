@@ -301,6 +301,39 @@ TEST_F(CApi, proj_create_from_wkt) {
     {
         PROJ_STRING_LIST warningList = nullptr;
         PROJ_STRING_LIST errorList = nullptr;
+        const char *const options[] = {
+            "UNSET_IDENTIFIERS_IF_INCOMPATIBLE_DEF=NO", nullptr};
+        auto wkt = "PROJCS[\"Merchich / Nord Maroc\","
+                   "    GEOGCS[\"Merchich\","
+                   "        DATUM[\"Merchich\","
+                   "            SPHEROID[\"Clarke 1880 (IGN)\","
+                   "6378249.2,293.466021293627]],"
+                   "        PRIMEM[\"Greenwich\",0],"
+                   "        UNIT[\"grad\",0.015707963267949,"
+                   "            AUTHORITY[\"EPSG\",\"9105\"]],"
+                   "        AUTHORITY[\"EPSG\",\"4261\"]],"
+                   "    PROJECTION[\"Lambert_Conformal_Conic_1SP\"],"
+                   "    PARAMETER[\"latitude_of_origin\",37],"
+                   "    PARAMETER[\"central_meridian\",-6],"
+                   "    PARAMETER[\"scale_factor\",0.999625769],"
+                   "    PARAMETER[\"false_easting\",500000],"
+                   "    PARAMETER[\"false_northing\",300000],"
+                   "    UNIT[\"metre\",1,"
+                   "        AUTHORITY[\"EPSG\",\"9001\"]],"
+                   "    AXIS[\"Easting\",EAST],"
+                   "    AXIS[\"Northing\",NORTH]]";
+        auto obj = proj_create_from_wkt(m_ctxt, wkt, options, &warningList,
+                                        &errorList);
+        ObjectKeeper keeper(obj);
+        EXPECT_NE(obj, nullptr);
+        EXPECT_EQ(warningList, nullptr);
+        proj_string_list_destroy(warningList);
+        EXPECT_EQ(errorList, nullptr);
+        proj_string_list_destroy(errorList);
+    }
+    {
+        PROJ_STRING_LIST warningList = nullptr;
+        PROJ_STRING_LIST errorList = nullptr;
         auto obj = proj_create_from_wkt(
             m_ctxt,
             GeographicCRS::EPSG_4326->exportToWKT(WKTFormatter::create().get())
@@ -497,6 +530,23 @@ TEST_F(CApi, proj_as_wkt) {
         ASSERT_NE(wkt, nullptr);
         EXPECT_TRUE(std::string(wkt).find(
                         "COMPD_CS[\"WGS 84 + Ellipsoid (metre)\"") == 0)
+            << wkt;
+    }
+
+    // ALLOW_LINUNIT_NODE default value
+    {
+        auto wkt = proj_as_wkt(m_ctxt, crs4979, PJ_WKT1_ESRI, nullptr);
+        ASSERT_NE(wkt, nullptr);
+        EXPECT_TRUE(std::string(wkt).find("LINUNIT") != std::string::npos)
+            << wkt;
+    }
+
+    // ALLOW_LINUNIT_NODE=NO
+    {
+        const char *const options[] = {"ALLOW_LINUNIT_NODE=NO", nullptr};
+        auto wkt = proj_as_wkt(m_ctxt, crs4979, PJ_WKT1_ESRI, options);
+        ASSERT_NE(wkt, nullptr);
+        EXPECT_TRUE(std::string(wkt).find("LINUNIT") == std::string::npos)
             << wkt;
     }
 
@@ -1542,6 +1592,9 @@ TEST_F(CApi, proj_coordoperation_get_grid_used) {
     ASSERT_NE(op, nullptr);
     ObjectKeeper keeper(op);
 
+    const std::string old_endpoint = proj_context_get_url_endpoint(m_ctxt);
+    proj_context_set_url_endpoint(m_ctxt, "https://example.com");
+
     EXPECT_EQ(proj_coordoperation_get_grid_used_count(m_ctxt, op), 1);
     const char *shortName = nullptr;
     const char *fullName = nullptr;
@@ -1569,9 +1622,41 @@ TEST_F(CApi, proj_coordoperation_get_grid_used) {
     EXPECT_EQ(shortName, std::string("ca_nrc_ntv1_can.tif"));
     // EXPECT_EQ(fullName, std::string(""));
     EXPECT_EQ(packageName, std::string(""));
-    EXPECT_EQ(std::string(url), "https://cdn.proj.org/ca_nrc_ntv1_can.tif");
+    EXPECT_EQ(std::string(url), "https://example.com/ca_nrc_ntv1_can.tif");
     EXPECT_EQ(directDownload, 1);
     EXPECT_EQ(openLicense, 1);
+
+    proj_context_set_url_endpoint(m_ctxt, old_endpoint.c_str());
+}
+
+// ---------------------------------------------------------------------------
+
+TEST_F(CApi, proj_coordoperation_get_grid_used_fullname_caching) {
+    // Test bugfix for
+    // https://github.com/OSGeo/PROJ/issues/3444#issuecomment-1309499342
+    for (int i = 0; i < 2; ++i) {
+        const char *proj_string =
+            "proj=vgridshift grids=tests/test_vgrid_int16.tif";
+        PJ *P = proj_create(m_ctxt, proj_string);
+        ObjectKeeper keeper(P);
+
+        const char *shortName = nullptr;
+        const char *fullName = nullptr;
+        const char *packageName = nullptr;
+        const char *url = nullptr;
+        int directDownload = 0;
+        int openLicense = 0;
+        int available = 0;
+
+        proj_coordoperation_get_grid_used(m_ctxt, P, 0, &shortName, &fullName,
+                                          &packageName, &url, &directDownload,
+                                          &openLicense, &available);
+
+        EXPECT_EQ(std::string(shortName), "tests/test_vgrid_int16.tif");
+        EXPECT_TRUE(std::string(fullName).find("tests/test_vgrid_int16.tif") !=
+                    std::string::npos)
+            << std::string(fullName);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -2426,12 +2511,24 @@ TEST_F(CApi, check_coord_op_obj_can_be_used_with_proj_trans) {
         ObjectKeeper keeper_projCRS(projCRS);
         ASSERT_NE(projCRS, nullptr);
 
+        {
+            PJ *pj_used = proj_trans_get_last_used_operation(projCRS);
+            ASSERT_EQ(pj_used, nullptr);
+        }
+
         PJ_COORD coord;
         coord.xyzt.x = proj_torad(3.0);
         coord.xyzt.y = 0;
         coord.xyzt.z = 0;
         coord.xyzt.t = 0;
         EXPECT_NEAR(proj_trans(projCRS, PJ_FWD, coord).xyzt.x, 500000.0, 1e-9);
+
+        {
+            PJ *pj_used = proj_trans_get_last_used_operation(projCRS);
+            ASSERT_TRUE(
+                proj_is_equivalent_to(pj_used, projCRS, PJ_COMP_STRICT));
+            proj_destroy(pj_used);
+        }
     }
 }
 
@@ -3004,6 +3101,10 @@ TEST_F(CApi, proj_clone_of_obj_with_alternative_operations) {
     EXPECT_NE(c_trans_ref.xyzt.x, c.xyzt.x);
     EXPECT_NEAR(c_trans_ref.xyzt.x, c.xyzt.x, 1e-3);
     EXPECT_NEAR(c_trans_ref.xyzt.y, c.xyzt.y, 1e-3);
+
+    PJ *pj_used = proj_trans_get_last_used_operation(obj);
+    ASSERT_NE(pj_used, nullptr);
+    proj_destroy(pj_used);
 
     auto clone = proj_clone(m_ctxt, obj);
     ObjectKeeper keeperClone(clone);
@@ -4341,7 +4442,7 @@ TEST_F(CApi, proj_as_projjson) {
         EXPECT_EQ(std::string(projjson),
                   "{\n"
                   "  \"$schema\": "
-                  "\"https://proj.org/schemas/v0.4/projjson.schema.json\",\n"
+                  "\"https://proj.org/schemas/v0.5/projjson.schema.json\",\n"
                   "  \"type\": \"Ellipsoid\",\n"
                   "  \"name\": \"WGS 84\",\n"
                   "  \"semi_major_axis\": 6378137,\n"
@@ -4824,6 +4925,7 @@ TEST_F(CApi, proj_crs_create_bound_vertical_crs) {
     ASSERT_NE(proj_4, nullptr);
     EXPECT_EQ(std::string(proj_4),
               "+proj=utm +zone=31 +datum=WGS84 +units=m +geoidgrids=foo.gtx "
+              "+geoid_crs=WGS84 "
               "+vunits=m +no_defs +type=crs");
 }
 

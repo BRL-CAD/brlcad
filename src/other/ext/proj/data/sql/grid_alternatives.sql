@@ -10,6 +10,7 @@ VALUES
 
 -- at_bev - Austria Bundesamt für Eich- und Vermessungswessen
 ('AT_GIS_GRID.gsb','at_bev_AT_GIS_GRID.tif','AT_GIS_GRID.gsb','GTiff','hgridshift',0,NULL,'https://cdn.proj.org/at_bev_AT_GIS_GRID.tif',1,1,NULL),
+('AT_GIS_GRID_2021_09_28.gsb','at_bev_AT_GIS_GRID_2021_09_28.tif',NULL,'GTiff','hgridshift',0,NULL,'https://cdn.proj.org/at_bev_AT_GIS_GRID_2021_09_28.tif',1,1,NULL),
 ('GV_HoehenGrid_V1.csv','at_bev_GV_Hoehengrid_V1.tif',NULL,'GTiff','vgridshift',0,NULL,'https://cdn.proj.org/at_bev_GV_Hoehengrid_V1.tif',1,1,NULL),
 ('GEOID_GRS80_Oesterreich.csv','at_bev_GEOID_GRS80_Oesterreich.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/at_bev_GEOID_GRS80_Oesterreich.tif',1,1,NULL),
 ('GEOID_BESSEL_Oesterreich.csv','at_bev_GEOID_BESSEL_Oesterreich.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/at_bev_GEOID_BESSEL_Oesterreich.tif',1,1,NULL),
@@ -43,11 +44,14 @@ VALUES
 ('SAD96_003.gsb','br_ibge_SAD96_003.tif',NULL,'GTiff','hgridshift',0,NULL,'https://cdn.proj.org/br_ibge_SAD96_003.tif',1,1,NULL),
 
 -- ca_nrc - Natural Resources Canada
-('CGG2013i08a.byn','ca_nrc_CGG2013ai08.tif','CGG2013ai08.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/ca_nrc_CGG2013ai08.tif',1,1,NULL),
-('CGG2013n83a.byn','ca_nrc_CGG2013an83.tif','CGG2013an83.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/ca_nrc_CGG2013an83.tif',1,1,NULL),
+('CGG2013ai08.byn','ca_nrc_CGG2013ai08.tif','CGG2013ai08.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/ca_nrc_CGG2013ai08.tif',1,1,NULL),
+('CGG2013an83.byn','ca_nrc_CGG2013an83.tif','CGG2013an83.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/ca_nrc_CGG2013an83.tif',1,1,NULL),
 ('CGG2013i83.byn','ca_nrc_CGG2013i08.tif','CGG2013i08.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/ca_nrc_CGG2013i08.tif',1,1,NULL),
 ('CGG2013n83.byn','ca_nrc_CGG2013n83.tif','CGG2013n83.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/ca_nrc_CGG2013n83.tif',1,1,NULL),
-('HT2_0.byn','ca_nrc_HT2_2010v70.tif','HT2_2010v70.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/ca_nrc_HT2_2010v70.tif',1,1,NULL),
+('HT2_0.byn','ca_nrc_HT2_2010v70.tif','HT2_2010v70.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/ca_nrc_HT2_2010v70.tif',1,1,NULL), -- deprecated name. dubious mapping !!!
+('HT2_1997.byn','ca_nrc_HT2_2010v70.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/ca_nrc_HT2_2010v70.tif',1,1,NULL), -- dubious mapping !!!
+('HT2_2010v70.byn','ca_nrc_HT2_2010v70.tif','HT2_2010v70.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/ca_nrc_HT2_2010v70.tif',1,1,NULL),
+('HT2_2010v70_CGG2013a.byn','ca_nrc_HT2_2010v70_CGG2013a.tif',NULL,'GTiff','vgridshift',0,NULL,'https://cdn.proj.org/ca_nrc_HT2_2010v70_CGG2013a.tif',1,1,NULL),
 -- the PROJ grid is the reverse way of the EPSG one
 ('NTv1_0.gsb','ca_nrc_ntv1_can.tif','ntv1_can.dat','GTiff','hgridshift',0,NULL,'https://cdn.proj.org/ca_nrc_ntv1_can.tif',1,1,NULL),
 -- just a case change
@@ -78,6 +82,8 @@ VALUES
 ('SK27-98.gsb','ca_nrc_SK27-98.tif','SK27-98.GSB','GTiff','hgridshift',0,NULL,'https://cdn.proj.org/ca_nrc_SK27-98.tif',1,1,NULL),
 ('SK83-98.gsb','ca_nrc_SK83-98.tif','SK83-98.GSB','GTiff','hgridshift',0,NULL,'https://cdn.proj.org/ca_nrc_SK83-98.tif',1,1,NULL),
 ('TOR27CSv1.GSB','ca_nrc_TO27CSv1.tif','TO27CSv1.GSB','GTiff','hgridshift',0,NULL,'https://cdn.proj.org/ca_nrc_TO27CSv1.tif',1,1,NULL),
+('NAD83v6VG.gvb','ca_nrc_NAD83v6VG.tif',NULL,'GTiff','velocity_grid',0,NULL,'https://cdn.proj.org/ca_nrc_NAD83v6VG.tif',1,1,NULL),
+('NAD83v70VG.gvb','ca_nrc_NAD83v70VG.tif',NULL,'GTiff','velocity_grid',0,NULL,'https://cdn.proj.org/ca_nrc_NAD83v70VG.tif',1,1,NULL),
 
 -- ca_que - Ministère de l'Énergie et des Ressources naturelles du Québec
 -- two grid names in EPSG point to the same file distributed by NRCan
@@ -137,6 +143,7 @@ VALUES
 ('RAF09.mnt','fr_ign_RAF09.tif','RAF09.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_RAF09.tif',1,1,NULL),
 ('RAF18.mnt','fr_ign_RAF18.tif','RAF18.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_RAF18.tif',1,1,NULL),
 ('RAF18b.mnt','fr_ign_RAF18b.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_RAF18b.tif',1,1,NULL),
+('RAF20.tac','fr_ign_RAF20.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_RAF20.tif',1,1,NULL),
 -- The following is a bit an abusive mapping. The ggf97a.txt is the one pointed for the "RGF93 v1 to NGF-IGN69 height" transformation
 -- but we have never ingested that grid. So we point to RAF18.mnt instead...
 -- If we didn't do this, we wouldn't get a grid at all, since RAF09 and RAF18 are now only available for RGF93 v2
@@ -167,6 +174,19 @@ VALUES
 ('ggguy00.txt','fr_ign_ggguy15.tif','ggguy15.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggguy15.tif',1,1,NULL),
 ('ggm00.txt','fr_ign_ggm00v2.tif','ggm00v2.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggm00v2.tif',1,1,NULL),
 ('GGSPM06v1.mnt','fr_ign_ggspm06v1.tif','ggspm06v1.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggspm06v1.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_CGVD2013RGSPM06.tif','fr_ign_CGVD2013RGSPM06.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_CGVD2013RGSPM06.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf02-Maiao.tif','fr_ign_ggpf02-Maiao.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf02-Maiao.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf02-Tupai.tif','fr_ign_ggpf02-Tupai.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf02-Tupai.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf05-HivaOa.tif','fr_ign_ggpf05-HivaOa.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf05-HivaOa.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf05-Nuku.tif','fr_ign_ggpf05-Nuku.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf05-Nuku.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf08-Gambier.tif','fr_ign_ggpf08-Gambier.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf08-Gambier.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf08-Hao.tif','fr_ign_ggpf08-Hao.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf08-Hao.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf08-Mataiva.tif','fr_ign_ggpf08-Mataiva.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf08-Mataiva.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf08-Raivavae.tif','fr_ign_ggpf08-Raivavae.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf08-Raivavae.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf08-Reao.tif','fr_ign_ggpf08-Reao.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf08-Reao.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf08-Rurutu.tif','fr_ign_ggpf08-Rurutu.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf08-Rurutu.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf08-Tikehau.tif','fr_ign_ggpf08-Tikehau.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf08-Tikehau.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-fr_ign_ggpf08-Tubuai.tif','fr_ign_ggpf08-Tubuai.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/fr_ign_ggpf08-Tubuai.tif',1,1,NULL),
 
 -- is_lmi - National Land Survey of Iceland
 ('Icegeoid_ISN2004.gri','is_lmi_Icegeoid_ISN2004.tif','Icegeoid_ISN2004.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/is_lmi_Icegeoid_ISN2004.tif',1,1,NULL),
@@ -174,6 +194,7 @@ VALUES
 ('Icegeoid_ISN2016.gri','is_lmi_Icegeoid_ISN2016.tif','Icegeoid_ISN2016.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/is_lmi_Icegeoid_ISN2016.tif',1,1,NULL),
 ('ISN93_ISN2016.gsb','is_lmi_ISN93_ISN2016.tif','ISN93_ISN2016.gsb','GTiff','hgridshift',0,NULL,'https://cdn.proj.org/is_lmi_ISN93_ISN2016.tif',1,1,NULL),
 ('ISN2004_ISN2016.gsb','is_lmi_ISN2004_ISN2016.tif','ISN2004_ISN2016.gsb','GTiff','hgridshift',0,NULL,'https://cdn.proj.org/is_lmi_ISN2004_ISN2016.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-is_lmi_ISN_vel_beta.tif','is_lmi_ISN_vel_beta.tif',NULL,'GTiff','velocity_grid',0,NULL,'https://cdn.proj.org/is_lmi_ISN_vel_beta.tif',1,1,NULL),
 
 -- jp_gsi - Geospatial Information Authority of Japan
 ('jp_gsi_gsigeo2011.tif','jp_gsi_gsigeo2011.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/jp_gsi_gsigeo2011.tif',1,1,NULL),
@@ -203,6 +224,7 @@ VALUES
 ('no_kv_NKGETRF14_EPSG7922_2000.tif','no_kv_NKGETRF14_EPSG7922_2000.tif',NULL,'GTiff','geocentricoffset',0,NULL,'https://cdn.proj.org/no_kv_NKGETRF14_EPSG7922_2000.tif',1,1,NULL),
 ('ChartDatum_above_Ellipsoid_EUREF89_v2021a.bin','no_kv_CD_above_Ell_ETRS89_v2021a.tif',NULL,'GTiff','vgridshift',0,NULL,'https://cdn.proj.org/no_kv_CD_above_Ell_ETRS89_v2021a.tif',1,1,NULL),
 ('no_kv_ETRS89NO_NGO48_TIN.json','no_kv_ETRS89NO_NGO48_TIN.json',NULL,'JSON','tinshift',0,NULL,'https://cdn.proj.org/no_kv_ETRS89NO_NGO48_TIN.json',1,1,NULL),
+('arcgp-2006-sk.bin','no_kv_arcgp-2006-sk.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/no_kv_arcgp-2006-sk.tif',1,1,NULL),
 
 -- nz_linz - New Zealand
 ('nzgd2kgrid0005.gsb','nz_linz_nzgd2kgrid0005.tif','nzgd2kgrid0005.gsb','GTiff','hgridshift',0,NULL,'https://cdn.proj.org/nz_linz_nzgd2kgrid0005.tif',1,1,NULL),
@@ -276,6 +298,12 @@ VALUES
 ('vertconc.94','us_noaa_vertconc.tif','vertconc.gtx','GTiff','vgridshift',0,NULL,'https://cdn.proj.org/us_noaa_vertconc.tif',1,1,NULL),
 ('vertcone.94','us_noaa_vertcone.tif','vertcone.gtx','GTiff','vgridshift',0,NULL,'https://cdn.proj.org/us_noaa_vertcone.tif',1,1,NULL),
 -- US GEOID99 height models. Not mapped: Alaska: g1999a01.gtx to g1999a04.gtx. Hawaii: g1999h01.gtx, Puerto Rico: g1999p01.gtx
+('NOT-YET-IN-GRID-TRANSFORMATION-g1999a01.bin','us_noaa_g1999a01.tif','g1999a01.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g1999a01.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g1999a02.bin','us_noaa_g1999a02.tif','g1999a02.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g1999a02.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g1999a03.bin','us_noaa_g1999a03.tif','g1999a03.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g1999a03.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g1999a04.bin','us_noaa_g1999a04.tif','g1999a04.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g1999a04.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g1999p01.bin','us_noaa_g1999p01.tif','g1999p01.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g1999p01.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g1999h01.bin','us_noaa_g1999h01.tif','g1999h01.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g1999h01.tif',1,1,NULL),
 ('g1999u01.bin','us_noaa_g1999u01.tif','g1999u01.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g1999u01.tif',1,1,NULL),
 ('g1999u02.bin','us_noaa_g1999u02.tif','g1999u02.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g1999u02.tif',1,1,NULL),
 ('g1999u03.bin','us_noaa_g1999u03.tif','g1999u03.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g1999u03.tif',1,1,NULL),
@@ -285,7 +313,12 @@ VALUES
 ('g1999u07.bin','us_noaa_g1999u07.tif','g1999u07.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g1999u07.tif',1,1,NULL),
 ('g1999u08.bin','us_noaa_g1999u08.tif','g1999u08.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g1999u08.tif',1,1,NULL),
 -- US GEOID03 height models. Not mapped: Alaska: g2003a01.gtx to g2003a04.gtx. Hawaii: g2003h01.gtx. Puerto Rico: g2003p01.gtx
-('geoid03_conus.bin','us_noaa_geoid03_conus.tif','geoid03_conus.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_geoid03_conus.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g2003a01.bin','us_noaa_g2003a01.tif','g2003a01.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2003a01.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g2003a02.bin','us_noaa_g2003a02.tif','g2003a02.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2003a02.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g2003a03.bin','us_noaa_g2003a03.tif','g2003a03.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2003a03.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g2003a04.bin','us_noaa_g2003a04.tif','g2003a04.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2003a04.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g2003p01.bin','us_noaa_g2003p01.tif','g2003p01.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2003p01.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g2003h01.bin','us_noaa_g2003h01.tif','g2003h01.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2003h01.tif',1,1,NULL),('geoid03_conus.bin','us_noaa_geoid03_conus.tif','geoid03_conus.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_geoid03_conus.tif',1,1,NULL),
 -- US GEOID06 height models
 ('geoid06_ak.bin','us_noaa_geoid06_ak.tif','geoid06_ak.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_geoid06_ak.tif',1,1,NULL),
 -- US GEOID09 height models.Not mapped: Hawaii: g2009h01.gtx
@@ -294,6 +327,7 @@ VALUES
 ('g2009g01.bin','us_noaa_g2009g01.tif','g2009g01.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2009g01.tif',1,1,NULL),
 ('g2009s01.bin','us_noaa_g2009s01.tif','g2009s01.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2009s01.tif',1,1,NULL),
 ('g2009p01.bin','us_noaa_g2009p01.tif','g2009p01.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2009p01.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-g2009h01.bin','us_noaa_g2009h01.tif','g2009h01.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2009h01.tif',1,1,NULL),
 -- US GEOID12B height models
 -- CONUS
 ('g2012bu0.bin','us_noaa_g2012bu0.tif','g2012bu0.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2012bu0.tif',1,1,NULL),
@@ -305,9 +339,18 @@ VALUES
 ('g2012bg0.bin','us_noaa_g2012bg0.tif','g2012bg0.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2012bg0.tif',1,1,NULL),
 -- American Samoa
 ('g2012bs0.bin','us_noaa_g2012bs0.tif','g2012bs0.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2012bs0.tif',1,1,NULL),
+-- Hawaii
+('NOT-YET-IN-GRID-TRANSFORMATION-g2012bh0.bin','us_noaa_g2012bh0.tif','g2012bh0.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2012bh0.tif',1,1,NULL),
+
 -- US GEOID18 height models
 ('g2018u0.bin','us_noaa_g2018u0.tif','g2018u0.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2018u0.tif',1,1,NULL),
 ('g2018p0.bin','us_noaa_g2018p0.tif','g2018p0.gtx','GTiff','geoid_like',0,NULL,'https://cdn.proj.org/us_noaa_g2018p0.tif',1,1,NULL),
+
+('NOT-YET-IN-GRID-TRANSFORMATION-us_noaa_flhpgn.tif','us_noaa_flhpgn.tif',NULL,'GTiff','hgridshift',0,NULL,'https://cdn.proj.org/us_noaa_flhpgn.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-us_noaa_mdhpgn.tif','us_noaa_mdhpgn.tif',NULL,'GTiff','hgridshift',0,NULL,'https://cdn.proj.org/us_noaa_mdhpgn.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-us_noaa_tnhpgn.tif','us_noaa_tnhpgn.tif',NULL,'GTiff','hgridshift',0,NULL,'https://cdn.proj.org/us_noaa_tnhpgn.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-us_noaa_wihpgn.tif','us_noaa_wihpgn.tif',NULL,'GTiff','hgridshift',0,NULL,'https://cdn.proj.org/us_noaa_wihpgn.tif',1,1,NULL),
+('NOT-YET-IN-GRID-TRANSFORMATION-us_noaa_wohpgn.tif','us_noaa_wohpgn.tif',NULL,'GTiff','hgridshift',0,NULL,'https://cdn.proj.org/us_noaa_wohpgn.tif',1,1,NULL),
 
 -- za_cdngi - Chief Directorate: National Geospatial Information (CD:NGI) South Africa
 ('SAGEOID2010.dat','za_cdngi_sageoid2010.tif',NULL,'GTiff','geoid_like',0,NULL,'https://cdn.proj.org/za_cdngi_sageoid2010.tif',1,1,NULL)

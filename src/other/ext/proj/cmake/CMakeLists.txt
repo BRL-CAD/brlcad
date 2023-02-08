@@ -64,9 +64,6 @@ string (TOLOWER "${PROJECT_LEGACY_NAME}" PROJECT_LEGACY_LOWER)
 #
 # At some more distant date, the PROJ4::proj target will be retired.
 #
-# To support this change, the CACHE variables PROJ_CMAKE_SUBDIR (and
-# CMAKECONFIGDIR) is now the "Parent of directory to install cmake
-# config files into".
 #
 # All this messiness is confined to
 #
@@ -93,9 +90,19 @@ else ()
   set (CMAKE_CROSSCOMPILING_STR "OFF")
 endif ()
 
-foreach (PROJECT_VARIANT_NAME ${PROJECT_NAME} ${PROJECT_LEGACY_NAME})
+# If this is a regular build (PROJECT_SOURCE_DIR == CMAKE_SOURCE_DIR), export legacy files by default
+# Otherwise, this is embedded in another project, only export PROJ target
+# cf https://github.com/OSGeo/gdal/issues/5646
+string(COMPARE EQUAL "${PROJECT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}" DEFAULT_VAL)
+option(INSTALL_LEGACY_CMAKE_FILES "Install PROJ4 legacy target CMake files" ${DEFAULT_VAL})
+
+set(PROJECT_LIST ${PROJECT_NAME})
+if (INSTALL_LEGACY_CMAKE_FILES)
+    set(PROJECT_LIST "${PROJECT_LIST}" "${PROJECT_LEGACY_NAME}")
+endif ()
+foreach (PROJECT_VARIANT_NAME IN LISTS PROJECT_LIST)
   string (TOLOWER "${PROJECT_VARIANT_NAME}" PROJECT_VARIANT_LOWER)
-  set (CMAKECONFIGSUBDIR "${CMAKECONFIGDIR}/${PROJECT_VARIANT_LOWER}")
+  set (CMAKECONFIGSUBDIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_VARIANT_LOWER}")
   # proj-config.cmake for the install tree.  It's installed in
   # ${CMAKECONFIGSUBDIR} and @PROJECT_ROOT_DIR@ is the relative
   # path to the root from there.  (Note that the whole install tree can
@@ -120,9 +127,11 @@ foreach (PROJECT_VARIANT_NAME ${PROJECT_NAME} ${PROJECT_LEGACY_NAME})
     NAMESPACE ${PROJECT_NAME}::
     FILE ${PROJECT_NAME_LOWER}-targets.cmake
     DESTINATION "${CMAKECONFIGSUBDIR}")
-  install(EXPORT targets
-    NAMESPACE ${PROJECT_LEGACY_NAME}::
-    FILE ${PROJECT_LEGACY_LOWER}-targets.cmake
-    DESTINATION "${CMAKECONFIGSUBDIR}")
+  if (INSTALL_LEGACY_CMAKE_FILES)
+      install(EXPORT targets
+        NAMESPACE ${PROJECT_LEGACY_NAME}::
+        FILE ${PROJECT_LEGACY_LOWER}-targets.cmake
+        DESTINATION "${CMAKECONFIGSUBDIR}")
+  endif()
 endforeach ()
 

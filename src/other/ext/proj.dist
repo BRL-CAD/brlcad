@@ -340,6 +340,8 @@ src/projections/hatano.cpp
 src/projections/healpix.cpp
 src/projections/igh.cpp
 src/projections/igh_o.cpp
+src/projections/imoll.cpp
+src/projections/imoll_o.cpp
 src/projections/imw_p.cpp
 src/projections/isea.cpp
 src/projections/krovak.cpp
@@ -416,8 +418,8 @@ src/sqlite3_utils.hpp
 src/strerrno.cpp
 src/strtod.cpp
 src/tests/CMakeLists.txt
-src/tests/bin_geodtest.cmake
-src/tests/geodtest.cpp
+src/tests/geodsigntest.c
+src/tests/geodtest.c
 src/tests/multistresstest.cpp
 src/tracing.cpp
 src/transformations/affine.cpp
@@ -434,6 +436,7 @@ src/transformations/tinshift.cpp
 src/transformations/tinshift.hpp
 src/transformations/tinshift_exceptions.hpp
 src/transformations/tinshift_impl.hpp
+src/transformations/vertoffset.cpp
 src/transformations/vgridshift.cpp
 src/transformations/xyzgridshift.cpp
 src/tsfn.cpp
@@ -453,6 +456,7 @@ src/wkt_parser.hpp
 src/zpoly1.cpp
 test/CMakeLists.txt
 test/cli/CMakeLists.txt
+test/cli/input_with_utf8_bom.txt
 test/cli/ntv2_out.dist
 test/cli/pj_out27.dist
 test/cli/pj_out83.dist
@@ -507,6 +511,7 @@ test/gigs/5104.gie
 test/gigs/5105.2.gie
 test/gigs/5106.gie
 test/gigs/5107.gie
+test/gigs/5108.gie
 test/gigs/5109.gie
 test/gigs/5111.1.gie
 test/gigs/5112.gie

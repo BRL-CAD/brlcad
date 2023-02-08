@@ -599,6 +599,10 @@ PJ *proj_create(PJ_CONTEXT *ctx, const char *text) {
  * <ul>
  * <li>STRICT=YES/NO. Defaults to NO. When set to YES, strict validation will
  * be enabled.</li>
+ * <li>UNSET_IDENTIFIERS_IF_INCOMPATIBLE_DEF=YES/NO. Defaults to YES.
+ *     When set to YES, object identifiers are unset when there is
+ *     a contradiction between the definition from WKT and the one from
+ *     the database./<li>
  * </ul>
  * @param out_warnings Pointer to a PROJ_STRING_LIST object, or NULL.
  * If provided, *out_warnings will contain a list of warnings, typically for
@@ -639,6 +643,10 @@ PJ *proj_create_from_wkt(PJ_CONTEXT *ctx, const char *wkt,
             const char *value;
             if ((value = getOptionValue(*iter, "STRICT="))) {
                 parser.setStrict(ci_equal(value, "YES"));
+            } else if ((value = getOptionValue(
+                            *iter, "UNSET_IDENTIFIERS_IF_INCOMPATIBLE_DEF="))) {
+                parser.setUnsetIdentifiersIfIncompatibleDef(
+                    ci_equal(value, "YES"));
             } else {
                 std::string msg("Unknown option :");
                 msg += *iter;
@@ -1524,6 +1532,9 @@ const char *proj_get_id_code(const PJ *obj, int index) {
  * to YES and type == PJ_WKT1_GDAL, a Geographic 3D CRS or a Projected 3D CRS
  * will be exported as a compound CRS whose vertical part represents an
  * ellipsoidal height (for example for use with LAS 1.4 WKT1).</li>
+ * <li>ALLOW_LINUNIT_NODE=YES/NO. Default is YES starting with PROJ 9.1.
+ * Only taken into account with type == PJ_WKT1_ESRI on a Geographic 3D
+ * CRS.</li>
  * </ul>
  * @return a string, or NULL in case of error.
  */
@@ -1580,6 +1591,8 @@ const char *proj_as_wkt(PJ_CONTEXT *ctx, const PJ *obj, PJ_WKT_TYPE type,
                             "ALLOW_ELLIPSOIDAL_HEIGHT_AS_VERTICAL_CRS="))) {
                 formatter->setAllowEllipsoidalHeightAsVerticalCRS(
                     ci_equal(value, "YES"));
+            } else if ((value = getOptionValue(*iter, "ALLOW_LINUNIT_NODE="))) {
+                formatter->setAllowLINUNITNode(ci_equal(value, "YES"));
             } else {
                 std::string msg("Unknown option :");
                 msg += *iter;
@@ -7757,6 +7770,52 @@ void proj_operation_factory_context_set_area_of_interest(
 
 // ---------------------------------------------------------------------------
 
+/** \brief Set the name of the desired area of interest for the resulting
+ * coordinate transformations.
+ *
+ * @param ctx PROJ context, or NULL for default context
+ * @param factory_ctx Operation factory context. must not be NULL
+ * @param area_name Area name. Must be known of the database.
+ */
+void proj_operation_factory_context_set_area_of_interest_name(
+    PJ_CONTEXT *ctx, PJ_OPERATION_FACTORY_CONTEXT *factory_ctx,
+    const char *area_name) {
+    SANITIZE_CTX(ctx);
+    if (!factory_ctx || !area_name) {
+        proj_context_errno_set(ctx, PROJ_ERR_OTHER_API_MISUSE);
+        proj_log_error(ctx, __FUNCTION__, "missing required input");
+        return;
+    }
+    try {
+        auto extent = factory_ctx->operationContext->getAreaOfInterest();
+        if (extent == nullptr) {
+            auto dbContext = getDBcontext(ctx);
+            auto factory = AuthorityFactory::create(dbContext, std::string());
+            auto res = factory->listAreaOfUseFromName(area_name, false);
+            if (res.size() == 1) {
+                factory_ctx->operationContext->setAreaOfInterest(
+                    AuthorityFactory::create(dbContext, res.front().first)
+                        ->createExtent(res.front().second)
+                        .as_nullable());
+            } else {
+                proj_log_error(ctx, __FUNCTION__, "cannot find area");
+                return;
+            }
+        } else {
+            factory_ctx->operationContext->setAreaOfInterest(
+                metadata::Extent::create(util::optional<std::string>(area_name),
+                                         extent->geographicElements(),
+                                         extent->verticalElements(),
+                                         extent->temporalElements())
+                    .as_nullable());
+        }
+    } catch (const std::exception &e) {
+        proj_log_error(ctx, __FUNCTION__, e.what());
+    }
+}
+
+// ---------------------------------------------------------------------------
+
 /** \brief Set how source and target CRS extent should be used
  * when considering if a transformation can be used (only takes effect if
  * no area of interest is explicitly defined).
@@ -8766,6 +8825,7 @@ PJ *proj_normalize_for_visualization(PJ_CONTEXT *ctx, const PJ *obj) {
             pjNew->descr = "Set of coordinate operations";
             pjNew->left = obj->left;
             pjNew->right = obj->right;
+            pjNew->over = obj->over;
 
             for (const auto &alt : obj->alternativeCoordinateOperations) {
                 auto co = dynamic_cast<const CoordinateOperation *>(
@@ -8798,11 +8858,14 @@ PJ *proj_normalize_for_visualization(PJ_CONTEXT *ctx, const PJ *obj) {
                             std::swap(maxxDst, maxyDst);
                         }
                     }
+                    auto pjNormalized =
+                        pj_obj_create(ctx, co->normalizeForVisualization());
+                    pjNormalized->over = alt.pj->over;
                     pjNew->alternativeCoordinateOperations.emplace_back(
                         alt.idxInOriginalList, minxSrc, minySrc, maxxSrc,
                         maxySrc, minxDst, minyDst, maxxDst, maxyDst,
-                        pj_obj_create(ctx, co->normalizeForVisualization()),
-                        co->nameStr(), alt.accuracy, alt.isOffshore);
+                        pjNormalized, co->nameStr(), alt.accuracy,
+                        alt.isOffshore);
                 }
             }
             return pjNew.release();
@@ -8831,7 +8894,9 @@ PJ *proj_normalize_for_visualization(PJ_CONTEXT *ctx, const PJ *obj) {
         return nullptr;
     }
     try {
-        return pj_obj_create(ctx, co->normalizeForVisualization());
+        auto pjNormalized = pj_obj_create(ctx, co->normalizeForVisualization());
+        pjNormalized->over = obj->over;
+        return pjNormalized;
     } catch (const std::exception &e) {
         proj_log_debug(ctx, __FUNCTION__, e.what());
         return nullptr;

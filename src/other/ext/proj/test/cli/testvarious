@@ -22,8 +22,8 @@ if test ! -x ${EXE}; then
     exit 1
 fi
 
-if test -z "${PROJ_LIB}"; then
-    export PROJ_LIB="`dirname $0`/../../data"
+if test -z "${PROJ_DATA}"; then
+    export PROJ_DATA="`dirname $0`/../../data"
 fi
 
 # Would be great to have a universale way of selecting a locale with
@@ -1050,6 +1050,55 @@ echo  "##############################################################" >> ${OUT}
 echo  "Check that we select the operation that has the smallest area of use, when 2 have the same accuracy" >> ${OUT}
 $EXE -E EPSG:4326 "NAD83(HARN)" >> ${OUT} <<EOF
 34 -120
+EOF
+
+echo  "##############################################################" >> ${OUT}
+echo  "Check that we promote CRS specified by name to 3D when the other one is 3D" >> ${OUT}
+$EXE -d 3 -E "WGS 84" "WGS 84 + EGM96 height" >> ${OUT} <<EOF
+49 2 50
+EOF
+
+$EXE -d 3 -E "WGS 84 + EGM96 height" "WGS 84" >> ${OUT} <<EOF
+49 2 0
+EOF
+
+echo  "##############################################################" >> ${OUT}
+echo  "Test input file with UTF-8 BOM marker" >> ${OUT}
+$EXE -d 3 -E EPSG:4326 EPSG:32631 ${TEST_CLI_DIR}/input_with_utf8_bom.txt >> ${OUT}
+
+echo "##############################################################" >> ${OUT}
+echo "Test cs2cs -W0" >> ${OUT}
+#
+$EXE -W0 +proj=latlong +datum=WGS84 +to +proj=latlong +datum=WGS84 -E >>${OUT} <<EOF
+0 0
+EOF
+
+echo "##############################################################" >> ${OUT}
+echo "Test cs2cs -W8" >> ${OUT}
+#
+$EXE -W8 +proj=latlong +datum=WGS84 +to +proj=latlong +datum=WGS84 -E >>${OUT} <<EOF
+0 0
+EOF
+
+echo "##############################################################" >> ${OUT}
+echo "Test cs2cs -W" >> ${OUT}
+#
+PROJ_DISPLAY_PROGRAM_NAME=NO $EXE -W +proj=latlong +datum=WGS84 +to +proj=latlong +datum=WGS84 -E >>${OUT} 2>&1 <<EOF
+0 0
+EOF
+
+echo "##############################################################" >> ${OUT}
+echo "Test cs2cs -W9" >> ${OUT}
+#
+PROJ_DISPLAY_PROGRAM_NAME=NO $EXE -W9 +proj=latlong +datum=WGS84 +to +proj=latlong +datum=WGS84 -E >>${OUT} 2>&1 <<EOF
+0 0
+EOF
+
+echo "##############################################################" >> ${OUT}
+echo "Test cs2cs -W10" >> ${OUT}
+#
+PROJ_DISPLAY_PROGRAM_NAME=NO $EXE -W10 +proj=latlong +datum=WGS84 +to +proj=latlong +datum=WGS84 -E >>${OUT} 2>&1 <<EOF
+0 0
 EOF
 
 

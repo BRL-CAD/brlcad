@@ -559,7 +559,31 @@ TEST(crs, EPSG_4979_as_WKT1_ESRI) {
     auto crs = GeographicCRS::EPSG_4979;
     WKTFormatterNNPtr f(
         WKTFormatter::create(WKTFormatter::Convention::WKT1_ESRI));
-    EXPECT_THROW(crs->exportToWKT(f.get()), FormattingException);
+    const auto wkt = "GEOGCS[\"WGS_1984_3D\",DATUM[\"D_WGS_1984\","
+                     "SPHEROID[\"WGS_1984\",6378137.0,298.257223563]],"
+                     "PRIMEM[\"Greenwich\",0.0],"
+                     "UNIT[\"Degree\",0.0174532925199433],"
+                     "LINUNIT[\"Meter\",1.0]]";
+
+    EXPECT_EQ(crs->exportToWKT(f.get()), wkt);
+}
+
+// ---------------------------------------------------------------------------
+
+TEST(crs, geographic3D_crs_as_WKT1_ESRI_database) {
+    auto dbContext = DatabaseContext::create();
+    auto factory = AuthorityFactory::create(dbContext, "EPSG");
+    auto crs = factory->createCoordinateReferenceSystem("7087");
+    WKTFormatterNNPtr f(
+        WKTFormatter::create(WKTFormatter::Convention::WKT1_ESRI, dbContext));
+    const auto wkt = "GEOGCS[\"RGTAAF07_(lon-lat)_3D\","
+                     "DATUM[\"D_Reseau_Geodesique_des_Terres_Australes_et_"
+                     "Antarctiques_Francaises_2007\","
+                     "SPHEROID[\"GRS_1980\",6378137.0,298.257222101]],"
+                     "PRIMEM[\"Greenwich\",0.0],"
+                     "UNIT[\"Degree\",0.0174532925199433],"
+                     "LINUNIT[\"Meter\",1.0]]";
+    EXPECT_EQ(crs->exportToWKT(f.get()), wkt);
 }
 
 // ---------------------------------------------------------------------------
@@ -772,6 +796,7 @@ TEST(crs,
     EXPECT_EQ(crs->coordinateSystem()->axisList().size(), 3U);
     WKTFormatterNNPtr f(WKTFormatter::create(
         WKTFormatter::Convention::WKT1_ESRI, DatabaseContext::create()));
+    f->setAllowLINUNITNode(false);
     // Situation where there is no EPSG official name
     EXPECT_EQ(crs->exportToWKT(f.get()),
               "GEOGCS[\"California_SRS_Epoch_2017.50_(NAD83)\","
@@ -794,6 +819,7 @@ TEST(crs, implicit_compound_ESRI_104971_to_3D_as_WKT1_ESRI_with_database) {
         std::string(), dbContext);
     WKTFormatterNNPtr f(WKTFormatter::create(
         WKTFormatter::Convention::WKT1_ESRI, DatabaseContext::create()));
+    f->setAllowLINUNITNode(false);
     // Situation where there is no ESRI vertical CRS, but the GEOGCS does exist
     // This will be only partly recognized by ESRI software.
     // See https://github.com/OSGeo/PROJ/issues/2757
@@ -2259,6 +2285,45 @@ TEST(crs,
               "        UNIT[\"metre\",1,\n"
               "            AUTHORITY[\"EPSG\",\"9001\"]],\n"
               "        AXIS[\"Ellipsoidal height\",UP]]]");
+}
+
+// ---------------------------------------------------------------------------
+
+TEST(crs, projectedCRS_with_other_deprecated_crs_of_same_name_as_WKT1_ESRI) {
+    auto dbContext = DatabaseContext::create();
+    // EPSG:3800 is the non-deprecated version of EPSG:3774
+    // This used to cause an issue when looking for the ESRI CRS name
+    auto crs =
+        AuthorityFactory::create(dbContext, "EPSG")->createProjectedCRS("3800");
+
+    auto esri_wkt =
+        "PROJCS[\"NAD_1927_3TM_120\",GEOGCS[\"GCS_North_American_1927\","
+        "DATUM[\"D_North_American_1927\","
+        "SPHEROID[\"Clarke_1866\",6378206.4,294.978698213898]],"
+        "PRIMEM[\"Greenwich\",0.0],UNIT[\"Degree\",0.0174532925199433]],"
+        "PROJECTION[\"Transverse_Mercator\"],"
+        "PARAMETER[\"False_Easting\",0.0],"
+        "PARAMETER[\"False_Northing\",0.0],"
+        "PARAMETER[\"Central_Meridian\",-120.0],"
+        "PARAMETER[\"Scale_Factor\",0.9999],"
+        "PARAMETER[\"Latitude_Of_Origin\",0.0],UNIT[\"Meter\",1.0]]";
+    EXPECT_EQ(
+        crs->exportToWKT(
+            WKTFormatter::create(WKTFormatter::Convention::WKT1_ESRI, dbContext)
+                .get()),
+        esri_wkt);
+
+    auto obj =
+        WKTParser().attachDatabaseContext(dbContext).createFromWKT(esri_wkt);
+    auto crs2 = nn_dynamic_pointer_cast<ProjectedCRS>(obj);
+    ASSERT_TRUE(crs2 != nullptr);
+    EXPECT_EQ(crs2->nameStr(), "NAD27 / Alberta 3TM ref merid 120 W");
+
+    EXPECT_EQ(
+        crs2->exportToWKT(
+            WKTFormatter::create(WKTFormatter::Convention::WKT1_ESRI, dbContext)
+                .get()),
+        esri_wkt);
 }
 
 // ---------------------------------------------------------------------------
@@ -4139,6 +4204,52 @@ static CompoundCRSNNPtr createCompoundCRS() {
 
 // ---------------------------------------------------------------------------
 
+static DerivedProjectedCRSNNPtr createDerivedProjectedCRS() {
+
+    auto derivingConversion = Conversion::create(
+        PropertyMap().set(IdentifiedObject::NAME_KEY, "unnamed"),
+        PropertyMap().set(IdentifiedObject::NAME_KEY, "PROJ unimplemented"),
+        std::vector<OperationParameterNNPtr>{},
+        std::vector<ParameterValueNNPtr>{});
+
+    return DerivedProjectedCRS::create(
+        PropertyMap().set(IdentifiedObject::NAME_KEY, "derived projectedCRS"),
+        createProjected(), derivingConversion,
+        CartesianCS::createEastingNorthing(UnitOfMeasure::METRE));
+}
+
+static DerivedProjectedCRSNNPtr createDerivedProjectedCRSNorthingEasting() {
+
+    auto derivingConversion = Conversion::create(
+        PropertyMap().set(IdentifiedObject::NAME_KEY, "unnamed"),
+        PropertyMap().set(IdentifiedObject::NAME_KEY, "PROJ unimplemented"),
+        std::vector<OperationParameterNNPtr>{},
+        std::vector<ParameterValueNNPtr>{});
+
+    return DerivedProjectedCRS::create(
+        PropertyMap().set(IdentifiedObject::NAME_KEY, "derived projectedCRS"),
+        createProjected(), derivingConversion,
+        CartesianCS::createNorthingEasting(UnitOfMeasure::FOOT));
+}
+
+// ---------------------------------------------------------------------------
+
+static DerivedVerticalCRSNNPtr createDerivedVerticalCRS() {
+
+    auto derivingConversion = Conversion::create(
+        PropertyMap().set(IdentifiedObject::NAME_KEY, "unnamed"),
+        PropertyMap().set(IdentifiedObject::NAME_KEY, "PROJ unimplemented"),
+        std::vector<OperationParameterNNPtr>{},
+        std::vector<ParameterValueNNPtr>{});
+
+    return DerivedVerticalCRS::create(
+        PropertyMap().set(IdentifiedObject::NAME_KEY, "Derived vertCRS"),
+        createVerticalCRS(), derivingConversion,
+        VerticalCS::createGravityRelatedHeight(UnitOfMeasure::METRE));
+}
+
+// ---------------------------------------------------------------------------
+
 TEST(crs, compoundCRS_valid) {
     // geographic 2D + vertical
     CompoundCRS::create(
@@ -4149,6 +4260,16 @@ TEST(crs, compoundCRS_valid) {
     CompoundCRS::create(
         PropertyMap(),
         std::vector<CRSNNPtr>{createProjected(), createVerticalCRS()});
+
+    // derived projected 2D + vertical
+    CompoundCRS::create(PropertyMap(),
+                        std::vector<CRSNNPtr>{createDerivedProjectedCRS(),
+                                              createVerticalCRS()});
+
+    // derived projected 2D + derived vertical
+    CompoundCRS::create(PropertyMap(),
+                        std::vector<CRSNNPtr>{createDerivedProjectedCRS(),
+                                              createDerivedVerticalCRS()});
 }
 
 // ---------------------------------------------------------------------------
@@ -5099,7 +5220,7 @@ TEST(crs, WKT1_VERT_DATUM_EXTENSION_to_WKT2) {
         "                    ORDER[3],\n"
         "                    LENGTHUNIT[\"metre\",1]],\n"
         "            ID[\"EPSG\",4979]]],\n"
-        "    ABRIDGEDTRANSFORMATION[\"EGM2008 geoid height to WGS84 "
+        "    ABRIDGEDTRANSFORMATION[\"EGM2008 geoid height to WGS 84 "
         "ellipsoidal height\",\n"
         "        METHOD[\"GravityRelatedHeight to Geographic3D\"],\n"
         "        PARAMETERFILE[\"Geoid (height correction) model "
@@ -5128,7 +5249,8 @@ TEST(crs, WKT1_VERT_DATUM_EXTENSION_to_PROJ_string) {
     ASSERT_TRUE(crs != nullptr);
 
     EXPECT_EQ(crs->exportToPROJString(PROJStringFormatter::create().get()),
-              "+geoidgrids=egm08_25.gtx +vunits=m +no_defs +type=crs");
+              "+geoidgrids=egm08_25.gtx +geoid_crs=WGS84 +vunits=m +no_defs "
+              "+type=crs");
 }
 
 // ---------------------------------------------------------------------------
@@ -5485,22 +5607,6 @@ TEST(crs, derivedGeodeticCRS_WKT1) {
         createDerivedGeodeticCRS()->exportToWKT(
             WKTFormatter::create(WKTFormatter::Convention::WKT1_GDAL).get()),
         FormattingException);
-}
-
-// ---------------------------------------------------------------------------
-
-static DerivedProjectedCRSNNPtr createDerivedProjectedCRS() {
-
-    auto derivingConversion = Conversion::create(
-        PropertyMap().set(IdentifiedObject::NAME_KEY, "unnamed"),
-        PropertyMap().set(IdentifiedObject::NAME_KEY, "PROJ unimplemented"),
-        std::vector<OperationParameterNNPtr>{},
-        std::vector<ParameterValueNNPtr>{});
-
-    return DerivedProjectedCRS::create(
-        PropertyMap().set(IdentifiedObject::NAME_KEY, "derived projectedCRS"),
-        createProjected(), derivingConversion,
-        CartesianCS::createEastingNorthing(UnitOfMeasure::METRE));
 }
 
 // ---------------------------------------------------------------------------
@@ -5870,18 +5976,15 @@ TEST(crs, parametricCRS_WKT1) {
 
 // ---------------------------------------------------------------------------
 
-static DerivedVerticalCRSNNPtr createDerivedVerticalCRS() {
+TEST(crs, derivedVerticalCRS_basic) {
 
-    auto derivingConversion = Conversion::create(
-        PropertyMap().set(IdentifiedObject::NAME_KEY, "unnamed"),
-        PropertyMap().set(IdentifiedObject::NAME_KEY, "PROJ unimplemented"),
-        std::vector<OperationParameterNNPtr>{},
-        std::vector<ParameterValueNNPtr>{});
+    auto crs = createDerivedVerticalCRS();
+    EXPECT_TRUE(crs->isEquivalentTo(crs.get()));
+    EXPECT_TRUE(crs->shallowClone()->isEquivalentTo(crs.get()));
+    EXPECT_TRUE(!crs->isEquivalentTo(createUnrelatedObject().get()));
 
-    return DerivedVerticalCRS::create(
-        PropertyMap().set(IdentifiedObject::NAME_KEY, "Derived vertCRS"),
-        createVerticalCRS(), derivingConversion,
-        VerticalCS::createGravityRelatedHeight(UnitOfMeasure::METRE));
+    EXPECT_FALSE(crs->isEquivalentTo(crs->baseCRS().get()));
+    EXPECT_FALSE(crs->baseCRS()->isEquivalentTo(crs.get()));
 }
 
 // ---------------------------------------------------------------------------
@@ -5900,10 +6003,6 @@ TEST(crs, DerivedVerticalCRS_WKT2) {
                     "                ID[\"EPSG\",9001]]]]";
 
     auto crs = createDerivedVerticalCRS();
-    EXPECT_TRUE(crs->isEquivalentTo(crs.get()));
-    EXPECT_TRUE(crs->shallowClone()->isEquivalentTo(crs.get()));
-    EXPECT_TRUE(!crs->isEquivalentTo(createUnrelatedObject().get()));
-
     EXPECT_EQ(crs->exportToWKT(
                   WKTFormatter::create(WKTFormatter::Convention::WKT2).get()),
               expected);
@@ -6194,7 +6293,7 @@ TEST(crs, crs_createBoundCRSToWGS84IfPossible) {
         EXPECT_EQ(compoundCRS->exportToPROJString(
                       PROJStringFormatter::create().get()),
                   "+proj=longlat +datum=WGS84 +geoidgrids=us_nga_egm08_25.tif "
-                  "+vunits=m +no_defs +type=crs");
+                  "+geoid_crs=WGS84 +vunits=m +no_defs +type=crs");
     }
 #ifdef disabled_since_epsg_10_035
     // There are now too many transformations from NGF-IGN69 height to WGS 84
@@ -6353,6 +6452,20 @@ TEST(crs, crs_stripVerticalComponent) {
         ASSERT_TRUE(projCRS != nullptr);
         EXPECT_EQ(projCRS->coordinateSystem()->axisList().size(), 2U);
     }
+
+    {
+        auto crs3D =
+            createDerivedProjectedCRS()->promoteTo3D(std::string(), nullptr);
+        auto derivedProj3D =
+            nn_dynamic_pointer_cast<DerivedProjectedCRS>(crs3D);
+        ASSERT_TRUE(derivedProj3D != nullptr);
+        EXPECT_EQ(derivedProj3D->coordinateSystem()->axisList().size(), 3U);
+
+        auto derivedProj2D = nn_dynamic_pointer_cast<DerivedProjectedCRS>(
+            derivedProj3D->stripVerticalComponent());
+        ASSERT_TRUE(derivedProj2D != nullptr);
+        EXPECT_EQ(derivedProj2D->coordinateSystem()->axisList().size(), 2U);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -6389,6 +6502,15 @@ TEST(crs, crs_alterGeodeticCRS) {
             createVerticalCRS()->alterGeodeticCRS(GeographicCRS::EPSG_4979);
         EXPECT_TRUE(crs->isEquivalentTo(createVerticalCRS().get()));
     }
+
+    {
+        auto crs = createDerivedProjectedCRS()->alterGeodeticCRS(
+            GeographicCRS::EPSG_4979);
+        auto derivedProjCRS = dynamic_cast<DerivedProjectedCRS *>(crs.get());
+        ASSERT_TRUE(derivedProjCRS != nullptr);
+        EXPECT_TRUE(derivedProjCRS->baseCRS()->baseCRS()->isEquivalentTo(
+            GeographicCRS::EPSG_4979.get()));
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -6401,6 +6523,19 @@ TEST(crs, crs_alterCSLinearUnit) {
         auto projCRS = dynamic_cast<ProjectedCRS *>(crs.get());
         ASSERT_TRUE(projCRS != nullptr);
         auto cs = projCRS->coordinateSystem();
+        ASSERT_EQ(cs->axisList().size(), 2U);
+        EXPECT_EQ(cs->axisList()[0]->unit().name(), "my unit");
+        EXPECT_EQ(cs->axisList()[0]->unit().conversionToSI(), 2);
+        EXPECT_EQ(cs->axisList()[1]->unit().name(), "my unit");
+        EXPECT_EQ(cs->axisList()[1]->unit().conversionToSI(), 2);
+    }
+
+    {
+        auto crs = createDerivedProjectedCRS()->alterCSLinearUnit(
+            UnitOfMeasure("my unit", 2));
+        auto derivedProjCRS = dynamic_cast<DerivedProjectedCRS *>(crs.get());
+        ASSERT_TRUE(derivedProjCRS != nullptr);
+        auto cs = derivedProjCRS->coordinateSystem();
         ASSERT_EQ(cs->axisList().size(), 2U);
         EXPECT_EQ(cs->axisList()[0]->unit().name(), "my unit");
         EXPECT_EQ(cs->axisList()[0]->unit().conversionToSI(), 2);
@@ -6714,6 +6849,118 @@ TEST(crs, promoteTo3D_and_demoteTo2D) {
             crs.get(), IComparable::Criterion::EQUIVALENT));
         EXPECT_TRUE(demoted->demoteTo2D(std::string(), nullptr)
                         ->isEquivalentTo(demoted.get()));
+    }
+
+    {
+        auto crs = createDerivedProjectedCRS();
+        auto crs3D = crs->promoteTo3D(std::string(), dbContext);
+        auto crs3DAsDerivedProj =
+            nn_dynamic_pointer_cast<DerivedProjectedCRS>(crs3D);
+        ASSERT_TRUE(crs3DAsDerivedProj != nullptr);
+        EXPECT_EQ(crs3DAsDerivedProj->baseCRS()
+                      ->coordinateSystem()
+                      ->axisList()
+                      .size(),
+                  3U);
+        EXPECT_EQ(crs3DAsDerivedProj->coordinateSystem()->axisList().size(),
+                  3U);
+        EXPECT_TRUE(crs3DAsDerivedProj->promoteTo3D(std::string(), nullptr)
+                        ->isEquivalentTo(crs3DAsDerivedProj.get()));
+
+        // Check that importing an exported DerivedProjected 3D CRS as WKT keeps
+        // the 3D aspect of the baseCRS (see #3340)
+        {
+            WKTFormatterNNPtr f(
+                WKTFormatter::create(WKTFormatter::Convention::WKT2_2019));
+            crs3DAsDerivedProj->exportToWKT(f.get());
+            auto obj = WKTParser().createFromWKT(f->toString());
+            auto crsFromWkt = nn_dynamic_pointer_cast<DerivedProjectedCRS>(obj);
+            ASSERT_TRUE(crsFromWkt != nullptr);
+            EXPECT_EQ(crsFromWkt->coordinateSystem()->axisList().size(), 3U);
+            EXPECT_EQ(
+                crsFromWkt->baseCRS()->coordinateSystem()->axisList().size(),
+                3U);
+        }
+
+        auto demoted = crs3DAsDerivedProj->demoteTo2D(std::string(), dbContext);
+        EXPECT_EQ(demoted->baseCRS()->coordinateSystem()->axisList().size(),
+                  2U);
+        EXPECT_EQ(demoted->coordinateSystem()->axisList().size(), 2U);
+        EXPECT_TRUE(demoted->isEquivalentTo(
+            crs.get(), IComparable::Criterion::EQUIVALENT));
+        EXPECT_TRUE(demoted->demoteTo2D(std::string(), nullptr)
+                        ->isEquivalentTo(demoted.get()));
+    }
+}
+
+// ---------------------------------------------------------------------------
+
+TEST(crs, normalizeForVisualization_derivedprojected_operation) {
+    auto crs = createDerivedProjectedCRSNorthingEasting();
+
+    auto op = CoordinateOperationFactory::create()->createOperation(
+        GeographicCRS::EPSG_4326, crs);
+
+    auto proj_string =
+        "+proj=pipeline +step +proj=axisswap +order=2,1 +step "
+        "+proj=unitconvert +xy_in=deg +xy_out=rad +step +proj=utm +zone=31 "
+        "+ellps=WGS84 +step +proj=unimplemented +step +proj=unitconvert "
+        "+xy_in=m +xy_out=ft +step +proj=axisswap +order=2,1";
+
+    ASSERT_TRUE(op != nullptr);
+    EXPECT_EQ(op->exportToPROJString(PROJStringFormatter::create().get()),
+              proj_string);
+
+    auto opNormalized = op->normalizeForVisualization();
+    auto proj_string_normalized =
+        "+proj=pipeline +step +proj=unitconvert +xy_in=deg +xy_out=rad +step "
+        "+proj=utm +zone=31 +ellps=WGS84 +step +proj=unimplemented +step "
+        "+proj=unitconvert +xy_in=m +xy_out=ft";
+    EXPECT_EQ(
+        opNormalized->exportToPROJString(PROJStringFormatter::create().get()),
+        proj_string_normalized);
+}
+
+// ---------------------------------------------------------------------------
+
+TEST(crs, normalizeForVisualization_derivedprojected) {
+
+    auto crs = createDerivedProjectedCRSNorthingEasting();
+
+    {
+        const auto &axisList = crs->coordinateSystem()->axisList();
+        ASSERT_EQ(axisList.size(), 2U);
+        EXPECT_EQ(axisList[0]->direction(),
+                  osgeo::proj::cs::AxisDirection::NORTH);
+        EXPECT_EQ(axisList[1]->direction(),
+                  osgeo::proj::cs::AxisDirection::EAST);
+    }
+
+    {
+        auto normalized = nn_dynamic_pointer_cast<SingleCRS>(
+            crs->normalizeForVisualization());
+        const auto &normalizedAxisList =
+            normalized->coordinateSystem()->axisList();
+        ASSERT_EQ(normalizedAxisList.size(), 2U);
+        EXPECT_EQ(normalizedAxisList[0]->direction(),
+                  osgeo::proj::cs::AxisDirection::EAST);
+        EXPECT_EQ(normalizedAxisList[1]->direction(),
+                  osgeo::proj::cs::AxisDirection::NORTH);
+    }
+
+    {
+        auto normalized3D = nn_dynamic_pointer_cast<SingleCRS>(
+            crs->promoteTo3D(std::string(), nullptr)
+                ->normalizeForVisualization());
+        const auto &normalized3DAxisList =
+            normalized3D->coordinateSystem()->axisList();
+        ASSERT_EQ(normalized3DAxisList.size(), 3U);
+        EXPECT_EQ(normalized3DAxisList[0]->direction(),
+                  osgeo::proj::cs::AxisDirection::EAST);
+        EXPECT_EQ(normalized3DAxisList[1]->direction(),
+                  osgeo::proj::cs::AxisDirection::NORTH);
+        EXPECT_EQ(normalized3DAxisList[2]->direction(),
+                  osgeo::proj::cs::AxisDirection::UP);
     }
 }
 
