@@ -157,7 +157,7 @@ void
 pm_make_tmpfile_fd(int *         const fdP,
                    const char ** const filenameP);
 
-void
+NETPBM_EXPORT void
 pm_nextimage(FILE * const file, int * const eofP);
 
 /* Variable-sized arrays definitions. */
@@ -389,7 +389,7 @@ pm_writelittlelongu(FILE *        const ofP,
     return pm_writelittlelong(ofP, (long) l);
 }
 
-int 
+NETPBM_EXPORT int
 pm_readmagicnumber(FILE * const ifP);
 
 char* 
@@ -430,7 +430,7 @@ enum pm_check_type {
     PM_CHECK_BASIC
 };
 
-void
+NETPBM_EXPORT void
 pm_check(FILE *               const file, 
          enum pm_check_type   const check_type, 
          pm_filepos           const need_raster_size,

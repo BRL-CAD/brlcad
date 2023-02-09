@@ -47,38 +47,57 @@ pm_canonstr(char * const arg) {
 
 
 
-static void
-openColornameFileSearch(const char * const searchPath,
-                        FILE **      const filePP) {
+FILE *
+pm_openColornameFile(const char * const fileName, const int must_open) {
 /*----------------------------------------------------------------------------
-   Open the color name file, finding it via the search path 'searchPath'.
-
-   Return as *filePP the stream handle for it, but if we don't find it
-   (or just can open it) anywhere, return *filePP == NULL.
+   Open the colorname dictionary file.  Its file name is 'fileName', unless
+   'fileName' is NULL.  In that case, its file name is the value of the
+   environment variable whose name is RGB_ENV (e.g. "RGBDEF").  Except
+   if that environment variable is not set, it is RGB_DB1, RGB_DB2,
+   or RGB_DB3 (e.g. "/usr/lib/X11/rgb.txt"), whichever exists.
+   
+   'must_open' is a logical: we must get the file open or die.  If
+   'must_open' is true and we can't open the file (e.g. it doesn't
+   exist), exit the program with an error message.  If 'must_open' is
+   false and we can't open the file, just return a null pointer.
 -----------------------------------------------------------------------------*/
-    char * buffer;
+    const char *rgbdef = NULL;
+    FILE *f = NULL;
 
-    buffer = strdup(searchPath);
-
-    if (buffer) {
-        char * cursor;
-        bool eol;
-
-        cursor = &buffer[0];
-        eol = FALSE;    /* initial value */
-        *filePP = NULL;  /* initial value */
-        while (!eol && !*filePP) {
-            const char * token;
-            token = pm_strsep(&cursor, ":");
-            if (token) {
-                *filePP = fopen(token, "r");
-            } else
-                eol = TRUE;
+    if (fileName == NULL) {
+        if ((rgbdef = getenv(RGBENV))==NULL) {
+            /* The environment variable isn't set, so try the hardcoded
+               default color name dictionary locations.
+            */
+            if ((f = fopen(RGB_DB1, "r")) == NULL &&
+                (f = fopen(RGB_DB2, "r")) == NULL &&
+                (f = fopen(RGB_DB3, "r")) == NULL && must_open) {
+                pm_error("can't open color names dictionary file named "
+                         "%s, %s, or %s "
+                         "and Environment variable %s not set.  Set %s to "
+                         "the pathname of your rgb.txt file or don't use "
+                         "color names.", 
+                         RGB_DB1, RGB_DB2, RGB_DB3, RGBENV, RGBENV);
+            }
+        } else {            
+            /* The environment variable is set */
+            if ((f = fopen(rgbdef, "r")) == NULL && must_open)
+                pm_error("Can't open the color names dictionary file "
+                         "named %s, per the %s environment variable.  "
+                         "errno = %d (%s)",
+                         rgbdef, RGBENV, errno, strerror(errno));
         }
-        free(buffer);
-    } else
-        *filePP = NULL;
+    } else {
+        f = fopen(fileName, "r");
+        if (f == NULL && must_open)
+            pm_error("Can't open the color names dictionary file '%s'.  "
+                     "errno = %d (%s)", fileName, errno, strerror(errno));
+        
+    }
+    lineNo = 0;
+    return(f);
 }
+
 
 
 struct colorfile_entry
