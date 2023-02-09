@@ -31,6 +31,26 @@ extern "C" {
 } /* to fake out automatic code indenters */
 #endif
 
+#if defined(_WIN32)
+# define COMPILER_DLLEXPORT __declspec(dllexport)
+# define COMPILER_DLLIMPORT __declspec(dllimport)
+#else
+# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#endif
+
+#ifndef NETPBM_EXPORT
+#  if defined(NETPBM_DLL_EXPORTS) && defined(NETPBM_DLL_IMPORTS)
+#    error "Only NETPBM_DLL_EXPORTS or NETPBM_DLL_IMPORTS can be defined, not both."
+#  elif defined(NETPBM_DLL_EXPORTS)
+#    define NETPBM_EXPORT COMPILER_DLLEXPORT
+#  elif defined(NETPBM_DLL_IMPORTS)
+#    define NETPBM_EXPORT COMPILER_DLLIMPORT
+#  else
+#    define NETPBM_EXPORT
+#  endif
+#endif
+
 
 /* Definitions to make Netpbm programs work with either ANSI C or C
    Classic.
@@ -142,17 +162,17 @@ pm_nextimage(FILE * const file, int * const eofP);
 
 /* Variable-sized arrays definitions. */
 
-char** 
+NETPBM_EXPORT extern char**
 pm_allocarray (int const cols, int const rows, int const size );
 
-void * 
+NETPBM_EXPORT extern char *
 pm_allocrow(unsigned int const cols,
             unsigned int const size);
 
-void 
+NETPBM_EXPORT extern void
 pm_freearray (char** const its, int const rows);
 
-void 
+NETPBM_EXPORT extern void
 pm_freerow(void * const row);
 
 
@@ -185,6 +205,7 @@ pm_setjmpbufsave(jmp_buf *  const jmpbufP,
 void
 pm_longjmp(void);
 
+#ifndef _WIN32
 void
 pm_fork(int *         const iAmParentP,
         pid_t *       const childPidP,
@@ -200,6 +221,7 @@ pm_waitpid(pid_t         const pid,
 
 void
 pm_waitpidSimple(pid_t const pid);
+#endif
 
 typedef void pm_usermessagefn(const char * msg);
 
@@ -227,22 +249,22 @@ pm_have_float_format(void);
 void 
 pm_usage (const char usage[]);             
 
-FILE* 
+NETPBM_EXPORT extern FILE*
 pm_openr (const char* const name);
          
-FILE*    
+NETPBM_EXPORT FILE*
 pm_openw (const char* const name);
          
-FILE *
+NETPBM_EXPORT FILE *
 pm_openr_seekable(const char name[]);
 
-void     
+NETPBM_EXPORT void
 pm_close (FILE* const f);
 
-void 
+NETPBM_EXPORT void
 pm_closer (FILE* const f);
           
-void      
+NETPBM_EXPORT void
 pm_closew (FILE* const f);
 
 

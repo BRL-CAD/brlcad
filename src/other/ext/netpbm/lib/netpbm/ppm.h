@@ -3,6 +3,26 @@
 #ifndef _PPM_H_
 #define _PPM_H_
 
+#if defined(_WIN32)
+# define COMPILER_DLLEXPORT __declspec(dllexport)
+# define COMPILER_DLLIMPORT __declspec(dllimport)
+#else
+# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#endif
+
+#ifndef NETPBM_EXPORT
+#  if defined(NETPBM_DLL_EXPORTS) && defined(NETPBM_DLL_IMPORTS)
+#    error "Only NETPBM_DLL_EXPORTS or NETPBM_DLL_IMPORTS can be defined, not both."
+#  elif defined(NETPBM_DLL_EXPORTS)
+#    define NETPBM_EXPORT COMPILER_DLLEXPORT
+#  elif defined(NETPBM_DLL_IMPORTS)
+#    define NETPBM_EXPORT COMPILER_DLLIMPORT
+#  else
+#    define NETPBM_EXPORT
+#  endif
+#endif
+
 #include <netpbm/pm_config.h>
 #include <netpbm/pm.h>
 #include <netpbm/pgm.h>
@@ -82,7 +102,7 @@ void ppm_init(int * const argcP, char ** const argv);
 #define ppm_allocarray(cols, rows) \
   ((pixel**) pm_allocarray(cols, rows, sizeof(pixel)))
 
-pixel *
+NETPBM_EXPORT pixel *
 ppm_allocrow(unsigned int const cols);
 
 #define ppm_freearray(pixels, rows) pm_freearray((char**) pixels, rows)
@@ -95,14 +115,14 @@ ppm_readppm(FILE *   const fileP,
             int *    const rowsP, 
             pixval * const maxvalP);
 
-void
+NETPBM_EXPORT void
 ppm_readppminit(FILE *   const fileP, 
                 int *    const colsP, 
                 int *    const rowsP, 
                 pixval * const maxvalP, 
                 int *    const formatP);
 
-void
+NETPBM_EXPORT void
 ppm_readppmrow(FILE*  const fileP, 
                pixel* const pixelrow, 
                int    const cols, 
@@ -117,14 +137,14 @@ ppm_writeppm(FILE *  const fileP,
              pixval  const maxval, 
              int     const forceplain);
 
-void
+NETPBM_EXPORT void
 ppm_writeppminit(FILE*  const fileP, 
                  int    const cols, 
                  int    const rows, 
                  pixval const maxval, 
                  int    const forceplain);
 
-void
+NETPBM_EXPORT void
 ppm_writeppmrow(FILE *        const fileP, 
                 const pixel * const pixelrow, 
                 int           const cols, 
