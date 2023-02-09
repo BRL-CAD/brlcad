@@ -1,6 +1,6 @@
 https://proj.org/
 
-All source, data files and other contents of the PROJ.4 package are
+All source, data files and other contents of the PROJ package are
 available under the following terms.  Note that the PROJ 4.3 and earlier
 was "public domain" as is common with US government work, but apparently
 this is not a well defined legal term in many countries.  I am placing
