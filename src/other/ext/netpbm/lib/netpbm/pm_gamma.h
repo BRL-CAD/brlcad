@@ -1,7 +1,7 @@
 #ifndef _PM_GAMMA_H_
 #define _PM_GAMMA_H_
 
-#include <netpbm/pm_config.h>
+#include "netpbm/pm_config.h"
 
 #include <math.h>
 

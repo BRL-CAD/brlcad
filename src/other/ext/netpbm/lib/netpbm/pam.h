@@ -8,9 +8,9 @@
 #ifndef PAM_H
 #define PAM_H
 
-#include <netpbm/pm_config.h>
-#include <netpbm/pm.h>
-#include <netpbm/pnm.h>
+#include "netpbm/pm_config.h"
+#include "netpbm/pm.h"
+#include "netpbm/pnm.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -4,8 +4,8 @@
 #ifndef _PGM_H_
 #define _PGM_H_
 
-#include <netpbm/pm.h>
-#include <netpbm/pbm.h>
+#include "netpbm/pm.h"
+#include "netpbm/pbm.h"
 
 #ifdef __cplusplus
 extern "C" {

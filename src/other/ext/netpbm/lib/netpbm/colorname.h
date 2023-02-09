@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <netpbm/ppm.h>
+#include "netpbm/ppm.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -13,7 +13,7 @@
 #ifndef PM_H_INCLUDED
 #define PM_H_INCLUDED
 
-#include <netpbm/pm_config.h>
+#include "netpbm/pm_config.h"
 
 #include <sys/types.h>
 #include <ctype.h>

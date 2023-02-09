@@ -8,7 +8,7 @@
 ** a single point, and it looks like this:
 */
 
-#include <netpbm/pm_config.h>
+#include "netpbm/pm_config.h"
 
 #ifdef __cplusplus
 extern "C" {

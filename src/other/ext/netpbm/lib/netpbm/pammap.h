@@ -9,8 +9,8 @@
 
 #ifndef PAMMAP_H
 #define PAMMAP_H
-#include <netpbm/colorname.h>
-#include <netpbm/pam.h>
+#include "netpbm/colorname.h"
+#include "netpbm/pam.h"
 
 #ifdef __cplusplus
 extern "C" {

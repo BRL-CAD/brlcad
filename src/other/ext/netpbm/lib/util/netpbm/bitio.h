@@ -32,7 +32,7 @@
 #ifndef _BITIO_H_
 #define _BITIO_H_
 
-#include <netpbm/pm.h>
+#include "netpbm/pm.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -18,6 +18,20 @@ advanced and update libpm.c accordingly.)
 
 We have also stripped out the shhopt code, since we are not using it.
 
+In order to reduce the chances of collision between bundled headers and system
+versions of NETPBM, we change the netpbm header includes as follows:
+
+find . -type f -not -path "*.git/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 's/#include <netpbm\/pm.h>/#include \"netpbm\/pm.h\"/g' {} \;
+find . -type f -not -path "*.git/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 's/#include <netpbm\/ppm.h>/#include \"netpbm\/ppm.h\"/g' {} \;
+find . -type f -not -path "*.git/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 's/#include <netpbm\/pm_config.h>/#include \"netpbm\/pm_config.h\"/g' {} \;
+find . -type f -not -path "*.git/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 's/#include <netpbm\/pam.h>/#include \"netpbm\/pam.h\"/g' {} \;
+find . -type f -not -path "*.git/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 's/#include <netpbm\/pbm.h>/#include \"netpbm\/pbm.h\"/g' {} \;
+find . -type f -not -path "*.git/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 's/#include <netpbm\/pgm.h>/#include \"netpbm\/pgm.h\"/g' {} \;
+find . -type f -not -path "*.git/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 's/#include <netpbm\/pnm.h>/#include \"netpbm\/pnm.h\"/g' {} \;
+find . -type f -not -path "*.git/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 's/#include <netpbm\/ppmcmap.h>/#include \"netpbm\/ppmcmap.h\"/g' {} \;
+find . -type f -not -path "*.git/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 's/#include <netpbm\/colorname.h>/#include \"netpbm\/colorname.h\"/g' {} \;
+
+
 Currently bundled BRL-CAD version of NETPBM is 10.73.42
 
                                  NETPBM
