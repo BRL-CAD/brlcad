@@ -165,7 +165,7 @@ pm_nextimage(FILE * const file, int * const eofP);
 NETPBM_EXPORT extern char**
 pm_allocarray (int const cols, int const rows, int const size );
 
-NETPBM_EXPORT extern char *
+NETPBM_EXPORT extern void *
 pm_allocrow(unsigned int const cols,
             unsigned int const size);
 
