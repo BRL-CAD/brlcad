@@ -47,7 +47,7 @@ lib/netpbm/ppmdfont.h
 lib/netpbm/ppmdraw.h
 lib/netpbm/ppmfloyd.h
 lib/path.c
-lib/pmfileio.c
+lib/pmfileio.cxx
 lib/ppmdfont.c
 lib/rgb.txt
 lib/standard.ppmdfont

@@ -1,17 +1,28 @@
 /**************************************************************************
-                                 pmfileio.c
+                               pmfileio.cxx
 ***************************************************************************
   This file contains fundamental file I/O stuff for libnetpbm.
   These are external functions, unlike 'fileio.c', but are not
   particular to any Netpbm format.
 **************************************************************************/
+
+#include <cstring>
+#include <string>
+#ifdef _WIN32
+#include <io.h> // for close
+#endif
+
 #define _SVID_SOURCE
     /* Make sure P_tmpdir is defined in GNU libc 2.0.7 (_XOPEN_SOURCE 500
        does it in other libc's).  pm_config.h defines TMPDIR as P_tmpdir
        in some environments.
     */
+#ifndef __APPLE__
 #define _BSD_SOURCE    /* Make sure strdup is defined */
+#endif
+#ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 500    /* Make sure ftello, fseeko, strdup are defined */
+#endif
 #define _LARGEFILE_SOURCE 1  /* Make sure ftello, fseeko are defined */
 #define _LARGEFILE64_SOURCE 1 
 #define _FILE_OFFSET_BITS 64
@@ -30,7 +41,9 @@
     /* This makes the the x64() functions available on AIX */
 
 #include "netpbm/pm_config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -88,7 +101,7 @@ pm_openw(const char * const name) {
 
 
 static const char *
-tmpDir(void) {
+tmpDir(char *tmpdir_aux_win32) {
 /*----------------------------------------------------------------------------
    Return the name of the directory in which we should create temporary
    files.
@@ -106,8 +119,14 @@ tmpDir(void) {
     if (!tmpdir || strlen(tmpdir) == 0)
         tmpdir = getenv("TEMP"); /* Windows convention */
 
-    if (!tmpdir || strlen(tmpdir) == 0)
+    if (!tmpdir || strlen(tmpdir) == 0) {
+#if defined(_MSC_VER) && (_MSC_VER > 1800)
+        GetTempPathA(MAX_PATH + 1, tmpdir_aux_win32);
+        tmpdir = tmpdir_aux_win32;
+#else
         tmpdir = TMPDIR;
+#endif
+    }
 
     return tmpdir;
 }
@@ -136,7 +155,47 @@ tempFileOpenFlags(void) {
 }
 
 
+#ifndef HAVE_MKSTEMP
 
+static int
+mkstemp(char *file_template)
+{
+    int fd = -1;
+    int counter = 0;
+    size_t i;
+    size_t start, end;
+
+    static const char replace[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    static int replacelen = sizeof(replace) - 1;
+
+    if (!file_template || file_template[0] == '\0')
+    	return -1;
+
+    /* identify the replacement suffix */
+    start = end = strlen(file_template)-1;
+    for (i=strlen(file_template)-1; i>=0; i--) {
+    	if (file_template[i] != 'X') {
+    		break;
+    	}
+    	end = i;
+    }
+
+    do {
+    	/* replace the template with random chars */
+    	srand(time(NULL));
+    	for (i=start; i>=end; i--) {
+    		file_template[i] = replace[(int)(replacelen * ((double)rand() / (double)RAND_MAX))];
+    	}
+#ifdef WIN32
+    	fd = _open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR | O_TEMPORARY, S_IRUSR | S_IWUSR);
+#else
+    	fd = open(file_template, O_CREAT | O_EXCL | O_TRUNC | O_RDWR | O_TEMPORARY, S_IRUSR | S_IWUSR);
+#endif
+    } while ((fd == -1) && (counter++ < 1000));
+
+    return fd;
+}
+#endif
 
 static int
 mkstempx(char * const filenameBuffer) {
@@ -164,10 +223,10 @@ mkstempx(char * const filenameBuffer) {
          !gotFile && !error && attempts < 100;
          ++attempts) {
 
-        char * rc;
-        rc = mktemp(filenameBuffer);
+        int rc;
+        rc = mkstemp(filenameBuffer);
 
-        if (rc == NULL)
+        if (rc == -1)
             error = TRUE;
         else {
             int rc;
@@ -250,11 +309,14 @@ pm_make_tmpfile_fd(int *         const fdP,
                    const char ** const filenameP) {
 
     const char * filenameTemplate;
-    const char * tmpdir;
     const char * dirseparator;
-    const char * error;
-
-    tmpdir = tmpDir();
+    const char * error = NULL;
+#if defined(_MSC_VER) && (_MSC_VER > 1800)
+    char tmpdir_aux_win32[MAX_PATH + 1];
+#else
+    char *tmpdir_aux_win32;
+#endif
+    const char * tmpdir = tmpDir(tmpdir_aux_win32);
 
     if (tmpdir[strlen(tmpdir) - 1] == '/')
         dirseparator = "";
@@ -354,7 +416,7 @@ static UnlinkListEntry *
 newUnlinkListEntry(const char * const fileName,
                    int          const fd) {
 
-    UnlinkListEntry * const unlinkListEntryP =
+     UnlinkListEntry * const unlinkListEntryP = (UnlinkListEntry * const)
         malloc(sizeof(*unlinkListEntryP) + strlen(fileName) + 1);
 
     if (unlinkListEntryP) {
@@ -805,7 +867,9 @@ pm_read_unknown_size(FILE * const file,
 
     *nread = 0;
     nalloc = PM_BUF_SIZE;
-    MALLOCARRAY(buf, nalloc);
+    void *array;
+    mallocProduct(&array, nalloc , sizeof(char));
+    buf = (char *)array;
 
     if (!buf)
         pm_error("Failed to allocate %lu bytes for read buffer",
@@ -821,7 +885,11 @@ pm_read_unknown_size(FILE * const file,
                 nalloc += PM_MAX_BUF_INC;
             else
                 nalloc += nalloc;
-            REALLOCARRAY(buf, nalloc);
+	    array = buf;
+	    reallocProduct(&array, nalloc, sizeof(buf[0]));
+	    if (!array && buf)
+		    free(buf);
+	    buf = (char *)array;
             if (!buf)
                 pm_error("Failed to allocate %lu bytes for read buffer",
                          (unsigned long) nalloc);
@@ -897,7 +965,7 @@ pm_tell2(FILE *       const fileP,
                  "Errno = %s (%d)\n", strerror(errno), errno);
 
     if (fileposSize == sizeof(pm_filepos)) {
-        pm_filepos * const fileposP_filepos = fileposP;
+        pm_filepos * const fileposP_filepos = (pm_filepos * const)fileposP;
         *fileposP_filepos = filepos;
     } else if (fileposSize == sizeof(long)) {
         if (sizeof(pm_filepos) > sizeof(long) &&
@@ -905,7 +973,7 @@ pm_tell2(FILE *       const fileP,
             pm_error("File size is too large to represent in the %u bytes "
                      "that were provided to pm_tell2()", fileposSize);
         else {
-            long * const fileposP_long = fileposP;
+            long * const fileposP_long = (long * const)fileposP;
             *fileposP_long = (long)filepos;
         }
     } else

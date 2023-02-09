@@ -127,6 +127,7 @@ set(NETPBM_SRCS
   lib/libppmfloyd.c
   lib/libppmfuzzy.c
   lib/path.c
+  lib/pmfileio.cxx
   lib/ppmdfont.c
   lib/standardppmdfont.c
   lib/util/bitio.c

@@ -4,7 +4,8 @@ files not used for that purpose, as well as adding a few files to help the
 CMake build succeed.
 
 We have added __declspec logic for Windows, to allow libnetpbm to act as a
-shared library on that platform.
+shared library on that platform.  pmfileio.c was altered somewhat for
+portability (now named pmfileio.cxx), as was the pm_config template file.
 
 Rather than using static symlinks for include header locating, we move the .h
 files to netpbm subdirectories.  This simplifies matters on platforms such as
