@@ -8,8 +8,13 @@
   Netpbm library subroutines.
 **************************************************************************/
 
+#ifndef __APPLE__
 #define _BSD_SOURCE          /* Make sure strdup is in string.h */
+#endif
+
+#ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 500    /* Make sure ftello, fseeko are defined */
+#endif
 #define _DARWIN_C_SOURCE   /* Make sure strdup() is in string.h */
 
 #include "netpbm/pm_config.h"
@@ -103,7 +108,7 @@ pm_longjmp(void) {
 }
 
 
-
+#ifndef _WIN32
 void
 pm_fork(int *         const iAmParentP,
         pid_t *       const childPidP,
@@ -181,7 +186,7 @@ pm_waitpidSimple(pid_t const pid) {
         assert(exitedPid != 0);
     }
 }
-
+#endif
 
 
 void
