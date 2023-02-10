@@ -3,7 +3,11 @@
 
 #include <stdarg.h>
 #include <string.h>
-#include <strings.h>  /* For strncasecmp */
+#ifdef _MSC_VER
+#  define strncasecmp _strnicmp
+#else
+#  include <strings.h>  /* For strncasecmp */
+#endif
 #include <ctype.h>
 
 #include "pm_c_util.h"
