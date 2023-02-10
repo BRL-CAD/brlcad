@@ -19,6 +19,7 @@
     */
 #ifndef __APPLE__
 #define _BSD_SOURCE    /* Make sure strdup is defined */
+#define _DARWIN_C_SOURCE   /* Make sure strdup() is in string.h */
 #endif
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 500    /* Make sure ftello, fseeko, strdup are defined */

@@ -10,11 +10,14 @@
 
 #define _BSD_SOURCE          /* Make sure strdup is in string.h */
 #define _XOPEN_SOURCE 500    /* Make sure ftello, fseeko are defined */
+#define _DARWIN_C_SOURCE   /* Make sure strdup() is in string.h */
 
 #include "netpbm/pm_config.h"
 
 #include <assert.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>

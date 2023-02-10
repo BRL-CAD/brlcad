@@ -11,6 +11,7 @@
 
 #define _BSD_SOURCE 1      /* Make sure strdup() is in string.h */
 #define _XOPEN_SOURCE 500  /* Make sure strdup() is in string.h */
+#define _DARWIN_C_SOURCE   /* Make sure strdup() is in string.h */
 
 #include <assert.h>
 #include <stdlib.h>
