@@ -64,6 +64,7 @@ PLUGIN_SETUP(ged-simulate ged)
 
 CMAKEFILES(
   CMakeLists.txt
+  ${bullet_srcs}
   rt_collision_algorithm.hpp
   rt_collision_shape.hpp
   rt_debug_draw.hpp
