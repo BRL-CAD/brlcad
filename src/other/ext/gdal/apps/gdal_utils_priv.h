@@ -33,46 +33,48 @@
 #ifndef DOXYGEN_SKIP
 
 #include "cpl_port.h"
+#include "cpl_string.h"
 #include "gdal_utils.h"
 
-/* This file is only meant at being used by the XXXX_bin.cpp and XXXX_lib.cpp files */
+/* This file is only meant at being used by the XXXX_bin.cpp and XXXX_lib.cpp
+ * files */
 
 CPL_C_START
 
 struct GDALInfoOptionsForBinary
 {
     /* Filename to open. */
-    char* pszFilename;
+    char *pszFilename;
 
     /* Open options. */
-    char** papszOpenOptions;
+    char **papszOpenOptions;
 
     /* > for reporting on a particular subdataset */
     int nSubdataset;
 
     /* Allowed input drivers. */
-    char** papszAllowInputDrivers;
+    char **papszAllowInputDrivers;
 };
 
 struct GDALTranslateOptionsForBinary
 {
-    char* pszSource;
-    char* pszDest;
+    char *pszSource;
+    char *pszDest;
     int bQuiet;
     int bCopySubDatasets;
-    char** papszOpenOptions;
-    char* pszFormat;
+    char **papszOpenOptions;
+    char *pszFormat;
 
     /* Allowed input drivers. */
-    char** papszAllowInputDrivers;
+    char **papszAllowInputDrivers;
 };
 
 struct GDALWarpAppOptionsForBinary
 {
-    char** papszSrcFiles;
-    char* pszDstFilename;
+    char **papszSrcFiles;
+    char *pszDstFilename;
     int bQuiet;
-    char** papszOpenOptions;
+    char **papszOpenOptions;
 
     /*! output dataset open option (format specific) */
     char **papszDestOpenOptions;
@@ -83,92 +85,99 @@ struct GDALWarpAppOptionsForBinary
     int bCreateOutput;
 
     /* Allowed input drivers. */
-    char** papszAllowInputDrivers;
+    char **papszAllowInputDrivers;
 };
 
 /* Access modes */
 typedef enum
 {
     ACCESS_CREATION,
-    ACCESS_UPDATE, /* open existing output datasource in update mode rather than trying to create a new one */
+    ACCESS_UPDATE, /* open existing output datasource in update mode rather than
+                      trying to create a new one */
     ACCESS_APPEND, /* append to existing layer instead of creating new */
     ACCESS_OVERWRITE /*  delete the output layer and recreate it empty */
 } GDALVectorTranslateAccessMode;
 
 struct GDALVectorTranslateOptionsForBinary
 {
-    char* pszDataSource;
-    char* pszDestDataSource;
+    char *pszDataSource;
+    char *pszDestDataSource;
     int bQuiet;
-    char** papszOpenOptions;
-    char* pszFormat;
+    char **papszOpenOptions;
+    char *pszFormat;
     GDALVectorTranslateAccessMode eAccessMode;
 };
 
 struct GDALDEMProcessingOptionsForBinary
 {
-    char* pszProcessing;
-    char* pszSrcFilename;
-    char* pszColorFilename;
-    char* pszDstFilename;
+    char *pszProcessing;
+    char *pszSrcFilename;
+    char *pszColorFilename;
+    char *pszDstFilename;
     int bQuiet;
 };
 
 struct GDALNearblackOptionsForBinary
 {
-    char* pszInFile;
-    char* pszOutFile;
+    char *pszInFile;
+    char *pszOutFile;
     int bQuiet;
 };
 
 struct GDALGridOptionsForBinary
 {
-    char* pszSource;
-    char* pszDest;
+    char *pszSource;
+    char *pszDest;
     int bQuiet;
-    char* pszFormat;
+    char *pszFormat;
 };
 
 struct GDALRasterizeOptionsForBinary
 {
-    char* pszSource;
-    char* pszDest;
+    char *pszSource;
+    char *pszDest;
     int bQuiet;
-    char* pszFormat;
+    char *pszFormat;
     int bCreateOutput;
 };
 
 struct GDALBuildVRTOptionsForBinary
 {
     int nSrcFiles;
-    char** papszSrcFiles;
-    char* pszDstFilename;
+    char **papszSrcFiles;
+    char *pszDstFilename;
     int bQuiet;
     int bOverwrite;
 };
 
+CPL_C_END
+
 struct GDALMultiDimInfoOptionsForBinary
 {
     /* Filename to open. */
-    char* pszFilename;
+    std::string osFilename{};
+
+    /* Allowed input drivers. */
+    CPLStringList aosAllowInputDrivers{};
 
     /* Open options. */
-    char** papszOpenOptions;
+    CPLStringList aosOpenOptions{};
 };
 
 struct GDALMultiDimTranslateOptionsForBinary
 {
-    char* pszSource;
-    char* pszDest;
-    char* pszFormat;
-    int   bQuiet;
-    int   bUpdate;
+    std::string osSource{};
+    std::string osDest{};
+    std::string osFormat{};
+    bool bQuiet = false;
+    bool bUpdate = false;
+
+    /* Allowed input drivers. */
+    CPLStringList aosAllowInputDrivers{};
 
     /* Open options. */
-    char** papszOpenOptions;
+    CPLStringList aosOpenOptions{};
 };
-
-CPL_C_END
 
 #endif /* #ifndef DOXYGEN_SKIP */
 

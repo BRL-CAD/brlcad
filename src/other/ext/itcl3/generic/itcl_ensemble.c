@@ -1497,8 +1497,10 @@ HandleEnsemble(clientData, interp, objc, objv)
         }
         if (ensPart != NULL) {
             cmdPtr = (Command*)ensPart->cmdPtr;
+	    TclInitRewriteEnsemble(interp, 2, 1, objv);
             result = (*cmdPtr->objProc)(cmdPtr->objClientData,
                 interp, objc, objv);
+	    TclResetRewriteEnsemble(interp, 1);
             return result;
         }
     }
@@ -1529,8 +1531,10 @@ HandleEnsemble(clientData, interp, objc, objv)
 
     if (result == TCL_OK) {
         cmdPtr = (Command*)ensPart->cmdPtr;
+	TclInitRewriteEnsemble(interp, 2, 1, objv);
         result = (*cmdPtr->objProc)(cmdPtr->objClientData, interp,
             cmdlinec, cmdlinev);
+	TclResetRewriteEnsemble(interp, 1);
     }
     Tcl_DecrRefCount(cmdlinePtr);
 

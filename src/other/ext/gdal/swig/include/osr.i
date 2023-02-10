@@ -1108,6 +1108,10 @@ public:
     return (OSRSpatialReferenceShadow*) OSRClone(self);
   }
 
+  OGRErr StripVertical() {
+    return OSRStripVertical(self);
+  }
+
   OGRErr Validate() {
     return OSRValidate(self);
   }
@@ -1169,8 +1173,8 @@ public:
         eastLongitudeDeg, northLatitudeDeg);
   }
 
-  bool SetOperation(const char* operation) {
-    return OCTCoordinateTransformationOptionsSetOperation(self, operation, false);
+  bool SetOperation(const char* operation, bool inverseCT = false) {
+    return OCTCoordinateTransformationOptionsSetOperation(self, operation, inverseCT);
   }
 
   bool SetDesiredAccuracy(double accuracy) {
@@ -1205,6 +1209,11 @@ public:
 
   ~OSRCoordinateTransformationShadow() {
     OCTDestroyCoordinateTransformation( self );
+  }
+
+  %newobject GetInverse;
+  OSRCoordinateTransformationShadow* GetInverse() {
+    return OCTGetInverse(self);
   }
 
 // Need to apply argin typemap second so the numinputs=1 version gets applied

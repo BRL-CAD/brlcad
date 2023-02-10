@@ -236,8 +236,8 @@ proc ttk::Repeatedly {args} {
     after cancel $Repeat(timer)
     set script [uplevel 1 [list namespace code $args]]
     set Repeat(script) $script
-    uplevel #0 $script
     set Repeat(timer) [after $Repeat(delay) ttk::Repeat]
+    uplevel #0 $script
 }
 
 ## Repeat --
@@ -245,8 +245,8 @@ proc ttk::Repeatedly {args} {
 #
 proc ttk::Repeat {} {
     variable Repeat
-    uplevel #0 $Repeat(script)
     set Repeat(timer) [after $Repeat(interval) ttk::Repeat]
+    uplevel #0 $Repeat(script)
 }
 
 ## ttk::CancelRepeat --

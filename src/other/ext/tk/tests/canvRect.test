@@ -123,11 +123,8 @@ test canvRect-3.5 {RectOvalCoords procedure} -body {
 } -cleanup {
     .c delete withtag all
 } -returnCodes error -result {bad screen distance "d"}
-test canvRect-3.6 {RectOvalCoords procedure} -constraints {
-    nonPortable
-} -body {
+test canvRect-3.6 {RectOvalCoords procedure} -body {
     .c create rectangle 10 20 30 40 -tags x
-    # Non-portable due to rounding differences.
     .c coords x 10 25 15 40
     .c bbox x
 } -cleanup {
@@ -160,8 +157,7 @@ test canvRect-4.3 {ConfigureRectOval procedure} -body {
 } -cleanup {
     .c delete withtag all
 } -returnCodes error -result {bad screen distance "-5"}
-test canvRect-4.4 {ConfigureRectOval procedure} -constraints nonPortable -body {
-    # Non-portable due to rounding differences
+test canvRect-4.4 {ConfigureRectOval procedure} -body {
     .c create rectangle 10 20 30 40 -tags x -width 1
     .c itemconfigure x -width 10
     .c bbox x
@@ -171,16 +167,21 @@ test canvRect-4.4 {ConfigureRectOval procedure} -constraints nonPortable -body {
 
 # I can't come up with any good tests for DeleteRectOval.
 
-test canvRect-5.1 {ComputeRectOvalBbox procedure} -constraints nonPortable -body {
-    # Non-portable due to rounding differences:
+# On Windows the bbox of rectangle items is 1 pixel larger at each border due
+# to the "bloat" implemented in ComputeRectOvalBbox() in case -outline is {}
+if {[tk windowingsystem] eq "win32"} {
+    set result_5_1 {9 4 21 16}
+} else {
+    set result_5_1 {10 5 20 15}
+}
+test canvRect-5.1 {ComputeRectOvalBbox procedure} -body {
     .c create rectangle 10 20 30 40 -tags x -width 1 -outline {}
     .c coords x 20 15 10 5
     .c bbox x
 } -cleanup {
     .c delete withtag all
-} -result {10 5 20 15}
-test canvRect-5.2 {ComputeRectOvalBbox procedure} -constraints nonPortable -body {
-    # Non-portable due to rounding differences:
+} -result $result_5_1
+test canvRect-5.2 {ComputeRectOvalBbox procedure} -body {
     .c create rectangle 10 20 30 40 -tags x -width 1 -outline {}
     .c coords x 10 20 30 10
     .c itemconfigure x -width 1 -outline red
@@ -188,8 +189,7 @@ test canvRect-5.2 {ComputeRectOvalBbox procedure} -constraints nonPortable -body
 } -cleanup {
     .c delete withtag all
 } -result {9 9 31 21}
-test canvRect-5.3 {ComputeRectOvalBbox procedure} -constraints nonPortable -body {
-    # Non-portable due to rounding differences:
+test canvRect-5.3 {ComputeRectOvalBbox procedure} -body {
     .c create rectangle 10 20 30 40 -tags x -width 1 -outline {}
     .c coords x 10 20 30 10
     .c itemconfigure x -width 2 -outline red
@@ -197,8 +197,7 @@ test canvRect-5.3 {ComputeRectOvalBbox procedure} -constraints nonPortable -body
 } -cleanup {
     .c delete withtag all
 } -result {9 9 31 21}
-test canvRect-5.4 {ComputeRectOvalBbox procedure} -constraints nonPortable -body {
-    # Non-portable due to rounding differences:
+test canvRect-5.4 {ComputeRectOvalBbox procedure} -body {
     .c create rectangle 10 20 30 40 -tags x -width 1 -outline {}
     .c coords x 10 20 30 10
     .c itemconfigure x -width 3 -outline red

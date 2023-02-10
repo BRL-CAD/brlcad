@@ -33,14 +33,17 @@ cd "$GDAL_ROOT"
 LOG_FILE=/tmp/cppcheck_gdal.txt
 
 CPPCHECK_VERSION="$(cppcheck --version | awk '{print $2}')"
-CPPCHECK_VERSION_GT_1_84=$(expr "$CPPCHECK_VERSION" \>= 1.84 || /bin/true)
+CPPCHECK_MAJOR_VERSION=$(echo "$CPPCHECK_VERSION" | cut -d. -f1)
+CPPCHECK_MINOR_VERSION=$(echo "$CPPCHECK_VERSION" | cut -d. -f2)
+CPPCHECK_VERSION=$(("$CPPCHECK_MAJOR_VERSION" * 100 + "$CPPCHECK_MINOR_VERSION"))
+CPPCHECK_VERSION_GT_1_84=$(expr "$CPPCHECK_VERSION" \>= 184 || /bin/true)
 if test "$CPPCHECK_VERSION_GT_1_84" = 1; then
     OVERRIDE=
 else
     OVERRIDE="-Doverride="
 fi
 
-CPPCHECK_VERSION_GT_2_7=$(expr "$CPPCHECK_VERSION" \>= 2.7 || /bin/true)
+CPPCHECK_VERSION_GT_2_7=$(expr "$CPPCHECK_VERSION" \>= 207 || /bin/true)
 if test "$CPPCHECK_VERSION_GT_2_7" = 1; then
     POSIX="--library=gnu"
 else
@@ -56,6 +59,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -D__linux \
         -DGBool=int -DCPL_HAS_GINT64=1 -DHAVE_GEOS -DHAVE_EXPAT -DHAVE_XERCES -DCOMPILATION_ALLOWED \
         -DHAVE_SFCGAL -DHAVE_SPATIALITE -DSPATIALITE_412_OR_LATER \
+        -D_SC_NPROCESSORS_ONLN -DHAVE_SCHED_GETAFFINITY \
         -DHAVE_SQLITE -DSQLITE_VERSION_NUMBER=3006000 -DHAVE_SQLITE_VFS \
         -DHAVE_RASTERLITE2 \
         -DHAVE_CURL -DLIBCURL_VERSION_NUM=0x073800 \
@@ -91,6 +95,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DINT_MIN=-2147483648 \
         -DINT_MAX=2147483647 \
         -DUINT_MAX=4294967295U \
+        -DKDU_HAS_ROI_RECT \
         --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
         -I "${CPL_CONFIG_H_DIR}" \

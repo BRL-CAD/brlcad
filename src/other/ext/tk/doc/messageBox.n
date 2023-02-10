@@ -66,9 +66,8 @@ box is displayed on top of its parent window.
 .TP
 \fB\-title\fR \fItitleString\fR
 .
-Specifies a string to display as the title of the message box. This option
-is ignored on Mac OS X, where platform guidelines forbid the use of a title
-on this kind of dialog.
+Specifies a string to display as the title of the message box. The
+default value is an empty string.
 .TP
 \fB\-type\fR \fIpredefinedType\fR
 .

@@ -55,15 +55,15 @@ TkSelGetSelection(
     Tcl_Encoding encoding;
     int result, locale, noBackslash = 0;
 
+    if ((selection != Tk_InternAtom(tkwin, "CLIPBOARD"))
+	    || (target != XA_STRING)) {
+	goto error;
+    }
     if (!OpenClipboard(NULL)) {
         Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 	        "clipboard cannot be opened, another application grabbed it"));
         Tcl_SetErrorCode(interp, "TK", "CLIPBOARD", "BUSY", NULL);
         return TCL_ERROR;
-    }
-    if ((selection != Tk_InternAtom(tkwin, "CLIPBOARD"))
-	    || (target != XA_STRING)) {
-	goto error;
     }
 
     /*

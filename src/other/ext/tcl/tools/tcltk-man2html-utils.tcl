@@ -889,7 +889,9 @@ proc insert-cross-references {text} {
 		}
 		switch -exact -- $invert([lindex $offsets 1]) {
 		    end-quote {
-			append result [string range $text 0 [expr {$offset(quote)-1}]]
+			if {$offset(quote) > 0} {
+			    append result [string range $text 0 [expr {$offset(quote)-1}]]
+			}
 			set body [string range $text [expr {$offset(quote)+2}] \
 				      [expr {$offset(end-quote)-1}]]
 			set text [string range $text[set text ""] \
@@ -916,8 +918,10 @@ proc insert-cross-references {text} {
 		}
 		switch -exact -- $invert([lindex $offsets 1]) {
 		    url - end-bold {
-			append result \
-			    [string range $text 0 [expr {$offset(bold)-1}]]
+			if {$offset(bold) > 0} {
+			    append result \
+				[string range $text 0 [expr {$offset(bold)-1}]]
+			}
 			set body [string range $text [expr {$offset(bold)+3}] \
 				      [expr {$offset(end-bold)-1}]]
 			set text [string range $text[set text ""] \
@@ -939,8 +943,10 @@ proc insert-cross-references {text} {
 		}
 	    }
 	    c.tk - c.ttk - c.tcl - c.tdbc - c.itcl {
-		append result [string range $text 0 \
-				   [expr {[lindex $offsets 0]-1}]]
+		if {[lindex $offsets 0] > 0} {
+		    append result [string range $text 0 \
+			   [expr {[lindex $offsets 0]-1}]]
+		}
 		regexp -indices -start [lindex $offsets 0] {\w+} $text range
 		set body [string range $text {*}$range]
 		set text [string range $text[set text ""] \
@@ -950,14 +956,18 @@ proc insert-cross-references {text} {
 	    }
 	    Tcl1 - Tcl2 {
 		set off [lindex $offsets 0]
-		append result [string range $text 0 [expr {$off-1}]]
+		if {$off > 0} {
+		    append result [string range $text 0 [expr {$off-1}]]
+		}
 		set text [string range $text[set text ""] [expr {$off+3}] end]
 		append result [cross-reference Tcl]
 		continue
 	    }
 	    url {
 		set off [lindex $offsets 0]
-		append result [string range $text 0 [expr {$off-1}]]
+		if {$off > 0} {
+		    append result [string range $text 0 [expr {$off-1}]]
+		}
 		regexp -indices -start $off {http://[\w/.-]+} $text range
 		set url [string range $text {*}$range]
 		append result "<A HREF=\"[string trimright $url .]\">$url</A>"

@@ -60,11 +60,13 @@ class FileManager {
     static bool unlink(PJ_CONTEXT *ctx, const char *filename);
     static bool rename(PJ_CONTEXT *ctx, const char *oldPath,
                        const char *newPath);
-    static std::string getProjLibEnvVar(PJ_CONTEXT *ctx);
+    static std::string getProjDataEnvVar(PJ_CONTEXT *ctx);
 
-    // "High-level" interface, honoring PROJ_LIB and the like.
-    static std::unique_ptr<File> open_resource_file(PJ_CONTEXT *ctx,
-                                                    const char *name);
+    // "High-level" interface, honoring PROJ_DATA and the like.
+    static std::unique_ptr<File>
+    open_resource_file(PJ_CONTEXT *ctx, const char *name,
+                       char *out_full_filename = nullptr,
+                       size_t out_full_filename_size = 0);
 
     static void fillDefaultNetworkInterface(PJ_CONTEXT *ctx);
 

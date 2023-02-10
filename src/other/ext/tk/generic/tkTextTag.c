@@ -70,7 +70,7 @@ static const Tk_OptionSpec tagOptionSpecs[] = {
 	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_COLOR, "-overstrikefg", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, overstrikeColor),
-        TK_OPTION_NULL_OK, 0, 0},
+	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_STRING, "-relief", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, reliefString), TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_STRING, "-rmargin", NULL, NULL,
@@ -97,10 +97,10 @@ static const Tk_OptionSpec tagOptionSpecs[] = {
 	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_COLOR, "-underlinefg", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, underlineColor),
-        TK_OPTION_NULL_OK, 0, 0},
+	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_STRING_TABLE, "-wrap", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, wrapMode),
-	TK_OPTION_NULL_OK, wrapStrings, 0},
+	TK_OPTION_NULL_OK|TK_OPTION_ENUM_VAR, wrapStrings, 0},
     {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0}
 };
 
@@ -526,8 +526,11 @@ TkTextTagCmd(
 		    || (tagPtr->spacing2String != NULL)
 		    || (tagPtr->spacing3String != NULL)
 		    || (tagPtr->tabStringPtr != NULL)
-		    || (tagPtr->tabStyle != TK_TEXT_TABSTYLE_NONE)
-		    || (tagPtr->wrapMode != TEXT_WRAPMODE_NULL)) {
+		    || (tagPtr->tabStyle == TK_TEXT_TABSTYLE_TABULAR)
+		    || (tagPtr->tabStyle == TK_TEXT_TABSTYLE_WORDPROCESSOR)
+		    || (tagPtr->wrapMode == TEXT_WRAPMODE_CHAR)
+		    || (tagPtr->wrapMode == TEXT_WRAPMODE_NONE)
+		    || (tagPtr->wrapMode == TEXT_WRAPMODE_WORD)) {
 		tagPtr->affectsDisplay = 1;
 		tagPtr->affectsDisplayGeometry = 1;
 	    }
@@ -1481,11 +1484,31 @@ TkTextBindProc(
 	}
 	TkTextPickCurrent(textPtr, eventPtr);
     }
-    if ((textPtr->numCurTags > 0)
-	    && (textPtr->sharedTextPtr->bindingTable != NULL)
+
+    if ((textPtr->sharedTextPtr->bindingTable != NULL)
 	    && (textPtr->tkwin != NULL) && !(textPtr->flags & DESTROYED)) {
-	TagBindEvent(textPtr, eventPtr, textPtr->numCurTags,
+	if (textPtr->numCurTags > 0) {
+	    /*
+	     * The mouse is inside the text widget, the 'current' mark was updated.
+	     */
+
+	    TagBindEvent(textPtr, eventPtr, textPtr->numCurTags,
 		textPtr->curTagArrayPtr);
+	} else if ((eventPtr->type == KeyPress) || (eventPtr->type == KeyRelease)) {
+	    /*
+	     * Key events fire independently of the 'current' mark and use the
+	     * 'insert' mark.
+	     */
+
+	    TkTextIndex index;
+	    TkTextTag** tagArrayPtr;
+	    int numTags;
+
+	    TkTextMarkNameToIndex(textPtr, "insert", &index);
+	    tagArrayPtr = TkBTreeGetTags(&index, textPtr, &numTags);
+	    SortTags(numTags, tagArrayPtr);
+	    TagBindEvent(textPtr, eventPtr, numTags, tagArrayPtr);
+	}
     }
     if (repick) {
 	unsigned int oldState;

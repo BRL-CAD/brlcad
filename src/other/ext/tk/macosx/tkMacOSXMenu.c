@@ -3,8 +3,8 @@
  *
  *	This module implements the Mac-platform specific features of menus.
  *
- * Copyright (c) 1996-1997 by Sun Microsystems, Inc.
- * Copyright 2001-2009, Apple Inc.
+ * Copyright (c) 1996-1997 Sun Microsystems, Inc.
+ * Copyright (c) 2001-2009 Apple Inc.
  * Copyright (c) 2005-2009 Daniel A. Steffen <das@users.sourceforge.net>
  * Copyright (c) 2012 Adrian Robert.
  *
@@ -94,7 +94,7 @@ static const struct {
 static int gNoTkMenus = 0;	/* This is used by Tk_MacOSXTurnOffMenus as
 				 * the flag that Tk is not to draw any
 				 * menus. */
-static int inPostMenu = 0;
+static Bool   inPostMenu = false;
 static SInt32 menuMarkColumnWidth = 0, menuIconTrailingEdgeMargin = 0;
 static SInt32 menuTextLeadingEdgeMargin = 0, menuTextTrailingEdgeMargin = 0;
 static SInt16 menuItemExtraHeight = 0, menuItemExtraWidth = 0;
@@ -124,7 +124,7 @@ static int	ModifierCharWidth(Tk_Font tkfont);
  * demo would cause the animation to stop.  This was also the case for
  * menubuttons.
  *
- * The TKBackground object below works around this problem, and allows a Tk
+ * The TKBackgroundLoop object below works around this problem, and allows a Tk
  * event loop to run while a menu is open.  It is a subclass of NSThread which
  * inserts requests to call [NSApp _runBackgroundLoop] onto the queue
  * associated with the NSEventTrackingRunLoopMode.  One of these threads gets
@@ -200,25 +200,36 @@ TKBackgroundLoop *backgroundLoop = nil;
  * Spanish keyboard both the ' and the ` keys are dead keys used to place
  * accents over letters.  But ⌘` is a standard KeyEquivalent which cycles
  * through the open windows of an application, changing the focus to the next
- * window.
+ * window. This caused a bug reported in [1626ed65b8].  When a dead key that is
+ * also as a KeyEquivalent is pressed, a KeyDown event with no characters would
+ * be passed to performKeyEquivalent.  The default implementation provided by
+ * Apple would cause that event to be routed to some private methods of NSMenu
+ * which raise NSInvalidArgumentException, causing an abort. Returning NO in
+ * such a case prevents the abort.  So the override below returns NO when the
+ * event has no characters.
  *
- * The performKeyEquivalent callback method is being overridden here to work
- * around a bug reported in [1626ed65b8].  When a dead key that is also as a
- * KeyEquivalent is pressed, a KeyDown event with no characters is passed to
- * performKeyEquivalent.  The default implementation provided by Apple will
- * cause that event to be routed to some private methods of NSMenu which raise
- * NSInvalidArgumentException, causing an abort. Returning NO in such a case
- * prevents the abort, but does not prevent the KeyEquivalent action from being
- * invoked, presumably because the event does get correctly handled higher in
- * the responder chain.
+ * In fact, however, we never want to handle accelerators because they are
+ * handled by Tk.  Hence this method could always return NO.  But if we did
+ * that then we would not see the menu flash when an accelerator is pressed.
+ * The flash is a useful visual indicator. It turns out that the flash is an
+ * undocumented side effect of calling the super method for
+ * performKeyEquivalent.  The super method also calls the NSMenuItem's action
+ * method - tkMenuItemInvoke in our case.  This is also not documented.
+ *
+ * To enable the flash we set up a flag that tells the action method to do
+ * nothing, because it is being called by an accelerator. The override below
+ * sets the flag and then calls super. See ticket [ead70921a9].
  */
 
+static Bool runMenuCommand = true;
 - (BOOL)performKeyEquivalent:(NSEvent *)event
 {
-    if (event.characters.length == 0) {
+    if ([[event characters] length] == 0) {
 	return NO;
     }
-    return [super performKeyEquivalent:event];
+    runMenuCommand = false;
+    /* Make the menu flash and call tkMenuItemInvoke. */
+    return [super performKeyEquivalent: event];
 }
 @end
 
@@ -239,8 +250,8 @@ TKBackgroundLoop *backgroundLoop = nil;
 
 - (id) initWithTkMenu: (TkMenu *) tkMenu
 {
-    NSString *title = [[NSString alloc] initWithUTF8String:
-	    Tk_PathName(tkMenu->tkwin)];
+    NSString *title = [[TKNSString alloc] initWithTclUtfBytes:
+	    Tk_PathName(tkMenu->tkwin) length:-1];
 
     self = [self initWithTitle:title];
     [title release];
@@ -332,11 +343,19 @@ TKBackgroundLoop *backgroundLoop = nil;
 
 - (void) tkMenuItemInvoke: (id) sender
 {
+    if (!runMenuCommand) {
+
+    	/*
+    	 * We are being called for a menu accelerator.  Tk will handle it.
+    	 * Just update the runMenuCommand flag.
+    	 */
+
+    	runMenuCommand = true;
+    	return;
+    }
+
     /*
-     * With the delegate matching key equivalents, when a menu action is sent
-     * in response to a key equivalent, the sender is the whole menu and not the
-     * specific menu item.  We use this to ignore key equivalents for Tk
-     * menus (as Tk handles them directly via bindings).
+     * We are being called for an actual menu item selection; run the command.
      */
 
     if ([sender isKindOfClass:[NSMenuItem class]]) {
@@ -346,12 +365,9 @@ TKBackgroundLoop *backgroundLoop = nil;
 
 	if (menuPtr && mePtr) {
 	    Tcl_Interp *interp = menuPtr->interp;
-
 	    Tcl_Preserve(interp);
 	    Tcl_Preserve(menuPtr);
-
 	    int result = TkInvokeMenu(interp, menuPtr, mePtr->index);
-
 	    if (result != TCL_OK && result != TCL_CONTINUE &&
 		    result != TCL_BREAK) {
 		Tcl_AddErrorInfo(interp, "\n    (menu invoke)");
@@ -493,8 +509,13 @@ TKBackgroundLoop *backgroundLoop = nil;
     }
     backgroundLoop = [[TKBackgroundLoop alloc] init];
     [backgroundLoop start];
-    //TkMacOSXClearMenubarActive();
-    //TkMacOSXPreprocessMenu();
+
+    /*
+     * Make sure that we can run commands when actually using a menu.
+     * See [412b80fcaf].
+     */
+
+    runMenuCommand = true;
 }
 
 - (void) menuEndTracking: (NSNotification *) notification
@@ -736,14 +757,9 @@ TkpConfigureMenuEntry(
     [menuItem setImage:image];
     if ((!image || mePtr->compound != COMPOUND_NONE) && mePtr->labelPtr &&
 	    mePtr->labelLength) {
-	Tcl_DString ds;
-	Tcl_DStringInit(&ds);
-	Tcl_UtfToUniCharDString(Tcl_GetString(mePtr->labelPtr),
-				mePtr->labelLength, &ds);
-	title = [[NSString alloc]
-		    initWithCharacters:(unichar *)Tcl_DStringValue(&ds)
-				length:Tcl_DStringLength(&ds)>>1];
-	Tcl_DStringFree(&ds);
+	title = [[TKNSString alloc]
+		    initWithTclUtfBytes:Tcl_GetString(mePtr->labelPtr)
+				length:mePtr->labelLength];
 	if ([title hasSuffix:@"..."]) {
 	    title = [NSString stringWithFormat:@"%@%C",
 		    [title substringToIndex:[title length] - 3], 0x2026];
@@ -814,7 +830,7 @@ TkpConfigureMenuEntry(
 	    if ([submenu supermenu] && [menuItem submenu] != submenu) {
 		/*
 		 * This happens during a clone, where the parent menu is
-		 * cloned before its children, so just ignore this temprary
+		 * cloned before its children, so just ignore this temporary
 		 * setting, it will be changed shortly (c.f. tkMenu.c
 		 * CloneMenu())
 		 */
@@ -943,10 +959,10 @@ TkpPostMenu(
     NSMenuItem *item = nil;
     NSPoint location = NSMakePoint(x, TkMacOSXZeroScreenHeight() - y);
 
-    inPostMenu = 1;
+    inPostMenu = true;
     result = TkPreprocessMenu(menuPtr);
     if (result != TCL_OK) {
-        inPostMenu = 0;
+        inPostMenu = false;
         return result;
     }
     if (itemIndex >= numItems) {
@@ -968,7 +984,7 @@ TkpPostMenu(
     [menu popUpMenuPositioningItem:item
 			atLocation:[win tkConvertPointFromScreen:location]
 			    inView:view];
-    inPostMenu = 0;
+    inPostMenu = false;
     return TCL_OK;
 }
 
@@ -1011,13 +1027,6 @@ TkpPostTearoffMenu(
     int vRootX, vRootY, vRootWidth, vRootHeight;
     int result;
 
-    if (index >= (int) menuPtr->numEntries) {
-	index = menuPtr->numEntries - 1;
-    }
-    if (index >= 0) {
-	y -= menuPtr->entries[index]->y;
-    }
-
     TkActivateMenuEntry(menuPtr, -1);
     TkRecomputeMenu(menuPtr);
     result = TkPostCommand(menuPtr);
@@ -1032,6 +1041,18 @@ TkpPostTearoffMenu(
 
     if (menuPtr->tkwin == NULL) {
     	return TCL_OK;
+    }
+
+    /*
+     * Adjust the menu y position so that the specified entry will be located
+     * at the given coordinates.
+     */
+
+    if (index >= menuPtr->numEntries) {
+	index = menuPtr->numEntries - 1;
+    }
+    if (index >= 0) {
+	y -= menuPtr->entries[index]->y;
     }
 
     /*
@@ -1309,7 +1330,7 @@ ParseAccelerator(
     if (ch) {
 	return [[[NSString alloc] initWithCharacters:&ch length:1] autorelease];
     } else {
-	return [[[[NSString alloc] initWithUTF8String:accel] autorelease]
+	return [[[[TKNSString alloc] initWithTclUtfBytes:accel length:-1] autorelease]
 		lowercaseString];
     }
 }
@@ -1319,7 +1340,7 @@ ParseAccelerator(
  *
  * ModifierCharWidth --
  *
- *	Helper mesuring width of command char in given font.
+ *	Helper measuring width of command char in given font.
  *
  * Results:
  *	Width of command char.
@@ -1369,7 +1390,7 @@ TkpComputeStandardMenuGeometry(
 {
     NSSize menuSize;
     Tk_Font tkfont, menuFont;
-    Tk_FontMetrics menuMetrics, entryMetrics, *fmPtr;
+    Tk_FontMetrics menuMetrics, entryMetrics;
     int modifierCharWidth, menuModifierCharWidth;
     int x, y, modifierWidth, labelWidth, indicatorSpace;
     int windowWidth, windowHeight, accelWidth;
@@ -1424,12 +1445,10 @@ TkpComputeStandardMenuGeometry(
 	}
 	if (mePtr->fontPtr == NULL) {
 	    tkfont = menuFont;
-	    fmPtr = &menuMetrics;
 	    modifierCharWidth = menuModifierCharWidth;
 	} else {
 	    tkfont = Tk_GetFontFromObj(menuPtr->tkwin, mePtr->fontPtr);
 	    Tk_GetFontMetrics(tkfont, &entryMetrics);
-	    fmPtr = &entryMetrics;
 	    modifierCharWidth = ModifierCharWidth(tkfont);
 	}
 	accelWidth = modifierWidth = indicatorSpace = 0;
@@ -1600,26 +1619,26 @@ void
 MenuSelectEvent(
     TkMenu *menuPtr)		/* the menu we have selected. */
 {
-    XVirtualEvent event;
+    union {XEvent general; XVirtualEvent virt;} event;
 
-    bzero(&event, sizeof(XVirtualEvent));
-    event.type = VirtualEvent;
-    event.serial = LastKnownRequestProcessed(menuPtr->display);
-    event.send_event = false;
-    event.display = menuPtr->display;
-    event.event = Tk_WindowId(menuPtr->tkwin);
-    event.root = XRootWindow(menuPtr->display, 0);
-    event.subwindow = None;
-    event.time = TkpGetMS();
-    XQueryPointer(NULL, None, NULL, NULL, &event.x_root, &event.y_root, NULL,
-	    NULL, &event.state);
-    event.same_screen = true;
-    event.name = Tk_GetUid("MenuSelect");
+    bzero(&event, sizeof(event));
+    event.virt.type = VirtualEvent;
+    event.virt.serial = LastKnownRequestProcessed(menuPtr->display);
+    event.virt.send_event = false;
+    event.virt.display = menuPtr->display;
+    event.virt.event = Tk_WindowId(menuPtr->tkwin);
+    event.virt.root = XRootWindow(menuPtr->display, 0);
+    event.virt.subwindow = None;
+    event.virt.time = TkpGetMS();
+    XQueryPointer(NULL, None, NULL, NULL, &event.virt.x_root, &event.virt.y_root, NULL,
+	    NULL, &event.virt.state);
+    event.virt.same_screen = true;
+    event.virt.name = Tk_GetUid("MenuSelect");
     Tk_MakeWindowExist(menuPtr->tkwin);
     if (Tcl_GetServiceMode() != TCL_SERVICE_NONE) {
-	Tk_HandleEvent((XEvent *) &event);
+	Tk_HandleEvent(&event.general);
     } else {
-	Tk_QueueWindowEvent((XEvent *) &event, TCL_QUEUE_TAIL);
+	Tk_QueueWindowEvent(&event.general, TCL_QUEUE_TAIL);
     }
 }
 

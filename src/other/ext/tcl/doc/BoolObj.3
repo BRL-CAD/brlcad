@@ -15,15 +15,15 @@ Tcl_NewBooleanObj, Tcl_SetBooleanObj, Tcl_GetBooleanFromObj \- store/retrieve bo
 \fB#include <tcl.h>\fR
 .sp
 Tcl_Obj *
-\fBTcl_NewBooleanObj\fR(\fIboolValue\fR)
+\fBTcl_NewBooleanObj\fR(\fIintValue\fR)
 .sp
-\fBTcl_SetBooleanObj\fR(\fIobjPtr, boolValue\fR)
+\fBTcl_SetBooleanObj\fR(\fIobjPtr, intValue\fR)
 .sp
 int
-\fBTcl_GetBooleanFromObj\fR(\fIinterp, objPtr, boolPtr\fR)
+\fBTcl_GetBooleanFromObj\fR(\fIinterp, objPtr, intPtr\fR)
 .SH ARGUMENTS
-.AS Tcl_Interp boolValue in/out
-.AP int boolValue in
+.AS Tcl_Interp intValue in/out
+.AP int intValue in
 Integer value to be stored as a boolean value in a Tcl_Obj.
 .AP Tcl_Obj *objPtr in/out
 Points to the Tcl_Obj in which to store, or from which to
@@ -32,7 +32,7 @@ retrieve a boolean value.
 If a boolean value cannot be retrieved,
 an error message is left in the interpreter's result value
 unless \fIinterp\fR is NULL.
-.AP int *boolPtr out
+.AP int *intPtr out
 Points to place where \fBTcl_GetBooleanFromObj\fR
 stores the boolean value (0 or 1) obtained from \fIobjPtr\fR.
 .BE
@@ -41,33 +41,33 @@ stores the boolean value (0 or 1) obtained from \fIobjPtr\fR.
 .PP
 These procedures are used to pass boolean values to and from
 Tcl as Tcl_Obj's.  When storing a boolean value into a Tcl_Obj,
-any non-zero integer value in \fIboolValue\fR is taken to be
+any non-zero integer value in \fIintValue\fR is taken to be
 the boolean value \fB1\fR, and the integer value \fB0\fR is
 taken to be the boolean value \fB0\fR.
 .PP
 \fBTcl_NewBooleanObj\fR creates a new Tcl_Obj, stores the boolean
-value \fIboolValue\fR in it, and returns a pointer to the new Tcl_Obj.
+value \fIintValue\fR in it, and returns a pointer to the new Tcl_Obj.
 The new Tcl_Obj has reference count of zero.
 .PP
 \fBTcl_SetBooleanObj\fR accepts \fIobjPtr\fR, a pointer to
 an existing Tcl_Obj, and stores in the Tcl_Obj \fI*objPtr\fR
-the boolean value \fIboolValue\fR.  This is a write operation
+the boolean value \fIintValue\fR.  This is a write operation
 on \fI*objPtr\fR, so \fIobjPtr\fR must be unshared.  Attempts to
 write to a shared Tcl_Obj will panic.  A successful write
-of \fIboolValue\fR into \fI*objPtr\fR implies the freeing of
+of \fIintValue\fR into \fI*objPtr\fR implies the freeing of
 any former value stored in \fI*objPtr\fR.
 .PP
 \fBTcl_GetBooleanFromObj\fR attempts to retrieve a boolean value
 from the value stored in \fI*objPtr\fR.
 If \fIobjPtr\fR holds a string value recognized by \fBTcl_GetBoolean\fR,
 then the recognized boolean value is written at the address given
-by \fIboolPtr\fR.
+by \fIintPtr\fR.
 If \fIobjPtr\fR holds any value recognized as
 a number by Tcl, then if that value is zero a 0 is written at
-the address given by \fIboolPtr\fR and if that
-value is non-zero a 1 is written at the address given by \fIboolPtr\fR.
+the address given by \fIintPtr\fR and if that
+value is non-zero a 1 is written at the address given by \fIintPtr\fR.
 In all cases where a value is written at the address given
-by \fIboolPtr\fR, \fBTcl_GetBooleanFromObj\fR returns \fBTCL_OK\fR.
+by \fIintPtr\fR, \fBTcl_GetBooleanFromObj\fR returns \fBTCL_OK\fR.
 If the value of \fIobjPtr\fR does not meet any of the conditions
 above, then \fBTCL_ERROR\fR is returned and an error message is
 left in the interpreter's result unless \fIinterp\fR is NULL.

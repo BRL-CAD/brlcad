@@ -155,7 +155,7 @@ namespace eval ::tcl::test::main {
 	puts -nonewline $f {puts [string equal \u20ac }
 	puts $f "\u20ac]"
 	close $f
-	catch {set f [open "|[list [interpreter] -encoding ascii script]" r]}
+	catch {set f [open "|[list [interpreter] -encoding iso8859-1 script]" r]}
     } -body {
 	read $f
     } -cleanup {

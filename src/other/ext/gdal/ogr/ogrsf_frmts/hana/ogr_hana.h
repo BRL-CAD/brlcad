@@ -41,7 +41,8 @@
 
 class OGRHanaDataSource;
 
-namespace OGRHANA {
+namespace OGRHANA
+{
 
 constexpr static int DEFAULT_BATCH_SIZE = 4 * 1024 * 1024;
 constexpr static int DEFAULT_STRING_SIZE = 256;
@@ -63,7 +64,7 @@ struct AttributeColumnDescription
     CPLString name;
     short type = -1;
     CPLString typeName;
-    int length = 0; // the same type as in OGRFieldDefn.GetWidth
+    int length = 0;  // the same type as in OGRFieldDefn.GetWidth
     unsigned short precision = 0;
     unsigned short scale = 0;
     bool isFeatureID = false;
@@ -98,9 +99,32 @@ struct ColumnTypeInfo
 
 struct Binary
 {
-    GByte* data;
+    GByte *data;
     std::size_t size;
 };
+
+enum class BatchOperation
+{
+    NONE = 0,
+    DELETE = 1,
+    INSERT = 2,
+    UPDATE = 4,
+    ALL = 7
+};
+
+inline BatchOperation operator&(BatchOperation a, BatchOperation b)
+{
+    return static_cast<BatchOperation>(
+        static_cast<std::underlying_type<BatchOperation>::type>(a) &
+        static_cast<std::underlying_type<BatchOperation>::type>(b));
+}
+
+inline BatchOperation operator|(BatchOperation a, BatchOperation b)
+{
+    return static_cast<BatchOperation>(
+        static_cast<std::underlying_type<BatchOperation>::type>(a) |
+        static_cast<std::underlying_type<BatchOperation>::type>(b));
+}
 
 /************************************************************************/
 /*                             OGRHanaLayer                             */
@@ -108,9 +132,9 @@ struct Binary
 
 class OGRHanaLayer : public OGRLayer
 {
-protected:
-    OGRHanaDataSource* dataSource_ = nullptr;
-    OGRFeatureDefn* featureDefn_ = nullptr;
+  protected:
+    OGRHanaDataSource *dataSource_ = nullptr;
+    OGRFeatureDefn *featureDefn_ = nullptr;
     GIntBig nextFeatureId_ = 0;
     std::vector<AttributeColumnDescription> attrColumns_;
     std::vector<GeometryColumnDescription> geomColumns_;
@@ -128,43 +152,47 @@ protected:
     virtual OGRErr Initialize() = 0;
 
     void ClearQueryStatement();
-    const CPLString& GetQueryStatement();
+    const CPLString &GetQueryStatement();
     void BuildWhereClause();
     void EnsureBufferCapacity(std::size_t size);
-    virtual OGRFeature* GetNextFeatureInternal();
+    virtual OGRFeature *GetNextFeatureInternal();
     int GetGeometryColumnSrid(int columnIndex) const;
-    virtual OGRFeature* ReadFeature();
-    OGRErr InitFeatureDefinition(
-        const CPLString& schemaName,
-        const CPLString& tableName,
-        const CPLString& query,
-        const CPLString& featureDefName);
-    void ReadGeometryExtent(int geomField, OGREnvelope* extent);
+    virtual OGRFeature *ReadFeature();
+    OGRErr InitFeatureDefinition(const CPLString &schemaName,
+                                 const CPLString &tableName,
+                                 const CPLString &query,
+                                 const CPLString &featureDefName);
+    void ReadGeometryExtent(int geomField, OGREnvelope *extent);
 
-public:
-    explicit OGRHanaLayer(OGRHanaDataSource* datasource);
+  public:
+    explicit OGRHanaLayer(OGRHanaDataSource *datasource);
     ~OGRHanaLayer() override;
+
+    virtual bool IsTableLayer() const
+    {
+        return false;
+    }
 
     void ResetReading() override;
 
-    OGRErr GetExtent(OGREnvelope* extent, int force = TRUE) override
+    OGRErr GetExtent(OGREnvelope *extent, int force = TRUE) override
     {
         return GetExtent(0, extent, force);
     }
-    OGRErr GetExtent(int geomField, OGREnvelope* extent, int force) override;
+    OGRErr GetExtent(int geomField, OGREnvelope *extent, int force) override;
     GIntBig GetFeatureCount(int force) override;
-    OGRFeature* GetNextFeature() override;
-    const char* GetFIDColumn() override;
-    OGRFeatureDefn* GetLayerDefn() override;
-    const char* GetName() override;
+    OGRFeature *GetNextFeature() override;
+    const char *GetFIDColumn() override;
+    OGRFeatureDefn *GetLayerDefn() override;
+    const char *GetName() override;
 
-    OGRErr SetAttributeFilter( const char *pszQuery ) override;
+    OGRErr SetAttributeFilter(const char *pszQuery) override;
 
-    void SetSpatialFilter(OGRGeometry* poGeom) override
+    void SetSpatialFilter(OGRGeometry *poGeom) override
     {
         SetSpatialFilter(0, poGeom);
     }
-    void SetSpatialFilter(int iGeomField, OGRGeometry* poGeom) override;
+    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
 };
 
 /************************************************************************/
@@ -173,7 +201,7 @@ public:
 
 class OGRHanaTableLayer final : public OGRHanaLayer
 {
-private:
+  private:
     CPLString schemaName_;
     CPLString tableName_;
     bool updateMode_ = false;
@@ -184,6 +212,7 @@ private:
     odbc::PreparedStatementRef deleteFeatureStmt_;
     odbc::PreparedStatementRef updateFeatureStmt_;
 
+    bool allowAutoFIDOnCreateFeature_ = false;
     std::size_t batchSize_ = DEFAULT_BATCH_SIZE;
     std::size_t defaultStringSize_ = DEFAULT_STRING_SIZE;
     bool launderColumnNames_ = true;
@@ -192,59 +221,83 @@ private:
     bool parseFunctionsChecked_ = false;
 
     OGRErr Initialize() override;
-    std::pair<OGRErr, std::size_t> ExecuteUpdate(
-        odbc::PreparedStatement& statement, bool withBatch, const char* functionName);
+    std::pair<OGRErr, std::size_t>
+    ExecuteUpdate(odbc::PreparedStatement &statement, bool withBatch,
+                  const char *functionName);
     odbc::PreparedStatementRef CreateDeleteFeatureStatement();
     odbc::PreparedStatementRef CreateInsertFeatureStatement(bool withFID);
     odbc::PreparedStatementRef CreateUpdateFeatureStatement();
     void ResetPreparedStatements();
-    OGRErr SetStatementParameters(
-        odbc::PreparedStatement& statement,
-        OGRFeature* feature,
-        bool newFeature,
-        bool withFID,
-        const char* functionName);
+    OGRErr SetStatementParameters(odbc::PreparedStatement &statement,
+                                  OGRFeature *feature, bool newFeature,
+                                  bool withFID, const char *functionName);
 
-    void FlushPendingFeatures();
-    bool HasPendingFeatures() const;
-    ColumnTypeInfo GetColumnTypeInfo(const OGRFieldDefn& field) const;
-    OGRErr GetGeometryWkb(OGRFeature* feature, int fieldIndex, Binary& binary);
+    OGRErr ExecutePendingBatches(BatchOperation op);
+    bool HasPendingBatches() const;
+    ColumnTypeInfo GetColumnTypeInfo(const OGRFieldDefn &field) const;
+    OGRErr GetGeometryWkb(OGRFeature *feature, int fieldIndex, Binary &binary);
     void ClearBatches();
+    void ColumnsChanged();
 
-public:
-    OGRHanaTableLayer(
-        OGRHanaDataSource* datasource,
-        const char* schemaName,
-        const char* tableName,
-        int update);
+  public:
+    OGRHanaTableLayer(OGRHanaDataSource *datasource, const char *schemaName,
+                      const char *tableName, int update);
     ~OGRHanaTableLayer() override;
+
+    bool IsTableLayer() const override
+    {
+        return true;
+    }
 
     OGRErr DropTable();
 
     void ResetReading() override;
-    const char* GetName() override { return tableName_.c_str(); }
-    int TestCapability(const char* capabilities) override;
+    OGRErr GetExtent(OGREnvelope *extent, int force = TRUE) override
+    {
+        return GetExtent(0, extent, force);
+    }
+    OGRErr GetExtent(int geomField, OGREnvelope *extent, int force) override;
+    GIntBig GetFeatureCount(int force) override;
+    const char *GetName() override
+    {
+        return tableName_.c_str();
+    }
+    int TestCapability(const char *capabilities) override;
 
-    OGRErr ICreateFeature(OGRFeature* feature) override;
+    OGRErr ICreateFeature(OGRFeature *feature) override;
     OGRErr DeleteFeature(GIntBig nFID) override;
-    OGRErr ISetFeature(OGRFeature* feature) override;
+    OGRErr ISetFeature(OGRFeature *feature) override;
 
-    OGRErr CreateField(OGRFieldDefn* field, int approxOK = TRUE) override;
-    OGRErr CreateGeomField(
-        OGRGeomFieldDefn* geomField, int approxOK = TRUE) override;
+    OGRErr CreateField(OGRFieldDefn *field, int approxOK = TRUE) override;
+    OGRErr CreateGeomField(OGRGeomFieldDefn *geomField,
+                           int approxOK = TRUE) override;
     OGRErr DeleteField(int field) override;
-    OGRErr AlterFieldDefn(
-        int field, OGRFieldDefn* newFieldDefn, int flagsIn) override;
+    OGRErr AlterFieldDefn(int field, OGRFieldDefn *newFieldDefn,
+                          int flagsIn) override;
 
-    void SetBatchSize(std::size_t size) { batchSize_ = size; }
-    void SetDefaultStringSize(std::size_t size) { defaultStringSize_ = size; }
-    void SetLaunderFlag(bool flag) { launderColumnNames_ = flag; }
-    void SetCustomColumnTypes(const char* columnTypes);
-    void SetPrecisionFlag(bool flag) { preservePrecision_ = flag; }
+    void SetBatchSize(std::size_t size)
+    {
+        batchSize_ = size;
+    }
+    void SetDefaultStringSize(std::size_t size)
+    {
+        defaultStringSize_ = size;
+    }
+    void SetLaunderFlag(bool flag)
+    {
+        launderColumnNames_ = flag;
+    }
+    void SetCustomColumnTypes(const char *columnTypes);
+    void SetPrecisionFlag(bool flag)
+    {
+        preservePrecision_ = flag;
+    }
 
     OGRErr StartTransaction() override;
     OGRErr CommitTransaction() override;
     OGRErr RollbackTransaction() override;
+
+    void FlushPendingBatches(bool commit);
 };
 
 /************************************************************************/
@@ -255,13 +308,14 @@ class OGRHanaResultLayer final : public OGRHanaLayer
 {
     OGRErr Initialize() override;
 
-public:
-    explicit OGRHanaResultLayer(OGRHanaDataSource* datasource, const char* query);
+  public:
+    explicit OGRHanaResultLayer(OGRHanaDataSource *datasource,
+                                const char *query);
 
-    int TestCapability(const char* capabilities) override;
+    int TestCapability(const char *capabilities) override;
 };
 
-} /* end of OGRHANA namespace */
+}  // namespace OGRHANA
 
 /************************************************************************/
 /*                          OGRHanaDataSource                          */
@@ -269,12 +323,12 @@ public:
 
 class OGRHanaDataSource final : public GDALDataset
 {
-private:
+  private:
     friend class OGRHANA::OGRHanaLayer;
     friend class OGRHANA::OGRHanaTableLayer;
     friend class OGRHANA::OGRHanaResultLayer;
 
-    using SrsCache = std::unordered_map<int, OGRSpatialReference*>;
+    using SrsCache = std::unordered_map<int, OGRSpatialReference *>;
 
     CPLString schemaName_;
     bool updateMode_ = false;
@@ -286,82 +340,79 @@ private:
     odbc::ConnectionRef conn_;
     int majorVersion_ = 0;
 
-private:
-    void CreateTable(
-        const CPLString& tableName,
-        const CPLString& fidName,
-        const CPLString& fidType,
-        const CPLString& geomColumnName,
-        OGRwkbGeometryType geomType,
-        bool geomColumnNullable,
-        const CPLString& geomColumnIndexType,
-        int geomSrid);
+  private:
+    void CreateTable(const CPLString &tableName, const CPLString &fidName,
+                     const CPLString &fidType, const CPLString &geomColumnName,
+                     OGRwkbGeometryType geomType, bool geomColumnNullable,
+                     const CPLString &geomColumnIndexType, int geomSrid);
 
-protected:
-    std::pair<CPLString, CPLString> FindSchemaAndTableNames(const char* query);
-    int FindLayerByName(const char* name);
-    CPLString FindSchemaName(const char* objectName);
+  protected:
+    std::pair<CPLString, CPLString> FindSchemaAndTableNames(const char *query);
+    int FindLayerByName(const char *name);
+    CPLString FindSchemaName(const char *objectName);
 
     odbc::StatementRef CreateStatement();
-    odbc::PreparedStatementRef PrepareStatement(const char* sql);
+    odbc::PreparedStatementRef PrepareStatement(const char *sql);
     void Commit();
-    void ExecuteSQL(const char* sql);
+    void ExecuteSQL(const CPLString &sql);
 
-    OGRSpatialReference* GetSrsById(int srid);
-    int GetSrsId(OGRSpatialReference* srs);
+    OGRSpatialReference *GetSrsById(int srid);
+    int GetSrsId(OGRSpatialReference *srs);
     bool IsSrsRoundEarth(int srid);
     bool HasSrsPlanarEquivalent(int srid);
     OGRErr GetQueryColumns(
-        const CPLString& schemaName,
-        const CPLString& query,
-        std::vector<OGRHANA::ColumnDescription>& columnDescriptions);
-    std::vector<CPLString> GetTablePrimaryKeys(
-        const char* schemaName, const char* tableName);
+        const CPLString &schemaName, const CPLString &query,
+        std::vector<OGRHANA::ColumnDescription> &columnDescriptions);
+    std::vector<CPLString> GetTablePrimaryKeys(const char *schemaName,
+                                               const char *tableName);
 
-    void InitializeLayers(
-        const char* schemaName,
-        const char* tableNames);
-    void CreateSpatialReferenceSystem(
-        const OGRSpatialReference& srs,
-        int srid,
-        const char* authorityName,
-        int authorityCode,
-        const CPLString& wkt,
-        const CPLString& proj4);
+    void InitializeLayers(const char *schemaName, const char *tableNames);
+    void CreateSpatialReferenceSystem(const OGRSpatialReference &srs, int srid,
+                                      const char *authorityName,
+                                      int authorityCode, const CPLString &wkt,
+                                      const CPLString &proj4);
 
-    bool IsTransactionStarted() const { return isTransactionStarted_; }
+    std::pair<OGRErr, CPLString> LaunderName(const char *name);
 
-    void CreateParseArrayFunctions(const char* schemaName);
-    bool ParseArrayFunctionsExist(const char* schemaName);
+    bool IsTransactionStarted() const
+    {
+        return isTransactionStarted_;
+    }
 
-public:
-    static const char* GetPrefix();
-    static const char* GetLayerCreationOptions();
-    static const char* GetOpenOptions();
-    static const char* GetSupportedDataTypes();
+    void CreateParseArrayFunctions(const char *schemaName);
+    bool ParseArrayFunctionsExist(const char *schemaName);
 
-public:
+  public:
+    static const char *GetPrefix();
+    static const char *GetLayerCreationOptions();
+    static const char *GetOpenOptions();
+    static const char *GetSupportedDataTypes();
+
+  public:
     OGRHanaDataSource();
     ~OGRHanaDataSource() override;
 
-    int Open(const char* newName, char** options, int update);
+    int Open(const char *newName, char **options, int update);
 
-    int GetMajorVersion() const { return majorVersion_; }
+    int GetMajorVersion() const
+    {
+        return majorVersion_;
+    }
     OGRErr DeleteLayer(int index) override;
-    int GetLayerCount() override { return static_cast<int>(layers_.size()); }
-    OGRLayer* GetLayer(int index) override;
-    OGRLayer* GetLayerByName(const char*) override;
-    OGRLayer* ICreateLayer(
-        const char* layerName,
-        OGRSpatialReference* srs = nullptr,
-        OGRwkbGeometryType geomType = wkbUnknown,
-        char** options = nullptr) override;
-    int TestCapability(const char* capabilities) override;
+    int GetLayerCount() override
+    {
+        return static_cast<int>(layers_.size());
+    }
+    OGRLayer *GetLayer(int index) override;
+    OGRLayer *GetLayerByName(const char *) override;
+    OGRLayer *ICreateLayer(const char *layerName,
+                           OGRSpatialReference *srs = nullptr,
+                           OGRwkbGeometryType geomType = wkbUnknown,
+                           char **options = nullptr) override;
+    int TestCapability(const char *capabilities) override;
 
-    OGRLayer* ExecuteSQL(
-        const char* sqlCommand,
-        OGRGeometry* spatialFilter,
-        const char* dialect) override;
+    OGRLayer *ExecuteSQL(const char *sqlCommand, OGRGeometry *spatialFilter,
+                         const char *dialect) override;
 
     OGRErr StartTransaction(int bForce = FALSE) override;
     OGRErr CommitTransaction() override;

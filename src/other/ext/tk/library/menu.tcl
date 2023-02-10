@@ -168,7 +168,7 @@ bind Menu <<PrevLine>> {
 bind Menu <<NextLine>> {
     tk::MenuDownArrow %W
 }
-bind Menu <KeyPress> {
+bind Menu <Key> {
     tk::TraverseWithinMenu %W %A
     break
 }
@@ -177,7 +177,7 @@ bind Menu <KeyPress> {
 # implement keyboard menu traversal.
 
 if {[tk windowingsystem] eq "x11"} {
-    bind all <Alt-KeyPress> {
+    bind all <Alt-Key> {
 	tk::TraverseToMenu %W %A
     }
 
@@ -185,7 +185,7 @@ if {[tk windowingsystem] eq "x11"} {
 	tk::FirstMenu %W
     }
 } else {
-    bind Menubutton <Alt-KeyPress> {
+    bind Menubutton <Alt-Key> {
 	tk::TraverseToMenu %W %A
     }
 
@@ -285,7 +285,7 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
     GenerateMenuSelect $menu
     update idletasks
 
-    if {[catch {PostMenubuttonMenu $w $menu} msg opt]} {
+    if {[catch {PostMenubuttonMenu $w $menu $x $y} msg opt]} {
 	# Error posting menu (e.g. bogus -postcommand). Unpost it and
 	# reflect the error.
 	MenuUnpost {}
@@ -1138,7 +1138,7 @@ proc ::tk::MenuFindName {menu s} {
 # side.  On other platforms the entry is centered over the button.
 
 if {[tk windowingsystem] eq "aqua"} {
-    proc ::tk::PostMenubuttonMenu {button menu} {
+    proc ::tk::PostMenubuttonMenu {button menu cx cy} {
 	set entry ""
 	if {[$button cget -indicatoron]} {
 	    set entry [MenuFindName $menu [$button cget -text]]
@@ -1163,14 +1163,14 @@ if {[tk windowingsystem] eq "aqua"} {
 	    right {
 		incr x [winfo width $button]
 	    }
-	    default {
+	    default {  # flush
 		incr x [expr {[winfo width $button] - [winfo reqwidth $menu] - 5}]
 	    }
 	}
 	PostOverPoint $menu $x $y $entry
     }
 } else {
-    proc ::tk::PostMenubuttonMenu {button menu} {
+    proc ::tk::PostMenubuttonMenu {button menu cx cy} {
 	set entry ""
 	if {[$button cget -indicatoron]} {
 	    set entry [MenuFindName $menu [$button cget -text]]
@@ -1201,22 +1201,24 @@ if {[tk windowingsystem] eq "aqua"} {
 		set entry {}
 	    }
 	    left {
-		# It is not clear why this is needed.
-		if {[tk windowingsystem] eq "win32"} {
-		    incr x [expr {-4 - [winfo reqwidth $button] / 2}]
-		}
 		incr x [expr {- [winfo reqwidth $menu]}]
 	    }
 	    right {
 		incr x [expr {[winfo width $button]}]
 	    }
-	    default {
-		if {[$button cget -indicatoron]} {
-		    incr x [expr {([winfo width $button] - \
-				   [winfo reqwidth $menu])/ 2}]
-		} else {
-		    incr y [winfo height $button]
-		}
+	    default {  # flush
+                if {[$button cget -indicatoron]} {
+                    if {$cx ne ""} {
+                        set x [expr {$cx - [winfo reqwidth $menu] / 2}]
+                        set l [font metrics [$menu cget -font] -linespace]
+                        set y [expr {$cy - $l/2 - 2}]
+                    } else {
+                        incr x [expr {([winfo width $button] - \
+				[winfo reqwidth $menu])/ 2}]
+                    }
+                } else {
+                    incr y [winfo height $button]
+                }
 	    }
 	}
 	PostOverPoint $menu $x $y $entry
@@ -1242,7 +1244,8 @@ if {[tk windowingsystem] ne "win32"} {
     proc ::tk::PostOverPoint {menu x y {entry {}}}  {
 	if {$entry ne ""} {
 	    $menu post $x $y $entry
-	    if {[$menu entrycget $entry -state] ne "disabled"} {
+	    if {[$menu type $entry] ni {separator tearoff} &&
+		[$menu entrycget $entry -state] ne "disabled"} {
 		$menu activate $entry
 		GenerateMenuSelect $menu
 	    }

@@ -6,7 +6,7 @@
  *	the "wm" command and passes geometry information to the window manager.
  *
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
- * Copyright 2001-2009, Apple Inc.
+ * Copyright (c) 2001-2009, Apple Inc.
  * Copyright (c) 2006-2009 Daniel A. Steffen <das@users.sourceforge.net>
  * Copyright (c) 2010 Kevin Walzer/WordTech Communications LLC.
  * Copyright (c) 2017-2019 Marc Culler.
@@ -362,7 +362,6 @@ static void             RemoveTransient(TkWindow *winPtr);
 @end
 
 @implementation TKWindow: NSWindow
-@synthesize mouseInResizeArea = _mouseInResizeArea;
 @synthesize tkWindow = _tkWindow;
 @end
 
@@ -746,74 +745,6 @@ TkWmNewWindow(
 /*
  *----------------------------------------------------------------------
  *
- * TkMacOSXHandleMapOrUnmap --
- *
- *      The mechanism used by a geometry manager to propogate the information
- *      about which of its content widgets are mapped is to call Tk_MapWindow
- *      or Tk_UnmapNotify.  Those functions generate MapNotify or UnmapNotify
- *      events and then handle them immediately.  Other platforms use
- *      Tk_HandleEvent to do this.  But that does not work correctly on macOS
- *      due to the fact that the calls to Tk_MapNotify or Tk_UnmapNotify can
- *      occur in display procedures which are being run in the drawRect method
- *      of a TKContentView. The events will be processed after drawRect
- *      returns, but they need to be processed immediately in some cases.
-
- *      This function operates as a macOS alternative to Tk_HandleEvent, for
- *      processing MapNotify or UnmapNotify events only.  It is called by
- *      Tk_MapWindow, Tk_UnmapWindow, TkWmMapWindow and TkWmUnmapWindow.
- *      Rather than using Tk_HandleEvent it installs a filter which restricts
- *      to the MapNotify or UnmapNotify events, it queues the event and then
- *      processes window events with the filter installed.  This allows the
- *      event to be handled immediately even from within the drawRect method.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Handles a MapNotify or UnMapNotify event.
- *
- *----------------------------------------------------------------------
- */
-static Tk_RestrictAction
-MapUnmapRestrictProc(
-    ClientData arg,
-    XEvent *eventPtr)
-{
-    return (eventPtr->type==MapNotify || eventPtr->type==UnmapNotify ?
-	    TK_PROCESS_EVENT : TK_DEFER_EVENT);
-}
-
-MODULE_SCOPE
-void TkMacOSXHandleMapOrUnmap(
-    Tk_Window tkwin,
-    XEvent *event)
-{
-    ClientData oldArg;
-    Tk_RestrictProc *oldProc;
-    TkWindow *winPtr = (TkWindow *) tkwin;
-    const Tk_GeomMgr *geomMgrPtr = winPtr->geomMgrPtr;
-
-    /*
-     * Sadly, this approach does not work with the "text" geometry manager.
-     * The mysterious unexplained crash elicited by textDisp-5.2 occurs.  So we
-     * have to check for the "text" manager and revert to using Tk_HandleEvent
-     * in that case.  Hopefully this can be removed when the revised text
-     * widget is in place.
-     */
-
-    if (geomMgrPtr && strcmp(geomMgrPtr->name, "text") == 0) {
-	Tk_HandleEvent(event);
-	return;
-    }
-    oldProc = Tk_RestrictEvents(MapUnmapRestrictProc, NULL, &oldArg);
-    Tk_QueueWindowEvent(event, TCL_QUEUE_TAIL);
-    while (Tcl_DoOneEvent(TCL_WINDOW_EVENTS|TCL_DONT_WAIT)) {}
-    Tk_RestrictEvents(oldProc, oldArg, &oldArg);
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * TkWmMapWindow --
  *
  *	This procedure is invoked to map a top-level window. This module gets
@@ -917,7 +848,7 @@ TkWmMapWindow(
     event.xmap.type = MapNotify;
     event.xmap.event = winPtr->window;
     event.xmap.override_redirect = winPtr->atts.override_redirect;
-    TkpHandleMapOrUnmap((Tk_Window)winPtr, &event);
+    Tk_HandleEvent(&event);
 }
 
 /*
@@ -953,7 +884,7 @@ TkWmUnmapWindow(
     event.xunmap.from_configure = false;
     winPtr->flags &= ~TK_MAPPED;
     XUnmapWindow(winPtr->display, winPtr->window);
-    TkpHandleMapOrUnmap((Tk_Window)winPtr, &event);
+    Tk_HandleEvent(&event);
 }
 
 /*
@@ -979,6 +910,7 @@ TkWmDeadWindow(
 {
     WmInfo *wmPtr = winPtr->wmInfoPtr, *wmPtr2;
     TKWindow *deadNSWindow;
+    TkWindow *dragTarget = [NSApp tkDragTarget];
 
     if (wmPtr == NULL) {
 	return;
@@ -1051,13 +983,41 @@ TkWmDeadWindow(
 	ckfree(transientPtr);
     }
 
+    deadNSWindow = (TKWindow *)wmPtr->window;
+
+    /*
+     * Remove references to the Tk window from the mouse event processing
+     * state which is recorded in the NSApplication object.
+     */
+
+    if (dragTarget && winPtr == TkMacOSXGetHostToplevel(dragTarget)->winPtr) {
+	[NSApp setTkDragTarget:nil];
+    }
+    if (winPtr == [NSApp tkPointerWindow]) {
+	NSWindow *w;
+	NSPoint mouse = [NSEvent mouseLocation];
+	[NSApp setTkPointerWindow:nil];
+	for (w in [NSApp orderedWindows]) {
+	    if (w == deadNSWindow) {
+		continue;
+	    }
+	    if (NSPointInRect(mouse, [w frame])) {
+		TkWindow *winPtr2 = TkMacOSXGetTkWindow(w);
+		int x = mouse.x, y = TkMacOSXZeroScreenHeight() - mouse.y;
+		[NSApp setTkPointerWindow:winPtr2];
+		Tk_UpdatePointer((Tk_Window) winPtr2, x, y,
+				 [NSApp tkButtonState]);
+		break;
+	    }
+	}
+    }
+
     /*
      * Unregister the NSWindow and remove all references to it from the Tk
      * data structures.  If the NSWindow is a child, disassociate it from
      * the parent.  Then close and release the NSWindow.
      */
 
-    deadNSWindow = (TKWindow *)wmPtr->window;
     if (deadNSWindow && !Tk_IsEmbedded(winPtr)) {
 	NSWindow *parent = [deadNSWindow parentWindow];
 	[deadNSWindow setTkWindow:None];
@@ -1094,6 +1054,13 @@ TkWmDeadWindow(
 	 * preventing zombies is to set the key window to nil.
 	 */
 
+
+	/*
+	 * Fix bug 5692042764:
+	 * set tkEventTarget to NULL when there is no window to send Tk events to.
+	 */
+	TkWindow *newTkEventTarget = NULL;
+
 	for (NSWindow *w in [NSApp orderedWindows]) {
 	    TkWindow *winPtr2 = TkMacOSXGetTkWindow(w);
 	    BOOL isOnScreen;
@@ -1106,9 +1073,12 @@ TkWmDeadWindow(
 			  wmPtr2->hints.initial_state != WithdrawnState);
 	    if (w != deadNSWindow && isOnScreen && [w canBecomeKeyWindow]) {
 		[w makeKeyAndOrderFront:NSApp];
+		newTkEventTarget = TkMacOSXGetTkWindow(w);
 		break;
 	    }
 	}
+
+	[NSApp setTkEventTarget:newTkEventTarget];
 
 	/*
 	 * Prevent zombies on systems with a TouchBar.
@@ -1120,7 +1090,6 @@ TkWmDeadWindow(
 	}
 	[deadNSWindow close];
 	[deadNSWindow release];
-	[NSApp _resetAutoreleasePool];
 
 #if DEBUG_ZOMBIES > 1
 	fprintf(stderr, "================= Pool dump ===================\n");
@@ -2627,7 +2596,7 @@ WmIconphotoCmd(
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tk_Image tk_icon;
-    int width, height, isDefault = 0;
+    int width, height;
     NSImage *newIcon = NULL;
 
     if (objc < 4) {
@@ -2641,7 +2610,6 @@ WmIconphotoCmd(
      */
 
     if (strcmp(Tcl_GetString(objv[3]), "-default") == 0) {
-	isDefault = 1;
 	if (objc == 4) {
 	    Tcl_WrongNumArgs(interp, 2, objv,
 		    "window ?-default? image1 ?image2 ...?");
@@ -2827,7 +2795,7 @@ WmIconwindowCmd(
 	     */
 
 	    TkpWmSetState(oldIcon, WithdrawnState);
-	    [win orderOut:nil];
+	    [win orderOut:NSApp];
     	    [win setExcludedFromWindowsMenu:YES];
 	    wmPtr3->iconFor = NULL;
 	}
@@ -3770,7 +3738,7 @@ WmTransientCmd(
 	}
 
 	for (w = containerPtr; w != NULL && w->wmInfoPtr != NULL;
-		w = (TkWindow *)w->wmInfoPtr->container) {
+	    w = (TkWindow *)w->wmInfoPtr->container) {
 	    if (w == winPtr) {
 		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		    "setting \"%s\" as master creates a transient/master cycle",
@@ -4819,14 +4787,12 @@ Tk_TopCoordsToWindow(
     TkWindow *nextPtr;		/* Coordinates of highest child found so far
 				 * that contains point. */
     int x, y;			/* Coordinates in winPtr. */
-    Window *children;		/* Children of winPtr, or NULL. */
 
     winPtr = (TkWindow *)tkwin;
     x = rootX;
     y = rootY;
     while (1) {
 	nextPtr = NULL;
-	children = NULL;
 
 	/*
 	 * Container windows cannot have children. So if it is a container,
@@ -5453,7 +5419,7 @@ TkSetWMName(
 	return;
     }
 
-    NSString *title = [[NSString alloc] initWithUTF8String:titleUid];
+    NSString *title = [[TKNSString alloc] initWithTclUtfBytes:titleUid length:-1];
     [TkMacOSXGetNSWindowForDrawable(winPtr->window) setTitle:title];
     [title release];
 }
@@ -6001,7 +5967,7 @@ WmWinTabbingId(
  *	allows you to get or set the appearance for the NSWindow associated
  *	with a Tk Window.  The syntax is:
  *
- *	    tk::unsupported::MacWindowStyle tabbingid window ?newAppearance?
+ *	    tk::unsupported::MacWindowStyle appearance window ?newAppearance?
  *
  *      Allowed appearance names are "aqua", "darkaqua", and "auto".
  *
@@ -6067,9 +6033,9 @@ WmWinAppearance(
     if (objc == 4) {
 	int index;
 	if (Tcl_GetIndexFromObjStruct(interp, objv[3], appearanceStrings,
-                sizeof(char *), "appearancename", 0, &index) != TCL_OK) {
-            return TCL_ERROR;
-        }
+		sizeof(char *), "appearancename", 0, &index) != TCL_OK) {
+	    return TCL_ERROR;
+	}
 	switch ((enum appearances) index) {
 	case APPEARANCE_AQUA:
 	    win.appearance = [NSAppearance appearanceNamed:
@@ -6244,7 +6210,7 @@ TkMacOSXMakeRealWindowExist(
     [window setContentView:contentView];
     [contentView release];
     [window setDelegate:NSApp];
-    [window setAcceptsMouseMovedEvents:YES];
+    [window setAcceptsMouseMovedEvents:NO];
     [window setReleasedWhenClosed:NO];
     if (styleMask & NSUtilityWindowMask) {
 	[(TKPanel*)window setFloatingPanel:YES];
@@ -6645,6 +6611,7 @@ TkpChangeFocus(
     	}
 	if (win && [win canBecomeKeyWindow]) {
 	    [win makeKeyAndOrderFront:NSApp];
+	    [NSApp setTkEventTarget:TkMacOSXGetTkWindow(win)];
 	}
     }
 

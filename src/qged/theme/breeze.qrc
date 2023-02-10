@@ -73,7 +73,6 @@
     <file>dark/right_arrow_hover.svg</file>
     <file>dark/shade.svg</file>
     <file>dark/sizegrip.svg</file>
-    <file>dark.qss</file>
     <file>dark/transparent.svg</file>
     <file>dark/trash.svg</file>
     <file>dark/undock.svg</file>
@@ -87,5 +86,7 @@
     <file>dark/vmovetoolbar.svg</file>
     <file>dark/vseptoolbar.svg</file>
     <file>dark/window_close.svg</file>
+    <file>dark.qss</file>
   </qresource>
 </RCC>
+

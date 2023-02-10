@@ -52,8 +52,10 @@ TIFFCleanup(TIFF* tif)
 	(*tif->tif_cleanup)(tif);
 	TIFFFreeDirectory(tif);
 
-	if (tif->tif_dirlist)
-		_TIFFfree(tif->tif_dirlist);
+	if (tif->tif_dirlistoff)
+		_TIFFfree(tif->tif_dirlistoff);
+	if (tif->tif_dirlistdirn)
+		_TIFFfree(tif->tif_dirlistdirn);
 
 	/*
          * Clean up client info links.
@@ -82,7 +84,10 @@ TIFFCleanup(TIFF* tif)
 			TIFFField *fld = tif->tif_fields[i];
 			if (fld->field_name != NULL) {
 				if (fld->field_bit == FIELD_CUSTOM &&
-					strncmp("Tag ", fld->field_name, 4) == 0) {
+					/* caution: tif_fields[i] must not be the beginning of a fields-array.
+					 *          Otherwise the following tags are also freed with the first free().
+					 */
+					TIFFFieldIsAnonymous(fld)) {
 					_TIFFfree(fld->field_name);
 					_TIFFfree(fld);
 				}

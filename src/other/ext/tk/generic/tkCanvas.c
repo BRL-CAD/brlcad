@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1991-1994 The Regents of the University of California.
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
- * Copyright (c) 1998-1999 by Scriptics Corporation.
+ * Copyright (c) 1998-1999 Scriptics Corporation.
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -261,13 +261,13 @@ static void		CanvasSetOrigin(TkCanvas *canvasPtr,
 			    int xOrigin, int yOrigin);
 static void		CanvasUpdateScrollbars(TkCanvas *canvasPtr);
 static int		CanvasWidgetCmd(ClientData clientData,
-			    Tcl_Interp *interp, int argc,
-			    Tcl_Obj *const *argv);
+			    Tcl_Interp *interp, int objc,
+			    Tcl_Obj *const *objv);
 static void		CanvasWorldChanged(ClientData instanceData);
 static int		ConfigureCanvas(Tcl_Interp *interp,
-			    TkCanvas *canvasPtr, int argc,
-			    Tcl_Obj *const *argv, int flags);
-static void		DestroyCanvas(char *memPtr);
+			    TkCanvas *canvasPtr, int objc,
+			    Tcl_Obj *const *objv, int flags);
+static void		DestroyCanvas(void *memPtr);
 static void		DisplayCanvas(ClientData clientData);
 static void		DoItem(Tcl_Obj *accumObj,
 			    Tk_Item *itemPtr, Tk_Uid tag);
@@ -279,14 +279,14 @@ static int		FindItems(Tcl_Interp *interp, TkCanvas *canvasPtr,
 			    Tcl_Obj *newTagObj, int first);
 #else /* USE_OLD_TAG_SEARCH */
 static int		FindItems(Tcl_Interp *interp, TkCanvas *canvasPtr,
-			    int argc, Tcl_Obj *const *argv,
+			    int objc, Tcl_Obj *const *objv,
 			    Tcl_Obj *newTagObj, int first,
 			    TagSearch **searchPtrPtr);
 #endif /* USE_OLD_TAG_SEARCH */
 static int		FindArea(Tcl_Interp *interp, TkCanvas *canvasPtr,
-			    Tcl_Obj *const *argv, Tk_Uid uid, int enclosed);
+			    Tcl_Obj *const *objv, Tk_Uid uid, int enclosed);
 static double		GridAlign(double coord, double spacing);
-static const char**	TkGetStringsFromObjs(int argc, Tcl_Obj *const *objv);
+static const char**	TkGetStringsFromObjs(int objc, Tcl_Obj *const *objv);
 static void		InitCanvas(void);
 #ifdef USE_OLD_TAG_SEARCH
 static Tk_Item *	NextItem(TagSearch *searchPtr);
@@ -635,8 +635,8 @@ int
 Tk_CanvasObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
-    int argc,			/* Number of arguments. */
-    Tcl_Obj *const argv[])	/* Argument objects. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tk_Window tkwin = (Tk_Window)clientData;
     TkCanvas *canvasPtr;
@@ -646,12 +646,12 @@ Tk_CanvasObjCmd(
 	InitCanvas();
     }
 
-    if (argc < 2) {
-	Tcl_WrongNumArgs(interp, 1, argv, "pathName ?-option value ...?");
+    if (objc < 2) {
+	Tcl_WrongNumArgs(interp, 1, objv, "pathName ?-option value ...?");
 	return TCL_ERROR;
     }
 
-    newWin = Tk_CreateWindowFromPath(interp,tkwin,Tcl_GetString(argv[1]),NULL);
+    newWin = Tk_CreateWindowFromPath(interp,tkwin,Tcl_GetString(objv[1]),NULL);
     if (newWin == NULL) {
 	return TCL_ERROR;
     }
@@ -751,7 +751,7 @@ Tk_CanvasObjCmd(
 	    CanvasBindProc, canvasPtr);
     Tk_CreateSelHandler(canvasPtr->tkwin, XA_PRIMARY, XA_STRING,
 	    CanvasFetchSelection, canvasPtr, XA_STRING);
-    if (ConfigureCanvas(interp, canvasPtr, argc-2, argv+2, 0) != TCL_OK) {
+    if (ConfigureCanvas(interp, canvasPtr, objc-2, objv+2, 0) != TCL_OK) {
 	goto error;
     }
 
@@ -963,7 +963,7 @@ CanvasWidgetCmd(
 		goto done;
 	    }
 	} else {
-    	    object = (ClientData) searchPtr->expr->uid;
+	    object = (void *)searchPtr->expr->uid;
 	}
 #endif /* USE_OLD_TAG_SEARCH */
 
@@ -2064,14 +2064,11 @@ CanvasWidgetCmd(
 	}
 
 	args = TkGetStringsFromObjs(objc, objv);
-	type = Tk_GetScrollInfo(interp, objc, args, &fraction, &count);
+	type = Tk_GetScrollInfoObj(interp, objc, objv, &fraction, &count);
 	if (args != NULL) {
 	    ckfree(args);
 	}
 	switch (type) {
-	case TK_SCROLL_ERROR:
-	    result = TCL_ERROR;
-	    goto done;
 	case TK_SCROLL_MOVETO:
 	    newX = canvasPtr->scrollX1 - canvasPtr->inset
 		    + (int) (fraction * (canvasPtr->scrollX2
@@ -2089,6 +2086,9 @@ CanvasWidgetCmd(
 			* (Tk_Width(canvasPtr->tkwin) - 2*canvasPtr->inset));
 	    }
 	    break;
+	default:
+	    result = TCL_ERROR;
+	    goto done;
 	}
 	CanvasSetOrigin(canvasPtr, newX, canvasPtr->yOrigin);
 	break;
@@ -2110,14 +2110,11 @@ CanvasWidgetCmd(
 	}
 
 	args = TkGetStringsFromObjs(objc, objv);
-	type = Tk_GetScrollInfo(interp, objc, args, &fraction, &count);
+	type = Tk_GetScrollInfoObj(interp, objc, objv, &fraction, &count);
 	if (args != NULL) {
 	    ckfree(args);
 	}
 	switch (type) {
-	case TK_SCROLL_ERROR:
-	    result = TCL_ERROR;
-	    goto done;
 	case TK_SCROLL_MOVETO:
 	    newY = canvasPtr->scrollY1 - canvasPtr->inset + (int) (
 		    fraction*(canvasPtr->scrollY2-canvasPtr->scrollY1) + 0.5);
@@ -2134,6 +2131,9 @@ CanvasWidgetCmd(
 			* (Tk_Height(canvasPtr->tkwin) - 2*canvasPtr->inset));
 	    }
 	    break;
+	default:
+	    result = TCL_ERROR;
+	    goto done;
 	}
 	CanvasSetOrigin(canvasPtr, canvasPtr->xOrigin, newY);
 	break;
@@ -2168,9 +2168,9 @@ CanvasWidgetCmd(
 
 static void
 DestroyCanvas(
-    char *memPtr)		/* Info about canvas widget. */
+    void *memPtr)		/* Info about canvas widget. */
 {
-    TkCanvas *canvasPtr = (TkCanvas *) memPtr;
+    TkCanvas *canvasPtr = (TkCanvas *)memPtr;
     Tk_Item *itemPtr;
 #ifndef USE_OLD_TAG_SEARCH
     TagSearchExpr *expr, *next;
@@ -4248,7 +4248,7 @@ DoItem(
 
 	itemPtr->tagSpace += 5;
 	newTagPtr = (Tk_Uid *)ckalloc(itemPtr->tagSpace * sizeof(Tk_Uid));
-	memcpy((void *) newTagPtr, itemPtr->tagPtr,
+	memcpy(newTagPtr, itemPtr->tagPtr,
 		itemPtr->numTags * sizeof(Tk_Uid));
 	if (itemPtr->tagPtr != itemPtr->staticTagSpace) {
 	    ckfree(itemPtr->tagPtr);
@@ -5185,17 +5185,17 @@ CanvasDoEvent(
     if (numObjects <= NUM_STATIC) {
 	objectPtr = staticObjects;
     } else {
-	objectPtr = ckalloc(numObjects * sizeof(ClientData));
+	objectPtr = (void **)ckalloc(numObjects * sizeof(void *));
     }
 #ifdef USE_OLD_TAG_SEARCH
-    objectPtr[0] = (ClientData) Tk_GetUid("all");
+    objectPtr[0] = (void *)Tk_GetUid("all");
 #else /* USE_OLD_TAG_SEARCH */
-    objectPtr[0] = (ClientData) searchUids->allUid;
+    objectPtr[0] = (void *)searchUids->allUid;
 #endif /* USE_OLD_TAG_SEARCH */
-    for (i = itemPtr->numTags-1; i >= 0; i--) {
-	objectPtr[i+1] = (ClientData) itemPtr->tagPtr[i];
+    for (i = itemPtr->numTags - 1; i >= 0; i--) {
+	objectPtr[i+1] = (void *)itemPtr->tagPtr[i];
     }
-    objectPtr[itemPtr->numTags+1] = itemPtr;
+    objectPtr[itemPtr->numTags + 1] = itemPtr;
 
 #ifndef USE_OLD_TAG_SEARCH
     /*

@@ -763,5 +763,188 @@ apply_filter_with_options(struct gcv_context *context, const struct gcv_filter *
         </tgroup>
       </table>
     </section>
+
+    <section>
+      <title>Open Asset Import Library Reader</title>
+      <para>The Open Asset Import Library (assimp) is an open source library integrated into GCV,
+      capable of loading and converting geometry from 45 3D file-formats.
+      </para>
+      <table frame='none'>
+        <title>Conversion extensions supported by Asset Import Library reader</title>
+        <tgroup cols='3'>
+	  <colspec colwidth="8%"/>
+	  <colspec colwidth="10%"/>
+          <tbody>
+            <row>   <!-- 1 -->
+              <entry>.3d</entry>
+              <entry>.gltf / .glb (1.0)</entry>
+	      <entry>.obj</entry>
+            </row>
+	    <row>   <!-- 2 -->
+              <entry>.3ds</entry>
+              <entry>.gltf (2.0)</entry>
+	      <entry>.off</entry>
+            </row>
+	    <row>   <!-- 3 -->
+              <entry>.3mf</entry>
+              <entry>.hmp</entry>
+	      <entry>.ogex</entry>
+            </row>
+	    <row>   <!-- 4 -->
+              <entry>.ac</entry>
+              <entry>.ifc</entry>
+	      <entry>.ply</entry>
+            </row>
+	    <row>   <!-- 5 -->
+              <entry>.ac3d</entry>
+              <entry>.lwo</entry>
+	      <entry>.pmx</entry>
+            </row>
+	    <row>   <!-- 6 -->
+              <entry>.acc</entry>
+              <entry>.lws</entry>
+	      <entry>.q3o</entry>
+            </row>
+	    <row>   <!-- 7 -->
+              <entry>.ase</entry>
+              <entry>.lxo</entry>
+	      <entry>.q3s</entry>
+            </row>
+	    <row>   <!-- 8 -->
+              <entry>.b3d</entry>
+              <entry>.md2</entry>
+	      <entry>.raw</entry>
+            </row>
+	    <row>   <!-- 9 -->
+              <entry>.blend</entry>
+              <entry>.md3</entry>
+	      <entry>.sib</entry>
+            </row>
+	    <row>   <!-- 10 -->
+              <entry>.bvh</entry>
+              <entry>.md5</entry>
+	      <entry>.smd</entry>
+            </row>
+	    <row>   <!-- 11 -->
+              <entry>.cms</entry>
+              <entry>.mdc</entry>
+	      <entry>.stl</entry>
+            </row>
+	    <row>   <!-- 12 -->
+              <entry>.cob</entry>
+              <entry>.mdl</entry>
+	      <entry>.x</entry>
+            </row>
+	    <row>   <!-- 13 -->
+              <entry>.dae</entry>
+              <entry>.mesh / .mesh.xml</entry>
+	      <entry>.x3d</entry>
+            </row>
+	    <row>   <!-- 14 -->
+              <entry>.dxf</entry>
+              <entry>.ms3d</entry>
+	      <entry>.xgl</entry>
+            </row>
+	    <row>   <!-- 15 -->
+              <entry>.fbx</entry>
+              <entry>.nff</entry>
+	      <entry>.zgl</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <table frame='none'>
+        <title>Asset Import Library reader options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--starting-ident=<replaceable>number</replaceable></literal></entry>
+              <entry>Specify the starting ident for the regions created. The default is <literal>1000</literal>. This number will be incremented for each region, unless <literal>--constant-ident</literal> is specified.</entry>
+            </row>
+            <row>
+              <entry><literal>--constant-ident</literal></entry>
+              <entry>Specify that the starting ident should remain constant.</entry>
+            </row>
+            <row>
+              <entry><literal>--material=<replaceable>code</replaceable></literal></entry>
+              <entry>Specify the material code that will be assigned to all created regions (the default is <literal>1</literal>).</entry>
+            </row>
+            <row>
+              <entry><literal>--format=<replaceable>file_fmt</replaceable></literal></entry>
+              <entry>Specify the file format for conversion. By default, this is inferred from the file extension.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <example>
+        <title>Specifying the Asset Import reader</title>
+	<para>NOTE: As the Asset Import library handles many formats, some of which are also handled by other conversion methods, 
+	it currently must be explicitly called to invoke. The format itself is then inferred from the files extension.</para>
+<screen>
+$ <userinput>gcv --input-format=assetimport input_file.ext output_file.ext</userinput>
+</screen>
+      </example>
+    </section>
+
+    <section>
+      <title>Open Asset Import Library Writer</title>
+      <para>The Open Asset Import Library (assimp) is an open source library integrated into GCV,
+      capable of exporting to 15 different 3D file-formats.
+      </para>
+      <table frame='none'>
+        <title>Conversion extensions supported by Asset Import Library writer</title>
+        <tgroup cols='3'>
+	  <colspec colwidth="10%"/>
+	  <colspec colwidth="8%"/>
+          <tbody>
+	    <row>   <!-- 1 -->
+              <entry>.3ds</entry>
+              <entry>.fbx</entry>
+	      <entry>.pbrt</entry>
+            </row>
+	    <row>   <!-- 2 -->
+              <entry>.3mf</entry>
+              <entry>.glb</entry>
+	      <entry>.ply</entry>
+            </row>
+	    <row>   <!-- 3 -->
+              <entry>.assbin (assetimport binary)</entry>
+              <entry>.gltf</entry>
+	      <entry>.stl</entry>
+            </row>
+	    <row>   <!-- 4 -->
+              <entry>.assxml (assetimport xml)</entry>
+              <entry>.json</entry>
+	      <entry>.stp</entry>
+            </row>
+	    <row>   <!-- 5 -->
+              <entry>.dae</entry>
+              <entry>.obj</entry>
+	      <entry>.x3d</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <table frame='none'>
+        <title>Asset Import Library writer options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--format=<replaceable>file_fmt</replaceable></literal></entry>
+              <entry>Specify the file format for conversion. By default, this is inferred from the file extension.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <example>
+        <title>Specifying the Asset Import writer</title>
+	<para>
+	    NOTE: As the Asset Import library handles many formats, some of which are also handled by other conversion methods,
+	    it currently must be explicitly called to invoke. The format itself is then inferred from the files extension.</para>
+<screen>
+$ <userinput>gcv --output-format=assetimport input_file.ext output_file.ext</userinput>
+</screen>
+      </example>
+    </section>
   </section>
 </article>

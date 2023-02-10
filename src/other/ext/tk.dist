@@ -468,6 +468,7 @@ library/msgs/en.msg
 library/msgs/en_gb.msg
 library/msgs/eo.msg
 library/msgs/es.msg
+library/msgs/fi.msg
 library/msgs/fr.msg
 library/msgs/hu.msg
 library/msgs/it.msg
@@ -476,6 +477,7 @@ library/msgs/pl.msg
 library/msgs/pt.msg
 library/msgs/ru.msg
 library/msgs/sv.msg
+library/msgs/zh_cn.msg
 library/obsolete.tcl
 library/optMenu.tcl
 library/palette.tcl
@@ -553,6 +555,8 @@ macosx/tkMacOSXEmbed.c
 macosx/tkMacOSXEntry.c
 macosx/tkMacOSXEvent.c
 macosx/tkMacOSXEvent.h
+macosx/tkMacOSXFileTypes.c
+macosx/tkMacOSXFileTypes.h
 macosx/tkMacOSXFont.c
 macosx/tkMacOSXFont.h
 macosx/tkMacOSXHLEvents.c
@@ -768,6 +772,7 @@ win/aclocal.m4
 win/buildall.vc.bat
 win/configure
 win/configure.in
+win/gitmanifest.in
 win/license.terms
 win/makefile.vc
 win/mkd.bat
@@ -861,9 +866,11 @@ win/rmd.bat
 win/rules-ext.vc
 win/rules.vc
 win/stubs.c
+win/svnmanifest.in
 win/targets.vc
 win/tcl.m4
 win/tkConfig.sh.in
+win/tkUuid.h.in
 win/tkWin.h
 win/tkWin32Dll.c
 win/tkWin3d.c

@@ -36,12 +36,11 @@
 #include <cstring>
 
 #include <algorithm>
+#include <limits>
 #include <string>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
-
-CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                           CPLStringList()                            */
@@ -61,11 +60,11 @@ CPLStringList::CPLStringList() = default;
  * of the list of strings which implies responsibility to free them.
  */
 
-CPLStringList::CPLStringList( char **papszListIn, int bTakeOwnership ):
-    CPLStringList()
+CPLStringList::CPLStringList(char **papszListIn, int bTakeOwnership)
+    : CPLStringList()
 
 {
-    Assign( papszListIn, bTakeOwnership );
+    Assign(papszListIn, bTakeOwnership);
 }
 
 /************************************************************************/
@@ -80,11 +79,10 @@ CPLStringList::CPLStringList( char **papszListIn, int bTakeOwnership ):
  * @param papszListIn the NULL terminated list of strings to ingest.
  */
 
-CPLStringList::CPLStringList( CSLConstList papszListIn ):
-    CPLStringList()
+CPLStringList::CPLStringList(CSLConstList papszListIn) : CPLStringList()
 
 {
-    Assign( CSLDuplicate(papszListIn) );
+    Assign(CSLDuplicate(papszListIn));
 }
 
 /************************************************************************/
@@ -92,34 +90,46 @@ CPLStringList::CPLStringList( CSLConstList papszListIn ):
 /************************************************************************/
 
 //! Copy constructor
-CPLStringList::CPLStringList( const CPLStringList &oOther ):
-    CPLStringList()
+CPLStringList::CPLStringList(const CPLStringList &oOther) : CPLStringList()
 
 {
-    Assign( oOther.papszList, FALSE );
+    operator=(oOther);
+}
 
-    // We don't want to just retain a reference to the others list
-    // as we don't want to make assumptions about its lifetime that
-    // might surprise the client developer.
-    MakeOurOwnCopy();
-    bIsSorted = oOther.bIsSorted;
+/************************************************************************/
+/*                           CPLStringList()                            */
+/************************************************************************/
+
+//! Move constructor
+CPLStringList::CPLStringList(CPLStringList &&oOther) : CPLStringList()
+
+{
+    operator=(std::move(oOther));
 }
 
 /************************************************************************/
 /*                             operator=()                              */
 /************************************************************************/
 
-CPLStringList &CPLStringList::operator=( const CPLStringList& oOther )
+CPLStringList &CPLStringList::operator=(const CPLStringList &oOther)
 {
-    if( this != &oOther )
+    if (this != &oOther)
     {
-        Assign( oOther.papszList, FALSE );
+        Assign(oOther.papszList, FALSE);
 
         // We don't want to just retain a reference to the others list
         // as we don't want to make assumptions about its lifetime that
-        // might surprise the client developer.
-        MakeOurOwnCopy();
-        bIsSorted = oOther.bIsSorted;
+        if (!MakeOurOwnCopy())
+        {
+            papszList = nullptr;
+            bOwnList = FALSE;
+            nAllocation = 0;
+            nCount = 0;
+        }
+        else
+        {
+            bIsSorted = oOther.bIsSorted;
+        }
     }
 
     return *this;
@@ -129,9 +139,9 @@ CPLStringList &CPLStringList::operator=( const CPLStringList& oOther )
 /*                             operator=()                              */
 /************************************************************************/
 
-CPLStringList &CPLStringList::operator=( CPLStringList&& oOther )
+CPLStringList &CPLStringList::operator=(CPLStringList &&oOther)
 {
-    if( this != &oOther )
+    if (this != &oOther)
     {
         Clear();
         papszList = oOther.papszList;
@@ -153,11 +163,11 @@ CPLStringList &CPLStringList::operator=( CPLStringList&& oOther )
 /*                             operator=()                              */
 /************************************************************************/
 
-CPLStringList &CPLStringList::operator=( CSLConstList papszListIn )
+CPLStringList &CPLStringList::operator=(CSLConstList papszListIn)
 {
-    if( papszListIn != papszList )
+    if (papszListIn != papszList)
     {
-        Assign( CSLDuplicate(papszListIn) );
+        Assign(CSLDuplicate(papszListIn));
         bIsSorted = false;
     }
 
@@ -184,9 +194,9 @@ CPLStringList::~CPLStringList()
 CPLStringList &CPLStringList::Clear()
 
 {
-    if( bOwnList )
+    if (bOwnList)
     {
-        CSLDestroy( papszList );
+        CSLDestroy(papszList);
         papszList = nullptr;
 
         bOwnList = FALSE;
@@ -212,7 +222,7 @@ CPLStringList &CPLStringList::Clear()
  * @return a reference to the CPLStringList on which it was invoked.
  */
 
-CPLStringList &CPLStringList::Assign( char **papszListIn, int bTakeOwnership )
+CPLStringList &CPLStringList::Assign(char **papszListIn, int bTakeOwnership)
 
 {
     Clear();
@@ -220,10 +230,10 @@ CPLStringList &CPLStringList::Assign( char **papszListIn, int bTakeOwnership )
     papszList = papszListIn;
     bOwnList = CPL_TO_BOOL(bTakeOwnership);
 
-    if( papszList == nullptr || *papszList == nullptr )
+    if (papszList == nullptr || *papszList == nullptr)
         nCount = 0;
     else
-        nCount = -1;      // unknown
+        nCount = -1;  // unknown
 
     nAllocation = 0;
     bIsSorted = FALSE;
@@ -242,16 +252,16 @@ CPLStringList &CPLStringList::Assign( char **papszListIn, int bTakeOwnership )
 int CPLStringList::Count() const
 
 {
-    if( nCount == -1 )
+    if (nCount == -1)
     {
-        if( papszList == nullptr )
+        if (papszList == nullptr)
         {
             nCount = 0;
             nAllocation = 0;
         }
         else
         {
-            nCount = CSLCount( papszList );
+            nCount = CSLCount(papszList);
             nAllocation = std::max(nCount + 1, nAllocation);
         }
     }
@@ -266,19 +276,25 @@ int CPLStringList::Count() const
 /*      Necessary if we are going to modify the list.                   */
 /************************************************************************/
 
-void CPLStringList::MakeOurOwnCopy()
+bool CPLStringList::MakeOurOwnCopy()
 
 {
-    if( bOwnList )
-        return;
+    if (bOwnList)
+        return true;
 
-    if( papszList == nullptr )
-        return;
+    if (papszList == nullptr)
+        return true;
 
     Count();
+    char **papszListNew = CSLDuplicate(papszList);
+    if (papszListNew == nullptr)
+    {
+        return false;
+    }
+    papszList = papszListNew;
     bOwnList = true;
-    papszList = CSLDuplicate( papszList );
-    nAllocation = nCount+1;
+    nAllocation = nCount + 1;
+    return true;
 }
 
 /************************************************************************/
@@ -289,28 +305,49 @@ void CPLStringList::MakeOurOwnCopy()
 /*      one more than the target)                                       */
 /************************************************************************/
 
-void CPLStringList::EnsureAllocation( int nMaxList )
+bool CPLStringList::EnsureAllocation(int nMaxList)
 
 {
-    if( !bOwnList )
-        MakeOurOwnCopy();
-
-    if( nAllocation <= nMaxList )
+    if (!bOwnList)
     {
-        nAllocation = std::max(nAllocation * 2 + 20, nMaxList + 1);
-        if( papszList == nullptr )
+        if (!MakeOurOwnCopy())
+            return false;
+    }
+
+    if (papszList == nullptr || nAllocation <= nMaxList)
+    {
+        // we need to be able to store nMaxList+1 as an int,
+        // and allocate (nMaxList+1) * sizeof(char*) bytes
+        if (nMaxList < 0 || nMaxList > std::numeric_limits<int>::max() - 1 ||
+            static_cast<size_t>(nMaxList) >
+                std::numeric_limits<size_t>::max() / sizeof(char *) - 1)
+        {
+            return false;
+        }
+        int nNewAllocation = nMaxList + 1;
+        if (nNewAllocation <= (std::numeric_limits<int>::max() - 20) / 2 /
+                                  static_cast<int>(sizeof(char *)))
+            nNewAllocation = std::max(nNewAllocation * 2 + 20, nMaxList + 1);
+        if (papszList == nullptr)
         {
             papszList = static_cast<char **>(
-                CPLCalloc(nAllocation, sizeof(char*)) );
+                VSI_CALLOC_VERBOSE(nNewAllocation, sizeof(char *)));
             bOwnList = true;
             nCount = 0;
+            if (papszList == nullptr)
+                return false;
         }
         else
         {
-            papszList = static_cast<char **>(
-                CPLRealloc(papszList, nAllocation*sizeof(char*)) );
+            char **papszListNew = static_cast<char **>(VSI_REALLOC_VERBOSE(
+                papszList, nNewAllocation * sizeof(char *)));
+            if (papszListNew == nullptr)
+                return false;
+            papszList = papszListNew;
         }
+        nAllocation = nNewAllocation;
     }
+    return true;
 }
 
 /************************************************************************/
@@ -326,13 +363,17 @@ void CPLStringList::EnsureAllocation( int nMaxList )
  * @param pszNewString the string to add to the list.
  */
 
-CPLStringList &CPLStringList::AddStringDirectly( char *pszNewString )
+CPLStringList &CPLStringList::AddStringDirectly(char *pszNewString)
 
 {
-    if( nCount == -1 )
+    if (nCount == -1)
         Count();
 
-    EnsureAllocation( nCount+1 );
+    if (!EnsureAllocation(nCount + 1))
+    {
+        VSIFree(pszNewString);
+        return *this;
+    }
 
     papszList[nCount++] = pszNewString;
     papszList[nCount] = nullptr;
@@ -354,11 +395,11 @@ CPLStringList &CPLStringList::AddStringDirectly( char *pszNewString )
  * @param pszNewString the string to add to the list.
  */
 
-CPLStringList &CPLStringList::AddString( const char *pszNewString )
+CPLStringList &CPLStringList::AddString(const char *pszNewString)
 
 {
-    char* pszDupString = VSI_STRDUP_VERBOSE(pszNewString);
-    if( pszDupString == nullptr )
+    char *pszDupString = VSI_STRDUP_VERBOSE(pszNewString);
+    if (pszDupString == nullptr)
         return *this;
     return AddStringDirectly(pszDupString);
 }
@@ -377,35 +418,47 @@ CPLStringList &CPLStringList::AddString( const char *pszNewString )
  * @param pszValue the key value to add.
  */
 
-CPLStringList &CPLStringList::AddNameValue( const char *pszKey,
-                                            const char *pszValue )
+CPLStringList &CPLStringList::AddNameValue(const char *pszKey,
+                                           const char *pszValue)
 
 {
-    if( pszKey == nullptr || pszValue==nullptr )
+    if (pszKey == nullptr || pszValue == nullptr)
         return *this;
 
-    MakeOurOwnCopy();
+    if (!MakeOurOwnCopy())
+        return *this;
 
-/* -------------------------------------------------------------------- */
-/*      Format the line.                                                */
-/* -------------------------------------------------------------------- */
-    const size_t nLen = strlen(pszKey)+strlen(pszValue)+2;
-    char *pszLine = static_cast<char *>( CPLMalloc(nLen) );
-    snprintf( pszLine, nLen, "%s=%s", pszKey, pszValue );
+    /* -------------------------------------------------------------------- */
+    /*      Format the line.                                                */
+    /* -------------------------------------------------------------------- */
+    if (strlen(pszKey) >
+            std::numeric_limits<size_t>::max() - strlen(pszValue) ||
+        strlen(pszKey) + strlen(pszValue) >
+            std::numeric_limits<size_t>::max() - 2)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Too big strings in AddNameValue()");
+        return *this;
+    }
+    const size_t nLen = strlen(pszKey) + strlen(pszValue) + 2;
+    char *pszLine = static_cast<char *>(VSI_MALLOC_VERBOSE(nLen));
+    if (pszLine == nullptr)
+        return *this;
+    snprintf(pszLine, nLen, "%s=%s", pszKey, pszValue);
 
-/* -------------------------------------------------------------------- */
-/*      If we don't need to keep the sort order things are pretty       */
-/*      straight forward.                                               */
-/* -------------------------------------------------------------------- */
-    if( !IsSorted() )
-        return AddStringDirectly( pszLine );
+    /* -------------------------------------------------------------------- */
+    /*      If we don't need to keep the sort order things are pretty       */
+    /*      straight forward.                                               */
+    /* -------------------------------------------------------------------- */
+    if (!IsSorted())
+        return AddStringDirectly(pszLine);
 
-/* -------------------------------------------------------------------- */
-/*      Find the proper insertion point.                                */
-/* -------------------------------------------------------------------- */
-    CPLAssert( IsSorted() );
-    const int iKey = FindSortedInsertionPoint( pszLine );
-    InsertStringDirectly( iKey, pszLine );
+    /* -------------------------------------------------------------------- */
+    /*      Find the proper insertion point.                                */
+    /* -------------------------------------------------------------------- */
+    CPLAssert(IsSorted());
+    const int iKey = FindSortedInsertionPoint(pszLine);
+    InsertStringDirectly(iKey, pszLine);
     bIsSorted = true;  // We have actually preserved sort order.
 
     return *this;
@@ -426,36 +479,47 @@ CPLStringList &CPLStringList::AddNameValue( const char *pszKey,
  * @param pszValue the key value to add.
  */
 
-CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
-                                            const char *pszValue )
+CPLStringList &CPLStringList::SetNameValue(const char *pszKey,
+                                           const char *pszValue)
 
 {
-    int iKey = FindName( pszKey );
+    int iKey = FindName(pszKey);
 
-    if( iKey == -1 )
-        return AddNameValue( pszKey, pszValue );
+    if (iKey == -1)
+        return AddNameValue(pszKey, pszValue);
 
     Count();
-    MakeOurOwnCopy();
+    if (!MakeOurOwnCopy())
+        return *this;
 
-    CPLFree( papszList[iKey] );
-    if( pszValue == nullptr ) // delete entry
+    CPLFree(papszList[iKey]);
+    if (pszValue == nullptr)  // delete entry
     {
 
         // shift everything down by one.
         do
         {
-            papszList[iKey] = papszList[iKey+1];
-        }
-        while( papszList[iKey++] != nullptr );
+            papszList[iKey] = papszList[iKey + 1];
+        } while (papszList[iKey++] != nullptr);
 
         nCount--;
     }
     else
     {
-        const size_t nLen = strlen(pszKey)+strlen(pszValue)+2;
-        char *pszLine = static_cast<char *>( CPLMalloc(nLen) );
-        snprintf( pszLine, nLen, "%s=%s", pszKey, pszValue );
+        if (strlen(pszKey) >
+                std::numeric_limits<size_t>::max() - strlen(pszValue) ||
+            strlen(pszKey) + strlen(pszValue) >
+                std::numeric_limits<size_t>::max() - 2)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Too big strings in AddNameValue()");
+            return *this;
+        }
+        const size_t nLen = strlen(pszKey) + strlen(pszValue) + 2;
+        char *pszLine = static_cast<char *>(VSI_MALLOC_VERBOSE(nLen));
+        if (pszLine == nullptr)
+            return *this;
+        snprintf(pszLine, nLen, "%s=%s", pszKey, pszValue);
 
         papszList[iKey] = pszLine;
     }
@@ -477,25 +541,25 @@ CPLStringList &CPLStringList::SetNameValue( const char *pszKey,
  * @param i the index of the list item to return.
  * @return selected entry in the list.
  */
-char *CPLStringList::operator[]( int i )
+char *CPLStringList::operator[](int i)
 
 {
-    if( nCount == -1 )
+    if (nCount == -1)
         Count();
 
-    if( i < 0 || i >= nCount )
+    if (i < 0 || i >= nCount)
         return nullptr;
 
     return papszList[i];
 }
 
-const char *CPLStringList::operator[]( int i ) const
+const char *CPLStringList::operator[](int i) const
 
 {
-    if( nCount == -1 )
+    if (nCount == -1)
         Count();
 
-    if( i < 0 || i >= nCount )
+    if (i < 0 || i >= nCount)
         return nullptr;
 
     return papszList[i];
@@ -526,32 +590,32 @@ char **CPLStringList::StealList()
     return papszRetList;
 }
 
-static int CPLCompareKeyValueString(const char* pszKVa, const char* pszKVb)
+static int CPLCompareKeyValueString(const char *pszKVa, const char *pszKVb)
 {
-    const char* pszItera = pszKVa;
-    const char* pszIterb = pszKVb;
-    while( true )
+    const char *pszItera = pszKVa;
+    const char *pszIterb = pszKVb;
+    while (true)
     {
         char cha = *pszItera;
         char chb = *pszIterb;
-        if( cha == '=' || cha == '\0' )
+        if (cha == '=' || cha == '\0')
         {
-            if( chb == '=' || chb == '\0' )
+            if (chb == '=' || chb == '\0')
                 return 0;
             else
                 return -1;
         }
-        if( chb == '=' || chb == '\0' )
+        if (chb == '=' || chb == '\0')
         {
             return 1;
         }
-        if( cha >= 'a' && cha <= 'z' )
+        if (cha >= 'a' && cha <= 'z')
             cha -= ('a' - 'A');
-        if( chb >= 'a' && chb <= 'z' )
+        if (chb >= 'a' && chb <= 'z')
             chb -= ('a' - 'A');
-        if( cha < chb )
+        if (cha < chb)
             return -1;
-        else if( cha > chb )
+        else if (cha > chb)
             return 1;
         pszItera++;
         pszIterb++;
@@ -568,7 +632,7 @@ static int llCompareStr(const void *a, const void *b)
 {
     return CPLCompareKeyValueString(
         *static_cast<const char **>(const_cast<void *>(a)),
-        *static_cast<const char **>(const_cast<void *>(b)) );
+        *static_cast<const char **>(const_cast<void *>(b)));
 }
 
 /************************************************************************/
@@ -591,10 +655,11 @@ CPLStringList &CPLStringList::Sort()
 
 {
     Count();
-    MakeOurOwnCopy();
+    if (!MakeOurOwnCopy())
+        return *this;
 
-    if( nCount )
-        qsort( papszList, nCount, sizeof(char*), llCompareStr );
+    if (nCount)
+        qsort(papszList, nCount, sizeof(char *), llCompareStr);
     bIsSorted = true;
 
     return *this;
@@ -616,30 +681,30 @@ CPLStringList &CPLStringList::Sort()
  * @return the string list index of this name, or -1 on failure.
  */
 
-int CPLStringList::FindName( const char *pszKey ) const
+int CPLStringList::FindName(const char *pszKey) const
 
 {
-    if( !IsSorted() )
-        return CSLFindName( papszList, pszKey );
+    if (!IsSorted())
+        return CSLFindName(papszList, pszKey);
 
     // If we are sorted, we can do an optimized binary search.
     int iStart = 0;
     int iEnd = nCount - 1;
     size_t nKeyLen = strlen(pszKey);
 
-    while( iStart <= iEnd )
+    while (iStart <= iEnd)
     {
         const int iMiddle = (iEnd + iStart) / 2;
         const char *pszMiddle = papszList[iMiddle];
 
-        if( EQUALN(pszMiddle, pszKey, nKeyLen )
-            && (pszMiddle[nKeyLen] == '=' || pszMiddle[nKeyLen] == ':') )
+        if (EQUALN(pszMiddle, pszKey, nKeyLen) &&
+            (pszMiddle[nKeyLen] == '=' || pszMiddle[nKeyLen] == ':'))
             return iMiddle;
 
-        if( CPLCompareKeyValueString(pszKey, pszMiddle) < 0 )
-            iEnd = iMiddle-1;
+        if (CPLCompareKeyValueString(pszKey, pszMiddle) < 0)
+            iEnd = iMiddle - 1;
         else
-            iStart = iMiddle+1;
+            iStart = iMiddle + 1;
     }
 
     return -1;
@@ -665,15 +730,15 @@ int CPLStringList::FindName( const char *pszKey ) const
  * @return true or false
  */
 
-bool CPLStringList::FetchBool( const char *pszKey, bool bDefault ) const
+bool CPLStringList::FetchBool(const char *pszKey, bool bDefault) const
 
 {
-    const char *pszValue = FetchNameValue( pszKey );
+    const char *pszValue = FetchNameValue(pszKey);
 
-    if( pszValue == nullptr )
+    if (pszValue == nullptr)
         return bDefault;
 
-    return CPLTestBool( pszValue );
+    return CPLTestBool(pszValue);
 }
 
 /************************************************************************/
@@ -696,10 +761,10 @@ bool CPLStringList::FetchBool( const char *pszKey, bool bDefault ) const
  * @return TRUE or FALSE
  */
 
-int CPLStringList::FetchBoolean( const char *pszKey, int bDefault ) const
+int CPLStringList::FetchBoolean(const char *pszKey, int bDefault) const
 
 {
-    return FetchBool( pszKey, CPL_TO_BOOL(bDefault) ) ? TRUE : FALSE;
+    return FetchBool(pszKey, CPL_TO_BOOL(bDefault)) ? TRUE : FALSE;
 }
 
 /************************************************************************/
@@ -719,18 +784,18 @@ int CPLStringList::FetchBoolean( const char *pszKey, int bDefault ) const
  * change on future calls.
  */
 
-const char *CPLStringList::FetchNameValue( const char *pszName ) const
+const char *CPLStringList::FetchNameValue(const char *pszName) const
 
 {
-    const int iKey = FindName( pszName );
+    const int iKey = FindName(pszName);
 
-    if( iKey == -1 )
+    if (iKey == -1)
         return nullptr;
 
-    CPLAssert( papszList[iKey][strlen(pszName)] == '='
-               || papszList[iKey][strlen(pszName)] == ':' );
+    CPLAssert(papszList[iKey][strlen(pszName)] == '=' ||
+              papszList[iKey][strlen(pszName)] == ':');
 
-    return papszList[iKey] + strlen(pszName)+1;
+    return papszList[iKey] + strlen(pszName) + 1;
 }
 
 /************************************************************************/
@@ -749,12 +814,12 @@ const char *CPLStringList::FetchNameValue( const char *pszName ) const
  * @return the corresponding value or the passed default if not found.
  */
 
-const char *CPLStringList::FetchNameValueDef( const char *pszName,
-                                              const char *pszDefault ) const
+const char *CPLStringList::FetchNameValueDef(const char *pszName,
+                                             const char *pszDefault) const
 
 {
-    const char *pszValue = FetchNameValue( pszName );
-    if( pszValue == nullptr )
+    const char *pszValue = FetchNameValue(pszName);
+    if (pszValue == nullptr)
         return pszDefault;
 
     return pszValue;
@@ -795,26 +860,30 @@ const char *CPLStringList::FetchNameValueDef( const char *pszName,
  * heap.
  */
 
-CPLStringList &CPLStringList::InsertStringDirectly( int nInsertAtLineNo,
-                                                    char *pszNewLine )
+CPLStringList &CPLStringList::InsertStringDirectly(int nInsertAtLineNo,
+                                                   char *pszNewLine)
 
 {
-    if( nCount == -1 )
+    if (nCount == -1)
         Count();
 
-    EnsureAllocation( nCount+1 );
-
-    if( nInsertAtLineNo < 0 || nInsertAtLineNo > nCount )
+    if (!EnsureAllocation(nCount + 1))
     {
-        CPLError( CE_Failure, CPLE_AppDefined,
-                  "CPLStringList::InsertString() requested beyond list end." );
+        VSIFree(pszNewLine);
+        return *this;
+    }
+
+    if (nInsertAtLineNo < 0 || nInsertAtLineNo > nCount)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CPLStringList::InsertString() requested beyond list end.");
         return *this;
     }
 
     bIsSorted = false;
 
-    for( int i = nCount; i > nInsertAtLineNo; i-- )
-        papszList[i] = papszList[i-1];
+    for (int i = nCount; i > nInsertAtLineNo; i--)
+        papszList[i] = papszList[i - 1];
 
     papszList[nInsertAtLineNo] = pszNewLine;
     papszList[++nCount] = nullptr;
@@ -829,31 +898,31 @@ CPLStringList &CPLStringList::InsertStringDirectly( int nInsertAtLineNo,
 /*      inserted in order to keep things in sorted order.               */
 /************************************************************************/
 
-int CPLStringList::FindSortedInsertionPoint( const char *pszLine )
+int CPLStringList::FindSortedInsertionPoint(const char *pszLine)
 
 {
-    CPLAssert( IsSorted() );
+    CPLAssert(IsSorted());
 
     int iStart = 0;
     int iEnd = nCount - 1;
 
-    while( iStart <= iEnd )
+    while (iStart <= iEnd)
     {
         const int iMiddle = (iEnd + iStart) / 2;
         const char *pszMiddle = papszList[iMiddle];
 
-        if( CPLCompareKeyValueString(pszLine, pszMiddle) < 0 )
+        if (CPLCompareKeyValueString(pszLine, pszMiddle) < 0)
             iEnd = iMiddle - 1;
         else
             iStart = iMiddle + 1;
     }
 
     iEnd++;
-    CPLAssert( iEnd >= 0 && iEnd <= nCount );
-    CPLAssert( iEnd == 0
-               || CPLCompareKeyValueString(pszLine, papszList[iEnd-1]) >= 0 );
-    CPLAssert( iEnd == nCount
-               || CPLCompareKeyValueString(pszLine, papszList[iEnd]) <= 0 );
+    CPLAssert(iEnd >= 0 && iEnd <= nCount);
+    CPLAssert(iEnd == 0 ||
+              CPLCompareKeyValueString(pszLine, papszList[iEnd - 1]) >= 0);
+    CPLAssert(iEnd == nCount ||
+              CPLCompareKeyValueString(pszLine, papszList[iEnd]) <= 0);
 
     return iEnd;
 }

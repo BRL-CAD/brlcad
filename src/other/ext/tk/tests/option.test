@@ -421,7 +421,7 @@ set opt162val {label {
 }
 set opt162list [split $opt162val \n]
 
-test option-16.2 {ticket 766ef52f3} {
+test option-16.2 {ticket 766ef52f3} -body {
     set option5 [makeFile {} option.file4]
     set file [open $option5 w]
     fconfigure $file -translation crlf
@@ -429,7 +429,9 @@ test option-16.2 {ticket 766ef52f3} {
     close $file
     option read $option5 userDefault
     option get . notok notok
-} $opt162list
+} -cleanup {
+    removeFile $option5
+} -result $opt162list
 
 deleteWindows
 

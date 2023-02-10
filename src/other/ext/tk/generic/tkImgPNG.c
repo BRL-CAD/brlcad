@@ -12,8 +12,8 @@
 
 #include "tkInt.h"
 
-#define	PNG_INT32(a,b,c,d)	\
-	(((long)(a) << 24) | ((long)(b) << 16) | ((long)(c) << 8) | (long)(d))
+#define	PNG_UINT32(a,b,c,d)	\
+	(((unsigned long)(a) << 24) | ((unsigned long)(b) << 16) | ((unsigned long)(c) << 8) | (unsigned long)(d))
 #define	PNG_BLOCK_SZ	1024		/* Process up to 1k at a time. */
 #define PNG_MIN(a, b) (((a) < (b)) ? (a) : (b))
 
@@ -45,35 +45,35 @@ static const int startLine[8] = {
  * are officially deprecated).
  */
 
-#define CHUNK_IDAT	PNG_INT32('I','D','A','T')	/* Pixel data. */
-#define CHUNK_IEND	PNG_INT32('I','E','N','D')	/* End of Image. */
-#define CHUNK_IHDR	PNG_INT32('I','H','D','R')	/* Header. */
-#define CHUNK_PLTE	PNG_INT32('P','L','T','E')	/* Palette. */
+#define CHUNK_IDAT	PNG_UINT32('I','D','A','T')	/* Pixel data. */
+#define CHUNK_IEND	PNG_UINT32('I','E','N','D')	/* End of Image. */
+#define CHUNK_IHDR	PNG_UINT32('I','H','D','R')	/* Header. */
+#define CHUNK_PLTE	PNG_UINT32('P','L','T','E')	/* Palette. */
 
-#define CHUNK_bKGD	PNG_INT32('b','K','G','D')	/* Background Color */
-#define CHUNK_cHRM	PNG_INT32('c','H','R','M')	/* Chroma values. */
-#define CHUNK_gAMA	PNG_INT32('g','A','M','A')	/* Gamma. */
-#define CHUNK_hIST	PNG_INT32('h','I','S','T')	/* Histogram. */
-#define CHUNK_iCCP	PNG_INT32('i','C','C','P')	/* Color profile. */
-#define CHUNK_iTXt	PNG_INT32('i','T','X','t')	/* Internationalized
+#define CHUNK_bKGD	PNG_UINT32('b','K','G','D')	/* Background Color */
+#define CHUNK_cHRM	PNG_UINT32('c','H','R','M')	/* Chroma values. */
+#define CHUNK_gAMA	PNG_UINT32('g','A','M','A')	/* Gamma. */
+#define CHUNK_hIST	PNG_UINT32('h','I','S','T')	/* Histogram. */
+#define CHUNK_iCCP	PNG_UINT32('i','C','C','P')	/* Color profile. */
+#define CHUNK_iTXt	PNG_UINT32('i','T','X','t')	/* Internationalized
 							 * text (comments,
 							 * etc.) */
-#define CHUNK_oFFs	PNG_INT32('o','F','F','s')	/* Image offset. */
-#define CHUNK_pCAL	PNG_INT32('p','C','A','L')	/* Pixel calibration
+#define CHUNK_oFFs	PNG_UINT32('o','F','F','s')	/* Image offset. */
+#define CHUNK_pCAL	PNG_UINT32('p','C','A','L')	/* Pixel calibration
 							 * data. */
-#define CHUNK_pHYs	PNG_INT32('p','H','Y','s')	/* Physical pixel
+#define CHUNK_pHYs	PNG_UINT32('p','H','Y','s')	/* Physical pixel
 							 * dimensions. */
-#define CHUNK_sBIT	PNG_INT32('s','B','I','T')	/* Significant bits */
-#define CHUNK_sCAL	PNG_INT32('s','C','A','L')	/* Physical scale. */
-#define CHUNK_sPLT	PNG_INT32('s','P','L','T')	/* Suggested
+#define CHUNK_sBIT	PNG_UINT32('s','B','I','T')	/* Significant bits */
+#define CHUNK_sCAL	PNG_UINT32('s','C','A','L')	/* Physical scale. */
+#define CHUNK_sPLT	PNG_UINT32('s','P','L','T')	/* Suggested
 							 * palette. */
-#define CHUNK_sRGB	PNG_INT32('s','R','G','B')	/* Standard RGB space
+#define CHUNK_sRGB	PNG_UINT32('s','R','G','B')	/* Standard RGB space
 							 * declaration. */
-#define CHUNK_tEXt	PNG_INT32('t','E','X','t')	/* Plain Latin-1
+#define CHUNK_tEXt	PNG_UINT32('t','E','X','t')	/* Plain Latin-1
 							 * text. */
-#define CHUNK_tIME	PNG_INT32('t','I','M','E')	/* Time stamp. */
-#define CHUNK_tRNS	PNG_INT32('t','R','N','S')	/* Transparency. */
-#define CHUNK_zTXt	PNG_INT32('z','T','X','t')	/* Compressed Latin-1
+#define CHUNK_tIME	PNG_UINT32('t','I','M','E')	/* Time stamp. */
+#define CHUNK_tRNS	PNG_UINT32('t','R','N','S')	/* Transparency. */
+#define CHUNK_zTXt	PNG_UINT32('z','T','X','t')	/* Compressed Latin-1
 							 * text. */
 
 /*
@@ -694,7 +694,7 @@ ReadInt32(
 	return TCL_ERROR;
     }
 
-    *resultPtr = PNG_INT32(p[0], p[1], p[2], p[3]);
+    *resultPtr = PNG_UINT32(p[0], p[1], p[2], p[3]);
 
     return TCL_OK;
 }
@@ -886,7 +886,7 @@ ReadChunkHeader(
 	    return TCL_ERROR;
 	}
 
-	temp = PNG_INT32(pc[0], pc[1], pc[2], pc[3]);
+	temp = PNG_UINT32(pc[0], pc[1], pc[2], pc[3]);
 
 	if (temp > INT_MAX) {
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
@@ -911,7 +911,7 @@ ReadChunkHeader(
 	 * Convert it to a host-order integer for simple comparison.
 	 */
 
-	chunkType = PNG_INT32(pc[0], pc[1], pc[2], pc[3]);
+	chunkType = PNG_UINT32(pc[0], pc[1], pc[2], pc[3]);
 
 	/*
 	 * Check to see if this is a known/supported chunk type. Note that the
@@ -976,7 +976,7 @@ ReadChunkHeader(
 	     */
 
 	    if (!(chunkType & PNG_CF_ANCILLARY)) {
-		if (chunkType & PNG_INT32(128,128,128,128)) {
+		if (chunkType & PNG_UINT32(128,128,128,128)) {
 		    /*
 		     * No nice ASCII conversion; shouldn't happen either, but
 		     * we'll be doubly careful.

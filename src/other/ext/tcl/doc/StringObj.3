@@ -211,7 +211,9 @@ appropriate range.
 characters between \fIfirst\fR and \fIlast\fR (inclusive) in the
 value's Unicode representation.  If the value's Unicode
 representation is invalid, the Unicode representation is regenerated
-from the value's string representation.
+from the value's string representation.  If \fIfirst\fR < 0, then
+the returned string starts at the beginning of the value. If \fIlast\fR < 0,
+then the returned string ends at the end of the value.
 .PP
 \fBTcl_GetCharLength\fR returns the number of characters (as opposed
 to bytes) in the string value.

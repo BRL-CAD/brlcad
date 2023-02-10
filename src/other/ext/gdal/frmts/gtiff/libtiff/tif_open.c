@@ -96,7 +96,6 @@ TIFFClientOpen(
 	assert(sizeof(int32_t) == 4);
 	assert(sizeof(uint64_t) == 8);
 	assert(sizeof(int64_t) == 8);
-	assert(sizeof(tmsize_t)==sizeof(void*));
 	{
 		union{
 			uint8_t a8[2];
@@ -355,7 +354,8 @@ TIFFClientOpen(
 			goto bad;
 		tif->tif_diroff = 0;
 		tif->tif_lastdiroff = 0;
-		tif->tif_dirlist = NULL;
+		tif->tif_dirlistoff = NULL;
+		tif->tif_dirlistdirn = NULL;
 		tif->tif_dirlistsize = 0;
 		tif->tif_dirnumber = 0;
 		return (tif);
@@ -666,6 +666,15 @@ int
 TIFFIsBigEndian(TIFF* tif)
 {
 	return (tif->tif_header.common.tiff_magic == TIFF_BIGENDIAN);
+}
+
+/*
+ * Return nonzero if given file is BigTIFF style.
+ */
+int
+TIFFIsBigTIFF(TIFF *tif)
+{
+	return (tif->tif_header.common.tiff_version == TIFF_VERSION_BIG);
 }
 
 /*

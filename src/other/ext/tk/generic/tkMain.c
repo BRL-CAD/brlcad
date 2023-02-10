@@ -25,11 +25,10 @@ extern int TkCygwinMainEx(int, char **, Tcl_AppInitProc *, Tcl_Interp *);
 static const char DEFAULT_PRIMARY_PROMPT[] = "% ";
 
 /*
- * This file can be compiled on Windows in UNICODE mode, as well as
- * on all other platforms using the native encoding. This is done
- * by using the normal Windows functions like _tcscmp, but on
- * platforms which don't have <tchar.h> we have to translate that
- * to strcmp here.
+ * This file can be compiled on Windows in UNICODE mode, as well as on all
+ * other platforms using the native encoding. This is done by using the normal
+ * Windows functions like _tcscmp, but on platforms which don't have <tchar.h>
+ * we have to translate that to strcmp here.
  */
 #ifdef _WIN32
 #ifdef __cplusplus
@@ -72,7 +71,7 @@ NewNativeObj(
     Tcl_DStringInit(&ds);
     Tcl_WCharToUtfDString(string, wcslen(string), &ds);
 #else
-    Tcl_ExternalToUtfDString(NULL, (char *) string, -1, &ds);
+    Tcl_ExternalToUtfDString(NULL, (char *)string, -1, &ds);
 #endif
     obj = Tcl_NewStringObj(Tcl_DStringValue(&ds), Tcl_DStringLength(&ds));
     Tcl_DStringFree(&ds);
@@ -118,7 +117,7 @@ static int WinIsTty(int fd) {
 extern int		isatty(int fd);
 #endif
 
-typedef struct InteractiveState {
+typedef struct {
     Tcl_Channel input;		/* The standard input channel from which lines
 				 * are read. */
     int tty;			/* Non-zero means standard input is a
@@ -251,19 +250,19 @@ Tk_MainEx(
 	 */
 
 	if ((argc > 3) && (0 == _tcscmp(TEXT("-encoding"), argv[1]))
-		&& (TEXT('-') != argv[3][0])) {
+		&& ('-' != argv[3][0])) {
 	    Tcl_Obj *value = NewNativeObj(argv[2]);
 	    Tcl_SetStartupScript(NewNativeObj(argv[3]), Tcl_GetString(value));
 	    Tcl_DecrRefCount(value);
 	    argc -= 3;
 	    argv += 3;
-	} else if ((argc > 1) && (TEXT('-') != argv[1][0])) {
+	} else if ((argc > 1) && ('-' != argv[1][0])) {
 	    Tcl_SetStartupScript(NewNativeObj(argv[1]), NULL);
 	    argc--;
 	    argv++;
 	} else if ((argc > 2) && (length = _tcslen(argv[1]))
 		&& (length > 1) && (0 == _tcsncmp(TEXT("-file"), argv[1], length))
-		&& (TEXT('-') != argv[2][0])) {
+		&& ('-' != argv[2][0])) {
 	    Tcl_SetStartupScript(NewNativeObj(argv[2]), NULL);
 	    argc -= 2;
 	    argv += 2;
@@ -407,15 +406,15 @@ StdinProc(
 {
     char *cmd;
     int code;
-    int count;
+    int length;
     InteractiveState *isPtr = (InteractiveState *)clientData;
     Tcl_Channel chan = isPtr->input;
     Tcl_Interp *interp = isPtr->interp;
     (void)mask;
 
-    count = Tcl_Gets(chan, &isPtr->line);
+    length = Tcl_Gets(chan, &isPtr->line);
 
-    if ((count == -1) && !isPtr->gotPartial) {
+    if ((length < 0) && !isPtr->gotPartial) {
 	if (isPtr->tty) {
 	    Tcl_Exit(0);
 	} else {

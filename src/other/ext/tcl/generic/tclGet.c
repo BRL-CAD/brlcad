@@ -110,7 +110,7 @@ Tcl_GetDouble(
  *	string.
  *
  * Results:
- *	The return value is normally TCL_OK; in this case *boolPtr will be set
+ *	The return value is normally TCL_OK; in this case *intPtr will be set
  *	to the 0/1 value equivalent to src. If src is improperly formed then
  *	TCL_ERROR is returned and an error message will be left in the
  *	interp's result.
@@ -126,7 +126,7 @@ Tcl_GetBoolean(
     Tcl_Interp *interp,		/* Interpreter used for error reporting. */
     const char *src,		/* String containing one of the boolean values
 				 * 1, 0, true, false, yes, no, on, off. */
-    int *boolPtr)		/* Place to store converted result, which will
+    int *intPtr)		/* Place to store converted result, which will
 				 * be 0 or 1. */
 {
     Tcl_Obj obj;
@@ -142,7 +142,7 @@ Tcl_GetBoolean(
 	Tcl_Panic("invalid sharing of Tcl_Obj on C stack");
     }
     if (code == TCL_OK) {
-	*boolPtr = obj.internalRep.longValue;
+	*intPtr = obj.internalRep.longValue;
     }
     return code;
 }

@@ -5,7 +5,7 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG ALPINE_VERSION=3.15
+ARG ALPINE_VERSION=3.16
 FROM alpine:${ALPINE_VERSION} as builder
 
 # Derived from osgeo/proj by Howard Butler <howard@hobu.co>
@@ -24,46 +24,19 @@ RUN \
 # For PROJ and GDAL
 ARG POPPLER_DEV=poppler-dev
 RUN apk add --no-cache \
-    linux-headers \
+    cmake linux-headers gnu-libiconv-dev \
     curl-dev tiff-dev \
     zlib-dev zstd-dev xz-dev snappy-dev \
-    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev \
+    libjpeg-turbo-dev libpng-dev openjpeg-dev libwebp-dev expat-dev libkml-dev \
     py3-numpy-dev python3-dev py3-setuptools py3-numpy \
     ${POPPLER_DEV} postgresql-dev \
     openexr-dev libheif-dev xerces-c-dev geos-dev cfitsio-dev \
     netcdf-dev hdf5-dev freexl-dev \
-    lz4-dev \
+    lz4-dev blosc-dev libdeflate-dev brotli-dev uriparser-dev \
+    kealib-dev libjxl-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
     && mkdir -p /build_thirdparty/usr/lib
-
-# Build blosc
-ARG BLOSC_VERSION=1.21.0
-RUN if test "${BLOSC_VERSION}" != ""; then ( \
-    apk add --no-cache cmake \
-    && wget -q https://github.com/Blosc/c-blosc/archive/refs/tags/v${BLOSC_VERSION}.tar.gz \
-    && tar xzf v${BLOSC_VERSION}.tar.gz \
-    && rm -f v${BLOSC_VERSION}.tar.gz \
-    && cd c-blosc-${BLOSC_VERSION} \
-    && cmake . \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr \
-        -DBUILD_SHARED=ON \
-        -DBUILD_STATIC=OFF \
-        -DBUILD_BENCHMARKS=OFF \
-        -DBUILD_FUZZERS=OFF \
-        -DBUILD_TESTS=OFF \
-        -DPREFER_EXTERNAL_LZ4=ON \
-        -DPREFER_EXTERNAL_ZLIB=ON \
-        -DPREFER_EXTERNAL_ZSTD=ON \
-        -DDEACTIVATE_SNAPPY=OFF \
-    && make -j$(nproc) \
-    && make install \
-    && cp -P /usr/lib/libblosc*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf c-blosc-${BLOSC_VERSION} \
-    ); fi
 
 # Build szip
 ARG SZIP_VERSION=2.1.1
@@ -101,31 +74,10 @@ RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     && apk del byacc flex portablexdr-dev \
     ); fi
 
-# Build likbkea
-ARG KEA_VERSION=1.4.13
-RUN if test "${KEA_VERSION}" != ""; then ( \
-    apk add --no-cache cmake \
-    && wget -q https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
-    && unzip -q kealib-${KEA_VERSION}.zip \
-    && rm -f kealib-${KEA_VERSION}.zip \
-    && cd kealib-kealib-${KEA_VERSION} \
-    && cmake . -DBUILD_SHARED_LIBS=ON -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr -DHDF5_INCLUDE_DIR=/usr/include/hdf5 \
-        -DHDF5_LIB_PATH=/usr/lib -DLIBKEA_WITH_GDAL=OFF \
-    && make -j$(nproc) \
-    && make install \
-    && cd .. \
-    && rm -rf kealib-kealib-${KEA_VERSION} \
-    && cp -P /usr/lib/libkea*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && apk del cmake \
-    ); fi
-
 # Build openjpeg
 # ARG OPENJPEG_VERSION=2.3.1
 RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
-    apk add --no-cache cmake \
-    && wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
+    wget -q https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
     && tar xzf v${OPENJPEG_VERSION}.tar.gz \
     && rm -f v${OPENJPEG_VERSION}.tar.gz \
     && cd openjpeg-${OPENJPEG_VERSION} \
@@ -138,21 +90,33 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
     && cd .. \
     && rm -rf openjpeg-${OPENJPEG_VERSION} \
-    && apk del cmake \
     ); fi
 
-# Build libdeflate
-ARG LIBDEFLATE_VERSION=1.7
-RUN if test "${LIBDEFLATE_VERSION}" != ""; then ( \
-    mkdir libdeflate \
-    && wget -q https://github.com/ebiggers/libdeflate/archive/v${LIBDEFLATE_VERSION}.tar.gz -O - \
-        | tar xz -C libdeflate --strip-components=1 \
-    && cd libdeflate \
-    && make -j$(nproc) PREFIX=/usr install \
-    && cp -P /usr/lib/libdeflate.so* /build_thirdparty/usr/lib \
+# Build Arrow Apache
+ARG ARROW_VERSION=10.0.0
+RUN if test "${ARROW_VERSION}" != ""; then ( \
+    wget -q https://dlcdn.apache.org/arrow/arrow-${ARROW_VERSION}/apache-arrow-${ARROW_VERSION}.tar.gz \
+    && apk add --no-cache re2-dev utf8proc-dev thrift-dev  \
+    && tar xzf apache-arrow-${ARROW_VERSION}.tar.gz \
+    && rm -f apache-arrow-${ARROW_VERSION}.tar.gz \
+    && cd apache-arrow-${ARROW_VERSION}/cpp \
+    && mkdir build \
+    && cd build \
+    && cmake .. -DARROW_BUILD_STATIC=ON -DARROW_BUILD_STATIC=OFF -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr -DARROW_DATASET=YES -DARROW_PARQUET=YES \
+        -DARROW_WITH_BZ2:BOOL=ON \
+        -DARROW_WITH_LZ4:BOOL=ON \
+        -DARROW_WITH_SNAPPY:BOOL=ON \
+        -DARROW_WITH_ZLIB:BOOL=ON \
+        -DARROW_WITH_ZSTD:BOOL=ON \ \
+        -DARROW_WITH_BROTLI:BOOL=ON \
+    && make -j$(nproc) \
+    && make install \
+    && cp -P /usr/lib/libarrow*.so* /build_thirdparty/usr/lib \
+    && cp -P /usr/lib/libparquet*.so* /build_thirdparty/usr/lib \
     && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf libdeflate \
+    && cd ../../.. \
+    && rm -rf apache-arrow-${ARROW_VERSION} \
     ); fi
 
 RUN apk add --no-cache rsync ccache
@@ -161,7 +125,6 @@ ARG RSYNC_REMOTE
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN mkdir proj \
-    && apk add --no-cache cmake \
     && wget -q https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz -O - \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
@@ -196,8 +159,7 @@ RUN mkdir proj \
     && cd .. \
     && rm -rf proj \
     && for i in /build_proj/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && apk del cmake
+    && for i in /build_proj/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build spatialite
 ARG SPATIALITE_VERSION=5.0.1
@@ -247,7 +209,6 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
-    && apk add --no-cache cmake \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
     fi \
@@ -280,6 +241,8 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
         -DCMAKE_BUILD_TYPE=Release \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON \
+        -DIconv_INCLUDE_DIR=/usr/include/gnu-libiconv \
+        -DIconv_LIBRARY=/usr/lib/libiconv.so \
     && make -j$(nproc) \
     && make install DESTDIR="/build" \
     && (make -j$(nproc) multireadtest && cp apps/multireadtest /build/usr/bin) \
@@ -313,8 +276,7 @@ RUN if test "${GDAL_VERSION}" = "master"; then \
             /build/usr/share/gdal/*.svg \
             # unused
             /build/usr/share/gdal/*.png \
-       ;do rm $i; done)\
-    && apk del cmake
+       ;do rm $i; done)
 
 # Build final image
 FROM alpine:${ALPINE_VERSION} as runner
@@ -324,15 +286,18 @@ RUN date
 ARG POPPLER=poppler
 RUN apk add --no-cache \
         libstdc++ \
+        gnu-libiconv \
         sqlite-libs \
         libcurl tiff \
         zlib zstd-libs xz-libs snappy \
-        libjpeg-turbo libpng libwebp expat \
+        libjpeg-turbo libpng libwebp expat libkml \
         icu-libs \
         python3 py3-numpy ${POPPLER} pcre libpq libxml2 portablexdr openjpeg \
         netcdf hdf5 freexl \
         openexr libheif xerces-c geos cfitsio minizip \
-        lz4-libs \
+        lz4-libs blosc libdeflate brotli-libs liburiparser \
+        kealib libjxl \
+        re2 utf8proc thrift-libs-cpp \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*

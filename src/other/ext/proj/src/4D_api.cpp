@@ -374,13 +374,28 @@ similarly, but prefers the 2D resp. 3D interfaces if available.
         return proj_coord_error ();
     }
 
+    P->iCurCoordOp = 0; // dummy value, to be used by proj_trans_get_last_used_operation()
     if (direction == PJ_FWD)
         return pj_fwd4d (coord, P);
     else
         return pj_inv4d (coord, P);
 }
 
-
+/*****************************************************************************/
+PJ* proj_trans_get_last_used_operation(PJ* P)
+/******************************************************************************
+    Return the operation used during the last invokation of proj_trans().
+    This is especially useful when P has been created with proj_create_crs_to_crs()
+    and has several alternative operations.
+    The returned object must be freed with proj_destroy().
+******************************************************************************/
+{
+    if( nullptr==P || P->iCurCoordOp < 0 )
+        return nullptr;
+    if( P->alternativeCoordinateOperations.empty() )
+        return proj_clone(P->ctx, P);
+    return proj_clone(P->ctx, P->alternativeCoordinateOperations[P->iCurCoordOp].pj);
+}
 
 /*****************************************************************************/
 int proj_trans_array (PJ *P, PJ_DIRECTION direction, size_t n, PJ_COORD *coord) {
@@ -880,7 +895,7 @@ For use by pipeline init function.
 
 /** Create an area of use */
 PJ_AREA * proj_area_create(void) {
-    return static_cast<PJ_AREA*>(calloc(1, sizeof(PJ_AREA)));
+    return new PJ_AREA();
 }
 
 /** Assign a bounding box to an area of use. */
@@ -896,9 +911,15 @@ void proj_area_set_bbox(PJ_AREA *area,
     area->north_lat_degree = north_lat_degree;
 }
 
+/** Assign the name of an area of use. */
+void proj_area_set_name(PJ_AREA *area,
+                        const char* name) {
+    area->name = name;
+}
+
 /** Free an area of use */
 void proj_area_destroy(PJ_AREA* area) {
-    free(area);
+    delete area;
 }
 
 /************************************************************************/
@@ -1895,6 +1916,13 @@ PJ  *proj_create_crs_to_crs_from_pj (PJ_CONTEXT *ctx, const PJ *source_crs, cons
                                             area->south_lat_degree,
                                             area->east_lon_degree,
                                             area->north_lat_degree);
+
+        if( !area->name.empty() ) {
+            proj_operation_factory_context_set_area_of_interest_name(
+                                            ctx,
+                                            operation_ctx,
+                                            area->name.c_str());
+        }
     }
 
     proj_operation_factory_context_set_spatial_criterion(
@@ -1925,7 +1953,7 @@ PJ  *proj_create_crs_to_crs_from_pj (PJ_CONTEXT *ctx, const PJ *source_crs, cons
     PJ* P = proj_list_get(ctx, op_list, 0);
     assert(P);
 
-    if( P == nullptr || op_count == 1 || (area && area->bbox_set) ||
+    if( P == nullptr || op_count == 1 ||
         proj_get_type(source_crs) == PJ_TYPE_GEOCENTRIC_CRS ||
         proj_get_type(target_crs) == PJ_TYPE_GEOCENTRIC_CRS ) {
         proj_list_destroy(op_list);
@@ -2200,13 +2228,16 @@ PJ_PROJ_INFO proj_pj_info(PJ *P) {
         return pjinfo;
 
     /* coordinate operation description */
-    if( P->iCurCoordOp >= 0 ) {
-        P = P->alternativeCoordinateOperations[P->iCurCoordOp].pj;
-    } else if( !P->alternativeCoordinateOperations.empty() ) {
-        pjinfo.id = "unknown";
-        pjinfo.description = "unavailable until proj_trans is called";
-        pjinfo.definition = "unavailable until proj_trans is called";
-        return pjinfo;
+    if( !P->alternativeCoordinateOperations.empty() )
+    {
+        if( P->iCurCoordOp >= 0 ) {
+            P = P->alternativeCoordinateOperations[P->iCurCoordOp].pj;
+        } else {
+            pjinfo.id = "unknown";
+            pjinfo.description = "unavailable until proj_trans is called";
+            pjinfo.definition = "unavailable until proj_trans is called";
+            return pjinfo;
+        }
     }
 
     /* projection id */
@@ -2276,25 +2307,28 @@ PJ_GRID_INFO proj_grid_info(const char *gridname) {
         strncpy (grinfo.gridname, gridname, sizeof(grinfo.gridname) - 1);
 
         /* full path of grid */
-        if( pj_find_file(ctx, gridname, grinfo.filename, sizeof(grinfo.filename) - 1) )
+        if( !pj_find_file(ctx, gridname, grinfo.filename, sizeof(grinfo.filename) - 1) )
         {
-            /* grid format */
-            strncpy (grinfo.format, format.c_str(), sizeof(grinfo.format) - 1);
-
-            /* grid size */
-            grinfo.n_lon = grid.width();
-            grinfo.n_lat = grid.height();
-
-            /* cell size */
-            grinfo.cs_lon = extent.resX;
-            grinfo.cs_lat = extent.resY;
-
-            /* bounds of grid */
-            grinfo.lowerleft.lam  = extent.west;
-            grinfo.lowerleft.phi  = extent.south;
-            grinfo.upperright.lam = extent.east;
-            grinfo.upperright.phi = extent.north;
+            // Can happen when using a remote grid
+            grinfo.filename[0] = 0;
         }
+
+        /* grid format */
+        strncpy (grinfo.format, format.c_str(), sizeof(grinfo.format) - 1);
+
+        /* grid size */
+        grinfo.n_lon = grid.width();
+        grinfo.n_lat = grid.height();
+
+        /* cell size */
+        grinfo.cs_lon = extent.resX;
+        grinfo.cs_lat = extent.resY;
+
+        /* bounds of grid */
+        grinfo.lowerleft.lam  = extent.west;
+        grinfo.lowerleft.phi  = extent.south;
+        grinfo.upperright.lam = extent.east;
+        grinfo.upperright.phi = extent.north;
     };
 
     {

@@ -6,7 +6,7 @@
 /* Compute log_{base}(a) */
 static mp_word s_pow(mp_word base, mp_word exponent)
 {
-   mp_word result = 1;
+   mp_word result = 1u;
    while (exponent != 0u) {
       if ((exponent & 1u) == 1u) {
          result *= base;
@@ -20,8 +20,8 @@ static mp_word s_pow(mp_word base, mp_word exponent)
 
 static mp_digit s_digit_ilogb(mp_digit base, mp_digit n)
 {
-   mp_word bracket_low = 1, bracket_mid, bracket_high, N;
-   mp_digit ret, high = 1uL, low = 0uL, mid;
+   mp_word bracket_low = 1u, bracket_mid, bracket_high, N;
+   mp_digit ret, high = 1u, low = 0uL, mid;
 
    if (n < base) {
       return 0uL;
@@ -40,7 +40,7 @@ static mp_digit s_digit_ilogb(mp_digit base, mp_digit n)
       bracket_high *= bracket_high;
    }
 
-   while (((mp_digit)(high - low)) > 1uL) {
+   while (((mp_digit)(high - low)) > 1u) {
       mid = (low + high) >> 1;
       bracket_mid = bracket_low * s_pow(base, (mp_word)(mid - low));
 

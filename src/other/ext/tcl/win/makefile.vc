@@ -52,7 +52,7 @@
 # turn on the 64-bit compiler, if your SDK has it.
 #
 # Basic macros and options usable on the commandline (see rules.vc for more info):
-#	OPTS=msvcrt,nothreads,pdbs,profile,static,staticpkg,symbols,thrdalloc,time64bit,unchecked,utfmax,none
+#	OPTS=msvcrt,nothreads,pdbs,profile,static,staticpkg,symbols,thrdalloc,time64bit,unchecked,utf16,none
 #		Sets special options for the core.  The default is for none.
 #		Any combination of the above may be used (comma separated).
 #		'none' will over-ride everything to nothing.
@@ -61,23 +61,23 @@
 #			    using libcmt(d) as the C runtime [by default] to
 #			    msvcrt(d). This is useful for static embedding
 #			    support.
+#		none      = Overrides all other options to nothing.
 #		nothreads = Turns off full multithreading support (default on).
-#		pbds      =  Produce separate debug symbol files.
-#		profile   =  Adds profiling hooks.  Map file is assumed.
+#		pdbs      = Produce separate debug symbol files.
+#		profile   = Adds profiling hooks.  Map file is assumed.
 #		static    = Builds a static library of the core instead of a
 #			    dll.  The shell will be static (and large), as well.
 #		staticpkg = Affects the static option only to switch
 #			    tclshXX.exe to have the dde and reg extension linked
 #			    inside it.
-#		symbols   =  Adds symbols for step debugging.
+#		symbols   = Adds symbols for step debugging.
 #		thrdalloc = Use the thread allocator (shared global free pool).
 #		time64bit = Forces a build using 64-bit time_t for 32-bit build
 #			    (CRT library should support this).
 #		unchecked = Allows a symbols build to not use the debug
 #			    enabled runtime (msvcrt.dll not msvcrtd.dll
 #			    or libcmt.lib not libcmtd.lib).
-#		utfmax    = Forces a build allowing 4-byte UTF-8 sequences
-#			    internally.
+#		utf16     = Forces a build using UTF-16 representation internally.
 #
 #	STATS=compdbg,memdbg,none
 #		Sets optional memory and bytecode compiler debugging code added
@@ -97,7 +97,7 @@
 #		nodep	 = Turns off compatibility macros to ensure the core
 #			    isn't being built with deprecated functions.
 #
-#	MACHINE=(ALPHA|AMD64|IA64|IX86)
+#	MACHINE=(ALPHA|AMD64|ARM64|IA64|IX86)
 #		Set the machine type used for the compiler, linker, and
 #		resource compiler.  This hook is needed to tell the tools
 #		when alternate platforms are requested.  IX86 is the default
@@ -171,7 +171,7 @@ VERSION         = $(TCL_MAJOR_VERSION)$(TCL_MINOR_VERSION)
    && [nmakehlp -V ..\library\dde\pkgIndex.tcl "dde " >> versions.vc]
 !endif
 !if [echo PKG_REG_VER =\>> versions.vc] \
-   && [nmakehlp -V ..\library\reg\pkgIndex.tcl registry >> versions.vc]
+   && [nmakehlp -V ..\library\reg\pkgIndex.tcl "registry " >> versions.vc]
 !endif
 
 !include versions.vc
@@ -303,6 +303,7 @@ COREOBJS = \
 	$(TMP_DIR)\tclVar.obj \
 	$(TMP_DIR)\tclZlib.obj
 
+!if $(STATIC_BUILD)
 ZLIBOBJS = \
 	$(TMP_DIR)\adler32.obj \
 	$(TMP_DIR)\compress.obj \
@@ -315,6 +316,9 @@ ZLIBOBJS = \
 	$(TMP_DIR)\trees.obj \
 	$(TMP_DIR)\uncompr.obj \
 	$(TMP_DIR)\zutil.obj
+!else
+ZLIBOBJS = $(OUT_DIR)\zdll.lib
+!endif
 
 TOMMATHOBJS = \
 	$(TMP_DIR)\bn_mp_add.obj \
@@ -438,7 +442,7 @@ TESTFLAGS = $(TESTFLAGS) -file $(TESTPAT)
 release:    setup $(TCLSH) $(TCLSTUBLIB) dlls pkgs
 core:	    setup $(TCLLIB) $(TCLSTUBLIB)
 shell:	    setup $(TCLSH)
-dlls:	    setup $(TCLREGLIB) $(TCLDDELIB)
+dlls:	    setup $(TCLREGLIB) $(TCLDDELIB) $(OUT_DIR)\zlib1.dll
 all:	    setup $(TCLSH) $(TCLSTUBLIB) dlls $(CAT32) pkgs
 tcltest:    setup $(TCLTEST) dlls $(CAT32)
 install:    install-binaries install-libraries install-docs install-pkgs
@@ -509,6 +513,23 @@ $(TCLREGLIB): $(TMP_DIR)\tclWinReg.obj
 $(TCLREGLIB): $(TMP_DIR)\tclWinReg.obj $(TCLSTUBLIB)
 	$(DLLCMD) $**
 	$(_VC_MANIFEST_EMBED_DLL)
+!endif
+
+!if "$(MACHINE)" == "ARM64"
+$(OUT_DIR)\zlib1.dll:	$(COMPATDIR)\zlib\win64-arm\zlib1.dll
+	$(COPY) $(COMPATDIR)\zlib\win64-arm\zlib1.dll $(OUT_DIR)\zlib1.dll
+$(OUT_DIR)\zdll.lib:	$(COMPATDIR)\zlib\win64-arm\zdll.lib
+	$(COPY) $(COMPATDIR)\zlib\win64-arm\zdll.lib $(OUT_DIR)\zdll.lib
+!elseif "$(MACHINE)" == "IX86"
+$(OUT_DIR)\zlib1.dll:	$(COMPATDIR)\zlib\win32\zlib1.dll
+	$(COPY) $(COMPATDIR)\zlib\win32\zlib1.dll $(OUT_DIR)\zlib1.dll
+$(OUT_DIR)\zdll.lib:	$(COMPATDIR)\zlib\win32\zdll.lib
+	$(COPY) $(COMPATDIR)\zlib\win32\zdll.lib $(OUT_DIR)\zdll.lib
+!else
+$(OUT_DIR)\zlib1.dll:	$(COMPATDIR)\zlib\win64\zlib1.dll
+	$(COPY) $(COMPATDIR)\zlib\win64\zlib1.dll $(OUT_DIR)\zlib1.dll
+$(OUT_DIR)\zdll.lib:	$(COMPATDIR)\zlib\win64\zdll.lib
+	$(COPY) $(COMPATDIR)\zlib\win64\zdll.lib $(OUT_DIR)\zdll.lib
 !endif
 
 pkgs:
@@ -738,6 +759,17 @@ $(TMP_DIR)\tclMainW.obj: $(GENERICDIR)\tclMain.c
 	$(cc32) $(pkgcflags) /DUNICODE /D_UNICODE \
 	    -Fo$@ $?
 
+$(ROOT)\manifest.uuid:
+	copy $(WIN_DIR)\gitmanifest.in $(ROOT)\manifest.uuid
+	git rev-parse HEAD >>$(ROOT)\manifest.uuid
+
+$(TMP_DIR)\tclUuid.h:	$(ROOT)\manifest.uuid
+	copy $(WIN_DIR)\tclUuid.h.in+$(ROOT)\manifest.uuid $(TMP_DIR)\tclUuid.h
+
+$(TMP_DIR)\tclEvent.obj: $(GENERICDIR)\tclEvent.c $(TMP_DIR)\tclUuid.h
+	$(cc32) $(pkgcflags) -I$(TMP_DIR) \
+	    -Fo$@ $(GENERICDIR)\tclEvent.c
+
 $(TMP_DIR)\tclTest.obj: $(GENERICDIR)\tclTest.c
 	$(cc32) $(appcflags) -Fo$@ $?
 
@@ -864,6 +896,7 @@ install-binaries:
 	@$(CPY) "$(TCLLIB)" "$(BIN_INSTALL_DIR)\"
 !endif
 	@$(CPY) "$(TCLIMPLIB)" "$(LIB_INSTALL_DIR)\"
+	@$(CPY) "$(OUT_DIR)\zlib1.dll" "$(BIN_INSTALL_DIR)\"
 !if exist($(TCLSH))
 	@echo Installing $(TCLSHNAME)
 	@$(CPY) "$(TCLSH)" "$(BIN_INSTALL_DIR)\"
@@ -912,6 +945,7 @@ install-libraries: tclConfig tcl-nmake install-msgs install-tzdata
 	@$(CPY) "$(WIN_DIR)\rules.vc"              "$(LIB_INSTALL_DIR)\nmake\"
 	@$(CPY) "$(WIN_DIR)\targets.vc"              "$(LIB_INSTALL_DIR)\nmake\"
 	@$(CPY) "$(WIN_DIR)\nmakehlp.c"            "$(LIB_INSTALL_DIR)\nmake\"
+	@$(CPY) "$(WIN_DIR)\x86_64-w64-mingw32-nmakehlp.exe" "$(LIB_INSTALL_DIR)\nmake\"
 	@$(CPY) "$(OUT_DIR)\tcl.nmake"            "$(LIB_INSTALL_DIR)\nmake\"
 	@echo Installing package http 1.0 (obsolete)
 	@$(CPY) "$(ROOT)\library\http1.0\*.tcl" \
@@ -999,6 +1033,7 @@ tidy:
 clean: default-clean clean-pkgs
 hose: default-hose
 realclean: hose
+.PHONY:
 
 # Local Variables:
 # mode: makefile

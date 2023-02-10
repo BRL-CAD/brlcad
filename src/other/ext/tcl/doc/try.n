@@ -87,7 +87,7 @@ Handle different reasons for a file to not be openable for reading:
 .PP
 .CS
 \fBtry\fR {
-    set f [open /some/file/name w]
+    set f [open /some/file/name r]
 } \fBtrap\fR {POSIX EISDIR} {} {
     puts "failed to open /some/file/name: it's a directory"
 } \fBtrap\fR {POSIX ENOENT} {} {

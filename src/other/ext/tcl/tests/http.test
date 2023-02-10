@@ -30,6 +30,8 @@ if {[catch {package require http 2} version]} {
 	return
     }
 }
+testConstraint http2.9.7 [package vsatisfies [package provide http] 2.9.7]
+testConstraint http2.9.8 [package vsatisfies [package provide http] 2.9.8]
 
 proc bgerror {args} {
     global errorInfo
@@ -119,6 +121,27 @@ test http-1.6 {http::config} -setup {
 test http-2.1 {http::reset} {
     catch {http::reset http#1}
 } 0
+test http-2.2 {http::CharsetToEncoding} http2.9.7 {
+    http::CharsetToEncoding iso-8859-11
+} iso8859-11
+test http-2.3 {http::CharsetToEncoding} http2.9.7 {
+    http::CharsetToEncoding iso-2022-kr
+} iso2022-kr
+test http-2.4 {http::CharsetToEncoding} http2.9.7 {
+    http::CharsetToEncoding shift-jis
+} shiftjis
+test http-2.5 {http::CharsetToEncoding} http2.9.7 {
+    http::CharsetToEncoding windows-437
+} cp437
+test http-2.6 {http::CharsetToEncoding} http2.9.7 {
+    http::CharsetToEncoding latin5
+} iso8859-9
+test http-2.7 {http::CharsetToEncoding} http2.9.7 {
+    http::CharsetToEncoding latin1
+} iso8859-1
+test http-2.8 {http::CharsetToEncoding} http2.9.7 {
+    http::CharsetToEncoding latin4
+} binary
 
 test http-3.1 {http::geturl} -returnCodes error -body {
     http::geturl -bogus flag
@@ -447,9 +470,14 @@ test http-3.33 {http::geturl application/xml is text} -body {
 } -cleanup {
     catch { http::cleanup $token }
 } -result {test 4660 /test}
-test http-3.34 {http::geturl -headers not a dict} -returnCodes error -body {
-    http::geturl http://test/t -headers NoDict
-} -result {Bad value for -headers (NoDict), must be dict}
+
+
+test http-3.34 {http::geturl -headers not a list} -returnCodes error -body {
+    http::geturl http://test/t -headers \"
+} -constraints http2.9.8 -result {Bad value for -headers ("), must be list}
+test http-3.35 {http::geturl -headers not even number of elements} -returnCodes error -body {
+    http::geturl http://test/t -headers {List Length 3}
+} -constraints http2.9.8 -result {Bad value for -headers (List Length 3), number of list elements must be even}
 
 test http-4.1 {http::Event} -body {
     set token [http::geturl $url -keepalive 0]

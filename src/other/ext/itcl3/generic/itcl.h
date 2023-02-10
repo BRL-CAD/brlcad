@@ -63,10 +63,10 @@
 #define ITCL_MAJOR_VERSION	3
 #define ITCL_MINOR_VERSION	4
 #define ITCL_RELEASE_LEVEL	TCL_FINAL_RELEASE
-#define ITCL_RELEASE_SERIAL	3
+#define ITCL_RELEASE_SERIAL	4
 
 #define ITCL_VERSION		"3.4"
-#define ITCL_PATCH_LEVEL	"3.4.3"
+#define ITCL_PATCH_LEVEL	"3.4.4"
 
 /* 
  * A special definition used to allow this header file to be included 

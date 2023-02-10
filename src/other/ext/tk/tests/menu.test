@@ -1222,10 +1222,10 @@ test menu-3.1 {MenuWidgetCmd procedure} -setup {
     menu .m1
     .m1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {wrong # args: should be ".m1 option ?arg ...?"}
 test menu-3.2 {MenuWidgetCmd, Tcl_Preserve and Tcl_Release} -constraints {
-	nonUnixUserInteraction
+    nonUnixUserInteraction
 } -setup {
     destroy .m1
 } -body  {
@@ -1236,190 +1236,190 @@ test menu-3.2 {MenuWidgetCmd, Tcl_Preserve and Tcl_Release} -constraints {
     destroy .m1
 } -returnCodes ok -result {}
 test menu-3.3 {MenuWidgetCmd procedure, "activate" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "test"
     .m1 activate
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {wrong # args: should be ".m1 activate index"}
 test menu-3.4 {MenuWidgetCmd procedure, "activate" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 activate "foo"
 } -returnCodes error -result {bad menu entry index "foo"}
 test menu-3.5 {MenuWidgetCmd procedure, "activate" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "test"
     .m1 add separator
     .m1 activate 2
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.6 {MenuWidgetCmd procedure, "activate" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "test"
     .m1 entryconfigure 1 -state disabled
     .m1 activate 1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.7 {MenuWidgetCmd procedure, "activate" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "test"
     .m1 activate 1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.8 {MenuWidgetCmd procedure, "add" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {wrong # args: should be ".m1 add type ?-option value ...?"}
 test menu-3.9 {MenuWidgetCmd procedure, "add" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add foo
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {bad menu entry type "foo": must be cascade, checkbutton, command, radiobutton, or separator}
 test menu-3.10 {MenuWidgetCmd procedure, "add" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add separator
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.11 {MenuWidgetCmd procedure, "cget" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 cget
 } -returnCodes error -result {wrong # args: should be ".m1 cget option"}
 test menu-3.12 {MenuWidgetCmd procedure, "cget" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 cget -gorp
 } -returnCodes error -result {unknown option "-gorp"}
 test menu-3.13 {MenuWidgetCmd procedure, "cget" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 configure -postcommand "Some string"
     .m1 cget -postcommand
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {Some string}
 test menu-3.14 {MenuWidgetCmd procedure, "clone" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 clone
 } -returnCodes error -result {wrong # args: should be ".m1 clone newMenuName ?menuType?"}
 test menu-3.15 {MenuWidgetCmd procedure, "clone" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 clone a b c d
 } -returnCodes error -result {wrong # args: should be ".m1 clone newMenuName ?menuType?"}
 test menu-3.16 {MenuWidgetCmd procedure, "clone" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 clone .m1.clone1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.17 {MenuWidgetCmd procedure, "clone" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 clone .m1.clone1 tearoff
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.18 {MenuWidgetCmd procedure, "configure" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     llength [.m1 configure]
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result 20
 test menu-3.19 {MenuWidgetCmd procedure, "configure" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 configure -gorp
 } -returnCodes error -result {unknown option "-gorp"}
 test menu-3.20 {MenuWidgetCmd procedure, "configure" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 configure -postcommand "A random String"
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.21 {MenuWidgetCmd procedure, "configure" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 configure -postcommand "Another string"
     lindex [.m1 configure -postcommand] 4
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {Another string}
 test menu-3.22 {MenuWidgetCmd procedure, "delete" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 delete
 } -returnCodes error -result {wrong # args: should be ".m1 delete first ?last?"}
 test menu-3.23 {MenuWidgetCmd procedure, "delete" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 delete foo
 } -returnCodes error -result {bad menu entry index "foo"}
 test menu-3.24 {MenuWidgetCmd procedure, "delete" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1 -tearoff 1
     .m1 delete 0 "foo"
 } -returnCodes error -result {bad menu entry index "foo"}
 test menu-3.25 {MenuWidgetCmd procedure, "delete" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 delete 0
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.26 {MenuWidgetCmd procedure, "delete" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "foo"
     .m1 delete 1 0
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.27 {MenuWidgetCmd procedure, "delete" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "1"
@@ -1427,10 +1427,10 @@ test menu-3.27 {MenuWidgetCmd procedure, "delete" option} -setup {
     .m1 add command -label "3"
     .m1 delete 1 3
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.28 {MenuWidgetCmd procedure, "delete" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "1"
@@ -1439,10 +1439,10 @@ test menu-3.28 {MenuWidgetCmd procedure, "delete" option} -setup {
     .m1 activate 2
     .m1 delete 1 3
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.29 {MenuWidgetCmd procedure, "delete" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "1"
@@ -1451,7 +1451,7 @@ test menu-3.29 {MenuWidgetCmd procedure, "delete" option} -setup {
     .m1 activate 3
     .m1 delete 1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.29+1 {MenuWidgetCmd, "delete", Bug 220950} -setup {
     destroy .m1
@@ -1465,86 +1465,86 @@ test menu-3.29+1 {MenuWidgetCmd, "delete", Bug 220950} -setup {
     destroy .m1
 } -result ok
 test menu-3.30 {MenuWidgetCmd procedure, "entrycget" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 entrycget
 } -returnCodes error -result {wrong # args: should be ".m1 entrycget index option"}
 test menu-3.31 {MenuWidgetCmd procedure, "entrycget" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 entrycget index option foo
 } -returnCodes error -result {wrong # args: should be ".m1 entrycget index option"}
 test menu-3.32 {MenuWidgetCmd procedure, "entrycget" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 entrycget foo -label
 } -returnCodes error -result {bad menu entry index "foo"}
 test menu-3.33 {MenuWidgetCmd procedure, "entrycget" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "test"
     .m1 entrycget 1 -label
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {test}
 test menu-3.34 {MenuWidgetCmd procedure, "entryconfigure" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 entryconfigure
 } -returnCodes error -result {wrong # args: should be ".m1 entryconfigure index ?-option value ...?"}
 test menu-3.35 {MenuWidgetCmd procedure, "entryconfigure" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 entryconfigure foo
 } -returnCodes error -result {bad menu entry index "foo"}
 test menu-3.36 {MenuWidgetCmd procedure, "entryconfigure" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "test"
     llength [.m1 entryconfigure 1]
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result 15
 test menu-3.37 {MenuWidgetCmd procedure, "entryconfigure" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "test"
     lindex [.m1 entryconfigure 1 -label] 4
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {test}
 test menu-3.38 {MenuWidgetCmd procedure, "entryconfigure" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "test"
     .m1 entryconfigure 1 -label "changed"
     lindex [.m1 entryconfigure 1 -label] 4
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {changed}
 test menu-3.39 {MenuWidgetCmd procedure, "index" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 index
 } -returnCodes error -result {wrong # args: should be ".m1 index string"}
 test menu-3.40 {MenuWidgetCmd procedure, "index" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 index foo
 } -returnCodes error -result {bad menu entry index "foo"}
 test menu-3.41 {MenuWidgetCmd procedure, "index" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1 -tearoff 1
     .m1 add command -label "test"
@@ -1555,105 +1555,105 @@ test menu-3.41 {MenuWidgetCmd procedure, "index" option} -setup {
     .m1 add command -label "final entry"
     list [.m1 index "test"] [.m1 index "3"] [.m1 index "3a"] [.m1 index "end"]
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {1 3 5 6}
 test menu-3.42 {MenuWidgetCmd procedure, "insert" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 insert
 } -returnCodes error -result {wrong # args: should be ".m1 insert index type ?-option value ...?"}
 test menu-3.43 {MenuWidgetCmd procedure, "insert" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 insert 1 command -label "test"
     .m1 entrycget 1 -label
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {test}
 test menu-3.44 {MenuWidgetCmd procedure, "invoke" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 invoke
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {wrong # args: should be ".m1 invoke index"}
 test menu-3.45 {MenuWidgetCmd procedure, "invoke" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 invoke foo
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {bad menu entry index "foo"}
 test menu-3.46 {MenuWidgetCmd procedure, "invoke" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     catch {unset foo}
     menu .m1
     .m1 add command -label "set foo" -command "set foo hello"
     list [.m1 invoke 1] [set foo] [unset foo]
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes ok -result {hello hello {}}
 test menu-3.47 {MenuWidgetCmd procedure, "post" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "On Windows, hit Escape to get this menu to go away"
     .m1 post
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {wrong # args: should be ".m1 post x y ?index?"}
 test menu-3.48 {MenuWidgetCmd procedure, "post" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 post foo 40
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {expected integer but got "foo"}
 test menu-3.49 {MenuWidgetCmd procedure, "post" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 post 40 bar
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {expected integer but got "bar"}
 test menu-3.50 {MenuWidgetCmd procedure, "post" option} -constraints {
-	nonUnixUserInteraction
+    nonUnixUserInteraction
 } -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "menu-3.50: hit Escape" -command "puts hello"
     .m1 post 40 40
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.51 {MenuWidgetCmd procedure, "postcascade" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 postcascade
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {wrong # args: should be ".m1 postcascade index"}
 test menu-3.52 {MenuWidgetCmd procedure, "postcascade" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 postcascade foo
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {bad menu entry index "foo"}
 test menu-3.53 {MenuWidgetCmd procedure, "postcascade" option} -constraints {
-	nonUnixUserInteraction
+    nonUnixUserInteraction
 } -setup {
-	destroy .m1 .m2
+    destroy .m1 .m2
 } -body {
     menu .m1
     .m1 add command -label "menu-3.53 - hit Escape"
@@ -1662,10 +1662,10 @@ test menu-3.53 {MenuWidgetCmd procedure, "postcascade" option} -constraints {
     .m1 add cascade -menu .m2
     .m1 postcascade 1
 } -cleanup {
-	destroy .m1 .m2
+    destroy .m1 .m2
 } -result {}
 test menu-3.54 {MenuWidgetCmd procedure, "postcascade" option} -setup {
-	destroy .m1 .m2
+    destroy .m1 .m2
 } -body {
     menu .m1
     menu .m2
@@ -1673,144 +1673,144 @@ test menu-3.54 {MenuWidgetCmd procedure, "postcascade" option} -setup {
     .m1 postcascade 1
     .m1 postcascade none
 } -cleanup {
-	destroy .m1 .m2
+    destroy .m1 .m2
 } -result {}
 test menu-3.55 {MenuWidgetCmd procedure, "type" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 type
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {wrong # args: should be ".m1 type index"}
 test menu-3.56 {MenuWidgetCmd procedure, "type" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 type foo
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {bad menu entry index "foo"}
 test menu-3.57 {MenuWidgetCmd procedure, "type" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "test"
     .m1 type 1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {command}
 test menu-3.58 {MenuWidgetCmd procedure, "type" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add separator
     .m1 type 1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {separator}
 test menu-3.59 {MenuWidgetCmd procedure, "type" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add checkbutton -label "test"
     .m1 type 1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {checkbutton}
 test menu-3.60 {MenuWidgetCmd procedure, "type" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add radiobutton -label "test"
     .m1 type 1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {radiobutton}
 test menu-3.61 {MenuWidgetCmd procedure, "type" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add cascade -label "test"
     .m1 type 1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {cascade}
 test menu-3.62 {MenuWidgetCmd procedure, "type" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1 -tearoff 1
     .m1 type 0
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {tearoff}
 test menu-3.63 {MenuWidgetCmd procedure, "unpost" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 unpost foo
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {wrong # args: should be ".m1 unpost"}
 test menu-3.64 {MenuWidgetCmd procedure, "unpost" option} -constraints {
-	nonUnixUserInteraction
+    nonUnixUserInteraction
 } -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 add command -label "menu-3.64 - hit Escape"
     .m1 post 40 40
     .m1 unpost
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {}
 test menu-3.65 {MenuWidgetCmd procedure, "yposition" option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 yposition
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {wrong # args: should be ".m1 yposition index"}
 test menu-3.66a {MenuWidgetCmd procedure, "yposition" option, no tearoff} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1 -tearoff 0
     .m1 yposition 1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result 0
 test menu-3.66b {MenuWidgetCmd procedure, "yposition" option, with tearoff} -constraints {
     notAqua
 } -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     # on Win or Linux, tearoff menus are supported
     # see menu-3.66c for aqua
     menu .m1 -tearoff 1
     .m1 yposition 1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result 1
 test menu-3.66c {MenuWidgetCmd procedure, "yposition" option, with tearoff} -constraints {
     aqua
 } -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     # on OS X, tearoff menus are not supported
     # see menu-3.66b for win or linux
     menu .m1 -tearoff 1
     .m1 yposition 1
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result 0
 test menu-3.67 {MenuWidgetCmd procedure, bad option} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     .m1 foo
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -returnCodes error -result {bad option "foo": must be activate, add, cget, clone, configure, delete, entrycget, entryconfigure, index, insert, invoke, post, postcascade, type, unpost, xposition, or yposition}
 test menu-3.68 {MenuWidgetCmd procedure, fix for bug#508988} -setup {
     deleteWindows
@@ -1858,7 +1858,7 @@ test menu-4.1 {TkInvokeMenu: disabled} -setup {
     catch {unset foo}
     menu .m1
     .m1 add checkbutton -label "test" -variable foo -onvalue on -offvalue off \
-	-state disabled
+    -state disabled
     list [catch {.m1 invoke 1} msg] $foo
 } -cleanup {
     destroy .m1
@@ -1867,7 +1867,7 @@ test menu-4.2 {TkInvokeMenu: tearoff} -setup {
     destroy .m1
 } -body {
     menu .m1
-	catch {.m1 invoke 0}
+    catch {.m1 invoke 0}
 } -cleanup {
     deleteWindows
 } -result 0
@@ -1878,7 +1878,7 @@ test menu-4.3 {TkInvokeMenu: checkbutton -on} -setup {
     menu .m1
     .m1 add checkbutton -label "test" -variable foo -onvalue on -offvalue off
     list [catch {.m1 invoke 1} msg] $msg [catch {set foo} msg2] $msg2 \
-		[catch {unset foo} msg3] $msg3
+            [catch {unset foo} msg3] $msg3
 } -cleanup {
     destroy .m1
 } -result {0 {} 0 on 0 {}}
@@ -1901,7 +1901,7 @@ test menu-4.5 {TkInvokeMenu: checkbutton array element} -setup {
     .m1 add checkbutton -label "test" -variable foo(1) -onvalue on
     list [catch {.m1 invoke 1} msg] $msg [catch {set foo(1)} msg2] $msg2 [catch {unset foo} msg3] $msg3
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {0 {} 0 on 0 {}}
 test menu-4.6 {TkInvokeMenu: radiobutton} -setup {
     destroy .m1
@@ -1913,7 +1913,7 @@ test menu-4.6 {TkInvokeMenu: radiobutton} -setup {
     .m1 add radiobutton -label "3" -variable foo -value three
     list [catch {.m1 invoke 1} msg] $msg [catch {set foo} msg2] $msg2 [catch {unset foo} msg3] $msg3
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {0 {} 0 one 0 {}}
 test menu-4.7 {TkInvokeMenu: radiobutton} -setup {
     destroy .m1
@@ -1925,7 +1925,7 @@ test menu-4.7 {TkInvokeMenu: radiobutton} -setup {
     .m1 add radiobutton -label "3" -variable foo -value three
     list [catch {.m1 invoke 2} msg] $msg [catch {set foo} msg2] $msg2 [catch {unset foo} msg3] $msg3
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {0 {} 0 two 0 {}}
 test menu-4.8 {TkInvokeMenu: radiobutton} -setup {
     destroy .m1
@@ -1937,7 +1937,7 @@ test menu-4.8 {TkInvokeMenu: radiobutton} -setup {
     .m1 add radiobutton -label "3" -variable foo -value three
     list [catch {.m1 invoke 3} msg] $msg [catch {set foo} msg2] $msg2 [catch {unset foo} msg3] $msg3
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {0 {} 0 three 0 {}}
 test menu-4.9 {TkInvokeMenu: radiobutton array element} -setup {
     destroy .m1
@@ -1949,7 +1949,7 @@ test menu-4.9 {TkInvokeMenu: radiobutton array element} -setup {
     .m1 add radiobutton -label "3" -variable foo(2) -value three
     list [catch {.m1 invoke 3} msg] $msg [catch {set foo(2)} msg2] $msg2 [catch {unset foo} msg3] $msg3
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {0 {} 0 three 0 {}}
 test menu-4.10 {TkInvokeMenu} -setup {
     destroy .m1
@@ -1959,7 +1959,7 @@ test menu-4.10 {TkInvokeMenu} -setup {
     .m1 add command -label "test" -command "set menu_test menu-4.8"
     list [catch {.m1 invoke 1} msg] $msg [catch {set menu_test} msg2] $msg2 [catch {unset menu_test} msg3] $msg3
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {0 menu-4.8 0 menu-4.8 0 {}}
 test menu-4.11 {TkInvokeMenu} -setup {
     destroy .m1
@@ -1968,7 +1968,7 @@ test menu-4.11 {TkInvokeMenu} -setup {
     .m1 add cascade -label "test" -menu .m1.m2
     list [catch {.m1 invoke 1} msg] $msg
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {0 {}}
 test menu-4.12 {TkInvokeMenu} -setup {
     destroy .m1
@@ -1977,7 +1977,7 @@ test menu-4.12 {TkInvokeMenu} -setup {
     .m1 add command -label "test" -command ".m1 delete 1"
     list [catch {.m1 invoke 1} msg] $msg [catch {.m1 type "test"} msg2] $msg2
 } -cleanup {
-	destroy .m1
+    destroy .m1
 } -result {0 {} 1 {bad menu entry index "test"}}
 
 test menu-5.1 {DestroyMenuInstance} -setup {
@@ -2162,7 +2162,7 @@ test menu-6.9 {TkDestroyMenu} -setup {
     menu .m1
     .m1 clone .m2
     .m1 clone .m3
-	list [destroy .m2] [destroy .m3] [destroy .m1]
+    list [destroy .m2] [destroy .m3] [destroy .m1]
 } -returnCodes ok -result {{} {} {}}
 test menu-6.10 {TkDestroyMenu} -setup {
     deleteWindows
@@ -2170,7 +2170,7 @@ test menu-6.10 {TkDestroyMenu} -setup {
     menu .m1
     .m1 clone .m2
     .m1 clone .m3
-	list [destroy .m3] [destroy .m1]
+    list [destroy .m3] [destroy .m1]
 } -returnCodes ok -result {{} {}}
 test menu-6.11 {TkDestroyMenu} -setup {
     deleteWindows
@@ -2179,7 +2179,7 @@ test menu-6.11 {TkDestroyMenu} -setup {
     .m1 clone .m2
     .m1 clone .m3
     .m1 clone .m4
-	list [destroy .m2] [destroy .m1]
+    list [destroy .m2] [destroy .m1]
 } -returnCodes ok -result {{} {}}
 test menu-6.12 {TkDestroyMenu} -setup {
     deleteWindows
@@ -2188,7 +2188,7 @@ test menu-6.12 {TkDestroyMenu} -setup {
     .m1 clone .m2
     .m1 clone .m3
     .m1 clone .m4
-	list [destroy .m3] [destroy .m1]
+    list [destroy .m3] [destroy .m1]
 } -returnCodes ok -result {{} {}}
 test menu-6.13 {TkDestroyMenu} -setup {
     deleteWindows
@@ -2197,10 +2197,10 @@ test menu-6.13 {TkDestroyMenu} -setup {
     .m1 clone .m2
     .m1 clone .m3
     .m1 clone .m4
-	list [destroy .m4] [destroy .m1]
+    list [destroy .m4] [destroy .m1]
 } -returnCodes ok -result {{} {}}
 test menu-6.14 {TkDestroyMenu} -setup {
-	destroy .m1
+    destroy .m1
 } -body {
     menu .m1
     . configure -menu .m1
@@ -3101,9 +3101,9 @@ test menu-16.19 {MenuAddOrInsert - Insert a cascade deep into the tree} -setup {
     .menubar.test.cascade add command -label SubItem -command "puts SubItemSelected"
     . configure -menu .menubar
     list [catch {.menubar.test add cascade -label SubMenu \
-		-menu .menubar.test.cascade}] \
-		[info commands .\#menubar.\#menubar\#test.\#menubar\#test\#cascade] \
-		[. configure -menu ""]
+            -menu .menubar.test.cascade}] \
+            [info commands .\#menubar.\#menubar\#test.\#menubar\#test\#cascade] \
+            [. configure -menu ""]
 } -cleanup {
     deleteWindows
 } -result {0 .#menubar.#menubar#test.#menubar#test#cascade {}}
@@ -3116,7 +3116,7 @@ test menu-17.1 {MenuVarProc} -setup {
     menu .m1
     set foo "hello"
     list [.m1 add checkbutton -variable foo -onvalue hello -offvalue goodbye] \
-		[unset foo]
+            [unset foo]
 } -cleanup {
     deleteWindows
 } -result {{} {}}
@@ -3127,7 +3127,7 @@ test menu-17.2 {MenuVarProc} -setup {
     catch {unset foo}
     menu .m1
     list [.m1 add checkbutton -variable foo -onvalue hello -offvalue goodbye] \
-		[set foo ""]
+            [set foo ""]
 } -cleanup {
     deleteWindows
 } -result {{} {}}
@@ -3138,7 +3138,7 @@ test menu-17.3 {MenuVarProc} -setup {
     menu .m1
     set foo "hello"
     list [.m1 add checkbutton -variable foo -onvalue hello -offvalue goodbye] \
-		[set foo "hello"] [unset foo]
+            [set foo "hello"] [unset foo]
 } -cleanup {
     deleteWindows
 } -result {{} hello {}}
@@ -3148,7 +3148,7 @@ test menu-17.4 {MenuVarProc} -setup {
     menu .m1
     set foo "goodbye"
     list [.m1 add checkbutton -variable foo -onvalue hello -offvalue goodbye] \
-		[set foo "hello"] [unset foo]
+            [set foo "hello"] [unset foo]
 } -cleanup {
     deleteWindows
 } -result {{} hello {}}
@@ -3158,7 +3158,7 @@ test menu-17.5 {MenuVarProc} -setup {
     menu .m1
     set foo "hello"
     list [.m1 add checkbutton -variable foo -onvalue hello -offvalue goodbye] \
-		[set foo "goodbye"] [unset foo]
+            [set foo "goodbye"] [unset foo]
 } -cleanup {
     deleteWindows
 } -result {{} goodbye {}}
@@ -3420,6 +3420,28 @@ test menu-22.5 {GetIndexFromCoords: mapped wide window} -setup {
     deleteWindows
 } -result 0
 
+test menu-22.6 {tk_popup on separator entry} -setup {
+    deleteWindows
+} -constraints {x11} -body {
+    menu .m1
+    label .l -text ClickMe!
+    .m1 add command -label "Example 1" -command bell
+    .m1 add command -label "Example 2" -command bell
+    .m1 add separator
+    .m1 add command -label "Example Other" -command "bell;bell"
+    tk_popup .m1 100 100 2
+    set waiting 0
+    tkwait visibility .m1
+    after 333 incr waiting
+    vwait waiting
+    .m1 invoke 4
+    after 333 incr waiting
+    vwait waiting
+    destroy .m1
+} -cleanup {
+    deleteWindows
+} -result {}
+
 test menu-23.1 {RecursivelyDeleteMenu} -setup {
     deleteWindows
 } -body {
@@ -3465,7 +3487,7 @@ test menu-24.3 {TkNewMenuName} -setup {
     menu .#m
     rename .#m hideme
     list [catch {. configure -menu [menu .m]}] [. configure -menu ""] [destroy .#m] \
-		[destroy .m] [destroy hideme]
+            [destroy .m] [destroy hideme]
 } -result {0 {} {} {} {}}
 
 
@@ -3822,7 +3844,7 @@ test menu-32.6 {DeleteMenuCloneEntries - reentrancy - crashes tk8.0} -setup {
 } -body {
     menu .m1
     .m1 add command -label test \
-		-command ".m1 delete test ; .m1 add command -label test -command \".m1 delete test\"; .m1 delete test"
+            -command ".m1 delete test ; .m1 add command -label test -command \".m1 delete test\"; .m1 delete test"
     .m1 invoke test
 } -cleanup {
     deleteWindows
@@ -3845,8 +3867,8 @@ test menu-32.8 {Ensure all menu clone commands are deleted} -setup {
     menu .menubar.test
     .menubar.test add command -label "hi"
     for {set i 0} {$i < 10} {incr i} {
-		.menubar add cascade -menu .menubar.test -label "Test"
-		.menubar delete Test
+        .menubar add cascade -menu .menubar.test -label "Test"
+        .menubar delete Test
     }
 
     info commands .#menubar*test*
@@ -3880,12 +3902,12 @@ test menu-32.9 {Ensure deleting of clones doesn't corrupt menu refs} -setup {
 test menu-33.1 {menu vs command hiding} -setup {
     deleteWindows
 } -body {
-	set l [interp hidden]
+    set l [interp hidden]
     menu .m
     interp hide {} .m
     destroy .m
     set result [list [winfo children .] [interp hidden]]
-	expr {$result eq [list {} $l]}
+    expr {$result eq [list {} $l]}
 } -result 1
 
 # menu-34 MenuInit only called at boot time
@@ -3894,7 +3916,7 @@ test menu-33.1 {menu vs command hiding} -setup {
 # menu from the first screen crashes Tk8.3.1
 #
 test menu-34.1 {menus on multiple screens - crashes tk8.3.1, Bug 5454} -constraints {
-	altDisplay
+    altDisplay
 } -setup {
     deleteWindows
 } -body {
@@ -3957,6 +3979,14 @@ test menu-38.1 {Can't dismiss ttk::menubutton menu until mouse has hovered over 
 } -cleanup {
     destroy .top.mb.m .top.m .top
 } -result 0
+
+test menu-39.1 {empty -type - bug be8f5b9fc2} -setup {
+    catch {destroy .m}
+} -body {
+    menu .m -type {}
+} -cleanup {
+    destroy .m
+} -returnCodes error -result {ambiguous type "": must be normal, tearoff, or menubar}
 
 
 # cleanup

@@ -54,6 +54,7 @@
 #undef TclBN_mp_tc_and
 #undef TclBN_mp_tc_or
 #undef TclBN_mp_tc_xor
+#undef TclObjInterpProc
 #define TclBN_mp_tc_and TclBN_mp_and
 #define TclBN_mp_tc_or TclBN_mp_or
 #define TclBN_mp_tc_xor TclBN_mp_xor
@@ -225,7 +226,7 @@ void *TclWinGetTclInstance()
 int
 TclpGetPid(Tcl_Pid pid)
 {
-    return (int) (size_t) pid;
+    return (int)(size_t)pid;
 }
 
 static void
@@ -394,7 +395,7 @@ static int exprInt(Tcl_Interp *interp, const char *expr, int *ptr){
 	    *ptr = (int)longValue;
 	} else {
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
-		    "integer value too large to represent as non-long integer", -1));
+		    "integer value too large to represent", -1));
 	    result = TCL_ERROR;
 	}
     }
@@ -410,7 +411,7 @@ static int exprIntObj(Tcl_Interp *interp, Tcl_Obj*expr, int *ptr){
 	    *ptr = (int)longValue;
 	} else {
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
-		    "integer value too large to represent as non-long integer", -1));
+		    "integer value too large to represent", -1));
 	    result = TCL_ERROR;
 	}
     }
@@ -749,7 +750,8 @@ static const TclIntStubs tclIntStubs = {
     TclStaticPackage, /* 257 */
     0, /* 258 */
     0, /* 259 */
-    TclUnusedStubEntry, /* 260 */
+    0, /* 260 */
+    TclUnusedStubEntry, /* 261 */
 };
 
 static const TclIntPlatStubs tclIntPlatStubs = {
@@ -862,6 +864,8 @@ static const TclPlatStubs tclPlatStubs = {
 #if defined(_WIN32) || defined(__CYGWIN__) /* WIN */
     Tcl_WinUtfToTChar, /* 0 */
     Tcl_WinTCharToUtf, /* 1 */
+    0, /* 2 */
+    TclUnusedStubEntry, /* 3 */
 #endif /* WIN */
 #ifdef MAC_OSX_TCL /* MACOSX */
     Tcl_MacOSXOpenBundleResources, /* 0 */
@@ -1649,7 +1653,30 @@ const TclStubs tclStubs = {
     0, /* 657 */
     0, /* 658 */
     0, /* 659 */
-    TclUnusedStubEntry, /* 660 */
+    0, /* 660 */
+    0, /* 661 */
+    0, /* 662 */
+    0, /* 663 */
+    0, /* 664 */
+    0, /* 665 */
+    0, /* 666 */
+    0, /* 667 */
+    0, /* 668 */
+    0, /* 669 */
+    0, /* 670 */
+    0, /* 671 */
+    0, /* 672 */
+    0, /* 673 */
+    0, /* 674 */
+    0, /* 675 */
+    0, /* 676 */
+    0, /* 677 */
+    0, /* 678 */
+    0, /* 679 */
+    0, /* 680 */
+    0, /* 681 */
+    0, /* 682 */
+    TclUnusedStubEntry, /* 683 */
 };
 
 /* !END!: Do not edit above this line. */

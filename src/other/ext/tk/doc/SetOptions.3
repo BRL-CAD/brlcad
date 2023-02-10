@@ -429,8 +429,8 @@ internal representation is set to zero.
 The value must be standard relief such as \fBraised\fR.
 The internal form is an integer relief value such as
 \fBTK_RELIEF_RAISED\fR.  This option type supports the \fBTK_OPTION_NULL_OK\fR
-flag; if the empty string is specified as the value for the option,
-the integer relief value is set to \fBTK_RELIEF_NULL\fR.
+flag; if a NULL value is set, the internal representation is set to
+\fBTK_RELIEF_NULL\fR.
 .TP
 \fBTK_OPTION_STRING\fR
 The value may be any string.  The internal form is a (char *) pointer

@@ -292,22 +292,23 @@ bind Text <<PasteSelection>> {
 bind Text <Insert> {
     catch {tk::TextInsert %W [::tk::GetSelection %W PRIMARY]}
 }
-bind Text <KeyPress> {
+bind Text <Key> {
     tk::TextInsert %W %A
 }
 
 # Ignore all Alt, Meta, and Control keypresses unless explicitly bound.
 # Otherwise, if a widget binding for one of these is defined, the
-# <KeyPress> class binding will also fire and insert the character,
+# <Key> class binding will also fire and insert the character,
 # which is wrong.  Ditto for <Escape>.
 
-bind Text <Alt-KeyPress> {# nothing }
-bind Text <Meta-KeyPress> {# nothing}
-bind Text <Control-KeyPress> {# nothing}
+bind Text <Alt-Key> {# nothing }
+bind Text <Meta-Key> {# nothing}
+bind Text <Control-Key> {# nothing}
 bind Text <Escape> {# nothing}
 bind Text <KP_Enter> {# nothing}
 if {[tk windowingsystem] eq "aqua"} {
-    bind Text <Command-KeyPress> {# nothing}
+    bind Text <Command-Key> {# nothing}
+    bind Text <Mod4-Key> {# nothing}
 }
 
 # Additional emacs-like bindings:

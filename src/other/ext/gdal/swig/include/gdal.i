@@ -79,6 +79,7 @@ typedef void GDALColorTableShadow;
 typedef void GDALRasterAttributeTableShadow;
 typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
+typedef void GDALRelationshipShadow;
 
 typedef GDALExtendedDataTypeHS GDALExtendedDataTypeHS;
 typedef GDALEDTComponentHS GDALEDTComponentHS;
@@ -155,7 +156,7 @@ typedef enum {
     /*! Complex Int32 */                        GDT_CInt32 = 9,
     /*! Complex Float32 */                      GDT_CFloat32 = 10,
     /*! Complex Float64 */                      GDT_CFloat64 = 11,
-    GDT_TypeCount = 12          /* maximum type # + 1 */
+    GDT_TypeCount = 14          /* maximum type # + 1 */
 } GDALDataType;
 
 /*! Types of color interpretation for raster bands. */
@@ -249,6 +250,30 @@ typedef enum {
 	GARIO_ERROR = 2,
 	GARIO_COMPLETE = 3
 } GDALAsyncStatusType;
+
+/** Cardinality of relationship.
+ *
+ * @since GDAL 3.6
+ */
+%rename (RelationshipCardinality) GDALRelationshipCardinality;
+typedef enum {
+  /*! One-to-one */ GRC_ONE_TO_ONE=0,
+  /*! One-to-many */ GRC_ONE_TO_MANY=1,
+  /*! Many-to-one */ GRC_MANY_TO_ONE=2,
+  /*! Many-to-many */ GRC_MANY_TO_MANY=3
+} GDALRelationshipCardinality;
+
+/** Type of relationship.
+ *
+ * @since GDAL 3.6
+ */
+%rename (RelationshipType) GDALRelationshipType;
+typedef enum {
+  /*! Composite relationship */ GRT_COMPOSITE=0,
+  /*! Association relationship */ GRT_ASSOCIATION=1,
+  /*! Aggregation relationship */ GRT_AGGREGATION=2,
+} GDALRelationshipType;
+
 #endif
 
 #if defined(SWIGPYTHON)
@@ -573,6 +598,13 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //
 //************************************************************************
 %include "RasterAttributeTable.i"
+
+//************************************************************************
+//
+// Define the Relationship object.
+//
+//************************************************************************
+%include "Relationship.i"
 
 //************************************************************************
 //

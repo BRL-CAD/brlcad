@@ -40,35 +40,32 @@
 #include "gdal_pam.h"
 #include "gdal_priv.h"
 
-CPL_CVSID("$Id$")
-
-CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
-                             GDALDataset *poParentDS,
-                             GDALDataset **ppoODS,
-                             int nBands, int *panBandList,
-                             int nNewOverviews, int *panNewOverviewList,
-                             const char *pszResampling,
-                             GDALProgressFunc pfnProgress,
-                             void *pProgressData )
+CPLErr HFAAuxBuildOverviews(const char *pszOvrFilename, GDALDataset *poParentDS,
+                            GDALDataset **ppoODS, int nBands,
+                            const int *panBandList, int nNewOverviews,
+                            const int *panNewOverviewList,
+                            const char *pszResampling,
+                            GDALProgressFunc pfnProgress, void *pProgressData,
+                            CSLConstList papszOptions)
 
 {
     // If the .aux file doesn't exist yet then create it now.
-    if( *ppoODS == nullptr )
+    if (*ppoODS == nullptr)
     {
         GDALDataType eDT = GDT_Unknown;
         // Determine the band datatype, and verify that all bands are the same.
-        for( int iBand = 0; iBand < nBands; iBand++ )
+        for (int iBand = 0; iBand < nBands; iBand++)
         {
             GDALRasterBand *poBand =
                 poParentDS->GetRasterBand(panBandList[iBand]);
 
-            if( iBand == 0 )
+            if (iBand == 0)
             {
                 eDT = poBand->GetRasterDataType();
             }
             else
             {
-                if( eDT != poBand->GetRasterDataType() )
+                if (eDT != poBand->GetRasterDataType())
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "HFAAuxBuildOverviews() doesn't support a "
@@ -83,7 +80,7 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
         // base band.
         GDALDriver *poHFADriver =
             static_cast<GDALDriver *>(GDALGetDriverByName("HFA"));
-        if( poHFADriver == nullptr )
+        if (poHFADriver == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "HFA driver is unavailable.");
             return CE_Failure;
@@ -92,17 +89,15 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
         CPLString osDepFileOpt = "DEPENDENT_FILE=";
         osDepFileOpt += CPLGetFilename(poParentDS->GetDescription());
 
-        const char *apszOptions[4] =
-            { "COMPRESSED=YES", "AUX=YES", osDepFileOpt.c_str(), nullptr };
+        const char *const apszOptions[4] = {"COMPRESSED=YES", "AUX=YES",
+                                            osDepFileOpt.c_str(), nullptr};
 
         *ppoODS =
-            poHFADriver->Create(pszOvrFilename,
-                                poParentDS->GetRasterXSize(),
+            poHFADriver->Create(pszOvrFilename, poParentDS->GetRasterXSize(),
                                 poParentDS->GetRasterYSize(),
-                                poParentDS->GetRasterCount(),
-                                eDT, const_cast<char **>(apszOptions));
+                                poParentDS->GetRasterCount(), eDT, apszOptions);
 
-        if( *ppoODS == nullptr )
+        if (*ppoODS == nullptr)
             return CE_Failure;
     }
 
@@ -113,14 +108,12 @@ CPLErr HFAAuxBuildOverviews( const char *pszOvrFilename,
     // We avoid regenerating the new layers here, because if we did
     // it would use the base layer from the .aux file as the source
     // data, and that is fake (all invalid tiles).
-    CPLString oAdjustedResampling = "NO_REGEN:";
-    oAdjustedResampling += pszResampling;
+    CPLStringList aosOptions(papszOptions);
+    aosOptions.SetNameValue("REGENERATE", "NO");
 
-    CPLErr eErr =
-        (*ppoODS)->BuildOverviews(oAdjustedResampling,
-                                  nNewOverviews, panNewOverviewList,
-                                  nBands, panBandList,
-                                  pfnProgress, pProgressData);
+    CPLErr eErr = (*ppoODS)->BuildOverviews(
+        pszResampling, nNewOverviews, panNewOverviewList, nBands, panBandList,
+        pfnProgress, pProgressData, aosOptions.List());
 
     return eErr;
 }

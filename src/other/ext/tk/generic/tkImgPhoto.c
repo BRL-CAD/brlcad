@@ -576,9 +576,6 @@ ImgPhotoCmd(
 	if ((options.fromX2 > block.width) || (options.fromY2 > block.height)
 		|| (options.fromX2 > block.width)
 		|| (options.fromY2 > block.height)) {
-	    if (options.background) {
-		Tk_FreeColor(options.background);
-	    }
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 		    "coordinates for -from option extend outside source image",
 		    -1));
@@ -631,15 +628,19 @@ ImgPhotoCmd(
 	 * Copy the image data over using Tk_PhotoPutZoomedBlock.
 	 */
 
-	block.pixelPtr += options.fromX * block.pixelSize
-		+ options.fromY * block.pitch;
-	block.width = options.fromX2 - options.fromX;
-	block.height = options.fromY2 - options.fromY;
-	result = Tk_PhotoPutZoomedBlock(interp, (Tk_PhotoHandle) modelPtr,
-		&block, options.toX, options.toY, options.toX2 - options.toX,
-		options.toY2 - options.toY, options.zoomX, options.zoomY,
-		options.subsampleX, options.subsampleY,
-		options.compositingRule);
+	if (block.pixelPtr) {
+	    block.pixelPtr += options.fromX * block.pixelSize
+		    + options.fromY * block.pitch;
+	    block.width = options.fromX2 - options.fromX;
+	    block.height = options.fromY2 - options.fromY;
+	    result = Tk_PhotoPutZoomedBlock(interp, (Tk_PhotoHandle) modelPtr,
+		    &block, options.toX, options.toY, options.toX2 - options.toX,
+		    options.toY2 - options.toY, options.zoomX, options.zoomY,
+		    options.subsampleX, options.subsampleY,
+		    options.compositingRule);
+	} else {
+	    result = TCL_OK;
+	}
 
 	/*
 	 * Set the destination image size if the -shrink option was specified.
@@ -651,19 +652,15 @@ ImgPhotoCmd(
 	if (options.options & OPT_SHRINK) {
 	    if (ImgPhotoSetSize(modelPtr, options.toX2,
 		    options.toY2) != TCL_OK) {
-		if (options.background) {
-		    Tk_FreeColor(options.background);
-		}
 		Tcl_SetObjResult(interp, Tcl_NewStringObj(
 			TK_PHOTO_ALLOC_FAILURE_MESSAGE, -1));
 		Tcl_SetErrorCode(interp, "TK", "MALLOC", NULL);
 		return TCL_ERROR;
 	    }
 	}
-	Tk_ImageChanged(modelPtr->tkMaster, 0, 0, 0, 0,
-		modelPtr->width, modelPtr->height);
-	if (options.background) {
-	    Tk_FreeColor(options.background);
+	if (block.pixelPtr || (options.options & OPT_SHRINK)) {
+	    Tk_ImageChanged(modelPtr->tkMaster, 0, 0, 0, 0,
+		    modelPtr->width, modelPtr->height);
 	}
 	return result;
 
@@ -689,6 +686,9 @@ ImgPhotoCmd(
 	}
 	if ((options.name != NULL) || (index < objc)) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "?-option value ...?");
+	    if (options.background) {
+		Tk_FreeColor(options.background);
+	    }
 	    return TCL_ERROR;
 	}
 	if ((options.fromX > modelPtr->width)
@@ -698,6 +698,9 @@ ImgPhotoCmd(
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 		    "coordinates for -from option extend outside image", -1));
 	    Tcl_SetErrorCode(interp, "TK", "IMAGE", "PHOTO", "BAD_FROM", NULL);
+	    if (options.background) {
+		Tk_FreeColor(options.background);
+	    }
 	    return TCL_ERROR;
 	}
 
@@ -749,6 +752,9 @@ ImgPhotoCmd(
 			(matched ? "not supported" : "unknown")));
 		Tcl_SetErrorCode(interp, "TK", "LOOKUP", "PHOTO_FORMAT",
 			Tcl_GetString(options.format), NULL);
+		if (options.background) {
+		    Tk_FreeColor(options.background);
+		}
 		return TCL_ERROR;
 	    }
 	} else {
@@ -1325,6 +1331,9 @@ ImgPhotoCmd(
 	}
 	if ((options.name == NULL) || (index < objc)) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "fileName ?-option value ...?");
+	    if (options.background) {
+		Tk_FreeColor(options.background);
+	    }
 	    return TCL_ERROR;
 	}
 	if ((options.fromX > modelPtr->width)
@@ -1334,6 +1343,9 @@ ImgPhotoCmd(
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 		    "coordinates for -from option extend outside image", -1));
 	    Tcl_SetErrorCode(interp, "TK", "IMAGE", "PHOTO", "BAD_FROM", NULL);
+	    if (options.background) {
+		Tk_FreeColor(options.background);
+	    }
 	    return TCL_ERROR;
 	}
 
@@ -1413,6 +1425,9 @@ ImgPhotoCmd(
 	    }
 	    Tcl_SetErrorCode(interp, "TK", "LOOKUP", "PHOTO_FORMAT",
 		    fmtString, NULL);
+	    if (options.background) {
+		Tk_FreeColor(options.background);
+	    }
 	    return TCL_ERROR;
 	}
 
@@ -2095,7 +2110,7 @@ ToggleComplexAlphaIfNeeded(
     size_t len = (size_t)MAX(mPtr->userWidth, mPtr->width) *
 	    (size_t)MAX(mPtr->userHeight, mPtr->height) * 4;
     unsigned char *c = mPtr->pix32;
-    unsigned char *end = c + len;
+    unsigned char *end;
 
     /*
      * Set the COMPLEX_ALPHA flag if we have an image with partially
@@ -2106,6 +2121,7 @@ ToggleComplexAlphaIfNeeded(
     if (c == NULL) {
 	return 0;
     }
+    end = c + len;
     c += 3;			/* Start at first alpha byte. */
     for (; c < end; c += 4) {
 	if (*c && *c != 255) {
@@ -2769,9 +2785,9 @@ Tk_PhotoPutBlock(
      */
     sourceBlock = *blockPtr;
     memToFree = NULL;
-    if (sourceBlock.pixelPtr >= modelPtr->pix32
-	    && sourceBlock.pixelPtr <= modelPtr->pix32 + modelPtr->width
-	    * modelPtr->height * 4) {
+    if (modelPtr->pix32 && (sourceBlock.pixelPtr >= modelPtr->pix32)
+	    && (sourceBlock.pixelPtr < modelPtr->pix32 + modelPtr->width
+	    * modelPtr->height * 4)) {
 	/*
 	 * Fix 5c51be6411: avoid reading
 	 *
@@ -3009,7 +3025,7 @@ Tk_PhotoPutBlock(
     if (alphaOffset) {
 	/*
 	 * This block is grossly inefficient. For each row in the image, it
-	 * finds each continguous string of nontransparent pixels, then marks
+	 * finds each contiguous string of nontransparent pixels, then marks
 	 * those areas as valid in the validRegion mask. This makes drawing
 	 * very efficient, because of the way we use X: we just say, here's
 	 * your mask, and here's your data. We need not worry about the
@@ -3215,9 +3231,9 @@ Tk_PhotoPutZoomedBlock(
      */
     sourceBlock = *blockPtr;
     memToFree = NULL;
-    if (sourceBlock.pixelPtr >= modelPtr->pix32
-	    && sourceBlock.pixelPtr <= modelPtr->pix32 + modelPtr->width
-	    * modelPtr->height * 4) {
+    if (modelPtr->pix32 && (sourceBlock.pixelPtr >= modelPtr->pix32)
+	    && (sourceBlock.pixelPtr < modelPtr->pix32 + modelPtr->width
+	    * modelPtr->height * 4)) {
 	/*
 	 * Fix 5c51be6411: avoid reading
 	 *
@@ -3600,8 +3616,10 @@ Tk_PhotoBlank(
      * arrays for each instance.
      */
 
-    memset(modelPtr->pix32, 0,
-	    ((size_t)modelPtr->width * modelPtr->height * 4));
+    if (modelPtr->pix32) {
+	memset(modelPtr->pix32, 0,
+		((size_t)modelPtr->width * modelPtr->height * 4));
+    }
     for (instancePtr = modelPtr->instancePtr; instancePtr != NULL;
 	    instancePtr = instancePtr->nextPtr) {
 	TkImgResetDither(instancePtr);

@@ -1014,7 +1014,7 @@ BitmapInit(
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
-     * First initialize the data in the ThreadSpecificData strucuture, if
+     * First initialize the data in the ThreadSpecificData structure, if
      * needed.
      */
 
@@ -1169,7 +1169,7 @@ TkDebugBitmap(
  *
  * TkGetBitmapPredefTable --
  *
- *	This function is used by tkMacBitmap.c to access the thread-specific
+ *	This function is used by tkMacOSXBitmap.c to access the thread-specific
  *	predefBitmap table that maps from the names of the predefined bitmaps
  *	to data associated with those bitmaps. It is required because the
  *	table is allocated in thread-local storage and is not visible outside

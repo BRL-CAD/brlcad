@@ -1010,7 +1010,7 @@ Tcl_ScanCountedElement(
  *----------------------------------------------------------------------
  */
 
-int
+unsigned int
 TclScanElement(
     const char *src,		/* String to convert to Tcl list element. */
     int length,			/* Number of bytes in src, or -1. */
@@ -1026,7 +1026,7 @@ TclScanElement(
     int extra = 0;		/* Count of number of extra bytes needed for
 				 * formatted element, assuming we use escape
 				 * sequences in formatting. */
-    int bytesNeeded;		/* Buffer length computed to complete the
+    unsigned int bytesNeeded;		/* Buffer length computed to complete the
 				 * element formatting in the selected mode. */
 #if COMPAT
     int preferEscape = 0;	/* Use preferences to track whether to use */
@@ -1290,7 +1290,7 @@ TclScanElement(
     *flagPtr = CONVERT_NONE;
 
   overflowCheck:
-    if (bytesNeeded < 0) {
+    if (bytesNeeded > INT_MAX) {
 	Tcl_Panic("TclScanElement: string length overflow");
     }
     return bytesNeeded;
@@ -1568,7 +1568,8 @@ Tcl_Merge(
 {
 #define LOCAL_SIZE 64
     char localFlags[LOCAL_SIZE], *flagPtr = NULL;
-    int i, bytesNeeded = 0;
+    int i;
+    unsigned int bytesNeeded = 0;
     char *result, *dst;
 
     /*
@@ -1576,7 +1577,10 @@ Tcl_Merge(
      * simpler.
      */
 
-    if (argc == 0) {
+    if (argc <= 0) {
+	if (argc < 0) {
+	    Tcl_Panic("Tcl_Merge called with negative argc (%d)", argc);
+	}
 	result = (char *)ckalloc(1);
 	result[0] = '\0';
 	return result;
@@ -1594,11 +1598,11 @@ Tcl_Merge(
     for (i = 0; i < argc; i++) {
 	flagPtr[i] = ( i ? TCL_DONT_QUOTE_HASH : 0 );
 	bytesNeeded += TclScanElement(argv[i], -1, &flagPtr[i]);
-	if (bytesNeeded < 0) {
+	if (bytesNeeded > INT_MAX) {
 	    Tcl_Panic("max size for a Tcl value (%d bytes) exceeded", INT_MAX);
 	}
     }
-    if (bytesNeeded > INT_MAX - argc + 1) {
+    if (bytesNeeded + argc > INT_MAX + 1U) {
 	Tcl_Panic("max size for a Tcl value (%d bytes) exceeded", INT_MAX);
     }
     bytesNeeded += argc;
@@ -3730,7 +3734,8 @@ UpdateStringOfEndOffset(
     memcpy(buffer, "end", 4);
     if (objPtr->internalRep.longValue != 0) {
 	buffer[len++] = '-';
-	len += TclFormatInt(buffer+len, -(objPtr->internalRep.longValue));
+	len += TclFormatInt(buffer+len,
+		(long)(-(unsigned long)(objPtr->internalRep.longValue)));
     }
     objPtr->bytes = (char *)ckalloc(len+1);
     memcpy(objPtr->bytes, buffer, len+1);
@@ -3842,8 +3847,7 @@ SetEndOffsetFromAny(
 	}
 	if (bytes[3] == '-') {
 
-	    /* TODO: Review overflow concerns here! */
-	    offset = -offset;
+	    offset = (int)(-(unsigned int)offset);
 	}
     } else {
 	/*

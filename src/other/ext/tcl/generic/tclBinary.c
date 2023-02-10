@@ -69,33 +69,17 @@ static void		UpdateStringOfByteArray(Tcl_Obj *listPtr);
 static void		DeleteScanNumberCache(Tcl_HashTable *numberCachePtr);
 static int		NeedReversing(int format);
 static void		CopyNumber(const void *from, void *to,
-			    unsigned length, int type);
+			    unsigned int length, int type);
 /* Binary ensemble commands */
-static int		BinaryFormatCmd(ClientData clientData,
-			    Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
-static int		BinaryScanCmd(ClientData clientData,
-			    Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
+static Tcl_ObjCmdProc	BinaryFormatCmd;
+static Tcl_ObjCmdProc	BinaryScanCmd;
 /* Binary encoding sub-ensemble commands */
-static int		BinaryEncodeHex(ClientData clientData,
-			    Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
-static int		BinaryDecodeHex(ClientData clientData,
-			    Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
-static int		BinaryEncode64(ClientData clientData,
-			    Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
-static int		BinaryDecode64(ClientData clientData,
-			    Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
-static int		BinaryEncodeUu(ClientData clientData,
-			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *const objv[]);
-static int		BinaryDecodeUu(ClientData clientData,
-			    Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const objv[]);
+static Tcl_ObjCmdProc	BinaryEncodeHex;
+static Tcl_ObjCmdProc	BinaryDecodeHex;
+static Tcl_ObjCmdProc	BinaryEncode64;
+static Tcl_ObjCmdProc	BinaryDecode64;
+static Tcl_ObjCmdProc	BinaryEncodeUu;
+static Tcl_ObjCmdProc	BinaryDecodeUu;
 
 /*
  * The following tables are used by the binary encoders
@@ -195,17 +179,18 @@ const Tcl_ObjType tclByteArrayType = {
  */
 
 typedef struct ByteArray {
-    int used;			/* The number of bytes used in the byte
+    unsigned int used;		/* The number of bytes used in the byte
 				 * array. */
-    int allocated;		/* The amount of space actually allocated
-				 * minus 1 byte. */
-    unsigned char bytes[TCLFLEXARRAY];	/* The array of bytes. The actual size of this
+    unsigned int allocated;	/* The number of bytes allocated for storage
+				 * of the following "bytes" field. */
+    unsigned char bytes[TCLFLEXARRAY];
+				/* The array of bytes. The actual size of this
 				 * field depends on the 'allocated' field
 				 * above. */
 } ByteArray;
 
 #define BYTEARRAY_SIZE(len) \
-		((unsigned) (TclOffset(ByteArray, bytes) + (len)))
+		(((unsigned)TclOffset(ByteArray, bytes) + (len)))
 #define GET_BYTEARRAY(objPtr) \
 		((ByteArray *) (objPtr)->internalRep.twoPtrValue.ptr1)
 #define SET_BYTEARRAY(objPtr, baPtr) \
@@ -417,9 +402,11 @@ Tcl_SetByteArrayLength(
     if (objPtr->typePtr != &tclByteArrayType) {
 	SetByteArrayFromAny(NULL, objPtr);
     }
-
+    if (length < 0) {
+	length = 0;
+    }
     byteArrayPtr = GET_BYTEARRAY(objPtr);
-    if (length > byteArrayPtr->allocated) {
+    if ((unsigned int)length > byteArrayPtr->allocated) {
 	byteArrayPtr = (ByteArray *)ckrealloc(byteArrayPtr, BYTEARRAY_SIZE(length));
 	byteArrayPtr->allocated = length;
 	SET_BYTEARRAY(objPtr, byteArrayPtr);
@@ -523,7 +510,7 @@ DupByteArrayInternalRep(
     Tcl_Obj *srcPtr,		/* Object with internal rep to copy. */
     Tcl_Obj *copyPtr)		/* Object with internal rep to set. */
 {
-    int length;
+    unsigned int length;
     ByteArray *srcArrayPtr, *copyArrayPtr;
 
     srcArrayPtr = GET_BYTEARRAY(srcPtr);
@@ -565,7 +552,7 @@ UpdateStringOfByteArray(
     Tcl_Obj *objPtr)		/* ByteArray object whose string rep to
 				 * update. */
 {
-    int i, length, size;
+    unsigned int i, length, size;
     unsigned char *src;
     char *dst;
     ByteArray *byteArrayPtr;
@@ -579,16 +566,16 @@ UpdateStringOfByteArray(
      */
 
     size = length;
-    for (i = 0; i < length && size >= 0; i++) {
+    for (i = 0; i < length && size <= INT_MAX; i++) {
 	if ((src[i] == 0) || (src[i] > 127)) {
 	    size++;
 	}
     }
-    if (size < 0) {
+    if (size > INT_MAX) {
 	Tcl_Panic("max size for a Tcl value (%d bytes) exceeded", INT_MAX);
     }
 
-    dst = (char *)ckalloc(size + 1);
+    dst = (char *)ckalloc(size + 1U);
     objPtr->bytes = dst;
     objPtr->length = size;
 
@@ -629,7 +616,7 @@ TclAppendBytesToByteArray(
     int len)
 {
     ByteArray *byteArrayPtr;
-    int needed;
+    unsigned int needed;
 
     if (Tcl_IsShared(objPtr)) {
 	Tcl_Panic("%s called with shared object","TclAppendBytesToByteArray");
@@ -650,7 +637,7 @@ TclAppendBytesToByteArray(
     }
     byteArrayPtr = GET_BYTEARRAY(objPtr);
 
-    if (len > INT_MAX - byteArrayPtr->used) {
+    if ((unsigned int)len > INT_MAX - byteArrayPtr->used) {
 	Tcl_Panic("max size for a Tcl value (%d bytes) exceeded", INT_MAX);
     }
 
@@ -661,7 +648,7 @@ TclAppendBytesToByteArray(
 
     if (needed > byteArrayPtr->allocated) {
 	ByteArray *ptr = NULL;
-	int attempt;
+	unsigned int attempt;
 
 	if (needed <= INT_MAX/2) {
 	    /*
@@ -943,7 +930,7 @@ BinaryFormatCmd(
      * bytes and filling with nulls.
      */
 
-    resultPtr = Tcl_NewObj();
+    TclNewObj(resultPtr);
     buffer = Tcl_SetByteArrayLength(resultPtr, length);
     memset(buffer, 0, length);
 
@@ -1253,7 +1240,7 @@ BinaryFormatCmd(
  *----------------------------------------------------------------------
  */
 
-int
+static int
 BinaryScanCmd(
     ClientData dummy,		/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
@@ -1376,7 +1363,7 @@ BinaryScanCmd(
 		}
 	    }
 	    src = buffer + offset;
-	    valuePtr = Tcl_NewObj();
+	    TclNewObj(valuePtr);
 	    Tcl_SetObjLength(valuePtr, count);
 	    dest = TclGetString(valuePtr);
 
@@ -1431,7 +1418,7 @@ BinaryScanCmd(
 		}
 	    }
 	    src = buffer + offset;
-	    valuePtr = Tcl_NewObj();
+	    TclNewObj(valuePtr);
 	    Tcl_SetObjLength(valuePtr, count);
 	    dest = TclGetString(valuePtr);
 
@@ -1515,7 +1502,7 @@ BinaryScanCmd(
 		if ((length - offset) < (count * size)) {
 		    goto done;
 		}
-		valuePtr = Tcl_NewObj();
+		TclNewObj(valuePtr);
 		src = buffer + offset;
 		for (i = 0; i < count; i++) {
 		    elementPtr = ScanNumber(src, cmd, flags, &numberCachePtr);
@@ -1665,7 +1652,7 @@ GetFormatSpec(
 	(*formatPtr)++;
 	*countPtr = BINARY_ALL;
     } else if (isdigit(UCHAR(**formatPtr))) { /* INTL: digit */
-	unsigned long int count;
+	unsigned long count;
 
 	errno = 0;
 	count = strtoul(*formatPtr, (char **) formatPtr, 10);
@@ -2118,12 +2105,12 @@ ScanNumber(
 	    value = (long) (buffer[0]
 		    + (buffer[1] << 8)
 		    + (buffer[2] << 16)
-		    + (((long)buffer[3]) << 24));
+		    + (((unsigned long)buffer[3]) << 24));
 	} else {
 	    value = (long) (buffer[3]
 		    + (buffer[2] << 8)
 		    + (buffer[1] << 16)
-		    + (((long) buffer[0]) << 24));
+		    + (((unsigned long) buffer[0]) << 24));
 	}
 
 	/*
@@ -2537,7 +2524,7 @@ BinaryEncode64(
 	maxlen = 0;
     }
 
-    resultObj = Tcl_NewObj();
+    TclNewObj(resultObj);
     data = Tcl_GetByteArrayFromObj(objv[objc - 1], &count);
     if (count > 0) {
 	unsigned char *cursor = NULL;
@@ -2615,7 +2602,8 @@ BinaryEncodeUu(
 {
     Tcl_Obj *resultObj;
     unsigned char *data, *start, *cursor;
-    int offset, count, rawLength, n, i, j, bits, index;
+    int offset, count, rawLength, i, j, bits, index;
+    unsigned int n;
     int lineLength = 61;
     const unsigned char SingleNewline[] = { UCHAR('\n') };
     const unsigned char *wrapchar = SingleNewline;

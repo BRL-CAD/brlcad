@@ -9116,3 +9116,54 @@ See RFC 2045
 2021-10-27 tzdata updated to Olson's tzdata2021e (nijtmans)
 
 - Released 8.6.12, Nov 5, 2021 - details at https://core.tcl-lang.org/tcl/ -
+
+2021-12-08 (update) tcltest package to version 2.5.4
+
+2022-01-13 (bug)[26f132] Crash when sizeof(int) < sizeof(void *) (Plan 9 port)
+
+2022-01-19 (TIP 623)[e9a271] Tcl_GetRange index args < 0 (petasis,nijtmans)
+
+2022-03-08 (bug) test string-5.22 (porter)
+
+2022-03-11 (bug)[8a7ec8] fat binary compile on Mac M1 (davis, nijtmans)
+
+2022-04-04 (bug)[e5ed1b] numeric IPv6 in URLs (nijtmans)
+=> http 2.9.6
+
+2022-04-26 (bug)[27520c] test error-9.6 (goth,sebres)
+
+2022-05-04 (bug)[8eb64b] http package tolerant again invalid reply header
+
+2022-05-11 (bug)[6898f9] http package failed detection of shiftjis charset
+
+2022-05-25 (bug)[76ad7a] tests string-6.13[23] (mistachkin, nijtmans)
+
+2022-06-20 (bug)[55bf73] Avoid connection reuse after response code 101.
+=> http 2.9.8
+
+2022-07-22 (bug)[713653] FP rounding exposed by x86 musl (rubicon,sebres)
+
+2022-07-22 More portable notation of microseconds in verbose output (sebres)
+=> tcltest 2.5.5
+
+2022-07-27 (bug)[b3977d] Process CR-LF split across packets (nadkarni,sebres)
+
+2022-07-29 (bug)[4eb3a1] crash due to undetected bytecode invalidity (nadkarni)
+
+2022-08-23 (new)[371080] Portability to CHERI-enabled Morello processor (jrtc27)
+
+2022-09-06 (bug)[55a02f] Fallback init env(HOME) from USERPROFILE (nadkarni)
+
+2022-09-13 (bug)[1073da] crash writing invalid utf-8 (nijtmans)
+
+2022-09-14 (new) Update to Unicode-15 (nijtmans)
+
+2022-10-14 tzdata updated to Olson's tzdata2022e (nijtmans)
+
+Update bundled zlib to 1.2.13
+
+Update bundled libtommath
+
+Many code fixes to avoid overflow or undefined behavior.  Thanks chrstphrchvz.
+
+- Released 8.6.13, Nov 22, 2022 - details at https://core.tcl-lang.org/tcl/ -

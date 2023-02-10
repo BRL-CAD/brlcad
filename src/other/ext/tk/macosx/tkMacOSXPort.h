@@ -35,17 +35,11 @@
 #ifndef _TCL
 #   include <tcl.h>
 #endif
-#if TIME_WITH_SYS_TIME
-#   include <sys/time.h>
-#   include <time.h>
-#else
-#   if HAVE_SYS_TIME_H
+#ifdef HAVE_SYS_TIME_H
 #	include <sys/time.h>
-#   else
-#	include <time.h>
-#   endif
 #endif
-#if HAVE_INTTYPES_H
+#include <time.h>
+#ifdef HAVE_INTTYPES_H
 #    include <inttypes.h>
 #endif
 #include <unistd.h>
@@ -197,14 +191,6 @@ MODULE_SCOPE int TkpPutRGBAImage(
 MODULE_SCOPE unsigned long TkMacOSXRGBPixel(unsigned long red, unsigned long green,
 					    unsigned long blue);
 #define TkpGetPixel(p) (TkMacOSXRGBPixel(p->red >> 8, p->green >> 8, p->blue >> 8))
-
-/*
- * Used by tkWindow.c
- */
-
-MODULE_SCOPE void TkMacOSXHandleMapOrUnmap(Tk_Window tkwin, XEvent *event);
-
-#define TkpHandleMapOrUnmap(tkwin, event)  TkMacOSXHandleMapOrUnmap(tkwin, event)
 
 /*
  * Used by tkAppInit

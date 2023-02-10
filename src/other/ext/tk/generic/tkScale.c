@@ -34,15 +34,6 @@ static const char *const orientStrings[] = {
     "horizontal", "vertical", NULL
 };
 
-/*
- * The following table defines the legal values for the -state option. It is
- * used together with the "enum state" declaration in tkScale.h.
- */
-
-static const char *const stateStrings[] = {
-    "active", "disabled", "normal", NULL
-};
-
 static const Tk_OptionSpec optionSpecs[] = {
     {TK_OPTION_BORDER, "-activebackground", "activeBackground", "Foreground",
 	DEF_SCALE_ACTIVE_BG_COLOR, -1, Tk_Offset(TkScale, activeBorder),
@@ -95,7 +86,7 @@ static const Tk_OptionSpec optionSpecs[] = {
 	DEF_SCALE_LENGTH, -1, Tk_Offset(TkScale, length), 0, 0, 0},
     {TK_OPTION_STRING_TABLE, "-orient", "orient", "Orient",
 	DEF_SCALE_ORIENT, -1, Tk_Offset(TkScale, orient),
-	0, orientStrings, 0},
+	TK_OPTION_ENUM_VAR, orientStrings, 0},
     {TK_OPTION_RELIEF, "-relief", "relief", "Relief",
 	DEF_SCALE_RELIEF, -1, Tk_Offset(TkScale, relief), 0, 0, 0},
     {TK_OPTION_INT, "-repeatdelay", "repeatDelay", "RepeatDelay",
@@ -118,7 +109,7 @@ static const Tk_OptionSpec optionSpecs[] = {
 	0, 0, 0},
     {TK_OPTION_STRING_TABLE, "-state", "state", "State",
 	DEF_SCALE_STATE, -1, Tk_Offset(TkScale, state),
-	0, stateStrings, 0},
+	TK_OPTION_ENUM_VAR, tkStateStrings, 0},
     {TK_OPTION_STRING, "-takefocus", "takeFocus", "TakeFocus",
 	DEF_SCALE_TAKE_FOCUS, Tk_Offset(TkScale, takeFocusPtr), -1,
 	TK_OPTION_NULL_OK, 0, 0},

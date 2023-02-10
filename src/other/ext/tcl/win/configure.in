@@ -15,7 +15,7 @@ SHELL=/bin/sh
 TCL_VERSION=8.6
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=6
-TCL_PATCH_LEVEL=".12"
+TCL_PATCH_LEVEL=".13"
 VER=$TCL_MAJOR_VERSION$TCL_MINOR_VERSION
 
 TCL_DDE_VERSION=1.4
@@ -144,10 +144,18 @@ AS_IF([test "${enable_shared+set}" = "set"], [
 AS_IF([test "$tcl_ok" = "yes"], [
   AC_SUBST(ZLIB_DLL_FILE,[\${ZLIB_DLL_FILE}])
   AS_IF([test "$do64bit" != "no"], [
-    AS_IF([test "$GCC" == "yes"],[
-      AC_SUBST(ZLIB_LIBS,[\${ZLIB_DIR_NATIVE}/win64/libz.dll.a])
+    AS_IF([test "$do64bit" = "arm64"], [
+      AS_IF([test "$GCC" == "yes"],[
+        AC_SUBST(ZLIB_LIBS,[\${ZLIB_DIR_NATIVE}/win64-arm/libz.dll.a])
+      ], [
+        AC_SUBST(ZLIB_LIBS,[\${ZLIB_DIR_NATIVE}/win64-arm/zdll.lib])
+      ])
     ], [
-      AC_SUBST(ZLIB_LIBS,[\${ZLIB_DIR_NATIVE}/win64/zdll.lib])
+      AS_IF([test "$GCC" == "yes"],[
+        AC_SUBST(ZLIB_LIBS,[\${ZLIB_DIR_NATIVE}/win64/libz.dll.a])
+      ], [
+        AC_SUBST(ZLIB_LIBS,[\${ZLIB_DIR_NATIVE}/win64/zdll.lib])
+      ])
     ])
   ], [
     AC_SUBST(ZLIB_LIBS,[\${ZLIB_DIR_NATIVE}/win32/zdll.lib])
@@ -375,7 +383,7 @@ case "$TCL_PATCH_LEVEL" in
 esac
 TCL_WIN_VERSION="$TCL_VERSION.$TCL_RELEASE_LEVEL.`echo $TCL_PATCH_LEVEL | tr -d ab.`"
 AC_SUBST(TCL_WIN_VERSION)
-# X86|AMD64|IA64 for manifest
+# X86|AMD64|ARM64|IA64 for manifest
 AC_SUBST(MACHINE)
 
 AC_SUBST(TCL_VERSION)

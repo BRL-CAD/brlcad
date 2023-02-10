@@ -1,8 +1,8 @@
 {
-  "$id": "https://proj.org/schemas/v0.4/projjson.schema.json",
+  "$id": "https://proj.org/schemas/v0.5/projjson.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "description": "Schema for PROJJSON (v0.4)",
-  "$comment": "This file exists both in data/ and in schemas/vXXX/. Keep both in sync. And if changing the value of $id, change PROJJSON_CURRENT_VERSION accordingly in io.cpp",
+  "description": "Schema for PROJJSON (v0.5)",
+  "$comment": "This file exists both in data/ and in schemas/vXXX/. Keep both in sync. And if changing the value of $id, change PROJJSON_DEFAULT_VERSION accordingly in io.cpp",
 
   "oneOf": [
     { "$ref": "#/definitions/crs" },
@@ -85,6 +85,7 @@
                                  "future",
                                  "past",
                                  "unspecified" ] },
+        "meridian": { "$ref": "#/definitions/meridian" },
         "unit": { "$ref": "#/definitions/unit" },
         "id": { "$ref": "#/definitions/id" },
         "ids": { "$ref": "#/definitions/ids" }
@@ -122,6 +123,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -144,6 +147,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -168,6 +173,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -292,6 +299,17 @@
       "additionalProperties": false
     },
 
+    "deformation_model": {
+      "description": "Association to a PointMotionOperation",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "id": { "$ref": "#/definitions/id" }
+      },
+      "required" : [ "name" ],
+      "additionalProperties": false
+    },
+
     "derived_engineering_crs": {
       "type": "object",
       "allOf": [{ "$ref": "#/definitions/object_usage" }],
@@ -306,6 +324,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -329,6 +349,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -351,6 +373,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -373,6 +397,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -395,6 +421,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -417,6 +445,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -435,11 +465,12 @@
         "ellipsoid": {},
         "prime_meridian": {},
         "frame_reference_epoch": { "type": "number" },
-        "deformation_model": { "type": "string" },
         "$schema" : {},
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -456,11 +487,12 @@
         "name": {},
         "anchor": {},
         "frame_reference_epoch": { "type": "number" },
-        "deformation_model": { "type": "string" },
         "$schema" : {},
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -528,6 +560,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -547,6 +581,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -568,10 +604,16 @@
         },
         "datum_ensemble": { "$ref": "#/definitions/datum_ensemble" },
         "coordinate_system": { "$ref": "#/definitions/coordinate_system" },
+        "deformation_models": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/deformation_model" }
+        },
         "$schema" : {},
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -598,11 +640,24 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
       },
       "required" : [ "name", "ellipsoid" ],
+      "additionalProperties": false
+    },
+
+    "geoid_model": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "interpolation_crs": { "$ref": "#/definitions/crs" },
+        "id": { "$ref": "#/definitions/id" }
+      },
+      "required" : [ "name" ],
       "additionalProperties": false
     },
 
@@ -668,6 +723,22 @@
       ]
     },
 
+    "meridian": {
+      "type": "object",
+      "properties": {
+        "$schema" : { "type": "string" },
+        "type": { "type": "string", "enum": ["Meridian"] },
+        "longitude": { "$ref": "#/definitions/value_in_degree_or_value_and_unit" },
+        "id": { "$ref": "#/definitions/id" },
+        "ids": { "$ref": "#/definitions/ids" }
+      },
+      "required" : [ "longitude" ],
+      "allOf": [
+        { "$ref": "#/definitions/id_ids_mutually_exclusive" }
+      ],
+      "additionalProperties": false
+    },
+
     "object_usage": {
       "anyOf": [
       {
@@ -677,6 +748,8 @@
             "scope": { "type": "string" },
             "area": { "type": "string" },
             "bbox": { "$ref": "#/definitions/bbox" },
+            "vertical_extent": { "$ref": "#/definitions/vertical_extent" },
+            "temporal_extent": { "$ref": "#/definitions/temporal_extent" },
             "remarks": { "type": "string" },
             "id": { "$ref": "#/definitions/id" },
             "ids": { "$ref": "#/definitions/ids" }
@@ -736,6 +809,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -755,11 +830,41 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
       },
       "required" : [ "name" ],
+      "additionalProperties": false
+    },
+
+    "point_motion_operation": {
+      "$comment": "Not implemented in PROJ (at least as of PROJ 9.1)",
+      "type": "object",
+      "allOf": [{ "$ref": "#/definitions/object_usage" }],
+      "properties": {
+        "type": { "type": "string", "enum": ["PointMotionOperation"] },
+        "name": { "type": "string" },
+        "source_crs": { "$ref": "#/definitions/crs" },
+        "method": { "$ref": "#/definitions/method" },
+        "parameters": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/parameter_value" }
+        },
+        "accuracy": { "type": "string" },
+        "$schema" : {},
+        "scope": {},
+        "area": {},
+        "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
+        "usages": {},
+        "remarks": {},
+        "id": {}, "ids": {}
+      },
+      "required" : [ "name", "source_crs", "method", "parameters" ],
       "additionalProperties": false
     },
 
@@ -783,7 +888,8 @@
     "single_operation": {
       "oneOf": [
         { "$ref": "#/definitions/conversion" },
-        { "$ref": "#/definitions/transformation" }
+        { "$ref": "#/definitions/transformation" },
+        { "$ref": "#/definitions/point_motion_operation" }
       ]
     },
 
@@ -801,6 +907,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -821,6 +929,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -841,11 +951,23 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
       },
       "required" : [ "name", "calendar" ],
+      "additionalProperties": false
+    },
+
+    "temporal_extent": {
+      "type": "object",
+      "properties": {
+        "start": { "type": "string" },
+        "end": { "type": "string" }
+      },
+      "required" : [ "start", "end" ],
       "additionalProperties": false
     },
 
@@ -868,6 +990,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -909,7 +1033,9 @@
           "properties": {
             "scope": { "type": "string" },
             "area": { "type": "string" },
-            "bbox": { "$ref": "#/definitions/bbox" }
+            "bbox": { "$ref": "#/definitions/bbox" },
+            "vertical_extent": { "$ref": "#/definitions/vertical_extent" },
+            "temporal_extent": { "$ref": "#/definitions/temporal_extent" }
            },
           "additionalProperties": false
         }
@@ -952,20 +1078,21 @@
         },
         "datum_ensemble": { "$ref": "#/definitions/datum_ensemble" },
         "coordinate_system": { "$ref": "#/definitions/coordinate_system" },
-        "geoid_model": {
-          "type": "object",
-          "properties": {
-            "name": { "type": "string" },
-            "interpolation_crs": { "$ref": "#/definitions/crs" },
-            "id": { "$ref": "#/definitions/id" }
-          },
-          "required" : [ "name" ],
-          "additionalProperties": false
+        "geoid_model": { "$ref": "#/definitions/geoid_model" },
+        "geoid_models": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/geoid_model" }
+        },
+        "deformation_models": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/deformation_model" }
         },
         "$schema" : {},
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}
@@ -974,8 +1101,25 @@
       "description": "One and only one of datum and datum_ensemble must be provided",
       "allOf": [
         { "$ref": "#/definitions/object_usage" },
-        { "$ref": "#/definitions/one_and_only_one_of_datum_or_datum_ensemble" }
+        { "$ref": "#/definitions/one_and_only_one_of_datum_or_datum_ensemble" },
+        {
+            "not": {
+                "type": "object",
+                "required": [ "geoid_model", "geoid_models" ]
+            }
+        }
       ],
+      "additionalProperties": false
+    },
+
+    "vertical_extent": {
+      "type": "object",
+      "properties": {
+        "minimum": { "type": "number" },
+        "maximum": { "type": "number" },
+        "unit": { "$ref": "#/definitions/unit" }
+      },
+      "required" : [ "minimum", "maximum" ],
       "additionalProperties": false
     },
 
@@ -990,6 +1134,8 @@
         "scope": {},
         "area": {},
         "bbox": {},
+        "vertical_extent": {},
+        "temporal_extent": {},
         "usages": {},
         "remarks": {},
         "id": {}, "ids": {}

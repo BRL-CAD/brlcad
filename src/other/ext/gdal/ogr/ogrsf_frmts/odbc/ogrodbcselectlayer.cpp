@@ -30,14 +30,13 @@
 #include "cpl_conv.h"
 #include "ogr_odbc.h"
 
-CPL_CVSID("$Id$")
 /************************************************************************/
 /*                          OGRODBCSelectLayer()                         */
 /************************************************************************/
 
-OGRODBCSelectLayer::OGRODBCSelectLayer( OGRODBCDataSource *poDSIn,
-                                        CPLODBCStatement * poStmtIn ) :
-    pszBaseStatement(CPLStrdup(poStmtIn->GetCommand()))
+OGRODBCSelectLayer::OGRODBCSelectLayer(OGRODBCDataSource *poDSIn,
+                                       CPLODBCStatement *poStmtIn)
+    : pszBaseStatement(CPLStrdup(poStmtIn->GetCommand()))
 {
     poDS = poDSIn;
 
@@ -47,7 +46,7 @@ OGRODBCSelectLayer::OGRODBCSelectLayer( OGRODBCDataSource *poDSIn,
 
     poStmt = poStmtIn;
 
-    BuildFeatureDefn( "SELECT", poStmt );
+    BuildFeatureDefn("SELECT", poStmt);
 }
 
 /************************************************************************/
@@ -67,7 +66,7 @@ OGRODBCSelectLayer::~OGRODBCSelectLayer()
 void OGRODBCSelectLayer::ClearStatement()
 
 {
-    if( poStmt != nullptr )
+    if (poStmt != nullptr)
     {
         delete poStmt;
         poStmt = nullptr;
@@ -81,7 +80,7 @@ void OGRODBCSelectLayer::ClearStatement()
 CPLODBCStatement *OGRODBCSelectLayer::GetStatement()
 
 {
-    if( poStmt == nullptr )
+    if (poStmt == nullptr)
         ResetStatement();
 
     return poStmt;
@@ -98,11 +97,11 @@ OGRErr OGRODBCSelectLayer::ResetStatement()
 
     iNextShapeId = 0;
 
-    CPLDebug( "OGR_ODBC", "Recreating statement." );
-    poStmt = new CPLODBCStatement( poDS->GetSession() );
-    poStmt->Append( pszBaseStatement );
+    CPLDebug("OGR_ODBC", "Recreating statement.");
+    poStmt = new CPLODBCStatement(poDS->GetSession());
+    poStmt->Append(pszBaseStatement);
 
-    if( poStmt->ExecuteSQL() )
+    if (poStmt->ExecuteSQL())
         return OGRERR_NONE;
     else
     {
@@ -119,7 +118,7 @@ OGRErr OGRODBCSelectLayer::ResetStatement()
 void OGRODBCSelectLayer::ResetReading()
 
 {
-    if( iNextShapeId != 0 )
+    if (iNextShapeId != 0)
         ClearStatement();
 
     OGRODBCLayer::ResetReading();
@@ -129,20 +128,20 @@ void OGRODBCSelectLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRODBCSelectLayer::GetFeature( GIntBig nFeatureId )
+OGRFeature *OGRODBCSelectLayer::GetFeature(GIntBig nFeatureId)
 
 {
-    return OGRODBCLayer::GetFeature( nFeatureId );
+    return OGRODBCLayer::GetFeature(nFeatureId);
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRODBCSelectLayer::TestCapability( const char * pszCap )
+int OGRODBCSelectLayer::TestCapability(const char *pszCap)
 
 {
-    return OGRODBCLayer::TestCapability( pszCap );
+    return OGRODBCLayer::TestCapability(pszCap);
 }
 
 /************************************************************************/
@@ -152,7 +151,7 @@ int OGRODBCSelectLayer::TestCapability( const char * pszCap )
 /*      can optimize the GetExtent() method!                            */
 /************************************************************************/
 
-OGRErr OGRODBCSelectLayer::GetExtent(OGREnvelope *, int )
+OGRErr OGRODBCSelectLayer::GetExtent(OGREnvelope *, int)
 
 {
     return OGRERR_FAILURE;
@@ -167,8 +166,8 @@ OGRErr OGRODBCSelectLayer::GetExtent(OGREnvelope *, int )
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRODBCSelectLayer::GetFeatureCount( int bForce )
+GIntBig OGRODBCSelectLayer::GetFeatureCount(int bForce)
 
 {
-    return OGRODBCLayer::GetFeatureCount( bForce );
+    return OGRODBCLayer::GetFeatureCount(bForce);
 }

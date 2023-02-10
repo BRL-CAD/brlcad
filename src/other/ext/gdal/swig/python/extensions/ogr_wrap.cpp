@@ -2694,36 +2694,40 @@ SWIGINTERN PyObject *SWIG_PyStaticMethod_New(PyObject *SWIGUNUSEDPARM(self), PyO
 
 /* -------- TYPES TABLE (BEGIN) -------- */
 
-#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[0]
-#define SWIGTYPE_p_GDALProgressFunc swig_types[1]
-#define SWIGTYPE_p_GIntBig swig_types[2]
-#define SWIGTYPE_p_OGRCodedValue swig_types[3]
-#define SWIGTYPE_p_OGRDataSourceShadow swig_types[4]
-#define SWIGTYPE_p_OGRDriverShadow swig_types[5]
-#define SWIGTYPE_p_OGRFeatureDefnShadow swig_types[6]
-#define SWIGTYPE_p_OGRFeatureShadow swig_types[7]
-#define SWIGTYPE_p_OGRFieldDefnShadow swig_types[8]
-#define SWIGTYPE_p_OGRFieldDomainShadow swig_types[9]
-#define SWIGTYPE_p_OGRGeomFieldDefnShadow swig_types[10]
-#define SWIGTYPE_p_OGRGeomTransformerShadow swig_types[11]
-#define SWIGTYPE_p_OGRGeometryShadow swig_types[12]
-#define SWIGTYPE_p_OGRLayerShadow swig_types[13]
-#define SWIGTYPE_p_OGRPreparedGeometryShadow swig_types[14]
-#define SWIGTYPE_p_OGRStyleTableShadow swig_types[15]
-#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[16]
-#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[17]
-#define SWIGTYPE_p_char swig_types[18]
-#define SWIGTYPE_p_double swig_types[19]
-#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[20]
-#define SWIGTYPE_p_float swig_types[21]
-#define SWIGTYPE_p_int swig_types[22]
-#define SWIGTYPE_p_p_GIntBig swig_types[23]
-#define SWIGTYPE_p_p_char swig_types[24]
-#define SWIGTYPE_p_p_double swig_types[25]
-#define SWIGTYPE_p_p_int swig_types[26]
-#define SWIGTYPE_p_size_t swig_types[27]
-static swig_type_info *swig_types[29];
-static swig_module_info swig_module = {swig_types, 28, 0, 0, 0, 0};
+#define SWIGTYPE_p_ArrowArray swig_types[0]
+#define SWIGTYPE_p_ArrowArrayStream swig_types[1]
+#define SWIGTYPE_p_ArrowSchema swig_types[2]
+#define SWIGTYPE_p_GDALMajorObjectShadow swig_types[3]
+#define SWIGTYPE_p_GDALProgressFunc swig_types[4]
+#define SWIGTYPE_p_GIntBig swig_types[5]
+#define SWIGTYPE_p_OGRCodedValue swig_types[6]
+#define SWIGTYPE_p_OGRDataSourceShadow swig_types[7]
+#define SWIGTYPE_p_OGRDriverShadow swig_types[8]
+#define SWIGTYPE_p_OGRFeatureDefnShadow swig_types[9]
+#define SWIGTYPE_p_OGRFeatureShadow swig_types[10]
+#define SWIGTYPE_p_OGRFieldDefnShadow swig_types[11]
+#define SWIGTYPE_p_OGRFieldDomainShadow swig_types[12]
+#define SWIGTYPE_p_OGRGeomFieldDefnShadow swig_types[13]
+#define SWIGTYPE_p_OGRGeomTransformerShadow swig_types[14]
+#define SWIGTYPE_p_OGRGeometryShadow swig_types[15]
+#define SWIGTYPE_p_OGRLayerShadow swig_types[16]
+#define SWIGTYPE_p_OGRPreparedGeometryShadow swig_types[17]
+#define SWIGTYPE_p_OGRStyleTableShadow swig_types[18]
+#define SWIGTYPE_p_OSRCoordinateTransformationShadow swig_types[19]
+#define SWIGTYPE_p_OSRSpatialReferenceShadow swig_types[20]
+#define SWIGTYPE_p_char swig_types[21]
+#define SWIGTYPE_p_double swig_types[22]
+#define SWIGTYPE_p_f_double_p_q_const__char_p_void__int swig_types[23]
+#define SWIGTYPE_p_float swig_types[24]
+#define SWIGTYPE_p_int swig_types[25]
+#define SWIGTYPE_p_p_GIntBig swig_types[26]
+#define SWIGTYPE_p_p_OGRGeometryTypeCounter swig_types[27]
+#define SWIGTYPE_p_p_char swig_types[28]
+#define SWIGTYPE_p_p_double swig_types[29]
+#define SWIGTYPE_p_p_int swig_types[30]
+#define SWIGTYPE_p_size_t swig_types[31]
+static swig_type_info *swig_types[33];
+static swig_module_info swig_module = {swig_types, 32, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -2827,6 +2831,9 @@ namespace swig {
 }
 
 
+typedef void* VoidPtrAsLong;
+
+
 typedef char retStringAndCPLFree;
 
 
@@ -2841,6 +2848,7 @@ using namespace std;
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
+#include "ogr_recordbatch.h"
 
 #define FIELD_INDEX_ERROR_TMPL "Invalid field index: '%i'"
 #define FIELD_NAME_ERROR_TMPL "Invalid field name: '%s'"
@@ -3165,7 +3173,7 @@ PyProgressProxy( double dfComplete, const char *pszMessage, void *pData )
     PyObject *psArgs, *psResult;
     int      bContinue = TRUE;
 
-    if( psInfo->nLastReported == (int) (100.0 * dfComplete) )
+    if( dfComplete > 0 && psInfo->nLastReported == (int) (100.0 * dfComplete) )
         return TRUE;
 
     if( psInfo->psPyCallback == NULL || psInfo->psPyCallback == Py_None )
@@ -3782,6 +3790,60 @@ SWIGINTERN OGRErr OGRDataSourceShadow_CommitTransaction(OGRDataSourceShadow *sel
 SWIGINTERN OGRErr OGRDataSourceShadow_RollbackTransaction(OGRDataSourceShadow *self){
     return GDALDatasetRollbackTransaction(self);
   }
+SWIGINTERN void delete_ArrowArray(ArrowArray *self){
+    if( self->release )
+      self->release(self);
+    free(self);
+  }
+SWIGINTERN VoidPtrAsLong ArrowArray__getPtr(ArrowArray *self){
+    return self;
+  }
+SWIGINTERN GIntBig ArrowArray_GetChildrenCount(ArrowArray *self){
+    return self->n_children;
+  }
+SWIGINTERN GIntBig ArrowArray_GetLength(ArrowArray *self){
+    return self->length;
+  }
+SWIGINTERN void delete_ArrowSchema(ArrowSchema *self){
+    if( self->release )
+      self->release(self);
+    free(self);
+  }
+SWIGINTERN VoidPtrAsLong ArrowSchema__getPtr(ArrowSchema *self){
+    return self;
+  }
+SWIGINTERN GIntBig ArrowSchema_GetChildrenCount(ArrowSchema *self){
+    return self->n_children;
+  }
+SWIGINTERN void delete_ArrowArrayStream(ArrowArrayStream *self){
+    if( self->release )
+      self->release(self);
+    free(self);
+  }
+SWIGINTERN ArrowSchema *ArrowArrayStream_GetSchema(ArrowArrayStream *self){
+      struct ArrowSchema* schema = (struct ArrowSchema* )malloc(sizeof(struct ArrowSchema));
+      if( self->get_schema(self, schema) == 0 )
+      {
+          return schema;
+      }
+      else
+      {
+          free(schema);
+          return NULL;
+      }
+  }
+SWIGINTERN ArrowArray *ArrowArrayStream_GetNextRecordBatch(ArrowArrayStream *self,char **options=NULL){
+      struct ArrowArray* array = (struct ArrowArray* )malloc(sizeof(struct ArrowArray));
+      if( self->get_next(self, array) == 0 && array->release != NULL )
+      {
+          return array;
+      }
+      else
+      {
+          free(array);
+          return NULL;
+      }
+  }
 SWIGINTERN OGRErr OGRLayerShadow_Rename(OGRLayerShadow *self,char const *new_name){
     return OGR_L_Rename( self, new_name);
   }
@@ -3835,6 +3897,9 @@ SWIGINTERN OGRErr OGRLayerShadow_SetFeature(OGRLayerShadow *self,OGRFeatureShado
   }
 SWIGINTERN OGRErr OGRLayerShadow_CreateFeature(OGRLayerShadow *self,OGRFeatureShadow *feature){
     return OGR_L_CreateFeature(self, feature);
+  }
+SWIGINTERN OGRErr OGRLayerShadow_UpsertFeature(OGRLayerShadow *self,OGRFeatureShadow *feature){
+    return OGR_L_UpsertFeature(self, feature);
   }
 SWIGINTERN OGRErr OGRLayerShadow_DeleteFeature(OGRLayerShadow *self,GIntBig fid){
     return OGR_L_DeleteFeature(self, fid);
@@ -3912,6 +3977,9 @@ SWIGINTERN OGRErr OGRLayerShadow_ReorderFields(OGRLayerShadow *self,int nList,in
 SWIGINTERN OGRErr OGRLayerShadow_AlterFieldDefn(OGRLayerShadow *self,int iField,OGRFieldDefnShadow *field_def,int nFlags){
     return OGR_L_AlterFieldDefn(self, iField, field_def, nFlags);
   }
+SWIGINTERN OGRErr OGRLayerShadow_AlterGeomFieldDefn(OGRLayerShadow *self,int iGeomField,OGRGeomFieldDefnShadow const *field_def,int nFlags){
+    return OGR_L_AlterGeomFieldDefn(self, iGeomField, const_cast<OGRGeomFieldDefnShadow*>(field_def), nFlags);
+  }
 SWIGINTERN OGRErr OGRLayerShadow_CreateGeomField(OGRLayerShadow *self,OGRGeomFieldDefnShadow *field_def,int approx_ok=1){
     return OGR_L_CreateGeomField(self, field_def, approx_ok);
   }
@@ -3967,6 +4035,19 @@ SWIGINTERN void OGRLayerShadow_SetStyleTable(OGRLayerShadow *self,OGRStyleTableS
     if( table != NULL )
         OGR_L_SetStyleTable(self, (OGRStyleTableH) table);
   }
+SWIGINTERN ArrowArrayStream *OGRLayerShadow_GetArrowStream(OGRLayerShadow *self,char **options=NULL){
+      struct ArrowArrayStream* stream = (struct ArrowArrayStream* )malloc(sizeof(struct ArrowArrayStream));
+      if( OGR_L_GetArrowStream(self, stream, options) )
+          return stream;
+      else
+      {
+          free(stream);
+          return NULL;
+      }
+  }
+SWIGINTERN void OGRLayerShadow_GetGeometryTypes(OGRLayerShadow *self,OGRGeometryTypeCounter **ppRet,int *pnEntryCount,int geom_field=0,int flags=0,GDALProgressFunc callback=NULL,void *callback_data=NULL){
+        *ppRet = OGR_L_GetGeometryTypes(self, geom_field, flags, pnEntryCount, callback, callback_data);
+    }
 SWIGINTERN void delete_OGRFeatureShadow(OGRFeatureShadow *self){
     OGR_F_Destroy(self);
   }
@@ -5199,6 +5280,23 @@ SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_GetBoundary(OGRGeometryShadow *s
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_ConvexHull(OGRGeometryShadow *self){
     return (OGRGeometryShadow*) OGR_G_ConvexHull(self);
   }
+
+SWIGINTERN int
+SWIG_AsVal_bool (PyObject *obj, bool *val)
+{
+  int r;
+  if (!PyBool_Check(obj))
+    return SWIG_ERROR;
+  r = PyObject_IsTrue(obj);
+  if (r == -1)
+    return SWIG_ERROR;
+  if (val) *val = r ? true : false;
+  return SWIG_OK;
+}
+
+SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_ConcaveHull(OGRGeometryShadow *self,double ratio,bool allowHoles){
+    return (OGRGeometryShadow*) OGR_G_ConcaveHull(self, ratio, allowHoles);
+  }
 SWIGINTERN OGRGeometryShadow *OGRGeometryShadow_MakeValid(OGRGeometryShadow *self,char **options=NULL){
     return (OGRGeometryShadow*) OGR_G_MakeValidEx(self, options);
   }
@@ -5540,20 +5638,6 @@ OGRFieldDomainShadow* CreateRangeFieldDomain( const char *name,
                                                             minIsInclusive,
                                                             &sMax,
                                                             maxIsInclusive );
-}
-
-
-SWIGINTERN int
-SWIG_AsVal_bool (PyObject *obj, bool *val)
-{
-  int r;
-  if (!PyBool_Check(obj))
-    return SWIG_ERROR;
-  r = PyObject_IsTrue(obj);
-  if (r == -1)
-    return SWIG_ERROR;
-  if (val) *val = r ? true : false;
-  return SWIG_OK;
 }
 
 
@@ -8771,6 +8855,463 @@ SWIGINTERN PyObject *DataSource_swigregister(PyObject *SWIGUNUSEDPARM(self), PyO
   return SWIG_Py_Void();
 }
 
+SWIGINTERN PyObject *_wrap_delete_ArrowArray(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowArray *arg1 = (ArrowArray *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowArray, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_ArrowArray" "', argument " "1"" of type '" "ArrowArray *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowArray * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_ArrowArray(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ArrowArray__getPtr(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowArray *arg1 = (ArrowArray *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  VoidPtrAsLong result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowArray, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ArrowArray__getPtr" "', argument " "1"" of type '" "ArrowArray *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowArray * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (VoidPtrAsLong)ArrowArray__getPtr(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    resultobj = PyLong_FromVoidPtr(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ArrowArray_GetChildrenCount(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowArray *arg1 = (ArrowArray *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  GIntBig result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowArray, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ArrowArray_GetChildrenCount" "', argument " "1"" of type '" "ArrowArray *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowArray * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = ArrowArray_GetChildrenCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    resultobj = PyLong_FromLongLong(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ArrowArray_GetLength(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowArray *arg1 = (ArrowArray *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  GIntBig result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowArray, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ArrowArray_GetLength" "', argument " "1"" of type '" "ArrowArray *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowArray * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = ArrowArray_GetLength(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    resultobj = PyLong_FromLongLong(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *ArrowArray_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!SWIG_Python_UnpackTuple(args, "swigregister", 1, 1, &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_ArrowArray, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_delete_ArrowSchema(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowSchema *arg1 = (ArrowSchema *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowSchema, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_ArrowSchema" "', argument " "1"" of type '" "ArrowSchema *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowSchema * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_ArrowSchema(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ArrowSchema__getPtr(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowSchema *arg1 = (ArrowSchema *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  VoidPtrAsLong result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowSchema, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ArrowSchema__getPtr" "', argument " "1"" of type '" "ArrowSchema *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowSchema * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (VoidPtrAsLong)ArrowSchema__getPtr(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    resultobj = PyLong_FromVoidPtr(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ArrowSchema_GetChildrenCount(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowSchema *arg1 = (ArrowSchema *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  GIntBig result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowSchema, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ArrowSchema_GetChildrenCount" "', argument " "1"" of type '" "ArrowSchema *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowSchema * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = ArrowSchema_GetChildrenCount(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    resultobj = PyLong_FromLongLong(result);
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *ArrowSchema_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!SWIG_Python_UnpackTuple(args, "swigregister", 1, 1, &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_ArrowSchema, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
+SWIGINTERN PyObject *_wrap_delete_ArrowArrayStream(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowArrayStream *arg1 = (ArrowArrayStream *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowArrayStream, SWIG_POINTER_DISOWN |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "delete_ArrowArrayStream" "', argument " "1"" of type '" "ArrowArrayStream *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowArrayStream * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      delete_ArrowArrayStream(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ArrowArrayStream_GetSchema(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowArrayStream *arg1 = (ArrowArrayStream *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  ArrowSchema *result = 0 ;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowArrayStream, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ArrowArrayStream_GetSchema" "', argument " "1"" of type '" "ArrowArrayStream *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowArrayStream * >(argp1);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (ArrowSchema *)ArrowArrayStream_GetSchema(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ArrowSchema, SWIG_POINTER_OWN |  0 );
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_ArrowArrayStream_GetNextRecordBatch(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  ArrowArrayStream *arg1 = (ArrowArrayStream *) 0 ;
+  char **arg2 = (char **) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[2] ;
+  ArrowArray *result = 0 ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "ArrowArrayStream_GetNextRecordBatch", 1, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_ArrowArrayStream, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "ArrowArrayStream_GetNextRecordBatch" "', argument " "1"" of type '" "ArrowArrayStream *""'"); 
+  }
+  arg1 = reinterpret_cast< ArrowArrayStream * >(argp1);
+  if (swig_obj[1]) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg2 = CSLFromPySequence(swig_obj[1], &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (ArrowArray *)ArrowArrayStream_GetNextRecordBatch(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ArrowArray, SWIG_POINTER_OWN |  0 );
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *ArrowArrayStream_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *obj;
+  if (!SWIG_Python_UnpackTuple(args, "swigregister", 1, 1, &obj)) return NULL;
+  SWIG_TypeNewClientData(SWIGTYPE_p_ArrowArrayStream, SWIG_NewClientData(obj));
+  return SWIG_Py_Void();
+}
+
 SWIGINTERN PyObject *_wrap_Layer_Rename(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
@@ -9869,6 +10410,75 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Layer_UpsertFeature(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  OGRFeatureShadow *arg2 = (OGRFeatureShadow *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  void *argp2 = 0 ;
+  int res2 = 0 ;
+  PyObject *swig_obj[2] ;
+  OGRErr result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Layer_UpsertFeature", 2, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_UpsertFeature" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  res2 = SWIG_ConvertPtr(swig_obj[1], &argp2,SWIGTYPE_p_OGRFeatureShadow, 0 |  0 );
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "Layer_UpsertFeature" "', argument " "2"" of type '" "OGRFeatureShadow *""'"); 
+  }
+  arg2 = reinterpret_cast< OGRFeatureShadow * >(argp2);
+  {
+    if (!arg2) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_UpsertFeature(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Layer_DeleteFeature(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
   OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
@@ -10093,7 +10703,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetExtent(PyObject *SWIGUNUSEDPARM(self), PyObj
   int arg6 = (int) 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
-  double argout2[6] ;
+  double argout2[4] ;
   int isvalid2 ;
   int val4 ;
   int ecode4 = 0 ;
@@ -10110,7 +10720,7 @@ SWIGINTERN PyObject *_wrap_Layer_GetExtent(PyObject *SWIGUNUSEDPARM(self), PyObj
   };
   
   {
-    /* %typemap(in) (double argout2[4], int* isvalid2) */
+    /* %typemap(in,numinputs=0) (double argout2[4], int* isvalid2) */
     arg2 = argout2;
     arg3 = &isvalid2;
   }
@@ -10578,6 +11188,91 @@ SWIGINTERN PyObject *_wrap_Layer_AlterFieldDefn(PyObject *SWIGUNUSEDPARM(self), 
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
       result = (OGRErr)OGRLayerShadow_AlterFieldDefn(arg1,arg2,arg3,arg4);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  {
+    /* %typemap(out) OGRErr */
+    if ( result != 0 && bUseExceptions) {
+      const char* pszMessage = CPLGetLastErrorMsg();
+      if( pszMessage[0] != '\0' )
+      PyErr_SetString( PyExc_RuntimeError, pszMessage );
+      else
+      PyErr_SetString( PyExc_RuntimeError, OGRErrMessages(result) );
+      SWIG_fail;
+    }
+  }
+  {
+    /* %typemap(ret) OGRErr */
+    if ( ReturnSame(resultobj == Py_None || resultobj == 0) ) {
+      resultobj = PyInt_FromLong( result );
+    }
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_AlterGeomFieldDefn(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  int arg2 ;
+  OGRGeomFieldDefnShadow *arg3 = (OGRGeomFieldDefnShadow *) 0 ;
+  int arg4 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  void *argp3 = 0 ;
+  int res3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject *swig_obj[4] ;
+  OGRErr result;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Layer_AlterGeomFieldDefn", 4, 4, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_AlterGeomFieldDefn" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Layer_AlterGeomFieldDefn" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
+  res3 = SWIG_ConvertPtr(swig_obj[2], &argp3,SWIGTYPE_p_OGRGeomFieldDefnShadow, 0 |  0 );
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "Layer_AlterGeomFieldDefn" "', argument " "3"" of type '" "OGRGeomFieldDefnShadow const *""'"); 
+  }
+  arg3 = reinterpret_cast< OGRGeomFieldDefnShadow * >(argp3);
+  ecode4 = SWIG_AsVal_int(swig_obj[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Layer_AlterGeomFieldDefn" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  {
+    if (!arg3) {
+      SWIG_exception(SWIG_ValueError,"Received a NULL pointer.");
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRErr)OGRLayerShadow_AlterGeomFieldDefn(arg1,arg2,(OGRGeomFieldDefnShadow const *)arg3,arg4);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -12324,6 +13019,234 @@ SWIGINTERN PyObject *_wrap_Layer_SetStyleTable(PyObject *SWIGUNUSEDPARM(self), P
   if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
   return resultobj;
 fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_GetArrowStream(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  char **arg2 = (char **) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[2] ;
+  ArrowArrayStream *result = 0 ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Layer_GetArrowStream", 1, 2, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetArrowStream" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  if (swig_obj[1]) {
+    {
+      /* %typemap(in) char **options */
+      int bErr = FALSE;
+      arg2 = CSLFromPySequence(swig_obj[1], &bErr);
+      if( bErr )
+      {
+        SWIG_fail;
+      }
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (ArrowArrayStream *)OGRLayerShadow_GetArrowStream(arg1,arg2);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_ArrowArrayStream, SWIG_POINTER_OWN |  0 );
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg) char **options */
+    CSLDestroy( arg2 );
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Layer_GetGeometryTypes(PyObject *SWIGUNUSEDPARM(self), PyObject *args, PyObject *kwargs) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRLayerShadow *arg1 = (OGRLayerShadow *) 0 ;
+  OGRGeometryTypeCounter **arg2 = (OGRGeometryTypeCounter **) 0 ;
+  int *arg3 = (int *) 0 ;
+  int arg4 = (int) 0 ;
+  int arg5 = (int) 0 ;
+  GDALProgressFunc arg6 = (GDALProgressFunc) NULL ;
+  void *arg7 = (void *) NULL ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  OGRGeometryTypeCounter *pRet2 = NULL ;
+  int nEntryCount2 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  int val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  char * kwnames[] = {
+    (char *)"self",  (char *)"geom_field",  (char *)"flags",  (char *)"callback",  (char *)"callback_data",  NULL 
+  };
+  
+  /* %typemap(arginit) ( const char* callback_data=NULL)  */
+  PyProgressData *psProgressInfo;
+  psProgressInfo = (PyProgressData *) CPLCalloc(1,sizeof(PyProgressData));
+  psProgressInfo->nLastReported = -1;
+  psProgressInfo->psPyCallback = NULL;
+  psProgressInfo->psPyCallbackData = NULL;
+  arg7 = psProgressInfo;
+  {
+    /* %typemap(in,numinputs=0) (OGRGeometryTypeCounter** ppRet, int* pnEntryCount) */
+    arg2 = &pRet2;
+    arg3 = &nEntryCount2;
+  }
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|OOOO:Layer_GetGeometryTypes", kwnames, &obj0, &obj1, &obj2, &obj3, &obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_OGRLayerShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Layer_GetGeometryTypes" "', argument " "1"" of type '" "OGRLayerShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRLayerShadow * >(argp1);
+  if (obj1) {
+    ecode4 = SWIG_AsVal_int(obj1, &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "Layer_GetGeometryTypes" "', argument " "4"" of type '" "int""'");
+    } 
+    arg4 = static_cast< int >(val4);
+  }
+  if (obj2) {
+    ecode5 = SWIG_AsVal_int(obj2, &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "Layer_GetGeometryTypes" "', argument " "5"" of type '" "int""'");
+    } 
+    arg5 = static_cast< int >(val5);
+  }
+  if (obj3) {
+    {
+      /* %typemap(in) (GDALProgressFunc callback = NULL) */
+      /* callback_func typemap */
+      
+      /* In some cases 0 is passed instead of None. */
+      /* See https://github.com/OSGeo/gdal/pull/219 */
+      if ( PyLong_Check(obj3) || PyInt_Check(obj3) )
+      {
+        if( PyLong_AsLong(obj3) == 0 )
+        {
+          obj3 = Py_None;
+        }
+      }
+      
+      if (obj3 && obj3 != Py_None ) {
+        void* cbfunction = NULL;
+        CPL_IGNORE_RET_VAL(SWIG_ConvertPtr( obj3,
+            (void**)&cbfunction,
+            SWIGTYPE_p_f_double_p_q_const__char_p_void__int,
+            SWIG_POINTER_EXCEPTION | 0 ));
+        
+        if ( cbfunction == GDALTermProgress ) {
+          arg6 = GDALTermProgress;
+        } else {
+          if (!PyCallable_Check(obj3)) {
+            PyErr_SetString( PyExc_RuntimeError,
+              "Object given is not a Python function" );
+            SWIG_fail;
+          }
+          psProgressInfo->psPyCallback = obj3;
+          arg6 = PyProgressProxy;
+        }
+        
+      }
+      
+    }
+  }
+  if (obj4) {
+    {
+      /* %typemap(in) ( void* callback_data=NULL)  */
+      psProgressInfo->psPyCallbackData = obj4 ;
+    }
+  }
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      OGRLayerShadow_GetGeometryTypes(arg1,arg2,arg3,arg4,arg5,arg6,arg7);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_Py_Void();
+  {
+    /* %typemap(argout)  (OGRGeometryTypeCounter** ppRet, int* pnEntryCount) */
+    Py_DECREF(resultobj);
+    int nEntryCount = *(arg3);
+    OGRGeometryTypeCounter* pRet = *(arg2);
+    if( pRet == NULL )
+    {
+      PyErr_SetString( PyExc_RuntimeError, CPLGetLastErrorMsg() );
+      SWIG_fail;
+    }
+    resultobj = PyDict_New();
+    for(int i = 0; i < nEntryCount; ++ i)
+    {
+      PyObject *key = PyInt_FromLong( (int)(pRet[i].eGeomType) );
+      PyObject *val = PyLong_FromLongLong( pRet[i].nCount );
+      PyDict_SetItem(resultobj, key, val );
+      Py_DECREF(key);
+      Py_DECREF(val);
+    }
+  }
+  {
+    /* %typemap(freearg)  (OGRGeometryTypeCounter** ppRet, int* pnEntryCount) */
+    VSIFree(*arg2);
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  {
+    /* %typemap(freearg)  (OGRGeometryTypeCounter** ppRet, int* pnEntryCount) */
+    VSIFree(*arg2);
+  }
+  {
+    /* %typemap(freearg) ( void* callback_data=NULL)  */
+    
+    CPLFree(psProgressInfo);
+    
+  }
   return NULL;
 }
 
@@ -15143,9 +16066,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_0(PyObject *SWIGUNUSED
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
-    if( *arg3 ) {
-      VSIFree( *arg4 );
-    }
+    VSIFree( *arg4 );
   }
   {
     /* %typemap(ret) OGRErr */
@@ -15158,9 +16079,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_0(PyObject *SWIGUNUSED
 fail:
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
-    if( *arg3 ) {
-      VSIFree( *arg4 );
-    }
+    VSIFree( *arg4 );
   }
   return NULL;
 }
@@ -15239,9 +16158,7 @@ SWIGINTERN PyObject *_wrap_Feature_GetFieldAsBinary__SWIG_1(PyObject *SWIGUNUSED
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
-    if( *arg3 ) {
-      VSIFree( *arg4 );
-    }
+    VSIFree( *arg4 );
   }
   {
     /* %typemap(ret) OGRErr */
@@ -15258,9 +16175,7 @@ fail:
   }
   {
     /* %typemap(freearg) (int *nLen, char **pBuf ) */
-    if( *arg3 ) {
-      VSIFree( *arg4 );
-    }
+    VSIFree( *arg4 );
   }
   return NULL;
 }
@@ -22521,9 +23436,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
   }
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-    if( *arg2 ) {
-      VSIFree( *arg3 );
-    }
+    VSIFree( *arg3 );
   }
   {
     /* %typemap(ret) OGRErr */
@@ -22536,9 +23449,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToWkb(PyObject *SWIGUNUSEDPARM(self), 
 fail:
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-    if( *arg2 ) {
-      VSIFree( *arg3 );
-    }
+    VSIFree( *arg3 );
   }
   return NULL;
 }
@@ -22623,9 +23534,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
   }
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-    if( *arg2 ) {
-      VSIFree( *arg3 );
-    }
+    VSIFree( *arg3 );
   }
   {
     /* %typemap(ret) OGRErr */
@@ -22638,9 +23547,7 @@ SWIGINTERN PyObject *_wrap_Geometry_ExportToIsoWkb(PyObject *SWIGUNUSEDPARM(self
 fail:
   {
     /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
-    if( *arg2 ) {
-      VSIFree( *arg3 );
-    }
+    VSIFree( *arg3 );
   }
   return NULL;
 }
@@ -24872,6 +25779,62 @@ SWIGINTERN PyObject *_wrap_Geometry_ConvexHull(PyObject *SWIGUNUSEDPARM(self), P
     {
       SWIG_PYTHON_THREAD_BEGIN_ALLOW;
       result = (OGRGeometryShadow *)OGRGeometryShadow_ConvexHull(arg1);
+      SWIG_PYTHON_THREAD_END_ALLOW;
+    }
+#ifndef SED_HACKS
+    if ( bUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+#endif
+  }
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_OGRGeometryShadow, SWIG_POINTER_OWN |  0 );
+  if ( ReturnSame(bLocalUseExceptionsCode) ) { CPLErr eclass = CPLGetLastErrorType(); if ( eclass == CE_Failure || eclass == CE_Fatal ) { Py_XDECREF(resultobj); SWIG_Error( SWIG_RuntimeError, CPLGetLastErrorMsg() ); return NULL; } }
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_Geometry_ConcaveHull(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0; int bLocalUseExceptionsCode = bUseExceptions;
+  OGRGeometryShadow *arg1 = (OGRGeometryShadow *) 0 ;
+  double arg2 ;
+  bool arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  double val2 ;
+  int ecode2 = 0 ;
+  bool val3 ;
+  int ecode3 = 0 ;
+  PyObject *swig_obj[3] ;
+  OGRGeometryShadow *result = 0 ;
+  
+  if (!SWIG_Python_UnpackTuple(args, "Geometry_ConcaveHull", 3, 3, swig_obj)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_OGRGeometryShadow, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Geometry_ConcaveHull" "', argument " "1"" of type '" "OGRGeometryShadow *""'"); 
+  }
+  arg1 = reinterpret_cast< OGRGeometryShadow * >(argp1);
+  ecode2 = SWIG_AsVal_double(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "Geometry_ConcaveHull" "', argument " "2"" of type '" "double""'");
+  } 
+  arg2 = static_cast< double >(val2);
+  ecode3 = SWIG_AsVal_bool(swig_obj[2], &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "Geometry_ConcaveHull" "', argument " "3"" of type '" "bool""'");
+  } 
+  arg3 = static_cast< bool >(val3);
+  {
+    if ( bUseExceptions ) {
+      ClearErrorState();
+    }
+    {
+      SWIG_PYTHON_THREAD_BEGIN_ALLOW;
+      result = (OGRGeometryShadow *)OGRGeometryShadow_ConcaveHull(arg1,arg2,arg3);
       SWIG_PYTHON_THREAD_END_ALLOW;
     }
 #ifndef SED_HACKS
@@ -30301,13 +31264,17 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Deprecated Use GDALDatasetGetLayerCount() in GDAL 2.0\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDS:\n"
+		"    handle to the data source from which to get the number of\n"
+		"    layers.\n"
 		"\n"
-		"hDS:  handle to the data source from which to get the number of\n"
-		"layers.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    layer count.\n"
 		"\n"
-		"layer count. \n"
 		""},
 	 { "DataSource_GetDriver", _wrap_DataSource_GetDriver, METH_O, "\n"
 		"DataSource_GetDriver(DataSource self) -> Driver\n"
@@ -30317,22 +31284,26 @@ static PyMethodDef SwigMethods[] = {
 		"Returns the driver that the dataset was opened with.\n"
 		"\n"
 		"NOTE: Starting with GDAL 2.0, it is NOT safe to cast the returned\n"
-		"handle to OGRSFDriver*. If a C++ object is needed, the handle should\n"
-		"be cast to GDALDriver*.\n"
+		"handle to OGRSFDriver\\*. If a C++ object is needed, the handle should\n"
+		"be cast to GDALDriver\\*.\n"
 		"\n"
 		"Deprecated Use GDALGetDatasetDriver() in GDAL 2.0\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDS:\n"
+		"    handle to the datasource\n"
 		"\n"
-		"hDS:  handle to the datasource\n"
+		"Returns\n"
+		"--------\n"
+		"OGRSFDriverH:\n"
+		"    NULL if driver info is not available, or pointer to a driver owned by\n"
+		"    the OGRSFDriverManager.\n"
 		"\n"
-		"NULL if driver info is not available, or pointer to a driver owned by\n"
-		"the OGRSFDriverManager. \n"
 		""},
 	 { "DataSource_GetName", _wrap_DataSource_GetName, METH_O, "\n"
 		"DataSource_GetName(DataSource self) -> char const *\n"
-		"const char*\n"
+		"const char\\*\n"
 		"OGR_DS_GetName(OGRDataSourceH hDS)\n"
 		"\n"
 		"Returns the name of the data source.\n"
@@ -30344,36 +31315,19 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Deprecated Use GDALGetDescription() in GDAL 2.0\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDS:\n"
+		"    handle to the data source to get the name from.\n"
 		"\n"
-		"hDS:  handle to the data source to get the name from.\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    pointer to an internal name string which should not be modified or\n"
+		"    freed by the caller.\n"
 		"\n"
-		"pointer to an internal name string which should not be modified or\n"
-		"freed by the caller. \n"
 		""},
-	 { "DataSource_DeleteLayer", _wrap_DataSource_DeleteLayer, METH_VARARGS, "\n"
-		"DataSource_DeleteLayer(DataSource self, int index) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_DS_DeleteLayer(OGRDataSourceH hDS, int iLayer)\n"
-		"\n"
-		"Delete the indicated layer from the datasource.\n"
-		"\n"
-		"If this method is supported the ODsCDeleteLayer capability will test\n"
-		"TRUE on the OGRDataSource.\n"
-		"\n"
-		"Deprecated Use GDALDatasetDeleteLayer() in GDAL 2.0\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hDS:  handle to the datasource\n"
-		"\n"
-		"iLayer:  the index of the layer to delete.\n"
-		"\n"
-		"OGRERR_NONE on success, or OGRERR_UNSUPPORTED_OPERATION if deleting\n"
-		"layers is not supported for this datasource. \n"
-		""},
+	 { "DataSource_DeleteLayer", _wrap_DataSource_DeleteLayer, METH_VARARGS, "DataSource_DeleteLayer(DataSource self, int index) -> OGRErr"},
 	 { "DataSource_SyncToDisk", _wrap_DataSource_SyncToDisk, METH_O, "\n"
 		"DataSource_SyncToDisk(DataSource self) -> OGRErr\n"
 		"OGRErr\n"
@@ -30387,9 +31341,9 @@ static PyMethodDef SwigMethods[] = {
 	 { "DataSource_CreateLayer", (PyCFunction)(void(*)(void))_wrap_DataSource_CreateLayer, METH_VARARGS|METH_KEYWORDS, "\n"
 		"DataSource_CreateLayer(DataSource self, char const * name, SpatialReference srs=None, OGRwkbGeometryType geom_type=wkbUnknown, char ** options=None) -> Layer\n"
 		"OGRLayerH\n"
-		"OGR_DS_CreateLayer(OGRDataSourceH hDS, const char *pszName,\n"
+		"OGR_DS_CreateLayer(OGRDataSourceH hDS, const char \\*pszName,\n"
 		"OGRSpatialReferenceH hSpatialRef, OGRwkbGeometryType eType, char\n"
-		"**papszOptions)\n"
+		"\\*\\*papszOptions)\n"
 		"\n"
 		"This function attempts to create a new layer on the data source with\n"
 		"the indicated name, coordinate system, geometry type.\n"
@@ -30400,35 +31354,37 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Deprecated Use GDALDatasetCreateLayer() in GDAL 2.0\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDS:\n"
+		"    The dataset handle.pszName:  the name for the new layer. This should ideally not match\n"
+		"    any existing layer on the datasource.\n"
+		"hSpatialRef:\n"
+		"    handle to the coordinate system to use for the new\n"
+		"    layer, or NULL if no coordinate system is available. The driver might\n"
+		"    only increase the reference counter of the object to take ownership,\n"
+		"    and not make a full copy, so do not use OSRDestroySpatialReference(),\n"
+		"    but OSRRelease() instead when you are done with the object.\n"
+		"eType:\n"
+		"    the geometry type for the layer. Use wkbUnknown if there are\n"
+		"    no constraints on the types geometry to be written.\n"
+		"papszOptions:\n"
+		"    a StringList of name=value options. Options are driver\n"
+		"    specific, and driver information can be found at the following\n"
+		"    url:http://www.gdal.org/ogr_formats.html\n"
 		"\n"
-		"hDS:  The dataset handle.\n"
 		"\n"
-		"pszName:  the name for the new layer. This should ideally not match\n"
-		"any existing layer on the datasource.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRLayerH:\n"
+		"    NULL is returned on failure, or a new OGRLayer handle on success.\n"
 		"\n"
-		"hSpatialRef:  handle to the coordinate system to use for the new\n"
-		"layer, or NULL if no coordinate system is available. The driver might\n"
-		"only increase the reference counter of the object to take ownership,\n"
-		"and not make a full copy, so do not use OSRDestroySpatialReference(),\n"
-		"but OSRRelease() instead when you are done with the object.\n"
-		"\n"
-		"eType:  the geometry type for the layer. Use wkbUnknown if there are\n"
-		"no constraints on the types geometry to be written.\n"
-		"\n"
-		"papszOptions:  a StringList of name=value options. Options are driver\n"
-		"specific, and driver information can be found at the following\n"
-		"url:http://www.gdal.org/ogr_formats.html\n"
-		"\n"
-		"NULL is returned on failure, or a new OGRLayer handle on success.\n"
-		"Example: \n"
 		""},
 	 { "DataSource_CopyLayer", (PyCFunction)(void(*)(void))_wrap_DataSource_CopyLayer, METH_VARARGS|METH_KEYWORDS, "\n"
 		"DataSource_CopyLayer(DataSource self, Layer src_layer, char const * new_name, char ** options=None) -> Layer\n"
 		"OGRLayerH\n"
 		"OGR_DS_CopyLayer(OGRDataSourceH hDS, OGRLayerH hSrcLayer, const char\n"
-		"*pszNewName, char **papszOptions)\n"
+		"\\*pszNewName, char \\*\\*papszOptions)\n"
 		"\n"
 		"Duplicate an existing layer.\n"
 		"\n"
@@ -30441,25 +31397,29 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Deprecated Use GDALDatasetCopyLayer() in GDAL 2.0\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDS:\n"
+		"    handle to the data source where to create the new layer\n"
+		"hSrcLayer:\n"
+		"    handle to the source layer.\n"
+		"pszNewName:\n"
+		"    the name of the layer to create.\n"
+		"papszOptions:\n"
+		"    a StringList of name=value options. Options are driver\n"
+		"    specific.\n"
 		"\n"
-		"hDS:  handle to the data source where to create the new layer\n"
+		"Returns\n"
+		"-------\n"
+		"OGRLayerH:\n"
+		"    a handle to the layer, or NULL if an error occurs.\n"
 		"\n"
-		"hSrcLayer:  handle to the source layer.\n"
-		"\n"
-		"pszNewName:  the name of the layer to create.\n"
-		"\n"
-		"papszOptions:  a StringList of name=value options. Options are driver\n"
-		"specific.\n"
-		"\n"
-		"a handle to the layer, or NULL if an error occurs. \n"
 		""},
 	 { "DataSource_GetLayerByIndex", _wrap_DataSource_GetLayerByIndex, METH_VARARGS, "DataSource_GetLayerByIndex(DataSource self, int index=0) -> Layer"},
 	 { "DataSource_GetLayerByName", _wrap_DataSource_GetLayerByName, METH_VARARGS, "\n"
 		"DataSource_GetLayerByName(DataSource self, char const * layer_name) -> Layer\n"
 		"OGRLayerH\n"
-		"OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char *pszLayerName)\n"
+		"OGR_DS_GetLayerByName(OGRDataSourceH hDS, const char \\*pszLayerName)\n"
 		"\n"
 		"Fetch a layer by name.\n"
 		"\n"
@@ -30468,20 +31428,25 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Deprecated Use GDALDatasetGetLayerByName() in GDAL 2.0\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDS:\n"
+		"    handle to the data source from which to get the layer.\n"
+		"pszLayerName:\n"
+		"    Layer the layer name of the layer to fetch.\n"
 		"\n"
-		"hDS:  handle to the data source from which to get the layer.\n"
 		"\n"
-		"pszLayerName:  Layer the layer name of the layer to fetch.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRLayerH:\n"
+		"    a handle to the layer, or NULL if the layer is not found or an error\n"
+		"    occurs.\n"
 		"\n"
-		"a handle to the layer, or NULL if the layer is not found or an error\n"
-		"occurs. \n"
 		""},
 	 { "DataSource_TestCapability", _wrap_DataSource_TestCapability, METH_VARARGS, "\n"
 		"DataSource_TestCapability(DataSource self, char const * cap) -> bool\n"
 		"int\n"
-		"OGR_DS_TestCapability(OGRDataSourceH hDS, const char *pszCapability)\n"
+		"OGR_DS_TestCapability(OGRDataSourceH hDS, const char \\*pszCapability)\n"
 		"\n"
 		"Test if capability is available.\n"
 		"\n"
@@ -30505,20 +31470,24 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Deprecated Use GDALDatasetTestCapability() in GDAL 2.0\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDS:\n"
+		"    handle to the data source against which to test the capability.\n"
+		"pszCapability:\n"
+		"    the capability to test.\n"
 		"\n"
-		"hDS:  handle to the data source against which to test the capability.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    TRUE if capability available otherwise FALSE.\n"
 		"\n"
-		"pszCapability:  the capability to test.\n"
-		"\n"
-		"TRUE if capability available otherwise FALSE. \n"
 		""},
 	 { "DataSource_ExecuteSQL", (PyCFunction)(void(*)(void))_wrap_DataSource_ExecuteSQL, METH_VARARGS|METH_KEYWORDS, "\n"
 		"DataSource_ExecuteSQL(DataSource self, char const * statement, Geometry spatialFilter=None, char const * dialect=\"\") -> Layer\n"
 		"OGRLayerH\n"
-		"OGR_DS_ExecuteSQL(OGRDataSourceH hDS, const char *pszStatement,\n"
-		"OGRGeometryH hSpatialFilter, const char *pszDialect)\n"
+		"OGR_DS_ExecuteSQL(OGRDataSourceH hDS, const char \\*pszStatement,\n"
+		"OGRGeometryH hSpatialFilter, const char \\*pszDialect)\n"
 		"\n"
 		"Execute an SQL statement against the data store.\n"
 		"\n"
@@ -30537,23 +31506,27 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Deprecated Use GDALDatasetExecuteSQL() in GDAL 2.0\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDS:\n"
+		"    handle to the data source on which the SQL query is executed.\n"
+		"pszStatement:\n"
+		"    the SQL statement to execute.\n"
+		"hSpatialFilter:\n"
+		"    handle to a geometry which represents a spatial\n"
+		"    filter. Can be NULL.\n"
+		"pszDialect:\n"
+		"    allows control of the statement dialect. If set to NULL,\n"
+		"    the OGR SQL engine will be used, except for RDBMS drivers that will\n"
+		"    use their dedicated SQL engine, unless OGRSQL is explicitly passed as\n"
+		"    the dialect. The SQLITE dialect can also be used.\n"
 		"\n"
-		"hDS:  handle to the data source on which the SQL query is executed.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRLayerH:\n"
+		"    a handle to a OGRLayer containing the results of the query. Deallocate\n"
+		"    with OGR_DS_ReleaseResultSet().\n"
 		"\n"
-		"pszStatement:  the SQL statement to execute.\n"
-		"\n"
-		"hSpatialFilter:  handle to a geometry which represents a spatial\n"
-		"filter. Can be NULL.\n"
-		"\n"
-		"pszDialect:  allows control of the statement dialect. If set to NULL,\n"
-		"the OGR SQL engine will be used, except for RDBMS drivers that will\n"
-		"use their dedicated SQL engine, unless OGRSQL is explicitly passed as\n"
-		"the dialect. The SQLITE dialect can also be used.\n"
-		"\n"
-		"a handle to a OGRLayer containing the results of the query. Deallocate\n"
-		"with OGR_DS_ReleaseResultSet(). \n"
 		""},
 	 { "DataSource_AbortSQL", _wrap_DataSource_AbortSQL, METH_O, "DataSource_AbortSQL(DataSource self) -> OGRErr"},
 	 { "DataSource_ReleaseResultSet", _wrap_DataSource_ReleaseResultSet, METH_VARARGS, "\n"
@@ -30570,12 +31543,12 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Deprecated Use GDALDatasetReleaseResultSet() in GDAL 2.0\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
-		"\n"
-		"hDS:  a handle to the data source on which was executed an SQL query.\n"
-		"\n"
-		"hLayer:  handle to the result of a previous OGR_DS_ExecuteSQL() call.\n"
+		"hDS:\n"
+		"    a handle to the data source on which was executed an SQL query.\n"
+		"hLayer:\n"
+		"    handle to the result of a previous OGR_DS_ExecuteSQL() call.\n"
 		"\n"
 		""},
 	 { "DataSource_GetStyleTable", _wrap_DataSource_GetStyleTable, METH_O, "\n"
@@ -30596,1579 +31569,908 @@ static PyMethodDef SwigMethods[] = {
 	 { "DataSource_CommitTransaction", _wrap_DataSource_CommitTransaction, METH_O, "DataSource_CommitTransaction(DataSource self) -> OGRErr"},
 	 { "DataSource_RollbackTransaction", _wrap_DataSource_RollbackTransaction, METH_O, "DataSource_RollbackTransaction(DataSource self) -> OGRErr"},
 	 { "DataSource_swigregister", DataSource_swigregister, METH_O, NULL},
+	 { "delete_ArrowArray", _wrap_delete_ArrowArray, METH_O, "delete_ArrowArray(ArrowArray self)"},
+	 { "ArrowArray__getPtr", _wrap_ArrowArray__getPtr, METH_O, "ArrowArray__getPtr(ArrowArray self) -> VoidPtrAsLong"},
+	 { "ArrowArray_GetChildrenCount", _wrap_ArrowArray_GetChildrenCount, METH_O, "ArrowArray_GetChildrenCount(ArrowArray self) -> GIntBig"},
+	 { "ArrowArray_GetLength", _wrap_ArrowArray_GetLength, METH_O, "ArrowArray_GetLength(ArrowArray self) -> GIntBig"},
+	 { "ArrowArray_swigregister", ArrowArray_swigregister, METH_O, NULL},
+	 { "delete_ArrowSchema", _wrap_delete_ArrowSchema, METH_O, "delete_ArrowSchema(ArrowSchema self)"},
+	 { "ArrowSchema__getPtr", _wrap_ArrowSchema__getPtr, METH_O, "ArrowSchema__getPtr(ArrowSchema self) -> VoidPtrAsLong"},
+	 { "ArrowSchema_GetChildrenCount", _wrap_ArrowSchema_GetChildrenCount, METH_O, "ArrowSchema_GetChildrenCount(ArrowSchema self) -> GIntBig"},
+	 { "ArrowSchema_swigregister", ArrowSchema_swigregister, METH_O, NULL},
+	 { "delete_ArrowArrayStream", _wrap_delete_ArrowArrayStream, METH_O, "delete_ArrowArrayStream(ArrowArrayStream self)"},
+	 { "ArrowArrayStream_GetSchema", _wrap_ArrowArrayStream_GetSchema, METH_O, "ArrowArrayStream_GetSchema(ArrowArrayStream self) -> ArrowSchema"},
+	 { "ArrowArrayStream_GetNextRecordBatch", _wrap_ArrowArrayStream_GetNextRecordBatch, METH_VARARGS, "ArrowArrayStream_GetNextRecordBatch(ArrowArrayStream self, char ** options=None) -> ArrowArray"},
+	 { "ArrowArrayStream_swigregister", ArrowArrayStream_swigregister, METH_O, NULL},
 	 { "Layer_Rename", _wrap_Layer_Rename, METH_VARARGS, "Layer_Rename(Layer self, char const * new_name) -> OGRErr"},
 	 { "Layer_GetRefCount", _wrap_Layer_GetRefCount, METH_O, "\n"
 		"Layer_GetRefCount(Layer self) -> int\n"
-		"int OGR_L_GetRefCount(OGRLayerH\n"
-		"hLayer) \n"
+		"\n"
+		"For more details: :cpp:func:`OGR_L_GetRefCount`\n"
+		"\n"
 		""},
 	 { "Layer_SetSpatialFilter", _wrap_Layer_SetSpatialFilter, METH_VARARGS, "\n"
 		"Layer_SetSpatialFilter(Layer self, Geometry filter)\n"
 		"Layer_SetSpatialFilter(Layer self, int iGeomField, Geometry filter)\n"
-		"void\n"
-		"OGR_L_SetSpatialFilter(OGRLayerH hLayer, OGRGeometryH hGeom)\n"
 		"\n"
 		"Set a new spatial filter.\n"
 		"\n"
-		"This function set the geometry to be used as a spatial filter when\n"
-		"fetching features via the OGR_L_GetNextFeature() function. Only\n"
-		"features that geometrically intersect the filter geometry will be\n"
-		"returned.\n"
+		"For more details:\n"
 		"\n"
-		"Currently this test is may be inaccurately implemented, but it is\n"
-		"guaranteed that all features whose envelope (as returned by\n"
-		"OGR_G_GetEnvelope()) overlaps the envelope of the spatial filter will\n"
-		"be returned. This can result in more shapes being returned that should\n"
-		"strictly be the case.\n"
+		"- :cpp:func:`OGR_L_SetSpatialFilter`\n"
+		"- :cpp:func:`OGR_L_SetSpatialFilterEx`\n"
 		"\n"
-		"Starting with GDAL 2.3, features with null or empty geometries will\n"
-		"never be considered as matching a spatial filter.\n"
-		"\n"
-		"This function makes an internal copy of the passed geometry. The\n"
-		"passed geometry remains the responsibility of the caller, and may be\n"
-		"safely destroyed.\n"
-		"\n"
-		"For the time being the passed filter geometry should be in the same\n"
-		"SRS as the layer (as returned by OGR_L_GetSpatialRef()). In the future\n"
-		"this may be generalized.\n"
-		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRLayer::SetSpatialFilter.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"iGeomField: int, optional\n"
+		"    index of the geometry field on which the spatial filter operates.\n"
+		"filter: Geometry\n"
+		"    The geometry to use as a filtering region. None may\n"
+		"    be passed indicating that the current spatial filter should be\n"
+		"    cleared, but no new one instituted.\n"
 		"\n"
-		"hLayer:  handle to the layer on which to set the spatial filter.\n"
-		"\n"
-		"hGeom:  handle to the geometry to use as a filtering region. NULL may\n"
-		"be passed indicating that the current spatial filter should be\n"
-		"cleared, but no new one instituted. \n"
 		""},
 	 { "Layer_SetSpatialFilterRect", _wrap_Layer_SetSpatialFilterRect, METH_VARARGS, "\n"
 		"Layer_SetSpatialFilterRect(Layer self, double minx, double miny, double maxx, double maxy)\n"
 		"Layer_SetSpatialFilterRect(Layer self, int iGeomField, double minx, double miny, double maxx, double maxy)\n"
-		"void\n"
-		"OGR_L_SetSpatialFilterRect(OGRLayerH hLayer, double dfMinX, double\n"
-		"dfMinY, double dfMaxX, double dfMaxY)\n"
 		"\n"
 		"Set a new rectangular spatial filter.\n"
 		"\n"
-		"This method set rectangle to be used as a spatial filter when fetching\n"
-		"features via the OGR_L_GetNextFeature() method. Only features that\n"
-		"geometrically intersect the given rectangle will be returned.\n"
+		"For more details:\n"
 		"\n"
-		"The x/y values should be in the same coordinate system as the layer as\n"
-		"a whole (as returned by OGRLayer::GetSpatialRef()). Internally this\n"
-		"method is normally implemented as creating a 5 vertex closed\n"
-		"rectangular polygon and passing it to OGRLayer::SetSpatialFilter(). It\n"
-		"exists as a convenience.\n"
+		"- :cpp:func:`OGR_L_SetSpatialFilterRect`\n"
+		"- :cpp:func:`OGR_L_SetSpatialFilterRectEx`\n"
 		"\n"
-		"The only way to clear a spatial filter set with this method is to call\n"
-		"OGRLayer::SetSpatialFilter(NULL).\n"
-		"\n"
-		"This method is the same as the C++ method\n"
-		"OGRLayer::SetSpatialFilterRect().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"iGeomField: int, optional\n"
+		"    index of the geometry field on which the spatial filter operates.\n"
+		"minx: float\n"
+		"    the minimum X coordinate for the rectangular region.\n"
+		"miny: float\n"
+		"    the minimum Y coordinate for the rectangular region.\n"
+		"maxx: float\n"
+		"    the maximum X coordinate for the rectangular region.\n"
+		"maxy: float\n"
+		"    the maximum Y coordinate for the rectangular region.\n"
 		"\n"
-		"hLayer:  handle to the layer on which to set the spatial filter.\n"
-		"\n"
-		"dfMinX:  the minimum X coordinate for the rectangular region.\n"
-		"\n"
-		"dfMinY:  the minimum Y coordinate for the rectangular region.\n"
-		"\n"
-		"dfMaxX:  the maximum X coordinate for the rectangular region.\n"
-		"\n"
-		"dfMaxY:  the maximum Y coordinate for the rectangular region. \n"
 		""},
 	 { "Layer_GetSpatialFilter", _wrap_Layer_GetSpatialFilter, METH_O, "\n"
 		"Layer_GetSpatialFilter(Layer self) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_L_GetSpatialFilter(OGRLayerH hLayer)\n"
 		"\n"
 		"This function returns the current spatial filter for this layer.\n"
 		"\n"
-		"The returned pointer is to an internally owned object, and should not\n"
-		"be altered or deleted by the caller.\n"
+		"For more details: :cpp:func:`OGR_L_GetSpatialFilter`\n"
 		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRLayer::GetSpatialFilter().\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    The spatial filter geometry.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer to get the spatial filter from.\n"
-		"\n"
-		"a handle to the spatial filter geometry. \n"
 		""},
 	 { "Layer_SetAttributeFilter", _wrap_Layer_SetAttributeFilter, METH_VARARGS, "\n"
 		"Layer_SetAttributeFilter(Layer self, char * filter_string) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszQuery)\n"
 		"\n"
 		"Set a new attribute query.\n"
 		"\n"
-		"This function sets the attribute query string to be used when fetching\n"
-		"features via the OGR_L_GetNextFeature() function. Only features for\n"
-		"which the query evaluates as true will be returned.\n"
+		"For more details: :cpp:func:`OGR_L_SetAttributeFilter`\n"
 		"\n"
-		"The query string should be in the format of an SQL WHERE clause. For\n"
-		"instance \"population > 1000000 and population < 5000000\" where\n"
-		"population is an attribute in the layer. The query format is a\n"
-		"restricted form of SQL WHERE clause as defined\n"
-		"\"eq_format=restricted_where\" about half way through this document:\n"
-		"\n"
-		"http://ogdi.sourceforge.net/prop/6.2.CapabilitiesMetadata.html\n"
-		"\n"
-		"Note that installing a query string will generally result in resetting\n"
-		"the current reading position (ala OGR_L_ResetReading()).\n"
-		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRLayer::SetAttributeFilter().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"filter_string: str\n"
+		"    query in restricted SQL WHERE format, or None to clear the\n"
+		"    current query.\n"
 		"\n"
-		"hLayer:  handle to the layer on which attribute query will be\n"
-		"executed.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` if successfully installed,\n"
+		"    or an error code if the query expression is in error,\n"
+		"    or some other failure occurs.\n"
 		"\n"
-		"pszQuery:  query in restricted SQL WHERE format, or NULL to clear the\n"
-		"current query.\n"
-		"\n"
-		"OGRERR_NONE if successfully installed, or an error code if the query\n"
-		"expression is in error, or some other failure occurs. \n"
 		""},
 	 { "Layer_ResetReading", _wrap_Layer_ResetReading, METH_O, "\n"
 		"Layer_ResetReading(Layer self)\n"
-		"void\n"
-		"OGR_L_ResetReading(OGRLayerH hLayer)\n"
 		"\n"
 		"Reset feature reading to start on the first feature.\n"
 		"\n"
-		"This affects GetNextFeature().\n"
+		"For more details: :cpp:func:`OGR_L_ResetReading`\n"
 		"\n"
-		"This function is the same as the C++ method OGRLayer::ResetReading().\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer on which features are read. \n"
 		""},
 	 { "Layer_GetName", _wrap_Layer_GetName, METH_O, "\n"
 		"Layer_GetName(Layer self) -> char const *\n"
-		"const char* OGR_L_GetName(OGRLayerH\n"
-		"hLayer)\n"
 		"\n"
 		"Return the layer name.\n"
 		"\n"
-		"This returns the same content as\n"
-		"OGR_FD_GetName(OGR_L_GetLayerDefn(hLayer)), but for a few drivers,\n"
-		"calling OGR_L_GetName() directly can avoid lengthy layer definition\n"
-		"initialization.\n"
+		"For more details: :cpp:func:`OGR_L_GetName`\n"
 		"\n"
-		"This function is the same as the C++ method OGRLayer::GetName().\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    The layer name\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer.\n"
-		"\n"
-		"the layer name (must not been freed)\n"
-		"\n"
-		"OGR 1.8.0 \n"
 		""},
 	 { "Layer_GetGeomType", _wrap_Layer_GetGeomType, METH_O, "\n"
 		"Layer_GetGeomType(Layer self) -> OGRwkbGeometryType\n"
-		"OGRwkbGeometryType\n"
-		"OGR_L_GetGeomType(OGRLayerH hLayer)\n"
 		"\n"
 		"Return the layer geometry type.\n"
 		"\n"
-		"This returns the same result as\n"
-		"OGR_FD_GetGeomType(OGR_L_GetLayerDefn(hLayer)), but for a few drivers,\n"
-		"calling OGR_L_GetGeomType() directly can avoid lengthy layer\n"
-		"definition initialization.\n"
+		"For more details: :cpp:func:`OGR_L_GetGeomType`\n"
 		"\n"
-		"For layers with multiple geometry fields, this method only returns the\n"
-		"geometry type of the first geometry column. For other columns, use\n"
-		"OGR_GFld_GetType(OGR_FD_GetGeomFieldDefn(OGR_L_GetLayerDefn(hLayer),\n"
-		"i)). For layers without any geometry field, this method returns\n"
-		"wkbNone.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    The geometry type code. The types can be found with\n"
+		"    'osgeo.ogr.wkb' prefix. For example :py:const:`osgeo.ogr.wkbPolygon`.\n"
 		"\n"
-		"This function is the same as the C++ method OGRLayer::GetGeomType().\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer.\n"
-		"\n"
-		"the geometry type\n"
-		"\n"
-		"OGR 1.8.0 \n"
 		""},
 	 { "Layer_GetGeometryColumn", _wrap_Layer_GetGeometryColumn, METH_O, "\n"
 		"Layer_GetGeometryColumn(Layer self) -> char const *\n"
-		"const char*\n"
-		"OGR_L_GetGeometryColumn(OGRLayerH hLayer)\n"
 		"\n"
 		"This method returns the name of the underlying database column being\n"
-		"used as the geometry column, or \"\" if not supported.\n"
+		"used as the geometry column, or '' if not supported.\n"
 		"\n"
-		"For layers with multiple geometry fields, this method only returns the\n"
-		"geometry type of the first geometry column. For other columns, use OGR\n"
-		"_GFld_GetNameRef(OGR_FD_GetGeomFieldDefn(OGR_L_GetLayerDefn(hLayer),\n"
-		"i)).\n"
+		"For more details: :cpp:func:`OGR_L_GetGeometryColumn`\n"
 		"\n"
-		"This method is the same as the C++ method\n"
-		"OGRLayer::GetGeometryColumn()\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    geometry column name.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer\n"
-		"\n"
-		"geometry column name. \n"
 		""},
 	 { "Layer_GetFIDColumn", _wrap_Layer_GetFIDColumn, METH_O, "\n"
 		"Layer_GetFIDColumn(Layer self) -> char const *\n"
-		"const char*\n"
-		"OGR_L_GetFIDColumn(OGRLayerH hLayer)\n"
 		"\n"
 		"This method returns the name of the underlying database column being\n"
-		"used as the FID column, or \"\" if not supported.\n"
+		"used as the FID column, or '' if not supported.\n"
 		"\n"
-		"This method is the same as the C++ method OGRLayer::GetFIDColumn()\n"
+		"For more details: :cpp:func:`OGR_L_GetFIDColumn`\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    fid column name.\n"
 		"\n"
-		"hLayer:  handle to the layer\n"
-		"\n"
-		"fid column name. \n"
 		""},
 	 { "Layer_GetFeature", _wrap_Layer_GetFeature, METH_VARARGS, "\n"
 		"Layer_GetFeature(Layer self, GIntBig fid) -> Feature\n"
-		"OGRFeatureH\n"
-		"OGR_L_GetFeature(OGRLayerH hLayer, GIntBig nFeatureId)\n"
 		"\n"
 		"Fetch a feature by its identifier.\n"
 		"\n"
-		"This function will attempt to read the identified feature. The nFID\n"
-		"value cannot be OGRNullFID. Success or failure of this operation is\n"
-		"unaffected by the spatial or attribute filters (and specialized\n"
-		"implementations in drivers should make sure that they do not take into\n"
-		"account spatial or attribute filters).\n"
+		"For more details: :cpp:func:`OGR_L_GetFeature`\n"
 		"\n"
-		"If this function returns a non-NULL feature, it is guaranteed that its\n"
-		"feature id ( OGR_F_GetFID()) will be the same as nFID.\n"
+		"Use :py:func:`TestCapability` with (:py:const:`osgeo.ogr.OLCRandomRead`)\n"
+		"to establish if this layer supports efficient random access reading via\n"
+		":py:func:`GetFeature`; However, the call should always work if the feature exists.\n"
 		"\n"
-		"Use OGR_L_TestCapability(OLCRandomRead) to establish if this layer\n"
-		"supports efficient random access reading via OGR_L_GetFeature();\n"
-		"however, the call should always work if the feature exists as a\n"
-		"fallback implementation just scans all the features in the layer\n"
-		"looking for the desired feature.\n"
+		"Sequential reads (with :py:func:`GetNextFeature`) are generally\n"
+		"considered interrupted by a :py:func:`GetFeature` call.\n"
 		"\n"
-		"Sequential reads (with OGR_L_GetNextFeature()) are generally\n"
-		"considered interrupted by a OGR_L_GetFeature() call.\n"
-		"\n"
-		"The returned feature should be free with OGR_F_Destroy().\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::GetFeature( ).\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"fid: int\n"
+		"    The feature id of the feature to read.\n"
 		"\n"
-		"hLayer:  handle to the layer that owned the feature.\n"
+		"Returns\n"
+		"--------\n"
+		"Feature:\n"
+		"    A new feature now owned by the caller, or None on failure.\n"
+		"    The returned feature should be deleted with :py:func:`Destroy`.\n"
 		"\n"
-		"nFeatureId:  the feature id of the feature to read.\n"
-		"\n"
-		"a handle to a feature now owned by the caller, or NULL on failure. \n"
 		""},
 	 { "Layer_GetNextFeature", _wrap_Layer_GetNextFeature, METH_O, "\n"
 		"Layer_GetNextFeature(Layer self) -> Feature\n"
-		"OGRFeatureH\n"
-		"OGR_L_GetNextFeature(OGRLayerH hLayer)\n"
 		"\n"
 		"Fetch the next available feature from this layer.\n"
 		"\n"
-		"The returned feature becomes the responsibility of the caller to\n"
-		"delete with OGR_F_Destroy(). It is critical that all features\n"
-		"associated with an OGRLayer (more specifically an OGRFeatureDefn) be\n"
-		"deleted before that layer/datasource is deleted.\n"
+		"For more details: :cpp:func:`OGR_L_GetNextFeature`\n"
 		"\n"
-		"Only features matching the current spatial filter (set with\n"
-		"SetSpatialFilter()) will be returned.\n"
+		"Returns\n"
+		"--------\n"
+		"Feature:\n"
+		"    A feature or None if no more features are available.\n"
 		"\n"
-		"This function implements sequential access to the features of a layer.\n"
-		"The OGR_L_ResetReading() function can be used to start at the\n"
-		"beginning again.\n"
-		"\n"
-		"Features returned by OGR_GetNextFeature() may or may not be affected\n"
-		"by concurrent modifications depending on drivers. A guaranteed way of\n"
-		"seeing modifications in effect is to call OGR_L_ResetReading() on\n"
-		"layers where OGR_GetNextFeature() has been called, before reading\n"
-		"again. Structural changes in layers (field addition, deletion, ...)\n"
-		"when a read is in progress may or may not be possible depending on\n"
-		"drivers. If a transaction is committed/aborted, the current sequential\n"
-		"reading may or may not be valid after that operation and a call to\n"
-		"OGR_L_ResetReading() might be needed.\n"
-		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRLayer::GetNextFeature().\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer from which feature are read.\n"
-		"\n"
-		"a handle to a feature, or NULL if no more features are available. \n"
 		""},
 	 { "Layer_SetNextByIndex", _wrap_Layer_SetNextByIndex, METH_VARARGS, "\n"
 		"Layer_SetNextByIndex(Layer self, GIntBig new_index) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_SetNextByIndex(OGRLayerH hLayer, GIntBig nIndex)\n"
 		"\n"
 		"Move read cursor to the nIndex'th feature in the current resultset.\n"
 		"\n"
-		"This method allows positioning of a layer such that the\n"
-		"GetNextFeature() call will read the requested feature, where nIndex is\n"
-		"an absolute index into the current result set. So, setting it to 3\n"
-		"would mean the next feature read with GetNextFeature() would have been\n"
-		"the 4th feature to have been read if sequential reading took place\n"
-		"from the beginning of the layer, including accounting for spatial and\n"
-		"attribute filters.\n"
+		"For more details: :cpp:func:`OGR_L_SetNextByIndex`\n"
 		"\n"
-		"Only in rare circumstances is SetNextByIndex() efficiently\n"
-		"implemented. In all other cases the default implementation which calls\n"
-		"ResetReading() and then calls GetNextFeature() nIndex times is used.\n"
-		"To determine if fast seeking is available on the current layer use the\n"
-		"TestCapability() method with a value of OLCFastSetNextByIndex.\n"
-		"\n"
-		"This method is the same as the C++ method OGRLayer::SetNextByIndex()\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"new_index: int\n"
+		"    The index indicating how many steps into the result set to seek.\n"
 		"\n"
-		"hLayer:  handle to the layer\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success or an error code.\n"
 		"\n"
-		"nIndex:  the index indicating how many steps into the result set to\n"
-		"seek.\n"
-		"\n"
-		"OGRERR_NONE on success or an error code. \n"
 		""},
 	 { "Layer_SetFeature", _wrap_Layer_SetFeature, METH_VARARGS, "\n"
 		"Layer_SetFeature(Layer self, Feature feature) -> OGRErr\n"
-		"OGRErr OGR_L_SetFeature(OGRLayerH\n"
-		"hLayer, OGRFeatureH hFeat)\n"
 		"\n"
 		"Rewrite an existing feature.\n"
 		"\n"
-		"This function will write a feature to the layer, based on the feature\n"
-		"id within the OGRFeature.\n"
+		"For more details: :cpp:func:`OGR_L_SetFeature`\n"
 		"\n"
-		"Use OGR_L_TestCapability(OLCRandomWrite) to establish if this layer\n"
-		"supports random access writing via OGR_L_SetFeature().\n"
+		"To set a feature, but create it if it doesn't exist see :py:meth:`.Layer.UpsertFeature`.\n"
 		"\n"
-		"This function is the same as the C++ method OGRLayer::SetFeature().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"feature: Feature\n"
+		"    The feature to write.\n"
 		"\n"
-		"hLayer:  handle to the layer to write the feature.\n"
-		"\n"
-		"hFeat:  the feature to write.\n"
-		"\n"
-		"OGRERR_NONE if the operation works, otherwise an appropriate error\n"
-		"code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` if the operation works,\n"
+		"    otherwise an appropriate error code\n"
+		"    (e.g :py:const:`osgeo.ogr.OGRERR_NON_EXISTING_FEATURE` if the\n"
+		"    feature does not exist).\n"
 		"\n"
 		""},
 	 { "Layer_CreateFeature", _wrap_Layer_CreateFeature, METH_VARARGS, "\n"
 		"Layer_CreateFeature(Layer self, Feature feature) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_CreateFeature(OGRLayerH hLayer, OGRFeatureH hFeat)\n"
 		"\n"
 		"Create and write a new feature within a layer.\n"
 		"\n"
-		"The passed feature is written to the layer as a new feature, rather\n"
-		"than overwriting an existing one. If the feature has a feature id\n"
-		"other than OGRNullFID, then the native implementation may use that as\n"
-		"the feature id of the new feature, but not necessarily. Upon\n"
-		"successful return the passed feature will have been updated with the\n"
-		"new feature id.\n"
+		"For more details: :cpp:func:`OGR_L_CreateFeature`\n"
 		"\n"
-		"This function is the same as the C++ method OGRLayer::CreateFeature().\n"
+		"To create a feature, but set it if it exists see :py:meth:`.Layer.UpsertFeature`.\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"feature: Feature\n"
+		"    The feature to write to disk.\n"
 		"\n"
-		"hLayer:  handle to the layer to write the feature to.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
 		"\n"
-		"hFeat:  the handle of the feature to write to disk.\n"
+		""},
+	 { "Layer_UpsertFeature", _wrap_Layer_UpsertFeature, METH_VARARGS, "\n"
+		"Layer_UpsertFeature(Layer self, Feature feature) -> OGRErr\n"
 		"\n"
-		"OGRERR_NONE on success. \n"
+		"Rewrite an existing feature or create a new feature within a layer.\n"
+		"\n"
+		"For more details: :cpp:func:`OGR_L_UpsertFeature`\n"
+		"\n"
+		"Parameters\n"
+		"-----------\n"
+		"feature: Feature\n"
+		"    The feature to write to disk.\n"
+		"\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
+		"\n"
 		""},
 	 { "Layer_DeleteFeature", _wrap_Layer_DeleteFeature, METH_VARARGS, "\n"
 		"Layer_DeleteFeature(Layer self, GIntBig fid) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_DeleteFeature(OGRLayerH hLayer, GIntBig nFID)\n"
 		"\n"
 		"Delete feature from layer.\n"
 		"\n"
-		"The feature with the indicated feature id is deleted from the layer if\n"
-		"supported by the driver. Most drivers do not support feature deletion,\n"
-		"and will return OGRERR_UNSUPPORTED_OPERATION. The\n"
-		"OGR_L_TestCapability() function may be called with OLCDeleteFeature to\n"
-		"check if the driver supports feature deletion.\n"
+		"For more details: :cpp:func:`OGR_L_DeleteFeature`\n"
 		"\n"
-		"This method is the same as the C++ method OGRLayer::DeleteFeature().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"fid: int\n"
+		"    The feature id to be deleted from the layer\n"
 		"\n"
-		"hLayer:  handle to the layer\n"
-		"\n"
-		"nFID:  the feature id to be deleted from the layer\n"
-		"\n"
-		"OGRERR_NONE if the operation works, otherwise an appropriate error\n"
-		"code (e.g OGRERR_NON_EXISTING_FEATURE if the feature does not exist).\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` if the operation works,\n"
+		"    otherwise an appropriate error code\n"
+		"    (e.g :py:const:`osgeo.ogr.OGRERR_NON_EXISTING_FEATURE`)\n"
+		"    if the feature does not exist.\n"
 		"\n"
 		""},
 	 { "Layer_SyncToDisk", _wrap_Layer_SyncToDisk, METH_O, "\n"
 		"Layer_SyncToDisk(Layer self) -> OGRErr\n"
-		"OGRErr OGR_L_SyncToDisk(OGRLayerH\n"
-		"hLayer)\n"
 		"\n"
 		"Flush pending changes to disk.\n"
 		"\n"
-		"This call is intended to force the layer to flush any pending writes\n"
-		"to disk, and leave the disk file in a consistent state. It would not\n"
-		"normally have any effect on read-only datasources.\n"
+		"For more details: :cpp:func:`OGR_L_SyncToDisk`\n"
 		"\n"
-		"Some layers do not implement this method, and will still return\n"
-		"OGRERR_NONE. The default implementation just returns OGRERR_NONE. An\n"
-		"error is only returned if an error occurs while attempting to flush to\n"
-		"disk.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` if no error occurs\n"
+		"    (even if nothing is done) or an error code.\n"
 		"\n"
-		"In any event, you should always close any opened datasource with\n"
-		"OGR_DS_Destroy() that will ensure all data is correctly flushed.\n"
-		"\n"
-		"This method is the same as the C++ method OGRLayer::SyncToDisk()\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer\n"
-		"\n"
-		"OGRERR_NONE if no error occurs (even if nothing is done) or an error\n"
-		"code. \n"
 		""},
 	 { "Layer_GetLayerDefn", _wrap_Layer_GetLayerDefn, METH_O, "\n"
 		"Layer_GetLayerDefn(Layer self) -> FeatureDefn\n"
-		"OGRFeatureDefnH\n"
-		"OGR_L_GetLayerDefn(OGRLayerH hLayer)\n"
 		"\n"
 		"Fetch the schema information for this layer.\n"
 		"\n"
-		"The returned handle to the OGRFeatureDefn is owned by the OGRLayer,\n"
-		"and should not be modified or freed by the application. It\n"
-		"encapsulates the attribute schema of the features of the layer.\n"
+		"For more details: :cpp:func:`OGR_L_GetLayerDefn`\n"
 		"\n"
-		"This function is the same as the C++ method OGRLayer::GetLayerDefn().\n"
+		"Returns\n"
+		"--------\n"
+		"FeatureDefn:\n"
+		"    The feature definition.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer to get the schema information.\n"
-		"\n"
-		"a handle to the feature definition. \n"
 		""},
 	 { "Layer_GetFeatureCount", (PyCFunction)(void(*)(void))_wrap_Layer_GetFeatureCount, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_GetFeatureCount(Layer self, int force=1) -> GIntBig\n"
-		"GIntBig\n"
-		"OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)\n"
 		"\n"
 		"Fetch the feature count in this layer.\n"
 		"\n"
-		"Returns the number of features in the layer. For dynamic databases the\n"
-		"count may not be exact. If bForce is FALSE, and it would be expensive\n"
-		"to establish the feature count a value of -1 may be returned\n"
-		"indicating that the count isn't know. If bForce is TRUE some\n"
-		"implementations will actually scan the entire layer once to count\n"
-		"objects.\n"
+		"For more details: :cpp:func:`OGR_L_GetFeatureCount`\n"
 		"\n"
-		"The returned count takes the spatial filter into account.\n"
-		"\n"
-		"Note that some implementations of this method may alter the read\n"
-		"cursor of the layer.\n"
-		"\n"
-		"This function is the same as the CPP OGRLayer::GetFeatureCount().\n"
-		"\n"
-		"Note: since GDAL 2.0, this method returns a GIntBig (previously a int)\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"force: int\n"
+		"    Flag indicating whether the count should be computed even if\n"
+		"    it is expensive.\n"
 		"\n"
-		"hLayer:  handle to the layer that owned the features.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    Feature count, -1 if count not known.\n"
 		"\n"
-		"bForce:  Flag indicating whether the count should be computed even if\n"
-		"it is expensive.\n"
-		"\n"
-		"feature count, -1 if count not known. \n"
 		""},
 	 { "Layer_GetExtent", (PyCFunction)(void(*)(void))_wrap_Layer_GetExtent, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_GetExtent(Layer self, int force=1, int can_return_null=0, int geom_field=0)\n"
-		"OGRErr OGR_L_GetExtent(OGRLayerH\n"
-		"hLayer, OGREnvelope *psExtent, int bForce)\n"
 		"\n"
 		"Fetch the extent of this layer.\n"
 		"\n"
-		"Returns the extent (MBR) of the data in the layer. If bForce is FALSE,\n"
-		"and it would be expensive to establish the extent then OGRERR_FAILURE\n"
-		"will be returned indicating that the extent isn't know. If bForce is\n"
-		"TRUE then some implementations will actually scan the entire layer\n"
-		"once to compute the MBR of all the features in the layer.\n"
+		"For more details:\n"
 		"\n"
-		"Depending on the drivers, the returned extent may or may not take the\n"
-		"spatial filter into account. So it is safer to call OGR_L_GetExtent()\n"
-		"without setting a spatial filter.\n"
+		"- :cpp:func:`OGR_L_GetExtent`\n"
+		"- :cpp:func:`OGR_L_GetExtentEx`\n"
 		"\n"
-		"Layers without any geometry may return OGRERR_FAILURE just indicating\n"
-		"that no meaningful extents could be collected.\n"
+		".. warning:: Check the return order of the bounds.\n"
 		"\n"
-		"Note that some implementations of this method may alter the read\n"
-		"cursor of the layer.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::GetExtent().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"force: int, default=False\n"
+		"    Flag indicating whether the extent should be computed even if\n"
+		"    it is expensive.\n"
+		"can_return_null: int, default=False\n"
+		"    Whether None can be returned in the response.\n"
+		"geom_field: int, default=0\n"
+		"    Ithe index of the geometry field on which to compute the extent.\n"
+		"    Can be iterated over using :py:func:`range` and :py:func:`GetGeomFieldCount`.\n"
 		"\n"
-		"hLayer:  handle to the layer from which to get extent.\n"
+		"Returns\n"
+		"--------\n"
+		"minx: float\n"
+		"maxx: float\n"
+		"miny: float\n"
+		"maxy: float\n"
 		"\n"
-		"psExtent:  the structure in which the extent value will be returned.\n"
-		"\n"
-		"bForce:  Flag indicating whether the extent should be computed even if\n"
-		"it is expensive.\n"
-		"\n"
-		"OGRERR_NONE on success, OGRERR_FAILURE if extent not known. \n"
 		""},
 	 { "Layer_TestCapability", _wrap_Layer_TestCapability, METH_VARARGS, "\n"
 		"Layer_TestCapability(Layer self, char const * cap) -> bool\n"
-		"int\n"
-		"OGR_L_TestCapability(OGRLayerH hLayer, const char *pszCap)\n"
 		"\n"
 		"Test if this layer supported the named capability.\n"
 		"\n"
-		"The capability codes that can be tested are represented as strings,\n"
-		"but #defined constants exists to ensure correct spelling. Specific\n"
-		"layer types may implement class specific capabilities, but this can't\n"
-		"generally be discovered by the caller.\n"
+		"For more details: :cpp:func:`OGR_L_TestCapability`\n"
 		"\n"
-		"OLCRandomRead / \"RandomRead\": TRUE if the GetFeature() method is\n"
-		"implemented in an optimized way for this layer, as opposed to the\n"
-		"default implementation using ResetReading() and GetNextFeature() to\n"
-		"find the requested feature id.\n"
-		"\n"
-		"OLCSequentialWrite / \"SequentialWrite\": TRUE if the CreateFeature()\n"
-		"method works for this layer. Note this means that this particular\n"
-		"layer is writable. The same OGRLayer class may returned FALSE for\n"
-		"other layer instances that are effectively read-only.\n"
-		"\n"
-		"OLCRandomWrite / \"RandomWrite\": TRUE if the SetFeature() method is\n"
-		"operational on this layer. Note this means that this particular layer\n"
-		"is writable. The same OGRLayer class may returned FALSE for other\n"
-		"layer instances that are effectively read-only.\n"
-		"\n"
-		"OLCFastSpatialFilter / \"FastSpatialFilter\": TRUE if this layer\n"
-		"implements spatial filtering efficiently. Layers that effectively read\n"
-		"all features, and test them with the OGRFeature intersection methods\n"
-		"should return FALSE. This can be used as a clue by the application\n"
-		"whether it should build and maintain its own spatial index for\n"
-		"features in this layer.\n"
-		"\n"
-		"OLCFastFeatureCount / \"FastFeatureCount\": TRUE if this layer can\n"
-		"return a feature count (via OGR_L_GetFeatureCount()) efficiently, i.e.\n"
-		"without counting the features. In some cases this will return TRUE\n"
-		"until a spatial filter is installed after which it will return FALSE.\n"
-		"\n"
-		"OLCFastGetExtent / \"FastGetExtent\": TRUE if this layer can return\n"
-		"its data extent (via OGR_L_GetExtent()) efficiently, i.e. without\n"
-		"scanning all the features. In some cases this will return TRUE until a\n"
-		"spatial filter is installed after which it will return FALSE.\n"
-		"\n"
-		"OLCFastSetNextByIndex / \"FastSetNextByIndex\": TRUE if this layer can\n"
-		"perform the SetNextByIndex() call efficiently, otherwise FALSE.\n"
-		"\n"
-		"OLCCreateField / \"CreateField\": TRUE if this layer can create new\n"
-		"fields on the current layer using CreateField(), otherwise FALSE.\n"
-		"\n"
-		"OLCCreateGeomField / \"CreateGeomField\": (GDAL >= 1.11) TRUE if this\n"
-		"layer can create new geometry fields on the current layer using\n"
-		"CreateGeomField(), otherwise FALSE.\n"
-		"\n"
-		"OLCDeleteField / \"DeleteField\": TRUE if this layer can delete\n"
-		"existing fields on the current layer using DeleteField(), otherwise\n"
-		"FALSE.\n"
-		"\n"
-		"OLCReorderFields / \"ReorderFields\": TRUE if this layer can reorder\n"
-		"existing fields on the current layer using ReorderField() or\n"
-		"ReorderFields(), otherwise FALSE.\n"
-		"\n"
-		"OLCAlterFieldDefn / \"AlterFieldDefn\": TRUE if this layer can alter\n"
-		"the definition of an existing field on the current layer using\n"
-		"AlterFieldDefn(), otherwise FALSE.\n"
-		"\n"
-		"OLCDeleteFeature / \"DeleteFeature\": TRUE if the DeleteFeature()\n"
-		"method is supported on this layer, otherwise FALSE.\n"
-		"\n"
-		"OLCStringsAsUTF8 / \"StringsAsUTF8\": TRUE if values of OFTString\n"
-		"fields are assured to be in UTF-8 format. If FALSE the encoding of\n"
-		"fields is uncertain, though it might still be UTF-8.\n"
-		"\n"
-		"OLCTransactions / \"Transactions\": TRUE if the StartTransaction(),\n"
-		"CommitTransaction() and RollbackTransaction() methods work in a\n"
-		"meaningful way, otherwise FALSE.\n"
-		"\n"
-		"OLCCurveGeometries / \"CurveGeometries\": TRUE if this layer supports\n"
-		"writing curve geometries or may return such geometries. (GDAL 2.0).\n"
-		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRLayer::TestCapability().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"cap: str\n"
+		"    The name of the capability to test. These can\n"
+		"    be found in the `osgeo.ogr` namespace. For example,\n"
+		"    :py:const:`osgeo.ogr.OLCRandomRead`.\n"
 		"\n"
-		"hLayer:  handle to the layer to get the capability from.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if the layer has the requested capability, or False otherwise.\n"
+		"    Will return False for any unrecognized capabilities.\n"
 		"\n"
-		"pszCap:  the name of the capability to test.\n"
-		"\n"
-		"TRUE if the layer has the requested capability, or FALSE otherwise.\n"
-		"OGRLayers will return FALSE for any unrecognized capabilities. \n"
 		""},
 	 { "Layer_CreateField", (PyCFunction)(void(*)(void))_wrap_Layer_CreateField, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_CreateField(Layer self, FieldDefn field_def, int approx_ok=1) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_CreateField(OGRLayerH hLayer, OGRFieldDefnH hField, int\n"
-		"bApproxOK)\n"
 		"\n"
 		"Create a new field on a layer.\n"
 		"\n"
-		"You must use this to create new fields on a real layer. Internally the\n"
-		"OGRFeatureDefn for the layer will be updated to reflect the new field.\n"
-		"Applications should never modify the OGRFeatureDefn used by a layer\n"
-		"directly.\n"
+		"For more details: :cpp:func:`OGR_L_CreateField`\n"
 		"\n"
-		"This function should not be called while there are feature objects in\n"
-		"existence that were obtained or created with the previous layer\n"
-		"definition.\n"
-		"\n"
-		"Not all drivers support this function. You can query a layer to check\n"
-		"if it supports it with the OLCCreateField capability. Some drivers may\n"
-		"only support this method while there are still no features in the\n"
-		"layer. When it is supported, the existing features of the backing\n"
-		"file/database should be updated accordingly.\n"
-		"\n"
-		"Drivers may or may not support not-null constraints. If they support\n"
-		"creating fields with not-null constraints, this is generally before\n"
-		"creating any feature to the layer.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::CreateField().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"field_def: FieldDefn\n"
+		"    The field definition to write to disk.\n"
+		"approx_ok: bool, default=True\n"
+		"    If True, the field may be created in a slightly different\n"
+		"    form depending on the limitations of the format driver.\n"
 		"\n"
-		"hLayer:  handle to the layer to write the field definition.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
 		"\n"
-		"hField:  handle of the field definition to write to disk.\n"
-		"\n"
-		"bApproxOK:  If TRUE, the field may be created in a slightly different\n"
-		"form depending on the limitations of the format driver.\n"
-		"\n"
-		"OGRERR_NONE on success. \n"
 		""},
 	 { "Layer_DeleteField", _wrap_Layer_DeleteField, METH_VARARGS, "\n"
 		"Layer_DeleteField(Layer self, int iField) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_DeleteField(OGRLayerH hLayer, int iField)\n"
 		"\n"
 		"Delete an existing field on a layer.\n"
 		"\n"
-		"You must use this to delete existing fields on a real layer.\n"
-		"Internally the OGRFeatureDefn for the layer will be updated to reflect\n"
-		"the deleted field. Applications should never modify the OGRFeatureDefn\n"
-		"used by a layer directly.\n"
+		"For more details: :cpp:func:`OGR_L_DeleteField`\n"
 		"\n"
-		"This function should not be called while there are feature objects in\n"
-		"existence that were obtained or created with the previous layer\n"
-		"definition.\n"
-		"\n"
-		"Not all drivers support this function. You can query a layer to check\n"
-		"if it supports it with the OLCDeleteField capability. Some drivers may\n"
-		"only support this method while there are still no features in the\n"
-		"layer. When it is supported, the existing features of the backing\n"
-		"file/database should be updated accordingly.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::DeleteField().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"iField: int\n"
+		"    index of the field to delete.\n"
 		"\n"
-		"hLayer:  handle to the layer.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
 		"\n"
-		"iField:  index of the field to delete.\n"
-		"\n"
-		"OGRERR_NONE on success.\n"
-		"\n"
-		"OGR 1.9.0 \n"
 		""},
 	 { "Layer_ReorderField", _wrap_Layer_ReorderField, METH_VARARGS, "\n"
 		"Layer_ReorderField(Layer self, int iOldFieldPos, int iNewFieldPos) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_ReorderField(OGRLayerH hLayer, int iOldFieldPos, int\n"
-		"iNewFieldPos)\n"
 		"\n"
 		"Reorder an existing field on a layer.\n"
 		"\n"
-		"This function is a convenience wrapper of OGR_L_ReorderFields()\n"
-		"dedicated to move a single field.\n"
+		"For more details: :cpp:func:`OGR_L_ReorderField`\n"
 		"\n"
-		"You must use this to reorder existing fields on a real layer.\n"
-		"Internally the OGRFeatureDefn for the layer will be updated to reflect\n"
-		"the reordering of the fields. Applications should never modify the\n"
-		"OGRFeatureDefn used by a layer directly.\n"
-		"\n"
-		"This function should not be called while there are feature objects in\n"
-		"existence that were obtained or created with the previous layer\n"
-		"definition.\n"
-		"\n"
-		"The field definition that was at initial position iOldFieldPos will be\n"
-		"moved at position iNewFieldPos, and elements between will be shuffled\n"
-		"accordingly.\n"
-		"\n"
-		"For example, let suppose the fields were \"0\",\"1\",\"2\",\"3\",\"4\"\n"
-		"initially. ReorderField(1, 3) will reorder them as\n"
-		"\"0\",\"2\",\"3\",\"1\",\"4\".\n"
-		"\n"
-		"Not all drivers support this function. You can query a layer to check\n"
-		"if it supports it with the OLCReorderFields capability. Some drivers\n"
-		"may only support this method while there are still no features in the\n"
-		"layer. When it is supported, the existing features of the backing\n"
-		"file/database should be updated accordingly.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::ReorderField().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"iOldFieldPos: int\n"
+		"    previous position of the field to move. Must be in the\n"
+		"    range [0,GetFieldCount()-1].\n"
+		"iNewFieldPos: int\n"
+		"    new position of the field to move. Must be in the range\n"
+		"    [0,GetFieldCount()-1].\n"
 		"\n"
-		"hLayer:  handle to the layer.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
 		"\n"
-		"iOldFieldPos:  previous position of the field to move. Must be in the\n"
-		"range [0,GetFieldCount()-1].\n"
-		"\n"
-		"iNewFieldPos:  new position of the field to move. Must be in the range\n"
-		"[0,GetFieldCount()-1].\n"
-		"\n"
-		"OGRERR_NONE on success.\n"
-		"\n"
-		"OGR 1.9.0 \n"
 		""},
 	 { "Layer_ReorderFields", _wrap_Layer_ReorderFields, METH_VARARGS, "\n"
 		"Layer_ReorderFields(Layer self, int nList) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_ReorderFields(OGRLayerH hLayer, int *panMap)\n"
 		"\n"
 		"Reorder all the fields of a layer.\n"
 		"\n"
-		"You must use this to reorder existing fields on a real layer.\n"
-		"Internally the OGRFeatureDefn for the layer will be updated to reflect\n"
-		"the reordering of the fields. Applications should never modify the\n"
-		"OGRFeatureDefn used by a layer directly.\n"
+		"For more details: :cpp:func:`OGR_L_ReorderFields`\n"
 		"\n"
-		"This function should not be called while there are feature objects in\n"
-		"existence that were obtained or created with the previous layer\n"
-		"definition.\n"
-		"\n"
-		"panMap is such that,for each field definition at position i after\n"
-		"reordering, its position before reordering was panMap[i].\n"
-		"\n"
-		"For example, let suppose the fields were \"0\",\"1\",\"2\",\"3\",\"4\"\n"
-		"initially. ReorderFields([0,2,3,1,4]) will reorder them as\n"
-		"\"0\",\"2\",\"3\",\"1\",\"4\".\n"
-		"\n"
-		"Not all drivers support this function. You can query a layer to check\n"
-		"if it supports it with the OLCReorderFields capability. Some drivers\n"
-		"may only support this method while there are still no features in the\n"
-		"layer. When it is supported, the existing features of the backing\n"
-		"file/database should be updated accordingly.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::ReorderFields().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"nList: list[int]\n"
+		"    A list of GetLayerDefn().GetFieldCount()\n"
+		"    elements which is a permutation of\n"
+		"    [0, GetLayerDefn().GetFieldCount()-1].\n"
 		"\n"
-		"hLayer:  handle to the layer.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
 		"\n"
-		"panMap:  an array of GetLayerDefn()-> OGRFeatureDefn::GetFieldCount()\n"
-		"elements which is a permutation of [0, GetLayerDefn()->\n"
-		"OGRFeatureDefn::GetFieldCount()-1].\n"
-		"\n"
-		"OGRERR_NONE on success.\n"
-		"\n"
-		"OGR 1.9.0 \n"
 		""},
 	 { "Layer_AlterFieldDefn", _wrap_Layer_AlterFieldDefn, METH_VARARGS, "\n"
 		"Layer_AlterFieldDefn(Layer self, int iField, FieldDefn field_def, int nFlags) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_AlterFieldDefn(OGRLayerH hLayer, int iField, OGRFieldDefnH\n"
-		"hNewFieldDefn, int nFlags)\n"
 		"\n"
 		"Alter the definition of an existing field on a layer.\n"
 		"\n"
-		"You must use this to alter the definition of an existing field of a\n"
-		"real layer. Internally the OGRFeatureDefn for the layer will be\n"
-		"updated to reflect the altered field. Applications should never modify\n"
-		"the OGRFeatureDefn used by a layer directly.\n"
+		"For more details: :cpp:func:`OGR_L_AlterFieldDefn`\n"
 		"\n"
-		"This function should not be called while there are feature objects in\n"
-		"existence that were obtained or created with the previous layer\n"
-		"definition.\n"
-		"\n"
-		"Not all drivers support this function. You can query a layer to check\n"
-		"if it supports it with the OLCAlterFieldDefn capability. Some drivers\n"
-		"may only support this method while there are still no features in the\n"
-		"layer. When it is supported, the existing features of the backing\n"
-		"file/database should be updated accordingly. Some drivers might also\n"
-		"not support all update flags.\n"
-		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRLayer::AlterFieldDefn().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"iField: int\n"
+		"    index of the field whose definition must be altered.\n"
+		"field_def: FieldDefn\n"
+		"    new field definition\n"
+		"nFlags: int\n"
+		"    Combination of\n"
+		"    :py:const:`osgeo.ogr.ALTER_NAME_FLAG`,\n"
+		"    :py:const:`osgeo.ogr.ALTER_TYPE_FLAG`,\n"
+		"    :py:const:`osgeo.ogr.ALTER_WIDTH_PRECISION_FLAG`,\n"
+		"    :py:const:`osgeo.ogr.ALTER_NULLABLE_FLAG` and\n"
+		"    :py:const:`osgeo.ogr.ALTER_DEFAULT_FLAG`\n"
+		"    to indicate which of the name and/or type and/or width and precision\n"
+		"    fields and/or nullability from the new field definition must be taken\n"
+		"    into account.\n"
 		"\n"
-		"hLayer:  handle to the layer.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
 		"\n"
-		"iField:  index of the field whose definition must be altered.\n"
-		"\n"
-		"hNewFieldDefn:  new field definition\n"
-		"\n"
-		"nFlags:  combination of ALTER_NAME_FLAG, ALTER_TYPE_FLAG,\n"
-		"ALTER_WIDTH_PRECISION_FLAG, ALTER_NULLABLE_FLAG and ALTER_DEFAULT_FLAG\n"
-		"to indicate which of the name and/or type and/or width and precision\n"
-		"fields and/or nullability from the new field definition must be taken\n"
-		"into account.\n"
-		"\n"
-		"OGRERR_NONE on success.\n"
-		"\n"
-		"OGR 1.9.0 \n"
 		""},
+	 { "Layer_AlterGeomFieldDefn", _wrap_Layer_AlterGeomFieldDefn, METH_VARARGS, "Layer_AlterGeomFieldDefn(Layer self, int iGeomField, GeomFieldDefn field_def, int nFlags) -> OGRErr"},
 	 { "Layer_CreateGeomField", (PyCFunction)(void(*)(void))_wrap_Layer_CreateGeomField, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_CreateGeomField(Layer self, GeomFieldDefn field_def, int approx_ok=1) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_CreateGeomField(OGRLayerH hLayer, OGRGeomFieldDefnH hField, int\n"
-		"bApproxOK)\n"
 		"\n"
 		"Create a new geometry field on a layer.\n"
 		"\n"
-		"You must use this to create new geometry fields on a real layer.\n"
-		"Internally the OGRFeatureDefn for the layer will be updated to reflect\n"
-		"the new field. Applications should never modify the OGRFeatureDefn\n"
-		"used by a layer directly.\n"
+		"For more details: :cpp:func:`OGR_L_CreateGeomField`\n"
 		"\n"
-		"This function should not be called while there are feature objects in\n"
-		"existence that were obtained or created with the previous layer\n"
-		"definition.\n"
-		"\n"
-		"Not all drivers support this function. You can query a layer to check\n"
-		"if it supports it with the OLCCreateField capability. Some drivers may\n"
-		"only support this method while there are still no features in the\n"
-		"layer. When it is supported, the existing features of the backing\n"
-		"file/database should be updated accordingly.\n"
-		"\n"
-		"Drivers may or may not support not-null constraints. If they support\n"
-		"creating fields with not-null constraints, this is generally before\n"
-		"creating any feature to the layer.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::CreateField().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"field_def: GeomFieldDefn\n"
+		"    The geometry field definition to write to disk.\n"
+		"approx_ok: bool, default=True\n"
+		"    If True, the field may be created in a slightly different\n"
+		"    form depending on the limitations of the format driver.\n"
 		"\n"
-		"hLayer:  handle to the layer to write the field definition.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
 		"\n"
-		"hField:  handle of the geometry field definition to write to disk.\n"
-		"\n"
-		"bApproxOK:  If TRUE, the field may be created in a slightly different\n"
-		"form depending on the limitations of the format driver.\n"
-		"\n"
-		"OGRERR_NONE on success.\n"
-		"\n"
-		"OGR 1.11 \n"
 		""},
 	 { "Layer_StartTransaction", _wrap_Layer_StartTransaction, METH_O, "\n"
 		"Layer_StartTransaction(Layer self) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_StartTransaction(OGRLayerH hLayer)\n"
 		"\n"
-		"For datasources which support transactions, StartTransaction creates a\n"
-		"transaction.\n"
+		"For datasources which support transactions, this creates a transaction.\n"
 		"\n"
-		"If starting the transaction fails, will return OGRERR_FAILURE.\n"
-		"Datasources which do not support transactions will always return\n"
-		"OGRERR_NONE.\n"
+		"For more details: :cpp:func:`OGR_L_StartTransaction`\n"
 		"\n"
-		"Note: as of GDAL 2.0, use of this API is discouraged when the dataset\n"
-		"offers dataset level transaction with GDALDataset::StartTransaction().\n"
-		"The reason is that most drivers can only offer transactions at dataset\n"
-		"level, and not layer level. Very few drivers really support\n"
-		"transactions at layer scope.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
 		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRLayer::StartTransaction().\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer\n"
-		"\n"
-		"OGRERR_NONE on success. \n"
 		""},
 	 { "Layer_CommitTransaction", _wrap_Layer_CommitTransaction, METH_O, "\n"
 		"Layer_CommitTransaction(Layer self) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_CommitTransaction(OGRLayerH hLayer)\n"
 		"\n"
-		"For datasources which support transactions, CommitTransaction commits\n"
-		"a transaction.\n"
+		"For datasources which support transactions, this commits a transaction.\n"
 		"\n"
-		"If no transaction is active, or the commit fails, will return\n"
-		"OGRERR_FAILURE. Datasources which do not support transactions will\n"
-		"always return OGRERR_NONE.\n"
+		"For more details: :cpp:func:`OGR_L_CommitTransaction`\n"
 		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRLayer::CommitTransaction().\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer\n"
-		"\n"
-		"OGRERR_NONE on success. \n"
 		""},
 	 { "Layer_RollbackTransaction", _wrap_Layer_RollbackTransaction, METH_O, "\n"
 		"Layer_RollbackTransaction(Layer self) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_RollbackTransaction(OGRLayerH hLayer)\n"
 		"\n"
-		"For datasources which support transactions, RollbackTransaction will\n"
-		"roll back a datasource to its state before the start of the current\n"
-		"transaction.\n"
+		"Roll back a datasource to its state before the start of the current transaction.\n"
 		"\n"
-		"If no transaction is active, or the rollback fails, will return\n"
-		"OGRERR_FAILURE. Datasources which do not support transactions will\n"
-		"always return OGRERR_NONE.\n"
+		"For more details: :cpp:func:`OGR_L_RollbackTransaction`\n"
 		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRLayer::RollbackTransaction().\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer\n"
-		"\n"
-		"OGRERR_NONE on success. \n"
 		""},
 	 { "Layer_FindFieldIndex", _wrap_Layer_FindFieldIndex, METH_VARARGS, "\n"
 		"Layer_FindFieldIndex(Layer self, char const * pszFieldName, int bExactMatch) -> int\n"
-		"int\n"
-		"OGR_L_FindFieldIndex(OGRLayerH hLayer, const char *pszFieldName, int\n"
-		"bExactMatch)\n"
 		"\n"
 		"Find the index of field in a layer.\n"
 		"\n"
-		"The returned number is the index of the field in the layers, or -1 if\n"
-		"the field doesn't exist.\n"
+		"For more details: :cpp:func:`OGR_L_FindFieldIndex`\n"
 		"\n"
-		"If bExactMatch is set to FALSE and the field doesn't exists in the\n"
-		"given form the driver might apply some changes to make it match, like\n"
-		"those it might do if the layer was created (eg. like LAUNDER in the\n"
-		"OCI driver).\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    field index, or -1 if the field doesn't exist\n"
 		"\n"
-		"This method is the same as the C++ method OGRLayer::FindFieldIndex().\n"
-		"\n"
-		"field index, or -1 if the field doesn't exist \n"
 		""},
 	 { "Layer_GetSpatialRef", _wrap_Layer_GetSpatialRef, METH_O, "\n"
 		"Layer_GetSpatialRef(Layer self) -> SpatialReference\n"
-		"OGRSpatialReferenceH\n"
-		"OGR_L_GetSpatialRef(OGRLayerH hLayer)\n"
 		"\n"
 		"Fetch the spatial reference system for this layer.\n"
 		"\n"
-		"The returned object is owned by the OGRLayer and should not be\n"
-		"modified or freed by the application.\n"
+		"For more details: :cpp:func:`OGR_L_GetSpatialRef`\n"
 		"\n"
-		"This function is the same as the C++ method OGRLayer::GetSpatialRef().\n"
+		"Returns\n"
+		"--------\n"
+		"SpatialReference:\n"
+		"    spatial reference, or None if there isn't one.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hLayer:  handle to the layer to get the spatial reference from.\n"
-		"\n"
-		"spatial reference, or NULL if there isn't one. \n"
 		""},
 	 { "Layer_GetFeaturesRead", _wrap_Layer_GetFeaturesRead, METH_O, "\n"
 		"Layer_GetFeaturesRead(Layer self) -> GIntBig\n"
-		"GIntBig\n"
-		"OGR_L_GetFeaturesRead(OGRLayerH hLayer) \n"
+		"\n"
+		"For more details: :cpp:func:`OGR_L_GetFeaturesRead`\n"
+		"\n"
 		""},
 	 { "Layer_SetIgnoredFields", _wrap_Layer_SetIgnoredFields, METH_VARARGS, "\n"
 		"Layer_SetIgnoredFields(Layer self, char const ** options) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_SetIgnoredFields(OGRLayerH hLayer, const char **papszFields)\n"
 		"\n"
 		"Set which fields can be omitted when retrieving features from the\n"
 		"layer.\n"
 		"\n"
-		"If the driver supports this functionality (testable using\n"
-		"OLCIgnoreFields capability), it will not fetch the specified fields in\n"
-		"subsequent calls to GetFeature() / GetNextFeature() and thus save some\n"
-		"processing time and/or bandwidth.\n"
+		"For more details: :cpp:func:`OGR_L_SetIgnoredFields`\n"
 		"\n"
-		"Besides field names of the layers, the following special fields can be\n"
-		"passed: \"OGR_GEOMETRY\" to ignore geometry and \"OGR_STYLE\" to\n"
-		"ignore layer style.\n"
-		"\n"
-		"By default, no fields are ignored.\n"
-		"\n"
-		"This method is the same as the C++ method OGRLayer::SetIgnoredFields()\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"options: list[str]\n"
+		"    A list of field names.\n"
+		"    If an empty list is passed, the ignored list is cleared.\n"
 		"\n"
-		"hLayer:  handle to the layer\n"
+		"Returns\n"
+		"-------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` if all field names have been resolved\n"
+		"    (even if the driver does not support this method)\n"
 		"\n"
-		"papszFields:  an array of field names terminated by NULL item. If NULL\n"
-		"is passed, the ignored list is cleared.\n"
-		"\n"
-		"OGRERR_NONE if all field names have been resolved (even if the driver\n"
-		"does not support this method) \n"
 		""},
 	 { "Layer_Intersection", (PyCFunction)(void(*)(void))_wrap_Layer_Intersection, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_Intersection(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_Intersection(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,\n"
-		"OGRLayerH pLayerResult, char **papszOptions, GDALProgressFunc\n"
-		"pfnProgress, void *pProgressArg)\n"
 		"\n"
 		"Intersection of two layers.\n"
 		"\n"
-		"The result layer contains features whose geometries represent areas\n"
-		"that are common between features in the input layer and in the method\n"
-		"layer. The features in the result layer have attributes from both\n"
-		"input and method layers. The schema of the result layer can be set by\n"
-		"the user or, if it is empty, is initialized to contain all fields in\n"
-		"the input and method layers.\n"
+		"For more details: :cpp:func:`OGR_L_Intersection`\n"
 		"\n"
-		"If the schema of the result is set by user and contains fields that\n"
-		"have the same name as a field in input and in method layer, then the\n"
-		"attribute in the result feature will get the value from the feature of\n"
-		"the method layer.\n"
-		"\n"
-		"For best performance use the minimum amount of features in the method\n"
-		"layer and copy it into a memory layer.\n"
-		"\n"
-		"This method relies on GEOS support. Do not use unless the GEOS support\n"
-		"is compiled in.  The recognized list of options is :\n"
-		"SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature\n"
-		"could not be inserted or a GEOS call failed.\n"
-		"\n"
-		"PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into\n"
-		"MultiPolygons, or LineStrings to MultiLineStrings.\n"
-		"\n"
-		"INPUT_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the input layer.\n"
-		"\n"
-		"METHOD_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the method layer.\n"
-		"\n"
-		"USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared\n"
-		"geometries to pretest intersection of features of method layer with\n"
-		"features of this layer.\n"
-		"\n"
-		"PRETEST_CONTAINMENT=YES/NO. Set to YES to pretest the containment of\n"
-		"features of method layer within the features of this layer. This will\n"
-		"speed up the method significantly in some cases. Requires that the\n"
-		"prepared geometries are in effect.\n"
-		"\n"
-		"KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip result\n"
-		"features with lower dimension geometry that would otherwise be added\n"
-		"to the result layer. The default is to add but only if the result\n"
-		"layer has an unknown geometry type.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::Intersection().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"method_layer: Layer\n"
+		"    the method layer. Should not be None.\n"
+		"result_layer: Layer\n"
+		"    the layer where the features resulting from the\n"
+		"    operation are inserted. Should not be None.\n"
+		"options: list[str], optional\n"
+		"    List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].\n"
+		"callback: Callable, optional\n"
+		"    a GDALProgressFunc() compatible callback function for\n"
+		"    reporting progress or None.\n"
+		"callback_data:\n"
+		"    Argument to be passed to 'callback'. May be None.\n"
 		"\n"
-		"pLayerInput:  the input layer. Should not be NULL.\n"
+		"Returns\n"
+		"-------\n"
+		"int:\n"
+		"    An error code if there was an error or the execution was interrupted,\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.\n"
 		"\n"
-		"pLayerMethod:  the method layer. Should not be NULL.\n"
-		"\n"
-		"pLayerResult:  the layer where the features resulting from the\n"
-		"operation are inserted. Should not be NULL. See above the note about\n"
-		"the schema.\n"
-		"\n"
-		"papszOptions:  NULL terminated list of options (may be NULL).\n"
-		"\n"
-		"pfnProgress:  a GDALProgressFunc() compatible callback function for\n"
-		"reporting progress or NULL.\n"
-		"\n"
-		"pProgressArg:  argument to be passed to pfnProgress. May be NULL.\n"
-		"\n"
-		"an error code if there was an error or the execution was interrupted,\n"
-		"OGRERR_NONE otherwise.\n"
-		"\n"
-		"The first geometry field is always used.\n"
-		"\n"
-		"OGR 1.10 \n"
 		""},
 	 { "Layer_Union", (PyCFunction)(void(*)(void))_wrap_Layer_Union, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_Union(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr\n"
-		"OGRErr OGR_L_Union(OGRLayerH\n"
-		"pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char\n"
-		"**papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)\n"
 		"\n"
 		"Union of two layers.\n"
 		"\n"
-		"The result layer contains features whose geometries represent areas\n"
-		"that are in either in the input layer, in the method layer, or in\n"
-		"both. The features in the result layer have attributes from both input\n"
-		"and method layers. For features which represent areas that are only in\n"
-		"the input or in the method layer the respective attributes have\n"
-		"undefined values. The schema of the result layer can be set by the\n"
-		"user or, if it is empty, is initialized to contain all fields in the\n"
-		"input and method layers.\n"
-		"\n"
-		"If the schema of the result is set by user and contains fields that\n"
-		"have the same name as a field in input and in method layer, then the\n"
-		"attribute in the result feature will get the value from the feature of\n"
-		"the method layer (even if it is undefined).\n"
-		"\n"
-		"For best performance use the minimum amount of features in the method\n"
-		"layer and copy it into a memory layer.\n"
-		"\n"
-		"This method relies on GEOS support. Do not use unless the GEOS support\n"
-		"is compiled in.  The recognized list of options is :\n"
-		"SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature\n"
-		"could not be inserted or a GEOS call failed.\n"
-		"\n"
-		"PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into\n"
-		"MultiPolygons, or LineStrings to MultiLineStrings.\n"
-		"\n"
-		"INPUT_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the input layer.\n"
-		"\n"
-		"METHOD_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the method layer.\n"
-		"\n"
-		"USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared\n"
-		"geometries to pretest intersection of features of method layer with\n"
-		"features of this layer.\n"
-		"\n"
-		"KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip result\n"
-		"features with lower dimension geometry that would otherwise be added\n"
-		"to the result layer. The default is to add but only if the result\n"
-		"layer has an unknown geometry type.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::Union().\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"pLayerInput:  the input layer. Should not be NULL.\n"
-		"\n"
-		"pLayerMethod:  the method layer. Should not be NULL.\n"
-		"\n"
-		"pLayerResult:  the layer where the features resulting from the\n"
-		"operation are inserted. Should not be NULL. See above the note about\n"
-		"the schema.\n"
-		"\n"
-		"papszOptions:  NULL terminated list of options (may be NULL).\n"
-		"\n"
-		"pfnProgress:  a GDALProgressFunc() compatible callback function for\n"
-		"reporting progress or NULL.\n"
-		"\n"
-		"pProgressArg:  argument to be passed to pfnProgress. May be NULL.\n"
-		"\n"
-		"an error code if there was an error or the execution was interrupted,\n"
-		"OGRERR_NONE otherwise.\n"
+		"For more details: :cpp:func:`OGR_L_Union`\n"
 		"\n"
 		"The first geometry field is always used.\n"
 		"\n"
-		"OGR 1.10 \n"
+		"Parameters\n"
+		"-----------\n"
+		"method_layer: Layer\n"
+		"    the method layer. Should not be None.\n"
+		"result_layer: Layer\n"
+		"    the layer where the features resulting from the\n"
+		"    operation are inserted. Should not be None.\n"
+		"options: list[str], optional\n"
+		"    List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].\n"
+		"callback: Callable, optional\n"
+		"    a GDALProgressFunc() compatible callback function for\n"
+		"    reporting progress or None.\n"
+		"callback_data:\n"
+		"    Argument to be passed to 'callback'. May be None.\n"
+		"\n"
+		"Returns\n"
+		"-------\n"
+		"int:\n"
+		"    An error code if there was an error or the execution was interrupted,\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.\n"
+		"\n"
 		""},
 	 { "Layer_SymDifference", (PyCFunction)(void(*)(void))_wrap_Layer_SymDifference, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_SymDifference(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_L_SymDifference(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,\n"
-		"OGRLayerH pLayerResult, char **papszOptions, GDALProgressFunc\n"
-		"pfnProgress, void *pProgressArg)\n"
 		"\n"
 		"Symmetrical difference of two layers.\n"
 		"\n"
-		"The result layer contains features whose geometries represent areas\n"
-		"that are in either in the input layer or in the method layer but not\n"
-		"in both. The features in the result layer have attributes from both\n"
-		"input and method layers. For features which represent areas that are\n"
-		"only in the input or in the method layer the respective attributes\n"
-		"have undefined values. The schema of the result layer can be set by\n"
-		"the user or, if it is empty, is initialized to contain all fields in\n"
-		"the input and method layers.\n"
+		"For more details: :cpp:func:`OGR_L_SymDifference`\n"
 		"\n"
-		"If the schema of the result is set by user and contains fields that\n"
-		"have the same name as a field in input and in method layer, then the\n"
-		"attribute in the result feature will get the value from the feature of\n"
-		"the method layer (even if it is undefined).\n"
-		"\n"
-		"For best performance use the minimum amount of features in the method\n"
-		"layer and copy it into a memory layer.\n"
-		"\n"
-		"This method relies on GEOS support. Do not use unless the GEOS support\n"
-		"is compiled in.  The recognized list of options is :\n"
-		"SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature\n"
-		"could not be inserted or a GEOS call failed.\n"
-		"\n"
-		"PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into\n"
-		"MultiPolygons, or LineStrings to MultiLineStrings.\n"
-		"\n"
-		"INPUT_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the input layer.\n"
-		"\n"
-		"METHOD_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the method layer.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::SymDifference().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"method_layer: Layer\n"
+		"    the method layer. Should not be None.\n"
+		"result_layer: Layer\n"
+		"    the layer where the features resulting from the\n"
+		"    operation are inserted. Should not be None.\n"
+		"options: list[str], optional\n"
+		"    List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].\n"
+		"callback: Callable, optional\n"
+		"    a GDALProgressFunc() compatible callback function for\n"
+		"    reporting progress or None.\n"
+		"callback_data:\n"
+		"    Argument to be passed to 'callback'. May be None.\n"
 		"\n"
-		"pLayerInput:  the input layer. Should not be NULL.\n"
+		"Returns\n"
+		"-------\n"
+		"int:\n"
+		"    An error code if there was an error or the execution was interrupted,\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.\n"
 		"\n"
-		"pLayerMethod:  the method layer. Should not be NULL.\n"
-		"\n"
-		"pLayerResult:  the layer where the features resulting from the\n"
-		"operation are inserted. Should not be NULL. See above the note about\n"
-		"the schema.\n"
-		"\n"
-		"papszOptions:  NULL terminated list of options (may be NULL).\n"
-		"\n"
-		"pfnProgress:  a GDALProgressFunc() compatible callback function for\n"
-		"reporting progress or NULL.\n"
-		"\n"
-		"pProgressArg:  argument to be passed to pfnProgress. May be NULL.\n"
-		"\n"
-		"an error code if there was an error or the execution was interrupted,\n"
-		"OGRERR_NONE otherwise.\n"
-		"\n"
-		"The first geometry field is always used.\n"
-		"\n"
-		"OGR 1.10 \n"
 		""},
 	 { "Layer_Identity", (PyCFunction)(void(*)(void))_wrap_Layer_Identity, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_Identity(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr\n"
-		"OGRErr OGR_L_Identity(OGRLayerH\n"
-		"pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char\n"
-		"**papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)\n"
 		"\n"
-		"Identify the features of this layer with the ones from the identity\n"
-		"layer.\n"
+		"Identify the features of this layer with the ones from the identity layer.\n"
 		"\n"
-		"The result layer contains features whose geometries represent areas\n"
-		"that are in the input layer. The features in the result layer have\n"
-		"attributes from both input and method layers. The schema of the result\n"
-		"layer can be set by the user or, if it is empty, is initialized to\n"
-		"contain all fields in input and method layers.\n"
+		"For more details: :cpp:func:`OGR_L_Identity`\n"
 		"\n"
-		"If the schema of the result is set by user and contains fields that\n"
-		"have the same name as a field in input and in method layer, then the\n"
-		"attribute in the result feature will get the value from the feature of\n"
-		"the method layer (even if it is undefined).\n"
-		"\n"
-		"For best performance use the minimum amount of features in the method\n"
-		"layer and copy it into a memory layer.\n"
-		"\n"
-		"This method relies on GEOS support. Do not use unless the GEOS support\n"
-		"is compiled in.  The recognized list of options is :\n"
-		"SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature\n"
-		"could not be inserted or a GEOS call failed.\n"
-		"\n"
-		"PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into\n"
-		"MultiPolygons, or LineStrings to MultiLineStrings.\n"
-		"\n"
-		"INPUT_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the input layer.\n"
-		"\n"
-		"METHOD_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the method layer.\n"
-		"\n"
-		"USE_PREPARED_GEOMETRIES=YES/NO. Set to NO to not use prepared\n"
-		"geometries to pretest intersection of features of method layer with\n"
-		"features of this layer.\n"
-		"\n"
-		"KEEP_LOWER_DIMENSION_GEOMETRIES=YES/NO. Set to NO to skip result\n"
-		"features with lower dimension geometry that would otherwise be added\n"
-		"to the result layer. The default is to add but only if the result\n"
-		"layer has an unknown geometry type.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::Identity().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"method_layer: Layer\n"
+		"    the method layer. Should not be None.\n"
+		"result_layer: Layer\n"
+		"    the layer where the features resulting from the\n"
+		"    operation are inserted. Should not be None.\n"
+		"options: list[str], optional\n"
+		"    List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].\n"
+		"callback: Callable, optional\n"
+		"    a GDALProgressFunc() compatible callback function for\n"
+		"    reporting progress or None.\n"
+		"callback_data:\n"
+		"    Argument to be passed to 'callback'. May be None.\n"
 		"\n"
-		"pLayerInput:  the input layer. Should not be NULL.\n"
+		"Returns\n"
+		"-------\n"
+		"int:\n"
+		"    An error code if there was an error or the execution was interrupted,\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.\n"
 		"\n"
-		"pLayerMethod:  the method layer. Should not be NULL.\n"
-		"\n"
-		"pLayerResult:  the layer where the features resulting from the\n"
-		"operation are inserted. Should not be NULL. See above the note about\n"
-		"the schema.\n"
-		"\n"
-		"papszOptions:  NULL terminated list of options (may be NULL).\n"
-		"\n"
-		"pfnProgress:  a GDALProgressFunc() compatible callback function for\n"
-		"reporting progress or NULL.\n"
-		"\n"
-		"pProgressArg:  argument to be passed to pfnProgress. May be NULL.\n"
-		"\n"
-		"an error code if there was an error or the execution was interrupted,\n"
-		"OGRERR_NONE otherwise.\n"
-		"\n"
-		"The first geometry field is always used.\n"
-		"\n"
-		"OGR 1.10 \n"
 		""},
 	 { "Layer_Update", (PyCFunction)(void(*)(void))_wrap_Layer_Update, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_Update(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr\n"
-		"OGRErr OGR_L_Update(OGRLayerH\n"
-		"pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char\n"
-		"**papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)\n"
 		"\n"
 		"Update this layer with features from the update layer.\n"
 		"\n"
-		"The result layer contains features whose geometries represent areas\n"
-		"that are either in the input layer or in the method layer. The\n"
-		"features in the result layer have areas of the features of the method\n"
-		"layer or those ares of the features of the input layer that are not\n"
-		"covered by the method layer. The features of the result layer get\n"
-		"their attributes from the input layer. The schema of the result layer\n"
-		"can be set by the user or, if it is empty, is initialized to contain\n"
-		"all fields in the input layer.\n"
+		"For more details: :cpp:func:`OGR_L_Update`\n"
 		"\n"
-		"If the schema of the result is set by user and contains fields that\n"
-		"have the same name as a field in the method layer, then the attribute\n"
-		"in the result feature the originates from the method layer will get\n"
-		"the value from the feature of the method layer.\n"
-		"\n"
-		"For best performance use the minimum amount of features in the method\n"
-		"layer and copy it into a memory layer.\n"
-		"\n"
-		"This method relies on GEOS support. Do not use unless the GEOS support\n"
-		"is compiled in.  The recognized list of options is :\n"
-		"SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature\n"
-		"could not be inserted or a GEOS call failed.\n"
-		"\n"
-		"PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into\n"
-		"MultiPolygons, or LineStrings to MultiLineStrings.\n"
-		"\n"
-		"INPUT_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the input layer.\n"
-		"\n"
-		"METHOD_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the method layer.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::Update().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"method_layer: Layer\n"
+		"    the method layer. Should not be None.\n"
+		"result_layer: Layer\n"
+		"    the layer where the features resulting from the\n"
+		"    operation are inserted. Should not be None.\n"
+		"options: list[str], optional\n"
+		"    List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].\n"
+		"callback: Callable, optional\n"
+		"    a GDALProgressFunc() compatible callback function for\n"
+		"    reporting progress or None.\n"
+		"callback_data:\n"
+		"    Argument to be passed to 'callback'. May be None.\n"
 		"\n"
-		"pLayerInput:  the input layer. Should not be NULL.\n"
+		"Returns\n"
+		"-------\n"
+		"int:\n"
+		"    An error code if there was an error or the execution was interrupted,\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.\n"
 		"\n"
-		"pLayerMethod:  the method layer. Should not be NULL.\n"
-		"\n"
-		"pLayerResult:  the layer where the features resulting from the\n"
-		"operation are inserted. Should not be NULL. See above the note about\n"
-		"the schema.\n"
-		"\n"
-		"papszOptions:  NULL terminated list of options (may be NULL).\n"
-		"\n"
-		"pfnProgress:  a GDALProgressFunc() compatible callback function for\n"
-		"reporting progress or NULL.\n"
-		"\n"
-		"pProgressArg:  argument to be passed to pfnProgress. May be NULL.\n"
-		"\n"
-		"an error code if there was an error or the execution was interrupted,\n"
-		"OGRERR_NONE otherwise.\n"
-		"\n"
-		"The first geometry field is always used.\n"
-		"\n"
-		"OGR 1.10 \n"
 		""},
 	 { "Layer_Clip", (PyCFunction)(void(*)(void))_wrap_Layer_Clip, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_Clip(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr\n"
-		"OGRErr OGR_L_Clip(OGRLayerH pLayerInput,\n"
-		"OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char **papszOptions,\n"
-		"GDALProgressFunc pfnProgress, void *pProgressArg)\n"
 		"\n"
 		"Clip off areas that are not covered by the method layer.\n"
 		"\n"
-		"The result layer contains features whose geometries represent areas\n"
-		"that are in the input layer and in the method layer. The features in\n"
-		"the result layer have the (possibly clipped) areas of features in the\n"
-		"input layer and the attributes from the same features. The schema of\n"
-		"the result layer can be set by the user or, if it is empty, is\n"
-		"initialized to contain all fields in the input layer.\n"
+		"For more details: :cpp:func:`OGR_L_Clip`\n"
 		"\n"
-		"For best performance use the minimum amount of features in the method\n"
-		"layer and copy it into a memory layer.\n"
-		"\n"
-		"This method relies on GEOS support. Do not use unless the GEOS support\n"
-		"is compiled in.  The recognized list of options is :\n"
-		"SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature\n"
-		"could not be inserted or a GEOS call failed.\n"
-		"\n"
-		"PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into\n"
-		"MultiPolygons, or LineStrings to MultiLineStrings.\n"
-		"\n"
-		"INPUT_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the input layer.\n"
-		"\n"
-		"METHOD_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the method layer.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::Clip().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"method_layer: Layer\n"
+		"    the method layer. Should not be None.\n"
+		"result_layer: Layer\n"
+		"    the layer where the features resulting from the\n"
+		"    operation are inserted. Should not be None.\n"
+		"options: list[str], optional\n"
+		"    List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].\n"
+		"callback: Callable, optional\n"
+		"    a GDALProgressFunc() compatible callback function for\n"
+		"    reporting progress or None.\n"
+		"callback_data:\n"
+		"    Argument to be passed to 'callback'. May be None.\n"
 		"\n"
-		"pLayerInput:  the input layer. Should not be NULL.\n"
+		"Returns\n"
+		"-------\n"
+		"int:\n"
+		"    An error code if there was an error or the execution was interrupted,\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.\n"
 		"\n"
-		"pLayerMethod:  the method layer. Should not be NULL.\n"
-		"\n"
-		"pLayerResult:  the layer where the features resulting from the\n"
-		"operation are inserted. Should not be NULL. See above the note about\n"
-		"the schema.\n"
-		"\n"
-		"papszOptions:  NULL terminated list of options (may be NULL).\n"
-		"\n"
-		"pfnProgress:  a GDALProgressFunc() compatible callback function for\n"
-		"reporting progress or NULL.\n"
-		"\n"
-		"pProgressArg:  argument to be passed to pfnProgress. May be NULL.\n"
-		"\n"
-		"an error code if there was an error or the execution was interrupted,\n"
-		"OGRERR_NONE otherwise.\n"
-		"\n"
-		"The first geometry field is always used.\n"
-		"\n"
-		"OGR 1.10 \n"
 		""},
 	 { "Layer_Erase", (PyCFunction)(void(*)(void))_wrap_Layer_Erase, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Layer_Erase(Layer self, Layer method_layer, Layer result_layer, char ** options=None, GDALProgressFunc callback=0, void * callback_data=None) -> OGRErr\n"
-		"OGRErr OGR_L_Erase(OGRLayerH\n"
-		"pLayerInput, OGRLayerH pLayerMethod, OGRLayerH pLayerResult, char\n"
-		"**papszOptions, GDALProgressFunc pfnProgress, void *pProgressArg)\n"
 		"\n"
 		"Remove areas that are covered by the method layer.\n"
 		"\n"
-		"The result layer contains features whose geometries represent areas\n"
-		"that are in the input layer but not in the method layer. The features\n"
-		"in the result layer have attributes from the input layer. The schema\n"
-		"of the result layer can be set by the user or, if it is empty, is\n"
-		"initialized to contain all fields in the input layer.\n"
+		"For more details: :cpp:func:`OGR_L_Erase`\n"
 		"\n"
-		"For best performance use the minimum amount of features in the method\n"
-		"layer and copy it into a memory layer.\n"
-		"\n"
-		"This method relies on GEOS support. Do not use unless the GEOS support\n"
-		"is compiled in.  The recognized list of options is :\n"
-		"SKIP_FAILURES=YES/NO. Set it to YES to go on, even when a feature\n"
-		"could not be inserted or a GEOS call failed.\n"
-		"\n"
-		"PROMOTE_TO_MULTI=YES/NO. Set it to YES to convert Polygons into\n"
-		"MultiPolygons, or LineStrings to MultiLineStrings.\n"
-		"\n"
-		"INPUT_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the input layer.\n"
-		"\n"
-		"METHOD_PREFIX=string. Set a prefix for the field names that will be\n"
-		"created from the fields of the method layer.\n"
-		"\n"
-		"This function is the same as the C++ method OGRLayer::Erase().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"method_layer: Layer\n"
+		"    the method layer. Should not be None.\n"
+		"result_layer: Layer\n"
+		"    the layer where the features resulting from the\n"
+		"    operation are inserted. Should not be None.\n"
+		"options: list[str], optional\n"
+		"    List of options (empty list is allowed). For example [\"PROMOTE_TO_MULTI=YES\"].\n"
+		"callback: Callable, optional\n"
+		"    a GDALProgressFunc() compatible callback function for\n"
+		"    reporting progress or None.\n"
+		"callback_data:\n"
+		"    Argument to be passed to 'callback'. May be None.\n"
 		"\n"
-		"pLayerInput:  the input layer. Should not be NULL.\n"
+		"Returns\n"
+		"-------\n"
+		"int:\n"
+		"    An error code if there was an error or the execution was interrupted,\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` otherwise.\n"
 		"\n"
-		"pLayerMethod:  the method layer. Should not be NULL.\n"
-		"\n"
-		"pLayerResult:  the layer where the features resulting from the\n"
-		"operation are inserted. Should not be NULL. See above the note about\n"
-		"the schema.\n"
-		"\n"
-		"papszOptions:  NULL terminated list of options (may be NULL).\n"
-		"\n"
-		"pfnProgress:  a GDALProgressFunc() compatible callback function for\n"
-		"reporting progress or NULL.\n"
-		"\n"
-		"pProgressArg:  argument to be passed to pfnProgress. May be NULL.\n"
-		"\n"
-		"an error code if there was an error or the execution was interrupted,\n"
-		"OGRERR_NONE otherwise.\n"
-		"\n"
-		"The first geometry field is always used.\n"
-		"\n"
-		"OGR 1.10 \n"
 		""},
 	 { "Layer_GetStyleTable", _wrap_Layer_GetStyleTable, METH_O, "\n"
 		"Layer_GetStyleTable(Layer self) -> StyleTable\n"
-		"OGRStyleTableH\n"
-		"OGR_L_GetStyleTable(OGRLayerH hLayer)\n"
 		"\n"
-		"Get style table. \n"
+		"Get style table.\n"
+		"\n"
+		"For more details: :cpp:func:`OGR_L_GetStyleTable`\n"
+		"\n"
 		""},
 	 { "Layer_SetStyleTable", _wrap_Layer_SetStyleTable, METH_VARARGS, "\n"
 		"Layer_SetStyleTable(Layer self, StyleTable table)\n"
-		"void\n"
-		"OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable)\n"
 		"\n"
-		"Set style table. \n"
+		"Set style table.\n"
+		"\n"
+		"For more details: :cpp:func:`OGR_L_SetStyleTable`\n"
+		"\n"
+		""},
+	 { "Layer_GetArrowStream", _wrap_Layer_GetArrowStream, METH_VARARGS, "Layer_GetArrowStream(Layer self, char ** options=None) -> ArrowArrayStream"},
+	 { "Layer_GetGeometryTypes", (PyCFunction)(void(*)(void))_wrap_Layer_GetGeometryTypes, METH_VARARGS|METH_KEYWORDS, "\n"
+		"Layer_GetGeometryTypes(Layer self, int geom_field=0, int flags=0, GDALProgressFunc callback=0, void * callback_data=None)\n"
+		"\n"
+		"Get actual geometry types found in features.\n"
+		"\n"
+		"For more details: :cpp:func:`OGR_L_GetGeometryTypes`\n"
+		"\n"
+		"Parameters\n"
+		"-----------\n"
+		"geom_field: int, optional\n"
+		"    index of the geometry field\n"
+		"flags: int, optional\n"
+		"    0, or a combination of :py:const:`osgeo.ogr.GGT_COUNT_NOT_NEEDED`,\n"
+		"    :py:const:`osgeo.ogr.GGT_STOP_IF_MIXED` and\n"
+		"    :py:const:`osgeo.ogr.GGT_GEOMCOLLECTIONZ_TINZ`\n"
+		"callback: Callable, optional\n"
+		"    a GDALProgressFunc() compatible callback function for\n"
+		"    cancellation or None.\n"
+		"callback_data:\n"
+		"    Argument to be passed to 'callback'. May be None.\n"
+		"\n"
+		"Returns\n"
+		"-------\n"
+		"dict:\n"
+		"    A dictionary whose keys are :py:const:`osgeo.ogr.wkbXXXX` constants and\n"
+		"    values the corresponding number of geometries of that type in the layer.\n"
+		"\n"
 		""},
 	 { "Layer_swigregister", Layer_swigregister, METH_O, NULL},
 	 { "delete_Feature", _wrap_delete_Feature, METH_O, "delete_Feature(Feature self)"},
 	 { "new_Feature", (PyCFunction)(void(*)(void))_wrap_new_Feature, METH_VARARGS|METH_KEYWORDS, "new_Feature(FeatureDefn feature_def) -> Feature"},
 	 { "Feature_GetDefnRef", _wrap_Feature_GetDefnRef, METH_O, "\n"
 		"Feature_GetDefnRef(Feature self) -> FeatureDefn\n"
-		"OGRFeatureDefnH\n"
-		"OGR_F_GetDefnRef(OGRFeatureH hFeat)\n"
+		"\n"
+		"OGRFeatureDefnH OGR_F_GetDefnRef(OGRFeatureH hFeat)\n"
 		"\n"
 		"Fetch feature definition.\n"
 		"\n"
 		"This function is the same as the C++ method OGRFeature::GetDefnRef().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature to get the feature definition from.\n"
 		"\n"
-		"hFeat:  handle to the feature to get the feature definition from.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRFeatureDefnH:\n"
+		"    a handle to the feature definition object on which feature depends.\n"
 		"\n"
-		"a handle to the feature definition object on which feature depends. \n"
 		""},
 	 { "Feature_SetGeometry", _wrap_Feature_SetGeometry, METH_VARARGS, "\n"
 		"Feature_SetGeometry(Feature self, Geometry geom) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_F_SetGeometry(OGRFeatureH hFeat, OGRGeometryH hGeom)\n"
+		"\n"
+		"OGRErr OGR_F_SetGeometry(OGRFeatureH hFeat, OGRGeometryH hGeom)\n"
 		"\n"
 		"Set feature geometry.\n"
 		"\n"
@@ -32184,21 +32486,25 @@ static PyMethodDef SwigMethods[] = {
 		"afterwards. Or if this is a new feature, OGR_L_CreateFeature() must be\n"
 		"used afterwards.\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which new geometry is applied to.\n"
+		"hGeom:\n"
+		"    handle to the new geometry to apply to feature.\n"
 		"\n"
-		"hFeat:  handle to the feature on which new geometry is applied to.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRErr:\n"
+		"    OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the\n"
+		"    geometry type is illegal for the OGRFeatureDefn (checking not yet\n"
+		"    implemented).\n"
 		"\n"
-		"hGeom:  handle to the new geometry to apply to feature.\n"
-		"\n"
-		"OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the\n"
-		"geometry type is illegal for the OGRFeatureDefn (checking not yet\n"
-		"implemented). \n"
 		""},
 	 { "Feature_SetGeometryDirectly", _wrap_Feature_SetGeometryDirectly, METH_VARARGS, "\n"
 		"Feature_SetGeometryDirectly(Feature self, Geometry geom) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_F_SetGeometryDirectly(OGRFeatureH hFeat, OGRGeometryH hGeom)\n"
+		"\n"
+		"OGRErr OGR_F_SetGeometryDirectly(OGRFeatureH hFeat, OGRGeometryH hGeom)\n"
 		"\n"
 		"Set feature geometry.\n"
 		"\n"
@@ -32215,35 +32521,39 @@ static PyMethodDef SwigMethods[] = {
 		"afterwards. Or if this is a new feature, OGR_L_CreateFeature() must be\n"
 		"used afterwards.\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which to apply the geometry.\n"
+		"hGeom:\n"
+		"    handle to the new geometry to apply to feature.\n"
 		"\n"
-		"hFeat:  handle to the feature on which to apply the geometry.\n"
 		"\n"
-		"hGeom:  handle to the new geometry to apply to feature.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRErr:\n"
+		"    OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the\n"
+		"    geometry type is illegal for the OGRFeatureDefn (checking not yet\n"
+		"    implemented).\n"
 		"\n"
-		"OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the\n"
-		"geometry type is illegal for the OGRFeatureDefn (checking not yet\n"
-		"implemented). \n"
 		""},
 	 { "Feature_GetGeometryRef", _wrap_Feature_GetGeometryRef, METH_O, "\n"
 		"Feature_GetGeometryRef(Feature self) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_F_GetGeometryRef(OGRFeatureH hFeat)\n"
 		"\n"
-		"Fetch a handle to feature geometry.\n"
+		"Return the feature geometry\n"
 		"\n"
-		"This function is essentially the same as the C++ method\n"
-		"OGRFeature::GetGeometryRef() (the only difference is that this C\n"
-		"function honours OGRGetNonLinearGeometriesEnabledFlag())\n"
+		"The lifetime of the returned geometry is bound to the one of its belonging\n"
+		"feature.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		"For more details: :cpp:func:`OGR_F_GetGeometryRef`\n"
 		"\n"
-		"hFeat:  handle to the feature to get geometry from.\n"
+		"The geometry() method is also available as an alias of GetGeometryRef()\n"
 		"\n"
-		"a handle to internal feature geometry. This object should not be\n"
-		"modified. \n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    the geometry, or None.\n"
+		"\n"
 		""},
 	 { "Feature_SetGeomField", _wrap_Feature_SetGeomField, METH_VARARGS, "\n"
 		"Feature_SetGeomField(Feature self, int iField, Geometry geom) -> OGRErr\n"
@@ -32259,25 +32569,28 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This function is the same as the C++ OGRFeature::SetGeomField().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which new geometry is applied to.\n"
+		"iField:\n"
+		"    geometry field to set.\n"
+		"hGeom:\n"
+		"    handle to the new geometry to apply to feature.\n"
 		"\n"
-		"hFeat:  handle to the feature on which new geometry is applied to.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRErr:\n"
+		"    OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the\n"
+		"    geometry type is illegal for the OGRFeatureDefn (checking not yet\n"
+		"    implemented).\n"
 		"\n"
-		"iField:  geometry field to set.\n"
-		"\n"
-		"hGeom:  handle to the new geometry to apply to feature.\n"
-		"\n"
-		"OGRERR_NONE if successful, or OGR_UNSUPPORTED_GEOMETRY_TYPE if the\n"
-		"geometry type is illegal for the OGRFeatureDefn (checking not yet\n"
-		"implemented). \n"
 		""},
 	 { "Feature_SetGeomFieldDirectly", _wrap_Feature_SetGeomFieldDirectly, METH_VARARGS, "\n"
 		"Feature_SetGeomFieldDirectly(Feature self, int iField, Geometry geom) -> OGRErr\n"
 		"Feature_SetGeomFieldDirectly(Feature self, char const * field_name, Geometry geom) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_F_SetGeomFieldDirectly(OGRFeatureH hFeat, int iField, OGRGeometryH\n"
-		"hGeom)\n"
+		"\n"
+		"OGRErr OGR_F_SetGeomFieldDirectly(OGRFeatureH hFeat, int iField, OGRGeometryH hGeom)\n"
 		"\n"
 		"Set feature geometry of a specified geometry field.\n"
 		"\n"
@@ -32288,20 +32601,24 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::SetGeomFieldDirectly.\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 1.11\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which to apply the geometry.\n"
+		"iField:\n"
+		"    geometry field to set.\n"
+		"hGeom:\n"
+		"    handle to the new geometry to apply to feature.\n"
 		"\n"
-		"hFeat:  handle to the feature on which to apply the geometry.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRErr:\n"
+		"    OGRERR_NONE if successful, or OGRERR_FAILURE if the index is invalid,\n"
+		"    or OGR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for\n"
+		"    the OGRFeatureDefn (checking not yet implemented).\n"
 		"\n"
-		"iField:  geometry field to set.\n"
-		"\n"
-		"hGeom:  handle to the new geometry to apply to feature.\n"
-		"\n"
-		"OGRERR_NONE if successful, or OGRERR_FAILURE if the index is invalid,\n"
-		"or OGR_UNSUPPORTED_GEOMETRY_TYPE if the geometry type is illegal for\n"
-		"the OGRFeatureDefn (checking not yet implemented).\n"
-		"\n"
-		"GDAL 1.11 \n"
 		""},
 	 { "Feature_GetGeomFieldRef", _wrap_Feature_GetGeomFieldRef, METH_VARARGS, "\n"
 		"Feature_GetGeomFieldRef(Feature self, int iField) -> Geometry\n"
@@ -32314,12 +32631,12 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetGeomFieldRef().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
-		"\n"
-		"hFeat:  handle to the feature to get geometry from.\n"
-		"\n"
-		"iField:  geometry field to get.\n"
+		"hFeat:\n"
+		"    handle to the feature to get geometry from.\n"
+		"iField:\n"
+		"    geometry field to get.\n"
 		"\n"
 		"a handle to internal feature geometry. This object should not be\n"
 		"modified.\n"
@@ -32328,8 +32645,8 @@ static PyMethodDef SwigMethods[] = {
 		""},
 	 { "Feature_Clone", _wrap_Feature_Clone, METH_O, "\n"
 		"Feature_Clone(Feature self) -> Feature\n"
-		"OGRFeatureH OGR_F_Clone(OGRFeatureH\n"
-		"hFeat)\n"
+		"\n"
+		"OGRFeatureH OGR_F_Clone(OGRFeatureH hFeat)\n"
 		"\n"
 		"Duplicate feature.\n"
 		"\n"
@@ -32338,12 +32655,16 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This function is the same as the C++ method OGRFeature::Clone().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature to clone.\n"
 		"\n"
-		"hFeat:  handle to the feature to clone.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRFeatureH:\n"
+		"    a handle to the new feature, exactly matching this feature.\n"
 		"\n"
-		"a handle to the new feature, exactly matching this feature. \n"
 		""},
 	 { "Feature_Equal", _wrap_Feature_Equal, METH_VARARGS, "\n"
 		"Feature_Equal(Feature self, Feature feature) -> bool\n"
@@ -32358,19 +32679,23 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This function is the same as the C++ method OGRFeature::Equal().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to one of the feature.\n"
+		"hOtherFeat:\n"
+		"    handle to the other feature to test this one against.\n"
 		"\n"
-		"hFeat:  handle to one of the feature.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    TRUE if they are equal, otherwise FALSE.\n"
 		"\n"
-		"hOtherFeat:  handle to the other feature to test this one against.\n"
-		"\n"
-		"TRUE if they are equal, otherwise FALSE. \n"
 		""},
 	 { "Feature_GetFieldCount", _wrap_Feature_GetFieldCount, METH_O, "\n"
 		"Feature_GetFieldCount(Feature self) -> int\n"
-		"int\n"
-		"OGR_F_GetFieldCount(OGRFeatureH hFeat)\n"
+		"\n"
+		"int OGR_F_GetFieldCount(OGRFeatureH hFeat)\n"
 		"\n"
 		"Fetch number of fields on this feature This will always be the same as\n"
 		"the field count for the OGRFeatureDefn.\n"
@@ -32378,38 +32703,46 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldCount().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature to get the fields count from.\n"
 		"\n"
-		"hFeat:  handle to the feature to get the fields count from.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    count of fields.\n"
 		"\n"
-		"count of fields. \n"
 		""},
 	 { "Feature_GetFieldDefnRef", _wrap_Feature_GetFieldDefnRef, METH_VARARGS, "\n"
 		"Feature_GetFieldDefnRef(Feature self, int id) -> FieldDefn\n"
 		"Feature_GetFieldDefnRef(Feature self, char const * field_name) -> FieldDefn\n"
-		"OGRFieldDefnH\n"
-		"OGR_F_GetFieldDefnRef(OGRFeatureH hFeat, int i)\n"
+		"\n"
+		"OGRFieldDefnH OGR_F_GetFieldDefnRef(OGRFeatureH hFeat, int i)\n"
 		"\n"
 		"Fetch definition for this field.\n"
 		"\n"
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldDefnRef().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which the field is found.\n"
+		"i:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
 		"\n"
-		"hFeat:  handle to the feature on which the field is found.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRFieldDefnH:\n"
+		"    a handle to the field definition (from the OGRFeatureDefn). This is an\n"
+		"    internal reference, and should not be deleted or modified.\n"
 		"\n"
-		"i:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"a handle to the field definition (from the OGRFeatureDefn). This is an\n"
-		"internal reference, and should not be deleted or modified. \n"
 		""},
 	 { "Feature_GetGeomFieldCount", _wrap_Feature_GetGeomFieldCount, METH_O, "\n"
 		"Feature_GetGeomFieldCount(Feature self) -> int\n"
-		"int\n"
-		"OGR_F_GetGeomFieldCount(OGRFeatureH hFeat)\n"
+		"\n"
+		"int OGR_F_GetGeomFieldCount(OGRFeatureH hFeat)\n"
 		"\n"
 		"Fetch number of geometry fields on this feature This will always be\n"
 		"the same as the geometry field count for the OGRFeatureDefn.\n"
@@ -32417,43 +32750,53 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetGeomFieldCount().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 1.11\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature to get the geometry fields count from.\n"
 		"\n"
-		"hFeat:  handle to the feature to get the geometry fields count from.\n"
 		"\n"
-		"count of geometry fields.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    count of geometry fields.\n"
 		"\n"
-		"GDAL 1.11 \n"
 		""},
 	 { "Feature_GetGeomFieldDefnRef", _wrap_Feature_GetGeomFieldDefnRef, METH_VARARGS, "\n"
 		"Feature_GetGeomFieldDefnRef(Feature self, int id) -> GeomFieldDefn\n"
 		"Feature_GetGeomFieldDefnRef(Feature self, char const * field_name) -> GeomFieldDefn\n"
-		"OGRGeomFieldDefnH\n"
-		"OGR_F_GetGeomFieldDefnRef(OGRFeatureH hFeat, int i)\n"
+		"\n"
+		"OGRGeomFieldDefnH OGR_F_GetGeomFieldDefnRef(OGRFeatureH hFeat, int i)\n"
 		"\n"
 		"Fetch definition for this geometry field.\n"
 		"\n"
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetGeomFieldDefnRef().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 1.11\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which the field is found.\n"
+		"i:\n"
+		"    the field to fetch, from 0 to GetGeomFieldCount()-1.\n"
 		"\n"
-		"hFeat:  handle to the feature on which the field is found.\n"
 		"\n"
-		"i:  the field to fetch, from 0 to GetGeomFieldCount()-1.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRGeomFieldDefnH:\n"
+		"    a handle to the field definition (from the OGRFeatureDefn). This is an\n"
+		"    internal reference, and should not be deleted or modified.\n"
 		"\n"
-		"a handle to the field definition (from the OGRFeatureDefn). This is an\n"
-		"internal reference, and should not be deleted or modified.\n"
-		"\n"
-		"GDAL 1.11 \n"
 		""},
 	 { "Feature_GetFieldAsString", _wrap_Feature_GetFieldAsString, METH_VARARGS, "\n"
 		"Feature_GetFieldAsString(Feature self, int id) -> char const\n"
 		"Feature_GetFieldAsString(Feature self, char const * field_name) -> char const *\n"
-		"const char*\n"
-		"OGR_F_GetFieldAsString(OGRFeatureH hFeat, int iField)\n"
+		"\n"
+		"const char\\* OGR_F_GetFieldAsString(OGRFeatureH hFeat, int iField)\n"
 		"\n"
 		"Fetch field value as a string.\n"
 		"\n"
@@ -32464,21 +32807,25 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldAsString().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    the field value. This string is internal, and should not be modified,\n"
+		"    or freed. Its lifetime may be very brief.\n"
 		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"the field value. This string is internal, and should not be modified,\n"
-		"or freed. Its lifetime may be very brief. \n"
 		""},
 	 { "Feature_GetFieldAsInteger", _wrap_Feature_GetFieldAsInteger, METH_VARARGS, "\n"
 		"Feature_GetFieldAsInteger(Feature self, int id) -> int\n"
 		"Feature_GetFieldAsInteger(Feature self, char const * field_name) -> int\n"
-		"int\n"
-		"OGR_F_GetFieldAsInteger(OGRFeatureH hFeat, int iField)\n"
+		"\n"
+		"int OGR_F_GetFieldAsInteger(OGRFeatureH hFeat, int iField)\n"
 		"\n"
 		"Fetch field value as integer.\n"
 		"\n"
@@ -32489,20 +32836,24 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldAsInteger().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    the field value.\n"
 		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"the field value. \n"
 		""},
 	 { "Feature_GetFieldAsInteger64", _wrap_Feature_GetFieldAsInteger64, METH_VARARGS, "\n"
 		"Feature_GetFieldAsInteger64(Feature self, int id) -> GIntBig\n"
 		"Feature_GetFieldAsInteger64(Feature self, char const * field_name) -> GIntBig\n"
-		"GIntBig\n"
-		"OGR_F_GetFieldAsInteger64(OGRFeatureH hFeat, int iField)\n"
+		"\n"
+		"GIntBig OGR_F_GetFieldAsInteger64(OGRFeatureH hFeat, int iField)\n"
 		"\n"
 		"Fetch field value as integer 64 bit.\n"
 		"\n"
@@ -32514,22 +32865,26 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldAsInteger64().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    the field value.\n"
 		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"the field value.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "Feature_GetFieldAsDouble", _wrap_Feature_GetFieldAsDouble, METH_VARARGS, "\n"
 		"Feature_GetFieldAsDouble(Feature self, int id) -> double\n"
 		"Feature_GetFieldAsDouble(Feature self, char const * field_name) -> double\n"
-		"double\n"
-		"OGR_F_GetFieldAsDouble(OGRFeatureH hFeat, int iField)\n"
+		"\n"
+		"double OGR_F_GetFieldAsDouble(OGRFeatureH hFeat, int iField)\n"
 		"\n"
 		"Fetch field value as a double.\n"
 		"\n"
@@ -32540,22 +32895,26 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldAsDouble().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
+		"Returns\n"
+		"--------\n"
+		"float:\n"
+		"    the field value.\n"
 		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"the field value. \n"
 		""},
 	 { "Feature_GetFieldAsDateTime", _wrap_Feature_GetFieldAsDateTime, METH_VARARGS, "\n"
 		"Feature_GetFieldAsDateTime(Feature self, int id)\n"
 		"Feature_GetFieldAsDateTime(Feature self, char const * field_name)\n"
 		"int\n"
-		"OGR_F_GetFieldAsDateTime(OGRFeatureH hFeat, int iField, int *pnYear,\n"
-		"int *pnMonth, int *pnDay, int *pnHour, int *pnMinute, int *pnSecond,\n"
-		"int *pnTZFlag)\n"
+		"OGR_F_GetFieldAsDateTime(OGRFeatureH hFeat, int iField, int \\*pnYear,\n"
+		"int \\*pnMonth, int \\*pnDay, int \\*pnHour, int \\*pnMinute, int \\*pnSecond,\n"
+		"int \\*pnTZFlag)\n"
 		"\n"
 		"Fetch field value as date and time.\n"
 		"\n"
@@ -32565,39 +32924,42 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldAsDateTime().\n"
 		"\n"
-		"Parameters:\n"
+		".. note:: Use OGR_F_GetFieldAsDateTimeEx() for second with millisecond accuracy.\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
-		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
-		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"pnYear:  (including century)\n"
-		"\n"
-		"pnMonth:  (1-12)\n"
-		"\n"
-		"pnDay:  (1-31)\n"
-		"\n"
-		"pnHour:  (0-23)\n"
-		"\n"
-		"pnMinute:  (0-59)\n"
-		"\n"
-		"pnSecond:  (0-59)\n"
-		"\n"
-		"pnTZFlag:  (0=unknown, 1=localtime, 100=GMT, see data model for\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
+		"pnYear:\n"
+		"    (including century)\n"
+		"pnMonth:\n"
+		"    (1-12)\n"
+		"pnDay:\n"
+		"    (1-31)\n"
+		"pnHour:\n"
+		"    (0-23)\n"
+		"pnMinute:\n"
+		"    (0-59)\n"
+		"pnSecond:\n"
+		"    (0-59)\n"
+		"pnTZFlag:\n"
+		"    (0=unknown, 1=localtime, 100=GMT, see data model for\n"
 		"details)\n"
 		"\n"
-		"TRUE on success or FALSE on failure.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    TRUE on success or FALSE on failure.\n"
 		"\n"
-		"See:  Use OGR_F_GetFieldAsDateTimeEx() for second with millisecond\n"
-		"accuracy. \n"
 		""},
 	 { "Feature_GetFieldAsIntegerList", _wrap_Feature_GetFieldAsIntegerList, METH_VARARGS, "\n"
 		"Feature_GetFieldAsIntegerList(Feature self, int id)\n"
 		"Feature_GetFieldAsIntegerList(Feature self, char const * field_name)\n"
-		"const int*\n"
-		"OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField, int\n"
-		"*pnCount)\n"
+		"\n"
+		"const int\\* OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField, int\n"
+		"\\*pnCount)\n"
 		"\n"
 		"Fetch field value as a list of integers.\n"
 		"\n"
@@ -32606,24 +32968,28 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldAsIntegerList().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
+		"pnCount:\n"
+		"    an integer to put the list count (number of integers) into.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
+		"Returns\n"
+		"--------\n"
+		"list[int]:\n"
+		"    the field value. This list is internal, and should not be modified, or\n"
+		"    freed. Its lifetime may be very brief. If \\*pnCount is zero on return\n"
+		"    the returned pointer may be NULL or non-NULL.\n"
 		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"pnCount:  an integer to put the list count (number of integers) into.\n"
-		"\n"
-		"the field value. This list is internal, and should not be modified, or\n"
-		"freed. Its lifetime may be very brief. If *pnCount is zero on return\n"
-		"the returned pointer may be NULL or non-NULL. \n"
 		""},
 	 { "Feature_GetFieldAsInteger64List", _wrap_Feature_GetFieldAsInteger64List, METH_VARARGS, "\n"
 		"Feature_GetFieldAsInteger64List(Feature self, int id)\n"
-		"const GIntBig*\n"
+		"const GIntBig\\*\n"
 		"OGR_F_GetFieldAsInteger64List(OGRFeatureH hFeat, int iField, int\n"
-		"*pnCount)\n"
+		"\\*pnCount)\n"
 		"\n"
 		"Fetch field value as a list of 64 bit integers.\n"
 		"\n"
@@ -32632,27 +32998,31 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldAsInteger64List().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
+		"pnCount:\n"
+		"    an integer to put the list count (number of integers) into.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
+		"Returns\n"
+		"--------\n"
+		"list[int]:\n"
+		"    the field value. This list is internal, and should not be modified, or\n"
+		"    freed. Its lifetime may be very brief. If \\*pnCount is zero on return\n"
+		"    the returned pointer may be NULL or non-NULL.\n"
 		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"pnCount:  an integer to put the list count (number of integers) into.\n"
-		"\n"
-		"the field value. This list is internal, and should not be modified, or\n"
-		"freed. Its lifetime may be very brief. If *pnCount is zero on return\n"
-		"the returned pointer may be NULL or non-NULL.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "Feature_GetFieldAsDoubleList", _wrap_Feature_GetFieldAsDoubleList, METH_VARARGS, "\n"
 		"Feature_GetFieldAsDoubleList(Feature self, int id)\n"
 		"Feature_GetFieldAsDoubleList(Feature self, char const * field_name)\n"
-		"const double*\n"
+		"const double\\*\n"
 		"OGR_F_GetFieldAsDoubleList(OGRFeatureH hFeat, int iField, int\n"
-		"*pnCount)\n"
+		"\\*pnCount)\n"
 		"\n"
 		"Fetch field value as a list of doubles.\n"
 		"\n"
@@ -32661,22 +33031,26 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldAsDoubleList().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
+		"pnCount:\n"
+		"    an integer to put the list count (number of doubles) into.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
+		"Returns\n"
+		"--------\n"
+		"list[float]:\n"
+		"    the field value. This list is internal, and should not be modified, or\n"
+		"    freed. Its lifetime may be very brief. If \\*pnCount is zero on return\n"
+		"    the returned pointer may be NULL or non-NULL.\n"
 		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"pnCount:  an integer to put the list count (number of doubles) into.\n"
-		"\n"
-		"the field value. This list is internal, and should not be modified, or\n"
-		"freed. Its lifetime may be very brief. If *pnCount is zero on return\n"
-		"the returned pointer may be NULL or non-NULL. \n"
 		""},
 	 { "Feature_GetFieldAsStringList", _wrap_Feature_GetFieldAsStringList, METH_VARARGS, "\n"
 		"Feature_GetFieldAsStringList(Feature self, int id) -> char **\n"
-		"char**\n"
+		"char\\*\\*\n"
 		"OGR_F_GetFieldAsStringList(OGRFeatureH hFeat, int iField)\n"
 		"\n"
 		"Fetch field value as a list of strings.\n"
@@ -32689,21 +33063,25 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldAsStringList().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
+		"Returns\n"
+		"--------\n"
+		"list[str]:\n"
+		"    the field value. This list is internal, and should not be modified, or\n"
+		"    freed. Its lifetime may be very brief.\n"
 		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"the field value. This list is internal, and should not be modified, or\n"
-		"freed. Its lifetime may be very brief. \n"
 		""},
 	 { "Feature_GetFieldAsBinary", _wrap_Feature_GetFieldAsBinary, METH_VARARGS, "\n"
 		"Feature_GetFieldAsBinary(Feature self, int id) -> OGRErr\n"
 		"Feature_GetFieldAsBinary(Feature self, char const * field_name) -> OGRErr\n"
-		"GByte*\n"
-		"OGR_F_GetFieldAsBinary(OGRFeatureH hFeat, int iField, int *pnBytes)\n"
+		"GByte\\*\n"
+		"OGR_F_GetFieldAsBinary(OGRFeatureH hFeat, int iField, int \\*pnBytes)\n"
 		"\n"
 		"Fetch field value as binary.\n"
 		"\n"
@@ -32712,84 +33090,101 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldAsBinary().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
+		"pnBytes:\n"
+		"    location to place count of bytes returned.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
 		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
+		"Returns\n"
+		"--------\n"
+		"list:\n"
+		"    the field value. This list is internal, and should not be modified, or\n"
+		"    freed. Its lifetime may be very brief.\n"
 		"\n"
-		"pnBytes:  location to place count of bytes returned.\n"
-		"\n"
-		"the field value. This list is internal, and should not be modified, or\n"
-		"freed. Its lifetime may be very brief. \n"
 		""},
 	 { "Feature_IsFieldSet", _wrap_Feature_IsFieldSet, METH_VARARGS, "\n"
 		"Feature_IsFieldSet(Feature self, int id) -> bool\n"
 		"Feature_IsFieldSet(Feature self, char const * field_name) -> bool\n"
-		"int OGR_F_IsFieldSet(OGRFeatureH\n"
-		"hFeat, int iField)\n"
+		"\n"
+		"int OGR_F_IsFieldSet(OGRFeatureH hFeat, int iField)\n"
 		"\n"
 		"Test if a field has ever been assigned a value or not.\n"
 		"\n"
 		"This function is the same as the C++ method OGRFeature::IsFieldSet().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which the field is.\n"
+		"iField:\n"
+		"    the field to test.\n"
 		"\n"
-		"hFeat:  handle to the feature on which the field is.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    TRUE if the field has been set, otherwise false.\n"
 		"\n"
-		"iField:  the field to test.\n"
-		"\n"
-		"TRUE if the field has been set, otherwise false. \n"
 		""},
 	 { "Feature_IsFieldNull", _wrap_Feature_IsFieldNull, METH_VARARGS, "\n"
 		"Feature_IsFieldNull(Feature self, int id) -> bool\n"
 		"Feature_IsFieldNull(Feature self, char const * field_name) -> bool\n"
-		"int OGR_F_IsFieldNull(OGRFeatureH\n"
-		"hFeat, int iField)\n"
+		"\n"
+		"int OGR_F_IsFieldNull(OGRFeatureH hFeat, int iField)\n"
 		"\n"
 		"Test if a field is null.\n"
 		"\n"
 		"This function is the same as the C++ method OGRFeature::IsFieldNull().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.2\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which the field is.\n"
+		"iField:\n"
+		"    the field to test.\n"
 		"\n"
-		"hFeat:  handle to the feature on which the field is.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    TRUE if the field is null, otherwise false.\n"
 		"\n"
-		"iField:  the field to test.\n"
-		"\n"
-		"TRUE if the field is null, otherwise false.\n"
-		"\n"
-		"GDAL 2.2 \n"
 		""},
 	 { "Feature_IsFieldSetAndNotNull", _wrap_Feature_IsFieldSetAndNotNull, METH_VARARGS, "\n"
 		"Feature_IsFieldSetAndNotNull(Feature self, int id) -> bool\n"
 		"Feature_IsFieldSetAndNotNull(Feature self, char const * field_name) -> bool\n"
-		"int\n"
-		"OGR_F_IsFieldSetAndNotNull(OGRFeatureH hFeat, int iField)\n"
+		"\n"
+		"int OGR_F_IsFieldSetAndNotNull(OGRFeatureH hFeat, int iField)\n"
 		"\n"
 		"Test if a field is set and not null.\n"
 		"\n"
 		"This function is the same as the C++ method\n"
 		"OGRFeature::IsFieldSetAndNotNull().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.2\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which the field is.\n"
+		"iField:\n"
+		"    the field to test.\n"
 		"\n"
-		"hFeat:  handle to the feature on which the field is.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    TRUE if the field is set and not null, otherwise false.\n"
 		"\n"
-		"iField:  the field to test.\n"
-		"\n"
-		"TRUE if the field is set and not null, otherwise false.\n"
-		"\n"
-		"GDAL 2.2 \n"
 		""},
 	 { "Feature_GetFieldIndex", _wrap_Feature_GetFieldIndex, METH_VARARGS, "\n"
 		"Feature_GetFieldIndex(Feature self, char const * field_name) -> int\n"
-		"int\n"
-		"OGR_F_GetFieldIndex(OGRFeatureH hFeat, const char *pszName)\n"
+		"\n"
+		"int OGR_F_GetFieldIndex(OGRFeatureH hFeat, const char \\*pszName)\n"
 		"\n"
 		"Fetch the field index given field name.\n"
 		"\n"
@@ -32798,19 +33193,23 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetFieldIndex().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which the field is found.\n"
+		"pszName:\n"
+		"    the name of the field to search for.\n"
 		"\n"
-		"hFeat:  handle to the feature on which the field is found.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    the field index, or -1 if no matching field is found.\n"
 		"\n"
-		"pszName:  the name of the field to search for.\n"
-		"\n"
-		"the field index, or -1 if no matching field is found. \n"
 		""},
 	 { "Feature_GetGeomFieldIndex", _wrap_Feature_GetGeomFieldIndex, METH_VARARGS, "\n"
 		"Feature_GetGeomFieldIndex(Feature self, char const * field_name) -> int\n"
-		"int\n"
-		"OGR_F_GetGeomFieldIndex(OGRFeatureH hFeat, const char *pszName)\n"
+		"\n"
+		"int OGR_F_GetGeomFieldIndex(OGRFeatureH hFeat, const char \\*pszName)\n"
 		"\n"
 		"Fetch the geometry field index given geometry field name.\n"
 		"\n"
@@ -32819,17 +33218,21 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetGeomFieldIndex().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 1.11\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which the geometry field is found.\n"
+		"pszName:\n"
+		"    the name of the geometry field to search for.\n"
 		"\n"
-		"hFeat:  handle to the feature on which the geometry field is found.\n"
 		"\n"
-		"pszName:  the name of the geometry field to search for.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    the geometry field index, or -1 if no matching geometry field is found.\n"
 		"\n"
-		"the geometry field index, or -1 if no matching geometry field is\n"
-		"found.\n"
-		"\n"
-		"GDAL 1.11 \n"
 		""},
 	 { "Feature_GetFID", _wrap_Feature_GetFID, METH_O, "\n"
 		"Feature_GetFID(Feature self) -> GIntBig\n"
@@ -32842,13 +33245,17 @@ static PyMethodDef SwigMethods[] = {
 		"Note: since GDAL 2.0, this method returns a GIntBig (previously a\n"
 		"long)\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
-		"\n"
-		"hFeat:  handle to the feature from which to get the feature\n"
+		"hFeat:\n"
+		"    handle to the feature from which to get the feature\n"
 		"identifier.\n"
 		"\n"
-		"feature id or OGRNullFID if none has been assigned. \n"
+		"Returns\n"
+		"-------\n"
+		"int:\n"
+		"    feature id or OGRNullFID if none has been assigned.\n"
+		"\n"
 		""},
 	 { "Feature_SetFID", _wrap_Feature_SetFID, METH_VARARGS, "\n"
 		"Feature_SetFID(Feature self, GIntBig fid) -> OGRErr\n"
@@ -32864,19 +33271,23 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This function is the same as the C++ method OGRFeature::SetFID().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature to set the feature id to.\n"
+		"nFID:\n"
+		"    the new feature identifier value to assign.\n"
 		"\n"
-		"hFeat:  handle to the feature to set the feature id to.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRErr:\n"
+		"    On success OGRERR_NONE, or on failure some other value.\n"
 		"\n"
-		"nFID:  the new feature identifier value to assign.\n"
-		"\n"
-		"On success OGRERR_NONE, or on failure some other value. \n"
 		""},
 	 { "Feature_DumpReadable", _wrap_Feature_DumpReadable, METH_O, "\n"
 		"Feature_DumpReadable(Feature self)\n"
 		"void\n"
-		"OGR_F_DumpReadable(OGRFeatureH hFeat, FILE *fpOut)\n"
+		"OGR_F_DumpReadable(OGRFeatureH hFeat, FILE \\*fpOut)\n"
 		"\n"
 		"Dump this feature in a human readable form.\n"
 		"\n"
@@ -32887,49 +33298,52 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::DumpReadable().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature to dump.\n"
+		"fpOut:\n"
+		"    the stream to write to, such as strout.\n"
 		"\n"
-		"hFeat:  handle to the feature to dump.\n"
-		"\n"
-		"fpOut:  the stream to write to, such as strout. \n"
 		""},
 	 { "Feature_UnsetField", _wrap_Feature_UnsetField, METH_VARARGS, "\n"
 		"Feature_UnsetField(Feature self, int id)\n"
 		"Feature_UnsetField(Feature self, char const * field_name)\n"
-		"void OGR_F_UnsetField(OGRFeatureH\n"
-		"hFeat, int iField)\n"
+		"\n"
+		"void OGR_F_UnsetField(OGRFeatureH hFeat, int iField)\n"
 		"\n"
 		"Clear a field, marking it as unset.\n"
 		"\n"
 		"This function is the same as the C++ method OGRFeature::UnsetField().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which the field is.\n"
+		"iField:\n"
+		"    the field to unset.\n"
 		"\n"
-		"hFeat:  handle to the feature on which the field is.\n"
-		"\n"
-		"iField:  the field to unset. \n"
 		""},
 	 { "Feature_SetFieldNull", _wrap_Feature_SetFieldNull, METH_VARARGS, "\n"
 		"Feature_SetFieldNull(Feature self, int id)\n"
 		"Feature_SetFieldNull(Feature self, char const * field_name)\n"
-		"void\n"
-		"OGR_F_SetFieldNull(OGRFeatureH hFeat, int iField)\n"
+		"\n"
+		"void OGR_F_SetFieldNull(OGRFeatureH hFeat, int iField)\n"
 		"\n"
 		"Clear a field, marking it as null.\n"
 		"\n"
 		"This function is the same as the C++ method\n"
 		"OGRFeature::SetFieldNull().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.2\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature on which the field is.\n"
+		"iField:\n"
+		"    the field to set to null.\n"
 		"\n"
-		"hFeat:  handle to the feature on which the field is.\n"
-		"\n"
-		"iField:  the field to set to null.\n"
-		"\n"
-		"GDAL 2.2 \n"
 		""},
 	 { "Feature_SetFieldInteger64", _wrap_Feature_SetFieldInteger64, METH_VARARGS, "\n"
 		"Feature_SetFieldInteger64(Feature self, int id, GIntBig value)\n"
@@ -32951,16 +33365,17 @@ static PyMethodDef SwigMethods[] = {
 		"afterwards. Or if this is a new feature, OGR_L_CreateFeature() must be\n"
 		"used afterwards.\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
+		"nValue:\n"
+		"    the value to assign.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
-		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"nValue:  the value to assign.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "Feature_SetField", _wrap_Feature_SetField, METH_VARARGS, "\n"
 		"Feature_SetField(Feature self, int id, char const * value)\n"
@@ -32974,7 +33389,7 @@ static PyMethodDef SwigMethods[] = {
 		"Feature_SetFieldIntegerList(Feature self, int id, int nList)\n"
 		"void\n"
 		"OGR_F_SetFieldIntegerList(OGRFeatureH hFeat, int iField, int nCount,\n"
-		"const int *panValues)\n"
+		"const int \\*panValues)\n"
 		"\n"
 		"Set field to list of integers value.\n"
 		"\n"
@@ -32989,22 +33404,23 @@ static PyMethodDef SwigMethods[] = {
 		"afterwards. Or if this is a new feature, OGR_L_CreateFeature() must be\n"
 		"used afterwards.\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to set, from 0 to GetFieldCount()-1.\n"
+		"nCount:\n"
+		"    the number of values in the list being assigned.\n"
+		"panValues:\n"
+		"    the values to assign.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
-		"\n"
-		"iField:  the field to set, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"nCount:  the number of values in the list being assigned.\n"
-		"\n"
-		"panValues:  the values to assign. \n"
 		""},
 	 { "Feature_SetFieldInteger64List", _wrap_Feature_SetFieldInteger64List, METH_VARARGS, "\n"
 		"Feature_SetFieldInteger64List(Feature self, int id, int nList)\n"
 		"void\n"
 		"OGR_F_SetFieldInteger64List(OGRFeatureH hFeat, int iField, int nCount,\n"
-		"const GIntBig *panValues)\n"
+		"const GIntBig \\*panValues)\n"
 		"\n"
 		"Set field to list of 64 bit integers value.\n"
 		"\n"
@@ -33019,24 +33435,25 @@ static PyMethodDef SwigMethods[] = {
 		"afterwards. Or if this is a new feature, OGR_L_CreateFeature() must be\n"
 		"used afterwards.\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to set, from 0 to GetFieldCount()-1.\n"
+		"nCount:\n"
+		"    the number of values in the list being assigned.\n"
+		"panValues:\n"
+		"    the values to assign.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
-		"\n"
-		"iField:  the field to set, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"nCount:  the number of values in the list being assigned.\n"
-		"\n"
-		"panValues:  the values to assign.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "Feature_SetFieldDoubleList", _wrap_Feature_SetFieldDoubleList, METH_VARARGS, "\n"
 		"Feature_SetFieldDoubleList(Feature self, int id, int nList)\n"
 		"void\n"
 		"OGR_F_SetFieldDoubleList(OGRFeatureH hFeat, int iField, int nCount,\n"
-		"const double *padfValues)\n"
+		"const double \\*padfValues)\n"
 		"\n"
 		"Set field to list of doubles value.\n"
 		"\n"
@@ -33051,16 +33468,17 @@ static PyMethodDef SwigMethods[] = {
 		"afterwards. Or if this is a new feature, OGR_L_CreateFeature() must be\n"
 		"used afterwards.\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to set, from 0 to GetFieldCount()-1.\n"
+		"nCount:\n"
+		"    the number of values in the list being assigned.\n"
+		"padfValues:\n"
+		"    the values to assign.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
-		"\n"
-		"iField:  the field to set, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"nCount:  the number of values in the list being assigned.\n"
-		"\n"
-		"padfValues:  the values to assign. \n"
 		""},
 	 { "Feature_SetFieldStringList", _wrap_Feature_SetFieldStringList, METH_VARARGS, "\n"
 		"Feature_SetFieldStringList(Feature self, int id, char ** pList)\n"
@@ -33080,15 +33498,16 @@ static PyMethodDef SwigMethods[] = {
 		"afterwards. Or if this is a new feature, OGR_L_CreateFeature() must be\n"
 		"used afterwards.\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to set, from 0 to GetFieldCount()-1.\n"
+		"papszValues:\n"
+		"    the values to assign. List of NUL-terminated string,\n"
+		"ending with a NULL pointer.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
-		"\n"
-		"iField:  the field to set, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"papszValues:  the values to assign. List of NUL-terminated string,\n"
-		"ending with a NULL pointer. \n"
 		""},
 	 { "Feature_SetFieldBinaryFromHexString", _wrap_Feature_SetFieldBinaryFromHexString, METH_VARARGS, "\n"
 		"Feature_SetFieldBinaryFromHexString(Feature self, int id, char const * pszValue)\n"
@@ -33104,30 +33523,34 @@ static PyMethodDef SwigMethods[] = {
 		"Overwrite the contents of this feature from the geometry and\n"
 		"attributes of another. The hOtherFeature does not need to have the\n"
 		"same OGRFeatureDefn. Field values are copied by corresponding field\n"
-		"names. Field types do not have to exactly match. OGR_F_SetField*()\n"
+		"names. Field types do not have to exactly match. OGR_F_SetField\\*()\n"
 		"function conversion rules will be applied as needed.\n"
 		"\n"
 		"This function is the same as the C++ method OGRFeature::SetFrom().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature to set to.\n"
+		"hOtherFeat:\n"
+		"    handle to the feature from which geometry, and field\n"
+		"    values will be copied.\n"
+		"bForgiving:\n"
+		"    TRUE if the operation should continue despite lacking\n"
+		"    output fields matching some of the source fields.\n"
 		"\n"
-		"hFeat:  handle to the feature to set to.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRErr:\n"
+		"    OGRERR_NONE if the operation succeeds, even if some values are not\n"
+		"    transferred, otherwise an error code.\n"
 		"\n"
-		"hOtherFeat:  handle to the feature from which geometry, and field\n"
-		"values will be copied.\n"
-		"\n"
-		"bForgiving:  TRUE if the operation should continue despite lacking\n"
-		"output fields matching some of the source fields.\n"
-		"\n"
-		"OGRERR_NONE if the operation succeeds, even if some values are not\n"
-		"transferred, otherwise an error code. \n"
 		""},
 	 { "Feature_SetFromWithMap", _wrap_Feature_SetFromWithMap, METH_VARARGS, "\n"
 		"Feature_SetFromWithMap(Feature self, Feature other, int forgiving, int nList) -> OGRErr\n"
 		"OGRErr\n"
 		"OGR_F_SetFromWithMap(OGRFeatureH hFeat, OGRFeatureH hOtherFeat, int\n"
-		"bForgiving, const int *panMap)\n"
+		"bForgiving, const int \\*panMap)\n"
 		"\n"
 		"Set one feature from another.\n"
 		"\n"
@@ -33135,36 +33558,40 @@ static PyMethodDef SwigMethods[] = {
 		"attributes of another. The hOtherFeature does not need to have the\n"
 		"same OGRFeatureDefn. Field values are copied according to the provided\n"
 		"indices map. Field types do not have to exactly match.\n"
-		"OGR_F_SetField*() function conversion rules will be applied as needed.\n"
+		"OGR_F_SetField\\*() function conversion rules will be applied as needed.\n"
 		"This is more efficient than OGR_F_SetFrom() in that this doesn't\n"
 		"lookup the fields by their names. Particularly useful when the field\n"
 		"names don't match.\n"
 		"\n"
 		"This function is the same as the C++ method OGRFeature::SetFrom().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature to set to.\n"
+		"hOtherFeat:\n"
+		"    handle to the feature from which geometry, and field\n"
+		"    values will be copied.\n"
+		"panMap:\n"
+		"    Array of the indices of the destination feature's fields\n"
+		"    stored at the corresponding index of the source feature's fields. A\n"
+		"    value of -1 should be used to ignore the source's field. The array\n"
+		"    should not be NULL and be as long as the number of fields in the\n"
+		"    source feature.\n"
+		"bForgiving:\n"
+		"    TRUE if the operation should continue despite lacking\n"
+		"    output fields matching some of the source fields.\n"
 		"\n"
-		"hFeat:  handle to the feature to set to.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRErr:\n"
+		"    OGRERR_NONE if the operation succeeds, even if some values are not\n"
+		"    transferred, otherwise an error code.\n"
 		"\n"
-		"hOtherFeat:  handle to the feature from which geometry, and field\n"
-		"values will be copied.\n"
-		"\n"
-		"panMap:  Array of the indices of the destination feature's fields\n"
-		"stored at the corresponding index of the source feature's fields. A\n"
-		"value of -1 should be used to ignore the source's field. The array\n"
-		"should not be NULL and be as long as the number of fields in the\n"
-		"source feature.\n"
-		"\n"
-		"bForgiving:  TRUE if the operation should continue despite lacking\n"
-		"output fields matching some of the source fields.\n"
-		"\n"
-		"OGRERR_NONE if the operation succeeds, even if some values are not\n"
-		"transferred, otherwise an error code. \n"
 		""},
 	 { "Feature_GetStyleString", _wrap_Feature_GetStyleString, METH_O, "\n"
 		"Feature_GetStyleString(Feature self) -> char const *\n"
-		"const char*\n"
+		"const char\\*\n"
 		"OGR_F_GetStyleString(OGRFeatureH hFeat)\n"
 		"\n"
 		"Fetch style string for this feature.\n"
@@ -33176,18 +33603,22 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetStyleString().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature to get the style from.\n"
 		"\n"
-		"hFeat:  handle to the feature to get the style from.\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    a reference to a representation in string format, or NULL if there\n"
+		"    isn't one.\n"
 		"\n"
-		"a reference to a representation in string format, or NULL if there\n"
-		"isn't one. \n"
 		""},
 	 { "Feature_SetStyleString", _wrap_Feature_SetStyleString, METH_VARARGS, "\n"
 		"Feature_SetStyleString(Feature self, char const * the_string)\n"
 		"void\n"
-		"OGR_F_SetStyleString(OGRFeatureH hFeat, const char *pszStyle)\n"
+		"OGR_F_SetStyleString(OGRFeatureH hFeat, const char \\*pszStyle)\n"
 		"\n"
 		"Set feature style string.\n"
 		"\n"
@@ -33198,12 +33629,12 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::SetStyleString().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
-		"\n"
-		"hFeat:  handle to the feature to set style to.\n"
-		"\n"
-		"pszStyle:  the style string to apply to this feature, cannot be NULL.\n"
+		"hFeat:\n"
+		"    handle to the feature to set style to.\n"
+		"pszStyle:\n"
+		"    the style string to apply to this feature, cannot be NULL.\n"
 		"\n"
 		""},
 	 { "Feature_GetFieldType", _wrap_Feature_GetFieldType, METH_VARARGS, "\n"
@@ -33227,47 +33658,52 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This function is the same as the C++ method OGRFeature::Validate().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature to validate.\n"
+		"nValidateFlags:\n"
+		"    OGR_F_VAL_ALL or combination of OGR_F_VAL_NULL,\n"
+		"    OGR_F_VAL_GEOM_TYPE, OGR_F_VAL_WIDTH and\n"
+		"    OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT with '|' operator\n"
+		"bEmitError:\n"
+		"    TRUE if a CPLError() must be emitted when a check fails\n"
 		"\n"
-		"hFeat:  handle to the feature to validate.\n"
+		"Returns\n"
+		"-------\n"
+		"int:\n"
+		"    TRUE if all enabled validation tests pass.\n"
 		"\n"
-		"nValidateFlags:  OGR_F_VAL_ALL or combination of OGR_F_VAL_NULL,\n"
-		"OGR_F_VAL_GEOM_TYPE, OGR_F_VAL_WIDTH and\n"
-		"OGR_F_VAL_ALLOW_NULL_WHEN_DEFAULT with '|' operator\n"
-		"\n"
-		"bEmitError:  TRUE if a CPLError() must be emitted when a check fails\n"
-		"\n"
-		"TRUE if all enabled validation tests pass.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "Feature_FillUnsetWithDefault", _wrap_Feature_FillUnsetWithDefault, METH_VARARGS, "\n"
 		"Feature_FillUnsetWithDefault(Feature self, int bNotNullableOnly=FALSE, char ** options=None)\n"
 		"void\n"
 		"OGR_F_FillUnsetWithDefault(OGRFeatureH hFeat, int bNotNullableOnly,\n"
-		"char **papszOptions)\n"
+		"char \\*\\*papszOptions)\n"
 		"\n"
 		"Fill unset fields with default values that might be defined.\n"
 		"\n"
 		"This function is the same as the C++ method\n"
 		"OGRFeature::FillUnsetWithDefault().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature.\n"
+		"bNotNullableOnly:\n"
+		"    if we should fill only unset fields with a not-null\n"
+		"    constraint.\n"
+		"papszOptions:\n"
+		"    unused currently. Must be set to NULL.\n"
 		"\n"
-		"hFeat:  handle to the feature.\n"
-		"\n"
-		"bNotNullableOnly:  if we should fill only unset fields with a not-null\n"
-		"constraint.\n"
-		"\n"
-		"papszOptions:  unused currently. Must be set to NULL.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "Feature_GetNativeData", _wrap_Feature_GetNativeData, METH_O, "\n"
 		"Feature_GetNativeData(Feature self) -> char const *\n"
-		"const char*\n"
+		"const char\\*\n"
 		"OGR_F_GetNativeData(OGRFeatureH hFeat)\n"
 		"\n"
 		"Returns the native data for the feature.\n"
@@ -33290,22 +33726,24 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::GetNativeData().\n"
 		"\n"
-		"Parameters:\n"
+		".. note:: See https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr\n"
+		"\n"
+		".. versionadded:: 2.1\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature.\n"
 		"\n"
-		"hFeat:  handle to the feature.\n"
-		"\n"
-		"a string with the native data, or NULL if there is none.\n"
-		"\n"
-		"GDAL 2.1\n"
-		"\n"
-		"See:\n"
-		"https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr\n"
+		"Returns\n"
+		"-------\n"
+		"str:\n"
+		"    a string with the native data, or NULL if there is none.\n"
 		"\n"
 		""},
 	 { "Feature_GetNativeMediaType", _wrap_Feature_GetNativeMediaType, METH_O, "\n"
 		"Feature_GetNativeMediaType(Feature self) -> char const *\n"
-		"const char*\n"
+		"const char\\*\n"
 		"OGR_F_GetNativeMediaType(OGRFeatureH hFeat)\n"
 		"\n"
 		"Returns the native media type for the feature.\n"
@@ -33318,23 +33756,26 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C function\n"
 		"OGR_F_GetNativeMediaType().\n"
 		"\n"
-		"Parameters:\n"
+		".. note:: See https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr\n"
+		"\n"
+		".. versionadded:: 2.1\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature.\n"
 		"\n"
-		"hFeat:  handle to the feature.\n"
 		"\n"
-		"a string with the native media type, or NULL if there is none.\n"
-		"\n"
-		"GDAL 2.1\n"
-		"\n"
-		"See:\n"
-		"https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    a string with the native media type, or NULL if there is none.\n"
 		"\n"
 		""},
 	 { "Feature_SetNativeData", _wrap_Feature_SetNativeData, METH_VARARGS, "\n"
 		"Feature_SetNativeData(Feature self, char const * nativeData)\n"
 		"void\n"
-		"OGR_F_SetNativeData(OGRFeatureH hFeat, const char *pszNativeData)\n"
+		"OGR_F_SetNativeData(OGRFeatureH hFeat, const char \\*pszNativeData)\n"
 		"\n"
 		"Sets the native data for the feature.\n"
 		"\n"
@@ -33346,25 +33787,23 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::SetNativeData().\n"
 		"\n"
-		"Parameters:\n"
+		".. note:: See https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr\n"
+		"\n"
+		".. versionadded:: 2.1\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
-		"\n"
-		"hFeat:  handle to the feature.\n"
-		"\n"
-		"pszNativeData:  a string with the native data, or NULL if there is\n"
-		"none.\n"
-		"\n"
-		"GDAL 2.1\n"
-		"\n"
-		"See:\n"
-		"https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr\n"
+		"hFeat:\n"
+		"    handle to the feature.\n"
+		"pszNativeData:\n"
+		"    a string with the native data, or NULL if there is none.\n"
 		"\n"
 		""},
 	 { "Feature_SetNativeMediaType", _wrap_Feature_SetNativeMediaType, METH_VARARGS, "\n"
 		"Feature_SetNativeMediaType(Feature self, char const * nativeMediaType)\n"
 		"void\n"
 		"OGR_F_SetNativeMediaType(OGRFeatureH hFeat, const char\n"
-		"*pszNativeMediaType)\n"
+		"\\*pszNativeMediaType)\n"
 		"\n"
 		"Sets the native media type for the feature.\n"
 		"\n"
@@ -33376,25 +33815,24 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeature::SetNativeMediaType().\n"
 		"\n"
-		"Parameters:\n"
+		".. note:: See https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr\n"
+		"\n"
+		".. versionadded:: 2.1\n"
+		"\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
-		"\n"
-		"hFeat:  handle to the feature.\n"
-		"\n"
-		"pszNativeMediaType:  a string with the native media type, or NULL if\n"
-		"there is none.\n"
-		"\n"
-		"GDAL 2.1\n"
-		"\n"
-		"See:\n"
-		"https://trac.osgeo.org/gdal/wiki/rfc60_improved_roundtripping_in_ogr\n"
+		"hFeat:\n"
+		"    handle to the feature.\n"
+		"pszNativeMediaType:\n"
+		"    a string with the native media type, or NULL if there is none.\n"
 		"\n"
 		""},
 	 { "Feature_SetFieldString", _wrap_Feature_SetFieldString, METH_VARARGS, "\n"
 		"Feature_SetFieldString(Feature self, int id, char const * value)\n"
 		"void\n"
 		"OGR_F_SetFieldString(OGRFeatureH hFeat, int iField, const char\n"
-		"*pszValue)\n"
+		"\\*pszValue)\n"
 		"\n"
 		"Set field to string value.\n"
 		"\n"
@@ -33412,14 +33850,15 @@ static PyMethodDef SwigMethods[] = {
 		"afterwards. Or if this is a new feature, OGR_L_CreateFeature() must be\n"
 		"used afterwards.\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFeat:\n"
+		"    handle to the feature that owned the field.\n"
+		"iField:\n"
+		"    the field to fetch, from 0 to GetFieldCount()-1.\n"
+		"pszValue:\n"
+		"    the value to assign.\n"
 		"\n"
-		"hFeat:  handle to the feature that owned the field.\n"
-		"\n"
-		"iField:  the field to fetch, from 0 to GetFieldCount()-1.\n"
-		"\n"
-		"pszValue:  the value to assign. \n"
 		""},
 	 { "Feature_swigregister", Feature_swigregister, METH_O, NULL},
 	 { "Feature_swiginit", Feature_swiginit, METH_VARARGS, NULL},
@@ -33427,19 +33866,22 @@ static PyMethodDef SwigMethods[] = {
 	 { "new_FeatureDefn", (PyCFunction)(void(*)(void))_wrap_new_FeatureDefn, METH_VARARGS|METH_KEYWORDS, "new_FeatureDefn(char const * name_null_ok=None) -> FeatureDefn"},
 	 { "FeatureDefn_GetName", _wrap_FeatureDefn_GetName, METH_O, "\n"
 		"FeatureDefn_GetName(FeatureDefn self) -> char const *\n"
-		"const char*\n"
+		"const char\\*\n"
 		"OGR_FD_GetName(OGRFeatureDefnH hDefn)\n"
 		"\n"
 		"Get name of the OGRFeatureDefn passed as an argument.\n"
 		"\n"
 		"This function is the same as the C++ method OGRFeatureDefn::GetName().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition to get the name from.\n"
 		"\n"
-		"hDefn:  handle to the feature definition to get the name from.\n"
-		"\n"
-		"the name. This name is internal and should not be modified, or freed.\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    the name. This name is internal and should not be modified, or freed.\n"
 		"\n"
 		""},
 	 { "FeatureDefn_GetFieldCount", _wrap_FeatureDefn_GetFieldCount, METH_O, "\n"
@@ -33451,12 +33893,16 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This function is the same as the C++ OGRFeatureDefn::GetFieldCount().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition to get the fields count from.\n"
 		"\n"
-		"hDefn:  handle to the feature definition to get the fields count from.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    count of fields.\n"
 		"\n"
-		"count of fields. \n"
 		""},
 	 { "FeatureDefn_GetFieldDefn", _wrap_FeatureDefn_GetFieldDefn, METH_VARARGS, "\n"
 		"FeatureDefn_GetFieldDefn(FeatureDefn self, int i) -> FieldDefn\n"
@@ -33468,22 +33914,24 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeatureDefn::GetFieldDefn().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition to get the field definition from.\n"
+		"iField:\n"
+		"    the field to fetch, between 0 and GetFieldCount()-1.\n"
 		"\n"
-		"hDefn:  handle to the feature definition to get the field definition\n"
-		"from.\n"
-		"\n"
-		"iField:  the field to fetch, between 0 and GetFieldCount()-1.\n"
-		"\n"
-		"a handle to an internal field definition object or NULL if invalid\n"
-		"index. This object should not be modified or freed by the application.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRFieldDefnH:\n"
+		"    a handle to an internal field definition object or NULL if invalid\n"
+		"    index. This object should not be modified or freed by the application.\n"
 		"\n"
 		""},
 	 { "FeatureDefn_GetFieldIndex", _wrap_FeatureDefn_GetFieldIndex, METH_VARARGS, "\n"
 		"FeatureDefn_GetFieldIndex(FeatureDefn self, char const * field_name) -> int\n"
 		"int\n"
-		"OGR_FD_GetFieldIndex(OGRFeatureDefnH hDefn, const char *pszFieldName)\n"
+		"OGR_FD_GetFieldIndex(OGRFeatureDefnH hDefn, const char \\*pszFieldName)\n"
 		"\n"
 		"Find field by name.\n"
 		"\n"
@@ -33493,14 +33941,18 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeatureDefn::GetFieldIndex.\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition to get field index from.\n"
+		"pszFieldName:\n"
+		"    the field name to search for.\n"
 		"\n"
-		"hDefn:  handle to the feature definition to get field index from.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    the field index, or -1 if no match found.\n"
 		"\n"
-		"pszFieldName:  the field name to search for.\n"
-		"\n"
-		"the field index, or -1 if no match found. \n"
 		""},
 	 { "FeatureDefn_AddFieldDefn", _wrap_FeatureDefn_AddFieldDefn, METH_VARARGS, "\n"
 		"FeatureDefn_AddFieldDefn(FeatureDefn self, FieldDefn defn)\n"
@@ -33519,13 +33971,13 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeatureDefn::AddFieldDefn().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition to add the field definition to.\n"
+		"hNewField:\n"
+		"    handle to the new field definition.\n"
 		"\n"
-		"hDefn:  handle to the feature definition to add the field definition\n"
-		"to.\n"
-		"\n"
-		"hNewField:  handle to the new field definition. \n"
 		""},
 	 { "FeatureDefn_GetGeomFieldCount", _wrap_FeatureDefn_GetGeomFieldCount, METH_O, "\n"
 		"FeatureDefn_GetGeomFieldCount(FeatureDefn self) -> int\n"
@@ -33537,14 +33989,18 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++\n"
 		"OGRFeatureDefn::GetGeomFieldCount().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 1.11\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition to get the fields count from.\n"
 		"\n"
-		"hDefn:  handle to the feature definition to get the fields count from.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    count of geometry fields.\n"
 		"\n"
-		"count of geometry fields.\n"
-		"\n"
-		"GDAL 1.11 \n"
 		""},
 	 { "FeatureDefn_GetGeomFieldDefn", _wrap_FeatureDefn_GetGeomFieldDefn, METH_VARARGS, "\n"
 		"FeatureDefn_GetGeomFieldDefn(FeatureDefn self, int i) -> GeomFieldDefn\n"
@@ -33556,25 +34012,27 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeatureDefn::GetGeomFieldDefn().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 1.11\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition to get the field definition from.\n"
+		"iGeomField:\n"
+		"    the geometry field to fetch, between 0 and GetGeomFieldCount() - 1.\n"
 		"\n"
-		"hDefn:  handle to the feature definition to get the field definition\n"
-		"from.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRGeomFieldDefnH:\n"
+		"    a handle to an internal field definition object or NULL if invalid\n"
+		"    index. This object should not be modified or freed by the application.\n"
 		"\n"
-		"iGeomField:  the geometry field to fetch, between 0 and\n"
-		"GetGeomFieldCount() - 1.\n"
-		"\n"
-		"a handle to an internal field definition object or NULL if invalid\n"
-		"index. This object should not be modified or freed by the application.\n"
-		"\n"
-		"GDAL 1.11 \n"
 		""},
 	 { "FeatureDefn_GetGeomFieldIndex", _wrap_FeatureDefn_GetGeomFieldIndex, METH_VARARGS, "\n"
 		"FeatureDefn_GetGeomFieldIndex(FeatureDefn self, char const * field_name) -> int\n"
 		"int\n"
 		"OGR_FD_GetGeomFieldIndex(OGRFeatureDefnH hDefn, const char\n"
-		"*pszGeomFieldName)\n"
+		"\\*pszGeomFieldName)\n"
 		"\n"
 		"Find geometry field by name.\n"
 		"\n"
@@ -33584,14 +34042,18 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeatureDefn::GetGeomFieldIndex.\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition to get field index from.\n"
+		"pszGeomFieldName:\n"
+		"    the geometry field name to search for.\n"
 		"\n"
-		"hDefn:  handle to the feature definition to get field index from.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    the geometry field index, or -1 if no match found.\n"
 		"\n"
-		"pszGeomFieldName:  the geometry field name to search for.\n"
-		"\n"
-		"the geometry field index, or -1 if no match found. \n"
 		""},
 	 { "FeatureDefn_AddGeomFieldDefn", _wrap_FeatureDefn_AddGeomFieldDefn, METH_VARARGS, "\n"
 		"FeatureDefn_AddGeomFieldDefn(FeatureDefn self, GeomFieldDefn defn)\n"
@@ -33612,15 +34074,16 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeatureDefn::AddGeomFieldDefn().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 1.11\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition to add the geometry field\n"
+		"    definition to.\n"
+		"hNewGeomField:\n"
+		"    handle to the new field definition.\n"
 		"\n"
-		"hDefn:  handle to the feature definition to add the geometry field\n"
-		"definition to.\n"
-		"\n"
-		"hNewGeomField:  handle to the new field definition.\n"
-		"\n"
-		"GDAL 1.11 \n"
 		""},
 	 { "FeatureDefn_DeleteGeomFieldDefn", _wrap_FeatureDefn_DeleteGeomFieldDefn, METH_VARARGS, "\n"
 		"FeatureDefn_DeleteGeomFieldDefn(FeatureDefn self, int idx) -> OGRErr\n"
@@ -33639,16 +34102,20 @@ static PyMethodDef SwigMethods[] = {
 		"This method is the same as the C++ method\n"
 		"OGRFeatureDefn::DeleteGeomFieldDefn().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 1.11\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition.\n"
+		"iGeomField:\n"
+		"    the index of the geometry field definition.\n"
 		"\n"
-		"hDefn:  handle to the feature definition.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRErr:\n"
+		"    OGRERR_NONE in case of success.\n"
 		"\n"
-		"iGeomField:  the index of the geometry field definition.\n"
-		"\n"
-		"OGRERR_NONE in case of success.\n"
-		"\n"
-		"GDAL 1.11 \n"
 		""},
 	 { "FeatureDefn_GetGeomType", _wrap_FeatureDefn_GetGeomType, METH_O, "\n"
 		"FeatureDefn_GetGeomType(FeatureDefn self) -> OGRwkbGeometryType\n"
@@ -33663,13 +34130,16 @@ static PyMethodDef SwigMethods[] = {
 		"Starting with GDAL 1.11, this method returns\n"
 		"GetGeomFieldDefn(0)->GetType().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition to get the geometry type from.\n"
 		"\n"
-		"hDefn:  handle to the feature definition to get the geometry type\n"
-		"from.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRwkbGeometryType:\n"
+		"    the base type for all geometry related to this definition.\n"
 		"\n"
-		"the base type for all geometry related to this definition. \n"
 		""},
 	 { "FeatureDefn_SetGeomType", _wrap_FeatureDefn_SetGeomType, METH_VARARGS, "\n"
 		"FeatureDefn_SetGeomType(FeatureDefn self, OGRwkbGeometryType geom_type)\n"
@@ -33690,13 +34160,13 @@ static PyMethodDef SwigMethods[] = {
 		"Starting with GDAL 1.11, this method calls\n"
 		"GetGeomFieldDefn(0)->SetType().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the layer or feature definition to set the geometry type to.\n"
+		"eType:\n"
+		"    the new type to assign.\n"
 		"\n"
-		"hDefn:  handle to the layer or feature definition to set the geometry\n"
-		"type to.\n"
-		"\n"
-		"eType:  the new type to assign. \n"
 		""},
 	 { "FeatureDefn_GetReferenceCount", _wrap_FeatureDefn_GetReferenceCount, METH_O, "\n"
 		"FeatureDefn_GetReferenceCount(FeatureDefn self) -> int\n"
@@ -33708,13 +34178,16 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeatureDefn::GetReferenceCount().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition on witch OGRFeature are based on.\n"
 		"\n"
-		"hDefn:  handle to the feature definition on witch OGRFeature are based\n"
-		"on.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    the current reference count.\n"
 		"\n"
-		"the current reference count. \n"
 		""},
 	 { "FeatureDefn_IsGeometryIgnored", _wrap_FeatureDefn_IsGeometryIgnored, METH_O, "\n"
 		"FeatureDefn_IsGeometryIgnored(FeatureDefn self) -> int\n"
@@ -33729,13 +34202,16 @@ static PyMethodDef SwigMethods[] = {
 		"Starting with GDAL 1.11, this method returns\n"
 		"GetGeomFieldDefn(0)->IsIgnored().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition on witch OGRFeature are based on.\n"
 		"\n"
-		"hDefn:  handle to the feature definition on witch OGRFeature are based\n"
-		"on.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    ignore state\n"
 		"\n"
-		"ignore state \n"
 		""},
 	 { "FeatureDefn_SetGeometryIgnored", _wrap_FeatureDefn_SetGeometryIgnored, METH_VARARGS, "\n"
 		"FeatureDefn_SetGeometryIgnored(FeatureDefn self, int bIgnored)\n"
@@ -33750,13 +34226,13 @@ static PyMethodDef SwigMethods[] = {
 		"Starting with GDAL 1.11, this method calls\n"
 		"GetGeomFieldDefn(0)->SetIgnored().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition on witch OGRFeature are based on.\n"
+		"bIgnore:\n"
+		"    ignore state\n"
 		"\n"
-		"hDefn:  handle to the feature definition on witch OGRFeature are based\n"
-		"on.\n"
-		"\n"
-		"bIgnore:  ignore state \n"
 		""},
 	 { "FeatureDefn_IsStyleIgnored", _wrap_FeatureDefn_IsStyleIgnored, METH_O, "\n"
 		"FeatureDefn_IsStyleIgnored(FeatureDefn self) -> int\n"
@@ -33768,13 +34244,16 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeatureDefn::IsStyleIgnored().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition on which OGRFeature are based on.\n"
 		"\n"
-		"hDefn:  handle to the feature definition on which OGRFeature are based\n"
-		"on.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    ignore state\n"
 		"\n"
-		"ignore state \n"
 		""},
 	 { "FeatureDefn_SetStyleIgnored", _wrap_FeatureDefn_SetStyleIgnored, METH_VARARGS, "\n"
 		"FeatureDefn_SetStyleIgnored(FeatureDefn self, int bIgnored)\n"
@@ -33786,13 +34265,13 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFeatureDefn::SetStyleIgnored().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the feature definition on witch OGRFeature are based on.\n"
+		"bIgnore:\n"
+		"    ignore state\n"
 		"\n"
-		"hDefn:  handle to the feature definition on witch OGRFeature are based\n"
-		"on.\n"
-		"\n"
-		"bIgnore:  ignore state \n"
 		""},
 	 { "FeatureDefn_IsSame", _wrap_FeatureDefn_IsSame, METH_VARARGS, "\n"
 		"FeatureDefn_IsSame(FeatureDefn self, FeatureDefn other_defn) -> int\n"
@@ -33801,17 +34280,20 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Test if the feature definition is identical to the other one.\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 1.11\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hFDefn:\n"
+		"    handle to the feature definition on witch OGRFeature are based on.\n"
+		"hOtherFDefn:\n"
+		"    handle to the other feature definition to compare to.\n"
 		"\n"
-		"hFDefn:  handle to the feature definition on witch OGRFeature are\n"
-		"based on.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    TRUE if the feature definition is identical to the other one.\n"
 		"\n"
-		"hOtherFDefn:  handle to the other feature definition to compare to.\n"
-		"\n"
-		"TRUE if the feature definition is identical to the other one.\n"
-		"\n"
-		"OGR 1.11 \n"
 		""},
 	 { "FeatureDefn_swigregister", FeatureDefn_swigregister, METH_O, NULL},
 	 { "FeatureDefn_swiginit", FeatureDefn_swiginit, METH_VARARGS, NULL},
@@ -33820,7 +34302,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "FieldDefn_GetName", _wrap_FieldDefn_GetName, METH_O, "FieldDefn_GetName(FieldDefn self) -> char const *"},
 	 { "FieldDefn_GetNameRef", _wrap_FieldDefn_GetNameRef, METH_O, "\n"
 		"FieldDefn_GetNameRef(FieldDefn self) -> char const *\n"
-		"const char*\n"
+		"const char\\*\n"
 		"OGR_Fld_GetNameRef(OGRFieldDefnH hDefn)\n"
 		"\n"
 		"Fetch name of this field.\n"
@@ -33828,33 +34310,38 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the CPP method\n"
 		"OGRFieldDefn::GetNameRef().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition.\n"
 		"\n"
-		"hDefn:  handle to the field definition.\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    the name of the field definition.\n"
 		"\n"
-		"the name of the field definition. \n"
 		""},
 	 { "FieldDefn_SetName", _wrap_FieldDefn_SetName, METH_VARARGS, "\n"
 		"FieldDefn_SetName(FieldDefn self, char const * name)\n"
 		"void OGR_Fld_SetName(OGRFieldDefnH\n"
-		"hDefn, const char *pszName)\n"
+		"hDefn, const char \\*pszName)\n"
 		"\n"
 		"Reset the name of this field.\n"
 		"\n"
 		"This function is the same as the CPP method OGRFieldDefn::SetName().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to apply the new name to.\n"
+		"pszName:\n"
+		"    the new name to apply.\n"
 		"\n"
-		"hDefn:  handle to the field definition to apply the new name to.\n"
-		"\n"
-		"pszName:  the new name to apply. \n"
 		""},
 	 { "FieldDefn_GetAlternativeName", _wrap_FieldDefn_GetAlternativeName, METH_O, "FieldDefn_GetAlternativeName(FieldDefn self) -> char const *"},
 	 { "FieldDefn_GetAlternativeNameRef", _wrap_FieldDefn_GetAlternativeNameRef, METH_O, "\n"
 		"FieldDefn_GetAlternativeNameRef(FieldDefn self) -> char const *\n"
-		"const char*\n"
+		"const char\\*\n"
 		"OGR_Fld_GetAlternativeNameRef(OGRFieldDefnH hDefn)\n"
 		"\n"
 		"Fetch the alternative name (or \"alias\") for this field.\n"
@@ -33870,20 +34357,24 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the CPP method\n"
 		"OGRFieldDefn::GetAlternativeNameRef().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 3.2\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition.\n"
 		"\n"
-		"hDefn:  handle to the field definition.\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    the alternative name of the field definition.\n"
 		"\n"
-		"the alternative name of the field definition.\n"
-		"\n"
-		"GDAL 3.2 \n"
 		""},
 	 { "FieldDefn_SetAlternativeName", _wrap_FieldDefn_SetAlternativeName, METH_VARARGS, "\n"
 		"FieldDefn_SetAlternativeName(FieldDefn self, char const * alternativeName)\n"
 		"void\n"
 		"OGR_Fld_SetAlternativeName(OGRFieldDefnH hDefn, const char\n"
-		"*pszAlternativeName)\n"
+		"\\*pszAlternativeName)\n"
 		"\n"
 		"Reset the alternative name (or \"alias\") for this field.\n"
 		"\n"
@@ -33898,15 +34389,15 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the CPP method\n"
 		"OGRFieldDefn::SetAlternativeName().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 3.2\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to apply the new alternative name to.\n"
+		"pszAlternativeName:\n"
+		"    the new alternative name to apply.\n"
 		"\n"
-		"hDefn:  handle to the field definition to apply the new alternative\n"
-		"name to.\n"
-		"\n"
-		"pszAlternativeName:  the new alternative name to apply.\n"
-		"\n"
-		"GDAL 3.2 \n"
 		""},
 	 { "FieldDefn_GetType", _wrap_FieldDefn_GetType, METH_O, "\n"
 		"FieldDefn_GetType(FieldDefn self) -> OGRFieldType\n"
@@ -33917,12 +34408,16 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This function is the same as the CPP method OGRFieldDefn::GetType().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to get type from.\n"
 		"\n"
-		"hDefn:  handle to the field definition to get type from.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRFieldType:\n"
+		"    field type.\n"
 		"\n"
-		"field type. \n"
 		""},
 	 { "FieldDefn_SetType", _wrap_FieldDefn_SetType, METH_VARARGS, "\n"
 		"FieldDefn_SetType(FieldDefn self, OGRFieldType type)\n"
@@ -33936,12 +34431,13 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This function is the same as the CPP method OGRFieldDefn::SetType().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to set type to.\n"
+		"eType:\n"
+		"    the new field type.\n"
 		"\n"
-		"hDefn:  handle to the field definition to set type to.\n"
-		"\n"
-		"eType:  the new field type. \n"
 		""},
 	 { "FieldDefn_GetSubType", _wrap_FieldDefn_GetSubType, METH_O, "\n"
 		"FieldDefn_GetSubType(FieldDefn self) -> OGRFieldSubType\n"
@@ -33953,14 +34449,18 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the CPP method\n"
 		"OGRFieldDefn::GetSubType().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to get subtype from.\n"
 		"\n"
-		"hDefn:  handle to the field definition to get subtype from.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRFieldSubType:\n"
+		"    field subtype.\n"
 		"\n"
-		"field subtype.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "FieldDefn_SetSubType", _wrap_FieldDefn_SetSubType, METH_VARARGS, "\n"
 		"FieldDefn_SetSubType(FieldDefn self, OGRFieldSubType type)\n"
@@ -33975,14 +34475,15 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the CPP method\n"
 		"OGRFieldDefn::SetSubType().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to set type to.\n"
+		"eSubType:\n"
+		"    the new field subtype.\n"
 		"\n"
-		"hDefn:  handle to the field definition to set type to.\n"
-		"\n"
-		"eSubType:  the new field subtype.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "FieldDefn_GetJustify", _wrap_FieldDefn_GetJustify, METH_O, "\n"
 		"FieldDefn_GetJustify(FieldDefn self) -> OGRJustification\n"
@@ -33996,12 +34497,16 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"Note: no driver is know to use the concept of field justification.\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to get justification from.\n"
 		"\n"
-		"hDefn:  handle to the field definition to get justification from.\n"
+		"Returns\n"
+		"--------\n"
+		"OGRJustification:\n"
+		"    the justification.\n"
 		"\n"
-		"the justification. \n"
 		""},
 	 { "FieldDefn_SetJustify", _wrap_FieldDefn_SetJustify, METH_VARARGS, "\n"
 		"FieldDefn_SetJustify(FieldDefn self, OGRJustification justify)\n"
@@ -34015,12 +34520,13 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the CPP method\n"
 		"OGRFieldDefn::SetJustify().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to set justification to.\n"
+		"eJustify:\n"
+		"    the new justification.\n"
 		"\n"
-		"hDefn:  handle to the field definition to set justification to.\n"
-		"\n"
-		"eJustify:  the new justification. \n"
 		""},
 	 { "FieldDefn_GetWidth", _wrap_FieldDefn_GetWidth, METH_O, "\n"
 		"FieldDefn_GetWidth(FieldDefn self) -> int\n"
@@ -34031,12 +34537,17 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This function is the same as the CPP method OGRFieldDefn::GetWidth().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to get width from.\n"
 		"\n"
-		"hDefn:  handle to the field definition to get width from.\n"
 		"\n"
-		"the width, zero means no specified width. \n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    the width, zero means no specified width.\n"
+		"\n"
 		""},
 	 { "FieldDefn_SetWidth", _wrap_FieldDefn_SetWidth, METH_VARARGS, "\n"
 		"FieldDefn_SetWidth(FieldDefn self, int width)\n"
@@ -34047,12 +34558,13 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This function is the same as the CPP method OGRFieldDefn::SetWidth().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to set width to.\n"
+		"nNewWidth:\n"
+		"    the new width.\n"
 		"\n"
-		"hDefn:  handle to the field definition to set width to.\n"
-		"\n"
-		"nNewWidth:  the new width. \n"
 		""},
 	 { "FieldDefn_GetPrecision", _wrap_FieldDefn_GetPrecision, METH_O, "\n"
 		"FieldDefn_GetPrecision(FieldDefn self) -> int\n"
@@ -34066,12 +34578,16 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the CPP method\n"
 		"OGRFieldDefn::GetPrecision().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to get precision from.\n"
 		"\n"
-		"hDefn:  handle to the field definition to get precision from.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    the precision.\n"
 		"\n"
-		"the precision. \n"
 		""},
 	 { "FieldDefn_SetPrecision", _wrap_FieldDefn_SetPrecision, METH_VARARGS, "\n"
 		"FieldDefn_SetPrecision(FieldDefn self, int precision)\n"
@@ -34085,12 +34601,13 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the CPP method\n"
 		"OGRFieldDefn::SetPrecision().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition to set precision to.\n"
+		"nPrecision:\n"
+		"    the new precision.\n"
 		"\n"
-		"hDefn:  handle to the field definition to set precision to.\n"
-		"\n"
-		"nPrecision:  the new precision. \n"
 		""},
 	 { "FieldDefn_GetTypeName", _wrap_FieldDefn_GetTypeName, METH_O, "FieldDefn_GetTypeName(FieldDefn self) -> char const *"},
 	 { "FieldDefn_GetFieldTypeName", _wrap_FieldDefn_GetFieldTypeName, METH_VARARGS, "FieldDefn_GetFieldTypeName(FieldDefn self, OGRFieldType type) -> char const *"},
@@ -34103,12 +34620,16 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This method is the same as the C++ method OGRFieldDefn::IsIgnored().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition\n"
 		"\n"
-		"hDefn:  handle to the field definition\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    ignore state\n"
 		"\n"
-		"ignore state \n"
 		""},
 	 { "FieldDefn_SetIgnored", _wrap_FieldDefn_SetIgnored, METH_VARARGS, "\n"
 		"FieldDefn_SetIgnored(FieldDefn self, int bIgnored)\n"
@@ -34119,12 +34640,13 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This method is the same as the C++ method OGRFieldDefn::SetIgnored().\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition\n"
+		"ignore:\n"
+		"    ignore state\n"
 		"\n"
-		"hDefn:  handle to the field definition\n"
-		"\n"
-		"ignore:  ignore state \n"
 		""},
 	 { "FieldDefn_IsNullable", _wrap_FieldDefn_IsNullable, METH_O, "\n"
 		"FieldDefn_IsNullable(FieldDefn self) -> int\n"
@@ -34142,14 +34664,19 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This method is the same as the C++ method OGRFieldDefn::IsNullable().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition\n"
 		"\n"
-		"hDefn:  handle to the field definition\n"
 		"\n"
-		"TRUE if the field is authorized to be null.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    TRUE if the field is authorized to be null.\n"
 		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "FieldDefn_SetNullable", _wrap_FieldDefn_SetNullable, METH_VARARGS, "\n"
 		"FieldDefn_SetNullable(FieldDefn self, int bNullable)\n"
@@ -34166,14 +34693,15 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This method is the same as the C++ method OGRFieldDefn::SetNullable().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition\n"
+		"bNullableIn:\n"
+		"    FALSE if the field must have a not-null constraint.\n"
 		"\n"
-		"hDefn:  handle to the field definition\n"
-		"\n"
-		"bNullableIn:  FALSE if the field must have a not-null constraint.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "FieldDefn_IsUnique", _wrap_FieldDefn_IsUnique, METH_O, "\n"
 		"FieldDefn_IsUnique(FieldDefn self) -> int\n"
@@ -34186,14 +34714,19 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This method is the same as the C++ method OGRFieldDefn::IsUnique().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 3.2\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition\n"
 		"\n"
-		"hDefn:  handle to the field definition\n"
 		"\n"
-		"TRUE if the field has a unique constraint.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    TRUE if the field has a unique constraint.\n"
 		"\n"
-		"GDAL 3.2 \n"
 		""},
 	 { "FieldDefn_SetUnique", _wrap_FieldDefn_SetUnique, METH_VARARGS, "\n"
 		"FieldDefn_SetUnique(FieldDefn self, int bUnique)\n"
@@ -34211,18 +34744,19 @@ static PyMethodDef SwigMethods[] = {
 		"\n"
 		"This method is the same as the C++ method OGRFieldDefn::SetUnique().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 3.2\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition\n"
+		"bUniqueIn:\n"
+		"    TRUE if the field must have a unique constraint.\n"
 		"\n"
-		"hDefn:  handle to the field definition\n"
-		"\n"
-		"bUniqueIn:  TRUE if the field must have a unique constraint.\n"
-		"\n"
-		"GDAL 3.2 \n"
 		""},
 	 { "FieldDefn_GetDefault", _wrap_FieldDefn_GetDefault, METH_O, "\n"
 		"FieldDefn_GetDefault(FieldDefn self) -> char const *\n"
-		"const char*\n"
+		"const char\\*\n"
 		"OGR_Fld_GetDefault(OGRFieldDefnH hDefn)\n"
 		"\n"
 		"Get default field value.\n"
@@ -34230,19 +34764,23 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFieldDefn::GetDefault().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition.\n"
 		"\n"
-		"hDefn:  handle to the field definition.\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    default field value or NULL.\n"
 		"\n"
-		"default field value or NULL.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "FieldDefn_SetDefault", _wrap_FieldDefn_SetDefault, METH_VARARGS, "\n"
 		"FieldDefn_SetDefault(FieldDefn self, char const * pszValue)\n"
 		"void\n"
-		"OGR_Fld_SetDefault(OGRFieldDefnH hDefn, const char *pszDefault)\n"
+		"OGR_Fld_SetDefault(OGRFieldDefnH hDefn, const char \\*pszDefault)\n"
 		"\n"
 		"Set default field value.\n"
 		"\n"
@@ -34267,14 +34805,15 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFieldDefn::SetDefault().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition.\n"
+		"pszDefault:\n"
+		"    new default field value or NULL pointer.\n"
 		"\n"
-		"hDefn:  handle to the field definition.\n"
-		"\n"
-		"pszDefault:  new default field value or NULL pointer.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "FieldDefn_IsDefaultDriverSpecific", _wrap_FieldDefn_IsDefaultDriverSpecific, METH_O, "\n"
 		"FieldDefn_IsDefaultDriverSpecific(FieldDefn self) -> int\n"
@@ -34291,18 +34830,23 @@ static PyMethodDef SwigMethods[] = {
 		"This function is the same as the C++ method\n"
 		"OGRFieldDefn::IsDefaultDriverSpecific().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.0\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition\n"
 		"\n"
-		"hDefn:  handle to the field definition\n"
 		"\n"
-		"TRUE if the default value is driver specific.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    TRUE if the default value is driver specific.\n"
 		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "FieldDefn_GetDomainName", _wrap_FieldDefn_GetDomainName, METH_O, "\n"
 		"FieldDefn_GetDomainName(FieldDefn self) -> char const *\n"
-		"const char*\n"
+		"const char\\*\n"
 		"OGR_Fld_GetDomainName(OGRFieldDefnH hDefn)\n"
 		"\n"
 		"Return the name of the field domain for this field.\n"
@@ -34315,19 +34859,23 @@ static PyMethodDef SwigMethods[] = {
 		"This method is the same as the C++ method\n"
 		"OGRFieldDefn::GetDomainName().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 3.3\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition\n"
 		"\n"
-		"hDefn:  handle to the field definition\n"
+		"Returns\n"
+		"--------\n"
+		"str:\n"
+		"    the field domain name, or an empty string if there is none.\n"
 		"\n"
-		"the field domain name, or an empty string if there is none.\n"
-		"\n"
-		"GDAL 3.3 \n"
 		""},
 	 { "FieldDefn_SetDomainName", _wrap_FieldDefn_SetDomainName, METH_VARARGS, "\n"
 		"FieldDefn_SetDomainName(FieldDefn self, char const * name)\n"
 		"void\n"
-		"OGR_Fld_SetDomainName(OGRFieldDefnH hDefn, const char *pszFieldName)\n"
+		"OGR_Fld_SetDomainName(OGRFieldDefnH hDefn, const char \\*pszFieldName)\n"
 		"\n"
 		"Set the name of the field domain for this field.\n"
 		"\n"
@@ -34336,14 +34884,15 @@ static PyMethodDef SwigMethods[] = {
 		"This method is the same as the C++ method\n"
 		"OGRFieldDefn::SetDomainName().\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 3.3\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"hDefn:\n"
+		"    handle to the field definition\n"
+		"pszFieldName:\n"
+		"    Field domain name.\n"
 		"\n"
-		"hDefn:  handle to the field definition\n"
-		"\n"
-		"pszFieldName:  Field domain name.\n"
-		"\n"
-		"GDAL 3.3 \n"
 		""},
 	 { "FieldDefn_swigregister", FieldDefn_swigregister, METH_O, NULL},
 	 { "FieldDefn_swiginit", FieldDefn_swiginit, METH_VARARGS, NULL},
@@ -34379,125 +34928,67 @@ static PyMethodDef SwigMethods[] = {
 	 { "new_Geometry", (PyCFunction)(void(*)(void))_wrap_new_Geometry, METH_VARARGS|METH_KEYWORDS, "new_Geometry(OGRwkbGeometryType type=wkbUnknown, char * wkt=None, int wkb=0, char * gml=None) -> Geometry"},
 	 { "Geometry_ExportToWkt", _wrap_Geometry_ExportToWkt, METH_O, "\n"
 		"Geometry_ExportToWkt(Geometry self) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_G_ExportToWkt(OGRGeometryH hGeom, char **ppszSrcText)\n"
 		"\n"
 		"Convert a geometry into well known text format.\n"
 		"\n"
-		"This function relates to the SFCOM IWks::ExportToWKT() method.\n"
+		"For more details: :cpp:func:`OGR_G_ExportToWkt`\n"
 		"\n"
-		"For backward compatibility purposes, it exports the Old-style 99-402\n"
-		"extended dimension (Z) WKB types for types Point, LineString, Polygon,\n"
-		"MultiPoint, MultiLineString, MultiPolygon and GeometryCollection. For\n"
-		"other geometry types, it is equivalent to OGR_G_ExportToIsoWkt().\n"
+		"Returns\n"
+		"--------\n"
+		"str\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::exportToWkt().\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  handle on the geometry to convert to a text format from.\n"
-		"\n"
-		"ppszSrcText:  a text buffer is allocated by the program, and assigned\n"
-		"to the passed pointer. After use, *ppszDstText should be freed with\n"
-		"CPLFree().\n"
-		"\n"
-		"Currently OGRERR_NONE is always returned. \n"
 		""},
 	 { "Geometry_ExportToIsoWkt", _wrap_Geometry_ExportToIsoWkt, METH_O, "\n"
 		"Geometry_ExportToIsoWkt(Geometry self) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_G_ExportToIsoWkt(OGRGeometryH hGeom, char **ppszSrcText)\n"
 		"\n"
 		"Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known text\n"
 		"format.\n"
 		"\n"
-		"This function relates to the SFCOM IWks::ExportToWKT() method. It\n"
-		"exports the SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M)\n"
-		"WKB types.\n"
+		"For more details: :cpp:func:`OGR_G_ExportToIsoWkt`\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::exportToWkt(wkbVariantIso).\n"
+		".. versionadded:: 2.0\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		"Returns\n"
+		"--------\n"
+		"str\n"
 		"\n"
-		"hGeom:  handle on the geometry to convert to a text format from.\n"
-		"\n"
-		"ppszSrcText:  a text buffer is allocated by the program, and assigned\n"
-		"to the passed pointer. After use, *ppszDstText should be freed with\n"
-		"CPLFree().\n"
-		"\n"
-		"Currently OGRERR_NONE is always returned.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "Geometry_ExportToWkb", (PyCFunction)(void(*)(void))_wrap_Geometry_ExportToWkb, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Geometry_ExportToWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_G_ExportToWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder, unsigned\n"
-		"char *pabyDstBuffer)\n"
 		"\n"
 		"Convert a geometry well known binary format.\n"
 		"\n"
-		"This function relates to the SFCOM IWks::ExportToWKB() method.\n"
+		"For more details: :cpp:func:`OGR_G_ExportToWkb`\n"
 		"\n"
-		"For backward compatibility purposes, it exports the Old-style 99-402\n"
-		"extended dimension (Z) WKB types for types Point, LineString, Polygon,\n"
-		"MultiPoint, MultiLineString, MultiPolygon and GeometryCollection. For\n"
-		"other geometry types, it is equivalent to OGR_G_ExportToIsoWkb().\n"
-		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char *,\n"
-		"OGRwkbVariant) with eWkbVariant = wkbVariantOldOgc.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"byte_order: osgeo.ogr.wkbXDR | osgeo.ogr.wkbNDR, default=osgeo.ogr.wkbNDR\n"
+		"    One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.\n"
 		"\n"
-		"hGeom:  handle on the geometry to convert to a well know binary data\n"
-		"from.\n"
+		"Returns\n"
+		"--------\n"
+		"bytes\n"
 		"\n"
-		"eOrder:  One of wkbXDR or wkbNDR indicating MSB or LSB byte order\n"
-		"respectively.\n"
-		"\n"
-		"pabyDstBuffer:  a buffer into which the binary representation is\n"
-		"written. This buffer must be at least OGR_G_WkbSize() byte in size.\n"
-		"\n"
-		"Currently OGRERR_NONE is always returned. \n"
 		""},
 	 { "Geometry_ExportToIsoWkb", (PyCFunction)(void(*)(void))_wrap_Geometry_ExportToIsoWkb, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Geometry_ExportToIsoWkb(Geometry self, OGRwkbByteOrder byte_order=wkbNDR) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_G_ExportToIsoWkb(OGRGeometryH hGeom, OGRwkbByteOrder eOrder,\n"
-		"unsigned char *pabyDstBuffer)\n"
 		"\n"
 		"Convert a geometry into SFSQL 1.2 / ISO SQL/MM Part 3 well known\n"
 		"binary format.\n"
 		"\n"
-		"This function relates to the SFCOM IWks::ExportToWKB() method. It\n"
-		"exports the SFSQL 1.2 and ISO SQL/MM Part 3 extended dimension (Z&M)\n"
-		"WKB types.\n"
+		"For more details: :cpp:func:`OGR_G_ExportToIsoWkb`\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::exportToWkb(OGRwkbByteOrder, unsigned char *,\n"
-		"OGRwkbVariant) with eWkbVariant = wkbVariantIso.\n"
+		".. versionadded:: 2.0\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"byte_order: osgeo.ogr.wkbXDR | osgeo.ogr.wkbNDR, default=osgeo.ogr.wkbNDR\n"
+		"    One of wkbXDR or wkbNDR indicating MSB or LSB byte order respectively.\n"
 		"\n"
-		"hGeom:  handle on the geometry to convert to a well know binary data\n"
-		"from.\n"
+		"Returns\n"
+		"--------\n"
+		"bytes\n"
 		"\n"
-		"eOrder:  One of wkbXDR or wkbNDR indicating MSB or LSB byte order\n"
-		"respectively.\n"
-		"\n"
-		"pabyDstBuffer:  a buffer into which the binary representation is\n"
-		"written. This buffer must be at least OGR_G_WkbSize() byte in size.\n"
-		"\n"
-		"Currently OGRERR_NONE is always returned.\n"
-		"\n"
-		"GDAL 2.0 \n"
 		""},
 	 { "Geometry_ExportToGML", (PyCFunction)(void(*)(void))_wrap_Geometry_ExportToGML, METH_VARARGS|METH_KEYWORDS, "Geometry_ExportToGML(Geometry self, char ** options=None) -> retStringAndCPLFree *"},
 	 { "Geometry_ExportToKML", _wrap_Geometry_ExportToKML, METH_VARARGS, "Geometry_ExportToKML(Geometry self, char const * altitude_mode=None) -> retStringAndCPLFree *"},
@@ -34511,62 +35002,45 @@ static PyMethodDef SwigMethods[] = {
 	 { "Geometry_RemoveGeometry", _wrap_Geometry_RemoveGeometry, METH_VARARGS, "Geometry_RemoveGeometry(Geometry self, int iSubGeom) -> OGRErr"},
 	 { "Geometry_Clone", _wrap_Geometry_Clone, METH_O, "\n"
 		"Geometry_Clone(Geometry self) -> Geometry\n"
-		"OGRGeometryH OGR_G_Clone(OGRGeometryH\n"
-		"hGeom)\n"
 		"\n"
 		"Make a copy of this object.\n"
 		"\n"
-		"This function relates to the SFCOM IGeometry::clone() method.\n"
+		"For more details: :cpp:func:`OGR_G_Clone`\n"
 		"\n"
-		"This function is the same as the CPP method OGRGeometry::clone().\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    The copy of the geometry with the same spatial reference system\n"
+		"    as the original.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  handle on the geometry to clone from.\n"
-		"\n"
-		"a handle on the copy of the geometry with the spatial reference system\n"
-		"as the original. \n"
 		""},
 	 { "Geometry_GetGeometryType", _wrap_Geometry_GetGeometryType, METH_O, "\n"
 		"Geometry_GetGeometryType(Geometry self) -> OGRwkbGeometryType\n"
-		"OGRwkbGeometryType\n"
-		"OGR_G_GetGeometryType(OGRGeometryH hGeom)\n"
 		"\n"
 		"Fetch geometry type.\n"
 		"\n"
-		"Note that the geometry type may include the 2.5D flag. To get a 2D\n"
-		"flattened version of the geometry type apply the wkbFlatten() macro to\n"
-		"the return result.\n"
+		"For more details: :cpp:func:`OGR_G_GetGeometryType`\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::getGeometryType().\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    The geometry type code. The types can be found with\n"
+		"    'osgeo.ogr.wkb' prefix. For example :py:const:`osgeo.ogr.wkbPolygon`.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  handle on the geometry to get type from.\n"
-		"\n"
-		"the geometry type code. \n"
 		""},
 	 { "Geometry_GetGeometryName", _wrap_Geometry_GetGeometryName, METH_O, "\n"
 		"Geometry_GetGeometryName(Geometry self) -> char const *\n"
-		"const char*\n"
-		"OGR_G_GetGeometryName(OGRGeometryH hGeom)\n"
 		"\n"
 		"Fetch WKT name for geometry type.\n"
 		"\n"
-		"There is no SFCOM analog to this function.\n"
+		"For more details: :cpp:func:`OGR_G_GetGeometryName`\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::getGeometryName().\n"
+		"geometry to get name from.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		"Returns\n"
+		"--------\n"
+		"str\n"
 		"\n"
-		"hGeom:  handle on the geometry to get name from.\n"
-		"\n"
-		"name used for this geometry type in well known text format. \n"
 		""},
 	 { "Geometry_Length", _wrap_Geometry_Length, METH_O, "Geometry_Length(Geometry self) -> double"},
 	 { "Geometry_Area", _wrap_Geometry_Area, METH_O, "Geometry_Area(Geometry self) -> double"},
@@ -34587,1239 +35061,799 @@ static PyMethodDef SwigMethods[] = {
 	 { "Geometry_SetPoint_2D", (PyCFunction)(void(*)(void))_wrap_Geometry_SetPoint_2D, METH_VARARGS|METH_KEYWORDS, "Geometry_SetPoint_2D(Geometry self, int point, double x, double y)"},
 	 { "Geometry_SwapXY", _wrap_Geometry_SwapXY, METH_O, "\n"
 		"Geometry_SwapXY(Geometry self)\n"
-		"void OGR_G_SwapXY(OGRGeometryH hGeom)\n"
 		"\n"
 		"Swap x and y coordinates.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		"For more details: :cpp:func:`OGR_G_SwapXY`\n"
 		"\n"
-		"hGeom:  geometry.\n"
+		".. versionadded:: 2.3.0\n"
 		"\n"
-		"OGR 2.3.0 \n"
+		"\n"
 		""},
 	 { "Geometry_GetGeometryRef", _wrap_Geometry_GetGeometryRef, METH_VARARGS, "Geometry_GetGeometryRef(Geometry self, int geom) -> Geometry"},
 	 { "Geometry_Simplify", _wrap_Geometry_Simplify, METH_VARARGS, "\n"
 		"Geometry_Simplify(Geometry self, double tolerance) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_Simplify(OGRGeometryH hThis, double dTolerance)\n"
 		"\n"
 		"Compute a simplified geometry.\n"
 		"\n"
-		"This function is the same as the C++ method OGRGeometry::Simplify().\n"
+		"For more details: :cpp:func:`OGR_G_Simplify`\n"
 		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"tolerance: float\n"
+		"    The distance tolerance for the simplification.\n"
 		"\n"
-		"hThis:  the geometry.\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    The simplified geometry or None if an error occurs.\n"
 		"\n"
-		"dTolerance:  the distance tolerance for the simplification.\n"
-		"\n"
-		"the simplified geometry or NULL if an error occurs.\n"
-		"\n"
-		"OGR 1.8.0 \n"
 		""},
 	 { "Geometry_SimplifyPreserveTopology", _wrap_Geometry_SimplifyPreserveTopology, METH_VARARGS, "\n"
 		"Geometry_SimplifyPreserveTopology(Geometry self, double tolerance) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis, double dTolerance)\n"
 		"\n"
 		"Simplify the geometry while preserving topology.\n"
 		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRGeometry::SimplifyPreserveTopology().\n"
+		"For more details: :cpp:func:`OGR_G_SimplifyPreserveTopology`\n"
 		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"tolerance: float\n"
+		"    The distance tolerance for the simplification.\n"
 		"\n"
-		"hThis:  the geometry.\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    The simplified geometry or None if an error occurs.\n"
 		"\n"
-		"dTolerance:  the distance tolerance for the simplification.\n"
-		"\n"
-		"the simplified geometry or NULL if an error occurs.\n"
-		"\n"
-		"OGR 1.9.0 \n"
 		""},
 	 { "Geometry_DelaunayTriangulation", (PyCFunction)(void(*)(void))_wrap_Geometry_DelaunayTriangulation, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Geometry_DelaunayTriangulation(Geometry self, double dfTolerance=0.0, int bOnlyEdges=FALSE) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_DelaunayTriangulation(OGRGeometryH hThis, double dfTolerance,\n"
-		"int bOnlyEdges)\n"
 		"\n"
 		"Return a Delaunay triangulation of the vertices of the geometry.\n"
 		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRGeometry::DelaunayTriangulation().\n"
+		"For more details: :cpp:func:`OGR_G_DelaunayTriangulation`\n"
 		"\n"
-		"This function is built on the GEOS library, v3.4 or above. If OGR is\n"
-		"built without the GEOS library, this function will always fail,\n"
-		"issuing a CPLE_NotSupported error.\n"
+		".. versionadded:: 2.1\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"dfTolerance: float\n"
+		"    optional snapping tolerance to use for improved robustness\n"
+		"bOnlyEdges: bool\n"
+		"    If True, will return a MULTILINESTRING, otherwise it will\n"
+		"    return a GEOMETRYCOLLECTION containing triangular POLYGONs.\n"
 		"\n"
-		"hThis:  the geometry.\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    The geometry resulting from the Delaunay triangulation or None if an\n"
+		"    error occurs.\n"
 		"\n"
-		"dfTolerance:  optional snapping tolerance to use for improved\n"
-		"robustness\n"
-		"\n"
-		"bOnlyEdges:  if TRUE, will return a MULTILINESTRING, otherwise it will\n"
-		"return a GEOMETRYCOLLECTION containing triangular POLYGONs.\n"
-		"\n"
-		"the geometry resulting from the Delaunay triangulation or NULL if an\n"
-		"error occurs.\n"
-		"\n"
-		"OGR 2.1 \n"
 		""},
 	 { "Geometry_Polygonize", _wrap_Geometry_Polygonize, METH_O, "\n"
 		"Geometry_Polygonize(Geometry self) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_Polygonize(OGRGeometryH hTarget)\n"
 		"\n"
 		"Polygonizes a set of sparse edges.\n"
 		"\n"
-		"A new geometry object is created and returned containing a collection\n"
-		"of reassembled Polygons: NULL will be returned if the input collection\n"
-		"doesn't corresponds to a MultiLinestring, or when reassembling Edges\n"
-		"into Polygons is impossible due to topological inconsistencies.\n"
+		"For more details: :cpp:func:`OGR_G_Polygonize`\n"
 		"\n"
-		"This function is the same as the C++ method OGRGeometry::Polygonize().\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    A new geometry or None on failure.\n"
 		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hTarget:  The Geometry to be polygonized.\n"
-		"\n"
-		"a handle to a newly allocated geometry now owned by the caller, or\n"
-		"NULL on failure.\n"
-		"\n"
-		"OGR 1.9.0 \n"
 		""},
 	 { "Geometry_Boundary", _wrap_Geometry_Boundary, METH_O, "\n"
 		"Geometry_Boundary(Geometry self) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_Boundary(OGRGeometryH hTarget)\n"
 		"\n"
 		"Compute boundary.\n"
 		"\n"
-		"A new geometry object is created and returned containing the boundary\n"
-		"of the geometry on which the method is invoked.\n"
+		"For more details: :cpp:func:`OGR_G_Boundary`\n"
 		"\n"
-		"This function is the same as the C++ method OGR_G_Boundary().\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    A new geometry or None on failure.\n"
 		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hTarget:  The Geometry to calculate the boundary of.\n"
-		"\n"
-		"a handle to a newly allocated geometry now owned by the caller, or\n"
-		"NULL on failure.\n"
-		"\n"
-		"OGR 1.8.0 \n"
 		""},
 	 { "Geometry_GetBoundary", _wrap_Geometry_GetBoundary, METH_O, "\n"
 		"Geometry_GetBoundary(Geometry self) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_GetBoundary(OGRGeometryH hTarget)\n"
 		"\n"
 		"Compute boundary (deprecated)\n"
 		"\n"
-		"Deprecated\n"
+		"For more details: :cpp:func:`OGR_G_GetBoundary`\n"
 		"\n"
-		"See:   OGR_G_Boundary() \n"
+		"..warning:: Deprecated\n"
+		"\n"
+		"See: :cpp:func:`OGR_G_Boundary`\n"
+		"\n"
 		""},
 	 { "Geometry_ConvexHull", _wrap_Geometry_ConvexHull, METH_O, "\n"
 		"Geometry_ConvexHull(Geometry self) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_ConvexHull(OGRGeometryH hTarget)\n"
 		"\n"
 		"Compute convex hull.\n"
 		"\n"
-		"A new geometry object is created and returned containing the convex\n"
-		"hull of the geometry on which the method is invoked.\n"
+		"For more details: :cpp:func:`OGR_G_ConvexHull`\n"
 		"\n"
-		"This function is the same as the C++ method OGRGeometry::ConvexHull().\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    a handle to A newly allocated geometry now owned by the caller, or\n"
+		"    None on failure.\n"
 		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hTarget:  The Geometry to calculate the convex hull of.\n"
-		"\n"
-		"a handle to a newly allocated geometry now owned by the caller, or\n"
-		"NULL on failure. \n"
 		""},
+	 { "Geometry_ConcaveHull", _wrap_Geometry_ConcaveHull, METH_VARARGS, "Geometry_ConcaveHull(Geometry self, double ratio, bool allowHoles) -> Geometry"},
 	 { "Geometry_MakeValid", _wrap_Geometry_MakeValid, METH_VARARGS, "\n"
 		"Geometry_MakeValid(Geometry self, char ** options=None) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_MakeValid(OGRGeometryH hGeom)\n"
 		"\n"
 		"Attempts to make an invalid geometry valid without losing vertices.\n"
 		"\n"
-		"Already-valid geometries are cloned without further intervention.\n"
+		"For more details: :cpp:func:`OGR_G_MakeValidEx`\n"
 		"\n"
-		"This function is the same as the C++ method OGRGeometry::MakeValid().\n"
+		".. versionadded:: 3.0\n"
+		".. versionadded:: 3.4 options\n"
 		"\n"
-		"This function is built on the GEOS >= 3.8 library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		">= 3.8 library, this function will return a clone of the input\n"
-		"geometry if it is valid, or NULL if it is invalid\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"options: list[str], optional\n"
+		"    papszOptions to be passed in. For example: [\"METHOD=STRUCTURE\"].\n"
 		"\n"
-		"hGeom:  The Geometry to make valid.\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    A newly allocated geometry now owned by the caller, or None on\n"
+		"    failure.\n"
 		"\n"
-		"a newly allocated geometry now owned by the caller, or NULL on\n"
-		"failure.\n"
-		"\n"
-		"GDAL 3.0 \n"
 		""},
 	 { "Geometry_Normalize", _wrap_Geometry_Normalize, METH_O, "\n"
 		"Geometry_Normalize(Geometry self) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_Normalize(OGRGeometryH hGeom)\n"
 		"\n"
 		"Attempts to bring geometry into normalized/canonical form.\n"
 		"\n"
-		"This function is the same as the C++ method OGRGeometry::Normalize().\n"
+		"For more details: :cpp:func:`OGR_G_Normalize`\n"
 		"\n"
-		"This function is built on the GEOS library; check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
+		".. versionadded:: 3.3\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    A newly allocated geometry now owned by the caller, or None on\n"
+		"    failure.\n"
 		"\n"
-		"hGeom:  The Geometry to normalize.\n"
-		"\n"
-		"a newly allocated geometry now owned by the caller, or NULL on\n"
-		"failure.\n"
-		"\n"
-		"GDAL 3.3 \n"
 		""},
 	 { "Geometry_RemoveLowerDimensionSubGeoms", _wrap_Geometry_RemoveLowerDimensionSubGeoms, METH_O, "Geometry_RemoveLowerDimensionSubGeoms(Geometry self) -> Geometry"},
 	 { "Geometry_Buffer", (PyCFunction)(void(*)(void))_wrap_Geometry_Buffer, METH_VARARGS|METH_KEYWORDS, "\n"
 		"Geometry_Buffer(Geometry self, double distance, int quadsecs=30) -> Geometry\n"
-		"OGRGeometryH OGR_G_Buffer(OGRGeometryH\n"
-		"hTarget, double dfDist, int nQuadSegs)\n"
 		"\n"
 		"Compute buffer of geometry.\n"
 		"\n"
-		"Builds a new geometry containing the buffer region around the geometry\n"
-		"on which it is invoked. The buffer is a polygon containing the region\n"
-		"within the buffer distance of the original geometry.\n"
+		"For more details: :cpp:func:`OGR_G_Buffer`\n"
 		"\n"
-		"Some buffer sections are properly described as curves, but are\n"
-		"converted to approximate polygons. The nQuadSegs parameter can be used\n"
-		"to control how many segments should be used to define a 90 degree\n"
-		"curve - a quadrant of a circle. A value of 30 is a reasonable default.\n"
-		"Large values result in large numbers of vertices in the resulting\n"
-		"buffer geometry while small numbers reduce the accuracy of the result.\n"
-		"\n"
-		"This function is the same as the C++ method OGRGeometry::Buffer().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"distance: float\n"
+		"    The buffer distance to be applied. Should be expressed into\n"
+		"    the same unit as the coordinates of the geometry.\n"
+		"quadsecs: int, default=30\n"
+		"    The number of segments used to approximate a 90 degree\n"
+		"    (quadrant) of curvature.\n"
 		"\n"
-		"hTarget:  the geometry.\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    The newly created geometry or None if an error occurs.\n"
 		"\n"
-		"dfDist:  the buffer distance to be applied. Should be expressed into\n"
-		"the same unit as the coordinates of the geometry.\n"
-		"\n"
-		"nQuadSegs:  the number of segments used to approximate a 90 degree\n"
-		"(quadrant) of curvature.\n"
-		"\n"
-		"the newly created geometry, or NULL if an error occurs. \n"
 		""},
 	 { "Geometry_Intersection", _wrap_Geometry_Intersection, METH_VARARGS, "\n"
 		"Geometry_Intersection(Geometry self, Geometry other) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_Intersection(OGRGeometryH hThis, OGRGeometryH hOther)\n"
 		"\n"
 		"Compute intersection.\n"
 		"\n"
-		"Generates a new geometry which is the region of intersection of the\n"
-		"two geometries operated on. The OGR_G_Intersects() function can be\n"
-		"used to test if two geometries intersect.\n"
+		"For more details: :cpp:func:`OGR_G_Intersection`\n"
 		"\n"
-		"Geometry validity is not checked. In case you are unsure of the\n"
-		"validity of the input geometries, call IsValid() before, otherwise the\n"
-		"result might be wrong.\n"
-		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRGeometry::Intersection().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    The other geometry.\n"
 		"\n"
-		"hThis:  the geometry.\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    A new geometry representing the intersection or None if there is no\n"
+		"    intersection or an error occurs.\n"
 		"\n"
-		"hOther:  the other geometry.\n"
-		"\n"
-		"a new geometry representing the intersection or NULL if there is no\n"
-		"intersection or an error occurs. \n"
 		""},
 	 { "Geometry_Union", _wrap_Geometry_Union, METH_VARARGS, "\n"
 		"Geometry_Union(Geometry self, Geometry other) -> Geometry\n"
-		"OGRGeometryH OGR_G_Union(OGRGeometryH\n"
-		"hThis, OGRGeometryH hOther)\n"
 		"\n"
 		"Compute union.\n"
 		"\n"
-		"Generates a new geometry which is the region of union of the two\n"
-		"geometries operated on.\n"
+		"For more details: :cpp:func:`OGR_G_Union`\n"
 		"\n"
-		"Geometry validity is not checked. In case you are unsure of the\n"
-		"validity of the input geometries, call IsValid() before, otherwise the\n"
-		"result might be wrong.\n"
-		"\n"
-		"This function is the same as the C++ method OGRGeometry::Union().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    The other geometry.\n"
 		"\n"
-		"hThis:  the geometry.\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    A new geometry representing the union or None if an error occurs.\n"
 		"\n"
-		"hOther:  the other geometry.\n"
-		"\n"
-		"a new geometry representing the union or NULL if an error occurs. \n"
 		""},
 	 { "Geometry_UnionCascaded", _wrap_Geometry_UnionCascaded, METH_O, "\n"
 		"Geometry_UnionCascaded(Geometry self) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_UnionCascaded(OGRGeometryH hThis)\n"
 		"\n"
 		"Compute union using cascading.\n"
 		"\n"
-		"Geometry validity is not checked. In case you are unsure of the\n"
-		"validity of the input geometries, call IsValid() before, otherwise the\n"
-		"result might be wrong.\n"
+		"For more deails: :cpp:func:`OGR_G_UnionCascaded`\n"
 		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRGeometry::UnionCascaded().\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    A new geometry representing the union or None if an error occurs.\n"
 		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hThis:  the geometry.\n"
-		"\n"
-		"a new geometry representing the union or NULL if an error occurs. \n"
 		""},
 	 { "Geometry_Difference", _wrap_Geometry_Difference, METH_VARARGS, "\n"
 		"Geometry_Difference(Geometry self, Geometry other) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_Difference(OGRGeometryH hThis, OGRGeometryH hOther)\n"
 		"\n"
 		"Compute difference.\n"
 		"\n"
-		"Generates a new geometry which is the region of this geometry with the\n"
-		"region of the other geometry removed.\n"
+		"For more details: :cpp:func:`OGR_G_Difference`\n"
 		"\n"
-		"Geometry validity is not checked. In case you are unsure of the\n"
-		"validity of the input geometries, call IsValid() before, otherwise the\n"
-		"result might be wrong.\n"
-		"\n"
-		"This function is the same as the C++ method OGRGeometry::Difference().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    The other geometry.\n"
 		"\n"
-		"hThis:  the geometry.\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    A new geometry representing the difference or None if the difference\n"
+		"    is empty or an error occurs.\n"
 		"\n"
-		"hOther:  the other geometry.\n"
-		"\n"
-		"a new geometry representing the difference or NULL if the difference\n"
-		"is empty or an error occurs. \n"
 		""},
 	 { "Geometry_SymDifference", _wrap_Geometry_SymDifference, METH_VARARGS, "\n"
 		"Geometry_SymDifference(Geometry self, Geometry other) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_SymDifference(OGRGeometryH hThis, OGRGeometryH hOther)\n"
 		"\n"
 		"Compute symmetric difference.\n"
 		"\n"
-		"Generates a new geometry which is the symmetric difference of this\n"
-		"geometry and the other geometry.\n"
+		"For more details: :cpp:func:`OGR_G_SymDifference`\n"
 		"\n"
-		"Geometry validity is not checked. In case you are unsure of the\n"
-		"validity of the input geometries, call IsValid() before, otherwise the\n"
-		"result might be wrong.\n"
-		"\n"
-		"This function is the same as the C++ method\n"
-		"OGRGeometry::SymmetricDifference().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other:\n"
+		"    the other geometry.\n"
 		"\n"
-		"hThis:  the geometry.\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    A new geometry representing the symmetric difference or None if the\n"
+		"    difference is empty or an error occurs.\n"
 		"\n"
-		"hOther:  the other geometry.\n"
-		"\n"
-		"a new geometry representing the symmetric difference or NULL if the\n"
-		"difference is empty or an error occurs.\n"
-		"\n"
-		"OGR 1.8.0 \n"
 		""},
 	 { "Geometry_SymmetricDifference", _wrap_Geometry_SymmetricDifference, METH_VARARGS, "\n"
 		"Geometry_SymmetricDifference(Geometry self, Geometry other) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_SymmetricDifference(OGRGeometryH hThis, OGRGeometryH hOther)\n"
 		"\n"
 		"Compute symmetric difference (deprecated)\n"
 		"\n"
-		"Deprecated\n"
+		"For more details: :cpp:func:`OGR_G_SymmetricDifference`\n"
 		"\n"
-		"See:  OGR_G_SymmetricDifference() \n"
+		".. warning:: Deprecated\n"
+		"\n"
+		"\n"
 		""},
 	 { "Geometry_Distance", _wrap_Geometry_Distance, METH_VARARGS, "\n"
 		"Geometry_Distance(Geometry self, Geometry other) -> double\n"
-		"double OGR_G_Distance(OGRGeometryH\n"
-		"hFirst, OGRGeometryH hOther)\n"
 		"\n"
 		"Compute distance between two geometries.\n"
 		"\n"
-		"Returns the shortest distance between the two geometries. The distance\n"
-		"is expressed into the same unit as the coordinates of the geometries.\n"
+		"For more details: :cpp:func:`OGR_G_Distance`\n"
 		"\n"
-		"This function is the same as the C++ method OGRGeometry::Distance().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    The other geometry to compare against.\n"
 		"\n"
-		"hFirst:  the first geometry to compare against.\n"
+		"Returns\n"
+		"--------\n"
+		"float:\n"
+		"    The distance between the geometries or -1 if an error occurs.\n"
 		"\n"
-		"hOther:  the other geometry to compare against.\n"
-		"\n"
-		"the distance between the geometries or -1 if an error occurs. \n"
 		""},
 	 { "Geometry_Distance3D", _wrap_Geometry_Distance3D, METH_VARARGS, "\n"
 		"Geometry_Distance3D(Geometry self, Geometry other) -> double\n"
-		"double\n"
-		"OGR_G_Distance3D(OGRGeometryH hFirst, OGRGeometryH hOther)\n"
 		"\n"
 		"Returns the 3D distance between two geometries.\n"
 		"\n"
-		"The distance is expressed into the same unit as the coordinates of the\n"
-		"geometries.\n"
+		"For more details: :cpp:func:`OGR_G_Distance3D`\n"
 		"\n"
-		"This method is built on the SFCGAL library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the\n"
-		"SFCGAL library, this method will always return -1.0\n"
+		".. versionadded:: 2.2\n"
 		"\n"
-		"This function is the same as the C++ method OGRGeometry::Distance3D().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    The other geometry to compare against.\n"
 		"\n"
-		"hFirst:  the first geometry to compare against.\n"
+		"Returns\n"
+		"--------\n"
+		"float:\n"
+		"    The distance between the geometries or -1 if an error occurs.\n"
 		"\n"
-		"hOther:  the other geometry to compare against.\n"
-		"\n"
-		"distance between the two geometries\n"
-		"\n"
-		"GDAL 2.2\n"
-		"\n"
-		"the distance between the geometries or -1 if an error occurs. \n"
 		""},
 	 { "Geometry_Empty", _wrap_Geometry_Empty, METH_O, "\n"
 		"Geometry_Empty(Geometry self)\n"
-		"void OGR_G_Empty(OGRGeometryH hGeom)\n"
 		"\n"
 		"Clear geometry information.\n"
 		"\n"
-		"This restores the geometry to its initial state after construction,\n"
-		"and before assignment of actual geometry.\n"
+		"For more details: :cpp:func:`OGR_G_Empty`\n"
 		"\n"
-		"This function relates to the SFCOM IGeometry::Empty() method.\n"
-		"\n"
-		"This function is the same as the CPP method OGRGeometry::empty().\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  handle on the geometry to empty. \n"
 		""},
 	 { "Geometry_IsEmpty", _wrap_Geometry_IsEmpty, METH_O, "\n"
 		"Geometry_IsEmpty(Geometry self) -> bool\n"
-		"int OGR_G_IsEmpty(OGRGeometryH hGeom)\n"
 		"\n"
 		"Test if the geometry is empty.\n"
 		"\n"
-		"This method is the same as the CPP method OGRGeometry::IsEmpty().\n"
+		"For more details: :cpp:func:`OGR_G_IsEmpty`\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if the geometry has no points, otherwise False.\n"
 		"\n"
-		"hGeom:  The Geometry to test.\n"
-		"\n"
-		"TRUE if the geometry has no points, otherwise FALSE. \n"
 		""},
 	 { "Geometry_IsValid", _wrap_Geometry_IsValid, METH_O, "\n"
 		"Geometry_IsValid(Geometry self) -> bool\n"
-		"int OGR_G_IsValid(OGRGeometryH hGeom)\n"
 		"\n"
 		"Test if the geometry is valid.\n"
 		"\n"
-		"This function is the same as the C++ method OGRGeometry::IsValid().\n"
+		"For more details: :cpp:func:`OGR_G_IsValid`\n"
 		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always return FALSE.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if the geometry has no points, otherwise False.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  The Geometry to test.\n"
-		"\n"
-		"TRUE if the geometry has no points, otherwise FALSE. \n"
 		""},
 	 { "Geometry_IsSimple", _wrap_Geometry_IsSimple, METH_O, "\n"
 		"Geometry_IsSimple(Geometry self) -> bool\n"
-		"int OGR_G_IsSimple(OGRGeometryH\n"
-		"hGeom)\n"
 		"\n"
-		"Returns TRUE if the geometry is simple.\n"
+		"Returns True if the geometry is simple.\n"
 		"\n"
-		"Returns TRUE if the geometry has no anomalous geometric points, such\n"
-		"as self intersection or self tangency. The description of each\n"
-		"instantiable geometric class will include the specific conditions that\n"
-		"cause an instance of that class to be classified as not simple.\n"
+		"For more details: :cpp:func:`OGR_G_IsSimple`\n"
 		"\n"
-		"This function is the same as the C++ method OGRGeometry::IsSimple()\n"
-		"method.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if object is simple, otherwise False.\n"
 		"\n"
-		"If OGR is built without the GEOS library, this function will always\n"
-		"return FALSE.\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  The Geometry to test.\n"
-		"\n"
-		"TRUE if object is simple, otherwise FALSE. \n"
 		""},
 	 { "Geometry_IsRing", _wrap_Geometry_IsRing, METH_O, "\n"
 		"Geometry_IsRing(Geometry self) -> bool\n"
-		"int OGR_G_IsRing(OGRGeometryH hGeom)\n"
 		"\n"
 		"Test if the geometry is a ring.\n"
 		"\n"
-		"This function is the same as the C++ method OGRGeometry::IsRing().\n"
+		"For more details: :cpp:func:`OGR_G_IsRing`\n"
 		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always return FALSE.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if the geometry has no points, otherwise False.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  The Geometry to test.\n"
-		"\n"
-		"TRUE if the geometry has no points, otherwise FALSE. \n"
 		""},
 	 { "Geometry_Intersects", _wrap_Geometry_Intersects, METH_VARARGS, "\n"
 		"Geometry_Intersects(Geometry self, Geometry other) -> bool\n"
-		"int OGR_G_Intersects(OGRGeometryH\n"
-		"hGeom, OGRGeometryH hOtherGeom)\n"
 		"\n"
-		"Do these features intersect?\n"
+		"Determines whether two geometries intersect.\n"
 		"\n"
-		"Determines whether two geometries intersect. If GEOS is enabled, then\n"
-		"this is done in rigorous fashion otherwise TRUE is returned if the\n"
-		"envelopes (bounding boxes) of the two geometries overlap.\n"
+		"For more details: :cpp:func:`OGR_G_Intersects`\n"
 		"\n"
-		"This function is the same as the CPP method OGRGeometry::Intersects.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    The other geometry to test against.\n"
 		"\n"
-		"hGeom:  handle on the first geometry.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if the geometries intersect, otherwise False.\n"
 		"\n"
-		"hOtherGeom:  handle on the other geometry to test against.\n"
-		"\n"
-		"TRUE if the geometries intersect, otherwise FALSE. \n"
 		""},
 	 { "Geometry_Intersect", _wrap_Geometry_Intersect, METH_VARARGS, "Geometry_Intersect(Geometry self, Geometry other) -> bool"},
 	 { "Geometry_Equals", _wrap_Geometry_Equals, METH_VARARGS, "\n"
 		"Geometry_Equals(Geometry self, Geometry other) -> bool\n"
-		"int OGR_G_Equals(OGRGeometryH hGeom,\n"
-		"OGRGeometryH hOther)\n"
 		"\n"
-		"Returns TRUE if two geometries are equivalent.\n"
+		"Returns True if two geometries are equivalent.\n"
 		"\n"
-		"This operation implements the SQL/MM ST_OrderingEquals() operation.\n"
+		"For more details: :cpp:func:`OGR_G_Equals`\n"
 		"\n"
-		"The comparison is done in a structural way, that is to say that the\n"
-		"geometry types must be identical, as well as the number and ordering\n"
-		"of sub-geometries and vertices. Or equivalently, two geometries are\n"
-		"considered equal by this method if their WKT/WKB representation is\n"
-		"equal. Note: this must be distinguished for equality in a spatial way\n"
-		"(which is the purpose of the ST_Equals() operation).\n"
-		"\n"
-		"This function is the same as the CPP method OGRGeometry::Equals()\n"
-		"method.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    The other geometry to test against.\n"
 		"\n"
-		"hGeom:  handle on the first geometry.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if equivalent or False otherwise.\n"
 		"\n"
-		"hOther:  handle on the other geometry to test against.\n"
-		"\n"
-		"TRUE if equivalent or FALSE otherwise. \n"
 		""},
 	 { "Geometry_Equal", _wrap_Geometry_Equal, METH_VARARGS, "Geometry_Equal(Geometry self, Geometry other) -> bool"},
 	 { "Geometry_Disjoint", _wrap_Geometry_Disjoint, METH_VARARGS, "\n"
 		"Geometry_Disjoint(Geometry self, Geometry other) -> bool\n"
-		"int OGR_G_Disjoint(OGRGeometryH\n"
-		"hThis, OGRGeometryH hOther)\n"
 		"\n"
 		"Test for disjointness.\n"
 		"\n"
-		"Tests if this geometry and the other geometry are disjoint.\n"
+		"For more details: :cpp:func:`OGR_G_Disjoint`\n"
 		"\n"
-		"Geometry validity is not checked. In case you are unsure of the\n"
-		"validity of the input geometries, call IsValid() before, otherwise the\n"
-		"result might be wrong.\n"
-		"\n"
-		"This function is the same as the C++ method OGRGeometry::Disjoint().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    The other geometry to compare.\n"
 		"\n"
-		"hThis:  the geometry to compare.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if they are disjoint, otherwise False.\n"
 		"\n"
-		"hOther:  the other geometry to compare.\n"
-		"\n"
-		"TRUE if they are disjoint, otherwise FALSE. \n"
 		""},
 	 { "Geometry_Touches", _wrap_Geometry_Touches, METH_VARARGS, "\n"
 		"Geometry_Touches(Geometry self, Geometry other) -> bool\n"
-		"int OGR_G_Touches(OGRGeometryH hThis,\n"
-		"OGRGeometryH hOther)\n"
 		"\n"
 		"Test for touching.\n"
 		"\n"
-		"Tests if this geometry and the other geometry are touching.\n"
+		"For more details: :cpp:func:`OGR_G_Touches`\n"
 		"\n"
-		"Geometry validity is not checked. In case you are unsure of the\n"
-		"validity of the input geometries, call IsValid() before, otherwise the\n"
-		"result might be wrong.\n"
-		"\n"
-		"This function is the same as the C++ method OGRGeometry::Touches().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other:\n"
+		"    the other geometry to compare.\n"
 		"\n"
-		"hThis:  the geometry to compare.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if they are touching, otherwise False.\n"
 		"\n"
-		"hOther:  the other geometry to compare.\n"
-		"\n"
-		"TRUE if they are touching, otherwise FALSE. \n"
 		""},
 	 { "Geometry_Crosses", _wrap_Geometry_Crosses, METH_VARARGS, "\n"
 		"Geometry_Crosses(Geometry self, Geometry other) -> bool\n"
-		"int OGR_G_Crosses(OGRGeometryH hThis,\n"
-		"OGRGeometryH hOther)\n"
 		"\n"
 		"Test for crossing.\n"
 		"\n"
-		"Tests if this geometry and the other geometry are crossing.\n"
+		"For more details: :cpp:func:`OGR_G_Crosses`\n"
 		"\n"
-		"Geometry validity is not checked. In case you are unsure of the\n"
-		"validity of the input geometries, call IsValid() before, otherwise the\n"
-		"result might be wrong.\n"
-		"\n"
-		"This function is the same as the C++ method OGRGeometry::Crosses().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    the other geometry to compare.\n"
 		"\n"
-		"hThis:  the geometry to compare.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if they are crossing, otherwise False.\n"
 		"\n"
-		"hOther:  the other geometry to compare.\n"
-		"\n"
-		"TRUE if they are crossing, otherwise FALSE. \n"
 		""},
 	 { "Geometry_Within", _wrap_Geometry_Within, METH_VARARGS, "\n"
 		"Geometry_Within(Geometry self, Geometry other) -> bool\n"
-		"int OGR_G_Within(OGRGeometryH hThis,\n"
-		"OGRGeometryH hOther)\n"
 		"\n"
 		"Test for containment.\n"
 		"\n"
-		"Tests if this geometry is within the other geometry.\n"
+		"For more details: :cpp:func:`OGR_G_Within`\n"
 		"\n"
-		"Geometry validity is not checked. In case you are unsure of the\n"
-		"validity of the input geometries, call IsValid() before, otherwise the\n"
-		"result might be wrong.\n"
-		"\n"
-		"This function is the same as the C++ method OGRGeometry::Within().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    the other geometry to compare.\n"
 		"\n"
-		"hThis:  the geometry to compare.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if this is within other, otherwise False.\n"
 		"\n"
-		"hOther:  the other geometry to compare.\n"
-		"\n"
-		"TRUE if hThis is within hOther, otherwise FALSE. \n"
 		""},
 	 { "Geometry_Contains", _wrap_Geometry_Contains, METH_VARARGS, "\n"
 		"Geometry_Contains(Geometry self, Geometry other) -> bool\n"
-		"int OGR_G_Contains(OGRGeometryH\n"
-		"hThis, OGRGeometryH hOther)\n"
 		"\n"
 		"Test for containment.\n"
 		"\n"
-		"Tests if this geometry contains the other geometry.\n"
+		"For more details: :cpp:func:`OGR_G_Contains`\n"
 		"\n"
-		"Geometry validity is not checked. In case you are unsure of the\n"
-		"validity of the input geometries, call IsValid() before, otherwise the\n"
-		"result might be wrong.\n"
-		"\n"
-		"This function is the same as the C++ method OGRGeometry::Contains().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    the other geometry to compare.\n"
 		"\n"
-		"hThis:  the geometry to compare.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if this contains the other geometry, otherwise False.\n"
 		"\n"
-		"hOther:  the other geometry to compare.\n"
-		"\n"
-		"TRUE if hThis contains hOther geometry, otherwise FALSE. \n"
 		""},
 	 { "Geometry_Overlaps", _wrap_Geometry_Overlaps, METH_VARARGS, "\n"
 		"Geometry_Overlaps(Geometry self, Geometry other) -> bool\n"
-		"int OGR_G_Overlaps(OGRGeometryH\n"
-		"hThis, OGRGeometryH hOther)\n"
 		"\n"
 		"Test for overlap.\n"
 		"\n"
-		"Tests if this geometry and the other geometry overlap, that is their\n"
-		"intersection has a non-zero area.\n"
+		"For more details: :cpp:func:`OGR_G_Overlaps`\n"
 		"\n"
-		"Geometry validity is not checked. In case you are unsure of the\n"
-		"validity of the input geometries, call IsValid() before, otherwise the\n"
-		"result might be wrong.\n"
-		"\n"
-		"This function is the same as the C++ method OGRGeometry::Overlaps().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"other: Geometry\n"
+		"    the other geometry to compare.\n"
 		"\n"
-		"hThis:  the geometry to compare.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if they are overlapping, otherwise False.\n"
 		"\n"
-		"hOther:  the other geometry to compare.\n"
-		"\n"
-		"TRUE if they are overlapping, otherwise FALSE. \n"
 		""},
 	 { "Geometry_TransformTo", _wrap_Geometry_TransformTo, METH_VARARGS, "\n"
 		"Geometry_TransformTo(Geometry self, SpatialReference reference) -> OGRErr\n"
-		"OGRErr\n"
-		"OGR_G_TransformTo(OGRGeometryH hGeom, OGRSpatialReferenceH hSRS)\n"
 		"\n"
 		"Transform geometry to new spatial reference system.\n"
 		"\n"
-		"This function will transform the coordinates of a geometry from their\n"
-		"current spatial reference system to a new target spatial reference\n"
-		"system. Normally this means reprojecting the vectors, but it could\n"
-		"include datum shifts, and changes of units.\n"
+		"For more details: :cpp:func:`OGR_G_TransformTo`\n"
 		"\n"
-		"This function will only work if the geometry already has an assigned\n"
-		"spatial reference system, and if it is transformable to the target\n"
-		"coordinate system.\n"
-		"\n"
-		"Because this function requires internal creation and initialization of\n"
-		"an OGRCoordinateTransformation object it is significantly more\n"
-		"expensive to use this function to transform many geometries than it is\n"
-		"to create the OGRCoordinateTransformation in advance, and call\n"
-		"transform() with that transformation. This function exists primarily\n"
-		"for convenience when only transforming a single geometry.\n"
-		"\n"
-		"This function is the same as the CPP method OGRGeometry::transformTo.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"reference: SpatialReference\n"
+		"   The spatial reference system to apply.\n"
 		"\n"
-		"hGeom:  handle on the geometry to apply the transform to.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    :py:const:`osgeo.ogr.OGRERR_NONE` on success, or an error code.\n"
 		"\n"
-		"hSRS:  handle on the spatial reference system to apply.\n"
-		"\n"
-		"OGRERR_NONE on success, or an error code. \n"
 		""},
 	 { "Geometry_GetSpatialReference", _wrap_Geometry_GetSpatialReference, METH_O, "\n"
 		"Geometry_GetSpatialReference(Geometry self) -> SpatialReference\n"
-		"OGRSpatialReferenceH\n"
-		"OGR_G_GetSpatialReference(OGRGeometryH hGeom)\n"
+		"\n"
+		"For more details: :cpp:func:`OGR_G_GetSpatialReference`\n"
 		"\n"
 		"Returns spatial reference system for geometry.\n"
 		"\n"
-		"This function relates to the SFCOM IGeometry::get_SpatialReference()\n"
-		"method.\n"
+		"Returns\n"
+		"--------\n"
+		"SpatialReference\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::getSpatialReference().\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  handle on the geometry to get spatial reference from.\n"
-		"\n"
-		"a reference to the spatial reference geometry. \n"
 		""},
 	 { "Geometry_AssignSpatialReference", _wrap_Geometry_AssignSpatialReference, METH_VARARGS, "\n"
 		"Geometry_AssignSpatialReference(Geometry self, SpatialReference reference)\n"
-		"void\n"
-		"OGR_G_AssignSpatialReference(OGRGeometryH hGeom, OGRSpatialReferenceH\n"
-		"hSRS)\n"
 		"\n"
 		"Assign spatial reference to this object.\n"
 		"\n"
-		"Any existing spatial reference is replaced, but under no circumstances\n"
-		"does this result in the object being reprojected. It is just changing\n"
-		"the interpretation of the existing geometry. Note that assigning a\n"
-		"spatial reference increments the reference count on the\n"
-		"OGRSpatialReference, but does not copy it.\n"
+		"For more details: :cpp:func:`OGR_G_AssignSpatialReference`\n"
 		"\n"
-		"Starting with GDAL 2.3, this will also assign the spatial reference to\n"
-		"potential sub-geometries of the geometry ( OGRGeometryCollection,\n"
-		"OGRCurvePolygon/OGRPolygon, OGRCompoundCurve, OGRPolyhedralSurface and\n"
-		"their derived classes).\n"
-		"\n"
-		"This is similar to the SFCOM IGeometry::put_SpatialReference() method.\n"
-		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::assignSpatialReference.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"reference: SpatialReference\n"
+		"    The new spatial reference system to apply.\n"
 		"\n"
-		"hGeom:  handle on the geometry to apply the new spatial reference\n"
-		"system.\n"
-		"\n"
-		"hSRS:  handle on the new spatial reference system to apply. \n"
 		""},
 	 { "Geometry_CloseRings", _wrap_Geometry_CloseRings, METH_O, "\n"
 		"Geometry_CloseRings(Geometry self)\n"
-		"void OGR_G_CloseRings(OGRGeometryH\n"
-		"hGeom)\n"
 		"\n"
 		"Force rings to be closed.\n"
 		"\n"
-		"If this geometry, or any contained geometries has polygon rings that\n"
-		"are not closed, they will be closed by adding the starting point at\n"
-		"the end.\n"
+		"For more details: :cpp:func:`OGR_G_CloseRings`\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  handle to the geometry. \n"
 		""},
 	 { "Geometry_FlattenTo2D", _wrap_Geometry_FlattenTo2D, METH_O, "\n"
 		"Geometry_FlattenTo2D(Geometry self)\n"
-		"void\n"
-		"OGR_G_FlattenTo2D(OGRGeometryH hGeom)\n"
 		"\n"
 		"Convert geometry to strictly 2D.\n"
 		"\n"
-		"In a sense this converts all Z coordinates to 0.0.\n"
+		"For more details: :cpp:func:`OGR_G_FlattenTo2D`\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::flattenTo2D().\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  handle on the geometry to convert. \n"
 		""},
 	 { "Geometry_Segmentize", _wrap_Geometry_Segmentize, METH_VARARGS, "\n"
 		"Geometry_Segmentize(Geometry self, double dfMaxLength)\n"
-		"void OGR_G_Segmentize(OGRGeometryH\n"
-		"hGeom, double dfMaxLength)\n"
 		"\n"
 		"Modify the geometry such it has no segment longer then the given\n"
 		"distance.\n"
 		"\n"
-		"Interpolated points will have Z and M values (if needed) set to 0.\n"
-		"Distance computation is performed in 2d only.\n"
+		"For more details: :cpp:func:`OGR_G_Segmentize`\n"
 		"\n"
-		"This function is the same as the CPP method OGRGeometry::segmentize().\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"dfMaxLength: float\n"
+		"    the maximum distance between 2 points after segmentization\n"
 		"\n"
-		"hGeom:  handle on the geometry to segmentize\n"
-		"\n"
-		"dfMaxLength:  the maximum distance between 2 points after\n"
-		"segmentization \n"
 		""},
 	 { "Geometry_GetEnvelope", _wrap_Geometry_GetEnvelope, METH_O, "\n"
 		"Geometry_GetEnvelope(Geometry self)\n"
-		"void\n"
-		"OGR_G_GetEnvelope(OGRGeometryH hGeom, OGREnvelope *psEnvelope)\n"
 		"\n"
 		"Computes and returns the bounding envelope for this geometry in the\n"
 		"passed psEnvelope structure.\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::getEnvelope().\n"
+		"For more details: :cpp:func:`OGR_G_GetEnvelope`\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		".. warning:: Check the return order of the bounds.\n"
 		"\n"
-		"hGeom:  handle of the geometry to get envelope from.\n"
+		"Returns\n"
+		"--------\n"
+		"minx: float\n"
+		"maxx: float\n"
+		"miny: float\n"
+		"maxy: float\n"
 		"\n"
-		"psEnvelope:  the structure in which to place the results. \n"
 		""},
 	 { "Geometry_GetEnvelope3D", _wrap_Geometry_GetEnvelope3D, METH_O, "\n"
 		"Geometry_GetEnvelope3D(Geometry self)\n"
-		"void\n"
-		"OGR_G_GetEnvelope3D(OGRGeometryH hGeom, OGREnvelope3D *psEnvelope)\n"
 		"\n"
 		"Computes and returns the bounding envelope (3D) for this geometry in\n"
 		"the passed psEnvelope structure.\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::getEnvelope().\n"
+		"For more details: :cpp:func:`OGR_G_GetEnvelope3D`\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		".. warning:: Check the return order of the bounds.\n"
 		"\n"
-		"hGeom:  handle of the geometry to get envelope from.\n"
+		"Returns\n"
+		"--------\n"
+		"minx: float\n"
+		"maxx: float\n"
+		"miny: float\n"
+		"maxy: float\n"
+		"minz: float\n"
+		"maxz: float\n"
 		"\n"
-		"psEnvelope:  the structure in which to place the results.\n"
-		"\n"
-		"OGR 1.9.0 \n"
 		""},
 	 { "Geometry_Centroid", _wrap_Geometry_Centroid, METH_O, "\n"
 		"Geometry_Centroid(Geometry self) -> Geometry\n"
-		"int OGR_G_Centroid(OGRGeometryH\n"
-		"hGeom, OGRGeometryH hCentroidPoint)\n"
 		"\n"
 		"Compute the geometry centroid.\n"
 		"\n"
-		"The centroid location is applied to the passed in OGRPoint object. The\n"
-		"centroid is not necessarily within the geometry.\n"
+		"For more details: :cpp:func:`OGR_G_Centroid`\n"
 		"\n"
-		"This method relates to the SFCOM ISurface::get_Centroid() method\n"
-		"however the current implementation based on GEOS can operate on other\n"
-		"geometry types such as multipoint, linestring, geometrycollection such\n"
-		"as multipolygons. OGC SF SQL 1.1 defines the operation for surfaces\n"
-		"(polygons). SQL/MM-Part 3 defines the operation for surfaces and\n"
-		"multisurfaces (multipolygons).\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry\n"
 		"\n"
-		"This function is the same as the C++ method OGRGeometry::Centroid().\n"
-		"\n"
-		"This function is built on the GEOS library, check it for the\n"
-		"definition of the geometry operation. If OGR is built without the GEOS\n"
-		"library, this function will always fail, issuing a CPLE_NotSupported\n"
-		"error.\n"
-		"\n"
-		"OGRERR_NONE on success or OGRERR_FAILURE on error. \n"
 		""},
 	 { "Geometry_PointOnSurface", _wrap_Geometry_PointOnSurface, METH_O, "\n"
 		"Geometry_PointOnSurface(Geometry self) -> Geometry\n"
-		"OGRGeometryH\n"
-		"OGR_G_PointOnSurface(OGRGeometryH hGeom)\n"
 		"\n"
 		"Returns a point guaranteed to lie on the surface.\n"
 		"\n"
-		"This method relates to the SFCOM ISurface::get_PointOnSurface() method\n"
-		"however the current implementation based on GEOS can operate on other\n"
-		"geometry types than the types that are supported by SQL/MM-Part 3 :\n"
-		"surfaces (polygons) and multisurfaces (multipolygons).\n"
+		"For more details: :cpp:func:`OGR_G_PointOnSurface`\n"
 		"\n"
-		"This method is built on the GEOS library, check it for the definition\n"
-		"of the geometry operation. If OGR is built without the GEOS library,\n"
-		"this method will always fail, issuing a CPLE_NotSupported error.\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    A point guaranteed to lie on the surface or None if an error occurred.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  the geometry to operate on.\n"
-		"\n"
-		"a point guaranteed to lie on the surface or NULL if an error occurred.\n"
-		"\n"
-		"OGR 1.10 \n"
 		""},
 	 { "Geometry_WkbSize", _wrap_Geometry_WkbSize, METH_O, "\n"
 		"Geometry_WkbSize(Geometry self) -> size_t\n"
-		"int OGR_G_WkbSize(OGRGeometryH hGeom)\n"
 		"\n"
 		"Returns size of related binary representation.\n"
 		"\n"
-		"This function returns the exact number of bytes required to hold the\n"
-		"well known binary representation of this geometry object. Its\n"
-		"computation may be slightly expensive for complex geometries.\n"
+		"For more details: :cpp:func:`OGR_G_WkbSize`\n"
 		"\n"
-		"This function relates to the SFCOM IWks::WkbSize() method.\n"
+		"Returns\n"
+		"--------\n"
+		"int\n"
 		"\n"
-		"This function is the same as the CPP method OGRGeometry::WkbSize().\n"
-		"\n"
-		"Use OGR_G_WkbSizeEx() if called on huge geometries (> 2 GB serialized)\n"
-		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  handle on the geometry to get the binary size from.\n"
-		"\n"
-		"size of binary representation in bytes. \n"
 		""},
 	 { "Geometry_GetCoordinateDimension", _wrap_Geometry_GetCoordinateDimension, METH_O, "\n"
 		"Geometry_GetCoordinateDimension(Geometry self) -> int\n"
-		"int\n"
-		"OGR_G_GetCoordinateDimension(OGRGeometryH hGeom)\n"
 		"\n"
 		"Get the dimension of the coordinates in this geometry.\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::getCoordinateDimension().\n"
+		"For more details: :cpp:func:`OGR_G_GetCoordinateDimension`\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		".. warning:: Deprecated. Use :py:func:`CoordinateDimension`,\n"
+		"    :py:func:`Is3D`, or :py:func:`IsMeasured`.\n"
 		"\n"
-		"hGeom:  handle on the geometry to get the dimension of the coordinates\n"
-		"from.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    This will return 2 or 3.\n"
 		"\n"
-		"Deprecated use OGR_G_CoordinateDimension(), OGR_G_Is3D(), or\n"
-		"OGR_G_IsMeasured().\n"
-		"\n"
-		"this will return 2 or 3. \n"
 		""},
 	 { "Geometry_CoordinateDimension", _wrap_Geometry_CoordinateDimension, METH_O, "\n"
 		"Geometry_CoordinateDimension(Geometry self) -> int\n"
-		"int\n"
-		"OGR_G_CoordinateDimension(OGRGeometryH hGeom)\n"
 		"\n"
 		"Get the dimension of the coordinates in this geometry.\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::CoordinateDimension().\n"
+		"For more details: :cpp:func:`OGR_G_CoordinateDimension`\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		".. versionadded:: 2.1\n"
 		"\n"
-		"hGeom:  handle on the geometry to get the dimension of the coordinates\n"
-		"from.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    This will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.\n"
 		"\n"
-		"this will return 2 for XY, 3 for XYZ and XYM, and 4 for XYZM data.\n"
-		"\n"
-		"GDAL 2.1 \n"
 		""},
 	 { "Geometry_Is3D", _wrap_Geometry_Is3D, METH_O, "\n"
 		"Geometry_Is3D(Geometry self) -> int\n"
-		"int OGR_G_Is3D(OGRGeometryH hGeom)\n"
 		"\n"
 		"See whether this geometry has Z coordinates.\n"
 		"\n"
-		"This function is the same as the CPP method OGRGeometry::Is3D().\n"
+		"For more details: :cpp:func:`OGR_G_Is3D`\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		".. versionadded:: 2.1\n"
 		"\n"
-		"hGeom:  handle on the geometry to check whether it has Z coordinates.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if the geometry has Z coordinates.\n"
 		"\n"
-		"TRUE if the geometry has Z coordinates.\n"
-		"\n"
-		"GDAL 2.1 \n"
 		""},
 	 { "Geometry_IsMeasured", _wrap_Geometry_IsMeasured, METH_O, "\n"
 		"Geometry_IsMeasured(Geometry self) -> int\n"
-		"int OGR_G_IsMeasured(OGRGeometryH\n"
-		"hGeom)\n"
 		"\n"
 		"See whether this geometry is measured.\n"
 		"\n"
-		"This function is the same as the CPP method OGRGeometry::IsMeasured().\n"
+		"For more details: :cpp:func:`OGR_G_IsMeasured`\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
+		".. versionadded:: 2.1\n"
 		"\n"
-		"hGeom:  handle on the geometry to check whether it is measured.\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    True if the geometry has M coordinates.\n"
 		"\n"
-		"TRUE if the geometry has M coordinates.\n"
-		"\n"
-		"GDAL 2.1 \n"
 		""},
 	 { "Geometry_SetCoordinateDimension", _wrap_Geometry_SetCoordinateDimension, METH_VARARGS, "\n"
 		"Geometry_SetCoordinateDimension(Geometry self, int dimension)\n"
-		"void\n"
-		"OGR_G_SetCoordinateDimension(OGRGeometryH hGeom, int nNewDimension)\n"
 		"\n"
 		"Set the coordinate dimension.\n"
 		"\n"
-		"This method sets the explicit coordinate dimension. Setting the\n"
-		"coordinate dimension of a geometry to 2 should zero out any existing Z\n"
-		"values. Setting the dimension of a geometry collection, a compound\n"
-		"curve, a polygon, etc. will affect the children geometries. This will\n"
-		"also remove the M dimension if present before this call.\n"
+		"For more details: :cpp:func:`OGR_G_SetCoordinateDimension`\n"
 		"\n"
-		"Deprecated use OGR_G_Set3D() or OGR_G_SetMeasured().\n"
+		".. warning:: Deprecated. Use :py:func:`Set3D` or :py:func:`SetMeasured`.\n"
 		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"dimension: int\n"
+		"    New coordinate dimension value, either 2 or 3.\n"
 		"\n"
-		"hGeom:  handle on the geometry to set the dimension of the\n"
-		"coordinates.\n"
-		"\n"
-		"nNewDimension:  New coordinate dimension value, either 2 or 3. \n"
 		""},
 	 { "Geometry_Set3D", _wrap_Geometry_Set3D, METH_VARARGS, "\n"
 		"Geometry_Set3D(Geometry self, int b3D)\n"
-		"void OGR_G_Set3D(OGRGeometryH hGeom,\n"
-		"int bIs3D)\n"
 		"\n"
 		"Add or remove the Z coordinate dimension.\n"
 		"\n"
-		"This method adds or removes the explicit Z coordinate dimension.\n"
-		"Removing the Z coordinate dimension of a geometry will remove any\n"
-		"existing Z values. Adding the Z dimension to a geometry collection, a\n"
-		"compound curve, a polygon, etc. will affect the children geometries.\n"
+		"For more details: :cpp:func:`OGR_G_Set3D`\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.1\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"bIs3D: bool\n"
+		"    Should the geometry have a Z dimension, either True or False.\n"
 		"\n"
-		"hGeom:  handle on the geometry to set or unset the Z dimension.\n"
-		"\n"
-		"bIs3D:  Should the geometry have a Z dimension, either TRUE or FALSE.\n"
-		"\n"
-		"GDAL 2.1 \n"
 		""},
 	 { "Geometry_SetMeasured", _wrap_Geometry_SetMeasured, METH_VARARGS, "\n"
 		"Geometry_SetMeasured(Geometry self, int bMeasured)\n"
-		"void\n"
-		"OGR_G_SetMeasured(OGRGeometryH hGeom, int bIsMeasured)\n"
 		"\n"
 		"Add or remove the M coordinate dimension.\n"
 		"\n"
-		"This method adds or removes the explicit M coordinate dimension.\n"
-		"Removing the M coordinate dimension of a geometry will remove any\n"
-		"existing M values. Adding the M dimension to a geometry collection, a\n"
-		"compound curve, a polygon, etc. will affect the children geometries.\n"
+		"For more details: :cpp:func:`OGR_G_SetMeasured`\n"
 		"\n"
-		"Parameters:\n"
+		".. versionadded:: 2.1\n"
+		"\n"
+		"Parameters\n"
 		"-----------\n"
+		"bIsMeasured: bool\n"
+		"    Should the geometry have a M dimension, either True or False.\n"
 		"\n"
-		"hGeom:  handle on the geometry to set or unset the M dimension.\n"
-		"\n"
-		"bIsMeasured:  Should the geometry have a M dimension, either TRUE or\n"
-		"FALSE.\n"
-		"\n"
-		"GDAL 2.1 \n"
 		""},
 	 { "Geometry_GetDimension", _wrap_Geometry_GetDimension, METH_O, "\n"
 		"Geometry_GetDimension(Geometry self) -> int\n"
-		"int\n"
-		"OGR_G_GetDimension(OGRGeometryH hGeom)\n"
 		"\n"
 		"Get the dimension of this geometry.\n"
 		"\n"
-		"This function corresponds to the SFCOM IGeometry::GetDimension()\n"
-		"method. It indicates the dimension of the geometry, but does not\n"
-		"indicate the dimension of the underlying space (as indicated by\n"
-		"OGR_G_GetCoordinateDimension() function).\n"
+		"For more details: :cpp:func:`OGR_G_GetDimension`\n"
 		"\n"
-		"This function is the same as the CPP method\n"
-		"OGRGeometry::getDimension().\n"
+		"Returns\n"
+		"--------\n"
+		"int:\n"
+		"    0 for points, 1 for lines, and 2 for surfaces.\n"
 		"\n"
-		"Parameters:\n"
-		"-----------\n"
-		"\n"
-		"hGeom:  handle on the geometry to get the dimension from.\n"
-		"\n"
-		"0 for points, 1 for lines and 2 for surfaces. \n"
 		""},
 	 { "Geometry_HasCurveGeometry", _wrap_Geometry_HasCurveGeometry, METH_VARARGS, "Geometry_HasCurveGeometry(Geometry self, int bLookForCircular=FALSE) -> int"},
 	 { "Geometry_GetLinearGeometry", (PyCFunction)(void(*)(void))_wrap_Geometry_GetLinearGeometry, METH_VARARGS|METH_KEYWORDS, "Geometry_GetLinearGeometry(Geometry self, double dfMaxAngleStepSizeDegrees=0.0, char ** options=None) -> Geometry"},
@@ -35828,34 +35862,21 @@ static PyMethodDef SwigMethods[] = {
 	 { "Geometry_Transform", _wrap_Geometry_Transform, METH_VARARGS, "\n"
 		"Geometry_Transform(Geometry self, CoordinateTransformation trans) -> OGRErr\n"
 		"Geometry_Transform(Geometry self, GeomTransformer transformer) -> Geometry\n"
-		"OGRErr OGR_G_Transform(OGRGeometryH\n"
-		"hGeom, OGRCoordinateTransformationH hTransform)\n"
 		"\n"
 		"Apply arbitrary coordinate transformation to geometry.\n"
 		"\n"
-		"This function will transform the coordinates of a geometry from their\n"
-		"current spatial reference system to a new target spatial reference\n"
-		"system. Normally this means reprojecting the vectors, but it could\n"
-		"include datum shifts, and changes of units.\n"
+		"For more details: :cpp:func:`OGR_G_Transform`\n"
 		"\n"
-		"Note that this function does not require that the geometry already\n"
-		"have a spatial reference system. It will be assumed that they can be\n"
-		"treated as having the source spatial reference system of the\n"
-		"OGRCoordinateTransformation object, and the actual SRS of the geometry\n"
-		"will be ignored. On successful completion the output\n"
-		"OGRSpatialReference of the OGRCoordinateTransformation will be\n"
-		"assigned to the geometry.\n"
-		"\n"
-		"This function is the same as the CPP method OGRGeometry::transform.\n"
-		"\n"
-		"Parameters:\n"
+		"Parameters\n"
 		"-----------\n"
+		"trans: CoordinateTransform\n"
+		"    The transformation to apply.\n"
 		"\n"
-		"hGeom:  handle on the geometry to apply the transform to.\n"
+		"Returns\n"
+		"--------\n"
+		"Geometry:\n"
+		"    The transformed geometry.\n"
 		"\n"
-		"hTransform:  handle on the transformation to apply.\n"
-		"\n"
-		"OGRERR_NONE on success or an error code. \n"
 		""},
 	 { "Geometry_CreatePreparedGeometry", _wrap_Geometry_CreatePreparedGeometry, METH_O, "Geometry_CreatePreparedGeometry(Geometry self) -> PreparedGeometry"},
 	 { "Geometry_swigregister", Geometry_swigregister, METH_O, NULL},
@@ -35937,6 +35958,9 @@ static void *_p_OGRLayerShadowTo_p_GDALMajorObjectShadow(void *x, int *SWIGUNUSE
 static void *_p_OGRDataSourceShadowTo_p_GDALMajorObjectShadow(void *x, int *SWIGUNUSEDPARM(newmemory)) {
     return (void *)((GDALMajorObjectShadow *)  ((OGRDataSourceShadow *) x));
 }
+static swig_type_info _swigt__p_ArrowArray = {"_p_ArrowArray", "ArrowArray *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_ArrowArrayStream = {"_p_ArrowArrayStream", "ArrowArrayStream *", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_ArrowSchema = {"_p_ArrowSchema", "ArrowSchema *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALMajorObjectShadow = {"_p_GDALMajorObjectShadow", "GDALMajorObjectShadow *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GDALProgressFunc = {"_p_GDALProgressFunc", "GDALProgressFunc *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_GIntBig = {"_p_GIntBig", "GIntBig *", 0, 0, (void*)0, 0};
@@ -35961,12 +35985,16 @@ static swig_type_info _swigt__p_f_double_p_q_const__char_p_void__int = {"_p_f_do
 static swig_type_info _swigt__p_float = {"_p_float", "float *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_int = {"_p_int", "OGRFieldSubType *|OSRAxisMappingStrategy *|OGRFieldDomainType *|OGRFieldType *|CPLErr *|int *|OGRwkbGeometryType *|OGRJustification *|OGRAxisOrientation *|OGRFieldDomainSplitPolicy *|OGRFieldDomainMergePolicy *|OGRwkbByteOrder *|OGRErr *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_GIntBig = {"_p_p_GIntBig", "GIntBig **", 0, 0, (void*)0, 0};
+static swig_type_info _swigt__p_p_OGRGeometryTypeCounter = {"_p_p_OGRGeometryTypeCounter", "OGRGeometryTypeCounter **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_char = {"_p_p_char", "char **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_double = {"_p_p_double", "double **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_p_int = {"_p_p_int", "int **", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_size_t = {"_p_size_t", "size_t *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
+  &_swigt__p_ArrowArray,
+  &_swigt__p_ArrowArrayStream,
+  &_swigt__p_ArrowSchema,
   &_swigt__p_GDALMajorObjectShadow,
   &_swigt__p_GDALProgressFunc,
   &_swigt__p_GIntBig,
@@ -35991,12 +36019,16 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_float,
   &_swigt__p_int,
   &_swigt__p_p_GIntBig,
+  &_swigt__p_p_OGRGeometryTypeCounter,
   &_swigt__p_p_char,
   &_swigt__p_p_double,
   &_swigt__p_p_int,
   &_swigt__p_size_t,
 };
 
+static swig_cast_info _swigc__p_ArrowArray[] = {  {&_swigt__p_ArrowArray, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_ArrowArrayStream[] = {  {&_swigt__p_ArrowArrayStream, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_ArrowSchema[] = {  {&_swigt__p_ArrowSchema, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALMajorObjectShadow[] = {  {&_swigt__p_GDALMajorObjectShadow, 0, 0, 0},  {&_swigt__p_OGRDriverShadow, _p_OGRDriverShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRLayerShadow, _p_OGRLayerShadowTo_p_GDALMajorObjectShadow, 0, 0},  {&_swigt__p_OGRDataSourceShadow, _p_OGRDataSourceShadowTo_p_GDALMajorObjectShadow, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GDALProgressFunc[] = {  {&_swigt__p_GDALProgressFunc, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_GIntBig[] = {  {&_swigt__p_GIntBig, 0, 0, 0},{0, 0, 0, 0}};
@@ -36021,12 +36053,16 @@ static swig_cast_info _swigc__p_f_double_p_q_const__char_p_void__int[] = {  {&_s
 static swig_cast_info _swigc__p_float[] = {  {&_swigt__p_float, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_int[] = {  {&_swigt__p_int, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_GIntBig[] = {  {&_swigt__p_p_GIntBig, 0, 0, 0},{0, 0, 0, 0}};
+static swig_cast_info _swigc__p_p_OGRGeometryTypeCounter[] = {  {&_swigt__p_p_OGRGeometryTypeCounter, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_char[] = {  {&_swigt__p_p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_double[] = {  {&_swigt__p_p_double, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_p_int[] = {  {&_swigt__p_p_int, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_size_t[] = {  {&_swigt__p_size_t, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
+  _swigc__p_ArrowArray,
+  _swigc__p_ArrowArrayStream,
+  _swigc__p_ArrowSchema,
   _swigc__p_GDALMajorObjectShadow,
   _swigc__p_GDALProgressFunc,
   _swigc__p_GIntBig,
@@ -36051,6 +36087,7 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_float,
   _swigc__p_int,
   _swigc__p_p_GIntBig,
+  _swigc__p_p_OGRGeometryTypeCounter,
   _swigc__p_p_char,
   _swigc__p_p_double,
   _swigc__p_p_int,
@@ -36908,11 +36945,20 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "ALTER_UNIQUE_FLAG",SWIG_From_int(static_cast< int >(32)));
   SWIG_Python_SetConstant(d, "ALTER_DOMAIN_FLAG",SWIG_From_int(static_cast< int >(64)));
   SWIG_Python_SetConstant(d, "ALTER_ALL_FLAG",SWIG_From_int(static_cast< int >(1+2+4+8+16+32+64)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_NAME_FLAG",SWIG_From_int(static_cast< int >(4096)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_TYPE_FLAG",SWIG_From_int(static_cast< int >(8192)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_NULLABLE_FLAG",SWIG_From_int(static_cast< int >(16384)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_SRS_FLAG",SWIG_From_int(static_cast< int >(32768)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG",SWIG_From_int(static_cast< int >(65536)));
+  SWIG_Python_SetConstant(d, "ALTER_GEOM_FIELD_DEFN_ALL_FLAG",SWIG_From_int(static_cast< int >(4096+8192+16384+32768+65536)));
   SWIG_Python_SetConstant(d, "F_VAL_NULL",SWIG_From_int(static_cast< int >(0x00000001)));
   SWIG_Python_SetConstant(d, "F_VAL_GEOM_TYPE",SWIG_From_int(static_cast< int >(0x00000002)));
   SWIG_Python_SetConstant(d, "F_VAL_WIDTH",SWIG_From_int(static_cast< int >(0x00000004)));
   SWIG_Python_SetConstant(d, "F_VAL_ALLOW_NULL_WHEN_DEFAULT",SWIG_From_int(static_cast< int >(0x00000008)));
   SWIG_Python_SetConstant(d, "F_VAL_ALL",SWIG_From_int(static_cast< int >(0xFFFFFFFF)));
+  SWIG_Python_SetConstant(d, "GGT_COUNT_NOT_NEEDED",SWIG_From_int(static_cast< int >(0x1)));
+  SWIG_Python_SetConstant(d, "GGT_STOP_IF_MIXED",SWIG_From_int(static_cast< int >(0x2)));
+  SWIG_Python_SetConstant(d, "GGT_GEOMCOLLECTIONZ_TINZ",SWIG_From_int(static_cast< int >(0x4)));
   SWIG_Python_SetConstant(d, "OLCRandomRead",SWIG_FromCharPtr("RandomRead"));
   SWIG_Python_SetConstant(d, "OLCSequentialWrite",SWIG_FromCharPtr("SequentialWrite"));
   SWIG_Python_SetConstant(d, "OLCRandomWrite",SWIG_FromCharPtr("RandomWrite"));
@@ -36923,6 +36969,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OLCDeleteField",SWIG_FromCharPtr("DeleteField"));
   SWIG_Python_SetConstant(d, "OLCReorderFields",SWIG_FromCharPtr("ReorderFields"));
   SWIG_Python_SetConstant(d, "OLCAlterFieldDefn",SWIG_FromCharPtr("AlterFieldDefn"));
+  SWIG_Python_SetConstant(d, "OLCAlterGeomFieldDefn",SWIG_FromCharPtr("AlterGeomFieldDefn"));
   SWIG_Python_SetConstant(d, "OLCTransactions",SWIG_FromCharPtr("Transactions"));
   SWIG_Python_SetConstant(d, "OLCDeleteFeature",SWIG_FromCharPtr("DeleteFeature"));
   SWIG_Python_SetConstant(d, "OLCFastSetNextByIndex",SWIG_FromCharPtr("FastSetNextByIndex"));
@@ -36931,7 +36978,9 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "OLCCreateGeomField",SWIG_FromCharPtr("CreateGeomField"));
   SWIG_Python_SetConstant(d, "OLCCurveGeometries",SWIG_FromCharPtr("CurveGeometries"));
   SWIG_Python_SetConstant(d, "OLCMeasuredGeometries",SWIG_FromCharPtr("MeasuredGeometries"));
+  SWIG_Python_SetConstant(d, "OLCZGeometries",SWIG_FromCharPtr("ZGeometries"));
   SWIG_Python_SetConstant(d, "OLCRename",SWIG_FromCharPtr("Rename"));
+  SWIG_Python_SetConstant(d, "OLCFastGetArrowStream",SWIG_FromCharPtr("FastGetArrowStream"));
   SWIG_Python_SetConstant(d, "ODsCCreateLayer",SWIG_FromCharPtr("CreateLayer"));
   SWIG_Python_SetConstant(d, "ODsCDeleteLayer",SWIG_FromCharPtr("DeleteLayer"));
   SWIG_Python_SetConstant(d, "ODsCCreateGeomFieldAfterCreateLayer",SWIG_FromCharPtr("CreateGeomFieldAfterCreateLayer"));
@@ -36939,6 +36988,7 @@ SWIG_init(void) {
   SWIG_Python_SetConstant(d, "ODsCTransactions",SWIG_FromCharPtr("Transactions"));
   SWIG_Python_SetConstant(d, "ODsCEmulatedTransactions",SWIG_FromCharPtr("EmulatedTransactions"));
   SWIG_Python_SetConstant(d, "ODsCMeasuredGeometries",SWIG_FromCharPtr("MeasuredGeometries"));
+  SWIG_Python_SetConstant(d, "ODsCZGeometries",SWIG_FromCharPtr("ZGeometries"));
   SWIG_Python_SetConstant(d, "ODsCRandomLayerRead",SWIG_FromCharPtr("RandomLayerRead"));
   SWIG_Python_SetConstant(d, "ODsCRandomLayerWrite",SWIG_FromCharPtr("RandomLayerWrite "));
   SWIG_Python_SetConstant(d, "ODsCAddFieldDomain",SWIG_FromCharPtr("AddFieldDomain"));

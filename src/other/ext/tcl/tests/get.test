@@ -20,8 +20,6 @@ catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testgetint [llength [info commands testgetint]]
 testConstraint testdoubleobj [llength [info commands testdoubleobj]]
-testConstraint longIs32bit [expr {int(0x80000000) < 0}]
-testConstraint longIs64bit [expr {int(0x8000000000000000) < 0}]
 
 test get-1.1 {Tcl_GetInt procedure} testgetint {
     testgetint 44 { 	  22}
@@ -41,28 +39,28 @@ test get-1.5 {Tcl_GetInt procedure} testgetint {
 test get-1.6 {Tcl_GetInt procedure} testgetint {
     list [catch {testgetint 44 {16	 x}} msg] $msg
 } {1 {expected integer but got "16	 x"}}
-test get-1.7 {Tcl_GetInt procedure} {testgetint longIs64bit} {
+test get-1.7 {Tcl_GetInt procedure} testgetint {
     list [catch {testgetint 44 18446744073709551616} msg] $msg $errorCode
 } {1 {integer value too large to represent} {ARITH IOVERFLOW {integer value too large to represent}}}
-test get-1.8 {Tcl_GetInt procedure} {testgetint longIs64bit} {
-    list [catch {testgetint 18446744073709551614} msg] $msg
-} {0 -2}
-test get-1.9 {Tcl_GetInt procedure} {testgetint longIs64bit} {
-    list [catch {testgetint +18446744073709551614} msg] $msg
-} {0 -2}
-test get-1.10 {Tcl_GetInt procedure} {testgetint longIs64bit} {
-    list [catch {testgetint -18446744073709551614} msg] $msg
-} {0 2}
-test get-1.11 {Tcl_GetInt procedure} {testgetint longIs32bit} {
+test get-1.8 {Tcl_GetInt procedure} testgetint {
+    list [catch {testgetint 18446744073709551614} msg] $msg $errorCode
+} {1 {integer value too large to represent} {ARITH IOVERFLOW {integer value too large to represent}}}
+test get-1.9 {Tcl_GetInt procedure} testgetint {
+    list [catch {testgetint +18446744073709551614} msg] $msg $errorCode
+} {1 {integer value too large to represent} {ARITH IOVERFLOW {integer value too large to represent}}}
+test get-1.10 {Tcl_GetInt procedure} testgetint {
+    list [catch {testgetint -18446744073709551614} msg] $msg $errorCode
+} {1 {integer value too large to represent} {ARITH IOVERFLOW {integer value too large to represent}}}
+test get-1.11 {Tcl_GetInt procedure} testgetint {
     list [catch {testgetint 44 4294967296} msg] $msg $errorCode
 } {1 {integer value too large to represent} {ARITH IOVERFLOW {integer value too large to represent}}}
-test get-1.12 {Tcl_GetInt procedure} {testgetint longIs32bit} {
+test get-1.12 {Tcl_GetInt procedure} testgetint {
     list [catch {testgetint 4294967294} msg] $msg
 } {0 -2}
-test get-1.13 {Tcl_GetInt procedure} {testgetint longIs32bit} {
+test get-1.13 {Tcl_GetInt procedure} testgetint {
     list [catch {testgetint +4294967294} msg] $msg
 } {0 -2}
-test get-1.14 {Tcl_GetInt procedure} {testgetint longIs32bit} {
+test get-1.14 {Tcl_GetInt procedure} testgetint {
     list [catch {testgetint -4294967294} msg] $msg
 } {0 2}
 

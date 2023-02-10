@@ -381,7 +381,7 @@ TEST(gie, info_functions) {
         ASSERT_EQ(std::string(info.version), std::string(tmpstr));
     }
     ASSERT_NE(std::string(info.release), "");
-    if (getenv("HOME") || getenv("PROJ_LIB")) {
+    if (getenv("HOME") || getenv("PROJ_LIB") || getenv("PROJ_DATA")) {
         ASSERT_NE(std::string(info.searchpath), std::string());
     }
 
@@ -411,6 +411,14 @@ TEST(gie, info_functions) {
     ASSERT_NE(std::string(grid_info.filename), "");
     ASSERT_EQ(std::string(grid_info.gridname), "tests/test_hgrid.tif");
     ASSERT_EQ(std::string(grid_info.format), "gtiff");
+    EXPECT_EQ(grid_info.n_lon, 4);
+    EXPECT_EQ(grid_info.n_lat, 4);
+    EXPECT_NEAR(grid_info.cs_lon, 0.017453292519943295, 1e-15);
+    EXPECT_NEAR(grid_info.cs_lat, 0.017453292519943295, 1e-15);
+    EXPECT_NEAR(grid_info.lowerleft.lam, 0.069813170079773182, 1e-15);
+    EXPECT_NEAR(grid_info.lowerleft.phi, 0.90757121103705141, 1e-15);
+    EXPECT_NEAR(grid_info.upperright.lam, 0.12217304763960307, 1e-15);
+    EXPECT_NEAR(grid_info.upperright.phi, 0.95993108859688125, 1e-15);
 
     grid_info = proj_grid_info("nonexistinggrid");
     ASSERT_EQ(std::string(grid_info.filename), "");
@@ -763,6 +771,120 @@ TEST(gie, horner_selftest) {
     proj_destroy(P);
 }
 
+static const char tc32_utm32_fwd_only[] = {
+    " +proj=horner"
+    " +ellps=intl"
+    " +range=10000000"
+    " +fwd_origin=877605.269066,6125810.306769"
+    " +deg=4"
+    " +fwd_v=6.1258112678e+06,9.9999971567e-01,1.5372750011e-10,5.9300860915e-"
+    "15,2.2609497633e-19,4.3188227445e-05,2.8225130416e-10,7.8740007114e-16,-1."
+    "7453997279e-19,1.6877465415e-10,-1.1234649773e-14,-1.7042333358e-18,-7."
+    "9303467953e-15,-5.2906832535e-19,3.9984284847e-19"
+    " +fwd_u=8.7760574982e+05,9.9999752475e-01,2.8817299305e-10,5.5641310680e-"
+    "15,-1.5544700949e-18,-4.1357045890e-05,4.2106213519e-11,2.8525551629e-14,-"
+    "1.9107771273e-18,3.3615590093e-10,2.4380247154e-14,-2.0241230315e-18,1."
+    "2429019719e-15,5.3886155968e-19,-1.0167505000e-18"};
+
+static const char sb_utm32_fwd_only[] = {
+    " +proj=horner"
+    " +ellps=intl"
+    " +range=10000000"
+    " +fwd_origin=4.94690026817276e+05,6.13342113183056e+06"
+    " +deg=3"
+    " +fwd_c=6.13258562111350e+06,6.19480105709997e+05,9.99378966275206e-01,-2."
+    "82153291753490e-02,-2.27089979140026e-10,-1.77019590701470e-09,1."
+    "08522286274070e-14,2.11430298751604e-15"};
+
+static const char hatt_to_ggrs[] = {
+    " +proj=horner"
+    " +ellps=bessel"
+    " +fwd_origin=0.0, 0.0"
+    " +deg=2"
+    " +range=10000000"
+    " +fwd_u=370552.68, 0.9997155, -1.08e-09, 0.0175123, 2.04e-09, 1.63e-09"
+    " +fwd_v=4511927.23, 0.9996979, 5.60e-10, -0.0174755, -1.65e-09, "
+    "-6.50e-10"};
+
+TEST(gie, horner_only_fwd_selftest) {
+
+    {
+        PJ *P = proj_create(PJ_DEFAULT_CTX, tc32_utm32_fwd_only);
+        ASSERT_TRUE(P != nullptr);
+
+        PJ_COORD a = proj_coord(0, 0, 0, 0);
+        a.uv.v = 6125305.4245;
+        a.uv.u = 878354.8539;
+
+        /* Check roundtrip precision for 1 iteration each way, starting in
+         * forward direction */
+        double dist = proj_roundtrip(P, PJ_FWD, 1, &a);
+        EXPECT_LE(dist, 0.01);
+
+        proj_destroy(P);
+    }
+
+    {
+        PJ_COORD a;
+        a = proj_coord(0, 0, 0, 0);
+        a.xy.x = -10157.950;
+        a.xy.y = -21121.093;
+        PJ_COORD c;
+        c = proj_coord(0, 0, 0, 0);
+        c.enu.e = 360028.794;
+        c.enu.n = 4490989.862;
+
+        PJ *P = proj_create(PJ_DEFAULT_CTX, hatt_to_ggrs);
+        ASSERT_TRUE(P != nullptr);
+
+        /* Forward projection */
+        PJ_COORD b = proj_trans(P, PJ_FWD, a);
+        double dist = proj_xy_dist(b, c);
+        EXPECT_LE(dist, 0.001);
+
+        /* Inverse projection */
+        b = proj_trans(P, PJ_INV, c);
+        dist = proj_xy_dist(b, a);
+        EXPECT_LE(dist, 0.001);
+
+        /* Check roundtrip precision for 1 iteration each way, starting in
+         * forward direction */
+        dist = proj_roundtrip(P, PJ_FWD, 1, &a);
+        EXPECT_LE(dist, 0.01);
+
+        proj_destroy(P);
+    }
+
+    {
+        PJ *P = proj_create(PJ_DEFAULT_CTX, sb_utm32_fwd_only);
+        ASSERT_TRUE(P != nullptr);
+
+        PJ_COORD a = proj_coord(0, 0, 0, 0);
+        PJ_COORD b = proj_coord(0, 0, 0, 0);
+        PJ_COORD c = proj_coord(0, 0, 0, 0);
+        a.uv.v = 6130821.2945;
+        a.uv.u = 495136.8544;
+        c.uv.v = 6130000.0000;
+        c.uv.u = 620000.0000;
+
+        /* Forward projection */
+        b = proj_trans(P, PJ_FWD, a);
+        double dist = proj_xy_dist(b, c);
+        EXPECT_LE(dist, 0.001);
+
+        /* Inverse projection */
+        b = proj_trans(P, PJ_INV, c);
+        dist = proj_xy_dist(b, a);
+        EXPECT_LE(dist, 0.001);
+
+        /* Check roundtrip precision for 1 iteration each way */
+        dist = proj_roundtrip(P, PJ_FWD, 1, &a);
+        EXPECT_LE(dist, 0.01);
+
+        proj_destroy(P);
+    }
+}
+
 // ---------------------------------------------------------------------------
 
 TEST(gie, proj_create_crs_to_crs_PULKOVO42_ETRS89) {
@@ -983,6 +1105,10 @@ TEST(gie, proj_create_crs_to_crs_from_pj_force_over) {
         EXPECT_NEAR(input_over.xyz.x, input_over_inv.xyz.x, 1e-8);
         EXPECT_NEAR(input_over.xyz.y, input_over_inv.xyz.y, 1e-8);
 
+        auto Pnormalized = proj_normalize_for_visualization(ctx, P);
+        ASSERT_TRUE(Pnormalized->over);
+        proj_destroy(Pnormalized);
+
         proj_destroy(P);
     }
 
@@ -1073,6 +1199,13 @@ TEST(gie, proj_create_crs_to_crs_from_pj_force_over) {
         EXPECT_NEAR(output.xyz.y, 14467212.882603768, 1e-8);
         EXPECT_NEAR(output_over.xyz.x, 4980122.749364435, 1e-8);
         EXPECT_NEAR(output_over.xyz.y, 14467212.882603768, 1e-8);
+
+        auto Pnormalized = proj_normalize_for_visualization(ctx, P);
+        ASSERT_TRUE(Pnormalized->over);
+        for (const auto &op : Pnormalized->alternativeCoordinateOperations) {
+            ASSERT_TRUE(op.pj->over);
+        }
+        proj_destroy(Pnormalized);
 
         proj_destroy(P);
     }

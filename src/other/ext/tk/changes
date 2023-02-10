@@ -7903,3 +7903,156 @@ Tk Cocoa 2.0: More drawing internals refinements (culler,walzer)
 2021-10-30 (bug)[6ea0b3] Mac: grab from menu makes dead window (culler)
 
 - Released 8.6.12, Nov 5, 2021 - https://core.tcl-lang.org/tk/ for details
+
+2021-11-09 (bug)[e699a7] Fix build on macOS < 10.12 (culler)
+
+2021-11-10 (bug)[8aebca,ce5d98] Mac: fix minimize button details (culler)
+
+2021-11-24 (bug)[18682c,733dae] Mac: Enter/Leave events for toplevels (culler)
+
+2021-11-29 (bug)[4ac9d2] Mac: canvas screenshot with Img package position
+	correction (chavez)
+
+2021-11-30 (documentation cleanup) [bad305] improve wm protocol
+	WM_DELETE_WINDOW documentation (culler)
+
+2021-11-30 (new) Mac: new color index "SelectedMenuItemTextColor".
+
+2021-12-01 (new)[TIP 599] Extended build information (nijtmans)
+
+2021-12-04 (bug)[440c52] fix PPM/PGM read with graylevel > 255 (vogel)
+
+2021-12-04 (bug)[5fb814] canvas redraw region for lines/polygones (vogel)
+
+2021-12-04 (new)[631a0b] text widget: direct mouse events to insert mark, not
+	current (vogel)
+
+2021-12-06 (bug)[b164ef] fix mouse events for multiple toplevels (culler)
+
+2021-12-07 (bug)[be8f5b] crash setting -type empty for a menu (vogel)
+
+2021-12-10 (bug)[50fc02,50fc02,25894d,156e58] ImgPhoto pointer issues (chavez)
+
+2021-12-20 (bug)[617861] -justify/-anchor defaults for ttk::label (nijtmans)
+
+2021-12-20 (bug)[6be8b0] Mac: crash on drag and Cmd-w (culler)
+
+2021-12-22 (bug)[a132b5] Mac: esc on combobox menu influences click reopening
+	(culler)
+
+2021-12-24 (bug)[915316] Mac: drag events not to initial widget (culler)
+
+2021-12-27 (bug)[eb26d4] Mac: wrong beep when clicking outside a combobox
+	(culler)
+
+2021-12-30 (bug)[822450] Mac: crash on exit (culler)
+
+2022-01-06 (bug)[b7d851] Mac: crash on tkdnd drop and window close (culler)
+
+2022-01-09 (bug)[40bc81] embedding error test failure (vogel)
+
+2022-01-16 (bug)[b1d115] No <Enter> event on new toplevel on current toplevel
+	destruction (vogel)
+
+2022-02-03 (bug)[3fefb3] crash in empty ttk::combobox when end index requested
+	(vogel)
+
+2022-02-07 (new)[247d80] Chinese message file (NewbieXvwu)
+
+2022-02-07 (new) Support Windows ARM platform (nijtmans)
+
+2022-02-11 (bug)[e331bc] NULL to memset in photo blank (chavez)
+
+2022-02-12 (bug)[fc5073] Mac: crash on native file dialog and tooltip (walzer)
+
+2022-02-17 (bug)[864b06] PNG photo image color numeric issue (chavez)
+
+2022-02-24 (bug)[141a11] Mac: dialog box with global grab inresponsive on
+	click in other toplevel (walzer)
+
+2022-02-25 (bug)[f75190] tk_fontchooser: multiple font families, locale
+	change, button activation (holger,vogel)
+
+2022-02-25 (bug)[ce6b42] (in TCL bug tracker) ttk::spinbox increment event
+	endless invokation (vogel)
+
+2022-02-26 (bug)[c7052d] Win: middle mouse click blocks system clipbord
+	(vogel)
+
+2022-02-27 (bug)[292598,01acde,e02fc96,0c3dbe,ee49f3,d175bb] Mac: memory leaks
+	(images, focus ring) (chavez)
+
+2022-03-07 (bug)[2a6c62] Avoid invalid <<TreeviewSelect>> events
+	(vogel,spjuth)
+
+2022-03-16 (new)[f47920] Updates to Finnish message catalog (hippelainen)
+
+2022-03-16 (bug)[424773] crash in test canvPs-5.1 (chavez,vogel)
+
+2022-03-19 (bug)[5412c6] crash in test canvWind-2.1 (SVID,vogel,griffin)
+
+2022-03-19 (bug)[54fe7a] crash in test textWind-18.3 (akuli,vogel)
+
+2022-04-04 (bug)[29b5c2] error in tk_popup with separator entry selected
+	(griffin)
+
+2022-04-07 (bug)[415415] scale advances multiple steps on single click (vogel)
+
+2022-04-10 (bug)[dc4c55] tk_popup entry index (mcdonald)
+
+2022-04-15 (bug)[c0bf1b] XVirtualEvent buffer overflows (chavez)
+
+2022-04-19 (new)[8dd3d5] Mac : use Fn + e to access Emoji (nijtmans)
+
+2022-05-11 (bug)[88cfdc] Mac: dialog memory, avoid use after free (chavez)
+
+2022-04-21 (new)[bf0f48] Mac: Optimization for compilation is now -O2
+	(nijtmans)
+
+2022-05-08 (bug)[eedd79] potential crashes in option parsing when sizeof(enum)
+	not equal to int (nijtmans)
+
+2022-05-08 (bug)[0ce975] panedwindow calls memcpy with NULL pointer (chavez)
+
+2022-05-22 (bug)[bee96b] Win: cursor warp, [tk busy] (mcdonald)
+
+2022-06-07 (bug) GIF with multiple images may reuse transparent color (oehhar)
+
+2022-06-12 (bug)[e4a051] Mac: map embedded window immediately (vogel)
+
+2022-06-15 (bug)[b18434] cygwin path compiling issues (fassel)
+
+2022-06-27 [aefdb8,be29f7] Updates to Russian message catalog (pylypenko)
+
+2022-07-04 Updates to Esperanto message catalog (ender)
+
+2022-07-19 (bug)[91ca77] Mac: map event handling (rosenburger,culler,landers)
+
+2022-07-20 (bug)[40bc81,17f44d,150174,61e0bb] embedding error test failures
+	(vogel)
+
+2022-07-25 (bug)[a3b03f] Linux, Windows: improve (ttk) menubutton menu
+	position (danckaert,vogel)
+
+2022-07-29 Update keysym tables to latest X11R6 (nijtmans)
+
+2022-08-22 [f6e4d4] consistent cross-platform polygon fill (akuli,chavez)
+
+2022-09-04 (bug)[bc6020] test treeview-bc602049ab (bende,spjuth)
+
+2022-09-08 (bug)[e17b6f] Mac: crash in test unixW-50.4 (chavez)
+
+2022-09-20 [33de84] Mac: handle Apple deprecation of OSTypes (culler)
+
+2022-09-20 (bug)[412b80] Mac menu: arrow key and menu selection (nab,culler)
+
+2022-09-22 (bug)[1a46d8,1fa325] Mac: memleak, crash safety in color (chavez)
+
+2022-10-17 [d93c81] Workaround faulty compiler optimization in VS 2022 (vogel)
+
+2022-10-26 (bug)[435739] crash in test bind-37.1 (csok,vogel)
+
+2022-10-28 (bug)[5e4e44] ttk::panedwindow drag robust wrt orientation variants
+	(xolodho,vogel)
+
+- Released 8.6.13, Nov 16, 2022 - https://core.tcl-lang.org/tk/ for details

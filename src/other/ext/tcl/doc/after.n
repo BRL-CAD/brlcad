@@ -33,6 +33,7 @@ depending on the first argument to the command:
 \fBafter \fIms\fR
 .
 \fIMs\fR must be an integer giving a time in milliseconds.
+A negative number is treated as 0.
 The command sleeps for \fIms\fR milliseconds and then returns.
 While the command is sleeping the application does not respond to
 events.
@@ -52,6 +53,9 @@ the background error will be reported by the command
 registered with \fBinterp bgerror\fR.
 The \fBafter\fR command returns an identifier that can be used
 to cancel the delayed command using \fBafter cancel\fR.
+A \fIms\fR value of 0 (or negative) queues the event immediately with
+priority over other event types (if not installed withn an event proc,
+which will wait for next round of events).
 .TP
 \fBafter cancel \fIid\fR
 .

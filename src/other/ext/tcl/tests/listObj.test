@@ -195,6 +195,16 @@ test listobj-10.1 {Bug [2971669]} {*}{
     }
     -result {{a b c d e} {} {a b c d e f}}
 }
+test listobj-10.2 {Tcl_ListObjReplace with negative start value} testobj {
+    testlistobj set 1 a b c d e
+    testlistobj replace 1 -1 2 f
+    testlistobj get 1
+} {f c d e}
+test listobj-10.3 {Tcl_ListObjReplace with negative count value} testobj {
+    testlistobj set 1 a b c d e
+    testlistobj replace 1 1 -1 f
+    testlistobj get 1
+} {a f b c d e}
 
 test listobj-11.1 {Bug 3598580: Tcl_ListObjReplace refcount management} testobj {
     testobj bug3598580

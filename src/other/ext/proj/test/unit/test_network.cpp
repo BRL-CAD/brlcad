@@ -1146,7 +1146,7 @@ TEST(networking, curl_vgridshift) {
 
     // WGS84 to EGM2008 height. Using egm08_25.tif
     auto P =
-        proj_create_crs_to_crs(ctx, "EPSG:4326", "EPSG:4326+3855", nullptr);
+        proj_create_crs_to_crs(ctx, "EPSG:4979", "EPSG:4326+3855", nullptr);
     ASSERT_NE(P, nullptr);
 
     PJ_COORD c;
@@ -1641,6 +1641,14 @@ TEST(networking, download_whole_files) {
     putenv(const_cast<char *>("PROJ_SKIP_READ_USER_WRITABLE_DIRECTORY="));
     putenv(const_cast<char *>("PROJ_USER_WRITABLE_DIRECTORY=./proj_test_tmp"));
     putenv(const_cast<char *>("PROJ_FULL_FILE_CHUNK_SIZE=100000"));
+
+    proj_context_set_enable_network(nullptr, true);
+    const auto grid_info = proj_grid_info("dk_sdfe_dvr90.tif");
+    EXPECT_EQ(std::string(grid_info.filename), "");
+    EXPECT_EQ(std::string(grid_info.gridname), "dk_sdfe_dvr90.tif");
+    EXPECT_EQ(std::string(grid_info.format), "gtiff");
+    proj_context_set_enable_network(nullptr, false);
+
     auto ctx = proj_context_create();
     proj_context_set_enable_network(ctx, true);
 
@@ -1914,6 +1922,54 @@ TEST(networking, file_api) {
     unlink("proj_test_tmp/cache.db");
     unlink("proj_test_tmp/dk_sdfe_dvr90.tif");
     rmdir("proj_test_tmp");
+}
+
+#endif
+
+// ---------------------------------------------------------------------------
+
+#ifdef CURL_ENABLED
+
+TEST(networking, proj_coordoperation_get_grid_used) {
+    if (!networkAccessOK) {
+        return;
+    }
+
+    auto ctx = proj_context_create();
+    proj_grid_cache_set_enable(ctx, false);
+    proj_context_set_enable_network(ctx, true);
+
+    // Test bugfix for
+    // https://github.com/OSGeo/PROJ/issues/3444#issuecomment-1309499342
+    for (int i = 0; i < 2; ++i) {
+        // This file is not in grid_alternatives, but in the CDN
+        const char *proj_string =
+            "proj=vgridshift grids=nz_linz_nzgd2000-c120100904-grid01.tif";
+        PJ *P = proj_create(ctx, proj_string);
+
+        const char *shortName = nullptr;
+        const char *fullName = nullptr;
+        const char *packageName = nullptr;
+        const char *url = nullptr;
+        int directDownload = 0;
+        int openLicense = 0;
+        int available = 0;
+
+        proj_coordoperation_get_grid_used(ctx, P, 0, &shortName, &fullName,
+                                          &packageName, &url, &directDownload,
+                                          &openLicense, &available);
+
+        EXPECT_EQ(std::string(shortName),
+                  "nz_linz_nzgd2000-c120100904-grid01.tif");
+        EXPECT_EQ(std::string(fullName), "");
+        EXPECT_EQ(
+            std::string(url),
+            "https://cdn.proj.org/nz_linz_nzgd2000-c120100904-grid01.tif");
+
+        proj_destroy(P);
+    }
+
+    proj_context_destroy(ctx);
 }
 
 #endif

@@ -592,7 +592,7 @@ UpdateControlValues(
     MacDrawable *macWin = (MacDrawable *)Tk_WindowId(scrollPtr->tkwin);
     double dViewSize;
     HIRect contrlRect;
-    short width, height;
+    short height;
 
     NSView *view = TkMacOSXGetNSViewForDrawable(macWin);
     CGFloat viewHeight = [view bounds].size.height;
@@ -606,7 +606,6 @@ UpdateControlValues(
     contrlRect = NSRectToCGRect(frame);
     msPtr->info.bounds = contrlRect;
 
-    width = contrlRect.size.width;
     height = contrlRect.size.height - scrollPtr->arrowLength;
 
     /*

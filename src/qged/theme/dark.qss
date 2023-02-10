@@ -186,6 +186,14 @@ QGroupBox::title
     padding-right: 0.2em;
 }
 
+QGroupBox:flat
+{
+    border-top: 0.04em solid #626568;
+    border-left: 0.04em transparent #76797c;
+    border-right: 0.04em transparent #76797c;
+    border-bottom: 0.04em transparent #76797c;
+}
+
 QCheckBox::indicator,
 QTreeView::indicator,
 QGroupBox::indicator
@@ -347,6 +355,7 @@ QMenuBar::item
 QMenuBar::item:selected
 {
     background: transparent;
+    border: 0.04em solid #3daee9;
 }
 
 QMenuBar::item:disabled
@@ -465,11 +474,6 @@ QAbstractItemView
     color: #eff0f1;
     border: 0.09em solid #31363b;
     border-radius: 0.09em;
-}
-
-QMenuBar::item:focus:!disabled
-{
-    border: 0.04em solid #3daee9;
 }
 
 QTabWidget:focus,
@@ -838,6 +842,12 @@ QPushButton
     border-radius: 0.09em;
     outline: none;
     min-height: 1.1em;
+}
+
+QPushButton:flat,
+QPushButton:flat:hover
+{
+    border: 0.04em transparent #76797c;
 }
 
 QComboBox:open,

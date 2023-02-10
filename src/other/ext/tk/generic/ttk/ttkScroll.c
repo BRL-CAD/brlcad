@@ -229,8 +229,6 @@ int TtkScrollviewCommand(
 	int count;
 
 	switch (Tk_GetScrollInfoObj(interp, objc, objv, &fraction, &count)) {
-	    case TK_SCROLL_ERROR:
-		return TCL_ERROR;
 	    case TK_SCROLL_MOVETO:
 		newFirst = (int) ((fraction * s->total) + 0.5);
 		break;
@@ -242,6 +240,8 @@ int TtkScrollviewCommand(
 		newFirst = s->first + count * perPage;
 		break;
 	    }
+	    default:
+		return TCL_ERROR;
 	}
     }
 

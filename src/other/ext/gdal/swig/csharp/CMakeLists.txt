@@ -15,15 +15,51 @@ set(GDAL_CSHARP_INSTALL_DIR
     "${CMAKE_INSTALL_DATADIR}/csharp"
     CACHE PATH "Installation sub-directory for CSharp bindings")
 
-set(CSHARP_LIBRARY_VERSION
-    "net5.0"
+
+if (DOTNET_FOUND)
+  set(CSHARP_LIBRARY_VERSION
+      "net6.0"
+      CACHE STRING ".NET version to be used for libraries")
+  set(CSHARP_APPLICATION_VERSION
+      "net6.0"
+      CACHE STRING ".NET version to be used for the sample Applications")
+else ()
+  set(CSHARP_LIBRARY_VERSION
+    "4.8"
     CACHE STRING ".NET version to be used for libraries")
-set(CSHARP_APPLICATION_VERSION
-    "net5.0"
+  set(CSHARP_APPLICATION_VERSION
+    "4.8"
     CACHE STRING ".NET version to be used for the sample Applications")
+endif ()
+
 set(CSHARP_CONFIG
     "RELEASE"
     CACHE STRING "Config to be used to compile the C# artifacts > RELEASE|CONFIG")
+
+message(STATUS "Available SDKS: " "${DOTNET_SDKS}")
+
+
+string(REGEX MATCH "[0-9\.]+" _CSHARP_LIBRARY_SDK_NUMBER "${CSHARP_LIBRARY_VERSION}" )
+message(STATUS "Requested Library DotNet SDK Level: " ${_CSHARP_LIBRARY_SDK_NUMBER} )
+string(REGEX MATCH "[0-9\.]+" _CSHARP_APPLICATION_SDK_NUMBER "${CSHARP_APPLICATION_VERSION}" )
+message(STATUS "Requested Application DotNet SDK Level: " ${_CSHARP_APPLICATION_SDK_NUMBER} )
+
+if ( DOTNET_FOUND )
+  if ( "${_CSHARP_LIBRARY_SDK_NUMBER}" IN_LIST DOTNET_SDKS OR "${CSHARP_LIBRARY_VERSION}" MATCHES "netstandard") 
+    message(STATUS "DotNet SDK " ${CSHARP_LIBRARY_VERSION} " found" )
+  else ()
+    message(STATUS "The Requested DotNet SDK was not found. C# Bindings will not be built" )
+    RETURN ()
+  endif ()
+  if ( NOT ( _CSHARP_LIBRARY_SDK_NUMBER STREQUAL _CSHARP_APPLICATION_SDK_NUMBER ) )
+    if ( "${_CSHARP_APPLICATION_SDK_NUMBER}" IN_LIST DOTNET_SDKS ) 
+      message(STATUS "DotNet SDK " ${CSHARP_APPLICATION_VERSION} " found" )
+    else ()
+      message(STATUS "The Requested DotNet SDK was not found. C# Bindings will not be built" )
+      RETURN ()
+      endif ()
+  endif ()
+endif()
 
 set(_VERSION_STRING ${GDAL_VERSION_NO_DEV_SUFFIX})
 if (GDAL_DEV_SUFFIX)
@@ -32,14 +68,26 @@ endif ()
 
 # based on https://stackoverflow.com/questions/39258250/how-to-detect-if-64-bit-msvc-with-cmake TODO - this not going to
 # cope with ARM architectures
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-  set(CSHARP_RID "osx-x64")
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  set(CSHARP_RID "linux-x64")
-elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
-  set(CSHARP_RID "win-x64")
-elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32")
-  set(CSHARP_RID "win-32")
+if (DOTNET_FOUND)
+  if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(CSHARP_RID "osx-x64")
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(CSHARP_RID "linux-x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
+    set(CSHARP_RID "win-x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32")
+    set(CSHARP_RID "win-x86")
+  endif ()
+else ()
+  if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(CSHARP_RID "x64")
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(CSHARP_RID "x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "x64")
+    set(CSHARP_RID "x64")
+  elseif ("${CMAKE_GENERATOR_PLATFORM}" STREQUAL "Win32")
+    set(CSHARP_RID "x86")
+  endif ()
 endif ()
 
 # needed because of differences in the packages
@@ -55,12 +103,12 @@ if (DOTNET_FOUND)
   dotnet_register_local_repository("local" ${_DN_REPO_PATH})
 endif ()
 
-# Cop[y build files
+# Copy build files
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gdal.snk ${CMAKE_CURRENT_BINARY_DIR}/gdal.snk COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Directory.Build.props ${CMAKE_CURRENT_BINARY_DIR}/Directory.Build.props
                COPYONLY)
 
-# Crate some placemarker packages for dependencies
+# Create some placemarker packages for dependencies
 if (DOTNET_FOUND)
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/osgeo.gdal.core.csproj.in"
                  "${CMAKE_CURRENT_BINARY_DIR}/osgeo.gdal.core.csproj")
@@ -76,6 +124,16 @@ if (DOTNET_FOUND)
 else ()
   add_custom_target(OSGeo.GDAL.Core)
 endif ()
+
+list(APPEND GDAL_SWIG_COMMON_INTERFACE_FILES
+   ${PROJECT_SOURCE_DIR}/swig/include/csharp/gdal_csharp_extend.i
+   ${PROJECT_SOURCE_DIR}/swig/include/csharp/gdal_csharp.i
+   ${PROJECT_SOURCE_DIR}/swig/include/csharp/gnm_csharp.i
+   ${PROJECT_SOURCE_DIR}/swig/include/csharp/ogr_csharp_extend.i
+   ${PROJECT_SOURCE_DIR}/swig/include/csharp/ogr_csharp.i
+   ${PROJECT_SOURCE_DIR}/swig/include/csharp/osr_csharp.i
+   ${PROJECT_SOURCE_DIR}/swig/include/csharp/swig_csharp_extensions.i
+   ${PROJECT_SOURCE_DIR}/swig/include/csharp/typemaps_csharp.i)
 
 # function for csharp wrapper build
 function (gdal_csharp_wrap)
@@ -126,10 +184,16 @@ function (gdal_csharp_dll)
   cmake_parse_arguments(_CSHARP "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" ${ARGN})
   get_filename_component(_root ${_CSHARP_TARGET} NAME_WE)
 
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}.csproj" _CSHARP_PROJ)
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}" _CSHARP_PROJ_PATH)
-  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}" _CSHARP_DLL_TARGET)
-  set(CSC_OPTIONS /unsafe /debug:full /target:library /out:${_CSHARP_DLL_TARGET})
+  if(WIN32)
+      file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}.csproj" _CSHARP_PROJ)
+      file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}" _CSHARP_PROJ_PATH)
+      file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}" _CSHARP_DLL_TARGET)
+  else()
+      set(_CSHARP_PROJ "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_root}.csproj")
+      set(_CSHARP_PROJ_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}")
+      set(_CSHARP_DLL_TARGET "${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET_SUBDIR}/${_CSHARP_TARGET}")
+  endif()
+  set(CSC_OPTIONS /unsafe /debug:full /target:library /sdk:${_CSHARP_LIBRARY_SDK_NUMBER} /platform:${CSHARP_RID} /out:${_CSHARP_DLL_TARGET} )
   if (WIN32)
     list(APPEND CSC_OPTIONS /define:CLR4)
   endif ()
@@ -140,7 +204,11 @@ function (gdal_csharp_dll)
   set(_deps csharp_interface)
   if (_CSHARP_DEPENDS)
     foreach (_dep IN LISTS _CSHARP_DEPENDS)
-      file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
+      if(WIN32)
+          file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
+      else()
+          set(_dep "${CMAKE_CURRENT_BINARY_DIR}/${_dep}")
+      endif()
       get_filename_component(_filename ${_dep} NAME)
       list(APPEND _dlls ${_filename}.dll)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
@@ -184,7 +252,7 @@ function (gdal_csharp_dll)
 
   else ()
     if (CMAKE_VERBOSE_MAKEFILE)
-      message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_CSHARP_TARGET})
+      message(STATUS "BUILDING : " ${_CSHARP_TARGET} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} )
     endif ()
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_CSHARP_TARGET}
@@ -315,18 +383,31 @@ function (gdal_build_csharp_sample)
   get_filename_component(_folder ${_GBCS_OUTPUT} NAME_WE)
   set(_GBCS_PROJ_PATH ${CMAKE_CURRENT_BINARY_DIR}/${_folder})
   set(_GBCS_PROJ ${_GBCS_PROJ_PATH}/${_folder})
-  file(TO_NATIVE_PATH "${_GBCS_PROJ}" _GBCS_PROJ_NATIVE)
-  file(TO_NATIVE_PATH "${_GBCS_PROJ_PATH}" _GBCS_PROJ_PATH_NATIVE)
+  if(WIN32)
+      file(TO_NATIVE_PATH "${_GBCS_PROJ}" _GBCS_PROJ_NATIVE)
+      file(TO_NATIVE_PATH "${_GBCS_PROJ_PATH}" _GBCS_PROJ_PATH_NATIVE)
+  else()
+      set(_GBCS_PROJ_NATIVE "${_GBCS_PROJ}")
+      set(_GBCS_PROJ_PATH_NATIVE "${_GBCS_PROJ_PATH}")
+  endif()
   file(MAKE_DIRECTORY ${_GBCS_PROJ_PATH})
 
   set(OUTPUT_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/${_folder}/${_GBCS_OUTPUT}")
-  file(TO_NATIVE_PATH ${OUTPUT_FILENAME} _GBCS_OUTPUT_NATIVE)
+  if(WIN32)
+      file(TO_NATIVE_PATH ${OUTPUT_FILENAME} _GBCS_OUTPUT_NATIVE)
+  else()
+      set(_GBCS_OUTPUT_NATIVE "${OUTPUT_FILENAME}")
+  endif()
 
   # Setup dependencies
   set(_dlls)
   if (_GBCS_DEPENDS)
     foreach (_dep IN LISTS _GBCS_DEPENDS)
-      file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
+      if(WIN32)
+          file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/${_dep}" _dep)
+      else()
+          set(_dep "${CMAKE_CURRENT_BINARY_DIR}/${_dep}")
+      endif()
       get_filename_component(_filename ${_dep} NAME)
       list(APPEND _dlls ${_filename}.dll)
       list(APPEND CSC_OPTIONS /r:${_dep}.dll)
@@ -340,7 +421,11 @@ function (gdal_build_csharp_sample)
     endforeach ()
   endif (_GBCS_SYSTEM_DEPENDS)
 
-  file(TO_NATIVE_PATH "${_GBCS_SOURCE}" SOURCE_NATIVE)
+  if(WIN32)
+      file(TO_NATIVE_PATH "${_GBCS_SOURCE}" SOURCE_NATIVE)
+  else()
+      set(SOURCE_NATIVE "${_GBCS_SOURCE}")
+  endif()
 
   # build the sample exe
   if (DOTNET_FOUND)
@@ -360,15 +445,16 @@ function (gdal_build_csharp_sample)
       ${_GBCS_SYSTEM_DEPENDS})
 
   else ()
+    list(APPEND CSC_OPTIONS /sdk:${_CSHARP_APPLICATION_SDK_NUMBER} /platform:${CSHARP_RID} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE})
     if (CMAKE_VERBOSE_MAKEFILE)
       message(
         STATUS
-          "BUILDING : ${_GBCS_OUTPUT} : ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}")
+          "BUILDING : " ${_GBCS_OUTPUT} " : " ${CSHARP_COMPILER} ${CSC_OPTIONS} )
     endif ()
     add_custom_command(
       OUTPUT ${OUTPUT_FILENAME}
       COMMAND ${CMAKE_COMMAND} -E echo "Building ${_GBCS_OUTPUT_NATIVE}"
-      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS} /out:${_GBCS_OUTPUT_NATIVE} ${SOURCE_NATIVE}
+      COMMAND ${CSHARP_COMPILER} ${CSC_OPTIONS}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       VERBATIM
       DEPENDS csharp_binding ${_GBCS_SOURCE})
@@ -683,7 +769,11 @@ gdal_set_runtime_env(TEST_ENV)
 
 set(_ex)
 if (CSHARP_INTERPRETER)
-  file(TO_NATIVE_PATH ${CMAKE_CURRENT_BINARY_DIR} _MONO_PATH)
+  if(WIN32)
+      file(TO_NATIVE_PATH ${CMAKE_CURRENT_BINARY_DIR} _MONO_PATH)
+  else()
+      set(_MONO_PATH "${CMAKE_CURRENT_BINARY_DIR}")
+  endif()
   list(APPEND TEST_ENV "MONO_PATH=${_MONO_PATH}")
   set(_ex ".exe")
 endif ()

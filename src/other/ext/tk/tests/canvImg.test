@@ -166,7 +166,7 @@ test canvImg-4.2 {ConfigureImage procedure} -constraints testImageType -setup {
     update
     set x {}
     set y {}
-    set timer [after 300 {lappend y "timed out"}]
+    set timer [after 500 {lappend y "timed out"}]
     .c itemconfigure i1 -image foo2
     update idletasks
     update
@@ -361,11 +361,8 @@ test canvImg-6.12 {ComputeImageBbox procedure} -constraints {
     image delete foo
 } -result {5 23 35 38}
 
-# The following test is non-portable because of differences in
-# coordinate rounding on some machines (does 0.5 round  up?).
-
 test canvImg-7.1 {DisplayImage procedure} -constraints {
-	nonPortable testImageType
+    testImageType
 } -setup {
     .c delete all
 } -body {
@@ -376,7 +373,7 @@ test canvImg-7.1 {DisplayImage procedure} -constraints {
     .c create rect 55 110 65 115 -width 1 -outline black -fill white
     update
     set x
-} -result {{foo display 4 9 12 6 30 30}}
+} -result {{foo display 4 9 12 6}}
 test canvImg-7.2 {DisplayImage procedure, no image} -body {
     .c delete all
     .c create image 50 100 -tags i1

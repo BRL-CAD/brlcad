@@ -186,6 +186,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     en_gb.msg
     eo.msg
     es.msg
+    fi.msg
     fr.msg
     hu.msg
     it.msg
@@ -194,6 +195,7 @@ if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
     pt.msg
     ru.msg
     sv.msg
+    zh_cn.msg
     )
 
   ExternalProject_ByProducts(tk TK_BLD ${TK_INSTDIR} ${LIB_DIR}/tk8.${TCL_MINOR_VERSION}/ttk

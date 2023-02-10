@@ -16,6 +16,8 @@
 #include "tkWinInt.h"
 #elif !defined(MAC_OSX_TK)
 #include "tkUnixInt.h"
+#else
+#include "tkMacOSXInt.h"
 #endif
 
 /*
@@ -24,7 +26,7 @@
  * grab state information: the current grab window, the current restrict
  * window, and whether the mouse is captured.
  *
- * The current grab window specifies the point in the Tk window heirarchy
+ * The current grab window specifies the point in the Tk window hierarchy
  * above which pointer events will not be reported. Any window within the
  * subtree below the grab window will continue to receive events as normal.
  * Events outside of the grab tree will be reported to the grab window.

@@ -13,6 +13,7 @@
 
 #include "tkMacOSXPrivate.h"
 #include "tkMacOSXConstants.h"
+
 /*
  * This structure holds information about native bitmaps.
  */
@@ -49,8 +50,8 @@ static BuiltInIcon builtInIcons[] = {
 
 #define builtInIconSize 32
 
-#define OSTYPE_TO_UTI(x) (NSString *)UTTypeCreatePreferredIdentifierForTag( \
-     kUTTagClassOSType, UTCreateStringForOSType(x), nil)
+#define OSTYPE_TO_UTI(x) ((NSString *)UTTypeCreatePreferredIdentifierForTag( \
+     kUTTagClassOSType, UTCreateStringForOSType(x), nil))
 
 static Tcl_HashTable iconBitmapTable = {};
 typedef struct {
@@ -174,9 +175,8 @@ TkpCreateNativeBitmap(
     Display *display,
     const void *source)		/* Info about the icon to build. */
 {
-    NSString *iconUTI = OSTYPE_TO_UTI(PTR2UINT(source));
-    NSImage *iconImage = [[NSWorkspace sharedWorkspace]
-			     iconForFileType: iconUTI];
+    NSString *filetype = [NSString stringWithUTF8String:(char *)source];
+    NSImage *iconImage = TkMacOSXIconForFileType(filetype);
     CGSize size = CGSizeMake(builtInIconSize, builtInIconSize);
     Pixmap pixmap = PixmapFromImage(display, iconImage, size);
     return pixmap;
@@ -253,7 +253,6 @@ TkpGetNativeAppBitmap(
     NSString *string;
     NSImage *image = nil;
     NSSize size = { .width = builtInIconSize, .height = builtInIconSize };
-
     if (iconBitmapTable.buckets &&
 	    (hPtr = Tcl_FindHashEntry(&iconBitmapTable, name))) {
 	OSType type;
@@ -268,12 +267,12 @@ TkpGetNativeAppBitmap(
 	    break;
 	case ICON_FILETYPE:
 	    string = [NSString stringWithUTF8String:iconBitmap->value];
-	    image = [[NSWorkspace sharedWorkspace] iconForFileType:string];
+	    image = TkMacOSXIconForFileType(string);
 	    break;
 	case ICON_OSTYPE:
 	    if (OSTypeFromString(iconBitmap->value, &type) == TCL_OK) {
-		string = NSFileTypeForHFSTypeCode(type);
-		image = [[NSWorkspace sharedWorkspace] iconForFileType:string];
+		string = [NSString stringWithUTF8String:iconBitmap->value];
+		image = TkMacOSXIconForFileType(string);
 	    }
 	    break;
 	case ICON_SYSTEMTYPE:
@@ -312,11 +311,15 @@ TkpGetNativeAppBitmap(
 	*height = size.height;
 	pixmap = PixmapFromImage(display, image, NSSizeToCGSize(size));
     } else if (name) {
+	/*
+	 * As a last resort, try to interpret the name as an OSType.
+	 * It would probably be better to just return None at this
+	 * point.
+	 */
 	OSType iconType;
 	if (OSTypeFromString(name, &iconType) == TCL_OK) {
-	    NSString *iconUTI = OSTYPE_TO_UTI(iconType);
-	    NSImage *iconImage = [[NSWorkspace sharedWorkspace]
-				     iconForFileType: iconUTI];
+	    NSString *iconUTI = TkMacOSXOSTypeToUTI(iconType);
+	    NSImage *iconImage = TkMacOSXIconForFileType(iconUTI);
 	    pixmap = PixmapFromImage(display, iconImage, NSSizeToCGSize(size));
 	}
     }

@@ -52,15 +52,18 @@ endif ()
 
 # Now deal with external dependencies
 
+# Include libjpeg first so that if we want to use jpeg-turbo on homebrew
+# /usr/local/opt/jpeg-turbo gets included first, before /usr/local/opt
+# triggered by libtiff, that contains libjpeg 9e
+if (NOT GDAL_USE_JPEG_INTERNAL AND GDAL_USE_JPEG)
+  gdal_target_link_libraries(gdal_GTIFF PRIVATE JPEG::JPEG)
+endif ()
+
 gdal_target_link_libraries(gdal_GTIFF PRIVATE PROJ::proj)
 
 if (NOT GDAL_USE_TIFF_INTERNAL)
   target_compile_definitions(gdal_GTIFF PRIVATE -DPIXARLOG_SUPPORT)
   gdal_target_link_libraries(gdal_GTIFF PRIVATE TIFF::TIFF)
-endif ()
-
-if (NOT GDAL_USE_JPEG_INTERNAL AND GDAL_USE_JPEG)
-  gdal_target_link_libraries(gdal_GTIFF PRIVATE JPEG::JPEG)
 endif ()
 
 if (NOT GDAL_USE_GEOTIFF_INTERNAL)
@@ -75,6 +78,7 @@ if (GDAL_USE_JXL)
     check_function_exists(JxlEncoderFrameSettingsCreate HAVE_JxlEncoderFrameSettingsCreate)
     check_function_exists(JxlEncoderSetFrameDistance HAVE_JxlEncoderSetFrameDistance)
     check_function_exists(JxlEncoderSetCodestreamLevel HAVE_JxlEncoderSetCodestreamLevel)
+    check_function_exists(JxlEncoderInitExtraChannelInfo HAVE_JxlEncoderInitExtraChannelInfo)
     cmake_pop_check_state()
     target_sources(gdal_GTIFF PRIVATE tif_jxl.c)
     target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_JXL)
@@ -89,6 +93,9 @@ if (GDAL_USE_JXL)
     endif ()
     if (HAVE_JxlEncoderSetCodestreamLevel)
       target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_JxlEncoderSetCodestreamLevel)
+    endif ()
+    if (HAVE_JxlEncoderInitExtraChannelInfo)
+      target_compile_definitions(gdal_GTIFF PRIVATE -DHAVE_JxlExtraChannels)
     endif ()
     gdal_target_link_libraries(gdal_GTIFF PRIVATE JXL::JXL)
   else ()

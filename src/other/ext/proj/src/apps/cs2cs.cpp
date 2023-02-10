@@ -78,7 +78,7 @@ static const char *oterr = "*\t*"; /* output line for unprojectable input */
 static const char *usage =
     "%s\nusage: %s [-dDeEfIlrstvwW [args]]\n"
     "              [[--area name_or_code] | [--bbox west_long,south_lat,east_long,north_lat]]\n"
-    "              [--authority {name}] [--accuracy {accuracy}] [--no-ballpark]\n"
+    "              [--authority {name}] [--accuracy {accuracy}] [--no-ballpark] [--3d]\n"
     "              [+opt[=arg] ...] [+to +opt[=arg] ...] [file ...]\n";
 
 static double (*informat)(const char *,
@@ -99,13 +99,25 @@ static void process(FILE *fid)
 {
     char line[MAX_LINE + 3], *s, pline[40];
     PJ_UV data;
+    bool bFirstLine = true;
 
-    for (;;) {
+    for (;; bFirstLine = false ) {
         double z;
 
         ++emess_dat.File_line;
         if (!(s = fgets(line, MAX_LINE, fid)))
             break;
+
+        if( bFirstLine &&
+            static_cast<uint8_t>(s[0]) == 0xEF &&
+            static_cast<uint8_t>(s[1]) == 0xBB &&
+            static_cast<uint8_t>(s[2]) == 0xBF )
+        {
+            // Skip UTF-8 Byte Order Marker (BOM)
+            s += 3;
+        }
+        const char* pszLineAfterBOM = s;
+
         if (!strchr(s, '\n')) { /* overlong line */
             int c;
             (void)strcat(s, "\n");
@@ -151,7 +163,7 @@ static void process(FILE *fid)
             char temp;
             temp = *s;
             *s = '\0';
-            (void)fputs(line, stdout);
+            (void)fputs(pszLineAfterBOM, stdout);
             *s = temp;
             putchar('\t');
         }
@@ -332,6 +344,25 @@ static std::string get_geog_crs_proj_string_from_proj_crs(PJ *src,
     return ret;
 }
 
+// ---------------------------------------------------------------------------
+
+static bool is3DCRS(const PJ* crs) {
+    auto type = proj_get_type(crs);
+    if( type == PJ_TYPE_COMPOUND_CRS )
+        return true;
+    if( type == PJ_TYPE_GEOGRAPHIC_3D_CRS )
+        return true;
+    if( type == PJ_TYPE_GEODETIC_CRS || type == PJ_TYPE_PROJECTED_CRS )
+    {
+        auto cs = proj_crs_get_coordinate_system(nullptr, crs);
+        assert(cs);
+        const bool ret = proj_cs_get_axis_count(nullptr, cs) == 3;
+        proj_destroy(cs);
+        return ret;
+    }
+    return false;
+}
+
 /************************************************************************/
 /*                                main()                                */
 /************************************************************************/
@@ -345,6 +376,8 @@ int main(int argc, char **argv) {
     int eargc = 0, mon = 0;
     int have_to_flag = 0, inverse = 0;
     int use_env_locale = 0;
+
+    pj_stderr_proj_lib_deprecation_warning();
 
     if( argc == 0 ) {
         exit(1);
@@ -384,6 +417,7 @@ int main(int argc, char **argv) {
     const char* authority = nullptr;
     double accuracy = -1;
     bool allowBallpark = true;
+    bool promoteTo3D = false;
 
     /* process run line arguments */
     while (--argc > 0) { /* collect run line arguments */
@@ -448,6 +482,9 @@ int main(int argc, char **argv) {
         }
         else if (strcmp(*argv, "--no-ballpark") == 0 ) {
             allowBallpark = false;
+        }
+        else if (strcmp(*argv, "--3d") == 0 ) {
+            promoteTo3D = true;
         }
         else if (**argv == '-') {
             for (arg = *argv;;) {
@@ -537,11 +574,13 @@ int main(int argc, char **argv) {
                 case 'w': /* -W for constant field width */
                 {
                     char c = arg[1];
-                    if (c != 0 && isdigit(c)) {
+                    // Check that the value is in the [0, 8] range
+                    if (c >= '0' && c <= '8' &&
+                        ((arg[2] == 0 || !(arg[2] >= '0' && arg[2] <= '9')))) {
                         set_rtodms(c - '0', *arg == 'W');
                         ++arg;
                     } else
-                        emess(1, "-W argument missing or non-digit");
+                        emess(1, "-W argument missing or not in range [0,8]");
                     continue;
                 }
                 case 'f': /* alternate output format degrees or xy */
@@ -716,6 +755,11 @@ int main(int argc, char **argv) {
                                    bbox->southBoundLatitude(),
                                    bbox->eastBoundLongitude(),
                                    bbox->northBoundLatitude());
+                if( bboxFilter->description().has_value() )
+                {
+                    proj_area_set_name(pj_area,
+                                       bboxFilter->description()->c_str());
+                }
             }
         }
     }
@@ -785,8 +829,7 @@ int main(int argc, char **argv) {
     src = proj_create(nullptr, pj_add_type_crs_if_needed(fromStr).c_str());
     dst = proj_create(nullptr, pj_add_type_crs_if_needed(toStr).c_str());
 
-    if( proj_get_type(src) == PJ_TYPE_COMPOUND_CRS ||
-        proj_get_type(dst) == PJ_TYPE_COMPOUND_CRS ) {
+    if( promoteTo3D ) {
         auto src3D = proj_crs_promote_to_3D(nullptr, nullptr, src);
         if( src3D ) {
             proj_destroy(src);
@@ -797,6 +840,39 @@ int main(int argc, char **argv) {
         if( dst3D ) {
             proj_destroy(dst);
             dst = dst3D;
+        }
+    } else {
+        // Auto-promote source/target CRS if it is specified by its name,
+        // if it has a known 3D version of it and that the other CRS is 3D.
+        // e.g cs2cs "WGS 84 + EGM96 height" "WGS 84"
+        if (is3DCRS(dst) && !is3DCRS(src) &&
+            proj_get_id_code(src, 0) != nullptr &&
+            Identifier::isEquivalentName(fromStr.c_str(),
+                                         proj_get_name(src))) {
+            auto promoted = proj_crs_promote_to_3D(nullptr, nullptr, src);
+            if (promoted)
+            {
+                if (proj_get_id_code(promoted, 0) != nullptr) {
+                    proj_destroy(src);
+                    src = promoted;
+                } else {
+                    proj_destroy(promoted);
+                }
+            }
+        } else if (is3DCRS(src) && !is3DCRS(dst) &&
+                   proj_get_id_code(dst, 0) != nullptr &&
+                   Identifier::isEquivalentName(toStr.c_str(),
+                                                proj_get_name(dst))) {
+            auto promoted = proj_crs_promote_to_3D(nullptr, nullptr, dst);
+            if (promoted)
+            {
+                if (proj_get_id_code(promoted, 0) != nullptr) {
+                    proj_destroy(dst);
+                    dst = promoted;
+                } else {
+                    proj_destroy(promoted);
+                }
+            }
         }
     }
 

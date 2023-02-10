@@ -90,7 +90,7 @@ static KeySym		KeycodeToKeysym(unsigned int keycode,
 
 const char *
 TkpGetString(
-    TkWindow *winPtr,		/* Window where event occurred: needed to get
+    TCL_UNUSED(TkWindow *),		/* Window where event occurred: needed to get
 				 * input context. */
     XEvent *eventPtr,		/* X keyboard event. */
     Tcl_DString *dsPtr)		/* Uninitialized or empty string to hold
@@ -151,7 +151,7 @@ TkpGetString(
 
 KeySym
 XKeycodeToKeysym(
-    Display *display,
+    TCL_UNUSED(Display *),
     unsigned int keycode,
     int index)
 {
@@ -505,7 +505,7 @@ TkpInitKeymapInfo(
     }
     dispPtr->numModKeyCodes = 0;
     arraySize = KEYCODE_ARRAY_SIZE;
-    dispPtr->modKeyCodes = ckalloc(KEYCODE_ARRAY_SIZE * sizeof(KeyCode));
+    dispPtr->modKeyCodes = (KeyCode *)ckalloc(KEYCODE_ARRAY_SIZE * sizeof(KeyCode));
     for (i = 0, codePtr = modMapPtr->modifiermap; i < max; i++, codePtr++) {
 	if (*codePtr == 0) {
 	    continue;
@@ -521,18 +521,18 @@ TkpInitKeymapInfo(
 	    }
 	}
 	if (dispPtr->numModKeyCodes >= arraySize) {
-	    KeyCode *new;
+	    KeyCode *newKey;
 
 	    /*
 	     * Ran out of space in the array; grow it.
 	     */
 
 	    arraySize *= 2;
-	    new = ckalloc(arraySize * sizeof(KeyCode));
-	    memcpy(new, dispPtr->modKeyCodes,
+	    newKey = (KeyCode *)ckalloc(arraySize * sizeof(KeyCode));
+	    memcpy(newKey, dispPtr->modKeyCodes,
 		    dispPtr->numModKeyCodes * sizeof(KeyCode));
 	    ckfree(dispPtr->modKeyCodes);
-	    dispPtr->modKeyCodes = new;
+	    dispPtr->modKeyCodes = newKey;
 	}
 	dispPtr->modKeyCodes[dispPtr->numModKeyCodes] = *codePtr;
 	dispPtr->numModKeyCodes++;
@@ -549,7 +549,7 @@ TkpInitKeymapInfo(
 
 void
 TkpSetKeycodeAndState(
-    Tk_Window tkwin,
+    TCL_UNUSED(Tk_Window),
     KeySym keySym,
     XEvent *eventPtr)
 {
@@ -607,7 +607,7 @@ TkpSetKeycodeAndState(
 
 KeyCode
 XKeysymToKeycode(
-    Display *display,
+    TCL_UNUSED(Display *),
     KeySym keysym)
 {
     int i;
@@ -655,12 +655,12 @@ XKeysymToKeycode(
 
 XModifierKeymap	*
 XGetModifierMapping(
-    Display *display)
+    TCL_UNUSED(Display *))
 {
-    XModifierKeymap *map = ckalloc(sizeof(XModifierKeymap));
+    XModifierKeymap *map = (XModifierKeymap *)ckalloc(sizeof(XModifierKeymap));
 
     map->max_keypermod = 1;
-    map->modifiermap = ckalloc(sizeof(KeyCode) * 8);
+    map->modifiermap = (KeyCode *)ckalloc(sizeof(KeyCode) * 8);
     map->modifiermap[ShiftMapIndex] = VK_SHIFT;
     map->modifiermap[LockMapIndex] = VK_CAPITAL;
     map->modifiermap[ControlMapIndex] = VK_CONTROL;
@@ -716,7 +716,7 @@ XFreeModifiermap(
 
 KeySym
 XStringToKeysym(
-    _Xconst char *string)
+    TCL_UNUSED(_Xconst char *))
 {
     return NoSymbol;
 }
@@ -739,7 +739,7 @@ XStringToKeysym(
 
 char *
 XKeysymToString(
-    KeySym keysym)
+    TCL_UNUSED(KeySym))
 {
     return NULL;
 }

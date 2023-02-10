@@ -77,7 +77,7 @@ in the case both \fB\-text\fR and \fB\-image\fR are present.
 If set to the empty string (the default), the rules described in the
 "Elements" section of \fIttk::intro(n)\fR explain which value is actually
 used.
-Valid values are:
+The other valid values are:
 .RS
 .IP text
 Display text only.

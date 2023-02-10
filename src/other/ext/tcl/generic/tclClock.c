@@ -1520,9 +1520,9 @@ GetJulianDayFromEraYearMonthDay(
      * Have to make sure quotient is truncated towards 0 when negative.
      * See above bug for details. The casts are necessary.
      */
-    if (ym1 >= 0)
+    if (ym1 >= 0) {
 	ym1o4 = ym1 / 4;
-    else {
+    } else {
 	ym1o4 = - (int) (((unsigned int) -ym1) / 4);
     }
 #endif

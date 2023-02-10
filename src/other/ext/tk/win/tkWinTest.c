@@ -301,7 +301,7 @@ TestwineventObjCmd(
     if ((objc == 3) && (strcmp(Tcl_GetString(objv[1]), "debug") == 0)) {
 	int b;
 
-	if (Tcl_GetBoolean(interp, Tcl_GetString(objv[2]), &b) != TCL_OK) {
+	if (Tcl_GetBooleanFromObj(interp, objv[2], &b) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 	TkWinDialogDebug(b);

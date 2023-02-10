@@ -1014,7 +1014,7 @@ TclNRPackageObjCmd(
 	} else {
 	    Tcl_Obj *resultObj;
 
-	    resultObj = Tcl_NewObj();
+	    TclNewObj(resultObj);
 	    tablePtr = &iPtr->packageTable;
 	    for (hPtr = Tcl_FirstHashEntry(tablePtr, &search); hPtr != NULL;
 		    hPtr = Tcl_NextHashEntry(&search)) {
@@ -1132,7 +1132,7 @@ TclNRPackageObjCmd(
 	    objvListPtr = Tcl_NewListObj(0, NULL);
 	    Tcl_IncrRefCount(objvListPtr);
 	    Tcl_ListObjAppendElement(interp, objvListPtr, ov);
-	    Tcl_ListObjGetElements(interp, objvListPtr, &newobjc, &newObjvPtr);
+	    TclListObjGetElements(interp, objvListPtr, &newobjc, &newObjvPtr);
 
 	    Tcl_NRAddCallback(interp, TclNRPackageObjCmdCleanup, objv[3], objvListPtr, NULL, NULL);
 	    Tcl_NRAddCallback(interp, PkgRequireCore, (void *)argv3, INT2PTR(newobjc), newObjvPtr, NULL);
@@ -1156,7 +1156,7 @@ TclNRPackageObjCmd(
 
 		Tcl_ListObjAppendElement(interp, objvListPtr, Tcl_DuplicateObj(newobjv[i]));
 	    }
-	    Tcl_ListObjGetElements(interp, objvListPtr, &newobjc, &newObjvPtr);
+	    TclListObjGetElements(interp, objvListPtr, &newobjc, &newObjvPtr);
 	    Tcl_NRAddCallback(interp, TclNRPackageObjCmdCleanup, objv[2], objvListPtr, NULL, NULL);
 	    Tcl_NRAddCallback(interp, PkgRequireCore, (void *)argv2, INT2PTR(newobjc), newObjvPtr, NULL);
 	    return TCL_OK;
@@ -1257,8 +1257,9 @@ TclNRPackageObjCmd(
 	    Tcl_WrongNumArgs(interp, 2, objv, "package");
 	    return TCL_ERROR;
 	} else {
-	    Tcl_Obj *resultObj = Tcl_NewObj();
+	    Tcl_Obj *resultObj;
 
+	    TclNewObj(resultObj);
 	    argv2 = TclGetString(objv[2]);
 	    hPtr = Tcl_FindHashEntry(&iPtr->packageTable, argv2);
 	    if (hPtr != NULL) {

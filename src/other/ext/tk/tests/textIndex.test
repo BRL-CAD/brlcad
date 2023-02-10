@@ -268,7 +268,7 @@ test textIndex-4.8 {TkTextGetIndex, tags} {
     set result
 } {1.0 1.1}
 
-test textIndex-5.1 {TkTextGetIndex, "@"} {nonPortable fonts} {
+test textIndex-5.1 {TkTextGetIndex, "@"} {fonts} {
     .t index @12,9
 } 1.1
 test textIndex-5.2 {TkTextGetIndex, "@"} {fonts} {
@@ -754,6 +754,7 @@ set str [string repeat "hello " 20]
 .t insert end "$str one two three four five six seven height nine ten\n"
 .t insert end "$str one two three four five six seven height nine ten\n"
 .t insert end "$str one two three four five six seven height nine ten\n"
+update
 
 test textIndex-19.1 {Display lines} {
     .t index "2.7 displaylinestart"

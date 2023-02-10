@@ -20,7 +20,7 @@ static const char *const sideNames[] = {
 
 /*
  * For each window that the packer cares about (either because the window is
- * managed by the packer or because the window has content managed by
+ * managed by the packer or because the window has content that are managed by
  * the packer), there is a structure of the following type:
  */
 
@@ -217,17 +217,16 @@ Tk_PackObjCmd(
 	return TCL_ERROR;
     }
 
-    if (Tcl_GetIndexFromObjStruct(interp, objv[1], optionStrings,
-	    sizeof(char *), "option", 0, &index) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(NULL, objv[1], optionStrings,
+	    "option", 0, &index) != TCL_OK) {
 	/*
 	 * Call it again without the deprecated ones to get a proper error
 	 * message. This works well since there can't be any ambiguity between
 	 * deprecated and new options.
 	 */
 
-	Tcl_ResetResult(interp);
-	Tcl_GetIndexFromObjStruct(interp, objv[1], &optionStrings[4],
-		sizeof(char *), "option", 0, &index);
+	Tcl_GetIndexFromObj(interp, objv[1], &optionStrings[4],
+		"option", 0, &index);
 	return TCL_ERROR;
     }
 
@@ -436,8 +435,8 @@ Tk_PackObjCmd(
 	}
 	break;
     }
-    case PACK_CONTENT:
-    case PACK_SLAVES: {
+    case PACK_SLAVES:
+    case PACK_CONTENT: {
 	Tk_Window container;
 	Packer *containerPtr, *contentPtr;
 	Tcl_Obj *resultObj;
@@ -598,7 +597,7 @@ ArrangePacking(
     containerPtr->flags &= ~REQUESTED_REPACK;
 
     /*
-     * If the container has no content anymore, then leave the container size as-is.
+     * If the container has no content anymore, then leave the container's size as-is.
      * Otherwise there is no way to "relinquish" control over the container
      * so another geometry manager can take over.
      */
@@ -1197,7 +1196,7 @@ PackAfter(
 	    } else if ((length == 5) && (strcmp(curOpt, "filly")) == 0) {
 		packPtr->flags |= FILLY;
 	    } else if ((c == 'p') && (strcmp(curOpt, "padx")) == 0) {
-		if (optionCount < (index+2)) {
+		if (optionCount <= (index+1)) {
 		missingPad:
 		    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 			    "wrong # args: \"%s\" option must be"
@@ -1215,7 +1214,7 @@ PackAfter(
 		packPtr->iPadX = 0;
 		index++;
 	    } else if ((c == 'p') && (strcmp(curOpt, "pady")) == 0) {
-		if (optionCount < (index+2)) {
+		if (optionCount <= (index+1)) {
 		    goto missingPad;
 		}
 		if (TkParsePadAmount(interp, tkwin, options[index+1],
@@ -1228,7 +1227,7 @@ PackAfter(
 		index++;
 	    } else if ((c == 'f') && (length > 1)
 		    && (strncmp(curOpt, "frame", length) == 0)) {
-		if (optionCount < (index+2)) {
+		if (optionCount <= (index+1)) {
 		    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 			    "wrong # args: \"frame\""
 			    " option must be followed by anchor point", -1));
@@ -1394,6 +1393,9 @@ DestroyPacker(
 {
     Packer *packPtr = (Packer *)memPtr;
 
+    if (packPtr->flags & REQUESTED_REPACK) {
+	Tcl_CancelIdleCall(ArrangePacking, packPtr);
+    }
     ckfree(packPtr);
 }
 
@@ -1594,8 +1596,8 @@ ConfigureContent(
 		Tcl_SetErrorCode(interp, "TK", "PACK", "BAD_PARAMETER", NULL);
 		return TCL_ERROR;
 	    }
-	    if (Tcl_GetIndexFromObjStruct(interp, objv[i], optionStrings,
-		    sizeof(char *), "option", 0, &index) != TCL_OK) {
+	    if (Tcl_GetIndexFromObj(interp, objv[i], optionStrings,
+		    "option", 0, &index) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 
@@ -1726,8 +1728,8 @@ ConfigureContent(
 		}
 		break;
 	    case CONF_SIDE:
-		if (Tcl_GetIndexFromObjStruct(interp, objv[i+1], sideNames,
-			sizeof(char *), "side", TCL_EXACT, &side) != TCL_OK) {
+		if (Tcl_GetIndexFromObj(interp, objv[i+1], sideNames,
+			"side", TCL_EXACT, &side) != TCL_OK) {
 		    return TCL_ERROR;
 		}
 		contentPtr->side = (Side) side;

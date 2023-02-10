@@ -76,7 +76,7 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 add_library(libsqlite3 SHARED sqlite3.c)
 set_target_properties(libsqlite3 PROPERTIES PREFIX "")
-set_target_properties(libsqlite3 PROPERTIES VERSION 3.39.2 SOVERSION 3)
+set_target_properties(libsqlite3 PROPERTIES VERSION 3.40.1 SOVERSION 3)
 target_link_libraries(libsqlite3 PRIVATE Threads::Threads ${M_LIBRARY})
 set_property(TARGET libsqlite3 APPEND PROPERTY COMPILE_DEFINITIONS "SQLITE_DLL_EXPORTS")
 set_property(TARGET libsqlite3 APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "SQLITE_DLL_IMPORTS")

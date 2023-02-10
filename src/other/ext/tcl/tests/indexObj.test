@@ -3,7 +3,7 @@
 # organized in the standard fashion for Tcl tests.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
-# Copyright (c) 1998-1999 by Scriptics Corporation.
+# Copyright (c) 1998-1999 Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -91,46 +91,54 @@ test indexObj-4.1 {free old internal representation} testindexobj {
 
 test indexObj-5.1 {Tcl_WrongNumArgs} testindexobj {
     testwrongnumargs 1 "?-switch?" mycmd
-} "wrong # args: should be \"mycmd ?-switch?\""
+} {wrong # args: should be "mycmd ?-switch?"}
 test indexObj-5.2 {Tcl_WrongNumArgs} testindexobj {
     testwrongnumargs 2 "bar" mycmd foo
-} "wrong # args: should be \"mycmd foo bar\""
+} {wrong # args: should be "mycmd foo bar"}
 test indexObj-5.3 {Tcl_WrongNumArgs} testindexobj {
     testwrongnumargs 0 "bar" mycmd foo
-} "wrong # args: should be \"bar\""
+} {wrong # args: should be "bar"}
 test indexObj-5.4 {Tcl_WrongNumArgs} testindexobj {
     testwrongnumargs 0 "" mycmd foo
-} "wrong # args: should be \"\""
+} {wrong # args: should be ""}
 test indexObj-5.5 {Tcl_WrongNumArgs} testindexobj {
     testwrongnumargs 1 "" mycmd foo
-} "wrong # args: should be \"mycmd\""
+} {wrong # args: should be "mycmd"}
 test indexObj-5.6 {Tcl_WrongNumArgs} testindexobj {
     testwrongnumargs 2 "" mycmd foo
-} "wrong # args: should be \"mycmd foo\""
+} {wrong # args: should be "mycmd foo"}
 # Contrast this with test proc-3.6; they have to be like this because
 # of [Bug 1066837] so Itcl won't break.
 test indexObj-5.7 {Tcl_WrongNumArgs} testindexobj {
     testwrongnumargs 2 "fee fi" "fo fum" foo bar
-} "wrong # args: should be \"fo fum foo fee fi\""
+} {wrong # args: should be "fo fum foo fee fi"}
 
 test indexObj-6.1 {Tcl_GetIndexFromObjStruct} testindexobj {
     set x a
     testgetindexfromobjstruct $x 0
-} "wrong # args: should be \"testgetindexfromobjstruct a 0\""
+} {wrong # args: should be "testgetindexfromobjstruct a 0"}
 test indexObj-6.2 {Tcl_GetIndexFromObjStruct} testindexobj {
     set x a
     testgetindexfromobjstruct $x 0
     testgetindexfromobjstruct $x 0
-} "wrong # args: should be \"testgetindexfromobjstruct a 0\""
+} {wrong # args: should be "testgetindexfromobjstruct a 0"}
 test indexObj-6.3 {Tcl_GetIndexFromObjStruct} testindexobj {
     set x c
     testgetindexfromobjstruct $x 1
-} "wrong # args: should be \"testgetindexfromobjstruct c 1\""
+} {wrong # args: should be "testgetindexfromobjstruct c 1"}
 test indexObj-6.4 {Tcl_GetIndexFromObjStruct} testindexobj {
     set x c
     testgetindexfromobjstruct $x 1
     testgetindexfromobjstruct $x 1
-} "wrong # args: should be \"testgetindexfromobjstruct c 1\""
+} {wrong # args: should be "testgetindexfromobjstruct c 1"}
+test indexObj-6.5 {Tcl_GetIndexFromObjStruct with TCL_EXACT flag} -constraints testindexobj -body {
+    set x e
+    testgetindexfromobjstruct $x 0 1
+} -returnCodes error -result {bad dummy "e": must be a, c, or ee}
+test indexObj-6.6 {Tcl_GetIndexFromObjStruct with NULL input} -constraints testindexobj -body {
+    set x ""
+    testgetindexfromobjstruct $x 0
+} -returnCodes error -result {ambiguous dummy "": must be a, c, or ee}
 
 test indexObj-7.1 {Tcl_ParseArgsObjv} testparseargs {
     testparseargs

@@ -187,10 +187,10 @@ void UnitOfMeasure::_exportToWKT(
     const bool isWKT2 = formatter->version() == WKTFormatter::Version::WKT2;
 
     const auto l_type = type();
-    if (formatter->forceUNITKeyword() && l_type != Type::PARAMETRIC) {
-        formatter->startNode(WKTConstants::UNIT, !codeSpace().empty());
-    } else if (!unitType.empty()) {
+    if (!unitType.empty()) {
         formatter->startNode(unitType, !codeSpace().empty());
+    } else if (formatter->forceUNITKeyword() && l_type != Type::PARAMETRIC) {
+        formatter->startNode(WKTConstants::UNIT, !codeSpace().empty());
     } else {
         if (isWKT2 && l_type == Type::LINEAR) {
             formatter->startNode(WKTConstants::LENGTHUNIT,
@@ -443,8 +443,14 @@ bool Measure::_isEquivalentTo(const Measure &other,
     if (criterion == util::IComparable::Criterion::STRICT) {
         return operator==(other);
     }
-    return std::fabs(getSIValue() - other.getSIValue()) <=
-           maxRelativeError * std::fabs(getSIValue());
+    const double SIValue = getSIValue();
+    const double otherSIValue = other.getSIValue();
+    // It is arguable that we have to deal with infinite values, but this
+    // helps robustify some situations.
+    if (std::isinf(SIValue) && std::isinf(otherSIValue))
+        return SIValue * otherSIValue > 0;
+    return std::fabs(SIValue - otherSIValue) <=
+           maxRelativeError * std::fabs(SIValue);
 }
 
 // ---------------------------------------------------------------------------
@@ -1100,10 +1106,29 @@ void ObjectDomain::_exportToJSON(JSONFormatter *formatter) const {
             }
         }
         if (d->domainOfValidity_->verticalElements().size() == 1) {
-            // TODO
+            const auto &verticalExtent =
+                d->domainOfValidity_->verticalElements().front();
+            writer->AddObjKey("vertical_extent");
+            auto bboxContext(writer->MakeObjectContext());
+            writer->AddObjKey("minimum");
+            writer->Add(verticalExtent->minimumValue(), 15);
+            writer->AddObjKey("maximum");
+            writer->Add(verticalExtent->maximumValue(), 15);
+            const auto &unit = verticalExtent->unit();
+            if (*unit != common::UnitOfMeasure::METRE) {
+                writer->AddObjKey("unit");
+                unit->_exportToJSON(formatter);
+            }
         }
         if (d->domainOfValidity_->temporalElements().size() == 1) {
-            // TODO
+            const auto &temporalExtent =
+                d->domainOfValidity_->temporalElements().front();
+            writer->AddObjKey("temporal_extent");
+            auto bboxContext(writer->MakeObjectContext());
+            writer->AddObjKey("start");
+            writer->Add(temporalExtent->start());
+            writer->AddObjKey("end");
+            writer->Add(temporalExtent->stop());
         }
     }
 }

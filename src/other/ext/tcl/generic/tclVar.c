@@ -3433,7 +3433,7 @@ ArrayGetCmd(
      */
 
     TclNewObj(tmpResObj);
-    result = Tcl_ListObjGetElements(interp, nameLstObj, &count, &nameObjPtr);
+    result = TclListObjGetElements(interp, nameLstObj, &count, &nameObjPtr);
     if (result != TCL_OK) {
 	goto errorInArrayGet;
     }

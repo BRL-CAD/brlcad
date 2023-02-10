@@ -1335,7 +1335,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 TCL_VERSION=8.6
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=6
-TCL_PATCH_LEVEL=".12"
+TCL_PATCH_LEVEL=".13"
 VERSION=${TCL_VERSION}
 
 EXTRA_INSTALL_BINARIES=${EXTRA_INSTALL_BINARIES:-"@:"}
@@ -2823,7 +2823,6 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <ctype.h>
-#include <stdlib.h>
 #if ((' ' & 0x0FF) == 0x020)
 # define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
 # define TOUPPER(c) (ISLOWER(c) ? 'A' + ((c) - 'a') : (c))
@@ -7523,7 +7522,7 @@ fi
 
 	    ;;
 	Darwin-*)
-	    CFLAGS_OPTIMIZE="-Os"
+	    CFLAGS_OPTIMIZE="-O2"
 	    SHLIB_CFLAGS="-fno-common"
 	    # To avoid discrepancies between what headers configure sees during
 	    # preprocessing tests and compiling tests, move any -isysroot and
@@ -7603,7 +7602,7 @@ echo "${ECHO_T}$tcl_cv_cc_arch_ppc64" >&6
 
 fi
 ;;
-		    i386)
+		    i386|x86_64)
 			echo "$as_me:$LINENO: checking if compiler accepts -arch x86_64 flag" >&5
 echo $ECHO_N "checking if compiler accepts -arch x86_64 flag... $ECHO_C" >&6
 if test "${tcl_cv_cc_arch_x86_64+set}" = set; then
@@ -7669,6 +7668,72 @@ echo "${ECHO_T}$tcl_cv_cc_arch_x86_64" >&6
 
 fi
 ;;
+		    arm64|arm64e)
+			echo "$as_me:$LINENO: checking if compiler accepts -arch arm64e flag" >&5
+echo $ECHO_N "checking if compiler accepts -arch arm64e flag... $ECHO_C" >&6
+if test "${tcl_cv_cc_arch_arm64e+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+			    hold_cflags=$CFLAGS
+			    CFLAGS="$CFLAGS -arch arm64e"
+			    cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  tcl_cv_cc_arch_arm64e=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+tcl_cv_cc_arch_arm64e=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+			    CFLAGS=$hold_cflags
+fi
+echo "$as_me:$LINENO: result: $tcl_cv_cc_arch_arm64e" >&5
+echo "${ECHO_T}$tcl_cv_cc_arch_arm64e" >&6
+			if test $tcl_cv_cc_arch_arm64e = yes; then
+
+			    CFLAGS="$CFLAGS -arch arm64e"
+			    do64bit_ok=yes
+
+fi
+;;
 		    *)
 			{ echo "$as_me:$LINENO: WARNING: Don't know how enable 64-bit on architecture \`arch\`" >&5
 echo "$as_me: WARNING: Don't know how enable 64-bit on architecture \`arch\`" >&2;};;
@@ -7677,7 +7742,7 @@ echo "$as_me: WARNING: Don't know how enable 64-bit on architecture \`arch\`" >&
 else
 
 		# Check for combined 32-bit and 64-bit fat build
-		if echo "$CFLAGS " |grep -E -q -- '-arch (ppc64|x86_64) ' \
+		if echo "$CFLAGS " |grep -E -q -- '-arch (ppc64|x86_64|arm64e) ' \
 		    && echo "$CFLAGS " |grep -E -q -- '-arch (ppc|i386) '; then
 
 		    fat_32_64=yes
@@ -8077,11 +8142,11 @@ fi
 	    SHLIB_CFLAGS=""
 	    if test "$SHARED_BUILD" = 1; then
 
-	        SHLIB_LD='ld -shared -expect_unresolved "*"'
+	        SHLIB_LD='${CC} -shared'
 
 else
 
-	        SHLIB_LD='ld -non_shared -expect_unresolved "*"'
+	        SHLIB_LD='${CC} -non_shared'
 
 fi
 
@@ -14133,6 +14198,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <time.h>
+#include <stdlib.h>
 int
 main ()
 {
@@ -14199,6 +14265,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <time.h>
+#include <stdlib.h>
 int
 main ()
 {

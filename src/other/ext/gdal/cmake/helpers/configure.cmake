@@ -41,6 +41,11 @@ check_include_file("dlfcn.h" HAVE_DLFCN_H)
 check_type_size("int" SIZEOF_INT)
 check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
 check_type_size("void*" SIZEOF_VOIDP)
+check_type_size("size_t" SIZEOF_SIZE_T)
+
+if(MSVC AND NOT BUILD_SHARED_LIBS)
+  set(CPL_DISABLE_DLL 1)
+endif()
 
 if (MSVC)
   set(HAVE_VSNPRINTF 1)
@@ -233,12 +238,52 @@ else ()
     set(VSI_FOPEN64 "fopen")
   endif ()
 
+  check_type_size("off_t" SIZEOF_OFF_T)
+
+  check_function_exists(pread64 HAVE_PREAD64)
+
   check_function_exists(ftruncate64 HAVE_FTRUNCATE64)
   if (HAVE_FTRUNCATE64)
     set(VSI_FTRUNCATE64 "ftruncate64")
   else ()
     set(VSI_FTRUNCATE64 "ftruncate")
   endif ()
+
+  # For some reason, above tests detect xxxx64 symbols for iOS, which are not
+  # available at build time.
+  # This is also necessary for Mac Catalyst builds.
+  # Cf https://lists.osgeo.org/pipermail/gdal-dev/2022-August/056174.html
+  if (${CMAKE_SYSTEM_NAME} MATCHES "iOS" OR ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(VSI_FOPEN64 "fopen")
+    set(VSI_FTRUNCATE64 "ftruncate")
+    set(VSI_FTELL64 "ftell")
+    set(VSI_FSEEK64 "fseek")
+    set(VSI_STAT64 "stat")
+    set(VSI_STAT64_T "stat")
+    unset(HAVE_FOPEN64)
+    unset(HAVE_FOPEN64 CACHE)
+    unset(HAVE_FTRUNCATE64)
+    unset(HAVE_FTRUNCATE64 CACHE)
+    unset(HAVE_FTELL64)
+    unset(HAVE_FTELL64 CACHE)
+    unset(HAVE_FSEEK64)
+    unset(HAVE_FSEEK64 CACHE)
+    unset(HAVE_STATVFS64)
+    unset(HAVE_STATVFS64 CACHE)
+    unset(HAVE_PREAD64)
+    unset(HAVE_PREAD64 CACHE)
+  endif()
+
+  if( NOT HAVE_PREAD64 )
+    check_c_source_compiles(
+      "
+         #include <sys/types.h>
+         #include <sys/uio.h>
+         #include <unistd.h>
+         int main() { pread(0, NULL, 0, 0); return 0; }
+        "
+      HAVE_PREAD_BSD)
+  endif()
 
   set(UNIX_STDIO_64 TRUE)
 
@@ -289,6 +334,14 @@ else ()
         int main () { return (sysconf(_SC_PHYS_PAGES)); return 0; }
     "
     HAVE_SC_PHYS_PAGES)
+
+  check_c_source_compiles(
+    "
+        #define _GNU_SOURCE
+        #include <sched.h>
+        int main () { return sched_getaffinity(0,0,0); }
+    "
+    HAVE_SCHED_GETAFFINITY)
 
   include(FindInt128)
   if (INT128_FOUND)

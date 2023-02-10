@@ -535,6 +535,13 @@ $(TMP_DIR)\testMain.obj: $(WIN_DIR)\winMain.c
 	    /DTCL_USE_STATIC_PACKAGES=$(TCL_USE_STATIC_PACKAGES) \
 	    -Fo$@ $?
 
+$(ROOT)\manifest.uuid:
+   copy $(WIN_DIR)\gitmanifest.in $(ROOT)\manifest.uuid
+   git rev-parse HEAD >>$(ROOT)\manifest.uuid
+
+$(TMP_DIR)\tkUuid.h:	$(ROOT)\manifest.uuid
+	copy $(WIN_DIR)\tkUuid.h.in+$(ROOT)\manifest.uuid $(TMP_DIR)\tkUuid.h
+
 $(TMP_DIR)\tkTest.obj: $(GENERICDIR)\tkTest.c
 	$(cc32) $(appcflags_nostubs) -Fo$@ $?
 
@@ -554,6 +561,9 @@ $(TMP_DIR)\winMain.obj: $(WIN_DIR)\winMain.c
 
 $(TMP_DIR)\tkMain2.obj: $(GENERICDIR)\tkMain.c
 	$(cc32) $(pkgcflags) /DUNICODE /D_UNICODE -Fo$@ $?
+
+$(TMP_DIR)\tkWindow.obj: $(GENERICDIR)\tkWindow.c $(TMP_DIR)\tkUuid.h
+	$(cc32) $(pkgcflags) -I$(TMP_DIR) -Fo$@ $?
 
 # The following objects are part of the stub library and should not
 # be built as DLL objects but none of the symbols should be exported
