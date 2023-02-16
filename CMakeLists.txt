@@ -2111,8 +2111,45 @@ if(MSVC)
 endif(MSVC)
 
 #-----------------------------------------------------------------------------
-# Add misc/tools for tools that are used in BRL-CAD's build process or for
-# maintenance activities.
+# Before we head into src/other and misc/tools, store all the build
+# flags that have been built up.  It's hard to be sure what will and
+# won't be set in those directories, so make sure we can restore the
+# BRL-CAD flags for the actual BRL-CAD subdirectories.
+CACHE_BUILD_FLAGS(_BRLCAD)
+
+# For lower build levels, some of the third party components are not
+# needed.  define some variables we can use for testing.
+set(BRLCAD_LEVEL2 0)
+set(BRLCAD_LEVEL3 0)
+if(NOT BRLCAD_ENABLE_TARGETS)
+  set(BRLCAD_LEVEL2 1)
+  set(BRLCAD_LEVEL3 1)
+else(NOT BRLCAD_ENABLE_TARGETS)
+  if(${BRLCAD_ENABLE_TARGETS} GREATER 1)
+    set(BRLCAD_LEVEL2 1)
+  endif(${BRLCAD_ENABLE_TARGETS} GREATER 1)
+  if(${BRLCAD_ENABLE_TARGETS} GREATER 2)
+    set(BRLCAD_LEVEL3 1)
+  endif(${BRLCAD_ENABLE_TARGETS} GREATER 2)
+endif(NOT BRLCAD_ENABLE_TARGETS)
+
+# If we're below level 2, we don't need Tcl
+if (NOT BRLCAD_LEVEL2)
+  set(BRLCAD_ENABLE_TCL OFF CACHE BOOL "Disabled due to level 1 build" FORCE)
+endif (NOT BRLCAD_LEVEL2)
+
+# At the start, clear the misc/tools subdirs list so repeated
+# configures will correctly add the required directories
+set(MISC_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
+mark_as_advanced(MISC_ADDED_DIRS)
+
+# The first order of business is the ext projects
+add_subdirectory(src/other/ext)
+
+# Add misc/tools for tools that are used in BRL-CAD's build process
+# but are not otherwise usable in BRL-CAD (due to licensing, design
+# intent, etc.)  misc/tools must be handled before src/other because
+# some of src/other's projects may need tools from misc/tools.
 add_subdirectory(misc/tools)
 
 # Now that the user options are set and we have misc/tools... if we're going to
