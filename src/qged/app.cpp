@@ -88,8 +88,6 @@ CADApp::initialize()
     //app_cmd_map[QString("open")] = &app_open;
     app_cmd_map[QString("close")] = &app_close;
     app_cmd_map[QString("man")] = &app_man;
-
-    QObject::connect(this, &CADApp::view_update, this, &CADApp::do_view_update);
 }
 
 void
@@ -127,15 +125,6 @@ CADApp::do_view_changed(unsigned long long flags)
     }
 
     emit view_update(flags);
-}
-
-void
-CADApp::do_view_update(unsigned long long flags)
-{
-    QTCAD_SLOT("CADApp::do_view_update", 1);
-    if (flags & QTCAD_VIEW_SELECT) {
-	emit view_update(QTCAD_VIEW_REFRESH);
-    }
 }
 
 void
