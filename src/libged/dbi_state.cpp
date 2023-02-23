@@ -2167,8 +2167,33 @@ BViewState::scene_obj(
 {
     // Solid - scene object time
     unsigned long long phash = dbis->path_hash(path_hashes, 0);
+    std::unordered_map<unsigned long long, std::unordered_map<int, struct bv_scene_obj *>>::iterator sm_it;
+    sm_it = s_map.find(phash);
     struct bv_scene_obj *sp = NULL;
-    if (s_map.find(phash) != s_map.end()) {
+    if (sm_it != s_map.end()) {
+
+	// If we have user supplied settings, we need to do some checking
+	if (vs && !vs->mixed_modes) {
+	    // If we're not allowed to mix modes, we need to erase any modes
+	    // that don't match the current mode
+	    std::vector<unsigned long long> phashes = path_hashes;
+	    if (phashes.size()) {
+		unsigned long long c_hash = phashes[phashes.size() - 1];
+		phashes.pop_back();
+		std::unordered_set<int> erase_modes;
+		std::unordered_map<int, struct bv_scene_obj *>::iterator s_it;
+		for (s_it = sm_it->second.begin(); s_it != sm_it->second.end(); s_it++) {
+		    if (s_it->first == curr_mode)
+			continue;
+		    erase_modes.insert(s_it->first);
+		}
+		std::unordered_set<int>::iterator e_it;
+		for (e_it = erase_modes.begin(); e_it != erase_modes.end(); e_it++) {
+		    erase_hpath(*e_it, c_hash, phashes, false);
+		}
+	    }
+	}
+
 	if (s_map[phash].find(curr_mode) != s_map[phash].end()) {
 	    // Already have scene object - check it against vs
 	    // settings to see if we need to update

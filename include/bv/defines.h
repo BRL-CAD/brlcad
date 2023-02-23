@@ -131,12 +131,13 @@ struct bv_axes {
 // for value setting
 struct bv_obj_settings {
 
-   int s_dmode;         	/**< @brief  draw mode: 0 - wireframe
+    int s_dmode;         	/**< @brief  draw mode: 0 - wireframe
 				 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
 				 *	      2 - shaded (booleans NOT evaluated)
 				 *	      3 - shaded (booleans evaluated)
 				 *	      4 - hidden line
 				 */
+    int mixed_modes;            /**< @brief  when drawing, don't remove an objects view objects for other modes */
     fastf_t transparency;	/**< @brief  holds a transparency value in the range [0.0, 1.0] - 1 is opaque */
 
     int color_override;
@@ -148,7 +149,7 @@ struct bv_obj_settings {
     int draw_solid_lines_only;   /**< @brief do not use dashed lines for subtraction solids */
     int draw_non_subtract_only;  /**< @brief do not visualize subtraction solids */
 };
-#define BV_OBJ_SETTINGS_INIT {0, 1.0, 0, {255, 0, 0}, 1, 0.0, 0.0, 0, 0}
+#define BV_OBJ_SETTINGS_INIT {0, 0, 1.0, 0, {255, 0, 0}, 1, 0.0, 0.0, 0, 0}
 
 
 /* Note that it is possible for a view object to be view-only (not
