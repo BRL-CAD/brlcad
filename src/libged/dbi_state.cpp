@@ -2764,6 +2764,11 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	}
 
 	// Expand active collapsed paths to solids, creating any missing path objects
+	//
+	// NOTE:  We deliberately do NOT pass the supplied vs (if any) to these scene_obj/
+	// gather_paths calls - user specified override settings should be applied only to
+	// staged paths specified by the user.  Pre-existing geometry NOT specified by
+	// those commands does not get those settings applied during redraw.
 	std::unordered_set<size_t>::iterator sz_it;
 	for (sz_it = active_collapsed.begin(); sz_it != active_collapsed.end(); sz_it++) {
 	    std::vector<unsigned long long> cpath = ms_it->second[*sz_it];
@@ -2772,12 +2777,12 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
 	    dbis->get_path_matrix(m, cpath);
 	    if (ms_it->first == 3 || ms_it->first == 5) {
 		dbis->get_path_matrix(m, cpath);
-		scene_obj(objs, ms_it->first, vs, m, cpath, views, v);
+		scene_obj(objs, ms_it->first, NULL, m, cpath, views, v);
 		continue;
 	    }
 	    unsigned long long ihash = cpath[cpath.size() - 1];
 	    cpath.pop_back();
-	    gather_paths(objs, ihash, ms_it->first, v, vs, m, NULL, cpath, views, &ret);
+	    gather_paths(objs, ihash, ms_it->first, v, NULL, m, NULL, cpath, views, &ret);
 	}
 	for (sz_it = draw_invalid_collapsed.begin(); sz_it != draw_invalid_collapsed.end(); sz_it++) {
 	    std::vector<unsigned long long> cpath = ms_it->second[*sz_it];
