@@ -16,6 +16,10 @@ int main(int argc, const char **argv)
     std::regex schars { R"([-[\]{}()*+?.,\^$|#\s])" };
     std::string bp_sanetized = std::regex_replace(build_path, schars, R"(\$&)");
     std::regex build_path_regex(bp_sanetized);
+    std::string bp_extended = bp_sanetized + std::string("/extinstall/[0-9A-Za-z_.-]+");
+    std::regex ext_build_path_regex(bp_extended);
+    std::string bp_build = bp_sanetized + std::string("/src/other/ext/[0-9A-Za-z_.-]+/src/[0-9A-Za-z_.-]+");
+    std::regex BLD_path_regex(bp_build);
 
     if (argc < 1) {
 	std::cerr << "Error: no file specified for processing.\n";
@@ -35,7 +39,9 @@ int main(int argc, const char **argv)
 	}
 
 	while (std::getline(fs, cline)) {
-	    std::string nline = std::regex_replace(cline, build_path_regex, install_path);
+	    std::string bline = std::regex_replace(cline, BLD_path_regex, install_path);
+	    std::string eline = std::regex_replace(bline, ext_build_path_regex, install_path);
+	    std::string nline = std::regex_replace(eline, build_path_regex, install_path);
 	    nfile_contents.append(nline);
 	    nfile_contents.append("\n");
 	    if (nline != cline && verbose > 1) {

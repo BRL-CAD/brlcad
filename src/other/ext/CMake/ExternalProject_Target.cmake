@@ -136,9 +136,12 @@ function(ExternalProject_ByProducts etarg extproj extroot dir)
       # and conditionalize this install - the PERMISSIONS setting here will not preserve pre-existing file modes...
       install(FILES "${CMAKE_BINARY_ROOT}/${dir}/${bpf}" DESTINATION "${dir}/" PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE WORLD_READ)
       if (E_FIXPATH)
-	# Note - proper quoting for install(CODE) is extremely important for CPack, see
-	# https://stackoverflow.com/a/48487133
-	install(CODE "execute_process(COMMAND $<TARGET_FILE:buildpath_replace> \"\${CMAKE_INSTALL_PREFIX}/${dir}/${bpf}\")")
+	# Note - proper quoting for install(CODE) is extremely important for
+	# CPack, see https://stackoverflow.com/a/48487133 The DESTDIR
+	# environment variable read is necessary for CPack RPM package
+	# generation (and any others that wide up using DESTDIR - see
+	# https://gitlab.kitware.com/cmake/cmake/-/issues/24212#note_1283057 )
+	install(CODE "execute_process(COMMAND $<TARGET_FILE:buildpath_replace> \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${dir}/${bpf}\")")
       endif (E_FIXPATH)
     endif (NOT E_NOINSTALL)
 

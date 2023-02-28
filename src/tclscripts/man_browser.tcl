@@ -258,6 +258,15 @@ package require cadwidgets::Accordian 1.0
 	}
     }
 
+    # bind MouseWheel listener to the widget.document (this is the html
+    # displayed as the current man page so it needs the 'active' listener)
+    bind $manhtml.document <MouseWheel> {
+        # strip the ".document" so that the widget's yview (not the document)
+        # can be updated with the scroll
+        set widget_base [regsub {\.document} %W ""]
+        $widget_base yview scroll [expr {-%D/120}] units
+    }
+
     configure -height 600 -width 800
     return $this
 }

@@ -60,10 +60,8 @@ set(mged_TCLSCRIPTS
   qray.tcl
   ray.tcl
   raypick.tcl
-  reid.tcl
-  relos.tcl
+  re_procs.tcl
   remap_mater.tcl
-  remat.tcl
   rt.tcl
   rt_script.tcl
   sample.tcl
