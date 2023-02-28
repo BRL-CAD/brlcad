@@ -2,7 +2,7 @@
 
 ## Introduction ##
 
-The goal of this effort is to auto-generate beautiful concise summaries of 3D geometry models in BRL-CAD, an open source computer-aided design (CAD) system.  BRL-CAD is used by academia, industry, and government to represent and visualize 3D models, to help analyze safety, and communicate suitability.  Developing this prototype will involve elements of computer graphics, verification and validation, physically-based rendering, automatic layout algorithms, graphic design, C/C++, Qt, and more. Leveraging capabilities in BRL-CAD, you’ll work on creating a tool that produces a novel “one page” summary report (which you will also help design) that includes visual, textual, and contextual information about a given 3D model.
+The goal of this effort is to auto-generate beautiful concise summaries of 3D geometry models in BRL-CAD, an open source computer-aided design (CAD) system. BRL-CAD is used by academia, industry, and government to represent and visualize 3D models, to help analyze safety, and communicate suitability.  Developing this prototype will involve elements of computer graphics, verification and validation, physically-based rendering, automatic layout algorithms, graphic design, C/C++, Qt, and more. Leveraging capabilities in BRL-CAD, you’ll work on creating a tool that produces a novel “one page” summary report (which you will also help design) that includes visual, textual, and contextual information about a given 3D model.
 
 ## Requirements ##
 
@@ -53,14 +53,7 @@ No environmental variables are needed yet, but they will be listed here soon.
 
 ## Deployment ##
 
-To deploy the code, we are planning to allow the user to input parameters into the terminals 
-
-Which then will output a novel “one page” summary report (which you will also help design) that 
-
-includes visual, textual, and contextual information about a given 3D model. Once we get further 
-
-into coding more informtion will be provided in this read-me
-
+To deploy the code, we are planning to allow the user to input parameters into the terminals, which then will output a novel “one page” summary report (which you will also help design) that includes visual, textual, and contextual information about a given 3D model. Once we get further into coding more informtion will be provided in this read-me
 
 ## References ##
 
