@@ -104,6 +104,7 @@ if (BRLCAD_TCL_BUILD)
     set(TCL_EXECNAME tclsh${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
     set(TCL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 
+    # TODO - how to pass Z_PREFIX through nmake so zlib.h has the correct prefix?  Is https://stackoverflow.com/a/11041834 what we need?  Also, do we need to patch makefile.vc to reference our zlib dll?
     ExternalProject_Add(TCL_BLD
       URL "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
       BUILD_ALWAYS ${EXT_BUILD_ALWAYS} ${LOG_OPTS}
