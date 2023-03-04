@@ -303,7 +303,6 @@ COREOBJS = \
 	$(TMP_DIR)\tclVar.obj \
 	$(TMP_DIR)\tclZlib.obj
 
-!if $(STATIC_BUILD)
 ZLIBOBJS = \
 	$(TMP_DIR)\adler32.obj \
 	$(TMP_DIR)\compress.obj \
@@ -316,9 +315,6 @@ ZLIBOBJS = \
 	$(TMP_DIR)\trees.obj \
 	$(TMP_DIR)\uncompr.obj \
 	$(TMP_DIR)\zutil.obj
-!else
-ZLIBOBJS = $(OUT_DIR)\zdll.lib
-!endif
 
 TOMMATHOBJS = \
 	$(TMP_DIR)\bn_mp_add.obj \
@@ -442,7 +438,7 @@ TESTFLAGS = $(TESTFLAGS) -file $(TESTPAT)
 release:    setup $(TCLSH) $(TCLSTUBLIB) dlls pkgs
 core:	    setup $(TCLLIB) $(TCLSTUBLIB)
 shell:	    setup $(TCLSH)
-dlls:	    setup $(TCLREGLIB) $(TCLDDELIB) $(OUT_DIR)\zlib1.dll
+dlls:	    setup $(TCLREGLIB) $(TCLDDELIB)
 all:	    setup $(TCLSH) $(TCLSTUBLIB) dlls $(CAT32) pkgs
 tcltest:    setup $(TCLTEST) dlls $(CAT32)
 install:    install-binaries install-libraries install-docs install-pkgs
@@ -513,23 +509,6 @@ $(TCLREGLIB): $(TMP_DIR)\tclWinReg.obj
 $(TCLREGLIB): $(TMP_DIR)\tclWinReg.obj $(TCLSTUBLIB)
 	$(DLLCMD) $**
 	$(_VC_MANIFEST_EMBED_DLL)
-!endif
-
-!if "$(MACHINE)" == "ARM64"
-$(OUT_DIR)\zlib1.dll:	$(COMPATDIR)\zlib\win64-arm\zlib1.dll
-	$(COPY) $(COMPATDIR)\zlib\win64-arm\zlib1.dll $(OUT_DIR)\zlib1.dll
-$(OUT_DIR)\zdll.lib:	$(COMPATDIR)\zlib\win64-arm\zdll.lib
-	$(COPY) $(COMPATDIR)\zlib\win64-arm\zdll.lib $(OUT_DIR)\zdll.lib
-!elseif "$(MACHINE)" == "IX86"
-$(OUT_DIR)\zlib1.dll:	$(COMPATDIR)\zlib\win32\zlib1.dll
-	$(COPY) $(COMPATDIR)\zlib\win32\zlib1.dll $(OUT_DIR)\zlib1.dll
-$(OUT_DIR)\zdll.lib:	$(COMPATDIR)\zlib\win32\zdll.lib
-	$(COPY) $(COMPATDIR)\zlib\win32\zdll.lib $(OUT_DIR)\zdll.lib
-!else
-$(OUT_DIR)\zlib1.dll:	$(COMPATDIR)\zlib\win64\zlib1.dll
-	$(COPY) $(COMPATDIR)\zlib\win64\zlib1.dll $(OUT_DIR)\zlib1.dll
-$(OUT_DIR)\zdll.lib:	$(COMPATDIR)\zlib\win64\zdll.lib
-	$(COPY) $(COMPATDIR)\zlib\win64\zdll.lib $(OUT_DIR)\zdll.lib
 !endif
 
 pkgs:
@@ -896,7 +875,6 @@ install-binaries:
 	@$(CPY) "$(TCLLIB)" "$(BIN_INSTALL_DIR)\"
 !endif
 	@$(CPY) "$(TCLIMPLIB)" "$(LIB_INSTALL_DIR)\"
-	@$(CPY) "$(OUT_DIR)\zlib1.dll" "$(BIN_INSTALL_DIR)\"
 !if exist($(TCLSH))
 	@echo Installing $(TCLSHNAME)
 	@$(CPY) "$(TCLSH)" "$(BIN_INSTALL_DIR)\"
@@ -945,7 +923,6 @@ install-libraries: tclConfig tcl-nmake install-msgs install-tzdata
 	@$(CPY) "$(WIN_DIR)\rules.vc"              "$(LIB_INSTALL_DIR)\nmake\"
 	@$(CPY) "$(WIN_DIR)\targets.vc"              "$(LIB_INSTALL_DIR)\nmake\"
 	@$(CPY) "$(WIN_DIR)\nmakehlp.c"            "$(LIB_INSTALL_DIR)\nmake\"
-	@$(CPY) "$(WIN_DIR)\x86_64-w64-mingw32-nmakehlp.exe" "$(LIB_INSTALL_DIR)\nmake\"
 	@$(CPY) "$(OUT_DIR)\tcl.nmake"            "$(LIB_INSTALL_DIR)\nmake\"
 	@echo Installing package http 1.0 (obsolete)
 	@$(CPY) "$(ROOT)\library\http1.0\*.tcl" \

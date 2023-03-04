@@ -22,6 +22,26 @@ changes made.  See document footer for additional details.
 * Updated PROJ library to version 9.1.1 - Cliff Yapp
 * Updated PNG library to version 1.6.39 - Cliff Yapp
 
+
+----------------------------------------------------------------------
+--- 2023-02-27  Release 7.34.2                                     ---
+----------------------------------------------------------------------
+
+* fixed a problem with matrix editing - Chris McGregor
+* fixed gcv reading of .g files as input - Cliff Yapp
+* add support to nirt non-drawn objects - Chris McGregor
+* reduced 'l' cmd verbosity for bot/brep primitives - Chris McGregor
+* fixed man page scrolling on Windows - Chris McGregor
+* fixed MGED file creation not applying extension - Chris McGregor
+* create 'reair' to quickly set aircode (like remat) - Chris McGregor
+* fixed 'search' of attribute equal to 0 - Chris McGregor
+* improve nirt output printing within MGED - Chris McGregor
+* fixed nirt -A (attribute) to work within MGED - Chris McGregor
+* fixed nirt -f (fmt) to work within MGED - Chris McGregor
+* fixed nirt of objects with hyphens in name - Chris McGregor
+* correct facetall.sh to automatically restart on failure - Cliff Yapp
+
+
 ----------------------------------------------------------------------
 --- 2022-11-23  Release 7.34.0                                     ---
 ----------------------------------------------------------------------
