@@ -15,7 +15,6 @@ changes made.  See document footer for additional details.
 
 * Updated OpenMesh library to version 9.0 - Cliff Yapp
 * Updated Open Asset Import Library - v5.2.5 + fix - Chris McGregor
-* Updated Itcl3 to version 3.4.4 - Cliff Yapp
 * Updated Tcl/Tk to version 8.6.13 - Cliff Yapp
 * Updated NETPBM library to version 10.73.42 - Cliff Yapp
 * Updated GDAL library to version 3.6.2 - Cliff Yapp
