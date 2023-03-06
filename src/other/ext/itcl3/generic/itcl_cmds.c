@@ -53,6 +53,9 @@ namespace eval ::itcl {\n\
         if {[info exists library]} {\n\
             lappend dirs $library\n\
         } else {\n\
+            if {[catch {uplevel #0 source -rsrc itcl}] == 0} {\n\
+                return\n\
+            }\n\
             set dirs {}\n\
             if {[info exists env(ITCL_LIBRARY)]} {\n\
                 lappend dirs $env(ITCL_LIBRARY)\n\
@@ -1142,7 +1145,7 @@ Itcl_ScopeCmd(dummy, interp, objc, objv)
         if (!entry) {
             Tcl_AppendResult(interp,
                 "can't scope variable \"", token,
-                "\": missing object context",
+                "\": missing object context\"",
                 (char*)NULL);
             result = TCL_ERROR;
             goto scopeCmdDone;
