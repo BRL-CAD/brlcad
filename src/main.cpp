@@ -7,6 +7,8 @@
 // ../../../../../build/bin/mged ../db/moss.g tops
 // ../../../../../build/bin/rt ../db/moss.g all.g
 
+// EXAMPLE of running: ./a.out ../db/moss.g
+
 int main(int argc, char **argv) {
     if (argc == 2) {
         std::string filename = argv[1];
