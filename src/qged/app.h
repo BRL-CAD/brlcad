@@ -43,10 +43,7 @@
 
 #include "main_window.h"
 
-class CADApp;
-
 /* Command type for application level commands */
-typedef int (*app_cmd_ptr)(void *, int, const char **);
 
 /* Derive the core application class from QApplication.  This is central to
  * QGED, as the primary application state is managed in this container.
@@ -108,8 +105,6 @@ class CADApp : public QApplication
 	void run_qcmd(const QString &command);
         void readSettings();
 
-	// TODO - fold into do_view_changed...
-	void tree_update();
 	void element_selected(QToolPaletteElement *el);
 
     public:
@@ -120,6 +115,7 @@ class CADApp : public QApplication
 	struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 
     private:
+	typedef int (*app_cmd_ptr)(void *, int, const char **);
 	QMap<QString, app_cmd_ptr> app_cmd_map;
 	std::vector<char *> tmp_av;
 	unsigned long long select_hash = 0;

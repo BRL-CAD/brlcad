@@ -128,33 +128,6 @@ CADApp::do_view_changed(unsigned long long flags)
 }
 
 void
-CADApp::tree_update()
-{
-    QTCAD_SLOT("CADApp::tree_update", 1);
-    if (!w)
-	return;
-    CADPalette *v = NULL;
-    CADPalette *vc = w->vc;
-    CADPalette *oc = w->oc;
-
-    switch (mdl->interaction_mode) {
-	case 0:
-	    v = vc;
-	    break;
-	case 2:
-	    v = oc;
-	    break;
-	default:
-	    v = NULL;
-	    break;
-    }
-    if (!v)
-	return;
-    vc->makeCurrent(v);
-    oc->makeCurrent(v);
-}
-
-void
 CADApp::open_file()
 {
     QTCAD_SLOT("CADApp::open_file", 1);
