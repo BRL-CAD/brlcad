@@ -388,6 +388,10 @@ if (BRLCAD_TCL_BUILD)
   # Anything using the executable needs everything in place
   add_dependencies(tclsh_exe tcl_stage)
 
+  # Scripts expect a non-versioned tclsh program, but the Tcl build doesn't provide one,
+  # we must provide it ourselves
+  install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tclsh_exe> \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${BIN_DIR}/tclsh${CMAKE_EXECUTABLE_SUFFIX}\")")
+
   set(TCL_LIBRARY tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_STUB_LIBRARY tclstub CACHE STRING "Building bundled tcl" FORCE)
