@@ -1145,7 +1145,7 @@ Itcl_ScopeCmd(dummy, interp, objc, objv)
         if (!entry) {
             Tcl_AppendResult(interp,
                 "can't scope variable \"", token,
-                "\": missing object context\"",
+                "\": missing object context",
                 (char*)NULL);
             result = TCL_ERROR;
             goto scopeCmdDone;
