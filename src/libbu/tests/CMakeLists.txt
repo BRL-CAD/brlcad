@@ -2,6 +2,7 @@
 # combine some of the unit tests into a single program.
 
 set(bu_test_srcs
+  argv.c
   b64.c
   backtrace.c
   badmagic.c
