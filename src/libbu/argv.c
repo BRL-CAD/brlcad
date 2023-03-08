@@ -201,9 +201,8 @@ nextword:
 	// make sure argv[] isn't full, need room for NULL.  Because (per the
 	// header comments) the user is supposed to have passed in the maximum
 	// number of elements *not including a terminating null*, we check if
-	// we are beyond that user provided limit - if we are at it, we can
-	// still assign one string and have one entry left for the NULL.
-	if (argc > lim)
+	// we are at or beyond that user provided limit.
+	if (argc >= lim)
 	    break;
 
 	/* start of next word */

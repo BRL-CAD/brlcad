@@ -45,6 +45,23 @@ argv_test(const char *s, size_t expected)
     return ac;
 }
 
+size_t
+argv_test_limited(const char *s, size_t expected, int lmax)
+{
+    char *ts = bu_strdup(s);
+    char **av = (char **)bu_calloc(strlen(ts)+1, sizeof(char *), "av");
+    size_t ac = bu_argv_from_string(av, lmax, ts);
+    if (ac != expected)
+	bu_exit(EXIT_FAILURE, "Test failed: %s\n", s);
+    bu_log("Test results (%zd elements): %s\n", ac,  s);
+    for (size_t i = 0; i < ac; i++) {
+	bu_log("%zd\t: %s\n", i, av[i]);
+    }
+    bu_free(av, "array");
+    bu_free(ts, "string copy");
+    return ac;
+}
+
 int
 main(int UNUSED(argc), char *argv[])
 {
@@ -71,6 +88,13 @@ main(int UNUSED(argc), char *argv[])
     argv_test("a\\ 0 a\\\\ 1", 3);
     argv_test("\"a\\ 0\" a\\ 1", 2);
     argv_test("\"a\\\\ 0\" a\\ 1", 2);
+
+
+    argv_test_limited("a0 a1 a2", 0, 0);
+    argv_test_limited("a0 a1 a2", 1, 1);
+    argv_test_limited("a0 a1 a2", 2, 2);
+    argv_test_limited("a0 a1 a2", 3, 3);
+    argv_test_limited("a0 a1 a2", 3, 4);
 
     return 1;
 }
