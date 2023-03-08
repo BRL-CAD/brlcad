@@ -53,11 +53,24 @@ main(int UNUSED(argc), char *argv[])
     if (bu_getprogname()[0] == '\0')
 	bu_setprogname(argv[0]);
 
-    argv_test("arg0", 1);
-    argv_test("arg0 arg1", 2);
-    argv_test("arg0 arg1 arg2", 3);
-    //argv_test("arg0 \"arg 1\"", 2);
-    //argv_test("arg0 arg\\ 1", 2);
+    argv_test("a0", 1);
+    argv_test("a0 a1", 2);
+    argv_test("a0 a1 a2", 3);
+    argv_test("a0 \"a 1\"", 2);
+    argv_test("\"a 0\" a1", 2);
+    argv_test("\"a 0\" \"a 1\"", 2);
+    argv_test("a0 \"a 1\" a2", 3);
+    argv_test("a0 a\\ 1", 2);
+    argv_test("a\\ 0 a1", 2);
+    argv_test("a\\ 0 a\\ 1", 2);
+    argv_test("a\\ 0 \"a 1\"", 2);
+    argv_test("\"a 0\" a\\ 1", 2);
+    argv_test("\\\"a 0\\\" a\\ 1", 3);
+    argv_test("a\\ 0 \\\"a 1\\\"", 3);
+    argv_test("a\\\\ 0 a\\ 1", 3);
+    argv_test("a\\ 0 a\\\\ 1", 3);
+    argv_test("\"a\\ 0\" a\\ 1", 2);
+    argv_test("\"a\\\\ 0\" a\\ 1", 2);
 
     return 1;
 }
