@@ -28,12 +28,57 @@
 #include "bu/file.h"
 #include "bu/exit.h"
 
+static void
+process_quote(char **lpp, int *quoted)
+{
+    char *cp = *lpp;
+
+    // Starting a quote
+    if (!(*quoted)) {
+	/* Shift everything to the left (i.e. stomp on the quote character) */
+	while (*cp != '\0') {
+	    *cp = *(cp+1);
+	    cp++;
+	}
+    }
+
+    // Ending a quote
+    if (*quoted) {
+	*cp = '\0';
+	(*lpp)++;
+    }
+
+    /* toggle quoted state */
+    *quoted = (*quoted) ? 0 : 1;
+}
+
+static void
+process_escape(char **lp)
+{
+    char *cp = *lp;
+    /* Shift everything to the left (i.e. stomp on the escape character) */
+    while (*cp != '\0') {
+	*cp = *(cp+1);
+	cp++;
+    }
+}
+
+
+/* skip leading whitespace */
+static void
+skip_whitespace(char **lpp)
+{
+    while (*(*lpp) != '\0' && isspace((int)(*(*lpp)))) {
+	/* null out spaces */
+	*(*lpp) = '\0';
+	(*lpp)++;
+    }
+}
 
 size_t
 bu_argv_from_string(char *argv[], size_t lim, char *lp)
 {
     size_t argc = 0; /* number of words seen */
-    size_t skip = 0;
     int quoted = 0;
     int escaped = 0;
 
@@ -49,113 +94,121 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
 	/* nothing to do, only return NULL in argv[0] */
 	return 0;
     }
+    char *echar = &(lp[strlen(lp)-1]);
 
     /* skip leading whitespace */
-    while (*lp != '\0' && isspace((int)(*lp)))
-	lp++;
+    skip_whitespace(&lp);
 
     if (*lp == '\0') {
 	/* no words, only return NULL in argv[0] */
 	return 0;
     }
 
+
+    // If we're leading off with a quoted string we need to handle the leading
+    // quote before we assign the argv pointer, to avoid capturing the arg's
+    // quote along with the string contents
+    if (*lp == '"')
+	process_quote(&lp, &quoted);
+
+    // Similarly, if we're leading with an escaped character handle the
+    // string adjustment before argv assignment
+    if (*lp == '\\') {
+	// Handle the implications of the escaped char
+	process_escape(&lp);
+	escaped = 1;
+    }
+
     /* some non-space string has been seen, set argv[0] */
-    argc = 0;
     argv[argc] = lp;
+    argc = 1;
 
     for (; *lp != '\0'; lp++) {
 
 	if (*lp == '\\') {
-	    char *cp = lp;
-
-	    /* Shift everything to the left (i.e. stomp on the escape character) */
-	    while (*cp != '\0') {
-		*cp = *(cp+1);
-		cp++;
+	    // If this escape character was previously escaped,
+	    // it's just a normal char
+	    if (escaped) {
+		escaped = 0;
+		continue;
 	    }
 
-	    /* mark the next character as escaped */
+	    // Handle the implications of the escaped char
+	    process_escape(&lp);
 	    escaped = 1;
-
-	    /* remember the loops lp++ */
-	    lp--;
-
 	    continue;
 	}
 
 	if (*lp == '"') {
-	    if (!quoted) {
-		char *cp = lp;
-
-		/* start collecting quoted string */
-		quoted = 1;
-
-		if (!escaped) {
-		    /* Shift everything to the left (i.e. stomp on the quote character) */
-		    while (*cp != '\0') {
-			*cp = *(cp+1);
-			cp++;
-		    }
-
-		    /* remember the loops lp++ */
-		    lp--;
-		}
-
+	    if (escaped) {
+		// An escaped quote is a normal char
+		escaped = 0;
 		continue;
 	    }
 
-	    /* end qoute */
-	    quoted = 0;
-	    if (escaped)
-		lp++;
-	    else
-		*lp++ = '\0';
+	    // Adjust the string based on the implications of the quote
+	    process_quote(&lp, &quoted);
 
-	    /* skip leading whitespace */
-	    while (*lp != '\0' && isspace((int)(*lp))) {
-		/* null out spaces */
-		*lp = '\0';
-		lp++;
-	    }
+	    // If we're starting a quote, repeat the previous processing step
+	    // with the string left shifted to remove the starting quote char.
+	    if (quoted)
+		continue;
 
-	    skip = 0;
 	    goto nextword;
 	}
 
+	// We've handled all the characters that might have been escaped -
+	// clear the flag for the next round
 	escaped = 0;
 
-	/* skip over current word */
-	if (quoted || !isspace((int)(*lp)))
+	// skip over current word
+	if (quoted || !isspace((int)(*lp))) {
 	    continue;
-
-	skip = 0;
-
-	/* terminate current word, skip space until we find the start
-	 * of the next word nulling out the spaces as we go along.
-	 */
-	while (*(lp+skip) != '\0' && isspace((int)(*(lp+skip)))) {
-	    lp[skip] = '\0';
-	    skip++;
 	}
 
-	if (*(lp + skip) == '\0')
-	    break;
+nextword:
+	// We either have a space or we're at the end of the string - either
+	// way, the arg is complete.  Terminate it with a NULL - if this is
+	// not the last arg, this replaces the space in the string with a
+	// NULL terminator to allow C to interpret the portion of the string
+	// pointed to by argv[argc] as its own string.
+	if (lp == echar)
+	    goto nullterm;
+	*lp = '\0';
+	lp++;
 
-    nextword:
-	/* make sure argv[] isn't full, need room for NULL */
+	// If we have additional whitespace, we need to clear it
+	skip_whitespace(&lp);
+
+	// If we're staring up a quoted string we need to handle the leading
+	// quote before we assign the argv pointer, to avoid capturing the
+	// arg's quote along with the string contents
+	if (*lp == '"')
+	    process_quote(&lp, &quoted);
+
+	// Similarly, if we're leading with an escaped character handle the
+	// string adjustment before argv assignment
+	if (*lp == '\\') {
+	    // Handle the implications of the escaped char
+	    process_escape(&lp);
+	    escaped = 1;
+	}
+
+	// If we have nothing left, we're done
+	if (*lp == '\0')
+	    goto nullterm;
+
+	// make sure argv[] isn't full, need room for NULL
 	if (argc >= lim-1)
 	    break;
 
 	/* start of next word */
+	argv[argc] = lp;
 	argc++;
-	argv[argc] = lp + skip;
-
-	/* jump over the spaces, remember the loop's lp++ */
-	lp += skip - 1;
     }
 
+nullterm:
     /* always NULL-terminate the array */
-    argc++;
     argv[argc] = (char *)NULL;
 
     return argc;
