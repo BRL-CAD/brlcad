@@ -66,9 +66,6 @@ class CADApp : public QApplication
 
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
 
-	int opendb(QString filename);
-	void closedb();
-
 	QgModel *mdl = NULL;
 	int exec_console_app_in_window(QString command, QStringList options, QString log_file = "");
 

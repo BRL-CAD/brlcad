@@ -37,27 +37,6 @@
 #include "fbserv.h"
 
 extern "C" int
-app_close(void *p, int UNUSED(argc), const char **UNUSED(argv))
-{
-    CADApp *ap = (CADApp *)p;
-    QtConsole *console = ap->w->console;
-    ap->closedb();
-    QtCADQuad *c4= ap->w->c4;
-    for (int i = 1; i < 5; i++) {
-	QtCADView *c = c4->get(i);
-	//c->dm_set = NULL;
-	c->set_view(NULL);
-	c->set_dm_current(NULL);
-	c->set_base2local(1);
-	c->set_local2base(1);
-    }
-    if (console)
-	console->printString("closed database\n");
-
-    return 0;
-}
-
-extern "C" int
 app_man(void *ip, int argc, const char **argv)
 {
     CADApp *ap = (CADApp *)ip;
@@ -84,9 +63,12 @@ app_man(void *ip, int argc, const char **argv)
 void
 CADApp::initialize()
 {
-    // TODO - eventually, load these as plugins
-    //app_cmd_map[QString("open")] = &app_open;
-    app_cmd_map[QString("close")] = &app_close;
+    // TODO - see if there's a way to use bu_process_exec to define a libged
+    // "man" command to exec brlman and avoid the need for this.  Probably will
+    // need env variables (GED_MAN_GRAPHICAL and GED_MAN_DEFAULT_SECTION
+    // maybe?) to allow apps to get default gui or console man viewers with the
+    // right contexts without requiring the user to pass in the right brlman
+    // options every time...
     app_cmd_map[QString("man")] = &app_man;
 }
 
@@ -159,15 +141,6 @@ CADApp::open_file()
     // Let the shell's completer know what the current gedp is (if any)
     w->cshellcomp->gedp = mdl->gedp;
 }
-
-
-void
-CADApp::closedb()
-{
-    delete mdl;
-    db_filename.clear();
-}
-
 
 int
 qged_view_update(struct ged *gedp)
@@ -381,7 +354,7 @@ CADApp::run_qcmd(const QString &command)
 	}
     }
 
-    if (mdl->gedp) {
+    if (mdl && mdl->gedp) {
 	bu_vls_trunc(mdl->gedp->ged_result_str, 0);
     }
 
