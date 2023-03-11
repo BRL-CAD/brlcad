@@ -56,13 +56,8 @@ class CADApp : public QApplication
     Q_OBJECT
 
     public:
-	CADApp(int &argc, char *argv[]) :QApplication(argc, argv) {
-	    mdl = new QgModel();
-	    BU_LIST_INIT(&RTG.rtg_vlfree);
-	};
-	~CADApp() {};
-
-	void initialize();
+	CADApp(int &argc, char *argv[], int swrast_mode = 0, int quad_mode = 0);
+	~CADApp();
 
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
 
@@ -108,8 +103,7 @@ class CADApp : public QApplication
 	BRLCAD_MainWindow *w = NULL;
 	QtCADView *curr_view = NULL;
 	QgTreeView *treeview = NULL;
-	QString db_filename;
-	struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
+	struct bu_vls init_msgs = BU_VLS_INIT_ZERO; // for plugin initialization reporting
 
     private:
 	std::vector<char *> tmp_av;

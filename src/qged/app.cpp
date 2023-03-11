@@ -35,13 +35,214 @@
 #include "qtcad/QgTreeSelectionModel.h"
 #include "app.h"
 #include "fbserv.h"
+#include "event_filter.h"
 
-void
-CADApp::initialize()
+extern "C" void
+qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t callback, void *data)
 {
-    // TODO - put any app initialization happens after the gedp and widgets
-    // are set up here.
+    if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
+	return;
+
+    BRLCAD_MainWindow *w = (BRLCAD_MainWindow *)p->gedp->ged_io_data;
+    QtConsole *c = w->console;
+
+    int fd = bu_process_fileno(p->p, t);
+    if (fd < 0)
+	return;
+
+    c->listen(fd, p, t, callback, data);
+
+    switch (t) {
+	case BU_PROCESS_STDIN:
+	    p->stdin_active = 1;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    p->stdout_active = 1;
+	    break;
+	case BU_PROCESS_STDERR:
+	    p->stderr_active = 1;
+	    break;
+    }
 }
+
+extern "C" void
+qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
+{
+    if (!p) return;
+
+    BRLCAD_MainWindow *w = (BRLCAD_MainWindow *)p->gedp->ged_io_data;
+    QtConsole *c = w->console;
+
+    // Since these callbacks are invoked from the listener, we can't call
+    // the listener destructors directly.  We instead call a routine that
+    // emits a single that will notify the console widget it's time to
+    // detach the listener.
+    switch (t) {
+	case BU_PROCESS_STDIN:
+	    bu_log("stdin\n");
+	    if (p->stdin_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+	    }
+	    p->stdin_active = 0;
+	    break;
+	case BU_PROCESS_STDOUT:
+	    if (p->stdout_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+		bu_log("stdout: %d\n", p->stdout_active);
+	    }
+	    p->stdout_active = 0;
+	    break;
+	case BU_PROCESS_STDERR:
+	    if (p->stderr_active && c->listeners.find(std::make_pair(p, t)) != c->listeners.end()) {
+		c->listeners[std::make_pair(p, t)]->m_notifier->disconnect();
+		c->listeners[std::make_pair(p, t)]->on_finished();
+		bu_log("stderr: %d\n", p->stderr_active);
+	    }
+	    p->stderr_active = 0;
+	    break;
+    }
+
+    // All communication has ceased between the app and the subprocess,
+    // time to call the end callback (if any)
+    if (!p->stdin_active && !p->stdout_active && !p->stderr_active) {
+	if (p->end_clbk)
+	    p->end_clbk(0, p->end_clbk_data);
+    }
+
+    w->c4->do_view_update(QTCAD_VIEW_REFRESH);
+}
+
+
+CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplication(argc, argv)
+{
+    setOrganizationName("BRL-CAD");
+    setOrganizationDomain("brlcad.org");
+    setApplicationName("QGED");
+    setApplicationVersion(brlcad_version());
+
+    // NOTE - these env variables should ultimately be temporary - we are using
+    // them to enable behavior in LIBRT/LIBGED we don't yet want on by default
+    // in all applications
+
+    /* Let LIBRT know to process comb instance specifiers in paths */
+    bu_setenv("LIBRT_USE_COMB_INSTANCE_SPECIFIERS", "1", 1);
+    /* Let LIBGED know to initialize its instance state container */
+    bu_setenv("LIBGED_DBI_STATE", "1", 1);
+    /* Let LIBGED know to use new command forms */
+    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
+
+    mdl = new QgModel();
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+
+    QGEDFilter *efilter = new QGEDFilter();
+    installEventFilter(efilter);
+
+    // Use the dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets
+    //
+    // TODO - need to fix a bug with the theme - observing it in qged.  See
+    // https://github.com/Alexhuszagh/BreezeStyleSheets/issues/25
+    QFile file(":/dark.qss");
+    file.open(QFile::ReadOnly | QFile::Text);
+    QTextStream stream(&file);
+    setStyleSheet(stream.readAll());
+
+    // Create the windows
+    w = new BRLCAD_MainWindow(swrast_mode, quad_mode);
+
+    // Read any saved settings
+    readSettings();
+
+    // (Debugging) Report settings filename
+    QSettings dmsettings("BRL-CAD", "QGED");
+    if (QFileInfo(dmsettings.fileName()).exists()) {
+	std::cout << "Reading settings from " << dmsettings.fileName().toStdString() << "\n";
+    }
+
+    // Disable animated redrawing to minimize performance issues
+    w->setAnimated(false);
+
+    // This is when the window and widgets are actually drawn
+    w->show();
+
+    // If the 3D view didn't set up appropriately, try the fallback rendering
+    // mode.  We must do this after the show() call, because it isn't until
+    // after that point that we know whether the setup of the system's OpenGL
+    // context setup was successful.
+    if (!w->isValid3D()) {
+	w->fallback3D();
+    }
+
+    // If we have a default .g file supplied, open it.  We've delayed doing so
+    // until now in order to have the display related containers from graphical
+    // initialization available - the GED structure will need to know about some
+    // of them to have drawing commands connect properly to the 3D displays.
+    if (argc) {
+	char *fname = bu_strdup(bu_dir(NULL, 0, BU_DIR_CURR, argv[0], NULL));
+	if (!bu_file_exists(fname, NULL)) {
+	    // Current dir prefix didn't work - were we given a full path rather
+	    // than a relative path?
+	    bu_free(fname, "path");
+	    fname = bu_strdup(bu_path_normalize(argv[0]));
+	}
+	int ac = 2;
+	const char *av[3];
+	av[0] = "open";
+	av[1] = fname;
+	av[2] = NULL;
+	int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
+	if (ret != BRLCAD_OK) {
+	    bu_exit(EXIT_FAILURE, "Error opening file %s\n", av[1]);
+	}
+	bu_free(fname, "path");
+    }
+
+    // Connect I/O handlers
+    mdl->gedp->ged_create_io_handler = &qt_create_io_handler;
+    mdl->gedp->ged_delete_io_handler = &qt_delete_io_handler;
+    mdl->gedp->ged_io_data = (void *)w;
+
+    // Send a view_change signal so widgets depending on view information
+    // can initialize themselves
+    emit view_update(QTCAD_VIEW_REFRESH);
+
+    // Generally speaking if we're going to have trouble initializing, it will
+    // be with either the GED plugins or the dm plugins.  Print relevant
+    // messages from those initialization routines (if any) so the user can
+    // tell what's going on.
+    int have_msg = 0;
+    std::string ged_msgs(ged_init_msgs());
+    if (ged_msgs.size()) {
+	w->console->printString(ged_msgs.c_str());
+	w->console->printString("\n");
+	have_msg = 1;
+    }
+    std::string dm_msgs(dm_init_msgs());
+    if (dm_msgs.size()) {
+	if (dm_msgs.find("qtgl") != std::string::npos || dm_msgs.find("swrast") != std::string::npos) {
+	    w->console->printString(dm_msgs.c_str());
+	    w->console->printString("\n");
+	    have_msg = 1;
+	}
+    }
+    if (bu_vls_strlen(&init_msgs)) {
+	w->console->printString(bu_vls_cstr(&init_msgs));
+	w->console->printString("\n");
+	have_msg = 1;
+    }
+
+    // If we did write any messages, need to restore the prompt
+    if (have_msg) {
+	w->console->prompt("$ ");
+    }
+
+}
+
+CADApp::~CADApp() {
+    delete mdl;
+    // TODO - free RTG.rtg_vlfree?
+};
 
 void
 CADApp::do_quad_view_change(QtCADView *cv)
