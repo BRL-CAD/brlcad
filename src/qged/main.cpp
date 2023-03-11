@@ -133,40 +133,6 @@ int main(int argc, char *argv[])
     // state (gedp) lives.
     CADApp app(argc, argv, swrast_mode, quad_mode);
 
-    // Send a view_change signal so widgets depending on view information
-    // can initialize themselves
-    emit app.view_update(QTCAD_VIEW_REFRESH);
-
-    // Generally speaking if we're going to have trouble initializing, it will
-    // be with either the GED plugins or the dm plugins.  Print relevant
-    // messages from those initialization routines (if any) so the user can
-    // tell what's going on.
-    int have_msg = 0;
-    std::string ged_msgs(ged_init_msgs());
-    if (ged_msgs.size()) {
-	app.w->console->printString(ged_msgs.c_str());
-	app.w->console->printString("\n");
-	have_msg = 1;
-    }
-    std::string dm_msgs(dm_init_msgs());
-    if (dm_msgs.size()) {
-	if (dm_msgs.find("qtgl") != std::string::npos || dm_msgs.find("swrast") != std::string::npos) {
-	    app.w->console->printString(dm_msgs.c_str());
-	    app.w->console->printString("\n");
-	    have_msg = 1;
-	}
-    }
-    if (bu_vls_strlen(&app.init_msgs)) {
-    	app.w->console->printString(bu_vls_cstr(&app.init_msgs));
-	app.w->console->printString("\n");
-	have_msg = 1;
-    }
-
-    // If we did write any messages, need to restore the prompt
-    if (have_msg) {
-	app.w->console->prompt("$ ");
-    }
-
     // Setup complete - time to enter the interactive event loop
     return app.exec();
 }
