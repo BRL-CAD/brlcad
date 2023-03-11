@@ -376,6 +376,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // execute the command.
     QObject::connect(this->console, &QtConsole::executeCommand, ((CADApp *)qApp), &CADApp::run_qcmd);
 
+    // The Qt console itself has no direct knowledge of GED commands.  For contextually
+    // aware command prompts, we need a customized completer with knowledge of the database
+    // contents and GED commands.
     GEDShellCompleter *cshellcomp = new GEDShellCompleter(console, gedp);
     console->setCompleter(cshellcomp);
 
