@@ -613,7 +613,7 @@ BRLMAN_MAIN(
     if (man_section != '\0') {
 	man_file = find_man_file(man_name, bu_vls_addr(&lang), man_section, enable_gui);
     } else {
-	const char sections[] = {'1', '3', '5', 'n', '\0'};
+	const char sections[] = BRLCAD_MAN_SECTIONS;
 	i = 0;
 	while(sections[i] != '\0') {
 	    man_file = find_man_file(man_name, bu_vls_addr(&lang), sections[i], enable_gui);
