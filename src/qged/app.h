@@ -99,7 +99,6 @@ class CADApp : public QApplication
 
     public:
 	BRLCAD_MainWindow *w = NULL;
-	QgTreeView *treeview = NULL;
 	struct bu_vls init_msgs = BU_VLS_INIT_ZERO; // for plugin initialization reporting
 
     private:
