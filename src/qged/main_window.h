@@ -63,7 +63,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	QgTreeView *treeview;
 	QtConsole *console;
 	QViewCtrl *vcw;
-	GEDShellCompleter *cshellcomp;
 	CADPalette *vc;
 	CADPalette *oc;
 

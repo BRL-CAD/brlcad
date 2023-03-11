@@ -376,7 +376,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // execute the command.
     QObject::connect(this->console, &QtConsole::executeCommand, ((CADApp *)qApp), &CADApp::run_qcmd);
 
-    cshellcomp = new GEDShellCompleter(console, gedp);
+    GEDShellCompleter *cshellcomp = new GEDShellCompleter(console, gedp);
     console->setCompleter(cshellcomp);
 
     /* Geometry Tree */

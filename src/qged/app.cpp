@@ -311,8 +311,6 @@ CADApp::open_file()
     } else {
 	w->statusBar()->showMessage(fileName);
     }
-    // Let the shell's completer know what the current gedp is (if any)
-    w->cshellcomp->gedp = mdl->gedp;
 }
 
 int
