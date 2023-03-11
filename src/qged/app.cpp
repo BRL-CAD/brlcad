@@ -36,40 +36,11 @@
 #include "app.h"
 #include "fbserv.h"
 
-extern "C" int
-app_man(void *ip, int argc, const char **argv)
-{
-    CADApp *ap = (CADApp *)ip;
-    QtConsole *console = ap->w->console;
-    int bac = (argc > 1) ? 5 : 4;
-    const char *bav[6];
-    char brlman[MAXPATHLEN] = {0};
-    bu_dir(brlman, MAXPATHLEN, BU_DIR_BIN, "brlman", BU_DIR_EXT, NULL);
-    bav[0] = (const char *)brlman;
-    bav[1] = "-g";
-    bav[2] = "-S";
-    bav[3] = "n";
-    bav[4] = (argc > 1) ? argv[1] : NULL;
-    bav[5] = NULL;
-    struct bu_process *p = NULL;
-    bu_process_exec(&p, bav[0], bac, (const char **)bav, 0, 0);
-    if (bu_process_pid(p) == -1 && console) {
-	console->printString("Failed to launch man page viewer\n") ;
-	return -1;
-    }
-    return 0;
-}
-
 void
 CADApp::initialize()
 {
-    // TODO - see if there's a way to use bu_process_exec to define a libged
-    // "man" command to exec brlman and avoid the need for this.  Probably will
-    // need env variables (GED_MAN_GRAPHICAL and GED_MAN_DEFAULT_SECTION
-    // maybe?) to allow apps to get default gui or console man viewers with the
-    // right contexts without requiring the user to pass in the right brlman
-    // options every time...
-    app_cmd_map[QString("man")] = &app_man;
+    // TODO - put any app initialization happens after the gedp and widgets
+    // are set up here.
 }
 
 void
@@ -324,21 +295,11 @@ CADApp::run_qcmd(const QString &command)
     int ac = bu_argv_from_string(av, strlen(input), input);
     struct bu_vls msg = BU_VLS_INIT_ZERO;
 
-    // First, see if we have an application level command.
-    int cmd_run = 0;
-    if (app_cmd_map.contains(QString(av[0]))) {
-	app_cmd_ptr acmd = app_cmd_map.value(QString(av[0]));
-	(*acmd)((void *)this, ac, (const char **)av);
-	cmd_run = 1;
-    }
-
-    // If it wasn't an app level command, try it as a GED command.
+    // Run as a GED command.
     int ret = BRLCAD_OK;
-    if (!cmd_run) {
-	ret = run_cmd(&msg, ac, (const char **)av);
-	if (bu_vls_strlen(&msg) > 0 && console) {
-	    console->printString(bu_vls_cstr(&msg));
-	}
+    ret = run_cmd(&msg, ac, (const char **)av);
+    if (bu_vls_strlen(&msg) > 0 && console) {
+	console->printString(bu_vls_cstr(&msg));
     }
 
     if (console) {

@@ -112,8 +112,6 @@ class CADApp : public QApplication
 	struct bu_vls init_msgs = BU_VLS_INIT_ZERO;
 
     private:
-	typedef int (*app_cmd_ptr)(void *, int, const char **);
-	QMap<QString, app_cmd_ptr> app_cmd_map;
 	std::vector<char *> tmp_av;
 	unsigned long long select_hash = 0;
 	long history_mark_start = -1;
