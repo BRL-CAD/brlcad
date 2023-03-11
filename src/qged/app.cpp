@@ -151,8 +151,11 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
     // Create the windows
     w = new BRLCAD_MainWindow(swrast_mode, quad_mode);
 
-    // Read any saved settings
-    readSettings();
+    // Read the saved window size, if any
+    QSettings settings("BRL-CAD", "QGED");
+    settings.beginGroup("BRLCAD_MainWindow");
+    w->resize(settings.value("size", QSize(1100, 800)).toSize());
+    settings.endGroup();
 
     // (Debugging) Report settings filename
     QSettings dmsettings("BRL-CAD", "QGED");
@@ -579,18 +582,6 @@ CADApp::exec_console_app_in_window(QString command, QStringList options, QString
 	out_win->exec();
     }
     return 0;
-}
-
-void
-CADApp::readSettings()
-{
-    QTCAD_SLOT("CADApp::readSettings", 1);
-    QSettings settings("BRL-CAD", "QGED");
-
-    settings.beginGroup("BRLCAD_MainWindow");
-    if (w)
-	w->resize(settings.value("size", QSize(1100, 800)).toSize());
-    settings.endGroup();
 }
 
 void
