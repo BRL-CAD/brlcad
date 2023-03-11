@@ -279,15 +279,12 @@ const struct ged_cmd apropos_cmd = { &apropos_cmd_impl };
 struct ged_cmd_impl info_cmd_impl     = { "info",    ged_help_core, GED_CMD_DEFAULT };
 const struct ged_cmd info_cmd = { &info_cmd_impl };
 
-struct ged_cmd_impl man_cmd_impl      = { "man",     ged_help_core, GED_CMD_DEFAULT };
-const struct ged_cmd man_cmd = { &man_cmd_impl };
-
 struct ged_cmd_impl question_cmd_impl = { "?",       ged_help_core, GED_CMD_DEFAULT };
 const struct ged_cmd question_cmd = { &question_cmd_impl };
 
-const struct ged_cmd *help_cmds[] = { &help_cmd,  &apropos_cmd,  &info_cmd,  &man_cmd,  &question_cmd, NULL };
+const struct ged_cmd *help_cmds[] = { &help_cmd,  &apropos_cmd,  &info_cmd,  &question_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  help_cmds, 5 };
+static const struct ged_plugin pinfo = { GED_API,  help_cmds, 4 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
