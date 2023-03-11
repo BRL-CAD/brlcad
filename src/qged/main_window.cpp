@@ -447,7 +447,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // Connect the primary view widget to the app
     QObject::connect(c4, &QtCADQuad::selected, ap, &CADApp::do_quad_view_change);
     QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_quad_view_change);
-    ap->curr_view = c4->get(0);
 
     // Some of the dm initialization has to be delayed - make the connections so we can
     // do the work after widget initialization is complete.

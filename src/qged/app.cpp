@@ -536,6 +536,9 @@ CADApp::element_selected(QToolPaletteElement *el)
 	return;
     }
 
+    // TODO - should this always be 0?
+    QtCADView *curr_view = w->c4->get(0);
+
     if (curr_view->curr_event_filter) {
 	curr_view->clear_event_filter(curr_view->curr_event_filter);
 	curr_view->curr_event_filter = NULL;
