@@ -160,10 +160,8 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
 	std::cout << "Reading settings from " << dmsettings.fileName().toStdString() << "\n";
     }
 
-    // Disable animated redrawing to minimize performance issues
-    w->setAnimated(false);
-
-    // This is when the window and widgets are actually drawn
+    // This is when the window and widgets are actually drawn (do this after
+    // loading settings so the window size matches the saved config, if any)
     w->show();
 
     // If the 3D view didn't set up appropriately, try the fallback rendering
@@ -176,8 +174,9 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
 
     // If we have a default .g file supplied, open it.  We've delayed doing so
     // until now in order to have the display related containers from graphical
-    // initialization available - the GED structure will need to know about some
-    // of them to have drawing commands connect properly to the 3D displays.
+    // initialization/show() available - the GED structure will need to know
+    // about some of them to have drawing commands connect properly to the 3D
+    // displays.
     if (argc) {
 	char *fname = bu_strdup(bu_dir(NULL, 0, BU_DIR_CURR, argv[0], NULL));
 	if (!bu_file_exists(fname, NULL)) {
@@ -198,7 +197,7 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
 	bu_free(fname, "path");
     }
 
-    // Connect I/O handlers
+    // Assign QGED specific I/O handlers to the gedp
     mdl->gedp->ged_create_io_handler = &qt_create_io_handler;
     mdl->gedp->ged_delete_io_handler = &qt_delete_io_handler;
     mdl->gedp->ged_io_data = (void *)w;
@@ -236,7 +235,6 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
     if (have_msg) {
 	w->console->prompt("$ ");
     }
-
 }
 
 CADApp::~CADApp() {

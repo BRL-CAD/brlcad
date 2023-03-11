@@ -127,10 +127,7 @@ int main(int argc, char *argv[])
 	return BRLCAD_ERROR;
     }
 
-    // We derive our own app type from QApplication so we can store any custom
-    // application-wide state there - using the Qt provided global rather than
-    // introducing any of our own.  In particular, that is where the current GED
-    // state (gedp) lives.
+    // We derive our own app type from QApplication
     CADApp app(argc, argv, swrast_mode, quad_mode);
 
     // Setup complete - time to enter the interactive event loop
