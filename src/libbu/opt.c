@@ -1402,7 +1402,7 @@ bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set
 {
     size_t i = 0;
     char *s_set = (char *)set_var;
-    const char sections[] = {'1', '3', '5', 'n', '\0'};
+    const char sections[] = BRLCAD_MAN_SECTIONS;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
 

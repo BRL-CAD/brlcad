@@ -438,6 +438,7 @@ BU_EXPORT extern int bu_opt_lang(struct bu_vls *msg, size_t argc, const char **a
  * Look for a valid man page section identifier (for BRL-CAD purposes valid
  * choices are 1, 3, 5, n)
  */
+#define BRLCAD_MAN_SECTIONS {'1', '3', '5', 'n', '\0'}
 BU_EXPORT extern int bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 __END_DECLS
