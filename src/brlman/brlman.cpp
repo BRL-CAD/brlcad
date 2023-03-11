@@ -73,82 +73,6 @@
 #endif
 
 /* Supported man sections */
-const char sections[] = {'1', '3', '5', 'n', '\0'};
-
-/*
- * Checks that a string matches the two lower case letter form of ISO 639-1
- * language codes.  List pulled from:
- *
- * http://www.loc.gov/standards/iso639-2/php/English_list.php
- */
-const char *iso639_1[] = {"ab", "aa", "af", "ak", "sq", "am", "ar", "an",
-			  "hy", "as", "av", "ae", "ay", "az", "bm", "ba", "eu", "be", "bn", "bh",
-			  "bi", "nb", "bs", "br", "bg", "my", "es", "ca", "km", "ch", "ce", "ny",
-			  "ny", "zh", "za", "cu", "cu", "cv", "kw", "co", "cr", "hr", "cs", "da",
-			  "dv", "dv", "nl", "dz", "en", "eo", "et", "ee", "fo", "fj", "fi", "nl",
-			  "fr", "ff", "gd", "gl", "lg", "ka", "de", "ki", "el", "kl", "gn", "gu",
-			  "ht", "ht", "ha", "he", "hz", "hi", "ho", "hu", "is", "io", "ig", "id",
-			  "ia", "ie", "iu", "ik", "ga", "it", "ja", "jv", "kl", "kn", "kr", "ks",
-			  "kk", "ki", "rw", "ky", "kv", "kg", "ko", "kj", "ku", "kj", "ky", "lo",
-			  "la", "lv", "lb", "li", "li", "li", "ln", "lt", "lu", "lb", "mk", "mg",
-			  "ms", "ml", "dv", "mt", "gv", "mi", "mr", "mh", "ro", "ro", "mn", "na",
-			  "nv", "nv", "nd", "nr", "ng", "ne", "nd", "se", "no", "nb", "nn", "ii",
-			  "ny", "nn", "ie", "oc", "oj", "cu", "cu", "cu", "or", "om", "os", "os",
-			  "pi", "pa", "ps", "fa", "pl", "pt", "pa", "ps", "qu", "ro", "rm", "rn",
-			  "ru", "sm", "sg", "sa", "sc", "gd", "sr", "sn", "ii", "sd", "si", "si",
-			  "sk", "sl", "so", "st", "nr", "es", "su", "sw", "ss", "sv", "tl", "ty",
-			  "tg", "ta", "tt", "te", "th", "bo", "ti", "to", "ts", "tn", "tr", "tk",
-			  "tw", "ug", "uk", "ur", "ug", "uz", "ca", "ve", "vi", "vo", "wa", "cy",
-			  "fy", "wo", "xh", "yi", "yo", "za", "zu", NULL};
-
-static int
-opt_lang(struct bu_vls *msg, size_t argc, const char **argv, void *l)
-{
-    size_t i = 0;
-    struct bu_vls *lang = (struct bu_vls *)l;
-    if (lang) {
-	int ret = bu_opt_vls(msg, argc, argv, (void *)l);
-	if (ret == -1)
-	    return -1;
-	if (bu_vls_strlen(lang) != 2)
-	    return -1;
-	/* Only return valid if we've got one of the ISO639-1 lang codes */
-	while (iso639_1[i]) {
-	    if (BU_STR_EQUAL(bu_vls_addr(lang), iso639_1[i]))
-		return ret;
-	    i++;
-	}
-	return -1;
-    } else {
-	return -1;
-    }
-}
-
-
-static int
-opt_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
-{
-    size_t i = 0;
-    char *s_set = (char *)set_var;
-
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
-
-    /* One char only */
-    if (strlen(argv[0]) != 1)
-	return -1;
-
-    while(sections[i]) {
-	if (sections[i] == argv[0][0]) {
-	    if (s_set)
-		(*s_set) = argv[0][0];
-	    return 1;
-	}
-	i++;
-    }
-
-    return -1;
-}
-
 
 static char *
 find_man_file(const char *man_name, const char *lang, char section, int gui)
@@ -569,11 +493,11 @@ BRLMAN_MAIN(
     bu_setprogname(argv[0]);
 
     /* Handle options in C */
-    BU_OPT(d[0], "h", "help",        "",         NULL, &print_help,  "Print help and exit");
-    BU_OPT(d[1], "g", "gui",         "",         NULL, &enable_gui,  "Enable GUI");
-    BU_OPT(d[2], "",  "no-gui",      "",         NULL, &disable_gui, "Disable GUI");
-    BU_OPT(d[3], "L", "language",  "lg",    &opt_lang, &lang,        "Set language");
-    BU_OPT(d[4], "S", "section",    "#", &opt_section, &man_section, "Set section");
+    BU_OPT(d[0], "h", "help",        "",                NULL, &print_help,  "Print help and exit");
+    BU_OPT(d[1], "g", "gui",         "",                NULL, &enable_gui,  "Enable GUI");
+    BU_OPT(d[2], "",  "no-gui",      "",                NULL, &disable_gui, "Disable GUI");
+    BU_OPT(d[3], "L", "language",  "lg",        &bu_opt_lang, &lang,        "Set language");
+    BU_OPT(d[4], "S", "section",    "#", &bu_opt_man_section, &man_section, "Set section");
     BU_OPT_NULL(d[5]);
 
     /* Skip first arg */
@@ -689,6 +613,7 @@ BRLMAN_MAIN(
     if (man_section != '\0') {
 	man_file = find_man_file(man_name, bu_vls_addr(&lang), man_section, enable_gui);
     } else {
+	const char sections[] = {'1', '3', '5', 'n', '\0'};
 	i = 0;
 	while(sections[i] != '\0') {
 	    man_file = find_man_file(man_name, bu_vls_addr(&lang), sections[i], enable_gui);

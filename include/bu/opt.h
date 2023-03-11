@@ -429,6 +429,17 @@ BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char *
  */
 BU_EXPORT extern int bu_opt_incr_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
+/**
+ * Looking for a string that defines a language per ISO 639-1 language codes.
+ */
+BU_EXPORT extern int bu_opt_lang(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+
+/**
+ * Look for a valid man page section identifier (for BRL-CAD purposes valid
+ * choices are 1, 3, 5, n)
+ */
+BU_EXPORT extern int bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+
 __END_DECLS
 
 #endif  /* BU_OPT_H */
