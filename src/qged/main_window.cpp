@@ -463,18 +463,9 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     vc->makeCurrent(vc);
 }
 
-bool
-BRLCAD_MainWindow::isValid3D()
-{
-    return c4->isValid();
-}
-
-void
-BRLCAD_MainWindow::fallback3D()
-{
-    c4->fallback();
-}
-
+// These commands can only be successfully executed after the QtCADQuad widget
+// initialization is *fully* complete.  Consequently, these steps are separated
+// out from the main constructor.
 void
 BRLCAD_MainWindow::do_dm_init()
 {
@@ -482,8 +473,6 @@ BRLCAD_MainWindow::do_dm_init()
     CADApp *ap = (CADApp *)qApp;
     QgModel *m = ap->mdl;
     struct ged *gedp = m->gedp;
-
-    bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
 
     ///////////////////////////////////////////////////////////////////////////
     // DEBUG - turn on some of the bells and whistles by default, since they
@@ -507,6 +496,19 @@ BRLCAD_MainWindow::do_dm_init()
 
     emit ap->view_update(QTCAD_VIEW_REFRESH);
     ///////////////////////////////////////////////////////////////////////////
+}
+
+
+bool
+BRLCAD_MainWindow::isValid3D()
+{
+    return c4->isValid();
+}
+
+void
+BRLCAD_MainWindow::fallback3D()
+{
+    c4->fallback();
 }
 
 /*
