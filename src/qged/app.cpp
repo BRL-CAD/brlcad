@@ -167,6 +167,7 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
 	w->restoreState(settings.value("windowState").toByteArray());
     }
 
+    // This is when the window and widgets are actually drawn (do this after
     // loading settings so the window size matches the saved config, if any)
     w->show();
 
