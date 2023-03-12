@@ -314,6 +314,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // hardcoded statics, so plugins can define their own graphical elements...
 
     vcd = new QDockWidget("View Controls", this);
+    vcd->setObjectName("View_Controls");
     addDockWidget(Qt::RightDockWidgetArea, vcd);
     vcd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     vm_panels->addAction(vcd->toggleViewAction());
@@ -321,6 +322,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     vcd->setWidget(vc);
 
     ocd = new QDockWidget("Object Editing", this);
+    ocd->setObjectName("Object_Editing");
     addDockWidget(Qt::RightDockWidgetArea, ocd);
     ocd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     vm_panels->addAction(ocd->toggleViewAction());
@@ -363,6 +365,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     /* Console */
     console_dock = new QgDockWidget("Console", this);
+    console_dock->setObjectName("Console");
     addDockWidget(Qt::BottomDockWidgetArea, console_dock);
     console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
     vm_panels->addAction(console_dock->toggleViewAction());
@@ -384,6 +387,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     /* Geometry Tree */
     tree_dock = new QgDockWidget("Hierarchy", this);
+    tree_dock->setObjectName("Hierarchy");
     addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
     tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     vm_panels->addAction(tree_dock->toggleViewAction());
@@ -420,6 +424,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 
     // Dialogues for attribute viewing (and eventually manipulation)
     QDockWidget *sattrd = new QDockWidget("Standard Attributes", this);
+    sattrd->setObjectName("Standard_Attributes");
     addDockWidget(Qt::LeftDockWidgetArea, sattrd);
     sattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     vm_panels->addAction(sattrd->toggleViewAction());
@@ -429,6 +434,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     sattrd->setWidget(stdpropview);
 
     QDockWidget *uattrd = new QDockWidget("User Attributes", this);
+    uattrd->setObjectName("User_Attributes");
     addDockWidget(Qt::LeftDockWidgetArea, uattrd);
     uattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     vm_panels->addAction(uattrd->toggleViewAction());
@@ -512,6 +518,26 @@ void
 BRLCAD_MainWindow::fallback3D()
 {
     c4->fallback();
+}
+
+void
+BRLCAD_MainWindow::close()
+{
+    closeEvent(NULL);
+    QMainWindow::close();
+}
+
+void
+BRLCAD_MainWindow::closeEvent(QCloseEvent* e)
+{
+    QSettings settings("BRL-CAD", "QGED");
+    // https://bugreports.qt.io/browse/QTBUG-16252?focusedCommentId=250562&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-250562
+    settings.setValue("geometry", QVariant(geometry()));
+    settings.setValue("windowState", saveState());
+    bu_log("mainwindow write settings\n");
+    if (!e)
+	return;
+    QMainWindow::closeEvent(e);
 }
 
 /*

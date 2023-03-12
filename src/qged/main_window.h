@@ -59,6 +59,7 @@ class BRLCAD_MainWindow : public QMainWindow
 	QtCADQuad *c4 = NULL;
 	bool isValid3D();
 	void fallback3D();
+	void closeEvent(QCloseEvent* e);
 
 	QgTreeView *treeview;
 	QtConsole *console;
@@ -69,6 +70,7 @@ class BRLCAD_MainWindow : public QMainWindow
     public slots:
         //void save_image();
 	void do_dm_init();
+        void close();
 
     private:
 	QMenu *file_menu;

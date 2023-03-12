@@ -153,17 +153,20 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
 
     // Read the saved window size, if any
     QSettings settings("BRL-CAD", "QGED");
-    settings.beginGroup("BRLCAD_MainWindow");
-    w->resize(settings.value("size", QSize(1100, 800)).toSize());
-    settings.endGroup();
 
     // (Debugging) Report settings filename
-    QSettings dmsettings("BRL-CAD", "QGED");
-    if (QFileInfo(dmsettings.fileName()).exists()) {
-	std::cout << "Reading settings from " << dmsettings.fileName().toStdString() << "\n";
+    if (QFileInfo(settings.fileName()).exists())
+	std::cout << "Reading settings from " << settings.fileName().toStdString() << "\n";
+
+    if (!QFileInfo(settings.fileName()).exists()) {
+	w->resize(QSize(1100, 800));
+    } else {
+	//https://bugreports.qt.io/browse/QTBUG-16252?focusedCommentId=250562&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-250562
+	if(settings.contains("geometry"))
+	    w->setGeometry(settings.value("geometry").value<QRect>());
+	w->restoreState(settings.value("windowState").toByteArray());
     }
 
-    // This is when the window and widgets are actually drawn (do this after
     // loading settings so the window size matches the saved config, if any)
     w->show();
 
@@ -469,8 +472,10 @@ CADApp::run_qcmd(const QString &command)
     QtConsole *console = w->console;
     const char *cmd = bu_strdup(command.toLocal8Bit().data());
 
-    if (BU_STR_EQUAL(cmd, "q"))
+    if (BU_STR_EQUAL(cmd, "q")) {
+	w->closeEvent(NULL);
 	bu_exit(0, "exit");
+    }
 
     if (BU_STR_EQUAL(cmd, "clear")) {
 	if (console) {
@@ -588,11 +593,8 @@ CADApp::write_settings()
     QTCAD_SLOT("CADApp::write_settings", 1);
     QSettings settings("BRL-CAD", "QGED");
 
-    if (w) {
-	settings.beginGroup("BRLCAD_MainWindow");
-	settings.setValue("size", w->size());
-	settings.endGroup();
-    }
+    // TODO - write user settings here.  Window state saving is handled by
+    // BRLCAD_MainWindow closeEvent
 }
 
 void
