@@ -211,8 +211,16 @@ qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
 }
 #endif
 
-// Because swrast uses a bview as its context pointer, we need to unpack the app data
-// when using that display method
+// Because swrast uses a bview as its context pointer, we need to unpack the
+// app data to get our Qt widget ctx when using that display method.  In other
+// words, the swrast backend is generic - it has no knowledge of Qt - and the
+// Qt widget we need to notify for update/redraw purposes is coming (from the
+// libdm perspective) solely from the application - which is why it lives in
+// the user data slot rather than the context.  (The swrast offscreen rendering
+// context is still present and relevant, hence the need for a separate user
+// pointer.)  The advantage of using a generic swrast backend is that such a
+// setup allows us to use the same logic both for Qt widget rendering and
+// headless image generation.
 void
 qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data)
 {
