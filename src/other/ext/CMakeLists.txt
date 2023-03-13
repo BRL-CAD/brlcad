@@ -24,10 +24,13 @@
 # Bundled libs, it is still possible to request a system library in
 # individual cases.
 #
-# NOTE:  Logic in this file assumes the misc/tools directory has
-# already been processed and relevant variables have been set.
-#
 #-----------------------------------------------------------------------
+
+# Yuck - OpenBSD has it's own naming convention for executables and
+# libraries, which is messing up both our copying logic and the
+# find_package results.  Will have to try to handle it - beginning
+# to wonder if we need a function to encapsulate the platform
+# naming conventions to avoid all these boilerplate patterns...
 
 project(BDEPS)
 
@@ -151,12 +154,6 @@ if(NOT DEFINED EXTPROJ_VERBOSE)
   set(EXTPROJ_VERBOSE 0)
 endif(NOT DEFINED EXTPROJ_VERBOSE)
 
-# NOTE:  while rpath_replace and buildpath_replace are uninstalled build
-# utilities, and so conceptually fit better in misc/tools, they are very
-# intimately connected to the variable settings required for external project
-# building - consequently, they are specifically located here to make sure they
-# are generated with the values expected and needed for this process to work.
-
 # Tool for replacing rpath values in build files.  CMAKE_BUILD_RPATH must be
 # set before configuring this file.
 configure_file(${BDEPS_CMAKE_DIR}/rpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
@@ -175,6 +172,38 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/CMake/buildpath_replace.cxx.in ${CMAK
 add_executable(buildpath_replace ${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
 set_target_properties(buildpath_replace PROPERTIES FOLDER "Compilation Utilities")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/buildpath_replace.cxx)
+
+# patchelf (https://github.com/NixOS/patchelf) is used to set/update RPATH
+# values on certain platforms.  Build a copy if we don't already have it and
+# we're not on Windows or Mac.  If we're going to use it, it needs to be
+# defined before we start setting up the external targets.
+#
+# Notes - patchelf is GPL, so we cannot combine it or use it with any of the
+# BRL-CAD distributed libraries.  It is bundled STRICTLY as a build time
+# convenience for platforms that might not have it installed by default - a
+# system version is fine, even preferred.  As of the time of this writing (2022)
+# patchelf seems to be the best way to do the necessary RPATH manipulation for
+# this third party management approach to work.
+
+# This copy of patchelf is not quite the newest version on github, as the newer
+# code needs newer C++ standards than BRL-CAD currently requires - see
+# UPGRADE_NOTE.txt in the patchelf directory.
+find_program(PATCHELF_EXECUTABLE patchelf)
+if (NOT PATCHELF_EXECUTABLE)
+  add_subdirectory(patchelf)
+  set(PATCHELF_EXECUTABLE "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${BIN_DIR}/patchelf")
+  if (TARGET patchelf)
+    set_target_properties(patchelf PROPERTIES FOLDER "Compilation Utilities")
+  endif (TARGET patchelf)
+endif (NOT PATCHELF_EXECUTABLE)
+set(PATCHELF_FILES
+  patchelf/CMakeLists.txt
+  patchelf/COPYING
+  patchelf/patchelf.cc
+  patchelf/elf.h
+  patchelf/UPGRADE_NOTE.txt
+  )
+CMAKEFILES(${PATCHELF_FILES})
 
 # BRL-CAD defines some additional custom targets used to manage the outputs of
 # ExternalProject_Add targets.
@@ -250,6 +279,15 @@ set(BRLCAD_LEVEL3 ON)
 #set(BRLCAD_ENABLE_GDAL ON)
 #set(BRLCAD_ENABLE_TCL ON)
 #set(BRLCAD_ENABLE_TK ON)
+
+###############################################################################
+# BRL-CAD and some of its dependencies require the lemon, re2c and perplex
+# tools for compilation.  They are not installed, but must be available.  We
+# ensure they can be found by building them up front if not present on the
+# system.
+###############################################################################
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/perplex.cmake)
 
 ###############################################################################
 # Build logic is broken out per-library, but the ordering is important.  Some
@@ -402,6 +440,8 @@ if (COMMAND CMAKEFILES)
     netpbm.dist
     openmesh.cmake
     openmesh.dist
+    perplex.cmake
+    perplex.dist
     png.cmake
     png.dist
     proj.dist

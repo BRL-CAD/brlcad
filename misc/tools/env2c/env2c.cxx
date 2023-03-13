@@ -1,4 +1,4 @@
-/*                       E N V 2 C . C P P
+/*                       E N V 2 C . C X X
  * BRL-CAD
  *
  * Copyright (c) 2018-2023 United States Government as represented by
@@ -32,7 +32,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/** @file env2c.cpp
+/** @file env2c.cxx
  *
  * Find all environment variables checked with getenv by BRL-CAD
  * and generate a file defining a static array listing them.
