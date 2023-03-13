@@ -616,6 +616,30 @@ BRLCAD_MainWindow::IndicateRaytraceDone(int val)
     vcw->raytrace_done(val);
 }
 
+int
+BRLCAD_MainWindow::InteractionMode(QPoint &gpos)
+{
+    if (vc->tpalette) {
+	QWidget *vcp = vc->tpalette;
+	QRect lrect = vcp->geometry();
+	QPoint mpos = vcp->mapFromGlobal(gpos);
+	if (lrect.contains(mpos)) {
+	    return 0;
+	}
+    }
+
+    if (oc->tpalette) {
+	QWidget *ocp = oc->tpalette;
+	QRect lrect = ocp->geometry();
+	QPoint mpos = ocp->mapFromGlobal(gpos);
+	if (lrect.contains(mpos)) {
+	    return 2;
+	}
+    }
+
+    return -1;
+}
+
 /*
  * Local Variables:
  * mode: C++

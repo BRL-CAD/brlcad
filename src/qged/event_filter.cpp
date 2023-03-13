@@ -72,32 +72,19 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
     if (!c || !c->w)
 	return false;
 
-    QWidget *vcp = c->w->vc->tpalette;
 #ifdef USE_QT6
     QPoint gpos = m_e->globalPosition().toPoint();
 #else
     QPoint gpos = m_e->globalPos();
 #endif
-    if (vcp) {
-	QRect lrect = vcp->geometry();
-	QPoint mpos = vcp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos) && c->mdl->interaction_mode != 0) {
-	    c->mdl->interaction_mode = 0;
-	    emit c->view_update(QTCAD_VIEW_MODE);
-	    return false;
-	}
+    int smode = c->w->InteractionMode(gpos);
+    if (smode == -1)
+	return false;
+    if (c->mdl->interaction_mode != smode) {
+	c->mdl->interaction_mode = smode;
+	emit c->view_update(QTCAD_VIEW_MODE);
+	return false;
     }
-    QWidget *ocp = c->w->oc->tpalette;
-    if (ocp) {
-	QRect lrect = ocp->geometry();
-	QPoint mpos = ocp->mapFromGlobal(gpos);
-	if (lrect.contains(mpos) && c->mdl->interaction_mode != 2) {
-	    c->mdl->interaction_mode = 2;
-	    emit c->view_update(QTCAD_VIEW_MODE);
-	    return false;
-	}
-    }
-
     return false;
 }
 

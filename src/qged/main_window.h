@@ -62,8 +62,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	void closeEvent(QCloseEvent* e);
 
 	QtConsole *console;
-	CADPalette *vc;
-	CADPalette *oc;
 
 	// Set the local unit conversions
 	void SetUnitConv(fastf_t base2local, fastf_t local2base);
@@ -92,12 +90,17 @@ class BRLCAD_MainWindow : public QMainWindow
 	// Clear visual window changes indicating a raytrace has begun
 	void IndicateRaytraceDone(int);
 
+	// Determine interaction mode based on selected palettes and the supplied point
+	int InteractionMode(QPoint &gpos);
+
     public slots:
         //void save_image();
 	void do_dm_init();
         void close();
 
     private:
+	CADPalette *vc;
+	CADPalette *oc;
 	QViewCtrl *vcw;
 	QgTreeView *treeview = NULL;
 	QtCADQuad *c4 = NULL;
