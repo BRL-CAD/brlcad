@@ -3,6 +3,13 @@ cmake_minimum_required(VERSION 3.18)
 # set project name
 project(CITRUS)
 
+# install(CODE) uses generator expressions - requires 3.14 or newer.
+# We want it to be on, but until we can bump our minimum requirement
+# set it to OLD to make sure we don't break anything.
+if (POLICY CMP0087)
+  cmake_policy(SET CMP0087 OLD)
+endif (POLICY CMP0087)
+
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -186,16 +193,18 @@ set(perplex_sources
 add_executable(perplex ${perplex_sources})
 set_property(TARGET perplex APPEND PROPERTY INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/perplex")
 
-if(NOT PERPLEX_SKIP_INSTALL)
-  # install the binaries
-  install(TARGETS lemon DESTINATION ${BIN_DIR})
-  install(TARGETS re2c DESTINATION ${BIN_DIR})
-  install(TARGETS perplex DESTINATION ${BIN_DIR})
 
-  # install the templates
-  install(FILES lempar.c DESTINATION ${DATA_DIR}/lemon)
-  install(FILES perplex/perplex_template.c DESTINATION ${DATA_DIR}/perplex)
-endif(NOT PERPLEX_SKIP_INSTALL)
+
+# install the binaries
+install(TARGETS lemon DESTINATION ${BIN_DIR})
+install(TARGETS re2c DESTINATION ${BIN_DIR})
+install(TARGETS perplex DESTINATION ${BIN_DIR})
+
+# install the templates
+install(FILES lempar.c DESTINATION ${DATA_DIR}/lemon)
+install(FILES perplex/perplex_template.c DESTINATION ${DATA_DIR}/perplex)
+
+
 
 # Local Variables:
 # tab-width: 8

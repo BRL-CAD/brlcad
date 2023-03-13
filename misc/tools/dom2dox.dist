@@ -1,0 +1,12 @@
+set(dom2dox_ignore_files
+CMake/FindLEMON.cmake
+CMake/FindPERPLEX.cmake
+CMake/FindRE2C.cmake
+CMakeLists.txt
+Doxyfile
+README.txt
+dom2dox.c
+dom2dox.h
+dom2dox_parser.lemon
+dom2dox_scanner.perplex
+)

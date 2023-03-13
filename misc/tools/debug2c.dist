@@ -1,0 +1,4 @@
+set(debug2c_ignore_files
+CMakeLists.txt
+debug2c.cxx
+)

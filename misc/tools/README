@@ -1,9 +1,10 @@
-BRL-CAD maintains and uses a number of external libraries and tools critical
-to its functionality that are not installed with the distribution. Generally
-these are used either in various stages of the compilation process or as
-maintenance tools.
+BRL-CAD bundles and maintains a number of external libraries and tools critical
+to its functionality.  These tools are not installed with the distribution, but
+are used in various stages of the compilation process.
 
-The ext subdirectory holds tools where we can (or at least in principle would
-like to) use system installed versions.  Tools at this level are written
-by the project specifically for BRL-CAD.
+lemon           http://www.hwaci.com/sw/lemon/    Parser generator, used by obj and step converters
+perplex         BRL-CAD project                   Tool to simplify creating re2c scanners, used by obj
+                                                  and step converters
+re2c            http://re2c.org/                  Scanner/lexer generator, used by obj and step converters
+xmltools        http://xmlsoft.org/               Verify DocBook inputs and generate DocBook outputs
 

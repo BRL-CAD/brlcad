@@ -1,4 +1,4 @@
-/*                      D E B U G 2 C . C P P
+/*                      D E B U G 2 C . C X X
  * BRL-CAD
  *
  * Copyright (c) 2018-2023 United States Government as represented by
@@ -32,7 +32,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/** @file debug2c.cpp
+/** @file debug2c.cxx
  *
  * Find all debugging variables defined by BRL-CAD and generate a file defining
  * information useful for the debugging command.
@@ -72,9 +72,6 @@ process_file(std::string f, std::map<std::string, std::vector<struct dentry>> &e
 		std::cerr << "Unable to open " << f << " for reading, skipping\n";
 		return -1;
 	    }
-
-	    if (verbose)
-		std::cout << "Processing " << std::string(f) << "\n";
 	    while (std::getline(fs, sline)) {
 		if (std::regex_match(sline, debug_regex)) {
 		    std::regex unused_regex(".*UNUSED.*");
