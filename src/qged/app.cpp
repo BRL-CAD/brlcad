@@ -360,20 +360,15 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     select_hash = (ss) ? ss->state_hash() : 0;
 
     /* Set the local unit conversions */
-    if (gedp->dbip) {
-	for (int i = 1; i < 5; i++) {
-	    QtCADView *c = w->c4->get(i);
-	    c->set_base2local(gedp->dbip->dbi_base2local);
-	    c->set_local2base(gedp->dbip->dbi_local2base);
-	}
-    }
+    if (gedp->dbip)
+	w->SetUnitConv(gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
 
     if (!tmp_av.size()) {
 
 	// If we're not in the middle of an incremental command,
 	// stash the view state(s) for later comparison and make
 	// sure our unit conversions are right
-	w->c4->stash_hashes();
+	w->DisplayCheckpoint();
 	//select_hash = ged_selection_hash_sets(gedp->ged_selection_sets);
 
 	// If we need command-specific subprocess awareness for
@@ -412,9 +407,10 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 
 	/* Check if the ged_exec call changed either the display manager or
 	 * the view settings - in either case we'll need to redraw */
-	// TODO - there would be some utility in checking only the camera or only
+	// TODO - there may be some utility in checking only the camera or only
 	// the who list, since we can set different update flags for each case...
-	if (w->c4->diff_hashes())
+	// that's a complexity vs. performance trade-off determination
+	if (w->DisplayDiff())
 	    view_flags |= QTCAD_VIEW_DRAWN;
 
 	unsigned long long cs_hash = (ss) ? ss->state_hash() : 0;
@@ -542,8 +538,7 @@ CADApp::element_selected(QToolPaletteElement *el)
 	return;
     }
 
-    // TODO - should this always be 0?
-    QtCADView *curr_view = w->c4->get(0);
+    QtCADView *curr_view = w->CurrentDisplay();
 
     if (curr_view->curr_event_filter) {
 	curr_view->clear_event_filter(curr_view->curr_event_filter);
@@ -601,14 +596,14 @@ void
 CADApp::switch_to_single_view()
 {
     QTCAD_SLOT("CADApp::switch_to_single_view", 1);
-    w->c4->changeToSingleFrame();
+    w->SingleDisplay();
 }
 
 void
 CADApp::switch_to_quad_view()
 {
     QTCAD_SLOT("CADApp::switch_to_quad_view", 1);
-    w->c4->changeToQuadFrame();
+    w->QuadDisplay();
 }
 
 /*

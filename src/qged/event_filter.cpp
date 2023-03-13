@@ -31,23 +31,6 @@
 #include "event_filter.h"
 #include "qtcad/QgModel.h"
 
-/* We base conditionals on whether the target widget w is active.  Usually the
- * actual focus widget is a child of the widget in question, so we walk up the
- * parents to see if the focusWidget is underneath the target widget. */
-static bool
-widget_active(QWidget *w)
-{
-    QWidget *fw = qApp->focusWidget();
-    QWidget *cw = fw;
-    while (cw) {
-	if (cw == w) {
-	    return true;
-	}
-	cw = (QWidget *)cw->parent();
-    }
-    return false;
-}
-
 bool QGEDFilter::eventFilter(QObject *, QEvent *e)
 {
     CADApp *c = (CADApp *)qApp;
@@ -63,7 +46,7 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
 	// bound events.  If so, we may perform the bound action.
 	QKeyEvent *k = (QKeyEvent *)e;
 	if (k->modifiers().testFlag(Qt::ShiftModifier) == true && k->key() == 'N') {
-	    if (!widget_active(c->w->c4))
+	    if (!c->w->isDisplayActive())
 		return false;
 	    c->run_qcmd(QString("nirt -b"));
 	    return true;
@@ -74,7 +57,7 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
     // All key binding handling should be above this point - anything below here is
     // mouse event only.
     //
-    // Note:  It MIGHT be possible to use the above widget_active test approach
+    // Note:  It MIGHT be possible to use the widget_active test used by display_active
     // for the view/instance/primitive switching below, but it's not clear if
     // the tree highlighting updates would occur immediately or if we'd end up
     // needing two mouse events - one to change the focused widget, and another

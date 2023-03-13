@@ -41,6 +41,7 @@
 #include "ged.h"
 #include "qtcad/SignalFlags.h"
 #include "qtcad/QtCADQuad.h"
+#include "qtcad/QtCADView.h"
 #include "qtcad/QgDockWidget.h"
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QtCADView.h"
@@ -56,7 +57,6 @@ class BRLCAD_MainWindow : public QMainWindow
     public:
 	BRLCAD_MainWindow(int canvas_type = 0, int quad_view = 0);
 
-	QtCADQuad *c4 = NULL;
 	bool isValid3D();
 	void fallback3D();
 	void closeEvent(QCloseEvent* e);
@@ -67,12 +67,34 @@ class BRLCAD_MainWindow : public QMainWindow
 	CADPalette *vc;
 	CADPalette *oc;
 
+	// Set the local unit conversions
+	void SetUnitConv(fastf_t base2local, fastf_t local2base);
+
+	// Report if the quad/central widget is active
+	bool isDisplayActive();
+
+	// Get the currently active view of the quad/central display widget
+	QtCADView * CurrentDisplay();
+
+	// Checkpoint display state (used for subsequent diff)
+	void DisplayCheckpoint();
+
+	// See if the display state has changed relative to most recent checkpoint
+	bool DisplayDiff();
+
+	// Put central display into Quad mode
+	void QuadDisplay();
+
+	// Put central display into Single mode
+	void SingleDisplay();
+
     public slots:
         //void save_image();
 	void do_dm_init();
         void close();
 
     private:
+	QtCADQuad *c4 = NULL;
 	QMenu *file_menu;
 	QAction *cad_open;
 	QAction *cad_save_settings;

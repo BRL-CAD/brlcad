@@ -540,6 +540,70 @@ BRLCAD_MainWindow::closeEvent(QCloseEvent* e)
     QMainWindow::closeEvent(e);
 }
 
+void
+BRLCAD_MainWindow::SetUnitConv(fastf_t base2local, fastf_t local2base)
+{
+    for (int i = 1; i < 5; i++) {
+	QtCADView *c = c4->get(i);
+	c->set_base2local(base2local);
+	c->set_local2base(local2base);
+    }
+}
+
+/* We base conditionals on whether the target widget w is active.  Usually the
+ * actual focus widget is a child of the widget in question, so we walk up the
+ * parents to see if the focusWidget is underneath the target widget. */
+static bool
+widget_active(QWidget *w)
+{
+    QWidget *fw = qApp->focusWidget();
+    QWidget *cw = fw;
+    while (cw) {
+	if (cw == w) {
+	    return true;
+	}
+	cw = (QWidget *)cw->parent();
+    }
+    return false;
+}
+
+bool
+BRLCAD_MainWindow::isDisplayActive()
+{
+    return widget_active(c4);
+}
+
+QtCADView *
+BRLCAD_MainWindow::CurrentDisplay()
+{
+    // TODO - should this always be 0?
+    return c4->get(0);
+}
+
+void
+BRLCAD_MainWindow::DisplayCheckpoint()
+{
+    c4->stash_hashes();
+}
+
+bool
+BRLCAD_MainWindow::DisplayDiff()
+{
+    return c4->diff_hashes();
+}
+
+void
+BRLCAD_MainWindow::QuadDisplay()
+{
+    c4->changeToQuadFrame();
+}
+
+void
+BRLCAD_MainWindow::SingleDisplay()
+{
+    c4->changeToSingleFrame();
+}
+
 /*
  * Local Variables:
  * mode: C++
