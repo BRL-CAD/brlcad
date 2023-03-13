@@ -53,7 +53,7 @@ if(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRL
   check_cxx_compiler_flag(-fsanitize=address SANITIZE_ADDRESS_FLAG)
 endif(BRLCAD_ENABLE_ADDRESS_SANITIZER AND ${BRLCAD_OPTIMIZED} MATCHES "OFF" AND BRLCAD_DEBUG)
 
-add_executable(env2c env2c.cxx)
+add_executable(env2c env2c.cpp)
 target_link_libraries(env2c Threads::Threads)
 
 set(STACK_SIZE_FLAGS "-Wl,-z,stack-size=4194304")
@@ -82,6 +82,12 @@ if (BRLCAD_ENABLE_ADDRESS_SANITIZER AND SANITIZE_ADDRESS_FLAG)
   target_link_libraries(env2c -lasan)
 endif (BRLCAD_ENABLE_ADDRESS_SANITIZER AND SANITIZE_ADDRESS_FLAG)
 
+if(COMMAND CMAKEFILES)
+  CMAKEFILES(
+    CMakeLists.txt
+    env2c.cpp
+    )
+endif()
 
 # Local Variables:
 # tab-width: 8
