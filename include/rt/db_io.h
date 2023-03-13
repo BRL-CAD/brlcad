@@ -688,8 +688,8 @@ RT_EXPORT extern int db5_scan_inmem(struct db_i *dbip,
 /**
  * Obtain the database version for a given database instance.
  *
- * Returns 4 or 5 accordingly for v4 or v5 database files, and -4 if a
- * v4 database was opened via rt_db_flip_endian().  
+ * Returns 4 or 5 accordingly for v4 or v5 geometry database files.
+ * Returns -1 if dbip is invalid.
  */
 RT_EXPORT extern int db_version(struct db_i *dbip);
 RT_EXPORT extern int db_version_inmem(struct db_i *dbip, const void *data, b_off_t data_size);
