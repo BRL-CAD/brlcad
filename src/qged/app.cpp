@@ -43,13 +43,12 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t 
     if (!p || !p->p || !p->gedp || !p->gedp->ged_io_data)
 	return;
 
-    BRLCAD_MainWindow *w = (BRLCAD_MainWindow *)p->gedp->ged_io_data;
-    QtConsole *c = w->console;
-
     int fd = bu_process_fileno(p->p, t);
     if (fd < 0)
 	return;
 
+    CADApp *ca = (CADApp *)p->gedp->ged_io_data;
+    QtConsole *c = ca->w->console;
     c->listen(fd, p, t, callback, data);
 
     switch (t) {
@@ -70,8 +69,8 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 {
     if (!p) return;
 
-    BRLCAD_MainWindow *w = (BRLCAD_MainWindow *)p->gedp->ged_io_data;
-    QtConsole *c = w->console;
+    CADApp *ca = (CADApp *)p->gedp->ged_io_data;
+    QtConsole *c = ca->w->console;
 
     // Since these callbacks are invoked from the listener, we can't call
     // the listener destructors directly.  We instead call a routine that
@@ -111,7 +110,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 	    p->end_clbk(0, p->end_clbk_data);
     }
 
-    w->c4->do_view_update(QTCAD_VIEW_REFRESH);
+    ca->w->c4->do_view_update(QTCAD_VIEW_REFRESH);
 }
 
 
@@ -207,7 +206,7 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
     // Assign QGED specific I/O handlers to the gedp
     mdl->gedp->ged_create_io_handler = &qt_create_io_handler;
     mdl->gedp->ged_delete_io_handler = &qt_delete_io_handler;
-    mdl->gedp->ged_io_data = (void *)w;
+    mdl->gedp->ged_io_data = (void *)qApp;
 
     // Send a view_change signal so widgets depending on view information
     // can initialize themselves
