@@ -188,7 +188,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
     if (dbip->dbi_read_only)
 	return -1;
 
-    BU_ASSERT(dbip->dbi_version == 4);
+    BU_ASSERT(db_version(dbip) == 4);
 
     if (dp->d_len < start)
 	return -1;
