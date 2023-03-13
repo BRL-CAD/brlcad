@@ -52,10 +52,13 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 	db_close(gedp->dbip);
     }
     gedp->dbip = NULL;
-    if (gedp->dbi_state) {
-	delete gedp->dbi_state;
-	gedp->dbi_state = NULL;
+
+    const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
+    if (use_dbi_state) {
+	if (gedp->dbi_state)
+	    delete gedp->dbi_state;
     }
+    gedp->dbi_state = NULL;
 
     /* Terminate any ged subprocesses */
     if (gedp != GED_NULL) {

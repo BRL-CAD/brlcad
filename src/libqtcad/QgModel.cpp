@@ -443,6 +443,11 @@ QgModel::g_update(struct db_i *n_dbip)
 	    QgItem *itm = *s_it;
 	    delete itm;
 	}
+	// Deleted all items, but we need a root item regardless
+	// of whether a .g is open - recreate it
+	rootItem = new QgItem(0, this);
+	rootItem->mdl = this;
+
 	items->clear();
 	tops_items.clear();
 	emit mdl_changed_db((void *)gedp);
