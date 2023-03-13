@@ -336,7 +336,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 
 	db_wrap_v4_external(ep, dp->d_namep);
     } else
-	bu_bomb("db_put_external(): unknown dbi_version\n");
+	bu_bomb("db_put_external(): unknown database version\n");
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy(dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes);
