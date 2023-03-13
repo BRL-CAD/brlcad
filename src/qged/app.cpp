@@ -335,14 +335,14 @@ extern "C" void
 raytrace_start(int val, void *ctx)
 {
     CADApp *ap = (CADApp *)ctx;
-    ap->w->vcw->raytrace_start(val);
+    ap->w->IndicateRaytraceStart(val);
 }
 
 extern "C" void
 raytrace_done(int val, void *ctx)
 {
     CADApp *ap = (CADApp *)ctx;
-    ap->w->vcw->raytrace_done(val);
+    ap->w->IndicateRaytraceDone(val);
 }
 
 int

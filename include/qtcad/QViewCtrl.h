@@ -34,8 +34,7 @@
 #include "ged.h"
 #include "qtcad/defines.h"
 
-// TODO - need a view image control widget for raytrace run, raytrace
-// abort, overlay/underlay/off, and save scene image
+// TODO - add save scene image
 //
 // component picking, etc. will most likely need to be a tool - we need to
 // be able to build up and manipulate selection sets, of which one is the

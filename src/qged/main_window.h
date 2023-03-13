@@ -62,7 +62,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	void closeEvent(QCloseEvent* e);
 
 	QtConsole *console;
-	QViewCtrl *vcw;
 	CADPalette *vc;
 	CADPalette *oc;
 
@@ -87,12 +86,19 @@ class BRLCAD_MainWindow : public QMainWindow
 	// Put central display into Single mode
 	void SingleDisplay();
 
+	// Apply visual window changes indicating a raytrace has begun
+	void IndicateRaytraceStart(int);
+
+	// Clear visual window changes indicating a raytrace has begun
+	void IndicateRaytraceDone(int);
+
     public slots:
         //void save_image();
 	void do_dm_init();
         void close();
 
     private:
+	QViewCtrl *vcw;
 	QgTreeView *treeview = NULL;
 	QtCADQuad *c4 = NULL;
 	QMenu *file_menu;

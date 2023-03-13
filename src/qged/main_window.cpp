@@ -604,6 +604,18 @@ BRLCAD_MainWindow::SingleDisplay()
     c4->changeToSingleFrame();
 }
 
+void
+BRLCAD_MainWindow::IndicateRaytraceStart(int val)
+{
+    vcw->raytrace_start(val);
+}
+
+void
+BRLCAD_MainWindow::IndicateRaytraceDone(int val)
+{
+    vcw->raytrace_done(val);
+}
+
 /*
  * Local Variables:
  * mode: C++
