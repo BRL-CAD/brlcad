@@ -69,7 +69,7 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
 	return false;
     }
     QMouseEvent *m_e = (QMouseEvent *)e;
-    if (!c || !c->w || !c->w->treeview)
+    if (!c || !c->w)
 	return false;
 
     QWidget *vcp = c->w->vc->tpalette;

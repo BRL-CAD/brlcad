@@ -61,7 +61,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	void fallback3D();
 	void closeEvent(QCloseEvent* e);
 
-	QgTreeView *treeview;
 	QtConsole *console;
 	QViewCtrl *vcw;
 	CADPalette *vc;
@@ -94,6 +93,7 @@ class BRLCAD_MainWindow : public QMainWindow
         void close();
 
     private:
+	QgTreeView *treeview = NULL;
 	QtCADQuad *c4 = NULL;
 	QMenu *file_menu;
 	QAction *cad_open;
