@@ -110,7 +110,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 	    p->end_clbk(0, p->end_clbk_data);
     }
 
-    ca->w->c4->do_view_update(QTCAD_VIEW_REFRESH);
+    emit ca->view_update(QTCAD_VIEW_REFRESH);
 }
 
 
