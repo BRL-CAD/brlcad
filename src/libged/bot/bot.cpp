@@ -340,6 +340,41 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
 
 
 extern "C" int
+_bot_cmd_flip(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "bot flip <objname>";
+    const char *purpose_string = "Flip BoT triangle normal directions (turns the BoT \"inside out\")";
+    if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+
+    argc--; argv++;
+
+    if (argc != 1) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    if (_bot_obj_setup(gb, argv[0]) & BRLCAD_ERROR) {
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+
+    rt_bot_flip(bot);
+
+    if (rt_db_put_internal(gb->dp, gb->gedp->dbip, gb->intern, &rt_uniresource) < 0) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Failed to update BoT");
+	return BRLCAD_ERROR;
+    }
+
+    bu_vls_printf(gb->gedp->ged_result_str, "BoT faces flipped");
+    return BRLCAD_OK;
+}
+
+extern "C" int
 _bot_cmd_isect(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "bot [options] isect <objname> <objname2>";
@@ -702,6 +737,7 @@ const struct bu_cmdtab _bot_cmds[] = {
     { "chull",      _bot_cmd_chull},
     { "decimate",   _bot_cmd_decimate},
     { "extrude",    _bot_cmd_extrude},
+    { "flip",       _bot_cmd_flip},
     { "get",        _bot_cmd_get},
     { "isect",      _bot_cmd_isect},
     { "remesh",     _bot_cmd_remesh},
