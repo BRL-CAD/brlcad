@@ -391,7 +391,8 @@ db_dirbuild(struct db_i *dbip)
     /* First, determine what version database this is */
     version = db_version(dbip);
 
-    if (version == 5) {
+    switch(version) {
+    case 5: {
 	struct directory *dp;
 	struct bu_external ext;
 	struct db5_raw_internal raw;
@@ -468,8 +469,8 @@ db_dirbuild(struct db_i *dbip)
 	bu_free_external(&ext);	/* not until after done with avs! */
 
 	return 0;		/* ok */
-
-    } else if (version == 4) {
+    }
+    case 4:
 	/* things used to be pretty simple with v4 */
 
 	if (db_scan(dbip, db_diradd4, 1, NULL) < 0) {
@@ -499,7 +500,8 @@ db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
     /* First, determine what version database this is */
     version = db_version_inmem(dbip, data, data_size);
 
-    if (version == 5) {
+    switch(version) {
+    case 5: {
 	struct directory *dp;
 	struct bu_external ext;
 	struct db5_raw_internal raw;
@@ -579,7 +581,8 @@ db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
 	bu_free_external(&ext);	/* not until after done with avs! */
 
 	return 0;		/* ok */
-    } else if (version == 4) {
+    }
+    case 4:
 	/* things used to be pretty simple with v4 */
 	if (db_scan(dbip, db_diradd4, 1, NULL) < 0)
 	    return -1;
@@ -594,7 +597,7 @@ db_dirbuild_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
 
 
 int
-db_version(struct db_i *dbip)
+db_version(const struct db_i *dbip)
 {
     unsigned char header[8];
 
@@ -629,7 +632,7 @@ db_version(struct db_i *dbip)
 
 
 int
-db_version_inmem(struct db_i *dbip, const void *data, b_off_t data_size)
+db_version_inmem(const struct db_i *dbip, const void *data, b_off_t data_size)
 {
     const unsigned char* header;
 
