@@ -112,7 +112,15 @@ analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip);
 extern void
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip);
 
-
+/**
+ * Raytrace-based inside/outside test of a point against a volume
+ */
+extern int
+pnt_inside_vol(
+       struct ged *gedp,
+       point_t *p,
+       struct directory *dp
+       );
 
 /**
  * Functions for performing union/intersection/subtraction analysis operations
