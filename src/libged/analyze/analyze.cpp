@@ -593,7 +593,17 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     long ret = 0;
     const char *tmpname = "___analyze_cmd_subtract_tmp_obj__";
     struct directory *dp1 = db_lookup(gedp->dbip, argv[0], LOOKUP_NOISY);
+    if (!dp1) {
+	bu_vls_sprintf(gedp->ged_result_str, "object %s does not exist.\n", argv[0]);
+	bu_vls_free(&oname);
+	return BRLCAD_ERROR;
+    }
     struct directory *dp2 = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
+    if (!dp2) {
+	bu_vls_sprintf(gedp->ged_result_str, "object %s does not exist.\n", argv[1]);
+	bu_vls_free(&oname);
+	return BRLCAD_ERROR;
+    }
     op_func_ptr of = _analyze_find_processor(gc, DB_OP_SUBTRACT, dp1->d_minor_type, dp2->d_minor_type);
     if (!of) {
 	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
