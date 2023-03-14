@@ -2046,14 +2046,20 @@ CACHE_BUILD_FLAGS(_BRLCAD)
 set(MISC_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
 mark_as_advanced(MISC_ADDED_DIRS)
 
-# The first order of business is the ext projects
-add_subdirectory(src/other/ext)
-
-# Add misc/tools for tools that are used in BRL-CAD's build process
-# but are not otherwise usable in BRL-CAD (due to licensing, design
-# intent, etc.)  misc/tools must be handled before src/other because
-# some of src/other's projects may need tools from misc/tools.
+# Add misc/tools for tools that are used in BRL-CAD's build process or for
+# maintenance activities but are not installed in BRL-CAD (due to licensing,
+# design intent, etc.) misc/tools must be handled before src/other because
+# src/other's build logic needs tools from misc/tools.
+#
+# (Note that if we hit a case where a tool in misc/tools ALSO needs a library
+# stored in src/other due to being installed with BRL-CAD, we're going to have
+# a problem. Introducing such dependencies is something to try and avoid, and
+# if that situation arises it will require careful consideration of the
+# options.)
 add_subdirectory(misc/tools)
+
+# The first order of business in src/other is the ext projects
+add_subdirectory(src/other/ext)
 
 # Now that we've done the system tests with BRL-CAD's compile flags,
 # add src/other to pick up any tests it needs.  We must add src/other

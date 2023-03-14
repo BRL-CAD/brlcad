@@ -105,7 +105,7 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
 
-    if (dbip->dbi_version > 4) {
+    if (db_version(dbip) > 4) {
 	/* can't get an mrec on a v5 */
 	return (union record *)NULL;
     }
@@ -265,7 +265,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 	return -1;		/* was dummy DB entry */
 
     BU_EXTERNAL_INIT(ep);
-    if (dbip->dbi_version < 5)
+    if (db_version(dbip) < 5)
 	ep->ext_nbytes = dp->d_len * sizeof(union record);
     else
 	ep->ext_nbytes = dp->d_len;
@@ -336,7 +336,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 
 	db_wrap_v4_external(ep, dp->d_namep);
     } else
-	bu_bomb("db_put_external(): unknown dbi_version\n");
+	bu_bomb("db_put_external(): unknown database version\n");
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	memcpy(dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes);
