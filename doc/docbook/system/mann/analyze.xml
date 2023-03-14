@@ -57,7 +57,13 @@
       geometric information about the specified solid(s).  This behavior may also
       be explicitly invoked by the <command>summarize</command> subcommand.
     </para>
-
+    
+    <para>
+      The <command>inside</command> will take an object and the x y z coordinates
+      of a point, and report whether the point is inside or outside the object
+      in question (returning 1 if inside and 0 otherwise.)
+    </para>
+    
     <para>
       The <command>intersect</command> will take the first object specified and
       intersect it with any subsequently specified objects - in effect, building
