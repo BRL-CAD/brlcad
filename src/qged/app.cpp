@@ -592,20 +592,6 @@ CADApp::write_settings()
     // BRLCAD_MainWindow closeEvent
 }
 
-void
-CADApp::switch_to_single_view()
-{
-    QTCAD_SLOT("CADApp::switch_to_single_view", 1);
-    w->SingleDisplay();
-}
-
-void
-CADApp::switch_to_quad_view()
-{
-    QTCAD_SLOT("CADApp::switch_to_quad_view", 1);
-    w->QuadDisplay();
-}
-
 /*
  * Local Variables:
  * mode: C++

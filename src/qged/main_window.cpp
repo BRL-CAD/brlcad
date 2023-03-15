@@ -75,11 +75,11 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 #endif
 
     cad_single_view = new QAction("Single View", this);
-    connect(cad_single_view, &QAction::triggered, ((CADApp *)qApp), &CADApp::switch_to_single_view);
+    connect(cad_single_view, &QAction::triggered, this, &BRLCAD_MainWindow::SingleDisplay);
     file_menu->addAction(cad_single_view);
 
     cad_quad_view = new QAction("Quad View", this);
-    connect(cad_quad_view, &QAction::triggered, ((CADApp *)qApp), &CADApp::switch_to_quad_view);
+    connect(cad_quad_view, &QAction::triggered, this, &BRLCAD_MainWindow::QuadDisplay);
     file_menu->addAction(cad_quad_view);
 
     cad_exit = new QAction("Exit", this);

@@ -49,6 +49,7 @@ CADPalette::CADPalette(int mode, QWidget *pparent)
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
 
+    // Load plugins for this particular palette type
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "qged", NULL);
     char **filenames;
     struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;

@@ -57,14 +57,13 @@ class BRLCAD_MainWindow : public QMainWindow
     public:
 	BRLCAD_MainWindow(int canvas_type = 0, int quad_view = 0);
 
-	bool isValid3D();
-	void fallback3D();
-	void closeEvent(QCloseEvent* e);
 
 	QtConsole *console;
 
-	// Set the local unit conversions
-	void SetUnitConv(fastf_t base2local, fastf_t local2base);
+	// Post-show methods for checking validity of OpenGL initialization and
+	// falling back to swrast on failure
+	bool isValid3D();
+	void fallback3D();
 
 	// Report if the quad/central widget is active
 	bool isDisplayActive();
@@ -78,12 +77,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	// See if the display state has changed relative to most recent checkpoint
 	bool DisplayDiff();
 
-	// Put central display into Quad mode
-	void QuadDisplay();
-
-	// Put central display into Single mode
-	void SingleDisplay();
-
 	// Apply visual window changes indicating a raytrace has begun
 	void IndicateRaytraceStart(int);
 
@@ -93,10 +86,21 @@ class BRLCAD_MainWindow : public QMainWindow
 	// Determine interaction mode based on selected palettes and the supplied point
 	int InteractionMode(QPoint &gpos);
 
+	// Utility wrapper for the closeEvent to save windowing dimensions
+	void closeEvent(QCloseEvent* e);
+
+	// TODO - this shouldn't be here...
+	// Set the local unit conversions
+	void SetUnitConv(fastf_t base2local, fastf_t local2base);
+
     public slots:
-        //void save_image();
+	//void save_image();
 	void do_dm_init();
         void close();
+	// Put central display into Quad mode
+	void QuadDisplay();
+	// Put central display into Single mode
+	void SingleDisplay();
 
     private:
 	CADPalette *vc;
