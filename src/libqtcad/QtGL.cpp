@@ -154,7 +154,7 @@ void QtGL::paintGL()
     // implementation) we need to do the draw routine every time in paintGL, or
     // we end up with unrendered frames.
     dm_set_dirty(dmp, 0);
-    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, draw_custom, draw_udata);
+    dm_draw_objs(v, draw_custom, draw_udata);
     dm_draw_end(dmp);
 }
 

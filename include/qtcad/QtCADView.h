@@ -70,20 +70,16 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	struct bview * view();
 	struct dm * dmp();
 	struct fb * ifp();
-	double base2local();
-	double local2base();
 
 	void set_view(struct bview *, int quad = 1);
 	void set_dmp(struct dm *, int quad = 1);
 	void set_dm_current(struct dm **, int quad = 1);
 	void set_ifp(struct fb *, int quad = 1);
-	void set_base2local(double);
-	void set_local2base(double);
 
 	void aet(double a, double e, double t);
 
 	QObject *curr_event_filter = NULL;
-	void set_draw_custom(void (*draw_custom)(struct bview *, double, double, void *), void *draw_udata);
+	void set_draw_custom(void (*draw_custom)(struct bview *, void *), void *draw_udata);
 
 	void add_event_filter(QObject *);
 	void clear_event_filter(QObject *);

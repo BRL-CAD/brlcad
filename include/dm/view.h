@@ -56,7 +56,7 @@ struct dm_view_data {
     int                 refresh_on;
 };
 
-DM_EXPORT extern void dm_draw_faceplate(struct bview *v, double base2local, double local2base);
+DM_EXPORT extern void dm_draw_faceplate(struct bview *v);
 
 /* As a temporary measure, require client codes to specifically ask to enable
  * the bits that require librt in the headers if they're not going to be
@@ -69,10 +69,10 @@ DM_EXPORT extern void dm_draw_faceplate(struct bview *v, double base2local, doub
  * sort on a bv scene object... */
 #include "rt/wdb.h"
 
-DM_EXPORT extern void dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *d, double base2local, double local2base);
+DM_EXPORT extern void dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *d);
 
 /* Stripped down form of dm_draw_viewobjs that does just what's needed for the new setup */
-DM_EXPORT extern void dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_draw_custom)(struct bview *, double, double, void *), void *u_data);
+DM_EXPORT extern void dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), void *u_data);
 #endif /* DM_NO_RT */
 
 __END_DECLS

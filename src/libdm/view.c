@@ -302,7 +302,7 @@ dm_draw_lines(struct dm *dmp, struct bv_data_line_state *gdlsp)
 
 
 void
-dm_draw_faceplate(struct bview *v, double base2local, double local2base)
+dm_draw_faceplate(struct bview *v)
 {
     /* Center dot */
     if (v->gv_s->gv_center_dot.gos_draw) {
@@ -320,7 +320,7 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 	point_t save_map;
 
 	VMOVE(save_map, v->gv_s->gv_model_axes.axes_pos);
-	VSCALE(map, v->gv_s->gv_model_axes.axes_pos, local2base);
+	VSCALE(map, v->gv_s->gv_model_axes.axes_pos, v->gv_local2base);
 	MAT4X3PNT(v->gv_s->gv_model_axes.axes_pos, v->gv_model2view, map);
 
 	dm_draw_hud_axes((struct dm *)v->dmp,
@@ -354,8 +354,8 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
     /* View scale */
     if (v->gv_s->gv_view_scale.gos_draw)
 	dm_draw_scale((struct dm *)v->dmp,
-		      v->gv_size*base2local,
-		      bu_units_string(1/base2local),
+		      v->gv_size*v->gv_base2local,
+		      bu_units_string(1/v->gv_base2local),
 		      v->gv_s->gv_view_scale.gos_line_color,
 		      v->gv_s->gv_view_params.gos_text_color);
 
@@ -366,7 +366,7 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 
     /* Draw grid */
     if (v->gv_s->gv_grid.draw) {
-	dm_draw_grid((struct dm *)v->dmp, &v->gv_s->gv_grid, v->gv_scale, v->gv_model2view, base2local);
+	dm_draw_grid((struct dm *)v->dmp, &v->gv_s->gv_grid, v->gv_scale, v->gv_model2view, v->gv_base2local);
     }
 
     /* Draw rect */
@@ -378,9 +378,9 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
     if (v->gv_s->gv_view_params.gos_draw || v->gv_s->gv_fps) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	point_t center;
-	char *ustr = (char *)bu_units_string(local2base);
+	char *ustr = (char *)bu_units_string(v->gv_local2base);
 	MAT_DELTAS_GET_NEG(center, v->gv_center);
-	VSCALE(center, center, base2local);
+	VSCALE(center, center, v->gv_base2local);
 	int64_t elapsed_time = bu_gettime() - ((struct dm *)v->dmp)->start_time;
 	/* Only use reasonable measurements */
 	if (elapsed_time > 10LL && elapsed_time < 30000000LL) {
@@ -391,7 +391,7 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 	if (v->gv_s->gv_view_params.gos_draw && v->gv_s->gv_fps) {
 	    bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f) az:%.2f  el:%.2f  tw::%.2f  FPS:%.2f",
 		    ustr,
-		    v->gv_size * base2local,
+		    v->gv_size * v->gv_base2local,
 		    V3ARGS(center),
 		    V3ARGS(v->gv_aet),
 		    1/v->gv_s->gv_frametime
@@ -399,7 +399,7 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 	} else if (v->gv_s->gv_view_params.gos_draw && !v->gv_s->gv_fps) {
 	    bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f) az:%.2f  el:%.2f  tw::%.2f",
 		    ustr,
-		    v->gv_size * base2local,
+		    v->gv_size * v->gv_base2local,
 		    V3ARGS(center),
 		    V3ARGS(v->gv_aet));
 	} else if (!v->gv_s->gv_view_params.gos_draw || v->gv_s->gv_fps) {
@@ -607,7 +607,7 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 }
 
 void
-dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, double base2local, double local2base)
+dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd)
 {
     bv_log(3, "libdm:dm_draw_viewobjs");
     struct dm *dmp = (struct dm *)v->dmp;
@@ -683,7 +683,7 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
     /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
     (void)dm_hud_begin(dmp);
 
-    dm_draw_faceplate(v, base2local, local2base);
+    dm_draw_faceplate(v);
 
     if (v->gv_tcl.gv_data_labels.gdls_draw)
 	dm_draw_labels(dmp, &v->gv_tcl.gv_data_labels, v->gv_model2view);
@@ -720,11 +720,11 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 // doesn't guarantee raw OpenGL drawing is supported, but the dmp should
 // provide enough information for the calling app to know if that is possible.)
 void
-dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_draw_custom)(struct bview *, double, double, void *), void *u_data)
+dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), void *u_data)
 {
     bv_log(3, "libdm:dm_draw_objs");
     if (dm_draw_custom) {
-	(*dm_draw_custom)(v, base2local, local2base, u_data);
+	(*dm_draw_custom)(v, u_data);
 	return;
     }
 
@@ -811,7 +811,7 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
     (void)dm_hud_begin(dmp);
 
     /* Draw faceplate elements based on their current enable/disable settings */
-    dm_draw_faceplate(v, base2local, local2base);
+    dm_draw_faceplate(v);
 
     /* Restore non-HUD settings. */
     (void)dm_hud_end(dmp);

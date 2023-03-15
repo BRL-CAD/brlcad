@@ -206,32 +206,6 @@ QtCADView::ifp()
     return NULL;
 }
 
-double
-QtCADView::base2local()
-{
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl && canvas_gl->v)
-	return canvas_gl->v->gv_base2local;
-#endif
-    if (canvas_sw && canvas_sw->v)
-	return canvas_sw->v->gv_base2local;
-
-    return 1.0;
-}
-
-double
-QtCADView::local2base()
-{
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl && canvas_gl->v)
-	return canvas_gl->v->gv_local2base;
-#endif
-    if (canvas_sw && canvas_sw->v)
-	return canvas_sw->v->gv_local2base;
-
-    return 1.0;
-}
-
 // TODO - for quad view, we're going to need to keep
 // local views - scene object vlists will be shared,
 // but camera settings will not.
@@ -293,28 +267,6 @@ QtCADView::set_ifp(struct fb *nfbp, int UNUSED(quad))
 #endif
     if (canvas_sw)
 	canvas_sw->ifp = nfbp;
-}
-
-void
-QtCADView::set_base2local(double nb2l)
-{
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl && canvas_gl->v)
-	canvas_gl->v->gv_base2local = nb2l;
-#endif
-    if (canvas_sw && canvas_sw->v)
-	canvas_sw->v->gv_base2local = nb2l;
-}
-
-void
-QtCADView::set_local2base(double nl2b)
-{
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl && canvas_gl->v)
-	canvas_gl->v->gv_local2base = nl2b;
-#endif
-    if (canvas_sw && canvas_sw->v)
-	canvas_sw->v->gv_local2base = nl2b;
 }
 
 void
@@ -419,7 +371,7 @@ QtCADView::clear_event_filter(QObject *o)
 }
 
 void
-QtCADView::set_draw_custom(void (*draw_custom)(struct bview *, double, double, void *), void *draw_udata)
+QtCADView::set_draw_custom(void (*draw_custom)(struct bview *, void *), void *draw_udata)
 {
 
 #ifdef BRLCAD_OPENGL

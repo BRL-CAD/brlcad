@@ -68,7 +68,7 @@ class QTCAD_EXPORT QtGL : public QOpenGLWidget, protected QOpenGLFunctions
 	struct bu_ptbl *dm_set = NULL;
 	struct dm **dm_current = NULL;
 
-	void (*draw_custom)(struct bview *, double, double, void *) = NULL;
+	void (*draw_custom)(struct bview *, void *) = NULL;
 	void *draw_udata = NULL;
 
 	void enableDefaultKeyBindings();

@@ -63,7 +63,7 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	bool isValid();
 	void fallback();
 
-	void default_views(); // Set the aet of the four quadrants to their standard defaults.
+	void default_views(int); // Set the aet of the four quadrants to their standard defaults.  If 0 is supplied the upper right quadrant isn't altered, if 1 is supplied all are adjusted.
 	QtCADView *get(int quadrant_num = UPPER_RIGHT_QUADRANT);
 	struct bview * view(int quadrant_id = UPPER_RIGHT_QUADRANT);
 

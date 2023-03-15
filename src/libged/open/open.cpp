@@ -121,6 +121,12 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	if (use_dbi_state)
 	    gedp->dbi_state = new DbiState(gedp);
 
+	// Set the view units, if we have a view
+	if (gedp->ged_gvp) {
+	    gedp->ged_gvp->gv_base2local = gedp->dbip->dbi_base2local;
+	    gedp->ged_gvp->gv_local2base = gedp->dbip->dbi_local2base;
+	}
+
 	return BRLCAD_OK;
     }
 

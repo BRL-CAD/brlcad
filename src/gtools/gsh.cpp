@@ -162,7 +162,7 @@ view_update(struct gsh_state *s)
 	    dm_get_bg(&dm_bg1, &dm_bg2, dmp);
 	    dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
 	    dm_set_dirty(dmp, 0);
-	    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, NULL, NULL);
+	    dm_draw_objs(v, NULL, NULL);
 	    dm_draw_end(dmp);
 	} else {
 	    matp_t mat = gedp->ged_gvp->gv_model2view;
@@ -176,9 +176,11 @@ view_update(struct gsh_state *s)
 	    // Faceplate drawing
 	    if (gedp->dbip) {
 		struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-		dm_draw_viewobjs(wdbp, v, NULL, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+		v->gv_base2local = gedp->dbip->dbi_base2local;
+		v->gv_local2base = gedp->dbip->dbi_local2base;
+		dm_draw_viewobjs(wdbp, v, NULL);
 	    } else {
-		dm_draw_viewobjs(NULL, v, NULL, 1, 1);
+		dm_draw_viewobjs(NULL, v, NULL);
 	    }
 	    dm_draw_end(dmp);
 	}

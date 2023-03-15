@@ -404,16 +404,6 @@ BRLCAD_MainWindow::closeEvent(QCloseEvent* e)
     QMainWindow::closeEvent(e);
 }
 
-void
-BRLCAD_MainWindow::SetUnitConv(fastf_t base2local, fastf_t local2base)
-{
-    for (int i = 1; i < 5; i++) {
-	QtCADView *c = c4->get(i);
-	c->set_base2local(base2local);
-	c->set_local2base(local2base);
-    }
-}
-
 /* We base conditionals on whether the target widget w is active.  Usually the
  * actual focus widget is a child of the widget in question, so we walk up the
  * parents to see if the focusWidget is underneath the target widget. */

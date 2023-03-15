@@ -387,8 +387,11 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
     select_hash = (ss) ? ss->state_hash() : 0;
 
     /* Set the local unit conversions */
-    if (gedp->dbip)
-	w->SetUnitConv(gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+    if (gedp->dbip) {
+	struct bview *v = w->CurrentView();
+	v->gv_base2local = gedp->dbip->dbi_base2local;
+	v->gv_local2base = gedp->dbip->dbi_local2base;
+    }
 
     if (!tmp_av.size()) {
 

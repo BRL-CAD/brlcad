@@ -102,7 +102,7 @@ dm_refresh(struct ged *gedp)
     dm_get_bg(&dm_bg1, &dm_bg2, dmp);
     dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
     dm_set_dirty(dmp, 0);
-    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, NULL, NULL);
+    dm_draw_objs(v, NULL, NULL);
     dm_draw_end(dmp);
 }
 

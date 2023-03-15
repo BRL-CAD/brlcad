@@ -161,7 +161,7 @@ void QtSW::paintEvent(QPaintEvent *e)
     matp_t mat = v->gv_model2view;
     dm_loadmatrix(dmp, mat, 0);
     dm_draw_begin(dmp);
-    dm_draw_objs(v, v->gv_base2local, v->gv_local2base, draw_custom, draw_udata);
+    dm_draw_objs(v, draw_custom, draw_udata);
     dm_draw_end(dmp);
 
     // Set up a QImage with the rendered output..

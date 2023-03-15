@@ -70,6 +70,7 @@ QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(p
     views[UPPER_RIGHT_QUADRANT]->set_current(1);
     currentView = views[UPPER_RIGHT_QUADRANT];
 
+    default_views(1);
 }
 
 QtCADQuad::~QtCADQuad()
@@ -177,7 +178,7 @@ QtCADQuad::changeToSingleFrame()
     spacerRight = nullptr;
     spacerCenter = nullptr;
 
-    default_views();
+    default_views(0);
 }
 
 /**
@@ -189,7 +190,14 @@ QtCADQuad::changeToQuadFrame()
 {
     for (int i = UPPER_RIGHT_QUADRANT + 1; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] == nullptr) {
+	    // Make the new view
 	    views[i] = createView(i);
+
+	    // Out of the gate, have the new view units match the first view's
+	    // units (which should usually be based on the database units)
+	    views[i]->view()->gv_base2local = views[0]->view()->gv_base2local;
+	    views[i]->view()->gv_local2base = views[0]->view()->gv_local2base;
+
 	    // For initial layout calculations, we need to set a screen width
 	    // and height.  This won't be right in the end, but it gives
 	    // bg_view_bounds something to work with
@@ -247,7 +255,7 @@ QtCADQuad::changeToQuadFrame()
     layout->addWidget(spacerBottom, 2, 1);
     layout->addWidget(views[LOWER_RIGHT_QUADRANT], 2, 2);
 
-    default_views();
+    default_views(0);
 
     // Not sure if this is the right way to do this but need to autoset each of the views
     // and make sure the common geometry visible in the first quadrant is also drawn in the
@@ -334,9 +342,9 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 }
 
 void
-QtCADQuad::default_views()
+QtCADQuad::default_views(int all_views)
 {
-    if (views[UPPER_RIGHT_QUADRANT] != nullptr) {
+    if (all_views && views[UPPER_RIGHT_QUADRANT] != nullptr) {
 	if (views[UPPER_LEFT_QUADRANT] == nullptr) {
 	    views[UPPER_RIGHT_QUADRANT]->aet(270, 90, 0);
 	}

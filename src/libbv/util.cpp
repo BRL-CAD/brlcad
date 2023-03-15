@@ -147,6 +147,10 @@ bv_init(struct bview *gvp, struct bview_set *s)
     // Also don't have a display manager
     gvp->dmp = NULL;
 
+    // Initial scaling factors are 1
+    gvp->gv_base2local = 1.0;
+    gvp->gv_local2base = 1.0;
+
     bv_update(gvp);
 }
 

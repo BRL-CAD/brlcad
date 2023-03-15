@@ -90,10 +90,6 @@ class BRLCAD_MainWindow : public QMainWindow
 	// Utility wrapper for the closeEvent to save windowing dimensions
 	void closeEvent(QCloseEvent* e);
 
-	// TODO - this shouldn't be here...
-	// Set the local unit conversions
-	void SetUnitConv(fastf_t base2local, fastf_t local2base);
-
     public slots:
 	//void save_image();
 	void do_dm_init();
