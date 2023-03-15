@@ -49,6 +49,7 @@
 #include "qtcad/QViewCtrl.h"
 
 #include "plugins/plugin.h"
+#include "attributes.h"
 #include "palettes.h"
 
 class BRLCAD_MainWindow : public QMainWindow
@@ -56,7 +57,6 @@ class BRLCAD_MainWindow : public QMainWindow
     Q_OBJECT
     public:
 	BRLCAD_MainWindow(int canvas_type = 0, int quad_view = 0);
-
 
 	QtConsole *console;
 
@@ -70,6 +70,7 @@ class BRLCAD_MainWindow : public QMainWindow
 
 	// Get the currently active view of the quad/central display widget
 	QtCADView * CurrentDisplay();
+	struct bview * CurrentView();
 
 	// Checkpoint display state (used for subsequent diff)
 	void DisplayCheckpoint();
@@ -103,28 +104,45 @@ class BRLCAD_MainWindow : public QMainWindow
 	void SingleDisplay();
 
     private:
-	CADPalette *vc;
-	CADPalette *oc;
-	QViewCtrl *vcw;
-	QgTreeView *treeview = NULL;
-	QtCADQuad *c4 = NULL;
-	QMenu *file_menu;
+
+	void CreateWidgets(int canvas_type);
+	void LocateWidgets();
+	void ConnectWidgets();
+	void SetupMenu();
+
+	// Menu actions
 	QAction *cad_open;
 	QAction *cad_save_settings;
 	//QAction *cad_save_image;
 	QAction *cad_exit;
-	QMenu *view_menu;
-	QAction *vm_topview;
-	QMenu *vm_panels;
-	QMenu *help_menu;
-	QAction *cad_single_view;
-	QAction *cad_quad_view;
 
-	QgDockWidget *console_dock;
-	QgDockWidget *tree_dock;
-	QDockWidget *vcd;
-	QDockWidget *ocd;
+	// Organizational widget
+	QWidget *cw = NULL;
 
+	// Central widgets
+	QViewCtrl *vcw = NULL;
+	QtCADQuad *c4 = NULL;
+	QAction *cad_single_view = NULL;
+	QAction *cad_quad_view = NULL;
+
+	// Docked widgets
+	CADAttributesModel *stdpropmodel = NULL;
+	CADAttributesModel *userpropmodel = NULL;
+	CADPalette *oc = NULL;
+	CADPalette *vc = NULL;
+	QgTreeView *treeview = NULL;
+
+	// Action for toggling treeview's ls or tree view
+	QAction *vm_treeview_mode_toggle = NULL;
+
+	// Docking containers
+	QDockWidget *ocd = NULL;
+	QDockWidget *sattrd = NULL;
+	QDockWidget *uattrd = NULL;
+	QDockWidget *vcd = NULL;
+	QMenu *vm_panels = NULL;
+	QgDockWidget *console_dock = NULL;
+	QgDockWidget *tree_dock = NULL;
 };
 
 #endif /* BRLCAD_MAINWINDOW_H */

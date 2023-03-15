@@ -1,4 +1,4 @@
-/*                 M A I N _ W I N D O W . C X X
+/*                 M A I N _ W I N D O W . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main_window.cxx
+/** @file main_window.cpp
  *
  * Implementation code for toplevel window for BRL-CAD GUI.
  *
@@ -31,13 +31,10 @@
 #include "app.h"
 #include "palettes.h"
 #include "attributes.h"
-#include "fbserv.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
     CADApp *ap = (CADApp *)qApp;
-    QgModel *m = ap->mdl;
-    struct ged *gedp = m->gedp;
     ap->w = this;
 
 #ifdef BRLCAD_OPENGL
@@ -58,47 +55,36 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // https://stackoverflow.com/a/17885699/2037687
     setAnimated(false);
 
-    // Create Menus
-    file_menu = menuBar()->addMenu("File");
-    cad_open = new QAction("Open", this);
-    QObject::connect(cad_open, &QAction::triggered, ((CADApp *)qApp), &CADApp::open_file);
-    file_menu->addAction(cad_open);
+    // Set up menu
+    SetupMenu();
 
-    cad_save_settings = new QAction("Save Settings", this);
-    connect(cad_save_settings, &QAction::triggered, ((CADApp *)qApp), &CADApp::write_settings);
-    file_menu->addAction(cad_save_settings);
+    // Create Widgets
+    CreateWidgets(canvas_type);
 
-#if 0
-    cad_save_image = new QAction("Save Image", this);
-    connect(cad_save_image, &QAction::triggered, this, &BRLCAD_MainWindow::save_image);
-    file_menu->addAction(cad_save_image);
-#endif
+    // Lay out widgets
+    LocateWidgets();
 
-    cad_single_view = new QAction("Single View", this);
-    connect(cad_single_view, &QAction::triggered, this, &BRLCAD_MainWindow::SingleDisplay);
-    file_menu->addAction(cad_single_view);
+    // Connect Widgets
+    ConnectWidgets();
 
-    cad_quad_view = new QAction("Quad View", this);
-    connect(cad_quad_view, &QAction::triggered, this, &BRLCAD_MainWindow::QuadDisplay);
-    file_menu->addAction(cad_quad_view);
+    // See if the user has requested a particular mode
+    if (quad_view) {
+	c4->changeToQuadFrame();
+    } else {
+	c4->changeToSingleFrame();
+    }
+}
 
-    cad_exit = new QAction("Exit", this);
-    QObject::connect(cad_exit, &QAction::triggered, this, &BRLCAD_MainWindow::close);
-    file_menu->addAction(cad_exit);
-
-    view_menu = menuBar()->addMenu("View");
-    vm_topview = new QAction("Toggle Hierarchy (ls/tops)", this);
-    view_menu->addAction(vm_topview);
-    vm_panels = view_menu->addMenu("Panels");
-
-    menuBar()->addSeparator();
-
-    help_menu = menuBar()->addMenu("Help");
-
+void
+BRLCAD_MainWindow::CreateWidgets(int canvas_type)
+{
+    CADApp *ap = (CADApp *)qApp;
+    QgModel *m = ap->mdl;
+    struct ged *gedp = m->gedp;
 
     // Define a widget to hold the main view and its associated
     // view control toolbar
-    QWidget *cw = new QWidget(this);
+    cw = new QWidget(this);
 
     // The core of the interface is the CAD view widget, which is capable
     // of either a single display or showing 4 views in a grid arrangement
@@ -113,6 +99,123 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     }
     c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
+    // Define a graphical toolbar with control widgets
+    vcw = new QViewCtrl(cw, gedp);
+    vcw->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+
+    // Having set up the central widget's components, we now define dockable
+    // control widgets.  These are the console, controls, etc. that can be
+    // attached and detached from the main window.
+
+    // Palettes and their associated dock widgets
+    vc = new CADPalette(QGED_VC_TOOL_PLUGIN, this);
+    vcd = new QDockWidget("View Controls", this);
+    vcd->setObjectName("View_Controls");
+    vcd->setWidget(vc);
+    oc = new CADPalette(QGED_OC_TOOL_PLUGIN, this);
+    ocd = new QDockWidget("Object Editing", this);
+    ocd->setObjectName("Object_Editing");
+    ocd->setWidget(oc);
+    // We start out with the View Control panel as the current panel - by
+    // default we are viewing, not editing
+    vc->makeCurrent(vc);
+
+    // Command console
+    console = new QtConsole(console_dock);
+    console->prompt("$ ");
+    console_dock = new QgDockWidget("Console", this);
+    console_dock->setObjectName("Console");
+    console_dock->setWidget(console);
+    // The Qt console itself has no direct knowledge of GED commands.  For contextually
+    // aware command prompts, we need a customized completer with knowledge of the database
+    // contents and GED commands.
+    GEDShellCompleter *cshellcomp = new GEDShellCompleter(console, gedp);
+    console->setCompleter(cshellcomp);
+
+    /* Geometry Tree */
+    treeview = new QgTreeView(tree_dock, ap->mdl);
+    tree_dock = new QgDockWidget("Hierarchy", this);
+    tree_dock->setObjectName("Hierarchy");
+    tree_dock->setWidget(treeview);
+    tree_dock->m = ap->mdl;
+
+    /* Object Attribute widgets */
+    sattrd = new QDockWidget("Standard Attributes", this);
+    sattrd->setObjectName("Standard_Attributes");
+    stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
+    QKeyValView *stdpropview = new QKeyValView(this, 1);
+    stdpropview->setModel(stdpropmodel);
+    sattrd->setWidget(stdpropview);
+
+    uattrd = new QDockWidget("User Attributes", this);
+    uattrd->setObjectName("User_Attributes");
+    userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
+    QKeyValView *userpropview = new QKeyValView(this, 0);
+    userpropview->setModel(userpropmodel);
+    uattrd->setWidget(userpropview);
+
+}
+
+void
+BRLCAD_MainWindow::LocateWidgets()
+{
+    // Central widget will hold the 3D display widget + Icon toolbar.
+    // Create a layout to organize them
+    QVBoxLayout *cwl = new QVBoxLayout;
+    // The toolbar is added to the layout first, so it is drawn above the Quad view
+    cwl->addWidget(vcw);
+    cwl->addWidget(c4);
+    // Having defined the layout, we set cw to use it and let the main window
+    // know cw is the central widget.
+    cw->setLayout(cwl);
+    setCentralWidget(cw);
+
+    // Set up the dock.  Generally speaking we will also define menu actions to
+    // enable and disable these windows, to all them to be recovered even if
+    // the user closes them completely.
+
+    /* Because the console usually doesn't need a huge amount of horizontal
+     * space and the tree can use all the vertical space it can get when
+     * viewing large .g hierarchies, give the bottom corners to the left/right
+     * docks */
+    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+
+    // Dock the widgets and constrain their allowed placements
+    addDockWidget(Qt::BottomDockWidgetArea, console_dock);
+    console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
+    vm_panels->addAction(console_dock->toggleViewAction());
+
+    addDockWidget(Qt::RightDockWidgetArea, vcd);
+    vcd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    vm_panels->addAction(vcd->toggleViewAction());
+
+    addDockWidget(Qt::RightDockWidgetArea, ocd);
+    ocd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    vm_panels->addAction(ocd->toggleViewAction());
+
+    addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
+    tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    vm_panels->addAction(tree_dock->toggleViewAction());
+
+    addDockWidget(Qt::LeftDockWidgetArea, sattrd);
+    sattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    vm_panels->addAction(sattrd->toggleViewAction());
+
+    addDockWidget(Qt::LeftDockWidgetArea, uattrd);
+    uattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    vm_panels->addAction(uattrd->toggleViewAction());
+}
+
+void
+BRLCAD_MainWindow::ConnectWidgets()
+{
+    CADApp *ap = (CADApp *)qApp;
+    QgModel *m = ap->mdl;
+
+    // If the model does something that it things should trigger a view update, let the app know
+    QObject::connect(m, &QgModel::view_change, ap, &CADApp::do_view_changed);
+
     // Make the fundamental connection that allows the view to update in
     // response to commands or widgets taking actions that will impact the
     // scene.  Camera view changes, adding/removing objects or view elements
@@ -121,79 +224,19 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     // it is time to update.
     QObject::connect(ap, &CADApp::view_update, c4, &QtCADQuad::do_view_update);
 
-    // Define a graphical toolbar with control widgets
-    vcw = new QViewCtrl(cw, gedp);
-    vcw->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    // 3D graphical widget
+    QObject::connect(c4, &QtCADQuad::selected, ap, &CADApp::do_quad_view_change);
+    QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_quad_view_change);
+    // Some of the dm initialization has to be delayed - make the connections so we can
+    // do the work after widget initialization is complete.
+    QObject::connect(c4, &QtCADQuad::init_done, this, &BRLCAD_MainWindow::do_dm_init);
+
+
+    // Graphical toolbar
     QObject::connect(vcw, &QViewCtrl::view_changed, ap, &CADApp::do_view_changed);
     QObject::connect(ap, &CADApp::view_update, vcw, &QViewCtrl::do_view_update);
     // Make the connection so the view control can change the mouse mode of the Quad View
     QObject::connect(vcw, &QViewCtrl::lmouse_mode, c4, &QtCADQuad::set_lmouse_move_default);
-
-    // The toolbar is added to the layout first, so it is drawn above the Quad view
-    QVBoxLayout *cwl = new QVBoxLayout;
-    cwl->addWidget(vcw);
-    cwl->addWidget(c4);
-
-    // Having defined the layout, we set cw to use it and let the main window
-    // know cw is the central widget.
-    cw->setLayout(cwl);
-    setCentralWidget(cw);
-
-    // Let GED know to use the QtCADQuad view as its current view
-    gedp->ged_gvp = c4->view();
-
-    // See if the user has requested a particular mode
-    if (quad_view) {
-	c4->changeToQuadFrame();
-    } else {
-	c4->changeToSingleFrame();
-    }
-
-    // Set up the connections needed for embedded raytracing
-    gedp->fbs_is_listening = &qdm_is_listening;
-    gedp->fbs_listen_on_port = &qdm_listen_on_port;
-    gedp->fbs_open_server_handler = &qdm_open_server_handler;
-    gedp->fbs_close_server_handler = &qdm_close_server_handler;
-
-    // Unfortunately, there are technical differences involved with
-    // the embedded fb mechanisms depending on whether we are using
-    // the system native OpenGL or our fallback software rasterizer
-    int type = c4->get(0)->view_type();
-#ifdef BRLCAD_OPENGL
-    if (type == QtCADView_GL) {
-	gedp->fbs_open_client_handler = &qdm_open_client_handler;
-    }
-#endif
-    if (type == QtCADView_SW) {
-	gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
-    }
-    gedp->fbs_close_client_handler = &qdm_close_client_handler;
-
-
-    // Having set up the central widget and fb connections, we now define
-    // dockable control widgets.  These are the console, controls, etc. that
-    // can be attached and detached from the main window.  Generally speaking
-    // we will also define menu actions to enable and disable these windows,
-    // to all them to be recovered even if the user closes them completely.
-    //
-    // TODO -  Eventually this should be a dynamic set of widgets rather than
-    // hardcoded statics, so plugins can define their own graphical elements...
-
-    vcd = new QDockWidget("View Controls", this);
-    vcd->setObjectName("View_Controls");
-    addDockWidget(Qt::RightDockWidgetArea, vcd);
-    vcd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    vm_panels->addAction(vcd->toggleViewAction());
-    vc = new CADPalette(QGED_VC_TOOL_PLUGIN, this);
-    vcd->setWidget(vc);
-
-    ocd = new QDockWidget("Object Editing", this);
-    ocd->setObjectName("Object_Editing");
-    addDockWidget(Qt::RightDockWidgetArea, ocd);
-    ocd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    vm_panels->addAction(ocd->toggleViewAction());
-    oc = new CADPalette(QGED_OC_TOOL_PLUGIN, this);
-    ocd->setWidget(oc);
 
     // The makeCurrent connections enforce an either/or paradigm
     // for the view and object editing panels.
@@ -221,46 +264,22 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     QObject::connect(ap, &CADApp::view_update, oc->tpalette, &QToolPalette::do_view_update);
     QObject::connect(oc->tpalette, &QToolPalette::view_changed, ap, &CADApp::do_view_changed);
 
-    /* Console */
-    console_dock = new QgDockWidget("Console", this);
-    console_dock->setObjectName("Console");
-    addDockWidget(Qt::BottomDockWidgetArea, console_dock);
-    console_dock->setAllowedAreas(Qt::BottomDockWidgetArea);
-    vm_panels->addAction(console_dock->toggleViewAction());
+    // Console
     connect(console_dock, &QgDockWidget::topLevelChanged, console_dock, &QgDockWidget::toWindow);
-    console = new QtConsole(console_dock);
-    console->prompt("$ ");
-    console_dock->setWidget(console);
     // The console's run of a command has implications for the entire
     // application, so rather than embedding the command execution logic in the
     // widget we use a signal/slot connection to have the application's slot
     // execute the command.
-    QObject::connect(this->console, &QtConsole::executeCommand, ((CADApp *)qApp), &CADApp::run_qcmd);
+    QObject::connect(console, &QtConsole::executeCommand, ap, &CADApp::run_qcmd);
 
-    // The Qt console itself has no direct knowledge of GED commands.  For contextually
-    // aware command prompts, we need a customized completer with knowledge of the database
-    // contents and GED commands.
-    GEDShellCompleter *cshellcomp = new GEDShellCompleter(console, gedp);
-    console->setCompleter(cshellcomp);
-
-    /* Geometry Tree */
-    tree_dock = new QgDockWidget("Hierarchy", this);
-    tree_dock->setObjectName("Hierarchy");
-    addDockWidget(Qt::LeftDockWidgetArea, tree_dock);
-    tree_dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    vm_panels->addAction(tree_dock->toggleViewAction());
+    // Geometry Tree
     connect(tree_dock, &QgDockWidget::topLevelChanged, tree_dock, &QgDockWidget::toWindow);
-    CADApp *ca = (CADApp *)qApp;
-    treeview = new QgTreeView(tree_dock, ca->mdl);
-    tree_dock->setWidget(treeview);
-    tree_dock->m = m;
     connect(tree_dock, &QgDockWidget::banner_click, m, &QgModel::toggle_hierarchy);
-    connect(vm_topview, &QAction::triggered, m, &QgModel::toggle_hierarchy);
+    connect(vm_treeview_mode_toggle, &QAction::triggered, m, &QgModel::toggle_hierarchy);
     connect(m, &QgModel::opened_item, treeview, &QgTreeView::qgitem_select_sync);
-    connect(m, &QgModel::view_change, ca, &CADApp::do_view_changed);
+    connect(m, &QgModel::view_change, ap, &CADApp::do_view_changed);
     QObject::connect(treeview, &QgTreeView::view_changed, ap, &CADApp::do_view_changed);
     QObject::connect(ap, &CADApp::view_update, treeview, &QgTreeView::do_view_update);
-
     // We need to record the expanded/contracted state of the tree items,
     // and restore them after a model reset
     connect(treeview, &QgTreeView::expanded, m, &QgModel::item_expanded);
@@ -268,67 +287,54 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(m, &QgModel::mdl_changed_db, treeview, &QgTreeView::redo_expansions);
     connect(m, &QgModel::check_highlights, treeview, &QgTreeView::redo_highlights);
 
-    // The tree's highlighting changes based on which set of tools we're using.
-    //
-    // TODO - instance editing and primitive editing have different non-local
-    // implications in the hierarchy.  Originally plan was to have separate
-    // panels for the two modes.  That's looking like it may be overkill, so
-    // the interaction mode of oc may need to change for the specific comb case
-    // of editing an instance in the comb tree.
-    //QgTreeSelectionModel *selm = (QgTreeSelectionModel *)treeview->selectionModel();
-    //connect(vc, &CADPalette::interaction_mode, selm, &QgTreeSelectionModel::mode_change);
-    //connect(oc, &CADPalette::interaction_mode, selm, &QgTreeSelectionModel::mode_change);
-
-
-    // Dialogues for attribute viewing (and eventually manipulation)
-    QDockWidget *sattrd = new QDockWidget("Standard Attributes", this);
-    sattrd->setObjectName("Standard_Attributes");
-    addDockWidget(Qt::LeftDockWidgetArea, sattrd);
-    sattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    vm_panels->addAction(sattrd->toggleViewAction());
-    CADAttributesModel *stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
-    QKeyValView *stdpropview = new QKeyValView(this, 1);
-    stdpropview->setModel(stdpropmodel);
-    sattrd->setWidget(stdpropview);
-
-    QDockWidget *uattrd = new QDockWidget("User Attributes", this);
-    uattrd->setObjectName("User_Attributes");
-    addDockWidget(Qt::LeftDockWidgetArea, uattrd);
-    uattrd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    vm_panels->addAction(uattrd->toggleViewAction());
-    CADAttributesModel *userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
-    QKeyValView *userpropview = new QKeyValView(this, 0);
-    userpropview->setModel(userpropmodel);
-    uattrd->setWidget(userpropview);
-
     // Update props if we select a new item in the tree.  TODO - these need to be updated when
     // we have a app_changed_db as well, since the change may have been to edit attributes...
     QObject::connect(treeview, &QgTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
     QObject::connect(treeview, &QgTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
 
-    // If the model does something that it things should trigger a view update, let the app know
-    QObject::connect(m, &QgModel::view_change, ap, &CADApp::do_view_changed);
-
-
-    // Connect the primary view widget to the app
-    QObject::connect(c4, &QtCADQuad::selected, ap, &CADApp::do_quad_view_change);
-    QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_quad_view_change);
-
-    // Some of the dm initialization has to be delayed - make the connections so we can
-    // do the work after widget initialization is complete.
-    QObject::connect(c4, &QtCADQuad::init_done, this, &BRLCAD_MainWindow::do_dm_init);
-
-    /* Because the console usually doesn't need a huge amount of horizontal
-     * space and the tree can use all the vertical space it can get when
-     * viewing large .g hierarchies, give the bottom corners to the left/right
-     * docks */
-    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
-    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
-
-    // We start out with the View Control panel as the current panel - by
-    // default we are viewing, not editing
-    vc->makeCurrent(vc);
 }
+
+void
+BRLCAD_MainWindow::SetupMenu()
+{
+    QMenu *file_menu = menuBar()->addMenu("File");
+    cad_open = new QAction("Open", this);
+    QObject::connect(cad_open, &QAction::triggered, ((CADApp *)qApp), &CADApp::open_file);
+    file_menu->addAction(cad_open);
+
+    cad_save_settings = new QAction("Save Settings", this);
+    connect(cad_save_settings, &QAction::triggered, ((CADApp *)qApp), &CADApp::write_settings);
+    file_menu->addAction(cad_save_settings);
+
+#if 0
+    cad_save_image = new QAction("Save Image", this);
+    connect(cad_save_image, &QAction::triggered, this, &BRLCAD_MainWindow::save_image);
+    file_menu->addAction(cad_save_image);
+#endif
+
+    cad_single_view = new QAction("Single View", this);
+    connect(cad_single_view, &QAction::triggered, this, &BRLCAD_MainWindow::SingleDisplay);
+    file_menu->addAction(cad_single_view);
+
+    cad_quad_view = new QAction("Quad View", this);
+    connect(cad_quad_view, &QAction::triggered, this, &BRLCAD_MainWindow::QuadDisplay);
+    file_menu->addAction(cad_quad_view);
+
+    cad_exit = new QAction("Exit", this);
+    QObject::connect(cad_exit, &QAction::triggered, this, &BRLCAD_MainWindow::close);
+    file_menu->addAction(cad_exit);
+
+    QMenu *view_menu = menuBar()->addMenu("View");
+    vm_treeview_mode_toggle = new QAction("Toggle Hierarchy (ls/tops)", this);
+    view_menu->addAction(vm_treeview_mode_toggle);
+    vm_panels = view_menu->addMenu("Panels");
+
+    menuBar()->addSeparator();
+
+    menuBar()->addMenu("Help");
+}
+
+
 
 // These commands can only be successfully executed after the QtCADQuad widget
 // initialization is *fully* complete.  Consequently, these steps are separated
@@ -434,8 +440,13 @@ BRLCAD_MainWindow::isDisplayActive()
 QtCADView *
 BRLCAD_MainWindow::CurrentDisplay()
 {
-    // TODO - should this always be 0?
-    return c4->get(0);
+    return c4->get();
+}
+
+struct bview *
+BRLCAD_MainWindow::CurrentView()
+{
+    return c4->view();
 }
 
 void
