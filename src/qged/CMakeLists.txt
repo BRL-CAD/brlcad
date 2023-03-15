@@ -51,7 +51,7 @@ if (BRLCAD_ENABLE_QT)
 
   # Let main_window know what the platform's extension is so it knows
   # what plugin filenames to look for
-  set_property(SOURCE main_window.cpp APPEND PROPERTY
+  set_property(SOURCE palettes.cpp APPEND PROPERTY
     COMPILE_DEFINITIONS "QGED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
   if(Qt6Widgets_FOUND)

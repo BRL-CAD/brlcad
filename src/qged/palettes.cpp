@@ -23,7 +23,14 @@
  *
  */
 
+#include <map>
+#include <set>
 #include <QColor>
+#include "bu/app.h"
+#include "bu/dylib.h"
+#include "bu/file.h"
+#include "bu/str.h"
+#include "plugins/plugin.h"
 #include "palettes.h"
 
 CADPalette::CADPalette(int mode, QWidget *pparent)
@@ -41,6 +48,93 @@ CADPalette::CADPalette(int mode, QWidget *pparent)
 
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setLayout(mlayout);
+
+    const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "qged", NULL);
+    char **filenames;
+    struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&plugin_pattern, "*%s", QGED_PLUGIN_SUFFIX);
+    size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
+    std::map<int, std::set<QToolPaletteElement *>> c_map;
+    for (size_t i = 0; i < nfiles; i++) {
+	char pfile[MAXPATHLEN] = {0};
+	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "qged", filenames[i], NULL);
+	void *dl_handle;
+	dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
+	if (!dl_handle) {
+	    const char * const error_msg = bu_dlerror();
+	    if (error_msg)
+		bu_log("%s\n", error_msg);
+
+	    bu_log("Unable to dynamically load '%s' (skipping)\n", pfile);
+	    continue;
+	}
+	{
+	    const char *psymbol = "qged_plugin_info";
+	    void *info_val = bu_dlsym(dl_handle, psymbol);
+	    const struct qged_plugin *(*plugin_info)() = (const struct qged_plugin *(*)())(intptr_t)info_val;
+	    if (!plugin_info) {
+		const char * const error_msg = bu_dlerror();
+
+		if (error_msg)
+		    bu_log("%s\n", error_msg);
+
+		bu_log("Unable to load symbols from '%s' (skipping)\n", pfile);
+		bu_log("Could not find '%s' symbol in plugin\n", psymbol);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    const struct qged_plugin *plugin = plugin_info();
+	    if (!plugin) {
+		bu_log("Invalid plugin file '%s' encountered (skipping)\n", pfile);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    if (!plugin->cmds) {
+		bu_log("Invalid plugin file '%s' encountered (skipping)\n", pfile);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    if (!plugin->cmd_cnt) {
+		bu_log("Plugin '%s' contains no commands, (skipping)\n", pfile);
+		bu_dlclose(dl_handle);
+		continue;
+	    }
+
+	    const struct qged_tool **cmds = plugin->cmds;
+	    uint32_t ptype = *((const uint32_t *)(plugin));
+
+	    if (ptype == (uint32_t)mode) {
+		for (int c = 0; c < plugin->cmd_cnt; c++) {
+		    const struct qged_tool *cmd = cmds[c];
+		    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
+		    c_map[cmd->palette_priority].insert(el);
+		}
+	    }
+	}
+    }
+    bu_argv_free(nfiles, filenames);
+    bu_vls_free(&plugin_pattern);
+
+    std::map<int, std::set<QToolPaletteElement *>>::iterator e_it;
+    for (e_it = c_map.begin(); e_it != c_map.end(); e_it++) {
+	std::set<QToolPaletteElement *>::iterator el_it;
+	for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
+	    QToolPaletteElement *el = *el_it;
+	    addTool(el);
+	}
+    }
+
+    // Add placeholder oc tool until we implement more real tools
+    if (mode == QGED_OC_TOOL_PLUGIN) {
+	QIcon *obj_icon = new QIcon();
+	QString obj_label("primitive controls ");
+	QPushButton *obj_control = new QPushButton(obj_label);
+	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
+	addTool(el);
+    }
 }
 
 void

@@ -23,148 +23,15 @@
  *
  */
 
-#include <map>
-#include <set>
 #include <QTimer>
 #include <QMessageBox>
 #include "qtcad/QViewCtrl.h"
 #include "qtcad/QgTreeSelectionModel.h"
-#include "bu/str.h"
 #include "main_window.h"
 #include "app.h"
 #include "palettes.h"
 #include "attributes.h"
 #include "fbserv.h"
-
-// The palette tools are loaded as dynamic plugins.  Since the logic for doing
-// so is rather verbose and not dependent on the Qt main_window information, we
-// break it out into a separate function to keep the main_window initialization
-// more readable.
-static void
-_load_palette_tools(
-	struct bu_vls *msgs,
-	CADPalette *vc,
-	CADPalette *oc,
-	std::map<int, std::set<QToolPaletteElement *>> &vc_map,
-	std::map<int, std::set<QToolPaletteElement *>> &oc_map
-	)
-{
-    const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "qged", NULL);
-    char **filenames;
-    struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&plugin_pattern, "*%s", QGED_PLUGIN_SUFFIX);
-    size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
-    for (size_t i = 0; i < nfiles; i++) {
-	char pfile[MAXPATHLEN] = {0};
-	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "qged", filenames[i], NULL);
-	void *dl_handle;
-	dl_handle = bu_dlopen(pfile, BU_RTLD_NOW);
-	if (!dl_handle) {
-	    const char * const error_msg = bu_dlerror();
-	    if (error_msg)
-		bu_vls_printf(msgs, "%s\n", error_msg);
-
-	    bu_vls_printf(msgs, "Unable to dynamically load '%s' (skipping)\n", pfile);
-	    continue;
-	}
-	{
-	    const char *psymbol = "qged_plugin_info";
-	    void *info_val = bu_dlsym(dl_handle, psymbol);
-	    const struct qged_plugin *(*plugin_info)() = (const struct qged_plugin *(*)())(intptr_t)info_val;
-	    if (!plugin_info) {
-		const char * const error_msg = bu_dlerror();
-
-		if (error_msg)
-		    bu_vls_printf(msgs, "%s\n", error_msg);
-
-		bu_vls_printf(msgs, "Unable to load symbols from '%s' (skipping)\n", pfile);
-		bu_vls_printf(msgs, "Could not find '%s' symbol in plugin\n", psymbol);
-		bu_dlclose(dl_handle);
-		continue;
-	    }
-
-	    const struct qged_plugin *plugin = plugin_info();
-
-	    if (!plugin) {
-		bu_vls_printf(msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
-		bu_dlclose(dl_handle);
-		continue;
-	    }
-
-	    if (!plugin->cmds) {
-		bu_vls_printf(msgs, "Invalid plugin file '%s' encountered (skipping)\n", pfile);
-		bu_dlclose(dl_handle);
-		continue;
-	    }
-
-	    if (!plugin->cmd_cnt) {
-		bu_vls_printf(msgs, "Plugin '%s' contains no commands, (skipping)\n", pfile);
-		bu_dlclose(dl_handle);
-		continue;
-	    }
-
-	    const struct qged_tool **cmds = plugin->cmds;
-	    uint32_t ptype = *((const uint32_t *)(plugin));
-
-	    switch (ptype) {
-		case QGED_VC_TOOL_PLUGIN:
-		    for (int c = 0; c < plugin->cmd_cnt; c++) {
-			const struct qged_tool *cmd = cmds[c];
-			QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
-			vc_map[cmd->palette_priority].insert(el);
-		    }
-		    break;
-		case QGED_OC_TOOL_PLUGIN:
-		    for (int c = 0; c < plugin->cmd_cnt; c++) {
-			const struct qged_tool *cmd = cmds[c];
-			QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
-			oc_map[cmd->palette_priority].insert(el);
-		    }
-		    break;
-		case QGED_CMD_PLUGIN:
-		    bu_vls_printf(msgs, "TODO - implement cmd plugins\n");
-		    bu_dlclose(dl_handle);
-		    break;
-		default:
-		    bu_vls_printf(msgs, "Plugin type %d of '%s' does not match any valid candidates (skipping)\n", ptype, pfile);
-		    bu_dlclose(dl_handle);
-		    continue;
-		    break;
-	    }
-	}
-    }
-    bu_argv_free(nfiles, filenames);
-    bu_vls_free(&plugin_pattern);
-
-    std::map<int, std::set<QToolPaletteElement *>>::iterator e_it;
-    for (e_it = vc_map.begin(); e_it != vc_map.end(); e_it++) {
-	std::set<QToolPaletteElement *>::iterator el_it;
-	for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
-	    QToolPaletteElement *el = *el_it;
-	    vc->addTool(el);
-	}
-    }
-
-    for (e_it = oc_map.begin(); e_it != oc_map.end(); e_it++) {
-	std::set<QToolPaletteElement *>::iterator el_it;
-	for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
-	    QToolPaletteElement *el = *el_it;
-	    oc->addTool(el);
-	}
-    }
-
-
-    // Add placeholder oc tool until we implement more real tools
-    {
-	QIcon *obj_icon = new QIcon();
-	QString obj_label("primitive controls ");
-	QPushButton *obj_control = new QPushButton(obj_label);
-	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
-	oc->addTool(el);
-    }
-
-}
-
 
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
@@ -179,7 +46,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     format.setDepthBufferSize(16);
     QSurfaceFormat::setDefaultFormat(format);
 #endif
-
 
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
     // suspect Unity's "global toolbar" settings are being used even when
@@ -318,7 +184,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     addDockWidget(Qt::RightDockWidgetArea, vcd);
     vcd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     vm_panels->addAction(vcd->toggleViewAction());
-    vc = new CADPalette(0, this);
+    vc = new CADPalette(QGED_VC_TOOL_PLUGIN, this);
     vcd->setWidget(vc);
 
     ocd = new QDockWidget("Object Editing", this);
@@ -326,7 +192,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     addDockWidget(Qt::RightDockWidgetArea, ocd);
     ocd->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     vm_panels->addAction(ocd->toggleViewAction());
-    oc = new CADPalette(2, this);
+    oc = new CADPalette(QGED_OC_TOOL_PLUGIN, this);
     ocd->setWidget(oc);
 
     // The makeCurrent connections enforce an either/or paradigm
@@ -335,14 +201,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     connect(vc, &CADPalette::current, vc, &CADPalette::makeCurrent);
     connect(oc, &CADPalette::current, oc, &CADPalette::makeCurrent);
     connect(oc, &CADPalette::current, vc, &CADPalette::makeCurrent);
-
-    /****************************************************************************
-     * The primary view and palette widgets are now in place.  We are ready to
-     * start loading tools defined as plugins.
-     ****************************************************************************/
-    std::map<int, std::set<QToolPaletteElement *>> vc_map;
-    std::map<int, std::set<QToolPaletteElement *>> oc_map;
-    _load_palette_tools(&ap->init_msgs, vc, oc, vc_map, oc_map);
 
     // Now that we've got everything set up, connect the palette selection
     // signals so they can update the view event filter as needed.  We don't do
