@@ -140,7 +140,7 @@ X 21.  Figure out how to do a button bar in Qt
 
 Other nice to haves:
 
-0.  Smarter, view aware wireframes for BoTs (RTree may be useful?  Can we do
+X 0.  Smarter, view aware wireframes for BoTs (RTree may be useful?  Can we do
     points with normals to represent small triangles?  Incorporate bounding box
     drawing in some fashion...)
 

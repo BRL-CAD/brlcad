@@ -114,7 +114,6 @@ set(qged_ignore_srcs
 	fonts/Inconsolata-LICENSE.txt
 	fonts/Inconsolata.otf
 	main.cpp
-	qdm_tests.txt
 	theme/LICENSE.md
 	theme/breeze.qrc
 	theme/dark.qss
