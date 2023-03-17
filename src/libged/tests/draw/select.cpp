@@ -162,6 +162,8 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail)
     int matching_cnt = 0;
     int off_by_1_cnt = 0;
     int off_by_many_cnt = 0;
+    uint32_t pret = icv_pdiff(ctrl, timg);
+    bu_log("pdiff(%d): %" PRIu32 "\n", id, pret);
     int iret = icv_diff(&matching_cnt, &off_by_1_cnt, &off_by_many_cnt, ctrl,timg);
     if (iret) {
 	if (soft_fail) {
