@@ -518,24 +518,33 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
     ON_Brep *nbrep = ON_Brep::New();
     struct brep_data bdata;
     bdata.brep = nbrep;
+
+    wchar_t wname[CREO_NAME_MAX];
+
+    err = ProMdlMdlnameGet(model, wname);
+    if (err != PRO_TK_NO_ERROR) {
+        return err;
+    }
+
+    err = ProSolidBodiesCollect(psol, &pbdy);
+    if (err != PRO_TK_NO_ERROR) {
+	return err;
+    }
+
+    // Getting to the point where we will use bdata - allocate
     bdata.cs_to_onf = new std::map<int, int>;
     bdata.ce_to_one = new std::map<int, int>;
     bdata.cc3d_to_on3dc = new std::map<int, int>;
     bdata.cc2d_to_on2dc = new std::map<int, int>;
 
-    wchar_t wname[CREO_NAME_MAX];
-
-    err = ProMdlMdlnameGet(model, wname);
-    if (err != PRO_TK_NO_ERROR)
-        return err;
-
-    err = ProSolidBodiesCollect(psol, &pbdy);
-    if (err != PRO_TK_NO_ERROR)
-        return err;
-
     err = ProSolidBodySurfaceVisit(pbdy, surface_process, (ProAppData)&bdata);
-    if (err != PRO_TK_NO_ERROR)
-        return err;
+    if (err != PRO_TK_NO_ERROR) {
+	delete bdata.cs_to_onf;
+	delete bdata.ce_to_one;
+	delete bdata.cc3d_to_on3dc;
+	delete bdata.cc2d_to_on2dc;
+	return err;
+    }
 
     /* Output the solid */
     *sname = get_brlcad_name(cinfo, wname, "brep", N_SOLID);
@@ -848,8 +857,8 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
     struct bu_vls vstr = BU_VLS_INIT_ZERO;
     struct bu_color color;
     struct wmember  wcomb;
-    struct bu_vls  *rname;
-    struct bu_vls  *sname;
+    struct bu_vls  *rname = NULL;
+    struct bu_vls  *sname = NULL;
     struct bu_vls  *ptc_name;
     struct part_conv_info *pinfo;
 
@@ -968,6 +977,10 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
      * the solid underneath it.
      */
 have_part:
+
+    // If we got here without a name, it's a no-go
+    if (!sname)
+	goto cleanup;
 
     BU_LIST_INIT(&wcomb.l);
     rname = get_brlcad_name(cinfo, wname, "r", N_REGION);

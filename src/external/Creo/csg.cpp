@@ -159,7 +159,6 @@ geomitem_visit(ProGeomitem *item, ProError UNUSED(status), ProAppData data)
 extern "C" struct bu_vls *
 tgc_hole_name(struct creo_conv_info *cinfo, wchar_t *wname, const char *suffix)
 {
-    struct directory *dp;
     char pname[CREO_NAME_MAX];
     struct bu_vls *cname;
     struct bu_vls *hname;
@@ -170,7 +169,7 @@ tgc_hole_name(struct creo_conv_info *cinfo, wchar_t *wname, const char *suffix)
     bu_vls_sprintf(hname, "%s_hole_0.%s", bu_vls_addr(cname), suffix);
 
     long count = 0;
-    while ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) {
+    while (db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET) != RT_DIR_NULL) {
         (void)bu_vls_incr(hname, NULL, "0:0:0:0:-", NULL, NULL);
         count++;
         creo_log(cinfo, MSG_DEBUG, "Generating hole name \"%s\"\n", bu_vls_addr(hname));
