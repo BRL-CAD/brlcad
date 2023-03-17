@@ -23,6 +23,7 @@
  */
 
 #include "common.h"
+#include <algorithm>
 #include <regex.h>
 #include "creo-brl.h"
 

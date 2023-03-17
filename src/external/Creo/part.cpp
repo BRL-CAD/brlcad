@@ -21,6 +21,7 @@
 
 
 #include "common.h"
+#include <algorithm>
 #include "creo-brl.h"
 
 
