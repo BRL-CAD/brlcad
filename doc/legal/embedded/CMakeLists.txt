@@ -29,6 +29,7 @@ set(embedded_licenses
   hv3_combobox.txt
   hv3_snit.txt
   Inconsolata.txt
+  image-hash.txt
   json.txt
   libtermlib.txt
   lod.txt
