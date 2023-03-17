@@ -79,10 +79,6 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->min_chamfer_dim   = 0.0;
     cinfo->min_round_radius  = 0.0;
 
-    /* Bounding box results */
-    double bbox_vol          = 0.0;
-    double bbox_area         = 0.0;
-
     /* Tessellation results */
     cinfo->tess_chord        = -1.0;
     cinfo->tess_angle        = -1.0;
@@ -191,7 +187,7 @@ output_parts(struct creo_conv_info *cinfo)
 {
     std::set<wchar_t *, WStrCmp>::iterator d_it;
 
-    int prt_count = 1;
+    unsigned int prt_count = 1;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
         wchar_t wname[CREO_NAME_MAX];
         struct bu_vls *rname;
@@ -275,7 +271,7 @@ output_assems(struct creo_conv_info *cinfo)
 {
     std::set<wchar_t *, WStrCmp>::iterator d_it;
 
-    int asm_count = 1;
+    unsigned int asm_count = 1;
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
         wchar_t wname[CREO_NAME_MAX];
         struct bu_vls *aname;
@@ -698,19 +694,21 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         (void)ProWstringFree(tmp_str);
 
         /* Open material file when name is provided */
-        if (strlen(mtl_fname) > 0)
-            if (bu_file_exists(mtl_fname, NULL)) {
-                if ((cinfo->fpmtl=fopen(mtl_fname, "r")) == NULL) {
-                    creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to open material file \"%s\"  ", mtl_fname);
-                    creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to open material file \"%s\"\n", mtl_fname);
-                    creo_conv_info_free(cinfo);
-                    ProUIDialogDestroy("creo_brl");
-                    delete cinfo;
-                    return;
-                } else 
-                    cinfo->mtl_rec = get_mtl_input(cinfo->fpmtl, &(cinfo->mtl_str[0][0]) , &(cinfo->mtl_id[0]), &(cinfo->mtl_los[0]));
-            } else
-                cinfo->fpmtl = (FILE *)NULL;
+	if (strlen(mtl_fname) > 0) {
+	    if (bu_file_exists(mtl_fname, NULL)) {
+		if ((cinfo->fpmtl=fopen(mtl_fname, "r")) == NULL) {
+		    creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to open material file \"%s\"  ", mtl_fname);
+		    creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to open material file \"%s\"\n", mtl_fname);
+		    creo_conv_info_free(cinfo);
+		    ProUIDialogDestroy("creo_brl");
+		    delete cinfo;
+		    return;
+		} else 
+		    cinfo->mtl_rec = get_mtl_input(cinfo->fpmtl, &(cinfo->mtl_str[0][0]) , &(cinfo->mtl_id[0]), &(cinfo->mtl_los[0]));
+	    } else {
+		cinfo->fpmtl = (FILE *)NULL;
+	    }
+	}
 
         /* Store the material filename for later use */
         sprintf(cinfo->mtl_fname, "%s", mtl_fname);
@@ -882,7 +880,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     } else {
         cinfo->lmin = wstr_to_long(cinfo, tmp_str);
         creo_log(cinfo, MSG_PLAIN, "#        Min luminance threshold, %s: %d\n", "%", cinfo->lmin);
-        cinfo->lmin = min(max(cinfo->lmin,0),100);
+        cinfo->lmin = std::min(std::max(cinfo->lmin,0),100);
         (void)ProWstringFree(tmp_str);
     }
 

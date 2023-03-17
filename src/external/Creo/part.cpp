@@ -133,7 +133,7 @@ extern "C" const char *feat_status_to_str(ProFeatStatus feat_stat)
     };
 
     if (feat_stat < 0 || feat_stat > 6)     /* out of range? */
-        return '\0';
+        return NULL;
     else
         return feat_status[feat_stat];
 }
@@ -1102,7 +1102,7 @@ have_part:
              pname, cinfo->mtl_key);
 
     /* If a translation table exists, attempt to find the material */
-    if (cinfo->mtl_rec > 0)
+    if (cinfo->mtl_rec > 0) {
         if (find_matl(cinfo)) {
             int p = cinfo->mtl_ptr;
             creo_log(cinfo, MSG_SUCCESS, "======== \"%s\" ========\n", cinfo->mtl_str[p]);
@@ -1118,12 +1118,15 @@ have_part:
                 bu_vls_sprintf(&vstr, "%d", cinfo->mtl_los[p]);
                 bu_avs_add(&r_avs, "los"         , bu_vls_addr(&vstr));
                 bu_vls_free(&vstr);
-            } else
+            } else {
                 creo_log(cinfo, MSG_SUCCESS, "Material attributes for material \"%s\" are suppressed\n",
                          mname);
-        } else
+	    }
+        } else {
             creo_log(cinfo, MSG_FAIL, "Unable to find \"%s\" in the material table\n",
                      cinfo->mtl_key);
+	}
+    }
 
     /* When luminance increases, add the "ptc_rgb" attribute */
     if (rgb_mode > 0) {
@@ -1169,15 +1172,15 @@ have_part:
         creo_log(cinfo, MSG_SUCCESS, "-------- \"%s\" --------\n", pname);
 
         /* Create volume attribute */
-        bu_vls_sprintf(&vstr, "%g", max(massprops.volume,0.0));
+        bu_vls_sprintf(&vstr, "%g", std::max(massprops.volume,0.0));
         bu_avs_add(&r_avs, "volume"      , bu_vls_addr(&vstr));
 
         /* Create surface area attribute */
-        bu_vls_sprintf(&vstr, "%g", max(massprops.surface_area,0.0));
+        bu_vls_sprintf(&vstr, "%g", std::max(massprops.surface_area,0.0));
         bu_avs_add(&r_avs, "surface_area", bu_vls_addr(&vstr));
 
         /* Create mass attribute */
-        bu_vls_sprintf(&vstr, "%g", max(massprops.mass,0.0));
+        bu_vls_sprintf(&vstr, "%g", std::max(massprops.mass,0.0));
         bu_avs_add(&r_avs, "mass"        , bu_vls_addr(&vstr));
         bu_vls_free(&vstr);
 

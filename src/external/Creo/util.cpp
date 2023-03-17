@@ -315,7 +315,7 @@ find_matl(struct creo_conv_info *cinfo)
     cinfo->mtl_ptr = -1;
 
     for (int n = 0; n < MAX_FILE_RECS; n++)
-        if (cinfo->mtl_str[n][0] != NULL)
+        if (cinfo->mtl_str[n][0] != '\0')
             if (memcmp(cinfo->mtl_key, &(cinfo->mtl_str[n][0]), keylen+1) == 0) {
                 cinfo->mtl_ptr = n;
                 break;
@@ -466,7 +466,7 @@ get_mtl_input(FILE *fpmtl, char *mtl_str, int *mtl_id, int *mtl_los)
         firstc = buf[0];
         if(strchr(comments, firstc))   /* skip comments */
             continue;
-        else if (sscanf(buf, "%s%d%d", &mtl, &id, &los) != 3)
+        else if (sscanf(buf, "%s%d%d", mtl, &id, &los) != 3)
             continue;                  /* skip invalid input */
         else if (recs < MAX_FILE_RECS) {
             for (int n = 0; n < cols; n++)
@@ -540,13 +540,13 @@ rgb4lmin(fastf_t *rgb, int lmin)
     if (UNLIKELY(!rgb))                          /* bad input? */
         return -1;
 
-    rp = min(max(lrint(rgb[0]*255.0),0),255);    /* control input range */
-    gp = min(max(lrint(rgb[1]*255.0),0),255);
-    bp = min(max(lrint(rgb[2]*255.0),0),255);
-    lp = min(max(lmin,0),100);
+    rp = std::min(std::max(lrint(rgb[0]*255.0),(long int)0),(long int)255);    /* control input range */
+    gp = std::min(std::max(lrint(rgb[1]*255.0),(long int)0),(long int)255);
+    bp = std::min(std::max(lrint(rgb[2]*255.0),(long int)0),(long int)255);
+    lp = std::min(std::max(lmin,0),100);
 
-    cmax = max(max(rp,gp),bp);
-    cmin = min(min(rp,gp),bp);
+    cmax = std::max(std::max(rp,gp),bp);
+    cmin = std::min(std::min(rp,gp),bp);
     del  = cmax-cmin;
     lum  = (cmax+cmin)/510.0;
 
@@ -593,9 +593,9 @@ rgb4lmin(fastf_t *rgb, int lmin)
             rf =  cp;  gf = 0.0;  bf =  xp;
     }
 
-    rgb[0] = min(max((rf + mp),0.0),1.0);        /* control output range */
-    rgb[1] = min(max((gf + mp),0.0),1.0);
-    rgb[2] = min(max((bf + mp),0.0),1.0);
+    rgb[0] = std::min(std::max((rf + mp),0.0),1.0);        /* control output range */
+    rgb[1] = std::min(std::max((gf + mp),0.0),1.0);
+    rgb[2] = std::min(std::max((bf + mp),0.0),1.0);
 
     return 1;
 }
