@@ -4,14 +4,24 @@
 # Note:    Requires an active Creo Pro/Toolkit license                 #
 #----------------------------------------------------------------------#
 
-# Minimum required version of CMake
-cmake_minimum_required(VERSION 3.18)
-message(STATUS "CMake version = ${CMAKE_VERSION}")
-
-# Produce console log of CMake variables
-set(verbose 0)
+# Establish the list of Source files - this is needed
+# both for the plugin build and the main BRL-CAD build
+set(CREO2BRL_SOURCES
+  assembly.cpp
+  csg.cpp
+  main.cpp
+  part.cpp
+  util.cpp
+  )
 
 if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
+
+  # Minimum required version of CMake
+  cmake_minimum_required(VERSION 3.18)
+  message(STATUS "CMake version = ${CMAKE_VERSION}")
+
+  # Produce console log of CMake variables
+  set(verbose 0)
 
   #----------------------------------------------------------------------#
   # Start building the CREO2BRL project                                  #
@@ -398,9 +408,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     ole32.lib
     ws2_32.lib
     )
-
-  # Establish the list of Source files
-  set(CREO2BRL_SOURCES assembly.cpp csg.cpp main.cpp part.cpp util.cpp CACHE STRING "" FORCE)
 
   add_library(creo-brl SHARED ${CREO2BRL_SOURCES})
   set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
