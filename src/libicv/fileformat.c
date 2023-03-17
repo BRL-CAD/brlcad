@@ -47,6 +47,10 @@
 static bu_mime_image_t
 icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
 {
+    // If we have no filename, there's nothing to go on
+    if (!filename)
+	return BU_MIME_IMAGE_PIX;
+
     /* look for the FMT: header */
 #define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name))) {if (trimmedname) bu_vls_sprintf(trimmedname, "%s", filename+strlen(#name)+1); return BU_MIME_IMAGE_##name; }
     CMP(PIX);
@@ -106,35 +110,36 @@ icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
 {
     int ret = 0;
     struct bu_vls ofilename = BU_VLS_INIT_ZERO;
+    const char *ofname = filename;
 
     if (format == BU_MIME_IMAGE_AUTO) {
 	format = icv_guess_file_format(filename, &ofilename);
-    } else {
-	bu_vls_sprintf(&ofilename, "%s", filename);
+	if (filename)
+	    ofname = bu_vls_cstr(&ofilename);
     }
 
     ICV_IMAGE_VAL_INT(bif);
 
     switch (format) {
 	/* case BU_MIME_IMAGE_BMP:
-	   return bmp_write(bif, bu_vls_cstr(&ofilename)); */
+	   return bmp_write(bif, ofname); */
 	case BU_MIME_IMAGE_PPM:
-	    ret = ppm_write(bif, bu_vls_cstr(&ofilename));
+	    ret = ppm_write(bif, ofname);
 	    break;
 	case BU_MIME_IMAGE_PNG:
-	    ret = png_write(bif, bu_vls_cstr(&ofilename));
+	    ret = png_write(bif, ofname);
 	    break;
 	case BU_MIME_IMAGE_PIX:
-	    ret = pix_write(bif, bu_vls_cstr(&ofilename));
+	    ret = pix_write(bif, ofname);
 	    break;
 	case BU_MIME_IMAGE_BW:
-	    ret = bw_write(bif, bu_vls_cstr(&ofilename));
+	    ret = bw_write(bif, ofname);
 	    break;
 	case BU_MIME_IMAGE_DPIX :
-	    ret = dpix_write(bif, bu_vls_cstr(&ofilename));
+	    ret = dpix_write(bif, ofname);
 	    break;
 	default:
-	    ret = pix_write(bif, bu_vls_cstr(&ofilename));
+	    ret = pix_write(bif, ofname);
     }
 
     bu_vls_free(&ofilename);
