@@ -165,15 +165,22 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, i
     int iret = icv_diff(&matching_cnt, &off_by_1_cnt, &off_by_many_cnt, ctrl, timg);
     if (iret) {
 	if (approximate_check) {
-	    uint32_t pret = icv_pdiff(ctrl, timg);
-	    // The return is a Hamming distance .  The scale of possible
-	    // returns ranges from 0 (same) to ~500 (completely different)
-	    // Based on some experimentation, currently using 20 for a
-	    // threshold above which we'll call it not a match.
-	    if (pret > 20) {
-		bu_log("icv_pdiff Hamming distance(%d): %" PRIu32 "\n", id, pret);
-	    } else {
+	    // First, if we're allowing approximate and all we have are off by one errors,
+	    // allow it.
+	    if (!off_by_many_cnt) {
+		bu_log("%d approximate matching enabled, no off by many - passing.  %d matching, %d off by 1\n", id, matching_cnt, off_by_1_cnt);
 		iret = 0;
+	    } else {
+		// We have off by many - do perceptual hashing difference calculation
+		uint32_t pret = icv_pdiff(ctrl, timg);
+		// The return is a Hamming distance .  The scale of possible
+		// returns ranges from 0 (same) to ~500 (completely different)
+		// Based on some experimentation, currently using 20 for a
+		// threshold above which we'll call it not a match.
+		bu_log("icv_pdiff Hamming distance(%d): %" PRIu32 "\n", id, pret);
+		if (pret < 20) {
+		    iret = 0;
+		}
 	    }
 	}
 
@@ -823,7 +830,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(23, dbp, av[1], true, soft_fail, 0);
+    img_cmp(23, dbp, av[1], true, soft_fail, 1);
     bu_log("Done.\n");
 
     bu_log("Testing mode 5 drawing (point based triangles)...\n");
