@@ -26,6 +26,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -282,6 +283,7 @@ public:
 	    }
 	    resize_row<RowT, float, float>(in_c, in_w, input_row, img.width, img_row, tile_w, true, hist);
 	    ++ty;
+	    assert(y < tile_h.size());
 	    size_t th = tile_h[y];
 	    if (ty >= th) {
 		ty = 0;
@@ -296,6 +298,7 @@ public:
 	} else {
 	    std::vector<float> tmp(img.width * img.channels, 0);
 	    resize_row<RowT, float, float>(in_c, in_w, input_row, img.width, tmp.data(), tile_w, false, hist);
+	    assert(y < tile_h.size());
 	    size_t th = tile_h[y];
 	    for (ty = 0; ty < th; ++ty, ++y, i += img.row_size) {
 		for (size_t x = 0, j = 0; x < img.width; ++x) {
