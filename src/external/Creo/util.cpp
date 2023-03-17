@@ -541,13 +541,13 @@ rgb4lmin(fastf_t *rgb, int lmin)
     if (UNLIKELY(!rgb))                          /* bad input? */
         return -1;
 
-    rp = std::min(std::max(lrint(rgb[0]*255.0),(long int)0),(long int)255);    /* control input range */
-    gp = std::min(std::max(lrint(rgb[1]*255.0),(long int)0),(long int)255);
-    bp = std::min(std::max(lrint(rgb[2]*255.0),(long int)0),(long int)255);
-    lp = std::min(std::max(lmin,0),100);
+    rp = std::min<long int>(std::max<long int>(lrint(rgb[0]*255.0),(long int)0),(long int)255);    /* control input range */
+    gp = std::min<long int>(std::max<long int>(lrint(rgb[1]*255.0),(long int)0),(long int)255);
+    bp = std::min<long int>(std::max<long int>(lrint(rgb[2]*255.0),(long int)0),(long int)255);
+    lp = std::min<int>(std::max<int>(lmin,0),100);
 
-    cmax = std::max(std::max(rp,gp),bp);
-    cmin = std::min(std::min(rp,gp),bp);
+    cmax = std::max<int>(std::max<int>(rp,gp),bp);
+    cmin = std::min<int>(std::min<int>(rp,gp),bp);
     del  = cmax-cmin;
     lum  = (cmax+cmin)/510.0;
 
@@ -594,9 +594,9 @@ rgb4lmin(fastf_t *rgb, int lmin)
             rf =  cp;  gf = 0.0;  bf =  xp;
     }
 
-    rgb[0] = std::min(std::max((rf + mp),0.0),1.0);        /* control output range */
-    rgb[1] = std::min(std::max((gf + mp),0.0),1.0);
-    rgb[2] = std::min(std::max((bf + mp),0.0),1.0);
+    rgb[0] = std::min<fastf_t>(std::max<fastf_t>((rf + mp),0.0),1.0);        /* control output range */
+    rgb[1] = std::min<fastf_t>(std::max<fastf_t>((gf + mp),0.0),1.0);
+    rgb[2] = std::min<fastf_t>(std::max<fastf_t>((bf + mp),0.0),1.0);
 
     return 1;
 }

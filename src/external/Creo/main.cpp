@@ -881,7 +881,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     } else {
         cinfo->lmin = wstr_to_long(cinfo, tmp_str);
         creo_log(cinfo, MSG_PLAIN, "#        Min luminance threshold, %s: %d\n", "%", cinfo->lmin);
-        cinfo->lmin = std::min(std::max(cinfo->lmin,0),100);
+        cinfo->lmin = std::min<int>(std::max<int>(cinfo->lmin,0),100);
         (void)ProWstringFree(tmp_str);
     }
 
