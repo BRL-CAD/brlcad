@@ -402,7 +402,7 @@ Image<float> Preprocess::stop()
 Image<float> Preprocess::apply(const Image<uint8_t>& input)
 {
     start(input.height, input.width, input.channels);
-    for (const uint8_t* row = input.data.get(); add_row(row); row += input.row_size);
+    for (const uint8_t* row = (const uint8_t*)input.data->data(); add_row(row); row += input.row_size);
     return stop();
 }
 

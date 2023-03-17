@@ -166,12 +166,9 @@ void resize(const Image<InT>& in, Image<OutT>& out)
 
 template<class T>
 struct Image {
-    std::shared_ptr<T[]> data;
+    std::vector<T> *data = NULL;
     size_t height, width, channels;
     size_t size, row_size;
-
-    Image() : data(nullptr), height(0), width(0), channels(0), size(0), row_size(0)
-    {}
 
     Image(size_t i_height, size_t i_width, size_t i_channels, size_t i_size, size_t i_row_size)
 	: data(nullptr), height(i_height), width(i_width), channels(i_channels), size(i_size), row_size(i_row_size)
@@ -188,7 +185,10 @@ struct Image {
 
     void allocate()
     {
-	data.reset(new T[size]);
+	if (data)
+	    delete data;
+	data = new std::vector<T>;
+	data->resize(size, 0);
     }
 
     size_t index(size_t y, size_t x, size_t c) const
@@ -198,11 +198,11 @@ struct Image {
 
     T* begin()
     {
-	return data.get();
+	return (T*)data->data();
     }
     const T* begin() const
     {
-	return data.get();
+	return (const T*)data->data();
     }
 
     T* end()
@@ -225,11 +225,11 @@ struct Image {
 
     T operator[](size_t i) const
     {
-	return data[i];
+	return (*data)[i];
     }
     T& operator[](size_t i)
     {
-	return data[i];
+	return (*data)[i];
     }
 
     T operator()(size_t y, size_t x, size_t c) const
