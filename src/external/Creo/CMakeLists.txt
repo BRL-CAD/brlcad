@@ -548,6 +548,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     creo-brl.h
     resources/creo-brl-msg.txt
     resources/creo_brl.res
+    resources/ptc_materials.mtl
     shim.h
     )
   CMAKEFILES(${creo_dist_files})

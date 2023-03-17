@@ -1095,9 +1095,9 @@ have_part:
                 break;
             }
     } else
-        strcpy(mname,"undefined");
+        bu_strlcpy(mname,"undefined", MAX_MATL_NAME);
 
-    strcpy(cinfo->mtl_key, mname);
+    bu_strlcpy(cinfo->mtl_key, mname, MAX_MATL_NAME);
     creo_log(cinfo, MSG_SUCCESS, "Part \"%s\" has ptc_material_name = \"%s\"\n", 
              pname, cinfo->mtl_key);
 
