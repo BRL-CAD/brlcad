@@ -88,6 +88,7 @@ set(misc_ignore_files
   docker/user/README.md
   docker/user/startup
   docker/README.md
+  docker/dev/docker-compose.yaml
   docker/dev/Dockerfile
   docker/dev/README.md
   docker/dev/startup
