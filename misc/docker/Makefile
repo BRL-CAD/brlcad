@@ -1,14 +1,11 @@
 .PHONY: all
 all: dev user
-build: common dev user
+build: dev user
 
-common: Dockerfile build-common.sh
-	docker build -t brlcad-common:latest .
-
-dev: dev/Dockerfile dev/build-dev.sh common
+dev: dev/Dockerfile
 	docker build -t brlcad-dev:latest dev
 
-user: user/Dockerfile user/build-user.sh common
+user: user/Dockerfile
 	docker build -t brlcad-user:latest user
 
 .PHONY: tag push
