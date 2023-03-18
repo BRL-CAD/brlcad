@@ -1186,15 +1186,15 @@ have_part:
         creo_log(cinfo, MSG_SUCCESS, "-------- \"%s\" --------\n", pname);
 
         /* Create volume attribute */
-        bu_vls_sprintf(&vstr, "%g", std::max(massprops.volume,0.0));
+        bu_vls_sprintf(&vstr, "%g", std::max<double>(massprops.volume,0.0));
         bu_avs_add(&r_avs, "volume"      , bu_vls_addr(&vstr));
 
         /* Create surface area attribute */
-        bu_vls_sprintf(&vstr, "%g", std::max(massprops.surface_area,0.0));
+        bu_vls_sprintf(&vstr, "%g", std::max<double>(massprops.surface_area,0.0));
         bu_avs_add(&r_avs, "surface_area", bu_vls_addr(&vstr));
 
         /* Create mass attribute */
-        bu_vls_sprintf(&vstr, "%g", std::max(massprops.mass,0.0));
+        bu_vls_sprintf(&vstr, "%g", std::max<double>(massprops.mass,0.0));
         bu_avs_add(&r_avs, "mass"        , bu_vls_addr(&vstr));
         bu_vls_free(&vstr);
 
