@@ -74,14 +74,19 @@
 static void
 filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 {
-    register int i;
-    point_t dst;
     static unsigned long max2x = ~((unsigned long)0);
     static unsigned long max = (~((unsigned long)0)) >> 1;
+
+    int i;
+    point_t dst = VINIT_ZERO;
 
     for (i=0; i < 3; i++) {
 	/* assure values are positive */
 	dst[i] = fabs(src[i]);
+
+	/* handle Inf/NaN by clamping */
+f	if (!isfinite(dst[i]))
+	    dst[i] = max;
 
 	/* fold space */
 	while (dst[i] > max || dst[i]<0) {
