@@ -85,7 +85,7 @@ filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 	dst[i] = fabs(src[i]);
 
 	/* handle Inf/NaN by clamping */
-f	if (!isfinite(dst[i]))
+	if (!isfinite(dst[i]))
 	    dst[i] = max;
 
 	/* fold space */
