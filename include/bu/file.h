@@ -132,7 +132,6 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  * with the sorted listing of matching file(s).  It is the caller's
  * responsibility to free a non-NULL array with bu_argv_free().
  *
-
  * If '*files' is NULL, the caller is expected to free the matches
  * array with bu_argv_free().  If '*files' is non-NULL (i.e., array of
  * string pointers is already allocated or on the stack), the caller

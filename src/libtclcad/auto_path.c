@@ -234,6 +234,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 		    bu_ptbl_ins(&paths, (long *)path);
 		}
 	    }
+	    bu_argv_free(count, listing);
 	}
     }
 
