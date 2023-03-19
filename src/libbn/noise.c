@@ -61,9 +61,10 @@
  * fold space to extend the domain over which we can take noise
  * values.
  *
- *@n x, y, z are set to the noise space location for the source point.
- *@n ix, iy, iz are the integer lattice point (integer portion of x, y, z)
- *@n fx, fy, fz are the fractional lattice distances above ix, iy, iz
+ *@n src[x], src[y], src[z] are set to the noise space location for the source point.
+ *@n p[x], p[y], p[z] are the real-valued lattice point locations
+ *@n ip[x], ip[y], ip[z] are the integer lattice point (integer portion of p[x], p[y], p[z])
+ *@n f[x], f[y], f[z] are the fractional lattice distances above ip[x], ip[y], ip[z]
  *
  * The noise function has a finite domain, which can be exceeded when
  * using fractal textures with very high frequencies.  This routine is
@@ -90,19 +91,21 @@ filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 		dst[i] = -dst[i];
 	    }
 	}
-
     }
 
+    /* calculate our destination point */
     p[X] = dst[0];
-    ip[X] = floor(p[X]);
-    f[X] = p[X] - ip[X];
-
     p[Y] = dst[1];
-    ip[Y] = floor(p[Y]);
-    f[Y] = p[Y] - ip[Y];
-
     p[Z] = dst[2];
+
+    /* calculate the integral lattice point position */
+    ip[X] = floor(p[X]);
+    ip[Y] = floor(p[Y]);
     ip[Z] = floor(p[Z]);
+
+    /* calculate the fractional lattice distances */
+    f[X] = p[X] - ip[X];
+    f[Y] = p[Y] - ip[Y];
     f[Z] = p[Z] - ip[Z];
 }
 
