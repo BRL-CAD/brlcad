@@ -87,16 +87,12 @@ icv_pdiff(icv_image_t *img1, icv_image_t *img2)
     int dct_size = 4; // 1024 bits
     hasher = std::make_unique<imghash::DCTHasher>(8 * dct_size, true);
 
-    int w1 = (128 > img1->width) ? img1->width : 128;
-    int h1 = (128 > img1->height) ? img1->height: 128;
-    int d1 = (w1 < h1) ? w1 : h1;
+    int d1 = (img1->width < img1->height) ? img1->width : img1->height;
     imghash::Preprocess prep1(d1, d1);
     load_icv(img1, &prep1);
     imghash::Image<float> pimg1 = prep1.stop();
 
-    int w2 = (128 > img2->width) ? img2->width : 128;
-    int h2 = (128 > img2->height) ? img2->height: 128;
-    int d2 = (w2 < h2) ? w2 : h2;
+    int d2 = (img2->width < img2->height) ? img2->width : img2->height;
     imghash::Preprocess prep2(d2, d2);
     load_icv(img2, &prep2);
     imghash::Image<float> pimg2 = prep2.stop();
