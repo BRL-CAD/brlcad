@@ -918,7 +918,7 @@ main(int ac, char *av[]) {
 
     ged_close(dbp);
 
-    return 0;
+    return -1;
 }
 
 
