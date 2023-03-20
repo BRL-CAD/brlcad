@@ -2313,7 +2313,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set(toplevel_ignore_files
     .github/workflows/analysis.yml
     .github/workflows/check.yml
-    .github/workflows/codeql-analysis.yml
     .gitignore
     BUGS
     CMakeLists.txt
