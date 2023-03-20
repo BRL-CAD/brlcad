@@ -11,6 +11,7 @@
 #include <string>
 
 // Visualization project header files
+#include "Options.h"
 #include "IFPainter.h"
 #include "InformationGatherer.h"
 #include "PerspectiveGatherer.h"

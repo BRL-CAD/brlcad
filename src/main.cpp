@@ -16,7 +16,12 @@ int main(int argc, char **argv) {
  */
 void readParameters(int argc, char** argv)
 {
-    // TODO: this
+    // TODO (Ally): Write this function to instantiate the options so it can be used in generateReport.
+
+    // TODO (Ally): This includes reading in the filepath of the file and storing it somewhere.
+
+    // TODO (Ally): Along with storing the filepath, you should give some sort of option/parameter for generating
+    // reports for an entire folder of models!
 
     // i.e. if user specifies to open the file in a gui, we'll put that here...
 
@@ -31,6 +36,8 @@ void readParameters(int argc, char** argv)
  */
 void generateReport()
 {
+    // TODO (Ally): Incorporate the Options into this method, and set the correct bounds on IFPainter.
+    
     // create image frame
     IFPainter img(1500, 1000);
 
