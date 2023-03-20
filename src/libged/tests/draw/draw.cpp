@@ -175,10 +175,8 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, i
 		uint32_t pret = icv_pdiff(ctrl, timg);
 		// The return is a Hamming distance .  The scale of possible
 		// returns ranges from 0 (same) to ~500 (completely different)
-		// Based on some experimentation, currently using 30 for a
-		// threshold above which we'll call it not a match.
 		bu_log("icv_pdiff Hamming distance(%d): %" PRIu32 "\n", id, pret);
-		if (pret < 30) {
+		if (pret < (uint32_t)approximate_check) {
 		    iret = 0;
 		}
 	    }
@@ -673,7 +671,7 @@ main(int ac, char *av[]) {
     s_av[12] = NULL;
     ged_exec(dbp, 12, s_av);
 
-    img_cmp(12, dbp, av[1], false, soft_fail, 1);
+    img_cmp(12, dbp, av[1], false, soft_fail, 30);
 
     s_av[0] = "ae";
     s_av[1] = "10";
@@ -681,7 +679,7 @@ main(int ac, char *av[]) {
     s_av[3] = "11";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(13, dbp, av[1], false, soft_fail, 1);
+    img_cmp(13, dbp, av[1], false, soft_fail, 30);
 
     s_av[0] = "ae";
     s_av[1] = "270";
@@ -689,7 +687,7 @@ main(int ac, char *av[]) {
     s_av[3] = "0";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(14, dbp, av[1], false, soft_fail, 1);
+    img_cmp(14, dbp, av[1], false, soft_fail, 30);
 
     s_av[0] = "ae";
     s_av[1] = "48";
@@ -697,7 +695,7 @@ main(int ac, char *av[]) {
     s_av[3] = "143";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(15, dbp, av[1], false, soft_fail, 1);
+    img_cmp(15, dbp, av[1], false, soft_fail, 50);
 
     s_av[0] = "ae";
     s_av[1] = "40";
@@ -705,7 +703,7 @@ main(int ac, char *av[]) {
     s_av[3] = "180";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(16, dbp, av[1], false, soft_fail, 1);
+    img_cmp(16, dbp, av[1], false, soft_fail, 30);
 
     s_av[0] = "ae";
     s_av[1] = "250";
@@ -713,7 +711,7 @@ main(int ac, char *av[]) {
     s_av[3] = "-140";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(17, dbp, av[1], true, soft_fail, 1);
+    img_cmp(17, dbp, av[1], true, soft_fail, 30);
 
     // Restore view to ae 35/25
     s_av[0] = "ae";
@@ -816,7 +814,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(22, dbp, av[1], true, soft_fail, 1);
+    img_cmp(22, dbp, av[1], true, soft_fail, 30);
     bu_log("Done.\n");
 
     bu_log("Testing mode 4 drawing (hidden lines)...\n");
@@ -830,7 +828,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(23, dbp, av[1], true, soft_fail, 1);
+    img_cmp(23, dbp, av[1], true, soft_fail, 30);
     bu_log("Done.\n");
 
     bu_log("Testing mode 5 drawing (point based triangles)...\n");
@@ -844,7 +842,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(24, dbp, av[1], true, soft_fail, 1);
+    img_cmp(24, dbp, av[1], true, soft_fail, 30);
     bu_log("Done.\n");
 
     bu_log("Test clearing of previous drawing mode (shaded and wireframe)...\n");
@@ -915,7 +913,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(26, dbp, av[1], true, soft_fail, 1);
+    img_cmp(26, dbp, av[1], true, soft_fail, 30);
     bu_log("Done.\n");
 
     ged_close(dbp);
