@@ -175,10 +175,10 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, i
 		uint32_t pret = icv_pdiff(ctrl, timg);
 		// The return is a Hamming distance .  The scale of possible
 		// returns ranges from 0 (same) to ~500 (completely different)
-		// Based on some experimentation, currently using 20 for a
+		// Based on some experimentation, currently using 30 for a
 		// threshold above which we'll call it not a match.
 		bu_log("icv_pdiff Hamming distance(%d): %" PRIu32 "\n", id, pret);
-		if (pret < 20) {
+		if (pret < 30) {
 		    iret = 0;
 		}
 	    }
