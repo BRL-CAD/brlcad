@@ -922,7 +922,7 @@ main(int ac, char *av[]) {
 
     ged_close(dbp);
 
-    return -1;
+    return 0;
 }
 
 
