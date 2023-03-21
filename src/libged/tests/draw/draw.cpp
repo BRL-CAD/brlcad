@@ -703,7 +703,7 @@ main(int ac, char *av[]) {
     s_av[3] = "180";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(16, dbp, av[1], false, soft_fail, 90);
+    img_cmp(16, dbp, av[1], false, soft_fail, 60);
 
     s_av[0] = "ae";
     s_av[1] = "250";
@@ -711,7 +711,7 @@ main(int ac, char *av[]) {
     s_av[3] = "-140";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(17, dbp, av[1], true, soft_fail, 90);
+    img_cmp(17, dbp, av[1], true, soft_fail, 35);
 
     // Restore view to ae 35/25
     s_av[0] = "ae";
@@ -814,7 +814,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(22, dbp, av[1], true, soft_fail, 90);
+    img_cmp(22, dbp, av[1], true, soft_fail, 30);
     bu_log("Done.\n");
 
     bu_log("Testing mode 4 drawing (hidden lines)...\n");
@@ -828,7 +828,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(23, dbp, av[1], true, soft_fail, 90);
+    img_cmp(23, dbp, av[1], true, soft_fail, 30);
     bu_log("Done.\n");
 
     bu_log("Testing mode 5 drawing (point based triangles)...\n");
@@ -842,7 +842,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(24, dbp, av[1], true, soft_fail, 90);
+    img_cmp(24, dbp, av[1], true, soft_fail, 30);
     bu_log("Done.\n");
 
     bu_log("Test clearing of previous drawing mode (shaded and wireframe)...\n");
@@ -913,12 +913,12 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(26, dbp, av[1], true, soft_fail, 90);
+    img_cmp(26, dbp, av[1], true, soft_fail, 30);
     bu_log("Done.\n");
 
     ged_close(dbp);
 
-    return -1;
+    return 0;
 }
 
 
