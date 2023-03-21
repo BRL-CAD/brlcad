@@ -13,9 +13,33 @@
 // you should code some way to set and retrieve the values of certain parameters.  You can use a map and/or
 // add a bunch of variables manually; it's up to you.
 
+struct Dimensions {
+	int width;
+	int length;
+};
+
 class Options
 {
 public:
 	Options();
 	~Options();
+	//Setter functions
+	void setFilepath(std::string f);
+	void setImgDimensions(int w, int l);
+	void setIsFolder();
+	void setOpenGUI();
+	void setExportToFile();
+	//Getter functions
+	std::string getFilepath();
+	int getWidth();
+	int getLength();
+	bool getIsFolder();
+	bool getOpenGUI();
+	bool getExportToFile();
+private:
+	std::string filepath;
+	Dimensions imgDimensions;
+	bool isFolder;
+	bool openGUI;
+	bool exportToFile;
 };
