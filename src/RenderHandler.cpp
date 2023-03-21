@@ -5,6 +5,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
     std::string ambOccImg = renderAmbientOcclusion();
     std::string frontImg = renderPerspective(FRONT);
     std::string rightImg = renderPerspective(RIGHT);
+    std::string topImg = renderPerspective(TOP);
 }
 
 int selectLayout(int secWidth, int secHeight, int modelLength, int modelWidth, int modelHeight)
