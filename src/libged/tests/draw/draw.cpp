@@ -170,6 +170,10 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, i
 	    if (!off_by_many_cnt) {
 		bu_log("%d approximate matching enabled, no off by many - passing.  %d matching, %d off by 1\n", id, matching_cnt, off_by_1_cnt);
 		iret = 0;
+		// We don't need it as a pass/fail, but for information report the
+		// Hamming distance on the approximate match
+		uint32_t pret = icv_pdiff(ctrl, timg);
+		bu_log("icv_pdiff Hamming distance(%d): %" PRIu32 "\n", id, pret);
 	    } else {
 		// We have off by many - do perceptual hashing difference calculation
 		uint32_t pret = icv_pdiff(ctrl, timg);
@@ -918,7 +922,7 @@ main(int ac, char *av[]) {
 
     ged_close(dbp);
 
-    return 0;
+    return -1;
 }
 
 
