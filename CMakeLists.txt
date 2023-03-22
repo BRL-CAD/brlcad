@@ -1,16 +1,12 @@
-set(VISUALIZATION_INCLUDE_DIRS
+set(RGEN_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
-  ${TCLCAD_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${PKG_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
-list(REMOVE_DUPLICATES VISUALIZATION_INCLUDE_DIRS)
-include_directories(${VISUALIZATION_INCLUDE_DIRS})
+list(REMOVE_DUPLICATES RGEN_INCLUDE_DIRS)
+include_directories(${RGEN_INCLUDE_DIRS})
 
-set(VISUALIZATION_SRCS
+set(RGEN_SRCS
   FactsHandler.cpp
   IFPainter.cpp
   InformationGatherer.cpp
@@ -21,13 +17,13 @@ set(VISUALIZATION_SRCS
   sample_code.cpp
   )
 
-BRLCAD_ADDEXEC(visualization "${VISUALIZATION_SRCS}"  "libbu;librt;libwdb")
+BRLCAD_ADDEXEC(rgen "${RGEN_SRCS}"  "libbu;librt;libwdb")
 
-set(visualization_ignore_files
+set(rgen_ignore_files
   CMakeLists.txt
   .DS_STORE
-  .git
   a.out
+  README.md
   FactsHandler.h
   IFPainter.h
   InformationGatherer.h
@@ -35,7 +31,7 @@ set(visualization_ignore_files
   PerspectiveGatherer.h
   RenderHandler.h
   )
-CMAKEFILES(${visualization_ignore_files})
+CMAKEFILES(${rgen_ignore_files})
 
 # Local Variables:
 # tab-width: 8
