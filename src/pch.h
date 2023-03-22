@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
+#include <fstream>
 
 // Visualization project header files
 #include "Options.h"
