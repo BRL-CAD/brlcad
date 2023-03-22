@@ -2,7 +2,8 @@
 
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
 {
-    std::string ambOccImg = renderAmbientOcclusion();
+    // std::string ambOccImg = renderAmbientOcclusion();
+    std::string ambOccImg = renderPerspective(AMBIENT);
     std::string frontImg = renderPerspective(FRONT);
     std::string rightImg = renderPerspective(RIGHT);
     std::string topImg = renderPerspective(TOP);
