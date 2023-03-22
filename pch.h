@@ -9,7 +9,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <string>
-#include <io.h>
+#include <fstream>
 
 // BRL-CAD header files
 #include "bu/getopt.h"

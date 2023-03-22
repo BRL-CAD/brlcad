@@ -16,7 +16,8 @@ enum RenderingFace
 	RIGHT,
 	LEFT,
 	BACK,
-	BOTTOM
+	BOTTOM,
+    AMBIENT
 };
 
 // TODO: add correct parameters and return type
