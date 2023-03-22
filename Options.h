@@ -13,11 +13,6 @@
 // you should code some way to set and retrieve the values of certain parameters.  You can use a map and/or
 // add a bunch of variables manually; it's up to you.
 
-struct Dimensions {
-	int width;
-	int length;
-};
-
 class Options
 {
 public:
@@ -25,10 +20,12 @@ public:
 	~Options();
 	//Setter functions
 	void setFilepath(std::string f);
-	void setImgDimensions(int w, int l);
+	void setWidth(int w);
+	void setLength(int l);
 	void setIsFolder();
 	void setOpenGUI();
 	void setExportToFile();
+	void setFileName(std::string n);
 	//Getter functions
 	std::string getFilepath();
 	int getWidth();
@@ -36,10 +33,19 @@ public:
 	bool getIsFolder();
 	bool getOpenGUI();
 	bool getExportToFile();
+	std::string getFileName();
 private:
+	//Path to file that will be used to generate report
 	std::string filepath;
-	Dimensions imgDimensions;
+	//Dimensions of the output, in pixels
+	int width;
+	int length;
+	//Whether path is a folder with multiple files or not
 	bool isFolder;
+	//Whether user specifices to open GUI as well
 	bool openGUI;
+	//Whether user decides to export to a png
 	bool exportToFile;
+	//Name of export file
+	std::string fileName;
 };

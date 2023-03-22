@@ -13,6 +13,7 @@
 
 // BRL-CAD header files
 #include "bu/getopt.h"
+#include "bu/log.h"
 
 // Visualization project header files
 #include "Options.h"
