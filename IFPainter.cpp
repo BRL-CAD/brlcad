@@ -40,7 +40,7 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 
 }
 
-void IFPainter::drawText(int x, int y, double fontSize, int width, std::string text, bool italics)
+void IFPainter::drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics)
 {
 	// TODO: this
 	// keep in mind that we'll need options for bold, italics, etc.
@@ -50,7 +50,6 @@ void IFPainter::drawText(int x, int y, double fontSize, int width, std::string t
 	Point text_position(x, y);
 	Scalar font_color(0, 0, 0);
 	//boldness can be adjusted through font_weight
-	double font_weight = 1;
 	//The italics doesnt look really look like the traditional italics
 	if (italics == true) {
 		putText(img, text, text_position, FONT_ITALIC, fontSize, font_color, font_weight);
