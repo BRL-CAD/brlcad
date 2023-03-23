@@ -39,7 +39,7 @@ void generateReport()
     // TODO (Ally): Incorporate the Options into this method, and set the correct bounds on IFPainter.
     
     // create image frame
-    IFPainter img(1500, 1000);
+    IFPainter img(1000, 750);
 
     // create information gatherer
     InformationGatherer info;
@@ -52,12 +52,15 @@ void generateReport()
     }
 
     // paint renderings
-    makeRenderSection(img, info, 0, 100, 1200, 900);
+    makeRenderSection(img, info, 0, 0, 750, 1000);
 
     // paint text sections (no method headers yet)
     // paintTitle
     // paintSidebar
     // etc...
+
+    //img.drawImage(100, 100, 200, 100, "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_front.png");
+    //img.drawLine(100, 100, 400, 400, 10, cv::Scalar(200, 200, 200));
 
 
     // optionally, display the scene

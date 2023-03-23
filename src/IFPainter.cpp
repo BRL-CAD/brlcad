@@ -22,6 +22,20 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 	// Perhaps there's a better way to store images; reading in images multiple times is inefficient, though if we only need
 	// to read in the image once (which I believe is the case), then reading images from a file should also be fine.
 	// TODO: this
+	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
+	cv::Mat resized_image;
+	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
+
+	//Trying to copyto the image on to the private image frame, img
+	cv::Mat destRoi;
+	try {
+		destRoi = img(cv::Rect(x, y, resized_image.cols, resized_image.rows));
+	}
+	catch (...) {
+		std::cerr << "Trying to create roi out of image boundaries" << std::endl;
+		return;
+	}
+	resized_image.copyTo(destRoi);
 }
 
 void IFPainter::drawText(int x, int y, int fontSize, int width, std::string text)
@@ -35,6 +49,15 @@ void IFPainter::drawText(int x, int y, int fontSize, int width, std::string text
 void IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
 {
 	// TODO: this
+	int lineType = cv::LINE_8;
+	cv::Point start(x1, y1);
+	cv::Point end(x2, y2);
+	line(img,
+		start,
+		end,
+		color,
+		width,
+		lineType);
 }
 
 void IFPainter::drawRect(int x1, int y1, int x2, int y2, cv::Scalar color)
