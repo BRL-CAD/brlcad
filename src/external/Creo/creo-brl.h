@@ -42,6 +42,7 @@
 #ifndef TEST_BUILD
 
 extern "C" {
+#include <pd_proto.h>
 #include <ProToolkit.h>
 #include <ProArray.h>
 #include <ProAsmcomp.h>
@@ -77,9 +78,7 @@ extern "C" {
 #include <ProUtil.h>
 #include <ProWindows.h>
 #include <PtApplsUnicodeUtils.h>
-#include <pd_proto.h>
 }
-
 #else
 extern "C" {
 #include "shim.h"
@@ -107,6 +106,9 @@ extern "C" {
 #define XFORM_X_TO_Z                          1
 #define XFORM_Y_TO_Z                          2
 
+#define NAME_PARAMS                           1
+#define ATTR_PARAMS                           2
+
 #define FEAT_ID_BLOCK                        64  /* number of slots to allocate in above list */
 #define NUM_HASH_TABLE_BINS                4096  /* number of bins for part number to part name hash table */
 #define TRI_BLOCK                           512  /* number of triangles to malloc per call */
@@ -118,17 +120,20 @@ extern "C" {
 #define CREO_NAME_MAX                     240*2  /* max part name length Creo supports is 240 chars */
 #define CREO_MSG_MAX                       4096  /* max message and/or response length */
 
-#define MAX_MATL_NAME                        32  /* maximum allowed material name length  */
-#define MAX_LINE_SIZE                        80  /* maximum allowed input line length     */
-#define MAX_FILE_RECS                       256  /* maximum allowed material record count */
+#define MAX_MATL_NAME                        32  /* maximum allowed material name length     */
+#define MAX_LINE_SIZE                        80  /* maximum allowed input line length        */
+#define MAX_LINE_BUFFER                     128  /* maximum allowed input line buffer length */
+#define MAX_FILE_RECS                       256  /* maximum allowed material record count    */
 
 #define MAX_UNIQUE_NAMES                  65535  /* maximum unique name generation count */
 
-#define MSG_FAIL                              0
-#define MSG_SUCCESS                           1
-#define MSG_DEBUG                             2
-#define MSG_STATUS                            3  /* Output for Creo msg window only */
-#define MSG_PLAIN                             4  
+
+                                                 /*  Log message types */
+#define MSG_FAIL                              0  /* Failure            */
+#define MSG_SUCCESS                           1  /* Success            */
+#define MSG_DEBUG                             2  /* Debug              */
+#define MSG_PLAIN                             3  /* [unlabeled]        */
+#define MSG_STATUS                            4  /* Status window only */
 
 #define PRO_FEAT_DELETE_NO_OPTS               0  /* Feature delete options         */
 #define PRO_FEAT_DELETE_CLIP                  1  /* Delete with children           */
@@ -202,15 +207,15 @@ struct creo_conv_info {
 
     FILE *fpmtl;                            /* material file data */
     char mtl_fname[MAXPATHLEN];
-    char mtl_key[MAX_MATL_NAME];
-    char mtl_str[MAX_FILE_RECS][MAX_LINE_SIZE + 1];
+    char mtl_key[MAX_MATL_NAME + 1];
+    char mtl_str[MAX_FILE_RECS][MAX_MATL_NAME + 1];
     int  mtl_id[MAX_FILE_RECS];
     int  mtl_los[MAX_FILE_RECS];
     int  mtl_ptr;
     int  mtl_rec;
 
     int  xform_mode;                        /* coordinate transformation mode */
-    long int reg_id;                        /* region ident number (incremented with each part) */
+    int  reg_id;                            /* region ident number (incremented with each part) */
     int  lmin;                              /* user-established minimum luminance threshold */
 
     /* units - model */
@@ -218,21 +223,21 @@ struct creo_conv_info {
     double local_tol;                       /* tolerance in Creo units */
     double local_tol_sq;                    /* tolerance squared */
 
-    /* Facetization settings */
-    ProBool do_facets_only;                 /* flag to indicate no CSG should be done */
+    /* Conversion control settings */
+    ProBool facets_only;                    /* flag to indicate no CSG should be done */
     ProBool check_solidity;                 /* flag to control testing BoTs for solidity */
-    ProBool get_normals;                    /* flag to indicate surface normals should be extracted from geometry */
-    ProBool do_elims;                       /* flag to indicate that small features are to be eliminated */
-    ProBool debug_bboxes;                   /* flag to indicate that bboxes should be written for parts that didn't convert */
+    ProBool create_boxes;                   /* flag indicating that bounding boxes should replace failed parts */
+    ProBool get_normals;                    /* flag indicating surface normals should be extracted from geometry */
+    ProBool elim_small;                     /* flag indicating that small features are to be eliminated */
 
-    double max_error;                       /* maximum allowable error in facetized approximation, mm */
-    double min_error;                       /* minimum allowable error in facetized approximation, mm */
-    double tol_dist;                        /* minimum distance between two distinct vertices, mm */
-    double max_angle_cntrl;                 /* max angle control for tessellation ( 0.0 - 1.0 ), deg */
-    double min_angle_cntrl;                 /* min angle control for tessellation ( 0.0 - 1.0 ), deg */
-    long int max_to_min_steps;              /* number of steps between max and min */
-    double error_increment;
-    double angle_increment;
+    /* Tessellation settings */
+    double max_chord;                       /* max chord height in facetized approximation, mm  */
+    double min_chord;                       /* min chord height in facetized approximation, mm  */
+    double tol_dist;                        /* min distance between two distinct vertices, mm   */
+    double max_angle;                       /* max angle control for tessellation ( 0.0 - 1.0 ) */
+    double min_angle;                       /* min angle control for tessellation ( 0.0 - 1.0 ) */
+    int    max_steps;                       /* max number of tessellation attempts */
+    int    tess_adapt;                      /* adaptive tessellation settings are in use */
 
     /* CSG settings */
     double min_hole_diameter;               /* if > 0.0, all holes features smaller than this will be deleted */
@@ -242,22 +247,26 @@ struct creo_conv_info {
                                             /* value will be deleted */
 
     /* Bounding box results */
+    double bbox_diag;                       /* bounding box diagonal,      [L]   */
     double bbox_vol;                        /* bounding box volume,        [L^3] */
     double bbox_area;                       /* bounding box surface area,  [L^2] */
 
     /* Tessellation results */
-    double tess_chord;                      /* chord error, mm  */
-    double tess_angle;                      /* angle error, deg */
+    int    tess_bbox;                       /* bounding box replaced failed tessellation */
+    int    tess_count;                      /* number of tessellation facets             */
+    double tess_chord;                      /* chord error, mm                           */
+    double tess_angle;                      /* angle error, deg                          */
 
     /* Conversion Process results */
     int asm_count;                          /* number of assemblies processed */
     int asm_total;                          /* number of assemblies found     */
-    int prt_count;                          /* number of assemblies processed */
+    int prt_count;                          /* number of parts processed      */
     int prt_total;                          /* number of parts found          */
 
     /* ------ Internal ------ */
     struct db_i   *dbip;                                             /* output database */
     struct rt_wdb *wdbp;
+    struct bu_attribute_value_set avs;                               /* current attribute value set */
     std::set<wchar_t *, WStrCmp> *parts;                             /* list of all parts in Creo hierarchy */
     std::set<wchar_t *, WStrCmp> *assems;                            /* list of all assemblies in Creo hierarchy */
     std::set<wchar_t *, WStrCmp> *empty;                             /* list of all parts and assemblies in Creo that have no shape */
@@ -267,8 +276,8 @@ struct creo_conv_info {
     std::map<wchar_t *, struct bu_vls *, WStrCmp> *creo_name_map;    /* wchar Creo names to char versions */
     std::set<struct bu_vls *, StrCmp> *brlcad_names;                 /* set of active .g object names */
     std::set<struct bu_vls *, StrCmp> *creo_names;                   /* set of active creo id strings */
-    std::vector<char *> *model_parameters;                           /* model parameters to use when generating .g names */
-    std::vector<char *> *attrs;                                      /* attributes to preserve when transferring objects */
+    std::vector<char *> *obj_name_params;                            /* model parameters used to create object names */
+    std::vector<char *> *obj_attr_params;                            /* model parameters preserved as object attributes */
     int warn_feature_unsuppress;                                     /* flag to determine if we need to warn the user feature unsuppression failed */
 };
 
@@ -307,17 +316,24 @@ extern "C" ProError output_part(struct creo_conv_info *, ProMdl model);
 
 /* util */
 extern "C" ProError component_filter(ProFeature *, ProAppData *);
-extern "C" ProError creo_attribute_val(char **val, const char *key, ProMdl m);
 extern "C" void creo_log(struct creo_conv_info *, int, const char *, ...);
-extern "C" ProError creo_model_units(double *,ProMdl);
+extern "C" ProError creo_model_units(double *, ProMdl);
 extern "C" char * creo_param_name(struct creo_conv_info *, wchar_t *, int);
+extern "C" ProError creo_param_val(char **, const char *, ProMdl );
 extern "C" int find_matl(struct creo_conv_info *);
 /*     "C" struct bu_vls * get_brlcad_name  (see comments below) */
 extern "C" int get_mtl_input(FILE *, char *, int *, int *);
 extern "C" void lower_case( char *);
+extern "C" ProError param_append(void *, ProError, ProAppData);
+extern "C" ProError param_collect(ProModelitem *, ProParameter **);
+extern "C" void param_export(struct creo_conv_info *, ProMdl, const char *);
+extern "C" ProError param_preserve(struct creo_conv_info *, ProMdl , const char *);
+extern "C" ProError params_to_attrs(struct creo_conv_info *, ProMdl, ProParameter *);
+extern "C" void parse_param_list(struct creo_conv_info *, const char *, int);
 extern "C" ProError PopupMsg(const char *, const char *);
-extern "C" ProError regex_key(ProParameter *, ProError , ProAppData );
+extern "C" ProError regex_key(ProParameter *, ProError, ProAppData );
 extern "C" int rgb4lmin(double *, int);
+extern "C" void scrub_vls(struct bu_vls *);
 extern "C" wchar_t* stable_wchar(struct creo_conv_info *, wchar_t *);
 extern "C" void trim(char *);
 extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
@@ -340,7 +356,6 @@ extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *cinfo, wchar_t 
 
 /* CSG */
 extern "C" int subtract_hole(struct part_conv_info *pinfo);
-
 
 
 #endif /*CREO_BRL_H*/

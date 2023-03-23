@@ -2,7 +2,7 @@
 !* Title:   creo_brl.res
 !* Purpose: Dialog box resource file for Creo to BRL-CAD Converter
 !* Version: Created for use with Creo version 7.0.9.0
-!* Date:    10/21/2022
+!* Date:    3/22/2023
 !*
 !* Notes:
 !*  1) Refer to: ..\src\external\Creo\main.cpp for more information
@@ -111,10 +111,10 @@
         (InputPanel   mtl_fname)
         (Label        empty_label)
         (Label        parameter_label)
-        (Label        attr_rename_l)
-        (InputPanel   attr_rename)
-        (Label        attr_save_l)
-        (InputPanel   attr_save)
+        (Label        param_rename_l)
+        (InputPanel   param_rename)
+        (Label        param_save_l)
+        (InputPanel   param_save)
     )
     (Resources
         (out_fname_l.AttachRight       True)
@@ -168,24 +168,24 @@
         (parameter_label.AttachLeft    True)
         (parameter_label.Label         "Creo Parameters")
         (parameter_label.LeftOffset    150)
-        (attr_rename_l.AttachRight     True)
-        (attr_rename_l.Label           "Create object names:")
-        (attr_rename_l.LeftOffset      4)
-        (attr_rename_l.RightOffset     0)
-        (attr_rename.AttachLeft        True)
-        (attr_rename.HelpText          "Enter a comma-separated list of Creo parameters which create BRL-CAD object names (optional)")
-        (attr_rename.LeftOffset        0)
-        (attr_rename.RightOffset       4)
-        (attr_rename.Value             "")
-        (attr_save_l.AttachRight       True)
-        (attr_save_l.Label             "Preserve as attributes:")
-        (attr_save_l.LeftOffset        4)
-        (attr_save_l.RightOffset       0)
-        (attr_save.AttachLeft          True)
-        (attr_save.HelpText            "Enter a comma-separated list of Creo parameters to preserve in the BRL-CAD .g file (optional)")
-        (attr_save.LeftOffset          0)
-        (attr_save.RightOffset         4)
-        (attr_save.Value               "")
+        (param_rename_l.AttachRight    True)
+        (param_rename_l.Label          "Create object names:")
+        (param_rename_l.LeftOffset     4)
+        (param_rename_l.RightOffset    0)
+        (param_rename.AttachLeft       True)
+        (param_rename.HelpText         "Enter a comma-separated list of Creo parameters which create BRL-CAD object names (optional)")
+        (param_rename.LeftOffset       0)
+        (param_rename.RightOffset      4)
+        (param_rename.Value            "nomenclature")
+        (param_save_l.AttachRight      True)
+        (param_save_l.Label            "Preserve as attributes:")
+        (param_save_l.LeftOffset       4)
+        (param_save_l.RightOffset      0)
+        (param_save.AttachLeft         True)
+        (param_save.HelpText           "Enter a comma-separated list of Creo parameters to preserve in the BRL-CAD .g file (optional)")
+        (param_save.LeftOffset         0)
+        (param_save.RightOffset        4)
+        (param_save.Value              "nomenclature,part_name")
         (.AttachTop                    True)
         (.BottomOffset                 4)
         (.Decorated                    False)
@@ -202,10 +202,10 @@
                 mtl_fname
                 empty_label
                 parameter_label
-                attr_rename_l
-                attr_rename
-                attr_save_l
-                attr_save
+                param_rename_l
+                param_rename
+                param_save_l
+                param_save
             )
         )
     )
@@ -294,68 +294,68 @@
 
 (Layout tessellation_controls
     (Components
-        (Label        max_error_l)
-        (InputPanel   max_error)
-        (Label        min_error_l)
-        (InputPanel   min_error)
-        (Label        max_angle_ctrl_l)
-        (InputPanel   max_angle_ctrl)
-        (Label        min_angle_ctrl_l)
-        (InputPanel   min_angle_ctrl)
-        (Label        isteps_l)
-        (InputPanel   isteps)
+        (Label        max_chord_l)
+        (InputPanel   max_chord)
+        (Label        min_chord_l)
+        (InputPanel   min_chord)
+        (Label        max_angle_l)
+        (InputPanel   max_angle)
+        (Label        min_angle_l)
+        (InputPanel   min_angle)
+        (Label        max_steps_l)
+        (InputPanel   max_steps)
     )
     (Resources
-        (max_error_l.AttachRight       True)
-        (max_error_l.Label             "Max chord error, mm:")
-        (max_error_l.LeftOffset        2)
-        (max_error_l.RightOffset       0)
-        (max_error.AttachLeft          True)
-        (max_error.HelpText            "Enter maximum chord error for tessellation of curved surfaces")
-        (max_error.InputType           3)
-        (max_error.LeftOffset          0)
-        (max_error.RightOffset         2)
-        (max_error.Value               "1.0")
-        (min_error_l.AttachRight       True)
-        (min_error_l.Label             "Min chord error, mm:")
-        (min_error_l.LeftOffset        2)
-        (min_error_l.RightOffset       0)
-        (min_error.AttachLeft          True)
-        (min_error.HelpText            "Enter minimum chord error for tessellation of curved surfaces")
-        (min_error.InputType           3)
-        (min_error.LeftOffset          0)
-        (min_error.RightOffset         2)
-        (min_error.Value               "0.1")
-        (max_angle_ctrl_l.AttachRight  True)
-        (max_angle_ctrl_l.Label        "Max angle control, deg:")
-        (max_angle_ctrl_l.LeftOffset   2)
-        (max_angle_ctrl_l.RightOffset  0)
-        (max_angle_ctrl.AttachLeft     True)
-        (max_angle_ctrl.HelpText       "Larger values here produce finer tessellations [0.0 to 1.0]")
-        (max_angle_ctrl.InputType      3)
-        (max_angle_ctrl.LeftOffset     0)
-        (max_angle_ctrl.RightOffset    2)
-        (max_angle_ctrl.Value          "1.0")
-        (min_angle_ctrl_l.AttachRight  True)
-        (min_angle_ctrl_l.Label        "Min angle control, deg:")
-        (min_angle_ctrl_l.LeftOffset   2)
-        (min_angle_ctrl_l.RightOffset  0)
-        (min_angle_ctrl.AttachLeft     True)
-        (min_angle_ctrl.HelpText       "Larger values here produce finer tessellations [0.0 to 1.0]")
-        (min_angle_ctrl.InputType      3)
-        (min_angle_ctrl.LeftOffset     0)
-        (min_angle_ctrl.RightOffset    2)
-        (min_angle_ctrl.Value          "1.0")
-        (isteps_l.AttachRight          True)
-        (isteps_l.Label                "Max to Min control steps:")
-        (isteps_l.LeftOffset           2)
-        (isteps_l.RightOffset          0)
-        (isteps.AttachLeft             True)
-        (isteps.HelpText               "Enter number of steps between the min to max angle control value")
-        (isteps.InputType              2)
-        (isteps.LeftOffset             0)
-        (isteps.RightOffset            2)
-        (isteps.Value                  "20")
+        (max_chord_l.AttachRight       True)
+        (max_chord_l.Label             "Max chord height, mm:")
+        (max_chord_l.LeftOffset        2)
+        (max_chord_l.RightOffset       0)
+        (max_chord.AttachLeft          True)
+        (max_chord.HelpText            "Enter maximum chord height for tessellation of curved surfaces")
+        (max_chord.InputType           3)
+        (max_chord.LeftOffset          0)
+        (max_chord.RightOffset         2)
+        (max_chord.Value               "0.0")
+        (min_chord_l.AttachRight       True)
+        (min_chord_l.Label             "Min chord height, mm:")
+        (min_chord_l.LeftOffset        2)
+        (min_chord_l.RightOffset       0)
+        (min_chord.AttachLeft          True)
+        (min_chord.HelpText            "Enter minimum chord height for tessellation of curved surfaces")
+        (min_chord.InputType           3)
+        (min_chord.LeftOffset          0)
+        (min_chord.RightOffset         2)
+        (min_chord.Value               "0.0")
+        (max_angle_l.AttachRight       True)
+        (max_angle_l.Label             "Max angle control:")
+        (max_angle_l.LeftOffset        2)
+        (max_angle_l.RightOffset       0)
+        (max_angle.AttachLeft          True)
+        (max_angle.HelpText            "Larger values here produce finer tessellations [0.0 to 1.0]")
+        (max_angle.InputType           3)
+        (max_angle.LeftOffset          0)
+        (max_angle.RightOffset         2)
+        (max_angle.Value               "1.0")
+        (min_angle_l.AttachRight       True)
+        (min_angle_l.Label             "Min angle control:")
+        (min_angle_l.LeftOffset        2)
+        (min_angle_l.RightOffset       0)
+        (min_angle.AttachLeft          True)
+        (min_angle.HelpText            "Larger values here produce finer tessellations [0.0 to 1.0]")
+        (min_angle.InputType           3)
+        (min_angle.LeftOffset          0)
+        (min_angle.RightOffset         2)
+        (min_angle.Value               "0.1")
+        (max_steps_l.AttachRight       True)
+        (max_steps_l.Label             "Maximum number of steps:")
+        (max_steps_l.LeftOffset        2)
+        (max_steps_l.RightOffset       0)
+        (max_steps.AttachLeft          True)
+        (max_steps.HelpText            "Enter maximum number of tessellation attempts")
+        (max_steps.InputType           2)
+        (max_steps.LeftOffset          0)
+        (max_steps.RightOffset         2)
+        (max_steps.Value               "50")
         (.Alignment                    0)
         (.AttachLeft                   True)
         (.AttachTop                    True)
@@ -366,16 +366,16 @@
         (.TopOffset                    1)
         (.Layout
             (Grid (Rows 1 1 1 1 1) (Cols 1 1)
-                max_error_l
-                max_error
-                min_error_l
-                min_error
-                max_angle_ctrl_l
-                max_angle_ctrl
-                min_angle_ctrl_l
-                min_angle_ctrl
-                isteps_l
-                isteps
+                max_chord_l
+                max_chord
+                min_chord_l
+                min_chord
+                max_angle_l
+                max_angle
+                min_angle_l
+                min_angle
+                max_steps_l
+                max_steps
             )
         )
     )
@@ -478,9 +478,9 @@
 (Layout surface_controls
     (Components
         (CheckButton   facets_only)
-        (CheckButton   get_normals)
         (CheckButton   check_solidity)
-        (CheckButton   debug_bboxes)
+        (CheckButton   create_boxes)
+        (CheckButton   get_normals)
     )
     (Resources
         (facets_only.AttachLeft        True)
@@ -492,6 +492,24 @@
         (facets_only.RightOffset       88)
         (facets_only.Set               True)
         (facets_only.TopOffset         0)
+        (check_solidity.AttachLeft     True)
+        (check_solidity.AttachTop      True)
+        (check_solidity.BottomOffset   0)
+        (check_solidity.HelpText       "Select this to reject BoTs that fail the solidity test (no unmated edges)")
+        (check_solidity.Label          "Reject BoTs that fail solidity")
+        (check_solidity.LeftOffset     0)
+        (check_solidity.RightOffset    88)
+        (check_solidity.Set            True)
+        (check_solidity.TopOffset      1)
+        (create_boxes.AttachLeft       True)
+        (create_boxes.AttachTop        True)
+        (create_boxes.BottomOffset     0)
+        (create_boxes.HelpText         "Select this to create a bounding box solid from the Creo part upon part tessellation failure")
+        (create_boxes.Label            "Bounding box replaces failed part")
+        (create_boxes.LeftOffset       0)
+        (create_boxes.RightOffset      88)
+        (create_boxes.Set              True)
+        (create_boxes.TopOffset        1)
         (get_normals.AttachLeft        True)
         (get_normals.AttachTop         True)
         (get_normals.BottomOffset      0)
@@ -501,24 +519,6 @@
         (get_normals.RightOffset       88)
         (get_normals.Set               False)
         (get_normals.TopOffset         1)
-        (check_solidity.AttachLeft     True)
-        (check_solidity.AttachTop      True)
-        (check_solidity.BottomOffset   0)
-        (check_solidity.HelpText       "Select this to reject BoTs that fail the solidity test (no unmated edges)")
-        (check_solidity.Label          "Reject BoTs that fail solidity")
-        (check_solidity.LeftOffset     0)
-        (check_solidity.RightOffset    88)
-        (check_solidity.Set            False)
-        (check_solidity.TopOffset      1)
-        (debug_bboxes.AttachLeft       True)
-        (debug_bboxes.AttachTop        True)
-        (debug_bboxes.BottomOffset     0)
-        (debug_bboxes.HelpText         "Select this to create a bounding box solid from the Creo part upon part tessellation failure")
-        (debug_bboxes.Label            "Bounding box replaces failed part")
-        (debug_bboxes.LeftOffset       0)
-        (debug_bboxes.RightOffset      88)
-        (debug_bboxes.Set              False)
-        (debug_bboxes.TopOffset        1)
         (.Alignment                    0)
         (.AttachLeft                   True)
         (.AttachTop                    True)
@@ -530,9 +530,9 @@
         (.Layout
             (Grid (Rows 1 1 1 1) (Cols 1)
                 facets_only
-                get_normals
                 check_solidity
-                debug_bboxes
+                create_boxes
+                get_normals
             )
         )
     )
