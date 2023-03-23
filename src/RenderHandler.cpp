@@ -1,7 +1,7 @@
 #include "RenderHandler.h"
 
-LayoutChoice::LayoutChoice(std::string map, bool ambientOnBottom)
-	: map(map), ambientOnBottom(ambientOnBottom), coordinates()
+LayoutChoice::LayoutChoice(std::string map, bool ambientOnBottom, bool lockRows)
+	: map(map), ambientOnBottom(ambientOnBottom), lockRows(lockRows), coordinates()
 {
 	// make a vector to store coordinates of each item on the map AND ALSO the ambient occlusion view
 	for (int i = 0; i < map.size() + 1; ++i)
@@ -37,7 +37,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 	for (int i = 1; i < map.size(); ++i)
 	{
 		// Each row starts after a "\n"
-		if (map[i-1] == '\n')
+		if (map[i - 1] == '\n')
 			rowStartingIndex.push_back(i);
 	}
 
@@ -45,7 +45,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 	int numRows = rowStartingIndex.size();
 	// number of columns is equal to the distance between two starting indexes of rows, omitting the '\n'
 	int numCols = rowStartingIndex[1] - rowStartingIndex[0] - 1;
-
+	int rowLen = numCols + 1; // length of a row is the number of columns plus the newline character.
 
 	// to find the dimensions of the grid, 
 	std::vector<int> rowHeights;
@@ -54,65 +54,66 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 	int orthoHeight = 0;
 	int orthoWidth = 0;
 
+
 	// calculate the height of each row
-	for (int r = 0; r < numRows; ++r)
+
+	// traverse the first row to gather the width
+	for (int i = 0; i < numCols; ++i)
 	{
-		int maxHeight = 0;
-
-		// traverse the row until a '\n' is reached
-		for (int i = rowStartingIndex[r]; map[i] != '\n' && i < map.size(); ++i)
+		int colWidth = 0;
+		switch (map[i])
 		{
-			switch (map[i])
-			{
-			case ' ': case '\n': case '_': case '|': // items with no area
-				break;
-			default:
-				RenderingFace face = (RenderingFace)(map[i] - '0'); // get the rendering face using the index (next - '0')
+		case '\n': case '-': case '|': // items with no area
+			break;
+		default:
+			RenderingFace face = (RenderingFace)(map[i] - '0'); // get the rendering face using the index (next - '0')
 
-				ModelDimension dim = faceDetails[face].heightContributor;
+			if (map[i] >= '0' && map[i] <= '9')
+				face = (RenderingFace)(map[i] - '0'); // get the rendering face using the index (next - '0');
+			else face = (RenderingFace)(map[i+rowLen] - '0'); // check the second row to snatch the width
 
-				if (dim == LENGTH)
-					maxHeight = std::max(maxHeight, modelLength);
-				else if (dim == DEPTH)
-					maxHeight = std::max(maxHeight, modelDepth);
-				else if (dim == HEIGHT)
-					maxHeight = std::max(maxHeight, modelHeight);
-			}
+			ModelDimension dim = faceDetails[face].widthContributor;
+
+			if (dim == LENGTH)
+				colWidth = modelLength;
+			else if (dim == DEPTH)
+				colWidth = modelDepth;
+			else if (dim == HEIGHT)
+				colWidth = modelHeight;
 		}
-
-		rowHeights.push_back(maxHeight);
-		orthoHeight += maxHeight;
+		if (!lockRows)
+			columnWidths.push_back(colWidth);
+		orthoWidth += colWidth;
 	}
 
-	// calculate the width of each column
-	// calculate the height of each row
-	for (int c = 0; c < numCols; ++c)
+	// traverse the first column to gather the height
+	for (int j = 0; j < numRows; ++j)
 	{
-		int maxWidth = 0;
-
-		// traverse the column.  Each element in the column will be the c'th character after a row start index
-		for (int i : rowStartingIndex)
+		int i = rowLen * j;
+		int rowHeight = 0;
+		switch (map[i])
 		{
-			switch (map[i + c])
-			{
-			case ' ': case '\n': case '_': case '|': // items with no area
-				break;
-			default:
-				RenderingFace face = (RenderingFace)(map[i + c] - '0'); // get the rendering face using the index (next - '0')
+		case '\n': case '-': case '|': // items with no area
+			break;
+		default:
+			RenderingFace face;
 
-				ModelDimension dim = faceDetails[face].widthContributor;
+			if (map[i] >= '0' && map[i] <= '9')
+				face = (RenderingFace)(map[i] - '0'); // get the rendering face using the index (next - '0');
+			else face = (RenderingFace)(map[i + 1] - '0'); // check the second column to snatch the height
 
-				if (dim == LENGTH)
-					maxWidth = std::max(maxWidth, modelLength);
-				else if (dim == DEPTH)
-					maxWidth = std::max(maxWidth, modelDepth);
-				else if (dim == HEIGHT)
-					maxWidth = std::max(maxWidth, modelHeight);
-			}
+			ModelDimension dim = faceDetails[face].heightContributor;
+
+			if (dim == LENGTH)
+				rowHeight = modelLength;
+			else if (dim == DEPTH)
+				rowHeight = modelDepth;
+			else if (dim == HEIGHT)
+				rowHeight = modelHeight;
 		}
-
-		columnWidths.push_back(maxWidth);
-		orthoWidth += maxWidth;
+		if (lockRows)
+			rowHeights.push_back(rowHeight);
+		orthoHeight += rowHeight;
 	}
 
 	// get aspect ratios
@@ -154,39 +155,129 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 	// calculating variables used for finding the actual coordinates
 	int offsetX = (workingWidth - actualOrthoWidth) / 2;
 	int offsetY = (workingHeight - actualOrthoHeight) / 2;
-	double widthConversionFactor = (double) actualOrthoWidth / orthoWidth;
+	double widthConversionFactor = (double)actualOrthoWidth / orthoWidth;
 	double heightConversionFactor = (double)actualOrthoHeight / orthoHeight;
-
+	
 	// now, filling out the coordinates
-	int curX = offsetX, curY = offsetY;
-	int curRow = 0, curCol = 0;
-
-	for (int i = 0; i < map.size(); ++i)
+	if (lockRows)
 	{
-		int curHeight = (int) (heightConversionFactor * rowHeights[curRow]);
-
-		if (map[i] == '\n')
+		// all elements in a row have the same height.  Iterate row by row
+		int curX = offsetX, curY = offsetY, curWidth = 0, curHeight = 0;
+		for (int r = 0; r < numRows; ++r)
 		{
-			// just finished traversing a row.  Move to the next row.
-			curRow++;
-			curCol = 0;
+			curHeight = (int)(heightConversionFactor * rowHeights[r]);
 
-			// update curX and curY accordingly
+			for (int c = 0; c < numCols; ++c)
+			{
+				int i = rowLen * r + c;
+
+				std::cout << "processing " << map[i] << " at " << r << " " << c << std::endl;
+
+				switch (map[i])
+				{
+				case '-':
+					// check item above for the width
+					curWidth = coordinates[i - rowLen][2] - coordinates[i - rowLen][0];
+					break;
+				case '|':
+					// vertical lines have no width
+					curWidth = 0;
+					break;
+				default: // either ' ' or a rendering face
+					RenderingFace face;
+
+					// search for a neighbor that has a usable width (or use your own width, if valid)
+					if (map[i] >= '0' && map[i] <= '9')
+						face = (RenderingFace)(map[i] - '0'); // get the rendering face using the index (next - '0')
+					else if (r > 0 && map[i - rowLen] >= '0' && map[i - rowLen] <= '9')
+						face = (RenderingFace)(map[i - rowLen] - '0'); // get the rendering face using the index (next - '0')
+					else if (r < numRows - 1 && map[i + rowLen] >= '0' && map[i + rowLen] <= '9')
+						face = (RenderingFace)(map[i + rowLen] - '0'); // get the rendering face using the index (next - '0')
+					else
+					{
+						std::cerr << "FATAL: couldn't find a width to use for rendering!" << std::endl;
+					}
+
+					ModelDimension dim = faceDetails[face].widthContributor;
+
+					if (dim == LENGTH)
+						curWidth = (int)(widthConversionFactor * modelLength);
+					else if (dim == DEPTH)
+						curWidth = (int)(widthConversionFactor * modelDepth);
+					else if (dim == HEIGHT)
+						curWidth = (int)(widthConversionFactor * modelHeight);
+				}
+
+				coordinates[i].push_back(curX);
+				coordinates[i].push_back(curY);
+				coordinates[i].push_back(curX + curWidth);
+				coordinates[i].push_back(curY + curHeight);
+
+				curX += curWidth;
+			}
+
 			curX = offsetX;
 			curY += curHeight;
-
-			continue;
 		}
+	}
+	else
+	{
+		// all elements in a column have the same width.  Iterate column by column
+		int curX = offsetX, curY = offsetY, curWidth = 0, curHeight = 0;
+		for (int c = 0; c < numCols; ++c)
+		{
+			curWidth = (int)(widthConversionFactor * columnWidths[c]);
 
-		int curWidth = (int) (widthConversionFactor * columnWidths[curCol]);
+			for (int r = 0; r < numRows; ++r)
+			{
+				int i = rowLen * r + c;
 
-		coordinates[i].push_back(curX);
-		coordinates[i].push_back(curY);
-		coordinates[i].push_back(curX + curWidth);
-		coordinates[i].push_back(curY + curHeight);
+				switch (map[i])
+				{
+				case '|':
+					// check item to the left for the height
+					curHeight = coordinates[i - 1][3] - coordinates[i - 1][1];
+					break;
+				case '-':
+					// horizontal lines have no height
+					curHeight = 0;
+					break;
+				default: // either ' ' or a rendering face
+					RenderingFace face;
+					
+					// search for a neighbor that has a usable height (or use your own height, if valid)
+					if (map[i] >= '0' && map[i] <= '9')
+						face = (RenderingFace)(map[i] - '0'); // get the rendering face using the index (next - '0')
+					else if (c > 0 && map[i-1] >= '0' && map[i-1] <= '9')
+						face = (RenderingFace)(map[i-1] - '0'); // get the rendering face using the index (next - '0')
+					else if (c < numCols-1 && map[i + 1] >= '0' && map[i + 1] <= '9')
+						face = (RenderingFace)(map[i + 1] - '0'); // get the rendering face using the index (next - '0')
+					else
+					{
+						std::cerr << "FATAL: couldn't find a height to use for rendering!" << std::endl;
+					}
 
-		curCol++;
-		curX += curWidth;
+					ModelDimension dim = faceDetails[face].heightContributor;
+
+					if (dim == LENGTH)
+						curHeight = (int)(heightConversionFactor * modelLength);
+					else if (dim == DEPTH)
+						curHeight = (int)(heightConversionFactor * modelDepth);
+					else if (dim == HEIGHT)
+						curHeight = (int)(heightConversionFactor * modelHeight);
+				}
+
+				coordinates[i].push_back(curX);
+				coordinates[i].push_back(curY);
+				coordinates[i].push_back(curX + curWidth);
+				coordinates[i].push_back(curY + curHeight);
+
+				curY += curHeight;
+			}
+
+			curY = offsetY;
+			curX += curWidth;
+		}
 	}
 
 	// add ambient occlusion coordinates
@@ -213,7 +304,7 @@ double LayoutChoice::getTotalCoverage()
 	{
 		switch (map[i])
 		{
-		case ' ': case '\n': case '_': case '|': // items with no area
+		case ' ': case '\n': case '-': case '|': // items with no area
 			break;
 		default:
 			if (coordinates[i].empty())
@@ -258,17 +349,18 @@ std::vector<LayoutChoice> initLayouts()
 {
 	std::vector<LayoutChoice> layouts;
 
-	layouts.emplace_back("1 \n02\n__\n43\n5 \n__\n", true);
-	layouts.emplace_back("1 |\n02|\n__\n43|\n5 |\n", false);
+	layouts.emplace_back("1 \n02\n--\n43\n5 \n--\n", true, true);
+	layouts.emplace_back("1 |\n02|\n-- \n43|\n5 |\n", false, true);
+	layouts.emplace_back("1 |43|\n02|5 |\n", false, false);
 
 	return layouts;
 }
 
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
 {
-	int modelLength = 100;
+	int modelLength = 300;
 	int modelDepth = 100;
-	int modelHeight = 200;
+	int modelHeight = 100;
 
 	LayoutChoice bestLayout = selectLayout(width, height, modelLength, modelDepth, modelHeight);
 
@@ -282,7 +374,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		{
 		case ' ': case '\n': // spacing character; nothing should be drawn here
 			break;
-		case '|': case '_': // draw separator line
+		case '|': case '-': // draw separator line
 			img.drawLine(coords[0], coords[1], coords[2], coords[3], 1, cv::Scalar(100, 100, 100));
 			break;
 		default: // draw face
@@ -324,7 +416,7 @@ LayoutChoice selectLayout(int secWidth, int secHeight, int modelLength, int mode
 	if (bestLayout == NULL)
 	{
 		std::cerr << "ISSUE: no layouts found.  This is a major problem!  In selectLayout() in RenderHandler.cpp" << std::endl;
-		return LayoutChoice("", false);
+		return LayoutChoice("", false, true);
 	}
 
 	return *bestLayout;

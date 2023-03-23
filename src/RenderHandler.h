@@ -21,10 +21,11 @@ struct LayoutChoice
 private:
 	std::string map;
 	bool ambientOnBottom;
+	bool lockRows;
 
 	std::vector<std::vector<int>> coordinates;
 public:
-	LayoutChoice(std::string map, bool ambientOnBottom);
+	LayoutChoice(std::string map, bool ambientOnBottom, bool lockRows);
 
 	void initCoordinates(int secWidth, int secHeight, int modelLength, int modelDepth, int modelHeight);
 
