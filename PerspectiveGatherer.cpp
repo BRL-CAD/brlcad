@@ -1,4 +1,5 @@
 #include "PerspectiveGatherer.h"
+#include "Options.h"
 
 // std::string renderAmbientOcclusion()
 // {
@@ -35,10 +36,11 @@ std::string renderPerspective(RenderingFace face)
 {
     // hardcode filename until options come out
     std::string component = "all.g";
-    std::string pathToInput = "../db/";
-    std::string fileInput = "moss.g";
+    std::string pathToInput = Options::getFilepath();
+    std::string fileInput = Options::getFileName();
     std::string pathToOutput = "../output/";
     std::string fileOutput = "moss";
+    std::cout << "dbg " << pathToInput << " " << std::fileInput << endl;
 
     // do directory traversal checks
     if (fileOutput.find("../") != std::string::npos) {
