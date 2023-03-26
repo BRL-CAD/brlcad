@@ -18,15 +18,19 @@ std::map<char, FaceDetails> getFaceDetails()
 	return output;
 }
 
-std::string renderPerspective(RenderingFace face)
+std::string extractFileName(std::string filePath) {
+    return filePath.substr(filePath.find_last_of("/\\") + 1);
+}
+
+std::string renderPerspective(RenderingFace face, Options& opt)
 {
     // hardcode filename until options come out
     std::string component = "all.g";
-    std::string pathToInput = "moss.g";
-    std::string fileInput = "moss.g";
-    std::string pathToOutput = "../output/";
-    std::string fileOutput = "moss";
-    std::cout << "dbg " << pathToInput << " " << fileInput << std::endl;
+    std::string pathToInput = opt.getFilepath();
+    std::string fileInput = extractFileName(pathToInput);
+    std::string pathToOutput = "output/";
+    std::string fileOutput = fileInput.substr(0, fileInput.find_last_of("."));
+    std::cout << "dbg " << pathToInput << " " << fileInput << " " << fileOutput << std::endl;
 
     // do directory traversal checks
     if (fileOutput.find("../") != std::string::npos) {
@@ -37,7 +41,6 @@ std::string renderPerspective(RenderingFace face)
     std::cout << "Processing file: " << fileInput << std::endl;
 
     // FIX security vulnerability
-    std::string inputname = pathToInput + fileInput;
     std::string outputname = pathToOutput + fileOutput;
     std::string render;
 
@@ -46,37 +49,37 @@ std::string renderPerspective(RenderingFace face)
         case FRONT:
             a = 0, e = 0;
             outputname += "_front.png";
-            render = "../../../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + inputname + " " + component;
+            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case RIGHT:
             a = 90, e = 0;
             outputname += "_right.png";
-            render = "../../../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + inputname + " " + component;
+            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case BACK:
             a = 180, e = 0;
             outputname += "_back.png";
-            render = "../../../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + inputname + " " + component;
+            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case LEFT:
             a = 270, e = 0;
             outputname += "_left.png";
-            render = "../../../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + inputname + " " + component;
+            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case TOP:
             a = 0, e = 90; // may need to change "a"?
             outputname += "_top.png";
-            render = "../../../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + inputname + " " + component;
+            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case BOTTOM:
             a = 0, e = 270;
             outputname += "_bottom.png";
-            render = "../../../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + inputname + " " + component;
+            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case DETAILED:
             a = 45, e = 45;
-            outputname += "_ambient.png";
-            render = "../../../../../build/bin/rt -C 255/255/255 -s 1024 -c \"set ambSamples=64\" -o " + outputname + " " + inputname + " " + component;
+            outputname += "_detailed.png";
+            render = "../../../build/bin/rt -C 255/255/255 -s 1024 -W -R -c \"set ambSamples=64\" -o " + outputname + " " + pathToInput + " " + component;
             break;
         default:
             std::cerr<< "mark added this\n";
@@ -91,7 +94,12 @@ std::string renderPerspective(RenderingFace face)
     }
     file.close();
     
-    auto result2 = system(render.c_str());
+    try {
+        auto result2 = system(render.c_str());
+    } catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
+
     std::cout << "Successlly generated perspective rendering png file\n";
 	return outputname;
 }

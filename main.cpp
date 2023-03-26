@@ -115,7 +115,7 @@ void generateReport(Options opt)
     }
 
     // paint renderings
-    makeRenderSection(img, info, 0, 100, 1200, 900);
+    makeRenderSection(img, info, 0, 100, 1200, 900, opt);
 
     // paint text sections (no method headers yet)
     // paintTitle

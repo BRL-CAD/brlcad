@@ -356,7 +356,7 @@ std::vector<LayoutChoice> initLayouts()
 	return layouts;
 }
 
-void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
+void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
 	int modelLength = 100;
 	int modelDepth = 100;
@@ -380,7 +380,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 			img.drawLine(coords[0], coords[1], coords[2], coords[3], 1, cv::Scalar(100, 100, 100));
 			break;
 		default: // draw face
-			std::string render = renderPerspective(faceDetails[next].face);
+			std::string render = renderPerspective(faceDetails[next].face, opt);
 
 			img.drawImage(coords[0], coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 			break;
@@ -389,7 +389,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 	// render ambient occlusion view
 	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
-	std::string render = renderPerspective(DETAILED);
+	std::string render = renderPerspective(DETAILED, opt);
 	img.drawImage(coords[0], coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 }
 
