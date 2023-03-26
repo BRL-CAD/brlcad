@@ -38,6 +38,48 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 	resized_image.copyTo(destRoi);
 }
 
+void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
+{
+	// TODO (Michael): Along with writing this method, figure out the best way to represent images in code.
+	// Perhaps there's a better way to store images; reading in images multiple times is inefficient, though if we only need
+	// to read in the image once (which I believe is the case), then reading images from a file should also be fine.
+	// TODO: this
+	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
+	int imgWidth = lilImage.size().width;
+	int imgHeight = lilImage.size().height;
+	int heightOffset = 0;
+	int widthOffset = 0;
+
+	if ((double)imgWidth / imgHeight > (double)width / height)
+	{
+		// image width is too large; bound on width
+		int newHeight = (int)(width * (double)imgHeight / imgWidth);
+		heightOffset = (height - newHeight) / 2;
+		height = newHeight;
+	}
+	else
+	{
+		// image height is too large; bound on height
+		int newWidth = (int)(height * (double)imgWidth / imgHeight);
+		widthOffset = (width - newWidth) / 2;
+		width = newWidth;
+	}
+
+	cv::Mat resized_image;
+	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
+
+	//Trying to copyto the image on to the private image frame, img
+	cv::Mat destRoi;
+	try {
+		destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
+	}
+	catch (...) {
+		std::cerr << "Trying to create roi out of image boundaries" << std::endl;
+		return;
+	}
+	resized_image.copyTo(destRoi);
+}
+
 void IFPainter::drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics, bool isWhite)
 {
 	// TODO: this
@@ -80,11 +122,11 @@ void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar c
 	cv::Point topLeft(x1, y1);
 	cv::Point bottomRight(x2, y2);
 	rectangle(img,
-		topLeft,
-		bottomRight,
-		color,
-		width,
-		cv::LINE_8);
+			  topLeft,
+			  bottomRight,
+              color,
+              width,
+			  cv::LINE_8);
 }
 
 

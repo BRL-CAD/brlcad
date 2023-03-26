@@ -15,12 +15,35 @@
 
 class IFPainter;
 class InformationGatherer;
+class Options;
 
-// TODO: correct parameters and return types
+struct LayoutChoice
+{
+private:
+	std::string map;
+	bool ambientOnBottom;
+	bool lockRows;
+
+	std::vector<std::vector<int>> coordinates;
+public:
+	LayoutChoice(std::string map, bool ambientOnBottom, bool lockRows);
+
+	void initCoordinates(int secWidth, int secHeight, int modelLength, int modelDepth, int modelHeight);
+
+	double getTotalCoverage();
+
+	std::vector<int> getCoordinates(int mapIndex);
+
+	int getMapSize();
+	char getMapChar(int index);
+};
 
 // calls selectLayout to find the most effective layout, then paints it onto the designated area.
-void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height);
+void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt);
+
+// generate the list of layouts
+std::vector<LayoutChoice> initLayouts();
 
 // uses a simple heuristic to determine which layout is the best for the object.
-int selectLayout(int secWidth, int secHeight, int modelLength, int modelWidth, int modelHeight);
+LayoutChoice selectLayout(int secWidth, int secHeight, int modelLength, int modelDepth, int modelHeight);
 
