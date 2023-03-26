@@ -26,6 +26,7 @@ public:
 	void setOpenGUI();
 	void setExportToFile();
 	void setFileName(std::string n);
+	void setName(std::string n);
 	//Getter functions
 	std::string getFilepath();
 	int getWidth();
@@ -34,6 +35,7 @@ public:
 	bool getOpenGUI();
 	bool getExportToFile();
 	std::string getFileName();
+	std::string getName();
 private:
 	//Path to file that will be used to generate report
 	std::string filepath;
@@ -48,4 +50,6 @@ private:
 	bool exportToFile;
 	//Name of export file
 	std::string fileName;
+	//Name of preparer
+	std::string name;
 };

@@ -22,24 +22,69 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 	// Perhaps there's a better way to store images; reading in images multiple times is inefficient, though if we only need
 	// to read in the image once (which I believe is the case), then reading images from a file should also be fine.
 	// TODO: this
+	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
+	cv::Mat resized_image;
+	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
+
+	//Trying to copyto the image on to the private image frame, img
+	cv::Mat destRoi;
+	try {
+		destRoi = img(cv::Rect(x, y, resized_image.cols, resized_image.rows));
+	}
+	catch (...) {
+		std::cerr << "Trying to create roi out of image boundaries" << std::endl;
+		return;
+	}
+	resized_image.copyTo(destRoi);
 }
 
-void IFPainter::drawText(int x, int y, int fontSize, int width, std::string text)
+void IFPainter::drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics, bool isWhite)
 {
 	// TODO: this
 	// keep in mind that we'll need options for bold, italics, etc.
 	// Try to make these methods as intuitive as possible in the idea of "we want text here, so we're confident that text will go here"
 	// Keep in mind text wrapping.
+
+	cv::Point text_position(x, y);
+	//boldness can be adjusted through font_weight
+	//The italics doesnt look really look like the traditional italics
+	if (italics) {
+		putText(img, text, text_position, cv::FONT_ITALIC, fontSize, cv::Scalar(0, 0, 0), font_weight);
+	}
+	else if (isWhite) {
+		putText(img, text, text_position, cv::FONT_HERSHEY_PLAIN, fontSize, cv::Scalar(255, 255, 255), font_weight);
+	}
+	else {
+		putText(img, text, text_position, cv::FONT_HERSHEY_PLAIN, fontSize, cv::Scalar(0, 0, 0), font_weight);
+	}
 }
 
 void IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
 {
 	// TODO: this
+	int lineType = cv::LINE_8;
+	cv::Point start(x1, y1);
+	cv::Point end(x2, y2);
+	line(img,
+		start,
+		end,
+		color,
+		width,
+		lineType);
 }
 
-void IFPainter::drawRect(int x1, int y1, int x2, int y2, cv::Scalar color)
+void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
 {
 	// TODO: this
+	//Should I try to fill the rectangle?
+	cv::Point topLeft(x1, y1);
+	cv::Point bottomRight(x2, y2);
+	rectangle(img,
+		topLeft,
+		bottomRight,
+		color,
+		width,
+		cv::LINE_8);
 }
 
 

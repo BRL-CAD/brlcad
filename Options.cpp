@@ -9,6 +9,7 @@ Options::Options()
 	openGUI = false;
 	exportToFile = false;
 	fileName = "";
+	name = "N/A";
 }
 
 Options::~Options()
@@ -44,6 +45,10 @@ void Options::setFileName(std::string n) {
 	fileName = n;
 }
 
+void Options::setName(std::string n) {
+	name = n;
+}
+
 std::string Options::getFilepath() {
 	return filepath;
 }
@@ -70,4 +75,8 @@ bool Options::getExportToFile() {
 
 std::string Options::getFileName() {
 	return fileName;
+}
+
+std::string Options::getName() {
+	return name;
 }

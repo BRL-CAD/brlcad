@@ -21,7 +21,7 @@ public:
 	InformationGatherer();
 	~InformationGatherer();
 
-	bool gatherInformation(std::string filePath);
+	bool gatherInformation(std::string filePath, std::string name);
 
 	std::string getInfo(std::string key);
 };

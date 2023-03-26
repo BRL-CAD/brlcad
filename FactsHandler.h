@@ -16,4 +16,5 @@
 class InformationGatherer;
 class IFPainter;
 
-void makeInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height);
+void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height);
+void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height);

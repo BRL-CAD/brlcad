@@ -18,6 +18,7 @@ int main(int argc, char **argv) {
         bu_log("    F = path specified is a folder of models\n");
         bu_log("    g = GUI output\n");
         bu_log("    f = filename of png export, MUST end in .png\n");
+        bu_log("    n = name of preparer, to be used in report\n");
         return 0;
     } 
     //If user has no arguments or did not specify filepath, give shortened help
@@ -63,7 +64,7 @@ void readParameters(int argc, char** argv, Options &opt, bool &h, bool &f)
 
     int opts;
 
-    while ((opts = bu_getopt(argc, argv, "Fg?p:w:l:f:")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "Fg?p:w:l:f:n:")) != -1) {
         switch (opts) {
             case 'p':
                 f = true;
@@ -84,6 +85,9 @@ void readParameters(int argc, char** argv, Options &opt, bool &h, bool &f)
             case 'f':
                 opt.setExportToFile();
                 opt.setFileName(bu_optarg);
+                break;
+            case 'n':
+                opt.setName(bu_optarg);
                 break;
             case '?':
                 h = true;
@@ -108,7 +112,7 @@ void generateReport(Options opt)
     InformationGatherer info;
 
     // read in all information from model file
-    if (!info.gatherInformation(opt.getFilepath()))
+    if (!info.gatherInformation(opt.getFilepath(), opt.getName()))
     {
         std::cerr << "Error on Information Gathering.  Report Generation skipped..." << std::endl;
         return;
@@ -121,6 +125,10 @@ void generateReport(Options opt)
     // paintTitle
     // paintSidebar
     // etc...
+
+    makeTopSection(img, info, 10, 10, 1590, 50);
+
+    makeBottomSection(img, info, 10, 990, 1590, 50);
 
 
     // optionally, display the scene
