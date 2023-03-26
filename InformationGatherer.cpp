@@ -13,6 +13,14 @@ InformationGatherer::~InformationGatherer()
 bool InformationGatherer::gatherInformation(std::string filePath)
 {
 	// TODO: this
+
+	//Gather title
+	const char* cmd[2] = {"title", NULL};
+	struct ged* g = ged_open("db", filePath.c_str(), 1);
+
+	ged_exec(g, 1, cmd);
+	printf("Title: %s\n", bu_vls_addr(g->ged_result_str));
+	ged_close(g); 
 	return true;
 }
 
