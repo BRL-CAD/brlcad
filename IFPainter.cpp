@@ -80,7 +80,7 @@ void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string
 	resized_image.copyTo(destRoi);
 }
 
-void IFPainter::drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics)
+void IFPainter::drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics, bool isWhite)
 {
 	// TODO: this
 	// keep in mind that we'll need options for bold, italics, etc.
@@ -88,13 +88,17 @@ void IFPainter::drawText(int x, int y, double fontSize, int font_weight, std::st
 	// Keep in mind text wrapping.
 
 	cv::Point text_position(x, y);
-	cv::Scalar font_color(0, 0, 0);
 	//boldness can be adjusted through font_weight
 	//The italics doesnt look really look like the traditional italics
-	if (italics == true) {
-		putText(img, text, text_position, cv::FONT_ITALIC, fontSize, font_color, font_weight);
+	if (italics) {
+		putText(img, text, text_position, cv::FONT_ITALIC, fontSize, cv::Scalar(0, 0, 0), font_weight);
 	}
-	putText(img, text, text_position, cv::FONT_HERSHEY_PLAIN, fontSize, font_color, font_weight);
+	else if (isWhite) {
+		putText(img, text, text_position, cv::FONT_HERSHEY_PLAIN, fontSize, cv::Scalar(255, 255, 255), font_weight);
+	}
+	else {
+		putText(img, text, text_position, cv::FONT_HERSHEY_PLAIN, fontSize, cv::Scalar(0, 0, 0), font_weight);
+	}
 }
 
 void IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
