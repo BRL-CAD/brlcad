@@ -15,6 +15,7 @@
 
 class IFPainter;
 class InformationGatherer;
+class Options;
 
 struct LayoutChoice
 {
@@ -38,7 +39,7 @@ public:
 };
 
 // calls selectLayout to find the most effective layout, then paints it onto the designated area.
-void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height);
+void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt);
 
 // generate the list of layouts
 std::vector<LayoutChoice> initLayouts();

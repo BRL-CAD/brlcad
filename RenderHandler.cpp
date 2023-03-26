@@ -63,7 +63,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 		int colWidth = 0;
 		switch (map[i])
 		{
-		case '\n': case '-': case '|': // items with no area
+		case '\n': case '-': case '|': case '.': // items with no area
 			break;
 		default:
 			FaceDetails fdet;
@@ -94,7 +94,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 		int rowHeight = 0;
 		switch (map[i])
 		{
-		case '\n': case '-': case '|': // items with no area
+		case '\n': case '-': case '|': case '.': // items with no area
 			break;
 		default:
 			FaceDetails fdet;
@@ -179,7 +179,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 					// check item above for the width
 					curWidth = coordinates[i - rowLen][2] - coordinates[i - rowLen][0];
 					break;
-				case '|':
+				case '|': case '.':
 					// vertical lines have no width
 					curWidth = 0;
 					break;
@@ -238,7 +238,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 					// check item to the left for the height
 					curHeight = coordinates[i - 1][3] - coordinates[i - 1][1];
 					break;
-				case '-':
+				case '-': case '.':
 					// horizontal lines have no height
 					curHeight = 0;
 					break;
@@ -304,7 +304,7 @@ double LayoutChoice::getTotalCoverage()
 	{
 		switch (map[i])
 		{
-		case ' ': case '\n': case '-': case '|': // items with no area
+		case ' ': case '\n': case '-': case '|': case '.': // items with no area
 			break;
 		default:
 			if (coordinates[i].empty())
@@ -349,18 +349,18 @@ std::vector<LayoutChoice> initLayouts()
 {
 	std::vector<LayoutChoice> layouts;
 
-	layouts.emplace_back("1 \n02\n--\n43\n5 \n--\n", true, true);
-	layouts.emplace_back("1 |\n02|\n-- \n43|\n5 |\n", false, true);
-	layouts.emplace_back("1 |43|\n02|5 |\n", false, false);
+	//layouts.emplace_back("1 \n02\n--\n43\n5 \n--\n", true, true);
+	layouts.emplace_back("1 |\n02|\n--.\n43|\n5 |\n", false, true);
+	//layouts.emplace_back("1 |43|\n02|5 |\n", false, false);
 
 	return layouts;
 }
 
-void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
+void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
-	int modelLength = 100;
-	int modelDepth = 100;
-	int modelHeight = 200;
+	int modelLength = 1000;
+	int modelDepth = 1000;
+	int modelHeight = 1000;
 
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
@@ -374,13 +374,13 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 		switch (next)
 		{
-		case ' ': case '\n': // spacing character; nothing should be drawn here
+		case ' ': case '\n': case '.': // spacing character; nothing should be drawn here
 			break;
 		case '|': case '-': // draw separator line
 			img.drawLine(coords[0], coords[1], coords[2], coords[3], 1, cv::Scalar(100, 100, 100));
 			break;
 		default: // draw face
-			std::string render = renderPerspective(faceDetails[next].face);
+			std::string render = renderPerspective(faceDetails[next].face, opt);
 
 			img.drawImage(coords[0], coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 			break;
@@ -389,8 +389,8 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 	// render ambient occlusion view
 	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
-	std::string render = renderPerspective(DETAILED);
-	img.drawImage(coords[0], coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
+	std::string render = renderPerspective(DETAILED, opt);
+	img.drawImageFitted(coords[0], coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 }
 
 LayoutChoice selectLayout(int secWidth, int secHeight, int modelLength, int modelDepth, int modelHeight)
