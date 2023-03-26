@@ -34,6 +34,7 @@ enum ModelDimension
 
 struct FaceDetails
 {
+	RenderingFace face;
 	std::string title;
 	std::string file_path;
 
@@ -41,7 +42,7 @@ struct FaceDetails
 	ModelDimension heightContributor;
 };
 
-std::map<RenderingFace,FaceDetails> getFaceDetails();
+std::map<char,FaceDetails> getFaceDetails();
 
 // TODO: add correct parameters and return type
 std::string renderPerspective(RenderingFace face);

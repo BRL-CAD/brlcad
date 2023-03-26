@@ -12,7 +12,7 @@ LayoutChoice::LayoutChoice(std::string map, bool ambientOnBottom, bool lockRows)
 
 void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength, int modelDepth, int modelHeight)
 {
-	std::map<RenderingFace, FaceDetails> faceDetails = getFaceDetails();
+	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
 	// create workingWidth and workingHeight: the area in which we will place orthographic views
 	int workingWidth = secWidth;
@@ -66,13 +66,14 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 		case '\n': case '-': case '|': // items with no area
 			break;
 		default:
-			RenderingFace face = (RenderingFace)(map[i] - '0'); // get the rendering face using the index (next - '0')
+			FaceDetails fdet;
 
-			if (map[i] >= '0' && map[i] <= '9')
-				face = (RenderingFace)(map[i] - '0'); // get the rendering face using the index (next - '0');
-			else face = (RenderingFace)(map[i+rowLen] - '0'); // check the second row to snatch the width
+			if (map[i] == ' ')
+				fdet = faceDetails[map[i + rowLen]]; // check the second row to snatch the width
+			else
+				fdet = faceDetails[map[i]]; // or use myself
 
-			ModelDimension dim = faceDetails[face].widthContributor;
+			ModelDimension dim = fdet.widthContributor;
 
 			if (dim == LENGTH)
 				colWidth = modelLength;
@@ -96,13 +97,14 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 		case '\n': case '-': case '|': // items with no area
 			break;
 		default:
-			RenderingFace face;
+			FaceDetails fdet;
 
-			if (map[i] >= '0' && map[i] <= '9')
-				face = (RenderingFace)(map[i] - '0'); // get the rendering face using the index (next - '0');
-			else face = (RenderingFace)(map[i + 1] - '0'); // check the second column to snatch the height
+			if (map[i] == ' ')
+				fdet = faceDetails[map[i + 1]]; // check the second column to snatch the height
+			else
+				fdet = faceDetails[map[i]];
 
-			ModelDimension dim = faceDetails[face].heightContributor;
+			ModelDimension dim = fdet.heightContributor;
 
 			if (dim == LENGTH)
 				rowHeight = modelLength;
@@ -171,8 +173,6 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 			{
 				int i = rowLen * r + c;
 
-				std::cout << "processing " << map[i] << " at " << r << " " << c << std::endl;
-
 				switch (map[i])
 				{
 				case '-':
@@ -184,21 +184,21 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 					curWidth = 0;
 					break;
 				default: // either ' ' or a rendering face
-					RenderingFace face;
+					FaceDetails fdet;
 
 					// search for a neighbor that has a usable width (or use your own width, if valid)
-					if (map[i] >= '0' && map[i] <= '9')
-						face = (RenderingFace)(map[i] - '0'); // get the rendering face using the index (next - '0')
-					else if (r > 0 && map[i - rowLen] >= '0' && map[i - rowLen] <= '9')
-						face = (RenderingFace)(map[i - rowLen] - '0'); // get the rendering face using the index (next - '0')
-					else if (r < numRows - 1 && map[i + rowLen] >= '0' && map[i + rowLen] <= '9')
-						face = (RenderingFace)(map[i + rowLen] - '0'); // get the rendering face using the index (next - '0')
+					if (faceDetails.find(map[i]) != faceDetails.end())
+						fdet = faceDetails[map[i]];
+					else if (r > 0 && faceDetails.find(map[i-rowLen]) != faceDetails.end())
+						fdet = faceDetails[map[i-rowLen]];
+					else if (r < numRows - 1 && faceDetails.find(map[i+rowLen]) != faceDetails.end())
+						fdet = faceDetails[map[i+rowLen]];
 					else
 					{
 						std::cerr << "FATAL: couldn't find a width to use for rendering!" << std::endl;
 					}
 
-					ModelDimension dim = faceDetails[face].widthContributor;
+					ModelDimension dim = fdet.widthContributor;
 
 					if (dim == LENGTH)
 						curWidth = (int)(widthConversionFactor * modelLength);
@@ -243,21 +243,21 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 					curHeight = 0;
 					break;
 				default: // either ' ' or a rendering face
-					RenderingFace face;
+					FaceDetails fdet;
 					
 					// search for a neighbor that has a usable height (or use your own height, if valid)
-					if (map[i] >= '0' && map[i] <= '9')
-						face = (RenderingFace)(map[i] - '0'); // get the rendering face using the index (next - '0')
-					else if (c > 0 && map[i-1] >= '0' && map[i-1] <= '9')
-						face = (RenderingFace)(map[i-1] - '0'); // get the rendering face using the index (next - '0')
-					else if (c < numCols-1 && map[i + 1] >= '0' && map[i + 1] <= '9')
-						face = (RenderingFace)(map[i + 1] - '0'); // get the rendering face using the index (next - '0')
+					if (faceDetails.find(map[i]) != faceDetails.end())
+						fdet = faceDetails[map[i]];
+					else if (c > 0 && faceDetails.find(map[i - 1]) != faceDetails.end())
+						fdet = faceDetails[map[i - 1]];
+					else if (c < numCols - 1 && faceDetails.find(map[i + 1]) != faceDetails.end())
+						fdet = faceDetails[map[i+1]];
 					else
 					{
 						std::cerr << "FATAL: couldn't find a height to use for rendering!" << std::endl;
 					}
 
-					ModelDimension dim = faceDetails[face].heightContributor;
+					ModelDimension dim = fdet.heightContributor;
 
 					if (dim == LENGTH)
 						curHeight = (int)(heightConversionFactor * modelLength);
@@ -358,9 +358,11 @@ std::vector<LayoutChoice> initLayouts()
 
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
 {
-	int modelLength = 300;
+	int modelLength = 100;
 	int modelDepth = 100;
-	int modelHeight = 100;
+	int modelHeight = 200;
+
+	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
 	LayoutChoice bestLayout = selectLayout(width, height, modelLength, modelDepth, modelHeight);
 
@@ -378,9 +380,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 			img.drawLine(coords[0], coords[1], coords[2], coords[3], 1, cv::Scalar(100, 100, 100));
 			break;
 		default: // draw face
-			RenderingFace face = (RenderingFace)(next - '0'); // get the rendering face using the index (next - '0')
-
-			std::string render = renderPerspective(face);
+			std::string render = renderPerspective(faceDetails[next].face);
 
 			img.drawImage(coords[0], coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 			break;
