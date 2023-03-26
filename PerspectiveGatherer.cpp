@@ -1,46 +1,32 @@
 #include "PerspectiveGatherer.h"
 #include "Options.h"
 
-// std::string renderAmbientOcclusion()
-// {
-//     // hardcode filename until options come out
-//     std::string component = "all.g";
-//     std::string pathToInput = "../db/";
-//     std::string fileInput = "moss.g";
-//     std::string pathToOutput = "../output/";
-//     std::string fileOutput = "moss.png";
-//     std::cout << "Processing file: " << fileInput << std::endl;
+std::map<char, FaceDetails> getFaceDetails()
+{
+	std::map<char, FaceDetails> output;
 
-//     // FIX security vulnerability
-//     std::string inputname = pathToInput + fileInput;
-//     std::string outputname = pathToOutput + fileOutput;
+	output['0'] = {FRONT, "Front", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_front.png", LENGTH, HEIGHT};
+	output['1'] = {TOP, "Top", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_top.png", LENGTH, DEPTH};
+	output['2'] = {RIGHT, "Right", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_right.png", DEPTH, HEIGHT};
+	output['3'] = {LEFT, "Left", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_left.png", DEPTH, HEIGHT};
+	output['4'] = {BACK, "Back", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_back.png", LENGTH, HEIGHT};
+	output['5'] = {BOTTOM, "Bottom", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_bottom.png", LENGTH, DEPTH};
+	output['6'] = {BACK_MIRRORED, "Back-Mirrored", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_back_mirrored.png", LENGTH, HEIGHT};
+	output['7'] = {BOTTOM_MIRRORED, "Bottom-Mirrored", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_bottom_mirrored.png", LENGTH, DEPTH};
+	output['8'] = {DETAILED, "Ambient Occlusion", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ambient_occ.png"};
 
-//     std::ifstream file;
-//     file.open(outputname);
-//     if (file) {
-//         std::string rmFile = "rm " + outputname;
-//         auto result2 = system(rmFile.c_str());
-//     }
-//     file.close();
-//     // TODO Need to somehow decide what to render if there are multiple components.
-//     // Maybe let user choose which one to render e.g. pass in all.g?
-
-//     // EX: ../../../../../build/bin/rt -C 255/255/255 -s 1024 -c "set ambSamples=64" ../db/moss.g all.g
-//     std::string render = "../../../../../build/bin/rt -C 255/255/255 -s 1024 -c \"set ambSamples=64\" -o " + outputname + " " + inputname + " " + component;
-//     auto result2 = system(render.c_str());
-//     std::cout << "Successlly generated ambient occlusion file\n";
-// 	return outputname;
-// }
+	return output;
+}
 
 std::string renderPerspective(RenderingFace face)
 {
     // hardcode filename until options come out
     std::string component = "all.g";
-    std::string pathToInput = Options::getFilepath();
-    std::string fileInput = Options::getFileName();
+    std::string pathToInput = "moss.g";
+    std::string fileInput = "moss.g";
     std::string pathToOutput = "../output/";
     std::string fileOutput = "moss";
-    std::cout << "dbg " << pathToInput << " " << std::fileInput << endl;
+    std::cout << "dbg " << pathToInput << " " << fileInput << std::endl;
 
     // do directory traversal checks
     if (fileOutput.find("../") != std::string::npos) {
@@ -87,10 +73,13 @@ std::string renderPerspective(RenderingFace face)
             outputname += "_bottom.png";
             render = "../../../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + inputname + " " + component;
             break;
-        case AMBIENT:
+        case DETAILED:
             a = 45, e = 45;
             outputname += "_ambient.png";
             render = "../../../../../build/bin/rt -C 255/255/255 -s 1024 -c \"set ambSamples=64\" -o " + outputname + " " + inputname + " " + component;
+            break;
+        default:
+            std::cerr<< "mark added this\n";
             break;
     }
 

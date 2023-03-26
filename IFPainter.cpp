@@ -22,9 +22,7 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 	// Perhaps there's a better way to store images; reading in images multiple times is inefficient, though if we only need
 	// to read in the image once (which I believe is the case), then reading images from a file should also be fine.
 	// TODO: this
-
-	//storing the desired image and resizing it to the desired width and height
-	cv::Mat lilImage = imread(imgPath , cv::IMREAD_UNCHANGED);
+	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
 	cv::Mat resized_image;
 	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
@@ -32,9 +30,10 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 	cv::Mat destRoi;
 	try {
 		destRoi = img(cv::Rect(x, y, resized_image.cols, resized_image.rows));
-	}  catch (...) {
+	}
+	catch (...) {
 		std::cerr << "Trying to create roi out of image boundaries" << std::endl;
-        return;
+		return;
 	}
 	resized_image.copyTo(destRoi);
 }

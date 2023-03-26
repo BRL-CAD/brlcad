@@ -9,6 +9,9 @@
  *
  */
 
+// NOTE: with the exception of the "DETAILED" element, do not change
+// the ordering of the elements of RenderingFace.  The indices
+// of FRONT ... BOTTOM_MIRRORED are hard-coded in initLayouts() in RenderHandler.cpp
 enum RenderingFace
 {
 	FRONT,
@@ -17,9 +20,29 @@ enum RenderingFace
 	LEFT,
 	BACK,
 	BOTTOM,
-    AMBIENT
+	BACK_MIRRORED,
+	BOTTOM_MIRRORED,
+	DETAILED
 };
 
+enum ModelDimension
+{
+	LENGTH,
+	DEPTH,
+	HEIGHT
+};
+
+struct FaceDetails
+{
+	RenderingFace face;
+	std::string title;
+	std::string file_path;
+
+	ModelDimension widthContributor;
+	ModelDimension heightContributor;
+};
+
+std::map<char,FaceDetails> getFaceDetails();
+
 // TODO: add correct parameters and return type
-std::string renderAmbientOcclusion();
 std::string renderPerspective(RenderingFace face);
