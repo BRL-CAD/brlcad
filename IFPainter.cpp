@@ -24,20 +24,19 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 	// TODO: this
 
 	//storing the desired image and resizing it to the desired width and height
-	Mat lilImage = imread(imgPath , cv::IMREAD_UNCHANGED);
-	Mat resized_image;
-	resize(lilImage, resized_image, Size(width, height), INTER_LINEAR);
+	cv::Mat lilImage = imread(imgPath , cv::IMREAD_UNCHANGED);
+	cv::Mat resized_image;
+	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
 	//Trying to copyto the image on to the private image frame, img
-	Mat destRoi;
+	cv::Mat destRoi;
 	try {
 		destRoi = img(cv::Rect(x, y, resized_image.cols, resized_image.rows));
 	}  catch (...) {
 		std::cerr << "Trying to create roi out of image boundaries" << std::endl;
-		return -1;
+        return;
 	}
 	resized_image.copyTo(destRoi);
-
 }
 
 void IFPainter::drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics)
@@ -47,22 +46,22 @@ void IFPainter::drawText(int x, int y, double fontSize, int font_weight, std::st
 	// Try to make these methods as intuitive as possible in the idea of "we want text here, so we're confident that text will go here"
 	// Keep in mind text wrapping.
 
-	Point text_position(x, y);
-	Scalar font_color(0, 0, 0);
+	cv::Point text_position(x, y);
+	cv::Scalar font_color(0, 0, 0);
 	//boldness can be adjusted through font_weight
 	//The italics doesnt look really look like the traditional italics
 	if (italics == true) {
-		putText(img, text, text_position, FONT_ITALIC, fontSize, font_color, font_weight);
+		putText(img, text, text_position, cv::FONT_ITALIC, fontSize, font_color, font_weight);
 	}
-	putText(img, text, text_position, FONT_HERSHEY_PLAIN, fontSize, font_color, font_weight);
+	putText(img, text, text_position, cv::FONT_HERSHEY_PLAIN, fontSize, font_color, font_weight);
 }
 
 void IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
 {
 	// TODO: this
-	int lineType = LINE_8;
-	Point start(x1, y1);
-	Point end(x2, y2);
+	int lineType = cv::LINE_8;
+	cv::Point start(x1, y1);
+	cv::Point end(x2, y2);
 	line(img,
 		start,
 		end,
@@ -75,14 +74,14 @@ void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar c
 {
 	// TODO: this
 	//Should I try to fill the rectangle?
-	Point topLeft(x1, y1);
-	Point bottomRight(x2, y2);
+	cv::Point topLeft(x1, y1);
+	cv::Point bottomRight(x2, y2);
 	rectangle(img,
 			  topLeft,
 			  bottomRight,
               color,
               width,
-			  LINE_8);
+			  cv::LINE_8);
 }
 
 
