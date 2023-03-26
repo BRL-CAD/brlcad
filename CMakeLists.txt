@@ -1,6 +1,7 @@
 set(RGEN_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 list(REMOVE_DUPLICATES RGEN_INCLUDE_DIRS)
@@ -17,7 +18,7 @@ set(RGEN_SRCS
   sample_code.cpp
   )
 
-BRLCAD_ADDEXEC(rgen "${RGEN_SRCS}"  "libbu;librt;libwdb")
+BRLCAD_ADDEXEC(rgen "${RGEN_SRCS}"  "libbu;librt;libged;")
 
 set(rgen_ignore_files
   CMakeLists.txt
