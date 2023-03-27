@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
         bu_log("    l = length of output and window\n");
         bu_log("    F = path specified is a folder of models\n");
         bu_log("    g = GUI output\n");
-        bu_log("    f = filename of png export, MUST end in .png\n");
+        bu_log("    f = filepath of png export, MUST end in .png\n");
         bu_log("    n = name of preparer, to be used in report\n");
         return 0;
     } 
@@ -120,16 +120,16 @@ void generateReport(Options opt)
 
     // paint renderings
     //makeRenderSection(img, info, 0, 0, 2400, 2400, opt);
-    makeRenderSection(img, info, 0, 100, 1200, 900);
+    //makeRenderSection(img, info, 0, 100, 1200, 900, opt);
 
     // paint text sections (no method headers yet)
     // paintTitle
     // paintSidebar
     // etc...
 
-    makeTopSection(img, info, 10, 10, 1590, 50);
+    makeTopSection(img, info, opt.getWidth() / 150, opt.getWidth() / 150, opt.getWidth() - opt.getWidth() / 150 * 2, opt.getLength() / 25);
 
-    makeBottomSection(img, info, 10, 990, 1590, 50);
+    makeBottomSection(img, info, opt.getWidth() / 150, opt.getLength() - opt.getLength() / 25 - opt.getWidth() / 150, opt.getWidth() - opt.getWidth() / 150 * 2, opt.getLength() / 25);
 
 
     // optionally, display the scene
