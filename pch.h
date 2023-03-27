@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <string>
 #include <fstream>
+#include <ctime>
 
 // BRL-CAD header files
 #include "bu/getopt.h"
