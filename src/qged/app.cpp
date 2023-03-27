@@ -273,7 +273,7 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
 CADApp::~CADApp() {
     delete mdl;
     // TODO - free RTG.rtg_vlfree?
-};
+}
 
 void
 CADApp::do_quad_view_change(QtCADView *cv)
