@@ -25,11 +25,21 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	//Gather name of preparer
 	infoMap.insert(std::pair < std::string, std::string>("preparer", name));
 
+	//Gather filepath
+	infoMap.insert(std::pair < std::string, std::string>("file", filePath));
+
+	//Gather date of generation
+	std::time_t now = time(0);
+	tm* ltm = localtime(&now);
+	std::string date = std::to_string(ltm->tm_mon+1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year+1900);
+	infoMap.insert(std::pair < std::string, std::string>("dateGenerated", date));
+
 	//Hard code other stuff into map for now
 	infoMap.insert(std::pair<std::string, std::string>("owner", "Ally Hoskinson"));
 	infoMap.insert(std::pair<std::string, std::string>("version", "1.1"));
 	infoMap.insert(std::pair<std::string, std::string>("lastUpdate", "3/24/2023"));
 	infoMap.insert(std::pair<std::string, std::string>("classification", "Confidential"));
+	infoMap.insert(std::pair<std::string, std::string>("checksum", "120EA8A25E5D487BF68B5F7096440019"));
 
 	//Close database
 	ged_close(g); 
