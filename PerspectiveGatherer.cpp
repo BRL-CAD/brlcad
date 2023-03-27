@@ -25,7 +25,7 @@ std::string extractFileName(std::string filePath) {
 std::string renderPerspective(RenderingFace face, Options& opt)
 {
     // hardcode filename until options come out
-    std::string component = "all.g";
+    std::string component = "component";
     std::string pathToInput = opt.getFilepath();
     std::string fileInput = extractFileName(pathToInput);
     std::string pathToOutput = "output/";
@@ -79,7 +79,7 @@ std::string renderPerspective(RenderingFace face, Options& opt)
         case DETAILED:
             a = 45, e = 45;
             outputname += "_detailed.png";
-            render = "../../../build/bin/rt -C 255/255/255 -s 1024 -W -R -c \"set ambSamples=64\" -o " + outputname + " " + pathToInput + " " + component;
+            render = "../../../build/bin/rt -C 255/255/255 -s 1024 -A 1.5 -W -R -c \"set ambSamples=64\" -o " + outputname + " " + pathToInput + " " + component;
             break;
         default:
             std::cerr<< "mark added this\n";
