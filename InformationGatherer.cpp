@@ -25,6 +25,9 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	//Gather name of preparer
 	infoMap.insert(std::pair < std::string, std::string>("preparer", name));
 
+	//Gather filepath
+	infoMap.insert(std::pair < std::string, std::string>("file", filePath));
+
 	//Hard code other stuff into map for now
 	infoMap.insert(std::pair<std::string, std::string>("owner", "Ally Hoskinson"));
 	infoMap.insert(std::pair<std::string, std::string>("version", "1.1"));
