@@ -20,8 +20,7 @@ public:
 	~Options();
 	//Setter functions
 	void setFilepath(std::string f);
-	void setWidth(int w);
-	void setLength(int l);
+	void setPPI(int p);
 	void setIsFolder();
 	void setOpenGUI();
 	void setExportToFile();
@@ -39,6 +38,8 @@ public:
 private:
 	//Path to file that will be used to generate report
 	std::string filepath;
+	//Pixels per inch
+	int ppi;
 	//Dimensions of the output, in pixels
 	int width;
 	int length;

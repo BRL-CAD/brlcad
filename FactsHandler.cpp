@@ -15,7 +15,7 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	else {
 		text = "Owner: " + info.getInfo("owner") + "     Version: " + info.getInfo("version") + "     Last Updated: " + info.getInfo("lastUpdate") + "     Source File: " + info.getInfo("file");
 	}
-	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, text, TO_WHITE);
+	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 }
 
 void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) { 
@@ -33,7 +33,7 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	else {
 		text = "Preparer: " + info.getInfo("preparer") + "     Date Generated: " + info.getInfo("dateGenerated");
 	}
-	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, text, TO_WHITE);
+	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 }
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
@@ -45,25 +45,25 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	int textHeight = height / 30;
 	int textYOffset = textHeight * 8 / 5;
 
-	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, "File Information", TO_BOLD);
+	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "File Information", TO_BOLD);
 	
 	int curiX = 3;
 
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "Geometry Type", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "(Sample) Implicit - CSG");
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Geometry Type", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) Implicit - CSG");
 	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "File Extension", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "(Sample) .g");
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "File Extension", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) .g");
 	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "Orientation", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "(Sample) Right-Hand, Z-Up");
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Orientation", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) Right-Hand, Z-Up");
 	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "Entity Summary", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "XXX primitives, 0 regions");
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "0 assemblies, 336 total");
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Entity Summary", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "XXX primitives, 0 regions");
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "0 assemblies, 336 total");
 	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "Notes", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "(Sample) My Notes");
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Notes", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) My Notes");
 	
 }
 void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
@@ -74,29 +74,29 @@ void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offs
 	int textHeight = height / 30;
 	int textYOffset = textHeight * 8 / 5;
 
-	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, "Verification", TO_BOLD);
+	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Verification", TO_BOLD);
 
 	int curiX = 3;
 
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "Unit", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "(Sample) Meters, m");
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Unit", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) Meters, m");
 	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "Approximate Volume", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "(Sample) 912 m^3");
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Approximate Volume", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) 912 m^3");
 	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "Surface Area", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "(Sample) 100 m^2 (3D)");
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "(Sample) 128 m^2 (Projected)");
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Surface Area", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) 100 m^2 (3D)");
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) 128 m^2 (Projected)");
 	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "Mass", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "2.5 Tonnes");
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Mass", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "2.5 Tonnes");
 }
 
 void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
 
 	int textHeight = height / 20;
-	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, "Object Hierarchy", TO_BOLD);
+	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Object Hierarchy", TO_BOLD);
 }
 
 void makeVVSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
@@ -109,40 +109,40 @@ void makeVVSection(IFPainter& img, InformationGatherer& info, int offsetX, int o
 
 	int textOffset = 2 * boxOffset + textHeight;
 
-	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeightTitle, "V&V Checks", TO_BOLD);
+	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeightTitle, width, "V&V Checks", TO_BOLD);
 
 	// left side
 	int curX = offsetX;
 	int curY = offsetY + 2 * textOffset;
 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-	img.drawText(curX + textOffset, curY, textHeight, "Has Material Properties");
+	img.drawText(curX + textOffset, curY, textHeight, width, "Has Material Properties");
 	curY += textOffset;
 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-	img.drawText(curX + textOffset, curY, textHeight, "Has Optical Properties");
+	img.drawText(curX + textOffset, curY, textHeight, width, "Has Optical Properties");
 	curY += textOffset;
 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-	img.drawText(curX + textOffset, curY, textHeight, "Has Analytical Properties");
+	img.drawText(curX + textOffset, curY, textHeight, width, "Has Analytical Properties");
 	curY += textOffset;
 
 	// right side
 	curX = offsetX + width*7/16;
 	curY = offsetY + 2 * textOffset;
 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-	img.drawText(curX + textOffset, curY, textHeight, "Watertight and Solid");
+	img.drawText(curX + textOffset, curY, textHeight, width, "Watertight and Solid");
 	curY += textOffset;
 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-	img.drawText(curX + textOffset, curY, textHeight, "Has Overlaps/Interferences");
+	img.drawText(curX + textOffset, curY, textHeight, width, "Has Overlaps/Interferences");
 	curY += textOffset;
 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-	img.drawText(curX + textOffset, curY, textHeight, "Has Domain-Specific Issues");
+	img.drawText(curX + textOffset, curY, textHeight, width, "Has Domain-Specific Issues");
 	curY += textOffset;
 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-	img.drawText(curX + textOffset, curY, textHeight, "Suitable for Scientific Analysis");
+	img.drawText(curX + textOffset, curY, textHeight, width, "Suitable for Scientific Analysis");
 	curY += textOffset;
 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-	img.drawText(curX + textOffset, curY, textHeight, "Suitable for Gaming/Visualization");
+	img.drawText(curX + textOffset, curY, textHeight, width, "Suitable for Gaming/Visualization");
 	curY += textOffset;
 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-	img.drawText(curX + textOffset, curY, textHeight, "Suitable for 3D Printing");
+	img.drawText(curX + textOffset, curY, textHeight, width, "Suitable for 3D Printing");
 	curY += textOffset;
 }
