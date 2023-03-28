@@ -350,7 +350,8 @@ std::vector<LayoutChoice> initLayouts()
 	std::vector<LayoutChoice> layouts;
 
 	//layouts.emplace_back("1 \n02\n--\n43\n5 \n--\n", true, true);
-	layouts.emplace_back("1 |\n02|\n--.\n43|\n5 |\n", false, true);
+	//layouts.emplace_back("1 |\n02|\n--.\n43|\n5 |\n", false, true);
+	layouts.emplace_back("1 \n02\n--\n43\n5 \n", false, true);
 	//layouts.emplace_back("1 |43|\n02|5 |\n", false, false);
 
 	return layouts;
@@ -361,6 +362,10 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	int modelLength = 1000;
 	int modelDepth = 1000;
 	int modelHeight = 1000;
+
+	// TODO: change temporary fix
+	width -= offsetX;
+	height -= offsetY;
 
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
@@ -377,12 +382,12 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		case ' ': case '\n': case '.': // spacing character; nothing should be drawn here
 			break;
 		case '|': case '-': // draw separator line
-			img.drawLine(coords[0], coords[1], coords[2], coords[3], 1, cv::Scalar(100, 100, 100));
+			img.drawLine(offsetX + coords[0], offsetY + coords[1], offsetX + coords[2], offsetY + coords[3], 3, cv::Scalar(100, 100, 100));
 			break;
 		default: // draw face
 			std::string render = renderPerspective(faceDetails[next].face, opt);
 
-			img.drawImage(coords[0], coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
+			img.drawImage(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 			break;
 		}
 	}
@@ -390,7 +395,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	// render ambient occlusion view
 	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
 	std::string render = renderPerspective(DETAILED, opt);
-	img.drawImageFitted(coords[0], coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
+	img.drawImageFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 }
 
 LayoutChoice selectLayout(int secWidth, int secHeight, int modelLength, int modelDepth, int modelHeight)

@@ -1,5 +1,10 @@
 #pragma once
 
+#define TO_BOLD 1
+#define TO_ITAL 2
+#define TO_WHITE 4
+
+
 #include "pch.h"
 
 /*
@@ -8,12 +13,18 @@
  *
  */
 
-#pragma once
 class IFPainter
 {
 
 private:
 	cv::Mat img;
+	
+	int standardTextWeight;
+	int boldTextWeight;
+	
+	std::map<int, int> heightToFontSizeMap;
+	
+	int getFontSizeFromHeight(int height);
 
 public:
 
@@ -21,8 +32,9 @@ public:
 	~IFPainter();
 
 	void drawImage(int x, int y, int width, int height, std::string imgPath);
-	void drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics, bool isWhite, bool centerText, int font);
 	void drawImageFitted(int x, int y, int width, int height, std::string imgPath);
+	void drawText(int x, int y, int height, std::string text, int flags = 0);
+	void drawTextCentered(int x, int y, int height, std::string text, int flags = 0);
 	void drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color);
 	void drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar color);
 

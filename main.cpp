@@ -1,37 +1,12 @@
 #include "pch.h"
 
-void readParameters(int argc, char** argv, Options &opt, bool &h, bool &f);
+bool readParameters(int argc, char** argv, Options &opt);
 void generateReport(Options opt);
 
 int main(int argc, char **argv) {
     Options options;
-    bool help = false;
-    bool filepath = false;
-    readParameters(argc, argv, options, help, filepath);
-    //If user wants help, list all options and how to use program
-    if (help) {
-        bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
-        bu_log("\nOptions:\n");
-        bu_log("    p = filepath\n");
-        bu_log("    w = width of output and window\n");
-        bu_log("    l = length of output and window\n");
-        bu_log("    F = path specified is a folder of models\n");
-        bu_log("    g = GUI output\n");
-        bu_log("    f = filepath of png export, MUST end in .png\n");
-        bu_log("    n = name of preparer, to be used in report\n");
-        return 0;
-    } 
-    //If user has no arguments or did not specify filepath, give shortened help
-    else if(argc < 2 || !filepath) {
-        bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
-        bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
-        return 0;
-    }
-    /*
-    * Theoretically there would be something here to check that the model path is valid and I have some examples for ref
-    * in rt but I can't test it myself because I can't get rt working in my local still (Ally)
-    */
-    generateReport(options);
+    if (readParameters(argc, argv, options))
+        generateReport(options);
 }
 
 /**
@@ -42,18 +17,13 @@ int main(int argc, char **argv) {
  * @opt options to be used in report generation
  * @h flag for help
  * @f flag for filepath specification
+ * 
+ * @returns if the given parameters are valid.
  */
-void readParameters(int argc, char** argv, Options &opt, bool &h, bool &f)
+bool readParameters(int argc, char** argv, Options &opt)
 {
-    // TODO (Ally): Write this function to instantiate the options so it can be used in generateReport.
-
-    // TODO (Ally): This includes reading in the filepath of the file and storing it somewhere.
-
-    // TODO (Ally): Along with storing the filepath, you should give some sort of option/parameter for generating
-    // reports for an entire folder of models!
-
-    //Go into switch statement to get arguments as necessary
     /*
+    * A list of parameters is as follows:
     * p = filepath
     * w = width of output and window
     * l = length of output and window
@@ -61,6 +31,9 @@ void readParameters(int argc, char** argv, Options &opt, bool &h, bool &f)
     * g = GUI output
     * f = filename of png export
     */
+
+    bool h = false; // user requested help
+    bool f = false; // user specified filepath
 
     int opts;
 
@@ -94,6 +67,32 @@ void readParameters(int argc, char** argv, Options &opt, bool &h, bool &f)
                 break;
         } 
     } 
+
+    if (h) {
+        bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
+        bu_log("\nOptions:\n");
+        bu_log("    p = filepath\n");
+        bu_log("    w = width of output and window\n");
+        bu_log("    l = length of output and window\n");
+        bu_log("    F = path specified is a folder of models\n");
+        bu_log("    g = GUI output\n");
+        bu_log("    f = filepath of png export, MUST end in .png\n");
+        bu_log("    n = name of preparer, to be used in report\n");
+        return false;
+    }
+    //If user has no arguments or did not specify filepath, give shortened help
+    else if (argc < 2 || !f) {
+        bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
+        bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
+        return false;
+    }
+
+    /*
+    * Theoretically there would be something here to check that the model path is valid and I have some examples for ref
+    * in rt but I can't test it myself because I can't get rt working in my local still (Ally)
+    */
+
+    return true;
 }
 
 /**
@@ -103,8 +102,6 @@ void readParameters(int argc, char** argv, Options &opt, bool &h, bool &f)
  */
 void generateReport(Options opt)
 {
-    // TODO (Ally): Incorporate the Options into this method, and set the correct bounds on IFPainter.
-    
     // create image frame
     IFPainter img(opt.getLength(), opt.getWidth());
 
@@ -117,15 +114,6 @@ void generateReport(Options opt)
         std::cerr << "Error on Information Gathering.  Report Generation skipped..." << std::endl;
         return;
     }
-
-    // paint renderings
-    makeRenderSection(img, info, 0, 0, 2400, 2400, opt);
-    //makeRenderSection(img, info, 0, 100, 1200, 900, opt);
-
-    // paint text sections (no method headers yet)
-    // paintTitle
-    // paintSidebar
-    // etc...
 
     int XY_margin = opt.getWidth() / 150;
 
@@ -141,10 +129,10 @@ void generateReport(Options opt)
     int fileSectionWidth = (opt.getWidth() / 4) - 3;
     int fileSectionHeight = (opt.getLength() / 2) - (XY_margin) -  (opt.getLength() / 25) - (opt.getLength() / 250) * 2;
     makeFileInfoSection(img, info, fileSectionOffsetX, fileSectionOffsetY, fileSectionWidth, fileSectionHeight);
-
+    
     int VerficationOffsetY = (opt.getLength() - XY_margin - (opt.getLength() / 25) - (opt.getLength() / 250)) - fileSectionHeight; 
     makeVerificationSection(img, info, fileSectionOffsetX, VerficationOffsetY, fileSectionWidth, fileSectionHeight);
-
+    
     int vvSectionHeight = (opt.getLength() - (opt.getLength() / 25) * 2 - (XY_margin / 2)) / 3;
     int vvSectionWidth = ((opt.getWidth() - (fileSectionWidth + 3) - (2*XY_margin)) / 2) - (opt.getLength() / 250);
     int vvOffsetY = (opt.getLength() - XY_margin - (opt.getLength() / 25) - (opt.getLength() / 250)) - vvSectionHeight;
@@ -152,6 +140,11 @@ void generateReport(Options opt)
 
     // Has same height and width as V&V Checks, offset X by V&V checks width
     makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight);
+    
+    // paint renderings
+    makeRenderSection(img, info, XY_margin, 2 * XY_margin + opt.getLength() / 25, vvSectionWidth * 2, opt.getLength() - vvSectionHeight - 3 * (opt.getLength() / 25) / 2, opt);
+    //img.drawRect(XY_margin, 2*XY_margin + opt.getLength() / 25, vvSectionWidth * 2, opt.getLength() - vvSectionHeight - 3 * (opt.getLength() / 25) / 2, 3, cv::Scalar(0, 0, 0));
+
     // optionally, display the scene
     if (opt.getOpenGUI()) {
         img.openInGUI();
