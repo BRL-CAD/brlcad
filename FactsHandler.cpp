@@ -8,7 +8,13 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	int textYOffset = (height - textHeight) / 2;
 
 	//Draw text on top
-	std::string text = "Owner: " + info.getInfo("owner") + "     Version: " + info.getInfo("version") + "     Last Updated: " + info.getInfo("lastUpdate") + "     Classification: " + info.getInfo("classification");
+	std::string text;
+	if (info.getInfo("classification") == "CONFIDENTIAL") {
+		text = "Owner: " + info.getInfo("owner") + "     Version: " + info.getInfo("version") + "     " + info.getInfo("classification") + "     Last Updated: " + info.getInfo("lastUpdate") + "     Source File: " + info.getInfo("file");
+	}
+	else {
+		text = "Owner: " + info.getInfo("owner") + "     Version: " + info.getInfo("version") + "     Last Updated: " + info.getInfo("lastUpdate") + "     Source File: " + info.getInfo("file");
+	}
 	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, text, TO_WHITE);
 }
 
@@ -20,7 +26,13 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	int textYOffset = (height - textHeight) / 2;
 
 	//Draw text on bottom
-	std::string text = "Preparer: " + info.getInfo("preparer") + "     Source File: " + info.getInfo("file") + "     Date Generated: " + info.getInfo("dateGenerated") + "     Model Checksum: " + info.getInfo("checksum");
+	std::string text;
+	if (info.getInfo("classification") == "CONFIDENTIAL") {
+		text = "Preparer: " + info.getInfo("preparer") + "     " + info.getInfo("classification") + "     Date Generated: " + info.getInfo("dateGenerated");
+	}
+	else {
+		text = "Preparer: " + info.getInfo("preparer") + "     Date Generated: " + info.getInfo("dateGenerated");
+	}
 	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, text, TO_WHITE);
 }
 
