@@ -18,9 +18,34 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	struct ged* g = ged_open("db", filePath.c_str(), 1);
 
 	//Gather title
-	const char* cmd[2] = { "title", NULL };
+	const char* cmd[5] = { "title", NULL, NULL, NULL, NULL };
 	ged_exec(g, 1, cmd);
 	infoMap.insert(std::pair<std::string, std::string>("title", bu_vls_addr(g->ged_result_str)));
+
+    // Gather units
+	cmd[0] = "units";
+	ged_exec(g, 1, cmd);
+	infoMap.insert(std::pair<std::string, std::string>("units", bu_vls_addr(g->ged_result_str)));
+
+    // Gather dimensions
+	cmd[0] = "bb";
+	cmd[1] = "component";
+	cmd[2] = NULL;
+	ged_exec(g, 2, cmd);
+    std::string result(bu_vls_addr(g->ged_result_str));
+    std::stringstream ss(bu_vls_addr(g->ged_result_str));
+    std::string val;
+    std::vector<std::string> dim_data = {"dimX", "dimY", "dimZ", "volume"};
+    int dim_idx = 0;
+    while (ss >> val) {
+        try {
+            stod(val);
+            infoMap[dim_data[dim_idx++]] = val;
+        } catch (const std::exception& e){
+            continue;
+        }
+    }
+    // std::cout << "print info " << infoMap["dimX"] << " " << infoMap["dimY"] << " " << infoMap["dimZ"] << " " << infoMap["volume"] << std::endl;
 
 	//Gather name of preparer
 	infoMap.insert(std::pair < std::string, std::string>("preparer", name));

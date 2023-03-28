@@ -67,7 +67,7 @@ void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offs
 	int curiX = 3;
 
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "Unit", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "(Sample) Meters, m");
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, info.getInfo("units"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "Approximate Volume", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, "(Sample) 912 m^3");
