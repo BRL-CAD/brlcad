@@ -80,7 +80,7 @@ void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string
 	resized_image.copyTo(destRoi);
 }
 
-void IFPainter::drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics, bool isWhite)
+void IFPainter::drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics, bool isWhite, bool centerText, int font)
 {
 	// TODO: this
 	// keep in mind that we'll need options for bold, italics, etc.
