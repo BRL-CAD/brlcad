@@ -3,6 +3,7 @@
 Options::Options()
 {
 	filepath = "";
+	ppi = 300;
 	width = 3508;
 	length = 2480;
 	isFolder = false;
@@ -21,12 +22,10 @@ void Options::setFilepath(std::string f) {
 	filepath = f;
 }
 
-void Options::setWidth(int w) {
-	width = w;
-}
-
-void Options::setLength(int l) {
-	length = l;
+void Options::setPPI(int p) {
+	ppi = p;
+	width = int(ppi * 11.69);
+	length = int(ppi * 8.27);
 }
 
 void Options::setIsFolder() {
