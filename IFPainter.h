@@ -21,7 +21,7 @@ public:
 	~IFPainter();
 
 	void drawImage(int x, int y, int width, int height, std::string imgPath);
-	void drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics, bool isWhite);
+	void drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics, bool isWhite, bool centerText, int font);
 	void drawImageFitted(int x, int y, int width, int height, std::string imgPath);
 	void drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color);
 	void drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar color);
