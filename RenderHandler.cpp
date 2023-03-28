@@ -351,7 +351,8 @@ std::vector<LayoutChoice> initLayouts()
 
 	//layouts.emplace_back("1 \n02\n--\n43\n5 \n--\n", true, true);
 	//layouts.emplace_back("1 |\n02|\n--.\n43|\n5 |\n", false, true);
-	layouts.emplace_back("1 \n02\n--\n43\n5 \n", false, true);
+	//layouts.emplace_back("1 \n02\n--\n43\n5 \n", false, true);
+	layouts.emplace_back("134\n025\n", false, false);
 	//layouts.emplace_back("1 |43|\n02|5 |\n", false, false);
 
 	return layouts;
