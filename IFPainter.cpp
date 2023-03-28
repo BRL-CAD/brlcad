@@ -3,25 +3,22 @@
 
 IFPainter::IFPainter(int width, int height)
 	: img(width, height, CV_8UC3, cv::Scalar(255, 255, 255))
+	, standardTextWeight(2)
+	, boldTextWeight(4)
+	, heightToFontSizeMap()
 {
 	if (img.empty())
 	{
 		std::cerr << "ISSUE: Image Frame failed to load (in IFPainter.cpp)" << std::endl;
 	}
-	// TODO: this
 }
 
 IFPainter::~IFPainter()
 {
-	// TODO: this
 }
 
 void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPath)
 {
-	// TODO (Michael): Along with writing this method, figure out the best way to represent images in code.
-	// Perhaps there's a better way to store images; reading in images multiple times is inefficient, though if we only need
-	// to read in the image once (which I believe is the case), then reading images from a file should also be fine.
-	// TODO: this
 	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
 	cv::Mat resized_image;
 	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
@@ -40,10 +37,6 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 
 void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
 {
-	// TODO (Michael): Along with writing this method, figure out the best way to represent images in code.
-	// Perhaps there's a better way to store images; reading in images multiple times is inefficient, though if we only need
-	// to read in the image once (which I believe is the case), then reading images from a file should also be fine.
-	// TODO: this
 	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
 	int imgWidth = lilImage.size().width;
 	int imgHeight = lilImage.size().height;
@@ -80,30 +73,46 @@ void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string
 	resized_image.copyTo(destRoi);
 }
 
-void IFPainter::drawText(int x, int y, double fontSize, int font_weight, std::string text, bool italics, bool isWhite, bool centerText, int font)
+int IFPainter::getFontSizeFromHeight(int height)
 {
-	// TODO: this
-	// keep in mind that we'll need options for bold, italics, etc.
-	// Try to make these methods as intuitive as possible in the idea of "we want text here, so we're confident that text will go here"
-	// Keep in mind text wrapping.
+	if (heightToFontSizeMap.find(height) != heightToFontSizeMap.end())
+	{
+		return heightToFontSizeMap[height];
+	}
 
-	cv::Point text_position(x, y);
-	//boldness can be adjusted through font_weight
-	//The italics doesnt look really look like the traditional italics
-	if (italics) {
-		putText(img, text, text_position, cv::FONT_ITALIC, fontSize, cv::Scalar(0, 0, 0), font_weight);
-	}
-	else if (isWhite) {
-		putText(img, text, text_position, cv::FONT_HERSHEY_PLAIN, fontSize, cv::Scalar(255, 255, 255), font_weight);
-	}
-	else {
-		putText(img, text, text_position, cv::FONT_HERSHEY_PLAIN, fontSize, cv::Scalar(0, 0, 0), font_weight);
-	}
+	int fontSize = 1;
+	while (getTextSize("I", cv::FONT_HERSHEY_PLAIN, fontSize, standardTextWeight, 0).height < height)
+		fontSize++;
+	fontSize--;
+	
+	heightToFontSizeMap[height] = fontSize;
+	return fontSize;
+}
+
+void IFPainter::drawText(int x, int y, int height, std::string text, int flags)
+{
+	// for now, italic text is omitted
+	int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
+	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
+	int fontSize = getFontSizeFromHeight(height);
+
+	cv::putText(img, text, cv::Point(x, y + height), cv::FONT_HERSHEY_PLAIN, fontSize, color, fontWeight);
+}
+
+void IFPainter::drawTextCentered(int x, int y, int height, std::string text, int flags)
+{
+	// for now, italic text is omitted
+	int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
+	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
+	int fontSize = getFontSizeFromHeight(height);
+
+	int width = getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, fontWeight, 0).width;
+
+	cv::putText(img, text, cv::Point(x - width/2, y + height), cv::FONT_HERSHEY_PLAIN, fontSize, color, fontWeight);
 }
 
 void IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
 {
-	// TODO: this
 	int lineType = cv::LINE_8;
 	cv::Point start(x1, y1);
 	cv::Point end(x2, y2);
@@ -117,8 +126,6 @@ void IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar c
 
 void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
 {
-	// TODO: this
-	//Should I try to fill the rectangle?
 	cv::Point topLeft(x1, y1);
 	cv::Point bottomRight(x2, y2);
 	rectangle(img,
@@ -144,12 +151,9 @@ void IFPainter::openInGUI()
 	catch (std::exception& e)
 	{
 	}
-	// TODO: this
 }
 
 void IFPainter::exportToFile(std::string filePath)
 {
 	cv::imwrite(filePath, this->img);
-
-	// TODO: this
 }
