@@ -133,6 +133,7 @@ void generateReport(Options opt)
 
     makeBottomSection(img, info, opt.getWidth() / 150, opt.getLength() - opt.getLength() / 25 - opt.getWidth() / 150, opt.getWidth() - opt.getWidth() / 150 * 2, opt.getLength() / 25);
 
+
     // Border width is 3, subtract or add 3 to calculations to align with other boxes
     // offsets are based on above section offset + height (or width) of box
     int fileSectionOffsetY = (XY_margin) + (opt.getLength() / 25) + (opt.getLength() / 250); 

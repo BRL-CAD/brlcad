@@ -11,6 +11,7 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <ctime>
 
 // BRL-CAD header files
 #include "bu/getopt.h"
