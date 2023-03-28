@@ -119,19 +119,39 @@ void generateReport(Options opt)
     }
 
     // paint renderings
-    makeRenderSection(img, info, 0, 0, 2400, 2400, opt);
-    // makeRenderSection(img, info, 0, 100, 1200, 900);
+    //makeRenderSection(img, info, 0, 0, 2400, 2400, opt);
+    //makeRenderSection(img, info, 0, 100, 1200, 900, opt);
 
     // paint text sections (no method headers yet)
     // paintTitle
     // paintSidebar
     // etc...
 
+    int XY_margin = opt.getWidth() / 150;
+
     makeTopSection(img, info, opt.getWidth() / 150, opt.getWidth() / 150, opt.getWidth() - opt.getWidth() / 150 * 2, opt.getLength() / 25);
 
     makeBottomSection(img, info, opt.getWidth() / 150, opt.getLength() - opt.getLength() / 25 - opt.getWidth() / 150, opt.getWidth() - opt.getWidth() / 150 * 2, opt.getLength() / 25);
 
 
+    // Border width is 3, subtract or add 3 to calculations to align with other boxes
+    // offsets are based on above section offset + height (or width) of box
+    int fileSectionOffsetY = (XY_margin) + (opt.getLength() / 25) + (opt.getLength() / 250); 
+    int fileSectionOffsetX = opt.getWidth() - (opt.getWidth() / 4) - (XY_margin);
+    int fileSectionWidth = (opt.getWidth() / 4) - 3;
+    int fileSectionHeight = (opt.getLength() / 2) - (XY_margin) -  (opt.getLength() / 25) - (opt.getLength() / 250) * 2;
+    makeFileInfoSection(img, info, fileSectionOffsetX, fileSectionOffsetY, fileSectionWidth, fileSectionHeight);
+
+    int VerficationOffsetY = (opt.getLength() - XY_margin - (opt.getLength() / 25) - (opt.getLength() / 250)) - fileSectionHeight; 
+    makeVerificationSection(img, info, fileSectionOffsetX, VerficationOffsetY, fileSectionWidth, fileSectionHeight);
+
+    int vvSectionHeight = (opt.getLength() - (opt.getLength() / 25) * 2 - (XY_margin / 2)) / 3;
+    int vvSectionWidth = ((opt.getWidth() - (fileSectionWidth + 3) - (2*XY_margin)) / 2) - (opt.getLength() / 250);
+    int vvOffsetY = (opt.getLength() - XY_margin - (opt.getLength() / 25) - (opt.getLength() / 250)) - vvSectionHeight;
+    makeVVSection(img, info, XY_margin, vvOffsetY, vvSectionWidth, vvSectionHeight);
+
+    // Has same height and width as V&V Checks, offset X by V&V checks width
+    makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight);
     // optionally, display the scene
     if (opt.getOpenGUI()) {
         img.openInGUI();

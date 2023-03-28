@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <string>
 #include <fstream>
+#include <vector>
 #include <ctime>
 
 // BRL-CAD header files
