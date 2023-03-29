@@ -22,14 +22,6 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	ged_exec(g, 1, cmd);
 	infoMap.insert(std::pair<std::string, std::string>("title", bu_vls_addr(g->ged_result_str)));
 
-	//Gather units
-	cmd[0] = "units";
-	ged_exec(g, 1, cmd);
-	std::string result = bu_vls_addr(g->ged_result_str);
-	std::size_t first = result.find_first_of("\'");
-	std::size_t last = result.find_last_of("\'");
-	infoMap.insert(std::pair<std::string, std::string>("units", result.substr(first+1, last-first-1))); 
-
 	//Gather primitives, regions, total objects
 	cmd[0] = "summary";
 	ged_exec(g, 1, cmd);
@@ -56,6 +48,34 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	cmd[0] = "dbversion";
 	ged_exec(g, 1, cmd);
 	infoMap.insert(std::pair<std::string, std::string>("version", bu_vls_addr(g->ged_result_str)));
+
+    // Gather units
+	cmd[0] = "units";
+	ged_exec(g, 1, cmd);
+  std::string result = bu_vls_addr(g->ged_result_str);
+	std::size_t first = result.find_first_of("\'");
+	std::size_t last = result.find_last_of("\'");
+	infoMap.insert(std::pair<std::string, std::string>("units", result.substr(first+1, last-first-1))); 
+
+    // Gather dimensions
+	cmd[0] = "bb";
+	cmd[1] = "component";
+	cmd[2] = NULL;
+	ged_exec(g, 2, cmd);
+    std::string result(bu_vls_addr(g->ged_result_str));
+    std::stringstream ss(bu_vls_addr(g->ged_result_str));
+    std::string val;
+    std::vector<std::string> dim_data = {"dimX", "dimY", "dimZ", "volume"};
+    int dim_idx = 0;
+    while (ss >> val) {
+        try {
+            stod(val);
+            infoMap[dim_data[dim_idx++]] = val;
+        } catch (const std::exception& e){
+            continue;
+        }
+    }
+    // std::cout << "print info " << infoMap["dimX"] << " " << infoMap["dimY"] << " " << infoMap["dimZ"] << " " << infoMap["volume"] << std::endl;
 
 	//Gather name of preparer
 	infoMap.insert(std::pair < std::string, std::string>("preparer", name));
