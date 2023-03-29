@@ -52,7 +52,7 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
     // Gather units
 	cmd[0] = "units";
 	ged_exec(g, 1, cmd);
-  std::string result = bu_vls_addr(g->ged_result_str);
+	std::string result = bu_vls_addr(g->ged_result_str);
 	std::size_t first = result.find_first_of("\'");
 	std::size_t last = result.find_last_of("\'");
 	infoMap.insert(std::pair<std::string, std::string>("units", result.substr(first+1, last-first-1))); 
@@ -62,7 +62,7 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	cmd[1] = "component";
 	cmd[2] = NULL;
 	ged_exec(g, 2, cmd);
-    std::string result(bu_vls_addr(g->ged_result_str));
+    result = (bu_vls_addr(g->ged_result_str));
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     std::vector<std::string> dim_data = {"dimX", "dimY", "dimZ", "volume"};
