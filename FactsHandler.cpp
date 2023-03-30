@@ -1,4 +1,5 @@
 #include "FactsHandler.h"
+#include "RenderHandler.h"
 
 void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
 	//Draw black rectangle
@@ -78,8 +79,8 @@ void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offs
 
 	int curiX = 3;
 
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, "Unit", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, info.getInfo("units"));
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Unit", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
 
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Approximate Volume", TO_BOLD);
@@ -93,11 +94,36 @@ void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offs
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "2.5 Tonnes");
 }
 
-void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
+void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
 
+    int textOffset = width / 10;
 	int textHeight = height / 20;
+    int textXOffset = textHeight * 53 / 5;
+    int textYOffset = textHeight * 15 / 5;
+
 	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Object Hierarchy", TO_BOLD);
+
+    int curiX = 0;
+    int curiY = 3;
+
+	// img.drawText(offsetX + textOffset, offsetY + curiY++ * textYOffset, textHeight, width, "Test", TO_BOLD);
+	// img.drawText(offsetX + textOffset, offsetY + curiY++ * textYOffset, textHeight, width, "Test2", TO_BOLD);
+
+    // TODO put in for loop to prevent out of bounds. 
+	std::string render = renderPerspective(DETAILED, info.largestComponents[0].second, opt);
+    // main component
+    img.drawImage(offsetX + textOffset, offsetY + textYOffset, 300, 300, render);
+
+    // sub components
+	render = renderPerspective(DETAILED, info.largestComponents[1].second, opt);
+    img.drawImage(offsetX + textOffset, offsetY + curiY * textYOffset, 300, 300, render);
+    curiX += 3;
+	render = renderPerspective(DETAILED, info.largestComponents[2].second, opt);
+    img.drawImage(offsetX + curiX * textOffset, offsetY + curiY * textYOffset, 300, 300, render);
+    curiX += 3;
+	render = renderPerspective(DETAILED, info.largestComponents[3].second, opt);
+    img.drawImage(offsetX + curiX * textOffset, offsetY + curiY * textYOffset, 300, 300, render);
 }
 
 void makeVVSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {

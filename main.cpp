@@ -135,7 +135,7 @@ void generateReport(Options opt)
     makeVVSection(img, info, XY_margin, vvOffsetY, vvSectionWidth, vvSectionHeight);
 
     // Has same height and width as V&V Checks, offset X by V&V checks width
-    makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight);
+    makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
     
     // paint renderings
     makeRenderSection(img, info, XY_margin, 2 * XY_margin + opt.getLength() / 25, vvSectionWidth * 2, opt.getLength() - vvSectionHeight - 3 * (opt.getLength() / 25) / 2, opt);
