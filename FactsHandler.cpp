@@ -6,16 +6,33 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
+	std::vector<std::string> text;
+	std::vector<std::string> text2;
 
 	//Draw text on top
-	std::string text;
+	/*std::string text;
 	if (info.getInfo("classification") == "CONFIDENTIAL") {
 		text = "Owner: " + info.getInfo("owner") + "     Version: " + info.getInfo("version") + "     " + info.getInfo("classification") + "     Last Updated: " + info.getInfo("lastUpdate") + "     Source File: " + info.getInfo("file");
 	}
 	else {
 		text = "Owner: " + info.getInfo("owner") + "     Version: " + info.getInfo("version") + "     Last Updated: " + info.getInfo("lastUpdate") + "     Source File: " + info.getInfo("file");
 	}
-	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE); */ 
+
+	if (info.getInfo("classification") == "CONFIDENTIAL") {
+		text.push_back("Owner: " + info.getInfo("owner"));
+		text.push_back("Version: " + info.getInfo("version"));
+		text2.push_back("Last Updated : " + info.getInfo("lastUpdate"));
+		text2.push_back("Source File : " + info.getInfo("file"));
+		img.justifyConfidential(offsetX, offsetY + textYOffset, textHeight, width, text, text2, TO_WHITE);
+	}
+	else {
+		text.push_back("Owner: " + info.getInfo("owner"));
+		text.push_back("Version: " + info.getInfo("version"));
+		text.push_back("Last Updated : " + info.getInfo("lastUpdate"));
+		text.push_back("Source File : " + info.getInfo("file"));
+		img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+	}
 }
 
 void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) { 
@@ -24,16 +41,28 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
+	std::vector<std::string> text;
+	std::vector<std::string> text2;
 
 	//Draw text on bottom
-	std::string text;
+	/*std::string text;
 	if (info.getInfo("classification") == "CONFIDENTIAL") {
 		text = "Preparer: " + info.getInfo("preparer") + "     " + info.getInfo("classification") + "     Date Generated: " + info.getInfo("dateGenerated");
 	}
 	else {
 		text = "Preparer: " + info.getInfo("preparer") + "     Date Generated: " + info.getInfo("dateGenerated");
 	}
-	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE);*/
+	if (info.getInfo("classification") == "CONFIDENTIAL") {
+		text.push_back("Preparer: " + info.getInfo("preparer"));
+		text2.push_back("Date Generated : " + info.getInfo("dateGenerated"));
+		img.justifyConfidential(offsetX, offsetY + textYOffset, textHeight, width, text, text2, TO_WHITE);
+	}
+	else {
+		text.push_back("Preparer: " + info.getInfo("preparer"));
+		text.push_back("Date Generated : " + info.getInfo("dateGenerated"));
+		img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+	}
 }
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
@@ -78,9 +107,10 @@ void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offs
 
 	int curiX = 3;
 
+
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Unit", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
-
+  
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Approximate Volume", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) 912 m^3");
@@ -96,8 +126,11 @@ void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offs
 void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
 
-	int textHeight = height / 20;
-	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Object Hierarchy", TO_BOLD);
+	int textHeightTitle = height / 20;
+	int textHeight = height / 30;
+	img.drawTextCentered(offsetX + width / 2, offsetY + textHeightTitle, textHeightTitle, width, "Object Hierarchy", TO_BOLD);
+	//img.textWrapping(offsetX + 10, offsetY + textHeightTitle * 3, offsetX + width, offsetY + height, width, textHeight, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt. tempor incididunt ut labore et dolore magna aliqua. Neque convallis a cras semper auctor neque. Blandit massa enim nec dui nunc. Tristique senectus et netus et. Adipiscing tristique risus nec feugiat in fermentum posuere. Ut etiam sit amet nisl. Posuere sollicitudin aliquam ultrices sagittis orci a. Pellentesque elit ullamcorper dignissim cras tincidunt lobortis feugiat vivamus. Aliquet nec ullamcorper sit amet risus nullam eget felis eget. Nulla facilisi etiam dignissim diam quis enim lobortis. Egestas sed tempus urna et pharetra pharetra massa massa. Lorem ipsum dolor sit amet.", 0, 0, 0);
+	//img.textWrapping(offsetX + 10, offsetY + height / 2 + height / 5, offsetX + width, offsetY + height, width, textHeight, "Placerat duis ultricies lacus sed. Consectetur adipiscing elit pellentesque habitant morbi tristique senectus et netus. Quis varius quam quisque id diam. Amet justo donec enim diam vulputate ut pharetra sit. Felis eget velit aliquet sagittis id consectetur purus. Massa tempor nec feugiat nisl pretium. Arcu felis bibendum ut tristique. Gravida cum sociis natoque penatibus et magnis dis parturient montes. Eu feugiat pretium nibh ipsum consequat. Varius quam quisque id diam vel quam elementum pulvinar. Bibendum ut tristique et egestas quis ipsum suspendisse ultrices", TO_ELLIPSIS, 500, 0);
 }
 
 void makeVVSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
