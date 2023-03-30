@@ -65,7 +65,7 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	infoMap.insert(std::pair<std::string, std::string>("owner", "Ally Hoskinson"));
 	infoMap.insert(std::pair<std::string, std::string>("version", "1.1"));
 	infoMap.insert(std::pair<std::string, std::string>("lastUpdate", "3/24/2023"));
-	infoMap.insert(std::pair<std::string, std::string>("classification", "CONFIDENTIAL"));
+	//infoMap.insert(std::pair<std::string, std::string>("classification", "CONFIDENTIAL"));
 	//infoMap.insert(std::pair<std::string, std::string>("checksum", "120EA8A25E5D487BF68B5F7096440019"));
 
 	//Close database
