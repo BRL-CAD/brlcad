@@ -26,7 +26,7 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
 	// draw bounding rectangle
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
+	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
 
 	int headerOffset = width / 20;
 	int textOffset = width / 10;
@@ -55,7 +55,7 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	
 }
 void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
+	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
 
 	int headerOffset = width / 20;
 	int textOffset = width / 10;
@@ -81,14 +81,14 @@ void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offs
 }
 
 void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
+	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
 
 	int textHeight = height / 20;
 	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, "Object Hierarchy", TO_BOLD);
 }
 
 void makeVVSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
+	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
 
 	int boxOffset = width / 40;
 	int textHeightTitle = height / 20;
