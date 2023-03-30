@@ -104,26 +104,6 @@ QtCADView::isValid()
     return false;
 }
 
-void
-QtCADView::fallback()
-{
-    if (canvas_sw)
-	return;
-
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl && !canvas_gl->isValid()) {
-	bu_log("System OpenGL Canvas didn't work, falling back on Software Rasterizer\n");
-	delete canvas_gl;
-	canvas_gl = NULL;
-	canvas_sw = new QtSW(this, NULL);
-	canvas_sw->setMinimumSize(50,50);
-	canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	l->addWidget(canvas_sw);
-    }
-#endif
-}
-
-
 int
 QtCADView::view_type()
 {

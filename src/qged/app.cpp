@@ -202,7 +202,7 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
     // after that point that we know whether the setup of the system's OpenGL
     // context setup was successful.
     if (!w->isValid3D()) {
-	w->fallback3D();
+	bu_exit(EXIT_FAILURE, "OpenGL failed to initialize properly.  Recommend running qged with '-s' option to use fallback swrast rendering.");
     }
 
     // If we have a default .g file supplied, open it.  We've delayed doing so

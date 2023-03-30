@@ -37,13 +37,6 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
     CADApp *ap = (CADApp *)qApp;
     ap->w = this;
 
-#ifdef BRLCAD_OPENGL
-    // Define the surface format for OpenGL drawing
-    QSurfaceFormat format;
-    format.setDepthBufferSize(16);
-    QSurfaceFormat::setDefaultFormat(format);
-#endif
-
     // This solves the disappearing menubar problem on Ubuntu + fluxbox -
     // suspect Unity's "global toolbar" settings are being used even when
     // the Qt app isn't being run under unity - this is probably a quirk
@@ -376,12 +369,6 @@ bool
 BRLCAD_MainWindow::isValid3D()
 {
     return c4->isValid();
-}
-
-void
-BRLCAD_MainWindow::fallback3D()
-{
-    c4->fallback();
 }
 
 void

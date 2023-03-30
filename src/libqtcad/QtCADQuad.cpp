@@ -311,22 +311,6 @@ QtCADQuad::isValid()
     return true;
 }
 
-void
-QtCADQuad::fallback()
-{
-    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
-	if (views[i] != nullptr) {
-	    views[i]->fallback();
-
-	    views[i]->set_current(0);
-	}
-    }
-
-    // ur is still the default current
-    views[UPPER_RIGHT_QUADRANT]->set_current(1);
-    currentView = views[UPPER_RIGHT_QUADRANT];
-}
-
 bool
 QtCADQuad::eventFilter(QObject *t, QEvent *e)
 {

@@ -60,10 +60,8 @@ class BRLCAD_MainWindow : public QMainWindow
 
 	QtConsole *console;
 
-	// Post-show methods for checking validity of OpenGL initialization and
-	// falling back to swrast on failure
+	// Post-show methods for checking validity of OpenGL initialization
 	bool isValid3D();
-	void fallback3D();
 
 	// Report if the quad/central widget is active
 	bool isDisplayActive();

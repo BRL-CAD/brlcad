@@ -65,7 +65,6 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	void save_image(int quad = 0);
 
 	bool isValid();
-	void fallback();
 
 	struct bview * view();
 	struct dm * dmp();
