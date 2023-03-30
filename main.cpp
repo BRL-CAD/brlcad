@@ -37,17 +37,14 @@ bool readParameters(int argc, char** argv, Options &opt)
 
     int opts;
 
-    while ((opts = bu_getopt(argc, argv, "Fg?p:w:l:f:n:")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "Fg?p:P:f:n:")) != -1) {
         switch (opts) {
             case 'p':
                 f = true;
                 opt.setFilepath(bu_optarg);
                 break;
-            case 'w':
-                opt.setWidth(atoi(bu_optarg));
-                break;
-            case 'l':
-                opt.setLength(atoi(bu_optarg));
+            case 'P':
+                opt.setPPI(atoi(bu_optarg));
                 break;
             case 'F':
                 opt.setIsFolder();
@@ -72,8 +69,7 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
         bu_log("\nOptions:\n");
         bu_log("    p = filepath\n");
-        bu_log("    w = width of output and window\n");
-        bu_log("    l = length of output and window\n");
+        bu_log("    P = pixels per inch, default is 300ppi\n");
         bu_log("    F = path specified is a folder of models\n");
         bu_log("    g = GUI output\n");
         bu_log("    f = filepath of png export, MUST end in .png\n");
