@@ -106,8 +106,10 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
         } 
         
         std::vector<std::pair<double, std::string> > childComp = lsComp(filePath, curComp.second);
-        for (auto& x : childComp)
-            pq.push(x);
+        for (auto& x : childComp) {
+            if (curComp.first != x.first)
+                pq.push(x);
+        }
     }
 
     for (auto& x : largestComponents) {

@@ -42,7 +42,8 @@ std::string renderPerspective(RenderingFace face, std::string component, Options
 
     // FIX security vulnerability
     std::string fileString = component.substr(0, component.find("."));
-    fileString = component.substr(0, component.find("/"));
+    fileString = fileString.substr(0, fileString.find("/"));
+    std::cout << "File string: " << fileString << std::endl;
     std::string outputname = pathToOutput + fileOutput + "_" + fileString;
     std::string render;
 

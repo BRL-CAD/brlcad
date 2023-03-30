@@ -113,17 +113,19 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     // TODO put in for loop to prevent out of bounds. 
 	std::string render = renderPerspective(DETAILED, info.largestComponents[0].second, opt);
     // main component
-    img.drawImage(offsetX + textOffset, offsetY + textYOffset, 300, 300, render);
+    img.drawImageFitted(offsetX + 5, offsetY + textYOffset, width - 10, height / 2 - textYOffset, render);
 
+    int offY = height / 2 + offsetY;
+    int offX = offsetX + 5;
+
+    int imgH = height / 2;
+    int imgW = (width - (info.largestComponents.size()-1)*5) / (info.largestComponents.size()-1);
+    
     // sub components
-	render = renderPerspective(DETAILED, info.largestComponents[1].second, opt);
-    img.drawImage(offsetX + textOffset, offsetY + curiY * textYOffset, 300, 300, render);
-    curiX += 3;
-	render = renderPerspective(DETAILED, info.largestComponents[2].second, opt);
-    img.drawImage(offsetX + curiX * textOffset, offsetY + curiY * textYOffset, 300, 300, render);
-    curiX += 3;
-	render = renderPerspective(DETAILED, info.largestComponents[3].second, opt);
-    img.drawImage(offsetX + curiX * textOffset, offsetY + curiY * textYOffset, 300, 300, render);
+    for (int i = 1; i < info.largestComponents.size(); i++) {
+        render = renderPerspective(DETAILED, info.largestComponents[i].second, opt);
+        img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
+    }
 }
 
 void makeVVSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
