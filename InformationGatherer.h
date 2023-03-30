@@ -18,6 +18,7 @@ private:
 	std::map<std::string, std::string> infoMap;
 
 public:
+    std::vector<std::pair<double, std::string> > largestComponents;
 	InformationGatherer();
 	~InformationGatherer();
 

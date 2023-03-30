@@ -386,8 +386,10 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 			img.drawLine(offsetX + coords[0], offsetY + coords[1], offsetX + coords[2], offsetY + coords[3], 3, cv::Scalar(100, 100, 100));
 			break;
 		default: // draw face
-			std::string render = renderPerspective(faceDetails[next].face, opt);
+			std::string render = renderPerspective(faceDetails[next].face, info.largestComponents[0].second, opt);
 
+            std::cout << "INside RenderHandler: " << offsetX + coords[0] << " " <<  offsetY + coords[1] << " " << coords[2] - coords[0] << " " << coords[3] - coords[1] << " " << render << std::endl; 
+            std::cout << render << std::endl;
 			img.drawImage(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 			break;
 		}
@@ -395,7 +397,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 	// render ambient occlusion view
 	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
-	std::string render = renderPerspective(DETAILED, opt);
+	std::string render = renderPerspective(DETAILED, info.largestComponents[0].second, opt);
 	img.drawImageFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 }
 

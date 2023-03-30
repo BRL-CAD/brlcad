@@ -1,4 +1,5 @@
 #include "FactsHandler.h"
+#include "RenderHandler.h"
 
 void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
 	//Draw black rectangle
@@ -123,14 +124,38 @@ void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offs
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "2.5 Tonnes");
 }
 
-void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
+void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
+	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
 
-	int textHeightTitle = height / 20;
-	int textHeight = height / 30;
-	img.drawTextCentered(offsetX + width / 2, offsetY + textHeightTitle, textHeightTitle, width, "Object Hierarchy", TO_BOLD);
-	//img.textWrapping(offsetX + 10, offsetY + textHeightTitle * 3, offsetX + width, offsetY + height, width, textHeight, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt. tempor incididunt ut labore et dolore magna aliqua. Neque convallis a cras semper auctor neque. Blandit massa enim nec dui nunc. Tristique senectus et netus et. Adipiscing tristique risus nec feugiat in fermentum posuere. Ut etiam sit amet nisl. Posuere sollicitudin aliquam ultrices sagittis orci a. Pellentesque elit ullamcorper dignissim cras tincidunt lobortis feugiat vivamus. Aliquet nec ullamcorper sit amet risus nullam eget felis eget. Nulla facilisi etiam dignissim diam quis enim lobortis. Egestas sed tempus urna et pharetra pharetra massa massa. Lorem ipsum dolor sit amet.", 0, 0, 0);
-	//img.textWrapping(offsetX + 10, offsetY + height / 2 + height / 5, offsetX + width, offsetY + height, width, textHeight, "Placerat duis ultricies lacus sed. Consectetur adipiscing elit pellentesque habitant morbi tristique senectus et netus. Quis varius quam quisque id diam. Amet justo donec enim diam vulputate ut pharetra sit. Felis eget velit aliquet sagittis id consectetur purus. Massa tempor nec feugiat nisl pretium. Arcu felis bibendum ut tristique. Gravida cum sociis natoque penatibus et magnis dis parturient montes. Eu feugiat pretium nibh ipsum consequat. Varius quam quisque id diam vel quam elementum pulvinar. Bibendum ut tristique et egestas quis ipsum suspendisse ultrices", TO_ELLIPSIS, 500, 0);
+    int textOffset = width / 10;
+	int textHeight = height / 20;
+    int textXOffset = textHeight * 53 / 5;
+    int textYOffset = textHeight * 15 / 5;
+
+	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Object Hierarchy", TO_BOLD);
+
+    int curiX = 0;
+    int curiY = 3;
+
+	// img.drawText(offsetX + textOffset, offsetY + curiY++ * textYOffset, textHeight, width, "Test", TO_BOLD);
+	// img.drawText(offsetX + textOffset, offsetY + curiY++ * textYOffset, textHeight, width, "Test2", TO_BOLD);
+
+    // TODO put in for loop to prevent out of bounds. 
+	std::string render = renderPerspective(DETAILED, info.largestComponents[0].second, opt);
+    // main component
+    img.drawImageFitted(offsetX + 5, offsetY + textYOffset, width - 10, height / 2 - textYOffset, render);
+
+    int offY = height / 2 + offsetY;
+    int offX = offsetX + 5;
+
+    int imgH = height / 2;
+    int imgW = (width - (info.largestComponents.size()-1)*5) / (info.largestComponents.size()-1);
+    
+    // sub components
+    for (int i = 1; i < info.largestComponents.size(); i++) {
+        render = renderPerspective(DETAILED, info.largestComponents[i].second, opt);
+        img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
+    }
 }
 
 void makeVVSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {

@@ -22,15 +22,15 @@ std::string extractFileName(std::string filePath) {
     return filePath.substr(filePath.find_last_of("/\\") + 1);
 }
 
-std::string renderPerspective(RenderingFace face, Options& opt)
+std::string renderPerspective(RenderingFace face, std::string component, Options& opt)
 {
     // hardcode filename until options come out
-    std::string component = "component";
     std::string pathToInput = opt.getFilepath();
     std::string fileInput = extractFileName(pathToInput);
     std::string pathToOutput = "output/";
     std::string fileOutput = fileInput.substr(0, fileInput.find_last_of("."));
-    std::cout << "dbg " << pathToInput << " " << fileInput << " " << fileOutput << std::endl;
+    std::cout << "Path to input: " << pathToInput << " " << fileOutput << std::endl;
+    std::cout << "Component: " << component << std::endl;
 
     // do directory traversal checks
     if (fileOutput.find("../") != std::string::npos) {
@@ -41,7 +41,10 @@ std::string renderPerspective(RenderingFace face, Options& opt)
     std::cout << "Processing file: " << fileInput << std::endl;
 
     // FIX security vulnerability
-    std::string outputname = pathToOutput + fileOutput;
+    std::string fileString = component.substr(0, component.find("."));
+    fileString = fileString.substr(0, fileString.find("/"));
+    std::cout << "File string: " << fileString << std::endl;
+    std::string outputname = pathToOutput + fileOutput + "_" + fileString;
     std::string render;
 
     int a, e;

@@ -120,6 +120,9 @@ void generateReport(Options opt)
     int vvHeight = (opt.getLength() - 2*header_footer_height - 2*margin) / 3;
     
 
+    // Has same height and width as V&V Checks, offset X by V&V checks width
+    // makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
+
     // define the position of all sections in the report
     Position imagePosition(0,0,opt.getWidth(), opt.getLength());
     Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
