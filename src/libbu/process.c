@@ -1,7 +1,7 @@
 /*                       P R O C E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -542,6 +542,32 @@ bu_process_wait(
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
+
+int
+bu_process_pending(int fd)
+{
+    int result;
+
+#if defined(_WIN32)
+    HANDLE out_fd = (HANDLE)_get_osfhandle(fd);
+    DWORD bytesAvailable = 0;
+    /* returns 1 on success, 0 on error */
+    if (PeekNamedPipe(out_fd, NULL, 0, NULL, &bytesAvailable, NULL)) {
+	result = bytesAvailable;
+    } else {
+	result = -1;
+    }
+#else
+    fd_set read_set;
+    FD_ZERO(&read_set);
+    FD_SET(fd, &read_set);
+    /* returns 1 on success, 0 on timeout, -1 on error */
+    result = select(fd+1, &read_set, NULL, NULL, 0);
+#endif
+
+    /* collapse return to ignore amount to read or errors */
+    return result > 0 ? 1 : 0;
+}
 
 int
 bu_interactive()
