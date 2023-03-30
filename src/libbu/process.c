@@ -544,6 +544,32 @@ bu_process_wait(
 #endif
 
 int
+bu_process_pending(int fd)
+{
+    int result;
+
+#if defined(_WIN32)
+    HANDLE out_fd = (HANDLE)_get_osfhandle(fd);
+    DWORD bytesAvailable = 0;
+    /* returns 1 on success, 0 on error */
+    if (PeekNamedPipe(out_fd, NULL, 0, NULL, &bytesAvailable, NULL)) {
+	result = bytesAvailable;
+    } else {
+	result = -1;
+    }
+#else
+    fd_set read_set;
+    FD_ZERO(&read_set);
+    FD_SET(fd, &read_set);
+    /* returns 1 on success, 0 on timeout, -1 on error */
+    result = select(fd+1, &read_set, NULL, NULL, 0);
+#endif
+
+    /* collapse return to ignore amount to read or errors */
+    return result > 0 ? 1 : 0;
+}
+
+int
 bu_interactive(void)
 {
     int interactive = 1;

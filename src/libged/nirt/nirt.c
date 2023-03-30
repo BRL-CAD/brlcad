@@ -45,6 +45,7 @@
 #include "bu/app.h"
 #include "bu/cmd.h"
 #include "bu/file.h"
+#include "bu/snooze.h"
 #include "bu/process.h"
 #include "vmath.h"
 
@@ -307,10 +308,20 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
 
 print:
-    while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
-	bu_vls_strcpy(&v, line);
-	bu_vls_trimspace(&v);
-	bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+    /* ensure nirt has started and has something to read from - with 5 second timeout */
+    int64_t start = bu_gettime();
+    while (!bu_process_pending(fileno(fp_err)) && !bu_process_pending(fileno(fp_out))) {
+	if ((bu_gettime() - start) > BU_SEC2USEC(5))
+	    break;
+    }
+
+    /* check if nirt wrote anything to error on load */
+    if (bu_process_pending(fileno(fp_err))) {
+	while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
+	    bu_vls_strcpy(&v, line);
+	    bu_vls_trimspace(&v);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+	}
     }
 
     if (DG_QRAY_TEXT(gedp->ged_gdp)) {
@@ -395,6 +406,15 @@ print:
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	bv_vlblock_free(vbp);
+    }
+
+    /* check if nirt wrote any errors from shots */
+    if (bu_process_pending(fileno(fp_err))) {
+	while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
+	    bu_vls_strcpy(&v, line);
+	    bu_vls_trimspace(&v);
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_addr(&v));
+	}
     }
 
     bu_vls_free(&v);
