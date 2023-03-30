@@ -46,6 +46,7 @@
 #include "bu/cmd.h"
 #include "bu/file.h"
 #include "bu/snooze.h"
+#include "bu/time.h"
 #include "bu/process.h"
 #include "vmath.h"
 
@@ -84,6 +85,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
     char **gd_rt_cmd = NULL;
     int gd_rt_cmd_len = 0;
     int skip_drawn = 0;
+    int64_t start = 0;
 
     const char *nirt = NULL;
     char nirtcmd[MAXPATHLEN] = {0};
@@ -309,7 +311,7 @@ ged_nirt_core(struct ged *gedp, int argc, const char *argv[])
 
 print:
     /* ensure nirt has started and has something to read from - with 5 second timeout */
-    int64_t start = bu_gettime();
+    start = bu_gettime();
     while (!bu_process_pending(fileno(fp_err)) && !bu_process_pending(fileno(fp_out))) {
 	if ((bu_gettime() - start) > BU_SEC2USEC(5))
 	    break;
