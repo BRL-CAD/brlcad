@@ -7,16 +7,33 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
+	std::vector<std::string> text;
+	std::vector<std::string> text2;
 
 	//Draw text on top
-	std::string text;
+	/*std::string text;
 	if (info.getInfo("classification") == "CONFIDENTIAL") {
 		text = "Owner: " + info.getInfo("owner") + "     Version: " + info.getInfo("version") + "     " + info.getInfo("classification") + "     Last Updated: " + info.getInfo("lastUpdate") + "     Source File: " + info.getInfo("file");
 	}
 	else {
 		text = "Owner: " + info.getInfo("owner") + "     Version: " + info.getInfo("version") + "     Last Updated: " + info.getInfo("lastUpdate") + "     Source File: " + info.getInfo("file");
 	}
-	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE); */ 
+
+	if (info.getInfo("classification") == "CONFIDENTIAL") {
+		text.push_back("Owner: " + info.getInfo("owner"));
+		text.push_back("Version: " + info.getInfo("version"));
+		text2.push_back("Last Updated : " + info.getInfo("lastUpdate"));
+		text2.push_back("Source File : " + info.getInfo("file"));
+		img.justifyConfidential(offsetX, offsetY + textYOffset, textHeight, width, text, text2, TO_WHITE);
+	}
+	else {
+		text.push_back("Owner: " + info.getInfo("owner"));
+		text.push_back("Version: " + info.getInfo("version"));
+		text.push_back("Last Updated : " + info.getInfo("lastUpdate"));
+		text.push_back("Source File : " + info.getInfo("file"));
+		img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+	}
 }
 
 void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) { 
@@ -25,21 +42,33 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
+	std::vector<std::string> text;
+	std::vector<std::string> text2;
 
 	//Draw text on bottom
-	std::string text;
+	/*std::string text;
 	if (info.getInfo("classification") == "CONFIDENTIAL") {
 		text = "Preparer: " + info.getInfo("preparer") + "     " + info.getInfo("classification") + "     Date Generated: " + info.getInfo("dateGenerated");
 	}
 	else {
 		text = "Preparer: " + info.getInfo("preparer") + "     Date Generated: " + info.getInfo("dateGenerated");
 	}
-	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE);*/
+	if (info.getInfo("classification") == "CONFIDENTIAL") {
+		text.push_back("Preparer: " + info.getInfo("preparer"));
+		text2.push_back("Date Generated : " + info.getInfo("dateGenerated"));
+		img.justifyConfidential(offsetX, offsetY + textYOffset, textHeight, width, text, text2, TO_WHITE);
+	}
+	else {
+		text.push_back("Preparer: " + info.getInfo("preparer"));
+		text.push_back("Date Generated : " + info.getInfo("dateGenerated"));
+		img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+	}
 }
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
 	// draw bounding rectangle
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
+	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
 
 	int headerOffset = width / 20;
 	int textOffset = width / 10;
@@ -54,21 +83,21 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) Implicit - CSG");
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "File Extension", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) .g");
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("extension"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Orientation", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) Right-Hand, Z-Up");
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Entity Summary", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "XXX primitives, 0 regions");
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "0 assemblies, 336 total");
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "? assemblies, " + info.getInfo("total") + " total");
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Notes", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) My Notes");
 	
 }
 void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
+	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
 
 	int headerOffset = width / 20;
 	int textOffset = width / 10;
@@ -79,9 +108,10 @@ void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offs
 
 	int curiX = 3;
 
+
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Unit", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
-
+  
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Approximate Volume", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) 912 m^3");
@@ -129,7 +159,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
 }
 
 void makeVVSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
+	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
 
 	int boxOffset = width / 40;
 	int textHeightTitle = height / 20;

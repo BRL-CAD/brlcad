@@ -111,35 +111,39 @@ void generateReport(Options opt)
         return;
     }
 
+    // Define commonly used ratio variables
     int XY_margin = opt.getWidth() / 150;
-
-    makeTopSection(img, info, opt.getWidth() / 150, opt.getWidth() / 150, opt.getWidth() - opt.getWidth() / 150 * 2, opt.getLength() / 25);
-
-    makeBottomSection(img, info, opt.getWidth() / 150, opt.getLength() - opt.getLength() / 25 - opt.getWidth() / 150, opt.getWidth() - opt.getWidth() / 150 * 2, opt.getLength() / 25);
-
-
-    // Border width is 3, subtract or add 3 to calculations to align with other boxes
-    // offsets are based on above section offset + height (or width) of box
-    int fileSectionOffsetY = (XY_margin) + (opt.getLength() / 25) + (opt.getLength() / 250); 
-    int fileSectionOffsetX = opt.getWidth() - (opt.getWidth() / 4) - (XY_margin);
-    int fileSectionWidth = (opt.getWidth() / 4) - 3;
-    int fileSectionHeight = (opt.getLength() / 2) - (XY_margin) -  (opt.getLength() / 25) - (opt.getLength() / 250) * 2;
-    makeFileInfoSection(img, info, fileSectionOffsetX, fileSectionOffsetY, fileSectionWidth, fileSectionHeight);
+    int margin = opt.getWidth() / 150;
+    int header_footer_height = opt.getLength() / 25;
+    int padding = opt.getLength() / 250;
+    int border_px = 3;
+    int vvHeight = (opt.getLength() - 2*header_footer_height - 2*margin) / 3;
     
-    int VerficationOffsetY = (opt.getLength() - XY_margin - (opt.getLength() / 25) - (opt.getLength() / 250)) - fileSectionHeight; 
-    makeVerificationSection(img, info, fileSectionOffsetX, VerficationOffsetY, fileSectionWidth, fileSectionHeight);
-    
-    int vvSectionHeight = (opt.getLength() - (opt.getLength() / 25) * 2 - (XY_margin / 2)) / 3;
-    int vvSectionWidth = ((opt.getWidth() - (fileSectionWidth + 3) - (2*XY_margin)) / 2) - (opt.getLength() / 250);
-    int vvOffsetY = (opt.getLength() - XY_margin - (opt.getLength() / 25) - (opt.getLength() / 250)) - vvSectionHeight;
-    makeVVSection(img, info, XY_margin, vvOffsetY, vvSectionWidth, vvSectionHeight);
 
     // Has same height and width as V&V Checks, offset X by V&V checks width
-    makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
+    // makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
+
+    // define the position of all sections in the report
+    Position imagePosition(0,0,opt.getWidth(), opt.getLength());
+    Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
+    Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
+    Position fileSection(imagePosition.right() - imagePosition.quarterWidth() - margin, topSection.bottom() + padding, imagePosition.quarterWidth() - border_px, (imagePosition.height() / 2) - margin - header_footer_height - (padding) - 2*border_px);
+    Position verificationSection(fileSection.x(),fileSection.bottom() + padding, fileSection.width(), fileSection.height());
+    Position vvSection(margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, ((imagePosition.width() - fileSection.width() - 2*margin) / 2) - padding, vvHeight);
+    Position hierarchySection(vvSection.right() + padding, vvSection.y(), vvSection.width(), vvSection.height());
+    Position renderSection(margin, topSection.bottom() + padding, imagePosition.width() - fileSection.width() - 2*margin, imagePosition.height() - margin - header_footer_height - vvHeight - 2 * padding - border_px);
+
+
+    // draw all sections
+    makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
+    makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
+    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height());
+    makeVerificationSection(img, info, verificationSection.x(), verificationSection.y(), verificationSection.width(), verificationSection.height());
+    makeVVSection(img, info, vvSection.x(), vvSection.y(), vvSection.width(), vvSection.height());
+    makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height());
+    makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
     
     // paint renderings
-    makeRenderSection(img, info, XY_margin, 2 * XY_margin + opt.getLength() / 25, vvSectionWidth * 2, opt.getLength() - vvSectionHeight - 3 * (opt.getLength() / 25) / 2, opt);
-    //img.drawRect(XY_margin, 2*XY_margin + opt.getLength() / 25, vvSectionWidth * 2, opt.getLength() - vvSectionHeight - 3 * (opt.getLength() / 25) / 2, 3, cv::Scalar(0, 0, 0));
 
     // optionally, display the scene
     if (opt.getOpenGUI()) {
