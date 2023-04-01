@@ -38,7 +38,6 @@ endif()
 
 # add our macro directory to cmake search path
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/finders ${CMAKE_CURRENT_SOURCE_DIR}/cmake-library/VCI )
-set (CMAKE_DEBUG_POSTFIX "d")
 
 # include our cmake files
 include (VCICommon)
