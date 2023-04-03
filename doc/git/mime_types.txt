@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
-		  Mime types and Current Git checkouts
+		           Mime types and Git
 -------------------------------------------------------------------------------
 
     SVN had an explicit per-file mime-type property that identified for the
@@ -28,19 +28,71 @@ include defining patterns that match files they were not intended to match and
 stale patterns lingering in the .gitattributes file after they are no longer
 needed for their original purpose.
 
-    The recommended way to address this issue in BRL-CAD is to compress a
-"text" file that should keep its original line endings and use CMake's ability
-to de-compress it at build time into the build directory to present the file in
+    This issue crops up both in current code development and when retrieving
+older versions of BRL-CAD from the Git history.  The latter case in particular
+can be very insidious, as the only way to avoid the problem requires manual
+intervention (see the discussion below for details on how to deal with this
+case.) Fortunately outright breakage of user facing functionality as a
+consequence of this issue hasn't been observed thus far, so for activities such
+as hunting where a bug was introduced with "git bisect" it's not normally
+necessary to address it.
+
+-------------------------------------------------------------------------------
+		      Techniques for Current Code
+-------------------------------------------------------------------------------
+
+1.  How to approach the file in question depends a bit on the constraints of
+the case.  If the goal is simply to have a particular file guaranteed to use a
+particular line ending, it is possible to use the CMake "configure_file"
+command in combination with a NEWLINE_STYLE option.  Using this approach, the
+file provided by Git is copied to a new location with the specified desired
+line ending.  For example, to get a CRLF file:
+
+configure_file(src_file.txt dest_file.txt NEWLINE_STYLE CRLF)
+
+If this step needs to happen at build time rather than configure time, the
+pattern would be to write out a "crlf_cpy.cmake" script file with the above
+line in it, and then run that script with a custom command:
+
+file(WRITE crlf_cpy.cmake
+ "configure_file(\"${CMAKE_CURRENT_SOURCE_DIR}/src_file.txt\" \"${CMAKE_CURRENT_BINARY_DIR}/dest_file.txt\" NEWLINE_STYLE CRLF)"
+)
+add_custom_command(
+   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/dest_file.txt
+   COMMAND ${CMAKE_COMMAND}" -P crlf_cpy.cmake
+   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src_file.txt
+   )
+add_custom_target(dest_setup ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/dest_file.txt)
+
+If any problems arise with the copying procedure not being fully complete
+before a subsequent step tries to read the file, the sentinel file approach
+discussed in step #2 below can also be applied here.
+
+Note that there are some restrictions to the configure_file method - in
+particular, NEWLINE_STYLE cannot be used with COPYONLY when running
+configure_file.  This means if the src_file.txt contains anything that might
+get mistaken for a CMake variable to expand by configure_file, NEWLINE_STYLE
+isn't a viable approach.  Also, if the goal is to preserve something more
+exotic (such as guaranteeing a file with mixed line endings remains unchanged)
+forcing the file to LF or CRLF isn't helpful.  For those more difficult cases,
+see approach #2 below.
+
+
+
+2   Another way to address this issue in BRL-CAD is to compress a "text" file
+that should keep its original line endings and use CMake's ability to
+de-compress it at build time into the build directory to present the file in
 the correct state.  There are a couple different ways this can be achieved.
 Let's take a hypothetical file BFILE and see how it would be processed:
 
-0.  Common preliminary step - compress the file.  The archive file will be a binary
+Common preliminary step - compress the file.  The archive file will be a binary
 file in the repository, and so remain unaltered:
 
 user@machine:~/brlcad$ cmake -E tar cjf BFILE.tbz2 BFILE
 
 
-Option 1: configure-time setup:
+Option A: configure-time setup:
 
     This technique is simpler, but has a drawback:  if the BFILE archive is
 updated the configure step will need to be re-run.  Use this approach when the
@@ -62,7 +114,7 @@ build logic will know that this file is an output file:
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/BFILE")
 
 
-Option 2: build-time setup:
+Option B: build-time setup:
 
    For files that may change with more frequency, or are slow to process and
 shouldn't be part of the serial configure process, custom commands can be used
@@ -129,11 +181,14 @@ add_dependencies(prog BFILE-setup)
                      Mime types and historical checkouts
 -------------------------------------------------------------------------------
 
-  For post-conversion checkouts problems can be addressed in-repository with
-the above techniques, but for historical tree states (which we can't change)
-this is a thornier issue.  The most likely scenarios are on Windows, which is
+  For working checkouts problems can be addressed in-repository with the above
+techniques, but for historical (i.e. pre-Git) tree states (which we can't
+change) this is a thornier issue.  Older repository states, using SVN mime
+types, didn't need the above measures in place and so will check out their
+contents using the default Git behavior, rather than what SVN's mime types
+would have produced.  The most likely scenarios are on Windows, which is
 generally the only platform which will alter a significant number of file
-contents at checkout.  (Problem cases will most likely be rare, but it isn't
+contents at checkout.  (Problem cases are relatively rare, but it isn't
 possible to anticipate all situations.)
 
     To achieve checkouts of older repository that don't alter specific files'

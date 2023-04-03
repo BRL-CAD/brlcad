@@ -141,7 +141,7 @@ if (LEMON_EXECUTABLE)
 
       # execute lemon
       add_custom_command(
-	OUTPUT ${_out_src_file}
+	OUTPUT ${_out_src_file} ${_basename}.h
 	COMMAND ${LEMON_EXECUTABLE} -T${LEMON_TEMPLATE} ${LEMON_EXECUTABLE_opts} ${_in_y_file}
 	DEPENDS ${Name}_input_cpy
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -152,7 +152,7 @@ if (LEMON_EXECUTABLE)
       add_custom_command(
 	OUTPUT ${_out_hdr_file}
 	COMMAND ${CMAKE_COMMAND} ARGS -E rename ${_basename}.h ${_out_hdr_file}
-	DEPENDS ${_out_src_file}
+	DEPENDS ${_out_src_file} ${_basename}.h
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
 

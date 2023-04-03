@@ -30,6 +30,10 @@
 #include <math.h>
 #include <string.h>
 
+#if defined(__clang__)
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 
 #ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
@@ -74,6 +78,11 @@
 #include "png.h"
 
 #include "tk.h"
+
+#if defined(__clang__)
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
+
 
 #undef VMIN		/* is used in vmath.h, too */
 
