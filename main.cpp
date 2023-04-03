@@ -140,7 +140,7 @@ void generateReport(Options opt)
     makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height());
     makeVerificationSection(img, info, verificationSection.x(), verificationSection.y(), verificationSection.width(), verificationSection.height());
     makeVVSection(img, info, vvSection.x(), vvSection.y(), vvSection.width(), vvSection.height());
-    makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height());
+    makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
     
     // paint renderings

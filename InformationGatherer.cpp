@@ -1,6 +1,6 @@
 #include "InformationGatherer.h"
 
-double getVolume(std::string filePath, std::string component) {
+double InformationGatherer::getVolume(std::string filePath, std::string component) {
     // Gather dimensions
     struct ged* g;
     g = ged_open("db", filePath.c_str(), 1);
@@ -22,32 +22,61 @@ double getVolume(std::string filePath, std::string component) {
     return 0;
 }
 
-std::vector<std::pair<double, std::string> > getTops(std::string filePath) {
-    struct ged* g = ged_open("db", filePath.c_str(), 1);
-	const char* cmd[2] = { "tops", NULL };
-	ged_exec(g, 1, cmd);
+int InformationGatherer::getNumEntities(std::string filePath, std::string component) {
+    // Find number of entities 
+    struct ged* g;
+    g = ged_open("db", filePath.c_str(), 1);
+    const char* cmd[4] = { "search", component.c_str(), "-type comb -not -type region", NULL };
+    ged_exec(g, 3, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
-    std::vector<std::pair<double, std::string> > topComps;
     std::string val;
-    while (ss >> val) {
-        topComps.push_back({getVolume(filePath, val), val});
+    int entities = 0;
+    while (getline(ss, val)) {
+        entities++;
     }
-    return topComps;
+    return entities;
 }
 
-std::vector<std::pair<double, std::string> > lsComp(std::string filePath, std::string component) {
+std::vector<ComponentData> InformationGatherer::getTops(std::string filePath) {
+    struct ged* g;
+    g = ged_open("db", filePath.c_str(), 1);
+    const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
+    ged_exec(g, 7, cmd);
+    std::stringstream ss(bu_vls_addr(g->ged_result_str));
+    std::string val;
+    std::vector<ComponentData> allComps;
+    while (getline(ss, val)) {
+        int entities = getNumEntities(filePath, val);
+        double volume = getVolume(filePath, val);
+        allComps.push_back({entities, volume, val});
+    }
+    return allComps;
+
+    // struct ged* g = ged_open("db", filePath.c_str(), 1);
+	// const char* cmd[2] = { "tops", NULL };
+	// ged_exec(g, 1, cmd);
+    // std::stringstream ss(bu_vls_addr(g->ged_result_str));
+    // std::vector<ComponentData> topComps;
+    // std::string val;
+    // while (ss >> val) {
+    //     topComps.push_back({getNumEntities(filePath, val), getVolume(filePath, val), val});
+    // }
+    // return topComps;
+}
+
+std::vector<ComponentData> InformationGatherer::lsComp(std::string filePath, std::string component) {
     struct ged* g = ged_open("db", filePath.c_str(), 1);
 	const char* cmd[3] = { "l", component.c_str(), NULL };
 	ged_exec(g, 2, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
-    std::vector<std::pair<double, std::string> > comps;
+    std::vector<ComponentData> comps;
     std::string val;
     std::getline(ss, val); // ignore first line
     while (getline(ss, val)) {
         val = val.erase(0, val.find_first_not_of(" ")); // left trim
         val = val.erase(val.find_last_not_of(" ") + 1); // right trim
         val = val.substr(val.find(' ')+1); // extract out u
-        comps.push_back({getVolume(filePath, val), val});
+        comps.push_back({getNumEntities(filePath, val), getVolume(filePath, val), val});
     }
     return comps;
 }
@@ -120,30 +149,48 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
     // We can stop as soon as final list of components size == num parts interested (e.g. 5) or total parts
     // final list is guaranteed to be sorted by volume
 
-    // std::vector<std::pair<double, std::string> > largestComponents;
-    std::priority_queue<std::pair<double, std::string> > pq;
-    // run tops command, push all children to pq
-    std::vector<std::pair<double, std::string> > topComp = getTops(filePath);
-    for (auto& x : topComp) {
-        pq.push(x);
-    }
+    std::vector<ComponentData> topComponents = getTops(filePath);
+    sort(topComponents.rbegin(), topComponents.rend());
+    // std::priority_queue<ComponentData> pq;
+    // // run tops command, push all children to pq
+    // std::vector<ComponentData> topComp = getTops(filePath);
+    // std::cout << "TOPS" << std::endl;
+    // for (auto& x : topComp) {
+    //     pq.push(x);
+    //     std::cout << x.numEntities << " " << x.volume << " " << x.name << std::endl;
+    // }
+    // std::cout << "END OF TOPS" << std::endl;
 
-    while (largestComponents.size() < 5 && !pq.empty()) {
-        auto curComp = pq.top(); pq.pop();
-        if (curComp.first != std::numeric_limits<double>::infinity()) {
-            // add curComp to final list
-            largestComponents.push_back(curComp);
-        } 
+    // while (largestComponents.size() < 5 && !pq.empty()) {
+    //     ComponentData curComp = pq.top(); pq.pop();
+    //     if (curComp.volume != std::numeric_limits<double>::infinity()) {
+    //         // add curComp to final list
+    //         largestComponents.push_back(curComp);
+    //     } 
         
-        std::vector<std::pair<double, std::string> > childComp = lsComp(filePath, curComp.second);
-        for (auto& x : childComp) {
-            if (curComp.first != x.first)
-                pq.push(x);
-        }
-    }
+    //     std::vector<ComponentData> childComp = lsComp(filePath, curComp.name);
+    //     for (auto& x : childComp) {
+    //         // if (curComp.volume != x.volume)
+    //             pq.push(x);
+    //     }
+    // }
 
-    for (auto& x : largestComponents) {
-        std::cout << x.first << " " << x.second << std::endl;
+    // while (! pq.empty() ) {
+    //     ComponentData qTop = pq.top();
+    //     std::cout << qTop.numEntities << " " << qTop.volume << " " << qTop.name << "\n";
+    //     pq.pop();
+    // }
+
+    int freq = 0;
+    for (auto& x : topComponents) {
+        std::cout << x.numEntities << " " << x.volume << " " << x.name << std::endl;
+        if (x.volume != std::numeric_limits<double>::infinity()) {
+            largestComponents.push_back(x);
+            freq++;
+        }
+        if (freq == 5) {
+            break;
+        }
     }
 
 
