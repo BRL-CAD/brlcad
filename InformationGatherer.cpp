@@ -1,9 +1,7 @@
 #include "InformationGatherer.h"
 
-double getVolume(std::string filePath, std::string component) {
+double getVolume(struct ged* g, std::string filePath, std::string component) {
     // Gather dimensions
-    struct ged* g;
-    g = ged_open("db", filePath.c_str(), 1);
     const char* cmd[3] = { "bb", component.c_str(), NULL };
     ged_exec(g, 2, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
@@ -19,24 +17,23 @@ double getVolume(std::string filePath, std::string component) {
             continue;
         }
     }
+
     return 0;
 }
 
-std::vector<std::pair<double, std::string> > getTops(std::string filePath) {
-    struct ged* g = ged_open("db", filePath.c_str(), 1);
+std::vector<std::pair<double, std::string> > getTops(struct ged* g, std::string filePath) {
 	const char* cmd[2] = { "tops", NULL };
 	ged_exec(g, 1, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::vector<std::pair<double, std::string> > topComps;
     std::string val;
     while (ss >> val) {
-        topComps.push_back({getVolume(filePath, val), val});
+        topComps.push_back({getVolume(g, filePath, val), val});
     }
     return topComps;
 }
 
-std::vector<std::pair<double, std::string> > lsComp(std::string filePath, std::string component) {
-    struct ged* g = ged_open("db", filePath.c_str(), 1);
+std::vector<std::pair<double, std::string> > lsComp(struct ged* g, std::string filePath, std::string component) {
 	const char* cmd[3] = { "l", component.c_str(), NULL };
 	ged_exec(g, 2, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
@@ -47,7 +44,7 @@ std::vector<std::pair<double, std::string> > lsComp(std::string filePath, std::s
         val = val.erase(0, val.find_first_not_of(" ")); // left trim
         val = val.erase(val.find_last_not_of(" ") + 1); // right trim
         val = val.substr(val.find(' ')+1); // extract out u
-        comps.push_back({getVolume(filePath, val), val});
+        comps.push_back({getVolume(g, filePath, val), val});
     }
     return comps;
 }
@@ -123,7 +120,7 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
     // std::vector<std::pair<double, std::string> > largestComponents;
     std::priority_queue<std::pair<double, std::string> > pq;
     // run tops command, push all children to pq
-    std::vector<std::pair<double, std::string> > topComp = getTops(filePath);
+    std::vector<std::pair<double, std::string> > topComp = getTops(g, filePath);
     for (auto& x : topComp) {
         pq.push(x);
     }
@@ -135,7 +132,7 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
             largestComponents.push_back(curComp);
         } 
         
-        std::vector<std::pair<double, std::string> > childComp = lsComp(filePath, curComp.second);
+        std::vector<std::pair<double, std::string> > childComp = lsComp(g, filePath, curComp.second);
         for (auto& x : childComp) {
             if (curComp.first != x.first)
                 pq.push(x);
