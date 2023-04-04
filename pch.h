@@ -17,7 +17,6 @@
 // BRL-CAD header files
 #include "bu/getopt.h"
 #include "bu/log.h"
-
 #include "ged.h"
 
 // Visualization project header files

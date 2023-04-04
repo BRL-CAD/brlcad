@@ -1,5 +1,4 @@
 #include "PerspectiveGatherer.h"
-#include "Options.h"
 
 std::map<char, FaceDetails> getFaceDetails()
 {
@@ -52,42 +51,44 @@ std::string renderPerspective(RenderingFace face, std::string component, Options
         case FRONT:
             a = 0, e = 0;
             outputname += "_front.png";
-            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
+            render = opt.getTemppath() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case RIGHT:
             a = 90, e = 0;
             outputname += "_right.png";
-            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
+            render = opt.getTemppath() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case BACK:
             a = 180, e = 0;
             outputname += "_back.png";
-            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
+            render = opt.getTemppath() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case LEFT:
             a = 270, e = 0;
             outputname += "_left.png";
-            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
+            render = opt.getTemppath() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case TOP:
             a = 0, e = 90; // may need to change "a"?
             outputname += "_top.png";
-            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
+            render = opt.getTemppath() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case BOTTOM:
             a = 0, e = 270;
             outputname += "_bottom.png";
-            render = "../../../build/bin/rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
+            render = opt.getTemppath() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " " + pathToInput + " " + component;
             break;
         case DETAILED:
             a = 45, e = 45;
             outputname += "_detailed.png";
-            render = "../../../build/bin/rt -C 255/255/255 -s 1024 -A 1.5 -W -R -c \"set ambSamples=64\" -o " + outputname + " " + pathToInput + " " + component;
+            render = opt.getTemppath() + "rt -C 255/255/255 -s 1024 -A 1.5 -W -R -c \"set ambSamples=64\" -o " + outputname + " " + pathToInput + " " + component;
             break;
         default:
             std::cerr<< "mark added this\n";
             break;
     }
+
+    std::cout << render << std::endl;
 
     std::ifstream file;
     file.open(outputname);
@@ -104,5 +105,6 @@ std::string renderPerspective(RenderingFace face, std::string component, Options
     }
 
     std::cout << "Successlly generated perspective rendering png file\n";
+
 	return outputname;
 }

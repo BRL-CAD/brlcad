@@ -3,6 +3,7 @@
 Options::Options()
 {
 	filepath = "";
+	temppath = "../../../build/bin/";
 	ppi = 300;
 	width = 3508;
 	length = 2480;
@@ -20,6 +21,10 @@ Options::~Options()
 
 void Options::setFilepath(std::string f) {
 	filepath = f;
+}
+
+void Options::setTemppath(std::string f) {
+	temppath = f;
 }
 
 void Options::setPPI(int p) {
@@ -50,6 +55,10 @@ void Options::setName(std::string n) {
 
 std::string Options::getFilepath() {
 	return filepath;
+}
+
+std::string Options::getTemppath() {
+	return temppath;
 }
 
 int Options::getWidth() {
