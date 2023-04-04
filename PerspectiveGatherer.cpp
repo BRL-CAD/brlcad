@@ -27,8 +27,9 @@ std::string renderPerspective(RenderingFace face, std::string component, Options
     // hardcode filename until options come out
     std::string pathToInput = opt.getFilepath();
     std::string fileInput = extractFileName(pathToInput);
+    std::string pathToOutput = std::filesystem::absolute("output/");
     std::string pathToOutput = "output/";
-    std::string fileOutput = fileInput.substr(0, fileInput.find_last_of("."));
+    // std::string fileOutput = fileInput.substr(0, fileInput.find_last_of("."));
     std::cout << "Path to input: " << pathToInput << " " << fileOutput << std::endl;
     std::cout << "Component: " << component << std::endl;
 
@@ -38,6 +39,7 @@ std::string renderPerspective(RenderingFace face, std::string component, Options
         return "";
     }
 
+    std::cout << "Path to output: " << pathToOutput << std::endl;
     std::cout << "Processing file: " << fileInput << std::endl;
 
     // FIX security vulnerability

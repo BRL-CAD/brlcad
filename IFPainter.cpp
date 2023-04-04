@@ -35,9 +35,13 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 	resized_image.copyTo(destRoi);
 }
 
-void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
+void IFPainter::drawImageFitted(int x, int y, int width, int height, bool grayScale, std::string imgPath)
 {
-	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
+    cv::Mat lilImage;
+    if (grayScale)
+	    lilImage = imread(imgPath, cv::IMREAD_GRAYSCALE);
+    else
+	    lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
 	int imgWidth = lilImage.size().width;
 	int imgHeight = lilImage.size().height;
 	int heightOffset = 0;

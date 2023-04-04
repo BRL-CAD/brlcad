@@ -143,7 +143,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     // TODO put in for loop to prevent out of bounds. 
 	std::string render = renderPerspective(DETAILED, info.largestComponents[0].name, opt);
     // main component
-    img.drawImageFitted(offsetX + 5, offsetY + textYOffset, width - 10, height / 2 - textYOffset, render);
+    img.drawImageFitted(offsetX + 5, offsetY + textYOffset, width - 10, height / 2 - textYOffset, false, render);
 
     int offY = height / 2 + offsetY;
     int offX = offsetX + 5;
@@ -154,7 +154,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     // sub components
     for (int i = 1; i < info.largestComponents.size(); i++) {
         render = renderPerspective(DETAILED, info.largestComponents[i].name, opt);
-        img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
+        img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, true, render);
     }
 }
 
