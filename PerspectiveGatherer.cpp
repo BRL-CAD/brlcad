@@ -11,8 +11,8 @@ std::map<char, FaceDetails> getFaceDetails()
 	output['3'] = {LEFT, "Left", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_left.png", DEPTH, HEIGHT};
 	output['4'] = {BACK, "Back", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_back.png", LENGTH, HEIGHT};
 	output['5'] = {BOTTOM, "Bottom", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_bottom.png", LENGTH, DEPTH};
-	output['6'] = {BACK_MIRRORED, "Back-Mirrored", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_back_mirrored.png", LENGTH, HEIGHT};
-	output['7'] = {BOTTOM_MIRRORED, "Bottom-Mirrored", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_bottom_mirrored.png", LENGTH, DEPTH};
+	// output['6'] = {BACK_MIRRORED, "Back-Mirrored", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_back_mirrored.png", LENGTH, HEIGHT};
+	// output['7'] = {BOTTOM_MIRRORED, "Bottom-Mirrored", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_bottom_mirrored.png", LENGTH, DEPTH};
 	output['8'] = {DETAILED, "Ambient Occlusion", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ambient_occ.png"};
 
 	return output;
@@ -22,14 +22,13 @@ std::string extractFileName(std::string filePath) {
     return filePath.substr(filePath.find_last_of("/\\") + 1);
 }
 
-std::string renderPerspective(RenderingFace face, std::string component, Options& opt)
+std::string renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
 {
     // hardcode filename until options come out
     std::string pathToInput = opt.getFilepath();
     std::string fileInput = extractFileName(pathToInput);
-    std::string pathToOutput = std::filesystem::absolute("output/");
     std::string pathToOutput = "output/";
-    // std::string fileOutput = fileInput.substr(0, fileInput.find_last_of("."));
+    std::string fileOutput = fileInput.substr(0, fileInput.find_last_of("."));
     std::cout << "Path to input: " << pathToInput << " " << fileOutput << std::endl;
     std::cout << "Component: " << component << std::endl;
 
@@ -85,6 +84,12 @@ std::string renderPerspective(RenderingFace face, std::string component, Options
             a = 45, e = 45;
             outputname += "_detailed.png";
             render = "../../../build/bin/rt -C 255/255/255 -s 1024 -A 1.5 -W -R -c \"set ambSamples=64\" -o " + outputname + " " + pathToInput + " " + component;
+            break;
+        case GHOST:
+            a = 35, e = 25;
+            outputname += "_ghost.png";
+            render = "../../../build/bin/rtwizard -s 1024 -a " + std::to_string(a) + " -e " + std::to_string(e) + " -i " + pathToInput + " -c " + component + " -g " + ghost + " -G 10 -o " + outputname;
+            // render2 = "../../../build/bin/rtwizard -s 1024 -a " + a + " -e " + e + " -i " + pathToInput + " -g " + ghost + " -G 3 -o " + outputname;
             break;
         default:
             std::cerr<< "mark added this\n";
