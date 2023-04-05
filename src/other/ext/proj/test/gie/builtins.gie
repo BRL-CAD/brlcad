@@ -1221,6 +1221,24 @@ expect  -188646.389356416 132268.540174065
 accept  -2 -1
 expect  -188646.389356416 -132268.540174065
 
+accept  -180 90
+expect  -8489602.7403 8489602.7403
+
+accept  180 90
+expect  8489602.7403 8489602.7403
+
+accept  -180 0
+expect  -16979205.4807 0
+
+accept  180 0
+expect  16979205.4807 0
+
+accept  -180 -90
+expect  -8489602.7403 -8489602.7403
+
+accept  180 -90
+expect  8489602.7403 -8489602.7403
+
 direction inverse
 accept  200 100
 expect  0.002120241 0.000756015
@@ -1231,6 +1249,47 @@ expect  -0.002120241 0.000756015
 accept  -200 -100
 expect  -0.002120241 -0.000756015
 
+accept  -8489602.74033281 8489602.74033281
+expect  -180 90
+
+accept  -8489602.75 8489602.74033281
+expect  failure errno coord_transfm_outside_projection_domain
+
+accept  8489602.74033281 8489602.74033281
+expect  180 90
+
+accept  8489602.75 8489602.74033281
+expect  failure errno coord_transfm_outside_projection_domain
+
+accept  0 8489602.75
+expect  failure errno coord_transfm_outside_projection_domain
+
+accept  -16979205.4807 0
+expect  -180 0
+
+accept  -16979205.49 0
+expect  failure errno coord_transfm_outside_projection_domain
+
+accept  16979205.4807 0
+expect  180 0
+
+accept  16979205.49 0
+expect  failure errno coord_transfm_outside_projection_domain
+
+accept  -8489602.74033281 -8489602.74033281
+expect  -180 -90
+
+accept  -8489602.75 -8489602.74033281
+expect  failure errno coord_transfm_outside_projection_domain
+
+accept  8489602.74033281 -8489602.74033281
+expect  180 -90
+
+accept  8489602.75 -8489602.74033281
+expect  failure errno coord_transfm_outside_projection_domain
+
+accept  0 -8489602.75
+expect  failure errno coord_transfm_outside_projection_domain
 
 ===============================================================================
 # Eckert V
@@ -1767,11 +1826,12 @@ expect  -0.001790493 -0.000895247
 
 ===============================================================================
 # Gnomonic
-# 	Azi, Sph.
+# 	Azi, Sph*Ell
 ===============================================================================
 
 -------------------------------------------------------------------------------
-# Test material from Snyder p. 168, table 26.
+# Test material from Snyder p. 168, table 26.  Repeat tests with ellispoid of
+# flattening 1/200.
 # Tests the equatorial aspect of the projection.
 -------------------------------------------------------------------------------
 operation +proj=gnom +R=1
@@ -1815,6 +1875,50 @@ direction   inverse
 accept      0   1e8
 expect      0   90
 
+-------------------------------------------------------------------------------
+operation +proj=gnom +a=1 +rf=200
+-------------------------------------------------------------------------------
+tolerance 0.1 mm
+accept  0       0
+expect  0       0
+roundtrip   100
+accept  10      80
+expect  0.1763  5.7232
+roundtrip   100
+accept  20      70
+expect  0.3641  2.9037
+roundtrip   100
+accept  30      60
+expect  0.5778  1.9861
+roundtrip   100
+accept  40      50
+expect  0.8405  1.5459
+roundtrip   100
+accept  50      40
+expect  1.1958  1.2994
+roundtrip   100
+accept  60      30
+expect  1.7435  1.1534
+roundtrip   100
+accept  70      20
+expect  2.7852  1.0711
+roundtrip   100
+accept  80      10
+expect  5.8813  1.0465
+roundtrip   100
+accept  80      80
+expect  5.7134 32.7298
+roundtrip   100
+accept  0       89.99
+expect  0       5700.9222
+roundtrip   100
+accept  180     89.99
+expect  failure errno coord_transfm_outside_projection_domain
+
+# test that extreme northings are mapped to the sphere
+direction   inverse
+accept      0   1e8
+expect      0   90
 
 -------------------------------------------------------------------------------
 # Test the northern polar aspect of the gnonomic projection
@@ -1831,6 +1935,27 @@ roundtrip   100
 accept  0       0
 expect  failure errno coord_transfm_outside_projection_domain
 accept  90      0
+expect  failure errno coord_transfm_outside_projection_domain
+
+-------------------------------------------------------------------------------
+operation +proj=gnom +a=1 +rf=200 +lat_0=90
+-------------------------------------------------------------------------------
+tolerance 0.1 mm
+accept  0       90
+expect  0       0
+roundtrip   100
+accept  45      45
+expect  0.7079  -0.7079
+roundtrip   100
+accept  0       0
+expect  0       -127.4835
+roundtrip   100
+accept  90      0
+expect  127.4835 0
+roundtrip   100
+accept  0       -0.5
+expect  failure errno coord_transfm_outside_projection_domain
+accept  90      -0.5
 expect  failure errno coord_transfm_outside_projection_domain
 
 -------------------------------------------------------------------------------
@@ -1851,6 +1976,27 @@ accept  90      0
 expect  failure errno coord_transfm_outside_projection_domain
 
 -------------------------------------------------------------------------------
+operation +proj=gnom +a=1 +rf=200 +lat_0=-90
+-------------------------------------------------------------------------------
+tolerance 0.1 mm
+accept  0       -90
+expect  0       0
+roundtrip   100
+accept  45      -45
+expect  0.7079  0.7079
+roundtrip   100
+accept  0       0
+expect  0       127.4835
+roundtrip   100
+accept  90      0
+expect  127.4835 0
+roundtrip   100
+accept  0       0.5
+expect  failure errno coord_transfm_outside_projection_domain
+accept  90      0.5
+expect  failure errno coord_transfm_outside_projection_domain
+
+-------------------------------------------------------------------------------
 # Test the oblique aspect of the gnonomic projection
 -------------------------------------------------------------------------------
 operation +proj=gnom +R=1 +lat_0=45
@@ -1868,6 +2014,24 @@ roundtrip   100
 accept  0       -45
 expect  failure errno coord_transfm_outside_projection_domain
 
+-------------------------------------------------------------------------------
+operation +proj=gnom +a=1 +rf=200 +lat_0=45
+-------------------------------------------------------------------------------
+tolerance 0.1 mm
+accept  0       45
+expect  0       0
+roundtrip   100
+accept  0       0
+expect  0       -0.9897
+roundtrip   100
+accept  0       90
+expect  0       1.0025
+roundtrip   100
+accept  0       -45
+expect  0       -154.8623
+roundtrip   100
+accept  0       -45.5
+expect  failure errno coord_transfm_outside_projection_domain
 ===============================================================================
 # Goode Homolosine
 # 	PCyl, Sph.
@@ -3675,6 +3839,112 @@ expect  127.761567257 -0.001735150
 
 -------------------------------------------------------------------------------
 operation +proj=misrsom   +R=6400000 +path=1
+-------------------------------------------------------------------------------
+tolerance 0.1 mm
+accept  2 1
+expect  18641249.279170386 9563342.532334166
+accept  2 -1
+expect  19130982.461581279 9739539.593504636
+accept  -2 1
+expect  18903483.515011538 8675064.500617975
+accept  -2 -1
+expect  19343388.399800610 8807471.904068489
+
+direction inverse
+accept  200 100
+expect  127.759505148 0.001716231
+accept  200 -100
+expect  127.761290324 0.001854121
+accept  -200 100
+expect  127.759780921 -0.001854121
+accept  -200 -100
+expect  127.761566096 -0.001716231
+
+
+===============================================================================
+# Generic Space Oblique Mercator
+#   Cyl, Sph&Ell
+#   inc_angle= ps_rev= asc_lon=
+===============================================================================
+
+-------------------------------------------------------------------------------
+operation +proj=som   +ellps=GRS80 +inc_angle=1.7157253262878522r +ps_rev=0.06866666666666667 +asc_lon=2.2298420007209447r
+-------------------------------------------------------------------------------
+tolerance 0.1 mm
+accept  2 1
+expect  18556630.368369825 9533394.675311271
+accept  2 -1
+expect  19041866.006729737 9707182.175323525
+accept  -2 1
+expect  18816810.130184799 8647669.649802955
+accept  -2 -1
+expect  19252610.784536730 8778164.085801404
+
+direction inverse
+accept  200 100
+expect  127.759503988 0.001735150
+accept  200 -100
+expect  127.761295471 0.001871966
+accept  -200 100
+expect  127.759775774 -0.001871966
+accept  -200 -100
+expect  127.761567257 -0.001735150
+
+-------------------------------------------------------------------------------
+operation +proj=som   +R=6400000 +inc_angle=1.7157253262878522r +ps_rev=0.06866666666666667 +asc_lon=2.2298420007209447r
+-------------------------------------------------------------------------------
+tolerance 0.1 mm
+accept  2 1
+expect  18641249.279170386 9563342.532334166
+accept  2 -1
+expect  19130982.461581279 9739539.593504636
+accept  -2 1
+expect  18903483.515011538 8675064.500617975
+accept  -2 -1
+expect  19343388.399800610 8807471.904068489
+
+direction inverse
+accept  200 100
+expect  127.759505148 0.001716231
+accept  200 -100
+expect  127.761290324 0.001854121
+accept  -200 100
+expect  127.759780921 -0.001854121
+accept  -200 -100
+expect  127.761566096 -0.001716231
+
+
+===============================================================================
+# Generic Space Oblique Mercator
+#   Cyl, Sph&Ell
+#   inc_angle= ps_rev= asc_lon=
+===============================================================================
+
+-------------------------------------------------------------------------------
+operation +proj=som   +ellps=GRS80 +inc_angle=98.30382 +ps_rev=0.06866666666666667 +asc_lon=127.7605356226
+-------------------------------------------------------------------------------
+tolerance 0.1 mm
+accept  2 1
+expect  18556630.368369825 9533394.675311271
+accept  2 -1
+expect  19041866.006729737 9707182.175323525
+accept  -2 1
+expect  18816810.130184799 8647669.649802955
+accept  -2 -1
+expect  19252610.784536730 8778164.085801404
+
+direction inverse
+accept  200 100
+expect  127.759503988 0.001735150
+accept  200 -100
+expect  127.761295471 0.001871966
+accept  -200 100
+expect  127.759775774 -0.001871966
+accept  -200 -100
+expect  127.761567257 -0.001735150
+
+-------------------------------------------------------------------------------
+operation +proj=som   +R=6400000 +inc_angle=98.30382 +ps_rev=0.06866666666666667 +asc_lon=127.7605356226
 -------------------------------------------------------------------------------
 tolerance 0.1 mm
 accept  2 1
@@ -6820,7 +7090,7 @@ expect  687071.43910944  6210141.32674801    0.00000000     2000.0000
 operation +proj=utm +zone=32 +approx
 tolerance 0.001 mm
 accept	12 56 0 2000
-expect  687071.43911000  6210141.32675053    0.00000000     2000.0000
+expect  687071.43910944  6210141.32674801    0.00000000     2000.0000
 
 
 -------------------------------------------------------------------------------

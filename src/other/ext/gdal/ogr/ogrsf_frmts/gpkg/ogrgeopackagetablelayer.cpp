@@ -2311,8 +2311,10 @@ void OGRGeoPackageTableLayer::SetDeferredSpatialIndexCreation(bool bFlag)
     m_bDeferredSpatialIndexCreation = bFlag;
     if (bFlag)
     {
+        // This method is invoked before the layer is added to the dataset,
+        // so GetLayerCount() will return 0 for the first layer added.
         m_bAllowedRTreeThread =
-            m_poDS->GetLayerCount() == 1 && sqlite3_threadsafe() != 0 &&
+            m_poDS->GetLayerCount() == 0 && sqlite3_threadsafe() != 0 &&
             CPLGetNumCPUs() >= 2 &&
             CPLTestBool(
                 CPLGetConfigOption("OGR_GPKG_ALLOW_THREADED_RTREE", "YES"));
@@ -4935,13 +4937,22 @@ CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(
 
     for (size_t i = 0; i < apoFields.size(); i++)
     {
+        OGRFieldDefn *poFieldDefn = apoFields[i];
+        // Eg. when a geometry type is specified + an sql statement returns no
+        // or NULL geometry values, the geom column is incorrectly treated as
+        // an attribute column as well with the same name. Not ideal, but skip
+        // this column here to avoid duplicate column name error. Issue: #6976.
+        if ((eGType != wkbNone) &&
+            (EQUAL(poFieldDefn->GetNameRef(), GetGeometryColumn())))
+        {
+            continue;
+        }
         if (bNeedComma)
         {
             osSQL += ", ";
         }
         bNeedComma = true;
 
-        OGRFieldDefn *poFieldDefn = apoFields[i];
         pszSQL = sqlite3_mprintf("\"%w\" %s", poFieldDefn->GetNameRef(),
                                  GPkgFieldFromOGR(poFieldDefn->GetType(),
                                                   poFieldDefn->GetSubType(),
@@ -6741,7 +6752,7 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
     iCol++;
 
     if (!psHelper->mapOGRGeomFieldToArrowField.empty() &&
-        psHelper->mapOGRGeomFieldToArrowField[0] > 0)
+        psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
     {
         const int iArrowField = psHelper->mapOGRGeomFieldToArrowField[0];
         auto psArray = psHelper->m_out_array->children[iArrowField];
@@ -7081,7 +7092,7 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
     }
 
     if (!m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField.empty() &&
-        m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField[0] > 0)
+        m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
     {
         osSQL += ",m.\"";
         osSQL += SQLEscapeName(GetGeometryColumn());
@@ -7456,7 +7467,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     osSQL += '"';
 
     if (!sFillArrowArray.psHelper->mapOGRGeomFieldToArrowField.empty() &&
-        sFillArrowArray.psHelper->mapOGRGeomFieldToArrowField[0] > 0)
+        sFillArrowArray.psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
     {
         osSQL += ',';
         osSQL += '"';

@@ -1213,12 +1213,47 @@ CPLErr GDALWarpKernel::PerformWarp()
         !bApplyVerticalShift &&
         CPLFetchBool(papszWarpOptions, "USE_OPENCL", true))
     {
-        const CPLErr eResult = GWKOpenCLCase(this);
+        if (pafUnifiedSrcDensity != nullptr)
+        {
+            // If pafUnifiedSrcDensity is only set to 1.0, then we can
+            // discard it.
+            bool bFoundNotOne = false;
+            for (GPtrDiff_t j = 0;
+                 j < static_cast<GPtrDiff_t>(nSrcXSize) * nSrcYSize; j++)
+            {
+                if (pafUnifiedSrcDensity[j] != 1.0)
+                {
+                    bFoundNotOne = true;
+                    break;
+                }
+            }
+            if (!bFoundNotOne)
+            {
+                CPLFree(pafUnifiedSrcDensity);
+                pafUnifiedSrcDensity = nullptr;
+            }
+        }
 
-        // CE_Warning tells us a suitable OpenCL environment was not available
-        // so we fall through to other CPU based methods.
-        if (eResult != CE_Warning)
-            return eResult;
+        if (pafUnifiedSrcDensity != nullptr)
+        {
+            // Typically if there's a cutline or an alpha band
+            static bool bHasWarned = false;
+            if (!bHasWarned)
+            {
+                bHasWarned = true;
+                CPLDebug("WARP", "pafUnifiedSrcDensity is not null, "
+                                 "hence OpenCL warper cannot be used");
+            }
+        }
+        else
+        {
+            const CPLErr eResult = GWKOpenCLCase(this);
+
+            // CE_Warning tells us a suitable OpenCL environment was not available
+            // so we fall through to other CPU based methods.
+            if (eResult != CE_Warning)
+                return eResult;
+        }
     }
 #endif  // defined HAVE_OPENCL
 
@@ -4984,6 +5019,12 @@ static void GWKGeneralCaseThread(void *pData)
     GDALWarpKernel *poWK = psJob->poWK;
     const int iYMin = psJob->iYMin;
     const int iYMax = psJob->iYMax;
+    const double dfMultFactorVerticalShiftPipeline =
+        poWK->bApplyVerticalShift
+            ? CPLAtof(CSLFetchNameValueDef(
+                  poWK->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
+                  "1.0"))
+            : 0.0;
 
     int nDstXSize = poWK->nDstXSize;
     int nSrcXSize = poWK->nSrcXSize;
@@ -5153,7 +5194,7 @@ static void GWKGeneralCaseThread(void *pData)
                     // from target to source
                     dfValueReal =
                         dfValueReal * poWK->dfMultFactorVerticalShift -
-                        padfZ[iDstX];
+                        padfZ[iDstX] * dfMultFactorVerticalShiftPipeline;
                 }
 
                 bHasFoundDensity = true;
@@ -5227,6 +5268,12 @@ static void GWKRealCaseThread(void *pData)
     const int nDstXSize = poWK->nDstXSize;
     const int nSrcXSize = poWK->nSrcXSize;
     const int nSrcYSize = poWK->nSrcYSize;
+    const double dfMultFactorVerticalShiftPipeline =
+        poWK->bApplyVerticalShift
+            ? CPLAtof(CSLFetchNameValueDef(
+                  poWK->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
+                  "1.0"))
+            : 0.0;
 
     /* -------------------------------------------------------------------- */
     /*      Allocate x,y,z coordinate arrays for transformation ... one     */
@@ -5426,7 +5473,7 @@ static void GWKRealCaseThread(void *pData)
                     // from target to source
                     dfValueReal =
                         dfValueReal * poWK->dfMultFactorVerticalShift -
-                        padfZ[iDstX];
+                        padfZ[iDstX] * dfMultFactorVerticalShiftPipeline;
                 }
 
                 bHasFoundDensity = true;
@@ -5495,6 +5542,12 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal(void *pData)
     GDALWarpKernel *poWK = psJob->poWK;
     const int iYMin = psJob->iYMin;
     const int iYMax = psJob->iYMax;
+    const double dfMultFactorVerticalShiftPipeline =
+        poWK->bApplyVerticalShift
+            ? CPLAtof(CSLFetchNameValueDef(
+                  poWK->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
+                  "1.0"))
+            : 0.0;
 
     const int nDstXSize = poWK->nDstXSize;
     const int nSrcXSize = poWK->nSrcXSize;
@@ -5612,7 +5665,8 @@ static void GWKResampleNoMasksOrDstDensityOnlyThreadInternal(void *pData)
                     // Subtract padfZ[] since the coordinate transformation is
                     // from target to source
                     value = GWKClampValueT<T>(
-                        value * poWK->dfMultFactorVerticalShift - padfZ[iDstX]);
+                        value * poWK->dfMultFactorVerticalShift -
+                        padfZ[iDstX] * dfMultFactorVerticalShiftPipeline);
                 }
 
                 if (poWK->pafDstDensity)
@@ -5727,6 +5781,12 @@ template <class T> static void GWKNearestThread(void *pData)
     GDALWarpKernel *poWK = psJob->poWK;
     const int iYMin = psJob->iYMin;
     const int iYMax = psJob->iYMax;
+    const double dfMultFactorVerticalShiftPipeline =
+        poWK->bApplyVerticalShift
+            ? CPLAtof(CSLFetchNameValueDef(
+                  poWK->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
+                  "1.0"))
+            : 0.0;
 
     const int nDstXSize = poWK->nDstXSize;
     const int nSrcXSize = poWK->nSrcXSize;
@@ -5855,7 +5915,7 @@ template <class T> static void GWKNearestThread(void *pData)
                         // is from target to source
                         value = GWKClampValueT<T>(
                             value * poWK->dfMultFactorVerticalShift -
-                            padfZ[iDstX]);
+                            padfZ[iDstX] * dfMultFactorVerticalShiftPipeline);
                     }
 
                     if (dfBandDensity < 1.0)
@@ -6021,6 +6081,12 @@ static void GWKAverageOrModeThread(void *pData)
     GDALWarpKernel *poWK = psJob->poWK;
     const int iYMin = psJob->iYMin;
     const int iYMax = psJob->iYMax;
+    const double dfMultFactorVerticalShiftPipeline =
+        poWK->bApplyVerticalShift
+            ? CPLAtof(CSLFetchNameValueDef(
+                  poWK->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
+                  "1.0"))
+            : 0.0;
 
     const int nDstXSize = poWK->nDstXSize;
     const int nSrcXSize = poWK->nSrcXSize;
@@ -6401,7 +6467,8 @@ static void GWKAverageOrModeThread(void *pData)
                             // transformation is from target to source
                             dfValueReal =
                                 dfValueReal * poWK->dfMultFactorVerticalShift -
-                                padfZ[iDstX];
+                                padfZ[iDstX] *
+                                    dfMultFactorVerticalShiftPipeline;
                         }
 
                         if (bIsComplex)
@@ -6469,7 +6536,8 @@ static void GWKAverageOrModeThread(void *pData)
                             // transformation is from target to source
                             dfValueReal =
                                 dfValueReal * poWK->dfMultFactorVerticalShift -
-                                padfZ[iDstX];
+                                padfZ[iDstX] *
+                                    dfMultFactorVerticalShiftPipeline;
                         }
 
                         if (bIsComplex)
@@ -6536,7 +6604,8 @@ static void GWKAverageOrModeThread(void *pData)
                             // transformation is from target to source
                             dfValueReal =
                                 dfValueReal * poWK->dfMultFactorVerticalShift -
-                                padfZ[iDstX];
+                                padfZ[iDstX] *
+                                    dfMultFactorVerticalShiftPipeline;
                         }
 
                         if (bIsComplex)
@@ -6628,7 +6697,8 @@ static void GWKAverageOrModeThread(void *pData)
                                 dfValueReal =
                                     dfValueReal *
                                         poWK->dfMultFactorVerticalShift -
-                                    padfZ[iDstX];
+                                    padfZ[iDstX] *
+                                        dfMultFactorVerticalShiftPipeline;
                             }
 
                             dfBandDensity = 1;
@@ -6692,7 +6762,8 @@ static void GWKAverageOrModeThread(void *pData)
                                 dfValueReal =
                                     dfValueReal *
                                         poWK->dfMultFactorVerticalShift -
-                                    padfZ[iDstX];
+                                    padfZ[iDstX] *
+                                        dfMultFactorVerticalShiftPipeline;
                             }
 
                             dfBandDensity = 1;
@@ -6752,7 +6823,8 @@ static void GWKAverageOrModeThread(void *pData)
                             // transformation is from target to source
                             dfValueReal =
                                 dfValueReal * poWK->dfMultFactorVerticalShift -
-                                padfZ[iDstX];
+                                padfZ[iDstX] *
+                                    dfMultFactorVerticalShiftPipeline;
                         }
 
                         dfBandDensity = 1;
@@ -6811,7 +6883,8 @@ static void GWKAverageOrModeThread(void *pData)
                             // transformation is from target to source
                             dfValueReal =
                                 dfValueReal * poWK->dfMultFactorVerticalShift -
-                                padfZ[iDstX];
+                                padfZ[iDstX] *
+                                    dfMultFactorVerticalShiftPipeline;
                         }
 
                         dfBandDensity = 1;
@@ -6872,7 +6945,8 @@ static void GWKAverageOrModeThread(void *pData)
                             // transformation is from target to source
                             dfValueReal =
                                 dfValueReal * poWK->dfMultFactorVerticalShift -
-                                padfZ[iDstX];
+                                padfZ[iDstX] *
+                                    dfMultFactorVerticalShiftPipeline;
                         }
 
                         dfBandDensity = 1;

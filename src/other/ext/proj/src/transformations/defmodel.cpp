@@ -25,7 +25,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#define PJ_LIB__
+#define PJ_LIB_
 #define PROJ_COMPILATION
 
 #include "defmodel.hpp"
@@ -108,18 +108,18 @@ struct Grid : public GridPrototype {
         return true;
     }
 
-    bool getLonLatOffset(int ix, int iy, double &lonOffsetRadian,
-                         double &latOffsetRadian) const {
+    bool getLongLatOffset(int ix, int iy, double &longOffsetRadian,
+                          double &latOffsetRadian) const {
         if (!checkHorizontal(STR_DEGREE)) {
             return false;
         }
-        float lonOffsetDeg;
+        float longOffsetDeg;
         float latOffsetDeg;
-        if (!realGrid->valueAt(ix, iy, sampleX, lonOffsetDeg) ||
+        if (!realGrid->valueAt(ix, iy, sampleX, longOffsetDeg) ||
             !realGrid->valueAt(ix, iy, sampleY, latOffsetDeg)) {
             return false;
         }
-        lonOffsetRadian = lonOffsetDeg * DEG_TO_RAD;
+        longOffsetRadian = longOffsetDeg * DEG_TO_RAD;
         latOffsetRadian = latOffsetDeg * DEG_TO_RAD;
         return true;
     }
@@ -184,9 +184,9 @@ struct Grid : public GridPrototype {
         return ret;
     }
 
-    bool getLonLatZOffset(int ix, int iy, double &lonOffsetRadian,
-                          double &latOffsetRadian, double &zOffset) const {
-        return getLonLatOffset(ix, iy, lonOffsetRadian, latOffsetRadian) &&
+    bool getLongLatZOffset(int ix, int iy, double &longOffsetRadian,
+                           double &latOffsetRadian, double &zOffset) const {
+        return getLongLatOffset(ix, iy, longOffsetRadian, latOffsetRadian) &&
                getZOffset(ix, iy, zOffset);
     }
 
@@ -343,34 +343,24 @@ static PJ *destructor(PJ *P, int errlev) {
     return pj_default_destructor(P, errlev);
 }
 
-static PJ_COORD forward_4d(PJ_COORD in, PJ *P) {
+static void forward_4d(PJ_COORD &coo, PJ *P) {
     auto *Q = (struct defmodelData *)P->opaque;
 
-    PJ_COORD out;
-    out.xyzt.t = in.xyzt.t;
-
-    if (!Q->evaluator->forward(Q->evaluatorIface, in.xyzt.x, in.xyzt.y,
-                               in.xyzt.z, in.xyzt.t, out.xyzt.x, out.xyzt.y,
-                               out.xyzt.z)) {
-        return proj_coord_error();
+    if (!Q->evaluator->forward(Q->evaluatorIface, coo.xyzt.x, coo.xyzt.y,
+                               coo.xyzt.z, coo.xyzt.t, coo.xyzt.x, coo.xyzt.y,
+                               coo.xyzt.z)) {
+        coo = proj_coord_error();
     }
-
-    return out;
 }
 
-static PJ_COORD reverse_4d(PJ_COORD in, PJ *P) {
+static void reverse_4d(PJ_COORD &coo, PJ *P) {
     auto *Q = (struct defmodelData *)P->opaque;
 
-    PJ_COORD out;
-    out.xyzt.t = in.xyzt.t;
-
-    if (!Q->evaluator->inverse(Q->evaluatorIface, in.xyzt.x, in.xyzt.y,
-                               in.xyzt.z, in.xyzt.t, out.xyzt.x, out.xyzt.y,
-                               out.xyzt.z)) {
-        return proj_coord_error();
+    if (!Q->evaluator->inverse(Q->evaluatorIface, coo.xyzt.x, coo.xyzt.y,
+                               coo.xyzt.z, coo.xyzt.t, coo.xyzt.x, coo.xyzt.y,
+                               coo.xyzt.z)) {
+        coo = proj_coord_error();
     }
-
-    return out;
 }
 
 // Function called by proj_assign_context() when a new context is assigned to

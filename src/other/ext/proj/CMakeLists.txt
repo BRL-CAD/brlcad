@@ -115,7 +115,7 @@ message(STATUS "Configuring PROJ:")
 #PROJ version information
 ################################################################################
 include(ProjVersion)
-proj_version(MAJOR 9 MINOR 1 PATCH 1)
+proj_version(MAJOR 9 MINOR 2 PATCH 0)
 set(PROJ_SOVERSION 25)
 set(PROJ_BUILD_VERSION "${PROJ_SOVERSION}.${PROJ_VERSION}")
 
@@ -218,6 +218,16 @@ if(ENABLE_CURL)
   find_package(CURL REQUIRED)
   if(CURL_FOUND)
     set(CURL_ENABLED TRUE)
+
+    # Target CURL::libcurl only defined since CMake 3.12
+    # TODO: remove this when CMake >= 3.12 required
+    if(NOT TARGET CURL::libcurl)
+      add_library(CURL::libcurl INTERFACE IMPORTED)
+      set_target_properties(CURL::libcurl PROPERTIES
+        INTERFACE_INCLUDE_DIRECTORIES "${CURL_INCLUDE_DIRS}"
+        INTERFACE_LINK_LIBRARIES      "${CURL_LIBRARIES}"
+      )
+    endif()
   else()
     message(SEND_ERROR "curl dependency not found!")
   endif()
@@ -240,6 +250,10 @@ endif()
 ################################################################################
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads)
+if(Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
+  set(CMAKE_REQUIRED_LIBRARIES
+    "${CMAKE_REQUIRED_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}")
+endif()
 
 include(CheckCSourceCompiles)
 if(MSVC)
@@ -247,23 +261,6 @@ if(MSVC)
 else()
   set(CMAKE_REQUIRED_LIBRARIES m)
   set(CMAKE_REQUIRED_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall")
-endif()
-
-if(Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
-  set(CMAKE_REQUIRED_LIBRARIES
-    "${CMAKE_REQUIRED_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}")
-  check_c_source_compiles("
-#include <pthread.h>
-
-int main(int argc, char* argv[]) {
-  (void)PTHREAD_MUTEX_RECURSIVE;
-  (void)argv;
-  return argc;
-}
-  " HAVE_PTHREAD_MUTEX_RECURSIVE_DEFN)
-  if(HAVE_PTHREAD_MUTEX_RECURSIVE_DEFN)
-    add_definitions(-DHAVE_PTHREAD_MUTEX_RECURSIVE=1)
-  endif()
 endif()
 
 # Set a default build type for single-configuration cmake generators if
@@ -295,7 +292,7 @@ include(ProjInstallPath)
 # By default GNUInstallDirs will use the upper case project name
 # for CMAKE_INSTALL_DOCDIR, resulting in something like share/doc/PROJ
 # instead of share/doc/proj which historically have been the path used
-# by the project.
+# by the project. 
 # Here force the use of a lower case project name and reset after
 # GNUInstallDirs has done its thing
 set(PROJECT_NAME_ORIGINAL "${PROJECT_NAME}")
@@ -401,3 +398,6 @@ if(NOT _is_multi_config_generator)
   )
   message(STATUS "PROJ: Configured 'dist' target")
 endif()
+
+configure_file(cmake/uninstall.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/proj_uninstall.cmake @ONLY)
+add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/proj_uninstall.cmake)

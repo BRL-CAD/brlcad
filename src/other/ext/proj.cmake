@@ -15,9 +15,9 @@ THIRD_PARTY(proj PROJ proj
 if (BRLCAD_PROJ_BUILD)
 
   set(PROJ_MAJOR_VERSION 9)
-  set(PROJ_MINOR_VERSION 1)
+  set(PROJ_MINOR_VERSION 2)
   set(PROJ_API_VERSION 25)
-  set(PROJ_VERSION ${PROJ_API_VERSION}.${PROJ_MAJOR_VERSION}.${PROJ_MINOR_VERSION}.1)
+  set(PROJ_VERSION ${PROJ_API_VERSION}.${PROJ_MAJOR_VERSION}.${PROJ_MINOR_VERSION}.0)
 
   # Our logic needs to know what files we are looking for to incorporate into
   # our build, and unfortunately those names are not only platform specific but

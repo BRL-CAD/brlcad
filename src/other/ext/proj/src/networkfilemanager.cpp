@@ -30,7 +30,7 @@
 #endif
 #define LRU11_DO_NOT_DEFINE_OUT_OF_CLASS_METHODS
 
-#if !defined(_WIN32) && !defined(_GNU_SOURCE)
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(_GNU_SOURCE)
 // For usleep() on Cygwin
 #define _GNU_SOURCE
 #endif
@@ -39,13 +39,13 @@
 
 #include <algorithm>
 #include <limits>
+#include <mutex>
 #include <string>
 
 #include "filemanager.hpp"
 #include "proj.h"
 #include "proj/internal/internal.hpp"
 #include "proj/internal/lru_cache.hpp"
-#include "proj/internal/mutex.hpp"
 #include "proj_internal.h"
 #include "sqlite3_utils.hpp"
 
@@ -142,7 +142,7 @@ class NetworkChunkCache {
     };
 
     lru11::Cache<
-        Key, std::shared_ptr<std::vector<unsigned char>>, NS_PROJ::mutex,
+        Key, std::shared_ptr<std::vector<unsigned char>>, std::mutex,
         std::unordered_map<
             Key,
             typename std::list<lru11::KeyValuePair<
@@ -166,7 +166,7 @@ class NetworkFilePropertiesCache {
     void clearMemoryCache();
 
   private:
-    lru11::Cache<std::string, FileProperties, NS_PROJ::mutex> cache_{};
+    lru11::Cache<std::string, FileProperties, std::mutex> cache_{};
 };
 
 // ---------------------------------------------------------------------------
@@ -1299,28 +1299,24 @@ std::unique_ptr<File> NetworkFile::open(PJ_CONTEXT *ctx, const char *filename) {
         errorBuffer.resize(1024);
 
         auto handle = ctx->networking.open(
-            ctx, filename, 0, buffer.size(), &buffer[0], &size_read,
+            ctx, filename, 0, buffer.size(), buffer.data(), &size_read,
             errorBuffer.size(), &errorBuffer[0], ctx->networking.user_data);
-        buffer.resize(size_read);
         if (!handle) {
             errorBuffer.resize(strlen(errorBuffer.data()));
             pj_log(ctx, PJ_LOG_ERROR, "Cannot open %s: %s", filename,
                    errorBuffer.c_str());
             proj_context_errno_set(ctx, PROJ_ERR_OTHER_NETWORK_ERROR);
+        } else if (get_props_from_headers(ctx, handle, props)) {
+            gNetworkFileProperties.insert(ctx, filename, props);
+            buffer.resize(size_read);
+            gNetworkChunkCache.insert(ctx, filename, 0, std::move(buffer));
+            return std::unique_ptr<File>(
+                new NetworkFile(ctx, filename, handle, size_read, props));
+        } else {
+            ctx->networking.close(ctx, handle, ctx->networking.user_data);
         }
 
-        bool ok = false;
-        if (handle) {
-            if (get_props_from_headers(ctx, handle, props)) {
-                ok = true;
-                gNetworkFileProperties.insert(ctx, filename, props);
-                gNetworkChunkCache.insert(ctx, filename, 0, std::move(buffer));
-            }
-        }
-
-        return std::unique_ptr<File>(
-            ok ? new NetworkFile(ctx, filename, handle, size_read, props)
-               : nullptr);
+        return std::unique_ptr<File>(nullptr);
     }
 }
 
@@ -2374,7 +2370,8 @@ int proj_download_file(PJ_CONTEXT *ctx, const char *url_or_filename,
     const int nPID = getpid();
 #endif
     char szUniqueSuffix[128];
-    snprintf(szUniqueSuffix, sizeof(szUniqueSuffix), "%d_%p", nPID, &url);
+    snprintf(szUniqueSuffix, sizeof(szUniqueSuffix), "%d_%p", nPID,
+             static_cast<const void *>(&url));
     const auto localFilenameTmp(localFilename + szUniqueSuffix);
     auto f = NS_PROJ::FileManager::open(ctx, localFilenameTmp.c_str(),
                                         NS_PROJ::FileAccess::CREATE);

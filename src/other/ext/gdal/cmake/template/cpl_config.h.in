@@ -49,6 +49,9 @@
 
 #ifdef GDAL_COMPILATION
 
+/* The size of `long int', as computed by sizeof. */
+#cmakedefine SIZEOF_LONG_INT @SIZEOF_LONG_INT@
+
 /* Define if you want to use pthreads based multiprocessing support */
 #cmakedefine CPL_MULTIPROC_PTHREAD 1
 
@@ -58,8 +61,8 @@
 /* Define to 1 if you have the `PTHREAD_MUTEX_ADAPTIVE_NP' constant. */
 #cmakedefine HAVE_PTHREAD_MUTEX_ADAPTIVE_NP 1
 
-/* Define to 1 if you have the `pthread_spinlock_t' type. */
-#cmakedefine HAVE_PTHREAD_SPINLOCK 1
+/* Define to 1 if you have the `pthread_spin_lock' function. */
+#cmakedefine HAVE_PTHREAD_SPIN_LOCK 1
 
 /* Define to 1 if you have the `pthread_atfork' function. */
 #cmakedefine HAVE_PTHREAD_ATFORK 1

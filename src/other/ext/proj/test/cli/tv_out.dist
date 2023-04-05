@@ -418,12 +418,6 @@ Test nzmg forward projection
 Test nzmg inverse projection
 2680778.57267967 6132228.07645127 0.	175.0000000	-40.0000000 0.0000000
 ##############################################################
-Test misrsom forward projection
-48.64966165540372 66.2263195368941 0.	7461299.8819401	528000.0550107 0.0000000
-##############################################################
-Test misrsom inverse projection
-7461300.0 528000.0 0.0	48.6496622	66.2263207 0.0000000
-##############################################################
 Test patterson forward projection
 -180 90	-20015114.35218637	11409566.82283130 0.00000000
 -135 67.5	-15011335.76413978	8729502.05411184 0.00000000
@@ -460,6 +454,9 @@ Test EPSG:4326 to EPSG:32631
 ##############################################################
 Test EPSG:32631 to EPSG:4326
 400000 5000000 0	45d8'47.014"N	1d43'40.681"E 0.000
+##############################################################
+Check we allow ellipsoids up to a 0.59% relative difference in size
+0 -90	0.00	0.00 0.00
 ##############################################################
 Test EPSG:4896 to EPSG:7930
 3496737.2679    743254.4507  5264462.9620	3496737.7857	743254.0394 5264462.6437 2019.0
@@ -534,3 +531,70 @@ Test cs2cs -W10
 
 -W argument missing or not in range [0,8]
 program abnormally terminated
+##############################################################
+Test cs2cs --only-best (grid missing) for NTF to RGF93
+Attempt to use coordinate operation NTF to RGF93 v1 (1) failed. Grid fr_ign_gr3df97a.tif is not available. Consult https://proj.org/resource_files.html for guidance.
+49 2 0	*	* inf
+##############################################################
+Test cs2cs --only-best (working) for EPSG:4326+5773 to EPSG:4979
+49 2 0	49dN	2dE 45.064
+##############################################################
+Test cs2cs --only-best (working) for EPSG:4326 to GDA94 
+-30 152 0	30dS	152dE 0.000
+##############################################################
+Test cs2cs --only-best (working) for GDA94 to EPSG:4326 
+-30 152 0	30dS	152dE 0.000
+##############################################################
+Test cs2cs --only-best (working) for EPSG:4326 to GDA2020 
+-30 152 0	30dS	152dE 0.000
+##############################################################
+Test cs2cs --only-best (working) for GDA2020 to EPSG:4326 
+-30 152 0	30dS	152dE 0.000
+##############################################################
+Test cs2cs (grid missing) for EPSG:4326+3855 to EPSG:4979
+49 2 0	49dN	2dE 0.000
+##############################################################
+Test cs2cs --only-best=no (grid missing) for EPSG:4326+3855 to EPSG:4979
+49 2 0	49dN	2dE 0.000
+##############################################################
+Test cs2cs --only-best (grid missing) for EPSG:4326+3855 to EPSG:4979
+Attempt to use coordinate operation Inverse of WGS 84 to EGM2008 height (1) failed. Grid us_nga_egm08_25.tif is not available. Consult https://proj.org/resource_files.html for guidance.
+49 2 0	*	* inf
+##############################################################
+Test cs2cs --only-best=yes (grid missing) for EPSG:4326+3855 to EPSG:4979
+Attempt to use coordinate operation Inverse of WGS 84 to EGM2008 height (1) failed. Grid us_nga_egm08_25.tif is not available. Consult https://proj.org/resource_files.html for guidance.
+49 2 0	*	* inf
+##############################################################
+Test cs2cs (grid missing) with PROJ_ONLY_BEST_DEFAULT=YES for EPSG:4326+3855 to EPSG:4979
+Attempt to use coordinate operation Inverse of WGS 84 to EGM2008 height (1) failed. Grid us_nga_egm08_25.tif is not available. Consult https://proj.org/resource_files.html for guidance.
+49 2 0	*	* inf
+##############################################################
+Test cs2cs (grid missing) with only_best_default=on in proj.ini
+Attempt to use coordinate operation Inverse of WGS 84 to EGM2008 height (1) failed. Grid us_nga_egm08_25.tif is not available. Consult https://proj.org/resource_files.html for guidance.
+49 2 0	*	* inf
+##############################################################
+Test cs2cs --only-best (grid missing)
+Attempt to use coordinate operation NAD27 to NAD83 (7) failed. Grid us_noaa_nadcon5_nad27_nad83_1986_conus.tif is not available. Consult https://proj.org/resource_files.html for guidance.
+40 -100 0	*	* inf
+##############################################################
+Test cs2cs --only-best --no-ballpark (grid missing)
+Attempt to use coordinate operation Inverse of WGS 84 to EGM2008 height (1) failed. Grid us_nga_egm08_25.tif is not available. Consult https://proj.org/resource_files.html for guidance.
+Rel. 9.2.0, March 1st, 2023
+<cs2cs>: 
+cannot initialize transformation
+cause: File not found or invalid
+program abnormally terminated
+##############################################################
+Test cs2cs (grid missing) with scenario of https://github.com/OSGeo/PROJ/issues/3607 that we are using the 'NAD27 to WGS 84 (6)' DMA-ConusW transformation
+-111.5 45.25919444444	1402288.54	5076296.64 0.00
+-111.5 45.25919444444	1402288.54	5076296.64 0.00
+##############################################################
+Test cs2cs (grid missing) with scenario of https://github.com/OSGeo/PROJ/issues/3613 that we are using a WGS 84 intermediate to do NAD27 to NAD83
+569704.5660295591 4269024.671083651	569720.46	4268813.88 0.00
+569704.5660295591 4269024.671083651	569720.46	4268813.88 0.00
+##############################################################
+Test Similarity Transformation (example from EPSG Guidance Note 7.2)
+300000 4500000	299905.060	4499796.515 0.000
+##############################################################
+Test inverse of Similarity Transformation (example from EPSG Guidance Note 7.2)
+299905.060 4499796.515	300000.000	4500000.000 0.000

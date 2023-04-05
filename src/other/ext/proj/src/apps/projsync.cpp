@@ -59,7 +59,7 @@ class ParsingException : public std::exception {
 
 // ---------------------------------------------------------------------------
 
-static void usage() {
+[[noreturn]] static void usage() {
     std::cerr << "usage: projsync " << std::endl;
     std::cerr << "          [--endpoint URL]" << std::endl;
     std::cerr << "          [--local-geojson-file FILENAME]" << std::endl;
@@ -289,7 +289,7 @@ int main(int argc, char *argv[]) {
     file.reset();
 
     if (listFiles) {
-        std::cout << "filename,source_id,area_of_use,file_size" << std::endl;
+        std::cout << "filename,area_of_use,source_id,file_size" << std::endl;
     }
 
     std::string proj_data_version_str;
@@ -362,7 +362,7 @@ int main(int argc, char *argv[]) {
                                           << " as it is only useful starting "
                                              "with PROJ-data "
                                           << version_added
-                                          << " and we are targetting "
+                                          << " and we are targeting "
                                           << proj_data_version_str << std::endl;
                             }
                             continue;
@@ -390,7 +390,7 @@ int main(int argc, char *argv[]) {
                                           << " as it is no longer useful "
                                              "starting with PROJ-data "
                                           << version_removed
-                                          << " and we are targetting "
+                                          << " and we are targeting "
                                           << proj_data_version_str << std::endl;
                             }
                             continue;
@@ -565,7 +565,8 @@ int main(int argc, char *argv[]) {
                     continue;
                 }
 
-                const std::string resource_url(endpoint + '/' + name);
+                const std::string resource_url(
+                    std::string(endpoint).append("/").append(name));
                 if (proj_is_download_needed(ctx, resource_url.c_str(), false)) {
                     total_size_to_download += file_size;
                     to_download.push_back(resource_url);

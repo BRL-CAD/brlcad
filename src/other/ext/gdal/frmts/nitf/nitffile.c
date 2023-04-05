@@ -548,7 +548,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
     VSILFILE *fp;
     GUIntBig nCur = 0;
     int nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
-    GUIntBig nImageSize;
+    GUIntBig nImageSize = 0;
     int nNBPR, nNBPC;
     const char *pszIREP;
     const char *pszIC = CSLFetchNameValue(papszOptions, "IC");
@@ -691,8 +691,11 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         nNPPBH = 0;
         nNPPBV = 0;
 
-        nImageSize =
-            ((nBitsPerSample) / 8) * ((GUIntBig)nPixels * nLines) * nBands;
+        if (EQUAL(pszIC, "NC"))
+        {
+            nImageSize =
+                ((nBitsPerSample) / 8) * ((GUIntBig)nPixels * nLines) * nBands;
+        }
     }
     else if ((EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) && nPixels > 8192 &&
              nNPPBH == nPixels)
@@ -711,8 +714,11 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
             return FALSE;
         }
 
-        nImageSize = ((nBitsPerSample) / 8) *
-                     ((GUIntBig)nPixels * (nNBPC * nNPPBV)) * nBands;
+        if (EQUAL(pszIC, "NC"))
+        {
+            nImageSize = ((nBitsPerSample) / 8) *
+                         ((GUIntBig)nPixels * (nNBPC * nNPPBV)) * nBands;
+        }
     }
     else if ((EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) && nLines > 8192 &&
              nNPPBV == nLines)
@@ -731,8 +737,11 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
             return FALSE;
         }
 
-        nImageSize = ((nBitsPerSample) / 8) *
-                     ((GUIntBig)nLines * (nNBPR * nNPPBH)) * nBands;
+        if (EQUAL(pszIC, "NC"))
+        {
+            nImageSize = ((nBitsPerSample) / 8) *
+                         ((GUIntBig)nLines * (nNBPR * nNPPBH)) * nBands;
+        }
     }
     else
     {
@@ -750,8 +759,11 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
             return FALSE;
         }
 
-        nImageSize = ((nBitsPerSample) / 8) * ((GUIntBig)nNBPR * nNBPC) *
-                     nNPPBH * nNPPBV * nBands;
+        if (EQUAL(pszIC, "NC"))
+        {
+            nImageSize = ((nBitsPerSample) / 8) * ((GUIntBig)nNBPR * nNBPC) *
+                         nNPPBH * nNPPBV * nBands;
+        }
     }
 
     if (EQUAL(pszIC, "NC"))
@@ -1454,7 +1466,6 @@ static int NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
     int bIgnoreBLOCKA =
         CSLFetchNameValue(papszOptions, "BLOCKA_BLOCK_COUNT") != NULL;
     int iOption;
-    int nTREPrefixLen = (int)strlen(pszTREPrefix);
     const bool bReserveSpaceForTREOverflow =
         CSLFetchNameValue(papszOptions, "RESERVE_SPACE_FOR_TRE_OVERFLOW") !=
         NULL;
@@ -1470,6 +1481,7 @@ static int NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
         int nContentLength;
         const char *pszSpace;
         int bIsHex = FALSE;
+        int nTREPrefixLen = (int)strlen(pszTREPrefix);
 
         if (!EQUALN(papszOptions[iOption], pszTREPrefix, nTREPrefixLen))
             continue;

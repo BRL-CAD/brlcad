@@ -535,34 +535,41 @@ static CPLErr CropToCutline(OGRGeometryH hCutline, char **papszTO,
         double adfGT[6];
         if (GDALGetGeoTransform(pahSrcDS[0], adfGT) == CE_None)
         {
+            // We allow for a relative error in coordinates up to 0.1% of the
+            // pixel size for rounding purposes.
+            constexpr double REL_EPS_PIXEL = 1e-3;
             if (CPLFetchBool(papszWarpOptions, "CUTLINE_ALL_TOUCHED", false))
             {
                 // All touched ? Then make the extent a bit larger than the
                 // cutline envelope
-                dfMinX =
-                    adfGT[0] +
-                    floor((dfMinX - adfGT[0]) / adfGT[1] + 1e-8) * adfGT[1];
+                dfMinX = adfGT[0] +
+                         floor((dfMinX - adfGT[0]) / adfGT[1] + REL_EPS_PIXEL) *
+                             adfGT[1];
                 dfMinY = adfGT[3] +
-                         ceil((dfMinY - adfGT[3]) / adfGT[5] - 1e-8) * adfGT[5];
+                         ceil((dfMinY - adfGT[3]) / adfGT[5] - REL_EPS_PIXEL) *
+                             adfGT[5];
                 dfMaxX = adfGT[0] +
-                         ceil((dfMaxX - adfGT[0]) / adfGT[1] - 1e-8) * adfGT[1];
-                dfMaxY =
-                    adfGT[3] +
-                    floor((dfMaxY - adfGT[3]) / adfGT[5] + 1e-8) * adfGT[5];
+                         ceil((dfMaxX - adfGT[0]) / adfGT[1] - REL_EPS_PIXEL) *
+                             adfGT[1];
+                dfMaxY = adfGT[3] +
+                         floor((dfMaxY - adfGT[3]) / adfGT[5] + REL_EPS_PIXEL) *
+                             adfGT[5];
             }
             else
             {
                 // Otherwise, make it a bit smaller
                 dfMinX = adfGT[0] +
-                         ceil((dfMinX - adfGT[0]) / adfGT[1] - 1e-8) * adfGT[1];
-                dfMinY =
-                    adfGT[3] +
-                    floor((dfMinY - adfGT[3]) / adfGT[5] + 1e-8) * adfGT[5];
-                dfMaxX =
-                    adfGT[0] +
-                    floor((dfMaxX - adfGT[0]) / adfGT[1] + 1e-8) * adfGT[1];
+                         ceil((dfMinX - adfGT[0]) / adfGT[1] - REL_EPS_PIXEL) *
+                             adfGT[1];
+                dfMinY = adfGT[3] +
+                         floor((dfMinY - adfGT[3]) / adfGT[5] + REL_EPS_PIXEL) *
+                             adfGT[5];
+                dfMaxX = adfGT[0] +
+                         floor((dfMaxX - adfGT[0]) / adfGT[1] + REL_EPS_PIXEL) *
+                             adfGT[1];
                 dfMaxY = adfGT[3] +
-                         ceil((dfMaxY - adfGT[3]) / adfGT[5] - 1e-8) * adfGT[5];
+                         ceil((dfMaxY - adfGT[3]) / adfGT[5] - REL_EPS_PIXEL) *
+                             adfGT[5];
             }
         }
     }
@@ -693,6 +700,12 @@ static bool ApplyVerticalShift(GDALDatasetH hWrkSrcDS,
             const char *pszUnit =
                 GDALGetRasterUnitType(GDALGetRasterBand(hWrkSrcDS, 1));
 
+            double dfToMeterSrcAxis = 1.0;
+            if (bSrcHasVertAxis)
+            {
+                oSRSSrc.GetAxis(nullptr, 2, nullptr, &dfToMeterSrcAxis);
+            }
+
             if (pszUnit && (EQUAL(pszUnit, "m") || EQUAL(pszUnit, "meter") ||
                             EQUAL(pszUnit, "metre")))
             {
@@ -710,10 +723,7 @@ static bool ApplyVerticalShift(GDALDatasetH hWrkSrcDS,
             {
                 if (bSrcHasVertAxis)
                 {
-                    oSRSSrc.GetAxis(nullptr, 2, nullptr, &dfToMeterSrc);
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Unknown units=%s. Using source vertical units.",
-                             pszUnit);
+                    dfToMeterSrc = dfToMeterSrcAxis;
                 }
                 else
                 {
@@ -740,6 +750,16 @@ static bool ApplyVerticalShift(GDALDatasetH hWrkSrcDS,
                 psWO->papszWarpOptions = CSLSetNameValue(
                     psWO->papszWarpOptions, "MULT_FACTOR_VERTICAL_SHIFT",
                     CPLSPrintf("%.18g", dfMultFactorVerticalShift));
+
+                const double dfMultFactorVerticalShiftPipeline =
+                    dfToMeterSrcAxis / dfToMeterDst;
+                CPLDebug("WARP",
+                         "Applying MULT_FACTOR_VERTICAL_SHIFT_PIPELINE=%.18g",
+                         dfMultFactorVerticalShiftPipeline);
+                psWO->papszWarpOptions = CSLSetNameValue(
+                    psWO->papszWarpOptions,
+                    "MULT_FACTOR_VERTICAL_SHIFT_PIPELINE",
+                    CPLSPrintf("%.18g", dfMultFactorVerticalShiftPipeline));
             }
         }
     }
@@ -2611,6 +2631,9 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
         if (psOptions->nOvLevel <= OVR_LEVEL_AUTO && nOvCount > 0)
         {
             double dfTargetRatio = 0;
+            double dfTargetRatioX = 0;
+            double dfTargetRatioY = 0;
+
             if (bFigureoutCorrespondingWindow)
             {
                 // If the user has explicitly set the target bounds and
@@ -2641,19 +2664,30 @@ static GDALDatasetH GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS,
                 {
                     double dfMinSrcX = std::numeric_limits<double>::infinity();
                     double dfMaxSrcX = -std::numeric_limits<double>::infinity();
+                    double dfMinSrcY = std::numeric_limits<double>::infinity();
+                    double dfMaxSrcY = -std::numeric_limits<double>::infinity();
                     for (int i = 0; i < nPoints; i++)
                     {
                         if (abSuccess[i])
                         {
                             dfMinSrcX = std::min(dfMinSrcX, adfX[i]);
                             dfMaxSrcX = std::max(dfMaxSrcX, adfX[i]);
+                            dfMinSrcY = std::min(dfMinSrcY, adfY[i]);
+                            dfMaxSrcY = std::max(dfMaxSrcY, adfY[i]);
                         }
                     }
                     if (dfMaxSrcX > dfMinSrcX)
                     {
-                        dfTargetRatio = (dfMaxSrcX - dfMinSrcX) /
-                                        GDALGetRasterXSize(hDstDS);
+                        dfTargetRatioX = (dfMaxSrcX - dfMinSrcX) /
+                                         GDALGetRasterXSize(hDstDS);
                     }
+                    if (dfMaxSrcY > dfMinSrcY)
+                    {
+                        dfTargetRatioY = (dfMaxSrcY - dfMinSrcY) /
+                                         GDALGetRasterYSize(hDstDS);
+                    }
+                    // take the minimum of these ratios #7019
+                    dfTargetRatio = std::min(dfTargetRatioX, dfTargetRatioY);
                 }
             }
             else

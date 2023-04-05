@@ -553,13 +553,16 @@ class PROJ_GCC_DLL JSONFormatter {
     PROJ_INTERNAL void setAbridgedTransformation(bool abriged);
     PROJ_INTERNAL bool abridgedTransformation() const;
 
+    PROJ_INTERNAL void setAbridgedTransformationWriteSourceCRS(bool writeCRS);
+    PROJ_INTERNAL bool abridgedTransformationWriteSourceCRS() const;
+
     // cppcheck-suppress functionStatic
     PROJ_INTERNAL bool outputId() const;
 
     PROJ_INTERNAL bool
     outputUsage(bool calledBeforeObjectContext = false) const;
 
-    PROJ_INTERNAL static const char *PROJJSON_v0_5;
+    PROJ_INTERNAL static const char *PROJJSON_v0_6;
 
     //! @endcond
 
@@ -594,7 +597,7 @@ class PROJ_GCC_DLL IJSONExportable {
         PROJ_INTERNAL virtual void
         _exportToJSON(
             JSONFormatter *formatter) const = 0; // throw(FormattingException)
-    //! @endcond
+                                                 //! @endcond
 };
 
 // ---------------------------------------------------------------------------
@@ -647,7 +650,7 @@ class PROJ_GCC_DLL IWKTExportable {
         PROJ_INTERNAL virtual void
         _exportToWKT(
             WKTFormatter *formatter) const = 0; // throw(FormattingException)
-    //! @endcond
+                                                //! @endcond
 };
 
 // ---------------------------------------------------------------------------
@@ -713,7 +716,7 @@ class PROJ_GCC_DLL IPROJStringExportable {
         PROJ_INTERNAL virtual void
         _exportToPROJString(PROJStringFormatter *formatter)
             const = 0; // throw(FormattingException)
-    //! @endcond
+                       //! @endcond
 };
 
 // ---------------------------------------------------------------------------
