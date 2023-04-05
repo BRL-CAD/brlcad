@@ -29,6 +29,7 @@ struct ComponentData {
 class InformationGatherer
 {
 private:
+    struct ged* g;
 	std::map<std::string, std::string> infoMap;
     double getVolume(std::string filePath, std::string component);
     int getNumEntities(std::string filePath, std::string component);

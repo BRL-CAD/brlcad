@@ -2,8 +2,6 @@
 
 double InformationGatherer::getVolume(std::string filePath, std::string component) {
     // Gather dimensions
-    struct ged* g;
-    g = ged_open("db", filePath.c_str(), 1);
     const char* cmd[3] = { "bb", component.c_str(), NULL };
     ged_exec(g, 2, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
@@ -19,13 +17,12 @@ double InformationGatherer::getVolume(std::string filePath, std::string componen
             continue;
         }
     }
+
     return 0;
 }
 
 int InformationGatherer::getNumEntities(std::string filePath, std::string component) {
     // Find number of entities 
-    struct ged* g;
-    g = ged_open("db", filePath.c_str(), 1);
     const char* cmd[4] = { "search", component.c_str(), "-type comb -not -type region", NULL };
     ged_exec(g, 3, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
@@ -38,8 +35,6 @@ int InformationGatherer::getNumEntities(std::string filePath, std::string compon
 }
 
 std::vector<ComponentData> InformationGatherer::getTops(std::string filePath) {
-    struct ged* g;
-    g = ged_open("db", filePath.c_str(), 1);
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
     ged_exec(g, 7, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
@@ -65,7 +60,6 @@ std::vector<ComponentData> InformationGatherer::getTops(std::string filePath) {
 }
 
 std::vector<ComponentData> InformationGatherer::lsComp(std::string filePath, std::string component) {
-    struct ged* g = ged_open("db", filePath.c_str(), 1);
 	const char* cmd[3] = { "l", component.c_str(), NULL };
 	ged_exec(g, 2, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
@@ -98,7 +92,7 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	// TODO: this
 
 	//Open database
-	struct ged* g = ged_open("db", filePath.c_str(), 1);
+	g = ged_open("db", filePath.c_str(), 1);
 
 	//Gather title
 	const char* cmd[5] = { "title", NULL, NULL, NULL, NULL };

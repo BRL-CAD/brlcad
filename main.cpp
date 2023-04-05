@@ -37,7 +37,7 @@ bool readParameters(int argc, char** argv, Options &opt)
 
     int opts;
 
-    while ((opts = bu_getopt(argc, argv, "Fg?p:P:f:n:")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "Fg?p:P:f:n:T:")) != -1) {
         switch (opts) {
             case 'p':
                 f = true;
@@ -59,6 +59,9 @@ bool readParameters(int argc, char** argv, Options &opt)
             case 'n':
                 opt.setName(bu_optarg);
                 break;
+            case 'T':
+                opt.setTemppath(bu_optarg);
+                break;
             case '?':
                 h = true;
                 break;
@@ -74,6 +77,7 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    g = GUI output\n");
         bu_log("    f = filepath of png export, MUST end in .png\n");
         bu_log("    n = name of preparer, to be used in report\n");
+        bu_log("    T = temporary directory to store intermediate files\n");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help

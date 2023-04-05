@@ -154,7 +154,9 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     // sub components
     for (int i = 1; i < info.largestComponents.size(); i++) {
         render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
-        img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, true, render);
+        // std::cout << "INSIDE factshandler DBG: " << render << std::endl;
+        img.drawText(offX + (i-1)*imgW, offY - width/20, textHeight, width, info.largestComponents[i].name, TO_BOLD);
+        img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, false, render);
     }
 }
 

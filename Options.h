@@ -20,6 +20,7 @@ public:
 	~Options();
 	//Setter functions
 	void setFilepath(std::string f);
+	void setTemppath(std::string f);
 	void setPPI(int p);
 	void setIsFolder();
 	void setOpenGUI();
@@ -28,6 +29,7 @@ public:
 	void setName(std::string n);
 	//Getter functions
 	std::string getFilepath();
+	std::string getTemppath();
 	int getWidth();
 	int getLength();
 	bool getIsFolder();
@@ -38,6 +40,8 @@ public:
 private:
 	//Path to file that will be used to generate report
 	std::string filepath;
+	//Path to temporary directory to store the info
+	std::string temppath;
 	//Pixels per inch
 	int ppi;
 	//Dimensions of the output, in pixels
