@@ -37,7 +37,7 @@ bool readParameters(int argc, char** argv, Options &opt)
 
     int opts;
 
-    while ((opts = bu_getopt(argc, argv, "Fg?p:P:f:n:T:")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "Fg?p:P:f:n:T:c:")) != -1) {
         switch (opts) {
             case 'p':
                 f = true;
@@ -62,6 +62,9 @@ bool readParameters(int argc, char** argv, Options &opt)
             case 'T':
                 opt.setTemppath(bu_optarg);
                 break;
+            case 'c':
+                opt.setClassification(bu_optarg);
+                break;
             case '?':
                 h = true;
                 break;
@@ -76,8 +79,9 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    F = path specified is a folder of models\n");
         bu_log("    g = GUI output\n");
         bu_log("    f = filepath of png export, MUST end in .png\n");
-        bu_log("    n = name of preparer, to be used in report\n");
         bu_log("    T = temporary directory to store intermediate files\n");
+        bu_log("    n = name of preparer, to be used in report\n");
+        bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report\n");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
@@ -86,11 +90,6 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
         return false;
     }
-
-    /*
-    * Theoretically there would be something here to check that the model path is valid and I have some examples for ref
-    * in rt but I can't test it myself because I can't get rt working in my local still (Ally)
-    */
 
     return true;
 }
@@ -109,7 +108,7 @@ void generateReport(Options opt)
     InformationGatherer info;
 
     // read in all information from model file
-    if (!info.gatherInformation(opt.getFilepath(), opt.getName()))
+    if (!info.gatherInformation(opt))
     {
         std::cerr << "Error on Information Gathering.  Report Generation skipped..." << std::endl;
         return;

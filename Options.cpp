@@ -12,6 +12,7 @@ Options::Options()
 	exportToFile = false;
 	fileName = "";
 	name = "N/A";
+	classification = "";
 }
 
 Options::~Options()
@@ -53,6 +54,10 @@ void Options::setName(std::string n) {
 	name = n;
 }
 
+void Options::setClassification(std::string c) {
+	classification = c;
+}
+
 std::string Options::getFilepath() {
 	return filepath;
 }
@@ -87,4 +92,8 @@ std::string Options::getFileName() {
 
 std::string Options::getName() {
 	return name;
+}
+
+std::string Options::getClassification() {
+	return classification;
 }

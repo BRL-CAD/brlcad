@@ -27,6 +27,7 @@ public:
 	void setExportToFile();
 	void setFileName(std::string n);
 	void setName(std::string n);
+	void setClassification(std::string c);
 	//Getter functions
 	std::string getFilepath();
 	std::string getTemppath();
@@ -37,6 +38,7 @@ public:
 	bool getExportToFile();
 	std::string getFileName();
 	std::string getName();
+	std::string getClassification();
 private:
 	//Path to file that will be used to generate report
 	std::string filepath;
@@ -57,4 +59,6 @@ private:
 	std::string fileName;
 	//Name of preparer
 	std::string name;
+	//Classification word
+	std::string classification;
 };

@@ -12,6 +12,8 @@
 // TODO: Arrange the class for this.
 // this class below is a placeholder; it may not be the optimal layout
 
+class Options;
+
 class InformationGatherer
 {
 private:
@@ -22,7 +24,7 @@ public:
 	InformationGatherer();
 	~InformationGatherer();
 
-	bool gatherInformation(std::string filePath, std::string name);
+	bool gatherInformation(Options &opt);
 
 	std::string getInfo(std::string key);
 };

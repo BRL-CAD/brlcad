@@ -13,6 +13,16 @@
 #include <sstream>
 #include <vector>
 #include <ctime>
+#ifdef HAVE_PWD_H
+#  include <pwd.h>
+#endif
+#ifdef HAVE_WINDOWS_H
+#	include <windows.h>
+#	include <stdio.h>
+#	include <aclapi.h>
+#endif 
+
+
 
 // BRL-CAD header files
 #include "bu/getopt.h"

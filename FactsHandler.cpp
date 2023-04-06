@@ -20,12 +20,12 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	}
 	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE); */ 
 
-	if (info.getInfo("classification") == "CONFIDENTIAL") {
+	if (info.getInfo("classification") != "") {
 		text.push_back("Owner: " + info.getInfo("owner"));
 		text.push_back("Version: " + info.getInfo("version"));
 		text2.push_back("Last Updated : " + info.getInfo("lastUpdate"));
 		text2.push_back("Source File : " + info.getInfo("file"));
-		img.justifyConfidential(offsetX, offsetY + textYOffset, textHeight, width, text, text2, TO_WHITE);
+		img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
 	}
 	else {
 		text.push_back("Owner: " + info.getInfo("owner"));
@@ -54,10 +54,10 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		text = "Preparer: " + info.getInfo("preparer") + "     Date Generated: " + info.getInfo("dateGenerated");
 	}
 	img.drawTextCentered(offsetX + width / 2, offsetY + textYOffset, textHeight, width, text, TO_WHITE);*/
-	if (info.getInfo("classification") == "CONFIDENTIAL") {
+	if (info.getInfo("classification") != "") {
 		text.push_back("Preparer: " + info.getInfo("preparer"));
 		text2.push_back("Date Generated : " + info.getInfo("dateGenerated"));
-		img.justifyConfidential(offsetX, offsetY + textYOffset, textHeight, width, text, text2, TO_WHITE);
+		img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
 	}
 	else {
 		text.push_back("Preparer: " + info.getInfo("preparer"));
