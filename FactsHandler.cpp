@@ -114,7 +114,7 @@ void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offs
   
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Approximate Volume", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) 912 m^3");
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("volume") + " " + info.getInfo("units") + "^3");
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Surface Area", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) 100 m^2 (3D)");
@@ -143,7 +143,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     // TODO put in for loop to prevent out of bounds. 
 	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
     // main component
-    img.drawImageFitted(offsetX + 5, offsetY + textYOffset, width - 10, height / 2 - textYOffset, false, render);
+    img.drawImageFitted(offsetX + 5, offsetY + textYOffset, width - 10, height / 2 - textYOffset, render);
 
     int offY = height / 2 + offsetY;
     int offX = offsetX + 5;
@@ -155,8 +155,8 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     for (int i = 1; i < info.largestComponents.size(); i++) {
         render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
         // std::cout << "INSIDE factshandler DBG: " << render << std::endl;
-        img.drawText(offX + (i-1)*imgW, offY - width/20, textHeight, width, info.largestComponents[i].name, TO_BOLD);
-        img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, false, render);
+        img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
+        img.drawText(offX + (i-1)*imgW, offY - width/30, textHeight, width, info.largestComponents[i].name, TO_BOLD);
     }
 }
 

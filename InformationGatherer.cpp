@@ -97,7 +97,7 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	//Gather title
 	const char* cmd[5] = { "title", NULL, NULL, NULL, NULL };
 	ged_exec(g, 1, cmd);
-	infoMap.insert(std::pair<std::string, std::string>("title", bu_vls_addr(g->ged_result_str)));
+    infoMap["title"] = bu_vls_addr(g->ged_result_str);
 
 	//Gather primitives, regions, total objects
 	cmd[0] = "summary";
@@ -106,16 +106,16 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	int count = 0;
 	while (res != NULL) {
 		if (count == 1) {
-			infoMap.insert(std::pair < std::string, std::string>("primitives", res));
+            infoMap["primitives"] = res;
 		}
 		else if (count == 3) {
-			infoMap.insert(std::pair < std::string, std::string>("regions", res));
+            infoMap["regions"] = res;
 		}
 		else if (count == 5) {
-			infoMap.insert(std::pair < std::string, std::string>("non-regions", res));
+            infoMap["non-regions"] = res;
 		}
 		else if (count == 8) {
-			infoMap.insert(std::pair < std::string, std::string>("total", res));
+            infoMap["total"] = res;
 		}
 		count++;
 		res = strtok(NULL, " ");
@@ -124,7 +124,7 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	//Gather DB Version
 	cmd[0] = "dbversion";
 	ged_exec(g, 1, cmd);
-	infoMap.insert(std::pair<std::string, std::string>("version", bu_vls_addr(g->ged_result_str)));
+    infoMap["version"] = bu_vls_addr(g->ged_result_str);
 
     // Gather units
 	cmd[0] = "units";
@@ -132,7 +132,7 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	std::string result = bu_vls_addr(g->ged_result_str);
 	std::size_t first = result.find_first_of("\'");
 	std::size_t last = result.find_last_of("\'");
-	infoMap.insert(std::pair<std::string, std::string>("units", result.substr(first+1, last-first-1))); 
+    infoMap["units"] = result.substr(first+1, last-first-1);
 
 
     // Parse out hierarchy
@@ -191,18 +191,18 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 
     // Gather dimensions
 	  cmd[0] = "bb";
-	  cmd[1] = "component";
+	  cmd[1] = largestComponents[0].name.c_str();
 	  cmd[2] = NULL;
 	  ged_exec(g, 2, cmd);
 
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
-    std::string val;
+    std::string token;
     std::vector<std::string> dim_data = {"dimX", "dimY", "dimZ", "volume"};
     int dim_idx = 0;
-    while (ss >> val) {
+    while (ss >> token) {
         try {
-            stod(val);
-            infoMap[dim_data[dim_idx++]] = val;
+            stod(token);
+            infoMap[dim_data[dim_idx++]] = token;
         } catch (const std::exception& e){
             continue;
         }
@@ -210,27 +210,27 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
     // std::cout << "print info " << infoMap["dimX"] << " " << infoMap["dimY"] << " " << infoMap["dimZ"] << " " << infoMap["volume"] << std::endl;
 
 	//Gather name of preparer
-	infoMap.insert(std::pair < std::string, std::string>("preparer", name));
+    infoMap["preparer"] = name;
 
 	//Gather source file
 	last = filePath.find_last_of("\\");
 	std::string file = filePath.substr(last+1, filePath.length()-1);
-	infoMap.insert(std::pair < std::string, std::string>("file", file));
+    infoMap["file"] = file;
 
 	//Gather file extension
 	last = file.find_last_of(".");
 	std::string ext = file.substr(last, file.length() - 1);
-	infoMap.insert(std::pair < std::string, std::string>("extension", ext));
+    infoMap["extension"] = ext;
 
 	//Gather date of generation
 	std::time_t now = time(0);
 	tm* ltm = localtime(&now);
 	std::string date = std::to_string(ltm->tm_mon+1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year+1900);
-	infoMap.insert(std::pair < std::string, std::string>("dateGenerated", date));
+    infoMap["dateGenerated"] = date;
 
 	//Hard code other stuff into map for now
-	infoMap.insert(std::pair<std::string, std::string>("owner", "Ally Hoskinson"));
-	infoMap.insert(std::pair<std::string, std::string>("lastUpdate", "3/24/2023"));
+    infoMap["owner"] = "Ally Hoskinson";
+    infoMap["lastUpdate"] = "3/24/2023";
 	//infoMap.insert(std::pair<std::string, std::string>("classification", "CONFIDENTIAL"));
 	//infoMap.insert(std::pair<std::string, std::string>("checksum", "120EA8A25E5D487BF68B5F7096440019"));
 

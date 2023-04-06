@@ -398,7 +398,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	// render ambient occlusion view
 	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
 	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
-	img.drawImageFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], false, render);
+	img.drawImageFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 }
 
 LayoutChoice selectLayout(int secWidth, int secHeight, int modelLength, int modelDepth, int modelHeight)
