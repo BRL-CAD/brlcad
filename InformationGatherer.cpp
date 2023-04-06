@@ -34,8 +34,11 @@ int InformationGatherer::getNumEntities(std::string filePath, std::string compon
     return entities;
 }
 
-std::vector<ComponentData> InformationGatherer::getTops(std::string filePath) {
+std::vector<ComponentData> InformationGatherer::getTops(std::string filePath, bool extra) {
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
+    if (extra)
+        cmd[4] = NULL;
+
     ged_exec(g, 7, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
@@ -45,6 +48,7 @@ std::vector<ComponentData> InformationGatherer::getTops(std::string filePath) {
         double volume = getVolume(filePath, val);
         allComps.push_back({entities, volume, val});
     }
+
     return allComps;
 
     // struct ged* g = ged_open("db", filePath.c_str(), 1);
@@ -72,6 +76,7 @@ std::vector<ComponentData> InformationGatherer::lsComp(std::string filePath, std
         val = val.substr(val.find(' ')+1); // extract out u
         comps.push_back({getNumEntities(filePath, val), getVolume(filePath, val), val});
     }
+
     return comps;
 }
 
@@ -143,7 +148,10 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
     // We can stop as soon as final list of components size == num parts interested (e.g. 5) or total parts
     // final list is guaranteed to be sorted by volume
 
-    std::vector<ComponentData> topComponents = getTops(filePath);
+    std::vector<ComponentData> topComponents = getTops(filePath, false);
+    if (topComponents.size() < 5) {
+        topComponents = getTops(filePath, true);
+    }
     sort(topComponents.rbegin(), topComponents.rend());
     // std::priority_queue<ComponentData> pq;
     // // run tops command, push all children to pq
@@ -190,10 +198,10 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 
 
     // Gather dimensions
-	  cmd[0] = "bb";
-	  cmd[1] = largestComponents[0].name.c_str();
-	  cmd[2] = NULL;
-	  ged_exec(g, 2, cmd);
+	cmd[0] = "bb";
+	cmd[1] = largestComponents[0].name.c_str();
+	cmd[2] = NULL;
+	ged_exec(g, 2, cmd);
 
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string token;

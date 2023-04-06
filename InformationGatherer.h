@@ -33,7 +33,7 @@ private:
 	std::map<std::string, std::string> infoMap;
     double getVolume(std::string filePath, std::string component);
     int getNumEntities(std::string filePath, std::string component);
-    std::vector<ComponentData> getTops(std::string filePath);
+    std::vector<ComponentData> getTops(std::string filePath, bool extra);
     std::vector<ComponentData> lsComp(std::string filePath, std::string component);
 
 
