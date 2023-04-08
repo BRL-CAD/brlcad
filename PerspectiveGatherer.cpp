@@ -45,6 +45,7 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
     fileString = fileString.substr(0, fileString.find("/"));
     std::cout << "File string: " << fileString << std::endl;
     std::string outputname = pathToOutput + fileOutput + "_" + fileString;
+    std::replace(outputname.begin(), outputname.end(), ' ', '_');
     std::string render;
 
     int a, e;

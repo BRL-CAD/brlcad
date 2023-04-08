@@ -132,31 +132,35 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     int textXOffset = textHeight * 53 / 5;
     int textYOffset = textHeight * 15 / 5;
 
-	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Object Hierarchy", TO_BOLD);
+	// img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Object Hierarchy", TO_BOLD);
 
-    int curiX = 0;
-    int curiY = 3;
-
-	// img.drawText(offsetX + textOffset, offsetY + curiY++ * textYOffset, textHeight, width, "Test", TO_BOLD);
-	// img.drawText(offsetX + textOffset, offsetY + curiY++ * textYOffset, textHeight, width, "Test2", TO_BOLD);
-
-    // TODO put in for loop to prevent out of bounds. 
 	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
-    // main component
-    img.drawImageFitted(offsetX + 5, offsetY + textYOffset, width - 10, height / 2 - textYOffset, render);
 
+    int N = 4; // number of sub components you want
     int offY = height / 2 + offsetY;
     int offX = offsetX + 5;
-
     int imgH = height / 2;
-    int imgW = (width - (info.largestComponents.size()-1)*5) / (info.largestComponents.size()-1);
+    int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
+
+    // main component
+    img.drawImageFitted(offsetX + 5, offsetY + textHeight, imgW, imgH, render);
     
     // sub components
-    for (int i = 1; i < info.largestComponents.size(); i++) {
+    for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
         render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
         // std::cout << "INSIDE factshandler DBG: " << render << std::endl;
         img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
         img.drawText(offX + (i-1)*imgW, offY - width/30, textHeight, width, info.largestComponents[i].name, TO_BOLD);
+    }
+
+    if (info.largestComponents.size() > N) {
+        // render the smaller sub components all in one
+        std::string subcomponents = "";
+        for (int i = N; i < info.largestComponents.size(); i++)
+            subcomponents += info.largestComponents[i].name + " ";
+        render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
+        img.drawImageFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
+        img.drawText(offX + (N-1)*imgW, offY - width/30, textHeight, width, "...", TO_BOLD);
     }
 }
 

@@ -106,10 +106,10 @@ void generateReport(Options opt)
     IFPainter img(opt.getLength(), opt.getWidth());
 
     // create information gatherer
-    InformationGatherer info;
+    InformationGatherer info(&opt);
 
     // read in all information from model file
-    if (!info.gatherInformation(opt.getFilepath(), opt.getName()))
+    if (!info.gatherInformation(opt.getName()))
     {
         std::cerr << "Error on Information Gathering.  Report Generation skipped..." << std::endl;
         return;

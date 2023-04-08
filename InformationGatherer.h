@@ -12,6 +12,8 @@
 // TODO: Arrange the class for this.
 // this class below is a placeholder; it may not be the optimal layout
 
+class Options;
+
 struct ComponentData {
     int numEntities;
     double volume;
@@ -29,20 +31,21 @@ struct ComponentData {
 class InformationGatherer
 {
 private:
+    Options* opt;
     struct ged* g;
 	std::map<std::string, std::string> infoMap;
-    double getVolume(std::string filePath, std::string component);
-    int getNumEntities(std::string filePath, std::string component);
-    void getMainComp(std::string filePath);
-    void getSubComp(std::string filePath);
+    double getVolume(std::string component);
+    int getNumEntities(std::string component);
+    void getMainComp();
+    void getSubComp();
 
 
 public:
     std::vector<ComponentData> largestComponents;
-	InformationGatherer();
+	InformationGatherer(Options* options);
 	~InformationGatherer();
 
-	bool gatherInformation(std::string filePath, std::string name);
+	bool gatherInformation(std::string name);
 
 	std::string getInfo(std::string key);
 };

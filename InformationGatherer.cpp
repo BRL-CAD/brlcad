@@ -1,6 +1,7 @@
+#include "pch.h"
 #include "InformationGatherer.h"
 
-double InformationGatherer::getVolume(std::string filePath, std::string component) {
+double InformationGatherer::getVolume(std::string component) {
     // Gather dimensions
     const char* cmd[3] = { "bb", component.c_str(), NULL };
     ged_exec(g, 2, cmd);
@@ -20,7 +21,7 @@ double InformationGatherer::getVolume(std::string filePath, std::string componen
     return 0;
 }
 
-int InformationGatherer::getNumEntities(std::string filePath, std::string component) {
+int InformationGatherer::getNumEntities(std::string component) {
     // Find number of entities 
     const char* cmd[4] = { "search", component.c_str(), "-type comb -not -type region", NULL };
     ged_exec(g, 3, cmd);
@@ -33,7 +34,7 @@ int InformationGatherer::getNumEntities(std::string filePath, std::string compon
     return entities;
 }
 
-void InformationGatherer::getMainComp(std::string filePath) {
+void InformationGatherer::getMainComp() {
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
 
     ged_exec(g, 7, cmd);
@@ -42,27 +43,25 @@ void InformationGatherer::getMainComp(std::string filePath) {
     std::vector<ComponentData> topComponents;
 
     while (getline(ss, val)) {
-        int entities = getNumEntities(filePath, val);
-        double volume = getVolume(filePath, val);
+        int entities = getNumEntities(val);
+        double volume = getVolume(val);
         topComponents.push_back({entities, volume, val});
     }
 
-    int biggestComponent = 0; // idx
-    for (int i = 1; i < topComponents.size(); i++) {
-        if (topComponents[i].numEntities >= topComponents[biggestComponent].numEntities && topComponents[i].volume != std::numeric_limits<double>::infinity()) {
-            if (topComponents[i].volume > topComponents[biggestComponent].volume) {
-                biggestComponent = i;
-            }
+    sort(topComponents.rbegin(), topComponents.rend());
+    for (int i = 0; i < topComponents.size(); i++) {
+        if (topComponents[i].volume != std::numeric_limits<double>::infinity()) {
+            largestComponents.push_back(topComponents[i]);
+            break;
         }
     }
-    largestComponents.push_back(topComponents[biggestComponent]);
 }
 
-void InformationGatherer::getSubComp(std::string filePath) {
+void InformationGatherer::getSubComp() {
     // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
     std::string pathToOutput = "output/sub_comp.txt";
-    std::string retrieveSub = "../../../build/bin/mged -c " + filePath + " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" > " + pathToOutput;
-    // std::cout << retrieveSub << std::endl;
+    std::string retrieveSub = opt->getTemppath() + "mged -c " + opt->getFilepath() + " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" > " + pathToOutput;
+    std::cout << retrieveSub << std::endl;
     system(retrieveSub.c_str());
     std::fstream scFile(pathToOutput);
     if (!scFile.is_open()) {
@@ -75,7 +74,7 @@ void InformationGatherer::getSubComp(std::string filePath) {
     std::vector<ComponentData> subComps;
 
     while (scFile >> comp >> numEntities) {
-        double volume = getVolume(filePath, comp);
+        double volume = getVolume(comp);
         subComps.push_back({numEntities, volume, comp});
         std::cout << " in subcomp " << comp << " " << numEntities << " " << volume << std::endl;
     }
@@ -85,9 +84,9 @@ void InformationGatherer::getSubComp(std::string filePath) {
 }
 
 
-InformationGatherer::InformationGatherer()
+InformationGatherer::InformationGatherer(Options* options)
 {
-	// TODO: this
+    opt = options;
 }
 
 InformationGatherer::~InformationGatherer()
@@ -95,11 +94,12 @@ InformationGatherer::~InformationGatherer()
 	// TODO: this
 }
 
-bool InformationGatherer::gatherInformation(std::string filePath, std::string name)
+bool InformationGatherer::gatherInformation(std::string name)
 {
 	// TODO: this
 
 	//Open database
+    std::string filePath = opt->getFilepath();
 	g = ged_open("db", filePath.c_str(), 1);
 
 	//Gather title
@@ -143,8 +143,10 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
     infoMap["units"] = result.substr(first+1, last-first-1);
 
 
-    getMainComp(filePath);
-    getSubComp(filePath);
+    getMainComp();
+    getSubComp();
+    if (largestComponents.size() == 0)
+        return false;
     std::cout << "Largest Components\n";
     for (ComponentData x : largestComponents) {
         std::cout << x.name << " " << x.numEntities << " " << x.volume << std::endl;
