@@ -17,7 +17,6 @@ double InformationGatherer::getVolume(std::string filePath, std::string componen
             continue;
         }
     }
-
     return 0;
 }
 
@@ -34,52 +33,56 @@ int InformationGatherer::getNumEntities(std::string filePath, std::string compon
     return entities;
 }
 
-std::vector<ComponentData> InformationGatherer::getTops(std::string filePath, bool extra) {
+void InformationGatherer::getMainComp(std::string filePath) {
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
-    if (extra)
-        cmd[4] = NULL;
 
     ged_exec(g, 7, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
-    std::vector<ComponentData> allComps;
+    std::vector<ComponentData> topComponents;
+
     while (getline(ss, val)) {
         int entities = getNumEntities(filePath, val);
         double volume = getVolume(filePath, val);
-        allComps.push_back({entities, volume, val});
+        topComponents.push_back({entities, volume, val});
     }
 
-    return allComps;
-
-    // struct ged* g = ged_open("db", filePath.c_str(), 1);
-	// const char* cmd[2] = { "tops", NULL };
-	// ged_exec(g, 1, cmd);
-    // std::stringstream ss(bu_vls_addr(g->ged_result_str));
-    // std::vector<ComponentData> topComps;
-    // std::string val;
-    // while (ss >> val) {
-    //     topComps.push_back({getNumEntities(filePath, val), getVolume(filePath, val), val});
-    // }
-    // return topComps;
+    int biggestComponent = 0; // idx
+    for (int i = 1; i < topComponents.size(); i++) {
+        if (topComponents[i].numEntities >= topComponents[biggestComponent].numEntities && topComponents[i].volume != std::numeric_limits<double>::infinity()) {
+            if (topComponents[i].volume > topComponents[biggestComponent].volume) {
+                biggestComponent = i;
+            }
+        }
+    }
+    largestComponents.push_back(topComponents[biggestComponent]);
 }
 
-std::vector<ComponentData> InformationGatherer::lsComp(std::string filePath, std::string component) {
-	const char* cmd[3] = { "l", component.c_str(), NULL };
-	ged_exec(g, 2, cmd);
-    std::stringstream ss(bu_vls_addr(g->ged_result_str));
-    std::vector<ComponentData> comps;
-    std::string val;
-    std::getline(ss, val); // ignore first line
-    while (getline(ss, val)) {
-        val = val.erase(0, val.find_first_not_of(" ")); // left trim
-        val = val.erase(val.find_last_not_of(" ") + 1); // right trim
-        val = val.substr(val.find(' ')+1); // extract out u
-        comps.push_back({getNumEntities(filePath, val), getVolume(filePath, val), val});
+void InformationGatherer::getSubComp(std::string filePath) {
+    // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
+    std::string pathToOutput = "output/sub_comp.txt";
+    std::string retrieveSub = "../../../build/bin/mged -c " + filePath + " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" > " + pathToOutput;
+    // std::cout << retrieveSub << std::endl;
+    system(retrieveSub.c_str());
+    std::fstream scFile(pathToOutput);
+    if (!scFile.is_open()) {
+        std::cerr << "failed to open file\n";
+        return;
     }
 
-    return comps;
-}
+    std::string comp;
+    int numEntities = 0;
+    std::vector<ComponentData> subComps;
 
+    while (scFile >> comp >> numEntities) {
+        double volume = getVolume(filePath, comp);
+        subComps.push_back({numEntities, volume, comp});
+        std::cout << " in subcomp " << comp << " " << numEntities << " " << volume << std::endl;
+    }
+    sort(subComps.rbegin(), subComps.rend());
+    largestComponents.reserve(largestComponents.size() + subComps.size());
+    largestComponents.insert(largestComponents.end(), subComps.begin(), subComps.end());
+}
 
 
 InformationGatherer::InformationGatherer()
@@ -140,60 +143,13 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
     infoMap["units"] = result.substr(first+1, last-first-1);
 
 
-    // Parse out hierarchy
-    // IDEA: Think of it as a tree. We identify the childs with tops command.
-    // We visit every child and get its volume, then push it into a max priority queue. 
-    // If the volume is not inf, we can push it into the final list of components we are interested.
-    // otherwise, we still visit its children but don't push it into final list of components
-    // We can stop as soon as final list of components size == num parts interested (e.g. 5) or total parts
-    // final list is guaranteed to be sorted by volume
-
-    std::vector<ComponentData> topComponents = getTops(filePath, false);
-    if (topComponents.size() < 5) {
-        topComponents = getTops(filePath, true);
+    getMainComp(filePath);
+    getSubComp(filePath);
+    std::cout << "Largest Components\n";
+    for (ComponentData x : largestComponents) {
+        std::cout << x.name << " " << x.numEntities << " " << x.volume << std::endl;
     }
-    sort(topComponents.rbegin(), topComponents.rend());
-    // std::priority_queue<ComponentData> pq;
-    // // run tops command, push all children to pq
-    // std::vector<ComponentData> topComp = getTops(filePath);
-    // std::cout << "TOPS" << std::endl;
-    // for (auto& x : topComp) {
-    //     pq.push(x);
-    //     std::cout << x.numEntities << " " << x.volume << " " << x.name << std::endl;
-    // }
-    // std::cout << "END OF TOPS" << std::endl;
 
-    // while (largestComponents.size() < 5 && !pq.empty()) {
-    //     ComponentData curComp = pq.top(); pq.pop();
-    //     if (curComp.volume != std::numeric_limits<double>::infinity()) {
-    //         // add curComp to final list
-    //         largestComponents.push_back(curComp);
-    //     } 
-        
-    //     std::vector<ComponentData> childComp = lsComp(filePath, curComp.name);
-    //     for (auto& x : childComp) {
-    //         // if (curComp.volume != x.volume)
-    //             pq.push(x);
-    //     }
-    // }
-
-    // while (! pq.empty() ) {
-    //     ComponentData qTop = pq.top();
-    //     std::cout << qTop.numEntities << " " << qTop.volume << " " << qTop.name << "\n";
-    //     pq.pop();
-    // }
-
-    int freq = 0;
-    for (auto& x : topComponents) {
-        std::cout << x.numEntities << " " << x.volume << " " << x.name << std::endl;
-        if (x.volume != std::numeric_limits<double>::infinity()) {
-            largestComponents.push_back(x);
-            freq++;
-        }
-        if (freq == 5) {
-            break;
-        }
-    }
 
 
 
