@@ -104,23 +104,69 @@ int IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string 
 void IFPainter::drawText(int x, int y, int height, int width, std::string text, int flags)
 {
 	// for now, italic text is omitted
-	int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
+	int fontWeight = standardTextWeight;
+	bool isUnderline = false;
+	if ((flags & TO_BOLD)) {
+    	fontWeight = boldTextWeight;
+	}
+
+	if (flags & TO_UNDERLINE) {
+    	isUnderline = true;
+	}
+	
+
 	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
 
+	cv::Point textOrigin(x, y + height);
 	cv::putText(img, text, cv::Point(x, y + height), cv::FONT_HERSHEY_PLAIN, fontSize, color, fontWeight);
+
+	if (isUnderline) {
+        // Compute the position of the line below the text
+        int baseline = 0;
+        cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, fontWeight, &baseline);
+        int underlineY = textOrigin.y + baseline + 2;
+        int underlineX1 = textOrigin.x;
+        int underlineX2 = underlineX1 + textSize.width;
+
+        // Draw the line using the same color as the text
+        cv::line(img, cv::Point(underlineX1, underlineY), cv::Point(underlineX2, underlineY), color, 1);
+    }
 }
 
 void IFPainter::drawTextCentered(int x, int y, int height, int width, std::string text, int flags)
 {
 	// for now, italic text is omitted
-	int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
+	int fontWeight = standardTextWeight;
+	bool isUnderline = false;
+	if ((flags & TO_BOLD)) {
+    	fontWeight = boldTextWeight;
+	}
+
+	if (flags & TO_UNDERLINE) {
+    	isUnderline = true;
+	}
+
+
 	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
 
 	int textWidth = getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, fontWeight, 0).width;
 
+	cv::Point textOrigin(x - textWidth/2, y + height);
 	cv::putText(img, text, cv::Point(x - textWidth/2, y + height), cv::FONT_HERSHEY_PLAIN, fontSize, color, fontWeight);
+
+	if (isUnderline) {
+        // Compute the position of the line below the text
+        int baseline = 0;
+        cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, fontWeight, &baseline);
+        int underlineY = textOrigin.y + baseline + 2;
+        int underlineX1 = textOrigin.x;
+        int underlineX2 = underlineX1 + textSize.width;
+
+        // Draw the line using the same color as the text
+        cv::line(img, cv::Point(underlineX1, underlineY), cv::Point(underlineX2, underlineY), color, 1);
+    }
 }
 void IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
 {
