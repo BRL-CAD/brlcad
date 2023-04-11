@@ -73,7 +73,6 @@ void getVerificationData(struct ged* g, Options &opt, std::map<std::string, std:
         std::string val = toVisit[i];
         //Get volume of region
         std::string command = opt.getTemppath() + "gqa -Av -g 2 -u " + map["units"] + ",\"cu " + map["units"] + "\" " + opt.getFilepath() + " " + val + " 2>&1";
-        std::cout << command << std::endl;
         char buffer[128];
         std::string result = "";
         FILE* pipe = popen(command.c_str(), "r");
@@ -88,7 +87,6 @@ void getVerificationData(struct ged* g, Options &opt, std::map<std::string, std:
             throw;
         }
         pclose(pipe); 
-        std::cout << result << std::endl;
         //Extract volume value
         result = result.substr(result.find("Average total volume:") + 22);
         result = result.substr(0, result.find("cu") - 1);
@@ -193,6 +191,7 @@ bool InformationGatherer::gatherInformation(Options &opt)
 	char* res = strtok(bu_vls_addr(g->ged_result_str), " ");
 	int count = 0;
 	while (res != NULL) {
+        std::cout << res << std::endl;
 		if (count == 1) {
 			infoMap.insert(std::pair < std::string, std::string>("primitives", res));
 		}
@@ -201,9 +200,6 @@ bool InformationGatherer::gatherInformation(Options &opt)
 		}
 		else if (count == 5) {
 			infoMap.insert(std::pair < std::string, std::string>("non-regions", res));
-		}
-		else if (count == 8) {
-			infoMap.insert(std::pair < std::string, std::string>("total", res));
 		}
 		count++;
 		res = strtok(NULL, " ");
@@ -216,15 +212,6 @@ bool InformationGatherer::gatherInformation(Options &opt)
 	std::size_t first = result.find_first_of("\'");
 	std::size_t last = result.find_last_of("\'");
 	infoMap.insert(std::pair<std::string, std::string>("units", result.substr(first+1, last-first-1))); 
-
-    //Gather assemblies
-    cmd[0] = "search";
-    cmd[1] = "obj";
-    cmd[2] = "-above";
-    cmd[3] = "-type";
-    cmd[4] = "region";
-    ged_exec(g, 5, cmd);
-    result = bu_vls_addr(g->ged_result_str);
 
     // Parse out hierarchy
     // IDEA: Think of it as a tree. We identify the childs with tops command.
@@ -303,6 +290,39 @@ bool InformationGatherer::gatherInformation(Options &opt)
     else {
         infoMap.insert(std::pair<std::string, std::string>("mass", std::to_string(mass)));
     }
+
+    //Gather representation
+    bool hasExplicit = false;
+    bool hasImplicit = false;
+    const char* tfilter = "-type brep";
+    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+        hasExplicit = true;
+    }
+    tfilter = "-below -type region -not -type comb -not -type brep";
+    std::cout << tfilter << std::endl;
+    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+        hasImplicit = true;
+    }
+    if (hasExplicit && hasImplicit) {
+        infoMap.insert(std::pair<std::string, std::string>("representation", "Hybrid (Explicit and Implicit)"));
+    }
+    else if (hasImplicit) {
+        infoMap.insert(std::pair<std::string, std::string>("representation", "Implicit with Booleans"));
+    }
+    else if (hasExplicit) {
+        infoMap.insert(std::pair<std::string, std::string>("representation", "Explicit Boundary"));
+    }
+    else {
+        infoMap.insert(std::pair<std::string, std::string>("representation", "ERROR: Type Unknown"));
+    }
+
+    //Gather assemblies
+    tfilter = "-above -type region";
+    int assemblies = db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL);
+    infoMap.insert(std::pair<std::string, std::string>("assemblies", std::to_string(assemblies)));
+
+    //Gather entity total
+    infoMap.insert(std::pair<std::string, std::string>("total", std::to_string(assemblies + stoi(infoMap["primitives"]) + stoi(infoMap["regions"]))));
 
     //Close database
     ged_close(g);
