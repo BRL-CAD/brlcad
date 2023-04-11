@@ -13,6 +13,7 @@
 #include <sstream>
 #include <vector>
 #include <ctime>
+#include<cstdio>
 
 // BRL-CAD header files
 #include "bu/getopt.h"

@@ -98,13 +98,7 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
 
     std::cout << render << std::endl;
 
-    std::ifstream file;
-    file.open(outputname);
-    if (file) {
-        std::string rmFile = "rm -rf " + outputname;
-        auto result2 = system(rmFile.c_str());
-    }
-    file.close();
+    std::remove(outputname.c_str());
     
     try {
         auto result2 = system(render.c_str());
