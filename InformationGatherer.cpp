@@ -23,8 +23,8 @@ double InformationGatherer::getVolume(std::string component) {
 
 int InformationGatherer::getNumEntities(std::string component) {
     // Find number of entities 
-    const char* cmd[4] = { "search", component.c_str(), "-type comb -not -type region", NULL };
-    ged_exec(g, 3, cmd);
+    const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
+    ged_exec(g, 7, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     int entities = 0;

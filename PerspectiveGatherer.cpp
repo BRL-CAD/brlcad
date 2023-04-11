@@ -98,7 +98,9 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
 
     std::cout << render << std::endl;
 
-    std::remove(outputname.c_str());
+    if (std::remove(outputname.c_str()) != 0) {
+        std::cerr << "Failed to remove " << outputname << std::endl;
+    }
     
     try {
         auto result2 = system(render.c_str());
