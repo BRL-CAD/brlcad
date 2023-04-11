@@ -252,6 +252,15 @@ void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar c
 			  cv::LINE_8);
 }
 
+// void IFPainter::drawArc(int x, int y, int width, cv::Scalar color) {
+// 	int lineType = cv::LINE_8;
+// 	cv::Point center(x, y);
+//     for(int i=10;i<=250;i=i+10)
+//     {
+//         ellipse( image, center, Size( i, i ), 0, 30, 150, color, width, lineType );
+//     }
+// }
+
 
 void IFPainter::openInGUI()
 {

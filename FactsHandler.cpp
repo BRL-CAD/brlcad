@@ -81,6 +81,9 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Geometry Type", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) Implicit - CSG");
+	// img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("dimX"));
+	// img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("dimY"));
+	// img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("dimZ"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "File Extension", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("extension"));
@@ -130,11 +133,10 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     int textOffset = width / 10;
 	int textHeight = height / 20;
     int textXOffset = textHeight * 53 / 5;
-    int textYOffset = textHeight * 15 / 5;
+    int textYOffset = textHeight * 8 / 5;
 
 	// img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Object Hierarchy", TO_BOLD);
 
-	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
 
     int N = 4; // number of sub components you want
     int offY = height / 2 + offsetY;
@@ -142,15 +144,31 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     int imgH = height / 2;
     int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
 
+    img.drawLine(offX + imgW/2, offY-10, offX + fmin(N-1, info.largestComponents.size()-1)*imgW + imgW/2, offY-10, 3, cv::Scalar(0, 0, 0));
+
     // main component
-    img.drawImageFitted(offsetX + 5, offsetY + textHeight, imgW, imgH, render);
+	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
+    img.drawImageFitted(offsetX + 5, offsetY + textHeight/3, imgW, imgH, render);
+    // img.drawLine();
+    // img.drawArc(offsetX + width / 2, offsetY + textHeight/3, 3, cv::Scalar(0, 0, 0));
+	img.drawTextCentered(offsetX + width / 2, offsetY + imgH*2/3, textHeight, width, info.largestComponents[0].name, TO_BOLD);
+
+    // entity summary
+    int curiX = 0;
+    img.drawText(offsetX + width*2/3, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Groups & Assemblies: " + info.getInfo("groups_assemblies"));
+	img.drawText(offsetX + width*2/3, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Regions & Parts: " + info.getInfo("regions_parts"));
+	img.drawText(offsetX + width*2/3, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Primitive Shapes: " + info.getInfo("primitives"));
+
+    
     
     // sub components
     for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
         render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
         // std::cout << "INSIDE factshandler DBG: " << render << std::endl;
         img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
-        img.drawText(offX + (i-1)*imgW, offY - width/30, textHeight, width, info.largestComponents[i].name, TO_BOLD);
+        img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY, textHeight, width, info.largestComponents[i].name, TO_BOLD);
+        img.drawLine(offX + (i-1)*imgW + imgW/2, offY-10, offX + (i-1)*imgW + imgW/2, offY+10, 3, cv::Scalar(0, 0, 0));
+        // img.drawLine(offX + (i-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (i-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
     }
 
     if (info.largestComponents.size() > N) {
@@ -160,7 +178,9 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
             subcomponents += info.largestComponents[i].name + " ";
         render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
         img.drawImageFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
-        img.drawText(offX + (N-1)*imgW, offY - width/30, textHeight, width, "...", TO_BOLD);
+        img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY, textHeight, width, "...", TO_BOLD);
+        img.drawLine(offX + (N-1)*imgW + imgW/2, offY-10, offX + (N-1)*imgW + imgW/2, offY+10, 3, cv::Scalar(0, 0, 0));
+        // img.drawLine(offX + (N-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (N-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
     }
 }
 

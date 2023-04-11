@@ -57,6 +57,17 @@ void InformationGatherer::getMainComp() {
     }
 }
 
+int InformationGatherer::getEntityData(char* buf) {
+    std::stringstream ss(buf);
+    std::string token;
+    int count = 0;
+    while (getline(ss, token)) {
+        count++;
+    }
+    return count;
+}
+
+
 void InformationGatherer::getSubComp() {
     // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
     std::string pathToOutput = "output/sub_comp.txt";
@@ -96,46 +107,25 @@ InformationGatherer::~InformationGatherer()
 
 bool InformationGatherer::gatherInformation(std::string name)
 {
-	// TODO: this
-
 	//Open database
     std::string filePath = opt->getFilepath();
 	g = ged_open("db", filePath.c_str(), 1);
 
 	//Gather title
-	const char* cmd[5] = { "title", NULL, NULL, NULL, NULL };
+	const char* cmd[6] = { "title", NULL, NULL, NULL, NULL };
 	ged_exec(g, 1, cmd);
     infoMap["title"] = bu_vls_addr(g->ged_result_str);
 
-	//Gather primitives, regions, total objects
-	cmd[0] = "summary";
-	ged_exec(g, 1, cmd);
-	char* res = strtok(bu_vls_addr(g->ged_result_str), " ");
-	int count = 0;
-	while (res != NULL) {
-		if (count == 1) {
-            infoMap["primitives"] = res;
-		}
-		else if (count == 3) {
-            infoMap["regions"] = res;
-		}
-		else if (count == 5) {
-            infoMap["non-regions"] = res;
-		}
-		else if (count == 8) {
-            infoMap["total"] = res;
-		}
-		count++;
-		res = strtok(NULL, " ");
-	}
 
 	//Gather DB Version
 	cmd[0] = "dbversion";
+    cmd[1] = NULL;
 	ged_exec(g, 1, cmd);
     infoMap["version"] = bu_vls_addr(g->ged_result_str);
 
     // Gather units
 	cmd[0] = "units";
+    cmd[1] = NULL;
 	ged_exec(g, 1, cmd);
 	std::string result = bu_vls_addr(g->ged_result_str);
 	std::size_t first = result.find_first_of("\'");
@@ -151,9 +141,6 @@ bool InformationGatherer::gatherInformation(std::string name)
     for (ComponentData x : largestComponents) {
         std::cout << x.name << " " << x.numEntities << " " << x.volume << std::endl;
     }
-
-
-
 
     // Gather dimensions
 	cmd[0] = "bb";
@@ -174,6 +161,33 @@ bool InformationGatherer::gatherInformation(std::string name)
         }
     }
     // std::cout << "print info " << infoMap["dimX"] << " " << infoMap["dimY"] << " " << infoMap["dimZ"] << " " << infoMap["volume"] << std::endl;
+
+    // gather group & assemblies
+    cmd[0] = "search";
+    cmd[1] = largestComponents[0].name.c_str();
+    cmd[2] = "-above";
+    cmd[3] = "-type";
+    cmd[4] = "region";
+    cmd[5] = NULL;
+    ged_exec(g, 5, cmd);
+    infoMap["groups_assemblies"] = std::to_string(getEntityData(bu_vls_addr(g->ged_result_str)));
+
+    // gather primitive shapes
+    cmd[2] = "-not";
+    cmd[3] = "-type";
+    cmd[4] = "comb";
+    cmd[5] = NULL;
+    ged_exec(g, 5, cmd);
+    infoMap["primitives"] = std::to_string(getEntityData(bu_vls_addr(g->ged_result_str)));
+
+    // gather primitive shapes
+    cmd[2] = "-type";
+    cmd[3] = "region";
+    cmd[4] = NULL;
+    ged_exec(g, 4, cmd);
+    infoMap["regions_parts"] = std::to_string(getEntityData(bu_vls_addr(g->ged_result_str)));
+
+
 
 	//Gather name of preparer
     infoMap["preparer"] = name;

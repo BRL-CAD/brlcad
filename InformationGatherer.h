@@ -38,6 +38,7 @@ private:
     int getNumEntities(std::string component);
     void getMainComp();
     void getSubComp();
+    int getEntityData(char* buf);
 
 
 public:
