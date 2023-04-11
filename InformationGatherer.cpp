@@ -6,6 +6,82 @@
 #	include <aclapi.h>
 #endif 
 
+void getVerificationData(struct ged* g, Options &opt, double &volume, double &mass, double &surfArea) {
+    const char* cmd[3] = { "tops", NULL, NULL };
+    ged_exec(g, 1, cmd);
+    std::stringstream ss(bu_vls_addr(g->ged_result_str));
+    std::string val;
+    std::map<std::string, bool> listed;
+    std::vector<std::string> toVisit;
+    while (ss >> val) {
+        const char* cmd[3] = { "l", val.c_str(), NULL };
+        ged_exec(g, 2, cmd);
+        std::stringstream ss2(bu_vls_addr(g->ged_result_str));
+        std::string val2;
+        std::getline(ss2, val2); // ignore first line
+        //Get initial regions
+        while (getline(ss2, val2)) {
+            //Parse components
+            val2 = val2.erase(0, val2.find_first_not_of(" ")); // left trim
+            val2 = val2.erase(val2.find_last_not_of(" ") + 1); // right trim
+            if (val2[0] == 'u') {
+                val2 = val2.substr(val2.find(' ') + 1); // extract out u
+                val2 = val2.substr(0, val2.find('['));
+                if (val2.find(' ') != std::string::npos) {
+                    val2 = val2.substr(0, val2.find(' '));
+                }
+                std::map<std::string, bool>::iterator it;
+                it = listed.find(val2);
+                if (it == listed.end()) {
+                    listed[val2] = true;
+                    toVisit.push_back(val2);
+                }
+            }
+        }
+    }
+    for (int i = 0; i < toVisit.size(); i++) {
+        std::string val = toVisit[i];
+        //Get volume of region
+        std::string command = opt.getTemppath() + "gqa -Av -g 2 " + opt.getFilepath() + " " + val + " 2>&1";
+        char buffer[128];
+        std::string result = "";
+        FILE* pipe = popen(command.c_str(), "r");
+        if (!pipe) throw std::runtime_error("popen() failed!");
+        try {
+            while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+                result += buffer;
+            }
+        }
+        catch (...) {
+            pclose(pipe);
+            throw;
+        }
+        pclose(pipe); 
+        //Extract volume value
+        result = result.substr(result.find("Average total volume:") + 22);
+        result = result.substr(0, result.find("cu") - 1);
+        if (result.find("inf") == std::string::npos) {
+            volume += stod(result);
+        }
+        //Get mass of region
+        command = opt.getTemppath() + "gqa -Am -g 1 " + opt.getFilepath() + " " + val + " 2>&1";
+        result = "";
+        pipe = popen(command.c_str(), "r");
+        if (!pipe) throw std::runtime_error("popen() failed!");
+        try {
+            while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+                result += buffer;
+            }
+        }
+        catch (...) {
+            pclose(pipe);
+            throw;
+        }
+        pclose(pipe);
+        std::cout << result << std::endl; 
+    }
+}
+
 double getVolume(struct ged* g, std::string filePath, std::string component) {
     // Gather dimensions
     const char* cmd[3] = { "bb", component.c_str(), NULL };
@@ -101,11 +177,6 @@ bool InformationGatherer::gatherInformation(Options &opt)
 		res = strtok(NULL, " ");
 	}
 
-	//Gather DB Version
-	cmd[0] = "dbversion";
-	ged_exec(g, 1, cmd);
-	infoMap.insert(std::pair<std::string, std::string>("version", bu_vls_addr(g->ged_result_str)));
-
     // Gather units
 	cmd[0] = "units";
 	ged_exec(g, 1, cmd);
@@ -114,6 +185,14 @@ bool InformationGatherer::gatherInformation(Options &opt)
 	std::size_t last = result.find_last_of("\'");
 	infoMap.insert(std::pair<std::string, std::string>("units", result.substr(first+1, last-first-1))); 
 
+    //Gather assemblies
+    cmd[0] = "search";
+    cmd[1] = "obj";
+    cmd[2] = "-above";
+    cmd[3] = "-type";
+    cmd[4] = "region";
+    ged_exec(g, 5, cmd);
+    result = bu_vls_addr(g->ged_result_str);
 
     // Parse out hierarchy
     // IDEA: Think of it as a tree. We identify the childs with tops command.
@@ -155,6 +234,8 @@ bool InformationGatherer::gatherInformation(Options &opt)
 	  cmd[0] = "bb";
 	  cmd[1] = "component";
 	  cmd[2] = NULL;
+      cmd[3] = NULL;
+      cmd[4] = NULL;
 	  ged_exec(g, 2, cmd);
 
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
@@ -164,12 +245,29 @@ bool InformationGatherer::gatherInformation(Options &opt)
     while (ss >> val) {
         try {
             stod(val);
-            infoMap[dim_data[dim_idx++]] = val;
+            //infoMap[dim_data[dim_idx++]] = val;
         } catch (const std::exception& e){
             continue;
         }
     }
     // std::cout << "print info " << infoMap["dimX"] << " " << infoMap["dimY"] << " " << infoMap["dimZ"] << " " << infoMap["volume"] << std::endl;
+
+    //Gather volume and mass
+    double volume = 0;
+    double mass = 0;
+    double surfArea = 0;
+    getVerificationData(g, opt, volume, mass, surfArea);
+    std::stringstream ss2;
+    ss2 << volume;
+    std::string vol = ss2.str();
+    infoMap.insert(std::pair<std::string, std::string>("volume", vol + " cu " + infoMap["units"]));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea", vol + " " + infoMap["units"] + "^2"));
+    if (mass == 0) {
+        infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
+    }
+    else {
+        infoMap.insert(std::pair<std::string, std::string>("mass", std::to_string(mass)));
+    }
 
     //Close database
     ged_close(g);
@@ -233,8 +331,19 @@ bool InformationGatherer::gatherInformation(Options &opt)
 
     infoMap.insert(std::pair<std::string, std::string>("owner", owner));
 
+    //Gather last date updated
+    struct stat info;
+    stat(opt.getFilepath().c_str(), &info);
+    std::time_t update = info.st_mtime;
+    tm* ltm = localtime(&update);
+    std::string date = std::to_string(ltm->tm_mon + 1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year + 1900);
+    infoMap.insert(std::pair < std::string, std::string>("lastUpdate", date));
+
 	//Gather source file
+    last = opt.getFilepath().find_last_of("/");
+#ifdef HAVE_WINDOWS_H
 	last = opt.getFilepath().find_last_of("\\");
+#endif
 	std::string file = opt.getFilepath().substr(last+1, opt.getFilepath().length()-1);
 	infoMap.insert(std::pair < std::string, std::string>("file", file));
 
@@ -245,8 +354,8 @@ bool InformationGatherer::gatherInformation(Options &opt)
 
 	//Gather date of generation
 	std::time_t now = time(0);
-	tm* ltm = localtime(&now);
-	std::string date = std::to_string(ltm->tm_mon+1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year+1900);
+	ltm = localtime(&now);
+	date = std::to_string(ltm->tm_mon+1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year+1900);
 	infoMap.insert(std::pair < std::string, std::string>("dateGenerated", date));
 
     //Gather name of preparer
@@ -261,7 +370,7 @@ bool InformationGatherer::gatherInformation(Options &opt)
 
 	//Hard code other stuff into map for now
 	infoMap.insert(std::pair<std::string, std::string>("lastUpdate", "3/24/2023"));
-	//infoMap.insert(std::pair<std::string, std::string>("checksum", "120EA8A25E5D487BF68B5F7096440019"));
+	infoMap.insert(std::pair<std::string, std::string>("checksum", "120EA8A25E5D487BF68B"));
 
 	return true;
 }

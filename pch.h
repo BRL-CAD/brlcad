@@ -13,6 +13,7 @@
 #include <sstream>
 #include <vector>
 #include <ctime>
+#include <sys/stat.h>
 #ifdef HAVE_PWD_H
 #  include <pwd.h>
 #endif
