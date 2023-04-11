@@ -37,7 +37,7 @@ bool readParameters(int argc, char** argv, Options &opt)
 
     int opts;
 
-    while ((opts = bu_getopt(argc, argv, "Fg?p:P:f:n:T:c:")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "Fg?Oop:P:f:n:T:c:N:")) != -1) {
         switch (opts) {
             case 'p':
                 f = true;
@@ -65,6 +65,15 @@ bool readParameters(int argc, char** argv, Options &opt)
             case 'c':
                 opt.setClassification(bu_optarg);
                 break;
+            case 'o':
+                opt.setOrientationRightLeft(true);
+                break;
+            case 'O':
+                opt.setOrientationZYUp(true);
+                break;
+            case 'N':
+                opt.setNotes(bu_optarg);
+                break;
             case '?':
                 h = true;
                 break;
@@ -82,6 +91,9 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    T = temporary directory to store intermediate files\n");
         bu_log("    n = name of preparer, to be used in report\n");
         bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report\n");
+        bu_log("    o = orientation of the file, default is right hand, flag will change orientation output to left hand");
+        bu_log("    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up");
+        bu_log("    N = notes that a user would like to add to be specified in the report");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
@@ -140,7 +152,7 @@ void generateReport(Options opt)
     // draw all sections
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
-    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height());
+    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
     makeVerificationSection(img, info, verificationSection.x(), verificationSection.y(), verificationSection.width(), verificationSection.height());
     makeVVSection(img, info, vvSection.x(), vvSection.y(), vvSection.width(), vvSection.height());
     makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);

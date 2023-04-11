@@ -47,7 +47,7 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	}
 }
 
-void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
+void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
 	// draw bounding rectangle
 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
 
@@ -67,14 +67,14 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("extension"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Orientation", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) Right-Hand, Z-Up");
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getOrientationRightLeft() + ", " + opt.getOrientationZYUp());
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Entity Summary", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("assemblies") + " assemblies, " + info.getInfo("total") + " total");
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Notes", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) My Notes");
+	img.textWrapping(offsetX + textOffset, offsetY + curiX++ * textYOffset, offsetX + width, offsetY + (curiX + 3) * textYOffset, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/8750);
 	
 }
 void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {

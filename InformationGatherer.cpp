@@ -191,7 +191,6 @@ bool InformationGatherer::gatherInformation(Options &opt)
 	char* res = strtok(bu_vls_addr(g->ged_result_str), " ");
 	int count = 0;
 	while (res != NULL) {
-        std::cout << res << std::endl;
 		if (count == 1) {
 			infoMap.insert(std::pair < std::string, std::string>("primitives", res));
 		}
@@ -259,12 +258,12 @@ bool InformationGatherer::gatherInformation(Options &opt)
 
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
-    std::vector<std::string> dim_data = {"dimX", "dimY", "dimZ", "volume"};
+    std::vector<std::string> dim_data = {"dimX", "dimY", "dimZ", "volume2"};
     int dim_idx = 0;
     while (ss >> val) {
         try {
             stod(val);
-            //infoMap[dim_data[dim_idx++]] = val;
+            infoMap[dim_data[dim_idx++]] = val;
         } catch (const std::exception& e){
             continue;
         }
@@ -299,7 +298,6 @@ bool InformationGatherer::gatherInformation(Options &opt)
         hasExplicit = true;
     }
     tfilter = "-below -type region -not -type comb -not -type brep";
-    std::cout << tfilter << std::endl;
     if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasImplicit = true;
     }
@@ -424,7 +422,6 @@ bool InformationGatherer::gatherInformation(Options &opt)
     infoMap.insert(std::pair < std::string, std::string>("classification", classification));
 
 	//Hard code other stuff into map for now
-	infoMap.insert(std::pair<std::string, std::string>("lastUpdate", "3/24/2023"));
 	infoMap.insert(std::pair<std::string, std::string>("checksum", "120EA8A25E5D487BF68B"));
 
 	return true;
