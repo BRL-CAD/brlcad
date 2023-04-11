@@ -6,7 +6,32 @@
 #	include <aclapi.h>
 #endif 
 
-void getVerificationData(struct ged* g, Options &opt, double &volume, double &mass, double &surfArea) {
+void getSurfaceArea(Options& opt, std::map<std::string, std::string> map, std::string az, std::string el, std::string comp, double& surfArea) {
+    std::string command = opt.getTemppath() + "rtarea -u " + map["units"] + " -a " + az + " -e " + el + " " + opt.getFilepath() + " " + comp + " 2>&1";
+    char buffer[128];
+    std::string result = "";
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) throw std::runtime_error("popen() failed!");
+    try {
+        while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+            result += buffer;
+        }
+    }
+    catch (...) {
+        pclose(pipe);
+        throw;
+    }
+    pclose(pipe);
+    //If rtarea didn't fail, calculate area
+    if (result.find("Total Exposed Area") != std::string::npos) {
+        result = result.substr(result.find("Total Exposed Area"));
+        result = result.substr(0, result.find("square") - 1);
+        result = result.substr(result.find("=") + 1);
+        surfArea += stod(result);
+    }
+}
+
+void getVerificationData(struct ged* g, Options &opt, std::map<std::string, std::string> map, double &volume, double &mass, double &surfArea) {
     const char* cmd[3] = { "tops", NULL, NULL };
     ged_exec(g, 1, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
@@ -14,6 +39,11 @@ void getVerificationData(struct ged* g, Options &opt, double &volume, double &ma
     std::map<std::string, bool> listed;
     std::vector<std::string> toVisit;
     while (ss >> val) {
+        //Get surface area
+        getSurfaceArea(opt, map, "0", "0", val, surfArea);
+        getSurfaceArea(opt, map, "90", "0", val, surfArea);
+        getSurfaceArea(opt, map, "0", "90", val, surfArea);
+        //Next, get regions underneath to calculate volume and mass
         const char* cmd[3] = { "l", val.c_str(), NULL };
         ged_exec(g, 2, cmd);
         std::stringstream ss2(bu_vls_addr(g->ged_result_str));
@@ -42,7 +72,8 @@ void getVerificationData(struct ged* g, Options &opt, double &volume, double &ma
     for (int i = 0; i < toVisit.size(); i++) {
         std::string val = toVisit[i];
         //Get volume of region
-        std::string command = opt.getTemppath() + "gqa -Av -g 2 " + opt.getFilepath() + " " + val + " 2>&1";
+        std::string command = opt.getTemppath() + "gqa -Av -g 2 -u " + map["units"] + ",\"cu " + map["units"] + "\" " + opt.getFilepath() + " " + val + " 2>&1";
+        std::cout << command << std::endl;
         char buffer[128];
         std::string result = "";
         FILE* pipe = popen(command.c_str(), "r");
@@ -57,6 +88,7 @@ void getVerificationData(struct ged* g, Options &opt, double &volume, double &ma
             throw;
         }
         pclose(pipe); 
+        std::cout << result << std::endl;
         //Extract volume value
         result = result.substr(result.find("Average total volume:") + 22);
         result = result.substr(0, result.find("cu") - 1);
@@ -64,7 +96,7 @@ void getVerificationData(struct ged* g, Options &opt, double &volume, double &ma
             volume += stod(result);
         }
         //Get mass of region
-        command = opt.getTemppath() + "gqa -Am -g 1 " + opt.getFilepath() + " " + val + " 2>&1";
+        command = opt.getTemppath() + "gqa -Am -g 2 " + opt.getFilepath() + " " + val + " 2>&1";
         result = "";
         pipe = popen(command.c_str(), "r");
         if (!pipe) throw std::runtime_error("popen() failed!");
@@ -256,12 +288,15 @@ bool InformationGatherer::gatherInformation(Options &opt)
     double volume = 0;
     double mass = 0;
     double surfArea = 0;
-    getVerificationData(g, opt, volume, mass, surfArea);
-    std::stringstream ss2;
-    ss2 << volume;
-    std::string vol = ss2.str();
+    getVerificationData(g, opt, infoMap, volume, mass, surfArea);
+    ss = std::stringstream();
+    ss << volume;
+    std::string vol = ss.str();
+    ss = std::stringstream();
+    ss << surfArea;
+    std::string surf = ss.str();
     infoMap.insert(std::pair<std::string, std::string>("volume", vol + " cu " + infoMap["units"]));
-    infoMap.insert(std::pair<std::string, std::string>("surfaceArea", vol + " " + infoMap["units"] + "^2"));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea", surf + " " + infoMap["units"] + "^2"));
     if (mass == 0) {
         infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
     }
