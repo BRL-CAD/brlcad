@@ -4,6 +4,7 @@
 #define TO_ITAL 2
 #define TO_WHITE 4
 #define TO_ELLIPSIS 6
+#define TO_UNDERLINE 8
 
 
 #include "pch.h"

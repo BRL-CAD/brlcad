@@ -53,17 +53,14 @@ std::vector<std::pair<double, std::string> > lsComp(struct ged* g, std::string f
 
 InformationGatherer::InformationGatherer()
 {
-	// TODO: this
 }
 
 InformationGatherer::~InformationGatherer()
 {
-	// TODO: this
 }
 
 bool InformationGatherer::gatherInformation(std::string filePath, std::string name)
 {
-	// TODO: this
 
 	//Open database
 	struct ged* g = ged_open("db", filePath.c_str(), 1);
@@ -169,7 +166,7 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 	infoMap.insert(std::pair < std::string, std::string>("preparer", name));
 
 	//Gather source file
-	last = filePath.find_last_of("\\");
+	last = filePath.find_last_of("/");
 	std::string file = filePath.substr(last+1, filePath.length()-1);
 	infoMap.insert(std::pair < std::string, std::string>("file", file));
 
@@ -197,6 +194,5 @@ bool InformationGatherer::gatherInformation(std::string filePath, std::string na
 
 std::string InformationGatherer::getInfo(std::string key)
 {
-	// TODO: this
 	return infoMap[key];
 }
