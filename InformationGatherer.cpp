@@ -10,7 +10,7 @@ double InformationGatherer::getVolume(std::string component) {
     int dim_idx = 0;
     while (ss >> val) {
         try {
-            stod(val);
+            double temp = stod(val);
             dim_idx++;
             if (dim_idx == 4)
                 return stod(val);

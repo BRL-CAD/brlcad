@@ -144,7 +144,9 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     int imgH = height / 2;
     int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
 
+    int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-1) - (offX+imgW/2)) / 2;
     img.drawLine(offX + imgW/2, offY-10, offX + fmin(N-1, info.largestComponents.size()-1)*imgW + imgW/2, offY-10, 3, cv::Scalar(0, 0, 0));
+    img.drawLine(centerPt, offY-20, centerPt, offY-10, 3, cv::Scalar(0, 0, 0));
 
     // main component
 	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
@@ -155,9 +157,9 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
 
     // entity summary
     int curiX = 0;
-    img.drawText(offsetX + width*2/3, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Groups & Assemblies: " + info.getInfo("groups_assemblies"));
-	img.drawText(offsetX + width*2/3, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Regions & Parts: " + info.getInfo("regions_parts"));
-	img.drawText(offsetX + width*2/3, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Primitive Shapes: " + info.getInfo("primitives"));
+    img.drawText(offsetX + width*3/5, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Groups & Assemblies: " + info.getInfo("groups_assemblies"));
+	img.drawText(offsetX + width*3/5, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Regions & Parts: " + info.getInfo("regions_parts"));
+	img.drawText(offsetX + width*3/5, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Primitive Shapes: " + info.getInfo("primitives"));
 
     
     
@@ -166,7 +168,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
         render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
         // std::cout << "INSIDE factshandler DBG: " << render << std::endl;
         img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
-        img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY, textHeight, width, info.largestComponents[i].name, TO_BOLD);
+        img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY+5, textHeight, width, info.largestComponents[i].name, TO_BOLD);
         img.drawLine(offX + (i-1)*imgW + imgW/2, offY-10, offX + (i-1)*imgW + imgW/2, offY+10, 3, cv::Scalar(0, 0, 0));
         // img.drawLine(offX + (i-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (i-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
     }
@@ -178,7 +180,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
             subcomponents += info.largestComponents[i].name + " ";
         render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
         img.drawImageFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
-        img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY, textHeight, width, "...", TO_BOLD);
+        img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY+5, textHeight, width, "...", TO_BOLD);
         img.drawLine(offX + (N-1)*imgW + imgW/2, offY-10, offX + (N-1)*imgW + imgW/2, offY+10, 3, cv::Scalar(0, 0, 0));
         // img.drawLine(offX + (N-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (N-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
     }
