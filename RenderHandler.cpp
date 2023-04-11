@@ -412,10 +412,12 @@ std::vector<LayoutChoice> initLayouts()
 {
 	std::vector<LayoutChoice> layouts;
 
-	layouts.emplace_back("1 \n02\n43\n5 \nAA\n", true);
+	//layouts.emplace_back("1 \n02\n43\n5 \nAA\n", true);
 	layouts.emplace_back("1423\n05AA", false);
-	layouts.emplace_back("1 43A\n025 A\n", false);
-	layouts.emplace_back("1 43\n025 \nAAAA\n", false);
+	//layouts.emplace_back("1 43A\n025 A\n", false);
+	//layouts.emplace_back("1 43\n025 \nAAAA\n", false);
+	layouts.emplace_back("102\n543\n.AA\n", false);
+	//layouts.emplace_back("10A\n52A\n 4A\n 3A\n", false);
 
 	return layouts;
 }
@@ -425,9 +427,9 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	//double modelLength = std::stod(info.getInfo("dimX"));
 	//double modelDepth = std::stod(info.getInfo("dimY"));;
 	//double modelHeight = std::stod(info.getInfo("dimZ"));;
-	double modelLength = 500;
-	double modelHeight = 500;
-	double modelDepth = 1200;
+	double modelLength = 1683;
+	double modelHeight = 625;
+	double modelDepth = 1988;
 
 	// TODO: change temporary fix
 	width -= offsetX;
@@ -452,7 +454,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 			break;
 		default: // draw face
 			std::string render = renderPerspective(faceDetails[next].face, info.largestComponents[0].second, opt);
-			img.drawImageFitted(offsetX + coords[0] - 5, offsetY + coords[1] - 5, coords[2] - coords[0] - 10, coords[3] - coords[1] - 10, render);
+			img.drawImageFitted(offsetX + coords[0] + 15, offsetY + coords[1] + 15, coords[2] - coords[0] - 30, coords[3] - coords[1] - 30, render);
 			break;
 		}
 	}
