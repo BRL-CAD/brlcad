@@ -48,6 +48,7 @@ bool readParameters(int argc, char** argv, Options &opt)
                 break;
             case 'F':
                 opt.setIsFolder();
+                opt.setFolder(bu_optarg);
                 break;
             case 'g':
                 opt.setOpenGUI();

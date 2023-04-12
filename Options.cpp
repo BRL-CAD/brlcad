@@ -8,6 +8,7 @@ Options::Options()
 	width = 3508;
 	length = 2480;
 	isFolder = false;
+    folderName = "";
 	openGUI = false;
 	exportToFile = false;
 	fileName = "";
@@ -43,6 +44,10 @@ void Options::setOpenGUI() {
 
 void Options::setExportToFile() {
 	exportToFile = true;
+}
+
+void Options::setFolder(std::string n) {
+	folderName = n;
 }
 
 void Options::setFileName(std::string n) {
