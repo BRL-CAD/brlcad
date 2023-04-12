@@ -10,9 +10,6 @@
  * retreiving said information from the InformationGatherer helper file.
  */
 
-// TODO: Organize this; I'm not sure how we want to present the information so don't want to template this out yet.
-// TODO: should we change this into a general ReportGenerator class, which will have methods to build each part of the page?
-
 class InformationGatherer;
 class IFPainter;
 

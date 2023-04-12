@@ -165,7 +165,6 @@ std::vector<std::pair<double, std::string> > lsComp(struct ged* g, std::string f
 
 InformationGatherer::InformationGatherer()
 {
-	// TODO: this
 }
 
 InformationGatherer::~InformationGatherer()
@@ -398,6 +397,7 @@ bool InformationGatherer::gatherInformation(Options &opt)
 	last = opt.getFilepath().find_last_of("\\");
 #endif
 	std::string file = opt.getFilepath().substr(last+1, opt.getFilepath().length()-1);
+
 	infoMap.insert(std::pair < std::string, std::string>("file", file));
 
 	//Gather file extension
@@ -429,6 +429,5 @@ bool InformationGatherer::gatherInformation(Options &opt)
 
 std::string InformationGatherer::getInfo(std::string key)
 {
-	// TODO: this
 	return infoMap[key];
 }

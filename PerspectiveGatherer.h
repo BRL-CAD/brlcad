@@ -45,5 +45,4 @@ struct FaceDetails
 
 std::map<char,FaceDetails> getFaceDetails();
 
-// TODO: add correct parameters and return type
 std::string renderPerspective(RenderingFace face, std::string component, Options& opt);

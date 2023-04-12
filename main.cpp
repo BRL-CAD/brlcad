@@ -127,7 +127,6 @@ void generateReport(Options opt)
     }
 
     // Define commonly used ratio variables
-    int XY_margin = opt.getWidth() / 150;
     int margin = opt.getWidth() / 150;
     int header_footer_height = opt.getLength() / 25;
     int padding = opt.getLength() / 250;
@@ -142,19 +141,17 @@ void generateReport(Options opt)
     Position imagePosition(0,0,opt.getWidth(), opt.getLength());
     Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
     Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
-    Position fileSection(imagePosition.right() - imagePosition.quarterWidth() - margin, topSection.bottom() + padding, imagePosition.quarterWidth() - border_px, (imagePosition.height() / 2) - margin - header_footer_height - (padding) - 2*border_px);
-    Position verificationSection(fileSection.x(),fileSection.bottom() + padding, fileSection.width(), fileSection.height());
-    Position vvSection(margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, ((imagePosition.width() - fileSection.width() - 2*margin) / 2) - padding, vvHeight);
-    Position hierarchySection(vvSection.right() + padding, vvSection.y(), vvSection.width(), vvSection.height());
-    Position renderSection(margin, topSection.bottom() + padding, imagePosition.width() - fileSection.width() - 2*margin, imagePosition.height() - margin - header_footer_height - vvHeight - 2 * padding - border_px);
+    Position hierarchySection(imagePosition.right() - imagePosition.thirdWidth() - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.thirdWidth(), vvHeight);
+    Position fileSection(imagePosition.right() - imagePosition.thirdWidth() - margin, topSection.bottom() + padding, imagePosition.thirdWidth(), hierarchySection.top() - topSection.bottom() - padding);
+    Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
+    
 
 
     // draw all sections
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
     makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
-    makeVerificationSection(img, info, verificationSection.x(), verificationSection.y(), verificationSection.width(), verificationSection.height());
-    makeVVSection(img, info, vvSection.x(), vvSection.y(), vvSection.width(), vvSection.height());
+    //makeVVSection(img, info, vvSection.x(), vvSection.y(), vvSection.width(), vvSection.height());
     makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
     
