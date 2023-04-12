@@ -22,6 +22,11 @@ public:
 	void setExportToFile();
 	void setFileName(std::string n);
 	void setName(std::string n);
+	void setClassification(std::string c);
+	void setOrientationRightLeft(bool rL);
+	void setOrientationZYUp(bool zy);
+	void setNotes(std::string n);
+
 	//Getter functions
 	std::string getFilepath();
 	std::string getTemppath();
@@ -32,6 +37,10 @@ public:
 	bool getExportToFile();
 	std::string getFileName();
 	std::string getName();
+	std::string getClassification();
+	std::string getOrientationRightLeft();
+	std::string getOrientationZYUp();
+	std::string getNotes();
 private:
 	//Path to file that will be used to generate report
 	std::string filepath;
@@ -52,4 +61,11 @@ private:
 	std::string fileName;
 	//Name of preparer
 	std::string name;
+	//Classification word
+	std::string classification;
+	//Orientation
+	std::string rightLeft;
+	std::string zY;
+	//Notes
+	std::string notes;
 };
