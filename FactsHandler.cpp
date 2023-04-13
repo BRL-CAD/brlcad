@@ -154,6 +154,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     img.drawLine(offX + imgW/2, offY-10, offX + fmin(N-1, info.largestComponents.size()-2)*imgW + imgW/2, offY-10, 3, cv::Scalar(94, 58, 32));
     img.drawLine(centerPt, offY-30, centerPt, offY-10, 3, cv::Scalar(94, 58, 32));
     img.drawCirc(centerPt, offY-30, 7, -1, cv::Scalar(94, 58, 32));
+    // img.drawCirc(centerPt, offY-30, 20, 3, cv::Scalar(94, 58, 32));
 
     // entity summary
     int curiX = 0;
@@ -171,6 +172,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
         img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY+20, textHeight, width, info.largestComponents[i].name, TO_BOLD);
         img.drawLine(offX + (i-1)*imgW + imgW/2, offY-10, offX + (i-1)*imgW + imgW/2, offY+10, 3, cv::Scalar(94, 58, 32));
         img.drawCirc(offX + (i-1)*imgW + imgW/2, offY+10, 7, -1, cv::Scalar(94, 58, 32));
+        // img.drawCirc(offX + (i-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
         // img.drawLine(offX + (i-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (i-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
     }
 
@@ -184,6 +186,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
         img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY+20, textHeight, width, "...", TO_BOLD);
         img.drawLine(offX + (N-1)*imgW + imgW/2, offY-10, offX + (N-1)*imgW + imgW/2, offY+10, 3, cv::Scalar(94, 58, 32));
         img.drawCirc(offX + (N-1)*imgW + imgW/2, offY+10, 7, -1, cv::Scalar(94, 58, 32));
+        // img.drawCirc(offX + (N-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
         // img.drawLine(offX + (N-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (N-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
     }
 }

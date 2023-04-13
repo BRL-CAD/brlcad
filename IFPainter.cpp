@@ -255,6 +255,7 @@ void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar c
 void IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
 {
     circle(img, cv::Point(x,y), radius, color, width, cv::LINE_8);
+    // ellipse(img, cv::Point(x,y), cv::Size(radius, radius), 0, 0, 180, color, width, cv::LINE_8);
 }
 
 // void IFPainter::drawArc(int x, int y, int width, cv::Scalar color) {

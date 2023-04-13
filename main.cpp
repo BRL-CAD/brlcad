@@ -15,10 +15,10 @@ int main(int argc, char **argv) {
                 filename = filename.substr(filename.find_last_of("/\\") + 1);
                 filename = filename.substr(0, filename.find_last_of("."));
                 std::cout << "Processing: " << filename << std::endl;
-                std::string exportPath = options.getExportFolder() + "/report_"+std::to_string(cnt++)+".png";
+                std::string exportPath = options.getExportFolder() + "/" + filename + "_report.png";
                 options.setFileName(exportPath);
                 generateReport(options);
-                std::cout << "Finished Processing: " << cnt << std::endl;
+                std::cout << "Finished Processing: " << cnt++ << std::endl;
             }
         } else {
             generateReport(options);
