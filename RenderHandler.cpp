@@ -424,12 +424,13 @@ std::vector<LayoutChoice> initLayouts()
 
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
-	//double modelLength = std::stod(info.getInfo("dimX"));
-	//double modelDepth = std::stod(info.getInfo("dimY"));;
-	//double modelHeight = std::stod(info.getInfo("dimZ"));;
-	double modelLength = 1683;
-	double modelHeight = 625;
-	double modelDepth = 1988;
+	double modelDepth = std::stod(info.getInfo("dimX"));
+	double modelLength = std::stod(info.getInfo("dimY"));;
+	double modelHeight = std::stod(info.getInfo("dimZ"));;
+    // std::cout << "Model dimensions: " << modelLength << " " << modelDepth << " " << modelHeight << std::endl;
+	// modelLength = 1683;
+	// modelHeight = 625;
+	// modelDepth = 1988;
 
 	// TODO: change temporary fix
 	width -= offsetX;

@@ -21,9 +21,8 @@ enum RenderingFace
 	LEFT,
 	BACK,
 	BOTTOM,
-	BACK_MIRRORED,
-	BOTTOM_MIRRORED,
-	DETAILED
+	DETAILED,
+    GHOST
 };
 
 enum ModelDimension
@@ -46,4 +45,4 @@ struct FaceDetails
 std::map<char,FaceDetails> getFaceDetails();
 
 // TODO: add correct parameters and return type
-std::string renderPerspective(RenderingFace face, std::string component, Options& opt);
+std::string renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost="");

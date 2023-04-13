@@ -8,11 +8,6 @@
  * etc.
  */
 
-// TODO: Task (Ally): Prepare this class.  There's a lot of freedom to how you can build this class.  You can
-// mix in constant variables along with modifiable ones, and allow certain parameters to be set via the user.
-// you should code some way to set and retrieve the values of certain parameters.  You can use a map and/or
-// add a bunch of variables manually; it's up to you.
-
 class Options
 {
 public:
@@ -25,8 +20,15 @@ public:
 	void setIsFolder();
 	void setOpenGUI();
 	void setExportToFile();
+	void setExportFolder(std::string fldr);
 	void setFileName(std::string n);
+	void setFolder(std::string n);
 	void setName(std::string n);
+	void setClassification(std::string c);
+	void setOrientationRightLeft(bool rL);
+	void setOrientationZYUp(bool zy);
+	void setNotes(std::string n);
+
 	//Getter functions
 	std::string getFilepath();
 	std::string getTemppath();
@@ -36,7 +38,13 @@ public:
 	bool getOpenGUI();
 	bool getExportToFile();
 	std::string getFileName();
+	std::string getFolder();
+	std::string getExportFolder();
 	std::string getName();
+	std::string getClassification();
+	std::string getOrientationRightLeft();
+	std::string getOrientationZYUp();
+	std::string getNotes();
 private:
 	//Path to file that will be used to generate report
 	std::string filepath;
@@ -55,6 +63,17 @@ private:
 	bool exportToFile;
 	//Name of export file
 	std::string fileName;
+    // Name of folder that contains input models
+	std::string folderName;
+    // Name of folder you want to create report.png in 
+	std::string exportFolderName;
 	//Name of preparer
 	std::string name;
+	//Classification word
+	std::string classification;
+	//Orientation
+	std::string rightLeft;
+	std::string zY;
+	//Notes
+	std::string notes;
 };
