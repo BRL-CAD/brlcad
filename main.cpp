@@ -6,23 +6,7 @@ void generateReport(Options opt);
 int main(int argc, char **argv) {
     Options options;
     if (readParameters(argc, argv, options)) {
-        if (options.getIsFolder()) {
-            int cnt = 1;
-            for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
-                options.setFilepath(entry.path());
-                options.setExportToFile();
-                std::string filename = options.getFilepath();
-                filename = filename.substr(filename.find_last_of("/\\") + 1);
-                filename = filename.substr(0, filename.find_last_of("."));
-                std::cout << "Processing: " << filename << std::endl;
-                std::string exportPath = options.getExportFolder() + "/" + filename + "_report.png";
-                options.setFileName(exportPath);
-                generateReport(options);
-                std::cout << "Finished Processing: " << cnt++ << std::endl;
-            }
-        } else {
-            generateReport(options);
-        }
+        generateReport(options);
     }
 }
 
