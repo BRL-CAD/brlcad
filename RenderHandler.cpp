@@ -454,7 +454,28 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 			break;
 		default: // draw face
 			std::string render = renderPerspective(faceDetails[next].face, info.largestComponents[0].second, opt);
-			img.drawImageFitted(offsetX + coords[0] + 15, offsetY + coords[1] + 15, coords[2] - coords[0] - 30, coords[3] - coords[1] - 30, render);
+
+			//double GAP_PIXELS = 80;
+			double oldW = coords[2] - coords[0];
+			double oldH = coords[3] - coords[1];
+			//double scale = oldW < oldH ? (oldW - GAP_PIXELS) / oldW : (oldH - GAP_PIXELS) / oldH;
+			double scale = 0.92;
+			double newW = oldW * scale;
+			double newH = oldH * scale;
+			double newX = coords[0] + oldW / 2 - newW / 2;
+			double newY = coords[1] + oldH / 2 - newH / 2;
+
+			img.drawImageFitted(offsetX + newX, offsetY + newY, newW, newH, render);
+			/*
+			if (next == '0')
+			{
+				img.drawLine(offsetX + newX + GAP_PIXELS / 8, offsetY + newY - GAP_PIXELS / 8, offsetX + newX + newW - GAP_PIXELS/8, offsetY + newY - GAP_PIXELS / 8, 2, cv::Scalar(160, 160, 160));
+				img.drawLine(offsetX + newX - GAP_PIXELS / 8, offsetY + newY + GAP_PIXELS / 8, offsetX + newX - GAP_PIXELS / 8, offsetY + newY + newH - GAP_PIXELS / 8, 2, cv::Scalar(160, 160, 160));
+			}
+			if (next == '1')
+			{
+				img.drawLine(offsetX + newX - GAP_PIXELS / 8, offsetY + newY + GAP_PIXELS / 8, offsetX + newX - GAP_PIXELS / 8, offsetY + newY + newH - GAP_PIXELS / 8, 2, cv::Scalar(160, 160, 160));
+			}*/
 			break;
 		}
 	}
@@ -462,7 +483,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	// render ambient occlusion view
 	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
 	std::string render = renderPerspective(DETAILED, info.largestComponents[0].second, opt);
-	img.drawImageFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
+	img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render, info.getInfo("title"));
 }
 
 LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight)
