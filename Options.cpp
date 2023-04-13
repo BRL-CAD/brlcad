@@ -11,6 +11,7 @@ Options::Options()
     folderName = "";
 	openGUI = false;
 	exportToFile = false;
+	exportFolderName = "";
 	fileName = "";
 	name = "N/A";
 }
@@ -46,6 +47,10 @@ void Options::setExportToFile() {
 	exportToFile = true;
 }
 
+void Options::setExportFolder(std::string fldr) {
+    exportFolderName = fldr;
+}
+
 void Options::setFolder(std::string n) {
 	folderName = n;
 }
@@ -60,6 +65,14 @@ void Options::setName(std::string n) {
 
 std::string Options::getFilepath() {
 	return filepath;
+}
+
+std::string Options::getFolder() {
+	return folderName;
+}
+
+std::string Options::getExportFolder() {
+    return exportFolderName;
 }
 
 std::string Options::getTemppath() {

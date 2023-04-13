@@ -5,8 +5,20 @@ void generateReport(Options opt);
 
 int main(int argc, char **argv) {
     Options options;
-    if (readParameters(argc, argv, options))
-        generateReport(options);
+    if (readParameters(argc, argv, options)) {
+        if (options.getIsFolder()) {
+            int cnt = 0;
+            for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
+                options.setFilepath(entry.path());
+                options.setExportToFile();
+                std::string exportPath = options.getExportFolder() + "/report_"+std::to_string(cnt++)+".png";
+                options.setFileName(exportPath);
+                generateReport(options);
+            }
+        } else {
+            generateReport(options);
+        }
+    }
 }
 
 /**
@@ -30,25 +42,31 @@ bool readParameters(int argc, char** argv, Options &opt)
     * F = path specified is a folder of models
     * g = GUI output
     * f = filename of png export
+    * E = folder name of png export
     */
 
     bool h = false; // user requested help
-    bool f = false; // user specified filepath
+    bool hasFile = 0; // user specified filepath
+    bool hasFolder = false; // user specified filepath
 
     int opts;
 
-    while ((opts = bu_getopt(argc, argv, "Fg?p:P:f:n:T:")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "g?p:F:P:f:n:T:E:")) != -1) {
         switch (opts) {
             case 'p':
-                f = true;
+                hasFile = true;
                 opt.setFilepath(bu_optarg);
                 break;
             case 'P':
                 opt.setPPI(atoi(bu_optarg));
                 break;
             case 'F':
+                hasFolder = true;
                 opt.setIsFolder();
                 opt.setFolder(bu_optarg);
+                break;
+            case 'E':
+                opt.setExportFolder(bu_optarg);
                 break;
             case 'g':
                 opt.setOpenGUI();
@@ -66,6 +84,9 @@ bool readParameters(int argc, char** argv, Options &opt)
             case '?':
                 h = true;
                 break;
+            default:
+                std::cerr << "Unknown option\n";
+                break;
         } 
     } 
 
@@ -82,7 +103,7 @@ bool readParameters(int argc, char** argv, Options &opt)
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
-    else if (argc < 2 || !f) {
+    else if (argc < 2 || (hasFolder == hasFile)) {
         bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
         bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
         return false;

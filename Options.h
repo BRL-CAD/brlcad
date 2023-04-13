@@ -25,7 +25,9 @@ public:
 	void setIsFolder();
 	void setOpenGUI();
 	void setExportToFile();
+	void setExportFolder(std::string fldr);
 	void setFileName(std::string n);
+	void setFolder(std::string n);
 	void setName(std::string n);
 	//Getter functions
 	std::string getFilepath();
@@ -36,6 +38,8 @@ public:
 	bool getOpenGUI();
 	bool getExportToFile();
 	std::string getFileName();
+	std::string getFolder();
+	std::string getExportFolder();
 	std::string getName();
 private:
 	//Path to file that will be used to generate report
@@ -55,6 +59,10 @@ private:
 	bool exportToFile;
 	//Name of export file
 	std::string fileName;
+    // Name of folder that contains input models
+	std::string folderName;
+    // Name of folder you want to create report.png in 
+	std::string exportFolderName;
 	//Name of preparer
 	std::string name;
 };

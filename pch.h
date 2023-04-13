@@ -14,6 +14,7 @@
 #include <vector>
 #include <ctime>
 #include<cstdio>
+#include<filesystem>
 
 // BRL-CAD header files
 #include "bu/getopt.h"
