@@ -1,7 +1,7 @@
 #include "RenderHandler.h"
 
-LayoutChoice::LayoutChoice(std::string map, bool ambientOnBottom, bool lockRows)
-	: map(map), ambientOnBottom(ambientOnBottom), lockRows(lockRows), coordinates()
+LayoutChoice::LayoutChoice(std::string map, bool lockRows)
+	: map(map), lockRows(lockRows), coordinates()
 {
 	// make a vector to store coordinates of each item on the map AND ALSO the ambient occlusion view
 	for (int i = 0; i < map.size() + 1; ++i)
@@ -10,25 +10,13 @@ LayoutChoice::LayoutChoice(std::string map, bool ambientOnBottom, bool lockRows)
 	}
 }
 
-void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength, int modelDepth, int modelHeight)
+void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight)
 {
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
 	// create workingWidth and workingHeight: the area in which we will place orthographic views
-	int workingWidth = secWidth;
-	int workingHeight = secHeight;
-
-	// allocate some space for the ambient occlusion, removing it from workingWidth/workingHeight.
-	if (ambientOnBottom)
-	{
-		// use bottom third for ambient occlusion
-		workingHeight = workingHeight * 2 / 3;
-	}
-	else
-	{
-		// use right-most third for ambient occlusion
-		workingWidth = workingWidth * 2 / 3;
-	}
+	double workingWidth = secWidth;
+	double workingHeight = secHeight;
 
 	// create an array to store the starting index of each row.
 	std::vector<int> rowStartingIndex;
@@ -47,23 +35,38 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 	int numCols = rowStartingIndex[1] - rowStartingIndex[0] - 1;
 	int rowLen = numCols + 1; // length of a row is the number of columns plus the newline character.
 
+	int ambientR = -1;
+	int ambientC = -1;
+	for (int r = 0; r < numRows; ++r)
+	{
+		for (int c = 0; c < numCols; ++c)
+		{
+			int x = r * (numCols + 1) + c;
+			if (map[x] == 'A')
+			{
+				ambientR = r;
+				ambientC = c;
+				break;
+			}
+		}
+		if (ambientR != -1)
+			break;
+	}
+
 	// to find the dimensions of the grid, 
-	std::vector<int> rowHeights;
-	std::vector<int> columnWidths;
+	std::vector<double> rowHeights;
+	std::vector<double> columnWidths;
 	// these variables represent the total height/width of the orthographic views, without extra space.
-	int orthoHeight = 0;
-	int orthoWidth = 0;
-
-
-	// calculate the height of each row
+	double orthoHeight = 0;
+	double orthoWidth = 0;
 
 	// traverse the first row to gather the width
 	for (int i = 0; i < numCols; ++i)
 	{
-		int colWidth = 0;
+		double colWidth = 0;
 		switch (map[i])
 		{
-		case '\n': case '-': case '|': case '.': // items with no area
+		case '\n': case '-': case '|': case '.': case 'A':// items with no area
 			break;
 		default:
 			FaceDetails fdet;
@@ -91,10 +94,10 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 	for (int j = 0; j < numRows; ++j)
 	{
 		int i = rowLen * j;
-		int rowHeight = 0;
+		double rowHeight = 0;
 		switch (map[i])
 		{
-		case '\n': case '-': case '|': case '.': // items with no area
+		case '\n': case '-': case '|': case '.': case 'A':// items with no area
 			break;
 		default:
 			FaceDetails fdet;
@@ -118,56 +121,116 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 		orthoHeight += rowHeight;
 	}
 
+	// update workingWidth and workingHeight to incorporate ambient occ
+	if (ambientR == 0)
+	{
+		// ambient occlusion is on right side; take off some part of working width
+		workingWidth *= 2.0 / 3;
+	}
+	else if (ambientC == 0)
+	{
+		// ambient occlusion is on bottom; take off some part of working height
+		workingHeight *= 2.0 / 3;
+	}
+	else
+	{
+		double ambientXOffset = 0;
+		double ambientYOffset = 0;
+		// ambient occlusion is in middle; search row/col to get dimensions
+		if (lockRows)
+		{
+			for (int i = 0; i < ambientR; ++i)
+				ambientYOffset += rowHeights[i];
+			for (int i = 0; i < ambientC; ++i)
+			{
+				switch (map[ambientR * rowLen + i])
+				{
+				case '-': case '|': case '.':
+					continue;
+				case '\n': case ' ': case 'A':
+					std::cerr << "ISSUE: Found unexpected character!" << std::endl;
+				default:
+					ModelDimension dim = faceDetails[map[ambientR * rowLen + i]].widthContributor;
+
+					if (dim == LENGTH)
+						ambientXOffset += modelLength;
+					else if (dim == DEPTH)
+						ambientXOffset += modelDepth;
+					else if (dim == HEIGHT)
+						ambientXOffset += modelHeight;
+				}
+			}
+		}
+		else
+		{
+			for (int i = 0; i < ambientC; ++i)
+				ambientXOffset += columnWidths[i];
+			for (int i = 0; i < ambientR; ++i)
+			{
+				switch (map[i * rowLen + ambientC])
+				{
+				case '-': case '|': case '.':
+					continue;
+				case '\n': case ' ': case 'A':
+					std::cerr << "ISSUE: Found unexpected character!" << std::endl;
+				default:
+					ModelDimension dim = faceDetails[map[i * rowLen + ambientC]].heightContributor;
+
+					if (dim == LENGTH)
+						ambientYOffset += modelLength;
+					else if (dim == DEPTH)
+						ambientYOffset += modelDepth;
+					else if (dim == HEIGHT)
+						ambientYOffset += modelHeight;
+				}
+			}
+		}
+		if (ambientXOffset > orthoWidth / 2)
+			workingWidth /= 2 * (workingWidth - ambientXOffset);
+		if (ambientYOffset > orthoHeight / 2)
+			workingHeight /= 2 * (workingHeight - ambientYOffset);
+	}
+
 	// get aspect ratios
 	double orthoAspectRatio = (double)orthoHeight / orthoWidth;
 	double sectionAspectRatio = (double)workingHeight / workingWidth;
 
 	// variables to store the actual width/height of the orthographic section, in image plane coordinate frame
-	int actualOrthoWidth = 0;
-	int actualOrthoHeight = 0;
+	double actualOrthoWidth = 0;
+	double actualOrthoHeight = 0;
 
 	// fit the orthographic
 	if (orthoAspectRatio > sectionAspectRatio)
 	{
 		// height of the orthographic section is relatively too large; cap the height.
-		double conversionFactor = (double)workingHeight / orthoHeight;
+		double conversionFactor = workingHeight / orthoHeight;
 
-		actualOrthoHeight = (int)(orthoHeight * conversionFactor);
-		actualOrthoWidth = (int)(orthoWidth * conversionFactor);
+		actualOrthoHeight = (orthoHeight * conversionFactor);
+		actualOrthoWidth = (orthoWidth * conversionFactor);
 	}
 	else
 	{
 		// width of the orthographic section is relatively too large; cap the width.
-		double conversionFactor = (double)workingWidth / orthoWidth;
+		double conversionFactor = workingWidth / orthoWidth;
 
-		actualOrthoHeight = (int)(orthoHeight * conversionFactor);
-		actualOrthoWidth = (int)(orthoWidth * conversionFactor);
-	}
-
-	// now, if we have extra space on the page after this adjustment, allocate it for the ambient occlusion view
-	if (ambientOnBottom && actualOrthoHeight < workingHeight)
-	{
-		workingHeight = actualOrthoHeight;
-	}
-	else if (!ambientOnBottom && actualOrthoWidth < workingWidth)
-	{
-		workingWidth = actualOrthoWidth;
+		actualOrthoHeight = (orthoHeight * conversionFactor);
+		actualOrthoWidth = (orthoWidth * conversionFactor);
 	}
 
 	// calculating variables used for finding the actual coordinates
-	int offsetX = (workingWidth - actualOrthoWidth) / 2;
-	int offsetY = (workingHeight - actualOrthoHeight) / 2;
-	double widthConversionFactor = (double)actualOrthoWidth / orthoWidth;
-	double heightConversionFactor = (double)actualOrthoHeight / orthoHeight;
+	double offsetX = ambientC > 0 ? 0 : (workingWidth - actualOrthoWidth) / 2;
+	double offsetY = ambientR > 0 ? 0 : (workingHeight - actualOrthoHeight) / 2;
+	double widthConversionFactor = actualOrthoWidth / orthoWidth;
+	double heightConversionFactor = actualOrthoHeight / orthoHeight;
 	
 	// now, filling out the coordinates
 	if (lockRows)
 	{
 		// all elements in a row have the same height.  Iterate row by row
-		int curX = offsetX, curY = offsetY, curWidth = 0, curHeight = 0;
+		double curX = offsetX, curY = offsetY, curWidth = 0, curHeight = 0;
 		for (int r = 0; r < numRows; ++r)
 		{
-			curHeight = (int)(heightConversionFactor * rowHeights[r]);
+			curHeight = (heightConversionFactor * rowHeights[r]);
 
 			for (int c = 0; c < numCols; ++c)
 			{
@@ -181,6 +244,9 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 					break;
 				case '|': case '.':
 					// vertical lines have no width
+					curWidth = 0;
+					break;
+				case 'A':
 					curWidth = 0;
 					break;
 				default: // either ' ' or a rendering face
@@ -201,11 +267,11 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 					ModelDimension dim = fdet.widthContributor;
 
 					if (dim == LENGTH)
-						curWidth = (int)(widthConversionFactor * modelLength);
+						curWidth = (widthConversionFactor * modelLength);
 					else if (dim == DEPTH)
-						curWidth = (int)(widthConversionFactor * modelDepth);
+						curWidth = (widthConversionFactor * modelDepth);
 					else if (dim == HEIGHT)
-						curWidth = (int)(widthConversionFactor * modelHeight);
+						curWidth = (widthConversionFactor * modelHeight);
 				}
 
 				coordinates[i].push_back(curX);
@@ -223,10 +289,10 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 	else
 	{
 		// all elements in a column have the same width.  Iterate column by column
-		int curX = offsetX, curY = offsetY, curWidth = 0, curHeight = 0;
+		double curX = offsetX, curY = offsetY, curWidth = 0, curHeight = 0;
 		for (int c = 0; c < numCols; ++c)
 		{
-			curWidth = (int)(widthConversionFactor * columnWidths[c]);
+			curWidth = (widthConversionFactor * columnWidths[c]);
 
 			for (int r = 0; r < numRows; ++r)
 			{
@@ -240,6 +306,9 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 					break;
 				case '-': case '.':
 					// horizontal lines have no height
+					curHeight = 0;
+					break;
+				case 'A':
 					curHeight = 0;
 					break;
 				default: // either ' ' or a rendering face
@@ -260,11 +329,11 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 					ModelDimension dim = fdet.heightContributor;
 
 					if (dim == LENGTH)
-						curHeight = (int)(heightConversionFactor * modelLength);
+						curHeight = (heightConversionFactor * modelLength);
 					else if (dim == DEPTH)
-						curHeight = (int)(heightConversionFactor * modelDepth);
+						curHeight = (heightConversionFactor * modelDepth);
 					else if (dim == HEIGHT)
-						curHeight = (int)(heightConversionFactor * modelHeight);
+						curHeight = (heightConversionFactor * modelHeight);
 				}
 
 				coordinates[i].push_back(curX);
@@ -280,21 +349,11 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, int modelLength,
 		}
 	}
 
-	// add ambient occlusion coordinates
-	if (ambientOnBottom)
-	{
-		coordinates[coordinates.size() - 1].push_back(offsetX);
-		coordinates[coordinates.size() - 1].push_back(workingHeight);
-		coordinates[coordinates.size() - 1].push_back(offsetX + actualOrthoWidth);
-		coordinates[coordinates.size() - 1].push_back(secHeight);
-	}
-	else
-	{
-		coordinates[coordinates.size() - 1].push_back(workingWidth);
-		coordinates[coordinates.size() - 1].push_back(offsetY);
-		coordinates[coordinates.size() - 1].push_back(secWidth);
-		coordinates[coordinates.size() - 1].push_back(offsetY + actualOrthoHeight);
-	}
+	
+	coordinates[coordinates.size() - 1].push_back(ambientC == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][0]);
+	coordinates[coordinates.size() - 1].push_back(ambientR == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][1]);
+	coordinates[coordinates.size() - 1].push_back(secWidth);
+	coordinates[coordinates.size() - 1].push_back(secHeight);
 }
 
 double LayoutChoice::getTotalCoverage()
@@ -321,16 +380,20 @@ double LayoutChoice::getTotalCoverage()
 
 std::vector<int> LayoutChoice::getCoordinates(int mapIndex)
 {
+	std::vector<int> output;
 	if (mapIndex == -1)
 	{
 		// want the coordinates for the ambient occlusion
-		return coordinates[map.size()];
+		for (double coord : coordinates[map.size()])
+			output.push_back((int)coord);
 	}
 	else
 	{
 		// want coordinates of an index in map
-		return coordinates[mapIndex];
+		for (double coord : coordinates[mapIndex])
+			output.push_back((int)coord);
 	}
+	return output;
 }
 
 int LayoutChoice::getMapSize()
@@ -349,22 +412,25 @@ std::vector<LayoutChoice> initLayouts()
 {
 	std::vector<LayoutChoice> layouts;
 
-	//layouts.emplace_back("1 \n02\n--\n43\n5 \n--\n", true, true);
-	//layouts.emplace_back("1 |\n02|\n--.\n43|\n5 |\n", false, true);
-	//layouts.emplace_back("1 \n02\n--\n43\n5 \n", false, true);
-	layouts.emplace_back("134\n025\n", false, false);
-	//layouts.emplace_back("1 |43|\n02|5 |\n", false, false);
+	//layouts.emplace_back("1 \n02\n43\n5 \nAA\n", true);
+	layouts.emplace_back("1423\n05AA", false);
+	//layouts.emplace_back("1 43A\n025 A\n", false);
+	//layouts.emplace_back("1 43\n025 \nAAAA\n", false);
+	layouts.emplace_back("102\n543\n.AA\n", false);
+	//layouts.emplace_back("10A\n52A\n 4A\n 3A\n", false);
 
 	return layouts;
 }
 
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
-	// img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
-
-	int modelLength = 1000;
-	int modelDepth = 1000;
-	int modelHeight = 1000;
+	double modelDepth = std::stod(info.getInfo("dimX"));
+	double modelLength = std::stod(info.getInfo("dimY"));;
+	double modelHeight = std::stod(info.getInfo("dimZ"));;
+    // std::cout << "Model dimensions: " << modelLength << " " << modelDepth << " " << modelHeight << std::endl;
+	// modelLength = 1683;
+	// modelHeight = 625;
+	// modelDepth = 1988;
 
 	// TODO: change temporary fix
 	width -= offsetX;
@@ -382,17 +448,14 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 		switch (next)
 		{
-		case ' ': case '\n': case '.': // spacing character; nothing should be drawn here
+		case ' ': case '\n': case '.': case 'A': // spacing character; nothing should be drawn here
 			break;
 		case '|': case '-': // draw separator line
 			img.drawLine(offsetX + coords[0], offsetY + coords[1], offsetX + coords[2], offsetY + coords[3], 3, cv::Scalar(100, 100, 100));
 			break;
 		default: // draw face
 			std::string render = renderPerspective(faceDetails[next].face, opt, info.largestComponents[0].name);
-
-            std::cout << "INside RenderHandler: " << offsetX + coords[0] << " " <<  offsetY + coords[1] << " " << coords[2] - coords[0] << " " << coords[3] - coords[1] << " " << render << std::endl; 
-            std::cout << render << std::endl;
-			img.drawImage(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
+			img.drawImageFitted(offsetX + coords[0] + 15, offsetY + coords[1] + 15, coords[2] - coords[0] - 30, coords[3] - coords[1] - 30, render);
 			break;
 		}
 	}
@@ -403,7 +466,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	img.drawImageFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 }
 
-LayoutChoice selectLayout(int secWidth, int secHeight, int modelLength, int modelDepth, int modelHeight)
+LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight)
 {
 	std::vector<LayoutChoice> allLayouts = initLayouts();
 
@@ -426,7 +489,7 @@ LayoutChoice selectLayout(int secWidth, int secHeight, int modelLength, int mode
 	if (bestLayout == NULL)
 	{
 		std::cerr << "ISSUE: no layouts found.  This is a major problem!  In selectLayout() in RenderHandler.cpp" << std::endl;
-		return LayoutChoice("", false, true);
+		return LayoutChoice("", true);
 	}
 
 	return *bestLayout;

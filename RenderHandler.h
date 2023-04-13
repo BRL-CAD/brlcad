@@ -21,14 +21,13 @@ struct LayoutChoice
 {
 private:
 	std::string map;
-	bool ambientOnBottom;
 	bool lockRows;
 
-	std::vector<std::vector<int>> coordinates;
+	std::vector<std::vector<double>> coordinates;
 public:
-	LayoutChoice(std::string map, bool ambientOnBottom, bool lockRows);
+	LayoutChoice(std::string map, bool lockRows);
 
-	void initCoordinates(int secWidth, int secHeight, int modelLength, int modelDepth, int modelHeight);
+	void initCoordinates(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight);
 
 	double getTotalCoverage();
 
@@ -45,5 +44,5 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 std::vector<LayoutChoice> initLayouts();
 
 // uses a simple heuristic to determine which layout is the best for the object.
-LayoutChoice selectLayout(int secWidth, int secHeight, int modelLength, int modelDepth, int modelHeight);
+LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight);
 
