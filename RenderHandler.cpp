@@ -360,6 +360,8 @@ std::vector<LayoutChoice> initLayouts()
 
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
+	// img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
+
 	int modelLength = 1000;
 	int modelDepth = 1000;
 	int modelHeight = 1000;

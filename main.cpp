@@ -86,6 +86,18 @@ bool readParameters(int argc, char** argv, Options &opt)
             case 'T':
                 opt.setTemppath(bu_optarg);
                 break;
+            case 'c':
+                opt.setClassification(bu_optarg);
+                break;
+            case 'o':
+                opt.setOrientationRightLeft(true);
+                break;
+            case 'O':
+                opt.setOrientationZYUp(true);
+                break;
+            case 'N':
+                opt.setNotes(bu_optarg);
+                break;
             case '?':
                 h = true;
                 break;
@@ -106,6 +118,11 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    E = path to folder to export reports. Used for processing folder of models\n");
         bu_log("    n = name of preparer, to be used in report\n");
         bu_log("    T = temporary directory to store intermediate files\n");
+        bu_log("    n = name of preparer, to be used in report\n");
+        bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report\n");
+        bu_log("    o = orientation of the file, default is right hand, flag will change orientation output to left hand");
+        bu_log("    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up");
+        bu_log("    N = notes that a user would like to add to be specified in the report");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
@@ -114,11 +131,6 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
         return false;
     }
-
-    /*
-    * Theoretically there would be something here to check that the model path is valid and I have some examples for ref
-    * in rt but I can't test it myself because I can't get rt working in my local still (Ally)
-    */
 
     return true;
 }
@@ -144,7 +156,6 @@ void generateReport(Options opt)
     }
 
     // Define commonly used ratio variables
-    int XY_margin = opt.getWidth() / 150;
     int margin = opt.getWidth() / 150;
     int header_footer_height = opt.getLength() / 25;
     int padding = opt.getLength() / 250;
@@ -159,19 +170,17 @@ void generateReport(Options opt)
     Position imagePosition(0,0,opt.getWidth(), opt.getLength());
     Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
     Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
-    Position fileSection(imagePosition.right() - imagePosition.quarterWidth() - margin, topSection.bottom() + padding, imagePosition.quarterWidth() - border_px, (imagePosition.height() / 2) - margin - header_footer_height - (padding) - 2*border_px);
-    Position verificationSection(fileSection.x(),fileSection.bottom() + padding, fileSection.width(), fileSection.height());
-    Position vvSection(margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, ((imagePosition.width() - fileSection.width() - 2*margin) / 2) - padding, vvHeight);
-    Position hierarchySection(vvSection.right() + padding, vvSection.y(), vvSection.width(), vvSection.height());
-    Position renderSection(margin, topSection.bottom() + padding, imagePosition.width() - fileSection.width() - 2*margin, imagePosition.height() - margin - header_footer_height - vvHeight - 2 * padding - border_px);
+    Position hierarchySection(imagePosition.right() - imagePosition.thirdWidth() - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.thirdWidth(), vvHeight);
+    Position fileSection(imagePosition.right() - imagePosition.thirdWidth() - margin, topSection.bottom() + padding, imagePosition.thirdWidth(), hierarchySection.top() - topSection.bottom() - padding);
+    Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
+    
 
 
     // draw all sections
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
-    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height());
-    makeVerificationSection(img, info, verificationSection.x(), verificationSection.y(), verificationSection.width(), verificationSection.height());
-    makeVVSection(img, info, vvSection.x(), vvSection.y(), vvSection.width(), vvSection.height());
+    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
+    //makeVVSection(img, info, vvSection.x(), vvSection.y(), vvSection.width(), vvSection.height());
     makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
     
