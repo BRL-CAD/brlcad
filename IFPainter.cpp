@@ -89,7 +89,7 @@ int IFPainter::getTextWidth(int height, int width, std::string text, int flags)
 {
 	int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
-	int textWidth = getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, fontWeight, 0).width;
+	int textWidth = getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, fontWeight, 0).width;
 	return textWidth;
 }
 
@@ -101,12 +101,12 @@ int IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string 
 	}
 
 	int fontSize = 1;
-	while (getTextSize("I", cv::FONT_HERSHEY_PLAIN, fontSize, standardTextWeight, 0).height < height)
+	while (getTextSize("I", cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).height < height)
 		fontSize++;
 	fontSize--;
 	
 	heightToFontSizeMap[height] = fontSize;
-	while (getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, standardTextWeight, 0).width > width) {
+	while (getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).width > width) {
 		fontSize--;
 	}
 	return fontSize;
@@ -115,23 +115,69 @@ int IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string 
 void IFPainter::drawText(int x, int y, int height, int width, std::string text, int flags)
 {
 	// for now, italic text is omitted
-	int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
+	int fontWeight = standardTextWeight;
+	bool isUnderline = false;
+	if ((flags & TO_BOLD)) {
+    	fontWeight = boldTextWeight;
+	}
+
+	if (flags & TO_UNDERLINE) {
+    	isUnderline = true;
+	}
+	
+
 	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
 
-	cv::putText(img, text, cv::Point(x, y + height), cv::FONT_HERSHEY_PLAIN, fontSize, color, fontWeight);
+	cv::Point textOrigin(x, y + height);
+	cv::putText(img, text, cv::Point(x, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
+
+	if (isUnderline) {
+        // Compute the position of the line below the text
+        int baseline = 0;
+        cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, fontWeight, &baseline);
+        int underlineY = textOrigin.y + baseline + 2;
+        int underlineX1 = textOrigin.x;
+        int underlineX2 = underlineX1 + textSize.width;
+
+        // Draw the line using the same color as the text
+        cv::line(img, cv::Point(underlineX1, underlineY), cv::Point(underlineX2, underlineY), color, 1);
+    }
 }
 
 void IFPainter::drawTextCentered(int x, int y, int height, int width, std::string text, int flags)
 {
 	// for now, italic text is omitted
-	int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
+	int fontWeight = standardTextWeight;
+	bool isUnderline = false;
+	if ((flags & TO_BOLD)) {
+    	fontWeight = boldTextWeight;
+	}
+
+	if (flags & TO_UNDERLINE) {
+    	isUnderline = true;
+	}
+
+
 	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
 
-	int textWidth = getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, fontWeight, 0).width;
+	int textWidth = getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, fontWeight, 0).width;
 
-	cv::putText(img, text, cv::Point(x - textWidth/2, y + height), cv::FONT_HERSHEY_PLAIN, fontSize, color, fontWeight);
+	cv::Point textOrigin(x - textWidth/2, y + height);
+	cv::putText(img, text, cv::Point(x - textWidth/2, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
+
+	if (isUnderline) {
+        // Compute the position of the line below the text
+        int baseline = 0;
+        cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_PLAIN, fontSize, fontWeight, &baseline);
+        int underlineY = textOrigin.y + baseline + 2;
+        int underlineX1 = textOrigin.x;
+        int underlineX2 = underlineX1 + textSize.width;
+
+        // Draw the line using the same color as the text
+        cv::line(img, cv::Point(underlineX1, underlineY), cv::Point(underlineX2, underlineY), color, 1);
+    }
 }
 void IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
 {
@@ -149,15 +195,15 @@ void IFPainter::justify(int x, int y, int height, int width, std::vector<std::st
 	int xPosition = x + spacing;
 	for (size_t i = 0; i < text.size(); i++) {
 		int fontSize = getFontSizeFromHeightAndWidth(height, width, text[i]);
-		cv::putText(img, text[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_PLAIN, fontSize, color, fontWeight);
+		cv::putText(img, text[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
 		xPosition += spacing + getTextWidth(height, width, text[i], flags);
 	}
 }
 
-void IFPainter::justifyConfidential(int x, int y, int height, int width, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
+void IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
 {
-	int confidentialWidth = getTextWidth(height, width, "CONFIDENTIAL", flags);
-	drawTextCentered(width / 2, y, height, width, "CONFIDENTIAL", flags);
+	int confidentialWidth = getTextWidth(height, width, centerWord, flags);
+	drawTextCentered(width / 2, y, height, width, centerWord, flags);
 	int totalLeftWidth = 0;
 	for (size_t i = 0; i < leftText.size(); i++) {
 		totalLeftWidth += getTextWidth(height, width, leftText[i], flags);
@@ -166,13 +212,13 @@ void IFPainter::justifyConfidential(int x, int y, int height, int width, std::ve
 	for (size_t i = 0; i < leftText.size(); i++) {
 		totalRightWidth += getTextWidth(height, width, rightText[i], flags);
 	}
-	int leftSpacing = (((width / 2) - (confidentialWidth / 2)) - totalLeftWidth) / (leftText.size() + 1);
-	int rightSpacing = (((width / 2) - (confidentialWidth / 2)) - totalRightWidth) / (rightText.size() + 1);
-	int spacing;
 	if (totalLeftWidth >= (width / 2) - (confidentialWidth / 2) || totalRightWidth >= (width / 2) - (confidentialWidth / 2)) {
 		throw std::invalid_argument("Text is larger than either the left or right side");
 		return;
 	}
+	int leftSpacing = (((width / 2) - (confidentialWidth / 2)) - totalLeftWidth) / (leftText.size() + 1);
+	int rightSpacing = (((width / 2) - (confidentialWidth / 2)) - totalRightWidth) / (rightText.size() + 1);
+	int spacing;
 	if (leftSpacing > rightSpacing) {
 		spacing = rightSpacing;
 	}
@@ -186,13 +232,13 @@ void IFPainter::justifyConfidential(int x, int y, int height, int width, std::ve
 	for (int i = leftText.size() - 1; i >= 0; i--) {
 		xPosition = xPosition - spacing - getTextWidth(height, width, leftText[i], flags);
 		int fontSize = getFontSizeFromHeightAndWidth(height, width, leftText[i]);
-		cv::putText(img, leftText[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_PLAIN, fontSize, color, fontWeight);
+		cv::putText(img, leftText[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
 	}
 
 	xPosition = width / 2 + confidentialWidth / 2 + spacing;
 	for (int i = 0; i < rightText.size(); i++) {
 		int fontSize = getFontSizeFromHeightAndWidth(height, width, rightText[i]);
-		cv::putText(img, rightText[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_PLAIN, fontSize, color, fontWeight);
+		cv::putText(img, rightText[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
 		xPosition = xPosition + spacing + getTextWidth(height, width, rightText[i], flags);
 	}
 }
@@ -262,6 +308,21 @@ void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar c
               width,
 			  cv::LINE_8);
 }
+
+void IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
+{
+    circle(img, cv::Point(x,y), radius, color, width, cv::LINE_8);
+    // ellipse(img, cv::Point(x,y), cv::Size(radius, radius), 0, 0, 180, color, width, cv::LINE_8);
+}
+
+// void IFPainter::drawArc(int x, int y, int width, cv::Scalar color) {
+// 	int lineType = cv::LINE_8;
+// 	cv::Point center(x, y);
+//     for(int i=10;i<=250;i=i+10)
+//     {
+//         ellipse( image, center, Size( i, i ), 0, 30, 150, color, width, lineType );
+//     }
+// }
 
 
 void IFPainter::openInGUI()

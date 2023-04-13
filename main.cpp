@@ -5,8 +5,25 @@ void generateReport(Options opt);
 
 int main(int argc, char **argv) {
     Options options;
-    if (readParameters(argc, argv, options))
-        generateReport(options);
+    if (readParameters(argc, argv, options)) {
+        if (options.getIsFolder()) {
+            int cnt = 1;
+            for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
+                options.setFilepath(entry.path());
+                options.setExportToFile();
+                std::string filename = options.getFilepath();
+                filename = filename.substr(filename.find_last_of("/\\") + 1);
+                filename = filename.substr(0, filename.find_last_of("."));
+                std::cout << "Processing: " << filename << std::endl;
+                std::string exportPath = options.getExportFolder() + "/" + filename + "_report.png";
+                options.setFileName(exportPath);
+                generateReport(options);
+                std::cout << "Finished Processing: " << cnt++ << std::endl;
+            }
+        } else {
+            generateReport(options);
+        }
+    }
 }
 
 /**
@@ -30,24 +47,31 @@ bool readParameters(int argc, char** argv, Options &opt)
     * F = path specified is a folder of models
     * g = GUI output
     * f = filename of png export
+    * E = folder name of png export
     */
 
     bool h = false; // user requested help
-    bool f = false; // user specified filepath
+    bool hasFile = 0; // user specified filepath
+    bool hasFolder = false; // user specified filepath
 
     int opts;
 
-    while ((opts = bu_getopt(argc, argv, "Fg?p:P:f:n:T:")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "g?p:F:P:f:n:T:E:")) != -1) {
         switch (opts) {
             case 'p':
-                f = true;
+                hasFile = true;
                 opt.setFilepath(bu_optarg);
                 break;
             case 'P':
                 opt.setPPI(atoi(bu_optarg));
                 break;
             case 'F':
+                hasFolder = true;
                 opt.setIsFolder();
+                opt.setFolder(bu_optarg);
+                break;
+            case 'E':
+                opt.setExportFolder(bu_optarg);
                 break;
             case 'g':
                 opt.setOpenGUI();
@@ -62,8 +86,23 @@ bool readParameters(int argc, char** argv, Options &opt)
             case 'T':
                 opt.setTemppath(bu_optarg);
                 break;
+            case 'c':
+                opt.setClassification(bu_optarg);
+                break;
+            case 'o':
+                opt.setOrientationRightLeft(true);
+                break;
+            case 'O':
+                opt.setOrientationZYUp(true);
+                break;
+            case 'N':
+                opt.setNotes(bu_optarg);
+                break;
             case '?':
                 h = true;
+                break;
+            default:
+                std::cerr << "Unknown option\n";
                 break;
         } 
     } 
@@ -76,21 +115,22 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    F = path specified is a folder of models\n");
         bu_log("    g = GUI output\n");
         bu_log("    f = filepath of png export, MUST end in .png\n");
+        bu_log("    E = path to folder to export reports. Used for processing folder of models\n");
         bu_log("    n = name of preparer, to be used in report\n");
         bu_log("    T = temporary directory to store intermediate files\n");
+        bu_log("    n = name of preparer, to be used in report\n");
+        bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report\n");
+        bu_log("    o = orientation of the file, default is right hand, flag will change orientation output to left hand");
+        bu_log("    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up");
+        bu_log("    N = notes that a user would like to add to be specified in the report");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
-    else if (argc < 2 || !f) {
+    else if (argc < 2 || (hasFolder == hasFile)) {
         bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
         bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
         return false;
     }
-
-    /*
-    * Theoretically there would be something here to check that the model path is valid and I have some examples for ref
-    * in rt but I can't test it myself because I can't get rt working in my local still (Ally)
-    */
 
     return true;
 }
@@ -106,17 +146,16 @@ void generateReport(Options opt)
     IFPainter img(opt.getLength(), opt.getWidth());
 
     // create information gatherer
-    InformationGatherer info;
+    InformationGatherer info(&opt);
 
     // read in all information from model file
-    if (!info.gatherInformation(opt.getFilepath(), opt.getName()))
+    if (!info.gatherInformation(opt.getName()))
     {
         std::cerr << "Error on Information Gathering.  Report Generation skipped..." << std::endl;
         return;
     }
 
     // Define commonly used ratio variables
-    int XY_margin = opt.getWidth() / 150;
     int margin = opt.getWidth() / 150;
     int header_footer_height = opt.getLength() / 25;
     int padding = opt.getLength() / 250;
@@ -131,19 +170,17 @@ void generateReport(Options opt)
     Position imagePosition(0,0,opt.getWidth(), opt.getLength());
     Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
     Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
-    Position fileSection(imagePosition.right() - imagePosition.quarterWidth() - margin, topSection.bottom() + padding, imagePosition.quarterWidth() - border_px, (imagePosition.height() / 2) - margin - header_footer_height - (padding) - 2*border_px);
-    Position verificationSection(fileSection.x(),fileSection.bottom() + padding, fileSection.width(), fileSection.height());
-    Position vvSection(margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, ((imagePosition.width() - fileSection.width() - 2*margin) / 2) - padding, vvHeight);
-    Position hierarchySection(vvSection.right() + padding, vvSection.y(), vvSection.width(), vvSection.height());
-    Position renderSection(margin, topSection.bottom() + padding, imagePosition.width() - fileSection.width() - 2*margin, imagePosition.height() - margin - header_footer_height - vvHeight - 2 * padding - border_px);
+    Position hierarchySection(imagePosition.right() - imagePosition.thirdWidth() - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.thirdWidth(), vvHeight);
+    Position fileSection(imagePosition.right() - imagePosition.thirdWidth() - margin, topSection.bottom() + padding, imagePosition.thirdWidth(), hierarchySection.top() - topSection.bottom() - padding);
+    Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
+    
 
 
     // draw all sections
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
-    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height());
-    makeVerificationSection(img, info, verificationSection.x(), verificationSection.y(), verificationSection.width(), verificationSection.height());
-    makeVVSection(img, info, vvSection.x(), vvSection.y(), vvSection.width(), vvSection.height());
+    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
+    //makeVVSection(img, info, vvSection.x(), vvSection.y(), vvSection.width(), vvSection.height());
     makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
     

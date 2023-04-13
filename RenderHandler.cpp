@@ -424,12 +424,13 @@ std::vector<LayoutChoice> initLayouts()
 
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
-	//double modelLength = std::stod(info.getInfo("dimX"));
-	//double modelDepth = std::stod(info.getInfo("dimY"));;
-	//double modelHeight = std::stod(info.getInfo("dimZ"));;
-	double modelLength = 1683;
-	double modelHeight = 625;
-	double modelDepth = 1988;
+	double modelDepth = std::stod(info.getInfo("dimX"));
+	double modelLength = std::stod(info.getInfo("dimY"));;
+	double modelHeight = std::stod(info.getInfo("dimZ"));;
+    // std::cout << "Model dimensions: " << modelLength << " " << modelDepth << " " << modelHeight << std::endl;
+	// modelLength = 1683;
+	// modelHeight = 625;
+	// modelDepth = 1988;
 
 	// TODO: change temporary fix
 	width -= offsetX;
@@ -453,7 +454,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 			img.drawLine(offsetX + coords[0], offsetY + coords[1], offsetX + coords[2], offsetY + coords[3], 3, cv::Scalar(100, 100, 100));
 			break;
 		default: // draw face
-			std::string render = renderPerspective(faceDetails[next].face, info.largestComponents[0].second, opt);
+			std::string render = renderPerspective(faceDetails[next].face, opt, info.largestComponents[0].name);
 			img.drawImageFitted(offsetX + coords[0] + 15, offsetY + coords[1] + 15, coords[2] - coords[0] - 30, coords[3] - coords[1] - 30, render);
 			break;
 		}
@@ -461,7 +462,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 	// render ambient occlusion view
 	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
-	std::string render = renderPerspective(DETAILED, info.largestComponents[0].second, opt);
+	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
 	img.drawImageFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render);
 }
 

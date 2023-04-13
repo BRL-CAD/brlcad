@@ -12,17 +12,41 @@
 // TODO: Arrange the class for this.
 // this class below is a placeholder; it may not be the optimal layout
 
+class Options;
+
+struct ComponentData {
+    int numEntities;
+    double volume;
+    std::string name;
+
+    bool operator<(const ComponentData& other) const {
+        if (numEntities != other.numEntities)
+            return numEntities < other.numEntities;
+        if (volume != other.volume)
+            return volume < other.volume;
+        return name < other.name;
+    }
+};
+
 class InformationGatherer
 {
 private:
+    Options* opt;
+    struct ged* g;
 	std::map<std::string, std::string> infoMap;
+    double getVolume(std::string component);
+    int getNumEntities(std::string component);
+    void getMainComp();
+    void getSubComp();
+    int getEntityData(char* buf);
+
 
 public:
-    std::vector<std::pair<double, std::string> > largestComponents;
-	InformationGatherer();
+    std::vector<ComponentData> largestComponents;
+	InformationGatherer(Options* options);
 	~InformationGatherer();
 
-	bool gatherInformation(std::string filePath, std::string name);
+	bool gatherInformation(std::string name);
 
 	std::string getInfo(std::string key);
 };
