@@ -7,13 +7,18 @@ int main(int argc, char **argv) {
     Options options;
     if (readParameters(argc, argv, options)) {
         if (options.getIsFolder()) {
-            int cnt = 0;
+            int cnt = 1;
             for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
                 options.setFilepath(entry.path());
                 options.setExportToFile();
+                std::string filename = options.getFilepath();
+                filename = filename.substr(filename.find_last_of("/\\") + 1);
+                filename = filename.substr(0, filename.find_last_of("."));
+                std::cout << "Processing: " << filename << std::endl;
                 std::string exportPath = options.getExportFolder() + "/report_"+std::to_string(cnt++)+".png";
                 options.setFileName(exportPath);
                 generateReport(options);
+                std::cout << "Finished Processing: " << cnt << std::endl;
             }
         } else {
             generateReport(options);
@@ -98,6 +103,7 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    F = path specified is a folder of models\n");
         bu_log("    g = GUI output\n");
         bu_log("    f = filepath of png export, MUST end in .png\n");
+        bu_log("    E = path to folder to export reports. Used for processing folder of models\n");
         bu_log("    n = name of preparer, to be used in report\n");
         bu_log("    T = temporary directory to store intermediate files\n");
         return false;

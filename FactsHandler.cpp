@@ -144,17 +144,16 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     int imgH = height / 2;
     int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
 
-    int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-1)*imgW) / 2;
-    img.drawLine(offX + imgW/2, offY-10, offX + fmin(N-1, info.largestComponents.size()-1)*imgW + imgW/2, offY-10, 3, cv::Scalar(94, 58, 32));
-    img.drawLine(centerPt, offY-30, centerPt, offY-10, 3, cv::Scalar(94, 58, 32));
-    img.drawCirc(centerPt, offY-30, 7, -1, cv::Scalar(94, 58, 32));
+    int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
 
     // main component
 	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
     img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
-    // img.drawLine();
-    // img.drawArc(offsetX + width / 2, offsetY + textHeight/3, 3, cv::Scalar(0, 0, 0));
 	img.drawTextCentered(offsetX + width / 2, offsetY + imgH*2/3, textHeight, width, info.largestComponents[0].name, TO_BOLD);
+
+    img.drawLine(offX + imgW/2, offY-10, offX + fmin(N-1, info.largestComponents.size()-2)*imgW + imgW/2, offY-10, 3, cv::Scalar(94, 58, 32));
+    img.drawLine(centerPt, offY-30, centerPt, offY-10, 3, cv::Scalar(94, 58, 32));
+    img.drawCirc(centerPt, offY-30, 7, -1, cv::Scalar(94, 58, 32));
 
     // entity summary
     int curiX = 0;
