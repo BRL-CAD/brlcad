@@ -454,7 +454,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 			img.drawLine(offsetX + coords[0], offsetY + coords[1], offsetX + coords[2], offsetY + coords[3], 3, cv::Scalar(100, 100, 100));
 			break;
 		default: // draw face
-			std::string render = renderPerspective(faceDetails[next].face, info.largestComponents[0].second, opt);
+			std::string render = renderPerspective(faceDetails[next].face, opt, info.largestComponents[0].name);
 
 			//double GAP_PIXELS = 80;
 			double oldW = coords[2] - coords[0];
@@ -483,7 +483,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 	// render ambient occlusion view
 	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
-	std::string render = renderPerspective(DETAILED, info.largestComponents[0].second, opt);
+	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
 	img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render, info.getInfo("title"));
 }
 
