@@ -37,7 +37,7 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 
 void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
 {
-	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
+    cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
 	int imgWidth = lilImage.size().width;
 	int imgHeight = lilImage.size().height;
 	int heightOffset = 0;
@@ -297,6 +297,21 @@ void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar c
               width,
 			  cv::LINE_8);
 }
+
+void IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
+{
+    circle(img, cv::Point(x,y), radius, color, width, cv::LINE_8);
+    // ellipse(img, cv::Point(x,y), cv::Size(radius, radius), 0, 0, 180, color, width, cv::LINE_8);
+}
+
+// void IFPainter::drawArc(int x, int y, int width, cv::Scalar color) {
+// 	int lineType = cv::LINE_8;
+// 	cv::Point center(x, y);
+//     for(int i=10;i<=250;i=i+10)
+//     {
+//         ellipse( image, center, Size( i, i ), 0, 30, 150, color, width, lineType );
+//     }
+// }
 
 
 void IFPainter::openInGUI()

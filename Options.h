@@ -20,7 +20,9 @@ public:
 	void setIsFolder();
 	void setOpenGUI();
 	void setExportToFile();
+	void setExportFolder(std::string fldr);
 	void setFileName(std::string n);
+	void setFolder(std::string n);
 	void setName(std::string n);
 	void setClassification(std::string c);
 	void setOrientationRightLeft(bool rL);
@@ -36,6 +38,8 @@ public:
 	bool getOpenGUI();
 	bool getExportToFile();
 	std::string getFileName();
+	std::string getFolder();
+	std::string getExportFolder();
 	std::string getName();
 	std::string getClassification();
 	std::string getOrientationRightLeft();
@@ -59,6 +63,10 @@ private:
 	bool exportToFile;
 	//Name of export file
 	std::string fileName;
+    // Name of folder that contains input models
+	std::string folderName;
+    // Name of folder you want to create report.png in 
+	std::string exportFolderName;
 	//Name of preparer
 	std::string name;
 	//Classification word
