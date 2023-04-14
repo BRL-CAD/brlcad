@@ -71,7 +71,6 @@ class QTCAD_EXPORT QtSW : public QWidget
 	struct dm *dmp = NULL;
 	struct fb *ifp = NULL;
 	struct bu_ptbl *dm_set = NULL;
-	struct dm **dm_current = NULL;
 
 	void (*draw_custom)(struct bview *, void *) = NULL;
 	void *draw_udata = NULL;

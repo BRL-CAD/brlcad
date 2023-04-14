@@ -186,11 +186,8 @@ QtCADView::ifp()
     return NULL;
 }
 
-// TODO - for quad view, we're going to need to keep
-// local views - scene object vlists will be shared,
-// but camera settings will not.
 void
-QtCADView::set_view(struct bview *nv, int UNUSED(quad))
+QtCADView::set_view(struct bview *nv)
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -206,47 +203,6 @@ QtCADView::set_view(struct bview *nv, int UNUSED(quad))
 	    canvas_sw->v->dmp = canvas_sw->dmp;
 	}
     }
-}
-
-void
-QtCADView::set_dmp(struct dm *ndmp, int UNUSED(quad))
-{
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl)
-	canvas_gl->dmp = ndmp;
-#endif
-    if (canvas_sw)
-	canvas_sw->dmp = ndmp;
-}
-
-void
-QtCADView::set_dm_current(struct dm **ndmp, int UNUSED(quad))
-{
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl) {
-	canvas_gl->dm_current = ndmp;
-	if (canvas_gl->dmp && canvas_gl->dm_current) {
-	    (*canvas_gl->dm_current) = canvas_gl->dmp;
-	}
-    }
-#endif
-    if (canvas_sw) {
-	canvas_sw->dm_current = ndmp;
-	if (canvas_sw->dmp && canvas_sw->dm_current) {
-	    (*canvas_sw->dm_current) = canvas_sw->dmp;
-	}
-    }
-}
-
-void
-QtCADView::set_ifp(struct fb *nfbp, int UNUSED(quad))
-{
-#ifdef BRLCAD_OPENGL
-    if (canvas_gl)
-	canvas_gl->ifp = nfbp;
-#endif
-    if (canvas_sw)
-	canvas_sw->ifp = nfbp;
 }
 
 void

@@ -141,8 +141,6 @@ void QtSW::paintEvent(QPaintEvent *e)
 	// pointer to indicate the current dm, go ahead and set them.
 	if (dm_set)
 	    bu_ptbl_ins_unique(dm_set, (long int *)dmp);
-	if (dm_current && !(*dm_current))
-	    (*dm_current) = dmp;
 
 	// Ready to go
 	m_init = true;

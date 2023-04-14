@@ -70,10 +70,7 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	struct dm * dmp();
 	struct fb * ifp();
 
-	void set_view(struct bview *, int quad = 1);
-	void set_dmp(struct dm *, int quad = 1);
-	void set_dm_current(struct dm **, int quad = 1);
-	void set_ifp(struct fb *, int quad = 1);
+	void set_view(struct bview *);
 
 	void aet(double a, double e, double t);
 
