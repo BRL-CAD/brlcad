@@ -1,11 +1,15 @@
 #include<bits/stdc++.h>
-#include "ged.h"
+#include<filesystem>
+//#include "ged.h"
 using namespace std;
 
 int main() {
-    std::string retrieveSub = "\"foreach {s} \\[ lt " + "all.g" + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" ";
-    cout << retrieveSub << endl;
-    const char* cmd[2] = { retrieveSub.c_str(), NULL };
-    ged_exec(g, 1, cmd);
-    cout << bu_vls_addr(g->ged_result_str) << endl;
+    string outputname = "../output/m35_misc_bed_frame__ghost.png";
+    if (std::filesystem::exists(outputname.c_str())) {
+        if (std::remove(outputname.c_str()) != 0) {
+            std::cerr << "File: " << outputname << " could not be removed." << std::endl;
+        }
+    } else {
+        std::cerr << "File: " << outputname << " does not exist." << std::endl;
+    }
 }

@@ -204,6 +204,7 @@ void InformationGatherer::getSubComp() {
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());
     largestComponents.insert(largestComponents.end(), subComps.begin(), subComps.end());
+    scFile.close();
 }
 
 
