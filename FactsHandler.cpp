@@ -70,8 +70,8 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
     img.drawTextCentered(col3Offset, offsetY + textHeight + curiX * textYOffset, textHeight, (width - 2 * headerOffset) / 3, "Mass", TO_BOLD);
 	curiX++;
 	img.drawTextCentered(col1Offset, offsetY + textHeight + curiX * textYOffset, textHeight, width, info.getInfo("units"));
-	img.drawTextCentered(col2Offset, offsetY + textHeight + curiX * textYOffset, textHeight, width, "912 m^3");
-	img.drawTextCentered(col3Offset, offsetY + textHeight + curiX * textYOffset, textHeight, width, "2.5 Tonnes");
+	img.drawTextCentered(col2Offset, offsetY + textHeight + curiX * textYOffset, textHeight, width, info.getInfo("volume"));
+	img.drawTextCentered(col3Offset, offsetY + textHeight + curiX * textYOffset, textHeight, width, info.getInfo("mass"));
 	curiX+=2;
 	img.drawTextCentered(col2Offset, offsetY + textHeight + curiX * textYOffset, textHeight, width, "Surface Area", TO_BOLD);
 	curiX++;
@@ -79,7 +79,7 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(col2Offset, offsetY + textHeight + curiX * textYOffset, textHeight, width, "Projected & Exposed", TO_UNDERLINE);
 	curiX+=2;
 	img.drawTextCentered(col1Offset, offsetY + textHeight + curiX * textYOffset, textHeight, width, "100 m^2");
-	img.drawTextCentered(col2Offset + (img.getTextWidth(textHeight, width, "Projected & Exposed") / 2), offsetY + textHeight + curiX * textYOffset, textHeight, width, "128 m^2");
+	img.drawTextCentered(col2Offset + (img.getTextWidth(textHeight, width, "Projected & Exposed") / 2), offsetY + textHeight + curiX * textYOffset, textHeight, width, info.getInfo("surfaceArea"));
 	
 
 	curiX += 2;
