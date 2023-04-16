@@ -2,11 +2,16 @@
 
 bool readParameters(int argc, char** argv, Options &opt);
 void generateReport(Options opt);
+void handleFolder(Options& opt);
 
 int main(int argc, char **argv) {
     Options options;
     if (readParameters(argc, argv, options)) {
-        generateReport(options);
+        if (options.getIsFolder()) {
+            handleFolder(options);
+        } else {
+            generateReport(options);
+        }
     }
 }
 
@@ -118,6 +123,25 @@ bool readParameters(int argc, char** argv, Options &opt)
 
     return true;
 }
+
+/**
+ * Checks if we are processing a folder of models
+*/
+void handleFolder(Options& options) {
+    int cnt = 1;
+    for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
+        options.setFilepath(entry.path().string());
+        options.setExportToFile();
+        std::string filename = options.getFilepath();
+        filename = filename.substr(filename.find_last_of("/\\") + 1);
+        filename = filename.substr(0, filename.find_last_of("."));
+        std::cout << "Processing: " << filename << std::endl;
+        std::string exportPath = options.getExportFolder() + "/" + filename + "_report.png";
+        options.setFileName(exportPath);
+        generateReport(options);
+        std::cout << "Finished Processing: " << cnt++ << std::endl;
+    }
+} 
 
 /**
  * Calls the necessary functions to generate the reports. 
