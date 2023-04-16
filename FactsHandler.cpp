@@ -58,11 +58,11 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 
 	// Verification Calculations
 	 // Calculate column offsets
-  int col1Offset = (offsetX + width / 4) - textOffset;
-  int col2Offset = offsetX + width / 2;
-  int col3Offset = (offsetX + (width*3) / 4) + textOffset;
+	int col1Offset = (offsetX + width / 4) - textOffset;
+	int col2Offset = offsetX + width / 2;
+	int col3Offset = (offsetX + (width*3) / 4) + textOffset;
 
-	int curiX = 2;
+	int curiX = 0;
 
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Geometry Type", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("representation"));
@@ -78,21 +78,20 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("assemblies") + " assemblies, " + info.getInfo("total") + " total");
 
 	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Surface Area - Projected and Exposed", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "128.222298 in^2");
-
-
-  img.drawTextCentered(col1Offset, offsetY + textHeight + curiX * textYOffset, textHeight, (width - 2 * headerOffset) / 3, "Unit", TO_BOLD);
-  img.drawTextCentered(col2Offset, offsetY + textHeight + curiX * textYOffset, textHeight, (width - 2 * headerOffset) / 3, "Volume", TO_BOLD);
-  img.drawTextCentered(col3Offset, offsetY + textHeight + curiX * textYOffset, textHeight, (width - 2 * headerOffset) / 3, "Mass", TO_BOLD);
-
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Surface Area - Projected", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("surfaceArea"));
 	curiX++;
-	img.drawTextCentered(col1Offset, offsetY + textHeight + curiX * textYOffset, textHeight, width, info.getInfo("units"));
-	img.drawTextCentered(col2Offset, offsetY + textHeight + curiX * textYOffset, textHeight, width, info.getInfo("volume") + " " + info.getInfo("units") + "^3");
-	img.drawTextCentered(col3Offset, offsetY + textHeight + curiX * textYOffset, textHeight, width, info.getInfo("surfaceArea") + " (Projected)"));
-	curiX+=2;
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Units", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
+	curiX++;
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Approximate Volume", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("volume") + " " + info.getInfo("units") + "^3");
+	curiX++;
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Mass", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("mass"));
+	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Notes", TO_BOLD);
-	img.textWrapping(offsetX + textOffset, offsetY + curiX++ * textYOffset, offsetX + width, offsetY + (curiX + 3) * textYOffset, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/8750);
+	img.textWrapping(offsetX + textOffset, offsetY + curiX * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/8750);
 
 }
 
