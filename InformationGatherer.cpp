@@ -477,12 +477,33 @@ bool InformationGatherer::gatherInformation(std::string name)
     }
     infoMap.insert(std::pair < std::string, std::string>("classification", classification));
 
-	//Hard code other stuff into map for now
-    // infoMap["owner"] = "Ally Hoskinson";
-    // infoMap["lastUpdate"] = "3/24/2023";
-	//infoMap.insert(std::pair<std::string, std::string>("classification", "CONFIDENTIAL"));
-	//infoMap.insert(std::pair<std::string, std::string>("checksum", "120EA8A25E5D487BF68B5F7096440019"));
-	infoMap.insert(std::pair<std::string, std::string>("checksum", "120EA8A25E5D487BF68B"));
+    //Gather checksum
+    struct bu_mapped_file* gFile = NULL;
+    char* buf = NULL;
+    gFile = bu_open_mapped_file(opt.getFilepath().c_str(), ".g file");
+    picohash_ctx_t ctx;
+    char digest[PICOHASH_MD5_DIGEST_LENGTH];
+    std::string output;
+
+    picohash_init_md5(&ctx);
+    picohash_update(&ctx, gFile->buf, gFile->buflen);
+    picohash_final(&ctx, digest);
+
+    std::stringstream ss2;
+
+    for (int i = 0; i < PICOHASH_MD5_DIGEST_LENGTH; i++) {
+        std::stringstream ss3;
+        std::string curHex;
+        ss3 << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(digest[i]);
+        curHex = ss3.str();
+        if (curHex.length() > 2) {
+            //Chop off the f padding
+            curHex = curHex.substr(curHex.length() - 2, 2);
+        }
+        ss2 << curHex;
+    }
+
+	infoMap.insert(std::pair<std::string, std::string>("checksum", ss2.str()));
 
 	return true;
 }

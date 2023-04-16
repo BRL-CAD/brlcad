@@ -13,6 +13,8 @@
 #include <sstream>
 #include <vector>
 #include <ctime>
+#include <sys/stat.h> 
+#include "picohash.h"
 #include<cstdio>
 #include<filesystem>
 #include <sys/stat.h>
@@ -24,8 +26,6 @@
     #include <stdio.h>
     #include <aclapi.h>
 #endif 
-
-
 
 // BRL-CAD header files
 #include "bu/getopt.h"
