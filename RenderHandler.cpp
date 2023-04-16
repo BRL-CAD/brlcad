@@ -349,11 +349,58 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 		}
 	}
 
-	
 	coordinates[coordinates.size() - 1].push_back(ambientC == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][0]);
 	coordinates[coordinates.size() - 1].push_back(ambientR == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][1]);
 	coordinates[coordinates.size() - 1].push_back(secWidth);
 	coordinates[coordinates.size() - 1].push_back(secHeight);
+
+	// iterate through all of the rows, shifting them over if necessary
+	for (int r = 0; r < numRows; ++r)
+	{
+		// test that row can be spaced
+		bool works = true;
+		for (int c = 0; c < numCols; ++c)
+		{
+			if (map[r * rowLen + c] == 'A')
+				works = false;
+		}
+
+		if (! works || numCols <= 1)
+			continue;
+		double rowWidth = coordinates[r * rowLen + numCols - 1][2];
+		double extraSpace = (secWidth - rowWidth) / (numCols - 1);
+
+		// now, space out the row
+		for (int c = 1; c < numCols; ++c)
+		{
+			coordinates[r * rowLen + c][0] += extraSpace * c;
+			coordinates[r * rowLen + c][2] += extraSpace * c;
+		}
+	}
+
+	// iterate through all of the columns, shifting them over if necessary
+	for (int c = 0; c < numCols; ++c)
+	{
+		// test that column can be spaced
+		bool works = true;
+		for (int r = 0; r < numRows; ++r)
+		{
+			if (map[r * rowLen + c] == 'A')
+				works = false;
+		}
+
+		if (!works || numRows <= 1)
+			continue;
+		double colHeight = coordinates[(numRows-1) * rowLen + c][3];
+		double extraSpace = (secHeight - colHeight) / (numRows - 1);
+
+		// now, space out the column
+		for (int r = 1; r < numRows; ++r)
+		{
+			coordinates[r * rowLen + c][1] += extraSpace * r;
+			coordinates[r * rowLen + c][3] += extraSpace * r;
+		}
+	}
 }
 
 double LayoutChoice::getTotalCoverage()
@@ -433,8 +480,8 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	// modelDepth = 1988;
 
 	// TODO: change temporary fix
-	width -= offsetX;
-	height -= offsetY;
+	//width -= offsetX;
+	//height -= offsetY;
 
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
