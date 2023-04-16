@@ -325,10 +325,6 @@ bool InformationGatherer::gatherInformation(std::string name)
 	//Gather name of preparer
     infoMap["preparer"] = name;
 
-	//Gather source file
-	last = filePath.find_last_of("\\");
-	std::string file = filePath.substr(last+1, filePath.length()-1);
-    infoMap["file"] = file;
     //Gather volume and mass
     double volume = 0;
     double mass = 0;
@@ -452,11 +448,11 @@ bool InformationGatherer::gatherInformation(std::string name)
     infoMap.insert(std::pair < std::string, std::string>("lastUpdate", date));
 
 	//Gather source file
-    last = opt->getFilepath().find_last_of("/");
-#ifdef HAVE_WINDOWS_H
-	last = opt->getFilepath().find_last_of("\\");
-#endif
-	file = opt->getFilepath().substr(last+1, opt->getFilepath().length()-1);
+    std::size_t last1 = opt->getFilepath().find_last_of("/");
+    std::size_t last2 = opt->getFilepath().find_last_of("\\");
+    last = last1 < last2 ? last1 : last2;
+    
+	std::string file = opt->getFilepath().substr(last+1, opt->getFilepath().length()-1);
 
 	infoMap.insert(std::pair < std::string, std::string>("file", file));
 
