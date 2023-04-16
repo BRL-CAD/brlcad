@@ -2,11 +2,17 @@
 
 bool readParameters(int argc, char** argv, Options &opt);
 void generateReport(Options opt);
+void handleFolder(Options& opt);
 
 int main(int argc, char **argv) {
     Options options;
-    if (readParameters(argc, argv, options))
-        generateReport(options);
+    if (readParameters(argc, argv, options)) {
+        if (options.getIsFolder()) {
+            handleFolder(options);
+        } else {
+            generateReport(options);
+        }
+    }
 }
 
 /**
@@ -30,24 +36,31 @@ bool readParameters(int argc, char** argv, Options &opt)
     * F = path specified is a folder of models
     * g = GUI output
     * f = filename of png export
+    * E = folder name of png export
     */
 
     bool h = false; // user requested help
-    bool f = false; // user specified filepath
+    bool hasFile = 0; // user specified filepath
+    bool hasFolder = false; // user specified filepath
 
     int opts;
 
-    while ((opts = bu_getopt(argc, argv, "Fg?Oop:P:f:n:T:c:N:")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "g?p:F:P:f:n:T:E:")) != -1) {
         switch (opts) {
             case 'p':
-                f = true;
+                hasFile = true;
                 opt.setFilepath(bu_optarg);
                 break;
             case 'P':
                 opt.setPPI(atoi(bu_optarg));
                 break;
             case 'F':
+                hasFolder = true;
                 opt.setIsFolder();
+                opt.setFolder(bu_optarg);
+                break;
+            case 'E':
+                opt.setExportFolder(bu_optarg);
                 break;
             case 'g':
                 opt.setOpenGUI();
@@ -77,6 +90,9 @@ bool readParameters(int argc, char** argv, Options &opt)
             case '?':
                 h = true;
                 break;
+            default:
+                std::cerr << "Unknown option\n";
+                break;
         } 
     } 
 
@@ -88,6 +104,8 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    F = path specified is a folder of models\n");
         bu_log("    g = GUI output\n");
         bu_log("    f = filepath of png export, MUST end in .png\n");
+        bu_log("    E = path to folder to export reports. Used for processing folder of models\n");
+        bu_log("    n = name of preparer, to be used in report\n");
         bu_log("    T = temporary directory to store intermediate files\n");
         bu_log("    n = name of preparer, to be used in report\n");
         bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report\n");
@@ -97,7 +115,7 @@ bool readParameters(int argc, char** argv, Options &opt)
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
-    else if (argc < 2 || !f) {
+    else if (argc < 2 || (hasFolder == hasFile)) {
         bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
         bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
         return false;
@@ -105,6 +123,25 @@ bool readParameters(int argc, char** argv, Options &opt)
 
     return true;
 }
+
+/**
+ * Checks if we are processing a folder of models
+*/
+void handleFolder(Options& options) {
+    int cnt = 1;
+    for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
+        options.setFilepath(entry.path().string());
+        options.setExportToFile();
+        std::string filename = options.getFilepath();
+        filename = filename.substr(filename.find_last_of("/\\") + 1);
+        filename = filename.substr(0, filename.find_last_of("."));
+        std::cout << "Processing: " << filename << std::endl;
+        std::string exportPath = options.getExportFolder() + "/" + filename + "_report.png";
+        options.setFileName(exportPath);
+        generateReport(options);
+        std::cout << "Finished Processing: " << cnt++ << std::endl;
+    }
+} 
 
 /**
  * Calls the necessary functions to generate the reports. 
@@ -117,10 +154,10 @@ void generateReport(Options opt)
     IFPainter img(opt.getLength(), opt.getWidth());
 
     // create information gatherer
-    InformationGatherer info;
+    InformationGatherer info(&opt);
 
     // read in all information from model file
-    if (!info.gatherInformation(opt))
+    if (!info.gatherInformation(opt.getName()))
     {
         std::cerr << "Error on Information Gathering.  Report Generation skipped..." << std::endl;
         return;
@@ -142,7 +179,7 @@ void generateReport(Options opt)
     Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
     Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
     Position hierarchySection(imagePosition.right() - imagePosition.thirdWidth() - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.thirdWidth(), vvHeight);
-    Position fileSection(imagePosition.right() - imagePosition.thirdWidth() - margin, topSection.bottom() + padding, imagePosition.thirdWidth(), hierarchySection.top() - topSection.bottom() - padding);
+    Position fileSection(imagePosition.right() - imagePosition.sixthWidth() - margin, topSection.bottom() + padding, imagePosition.sixthWidth(), hierarchySection.top() - topSection.bottom() - padding);
     Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
     
 
@@ -151,9 +188,8 @@ void generateReport(Options opt)
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
     makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
-    //makeVVSection(img, info, vvSection.x(), vvSection.y(), vvSection.width(), vvSection.height());
-    makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
+    makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     
     // paint renderings
 
