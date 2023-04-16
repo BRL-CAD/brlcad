@@ -29,11 +29,13 @@ public:
     int halfWidth() const;
     int thirdWidth() const;
     int quarterWidth() const;
+    int sixthWidth() const;
     int eighthWidth() const;
 
     int halfHeight() const;
     int thirdHeight() const;
     int quarterHeight() const;
+    int sixthHeight() const;
     int eighthHeight() const;
 
     int x() const;
