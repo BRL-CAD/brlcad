@@ -73,7 +73,7 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
     for (int i = 0; i < toVisit.size(); i++) {
         std::string val = toVisit[i];
         //Get volume of region
-        std::string command = opt->getTemppath() + "gqa -Av -g 2 -u " + map["units"] + ",\"cu " + map["units"] + "\" " + opt->getFilepath() + " " + val + " 2>&1";
+        std::string command = opt->getTemppath() + "gqa -Av -q -g 2 -u " + map["units"] + ",\"cu " + map["units"] + "\" " + opt->getFilepath() + " " + val + " 2>&1";
         char buffer[128];
         std::string result = "";
         FILE* pipe = popen(command.c_str(), "r");
@@ -95,7 +95,7 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
             volume += stod(result);
         }
         //Get mass of region
-        command = opt->getTemppath() + "gqa -Am -g 2 " + opt->getFilepath() + " " + val + " 2>&1";
+        command = opt->getTemppath() + "gqa -Am -q -g 2 " + opt->getFilepath() + " " + val + " 2>&1";
         result = "";
         pipe = popen(command.c_str(), "r");
         if (!pipe) throw std::runtime_error("popen() failed!");

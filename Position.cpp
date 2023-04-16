@@ -58,6 +58,10 @@ int Position::thirdWidth() const {
 int Position::quarterWidth() const {
     return width_ / 4;
 }
+
+int Position::sixthWidth() const {
+    return width_ / 6;
+}
     
 int Position::eighthWidth() const {
     return width_ / 8;
@@ -73,6 +77,10 @@ int Position::thirdHeight() const {
 
 int Position::quarterHeight() const {
     return height_ / 4;
+}
+
+int Position::sixthHeight() const {
+    return height_ / 6;
 }
     
 int Position::eighthHeight() const {
