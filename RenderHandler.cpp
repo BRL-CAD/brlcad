@@ -401,6 +401,54 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 			coordinates[r * rowLen + c][3] += extraSpace * r;
 		}
 	}
+
+	// iterate through all of the rows, shifting them over if necessary
+	for (int r = 0; r < numRows; ++r)
+	{
+		// test that row can be spaced
+		bool works = true;
+		for (int c = 0; c < numCols; ++c)
+		{
+			if (map[r * rowLen + c] == 'A')
+				works = false;
+		}
+
+		if (!works || numCols <= 1)
+			continue;
+		double rowWidth = coordinates[r * rowLen + numCols - 1][2];
+		double extraSpace = (secWidth - rowWidth) / (numCols - 1);
+
+		// now, space out the row
+		for (int c = 1; c < numCols; ++c)
+		{
+			coordinates[r * rowLen + c][0] += extraSpace * c;
+			coordinates[r * rowLen + c][2] += extraSpace * c;
+		}
+	}
+
+	// iterate through all of the columns, shifting them over if necessary
+	for (int c = 0; c < numCols; ++c)
+	{
+		// test that column can be spaced
+		bool works = true;
+		for (int r = 0; r < numRows; ++r)
+		{
+			if (map[r * rowLen + c] == 'A')
+				works = false;
+		}
+
+		if (!works || numRows <= 1)
+			continue;
+		double colHeight = coordinates[(numRows - 1) * rowLen + c][3];
+		double extraSpace = (secHeight - colHeight) / (numRows - 1);
+
+		// now, space out the column
+		for (int r = 1; r < numRows; ++r)
+		{
+			coordinates[r * rowLen + c][1] += extraSpace * r;
+			coordinates[r * rowLen + c][3] += extraSpace * r;
+		}
+	}
 }
 
 double LayoutChoice::getTotalCoverage()
@@ -453,18 +501,12 @@ char LayoutChoice::getMapChar(int index)
 	return map[index];
 }
 
-
-
 std::vector<LayoutChoice> initLayouts()
 {
 	std::vector<LayoutChoice> layouts;
 
-	//layouts.emplace_back("1 \n02\n43\n5 \nAA\n", true);
 	layouts.emplace_back("1423\n05AA", false);
-	//layouts.emplace_back("1 43A\n025 A\n", false);
-	//layouts.emplace_back("1 43\n025 \nAAAA\n", false);
 	layouts.emplace_back("102\n543\n.AA\n", false);
-	//layouts.emplace_back("10A\n52A\n 4A\n 3A\n", false);
 
 	return layouts;
 }
@@ -478,10 +520,6 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	// modelLength = 1683;
 	// modelHeight = 625;
 	// modelDepth = 1988;
-
-	// TODO: change temporary fix
-	//width -= offsetX;
-	//height -= offsetY;
 
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
