@@ -37,7 +37,18 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 
 void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
 {
-	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
+	cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+	// Convert the image to grayscale for creating the mask
+	cv::Mat gray_image;
+	cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
+	// Create a mask of non-white pixels
+	cv::Mat mask = gray_image < 255;
+	// Find the bounding rectangle of non-white pixels
+	cv::Rect bounding_rect = boundingRect(mask);
+	// Crop the image to the bounding rectangle
+	cv::Mat lilImage = imageRaw(bounding_rect);
+
+
 	int imgWidth = lilImage.size().width;
 	int imgHeight = lilImage.size().height;
 	int heightOffset = 0;
@@ -71,6 +82,61 @@ void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string
 		return;
 	}
 	resized_image.copyTo(destRoi);
+}
+
+void IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
+{
+	y += 65;
+	height -= 65;
+	cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+	// Convert the image to grayscale for creating the mask
+	cv::Mat gray_image;
+	cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
+	// Create a mask of non-white pixels
+	cv::Mat mask = gray_image < 255;
+	// Find the bounding rectangle of non-white pixels
+	cv::Rect bounding_rect = boundingRect(mask);
+	// Crop the image to the bounding rectangle
+	cv::Mat lilImage = imageRaw(bounding_rect);
+
+
+	int imgWidth = lilImage.size().width;
+	int imgHeight = lilImage.size().height;
+	int heightOffset = 0;
+	int widthOffset = 0;
+
+	if ((double)imgWidth / imgHeight > (double)width / height)
+	{
+		// image width is too large; bound on width
+		int newHeight = (int)(width * (double)imgHeight / imgWidth);
+		heightOffset = (height - newHeight) / 2;
+		height = newHeight;
+	}
+	else
+	{
+		// image height is too large; bound on height
+		int newWidth = (int)(height * (double)imgWidth / imgHeight);
+		widthOffset = (width - newWidth) / 2;
+		width = newWidth;
+	}
+
+	cv::Mat resized_image;
+	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
+
+	//Trying to copyto the image on to the private image frame, img
+	cv::Mat destRoi;
+	try {
+		destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
+	}
+	catch (...) {
+		std::cerr << "Trying to create roi out of image boundaries" << std::endl;
+		return;
+	}
+	resized_image.copyTo(destRoi);
+
+	// now, draw text and line
+	this->drawLine(x + widthOffset, y + heightOffset - 5, x + widthOffset + width, y + heightOffset - 5, 5, cv::Scalar(0, 0, 0));
+	this->drawTextCentered(x + widthOffset + width / 2, y + heightOffset - 65, 50, width, text, TO_BOLD);
 }
 
 //Helper funciton to support getting the width of a text
@@ -297,6 +363,21 @@ void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar c
               width,
 			  cv::LINE_8);
 }
+
+void IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
+{
+    circle(img, cv::Point(x,y), radius, color, width, cv::LINE_8);
+    // ellipse(img, cv::Point(x,y), cv::Size(radius, radius), 0, 0, 180, color, width, cv::LINE_8);
+}
+
+// void IFPainter::drawArc(int x, int y, int width, cv::Scalar color) {
+// 	int lineType = cv::LINE_8;
+// 	cv::Point center(x, y);
+//     for(int i=10;i<=250;i=i+10)
+//     {
+//         ellipse( image, center, Size( i, i ), 0, 30, 150, color, width, lineType );
+//     }
+// }
 
 
 void IFPainter::openInGUI()

@@ -8,8 +8,10 @@ Options::Options()
 	width = 3508;
 	length = 2480;
 	isFolder = false;
+    folderName = "";
 	openGUI = false;
 	exportToFile = false;
+	exportFolderName = "";
 	fileName = "";
 	name = "N/A";
 	classification = "";
@@ -49,6 +51,14 @@ void Options::setExportToFile() {
 	exportToFile = true;
 }
 
+void Options::setExportFolder(std::string fldr) {
+    exportFolderName = fldr;
+}
+
+void Options::setFolder(std::string n) {
+	folderName = n;
+}
+
 void Options::setFileName(std::string n) {
 	fileName = n;
 }
@@ -79,6 +89,14 @@ void Options::setNotes(std::string n) {
 
 std::string Options::getFilepath() {
 	return filepath;
+}
+
+std::string Options::getFolder() {
+	return folderName;
+}
+
+std::string Options::getExportFolder() {
+    return exportFolderName;
 }
 
 std::string Options::getTemppath() {

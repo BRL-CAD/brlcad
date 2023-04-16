@@ -2,6 +2,8 @@ a.out
 CMakeCache.txt
 /CMakeFiles
 /output
+/sample_models
+/sample_reports
 
 *~
 \#*\#
