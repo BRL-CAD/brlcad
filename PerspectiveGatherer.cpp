@@ -97,8 +97,12 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
 
     std::cout << render << std::endl;
 
-    if (std::remove(outputname.c_str()) != 0) {
-       std::cerr << "Failed to remove " << outputname << std::endl;
+    if (std::filesystem::exists(outputname.c_str())) {
+        if (std::remove(outputname.c_str()) != 0) {
+            std::cerr << "File: " << outputname << " could not be removed." << std::endl;
+        }
+    } else {
+        std::cerr << "File: " << outputname << " does not exist. Did not remove." << std::endl;
     }
     
     try {
@@ -107,7 +111,7 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
         std::cerr << e.what() << std::endl;
     }
 
-    std::cout << "Successlly generated perspective rendering png file\n";
+    std::cout << "Successfully generated perspective rendering png file\n";
 
 	return outputname;
 }

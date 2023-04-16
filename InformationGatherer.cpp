@@ -204,6 +204,7 @@ void InformationGatherer::getSubComp() {
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());
     largestComponents.insert(largestComponents.end(), subComps.begin(), subComps.end());
+    scFile.close();
 }
 
 
@@ -480,7 +481,7 @@ bool InformationGatherer::gatherInformation(std::string name)
     //Gather checksum
     struct bu_mapped_file* gFile = NULL;
     char* buf = NULL;
-    gFile = bu_open_mapped_file(opt.getFilepath().c_str(), ".g file");
+    gFile = bu_open_mapped_file(opt->getFilepath().c_str(), ".g file");
     picohash_ctx_t ctx;
     char digest[PICOHASH_MD5_DIGEST_LENGTH];
     std::string output;
