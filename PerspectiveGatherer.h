@@ -36,7 +36,6 @@ struct FaceDetails
 {
 	RenderingFace face;
 	std::string title;
-	std::string file_path;
 
 	ModelDimension widthContributor;
 	ModelDimension heightContributor;

@@ -11,6 +11,7 @@ Options::Options()
     folderName = "";
 	openGUI = false;
 	exportToFile = false;
+	overrideImages = false;
 	exportFolderName = "";
 	fileName = "";
 	name = "N/A";
@@ -49,6 +50,10 @@ void Options::setOpenGUI() {
 
 void Options::setExportToFile() {
 	exportToFile = true;
+}
+
+void Options::setOverrideImages() {
+	overrideImages = true;
 }
 
 void Options::setExportFolder(std::string fldr) {
@@ -121,6 +126,10 @@ bool Options::getOpenGUI() {
 
 bool Options::getExportToFile() {
 	return exportToFile;
+}
+
+bool Options::getOverrideImages() {
+	return overrideImages;
 }
 
 std::string Options::getFileName() {

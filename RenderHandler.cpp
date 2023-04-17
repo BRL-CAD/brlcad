@@ -186,9 +186,9 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 			}
 		}
 		if (ambientXOffset > orthoWidth / 2)
-			workingWidth /= 2 * (workingWidth - ambientXOffset);
+			workingWidth *= orthoWidth / 2 / ambientXOffset;
 		if (ambientYOffset > orthoHeight / 2)
-			workingHeight /= 2 * (workingHeight - ambientYOffset);
+			workingHeight *= 2 * orthoHeight / 2 / ambientYOffset;
 	}
 
 	// get aspect ratios
@@ -401,54 +401,6 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 			coordinates[r * rowLen + c][3] += extraSpace * r;
 		}
 	}
-
-	// iterate through all of the rows, shifting them over if necessary
-	for (int r = 0; r < numRows; ++r)
-	{
-		// test that row can be spaced
-		bool works = true;
-		for (int c = 0; c < numCols; ++c)
-		{
-			if (map[r * rowLen + c] == 'A')
-				works = false;
-		}
-
-		if (!works || numCols <= 1)
-			continue;
-		double rowWidth = coordinates[r * rowLen + numCols - 1][2];
-		double extraSpace = (secWidth - rowWidth) / (numCols - 1);
-
-		// now, space out the row
-		for (int c = 1; c < numCols; ++c)
-		{
-			coordinates[r * rowLen + c][0] += extraSpace * c;
-			coordinates[r * rowLen + c][2] += extraSpace * c;
-		}
-	}
-
-	// iterate through all of the columns, shifting them over if necessary
-	for (int c = 0; c < numCols; ++c)
-	{
-		// test that column can be spaced
-		bool works = true;
-		for (int r = 0; r < numRows; ++r)
-		{
-			if (map[r * rowLen + c] == 'A')
-				works = false;
-		}
-
-		if (!works || numRows <= 1)
-			continue;
-		double colHeight = coordinates[(numRows - 1) * rowLen + c][3];
-		double extraSpace = (secHeight - colHeight) / (numRows - 1);
-
-		// now, space out the column
-		for (int r = 1; r < numRows; ++r)
-		{
-			coordinates[r * rowLen + c][1] += extraSpace * r;
-			coordinates[r * rowLen + c][3] += extraSpace * r;
-		}
-	}
 }
 
 double LayoutChoice::getTotalCoverage()
@@ -480,13 +432,13 @@ std::vector<int> LayoutChoice::getCoordinates(int mapIndex)
 	{
 		// want the coordinates for the ambient occlusion
 		for (double coord : coordinates[map.size()])
-			output.push_back((int)coord);
+			output.push_back((int)std::ceil(coord));
 	}
 	else
 	{
 		// want coordinates of an index in map
 		for (double coord : coordinates[mapIndex])
-			output.push_back((int)coord);
+			output.push_back((int)std::ceil(coord));
 	}
 	return output;
 }
@@ -505,8 +457,9 @@ std::vector<LayoutChoice> initLayouts()
 {
 	std::vector<LayoutChoice> layouts;
 
-	layouts.emplace_back("1423\n05AA", false);
-	layouts.emplace_back("102\n543\n.AA\n", false);
+	layouts.emplace_back("TBRL\nFbAA", false);
+	layouts.emplace_back("TFR\nbBL\n.AA\n", false);
+	//layouts.emplace_back("TbFR\n..BL\n..AA\n", false);
 
 	return layouts;
 }
@@ -551,7 +504,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 			double newX = coords[0] + oldW / 2 - newW / 2;
 			double newY = coords[1] + oldH / 2 - newH / 2;
 
-			img.drawImageFitted(offsetX + newX, offsetY + newY, newW, newH, render);
+			img.drawImageFitted((int) (offsetX + newX), (int) (offsetY + newY), (int) std::ceil(newW), (int) std::ceil(newH), render);
 			/*
 			if (next == '0')
 			{

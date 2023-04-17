@@ -4,15 +4,13 @@ std::map<char, FaceDetails> getFaceDetails()
 {
 	std::map<char, FaceDetails> output;
 
-	output['0'] = {FRONT, "Front", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_front.png", LENGTH, HEIGHT};
-	output['1'] = {TOP, "Top", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_top.png", LENGTH, DEPTH};
-	output['2'] = {RIGHT, "Right", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_right.png", DEPTH, HEIGHT};
-	output['3'] = {LEFT, "Left", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_left.png", DEPTH, HEIGHT};
-	output['4'] = {BACK, "Back", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_back.png", LENGTH, HEIGHT};
-	output['5'] = {BOTTOM, "Bottom", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_bottom.png", LENGTH, DEPTH};
-	// output['6'] = {BACK_MIRRORED, "Back-Mirrored", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_back_mirrored.png", LENGTH, HEIGHT};
-	// output['7'] = {BOTTOM_MIRRORED, "Bottom-Mirrored", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ortho_bottom_mirrored.png", LENGTH, DEPTH};
-	output['8'] = {DETAILED, "Ambient Occlusion", "D:\\Mark\\ProgrammingWorkspace\\brlcad\\buildapple\\src\\gtools\\rgen\\visualization\\src\\ambient_occ.png"};
+	output['F'] = {FRONT, "Front", LENGTH, HEIGHT};
+	output['T'] = {TOP, "Top", LENGTH, DEPTH};
+	output['R'] = {RIGHT, "Right", DEPTH, HEIGHT};
+	output['L'] = {LEFT, "Left", DEPTH, HEIGHT};
+	output['B'] = {BACK, "Back", LENGTH, HEIGHT};
+	output['b'] = {BOTTOM, "Bottom", LENGTH, DEPTH};
+	output['A'] = {DETAILED, "Ambient Occlusion"};
 
 	return output;
 }
@@ -97,8 +95,8 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
 
     std::cout << render << std::endl;
 
-    if (std::remove(outputname.c_str()) != 0) {
-       std::cerr << "Failed to remove " << outputname << std::endl;
+    if (opt.getOverrideImages() || std::remove(outputname.c_str()) != 0) {
+       std::cerr << "Did not remove " << outputname << std::endl;
     }
     
     try {
