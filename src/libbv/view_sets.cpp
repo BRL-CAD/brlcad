@@ -102,8 +102,13 @@ bv_set_add_view(struct bview_set *s, struct bview *v){
 
 void
 bv_set_rm_view(struct bview_set *s, struct bview *v){
-    if (!s || !v)
+    if (!s)
 	return;
+
+    if (!v) {
+	bu_ptbl_reset(&s->i->views);
+	return;
+    }
 
     bu_ptbl_rm(&s->i->views, (long int *)v);
 

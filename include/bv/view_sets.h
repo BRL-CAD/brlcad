@@ -52,7 +52,8 @@ BV_EXPORT void
 bv_set_add_view(struct bview_set *s, struct bview *v);
 
 /**
- * Remove view v from set s
+ * Remove view v from set s.  If v == NULL, all views
+ * are removed from the set.
  */
 BV_EXPORT void
 bv_set_rm_view(struct bview_set *s, struct bview *v);
