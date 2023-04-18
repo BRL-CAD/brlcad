@@ -1,9 +1,10 @@
 # helper functions for setting up gcv conversion tests
 
 function(GCV_to_g_util fmt INPUT_FILES)
-  # supply INPUT_OPTIONS for gcv run flags
-  # supply EXPECTED_FILE_SIZE for conversions resulting in extreme file sizes
-  cmake_parse_arguments("${fmt}" "" "INPUT_OPTIONS;EXPECTED_FILE_SIZE" "" ${ARGN})
+  # INPUT_OPTIONS: for gcv run flags
+  # EXPECTED_FILE_SIZE: for conversions resulting in file sizes outside of 300-700 bytes
+  # DEPS: for converters using 3rd party build dependencies (i.e. gcv-gdal, gcv-assetimport)
+  cmake_parse_arguments("${fmt}" "" "DEPS;EXPECTED_FILE_SIZE" "INPUT_OPTIONS" ${ARGN})
 
   # BRLCAD_REGRESSION_TEST is expecting a cmake.in file - create for this test
   set (cmake_in_path "${CMAKE_CURRENT_BINARY_DIR}/regress-${fmt}-g.cmake.in")
@@ -12,11 +13,11 @@ function(GCV_to_g_util fmt INPUT_FILES)
   # Use a default file size check for converted .g's to make sure we have
   # a reasonable output. This doesn't ensure the data is correct.
   # most test files are very small, set default expected converted file size to 
-  # 500 bytes and delta of 200 bytes
+  # 500 bytes
   if (${fmt}_EXPECTED_FILE_SIZE)
     set(EXPECTED_FILE_SIZE ${${fmt}_EXPECTED_FILE_SIZE})
     # set the delta to 3% of file size
-    math(EXPR FILE_SIZE_DELTA "${${fmt}_EXPECTED_FILE_SIZE} * .03")
+    math(EXPR FILE_SIZE_DELTA "${EXPECTED_FILE_SIZE} * 3 / 100")
   else()
     set(EXPECTED_FILE_SIZE 500)
     set(FILE_SIZE_DELTA 200)
@@ -27,7 +28,8 @@ function(GCV_to_g_util fmt INPUT_FILES)
   "
 # Values set at CMake configure time
 set(CSDIR \"@CMAKE_CURRENT_SOURCE_DIR@\")
-set(LOGFILE \"\${CMAKE_CURRENT_BINARY_DIR}/regress-${fmt}-g.log\")
+set(CBDIR \"@CMAKE_CURRENT_BINARY_DIR@\")
+set(LOGFILE \"\${CBDIR}/regress-${fmt}-g.log\")
 
 file(WRITE \"\${LOGFILE}\" \"Starting ${fmt} testing\\n\\n\")
 
@@ -49,26 +51,43 @@ endif (NOT EXISTS \"\${GCV_EXEC}\")\n"
     # keep track for distclean
     set (OUTPUT_FILES "${OUTPUT_FILES} ${out_path}")
 
+    # command string can't have empty "" - have to build it explicitly with cmd line flags if supplied
+    if (${fmt}_INPUT_OPTIONS)
+      set(CMD_STR "COMMAND \"\${GCV_EXEC}\" \"${${fmt}_INPUT_OPTIONS}\" \"\${in_path}\" \"${out_path}\"")
+    else()
+      set(CMD_STR "COMMAND \"\${GCV_EXEC}\" \"\${in_path}\" \"${out_path}\"")
+    endif(${fmt}_INPUT_OPTIONS)
+
     file (APPEND "${cmake_in_path}"
     "
+# check for input file in source and binary dir - priority of src
+if (EXISTS \${CSDIR}/${in_file})
+  set (in_path \${CSDIR}/${in_file})
+elseif (EXISTS \${CBDIR}/${in_file})
+  set (in_path \${CBDIR}/${in_file})
+else()
+  message(FATAL_ERROR \"[gcv] could not find ${in_file}, searched \${CSDIR} and \${CBDIR}. aborting.\")
+endif (EXISTS \${CSDIR}/${in_file})
+
 # blow away expected output file if it exists for some reason
 file(REMOVE \"${out_path}\")
 
 # Run the converter for ${in_file}
-set(log_msg \"Running: \${GCV_EXEC} ${${fmt}_INPUT_OPTIONS} \${CSDIR}/${in_file} ${out_path}\\n\")
+set(log_msg \"Running: ${CMD_STR}\\n\")
 file(APPEND \"\${LOGFILE}\" \"\${log_msg}\")
 
-execute_process(
-  COMMAND \"\${GCV_EXEC} ${${fmt}_INPUT_OPTIONS}\" \"\${CSDIR}/${in_file}\" \"${out_path}\"
-  RESULT_VARIABLE curr_result OUTPUT_VARIABLE log_msg ERROR_VARIABLE log_msg
-  )
+  execute_process(
+    ${CMD_STR}
+    RESULT_VARIABLE curr_result OUTPUT_VARIABLE log_msg ERROR_VARIABLE log_msg
+    )
+
 file(APPEND \"\${LOGFILE}\" \"\${log_msg}\\n\")
 set(log_msg)
 
 # check output file exists and is a reasonable size
 if(NOT EXISTS \"${out_path}\")
   file(APPEND \"\${LOGFILE}\" \"FAILURE: \${curr_result}\")
-  message(FATAL_ERROR \"[gcv] Unable to convert \${CSDIR}/${in_file} to ${out_path} with \${GCV_EXEC}, aborting.\\nSee \${LOGFILE} for more details.\")
+  message(FATAL_ERROR \"[gcv] Unable to convert \${in_path} to ${out_path} with \${GCV_EXEC}, aborting.\\nSee \${LOGFILE} for more details.\")
 else()
   file(SIZE \"${out_path}\" file_size)	# size in bytes
   if (\"\${file_size}\" GREATER \"${EXPECTED_FILE_SIZE}\")
@@ -94,8 +113,15 @@ foreach(of ${OUTPUT_FILES})
 endforeach(of ${OUTPUT_FILES})"
   )
 
+  # assume the fmt is the gcv dependency unless specified
+  if (${fmt}_DEPS)
+    set(DEPS ${${fmt}_DEPS})
+  else()
+    set(DEPS "gcv;gcv-${fmt}")
+  endif(${fmt}_DEPS)
+
   # create actual regression target
-  BRLCAD_REGRESSION_TEST(regress-${fmt}-g "gcv;gcv-${fmt}" EXEC gcv TEST_SCRIPT "${cmake_in_path}")
+  BRLCAD_REGRESSION_TEST(regress-${fmt}-g ${DEPS} EXEC gcv TEST_SCRIPT "${cmake_in_path}")
 
   # BRLCAD_REGRESSION_TEST copies and evalutates the cmake.in - safe to get rid of it now
   file(REMOVE ${cmake_in_path})
