@@ -45,7 +45,7 @@ bool readParameters(int argc, char** argv, Options &opt)
 
     int opts;
 
-    while ((opts = bu_getopt(argc, argv, "g?p:F:P:f:n:T:E:")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "g?cOop:F:P:f:n:T:E:N:")) != -1) {
         switch (opts) {
             case 'p':
                 hasFile = true;
