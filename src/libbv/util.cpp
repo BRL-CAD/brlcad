@@ -104,6 +104,7 @@ bv_init(struct bview *gvp, struct bview_set *s)
     gvp->gv_maxMouseDelta = 20;
     gvp->gv_rscale = 0.4;
     gvp->gv_sscale = 2.0;
+    gvp->gv_perspective = 0.0;
 
     gvp->gv_data_vZ = 0.0;
 
@@ -361,16 +362,17 @@ bv_mat_aet(struct bview *v)
 void
 bv_settings_init(struct bview_settings *s)
 {
-    struct bv_obj_settings defaults = BV_OBJ_SETTINGS_INIT;
-    bv_obj_settings_sync(&s->obj_s, &defaults);
+    s->obj_s = BV_OBJ_SETTINGS_INIT;
 
     s->gv_cleared = 1;
 
+    s->gv_adc.draw = 0;
     s->gv_adc.a1 = 45.0;
     s->gv_adc.a2 = 45.0;
     VSET(s->gv_adc.line_color, 255, 255, 0);
     VSET(s->gv_adc.tick_color, 255, 255, 255);
 
+    s->gv_grid.draw = 0;
     VSET(s->gv_grid.anchor, 0.0, 0.0, 0.0);
     s->gv_grid.res_h = 1.0;
     s->gv_grid.res_v = 1.0;
