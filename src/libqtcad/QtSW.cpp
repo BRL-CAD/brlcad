@@ -50,9 +50,10 @@ QtSW::QtSW(QWidget *parent, struct fb *fbp)
 {
     // Provide a view specific to this widget - set gedp->ged_gvp to v
     // if this is the current view
-    BU_GET(v, struct bview);
-    bv_init(v, NULL);
-    bu_vls_sprintf(&v->gv_name, "swrast");
+    BU_GET(local_v, struct bview);
+    bv_init(local_v, NULL);
+    bu_vls_sprintf(&local_v->gv_name, "swrast");
+    v = local_v;
 
     // Don't dm_open until we have the view.
     dmp = NULL;
@@ -77,7 +78,7 @@ QtSW::~QtSW()
     if (ifp && !fb_get_standalone(ifp)) {
 	fb_close_existing(ifp);
     }
-    BU_PUT(v, struct bv);
+    BU_PUT(local_v, struct bv);
 }
 
 void QtSW::need_update()

@@ -48,9 +48,10 @@ QtGL::QtGL(QWidget *parent, struct fb *fbp)
 {
     // Provide a view specific to this widget - set gedp->ged_gvp to v
     // if this is the current view
-    BU_GET(v, struct bview);
-    bv_init(v, NULL);
-    bu_vls_sprintf(&v->gv_name, "qtgl");
+    BU_GET(local_v, struct bview);
+    bv_init(local_v, NULL);
+    bu_vls_sprintf(&local_v->gv_name, "qtgl");
+    v = local_v;
 
     // We can't initialize dmp successfully until more of the OpenGL
     // initialization is complete
@@ -76,7 +77,7 @@ QtGL::~QtGL()
     if (ifp && !fb_get_standalone(ifp)) {
 	fb_close_existing(ifp);
     }
-    BU_PUT(v, struct bv);
+    BU_PUT(local_v, struct bv);
 }
 
 

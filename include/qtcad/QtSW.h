@@ -112,6 +112,8 @@ class QTCAD_EXPORT QtSW : public QWidget
 	int y_prev = -INT_MAX;
 	double x_press_pos = -INT_MAX;
 	double y_press_pos = -INT_MAX;
+
+	struct bview *local_v = NULL;
 };
 
 #endif /* QTCAD_QTSW_H */
