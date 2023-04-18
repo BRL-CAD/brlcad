@@ -95,7 +95,7 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
             volume += stod(result);
         }
         //Get mass of region
-        command = opt->getTemppath() + "gqa -Am -q -g 2 " + opt->getFilepath() + " " + val + " 2>&1";
+        command = opt->getTemppath() + "gqa -Am -q -g 2 " + opt->getFilepath() + " -f C:\\Users\\bhosk\\VSC_Projects\\CSCE_482\\brlcad\\build\\Release\\share\\data\\GQA_SAMPLE_DENSITIES " + val + " 2>&1";
         result = "";
         pipe = popen(command.c_str(), "r");
         if (!pipe) throw std::runtime_error("popen() failed!");
@@ -109,7 +109,21 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
             throw;
         }
         pclose(pipe);
-        std::cout << result << std::endl; 
+        if (result.find("Average total weight:") != std::string::npos) {
+            //Extract mass value
+            result = result.substr(result.find("Average total weight:") + 22);
+            result = result.substr(0, result.find("g") - 1);
+            //Mass cannot be negative or infinite
+            if (result.find("inf") == std::string::npos) {
+                if (result[0] == '-') {
+                    result = result.substr(1);
+                    mass += stod(result);
+                }
+                else {
+                    mass += stod(result);
+                }
+            }
+        }
     }
 }
 
@@ -337,13 +351,16 @@ bool InformationGatherer::gatherInformation(std::string name)
     ss = std::stringstream();
     ss << surfArea;
     std::string surf = ss.str();
+    ss = std::stringstream();
+    ss << mass;
+    std::string ma = ss.str();
     infoMap.insert(std::pair<std::string, std::string>("volume", vol + " cu " + infoMap["units"]));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea", surf + " " + infoMap["units"] + "^2"));
     if (mass == 0) {
         infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
     }
     else {
-        infoMap.insert(std::pair<std::string, std::string>("mass", std::to_string(mass)));
+        infoMap.insert(std::pair<std::string, std::string>("mass", ma + " grams"));
     }
 
     //Gather representation
