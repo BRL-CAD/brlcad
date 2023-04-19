@@ -581,6 +581,9 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	BU_GET(target_view, struct bview);
 	bv_init(target_view, &gedp->ged_views);
 	bv_set_add_view(&gedp->ged_views, target_view);
+	// This view is being created by GED, so it needs to be cleaned
+	// up by GED as well
+	bu_ptbl_ins(&gedp->ged_free_views, (long *)target_view);
     }
 
     if (target_view->dmp) {

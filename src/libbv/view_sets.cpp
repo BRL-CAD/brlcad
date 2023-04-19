@@ -52,16 +52,7 @@ void
 bv_set_free(struct bview_set *s)
 {
     if (s->i) {
-	// Note - it is the caller's responsibility to have freed any data
-	// associated with the ged or its i->views in the u_data pointers.
-	struct bview *gdvp;
-	for (size_t i = 0; i < BU_PTBL_LEN(&s->i->views); i++) {
-	    gdvp = (struct bview *)BU_PTBL_GET(&s->i->views, i);
-	    bv_free(gdvp);
-	    bu_free((void *)gdvp, "bv");
-	}
 	bu_ptbl_free(&s->i->views);
-
 	bu_ptbl_free(&s->i->shared_db_objs);
 	bu_ptbl_free(&s->i->shared_view_objs);
 

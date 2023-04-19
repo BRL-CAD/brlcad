@@ -123,8 +123,14 @@ ged_free(struct ged *gedp)
     bu_vls_free(&gedp->go_name);
 
     gedp->ged_gvp = NULL;
-    bv_set_free(&gedp->ged_views);
 
+    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_free_views); i++) {
+	struct bview *gdvp = (struct bview *)BU_PTBL_GET(&gedp->ged_free_views, i);
+	bv_free(gdvp);
+	bu_free((void *)gdvp, "bv");
+    }
+    bu_ptbl_free(&gedp->ged_free_views);
+    bv_set_free(&gedp->ged_views);
 
     if (gedp->ged_gdp != GED_DRAWABLE_NULL) {
 
@@ -185,6 +191,7 @@ ged_init(struct ged *gedp)
 
     // View related containers
     bv_set_init(&gedp->ged_views);
+    BU_PTBL_INIT(&gedp->ged_free_views);
 
     /* TODO: If we're init-ing the list here, does that mean the gedp has
      * ownership of all solid objects created and stored here, and should we

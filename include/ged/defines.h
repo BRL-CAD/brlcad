@@ -583,6 +583,13 @@ struct ged {
     struct bview		*ged_gvp;
     /* The full set of views associated with this ged object */
     struct bview_set            ged_views;
+    /* Sometimes applications will supply GED views, and sometimes GED commands
+     * may create views.  In the latter case, ged_close will also need to free
+     * the views.  We define a container to hold those views that libged is
+     * managing, since ged_views views may belong to the application rather
+     * than GED. */
+    struct bu_ptbl              ged_free_views;
+
     /* Drawing data associated with this .g file */
     struct bg_mesh_lod_context  *ged_lod;
 

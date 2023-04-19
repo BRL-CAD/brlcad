@@ -248,6 +248,7 @@ main(int ac, char *av[]) {
     bv_init(dbp->ged_gvp, &dbp->ged_views);
     bu_vls_sprintf(&dbp->ged_gvp->gv_name, "default");
     bv_set_add_view(&dbp->ged_views, dbp->ged_gvp);
+    bu_ptbl_ins(&dbp->ged_free_views, (long *)dbp->ged_gvp);
 
     /* To generate images that will allow us to check if the drawing
      * is proceeding as expected, we use the swrast off-screen dm. */

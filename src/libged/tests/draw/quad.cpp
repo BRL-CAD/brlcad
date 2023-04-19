@@ -451,6 +451,7 @@ main(int ac, char *av[]) {
 	v->independent = 0;
 	bu_vls_sprintf(&v->gv_name, "V%zd", i);
 	bv_set_add_view(&dbp->ged_views, v);
+	bu_ptbl_ins(&dbp->ged_free_views, (long *)v);
 
 	/* To generate images that will allow us to check if the drawing
 	 * is proceeding as expected, we use the swrast off-screen dm. */
