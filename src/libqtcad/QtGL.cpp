@@ -120,15 +120,17 @@ void QtGL::paintGL()
 	fastf_t windowbounds[6] = { -1, 1, -1, 1, QTGL_ZMIN, QTGL_ZMAX };
 	dm_set_win_bounds(dmp, windowbounds);
 
-	// Associate the view scale with the dmp
-	dm_set_vp(dmp, &v->gv_scale);
+	if (v) {
+	    // Associate the view scale with the dmp
+	    dm_set_vp(dmp, &v->gv_scale);
 
-	// Let the view know it now has an associated display manager
-	v->dmp = dmp;
+	    // Let the view know it now has an associated display manager
+	    v->dmp = dmp;
 
-	// Set the view width and height to match the dm
-	v->gv_width = dm_get_width(dmp);
-	v->gv_height = dm_get_height(dmp);
+	    // Set the view width and height to match the dm
+	    v->gv_width = dm_get_width(dmp);
+	    v->gv_height = dm_get_height(dmp);
+	}
 
 	// If we have a ptbl defining the current dm set and/or an unset
 	// pointer to indicate the current dm, go ahead and set them.
@@ -140,7 +142,7 @@ void QtGL::paintGL()
 	emit init_done();
     }
 
-    if (!m_init || !dmp)
+    if (!m_init || !dmp || !v)
 	return;
 
     // Re-draw the background to clear any previous drawing
@@ -159,7 +161,7 @@ void QtGL::paintGL()
 
 void QtGL::resizeGL(int, int)
 {
-    if (!dmp)
+    if (!dmp || !v)
 	return;
     dm_configure_win(dmp, 0);
     v->gv_width = dm_get_width(dmp);
@@ -184,7 +186,7 @@ void QtGL::need_update()
 
 void QtGL::keyPressEvent(QKeyEvent *k) {
 
-    if (!dmp || !current || !use_default_keybindings) {
+    if (!dmp || !v || !current || !use_default_keybindings) {
 	QOpenGLWidget::keyPressEvent(k);
 	return;
     }
@@ -205,7 +207,7 @@ void QtGL::keyPressEvent(QKeyEvent *k) {
 
 void QtGL::mousePressEvent(QMouseEvent *e) {
 
-    if (!dmp || !current || !use_default_mousebindings) {
+    if (!dmp || !v || !current || !use_default_mousebindings) {
 	QOpenGLWidget::mousePressEvent(e);
 	return;
     }
@@ -235,6 +237,11 @@ void QtGL::mousePressEvent(QMouseEvent *e) {
 
 void QtGL::mouseReleaseEvent(QMouseEvent *e) {
 
+    if (!v) {
+	QOpenGLWidget::mouseReleaseEvent(e);
+	return;
+    }
+
     // To avoid an abrupt jump in scene motion the next time movement is
     // started with the mouse, after we release we return to the default state.
     x_prev = -INT_MAX;
@@ -251,7 +258,7 @@ void QtGL::mouseReleaseEvent(QMouseEvent *e) {
 
 void QtGL::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!dmp || !current || !use_default_mousebindings) {
+    if (!dmp || !v || !current || !use_default_mousebindings) {
 	QOpenGLWidget::mouseMoveEvent(e);
 	return;
     }
@@ -281,7 +288,7 @@ void QtGL::mouseMoveEvent(QMouseEvent *e)
 
 void QtGL::wheelEvent(QWheelEvent *e) {
 
-    if (!dmp || !current || !use_default_mousebindings) {
+    if (!dmp || !v || !current || !use_default_mousebindings) {
 	QOpenGLWidget::wheelEvent(e);
 	return;
     }
@@ -349,6 +356,9 @@ void QtGL::save_image() {
 
 void QtGL::aet(double a, double e, double t)
 {
+    if (!v)
+	return;
+
     fastf_t aet[3];
     double aetd[3];
     aetd[0] = a;

@@ -95,6 +95,10 @@ void QtSW::paintEvent(QPaintEvent *e)
     // we end up with unrendered frames.
     dm_set_dirty(dmp, 0);
 
+    // Without a view, SWrast can't work
+    if (!v)
+	return;
+
     if (!m_init) {
 
 	if (!dmp) {
@@ -195,7 +199,7 @@ void QtSW::resizeEvent(QResizeEvent *e)
 
 void QtSW::keyPressEvent(QKeyEvent *k) {
 
-    if (!dmp || !current || !use_default_keybindings) {
+    if (!dmp || !v || !current || !use_default_keybindings) {
 	QWidget::keyPressEvent(k);
 	return;
     }
@@ -216,7 +220,7 @@ void QtSW::keyPressEvent(QKeyEvent *k) {
 
 void QtSW::mousePressEvent(QMouseEvent *e) {
 
-    if (!dmp || !current || !use_default_mousebindings) {
+    if (!dmp || !v || !current || !use_default_mousebindings) {
 	QWidget::mousePressEvent(e);
 	return;
     }
@@ -245,6 +249,10 @@ void QtSW::mousePressEvent(QMouseEvent *e) {
 }
 
 void QtSW::mouseReleaseEvent(QMouseEvent *e) {
+    if (!v) {
+	QWidget::mouseReleaseEvent(e);
+	return;
+    }
 
     // To avoid an abrupt jump in scene motion the next time movement is
     // started with the mouse, after we release we return to the default state.
@@ -263,7 +271,7 @@ void QtSW::mouseReleaseEvent(QMouseEvent *e) {
 
 void QtSW::mouseMoveEvent(QMouseEvent *e)
 {
-    if (!dmp || !current || !use_default_mousebindings) {
+    if (!dmp || !v || !current || !use_default_mousebindings) {
 	QWidget::mouseMoveEvent(e);
 	return;
     }
@@ -293,7 +301,7 @@ void QtSW::mouseMoveEvent(QMouseEvent *e)
 
 void QtSW::wheelEvent(QWheelEvent *e) {
 
-    if (!dmp || !current || !use_default_mousebindings) {
+    if (!dmp || !v || !current || !use_default_mousebindings) {
 	QWidget::wheelEvent(e);
 	return;
     }
@@ -370,6 +378,9 @@ void QtSW::save_image() {
 
 void QtSW::aet(double a, double e, double t)
 {
+    if (!v)
+	return;
+
     fastf_t aet[3];
     double aetd[3];
     aetd[0] = a;
