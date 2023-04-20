@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset>
+    <contributor>
+      <author>Assimp</author>
+      <authoring_tool>Assimp Exporter</authoring_tool>
+    </contributor>
+    <created>2023-02-09T13:21:07</created>
+    <modified>2023-02-09T13:21:07</modified>
+    <unit name="meter" meter="1" />
+    <up_axis>Y_UP</up_axis>
+  </asset>
+  <library_images>
+  </library_images>
+  <library_effects>
+    <effect id="plastic-fx" name="plastic">
+      <profile_COMMON>
+        <technique sid="standard">
+          <phong>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+    <effect id="plasticWspz1.0Wemz0.1-fx" name="plastic sp=1.0 em=0.1">
+      <profile_COMMON>
+        <technique sid="standard">
+          <phong>
+            <diffuse>
+              <color sid="diffuse">255   0   255   1</color>
+            </diffuse>
+            <shininess>
+              <float sid="shininess">10</float>
+            </shininess>
+            <transparency>
+              <float sid="transparency">1</float>
+            </transparency>
+            <index_of_refraction>
+              <float sid="index_of_refraction">1</float>
+            </index_of_refraction>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_materials>
+    <material id="plastic" name="plastic">
+      <instance_effect url="#plastic-fx"/>
+    </material>
+    <material id="plasticWspz1.0Wemz0.1" name="plastic sp=1.0 em=0.1">
+      <instance_effect url="#plasticWspz1.0Wemz0.1-fx"/>
+    </material>
+  </library_materials>
+  <library_geometries>
+    <geometry id="tetra.r" name="tetra.r" >
+      <mesh>
+        <source id="tetra.r-positions" name="tetra.r-positions">
+          <float_array id="tetra.r-positions-array" count="12"> 1 0 0 0 1 0 0 0 1 0 0 0 </float_array>
+          <technique_common>
+            <accessor count="4" offset="0" source="#tetra.r-positions-array" stride="3">
+              <param name="X" type="float" />
+              <param name="Y" type="float" />
+              <param name="Z" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="tetra.r-color0" name="tetra.r-color0">
+          <float_array id="tetra.r-color0-array" count="12"> 1 0 1 -4.22016832e+37 0 4099.03662 -5.25408541e-06 6.31985607e-43 -2.70510441e-08 0 0 0 </float_array>
+          <technique_common>
+            <accessor count="4" offset="0" source="#tetra.r-color0-array" stride="3">
+              <param name="R" type="float" />
+              <param name="G" type="float" />
+              <param name="B" type="float" />
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="tetra.r-vertices">
+          <input semantic="POSITION" source="#tetra.r-positions" />
+        </vertices>
+        <polylist count="4" material="defaultMaterial">
+          <input offset="0" semantic="VERTEX" source="#tetra.r-vertices" />
+          <input offset="0" semantic="COLOR" source="#tetra.r-color0" set="0" />
+          <vcount>3 3 3 3 </vcount>
+          <p>0 1 2 3 0 2 3 2 1 3 1 0 </p>
+        </polylist>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_controllers>
+  </library_controllers>
+  <library_visual_scenes>
+    <visual_scene id="node" name="">
+      <node id="_ltetra.r" name="/tetra.r" type="NODE">
+        <matrix sid="matrix">1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1</matrix>
+        <instance_geometry url="#tetra.r">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="defaultMaterial" target="#plasticWspz1.0Wemz0.1">
+              </instance_material>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+      </node>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#node" />
+  </scene>
+</COLLADA>
