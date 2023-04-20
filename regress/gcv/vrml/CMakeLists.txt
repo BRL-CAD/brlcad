@@ -1,4 +1,4 @@
-GCV_to_g_util("vrml" "vrml_example.wrl")
+GCV_regress_util("vrml" "vrml_example.wrl")
 
 CMAKEFILES(
   CMakeLists.txt

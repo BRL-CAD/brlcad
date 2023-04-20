@@ -1,5 +1,5 @@
 if (TARGET gcv-assetimport)
-  GCV_to_g_util("3ds" "tetra.3ds" DEPS "gcv;gcv-assetimport" INPUT_OPTIONS "--input-format=assetimport")
+  GCV_regress_util("3ds" "tetra.3ds" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--input-format=assetimport")
 endif (TARGET gcv-assetimport)
 
 CMAKEFILES(

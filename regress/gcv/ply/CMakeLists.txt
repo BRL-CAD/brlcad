@@ -4,7 +4,7 @@ else ()
   set(run_str "ply" "tetra.ply")
 endif (TARGET gcv-assetimport)
 
-GCV_to_g_util(${run_str})
+GCV_regress_util(${run_str})
 
 CMAKEFILES(
   CMakeLists.txt

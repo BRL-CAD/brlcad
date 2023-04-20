@@ -1,5 +1,5 @@
 if (TARGET gcv-assetimport)
-  GCV_to_g_util("x3d" "tetra.x3d" DEPS "gcv;gcv-assetimport" INPUT_OPTIONS "--input-format=assetimport" EXPECTED_FILE_SIZE "792")
+  GCV_regress_util("x3d" "tetra.x3d" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--input-format=assetimport" EXPECTED_FILE_SIZE "792")
 endif (TARGET gcv-assetimport)
 
 CMAKEFILES(

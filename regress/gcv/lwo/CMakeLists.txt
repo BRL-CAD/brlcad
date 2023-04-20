@@ -1,5 +1,5 @@
 if (TARGET gcv-assetimport)
-  GCV_to_g_util("lwo" "tetra.lwo" DEPS "gcv;gcv-assetimport" INPUT_OPTIONS "--input-format=assetimport" EXPECTED_FILE_SIZE "1136")
+  GCV_regress_util("lwo" "tetra.lwo" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--input-format=assetimport" EXPECTED_FILE_SIZE "1136")
 endif (TARGET gcv-assetimport)
 
 CMAKEFILES(
