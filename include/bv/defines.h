@@ -276,6 +276,12 @@ struct bv_scene_obj  {
     /* Parent object of this object */
     struct bv_scene_ob *parent;
 
+    /* Flag indicating primary ownership and management of this scene object
+     * lies with the application, not the BRL-CAD libraries.  Among other
+     * things, this means a bv_clear operation will put the drawing flag to
+     * DOWN but will NOT delete the scene object */
+    int app_owned;
+
     /* Object level pointers to parent containers.  These are stored so
      * that the object itself knows everything needed for data manipulation
      * and it is unnecessary to explicitly pass other parameters. */

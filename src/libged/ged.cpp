@@ -359,6 +359,8 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     GED_INIT(gedp, wdbp);
     BU_ALLOC(gedp->ged_gvp, struct bview);
     bv_init(gedp->ged_gvp, &gedp->ged_views);
+    bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
+    bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
 
     db_update_nref(gedp->dbip, &rt_uniresource);
 

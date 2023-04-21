@@ -308,6 +308,7 @@ QgModel::QgModel(QObject *p, const char *npath)
     // with commands needing a view.
     BU_GET(empty_gvp, struct bview);
     bv_init(empty_gvp, &gedp->ged_views);
+    bv_set_add_view(&gedp->ged_views, empty_gvp);
     gedp->ged_gvp = empty_gvp;
     bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
     gedp->ged_gvp->independent = 0;

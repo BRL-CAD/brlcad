@@ -24,6 +24,7 @@
  */
 
 #include "common.h"
+#include <set>
 #include <string.h>
 #include "vmath.h"
 #include "bu/log.h"
@@ -47,8 +48,6 @@ bv_init(struct bview *gvp, struct bview_set *s)
 	return;
 
     gvp->magic = BV_MAGIC;
-
-    gvp->vset = s;
 
     if (!BU_VLS_IS_INITIALIZED(&gvp->gv_name)) {
 	bu_vls_init(&gvp->gv_name);
@@ -754,24 +753,48 @@ bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t 
 size_t
 bv_clear(struct bview *v, int flags)
 {
+    size_t app_obj_cnt = 0;
+    std::set<struct bv_scene_obj *>::iterator k_it;
     if (!flags || flags & BV_DB_OBJS) {
 	struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS | (flags & ~BV_VIEW_OBJS));
 	if (sg) {
+	    std::set<struct bv_scene_obj *> keep;
 	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		struct bv_scene_obj *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+		if (cg->app_owned) {
+		    cg->s_flag = DOWN;
+		    keep.insert(cg);
+		    app_obj_cnt++;
+		    continue;
+		}
 		bv_obj_put(cg);
 	    }
 	    bu_ptbl_reset(sg);
+	    for (k_it = keep.begin(); k_it != keep.end(); k_it++) {
+		struct bv_scene_obj *cg = *k_it;
+		bu_ptbl_ins(sg, (long *)cg);
+	    }
 	}
     }
     if (!flags || flags & BV_VIEW_OBJS) {
 	struct bu_ptbl *sv = bv_view_objs(v, BV_VIEW_OBJS | (flags & ~BV_DB_OBJS));
 	if (sv) {
+	    std::set<struct bv_scene_obj *> keep;
 	    for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
+		if (s->app_owned) {
+		    s->s_flag = DOWN;
+		    keep.insert(s);
+		    app_obj_cnt++;
+		    continue;
+		}
 		bv_obj_put(s);
 	    }
 	    bu_ptbl_reset(sv);
+	    for (k_it = keep.begin(); k_it != keep.end(); k_it++) {
+		struct bv_scene_obj *s = *k_it;
+		bu_ptbl_ins(sv, (long *)s);
+	    }
 	}
     }
 
@@ -779,21 +802,43 @@ bv_clear(struct bview *v, int flags)
 	if (!flags || flags & BV_DB_OBJS) {
 	    struct bu_ptbl *sg = bv_view_objs(v, BV_DB_OBJS | (flags & ~BV_VIEW_OBJS) | BV_LOCAL_OBJS);
 	    if (sg) {
+		std::set<struct bv_scene_obj *> keep;
 		for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
 		    struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
+		    if (cg->app_owned) {
+			cg->s_flag = DOWN;
+			keep.insert(cg);
+			app_obj_cnt++;
+			continue;
+		    }
 		    bv_obj_put(cg);
 		}
 		bu_ptbl_reset(sg);
+		for (k_it = keep.begin(); k_it != keep.end(); k_it++) {
+		    struct bv_scene_obj *cg = *k_it;
+		    bu_ptbl_ins(sg, (long *)cg);
+		}
 	    }
 	}
 	if (!flags || flags & BV_VIEW_OBJS) {
 	    struct bu_ptbl *sv = bv_view_objs(v, BV_VIEW_OBJS | (flags & ~BV_DB_OBJS) | BV_LOCAL_OBJS);
 	    if (sv) {
+		std::set<struct bv_scene_obj *> keep;
 		for (long i = (long)BU_PTBL_LEN(sv) - 1; i >= 0; i--) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(sv, i);
+		    if (s->app_owned) {
+			s->s_flag = DOWN;
+			keep.insert(s);
+			app_obj_cnt++;
+			continue;
+		    }
 		    bv_obj_put(s);
 		}
 		bu_ptbl_reset(sv);
+		for (k_it = keep.begin(); k_it != keep.end(); k_it++) {
+		    struct bv_scene_obj *s = *k_it;
+		    bu_ptbl_ins(sv, (long *)s);
+		}
 	    }
 	}
     }
@@ -809,7 +854,7 @@ bv_clear(struct bview *v, int flags)
     ocnt += (sgl && sgl != sg) ? BU_PTBL_LEN(sgl) : 0;
     ocnt += (sv) ? BU_PTBL_LEN(sv) : 0;
     ocnt += (svl && svl != sv) ? BU_PTBL_LEN(svl) : 0;
-    return ocnt ;
+    return (app_obj_cnt > ocnt) ? 0 : ocnt - app_obj_cnt ;
 }
 
 void
@@ -924,6 +969,10 @@ bv_obj_create(struct bview *v, int type)
     s->free_scene_obj = free_scene_obj;
     s->vlfree = vlfree;
     s->otbl = otbl;
+
+    // The app has to assert management actively - by default assume
+    // this is false
+    s->app_owned = 0;
 
     return s;
 }
