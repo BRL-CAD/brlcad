@@ -1,10 +1,11 @@
 if (TARGET gcv-assetimport)
-  set(run_str "ply" "tetra.ply" DEPS "gcv;gcv-ply;gcv-assetimport" CONVERTERS "assetimport")
+  set(dep_str DEPS "gcv;gcv-ply;gcv-assetimport" CONVERTERS "assetimport")
 else ()
-  set(run_str "ply" "tetra.ply")
+  set(dep_str "")
 endif (TARGET gcv-assetimport)
 
-GCV_regress_util(${run_str})
+GCV_regress_util("ply" "tetra.ply" ${dep_str})
+GCV_regress_util("ply" "tetra.g" ${dep_str} EXPORTER)
 
 CMAKEFILES(
   CMakeLists.txt

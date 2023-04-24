@@ -27,6 +27,9 @@ function(GCV_regress_util fmt INPUT_FILES)
     set(EXPECTED_FILE_SIZE ${${fmt}_EXPECTED_FILE_SIZE})
     # set the delta to 3% of file size
     math(EXPR FILE_SIZE_DELTA "${EXPECTED_FILE_SIZE} * 3 / 100")
+    if(FILE_SIZE_DELTA LESS 350)
+      set(FILE_SIZE_DELTA 350)
+    endif(FILE_SIZE_DELTA LESS 350)
   else()
     set(EXPECTED_FILE_SIZE 500)
     set(FILE_SIZE_DELTA 350)
@@ -35,6 +38,11 @@ function(GCV_regress_util fmt INPUT_FILES)
   # setup logfile and gcv EXEC call in cmake.in
   file(APPEND "${cmake_in_path}"
   "
+# lets cmake if() recognize numbers and boolean constants.
+if (POLICY CMP0012)
+  cmake_policy(SET CMP0012 NEW)
+endif (POLICY CMP0012)
+
 # Values set at CMake configure time
 set(CSDIR \"@CMAKE_CURRENT_SOURCE_DIR@\")
 set(CBDIR \"@CMAKE_CURRENT_BINARY_DIR@\")
@@ -104,6 +112,9 @@ if(EXISTS \${CSDIR}/${in_file})
   set(in_path \${CSDIR}/${in_file})
 elseif(EXISTS \${CBDIR}/${in_file})
   set(in_path \${CBDIR}/${in_file})
+elseif(${${fmt}_EXPORTER} AND EXISTS \${CSDIR}/../${in_file})
+  # if this is an exporter, check regress/gcv for .g files used to test multiple converters
+  set(in_path \${CSDIR}/../${in_file})
 else()
   message(FATAL_ERROR \"[gcv] could not find ${in_file}, searched \${CSDIR} and \${CBDIR}. aborting.\")
 endif(EXISTS \${CSDIR}/${in_file})
@@ -186,15 +197,21 @@ endfunction()
 # each file type to be tested should have its own directory
 add_subdirectory(3ds)
 add_subdirectory(3mf)
+add_subdirectory(assetimport-binary)
+add_subdirectory(assetimport-xml)
 add_subdirectory(dae)
 add_subdirectory(dem)
 add_subdirectory(dxf)
 add_subdirectory(fastgen)
+add_subdirectory(fbx)
 add_subdirectory(gltf)
+add_subdirectory(json)
 add_subdirectory(lwo)
 add_subdirectory(obj)
+add_subdirectory(pbrt)
 add_subdirectory(ply)
 add_subdirectory(stl)
+add_subdirectory(stp)
 add_subdirectory(vrml)
 add_subdirectory(x)
 add_subdirectory(x3d)
@@ -202,6 +219,7 @@ add_subdirectory(x3d)
 CMAKEFILES(
   CMakeLists.txt
   README
+  tetra.g           # used for exporters - keep in root to eliminate copying duplicate file to all subdirectories
   )
 
 # Local Variables:

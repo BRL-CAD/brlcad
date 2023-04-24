@@ -1,13 +1,13 @@
 if (TARGET gcv-assetimport)
-  set(run_str DEPS "gcv;gcv-obj;gcv-assetimport" CONVERTERS "assetimport;obj")
+  set(dep_str DEPS "gcv;gcv-obj;gcv-assetimport" CONVERTERS "assetimport")
 
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/conv-tetra.mtl")   # hard to track companion files
 else()
-  set(run_str "")
+  set(dep_str "")
 endif (TARGET gcv-assetimport)
 
-GCV_regress_util("obj" "tetra.obj" ${run_str})
-GCV_regress_util("obj" "tetra.g" ${run_str} EXPORTER)
+GCV_regress_util("obj" "tetra.obj" ${dep_str})
+GCV_regress_util("obj" "tetra.g" ${dep_str} EXPORTER)
 
 CMAKEFILES(
   CMakeLists.txt
