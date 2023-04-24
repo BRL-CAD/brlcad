@@ -8,9 +8,6 @@
  *
  */
 
-// NOTE: with the exception of the "DETAILED" element, do not change
-// the ordering of the elements of RenderingFace.  The indices
-// of FRONT ... BOTTOM_MIRRORED are hard-coded in initLayouts() in RenderHandler.cpp
 class Options;
 
 enum RenderingFace

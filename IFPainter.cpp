@@ -186,7 +186,7 @@ void IFPainter::drawText(int x, int y, int height, int width, std::string text, 
 	}
 	
 
-	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
+	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
 
 	cv::Point textOrigin(x, y + height);
@@ -219,7 +219,7 @@ void IFPainter::drawTextCentered(int x, int y, int height, int width, std::strin
 	}
 
 
-	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
+	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
 
 	int textWidth = getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, fontWeight, 0).width;

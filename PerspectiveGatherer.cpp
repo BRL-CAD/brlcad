@@ -10,7 +10,7 @@ std::map<char, FaceDetails> getFaceDetails()
 	output['L'] = {LEFT, "Left", DEPTH, HEIGHT};
 	output['B'] = {BACK, "Back", LENGTH, HEIGHT};
 	output['b'] = {BOTTOM, "Bottom", LENGTH, DEPTH};
-	output['A'] = {DETAILED, "Ambient Occlusion"};
+	//output['A'] = {DETAILED, "Ambient Occlusion"};
 
 	return output;
 }
