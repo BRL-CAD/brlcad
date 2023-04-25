@@ -70,6 +70,11 @@ void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string
 	}
 
 	cv::Mat resized_image;
+
+	// prevent crashes
+	if (width <= 0) width = 1;
+	if (height <= 0) height = 1;
+
 	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
 	//Trying to copyto the image on to the private image frame, img
@@ -181,7 +186,7 @@ void IFPainter::drawText(int x, int y, int height, int width, std::string text, 
 	}
 	
 
-	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
+	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
 
 	cv::Point textOrigin(x, y + height);
@@ -214,7 +219,7 @@ void IFPainter::drawTextCentered(int x, int y, int height, int width, std::strin
 	}
 
 
-	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
+	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
 
 	int textWidth = getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, fontWeight, 0).width;

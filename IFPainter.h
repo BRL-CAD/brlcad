@@ -3,8 +3,9 @@
 #define TO_BOLD 1
 #define TO_ITAL 2
 #define TO_WHITE 4
-#define TO_ELLIPSIS 6
-#define TO_UNDERLINE 8
+#define TO_ELLIPSIS 8
+#define TO_UNDERLINE 16
+#define TO_BLUE 32
 
 
 #include "pch.h"

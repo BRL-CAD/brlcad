@@ -25,6 +25,8 @@ private:
 
 	std::vector<std::vector<double>> coordinates;
 public:
+	std::vector<std::pair<int, int>> dimDetails;
+
 	LayoutChoice(std::string map, bool lockRows);
 
 	void initCoordinates(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight);

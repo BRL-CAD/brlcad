@@ -20,6 +20,7 @@ public:
 	void setIsFolder();
 	void setOpenGUI();
 	void setExportToFile();
+	void setOverrideImages();
 	void setExportFolder(std::string fldr);
 	void setFileName(std::string n);
 	void setFolder(std::string n);
@@ -37,6 +38,7 @@ public:
 	bool getIsFolder();
 	bool getOpenGUI();
 	bool getExportToFile();
+	bool getOverrideImages();
 	std::string getFileName();
 	std::string getFolder();
 	std::string getExportFolder();
@@ -61,6 +63,8 @@ private:
 	bool openGUI;
 	//Whether user decides to export to a png
 	bool exportToFile;
+	// Whether or not to override pre-existing rt/rtwizard output files
+	bool overrideImages;
 	//Name of export file
 	std::string fileName;
     // Name of folder that contains input models
