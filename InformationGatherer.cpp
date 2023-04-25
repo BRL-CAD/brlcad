@@ -95,7 +95,7 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
             volume += stod(result);
         }
         //Get mass of region
-        command = opt->getTemppath() + "gqa -Am -q -g 2 " + opt->getFilepath() + " " + val + " 2>&1";
+        command = opt->getTemppath() + "gqa -Am -q -g 2 " + opt->getFilepath() + " -f C:\\Users\\bhosk\\VSC_Projects\\CSCE_482\\brlcad\\build\\Release\\share\\data\\GQA_SAMPLE_DENSITIES " + val + " 2>&1";
         result = "";
         pipe = popen(command.c_str(), "r");
         if (!pipe) throw std::runtime_error("popen() failed!");
@@ -109,7 +109,21 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
             throw;
         }
         pclose(pipe);
-        std::cout << result << std::endl; 
+        if (result.find("Average total weight:") != std::string::npos) {
+            //Extract mass value
+            result = result.substr(result.find("Average total weight:") + 22);
+            result = result.substr(0, result.find("g") - 1);
+            //Mass cannot be negative or infinite
+            if (result.find("inf") == std::string::npos) {
+                if (result[0] == '-') {
+                    result = result.substr(1);
+                    mass += stod(result);
+                }
+                else {
+                    mass += stod(result);
+                }
+            }
+        }
     }
 }
 
@@ -204,6 +218,7 @@ void InformationGatherer::getSubComp() {
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());
     largestComponents.insert(largestComponents.end(), subComps.begin(), subComps.end());
+    scFile.close();
 }
 
 
@@ -336,13 +351,16 @@ bool InformationGatherer::gatherInformation(std::string name)
     ss = std::stringstream();
     ss << surfArea;
     std::string surf = ss.str();
+    ss = std::stringstream();
+    ss << mass;
+    std::string ma = ss.str();
     infoMap.insert(std::pair<std::string, std::string>("volume", vol + " cu " + infoMap["units"]));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea", surf + " " + infoMap["units"] + "^2"));
     if (mass == 0) {
         infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
     }
     else {
-        infoMap.insert(std::pair<std::string, std::string>("mass", std::to_string(mass)));
+        infoMap.insert(std::pair<std::string, std::string>("mass", ma + " grams"));
     }
 
     //Gather representation
@@ -477,12 +495,33 @@ bool InformationGatherer::gatherInformation(std::string name)
     }
     infoMap.insert(std::pair < std::string, std::string>("classification", classification));
 
-	//Hard code other stuff into map for now
-    // infoMap["owner"] = "Ally Hoskinson";
-    // infoMap["lastUpdate"] = "3/24/2023";
-	//infoMap.insert(std::pair<std::string, std::string>("classification", "CONFIDENTIAL"));
-	//infoMap.insert(std::pair<std::string, std::string>("checksum", "120EA8A25E5D487BF68B5F7096440019"));
-	infoMap.insert(std::pair<std::string, std::string>("checksum", "120EA8A25E5D487BF68B"));
+    //Gather checksum
+    struct bu_mapped_file* gFile = NULL;
+    char* buf = NULL;
+    gFile = bu_open_mapped_file(opt->getFilepath().c_str(), ".g file");
+    picohash_ctx_t ctx;
+    char digest[PICOHASH_MD5_DIGEST_LENGTH];
+    std::string output;
+
+    picohash_init_md5(&ctx);
+    picohash_update(&ctx, gFile->buf, gFile->buflen);
+    picohash_final(&ctx, digest);
+
+    std::stringstream ss2;
+
+    for (int i = 0; i < PICOHASH_MD5_DIGEST_LENGTH; i++) {
+        std::stringstream ss3;
+        std::string curHex;
+        ss3 << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(digest[i]);
+        curHex = ss3.str();
+        if (curHex.length() > 2) {
+            //Chop off the f padding
+            curHex = curHex.substr(curHex.length() - 2, 2);
+        }
+        ss2 << curHex;
+    }
+
+	infoMap.insert(std::pair<std::string, std::string>("checksum", ss2.str()));
 
 	return true;
 }

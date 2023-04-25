@@ -91,7 +91,7 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("mass"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Notes", TO_BOLD);
-	img.textWrapping(offsetX + textOffset, offsetY + curiX * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/8750);
+	img.textWrapping(offsetX + textOffset, offsetY + curiX * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight * 8, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/4750);
 
 }
 
@@ -99,7 +99,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
 	// img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
 
   int textOffset = width / 10;
-	int textHeight = height / 20;
+  int textHeight = height / 20;
   int textXOffset = textHeight * 53 / 5;
   int textYOffset = textHeight * 8 / 5;
 
@@ -124,11 +124,14 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
   img.drawCirc(centerPt, offY-30, 7, -1, cv::Scalar(94, 58, 32));
   // img.drawCirc(centerPt, offY-30, 20, 3, cv::Scalar(94, 58, 32));
 
-  // entity summary
-  int curiX = 0;
-  img.drawText(offsetX + width*3/5, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Groups & Assemblies: " + info.getInfo("groups_assemblies"));
-	img.drawText(offsetX + width*3/5, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Regions & Parts: " + info.getInfo("regions_parts"));
-	img.drawText(offsetX + width*3/5, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, "Primitive Shapes: " + info.getInfo("primitives"));
+    // entity summary
+    int curiX = 0;
+    // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Groups & Assemblies:", TO_BOLD);
+    // img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("groups_assemblies"), TO_BOLD);
+	// img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Regions & Parts:", TO_BOLD);
+	// img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("regions_parts"), TO_BOLD);
+	// img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Primitive Shapes:", TO_BOLD);
+	// img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("primitives"), TO_BOLD);
 
     
     

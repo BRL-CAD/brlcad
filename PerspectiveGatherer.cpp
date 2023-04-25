@@ -80,7 +80,7 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
         case DETAILED:
             a = 45, e = 45;
             outputname += "_detailed.png";
-            render = opt.getTemppath() + "rt -C 255/255/255 -s 1024 -A 1.5 -W -R -c \"set ambSamples=64\" -o " + outputname + " " + pathToInput + " " + component;
+            render = opt.getTemppath() + "rt -C 255/255/255 -s 1024 -A 1.5 -W -R -c \"set ambSamples=64 ambSlow=1\" -o " + outputname + " " + pathToInput + " " + component;
             break;
         case GHOST:
             a = 35, e = 25;
@@ -95,6 +95,7 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
 
     std::cout << render << std::endl;
 
+
     if (opt.getOverrideImages() || std::remove(outputname.c_str()) != 0) {
        std::cerr << "Did not remove " << outputname << std::endl;
     }
@@ -105,7 +106,7 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
         std::cerr << e.what() << std::endl;
     }
 
-    std::cout << "Successlly generated perspective rendering png file\n";
+    std::cout << "Successfully generated perspective rendering png file\n";
 
 	return outputname;
 }
