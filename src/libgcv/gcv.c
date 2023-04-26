@@ -1,4 +1,3 @@
-
 /*                           G C V . C
  * BRL-CAD
  *
@@ -482,10 +481,10 @@ find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const c
      return NULL;
  }
 
-/* Returns supported read and write extensions as comma seperated strings
+/* Returns available read and write extensions as comma seperated strings
  * to 'read_formats' and 'write_formats' respectively */
 void
-gcv_get_available_formats(struct bu_ptbl* filters, char* read_formats, char* write_formats)
+gcv_available_formats(struct bu_ptbl* filters, char* read_formats, char* write_formats)
 {
 	if (filters == NULL)
 		//TODO
@@ -504,8 +503,8 @@ gcv_get_available_formats(struct bu_ptbl* filters, char* read_formats, char* wri
 		switch (f->filter_type) {
 		case(GCV_FILTER_READ):
 		case(GCV_FILTER_WRITE):
-			vls = f->filter_type == GCV_FILTER_READ
-				? read_formats_vls : write_formats_vls;
+			&vls = f->filter_type == GCV_FILTER_READ
+				? &read_formats_vls : &write_formats_vls;
 
 			if (f->mime_type == BU_MIME_MODEL_UNKNOWN) {
 				if (f->supported_extensions == NULL)
@@ -529,6 +528,9 @@ gcv_get_available_formats(struct bu_ptbl* filters, char* read_formats, char* wri
 			bu_bomb("Unknown Filter Type");
 		}
 	}
+
+	read_formats = bu_vls_cstr(read_formats_vls);
+	write_formats = bu_vls_cstr(write_formats_vls);
 
 	//remove trailing comma if present
 	size_t len = strlen(read_formats);

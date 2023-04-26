@@ -464,12 +464,33 @@ assetimport_write(struct gcv_context *context, const struct gcv_opts *gcv_option
     return ret;
 }
 
+void
+supported_extensions(char *extensions) {
+    struct bu_vls vls;
+    bu_vls_init(&vls);
+
+    Assimp::Exporter exporter;
+    for (size_t i = 0, end = exporter.GetExportFormatCount(); i < end; ++i) {
+        bu_vls_strcat(&vls, exporter.GetExportFormatDescription(i)->fileExtension);
+        bu_vls_putc(&vls, ',');
+    }
+
+    extensions = bu_vls_cstr(&vls);
+
+    //remove trailing comma if present
+    size_t len = strlen(extensions);
+    if(len > 0 && extensions[len - 1] == ',')
+        extension[len - 1] = NULL;//TODO: save the last byte
+
+    bu_vls_free(&vls);
+}
+
 /* filter setup */
 extern "C"
 {
     extern const struct gcv_filter gcv_conv_assetimport_write = {
 	"Assetimport Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_ASSETIMPORT, NULL,
-	assetimport_write_create_opts, assetimport_write_free_opts, assetimport_write
+	assetimport_write_create_opts, assetimport_write_free_opts, assetimport_write, supported_extensions
     };
 }
 

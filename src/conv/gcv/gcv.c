@@ -546,11 +546,11 @@ main(int ac, const char **av)
 	gcv_context_init(&context);
 	
 	char* read_extensions, write_extensions;
-	gcv_supported_extension(gcv_list_filters(&context), read_extensions, write_extensions);
+	gcv_available_extension(gcv_list_filters(&context), read_extensions, write_extensions);
 	//TODO: Use better formatting (Table)
-	bu_log("%s\n%s\n%s\n",
-		"Supported Read Formats: ", read_extensions,
-		"Supported Write Formats: ", write_extensions);
+	bu_log("%s%s\n%s%s\n",
+		"Available Import Formats: ", read_extensions,
+		"Available Export Formats: ", write_extensions);
 
 	gcv_context_destroy(&context);
 

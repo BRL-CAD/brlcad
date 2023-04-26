@@ -567,13 +567,12 @@ assetimport_can_read(const char* data)
     return 1;
 }
 
-const char *
-supported_extensions()
+void
+supported_extensions(char *extensions)
 {
-    char* ext = NULL;
     aiString* s;
     aiGetExtensionList(s);
-    return s->C_Str();//TODO: return comma seperated strings
+    extensions = s->C_Str();//TODO: return a comma seperated strings
 }
 
 
