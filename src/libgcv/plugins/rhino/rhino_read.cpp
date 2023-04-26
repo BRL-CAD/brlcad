@@ -1173,7 +1173,7 @@ rhino_can_read(const char *source_path)
 
 struct gcv_filter gcv_conv_rhino_read = {
     "Rhino Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO, rhino_can_read,
-    NULL, NULL, rhino_read
+    NULL, NULL, rhino_read, NULL
 };
 
 static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, NULL};

@@ -830,7 +830,7 @@ free_all:
 /* filter setup */
 const struct gcv_filter gcv_conv_ply_write = {
     "PLY Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_PLY, NULL,
-    ply_write_create_opts, ply_write_free_opts, ply_write_gcv
+    ply_write_create_opts, ply_write_free_opts, ply_write_gcv, NULL
 };
 
 /*

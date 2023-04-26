@@ -195,6 +195,12 @@ struct gcv_filter {
      */
     int (* const filter_fn)(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *target);
 
+    /* 
+     * Returns list of supported extension as comma separated string should not
+     * return NULL
+     */
+    char* (* const supported_extensions)();
+
 };
 
 

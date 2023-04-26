@@ -1,3 +1,4 @@
+
 /*                           G C V . C
  * BRL-CAD
  *
@@ -467,8 +468,8 @@ gcv_list_filters(struct gcv_context *context)
 }
 
 const struct gcv_filter *
- find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const char *data, struct gcv_context *context)
- {
+find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type, const char *data, struct gcv_context *context)
+{
      const struct gcv_filter * const *entry;
      const struct bu_ptbl * const filters = gcv_list_filters(context);
 
@@ -480,6 +481,66 @@ const struct gcv_filter *
      }
      return NULL;
  }
+
+/* Returns supported read and write extensions as comma seperated strings
+ * to 'read_formats' and 'write_formats' respectively */
+void
+gcv_get_available_formats(struct bu_ptbl* filters, char* read_formats, char* write_formats)
+{
+	if (filters == NULL)
+		//TODO
+		bu_bomb("'filters' is NULL");
+
+	const struct gcv_filter * const *filter;
+	struct bu_vls read_formats_vls, write_formats_vls, vls;
+
+	bu_vls_init(&read_formats_vls);
+	bu_vls_init(&write_formats_vls);
+
+	for (BU_PTBL_FOR(filter, (const struct gcv_filter* const*), filters)) {
+		struct gcv_filter* f = *filter;
+		char* ext = NULL;
+
+		switch (f->filter_type) {
+		case(GCV_FILTER_READ):
+		case(GCV_FILTER_WRITE):
+			vls = f->filter_type == GCV_FILTER_READ
+				? read_formats_vls : write_formats_vls;
+
+			if (f->mime_type == BU_MIME_MODEL_UNKNOWN) {
+				if (f->supported_extensions == NULL)
+					bu_bomb("Invalid GCV Plugin");
+
+				ext = (*f->supported_extensions)();
+			} else {
+				ext = bu_file_mime_ext(f->mime_type, BU_MIME_APPLICATION);
+				if (!ext)
+					bu_log("extension not found for %s\n",
+						bu_file_mime_str(f->mime_type, BU_MIME_APPLICATION));
+			}
+
+			bu_vls_strcat(&vls, ext);
+			bu_vls_putc(&vls, ',');
+			break;
+		case(GCV_FILTER_FILTER):
+			//TODO
+			break;
+		default:
+			bu_bomb("Unknown Filter Type");
+		}
+	}
+
+	//remove trailing comma if present
+	size_t len = strlen(read_formats);
+	if (len > 0 && read_formats[len - 1] == ',')
+		read_formats[len - 1] = NULL;//TODO: save the last byte
+	len = strlen(write_formats);
+	if (len > 0 && write_formats[len - 1] == ',')
+		write_formats[len - 1] = NULL;//TODO: save the last byte
+
+	bu_vls_free(&read_formats_vls);
+	bu_vls_free(&write_formats_vls);
+}
 
 void
 gcv_opts_default(struct gcv_opts *gcv_options)

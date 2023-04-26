@@ -143,7 +143,8 @@ extern "C"
 	asc_can_read,
 	NULL,
 	NULL,
-	asc_read
+	asc_read,
+	NULL
     };
 
     struct gcv_filter gcv_conv_asc_write =
@@ -154,7 +155,8 @@ extern "C"
        	NULL,
        	NULL,
        	NULL,
-       	asc_write
+       	asc_write,
+		NULL
     };
 
     static const struct gcv_filter * const filters[] = {&gcv_conv_asc_read, &gcv_conv_asc_write, NULL};

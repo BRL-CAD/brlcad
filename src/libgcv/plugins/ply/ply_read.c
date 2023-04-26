@@ -374,7 +374,7 @@ ply_read_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, co
 /* filter setup */
 static const struct gcv_filter gcv_conv_ply_read = {
     "PLY Reader", GCV_FILTER_READ, BU_MIME_MODEL_PLY, ply_can_read,
-    ply_read_create_opts, ply_read_free_opts, ply_read_gcv
+    ply_read_create_opts, ply_read_free_opts, ply_read_gcv, NULL
 };
 
 extern const struct gcv_filter gcv_conv_ply_write;

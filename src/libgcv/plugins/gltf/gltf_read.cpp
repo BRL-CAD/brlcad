@@ -293,7 +293,7 @@ extern "C"
 {
 	static const struct gcv_filter gcv_conv_gltf_read = {
 		"GLTF Reader", GCV_FILTER_READ, BU_MIME_MODEL_GLTF, gltf_can_read,
-		NULL, NULL, gltf_read
+		NULL, NULL, gltf_read, NULL
 	};
 
 	static const struct gcv_filter * const filters[] = { &gcv_conv_gltf_read, NULL, NULL };

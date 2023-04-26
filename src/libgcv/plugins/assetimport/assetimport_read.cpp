@@ -567,13 +567,22 @@ assetimport_can_read(const char* data)
     return 1;
 }
 
+const char *
+supported_extensions()
+{
+    char* ext = NULL;
+    aiString* s;
+    aiGetExtensionList(s);
+    return s->C_Str();//TODO: return comma seperated strings
+}
+
 
 /* filter setup */
 extern "C"
 {
     static const struct gcv_filter gcv_conv_assetimport_read = {
 	"Assetimport Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_ASSETIMPORT, assetimport_can_read,
-	assetimport_read_create_opts, assetimport_read_free_opts, assetimport_read
+	assetimport_read_create_opts, assetimport_read_free_opts, assetimport_read, supported_extensions
     };
 
     extern const struct gcv_filter gcv_conv_assetimport_write;
