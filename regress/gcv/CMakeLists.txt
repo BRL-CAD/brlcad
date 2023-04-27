@@ -146,7 +146,7 @@ unset(log_msg)
 # check output files exists and are a reasonable size
 foreach(out_file ${OUTPUT_FILES})
   if(NOT EXISTS \"\${out_file}\")
-    file(APPEND \"\${LOGFILE}\" \"FAILURE: \${curr_result}\")
+    file(APPEND \"\${LOGFILE}\" \"FAILURE: \${curr_result}, \${out_file} not found.\")
     message(FATAL_ERROR \"[gcv] Unable to convert \${in_path} to \${out_file} with \${GCV_EXEC}, aborting.\\nSee \${LOGFILE} for more details.\")
   else()
     file(SIZE \"\${out_file}\" file_size)	# size in bytes
