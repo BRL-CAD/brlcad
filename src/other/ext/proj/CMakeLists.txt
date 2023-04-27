@@ -269,12 +269,6 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-if(MSVC OR CMAKE_CONFIGURATION_TYPES)
-  # For multi-config systems and for Visual Studio, the debug version of
-  # the library has _d appended.
-  set(CMAKE_DEBUG_POSTFIX _d)
-endif()
-
 # Put the libraries and binaries that get built into directories at the
 # top of the build tree rather than in hard-to-find leaf
 # directories. This simplifies manual testing and the use of the build

@@ -380,12 +380,6 @@ set_target_properties(
 set_property(TARGET ${GDAL_LIB_TARGET_NAME} PROPERTY PLUGIN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/gdalplugins")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gdalplugins")
 
-if (MSVC)
-  set(GDAL_DEBUG_POSTFIX
-      "d"
-      CACHE STRING "Postfix to add to the GDAL dll name for debug builds")
-  set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES DEBUG_POSTFIX "${GDAL_DEBUG_POSTFIX}")
-endif ()
 if (MINGW AND BUILD_SHARED_LIBS)
     set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES SUFFIX "-${GDAL_SOVERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif ()

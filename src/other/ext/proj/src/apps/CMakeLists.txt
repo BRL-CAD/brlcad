@@ -82,13 +82,3 @@ if(BUILD_PROJSYNC)
   include(bin_projsync.cmake)
   list(APPEND BIN_TARGETS projsync)
 endif()
-
-# global configurations for all apps
-
-if(MSVC OR CMAKE_CONFIGURATION_TYPES)
-  if(BIN_TARGETS)
-    # Add _d suffix for debug versions of the apps
-    set_target_properties(${BIN_TARGETS} PROPERTIES
-      DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
-  endif()
-endif()
