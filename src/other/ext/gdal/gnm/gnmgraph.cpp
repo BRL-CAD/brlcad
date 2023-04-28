@@ -34,20 +34,22 @@
 #include <limits>
 #include <set>
 
-CPL_CVSID("$Id$");
-
 //! @cond Doxygen_Suppress
-GNMGraph::GNMGraph() {}
+GNMGraph::GNMGraph()
+{
+}
 
-GNMGraph::~GNMGraph() {}
+GNMGraph::~GNMGraph()
+{
+}
 
 void GNMGraph::AddVertex(GNMGFID nFID)
 {
-    if(m_mstVertices.find(nFID) != m_mstVertices.end())
+    if (m_mstVertices.find(nFID) != m_mstVertices.end())
         return;
 
     GNMStdVertex stVertex;
-    stVertex.bIsBloked = false;
+    stVertex.bIsBlocked = false;
     m_mstVertices[nFID] = stVertex;
 }
 
@@ -57,13 +59,14 @@ void GNMGraph::DeleteVertex(GNMGFID nFID)
 
     // remove all edges with this vertex
     std::vector<GNMGFID> aoIdsToErase;
-    for(std::map<GNMGFID,GNMStdEdge>::iterator it = m_mstEdges.begin();
-        it != m_mstEdges.end(); ++it)
+    for (std::map<GNMGFID, GNMStdEdge>::iterator it = m_mstEdges.begin();
+         it != m_mstEdges.end(); ++it)
     {
-        if(it->second.nSrcVertexFID == nFID || it->second.nTgtVertexFID == nFID)
+        if (it->second.nSrcVertexFID == nFID ||
+            it->second.nTgtVertexFID == nFID)
             aoIdsToErase.push_back(it->first);
     }
-    for(size_t i=0;i<aoIdsToErase.size();i++)
+    for (size_t i = 0; i < aoIdsToErase.size(); i++)
         m_mstEdges.erase(aoIdsToErase[i]);
 }
 
@@ -72,18 +75,20 @@ void GNMGraph::AddEdge(GNMGFID nConFID, GNMGFID nSrcFID, GNMGFID nTgtFID,
 {
     // We do not add edge if an edge with the same id already exist
     // because each edge must have only one source and one target vertex.
-    std::map<GNMGFID,GNMStdEdge>::iterator it = m_mstEdges.find(nConFID);
+    std::map<GNMGFID, GNMStdEdge>::iterator it = m_mstEdges.find(nConFID);
     if (it != m_mstEdges.end())
     {
-        CPLError( CE_Failure, CPLE_AppDefined, "The edge already exist." );
+        CPLError(CE_Failure, CPLE_AppDefined, "The edge already exist.");
         return;
     }
 
     AddVertex(nSrcFID);
     AddVertex(nTgtFID);
 
-    std::map<GNMGFID, GNMStdVertex>::iterator itSrs = m_mstVertices.find(nSrcFID);
-    std::map<GNMGFID, GNMStdVertex>::iterator itTgt = m_mstVertices.find(nTgtFID);
+    std::map<GNMGFID, GNMStdVertex>::iterator itSrs =
+        m_mstVertices.find(nSrcFID);
+    std::map<GNMGFID, GNMStdVertex>::iterator itTgt =
+        m_mstVertices.find(nTgtFID);
 
     // Insert edge to the array of edges.
     GNMStdEdge stEdge;
@@ -92,7 +97,7 @@ void GNMGraph::AddEdge(GNMGFID nConFID, GNMGFID nSrcFID, GNMGFID nTgtFID,
     stEdge.bIsBidir = bIsBidir;
     stEdge.dfDirCost = dfCost;
     stEdge.dfInvCost = dfInvCost;
-    stEdge.bIsBloked = false;
+    stEdge.bIsBlocked = false;
 
     m_mstEdges[nConFID] = stEdge;
 
@@ -112,13 +117,13 @@ void GNMGraph::DeleteEdge(GNMGFID nConFID)
     m_mstEdges.erase(nConFID);
 
     // remove edge from all vertices anOutEdgeFIDs
-    for(std::map<GNMGFID, GNMStdVertex>::iterator it = m_mstVertices.begin();
-        it != m_mstVertices.end(); ++it)
+    for (std::map<GNMGFID, GNMStdVertex>::iterator it = m_mstVertices.begin();
+         it != m_mstVertices.end(); ++it)
     {
         it->second.anOutEdgeFIDs.erase(
-                    std::remove( it->second.anOutEdgeFIDs.begin(),
-                                 it->second.anOutEdgeFIDs.end(), nConFID),
-                    it->second.anOutEdgeFIDs.end());
+            std::remove(it->second.anOutEdgeFIDs.begin(),
+                        it->second.anOutEdgeFIDs.end(), nConFID),
+            it->second.anOutEdgeFIDs.end());
     }
 }
 
@@ -136,9 +141,9 @@ void GNMGraph::ChangeBlockState(GNMGFID nFID, bool bBlock)
 {
     // check vertices
     std::map<GNMGFID, GNMStdVertex>::iterator itv = m_mstVertices.find(nFID);
-    if(itv != m_mstVertices.end())
+    if (itv != m_mstVertices.end())
     {
-        itv->second.bIsBloked = bBlock;
+        itv->second.bIsBlocked = bBlock;
         return;
     }
 
@@ -146,35 +151,37 @@ void GNMGraph::ChangeBlockState(GNMGFID nFID, bool bBlock)
     std::map<GNMGFID, GNMStdEdge>::iterator ite = m_mstEdges.find(nFID);
     if (ite != m_mstEdges.end())
     {
-        ite->second.bIsBloked = bBlock;
+        ite->second.bIsBlocked = bBlock;
     }
 }
 
 bool GNMGraph::CheckVertexBlocked(GNMGFID nFID) const
 {
-    std::map<GNMGFID, GNMStdVertex>::const_iterator it = m_mstVertices.find(nFID);
+    std::map<GNMGFID, GNMStdVertex>::const_iterator it =
+        m_mstVertices.find(nFID);
     if (it != m_mstVertices.end())
-        return it->second.bIsBloked;
+        return it->second.bIsBlocked;
     return false;
 }
 
 void GNMGraph::ChangeAllBlockState(bool bBlock)
 {
-    for(std::map<GNMGFID, GNMStdVertex>::iterator itv = m_mstVertices.begin();
-        itv != m_mstVertices.end(); ++itv)
+    for (std::map<GNMGFID, GNMStdVertex>::iterator itv = m_mstVertices.begin();
+         itv != m_mstVertices.end(); ++itv)
     {
-        itv->second.bIsBloked = bBlock;
+        itv->second.bIsBlocked = bBlock;
     }
 
-    for(std::map<GNMGFID, GNMStdEdge>::iterator ite = m_mstEdges.begin();
-        ite != m_mstEdges.end(); ++ite)
+    for (std::map<GNMGFID, GNMStdEdge>::iterator ite = m_mstEdges.begin();
+         ite != m_mstEdges.end(); ++ite)
     {
-        ite->second.bIsBloked = bBlock;
+        ite->second.bIsBlocked = bBlock;
     }
 }
 
-GNMPATH GNMGraph::DijkstraShortestPath( GNMGFID nStartFID, GNMGFID nEndFID,
-                                 const std::map<GNMGFID, GNMStdEdge> &mstEdges)
+GNMPATH
+GNMGraph::DijkstraShortestPath(GNMGFID nStartFID, GNMGFID nEndFID,
+                               const std::map<GNMGFID, GNMStdEdge> &mstEdges)
 {
     std::map<GNMGFID, GNMGFID> mnShortestTree;
     DijkstraShortestPathTree(nStartFID, mstEdges, mnShortestTree);
@@ -200,7 +207,7 @@ GNMPATH GNMGraph::DijkstraShortestPath( GNMGFID nStartFID, GNMGFID nEndFID,
         else if (it->first == nStartFID)
         {
             // We've reached the start vertex and return an array.
-            aoShortestPath.push_back( std::make_pair(nNextVertexId, -1) );
+            aoShortestPath.push_back(std::make_pair(nNextVertexId, -1));
 
             // Revert array because the first vertex is now the last in path.
             int size = static_cast<int>(aoShortestPath.size());
@@ -219,7 +226,7 @@ GNMPATH GNMGraph::DijkstraShortestPath( GNMGFID nStartFID, GNMGFID nEndFID,
             // final array.
             aoShortestPath.push_back(std::make_pair(nNextVertexId, it->second));
 
-            // An edge has only two vertexes, so we get the opposite one to the
+            // An edge has only two vertices, so we get the opposite one to the
             // current vertex in order to continue search backwards.
             nNextVertexId = GetOppositVertex(it->second, it->first);
         }
@@ -230,20 +237,20 @@ GNMPATH GNMGraph::DijkstraShortestPath( GNMGFID nStartFID, GNMGFID nEndFID,
     return oRet;
 }
 
-GNMPATH GNMGraph::DijkstraShortestPath( GNMGFID nStartFID, GNMGFID nEndFID)
+GNMPATH GNMGraph::DijkstraShortestPath(GNMGFID nStartFID, GNMGFID nEndFID)
 {
     return DijkstraShortestPath(nStartFID, nEndFID, m_mstEdges);
 }
 
-std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID,
-                                              size_t nK)
+std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID,
+                                              GNMGFID nEndFID, size_t nK)
 {
     // Resulting array with paths.
     // A will be sorted by the path costs' descending.
     std::vector<GNMPATH> A;
 
     if (nK == 0)
-        return A; // return empty array if K is incorrect.
+        return A;  // return empty array if K is incorrect.
 
     // Temporary array for storing paths-candidates.
     // B will be automatically sorted by the cost descending order. We
@@ -257,7 +264,7 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
     // path segments in the Yen's algorithm iterations.
     GNMPATH aoFirstPath = DijkstraShortestPath(nStartFID, nEndFID);
     if (aoFirstPath.empty())
-        return A; // return empty array if there is no path between points.
+        return A;  // return empty array if there is no path between points.
 
     A.push_back(aoFirstPath);
 
@@ -271,12 +278,13 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
 
     std::map<GNMGFID, GNMStdEdge> mstEdges = m_mstEdges;
 
-    for (k = 0; k < nK - 1; ++k) // -1 because we have already found one
+    for (k = 0; k < nK - 1; ++k)  // -1 because we have already found one
     {
-        std::map<GNMGFID, double> mDeletedEdges; // for infinity costs assignment
+        std::map<GNMGFID, double>
+            mDeletedEdges;  // for infinity costs assignment
         itAk = A[k].begin();
 
-        for (i = 0; i < A[k].size() - 1; ++i) // avoid end node
+        for (i = 0; i < A[k].size() - 1; ++i)  // avoid end node
         {
             // Get the current node.
             nSpurNode = A[k][i].first;
@@ -318,13 +326,13 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
                 // also check if node number exceed the number of the last node
                 // in root array.
                 if ((aoRootPath == aoRootPathOther) &&
-                        (i < aoRootPathOther.size()))
+                    (i < aoRootPathOther.size()))
                 {
                     tempIt = itA->begin() + i + 1;
-                    mDeletedEdges.insert(std::make_pair(tempIt->second,
-                                           mstEdges[tempIt->second].dfDirCost));
-                    mstEdges[tempIt->second].dfDirCost
-                                      = std::numeric_limits<double>::infinity();
+                    mDeletedEdges.insert(std::make_pair(
+                        tempIt->second, mstEdges[tempIt->second].dfDirCost));
+                    mstEdges[tempIt->second].dfDirCost =
+                        std::numeric_limits<double>::infinity();
                 }
             }
 
@@ -338,14 +346,14 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
             for (itR = aoRootPath.begin(); itR != aoRootPath.end() - 1; ++itR)
             {
                 nVertexToDel = itR->first;
-                for (l = 0; l < m_mstVertices[nVertexToDel].anOutEdgeFIDs.size();
-                     ++l)
+                for (l = 0;
+                     l < m_mstVertices[nVertexToDel].anOutEdgeFIDs.size(); ++l)
                 {
                     nEdgeToDel = m_mstVertices[nVertexToDel].anOutEdgeFIDs[l];
-                    mDeletedEdges.insert(std::make_pair(nEdgeToDel,
-                                               mstEdges[nEdgeToDel].dfDirCost));
-                    mstEdges[nEdgeToDel].dfDirCost
-                                      = std::numeric_limits<double>::infinity();
+                    mDeletedEdges.insert(std::make_pair(
+                        nEdgeToDel, mstEdges[nEdgeToDel].dfDirCost));
+                    mstEdges[nEdgeToDel].dfDirCost =
+                        std::numeric_limits<double>::infinity();
                 }
             }
 
@@ -371,8 +379,8 @@ std::vector<GNMPATH> GNMGraph::KShortestPaths(GNMGFID nStartFID, GNMGFID nEndFID
             {
                 // + 1 so not to consider the first node in the found path,
                 // which is already the last node in the root path
-                aoRootPath.insert( aoRootPath.end(), aoSpurPath.begin() + 1,
-                                   aoSpurPath.end());
+                aoRootPath.insert(aoRootPath.end(), aoSpurPath.begin() + 1,
+                                  aoSpurPath.end());
                 // Calculate the summary cost of the path.
                 // TODO: get the summary cost from the Dejkstra method?
                 dfSumCost = 0.0;
@@ -418,9 +426,9 @@ GNMPATH GNMGraph::ConnectedComponents(const GNMVECTOR &anEmittersIDs)
 {
     GNMPATH anConnectedIDs;
 
-    if(anEmittersIDs.empty())
+    if (anEmittersIDs.empty())
     {
-        CPLError( CE_Failure, CPLE_IllegalArg, "Emitters list is empty." );
+        CPLError(CE_Failure, CPLE_IllegalArg, "Emitters list is empty.");
         return anConnectedIDs;
     }
     std::set<GNMGFID> anMarkedVertIDs;
@@ -444,11 +452,11 @@ void GNMGraph::Clear()
     m_mstEdges.clear();
 }
 
-void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
-                                   const std::map<GNMGFID, GNMStdEdge> &mstEdges,
-                                         std::map<GNMGFID, GNMGFID> &mnPathTree)
+void GNMGraph::DijkstraShortestPathTree(
+    GNMGFID nFID, const std::map<GNMGFID, GNMStdEdge> &mstEdges,
+    std::map<GNMGFID, GNMGFID> &mnPathTree)
 {
-    // Initialize all vertexes in graph with infinity mark.
+    // Initialize all vertices in graph with infinity mark.
     double dfInfinity = std::numeric_limits<double>::infinity();
 
     std::map<GNMGFID, double> mMarks;
@@ -461,36 +469,36 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
     mMarks[nFID] = 0.0;
     mnPathTree[nFID] = -1;
 
-    // Initialize all vertexes as unseen (there are no seen vertexes).
+    // Initialize all vertices as unseen (there are no seen vertices).
     std::set<GNMGFID> snSeen;
 
     // We use multimap to maintain the ascending order of costs and because
-    // there can be different vertexes with the equal cost.
-    std::multimap<double,GNMGFID> to_see;
-    std::multimap<double,GNMGFID>::iterator it;
-    to_see.insert(std::pair<double,GNMGFID>(0.0, nFID));
+    // there can be different vertices with the equal cost.
+    std::multimap<double, GNMGFID> to_see;
+    std::multimap<double, GNMGFID>::iterator it;
+    to_see.insert(std::pair<double, GNMGFID>(0.0, nFID));
     LPGNMCONSTVECTOR panOutcomeEdgeId;
 
     size_t i;
-    GNMGFID nCurrenVertId, nCurrentEdgeId, nTargetVertId;
+    GNMGFID nCurrentVertId, nCurrentEdgeId, nTargetVertId;
     double dfCurrentEdgeCost, dfCurrentVertMark, dfNewVertexMark;
     std::map<GNMGFID, GNMStdEdge>::const_iterator ite;
 
-    // Continue iterations while there are some vertexes to see.
+    // Continue iterations while there are some vertices to see.
     while (!to_see.empty())
     {
-        // We must see vertexes with minimal costs at first.
+        // We must see vertices with minimal costs at first.
         // In multimap the first cost is the minimal.
         it = to_see.begin();
 
-        nCurrenVertId = it->second;
+        nCurrentVertId = it->second;
         dfCurrentVertMark = it->first;
         snSeen.insert(it->second);
         to_see.erase(it);
 
         // For all neighbours for the current vertex.
-        panOutcomeEdgeId = GetOutEdges(nCurrenVertId);
-        if(NULL == panOutcomeEdgeId)
+        panOutcomeEdgeId = GetOutEdges(nCurrentVertId);
+        if (nullptr == panOutcomeEdgeId)
             continue;
 
         for (i = 0; i < panOutcomeEdgeId->size(); ++i)
@@ -498,7 +506,7 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
             nCurrentEdgeId = panOutcomeEdgeId->operator[](i);
 
             ite = mstEdges.find(nCurrentEdgeId);
-            if(ite == mstEdges.end() || ite->second.bIsBloked)
+            if (ite == mstEdges.end() || ite->second.bIsBlocked)
                 continue;
 
             // We go in any edge from source to target so we take only
@@ -507,7 +515,7 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
 
             // While we see outcome edges of current vertex id we definitely
             // know that target vertex id will be target for current edge id.
-            nTargetVertId = GetOppositVertex(nCurrentEdgeId, nCurrenVertId);
+            nTargetVertId = GetOppositVertex(nCurrentEdgeId, nCurrentVertId);
 
             // Calculate a new mark assuming the full path cost (mark of the
             // current vertex) to this vertex.
@@ -515,16 +523,16 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
 
             // Update mark of the vertex if needed.
             if (snSeen.find(nTargetVertId) == snSeen.end() &&
-                    dfNewVertexMark < mMarks[nTargetVertId] &&
-                    !CheckVertexBlocked(nTargetVertId))
+                dfNewVertexMark < mMarks[nTargetVertId] &&
+                !CheckVertexBlocked(nTargetVertId))
             {
                 mMarks[nTargetVertId] = dfNewVertexMark;
                 mnPathTree[nTargetVertId] = nCurrentEdgeId;
 
                 // The vertex with minimal cost will be inserted to the
                 // beginning.
-                to_see.insert(std::pair<double,GNMGFID>(dfNewVertexMark,
-                                                        nTargetVertId));
+                to_see.insert(
+                    std::pair<double, GNMGFID>(dfNewVertexMark, nTargetVertId));
             }
         }
     }
@@ -532,15 +540,17 @@ void GNMGraph::DijkstraShortestPathTree(GNMGFID nFID,
 
 LPGNMCONSTVECTOR GNMGraph::GetOutEdges(GNMGFID nFID) const
 {
-    std::map<GNMGFID,GNMStdVertex>::const_iterator it = m_mstVertices.find(nFID);
+    std::map<GNMGFID, GNMStdVertex>::const_iterator it =
+        m_mstVertices.find(nFID);
     if (it != m_mstVertices.end())
         return &it->second.anOutEdgeFIDs;
-    return NULL;
+    return nullptr;
 }
 
 GNMGFID GNMGraph::GetOppositVertex(GNMGFID nEdgeFID, GNMGFID nVertexFID) const
 {
-    std::map<GNMGFID, GNMStdEdge>::const_iterator it = m_mstEdges.find(nEdgeFID);
+    std::map<GNMGFID, GNMStdEdge>::const_iterator it =
+        m_mstEdges.find(nEdgeFID);
     if (it != m_mstEdges.end())
     {
         if (nVertexFID == it->second.nSrcVertexFID)
@@ -562,38 +572,42 @@ void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
     GNMCONSTVECTOR::const_iterator it;
     std::queue<GNMGFID> neighbours_queue;
 
-    // See all given vertexes except thouse that have been already seen.
+    // See all given vertices except thouse that have been already seen.
     while (!vertexQueue.empty())
     {
         GNMGFID nCurVertID = vertexQueue.front();
 
-        // There may be duplicate unmarked vertexes in a current queue. Check it.
+        // There may be duplicate unmarked vertices in a current queue. Check
+        // it.
         if (markedVertIds.find(nCurVertID) == markedVertIds.end())
         {
             markedVertIds.insert(nCurVertID);
 
-            // See all outcome edges, add them to connected and than see the target
-            // vertex of each edge. Add it to the queue, which will be recursively
-            // seen the same way on the next iteration.
+            // See all outcome edges, add them to connected and than see the
+            // target vertex of each edge. Add it to the queue, which will be
+            // recursively seen the same way on the next iteration.
             LPGNMCONSTVECTOR panOutcomeEdgeIDs = GetOutEdges(nCurVertID);
-            if(NULL != panOutcomeEdgeIDs)
+            if (nullptr != panOutcomeEdgeIDs)
             {
-                for (it = panOutcomeEdgeIDs->begin(); it != panOutcomeEdgeIDs->end(); ++it)
+                for (it = panOutcomeEdgeIDs->begin();
+                     it != panOutcomeEdgeIDs->end(); ++it)
                 {
                     GNMGFID nCurEdgeID = *it;
 
-                    // ISSUE: think about to return a sequence of vertexes and edges
-                    // (which is more universal), as now we are going to return only
-                    // sequence of edges.
-                    connectedIds.push_back( std::make_pair(nCurVertID, nCurEdgeID) );
+                    // ISSUE: think about to return a sequence of vertices and
+                    // edges (which is more universal), as now we are going to
+                    // return only sequence of edges.
+                    connectedIds.push_back(
+                        std::make_pair(nCurVertID, nCurEdgeID));
 
-                    // Get the only target vertex of this edge. If edge is bidirected
-                    // get not that vertex that with nCurVertID.
+                    // Get the only target vertex of this edge. If edge is
+                    // bidirected get not that vertex that with nCurVertID.
                     GNMGFID nTargetVertID;
                     /*
-                    std::vector<GNMGFID> target_vert_ids = _getTgtVert(cur_edge_id);
-                    std::vector<GNMGFID>::iterator itt;
-                    for (itt = target_vert_ids.begin(); itt != target_vert_ids.end(); ++itt)
+                    std::vector<GNMGFID> target_vert_ids =
+                    _getTgtVert(cur_edge_id); std::vector<GNMGFID>::iterator
+                    itt; for (itt = target_vert_ids.begin(); itt !=
+                    target_vert_ids.end(); ++itt)
                     {
                         if ((*itt) != cur_vert_id)
                         {
@@ -604,9 +618,10 @@ void GNMGraph::TraceTargets(std::queue<GNMGFID> &vertexQueue,
                     */
                     nTargetVertID = GetOppositVertex(nCurEdgeID, nCurVertID);
 
-                    // Avoid marked or blocked vertexes.
-                    if ((markedVertIds.find(nTargetVertID) == markedVertIds.end())
-                    && (!CheckVertexBlocked(nTargetVertID)))
+                    // Avoid marked or blocked vertices.
+                    if ((markedVertIds.find(nTargetVertID) ==
+                         markedVertIds.end()) &&
+                        (!CheckVertexBlocked(nTargetVertID)))
                         neighbours_queue.push(nTargetVertID);
                 }
             }

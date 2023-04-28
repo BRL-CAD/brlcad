@@ -360,6 +360,17 @@ void TkSetCursorPos(
     int xscreen = (int)(GetSystemMetrics(SM_CXSCREEN) - 1);
     int yscreen = (int)(GetSystemMetrics(SM_CYSCREEN) - 1);
 
+    /*
+     * A multi-screen system may have different logical pixels/inch, with
+     * Windows applying behind-the-scenes scaling on secondary screens.
+     * Don't try and emulate that, instead fall back to SetCursor if the
+     * requested position is off the primary screen.
+     */
+    if ( x < 0 || x > xscreen || y < 0 || y > yscreen ) {
+        SetCursorPos(x, y);
+        return;
+    }
+
     input.type = INPUT_MOUSE;
     input.mi.dx = (x * 65535 + xscreen/2) / xscreen;
     input.mi.dy = (y * 65535 + yscreen/2) / yscreen;

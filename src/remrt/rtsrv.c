@@ -1,7 +1,7 @@
 /*                         R T S R V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2022 United States Government as represented by
+ * Copyright (c) 1985-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -82,7 +82,7 @@ unsigned char *scanbuf = NULL;
 /***** end of sharing with viewing model *****/
 
 extern int grid_setup(struct bu_vls *err);
-extern void worker();
+extern void worker(int, void *);
 extern void application_init(void);
 
 /***** variables shared with worker() ******/

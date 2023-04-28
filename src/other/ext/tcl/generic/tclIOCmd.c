@@ -323,7 +323,7 @@ Tcl_GetsObjCmd(
     }
 
     TclChannelPreserve(chan);
-    linePtr = Tcl_NewObj();
+    TclNewObj(linePtr);
     lineLen = Tcl_GetsObj(chan, linePtr);
     if (lineLen < 0) {
 	if (!Tcl_Eof(chan) && !Tcl_InputBlocked(chan)) {
@@ -463,7 +463,7 @@ Tcl_ReadObjCmd(
 	}
     }
 
-    resultPtr = Tcl_NewObj();
+    TclNewObj(resultPtr);
     Tcl_IncrRefCount(resultPtr);
     TclChannelPreserve(chan);
     charactersRead = Tcl_ReadChars(chan, resultPtr, toRead, 0);
@@ -991,7 +991,7 @@ Tcl_ExecObjCmd(
 	return TCL_OK;
     }
 
-    resultPtr = Tcl_NewObj();
+    TclNewObj(resultPtr);
     if (Tcl_GetChannelHandle(chan, TCL_READABLE, NULL) == TCL_OK) {
 	if (Tcl_ReadChars(chan, resultPtr, -1, 0) < 0) {
 	    /*
@@ -1903,7 +1903,7 @@ ChanPipeObjCmd(
     channelNames[0] = Tcl_GetChannelName(rchan);
     channelNames[1] = Tcl_GetChannelName(wchan);
 
-    resultPtr = Tcl_NewObj();
+    TclNewObj(resultPtr);
     Tcl_ListObjAppendElement(NULL, resultPtr,
 	    Tcl_NewStringObj(channelNames[0], -1));
     Tcl_ListObjAppendElement(NULL, resultPtr,

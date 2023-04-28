@@ -1,8 +1,4 @@
-<svg x="0px" y="0px" width="54px" height="10px" viewBox="0 0 54 10" enable-background="new 0 0 54 10" xml:space="preserve">
-  <rect id="Dark1" data-name="Dark1" fill="#292c31" x="16" y="1" width="4" height="8"/>
-  <rect id="Light1" data-name="Light1" fill="#7f8795" x="16" y="1" width="3" height="7"/>
-  <rect id="Dark2" data-name="Dark2" fill="#292c31" x="25" y="1" width="4" height="8"/>
-  <rect id="Light2" data-name="Light2" fill="#7f8795" x="25" y="1" width="3" height="7"/>
-  <rect id="Dark3" data-name="Dark3" fill="#292c31" x="34" y="1" width="4" height="8"/>
-  <rect id="Light3" data-name="Light3" fill="#7f8795" x="34" y="1" width="3" height="7"/>
+<svg width="32" height="16">
+    <rect fill="#b0b0b0" x="4" y="6" width="24" height="1"/>
+    <rect fill="#b0b0b0" x="4" y="14" width="24" height="1"/>
 </svg>

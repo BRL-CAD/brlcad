@@ -908,7 +908,7 @@ RecomputeWidgets(
      *
      * This could be done recursively or iteratively. The recursive version is
      * easier to implement and understand, and typically, windows with a -font
-     * option will be leaf nodes in the widget heirarchy (buttons, labels,
+     * option will be leaf nodes in the widget hierarchy (buttons, labels,
      * etc.), so the recursion depth will be shallow.
      *
      * However, the additional overhead of the recursive calls may become a

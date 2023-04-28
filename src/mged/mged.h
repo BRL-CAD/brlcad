@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2022 United States Government as represented by
+ * Copyright (c) 1985-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -178,11 +178,8 @@ extern Tcl_Interp *ged_interp;
  * GED functions referenced in more than one source file:
  */
 
-extern int tran();
-extern int irot();
 extern void mged_setup(Tcl_Interp **interpreter);
 extern void mged_global_variable_teardown(Tcl_Interp *interpreter); /* cmd.c */
-extern void dir_build();
 extern void buildHrot(mat_t, double, double, double);
 extern void dozoom(int which_eye);
 #ifndef _WIN32
@@ -197,32 +194,20 @@ extern void moveHinstance(struct directory *cdp, struct directory *dp, matp_t xl
 extern void moveHobj(struct directory *dp, matp_t xlate);
 extern void quit(void);
 extern void refresh(void);
-extern void rej_sedit();
 extern void sedit(void);
 extern void setview(double a1, double a2, double a3);
 extern void adcursor(void);
 extern void mmenu_display(int y_top);
 extern void mmenu_set(int idx, struct menu_item *value);
 extern void mmenu_set_all(int idx, struct menu_item *value);
-extern void col_item();
-extern void col_putchar();
-extern void col_eol();
-extern void col_pr4v();
 extern void sedit_menu(void);
 extern void get_attached(void);
-extern void (*cur_sigint)();	/* Current SIGINT status */
+extern void (*cur_sigint)(int);	/* Current SIGINT status */
 extern void sig2(int);
 extern void sig3(int);
 
 extern void aexists(const char *name);
-extern int getname();
-extern int use_pen();
-extern int dir_print();
-extern int mged_cmd_arg_check();
 extern int release(char *name, int need_close);
-extern struct directory *combadd();
-extern struct directory **dir_getspace();
-extern void ellipse();
 
 /* mged.c */
 extern void mged_view_callback(struct bview *gvp, void *clientData);
@@ -396,7 +381,7 @@ struct funtab {
     char *ft_name;
     char *ft_parms;
     char *ft_comment;
-    int (*ft_func)();
+    int (*ft_func)(int, const char **);
     int ft_min;
     int ft_max;
     int tcl_converted;
@@ -528,11 +513,7 @@ int editarb(vect_t pos_model);
 extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */
-#if defined(SEEN_RTGEOM_H)
 void find_ars_nearest_pnt(int *crv, int *col, struct rt_ars_internal *ars, point_t pick_pt, vect_t dir);
-#else
-void find_ars_nearest_pnt();
-#endif
 
 /* mged.c */
 int event_check(int non_blocking);

@@ -1,7 +1,7 @@
 /*                        S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -488,7 +488,13 @@ ged_search_core(struct ged *gedp, int argc, const char *argv_orig[])
     /* re-assemble search plan into a string - the db search functions break it out themselves */
     bu_vls_trunc(&search_string, 0);
     while (argv[plan_argv]) {
-	bu_vls_printf(&search_string, " %s", argv[plan_argv]);
+	// If any of the plans have spaces in them, we need to protect them for
+	// bu_argv_from_string processing
+	if (strchr(argv[plan_argv], ' ') != NULL) {
+	    bu_vls_printf(&search_string, " \"%s\"", argv[plan_argv]);
+	} else {
+	    bu_vls_printf(&search_string, " %s", argv[plan_argv]);
+	}
 	plan_argv++;
     }
 
@@ -676,7 +682,7 @@ const struct ged_cmd *search_cmds[] = { &search_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  search_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

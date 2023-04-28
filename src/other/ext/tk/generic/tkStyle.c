@@ -1447,6 +1447,7 @@ Tk_GetStyleFromObj(
  *
  *---------------------------------------------------------------------------
  */
+#undef Tk_FreeStyleFromObj
 void
 Tk_FreeStyleFromObj(
     TCL_UNUSED(Tcl_Obj *))

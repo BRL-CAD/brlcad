@@ -1,7 +1,7 @@
 /*                  P L Y _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2022 United States Government as represented by
+ * Copyright (c) 2003-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -260,12 +260,12 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    if (pstate->ply_write_options->verbose || pstate->gcv_options->verbosity_level)
 			bu_log("\t\t(%g %g %g)\n", V3ARGS(v->vg_p->coord));
 
-		    if (!bu_hash_get(pstate->v_tbl_regs[pstate->cur_region], (const uint8_t *)(pstate->f_regs[pstate->cur_region][reg_faces_pos] + v_ind_pos), sizeof(long *))) {
+		    if (!bu_hash_get(pstate->v_tbl_regs[pstate->cur_region], (const uint8_t *)(pstate->f_regs[pstate->cur_region][reg_faces_pos] + v_ind_pos), sizeof(long))) {
 			pstate->v_regs[pstate->cur_region][nvertices] = (double *) bu_calloc(4, sizeof(double), "v_coords");
 			pstate->v_regs[pstate->cur_region][nvertices][0] = (double)(v->vg_p->coord[0]);
 			pstate->v_regs[pstate->cur_region][nvertices][1] = (double)(v->vg_p->coord[1]);
 			pstate->v_regs[pstate->cur_region][nvertices][2] = (double)(v->vg_p->coord[2]);
-			(void)bu_hash_set(pstate->v_tbl_regs[pstate->cur_region], (const uint8_t *)(pstate->f_regs[pstate->cur_region][reg_faces_pos] + v_ind_pos), sizeof(long *), (void *)pstate->v_regs[pstate->cur_region][nvertices]);
+			(void)bu_hash_set(pstate->v_tbl_regs[pstate->cur_region], (const uint8_t *)(pstate->f_regs[pstate->cur_region][reg_faces_pos] + v_ind_pos), sizeof(long), (void *)pstate->v_regs[pstate->cur_region][nvertices]);
 			nvertices++;
 		    }
 

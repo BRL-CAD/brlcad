@@ -14,6 +14,8 @@
  * Copyright (c) 2007, Frank Warmerdam <warmerdam@pobox.com>
  * Copyright (c) 2009-2010, Even Rouault <even.rouault at spatialys.com>
  * Copyright (c) 2017 Hobu Inc
+ * Copyright (c) 2017, Dmitry Baryshnikov <polimax@mail.ru>
+ * Copyright (c) 2017, NextGIS <info@nextgis.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,6 +36,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include "cpl_json.h"
 #include "cpl_string.h"
 #include "cpl_time.h"
 #include "cpl_vsi_error.h"
@@ -41,10 +44,10 @@
 #include "gdal_proxy.h"
 #include "nasakeywordhandler.h"
 #include "ogrgeojsonreader.h"
-#include "ogr_json_header.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 #include "vrtdataset.h"
+#include "cpl_safemaths.hpp"
 
 // For gethostname()
 #ifdef _WIN32
@@ -55,479 +58,54 @@
 
 #include <algorithm>
 #include <map>
-#include <utility> // pair
+#include <utility>  // pair
 #include <vector>
 
 // Constants coming from ISIS3 source code
 // in isis/src/base/objs/SpecialPixel/SpecialPixel.h
 
-//There are several types of special pixels
-//   *   Isis::Null Pixel has no data available
-//   *   Isis::Lis Pixel was saturated on the instrument
-//   *   Isis::His Pixel was saturated on the instrument
-//   *   Isis::Lrs Pixel was saturated during a computation
-//   *   Isis::Hrs Pixel was saturated during a computation
+// There are several types of special pixels
+//    *   Isis::Null Pixel has no data available
+//    *   Isis::Lis Pixel was saturated on the instrument
+//    *   Isis::His Pixel was saturated on the instrument
+//    *   Isis::Lrs Pixel was saturated during a computation
+//    *   Isis::Hrs Pixel was saturated during a computation
 
 // 1-byte special pixel values
-const unsigned char NULL1           = 0;
-const unsigned char LOW_REPR_SAT1   = 0;
-const unsigned char LOW_INSTR_SAT1  = 0;
+const unsigned char NULL1 = 0;
+const unsigned char LOW_REPR_SAT1 = 0;
+const unsigned char LOW_INSTR_SAT1 = 0;
 const unsigned char HIGH_INSTR_SAT1 = 255;
-const unsigned char HIGH_REPR_SAT1  = 255;
+const unsigned char HIGH_REPR_SAT1 = 255;
 
 // 2-byte unsigned special pixel values
-const unsigned short NULLU2           = 0;
-const unsigned short LOW_REPR_SATU2   = 1;
-const unsigned short LOW_INSTR_SATU2  = 2;
+const unsigned short NULLU2 = 0;
+const unsigned short LOW_REPR_SATU2 = 1;
+const unsigned short LOW_INSTR_SATU2 = 2;
 const unsigned short HIGH_INSTR_SATU2 = 65534;
-const unsigned short HIGH_REPR_SATU2  = 65535;
+const unsigned short HIGH_REPR_SATU2 = 65535;
 
 // 2-byte signed special pixel values
-const short NULL2           = -32768;
-const short LOW_REPR_SAT2   = -32767;
-const short LOW_INSTR_SAT2  = -32766;
+const short NULL2 = -32768;
+const short LOW_REPR_SAT2 = -32767;
+const short LOW_INSTR_SAT2 = -32766;
 const short HIGH_INSTR_SAT2 = -32765;
-const short HIGH_REPR_SAT2  = -32764;
+const short HIGH_REPR_SAT2 = -32764;
 
 // Define 4-byte special pixel values for IEEE floating point
-const float NULL4           = -3.4028226550889045e+38f; // 0xFF7FFFFB;
-const float LOW_REPR_SAT4   = -3.4028228579130005e+38f; // 0xFF7FFFFC;
-const float LOW_INSTR_SAT4  = -3.4028230607370965e+38f; // 0xFF7FFFFD;
-const float HIGH_INSTR_SAT4 = -3.4028232635611926e+38f; // 0xFF7FFFFE;
-const float HIGH_REPR_SAT4  = -3.4028234663852886e+38f; // 0xFF7FFFFF;
+const float NULL4 = -3.4028226550889045e+38f;            // 0xFF7FFFFB;
+const float LOW_REPR_SAT4 = -3.4028228579130005e+38f;    // 0xFF7FFFFC;
+const float LOW_INSTR_SAT4 = -3.4028230607370965e+38f;   // 0xFF7FFFFD;
+const float HIGH_INSTR_SAT4 = -3.4028232635611926e+38f;  // 0xFF7FFFFE;
+const float HIGH_REPR_SAT4 = -3.4028234663852886e+38f;   // 0xFF7FFFFF;
 
 // Must be large enough to hold an integer
-static const char* const pszSTARTBYTE_PLACEHOLDER = "!*^STARTBYTE^*!";
+static const char *const pszSTARTBYTE_PLACEHOLDER = "!*^STARTBYTE^*!";
 // Must be large enough to hold an integer
-static const char* const pszLABEL_BYTES_PLACEHOLDER = "!*^LABEL_BYTES^*!";
+static const char *const pszLABEL_BYTES_PLACEHOLDER = "!*^LABEL_BYTES^*!";
 // Must be large enough to hold an integer
-static const char* const pszHISTORY_STARTBYTE_PLACEHOLDER =
-                                                    "!*^HISTORY_STARTBYTE^*!";
-
-CPL_CVSID("$Id$");
-
-/************************************************************************/
-/* ==================================================================== */
-/*                             CPLJsonObject                            */
-/* ==================================================================== */
-/************************************************************************/
-
-// This class is intended to be general purpose
-
-class CPLJsonObject
-{
-    public:
-        enum Type
-        {
-            UNINIT,
-            JSON_NULL,
-            INT,
-            BOOLEAN,
-            DOUBLE,
-            STRING,
-            OBJECT,
-            ARRAY
-        };
-
-    private:
-        static const CPLJsonObject m_gUninitObject;
-
-        Type m_eType;
-        // Maintain both a list and a map to keep insertion order
-        std::vector< std::pair< CPLString, CPLJsonObject* > > m_oList;
-        std::map< CPLString, int> m_oMap;
-        GIntBig m_nVal;
-        double m_dfVal;
-        CPLString m_osVal;
-
-        void add( json_object* poObj )
-        {
-            CPLAssert( m_eType == UNINIT || m_eType == ARRAY );
-            m_eType = ARRAY;
-            m_oList.push_back( std::pair<CPLString,CPLJsonObject*>(
-                                CPLString(), new CPLJsonObject(poObj)) );
-        }
-
-    public:
-
-        static const CPLJsonObject JSON_NULL_CST;
-
-        CPLJsonObject() : m_eType(UNINIT), m_nVal(0), m_dfVal(0) {}
-
-        ~CPLJsonObject()
-        {
-            clear();
-        }
-
-        CPLJsonObject(const CPLJsonObject& other) :
-            m_eType(other.m_eType),
-            m_oList(other.m_oList),
-            m_oMap(other.m_oMap),
-            m_nVal(other.m_nVal),
-            m_dfVal(other.m_dfVal),
-            m_osVal(other.m_osVal)
-        {
-            for(size_t i=0;i<m_oList.size();++i)
-                m_oList[i].second = new CPLJsonObject( *m_oList[i].second );
-        }
-
-        explicit CPLJsonObject(int nVal) :
-            m_eType(INT), m_nVal(nVal), m_dfVal(0.0) {}
-
-        explicit CPLJsonObject(GIntBig nVal) :
-            m_eType(INT), m_nVal(nVal), m_dfVal(0.0) {}
-
-        explicit CPLJsonObject(bool bVal) :
-            m_eType(BOOLEAN), m_nVal(bVal), m_dfVal(0.0) {}
-
-        explicit CPLJsonObject(double dfVal) :
-            m_eType(DOUBLE), m_nVal(0), m_dfVal(dfVal) {}
-
-        explicit CPLJsonObject(const char* pszVal) :
-            m_eType(STRING), m_nVal(0), m_dfVal(0.0), m_osVal(pszVal) {}
-
-        explicit CPLJsonObject(Type eType):
-            m_eType(eType), m_nVal(0), m_dfVal(0) {}
-
-        explicit CPLJsonObject(json_object* poObj):
-            m_eType(UNINIT), m_nVal(0), m_dfVal(0.0)
-        {
-            *this = poObj;
-        }
-
-        void clear()
-        {
-            if( m_eType != UNINIT )
-            {
-                m_eType = UNINIT;
-                for(size_t i=0;i<m_oList.size();++i)
-                    delete m_oList[i].second;
-                m_oList.clear();
-                m_oMap.clear();
-                m_nVal = 0;
-                m_dfVal = 0.0;
-                m_osVal.clear();
-            }
-        }
-
-        Type getType() const { return m_eType; }
-        bool getBool() const { return m_nVal == 1; }
-        GIntBig getInt() const { return m_nVal; }
-        double getDouble() const { return m_dfVal; }
-        const char* getString() const { return m_osVal.c_str(); }
-
-        json_object* asLibJsonObj() const
-        {
-            json_object* obj = NULL;
-            if( m_eType == INT )
-                obj = json_object_new_int64(m_nVal);
-            else if( m_eType == BOOLEAN )
-                obj = json_object_new_boolean( m_nVal == 1 );
-            else if( m_eType == DOUBLE )
-                obj = json_object_new_double(m_dfVal);
-            else if( m_eType == STRING )
-                obj = json_object_new_string(m_osVal);
-            else if( m_eType == OBJECT )
-            {
-                obj = json_object_new_object();
-                for( size_t i=0; i < m_oList.size(); ++i )
-                {
-                    json_object_object_add(obj,
-                                           m_oList[i].first.c_str(),
-                                           m_oList[i].second->asLibJsonObj());
-                }
-            }
-            else if( m_eType == ARRAY )
-            {
-                obj = json_object_new_array();
-                for( size_t i=0; i < m_oList.size(); ++i )
-                {
-                    json_object_array_add(obj,
-                                          m_oList[i].second->asLibJsonObj());
-                }
-            }
-            return obj;
-        }
-
-        // Non-const accessor. Creates then entry if needed
-        CPLJsonObject& operator[](const CPLString& osKey)
-        {
-            CPLAssert( m_eType == UNINIT || m_eType == OBJECT );
-            m_eType = OBJECT;
-            std::map<CPLString,int>::const_iterator oIter =
-                                                    m_oMap.find(osKey);
-            if( oIter != m_oMap.end() )
-                return *(m_oList[ oIter->second ].second);
-            m_oList.push_back( std::pair<CPLString,CPLJsonObject*>(
-                                                osKey, new CPLJsonObject()) );
-            m_oMap[osKey] = static_cast<int>(m_oList.size()) - 1;
-            return *(m_oList.back().second);
-        }
-
-        void insert(size_t nPos, const CPLString& osKey, const CPLJsonObject& obj )
-        {
-            CPLAssert( m_eType == OBJECT );
-            CPLAssert( nPos <= m_oList.size() );
-            del(osKey);
-            std::map<CPLString,int>::iterator oIter = m_oMap.begin();
-            for( ; oIter != m_oMap.end(); ++oIter )
-            {
-                if( oIter->second >= static_cast<int>(nPos) )
-                    oIter->second ++;
-            }
-            m_oList.insert( m_oList.begin() + nPos,
-                            std::pair<CPLString,CPLJsonObject*>(
-                                            osKey, new CPLJsonObject(obj)) );
-            m_oMap[osKey] = static_cast<int>(nPos);
-        }
-
-        bool has(const CPLString& osKey) const
-        {
-            CPLAssert( m_eType == OBJECT );
-            std::map<CPLString,int>::const_iterator oIter =
-                                                    m_oMap.find(osKey);
-            return oIter != m_oMap.end();
-        }
-
-        void del(const CPLString& osKey)
-        {
-            CPLAssert( m_eType == OBJECT );
-            std::map<CPLString,int>::iterator oIter = m_oMap.find(osKey);
-            if( oIter != m_oMap.end() )
-            {
-                const int nIdx = oIter->second;
-                delete m_oList[nIdx].second;
-                m_oList.erase( m_oList.begin() + nIdx );
-                m_oMap.erase(oIter);
-
-                oIter = m_oMap.begin();
-                for( ; oIter != m_oMap.end(); ++oIter )
-                {
-                    if( oIter->second > nIdx )
-                        oIter->second --;
-                }
-            }
-        }
-
-        const CPLJsonObject& operator[](const CPLString& osKey) const
-        {
-            CPLAssert( m_eType == OBJECT );
-            std::map<CPLString,int>::const_iterator oIter =
-                                                    m_oMap.find(osKey);
-            if( oIter != m_oMap.end() )
-                return *(m_oList[ oIter->second ].second);
-            return m_gUninitObject;
-        }
-
-        CPLJsonObject& operator[](int i)
-        {
-            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
-            CPLAssert( i >= 0 && static_cast<size_t>(i) < m_oList.size() );
-            return *(m_oList[i].second);
-        }
-
-        CPLJsonObject& operator[](size_t i)
-        {
-            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
-            CPLAssert( i < m_oList.size() );
-            return *(m_oList[i].second);
-        }
-
-        const CPLJsonObject& operator[](int i) const
-        {
-            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
-            CPLAssert( i >= 0 && static_cast<size_t>(i) < m_oList.size() );
-            return *(m_oList[i].second);
-        }
-
-        const CPLJsonObject& operator[](size_t i) const
-        {
-            CPLAssert( m_eType == ARRAY || m_eType == OBJECT );
-            CPLAssert( i < m_oList.size() );
-            return *(m_oList[i].second);
-        }
-
-        const CPLString& getKey(int i) const
-        {
-            CPLAssert( m_eType == OBJECT );
-            CPLAssert( i >= 0 && static_cast<size_t>(i) < m_oList.size() );
-            return m_oList[i].first;
-        }
-
-        const CPLString& getKey(size_t i) const
-        {
-            CPLAssert( m_eType == OBJECT );
-            CPLAssert( i < m_oList.size() );
-            return m_oList[i].first;
-        }
-
-        void add( const CPLJsonObject& newChild )
-        {
-            CPLAssert( m_eType == UNINIT || m_eType == ARRAY );
-            m_eType = ARRAY;
-            m_oList.push_back( std::pair<CPLString,CPLJsonObject*>(
-                                CPLString(), new CPLJsonObject(newChild)) );
-        }
-
-        size_t size() const
-        {
-            CPLAssert( m_eType == OBJECT || m_eType == ARRAY );
-            return m_oList.size();
-        }
-
-        CPLJsonObject& operator= (int nVal)
-        {
-            m_eType = INT;
-            m_nVal = nVal;
-            return *this;
-        }
-
-        CPLJsonObject& operator= (GIntBig nVal)
-        {
-            m_eType = INT;
-            m_nVal = nVal;
-            return *this;
-        }
-
-        CPLJsonObject& operator= (bool bVal)
-        {
-            m_eType = BOOLEAN;
-            m_nVal = bVal;
-            return *this;
-        }
-        CPLJsonObject& operator= (double dfVal)
-        {
-            m_eType = DOUBLE;
-            m_dfVal = dfVal;
-            return *this;
-        }
-
-        CPLJsonObject& operator= (const char* pszVal)
-        {
-            m_eType = STRING;
-            m_osVal = pszVal;
-            return *this;
-        }
-
-        CPLJsonObject& operator= (const CPLJsonObject& other)
-        {
-            if( &other != this )
-            {
-                clear();
-                m_eType = other.m_eType;
-                m_oList = other.m_oList;
-                m_oMap = other.m_oMap;
-                m_nVal = other.m_nVal;
-                m_dfVal = other.m_dfVal;
-                m_osVal = other.m_osVal;
-                for(size_t i=0;i<m_oList.size();++i)
-                    m_oList[i].second = new CPLJsonObject(*m_oList[i].second);
-            }
-            return *this;
-        }
-
-        CPLJsonObject& operator= (json_object* poObj)
-        {
-            clear();
-            if( poObj == NULL )
-            {
-                m_eType = JSON_NULL;
-                return *this;
-            }
-            int eType = json_object_get_type(poObj);
-            if( eType == json_type_boolean)
-            {
-                m_eType = BOOLEAN;
-                m_nVal = json_object_get_boolean(poObj);
-                return *this;
-            }
-            if( eType == json_type_int )
-            {
-                m_eType = INT;
-                m_nVal = json_object_get_int64(poObj);
-                return *this;
-            }
-            if( eType == json_type_double )
-            {
-                m_eType = DOUBLE;
-                m_dfVal = json_object_get_double(poObj);
-                return *this;
-            }
-            if( eType == json_type_string )
-            {
-                m_eType = STRING;
-                m_osVal = json_object_get_string(poObj);
-                return *this;
-            }
-            if( eType == json_type_object )
-            {
-                m_eType = OBJECT;
-                json_object_iter it;
-                it.key = NULL;
-                it.val = NULL;
-                it.entry = NULL;
-                json_object_object_foreachC( poObj, it )
-                {
-                    (*this)[it.key] = it.val;
-                }
-                return *this;
-            }
-            if( eType == json_type_array )
-            {
-                m_eType = ARRAY;
-                const int nLength = json_object_array_length(poObj);
-                for( int i = 0; i < nLength; i++ )
-                {
-                    add( json_object_array_get_idx(poObj, i) );
-                }
-                return *this;
-            }
-            CPLAssert(false);
-            return *this;
-        }
-
-        bool operator== (const CPLJsonObject& other) const
-        {
-            if( m_eType != other.m_eType )
-                return false;
-
-            if( m_eType == INT || m_eType == BOOLEAN )
-                return m_nVal == other.m_nVal;
-            if( m_eType == DOUBLE )
-                return m_dfVal == other.m_dfVal;
-            if( m_eType == STRING )
-                return m_osVal == other.m_osVal;
-            if( m_eType == OBJECT )
-            {
-                if( m_oList.size() != other.m_oList.size() )
-                    return false;
-                for(size_t i=0;i<m_oList.size();++i)
-                {
-                    if( *m_oList[i].second != other[m_oList[i].first] )
-                        return false;
-                }
-            }
-            if( m_eType == ARRAY )
-            {
-                if( m_oList.size() != other.m_oList.size() )
-                    return false;
-                for(size_t i=0;i<m_oList.size();++i)
-                {
-                    if( *m_oList[i].second != *other.m_oList[i].second )
-                        return false;
-                }
-            }
-            return true;
-        }
-
-        bool operator!= (const CPLJsonObject& other) const
-        {
-            return !((*this) == other);
-        }
-};
-
-const CPLJsonObject CPLJsonObject::m_gUninitObject;
-const CPLJsonObject CPLJsonObject::JSON_NULL_CST(CPLJsonObject::JSON_NULL);
+static const char *const pszHISTORY_STARTBYTE_PLACEHOLDER =
+    "!*^HISTORY_STARTBYTE^*!";
 
 /************************************************************************/
 /* ==================================================================== */
@@ -535,7 +113,7 @@ const CPLJsonObject CPLJsonObject::JSON_NULL_CST(CPLJsonObject::JSON_NULL);
 /* ==================================================================== */
 /************************************************************************/
 
-class ISIS3Dataset : public RawDataset
+class ISIS3Dataset final : public RawDataset
 {
     friend class ISIS3RawRasterBand;
     friend class ISISTiledBand;
@@ -543,101 +121,103 @@ class ISIS3Dataset : public RawDataset
 
     class NonPixelSection
     {
-        public:
-            CPLString    osSrcFilename;
-            CPLString    osDstFilename; // empty for same file
-            vsi_l_offset nSrcOffset;
-            vsi_l_offset nSize;
-            CPLString    osPlaceHolder; // empty if not same file
+      public:
+        CPLString osSrcFilename;
+        CPLString osDstFilename;  // empty for same file
+        vsi_l_offset nSrcOffset;
+        vsi_l_offset nSize;
+        CPLString osPlaceHolder;  // empty if not same file
     };
 
-    VSILFILE    *m_fpLabel;  // label file (only used for writing)
-    VSILFILE    *m_fpImage;  // image data file. May be == fpLabel
-    GDALDataset *m_poExternalDS; // external dataset (GeoTIFF)
-    bool         m_bGeoTIFFAsRegularExternal; // creation only
-    bool         m_bGeoTIFFInitDone; // creation only
+    VSILFILE *m_fpLabel;               // label file (only used for writing)
+    VSILFILE *m_fpImage;               // image data file. May be == fpLabel
+    GDALDataset *m_poExternalDS;       // external dataset (GeoTIFF)
+    bool m_bGeoTIFFAsRegularExternal;  // creation only
+    bool m_bGeoTIFFInitDone;           // creation only
 
-    CPLString    m_osExternalFilename;
-    bool         m_bIsLabelWritten; // creation only
+    CPLString m_osExternalFilename;
+    bool m_bIsLabelWritten;  // creation only
 
-    bool         m_bIsTiled;
-    bool         m_bInitToNodata; // creation only
+    bool m_bIsTiled;
+    bool m_bInitToNodata;  // creation only
 
     NASAKeywordHandler m_oKeywords;
 
-    bool        m_bGotTransform;
-    double      m_adfGeoTransform[6];
+    bool m_bGotTransform;
+    double m_adfGeoTransform[6];
 
-    bool        m_bHasSrcNoData; // creation only
-    double      m_dfSrcNoData; // creation only
+    bool m_bHasSrcNoData;  // creation only
+    double m_dfSrcNoData;  // creation only
 
-    CPLString   m_osProjection;
+    OGRSpatialReference m_oSRS;
 
     // creation only variables
-    CPLString   m_osComment;
-    CPLString   m_osLatitudeType;
-    CPLString   m_osLongitudeDirection;
-    CPLString   m_osTargetName;
-    bool        m_bForce360;
-    bool        m_bWriteBoundingDegrees;
-    CPLString   m_osBoundingDegrees;
+    CPLString m_osComment;
+    CPLString m_osLatitudeType;
+    CPLString m_osLongitudeDirection;
+    CPLString m_osTargetName;
+    bool m_bForce360;
+    bool m_bWriteBoundingDegrees;
+    CPLString m_osBoundingDegrees;
 
-    json_object  *m_poJSonLabel;
-    CPLString     m_osHistory; // creation only
-    bool          m_bUseSrcLabel; // creation only
-    bool          m_bUseSrcMapping; // creation only
-    bool          m_bUseSrcHistory; // creation only
-    bool          m_bAddGDALHistory; // creation only
-    CPLString     m_osGDALHistory; // creation only
-    std::vector<NonPixelSection> m_aoNonPixelSections; // creation only
-    json_object  *m_poSrcJSonLabel; // creation only
+    CPLJSONObject m_oJSonLabel;
+    CPLString m_osHistory;                              // creation only
+    bool m_bUseSrcLabel;                                // creation only
+    bool m_bUseSrcMapping;                              // creation only
+    bool m_bUseSrcHistory;                              // creation only
+    bool m_bAddGDALHistory;                             // creation only
+    CPLString m_osGDALHistory;                          // creation only
+    std::vector<NonPixelSection> m_aoNonPixelSections;  // creation only
+    CPLJSONObject m_oSrcJSonLabel;                      // creation only
     CPLStringList m_aosISIS3MD;
     CPLStringList m_aosAdditionalFiles;
-    CPLString     m_osFromFilename; // creation only
+    CPLString m_osFromFilename;  // creation only
 
-    const char *GetKeyword( const char *pszPath,
-                            const char *pszDefault = "");
+    RawBinaryLayout m_sLayout{};
 
-    double       FixLong( double dfLong );
-    void         BuildLabel();
-    void         BuildHistory();
-    void         WriteLabel();
-    void         InvalidateLabel();
+    const char *GetKeyword(const char *pszPath, const char *pszDefault = "");
 
-    static CPLString SerializeAsPDL( json_object* poObj );
-    static void SerializeAsPDL( VSILFILE* fp, json_object* poObj,
-                                int nDepth = 0 );
+    double FixLong(double dfLong);
+    void BuildLabel();
+    void BuildHistory();
+    void WriteLabel();
+    void InvalidateLabel();
 
-public:
+    static CPLString SerializeAsPDL(const CPLJSONObject &oObj);
+    static void SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
+                               int nDepth = 0);
+
+  public:
     ISIS3Dataset();
     virtual ~ISIS3Dataset();
 
     virtual int CloseDependentDatasets() override;
 
-    virtual CPLErr GetGeoTransform( double * padfTransform ) override;
-    virtual CPLErr SetGeoTransform( double * padfTransform ) override;
+    virtual CPLErr GetGeoTransform(double *padfTransform) override;
+    virtual CPLErr SetGeoTransform(double *padfTransform) override;
 
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr SetProjection( const char* pszProjection ) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
     virtual char **GetFileList() override;
 
     virtual char **GetMetadataDomainList() override;
-    virtual char **GetMetadata( const char* pszDomain = "" ) override;
-    virtual CPLErr SetMetadata( char** papszMD, const char* pszDomain = "" )
-                                                                     override;
+    virtual char **GetMetadata(const char *pszDomain = "") override;
+    virtual CPLErr SetMetadata(char **papszMD,
+                               const char *pszDomain = "") override;
 
-    static int          Identify( GDALOpenInfo * );
-    static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszOptions );
-    static GDALDataset* CreateCopy( const char *pszFilename,
-                                       GDALDataset *poSrcDS,
-                                       int bStrict,
-                                       char ** papszOptions,
-                                       GDALProgressFunc pfnProgress,
-                                       void * pProgressData );
+    bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
+
+    static int Identify(GDALOpenInfo *);
+    static GDALDataset *Open(GDALOpenInfo *);
+    static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
+                               int nBandsIn, GDALDataType eType,
+                               char **papszOptions);
+    static GDALDataset *CreateCopy(const char *pszFilename,
+                                   GDALDataset *poSrcDS, int bStrict,
+                                   char **papszOptions,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData);
 };
 
 /************************************************************************/
@@ -646,43 +226,41 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class ISISTiledBand : public GDALPamRasterBand
+class ISISTiledBand final : public GDALPamRasterBand
 {
-        friend class ISIS3Dataset;
+    friend class ISIS3Dataset;
 
-        VSILFILE *m_fpVSIL;
-        GIntBig   m_nFirstTileOffset;
-        GIntBig   m_nXTileOffset;
-        GIntBig   m_nYTileOffset;
-        int       m_bNativeOrder;
-        bool      m_bHasOffset;
-        bool      m_bHasScale;
-        double    m_dfOffset;
-        double    m_dfScale;
-        double    m_dfNoData;
+    VSILFILE *m_fpVSIL;
+    GIntBig m_nFirstTileOffset;
+    GIntBig m_nXTileOffset;
+    GIntBig m_nYTileOffset;
+    int m_bNativeOrder;
+    bool m_bHasOffset;
+    bool m_bHasScale;
+    double m_dfOffset;
+    double m_dfScale;
+    double m_dfNoData;
 
   public:
+    ISISTiledBand(GDALDataset *poDS, VSILFILE *fpVSIL, int nBand,
+                  GDALDataType eDT, int nTileXSize, int nTileYSize,
+                  GIntBig nFirstTileOffset, GIntBig nXTileOffset,
+                  GIntBig nYTileOffset, int bNativeOrder);
+    virtual ~ISISTiledBand()
+    {
+    }
 
-                ISISTiledBand( GDALDataset *poDS, VSILFILE *fpVSIL,
-                               int nBand, GDALDataType eDT,
-                               int nTileXSize, int nTileYSize,
-                               GIntBig nFirstTileOffset,
-                               GIntBig nXTileOffset,
-                               GIntBig nYTileOffset,
-                               int bNativeOrder );
-        virtual     ~ISISTiledBand() {}
+    virtual CPLErr IReadBlock(int, int, void *) override;
+    virtual CPLErr IWriteBlock(int, int, void *) override;
 
-        virtual CPLErr          IReadBlock( int, int, void * ) override;
-        virtual CPLErr          IWriteBlock( int, int, void * ) override;
+    virtual double GetOffset(int *pbSuccess = nullptr) override;
+    virtual double GetScale(int *pbSuccess = nullptr) override;
+    virtual CPLErr SetOffset(double dfNewOffset) override;
+    virtual CPLErr SetScale(double dfNewScale) override;
+    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
+    virtual CPLErr SetNoDataValue(double dfNewNoData) override;
 
-        virtual double GetOffset( int *pbSuccess = NULL ) override;
-        virtual double GetScale( int *pbSuccess = NULL ) override;
-        virtual CPLErr SetOffset( double dfNewOffset ) override;
-        virtual CPLErr SetScale( double dfNewScale ) override;
-        virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
-        virtual CPLErr SetNoDataValue( double dfNewNoData ) override;
-
-        void    SetMaskBand(GDALRasterBand* poMaskBand);
+    void SetMaskBand(GDALRasterBand *poMaskBand);
 };
 
 /************************************************************************/
@@ -691,44 +269,41 @@ class ISISTiledBand : public GDALPamRasterBand
 /* ==================================================================== */
 /************************************************************************/
 
-class ISIS3RawRasterBand: public RawRasterBand
+class ISIS3RawRasterBand final : public RawRasterBand
 {
-        friend class ISIS3Dataset;
+    friend class ISIS3Dataset;
 
-        bool      m_bHasOffset;
-        bool      m_bHasScale;
-        double    m_dfOffset;
-        double    m_dfScale;
-        double    m_dfNoData;
+    bool m_bHasOffset;
+    bool m_bHasScale;
+    double m_dfOffset;
+    double m_dfScale;
+    double m_dfNoData;
 
-    public:
-                 ISIS3RawRasterBand( GDALDataset *l_poDS, int l_nBand,
-                                     void * l_fpRaw,
-                                     vsi_l_offset l_nImgOffset,
-                                     int l_nPixelOffset,
-                                     int l_nLineOffset,
-                                     GDALDataType l_eDataType,
-                                     int l_bNativeOrder,
-                                     int l_bIsVSIL = FALSE,
-                                     int l_bOwnsFP = FALSE );
-        virtual ~ISIS3RawRasterBand() {}
+  public:
+    ISIS3RawRasterBand(GDALDataset *l_poDS, int l_nBand, VSILFILE *l_fpRaw,
+                       vsi_l_offset l_nImgOffset, int l_nPixelOffset,
+                       int l_nLineOffset, GDALDataType l_eDataType,
+                       int l_bNativeOrder);
+    virtual ~ISIS3RawRasterBand()
+    {
+    }
 
-        virtual CPLErr          IReadBlock( int, int, void * ) override;
-        virtual CPLErr          IWriteBlock( int, int, void * ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
+    virtual CPLErr IWriteBlock(int, int, void *) override;
 
-        virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
-                                void *, int, int, GDALDataType,
-                                GSpacing nPixelSpace, GSpacing nLineSpace,
-                                GDALRasterIOExtraArg* psExtraArg ) override;
+    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                             GDALDataType, GSpacing nPixelSpace,
+                             GSpacing nLineSpace,
+                             GDALRasterIOExtraArg *psExtraArg) override;
 
-        virtual double GetOffset( int *pbSuccess = NULL ) override;
-        virtual double GetScale( int *pbSuccess = NULL ) override;
-        virtual CPLErr SetOffset( double dfNewOffset ) override;
-        virtual CPLErr SetScale( double dfNewScale ) override;
-        virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
-        virtual CPLErr SetNoDataValue( double dfNewNoData ) override;
+    virtual double GetOffset(int *pbSuccess = nullptr) override;
+    virtual double GetScale(int *pbSuccess = nullptr) override;
+    virtual CPLErr SetOffset(double dfNewOffset) override;
+    virtual CPLErr SetScale(double dfNewScale) override;
+    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
+    virtual CPLErr SetNoDataValue(double dfNewNoData) override;
 
-        void    SetMaskBand(GDALRasterBand* poMaskBand);
+    void SetMaskBand(GDALRasterBand *poMaskBand);
 };
 
 /************************************************************************/
@@ -738,44 +313,56 @@ class ISIS3RawRasterBand: public RawRasterBand
 /*      proxy for bands stored in other formats.                        */
 /* ==================================================================== */
 /************************************************************************/
-class ISIS3WrapperRasterBand : public GDALProxyRasterBand
+class ISIS3WrapperRasterBand final : public GDALProxyRasterBand
 {
-        friend class ISIS3Dataset;
+    friend class ISIS3Dataset;
 
-        GDALRasterBand* m_poBaseBand;
-        bool      m_bHasOffset;
-        bool      m_bHasScale;
-        double    m_dfOffset;
-        double    m_dfScale;
-        double    m_dfNoData;
+    GDALRasterBand *m_poBaseBand;
+    bool m_bHasOffset;
+    bool m_bHasScale;
+    double m_dfOffset;
+    double m_dfScale;
+    double m_dfNoData;
 
   protected:
-    virtual GDALRasterBand* RefUnderlyingRasterBand() override
-                                                    { return m_poBaseBand; }
+    virtual GDALRasterBand *RefUnderlyingRasterBand() const override
+    {
+        return m_poBaseBand;
+    }
 
   public:
-            explicit ISIS3WrapperRasterBand( GDALRasterBand* poBaseBandIn );
-            ~ISIS3WrapperRasterBand() {}
+    explicit ISIS3WrapperRasterBand(GDALRasterBand *poBaseBandIn);
+    ~ISIS3WrapperRasterBand()
+    {
+    }
 
-        void    InitFile();
+    void InitFile();
 
-        virtual CPLErr          IWriteBlock( int, int, void * ) override;
+    virtual CPLErr Fill(double dfRealValue,
+                        double dfImaginaryValue = 0) override;
+    virtual CPLErr IWriteBlock(int, int, void *) override;
 
-        virtual CPLErr  IRasterIO( GDALRWFlag, int, int, int, int,
-                                void *, int, int, GDALDataType,
-                                GSpacing nPixelSpace, GSpacing nLineSpace,
-                                GDALRasterIOExtraArg* psExtraArg ) override;
+    virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
+                             GDALDataType, GSpacing nPixelSpace,
+                             GSpacing nLineSpace,
+                             GDALRasterIOExtraArg *psExtraArg) override;
 
-        virtual double GetOffset( int *pbSuccess = NULL ) override;
-        virtual double GetScale( int *pbSuccess = NULL ) override;
-        virtual CPLErr SetOffset( double dfNewOffset ) override;
-        virtual CPLErr SetScale( double dfNewScale ) override;
-        virtual double GetNoDataValue( int *pbSuccess = NULL ) override;
-        virtual CPLErr SetNoDataValue( double dfNewNoData ) override;
+    virtual double GetOffset(int *pbSuccess = nullptr) override;
+    virtual double GetScale(int *pbSuccess = nullptr) override;
+    virtual CPLErr SetOffset(double dfNewOffset) override;
+    virtual CPLErr SetScale(double dfNewScale) override;
+    virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
+    virtual CPLErr SetNoDataValue(double dfNewNoData) override;
 
-        int             GetMaskFlags() override { return nMaskFlags; }
-        GDALRasterBand* GetMaskBand() override { return poMask; }
-        void            SetMaskBand(GDALRasterBand* poMaskBand);
+    int GetMaskFlags() override
+    {
+        return nMaskFlags;
+    }
+    GDALRasterBand *GetMaskBand() override
+    {
+        return poMask;
+    }
+    void SetMaskBand(GDALRasterBand *poMaskBand);
 };
 
 /************************************************************************/
@@ -783,41 +370,31 @@ class ISIS3WrapperRasterBand : public GDALProxyRasterBand
 /*                             ISISMaskBand                             */
 /* ==================================================================== */
 
-class ISISMaskBand : public GDALRasterBand
+class ISISMaskBand final : public GDALRasterBand
 {
-    GDALRasterBand  *m_poBaseBand;
-    void            *m_pBuffer;
+    GDALRasterBand *m_poBaseBand;
+    void *m_pBuffer;
 
   public:
+    explicit ISISMaskBand(GDALRasterBand *poBaseBand);
+    ~ISISMaskBand();
 
-                            explicit ISISMaskBand( GDALRasterBand* poBaseBand );
-                           ~ISISMaskBand();
-
-    virtual CPLErr          IReadBlock( int, int, void * ) override;
-
+    virtual CPLErr IReadBlock(int, int, void *) override;
 };
 
 /************************************************************************/
 /*                           ISISTiledBand()                            */
 /************************************************************************/
 
-ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
-                              int nBandIn, GDALDataType eDT,
-                              int nTileXSize, int nTileYSize,
-                              GIntBig nFirstTileOffsetIn,
-                              GIntBig nXTileOffsetIn,
-                              GIntBig nYTileOffsetIn,
-                              int bNativeOrderIn ) :
-    m_fpVSIL(fpVSILIn),
-    m_nFirstTileOffset(0),
-    m_nXTileOffset(nXTileOffsetIn),
-    m_nYTileOffset(nYTileOffsetIn),
-    m_bNativeOrder(bNativeOrderIn),
-    m_bHasOffset(false),
-    m_bHasScale(false),
-    m_dfOffset(0.0),
-    m_dfScale(1.0),
-    m_dfNoData(0.0)
+ISISTiledBand::ISISTiledBand(GDALDataset *poDSIn, VSILFILE *fpVSILIn,
+                             int nBandIn, GDALDataType eDT, int nTileXSize,
+                             int nTileYSize, GIntBig nFirstTileOffsetIn,
+                             GIntBig nXTileOffsetIn, GIntBig nYTileOffsetIn,
+                             int bNativeOrderIn)
+    : m_fpVSIL(fpVSILIn), m_nFirstTileOffset(0), m_nXTileOffset(nXTileOffsetIn),
+      m_nYTileOffset(nYTileOffsetIn), m_bNativeOrder(bNativeOrderIn),
+      m_bHasOffset(false), m_bHasScale(false), m_dfOffset(0.0), m_dfScale(1.0),
+      m_dfNoData(0.0)
 {
     poDS = poDSIn;
     nBand = nBandIn;
@@ -830,58 +407,78 @@ ISISTiledBand::ISISTiledBand( GDALDataset *poDSIn, VSILFILE *fpVSILIn,
     const int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     const int l_nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
 
-    if( m_nXTileOffset == 0 && m_nYTileOffset == 0 )
+    if (m_nXTileOffset == 0 && m_nYTileOffset == 0)
     {
         m_nXTileOffset =
-            static_cast<GIntBig>(GDALGetDataTypeSizeBytes(eDT)) *
-            nTileXSize * nTileYSize;
+            static_cast<GIntBig>(GDALGetDataTypeSizeBytes(eDT)) * nTileXSize;
+        if (m_nXTileOffset > GINTBIG_MAX / nTileYSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+            return;
+        }
+        m_nXTileOffset *= nTileYSize;
+
+        if (m_nXTileOffset > GINTBIG_MAX / l_nBlocksPerRow)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+            return;
+        }
         m_nYTileOffset = m_nXTileOffset * l_nBlocksPerRow;
     }
 
-    m_nFirstTileOffset = nFirstTileOffsetIn
-        + (nBand-1) * m_nYTileOffset * l_nBlocksPerColumn;
+    m_nFirstTileOffset = nFirstTileOffsetIn;
+    if (nBand > 1)
+    {
+        if (m_nYTileOffset > GINTBIG_MAX / (nBand - 1) ||
+            (nBand - 1) * m_nYTileOffset > GINTBIG_MAX / l_nBlocksPerColumn ||
+            m_nFirstTileOffset >
+                GINTBIG_MAX - (nBand - 1) * m_nYTileOffset * l_nBlocksPerColumn)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
+            return;
+        }
+        m_nFirstTileOffset += (nBand - 1) * m_nYTileOffset * l_nBlocksPerColumn;
+    }
 }
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
+CPLErr ISISTiledBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
-    if( poGDS->m_osExternalFilename.empty() )
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (poGDS->m_osExternalFilename.empty())
     {
-        if( !poGDS->m_bIsLabelWritten )
+        if (!poGDS->m_bIsLabelWritten)
             poGDS->WriteLabel();
     }
 
-    const GIntBig  nOffset = m_nFirstTileOffset +
-        nXBlock * m_nXTileOffset + nYBlock * m_nYTileOffset;
+    const GIntBig nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
+                            nYBlock * m_nYTileOffset;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-    const size_t nBlockSize = static_cast<size_t>(nDTSize)
-                                            * nBlockXSize * nBlockYSize;
+    const size_t nBlockSize =
+        static_cast<size_t>(nDTSize) * nBlockXSize * nBlockYSize;
 
-    if( VSIFSeekL( m_fpVSIL, nOffset, SEEK_SET ) != 0 )
+    if (VSIFSeekL(m_fpVSIL, nOffset, SEEK_SET) != 0)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to offset %d to read tile %d,%d.",
-                  static_cast<int>( nOffset ), nXBlock, nYBlock );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Failed to seek to offset %d to read tile %d,%d.",
+                 static_cast<int>(nOffset), nXBlock, nYBlock);
         return CE_Failure;
     }
 
-    if( VSIFReadL( pImage, 1, nBlockSize, m_fpVSIL ) != nBlockSize )
+    if (VSIFReadL(pImage, 1, nBlockSize, m_fpVSIL) != nBlockSize)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to read %d bytes for tile %d,%d.",
-                  static_cast<int>( nBlockSize ), nXBlock, nYBlock );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Failed to read %d bytes for tile %d,%d.",
+                 static_cast<int>(nBlockSize), nXBlock, nYBlock);
         return CE_Failure;
     }
 
-    if( !m_bNativeOrder && eDataType != GDT_Byte )
-        GDALSwapWords( pImage, nDTSize,
-                       nBlockXSize*nBlockYSize,
-                       nDTSize );
+    if (!m_bNativeOrder && eDataType != GDT_Byte)
+        GDALSwapWords(pImage, nDTSize, nBlockXSize * nBlockYSize, nDTSize);
 
     return CE_None;
 }
@@ -890,12 +487,12 @@ CPLErr ISISTiledBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
 /*                           RemapNoDataT()                             */
 /************************************************************************/
 
-template<class T> static void RemapNoDataT( T* pBuffer, int nItems,
-                                            T srcNoData, T dstNoData )
+template <class T>
+static void RemapNoDataT(T *pBuffer, int nItems, T srcNoData, T dstNoData)
 {
-    for( int i = 0; i < nItems; i++ )
+    for (int i = 0; i < nItems; i++)
     {
-        if( pBuffer[i] == srcNoData )
+        if (pBuffer[i] == srcNoData)
             pBuffer[i] = dstNoData;
     }
 }
@@ -904,121 +501,133 @@ template<class T> static void RemapNoDataT( T* pBuffer, int nItems,
 /*                            RemapNoData()                             */
 /************************************************************************/
 
-static void RemapNoData( GDALDataType eDataType,
-                         void* pBuffer, int nItems, double dfSrcNoData,
-                         double dfDstNoData )
+static void RemapNoData(GDALDataType eDataType, void *pBuffer, int nItems,
+                        double dfSrcNoData, double dfDstNoData)
 {
-    if( eDataType == GDT_Byte )
+    if (eDataType == GDT_Byte)
     {
-        RemapNoDataT( reinterpret_cast<GByte*>(pBuffer),
-                      nItems,
-                      static_cast<GByte>(dfSrcNoData),
-                      static_cast<GByte>(dfDstNoData) );
+        RemapNoDataT(reinterpret_cast<GByte *>(pBuffer), nItems,
+                     static_cast<GByte>(dfSrcNoData),
+                     static_cast<GByte>(dfDstNoData));
     }
-    else if( eDataType == GDT_UInt16 )
+    else if (eDataType == GDT_UInt16)
     {
-        RemapNoDataT( reinterpret_cast<GUInt16*>(pBuffer),
-                      nItems,
-                      static_cast<GUInt16>(dfSrcNoData),
-                      static_cast<GUInt16>(dfDstNoData) );
+        RemapNoDataT(reinterpret_cast<GUInt16 *>(pBuffer), nItems,
+                     static_cast<GUInt16>(dfSrcNoData),
+                     static_cast<GUInt16>(dfDstNoData));
     }
-    else if( eDataType == GDT_Int16)
+    else if (eDataType == GDT_Int16)
     {
-        RemapNoDataT( reinterpret_cast<GInt16*>(pBuffer),
-                      nItems,
-                      static_cast<GInt16>(dfSrcNoData),
-                      static_cast<GInt16>(dfDstNoData) );
+        RemapNoDataT(reinterpret_cast<GInt16 *>(pBuffer), nItems,
+                     static_cast<GInt16>(dfSrcNoData),
+                     static_cast<GInt16>(dfDstNoData));
     }
     else
     {
-        CPLAssert( eDataType == GDT_Float32 );
-        RemapNoDataT( reinterpret_cast<float*>(pBuffer),
-                      nItems,
-                      static_cast<float>(dfSrcNoData),
-                      static_cast<float>(dfDstNoData) );
+        CPLAssert(eDataType == GDT_Float32);
+        RemapNoDataT(reinterpret_cast<float *>(pBuffer), nItems,
+                     static_cast<float>(dfSrcNoData),
+                     static_cast<float>(dfDstNoData));
     }
+}
+
+/**
+ * Get or create CPLJSONObject.
+ * @param  oParent Parent CPLJSONObject.
+ * @param  osKey  Key name.
+ * @return         CPLJSONObject class instance.
+ */
+static CPLJSONObject GetOrCreateJSONObject(CPLJSONObject &oParent,
+                                           const std::string &osKey)
+{
+    CPLJSONObject oChild = oParent[osKey];
+    if (oChild.IsValid() && oChild.GetType() != CPLJSONObject::Type::Object)
+    {
+        oParent.Delete(osKey);
+        oChild.Deinit();
+    }
+
+    if (!oChild.IsValid())
+    {
+        oChild = CPLJSONObject();
+        oParent.Add(osKey, oChild);
+    }
+    return oChild;
 }
 
 /************************************************************************/
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr ISISTiledBand::IWriteBlock( int nXBlock, int nYBlock, void *pImage )
+CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
-    if( poGDS->m_osExternalFilename.empty() )
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (poGDS->m_osExternalFilename.empty())
     {
-        if( !poGDS->m_bIsLabelWritten )
+        if (!poGDS->m_bIsLabelWritten)
             poGDS->WriteLabel();
     }
 
-    if( poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData != m_dfNoData )
+    if (poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData != m_dfNoData)
     {
-        RemapNoData( eDataType, pImage, nBlockXSize * nBlockYSize,
-                     poGDS->m_dfSrcNoData, m_dfNoData );
+        RemapNoData(eDataType, pImage, nBlockXSize * nBlockYSize,
+                    poGDS->m_dfSrcNoData, m_dfNoData);
     }
 
-    const GIntBig  nOffset = m_nFirstTileOffset +
-        nXBlock * m_nXTileOffset + nYBlock * m_nYTileOffset;
+    const GIntBig nOffset = m_nFirstTileOffset + nXBlock * m_nXTileOffset +
+                            nYBlock * m_nYTileOffset;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-    const size_t nBlockSize = static_cast<size_t>(nDTSize)
-                                            * nBlockXSize * nBlockYSize;
+    const size_t nBlockSize =
+        static_cast<size_t>(nDTSize) * nBlockXSize * nBlockYSize;
 
     const int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     const int l_nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
 
     // Pad partial blocks to nodata value
-    if( nXBlock == l_nBlocksPerRow - 1 && (nRasterXSize % nBlockXSize) != 0 )
+    if (nXBlock == l_nBlocksPerRow - 1 && (nRasterXSize % nBlockXSize) != 0)
     {
-        GByte* pabyImage = static_cast<GByte*>(pImage);
+        GByte *pabyImage = static_cast<GByte *>(pImage);
         int nXStart = nRasterXSize % nBlockXSize;
-        for( int iY = 0; iY < nBlockYSize; iY++ )
+        for (int iY = 0; iY < nBlockYSize; iY++)
         {
-            GDALCopyWords( &m_dfNoData, GDT_Float64, 0,
-                           pabyImage + (iY * nBlockXSize + nXStart) * nDTSize,
-                           eDataType, nDTSize,
-                           nBlockXSize - nXStart );
+            GDALCopyWords(&m_dfNoData, GDT_Float64, 0,
+                          pabyImage + (iY * nBlockXSize + nXStart) * nDTSize,
+                          eDataType, nDTSize, nBlockXSize - nXStart);
         }
     }
-    if( nYBlock == l_nBlocksPerColumn - 1 &&
-        (nRasterYSize % nBlockYSize) != 0 )
+    if (nYBlock == l_nBlocksPerColumn - 1 && (nRasterYSize % nBlockYSize) != 0)
     {
-        GByte* pabyImage = static_cast<GByte*>(pImage);
-        for( int iY = nRasterYSize % nBlockYSize; iY < nBlockYSize; iY++ )
+        GByte *pabyImage = static_cast<GByte *>(pImage);
+        for (int iY = nRasterYSize % nBlockYSize; iY < nBlockYSize; iY++)
         {
-            GDALCopyWords( &m_dfNoData, GDT_Float64, 0,
-                           pabyImage + iY * nBlockXSize * nDTSize,
-                           eDataType, nDTSize,
-                           nBlockXSize );
+            GDALCopyWords(&m_dfNoData, GDT_Float64, 0,
+                          pabyImage + iY * nBlockXSize * nDTSize, eDataType,
+                          nDTSize, nBlockXSize);
         }
     }
 
-    if( VSIFSeekL( m_fpVSIL, nOffset, SEEK_SET ) != 0 )
+    if (VSIFSeekL(m_fpVSIL, nOffset, SEEK_SET) != 0)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to seek to offset %d to read tile %d,%d.",
-                  static_cast<int>( nOffset ), nXBlock, nYBlock );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Failed to seek to offset %d to read tile %d,%d.",
+                 static_cast<int>(nOffset), nXBlock, nYBlock);
         return CE_Failure;
     }
 
-    if( !m_bNativeOrder && eDataType != GDT_Byte )
-        GDALSwapWords( pImage, nDTSize,
-                       nBlockXSize*nBlockYSize,
-                       nDTSize );
+    if (!m_bNativeOrder && eDataType != GDT_Byte)
+        GDALSwapWords(pImage, nDTSize, nBlockXSize * nBlockYSize, nDTSize);
 
-    if( VSIFWriteL( pImage, 1, nBlockSize, m_fpVSIL ) != nBlockSize )
+    if (VSIFWriteL(pImage, 1, nBlockSize, m_fpVSIL) != nBlockSize)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Failed to write %d bytes for tile %d,%d.",
-                  static_cast<int>( nBlockSize ), nXBlock, nYBlock );
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "Failed to write %d bytes for tile %d,%d.",
+                 static_cast<int>(nBlockSize), nXBlock, nYBlock);
         return CE_Failure;
     }
 
-    if( !m_bNativeOrder && eDataType != GDT_Byte )
-        GDALSwapWords( pImage, nDTSize,
-                       nBlockXSize*nBlockYSize,
-                       nDTSize );
+    if (!m_bNativeOrder && eDataType != GDT_Byte)
+        GDALSwapWords(pImage, nDTSize, nBlockXSize * nBlockYSize, nDTSize);
 
     return CE_None;
 }
@@ -1027,7 +636,7 @@ CPLErr ISISTiledBand::IWriteBlock( int nXBlock, int nYBlock, void *pImage )
 /*                             SetMaskBand()                            */
 /************************************************************************/
 
-void ISISTiledBand::SetMaskBand(GDALRasterBand* poMaskBand)
+void ISISTiledBand::SetMaskBand(GDALRasterBand *poMaskBand)
 {
     bOwnMask = true;
     poMask = poMaskBand;
@@ -1038,9 +647,9 @@ void ISISTiledBand::SetMaskBand(GDALRasterBand* poMaskBand)
 /*                              GetOffset()                             */
 /************************************************************************/
 
-double ISISTiledBand::GetOffset( int *pbSuccess )
+double ISISTiledBand::GetOffset(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = m_bHasOffset;
     return m_dfOffset;
 }
@@ -1049,9 +658,9 @@ double ISISTiledBand::GetOffset( int *pbSuccess )
 /*                              GetScale()                              */
 /************************************************************************/
 
-double ISISTiledBand::GetScale( int *pbSuccess )
+double ISISTiledBand::GetScale(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = m_bHasScale;
     return m_dfScale;
 }
@@ -1060,7 +669,7 @@ double ISISTiledBand::GetScale( int *pbSuccess )
 /*                              SetOffset()                             */
 /************************************************************************/
 
-CPLErr ISISTiledBand::SetOffset( double dfNewOffset )
+CPLErr ISISTiledBand::SetOffset(double dfNewOffset)
 {
     m_dfOffset = dfNewOffset;
     m_bHasOffset = true;
@@ -1071,7 +680,7 @@ CPLErr ISISTiledBand::SetOffset( double dfNewOffset )
 /*                              SetScale()                              */
 /************************************************************************/
 
-CPLErr ISISTiledBand::SetScale( double dfNewScale )
+CPLErr ISISTiledBand::SetScale(double dfNewScale)
 {
     m_dfScale = dfNewScale;
     m_bHasScale = true;
@@ -1082,9 +691,9 @@ CPLErr ISISTiledBand::SetScale( double dfNewScale )
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
-double ISISTiledBand::GetNoDataValue( int *pbSuccess )
+double ISISTiledBand::GetNoDataValue(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = true;
     return m_dfNoData;
 }
@@ -1093,7 +702,7 @@ double ISISTiledBand::GetNoDataValue( int *pbSuccess )
 /*                           SetNoDataValue()                           */
 /************************************************************************/
 
-CPLErr ISISTiledBand::SetNoDataValue( double dfNewNoData )
+CPLErr ISISTiledBand::SetNoDataValue(double dfNewNoData)
 {
     m_dfNoData = dfNewNoData;
     return CE_None;
@@ -1103,22 +712,17 @@ CPLErr ISISTiledBand::SetNoDataValue( double dfNewNoData )
 /*                       ISIS3RawRasterBand()                           */
 /************************************************************************/
 
-ISIS3RawRasterBand::ISIS3RawRasterBand( GDALDataset *l_poDS, int l_nBand,
-                                        void * l_fpRaw,
-                                        vsi_l_offset l_nImgOffset,
-                                        int l_nPixelOffset,
-                                        int l_nLineOffset,
-                                        GDALDataType l_eDataType,
-                                        int l_bNativeOrder,
-                                        int l_bIsVSIL, int l_bOwnsFP )
+ISIS3RawRasterBand::ISIS3RawRasterBand(GDALDataset *l_poDS, int l_nBand,
+                                       VSILFILE *l_fpRaw,
+                                       vsi_l_offset l_nImgOffset,
+                                       int l_nPixelOffset, int l_nLineOffset,
+                                       GDALDataType l_eDataType,
+                                       int l_bNativeOrder)
     : RawRasterBand(l_poDS, l_nBand, l_fpRaw, l_nImgOffset, l_nPixelOffset,
-                    l_nLineOffset,
-                    l_eDataType, l_bNativeOrder, l_bIsVSIL, l_bOwnsFP),
-    m_bHasOffset(false),
-    m_bHasScale(false),
-    m_dfOffset(0.0),
-    m_dfScale(1.0),
-    m_dfNoData(0.0)
+                    l_nLineOffset, l_eDataType, l_bNativeOrder,
+                    RawRasterBand::OwnFP::NO),
+      m_bHasOffset(false), m_bHasScale(false), m_dfOffset(0.0), m_dfScale(1.0),
+      m_dfNoData(0.0)
 {
 }
 
@@ -1126,108 +730,100 @@ ISIS3RawRasterBand::ISIS3RawRasterBand( GDALDataset *l_poDS, int l_nBand,
 /*                             IReadBlock()                             */
 /************************************************************************/
 
-CPLErr ISIS3RawRasterBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
+CPLErr ISIS3RawRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
-    if( poGDS->m_osExternalFilename.empty() )
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (poGDS->m_osExternalFilename.empty())
     {
-        if( !poGDS->m_bIsLabelWritten )
+        if (!poGDS->m_bIsLabelWritten)
             poGDS->WriteLabel();
     }
-    return RawRasterBand::IReadBlock( nXBlock, nYBlock, pImage );
+    return RawRasterBand::IReadBlock(nXBlock, nYBlock, pImage);
 }
 
 /************************************************************************/
-/*                             IReadBlock()                             */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
-CPLErr ISIS3RawRasterBand::IWriteBlock( int nXBlock, int nYBlock,
-                                        void *pImage )
+CPLErr ISIS3RawRasterBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
-    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
-    if( poGDS->m_osExternalFilename.empty() )
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (poGDS->m_osExternalFilename.empty())
     {
-        if( !poGDS->m_bIsLabelWritten )
+        if (!poGDS->m_bIsLabelWritten)
             poGDS->WriteLabel();
     }
 
-    if( poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData != m_dfNoData )
+    if (poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData != m_dfNoData)
     {
-        RemapNoData( eDataType, pImage, nBlockXSize * nBlockYSize,
-                     poGDS->m_dfSrcNoData, m_dfNoData );
+        RemapNoData(eDataType, pImage, nBlockXSize * nBlockYSize,
+                    poGDS->m_dfSrcNoData, m_dfNoData);
     }
 
-    return RawRasterBand::IWriteBlock( nXBlock, nYBlock, pImage );
+    return RawRasterBand::IWriteBlock(nXBlock, nYBlock, pImage);
 }
 
 /************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr ISIS3RawRasterBand::IRasterIO( GDALRWFlag eRWFlag,
-                                 int nXOff, int nYOff, int nXSize, int nYSize,
-                                 void * pData, int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType,
-                                 GSpacing nPixelSpace, GSpacing nLineSpace,
-                                 GDALRasterIOExtraArg* psExtraArg )
+CPLErr ISIS3RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                     int nXSize, int nYSize, void *pData,
+                                     int nBufXSize, int nBufYSize,
+                                     GDALDataType eBufType,
+                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALRasterIOExtraArg *psExtraArg)
 
 {
-    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
-    if( poGDS->m_osExternalFilename.empty() )
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (poGDS->m_osExternalFilename.empty())
     {
-        if( !poGDS->m_bIsLabelWritten )
+        if (!poGDS->m_bIsLabelWritten)
             poGDS->WriteLabel();
     }
-    if( eRWFlag == GF_Write && 
-        poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData != m_dfNoData )
+    if (eRWFlag == GF_Write && poGDS->m_bHasSrcNoData &&
+        poGDS->m_dfSrcNoData != m_dfNoData)
     {
         const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-        if( eBufType == eDataType && nPixelSpace == nDTSize &&
-            nLineSpace == nPixelSpace * nBufXSize )
+        if (eBufType == eDataType && nPixelSpace == nDTSize &&
+            nLineSpace == nPixelSpace * nBufXSize)
         {
-            RemapNoData( eDataType, pData, nBufXSize * nBufYSize,
-                         poGDS->m_dfSrcNoData, m_dfNoData );
+            RemapNoData(eDataType, pData, nBufXSize * nBufYSize,
+                        poGDS->m_dfSrcNoData, m_dfNoData);
         }
         else
         {
-            const GByte* pabySrc = reinterpret_cast<GByte*>(pData);
-            GByte* pabyTemp = reinterpret_cast<GByte*>(
+            const GByte *pabySrc = reinterpret_cast<GByte *>(pData);
+            GByte *pabyTemp = reinterpret_cast<GByte *>(
                 VSI_MALLOC3_VERBOSE(nDTSize, nBufXSize, nBufYSize));
-            for( int i = 0; i < nBufYSize; i++ )
+            for (int i = 0; i < nBufYSize; i++)
             {
-                GDALCopyWords( pabySrc + i * nLineSpace, eBufType,
-                               static_cast<int>(nPixelSpace),
-                               pabyTemp + i * nBufXSize * nDTSize,
-                               eDataType, nDTSize,
-                               nBufXSize );
+                GDALCopyWords(pabySrc + i * nLineSpace, eBufType,
+                              static_cast<int>(nPixelSpace),
+                              pabyTemp + i * nBufXSize * nDTSize, eDataType,
+                              nDTSize, nBufXSize);
             }
-            RemapNoData( eDataType, pabyTemp, nBufXSize * nBufYSize,
-                         poGDS->m_dfSrcNoData, m_dfNoData );
-            CPLErr eErr = RawRasterBand::IRasterIO( eRWFlag,
-                                     nXOff, nYOff, nXSize, nYSize,
-                                     pabyTemp, nBufXSize, nBufYSize,
-                                     eDataType,
-                                     nDTSize, nDTSize*nBufXSize,
-                                     psExtraArg );
+            RemapNoData(eDataType, pabyTemp, nBufXSize * nBufYSize,
+                        poGDS->m_dfSrcNoData, m_dfNoData);
+            CPLErr eErr = RawRasterBand::IRasterIO(
+                eRWFlag, nXOff, nYOff, nXSize, nYSize, pabyTemp, nBufXSize,
+                nBufYSize, eDataType, nDTSize, nDTSize * nBufXSize, psExtraArg);
             VSIFree(pabyTemp);
             return eErr;
         }
     }
-    return RawRasterBand::IRasterIO( eRWFlag,
-                                     nXOff, nYOff, nXSize, nYSize,
-                                     pData, nBufXSize, nBufYSize,
-                                     eBufType,
-                                     nPixelSpace, nLineSpace,
-                                     psExtraArg );
+    return RawRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                    pData, nBufXSize, nBufYSize, eBufType,
+                                    nPixelSpace, nLineSpace, psExtraArg);
 }
 
 /************************************************************************/
 /*                             SetMaskBand()                            */
 /************************************************************************/
 
-void ISIS3RawRasterBand::SetMaskBand(GDALRasterBand* poMaskBand)
+void ISIS3RawRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
 {
     bOwnMask = true;
     poMask = poMaskBand;
@@ -1238,9 +834,9 @@ void ISIS3RawRasterBand::SetMaskBand(GDALRasterBand* poMaskBand)
 /*                              GetOffset()                             */
 /************************************************************************/
 
-double ISIS3RawRasterBand::GetOffset( int *pbSuccess )
+double ISIS3RawRasterBand::GetOffset(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = m_bHasOffset;
     return m_dfOffset;
 }
@@ -1249,9 +845,9 @@ double ISIS3RawRasterBand::GetOffset( int *pbSuccess )
 /*                              GetScale()                              */
 /************************************************************************/
 
-double ISIS3RawRasterBand::GetScale( int *pbSuccess )
+double ISIS3RawRasterBand::GetScale(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = m_bHasScale;
     return m_dfScale;
 }
@@ -1260,7 +856,7 @@ double ISIS3RawRasterBand::GetScale( int *pbSuccess )
 /*                              SetOffset()                             */
 /************************************************************************/
 
-CPLErr ISIS3RawRasterBand::SetOffset( double dfNewOffset )
+CPLErr ISIS3RawRasterBand::SetOffset(double dfNewOffset)
 {
     m_dfOffset = dfNewOffset;
     m_bHasOffset = true;
@@ -1271,7 +867,7 @@ CPLErr ISIS3RawRasterBand::SetOffset( double dfNewOffset )
 /*                              SetScale()                              */
 /************************************************************************/
 
-CPLErr ISIS3RawRasterBand::SetScale( double dfNewScale )
+CPLErr ISIS3RawRasterBand::SetScale(double dfNewScale)
 {
     m_dfScale = dfNewScale;
     m_bHasScale = true;
@@ -1282,9 +878,9 @@ CPLErr ISIS3RawRasterBand::SetScale( double dfNewScale )
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
-double ISIS3RawRasterBand::GetNoDataValue( int *pbSuccess )
+double ISIS3RawRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = true;
     return m_dfNoData;
 }
@@ -1293,7 +889,7 @@ double ISIS3RawRasterBand::GetNoDataValue( int *pbSuccess )
 /*                           SetNoDataValue()                           */
 /************************************************************************/
 
-CPLErr ISIS3RawRasterBand::SetNoDataValue( double dfNewNoData )
+CPLErr ISIS3RawRasterBand::SetNoDataValue(double dfNewNoData)
 {
     m_dfNoData = dfNewNoData;
     return CE_None;
@@ -1303,13 +899,9 @@ CPLErr ISIS3RawRasterBand::SetNoDataValue( double dfNewNoData )
 /*                        ISIS3WrapperRasterBand()                      */
 /************************************************************************/
 
-ISIS3WrapperRasterBand::ISIS3WrapperRasterBand( GDALRasterBand* poBaseBandIn ) :
-    m_poBaseBand(poBaseBandIn),
-    m_bHasOffset(false),
-    m_bHasScale(false),
-    m_dfOffset(0.0),
-    m_dfScale(1.0),
-    m_dfNoData(0.0)
+ISIS3WrapperRasterBand::ISIS3WrapperRasterBand(GDALRasterBand *poBaseBandIn)
+    : m_poBaseBand(poBaseBandIn), m_bHasOffset(false), m_bHasScale(false),
+      m_dfOffset(0.0), m_dfScale(1.0), m_dfNoData(0.0)
 {
     eDataType = m_poBaseBand->GetRasterDataType();
     m_poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
@@ -1319,7 +911,7 @@ ISIS3WrapperRasterBand::ISIS3WrapperRasterBand( GDALRasterBand* poBaseBandIn ) :
 /*                             SetMaskBand()                            */
 /************************************************************************/
 
-void ISIS3WrapperRasterBand::SetMaskBand(GDALRasterBand* poMaskBand)
+void ISIS3WrapperRasterBand::SetMaskBand(GDALRasterBand *poMaskBand)
 {
     bOwnMask = true;
     poMask = poMaskBand;
@@ -1330,9 +922,9 @@ void ISIS3WrapperRasterBand::SetMaskBand(GDALRasterBand* poMaskBand)
 /*                              GetOffset()                             */
 /************************************************************************/
 
-double ISIS3WrapperRasterBand::GetOffset( int *pbSuccess )
+double ISIS3WrapperRasterBand::GetOffset(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = m_bHasOffset;
     return m_dfOffset;
 }
@@ -1341,9 +933,9 @@ double ISIS3WrapperRasterBand::GetOffset( int *pbSuccess )
 /*                              GetScale()                              */
 /************************************************************************/
 
-double ISIS3WrapperRasterBand::GetScale( int *pbSuccess )
+double ISIS3WrapperRasterBand::GetScale(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = m_bHasScale;
     return m_dfScale;
 }
@@ -1352,13 +944,13 @@ double ISIS3WrapperRasterBand::GetScale( int *pbSuccess )
 /*                              SetOffset()                             */
 /************************************************************************/
 
-CPLErr ISIS3WrapperRasterBand::SetOffset( double dfNewOffset )
+CPLErr ISIS3WrapperRasterBand::SetOffset(double dfNewOffset)
 {
     m_dfOffset = dfNewOffset;
     m_bHasOffset = true;
 
-    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
-    if( poGDS->m_poExternalDS && eAccess == GA_Update )
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (poGDS->m_poExternalDS && eAccess == GA_Update)
         poGDS->m_poExternalDS->GetRasterBand(nBand)->SetOffset(dfNewOffset);
 
     return CE_None;
@@ -1368,13 +960,13 @@ CPLErr ISIS3WrapperRasterBand::SetOffset( double dfNewOffset )
 /*                              SetScale()                              */
 /************************************************************************/
 
-CPLErr ISIS3WrapperRasterBand::SetScale( double dfNewScale )
+CPLErr ISIS3WrapperRasterBand::SetScale(double dfNewScale)
 {
     m_dfScale = dfNewScale;
     m_bHasScale = true;
 
-    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
-    if( poGDS->m_poExternalDS && eAccess == GA_Update )
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (poGDS->m_poExternalDS && eAccess == GA_Update)
         poGDS->m_poExternalDS->GetRasterBand(nBand)->SetScale(dfNewScale);
 
     return CE_None;
@@ -1384,9 +976,9 @@ CPLErr ISIS3WrapperRasterBand::SetScale( double dfNewScale )
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
-double ISIS3WrapperRasterBand::GetNoDataValue( int *pbSuccess )
+double ISIS3WrapperRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    if( pbSuccess )
+    if (pbSuccess)
         *pbSuccess = true;
     return m_dfNoData;
 }
@@ -1395,13 +987,14 @@ double ISIS3WrapperRasterBand::GetNoDataValue( int *pbSuccess )
 /*                           SetNoDataValue()                           */
 /************************************************************************/
 
-CPLErr ISIS3WrapperRasterBand::SetNoDataValue( double dfNewNoData )
+CPLErr ISIS3WrapperRasterBand::SetNoDataValue(double dfNewNoData)
 {
     m_dfNoData = dfNewNoData;
 
-    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
-    if( poGDS->m_poExternalDS && eAccess == GA_Update )
-        poGDS->m_poExternalDS->GetRasterBand(nBand)->SetNoDataValue(dfNewNoData);
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (poGDS->m_poExternalDS && eAccess == GA_Update)
+        poGDS->m_poExternalDS->GetRasterBand(nBand)->SetNoDataValue(
+            dfNewNoData);
 
     return CE_None;
 }
@@ -1412,47 +1005,48 @@ CPLErr ISIS3WrapperRasterBand::SetNoDataValue( double dfNewNoData )
 
 void ISIS3WrapperRasterBand::InitFile()
 {
-    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
-    if( poGDS->m_bGeoTIFFAsRegularExternal && !poGDS->m_bGeoTIFFInitDone )
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (poGDS->m_bGeoTIFFAsRegularExternal && !poGDS->m_bGeoTIFFInitDone)
     {
         poGDS->m_bGeoTIFFInitDone = true;
 
         const int nBands = poGDS->GetRasterCount();
         // We need to make sure that blocks are written in the right order
-        for( int i = 0; i < nBands; i++ )
+        for (int i = 0; i < nBands; i++)
         {
-            poGDS->m_poExternalDS->GetRasterBand(i+1)->Fill(m_dfNoData);
+            poGDS->m_poExternalDS->GetRasterBand(i + 1)->Fill(m_dfNoData);
         }
-        poGDS->m_poExternalDS->FlushCache();
+        poGDS->m_poExternalDS->FlushCache(false);
 
         // Check that blocks are effectively written in expected order.
-        const int nBlockSizeBytes = nBlockXSize * nBlockYSize *
-                                        GDALGetDataTypeSizeBytes(eDataType);
+        const int nBlockSizeBytes =
+            nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType);
 
         GIntBig nLastOffset = 0;
         bool bGoOn = true;
         const int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
         const int l_nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
-        for( int i = 0; i < nBands && bGoOn; i++ )
+        for (int i = 0; i < nBands && bGoOn; i++)
         {
-            for( int y = 0; y < l_nBlocksPerColumn && bGoOn; y++ )
+            for (int y = 0; y < l_nBlocksPerColumn && bGoOn; y++)
             {
-                for( int x = 0; x < l_nBlocksPerRow && bGoOn; x++ )
+                for (int x = 0; x < l_nBlocksPerRow && bGoOn; x++)
                 {
-                    const char* pszBlockOffset =  poGDS->m_poExternalDS->
-                        GetRasterBand(i+1)->GetMetadataItem(
-                            CPLSPrintf("BLOCK_OFFSET_%d_%d", x, y), "TIFF");
-                    if( pszBlockOffset )
+                    const char *pszBlockOffset =
+                        poGDS->m_poExternalDS->GetRasterBand(i + 1)
+                            ->GetMetadataItem(
+                                CPLSPrintf("BLOCK_OFFSET_%d_%d", x, y), "TIFF");
+                    if (pszBlockOffset)
                     {
                         GIntBig nOffset = CPLAtoGIntBig(pszBlockOffset);
-                        if( i != 0 || x != 0 || y != 0 )
+                        if (i != 0 || x != 0 || y != 0)
                         {
-                            if( nOffset != nLastOffset + nBlockSizeBytes )
+                            if (nOffset != nLastOffset + nBlockSizeBytes)
                             {
                                 CPLError(CE_Warning, CPLE_AppDefined,
                                          "Block %d,%d band %d not at expected "
                                          "offset",
-                                         x, y, i+1);
+                                         x, y, i + 1);
                                 bGoOn = false;
                                 poGDS->m_bGeoTIFFAsRegularExternal = false;
                             }
@@ -1462,9 +1056,9 @@ void ISIS3WrapperRasterBand::InitFile()
                     else
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
-                                         "Block %d,%d band %d not at expected "
-                                         "offset",
-                                         x, y, i+1);
+                                 "Block %d,%d band %d not at expected "
+                                 "offset",
+                                 x, y, i + 1);
                         bGoOn = false;
                         poGDS->m_bGeoTIFFAsRegularExternal = false;
                     }
@@ -1475,95 +1069,104 @@ void ISIS3WrapperRasterBand::InitFile()
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                             */
+/*                               Fill()                                 */
 /************************************************************************/
 
-CPLErr ISIS3WrapperRasterBand::IWriteBlock( int nXBlock, int nYBlock,
-                                            void *pImage )
-
+CPLErr ISIS3WrapperRasterBand::Fill(double dfRealValue, double dfImaginaryValue)
 {
-    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
-    if( poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData != m_dfNoData )
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData == dfRealValue)
     {
-        RemapNoData( eDataType, pImage, nBlockXSize * nBlockYSize,
-                     poGDS->m_dfSrcNoData, m_dfNoData );
+        dfRealValue = m_dfNoData;
     }
-    if( poGDS->m_bGeoTIFFAsRegularExternal && poGDS->m_bGeoTIFFInitDone )
+    if (poGDS->m_bGeoTIFFAsRegularExternal && !poGDS->m_bGeoTIFFInitDone)
     {
         InitFile();
     }
 
-    return GDALProxyRasterBand::IWriteBlock( nXBlock, nYBlock, pImage );
+    return GDALProxyRasterBand::Fill(dfRealValue, dfImaginaryValue);
+}
+
+/************************************************************************/
+/*                             IWriteBlock()                             */
+/************************************************************************/
+
+CPLErr ISIS3WrapperRasterBand::IWriteBlock(int nXBlock, int nYBlock,
+                                           void *pImage)
+
+{
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData != m_dfNoData)
+    {
+        RemapNoData(eDataType, pImage, nBlockXSize * nBlockYSize,
+                    poGDS->m_dfSrcNoData, m_dfNoData);
+    }
+    if (poGDS->m_bGeoTIFFAsRegularExternal && !poGDS->m_bGeoTIFFInitDone)
+    {
+        InitFile();
+    }
+
+    return GDALProxyRasterBand::IWriteBlock(nXBlock, nYBlock, pImage);
 }
 
 /************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr ISIS3WrapperRasterBand::IRasterIO( GDALRWFlag eRWFlag,
-                                 int nXOff, int nYOff, int nXSize, int nYSize,
-                                 void * pData, int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType,
-                                 GSpacing nPixelSpace, GSpacing nLineSpace,
-                                 GDALRasterIOExtraArg* psExtraArg )
+CPLErr ISIS3WrapperRasterBand::IRasterIO(
+    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
+    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
+    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 
 {
-    ISIS3Dataset* poGDS = reinterpret_cast<ISIS3Dataset*>(poDS);
-    if( eRWFlag == GF_Write && poGDS->m_bGeoTIFFAsRegularExternal &&
-        !poGDS->m_bGeoTIFFInitDone )
+    ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);
+    if (eRWFlag == GF_Write && poGDS->m_bGeoTIFFAsRegularExternal &&
+        !poGDS->m_bGeoTIFFInitDone)
     {
         InitFile();
     }
-    if( eRWFlag == GF_Write && 
-        poGDS->m_bHasSrcNoData && poGDS->m_dfSrcNoData != m_dfNoData )
+    if (eRWFlag == GF_Write && poGDS->m_bHasSrcNoData &&
+        poGDS->m_dfSrcNoData != m_dfNoData)
     {
         const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
-        if( eBufType == eDataType && nPixelSpace == nDTSize &&
-            nLineSpace == nPixelSpace * nBufXSize )
+        if (eBufType == eDataType && nPixelSpace == nDTSize &&
+            nLineSpace == nPixelSpace * nBufXSize)
         {
-            RemapNoData( eDataType, pData, nBufXSize * nBufYSize,
-                         poGDS->m_dfSrcNoData, m_dfNoData );
+            RemapNoData(eDataType, pData, nBufXSize * nBufYSize,
+                        poGDS->m_dfSrcNoData, m_dfNoData);
         }
         else
         {
-            const GByte* pabySrc = reinterpret_cast<GByte*>(pData);
-            GByte* pabyTemp = reinterpret_cast<GByte*>(
+            const GByte *pabySrc = reinterpret_cast<GByte *>(pData);
+            GByte *pabyTemp = reinterpret_cast<GByte *>(
                 VSI_MALLOC3_VERBOSE(nDTSize, nBufXSize, nBufYSize));
-            for( int i = 0; i < nBufYSize; i++ )
+            for (int i = 0; i < nBufYSize; i++)
             {
-                GDALCopyWords( pabySrc + i * nLineSpace, eBufType,
-                               static_cast<int>(nPixelSpace),
-                               pabyTemp + i * nBufXSize * nDTSize,
-                               eDataType, nDTSize,
-                               nBufXSize );
+                GDALCopyWords(pabySrc + i * nLineSpace, eBufType,
+                              static_cast<int>(nPixelSpace),
+                              pabyTemp + i * nBufXSize * nDTSize, eDataType,
+                              nDTSize, nBufXSize);
             }
-            RemapNoData( eDataType, pabyTemp, nBufXSize * nBufYSize,
-                         poGDS->m_dfSrcNoData, m_dfNoData );
-            CPLErr eErr = GDALProxyRasterBand::IRasterIO( eRWFlag,
-                                     nXOff, nYOff, nXSize, nYSize,
-                                     pabyTemp, nBufXSize, nBufYSize,
-                                     eDataType,
-                                     nDTSize, nDTSize*nBufXSize,
-                                     psExtraArg );
+            RemapNoData(eDataType, pabyTemp, nBufXSize * nBufYSize,
+                        poGDS->m_dfSrcNoData, m_dfNoData);
+            CPLErr eErr = GDALProxyRasterBand::IRasterIO(
+                eRWFlag, nXOff, nYOff, nXSize, nYSize, pabyTemp, nBufXSize,
+                nBufYSize, eDataType, nDTSize, nDTSize * nBufXSize, psExtraArg);
             VSIFree(pabyTemp);
             return eErr;
         }
     }
-    return GDALProxyRasterBand::IRasterIO( eRWFlag,
-                                     nXOff, nYOff, nXSize, nYSize,
-                                     pData, nBufXSize, nBufYSize,
-                                     eBufType,
-                                     nPixelSpace, nLineSpace,
-                                     psExtraArg );
+    return GDALProxyRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                          pData, nBufXSize, nBufYSize, eBufType,
+                                          nPixelSpace, nLineSpace, psExtraArg);
 }
 
 /************************************************************************/
 /*                            ISISMaskBand()                            */
 /************************************************************************/
 
-ISISMaskBand::ISISMaskBand( GDALRasterBand* poBaseBand )
-    : m_poBaseBand(poBaseBand)
-    , m_pBuffer(NULL)
+ISISMaskBand::ISISMaskBand(GDALRasterBand *poBaseBand)
+    : m_poBaseBand(poBaseBand), m_pBuffer(nullptr)
 {
     eDataType = GDT_Byte;
     poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
@@ -1584,25 +1187,20 @@ ISISMaskBand::~ISISMaskBand()
 /*                             FillMask()                               */
 /************************************************************************/
 
-template<class T>
-static void FillMask      (void* pvBuffer,
-                           GByte* pabyDst,
-                           int nReqXSize, int nReqYSize,
-                           int nBlockXSize,
-                           T NULL_VAL, T LOW_REPR_SAT, T LOW_INSTR_SAT,
-                           T HIGH_INSTR_SAT, T HIGH_REPR_SAT)
+template <class T>
+static void FillMask(void *pvBuffer, GByte *pabyDst, int nReqXSize,
+                     int nReqYSize, int nBlockXSize, T NULL_VAL, T LOW_REPR_SAT,
+                     T LOW_INSTR_SAT, T HIGH_INSTR_SAT, T HIGH_REPR_SAT)
 {
-    const T* pSrc = static_cast<T*>(pvBuffer);
-    for( int y = 0; y < nReqYSize; y++ )
+    const T *pSrc = static_cast<T *>(pvBuffer);
+    for (int y = 0; y < nReqYSize; y++)
     {
-        for( int x = 0; x < nReqXSize; x++ )
+        for (int x = 0; x < nReqXSize; x++)
         {
             const T nSrc = pSrc[y * nBlockXSize + x];
-            if( nSrc == NULL_VAL ||
-                nSrc == LOW_REPR_SAT ||
-                nSrc == LOW_INSTR_SAT ||
-                nSrc == HIGH_INSTR_SAT ||
-                nSrc == HIGH_REPR_SAT )
+            if (nSrc == NULL_VAL || nSrc == LOW_REPR_SAT ||
+                nSrc == LOW_INSTR_SAT || nSrc == HIGH_INSTR_SAT ||
+                nSrc == HIGH_REPR_SAT)
             {
                 pabyDst[y * nBlockXSize + x] = 0;
             }
@@ -1618,64 +1216,60 @@ static void FillMask      (void* pvBuffer,
 /*                           IReadBlock()                               */
 /************************************************************************/
 
-CPLErr ISISMaskBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
+CPLErr ISISMaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 
 {
     const GDALDataType eSrcDT = m_poBaseBand->GetRasterDataType();
     const int nSrcDTSize = GDALGetDataTypeSizeBytes(eSrcDT);
-    if( m_pBuffer == NULL )
+    if (m_pBuffer == nullptr)
     {
         m_pBuffer = VSI_MALLOC3_VERBOSE(nBlockXSize, nBlockYSize, nSrcDTSize);
-        if( m_pBuffer == NULL )
+        if (m_pBuffer == nullptr)
             return CE_Failure;
     }
 
     int nXOff = nXBlock * nBlockXSize;
     int nReqXSize = nBlockXSize;
-    if( nXOff + nReqXSize > nRasterXSize )
+    if (nXOff + nReqXSize > nRasterXSize)
         nReqXSize = nRasterXSize - nXOff;
     int nYOff = nYBlock * nBlockYSize;
     int nReqYSize = nBlockYSize;
-    if( nYOff + nReqYSize > nRasterYSize )
+    if (nYOff + nReqYSize > nRasterYSize)
         nReqYSize = nRasterYSize - nYOff;
 
-    if( m_poBaseBand->RasterIO( GF_Read,
-                                nXOff, nYOff, nReqXSize, nReqYSize,
-                                m_pBuffer,
-                                nReqXSize, nReqYSize,
-                                eSrcDT,
-                                nSrcDTSize,
-                                nSrcDTSize * nBlockXSize,
-                                NULL ) != CE_None )
+    if (m_poBaseBand->RasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize,
+                               m_pBuffer, nReqXSize, nReqYSize, eSrcDT,
+                               nSrcDTSize, nSrcDTSize * nBlockXSize,
+                               nullptr) != CE_None)
     {
         return CE_Failure;
     }
 
-    GByte* pabyDst = static_cast<GByte*>(pImage);
-    if( eSrcDT == GDT_Byte )
+    GByte *pabyDst = static_cast<GByte *>(pImage);
+    if (eSrcDT == GDT_Byte)
     {
         FillMask<GByte>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                        NULL1, LOW_REPR_SAT1, LOW_INSTR_SAT1,
-                        HIGH_INSTR_SAT1, HIGH_REPR_SAT1);
+                        NULL1, LOW_REPR_SAT1, LOW_INSTR_SAT1, HIGH_INSTR_SAT1,
+                        HIGH_REPR_SAT1);
     }
-    else if( eSrcDT == GDT_UInt16 )
+    else if (eSrcDT == GDT_UInt16)
     {
         FillMask<GUInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                        NULLU2, LOW_REPR_SATU2, LOW_INSTR_SATU2,
-                        HIGH_INSTR_SATU2, HIGH_REPR_SATU2);
+                          NULLU2, LOW_REPR_SATU2, LOW_INSTR_SATU2,
+                          HIGH_INSTR_SATU2, HIGH_REPR_SATU2);
     }
-    else if( eSrcDT == GDT_Int16 )
+    else if (eSrcDT == GDT_Int16)
     {
         FillMask<GInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                        NULL2, LOW_REPR_SAT2, LOW_INSTR_SAT2,
-                        HIGH_INSTR_SAT2, HIGH_REPR_SAT2);
+                         NULL2, LOW_REPR_SAT2, LOW_INSTR_SAT2, HIGH_INSTR_SAT2,
+                         HIGH_REPR_SAT2);
     }
     else
     {
-        CPLAssert( eSrcDT == GDT_Float32 );
+        CPLAssert(eSrcDT == GDT_Float32);
         FillMask<float>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                        NULL4, LOW_REPR_SAT4, LOW_INSTR_SAT4,
-                        HIGH_INSTR_SAT4, HIGH_REPR_SAT4);
+                        NULL4, LOW_REPR_SAT4, LOW_INSTR_SAT4, HIGH_INSTR_SAT4,
+                        HIGH_REPR_SAT4);
     }
 
     return CE_None;
@@ -1685,26 +1279,13 @@ CPLErr ISISMaskBand::IReadBlock( int nXBlock, int nYBlock, void *pImage )
 /*                            ISIS3Dataset()                            */
 /************************************************************************/
 
-ISIS3Dataset::ISIS3Dataset() :
-    m_fpLabel(NULL),
-    m_fpImage(NULL),
-    m_poExternalDS(NULL),
-    m_bGeoTIFFAsRegularExternal(false),
-    m_bGeoTIFFInitDone(true),
-    m_bIsLabelWritten(true),
-    m_bIsTiled(false),
-    m_bInitToNodata(false),
-    m_bGotTransform(false),
-    m_bHasSrcNoData(false),
-    m_dfSrcNoData(0.0),
-    m_bForce360(false),
-    m_bWriteBoundingDegrees(true),
-    m_poJSonLabel(NULL),
-    m_bUseSrcLabel(true),
-    m_bUseSrcMapping(false),
-    m_bUseSrcHistory(true),
-    m_bAddGDALHistory(true),
-    m_poSrcJSonLabel(NULL)
+ISIS3Dataset::ISIS3Dataset()
+    : m_fpLabel(nullptr), m_fpImage(nullptr), m_poExternalDS(nullptr),
+      m_bGeoTIFFAsRegularExternal(false), m_bGeoTIFFInitDone(true),
+      m_bIsLabelWritten(true), m_bIsTiled(false), m_bInitToNodata(false),
+      m_bGotTransform(false), m_bHasSrcNoData(false), m_dfSrcNoData(0.0),
+      m_bForce360(false), m_bWriteBoundingDegrees(true), m_bUseSrcLabel(true),
+      m_bUseSrcMapping(false), m_bUseSrcHistory(true), m_bAddGDALHistory(true)
 {
     m_oKeywords.SetStripSurroundingQuotes(true);
     m_adfGeoTransform[0] = 0.0;
@@ -1713,6 +1294,10 @@ ISIS3Dataset::ISIS3Dataset() :
     m_adfGeoTransform[3] = 0.0;
     m_adfGeoTransform[4] = 0.0;
     m_adfGeoTransform[5] = 1.0;
+
+    // Deinit JSON objects
+    m_oJSonLabel.Deinit();
+    m_oSrcJSonLabel.Deinit();
 }
 
 /************************************************************************/
@@ -1722,23 +1307,20 @@ ISIS3Dataset::ISIS3Dataset() :
 ISIS3Dataset::~ISIS3Dataset()
 
 {
-    if( !m_bIsLabelWritten )
+    if (!m_bIsLabelWritten)
         WriteLabel();
-    if( m_poExternalDS && m_bGeoTIFFAsRegularExternal && !m_bGeoTIFFInitDone )
+    if (m_poExternalDS && m_bGeoTIFFAsRegularExternal && !m_bGeoTIFFInitDone)
     {
-        reinterpret_cast<ISIS3WrapperRasterBand*>(GetRasterBand(1))->
-            InitFile();
+        reinterpret_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
+            ->InitFile();
     }
-    FlushCache();
-    if( m_fpLabel != NULL )
-        VSIFCloseL( m_fpLabel );
-    if( m_fpImage != NULL && m_fpImage != m_fpLabel )
-        VSIFCloseL( m_fpImage );
-    if( m_poJSonLabel != NULL )
-        json_object_put(m_poJSonLabel);
-    if( m_poSrcJSonLabel != NULL )
-        json_object_put(m_poSrcJSonLabel);
-    CloseDependentDatasets();
+    ISIS3Dataset::FlushCache(true);
+    if (m_fpLabel != nullptr)
+        VSIFCloseL(m_fpLabel);
+    if (m_fpImage != nullptr && m_fpImage != m_fpLabel)
+        VSIFCloseL(m_fpImage);
+
+    ISIS3Dataset::CloseDependentDatasets();
 }
 
 /************************************************************************/
@@ -1749,16 +1331,16 @@ int ISIS3Dataset::CloseDependentDatasets()
 {
     int bHasDroppedRef = GDALPamDataset::CloseDependentDatasets();
 
-    if( m_poExternalDS )
+    if (m_poExternalDS)
     {
         bHasDroppedRef = FALSE;
         delete m_poExternalDS;
-        m_poExternalDS = NULL;
+        m_poExternalDS = nullptr;
     }
 
-    for( int iBand = 0; iBand < nBands; iBand++ )
+    for (int iBand = 0; iBand < nBands; iBand++)
     {
-       delete papoBands[iBand];
+        delete papoBands[iBand];
     }
     nBands = 0;
 
@@ -1774,14 +1356,14 @@ char **ISIS3Dataset::GetFileList()
 {
     char **papszFileList = GDALPamDataset::GetFileList();
 
-    if( !m_osExternalFilename.empty() )
-        papszFileList = CSLAddString( papszFileList, m_osExternalFilename );
-    for( int i = 0; i < m_aosAdditionalFiles.Count(); ++i )
+    if (!m_osExternalFilename.empty())
+        papszFileList = CSLAddString(papszFileList, m_osExternalFilename);
+    for (int i = 0; i < m_aosAdditionalFiles.Count(); ++i)
     {
-        if( CSLFindString(papszFileList, m_aosAdditionalFiles[i]) < 0 )
+        if (CSLFindString(papszFileList, m_aosAdditionalFiles[i]) < 0)
         {
-            papszFileList = CSLAddString( papszFileList,
-                                          m_aosAdditionalFiles[i] );
+            papszFileList =
+                CSLAddString(papszFileList, m_aosAdditionalFiles[i]);
         }
     }
 
@@ -1789,29 +1371,32 @@ char **ISIS3Dataset::GetFileList()
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
-const char *ISIS3Dataset::GetProjectionRef()
+const OGRSpatialReference *ISIS3Dataset::GetSpatialRef() const
 
 {
-    if( !m_osProjection.empty() )
-        return m_osProjection;
+    if (!m_oSRS.IsEmpty())
+        return &m_oSRS;
 
-    return GDALPamDataset::GetProjectionRef();
+    return GDALPamDataset::GetSpatialRef();
 }
 
 /************************************************************************/
-/*                           SetProjection()                            */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::SetProjection( const char* pszProjection )
+CPLErr ISIS3Dataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 {
-    if( eAccess == GA_ReadOnly )
-        return GDALPamDataset::SetProjection( pszProjection );
-    m_osProjection = pszProjection ? pszProjection : "";
-    if( m_poExternalDS )
-        m_poExternalDS->SetProjection(pszProjection);
+    if (eAccess == GA_ReadOnly)
+        return GDALPamDataset::SetSpatialRef(poSRS);
+    if (poSRS)
+        m_oSRS = *poSRS;
+    else
+        m_oSRS.Clear();
+    if (m_poExternalDS)
+        m_poExternalDS->SetSpatialRef(poSRS);
     InvalidateLabel();
     return CE_None;
 }
@@ -1820,37 +1405,37 @@ CPLErr ISIS3Dataset::SetProjection( const char* pszProjection )
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::GetGeoTransform( double * padfTransform )
+CPLErr ISIS3Dataset::GetGeoTransform(double *padfTransform)
 
 {
-    if( m_bGotTransform )
+    if (m_bGotTransform)
     {
-        memcpy( padfTransform, m_adfGeoTransform, sizeof(double) * 6 );
+        memcpy(padfTransform, m_adfGeoTransform, sizeof(double) * 6);
         return CE_None;
     }
 
-    return GDALPamDataset::GetGeoTransform( padfTransform );
+    return GDALPamDataset::GetGeoTransform(padfTransform);
 }
 
 /************************************************************************/
 /*                          SetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::SetGeoTransform( double * padfTransform )
+CPLErr ISIS3Dataset::SetGeoTransform(double *padfTransform)
 
 {
-    if( eAccess == GA_ReadOnly )
-        return GDALPamDataset::SetGeoTransform( padfTransform );
-    if( padfTransform[1] <= 0.0 || padfTransform[1] != -padfTransform[5] ||
-        padfTransform[2] != 0.0 || padfTransform[4] != 0.0 )
+    if (eAccess == GA_ReadOnly)
+        return GDALPamDataset::SetGeoTransform(padfTransform);
+    if (padfTransform[1] <= 0.0 || padfTransform[1] != -padfTransform[5] ||
+        padfTransform[2] != 0.0 || padfTransform[4] != 0.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only north-up geotransform with square pixels supported");
         return CE_Failure;
     }
     m_bGotTransform = true;
-    memcpy( m_adfGeoTransform, padfTransform, sizeof(double) * 6 );
-    if( m_poExternalDS )
+    memcpy(m_adfGeoTransform, padfTransform, sizeof(double) * 6);
+    if (m_poExternalDS)
         m_poExternalDS->SetGeoTransform(padfTransform);
     InvalidateLabel();
     return CE_None;
@@ -1862,28 +1447,27 @@ CPLErr ISIS3Dataset::SetGeoTransform( double * padfTransform )
 
 char **ISIS3Dataset::GetMetadataDomainList()
 {
-    return BuildMetadataDomainList(
-        NULL, FALSE, "", "json:ISIS3", NULL);
+    return BuildMetadataDomainList(nullptr, FALSE, "", "json:ISIS3", nullptr);
 }
 
 /************************************************************************/
 /*                             GetMetadata()                            */
 /************************************************************************/
 
-char **ISIS3Dataset::GetMetadata( const char* pszDomain )
+char **ISIS3Dataset::GetMetadata(const char *pszDomain)
 {
-    if( pszDomain != NULL && EQUAL( pszDomain, "json:ISIS3" ) )
+    if (pszDomain != nullptr && EQUAL(pszDomain, "json:ISIS3"))
     {
-        if( m_aosISIS3MD.empty() )
+        if (m_aosISIS3MD.empty())
         {
-            if( eAccess == GA_Update && m_poJSonLabel == NULL )
+            if (eAccess == GA_Update && !m_oJSonLabel.IsValid())
             {
                 BuildLabel();
             }
-            CPLAssert( m_poJSonLabel != NULL );
-            const char* pszJSon = json_object_to_json_string_ext(
-                m_poJSonLabel, JSON_C_TO_STRING_PRETTY);
-            m_aosISIS3MD.InsertString(0, pszJSon);
+            CPLAssert(m_oJSonLabel.IsValid());
+            const CPLString osJson =
+                m_oJSonLabel.Format(CPLJSONObject::PrettyFormat::Pretty);
+            m_aosISIS3MD.InsertString(0, osJson.c_str());
         }
         return m_aosISIS3MD.List();
     }
@@ -1896,9 +1480,7 @@ char **ISIS3Dataset::GetMetadata( const char* pszDomain )
 
 void ISIS3Dataset::InvalidateLabel()
 {
-    if( m_poJSonLabel )
-            json_object_put(m_poJSonLabel);
-        m_poJSonLabel = NULL;
+    m_oJSonLabel.Deinit();
     m_aosISIS3MD.Clear();
 }
 
@@ -1906,18 +1488,24 @@ void ISIS3Dataset::InvalidateLabel()
 /*                             SetMetadata()                            */
 /************************************************************************/
 
-CPLErr ISIS3Dataset::SetMetadata( char** papszMD, const char* pszDomain )
+CPLErr ISIS3Dataset::SetMetadata(char **papszMD, const char *pszDomain)
 {
-    if( m_bUseSrcLabel && eAccess == GA_Update && pszDomain != NULL &&
-        EQUAL( pszDomain, "json:ISIS3" ) )
+    if (m_bUseSrcLabel && eAccess == GA_Update && pszDomain != nullptr &&
+        EQUAL(pszDomain, "json:ISIS3"))
     {
-        if( m_poSrcJSonLabel )
-            json_object_put(m_poSrcJSonLabel);
-        m_poSrcJSonLabel = NULL;
+        m_oSrcJSonLabel.Deinit();
         InvalidateLabel();
-        if( papszMD != NULL && papszMD[0] != NULL )
+        if (papszMD != nullptr && papszMD[0] != nullptr)
         {
-            if( !OGRJSonParse( papszMD[0], &m_poSrcJSonLabel, true ) )
+            CPLJSONDocument oJSONDocument;
+            const GByte *pabyData = reinterpret_cast<const GByte *>(papszMD[0]);
+            if (!oJSONDocument.LoadMemory(pabyData))
+            {
+                return CE_Failure;
+            }
+
+            m_oSrcJSonLabel = oJSONDocument.GetRoot();
+            if (!m_oSrcJSonLabel.IsValid())
             {
                 return CE_Failure;
             }
@@ -1930,103 +1518,151 @@ CPLErr ISIS3Dataset::SetMetadata( char** papszMD, const char* pszDomain )
 /************************************************************************/
 /*                              Identify()                              */
 /************************************************************************/
-int ISIS3Dataset::Identify( GDALOpenInfo * poOpenInfo )
+int ISIS3Dataset::Identify(GDALOpenInfo *poOpenInfo)
 
 {
-    if( poOpenInfo->fpL != NULL &&
-        poOpenInfo->pabyHeader != NULL &&
-        strstr((const char *)poOpenInfo->pabyHeader,"IsisCube") != NULL )
+    if (poOpenInfo->fpL != nullptr && poOpenInfo->pabyHeader != nullptr &&
+        strstr((const char *)poOpenInfo->pabyHeader, "IsisCube") != nullptr)
         return TRUE;
 
     return FALSE;
 }
 
 /************************************************************************/
+/*                        GetRawBinaryLayout()                          */
+/************************************************************************/
+
+bool ISIS3Dataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
+{
+    if (m_sLayout.osRawFilename.empty())
+        return false;
+    sLayout = m_sLayout;
+    return true;
+}
+
+/************************************************************************/
+/*                           GetValueAndUnits()                         */
+/************************************************************************/
+
+static void GetValueAndUnits(const CPLJSONObject &obj,
+                             std::vector<double> &adfValues,
+                             std::vector<std::string> &aosUnits,
+                             int nExpectedVals)
+{
+    if (obj.GetType() == CPLJSONObject::Type::Integer ||
+        obj.GetType() == CPLJSONObject::Type::Double)
+    {
+        adfValues.push_back(obj.ToDouble());
+    }
+    else if (obj.GetType() == CPLJSONObject::Type::Object)
+    {
+        auto oValue = obj.GetObj("value");
+        auto oUnit = obj.GetObj("unit");
+        if (oValue.IsValid() &&
+            (oValue.GetType() == CPLJSONObject::Type::Integer ||
+             oValue.GetType() == CPLJSONObject::Type::Double ||
+             oValue.GetType() == CPLJSONObject::Type::Array) &&
+            oUnit.IsValid() && oUnit.GetType() == CPLJSONObject::Type::String)
+        {
+            if (oValue.GetType() == CPLJSONObject::Type::Array)
+            {
+                GetValueAndUnits(oValue, adfValues, aosUnits, nExpectedVals);
+            }
+            else
+            {
+                adfValues.push_back(oValue.ToDouble());
+            }
+            aosUnits.push_back(oUnit.ToString());
+        }
+    }
+    else if (obj.GetType() == CPLJSONObject::Type::Array)
+    {
+        auto oArray = obj.ToArray();
+        if (oArray.Size() == nExpectedVals)
+        {
+            for (int i = 0; i < nExpectedVals; i++)
+            {
+                if (oArray[i].GetType() == CPLJSONObject::Type::Integer ||
+                    oArray[i].GetType() == CPLJSONObject::Type::Double)
+                {
+                    adfValues.push_back(oArray[i].ToDouble());
+                }
+                else
+                {
+                    adfValues.clear();
+                    return;
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
-{
-/* -------------------------------------------------------------------- */
-/*      Does this look like a CUBE dataset?                             */
-/* -------------------------------------------------------------------- */
-    if( !Identify( poOpenInfo ) )
-        return NULL;
+GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
 
-/* -------------------------------------------------------------------- */
-/*      Open the file using the large file API.                         */
-/* -------------------------------------------------------------------- */
+{
+    /* -------------------------------------------------------------------- */
+    /*      Does this look like a CUBE dataset?                             */
+    /* -------------------------------------------------------------------- */
+    if (!Identify(poOpenInfo))
+        return nullptr;
+
+    /* -------------------------------------------------------------------- */
+    /*      Open the file using the large file API.                         */
+    /* -------------------------------------------------------------------- */
     ISIS3Dataset *poDS = new ISIS3Dataset();
 
-    if( ! poDS->m_oKeywords.Ingest( poOpenInfo->fpL, 0 ) )
+    if (!poDS->m_oKeywords.Ingest(poOpenInfo->fpL, 0))
     {
-        VSIFCloseL( poOpenInfo->fpL );
-        poOpenInfo->fpL = NULL;
+        VSIFCloseL(poOpenInfo->fpL);
+        poOpenInfo->fpL = nullptr;
         delete poDS;
-        return NULL;
+        return nullptr;
     }
-    poDS->m_poJSonLabel = poDS->m_oKeywords.StealJSon();
-    json_object_object_add(poDS->m_poJSonLabel, "_filename",
-                           json_object_new_string(poOpenInfo->pszFilename));
+    poDS->m_oJSonLabel = poDS->m_oKeywords.GetJsonObject();
+    poDS->m_oJSonLabel.Add("_filename", poOpenInfo->pszFilename);
 
     // Find additional files from the label
-    CPLJsonObject oObjLabel(poDS->m_poJSonLabel);
-    if( oObjLabel.getType() == CPLJsonObject::OBJECT )
+    for (const CPLJSONObject &oObj : poDS->m_oJSonLabel.GetChildren())
     {
-        const size_t nSize = oObjLabel.size();
-        for( size_t i = 0; i < nSize; ++i )
+        if (oObj.GetType() == CPLJSONObject::Type::Object)
         {
-            const CPLJsonObject& oObj(oObjLabel[i]);
-            if( oObj.getType() == CPLJsonObject::OBJECT )
+            CPLString osContainerName = oObj.GetName();
+            CPLJSONObject oContainerName = oObj.GetObj("_container_name");
+            if (oContainerName.GetType() == CPLJSONObject::Type::String)
             {
-                const CPLString& osKey = oObjLabel.getKey(i);
+                osContainerName = oContainerName.ToString();
+            }
 
-                CPLString osContainerName(osKey);
-                if( oObj.has( "_container_name" ) )
+            CPLJSONObject oFilename = oObj.GetObj("^" + osContainerName);
+            if (oFilename.GetType() == CPLJSONObject::Type::String)
+            {
+                VSIStatBufL sStat;
+                CPLString osFilename(
+                    CPLFormFilename(CPLGetPath(poOpenInfo->pszFilename),
+                                    oFilename.ToString().c_str(), nullptr));
+                if (VSIStatL(osFilename, &sStat) == 0)
                 {
-                    const CPLJsonObject& oContainerName(
-                        oObj["_container_name"]);
-                    if( oContainerName.getType() ==
-                                    CPLJsonObject::STRING )
-                    {
-                        osContainerName = oContainerName.getString();
-                    }
+                    poDS->m_aosAdditionalFiles.AddString(osFilename);
                 }
-
-                if( oObj.has( "^" + osContainerName ) )
+                else
                 {
-                    const CPLJsonObject& oFilename(
-                                        oObj["^" + osContainerName]);
-                    if( oFilename.getType() == CPLJsonObject::STRING )
-                    {
-                        VSIStatBufL sStat;
-                        CPLString osFilename( CPLFormFilename(
-                            CPLGetPath(poOpenInfo->pszFilename),
-                            oFilename.getString(),
-                            NULL ) );
-                        if( VSIStatL( osFilename, &sStat ) == 0 )
-                        {
-                            poDS->m_aosAdditionalFiles.AddString(
-                                osFilename);
-                        }
-                        else
-                        {
-                            CPLDebug("ISIS3",
-                                        "File %s referenced but not foud",
-                                        osFilename.c_str());
-                        }
-                    }
+                    CPLDebug("ISIS3", "File %s referenced but not foud",
+                             osFilename.c_str());
                 }
             }
         }
     }
 
-    VSIFCloseL( poOpenInfo->fpL );
-    poOpenInfo->fpL = NULL;
+    VSIFCloseL(poOpenInfo->fpL);
+    poOpenInfo->fpL = nullptr;
 
-/* -------------------------------------------------------------------- */
-/* Assume user is pointing to label (i.e. .lbl) file for detached option */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /* Assume user is pointing to label (i.e. .lbl) file for detached option */
+    /* -------------------------------------------------------------------- */
     //  Image can be inline or detached and point to an image name
     //  the Format can be Tiled or Raw
     //  Object = Core
@@ -2034,80 +1670,82 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     //      Format      = Tile
     //      TileSamples = 128
     //      TileLines   = 128
-    //OR-----
+    // OR-----
     //  Object = Core
     //      StartByte = 1
     //      ^Core     = r0200357_detatched.cub
     //      Format    = BandSequential
-    //OR-----
+    // OR-----
     //  Object = Core
     //      StartByte = 1
     //      ^Core     = r0200357_detached_tiled.cub
     //      Format      = Tile
     //      TileSamples = 128
     //      TileLines   = 128
-    //OR-----
+    // OR-----
     //  Object = Core
     //      StartByte = 1
     //      ^Core     = some.tif
     //      Format    = GeoTIFF
 
-/* -------------------------------------------------------------------- */
-/*      What file contains the actual data?                             */
-/* -------------------------------------------------------------------- */
-    const char *pszCore = poDS->GetKeyword( "IsisCube.Core.^Core" );
+    /* -------------------------------------------------------------------- */
+    /*      What file contains the actual data?                             */
+    /* -------------------------------------------------------------------- */
+    const char *pszCore = poDS->GetKeyword("IsisCube.Core.^Core");
     CPLString osQubeFile;
 
-    if( EQUAL(pszCore,"") )
+    if (EQUAL(pszCore, ""))
         osQubeFile = poOpenInfo->pszFilename;
     else
     {
-        CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
-        osQubeFile = CPLFormFilename( osPath, pszCore, NULL );
+        CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
+        osQubeFile = CPLFormFilename(osPath, pszCore, nullptr);
         poDS->m_osExternalFilename = osQubeFile;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Check if file an ISIS3 header file?  Read a few lines of text   */
-/*      searching for something starting with nrows or ncols.           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Check if file an ISIS3 header file?  Read a few lines of text   */
+    /*      searching for something starting with nrows or ncols.           */
+    /* -------------------------------------------------------------------- */
 
     /*************   Skipbytes     *****************************/
-    const int nSkipBytes =
-            atoi(poDS->GetKeyword("IsisCube.Core.StartByte", "1")) - 1;
+    int nSkipBytes = atoi(poDS->GetKeyword("IsisCube.Core.StartByte", "1"));
+    if (nSkipBytes <= 1)
+        nSkipBytes = 0;
+    else
+        nSkipBytes -= 1;
 
     /*******   Grab format type (BandSequential, Tiled)  *******/
-    CPLString osFormat = poDS->GetKeyword( "IsisCube.Core.Format" );
+    CPLString osFormat = poDS->GetKeyword("IsisCube.Core.Format");
 
     int tileSizeX = 0;
     int tileSizeY = 0;
 
-    if (EQUAL(osFormat,"Tile") ) 
+    if (EQUAL(osFormat, "Tile"))
     {
-       poDS->m_bIsTiled = true;
-       /******* Get Tile Sizes *********/
-       tileSizeX = atoi(poDS->GetKeyword("IsisCube.Core.TileSamples"));
-       tileSizeY = atoi(poDS->GetKeyword("IsisCube.Core.TileLines"));
-       if (tileSizeX <= 0 || tileSizeY <= 0)
-       {
-           CPLError( CE_Failure, CPLE_OpenFailed,
-                     "Wrong tile dimensions : %d x %d",
-                     tileSizeX, tileSizeY);
-           delete poDS;
-           return NULL;
-       }
+        poDS->m_bIsTiled = true;
+        /******* Get Tile Sizes *********/
+        tileSizeX = atoi(poDS->GetKeyword("IsisCube.Core.TileSamples"));
+        tileSizeY = atoi(poDS->GetKeyword("IsisCube.Core.TileLines"));
+        if (tileSizeX <= 0 || tileSizeY <= 0)
+        {
+            CPLError(CE_Failure, CPLE_OpenFailed,
+                     "Wrong tile dimensions : %d x %d", tileSizeX, tileSizeY);
+            delete poDS;
+            return nullptr;
+        }
     }
-    else if (!EQUAL(osFormat,"BandSequential") &&
-             !EQUAL(osFormat,"GeoTIFF") )
+    else if (!EQUAL(osFormat, "BandSequential") && !EQUAL(osFormat, "GeoTIFF"))
     {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "%s format not supported.", osFormat.c_str());
+        CPLError(CE_Failure, CPLE_OpenFailed, "%s format not supported.",
+                 osFormat.c_str());
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /***********   Grab samples lines band ************/
-    const int nCols = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Samples"));
+    const int nCols =
+        atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Samples"));
     const int nRows = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Lines"));
     const int nBands = atoi(poDS->GetKeyword("IsisCube.Core.Dimensions.Bands"));
 
@@ -2115,42 +1753,48 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     GDALDataType eDataType = GDT_Byte;
     double dfNoData = 0.0;
 
-    const char *itype = poDS->GetKeyword( "IsisCube.Core.Pixels.Type" );
-    if (EQUAL(itype,"UnsignedByte") ) {
+    const char *itype = poDS->GetKeyword("IsisCube.Core.Pixels.Type");
+    if (EQUAL(itype, "UnsignedByte"))
+    {
         eDataType = GDT_Byte;
         dfNoData = NULL1;
     }
-    else if (EQUAL(itype,"UnsignedWord") ) {
+    else if (EQUAL(itype, "UnsignedWord"))
+    {
         eDataType = GDT_UInt16;
         dfNoData = NULLU2;
     }
-    else if (EQUAL(itype,"SignedWord") ) {
+    else if (EQUAL(itype, "SignedWord"))
+    {
         eDataType = GDT_Int16;
         dfNoData = NULL2;
     }
-    else if (EQUAL(itype,"Real") || EQUAL(itype,"") ) {
+    else if (EQUAL(itype, "Real") || EQUAL(itype, ""))
+    {
         eDataType = GDT_Float32;
         dfNoData = NULL4;
     }
-    else {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "%s pixel type not supported.", itype);
+    else
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed, "%s pixel type not supported.",
+                 itype);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     /***********   Grab samples lines band ************/
 
-    //default to MSB
-    const bool bIsLSB = EQUAL(
-            poDS->GetKeyword( "IsisCube.Core.Pixels.ByteOrder"),"Lsb");
+    // default to MSB
+    const bool bIsLSB =
+        EQUAL(poDS->GetKeyword("IsisCube.Core.Pixels.ByteOrder"), "Lsb");
 
     /***********   Grab Cellsize ************/
     double dfXDim = 1.0;
     double dfYDim = 1.0;
 
-    const char* pszRes = poDS->GetKeyword("IsisCube.Mapping.PixelResolution");
-    if (strlen(pszRes) > 0 ) {
+    const char *pszRes = poDS->GetKeyword("IsisCube.Mapping.PixelResolution");
+    if (strlen(pszRes) > 0)
+    {
         dfXDim = CPLAtof(pszRes); /* values are in meters */
         dfYDim = -CPLAtof(pszRes);
     }
@@ -2158,16 +1802,18 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     /***********   Grab UpperLeftCornerY ************/
     double dfULYMap = 0.5;
 
-    const char* pszULY = poDS->GetKeyword("IsisCube.Mapping.UpperLeftCornerY");
-    if (strlen(pszULY) > 0) {
+    const char *pszULY = poDS->GetKeyword("IsisCube.Mapping.UpperLeftCornerY");
+    if (strlen(pszULY) > 0)
+    {
         dfULYMap = CPLAtof(pszULY);
     }
 
     /***********   Grab UpperLeftCornerX ************/
     double dfULXMap = 0.5;
 
-    const char* pszULX = poDS->GetKeyword("IsisCube.Mapping.UpperLeftCornerX");
-    if( strlen(pszULX) > 0 ) {
+    const char *pszULX = poDS->GetKeyword("IsisCube.Mapping.UpperLeftCornerX");
+    if (strlen(pszULX) > 0)
+    {
         dfULXMap = CPLAtof(pszULX);
     }
 
@@ -2175,37 +1821,49 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     /**** This is the planets name i.e. Mars ***/
     const char *target_name = poDS->GetKeyword("IsisCube.Mapping.TargetName");
 
+#ifdef notdef
+    const double dfLongitudeMulFactor =
+        EQUAL(poDS->GetKeyword("IsisCube.Mapping.LongitudeDirection",
+                               "PositiveEast"),
+              "PositiveEast")
+            ? 1
+            : -1;
+#else
+    const double dfLongitudeMulFactor = 1;
+#endif
+
     /***********   Grab MAP_PROJECTION_TYPE ************/
-     const char *map_proj_name =
-        poDS->GetKeyword( "IsisCube.Mapping.ProjectionName");
+    const char *map_proj_name =
+        poDS->GetKeyword("IsisCube.Mapping.ProjectionName");
 
     /***********   Grab SEMI-MAJOR ************/
     const double semi_major =
-        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.EquatorialRadius"));
+        CPLAtof(poDS->GetKeyword("IsisCube.Mapping.EquatorialRadius"));
 
     /***********   Grab semi-minor ************/
     const double semi_minor =
-        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.PolarRadius"));
+        CPLAtof(poDS->GetKeyword("IsisCube.Mapping.PolarRadius"));
 
     /***********   Grab CENTER_LAT ************/
     const double center_lat =
-        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.CenterLatitude"));
+        CPLAtof(poDS->GetKeyword("IsisCube.Mapping.CenterLatitude"));
 
     /***********   Grab CENTER_LON ************/
     const double center_lon =
-        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.CenterLongitude"));
+        CPLAtof(poDS->GetKeyword("IsisCube.Mapping.CenterLongitude")) *
+        dfLongitudeMulFactor;
 
     /***********   Grab 1st std parallel ************/
     const double first_std_parallel =
-        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.FirstStandardParallel"));
+        CPLAtof(poDS->GetKeyword("IsisCube.Mapping.FirstStandardParallel"));
 
     /***********   Grab 2nd std parallel ************/
     const double second_std_parallel =
-        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.SecondStandardParallel"));
+        CPLAtof(poDS->GetKeyword("IsisCube.Mapping.SecondStandardParallel"));
 
     /***********   Grab scaleFactor ************/
     const double scaleFactor =
-        CPLAtof(poDS->GetKeyword( "IsisCube.Mapping.scaleFactor", "1.0"));
+        CPLAtof(poDS->GetKeyword("IsisCube.Mapping.scaleFactor", "1.0"));
 
     /*** grab      LatitudeType = Planetographic ****/
     // Need to further study how ocentric/ographic will effect the gdal library
@@ -2214,288 +1872,357 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     // Frank - may need to talk this over
     bool bIsGeographic = true;
-    if (EQUAL( poDS->GetKeyword("IsisCube.Mapping.LatitudeType"),
-               "Planetocentric" ))
+    if (EQUAL(poDS->GetKeyword("IsisCube.Mapping.LatitudeType"),
+              "Planetocentric"))
         bIsGeographic = false;
 
-    //Set oSRS projection and parameters
-    //############################################################
-    //ISIS3 Projection types
-    //  Equirectangular
-    //  LambertConformal
-    //  Mercator
-    //  ObliqueCylindrical //Todo
-    //  Orthographic
-    //  PolarStereographic
-    //  SimpleCylindrical
-    //  Sinusoidal
-    //  TransverseMercator
+        // Set oSRS projection and parameters
+        // ############################################################
+        // ISIS3 Projection types
+        //   Equirectangular
+        //   LambertConformal
+        //   Mercator
+        //   ObliqueCylindrical
+        //   Orthographic
+        //   PolarStereographic
+        //   SimpleCylindrical
+        //   Sinusoidal
+        //   TransverseMercator
 
 #ifdef DEBUG
-    CPLDebug( "ISIS3", "using projection %s", map_proj_name);
+    CPLDebug("ISIS3", "using projection %s", map_proj_name);
 #endif
 
     OGRSpatialReference oSRS;
     bool bProjectionSet = true;
 
-    if ((EQUAL( map_proj_name, "Equirectangular" )) ||
-        (EQUAL( map_proj_name, "SimpleCylindrical" )) )  {
-        oSRS.OGRSpatialReference::SetEquirectangular2 ( 0.0, center_lon, center_lat, 0, 0 );
-    } else if (EQUAL( map_proj_name, "Orthographic" )) {
-        oSRS.OGRSpatialReference::SetOrthographic ( center_lat, center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "Sinusoidal" )) {
-        oSRS.OGRSpatialReference::SetSinusoidal ( center_lon, 0, 0 );
-    } else if (EQUAL( map_proj_name, "Mercator" )) {
-        oSRS.OGRSpatialReference::SetMercator ( center_lat, center_lon, scaleFactor, 0, 0 );
-    } else if (EQUAL( map_proj_name, "PolarStereographic" )) {
-        oSRS.OGRSpatialReference::SetPS ( center_lat, center_lon, scaleFactor, 0, 0 );
-    } else if (EQUAL( map_proj_name, "TransverseMercator" )) {
-        oSRS.OGRSpatialReference::SetTM ( center_lat, center_lon, scaleFactor, 0, 0 );
-    } else if (EQUAL( map_proj_name, "LambertConformal" )) {
-        oSRS.OGRSpatialReference::SetLCC ( first_std_parallel, second_std_parallel, center_lat, center_lon, 0, 0 );
-    } else {
-        CPLDebug( "ISIS3",
-                  "Dataset projection %s is not supported. Continuing...",
-                  map_proj_name );
+    if ((EQUAL(map_proj_name, "Equirectangular")) ||
+        (EQUAL(map_proj_name, "SimpleCylindrical")))
+    {
+        oSRS.SetEquirectangular2(0.0, center_lon, center_lat, 0, 0);
+    }
+    else if (EQUAL(map_proj_name, "Orthographic"))
+    {
+        oSRS.SetOrthographic(center_lat, center_lon, 0, 0);
+    }
+    else if (EQUAL(map_proj_name, "Sinusoidal"))
+    {
+        oSRS.SetSinusoidal(center_lon, 0, 0);
+    }
+    else if (EQUAL(map_proj_name, "Mercator"))
+    {
+        oSRS.SetMercator(center_lat, center_lon, scaleFactor, 0, 0);
+    }
+    else if (EQUAL(map_proj_name, "PolarStereographic"))
+    {
+        oSRS.SetPS(center_lat, center_lon, scaleFactor, 0, 0);
+    }
+    else if (EQUAL(map_proj_name, "TransverseMercator"))
+    {
+        oSRS.SetTM(center_lat, center_lon, scaleFactor, 0, 0);
+    }
+    else if (EQUAL(map_proj_name, "LambertConformal"))
+    {
+        oSRS.SetLCC(first_std_parallel, second_std_parallel, center_lat,
+                    center_lon, 0, 0);
+    }
+    else if (EQUAL(map_proj_name, "PointPerspective"))
+    {
+        // Distance parameter is the distance to the center of the body, and is
+        // given in km
+        const double distance =
+            CPLAtof(poDS->GetKeyword("IsisCube.Mapping.Distance")) * 1000.0;
+        const double height_above_ground = distance - semi_major;
+        oSRS.SetVerticalPerspective(center_lat, center_lon, 0,
+                                    height_above_ground, 0, 0);
+    }
+    else if (EQUAL(map_proj_name, "ObliqueCylindrical"))
+    {
+        const double poleLatitude =
+            CPLAtof(poDS->GetKeyword("IsisCube.Mapping.PoleLatitude"));
+        const double poleLongitude =
+            CPLAtof(poDS->GetKeyword("IsisCube.Mapping.PoleLongitude")) *
+            dfLongitudeMulFactor;
+        const double poleRotation =
+            CPLAtof(poDS->GetKeyword("IsisCube.Mapping.PoleRotation"));
+        CPLString oProj4String;
+        // ISIS3 rotated pole doesn't use the same conventions than PROJ ob_tran
+        // Compare the sign difference in
+        // https://github.com/USGS-Astrogeology/ISIS3/blob/3.8.0/isis/src/base/objs/ObliqueCylindrical/ObliqueCylindrical.cpp#L244
+        // and
+        // https://github.com/OSGeo/PROJ/blob/6.2/src/projections/ob_tran.cpp#L34
+        // They can be compensated by modifying the poleLatitude to
+        // 180-poleLatitude There's also a sign difference for the poleRotation
+        // parameter The existence of those different conventions is
+        // acknowledged in
+        // https://pds-imaging.jpl.nasa.gov/documentation/Cassini_BIDRSIS.PDF in
+        // the middle of page 10
+        oProj4String.Printf("+proj=ob_tran +o_proj=eqc +o_lon_p=%.18g "
+                            "+o_lat_p=%.18g +lon_0=%.18g",
+                            -poleRotation, 180 - poleLatitude, poleLongitude);
+        oSRS.SetFromUserInput(oProj4String);
+    }
+    else
+    {
+        CPLDebug("ISIS3",
+                 "Dataset projection %s is not supported. Continuing...",
+                 map_proj_name);
         bProjectionSet = false;
     }
 
-    if (bProjectionSet) {
-        //Create projection name, i.e. MERCATOR MARS and set as ProjCS keyword
+    if (bProjectionSet)
+    {
+        // Create projection name, i.e. MERCATOR MARS and set as ProjCS keyword
         CPLString osProjTargetName(map_proj_name);
         osProjTargetName += " ";
         osProjTargetName += target_name;
-        oSRS.SetProjCS(osProjTargetName); //set ProjCS keyword
+        oSRS.SetProjCS(osProjTargetName);  // set ProjCS keyword
 
-        //The geographic/geocentric name will be the same basic name as the body name
-        //'GCS' = Geographic/Geocentric Coordinate System
+        // The geographic/geocentric name will be the same basic name as the
+        // body name 'GCS' = Geographic/Geocentric Coordinate System
         CPLString osGeogName("GCS_");
         osGeogName += target_name;
 
-        //The datum name will be the same basic name as the planet
+        // The datum name will be the same basic name as the planet
         CPLString osDatumName("D_");
         osDatumName += target_name;
 
         CPLString osSphereName(target_name);
-        //strcat(osSphereName, "_IAU_IAG");  //Might not be IAU defined so don't add
+        // strcat(osSphereName, "_IAU_IAG");  //Might not be IAU defined so
+        // don't add
 
-        //calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
+        // calculate inverse flattening from major and minor axis: 1/f = a/(a-b)
         double iflattening = 0.0;
         if ((semi_major - semi_minor) < 0.0000001)
-           iflattening = 0;
+            iflattening = 0;
         else
-           iflattening = semi_major / (semi_major - semi_minor);
+            iflattening = semi_major / (semi_major - semi_minor);
 
-        //Set the body size but take into consideration which proj is being used to help w/ proj4 compatibility
-        //The use of a Sphere, polar radius or ellipse here is based on how ISIS does it internally
-        if ( ( (EQUAL( map_proj_name, "Stereographic" ) && (fabs(center_lat) == 90)) ) ||
-             (EQUAL( map_proj_name, "PolarStereographic" )) )
-         {
-            if (bIsGeographic) {
-                //Geograpraphic, so set an ellipse
-                oSRS.SetGeogCS( osGeogName, osDatumName, osSphereName,
-                                semi_major, iflattening,
-                               "Reference_Meridian", 0.0 );
-            } else {
-              //Geocentric, so force a sphere using the semi-minor axis. I hope...
-              osSphereName += "_polarRadius";
-              oSRS.SetGeogCS( osGeogName, osDatumName, osSphereName,
-                              semi_minor, 0.0,
-                              "Reference_Meridian", 0.0 );
+        // Set the body size but take into consideration which proj is being
+        // used to help w/ proj4 compatibility The use of a Sphere, polar radius
+        // or ellipse here is based on how ISIS does it internally
+        if (((EQUAL(map_proj_name, "Stereographic") &&
+              (fabs(center_lat) == 90))) ||
+            (EQUAL(map_proj_name, "PolarStereographic")))
+        {
+            if (bIsGeographic)
+            {
+                // Geograpraphic, so set an ellipse
+                oSRS.SetGeogCS(osGeogName, osDatumName, osSphereName,
+                               semi_major, iflattening, "Reference_Meridian",
+                               0.0);
+            }
+            else
+            {
+                // Geocentric, so force a sphere using the semi-minor axis. I
+                // hope...
+                osSphereName += "_polarRadius";
+                oSRS.SetGeogCS(osGeogName, osDatumName, osSphereName,
+                               semi_minor, 0.0, "Reference_Meridian", 0.0);
             }
         }
-        else if ( (EQUAL( map_proj_name, "SimpleCylindrical" )) ||
-                  (EQUAL( map_proj_name, "Orthographic" )) ||
-                  (EQUAL( map_proj_name, "Stereographic" )) ||
-                  (EQUAL( map_proj_name, "Sinusoidal" )) ) {
+        else if ((EQUAL(map_proj_name, "SimpleCylindrical")) ||
+                 (EQUAL(map_proj_name, "Orthographic")) ||
+                 (EQUAL(map_proj_name, "Stereographic")) ||
+                 (EQUAL(map_proj_name, "Sinusoidal")) ||
+                 (EQUAL(map_proj_name, "PointPerspective")))
+        {
             // ISIS uses the spherical equation for these projections
             // so force a sphere.
-            oSRS.SetGeogCS( osGeogName, osDatumName, osSphereName,
-                            semi_major, 0.0,
-                            "Reference_Meridian", 0.0 );
+            oSRS.SetGeogCS(osGeogName, osDatumName, osSphereName, semi_major,
+                           0.0, "Reference_Meridian", 0.0);
         }
-        else if  (EQUAL( map_proj_name, "Equirectangular" )) {
-            //Calculate localRadius using ISIS3 simple elliptical method
-            //  not the more standard Radius of Curvature method
-            //PI = 4 * atan(1);
+        else if (EQUAL(map_proj_name, "Equirectangular"))
+        {
+            // Calculate localRadius using ISIS3 simple elliptical method
+            //   not the more standard Radius of Curvature method
+            // PI = 4 * atan(1);
             const double radLat = center_lat * M_PI / 180;  // in radians
-            const double localRadius
-                = semi_major * semi_minor
-                / sqrt( pow( semi_minor * cos( radLat ), 2)
-                       + pow( semi_major * sin( radLat ), 2) );
+            const double meanRadius = sqrt(pow(semi_minor * cos(radLat), 2) +
+                                           pow(semi_major * sin(radLat), 2));
+            const double localRadius =
+                (meanRadius == 0.0) ? 0.0
+                                    : semi_major * semi_minor / meanRadius;
             osSphereName += "_localRadius";
-            oSRS.SetGeogCS( osGeogName, osDatumName, osSphereName,
-                            localRadius, 0.0,
-                            "Reference_Meridian", 0.0 );
+            oSRS.SetGeogCS(osGeogName, osDatumName, osSphereName, localRadius,
+                           0.0, "Reference_Meridian", 0.0);
         }
-        else {
-            //All other projections: Mercator, Transverse Mercator, Lambert Conformal, etc.
-            //Geographic, so set an ellipse
-            if (bIsGeographic) {
-                oSRS.SetGeogCS( osGeogName, osDatumName, osSphereName,
-                                semi_major, iflattening,
-                                "Reference_Meridian", 0.0 );
-            } else {
-                //Geocentric, so force a sphere. I hope...
-                oSRS.SetGeogCS( osGeogName, osDatumName, osSphereName,
-                                semi_major, 0.0,
-                                "Reference_Meridian", 0.0 );
+        else
+        {
+            // All other projections: Mercator, Transverse Mercator, Lambert
+            // Conformal, etc. Geographic, so set an ellipse
+            if (bIsGeographic)
+            {
+                oSRS.SetGeogCS(osGeogName, osDatumName, osSphereName,
+                               semi_major, iflattening, "Reference_Meridian",
+                               0.0);
+            }
+            else
+            {
+                // Geocentric, so force a sphere. I hope...
+                oSRS.SetGeogCS(osGeogName, osDatumName, osSphereName,
+                               semi_major, 0.0, "Reference_Meridian", 0.0);
             }
         }
 
         // translate back into a projection string.
-        char *pszResult = NULL;
-        oSRS.exportToWkt( &pszResult );
-        poDS->m_osProjection = pszResult;
-        CPLFree( pszResult );
+        poDS->m_oSRS = oSRS;
+        poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     }
 
-/* END ISIS3 Label Read */
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+    /* END ISIS3 Label Read */
+    /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-/* -------------------------------------------------------------------- */
-/*      Did we get the required keywords?  If not we return with        */
-/*      this never having been considered to be a match. This isn't     */
-/*      an error!                                                       */
-/* -------------------------------------------------------------------- */
-    if( !GDALCheckDatasetDimensions(nCols, nRows) ||
-        !GDALCheckBandCount(nBands, false) )
+    /* -------------------------------------------------------------------- */
+    /*      Did we get the required keywords?  If not we return with        */
+    /*      this never having been considered to be a match. This isn't     */
+    /*      an error!                                                       */
+    /* -------------------------------------------------------------------- */
+    if (!GDALCheckDatasetDimensions(nCols, nRows) ||
+        !GDALCheckBandCount(nBands, false))
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Capture some information from the file that is of interest.     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Capture some information from the file that is of interest.     */
+    /* -------------------------------------------------------------------- */
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
 
-/* -------------------------------------------------------------------- */
-/*      Open target binary file.                                        */
-/* -------------------------------------------------------------------- */
-    if( EQUAL(osFormat,"GeoTIFF") )
+    /* -------------------------------------------------------------------- */
+    /*      Open target binary file.                                        */
+    /* -------------------------------------------------------------------- */
+    if (EQUAL(osFormat, "GeoTIFF"))
     {
-        if( nSkipBytes != 0 )
+        if (nSkipBytes != 0)
         {
             CPLError(CE_Warning, CPLE_NotSupported,
                      "Ignoring StartByte=%d for format=GeoTIFF",
-                     1+nSkipBytes);
+                     1 + nSkipBytes);
+        }
+        if (osQubeFile == poOpenInfo->pszFilename)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "A ^Core file must be set");
+            delete poDS;
+            return nullptr;
         }
         poDS->m_poExternalDS = reinterpret_cast<GDALDataset *>(
-                                GDALOpen( osQubeFile, poOpenInfo->eAccess ) );
-        if( poDS->m_poExternalDS == NULL )
+            GDALOpen(osQubeFile, poOpenInfo->eAccess));
+        if (poDS->m_poExternalDS == nullptr)
         {
             delete poDS;
-            return NULL;
+            return nullptr;
         }
-        if( poDS->m_poExternalDS->GetRasterXSize() != poDS->nRasterXSize ||
+        if (poDS->m_poExternalDS->GetRasterXSize() != poDS->nRasterXSize ||
             poDS->m_poExternalDS->GetRasterYSize() != poDS->nRasterYSize ||
             poDS->m_poExternalDS->GetRasterCount() != nBands ||
-            poDS->m_poExternalDS->GetRasterBand(1)->GetRasterDataType() != 
-                                                                    eDataType )
+            poDS->m_poExternalDS->GetRasterBand(1)->GetRasterDataType() !=
+                eDataType)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "%s has incompatible characteristics with the ones "
-                      "declared in the label.",
-                      osQubeFile.c_str() );
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s has incompatible characteristics with the ones "
+                     "declared in the label.",
+                     osQubeFile.c_str());
             delete poDS;
-            return NULL;
+            return nullptr;
         }
     }
     else
     {
-        if( poOpenInfo->eAccess == GA_ReadOnly )
-            poDS->m_fpImage = VSIFOpenL( osQubeFile, "r" );
+        if (poOpenInfo->eAccess == GA_ReadOnly)
+            poDS->m_fpImage = VSIFOpenL(osQubeFile, "r");
         else
-            poDS->m_fpImage = VSIFOpenL( osQubeFile, "r+" );
+            poDS->m_fpImage = VSIFOpenL(osQubeFile, "r+");
 
-        if( poDS->m_fpImage == NULL )
+        if (poDS->m_fpImage == nullptr)
         {
-            CPLError( CE_Failure, CPLE_OpenFailed,
-                    "Failed to open %s: %s.",
-                    osQubeFile.c_str(),
-                    VSIStrerror( errno ) );
+            CPLError(CE_Failure, CPLE_OpenFailed, "Failed to open %s: %s.",
+                     osQubeFile.c_str(), VSIStrerror(errno));
             delete poDS;
-            return NULL;
+            return nullptr;
         }
 
         // Sanity checks in case the external raw file appears to be a
         // TIFF file
-        if( EQUAL(CPLGetExtension(osQubeFile), "tif") )
+        if (EQUAL(CPLGetExtension(osQubeFile), "tif"))
         {
-            GDALDataset* poTIF_DS = reinterpret_cast<GDALDataset*>(
+            GDALDataset *poTIF_DS = reinterpret_cast<GDALDataset *>(
                 GDALOpen(osQubeFile, GA_ReadOnly));
-            if( poTIF_DS )
+            if (poTIF_DS)
             {
                 bool bWarned = false;
-                if( poTIF_DS->GetRasterXSize() != poDS->nRasterXSize ||
+                if (poTIF_DS->GetRasterXSize() != poDS->nRasterXSize ||
                     poTIF_DS->GetRasterYSize() != poDS->nRasterYSize ||
                     poTIF_DS->GetRasterCount() != nBands ||
-                    poTIF_DS->GetRasterBand(1)->GetRasterDataType() != 
-                                                                eDataType ||
+                    poTIF_DS->GetRasterBand(1)->GetRasterDataType() !=
+                        eDataType ||
                     poTIF_DS->GetMetadataItem("COMPRESSION",
-                                              "IMAGE_STRUCTURE") != NULL )
+                                              "IMAGE_STRUCTURE") != nullptr)
                 {
                     bWarned = true;
-                    CPLError( CE_Warning, CPLE_AppDefined,
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
                         "%s has incompatible characteristics with the ones "
                         "declared in the label.",
-                        osQubeFile.c_str() );
+                        osQubeFile.c_str());
                 }
                 int nBlockXSize = 1, nBlockYSize = 1;
                 poTIF_DS->GetRasterBand(1)->GetBlockSize(&nBlockXSize,
                                                          &nBlockYSize);
-                if( (poDS->m_bIsTiled && (nBlockXSize != tileSizeX ||
-                                          nBlockYSize != tileSizeY) ) ||
+                if ((poDS->m_bIsTiled &&
+                     (nBlockXSize != tileSizeX || nBlockYSize != tileSizeY)) ||
                     (!poDS->m_bIsTiled && (nBlockXSize != nCols ||
-                                        (nBands > 1 && nBlockYSize != 1))) )
+                                           (nBands > 1 && nBlockYSize != 1))))
                 {
-                    if( !bWarned )
+                    if (!bWarned)
                     {
                         bWarned = true;
-                        CPLError( CE_Warning, CPLE_AppDefined,
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
                             "%s has incompatible characteristics with the ones "
                             "declared in the label.",
-                            osQubeFile.c_str() );
+                            osQubeFile.c_str());
                     }
                 }
+                // to please Clang Static Analyzer
+                nBlockXSize = std::max(1, nBlockXSize);
+                nBlockYSize = std::max(1, nBlockYSize);
 
                 // Check that blocks are effectively written in expected order.
                 const int nBlockSizeBytes = nBlockXSize * nBlockYSize *
-                                        GDALGetDataTypeSizeBytes(eDataType);
+                                            GDALGetDataTypeSizeBytes(eDataType);
                 bool bGoOn = !bWarned;
-                const int l_nBlocksPerRow =
-                        DIV_ROUND_UP(nCols, nBlockXSize);
-                const int l_nBlocksPerColumn =
-                        DIV_ROUND_UP(nRows, nBlockYSize);
+                const int l_nBlocksPerRow = DIV_ROUND_UP(nCols, nBlockXSize);
+                const int l_nBlocksPerColumn = DIV_ROUND_UP(nRows, nBlockYSize);
                 int nBlockNo = 0;
-                for( int i = 0; i < nBands && bGoOn; i++ )
+                for (int i = 0; i < nBands && bGoOn; i++)
                 {
-                    for( int y = 0; y < l_nBlocksPerColumn && bGoOn; y++ )
+                    for (int y = 0; y < l_nBlocksPerColumn && bGoOn; y++)
                     {
-                        for( int x = 0; x < l_nBlocksPerRow && bGoOn; x++ )
+                        for (int x = 0; x < l_nBlocksPerRow && bGoOn; x++)
                         {
-                            const char* pszBlockOffset =  poTIF_DS->
-                                GetRasterBand(i+1)->GetMetadataItem(
+                            const char *pszBlockOffset =
+                                poTIF_DS->GetRasterBand(i + 1)->GetMetadataItem(
                                     CPLSPrintf("BLOCK_OFFSET_%d_%d", x, y),
                                     "TIFF");
-                            if( pszBlockOffset )
+                            if (pszBlockOffset)
                             {
                                 GIntBig nOffset = CPLAtoGIntBig(pszBlockOffset);
-                                if( nOffset != nSkipBytes + nBlockNo *
-                                                            nBlockSizeBytes )
+                                if (nOffset !=
+                                    nSkipBytes + nBlockNo * nBlockSizeBytes)
                                 {
-                                    //bWarned = true;
-                                    CPLError( CE_Warning, CPLE_AppDefined,
-                                        "%s has incompatible "
-                                        "characteristics with the ones "
-                                        "declared in the label.",
-                                        osQubeFile.c_str() );
+                                    // bWarned = true;
+                                    CPLError(CE_Warning, CPLE_AppDefined,
+                                             "%s has incompatible "
+                                             "characteristics with the ones "
+                                             "declared in the label.",
+                                             osQubeFile.c_str());
                                     bGoOn = false;
                                 }
                             }
-                            nBlockNo ++;
+                            nBlockNo++;
                         }
                     }
                 }
@@ -2507,21 +2234,149 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 
     poDS->eAccess = poOpenInfo->eAccess;
 
-/* -------------------------------------------------------------------- */
-/*      Compute the line offset.                                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Compute the line offset.                                        */
+    /* -------------------------------------------------------------------- */
     int nLineOffset = 0;
     int nPixelOffset = 0;
     vsi_l_offset nBandOffset = 0;
 
-    if( EQUAL(osFormat,"BandSequential") )
+    if (EQUAL(osFormat, "BandSequential"))
     {
         const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
         nPixelOffset = nItemSize;
-        nLineOffset = nPixelOffset * nCols;
+        try
+        {
+            nLineOffset = (CPLSM(nPixelOffset) * CPLSM(nCols)).v();
+        }
+        catch (const CPLSafeIntOverflow &)
+        {
+            delete poDS;
+            return nullptr;
+        }
         nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
+
+        poDS->m_sLayout.osRawFilename = osQubeFile;
+        if (nBands > 1)
+            poDS->m_sLayout.eInterleaving = RawBinaryLayout::Interleaving::BSQ;
+        poDS->m_sLayout.eDataType = eDataType;
+        poDS->m_sLayout.bLittleEndianOrder = bIsLSB;
+        poDS->m_sLayout.nImageOffset = nSkipBytes;
+        poDS->m_sLayout.nPixelOffset = nPixelOffset;
+        poDS->m_sLayout.nLineOffset = nLineOffset;
+        poDS->m_sLayout.nBandOffset = static_cast<GIntBig>(nBandOffset);
     }
     /* else Tiled or external */
+
+    /* -------------------------------------------------------------------- */
+    /*      Extract BandBin info.                                           */
+    /* -------------------------------------------------------------------- */
+    std::vector<std::string> aosBandNames;
+    std::vector<std::string> aosBandUnits;
+    std::vector<double> adfWavelengths;
+    std::vector<std::string> aosWavelengthsUnit;
+    std::vector<double> adfBandwidth;
+    std::vector<std::string> aosBandwidthUnit;
+    const auto oBandBin = poDS->m_oJSonLabel.GetObj("IsisCube/BandBin");
+    if (oBandBin.IsValid() && oBandBin.GetType() == CPLJSONObject::Type::Object)
+    {
+        for (const auto &child : oBandBin.GetChildren())
+        {
+            if (CPLString(child.GetName()).ifind("name") != std::string::npos)
+            {
+                // Use "name" in priority
+                if (EQUAL(child.GetName().c_str(), "name"))
+                {
+                    aosBandNames.clear();
+                }
+                else if (!aosBandNames.empty())
+                {
+                    continue;
+                }
+
+                if (child.GetType() == CPLJSONObject::Type::String &&
+                    nBands == 1)
+                {
+                    aosBandNames.push_back(child.ToString());
+                }
+                else if (child.GetType() == CPLJSONObject::Type::Array)
+                {
+                    auto oArray = child.ToArray();
+                    if (oArray.Size() == nBands)
+                    {
+                        for (int i = 0; i < nBands; i++)
+                        {
+                            if (oArray[i].GetType() ==
+                                CPLJSONObject::Type::String)
+                            {
+                                aosBandNames.push_back(oArray[i].ToString());
+                            }
+                            else
+                            {
+                                aosBandNames.clear();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            else if (EQUAL(child.GetName().c_str(), "BandSuffixUnit") &&
+                     child.GetType() == CPLJSONObject::Type::Array)
+            {
+                auto oArray = child.ToArray();
+                if (oArray.Size() == nBands)
+                {
+                    for (int i = 0; i < nBands; i++)
+                    {
+                        if (oArray[i].GetType() == CPLJSONObject::Type::String)
+                        {
+                            aosBandUnits.push_back(oArray[i].ToString());
+                        }
+                        else
+                        {
+                            aosBandUnits.clear();
+                            break;
+                        }
+                    }
+                }
+            }
+            else if (EQUAL(child.GetName().c_str(), "BandBinCenter") ||
+                     EQUAL(child.GetName().c_str(), "Center"))
+            {
+                GetValueAndUnits(child, adfWavelengths, aosWavelengthsUnit,
+                                 nBands);
+            }
+            else if (EQUAL(child.GetName().c_str(), "BandBinUnit") &&
+                     child.GetType() == CPLJSONObject::Type::String)
+            {
+                CPLString unit(child.ToString());
+                if (STARTS_WITH_CI(unit, "micromet") || EQUAL(unit, "um") ||
+                    STARTS_WITH_CI(unit, "nanomet") || EQUAL(unit, "nm"))
+                {
+                    aosWavelengthsUnit.push_back(child.ToString());
+                }
+            }
+            else if (EQUAL(child.GetName().c_str(), "Width"))
+            {
+                GetValueAndUnits(child, adfBandwidth, aosBandwidthUnit, nBands);
+            }
+        }
+
+        if (!adfWavelengths.empty() && aosWavelengthsUnit.size() == 1)
+        {
+            for (int i = 1; i < nBands; i++)
+            {
+                aosWavelengthsUnit.push_back(aosWavelengthsUnit[0]);
+            }
+        }
+        if (!adfBandwidth.empty() && aosBandwidthUnit.size() == 1)
+        {
+            for (int i = 1; i < nBands; i++)
+            {
+                aosBandwidthUnit.push_back(aosBandwidthUnit[0]);
+            }
+        }
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Create band information objects.                                */
@@ -2532,90 +2387,113 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
     const bool bNativeOrder = !bIsLSB;
 #endif
 
-    for( int i = 0; i < nBands; i++ )
+    for (int i = 0; i < nBands; i++)
     {
-        GDALRasterBand *poBand = NULL;
+        GDALRasterBand *poBand = nullptr;
 
-        if( poDS->m_poExternalDS != NULL )
+        if (poDS->m_poExternalDS != nullptr)
         {
-            ISIS3WrapperRasterBand* poISISBand =
-                new ISIS3WrapperRasterBand(
-                            poDS->m_poExternalDS->GetRasterBand( i+1 ) );
+            ISIS3WrapperRasterBand *poISISBand = new ISIS3WrapperRasterBand(
+                poDS->m_poExternalDS->GetRasterBand(i + 1));
             poBand = poISISBand;
-            poDS->SetBand( i+1, poBand );
+            poDS->SetBand(i + 1, poBand);
 
-            poISISBand->SetMaskBand( new ISISMaskBand(poISISBand) );
+            poISISBand->SetMaskBand(new ISISMaskBand(poISISBand));
         }
-        else if( poDS->m_bIsTiled )
+        else if (poDS->m_bIsTiled)
         {
-            ISISTiledBand* poISISBand =
-                new ISISTiledBand( poDS, poDS->m_fpImage, i+1, eDataType,
-                                        tileSizeX, tileSizeY,
-                                        nSkipBytes, 0, 0,
-                                        bNativeOrder );
-
+            CPLErrorReset();
+            ISISTiledBand *poISISBand = new ISISTiledBand(
+                poDS, poDS->m_fpImage, i + 1, eDataType, tileSizeX, tileSizeY,
+                nSkipBytes, 0, 0, bNativeOrder);
+            if (CPLGetLastErrorType() != CE_None)
+            {
+                delete poISISBand;
+                delete poDS;
+                return nullptr;
+            }
             poBand = poISISBand;
-            poDS->SetBand( i+1, poBand );
+            poDS->SetBand(i + 1, poBand);
 
-            poISISBand->SetMaskBand( new ISISMaskBand(poISISBand) );
+            poISISBand->SetMaskBand(new ISISMaskBand(poISISBand));
         }
         else
         {
-            ISIS3RawRasterBand* poISISBand =
-                new ISIS3RawRasterBand( poDS, i+1, poDS->m_fpImage,
-                                   nSkipBytes + nBandOffset * i,
-                                   nPixelOffset, nLineOffset, eDataType,
-                                   bNativeOrder,
-                                   TRUE );
+            ISIS3RawRasterBand *poISISBand = new ISIS3RawRasterBand(
+                poDS, i + 1, poDS->m_fpImage, nSkipBytes + nBandOffset * i,
+                nPixelOffset, nLineOffset, eDataType, bNativeOrder);
 
             poBand = poISISBand;
-            poDS->SetBand( i+1, poBand );
+            poDS->SetBand(i + 1, poBand);
 
-            poISISBand->SetMaskBand( new ISISMaskBand(poISISBand) );
+            poISISBand->SetMaskBand(new ISISMaskBand(poISISBand));
         }
 
-        poBand->SetNoDataValue( dfNoData );
+        if (i < static_cast<int>(aosBandNames.size()))
+        {
+            poBand->SetDescription(aosBandNames[i].c_str());
+        }
+        if (i < static_cast<int>(adfWavelengths.size()) &&
+            i < static_cast<int>(aosWavelengthsUnit.size()))
+        {
+            poBand->SetMetadataItem("WAVELENGTH",
+                                    CPLSPrintf("%f", adfWavelengths[i]));
+            poBand->SetMetadataItem("WAVELENGTH_UNIT",
+                                    aosWavelengthsUnit[i].c_str());
+            if (i < static_cast<int>(adfBandwidth.size()) &&
+                i < static_cast<int>(aosBandwidthUnit.size()))
+            {
+                poBand->SetMetadataItem("BANDWIDTH",
+                                        CPLSPrintf("%f", adfBandwidth[i]));
+                poBand->SetMetadataItem("BANDWIDTH_UNIT",
+                                        aosBandwidthUnit[i].c_str());
+            }
+        }
+        if (i < static_cast<int>(aosBandUnits.size()))
+        {
+            poBand->SetUnitType(aosBandUnits[i].c_str());
+        }
+
+        poBand->SetNoDataValue(dfNoData);
 
         // Set offset/scale values.
         const double dfOffset =
-            CPLAtofM(poDS->GetKeyword("IsisCube.Core.Pixels.Base","0.0"));
-        const double dfScale =
-            CPLAtofM(poDS->GetKeyword("IsisCube.Core.Pixels.Multiplier","1.0"));
-        if( dfOffset != 0.0 || dfScale != 1.0 )
+            CPLAtofM(poDS->GetKeyword("IsisCube.Core.Pixels.Base", "0.0"));
+        const double dfScale = CPLAtofM(
+            poDS->GetKeyword("IsisCube.Core.Pixels.Multiplier", "1.0"));
+        if (dfOffset != 0.0 || dfScale != 1.0)
         {
             poBand->SetOffset(dfOffset);
             poBand->SetScale(dfScale);
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Check for a .prj file. For ISIS3 I would like to keep this in   */
-/* -------------------------------------------------------------------- */
-    const CPLString osPath = CPLGetPath( poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Check for a .prj file. For ISIS3 I would like to keep this in   */
+    /* -------------------------------------------------------------------- */
+    const CPLString osPath = CPLGetPath(poOpenInfo->pszFilename);
     const CPLString osName = CPLGetBasename(poOpenInfo->pszFilename);
-    const char  *pszPrjFile = CPLFormCIFilename( osPath, osName, "prj" );
+    const char *pszPrjFile = CPLFormCIFilename(osPath, osName, "prj");
 
-    VSILFILE *fp = VSIFOpenL( pszPrjFile, "r" );
-    if( fp != NULL )
+    VSILFILE *fp = VSIFOpenL(pszPrjFile, "r");
+    if (fp != nullptr)
     {
-        VSIFCloseL( fp );
+        VSIFCloseL(fp);
 
-        char **papszLines = CSLLoad( pszPrjFile );
+        char **papszLines = CSLLoad(pszPrjFile);
 
         OGRSpatialReference oSRS2;
-        if( oSRS2.importFromESRI( papszLines ) == OGRERR_NONE )
+        if (oSRS2.importFromESRI(papszLines) == OGRERR_NONE)
         {
-            poDS->m_aosAdditionalFiles.AddString( pszPrjFile );
-            char *pszResult = NULL;
-            oSRS2.exportToWkt( &pszResult );
-            poDS->m_osProjection = pszResult;
-            CPLFree( pszResult );
+            poDS->m_aosAdditionalFiles.AddString(pszPrjFile);
+            poDS->m_oSRS = oSRS2;
+            poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         }
 
-        CSLDestroy( papszLines );
+        CSLDestroy(papszLines);
     }
 
-    if( dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0 )
+    if (dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0)
     {
         poDS->m_bGotTransform = true;
         poDS->m_adfGeoTransform[0] = dfULXMap;
@@ -2626,40 +2504,38 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
         poDS->m_adfGeoTransform[5] = dfYDim;
     }
 
-    if( !poDS->m_bGotTransform )
+    if (!poDS->m_bGotTransform)
     {
-        poDS->m_bGotTransform =
-            CPL_TO_BOOL(GDALReadWorldFile( poOpenInfo->pszFilename, "cbw",
-                               poDS->m_adfGeoTransform ));
-        if( poDS->m_bGotTransform )
+        poDS->m_bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
+            poOpenInfo->pszFilename, "cbw", poDS->m_adfGeoTransform));
+        if (poDS->m_bGotTransform)
         {
             poDS->m_aosAdditionalFiles.AddString(
-                        CPLResetExtension(poOpenInfo->pszFilename, "cbw") );
+                CPLResetExtension(poOpenInfo->pszFilename, "cbw"));
         }
     }
 
-    if( !poDS->m_bGotTransform )
+    if (!poDS->m_bGotTransform)
     {
-        poDS->m_bGotTransform =
-            CPL_TO_BOOL(GDALReadWorldFile( poOpenInfo->pszFilename, "wld",
-                               poDS->m_adfGeoTransform ));
-        if( poDS->m_bGotTransform )
+        poDS->m_bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
+            poOpenInfo->pszFilename, "wld", poDS->m_adfGeoTransform));
+        if (poDS->m_bGotTransform)
         {
             poDS->m_aosAdditionalFiles.AddString(
-                        CPLResetExtension(poOpenInfo->pszFilename, "wld") );
+                CPLResetExtension(poOpenInfo->pszFilename, "wld"));
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Initialize any PAM information.                                 */
+    /* -------------------------------------------------------------------- */
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-/* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Check for overviews.                                            */
+    /* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
 
     return poDS;
 }
@@ -2668,22 +2544,22 @@ GDALDataset *ISIS3Dataset::Open( GDALOpenInfo * poOpenInfo )
 /*                             GetKeyword()                             */
 /************************************************************************/
 
-const char *ISIS3Dataset::GetKeyword( const char *pszPath,
-                                      const char *pszDefault )
+const char *ISIS3Dataset::GetKeyword(const char *pszPath,
+                                     const char *pszDefault)
 
 {
-    return m_oKeywords.GetKeyword( pszPath, pszDefault );
+    return m_oKeywords.GetKeyword(pszPath, pszDefault);
 }
 
 /************************************************************************/
 /*                              FixLong()                               */
 /************************************************************************/
 
-double ISIS3Dataset::FixLong( double dfLong )
+double ISIS3Dataset::FixLong(double dfLong)
 {
-    if( m_osLongitudeDirection == "PositiveWest" )
+    if (m_osLongitudeDirection == "PositiveWest")
         dfLong = -dfLong;
-    if( m_bForce360 && dfLong < 0 )
+    if (m_bForce360 && dfLong < 0)
         dfLong += 360.0;
     return dfLong;
 }
@@ -2694,39 +2570,43 @@ double ISIS3Dataset::FixLong( double dfLong )
 
 void ISIS3Dataset::BuildLabel()
 {
-    // If we have a source label, then edit it directly
-    CPLJsonObject oLabel( m_poSrcJSonLabel );
-    if( m_poSrcJSonLabel == NULL )
-        oLabel.clear();
-
-    CPLJsonObject& oIsisCube = oLabel["IsisCube"];
-    if( oIsisCube.getType() != CPLJsonObject::OBJECT )
-        oIsisCube.clear();
-    oIsisCube["_type"] = "object";
-
-    if( !m_osComment.empty() )
-        oIsisCube.insert(0, "_comment", CPLJsonObject(m_osComment));
-
-    CPLJsonObject& oCore = oIsisCube["Core"];
-    if( oCore.getType() != CPLJsonObject::OBJECT )
-        oCore.clear();
-    oCore["_type"] = "object";
-
-    if( !m_osExternalFilename.empty() )
+    CPLJSONObject oLabel = m_oSrcJSonLabel;
+    if (!oLabel.IsValid())
     {
-        if( m_poExternalDS && m_bGeoTIFFAsRegularExternal )
+        oLabel = CPLJSONObject();
+    }
+    // If we have a source label, then edit it directly
+    CPLJSONObject oIsisCube = GetOrCreateJSONObject(oLabel, "IsisCube");
+    oIsisCube.Set("_type", "object");
+
+    if (!m_osComment.empty())
+        oIsisCube.Set("_comment", m_osComment);
+
+    CPLJSONObject oCore = GetOrCreateJSONObject(oIsisCube, "Core");
+    if (oCore.GetType() != CPLJSONObject::Type::Object)
+    {
+        oIsisCube.Delete("Core");
+        oCore = CPLJSONObject();
+        oIsisCube.Add("Core", oCore);
+    }
+    oCore.Set("_type", "object");
+
+    if (!m_osExternalFilename.empty())
+    {
+        if (m_poExternalDS && m_bGeoTIFFAsRegularExternal)
         {
-            if( !m_bGeoTIFFInitDone )
+            if (!m_bGeoTIFFInitDone)
             {
-                reinterpret_cast<ISIS3WrapperRasterBand*>(GetRasterBand(1))->
-                    InitFile();
+                reinterpret_cast<ISIS3WrapperRasterBand *>(GetRasterBand(1))
+                    ->InitFile();
             }
 
-            const char* pszOffset = m_poExternalDS->GetRasterBand(1)->
-                                GetMetadataItem("BLOCK_OFFSET_0_0", "TIFF");
-            if( pszOffset )
+            const char *pszOffset =
+                m_poExternalDS->GetRasterBand(1)->GetMetadataItem(
+                    "BLOCK_OFFSET_0_0", "TIFF");
+            if (pszOffset)
             {
-                oCore["StartByte"] = 1 + atoi(pszOffset);
+                oCore.Set("StartByte", 1 + atoi(pszOffset));
             }
             else
             {
@@ -2734,560 +2614,591 @@ void ISIS3Dataset::BuildLabel()
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Missing BLOCK_OFFSET_0_0");
                 m_bGeoTIFFAsRegularExternal = false;
-                oCore["StartByte"] = 1;
+                oCore.Set("StartByte", 1);
             }
         }
         else
         {
-            oCore["StartByte"] = 1;
+            oCore.Set("StartByte", 1);
         }
-        oCore["^Core"] = CPLGetFilename(m_osExternalFilename);
+        if (!m_osExternalFilename.empty())
+        {
+            const CPLString osExternalFilename =
+                CPLGetFilename(m_osExternalFilename);
+            oCore.Set("^Core", osExternalFilename);
+        }
     }
     else
     {
-        oCore["StartByte"] = pszSTARTBYTE_PLACEHOLDER;
-        oCore.del("^Core");
+        oCore.Set("StartByte", pszSTARTBYTE_PLACEHOLDER);
+        oCore.Delete("^Core");
     }
 
-    if( m_poExternalDS && !m_bGeoTIFFAsRegularExternal )
+    if (m_poExternalDS && !m_bGeoTIFFAsRegularExternal)
     {
-        oCore["Format"] = "GeoTIFF";
-        oCore.del("TileSamples");
-        oCore.del("TileLines");
+        oCore.Set("Format", "GeoTIFF");
+        oCore.Delete("TileSamples");
+        oCore.Delete("TileLines");
     }
-    else if( m_bIsTiled )
+    else if (m_bIsTiled)
     {
-        oCore["Format"] = "Tile";
+        oCore.Set("Format", "Tile");
         int nBlockXSize = 1, nBlockYSize = 1;
         GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-        oCore["TileSamples"] = nBlockXSize;
-        oCore["TileLines"] = nBlockYSize;
+        oCore.Set("TileSamples", nBlockXSize);
+        oCore.Set("TileLines", nBlockYSize);
     }
     else
     {
-        oCore["Format"] = "BandSequential";
-        oCore.del("TileSamples");
-        oCore.del("TileLines");
+        oCore.Set("Format", "BandSequential");
+        oCore.Delete("TileSamples");
+        oCore.Delete("TileLines");
     }
 
-    CPLJsonObject& oDimensions = oCore["Dimensions"];
-    if( oDimensions.getType() != CPLJsonObject::OBJECT )
-        oDimensions.clear();
-    oDimensions["_type"] = "group";
-    oDimensions["Samples"] = nRasterXSize;
-    oDimensions["Lines"] = nRasterYSize;
-    oDimensions["Bands"] = nBands;
+    CPLJSONObject oDimensions = GetOrCreateJSONObject(oCore, "Dimensions");
+    oDimensions.Set("_type", "group");
+    oDimensions.Set("Samples", nRasterXSize);
+    oDimensions.Set("Lines", nRasterYSize);
+    oDimensions.Set("Bands", nBands);
 
-    CPLJsonObject& oPixels = oCore["Pixels"];
-    if( oPixels.getType() != CPLJsonObject::OBJECT )
-        oPixels.clear();
-    oPixels["_type"] = "group";
-        const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
-    oPixels["Type"] =
-        (eDT == GDT_Byte) ?   "UnsignedByte" :
-        (eDT == GDT_UInt16) ? "UnsignedWord" :
-        (eDT == GDT_Int16) ?  "SignedWord" :
-                                "Real";
+    CPLJSONObject oPixels = GetOrCreateJSONObject(oCore, "Pixels");
+    oPixels.Set("_type", "group");
+    const GDALDataType eDT = GetRasterBand(1)->GetRasterDataType();
+    oPixels.Set("Type", (eDT == GDT_Byte)     ? "UnsignedByte"
+                        : (eDT == GDT_UInt16) ? "UnsignedWord"
+                        : (eDT == GDT_Int16)  ? "SignedWord"
+                                              : "Real");
 
-    oPixels["ByteOrder"] = "Lsb";
-    oPixels["Base"] = GetRasterBand(1)->GetOffset();
-    oPixels["Multiplier"] = GetRasterBand(1)->GetScale();
+    oPixels.Set("ByteOrder", "Lsb");
+    oPixels.Set("Base", GetRasterBand(1)->GetOffset());
+    oPixels.Set("Multiplier", GetRasterBand(1)->GetScale());
 
-    OGRSpatialReference oSRS;
+    const OGRSpatialReference &oSRS = m_oSRS;
 
-    if( !m_bUseSrcMapping && oIsisCube.has("Mapping") )
-        oIsisCube["Mapping"].clear();
-
-    if( m_bUseSrcMapping && oIsisCube.has("Mapping") &&
-        oIsisCube["Mapping"].getType() == CPLJsonObject::OBJECT)
+    if (!m_bUseSrcMapping)
     {
-        CPLJsonObject& oMapping = oIsisCube["Mapping"];
-        if( !m_osTargetName.empty() )
-            oMapping["TargetName"] = m_osTargetName;
-        if( !m_osLatitudeType.empty() )
-            oMapping["LatitudeType"] = m_osLatitudeType;
-        if( !m_osLongitudeDirection.empty() )
-            oMapping["LongitudeDirection"] = m_osLongitudeDirection;
+        oIsisCube.Delete("Mapping");
     }
-    else if( !m_bUseSrcMapping && !m_osProjection.empty() )
-    {
-        CPLJsonObject& oMapping = oIsisCube["Mapping"];
-        oMapping["_type"] = "group";
 
-        oSRS.SetFromUserInput(m_osProjection);
-        if( oSRS.IsProjected() || oSRS.IsGeographic() )
+    CPLJSONObject oMapping = GetOrCreateJSONObject(oIsisCube, "Mapping");
+    if (m_bUseSrcMapping && oMapping.IsValid() &&
+        oMapping.GetType() == CPLJSONObject::Type::Object)
+    {
+        if (!m_osTargetName.empty())
+            oMapping.Set("TargetName", m_osTargetName);
+        if (!m_osLatitudeType.empty())
+            oMapping.Set("LatitudeType", m_osLatitudeType);
+        if (!m_osLongitudeDirection.empty())
+            oMapping.Set("LongitudeDirection", m_osLongitudeDirection);
+    }
+    else if (!m_bUseSrcMapping && !m_oSRS.IsEmpty())
+    {
+        oMapping.Add("_type", "group");
+
+        if (oSRS.IsProjected() || oSRS.IsGeographic())
         {
-            const char* pszDatum = oSRS.GetAttrValue("DATUM");
-            CPLString osTargetName( m_osTargetName );
-            if( osTargetName.empty() )
+            const char *pszDatum = oSRS.GetAttrValue("DATUM");
+            CPLString osTargetName(m_osTargetName);
+            if (osTargetName.empty())
             {
-                if( pszDatum && STARTS_WITH(pszDatum, "D_") )
+                if (pszDatum && STARTS_WITH(pszDatum, "D_"))
                 {
                     osTargetName = pszDatum + 2;
                 }
-                else if( pszDatum )
+                else if (pszDatum)
                 {
                     osTargetName = pszDatum;
                 }
             }
-            if( !osTargetName.empty() )
-                oMapping["TargetName"] = osTargetName;
+            if (!osTargetName.empty())
+                oMapping.Add("TargetName", osTargetName);
 
-            oMapping["EquatorialRadius"]["value"] = oSRS.GetSemiMajor();
-            oMapping["EquatorialRadius"]["unit"] = "meters";
-            oMapping["PolarRadius"]["value"] = oSRS.GetSemiMinor();
-            oMapping["PolarRadius"]["unit"] = "meters";
+            oMapping.Add("EquatorialRadius/value", oSRS.GetSemiMajor());
+            oMapping.Add("EquatorialRadius/unit", "meters");
+            oMapping.Add("PolarRadius/value", oSRS.GetSemiMinor());
+            oMapping.Add("PolarRadius/unit", "meters");
 
-            if( !m_osLatitudeType.empty() )
-                oMapping["LatitudeType"] = m_osLatitudeType;
+            if (!m_osLatitudeType.empty())
+                oMapping.Add("LatitudeType", m_osLatitudeType);
             else
-                oMapping["LatitudeType"] = "Planetocentric";
+                oMapping.Add("LatitudeType", "Planetocentric");
 
-            if( !m_osLongitudeDirection.empty() )
-                oMapping["LongitudeDirection"] = m_osLongitudeDirection;
+            if (!m_osLongitudeDirection.empty())
+                oMapping.Add("LongitudeDirection", m_osLongitudeDirection);
             else
-                oMapping["LongitudeDirection"] = "PositiveEast";
+                oMapping.Add("LongitudeDirection", "PositiveEast");
 
             double adfX[4] = {0};
             double adfY[4] = {0};
             bool bLongLatCorners = false;
-            if( m_bGotTransform )
+            if (m_bGotTransform)
             {
-                for( int i = 0; i < 4; i++ )
+                for (int i = 0; i < 4; i++)
                 {
-                    adfX[i] = m_adfGeoTransform[0] + (i%2) *
-                                    nRasterXSize * m_adfGeoTransform[1];
+                    adfX[i] = m_adfGeoTransform[0] +
+                              (i % 2) * nRasterXSize * m_adfGeoTransform[1];
                     adfY[i] = m_adfGeoTransform[3] +
-                            ( (i == 0 || i == 3) ? 0 : 1 ) *
-                            nRasterYSize * m_adfGeoTransform[5];
+                              ((i == 0 || i == 3) ? 0 : 1) * nRasterYSize *
+                                  m_adfGeoTransform[5];
                 }
-                if( oSRS.IsGeographic() )
+                if (oSRS.IsGeographic())
                 {
                     bLongLatCorners = true;
                 }
                 else
                 {
-                    OGRSpatialReference* poSRSLongLat = oSRS.CloneGeogCS();
-                    OGRCoordinateTransformation* poCT =
-                        OGRCreateCoordinateTransformation(&oSRS, poSRSLongLat);
-                    if( poCT )
+                    OGRSpatialReference *poSRSLongLat = oSRS.CloneGeogCS();
+                    if (poSRSLongLat)
                     {
-                        if( poCT->Transform(4, adfX, adfY) )
+                        poSRSLongLat->SetAxisMappingStrategy(
+                            OAMS_TRADITIONAL_GIS_ORDER);
+                        OGRCoordinateTransformation *poCT =
+                            OGRCreateCoordinateTransformation(&oSRS,
+                                                              poSRSLongLat);
+                        if (poCT)
                         {
-                            bLongLatCorners = true;
+                            if (poCT->Transform(4, adfX, adfY))
+                            {
+                                bLongLatCorners = true;
+                            }
+                            delete poCT;
                         }
-                        delete poCT;
+                        delete poSRSLongLat;
                     }
-                    delete poSRSLongLat;
                 }
             }
-            if( bLongLatCorners )
+            if (bLongLatCorners)
             {
-                for( int i = 0; i < 4; i++ )
+                for (int i = 0; i < 4; i++)
                 {
                     adfX[i] = FixLong(adfX[i]);
                 }
             }
 
-            if( bLongLatCorners && (
-                    m_bForce360 || adfX[0] <- 180.0 || adfX[3] > 180.0) )
+            if (bLongLatCorners &&
+                (m_bForce360 || adfX[0] < -180.0 || adfX[3] > 180.0))
             {
-                oMapping["LongitudeDomain"] = 360;
+                oMapping.Add("LongitudeDomain", 360);
             }
             else
             {
-                oMapping["LongitudeDomain"] = 180;
+                oMapping.Add("LongitudeDomain", 180);
             }
 
-            if( m_bWriteBoundingDegrees && !m_osBoundingDegrees.empty() )
+            if (m_bWriteBoundingDegrees && !m_osBoundingDegrees.empty())
             {
-                char** papszTokens =
-                        CSLTokenizeString2(m_osBoundingDegrees, ",", 0);
-                if( CSLCount(papszTokens) == 4 )
+                char **papszTokens =
+                    CSLTokenizeString2(m_osBoundingDegrees, ",", 0);
+                if (CSLCount(papszTokens) == 4)
                 {
-                    oMapping["MinimumLatitude"]  = CPLAtof(papszTokens[1]);
-                    oMapping["MinimumLongitude"] = CPLAtof(papszTokens[0]);
-                    oMapping["MaximumLatitude"]  = CPLAtof(papszTokens[3]);
-                    oMapping["MaximumLongitude"] = CPLAtof(papszTokens[2]);
+                    oMapping.Add("MinimumLatitude", CPLAtof(papszTokens[1]));
+                    oMapping.Add("MinimumLongitude", CPLAtof(papszTokens[0]));
+                    oMapping.Add("MaximumLatitude", CPLAtof(papszTokens[3]));
+                    oMapping.Add("MaximumLongitude", CPLAtof(papszTokens[2]));
                 }
                 CSLDestroy(papszTokens);
             }
-            else if( m_bWriteBoundingDegrees && bLongLatCorners )
+            else if (m_bWriteBoundingDegrees && bLongLatCorners)
             {
-                oMapping["MinimumLatitude"] = std::min(
-                    std::min(adfY[0], adfY[1]), std::min(adfY[2],adfY[3]));
-                oMapping["MinimumLongitude"] = std::min(
-                    std::min(adfX[0], adfX[1]), std::min(adfX[2],adfX[3]));
-                oMapping["MaximumLatitude"] = std::max(
-                    std::max(adfY[0], adfY[1]), std::max(adfY[2],adfY[3]));
-                oMapping["MaximumLongitude"] = std::max(
-                    std::max(adfX[0], adfX[1]), std::max(adfX[2],adfX[3]));
+                oMapping.Add("MinimumLatitude",
+                             std::min(std::min(adfY[0], adfY[1]),
+                                      std::min(adfY[2], adfY[3])));
+                oMapping.Add("MinimumLongitude",
+                             std::min(std::min(adfX[0], adfX[1]),
+                                      std::min(adfX[2], adfX[3])));
+                oMapping.Add("MaximumLatitude",
+                             std::max(std::max(adfY[0], adfY[1]),
+                                      std::max(adfY[2], adfY[3])));
+                oMapping.Add("MaximumLongitude",
+                             std::max(std::max(adfX[0], adfX[1]),
+                                      std::max(adfX[2], adfX[3])));
             }
 
-            const char* pszProjection = oSRS.GetAttrValue("PROJECTION");
-            if( pszProjection == NULL )
+            const char *pszProjection = oSRS.GetAttrValue("PROJECTION");
+            if (pszProjection == nullptr)
             {
-                oMapping["ProjectionName"] = "SimpleCylindrical";
-                oMapping["CenterLongitude"] = 0.0;
-                oMapping["CenterLatitude"] = 0.0;
-                oMapping["CenterLatitudeRadius"] = oSRS.GetSemiMajor();
+                oMapping.Add("ProjectionName", "SimpleCylindrical");
+                oMapping.Add("CenterLongitude", 0.0);
+                oMapping.Add("CenterLatitude", 0.0);
+                oMapping.Add("CenterLatitudeRadius", oSRS.GetSemiMajor());
             }
-            else if( EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR) )
+            else if (EQUAL(pszProjection, SRS_PT_EQUIRECTANGULAR))
             {
-                oMapping["ProjectionName"] = "Equirectangular";
-                if( oSRS.GetNormProjParm( SRS_PP_LATITUDE_OF_ORIGIN, 0.0 )
-                                                                    != 0.0 )
+                oMapping.Add("ProjectionName", "Equirectangular");
+                if (oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0) != 0.0)
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
                              "Ignoring %s. Only 0 value supported",
                              SRS_PP_LATITUDE_OF_ORIGIN);
                 }
-                oMapping["CenterLongitude"] =
-                    FixLong(oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
+                oMapping.Add("CenterLongitude",
+                             FixLong(oSRS.GetNormProjParm(
+                                 SRS_PP_CENTRAL_MERIDIAN, 0.0)));
                 const double dfCenterLat =
-                        oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
-                oMapping["CenterLatitude"] = dfCenterLat;
+                    oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
+                oMapping.Add("CenterLatitude", dfCenterLat);
 
-                  // in radians
+                // in radians
                 const double radLat = dfCenterLat * M_PI / 180;
                 const double semi_major = oSRS.GetSemiMajor();
                 const double semi_minor = oSRS.GetSemiMinor();
-                const double localRadius
-                        = semi_major * semi_minor
-                        / sqrt( pow( semi_minor * cos( radLat ), 2)
-                            + pow( semi_major * sin( radLat ), 2) );
-                oMapping["CenterLatitudeRadius"] = localRadius;
+                const double localRadius =
+                    semi_major * semi_minor /
+                    sqrt(pow(semi_minor * cos(radLat), 2) +
+                         pow(semi_major * sin(radLat), 2));
+                oMapping.Add("CenterLatitudeRadius", localRadius);
             }
 
-            else if( EQUAL(pszProjection, SRS_PT_ORTHOGRAPHIC) )
+            else if (EQUAL(pszProjection, SRS_PT_ORTHOGRAPHIC))
             {
-                oMapping["ProjectionName"] = "Orthographic";
-                oMapping["CenterLongitude"] = FixLong(
-                    oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-                oMapping["CenterLatitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
+                oMapping.Add("ProjectionName", "Orthographic");
+                oMapping.Add("CenterLongitude",
+                             FixLong(oSRS.GetNormProjParm(
+                                 SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                oMapping.Add(
+                    "CenterLatitude",
+                    oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
             }
 
-            else if( EQUAL(pszProjection, SRS_PT_SINUSOIDAL) )
+            else if (EQUAL(pszProjection, SRS_PT_SINUSOIDAL))
             {
-                oMapping["ProjectionName"] = "Sinusoidal";
-                oMapping["CenterLongitude"] = FixLong(
-                    oSRS.GetNormProjParm(SRS_PP_LONGITUDE_OF_CENTER, 0.0));
+                oMapping.Add("ProjectionName", "Sinusoidal");
+                oMapping.Add("CenterLongitude",
+                             FixLong(oSRS.GetNormProjParm(
+                                 SRS_PP_LONGITUDE_OF_CENTER, 0.0)));
             }
 
-            else if( EQUAL(pszProjection, SRS_PT_MERCATOR_1SP) )
+            else if (EQUAL(pszProjection, SRS_PT_MERCATOR_1SP))
             {
-                oMapping["ProjectionName"] = "Mercator";
-                oMapping["CenterLongitude"] = FixLong(
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-                oMapping["CenterLatitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
-                oMapping["scaleFactor"] =
-                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+                oMapping.Add("ProjectionName", "Mercator");
+                oMapping.Add("CenterLongitude",
+                             FixLong(oSRS.GetNormProjParm(
+                                 SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                oMapping.Add(
+                    "CenterLatitude",
+                    oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+                oMapping.Add("scaleFactor",
+                             oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0));
             }
 
-            else if( EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC) )
+            else if (EQUAL(pszProjection, SRS_PT_POLAR_STEREOGRAPHIC))
             {
-                oMapping["ProjectionName"] = "PolarStereographic";
-                oMapping["CenterLongitude"] = FixLong(
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-                oMapping["CenterLatitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
-                oMapping["scaleFactor"] =
-                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+                oMapping.Add("ProjectionName", "PolarStereographic");
+                oMapping.Add("CenterLongitude",
+                             FixLong(oSRS.GetNormProjParm(
+                                 SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                oMapping.Add(
+                    "CenterLatitude",
+                    oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+                oMapping.Add("scaleFactor",
+                             oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0));
             }
 
-            else if( EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR) )
+            else if (EQUAL(pszProjection, SRS_PT_TRANSVERSE_MERCATOR))
             {
-                oMapping["ProjectionName"] = "TransverseMercator";
-                oMapping["CenterLongitude"] = FixLong(
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-                oMapping["CenterLatitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
-                oMapping["scaleFactor"] =
-                        oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0);
+                oMapping.Add("ProjectionName", "TransverseMercator");
+                oMapping.Add("CenterLongitude",
+                             FixLong(oSRS.GetNormProjParm(
+                                 SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                oMapping.Add(
+                    "CenterLatitude",
+                    oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+                oMapping.Add("scaleFactor",
+                             oSRS.GetNormProjParm(SRS_PP_SCALE_FACTOR, 1.0));
             }
 
-            else if( EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP) )
+            else if (EQUAL(pszProjection, SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP))
             {
-                oMapping["ProjectionName"] = "LambertConformal";
-                oMapping["CenterLongitude"] = FixLong(
-                        oSRS.GetNormProjParm(SRS_PP_CENTRAL_MERIDIAN, 0.0));
-                oMapping["CenterLatitude"] =
-                        oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0);
-                oMapping["FirstStandardParallel"] =
-                        oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0);
-                oMapping["SecondStandardParallel"] =
-                        oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0);
+                oMapping.Add("ProjectionName", "LambertConformal");
+                oMapping.Add("CenterLongitude",
+                             FixLong(oSRS.GetNormProjParm(
+                                 SRS_PP_CENTRAL_MERIDIAN, 0.0)));
+                oMapping.Add(
+                    "CenterLatitude",
+                    oSRS.GetNormProjParm(SRS_PP_LATITUDE_OF_ORIGIN, 0.0));
+                oMapping.Add(
+                    "FirstStandardParallel",
+                    oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_1, 0.0));
+                oMapping.Add(
+                    "SecondStandardParallel",
+                    oSRS.GetNormProjParm(SRS_PP_STANDARD_PARALLEL_2, 0.0));
             }
 
+            else if (EQUAL(pszProjection,
+                           "Vertical Perspective"))  // PROJ 7 required
+            {
+                oMapping.Add("ProjectionName", "PointPerspective");
+                oMapping.Add("CenterLongitude",
+                             FixLong(oSRS.GetNormProjParm(
+                                 "Longitude of topocentric origin", 0.0)));
+                oMapping.Add("CenterLatitude",
+                             oSRS.GetNormProjParm(
+                                 "Latitude of topocentric origin", 0.0));
+                // ISIS3 value is the distance from center of ellipsoid, in km
+                oMapping.Add("Distance",
+                             (oSRS.GetNormProjParm("Viewpoint height", 0.0) +
+                              oSRS.GetSemiMajor()) /
+                                 1000.0);
+            }
+
+            else if (EQUAL(pszProjection, "custom_proj4"))
+            {
+                const char *pszProj4 =
+                    oSRS.GetExtension("PROJCS", "PROJ4", nullptr);
+                if (pszProj4 && strstr(pszProj4, "+proj=ob_tran") &&
+                    strstr(pszProj4, "+o_proj=eqc"))
+                {
+                    const auto FetchParam =
+                        [](const char *pszProj4Str, const char *pszKey)
+                    {
+                        CPLString needle;
+                        needle.Printf("+%s=", pszKey);
+                        const char *pszVal =
+                            strstr(pszProj4Str, needle.c_str());
+                        if (pszVal)
+                            return CPLAtof(pszVal + needle.size());
+                        return 0.0;
+                    };
+
+                    double dfLonP = FetchParam(pszProj4, "o_lon_p");
+                    double dfLatP = FetchParam(pszProj4, "o_lat_p");
+                    double dfLon0 = FetchParam(pszProj4, "lon_0");
+                    double dfPoleRotation = -dfLonP;
+                    double dfPoleLatitude = 180 - dfLatP;
+                    double dfPoleLongitude = dfLon0;
+                    oMapping.Add("ProjectionName", "ObliqueCylindrical");
+                    oMapping.Add("PoleLatitude", dfPoleLatitude);
+                    oMapping.Add("PoleLongitude", FixLong(dfPoleLongitude));
+                    oMapping.Add("PoleRotation", dfPoleRotation);
+                }
+                else
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "Projection %s not supported", pszProjection);
+                }
+            }
             else
             {
                 CPLError(CE_Warning, CPLE_NotSupported,
-                         "Projection %s not supported",
-                         pszProjection);
+                         "Projection %s not supported", pszProjection);
             }
 
-            if( oMapping.has("ProjectionName") )
+            if (oMapping["ProjectionName"].IsValid())
             {
-                if( oSRS.GetNormProjParm( SRS_PP_FALSE_EASTING, 0.0 ) != 0.0 )
+                if (oSRS.GetNormProjParm(SRS_PP_FALSE_EASTING, 0.0) != 0.0)
                 {
                     CPLError(CE_Warning, CPLE_NotSupported,
                              "Ignoring %s. Only 0 value supported",
                              SRS_PP_FALSE_EASTING);
                 }
-                if( oSRS.GetNormProjParm( SRS_PP_FALSE_NORTHING, 0.0 ) != 0.0 )
+                if (oSRS.GetNormProjParm(SRS_PP_FALSE_NORTHING, 0.0) != 0.0)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "Ignoring %s. Only 0 value supported",
+                             "Ignoring %s. Only 0 value supported",
                              SRS_PP_FALSE_NORTHING);
                 }
             }
         }
         else
         {
-            CPLError(CE_Warning, CPLE_NotSupported,
-                     "SRS not supported");
+            CPLError(CE_Warning, CPLE_NotSupported, "SRS not supported");
         }
     }
 
-    if( !m_bUseSrcMapping && m_bGotTransform )
+    if (!m_bUseSrcMapping && m_bGotTransform)
     {
-        CPLJsonObject& oMapping = oIsisCube["Mapping"];
-        oMapping["_type"] = "group";
+        oMapping.Add("_type", "group");
 
         const double dfDegToMeter = oSRS.GetSemiMajor() * M_PI / 180.0;
-        if( !m_osProjection.empty() && oSRS.IsProjected() )
+        if (!m_oSRS.IsEmpty() && oSRS.IsProjected())
         {
             const double dfLinearUnits = oSRS.GetLinearUnits();
             // Maybe we should deal differently with non meter units ?
             const double dfRes = m_adfGeoTransform[1] * dfLinearUnits;
             const double dfScale = dfDegToMeter / dfRes;
-            oMapping["UpperLeftCornerX"] = m_adfGeoTransform[0];
-            oMapping["UpperLeftCornerY"] = m_adfGeoTransform[3];
-            oMapping["PixelResolution"]["value"] = dfRes;
-            oMapping["PixelResolution"]["unit"] = "meters/pixel";
-            oMapping["Scale"]["value"] = dfScale;
-            oMapping["Scale"]["unit"] = "pixels/degree";
+            oMapping.Add("UpperLeftCornerX", m_adfGeoTransform[0]);
+            oMapping.Add("UpperLeftCornerY", m_adfGeoTransform[3]);
+            oMapping.Add("PixelResolution/value", dfRes);
+            oMapping.Add("PixelResolution/unit", "meters/pixel");
+            oMapping.Add("Scale/value", dfScale);
+            oMapping.Add("Scale/unit", "pixels/degree");
         }
-        else if( !m_osProjection.empty() && oSRS.IsGeographic() )
+        else if (!m_oSRS.IsEmpty() && oSRS.IsGeographic())
         {
             const double dfScale = 1.0 / m_adfGeoTransform[1];
             const double dfRes = m_adfGeoTransform[1] * dfDegToMeter;
-            oMapping["UpperLeftCornerX"] = m_adfGeoTransform[0] * dfDegToMeter;
-            oMapping["UpperLeftCornerY"] = m_adfGeoTransform[3] * dfDegToMeter;
-            oMapping["PixelResolution"]["value"] = dfRes;
-            oMapping["PixelResolution"]["unit"] = "meters/pixel";
-            oMapping["Scale"]["value"] = dfScale;
-            oMapping["Scale"]["unit"] = "pixels/degree";
+            oMapping.Add("UpperLeftCornerX",
+                         m_adfGeoTransform[0] * dfDegToMeter);
+            oMapping.Add("UpperLeftCornerY",
+                         m_adfGeoTransform[3] * dfDegToMeter);
+            oMapping.Add("PixelResolution/value", dfRes);
+            oMapping.Add("PixelResolution/unit", "meters/pixel");
+            oMapping.Add("Scale/value", dfScale);
+            oMapping.Add("Scale/unit", "pixels/degree");
         }
         else
         {
-            oMapping["UpperLeftCornerX"] = m_adfGeoTransform[0];
-            oMapping["UpperLeftCornerY"] = m_adfGeoTransform[3];
-            oMapping["PixelResolution"] = m_adfGeoTransform[1];
+            oMapping.Add("UpperLeftCornerX", m_adfGeoTransform[0]);
+            oMapping.Add("UpperLeftCornerY", m_adfGeoTransform[3]);
+            oMapping.Add("PixelResolution", m_adfGeoTransform[1]);
         }
     }
 
-    CPLJsonObject& oLabelLabel = oLabel["Label"];
-    if( oLabelLabel.getType() != CPLJsonObject::OBJECT )
-        oLabelLabel.clear();
-    oLabelLabel["_type"] = "object";
-    oLabelLabel["Bytes"] = pszLABEL_BYTES_PLACEHOLDER;
+    CPLJSONObject oLabelLabel = GetOrCreateJSONObject(oLabel, "Label");
+    oLabelLabel.Set("_type", "object");
+    oLabelLabel.Set("Bytes", pszLABEL_BYTES_PLACEHOLDER);
 
     // Deal with History object
     BuildHistory();
 
-    CPLJsonObject& oHistory = oLabel["History"];
-    oHistory.clear();
-    oHistory["_type"] = "object";
-    oHistory["Name"] = "IsisCube";
-    if( m_osExternalFilename.empty() )
-        oHistory["StartByte"] = pszHISTORY_STARTBYTE_PLACEHOLDER;
-    else
-        oHistory["StartByte"] = 1;
-    oHistory["Bytes"] = static_cast<GIntBig>(m_osHistory.size());
-    if( !m_osExternalFilename.empty() )
+    oLabel.Delete("History");
+    if (!m_osHistory.empty())
     {
-        CPLString osFilename(CPLGetBasename(GetDescription()));
-        osFilename += ".History.IsisCube";
-        oHistory["^History"] = osFilename;
+        CPLJSONObject oHistory;
+        oHistory.Add("_type", "object");
+        oHistory.Add("Name", "IsisCube");
+        if (m_osExternalFilename.empty())
+            oHistory.Add("StartByte", pszHISTORY_STARTBYTE_PLACEHOLDER);
+        else
+            oHistory.Add("StartByte", 1);
+        oHistory.Add("Bytes", static_cast<GIntBig>(m_osHistory.size()));
+        if (!m_osExternalFilename.empty())
+        {
+            CPLString osFilename(CPLGetBasename(GetDescription()));
+            osFilename += ".History.IsisCube";
+            oHistory.Add("^History", osFilename);
+        }
+        oLabel.Add("History", oHistory);
     }
 
     // Deal with other objects that have StartByte & Bytes
     m_aoNonPixelSections.clear();
-    if( m_poSrcJSonLabel )
+    if (m_oSrcJSonLabel.IsValid())
     {
         CPLString osLabelSrcFilename;
-        if( oLabel.has("_filename") )
+        CPLJSONObject oFilename = oLabel["_filename"];
+        if (oFilename.GetType() == CPLJSONObject::Type::String)
         {
-            const CPLJsonObject& oFilename = oLabel["_filename"];
-            if( oFilename.getType() == CPLJsonObject::STRING )
-            {
-                osLabelSrcFilename = oFilename.getString();
-            }
+            osLabelSrcFilename = oFilename.ToString();
         }
 
-        for( size_t i = 0; i < oLabel.size(); )
+        for (CPLJSONObject &oObj : oLabel.GetChildren())
         {
-            if( oLabel[i].getType() == CPLJsonObject::OBJECT )
+            CPLString osKey = oObj.GetName();
+            if (osKey == "History")
             {
-                const CPLString& osKey = oLabel.getKey(i);
-                if( osKey == "History" )
-                {
-                    ++i;
-                    continue;
-                }
+                continue;
+            }
 
-                CPLJsonObject& oObj(oLabel[i]);
-                if( oObj.getType() != CPLJsonObject::OBJECT ||
-                    !oObj.has("Bytes") ||
-                    oObj["Bytes"].getType() != CPLJsonObject::INT ||
-                    oObj["Bytes"].getInt() <= 0 ||
-                    !oObj.has("StartByte") ||
-                    oObj["StartByte"].getType() != CPLJsonObject::INT ||
-                    oObj["StartByte"].getInt() <= 0 )
-                {
-                    ++i;
-                    continue;
-                }
+            CPLJSONObject oBytes = oObj.GetObj("Bytes");
+            if (oBytes.GetType() != CPLJSONObject::Type::Integer ||
+                oBytes.ToInteger() <= 0)
+            {
+                continue;
+            }
 
-                if( osLabelSrcFilename.empty() )
+            CPLJSONObject oStartByte = oObj.GetObj("StartByte");
+            if (oStartByte.GetType() != CPLJSONObject::Type::Integer ||
+                oStartByte.ToInteger() <= 0)
+            {
+                continue;
+            }
+
+            if (osLabelSrcFilename.empty())
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot find _filename attribute in "
+                         "source ISIS3 metadata. Removing object "
+                         "%s from the label.",
+                         osKey.c_str());
+                oLabel.Delete(osKey);
+                continue;
+            }
+
+            NonPixelSection oSection;
+            oSection.osSrcFilename = osLabelSrcFilename;
+            oSection.nSrcOffset =
+                static_cast<vsi_l_offset>(oObj.GetInteger("StartByte")) - 1U;
+            oSection.nSize =
+                static_cast<vsi_l_offset>(oObj.GetInteger("Bytes"));
+
+            CPLString osName;
+            CPLJSONObject oName = oObj.GetObj("Name");
+            if (oName.GetType() == CPLJSONObject::Type::String)
+            {
+                osName = oName.ToString();
+            }
+
+            CPLString osContainerName(osKey);
+            CPLJSONObject oContainerName = oObj.GetObj("_container_name");
+            if (oContainerName.GetType() == CPLJSONObject::Type::String)
+            {
+                osContainerName = oContainerName.ToString();
+            }
+
+            const CPLString osKeyFilename("^" + osContainerName);
+            CPLJSONObject oFilenameCap = oObj.GetObj(osKeyFilename);
+            if (oFilenameCap.GetType() == CPLJSONObject::Type::String)
+            {
+                VSIStatBufL sStat;
+                const CPLString osSrcFilename(
+                    CPLFormFilename(CPLGetPath(osLabelSrcFilename),
+                                    oFilenameCap.ToString().c_str(), nullptr));
+                if (VSIStatL(osSrcFilename, &sStat) == 0)
+                {
+                    oSection.osSrcFilename = osSrcFilename;
+                }
+                else
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                            "Cannot find _filename attribute in "
-                            "source ISIS3 metadata. Removing object "
-                            "%s from the label.",
-                            osKey.c_str());
-                    oLabel.del( osKey );
-                    // Do not increment i due to deletion.
+                             "Object %s points to %s, which does "
+                             "not exist. Removing this section "
+                             "from the label",
+                             osKey.c_str(), osSrcFilename.c_str());
+                    oLabel.Delete(osKey);
                     continue;
                 }
-
-                NonPixelSection oSection;
-                oSection.osSrcFilename = osLabelSrcFilename;
-                oSection.nSrcOffset = static_cast<vsi_l_offset>(
-                    oObj["StartByte"].getInt()) - 1U;
-                oSection.nSize = static_cast<vsi_l_offset>(
-                    oObj["Bytes"].getInt());
-
-                CPLString osName;
-                if( oObj.has( "Name" ) )
-                {
-                    const CPLJsonObject& oName(oObj["Name"]);
-                    if( oName.getType() ==
-                                    CPLJsonObject::STRING )
-                    {
-                        osName = oName.getString();
-                    }
-                }
-
-                CPLString osContainerName(osKey);
-                if( oObj.has( "_container_name" ) )
-                {
-                    const CPLJsonObject& oContainerName(
-                        oObj["_container_name"]);
-                    if( oContainerName.getType() ==
-                                    CPLJsonObject::STRING )
-                    {
-                        osContainerName = oContainerName.getString();
-                    }
-                }
-
-                const CPLString osKeyFilename( "^" + osContainerName );
-                if( oObj.has( osKeyFilename ) )
-                {
-                    const CPLJsonObject& oFilename(oObj[osKeyFilename]);
-                    if( oFilename.getType() == CPLJsonObject::STRING )
-                    {
-                        VSIStatBufL sStat;
-                        const CPLString osSrcFilename( CPLFormFilename(
-                            CPLGetPath(osLabelSrcFilename),
-                            oFilename.getString(),
-                            NULL ) );
-                        if( VSIStatL( osSrcFilename, &sStat ) == 0 )
-                        {
-                            oSection.osSrcFilename = osSrcFilename;
-                        }
-                        else
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Object %s points to %s, which does "
-                                     "not exist. Removing this section "
-                                     "from the label",
-                                     osKey.c_str(),
-                                     osSrcFilename.c_str());
-                            oLabel.del( osKey );
-                            // Do not increment i due to deletion.
-                            continue;
-                        }
-                    }
-                }
-
-                if( !m_osExternalFilename.empty() )
-                {
-                    oObj["StartByte"] = 1;
-                }
-                else
-                {
-                    CPLString osPlaceHolder;
-                    osPlaceHolder.Printf(
-                        "!*^PLACEHOLDER_%d_STARTBYTE^*!",
-                        static_cast<int>(m_aoNonPixelSections.size()) + 1);
-                    oObj["StartByte"] = osPlaceHolder;
-                    oSection.osPlaceHolder = osPlaceHolder;
-                }
-
-                if( !m_osExternalFilename.empty() )
-                {
-                    CPLString osDstFilename(
-                            CPLGetBasename(GetDescription()));
-                    osDstFilename += ".";
-                    osDstFilename += osContainerName;
-                    if( !osName.empty() )
-                    {
-                        osDstFilename += ".";
-                        osDstFilename += osName;
-                    }
-
-                    oSection.osDstFilename = CPLFormFilename(
-                        CPLGetPath( GetDescription() ),
-                        osDstFilename,
-                        NULL );
-
-                    if( oObj.has(osKeyFilename) )
-                        oObj[osKeyFilename] = osDstFilename;
-                    else
-                    {
-                        // Insert before first sub-group/object if there's one
-                        size_t j = 0;
-                        for(;  j < oObj.size(); ++j )
-                        {
-                            if( oObj[j].getType() == CPLJsonObject::OBJECT )
-                            {
-                                break;
-                            }
-                        }
-                        oObj.insert( j, osKeyFilename,
-                                     CPLJsonObject(osDstFilename) );
-                    }
-                }
-                else
-                {
-                    oObj.del(osKeyFilename);
-                }
-
-                m_aoNonPixelSections.push_back(oSection);
             }
 
-            // Do not move that in for() loop.
-            ++i;
+            if (!m_osExternalFilename.empty())
+            {
+                oObj.Set("StartByte", 1);
+            }
+            else
+            {
+                CPLString osPlaceHolder;
+                osPlaceHolder.Printf(
+                    "!*^PLACEHOLDER_%d_STARTBYTE^*!",
+                    static_cast<int>(m_aoNonPixelSections.size()) + 1);
+                oObj.Set("StartByte", osPlaceHolder);
+                oSection.osPlaceHolder = osPlaceHolder;
+            }
+
+            if (!m_osExternalFilename.empty())
+            {
+                CPLString osDstFilename(CPLGetBasename(GetDescription()));
+                osDstFilename += ".";
+                osDstFilename += osContainerName;
+                if (!osName.empty())
+                {
+                    osDstFilename += ".";
+                    osDstFilename += osName;
+                }
+
+                oSection.osDstFilename = CPLFormFilename(
+                    CPLGetPath(GetDescription()), osDstFilename, nullptr);
+
+                oObj.Set(osKeyFilename, osDstFilename);
+            }
+            else
+            {
+                oObj.Delete(osKeyFilename);
+            }
+
+            m_aoNonPixelSections.push_back(oSection);
         }
     }
-
-    if( m_poJSonLabel )
-        json_object_put(m_poJSonLabel);
-    m_poJSonLabel = oLabel.asLibJsonObj();
+    m_oJSonLabel = oLabel;
 }
 
 /************************************************************************/
@@ -3298,80 +3209,63 @@ void ISIS3Dataset::BuildHistory()
 {
     CPLString osHistory;
 
-    if( m_poSrcJSonLabel != NULL && m_bUseSrcHistory )
+    if (m_oSrcJSonLabel.IsValid() && m_bUseSrcHistory)
     {
-        CPLJsonObject oLabel( m_poSrcJSonLabel );
         vsi_l_offset nHistoryOffset = 0;
         int nHistorySize = 0;
         CPLString osSrcFilename;
-        if( oLabel.has("_filename") )
+
+        CPLJSONObject oFilename = m_oSrcJSonLabel["_filename"];
+        if (oFilename.GetType() == CPLJSONObject::Type::String)
         {
-            const CPLJsonObject& oFilename = oLabel["_filename"];
-            if( oFilename.getType() == CPLJsonObject::STRING )
-            {
-                osSrcFilename = oFilename.getString();
-            }
+            osSrcFilename = oFilename.ToString();
         }
         CPLString osHistoryFilename(osSrcFilename);
-        if( oLabel.has("History") )
+        CPLJSONObject oHistory = m_oSrcJSonLabel["History"];
+        if (oHistory.GetType() == CPLJSONObject::Type::Object)
         {
-            const CPLJsonObject& oHistory = oLabel["History"];
-            if( oHistory.getType() == CPLJsonObject::OBJECT )
+            CPLJSONObject oHistoryFilename = oHistory["^History"];
+            if (oHistoryFilename.GetType() == CPLJSONObject::Type::String)
             {
-                if( oHistory.has("^History") )
-                {
-                    const CPLJsonObject& oHistoryFilename =
-                                                    oHistory["^History"];
-                    if( oHistoryFilename.getType() == CPLJsonObject::STRING )
-                    {
-                        osHistoryFilename = 
-                            CPLFormFilename( CPLGetPath(osSrcFilename),
-                                             oHistoryFilename.getString(),
-                                             NULL );
-                    }
-                }
+                osHistoryFilename = CPLFormFilename(
+                    CPLGetPath(osSrcFilename),
+                    oHistoryFilename.ToString().c_str(), nullptr);
+            }
 
-                if( oHistory.has("StartByte") )
+            CPLJSONObject oStartByte = oHistory["StartByte"];
+            if (oStartByte.GetType() == CPLJSONObject::Type::Integer)
+            {
+                if (oStartByte.ToInteger() > 0)
                 {
-                    const CPLJsonObject& oStartByte = oHistory["StartByte"];
-                    if( oStartByte.getType() == CPLJsonObject::INT &&
-                        oStartByte.getInt() > 0 )
-                    {
-                        nHistoryOffset = static_cast<vsi_l_offset>(
-                            oStartByte.getInt()) - 1U;
-                    }
-                }
-
-                if( oHistory.has("Bytes") )
-                {
-                    const CPLJsonObject& oBytes = oHistory["Bytes"];
-                    if( oBytes.getType() == CPLJsonObject::INT )
-                    {
-                        nHistorySize = static_cast<int>(
-                            oBytes.getInt());
-                    }
+                    nHistoryOffset =
+                        static_cast<vsi_l_offset>(oStartByte.ToInteger()) - 1U;
                 }
             }
+
+            CPLJSONObject oBytes = oHistory["Bytes"];
+            if (oBytes.GetType() == CPLJSONObject::Type::Integer)
+            {
+                nHistorySize = static_cast<int>(oBytes.ToInteger());
+            }
         }
-        if( osHistoryFilename.empty() )
+
+        if (osHistoryFilename.empty())
         {
             CPLDebug("ISIS3", "Cannot find filename for source history");
         }
-        else if( nHistorySize <= 0 || nHistorySize > 1000000 )
+        else if (nHistorySize <= 0 || nHistorySize > 1000000)
         {
-            CPLDebug("ISIS3",
-                     "Invalid or missing value for History.Bytes "
-                     "for source history");
+            CPLDebug("ISIS3", "Invalid or missing value for History.Bytes "
+                              "for source history");
         }
         else
         {
-            VSILFILE* fpHistory = VSIFOpenL(osHistoryFilename, "rb");
-            if( fpHistory != NULL )
+            VSILFILE *fpHistory = VSIFOpenL(osHistoryFilename, "rb");
+            if (fpHistory != nullptr)
             {
                 VSIFSeekL(fpHistory, nHistoryOffset, SEEK_SET);
-                osHistory.resize( nHistorySize );
-                if( VSIFReadL( &osHistory[0], nHistorySize, 1,
-                              fpHistory ) != 1 )
+                osHistory.resize(nHistorySize);
+                if (VSIFReadL(&osHistory[0], nHistorySize, 1, fpHistory) != 1)
                 {
                     CPLError(CE_Warning, CPLE_FileIO,
                              "Cannot read %d bytes at offset " CPL_FRMT_GUIB
@@ -3391,71 +3285,75 @@ void ISIS3Dataset::BuildHistory()
         }
     }
 
-    if( m_bAddGDALHistory && !m_osGDALHistory.empty() )
+    if (m_bAddGDALHistory && !m_osGDALHistory.empty())
     {
-        if( !osHistory.empty() )
+        if (!osHistory.empty())
             osHistory += "\n";
         osHistory += m_osGDALHistory;
     }
-    else if( m_bAddGDALHistory )
+    else if (m_bAddGDALHistory)
     {
-        if( !osHistory.empty() )
+        if (!osHistory.empty())
             osHistory += "\n";
 
-        CPLJsonObject oHistoryObj;
-        char szFullFilename[2048] = { 0 };
-        if( !CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1) )
+        CPLJSONObject oHistoryObj;
+        char szFullFilename[2048] = {0};
+        if (!CPLGetExecPath(szFullFilename, sizeof(szFullFilename) - 1))
             strcpy(szFullFilename, "unknown_program");
         const CPLString osProgram(CPLGetBasename(szFullFilename));
         const CPLString osPath(CPLGetPath(szFullFilename));
-        CPLJsonObject& oObj = oHistoryObj[osProgram];
-        oObj["_type"] = "object";
-        oObj["GdalVersion"] = GDALVersionInfo("RELEASE_NAME");
-        if( osPath != "." )
-            oObj["ProgramPath"] = osPath;
-        time_t nCurTime = time(NULL);
-        if( nCurTime != -1 )
+
+        CPLJSONObject oObj;
+        oHistoryObj.Add(osProgram, oObj);
+
+        oObj.Add("_type", "object");
+        oObj.Add("GdalVersion", GDALVersionInfo("RELEASE_NAME"));
+        if (osPath != ".")
+            oObj.Add("ProgramPath", osPath);
+        time_t nCurTime = time(nullptr);
+        if (nCurTime != -1)
         {
             struct tm mytm;
             CPLUnixTimeToYMDHMS(nCurTime, &mytm);
-            oObj["ExecutionDateTime"] =
-                CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
-                            mytm.tm_year + 1900,
-                            mytm.tm_mon + 1,
-                            mytm.tm_mday,
-                            mytm.tm_hour,
-                            mytm.tm_min,
-                            mytm.tm_sec);
+            oObj.Add("ExecutionDateTime",
+                     CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
+                                mytm.tm_year + 1900, mytm.tm_mon + 1,
+                                mytm.tm_mday, mytm.tm_hour, mytm.tm_min,
+                                mytm.tm_sec));
         }
-        char szHostname[256] = { 0 };
-        if( gethostname(szHostname, sizeof(szHostname)-1) == 0 )
+        char szHostname[256] = {0};
+        if (gethostname(szHostname, sizeof(szHostname) - 1) == 0)
         {
-            oObj["HostName"] = szHostname;
+            oObj.Add("HostName", std::string(szHostname));
         }
-        const char* pszUsername = CPLGetConfigOption("USERNAME", NULL);
-        if( pszUsername == NULL )
-            pszUsername = CPLGetConfigOption("USER", NULL);
-        if( pszUsername != NULL )
+        const char *pszUsername = CPLGetConfigOption("USERNAME", nullptr);
+        if (pszUsername == nullptr)
+            pszUsername = CPLGetConfigOption("USER", nullptr);
+        if (pszUsername != nullptr)
         {
-            oObj["UserName"] = pszUsername;
+            oObj.Add("UserName", pszUsername);
         }
-        oObj["Description"] = "GDAL conversion";
+        oObj.Add("Description", "GDAL conversion");
 
-        CPLJsonObject& oUserParameters = oObj["UserParameters"];
-        oUserParameters["_type"] = "group";
-        if( !m_osFromFilename.empty() )
-            oUserParameters["FROM"] = CPLGetFilename( m_osFromFilename );
-        oUserParameters["TO"] = CPLGetFilename( GetDescription() );
-        if( m_bForce360 )
-            oUserParameters["Force_360"] = "true";
+        CPLJSONObject oUserParameters;
+        oObj.Add("UserParameters", oUserParameters);
 
-        json_object* poObj = oHistoryObj.asLibJsonObj();
-        osHistory += SerializeAsPDL( poObj );
-        json_object_put(poObj);
+        oUserParameters.Add("_type", "group");
+        if (!m_osFromFilename.empty())
+        {
+            const CPLString osFromFilename = CPLGetFilename(m_osFromFilename);
+            oUserParameters.Add("FROM", osFromFilename);
+        }
+        if (nullptr != GetDescription())
+        {
+            const CPLString osToFileName = CPLGetFilename(GetDescription());
+            oUserParameters.Add("TO", osToFileName);
+        }
+        if (m_bForce360)
+            oUserParameters.Add("Force_360", "true");
+
+        osHistory += SerializeAsPDL(oHistoryObj);
     }
-
-    if( osHistory.empty() )
-        osHistory = " ";
 
     m_osHistory = osHistory;
 }
@@ -3468,241 +3366,243 @@ void ISIS3Dataset::WriteLabel()
 {
     m_bIsLabelWritten = true;
 
-    if( m_poJSonLabel == NULL )
+    if (!m_oJSonLabel.IsValid())
         BuildLabel();
 
     // Serialize label
-    CPLString osLabel( SerializeAsPDL(m_poJSonLabel) );
+    CPLString osLabel(SerializeAsPDL(m_oJSonLabel));
     osLabel += "End\n";
+    if (m_osExternalFilename.empty() && osLabel.size() < 65536)
+    {
+        // In-line labels have conventionally a minimize size of 65536 bytes
+        // See #2741
+        osLabel.resize(65536);
+    }
     char *pszLabel = &osLabel[0];
     const int nLabelSize = static_cast<int>(osLabel.size());
 
     // Hack back StartByte value
     {
         char *pszStartByte = strstr(pszLabel, pszSTARTBYTE_PLACEHOLDER);
-        if( pszStartByte != NULL )
+        if (pszStartByte != nullptr)
         {
-            const char* pszOffset = CPLSPrintf("%d", 1 + nLabelSize);
+            const char *pszOffset = CPLSPrintf("%d", 1 + nLabelSize);
             memcpy(pszStartByte, pszOffset, strlen(pszOffset));
             memset(pszStartByte + strlen(pszOffset), ' ',
-                    strlen(pszSTARTBYTE_PLACEHOLDER) - strlen(pszOffset));
+                   strlen(pszSTARTBYTE_PLACEHOLDER) - strlen(pszOffset));
         }
     }
 
     // Hack back Label.Bytes value
     {
-        char* pszLabelBytes = strstr(pszLabel, pszLABEL_BYTES_PLACEHOLDER);
-        if( pszLabelBytes != NULL )
+        char *pszLabelBytes = strstr(pszLabel, pszLABEL_BYTES_PLACEHOLDER);
+        if (pszLabelBytes != nullptr)
         {
-            const char* pszBytes = CPLSPrintf("%d", nLabelSize);
+            const char *pszBytes = CPLSPrintf("%d", nLabelSize);
             memcpy(pszLabelBytes, pszBytes, strlen(pszBytes));
             memset(pszLabelBytes + strlen(pszBytes), ' ',
-                    strlen(pszLABEL_BYTES_PLACEHOLDER) - strlen(pszBytes));
+                   strlen(pszLABEL_BYTES_PLACEHOLDER) - strlen(pszBytes));
         }
     }
 
     const GDALDataType eType = GetRasterBand(1)->GetRasterDataType();
     const int nDTSize = GDALGetDataTypeSizeBytes(eType);
     vsi_l_offset nImagePixels = 0;
-    if( m_poExternalDS == NULL )
+    if (m_poExternalDS == nullptr)
     {
-        if( m_bIsTiled )
+        if (m_bIsTiled)
         {
             int nBlockXSize = 1, nBlockYSize = 1;
             GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
             nImagePixels = static_cast<vsi_l_offset>(nBlockXSize) *
-                            nBlockYSize * nBands *
-                            DIV_ROUND_UP(nRasterXSize, nBlockXSize) *
-                            DIV_ROUND_UP(nRasterYSize, nBlockYSize);
+                           nBlockYSize * nBands *
+                           DIV_ROUND_UP(nRasterXSize, nBlockXSize) *
+                           DIV_ROUND_UP(nRasterYSize, nBlockYSize);
         }
         else
         {
-            nImagePixels = static_cast<vsi_l_offset>(nRasterXSize) *
-                            nRasterYSize * nBands;
+            nImagePixels =
+                static_cast<vsi_l_offset>(nRasterXSize) * nRasterYSize * nBands;
         }
     }
 
     // Hack back History.StartBytes value
-    char* pszHistoryStartBytes = strstr(pszLabel,
-                                        pszHISTORY_STARTBYTE_PLACEHOLDER);
+    char *pszHistoryStartBytes =
+        strstr(pszLabel, pszHISTORY_STARTBYTE_PLACEHOLDER);
 
     vsi_l_offset nHistoryOffset = 0;
     vsi_l_offset nLastOffset = 0;
-    if( pszHistoryStartBytes != NULL )
+    if (pszHistoryStartBytes != nullptr)
     {
-        CPLAssert( m_osExternalFilename.empty() );
+        CPLAssert(m_osExternalFilename.empty());
         nHistoryOffset = nLabelSize + nImagePixels * nDTSize;
         nLastOffset = nHistoryOffset + m_osHistory.size();
-        const char* pszStartByte = CPLSPrintf(CPL_FRMT_GUIB,
-                                              nHistoryOffset + 1);
+        const char *pszStartByte =
+            CPLSPrintf(CPL_FRMT_GUIB, nHistoryOffset + 1);
         CPLAssert(strlen(pszStartByte) <
-                                    strlen(pszHISTORY_STARTBYTE_PLACEHOLDER));
+                  strlen(pszHISTORY_STARTBYTE_PLACEHOLDER));
         memcpy(pszHistoryStartBytes, pszStartByte, strlen(pszStartByte));
         memset(pszHistoryStartBytes + strlen(pszStartByte), ' ',
-               strlen(pszHISTORY_STARTBYTE_PLACEHOLDER) -
-                                                        strlen(pszStartByte));
+               strlen(pszHISTORY_STARTBYTE_PLACEHOLDER) - strlen(pszStartByte));
     }
 
     // Replace placeholders in other sections
-    for( size_t i = 0; i < m_aoNonPixelSections.size(); ++i )
+    for (size_t i = 0; i < m_aoNonPixelSections.size(); ++i)
     {
-        if( !m_aoNonPixelSections[i].osPlaceHolder.empty() )
+        if (!m_aoNonPixelSections[i].osPlaceHolder.empty())
         {
-            char* pszPlaceHolder = strstr(pszLabel,
-                            m_aoNonPixelSections[i].osPlaceHolder.c_str());
-            CPLAssert( pszPlaceHolder != NULL );
-            const char* pszStartByte = CPLSPrintf(CPL_FRMT_GUIB,
-                                                  nLastOffset + 1);
+            char *pszPlaceHolder =
+                strstr(pszLabel, m_aoNonPixelSections[i].osPlaceHolder.c_str());
+            CPLAssert(pszPlaceHolder != nullptr);
+            const char *pszStartByte =
+                CPLSPrintf(CPL_FRMT_GUIB, nLastOffset + 1);
             nLastOffset += m_aoNonPixelSections[i].nSize;
             CPLAssert(strlen(pszStartByte) <
-                            m_aoNonPixelSections[i].osPlaceHolder.size() );
+                      m_aoNonPixelSections[i].osPlaceHolder.size());
 
             memcpy(pszPlaceHolder, pszStartByte, strlen(pszStartByte));
             memset(pszPlaceHolder + strlen(pszStartByte), ' ',
-                m_aoNonPixelSections[i].osPlaceHolder.size() -
-                                                            strlen(pszStartByte));
+                   m_aoNonPixelSections[i].osPlaceHolder.size() -
+                       strlen(pszStartByte));
         }
     }
 
     // Write to final file
-    VSIFSeekL( m_fpLabel, 0, SEEK_SET );
-    VSIFWriteL( pszLabel, 1, osLabel.size(), m_fpLabel);
+    VSIFSeekL(m_fpLabel, 0, SEEK_SET);
+    VSIFWriteL(pszLabel, 1, osLabel.size(), m_fpLabel);
 
-    if( m_osExternalFilename.empty() )
+    if (m_osExternalFilename.empty())
     {
         // Update image offset in bands
-        if( m_bIsTiled )
+        if (m_bIsTiled)
         {
-            for(int i=0;i<nBands;i++)
+            for (int i = 0; i < nBands; i++)
             {
-                ISISTiledBand* poBand =
-                    reinterpret_cast<ISISTiledBand*>(GetRasterBand(i+1));
+                ISISTiledBand *poBand =
+                    reinterpret_cast<ISISTiledBand *>(GetRasterBand(i + 1));
                 poBand->m_nFirstTileOffset += nLabelSize;
             }
         }
         else
         {
-            for(int i=0;i<nBands;i++)
+            for (int i = 0; i < nBands; i++)
             {
-                ISIS3RawRasterBand* poBand =
-                    reinterpret_cast<ISIS3RawRasterBand*>(GetRasterBand(i+1));
+                ISIS3RawRasterBand *poBand =
+                    reinterpret_cast<ISIS3RawRasterBand *>(
+                        GetRasterBand(i + 1));
                 poBand->nImgOffset += nLabelSize;
             }
         }
     }
 
-    if( m_bInitToNodata )
+    if (m_bInitToNodata)
     {
         // Initialize the image to nodata
         const double dfNoData = GetRasterBand(1)->GetNoDataValue();
-        if( dfNoData == 0.0 )
+        if (dfNoData == 0.0)
         {
-            VSIFTruncateL( m_fpImage, VSIFTellL(m_fpImage) + 
-                                                nImagePixels * nDTSize );
+            VSIFTruncateL(m_fpImage,
+                          VSIFTellL(m_fpImage) + nImagePixels * nDTSize);
         }
-        else if( nDTSize != 0 ) // to make Coverity not warn about div by 0
+        else if (nDTSize != 0)  // to make Coverity not warn about div by 0
         {
-            const int nPageSize = 4096; // Must be multiple of 4 since
-                                        // Float32 is the largest type
-            CPLAssert( (nPageSize % nDTSize) == 0 );
+            const int nPageSize = 4096;  // Must be multiple of 4 since
+                                         // Float32 is the largest type
+            CPLAssert((nPageSize % nDTSize) == 0);
             const int nMaxPerPage = nPageSize / nDTSize;
-            GByte* pabyTemp = static_cast<GByte*>(CPLMalloc(nPageSize));
-            GDALCopyWords( &dfNoData, GDT_Float64, 0,
-                           pabyTemp, eType, nDTSize,
-                           nMaxPerPage );
+            GByte *pabyTemp = static_cast<GByte *>(CPLMalloc(nPageSize));
+            GDALCopyWords(&dfNoData, GDT_Float64, 0, pabyTemp, eType, nDTSize,
+                          nMaxPerPage);
 #ifdef CPL_MSB
-            GDALSwapWords( pabyTemp, nDTSize, nMaxPerPage, nDTSize );
+            GDALSwapWords(pabyTemp, nDTSize, nMaxPerPage, nDTSize);
 #endif
-            for( vsi_l_offset i = 0; i < nImagePixels; i += nMaxPerPage )
+            for (vsi_l_offset i = 0; i < nImagePixels; i += nMaxPerPage)
             {
                 int n;
-                if( i + nMaxPerPage <= nImagePixels )
+                if (i + nMaxPerPage <= nImagePixels)
                     n = nMaxPerPage;
                 else
                     n = static_cast<int>(nImagePixels - i);
-                if( VSIFWriteL( pabyTemp, n * nDTSize, 1, m_fpImage ) != 1 )
+                if (VSIFWriteL(pabyTemp, n * nDTSize, 1, m_fpImage) != 1)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
-                            "Cannot initialize imagery to null");
+                             "Cannot initialize imagery to null");
                     break;
                 }
             }
 
-            CPLFree( pabyTemp );
+            CPLFree(pabyTemp);
         }
     }
 
     // Write history
-    if( !m_osHistory.empty() )
+    if (!m_osHistory.empty())
     {
-        if( m_osExternalFilename.empty() )
+        if (m_osExternalFilename.empty())
         {
-            VSIFSeekL( m_fpLabel, nHistoryOffset, SEEK_SET );
-            VSIFWriteL( m_osHistory.c_str(), 1, m_osHistory.size(), m_fpLabel);
+            VSIFSeekL(m_fpLabel, nHistoryOffset, SEEK_SET);
+            VSIFWriteL(m_osHistory.c_str(), 1, m_osHistory.size(), m_fpLabel);
         }
         else
         {
             CPLString osFilename(CPLGetBasename(GetDescription()));
             osFilename += ".History.IsisCube";
-            osFilename = 
-              CPLFormFilename(CPLGetPath(GetDescription()), osFilename, NULL);
-            VSILFILE* fp = VSIFOpenL(osFilename, "wb");
-            if( fp )
+            osFilename = CPLFormFilename(CPLGetPath(GetDescription()),
+                                         osFilename, nullptr);
+            VSILFILE *fp = VSIFOpenL(osFilename, "wb");
+            if (fp)
             {
                 m_aosAdditionalFiles.AddString(osFilename);
 
-                VSIFWriteL( m_osHistory.c_str(), 1,
-                            m_osHistory.size(), fp );
+                VSIFWriteL(m_osHistory.c_str(), 1, m_osHistory.size(), fp);
                 VSIFCloseL(fp);
             }
             else
             {
-                CPLError(CE_Warning, CPLE_FileIO,
-                         "Cannot write %s", osFilename.c_str());
+                CPLError(CE_Warning, CPLE_FileIO, "Cannot write %s",
+                         osFilename.c_str());
             }
         }
     }
 
     // Write other non pixel sections
-    for( size_t i = 0; i < m_aoNonPixelSections.size(); ++i )
+    for (size_t i = 0; i < m_aoNonPixelSections.size(); ++i)
     {
-        VSILFILE* fpSrc = VSIFOpenL(
-                        m_aoNonPixelSections[i].osSrcFilename, "rb");
-        if( fpSrc == NULL )
+        VSILFILE *fpSrc =
+            VSIFOpenL(m_aoNonPixelSections[i].osSrcFilename, "rb");
+        if (fpSrc == nullptr)
         {
-            CPLError(CE_Warning, CPLE_FileIO,
-                        "Cannot open %s",
-                        m_aoNonPixelSections[i].osSrcFilename.c_str());
+            CPLError(CE_Warning, CPLE_FileIO, "Cannot open %s",
+                     m_aoNonPixelSections[i].osSrcFilename.c_str());
             continue;
         }
 
-        VSILFILE* fpDest = m_fpLabel;
-        if( !m_aoNonPixelSections[i].osDstFilename.empty() )
+        VSILFILE *fpDest = m_fpLabel;
+        if (!m_aoNonPixelSections[i].osDstFilename.empty())
         {
             fpDest = VSIFOpenL(m_aoNonPixelSections[i].osDstFilename, "wb");
-            if( fpDest == NULL )
+            if (fpDest == nullptr)
             {
-                CPLError(CE_Warning, CPLE_FileIO,
-                         "Cannot create %s",
+                CPLError(CE_Warning, CPLE_FileIO, "Cannot create %s",
                          m_aoNonPixelSections[i].osDstFilename.c_str());
                 VSIFCloseL(fpSrc);
                 continue;
             }
 
             m_aosAdditionalFiles.AddString(
-                                m_aoNonPixelSections[i].osDstFilename);
+                m_aoNonPixelSections[i].osDstFilename);
         }
 
         VSIFSeekL(fpSrc, m_aoNonPixelSections[i].nSrcOffset, SEEK_SET);
         GByte abyBuffer[4096];
         vsi_l_offset nRemaining = m_aoNonPixelSections[i].nSize;
-        while( nRemaining )
+        while (nRemaining)
         {
             size_t nToRead = 4096;
-            if( nRemaining < nToRead )
+            if (nRemaining < nToRead)
                 nToRead = static_cast<size_t>(nRemaining);
-            size_t nRead = VSIFReadL( abyBuffer, 1, nToRead, fpSrc );
-            if( nRead != nToRead )
+            size_t nRead = VSIFReadL(abyBuffer, 1, nToRead, fpSrc);
+            if (nRead != nToRead)
             {
                 CPLError(CE_Warning, CPLE_FileIO,
                          "Could not read " CPL_FRMT_GUIB " bytes from %s",
@@ -3710,12 +3610,12 @@ void ISIS3Dataset::WriteLabel()
                          m_aoNonPixelSections[i].osSrcFilename.c_str());
                 break;
             }
-            VSIFWriteL( abyBuffer, 1, nRead, fpDest );
+            VSIFWriteL(abyBuffer, 1, nRead, fpDest);
             nRemaining -= nRead;
         }
 
-        VSIFCloseL( fpSrc );
-        if( fpDest != m_fpLabel )
+        VSIFCloseL(fpSrc);
+        if (fpDest != m_fpLabel)
             VSIFCloseL(fpDest);
     }
 }
@@ -3724,14 +3624,15 @@ void ISIS3Dataset::WriteLabel()
 /*                      SerializeAsPDL()                                */
 /************************************************************************/
 
-CPLString ISIS3Dataset::SerializeAsPDL( json_object* poObj )
+CPLString ISIS3Dataset::SerializeAsPDL(const CPLJSONObject &oObj)
 {
-    CPLString osTmpFile( CPLSPrintf("/vsimem/isis3_%p", poObj) );
-    VSILFILE* fpTmp = VSIFOpenL( osTmpFile, "wb+" );
-    SerializeAsPDL( fpTmp, poObj );
-    VSIFCloseL( fpTmp );
-    CPLString osContent( reinterpret_cast<char*>(
-                            VSIGetMemFileBuffer( osTmpFile, NULL, FALSE )) );
+    CPLString osTmpFile(
+        CPLSPrintf("/vsimem/isis3_%p", oObj.GetInternalHandle()));
+    VSILFILE *fpTmp = VSIFOpenL(osTmpFile, "wb+");
+    SerializeAsPDL(fpTmp, oObj);
+    VSIFCloseL(fpTmp);
+    CPLString osContent(reinterpret_cast<char *>(
+        VSIGetMemFileBuffer(osTmpFile, nullptr, FALSE)));
     VSIUnlink(osTmpFile);
     return osContent;
 }
@@ -3740,250 +3641,247 @@ CPLString ISIS3Dataset::SerializeAsPDL( json_object* poObj )
 /*                      SerializeAsPDL()                                */
 /************************************************************************/
 
-void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
-                                   int nDepth )
+void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
+                                  int nDepth)
 {
     CPLString osIndentation;
-    for( int i = 0; i < nDepth; i++ )
+    for (int i = 0; i < nDepth; i++)
         osIndentation += "  ";
     const size_t WIDTH = 79;
 
-    json_object_iter it;
-    it.key = NULL;
-    it.val = NULL;
-    it.entry = NULL;
+    std::vector<CPLJSONObject> aoChildren = oObj.GetChildren();
     size_t nMaxKeyLength = 0;
-    json_object_object_foreachC( poObj, it )
+    for (const CPLJSONObject &oChild : aoChildren)
     {
-        if( it.val == NULL ||
-            strcmp(it.key, "_type") == 0 ||
-            strcmp(it.key, "_container_name") == 0 ||
-            strcmp(it.key, "_filename") == 0 )
+        const CPLString osKey = oChild.GetName();
+        if (EQUAL(osKey, "_type") || EQUAL(osKey, "_container_name") ||
+            EQUAL(osKey, "_filename"))
         {
             continue;
         }
-        const int nValType = json_object_get_type(it.val);
-        if( nValType == json_type_string ||
-            nValType == json_type_int ||
-            nValType == json_type_double ||
-            nValType == json_type_array )
+
+        const auto eType = oChild.GetType();
+        if (eType == CPLJSONObject::Type::String ||
+            eType == CPLJSONObject::Type::Integer ||
+            eType == CPLJSONObject::Type::Double ||
+            eType == CPLJSONObject::Type::Array)
         {
-            if( strlen(it.key) > nMaxKeyLength )
-                nMaxKeyLength = strlen(it.key);
-        }
-        else if( nValType == json_type_object )
-        {
-            json_object* poValue = CPL_json_object_object_get(it.val,
-                                                                  "value");
-            json_object* poUnit = CPL_json_object_object_get(it.val,
-                                                                "unit");
-            if( poValue && poUnit &&
-                json_object_get_type(poUnit) == json_type_string )
+            if (osKey.size() > nMaxKeyLength)
             {
-                if( strlen(it.key) > nMaxKeyLength )
-                    nMaxKeyLength = strlen(it.key);
+                nMaxKeyLength = osKey.size();
+            }
+        }
+        else if (eType == CPLJSONObject::Type::Object)
+        {
+            CPLJSONObject oValue = oChild.GetObj("value");
+            CPLJSONObject oUnit = oChild.GetObj("unit");
+            if (oValue.IsValid() &&
+                oUnit.GetType() == CPLJSONObject::Type::String)
+            {
+                if (osKey.size() > nMaxKeyLength)
+                {
+                    nMaxKeyLength = osKey.size();
+                }
             }
         }
     }
 
-    it.key = NULL;
-    it.val = NULL;
-    it.entry = NULL;
-    json_object_object_foreachC( poObj, it )
+    for (const CPLJSONObject &oChild : aoChildren)
     {
-        if( it.val == NULL ||
-            strcmp(it.key, "_type") == 0 ||
-            strcmp(it.key, "_container_name") == 0 ||
-            strcmp(it.key, "_filename") == 0 )
+        const CPLString osKey = oChild.GetName();
+        if (EQUAL(osKey, "_type") || EQUAL(osKey, "_container_name") ||
+            EQUAL(osKey, "_filename"))
         {
             continue;
         }
-        if( STARTS_WITH(it.key, "_comment") )
+        if (STARTS_WITH(osKey, "_comment"))
         {
-            if(json_object_get_type(it.val) == json_type_string )
+            if (oChild.GetType() == CPLJSONObject::Type::String)
             {
-                VSIFPrintfL(fp, "#%s\n", 
-                            json_object_get_string(it.val));
+                VSIFPrintfL(fp, "#%s\n", oChild.ToString().c_str());
             }
             continue;
         }
-        std::string osPadding;
-        if( strlen(it.key) < nMaxKeyLength )
-            osPadding.append( nMaxKeyLength - strlen(it.key), ' ' );
-        const int nValType = json_object_get_type(it.val);
-        if( nValType == json_type_object )
+        CPLString osPadding;
+        size_t nLen = osKey.size();
+        if (nLen < nMaxKeyLength)
         {
-            json_object* poType = CPL_json_object_object_get(it.val, "_type");
-            json_object* poContainerName =
-                CPL_json_object_object_get(it.val, "_container_name");
-            const char* pszContainerName = it.key;
-            if( poContainerName &&
-                json_object_get_type(poContainerName) == json_type_string )
+            osPadding.append(nMaxKeyLength - nLen, ' ');
+        }
+
+        const auto eType = oChild.GetType();
+        if (eType == CPLJSONObject::Type::Object)
+        {
+            CPLJSONObject oType = oChild.GetObj("_type");
+            CPLJSONObject oContainerName = oChild.GetObj("_container_name");
+            CPLString osContainerName = osKey;
+            if (oContainerName.GetType() == CPLJSONObject::Type::String)
             {
-                pszContainerName = json_object_get_string(poContainerName);
+                osContainerName = oContainerName.ToString();
             }
-            if( poType && json_object_get_type(poType) == json_type_string )
+            if (oType.GetType() == CPLJSONObject::Type::String)
             {
-                const char* pszType = json_object_get_string(poType);
-                if( EQUAL(pszType, "Object") )
+                const CPLString osType = oType.ToString();
+                if (EQUAL(osType, "Object"))
                 {
-                    if( nDepth == 0 && VSIFTellL(fp) != 0 )
+                    if (nDepth == 0 && VSIFTellL(fp) != 0)
                         VSIFPrintfL(fp, "\n");
-                    VSIFPrintfL(fp, "%sObject = %s\n",
-                                osIndentation.c_str(), pszContainerName);
-                    SerializeAsPDL( fp, it.val, nDepth + 1 );
-                    VSIFPrintfL(fp, "%sEnd_Object\n",
-                                osIndentation.c_str());
+                    VSIFPrintfL(fp, "%sObject = %s\n", osIndentation.c_str(),
+                                osContainerName.c_str());
+                    SerializeAsPDL(fp, oChild, nDepth + 1);
+                    VSIFPrintfL(fp, "%sEnd_Object\n", osIndentation.c_str());
                 }
-                else if( EQUAL(pszType, "Group") )
+                else if (EQUAL(osType, "Group"))
                 {
                     VSIFPrintfL(fp, "\n");
-                    VSIFPrintfL(fp, "%sGroup = %s\n",
-                                osIndentation.c_str(), pszContainerName);
-                    SerializeAsPDL( fp, it.val, nDepth + 1 );
-                    VSIFPrintfL(fp, "%sEnd_Group\n",
-                                osIndentation.c_str());
+                    VSIFPrintfL(fp, "%sGroup = %s\n", osIndentation.c_str(),
+                                osContainerName.c_str());
+                    SerializeAsPDL(fp, oChild, nDepth + 1);
+                    VSIFPrintfL(fp, "%sEnd_Group\n", osIndentation.c_str());
                 }
             }
             else
             {
-                json_object* poValue = CPL_json_object_object_get(it.val,
-                                                                  "value");
-                json_object* poUnit = CPL_json_object_object_get(it.val,
-                                                                 "unit");
-                if( poValue && poUnit &&
-                    json_object_get_type(poUnit) == json_type_string )
+                CPLJSONObject oValue = oChild.GetObj("value");
+                CPLJSONObject oUnit = oChild.GetObj("unit");
+                if (oValue.IsValid() &&
+                    oUnit.GetType() == CPLJSONObject::Type::String)
                 {
-                    const char* pszUnit = json_object_get_string(poUnit);
-                    const int nValueType = json_object_get_type(poValue);
-                    if( nValueType == json_type_int )
+                    const CPLString osUnit = oUnit.ToString();
+                    const auto eValueType = oValue.GetType();
+                    if (eValueType == CPLJSONObject::Type::Integer)
                     {
-                        const int nVal = json_object_get_int(poValue);
                         VSIFPrintfL(fp, "%s%s%s = %d <%s>\n",
-                                    osIndentation.c_str(), it.key,
-                                    osPadding.c_str(),
-                                    nVal, pszUnit);
+                                    osIndentation.c_str(), osKey.c_str(),
+                                    osPadding.c_str(), oValue.ToInteger(),
+                                    osUnit.c_str());
                     }
-                    else if( nValueType == json_type_double )
+                    else if (eValueType == CPLJSONObject::Type::Double)
                     {
-                        const double dfVal = json_object_get_double(poValue);
-                        if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
-                            static_cast<int>(dfVal) == dfVal )
+                        const double dfVal = oValue.ToDouble();
+                        if (dfVal >= INT_MIN && dfVal <= INT_MAX &&
+                            static_cast<int>(dfVal) == dfVal)
                         {
                             VSIFPrintfL(fp, "%s%s%s = %d.0 <%s>\n",
-                                        osIndentation.c_str(), it.key,
+                                        osIndentation.c_str(), osKey.c_str(),
                                         osPadding.c_str(),
-                                        static_cast<int>(dfVal), pszUnit);
+                                        static_cast<int>(dfVal),
+                                        osUnit.c_str());
                         }
                         else
                         {
                             VSIFPrintfL(fp, "%s%s%s = %.18g <%s>\n",
-                                        osIndentation.c_str(), it.key,
-                                        osPadding.c_str(),
-                                        dfVal, pszUnit);
+                                        osIndentation.c_str(), osKey.c_str(),
+                                        osPadding.c_str(), dfVal,
+                                        osUnit.c_str());
                         }
                     }
                 }
             }
         }
-        else if( nValType == json_type_string )
+        else if (eType == CPLJSONObject::Type::String)
         {
-            const char* pszVal = json_object_get_string(it.val);
-            if( pszVal[0] == '\0' ||
-                strchr(pszVal, ' ') || strstr(pszVal, "\\n") ||
-                strstr(pszVal, "\\r") )
+            CPLString osVal = oChild.ToString();
+            const char *pszVal = osVal.c_str();
+            if (pszVal[0] == '\0' || strchr(pszVal, ' ') ||
+                strstr(pszVal, "\\n") || strstr(pszVal, "\\r"))
             {
-                CPLString osVal(pszVal);
                 osVal.replaceAll("\\n", "\n");
                 osVal.replaceAll("\\r", "\r");
-                VSIFPrintfL(fp, "%s%s%s = \"%s\"\n",
-                            osIndentation.c_str(), it.key,
-                            osPadding.c_str(), osVal.c_str());
+                VSIFPrintfL(fp, "%s%s%s = \"%s\"\n", osIndentation.c_str(),
+                            osKey.c_str(), osPadding.c_str(), osVal.c_str());
             }
             else
             {
-                if( osIndentation.size() + strlen(it.key) + osPadding.size() +
-                    strlen(" = ") + strlen(pszVal) > WIDTH &&
-                    osIndentation.size() + strlen(it.key) + osPadding.size() +
-                    strlen(" = ") < WIDTH )
+                if (osIndentation.size() + osKey.size() + osPadding.size() +
+                            strlen(" = ") + strlen(pszVal) >
+                        WIDTH &&
+                    osIndentation.size() + osKey.size() + osPadding.size() +
+                            strlen(" = ") <
+                        WIDTH)
                 {
-                    size_t nFirstPos = osIndentation.size() + strlen(it.key) +
-                                     osPadding.size() + strlen(" = ");
-                    VSIFPrintfL(fp, "%s%s%s = ",
-                                osIndentation.c_str(), it.key,
-                                osPadding.c_str());
+                    size_t nFirstPos = osIndentation.size() + osKey.size() +
+                                       osPadding.size() + strlen(" = ");
+                    VSIFPrintfL(fp, "%s%s%s = ", osIndentation.c_str(),
+                                osKey.c_str(), osPadding.c_str());
                     size_t nCurPos = nFirstPos;
-                    for( int i = 0; pszVal[i] != '\0'; i++ )
+                    for (int j = 0; pszVal[j] != '\0'; j++)
                     {
-                        nCurPos ++;
-                        if( nCurPos == WIDTH && pszVal[i+1] != '\0' )
+                        nCurPos++;
+                        if (nCurPos == WIDTH && pszVal[j + 1] != '\0')
                         {
-                            VSIFPrintfL( fp, "-\n" );
-                            for( size_t j=0;j<nFirstPos;j++ )
+                            VSIFPrintfL(fp, "-\n");
+                            for (size_t k = 0; k < nFirstPos; k++)
                             {
                                 const char chSpace = ' ';
                                 VSIFWriteL(&chSpace, 1, 1, fp);
                             }
                             nCurPos = nFirstPos + 1;
                         }
-                        VSIFWriteL( &pszVal[i], 1, 1, fp );
+                        VSIFWriteL(&pszVal[j], 1, 1, fp);
                     }
                     VSIFPrintfL(fp, "\n");
                 }
                 else
                 {
-                    VSIFPrintfL(fp, "%s%s%s = %s\n",
-                                osIndentation.c_str(), it.key,
-                                osPadding.c_str(), pszVal);
+                    VSIFPrintfL(fp, "%s%s%s = %s\n", osIndentation.c_str(),
+                                osKey.c_str(), osPadding.c_str(), pszVal);
                 }
             }
         }
-        else if( nValType == json_type_int )
+        else if (eType == CPLJSONObject::Type::Integer)
         {
-            const int nVal = json_object_get_int(it.val);
-            VSIFPrintfL(fp, "%s%s%s = %d\n",
-                        osIndentation.c_str(), it.key,
-                        osPadding.c_str(), nVal);
+            const int nVal = oChild.ToInteger();
+            VSIFPrintfL(fp, "%s%s%s = %d\n", osIndentation.c_str(),
+                        osKey.c_str(), osPadding.c_str(), nVal);
         }
-        else if( nValType == json_type_double )
+        else if (eType == CPLJSONObject::Type::Double)
         {
-            const double dfVal = json_object_get_double(it.val);
-            if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
-                static_cast<int>(dfVal) == dfVal )
+            const double dfVal = oChild.ToDouble();
+            if (dfVal >= INT_MIN && dfVal <= INT_MAX &&
+                static_cast<int>(dfVal) == dfVal)
             {
-                VSIFPrintfL(fp, "%s%s%s = %d.0\n",
-                        osIndentation.c_str(), it.key,
-                        osPadding.c_str(), static_cast<int>(dfVal));
+                VSIFPrintfL(fp, "%s%s%s = %d.0\n", osIndentation.c_str(),
+                            osKey.c_str(), osPadding.c_str(),
+                            static_cast<int>(dfVal));
             }
             else
             {
-                VSIFPrintfL(fp, "%s%s%s = %.18g\n",
-                            osIndentation.c_str(), it.key,
-                            osPadding.c_str(), dfVal);
+                VSIFPrintfL(fp, "%s%s%s = %.18g\n", osIndentation.c_str(),
+                            osKey.c_str(), osPadding.c_str(), dfVal);
             }
         }
-        else if( nValType == json_type_array )
+        else if (eType == CPLJSONObject::Type::Array)
         {
-            const int nLength = json_object_array_length(it.val);
-            size_t nFirstPos = osIndentation.size() + strlen(it.key) +
-                                     osPadding.size() + strlen(" = (");
-            VSIFPrintfL(fp, "%s%s%s = (",
-                        osIndentation.c_str(), it.key,
+            CPLJSONArray oArrayItem(oChild);
+            const int nLength = oArrayItem.Size();
+            size_t nFirstPos = osIndentation.size() + osKey.size() +
+                               osPadding.size() + strlen(" = (");
+            VSIFPrintfL(fp, "%s%s%s = (", osIndentation.c_str(), osKey.c_str(),
                         osPadding.c_str());
             size_t nCurPos = nFirstPos;
-            for( int idx = 0; idx < nLength; idx++ )
+            for (int idx = 0; idx < nLength; idx++)
             {
-                json_object* poItem = json_object_array_get_idx(it.val, idx);
-                const int nItemType = json_object_get_type(poItem);
-                if( nItemType == json_type_string )
+                CPLJSONObject oItem = oArrayItem[idx];
+                const auto eArrayItemType = oItem.GetType();
+                if (eArrayItemType == CPLJSONObject::Type::String)
                 {
-                    const char* pszVal = json_object_get_string(poItem);
-                    if( nFirstPos < WIDTH && nCurPos + strlen(pszVal) > WIDTH )
+                    CPLString osVal = oItem.ToString();
+                    const char *pszVal = osVal.c_str();
+                    if (pszVal[0] == '\0' || strchr(pszVal, ' ') ||
+                        strstr(pszVal, "\\n") || strstr(pszVal, "\\r"))
                     {
-                        if( idx > 0 )
+                        osVal.replaceAll("\\n", "\n");
+                        osVal.replaceAll("\\r", "\r");
+                        VSIFPrintfL(fp, "\"%s\"", osVal.c_str());
+                    }
+                    else if (nFirstPos < WIDTH &&
+                             nCurPos + strlen(pszVal) > WIDTH)
+                    {
+                        if (idx > 0)
                         {
-                            VSIFPrintfL( fp, "\n" );
-                            for( size_t j=0;j<nFirstPos;j++ )
+                            VSIFPrintfL(fp, "\n");
+                            for (size_t j = 0; j < nFirstPos; j++)
                             {
                                 const char chSpace = ' ';
                                 VSIFWriteL(&chSpace, 1, 1, fp);
@@ -3991,53 +3889,53 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
                             nCurPos = nFirstPos;
                         }
 
-                        for( int i = 0; pszVal[i] != '\0'; i++ )
+                        for (int j = 0; pszVal[j] != '\0'; j++)
                         {
-                            nCurPos ++;
-                            if( nCurPos == WIDTH && pszVal[i+1] != '\0' )
+                            nCurPos++;
+                            if (nCurPos == WIDTH && pszVal[j + 1] != '\0')
                             {
-                                VSIFPrintfL( fp, "-\n" );
-                                for( size_t j=0;j<nFirstPos;j++ )
+                                VSIFPrintfL(fp, "-\n");
+                                for (size_t k = 0; k < nFirstPos; k++)
                                 {
                                     const char chSpace = ' ';
                                     VSIFWriteL(&chSpace, 1, 1, fp);
                                 }
                                 nCurPos = nFirstPos + 1;
                             }
-                            VSIFWriteL( &pszVal[i], 1, 1, fp );
+                            VSIFWriteL(&pszVal[j], 1, 1, fp);
                         }
                     }
                     else
                     {
-                        VSIFPrintfL( fp, "%s", pszVal );
+                        VSIFPrintfL(fp, "%s", pszVal);
                         nCurPos += strlen(pszVal);
                     }
                 }
-                else if( nItemType == json_type_int )
+                else if (eArrayItemType == CPLJSONObject::Type::Integer)
                 {
-                    const int nVal = json_object_get_int(poItem);
-                    const char* pszVal = CPLSPrintf("%d", nVal);
+                    const int nVal = oItem.ToInteger();
+                    const char *pszVal = CPLSPrintf("%d", nVal);
                     const size_t nValLen = strlen(pszVal);
-                    if( nFirstPos < WIDTH && idx > 0 &&
-                        nCurPos + nValLen > WIDTH )
+                    if (nFirstPos < WIDTH && idx > 0 &&
+                        nCurPos + nValLen > WIDTH)
                     {
-                        VSIFPrintfL( fp, "\n" );
-                        for( size_t j=0;j<nFirstPos;j++ )
+                        VSIFPrintfL(fp, "\n");
+                        for (size_t j = 0; j < nFirstPos; j++)
                         {
                             const char chSpace = ' ';
                             VSIFWriteL(&chSpace, 1, 1, fp);
                         }
                         nCurPos = nFirstPos;
                     }
-                    VSIFPrintfL( fp, "%d", nVal );
+                    VSIFPrintfL(fp, "%d", nVal);
                     nCurPos += nValLen;
                 }
-                else if( nItemType == json_type_double )
+                else if (eArrayItemType == CPLJSONObject::Type::Double)
                 {
-                    const double dfVal = json_object_get_double(poItem);
+                    const double dfVal = oItem.ToDouble();
                     CPLString osVal;
-                    if( dfVal >= INT_MIN && dfVal <= INT_MAX &&
-                        static_cast<int>(dfVal) == dfVal )
+                    if (dfVal >= INT_MIN && dfVal <= INT_MAX &&
+                        static_cast<int>(dfVal) == dfVal)
                     {
                         osVal = CPLSPrintf("%d.0", static_cast<int>(dfVal));
                     }
@@ -4046,133 +3944,124 @@ void ISIS3Dataset::SerializeAsPDL( VSILFILE* fp, json_object* poObj,
                         osVal = CPLSPrintf("%.18g", dfVal);
                     }
                     const size_t nValLen = osVal.size();
-                    if( nFirstPos < WIDTH && idx > 0 &&
-                        nCurPos + nValLen > WIDTH )
+                    if (nFirstPos < WIDTH && idx > 0 &&
+                        nCurPos + nValLen > WIDTH)
                     {
-                        VSIFPrintfL( fp, "\n" );
-                        for( size_t j=0;j<nFirstPos;j++ )
+                        VSIFPrintfL(fp, "\n");
+                        for (size_t j = 0; j < nFirstPos; j++)
                         {
                             const char chSpace = ' ';
                             VSIFWriteL(&chSpace, 1, 1, fp);
                         }
                         nCurPos = nFirstPos;
                     }
-                    VSIFPrintfL( fp, "%s", osVal.c_str() );
+                    VSIFPrintfL(fp, "%s", osVal.c_str());
                     nCurPos += nValLen;
                 }
-                if( idx < nLength - 1 )
+                if (idx < nLength - 1)
                 {
-                    VSIFPrintfL( fp, ", " );
+                    VSIFPrintfL(fp, ", ");
                     nCurPos += 2;
                 }
             }
-            VSIFPrintfL(fp, ")\n" );
+            VSIFPrintfL(fp, ")\n");
         }
     }
 }
-
 
 /************************************************************************/
 /*                           Create()                                   */
 /************************************************************************/
 
-GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
-                                  int nXSize, int nYSize, int nBands,
-                                  GDALDataType eType,
-                                  char** papszOptions)
+GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
+                                  int nYSize, int nBandsIn, GDALDataType eType,
+                                  char **papszOptions)
 {
-    if( eType != GDT_Byte && eType != GDT_UInt16 && eType != GDT_Int16 &&
-        eType != GDT_Float32 )
+    if (eType != GDT_Byte && eType != GDT_UInt16 && eType != GDT_Int16 &&
+        eType != GDT_Float32)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported data type");
-        return NULL;
+        return nullptr;
     }
-    if( nBands == 0 || nBands > 32767 )
+    if (nBandsIn == 0 || nBandsIn > 32767)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported band count");
-        return NULL;
+        return nullptr;
     }
 
-    const char* pszDataLocation = CSLFetchNameValueDef(papszOptions,
-                                                       "DATA_LOCATION",
-                                                       "LABEL");
+    const char *pszDataLocation =
+        CSLFetchNameValueDef(papszOptions, "DATA_LOCATION", "LABEL");
     const bool bIsTiled = CPLFetchBool(papszOptions, "TILED", false);
-    const int nBlockXSize = std::max(1,
-            atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "256")));
-    const int nBlockYSize = std::max(1,
-            atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "256")));
-    if( !EQUAL(pszDataLocation, "LABEL") &&
-        !EQUAL( CPLGetExtension(pszFilename), "LBL") )
+    const int nBlockXSize = std::max(
+        1, atoi(CSLFetchNameValueDef(papszOptions, "BLOCKXSIZE", "256")));
+    const int nBlockYSize = std::max(
+        1, atoi(CSLFetchNameValueDef(papszOptions, "BLOCKYSIZE", "256")));
+    if (!EQUAL(pszDataLocation, "LABEL") &&
+        !EQUAL(CPLGetExtension(pszFilename), "LBL"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                    "For DATA_LOCATION=%s, "
-                    "the main filename should have a .lbl extension",
-                    pszDataLocation);
-        return NULL;
+                 "For DATA_LOCATION=%s, "
+                 "the main filename should have a .lbl extension",
+                 pszDataLocation);
+        return nullptr;
     }
 
-    VSILFILE* fp = VSIFOpenExL(pszFilename, "wb", true);
-    if( fp == NULL )
+    VSILFILE *fp = VSIFOpenExL(pszFilename, "wb", true);
+    if (fp == nullptr)
     {
-        CPLError( CE_Failure, CPLE_FileIO,
-                  "Cannot create %s: %s",
-                  pszFilename, VSIGetLastErrorMsg() );
-        return NULL;
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s: %s", pszFilename,
+                 VSIGetLastErrorMsg());
+        return nullptr;
     }
-    VSILFILE* fpImage = NULL;
+    VSILFILE *fpImage = nullptr;
     CPLString osExternalFilename;
-    GDALDataset* poExternalDS = NULL;
+    GDALDataset *poExternalDS = nullptr;
     bool bGeoTIFFAsRegularExternal = false;
-    if( EQUAL(pszDataLocation, "EXTERNAL") )
+    if (EQUAL(pszDataLocation, "EXTERNAL"))
     {
-        osExternalFilename = CSLFetchNameValueDef(papszOptions,
-                                        "EXTERNAL_FILENAME",
-                                        CPLResetExtension(pszFilename, "cub"));
+        osExternalFilename =
+            CSLFetchNameValueDef(papszOptions, "EXTERNAL_FILENAME",
+                                 CPLResetExtension(pszFilename, "cub"));
         fpImage = VSIFOpenExL(osExternalFilename, "wb", true);
-        if( fpImage == NULL )
+        if (fpImage == nullptr)
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Cannot create %s: %s",
-                      osExternalFilename.c_str(), VSIGetLastErrorMsg() );
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s: %s",
+                     osExternalFilename.c_str(), VSIGetLastErrorMsg());
             VSIFCloseL(fp);
-            return NULL;
+            return nullptr;
         }
     }
-    else if( EQUAL(pszDataLocation, "GEOTIFF") )
+    else if (EQUAL(pszDataLocation, "GEOTIFF"))
     {
-        osExternalFilename = CSLFetchNameValueDef(papszOptions,
-                                        "EXTERNAL_FILENAME",
-                                        CPLResetExtension(pszFilename, "tif"));
-        GDALDriver* poDrv = static_cast<GDALDriver*>(
-                                            GDALGetDriverByName("GTiff"));
-        if( poDrv == NULL )
+        osExternalFilename =
+            CSLFetchNameValueDef(papszOptions, "EXTERNAL_FILENAME",
+                                 CPLResetExtension(pszFilename, "tif"));
+        GDALDriver *poDrv =
+            static_cast<GDALDriver *>(GDALGetDriverByName("GTiff"));
+        if (poDrv == nullptr)
         {
-            CPLError( CE_Failure, CPLE_AppDefined,
-                      "Cannot find GTiff driver" );
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot find GTiff driver");
             VSIFCloseL(fp);
-            return NULL;
+            return nullptr;
         }
-        char** papszGTiffOptions = NULL;
-        papszGTiffOptions = CSLSetNameValue(papszGTiffOptions,
-                                            "ENDIANNESS", "LITTLE");
-        if( bIsTiled )
+        char **papszGTiffOptions = nullptr;
+        papszGTiffOptions =
+            CSLSetNameValue(papszGTiffOptions, "ENDIANNESS", "LITTLE");
+        if (bIsTiled)
         {
-            papszGTiffOptions = CSLSetNameValue(papszGTiffOptions,
-                                                "TILED", "YES");
-            papszGTiffOptions = CSLSetNameValue(papszGTiffOptions,
-                                                "BLOCKXSIZE",
+            papszGTiffOptions =
+                CSLSetNameValue(papszGTiffOptions, "TILED", "YES");
+            papszGTiffOptions = CSLSetNameValue(papszGTiffOptions, "BLOCKXSIZE",
                                                 CPLSPrintf("%d", nBlockXSize));
-            papszGTiffOptions = CSLSetNameValue(papszGTiffOptions,
-                                                "BLOCKYSIZE",
+            papszGTiffOptions = CSLSetNameValue(papszGTiffOptions, "BLOCKYSIZE",
                                                 CPLSPrintf("%d", nBlockYSize));
         }
-        const char* pszGTiffOptions = CSLFetchNameValueDef(papszOptions,
-                                                    "GEOTIFF_OPTIONS", "");
-        char** papszTokens = CSLTokenizeString2( pszGTiffOptions, ",", 0 );
-        for( int i = 0; papszTokens[i] != NULL; i++ )
+        const char *pszGTiffOptions =
+            CSLFetchNameValueDef(papszOptions, "GEOTIFF_OPTIONS", "");
+        char **papszTokens = CSLTokenizeString2(pszGTiffOptions, ",", 0);
+        for (int i = 0; papszTokens[i] != nullptr; i++)
         {
-            papszGTiffOptions = CSLAddString(papszGTiffOptions,
-                                             papszTokens[i]);
+            papszGTiffOptions = CSLAddString(papszGTiffOptions, papszTokens[i]);
         }
         CSLDestroy(papszTokens);
 
@@ -4180,102 +4069,98 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
         // GEOTIFF_AS_REGULAR_EXTERNAL is set (or unspecified), then the
         // GeoTIFF file can be seen as a regular external raw file, provided
         // we make some provision on its organization.
-        if( CSLFetchNameValue(papszGTiffOptions, "COMPRESS") == NULL &&
-            CPLFetchBool(papszOptions, "GEOTIFF_AS_REGULAR_EXTERNAL", true) )
+        if (CSLFetchNameValue(papszGTiffOptions, "COMPRESS") == nullptr &&
+            CPLFetchBool(papszOptions, "GEOTIFF_AS_REGULAR_EXTERNAL", true))
         {
             bGeoTIFFAsRegularExternal = true;
-            papszGTiffOptions = CSLSetNameValue(papszGTiffOptions,
-                                                "INTERLEAVE", "BAND");
+            papszGTiffOptions =
+                CSLSetNameValue(papszGTiffOptions, "INTERLEAVE", "BAND");
             // Will make sure that our blocks at nodata are not optimized
             // away but indeed well written
-            papszGTiffOptions = CSLSetNameValue(papszGTiffOptions,
-                                    "@WRITE_EMPTY_TILES_SYNCHRONOUSLY", "YES");
-            if( !bIsTiled && nBands > 1 )
+            papszGTiffOptions = CSLSetNameValue(
+                papszGTiffOptions, "@WRITE_EMPTY_TILES_SYNCHRONOUSLY", "YES");
+            if (!bIsTiled && nBandsIn > 1)
             {
-                papszGTiffOptions = CSLSetNameValue(papszGTiffOptions,
-                                                    "BLOCKYSIZE", "1");
+                papszGTiffOptions =
+                    CSLSetNameValue(papszGTiffOptions, "BLOCKYSIZE", "1");
             }
         }
 
-        poExternalDS = poDrv->Create( osExternalFilename, nXSize, nYSize,
-                                      nBands,
-                                      eType, papszGTiffOptions );
+        poExternalDS = poDrv->Create(osExternalFilename, nXSize, nYSize,
+                                     nBandsIn, eType, papszGTiffOptions);
         CSLDestroy(papszGTiffOptions);
-        if( poExternalDS == NULL )
+        if (poExternalDS == nullptr)
         {
-            CPLError( CE_Failure, CPLE_FileIO,
-                      "Cannot create %s",
-                      osExternalFilename.c_str() );
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s",
+                     osExternalFilename.c_str());
             VSIFCloseL(fp);
-            return NULL;
+            return nullptr;
         }
     }
 
-    ISIS3Dataset* poDS = new ISIS3Dataset();
-    poDS->SetDescription( pszFilename );
+    ISIS3Dataset *poDS = new ISIS3Dataset();
+    poDS->SetDescription(pszFilename);
     poDS->eAccess = GA_Update;
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->m_osExternalFilename = osExternalFilename;
     poDS->m_poExternalDS = poExternalDS;
     poDS->m_bGeoTIFFAsRegularExternal = bGeoTIFFAsRegularExternal;
-    if( bGeoTIFFAsRegularExternal )
+    if (bGeoTIFFAsRegularExternal)
         poDS->m_bGeoTIFFInitDone = false;
     poDS->m_fpLabel = fp;
-    poDS->m_fpImage = fpImage ? fpImage: fp;
+    poDS->m_fpImage = fpImage ? fpImage : fp;
     poDS->m_bIsLabelWritten = false;
     poDS->m_bIsTiled = bIsTiled;
-    poDS->m_bInitToNodata = (poDS->m_poExternalDS == NULL);
+    poDS->m_bInitToNodata = (poDS->m_poExternalDS == nullptr);
     poDS->m_osComment = CSLFetchNameValueDef(papszOptions, "COMMENT", "");
-    poDS->m_osLatitudeType = CSLFetchNameValueDef(papszOptions,
-                                                  "LATITUDE_TYPE", "");
-    poDS->m_osLongitudeDirection = CSLFetchNameValueDef(papszOptions,
-                                                  "LONGITUDE_DIRECTION", "");
-    poDS->m_osTargetName = CSLFetchNameValueDef(papszOptions,
-                                                  "TARGET_NAME", "");
+    poDS->m_osLatitudeType =
+        CSLFetchNameValueDef(papszOptions, "LATITUDE_TYPE", "");
+    poDS->m_osLongitudeDirection =
+        CSLFetchNameValueDef(papszOptions, "LONGITUDE_DIRECTION", "");
+    poDS->m_osTargetName =
+        CSLFetchNameValueDef(papszOptions, "TARGET_NAME", "");
     poDS->m_bForce360 = CPLFetchBool(papszOptions, "FORCE_360", false);
-    poDS->m_bWriteBoundingDegrees = CPLFetchBool(papszOptions,
-                                                 "WRITE_BOUNDING_DEGREES",
-                                                 true);
-    poDS->m_osBoundingDegrees = CSLFetchNameValueDef(papszOptions,
-                                                     "BOUNDING_DEGREES", "");
+    poDS->m_bWriteBoundingDegrees =
+        CPLFetchBool(papszOptions, "WRITE_BOUNDING_DEGREES", true);
+    poDS->m_osBoundingDegrees =
+        CSLFetchNameValueDef(papszOptions, "BOUNDING_DEGREES", "");
     poDS->m_bUseSrcLabel = CPLFetchBool(papszOptions, "USE_SRC_LABEL", true);
     poDS->m_bUseSrcMapping =
-                        CPLFetchBool(papszOptions, "USE_SRC_MAPPING", false);
+        CPLFetchBool(papszOptions, "USE_SRC_MAPPING", false);
     poDS->m_bUseSrcHistory =
-                        CPLFetchBool(papszOptions, "USE_SRC_HISTORY", true);
+        CPLFetchBool(papszOptions, "USE_SRC_HISTORY", true);
     poDS->m_bAddGDALHistory =
-                        CPLFetchBool(papszOptions, "ADD_GDAL_HISTORY", true);
-    if( poDS->m_bAddGDALHistory )
+        CPLFetchBool(papszOptions, "ADD_GDAL_HISTORY", true);
+    if (poDS->m_bAddGDALHistory)
     {
-        poDS->m_osGDALHistory = CSLFetchNameValueDef(papszOptions,
-                                                     "GDAL_HISTORY", "");
+        poDS->m_osGDALHistory =
+            CSLFetchNameValueDef(papszOptions, "GDAL_HISTORY", "");
     }
-    const double dfNoData = (eType == GDT_Byte)    ? NULL1:
-                            (eType == GDT_UInt16)  ? NULLU2:
-                            (eType == GDT_Int16)   ? NULL2:
-                            /*(eType == GDT_Float32) ?*/ NULL4;
+    const double dfNoData = (eType == GDT_Byte)     ? NULL1
+                            : (eType == GDT_UInt16) ? NULLU2
+                            : (eType == GDT_Int16)
+                                ? NULL2
+                                :
+                                /*(eType == GDT_Float32) ?*/ NULL4;
 
-    for( int i = 0; i < nBands; i++ )
+    for (int i = 0; i < nBandsIn; i++)
     {
-        GDALRasterBand *poBand = NULL;
+        GDALRasterBand *poBand = nullptr;
 
-        if( poDS->m_poExternalDS != NULL )
+        if (poDS->m_poExternalDS != nullptr)
         {
-            ISIS3WrapperRasterBand* poISISBand =
-                new ISIS3WrapperRasterBand(
-                            poDS->m_poExternalDS->GetRasterBand( i+1 ) );
+            ISIS3WrapperRasterBand *poISISBand = new ISIS3WrapperRasterBand(
+                poDS->m_poExternalDS->GetRasterBand(i + 1));
             poBand = poISISBand;
         }
-        else if( bIsTiled  )
+        else if (bIsTiled)
         {
-            ISISTiledBand* poISISBand =
-                new ISISTiledBand( poDS, poDS->m_fpImage, i+1, eType,
-                                   nBlockXSize, nBlockYSize,
-                                   0, //nSkipBytes, to be hacked
-                                   // afterwards for in-label imagery
-                                   0, 0,
-                                   CPL_IS_LSB );
+            ISISTiledBand *poISISBand = new ISISTiledBand(
+                poDS, poDS->m_fpImage, i + 1, eType, nBlockXSize, nBlockYSize,
+                0,  // nSkipBytes, to be hacked
+                // afterwards for in-label imagery
+                0, 0, CPL_IS_LSB);
 
             poBand = poISISBand;
         }
@@ -4283,19 +4168,17 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
         {
             const int nPixelOffset = GDALGetDataTypeSizeBytes(eType);
             const int nLineOffset = nPixelOffset * nXSize;
-            const vsi_l_offset nBandOffset = 
+            const vsi_l_offset nBandOffset =
                 static_cast<vsi_l_offset>(nLineOffset) * nYSize;
-            ISIS3RawRasterBand* poISISBand =
-                new ISIS3RawRasterBand( poDS, i+1, poDS->m_fpImage,
-                                   nBandOffset * i, // nImgOffset, to be
-                                   //hacked afterwards for in-label imagery
-                                   nPixelOffset, nLineOffset, eType,
-                                   CPL_IS_LSB,
-                                   TRUE );
+            ISIS3RawRasterBand *poISISBand = new ISIS3RawRasterBand(
+                poDS, i + 1, poDS->m_fpImage,
+                nBandOffset * i,  // nImgOffset, to be
+                // hacked afterwards for in-label imagery
+                nPixelOffset, nLineOffset, eType, CPL_IS_LSB);
 
             poBand = poISISBand;
         }
-        poDS->SetBand( i+1, poBand );
+        poDS->SetBand(i + 1, poBand);
         poBand->SetNoDataValue(dfNoData);
     }
 
@@ -4306,12 +4189,12 @@ GDALDataset *ISIS3Dataset::Create(const char* pszFilename,
 /*                      GetUnderlyingDataset()                          */
 /************************************************************************/
 
-static GDALDataset* GetUnderlyingDataset( GDALDataset* poSrcDS )
+static GDALDataset *GetUnderlyingDataset(GDALDataset *poSrcDS)
 {
-    if( poSrcDS->GetDriver() != NULL &&
-        poSrcDS->GetDriver() == GDALGetDriverByName("VRT") )
+    if (poSrcDS->GetDriver() != nullptr &&
+        poSrcDS->GetDriver() == GDALGetDriverByName("VRT"))
     {
-        VRTDataset* poVRTDS = reinterpret_cast<VRTDataset* >(poSrcDS);
+        VRTDataset *poVRTDS = reinterpret_cast<VRTDataset *>(poSrcDS);
         poSrcDS = poVRTDS->GetSingleSimpleSource();
     }
 
@@ -4322,71 +4205,66 @@ static GDALDataset* GetUnderlyingDataset( GDALDataset* poSrcDS )
 /*                            CreateCopy()                              */
 /************************************************************************/
 
-GDALDataset* ISIS3Dataset::CreateCopy( const char *pszFilename,
-                                       GDALDataset *poSrcDS,
-                                       int /*bStrict*/,
-                                       char ** papszOptions,
-                                       GDALProgressFunc pfnProgress,
-                                       void * pProgressData )
+GDALDataset *ISIS3Dataset::CreateCopy(const char *pszFilename,
+                                      GDALDataset *poSrcDS, int /*bStrict*/,
+                                      char **papszOptions,
+                                      GDALProgressFunc pfnProgress,
+                                      void *pProgressData)
 {
-    const char* pszDataLocation = CSLFetchNameValueDef(papszOptions,
-                                                       "DATA_LOCATION",
-                                                       "LABEL");
-    GDALDataset* poSrcUnderlyingDS = GetUnderlyingDataset(poSrcDS);
-    if( poSrcUnderlyingDS == NULL )
+    const char *pszDataLocation =
+        CSLFetchNameValueDef(papszOptions, "DATA_LOCATION", "LABEL");
+    GDALDataset *poSrcUnderlyingDS = GetUnderlyingDataset(poSrcDS);
+    if (poSrcUnderlyingDS == nullptr)
         poSrcUnderlyingDS = poSrcDS;
-    if( EQUAL(pszDataLocation, "GEOTIFF") &&
+    if (EQUAL(pszDataLocation, "GEOTIFF") &&
         strcmp(poSrcUnderlyingDS->GetDescription(),
                CSLFetchNameValueDef(papszOptions, "EXTERNAL_FILENAME",
-                                    CPLResetExtension(pszFilename, "tif"))
-              ) == 0 )
+                                    CPLResetExtension(pszFilename, "tif"))) ==
+            0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Output file has same name as input file");
-        return NULL;
+        return nullptr;
     }
-    if( poSrcDS->GetRasterCount() == 0 )
+    if (poSrcDS->GetRasterCount() == 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported band count");
-        return NULL;
+        return nullptr;
     }
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
     const int nBands = poSrcDS->GetRasterCount();
     GDALDataType eType = poSrcDS->GetRasterBand(1)->GetRasterDataType();
-    ISIS3Dataset *poDS = reinterpret_cast<ISIS3Dataset*>(
-        Create( pszFilename, nXSize, nYSize, nBands, eType, papszOptions ));
-    if( poDS == NULL )
-        return NULL;
+    ISIS3Dataset *poDS = reinterpret_cast<ISIS3Dataset *>(
+        Create(pszFilename, nXSize, nYSize, nBands, eType, papszOptions));
+    if (poDS == nullptr)
+        return nullptr;
     poDS->m_osFromFilename = poSrcUnderlyingDS->GetDescription();
 
-    double adfGeoTransform[6] = { 0.0 };
-    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None
-        && (adfGeoTransform[0] != 0.0
-            || adfGeoTransform[1] != 1.0
-            || adfGeoTransform[2] != 0.0
-            || adfGeoTransform[3] != 0.0
-            || adfGeoTransform[4] != 0.0
-            || adfGeoTransform[5] != 1.0) )
+    double adfGeoTransform[6] = {0.0};
+    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None &&
+        (adfGeoTransform[0] != 0.0 || adfGeoTransform[1] != 1.0 ||
+         adfGeoTransform[2] != 0.0 || adfGeoTransform[3] != 0.0 ||
+         adfGeoTransform[4] != 0.0 || adfGeoTransform[5] != 1.0))
     {
-        poDS->SetGeoTransform( adfGeoTransform );
+        poDS->SetGeoTransform(adfGeoTransform);
     }
 
-    if( poSrcDS->GetProjectionRef() != NULL
-        && strlen(poSrcDS->GetProjectionRef()) > 0 )
+    auto poSrcSRS = poSrcDS->GetSpatialRef();
+    if (poSrcSRS)
     {
-        poDS->SetProjection( poSrcDS->GetProjectionRef() );
+        poDS->SetSpatialRef(poSrcSRS);
     }
 
-    for(int i=1;i<=nBands;i++)
+    for (int i = 1; i <= nBands; i++)
     {
         const double dfOffset = poSrcDS->GetRasterBand(i)->GetOffset();
-        if( dfOffset != 0.0 )
+        if (dfOffset != 0.0)
             poDS->GetRasterBand(i)->SetOffset(dfOffset);
 
         const double dfScale = poSrcDS->GetRasterBand(i)->GetScale();
-        if( dfScale != 1.0 )
+        if (dfScale != 1.0)
             poDS->GetRasterBand(i)->SetScale(dfScale);
     }
 
@@ -4396,26 +4274,26 @@ GDALDataset* ISIS3Dataset::CreateCopy( const char *pszFilename,
         poSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
     poDS->m_bHasSrcNoData = CPL_TO_BOOL(bHasNoData);
 
-    if( poDS->m_bUseSrcLabel )
+    if (poDS->m_bUseSrcLabel)
     {
-        char** papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
-        if( papszMD_ISIS3 != NULL )
+        char **papszMD_ISIS3 = poSrcDS->GetMetadata("json:ISIS3");
+        if (papszMD_ISIS3 != nullptr)
         {
-            poDS->SetMetadata( papszMD_ISIS3, "json:ISIS3" );
+            poDS->SetMetadata(papszMD_ISIS3, "json:ISIS3");
         }
     }
 
     // We don't need to initialize the imagery as we are going to copy it
     // completely
     poDS->m_bInitToNodata = false;
-    CPLErr eErr = GDALDatasetCopyWholeRaster( poSrcDS, poDS,
-                                           NULL, pfnProgress, pProgressData );
-    poDS->FlushCache();
+    CPLErr eErr = GDALDatasetCopyWholeRaster(poSrcDS, poDS, nullptr,
+                                             pfnProgress, pProgressData);
+    poDS->FlushCache(false);
     poDS->m_bHasSrcNoData = false;
-    if( eErr != CE_None )
+    if (eErr != CE_None)
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     return poDS;
@@ -4428,94 +4306,97 @@ GDALDataset* ISIS3Dataset::CreateCopy( const char *pszFilename,
 void GDALRegister_ISIS3()
 
 {
-    if( GDALGetDriverByName( "ISIS3" ) != NULL )
+    if (GDALGetDriverByName("ISIS3") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "ISIS3" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "USGS Astrogeology ISIS cube (Version 3)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_isis3.html" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSIONS, "lbl cub" );
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONDATATYPES,
-                               "Byte UInt16 Int16 Float32" );
-    poDriver->SetMetadataItem( GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList/>");
-    poDriver->SetMetadataItem( GDAL_DMD_CREATIONOPTIONLIST,
-"<CreationOptionList>"
-"  <Option name='DATA_LOCATION' type='string-select' "
-                "description='Location of pixel data' default='LABEL'>"
-"     <Value>LABEL</Value>"
-"     <Value>EXTERNAL</Value>"
-"     <Value>GEOTIFF</Value>"
-"  </Option>"
-"  <Option name='GEOTIFF_AS_REGULAR_EXTERNAL' type='boolean'"
-    "description='Whether the GeoTIFF file, if uncompressed, should be "
-    "registered as a regular raw file' default='YES'/>"
-"  <Option name='GEOTIFF_OPTIONS' type='string' "
-    "description='Comma separated list of KEY=VALUE tuples to forward "
-    "to the GeoTIFF driver'/>"
-"  <Option name='EXTERNAL_FILENAME' type='string' "
-                "description='Override default external filename. "
-                "Only for DATA_LOCATION=EXTERNAL or GEOTIFF'/>"
-"  <Option name='TILED' type='boolean' "
+    poDriver->SetDescription("ISIS3");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "USGS Astrogeology ISIS cube (Version 3)");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/isis3.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "lbl cub");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES,
+                              "Byte UInt16 Int16 Float32");
+    poDriver->SetMetadataItem(GDAL_DMD_OPENOPTIONLIST, "<OpenOptionList/>");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='DATA_LOCATION' type='string-select' "
+        "description='Location of pixel data' default='LABEL'>"
+        "     <Value>LABEL</Value>"
+        "     <Value>EXTERNAL</Value>"
+        "     <Value>GEOTIFF</Value>"
+        "  </Option>"
+        "  <Option name='GEOTIFF_AS_REGULAR_EXTERNAL' type='boolean' "
+        "description='Whether the GeoTIFF file, if uncompressed, should be "
+        "registered as a regular raw file' default='YES'/>"
+        "  <Option name='GEOTIFF_OPTIONS' type='string' "
+        "description='Comma separated list of KEY=VALUE tuples to forward "
+        "to the GeoTIFF driver'/>"
+        "  <Option name='EXTERNAL_FILENAME' type='string' "
+        "description='Override default external filename. "
+        "Only for DATA_LOCATION=EXTERNAL or GEOTIFF'/>"
+        "  <Option name='TILED' type='boolean' "
         "description='Whether the pixel data should be tiled' default='NO'/>"
-"  <Option name='BLOCKXSIZE' type='int' "
-                            "description='Tile width' default='256'/>"
-"  <Option name='BLOCKYSIZE' type='int' "
-                            "description='Tile height' default='256'/>"
-"  <Option name='COMMENT' type='string' "
-    "description='Comment to add into the label'/>"
-"  <Option name='LATITUDE_TYPE' type='string-select' "
-    "description='Value of Mapping.LatitudeType' default='Planetocentric'>"
-"     <Value>Planetocentric</Value>"
-"     <Value>Planetographic</Value>"
-"  </Option>"
-"  <Option name='LONGITUDE_DIRECTION' type='string-select' "
-    "description='Value of Mapping.LongitudeDirection' "
-    "default='PositiveEast'>"
-"     <Value>PositiveEast</Value>"
-"     <Value>PositiveWest</Value>"
-"  </Option>"
-"  <Option name='TARGET_NAME' type='string' description='Value of "
-    "Mapping.TargetName'/>"
-"  <Option name='FORCE_360' type='boolean' "
-    "description='Whether to force longitudes in [0,360] range' default='NO'/>"
-"  <Option name='WRITE_BOUNDING_DEGREES' type='boolean'"
-    "description='Whether to write Min/MaximumLong/Latitude values' "
-    "default='YES'/>"
-"  <Option name='BOUNDING_DEGREES' type='string'"
-    "description='Manually set bounding box with the syntax "
-    "min_long,min_lat,max_long,max_lat'/>"
-"  <Option name='USE_SRC_LABEL' type='boolean'"
-    "description='Whether to use source label in ISIS3 to ISIS3 conversions' "
-    "default='YES'/>"
-"  <Option name='USE_SRC_MAPPING' type='boolean'"
-    "description='Whether to use Mapping group from source label in "
-                 "ISIS3 to ISIS3 conversions' "
-    "default='NO'/>"
-"  <Option name='USE_SRC_HISTORY' type='boolean'"
-    "description='Whether to use content pointed by the History object in "
-                 "ISIS3 to ISIS3 conversions' "
-    "default='YES'/>"
-"  <Option name='ADD_GDAL_HISTORY' type='boolean'"
-    "description='Whether to add GDAL specific history in the content pointed "
-                 "by the History object in "
-                 "ISIS3 to ISIS3 conversions' "
-    "default='YES'/>"
-"  <Option name='GDAL_HISTORY' type='string'"
-    "description='Manually defined GDAL history. Must be formatted as ISIS3 "
-    "PDL. If not specified, it is automatically composed.'/>"
-"</CreationOptionList>"
-    );
+        "  <Option name='BLOCKXSIZE' type='int' "
+        "description='Tile width' default='256'/>"
+        "  <Option name='BLOCKYSIZE' type='int' "
+        "description='Tile height' default='256'/>"
+        "  <Option name='COMMENT' type='string' "
+        "description='Comment to add into the label'/>"
+        "  <Option name='LATITUDE_TYPE' type='string-select' "
+        "description='Value of Mapping.LatitudeType' default='Planetocentric'>"
+        "     <Value>Planetocentric</Value>"
+        "     <Value>Planetographic</Value>"
+        "  </Option>"
+        "  <Option name='LONGITUDE_DIRECTION' type='string-select' "
+        "description='Value of Mapping.LongitudeDirection' "
+        "default='PositiveEast'>"
+        "     <Value>PositiveEast</Value>"
+        "     <Value>PositiveWest</Value>"
+        "  </Option>"
+        "  <Option name='TARGET_NAME' type='string' description='Value of "
+        "Mapping.TargetName'/>"
+        "  <Option name='FORCE_360' type='boolean' "
+        "description='Whether to force longitudes in [0,360] range' "
+        "default='NO'/>"
+        "  <Option name='WRITE_BOUNDING_DEGREES' type='boolean' "
+        "description='Whether to write Min/MaximumLong/Latitude values' "
+        "default='YES'/>"
+        "  <Option name='BOUNDING_DEGREES' type='string' "
+        "description='Manually set bounding box with the syntax "
+        "min_long,min_lat,max_long,max_lat'/>"
+        "  <Option name='USE_SRC_LABEL' type='boolean' "
+        "description='Whether to use source label in ISIS3 to ISIS3 "
+        "conversions' "
+        "default='YES'/>"
+        "  <Option name='USE_SRC_MAPPING' type='boolean' "
+        "description='Whether to use Mapping group from source label in "
+        "ISIS3 to ISIS3 conversions' "
+        "default='NO'/>"
+        "  <Option name='USE_SRC_HISTORY' type='boolean' "
+        "description='Whether to use content pointed by the History object in "
+        "ISIS3 to ISIS3 conversions' "
+        "default='YES'/>"
+        "  <Option name='ADD_GDAL_HISTORY' type='boolean' "
+        "description='Whether to add GDAL specific history in the content "
+        "pointed "
+        "by the History object in "
+        "ISIS3 to ISIS3 conversions' "
+        "default='YES'/>"
+        "  <Option name='GDAL_HISTORY' type='string' "
+        "description='Manually defined GDAL history. Must be formatted as "
+        "ISIS3 "
+        "PDL. If not specified, it is automatically composed.'/>"
+        "</CreationOptionList>");
 
     poDriver->pfnOpen = ISIS3Dataset::Open;
     poDriver->pfnIdentify = ISIS3Dataset::Identify;
     poDriver->pfnCreate = ISIS3Dataset::Create;
     poDriver->pfnCreateCopy = ISIS3Dataset::CreateCopy;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

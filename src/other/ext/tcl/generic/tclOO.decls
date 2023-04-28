@@ -51,7 +51,7 @@ declare 8 {
 }
 declare 9 {
     int Tcl_MethodIsType(Tcl_Method method, const Tcl_MethodType *typePtr,
-	    ClientData *clientDataPtr)
+	    void **clientDataPtr)
 }
 declare 10 {
     Tcl_Obj *Tcl_MethodName(Tcl_Method method)
@@ -59,12 +59,12 @@ declare 10 {
 declare 11 {
     Tcl_Method Tcl_NewInstanceMethod(Tcl_Interp *interp, Tcl_Object object,
 	    Tcl_Obj *nameObj, int isPublic, const Tcl_MethodType *typePtr,
-	    ClientData clientData)
+	    void *clientData)
 }
 declare 12 {
     Tcl_Method Tcl_NewMethod(Tcl_Interp *interp, Tcl_Class cls,
 	    Tcl_Obj *nameObj, int isPublic, const Tcl_MethodType *typePtr,
-	    ClientData clientData)
+	    void *clientData)
 }
 declare 13 {
     Tcl_Object Tcl_NewObjectInstance(Tcl_Interp *interp, Tcl_Class cls,
@@ -87,20 +87,20 @@ declare 18 {
     int Tcl_ObjectContextSkippedArgs(Tcl_ObjectContext context)
 }
 declare 19 {
-    ClientData Tcl_ClassGetMetadata(Tcl_Class clazz,
+    void *Tcl_ClassGetMetadata(Tcl_Class clazz,
 	    const Tcl_ObjectMetadataType *typePtr)
 }
 declare 20 {
     void Tcl_ClassSetMetadata(Tcl_Class clazz,
-	    const Tcl_ObjectMetadataType *typePtr, ClientData metadata)
+	    const Tcl_ObjectMetadataType *typePtr, void *metadata)
 }
 declare 21 {
-    ClientData Tcl_ObjectGetMetadata(Tcl_Object object,
+    void *Tcl_ObjectGetMetadata(Tcl_Object object,
 	    const Tcl_ObjectMetadataType *typePtr)
 }
 declare 22 {
     void Tcl_ObjectSetMetadata(Tcl_Object object,
-	    const Tcl_ObjectMetadataType *typePtr, ClientData metadata)
+	    const Tcl_ObjectMetadataType *typePtr, void *metadata)
 }
 declare 23 {
     int Tcl_ObjectContextInvokeNext(Tcl_Interp *interp,
@@ -126,7 +126,7 @@ declare 27 {
 declare 28 {
     Tcl_Obj *Tcl_GetObjectName(Tcl_Interp *interp, Tcl_Object object)
 }
-declare 31 {
+declare 34 {
     void TclOOUnusedStubEntry(void)
 }
 
@@ -144,14 +144,14 @@ declare 0 {
 declare 1 {
     Tcl_Method TclOOMakeProcInstanceMethod(Tcl_Interp *interp, Object *oPtr,
 	    int flags, Tcl_Obj *nameObj, Tcl_Obj *argsObj, Tcl_Obj *bodyObj,
-	    const Tcl_MethodType *typePtr, ClientData clientData,
+	    const Tcl_MethodType *typePtr, void *clientData,
 	    Proc **procPtrPtr)
 }
 declare 2 {
     Tcl_Method TclOOMakeProcMethod(Tcl_Interp *interp, Class *clsPtr,
 	    int flags, Tcl_Obj *nameObj, const char *namePtr,
 	    Tcl_Obj *argsObj, Tcl_Obj *bodyObj, const Tcl_MethodType *typePtr,
-	    ClientData clientData, Proc **procPtrPtr)
+	    void *clientData, Proc **procPtrPtr)
 }
 declare 3 {
     Method *TclOONewProcInstanceMethod(Tcl_Interp *interp, Object *oPtr,
@@ -182,13 +182,13 @@ declare 9 {
     Tcl_Method TclOONewProcInstanceMethodEx(Tcl_Interp *interp,
 	    Tcl_Object oPtr, TclOO_PreCallProc *preCallPtr,
 	    TclOO_PostCallProc *postCallPtr, ProcErrorProc *errProc,
-	    ClientData clientData, Tcl_Obj *nameObj, Tcl_Obj *argsObj,
+	    void *clientData, Tcl_Obj *nameObj, Tcl_Obj *argsObj,
 	    Tcl_Obj *bodyObj, int flags, void **internalTokenPtr)
 }
 declare 10 {
     Tcl_Method TclOONewProcMethodEx(Tcl_Interp *interp, Tcl_Class clsPtr,
 	    TclOO_PreCallProc *preCallPtr, TclOO_PostCallProc *postCallPtr,
-	    ProcErrorProc *errProc, ClientData clientData, Tcl_Obj *nameObj,
+	    ProcErrorProc *errProc, void *clientData, Tcl_Obj *nameObj,
 	    Tcl_Obj *argsObj, Tcl_Obj *bodyObj, int flags,
 	    void **internalTokenPtr)
 }

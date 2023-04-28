@@ -1,7 +1,7 @@
 /*                      D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2022 United States Government as represented by
+ * Copyright (c) 2016-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -102,7 +102,7 @@ static const struct gcv_filter * const filters[] = {&gcv_filter_decimate, NULL};
 const struct gcv_plugin gcv_plugin_info_s = {filters};
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
-	gcv_plugin_info(){ return &gcv_plugin_info_s; }
+	gcv_plugin_info(void){ return &gcv_plugin_info_s; }
 
 /*
  * Local Variables:

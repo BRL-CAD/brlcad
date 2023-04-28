@@ -16,6 +16,14 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 ON_Ellipse::ON_Ellipse() 
 {
   radius[0] = radius[1] = 0.0;
@@ -47,7 +55,7 @@ ON_Ellipse& ON_Ellipse::operator=(const ON_Circle& c)
   return *this;
 }
 
-ON_BOOL32 ON_Ellipse::Create( const ON_Plane& p, double rx, double ry )
+bool ON_Ellipse::Create( const ON_Plane& p, double rx, double ry )
 {
   plane = p;
   radius[0] = rx;
@@ -55,17 +63,17 @@ ON_BOOL32 ON_Ellipse::Create( const ON_Plane& p, double rx, double ry )
   return IsValid();
 }
 
-ON_BOOL32 ON_Ellipse::Create( const ON_Circle& c )
+bool ON_Ellipse::Create( const ON_Circle& c )
 {
   return Create( c.Plane(), c.Radius(), c.Radius() );
 }
 
-ON_BOOL32 ON_Ellipse::IsValid() const
+bool ON_Ellipse::IsValid() const
 {
   return (plane.IsValid() && radius[0] > ON_ZERO_TOLERANCE && radius[1] > ON_ZERO_TOLERANCE) ? true : false;
 }
 
-ON_BOOL32 ON_Ellipse::IsCircle() const
+bool ON_Ellipse::IsCircle() const
 {
   double r0 = radius[0];
   return ( ON_IsValid(r0) && fabs(r0-radius[1]) <= fabs(r0)*ON_ZERO_TOLERANCE && IsValid() ) ? true : false;
@@ -120,7 +128,8 @@ ON_3dVector ON_Ellipse::DerivativeAt(
 {
   double r0 = radius[0];
   double r1 = radius[1];
-  switch (abs(d)%4) {
+  switch ( std::abs(d) % 4 )
+  {
   case 0:
     r0 *=  cos(t);
     r1 *=  sin(t);
@@ -189,13 +198,13 @@ static int distSqToEllipse(void* p, double t, double* f, double* df )
 // This source code is used on many compilers and
 // I do not trust all of them to get for(..;;...)
 // right.
-#pragma warning( push )
-#pragma warning( disable : 4127 ) 
+#pragma ON_PRAGMA_WARNING_PUSH
+#pragma ON_PRAGMA_WARNING_DISABLE_MSC( 4127 ) 
 #endif
 
-ON_BOOL32 ON_Ellipse::ClosestPointTo( const ON_3dPoint& point, double* t ) const
+bool ON_Ellipse::ClosestPointTo( const ON_3dPoint& point, double* t ) const
 {
-  ON_BOOL32 rc = true;
+  bool rc = true;
   if ( t ) {
     ON_2dPoint uv;
     rc = plane.ClosestPointTo( point, &uv.x, &uv.y );
@@ -279,8 +288,8 @@ ON_BOOL32 ON_Ellipse::ClosestPointTo( const ON_3dPoint& point, double* t ) const
             et = 0.9*t0 + 0.1*t1;
           else if ( et >= t1 )
             et = 0.9*t1 + 0.1*t0;
-          distSqToEllipse( p, t0, &d0, NULL );
-          distSqToEllipse( p, t1, &d1, NULL );
+          distSqToEllipse( p, t0, &d0, nullptr );
+          distSqToEllipse( p, t1, &d1, nullptr );
           if ( d0 == 0.0 ) {
             *t = (t0 == 2.0*ON_PI) ? 0.0 : t0;
             return true;
@@ -295,7 +304,7 @@ ON_BOOL32 ON_Ellipse::ClosestPointTo( const ON_3dPoint& point, double* t ) const
           }
           *t = (t0 == 2.0*ON_PI) ? 0.0 : t0;
           for ( i = 0; true; i++ ) {
-            distSqToEllipse( p, et, &dt, NULL );
+            distSqToEllipse( p, et, &dt, nullptr );
             if ( dt < d0 )
             {
               *t = (et >= 2.0*ON_PI) ? 0.0 : et;
@@ -335,7 +344,6 @@ ON_BOOL32 ON_Ellipse::ClosestPointTo( const ON_3dPoint& point, double* t ) const
                             t0, et, t1, 
                             ON_EPSILON,  ON_SQRT_EPSILON, 100,
                             &et );
-          rc = (rc > 0) ? true : false;
           if ( rc )
             *t = (et >= 2.0*ON_PI) ? 0.0 : et;
         }
@@ -346,7 +354,7 @@ ON_BOOL32 ON_Ellipse::ClosestPointTo( const ON_3dPoint& point, double* t ) const
 }
 
 #if defined(ON_COMPILER_MSC)
-#pragma warning( pop )
+#pragma ON_PRAGMA_WARNING_POP
 #endif
 
 ON_3dPoint ON_Ellipse::ClosestPointTo( const ON_3dPoint& point ) const
@@ -382,12 +390,12 @@ ON_2dVector ON_Ellipse::GradientAt(
     g.y = 2.0*p.y/(radius[1]*radius[1]);
   }
   else {
-    g.Zero();
+    g = ON_2dVector::ZeroVector;
   }
   return g;
 }
 
-ON_BOOL32 ON_Ellipse::Rotate( 
+bool ON_Ellipse::Rotate( 
                           double sin_angle, double cos_angle, 
                           const ON_3dVector& axis
                           )
@@ -395,7 +403,7 @@ ON_BOOL32 ON_Ellipse::Rotate(
   return plane.Rotate( sin_angle, cos_angle, axis );
 }
 
-ON_BOOL32 ON_Ellipse::Rotate( 
+bool ON_Ellipse::Rotate( 
                           double angle, 
                           const ON_3dVector& axis
                           )
@@ -403,7 +411,7 @@ ON_BOOL32 ON_Ellipse::Rotate(
   return plane.Rotate( angle, axis );
 }
 
-ON_BOOL32 ON_Ellipse::Rotate( 
+bool ON_Ellipse::Rotate( 
                           double sin_angle, double cos_angle, 
                           const ON_3dVector& axis,
                           const ON_3dPoint& point
@@ -412,7 +420,7 @@ ON_BOOL32 ON_Ellipse::Rotate(
   return plane.Rotate( sin_angle, cos_angle, axis, point );
 }
 
-ON_BOOL32 ON_Ellipse::Rotate( 
+bool ON_Ellipse::Rotate( 
                           double angle, 
                           const ON_3dVector& axis,
                           const ON_3dPoint& point
@@ -422,14 +430,14 @@ ON_BOOL32 ON_Ellipse::Rotate(
 }
 
 
-ON_BOOL32 ON_Ellipse::Translate(
+bool ON_Ellipse::Translate(
                           const ON_3dVector& delta
                             )
 {
   return plane.Translate( delta );
 }
 
-ON_BOOL32 ON_Ellipse::GetNurbForm( ON_NurbsCurve& nurbscurve ) const
+int ON_Ellipse::GetNurbForm( ON_NurbsCurve& nurbscurve ) const
 {
   int rc = 0;
   if ( IsValid() ) {

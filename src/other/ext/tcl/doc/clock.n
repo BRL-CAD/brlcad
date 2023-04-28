@@ -188,9 +188,9 @@ Surprising results
 may be obtained when crossing a point at which a leap second is
 inserted or removed; the \fBclock add\fR command simply ignores
 leap seconds and therefore assumes that times come in sequence,
-23:59:58, 23:59:59, 00:00:00.  (This assumption is handled by
+23:59:58, 23:59:59, 00:00:00.  This assumption is handled by
 the fact that Tcl's model of time reacts to leap seconds by speeding
-or slowing the clock by a minuscule amount until Tcl's time
+or slowing the clock by a miniscule amount until Tcl's time
 is back in step with the world.
 .PP
 The fact that adding and subtracting hours is defined in terms of

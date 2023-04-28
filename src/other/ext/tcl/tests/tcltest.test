@@ -716,8 +716,8 @@ test tcltest-8.60 {::workingDirectory}  {
 
 switch -- $::tcl_platform(platform) {
     unix {
-	file attributes $notReadableDir -permissions 777
-	file attributes $notWriteableDir -permissions 777
+	file attributes $notReadableDir -permissions 0o777
+	file attributes $notWriteableDir -permissions 0o777
     }
     default {
 	catch {testchmod 0o777 $notWriteableDir}

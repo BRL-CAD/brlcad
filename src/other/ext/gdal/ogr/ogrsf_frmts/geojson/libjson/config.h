@@ -1,5 +1,5 @@
 /*
- * $Id$
+ * $Id: config.h.win32,v 1.2 2006/01/26 02:16:28 mclark Exp $
  *
  * Copyright (c) 2004, 2005 Metaparadigm Pte. Ltd.
  * Michael Clark <michael@metaparadigm.com>
@@ -68,11 +68,11 @@
 #define HAVE_STRERROR 1
 #endif
 
+#if !defined(_WIN32)
 /* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
-
-/* Define to 1 if you have the <string.h> header file. */
-#define HAVE_STRING_H 1
+#define HAVE_STRINGS_H
+#  include <strings.h>
+#endif
 
 /* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
@@ -95,12 +95,11 @@
 #endif
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
-
-/* Define to 1 if you have the `vprintf' function. */
-#ifdef _MSC_VER
-#undef HAVE_VPRINTF
+#ifndef _WIN32
+#define HAVE_UNISTD_H 1
 #endif
+
+#define HAVE_SNPRINTF 1
 
 /* Define to 1 if you have the `vasprintf' function. */
 #define HAVE_VASPRINTF 1
@@ -123,4 +122,13 @@
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
-#include <cpl_config.h>
+#define HAVE_DECL_ISNAN
+#define HAVE_DECL_ISINF
+#define HAVE_DECL_INFINITY
+#define HAVE_DECL_NAN
+
+#include "cpl_config.h"
+
+#ifndef SIZE_T_MAX
+#define SIZE_T_MAX  (~(size_t)0)
+#endif

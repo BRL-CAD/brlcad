@@ -73,7 +73,7 @@ int tclTraceExec = 0;
  * expression opcodes (e.g., INST_LOR) in tclCompile.h.
  *
  * Does not include the string for INST_EXPON (and beyond), as that is
- * disjoint for backward-compatability reasons.
+ * disjoint for backward-compatibility reasons.
  */
 
 static const char *const operatorStrings[] = {
@@ -193,10 +193,10 @@ typedef struct TEBCdata {
 #define PUSH_TAUX_OBJ(objPtr) \
     do {							\
 	if (auxObjList) {					\
-	    objPtr->length += auxObjList->length;		\
+	    (objPtr)->length += auxObjList->length;		\
 	}							\
-	objPtr->internalRep.twoPtrValue.ptr1 = auxObjList;	\
-	auxObjList = objPtr;					\
+	(objPtr)->internalRep.twoPtrValue.ptr1 = auxObjList;	\
+	auxObjList = (objPtr);					\
     } while (0)
 
 #define POP_TAUX_OBJ() \
@@ -549,14 +549,14 @@ VarHashCreateVar(
  * Tcl_GetBooleanFromObj(). The ANSI C "prototype" is:
  *
  * MODULE_SCOPE int TclGetBooleanFromObj(Tcl_Interp *interp, Tcl_Obj *objPtr,
- *			int *boolPtr);
+ *			int *intPtr);
  */
 
-#define TclGetBooleanFromObj(interp, objPtr, boolPtr) \
+#define TclGetBooleanFromObj(interp, objPtr, intPtr) \
     ((((objPtr)->typePtr == &tclIntType)				\
 	|| ((objPtr)->typePtr == &tclBooleanType))			\
-	? (*(boolPtr) = ((objPtr)->internalRep.longValue!=0), TCL_OK)	\
-	: Tcl_GetBooleanFromObj((interp), (objPtr), (boolPtr)))
+	? (*(intPtr) = ((objPtr)->internalRep.longValue!=0), TCL_OK)	\
+	: Tcl_GetBooleanFromObj((interp), (objPtr), (intPtr)))
 
 /*
  * Macro used to make the check for type overflow more mnemonic. This works by
@@ -1898,7 +1898,7 @@ TclIncrObj(
     if ((type1 == TCL_NUMBER_LONG) && (type2 == TCL_NUMBER_LONG)) {
 	long augend = *((const long *) ptr1);
 	long addend = *((const long *) ptr2);
-	long sum = augend + addend;
+	long sum = (long)((unsigned long)augend + (unsigned long)addend);
 
 	/*
 	 * Overflow when (augend and sum have different sign) and (augend and
@@ -1949,7 +1949,7 @@ TclIncrObj(
 
 	TclGetWideIntFromObj(NULL, valuePtr, &w1);
 	TclGetWideIntFromObj(NULL, incrPtr, &w2);
-	sum = w1 + w2;
+	sum = (Tcl_WideInt)((Tcl_WideUInt)w1 + (Tcl_WideUInt)w2);
 
 	/*
 	 * Check for overflow.
@@ -3240,7 +3240,7 @@ TEBCresume(
 
 	TclMarkTailcall(interp);
 	TclNRAddCallback(interp, TclClearRootEnsemble, NULL, NULL, NULL, NULL);
-	Tcl_ListObjGetElements(NULL, objPtr, &objc, &objv);
+	TclListObjGetElements(NULL, objPtr, &objc, &objv);
 	TclNRAddCallback(interp, TclNRReleaseValues, objPtr, NULL, NULL, NULL);
 	return TclNREvalObjv(interp, objc, objv, TCL_EVAL_INVOKE, NULL);
 
@@ -3929,7 +3929,7 @@ TEBCresume(
 	    if (GetNumberFromObj(NULL, objPtr, &ptr, &type) == TCL_OK) {
 		if (type == TCL_NUMBER_LONG) {
 		    long augend = *((const long *)ptr);
-		    long sum = augend + increment;
+		    long sum = (long)((unsigned long)augend + (unsigned long)increment);
 
 		    /*
 		     * Overflow when (augend and sum have different sign) and
@@ -3977,7 +3977,7 @@ TEBCresume(
 		    Tcl_WideInt sum;
 
 		    w = *((const Tcl_WideInt *) ptr);
-		    sum = w + increment;
+		    sum = (Tcl_WideInt)((Tcl_WideUInt)w + (Tcl_WideUInt)increment);
 
 		    /*
 		     * Check for overflow.
@@ -5855,7 +5855,9 @@ TEBCresume(
 	p = ustring1;
 	end = ustring1 + length;
 	for (; ustring1 < end; ustring1++) {
-	    if ((*ustring1 == *ustring2) && (length2==1 ||
+	    if ((*ustring1 == *ustring2) &&
+		/* Fix bug [69218ab7b]: restrict max compare length. */
+		(end-ustring1 >= length2) && (length2==1 ||
 		    memcmp(ustring1, ustring2, sizeof(Tcl_UniChar) * length2)
 			    == 0)) {
 		if (p != ustring1) {
@@ -6284,7 +6286,8 @@ TEBCresume(
 			    (lResult * l2 != l1)) {
 			lResult -= 1;
 		    }
-		    lResult = l1 - l2*lResult;
+		    lResult = (long)((unsigned long)l1 -
+			    (unsigned long)l2*(unsigned long)lResult);
 		    goto longResultOfArithmetic;
 		}
 		break;
@@ -6379,10 +6382,10 @@ TEBCresume(
 		     * Handle shifts within the native long range.
 		     */
 
-		    if ((size_t) shift < CHAR_BIT*sizeof(long) && (l1 != 0)
+		    if (((size_t) shift < CHAR_BIT*sizeof(long))
 			    && !((l1>0 ? l1 : ~l1) &
-				-(1L<<(CHAR_BIT*sizeof(long) - 1 - shift)))) {
-			lResult = l1 << shift;
+				-(1UL<<(CHAR_BIT*sizeof(long) - 1 - shift)))) {
+			lResult = (unsigned long)l1 << shift;
 			goto longResultOfArithmetic;
 		    }
 		}
@@ -6504,7 +6507,7 @@ TEBCresume(
 	    case INST_ADD:
 		w1 = (Tcl_WideInt) l1;
 		w2 = (Tcl_WideInt) l2;
-		wResult = w1 + w2;
+		wResult = (Tcl_WideInt)((Tcl_WideUInt)w1 + (Tcl_WideUInt)w2);
 #ifdef TCL_WIDE_INT_IS_LONG
 		/*
 		 * Check for overflow.
@@ -6519,7 +6522,7 @@ TEBCresume(
 	    case INST_SUB:
 		w1 = (Tcl_WideInt) l1;
 		w2 = (Tcl_WideInt) l2;
-		wResult = w1 - w2;
+		wResult = (Tcl_WideInt)((Tcl_WideUInt)w1 - (Tcl_WideUInt)w2);
 #ifdef TCL_WIDE_INT_IS_LONG
 		/*
 		 * Must check for overflow. The macro tests for overflows in
@@ -8462,24 +8465,24 @@ ExecuteExtendedBinaryMathOp(
 {
 #define LONG_RESULT(l) \
     if (Tcl_IsShared(valuePtr)) {		\
-	TclNewLongObj(objResultPtr, l);		\
+	TclNewLongObj(objResultPtr, (l));		\
 	return objResultPtr;			\
     } else {					\
-	Tcl_SetLongObj(valuePtr, l);		\
+	Tcl_SetLongObj(valuePtr, (l));		\
 	return NULL;				\
     }
 #define WIDE_RESULT(w) \
     if (Tcl_IsShared(valuePtr)) {		\
 	return Tcl_NewWideIntObj(w);		\
     } else {					\
-	Tcl_SetWideIntObj(valuePtr, w);		\
+	Tcl_SetWideIntObj(valuePtr, (w));		\
 	return NULL;				\
     }
 #define BIG_RESULT(b) \
     if (Tcl_IsShared(valuePtr)) {		\
 	return Tcl_NewBignumObj(b);		\
     } else {					\
-	Tcl_SetBignumObj(valuePtr, b);		\
+	Tcl_SetBignumObj(valuePtr, (b));		\
 	return NULL;				\
     }
 #define DOUBLE_RESULT(d) \
@@ -8542,7 +8545,8 @@ ExecuteExtendedBinaryMathOp(
 			&& (wQuotient * w2 != w1)) {
 		    wQuotient -= (Tcl_WideInt) 1;
 		}
-		wRemainder = w1 - w2*wQuotient;
+		wRemainder = (Tcl_WideInt)((Tcl_WideUInt)w1 -
+			(Tcl_WideUInt)w2*(Tcl_WideUInt)wQuotient);
 		WIDE_RESULT(wRemainder);
 	    }
 
@@ -8657,9 +8661,9 @@ ExecuteExtendedBinaryMathOp(
 		    && ((size_t)shift < CHAR_BIT*sizeof(Tcl_WideInt))) {
 		TclGetWideIntFromObj(NULL, valuePtr, &w1);
 		if (!((w1>0 ? w1 : ~w1)
-			& -(((Tcl_WideInt)1)
+			& -(((Tcl_WideUInt)1)
 			<< (CHAR_BIT*sizeof(Tcl_WideInt) - 1 - shift)))) {
-		    WIDE_RESULT(w1 << shift);
+		    WIDE_RESULT((Tcl_WideUInt)w1 << shift);
 		}
 	    }
 	} else {
@@ -9144,7 +9148,7 @@ ExecuteExtendedBinaryMathOp(
 
 	    switch (opcode) {
 	    case INST_ADD:
-		wResult = w1 + w2;
+		wResult = (Tcl_WideInt)((Tcl_WideUInt)w1 + (Tcl_WideUInt)w2);
 #ifndef TCL_WIDE_INT_IS_LONG
 		if ((type1 == TCL_NUMBER_WIDE) || (type2 == TCL_NUMBER_WIDE))
 #endif
@@ -9160,7 +9164,7 @@ ExecuteExtendedBinaryMathOp(
 		break;
 
 	    case INST_SUB:
-		wResult = w1 - w2;
+		wResult = (Tcl_WideInt)((Tcl_WideUInt)w1 - (Tcl_WideUInt)w2);
 #ifndef TCL_WIDE_INT_IS_LONG
 		if ((type1 == TCL_NUMBER_WIDE) || (type2 == TCL_NUMBER_WIDE))
 #endif
@@ -9625,7 +9629,7 @@ PrintByteCodeInfo(
 #ifdef TCL_COMPILE_STATS
     fprintf(stdout, "  Code %lu = header %lu+inst %d+litObj %lu+exc %lu+aux %lu+cmdMap %d\n",
 	    (unsigned long) codePtr->structureSize,
-	    (unsigned long) (sizeof(ByteCode)-sizeof(size_t)-sizeof(Tcl_Time)),
+	    (unsigned long) (TclOffset(ByteCode, localCachePtr)),
 	    codePtr->numCodeBytes,
 	    (unsigned long) (codePtr->numLitObjects * sizeof(Tcl_Obj *)),
 	    (unsigned long) (codePtr->numExceptRanges*sizeof(ExceptionRange)),
@@ -10268,7 +10272,7 @@ EvalStatsCmd(
     numCurrentByteCodes =
 	    statsPtr->numCompilations - statsPtr->numByteCodesFreed;
     currentHeaderBytes = numCurrentByteCodes
-	    * (sizeof(ByteCode) - sizeof(size_t) - sizeof(Tcl_Time));
+	    * (TclOffset(ByteCode, localCachePtr));
     literalMgmtBytes = sizeof(LiteralTable)
 	    + (iPtr->literalTable.numBuckets * sizeof(LiteralEntry *))
 	    + (iPtr->literalTable.numEntries * sizeof(LiteralEntry));

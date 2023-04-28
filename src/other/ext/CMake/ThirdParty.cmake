@@ -268,12 +268,12 @@ function(THIRD_PARTY dir vroot build_target description)
 
   # If this is a BRL-CAD build, update the options
   if (COMMAND BRLCAD_OPTION)
-    if(NOT ${vroot}_UNDOCUMENTED)
+    if(NOT TP_UNDOCUMENTED)
       BRLCAD_OPTION("${CMAKE_PROJECT_NAME}_${vroot}" "${${CMAKE_PROJECT_NAME}_${vroot}}"
 	TYPE ABS
 	ALIASES ${TP_ALIASES}
 	DESCRIPTION "${description}")
-    endif(NOT ${vroot}_UNDOCUMENTED)
+    endif(NOT TP_UNDOCUMENTED)
   endif (COMMAND BRLCAD_OPTION)
 
   # For drop-down menus in CMake gui - set STRINGS property

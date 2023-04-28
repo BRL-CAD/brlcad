@@ -1,7 +1,7 @@
 /*                   B R E P _ C D T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -550,8 +550,8 @@ getSurfacePoints(const ON_BrepFace &face,
 	} else {
 	    cos_within_ang = cos(ON_PI / 2.0);
 	}
-	ON_BOOL32 uclosed = s->IsClosed(0);
-	ON_BOOL32 vclosed = s->IsClosed(1);
+	bool uclosed = s->IsClosed(0);
+	bool vclosed = s->IsClosed(1);
 	if (uclosed && vclosed) {
 	    ON_2dPoint p(0.0, 0.0);
 	    double midx = (min.x + max.x) / 2.0;

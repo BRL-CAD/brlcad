@@ -161,6 +161,11 @@ SOFTWARE.
 #define XK_Kana_Shift                    0xff2e  /* Kana Shift */
 #define XK_Eisu_Shift                    0xff2f  /* Alphanumeric Shift */
 #define XK_Eisu_toggle                   0xff30  /* Alphanumeric toggle */
+#define XK_Kanji_Bangou                  0xff37  /* Codeinput */
+#define XK_Zen_Koho                      0xff3d  /* Multiple/All Candidate(s) */
+#define XK_Mae_Koho                      0xff3e  /* Previous Candidate */
+
+/* 0xff31 thru 0xff3f are under XK_KOREAN */
 
 /* Cursor control & motion */
 
@@ -329,6 +334,212 @@ SOFTWARE.
 #define XK_Hyper_L                       0xffed  /* Left hyper */
 #define XK_Hyper_R                       0xffee  /* Right hyper */
 #endif /* XK_MISCELLANY */
+
+/*
+ * Keyboard (XKB) Extension function and modifier keys
+ * (from Appendix C of "The X Keyboard Extension: Protocol Specification")
+ * Byte 3 = 0xfe
+ */
+
+#ifdef XK_XKB_KEYS
+#define XK_ISO_Lock                      0xfe01
+#define XK_ISO_Level2_Latch              0xfe02
+#define XK_ISO_Level3_Shift              0xfe03
+#define XK_ISO_Level3_Latch              0xfe04
+#define XK_ISO_Level3_Lock               0xfe05
+#define XK_ISO_Level5_Shift              0xfe11
+#define XK_ISO_Level5_Latch              0xfe12
+#define XK_ISO_Level5_Lock               0xfe13
+#define XK_ISO_Group_Shift               0xff7e  /* Alias for mode_switch */
+#define XK_ISO_Group_Latch               0xfe06
+#define XK_ISO_Group_Lock                0xfe07
+#define XK_ISO_Next_Group                0xfe08
+#define XK_ISO_Next_Group_Lock           0xfe09
+#define XK_ISO_Prev_Group                0xfe0a
+#define XK_ISO_Prev_Group_Lock           0xfe0b
+#define XK_ISO_First_Group               0xfe0c
+#define XK_ISO_First_Group_Lock          0xfe0d
+#define XK_ISO_Last_Group                0xfe0e
+#define XK_ISO_Last_Group_Lock           0xfe0f
+
+#define XK_ISO_Left_Tab                  0xfe20
+#define XK_ISO_Move_Line_Up              0xfe21
+#define XK_ISO_Move_Line_Down            0xfe22
+#define XK_ISO_Partial_Line_Up           0xfe23
+#define XK_ISO_Partial_Line_Down         0xfe24
+#define XK_ISO_Partial_Space_Left        0xfe25
+#define XK_ISO_Partial_Space_Right       0xfe26
+#define XK_ISO_Set_Margin_Left           0xfe27
+#define XK_ISO_Set_Margin_Right          0xfe28
+#define XK_ISO_Release_Margin_Left       0xfe29
+#define XK_ISO_Release_Margin_Right      0xfe2a
+#define XK_ISO_Release_Both_Margins      0xfe2b
+#define XK_ISO_Fast_Cursor_Left          0xfe2c
+#define XK_ISO_Fast_Cursor_Right         0xfe2d
+#define XK_ISO_Fast_Cursor_Up            0xfe2e
+#define XK_ISO_Fast_Cursor_Down          0xfe2f
+#define XK_ISO_Continuous_Underline      0xfe30
+#define XK_ISO_Discontinuous_Underline   0xfe31
+#define XK_ISO_Emphasize                 0xfe32
+#define XK_ISO_Center_Object             0xfe33
+#define XK_ISO_Enter                     0xfe34
+
+#define XK_dead_grave                    0xfe50
+#define XK_dead_acute                    0xfe51
+#define XK_dead_circumflex               0xfe52
+#define XK_dead_tilde                    0xfe53
+#define XK_dead_perispomeni              0xfe53  /* alias for dead_tilde */
+#define XK_dead_macron                   0xfe54
+#define XK_dead_breve                    0xfe55
+#define XK_dead_abovedot                 0xfe56
+#define XK_dead_diaeresis                0xfe57
+#define XK_dead_abovering                0xfe58
+#define XK_dead_doubleacute              0xfe59
+#define XK_dead_caron                    0xfe5a
+#define XK_dead_cedilla                  0xfe5b
+#define XK_dead_ogonek                   0xfe5c
+#define XK_dead_iota                     0xfe5d
+#define XK_dead_voiced_sound             0xfe5e
+#define XK_dead_semivoiced_sound         0xfe5f
+#define XK_dead_belowdot                 0xfe60
+#define XK_dead_hook                     0xfe61
+#define XK_dead_horn                     0xfe62
+#define XK_dead_stroke                   0xfe63
+#define XK_dead_abovecomma               0xfe64
+#define XK_dead_psili                    0xfe64  /* alias for dead_abovecomma */
+#define XK_dead_abovereversedcomma       0xfe65
+#define XK_dead_dasia                    0xfe65  /* alias for dead_abovereversedcomma */
+#define XK_dead_doublegrave              0xfe66
+#define XK_dead_belowring                0xfe67
+#define XK_dead_belowmacron              0xfe68
+#define XK_dead_belowcircumflex          0xfe69
+#define XK_dead_belowtilde               0xfe6a
+#define XK_dead_belowbreve               0xfe6b
+#define XK_dead_belowdiaeresis           0xfe6c
+#define XK_dead_invertedbreve            0xfe6d
+#define XK_dead_belowcomma               0xfe6e
+#define XK_dead_currency                 0xfe6f
+
+/* extra dead elements for German T3 layout */
+#define XK_dead_lowline                  0xfe90
+#define XK_dead_aboveverticalline        0xfe91
+#define XK_dead_belowverticalline        0xfe92
+#define XK_dead_longsolidusoverlay       0xfe93
+
+/* dead vowels for universal syllable entry */
+#define XK_dead_a                        0xfe80
+#define XK_dead_A                        0xfe81
+#define XK_dead_e                        0xfe82
+#define XK_dead_E                        0xfe83
+#define XK_dead_i                        0xfe84
+#define XK_dead_I                        0xfe85
+#define XK_dead_o                        0xfe86
+#define XK_dead_O                        0xfe87
+#define XK_dead_u                        0xfe88
+#define XK_dead_U                        0xfe89
+#define XK_dead_small_schwa              0xfe8a
+#define XK_dead_capital_schwa            0xfe8b
+
+#define XK_dead_greek                    0xfe8c
+
+#define XK_First_Virtual_Screen          0xfed0
+#define XK_Prev_Virtual_Screen           0xfed1
+#define XK_Next_Virtual_Screen           0xfed2
+#define XK_Last_Virtual_Screen           0xfed4
+#define XK_Terminate_Server              0xfed5
+
+#define XK_AccessX_Enable                0xfe70
+#define XK_AccessX_Feedback_Enable       0xfe71
+#define XK_RepeatKeys_Enable             0xfe72
+#define XK_SlowKeys_Enable               0xfe73
+#define XK_BounceKeys_Enable             0xfe74
+#define XK_StickyKeys_Enable             0xfe75
+#define XK_MouseKeys_Enable              0xfe76
+#define XK_MouseKeys_Accel_Enable        0xfe77
+#define XK_Overlay1_Enable               0xfe78
+#define XK_Overlay2_Enable               0xfe79
+#define XK_AudibleBell_Enable            0xfe7a
+
+#define XK_Pointer_Left                  0xfee0
+#define XK_Pointer_Right                 0xfee1
+#define XK_Pointer_Up                    0xfee2
+#define XK_Pointer_Down                  0xfee3
+#define XK_Pointer_UpLeft                0xfee4
+#define XK_Pointer_UpRight               0xfee5
+#define XK_Pointer_DownLeft              0xfee6
+#define XK_Pointer_DownRight             0xfee7
+#define XK_Pointer_Button_Dflt           0xfee8
+#define XK_Pointer_Button1               0xfee9
+#define XK_Pointer_Button2               0xfeea
+#define XK_Pointer_Button3               0xfeeb
+#define XK_Pointer_Button4               0xfeec
+#define XK_Pointer_Button5               0xfeed
+#define XK_Pointer_DblClick_Dflt         0xfeee
+#define XK_Pointer_DblClick1             0xfeef
+#define XK_Pointer_DblClick2             0xfef0
+#define XK_Pointer_DblClick3             0xfef1
+#define XK_Pointer_DblClick4             0xfef2
+#define XK_Pointer_DblClick5             0xfef3
+#define XK_Pointer_Drag_Dflt             0xfef4
+#define XK_Pointer_Drag1                 0xfef5
+#define XK_Pointer_Drag2                 0xfef6
+#define XK_Pointer_Drag3                 0xfef7
+#define XK_Pointer_Drag4                 0xfef8
+#define XK_Pointer_Drag5                 0xfefd
+
+#define XK_Pointer_EnableKeys            0xfef9
+#define XK_Pointer_Accelerate            0xfefa
+#define XK_Pointer_DfltBtnNext           0xfefb
+#define XK_Pointer_DfltBtnPrev           0xfefc
+
+/* Single-Stroke Multiple-Character N-Graph Keysyms For The X Input Method */
+
+#define XK_ch                            0xfea0
+#define XK_Ch                            0xfea1
+#define XK_CH                            0xfea2
+#define XK_c_h                           0xfea3
+#define XK_C_h                           0xfea4
+#define XK_C_H                           0xfea5
+
+#endif /* XK_XKB_KEYS */
+
+/*
+ * 3270 Terminal Keys
+ * Byte 3 = 0xfd
+ */
+
+#ifdef XK_3270
+#define XK_3270_Duplicate                0xfd01
+#define XK_3270_FieldMark                0xfd02
+#define XK_3270_Right2                   0xfd03
+#define XK_3270_Left2                    0xfd04
+#define XK_3270_BackTab                  0xfd05
+#define XK_3270_EraseEOF                 0xfd06
+#define XK_3270_EraseInput               0xfd07
+#define XK_3270_Reset                    0xfd08
+#define XK_3270_Quit                     0xfd09
+#define XK_3270_PA1                      0xfd0a
+#define XK_3270_PA2                      0xfd0b
+#define XK_3270_PA3                      0xfd0c
+#define XK_3270_Test                     0xfd0d
+#define XK_3270_Attn                     0xfd0e
+#define XK_3270_CursorBlink              0xfd0f
+#define XK_3270_AltCursor                0xfd10
+#define XK_3270_KeyClick                 0xfd11
+#define XK_3270_Jump                     0xfd12
+#define XK_3270_Ident                    0xfd13
+#define XK_3270_Rule                     0xfd14
+#define XK_3270_Copy                     0xfd15
+#define XK_3270_Play                     0xfd16
+#define XK_3270_Setup                    0xfd17
+#define XK_3270_Record                   0xfd18
+#define XK_3270_ChangeScreen             0xfd19
+#define XK_3270_DeleteWord               0xfd1a
+#define XK_3270_ExSelect                 0xfd1b
+#define XK_3270_CursorSelect             0xfd1c
+#define XK_3270_PrintScreen              0xfd1d
+#define XK_3270_Enter                    0xfd1e
+#endif /* XK_3270 */
 
 /*
  * Latin 1
@@ -1281,6 +1492,246 @@ SOFTWARE.
 #define XK_hebrew_taf                    0x0cfa  /* deprecated */
 #define XK_Hebrew_switch                 0xff7e  /* Alias for mode_switch */
 #endif /* XK_HEBREW */
+
+/*
+ * Thai
+ * Byte 3 = 0x0d
+ */
+
+#ifdef XK_THAI
+#define XK_Thai_kokai                    0x0da1  /* U+0E01 THAI CHARACTER KO KAI */
+#define XK_Thai_khokhai                  0x0da2  /* U+0E02 THAI CHARACTER KHO KHAI */
+#define XK_Thai_khokhuat                 0x0da3  /* U+0E03 THAI CHARACTER KHO KHUAT */
+#define XK_Thai_khokhwai                 0x0da4  /* U+0E04 THAI CHARACTER KHO KHWAI */
+#define XK_Thai_khokhon                  0x0da5  /* U+0E05 THAI CHARACTER KHO KHON */
+#define XK_Thai_khorakhang               0x0da6  /* U+0E06 THAI CHARACTER KHO RAKHANG */
+#define XK_Thai_ngongu                   0x0da7  /* U+0E07 THAI CHARACTER NGO NGU */
+#define XK_Thai_chochan                  0x0da8  /* U+0E08 THAI CHARACTER CHO CHAN */
+#define XK_Thai_choching                 0x0da9  /* U+0E09 THAI CHARACTER CHO CHING */
+#define XK_Thai_chochang                 0x0daa  /* U+0E0A THAI CHARACTER CHO CHANG */
+#define XK_Thai_soso                     0x0dab  /* U+0E0B THAI CHARACTER SO SO */
+#define XK_Thai_chochoe                  0x0dac  /* U+0E0C THAI CHARACTER CHO CHOE */
+#define XK_Thai_yoying                   0x0dad  /* U+0E0D THAI CHARACTER YO YING */
+#define XK_Thai_dochada                  0x0dae  /* U+0E0E THAI CHARACTER DO CHADA */
+#define XK_Thai_topatak                  0x0daf  /* U+0E0F THAI CHARACTER TO PATAK */
+#define XK_Thai_thothan                  0x0db0  /* U+0E10 THAI CHARACTER THO THAN */
+#define XK_Thai_thonangmontho            0x0db1  /* U+0E11 THAI CHARACTER THO NANGMONTHO */
+#define XK_Thai_thophuthao               0x0db2  /* U+0E12 THAI CHARACTER THO PHUTHAO */
+#define XK_Thai_nonen                    0x0db3  /* U+0E13 THAI CHARACTER NO NEN */
+#define XK_Thai_dodek                    0x0db4  /* U+0E14 THAI CHARACTER DO DEK */
+#define XK_Thai_totao                    0x0db5  /* U+0E15 THAI CHARACTER TO TAO */
+#define XK_Thai_thothung                 0x0db6  /* U+0E16 THAI CHARACTER THO THUNG */
+#define XK_Thai_thothahan                0x0db7  /* U+0E17 THAI CHARACTER THO THAHAN */
+#define XK_Thai_thothong                 0x0db8  /* U+0E18 THAI CHARACTER THO THONG */
+#define XK_Thai_nonu                     0x0db9  /* U+0E19 THAI CHARACTER NO NU */
+#define XK_Thai_bobaimai                 0x0dba  /* U+0E1A THAI CHARACTER BO BAIMAI */
+#define XK_Thai_popla                    0x0dbb  /* U+0E1B THAI CHARACTER PO PLA */
+#define XK_Thai_phophung                 0x0dbc  /* U+0E1C THAI CHARACTER PHO PHUNG */
+#define XK_Thai_fofa                     0x0dbd  /* U+0E1D THAI CHARACTER FO FA */
+#define XK_Thai_phophan                  0x0dbe  /* U+0E1E THAI CHARACTER PHO PHAN */
+#define XK_Thai_fofan                    0x0dbf  /* U+0E1F THAI CHARACTER FO FAN */
+#define XK_Thai_phosamphao               0x0dc0  /* U+0E20 THAI CHARACTER PHO SAMPHAO */
+#define XK_Thai_moma                     0x0dc1  /* U+0E21 THAI CHARACTER MO MA */
+#define XK_Thai_yoyak                    0x0dc2  /* U+0E22 THAI CHARACTER YO YAK */
+#define XK_Thai_rorua                    0x0dc3  /* U+0E23 THAI CHARACTER RO RUA */
+#define XK_Thai_ru                       0x0dc4  /* U+0E24 THAI CHARACTER RU */
+#define XK_Thai_loling                   0x0dc5  /* U+0E25 THAI CHARACTER LO LING */
+#define XK_Thai_lu                       0x0dc6  /* U+0E26 THAI CHARACTER LU */
+#define XK_Thai_wowaen                   0x0dc7  /* U+0E27 THAI CHARACTER WO WAEN */
+#define XK_Thai_sosala                   0x0dc8  /* U+0E28 THAI CHARACTER SO SALA */
+#define XK_Thai_sorusi                   0x0dc9  /* U+0E29 THAI CHARACTER SO RUSI */
+#define XK_Thai_sosua                    0x0dca  /* U+0E2A THAI CHARACTER SO SUA */
+#define XK_Thai_hohip                    0x0dcb  /* U+0E2B THAI CHARACTER HO HIP */
+#define XK_Thai_lochula                  0x0dcc  /* U+0E2C THAI CHARACTER LO CHULA */
+#define XK_Thai_oang                     0x0dcd  /* U+0E2D THAI CHARACTER O ANG */
+#define XK_Thai_honokhuk                 0x0dce  /* U+0E2E THAI CHARACTER HO NOKHUK */
+#define XK_Thai_paiyannoi                0x0dcf  /* U+0E2F THAI CHARACTER PAIYANNOI */
+#define XK_Thai_saraa                    0x0dd0  /* U+0E30 THAI CHARACTER SARA A */
+#define XK_Thai_maihanakat               0x0dd1  /* U+0E31 THAI CHARACTER MAI HAN-AKAT */
+#define XK_Thai_saraaa                   0x0dd2  /* U+0E32 THAI CHARACTER SARA AA */
+#define XK_Thai_saraam                   0x0dd3  /* U+0E33 THAI CHARACTER SARA AM */
+#define XK_Thai_sarai                    0x0dd4  /* U+0E34 THAI CHARACTER SARA I */
+#define XK_Thai_saraii                   0x0dd5  /* U+0E35 THAI CHARACTER SARA II */
+#define XK_Thai_saraue                   0x0dd6  /* U+0E36 THAI CHARACTER SARA UE */
+#define XK_Thai_sarauee                  0x0dd7  /* U+0E37 THAI CHARACTER SARA UEE */
+#define XK_Thai_sarau                    0x0dd8  /* U+0E38 THAI CHARACTER SARA U */
+#define XK_Thai_sarauu                   0x0dd9  /* U+0E39 THAI CHARACTER SARA UU */
+#define XK_Thai_phinthu                  0x0dda  /* U+0E3A THAI CHARACTER PHINTHU */
+#define XK_Thai_maihanakat_maitho        0x0dde
+#define XK_Thai_baht                     0x0ddf  /* U+0E3F THAI CURRENCY SYMBOL BAHT */
+#define XK_Thai_sarae                    0x0de0  /* U+0E40 THAI CHARACTER SARA E */
+#define XK_Thai_saraae                   0x0de1  /* U+0E41 THAI CHARACTER SARA AE */
+#define XK_Thai_sarao                    0x0de2  /* U+0E42 THAI CHARACTER SARA O */
+#define XK_Thai_saraaimaimuan            0x0de3  /* U+0E43 THAI CHARACTER SARA AI MAIMUAN */
+#define XK_Thai_saraaimaimalai           0x0de4  /* U+0E44 THAI CHARACTER SARA AI MAIMALAI */
+#define XK_Thai_lakkhangyao              0x0de5  /* U+0E45 THAI CHARACTER LAKKHANGYAO */
+#define XK_Thai_maiyamok                 0x0de6  /* U+0E46 THAI CHARACTER MAIYAMOK */
+#define XK_Thai_maitaikhu                0x0de7  /* U+0E47 THAI CHARACTER MAITAIKHU */
+#define XK_Thai_maiek                    0x0de8  /* U+0E48 THAI CHARACTER MAI EK */
+#define XK_Thai_maitho                   0x0de9  /* U+0E49 THAI CHARACTER MAI THO */
+#define XK_Thai_maitri                   0x0dea  /* U+0E4A THAI CHARACTER MAI TRI */
+#define XK_Thai_maichattawa              0x0deb  /* U+0E4B THAI CHARACTER MAI CHATTAWA */
+#define XK_Thai_thanthakhat              0x0dec  /* U+0E4C THAI CHARACTER THANTHAKHAT */
+#define XK_Thai_nikhahit                 0x0ded  /* U+0E4D THAI CHARACTER NIKHAHIT */
+#define XK_Thai_leksun                   0x0df0  /* U+0E50 THAI DIGIT ZERO */
+#define XK_Thai_leknung                  0x0df1  /* U+0E51 THAI DIGIT ONE */
+#define XK_Thai_leksong                  0x0df2  /* U+0E52 THAI DIGIT TWO */
+#define XK_Thai_leksam                   0x0df3  /* U+0E53 THAI DIGIT THREE */
+#define XK_Thai_leksi                    0x0df4  /* U+0E54 THAI DIGIT FOUR */
+#define XK_Thai_lekha                    0x0df5  /* U+0E55 THAI DIGIT FIVE */
+#define XK_Thai_lekhok                   0x0df6  /* U+0E56 THAI DIGIT SIX */
+#define XK_Thai_lekchet                  0x0df7  /* U+0E57 THAI DIGIT SEVEN */
+#define XK_Thai_lekpaet                  0x0df8  /* U+0E58 THAI DIGIT EIGHT */
+#define XK_Thai_lekkao                   0x0df9  /* U+0E59 THAI DIGIT NINE */
+#endif /* XK_THAI */
+
+/*
+ * Korean
+ * Byte 3 = 0x0e
+ */
+
+#ifdef XK_KOREAN
+
+#define XK_Hangul                        0xff31  /* Hangul start/stop(toggle) */
+#define XK_Hangul_Start                  0xff32  /* Hangul start */
+#define XK_Hangul_End                    0xff33  /* Hangul end, English start */
+#define XK_Hangul_Hanja                  0xff34  /* Start Hangul->Hanja Conversion */
+#define XK_Hangul_Jamo                   0xff35  /* Hangul Jamo mode */
+#define XK_Hangul_Romaja                 0xff36  /* Hangul Romaja mode */
+#define XK_Hangul_Codeinput              0xff37  /* Hangul code input mode */
+#define XK_Hangul_Jeonja                 0xff38  /* Jeonja mode */
+#define XK_Hangul_Banja                  0xff39  /* Banja mode */
+#define XK_Hangul_PreHanja               0xff3a  /* Pre Hanja conversion */
+#define XK_Hangul_PostHanja              0xff3b  /* Post Hanja conversion */
+#define XK_Hangul_SingleCandidate        0xff3c  /* Single candidate */
+#define XK_Hangul_MultipleCandidate      0xff3d  /* Multiple candidate */
+#define XK_Hangul_PreviousCandidate      0xff3e  /* Previous candidate */
+#define XK_Hangul_Special                0xff3f  /* Special symbols */
+#define XK_Hangul_switch                 0xff7e  /* Alias for mode_switch */
+
+/* Hangul Consonant Characters */
+#define XK_Hangul_Kiyeog                 0x0ea1  /* U+3131 HANGUL LETTER KIYEOK */
+#define XK_Hangul_SsangKiyeog            0x0ea2  /* U+3132 HANGUL LETTER SSANGKIYEOK */
+#define XK_Hangul_KiyeogSios             0x0ea3  /* U+3133 HANGUL LETTER KIYEOK-SIOS */
+#define XK_Hangul_Nieun                  0x0ea4  /* U+3134 HANGUL LETTER NIEUN */
+#define XK_Hangul_NieunJieuj             0x0ea5  /* U+3135 HANGUL LETTER NIEUN-CIEUC */
+#define XK_Hangul_NieunHieuh             0x0ea6  /* U+3136 HANGUL LETTER NIEUN-HIEUH */
+#define XK_Hangul_Dikeud                 0x0ea7  /* U+3137 HANGUL LETTER TIKEUT */
+#define XK_Hangul_SsangDikeud            0x0ea8  /* U+3138 HANGUL LETTER SSANGTIKEUT */
+#define XK_Hangul_Rieul                  0x0ea9  /* U+3139 HANGUL LETTER RIEUL */
+#define XK_Hangul_RieulKiyeog            0x0eaa  /* U+313A HANGUL LETTER RIEUL-KIYEOK */
+#define XK_Hangul_RieulMieum             0x0eab  /* U+313B HANGUL LETTER RIEUL-MIEUM */
+#define XK_Hangul_RieulPieub             0x0eac  /* U+313C HANGUL LETTER RIEUL-PIEUP */
+#define XK_Hangul_RieulSios              0x0ead  /* U+313D HANGUL LETTER RIEUL-SIOS */
+#define XK_Hangul_RieulTieut             0x0eae  /* U+313E HANGUL LETTER RIEUL-THIEUTH */
+#define XK_Hangul_RieulPhieuf            0x0eaf  /* U+313F HANGUL LETTER RIEUL-PHIEUPH */
+#define XK_Hangul_RieulHieuh             0x0eb0  /* U+3140 HANGUL LETTER RIEUL-HIEUH */
+#define XK_Hangul_Mieum                  0x0eb1  /* U+3141 HANGUL LETTER MIEUM */
+#define XK_Hangul_Pieub                  0x0eb2  /* U+3142 HANGUL LETTER PIEUP */
+#define XK_Hangul_SsangPieub             0x0eb3  /* U+3143 HANGUL LETTER SSANGPIEUP */
+#define XK_Hangul_PieubSios              0x0eb4  /* U+3144 HANGUL LETTER PIEUP-SIOS */
+#define XK_Hangul_Sios                   0x0eb5  /* U+3145 HANGUL LETTER SIOS */
+#define XK_Hangul_SsangSios              0x0eb6  /* U+3146 HANGUL LETTER SSANGSIOS */
+#define XK_Hangul_Ieung                  0x0eb7  /* U+3147 HANGUL LETTER IEUNG */
+#define XK_Hangul_Jieuj                  0x0eb8  /* U+3148 HANGUL LETTER CIEUC */
+#define XK_Hangul_SsangJieuj             0x0eb9  /* U+3149 HANGUL LETTER SSANGCIEUC */
+#define XK_Hangul_Cieuc                  0x0eba  /* U+314A HANGUL LETTER CHIEUCH */
+#define XK_Hangul_Khieuq                 0x0ebb  /* U+314B HANGUL LETTER KHIEUKH */
+#define XK_Hangul_Tieut                  0x0ebc  /* U+314C HANGUL LETTER THIEUTH */
+#define XK_Hangul_Phieuf                 0x0ebd  /* U+314D HANGUL LETTER PHIEUPH */
+#define XK_Hangul_Hieuh                  0x0ebe  /* U+314E HANGUL LETTER HIEUH */
+
+/* Hangul Vowel Characters */
+#define XK_Hangul_A                      0x0ebf  /* U+314F HANGUL LETTER A */
+#define XK_Hangul_AE                     0x0ec0  /* U+3150 HANGUL LETTER AE */
+#define XK_Hangul_YA                     0x0ec1  /* U+3151 HANGUL LETTER YA */
+#define XK_Hangul_YAE                    0x0ec2  /* U+3152 HANGUL LETTER YAE */
+#define XK_Hangul_EO                     0x0ec3  /* U+3153 HANGUL LETTER EO */
+#define XK_Hangul_E                      0x0ec4  /* U+3154 HANGUL LETTER E */
+#define XK_Hangul_YEO                    0x0ec5  /* U+3155 HANGUL LETTER YEO */
+#define XK_Hangul_YE                     0x0ec6  /* U+3156 HANGUL LETTER YE */
+#define XK_Hangul_O                      0x0ec7  /* U+3157 HANGUL LETTER O */
+#define XK_Hangul_WA                     0x0ec8  /* U+3158 HANGUL LETTER WA */
+#define XK_Hangul_WAE                    0x0ec9  /* U+3159 HANGUL LETTER WAE */
+#define XK_Hangul_OE                     0x0eca  /* U+315A HANGUL LETTER OE */
+#define XK_Hangul_YO                     0x0ecb  /* U+315B HANGUL LETTER YO */
+#define XK_Hangul_U                      0x0ecc  /* U+315C HANGUL LETTER U */
+#define XK_Hangul_WEO                    0x0ecd  /* U+315D HANGUL LETTER WEO */
+#define XK_Hangul_WE                     0x0ece  /* U+315E HANGUL LETTER WE */
+#define XK_Hangul_WI                     0x0ecf  /* U+315F HANGUL LETTER WI */
+#define XK_Hangul_YU                     0x0ed0  /* U+3160 HANGUL LETTER YU */
+#define XK_Hangul_EU                     0x0ed1  /* U+3161 HANGUL LETTER EU */
+#define XK_Hangul_YI                     0x0ed2  /* U+3162 HANGUL LETTER YI */
+#define XK_Hangul_I                      0x0ed3  /* U+3163 HANGUL LETTER I */
+
+/* Hangul syllable-final (JongSeong) Characters */
+#define XK_Hangul_J_Kiyeog               0x0ed4  /* U+11A8 HANGUL JONGSEONG KIYEOK */
+#define XK_Hangul_J_SsangKiyeog          0x0ed5  /* U+11A9 HANGUL JONGSEONG SSANGKIYEOK */
+#define XK_Hangul_J_KiyeogSios           0x0ed6  /* U+11AA HANGUL JONGSEONG KIYEOK-SIOS */
+#define XK_Hangul_J_Nieun                0x0ed7  /* U+11AB HANGUL JONGSEONG NIEUN */
+#define XK_Hangul_J_NieunJieuj           0x0ed8  /* U+11AC HANGUL JONGSEONG NIEUN-CIEUC */
+#define XK_Hangul_J_NieunHieuh           0x0ed9  /* U+11AD HANGUL JONGSEONG NIEUN-HIEUH */
+#define XK_Hangul_J_Dikeud               0x0eda  /* U+11AE HANGUL JONGSEONG TIKEUT */
+#define XK_Hangul_J_Rieul                0x0edb  /* U+11AF HANGUL JONGSEONG RIEUL */
+#define XK_Hangul_J_RieulKiyeog          0x0edc  /* U+11B0 HANGUL JONGSEONG RIEUL-KIYEOK */
+#define XK_Hangul_J_RieulMieum           0x0edd  /* U+11B1 HANGUL JONGSEONG RIEUL-MIEUM */
+#define XK_Hangul_J_RieulPieub           0x0ede  /* U+11B2 HANGUL JONGSEONG RIEUL-PIEUP */
+#define XK_Hangul_J_RieulSios            0x0edf  /* U+11B3 HANGUL JONGSEONG RIEUL-SIOS */
+#define XK_Hangul_J_RieulTieut           0x0ee0  /* U+11B4 HANGUL JONGSEONG RIEUL-THIEUTH */
+#define XK_Hangul_J_RieulPhieuf          0x0ee1  /* U+11B5 HANGUL JONGSEONG RIEUL-PHIEUPH */
+#define XK_Hangul_J_RieulHieuh           0x0ee2  /* U+11B6 HANGUL JONGSEONG RIEUL-HIEUH */
+#define XK_Hangul_J_Mieum                0x0ee3  /* U+11B7 HANGUL JONGSEONG MIEUM */
+#define XK_Hangul_J_Pieub                0x0ee4  /* U+11B8 HANGUL JONGSEONG PIEUP */
+#define XK_Hangul_J_PieubSios            0x0ee5  /* U+11B9 HANGUL JONGSEONG PIEUP-SIOS */
+#define XK_Hangul_J_Sios                 0x0ee6  /* U+11BA HANGUL JONGSEONG SIOS */
+#define XK_Hangul_J_SsangSios            0x0ee7  /* U+11BB HANGUL JONGSEONG SSANGSIOS */
+#define XK_Hangul_J_Ieung                0x0ee8  /* U+11BC HANGUL JONGSEONG IEUNG */
+#define XK_Hangul_J_Jieuj                0x0ee9  /* U+11BD HANGUL JONGSEONG CIEUC */
+#define XK_Hangul_J_Cieuc                0x0eea  /* U+11BE HANGUL JONGSEONG CHIEUCH */
+#define XK_Hangul_J_Khieuq               0x0eeb  /* U+11BF HANGUL JONGSEONG KHIEUKH */
+#define XK_Hangul_J_Tieut                0x0eec  /* U+11C0 HANGUL JONGSEONG THIEUTH */
+#define XK_Hangul_J_Phieuf               0x0eed  /* U+11C1 HANGUL JONGSEONG PHIEUPH */
+#define XK_Hangul_J_Hieuh                0x0eee  /* U+11C2 HANGUL JONGSEONG HIEUH */
+
+/* Ancient Hangul Consonant Characters */
+#define XK_Hangul_RieulYeorinHieuh       0x0eef  /* U+316D HANGUL LETTER RIEUL-YEORINHIEUH */
+#define XK_Hangul_SunkyeongeumMieum      0x0ef0  /* U+3171 HANGUL LETTER KAPYEOUNMIEUM */
+#define XK_Hangul_SunkyeongeumPieub      0x0ef1  /* U+3178 HANGUL LETTER KAPYEOUNPIEUP */
+#define XK_Hangul_PanSios                0x0ef2  /* U+317F HANGUL LETTER PANSIOS */
+#define XK_Hangul_KkogjiDalrinIeung      0x0ef3  /* U+3181 HANGUL LETTER YESIEUNG */
+#define XK_Hangul_SunkyeongeumPhieuf     0x0ef4  /* U+3184 HANGUL LETTER KAPYEOUNPHIEUPH */
+#define XK_Hangul_YeorinHieuh            0x0ef5  /* U+3186 HANGUL LETTER YEORINHIEUH */
+
+/* Ancient Hangul Vowel Characters */
+#define XK_Hangul_AraeA                  0x0ef6  /* U+318D HANGUL LETTER ARAEA */
+#define XK_Hangul_AraeAE                 0x0ef7  /* U+318E HANGUL LETTER ARAEAE */
+
+/* Ancient Hangul syllable-final (JongSeong) Characters */
+#define XK_Hangul_J_PanSios              0x0ef8  /* U+11EB HANGUL JONGSEONG PANSIOS */
+#define XK_Hangul_J_KkogjiDalrinIeung    0x0ef9  /* U+11F0 HANGUL JONGSEONG YESIEUNG */
+#define XK_Hangul_J_YeorinHieuh          0x0efa  /* U+11F9 HANGUL JONGSEONG YEORINHIEUH */
+
+/* Korean currency symbol */
+#define XK_Korean_Won                    0x0eff  /*(U+20A9 WON SIGN)*/
+
+#endif /* XK_KOREAN */
+
+#ifdef XK_CURRENCY
+#define XK_EuroSign                      0x20ac  /* U+20AC EURO SIGN */
+#endif /* XK_CURRENCY */
+
+#ifdef XK_BRAILLE
+#define XK_braille_dot_1                 0xfff1
+#define XK_braille_dot_2                 0xfff2
+#define XK_braille_dot_3                 0xfff3
+#define XK_braille_dot_4                 0xfff4
+#define XK_braille_dot_5                 0xfff5
+#define XK_braille_dot_6                 0xfff6
+#define XK_braille_dot_7                 0xfff7
+#define XK_braille_dot_8                 0xfff8
+#define XK_braille_dot_9                 0xfff9
+#define XK_braille_dot_10                0xfffa
+#endif /* XK_BRAILLE */
 
 /* Multimedia keys, defined same as on Linux
  * /usr/include/pkg/libxkbcommon/xkbcommon/xkbcommon-keysyms.h

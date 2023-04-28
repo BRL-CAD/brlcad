@@ -125,12 +125,12 @@ public:
   Description:
     Creates a surface of revolution definition of the cylinder.
   Parameters:
-    srf - [in] if not NULL, then this srf is used.
+    srf - [in] if not nullptr, then this srf is used.
   Result:
-    A surface of revolution or NULL if the cylinder is not 
+    A surface of revolution or nullptr if the cylinder is not 
     valid or is infinite.
   */
-  ON_RevSurface* RevSurfaceForm( ON_RevSurface* srf = NULL ) const;
+  ON_RevSurface* RevSurfaceForm( ON_RevSurface* srf = nullptr ) const;
 
 public: // members left public
   // base circle

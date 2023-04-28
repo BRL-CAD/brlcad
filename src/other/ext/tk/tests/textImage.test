@@ -386,18 +386,20 @@ test textImage-4.2 {alignment checking - baseline} -setup {
     .t image create end -image large
     .t image create end -image small -align baseline
     .t insert end test
+    update
     # Sizes larger than 25 can be too big and lead to a negative 'norm',
     # at least on Windows XP with certain settings.
     foreach size {10 15 20 25} {
-    font configure test_font2 -size $size
-    array set Metrics [font metrics test_font2]
-    update
-    foreach {x y w h} [.t bbox small] {}
-    set norm [expr {
-            (([image height large] - $Metrics(-linespace))/2
-            + $Metrics(-ascent) - [image height small] - $y)
+        font configure test_font2 -size $size
+        array set Metrics [font metrics test_font2]
+        update  ; # services the idle "TheWorldHasChanged" event, queues "TkWorldChanged" events
+        update  ; # services the queued "TkWorldChanged" events
+        foreach {x y w h} [.t bbox small] {}
+        set norm [expr {
+                (([image height large] - $Metrics(-linespace))/2
+                + $Metrics(-ascent) - [image height small] - $y)
         }]
-            lappend result "$size $norm"
+        lappend result "$size $norm"
     }
     return $result
 } -cleanup {

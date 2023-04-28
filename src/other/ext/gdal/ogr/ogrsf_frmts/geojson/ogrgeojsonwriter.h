@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Mateusz Loskot
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,10 +31,10 @@
 #ifndef OGR_GEOJSONWRITER_H_INCLUDED
 #define OGR_GEOJSONWRITER_H_INCLUDED
 
-#include <ogr_core.h>
+#include "ogr_core.h"
 
-#include "ogr_json_header.h"
-
+#include "cpl_json_header.h"
+#include "cpl_string.h"
 
 /************************************************************************/
 /*                         FORWARD DECLARATIONS                         */
@@ -54,11 +54,13 @@ class OGRGeometryCollection;
 
 CPL_C_START
 /* %.XXXf formatting */
-json_object CPL_DLL *json_object_new_double_with_precision(double dfVal, int nCoordPrecision);
+json_object CPL_DLL *json_object_new_double_with_precision(double dfVal,
+                                                           int nCoordPrecision);
 
 /* %.XXXg formatting */
-json_object CPL_DLL* json_object_new_double_with_significant_figures(double dfVal,
-                                                                     int nSignificantFigures);
+json_object CPL_DLL *
+json_object_new_double_with_significant_figures(double dfVal,
+                                                int nSignificantFigures);
 CPL_C_END
 
 /************************************************************************/
@@ -70,49 +72,66 @@ class OGRCoordinateTransformation;
 /*! @cond Doxygen_Suppress */
 class OGRGeoJSONWriteOptions
 {
-    public:
-        bool bWriteBBOX;
-        bool bBBOXRFC7946;
-        int  nCoordPrecision;
-        int  nSignificantFigures;
-        bool bPolygonRightHandRule;
-        bool bCanPatchCoordinatesWithNativeData;
-        bool bHonourReservedRFC7946Members;
+  public:
+    bool bWriteBBOX = false;
+    bool bBBOXRFC7946 = false;
+    int nCoordPrecision = -1;
+    int nSignificantFigures = -1;
+    bool bPolygonRightHandRule = false;
+    bool bCanPatchCoordinatesWithNativeData = true;
+    bool bHonourReservedRFC7946Members = false;
+    CPLString osIDField{};
+    bool bForceIDFieldType = false;
+    bool bGenerateID = false;
+    OGRFieldType eForcedIDFieldType = OFTString;
+    bool bAllowNonFiniteValues = false;
 
-        OGRGeoJSONWriteOptions():
-            bWriteBBOX(false),
-            bBBOXRFC7946(false),
-            nCoordPrecision(-1),
-            nSignificantFigures(-1),
-            bPolygonRightHandRule(false),
-            bCanPatchCoordinatesWithNativeData(true),
-            bHonourReservedRFC7946Members(false)
-        {}
-
-        void SetRFC7946Settings();
+    void SetRFC7946Settings();
+    void SetIDOptions(CSLConstList papszOptions);
 };
 /*! @endcond */
 
-OGREnvelope3D OGRGeoJSONGetBBox( OGRGeometry* poGeometry,
-                                 const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteFeature( OGRFeature* poFeature, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteAttributes( OGRFeature* poFeature,
-                                        bool bWriteIdIfFoundInAttributes = true,
-                                        const OGRGeoJSONWriteOptions& oOptions = OGRGeoJSONWriteOptions() );
-json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry, int nCoordPrecision, int nSignificantFigures );
-json_object* OGRGeoJSONWriteGeometry( OGRGeometry* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWritePoint( OGRPoint* poPoint, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteLineString( OGRLineString* poLine, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWritePolygon( OGRPolygon* poPolygon, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteMultiPoint( OGRMultiPoint* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteMultiLineString( OGRMultiLineString* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteMultiPolygon( OGRMultiPolygon* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteGeometryCollection( OGRGeometryCollection* poGeometry, const OGRGeoJSONWriteOptions& oOptions );
+OGREnvelope3D OGRGeoJSONGetBBox(OGRGeometry *poGeometry,
+                                const OGRGeoJSONWriteOptions &oOptions);
+json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
+                                    const OGRGeoJSONWriteOptions &oOptions);
+json_object *OGRGeoJSONWriteAttributes(
+    OGRFeature *poFeature, bool bWriteIdIfFoundInAttributes = true,
+    const OGRGeoJSONWriteOptions &oOptions = OGRGeoJSONWriteOptions());
+json_object *OGRGeoJSONWriteGeometry(const OGRGeometry *poGeometry,
+                                     int nCoordPrecision,
+                                     int nSignificantFigures);
+json_object CPL_DLL *
+OGRGeoJSONWriteGeometry(const OGRGeometry *poGeometry,
+                        const OGRGeoJSONWriteOptions &oOptions);
+json_object *OGRGeoJSONWritePoint(const OGRPoint *poPoint,
+                                  const OGRGeoJSONWriteOptions &oOptions);
+json_object *OGRGeoJSONWriteLineString(const OGRLineString *poLine,
+                                       const OGRGeoJSONWriteOptions &oOptions);
+json_object *OGRGeoJSONWritePolygon(const OGRPolygon *poPolygon,
+                                    const OGRGeoJSONWriteOptions &oOptions);
+json_object *OGRGeoJSONWriteMultiPoint(const OGRMultiPoint *poGeometry,
+                                       const OGRGeoJSONWriteOptions &oOptions);
+json_object *
+OGRGeoJSONWriteMultiLineString(const OGRMultiLineString *poGeometry,
+                               const OGRGeoJSONWriteOptions &oOptions);
+json_object *
+OGRGeoJSONWriteMultiPolygon(const OGRMultiPolygon *poGeometry,
+                            const OGRGeoJSONWriteOptions &oOptions);
+json_object *
+OGRGeoJSONWriteGeometryCollection(const OGRGeometryCollection *poGeometry,
+                                  const OGRGeoJSONWriteOptions &oOptions);
 
-json_object* OGRGeoJSONWriteCoords( double const& fX, double const& fY, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteCoords( double const& fX, double const& fY, double const& fZ, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteLineCoords( OGRLineString* poLine, const OGRGeoJSONWriteOptions& oOptions );
-json_object* OGRGeoJSONWriteRingCoords( OGRLinearRing* poLine, bool bIsExteriorRing, const OGRGeoJSONWriteOptions& oOptions );
+json_object *OGRGeoJSONWriteCoords(double const &fX, double const &fY,
+                                   const OGRGeoJSONWriteOptions &oOptions);
+json_object *OGRGeoJSONWriteCoords(double const &fX, double const &fY,
+                                   double const &fZ,
+                                   const OGRGeoJSONWriteOptions &oOptions);
+json_object *OGRGeoJSONWriteLineCoords(const OGRLineString *poLine,
+                                       const OGRGeoJSONWriteOptions &oOptions);
+json_object *OGRGeoJSONWriteRingCoords(const OGRLinearRing *poLine,
+                                       bool bIsExteriorRing,
+                                       const OGRGeoJSONWriteOptions &oOptions);
 #endif
 
 #endif /* OGR_GEOJSONWRITER_H_INCLUDED */

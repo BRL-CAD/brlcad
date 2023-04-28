@@ -1,7 +1,7 @@
 /*                       A U T O _ P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -234,6 +234,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 		    bu_ptbl_ins(&paths, (long *)path);
 		}
 	    }
+	    bu_argv_free(count, listing);
 	}
     }
 

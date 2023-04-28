@@ -29,13 +29,13 @@ public:
   // default copy constructor and operator= are fine.
 
   // virtual ON_Object::DestroyRuntimeCache override
-  void DestroyRuntimeCache( bool bDelete = true );
+  void DestroyRuntimeCache( bool bDelete = true ) override;
 
   // virtual ON_Curve::IsClosed override
-  ON_BOOL32 IsClosed() const;
+  bool IsClosed() const override;
 
   // virtual ON_Curve::DuplicateCurve override
-  ON_Curve* DuplicateCurve() const;
+  ON_Curve* DuplicateCurve() const override;
 
   /*
   Description:
@@ -65,15 +65,15 @@ public:
 
   ON_PolyEdgeSegment* operator[](int) const;
 
-  ON_BOOL32 Prepend( ON_PolyEdgeSegment* new_segment ); // Prepend curve.
-  ON_BOOL32 Append( ON_PolyEdgeSegment* new_segment );  // Append curve.
-  ON_BOOL32 Insert( 
+  bool Prepend( ON_PolyEdgeSegment* new_segment ); // Prepend curve.
+  bool Append( ON_PolyEdgeSegment* new_segment );  // Append curve.
+  bool Insert( 
            int segment_index,
            ON_PolyEdgeSegment* new_segment
            );
 
   // if the segment is an edge, the following
-  // return non-NULL pointers.
+  // return non-nullptr pointers.
   const ON_BrepEdge* EdgeAt(double t) const;
   const ON_BrepTrim* TrimAt(double t) const;
   const ON_Brep*     BrepAt(double t) const;
@@ -88,6 +88,7 @@ public:
   // Test if all segments of the polyedge are surface edges
   bool ContainsAllEdges() const;
   
+
   /*
   Description:
     See if this polyedge has an edge as one of its segments
@@ -127,16 +128,16 @@ public:
 
   // virtual ON_Curve overrides do nothing
   // to prevent changing edge
-  ON_BOOL32 SetStartPoint(ON_3dPoint start_point);
-  ON_BOOL32 SetEndPoint(ON_3dPoint end_point);
-  ON_BOOL32 ChangeClosedCurveSeam( double t );
-  ON_BOOL32 PrependAndMatch(ON_Curve*);
-  ON_BOOL32 AppendAndMatch(ON_Curve*);
+  bool SetStartPoint(ON_3dPoint start_point) override;
+  bool SetEndPoint(ON_3dPoint end_point) override;
+  bool ChangeClosedCurveSeam( double t ) override;
+  bool PrependAndMatch(ON_Curve*);
+  bool AppendAndMatch(ON_Curve*);
 
   // 7-1-03 lw added override to unset cached closed flag
   // when a segment is removed
-  ON_BOOL32 Remove(); // remove last
-  ON_BOOL32 Remove( int index);
+  bool Remove(); // remove last
+  bool Remove( int index);
 };
 
 class ON_CLASS ON_PolyEdgeSegment : public ON_CurveProxy
@@ -150,18 +151,18 @@ public:
   // default copy constructor and operator= are fine.
 
   // virtual ON_Object::DestroyRuntimeCache override
-  void DestroyRuntimeCache( bool bDelete = true );
+  void DestroyRuntimeCache( bool bDelete = true ) override;
 
-  ON_BOOL32 Write( ON_BinaryArchive& ) const;
+  bool Write( ON_BinaryArchive& ) const override;
 
-  ON_BOOL32 Read( ON_BinaryArchive& );
+  bool Read( ON_BinaryArchive& ) override;
 
   // virtual ON_Curve::IsClosed override
-  ON_BOOL32 IsClosed() const;
+  bool IsClosed() const override;
 
 
   // virtual ON_Curve::DuplicateCurve override
-  ON_Curve* DuplicateCurve() const;
+  ON_Curve* DuplicateCurve() const override;
 
   /*
   Description:
@@ -195,10 +196,10 @@ public:
           const ON_UUID& object_id
           );
 
-  const ON_BrepEdge* Edge() const;
-  const ON_BrepTrim* Trim() const;
+  const ON_BrepEdge* BrepEdge() const;
+  const ON_BrepTrim* BrepTrim() const;
   const ON_Brep*     Brep() const;
-  const ON_BrepFace* Face() const;
+  const ON_BrepFace* BrepFace() const;
   const ON_Surface*  Surface() const;
   ON_Surface::ISO    IsoType() const;
 
@@ -232,15 +233,16 @@ public:
   */
   ON_Interval TrimDomain() const;
 
+
   // m_object_id = id of a brep or curve object in Rhino
   ON_UUID m_object_id; 
   // When the Rhino object is a brep, m_component_index
   // refers to either an edge or a trim.
   ON_COMPONENT_INDEX m_component_index;
   // corresponding domain of the edge - see note below
-  ON_Interval m_edge_domain;  
+  ON_Interval m_edge_domain = ON_Interval::EmptyInterval;  
   // corresponding domain of the trim - see note below
-  ON_Interval m_trim_domain;   
+  ON_Interval m_trim_domain = ON_Interval::EmptyInterval;   
 
 
   // When m_component_index refers to an ON_BrepTrim, there
@@ -278,6 +280,7 @@ public:
   const ON_BrepEdge* m_edge;  // 3d edge in m_brep
   const ON_BrepFace* m_face;
   const ON_Surface* m_surface;
+
 
 private:
   friend class ON_PolyEdgeCurve;

@@ -1,7 +1,7 @@
 /*                 ConnectedFaceSet.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2022 United States Government as represented by
+ * Copyright (c) 1994-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -154,7 +154,9 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
     }
 
     LIST_OF_FACES::iterator i;
+#ifdef _DEBUG_TESTING_
     int facecnt = 0;
+#endif
     for (i = cfs_faces.begin(); i != cfs_faces.end(); ++i) {
 #ifdef _DEBUG_TESTING_
 	if (facecnt != _face_cnt_) {
@@ -167,7 +169,9 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
+#ifdef _DEBUG_TESTING_
 	facecnt++;
+#endif
     }
     return true;
 }

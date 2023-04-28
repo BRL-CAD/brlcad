@@ -847,6 +847,9 @@ characters in the text.
 .IP [4]
 Whenever the \fBsel\fR tag range changes a virtual event \fB<<Selection>>\fR
 is generated.
+It might also be generated when selection is affected but not actually changed.
+Further, multiple selection changes could happen before events can be processed
+leading to multiple events with the same visible selection.
 .PP
 The \fBsel\fR tag is automatically defined when a text widget is created, and
 it may not be deleted with the
@@ -1732,15 +1735,17 @@ all the sequences for which bindings have been defined for \fItagName\fR.
 .PP
 The only events for which bindings may be specified are those related to the
 mouse and keyboard (such as \fBEnter\fR, \fBLeave\fR, \fBButtonPress\fR,
-\fBMotion\fR, and \fBKeyPress\fR) or virtual events. Event bindings for a text
-widget use the \fBcurrent\fR mark described under \fBMARKS\fR above. An
+\fBMotion\fR, and \fBKeyPress\fR) or virtual events. Mouse and keyboard event
+bindings for a text widget respectively use the \fBcurrent\fR and \fBinsert\fR
+marks described under \fBMARKS\fR above. An
 \fBEnter\fR event triggers for a tag when the tag first becomes present on the
 current character, and a \fBLeave\fR event triggers for a tag when it ceases
 to be present on the current character. \fBEnter\fR and \fBLeave\fR events can
 happen either because the \fBcurrent\fR mark moved or because the character at
 that position changed. Note that these events are different than \fBEnter\fR
-and \fBLeave\fR events for windows. Mouse and keyboard events are directed to
-the current character. If a virtual event is used in a binding, that binding
+and \fBLeave\fR events for windows. Mouse events are directed to the current
+character, while keyboard events are directed to the insert character.
+If a virtual event is used in a binding, that binding
 can trigger only if the virtual event is defined by an underlying
 mouse-related or keyboard-related event.
 .PP

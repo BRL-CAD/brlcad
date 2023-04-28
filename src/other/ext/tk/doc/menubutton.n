@@ -24,7 +24,7 @@ menubutton \- Create and manipulate 'menubutton' pop-up menu indicator widgets
 \-compound	\-justify	\-wraplength
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
-.OP \-direction direction Height
+.OP \-direction direction Direction
 Specifies where the menu is going to be popup up. \fBabove\fR tries to
 pop the menu above the menubutton. \fBbelow\fR tries to pop the menu
 below the menubutton. \fBleft\fR tries to pop the menu to the left of

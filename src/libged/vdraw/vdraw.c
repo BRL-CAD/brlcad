@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -788,7 +788,7 @@ const struct ged_cmd *vdraw_cmds[] = { &vdraw_pcmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  vdraw_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

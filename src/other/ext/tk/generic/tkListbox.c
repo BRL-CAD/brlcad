@@ -220,10 +220,6 @@ enum state {
     STATE_DISABLED, STATE_NORMAL
 };
 
-static const char *const stateStrings[] = {
-    "disabled", "normal", NULL
-};
-
 enum activeStyle {
     ACTIVE_STYLE_DOTBOX, ACTIVE_STYLE_NONE, ACTIVE_STYLE_UNDERLINE
 };
@@ -297,7 +293,7 @@ static const Tk_OptionSpec optionSpecs[] = {
 	 DEF_LISTBOX_SET_GRID, -1, Tk_Offset(Listbox, setGrid), 0, 0, 0},
     {TK_OPTION_STRING_TABLE, "-state", "state", "State",
 	DEF_LISTBOX_STATE, -1, Tk_Offset(Listbox, state),
-	0, stateStrings, 0},
+	0, &tkStateStrings[1], 0},
     {TK_OPTION_STRING, "-takefocus", "takeFocus", "TakeFocus",
 	 DEF_LISTBOX_TAKE_FOCUS, -1, Tk_Offset(Listbox, takeFocus),
 	 TK_OPTION_NULL_OK, 0, 0},
@@ -1284,8 +1280,6 @@ ListboxXviewSubCmd(
 	ChangeListboxOffset(listPtr, index*listPtr->xScrollUnit);
     } else {
 	switch (Tk_GetScrollInfoObj(interp, objc, objv, &fraction, &count)) {
-	case TK_SCROLL_ERROR:
-	    return TCL_ERROR;
 	case TK_SCROLL_MOVETO:
 	    offset = (int) (fraction*listPtr->maxWidth + 0.5);
 	    break;
@@ -1301,6 +1295,8 @@ ListboxXviewSubCmd(
 	case TK_SCROLL_UNITS:
 	    offset = listPtr->xOffset + count*listPtr->xScrollUnit;
 	    break;
+	default:
+	    return TCL_ERROR;
 	}
 	ChangeListboxOffset(listPtr, offset);
     }
@@ -1371,7 +1367,6 @@ ListboxYviewSubCmd(
 	case TK_SCROLL_UNITS:
 	    index = listPtr->topIndex + count;
 	    break;
-	case TK_SCROLL_ERROR:
 	default:
 	    return TCL_ERROR;
 	}

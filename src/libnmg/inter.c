@@ -1,7 +1,7 @@
 /*                     N M G _ I N T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2022 United States Government as represented by
+ * Copyright (c) 1994-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -5687,7 +5687,8 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
     plane_t tmp_pl;
     vect_t left;
     struct bu_ptbl verts;
-    int on_line, above_left, below_left, on_left, above_right, below_right, on_right;
+    int above_left, below_left, on_left, above_right, below_right, on_right;
+    //int on_line;
     size_t i;
 
     NMG_CK_FACEUSE(fu1);
@@ -5723,7 +5724,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
 
     /* check vertices from fu1 versus plane of fu2 */
     nmg_vertex_tabulate(&verts, &fu1->l.magic, vlfree);
-    on_line = 0;
+    //on_line = 0;
     above_left = 0;
     below_left = 0;
     on_left = 0;
@@ -5742,7 +5743,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
 	code = bg_dist_pnt3_line3(&dist, pca, bs->pt, bs->dir, v->vg_p->coord, tol);
 
 	if (code == 0 || code == 1) {
-	    on_line++;
+	    //on_line++;
 	    continue;
 	}
 
@@ -5779,7 +5780,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
 
     /* check vertices from fu2 versus plane of fu1 */
     nmg_vertex_tabulate(&verts, &fu2->l.magic, vlfree);
-    on_line = 0;
+    //on_line = 0;
     above_left = 0;
     below_left = 0;
     on_left = 0;
@@ -5798,7 +5799,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
 	code = bg_dist_pnt3_line3(&dist, pca, bs->pt, bs->dir, v->vg_p->coord, tol);
 
 	if (code == 0 || code == 1) {
-	    on_line++;
+	    //on_line++;
 	    continue;
 	}
 

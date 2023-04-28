@@ -32,15 +32,18 @@
 
 #include "gdal_pam.h"
 #include "gdal_priv.h"
+#include "gdal_rat.h"
+
+#include <memory>
 
 CPL_C_START
-/* Caution: if changing this prototype, also change in swig/include/gdal_python.i
-   where it is redefined */
-GDALRasterBandH CPL_DLL MEMCreateRasterBand( GDALDataset *, int, GByte *,
-                                             GDALDataType, int, int, int );
-GDALRasterBandH CPL_DLL MEMCreateRasterBandEx( GDALDataset *, int, GByte *,
-                                               GDALDataType, GSpacing, GSpacing,
-                                               int );
+/* Caution: if changing this prototype, also change in
+   swig/include/gdal_python.i where it is redefined */
+GDALRasterBandH CPL_DLL MEMCreateRasterBand(GDALDataset *, int, GByte *,
+                                            GDALDataType, int, int, int);
+GDALRasterBandH CPL_DLL MEMCreateRasterBandEx(GDALDataset *, int, GByte *,
+                                              GDALDataType, GSpacing, GSpacing,
+                                              int);
 CPL_C_END
 
 /************************************************************************/
@@ -49,21 +52,26 @@ CPL_C_END
 
 class MEMRasterBand;
 
-class CPL_DLL MEMDataset : public GDALDataset
+class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
 {
+    CPL_DISALLOW_COPY_ASSIGN(MEMDataset)
+
     friend class MEMRasterBand;
 
-    int         bGeoTransformSet;
-    double      adfGeoTransform[6];
+    int bGeoTransformSet;
+    double adfGeoTransform[6];
 
-    char        *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
-    int          nGCPCount;
-    GDAL_GCP    *pasGCPs;
-    CPLString    osGCPProjection;
+    int m_nGCPCount;
+    GDAL_GCP *m_pasGCPs;
+    OGRSpatialReference m_oGCPSRS{};
 
-    int          m_nOverviewDSCount;
-    GDALDataset  **m_papoOverviewDS;
+    int m_nOverviewDSCount;
+    GDALDataset **m_papoOverviewDS;
+
+    struct Private;
+    std::unique_ptr<Private> m_poPrivate;
 
 #if 0
   protected:
@@ -71,134 +79,110 @@ class CPL_DLL MEMDataset : public GDALDataset
     virtual void                LeaveReadWrite();
 #endif
 
+    friend void GDALRegister_MEM();
+
+    // cppcheck-suppress unusedPrivateFunction
+    static GDALDataset *CreateBase(const char *pszFilename, int nXSize,
+                                   int nYSize, int nBands, GDALDataType eType,
+                                   char **papszParamList);
+
   public:
-                 MEMDataset();
-    virtual      ~MEMDataset();
+    MEMDataset();
+    virtual ~MEMDataset();
 
-    virtual const char *GetProjectionRef() CPL_OVERRIDE;
-    virtual CPLErr SetProjection( const char * ) CPL_OVERRIDE;
+    const OGRSpatialReference *GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr GetGeoTransform( double * ) CPL_OVERRIDE;
-    virtual CPLErr SetGeoTransform( double * ) CPL_OVERRIDE;
+    virtual CPLErr GetGeoTransform(double *) override;
+    virtual CPLErr SetGeoTransform(double *) override;
 
-    virtual void *GetInternalHandle( const char * ) CPL_OVERRIDE;
+    virtual void *GetInternalHandle(const char *) override;
 
-    virtual int    GetGCPCount() CPL_OVERRIDE;
-    virtual const char *GetGCPProjection() CPL_OVERRIDE;
-    virtual const GDAL_GCP *GetGCPs() CPL_OVERRIDE;
-    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection ) CPL_OVERRIDE;
+    virtual int GetGCPCount() override;
+    const OGRSpatialReference *GetGCPSpatialRef() const override;
+    virtual const GDAL_GCP *GetGCPs() override;
+    CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
+                   const OGRSpatialReference *poSRS) override;
+    virtual CPLErr AddBand(GDALDataType eType,
+                           char **papszOptions = nullptr) override;
+    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                             int nXSize, int nYSize, void *pData, int nBufXSize,
+                             int nBufYSize, GDALDataType eBufType,
+                             int nBandCount, int *panBandMap,
+                             GSpacing nPixelSpaceBuf, GSpacing nLineSpaceBuf,
+                             GSpacing nBandSpaceBuf,
+                             GDALRasterIOExtraArg *psExtraArg) override;
+    virtual CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
+                                   const int *panOverviewList, int nListBands,
+                                   const int *panBandList,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData,
+                                   CSLConstList papszOptions) override;
 
-    virtual CPLErr        AddBand( GDALDataType eType,
-                                   char **papszOptions=NULL ) CPL_OVERRIDE;
-    virtual CPLErr  IRasterIO( GDALRWFlag eRWFlag,
-                               int nXOff, int nYOff, int nXSize, int nYSize,
-                               void * pData, int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType,
-                               int nBandCount, int *panBandMap,
-                               GSpacing nPixelSpaceBuf,
-                               GSpacing nLineSpaceBuf,
-                               GSpacing nBandSpaceBuf,
-                               GDALRasterIOExtraArg* psExtraArg) CPL_OVERRIDE;
-    virtual CPLErr  IBuildOverviews( const char *pszResampling,
-                                     int nOverviews, int *panOverviewList,
-                                     int nListBands, int *panBandList,
-                                     GDALProgressFunc pfnProgress,
-                                     void * pProgressData ) CPL_OVERRIDE;
+    virtual CPLErr CreateMaskBand(int nFlagsIn) override;
 
-    virtual CPLErr          CreateMaskBand( int nFlagsIn ) CPL_OVERRIDE;
+    std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
-    static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char * pszFilename,
-                                int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszParmList );
+    void AddMEMBand(GDALRasterBandH hMEMBand);
+
+    static GDALDataset *Open(GDALOpenInfo *);
+    static MEMDataset *Create(const char *pszFilename, int nXSize, int nYSize,
+                              int nBands, GDALDataType eType,
+                              char **papszParamList);
+    static GDALDataset *
+    CreateMultiDimensional(const char *pszFilename,
+                           CSLConstList papszRootGroupOptions,
+                           CSLConstList papszOptions);
 };
 
 /************************************************************************/
 /*                            MEMRasterBand                             */
 /************************************************************************/
 
-class CPL_DLL MEMRasterBand : public GDALPamRasterBand
+class CPL_DLL MEMRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 {
   private:
-                MEMRasterBand( GByte *pabyDataIn, GDALDataType eTypeIn,
-                               int nXSizeIn, int nYSizeIn );
+    MEMRasterBand(GByte *pabyDataIn, GDALDataType eTypeIn, int nXSizeIn,
+                  int nYSizeIn);
+
+    CPL_DISALLOW_COPY_ASSIGN(MEMRasterBand)
 
   protected:
-    friend      class MEMDataset;
+    friend class MEMDataset;
 
-    GByte      *pabyData;
-    GSpacing    nPixelOffset;
-    GSpacing    nLineOffset;
-    int         bOwnData;
+    GByte *pabyData;
+    GSpacing nPixelOffset;
+    GSpacing nLineOffset;
+    int bOwnData;
 
-    int         bNoDataSet;
-    double      dfNoData;
-
-    GDALColorTable *poColorTable;
-    GDALColorInterp eColorInterp;
-
-    char           *pszUnitType;
-    char           **papszCategoryNames;
-
-    double         dfOffset;
-    double         dfScale;
-
-    CPLXMLNode    *psSavedHistograms;
+    bool m_bIsMask = false;
 
   public:
-                   MEMRasterBand( GDALDataset *poDS, int nBand,
-                                  GByte *pabyData, GDALDataType eType,
-                                  GSpacing nPixelOffset, GSpacing nLineOffset,
-                                  int bAssumeOwnership,
-                                  const char * pszPixelType = NULL );
-    virtual        ~MEMRasterBand();
+    MEMRasterBand(GDALDataset *poDS, int nBand, GByte *pabyData,
+                  GDALDataType eType, GSpacing nPixelOffset,
+                  GSpacing nLineOffset, int bAssumeOwnership,
+                  const char *pszPixelType = nullptr);
+    virtual ~MEMRasterBand();
 
-    virtual CPLErr IReadBlock( int, int, void * ) CPL_OVERRIDE;
-    virtual CPLErr IWriteBlock( int, int, void * ) CPL_OVERRIDE;
-    virtual CPLErr IRasterIO( GDALRWFlag eRWFlag,
-                                  int nXOff, int nYOff, int nXSize, int nYSize,
-                                  void * pData, int nBufXSize, int nBufYSize,
-                                  GDALDataType eBufType,
-                                  GSpacing nPixelSpaceBuf,
-                                  GSpacing nLineSpaceBuf,
-                                  GDALRasterIOExtraArg* psExtraArg ) CPL_OVERRIDE;
-    virtual double GetNoDataValue( int *pbSuccess = NULL ) CPL_OVERRIDE;
-    virtual CPLErr SetNoDataValue( double ) CPL_OVERRIDE;
-    virtual CPLErr DeleteNoDataValue() CPL_OVERRIDE;
+    virtual CPLErr IReadBlock(int, int, void *) override;
+    virtual CPLErr IWriteBlock(int, int, void *) override;
+    virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                             int nXSize, int nYSize, void *pData, int nBufXSize,
+                             int nBufYSize, GDALDataType eBufType,
+                             GSpacing nPixelSpaceBuf, GSpacing nLineSpaceBuf,
+                             GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual GDALColorInterp GetColorInterpretation() CPL_OVERRIDE;
-    virtual GDALColorTable *GetColorTable() CPL_OVERRIDE;
-    virtual CPLErr SetColorTable( GDALColorTable * ) CPL_OVERRIDE;
+    virtual int GetOverviewCount() override;
+    virtual GDALRasterBand *GetOverview(int) override;
 
-    virtual CPLErr SetColorInterpretation( GDALColorInterp ) CPL_OVERRIDE;
-
-    virtual const char *GetUnitType() CPL_OVERRIDE;
-    CPLErr SetUnitType( const char * ) CPL_OVERRIDE;
-
-    virtual char **GetCategoryNames() CPL_OVERRIDE;
-    virtual CPLErr SetCategoryNames( char ** ) CPL_OVERRIDE;
-
-    virtual double GetOffset( int *pbSuccess = NULL ) CPL_OVERRIDE;
-    CPLErr SetOffset( double ) CPL_OVERRIDE;
-    virtual double GetScale( int *pbSuccess = NULL ) CPL_OVERRIDE;
-    CPLErr SetScale( double ) CPL_OVERRIDE;
-
-    virtual CPLErr SetDefaultHistogram( double dfMin, double dfMax,
-                                        int nBuckets, GUIntBig *panHistogram ) CPL_OVERRIDE;
-    virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                        int *pnBuckets,
-                                        GUIntBig ** ppanHistogram,
-                                        int bForce,
-                                        GDALProgressFunc, void *pProgressData) CPL_OVERRIDE;
-
-    virtual int GetOverviewCount() CPL_OVERRIDE;
-    virtual GDALRasterBand *GetOverview(int) CPL_OVERRIDE;
-
-    virtual CPLErr          CreateMaskBand( int nFlagsIn ) CPL_OVERRIDE;
+    virtual CPLErr CreateMaskBand(int nFlagsIn) override;
+    virtual bool IsMaskBand() const override;
 
     // Allow access to MEM driver's private internal memory buffer.
-    GByte *GetData() const { return(pabyData); }
+    GByte *GetData() const
+    {
+        return (pabyData);
+    }
 };
 
 #endif /* ndef MEMDATASET_H_INCLUDED */

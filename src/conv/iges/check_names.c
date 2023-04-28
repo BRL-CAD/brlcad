@@ -1,7 +1,7 @@
 /*                   C H E C K _ N A M E S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2022 United States Government as represented by
+ * Copyright (c) 1993-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -151,7 +151,7 @@ Make_unique_brl_name(char *name)
 
 
 void
-Skip_field()
+Skip_field(void)
 {
     int done = 0;
     int lencard;
@@ -507,7 +507,7 @@ Get_subfig_name(size_t entityno)
 
 
 void
-Check_names()
+Check_names(void)
 {
     size_t i;
 

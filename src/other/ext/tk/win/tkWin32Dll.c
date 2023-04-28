@@ -101,7 +101,7 @@ DllMain(
     DWORD reason,
     LPVOID reserved)
 {
-#ifdef HAVE_NO_SEH
+#if defined(HAVE_NO_SEH) && !defined(__aarch64__)
     TCLEXCEPTION_REGISTRATION registration;
 #endif
 
@@ -123,7 +123,9 @@ DllMain(
 	 */
 
 #ifdef HAVE_NO_SEH
-#   ifdef _WIN64
+#   if defined(__aarch64__)
+	/* Don't run TkFinalize(NULL) on mingw-w64 for ARM64, since we don't have corresponding assembler-code. */
+#   elif defined(_WIN64)
 	__asm__ __volatile__ (
 
 	    /*

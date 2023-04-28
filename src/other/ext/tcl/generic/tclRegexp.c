@@ -677,7 +677,7 @@ TclRegAbout(
      * well and Tcl has other limits that constrain things as well...
      */
 
-    resultObj = Tcl_NewObj();
+    TclNewObj(resultObj);
     Tcl_ListObjAppendElement(NULL, resultObj,
 	    Tcl_NewIntObj((int) regexpPtr->re.re_nsub));
 

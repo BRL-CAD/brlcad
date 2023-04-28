@@ -19,7 +19,7 @@ mp_err mp_mul(const mp_int *a, const mp_int *b, mp_int *c)
         * The bigger one needs to be at least about one MP_KARATSUBA_MUL_CUTOFF bigger
         * to make some sense, but it depends on architecture, OS, position of the
         * stars... so YMMV.
-        * Using it to cut the input into slices small enough for fast_s_mp_mul_digs
+        * Using it to cut the input into slices small enough for s_mp_mul_digs_fast
         * was actually slower on the author's machine, but YMMV.
         */
        (min_len >= MP_KARATSUBA_MUL_CUTOFF) &&

@@ -84,7 +84,7 @@ static const Tk_OptionSpec optionSpecs[] = {
     {TK_OPTION_ANCHOR, "-anchor", NULL, NULL, "nw", -1,
 	 Tk_Offset(Content, anchor), 0, 0, 0},
     {TK_OPTION_STRING_TABLE, "-bordermode", NULL, NULL, "inside", -1,
-	 Tk_Offset(Content, borderMode), 0, borderModeStrings, 0},
+	 Tk_Offset(Content, borderMode), TK_OPTION_ENUM_VAR, borderModeStrings, 0},
     {TK_OPTION_PIXELS, "-height", NULL, NULL, "", Tk_Offset(Content, heightPtr),
 	 Tk_Offset(Content, height), TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_WINDOW, "-in", NULL, NULL, "", -1, Tk_Offset(Content, inTkwin),
@@ -276,8 +276,8 @@ Tk_PlaceObjCmd(
 	dispPtr->placeInit = 1;
     }
 
-    if (Tcl_GetIndexFromObjStruct(interp, objv[1], optionStrings,
-	    sizeof(char *), "option", 0, &index) != TCL_OK) {
+    if (Tcl_GetIndexFromObj(interp, objv[1], optionStrings,
+	    "option", 0, &index) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -330,8 +330,8 @@ Tk_PlaceObjCmd(
 	}
 	return PlaceInfoCommand(interp, tkwin);
 
-    case PLACE_CONTENT:
-    case PLACE_SLAVES: {
+    case PLACE_SLAVES:
+    case PLACE_CONTENT: {
 	Container *containerPtr;
 
 	if (objc != 3) {
@@ -426,6 +426,9 @@ static void
 FreeContent(
     Content *contentPtr)
 {
+    if (contentPtr->containerPtr && (contentPtr->containerPtr->flags & PARENT_RECONFIG_PENDING)) {
+	Tcl_CancelIdleCall(RecomputePlacement, contentPtr->containerPtr);
+    }
     Tk_FreeConfigOptions((char *) contentPtr, contentPtr->optionTable,
 	    contentPtr->tkwin);
     ckfree(contentPtr);
@@ -468,7 +471,7 @@ FindContent(
  *
  * UnlinkContent --
  *
- *	This function removes a content window from the chain of content in its
+ *	This function removes a content window from the chain of content windows in its
  *	container.
  *
  * Results:
@@ -673,7 +676,7 @@ ConfigureContent(
 
 	/*
 	 * Make sure that the new container is either the logical parent of the
-	 * content or a descendant of that window, and that the container and content
+	 * content window or a descendant of that window, and that the container and content
 	 * aren't the same.
 	 */
 
@@ -888,7 +891,7 @@ RecomputePlacement(
     Tcl_Preserve(containerPtr);
 
     /*
-     * Iterate over all the content for the container. Each content's geometry can
+     * Iterate over all the content windows for the container. Each content's geometry can
      * be computed independently of the other content. Changes to the window's
      * structure could cause almost anything to happen, including deleting the
      * parent or child. If this happens, we'll be told to abort.

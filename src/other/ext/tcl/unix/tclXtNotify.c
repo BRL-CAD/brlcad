@@ -193,14 +193,11 @@ InitNotifier(void)
 	return;
     }
 
+    memset(&np, 0, sizeof(np));
     np.createFileHandlerProc = CreateFileHandler;
     np.deleteFileHandlerProc = DeleteFileHandler;
     np.setTimerProc = SetTimer;
     np.waitForEventProc = WaitForEvent;
-    np.initNotifierProc = Tcl_InitNotifier;
-    np.finalizeNotifierProc = Tcl_FinalizeNotifier;
-    np.alertNotifierProc = Tcl_AlertNotifier;
-    np.serviceModeHookProc = Tcl_ServiceModeHook;
     Tcl_SetNotifier(&np);
 
     /*
@@ -209,7 +206,6 @@ InitNotifier(void)
      */
 
     initialized = 1;
-    memset(&np, 0, sizeof(np));
     Tcl_CreateExitHandler(NotifierExitHandler, NULL);
 }
 

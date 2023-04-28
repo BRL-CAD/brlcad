@@ -526,7 +526,6 @@ EmbWinStructureProc(
 {
     TkTextEmbWindowClient *client = (TkTextEmbWindowClient *)clientData;
     TkTextSegment *ewPtr = client->parent;
-    TkTextIndex index;
     Tcl_HashEntry *hPtr;
 
     if (eventPtr->type != DestroyNotify) {
@@ -545,12 +544,7 @@ EmbWinStructureProc(
 
     ewPtr->body.ew.tkwin = NULL;
     client->tkwin = NULL;
-    index.tree = ewPtr->body.ew.sharedTextPtr->tree;
-    index.linePtr = ewPtr->body.ew.linePtr;
-    index.byteIndex = TkTextSegToOffset(ewPtr, ewPtr->body.ew.linePtr);
-    TkTextChanged(ewPtr->body.ew.sharedTextPtr, NULL, &index, &index);
-    TkTextInvalidateLineMetrics(ewPtr->body.ew.sharedTextPtr, NULL,
-	    index.linePtr, 0, TK_TEXT_INVALIDATE_ONLY);
+    EmbWinRequestProc(client, NULL);
 }
 
 /*
@@ -574,7 +568,7 @@ EmbWinStructureProc(
 static void
 EmbWinRequestProc(
     ClientData clientData,	/* Pointer to record for window item. */
-    TCL_UNUSED(Tk_Window))		/* Window that changed its desired size. */
+    TCL_UNUSED(Tk_Window))	/* Window that changed its desired size. */
 {
     TkTextEmbWindowClient *client = (TkTextEmbWindowClient *)clientData;
     TkTextSegment *ewPtr = client->parent;
@@ -582,7 +576,15 @@ EmbWinRequestProc(
 
     index.tree = ewPtr->body.ew.sharedTextPtr->tree;
     index.linePtr = ewPtr->body.ew.linePtr;
-    index.byteIndex = TkTextSegToOffset(ewPtr, ewPtr->body.ew.linePtr);
+
+    /*
+     * ewPtr->body.ew.tkwin == NULL means the embedded window is already
+     * destroyed. The ewPtr segment is no longer linked, TkTextSegToOffset
+     * cannot find it within the line pointed by ewPtr->body.ew.linePtr.
+     */
+
+    index.byteIndex =  ewPtr->body.ew.tkwin ?
+	    TkTextSegToOffset(ewPtr, ewPtr->body.ew.linePtr) : 0;
     TkTextChanged(ewPtr->body.ew.sharedTextPtr, NULL, &index, &index);
     TkTextInvalidateLineMetrics(ewPtr->body.ew.sharedTextPtr, NULL,
 	    index.linePtr, 0, TK_TEXT_INVALIDATE_ONLY);

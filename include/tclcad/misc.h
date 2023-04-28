@@ -1,7 +1,7 @@
 /*                   T C L C A D / M I S C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -217,7 +217,7 @@ struct tclcad_io_data {
     void *state;
 };
 TCLCAD_EXPORT struct tclcad_io_data *
-tclcad_create_io_data();
+tclcad_create_io_data(void);
 TCLCAD_EXPORT void
 tclcad_destroy_io_data(struct tclcad_io_data *d);
 

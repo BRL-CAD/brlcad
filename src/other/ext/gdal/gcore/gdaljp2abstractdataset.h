@@ -4,10 +4,10 @@
  * Project:  GDAL
  * Purpose:  GDALGeorefPamDataset with helper to read georeferencing and other
  *           metadata from JP2Boxes
- * Author:   Even Rouault <even dot rouault at mines-paris dot org>
+ * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,29 +34,41 @@
 //! @cond Doxygen_Suppress
 #include "gdalgeorefpamdataset.h"
 
-class CPL_DLL GDALJP2AbstractDataset: public GDALGeorefPamDataset
+class CPL_DLL GDALJP2AbstractDataset : public GDALGeorefPamDataset
 {
-    char*               pszWldFilename;
+    char *pszWldFilename = nullptr;
 
-    GDALDataset*        poMemDS;
-    char**              papszMetadataFiles;
-    int                 m_nWORLDFILEIndex;
+    GDALDataset *poMemDS = nullptr;
+    char **papszMetadataFiles = nullptr;
+    int m_nWORLDFILEIndex = -1;
+    CPLStringList m_aosImageStructureMetadata{};
+
+    CPL_DISALLOW_COPY_ASSIGN(GDALJP2AbstractDataset)
 
   protected:
-    virtual int         CloseDependentDatasets() CPL_OVERRIDE;
+    int CloseDependentDatasets() override;
+    virtual VSILFILE *GetFileHandle()
+    {
+        return nullptr;
+    }
 
   public:
-        GDALJP2AbstractDataset();
-        virtual ~GDALJP2AbstractDataset();
+    GDALJP2AbstractDataset();
+    ~GDALJP2AbstractDataset() override;
 
-        void LoadJP2Metadata( GDALOpenInfo* poOpenInfo,
-                              const char* pszOverrideFilename = NULL );
-        void            LoadVectorLayers( int bOpenRemoteResources = FALSE );
+    void LoadJP2Metadata(GDALOpenInfo *poOpenInfo,
+                         const char *pszOverrideFilename = nullptr,
+                         VSILFILE *fpBox = nullptr);
+    void LoadVectorLayers(int bOpenRemoteResources = FALSE);
 
-        virtual char      **GetFileList( void ) CPL_OVERRIDE;
+    char **GetFileList(void) override;
 
-        virtual int         GetLayerCount() CPL_OVERRIDE;
-        virtual OGRLayer   *GetLayer( int i ) CPL_OVERRIDE;
+    char **GetMetadata(const char *pszDomain = "") override;
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain = "") override;
+
+    int GetLayerCount() override;
+    OGRLayer *GetLayer(int i) override;
 };
 //! @endcond
 

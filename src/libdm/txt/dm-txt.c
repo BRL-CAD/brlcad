@@ -1,7 +1,7 @@
 /*                       D M - T X T . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2022 United States Government as represented by
+ * Copyright (c) 2013-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -581,7 +581,7 @@ struct dm dm_txt = { DM_MAGIC, &dm_txt_impl, 0 };
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_txt };
 
-COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info(void)
 {
     return &pinfo;
 }

@@ -1156,7 +1156,7 @@ Itcl_CreateArg(name, init)
     nameLen = strlen(name);
 
     localPtr = (CompiledLocal*)ckalloc(
-        (unsigned)(sizeof(CompiledLocal)-sizeof(localPtr->name) + nameLen+1)
+        TclOffset(CompiledLocal, name) + nameLen+1
     );
 
     localPtr->nextPtr = NULL;

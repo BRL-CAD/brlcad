@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2022 United States Government as represented by
+ * Copyright (c) 1988-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -254,8 +254,10 @@ db_open(const char *name, const char *mode)
 
     if (dbip->dbi_version < 5) {
 	if (rt_db_flip_endian(dbip)) {
-	    if (dbip->dbi_version > 0)
+	    if (dbip->dbi_version > 0) {
+		/* version is stored as -4 to denote the flip */
 		dbip->dbi_version *= -1;
+	    }
 	    dbip->dbi_read_only = 1;
 	    bu_log("WARNING: Binary-incompatible v4 geometry database detected.\n");
 	    bu_log(" Endianness flipped.  Converting to READ ONLY.\n");

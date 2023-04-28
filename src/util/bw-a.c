@@ -1,7 +1,7 @@
 /*                          B W - A . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2022 United States Government as represented by
+ * Copyright (c) 1986-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -114,7 +114,6 @@ main(int argc, char **argv)
 {
     int c;
     long int cur_width = 0;
-    long int cur_height = 0;
 
     bu_setprogname(argv[0]);
 
@@ -145,7 +144,6 @@ main(int argc, char **argv)
 	if (++cur_width >= file_width) {
 	    putchar('\n');
 	    cur_width=0L;
-	    cur_height++;
 	}
     }
     return 0;

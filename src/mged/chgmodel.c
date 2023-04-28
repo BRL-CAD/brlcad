@@ -1,7 +1,7 @@
 /*                      C H G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2022 United States Government as represented by
+ * Copyright (c) 1985-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@
 extern int edit_com(int argc, const char *argv[]);
 
 /* defined in buttons.c */
-extern int be_s_trans();
+extern int be_s_trans(ClientData, Tcl_Interp *, int, char **);
 
 
 /* tell him it already exists */
@@ -315,7 +315,7 @@ f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[]
 	/* In solid edit mode,
 	 * perform the equivalent of "press sxy" and "p xyz"
 	 */
-	if (be_s_trans() == TCL_ERROR)
+	if (be_s_trans(NULL, NULL, 0, NULL) == TCL_ERROR)
 	    return TCL_ERROR;
 	return f_param(clientData, interp, argc, argv);
     }

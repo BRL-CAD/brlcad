@@ -1347,6 +1347,7 @@ deleteWindows
 
 test wm-stackorder-2.1 {stacking order} -body {
     toplevel .t ; update
+    raiseDelay
     wm stackorder .
 } -cleanup {
     destroy .t
@@ -1399,6 +1400,7 @@ test wm-stackorder-2.5 {stacking order} -setup {
 } -result {.parent.child2 .parent.child1 .parent}
 test wm-stackorder-2.6 {stacking order: non-toplevel widgets ignored} -body {
     toplevel .t1
+    raiseDelay
     button .t1.b
     pack .t1.b
     update
@@ -1418,6 +1420,7 @@ test wm-stackorder-3.1 {unmapped toplevel} -constraints {failsOnUbuntu failsOnXQ
     toplevel .t1 ; update
     toplevel .t2 ; update
     wm iconify .t1
+    raiseDelay
     wm stackorder .
 } -cleanup {
     destroy .t1 .t2
@@ -1426,6 +1429,7 @@ test wm-stackorder-3.2 {unmapped toplevel} -body {
     toplevel .t1 ; update
     toplevel .t2 ; update
     wm withdraw .t2
+    raiseDelay
     wm stackorder .
 } -cleanup {
     destroy .t1 .t2
@@ -1459,6 +1463,7 @@ test wm-stackorder-3.6 {unmapped toplevel} -body {
     toplevel .t1.t2 ; update
     toplevel .t1.t2.t3 ; update
     wm withdraw .t1.t2
+    raiseDelay
     wm stackorder .t1
 } -cleanup {
     destroy .t1
@@ -1561,10 +1566,11 @@ test wm-stackorder-5.3 {An overrideredirect window\
 } -result 1
 
 test wm-stackorder-6.1 {An embedded toplevel does not appear in the \
-	stacking order} -body {
+	 stacking order} -body {
     toplevel .real -container 1
+    raiseDelay
     toplevel .embd -bg blue -use [winfo id .real]
-    update
+    raiseDelay
     wm stackorder .
 } -cleanup {
     deleteWindows
@@ -1936,7 +1942,7 @@ test wm-transient-8.1 {transient to withdrawn window, Bug 1163496} -constraints 
     lappend result [winfo ismapped .t1] [winfo ismapped .t2]
     wm deiconify .t1; update
     lappend result [winfo ismapped .t1] [winfo ismapped .t2]
-    raise .t1; update
+    raise .t1; raiseDelay; update
     lappend result [lsearch -all -inline -glob [wm stackorder .] ".t?"]
 } -cleanup {
     deleteWindows
@@ -2311,7 +2317,7 @@ test wm-forget-1.4 "pack into unmapped toplevel causes crash" -body {
 test wm-forget-2 {bug [e9112ef96e] - [wm forget] doesn't completely} -setup {
     catch {destroy .l .f.b .f}
     set res {}
-    if {[tk windowingsystem] == "aqua"} {
+    if {[tk windowingsystem] eq "aqua"} {
 	proc doUpdate {} {update idletasks}
     } else {
 	proc doUpdate {} {update}

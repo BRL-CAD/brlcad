@@ -4,7 +4,7 @@
 # Part of the nmake based build system for Tcl and its extensions.
 # This file defines some standard targets for the convenience of extensions
 # and can be optionally included by the extension makefile.
-# See TIP 477 (https://core.tcl-lang.org/tips/doc/trunk/tip/477.md) for docs.
+# See TIP 477 (https://core.tcl-lang.org/tips/doc/main/tip/477.md) for docs.
 
 $(PROJECT): setup pkgindex $(PRJLIB)
 

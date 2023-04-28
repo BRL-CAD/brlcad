@@ -1,7 +1,7 @@
 /*                        F B C M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2022 United States Government as represented by
+ * Copyright (c) 1986-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -622,7 +622,7 @@ pars_Argv(int argc, char **argv)
 
 
 static void
-usage()
+usage(void)
 {
     (void) fprintf(stderr, "Usage: fbcmap [-F framebuffer]\n");
     (void) fprintf(stderr, "	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n");

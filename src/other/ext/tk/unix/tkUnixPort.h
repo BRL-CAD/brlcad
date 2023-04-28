@@ -40,17 +40,17 @@
 #ifndef _TCL
 #   include <tcl.h>
 #endif
-#if TIME_WITH_SYS_TIME
+#ifdef TIME_WITH_SYS_TIME
 #   include <sys/time.h>
 #   include <time.h>
 #else
-#   if HAVE_SYS_TIME_H
+#   ifdef HAVE_SYS_TIME_H
 #	include <sys/time.h>
 #   else
 #	include <time.h>
 #   endif
 #endif
-#if HAVE_INTTYPES_H
+#ifdef HAVE_INTTYPES_H
 #    include <inttypes.h>
 #endif
 #ifndef NO_UNISTD_H
@@ -193,11 +193,5 @@
 #define TkpPrintWindowId(buf,w) \
 	sprintf((buf), "0x%08lx", (unsigned long) (w))
 #endif
-
-/*
- * Used by tkWindow.c
- */
-
-#define TkpHandleMapOrUnmap(tkwin, event)  Tk_HandleEvent(event)
 
 #endif /* _UNIXPORT */

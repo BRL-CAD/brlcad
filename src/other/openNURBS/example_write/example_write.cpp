@@ -14,400 +14,219 @@
 ////////////////////////////////////////////////////////////////
 */
 
-
-// uncomment the "ON_DLL_IMPORTS" define to use opennurbs as a Windows DLL
-//#define ON_DLL_IMPORTS
-#include "../opennurbs.h"
-#include "../examples_linking_pragmas.h"
+#include "../opennurbs_public_examples.h"
 
 #include "../example_userdata/example_ud.h"
 
-static bool write_simple_file_example(
-            FILE* fp,
-            int version,
-            ON_TextLog& error_log,
-            const char* sNotes,
-            const ON_3dmSettings* settings,
-            int material_count, const ON_Material* material,  // optional rendering material
-            int layer_count,    const ON_Layer* layer,        // optional layer definitions
-            int light_count,
-            const ON_3dmObjectAttributes* light_attributes, // optional light attributes
-            ON_Light*                     light,            // lights
-            int object_count,
-            const ON_3dmObjectAttributes* object_attributes, // optional object attributes
-            ON_Object**                   object      // objects
-            )
-{
-  ONX_Model model;
-  int i;
-  ON_3dmObjectAttributes attribs;
+#define INTERNAL_INITIALIZE_MODEL(model) Internal_SetExampleModelProperties(model,OPENNURBS__FUNCTION__,__FILE__)
 
+static void Internal_SetExampleModelProperties(
+  ONX_Model& model,
+  const char* function_name,
+  const char* source_file_name
+  )
+{
+  const bool bHaveFunctionName = (nullptr != function_name && 0 != function_name[0]);
+  if ( !bHaveFunctionName )
+    function_name = "";
+
+  const bool bHaveFileName = (nullptr != source_file_name && 0 != source_file_name[0]);
+  if (!bHaveFileName)
+    source_file_name = "";
+
+  model.m_sStartSectionComments = "This was file created by OpenNURBS toolkit example code.";
+
+  // set application information
+  const ON_wString wide_function_name(function_name);
+  const ON_wString wide_source_file_name(source_file_name);
+  model.m_properties.m_Application.m_application_name
+    = bHaveFunctionName
+    ? ON_wString::FormatToString(L"OpenNURBS toolkit Example: %ls() function", static_cast<const wchar_t*>(wide_function_name))
+    : ON_wString(L"OpenNURBS Examples");
+
+  model.m_properties.m_Application.m_application_URL = L"http://www.opennurbs.org";
+  model.m_properties.m_Application.m_application_details
+    = bHaveFileName
+    ? ON_wString::FormatToString(L"Opennurbs examples are in the file %ls.", static_cast<const wchar_t*>(wide_source_file_name))
+    : ON_wString::FormatToString(L"Opennurbs examples are example_*.cpp files.");
 
   // some notes
-  model.m_properties.m_Notes.m_notes = sNotes;
-  model.m_properties.m_Notes.m_bVisible = (model.m_properties.m_Notes.m_notes.Length() > 0);
-
+  if (bHaveFunctionName && bHaveFileName)
+  {
+    model.m_properties.m_Notes.m_notes
+      = ON_wString::FormatToString(
+        L"This .3dm file was made with the OpenNURBS toolkit example function %s() defined in source code file %ls.",
+        static_cast<const wchar_t*>(wide_function_name),
+        static_cast<const wchar_t*>(wide_source_file_name));
+    model.m_properties.m_Notes.m_bVisible = model.m_properties.m_Notes.m_notes.IsNotEmpty();
+  }
+  
   // set revision history information
   model.m_properties.m_RevisionHistory.NewRevision();
-  
-  // set application information
-  model.m_properties.m_Application.m_application_name = "OpenNURBS write_simple_file_example() function";
-  model.m_properties.m_Application.m_application_URL = "http://www.opennurbs.org";
-  model.m_properties.m_Application.m_application_details = "Example program in OpenNURBS toolkit.";
-
-
-  if ( 0 != settings )
-    model.m_settings = *settings;
-
-  if ( 0 != material && material_count > 0 )
-  {
-    model.m_material_table.Reserve(material_count);
-    for ( i = 0; i < material_count; i++ )
-      model.m_material_table.Append(material[i]);
-  }
-
-  // layer table
-  {
-    // Each object in the object table (written below)
-    // should to be on a defined layer.  There should be
-    // at least one layer with layer index 0 in every file.
-
-    // layer table indices begin at 0
-    ON_Layer default_layer;
-    default_layer.SetLayerIndex(0);
-    default_layer.SetLayerName("Default");
-    if ( 0 == layer || layer_count <= 0 || layer[0].LayerIndex() != 0 ) {
-      layer = &default_layer;
-      layer_count = 1;
-    }
-
-    model.m_layer_table.Reserve(layer_count);
-    for ( i = 0; i < layer_count; i++ ) 
-    {
-      // check that layer index is correct
-      if ( layer[i].LayerIndex() != i ) 
-      {
-        error_log.Print("error: layer[%d].LayerIndex() == %d\n",i,layer[i].LayerIndex());
-        layer_count = i;
-        break;
-      }
-      // check that layer's material index is correct
-      if (    layer[i].RenderMaterialIndex() < -1 
-           || layer[i].RenderMaterialIndex() >= material_count ) 
-      {
-        error_log.Print("error: layer[%d].RenderMaterialIndex() == %d\n",i,layer[i].RenderMaterialIndex());
-        layer_count = i;
-        break;
-      }
-      model.m_layer_table.Append(layer[i]);
-    }
-  }
-
-  if ( 0 != light && light_count > 0 )
-  {
-    for ( i = 0; i < light_count; i++ ) 
-    {
-      ONX_Model_RenderLight& mrl = model.m_light_table.AppendNew();
-      mrl.m_light = light[i];
-      if ( light_attributes )
-        mrl.m_attributes = light_attributes[i];
-    }
-  }
-
-  if ( 0 != object && object_count > 0 )
-  {
-    for ( i = 0; i < object_count; i++ ) 
-    {
-      // get object attributes and make sure layer and material indices are legit
-      if ( object[i] ) 
-      {
-        ONX_Model_Object& mo = model.m_object_table.AppendNew();
-        mo.m_object = object[i];
-        mo.m_bDeleteObject = false;
-        if ( object_attributes )
-          mo.m_attributes = object_attributes[i];
-      }
-    }
-  }
-
-  // archive to write to
-  ON_BinaryFile archive( ON::on_write3dm, fp );
-
-  // Set uuid's, indices, etc.
-  model.Polish();
-  // writes model to archive
-  bool ok = model.Write( archive,
-                         version, 
-                         __FILE__ " write_simple_file_example() " __DATE__, 
-                         &error_log );
-
-  return ok;
 }
 
-static bool write_points_example( FILE* fp, int version, ON_TextLog& error_log  )
+static bool Internal_WriteExampleModel(
+  const ONX_Model& model,
+  const wchar_t* filename,
+  ON_TextLog& error_log
+)
+{
+  int version = 0;
+
+  // writes model to archive
+  return model.Write( filename, version, &error_log );
+}
+
+ON_3dmObjectAttributes* Internal_CreateManagedAttributes(
+  int layer_index,
+  const wchar_t* name
+)
+{
+  ON_3dmObjectAttributes* attributes = new ON_3dmObjectAttributes();
+  attributes->m_layer_index = layer_index;
+  attributes->m_name = name;
+  return attributes;
+}
+
+static bool write_points_example( const wchar_t* filename, ON_TextLog& error_log  )
 {
   // example demonstrates how to write a singe points and point clouds
   ONX_Model model;
-
-
-  // file properties (notes, preview image, revision history, ...)
-  {
-    // set revision history information
-    model.m_properties.m_RevisionHistory.NewRevision();
-    
-    // set application information
-    model.m_properties.m_Application.m_application_name = "OpenNURBS write_points_example() function";
-    model.m_properties.m_Application.m_application_URL = "http://www.opennurbs.org";
-    model.m_properties.m_Application.m_application_details = "Example program in OpenNURBS toolkit.";
-
-    {
-      // OPTIONAL - add some notes
-      model.m_properties.m_Notes.m_notes = "This file was made with the OpenNURBS write_points_example() function.";
-      model.m_properties.m_Notes.m_bVisible = true;
-    }
-  }
+  INTERNAL_INITIALIZE_MODEL(model);
 
   // file settings (units, tolerances, views, ...)
-  {
-    // OPTIONAL - change values from defaults
-    model.m_settings.m_ModelUnitsAndTolerances.m_unit_system = ON::meters;
-    model.m_settings.m_ModelUnitsAndTolerances.m_absolute_tolerance = 0.01;
-    model.m_settings.m_ModelUnitsAndTolerances.m_angle_tolerance = ON_PI/180.0; // radians
-    model.m_settings.m_ModelUnitsAndTolerances.m_relative_tolerance = 0.01; // 1%
-  }
+  // OPTIONAL - change values from defaults
+  model.m_settings.m_ModelUnitsAndTolerances.m_unit_system = ON::LengthUnitSystem::Meters;
+  model.m_settings.m_ModelUnitsAndTolerances.m_absolute_tolerance = 0.01;
+  model.m_settings.m_ModelUnitsAndTolerances.m_angle_tolerance = ON_PI/180.0; // radians
+  model.m_settings.m_ModelUnitsAndTolerances.m_relative_tolerance = 0.01; // 1%
 
   // layer table
-  {
-    // define some layers
-    ON_Layer layer[3];
+  // define some layers
+  model.AddDefaultLayer(nullptr, ON_Color::UnsetColor);
+  const int point1_layer_index = model.AddLayer(L"my layer",ON_Color::Black);
+  const int pointcloud_layer_index = model.AddLayer(L"red points",ON_Color::SaturatedRed);
+  const int point2_layer_index = model.AddLayer(L"one blue point",ON_Color::SaturatedBlue);
 
-    layer[0].SetLayerName("Default");
-    layer[0].SetVisible(true);
-    layer[0].SetLocked(false);
-    layer[0].SetLayerIndex(0);
-    layer[0].SetColor( ON_Color(0,0,0) );
+  // we'll put 2 red and one blue point in a group
+  ON_Group group;
+  group.SetName(L"group of points");
+  group.SetIndex(0);
+  model.AddModelComponent(group, true);
 
-    layer[1].SetLayerName("red points");
-    layer[1].SetVisible(true);
-    layer[1].SetLocked(false);
-    layer[1].SetLayerIndex(1);
-    layer[1].SetColor( ON_Color(255,0,0) );
-
-    layer[2].SetLayerName("one blue point");
-    layer[2].SetVisible(true);
-    layer[2].SetLocked(false);
-    layer[2].SetLayerIndex(2);
-    layer[2].SetColor( ON_Color(0,0,255) );
-
-    model.m_layer_table.Append(layer[0]);
-    model.m_layer_table.Append(layer[1]);
-    model.m_layer_table.Append(layer[2]);
-  }
-
-  // group table
-  {
-    // we'll put 2 red and one blue point in a group
-    ON_Group group;
-    group.SetGroupName("group of points");
-    group.SetGroupIndex(0);
-    model.m_group_table.Append(group);
-  }
-
-  // object table
 
   // single point at (1,4,5) on default layer
-  ON_Point point1(ON_3dPoint( 1.0, 4.0, 5.0 ));
-  point1.AttachUserData( new CExampleWriteUserData("write_points_example()-point1") );
-  {
-    ONX_Model_Object& mo = model.m_object_table.AppendNew();
-    mo.m_object = &point1;
-    mo.m_bDeleteObject = false; // point1 is on the stack
-    mo.m_attributes.m_layer_index = 0;
-    mo.m_attributes.m_name = "first point";
-  }
+  ON_Point* point1 = new ON_Point(ON_3dPoint( 1.0, 4.0, 5.0 ));
+  point1->AttachUserData( new CExampleWriteUserData("write_points_example()-point1") );
+  model.AddManagedModelGeometryComponent( 
+    point1,
+    Internal_CreateManagedAttributes(point1_layer_index,L"first point")
+  );
 
   // point "cloud" with 3 points on red point cloud layer
   ON_PointCloud* pointcloud = new ON_PointCloud();
   pointcloud->AppendPoint(ON_3dPoint( 1.0, 6.0, 5.0 ));
   pointcloud->AppendPoint(ON_3dPoint( 1.5, 4.5, 6.0 ));
   pointcloud->AppendPoint(ON_3dPoint( 2.0, 5.0, 7.0 ));
-
   pointcloud->AttachUserData( new CExampleWriteUserData("write_points_example()-pointcloud") );
-  {
-    ONX_Model_Object& mo = model.m_object_table.AppendNew();
-    mo.m_object = pointcloud;
-    mo.m_bDeleteObject = true; // ~ONX_Model will delete pointcloud.
-    mo.m_attributes.m_layer_index = 1;
-    mo.m_attributes.AddToGroup(0); // put these points in the group
-    mo.m_attributes.m_name = "3 points";
-  }
+  ON_3dmObjectAttributes* pointcloud_attributes = Internal_CreateManagedAttributes(pointcloud_layer_index, L"3 points");
+  pointcloud_attributes->AddToGroup(group.Index());
+  model.AddManagedModelGeometryComponent( 
+    pointcloud,
+    pointcloud_attributes
+  );
 
-  // single point at (3,2,4) on red point layer
-  ON_Point point2(ON_3dPoint( 3.0, 2.0, 4.0  ));
-  point2.AttachUserData( new CExampleWriteUserData("write_points_example()-point2") );
-  {
-    ONX_Model_Object& mo = model.m_object_table.AppendNew();
-    mo.m_object = &point2;
-    mo.m_bDeleteObject = false;
-    mo.m_attributes.m_layer_index = 2;
-    mo.m_attributes.AddToGroup(0); // put this points in the group
-    mo.m_attributes.m_name = "last point";
-  }
+  // single point at (3,2,4) on red point layer and in group with the pointcloud
+  ON_Point* point2 = new ON_Point(ON_3dPoint( 3.0, 2.0, 4.0  ));
+  ON_3dmObjectAttributes* point2_attributes = Internal_CreateManagedAttributes(point2_layer_index, L"last point");
+  point2_attributes->AddToGroup(group.Index());
+  point2->AttachUserData( new CExampleWriteUserData("write_points_example()-point2") );
+  model.AddManagedModelGeometryComponent( point2, point2_attributes);
 
-  ON_BinaryFile archive( ON::on_write3dm, fp ); // fp = pointer from fopoen(...,"wb")
-
-  // start section comment
-  const char* sStartSectionComment = __FILE__ "write_points_example()" __DATE__;
-
-  // Set uuid's, indices, etc.
-  model.Polish();
-  // writes model to archive
-  bool ok = model.Write( archive, version, sStartSectionComment, &error_log );
-
-  return ok;
+  return Internal_WriteExampleModel(model, filename, error_log);
 }
 
-
-
-static bool write_curves_example( FILE* fp, int version, ON_TextLog& error_log )
+static bool write_curves_example( const wchar_t* filename, ON_TextLog& error_log )
 {
   // example demonstrates how to write a NURBS curve, line, and circle
   ONX_Model model;
-
-  // file properties (notes, preview image, revision history, ...)
-
-  // set revision history information
-  model.m_properties.m_RevisionHistory.NewRevision();
-
-  // set application information
-  model.m_properties.m_Application.m_application_name = "OpenNURBS write_curves_example() function";
-  model.m_properties.m_Application.m_application_URL = "http://www.opennurbs.org";
-  model.m_properties.m_Application.m_application_details = "Example program in OpenNURBS toolkit.";
-
-  // some notes
-  model.m_properties.m_Notes.m_notes = "This file was made with the OpenNURBS write_curves_example() function.";
-  model.m_properties.m_Notes.m_bVisible = true;
-
-
+  INTERNAL_INITIALIZE_MODEL(model);
+  
   // file settings (units, tolerances, views, ...)
-  model.m_settings.m_ModelUnitsAndTolerances.m_unit_system = ON::inches;
+  model.m_settings.m_ModelUnitsAndTolerances.m_unit_system = ON::LengthUnitSystem::Inches;
   model.m_settings.m_ModelUnitsAndTolerances.m_absolute_tolerance = 0.001;
   model.m_settings.m_ModelUnitsAndTolerances.m_angle_tolerance = ON_PI/180.0; // radians
   model.m_settings.m_ModelUnitsAndTolerances.m_relative_tolerance = 0.01; // 1%
 
-
-  // layer table
+  // add some layers
+  model.AddDefaultLayer(nullptr, ON_Color::UnsetColor);
+  const int line_layer_index = model.AddLayer(L"line layer",ON_Color::Black);
+  const int wiggle_layer_index = model.AddLayer(L"green NURBS wiggle",ON_Color::SaturatedGreen);
+  const int circles_layer_index = model.AddLayer(L"blue circles",ON_Color::SaturatedBlue);
+  
   {
-    // OPTIONAL - define some layers
-    ON_Layer layer[3];
-
-    layer[0].SetLayerName("Default");
-    layer[0].SetVisible(true);
-    layer[0].SetLocked(false);
-    layer[0].SetColor( ON_Color(0,0,0) );
-
-    layer[1].SetLayerName("green NURBS wiggle");
-    layer[1].SetVisible(true);
-    layer[1].SetLocked(false);
-    layer[1].SetLayerIndex(1);
-    layer[1].SetColor( ON_Color(0,255,0) );
-
-    layer[2].SetLayerName("blue circles");
-    layer[2].SetVisible(true);
-    layer[2].SetLocked(false);
-    layer[2].SetLayerIndex(2);
-    layer[2].SetColor( ON_Color(0,0,255) );
-
-    model.m_layer_table.Append(layer[0]);
-    model.m_layer_table.Append(layer[1]);
-    model.m_layer_table.Append(layer[2]);
+    // add a line
+    ON_Object* managed_line = new ON_LineCurve( ON_Line( ON_3dPoint(1.0,2.0,-1.5), ON_3dPoint(5.0,3.0,2.0) ) );
+    model.AddManagedModelGeometryComponent(
+      managed_line,
+      Internal_CreateManagedAttributes(line_layer_index, L"straight line curve")
+      );
   }
 
-
-  // object table
   {
-
-    {
-      // write a line on the default layer
-      ONX_Model_Object& mo = model.m_object_table.AppendNew();
-      mo.m_object = new ON_LineCurve( ON_Line( ON_3dPoint(1.0,2.0,-1.5), ON_3dPoint(5.0,3.0,2.0) ) );
-      mo.m_bDeleteObject = true;
-      mo.m_attributes.m_layer_index = 0;
-      mo.m_attributes.m_name = "straight line curve";
-
+    // add a wiggly cubic curve
+    ON_NurbsCurve* wiggle = new ON_NurbsCurve(
+      3, // dimension
+      false, // true if rational
+      4,     // order = degree+1
+      6      // number of control vertices
+      );
+    int i;
+    for ( i = 0; i < wiggle->CVCount(); i++ ) {
+      ON_3dPoint pt( 2*i, -i, (i-3)*(i-3) ); // pt = some 3d point
+      wiggle->SetCV( i, pt );
     }
 
-    {
-      // write a wiggly cubic curve on the "green NURBS wiggle" layer
-      ON_NurbsCurve* wiggle = new ON_NurbsCurve(
-        3, // dimension
-        false, // true if rational
-        4,     // order = degree+1
-        6      // number of control vertices
-        );
-      int i;
-      for ( i = 0; i < wiggle->CVCount(); i++ ) {
-        ON_3dPoint pt( 2*i, -i, (i-3)*(i-3) ); // pt = some 3d point
-        wiggle->SetCV( i, pt );
-      }
+    // ON_NurbsCurve's have order+cv_count-2 knots.
+    wiggle->SetKnot(0, 0.0);
+    wiggle->SetKnot(1, 0.0);
+    wiggle->SetKnot(2, 0.0);
+    wiggle->SetKnot(3, 1.5);
+    wiggle->SetKnot(4, 2.3);
+    wiggle->SetKnot(5, 4.0);
+    wiggle->SetKnot(6, 4.0);
+    wiggle->SetKnot(7, 4.0);
 
-      // ON_NurbsCurve's have order+cv_count-2 knots.
-      wiggle->SetKnot(0, 0.0);
-      wiggle->SetKnot(1, 0.0);
-      wiggle->SetKnot(2, 0.0);
-      wiggle->SetKnot(3, 1.5);
-      wiggle->SetKnot(4, 2.3);
-      wiggle->SetKnot(5, 4.0);
-      wiggle->SetKnot(6, 4.0);
-      wiggle->SetKnot(7, 4.0);
-
-      
-      if ( wiggle->IsValid() ) 
-      {
-        ONX_Model_Object& mo = model.m_object_table.AppendNew();
-        mo.m_object = wiggle;
-        mo.m_bDeleteObject = true;
-        mo.m_attributes.m_layer_index = 1;
-        mo.m_attributes.m_name = "wiggly cubic curve";
-      }
-      else
-        delete wiggle;
-    }
-
-    {
-      // write two circles on the "blue circles"
-      ONX_Model_Object& circle1 = model.m_object_table.AppendNew();
-      circle1.m_object = new ON_ArcCurve( ON_Circle( ON_3dPoint(1.0,2.0,-1.5), 3.0 ) );
-      circle1.m_bDeleteObject = true;
-      circle1.m_attributes.m_layer_index = 2;
-      circle1.m_attributes.m_name = "radius 3 circle";
-
-      ONX_Model_Object& circle2 = model.m_object_table.AppendNew();
-      circle2.m_object = new ON_ArcCurve( ON_Circle( ON_3dPoint(1.0,2.0,-1.5), 5.0 ) );
-      circle2.m_bDeleteObject = true;
-      circle2.m_attributes.m_layer_index = 2;
-      circle2.m_attributes.m_name = "radius 5 circle";
-    }
-
+    model.AddManagedModelGeometryComponent(
+      wiggle,
+      Internal_CreateManagedAttributes(wiggle_layer_index, L"wiggly cubic curve")
+      );
   }
 
-  // start section comments
-  const char* sStartSectionComment = __FILE__ "write_curves_example()" __DATE__;
+  {
+    // add two circles
+    ON_ArcCurve* circle1 = new ON_ArcCurve( ON_Circle( ON_3dPoint(1.0,2.0,-1.5), 3.0 ) );
+    model.AddManagedModelGeometryComponent(
+      circle1,
+      Internal_CreateManagedAttributes(circles_layer_index, L"radius 3 circle")
+      );
 
-  ON_BinaryFile archive( ON::on_write3dm, fp ); // fp = pointer from fopoen(...,"wb")
+    ON_ArcCurve* circle2 = new ON_ArcCurve( ON_Circle( ON_3dPoint(1.0,2.0,-1.5), 5.0 ) );
+    model.AddManagedModelGeometryComponent(
+      circle2,
+      Internal_CreateManagedAttributes(circles_layer_index, L"radius 5 circle")
+      );
+  }
 
-  // Set uuid's, indices, etc.
-  model.Polish();
-  // writes model to archive
-  bool ok = model.Write(archive, version, sStartSectionComment, &error_log );
-
-  return ok;
+  return Internal_WriteExampleModel(model, filename, error_log);
 }
 
 
-static bool write_surfaces_example( FILE* fp, int version )
+static bool write_surfaces_example( const wchar_t* filename, ON_TextLog& error_log )
 {
   // example demonstrates how to write a NURBS surface
+  ONX_Model model;
+  INTERNAL_INITIALIZE_MODEL(model);
 
   //////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////
@@ -468,20 +287,20 @@ static bool write_surfaces_example( FILE* fp, int version )
     }
   }
 
-  bool ok = false;
-  if ( nurbs_surface.IsValid() ) 
-  {
-    ON_BinaryFile archive( ON::on_write3dm, fp );
-    ok = ON_WriteOneObjectArchive( archive, version, nurbs_surface );
-  }
+  model.AddModelGeometryComponent(&nurbs_surface, nullptr);
+  //   model.AddDefaultLayer(L"NURBS surface", ON_Color::UnsetColor);
 
-  return ok;
+  return Internal_WriteExampleModel(model, filename, error_log);
 }
 
 
-static bool write_mesh_example( FILE* fp, int version )
+static bool write_mesh_example( const wchar_t* filename, ON_TextLog& error_log )
 {
   // example demonstrates how to create and write a mesh
+  ONX_Model model;
+  INTERNAL_INITIALIZE_MODEL(model);
+
+  model.AddDefaultLayer(L"mesh", ON_Color::Black);
 
   // create a mesh to write
   // The mesh is a pyramid with 4 triangular sides and a quadranglar 
@@ -558,26 +377,28 @@ static bool write_mesh_example( FILE* fp, int version )
   // last face is quadrangular base
   mesh.SetQuad( 4,   5, 8, 7, 6 );
 
+  if ( !mesh.HasVertexNormals() )
+    mesh.ComputeVertexNormals();
+
   //////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////
 
-  bool ok = false;
-  if ( mesh.IsValid() ) 
-  {
-    // Most applications expect vertex normals.
-    // If they are not present, ComputeVertexNormals sets
-    // them by averaging face normals.
-    if ( !mesh.HasVertexNormals() )
-      mesh.ComputeVertexNormals();
-    ON_BinaryFile archive( ON::on_write3dm, fp );
-    ok = ON_WriteOneObjectArchive( archive, version, mesh );
-  }
+  // Avoid copying the mesh - useful technique for large objects
+  model.AddModelGeometryComponentForExperts(false, &mesh, false, nullptr, true);
 
-  return ok;
+  return Internal_WriteExampleModel(model, filename, error_log);
 }
 
-static bool write_mesh_with_material_example( FILE* fp, int version, ON_TextLog& error_log )
+static bool write_mesh_with_material_example( const wchar_t* filename, ON_TextLog& error_log )
 {
+  // example demonstrates how to create and write a mesh
+  ONX_Model model;
+  INTERNAL_INITIALIZE_MODEL(model);
+
+  model.AddDefaultLayer(L"mesh", ON_Color::Black);
+
+  const bool bResolveIdAndNameConflicts = true;
+  
   // example demonstrates how to create and write a mesh that uses
   // a rendering material.  You may want to study write_mesh_example() 
   // before examining this function.
@@ -587,6 +408,39 @@ static bool write_mesh_with_material_example( FILE* fp, int version, ON_TextLog&
   // texture as a bitmap, and to attach the material to the
   // mesh before writing the mesh.
 
+  // rendering material with a texture map.
+  ON_Material material;
+  material.SetIndex(0);
+  material.SetAmbient(  ON_Color(  40,  40,  40 ) );
+  material.SetDiffuse(  ON_Color( 220, 220, 220 ) );
+  material.SetEmission( ON_Color::Black );
+  material.SetSpecular( ON_Color( 180, 180, 180 ) );
+
+  material.SetShine( 0.35*ON_Material::MaxShine ); // 0 = flat
+                                                        // MaxShine() = shiney
+
+  material.SetTransparency( 0.2 );  // 0 = opaque, 1 = transparent
+
+  // Texture and bump bitmaps can be Windows bitmap (.BMP), Targa (.TGA),
+  // JPEG (.JPG), PCX or PNG files.  Version 1 of Rhino will not support
+  // filenames using unicode or multibyte character sets.  As soon as
+  // Rhino supports these character sets, the const char* filename will
+  // changed to const _TCHAR*.
+
+  // For Rhino to find the texture bitmap, the .3dm file and the
+  // .bmp file need to be in the same directory.
+  ON_Texture texture;
+  texture.m_image_file_reference.SetRelativePath(L"./example_texture.bmp");
+  material.AddTexture( texture );
+
+  // The render material name is a string used to identify rendering
+  // materials in RIB, POV, OBJ, ..., files.  In Rhino, the render
+  // material name is set with the SetObjectMaterial command and can
+  // be viewed in the Info tab of the dialog displayed by the
+  // Properties command.
+  material.SetName( L"my render material" );
+
+  model.AddModelComponent(material, bResolveIdAndNameConflicts);
 
   bool bHasVertexNormals = false; // we will NOT specify vertex normals
   bool bHasTexCoords = true;      // we will specify texture coordinates
@@ -631,103 +485,47 @@ static bool write_mesh_with_material_example( FILE* fp, int version, ON_TextLog&
     }
   }
 
+  // Most applications expect vertex normals.
+  // If they are not present, ComputeVertexNormals sets
+  // them by averaging face normals.
+  if ( !mesh.HasVertexNormals() )
+    mesh.ComputeVertexNormals();
 
-  // rendering material with a texture map.
-  ON_Material material;
-  material.SetMaterialIndex(0);
-  material.SetAmbient(  ON_Color(  40,  40,  40 ) );
-  material.SetDiffuse(  ON_Color( 220, 220, 220 ) );
-  material.SetEmission( ON_Color(   0,   0,   0 ) );
-  material.SetSpecular( ON_Color( 180, 180, 180 ) );
+  ON_3dmObjectAttributes attributes;
+  attributes.m_name = "my mesh with material";
+  attributes.m_material_index = 0;
+  attributes.SetMaterialSource( ON::material_from_object );
 
-  material.SetShine( 0.35*ON_Material::MaxShine() ); // 0 = flat
-                                                        // MaxShine() = shiney
+  const bool bManagedGeometry = false; // mesh not copied
+  const bool bManagedAttributes = false; // attributes not copied
+  model.AddModelGeometryComponentForExperts(bManagedGeometry, &mesh, bManagedAttributes, &attributes, bResolveIdAndNameConflicts);
 
-  material.SetTransparency( 0.2 );  // 0 = opaque, 1 = transparent
-
-  // Texture and bump bitmaps can be Windows bitmap (.BMP), Targa (.TGA),
-  // JPEG (.JPG), PCX or PNG files.  Version 1 of Rhino will not support
-  // filenames using unicode or multibyte character sets.  As soon as
-  // Rhino supports these character sets, the const char* filename will
-  // changed to const _TCHAR*.
-
-  // For Rhino to find the texture bitmap, the .3dm file and the
-  // .bmp file need to be in the same directory.
-  ON_Texture texture;
-  texture.m_filename = L"example_texture.bmp";
-  material.AddTexture( texture );
-
-  // The render material name is a string used to identify rendering
-  // materials in RIB, POV, OBJ, ..., files.  In Rhino, the render
-  // material name is set with the SetObjectMaterial command and can
-  // be viewed in the Info tab of the dialog displayed by the
-  // Properties command.
-  material.SetMaterialName( L"my render material" );
-
-  bool ok = false;
-  if ( mesh.IsValid() ) 
-  {
-    // Most applications expect vertex normals.
-    // If they are not present, ComputeVertexNormals sets
-    // them by averaging face normals.
-    if ( !mesh.HasVertexNormals() )
-      mesh.ComputeVertexNormals();
-
-    ON_Object* object[1];
-    object[0] = &mesh;
-    ON_3dmObjectAttributes attributes;
-    attributes.m_name = "my mesh with material";
-    attributes.m_material_index = 0;
-    attributes.SetMaterialSource( ON::material_from_object );
-    ok = write_simple_file_example( fp, version, error_log,
-         "OpenNURBS write_mesh_with_material_example()", // notes
-         NULL,               // default settings
-         1, &material,       // render material table
-         0, NULL,            // layer table
-         0,                  // light count
-         NULL,               // light attributes
-         NULL,               // lights
-         1,                  // object count
-         &attributes,        // array of object_count attributes
-         object              // array of object_count objects
-         );
-  }
-
-  return ok;
+  return Internal_WriteExampleModel(model, filename, error_log);
 }
 
-static bool write_spot_light_example( FILE* fp, int version, ON_TextLog& error_log )
+static bool write_spot_light_example( const wchar_t* filename, ON_TextLog& error_log )
 {
   // create a blue spotlight shining on a white plane
+  ONX_Model model;
+  INTERNAL_INITIALIZE_MODEL(model);
 
   // white material for surface
   ON_Material material;
-  ON_Color white(255,255,255);
-  ON_Color black(0,0,0);
-  material.SetMaterialIndex(0);
-  material.SetAmbient(  white );
-  material.SetDiffuse(  white );
-  material.SetEmission( black );
-  material.SetSpecular( white );
-  material.SetShine( 0.35*ON_Material::MaxShine() ); // 0 = flat
+  material.SetIndex(0);
+  material.SetAmbient(  ON_Color::White );
+  material.SetDiffuse(  ON_Color::White );
+  material.SetEmission( ON_Color::Black );
+  material.SetSpecular( ON_Color::White );
+  material.SetShine( 0.35*ON_Material::MaxShine ); // 0 = flat
                                                         // MaxShine() = shiney
   material.SetTransparency( 0.0 );  // 0 = opaque, 1 = transparent
-  material.SetMaterialName( L"white material" );
+  material.SetName( L"white material" );
+  
+  model.AddModelComponent(material);
 
-
-  // 2 layers
-  ON_Layer layer[2];
-  layer[0].SetLayerName(L"surfaces");
-  layer[0].SetVisible(true);
-  layer[0].SetLocked(false);
-  layer[0].SetLayerIndex(0);
-  layer[0].SetColor( ON_Color(0, 0, 0) );
-
-  layer[1].SetLayerName(L"lights");
-  layer[1].SetVisible(true);
-  layer[1].SetLocked(false);
-  layer[1].SetLayerIndex(1);
-  layer[1].SetColor( ON_Color(0, 0, 0) );
+  model.AddDefaultLayer(nullptr, ON_Color::UnsetColor);
+  const int surfaces_layer_index = model.AddLayer(L"surfaces", ON_Color::Black);
+  const int lights_layer_index = model.AddLayer(L"lights", ON_Color::Black);
 
 
   // spotlight
@@ -735,9 +533,9 @@ static bool write_spot_light_example( FILE* fp, int version, ON_TextLog& error_l
   light.SetLightIndex(0);
   light.SetLocation( ON_3dPoint(2.0, 3.0, 10.0) );
   light.SetDirection( ON_3dVector(-1.0, -1.0, -10.0) );
-  light.SetDiffuse( ON_Color( 0, 0, 255 ) );
-  light.SetAmbient( ON_Color( 0, 0, 0 ) );
-  light.SetSpecular( ON_Color( 0, 0, 255 ) );
+  light.SetDiffuse( ON_Color::SaturatedBlue );
+  light.SetAmbient( ON_Color::Black );
+  light.SetSpecular( ON_Color::SaturatedBlue );
   light.SetSpotExponent( 60 );    // 0 = hard, 128 = soft
   light.SetSpotAngleDegrees( 30.0 );
   light.SetStyle(ON::world_spot_light);
@@ -746,8 +544,10 @@ static bool write_spot_light_example( FILE* fp, int version, ON_TextLog& error_l
 
   ON_3dmObjectAttributes light_attributes;
   light_attributes.Default();
-  light_attributes.m_layer_index = 1;     // spotlights layer we defined above
+  light_attributes.m_layer_index = lights_layer_index; // spotlights layer we defined above
   light_attributes.m_name = "Blue spot light";
+
+  model.AddModelGeometryComponent(&light, &light_attributes);
 
 
   // quick and dirty plane
@@ -755,36 +555,28 @@ static bool write_spot_light_example( FILE* fp, int version, ON_TextLog& error_l
   plane.SetDomain( 0, -10.0, +10.0 );
   plane.SetDomain( 1, -10.0, +10.0 );
 
-  ON_3dmObjectAttributes object_attributes;
-  object_attributes.Default();
-  object_attributes.m_layer_index = 0; // surfaces layer we defined above
-  object_attributes.m_material_index = 0; // white material we defined above
-  object_attributes.SetMaterialSource(ON::material_from_object);
-  object_attributes.m_name = "20x20 plane";
+  ON_3dmObjectAttributes plane_attributes;
+  plane_attributes.Default();
+  plane_attributes.m_layer_index = surfaces_layer_index; // surfaces layer we defined above
+  plane_attributes.m_material_index = material.Index(); // white material we defined above
+  plane_attributes.SetMaterialSource(ON::material_from_object);
+  plane_attributes.m_name = "20x20 plane";
 
-  ON_Object* object[1];
-  object[0] = &plane;
-  bool ok = write_simple_file_example( fp, version, error_log,
-       "OpenNURBS write_spot_light_example()", // notes
-       NULL,               // default settings
-       0, NULL,            // render material table
-       0, NULL,            // layer table
-       1,                  // light_count
-       &light_attributes,  // array of light_count attributes
-       &light,             // array of light_count lights
-       1,                  // object_count
-       &object_attributes, // array of object_count attributes
-       object              // array of object_count objects
-       );
+  model.AddModelGeometryComponent(&plane, &plane_attributes);
 
-  return ok;
+  return Internal_WriteExampleModel(model, filename, error_log);
 }
 
 
-static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log,
-      const ON_Sphere& sphere // sphere containing region to be viewed
-       )
+static bool write_viewport_example( const wchar_t* filename, ON_TextLog& error_log )
 {
+  // create a model with 7 viewports
+  ONX_Model model;
+  INTERNAL_INITIALIZE_MODEL(model);
+
+  // views will display space inside the sphere
+  ON_Sphere sphere ( ON_origin, 10.0 );
+
   // Writes a 7 viewport layout - 3 along the right side,
   // 3 along the left side, and 1 big on in the middle
   // that displays the space inside the sphere.
@@ -796,17 +588,14 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
   // (optionally) displayed as a grid.
   //
 
-  ON_3dmSettings settings;
-  {
-    // OPTIONAL - change values from defaults
-    settings.m_ModelUnitsAndTolerances.m_unit_system = ON::millimeters;
-    settings.m_ModelUnitsAndTolerances.m_absolute_tolerance = 0.01;
-    settings.m_ModelUnitsAndTolerances.m_angle_tolerance = ON_PI/180.0; // radians
-    settings.m_ModelUnitsAndTolerances.m_relative_tolerance = 0.01; // 1%
-  }
+  // OPTIONAL - change values from defaults
+  model.m_settings.m_ModelUnitsAndTolerances.m_unit_system = ON::LengthUnitSystem::Millimeters;
+  model.m_settings.m_ModelUnitsAndTolerances.m_absolute_tolerance = 0.01;
+  model.m_settings.m_ModelUnitsAndTolerances.m_angle_tolerance = ON_PI/180.0; // radians
+  model.m_settings.m_ModelUnitsAndTolerances.m_relative_tolerance = 0.01; // 1%
 
   // reserve room for 7 views
-  settings.m_views.Reserve(7);
+  model.m_settings.m_views.Reserve(7);
 
   // some values needed to fill in view information
   const double pos_x[4]  = {0.0,0.25,0.75,1.0};       // x: 0 = left, 1 = right
@@ -825,7 +614,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
 
   // view number 1
   {
-    ON_3dmView& view = settings.m_views.AppendNew();
+    ON_3dmView& view = model.m_settings.m_views.AppendNew();
 
     // set primary view transformation information first
     view.m_vp.SetProjection( ON::parallel_view );
@@ -853,7 +642,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
 
   // view number 2
   {
-    ON_3dmView& view = settings.m_views.AppendNew();
+    ON_3dmView& view = model.m_settings.m_views.AppendNew();
 
     // set primary view transformation information first
     view.m_vp.SetProjection( ON::parallel_view );
@@ -881,7 +670,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
 
   // view number 3
   {
-    ON_3dmView& view = settings.m_views.AppendNew();
+    ON_3dmView& view = model.m_settings.m_views.AppendNew();
 
     // set primary view transformation information first
     view.m_vp.SetProjection( ON::parallel_view );
@@ -909,7 +698,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
 
   // view number 4
   {
-    ON_3dmView& view = settings.m_views.AppendNew();
+    ON_3dmView& view = model.m_settings.m_views.AppendNew();
 
     // set primary view transformation information first
     view.m_vp.SetProjection( ON::parallel_view );
@@ -937,7 +726,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
 
   // view number 5
   {
-    ON_3dmView& view = settings.m_views.AppendNew();
+    ON_3dmView& view = model.m_settings.m_views.AppendNew();
 
     // set primary view transformation information first
     view.m_vp.SetProjection( ON::parallel_view );
@@ -965,7 +754,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
 
   // view number 6
   {
-    ON_3dmView& view = settings.m_views.AppendNew();
+    ON_3dmView& view = model.m_settings.m_views.AppendNew();
 
     // set primary view transformation information first
     view.m_vp.SetProjection( ON::parallel_view );
@@ -993,7 +782,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
 
   // view number 7
   {
-    ON_3dmView& view = settings.m_views.AppendNew();
+    ON_3dmView& view = model.m_settings.m_views.AppendNew();
 
     // set primary view transformation information first
     target_distance = 10.0*sphere.radius;
@@ -1029,21 +818,11 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
     view.m_cplane.m_plane = ON_xy_plane;
   }
 
+  // Add a sphere
+  model.AddDefaultLayer(L"sphere", ON_Color::Black);
+  model.AddManagedModelGeometryComponent( sphere.RevSurfaceForm( true, nullptr ), nullptr );
 
-  bool ok = write_simple_file_example( fp, version, error_log,
-         "OpenNURBS write_viewport_example()", // notes
-         &settings,          // default settings
-         0, NULL,            // render material table
-         0, NULL,            // layer table
-         0,                  // light count
-         NULL,               // light attributes
-         NULL,               // lights
-         0,                  // object count
-         NULL,               // array of object_count attributes
-         NULL                // array of object_count objects
-         );
-
-  return ok;
+  return Internal_WriteExampleModel(model, filename, error_log);
 }
 
 static void make_trimming_curves( ON_Brep& brep, 
@@ -1067,8 +846,14 @@ static void make_trimming_curves( ON_Brep& brep,
 }
 
 
-static bool write_trimmed_surface_example( FILE* fp, int version, ON_TextLog& error_log )
+static bool write_trimmed_surface_example( const wchar_t* filename, ON_TextLog& error_log )
 {
+  // write a trimmed surface
+  ONX_Model model;
+  INTERNAL_INITIALIZE_MODEL(model);
+
+  model.AddDefaultLayer(L"trimmed surface", ON_Color::Black);
+
   // trimmed surfaces are written as a CRhinoBrep that has
   // a single surface and a single CRhinoBrepFace.
   //
@@ -1160,45 +945,25 @@ static bool write_trimmed_surface_example( FILE* fp, int version, ON_TextLog& er
   brep.m_T[2].m_tolerance[0] = 0.0;
   brep.m_T[2].m_tolerance[1] = 0.0;
 
-    // when debugging your code, IsValid(), IsSolid(), IsManifold() are useful
+  // when debugging your code, IsValid(), IsSolid(), IsManifold() are useful
   // to check.
 
-  bool ok = false;
-  if ( brep.IsValid( &error_log ) )
-  {
-    ON_BinaryFile archive(ON::on_write3dm,fp);
-    ok = ON_WriteOneObjectArchive( archive, version, brep );
-  }
-  
-  int bIsManifold, bIsOriented, bHasBoundary, bIsSolid;
-  bIsManifold = brep.IsManifold( &bIsOriented, &bHasBoundary );
-  bIsSolid = brep.IsSolid();
+  model.AddModelGeometryComponent(&brep, nullptr);
 
-  return ok;
+
+  return Internal_WriteExampleModel(model, filename, error_log);
 }
 
 //int main ( int argc, const char* argv[] )
 int main ()
 {
-  bool rc;
-  const char* filename;
+  bool rc = false;
+  const wchar_t* filename;
 
   ON::Begin();
   // If you want to learn to write b-rep models, first work through
   // this example paying close attention to write_trimmed_surface_example(),
   // then examime example_brep.cpp.
-
-  // The OpenNURBS toolkit will write version 2 and 3 and read
-  // version 1, 2 and 3 of the 3DM file format.
-  //
-  // version 1 is the legacy Rhino I/O tookit format and was used by Rhino 1.x.
-  // version 2 is the OpenNURBS format (released 1 July 2000) and is used by Rhino 2.x
-  // version 3 is the OpenNURBS format (released 1 November 2002) and is used by Rhino 3.x
-  // version 4 is the OpenNURBS format (released September 2006) and is used by Rhino 4.x
-  // version 5 is the OpenNURBS format (released September 2009) and is used by Rhino 5.x
-
-  // version to write
-  int version = 0; // version will be ON_BinaryArchive::CurrentArchiveVersion()
 
   // errors printed to stdout
   ON_TextLog error_log;
@@ -1209,80 +974,61 @@ int main ()
   // errors logged in text file
   //FILE* error_log_fp = ON::OpenFile("error_log.txt","w");
   //ON_TextLog error_log(error_log_fp);
-
-  filename = "my_points.3dm";
-  FILE* fp = ON::OpenFile( filename, "wb" );
-  rc = write_points_example( fp, version, error_log );
-  ON::CloseFile( fp );
+  filename = L"my_points.3dm";
+  rc = write_points_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
-  filename = "my_curves.3dm";
-  fp = ON::OpenFile( filename, "wb" );
-  rc = write_curves_example( fp, version, error_log );
-  ON::CloseFile( fp );
+  filename = L"my_curves.3dm";
+  rc = write_curves_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
-  filename = "my_surfaces.3dm";
-  fp = ON::OpenFile( filename, "wb" );
-  rc = write_surfaces_example( fp, version );
-  ON::CloseFile( fp );
+  filename = L"my_surfaces.3dm";
+  rc = write_surfaces_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
-  filename = "my_mesh.3dm";
-  fp = ON::OpenFile( filename, "wb" );
-  rc = write_mesh_example( fp, version );
-  ON::CloseFile( fp );
+  filename = L"my_mesh.3dm";
+  rc = write_mesh_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
-  filename = "my_mesh_with_material.3dm";
-  fp = ON::OpenFile( filename, "wb" );
-  rc = write_mesh_with_material_example( fp, version, error_log );
-  ON::CloseFile( fp );
+  filename = L"my_mesh_with_material.3dm";
+  rc = write_mesh_with_material_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
-  filename = "my_spot_light.3dm";
-  fp = ON::OpenFile( filename, "wb" );
-  rc = write_spot_light_example( fp, version, error_log );
-  ON::CloseFile( fp );
+  filename = L"my_spot_light.3dm";
+  rc = write_spot_light_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
-  filename = "my_viewports.3dm";
-  fp = ON::OpenFile( filename, "wb" );
-  // views will display space inside the sphere
-  ON_Sphere sphere ( ON_origin, 10.0 );
-  rc = write_viewport_example( fp, version, error_log, sphere );
-  ON::CloseFile( fp );
+  filename = L"my_viewports.3dm";
+  rc = write_viewport_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
-  filename = "my_trimmed_surface.3dm";
-  fp = ON::OpenFile( filename, "wb" );
-  rc = write_trimmed_surface_example( fp, version, error_log );
-  ON::CloseFile( fp );
+  filename = L"my_trimmed_surface.3dm";
+  rc = write_trimmed_surface_example( filename, error_log );
   if (rc)
-    message_log.Print("Successfully wrote %s.\n",filename);
+    message_log.Print(L"Successfully wrote %ls.\n",filename);
   else
-    message_log.Print("Errors while writing %s.\n",filename);
+    message_log.Print(L"Errors while writing %ls.\n",filename);
 
   ON::End();
 

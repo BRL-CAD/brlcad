@@ -16,6 +16,17 @@ namespace import -force ::tk::test:loadTkCommand
 testConstraint failsOnUbuntu [expr {![info exists ::env(CI)] || ![string match Linux $::tcl_platform(os)]}]
 testConstraint failsOnXQuarz [expr {$tcl_platform(os) ne "Darwin" || [tk windowingsystem] ne "x11" }]
 
+# Starting with macOS Ventura it became necessary to wait for windows to be restacked
+# or to be raised after creation.
+
+if {[tk windowingsystem] eq "aqua"} {
+    proc restackDelay {} {
+	after 100;
+    }
+} else {
+    proc restackDelay {} {}
+}
+
 proc sleep ms {
     global x
     after $ms {set x 1}
@@ -818,7 +829,7 @@ test unixWm-22.2 {Tk_WmCmd procedure, "iconbitmap" option} {unix testwrapper} {
 	    WM_HINTS] 0]]]
     lappend result [wm iconbitmap .t] $bit
 } {{} questhead 0x4 {} 0x0}
-if {[tk windowingsystem] == "aqua"} {
+if {[tk windowingsystem] eq "aqua"} {
     set result_22_3 {0 {}}
 } else {
     set result_22_3 {1 {bitmap "bad-bitmap" not defined}}
@@ -1229,7 +1240,7 @@ test unixWm-34.2 {Tk_WmCmd procedure, "sizefrom" option} {unix testwrapper} {
 test unixWm-34.3 {Tk_WmCmd procedure, "sizefrom" option} unix {
     list [catch {wm sizefrom .t none} msg]  $msg
 } {1 {bad argument "none": must be program or user}}
-if {[tk windowingsystem] == "aqua"} {
+if {[tk windowingsystem] eq "aqua"} {
     set result_35_1 {1 {bad argument "1": must be normal, iconic, withdrawn, or zoomed}}
 } else {
     set result_35_1 {1 {bad argument "1": must be normal, iconic, or withdrawn}}
@@ -1791,7 +1802,7 @@ test unixWm-49.2 {Tk_GetRootCoords procedure, menubars} {unix testmenubar} {
 
 deleteWindows
 wm withdraw .
-if {[tk windowingsystem] == "aqua"} {
+if {[tk windowingsystem] eq "aqua"} {
     # Modern mac windows have no border.
     set result_50_1 {{} {} .t .t .t2 {} .t2 .t .t}
 } else {
@@ -1823,13 +1834,17 @@ test unixWm-50.1 {Tk_CoordsToWindow procedure, finding a toplevel, x-coords, tit
 test unixWm-50.2 {Tk_CoordsToWindow procedure, finding a toplevel, y-coords and overrideredirect} unix {
     deleteWindows
     toplevel .t -width 400 -height 300 -bg yellow
-    wm geom .t +100+100
     tkwait visibility .t
+    wm geom .t +100+100
+    update
+    restackDelay
     toplevel .t2 -width 200 -height 100 -bg blue
+    tkwait visibility .t2
     wm overrideredirect .t2 1
     wm geom .t2 +200+200
-    tkwait visibility .t2
+    update
     raise .t2
+    restackDelay
     set x [winfo rootx .t]
     set y [winfo rooty .t]
     set y2 [winfo rooty .t2]
@@ -1879,12 +1894,13 @@ test unixWm-50.4 {Tk_CoordsToWindow procedure, window in other application} unix
 
     catch {interp delete child}
     toplevel .t -width 200 -height 200 -bg green
-    wm geometry .t +100+100
     tkwait visibility .t
+    wm geometry .t +100+100
     update
     interp create child
     load {} Tk child
-    child eval {wm geometry . 200x200+100+100; tkwait visibility . ; update}
+    child eval {wm geometry . 200x200+100+100; update}
+    restackDelay
     set result [list [winfo containing 200 200] \
 	    [child eval {winfo containing 200 200}]]
     interp delete child
@@ -1967,14 +1983,19 @@ test unixWm-50.9 {Tk_CoordsToWindow procedure, unmapped windows} {unix failsOnUb
     destroy .t
     destroy .t2
     toplevel .t -width 200 -height 200 -bg green
-    wm geometry .t +0+0
     tkwait visibility .t
+    update
+    wm geometry .t +0+0
+    update
     toplevel .t2 -width 200 -height 200 -bg red
-    wm geometry .t2 +0+0
     tkwait visibility .t2
+    update
+    wm geometry .t2 +0+0
+    update
+    restackDelay
     set result [list [winfo containing 100 100]]
     wm iconify .t2
-    update idletasks
+    update
     lappend result [winfo containing 100 100]
 } {.t2 .t}
 test unixWm-50.10 {Tk_CoordsToWindow procedure, unmapped windows} unix {
@@ -2048,24 +2069,28 @@ deleteWindows
 test unixWm-51.6 {TkWmRestackToplevel procedure, window to be stacked isn't mapped} unix {
     destroy .t
     toplevel .t -width 200 -height 200 -bg green
-    wm geometry .t +0+0
     tkwait visibility .t
+    wm geometry .t +0+0
+    update
+    restackDelay
     destroy .t2
     toplevel .t2 -width 200 -height 200 -bg red
-    wm geometry .t2 +0+0
+    # This test assumes that .t2 is not mapped yet, but that is not really guaranteed.
     winfo containing 100 100
 } {.t}
 test unixWm-51.7 {TkWmRestackToplevel procedure, other window isn't mapped} {unix failsOnXQuarz} {
     foreach w {.t .t2 .t3} {
 	destroy $w
-	update
 	toplevel $w -width 200 -height 200 -bg green
 	wm geometry $w +0+0
+	update
     }
     raise .t .t2
+    restackDelay
     update
     set result [list [winfo containing 100 100]]
     lower .t3
+    restackDelay
     lappend result [winfo containing 100 100]
 } {.t3 .t}
 test unixWm-51.8 {TkWmRestackToplevel procedure, overrideredirect windows} unix {
@@ -2079,6 +2104,7 @@ test unixWm-51.8 {TkWmRestackToplevel procedure, overrideredirect windows} unix 
     wm overrideredirect .t2 1
     wm geometry .t2 +0+0
     tkwait visibility .t2
+    restackDelay
 
     # Need to use vrootx and vrooty to make tests work correctly with
     # virtual root window measures managers: overrideredirect windows
@@ -2089,12 +2115,14 @@ test unixWm-51.8 {TkWmRestackToplevel procedure, overrideredirect windows} unix 
     set y [expr 100-[winfo vrooty .]]
     set result [list [winfo containing $x $y]]
     raise .t
+    restackDelay
     lappend result [winfo containing $x $y]
     raise .t2
+    restackDelay
     lappend result [winfo containing $x $y]
 } {.t2 .t .t2}
 # The mac won't put an overrideredirect window above the root,
-if {[tk windowingsystem] == "aqua"} {
+if {[tk windowingsystem] eq "aqua"} {
     wm withdraw .
 }
 test unixWm-51.9 {TkWmRestackToplevel procedure, other window overrideredirect} unix {
@@ -2108,6 +2136,7 @@ test unixWm-51.9 {TkWmRestackToplevel procedure, other window overrideredirect} 
 	update
     }
     lower .t3 .t2
+    restackDelay
     update
 
     # Need to use vrootx and vrooty to make tests work correctly with
@@ -2119,9 +2148,10 @@ test unixWm-51.9 {TkWmRestackToplevel procedure, other window overrideredirect} 
     set y [expr 100-[winfo vrooty .]]
     set result [list [winfo containing $x $y]]
     lower .t2
+    restackDelay
     lappend result [winfo containing $x $y]
 } {.t2 .t3}
-if {[tk windowingsystem] == "aqua"} {
+if {[tk windowingsystem] eq "aqua"} {
     wm deiconify .
 }
 test unixWm-51.10 {TkWmRestackToplevel procedure, don't move window that's already in the right place} unix {
@@ -2499,7 +2529,7 @@ test unixWm-59.3 {exit processing} unix {
 # NOTE: since [wm attributes] is not guaranteed to have any effect,
 # the only thing we can really test here is the syntax.
 #
-if {[tk windowingsystem] == "aqua"} {
+if {[tk windowingsystem] eq "aqua"} {
     set result_60_1 {-alpha 1.0 -fullscreen 0 -modified 0 -notify 0\
 			 -titlepath {} -topmost 0 -transparent 0\
 			 -type unsupported}

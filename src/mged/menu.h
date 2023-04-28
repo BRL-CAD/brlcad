@@ -1,7 +1,7 @@
 /*                          M E N U . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 
 struct menu_item {
     char *menu_string;
-    void (*menu_func)();
+    void (*menu_func)(int, int, int);
     int menu_arg;
 };
 

@@ -16,7 +16,7 @@ mp_err mp_set_double(mp_int *a, double b)
    cast.dbl = b;
 
    exp = (int)((unsigned)(cast.bits >> 52) & 0x7FFu);
-   frac = (cast.bits & ((1uLL << 52) - 1uLL)) | (1uLL << 52);
+   frac = (cast.bits & (((uint64_t)1 << 52) - (uint64_t)1)) | ((uint64_t)1 << 52);
 
    if (exp == 0x7FF) { /* +-inf, NaN */
       return MP_VAL;
@@ -30,7 +30,7 @@ mp_err mp_set_double(mp_int *a, double b)
       return err;
    }
 
-   if (((cast.bits >> 63) != 0uLL) && !MP_IS_ZERO(a)) {
+   if (((cast.bits >> 63) != 0u) && !MP_IS_ZERO(a)) {
       a->sign = MP_NEG;
    }
 

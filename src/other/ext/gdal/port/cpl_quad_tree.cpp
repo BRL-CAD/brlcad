@@ -4,11 +4,11 @@
  * Purpose:  Implementation of quadtree building and searching functions.
  *           Derived from shapelib and mapserver implementations
  * Author:   Frank Warmerdam, warmerdam@pobox.com
- *           Even Rouault, <even dot rouault at mines dash paris dot org>
+ *           Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
  * Copyright (c) 1999-2008, Frank Warmerdam
- * Copyright (c) 2008-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,47 +33,50 @@
 #include "cpl_port.h"
 #include "cpl_quad_tree.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$");
-
-static const int MAX_DEFAULT_TREE_DEPTH = 12;
-static const int MAX_SUBNODES = 4;
+constexpr int MAX_DEFAULT_TREE_DEPTH = 12;
+constexpr int MAX_SUBNODES = 4;
 
 typedef struct _QuadTreeNode QuadTreeNode;
 
 struct _QuadTreeNode
 {
-  /* area covered by this psNode */
-  CPLRectObj    rect;
+    /* area covered by this psNode */
+    CPLRectObj rect;
 
-  int           nFeatures;    /* number of shapes stored at this psNode. */
+    int nFeatures; /* number of shapes stored at this psNode. */
 
-  int           nNumSubNodes; /* number of active subnodes */
+    int nNumSubNodes; /* number of active subnodes */
 
-  void        **pahFeatures; /* list of shapes stored at this psNode. */
-  CPLRectObj   *pasBounds;
+    void **pahFeatures; /* list of shapes stored at this psNode. */
+    CPLRectObj *pasBounds;
 
-  QuadTreeNode *apSubNode[MAX_SUBNODES];
+    QuadTreeNode *apSubNode[MAX_SUBNODES];
 };
 
 struct _CPLQuadTree
 {
-  QuadTreeNode             *psRoot;
-  CPLQuadTreeGetBoundsFunc  pfnGetBounds;
-  int                       nFeatures;
-  int                       nMaxDepth;
-  int                       nBucketCapacity;
-  double                    dfSplitRatio;
+    QuadTreeNode *psRoot;
+    CPLQuadTreeGetBoundsFunc pfnGetBounds;
+    CPLQuadTreeGetBoundsExFunc pfnGetBoundsEx;
+    void *pUserData;
+    int nFeatures;
+    int nMaxDepth;
+    int nBucketCapacity;
+    double dfSplitRatio;
+    bool bForceUseOfSubNodes;
 };
 
 static void CPLQuadTreeAddFeatureInternal(CPLQuadTree *hQuadTree,
-                                          void* hFeature,
+                                          void *hFeature,
                                           const CPLRectObj *pRect);
+static void CPLQuadTreeNodeDestroy(QuadTreeNode *psNode);
 
 /* -------------------------------------------------------------------- */
 /*      If the following is 0.5, psNodes will be split in half.  If it  */
@@ -82,29 +85,31 @@ static void CPLQuadTreeAddFeatureInternal(CPLQuadTree *hQuadTree,
 /*      prevent small objects on a boundary from shifting too high      */
 /*      up the hQuadTree.                                               */
 /* -------------------------------------------------------------------- */
-static const double DEFAULT_SPLIT_RATIO = 0.55;
+constexpr double DEFAULT_SPLIT_RATIO = 0.55;
 
 /*
 ** Returns TRUE if rectangle a is contained in rectangle b
 */
-static CPL_INLINE bool CPL_RectContained( const CPLRectObj *a,
-                                          const CPLRectObj *b )
+static CPL_INLINE bool CPL_RectContained(const CPLRectObj *a,
+                                         const CPLRectObj *b)
 {
-    return
-        a->minx >= b->minx && a->maxx <= b->maxx &&
-        a->miny >= b->miny && a->maxy <= b->maxy;
+    return a->minx >= b->minx && a->maxx <= b->maxx && a->miny >= b->miny &&
+           a->maxy <= b->maxy;
 }
 
 /*
 ** Returns TRUE if rectangles a and b overlap
 */
-static CPL_INLINE bool CPL_RectOverlap( const CPLRectObj *a,
-                                        const CPLRectObj *b )
+static CPL_INLINE bool CPL_RectOverlap(const CPLRectObj *a, const CPLRectObj *b)
 {
-    if( a->minx > b->maxx ) return false;
-    if( a->maxx < b->minx ) return false;
-    if( a->miny > b->maxy ) return false;
-    if( a->maxy < b->miny ) return false;
+    if (a->minx > b->maxx)
+        return false;
+    if (a->maxx < b->minx)
+        return false;
+    if (a->miny > b->maxy)
+        return false;
+    if (a->maxy < b->miny)
+        return false;
     return true;
 }
 
@@ -112,14 +117,14 @@ static CPL_INLINE bool CPL_RectOverlap( const CPLRectObj *a,
 /*                      CPLQuadTreeNodeCreate()                         */
 /************************************************************************/
 
-static QuadTreeNode *CPLQuadTreeNodeCreate(const CPLRectObj* pRect)
+static QuadTreeNode *CPLQuadTreeNodeCreate(const CPLRectObj *pRect)
 {
-    QuadTreeNode *psNode
-        = static_cast<QuadTreeNode *>( CPLMalloc( sizeof(QuadTreeNode) ) );
+    QuadTreeNode *psNode =
+        static_cast<QuadTreeNode *>(CPLMalloc(sizeof(QuadTreeNode)));
 
     psNode->nFeatures = 0;
-    psNode->pahFeatures = NULL;
-    psNode->pasBounds = NULL;
+    psNode->pahFeatures = nullptr;
+    psNode->pasBounds = nullptr;
 
     psNode->nNumSubNodes = 0;
 
@@ -146,28 +151,82 @@ static QuadTreeNode *CPLQuadTreeNodeCreate(const CPLRectObj* pRect)
  * @return a newly allocated quadtree
  */
 
-CPLQuadTree *CPLQuadTreeCreate( const CPLRectObj* pGlobalBounds,
-                                CPLQuadTreeGetBoundsFunc pfnGetBounds )
+CPLQuadTree *CPLQuadTreeCreate(const CPLRectObj *pGlobalBounds,
+                               CPLQuadTreeGetBoundsFunc pfnGetBounds)
 {
     CPLAssert(pGlobalBounds);
 
     /* -------------------------------------------------------------------- */
     /*      Allocate the hQuadTree object                                   */
     /* -------------------------------------------------------------------- */
-    CPLQuadTree *hQuadTree
-        = static_cast<CPLQuadTree *>( CPLMalloc(sizeof(CPLQuadTree)) );
+    CPLQuadTree *hQuadTree =
+        static_cast<CPLQuadTree *>(CPLMalloc(sizeof(CPLQuadTree)));
 
     hQuadTree->nFeatures = 0;
     hQuadTree->pfnGetBounds = pfnGetBounds;
+    hQuadTree->pfnGetBoundsEx = nullptr;
     hQuadTree->nMaxDepth = 0;
     hQuadTree->nBucketCapacity = 8;
 
     hQuadTree->dfSplitRatio = DEFAULT_SPLIT_RATIO;
+    hQuadTree->bForceUseOfSubNodes = false;
 
     /* -------------------------------------------------------------------- */
     /*      Allocate the psRoot psNode.                                     */
     /* -------------------------------------------------------------------- */
     hQuadTree->psRoot = CPLQuadTreeNodeCreate(pGlobalBounds);
+
+    hQuadTree->pUserData = nullptr;
+
+    return hQuadTree;
+}
+
+/************************************************************************/
+/*                         CPLQuadTreeCreateEx()                        */
+/************************************************************************/
+
+/**
+ * Create a new quadtree
+ *
+ * @param pGlobalBounds a pointer to the global extent of all
+ *                      the elements that will be inserted
+ * @param pfnGetBoundsEx  a user provided function to get the bounding box of
+ *                      the inserted elements. If it is set to NULL, then
+ *                      CPLQuadTreeInsertWithBounds() must be used, and
+ *                      extra memory will be used to keep features bounds in the
+ *                      quad tree.
+ * @param pUserData     user data passed to pfnGetBoundsEx
+ *
+ * @return a newly allocated quadtree
+ */
+
+CPLQuadTree *CPLQuadTreeCreateEx(const CPLRectObj *pGlobalBounds,
+                                 CPLQuadTreeGetBoundsExFunc pfnGetBoundsEx,
+                                 void *pUserData)
+{
+    CPLAssert(pGlobalBounds);
+
+    /* -------------------------------------------------------------------- */
+    /*      Allocate the hQuadTree object                                   */
+    /* -------------------------------------------------------------------- */
+    CPLQuadTree *hQuadTree =
+        static_cast<CPLQuadTree *>(CPLMalloc(sizeof(CPLQuadTree)));
+
+    hQuadTree->nFeatures = 0;
+    hQuadTree->pfnGetBounds = nullptr;
+    hQuadTree->pfnGetBoundsEx = pfnGetBoundsEx;
+    hQuadTree->nMaxDepth = 0;
+    hQuadTree->nBucketCapacity = 8;
+
+    hQuadTree->dfSplitRatio = DEFAULT_SPLIT_RATIO;
+    hQuadTree->bForceUseOfSubNodes = false;
+
+    /* -------------------------------------------------------------------- */
+    /*      Allocate the psRoot psNode.                                     */
+    /* -------------------------------------------------------------------- */
+    hQuadTree->psRoot = CPLQuadTreeNodeCreate(pGlobalBounds);
+
+    hQuadTree->pUserData = pUserData;
 
     return hQuadTree;
 }
@@ -187,35 +246,34 @@ CPLQuadTree *CPLQuadTreeCreate( const CPLRectObj* pGlobalBounds,
 
 int CPLQuadTreeGetAdvisedMaxDepth(int nExpectedFeatures)
 {
-/* -------------------------------------------------------------------- */
-/*      Try to select a reasonable one                                  */
-/*      that implies approximately 8 shapes per node.                   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Try to select a reasonable one                                  */
+    /*      that implies approximately 8 shapes per node.                   */
+    /* -------------------------------------------------------------------- */
     int nMaxDepth = 0;
     int nMaxNodeCount = 1;
 
-    while( nMaxNodeCount*4 < nExpectedFeatures )
+    while (nMaxNodeCount < nExpectedFeatures / 4)
     {
         nMaxDepth += 1;
         nMaxNodeCount = nMaxNodeCount * 2;
     }
 
-    CPLDebug( "CPLQuadTree",
-              "Estimated spatial index tree depth: %d",
-              nMaxDepth );
+    CPLDebug("CPLQuadTree", "Estimated spatial index tree depth: %d",
+             nMaxDepth);
 
     /* NOTE: Due to problems with memory allocation for deep trees,
-        * automatically estimated depth is limited up to 12 levels.
-        * See Ticket #1594 for detailed discussion.
-        */
-    if( nMaxDepth > MAX_DEFAULT_TREE_DEPTH )
+     * automatically estimated depth is limited up to 12 levels.
+     * See Ticket #1594 for detailed discussion.
+     */
+    if (nMaxDepth > MAX_DEFAULT_TREE_DEPTH)
     {
         nMaxDepth = MAX_DEFAULT_TREE_DEPTH;
 
-        CPLDebug( "CPLQuadTree",
-                  "Falling back to max number of allowed index tree "
-                  "levels (%d).",
-                  MAX_DEFAULT_TREE_DEPTH );
+        CPLDebug("CPLQuadTree",
+                 "Falling back to max number of allowed index tree "
+                 "levels (%d).",
+                 MAX_DEFAULT_TREE_DEPTH);
     }
 
     return nMaxDepth;
@@ -253,8 +311,25 @@ void CPLQuadTreeSetMaxDepth(CPLQuadTree *hQuadTree, int nMaxDepth)
 
 void CPLQuadTreeSetBucketCapacity(CPLQuadTree *hQuadTree, int nBucketCapacity)
 {
-    if( nBucketCapacity > 0 )
+    if (nBucketCapacity > 0)
         hQuadTree->nBucketCapacity = nBucketCapacity;
+}
+
+/***********************************************************************/
+/*                   CPLQuadTreeForceUseOfSubNodes()                   */
+/************************************************************************/
+
+/**
+ * Force the quadtree to insert as much as possible a feature whose bbox
+ * spread over multiple subnodes into those subnodes, rather than in the
+ * list of features attached to the node.
+ *
+ * @param hQuadTree the quad tree
+ */
+
+void CPLQuadTreeForceUseOfSubNodes(CPLQuadTree *hQuadTree)
+{
+    hQuadTree->bForceUseOfSubNodes = true;
 }
 
 /************************************************************************/
@@ -268,9 +343,10 @@ void CPLQuadTreeSetBucketCapacity(CPLQuadTree *hQuadTree, int nBucketCapacity)
  * @param hFeature the feature to insert
  */
 
-void CPLQuadTreeInsert(CPLQuadTree * hQuadTree, void* hFeature)
+void CPLQuadTreeInsert(CPLQuadTree *hQuadTree, void *hFeature)
 {
-    if( hQuadTree->pfnGetBounds == NULL )
+    if (hQuadTree->pfnGetBounds == nullptr &&
+        hQuadTree->pfnGetBoundsEx == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "hQuadTree->pfnGetBounds == NULL");
@@ -278,7 +354,10 @@ void CPLQuadTreeInsert(CPLQuadTree * hQuadTree, void* hFeature)
     }
     hQuadTree->nFeatures++;
     CPLRectObj bounds;
-    hQuadTree->pfnGetBounds(hFeature, &bounds);
+    if (hQuadTree->pfnGetBoundsEx)
+        hQuadTree->pfnGetBoundsEx(hFeature, hQuadTree->pUserData, &bounds);
+    else
+        hQuadTree->pfnGetBounds(hFeature, &bounds);
     CPLQuadTreeAddFeatureInternal(hQuadTree, hFeature, &bounds);
 }
 
@@ -293,12 +372,112 @@ void CPLQuadTreeInsert(CPLQuadTree * hQuadTree, void* hFeature)
  * @param hFeature the feature to insert
  * @param psBounds bounds of the feature
  */
-void CPLQuadTreeInsertWithBounds(CPLQuadTree *hQuadTree,
-                                 void* hFeature,
-                                 const CPLRectObj* psBounds)
+void CPLQuadTreeInsertWithBounds(CPLQuadTree *hQuadTree, void *hFeature,
+                                 const CPLRectObj *psBounds)
 {
     hQuadTree->nFeatures++;
     CPLQuadTreeAddFeatureInternal(hQuadTree, hFeature, psBounds);
+}
+
+/************************************************************************/
+/*                            CPLQuadTreeRemove()                       */
+/************************************************************************/
+
+static bool CPLQuadTreeRemoveInternal(QuadTreeNode *psNode, void *hFeature,
+                                      const CPLRectObj *psBounds)
+{
+    bool bRemoved = false;
+
+    for (int i = 0; i < psNode->nFeatures; i++)
+    {
+        if (psNode->pahFeatures[i] == hFeature)
+        {
+            if (i < psNode->nFeatures - 1)
+            {
+                memmove(psNode->pahFeatures + i, psNode->pahFeatures + i + 1,
+                        (psNode->nFeatures - 1 - i) * sizeof(void *));
+                if (psNode->pasBounds)
+                {
+                    memmove(psNode->pasBounds + i, psNode->pasBounds + i + 1,
+                            (psNode->nFeatures - 1 - i) * sizeof(CPLRectObj));
+                }
+            }
+            bRemoved = true;
+            psNode->nFeatures--;
+            break;
+        }
+    }
+    if (psNode->nFeatures == 0 && psNode->pahFeatures != nullptr)
+    {
+        CPLFree(psNode->pahFeatures);
+        CPLFree(psNode->pasBounds);
+        psNode->pahFeatures = nullptr;
+        psNode->pasBounds = nullptr;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Recurse to subnodes if they exist.                              */
+    /* -------------------------------------------------------------------- */
+    for (int i = 0; i < psNode->nNumSubNodes; i++)
+    {
+        if (psNode->apSubNode[i] &&
+            CPL_RectOverlap(&(psNode->apSubNode[i]->rect), psBounds))
+        {
+            bRemoved |= CPLQuadTreeRemoveInternal(psNode->apSubNode[i],
+                                                  hFeature, psBounds);
+
+            if (psNode->apSubNode[i]->nFeatures == 0 &&
+                psNode->apSubNode[i]->nNumSubNodes == 0)
+            {
+                CPLQuadTreeNodeDestroy(psNode->apSubNode[i]);
+                if (i < psNode->nNumSubNodes - 1)
+                {
+                    memmove(psNode->apSubNode + i, psNode->apSubNode + i + 1,
+                            (psNode->nNumSubNodes - 1 - i) *
+                                sizeof(QuadTreeNode *));
+                }
+                i--;
+                psNode->nNumSubNodes--;
+            }
+        }
+    }
+
+    return bRemoved;
+}
+
+/**
+ * Remove a feature from a quadtree.
+ *
+ * Currently the quadtree is not re-balanced.
+ *
+ * @param hQuadTree the quad tree
+ * @param hFeature the feature to remove
+ * @param psBounds bounds of the feature (or NULL if pfnGetBounds has been
+ * filled)
+ */
+void CPLQuadTreeRemove(CPLQuadTree *hQuadTree, void *hFeature,
+                       const CPLRectObj *psBounds)
+{
+    if (psBounds == nullptr && hQuadTree->pfnGetBounds == nullptr &&
+        hQuadTree->pfnGetBoundsEx == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "hQuadTree->pfnGetBounds == NULL");
+        return;
+    }
+    CPLRectObj bounds;  // keep variable in this outer scope
+    if (psBounds == nullptr)
+    {
+        if (hQuadTree->pfnGetBoundsEx)
+            hQuadTree->pfnGetBoundsEx(hFeature, hQuadTree->pUserData, &bounds);
+        else
+            hQuadTree->pfnGetBounds(hFeature, &bounds);
+        psBounds = &bounds;
+    }
+    if (CPLQuadTreeRemoveInternal(hQuadTree->psRoot, hFeature, psBounds))
+    {
+        hQuadTree->nFeatures--;
+    }
 }
 
 /************************************************************************/
@@ -307,13 +486,13 @@ void CPLQuadTreeInsertWithBounds(CPLQuadTree *hQuadTree,
 
 static void CPLQuadTreeNodeDestroy(QuadTreeNode *psNode)
 {
-    for( int i = 0; i < psNode->nNumSubNodes; i++ )
+    for (int i = 0; i < psNode->nNumSubNodes; i++)
     {
-        if( psNode->apSubNode[i] )
+        if (psNode->apSubNode[i])
             CPLQuadTreeNodeDestroy(psNode->apSubNode[i]);
     }
 
-    if( psNode->pahFeatures )
+    if (psNode->pahFeatures)
     {
         CPLFree(psNode->pahFeatures);
         CPLFree(psNode->pasBounds);
@@ -343,10 +522,8 @@ void CPLQuadTreeDestroy(CPLQuadTree *hQuadTree)
 /*                     CPLQuadTreeSplitBounds()                         */
 /************************************************************************/
 
-static void CPLQuadTreeSplitBounds( double dfSplitRatio,
-                                      const CPLRectObj *in,
-                                      CPLRectObj *out1,
-                                      CPLRectObj *out2)
+static void CPLQuadTreeSplitBounds(double dfSplitRatio, const CPLRectObj *in,
+                                   CPLRectObj *out1, CPLRectObj *out2)
 {
     /* -------------------------------------------------------------------- */
     /*      The output bounds will be very similar to the input bounds,     */
@@ -358,7 +535,7 @@ static void CPLQuadTreeSplitBounds( double dfSplitRatio,
     /* -------------------------------------------------------------------- */
     /*      Split in X direction.                                           */
     /* -------------------------------------------------------------------- */
-    if( (in->maxx - in->minx) > (in->maxy - in->miny) )
+    if ((in->maxx - in->minx) > (in->maxy - in->miny))
     {
         const double range = in->maxx - in->minx;
 
@@ -382,39 +559,39 @@ static void CPLQuadTreeSplitBounds( double dfSplitRatio,
 /*                  CPLQuadTreeNodeAddFeatureAlg1()                     */
 /************************************************************************/
 
-static void CPLQuadTreeNodeAddFeatureAlg1( CPLQuadTree* hQuadTree,
-                                           QuadTreeNode *psNode,
-                                           void* hFeature,
-                                           const CPLRectObj* pRect)
+static void CPLQuadTreeNodeAddFeatureAlg1(CPLQuadTree *hQuadTree,
+                                          QuadTreeNode *psNode, void *hFeature,
+                                          const CPLRectObj *pRect)
 {
-    if( psNode->nNumSubNodes == 0 )
+    if (psNode->nNumSubNodes == 0)
     {
         // If we have reached the max bucket capacity, try to insert
         // in a subnode if possible.
-        if( psNode->nFeatures >= hQuadTree->nBucketCapacity )
+        if (psNode->nFeatures >= hQuadTree->nBucketCapacity)
         {
-            CPLRectObj half1 = { 0.0, 0.0, 0.0, 0.0 };
-            CPLRectObj half2 = { 0.0, 0.0, 0.0, 0.0 };
-            CPLRectObj quad1 = { 0.0, 0.0, 0.0, 0.0 };
-            CPLRectObj quad2 = { 0.0, 0.0, 0.0, 0.0 };
-            CPLRectObj quad3 = { 0.0, 0.0, 0.0, 0.0 };
-            CPLRectObj quad4 = { 0.0, 0.0, 0.0, 0.0 };
+            CPLRectObj half1 = {0.0, 0.0, 0.0, 0.0};
+            CPLRectObj half2 = {0.0, 0.0, 0.0, 0.0};
+            CPLRectObj quad1 = {0.0, 0.0, 0.0, 0.0};
+            CPLRectObj quad2 = {0.0, 0.0, 0.0, 0.0};
+            CPLRectObj quad3 = {0.0, 0.0, 0.0, 0.0};
+            CPLRectObj quad4 = {0.0, 0.0, 0.0, 0.0};
 
-            CPLQuadTreeSplitBounds( hQuadTree->dfSplitRatio, &psNode->rect,
-                                    &half1, &half2);
-            CPLQuadTreeSplitBounds( hQuadTree->dfSplitRatio, &half1,
-                                    &quad1, &quad2);
-            CPLQuadTreeSplitBounds( hQuadTree->dfSplitRatio, &half2,
-                                    &quad3, &quad4);
+            CPLQuadTreeSplitBounds(hQuadTree->dfSplitRatio, &psNode->rect,
+                                   &half1, &half2);
+            CPLQuadTreeSplitBounds(hQuadTree->dfSplitRatio, &half1, &quad1,
+                                   &quad2);
+            CPLQuadTreeSplitBounds(hQuadTree->dfSplitRatio, &half2, &quad3,
+                                   &quad4);
 
-            if( memcmp(&psNode->rect, &quad1, sizeof(CPLRectObj)) != 0 &&
+            if (memcmp(&psNode->rect, &quad1, sizeof(CPLRectObj)) != 0 &&
                 memcmp(&psNode->rect, &quad2, sizeof(CPLRectObj)) != 0 &&
                 memcmp(&psNode->rect, &quad3, sizeof(CPLRectObj)) != 0 &&
                 memcmp(&psNode->rect, &quad4, sizeof(CPLRectObj)) != 0 &&
-                (CPL_RectContained(pRect, &quad1) ||
-                CPL_RectContained(pRect, &quad2) ||
-                CPL_RectContained(pRect, &quad3) ||
-                CPL_RectContained(pRect, &quad4)) )
+                (hQuadTree->bForceUseOfSubNodes ||
+                 CPL_RectContained(pRect, &quad1) ||
+                 CPL_RectContained(pRect, &quad2) ||
+                 CPL_RectContained(pRect, &quad3) ||
+                 CPL_RectContained(pRect, &quad4)))
             {
                 psNode->nNumSubNodes = 4;
                 psNode->apSubNode[0] = CPLQuadTreeNodeCreate(&quad1);
@@ -423,26 +600,30 @@ static void CPLQuadTreeNodeAddFeatureAlg1( CPLQuadTree* hQuadTree,
                 psNode->apSubNode[3] = CPLQuadTreeNodeCreate(&quad4);
 
                 const int oldNumFeatures = psNode->nFeatures;
-                void** oldFeatures = psNode->pahFeatures;
-                CPLRectObj* pasOldBounds = psNode->pasBounds;
+                void **oldFeatures = psNode->pahFeatures;
+                CPLRectObj *pasOldBounds = psNode->pasBounds;
                 psNode->nFeatures = 0;
-                psNode->pahFeatures = NULL;
-                psNode->pasBounds = NULL;
+                psNode->pahFeatures = nullptr;
+                psNode->pasBounds = nullptr;
 
                 // Redispatch existing pahFeatures in apSubNodes.
-                for( int i = 0; i < oldNumFeatures; i++ )
+                for (int i = 0; i < oldNumFeatures; i++)
                 {
-                    if( hQuadTree->pfnGetBounds == NULL )
-                        CPLQuadTreeNodeAddFeatureAlg1( hQuadTree, psNode,
-                                                       oldFeatures[i],
-                                                       &pasOldBounds[i]);
+                    if (hQuadTree->pfnGetBounds == nullptr &&
+                        hQuadTree->pfnGetBoundsEx == nullptr)
+                        CPLQuadTreeNodeAddFeatureAlg1(hQuadTree, psNode,
+                                                      oldFeatures[i],
+                                                      &pasOldBounds[i]);
                     else
                     {
                         CPLRectObj bounds;
-                        hQuadTree->pfnGetBounds(oldFeatures[i], &bounds);
-                        CPLQuadTreeNodeAddFeatureAlg1( hQuadTree, psNode,
-                                                       oldFeatures[i],
-                                                       &bounds );
+                        if (hQuadTree->pfnGetBoundsEx)
+                            hQuadTree->pfnGetBoundsEx(
+                                oldFeatures[i], hQuadTree->pUserData, &bounds);
+                        else
+                            hQuadTree->pfnGetBounds(oldFeatures[i], &bounds);
+                        CPLQuadTreeNodeAddFeatureAlg1(hQuadTree, psNode,
+                                                      oldFeatures[i], &bounds);
                     }
                 }
 
@@ -450,56 +631,93 @@ static void CPLQuadTreeNodeAddFeatureAlg1( CPLQuadTree* hQuadTree,
                 CPLFree(pasOldBounds);
 
                 /* recurse back on this psNode now that it has apSubNodes */
-                CPLQuadTreeNodeAddFeatureAlg1( hQuadTree, psNode, hFeature,
-                                               pRect );
+                CPLQuadTreeNodeAddFeatureAlg1(hQuadTree, psNode, hFeature,
+                                              pRect);
                 return;
             }
         }
     }
     else
     {
-    /* -------------------------------------------------------------------- */
-    /*      If there are apSubNodes, then consider whether this object      */
-    /*      will fit in them.                                               */
-    /* -------------------------------------------------------------------- */
-        for( int i = 0; i < psNode->nNumSubNodes; i++ )
+        /* --------------------------------------------------------------------
+         */
+        /*      If there are apSubNodes, then consider whether this object */
+        /*      will fit in them. */
+        /* --------------------------------------------------------------------
+         */
+        for (int i = 0; i < psNode->nNumSubNodes; i++)
         {
-            if( CPL_RectContained(pRect, &psNode->apSubNode[i]->rect))
+            if (CPL_RectContained(pRect, &psNode->apSubNode[i]->rect))
             {
-                CPLQuadTreeNodeAddFeatureAlg1( hQuadTree, psNode->apSubNode[i],
-                                               hFeature, pRect );
+                CPLQuadTreeNodeAddFeatureAlg1(hQuadTree, psNode->apSubNode[i],
+                                              hFeature, pRect);
+                return;
+            }
+        }
+        if (hQuadTree->bForceUseOfSubNodes)
+        {
+            bool overlaps[4];
+            bool overlapAll = true;
+            for (int i = 0; i < psNode->nNumSubNodes; i++)
+            {
+                overlaps[i] =
+                    CPL_RectOverlap(pRect, &psNode->apSubNode[i]->rect);
+                if (!overlaps[i])
+                    overlapAll = false;
+            }
+            if (!overlapAll)
+            {
+                for (int i = 0; i < psNode->nNumSubNodes; i++)
+                {
+                    if (overlaps[i])
+                    {
+                        CPLRectObj intersection;
+                        intersection.minx = std::max(
+                            pRect->minx, psNode->apSubNode[i]->rect.minx);
+                        intersection.miny = std::max(
+                            pRect->miny, psNode->apSubNode[i]->rect.miny);
+                        intersection.maxx = std::min(
+                            pRect->maxx, psNode->apSubNode[i]->rect.maxx);
+                        intersection.maxy = std::min(
+                            pRect->maxy, psNode->apSubNode[i]->rect.maxy);
+                        CPLQuadTreeNodeAddFeatureAlg1(hQuadTree,
+                                                      psNode->apSubNode[i],
+                                                      hFeature, &intersection);
+                    }
+                }
                 return;
             }
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      If none of that worked, just add it to this psNodes list.         */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      If none of that worked, just add it to this psNodes list.         */
+    /* -------------------------------------------------------------------- */
     psNode->nFeatures++;
 
-    if( psNode->nFeatures == 1 )
+    if (psNode->nFeatures == 1)
     {
-        CPLAssert( psNode->pahFeatures == NULL );
+        CPLAssert(psNode->pahFeatures == nullptr);
         psNode->pahFeatures = static_cast<void **>(
-            CPLMalloc( hQuadTree->nBucketCapacity * sizeof(void*) ) );
-        if( hQuadTree->pfnGetBounds == NULL )
+            CPLMalloc(hQuadTree->nBucketCapacity * sizeof(void *)));
+        if (hQuadTree->pfnGetBounds == nullptr &&
+            hQuadTree->pfnGetBoundsEx == nullptr)
             psNode->pasBounds = static_cast<CPLRectObj *>(
-                CPLMalloc( hQuadTree->nBucketCapacity * sizeof(CPLRectObj) ) );
+                CPLMalloc(hQuadTree->nBucketCapacity * sizeof(CPLRectObj)));
     }
-    else if( psNode->nFeatures > hQuadTree->nBucketCapacity )
+    else if (psNode->nFeatures > hQuadTree->nBucketCapacity)
     {
-        psNode->pahFeatures = static_cast<void **>(
-            CPLRealloc( psNode->pahFeatures,
-                        sizeof(void*) * psNode->nFeatures ) );
-        if( hQuadTree->pfnGetBounds == NULL )
-            psNode->pasBounds = static_cast<CPLRectObj *>(
-                CPLRealloc( psNode->pasBounds,
-                            sizeof(CPLRectObj) * psNode->nFeatures ) );
+        psNode->pahFeatures = static_cast<void **>(CPLRealloc(
+            psNode->pahFeatures, sizeof(void *) * psNode->nFeatures));
+        if (hQuadTree->pfnGetBounds == nullptr &&
+            hQuadTree->pfnGetBoundsEx == nullptr)
+            psNode->pasBounds = static_cast<CPLRectObj *>(CPLRealloc(
+                psNode->pasBounds, sizeof(CPLRectObj) * psNode->nFeatures));
     }
-    psNode->pahFeatures[psNode->nFeatures-1] = hFeature;
-    if( hQuadTree->pfnGetBounds == NULL )
-        psNode->pasBounds[psNode->nFeatures-1] = *pRect;
+    psNode->pahFeatures[psNode->nFeatures - 1] = hFeature;
+    if (hQuadTree->pfnGetBounds == nullptr &&
+        hQuadTree->pfnGetBoundsEx == nullptr)
+        psNode->pasBounds[psNode->nFeatures - 1] = *pRect;
 
     return;
 }
@@ -508,50 +726,49 @@ static void CPLQuadTreeNodeAddFeatureAlg1( CPLQuadTree* hQuadTree,
 /*                  CPLQuadTreeNodeAddFeatureAlg2()                     */
 /************************************************************************/
 
-static void CPLQuadTreeNodeAddFeatureAlg2( CPLQuadTree *hQuadTree,
-                                           QuadTreeNode *psNode,
-                                           void* hFeature,
-                                           const CPLRectObj* pRect,
-                                           int nMaxDepth)
+static void CPLQuadTreeNodeAddFeatureAlg2(CPLQuadTree *hQuadTree,
+                                          QuadTreeNode *psNode, void *hFeature,
+                                          const CPLRectObj *pRect,
+                                          int nMaxDepth)
 {
-  /* -------------------------------------------------------------------- */
-  /*      If there are apSubNodes, then consider whether this object      */
-  /*      will fit in them.                                               */
-  /* -------------------------------------------------------------------- */
-    if( nMaxDepth > 1 && psNode->nNumSubNodes > 0 )
+    /* -------------------------------------------------------------------- */
+    /*      If there are apSubNodes, then consider whether this object      */
+    /*      will fit in them.                                               */
+    /* -------------------------------------------------------------------- */
+    if (nMaxDepth > 1 && psNode->nNumSubNodes > 0)
     {
-        for( int i = 0; i < psNode->nNumSubNodes; i++ )
+        for (int i = 0; i < psNode->nNumSubNodes; i++)
         {
-            if( CPL_RectContained(pRect, &psNode->apSubNode[i]->rect))
+            if (CPL_RectContained(pRect, &psNode->apSubNode[i]->rect))
             {
-                CPLQuadTreeNodeAddFeatureAlg2( hQuadTree, psNode->apSubNode[i],
-                                               hFeature, pRect, nMaxDepth-1);
+                CPLQuadTreeNodeAddFeatureAlg2(hQuadTree, psNode->apSubNode[i],
+                                              hFeature, pRect, nMaxDepth - 1);
                 return;
             }
         }
     }
 
-  /* -------------------------------------------------------------------- */
-  /*      Otherwise, consider creating four apSubNodes if could fit into  */
-  /*      them, and adding to the appropriate apSubNode.                  */
-  /* -------------------------------------------------------------------- */
-    else if( nMaxDepth > 1 && psNode->nNumSubNodes == 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Otherwise, consider creating four apSubNodes if could fit into  */
+    /*      them, and adding to the appropriate apSubNode.                  */
+    /* -------------------------------------------------------------------- */
+    else if (nMaxDepth > 1 && psNode->nNumSubNodes == 0)
     {
         CPLRectObj half1, half2, quad1, quad2, quad3, quad4;
 
-        CPLQuadTreeSplitBounds(hQuadTree->dfSplitRatio, &psNode->rect,
-                               &half1, &half2);
+        CPLQuadTreeSplitBounds(hQuadTree->dfSplitRatio, &psNode->rect, &half1,
+                               &half2);
         CPLQuadTreeSplitBounds(hQuadTree->dfSplitRatio, &half1, &quad1, &quad2);
         CPLQuadTreeSplitBounds(hQuadTree->dfSplitRatio, &half2, &quad3, &quad4);
 
-        if( memcmp(&psNode->rect, &quad1, sizeof(CPLRectObj)) != 0 &&
+        if (memcmp(&psNode->rect, &quad1, sizeof(CPLRectObj)) != 0 &&
             memcmp(&psNode->rect, &quad2, sizeof(CPLRectObj)) != 0 &&
             memcmp(&psNode->rect, &quad3, sizeof(CPLRectObj)) != 0 &&
             memcmp(&psNode->rect, &quad4, sizeof(CPLRectObj)) != 0 &&
             (CPL_RectContained(pRect, &quad1) ||
              CPL_RectContained(pRect, &quad2) ||
              CPL_RectContained(pRect, &quad3) ||
-             CPL_RectContained(pRect, &quad4)) )
+             CPL_RectContained(pRect, &quad4)))
         {
             psNode->nNumSubNodes = 4;
             psNode->apSubNode[0] = CPLQuadTreeNodeCreate(&quad1);
@@ -560,31 +777,30 @@ static void CPLQuadTreeNodeAddFeatureAlg2( CPLQuadTree *hQuadTree,
             psNode->apSubNode[3] = CPLQuadTreeNodeCreate(&quad4);
 
             /* recurse back on this psNode now that it has apSubNodes */
-            CPLQuadTreeNodeAddFeatureAlg2( hQuadTree, psNode, hFeature,
-                                           pRect, nMaxDepth);
+            CPLQuadTreeNodeAddFeatureAlg2(hQuadTree, psNode, hFeature, pRect,
+                                          nMaxDepth);
             return;
         }
     }
 
-/* -------------------------------------------------------------------- */
-/*      If none of that worked, just add it to this psNodes list.       */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      If none of that worked, just add it to this psNodes list.       */
+    /* -------------------------------------------------------------------- */
     psNode->nFeatures++;
 
-    psNode->pahFeatures =
-        static_cast<void **>( CPLRealloc( psNode->pahFeatures,
-                                          sizeof(void*) * psNode->nFeatures ) );
-    if( hQuadTree->pfnGetBounds == NULL )
+    psNode->pahFeatures = static_cast<void **>(
+        CPLRealloc(psNode->pahFeatures, sizeof(void *) * psNode->nFeatures));
+    if (hQuadTree->pfnGetBounds == nullptr &&
+        hQuadTree->pfnGetBoundsEx == nullptr)
     {
-        psNode->pasBounds =
-          static_cast<CPLRectObj*>(
-              CPLRealloc( psNode->pasBounds,
-                          sizeof(CPLRectObj) * psNode->nFeatures ) );
+        psNode->pasBounds = static_cast<CPLRectObj *>(CPLRealloc(
+            psNode->pasBounds, sizeof(CPLRectObj) * psNode->nFeatures));
     }
-    psNode->pahFeatures[psNode->nFeatures-1] = hFeature;
-    if( hQuadTree->pfnGetBounds == NULL )
+    psNode->pahFeatures[psNode->nFeatures - 1] = hFeature;
+    if (hQuadTree->pfnGetBounds == nullptr &&
+        hQuadTree->pfnGetBoundsEx == nullptr)
     {
-        psNode->pasBounds[psNode->nFeatures-1] = *pRect;
+        psNode->pasBounds[psNode->nFeatures - 1] = *pRect;
     }
 }
 
@@ -593,18 +809,18 @@ static void CPLQuadTreeNodeAddFeatureAlg2( CPLQuadTree *hQuadTree,
 /************************************************************************/
 
 static void CPLQuadTreeAddFeatureInternal(CPLQuadTree *hQuadTree,
-                                          void* hFeature,
+                                          void *hFeature,
                                           const CPLRectObj *pRect)
 {
-    if( hQuadTree->nMaxDepth == 0 )
+    if (hQuadTree->nMaxDepth == 0)
     {
-        CPLQuadTreeNodeAddFeatureAlg1(hQuadTree, hQuadTree->psRoot,
-                                     hFeature, pRect);
+        CPLQuadTreeNodeAddFeatureAlg1(hQuadTree, hQuadTree->psRoot, hFeature,
+                                      pRect);
     }
     else
     {
-        CPLQuadTreeNodeAddFeatureAlg2(hQuadTree, hQuadTree->psRoot,
-                                     hFeature, pRect, hQuadTree->nMaxDepth);
+        CPLQuadTreeNodeAddFeatureAlg2(hQuadTree, hQuadTree->psRoot, hFeature,
+                                      pRect, hQuadTree->nMaxDepth);
     }
 }
 
@@ -614,44 +830,49 @@ static void CPLQuadTreeAddFeatureInternal(CPLQuadTree *hQuadTree,
 
 static void CPLQuadTreeCollectFeatures(const CPLQuadTree *hQuadTree,
                                        const QuadTreeNode *psNode,
-                                       const CPLRectObj* pAoi,
-                                       int* pnFeatureCount,
-                                       int* pnMaxFeatures,
-                                       void*** pppFeatureList)
+                                       const CPLRectObj *pAoi,
+                                       int *pnFeatureCount, int *pnMaxFeatures,
+                                       void ***pppFeatureList)
 {
     /* -------------------------------------------------------------------- */
     /*      Does this psNode overlap the area of interest at all?  If not,  */
     /*      return without adding to the list at all.                       */
     /* -------------------------------------------------------------------- */
-    if( !CPL_RectOverlap(&psNode->rect, pAoi) )
+    if (!CPL_RectOverlap(&psNode->rect, pAoi))
         return;
 
     /* -------------------------------------------------------------------- */
     /*      Grow the list to hold the features on this psNode.              */
     /* -------------------------------------------------------------------- */
-    if( *pnFeatureCount + psNode->nFeatures > *pnMaxFeatures )
+    if (*pnFeatureCount + psNode->nFeatures > *pnMaxFeatures)
     {
         // TODO(schwehr): Symbolic constant.
         *pnMaxFeatures = (*pnFeatureCount + psNode->nFeatures) * 2 + 20;
         *pppFeatureList = static_cast<void **>(
-            CPLRealloc(*pppFeatureList, sizeof(void*) * *pnMaxFeatures) );
+            CPLRealloc(*pppFeatureList, sizeof(void *) * *pnMaxFeatures));
     }
 
     /* -------------------------------------------------------------------- */
     /*      Add the local features to the list.                             */
     /* -------------------------------------------------------------------- */
-    for( int i = 0; i < psNode->nFeatures; i++ )
+    for (int i = 0; i < psNode->nFeatures; i++)
     {
-        if( hQuadTree->pfnGetBounds == NULL )
+        if (hQuadTree->pfnGetBounds == nullptr &&
+            hQuadTree->pfnGetBoundsEx == nullptr)
         {
-            if( CPL_RectOverlap(&psNode->pasBounds[i], pAoi) )
+            if (CPL_RectOverlap(&psNode->pasBounds[i], pAoi))
                 (*pppFeatureList)[(*pnFeatureCount)++] = psNode->pahFeatures[i];
         }
         else
         {
             CPLRectObj bounds;
-            hQuadTree->pfnGetBounds(psNode->pahFeatures[i], &bounds);
-            if( CPL_RectOverlap(&bounds, pAoi) )
+            if (hQuadTree->pfnGetBoundsEx)
+                hQuadTree->pfnGetBoundsEx(psNode->pahFeatures[i],
+                                          hQuadTree->pUserData, &bounds);
+            else
+                hQuadTree->pfnGetBounds(psNode->pahFeatures[i], &bounds);
+
+            if (CPL_RectOverlap(&bounds, pAoi))
                 (*pppFeatureList)[(*pnFeatureCount)++] = psNode->pahFeatures[i];
         }
     }
@@ -659,12 +880,12 @@ static void CPLQuadTreeCollectFeatures(const CPLQuadTree *hQuadTree,
     /* -------------------------------------------------------------------- */
     /*      Recurse to subnodes if they exist.                              */
     /* -------------------------------------------------------------------- */
-    for( int i = 0; i < psNode->nNumSubNodes; i++ )
+    for (int i = 0; i < psNode->nNumSubNodes; i++)
     {
-        if( psNode->apSubNode[i] )
-            CPLQuadTreeCollectFeatures( hQuadTree, psNode->apSubNode[i], pAoi,
-                                        pnFeatureCount, pnMaxFeatures,
-                                        pppFeatureList );
+        if (psNode->apSubNode[i])
+            CPLQuadTreeCollectFeatures(hQuadTree, psNode->apSubNode[i], pAoi,
+                                       pnFeatureCount, pnMaxFeatures,
+                                       pppFeatureList);
     }
 }
 
@@ -683,21 +904,20 @@ static void CPLQuadTreeCollectFeatures(const CPLQuadTree *hQuadTree,
  * @return an array of features that must be freed with CPLFree
  */
 
-void** CPLQuadTreeSearch( const CPLQuadTree *hQuadTree,
-                          const CPLRectObj* pAoi,
-                          int* pnFeatureCount )
+void **CPLQuadTreeSearch(const CPLQuadTree *hQuadTree, const CPLRectObj *pAoi,
+                         int *pnFeatureCount)
 {
     CPLAssert(hQuadTree);
     CPLAssert(pAoi);
 
     int nFeatureCount = 0;
-    if( pnFeatureCount == NULL )
+    if (pnFeatureCount == nullptr)
         pnFeatureCount = &nFeatureCount;
 
     *pnFeatureCount = 0;
 
     int nMaxFeatures = 0;
-    void** ppFeatureList = NULL;
+    void **ppFeatureList = nullptr;
     CPLQuadTreeCollectFeatures(hQuadTree, hQuadTree->psRoot, pAoi,
                                pnFeatureCount, &nMaxFeatures, &ppFeatureList);
 
@@ -709,19 +929,19 @@ void** CPLQuadTreeSearch( const CPLQuadTree *hQuadTree,
 /************************************************************************/
 
 static bool CPLQuadTreeNodeForeach(const QuadTreeNode *psNode,
-                                  CPLQuadTreeForeachFunc pfnForeach,
-                                  void* pUserData)
+                                   CPLQuadTreeForeachFunc pfnForeach,
+                                   void *pUserData)
 {
-    for( int i = 0; i < psNode->nNumSubNodes; i++ )
+    for (int i = 0; i < psNode->nNumSubNodes; i++)
     {
-        if( !CPLQuadTreeNodeForeach(psNode->apSubNode[i], pfnForeach,
-                                    pUserData) )
+        if (!CPLQuadTreeNodeForeach(psNode->apSubNode[i], pfnForeach,
+                                    pUserData))
             return false;
     }
 
-    for( int i = 0; i < psNode->nFeatures; i++ )
+    for (int i = 0; i < psNode->nFeatures; i++)
     {
-        if( pfnForeach(psNode->pahFeatures[i], pUserData) == FALSE )
+        if (pfnForeach(psNode->pahFeatures[i], pUserData) == FALSE)
             return false;
     }
 
@@ -748,9 +968,8 @@ static bool CPLQuadTreeNodeForeach(const QuadTreeNode *psNode,
  * @param pUserData the user data provided to the function.
  */
 
-void CPLQuadTreeForeach( const CPLQuadTree *hQuadTree,
-                         CPLQuadTreeForeachFunc pfnForeach,
-                         void* pUserData )
+void CPLQuadTreeForeach(const CPLQuadTree *hQuadTree,
+                        CPLQuadTreeForeachFunc pfnForeach, void *pUserData)
 {
     CPLAssert(hQuadTree);
     CPLAssert(pfnForeach);
@@ -761,44 +980,43 @@ void CPLQuadTreeForeach( const CPLQuadTree *hQuadTree,
 /*                       CPLQuadTreeDumpNode()                          */
 /************************************************************************/
 
-static void CPLQuadTreeDumpNode( const QuadTreeNode *psNode,
-                                 int nIndentLevel,
-                                 CPLQuadTreeDumpFeatureFunc pfnDumpFeatureFunc,
-                                 void* pUserData )
+static void CPLQuadTreeDumpNode(const QuadTreeNode *psNode, int nIndentLevel,
+                                CPLQuadTreeDumpFeatureFunc pfnDumpFeatureFunc,
+                                void *pUserData)
 {
-    if( psNode->nNumSubNodes )
+    if (psNode->nNumSubNodes)
     {
-        for( int count = nIndentLevel; --count >= 0; )
+        for (int count = nIndentLevel; --count >= 0;)
         {
             printf("  "); /*ok*/
         }
         printf("SubhQuadTrees :\n"); /*ok*/
-        for( int i = 0; i < psNode->nNumSubNodes; i++ )
+        for (int i = 0; i < psNode->nNumSubNodes; i++)
         {
-            for( int count = nIndentLevel+1; --count >= 0; )
+            for (int count = nIndentLevel + 1; --count >= 0;)
             {
                 printf("  "); /*ok*/
             }
-            printf("SubhQuadTree %d :\n", i+1); /*ok*/
+            printf("SubhQuadTree %d :\n", i + 1); /*ok*/
             CPLQuadTreeDumpNode(psNode->apSubNode[i], nIndentLevel + 2,
                                 pfnDumpFeatureFunc, pUserData);
         }
     }
-    if( psNode->nFeatures )
+    if (psNode->nFeatures)
     {
-        for( int count = nIndentLevel; --count >= 0; )
-            printf("  "); /*ok*/
+        for (int count = nIndentLevel; --count >= 0;)
+            printf("  ");                            /*ok*/
         printf("Leaves (%d):\n", psNode->nFeatures); /*ok*/
-        for( int i = 0; i < psNode->nFeatures; i++ )
+        for (int i = 0; i < psNode->nFeatures; i++)
         {
-            if( pfnDumpFeatureFunc )
+            if (pfnDumpFeatureFunc)
             {
                 pfnDumpFeatureFunc(psNode->pahFeatures[i], nIndentLevel + 2,
                                    pUserData);
             }
             else
             {
-                for( int count = nIndentLevel + 1; --count >= 0; )
+                for (int count = nIndentLevel + 1; --count >= 0;)
                 {
                     printf("  "); /*ok*/
                 }
@@ -813,9 +1031,9 @@ static void CPLQuadTreeDumpNode( const QuadTreeNode *psNode,
 /************************************************************************/
 
 /** Dump quad tree */
-void CPLQuadTreeDump( const CPLQuadTree *hQuadTree,
-                      CPLQuadTreeDumpFeatureFunc pfnDumpFeatureFunc,
-                      void* pUserData )
+void CPLQuadTreeDump(const CPLQuadTree *hQuadTree,
+                     CPLQuadTreeDumpFeatureFunc pfnDumpFeatureFunc,
+                     void *pUserData)
 {
     CPLQuadTreeDumpNode(hQuadTree->psRoot, 0, pfnDumpFeatureFunc, pUserData);
 }
@@ -824,20 +1042,17 @@ void CPLQuadTreeDump( const CPLQuadTree *hQuadTree,
 /*                  CPLQuadTreeGetStatsNode()                           */
 /************************************************************************/
 
-static
-void CPLQuadTreeGetStatsNode( const QuadTreeNode *psNode,
-                              int nDepthLevel,
-                              int* pnNodeCount,
-                              int* pnMaxDepth,
-                              int* pnMaxBucketCapacity )
+static void CPLQuadTreeGetStatsNode(const QuadTreeNode *psNode, int nDepthLevel,
+                                    int *pnNodeCount, int *pnMaxDepth,
+                                    int *pnMaxBucketCapacity)
 {
-    (*pnNodeCount) ++;
-    if( nDepthLevel > *pnMaxDepth )
+    (*pnNodeCount)++;
+    if (nDepthLevel > *pnMaxDepth)
         *pnMaxDepth = nDepthLevel;
-    if( psNode->nFeatures > *pnMaxBucketCapacity )
+    if (psNode->nFeatures > *pnMaxBucketCapacity)
         *pnMaxBucketCapacity = psNode->nFeatures;
 
-    for( int i = 0; i < psNode->nNumSubNodes; i++ )
+    for (int i = 0; i < psNode->nNumSubNodes; i++)
     {
         CPLQuadTreeGetStatsNode(psNode->apSubNode[i], nDepthLevel + 1,
                                 pnNodeCount, pnMaxDepth, pnMaxBucketCapacity);
@@ -849,25 +1064,23 @@ void CPLQuadTreeGetStatsNode( const QuadTreeNode *psNode,
 /************************************************************************/
 
 /** Get stats */
-void CPLQuadTreeGetStats( const CPLQuadTree *hQuadTree,
-                          int* pnFeatureCount,
-                          int* pnNodeCount,
-                          int* pnMaxDepth,
-                          int* pnMaxBucketCapacity )
+void CPLQuadTreeGetStats(const CPLQuadTree *hQuadTree, int *pnFeatureCount,
+                         int *pnNodeCount, int *pnMaxDepth,
+                         int *pnMaxBucketCapacity)
 {
     CPLAssert(hQuadTree);
 
     int nFeatureCount = 0;
-    if( pnFeatureCount == NULL )
+    if (pnFeatureCount == nullptr)
         pnFeatureCount = &nFeatureCount;
     int nNodeCount = 0;
-    if( pnNodeCount == NULL )
+    if (pnNodeCount == nullptr)
         pnNodeCount = &nNodeCount;
     int nMaxDepth = 0;
-    if( pnMaxDepth == NULL )
+    if (pnMaxDepth == nullptr)
         pnMaxDepth = &nMaxDepth;
     int nMaxBucketCapacity = 0;
-    if( pnMaxBucketCapacity == NULL )
+    if (pnMaxBucketCapacity == nullptr)
         pnMaxBucketCapacity = &nMaxBucketCapacity;
 
     *pnFeatureCount = hQuadTree->nFeatures;
@@ -875,8 +1088,8 @@ void CPLQuadTreeGetStats( const CPLQuadTree *hQuadTree,
     *pnMaxDepth = 1;
     *pnMaxBucketCapacity = 0;
 
-    CPLQuadTreeGetStatsNode( hQuadTree->psRoot, 0, pnNodeCount, pnMaxDepth,
-                             pnMaxBucketCapacity );
+    CPLQuadTreeGetStatsNode(hQuadTree->psRoot, 0, pnNodeCount, pnMaxDepth,
+                            pnMaxBucketCapacity);
 
     // TODO(schwehr): If any of the pointers were set to local vars,
     // do they need to be reset to a nullptr?

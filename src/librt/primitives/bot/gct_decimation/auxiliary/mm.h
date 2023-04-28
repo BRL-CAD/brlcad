@@ -114,7 +114,7 @@ typedef struct {
 extern mmContext mmcontext;
 
 
-void mmInit();
+void mmInit(void);
 
 
 void *mmAlignAlloc(size_t bytes, intptr_t align);

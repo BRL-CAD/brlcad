@@ -1,7 +1,7 @@
 /*                      D B _ A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2022 United States Government as represented by
+ * Copyright (c) 1988-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -188,7 +188,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
     if (dbip->dbi_read_only)
 	return -1;
 
-    BU_ASSERT(dbip->dbi_version == 4);
+    BU_ASSERT(db_version(dbip) == 4);
 
     if (dp->d_len < start)
 	return -1;

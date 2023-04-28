@@ -1,7 +1,7 @@
 /*                  S U B S U R F A C E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2022 United States Government as represented by
+ * Copyright (c) 2014-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,7 +78,7 @@ Subsurface::Split()
 	m_children[i] = new Subsurface();
     }
     ON_Surface *temp_surf1 = NULL, *temp_surf2 = NULL;
-    ON_BOOL32 ret = true;
+    bool ret = true;
     ret = m_surf->Split(0, m_surf->Domain(0).Mid(), temp_surf1, temp_surf2);
     if (!ret) {
 	delete temp_surf1;

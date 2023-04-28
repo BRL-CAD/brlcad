@@ -43,35 +43,24 @@
 #include "mitab_priv.h"
 #include "mitab_utils.h"
 
-CPL_CVSID("$Id$");
-
 /*=====================================================================
  *                      class TABMAPObjectBlock
  *====================================================================*/
 
-static const int MAP_OBJECT_HEADER_SIZE = 20;
+constexpr int MAP_OBJECT_HEADER_SIZE = 20;
 
 /**********************************************************************
  *                   TABMAPObjectBlock::TABMAPObjectBlock()
  *
  * Constructor.
  **********************************************************************/
-TABMAPObjectBlock::TABMAPObjectBlock( TABAccess eAccessMode /*= TABRead*/ ) :
-    TABRawBinBlock(eAccessMode, TRUE),
-    m_numDataBytes(0),
-    m_nFirstCoordBlock(0),
-    m_nLastCoordBlock(0),
-    m_nCenterX(0),
-    m_nCenterY(0),
-    m_nMinX(0),
-    m_nMinY(0),
-    m_nMaxX(0),
-    m_nMaxY(0),
-    m_nCurObjectOffset(0),
-    m_nCurObjectId(0),
-    m_nCurObjectType(TAB_GEOM_UNSET),
-    m_bLockCenter(FALSE)
-{}
+TABMAPObjectBlock::TABMAPObjectBlock(TABAccess eAccessMode /*= TABRead*/)
+    : TABRawBinBlock(eAccessMode, TRUE), m_numDataBytes(0),
+      m_nFirstCoordBlock(0), m_nLastCoordBlock(0), m_nCenterX(0), m_nCenterY(0),
+      m_nMinX(0), m_nMinY(0), m_nMaxX(0), m_nMaxY(0), m_nCurObjectOffset(0),
+      m_nCurObjectId(0), m_nCurObjectType(TAB_GEOM_UNSET), m_bLockCenter(FALSE)
+{
+}
 
 /**********************************************************************
  *                   TABMAPObjectBlock::~TABMAPObjectBlock()
@@ -96,20 +85,17 @@ TABMAPObjectBlock::~TABMAPObjectBlock()
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
-                                             int nBlockSize, int nSizeUsed,
-                                             GBool bMakeCopy /* = TRUE */,
-                                             VSILFILE *fpSrc /* = NULL */,
-                                             int nOffset /* = 0 */)
+int TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf, int nBlockSize,
+                                         int nSizeUsed,
+                                         GBool bMakeCopy /* = TRUE */,
+                                         VSILFILE *fpSrc /* = NULL */,
+                                         int nOffset /* = 0 */)
 {
     /*-----------------------------------------------------------------
      * First of all, we must call the base class' InitBlockFromData()
      *----------------------------------------------------------------*/
-    const int nStatus =
-        TABRawBinBlock::InitBlockFromData(pabyBuf,
-                                          nBlockSize, nSizeUsed,
-                                          bMakeCopy,
-                                          fpSrc, nOffset);
+    const int nStatus = TABRawBinBlock::InitBlockFromData(
+        pabyBuf, nBlockSize, nSizeUsed, bMakeCopy, fpSrc, nOffset);
     if (nStatus != 0)
         return nStatus;
 
@@ -122,7 +108,7 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
                  "InitBlockFromData(): Invalid Block Type: got %d expected %d",
                  m_nBlockType, TABMAP_OBJECT_BLOCK);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -130,14 +116,16 @@ int     TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf,
      * Init member variables
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x002);
-    m_numDataBytes = ReadInt16();       /* Excluding 4 bytes header */
-    if( m_numDataBytes < 0 || m_numDataBytes + MAP_OBJECT_HEADER_SIZE > nBlockSize )
+    m_numDataBytes = ReadInt16(); /* Excluding 4 bytes header */
+    if (m_numDataBytes < 0 ||
+        m_numDataBytes + MAP_OBJECT_HEADER_SIZE > nBlockSize)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "TABMAPObjectBlock::InitBlockFromData(): m_numDataBytes=%d incompatible with block size %d",
+                 "TABMAPObjectBlock::InitBlockFromData(): m_numDataBytes=%d "
+                 "incompatible with block size %d",
                  m_numDataBytes, nBlockSize);
         CPLFree(m_pabyBuf);
-        m_pabyBuf = NULL;
+        m_pabyBuf = nullptr;
         return -1;
     }
 
@@ -201,7 +189,8 @@ void TABMAPObjectBlock::LockCenter()
  * lock them. See LockCenter() as well.
  * Used when splitting a page.
  ************************************************************************/
-void TABMAPObjectBlock::SetCenterFromOtherBlock(TABMAPObjectBlock* poOtherObjBlock)
+void TABMAPObjectBlock::SetCenterFromOtherBlock(
+    TABMAPObjectBlock *poOtherObjBlock)
 {
     m_nCenterX = poOtherObjBlock->m_nCenterX;
     m_nCenterY = poOtherObjBlock->m_nCenterY;
@@ -211,7 +200,7 @@ void TABMAPObjectBlock::SetCenterFromOtherBlock(TABMAPObjectBlock* poOtherObjBlo
 /************************************************************************/
 /*                        Rewind()                                      */
 /************************************************************************/
-void TABMAPObjectBlock::Rewind( )
+void TABMAPObjectBlock::Rewind()
 {
     m_nCurObjectId = -1;
     m_nCurObjectOffset = -1;
@@ -222,29 +211,43 @@ void TABMAPObjectBlock::Rewind( )
 /*                        AdvanceToNextObject()                         */
 /************************************************************************/
 
-int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
+int TABMAPObjectBlock::AdvanceToNextObject(TABMAPHeaderBlock *poHeader)
 
 {
-    if( m_nCurObjectId == -1 )
+    if (m_nCurObjectId == -1)
     {
         m_nCurObjectOffset = 20;
     }
     else
     {
-        m_nCurObjectOffset += poHeader->GetMapObjectSize( m_nCurObjectType );
+        m_nCurObjectOffset += poHeader->GetMapObjectSize(m_nCurObjectType);
     }
 
-    if( m_nCurObjectOffset + 5 < m_numDataBytes + 20 )
+    if (m_nCurObjectOffset + 5 < m_numDataBytes + 20)
     {
-        GotoByteInBlock( m_nCurObjectOffset );
-        m_nCurObjectType = (TABGeomType)ReadByte();
+        GotoByteInBlock(m_nCurObjectOffset);
+        const GByte byVal = ReadByte();
+        if (TABMAPFile::IsValidObjType(byVal))
+        {
+            m_nCurObjectType = static_cast<TABGeomType>(byVal);
+        }
+        else
+        {
+            CPLError(
+                CE_Warning,
+                static_cast<CPLErrorNum>(TAB_WarningFeatureTypeNotSupported),
+                "Unsupported object type %d (0x%2.2x).  Feature will be "
+                "returned with NONE geometry.",
+                byVal, byVal);
+            m_nCurObjectType = TAB_GEOM_NONE;
+        }
     }
     else
     {
         m_nCurObjectType = TAB_GEOM_UNSET;
     }
 
-    if( m_nCurObjectType <= 0 || m_nCurObjectType >= TAB_GEOM_MAX_TYPE )
+    if (m_nCurObjectType <= 0 || m_nCurObjectType >= TAB_GEOM_MAX_TYPE)
     {
         m_nCurObjectType = TAB_GEOM_UNSET;
         m_nCurObjectId = -1;
@@ -258,9 +261,9 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
         // I check both the top bits but I have only seen this occur
         // with the second highest bit set (i.e. in usa/states.tab). NFW.
 
-        if( (((GUInt32)m_nCurObjectId) & (GUInt32) 0xC0000000) != 0 )
+        if ((static_cast<GUInt32>(m_nCurObjectId) & 0xC0000000U) != 0)
         {
-            m_nCurObjectId = AdvanceToNextObject( poHeader );
+            m_nCurObjectId = AdvanceToNextObject(poHeader);
         }
     }
 
@@ -280,14 +283,13 @@ int TABMAPObjectBlock::AdvanceToNextObject( TABMAPHeaderBlock *poHeader )
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPObjectBlock::CommitToFile()
+int TABMAPObjectBlock::CommitToFile()
 {
-    int nStatus = 0;
-
-    if ( m_pabyBuf == NULL )
+    if (m_pabyBuf == nullptr)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
-     "TABMAPObjectBlock::CommitToFile(): Block has not been initialized yet!");
+                 "TABMAPObjectBlock::CommitToFile(): Block has not been "
+                 "initialized yet!");
         return -1;
     }
 
@@ -302,10 +304,10 @@ int     TABMAPObjectBlock::CommitToFile()
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x000);
 
-    WriteInt16(TABMAP_OBJECT_BLOCK);    // Block type code
+    WriteInt16(TABMAP_OBJECT_BLOCK);  // Block type code
     m_numDataBytes = m_nSizeUsed - MAP_OBJECT_HEADER_SIZE;
     CPLAssert(m_numDataBytes >= 0 && m_numDataBytes < 32768);
-    WriteInt16((GInt16)m_numDataBytes);         // num. bytes used
+    WriteInt16(static_cast<GInt16>(m_numDataBytes));  // num. bytes used
 
     WriteInt32(m_nCenterX);
     WriteInt32(m_nCenterY);
@@ -313,7 +315,7 @@ int     TABMAPObjectBlock::CommitToFile()
     WriteInt32(m_nFirstCoordBlock);
     WriteInt32(m_nLastCoordBlock);
 
-    nStatus = CPLGetLastErrorNo();
+    int nStatus = CPLGetLastErrorType() == CE_Failure ? -1 : 0;
 
     /*-----------------------------------------------------------------
      * OK, all object data has already been written in the block.
@@ -322,7 +324,8 @@ int     TABMAPObjectBlock::CommitToFile()
     if (nStatus == 0)
     {
 #ifdef DEBUG_VERBOSE
-        CPLDebug("MITAB", "Committing OBJECT block to offset %d", m_nFileOffset);
+        CPLDebug("MITAB", "Committing OBJECT block to offset %d",
+                 m_nFileOffset);
 #endif
         nStatus = TABRawBinBlock::CommitToFile();
     }
@@ -345,13 +348,13 @@ int     TABMAPObjectBlock::CommitToFile()
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int TABMAPObjectBlock::InitNewBlock( VSILFILE *fpSrc, int nBlockSize,
-                                     int nFileOffset /* = 0*/ )
+int TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
+                                    int nFileOffset /* = 0*/)
 {
     /*-----------------------------------------------------------------
      * Start with the default initialization
      *----------------------------------------------------------------*/
-    if ( TABRawBinBlock::InitNewBlock(fpSrc, nBlockSize, nFileOffset) != 0)
+    if (TABRawBinBlock::InitNewBlock(fpSrc, nBlockSize, nFileOffset) != 0)
         return -1;
 
     /*-----------------------------------------------------------------
@@ -369,7 +372,7 @@ int TABMAPObjectBlock::InitNewBlock( VSILFILE *fpSrc, int nBlockSize,
     m_nCurObjectOffset = -1;
     m_nCurObjectType = TAB_GEOM_UNSET;
 
-    m_numDataBytes = 0;       /* Data size excluding header */
+    m_numDataBytes = 0; /* Data size excluding header */
     m_nCenterX = 0;
     m_nCenterY = 0;
     m_nFirstCoordBlock = 0;
@@ -379,8 +382,8 @@ int TABMAPObjectBlock::InitNewBlock( VSILFILE *fpSrc, int nBlockSize,
     {
         GotoByteInBlock(0x000);
 
-        WriteInt16(TABMAP_OBJECT_BLOCK);// Block type code
-        WriteInt16(0);                  // num. bytes used, excluding header
+        WriteInt16(TABMAP_OBJECT_BLOCK);  // Block type code
+        WriteInt16(0);                    // num. bytes used, excluding header
 
         // MBR center here... will be written in CommitToFile()
         WriteInt32(0);
@@ -391,7 +394,7 @@ int TABMAPObjectBlock::InitNewBlock( VSILFILE *fpSrc, int nBlockSize,
         WriteInt32(0);
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -410,8 +413,7 @@ int TABMAPObjectBlock::InitNewBlock( VSILFILE *fpSrc, int nBlockSize,
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPObjectBlock::ReadIntCoord(GBool bCompressed,
-                                        GInt32 &nX, GInt32 &nY)
+int TABMAPObjectBlock::ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY)
 {
     if (bCompressed)
     {
@@ -426,7 +428,7 @@ int     TABMAPObjectBlock::ReadIntCoord(GBool bCompressed,
         nY = ReadInt32();
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -445,16 +447,17 @@ int     TABMAPObjectBlock::ReadIntCoord(GBool bCompressed,
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPObjectBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
-                                         GBool bCompressed /*=FALSE*/)
+int TABMAPObjectBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
+                                     GBool bCompressed /*=FALSE*/)
 {
 
     /*-----------------------------------------------------------------
      * Write coords to the file.
      *----------------------------------------------------------------*/
-    if ((!bCompressed && (WriteInt32(nX) != 0 || WriteInt32(nY) != 0 ) ) ||
-        (bCompressed && (WriteInt16((GInt16)(nX - m_nCenterX)) != 0 ||
-                         WriteInt16((GInt16)(nY - m_nCenterY)) != 0) ) )
+    if ((!bCompressed && (WriteInt32(nX) != 0 || WriteInt32(nY) != 0)) ||
+        (bCompressed &&
+         (WriteInt16(static_cast<GInt16>(nX - m_nCenterX)) != 0 ||
+          WriteInt16(static_cast<GInt16>(nY - m_nCenterY)) != 0)))
     {
         return -1;
     }
@@ -478,14 +481,14 @@ int     TABMAPObjectBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPObjectBlock::WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin,
-                                            GInt32 nXMax, GInt32 nYMax,
-                                            GBool bCompressed /*=FALSE*/)
+int TABMAPObjectBlock::WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin,
+                                        GInt32 nXMax, GInt32 nYMax,
+                                        GBool bCompressed /*=FALSE*/)
 {
     if (WriteIntCoord(std::min(nXMin, nXMax), std::min(nYMin, nYMax),
                       bCompressed) != 0 ||
         WriteIntCoord(std::max(nXMin, nXMax), std::max(nYMin, nYMax),
-                      bCompressed) != 0 )
+                      bCompressed) != 0)
     {
         return -1;
     }
@@ -501,7 +504,7 @@ int     TABMAPObjectBlock::WriteIntMBRCoord(GInt32 nXMin, GInt32 nYMin,
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPObjectBlock::UpdateMBR(GInt32 nX, GInt32 nY)
+int TABMAPObjectBlock::UpdateMBR(GInt32 nX, GInt32 nY)
 {
 
     if (nX < m_nMinX)
@@ -514,10 +517,12 @@ int     TABMAPObjectBlock::UpdateMBR(GInt32 nX, GInt32 nY)
     if (nY > m_nMaxY)
         m_nMaxY = nY;
 
-    if( !m_bLockCenter )
+    if (!m_bLockCenter)
     {
-        m_nCenterX = (m_nMinX + m_nMaxX) /2;
-        m_nCenterY = (m_nMinY + m_nMaxY) /2;
+        m_nCenterX =
+            static_cast<int>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+        m_nCenterY =
+            static_cast<int>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
     }
 
     return 0;
@@ -529,7 +534,7 @@ int     TABMAPObjectBlock::UpdateMBR(GInt32 nX, GInt32 nY)
  * Update the first/last coord block fields in this object to contain
  * the specified block address.
  **********************************************************************/
-void     TABMAPObjectBlock::AddCoordBlockRef(GInt32 nNewBlockAddress)
+void TABMAPObjectBlock::AddCoordBlockRef(GInt32 nNewBlockAddress)
 {
     /*-----------------------------------------------------------------
      * Normally, new blocks are added to the end of the list, except
@@ -548,18 +553,20 @@ void     TABMAPObjectBlock::AddCoordBlockRef(GInt32 nNewBlockAddress)
  *
  * Set the MBR for the current block.
  **********************************************************************/
-void TABMAPObjectBlock::SetMBR(GInt32 nXMin, GInt32 nYMin,
-                               GInt32 nXMax, GInt32 nYMax)
+void TABMAPObjectBlock::SetMBR(GInt32 nXMin, GInt32 nYMin, GInt32 nXMax,
+                               GInt32 nYMax)
 {
     m_nMinX = nXMin;
     m_nMinY = nYMin;
     m_nMaxX = nXMax;
     m_nMaxY = nYMax;
 
-    if( !m_bLockCenter )
+    if (!m_bLockCenter)
     {
-        m_nCenterX = (m_nMinX + m_nMaxX) /2;
-        m_nCenterY = (m_nMinY + m_nMaxY) /2;
+        m_nCenterX =
+            static_cast<int>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+        m_nCenterY =
+            static_cast<int>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
     }
 }
 
@@ -568,8 +575,8 @@ void TABMAPObjectBlock::SetMBR(GInt32 nXMin, GInt32 nYMin,
  *
  * Return the MBR for the current block.
  **********************************************************************/
-void TABMAPObjectBlock::GetMBR(GInt32 &nXMin, GInt32 &nYMin,
-                               GInt32 &nXMax, GInt32 &nYMax)
+void TABMAPObjectBlock::GetMBR(GInt32 &nXMin, GInt32 &nYMin, GInt32 &nXMax,
+                               GInt32 &nYMax)
 {
     nXMin = m_nMinX;
     nYMin = m_nMinY;
@@ -586,7 +593,7 @@ void TABMAPObjectBlock::GetMBR(GInt32 &nXMin, GInt32 &nYMin,
  *
  * Returns the position at which the new object starts
  **********************************************************************/
-int     TABMAPObjectBlock::PrepareNewObject(TABMAPObjHdr *poObjHdr)
+int TABMAPObjectBlock::PrepareNewObject(TABMAPObjHdr *poObjHdr)
 {
     int nStartAddress = 0;
 
@@ -617,7 +624,7 @@ int     TABMAPObjectBlock::PrepareNewObject(TABMAPObjHdr *poObjHdr)
     m_nCurObjectOffset = nStartAddress - GetStartAddress();
 
     m_nCurObjectType = poObjHdr->m_nType;
-    m_nCurObjectId   = poObjHdr->m_nId;
+    m_nCurObjectId = poObjHdr->m_nId;
 
     return nStartAddress;
 }
@@ -632,11 +639,11 @@ int     TABMAPObjectBlock::PrepareNewObject(TABMAPObjHdr *poObjHdr)
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int     TABMAPObjectBlock::CommitNewObject(TABMAPObjHdr *poObjHdr)
+int TABMAPObjectBlock::CommitNewObject(TABMAPObjHdr *poObjHdr)
 {
     int nStatus = 0;
 
-    CPLAssert (poObjHdr->m_nType != TAB_GEOM_NONE);
+    CPLAssert(poObjHdr->m_nType != TAB_GEOM_NONE);
 
     // Nothing to do for NONE objects
     if (poObjHdr->m_nType == TAB_GEOM_NONE)
@@ -666,23 +673,23 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
 {
     CPLErrorReset();
 
-    if (fpOut == NULL)
+    if (fpOut == nullptr)
         fpOut = stdout;
 
     fprintf(fpOut, "----- TABMAPObjectBlock::Dump() -----\n");
-    if (m_pabyBuf == NULL)
+    if (m_pabyBuf == nullptr)
     {
         fprintf(fpOut, "Block has not been initialized yet.");
     }
     else
     {
-        fprintf(fpOut,"Object Data Block (type %d) at offset %d.\n",
-                                                m_nBlockType, m_nFileOffset);
-        fprintf(fpOut,"  m_numDataBytes        = %d\n", m_numDataBytes);
-        fprintf(fpOut,"  m_nCenterX            = %d\n", m_nCenterX);
-        fprintf(fpOut,"  m_nCenterY            = %d\n", m_nCenterY);
-        fprintf(fpOut,"  m_nFirstCoordBlock    = %d\n", m_nFirstCoordBlock);
-        fprintf(fpOut,"  m_nLastCoordBlock     = %d\n", m_nLastCoordBlock);
+        fprintf(fpOut, "Object Data Block (type %d) at offset %d.\n",
+                m_nBlockType, m_nFileOffset);
+        fprintf(fpOut, "  m_numDataBytes        = %d\n", m_numDataBytes);
+        fprintf(fpOut, "  m_nCenterX            = %d\n", m_nCenterX);
+        fprintf(fpOut, "  m_nCenterY            = %d\n", m_nCenterY);
+        fprintf(fpOut, "  m_nFirstCoordBlock    = %d\n", m_nFirstCoordBlock);
+        fprintf(fpOut, "  m_nLastCoordBlock     = %d\n", m_nLastCoordBlock);
     }
 
     if (bDetails)
@@ -690,26 +697,29 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
         /* We need the mapfile's header block */
         TABRawBinBlock *poBlock =
             TABCreateMAPBlockFromFile(m_fp, 0, m_nBlockSize);
-        if (poBlock==NULL || poBlock->GetBlockClass() != TABMAP_HEADER_BLOCK)
+        if (poBlock == nullptr ||
+            poBlock->GetBlockClass() != TABMAP_HEADER_BLOCK)
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "Failed reading header block.");
             return;
         }
-        TABMAPHeaderBlock *poHeader = (TABMAPHeaderBlock *)poBlock;
+        TABMAPHeaderBlock *poHeader =
+            cpl::down_cast<TABMAPHeaderBlock *>(poBlock);
 
         Rewind();
-        TABMAPObjHdr *poObjHdr = NULL;
-        while((poObjHdr = TABMAPObjHdr::ReadNextObj(this, poHeader)) != NULL)
+        TABMAPObjHdr *poObjHdr = nullptr;
+        while ((poObjHdr = TABMAPObjHdr::ReadNextObj(this, poHeader)) !=
+               nullptr)
         {
             fprintf(fpOut,
                     "   object id=%d, type=%d, offset=%d (%d), size=%d\n"
                     "          MBR=(%d, %d, %d, %d)\n",
                     m_nCurObjectId, m_nCurObjectType, m_nCurObjectOffset,
                     m_nFileOffset + m_nCurObjectOffset,
-                    poHeader->GetMapObjectSize( m_nCurObjectType ),
-                    poObjHdr->m_nMinX, poObjHdr->m_nMinY,
-                    poObjHdr->m_nMaxX,poObjHdr->m_nMaxY);
+                    poHeader->GetMapObjectSize(m_nCurObjectType),
+                    poObjHdr->m_nMinX, poObjHdr->m_nMinY, poObjHdr->m_nMaxX,
+                    poObjHdr->m_nMaxY);
             delete poObjHdr;
         }
 
@@ -719,7 +729,7 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
     fflush(fpOut);
 }
 
-#endif // DEBUG
+#endif  // DEBUG
 
 /*=====================================================================
  *                      class TABMAPObjHdr and family
@@ -741,77 +751,77 @@ void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
  **********************************************************************/
 TABMAPObjHdr *TABMAPObjHdr::NewObj(TABGeomType nNewObjType, GInt32 nId /*=0*/)
 {
-    TABMAPObjHdr *poObj = NULL;
+    TABMAPObjHdr *poObj = nullptr;
 
-    switch(nNewObjType)
+    switch (nNewObjType)
     {
-      case TAB_GEOM_NONE:
-        poObj = new TABMAPObjNone;
-        break;
-      case TAB_GEOM_SYMBOL_C:
-      case TAB_GEOM_SYMBOL:
-        poObj = new TABMAPObjPoint;
-        break;
-      case TAB_GEOM_FONTSYMBOL_C:
-      case TAB_GEOM_FONTSYMBOL:
-        poObj = new TABMAPObjFontPoint;
-        break;
-      case TAB_GEOM_CUSTOMSYMBOL_C:
-      case TAB_GEOM_CUSTOMSYMBOL:
-        poObj = new TABMAPObjCustomPoint;
-        break;
-      case TAB_GEOM_LINE_C:
-      case TAB_GEOM_LINE:
-        poObj = new TABMAPObjLine;
-        break;
-      case TAB_GEOM_PLINE_C:
-      case TAB_GEOM_PLINE:
-      case TAB_GEOM_REGION_C:
-      case TAB_GEOM_REGION:
-      case TAB_GEOM_MULTIPLINE_C:
-      case TAB_GEOM_MULTIPLINE:
-      case TAB_GEOM_V450_REGION_C:
-      case TAB_GEOM_V450_REGION:
-      case TAB_GEOM_V450_MULTIPLINE_C:
-      case TAB_GEOM_V450_MULTIPLINE:
-      case TAB_GEOM_V800_REGION_C:
-      case TAB_GEOM_V800_REGION:
-      case TAB_GEOM_V800_MULTIPLINE_C:
-      case TAB_GEOM_V800_MULTIPLINE:
-        poObj = new TABMAPObjPLine;
-        break;
-      case TAB_GEOM_ARC_C:
-      case TAB_GEOM_ARC:
-        poObj = new TABMAPObjArc;
-        break;
-      case TAB_GEOM_RECT_C:
-      case TAB_GEOM_RECT:
-      case TAB_GEOM_ROUNDRECT_C:
-      case TAB_GEOM_ROUNDRECT:
-      case TAB_GEOM_ELLIPSE_C:
-      case TAB_GEOM_ELLIPSE:
-        poObj = new TABMAPObjRectEllipse;
-        break;
-      case TAB_GEOM_TEXT_C:
-      case TAB_GEOM_TEXT:
-        poObj = new TABMAPObjText;
-        break;
-      case TAB_GEOM_MULTIPOINT_C:
-      case TAB_GEOM_MULTIPOINT:
-      case TAB_GEOM_V800_MULTIPOINT_C:
-      case TAB_GEOM_V800_MULTIPOINT:
-        poObj = new TABMAPObjMultiPoint;
-        break;
-      case TAB_GEOM_COLLECTION_C:
-      case TAB_GEOM_COLLECTION:
-      case TAB_GEOM_V800_COLLECTION_C:
-      case TAB_GEOM_V800_COLLECTION:
-        poObj = new TABMAPObjCollection();
-    break;
-      default:
-        CPLError(CE_Failure, CPLE_AssertionFailed,
-                 "TABMAPObjHdr::NewObj(): Unsupported object type %d",
-                 nNewObjType);
+        case TAB_GEOM_NONE:
+            poObj = new TABMAPObjNone;
+            break;
+        case TAB_GEOM_SYMBOL_C:
+        case TAB_GEOM_SYMBOL:
+            poObj = new TABMAPObjPoint;
+            break;
+        case TAB_GEOM_FONTSYMBOL_C:
+        case TAB_GEOM_FONTSYMBOL:
+            poObj = new TABMAPObjFontPoint;
+            break;
+        case TAB_GEOM_CUSTOMSYMBOL_C:
+        case TAB_GEOM_CUSTOMSYMBOL:
+            poObj = new TABMAPObjCustomPoint;
+            break;
+        case TAB_GEOM_LINE_C:
+        case TAB_GEOM_LINE:
+            poObj = new TABMAPObjLine;
+            break;
+        case TAB_GEOM_PLINE_C:
+        case TAB_GEOM_PLINE:
+        case TAB_GEOM_REGION_C:
+        case TAB_GEOM_REGION:
+        case TAB_GEOM_MULTIPLINE_C:
+        case TAB_GEOM_MULTIPLINE:
+        case TAB_GEOM_V450_REGION_C:
+        case TAB_GEOM_V450_REGION:
+        case TAB_GEOM_V450_MULTIPLINE_C:
+        case TAB_GEOM_V450_MULTIPLINE:
+        case TAB_GEOM_V800_REGION_C:
+        case TAB_GEOM_V800_REGION:
+        case TAB_GEOM_V800_MULTIPLINE_C:
+        case TAB_GEOM_V800_MULTIPLINE:
+            poObj = new TABMAPObjPLine;
+            break;
+        case TAB_GEOM_ARC_C:
+        case TAB_GEOM_ARC:
+            poObj = new TABMAPObjArc;
+            break;
+        case TAB_GEOM_RECT_C:
+        case TAB_GEOM_RECT:
+        case TAB_GEOM_ROUNDRECT_C:
+        case TAB_GEOM_ROUNDRECT:
+        case TAB_GEOM_ELLIPSE_C:
+        case TAB_GEOM_ELLIPSE:
+            poObj = new TABMAPObjRectEllipse;
+            break;
+        case TAB_GEOM_TEXT_C:
+        case TAB_GEOM_TEXT:
+            poObj = new TABMAPObjText;
+            break;
+        case TAB_GEOM_MULTIPOINT_C:
+        case TAB_GEOM_MULTIPOINT:
+        case TAB_GEOM_V800_MULTIPOINT_C:
+        case TAB_GEOM_V800_MULTIPOINT:
+            poObj = new TABMAPObjMultiPoint;
+            break;
+        case TAB_GEOM_COLLECTION_C:
+        case TAB_GEOM_COLLECTION:
+        case TAB_GEOM_V800_COLLECTION_C:
+        case TAB_GEOM_V800_COLLECTION:
+            poObj = new TABMAPObjCollection();
+            break;
+        default:
+            CPLError(CE_Failure, CPLE_AssertionFailed,
+                     "TABMAPObjHdr::NewObj(): Unsupported object type %d",
+                     nNewObjType);
     }
 
     if (poObj)
@@ -834,18 +844,18 @@ TABMAPObjHdr *TABMAPObjHdr::NewObj(TABGeomType nNewObjType, GInt32 nId /*=0*/)
 TABMAPObjHdr *TABMAPObjHdr::ReadNextObj(TABMAPObjectBlock *poObjBlock,
                                         TABMAPHeaderBlock *poHeader)
 {
-    TABMAPObjHdr *poObjHdr = NULL;
+    TABMAPObjHdr *poObjHdr = nullptr;
 
     if (poObjBlock->AdvanceToNextObject(poHeader) != -1)
     {
-        poObjHdr=TABMAPObjHdr::NewObj(poObjBlock->GetCurObjectType());
+        poObjHdr = TABMAPObjHdr::NewObj(poObjBlock->GetCurObjectType());
         if (poObjHdr &&
             ((poObjHdr->m_nId = poObjBlock->GetCurObjectId()) == -1 ||
-             poObjHdr->ReadObj(poObjBlock) != 0 ) )
+             poObjHdr->ReadObj(poObjBlock) != 0))
         {
             // Failed reading object in block... an error was already produced
             delete poObjHdr;
-            return NULL;
+            return nullptr;
         }
     }
 
@@ -874,7 +884,7 @@ GBool TABMAPObjHdr::IsCompressedType()
  **********************************************************************/
 int TABMAPObjHdr::WriteObjTypeAndId(TABMAPObjectBlock *poObjBlock)
 {
-    poObjBlock->WriteByte((GByte)m_nType);
+    poObjBlock->WriteByte(static_cast<GByte>(m_nType));
     return poObjBlock->WriteInt32(m_nId);
 }
 
@@ -882,8 +892,8 @@ int TABMAPObjHdr::WriteObjTypeAndId(TABMAPObjectBlock *poObjBlock)
  *                   TABMAPObjHdr::SetMBR()
  *
  **********************************************************************/
-void TABMAPObjHdr::SetMBR(GInt32 nMinX, GInt32 nMinY,
-                          GInt32 nMaxX, GInt32 nMaxY)
+void TABMAPObjHdr::SetMBR(GInt32 nMinX, GInt32 nMinY, GInt32 nMaxX,
+                          GInt32 nMaxY)
 {
     m_nMinX = std::min(nMinX, nMaxX);
     m_nMinY = std::min(nMinY, nMaxY);
@@ -911,11 +921,11 @@ int TABMAPObjLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nX1, m_nY1);
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nX2, m_nY2);
 
-    m_nPenId = poObjBlock->ReadByte();      // Pen index
+    m_nPenId = poObjBlock->ReadByte();  // Pen index
 
     SetMBR(m_nX1, m_nY1, m_nX2, m_nY2);
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -936,9 +946,9 @@ int TABMAPObjLine::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteIntCoord(m_nX1, m_nY1, IsCompressedType());
     poObjBlock->WriteIntCoord(m_nX2, m_nY2, IsCompressedType());
 
-    poObjBlock->WriteByte(m_nPenId);      // Pen index
+    poObjBlock->WriteByte(m_nPenId);  // Pen index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -967,7 +977,7 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     if (m_nCoordDataSize & 0x80000000)
     {
         m_bSmooth = TRUE;
-        m_nCoordDataSize &= 0x7FFFFFFF; //Take smooth flag out of the value
+        m_nCoordDataSize &= 0x7FFFFFFF;  // Take smooth flag out of the value
     }
     else
     {
@@ -975,20 +985,19 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     }
 
 #ifdef TABDUMP
-    printf("TABMAPObjPLine::ReadObj: m_nCoordDataSize = %d @ %d\n",/*ok*/
+    printf("TABMAPObjPLine::ReadObj: m_nCoordDataSize = %d @ %d\n", /*ok*/
            m_nCoordDataSize, m_nCoordBlockPtr);
 #endif
 
     // Number of line segments applies only to MULTIPLINE/REGION but not PLINE
-    if (m_nType == TAB_GEOM_PLINE_C ||
-        m_nType == TAB_GEOM_PLINE )
+    if (m_nType == TAB_GEOM_PLINE_C || m_nType == TAB_GEOM_PLINE)
     {
         m_numLineSections = 1;
     }
     else if (m_nType == TAB_GEOM_V800_REGION ||
              m_nType == TAB_GEOM_V800_REGION_C ||
              m_nType == TAB_GEOM_V800_MULTIPLINE ||
-             m_nType == TAB_GEOM_V800_MULTIPLINE_C )
+             m_nType == TAB_GEOM_V800_MULTIPLINE_C)
     {
         /* V800 REGIONS/MULTIPLINES use an int32 */
         m_numLineSections = poObjBlock->ReadInt32();
@@ -1009,15 +1018,14 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_numLineSections = poObjBlock->ReadInt16();
     }
 
-    if( m_numLineSections < 0 )
+    if (m_numLineSections < 0)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
-                    "Invalid numLineSections");
+        CPLError(CE_Failure, CPLE_AssertionFailed, "Invalid numLineSections");
         return -1;
     }
 
 #ifdef TABDUMP
-    printf("PLINE/REGION: id=%d, type=%d, "/*ok*/
+    printf("PLINE/REGION: id=%d, type=%d, " /*ok*/
            "CoordBlockPtr=%d, CoordDataSize=%d, numLineSect=%d, bSmooth=%d\n",
            m_nId, m_nType, m_nCoordBlockPtr, m_nCoordDataSize,
            m_numLineSections, m_bSmooth);
@@ -1026,7 +1034,7 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
+        // No it is not relative to the Object block center
         m_nLabelX = poObjBlock->ReadInt16();
         m_nLabelY = poObjBlock->ReadInt16();
 
@@ -1049,40 +1057,39 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     else
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
+        // No it is not relative to the Object block center
         m_nLabelX = poObjBlock->ReadInt32();
         m_nLabelY = poObjBlock->ReadInt32();
 
-        m_nMinX = poObjBlock->ReadInt32();    // Read MBR
+        m_nMinX = poObjBlock->ReadInt32();  // Read MBR
         m_nMinY = poObjBlock->ReadInt32();
         m_nMaxX = poObjBlock->ReadInt32();
         m_nMaxY = poObjBlock->ReadInt32();
     }
 
-    if ( ! IsCompressedType() )
+    if (!IsCompressedType())
     {
         // Init. Compr. Origin to a default value in case type is ever changed
-        m_nComprOrgX = static_cast<GInt32>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
-        m_nComprOrgY = static_cast<GInt32>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
+        m_nComprOrgX =
+            static_cast<GInt32>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+        m_nComprOrgY =
+            static_cast<GInt32>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
     }
 
-    m_nPenId = poObjBlock->ReadByte();      // Pen index
+    m_nPenId = poObjBlock->ReadByte();  // Pen index
 
-    if (m_nType == TAB_GEOM_REGION ||
-        m_nType == TAB_GEOM_REGION_C ||
-        m_nType == TAB_GEOM_V450_REGION ||
-        m_nType == TAB_GEOM_V450_REGION_C ||
-        m_nType == TAB_GEOM_V800_REGION ||
-        m_nType == TAB_GEOM_V800_REGION_C )
+    if (m_nType == TAB_GEOM_REGION || m_nType == TAB_GEOM_REGION_C ||
+        m_nType == TAB_GEOM_V450_REGION || m_nType == TAB_GEOM_V450_REGION_C ||
+        m_nType == TAB_GEOM_V800_REGION || m_nType == TAB_GEOM_V800_REGION_C)
     {
-        m_nBrushId = poObjBlock->ReadByte();    // Brush index... REGION only
+        m_nBrushId = poObjBlock->ReadByte();  // Brush index... REGION only
     }
     else
     {
         m_nBrushId = 0;
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1104,34 +1111,32 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     // Combine smooth flag in the coord data size.
     if (m_bSmooth)
-        poObjBlock->WriteInt32( m_nCoordDataSize | 0x80000000 );
+        poObjBlock->WriteInt32(m_nCoordDataSize | 0x80000000);
     else
-        poObjBlock->WriteInt32( m_nCoordDataSize );
+        poObjBlock->WriteInt32(m_nCoordDataSize);
 
     // Number of line segments applies only to MULTIPLINE/REGION but not PLINE
-    if (m_nType == TAB_GEOM_V800_REGION ||
-        m_nType == TAB_GEOM_V800_REGION_C ||
+    if (m_nType == TAB_GEOM_V800_REGION || m_nType == TAB_GEOM_V800_REGION_C ||
         m_nType == TAB_GEOM_V800_MULTIPLINE ||
-        m_nType == TAB_GEOM_V800_MULTIPLINE_C )
+        m_nType == TAB_GEOM_V800_MULTIPLINE_C)
     {
         /* V800 REGIONS/MULTIPLINES use an int32 */
         poObjBlock->WriteInt32(m_numLineSections);
         /* ... followed by 33 unknown bytes */
         poObjBlock->WriteZeros(33);
     }
-    else if (m_nType != TAB_GEOM_PLINE_C &&
-             m_nType != TAB_GEOM_PLINE )
+    else if (m_nType != TAB_GEOM_PLINE_C && m_nType != TAB_GEOM_PLINE)
     {
         /* V300 and V450 REGIONS/MULTIPLINES use an int16 */
-        poObjBlock->WriteInt16((GInt16)m_numLineSections);
+        poObjBlock->WriteInt16(static_cast<GInt16>(m_numLineSections));
     }
 
     if (IsCompressedType())
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
-        poObjBlock->WriteInt16((GInt16)(m_nLabelX - m_nComprOrgX));
-        poObjBlock->WriteInt16((GInt16)(m_nLabelY - m_nComprOrgY));
+        // No it is not relative to the Object block center
+        poObjBlock->WriteInt16(TABInt16Diff(m_nLabelX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nLabelY, m_nComprOrgY));
 
         // Compressed coordinate origin (present only in compressed case!)
         poObjBlock->WriteInt32(m_nComprOrgX);
@@ -1148,10 +1153,10 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
         // MBR relative to PLINE origin (and not object block center)
-        poObjBlock->WriteInt16((GInt16)(m_nMinX - m_nComprOrgX));
-        poObjBlock->WriteInt16((GInt16)(m_nMinY - m_nComprOrgY));
-        poObjBlock->WriteInt16((GInt16)(m_nMaxX - m_nComprOrgX));
-        poObjBlock->WriteInt16((GInt16)(m_nMaxY - m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinY, m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxY, m_nComprOrgY));
     }
     else
     {
@@ -1161,19 +1166,16 @@ int TABMAPObjPLine::WriteObj(TABMAPObjectBlock *poObjBlock)
         poObjBlock->WriteInt32(m_nMaxY);
     }
 
-    poObjBlock->WriteByte(m_nPenId);      // Pen index
+    poObjBlock->WriteByte(m_nPenId);  // Pen index
 
-    if (m_nType == TAB_GEOM_REGION ||
-        m_nType == TAB_GEOM_REGION_C ||
-        m_nType == TAB_GEOM_V450_REGION ||
-        m_nType == TAB_GEOM_V450_REGION_C ||
-        m_nType == TAB_GEOM_V800_REGION ||
-        m_nType == TAB_GEOM_V800_REGION_C )
+    if (m_nType == TAB_GEOM_REGION || m_nType == TAB_GEOM_REGION_C ||
+        m_nType == TAB_GEOM_V450_REGION || m_nType == TAB_GEOM_V450_REGION_C ||
+        m_nType == TAB_GEOM_V800_REGION || m_nType == TAB_GEOM_V800_REGION_C)
     {
-        poObjBlock->WriteByte(m_nBrushId);    // Brush index... REGION only
+        poObjBlock->WriteByte(m_nBrushId);  // Brush index... REGION only
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1193,11 +1195,11 @@ int TABMAPObjPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
 {
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nX, m_nY);
 
-    m_nSymbolId = poObjBlock->ReadByte();      // Symbol index
+    m_nSymbolId = poObjBlock->ReadByte();  // Symbol index
 
     SetMBR(m_nX, m_nY, m_nX, m_nY);
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1217,9 +1219,9 @@ int TABMAPObjPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
 
     poObjBlock->WriteIntCoord(m_nX, m_nY, IsCompressedType());
 
-    poObjBlock->WriteByte(m_nSymbolId);      // Symbol index
+    poObjBlock->WriteByte(m_nSymbolId);  // Symbol index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1237,27 +1239,27 @@ int TABMAPObjPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
  **********************************************************************/
 int TABMAPObjFontPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
 {
-    m_nSymbolId  = poObjBlock->ReadByte();      // Symbol index
+    m_nSymbolId = poObjBlock->ReadByte();  // Symbol index
     m_nPointSize = poObjBlock->ReadByte();
-    m_nFontStyle = poObjBlock->ReadInt16();     // font style
+    m_nFontStyle = poObjBlock->ReadInt16();  // font style
 
     m_nR = poObjBlock->ReadByte();
     m_nG = poObjBlock->ReadByte();
     m_nB = poObjBlock->ReadByte();
 
-    poObjBlock->ReadByte();         // ??? BG Color ???
-    poObjBlock->ReadByte();         // ???
-    poObjBlock->ReadByte();         // ???
+    poObjBlock->ReadByte();  // ??? BG Color ???
+    poObjBlock->ReadByte();  // ???
+    poObjBlock->ReadByte();  // ???
 
     m_nAngle = poObjBlock->ReadInt16();
 
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nX, m_nY);
 
-    m_nFontId  = poObjBlock->ReadByte();      // Font name index
+    m_nFontId = poObjBlock->ReadByte();  // Font name index
 
     SetMBR(m_nX, m_nY, m_nX, m_nY);
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1275,25 +1277,25 @@ int TABMAPObjFontPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Write object type and id
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
-    poObjBlock->WriteByte(m_nSymbolId);   // symbol shape
+    poObjBlock->WriteByte(m_nSymbolId);  // symbol shape
     poObjBlock->WriteByte(m_nPointSize);
-    poObjBlock->WriteInt16(m_nFontStyle);            // font style
+    poObjBlock->WriteInt16(m_nFontStyle);  // font style
 
-    poObjBlock->WriteByte( m_nR );
-    poObjBlock->WriteByte( m_nG );
-    poObjBlock->WriteByte( m_nB );
+    poObjBlock->WriteByte(m_nR);
+    poObjBlock->WriteByte(m_nG);
+    poObjBlock->WriteByte(m_nB);
 
-    poObjBlock->WriteByte( 0 );
-    poObjBlock->WriteByte( 0 );
-    poObjBlock->WriteByte( 0 );
+    poObjBlock->WriteByte(0);
+    poObjBlock->WriteByte(0);
+    poObjBlock->WriteByte(0);
 
     poObjBlock->WriteInt16(m_nAngle);
 
     poObjBlock->WriteIntCoord(m_nX, m_nY, IsCompressedType());
 
-    poObjBlock->WriteByte(m_nFontId);      // Font name index
+    poObjBlock->WriteByte(m_nFontId);  // Font name index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1311,17 +1313,17 @@ int TABMAPObjFontPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
  **********************************************************************/
 int TABMAPObjCustomPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
 {
-    m_nUnknown_ = poObjBlock->ReadByte();       // ???
-    m_nCustomStyle = poObjBlock->ReadByte(); // 0x01=Show BG, 0x02=Apply Color
+    m_nUnknown_ = poObjBlock->ReadByte();     // ???
+    m_nCustomStyle = poObjBlock->ReadByte();  // 0x01=Show BG, 0x02=Apply Color
 
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nX, m_nY);
 
-    m_nSymbolId = poObjBlock->ReadByte();      // Symbol index
-    m_nFontId   = poObjBlock->ReadByte();      // Font index
+    m_nSymbolId = poObjBlock->ReadByte();  // Symbol index
+    m_nFontId = poObjBlock->ReadByte();    // Font index
 
     SetMBR(m_nX, m_nY, m_nX, m_nY);
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1339,14 +1341,14 @@ int TABMAPObjCustomPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Write object type and id
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
-    poObjBlock->WriteByte(m_nUnknown_);  // ???
-    poObjBlock->WriteByte(m_nCustomStyle); // 0x01=Show BG, 0x02=Apply Color
+    poObjBlock->WriteByte(m_nUnknown_);     // ???
+    poObjBlock->WriteByte(m_nCustomStyle);  // 0x01=Show BG, 0x02=Apply Color
     poObjBlock->WriteIntCoord(m_nX, m_nY, IsCompressedType());
 
-    poObjBlock->WriteByte(m_nSymbolId);      // Symbol index
-    poObjBlock->WriteByte(m_nFontId);      // Font index
+    poObjBlock->WriteByte(m_nSymbolId);  // Symbol index
+    poObjBlock->WriteByte(m_nFontId);    // Font index
 
-  if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1364,17 +1366,16 @@ int TABMAPObjCustomPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
  **********************************************************************/
 int TABMAPObjRectEllipse::ReadObj(TABMAPObjectBlock *poObjBlock)
 {
-    if (m_nType == TAB_GEOM_ROUNDRECT ||
-        m_nType == TAB_GEOM_ROUNDRECT_C)
+    if (m_nType == TAB_GEOM_ROUNDRECT || m_nType == TAB_GEOM_ROUNDRECT_C)
     {
         if (IsCompressedType())
         {
-            m_nCornerWidth  = poObjBlock->ReadInt16();
+            m_nCornerWidth = poObjBlock->ReadInt16();
             m_nCornerHeight = poObjBlock->ReadInt16();
         }
         else
         {
-            m_nCornerWidth  = poObjBlock->ReadInt32();
+            m_nCornerWidth = poObjBlock->ReadInt32();
             m_nCornerHeight = poObjBlock->ReadInt32();
         }
     }
@@ -1382,10 +1383,10 @@ int TABMAPObjRectEllipse::ReadObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nMinX, m_nMinY);
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nMaxX, m_nMaxY);
 
-    m_nPenId    = poObjBlock->ReadByte();      // Pen index
-    m_nBrushId  = poObjBlock->ReadByte();      // Brush index
+    m_nPenId = poObjBlock->ReadByte();    // Pen index
+    m_nBrushId = poObjBlock->ReadByte();  // Brush index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1403,13 +1404,12 @@ int TABMAPObjRectEllipse::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Write object type and id
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
-    if (m_nType == TAB_GEOM_ROUNDRECT ||
-        m_nType == TAB_GEOM_ROUNDRECT_C)
+    if (m_nType == TAB_GEOM_ROUNDRECT || m_nType == TAB_GEOM_ROUNDRECT_C)
     {
         if (IsCompressedType())
         {
-            poObjBlock->WriteInt16((GInt16)m_nCornerWidth);
-            poObjBlock->WriteInt16((GInt16)m_nCornerHeight);
+            poObjBlock->WriteInt16(static_cast<GInt16>(m_nCornerWidth));
+            poObjBlock->WriteInt16(static_cast<GInt16>(m_nCornerHeight));
         }
         else
         {
@@ -1421,10 +1421,10 @@ int TABMAPObjRectEllipse::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteIntMBRCoord(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
                                  IsCompressedType());
 
-    poObjBlock->WriteByte(m_nPenId);      // Pen index
-    poObjBlock->WriteByte(m_nBrushId);      // Brush index
+    poObjBlock->WriteByte(m_nPenId);    // Pen index
+    poObjBlock->WriteByte(m_nBrushId);  // Brush index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1443,21 +1443,21 @@ int TABMAPObjRectEllipse::WriteObj(TABMAPObjectBlock *poObjBlock)
 int TABMAPObjArc::ReadObj(TABMAPObjectBlock *poObjBlock)
 {
     m_nStartAngle = poObjBlock->ReadInt16();
-    m_nEndAngle   = poObjBlock->ReadInt16();
+    m_nEndAngle = poObjBlock->ReadInt16();
 
     // An arc is defined by its defining ellipse's MBR:
-    poObjBlock->ReadIntCoord(IsCompressedType(),
-                             m_nArcEllipseMinX, m_nArcEllipseMinY);
-    poObjBlock->ReadIntCoord(IsCompressedType(),
-                             m_nArcEllipseMaxX, m_nArcEllipseMaxY);
+    poObjBlock->ReadIntCoord(IsCompressedType(), m_nArcEllipseMinX,
+                             m_nArcEllipseMinY);
+    poObjBlock->ReadIntCoord(IsCompressedType(), m_nArcEllipseMaxX,
+                             m_nArcEllipseMaxY);
 
     // Read the Arc's actual MBR
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nMinX, m_nMinY);
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nMaxX, m_nMaxY);
 
-    m_nPenId = poObjBlock->ReadByte();      // Pen index
+    m_nPenId = poObjBlock->ReadByte();  // Pen index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1475,8 +1475,8 @@ int TABMAPObjArc::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Write object type and id
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
-    poObjBlock->WriteInt16((GInt16)m_nStartAngle);
-    poObjBlock->WriteInt16((GInt16)m_nEndAngle);
+    poObjBlock->WriteInt16(static_cast<GInt16>(m_nStartAngle));
+    poObjBlock->WriteInt16(static_cast<GInt16>(m_nEndAngle));
 
     // An arc is defined by its defining ellipse's MBR:
     poObjBlock->WriteIntMBRCoord(m_nArcEllipseMinX, m_nArcEllipseMinY,
@@ -1487,9 +1487,9 @@ int TABMAPObjArc::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteIntMBRCoord(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
                                  IsCompressedType());
 
-    poObjBlock->WriteByte(m_nPenId);      // Pen index
+    poObjBlock->WriteByte(m_nPenId);  // Pen index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1507,26 +1507,26 @@ int TABMAPObjArc::WriteObj(TABMAPObjectBlock *poObjBlock)
  **********************************************************************/
 int TABMAPObjText::ReadObj(TABMAPObjectBlock *poObjBlock)
 {
-    m_nCoordBlockPtr  = poObjBlock->ReadInt32();    // String position
-    m_nCoordDataSize  = poObjBlock->ReadInt16();    // String length
-    if( m_nCoordDataSize < 0 )
+    m_nCoordBlockPtr = poObjBlock->ReadInt32();  // String position
+    m_nCoordDataSize = poObjBlock->ReadInt16();  // String length
+    if (m_nCoordDataSize < 0)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed, "m_nCoordDataSize < 0");
         return -1;
     }
-    m_nTextAlignment  = poObjBlock->ReadInt16();    // just./spacing/arrow
+    m_nTextAlignment = poObjBlock->ReadInt16();  // just./spacing/arrow
 
-    m_nAngle     = poObjBlock->ReadInt16();         // Tenths of degree
+    m_nAngle = poObjBlock->ReadInt16();  // Tenths of degree
 
-    m_nFontStyle = poObjBlock->ReadInt16();         // Font style/effect
+    m_nFontStyle = poObjBlock->ReadInt16();  // Font style/effect
 
-    m_nFGColorR  = poObjBlock->ReadByte();
-    m_nFGColorG  = poObjBlock->ReadByte();
-    m_nFGColorB  = poObjBlock->ReadByte();
+    m_nFGColorR = poObjBlock->ReadByte();
+    m_nFGColorG = poObjBlock->ReadByte();
+    m_nFGColorB = poObjBlock->ReadByte();
 
-    m_nBGColorR  = poObjBlock->ReadByte();
-    m_nBGColorG  = poObjBlock->ReadByte();
-    m_nBGColorB  = poObjBlock->ReadByte();
+    m_nBGColorR = poObjBlock->ReadByte();
+    m_nBGColorG = poObjBlock->ReadByte();
+    m_nBGColorB = poObjBlock->ReadByte();
 
     // Label line end point
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nLineEndX, m_nLineEndY);
@@ -1538,15 +1538,15 @@ int TABMAPObjText::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nHeight = poObjBlock->ReadInt32();
 
     // Font name
-    m_nFontId = poObjBlock->ReadByte();      // Font name index
+    m_nFontId = poObjBlock->ReadByte();  // Font name index
 
     // MBR after rotation
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nMinX, m_nMinY);
     poObjBlock->ReadIntCoord(IsCompressedType(), m_nMaxX, m_nMaxY);
 
-    m_nPenId = poObjBlock->ReadByte();      // Pen index
+    m_nPenId = poObjBlock->ReadByte();  // Pen index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1564,41 +1564,43 @@ int TABMAPObjText::WriteObj(TABMAPObjectBlock *poObjBlock)
     // Write object type and id
     TABMAPObjHdr::WriteObjTypeAndId(poObjBlock);
 
-    poObjBlock->WriteInt32(m_nCoordBlockPtr);     // String position
-    poObjBlock->WriteInt16((GInt16)m_nCoordDataSize);     // String length
-    poObjBlock->WriteInt16((GInt16)m_nTextAlignment);     // just./spacing/arrow
+    poObjBlock->WriteInt32(m_nCoordBlockPtr);  // String position
+    poObjBlock->WriteInt16(
+        static_cast<GInt16>(m_nCoordDataSize));  // String length
+    poObjBlock->WriteInt16(
+        static_cast<GInt16>(m_nTextAlignment));  // just./spacing/arrow
 
-    poObjBlock->WriteInt16((GInt16)m_nAngle);             // Tenths of degree
+    poObjBlock->WriteInt16(static_cast<GInt16>(m_nAngle));  // Tenths of degree
 
-    poObjBlock->WriteInt16(m_nFontStyle);         // Font style/effect
+    poObjBlock->WriteInt16(m_nFontStyle);  // Font style/effect
 
-    poObjBlock->WriteByte(m_nFGColorR );
-    poObjBlock->WriteByte(m_nFGColorG );
-    poObjBlock->WriteByte(m_nFGColorB );
+    poObjBlock->WriteByte(m_nFGColorR);
+    poObjBlock->WriteByte(m_nFGColorG);
+    poObjBlock->WriteByte(m_nFGColorB);
 
-    poObjBlock->WriteByte(m_nBGColorR );
-    poObjBlock->WriteByte(m_nBGColorG );
-    poObjBlock->WriteByte(m_nBGColorB );
+    poObjBlock->WriteByte(m_nBGColorR);
+    poObjBlock->WriteByte(m_nBGColorG);
+    poObjBlock->WriteByte(m_nBGColorB);
 
     // Label line end point
     poObjBlock->WriteIntCoord(m_nLineEndX, m_nLineEndY, IsCompressedType());
 
     // Text Height
     if (IsCompressedType())
-        poObjBlock->WriteInt16((GInt16)m_nHeight);
+        poObjBlock->WriteInt16(static_cast<GInt16>(m_nHeight));
     else
         poObjBlock->WriteInt32(m_nHeight);
 
     // Font name
-    poObjBlock->WriteByte(m_nFontId);      // Font name index
+    poObjBlock->WriteByte(m_nFontId);  // Font name index
 
     // MBR after rotation
     poObjBlock->WriteIntMBRCoord(m_nMinX, m_nMinY, m_nMaxX, m_nMaxY,
                                  IsCompressedType());
 
-    poObjBlock->WriteByte(m_nPenId);      // Pen index
+    poObjBlock->WriteByte(m_nPenId);  // Pen index
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1625,16 +1627,16 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
     m_nNumPoints = poObjBlock->ReadInt32();
 
     const int nPointSize = (IsCompressedType()) ? 2 * 2 : 2 * 4;
-    if( m_nNumPoints < 0 || m_nNumPoints > INT_MAX / nPointSize )
+    if (m_nNumPoints < 0 || m_nNumPoints > INT_MAX / nPointSize)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
-                 "Invalid m_nNumPoints = %d", m_nNumPoints);
+        CPLError(CE_Failure, CPLE_AssertionFailed, "Invalid m_nNumPoints = %d",
+                 m_nNumPoints);
         return -1;
     }
     m_nCoordDataSize = m_nNumPoints * nPointSize;
 
 #ifdef TABDUMP
-    printf("MULTIPOINT: id=%d, type=%d, "/*ok*/
+    printf("MULTIPOINT: id=%d, type=%d, " /*ok*/
            "CoordBlockPtr=%d, CoordDataSize=%d, numPoints=%d\n",
            m_nId, m_nType, m_nCoordBlockPtr, m_nCoordDataSize, m_nNumPoints);
 #endif
@@ -1648,7 +1650,7 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->ReadByte();
 
     if (m_nType == TAB_GEOM_V800_MULTIPOINT ||
-        m_nType == TAB_GEOM_V800_MULTIPOINT_C )
+        m_nType == TAB_GEOM_V800_MULTIPOINT_C)
     {
         /* V800 MULTIPOINTS have another 33 unknown bytes... all zeros */
         poObjBlock->ReadInt32();
@@ -1670,7 +1672,7 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
+        // No it is not relative to the Object block center
         m_nLabelX = poObjBlock->ReadInt16();
         m_nLabelY = poObjBlock->ReadInt16();
 
@@ -1696,17 +1698,19 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
         m_nLabelX = poObjBlock->ReadInt32();
         m_nLabelY = poObjBlock->ReadInt32();
 
-        m_nMinX = poObjBlock->ReadInt32();    // Read MBR
+        m_nMinX = poObjBlock->ReadInt32();  // Read MBR
         m_nMinY = poObjBlock->ReadInt32();
         m_nMaxX = poObjBlock->ReadInt32();
         m_nMaxY = poObjBlock->ReadInt32();
 
         // Init. Compr. Origin to a default value in case type is ever changed
-        m_nComprOrgX = static_cast<GInt32>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
-        m_nComprOrgY = static_cast<GInt32>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
+        m_nComprOrgX =
+            static_cast<GInt32>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+        m_nComprOrgY =
+            static_cast<GInt32>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1733,7 +1737,7 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     poObjBlock->WriteZeros(15);
 
     if (m_nType == TAB_GEOM_V800_MULTIPOINT ||
-        m_nType == TAB_GEOM_V800_MULTIPOINT_C )
+        m_nType == TAB_GEOM_V800_MULTIPOINT_C)
     {
         /* V800 MULTIPOINTS have another 33 unknown bytes... all zeros */
         poObjBlock->WriteZeros(33);
@@ -1749,18 +1753,18 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
         // Region center/label point, relative to compr. coord. origin
-        // No it's not relative to the Object block center
-        poObjBlock->WriteInt16((GInt16)(m_nLabelX - m_nComprOrgX));
-        poObjBlock->WriteInt16((GInt16)(m_nLabelY - m_nComprOrgY));
+        // No it is not relative to the Object block center
+        poObjBlock->WriteInt16(TABInt16Diff(m_nLabelX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nLabelY, m_nComprOrgY));
 
         poObjBlock->WriteInt32(m_nComprOrgX);
         poObjBlock->WriteInt32(m_nComprOrgY);
 
         // MBR relative to object origin (and not object block center)
-        poObjBlock->WriteInt16((GInt16)(m_nMinX - m_nComprOrgX));
-        poObjBlock->WriteInt16((GInt16)(m_nMinY - m_nComprOrgY));
-        poObjBlock->WriteInt16((GInt16)(m_nMaxX - m_nComprOrgX));
-        poObjBlock->WriteInt16((GInt16)(m_nMaxY - m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinY, m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxY, m_nComprOrgY));
     }
     else
     {
@@ -1774,7 +1778,7 @@ int TABMAPObjMultiPoint::WriteObj(TABMAPObjectBlock *poObjBlock)
         poObjBlock->WriteInt32(m_nMaxY);
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -1819,22 +1823,22 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
         SIZE_OF_REGION_PLINE_MINI_HDR += 4;
     }
 
-    m_nCoordBlockPtr = poObjBlock->ReadInt32();    // pointer into coord block
-    m_nNumMultiPoints = poObjBlock->ReadInt32();   // no. points in multi point
-    m_nRegionDataSize = poObjBlock->ReadInt32();   // size of region data inc. section hdrs
-    m_nPolylineDataSize = poObjBlock->ReadInt32(); // size of multipline data inc. section hdrs
+    m_nCoordBlockPtr = poObjBlock->ReadInt32();   // pointer into coord block
+    m_nNumMultiPoints = poObjBlock->ReadInt32();  // no. points in multi point
+    m_nRegionDataSize =
+        poObjBlock->ReadInt32();  // size of region data inc. section hdrs
+    m_nPolylineDataSize =
+        poObjBlock->ReadInt32();  // size of multipline data inc. section hdrs
 
-    if( m_nRegionDataSize < 0 )
+    if (m_nRegionDataSize < 0)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
-                    "Invalid m_nRegionDataSize");
+        CPLError(CE_Failure, CPLE_AssertionFailed, "Invalid m_nRegionDataSize");
         return -1;
     }
 
-    if( m_nPolylineDataSize < 0 )
+    if (m_nPolylineDataSize < 0)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
-                    "Invalid m_nRegionDataSize");
+        CPLError(CE_Failure, CPLE_AssertionFailed, "Invalid m_nRegionDataSize");
         return -1;
     }
 
@@ -1852,10 +1856,9 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     }
 
     const int nPointSize = (IsCompressedType()) ? 2 * 2 : 2 * 4;
-    if( m_nNumMultiPoints < 0 || m_nNumMultiPoints > INT_MAX / nPointSize )
+    if (m_nNumMultiPoints < 0 || m_nNumMultiPoints > INT_MAX / nPointSize)
     {
-        CPLError(CE_Failure, CPLE_AssertionFailed,
-                    "Invalid m_nNumMultiPoints");
+        CPLError(CE_Failure, CPLE_AssertionFailed, "Invalid m_nNumMultiPoints");
         return -1;
     }
 
@@ -1870,20 +1873,20 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
      *
      * We'll adjust the values in memory to be the corrected values.
      */
-    if( m_nNumRegSections < 0 || m_nNumRegSections > INT_MAX / 2 ||
-        m_nRegionDataSize < 2 * m_nNumRegSections )
+    if (m_nNumRegSections < 0 || m_nNumRegSections > INT_MAX / 2 ||
+        m_nRegionDataSize < 2 * m_nNumRegSections)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
-                    "Invalid m_nNumRegSections / m_nRegionDataSize");
+                 "Invalid m_nNumRegSections / m_nRegionDataSize");
         return -1;
     }
-    m_nRegionDataSize   = m_nRegionDataSize - (2 * m_nNumRegSections);
+    m_nRegionDataSize = m_nRegionDataSize - (2 * m_nNumRegSections);
 
-    if( m_nNumPLineSections < 0 || m_nNumPLineSections > INT_MAX / 2 ||
-        m_nPolylineDataSize < 2 * m_nNumPLineSections )
+    if (m_nNumPLineSections < 0 || m_nNumPLineSections > INT_MAX / 2 ||
+        m_nPolylineDataSize < 2 * m_nNumPLineSections)
     {
         CPLError(CE_Failure, CPLE_AssertionFailed,
-                    "Invalid m_nNumPLineSections / m_nPolylineDataSize");
+                 "Invalid m_nNumPLineSections / m_nPolylineDataSize");
         return -1;
     }
     m_nPolylineDataSize = m_nPolylineDataSize - (2 * m_nNumPLineSections);
@@ -1891,48 +1894,52 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     /* Compute total coord block data size, required when splitting blocks */
     m_nCoordDataSize = 0;
 
-    if(m_nNumRegSections > 0)
+    if (m_nNumRegSections > 0)
     {
-        if( m_nRegionDataSize > INT_MAX - SIZE_OF_REGION_PLINE_MINI_HDR ||
-            m_nCoordDataSize > INT_MAX - (SIZE_OF_REGION_PLINE_MINI_HDR + m_nRegionDataSize) )
+        if (m_nRegionDataSize > INT_MAX - SIZE_OF_REGION_PLINE_MINI_HDR ||
+            m_nCoordDataSize >
+                INT_MAX - (SIZE_OF_REGION_PLINE_MINI_HDR + m_nRegionDataSize))
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
-                        "Invalid m_nCoordDataSize / m_nRegionDataSize");
+                     "Invalid m_nCoordDataSize / m_nRegionDataSize");
             return -1;
         }
         m_nCoordDataSize += SIZE_OF_REGION_PLINE_MINI_HDR + m_nRegionDataSize;
     }
-    if(m_nNumPLineSections > 0)
+    if (m_nNumPLineSections > 0)
     {
-        if( m_nPolylineDataSize > INT_MAX - SIZE_OF_REGION_PLINE_MINI_HDR ||
-            m_nCoordDataSize > INT_MAX - (SIZE_OF_REGION_PLINE_MINI_HDR + m_nPolylineDataSize) )
+        if (m_nPolylineDataSize > INT_MAX - SIZE_OF_REGION_PLINE_MINI_HDR ||
+            m_nCoordDataSize >
+                INT_MAX - (SIZE_OF_REGION_PLINE_MINI_HDR + m_nPolylineDataSize))
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
-                        "Invalid m_nCoordDataSize / m_nPolylineDataSize");
+                     "Invalid m_nCoordDataSize / m_nPolylineDataSize");
             return -1;
         }
         m_nCoordDataSize += SIZE_OF_REGION_PLINE_MINI_HDR + m_nPolylineDataSize;
     }
-    if(m_nNumMultiPoints > 0)
+    if (m_nNumMultiPoints > 0)
     {
-        if( m_nMPointDataSize > INT_MAX - SIZE_OF_MPOINT_MINI_HDR ||
-            m_nCoordDataSize > INT_MAX - (SIZE_OF_MPOINT_MINI_HDR + m_nMPointDataSize) )
+        if (m_nMPointDataSize > INT_MAX - SIZE_OF_MPOINT_MINI_HDR ||
+            m_nCoordDataSize >
+                INT_MAX - (SIZE_OF_MPOINT_MINI_HDR + m_nMPointDataSize))
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
-                        "Invalid m_nCoordDataSize / m_nMPointDataSize");
+                     "Invalid m_nCoordDataSize / m_nMPointDataSize");
             return -1;
         }
         m_nCoordDataSize += SIZE_OF_MPOINT_MINI_HDR + m_nMPointDataSize;
     }
 
 #ifdef TABDUMP
-    printf("COLLECTION: id=%d, type=%d (0x%x), "/*ok*/
+    printf("COLLECTION: id=%d, type=%d (0x%x), " /*ok*/
            "CoordBlockPtr=%d, numRegionSections=%d (size=%d+%d), "
            "numPlineSections=%d (size=%d+%d), numPoints=%d (size=%d+%d)\n",
-           m_nId, m_nType, m_nType, m_nCoordBlockPtr,
-           m_nNumRegSections, m_nRegionDataSize, SIZE_OF_REGION_PLINE_MINI_HDR,
-           m_nNumPLineSections, m_nPolylineDataSize, SIZE_OF_REGION_PLINE_MINI_HDR,
-           m_nNumMultiPoints, m_nMPointDataSize, SIZE_OF_MPOINT_MINI_HDR);
+           m_nId, m_nType, m_nType, m_nCoordBlockPtr, m_nNumRegSections,
+           m_nRegionDataSize, SIZE_OF_REGION_PLINE_MINI_HDR,
+           m_nNumPLineSections, m_nPolylineDataSize,
+           SIZE_OF_REGION_PLINE_MINI_HDR, m_nNumMultiPoints, m_nMPointDataSize,
+           SIZE_OF_MPOINT_MINI_HDR);
 #endif
 
     if (nVersion >= 800)
@@ -1970,8 +1977,8 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
 #ifdef TABDUMP
-    printf("COLLECTION: READING ComprOrg @ %d\n",/*ok*/
-           poObjBlock->GetCurAddress());
+        printf("COLLECTION: READING ComprOrg @ %d\n", /*ok*/
+               poObjBlock->GetCurAddress());
 #endif
         // Compressed coordinate origin
         m_nComprOrgX = poObjBlock->ReadInt32();
@@ -1986,23 +1993,25 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
         TABSaturatedAdd(m_nMaxX, m_nComprOrgX);
         TABSaturatedAdd(m_nMaxY, m_nComprOrgY);
 #ifdef TABDUMP
-    printf("COLLECTION: ComprOrgX,Y= (%d,%d)\n",/*ok*/
-           m_nComprOrgX, m_nComprOrgY);
+        printf("COLLECTION: ComprOrgX,Y= (%d,%d)\n", /*ok*/
+               m_nComprOrgX, m_nComprOrgY);
 #endif
     }
     else
     {
-        m_nMinX = poObjBlock->ReadInt32();    // Read MBR
+        m_nMinX = poObjBlock->ReadInt32();  // Read MBR
         m_nMinY = poObjBlock->ReadInt32();
         m_nMaxX = poObjBlock->ReadInt32();
         m_nMaxY = poObjBlock->ReadInt32();
 
         // Init. Compr. Origin to a default value in case type is ever changed
-        m_nComprOrgX = static_cast<GInt32>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
-        m_nComprOrgY = static_cast<GInt32>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
+        m_nComprOrgX =
+            static_cast<GInt32>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+        m_nComprOrgY =
+            static_cast<GInt32>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;
@@ -2033,19 +2042,22 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
      * per section header in the values that we write on disk to emulate
      * MapInfo's behavior.
      */
-    GInt32 nRegionDataSizeMI = m_nRegionDataSize + (2*m_nNumRegSections);
-    GInt32 nPolylineDataSizeMI = m_nPolylineDataSize+(2*m_nNumPLineSections);
+    GInt32 nRegionDataSizeMI = m_nRegionDataSize + (2 * m_nNumRegSections);
+    GInt32 nPolylineDataSizeMI =
+        m_nPolylineDataSize + (2 * m_nNumPLineSections);
 
-    poObjBlock->WriteInt32(m_nCoordBlockPtr);    // pointer into coord block
-    poObjBlock->WriteInt32(m_nNumMultiPoints);   // no. points in multi point
-    poObjBlock->WriteInt32(nRegionDataSizeMI);   // size of region data inc. section hdrs
-    poObjBlock->WriteInt32(nPolylineDataSizeMI); // size of Mpolyline data inc. section hdrs
+    poObjBlock->WriteInt32(m_nCoordBlockPtr);   // pointer into coord block
+    poObjBlock->WriteInt32(m_nNumMultiPoints);  // no. points in multi point
+    poObjBlock->WriteInt32(
+        nRegionDataSizeMI);  // size of region data inc. section hdrs
+    poObjBlock->WriteInt32(
+        nPolylineDataSizeMI);  // size of Mpolyline data inc. section hdrs
 
     if (nVersion < 800)
     {
         // Num Region/Pline section headers (int16 in V650)
-        poObjBlock->WriteInt16((GInt16)m_nNumRegSections);
-        poObjBlock->WriteInt16((GInt16)m_nNumPLineSections);
+        poObjBlock->WriteInt16(static_cast<GInt16>(m_nNumRegSections));
+        poObjBlock->WriteInt16(static_cast<GInt16>(m_nNumPLineSections));
     }
     else
     {
@@ -2078,27 +2090,27 @@ int TABMAPObjCollection::WriteObj(TABMAPObjectBlock *poObjBlock)
     if (IsCompressedType())
     {
 #ifdef TABDUMP
-    printf("COLLECTION: WRITING ComprOrgX,Y= (%d,%d) @ %d\n",/*ok*/
-           m_nComprOrgX, m_nComprOrgY, poObjBlock->GetCurAddress());
+        printf("COLLECTION: WRITING ComprOrgX,Y= (%d,%d) @ %d\n", /*ok*/
+               m_nComprOrgX, m_nComprOrgY, poObjBlock->GetCurAddress());
 #endif
         // Compressed coordinate origin
         poObjBlock->WriteInt32(m_nComprOrgX);
         poObjBlock->WriteInt32(m_nComprOrgY);
 
-        poObjBlock->WriteInt16((GInt16)(m_nMinX - m_nComprOrgX));  // MBR
-        poObjBlock->WriteInt16((GInt16)(m_nMinY - m_nComprOrgY));
-        poObjBlock->WriteInt16((GInt16)(m_nMaxX - m_nComprOrgX));
-        poObjBlock->WriteInt16((GInt16)(m_nMaxY - m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinX, m_nComprOrgX));  // MBR
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMinY, m_nComprOrgY));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxX, m_nComprOrgX));
+        poObjBlock->WriteInt16(TABInt16Diff(m_nMaxY, m_nComprOrgY));
     }
     else
     {
-        poObjBlock->WriteInt32(m_nMinX);    // MBR
+        poObjBlock->WriteInt32(m_nMinX);  // MBR
         poObjBlock->WriteInt32(m_nMinY);
         poObjBlock->WriteInt32(m_nMaxX);
         poObjBlock->WriteInt32(m_nMaxY);
     }
 
-    if (CPLGetLastErrorNo() != 0)
+    if (CPLGetLastErrorType() == CE_Failure)
         return -1;
 
     return 0;

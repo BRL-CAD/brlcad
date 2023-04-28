@@ -1,7 +1,7 @@
 /*                        M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2022 United States Government as represented by
+ * Copyright (c) 1986-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -98,7 +98,7 @@ struct rtwizard_settings {
 
 
 struct rtwizard_settings *
-rtwizard_settings_create()
+rtwizard_settings_create(void)
 {
     struct rtwizard_settings *s;
     unsigned char white[3] = {255, 255, 255};

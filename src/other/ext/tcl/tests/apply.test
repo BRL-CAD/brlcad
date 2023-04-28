@@ -16,12 +16,16 @@ if {"::tcltest" ni [namespace children]} {
     package require tcltest 2.5
     namespace import -force ::tcltest::*
 }
+::tcltest::loadTestedCommands
+catch [list package require -exact tcl::test [info patchlevel]]
 
 if {[info commands ::apply] eq {}} {
     return
 }
 
 testConstraint memory [llength [info commands memory]]
+testConstraint applylambda [llength [info commands testapplylambda]]
+
 
 # Tests for wrong number of arguments
 
@@ -305,6 +309,13 @@ test apply-9.3 {leaking internal rep} -setup {
     rename getbytes {}
     unset -nocomplain end i x tmp leakedBytes
 } -result 0
+
+# Tests for specific bugs
+test apply-10.1 {Test for precompiled bytecode body} -constraints {
+    applylambda
+} -body {
+    testapplylambda
+} -result 42
 
 # Tests for the avoidance of recompilation
 

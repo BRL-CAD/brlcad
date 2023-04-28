@@ -1,7 +1,7 @@
 /*                         G L O B . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2022 United States Government as represented by
+ * Copyright (c) 2015-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -112,7 +112,7 @@ typedef struct bu_glob_context bu_glob_t;
 /**
  * initialize a globbing context for use prior to calling bu_glob()
  */
-BU_EXPORT struct bu_glob_context *bu_glob_init();
+BU_EXPORT struct bu_glob_context *bu_glob_init(void);
 
 
 /**

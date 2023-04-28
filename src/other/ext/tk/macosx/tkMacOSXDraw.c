@@ -514,7 +514,7 @@ XDrawSegments(
  *
  * XFillPolygon --
  *
- *	Draws a filled polygon using the even-odd fill algorithm,
+ *	Draws a filled polygon.
  *
  * Results:
  *	None.
@@ -562,7 +562,9 @@ XFillPolygon(
 		CGContextAddLineToPoint(dc.context, prevx, prevy);
 	    }
 	}
-	CGContextEOFillPath(dc.context);
+	(gc->fill_rule == EvenOddRule)
+		? CGContextEOFillPath(dc.context)
+		: CGContextFillPath(dc.context);
     }
     TkMacOSXRestoreDrawingContext(&dc);
     return Success;
@@ -1142,72 +1144,52 @@ TkScrollWindow(
     Drawable drawable = Tk_WindowId(tkwin);
     MacDrawable *macDraw = (MacDrawable *)drawable;
     TKContentView *view = (TKContentView *)TkMacOSXGetNSViewForDrawable(macDraw);
-    CGRect srcRect, dstRect;
-    HIShapeRef dmgRgn = NULL, extraRgn = NULL;
-    NSRect bounds, visRect, scrollSrc, scrollDst;
+    HIShapeRef srcRgn, dstRgn;
+    HIMutableShapeRef dmgRgn = HIShapeCreateMutable();
+    NSRect bounds, viewSrcRect, srcRect, dstRect;
     int result = 0;
 
     if (view) {
+
   	/*
 	 * Get the scroll area in NSView coordinates (origin at bottom left).
 	 */
 
   	bounds = [view bounds];
- 	scrollSrc = NSMakeRect(macDraw->xOff + x,
+ 	viewSrcRect = NSMakeRect(macDraw->xOff + x,
 		bounds.size.height - height - (macDraw->yOff + y),
 		width, height);
- 	scrollDst = NSOffsetRect(scrollSrc, dx, -dy);
 
-  	/*
-	 * Limit scrolling to the window content area.
+	/*
+	 * Scroll the rectangle.
 	 */
 
- 	visRect = [view visibleRect];
- 	scrollSrc = NSIntersectionRect(scrollSrc, visRect);
- 	scrollDst = NSIntersectionRect(scrollDst, visRect);
- 	if (!NSIsEmptyRect(scrollSrc) && !NSIsEmptyRect(scrollDst)) {
-  	    /*
-  	     * Mark the difference between source and destination as damaged.
-	     * This region is described in NSView coordinates (y=0 at the
-	     * bottom) and converted to Tk coordinates later.
-  	     */
+	[view scrollRect:viewSrcRect by:NSMakeSize(dx, -dy)];
 
-	    srcRect = CGRectMake(x, y, width, height);
-	    dstRect = CGRectOffset(srcRect, dx, dy);
+	/*
+	 * Compute the damage region, using Tk coordinates (origin at top left).
+	 */
 
-	    /*
-	     * Compute the damage.
-	     */
+	srcRect = CGRectMake(x, y, width, height);
+	dstRect = CGRectOffset(srcRect, dx, dy);
+	srcRgn = HIShapeCreateWithRect(&srcRect);
+	dstRgn = HIShapeCreateWithRect(&dstRect);
+	ChkErr(HIShapeDifference, srcRgn, dstRgn, dmgRgn);
+	result = HIShapeIsEmpty(dmgRgn) ? 0 : 1;
 
-  	    dmgRgn = HIShapeCreateMutableWithRect(&srcRect);
- 	    extraRgn = HIShapeCreateWithRect(&dstRect);
- 	    ChkErr(HIShapeDifference, dmgRgn, extraRgn,
-		    (HIMutableShapeRef) dmgRgn);
-	    result = HIShapeIsEmpty(dmgRgn) ? 0 : 1;
-
-	    /*
-	     * Convert to Tk coordinates, offset by the window origin.
-	     */
-
-	    TkMacOSXSetWithNativeRegion(damageRgn, dmgRgn);
-	    if (extraRgn) {
-		CFRelease(extraRgn);
-	    }
-
- 	    /*
-	     * Scroll the rectangle.
-	     */
-
- 	    [view scrollRect:scrollSrc by:NSMakeSize(dx, -dy)];
-  	}
-    } else {
-	dmgRgn = HIShapeCreateEmpty();
-	TkMacOSXSetWithNativeRegion(damageRgn, dmgRgn);
     }
 
-    if (dmgRgn) {
-	CFRelease(dmgRgn);
-    }
+    /*
+     * Convert the HIShape dmgRgn into a TkRegion and store it.
+     */
+
+    TkMacOSXSetWithNativeRegion(damageRgn, dmgRgn);
+
+    /*
+     * Mutable shapes are not reference counted, and must be released.
+     */
+
+    CFRelease(dmgRgn);
     return result;
 }
 

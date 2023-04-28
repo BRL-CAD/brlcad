@@ -110,7 +110,7 @@ EXTERN void		Tcl_DbIncrRefCount(Tcl_Obj *objPtr, const char *file,
 EXTERN int		Tcl_DbIsShared(Tcl_Obj *objPtr, const char *file,
 				int line);
 /* 22 */
-EXTERN Tcl_Obj *	Tcl_DbNewBooleanObj(int boolValue, const char *file,
+EXTERN Tcl_Obj *	Tcl_DbNewBooleanObj(int intValue, const char *file,
 				int line);
 /* 23 */
 EXTERN Tcl_Obj *	Tcl_DbNewByteArrayObj(const unsigned char *bytes,
@@ -135,10 +135,10 @@ EXTERN Tcl_Obj *	Tcl_DuplicateObj(Tcl_Obj *objPtr);
 EXTERN void		TclFreeObj(Tcl_Obj *objPtr);
 /* 31 */
 EXTERN int		Tcl_GetBoolean(Tcl_Interp *interp, const char *src,
-				int *boolPtr);
+				int *intPtr);
 /* 32 */
 EXTERN int		Tcl_GetBooleanFromObj(Tcl_Interp *interp,
-				Tcl_Obj *objPtr, int *boolPtr);
+				Tcl_Obj *objPtr, int *intPtr);
 /* 33 */
 EXTERN unsigned char *	Tcl_GetByteArrayFromObj(Tcl_Obj *objPtr,
 				int *lengthPtr);
@@ -190,7 +190,7 @@ EXTERN int		Tcl_ListObjReplace(Tcl_Interp *interp,
 				Tcl_Obj *listPtr, int first, int count,
 				int objc, Tcl_Obj *const objv[]);
 /* 49 */
-EXTERN Tcl_Obj *	Tcl_NewBooleanObj(int boolValue);
+EXTERN Tcl_Obj *	Tcl_NewBooleanObj(int intValue);
 /* 50 */
 EXTERN Tcl_Obj *	Tcl_NewByteArrayObj(const unsigned char *bytes,
 				int length);
@@ -207,12 +207,12 @@ EXTERN Tcl_Obj *	Tcl_NewObj(void);
 /* 56 */
 EXTERN Tcl_Obj *	Tcl_NewStringObj(const char *bytes, int length);
 /* 57 */
-EXTERN void		Tcl_SetBooleanObj(Tcl_Obj *objPtr, int boolValue);
+EXTERN void		Tcl_SetBooleanObj(Tcl_Obj *objPtr, int intValue);
 /* 58 */
-EXTERN unsigned char *	Tcl_SetByteArrayLength(Tcl_Obj *objPtr, int length);
+EXTERN unsigned char *	Tcl_SetByteArrayLength(Tcl_Obj *objPtr, int numBytes);
 /* 59 */
 EXTERN void		Tcl_SetByteArrayObj(Tcl_Obj *objPtr,
-				const unsigned char *bytes, int length);
+				const unsigned char *bytes, int numBytes);
 /* 60 */
 EXTERN void		Tcl_SetDoubleObj(Tcl_Obj *objPtr, double doubleValue);
 /* 61 */
@@ -603,7 +603,7 @@ EXTERN Tcl_Channel	Tcl_OpenFileChannel(Tcl_Interp *interp,
 /* 199 */
 EXTERN Tcl_Channel	Tcl_OpenTcpClient(Tcl_Interp *interp, int port,
 				const char *address, const char *myaddr,
-				int myport, int async);
+				int myport, int flags);
 /* 200 */
 EXTERN Tcl_Channel	Tcl_OpenTcpServer(Tcl_Interp *interp, int port,
 				const char *host,
@@ -1844,7 +1844,30 @@ EXTERN void		Tcl_ZlibStreamSetCompressionDictionary(
 /* Slot 657 is reserved */
 /* Slot 658 is reserved */
 /* Slot 659 is reserved */
-/* 660 */
+/* Slot 660 is reserved */
+/* Slot 661 is reserved */
+/* Slot 662 is reserved */
+/* Slot 663 is reserved */
+/* Slot 664 is reserved */
+/* Slot 665 is reserved */
+/* Slot 666 is reserved */
+/* Slot 667 is reserved */
+/* Slot 668 is reserved */
+/* Slot 669 is reserved */
+/* Slot 670 is reserved */
+/* Slot 671 is reserved */
+/* Slot 672 is reserved */
+/* Slot 673 is reserved */
+/* Slot 674 is reserved */
+/* Slot 675 is reserved */
+/* Slot 676 is reserved */
+/* Slot 677 is reserved */
+/* Slot 678 is reserved */
+/* Slot 679 is reserved */
+/* Slot 680 is reserved */
+/* Slot 681 is reserved */
+/* Slot 682 is reserved */
+/* 683 */
 EXTERN void		TclUnusedStubEntry(void);
 
 typedef struct {
@@ -1895,7 +1918,7 @@ typedef struct TclStubs {
     void (*tcl_DbDecrRefCount) (Tcl_Obj *objPtr, const char *file, int line); /* 19 */
     void (*tcl_DbIncrRefCount) (Tcl_Obj *objPtr, const char *file, int line); /* 20 */
     int (*tcl_DbIsShared) (Tcl_Obj *objPtr, const char *file, int line); /* 21 */
-    Tcl_Obj * (*tcl_DbNewBooleanObj) (int boolValue, const char *file, int line); /* 22 */
+    Tcl_Obj * (*tcl_DbNewBooleanObj) (int intValue, const char *file, int line); /* 22 */
     Tcl_Obj * (*tcl_DbNewByteArrayObj) (const unsigned char *bytes, int length, const char *file, int line); /* 23 */
     Tcl_Obj * (*tcl_DbNewDoubleObj) (double doubleValue, const char *file, int line); /* 24 */
     Tcl_Obj * (*tcl_DbNewListObj) (int objc, Tcl_Obj *const *objv, const char *file, int line); /* 25 */
@@ -1904,8 +1927,8 @@ typedef struct TclStubs {
     Tcl_Obj * (*tcl_DbNewStringObj) (const char *bytes, int length, const char *file, int line); /* 28 */
     Tcl_Obj * (*tcl_DuplicateObj) (Tcl_Obj *objPtr); /* 29 */
     void (*tclFreeObj) (Tcl_Obj *objPtr); /* 30 */
-    int (*tcl_GetBoolean) (Tcl_Interp *interp, const char *src, int *boolPtr); /* 31 */
-    int (*tcl_GetBooleanFromObj) (Tcl_Interp *interp, Tcl_Obj *objPtr, int *boolPtr); /* 32 */
+    int (*tcl_GetBoolean) (Tcl_Interp *interp, const char *src, int *intPtr); /* 31 */
+    int (*tcl_GetBooleanFromObj) (Tcl_Interp *interp, Tcl_Obj *objPtr, int *intPtr); /* 32 */
     unsigned char * (*tcl_GetByteArrayFromObj) (Tcl_Obj *objPtr, int *lengthPtr); /* 33 */
     int (*tcl_GetDouble) (Tcl_Interp *interp, const char *src, double *doublePtr); /* 34 */
     int (*tcl_GetDoubleFromObj) (Tcl_Interp *interp, Tcl_Obj *objPtr, double *doublePtr); /* 35 */
@@ -1922,7 +1945,7 @@ typedef struct TclStubs {
     int (*tcl_ListObjIndex) (Tcl_Interp *interp, Tcl_Obj *listPtr, int index, Tcl_Obj **objPtrPtr); /* 46 */
     int (*tcl_ListObjLength) (Tcl_Interp *interp, Tcl_Obj *listPtr, int *lengthPtr); /* 47 */
     int (*tcl_ListObjReplace) (Tcl_Interp *interp, Tcl_Obj *listPtr, int first, int count, int objc, Tcl_Obj *const objv[]); /* 48 */
-    Tcl_Obj * (*tcl_NewBooleanObj) (int boolValue); /* 49 */
+    Tcl_Obj * (*tcl_NewBooleanObj) (int intValue); /* 49 */
     Tcl_Obj * (*tcl_NewByteArrayObj) (const unsigned char *bytes, int length); /* 50 */
     Tcl_Obj * (*tcl_NewDoubleObj) (double doubleValue); /* 51 */
     Tcl_Obj * (*tcl_NewIntObj) (int intValue); /* 52 */
@@ -1930,9 +1953,9 @@ typedef struct TclStubs {
     Tcl_Obj * (*tcl_NewLongObj) (long longValue); /* 54 */
     Tcl_Obj * (*tcl_NewObj) (void); /* 55 */
     Tcl_Obj * (*tcl_NewStringObj) (const char *bytes, int length); /* 56 */
-    void (*tcl_SetBooleanObj) (Tcl_Obj *objPtr, int boolValue); /* 57 */
-    unsigned char * (*tcl_SetByteArrayLength) (Tcl_Obj *objPtr, int length); /* 58 */
-    void (*tcl_SetByteArrayObj) (Tcl_Obj *objPtr, const unsigned char *bytes, int length); /* 59 */
+    void (*tcl_SetBooleanObj) (Tcl_Obj *objPtr, int intValue); /* 57 */
+    unsigned char * (*tcl_SetByteArrayLength) (Tcl_Obj *objPtr, int numBytes); /* 58 */
+    void (*tcl_SetByteArrayObj) (Tcl_Obj *objPtr, const unsigned char *bytes, int numBytes); /* 59 */
     void (*tcl_SetDoubleObj) (Tcl_Obj *objPtr, double doubleValue); /* 60 */
     void (*tcl_SetIntObj) (Tcl_Obj *objPtr, int intValue); /* 61 */
     void (*tcl_SetListObj) (Tcl_Obj *objPtr, int objc, Tcl_Obj *const objv[]); /* 62 */
@@ -2080,7 +2103,7 @@ typedef struct TclStubs {
     Tcl_Obj * (*tcl_ObjSetVar2) (Tcl_Interp *interp, Tcl_Obj *part1Ptr, Tcl_Obj *part2Ptr, Tcl_Obj *newValuePtr, int flags); /* 196 */
     Tcl_Channel (*tcl_OpenCommandChannel) (Tcl_Interp *interp, int argc, CONST84 char **argv, int flags); /* 197 */
     Tcl_Channel (*tcl_OpenFileChannel) (Tcl_Interp *interp, const char *fileName, const char *modeString, int permissions); /* 198 */
-    Tcl_Channel (*tcl_OpenTcpClient) (Tcl_Interp *interp, int port, const char *address, const char *myaddr, int myport, int async); /* 199 */
+    Tcl_Channel (*tcl_OpenTcpClient) (Tcl_Interp *interp, int port, const char *address, const char *myaddr, int myport, int flags); /* 199 */
     Tcl_Channel (*tcl_OpenTcpServer) (Tcl_Interp *interp, int port, const char *host, Tcl_TcpAcceptProc *acceptProc, ClientData callbackData); /* 200 */
     void (*tcl_Preserve) (ClientData data); /* 201 */
     void (*tcl_PrintDouble) (Tcl_Interp *interp, double value, char *dst); /* 202 */
@@ -2541,7 +2564,30 @@ typedef struct TclStubs {
     void (*reserved657)(void);
     void (*reserved658)(void);
     void (*reserved659)(void);
-    void (*tclUnusedStubEntry) (void); /* 660 */
+    void (*reserved660)(void);
+    void (*reserved661)(void);
+    void (*reserved662)(void);
+    void (*reserved663)(void);
+    void (*reserved664)(void);
+    void (*reserved665)(void);
+    void (*reserved666)(void);
+    void (*reserved667)(void);
+    void (*reserved668)(void);
+    void (*reserved669)(void);
+    void (*reserved670)(void);
+    void (*reserved671)(void);
+    void (*reserved672)(void);
+    void (*reserved673)(void);
+    void (*reserved674)(void);
+    void (*reserved675)(void);
+    void (*reserved676)(void);
+    void (*reserved677)(void);
+    void (*reserved678)(void);
+    void (*reserved679)(void);
+    void (*reserved680)(void);
+    void (*reserved681)(void);
+    void (*reserved682)(void);
+    void (*tclUnusedStubEntry) (void); /* 683 */
 } TclStubs;
 
 extern const TclStubs *tclStubsPtr;
@@ -3863,8 +3909,31 @@ extern const TclStubs *tclStubsPtr;
 /* Slot 657 is reserved */
 /* Slot 658 is reserved */
 /* Slot 659 is reserved */
+/* Slot 660 is reserved */
+/* Slot 661 is reserved */
+/* Slot 662 is reserved */
+/* Slot 663 is reserved */
+/* Slot 664 is reserved */
+/* Slot 665 is reserved */
+/* Slot 666 is reserved */
+/* Slot 667 is reserved */
+/* Slot 668 is reserved */
+/* Slot 669 is reserved */
+/* Slot 670 is reserved */
+/* Slot 671 is reserved */
+/* Slot 672 is reserved */
+/* Slot 673 is reserved */
+/* Slot 674 is reserved */
+/* Slot 675 is reserved */
+/* Slot 676 is reserved */
+/* Slot 677 is reserved */
+/* Slot 678 is reserved */
+/* Slot 679 is reserved */
+/* Slot 680 is reserved */
+/* Slot 681 is reserved */
+/* Slot 682 is reserved */
 #define TclUnusedStubEntry \
-	(tclStubsPtr->tclUnusedStubEntry) /* 660 */
+	(tclStubsPtr->tclUnusedStubEntry) /* 683 */
 
 #endif /* defined(USE_TCL_STUBS) */
 
@@ -3918,14 +3987,14 @@ extern const TclStubs *tclStubsPtr;
 	Tcl_GetIndexFromObjStruct(interp, objPtr, tablePtr, \
 	sizeof(char *), msg, flags, indexPtr)
 #undef Tcl_NewBooleanObj
-#define Tcl_NewBooleanObj(boolValue) \
-	Tcl_NewIntObj((boolValue)!=0)
+#define Tcl_NewBooleanObj(intValue) \
+	Tcl_NewIntObj((intValue)!=0)
 #undef Tcl_DbNewBooleanObj
-#define Tcl_DbNewBooleanObj(boolValue, file, line) \
-	Tcl_DbNewLongObj((boolValue)!=0, file, line)
+#define Tcl_DbNewBooleanObj(intValue, file, line) \
+	Tcl_DbNewLongObj((intValue)!=0, file, line)
 #undef Tcl_SetBooleanObj
-#define Tcl_SetBooleanObj(objPtr, boolValue) \
-	Tcl_SetIntObj((objPtr), (boolValue)!=0)
+#define Tcl_SetBooleanObj(objPtr, intValue) \
+	Tcl_SetIntObj((objPtr), (intValue)!=0)
 #undef Tcl_SetVar
 #define Tcl_SetVar(interp, varName, newValue, flags) \
 	Tcl_SetVar2(interp, varName, NULL, newValue, flags)

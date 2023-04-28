@@ -1,7 +1,7 @@
 /*                      P I X S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2022 United States Government as represented by
+ * Copyright (c) 1986-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -324,7 +324,7 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer()
+init_buffer(void)
 {
     ssize_t max;
 

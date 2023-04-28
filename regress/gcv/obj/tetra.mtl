@@ -1,0 +1,13 @@
+# File produced by Open Asset Import Library (http://www.assimp.sf.net)
+# (assimp v5.2.4244644030)
+
+newmtl plastic
+illum 1
+
+newmtl plastic sp=1.0 em=0.1
+Kd 255 0 255
+d 1
+Ni 1
+Ns 10
+illum 2
+

@@ -11,8 +11,6 @@ namespace import ::tcltest::*
 tcltest::configure {*}$argv
 tcltest::loadTestedCommands
 
-testConstraint failsOnUbuntu [expr {![info exists ::env(CI)] || ![string match Linux $::tcl_platform(os)]}]
-
 deleteWindows
 
 set fixedFont {"Courier" -12}
@@ -357,13 +355,13 @@ test textWind-3.3 {EmbWinConfigure procedure} -setup {
     frame .f -width 10 -height 20 -bg $color
     .t window create 1.3 -window .f
     update
+    set res [winfo ismapped .f]
     .t window configure 1.3 -window {}
     update
-    catch {.t index .f}
-    list [winfo ismapped .f] [.t bbox 1.4]
+    lappend res [winfo ismapped .f] [.t bbox 1.4]
 } -cleanup {
     destroy .f
-} -result [list 0 \
+} -result [list 1 0 \
     [list [expr {$padx+3*$fixedWidth}] $pady $fixedWidth $fixedHeight]]
 
 test textWind-3.4 {EmbWinConfigure procedure} -setup {
@@ -387,13 +385,13 @@ test textWind-3.5 {EmbWinConfigure procedure} -setup {
     frame .t.f -width 10 -height 20 -bg $color
     .t window create 1.3 -window .t.f
     update
+    set res [winfo ismapped .t.f]
     .t window configure 1.3 -window {}
     update
-    catch {.t index .t.f}
-    list [winfo ismapped .t.f] [.t bbox 1.4]
+    lappend res [winfo ismapped .t.f] [.t bbox 1.4]
 } -cleanup {
     destroy .t.f
-} -result [list 0 \
+} -result [list 1 0 \
     [list [expr {$padx+3*$fixedWidth}] $pady $fixedWidth $fixedHeight]]
 
 test textWind-3.6 {EmbWinConfigure procedure} -setup {
@@ -422,6 +420,7 @@ test textWind-3.7 {EmbWinConfigure procedure} -setup {
 } -cleanup {
     destroy .f
 } -returnCodes error -result {can't embed .f.f in .t}
+
 test textWind-3.8 {EmbWinConfigure procedure} -setup {
     destroy .t2
 } -body {
@@ -432,6 +431,7 @@ test textWind-3.8 {EmbWinConfigure procedure} -setup {
 } -cleanup {
     destroy .t2
 } -returnCodes error -result {can't embed .t2 in .t}
+
 test textWind-3.9 {EmbWinConfigure procedure} -setup {
     destroy .t2
 } -body {
@@ -443,6 +443,7 @@ test textWind-3.9 {EmbWinConfigure procedure} -setup {
 } -cleanup {
     destroy .t2
 } -result {-window {} {} {} {}}
+
 test textWind-3.10 {EmbWinConfigure procedure} -setup {
     .t delete 1.0 end
 } -body {
@@ -450,6 +451,7 @@ test textWind-3.10 {EmbWinConfigure procedure} -setup {
     .t window create 1.3
     .t window configure 1.3 -window .t
 } -returnCodes error -result {can't embed .t in .t}
+
 test textWind-3.11 {EmbWinConfigure procedure} -setup {
     .t delete 1.0 end
 } -body {
@@ -764,7 +766,7 @@ test textWind-10.5 {EmbWinLayoutProc procedure, error in creating window} -setup
         frame .t.f
         frame .t.f.f -width 10 -height 20 -bg $color
     }
-    update idletasks
+    update
     lappend msg [winfo exists .t.f.f]
 } -cleanup {
     destroy .t.f
@@ -794,7 +796,7 @@ test textWind-10.6 {EmbWinLayoutProc procedure, error in creating window} -setup
     {{can't embed .t relative to .t}} \
     [list [expr {$padx+5*$fixedWidth}] [expr {$pady+($fixedHeight/2)}] 0 0]]
 
-test textWind-10.7 {EmbWinLayoutProc procedure, error in creating window} -constraints failsOnUbuntu -setup {
+test textWind-10.7 {EmbWinLayoutProc procedure, error in creating window} -setup {
     .t delete 1.0 end
     destroy .t2
     proc bgerror args {
@@ -809,7 +811,7 @@ test textWind-10.7 {EmbWinLayoutProc procedure, error in creating window} -const
         concat .t2
     }
     set msg {}
-    update
+    update idletasks ; after 100 ; update
     lappend msg [.t bbox 1.5]
 } -cleanup {
     rename bgerror {}
@@ -956,15 +958,16 @@ test textWind-11.1 {EmbWinDisplayProc procedure, geometry transforms} -setup {
     destroy .f
     place forget .t
     pack .t
-# Make sure the Text is mapped before we start
+    # Make sure the Text is mapped before we start
     update
 } -body {
     .t insert 1.0 "Some sample text"
     pack forget .t
     place .t -x 30 -y 50
+    update
     frame .f -width 30 -height 20 -bg $color
     .t window create 1.12 -window .f
-    update ; after 100 ; update
+    update
     winfo geom .f
 } -cleanup {
     destroy .f
@@ -976,15 +979,16 @@ test textWind-11.2 {EmbWinDisplayProc procedure, geometry transforms} -setup {
     destroy .t.f
     place forget .t
     pack .t
-# Make sure the Text is mapped before we start
+    # Make sure the Text is mapped before we start
     update
 } -body {
     .t insert 1.0 "Some sample text"
     pack forget .t
     place .t -x 30 -y 50
+    update
     frame .t.f -width 30 -height 20 -bg $color
     .t window create 1.12 -window .t.f
-    update ; after 100 ; update
+    update
     winfo geom .t.f
 } -cleanup {
     destroy .t.f
@@ -997,7 +1001,7 @@ test textWind-11.3 {EmbWinDisplayProc procedure, configuration optimization} -se
     destroy .f
     place forget .t
     pack .t
-# Make sure the Text is mapped before we start
+    # Make sure the Text is mapped before we start
     update
 } -body {
     .t insert 1.0 "Some sample text"
@@ -1080,6 +1084,7 @@ test textWind-12.1 {EmbWinUndisplayProc procedure, mapping/unmapping} -setup {
     lappend x replaced
     .t window configure .f -window {}
     .t delete 1.1
+    update
     .t window create 1.4 -window .f
     update
     lappend x off-screen
@@ -1547,28 +1552,49 @@ test textWind-17.10 {peer widget window configuration} -setup {
     .t insert 1.0 "Some sample text"
     toplevel .tt
     pack [.t peer create .tt.t]
-    update idletasks
+    update
     .t window create 1.2 -window [frame .t.f -width 10 -height 20 -bg blue]
-    update idletasks
-    # There should be a window in the main widget but not in the peer.
-    lappend res [.t window configure 1.2 -window]
-    lappend res [.tt.t window configure 1.2 -window]
-    .tt.t window create 1.2 -window [frame .tt.t.f -width 25 -height 20 -bg blue]
-    update idletasks
-    .t window configure 1.2 -create {destroy %W.f ; frame %W.f -width 50 -height 7 -bg red}
-    update idletasks
-    # The main widget should not have changed.
-    lappend res [.t window configure 1.2 -window]
+    update
+    # There is a blue window in the main widget .t but not in the peer .tt.t
+    lappend res [.t window cget 1.2 -window]
+    lappend res [.tt.t window cget 1.2 -window]
+    # Insert a green window in the peer. Warning: the blue window previously
+    # inserted in .t at index 1.2 will now be found in .t at index 1.3
+    # The underlying linked segments are common in a text widget and its peers.
+    .tt.t window create 1.2 -window [frame .tt.t.f -width 25 -height 20 -bg green]
+    update
+    lappend res [.t window cget 1.2 -window]
+    lappend res [.t window cget 1.3 -window]
+    # In the peer, the green window still is at 1.2, and there is no window at 1.3
+    lappend res [.tt.t window cget 1.2 -window]
+    lappend res [.tt.t window cget 1.3 -window]
+    # Insert a red window in .t at index 1.2. This replaces the blue window originally at 1.2
+    # in .t, because the green window inserted in the peer is not visible from .t, therefore
+    # the embedded window found at index 1.2 in .t is the one originally at 1.2 in .t, i.e.
+    # the blue one
+    .t window configure 1.2 -create {destroy %W.f ; update ; frame %W.f -width 50 -height 7 -bg red}
+    update
+    # The main widget .t still has a window named .t.f at 1.2. This is NOT the blue
+    # frame but the red frame from the -create script, which bears the same name.
+    lappend res [.t window cget 1.2 -window]
+    # The peer still has its green .tt.t.f at 1.2
+    lappend res [.tt.t window cget 1.2 -window]
+    # When removing the -window option the create script plays, therefore .t still has
+    # the red frame .t.f at 1.2
     .t window configure 1.2 -window {}
+    update
+    lappend res [.t window cget 1.2 -window]
+    # The -create script associated to index 1.2 applies to all peers (that's the reason
+    # why the manual states that "If multiple peer widgets are in use, it is usually simpler
+    # to use the -create option if embedded windows are desired in each peer."). Therefore
+    # when removing the -window option in the peer, the -create script is run, which replaces
+    # the green frame by the red one named as per the -create script, i.e. .tt.t.f
     .tt.t window configure 1.2 -window {}
     update
-    # Nothing should have changed.
-    lappend res [.t window configure 1.2 -window]
-    lappend res [.tt.t window configure 1.2 -window]
+    lappend res [.tt.t window cget 1.2 -window]
 } -cleanup {
     destroy .tt .t
-}  -result {{-window {} {} {} .t.f} {-window {} {} {} {}} {-window {} {} {} .t.f}\
-{-window {} {} {} .t.f} {-window {} {} {} .tt.t.f}}
+}  -result {.t.f {} {} .t.f .tt.t.f {} .t.f .tt.t.f .t.f .tt.t.f}
 
 test textWind-18.1 {embedded window deletion triggered by a script bound to <Map>} -setup {
     catch {destroy .t .f .f2}
@@ -1582,9 +1608,43 @@ test textWind-18.1 {embedded window deletion triggered by a script bound to <Map
     # this shall not crash (bug 1501749)
     after 100 {.t yview end}
     tkwait visibility .f2
+    after 200
     update
 } -cleanup {
     destroy .t .f .f2
+} -result {}
+
+test textWind-18.2 {text widget deletion triggered by a script bound to embedded window mapping} -setup {
+    catch {destroy .t .f}
+} -body {
+    pack [text .t]
+    for {set i 1} {$i < 100} {incr i} {.t insert end "Line $i\n"}
+    .t window create end -window [frame .f -background red -width 80 -height 80]
+    bind .f <Map> {destroy .t}
+    update
+    # this shall not crash (bug 1501749)
+    after 100 {.t yview end}
+    tkwait window .t
+} -cleanup {
+    destroy .t .f
+} -result {}
+
+test textWind-18.3 {embedded window destruction in cascade} -setup {
+    catch {destroy .t .f}
+    set x 0
+} -body {
+    pack [text .t]
+    button .t.b1
+    .t window create 1.0 -window .t.b1
+    bind .t.b1 <Destroy> {destroy .t.b2 ; set x 1}
+    button .t.b2
+    .t window create 2.0 -window .t.b2
+    update
+    # this shall not crash (bug 54fe7a5e71)
+    after 100 {.t delete 1.0 end}
+    tkwait variable x
+} -cleanup {
+    destroy .t .f
 } -result {}
 
 option clear

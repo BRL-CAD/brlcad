@@ -1,7 +1,7 @@
 /*                        M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -96,14 +96,14 @@ typedef struct master_s
 } master_t;
 
 
-void master_dispatcher_init();
+void master_dispatcher_init(void);
 int master_networking(void *ptr);
 void master_result(tienet_buffer_t *result);
 
 master_t master;
 
 static void
-master_setup()
+master_setup(void)
 {
     uint16_t i;
 
@@ -641,7 +641,7 @@ static void finish(int sig) {
 }
 
 
-static void help() {
+static void help(void) {
     fprintf(stderr,"%s\n", "Usage: adrt_master [options]\n\
   -h\t\tdisplay help.\n\
   -c\t\tconnect to component server.\n\

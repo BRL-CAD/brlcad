@@ -1,7 +1,7 @@
 /*                 C H E C K _ O P T I O N S. C
  * BRL-CAD
  *
- * Copyright (c) 2018-2022 United States Government as represented by
+ * Copyright (c) 2018-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
  * initializes the current state with meaningful defaults for raytracing.
  */
 struct current_state *
-analyze_current_state_init()
+analyze_current_state_init(void)
 {
     struct current_state *state;
     BU_ALLOC(state, struct current_state);

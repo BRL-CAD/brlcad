@@ -257,6 +257,68 @@ test btree-2.21 {deleting with negative range} -body {
     .t delete 3.2 3.2
     .t get 1.0 1000000.0
 } -result "Line 1\nLine 2\nLine 3\n"
+test btree-2.22 {deleting into beginning of elided range} -setup {
+    .t delete 1.0 end
+} -body {
+    for {set n 1} {$n <= 10} {incr n} {
+        .t insert end "Line $n\n"
+    }
+    .t tag configure Elided -elide 1
+    .t tag add Elided 6.0 end
+    .t delete 5.0 "5.0 + 8 chars"
+    .t get 4.0 7.0
+} -cleanup {
+    .t tag delete Elided
+    .t delete 1.0 end
+} -result "Line 4\nine 6\nLine 7\n"
+test btree-2.23 {deleting from within elided range} -body {
+    for {set n 1} {$n <= 10} {incr n} {
+        .t insert end "Line $n\n"
+    }
+    .t tag configure Elided -elide 1
+    .t tag add Elided 6.0 8.0
+    .t delete 7.0 9.0
+    .t get 6.0 8.0
+} -cleanup {
+    .t tag delete Elided
+    .t delete 1.0 end
+} -result "Line 6\nLine 9\n"
+test btree-2.24 {deleting whole elided range} -body {
+    for {set n 1} {$n <= 10} {incr n} {
+        .t insert end "Line $n\n"
+    }
+    .t tag configure Elided -elide 1
+    .t tag add Elided 6.0 8.0
+    .t delete 5.0 9.0
+    .t get 4.0 6.0
+} -cleanup {
+    .t tag delete Elided
+    .t delete 1.0 end
+} -result "Line 4\nLine 9\n"
+test btree-2.25 {deleting several elided ranges} -body {
+    for {set n 1} {$n <= 10} {incr n} {
+        .t insert end "Line $n\n"
+    }
+    .t tag configure Elided -elide 1
+    .t tag add Elided 6.0 6.2 6.4 6.5 7.2 7.6
+    .t delete 5.0 9.0
+    .t get 4.0 7.0
+} -cleanup {
+    .t tag delete Elided
+    .t delete 1.0 end
+} -result "Line 4\nLine 9\nLine 10\n"
+test btree-2.26 {deleting first char of elided range} -body {
+    for {set n 1} {$n <= 10} {incr n} {
+        .t insert end "Line $n\n"
+    }
+    .t tag configure Elided -elide 1
+    .t tag add Elided 6.0 end
+    .t delete 6.0 6.1
+    .t get 5.0 7.0
+} -cleanup {
+    .t tag delete Elided
+    .t delete 1.0 end
+} -result "Line 5\nine 6\n"
 
 
 test btree-3.1 {inserting with tags} -body {

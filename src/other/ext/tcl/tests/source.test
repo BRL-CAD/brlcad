@@ -284,11 +284,11 @@ test source-7.6 {source -encoding: mismatch encoding error} -setup {
     puts $f "proc \u20ac {} {return foo}"
     close $f
 } -body {
-    source -encoding ascii $sourcefile
+    source -encoding iso8859-1 $sourcefile
     \u20ac
 } -cleanup {
     removeFile source.file
-} -returnCodes error -match glob -result {invalid command name*}
+} -returnCodes error -result "invalid command name \"\u20ac\""
 
 test source-8.1 {source and coroutine/yield} -setup {
     set sourcefile [makeFile {} source.file]

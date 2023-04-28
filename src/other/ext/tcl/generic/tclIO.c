@@ -4278,6 +4278,7 @@ Write(
     char *nextNewLine = NULL;
     int endEncoding, saved = 0, total = 0, flushed = 0, needNlFlush = 0;
     char safe[BUFFER_PADDING];
+    int encodingError = 0;
 
     if (srcLen) {
         WillWrite(chanPtr);
@@ -4294,7 +4295,7 @@ Write(
 	nextNewLine = (char *)memchr(src, '\n', srcLen);
     }
 
-    while (srcLen + saved + endEncoding > 0) {
+    while (srcLen + saved + endEncoding > 0 && !encodingError) {
 	ChannelBuffer *bufPtr;
 	char *dst;
 	int result, srcRead, dstLen, dstWrote, srcLimit = srcLen;
@@ -4335,16 +4336,8 @@ Write(
 	statePtr->outputEncodingFlags &= ~TCL_ENCODING_START;
 
 	if ((result != TCL_OK) && (srcRead + dstWrote == 0)) {
-	    /*
-	     * We're reading from invalid/incomplete UTF-8.
-	     */
-
-	    ReleaseChannelBuffer(bufPtr);
-	    if (total == 0) {
-		Tcl_SetErrno(EINVAL);
-		return -1;
-	    }
-	    break;
+	    encodingError = 1;
+	    result = TCL_OK;
 	}
 
 	bufPtr->nextAdded += dstWrote;
@@ -4435,13 +4428,17 @@ Write(
 	}
 	ReleaseChannelBuffer(bufPtr);
     }
-    if ((flushed < total) && (GotFlag(statePtr, CHANNEL_UNBUFFERED) ||
-	    (needNlFlush && GotFlag(statePtr, CHANNEL_LINEBUFFERED)))) {
+    if (((flushed < total) && GotFlag(statePtr, CHANNEL_UNBUFFERED)) ||
+	    (needNlFlush && GotFlag(statePtr, CHANNEL_LINEBUFFERED))) {
 	if (FlushChannel(NULL, chanPtr, 0) != 0) {
 	    return -1;
 	}
     }
 
+    if (encodingError) {
+	Tcl_SetErrno(EINVAL);
+	return -1;
+    }
     return total;
 }
 
@@ -4694,7 +4691,6 @@ Tcl_GetsObj(
 	    eol = dst;
 	    skip = 1;
 	    if (GotFlag(statePtr, INPUT_SAW_CR)) {
-		ResetFlag(statePtr, INPUT_SAW_CR);
 		if ((eol < dstEnd) && (*eol == '\n')) {
 		    /*
 		     * Skip the raw bytes that make up the '\n'.
@@ -4744,8 +4740,10 @@ Tcl_GetsObj(
 			skip++;
 		    }
 		    eol--;
+		    ResetFlag(statePtr, INPUT_SAW_CR);
 		    goto gotEOL;
 		} else if (*eol == '\n') {
+		    ResetFlag(statePtr, INPUT_SAW_CR);
 		    goto gotEOL;
 		}
 	    }
@@ -4774,7 +4772,7 @@ Tcl_GetsObj(
 		Tcl_SetObjLength(objPtr, oldLength);
 		CommonGetsCleanup(chanPtr);
 		copiedTotal = -1;
-		ResetFlag(statePtr, CHANNEL_BLOCKED);
+		ResetFlag(statePtr, CHANNEL_BLOCKED|INPUT_SAW_CR);
 		goto done;
 	    }
 	    goto gotEOL;
@@ -11006,7 +11004,7 @@ FixLevelCode(
      * information. Hence an error means that we've got serious breakage.
      */
 
-    res = Tcl_ListObjGetElements(NULL, msg, &lc, &lv);
+    res = TclListObjGetElements(NULL, msg, &lc, &lv);
     if (res != TCL_OK) {
 	Tcl_Panic("Tcl_SetChannelError: bad syntax of message");
     }

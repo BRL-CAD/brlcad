@@ -1,7 +1,7 @@
 #       B R L C A D _ U S E R _ O P T I O N S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2020-2022 United States Government as represented by
+# Copyright (c) 2020-2023 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -200,8 +200,12 @@ option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstrac
 mark_as_advanced(BRLCAD_ENABLE_GDAL)
 
 # Enable features requiring Open Asset Import library
-option(BRLCAD_ENABLE_ASSIMP "Enable features requiring the Open Asset Import Library" OFF)
-mark_as_advanced(BRLCAD_ENABLE_ASSIMP)
+option(BRLCAD_ENABLE_ASSETIMPORT "Enable features requiring the Open Asset Import Library" ON)
+mark_as_advanced(BRLCAD_ENABLE_ASSETIMPORT)
+
+# Enable features requiring OpenMesh library
+option(BRLCAD_ENABLE_OPENMESH "Enable features requiring the OpenMesh Library" ON)
+mark_as_advanced(BRLCAD_ENABLE_OPENMESH)
 
 # Enable features requiring STEPcode library
 option(BRLCAD_ENABLE_STEP "Enable features requiring the STEP support libraries" ON)

@@ -1,7 +1,7 @@
 /*                       L O D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2022 United States Government as represented by
+ * Copyright (c) 2022-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Based off of code from https://github.com/bhaettasch/pop-buffer-demo

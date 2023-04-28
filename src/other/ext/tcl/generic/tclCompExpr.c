@@ -1001,7 +1001,7 @@ ParseExpr(
 		 * later.
 		 */
 
-		literal = Tcl_NewObj();
+		TclNewObj(literal);
 		if (TclWordKnownAtCompileTime(tokenPtr, literal)) {
 		    Tcl_ListObjAppendElement(NULL, litList, literal);
 		    complete = lastParsed = OT_LITERAL;
@@ -1828,8 +1828,8 @@ Tcl_ParseExpr(
 {
     int code;
     OpNode *opTree = NULL;	/* Will point to the tree of operators. */
-    Tcl_Obj *litList = Tcl_NewObj();	/* List to hold the literals. */
-    Tcl_Obj *funcList = Tcl_NewObj();	/* List to hold the functon names. */
+    Tcl_Obj *litList;	/* List to hold the literals. */
+    Tcl_Obj *funcList;	/* List to hold the functon names. */
     Tcl_Parse *exprParsePtr = TclStackAlloc(interp, sizeof(Tcl_Parse));
 				/* Holds the Tcl_Tokens of substitutions. */
 
@@ -1837,6 +1837,8 @@ Tcl_ParseExpr(
 	numBytes = (start ? strlen(start) : 0);
     }
 
+    TclNewObj(litList);
+    TclNewObj(funcList);
     code = ParseExpr(interp, start, numBytes, &opTree, litList, funcList,
 	    exprParsePtr, 1 /* parseOnly */);
     Tcl_DecrRefCount(funcList);
@@ -2003,7 +2005,7 @@ ParseLexeme(
 	}
     }
 
-    literal = Tcl_NewObj();
+    TclNewObj(literal);
     if (TclParseNumber(NULL, literal, NULL, start, numBytes, &end,
 	    TCL_PARSE_NO_WHITESPACE) == TCL_OK) {
 	if (end < start + numBytes && !TclIsBareword(*end)) {
@@ -2117,12 +2119,15 @@ TclCompileExpr(
     int optimize)		/* 0 for one-off expressions. */
 {
     OpNode *opTree = NULL;	/* Will point to the tree of operators */
-    Tcl_Obj *litList = Tcl_NewObj();	/* List to hold the literals */
-    Tcl_Obj *funcList = Tcl_NewObj();	/* List to hold the functon names*/
+    Tcl_Obj *litList;	/* List to hold the literals */
+    Tcl_Obj *funcList;	/* List to hold the functon names*/
     Tcl_Parse *parsePtr = TclStackAlloc(interp, sizeof(Tcl_Parse));
 				/* Holds the Tcl_Tokens of substitutions */
+    int code;
 
-    int code = ParseExpr(interp, script, numBytes, &opTree, litList,
+    TclNewObj(litList);
+    TclNewObj(funcList);
+    code = ParseExpr(interp, script, numBytes, &opTree, litList,
 	    funcList, parsePtr, 0 /* parseOnly */);
 
     if (code == TCL_OK) {
@@ -2181,9 +2186,10 @@ ExecConstantExprTree(
     CompileEnv *envPtr;
     ByteCode *byteCodePtr;
     int code;
-    Tcl_Obj *byteCodeObj = Tcl_NewObj();
+    Tcl_Obj *byteCodeObj;
     NRE_callback *rootPtr = TOP_CB(interp);
 
+    TclNewObj(byteCodeObj);
     /*
      * Note we are compiling an expression with literal arguments. This means
      * there can be no [info frame] calls when we execute the resulting

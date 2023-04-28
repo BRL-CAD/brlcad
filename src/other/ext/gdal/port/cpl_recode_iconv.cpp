@@ -8,7 +8,7 @@
  *
  **********************************************************************
  * Copyright (c) 2011, Andrey Kiselev <dron@ak4719.spb.edu>
- * Copyright (c) 2011-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,8 +27,6 @@
 
 #include <algorithm>
 
-CPL_CVSID("$Id$");
-
 #ifdef CPL_RECODE_ICONV
 
 #include <iconv.h>
@@ -38,15 +36,15 @@ CPL_CVSID("$Id$");
 #define ICONV_CPP_CONST ICONV_CONST
 #endif
 
-static const size_t CPL_RECODE_DSTBUF_SIZE = 32768;
+constexpr size_t CPL_RECODE_DSTBUF_SIZE = 32768;
 
- /* used by cpl_recode.cpp */
+/* used by cpl_recode.cpp */
 extern void CPLClearRecodeIconvWarningFlags();
-extern char *CPLRecodeIconv( const char *, const char *, const char * ) CPL_RETURNS_NONNULL;
-extern char *CPLRecodeFromWCharIconv( const wchar_t *,
-                                      const char *, const char * );
-extern wchar_t *CPLRecodeToWCharIconv( const char *,
-                                       const char *, const char * );
+extern char *CPLRecodeIconv(const char *, const char *,
+                            const char *) CPL_RETURNS_NONNULL;
+extern char *CPLRecodeFromWCharIconv(const wchar_t *, const char *,
+                                     const char *);
+extern wchar_t *CPLRecodeToWCharIconv(const char *, const char *, const char *);
 
 /************************************************************************/
 /*                 CPLClearRecodeIconvWarningFlags()                    */
@@ -59,6 +57,25 @@ void CPLClearRecodeIconvWarningFlags()
 {
     bHaveWarned1 = false;
     bHaveWarned2 = false;
+}
+
+/************************************************************************/
+/*                      CPLFixInputEncoding()                           */
+/************************************************************************/
+
+static const char *CPLFixInputEncoding(const char *pszSrcEncoding,
+                                       int nFirstByteVal)
+{
+    // iconv on Alpine Linux seems to assume BE order, when it is not explicit
+    if (EQUAL(pszSrcEncoding, CPL_ENC_UCS2))
+        pszSrcEncoding = "UCS-2LE";
+    else if (EQUAL(pszSrcEncoding, CPL_ENC_UTF16) && nFirstByteVal != 0xFF &&
+             nFirstByteVal != 0xFE)
+    {
+        // Only force UTF-16LE if there's no starting endianness marker
+        pszSrcEncoding = "UTF-16LE";
+    }
+    return pszSrcEncoding;
 }
 
 /************************************************************************/
@@ -78,49 +95,61 @@ void CPLClearRecodeIconvWarningFlags()
  * @return a NULL terminated string which should be freed with CPLFree().
  */
 
-char *CPLRecodeIconv( const char *pszSource,
-                      const char *pszSrcEncoding,
-                      const char *pszDstEncoding )
+char *CPLRecodeIconv(const char *pszSource, const char *pszSrcEncoding,
+                     const char *pszDstEncoding)
 
 {
+    pszSrcEncoding = CPLFixInputEncoding(
+        pszSrcEncoding, static_cast<unsigned char>(pszSource[0]));
+
     iconv_t sConv;
 
-    sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
+    sConv = iconv_open(pszDstEncoding, pszSrcEncoding);
 
-    if( sConv == (iconv_t)-1 )
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+    // iconv_t might be a integer or a pointer, so we have to fallback to
+    // C-style cast
+    if (sConv == (iconv_t)(-1))
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Recode from %s to %s failed with the error: \"%s\".",
-                  pszSrcEncoding, pszDstEncoding, strerror(errno) );
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Recode from %s to %s failed with the error: \"%s\".",
+                 pszSrcEncoding, pszDstEncoding, strerror(errno));
 
         return CPLStrdup(pszSource);
     }
 
-/* -------------------------------------------------------------------- */
-/*      XXX: There is a portability issue: iconv() function could be    */
-/*      declared differently on different platforms. The second         */
-/*      argument could be declared as char** (as POSIX defines) or      */
-/*      as a const char**. Handle it with the ICONV_CPP_CONST macro here.   */
-/* -------------------------------------------------------------------- */
-    ICONV_CPP_CONST char *pszSrcBuf = (ICONV_CPP_CONST char *)pszSource;
-    size_t nSrcLen = strlen( pszSource );
-    size_t nDstCurLen = std::max(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
+    /* -------------------------------------------------------------------- */
+    /*      XXX: There is a portability issue: iconv() function could be    */
+    /*      declared differently on different platforms. The second         */
+    /*      argument could be declared as char** (as POSIX defines) or      */
+    /*      as a const char**. Handle it with the ICONV_CPP_CONST macro here. */
+    /* -------------------------------------------------------------------- */
+    ICONV_CPP_CONST char *pszSrcBuf =
+        const_cast<ICONV_CPP_CONST char *>(pszSource);
+    size_t nSrcLen = strlen(pszSource);
+    size_t nDstCurLen = std::max(CPL_RECODE_DSTBUF_SIZE, nSrcLen);
     size_t nDstLen = nDstCurLen;
     char *pszDestination =
-        static_cast<char *>(CPLCalloc(nDstCurLen, sizeof(char)));
+        static_cast<char *>(CPLCalloc(nDstCurLen + 1, sizeof(char)));
     char *pszDstBuf = pszDestination;
 
-    while( nSrcLen > 0 )
+    while (nSrcLen > 0)
     {
         size_t nConverted =
-            iconv( sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen );
+            iconv(sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen);
 
-        if( nConverted == static_cast<size_t>(-1) )
+        if (nConverted == static_cast<size_t>(-1))
         {
-            if( errno == EILSEQ )
+            if (errno == EILSEQ)
             {
                 // Skip the invalid sequence in the input string.
-                if( !bHaveWarned1 )
+                if (!bHaveWarned1)
                 {
                     bHaveWarned1 = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -129,21 +158,23 @@ char *CPLRecodeIconv( const char *pszSource,
                              "This warning will not be emitted anymore",
                              pszSrcEncoding, pszDstEncoding);
                 }
+                if (nSrcLen == 0)
+                    break;
                 nSrcLen--;
                 pszSrcBuf++;
                 continue;
             }
 
-            else if( errno == E2BIG )
+            else if (errno == E2BIG)
             {
                 // We are running out of the output buffer.
                 // Dynamically increase the buffer size.
                 size_t nTmp = nDstCurLen;
                 nDstCurLen *= 2;
-                pszDestination =
-                    static_cast<char *>(CPLRealloc(pszDestination, nDstCurLen));
+                pszDestination = static_cast<char *>(
+                    CPLRealloc(pszDestination, nDstCurLen + 1));
                 pszDstBuf = pszDestination + nTmp - nDstLen;
-                nDstLen += nDstCurLen - nTmp;
+                nDstLen += nTmp;
                 continue;
             }
 
@@ -154,7 +185,7 @@ char *CPLRecodeIconv( const char *pszSource,
 
     pszDestination[nDstCurLen - nDstLen] = '\0';
 
-    iconv_close( sConv );
+    iconv_close(sConv);
 
     return pszDestination;
 }
@@ -182,101 +213,114 @@ char *CPLRecodeIconv( const char *pszSource,
  * CPLFree(), or NULL if an error occurs.
  */
 
-char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
-                               const char *pszSrcEncoding,
-                               const char *pszDstEncoding )
+char *CPLRecodeFromWCharIconv(const wchar_t *pwszSource,
+                              const char *pszSrcEncoding,
+                              const char *pszDstEncoding)
 
 {
-/* -------------------------------------------------------------------- */
-/*      What is the source length.                                      */
-/* -------------------------------------------------------------------- */
+    pszSrcEncoding = CPLFixInputEncoding(pszSrcEncoding, pwszSource[0]);
+
+    /* -------------------------------------------------------------------- */
+    /*      What is the source length.                                      */
+    /* -------------------------------------------------------------------- */
     size_t nSrcLen = 0;
 
-    while( pwszSource[nSrcLen] != 0 )
+    while (pwszSource[nSrcLen] != 0)
         nSrcLen++;
 
-/* -------------------------------------------------------------------- */
-/*      iconv() does not support wchar_t so we need to repack the       */
-/*      characters according to the width of a character in the         */
-/*      source encoding.  For instance if wchar_t is 4 bytes but our    */
-/*      source is UTF16 then we need to pack down into 2 byte           */
-/*      characters before passing to iconv().                           */
-/* -------------------------------------------------------------------- */
-    const int nTargetCharWidth = CPLEncodingCharSize( pszSrcEncoding );
+    /* -------------------------------------------------------------------- */
+    /*      iconv() does not support wchar_t so we need to repack the       */
+    /*      characters according to the width of a character in the         */
+    /*      source encoding.  For instance if wchar_t is 4 bytes but our    */
+    /*      source is UTF16 then we need to pack down into 2 byte           */
+    /*      characters before passing to iconv().                           */
+    /* -------------------------------------------------------------------- */
+    const int nTargetCharWidth = CPLEncodingCharSize(pszSrcEncoding);
 
-    if( nTargetCharWidth < 1 )
+    if (nTargetCharWidth < 1)
     {
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Recode from %s with CPLRecodeFromWChar() failed because"
-                  " the width of characters in the encoding are not known.",
-                  pszSrcEncoding );
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Recode from %s with CPLRecodeFromWChar() failed because"
+                 " the width of characters in the encoding are not known.",
+                 pszSrcEncoding);
         return CPLStrdup("");
     }
 
     GByte *pszIconvSrcBuf =
         static_cast<GByte *>(CPLCalloc((nSrcLen + 1), nTargetCharWidth));
 
-    for( unsigned int iSrc = 0; iSrc <= nSrcLen; iSrc++ )
+    for (unsigned int iSrc = 0; iSrc <= nSrcLen; iSrc++)
     {
-        if( nTargetCharWidth == 1 )
+        if (nTargetCharWidth == 1)
             pszIconvSrcBuf[iSrc] = static_cast<GByte>(pwszSource[iSrc]);
-        else if( nTargetCharWidth == 2 )
-            ((short *)pszIconvSrcBuf)[iSrc] =
+        else if (nTargetCharWidth == 2)
+            (reinterpret_cast<short *>(pszIconvSrcBuf))[iSrc] =
                 static_cast<short>(pwszSource[iSrc]);
-        else if( nTargetCharWidth == 4 )
-            ((GInt32 *)pszIconvSrcBuf)[iSrc] = pwszSource[iSrc];
+        else if (nTargetCharWidth == 4)
+            (reinterpret_cast<GInt32 *>(pszIconvSrcBuf))[iSrc] =
+                pwszSource[iSrc];
     }
 
-/* -------------------------------------------------------------------- */
-/*      Create the iconv() translation object.                          */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create the iconv() translation object.                          */
+    /* -------------------------------------------------------------------- */
     iconv_t sConv;
 
-    sConv = iconv_open( pszDstEncoding, pszSrcEncoding );
+    sConv = iconv_open(pszDstEncoding, pszSrcEncoding);
 
-    if( sConv == (iconv_t)-1 )
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#endif
+    // iconv_t might be a integer or a pointer, so we have to fallback to
+    // C-style cast
+    if (sConv == (iconv_t)(-1))
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
     {
-        CPLFree( pszIconvSrcBuf );
-        CPLError( CE_Warning, CPLE_AppDefined,
-                  "Recode from %s to %s failed with the error: \"%s\".",
-                  pszSrcEncoding, pszDstEncoding, strerror(errno) );
+        CPLFree(pszIconvSrcBuf);
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Recode from %s to %s failed with the error: \"%s\".",
+                 pszSrcEncoding, pszDstEncoding, strerror(errno));
 
-        return CPLStrdup( "" );
+        return CPLStrdup("");
     }
 
-/* -------------------------------------------------------------------- */
-/*      XXX: There is a portability issue: iconv() function could be    */
-/*      declared differently on different platforms. The second         */
-/*      argument could be declared as char** (as POSIX defines) or      */
-/*      as a const char**. Handle it with the ICONV_CPP_CONST macro here.   */
-/* -------------------------------------------------------------------- */
-    ICONV_CPP_CONST char *pszSrcBuf = (ICONV_CPP_CONST char *) pszIconvSrcBuf;
+    /* -------------------------------------------------------------------- */
+    /*      XXX: There is a portability issue: iconv() function could be    */
+    /*      declared differently on different platforms. The second         */
+    /*      argument could be declared as char** (as POSIX defines) or      */
+    /*      as a const char**. Handle it with the ICONV_CPP_CONST macro here. */
+    /* -------------------------------------------------------------------- */
+    ICONV_CPP_CONST char *pszSrcBuf = const_cast<ICONV_CPP_CONST char *>(
+        reinterpret_cast<char *>(pszIconvSrcBuf));
 
     /* iconv expects a number of bytes, not characters */
-    nSrcLen *= sizeof(wchar_t);
+    nSrcLen *= nTargetCharWidth;
 
-/* -------------------------------------------------------------------- */
-/*      Allocate destination buffer.                                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Allocate destination buffer.                                    */
+    /* -------------------------------------------------------------------- */
     size_t nDstCurLen = std::max(CPL_RECODE_DSTBUF_SIZE, nSrcLen + 1);
     size_t nDstLen = nDstCurLen;
     char *pszDestination =
         static_cast<char *>(CPLCalloc(nDstCurLen, sizeof(char)));
     char *pszDstBuf = pszDestination;
 
-    while( nSrcLen > 0 )
+    while (nSrcLen > 0)
     {
         const size_t nConverted =
-            iconv( sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen );
+            iconv(sConv, &pszSrcBuf, &nSrcLen, &pszDstBuf, &nDstLen);
 
-        if( nConverted == static_cast<size_t>(-1) )
+        if (nConverted == static_cast<size_t>(-1))
         {
-            if( errno == EILSEQ )
+            if (errno == EILSEQ)
             {
                 // Skip the invalid sequence in the input string.
-                nSrcLen--;
-                pszSrcBuf += sizeof(wchar_t);
-                if( !bHaveWarned2 )
+                nSrcLen -= nTargetCharWidth;
+                pszSrcBuf += nTargetCharWidth;
+                if (!bHaveWarned2)
                 {
                     bHaveWarned2 = true;
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -288,7 +332,7 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
                 continue;
             }
 
-            else if( errno == E2BIG )
+            else if (errno == E2BIG)
             {
                 // We are running out of the output buffer.
                 // Dynamically increase the buffer size.
@@ -306,11 +350,18 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
         }
     }
 
+    if (nDstLen == 0)
+    {
+        ++nDstCurLen;
+        pszDestination =
+            static_cast<char *>(CPLRealloc(pszDestination, nDstCurLen));
+        ++nDstLen;
+    }
     pszDestination[nDstCurLen - nDstLen] = '\0';
 
-    iconv_close( sConv );
+    iconv_close(sConv);
 
-    CPLFree( pszIconvSrcBuf );
+    CPLFree(pszIconvSrcBuf);
 
     return pszDestination;
 }
@@ -338,13 +389,13 @@ char *CPLRecodeFromWCharIconv( const wchar_t *pwszSource,
  * NULL on error.
  */
 
-wchar_t *CPLRecodeToWCharIconv( const char *pszSource,
-                                const char *pszSrcEncoding,
-                                const char *pszDstEncoding )
+wchar_t *CPLRecodeToWCharIconv(const char *pszSource,
+                               const char *pszSrcEncoding,
+                               const char *pszDstEncoding)
 
 {
-    return (wchar_t *)CPLRecodeIconv( pszSource,
-                                      pszSrcEncoding, pszDstEncoding);
+    return reinterpret_cast<wchar_t *>(
+        CPLRecodeIconv(pszSource, pszSrcEncoding, pszDstEncoding));
 }
 
 #endif /* CPL_RECODE_ICONV */

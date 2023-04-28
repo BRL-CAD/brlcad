@@ -528,7 +528,7 @@ test util-8.6 {TclNeedSpace - correct utf-8 handling} testdstring {
     testdstring append \} -1
     list [llength [testdstring get]] [string length [testdstring get]]
 } {2 8}
-test util-8.7 {TclNeedSpace - watch out for escaped space} {
+test util-8.7 {TclNeedSpace - watch out for escaped space} testdstring {
     testdstring free
     testdstring append {\ } -1
     testdstring start
@@ -537,7 +537,7 @@ test util-8.7 {TclNeedSpace - watch out for escaped space} {
     # Should make {\  {}}
     list [llength [testdstring get]] [string index [testdstring get] 3]
 } {2 \{}
-test util-8.8 {TclNeedSpace - watch out for escaped space} {
+test util-8.8 {TclNeedSpace - watch out for escaped space} testdstring {
     testdstring free
     testdstring append {\\ } -1
     testdstring start
@@ -546,7 +546,7 @@ test util-8.8 {TclNeedSpace - watch out for escaped space} {
     # Should make {\\ {}}
     list [llength [testdstring get]] [string index [testdstring get] 3]
 } {2 \{}
-test util-8.9 {TclNeedSpace - watch out for escaped space} {
+test util-8.9 {TclNeedSpace - watch out for escaped space} testdstring {
     testdstring free
     testdstring append {\\\ } -1
     testdstring start
@@ -555,7 +555,7 @@ test util-8.9 {TclNeedSpace - watch out for escaped space} {
     # Should make {\\\  {}}
     list [llength [testdstring get]] [string index [testdstring get] 5]
 } {2 \{}
-test util-8.10 {TclNeedSpace - watch out for escaped space} {
+test util-8.10 {TclNeedSpace - watch out for escaped space} testdstring {
     testdstring free
     testdstring append {\\\\\\\ } -1
     testdstring start
@@ -564,7 +564,7 @@ test util-8.10 {TclNeedSpace - watch out for escaped space} {
     # Should make {\\\\\\\  {}}
     list [llength [testdstring get]] [string index [testdstring get] 9]
 } {2 \{}
-test util-8.11 {TclNeedSpace - watch out for escaped space} {
+test util-8.11 {TclNeedSpace - watch out for escaped space} testdstring {
     testdstring free
     testdstring append {\\\\\\\\ } -1
     testdstring start

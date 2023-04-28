@@ -1,7 +1,7 @@
 /*                     G - V A R . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2022 United States Government as represented by
+ * Copyright (c) 2002-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -114,7 +114,7 @@ void mesh_tracker(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 }
 
 
-void dealloc_mesh_list()
+void dealloc_mesh_list(void)
 {
     struct mesh* tmp;
     curr = head;
@@ -251,7 +251,7 @@ void get_normals(struct rt_bot_internal *bot, float *dest)
 }
 
 
-void write_mesh_data()
+void write_mesh_data(void)
 {
     size_t ret;
 

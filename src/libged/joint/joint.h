@@ -1,7 +1,7 @@
 /*                        J O I N T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,6 +56,7 @@
 #ifndef LIBGED_JOINT_H
 #define LIBGED_JOINT_H
 
+#include "ged/defines.h"
 
 #ifndef FALSE
 #  define FALSE 0
@@ -175,7 +176,7 @@ struct funtab {
     char *ft_name;
     char *ft_parms;
     char *ft_comment;
-    int (*ft_func)();
+    int (*ft_func)(struct ged *, int, const char **);
     int ft_min;
     int ft_max;
     int tcl_converted;

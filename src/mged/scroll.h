@@ -1,7 +1,7 @@
 /*                        S C R O L L . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2022 United States Government as represented by
+ * Copyright (c) 1989-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 
 struct scroll_item {
     char *scroll_string;
-    void (*scroll_func)();
+    void (*scroll_func)(struct scroll_item *, double);
     int scroll_val;
     char *scroll_cmd;
 };

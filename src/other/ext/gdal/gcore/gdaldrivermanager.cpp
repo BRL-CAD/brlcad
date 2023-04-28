@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1998, Frank Warmerdam
- * Copyright (c) 2009-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,35 +30,40 @@
 #include "cpl_port.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
 #include <cstring>
 #include <map>
+#include <set>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
+#include "cpl_http.h"
 #include "cpl_multiproc.h"
 #include "cpl_port.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_compressor.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include "gdal.h"
 #include "gdal_pam.h"
+#include "gdal_version_full/gdal_version.h"
+#include "gdal_thread_pool.h"
 #include "ogr_srs_api.h"
+#include "ograpispy.h"
+#ifdef HAVE_XERCES
 #include "ogr_xerces.h"
+#endif  // HAVE_XERCES
 
 #ifdef _MSC_VER
-#  ifdef MSVC_USE_VLD
-#    include <wchar.h>
-#    include <vld.h>
-#  endif
+#ifdef MSVC_USE_VLD
+#include <wchar.h>
+#include <vld.h>
+#endif
 #endif
 
 // FIXME: Disabled following code as it crashed on OSX CI test.
-//#if HAVE_CXX11
-//#include <mutex>
-//#endif
-
-CPL_CVSID("$Id$");
+// #include <mutex>
 
 /************************************************************************/
 /* ==================================================================== */
@@ -66,15 +71,16 @@ CPL_CVSID("$Id$");
 /* ==================================================================== */
 /************************************************************************/
 
-static volatile GDALDriverManager *poDM = NULL;
-static CPLMutex *hDMMutex = NULL;
+static volatile GDALDriverManager *poDM = nullptr;
+static CPLMutex *hDMMutex = nullptr;
 
-// FIXME: Disale following code as it crashed on OSX CI test.
-//#if HAVE_CXX11
-//static std::mutex oDeleteMutex;
-//#endif
+// FIXME: Disabled following code as it crashed on OSX CI test.
+// static std::mutex oDeleteMutex;
 
-CPLMutex** GDALGetphDMMutex() { return &hDMMutex; }
+CPLMutex **GDALGetphDMMutex()
+{
+    return &hDMMutex;
+}
 
 /************************************************************************/
 /*                        GetGDALDriverManager()                        */
@@ -93,31 +99,31 @@ CPLMutex** GDALGetphDMMutex() { return &hDMMutex; }
  * to fail.
  */
 
-GDALDriverManager * GetGDALDriverManager()
+GDALDriverManager *GetGDALDriverManager()
 
 {
-    if( poDM == NULL )
+    if (poDM == nullptr)
     {
-        CPLMutexHolderD( &hDMMutex );
-
-        if( poDM == NULL )
+        CPLMutexHolderD(&hDMMutex);
+        // cppcheck-suppress identicalInnerCondition
+        if (poDM == nullptr)
             poDM = new GDALDriverManager();
     }
 
-    CPLAssert( NULL != poDM );
+    CPLAssert(nullptr != poDM);
 
-    return const_cast<GDALDriverManager *>( poDM );
+    return const_cast<GDALDriverManager *>(poDM);
 }
 
 /************************************************************************/
 /*                         GDALDriverManager()                          */
 /************************************************************************/
 
-GDALDriverManager::GDALDriverManager() :
-    nDrivers(0),
-    papoDrivers(NULL)
+GDALDriverManager::GDALDriverManager()
 {
-    CPLAssert( poDM == NULL );
+    CPLAssert(poDM == nullptr);
+
+    CPLLoadConfigOptionsFromPredefinedFiles();
 
 /* -------------------------------------------------------------------- */
 /*      We want to push a location to search for data files             */
@@ -128,13 +134,13 @@ GDALDriverManager::GDALDriverManager() :
 /*      have been employed.                                             */
 /* -------------------------------------------------------------------- */
 #ifdef INST_DATA
-    if( CPLGetConfigOption( "GDAL_DATA", NULL ) != NULL )
+    if (CPLGetConfigOption("GDAL_DATA", nullptr) != nullptr)
     {
         // This one is picked up automatically by finder initialization.
     }
     else
     {
-        CPLPushFinderLocation( INST_DATA );
+        CPLPushFinderLocation(INST_DATA);
     }
 #endif
 }
@@ -150,9 +156,9 @@ void GDALDatasetPoolForceDestroy();
 GDALDriverManager::~GDALDriverManager()
 
 {
-/* -------------------------------------------------------------------- */
-/*      Cleanup any open datasets.                                      */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup any open datasets.                                      */
+    /* -------------------------------------------------------------------- */
 
     // We have to prevent the destroying of the dataset pool during this first
     // phase, otherwise it cause crashes with a VRT B referencing a VRT A, and
@@ -180,16 +186,16 @@ GDALDriverManager::~GDALDriverManager()
         // invalid, so go out of the loop and try again with the new valid
         // list.
         bHasDroppedRef = false;
-        for( int i = 0; i < nDSCount && !bHasDroppedRef; ++i )
+        for (int i = 0; i < nDSCount && !bHasDroppedRef; ++i)
         {
 #if DEBUG_VERBOSE
-            CPLDebug( "GDAL", "Call CloseDependentDatasets() on %s",
-                      papoDSList[i]->GetDescription() );
+            CPLDebug("GDAL", "Call CloseDependentDatasets() on %s",
+                     papoDSList[i]->GetDescription());
 #endif  // DEBUG_VERBOSE
             bHasDroppedRef =
                 CPL_TO_BOOL(papoDSList[i]->CloseDependentDatasets());
         }
-    } while(bHasDroppedRef);
+    } while (bHasDroppedRef);
 
     // Now let's destroy the dataset pool. Nobody should use it afterwards
     // if people have well released their dependent datasets above.
@@ -198,11 +204,10 @@ GDALDriverManager::~GDALDriverManager()
     // Now close the stand-alone datasets.
     int nDSCount = 0;
     GDALDataset **papoDSList = GDALDataset::GetOpenDatasets(&nDSCount);
-    for( int i = 0; i < nDSCount; ++i )
+    for (int i = 0; i < nDSCount; ++i)
     {
-        CPLDebug( "GDAL",
-                  "Force close of %s (%p) in GDALDriverManager cleanup.",
-                  papoDSList[i]->GetDescription(), papoDSList[i] );
+        CPLDebug("GDAL", "Force close of %s (%p) in GDALDriverManager cleanup.",
+                 papoDSList[i]->GetDescription(), papoDSList[i]);
         // Destroy with delete operator rather than GDALClose() to force
         // deletion of datasets with multiple reference count.
         // We could also iterate while GetOpenDatasets() returns a non NULL
@@ -210,10 +215,10 @@ GDALDriverManager::~GDALDriverManager()
         delete papoDSList[i];
     }
 
-/* -------------------------------------------------------------------- */
-/*      Destroy the existing drivers.                                   */
-/* -------------------------------------------------------------------- */
-    while( GetDriverCount() > 0 )
+    /* -------------------------------------------------------------------- */
+    /*      Destroy the existing drivers.                                   */
+    /* -------------------------------------------------------------------- */
+    while (GetDriverCount() > 0)
     {
         GDALDriver *poDriver = GetDriver(0);
 
@@ -221,100 +226,109 @@ GDALDriverManager::~GDALDriverManager()
         delete poDriver;
     }
 
-    delete GDALGetAPIPROXYDriver();
+    CleanupPythonDrivers();
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup local memory.                                           */
-/* -------------------------------------------------------------------- */
-    VSIFree( papoDrivers );
+    GDALDestroyGlobalThreadPool();
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup any Proxy related memory.                               */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup local memory.                                           */
+    /* -------------------------------------------------------------------- */
+    VSIFree(papoDrivers);
+
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup any Proxy related memory.                               */
+    /* -------------------------------------------------------------------- */
     PamCleanProxyDB();
 
-/* -------------------------------------------------------------------- */
-/*      Blow away all the finder hints paths.  We really should not     */
-/*      be doing all of them, but it is currently hard to keep track    */
-/*      of those that actually belong to us.                            */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup any memory allocated by the OGRSpatialReference         */
+    /*      related subsystem.                                              */
+    /* -------------------------------------------------------------------- */
+    OSRCleanup();
+
+    /* -------------------------------------------------------------------- */
+    /*      Blow away all the finder hints paths.  We really should not     */
+    /*      be doing all of them, but it is currently hard to keep track    */
+    /*      of those that actually belong to us.                            */
+    /* -------------------------------------------------------------------- */
     CPLFinderClean();
     CPLFreeConfig();
     CPLCleanupSharedFileMutex();
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup any memory allocated by the OGRSpatialReference         */
-/*      related subsystem.                                              */
-/* -------------------------------------------------------------------- */
-    OSRCleanup();
-
+#ifdef HAVE_XERCES
     OGRCleanupXercesMutex();
+#endif
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup VSIFileManager.                                         */
-/* -------------------------------------------------------------------- */
+#ifdef OGRAPISPY_ENABLED
+    OGRAPISpyDestroyMutex();
+#endif
+
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup VSIFileManager.                                         */
+    /* -------------------------------------------------------------------- */
     VSICleanupFileManager();
+    CPLDestroyCompressorRegistry();
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup thread local storage ... I hope the program is all      */
-/*      done with GDAL/OGR!                                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup thread local storage ... I hope the program is all      */
+    /*      done with GDAL/OGR!                                             */
+    /* -------------------------------------------------------------------- */
     CPLCleanupTLS();
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup our mutex.                                              */
-/* -------------------------------------------------------------------- */
-    if( hDMMutex )
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup our mutex.                                              */
+    /* -------------------------------------------------------------------- */
+    if (hDMMutex)
     {
-        CPLDestroyMutex( hDMMutex );
-        hDMMutex = NULL;
+        CPLDestroyMutex(hDMMutex);
+        hDMMutex = nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup dataset list mutex.                                     */
-/* -------------------------------------------------------------------- */
-    if( *GDALGetphDLMutex() != NULL )
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup dataset list mutex.                                     */
+    /* -------------------------------------------------------------------- */
+    if (*GDALGetphDLMutex() != nullptr)
     {
-        CPLDestroyMutex( *GDALGetphDLMutex() );
-        *GDALGetphDLMutex() = NULL;
+        CPLDestroyMutex(*GDALGetphDLMutex());
+        *GDALGetphDLMutex() = nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup raster block mutex.                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup raster block mutex.                                     */
+    /* -------------------------------------------------------------------- */
     GDALRasterBlock::DestroyRBMutex();
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup gdaltransformer.cpp mutex.                              */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup gdaltransformer.cpp mutex.                              */
+    /* -------------------------------------------------------------------- */
     GDALCleanupTransformDeserializerMutex();
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup cpl_error.cpp mutex.                                    */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup cpl_error.cpp mutex.                                    */
+    /* -------------------------------------------------------------------- */
     CPLCleanupErrorMutex();
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup CPLsetlocale mutex.                                     */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup CPLsetlocale mutex.                                     */
+    /* -------------------------------------------------------------------- */
     CPLCleanupSetlocaleMutex();
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup QHull mutex.                                            */
-/* -------------------------------------------------------------------- */
-    GDALTriangulationTerminate();
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup curl related stuff.                                     */
+    /* -------------------------------------------------------------------- */
+    CPLHTTPCleanup();
 
-/* -------------------------------------------------------------------- */
-/*      Cleanup the master CPL mutex, which governs the creation        */
-/*      of all other mutexes.                                           */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Cleanup the master CPL mutex, which governs the creation        */
+    /*      of all other mutexes.                                           */
+    /* -------------------------------------------------------------------- */
     CPLCleanupMasterMutex();
 
-/* -------------------------------------------------------------------- */
-/*      Ensure the global driver manager pointer is NULLed out.         */
-/* -------------------------------------------------------------------- */
-    if( poDM == this )
-        poDM = NULL;
+    /* -------------------------------------------------------------------- */
+    /*      Ensure the global driver manager pointer is NULLed out.         */
+    /* -------------------------------------------------------------------- */
+    if (poDM == this)
+        poDM = nullptr;
 }
 
 /************************************************************************/
@@ -365,10 +379,10 @@ int CPL_STDCALL GDALGetDriverCount()
  * @return the driver identified by the index or NULL if the index is invalid
  */
 
-GDALDriver * GDALDriverManager::GetDriver( int iDriver )
+GDALDriver *GDALDriverManager::GetDriver(int iDriver)
 
 {
-    CPLMutexHolderD( &hDMMutex );
+    CPLMutexHolderD(&hDMMutex);
 
     return GetDriver_unlocked(iDriver);
 }
@@ -383,7 +397,7 @@ GDALDriver * GDALDriverManager::GetDriver( int iDriver )
  * @see GDALDriverManager::GetDriver()
  */
 
-GDALDriverH CPL_STDCALL GDALGetDriver( int iDriver )
+GDALDriverH CPL_STDCALL GDALGetDriver(int iDriver)
 
 {
     return /* (GDALDriverH) */ GetGDALDriverManager()->GetDriver(iDriver);
@@ -412,71 +426,76 @@ GDALDriverH CPL_STDCALL GDALGetDriver( int iDriver )
  * @return the index of the new installed driver.
  */
 
-int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
+int GDALDriverManager::RegisterDriver(GDALDriver *poDriver)
 
 {
-    CPLMutexHolderD( &hDMMutex );
+    CPLMutexHolderD(&hDMMutex);
 
-/* -------------------------------------------------------------------- */
-/*      If it is already registered, just return the existing           */
-/*      index.                                                          */
-/* -------------------------------------------------------------------- */
-    if( GetDriverByName_unlocked( poDriver->GetDescription() ) != NULL )
+    /* -------------------------------------------------------------------- */
+    /*      If it is already registered, just return the existing           */
+    /*      index.                                                          */
+    /* -------------------------------------------------------------------- */
+    if (GetDriverByName_unlocked(poDriver->GetDescription()) != nullptr)
     {
-        for( int i = 0; i < nDrivers; ++i )
+        for (int i = 0; i < nDrivers; ++i)
         {
-            if( papoDrivers[i] == poDriver )
+            if (papoDrivers[i] == poDriver)
             {
                 return i;
             }
         }
 
-        CPLAssert( false );
+        CPLAssert(false);
     }
 
-/* -------------------------------------------------------------------- */
-/*      Otherwise grow the list to hold the new entry.                  */
-/* -------------------------------------------------------------------- */
-    GDALDriver** papoNewDrivers = static_cast<GDALDriver **>(
-        VSI_REALLOC_VERBOSE(papoDrivers, sizeof(GDALDriver *) * (nDrivers+1)) );
-    if( papoNewDrivers == NULL )
+    /* -------------------------------------------------------------------- */
+    /*      Otherwise grow the list to hold the new entry.                  */
+    /* -------------------------------------------------------------------- */
+    GDALDriver **papoNewDrivers =
+        static_cast<GDALDriver **>(VSI_REALLOC_VERBOSE(
+            papoDrivers, sizeof(GDALDriver *) * (nDrivers + 1)));
+    if (papoNewDrivers == nullptr)
         return -1;
     papoDrivers = papoNewDrivers;
 
     papoDrivers[nDrivers] = poDriver;
     ++nDrivers;
 
-    if( poDriver->pfnOpen != NULL ||
-        poDriver->pfnOpenWithDriverArg != NULL )
-        poDriver->SetMetadataItem( GDAL_DCAP_OPEN, "YES" );
+    if (poDriver->pfnOpen != nullptr ||
+        poDriver->pfnOpenWithDriverArg != nullptr)
+        poDriver->SetMetadataItem(GDAL_DCAP_OPEN, "YES");
 
-    if( poDriver->pfnCreate != NULL )
-        poDriver->SetMetadataItem( GDAL_DCAP_CREATE, "YES" );
+    if (poDriver->pfnCreate != nullptr || poDriver->pfnCreateEx != nullptr)
+        poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
 
-    if( poDriver->pfnCreateCopy != NULL )
-        poDriver->SetMetadataItem( GDAL_DCAP_CREATECOPY, "YES" );
+    if (poDriver->pfnCreateCopy != nullptr)
+        poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+
+    if (poDriver->pfnCreateMultiDimensional != nullptr)
+        poDriver->SetMetadataItem(GDAL_DCAP_CREATE_MULTIDIMENSIONAL, "YES");
 
     // Backward compatibility for GDAL raster out-of-tree drivers:
     // If a driver hasn't explicitly set a vector capability, assume it is
     // a raster-only driver (legacy OGR drivers will have DCAP_VECTOR set before
     // calling RegisterDriver()).
-    if( poDriver->GetMetadataItem( GDAL_DCAP_RASTER ) == NULL &&
-        poDriver->GetMetadataItem( GDAL_DCAP_VECTOR ) == NULL &&
-        poDriver->GetMetadataItem( GDAL_DCAP_GNM ) == NULL )
+    if (poDriver->GetMetadataItem(GDAL_DCAP_RASTER) == nullptr &&
+        poDriver->GetMetadataItem(GDAL_DCAP_VECTOR) == nullptr &&
+        poDriver->GetMetadataItem(GDAL_DCAP_GNM) == nullptr)
     {
-        CPLDebug( "GDAL", "Assuming DCAP_RASTER for driver %s. Please fix it.",
-                  poDriver->GetDescription() );
-        poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
+        CPLDebug("GDAL", "Assuming DCAP_RASTER for driver %s. Please fix it.",
+                 poDriver->GetDescription());
+        poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     }
 
-    if( poDriver->GetMetadataItem( GDAL_DMD_OPENOPTIONLIST ) != NULL &&
-        poDriver->pfnIdentify == NULL &&
-        !STARTS_WITH_CI(poDriver->GetDescription(), "Interlis") )
+    if (poDriver->GetMetadataItem(GDAL_DMD_OPENOPTIONLIST) != nullptr &&
+        poDriver->pfnIdentify == nullptr &&
+        poDriver->pfnIdentifyEx == nullptr &&
+        !STARTS_WITH_CI(poDriver->GetDescription(), "Interlis"))
     {
-        CPLDebug( "GDAL",
-                  "Driver %s that defines GDAL_DMD_OPENOPTIONLIST must also "
-                  "implement Identify(), so that it can be used",
-                  poDriver->GetDescription() );
+        CPLDebug("GDAL",
+                 "Driver %s that defines GDAL_DMD_OPENOPTIONLIST must also "
+                 "implement Identify(), so that it can be used",
+                 poDriver->GetDescription());
     }
 
     oMapNameToDrivers[CPLString(poDriver->GetDescription()).toupper()] =
@@ -497,13 +516,13 @@ int GDALDriverManager::RegisterDriver( GDALDriver * poDriver )
  * @see GDALDriverManager::GetRegisterDriver()
  */
 
-int CPL_STDCALL GDALRegisterDriver( GDALDriverH hDriver )
+int CPL_STDCALL GDALRegisterDriver(GDALDriverH hDriver)
 
 {
-    VALIDATE_POINTER1( hDriver, "GDALRegisterDriver", 0 );
+    VALIDATE_POINTER1(hDriver, "GDALRegisterDriver", 0);
 
-    return GetGDALDriverManager()->
-        RegisterDriver( static_cast<GDALDriver *>( hDriver ) );
+    return GetGDALDriverManager()->RegisterDriver(
+        static_cast<GDALDriver *>(hDriver));
 }
 
 /************************************************************************/
@@ -520,27 +539,27 @@ int CPL_STDCALL GDALRegisterDriver( GDALDriverH hDriver )
  * @param poDriver the driver to deregister.
  */
 
-void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
+void GDALDriverManager::DeregisterDriver(GDALDriver *poDriver)
 
 {
-    CPLMutexHolderD( &hDMMutex );
+    CPLMutexHolderD(&hDMMutex);
 
     int i = 0;  // Used after for.
-    for( ; i < nDrivers; ++i )
+    for (; i < nDrivers; ++i)
     {
-        if( papoDrivers[i] == poDriver )
+        if (papoDrivers[i] == poDriver)
             break;
     }
 
-    if( i == nDrivers )
+    if (i == nDrivers)
         return;
 
     oMapNameToDrivers.erase(CPLString(poDriver->GetDescription()).toupper());
     --nDrivers;
     // Move all following drivers down by one to pack the list.
-    while( i < nDrivers )
+    while (i < nDrivers)
     {
-        papoDrivers[i] = papoDrivers[i+1];
+        papoDrivers[i] = papoDrivers[i + 1];
         ++i;
     }
 }
@@ -555,12 +574,13 @@ void GDALDriverManager::DeregisterDriver( GDALDriver * poDriver )
  * @see GDALDriverManager::GetDeregisterDriver()
  */
 
-void CPL_STDCALL GDALDeregisterDriver( GDALDriverH hDriver )
+void CPL_STDCALL GDALDeregisterDriver(GDALDriverH hDriver)
 
 {
-    VALIDATE_POINTER0( hDriver, "GDALDeregisterDriver" );
+    VALIDATE_POINTER0(hDriver, "GDALDeregisterDriver");
 
-    GetGDALDriverManager()->DeregisterDriver( (GDALDriver *) hDriver );
+    GetGDALDriverManager()->DeregisterDriver(
+        static_cast<GDALDriver *>(hDriver));
 }
 
 /************************************************************************/
@@ -577,16 +597,16 @@ void CPL_STDCALL GDALDeregisterDriver( GDALDriverH hDriver )
  * @return the identified driver, or NULL if no match is found.
  */
 
-GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
+GDALDriver *GDALDriverManager::GetDriverByName(const char *pszName)
 
 {
-    CPLMutexHolderD( &hDMMutex );
+    CPLMutexHolderD(&hDMMutex);
 
     // Alias old name to new name
-    if( EQUAL(pszName, "CartoDB") )
+    if (EQUAL(pszName, "CartoDB"))
         pszName = "Carto";
 
-    return oMapNameToDrivers[CPLString(pszName).toupper()];
+    return GetDriverByName_unlocked(pszName);
 }
 
 /************************************************************************/
@@ -599,12 +619,12 @@ GDALDriver * GDALDriverManager::GetDriverByName( const char * pszName )
  * @see GDALDriverManager::GetDriverByName()
  */
 
-GDALDriverH CPL_STDCALL GDALGetDriverByName( const char * pszName )
+GDALDriverH CPL_STDCALL GDALGetDriverByName(const char *pszName)
 
 {
-    VALIDATE_POINTER1( pszName, "GDALGetDriverByName", NULL );
+    VALIDATE_POINTER1(pszName, "GDALGetDriverByName", nullptr);
 
-    return GetGDALDriverManager()->GetDriverByName( pszName );
+    return GetGDALDriverManager()->GetDriverByName(pszName);
 }
 
 /************************************************************************/
@@ -630,46 +650,110 @@ GDALDriverH CPL_STDCALL GDALGetDriverByName( const char * pszName )
 void GDALDriverManager::AutoSkipDrivers()
 
 {
-    char **apapszList[2] = { NULL, NULL };
-    const char* pszGDAL_SKIP = CPLGetConfigOption( "GDAL_SKIP", NULL );
-    if( pszGDAL_SKIP != NULL )
+    char **apapszList[2] = {nullptr, nullptr};
+    const char *pszGDAL_SKIP = CPLGetConfigOption("GDAL_SKIP", nullptr);
+    if (pszGDAL_SKIP != nullptr)
     {
         // Favor comma as a separator. If not found, then use space.
-        const char* pszSep = (strchr(pszGDAL_SKIP, ',') != NULL) ? "," : " ";
+        const char *pszSep = (strchr(pszGDAL_SKIP, ',') != nullptr) ? "," : " ";
         apapszList[0] =
-            CSLTokenizeStringComplex( pszGDAL_SKIP, pszSep, FALSE, FALSE );
+            CSLTokenizeStringComplex(pszGDAL_SKIP, pszSep, FALSE, FALSE);
     }
-    const char* pszOGR_SKIP = CPLGetConfigOption( "OGR_SKIP", NULL );
-    if( pszOGR_SKIP != NULL )
+    const char *pszOGR_SKIP = CPLGetConfigOption("OGR_SKIP", nullptr);
+    if (pszOGR_SKIP != nullptr)
     {
         // OGR has always used comma as a separator.
-        apapszList[1] = CSLTokenizeStringComplex(pszOGR_SKIP, ",", FALSE, FALSE);
+        apapszList[1] =
+            CSLTokenizeStringComplex(pszOGR_SKIP, ",", FALSE, FALSE);
     }
 
-    for( int j = 0; j < 2; ++j )
+    for (auto j : {0, 1})
     {
-        for( int i = 0; apapszList[j] != NULL && apapszList[j][i] != NULL; ++i )
+        for (int i = 0; apapszList[j] != nullptr && apapszList[j][i] != nullptr;
+             ++i)
         {
-            GDALDriver * const poDriver = GetDriverByName( apapszList[j][i] );
+            GDALDriver *const poDriver = GetDriverByName(apapszList[j][i]);
 
-            if( poDriver == NULL )
+            if (poDriver == nullptr)
             {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                          "Unable to find driver %s to unload from GDAL_SKIP "
-                          "environment variable.",
-                        apapszList[j][i] );
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Unable to find driver %s to unload from GDAL_SKIP "
+                         "environment variable.",
+                         apapszList[j][i]);
             }
             else
             {
-                CPLDebug( "GDAL", "AutoSkipDriver(%s)", apapszList[j][i] );
-                DeregisterDriver( poDriver );
+                CPLDebug("GDAL", "AutoSkipDriver(%s)", apapszList[j][i]);
+                DeregisterDriver(poDriver);
                 delete poDriver;
             }
         }
     }
 
-    CSLDestroy( apapszList[0] );
-    CSLDestroy( apapszList[1] );
+    CSLDestroy(apapszList[0]);
+    CSLDestroy(apapszList[1]);
+}
+
+/************************************************************************/
+/*                          GetSearchPaths()                            */
+/************************************************************************/
+
+char **GDALDriverManager::GetSearchPaths(const char *pszGDAL_DRIVER_PATH)
+{
+    char **papszSearchPaths = nullptr;
+    CPL_IGNORE_RET_VAL(pszGDAL_DRIVER_PATH);
+#ifndef GDAL_NO_AUTOLOAD
+    if (pszGDAL_DRIVER_PATH != nullptr)
+    {
+#ifdef WIN32
+        papszSearchPaths =
+            CSLTokenizeStringComplex(pszGDAL_DRIVER_PATH, ";", TRUE, FALSE);
+#else
+        papszSearchPaths =
+            CSLTokenizeStringComplex(pszGDAL_DRIVER_PATH, ":", TRUE, FALSE);
+#endif
+    }
+    else
+    {
+#ifdef INSTALL_PLUGIN_FULL_DIR
+        // CMake way
+        papszSearchPaths =
+            CSLAddString(papszSearchPaths, INSTALL_PLUGIN_FULL_DIR);
+#elif defined(GDAL_PREFIX)
+        papszSearchPaths = CSLAddString(papszSearchPaths,
+#ifdef MACOSX_FRAMEWORK
+                                        GDAL_PREFIX "/PlugIns");
+#else
+                                        GDAL_PREFIX "/lib/gdalplugins");
+#endif
+#else
+        char szExecPath[1024];
+
+        if (CPLGetExecPath(szExecPath, sizeof(szExecPath)))
+        {
+            char szPluginDir[sizeof(szExecPath) + 50];
+            strcpy(szPluginDir, CPLGetDirname(szExecPath));
+            strcat(szPluginDir, "\\gdalplugins");
+            papszSearchPaths = CSLAddString(papszSearchPaths, szPluginDir);
+        }
+        else
+        {
+            papszSearchPaths =
+                CSLAddString(papszSearchPaths, "/usr/local/lib/gdalplugins");
+        }
+#endif
+
+#ifdef MACOSX_FRAMEWORK
+#define num2str(x) str(x)
+#define str(x) #x
+        papszSearchPaths = CSLAddString(
+            papszSearchPaths,
+            "/Library/Application Support/GDAL/" num2str(
+                GDAL_VERSION_MAJOR) "." num2str(GDAL_VERSION_MINOR) "/PlugIns");
+#endif
+    }
+#endif  // GDAL_NO_AUTOLOAD
+    return papszSearchPaths;
 }
 
 /************************************************************************/
@@ -695,168 +779,251 @@ void GDALDriverManager::AutoSkipDrivers()
  *
  * Auto loading can be completely disabled by setting the GDAL_DRIVER_PATH
  * config option to "disable".
+ *
+ * Starting with gdal 3.5, the default search path $(prefix)/lib/gdalplugins
+ * can be overridden at compile time by passing
+ * -DINSTALL_PLUGIN_DIR=/another/path to cmake.
  */
 
 void GDALDriverManager::AutoLoadDrivers()
 
 {
 #ifdef GDAL_NO_AUTOLOAD
-    CPLDebug( "GDAL", "GDALDriverManager::AutoLoadDrivers() not compiled in." );
+    CPLDebug("GDAL", "GDALDriverManager::AutoLoadDrivers() not compiled in.");
 #else
     const char *pszGDAL_DRIVER_PATH =
-        CPLGetConfigOption( "GDAL_DRIVER_PATH", NULL );
-    if( pszGDAL_DRIVER_PATH == NULL )
-        pszGDAL_DRIVER_PATH = CPLGetConfigOption( "OGR_DRIVER_PATH", NULL );
+        CPLGetConfigOption("GDAL_DRIVER_PATH", nullptr);
+    if (pszGDAL_DRIVER_PATH == nullptr)
+        pszGDAL_DRIVER_PATH = CPLGetConfigOption("OGR_DRIVER_PATH", nullptr);
 
-/* -------------------------------------------------------------------- */
-/*      Allow applications to completely disable this search by         */
-/*      setting the driver path to the special string "disable".        */
-/* -------------------------------------------------------------------- */
-    if( pszGDAL_DRIVER_PATH != NULL && EQUAL(pszGDAL_DRIVER_PATH,"disable"))
+    /* -------------------------------------------------------------------- */
+    /*      Allow applications to completely disable this search by         */
+    /*      setting the driver path to the special string "disable".        */
+    /* -------------------------------------------------------------------- */
+    if (pszGDAL_DRIVER_PATH != nullptr && EQUAL(pszGDAL_DRIVER_PATH, "disable"))
     {
-        CPLDebug( "GDAL", "GDALDriverManager::AutoLoadDrivers() disabled." );
+        CPLDebug("GDAL", "GDALDriverManager::AutoLoadDrivers() disabled.");
         return;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Where should we look for stuff?                                 */
-/* -------------------------------------------------------------------- */
-    char **papszSearchPath = NULL;
+    /* -------------------------------------------------------------------- */
+    /*      Where should we look for stuff?                                 */
+    /* -------------------------------------------------------------------- */
+    char **papszSearchPaths = GetSearchPaths(pszGDAL_DRIVER_PATH);
 
-    if( pszGDAL_DRIVER_PATH != NULL )
-    {
-#ifdef WIN32
-        papszSearchPath =
-            CSLTokenizeStringComplex( pszGDAL_DRIVER_PATH, ";", TRUE, FALSE );
-#else
-        papszSearchPath =
-            CSLTokenizeStringComplex( pszGDAL_DRIVER_PATH, ":", TRUE, FALSE );
-#endif
-    }
-    else
-    {
-#ifdef GDAL_PREFIX
-        papszSearchPath = CSLAddString( papszSearchPath,
-    #ifdef MACOSX_FRAMEWORK
-                                        GDAL_PREFIX "/PlugIns");
-    #else
-                                        GDAL_PREFIX "/lib/gdalplugins" );
-    #endif
-#else
-        char szExecPath[1024];
-
-        if( CPLGetExecPath( szExecPath, sizeof(szExecPath) ) )
-        {
-            char szPluginDir[sizeof(szExecPath)+50];
-            strcpy( szPluginDir, CPLGetDirname( szExecPath ) );
-            strcat( szPluginDir, "\\gdalplugins" );
-            papszSearchPath = CSLAddString( papszSearchPath, szPluginDir );
-        }
-        else
-        {
-            papszSearchPath = CSLAddString( papszSearchPath,
-                                            "/usr/local/lib/gdalplugins" );
-        }
-#endif
-
-   #ifdef MACOSX_FRAMEWORK
-   #define num2str(x) str(x)
-   #define str(x) #x
-     papszSearchPath = CSLAddString( papszSearchPath,
-                                     "/Library/Application Support/GDAL/"
-                                     num2str(GDAL_VERSION_MAJOR) "."
-                                     num2str(GDAL_VERSION_MINOR) "/PlugIns" );
-   #endif
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Format the ABI version specific subdirectory to look in.        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Format the ABI version specific subdirectory to look in.        */
+    /* -------------------------------------------------------------------- */
     CPLString osABIVersion;
 
-    osABIVersion.Printf( "%d.%d", GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR );
+    osABIVersion.Printf("%d.%d", GDAL_VERSION_MAJOR, GDAL_VERSION_MINOR);
 
-/* -------------------------------------------------------------------- */
-/*      Scan each directory looking for files starting with gdal_       */
-/* -------------------------------------------------------------------- */
-    for( int iDir = 0; iDir < CSLCount(papszSearchPath); ++iDir )
+    /* -------------------------------------------------------------------- */
+    /*      Scan each directory looking for files starting with gdal_       */
+    /* -------------------------------------------------------------------- */
+    const int nSearchPaths = CSLCount(papszSearchPaths);
+    bool bFoundOnePlugin = false;
+    for (int iDir = 0; iDir < nSearchPaths; ++iDir)
     {
         CPLString osABISpecificDir =
-            CPLFormFilename( papszSearchPath[iDir], osABIVersion, NULL );
+            CPLFormFilename(papszSearchPaths[iDir], osABIVersion, nullptr);
 
         VSIStatBufL sStatBuf;
-        if( VSIStatL( osABISpecificDir, &sStatBuf ) != 0 )
-            osABISpecificDir = papszSearchPath[iDir];
+        if (VSIStatL(osABISpecificDir, &sStatBuf) != 0)
+            osABISpecificDir = papszSearchPaths[iDir];
 
-        char **papszFiles = VSIReadDir( osABISpecificDir );
+        char **papszFiles = VSIReadDir(osABISpecificDir);
         const int nFileCount = CSLCount(papszFiles);
 
-        for( int iFile = 0; iFile < nFileCount; ++iFile )
+        for (int iFile = 0; iFile < nFileCount; ++iFile)
         {
-            const char *pszExtension = CPLGetExtension( papszFiles[iFile] );
+            const char *pszExtension = CPLGetExtension(papszFiles[iFile]);
 
-            if( !EQUAL(pszExtension,"dll")
-                && !EQUAL(pszExtension,"so")
-                && !EQUAL(pszExtension,"dylib") )
+            if (!EQUAL(pszExtension, "dll") && !EQUAL(pszExtension, "so") &&
+                !EQUAL(pszExtension, "dylib"))
+            {
+                if (strcmp(papszFiles[iFile], "drivers.ini") == 0)
+                {
+                    m_osDriversIniPath = CPLFormFilename(
+                        osABISpecificDir, papszFiles[iFile], nullptr);
+                }
                 continue;
-
-            char *pszFuncName;
-            if( STARTS_WITH_CI(papszFiles[iFile], "gdal_") )
-            {
-                pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
-                snprintf( pszFuncName,
-                          strlen(papszFiles[iFile])+20,
-                          "GDALRegister_%s",
-                        CPLGetBasename(papszFiles[iFile]) + strlen("gdal_") );
             }
-            else if( STARTS_WITH_CI(papszFiles[iFile], "ogr_") )
+
+            CPLString osFuncName;
+            if (STARTS_WITH_CI(papszFiles[iFile], "gdal_"))
             {
-                pszFuncName = (char *) CPLCalloc(strlen(papszFiles[iFile])+20,1);
-                snprintf( pszFuncName,
-                         strlen(papszFiles[iFile])+20,
-                         "RegisterOGR%s",
-                         CPLGetBasename(papszFiles[iFile]) + strlen("ogr_") );
+                osFuncName.Printf("GDALRegister_%s",
+                                  CPLGetBasename(papszFiles[iFile]) +
+                                      strlen("gdal_"));
+            }
+            else if (STARTS_WITH_CI(papszFiles[iFile], "ogr_"))
+            {
+                osFuncName.Printf("RegisterOGR%s",
+                                  CPLGetBasename(papszFiles[iFile]) +
+                                      strlen("ogr_"));
             }
             else
                 continue;
 
-            const char *pszFilename
-                = CPLFormFilename( osABISpecificDir,
-                                   papszFiles[iFile], NULL );
+            const char *pszFilename =
+                CPLFormFilename(osABISpecificDir, papszFiles[iFile], nullptr);
 
             CPLErrorReset();
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            void *pRegister = CPLGetSymbol( pszFilename, pszFuncName );
+            void *pRegister = CPLGetSymbol(pszFilename, osFuncName);
             CPLPopErrorHandler();
-            if( pRegister == NULL )
+            if (pRegister == nullptr)
             {
                 CPLString osLastErrorMsg(CPLGetLastErrorMsg());
-                strcpy( pszFuncName, "GDALRegisterMe" );
-                pRegister = CPLGetSymbol( pszFilename, pszFuncName );
-                if( pRegister == NULL )
+                osFuncName = "GDALRegisterMe";
+                pRegister = CPLGetSymbol(pszFilename, osFuncName);
+                if (pRegister == nullptr)
                 {
-                    CPLError( CE_Failure, CPLE_AppDefined,
-                              "%s", osLastErrorMsg.c_str() );
+                    CPLError(CE_Failure, CPLE_AppDefined, "%s",
+                             osLastErrorMsg.c_str());
                 }
             }
 
-            if( pRegister != NULL )
+            if (pRegister != nullptr)
             {
-                CPLDebug( "GDAL", "Auto register %s using %s.",
-                          pszFilename, pszFuncName );
+                bFoundOnePlugin = true;
+                CPLDebug("GDAL", "Auto register %s using %s.", pszFilename,
+                         osFuncName.c_str());
 
-                ((void (*)()) pRegister)();
+                reinterpret_cast<void (*)()>(pRegister)();
             }
-
-            CPLFree( pszFuncName );
         }
 
-        CSLDestroy( papszFiles );
+        CSLDestroy(papszFiles);
     }
 
-    CSLDestroy( papszSearchPath );
+    CSLDestroy(papszSearchPaths);
+
+    // No need to reorder drivers if there are no plugins
+    if (!bFoundOnePlugin)
+        m_osDriversIniPath.clear();
 
 #endif  // GDAL_NO_AUTOLOAD
+}
+
+/************************************************************************/
+/*                           ReorderDrivers()                           */
+/************************************************************************/
+
+/**
+ * \brief Reorder drivers according to the order of the drivers.ini file.
+ *
+ * This function is called by GDALAllRegister(), at the end of driver loading,
+ * in particular after plugin loading.
+ * It will load the drivers.ini configuration file located next to plugins and
+ * will use it to reorder the registration order of drivers. This can be
+ * important in some situations where multiple drivers could open the same
+ * dataset.
+ */
+
+void GDALDriverManager::ReorderDrivers()
+{
+#ifndef GDAL_NO_AUTOLOAD
+    if (m_osDriversIniPath.empty())
+        return;
+
+    CPLMutexHolderD(&hDMMutex);
+
+    CPLAssert(static_cast<int>(oMapNameToDrivers.size()) == nDrivers);
+
+    VSILFILE *fp = VSIFOpenL(m_osDriversIniPath.c_str(), "rb");
+    if (fp == nullptr)
+        return;
+
+    // Parse drivers.ini
+    bool bInOrderSection = false;
+    std::vector<std::string> aosOrderedDrivers;
+    std::set<std::string> oSetOrderedDrivers;
+    while (const char *pszLine = CPLReadLine2L(fp, 1024, nullptr))
+    {
+        if (pszLine[0] == '#')
+            continue;
+        int i = 0;
+        while (pszLine[i] != 0 && isspace(pszLine[i]))
+            i++;
+        if (pszLine[i] == 0)
+            continue;
+        if (strcmp(pszLine, "[order]") == 0)
+        {
+            bInOrderSection = true;
+        }
+        else if (pszLine[0] == '[')
+        {
+            bInOrderSection = false;
+        }
+        else if (bInOrderSection)
+        {
+            CPLString osUCDriverName(pszLine);
+            osUCDriverName.toupper();
+            if (oSetOrderedDrivers.find(osUCDriverName) !=
+                oSetOrderedDrivers.end())
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Duplicated name %s in [order] section", pszLine);
+            }
+            else if (oMapNameToDrivers.find(osUCDriverName) !=
+                     oMapNameToDrivers.end())
+            {
+                aosOrderedDrivers.emplace_back(pszLine);
+                oSetOrderedDrivers.insert(osUCDriverName);
+            }
+#ifdef DEBUG_VERBOSE
+            else
+            {
+                // Completely expected situation for "non-maximal" builds,
+                // but can help diagnose bad entries in drivers.ini
+                CPLDebug("GDAL",
+                         "Driver %s is listed in %s but not registered.",
+                         pszLine, m_osDriversIniPath.c_str());
+            }
+#endif
+        }
+    }
+    VSIFCloseL(fp);
+
+    // Find potential registered drivers not in drivers.ini, and put them in
+    // their registration order in aosUnorderedDrivers
+    std::vector<std::string> aosUnorderedDrivers;
+    for (int i = 0; i < nDrivers; ++i)
+    {
+        const char *pszName = papoDrivers[i]->GetDescription();
+        if (oSetOrderedDrivers.find(CPLString(pszName).toupper()) ==
+            oSetOrderedDrivers.end())
+        {
+            // Could happen for a private plugin
+            CPLDebug("GDAL",
+                     "Driver %s is registered but not listed in %s. "
+                     "It will be registered before other drivers.",
+                     pszName, m_osDriversIniPath.c_str());
+            aosUnorderedDrivers.emplace_back(pszName);
+        }
+    }
+
+    // Put aosUnorderedDrivers in front of existing aosOrderedDrivers
+    if (!aosUnorderedDrivers.empty())
+    {
+        aosUnorderedDrivers.insert(aosUnorderedDrivers.end(),
+                                   aosOrderedDrivers.begin(),
+                                   aosOrderedDrivers.end());
+        std::swap(aosOrderedDrivers, aosUnorderedDrivers);
+    }
+
+    // Update papoDrivers[] to reflect aosOrderedDrivers order.
+    CPLAssert(static_cast<int>(aosOrderedDrivers.size()) == nDrivers);
+    for (int i = 0; i < nDrivers; ++i)
+    {
+        const auto oIter =
+            oMapNameToDrivers.find(CPLString(aosOrderedDrivers[i]).toupper());
+        CPLAssert(oIter != oMapNameToDrivers.end());
+        papoDrivers[i] = oIter->second;
+    }
+#endif
 }
 
 /************************************************************************/
@@ -872,21 +1039,50 @@ void GDALDriverManager::AutoLoadDrivers()
  * other threads are actively using GDAL.
  */
 
-void CPL_STDCALL GDALDestroyDriverManager( void )
+void CPL_STDCALL GDALDestroyDriverManager(void)
 
 {
     // THREADSAFETY: We would like to lock the mutex here, but it
     // needs to be reacquired within the destructor during driver
     // deregistration.
 
-// FIXME: Disale following code as it crashed on OSX CI test.
-//#if HAVE_CXX11
-//    std::lock_guard<std::mutex> oLock(oDeleteMutex);
-//#endif
+    // FIXME: Disable following code as it crashed on OSX CI test.
+    // std::lock_guard<std::mutex> oLock(oDeleteMutex);
 
-    if( poDM != NULL )
+    if (poDM != nullptr)
     {
         delete poDM;
-        poDM = NULL;
+        poDM = nullptr;
     }
+}
+
+/************************************************************************/
+/*        GDALIsDriverDeprecatedForGDAL35StillEnabled()                 */
+/************************************************************************/
+
+/**
+ * \brief Returns whether a deprecated driver is explicitly enabled by the user
+ */
+
+bool GDALIsDriverDeprecatedForGDAL35StillEnabled(const char *pszDriverName,
+                                                 const char *pszExtraMsg)
+{
+    CPLString osConfigOption;
+    osConfigOption.Printf("GDAL_ENABLE_DEPRECATED_DRIVER_%s", pszDriverName);
+    if (CPLTestBool(CPLGetConfigOption(osConfigOption.c_str(), "NO")))
+    {
+        return true;
+    }
+    CPLError(
+        CE_Failure, CPLE_AppDefined,
+        "Driver %s is considered for removal in GDAL 3.5.%s You are invited "
+        "to convert any dataset in that format to another more common one. "
+        "If you need this driver in future GDAL versions, create a ticket at "
+        "https://github.com/OSGeo/gdal (look first for an existing one first) "
+        "to "
+        "explain how critical it is for you (but the GDAL project may still "
+        "remove it), and to enable it now, set the %s "
+        "configuration option / environment variable to YES.",
+        pszDriverName, pszExtraMsg, osConfigOption.c_str());
+    return false;
 }

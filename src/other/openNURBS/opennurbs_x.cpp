@@ -961,7 +961,8 @@ bool ON__SSXTester_Helper::TestPoint(ON_2dPoint A, ON_2dPoint B, ON_3dPoint P, d
     rc = false;
   }
 
-
+  return false;
+#if 0
   double dist;
 
   ON_2dPoint st, uv;
@@ -1018,5 +1019,6 @@ bool ON__SSXTester_Helper::TestPoint(ON_2dPoint A, ON_2dPoint B, ON_3dPoint P, d
   if(!rc && error)
     *error = err;
   return rc;
+#endif
 }
 

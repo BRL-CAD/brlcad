@@ -3,10 +3,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Defines OGRLMutexedDataSource class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,72 +46,93 @@
  */
 class CPL_DLL OGRMutexedDataSource : public OGRDataSource
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRMutexedDataSource)
+
   protected:
     OGRDataSource *m_poBaseDataSource;
-    int            m_bHasOwnership;
-    CPLMutex      *m_hGlobalMutex;
-    int            m_bWrapLayersInMutexedLayer;
-    std::map<OGRLayer*, OGRMutexedLayer* > m_oMapLayers;
-    std::map<OGRMutexedLayer*, OGRLayer* > m_oReverseMapLayers;
+    int m_bHasOwnership;
+    CPLMutex *m_hGlobalMutex;
+    int m_bWrapLayersInMutexedLayer;
+    std::map<OGRLayer *, OGRMutexedLayer *> m_oMapLayers{};
+    std::map<OGRMutexedLayer *, OGRLayer *> m_oReverseMapLayers{};
 
-    OGRLayer*           WrapLayerIfNecessary(OGRLayer* poLayer);
+    OGRLayer *WrapLayerIfNecessary(OGRLayer *poLayer);
 
   public:
-
     /* The construction of the object isn't protected by the mutex */
-                 OGRMutexedDataSource(OGRDataSource* poBaseDataSource,
-                                      int bTakeOwnership,
-                                      CPLMutex* hMutexIn,
-                                      int bWrapLayersInMutexedLayer);
+    OGRMutexedDataSource(OGRDataSource *poBaseDataSource, int bTakeOwnership,
+                         CPLMutex *hMutexIn, int bWrapLayersInMutexedLayer);
 
     /* The destruction of the object isn't protected by the mutex */
-    virtual     ~OGRMutexedDataSource();
+    virtual ~OGRMutexedDataSource() override;
 
-    OGRDataSource*      GetBaseDataSource() { return m_poBaseDataSource; }
+    OGRDataSource *GetBaseDataSource()
+    {
+        return m_poBaseDataSource;
+    }
 
-    virtual const char  *GetName() override;
+    virtual const char *GetName() override;
 
-    virtual int         GetLayerCount() override ;
-    virtual OGRLayer    *GetLayer(int) override;
-    virtual OGRLayer    *GetLayerByName(const char *) override;
-    virtual OGRErr      DeleteLayer(int) override;
+    virtual int GetLayerCount() override;
+    virtual OGRLayer *GetLayer(int) override;
+    virtual OGRLayer *GetLayerByName(const char *) override;
+    virtual OGRErr DeleteLayer(int) override;
+    virtual bool IsLayerPrivate(int iLayer) const override;
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 
-    virtual OGRLayer   *ICreateLayer( const char *pszName,
-                                     OGRSpatialReference *poSpatialRef = NULL,
-                                     OGRwkbGeometryType eGType = wkbUnknown,
-                                     char ** papszOptions = NULL ) override;
-    virtual OGRLayer   *CopyLayer( OGRLayer *poSrcLayer,
-                                   const char *pszNewName,
-                                   char **papszOptions = NULL ) override;
+    virtual OGRLayer *ICreateLayer(const char *pszName,
+                                   OGRSpatialReference *poSpatialRef = nullptr,
+                                   OGRwkbGeometryType eGType = wkbUnknown,
+                                   char **papszOptions = nullptr) override;
+    virtual OGRLayer *CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
+                                char **papszOptions = nullptr) override;
 
     virtual OGRStyleTable *GetStyleTable() override;
-    virtual void        SetStyleTableDirectly( OGRStyleTable *poStyleTable ) override;
+    virtual void SetStyleTableDirectly(OGRStyleTable *poStyleTable) override;
 
-    virtual void        SetStyleTable(OGRStyleTable *poStyleTable) override;
+    virtual void SetStyleTable(OGRStyleTable *poStyleTable) override;
 
-    virtual OGRLayer *  ExecuteSQL( const char *pszStatement,
-                                    OGRGeometry *poSpatialFilter,
-                                    const char *pszDialect ) override;
-    virtual void        ReleaseResultSet( OGRLayer * poResultsSet ) override;
+    virtual OGRLayer *ExecuteSQL(const char *pszStatement,
+                                 OGRGeometry *poSpatialFilter,
+                                 const char *pszDialect) override;
+    virtual void ReleaseResultSet(OGRLayer *poResultsSet) override;
 
-    virtual void        FlushCache() override;
+    virtual void FlushCache(bool bAtClosing) override;
 
-    virtual OGRErr      StartTransaction(int bForce=FALSE) override;
-    virtual OGRErr      CommitTransaction() override;
-    virtual OGRErr      RollbackTransaction() override;
+    virtual OGRErr StartTransaction(int bForce = FALSE) override;
+    virtual OGRErr CommitTransaction() override;
+    virtual OGRErr RollbackTransaction() override;
 
-    virtual char      **GetMetadata( const char * pszDomain = "" ) override;
-    virtual CPLErr      SetMetadata( char ** papszMetadata,
-                                     const char * pszDomain = "" ) override;
-    virtual const char *GetMetadataItem( const char * pszName,
-                                         const char * pszDomain = "" ) override;
-    virtual CPLErr      SetMetadataItem( const char * pszName,
-                                         const char * pszValue,
-                                         const char * pszDomain = "" ) override;
+    virtual char **GetMetadata(const char *pszDomain = "") override;
+    virtual CPLErr SetMetadata(char **papszMetadata,
+                               const char *pszDomain = "") override;
+    virtual const char *GetMetadataItem(const char *pszName,
+                                        const char *pszDomain = "") override;
+    virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                                   const char *pszDomain = "") override;
+
+    virtual std::vector<std::string>
+    GetFieldDomainNames(CSLConstList papszOptions = nullptr) const override;
+    virtual const OGRFieldDomain *
+    GetFieldDomain(const std::string &name) const override;
+
+    virtual bool AddFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
+                                std::string &failureReason) override;
+    virtual bool DeleteFieldDomain(const std::string &name,
+                                   std::string &failureReason) override;
+    virtual bool UpdateFieldDomain(std::unique_ptr<OGRFieldDomain> &&domain,
+                                   std::string &failureReason) override;
+
+    std::vector<std::string>
+    GetRelationshipNames(CSLConstList papszOptions = nullptr) const override;
+
+    const GDALRelationship *
+    GetRelationship(const std::string &name) const override;
+
+    virtual std::shared_ptr<GDALGroup> GetRootGroup() const override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
-#endif // OGRMUTEXEDDATASOURCELAYER_H_INCLUDED
+#endif  // OGRMUTEXEDDATASOURCELAYER_H_INCLUDED

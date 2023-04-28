@@ -1,7 +1,7 @@
 /*                      S H O W T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2022 United States Government as represented by
+ * Copyright (c) 1990-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,13 +25,6 @@
 
 #define STKBLK 100	/* Allocation block size */
 
-static void Initastack(), Apush();
-static void Initsstack(), Spush();
-static void Afreestack(), Sfreestack();
-
-static char *Apop();
-static struct node *Spop();
-
 /* Some junk for this routines private node stack */
 struct node **sstk_p;
 int sjtop, sstklen;
@@ -39,6 +32,144 @@ int sjtop, sstklen;
 /* some junk for this routines private character string stack */
 char **stk;
 int jtop, stklen;
+
+/* The following are stack routines for character strings */
+
+static void
+Initastack(void)
+{
+    int i;
+
+    jtop = (-1);
+    stklen = STKBLK;
+    stk = (char **)bu_malloc(stklen*sizeof(char *), "Initastack: stk");
+    if (stk == NULL) {
+	bu_log("Cannot allocate stack space\n");
+	perror("Initastack");
+	bu_exit(1, NULL);
+    }
+    for (i = 0; i < stklen; i++)
+	stk[i] = NULL;
+}
+
+
+/* This function pushes a pointer onto the stack. */
+
+static void
+Apush(char *ptr)
+{
+    int i;
+
+    jtop++;
+    if (jtop == stklen) {
+	stklen += STKBLK;
+	stk = (char **)bu_realloc((char *)stk, stklen*sizeof(char *), "Apush: stk");
+	if (stk == NULL) {
+	    bu_log("Cannot reallocate stack space\n");
+	    perror("Apush");
+	    bu_exit(1, NULL);
+	}
+	for (i = jtop; i < stklen; i++)
+	    stk[i] = NULL;
+    }
+    stk[jtop] = ptr;
+}
+
+
+/* This function pops the top of the stack. */
+
+
+static char *
+Apop(void)
+{
+    char *ptr;
+
+    if (jtop == (-1))
+	ptr = NULL;
+    else {
+	ptr = stk[jtop];
+	jtop--;
+    }
+
+    return ptr;
+}
+
+
+/* Free the memory associated with the stack */
+static void
+Afreestack(void)
+{
+
+    jtop = (-1);
+    stklen = 0;
+    bu_free((char *)stk, "Afreestack: stk");
+    return;
+}
+
+
+/* The following routines are stack routines for 'struct node' */
+static void
+Initsstack(void) /* initialize the stack */
+{
+
+    sjtop = (-1);
+    sstklen = STKBLK;
+    sstk_p = (struct node **)bu_malloc(sstklen*sizeof(struct node *), "Initsstack: sstk_p");
+    if (sstk_p == NULL) {
+	bu_log("Cannot allocate stack space\n");
+	perror("Initsstack");
+	bu_exit(1, NULL);
+    }
+}
+
+
+/* This function pushes a pointer onto the stack. */
+
+static void
+Spush(struct node *ptr)
+{
+
+    sjtop++;
+    if (sjtop == sstklen) {
+	sstklen += STKBLK;
+	sstk_p = (struct node **)bu_realloc((char *)sstk_p, sstklen*sizeof(struct node *), "Spush: sstk_p");
+	if (sstk_p == NULL) {
+	    bu_log("Cannot reallocate stack space\n");
+	    perror("Spush");
+	    bu_exit(1, NULL);
+	}
+    }
+    sstk_p[sjtop] = ptr;
+}
+
+
+/* This function pops the top of the stack. */
+
+
+static struct node *
+Spop(void)
+{
+    struct node *ptr;
+
+    if (sjtop == (-1))
+	ptr = NULL;
+    else {
+	ptr = sstk_p[sjtop];
+	sjtop--;
+    }
+
+    return ptr;
+}
+
+
+/* free memory associated with the stack, but not the pointed to nodes */
+static void
+Sfreestack(void)
+{
+    sjtop = (-1);
+    bu_free((char *)sstk_p, "Sfreestack: sstk_p");
+    return;
+}
 
 void
 Showtree(struct node *root)
@@ -116,146 +247,6 @@ Showtree(struct node *root)
 	}
     }
 }
-
-
-/* The following are stack routines for character strings */
-
-static void
-Initastack()
-{
-    int i;
-
-    jtop = (-1);
-    stklen = STKBLK;
-    stk = (char **)bu_malloc(stklen*sizeof(char *), "Initastack: stk");
-    if (stk == NULL) {
-	bu_log("Cannot allocate stack space\n");
-	perror("Initastack");
-	bu_exit(1, NULL);
-    }
-    for (i = 0; i < stklen; i++)
-	stk[i] = NULL;
-}
-
-
-/* This function pushes a pointer onto the stack. */
-
-static void
-Apush(char *ptr)
-{
-    int i;
-
-    jtop++;
-    if (jtop == stklen) {
-	stklen += STKBLK;
-	stk = (char **)bu_realloc((char *)stk, stklen*sizeof(char *), "Apush: stk");
-	if (stk == NULL) {
-	    bu_log("Cannot reallocate stack space\n");
-	    perror("Apush");
-	    bu_exit(1, NULL);
-	}
-	for (i = jtop; i < stklen; i++)
-	    stk[i] = NULL;
-    }
-    stk[jtop] = ptr;
-}
-
-
-/* This function pops the top of the stack. */
-
-
-static char *
-Apop()
-{
-    char *ptr;
-
-    if (jtop == (-1))
-	ptr = NULL;
-    else {
-	ptr = stk[jtop];
-	jtop--;
-    }
-
-    return ptr;
-}
-
-
-/* Free the memory associated with the stack */
-static void
-Afreestack()
-{
-
-    jtop = (-1);
-    stklen = 0;
-    bu_free((char *)stk, "Afreestack: stk");
-    return;
-}
-
-
-/* The following routines are stack routines for 'struct node' */
-static void
-Initsstack() /* initialize the stack */
-{
-
-    sjtop = (-1);
-    sstklen = STKBLK;
-    sstk_p = (struct node **)bu_malloc(sstklen*sizeof(struct node *), "Initsstack: sstk_p");
-    if (sstk_p == NULL) {
-	bu_log("Cannot allocate stack space\n");
-	perror("Initsstack");
-	bu_exit(1, NULL);
-    }
-}
-
-
-/* This function pushes a pointer onto the stack. */
-
-static void
-Spush(struct node *ptr)
-{
-
-    sjtop++;
-    if (sjtop == sstklen) {
-	sstklen += STKBLK;
-	sstk_p = (struct node **)bu_realloc((char *)sstk_p, sstklen*sizeof(struct node *), "Spush: sstk_p");
-	if (sstk_p == NULL) {
-	    bu_log("Cannot reallocate stack space\n");
-	    perror("Spush");
-	    bu_exit(1, NULL);
-	}
-    }
-    sstk_p[sjtop] = ptr;
-}
-
-
-/* This function pops the top of the stack. */
-
-
-static struct node *
-Spop()
-{
-    struct node *ptr;
-
-    if (sjtop == (-1))
-	ptr = NULL;
-    else {
-	ptr = sstk_p[sjtop];
-	sjtop--;
-    }
-
-    return ptr;
-}
-
-
-/* free memory associated with the stack, but not the pointed to nodes */
-static void
-Sfreestack()
-{
-    sjtop = (-1);
-    bu_free((char *)sstk_p, "Sfreestack: sstk_p");
-    return;
-}
-
 
 /*
  * Local Variables:

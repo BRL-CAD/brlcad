@@ -166,10 +166,10 @@ extern EXTLANG int UF_get_fail_message(int, char*);
 extern EXTLANG tag_t UF_ASSEM_ask_child_of_instance(tag_t);
 extern EXTLANG tag_t UF_ASSEM_ask_inst_of_part_occ(tag_t);
 extern EXTLANG tag_t UF_ASSEM_ask_root_part_occ(tag_t);
-extern EXTLANG tag_t UF_PART_ask_display_part();
+extern EXTLANG tag_t UF_PART_ask_display_part(void);
 extern EXTLANG void UF_PART_close(tag_t, int, int);
-extern EXTLANG void UF_initialize();
-extern EXTLANG void UF_terminate();
+extern EXTLANG void UF_initialize(void);
+extern EXTLANG void UF_terminate(void);
 extern EXTLANG void uc6476(int);
 
 #endif /* UG_SHIM_H */

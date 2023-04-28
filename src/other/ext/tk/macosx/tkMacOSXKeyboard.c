@@ -273,9 +273,9 @@ UpdateKeymaps()
         for (virt = 0; virt < 128; virt++) {
 	    MacKeycode macKC;
 	    macKC.v = (keycode_v) {.virt = virt, .o_s = index, .keychar = 0};
-	    int modifiers = INDEX2CARBON(index), result;
+	    int modifiers = INDEX2CARBON(index);
 	    UniChar keychar = 0;
-	    result = KeyDataToUnicode(&keychar, 1, kUCKeyActionDown, virt,
+	    KeyDataToUnicode(&keychar, 1, kUCKeyActionDown, virt,
 				      modifiers, NULL);
 	    if (keychar == 0x10) {
 

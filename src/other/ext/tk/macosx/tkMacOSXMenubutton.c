@@ -375,7 +375,6 @@ DrawMenuButtonImageAndText(
     Tk_Window tkwin  = butPtr->tkwin;
     Pixmap pixmap;
     int haveImage = 0, haveText = 0;
-    int imageWidth = 0, imageHeight = 0;
     int imageXOffset = 0, imageYOffset = 0;
     int textXOffset = 0, textYOffset = 0;
     int width = 0, height = 0;
@@ -395,9 +394,6 @@ DrawMenuButtonImageAndText(
         Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
         haveImage = 1;
     }
-
-    imageWidth = width;
-    imageHeight = height;
 
     haveText = (butPtr->textWidth != 0 && butPtr->textHeight != 0);
     if (butPtr->compound != COMPOUND_NONE && haveImage && haveText) {

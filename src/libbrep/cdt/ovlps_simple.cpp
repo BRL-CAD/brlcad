@@ -1,7 +1,7 @@
 /*                   C D T _ O V L P S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -153,7 +153,6 @@ mesh_ovlps(
 
     // Intersect first the triangle RTrees, then any potentially
     // overlapping triangles found within the leaves.
-    size_t tri_isects = 0;
     std::map<cdt_mesh_t *, std::set<long>> itris;
     std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
@@ -187,7 +186,6 @@ mesh_ovlps(
 			itris[t2.m].insert(t2.ind);
 			//tris_i1.insert(t1.ind);
 			//tris_i2.insert(t2.ind);
-			tri_isects++;
 		    }
 		}
 		//fmesh1->tris_set_plot(tris_i1,"ti1.plot3");

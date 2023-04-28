@@ -43,26 +43,32 @@
 
 /*! @cond Doxygen_Suppress */
 
-class CPLKeywordParser
+class CPL_DLL CPLKeywordParser
 {
-    char     **papszKeywordList;
+    char **papszKeywordList = nullptr;
 
-    CPLString osHeaderText;
-    const char *pszHeaderNext;
+    CPLString osHeaderText{};
+    const char *pszHeaderNext = nullptr;
 
-    void    SkipWhite();
-    int     ReadWord( CPLString &osWord );
-    int     ReadPair( CPLString &osName, CPLString &osValue );
-    int     ReadGroup( const char *pszPathPrefix );
+    void SkipWhite();
+    bool ReadWord(CPLString &osWord);
+    bool ReadPair(CPLString &osName, CPLString &osValue);
+    bool ReadGroup(const char *pszPathPrefix, int nRecLevel);
 
-public:
+    CPL_DISALLOW_COPY_ASSIGN(CPLKeywordParser)
+
+  public:
     CPLKeywordParser();
     ~CPLKeywordParser();
 
-    int     Ingest( VSILFILE *fp );
+    int Ingest(VSILFILE *fp);
 
-    const char *GetKeyword( const char *pszPath, const char *pszDefault=NULL );
-    char  **GetAllKeywords() { return papszKeywordList; }
+    const char *GetKeyword(const char *pszPath,
+                           const char *pszDefault = nullptr);
+    char **GetAllKeywords()
+    {
+        return papszKeywordList;
+    }
 };
 
 /*! @endcond */

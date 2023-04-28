@@ -975,8 +975,8 @@ FreeWindowInternalRep(
  *
  * TkNewWindowObj --
  *
- *	This function allocates a new Tcl_Obj that refers to a particular to a
- *	particular Tk window.
+ *	This function allocates a new Tcl_Obj that refers to a particular
+ *	Tk window.
  *
  * Results:
  *	A standard Tcl object reference, with refcount 0.

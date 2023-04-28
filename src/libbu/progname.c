@@ -1,7 +1,7 @@
 /*                      P R O G N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ static char bu_progname[MAXPATHLEN] = {0};
 const char *DEFAULT_PROGNAME = "(" PACKAGE_NAME ")";
 
 const char *
-_bu_progname_raw()
+_bu_progname_raw(void)
 {
     return (const char *)bu_progname;
 }

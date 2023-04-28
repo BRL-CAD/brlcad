@@ -315,7 +315,7 @@ TkFocusFilterEvent(
 	 *	embedded child. We don't care about this, although we may end
 	 *	up getting a NotifyPointer later.
 	 * NotifyInferior - focus is coming to us from an embedded child. When
-	 *	focus is on an embeded focus, we still think we have the
+	 *	focus is on an embedded focus, we still think we have the
 	 *	focus, too, so this message doesn't change our state.
 	 * NotifyPointerRoot - should never happen because this is sent to the
 	 *	root window.
@@ -369,7 +369,7 @@ TkFocusFilterEvent(
     }
 
     /*
-     * If winPtr isn't a top-level window than just ignore the event.
+     * If winPtr isn't a top-level window then just ignore the event.
      */
 
     winPtr = TkWmFocusToplevel(winPtr);
@@ -636,7 +636,7 @@ TkSetFocusWin(
 	 * We are assigning focus to an embedded toplevel.  The platform
 	 * specific function TkpClaimFocus needs to handle the job of
 	 * assigning focus to the container, since we have no way to find the
-	 * contaiuner.
+	 * container.
 	 */
 
 	TkpClaimFocus(topLevelPtr, force);
@@ -813,6 +813,7 @@ TkFocusDeadWindow(
     ToplevelFocusInfo *tlFocusPtr, *prevPtr;
     DisplayFocusInfo *displayFocusPtr;
     TkDisplay *dispPtr = winPtr->dispPtr;
+    int noMatch = 1;
 
     /*
      * Certain special windows like those used for send and clipboard have no
@@ -856,6 +857,7 @@ TkFocusDeadWindow(
 		prevPtr->nextPtr = tlFocusPtr->nextPtr;
 	    }
 	    ckfree(tlFocusPtr);
+	    noMatch = 0;
 	    break;
 	} else if (winPtr == tlFocusPtr->focusWinPtr) {
 	    /*
@@ -873,6 +875,7 @@ TkFocusDeadWindow(
 		displayFocusPtr->focusWinPtr = tlFocusPtr->topLevelPtr;
 		dispPtr->focusPtr = tlFocusPtr->topLevelPtr;
 	    }
+	    noMatch = 0;
 	    break;
 	}
     }
@@ -889,6 +892,15 @@ TkFocusDeadWindow(
 
     if (displayFocusPtr->focusOnMapPtr == winPtr) {
 	displayFocusPtr->focusOnMapPtr = NULL;
+    }
+
+    /*
+     * It may happen that the search above for focus records that refer
+     * to this window did not find any match. In such a case, when the
+     * dead window had the focus, release it.
+     */
+    if (noMatch && (dispPtr->focusPtr == winPtr)) {
+	dispPtr->focusPtr = NULL;
     }
 }
 
@@ -1167,7 +1179,7 @@ TkFocusSplit(
  *
  * TkFocusJoin --
  *
- *	Remove the focus record for this window that is nolonger managed
+ *	Remove the focus record for this window that is no longer managed
  *
  * Results:
  *	None.

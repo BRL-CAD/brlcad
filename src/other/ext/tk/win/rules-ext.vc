@@ -31,7 +31,12 @@ macro to the name of the project makefile.
 # We extract version numbers using the nmakehlp program. For now use
 # the local copy of nmakehlp. Once we locate Tcl, we will use that
 # one if it is newer.
+!if "$(MACHINE)" == "IX86" || "$(MACHINE)" == "$(NATIVE_ARCH)"
 !if [$(CC) -nologo -DNDEBUG "nmakehlp.c" -link -subsystem:console > nul]
+!endif
+!else
+!if [copy x86_64-w64-mingw32-nmakehlp.exe nmakehlp.exe >NUL]
+!endif
 !endif
 
 # First locate the Tcl directory that we are working with.

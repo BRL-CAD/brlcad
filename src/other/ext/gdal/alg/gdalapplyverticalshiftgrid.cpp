@@ -29,96 +29,92 @@
 #include "cpl_string.h"
 #include "gdal.h"
 #include "gdal_alg.h"
+#include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 #include "gdal_utils.h"
 #include "gdalwarper.h"
 #include "vrtdataset.h"
 #include "ogr_spatialref.h"
 
-#ifdef PROJ_STATIC
-#include "proj_api.h"
-#endif
+#include "proj.h"
 
 #include <limits>
 
-CPL_CVSID("$Id$");
+CPL_CVSID("$Id$")
 
 /************************************************************************/
 /*                        GDALApplyVSGDataset                           */
 /************************************************************************/
 
-class GDALApplyVSGDataset: public GDALDataset
+class GDALApplyVSGDataset final : public GDALDataset
 {
-        friend class GDALApplyVSGRasterBand;
+    friend class GDALApplyVSGRasterBand;
 
-        GDALDataset* m_poSrcDataset;
-        GDALDataset* m_poReprojectedGrid;
-        bool         m_bInverse;
-        double       m_dfSrcUnitToMeter;
-        double       m_dfDstUnitToMeter;
+    GDALDataset *m_poSrcDataset = nullptr;
+    GDALDataset *m_poReprojectedGrid = nullptr;
+    bool m_bInverse = false;
+    double m_dfSrcUnitToMeter = 0.0;
+    double m_dfDstUnitToMeter = 0.0;
 
-    public:
-        GDALApplyVSGDataset( GDALDataset* poSrcDataset,
-                             GDALDataset* poReprojectedGrid,
-                             GDALDataType eDT,
-                             bool bInverse,
-                             double dfSrcUnitToMeter,
-                             double dfDstUnitToMeter,
-                             int nBlockSize );
-        virtual ~GDALApplyVSGDataset();
+    CPL_DISALLOW_COPY_ASSIGN(GDALApplyVSGDataset)
 
-        virtual int        CloseDependentDatasets() override;
+  public:
+    GDALApplyVSGDataset(GDALDataset *poSrcDataset,
+                        GDALDataset *poReprojectedGrid, GDALDataType eDT,
+                        bool bInverse, double dfSrcUnitToMeter,
+                        double dfDstUnitToMeter, int nBlockSize);
+    virtual ~GDALApplyVSGDataset();
 
-        virtual CPLErr GetGeoTransform(double* padfGeoTransform) override;
-        virtual const char* GetProjectionRef() override;
+    virtual int CloseDependentDatasets() override;
 
-        bool    IsInitOK();
+    virtual CPLErr GetGeoTransform(double *padfGeoTransform) override;
+    virtual const OGRSpatialReference *GetSpatialRef() const override;
+
+    bool IsInitOK();
 };
 
 /************************************************************************/
 /*                       GDALApplyVSGRasterBand                         */
 /************************************************************************/
 
-class GDALApplyVSGRasterBand: public GDALRasterBand
+class GDALApplyVSGRasterBand final : public GDALRasterBand
 {
-        friend class GDALApplyVSGDataset;
+    friend class GDALApplyVSGDataset;
 
-        float       *m_pafSrcData;
-        float       *m_pafGridData;
+    float *m_pafSrcData = nullptr;
+    float *m_pafGridData = nullptr;
 
-    public:
-        GDALApplyVSGRasterBand( GDALDataType eDT,
-                                int nBlockSize );
-        virtual ~GDALApplyVSGRasterBand();
+    CPL_DISALLOW_COPY_ASSIGN(GDALApplyVSGRasterBand)
 
-        virtual CPLErr IReadBlock( int nBlockXOff, int nBlockYOff,
-                                   void * pData ) override;
-        virtual double GetNoDataValue( int* pbSuccess ) override;
+  public:
+    GDALApplyVSGRasterBand(GDALDataType eDT, int nBlockSize);
+    virtual ~GDALApplyVSGRasterBand();
+
+    virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
+                              void *pData) override;
+    virtual double GetNoDataValue(int *pbSuccess) override;
 };
 
 /************************************************************************/
 /*                        GDALApplyVSGDataset()                         */
 /************************************************************************/
 
-GDALApplyVSGDataset::GDALApplyVSGDataset( GDALDataset* poSrcDataset,
-                                          GDALDataset* poReprojectedGrid,
-                                          GDALDataType eDT,
-                                          bool bInverse,
-                                          double dfSrcUnitToMeter,
-                                          double dfDstUnitToMeter,
-                                          int nBlockSize ) :
-    m_poSrcDataset(poSrcDataset),
-    m_poReprojectedGrid(poReprojectedGrid),
-    m_bInverse(bInverse),
-    m_dfSrcUnitToMeter(dfSrcUnitToMeter),
-    m_dfDstUnitToMeter(dfDstUnitToMeter)
+GDALApplyVSGDataset::GDALApplyVSGDataset(GDALDataset *poSrcDataset,
+                                         GDALDataset *poReprojectedGrid,
+                                         GDALDataType eDT, bool bInverse,
+                                         double dfSrcUnitToMeter,
+                                         double dfDstUnitToMeter,
+                                         int nBlockSize)
+    : m_poSrcDataset(poSrcDataset), m_poReprojectedGrid(poReprojectedGrid),
+      m_bInverse(bInverse), m_dfSrcUnitToMeter(dfSrcUnitToMeter),
+      m_dfDstUnitToMeter(dfDstUnitToMeter)
 {
     m_poSrcDataset->Reference();
     m_poReprojectedGrid->Reference();
 
     nRasterXSize = poSrcDataset->GetRasterXSize();
     nRasterYSize = poSrcDataset->GetRasterYSize();
-    SetBand( 1, new GDALApplyVSGRasterBand( eDT, nBlockSize ) );
+    SetBand(1, new GDALApplyVSGRasterBand(eDT, nBlockSize));
 }
 
 /************************************************************************/
@@ -127,7 +123,7 @@ GDALApplyVSGDataset::GDALApplyVSGDataset( GDALDataset* poSrcDataset,
 
 GDALApplyVSGDataset::~GDALApplyVSGDataset()
 {
-    CloseDependentDatasets();
+    GDALApplyVSGDataset::CloseDependentDatasets();
 }
 
 /************************************************************************/
@@ -137,21 +133,21 @@ GDALApplyVSGDataset::~GDALApplyVSGDataset()
 int GDALApplyVSGDataset::CloseDependentDatasets()
 {
     bool bRet = false;
-    if( m_poSrcDataset != NULL )
+    if (m_poSrcDataset != nullptr)
     {
-        if( m_poSrcDataset->ReleaseRef() )
+        if (m_poSrcDataset->ReleaseRef())
         {
             bRet = true;
         }
-        m_poSrcDataset = NULL;
+        m_poSrcDataset = nullptr;
     }
-    if( m_poReprojectedGrid != NULL )
+    if (m_poReprojectedGrid != nullptr)
     {
-        if( m_poReprojectedGrid->ReleaseRef() )
+        if (m_poReprojectedGrid->ReleaseRef())
         {
             bRet = true;
         }
-        m_poReprojectedGrid = NULL;
+        m_poReprojectedGrid = nullptr;
     }
     return bRet;
 }
@@ -160,18 +156,18 @@ int GDALApplyVSGDataset::CloseDependentDatasets()
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GDALApplyVSGDataset::GetGeoTransform(double* padfGeoTransform)
+CPLErr GDALApplyVSGDataset::GetGeoTransform(double *padfGeoTransform)
 {
     return m_poSrcDataset->GetGeoTransform(padfGeoTransform);
 }
 
 /************************************************************************/
-/*                          GetProjectionRef()                          */
+/*                          GetSpatialRef()                             */
 /************************************************************************/
 
-const char* GDALApplyVSGDataset::GetProjectionRef()
+const OGRSpatialReference *GDALApplyVSGDataset::GetSpatialRef() const
 {
-    return m_poSrcDataset->GetProjectionRef();
+    return m_poSrcDataset->GetSpatialRef();
 }
 
 /************************************************************************/
@@ -180,24 +176,23 @@ const char* GDALApplyVSGDataset::GetProjectionRef()
 
 bool GDALApplyVSGDataset::IsInitOK()
 {
-    GDALApplyVSGRasterBand* poBand =
-        reinterpret_cast<GDALApplyVSGRasterBand*>(GetRasterBand(1));
-    return poBand->m_pafSrcData != NULL && poBand->m_pafGridData != NULL;
+    GDALApplyVSGRasterBand *poBand =
+        reinterpret_cast<GDALApplyVSGRasterBand *>(GetRasterBand(1));
+    return poBand->m_pafSrcData != nullptr && poBand->m_pafGridData != nullptr;
 }
 
 /************************************************************************/
 /*                       GDALApplyVSGRasterBand()                       */
 /************************************************************************/
 
-GDALApplyVSGRasterBand::GDALApplyVSGRasterBand( GDALDataType eDT,
-                                                int nBlockSize )
+GDALApplyVSGRasterBand::GDALApplyVSGRasterBand(GDALDataType eDT, int nBlockSize)
 {
     eDataType = eDT;
     nBlockXSize = nBlockSize;
     nBlockYSize = nBlockSize;
-    m_pafSrcData = static_cast<float*>(
+    m_pafSrcData = static_cast<float *>(
         VSI_MALLOC3_VERBOSE(nBlockXSize, nBlockYSize, sizeof(float)));
-    m_pafGridData = static_cast<float*>(
+    m_pafGridData = static_cast<float *>(
         VSI_MALLOC3_VERBOSE(nBlockXSize, nBlockYSize, sizeof(float)));
 }
 
@@ -215,9 +210,9 @@ GDALApplyVSGRasterBand::~GDALApplyVSGRasterBand()
 /*                           GetNoDataValue()                           */
 /************************************************************************/
 
-double GDALApplyVSGRasterBand::GetNoDataValue( int* pbSuccess )
+double GDALApplyVSGRasterBand::GetNoDataValue(int *pbSuccess)
 {
-    GDALApplyVSGDataset* poGDS = reinterpret_cast<GDALApplyVSGDataset*>(poDS);
+    GDALApplyVSGDataset *poGDS = reinterpret_cast<GDALApplyVSGDataset *>(poDS);
     return poGDS->m_poSrcDataset->GetRasterBand(1)->GetNoDataValue(pbSuccess);
 }
 
@@ -225,77 +220,67 @@ double GDALApplyVSGRasterBand::GetNoDataValue( int* pbSuccess )
 /*                              IReadBlock()                            */
 /************************************************************************/
 
-CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                           void * pData )
+CPLErr GDALApplyVSGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
+                                          void *pData)
 {
-    GDALApplyVSGDataset* poGDS = reinterpret_cast<GDALApplyVSGDataset*>(poDS);
+    GDALApplyVSGDataset *poGDS = reinterpret_cast<GDALApplyVSGDataset *>(poDS);
 
     const int nXOff = nBlockXOff * nBlockXSize;
-    const int nReqXSize = ( nXOff > nRasterXSize - nBlockXSize ) ?
-                                    nRasterXSize - nXOff : nBlockXSize;
+    const int nReqXSize = (nXOff > nRasterXSize - nBlockXSize)
+                              ? nRasterXSize - nXOff
+                              : nBlockXSize;
     const int nYOff = nBlockYOff * nBlockYSize;
-    const int nReqYSize = ( nYOff > nRasterYSize - nBlockYSize ) ?
-                                    nRasterYSize - nYOff : nBlockYSize;
+    const int nReqYSize = (nYOff > nRasterYSize - nBlockYSize)
+                              ? nRasterYSize - nYOff
+                              : nBlockYSize;
 
-    CPLErr eErr =
-        poGDS->m_poSrcDataset->GetRasterBand(1)->RasterIO(GF_Read,
-                                                    nXOff, nYOff,
-                                                    nReqXSize, nReqYSize,
-                                                    m_pafSrcData,
-                                                    nReqXSize, nReqYSize,
-                                                    GDT_Float32,
-                                                    sizeof(float),
-                                                    nBlockXSize * sizeof(float),
-                                                    NULL);
-    if( eErr == CE_None )
-        eErr =  poGDS->m_poReprojectedGrid->GetRasterBand(1)->RasterIO(GF_Read,
-                                                    nXOff, nYOff,
-                                                    nReqXSize, nReqYSize,
-                                                    m_pafGridData,
-                                                    nReqXSize, nReqYSize,
-                                                    GDT_Float32,
-                                                    sizeof(float),
-                                                    nBlockXSize * sizeof(float),
-                                                    NULL);
-    if( eErr == CE_None )
+    CPLErr eErr = poGDS->m_poSrcDataset->GetRasterBand(1)->RasterIO(
+        GF_Read, nXOff, nYOff, nReqXSize, nReqYSize, m_pafSrcData, nReqXSize,
+        nReqYSize, GDT_Float32, sizeof(float), nBlockXSize * sizeof(float),
+        nullptr);
+    if (eErr == CE_None)
+        eErr = poGDS->m_poReprojectedGrid->GetRasterBand(1)->RasterIO(
+            GF_Read, nXOff, nYOff, nReqXSize, nReqYSize, m_pafGridData,
+            nReqXSize, nReqYSize, GDT_Float32, sizeof(float),
+            nBlockXSize * sizeof(float), nullptr);
+    if (eErr == CE_None)
     {
         const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
         int bHasNoData = FALSE;
         float fNoDataValue = static_cast<float>(GetNoDataValue(&bHasNoData));
-        for( int iY = 0; iY < nReqYSize; iY++ )
+        for (int iY = 0; iY < nReqYSize; iY++)
         {
-            for( int iX = 0; iX < nReqXSize; iX ++ )
+            for (int iX = 0; iX < nReqXSize; iX++)
             {
                 const float fSrcVal = m_pafSrcData[iY * nBlockXSize + iX];
                 const float fGridVal = m_pafGridData[iY * nBlockXSize + iX];
-                if( bHasNoData && fSrcVal == fNoDataValue )
+                if (bHasNoData && fSrcVal == fNoDataValue)
                 {
                 }
-                else if( CPLIsInf(fGridVal) )
+                else if (CPLIsInf(fGridVal))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Missing vertical grid value at source (%d,%d)",
                              nXOff + iX, nYOff + iY);
                     return CE_Failure;
                 }
-                else if( poGDS->m_bInverse )
+                else if (poGDS->m_bInverse)
                 {
                     m_pafSrcData[iY * nBlockXSize + iX] = static_cast<float>(
-                        (fSrcVal * poGDS->m_dfSrcUnitToMeter - fGridVal) / 
-                                                poGDS->m_dfDstUnitToMeter);
+                        (fSrcVal * poGDS->m_dfSrcUnitToMeter - fGridVal) /
+                        poGDS->m_dfDstUnitToMeter);
                 }
                 else
                 {
                     m_pafSrcData[iY * nBlockXSize + iX] = static_cast<float>(
-                        (fSrcVal * poGDS->m_dfSrcUnitToMeter + fGridVal) / 
-                                                poGDS->m_dfDstUnitToMeter);
+                        (fSrcVal * poGDS->m_dfSrcUnitToMeter + fGridVal) /
+                        poGDS->m_dfDstUnitToMeter);
                 }
             }
-            GDALCopyWords( m_pafSrcData + iY * nBlockXSize,
-                                GDT_Float32, sizeof(float),
-                           static_cast<GByte*>(pData) + iY * nBlockXSize *
-                                nDTSize, eDataType, nDTSize,
-                           nReqXSize );
+            GDALCopyWords(
+                m_pafSrcData + iY * nBlockXSize, GDT_Float32, sizeof(float),
+                static_cast<GByte *>(pData) + iY * nBlockXSize * nDTSize,
+                eDataType, nDTSize, nReqXSize);
         }
     }
 
@@ -307,14 +292,14 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 /** Apply a vertical shift grid to a source (DEM typically) dataset.
- * 
+ *
  * hGridDataset will typically use WGS84 as horizontal datum (but this is
  * not a requirement) and its values are the values to add to go from geoid
  * elevations to WGS84 ellipsoidal heights.
- * 
+ *
  * hGridDataset will be on-the-fly reprojected and resampled to the projection
  * and resolution of hSrcDataset, using bilinear resampling by default.
- * 
+ *
  * Both hSrcDataset and hGridDataset must be single band datasets, and have
  * a valid geotransform and projection.
  *
@@ -326,7 +311,7 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
  * owner of them.
  *
  * Valid use cases:
- * 
+ *
  * \code
  * hSrcDataset = GDALOpen(...)
  * hGridDataset = GDALOpen(...)
@@ -335,7 +320,7 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
  * GDALReleaseDataset(hGridDataset);
  * if( hDstDataset )
  * {
- *     // Do things with hDstDataset 
+ *     // Do things with hDstDataset
  *     GDALClose(hDstDataset) // will close hSrcDataset and hGridDataset
  * }
  * \endcode
@@ -367,146 +352,156 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
  * hGridDataset, or NULL. If not NULL, it must be closed with GDALClose().
  *
  * @since GDAL 2.2
+ * @deprecated GDAL 3.4. Will be removed in GDAL 4.0. This function was used
+ *             by gdalwarp initially, but is no longer needed.
  */
-GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
-                                         GDALDatasetH hGridDataset,
-                                         int bInverse,
-                                         double dfSrcUnitToMeter,
-                                         double dfDstUnitToMeter,
-                                         const char* const* papszOptions )
+GDALDatasetH GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
+                                        GDALDatasetH hGridDataset, int bInverse,
+                                        double dfSrcUnitToMeter,
+                                        double dfDstUnitToMeter,
+                                        const char *const *papszOptions)
 {
-    VALIDATE_POINTER1( hSrcDataset, "GDALApplyVerticalShiftGrid", NULL );
-    VALIDATE_POINTER1( hGridDataset, "GDALApplyVerticalShiftGrid", NULL );
+    VALIDATE_POINTER1(hSrcDataset, "GDALApplyVerticalShiftGrid", nullptr);
+    VALIDATE_POINTER1(hGridDataset, "GDALApplyVerticalShiftGrid", nullptr);
 
     double adfSrcGT[6];
-    if( GDALGetGeoTransform(hSrcDataset, adfSrcGT) != CE_None )
+    if (GDALGetGeoTransform(hSrcDataset, adfSrcGT) != CE_None)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Source dataset has no geotransform.");
-        return NULL;
+        return nullptr;
     }
-    const char* pszSrcProjection = CSLFetchNameValueDef(papszOptions,
-                                            "SRC_SRS",
-                                            GDALGetProjectionRef(hSrcDataset));
-    if( pszSrcProjection == NULL || pszSrcProjection[0] == '\0' )
+    const char *pszSrcProjection = CSLFetchNameValue(papszOptions, "SRC_SRS");
+    OGRSpatialReference oSrcSRS;
+    if (pszSrcProjection != nullptr && pszSrcProjection[0] != '\0')
+    {
+        oSrcSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        oSrcSRS.SetFromUserInput(pszSrcProjection);
+    }
+    else
+    {
+        auto poSRS = GDALDataset::FromHandle(hSrcDataset)->GetSpatialRef();
+        if (poSRS)
+            oSrcSRS = *poSRS;
+    }
+
+    if (oSrcSRS.IsCompound())
+    {
+        oSrcSRS.StripVertical();
+    }
+
+    if (oSrcSRS.IsEmpty())
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Source dataset has no projection.");
-        return NULL;
+        return nullptr;
     }
-    if(  GDALGetRasterCount(hSrcDataset) != 1 )
+    if (GDALGetRasterCount(hSrcDataset) != 1)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only single band source dataset is supported.");
-        return NULL;
+        return nullptr;
     }
 
     double adfGridGT[6];
-    if( GDALGetGeoTransform(hGridDataset, adfGridGT) != CE_None )
+    if (GDALGetGeoTransform(hGridDataset, adfGridGT) != CE_None)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Grid dataset has no geotransform.");
-        return NULL;
+        return nullptr;
     }
-    const char* pszGridProjection = GDALGetProjectionRef(hGridDataset);
-    if( pszGridProjection == NULL || pszGridProjection[0] == '\0' )
+
+    OGRSpatialReferenceH hGridSRS = GDALGetSpatialRef(hGridDataset);
+    if (hGridSRS == nullptr)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Grid dataset has no projection.");
-        return NULL;
+        return nullptr;
     }
-    if(  GDALGetRasterCount(hGridDataset) != 1 )
+    if (GDALGetRasterCount(hGridDataset) != 1)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only single band grid dataset is supported.");
-        return NULL;
+        return nullptr;
     }
 
-    GDALDataType eDT = GDALGetRasterDataType(GDALGetRasterBand(hSrcDataset,1));
-    const char* pszDataType = CSLFetchNameValue(papszOptions, "DATATYPE");
-    if( pszDataType )
+    GDALDataType eDT = GDALGetRasterDataType(GDALGetRasterBand(hSrcDataset, 1));
+    const char *pszDataType = CSLFetchNameValue(papszOptions, "DATATYPE");
+    if (pszDataType)
         eDT = GDALGetDataTypeByName(pszDataType);
-    if( eDT == GDT_Unknown )
+    if (eDT == GDT_Unknown)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Invalid DATATYPE=%s", pszDataType);
-        return NULL;
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid DATATYPE=%s",
+                 pszDataType);
+        return nullptr;
     }
 
     const int nSrcXSize = GDALGetRasterXSize(hSrcDataset);
     const int nSrcYSize = GDALGetRasterYSize(hSrcDataset);
 
-    OGRSpatialReference oSRS;
-    CPLString osSrcProjection(pszSrcProjection);
-    oSRS.SetFromUserInput(osSrcProjection);
-    if( oSRS.IsCompound() )
-    {
-        OGR_SRSNode* poNode = oSRS.GetRoot()->GetChild(1);
-        if( poNode != NULL )
-        {
-            char* pszWKT = NULL;
-            poNode->exportToWkt(&pszWKT);
-            osSrcProjection = pszWKT;
-            CPLFree(pszWKT);
-        }
-    }
+    double dfWestLongitudeDeg = 0.0;
+    double dfSouthLatitudeDeg = 0.0;
+    double dfEastLongitudeDeg = 0.0;
+    double dfNorthLatitudeDeg = 0.0;
+    GDALComputeAreaOfInterest(&oSrcSRS, adfSrcGT, nSrcXSize, nSrcYSize,
+                              dfWestLongitudeDeg, dfSouthLatitudeDeg,
+                              dfEastLongitudeDeg, dfNorthLatitudeDeg);
 
-    void* hTransform = GDALCreateGenImgProjTransformer3( pszGridProjection,
-                                                         adfGridGT,
-                                                         osSrcProjection,
-                                                         adfSrcGT );
-    if( hTransform == NULL )
-        return NULL;
-    GDALWarpOptions* psWO = GDALCreateWarpOptions();
+    CPLStringList aosOptions;
+    if (!(dfWestLongitudeDeg == 0.0 && dfSouthLatitudeDeg == 0.0 &&
+          dfEastLongitudeDeg == 0.0 && dfNorthLatitudeDeg == 0.0))
+    {
+        aosOptions.SetNameValue(
+            "AREA_OF_INTEREST",
+            CPLSPrintf("%.16g,%.16g,%.16g,%.16g", dfWestLongitudeDeg,
+                       dfSouthLatitudeDeg, dfEastLongitudeDeg,
+                       dfNorthLatitudeDeg));
+    }
+    void *hTransform = GDALCreateGenImgProjTransformer4(
+        hGridSRS, adfGridGT, OGRSpatialReference::ToHandle(&oSrcSRS), adfSrcGT,
+        aosOptions.List());
+    if (hTransform == nullptr)
+        return nullptr;
+    GDALWarpOptions *psWO = GDALCreateWarpOptions();
     psWO->hSrcDS = hGridDataset;
     psWO->eResampleAlg = GRA_Bilinear;
-    const char* pszResampling = CSLFetchNameValue(papszOptions, "RESAMPLING");
-    if( pszResampling )
+    const char *pszResampling = CSLFetchNameValue(papszOptions, "RESAMPLING");
+    if (pszResampling)
     {
-        if( EQUAL(pszResampling, "NEAREST") )
+        if (EQUAL(pszResampling, "NEAREST"))
             psWO->eResampleAlg = GRA_NearestNeighbour;
-        else if( EQUAL(pszResampling, "BILINEAR") )
+        else if (EQUAL(pszResampling, "BILINEAR"))
             psWO->eResampleAlg = GRA_Bilinear;
-        else if( EQUAL(pszResampling, "CUBIC") )
+        else if (EQUAL(pszResampling, "CUBIC"))
             psWO->eResampleAlg = GRA_Cubic;
     }
     psWO->eWorkingDataType = GDT_Float32;
     int bHasNoData = FALSE;
     const double dfSrcNoData = GDALGetRasterNoDataValue(
-        GDALGetRasterBand(hGridDataset, 1), &bHasNoData );
-    if( bHasNoData )
+        GDALGetRasterBand(hGridDataset, 1), &bHasNoData);
+    if (bHasNoData)
     {
         psWO->padfSrcNoDataReal =
-                static_cast<double*>(CPLMalloc(sizeof(double)));
+            static_cast<double *>(CPLMalloc(sizeof(double)));
         psWO->padfSrcNoDataReal[0] = dfSrcNoData;
-        psWO->padfSrcNoDataImag =
-                static_cast<double*>(CPLMalloc(sizeof(double)));
-        psWO->padfSrcNoDataImag[0] = 0.0;
     }
 
-    psWO->padfDstNoDataReal = static_cast<double*>(CPLMalloc(sizeof(double)));
-    const bool bErrorOnMissingShift = CPLFetchBool( papszOptions,
-                                              "ERROR_ON_MISSING_VERT_SHIFT",
-                                              false );
-    psWO->padfDstNoDataReal[0] = 
+    psWO->padfDstNoDataReal = static_cast<double *>(CPLMalloc(sizeof(double)));
+    const bool bErrorOnMissingShift =
+        CPLFetchBool(papszOptions, "ERROR_ON_MISSING_VERT_SHIFT", false);
+    psWO->padfDstNoDataReal[0] =
         (bErrorOnMissingShift) ? -std::numeric_limits<float>::infinity() : 0.0;
-    psWO->padfDstNoDataImag = static_cast<double*>(CPLMalloc(sizeof(double)));
-    psWO->padfDstNoDataImag[0] = 0.0;
-    psWO->papszWarpOptions = CSLSetNameValue(psWO->papszWarpOptions,
-                                                 "INIT_DEST",
-                                                 "NO_DATA");
+    psWO->papszWarpOptions =
+        CSLSetNameValue(psWO->papszWarpOptions, "INIT_DEST", "NO_DATA");
 
     psWO->pfnTransformer = GDALGenImgProjTransform;
     psWO->pTransformerArg = hTransform;
-    const double dfMaxError = CPLAtof(CSLFetchNameValueDef(papszOptions,
-                                                           "MAX_ERROR",
-                                                           "0.125"));
-    if( dfMaxError > 0.0 )
+    const double dfMaxError =
+        CPLAtof(CSLFetchNameValueDef(papszOptions, "MAX_ERROR", "0.125"));
+    if (dfMaxError > 0.0)
     {
-        psWO->pTransformerArg =
-            GDALCreateApproxTransformer( psWO->pfnTransformer,
-                                         psWO->pTransformerArg,
-                                         dfMaxError );
+        psWO->pTransformerArg = GDALCreateApproxTransformer(
+            psWO->pfnTransformer, psWO->pTransformerArg, dfMaxError);
         psWO->pfnTransformer = GDALApproxTransform;
         GDALApproxTransformerOwnsSubtransformer(psWO->pTransformerArg, TRUE);
     }
@@ -516,132 +511,55 @@ GDALDatasetH GDALApplyVerticalShiftGrid( GDALDatasetH hSrcDataset,
     psWO->panDstBands = static_cast<int *>(CPLMalloc(sizeof(int)));
     psWO->panDstBands[0] = 1;
 
-    VRTWarpedDataset* poReprojectedGrid =
-                new VRTWarpedDataset(nSrcXSize, nSrcYSize);
+    VRTWarpedDataset *poReprojectedGrid =
+        new VRTWarpedDataset(nSrcXSize, nSrcYSize);
     // This takes a reference on hGridDataset
     CPLErr eErr = poReprojectedGrid->Initialize(psWO);
     CPLAssert(eErr == CE_None);
     CPL_IGNORE_RET_VAL(eErr);
     GDALDestroyWarpOptions(psWO);
     poReprojectedGrid->SetGeoTransform(adfSrcGT);
-    poReprojectedGrid->AddBand(GDT_Float32, NULL);
+    poReprojectedGrid->AddBand(GDT_Float32, nullptr);
 
-    GDALApplyVSGDataset* poOutDS = new GDALApplyVSGDataset(
-        reinterpret_cast<GDALDataset*>(hSrcDataset),
-        poReprojectedGrid,
-        eDT,
-        CPL_TO_BOOL(bInverse),
-        dfSrcUnitToMeter,
-        dfDstUnitToMeter,
+    GDALApplyVSGDataset *poOutDS = new GDALApplyVSGDataset(
+        reinterpret_cast<GDALDataset *>(hSrcDataset), poReprojectedGrid, eDT,
+        CPL_TO_BOOL(bInverse), dfSrcUnitToMeter, dfDstUnitToMeter,
         // Undocumented option. For testing only
-        atoi(CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", "256")) );
+        atoi(CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", "256")));
 
     poReprojectedGrid->ReleaseRef();
 
-    if( !poOutDS->IsInitOK() )
+    if (!poOutDS->IsInitOK())
     {
         delete poOutDS;
-        return NULL;
+        return nullptr;
     }
-    poOutDS->SetDescription( GDALGetDescription( hSrcDataset ) );
+    poOutDS->SetDescription(GDALGetDescription(hSrcDataset));
     return reinterpret_cast<GDALDatasetH>(poOutDS);
 }
-
-/************************************************************************/
-/*                          my_proj4_logger()                           */
-/************************************************************************/
-
-#if defined(PROJ_STATIC) && PJ_VERSION <= 493
-static void my_proj4_logger(void * user_data, int /*level*/, const char * msg)
-{
-    CPLString* posMsg = static_cast<CPLString*>(user_data);
-    *posMsg += msg;
-}
-#endif
 
 /************************************************************************/
 /*                           GetProj4Filename()                         */
 /************************************************************************/
 
-static CPLString GetProj4Filename(const char* pszFilename)
+static CPLString GetProj4Filename(const char *pszFilename)
 {
     CPLString osFilename;
 
     /* or fixed path: /name, ./name or ../name */
-    if ( !CPLIsFilenameRelative(pszFilename) || *pszFilename == '.' )
+    if (!CPLIsFilenameRelative(pszFilename) || *pszFilename == '.')
     {
         return pszFilename;
     }
 
-#if defined(PROJ_STATIC) && PJ_VERSION > 493
-    osFilename.resize(2048);
-    projCtx ctx = pj_ctx_alloc();
-    if( pj_find_file(ctx, pszFilename, &osFilename[0], osFilename.size()) )
+    PJ_GRID_INFO info = proj_grid_info(pszFilename);
+    if (info.filename[0])
     {
-        osFilename.resize( strlen(osFilename) );
-    }
-    else
-    {
-        osFilename.clear();
-    }
-    pj_ctx_free(ctx);
-#else
-    // Transpose some of the proj.4 pj_open_lib() logic...
-
-    /* check if ~/name */
-    char* pszSysname;
-    if (*pszFilename == '~' &&
-        (pszFilename[1] == '/' || pszFilename[1] == '\\') )
-    {
-        if ((pszSysname = getenv("HOME")) != NULL)
-        {
-            osFilename = CPLFormFilename(pszSysname, pszFilename + 1, NULL);
-        }
-        return osFilename;
+        osFilename = info.filename;
     }
 
-    /* or is environment PROJ_LIB defined */
-    else if ((pszSysname = getenv("PROJ_LIB")) != NULL)
-    {
-        osFilename = CPLFormFilename(pszSysname, pszFilename, NULL);
-        VSIStatBufL sStat;
-        if( VSIStatL(osFilename, &sStat) == 0 )
-            return osFilename;
-        osFilename.clear();
-    }
-
-
-#if defined(PROJ_STATIC) && PJ_VERSION >= 490
-    // Super messy. proj.4 up to 4.9.3 had no public API to return the full
-    // path to a resource file, so we rely on the fact that it emits a log
-    // message with it...
-    // Basically this is needed in the case where the file is in the
-    // resource installation directory of proj.4, which we have no way to
-    // know otherwise.
-    CPLString osMsg;
-    projCtx ctx = pj_ctx_alloc();
-    pj_ctx_set_app_data(ctx, &osMsg);
-    pj_ctx_set_debug(ctx, PJ_LOG_DEBUG_MAJOR);
-    pj_ctx_set_logger(ctx, my_proj4_logger);
-    PAFile f = pj_open_lib(ctx, pszFilename, "rb");
-    if( f )
-    {
-        pj_ctx_fclose(ctx, f);
-        size_t nPos = osMsg.find("fopen(");
-        if( nPos != std::string::npos )
-        {
-            osFilename = osMsg.substr(nPos + strlen("fopen("));
-            nPos = osFilename.find(")");
-            if( nPos != std::string::npos )
-                osFilename = osFilename.substr(0, nPos);
-        }
-    }
-    pj_ctx_free(ctx);
-#endif
-#endif
     return osFilename;
 }
-
 
 /************************************************************************/
 /*                       GDALOpenVerticalShiftGrid()                    */
@@ -656,58 +574,60 @@ static CPLString GetProj4Filename(const char* pszFilename)
  * @return a dataset. If not NULL, it must be closed with GDALClose().
  *
  * @since GDAL 2.2
+ * @deprecated GDAL 3.4. Will be removed in GDAL 4.0. This function was used
+ *             by gdalwarp initially, but is no longer needed.
  */
-GDALDatasetH GDALOpenVerticalShiftGrid( const char* pszProj4Geoidgrids,
-                                        int* pbError )
+GDALDatasetH GDALOpenVerticalShiftGrid(const char *pszProj4Geoidgrids,
+                                       int *pbError)
 {
-    char** papszGrids = CSLTokenizeString2( pszProj4Geoidgrids, ",", 0);
+    char **papszGrids = CSLTokenizeString2(pszProj4Geoidgrids, ",", 0);
     const int nGridCount = CSLCount(papszGrids);
-    if( nGridCount == 1 )
+    if (nGridCount == 1)
     {
         CSLDestroy(papszGrids);
 
         bool bMissingOk = false;
-        if( *pszProj4Geoidgrids == '@' )
+        if (*pszProj4Geoidgrids == '@')
         {
-            pszProj4Geoidgrids ++;
+            pszProj4Geoidgrids++;
             bMissingOk = true;
         }
         const CPLString osFilename(GetProj4Filename(pszProj4Geoidgrids));
-        const char* const papszOpenOptions[] =
-            { "@SHIFT_ORIGIN_IN_MINUS_180_PLUS_180=YES", NULL };
-        GDALDatasetH hDS = GDALOpenEx(osFilename, 0, NULL, papszOpenOptions, NULL);
-        if( hDS == NULL )
+        const char *const papszOpenOptions[] = {
+            "@SHIFT_ORIGIN_IN_MINUS_180_PLUS_180=YES", nullptr};
+        GDALDatasetH hDS =
+            GDALOpenEx(osFilename, 0, nullptr, papszOpenOptions, nullptr);
+        if (hDS == nullptr)
         {
             CPLDebug("GDAL", "Cannot find file corresponding to %s",
                      pszProj4Geoidgrids);
         }
-        if( pbError )
-            *pbError = (!bMissingOk && hDS == NULL);
+        if (pbError)
+            *pbError = (!bMissingOk && hDS == nullptr);
         return hDS;
     }
 
     CPLStringList aosFilenames;
-    for( int i = nGridCount - 1; i >= 0; i-- )
+    for (int i = nGridCount - 1; i >= 0; i--)
     {
-        const char* pszName = papszGrids[i];
+        const char *pszName = papszGrids[i];
         bool bMissingOk = false;
-        if( *pszName == '@' )
+        if (*pszName == '@')
         {
-            pszName ++;
+            pszName++;
             bMissingOk = true;
         }
         const CPLString osFilename(GetProj4Filename(pszName));
         VSIStatBufL sStat;
-        if( osFilename.empty() || VSIStatL(osFilename, &sStat) != 0 )
+        if (osFilename.empty() || VSIStatL(osFilename, &sStat) != 0)
         {
-            CPLDebug("GDAL", "Cannot find file corresponding to %s",
-                     pszName);
-            if( !bMissingOk )
+            CPLDebug("GDAL", "Cannot find file corresponding to %s", pszName);
+            if (!bMissingOk)
             {
-                if( pbError )
+                if (pbError)
                     *pbError = true;
                 CSLDestroy(papszGrids);
-                return NULL;
+                return nullptr;
             }
         }
         else
@@ -718,27 +638,27 @@ GDALDatasetH GDALOpenVerticalShiftGrid( const char* pszProj4Geoidgrids,
 
     CSLDestroy(papszGrids);
 
-    if( aosFilenames.empty() )
+    if (aosFilenames.empty())
     {
-        if( pbError )
+        if (pbError)
             *pbError = false;
-        return NULL;
+        return nullptr;
     }
 
-    char** papszArgv = NULL;
+    char **papszArgv = nullptr;
     papszArgv = CSLAddString(papszArgv, "-resolution");
     papszArgv = CSLAddString(papszArgv, "highest");
     papszArgv = CSLAddString(papszArgv, "-vrtnodata");
     papszArgv = CSLAddString(papszArgv, "-inf");
     papszArgv = CSLAddString(papszArgv, "-oo");
-    papszArgv = CSLAddString(papszArgv, "@SHIFT_ORIGIN_IN_MINUS_180_PLUS_180=YES");
-    GDALBuildVRTOptions* psOptions = GDALBuildVRTOptionsNew(papszArgv, NULL);
+    papszArgv =
+        CSLAddString(papszArgv, "@SHIFT_ORIGIN_IN_MINUS_180_PLUS_180=YES");
+    GDALBuildVRTOptions *psOptions = GDALBuildVRTOptionsNew(papszArgv, nullptr);
     CSLDestroy(papszArgv);
-    GDALDatasetH hDS =
-        GDALBuildVRT( "", aosFilenames.size(), NULL, aosFilenames.List(),
-                     psOptions, NULL );
-    GDALBuildVRTOptionsFree( psOptions );
-    if( pbError )
-        *pbError = hDS != NULL;
+    GDALDatasetH hDS = GDALBuildVRT("", aosFilenames.size(), nullptr,
+                                    aosFilenames.List(), psOptions, nullptr);
+    GDALBuildVRTOptionsFree(psOptions);
+    if (pbError)
+        *pbError = hDS != nullptr;
     return hDS;
 }

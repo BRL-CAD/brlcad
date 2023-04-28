@@ -31,7 +31,7 @@ testConstraint $dll [file readable $x]
 
 # Tests also require that this DLL has not already been loaded.
 set loaded "[file tail $x]Loaded"
-set alreadyLoaded [info loaded]
+set alreadyLoaded [info loaded {}]
 testConstraint $loaded [expr {![string match *pkga* $alreadyLoaded]}]
 
 set alreadyTotalLoaded [info loaded]

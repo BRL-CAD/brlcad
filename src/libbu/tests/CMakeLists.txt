@@ -2,6 +2,7 @@
 # combine some of the unit tests into a single program.
 
 set(bu_test_srcs
+  argv.c
   b64.c
   backtrace.c
   badmagic.c
@@ -740,6 +741,11 @@ BRLCAD_ADD_TEST(NAME bu_mappedfile_parallel_16384 COMMAND bu_test mappedfile 2 1
 BRLCAD_ADD_TEST(NAME bu_mappedfile_repeat_serial_10 COMMAND bu_test mappedfile 3 10)
 BRLCAD_ADD_TEST(NAME bu_mappedfile_repeat_parallel_10 COMMAND bu_test mappedfile 4 10)
 #BRLCAD_ADD_TEST(NAME bu_mappedfile_parallel_free COMMAND bu_test mappedfile 5)
+
+# The 16k mapping tests may take a large amount of time in some situations -
+# wait longer than the 1500s default
+set_tests_properties(bu_mappedfile_serial_16384 PROPERTIES TIMEOUT 3000)
+set_tests_properties(bu_mappedfile_parallel_16384 PROPERTIES TIMEOUT 3000)
 
 #
 #  *********** realpath.c tests ************

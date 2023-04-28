@@ -46,26 +46,29 @@ Common metadata (from metadata filename):
 
 */
 
-class GDALMDReaderPleiades: public GDALMDReaderBase
+class CPL_DLL GDALMDReaderPleiades : public GDALMDReaderBase
 {
-public:
+  public:
     GDALMDReaderPleiades(const char *pszPath, char **papszSiblingFiles);
     virtual ~GDALMDReaderPleiades();
     virtual bool HasRequiredFiles() const override;
-    virtual char** GetMetadataFiles() const override;
+    virtual char **GetMetadataFiles() const override;
 
-    static GDALMDReaderPleiades* CreateReaderForRPC(const char* pszRPCSourceFilename);
+    static GDALMDReaderPleiades *
+    CreateReaderForRPC(const char *pszRPCSourceFilename);
 
-    char** LoadRPCXmlFile();
+    char **LoadRPCXmlFile();
 
-protected:
+  protected:
     virtual void LoadMetadata() override;
-protected:
-    CPLString m_osBaseFilename;
-    CPLString m_osIMDSourceFilename;
-    CPLString m_osRPBSourceFilename;
-private:
+
+  protected:
+    CPLString m_osBaseFilename{};
+    CPLString m_osIMDSourceFilename{};
+    CPLString m_osRPBSourceFilename{};
+
+  private:
     GDALMDReaderPleiades();
 };
 
-#endif // READER_PLEIADES_H_INCLUDED
+#endif  // READER_PLEIADES_H_INCLUDED

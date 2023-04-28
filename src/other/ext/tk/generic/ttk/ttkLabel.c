@@ -30,7 +30,7 @@ typedef struct {
     Tcl_Obj	*anchorObj;
     Tcl_Obj	*justifyObj;
     Tcl_Obj	*wrapLengthObj;
-    Tcl_Obj     *embossedObj;
+    Tcl_Obj	*embossedObj;
 
     /*
      * Computed resources:

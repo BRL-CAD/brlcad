@@ -2,23 +2,23 @@
  * Copyright (c) 1988-1997 Sam Leffler
  * Copyright (c) 1991-1997 Silicon Graphics, Inc.
  *
- * Permission to use, copy, modify, distribute, and sell this software and 
+ * Permission to use, copy, modify, distribute, and sell this software and
  * its documentation for any purpose is hereby granted without fee, provided
  * that (i) the above copyright notices and this permission notice appear in
  * all copies of the software and related documentation, and (ii) the names of
  * Sam Leffler and Silicon Graphics may not be used in any advertising or
  * publicity relating to the software without the specific, prior written
  * permission of Sam Leffler and Silicon Graphics.
- * 
- * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
- * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
- * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
- * 
+ *
+ * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY
+ * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+ *
  * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
  * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
  * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
- * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
- * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+ * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF
+ * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
 
@@ -44,7 +44,20 @@ void
 TIFFCIELabToXYZ(TIFFCIELabToRGB *cielab, uint32_t l, int32_t a, int32_t b,
                 float *X, float *Y, float *Z)
 {
-	float L = (float)l * 100.0F / 255.0F;
+	TIFFCIELab16ToXYZ(cielab, l * 257, a * 256, b * 256, X, Y, Z);
+}
+
+/*
+ * For CIELab encoded in 16 bits, L is an unsigned integer range [0,65535].
+ * The a* and b* components are signed integers range [-32768,32767]. The 16
+ * bit chrominance values are encoded as 256 times the 1976 CIE a* and b*
+ * values
+ */
+void
+TIFFCIELab16ToXYZ(TIFFCIELabToRGB *cielab, uint32_t l, int32_t a, int32_t b,
+                  float *X, float *Y, float *Z)
+{
+	float L = (float)l * 100.0F / 65535.0F;
 	float cby, tmp;
 
 	if( L < 8.856F ) {
@@ -55,16 +68,16 @@ TIFFCIELabToXYZ(TIFFCIELabToRGB *cielab, uint32_t l, int32_t a, int32_t b,
 		*Y = cielab->Y0 * cby * cby * cby;
 	}
 
-	tmp = (float)a / 500.0F + cby;
+	tmp = (float)a / 256.0F / 500.0F + cby;
 	if( tmp < 0.2069F )
 		*X = cielab->X0 * (tmp - 0.13793F) / 7.787F;
-	else    
+	else
 		*X = cielab->X0 * tmp * tmp * tmp;
 
-	tmp = cby - (float)b / 200.0F;
+	tmp = cby - (float)b / 256.0F / 200.0F;
 	if( tmp < 0.2069F )
 		*Z = cielab->Z0 * (tmp - 0.13793F) / 7.787F;
-	else    
+	else
 		*Z = cielab->Z0 * tmp * tmp * tmp;
 }
 
@@ -115,7 +128,7 @@ TIFFXYZToRGB(TIFFCIELabToRGB *cielab, float X, float Y, float Z,
 }
 #undef RINT
 
-/* 
+/*
  * Allocate conversion state structures and make look_up tables for
  * the Yr,Yb,Yg <=> r,g,b conversions.
  */
@@ -165,7 +178,7 @@ TIFFCIELabToRGBInit(TIFFCIELabToRGB* cielab,
 	return 0;
 }
 
-/* 
+/*
  * Convert color value from the YCbCr space to RGB.
  * The colorspace conversion algorithm comes from the IJG v5a code;
  * see below for more information on how it works.
@@ -174,7 +187,8 @@ TIFFCIELabToRGBInit(TIFFCIELabToRGB* cielab,
 #define	FIX(x)			((int32_t)((x) * (1L<<SHIFT) + 0.5))
 #define	ONE_HALF		((int32_t)(1<<(SHIFT-1)))
 #define	Code2V(c, RB, RW, CR)	((((c)-(int32_t)(RB))*(float)(CR))/(float)(((RW)-(RB)!=0) ? ((RW)-(RB)) : 1))
-#define	CLAMP(f,min,max)	((f)<(min)?(min):(f)>(max)?(max):(f))
+/* !((f)>=(min)) written that way to deal with NaN */
+#define	CLAMP(f,min,max)	((!((f)>=(min)))?(min):(f)>(max)?(max):(f))
 #define HICLAMP(f,max)		((f)>(max)?(max):(f))
 
 void
@@ -235,7 +249,7 @@ TIFFYCbCrToRGBInit(TIFFYCbCrToRGB* ycbcr, float *luma, float *refBlackWhite)
 {
     TIFFRGBValue* clamptab;
     int i;
-    
+
 #define LumaRed	    luma[0]
 #define LumaGreen   luma[1]
 #define LumaBlue    luma[2]
@@ -262,7 +276,7 @@ TIFFYCbCrToRGBInit(TIFFYCbCrToRGB* ycbcr, float *luma, float *refBlackWhite)
 #undef LumaBlue
 #undef LumaGreen
 #undef LumaRed
-      
+
       /*
        * i is the actual input pixel value in the range 0..255
        * Cb and Cr values are in the range -128..127 (actually

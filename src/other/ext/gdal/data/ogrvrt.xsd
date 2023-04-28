@@ -5,7 +5,7 @@
  *
  * Project:  GDAL/OGR
  * Purpose:  XML Schema for OGR VRT files.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  **********************************************************************
  * Copyright (c) 2012, Even Rouault
@@ -141,10 +141,10 @@
 
     <xs:complexType name="FIDType">
         <xs:simpleContent>
-            <xs:extension base="nonEmptyStringType">
+            <xs:extension base="xs:string">
                 <xs:attribute name="name" type="xs:string">
                     <xs:annotation>
-                        <xs:documentation>A user-facing name can be specified here so that a FID column name is reported even if it is not reported as a regular field.</xs:documentation>
+                        <xs:documentation>User-facing name of the FID column.</xs:documentation>
                     </xs:annotation>
                 </xs:attribute>
             </xs:extension>
@@ -203,6 +203,7 @@
             <xs:enumeration value="wkbMultiSurface"/> <!-- new in GDAL 2.0 -->
             <xs:enumeration value="wkbCurve"/> <!-- new in GDAL 2.1 -->
             <xs:enumeration value="wkbSurface"/> <!-- new in GDAL 2.1 -->
+            <xs:enumeration value="wkbUnknown25D"/>
             <xs:enumeration value="wkbPoint25D"/>
             <xs:enumeration value="wkbLineString25D"/>
             <xs:enumeration value="wkbPolygon25D"/>
@@ -274,6 +275,7 @@
         <xs:attribute name="precision" type="xs:nonNegativeInteger"/>
         <xs:attribute name="nullable" type="OGRBooleanType" default="true"/>  <!-- new in GDAL 2.0 -->
         <xs:attribute name="default" type="xs:string"/>  <!-- new in GDAL 2.0 -->
+        <xs:attribute name="unique" type="OGRBooleanType" default="false"/>  <!-- new in GDAL 3.2 -->
     </xs:complexType>
 
     <xs:complexType name="FieldType">
@@ -494,7 +496,7 @@
                 </xs:element>
                 <xs:element name="FieldStrategy" type="FieldStrategyType">
                     <xs:annotation>
-                        <xs:documentation>Defaults to Union if no Field or GeometryField element is speicified.</xs:documentation>
+                        <xs:documentation>Defaults to Union if no Field or GeometryField element is specified.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="Field" type="FieldTypeWithoutSrc">

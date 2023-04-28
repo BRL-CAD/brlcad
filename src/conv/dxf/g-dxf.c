@@ -1,7 +1,7 @@
 /*                         G - D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2022 United States Government as represented by
+ * Copyright (c) 2003-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -142,7 +142,6 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
     struct vertex *v;
     struct bu_ptbl verts;
     char *region_name;
-    int region_polys=0;
     int tri_count=0;
     int color_num;
     int do_triangulate=0;
@@ -335,7 +334,6 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, struct db_tree
 		}
 
 		tot_polygons++;
-		region_polys++;
 	    }
 	}
     }

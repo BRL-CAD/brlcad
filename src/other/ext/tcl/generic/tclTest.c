@@ -326,9 +326,10 @@ static Tcl_NRPostProc	NREUnwind_callback;
 static Tcl_ObjCmdProc	TestNREUnwind;
 static Tcl_ObjCmdProc	TestNRELevels;
 static Tcl_ObjCmdProc	TestInterpResolverCmd;
-#if defined(HAVE_CPUID) || defined(_WIN32)
+#if defined(HAVE_CPUID) && !defined(MAC_OSX_TCL)
 static Tcl_ObjCmdProc	TestcpuidCmd;
 #endif
+static Tcl_ObjCmdProc	TestApplyLambdaObjCmd;
 
 static const Tcl_Filesystem testReportingFilesystem = {
     "reporting",
@@ -600,7 +601,7 @@ Tcltest_Init(
 	    NULL, NULL);
     Tcl_CreateCommand(interp, "testexitmainloop", TestexitmainloopCmd,
 	    NULL, NULL);
-#if defined(HAVE_CPUID) || defined(_WIN32)
+#if defined(HAVE_CPUID) && !defined(MAC_OSX_TCL)
     Tcl_CreateObjCommand(interp, "testcpuid", TestcpuidCmd,
 	    NULL, NULL);
 #endif
@@ -614,6 +615,8 @@ Tcltest_Init(
     Tcl_CreateObjCommand(interp, "testnrelevels", TestNRELevels,
 	    NULL, NULL);
     Tcl_CreateObjCommand(interp, "testinterpresolver", TestInterpResolverCmd,
+	    NULL, NULL);
+    Tcl_CreateObjCommand(interp, "testapplylambda", TestApplyLambdaObjCmd,
 	    NULL, NULL);
 
     if (TclObjTest_Init(interp) != TCL_OK) {
@@ -1622,7 +1625,7 @@ TestdoubledigitsObjCmd(ClientData unused,
 		       Tcl_Obj* const objv[])
 				/* Parameter vector */
 {
-    static const char* options[] = {
+    static const char *options[] = {
 	"shortest",
 	"Steele",
 	"e",
@@ -1643,8 +1646,8 @@ TestdoubledigitsObjCmd(ClientData unused,
     int type;
     int decpt;
     int signum;
-    char* str;
-    char* endPtr;
+    char * str;
+    char *endPtr;
     Tcl_Obj* strObj;
     Tcl_Obj* retval;
 
@@ -1759,7 +1762,7 @@ TestdstringCmd(
 	    strcpy(s, "This is a malloc-ed string");
 	    Tcl_SetResult(interp, s, TCL_DYNAMIC);
 	} else if (strcmp(argv[2], "special") == 0) {
-	    char *s = (char*)ckalloc(100) + 16;
+	    char *s = (char *)ckalloc(100) + 16;
 	    strcpy(s, "This is a specially-allocated string");
 	    Tcl_SetResult(interp, s, SpecialFree);
 	} else {
@@ -3596,8 +3599,9 @@ PrintParse(
 		Tcl_NewIntObj(tokenPtr->numComponents));
     }
     Tcl_ListObjAppendElement(NULL, objPtr,
+	    parsePtr->commandStart ?
 	    Tcl_NewStringObj(parsePtr->commandStart + parsePtr->commandSize,
-	    -1));
+	    -1) : Tcl_NewObj());
 }
 
 /*
@@ -3917,7 +3921,7 @@ TestregexpObjCmd(
 	    if (ii == -1) {
 		TclRegExpRangeUniChar(regExpr, ii, &start, &end);
 		newPtr = Tcl_GetRange(objPtr, start, end);
-	    } else if (ii > info.nsubs) {
+	    } else if (ii > info.nsubs || info.matches[ii].end <= 0) {
 		newPtr = Tcl_NewObj();
 	    } else {
 		newPtr = Tcl_GetRange(objPtr, info.matches[ii].start,
@@ -4168,7 +4172,7 @@ TestsetplatformCmd(
  *	A standard Tcl result.
  *
  * Side effects:
- *	When the packge given by argv[1] is loaded into an interpeter,
+ *	When the packge given by argv[1] is loaded into an interpreter,
  *	variable "x" in that interpreter is set to "loaded".
  *
  *----------------------------------------------------------------------
@@ -6176,19 +6180,22 @@ TestGetIndexFromObjStructObjCmd(
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
     const char *const ary[] = {
-	"a", "b", "c", "d", "e", "f", NULL, NULL
+	"a", "b", "c", "d", "ee", "ff", NULL, NULL
     };
-    int idx,target;
+    int idx,target, flags = 0;
 
-    if (objc != 3) {
-	Tcl_WrongNumArgs(interp, 1, objv, "argument targetvalue");
-	return TCL_ERROR;
-    }
-    if (Tcl_GetIndexFromObjStruct(interp, objv[1], ary, 2*sizeof(char *),
-	    "dummy", 0, &idx) != TCL_OK) {
+    if (objc != 3 && objc != 4) {
+	Tcl_WrongNumArgs(interp, 1, objv, "argument targetvalue ?flags?");
 	return TCL_ERROR;
     }
     if (Tcl_GetIntFromObj(interp, objv[2], &target) != TCL_OK) {
+	return TCL_ERROR;
+    }
+    if ((objc > 3) && (Tcl_GetIntFromObj(interp, objv[3], &flags) != TCL_OK)) {
+	return TCL_ERROR;
+    }
+    if (Tcl_GetIndexFromObjStruct(interp, (Tcl_GetString(objv[1])[0] ? objv[1] : NULL), ary, 2*sizeof(char *),
+	    "dummy", flags, &idx) != TCL_OK) {
 	return TCL_ERROR;
     }
     if (idx != target) {
@@ -6200,7 +6207,7 @@ TestGetIndexFromObjStructObjCmd(
 	Tcl_AppendResult(interp, " when ", buffer, " expected", NULL);
 	return TCL_ERROR;
     }
-    Tcl_WrongNumArgs(interp, 3, objv, NULL);
+    Tcl_WrongNumArgs(interp, objc, objv, NULL);
     return TCL_OK;
 }
 
@@ -6951,7 +6958,7 @@ TestFindLastCmd(
     return TCL_OK;
 }
 
-#if defined(HAVE_CPUID) || defined(_WIN32)
+#if defined(HAVE_CPUID) && !defined(MAC_OSX_TCL)
 /*
  *----------------------------------------------------------------------
  *
@@ -7802,7 +7809,85 @@ TestInterpResolverCmd(
     }
     return TCL_OK;
 }
-
+
+/*
+ *------------------------------------------------------------------------
+ *
+ * TestApplyLambdaObjCmd --
+ *
+ *	Implements the Tcl command testapplylambda. This tests the apply
+ *	implementation handling of a lambda where the lambda has a list
+ *	internal representation where the second element's internal
+ *	representation is already a byte code object.
+ *
+ * Results:
+ *	TCL_OK    - Success. Caller should check result is 42
+ *	TCL_ERROR - Error.
+ *
+ * Side effects:
+ *	In the presence of the apply bug, may panic. Otherwise
+ *	Interpreter result holds result or error message.
+ *
+ *------------------------------------------------------------------------
+ */
+int TestApplyLambdaObjCmd (
+    ClientData notUsed,
+    Tcl_Interp *interp,    /* Current interpreter. */
+    int objc,              /* Number of arguments. */
+    Tcl_Obj *const objv[]) /* Argument objects. */
+{
+    Tcl_Obj *lambdaObjs[2];
+    Tcl_Obj *evalObjs[2];
+    Tcl_Obj *lambdaObj;
+    int result;
+
+    /* Create a lambda {{} {set a 42}} */
+    lambdaObjs[0] = Tcl_NewObj(); /* No parameters */
+    lambdaObjs[1] = Tcl_NewStringObj("set a 42", -1); /* Body */
+    lambdaObj = Tcl_NewListObj(2, lambdaObjs);
+    Tcl_IncrRefCount(lambdaObj);
+
+    /* Create the command "apply {{} {set a 42}" */
+    evalObjs[0] = Tcl_NewStringObj("apply", -1);
+    Tcl_IncrRefCount(evalObjs[0]);
+    /*
+     * NOTE: IMPORTANT TO EXHIBIT THE BUG. We duplicate the lambda because
+     * it will get shimmered to a Lambda internal representation but we
+     * want to hold on to our list representation.
+     */
+    evalObjs[1] = Tcl_DuplicateObj(lambdaObj);
+    Tcl_IncrRefCount(evalObjs[1]);
+
+    /* Evaluate it */
+    result = Tcl_EvalObjv(interp, 2, evalObjs, TCL_EVAL_GLOBAL);
+    if (result != TCL_OK) {
+	Tcl_DecrRefCount(evalObjs[0]);
+	Tcl_DecrRefCount(evalObjs[1]);
+	return result;
+    }
+    /*
+     * So far so good. At this point,
+     * - evalObjs[1] has an internal representation of Lambda
+     * - lambdaObj[1] ({set a 42}) has been shimmered to
+     * an internal representation of ByteCode.
+     */
+    Tcl_DecrRefCount(evalObjs[1]); /* Don't need this anymore */
+    /*
+     * The bug trigger. Repeating the command but:
+     *  - we are calling apply with a lambda that is a list (as BEFORE),
+     *    BUT
+     *  - The body of the lambda (lambdaObjs[1]) ALREADY has internal
+     *    representation of ByteCode and thus will not be compiled again
+     */
+    evalObjs[1] = lambdaObj; /* lambdaObj already has a ref count so
+     				no need for IncrRef */
+    result = Tcl_EvalObjv(interp, 2, evalObjs, TCL_EVAL_GLOBAL);
+    Tcl_DecrRefCount(evalObjs[0]);
+    Tcl_DecrRefCount(lambdaObj);
+
+    return result;
+}
+
 /*
  * Local Variables:
  * mode: c
@@ -7812,3 +7897,4 @@ TestInterpResolverCmd(
  * indent-tabs-mode: nil
  * End:
  */
+

@@ -1,7 +1,7 @@
 /*                     G _ T R A N S F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2022 United States Government as represented by
+ * Copyright (c) 2006-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ typedef struct _server_data_ {
 
 
 server_data*
-init_srv_data()
+init_srv_data(void)
 {
     server_data *stash = (server_data *)bu_malloc(sizeof *stash, "server data memory");
     stash->DBIP = NULL;

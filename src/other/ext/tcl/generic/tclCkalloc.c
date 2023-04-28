@@ -41,7 +41,7 @@ typedef struct MemTag {
 				 * last field in the structure. */
 } MemTag;
 
-#define TAG_SIZE(bytesInString) ((unsigned) ((TclOffset(MemTag, string) + 1) + bytesInString))
+#define TAG_SIZE(bytesInString) ((unsigned) ((TclOffset(MemTag, string) + 1U) + (bytesInString)))
 
 static MemTag *curTagPtr = NULL;/* Tag to use in all future mem_headers (set
 				 * by "memory tag" command). */

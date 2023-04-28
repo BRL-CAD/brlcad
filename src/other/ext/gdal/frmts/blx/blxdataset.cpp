@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2006, Henrik Johansson <henrik@johome.net>
- * Copyright (c) 2008-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,65 +26,63 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ******************************************************************************
-*
-*/
+ *
+ */
 
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
 CPL_C_START
-#include <blx.h>
+#include "blx.h"
 CPL_C_END
 
-CPL_CVSID("$Id$");
-
-class BLXDataset : public GDALPamDataset
+class BLXDataset final : public GDALPamDataset
 {
     friend class BLXRasterBand;
 
-    CPLErr      GetGeoTransform( double * padfTransform ) override;
-    const char *GetProjectionRef() override;
+    CPLErr GetGeoTransform(double *padfTransform) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
 
-    blxcontext_t *blxcontext;
+    OGRSpatialReference m_oSRS{};
+    blxcontext_t *blxcontext = nullptr;
 
-    int nOverviewCount;
-    bool bIsOverview;
-    BLXDataset *papoOverviewDS[BLX_OVERVIEWLEVELS];
+    bool bIsOverview = false;
+    std::vector<std::unique_ptr<BLXDataset>> apoOverviewDS{};
 
   public:
     BLXDataset();
     ~BLXDataset();
 
-    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
 };
 
-class BLXRasterBand : public GDALPamRasterBand
+class BLXRasterBand final : public GDALPamRasterBand
 {
     int overviewLevel;
 
   public:
-    BLXRasterBand( BLXDataset *, int, int overviewLevel=0 );
+    BLXRasterBand(BLXDataset *, int, int overviewLevel = 0);
 
-    virtual double  GetNoDataValue( int *pbSuccess = NULL ) override;
-    virtual GDALColorInterp GetColorInterpretation(void) override;
-    virtual int GetOverviewCount() override;
-    virtual GDALRasterBand *GetOverview( int ) override;
+    double GetNoDataValue(int *pbSuccess = nullptr) override;
+    GDALColorInterp GetColorInterpretation(void) override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int) override;
 
-    virtual CPLErr IReadBlock( int, int, void * ) override;
+    CPLErr IReadBlock(int, int, void *) override;
 };
 
-GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *BLXDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
     // --------------------------------------------------------------------
     //      First that the header looks like a BLX header
     // --------------------------------------------------------------------
-    if( poOpenInfo->fpL == NULL || poOpenInfo->nHeaderBytes < 102 )
-        return NULL;
+    if (poOpenInfo->fpL == nullptr || poOpenInfo->nHeaderBytes < 102)
+        return nullptr;
 
-    if(!blx_checkheader((const char *)poOpenInfo->pabyHeader))
-        return NULL;
+    if (!blx_checkheader((const char *)poOpenInfo->pabyHeader))
+        return nullptr;
 
     // --------------------------------------------------------------------
     //      Create a corresponding GDALDataset.
@@ -95,22 +93,22 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
     //      Open BLX file
     // --------------------------------------------------------------------
     poDS->blxcontext = blx_create_context();
-    if(poDS->blxcontext==NULL)
+    if (poDS->blxcontext == nullptr)
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
     if (blxopen(poDS->blxcontext, poOpenInfo->pszFilename, "rb") != 0)
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
-    if ((poDS->blxcontext->cell_xsize % (1 << (1+BLX_OVERVIEWLEVELS))) != 0 ||
-        (poDS->blxcontext->cell_ysize % (1 << (1+BLX_OVERVIEWLEVELS))) != 0)
+    if ((poDS->blxcontext->cell_xsize % (1 << (1 + BLX_OVERVIEWLEVELS))) != 0 ||
+        (poDS->blxcontext->cell_ysize % (1 << (1 + BLX_OVERVIEWLEVELS))) != 0)
     {
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
     // Update dataset header from BLX context
@@ -121,65 +119,61 @@ GDALDataset *BLXDataset::Open( GDALOpenInfo * poOpenInfo )
     //      Create band information objects.
     // --------------------------------------------------------------------
     poDS->nBands = 1;
-    poDS->SetBand( 1, new BLXRasterBand( poDS, 1 ));
+    poDS->SetBand(1, new BLXRasterBand(poDS, 1));
 
     // Create overview bands
-    poDS->nOverviewCount = BLX_OVERVIEWLEVELS;
-    for(int i=0; i < poDS->nOverviewCount; i++) {
-        poDS->papoOverviewDS[i] = new BLXDataset();
-        poDS->papoOverviewDS[i]->blxcontext = poDS->blxcontext;
-        poDS->papoOverviewDS[i]->bIsOverview = true;
-        poDS->papoOverviewDS[i]->nRasterXSize = poDS->nRasterXSize >> (i+1);
-        poDS->papoOverviewDS[i]->nRasterYSize = poDS->nRasterYSize >> (i+1);
+    for (int i = 0; i < BLX_OVERVIEWLEVELS; i++)
+    {
+        poDS->apoOverviewDS.emplace_back(cpl::make_unique<BLXDataset>());
+        poDS->apoOverviewDS[i]->blxcontext = poDS->blxcontext;
+        poDS->apoOverviewDS[i]->bIsOverview = true;
+        poDS->apoOverviewDS[i]->nRasterXSize = poDS->nRasterXSize >> (i + 1);
+        poDS->apoOverviewDS[i]->nRasterYSize = poDS->nRasterYSize >> (i + 1);
         poDS->nBands = 1;
-        poDS->papoOverviewDS[i]->SetBand(1, new BLXRasterBand( poDS->papoOverviewDS[i], 1, i+1));
+        poDS->apoOverviewDS[i]->SetBand(
+            1, new BLXRasterBand(poDS->apoOverviewDS[i].get(), 1, i + 1));
     }
 
-/* -------------------------------------------------------------------- */
-/*      Confirm the requested access is supported.                      */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_Update )
+    /* -------------------------------------------------------------------- */
+    /*      Confirm the requested access is supported.                      */
+    /* -------------------------------------------------------------------- */
+    if (poOpenInfo->eAccess == GA_Update)
     {
         delete poDS;
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "The BLX driver does not support update access to existing"
-                  " datasets.\n" );
-        return NULL;
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The BLX driver does not support update access to existing"
+                 " datasets.\n");
+        return nullptr;
     }
 
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Initialize any PAM information.                                 */
+    /* -------------------------------------------------------------------- */
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
     return poDS;
 }
 
-BLXDataset::BLXDataset() :
-    blxcontext(NULL),
-    nOverviewCount(0),
-    bIsOverview(false)
+BLXDataset::BLXDataset()
 {
-    for( int i = 0; i < BLX_OVERVIEWLEVELS; i++ )
-        papoOverviewDS[i] = NULL;
+    m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+    m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
 }
 
 BLXDataset::~BLXDataset()
 {
-    if( !bIsOverview )
+    if (!bIsOverview)
     {
-        if(blxcontext) {
+        if (blxcontext)
+        {
             blxclose(blxcontext);
             blx_free_context(blxcontext);
         }
-        for(int i=0; i < nOverviewCount; i++)
-            if(papoOverviewDS[i])
-                delete papoOverviewDS[i];
     }
 }
 
-CPLErr BLXDataset::GetGeoTransform( double * padfTransform )
+CPLErr BLXDataset::GetGeoTransform(double *padfTransform)
 
 {
     padfTransform[0] = blxcontext->lon;
@@ -192,18 +186,14 @@ CPLErr BLXDataset::GetGeoTransform( double * padfTransform )
     return CE_None;
 }
 
-const char *BLXDataset::GetProjectionRef()
+const OGRSpatialReference *BLXDataset::GetSpatialRef() const
 {
-    return
-        "GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\","
-        "SPHEROID[\"WGS 84\",6378137,298.257223563]],"
-        "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433],"
-        "AUTHORITY[\"EPSG\",\"4326\"]]";
+    return &m_oSRS;
 }
 
-BLXRasterBand::BLXRasterBand( BLXDataset *poDSIn, int nBandIn,
-                              int overviewLevelIn ) :
-    overviewLevel(overviewLevelIn)
+BLXRasterBand::BLXRasterBand(BLXDataset *poDSIn, int nBandIn,
+                             int overviewLevelIn)
+    : overviewLevel(overviewLevelIn)
 {
     BLXDataset *poGDS = poDSIn;
 
@@ -218,125 +208,132 @@ BLXRasterBand::BLXRasterBand( BLXDataset *poDSIn, int nBandIn,
 
 int BLXRasterBand::GetOverviewCount()
 {
-    BLXDataset *poGDS = reinterpret_cast<BLXDataset *>(poDS);
-
-    return poGDS->nOverviewCount;
+    BLXDataset *poGDS = cpl::down_cast<BLXDataset *>(poDS);
+    return static_cast<int>(poGDS->apoOverviewDS.size());
 }
 
-GDALRasterBand *BLXRasterBand::GetOverview( int i )
+GDALRasterBand *BLXRasterBand::GetOverview(int i)
+{
+    BLXDataset *poGDS = cpl::down_cast<BLXDataset *>(poDS);
+
+    if (i < 0 || static_cast<size_t>(i) >= poGDS->apoOverviewDS.size())
+        return nullptr;
+
+    return poGDS->apoOverviewDS[i]->GetRasterBand(nBand);
+}
+
+CPLErr BLXRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
+
 {
     BLXDataset *poGDS = reinterpret_cast<BLXDataset *>(poDS);
 
-    if( i < 0 || i >= poGDS->nOverviewCount )
-        return NULL;
-
-    return poGDS->papoOverviewDS[i]->GetRasterBand(nBand);
-}
-
-CPLErr BLXRasterBand::IReadBlock( int nBlockXOff, int nBlockYOff,
-                                  void *pImage )
-
-{
-    BLXDataset *poGDS = reinterpret_cast<BLXDataset *>(poDS);
-
-    if(blx_readcell(poGDS->blxcontext, nBlockYOff, nBlockXOff, (short *)pImage, nBlockXSize*nBlockYSize*2, overviewLevel) == NULL) {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to read BLX cell");
+    if (blx_readcell(poGDS->blxcontext, nBlockYOff, nBlockXOff, (short *)pImage,
+                     nBlockXSize * nBlockYSize * 2, overviewLevel) == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to read BLX cell");
         return CE_Failure;
     }
 
     return CE_None;
 }
 
-double BLXRasterBand::GetNoDataValue( int *pbSuccess )
+double BLXRasterBand::GetNoDataValue(int *pbSuccess)
 {
     if (pbSuccess)
         *pbSuccess = TRUE;
     return BLX_UNDEF;
 }
 
-GDALColorInterp BLXRasterBand::GetColorInterpretation(void) {
+GDALColorInterp BLXRasterBand::GetColorInterpretation(void)
+{
     return GCI_GrayIndex;
 }
 
 /* TODO: check if georeference is the same as for BLX files, WGS84
-*/
-static GDALDataset *
-BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-               int bStrict, char ** papszOptions,
-               GDALProgressFunc pfnProgress, void * pProgressData )
+ */
+static GDALDataset *BLXCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
+                                  int bStrict, char **papszOptions,
+                                  GDALProgressFunc pfnProgress,
+                                  void *pProgressData)
 
 {
-// --------------------------------------------------------------------
-//      Some rudimentary checks
-// --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    //      Some rudimentary checks
+    // --------------------------------------------------------------------
     const int nBands = poSrcDS->GetRasterCount();
-    if( nBands != 1 )
+    if (nBands != 1)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "BLX driver doesn't support %d bands.  Must be 1 (grey) ",
-                  nBands );
-        return NULL;
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "BLX driver doesn't support %d bands.  Must be 1 (grey) ",
+                 nBands);
+        return nullptr;
     }
 
-    if( poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Int16 && bStrict )
+    if (poSrcDS->GetRasterBand(1)->GetRasterDataType() != GDT_Int16 && bStrict)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "BLX driver doesn't support data type %s. "
-                  "Only 16 bit byte bands supported.\n",
-                  GDALGetDataTypeName(
-                      poSrcDS->GetRasterBand(1)->GetRasterDataType()) );
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "BLX driver doesn't support data type %s. "
+                 "Only 16 bit byte bands supported.\n",
+                 GDALGetDataTypeName(
+                     poSrcDS->GetRasterBand(1)->GetRasterDataType()));
 
-        return NULL;
+        return nullptr;
     }
 
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
-    if( (nXSize % 128 != 0) || (nYSize % 128 != 0) ) {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "BLX driver doesn't support dimensions that are not a multiple of 128.\n");
+    if ((nXSize % 128 != 0) || (nYSize % 128 != 0))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "BLX driver doesn't support dimensions that are not a "
+                 "multiple of 128.\n");
 
-        return NULL;
+        return nullptr;
     }
 
-// --------------------------------------------------------------------
-//      What options has the user selected?
-// --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    //      What options has the user selected?
+    // --------------------------------------------------------------------
     int zscale = 1;
-    if( CSLFetchNameValue(papszOptions,"ZSCALE") != NULL ) {
-        zscale = atoi(CSLFetchNameValue(papszOptions,"ZSCALE"));
-        if( zscale < 1 ) {
-            CPLError( CE_Failure, CPLE_IllegalArg,
-                      "ZSCALE=%s is not a legal value in the range >= 1.",
-                      CSLFetchNameValue(papszOptions,"ZSCALE") );
-            return NULL;
+    if (CSLFetchNameValue(papszOptions, "ZSCALE") != nullptr)
+    {
+        zscale = atoi(CSLFetchNameValue(papszOptions, "ZSCALE"));
+        if (zscale < 1)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "ZSCALE=%s is not a legal value in the range >= 1.",
+                     CSLFetchNameValue(papszOptions, "ZSCALE"));
+            return nullptr;
         }
     }
 
     int fillundef = 1;
-    if( CSLFetchNameValue(papszOptions,"FILLUNDEF") != NULL
-                && EQUAL(CSLFetchNameValue(papszOptions,"FILLUNDEF"),"NO") )
+    if (CSLFetchNameValue(papszOptions, "FILLUNDEF") != nullptr &&
+        EQUAL(CSLFetchNameValue(papszOptions, "FILLUNDEF"), "NO"))
         fillundef = 0;
 
     int fillundefval = 0;
-    if( CSLFetchNameValue(papszOptions,"FILLUNDEFVAL") != NULL ) {
-        fillundefval = atoi(CSLFetchNameValue(papszOptions,"FILLUNDEFVAL"));
-        if( (fillundefval < -32768) || (fillundefval > 32767) ) {
-            CPLError( CE_Failure, CPLE_IllegalArg,
-                      "FILLUNDEFVAL=%s is not a legal value in the range -32768, 32767.",
-                      CSLFetchNameValue(papszOptions,"FILLUNDEFVAL") );
-            return NULL;
+    if (CSLFetchNameValue(papszOptions, "FILLUNDEFVAL") != nullptr)
+    {
+        fillundefval = atoi(CSLFetchNameValue(papszOptions, "FILLUNDEFVAL"));
+        if ((fillundefval < -32768) || (fillundefval > 32767))
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "FILLUNDEFVAL=%s is not a legal value in the range "
+                     "-32768, 32767.",
+                     CSLFetchNameValue(papszOptions, "FILLUNDEFVAL"));
+            return nullptr;
         }
     }
 
     int endian = LITTLEENDIAN;
-    if( CSLFetchNameValue(papszOptions,"BIGENDIAN") != NULL
-        && !EQUAL(CSLFetchNameValue(papszOptions,"BIGENDIAN"),"NO") )
+    if (CSLFetchNameValue(papszOptions, "BIGENDIAN") != nullptr &&
+        !EQUAL(CSLFetchNameValue(papszOptions, "BIGENDIAN"), "NO"))
         endian = BIGENDIAN;
 
-// --------------------------------------------------------------------
-//      Create the dataset.
-// --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    //      Create the dataset.
+    // --------------------------------------------------------------------
 
     // Create a BLX context
     blxcontext_t *ctx = blx_create_context();
@@ -349,40 +346,41 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     ctx->fillundefval = fillundefval;
     ctx->endian = endian;
 
-    if(blxopen(ctx, pszFilename, "wb")) {
-        CPLError( CE_Failure, CPLE_OpenFailed,
-                  "Unable to create blx file %s.\n",
-                  pszFilename );
+    if (blxopen(ctx, pszFilename, "wb"))
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed, "Unable to create blx file %s.\n",
+                 pszFilename);
         blx_free_context(ctx);
-        return NULL;
+        return nullptr;
     }
 
-// --------------------------------------------------------------------
-//      Loop over image, copying image data.
-// --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    //      Loop over image, copying image data.
+    // --------------------------------------------------------------------
 
-    GInt16 *pabyTile
-        = (GInt16 *) VSI_MALLOC_VERBOSE( sizeof(GInt16)*ctx->cell_xsize*ctx->cell_ysize );
-    if (pabyTile == NULL)
+    GInt16 *pabyTile = (GInt16 *)VSI_MALLOC_VERBOSE(
+        sizeof(GInt16) * ctx->cell_xsize * ctx->cell_ysize);
+    if (pabyTile == nullptr)
     {
         blxclose(ctx);
         blx_free_context(ctx);
-        return NULL;
+        return nullptr;
     }
 
-    CPLErr eErr=CE_None;
-    if( !pfnProgress( 0.0, NULL, pProgressData ) )
+    CPLErr eErr = CE_None;
+    if (!pfnProgress(0.0, nullptr, pProgressData))
         eErr = CE_Failure;
 
-    for(int i=0; (i < ctx->cell_rows) && (eErr == CE_None); i++)
-        for(int j=0; j < ctx->cell_cols; j++) {
-            GDALRasterBand * poBand = poSrcDS->GetRasterBand( 1 );
-            eErr = poBand->RasterIO( GF_Read, j*ctx->cell_xsize, i*ctx->cell_ysize,
-                                     ctx->cell_xsize, ctx->cell_ysize,
-                                     pabyTile, ctx->cell_xsize, ctx->cell_ysize, GDT_Int16,
-                                     0, 0, NULL );
-            if(eErr >= CE_Failure)
-                 break;
+    for (int i = 0; (i < ctx->cell_rows) && (eErr == CE_None); i++)
+        for (int j = 0; j < ctx->cell_cols; j++)
+        {
+            GDALRasterBand *poBand = poSrcDS->GetRasterBand(1);
+            eErr = poBand->RasterIO(GF_Read, j * ctx->cell_xsize,
+                                    i * ctx->cell_ysize, ctx->cell_xsize,
+                                    ctx->cell_ysize, pabyTile, ctx->cell_xsize,
+                                    ctx->cell_ysize, GDT_Int16, 0, 0, nullptr);
+            if (eErr >= CE_Failure)
+                break;
             blxdata *celldata = pabyTile;
             if (blx_writecell(ctx, celldata, i, j) != 0)
             {
@@ -390,19 +388,21 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
                 break;
             }
 
-            if ( ! pfnProgress( 1.0 * (i * ctx->cell_cols + j) / (ctx->cell_rows * ctx->cell_cols), NULL, pProgressData ))
+            if (!pfnProgress(1.0 * (i * ctx->cell_cols + j) /
+                                 (ctx->cell_rows * ctx->cell_cols),
+                             nullptr, pProgressData))
             {
                 eErr = CE_Failure;
                 break;
             }
-    }
+        }
 
-    pfnProgress( 1.0, NULL, pProgressData );
+    pfnProgress(1.0, nullptr, pProgressData);
 
-    CPLFree( pabyTile );
+    CPLFree(pabyTile);
 
     double adfGeoTransform[6];
-    if( poSrcDS->GetGeoTransform( adfGeoTransform ) == CE_None )
+    if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
     {
         ctx->lon = adfGeoTransform[0];
         ctx->lat = adfGeoTransform[3];
@@ -414,31 +414,30 @@ BLXCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
     blx_free_context(ctx);
 
     if (eErr == CE_None)
-        return reinterpret_cast<GDALDataset *>( GDALOpen( pszFilename, GA_ReadOnly ) );
+        return reinterpret_cast<GDALDataset *>(
+            GDALOpen(pszFilename, GA_ReadOnly));
 
-    return NULL;
+    return nullptr;
 }
 
 void GDALRegister_BLX()
 
 {
-    if( GDALGetDriverByName( "BLX" ) != NULL )
+    if (GDALGetDriverByName("BLX") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "BLX" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Magellan topo (.blx)" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-                               "frmt_various.html#BLX" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "blx" );
+    poDriver->SetDescription("BLX");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Magellan topo (.blx)");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/blx.html");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "blx");
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = BLXDataset::Open;
     poDriver->pfnCreateCopy = BLXCreateCopy;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

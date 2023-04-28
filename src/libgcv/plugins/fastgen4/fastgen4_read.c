@@ -1,7 +1,7 @@
 /*                 F A S T G E N 4 _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2022 United States Government as represented by
+ * Copyright (c) 1994-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2980,7 +2980,7 @@ static const struct gcv_filter * const filters[] = {&gcv_conv_fastgen4_read, &gc
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
-gcv_plugin_info(){ return &gcv_plugin_info_s; }
+gcv_plugin_info(void){ return &gcv_plugin_info_s; }
 
 /*
  * Local Variables:

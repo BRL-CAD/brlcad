@@ -54,11 +54,11 @@ tags provide the following behavior:
 If a tag is the name of an internal window the binding applies
 to that window.
 .IP \(bu 3
+If the tag is the name of a class of widgets, such as \fBButton\fR,
+the binding applies to all widgets in that class.
+.IP \(bu 3
 If the tag is the name of a toplevel window the binding applies
 to the toplevel window and all its internal windows.
-.IP \(bu 3
-If the tag is the name of a class of widgets, such as \fBButton\fR,
-the binding applies to all widgets in that class;
 .IP \(bu 3
 If \fItag\fR has the value \fBall\fR,
 the binding applies to all windows in the application.

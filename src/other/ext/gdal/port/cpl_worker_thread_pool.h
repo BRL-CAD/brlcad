@@ -32,6 +32,10 @@
 
 #include "cpl_multiproc.h"
 #include "cpl_list.h"
+
+#include <condition_variable>
+#include <memory>
+#include <mutex>
 #include <vector>
 
 /**
@@ -42,26 +46,23 @@
  */
 
 #ifndef DOXYGEN_SKIP
+struct CPLWorkerThreadJob;
 class CPLWorkerThreadPool;
 
-typedef struct
+struct CPLWorkerThread
 {
-    CPLThreadFunc  pfnFunc;
-    void          *pData;
-} CPLWorkerThreadJob;
+    CPL_DISALLOW_COPY_ASSIGN(CPLWorkerThread)
+    CPLWorkerThread() = default;
 
-typedef struct
-{
-    CPLThreadFunc        pfnInitFunc;
-    void                *pInitData;
-    CPLWorkerThreadPool *poTP;
-    CPLJoinableThread   *hThread;
-    int                  bMarkedAsWaiting;
-    // CPLWorkerThreadJob  *psNextJob;
+    CPLThreadFunc pfnInitFunc = nullptr;
+    void *pInitData = nullptr;
+    CPLWorkerThreadPool *poTP = nullptr;
+    CPLJoinableThread *hThread = nullptr;
+    bool bMarkedAsWaiting = false;
 
-    CPLMutex            *hMutex;
-    CPLCond             *hCond;
-} CPLWorkerThread;
+    std::mutex m_mutex{};
+    std::condition_variable m_cv{};
+};
 
 typedef enum
 {
@@ -71,37 +72,81 @@ typedef enum
 } CPLWorkerThreadState;
 #endif  // ndef DOXYGEN_SKIP
 
+class CPLJobQueue;
+
 /** Pool of worker threads */
 class CPL_DLL CPLWorkerThreadPool
 {
-        std::vector<CPLWorkerThread> aWT;
-        CPLCond* hCond;
-        CPLMutex* hMutex;
-        volatile CPLWorkerThreadState eState;
-        CPLList* psJobQueue;
-        volatile int nPendingJobs;
+    CPL_DISALLOW_COPY_ASSIGN(CPLWorkerThreadPool)
 
-        CPLList* psWaitingWorkerThreadsList;
-        int nWaitingWorkerThreads;
+    std::vector<std::unique_ptr<CPLWorkerThread>> aWT{};
+    std::mutex m_mutex{};
+    std::condition_variable m_cv{};
+    volatile CPLWorkerThreadState eState = CPLWTS_OK;
+    CPLList *psJobQueue = nullptr;
+    int nPendingJobs = 0;
 
-        static void WorkerThreadFunction(void* user_data);
+    CPLList *psWaitingWorkerThreadsList = nullptr;
+    int nWaitingWorkerThreads = 0;
 
-        void DeclareJobFinished();
-        CPLWorkerThreadJob* GetNextJob(CPLWorkerThread* psWorkerThread);
+    int m_nMaxThreads = 0;
 
-    public:
-        CPLWorkerThreadPool();
-       ~CPLWorkerThreadPool();
+    static void WorkerThreadFunction(void *user_data);
 
-        bool Setup(int nThreads,
-                   CPLThreadFunc pfnInitFunc,
-                   void** pasInitData);
-        bool SubmitJob(CPLThreadFunc pfnFunc, void* pData);
-        bool SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void*>& apData);
-        void WaitCompletion(int nMaxRemainingJobs = 0);
+    void DeclareJobFinished();
+    CPLWorkerThreadJob *GetNextJob(CPLWorkerThread *psWorkerThread);
 
-        /** Return the number of threads setup */
-        int GetThreadCount() const { return (int)aWT.size(); }
+  public:
+    CPLWorkerThreadPool();
+    ~CPLWorkerThreadPool();
+
+    bool Setup(int nThreads, CPLThreadFunc pfnInitFunc, void **pasInitData);
+    bool Setup(int nThreads, CPLThreadFunc pfnInitFunc, void **pasInitData,
+               bool bWaitallStarted);
+
+    std::unique_ptr<CPLJobQueue> CreateJobQueue();
+
+    bool SubmitJob(CPLThreadFunc pfnFunc, void *pData);
+    bool SubmitJobs(CPLThreadFunc pfnFunc, const std::vector<void *> &apData);
+    void WaitCompletion(int nMaxRemainingJobs = 0);
+    void WaitEvent();
+
+    /** Return the number of threads setup */
+    int GetThreadCount() const
+    {
+        return m_nMaxThreads;
+    }
 };
 
-#endif // CPL_WORKER_THREAD_POOL_H_INCLUDED_
+/** Job queue */
+class CPL_DLL CPLJobQueue
+{
+    CPL_DISALLOW_COPY_ASSIGN(CPLJobQueue)
+    CPLWorkerThreadPool *m_poPool = nullptr;
+    std::mutex m_mutex{};
+    std::condition_variable m_cv{};
+    int m_nPendingJobs = 0;
+
+    static void JobQueueFunction(void *);
+    void DeclareJobFinished();
+
+    //! @cond Doxygen_Suppress
+  protected:
+    friend class CPLWorkerThreadPool;
+    explicit CPLJobQueue(CPLWorkerThreadPool *poPool);
+    //! @endcond
+
+  public:
+    ~CPLJobQueue();
+
+    /** Return the owning worker thread pool */
+    CPLWorkerThreadPool *GetPool()
+    {
+        return m_poPool;
+    }
+
+    bool SubmitJob(CPLThreadFunc pfnFunc, void *pData);
+    void WaitCompletion(int nMaxRemainingJobs = 0);
+};
+
+#endif  // CPL_WORKER_THREAD_POOL_H_INCLUDED_

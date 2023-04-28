@@ -561,7 +561,7 @@ Tk_MaintainGeometry(
 
 void
 Tk_UnmaintainGeometry(
-    Tk_Window window,		/* WIndow for geometry management. */
+    Tk_Window window,		/* Window for geometry management. */
     Tk_Window container)		/* Container for window; must be a descendant of
 				 * window's parent. */
 {

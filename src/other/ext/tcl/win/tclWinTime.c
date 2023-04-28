@@ -225,7 +225,7 @@ TclpGetClicks(void)
 	Tcl_Time now;		/* Current Tcl time */
 
 	tclGetTimeProcPtr(&now, tclTimeClientData);	/* Tcl_GetTime inlined */
-	return (unsigned long)(now.sec * 1000000) + now.usec;
+	return ((unsigned long)(now.sec)*1000000UL) + (unsigned long)(now.usec);
     }
 }
 

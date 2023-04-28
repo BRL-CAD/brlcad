@@ -1,7 +1,7 @@
 /*                 T R I M E S H _ S P L I T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2022 United States Government as represented by
+ * Copyright (c) 2018-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -107,7 +107,6 @@ bg_trimesh_split(int ***of, int **oc, int *f, int fcnt)
     for (int i = 0; i < fcnt; ++i) {
 	active_tris.insert(i);
     }
-    int set_cnt = 0;
     std::vector<int *> fsets;
     std::vector<int> fset_cnts;
     while (active_tris.size()) {
@@ -169,7 +168,6 @@ bg_trimesh_split(int ***of, int **oc, int *f, int fcnt)
 	}
 
 	if (new_mesh.size()) {
-	    set_cnt++;
 	    int *fset = (int *)bu_calloc(new_mesh.size(), 3*sizeof(int), "face set");
 	    std::unordered_set<size_t>::iterator s_it;
 	    int f_ind = 0;

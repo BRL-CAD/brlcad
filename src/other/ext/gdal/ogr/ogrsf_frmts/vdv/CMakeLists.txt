@@ -1,2 +1,2 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(ogr_frmt_vdv OBJECT ogrvdvdatasource.cpp)
+add_gdal_driver(TARGET ogr_VDV SOURCES ogr_vdv.h ogrvdvdatasource.cpp PLUGIN_CAPABLE NO_DEPS)
+gdal_standard_includes(ogr_VDV)

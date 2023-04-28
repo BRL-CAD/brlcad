@@ -1,45 +1,92 @@
 <RCC>
   <qresource>
-    <file>dark/hmovetoolbar.svg</file>
-    <file>dark/vmovetoolbar.svg</file>
-    <file>dark/hsepartoolbar.svg</file>
-    <file>dark/vsepartoolbars.svg</file>
-    <file>dark/stylesheet-branch-end.svg</file>
-    <file>dark/stylesheet-branch-end-closed.svg</file>
-    <file>dark/stylesheet-branch-end-open.svg</file>
-    <file>dark/stylesheet-vline.svg</file>
-    <file>dark/stylesheet-branch-more.svg</file>
     <file>dark/branch_closed.svg</file>
-    <file>dark/branch_closed-on.svg</file>
+    <file>dark/branch_closed_hover.svg</file>
+    <file>dark/branch_end.svg</file>
+    <file>dark/branch_end_arrow.svg</file>
+    <file>dark/branch_more.svg</file>
+    <file>dark/branch_more_arrow.svg</file>
     <file>dark/branch_open.svg</file>
-    <file>dark/branch_open-on.svg</file>
-    <file>dark/down_arrow.svg</file>
-    <file>dark/down_arrow_disabled.svg</file>
-    <file>dark/down_arrow-hover.svg</file>
-    <file>dark/left_arrow.svg</file>
-    <file>dark/left_arrow_disabled.svg</file>
-    <file>dark/right_arrow.svg</file>
-    <file>dark/right_arrow_disabled.svg</file>
-    <file>dark/up_arrow.svg</file>
-    <file>dark/up_arrow_disabled.svg</file>
-    <file>dark/up_arrow-hover.svg</file>
-    <file>dark/sizegrip.svg</file>
-    <file>dark/transparent.svg</file>
-    <file>dark/close.svg</file>
-    <file>dark/close-hover.svg</file>
-    <file>dark/close-pressed.svg</file>
-    <file>dark/undock.svg</file>
-    <file>dark/undock-hover.svg</file>
+    <file>dark/branch_open_hover.svg</file>
+    <file>dark/calendar_next.svg</file>
+    <file>dark/calendar_previous.svg</file>
     <file>dark/checkbox_checked.svg</file>
     <file>dark/checkbox_checked_disabled.svg</file>
     <file>dark/checkbox_indeterminate.svg</file>
     <file>dark/checkbox_indeterminate_disabled.svg</file>
     <file>dark/checkbox_unchecked.svg</file>
     <file>dark/checkbox_unchecked_disabled.svg</file>
+    <file>dark/clear_text.svg</file>
+    <file>dark/close.svg</file>
+    <file>dark/close_hover.svg</file>
+    <file>dark/close_pressed.svg</file>
+    <file>dark/computer.svg</file>
+    <file>dark/desktop.svg</file>
+    <file>dark/dialog_cancel.svg</file>
+    <file>dark/dialog_close.svg</file>
+    <file>dark/dialog_discard.svg</file>
+    <file>dark/dialog_help.svg</file>
+    <file>dark/dialog_no.svg</file>
+    <file>dark/dialog_ok.svg</file>
+    <file>dark/dialog_open.svg</file>
+    <file>dark/dialog_reset.svg</file>
+    <file>dark/dialog_save.svg</file>
+    <file>dark/disc_drive.svg</file>
+    <file>dark/down_arrow.svg</file>
+    <file>dark/down_arrow_disabled.svg</file>
+    <file>dark/down_arrow_hover.svg</file>
+    <file>dark/file.svg</file>
+    <file>dark/file_dialog_contents.svg</file>
+    <file>dark/file_dialog_detailed.svg</file>
+    <file>dark/file_dialog_end.svg</file>
+    <file>dark/file_dialog_info.svg</file>
+    <file>dark/file_dialog_list.svg</file>
+    <file>dark/file_dialog_start.svg</file>
+    <file>dark/file_link.svg</file>
+    <file>dark/floppy_drive.svg</file>
+    <file>dark/folder.svg</file>
+    <file>dark/folder_link.svg</file>
+    <file>dark/folder_open.svg</file>
+    <file>dark/hard_drive.svg</file>
+    <file>dark/help.svg</file>
+    <file>dark/hmovetoolbar.svg</file>
+    <file>dark/home_directory.svg</file>
+    <file>dark/hseptoolbar.svg</file>
+    <file>dark/left_arrow.svg</file>
+    <file>dark/left_arrow_disabled.svg</file>
+    <file>dark/left_arrow_hover.svg</file>
+    <file>dark/maximize.svg</file>
+    <file>dark/menu.svg</file>
+    <file>dark/message_critical.svg</file>
+    <file>dark/message_information.svg</file>
+    <file>dark/message_question.svg</file>
+    <file>dark/message_warning.svg</file>
+    <file>dark/minimize.svg</file>
+    <file>dark/network_drive.svg</file>
     <file>dark/radio_checked.svg</file>
     <file>dark/radio_checked_disabled.svg</file>
     <file>dark/radio_unchecked.svg</file>
     <file>dark/radio_unchecked_disabled.svg</file>
+    <file>dark/restore.svg</file>
+    <file>dark/right_arrow.svg</file>
+    <file>dark/right_arrow_disabled.svg</file>
+    <file>dark/right_arrow_hover.svg</file>
+    <file>dark/shade.svg</file>
+    <file>dark/sizegrip.svg</file>
+    <file>dark/transparent.svg</file>
+    <file>dark/trash.svg</file>
+    <file>dark/undock.svg</file>
+    <file>dark/undock_hover.svg</file>
+    <file>dark/undock_hover_pressed.svg</file>
+    <file>dark/unshade.svg</file>
+    <file>dark/up_arrow.svg</file>
+    <file>dark/up_arrow_disabled.svg</file>
+    <file>dark/up_arrow_hover.svg</file>
+    <file>dark/vline.svg</file>
+    <file>dark/vmovetoolbar.svg</file>
+    <file>dark/vseptoolbar.svg</file>
+    <file>dark/window_close.svg</file>
     <file>dark.qss</file>
   </qresource>
 </RCC>
+

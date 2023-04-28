@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam
- * Copyright (c) 2007-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2007-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@
 #include <cstdlib>
 #include <cstring>
 #if HAVE_FCNTL_H
-#  include <fcntl.h>
+#include <fcntl.h>
 #endif
 
 #include <algorithm>
@@ -60,73 +60,92 @@
 
 class ENVIRasterBand;
 
-class ENVIDataset : public RawDataset
+class ENVIDataset final : public RawDataset
 {
     friend class ENVIRasterBand;
 
-    VSILFILE   *fpImage;  // Image data file.
-    VSILFILE   *fp;  // Header file
-    char       *pszHDRFilename;
+    VSILFILE *fpImage;  // Image data file.
+    VSILFILE *fp;       // Header file
+    char *pszHDRFilename;
 
-    bool        bFoundMapinfo;
-    bool        bHeaderDirty;
-    bool        bFillFile;
+    bool bFoundMapinfo;
+    bool bHeaderDirty;
+    bool bFillFile;
 
-    double      adfGeoTransform[6];
+    double adfGeoTransform[6];
 
-    char       *pszProjection;
+    OGRSpatialReference m_oSRS{};
 
-    char        **papszHeader;
+    CPLStringList m_aosHeader{};
 
-    CPLString   osStaFilename;
+    CPLString osStaFilename{};
 
-    bool        ReadHeader( VSILFILE * );
-    bool        ProcessMapinfo( const char * );
-    void        ProcessRPCinfo( const char *, int, int);
-    void        ProcessStatsFile();
-    static int         byteSwapInt(int);
-    static float       byteSwapFloat(float);
-    static double      byteSwapDouble(double);
-    static void        SetENVIDatum( OGRSpatialReference *, const char * );
-    static void        SetENVIEllipse( OGRSpatialReference *, char ** );
-    void        WriteProjectionInfo();
-    bool        ParseRpcCoeffsMetaDataString( const char *psName,
-                                              char *papszVal[], int& idx );
-    bool        WriteRpcInfo();
-    bool        WritePseudoGcpInfo();
+    std::vector<GDAL_GCP> m_asGCPs{};
 
-    void        SetFillFile() { bFillFile = true; }
+    bool ReadHeader(VSILFILE *);
+    bool ProcessMapinfo(const char *);
+    void ProcessRPCinfo(const char *, int, int);
+    void ProcessGeoPoints(const char *);
+    void ProcessStatsFile();
+    static int byteSwapInt(int);
+    static float byteSwapFloat(float);
+    static double byteSwapDouble(double);
+    static void SetENVIDatum(OGRSpatialReference *, const char *);
+    static void SetENVIEllipse(OGRSpatialReference *, char **);
+    void WriteProjectionInfo();
+    bool ParseRpcCoeffsMetaDataString(const char *psName, char *papszVal[],
+                                      int &idx);
+    bool WriteRpcInfo();
+    bool WritePseudoGcpInfo();
 
-    char        **SplitList( const char * );
+    void SetFillFile()
+    {
+        bFillFile = true;
+    }
 
-    enum Interleave { BSQ, BIL, BIP } interleave;
+    static char **SplitList(const char *);
+
+    enum Interleave
+    {
+        BSQ,
+        BIL,
+        BIP
+    } interleave;
     static int GetEnviType(GDALDataType eType);
 
+    CPL_DISALLOW_COPY_ASSIGN(ENVIDataset)
+
   public:
-            ENVIDataset();
-    virtual ~ENVIDataset();
+    ENVIDataset();
+    ~ENVIDataset() override;
 
-    virtual void    FlushCache() override;
-    virtual CPLErr  GetGeoTransform( double *padfTransform ) override;
-    virtual CPLErr  SetGeoTransform( double * ) override;
-    virtual const char *GetProjectionRef(void) override;
-    virtual CPLErr  SetProjection( const char * ) override;
-    virtual char  **GetFileList(void) override;
+    void FlushCache(bool bAtClosing) override;
+    CPLErr GetGeoTransform(double *padfTransform) override;
+    CPLErr SetGeoTransform(double *) override;
 
-    virtual void        SetDescription( const char * ) override;
+    const OGRSpatialReference *GetSpatialRef() const override;
+    CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
-    virtual CPLErr      SetMetadata( char **papszMetadata,
-                                     const char *pszDomain = "" ) override;
-    virtual CPLErr      SetMetadataItem( const char *pszName,
-                                         const char *pszValue,
-                                         const char *pszDomain = "" ) override;
-    virtual CPLErr SetGCPs( int nGCPCount, const GDAL_GCP *pasGCPList,
-                            const char *pszGCPProjection ) override;
+    char **GetFileList() override;
 
-    static GDALDataset *Open( GDALOpenInfo * );
-    static GDALDataset *Create( const char *pszFilename,
-                                int nXSize, int nYSize, int nBands,
-                                GDALDataType eType, char ** papszOptions );
+    void SetDescription(const char *) override;
+
+    CPLErr SetMetadata(char **papszMetadata,
+                       const char *pszDomain = "") override;
+    CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
+                           const char *pszDomain = "") override;
+    CPLErr SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
+                   const OGRSpatialReference *poSRS) override;
+    int GetGCPCount() override;
+    const GDAL_GCP *GetGCPs() override;
+
+    bool GetRawBinaryLayout(GDALDataset::RawBinaryLayout &) override;
+
+    static GDALDataset *Open(GDALOpenInfo *);
+    static ENVIDataset *Open(GDALOpenInfo *, bool bFileSizeCheck);
+    static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
+                               int nBands, GDALDataType eType,
+                               char **papszOptions);
 };
 
 /************************************************************************/
@@ -135,19 +154,26 @@ class ENVIDataset : public RawDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class ENVIRasterBand : public RawRasterBand
+class ENVIRasterBand final : public RawRasterBand
 {
-    public:
-                ENVIRasterBand( GDALDataset *poDS, int nBand, void *fpRaw,
-                                vsi_l_offset nImgOffset, int nPixelOffset,
-                                int nLineOffset,
-                                GDALDataType eDataType, int bNativeOrder,
-                                int bIsVSIL = FALSE, int bOwnsFP = FALSE );
-    virtual ~ENVIRasterBand() {}
+    CPL_DISALLOW_COPY_ASSIGN(ENVIRasterBand)
 
-    virtual void        SetDescription( const char * ) override;
+  public:
+    ENVIRasterBand(GDALDataset *poDSIn, int nBandIn, VSILFILE *fpRawIn,
+                   vsi_l_offset nImgOffsetIn, int nPixelOffsetIn,
+                   int nLineOffsetIn, GDALDataType eDataTypeIn,
+                   int bNativeOrderIn);
+    ~ENVIRasterBand() override
+    {
+    }
 
-    virtual CPLErr SetCategoryNames( char ** ) override;
+    void SetDescription(const char *) override;
+    CPLErr SetNoDataValue(double) override;
+    CPLErr SetColorInterpretation(GDALColorInterp eColorInterp) override;
+    CPLErr SetOffset(double) override;
+    CPLErr SetScale(double) override;
+
+    CPLErr SetCategoryNames(char **) override;
 };
 
 #endif  // GDAL_FRMTS_RAW_ENVIDATASET_H_INCLUDED

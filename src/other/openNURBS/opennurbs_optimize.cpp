@@ -16,6 +16,13 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
 
 
 int ON_FindLocalMinimum(
@@ -70,7 +77,7 @@ int ON_FindLocalMinimum(
 
   if ( 0 == t_addr )
   {
-    ON_ERROR("t_addr is NULL");
+    ON_ERROR("t_addr is nullptr");
     return 0;
   }
 
@@ -195,7 +202,7 @@ ON_LocalZero1::ON_LocalZero1()
 , m_t1(ON_UNSET_VALUE)
 , m_f_tolerance(0.0)
 , m_t_tolerance(0.0)
-, m_k(NULL)
+, m_k(nullptr)
 , m_k_count(0)
 , m_s0(ON_UNSET_VALUE)
 , m_f0(ON_UNSET_VALUE)
@@ -206,7 +213,7 @@ ON_LocalZero1::ON_LocalZero1()
 ON_LocalZero1::~ON_LocalZero1()
 {}
 
-ON_BOOL32
+bool
 ON_LocalZero1::BracketZero( double s0, double f0, 
                              double s1, double f1,
                              int level )
@@ -263,12 +270,12 @@ ON_LocalZero1::BracketZero( double s0, double f0,
   return false;
 }
 
-ON_BOOL32
+bool
 ON_LocalZero1::BracketSpan( double s0, double f0, double s1, double f1 )
 {
   int i0, i1, i;
   double fm, fp;
-  ON_BOOL32 rc = true;
+  bool rc = true;
   if ( m_k && m_k_count >= 3 ) {
     i0 = ON_SearchMonotoneArray(m_k,m_k_count,s0);
     if ( i0 < 0 )
@@ -284,8 +291,8 @@ ON_LocalZero1::BracketSpan( double s0, double f0, double s1, double f1 )
       i0++;
     if ( i0 <= i1 ) {
       // we have s0 < m_k[i0] <= ... <= m_k[i1] < s1
-      Evaluate( m_k[i0], &fm, NULL,-1 ); // gaurd against C0 discontinuities
-      Evaluate( m_k[i0], &fp, NULL, 1 );
+      Evaluate( m_k[i0], &fm, nullptr,-1 ); // gaurd against C0 discontinuities
+      Evaluate( m_k[i0], &fp, nullptr, 1 );
       if ( (f0 <= 0.0 && fm >= 0.0) || (f0 >= 0.0 && fm <= 0.0) ) {
         m_s1 = m_k[i0];
         m_f1 = fm;
@@ -294,8 +301,8 @@ ON_LocalZero1::BracketSpan( double s0, double f0, double s1, double f1 )
         m_s0 = m_k[i0];
         m_f0 = fp;
         if ( i0 < i1 ) {
-          Evaluate( m_k[i1], &fm, NULL, -1 );
-          Evaluate( m_k[i1], &fp, NULL,  1 );
+          Evaluate( m_k[i1], &fm, nullptr, -1 );
+          Evaluate( m_k[i1], &fp, nullptr,  1 );
           if ( (f1 <= 0.0 && fp >= 0.0) || (f1 >= 0.0 && fp <= 0.0) ) {
             m_s0 = m_k[i1];
             m_f0 = fp;
@@ -309,8 +316,8 @@ ON_LocalZero1::BracketSpan( double s0, double f0, double s1, double f1 )
               // m_k[i],m_k[i+1].  We need to do this in order to make sure
               // we are passing a C2 function to the repeated zero finders.
               i = (i0+i1)>>1;
-              Evaluate( m_k[i], &fm, NULL, -1 );
-              Evaluate( m_k[i], &fp, NULL,  1 );
+              Evaluate( m_k[i], &fm, nullptr, -1 );
+              Evaluate( m_k[i], &fp, nullptr,  1 );
               if ( (f0 <= 0.0 && fm >= 0.0) || (f0 >= 0.0 && fm <= 0.0) ) {
                 m_s1 = m_k[i];
                 m_f1 = fm;
@@ -347,7 +354,7 @@ ON_LocalZero1::BracketSpan( double s0, double f0, double s1, double f1 )
   return rc;
 }
 
-ON_BOOL32 ON_LocalZero1::FindZero( double* t )
+bool ON_LocalZero1::FindZero( double* t )
 {
   // Find values of m_s0 and m_s1 between m_t0 and m_t1 such that
   // f(m_t0) and f(m_t1) have different signs
@@ -383,7 +390,7 @@ ON_BOOL32 ON_LocalZero1::FindZero( double* t )
 
   if ( m_s0 == m_s1 )
   {
-    if ( Evaluate( m_s0, &m_f0, NULL, 1 ) ) 
+    if ( Evaluate( m_s0, &m_f0, nullptr, 1 ) ) 
     {
       m_f1 = m_f0;
       if ( fabs(m_f0) <= m_f_tolerance ) 
@@ -398,13 +405,13 @@ ON_BOOL32 ON_LocalZero1::FindZero( double* t )
     return false;
   }
 
-  if ( !Evaluate( m_s0, &m_f0, NULL, 1 ) )
+  if ( !Evaluate( m_s0, &m_f0, nullptr, 1 ) )
   {
     ON_ERROR("Evaluation failed at m_s0.");
     return false;
   }
 
-  if ( !Evaluate( m_s1, &m_f1, NULL, -1 ) )
+  if ( !Evaluate( m_s1, &m_f1, nullptr, -1 ) )
   {
     ON_ERROR("Evaluation failed at m_s1.");
     return false;
@@ -445,13 +452,13 @@ ON_BOOL32 ON_LocalZero1::FindZero( double* t )
   return true;
 }
 
-ON_BOOL32 ON_LocalZero1::NewtonRaphson( double s0, double f0,
+bool ON_LocalZero1::NewtonRaphson( double s0, double f0,
                                     double s1, double f1,
                                     int maxit, double* t )
 {
   // private function - input must satisfy
   //
-  // 1) t is not NULL
+  // 1) t is not nullptr
   //
   // 2) maxit >= 2
   //

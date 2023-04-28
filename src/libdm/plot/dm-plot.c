@@ -1,7 +1,7 @@
 /*                       D M - P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2022 United States Government as represented by
+ * Copyright (c) 1985-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@ static int plot_close(struct dm *dmp);
  *
  */
 struct dm *
-plot_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
+plot_open(void *UNUSED(ctx), void *vinterp, int UNUSED(argc), const char *argv[])
 {
     static int count = 0;
     struct dm *dmp;
@@ -115,7 +115,6 @@ plot_open(void *UNUSED(ctx), void *vinterp, int argc, const char *argv[])
     bu_vls_printf(&dmp->i->dm_tkName, "dm_plot%d", count++);
 
     /* skip first argument */
-    --argc;
     ++argv;
 
     /* Process any options */
@@ -882,7 +881,7 @@ struct dm dm_plot = { DM_MAGIC, &dm_plot_impl, 0 };
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { DM_API, &dm_plot };
 
-COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info(void)
 {
     return &pinfo;
 }

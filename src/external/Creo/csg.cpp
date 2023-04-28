@@ -2,7 +2,7 @@
  *                   C S G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017-2022 United States Government as represented by
+ * Copyright (c) 2017-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,9 +25,9 @@
 #include "common.h"
 #include "creo-brl.h"
 
-#define MIN_RADIUS      1.0e-7          /** BRL-CAD does not allow tgc's with zero radius */
+#define MIN_RADIUS      1.0e-7          /* BRL-CAD does not allow TGCs with zero radius */
 
-/** Information needed to replace holes with CSG */
+/* Information needed to replace holes with CSG */
 struct hole_info {
     ProFeature *feat;
     double radius;
@@ -36,14 +36,14 @@ struct hole_info {
     int add_cbore;
     int add_csink;
     int hole_depth_type;
-    double cb_depth;             /** Counter-bore depth */
-    double cb_diam;              /** Counter-bore diam */
-    double cs_diam;              /** Counter-sink diam */
-    double cs_angle;             /** Counter-sink angle */
-    double hole_diam;            /** Drilled hole diameter */
-    double hole_depth;           /** Drilled hole depth */
-    double drill_angle;          /** Drill tip angle */
-    Pro3dPnt end1, end2;         /** Axis end-points for holes */
+    double cb_depth;             /* Counter-bore depth */
+    double cb_diam;              /* Counter-bore diam */
+    double cs_diam;              /* Counter-sink diam */
+    double cs_angle;             /* Counter-sink angle */
+    double hole_diam;            /* Drilled hole diameter */
+    double hole_depth;           /* Drilled hole depth */
+    double drill_angle;          /* Drill tip angle */
+    Pro3dPnt end1, end2;         /* Axis end-points for holes */
 };
 
 
@@ -57,19 +57,23 @@ hole_elem_filter(ProElement UNUSED(elem_tree), ProElement UNUSED(elem), ProElemp
 extern "C" ProError
 hole_elem_visit(ProElement UNUSED(elem_tree), ProElement elem, ProElempath UNUSED(elem_path), ProAppData data)
 {
-    ProError         err;
+    ProError         err = PRO_TK_GENERAL_ERROR;
     ProElemId        elemid;
     ProValueDataType data_type;
 
     struct hole_info *hinfo = (struct hole_info *)data;
 
-    if ((err = ProElementValuetypeGet(elem, &data_type)) != PRO_TK_NO_ERROR) return err;
+    err = ProElementValuetypeGet(elem, &data_type);
+    if (err != PRO_TK_NO_ERROR)
+        return err;
 
     switch (data_type) {
         case PRO_VALUE_TYPE_INT:                           /* Integer data type */
             int intval;
-            if ((err = ProElementIntegerGet(elem, NULL, &intval)) != PRO_TK_NO_ERROR) return err;
-            if ((err = ProElementIdGet(elem, &elemid))            != PRO_TK_NO_ERROR) return err;
+            if ((err = ProElementIntegerGet(elem, NULL, &intval)) != PRO_TK_NO_ERROR)
+                return err;
+            if ((err = ProElementIdGet(elem, &elemid))            != PRO_TK_NO_ERROR)
+                return err;
             switch (elemid) {
                 case PRO_E_HLE_ADD_CBORE:                  /* Add counterbore */
                     hinfo->add_cbore = intval;
@@ -87,8 +91,10 @@ hole_elem_visit(ProElement UNUSED(elem_tree), ProElement elem, ProElempath UNUSE
             break;
         case PRO_VALUE_TYPE_DOUBLE:                        /* Double data type */
             double dblval;
-            if ((err = ProElementDoubleGet(elem, NULL, &dblval)) != PRO_TK_NO_ERROR) return err;
-            if ((err = ProElementIdGet(elem, &elemid))           != PRO_TK_NO_ERROR) return err;
+            if ((err = ProElementDoubleGet(elem, NULL, &dblval)) != PRO_TK_NO_ERROR)
+                return err;
+            if ((err = ProElementIdGet(elem, &elemid))           != PRO_TK_NO_ERROR)
+                return err;
             switch (elemid) {
                 case PRO_E_DIAMETER:                       /* Hole diameter */
                     hinfo->hole_diam = dblval;
@@ -131,13 +137,21 @@ extern "C" ProError
 geomitem_visit(ProGeomitem *item, ProError UNUSED(status), ProAppData data)
 {
     ProGeomitemdata *geom;
-    ProCurvedata *crv;
-    ProError ret;
+    ProCurvedata    *crv;
+    ProError        err = PRO_TK_GENERAL_ERROR;
+
     struct hole_info *hinfo = (struct hole_info *)data;
 
-    if ((ret=ProGeomitemdataGet(item, &geom)) != PRO_TK_NO_ERROR) return ret;
+    err = ProGeomitemdataGet(item, &geom);
+    if (err != PRO_TK_NO_ERROR)
+        return err;
+
     crv = PRO_CURVE_DATA(geom);
-    if ((ret=ProLinedataGet(crv, hinfo->end1, hinfo->end2)) != PRO_TK_NO_ERROR) return ret;
+
+    err = ProLinedataGet(crv, hinfo->end1, hinfo->end2);
+    if (err != PRO_TK_NO_ERROR)
+        return err;
+
     return PRO_TK_NO_ERROR;
 }
 
@@ -145,25 +159,25 @@ geomitem_visit(ProGeomitem *item, ProError UNUSED(status), ProAppData data)
 extern "C" struct bu_vls *
 tgc_hole_name(struct creo_conv_info *cinfo, wchar_t *wname, const char *suffix)
 {
-    struct directory *dp;
     char pname[CREO_NAME_MAX];
     struct bu_vls *cname;
     struct bu_vls *hname;
-    long count = 0;
+
     BU_GET(hname, struct bu_vls);
     bu_vls_init(hname);
     cname = get_brlcad_name(cinfo, wname, NULL, N_CREO);
     bu_vls_sprintf(hname, "%s_hole_0.%s", bu_vls_addr(cname), suffix);
-    dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET);
-    while (dp != RT_DIR_NULL) {
+
+    long count = 0;
+    while (db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET) != RT_DIR_NULL) {
         (void)bu_vls_incr(hname, NULL, "0:0:0:0:-", NULL, NULL);
         count++;
-        creo_log(cinfo, MSG_DEBUG, "\t trying hole name : %s\n", bu_vls_addr(hname));
-        if (count == LONG_MAX) {
+        creo_log(cinfo, MSG_DEBUG, "Generating hole name \"%s\"\n", bu_vls_addr(hname));
+        if (count >= MAX_UNIQUE_NAMES) {
             bu_vls_free(hname);
             BU_PUT(hname, struct bu_vls);
             ProWstringToString(pname, wname);
-            creo_log(cinfo, MSG_DEBUG, "%s: hole name generation FAILED.\n", pname);
+            creo_log(cinfo, MSG_DEBUG, "Hole \"%s\" failed name generation\n", pname);
             return NULL;
         }
     }
@@ -184,47 +198,50 @@ subtract_hole(struct part_conv_info *pinfo)
 {
     wchar_t wname[CREO_NAME_MAX];
     struct bu_vls *hname;
-    ProError ret;
-    ProElement elem_tree;
-    ProElempath elem_path=NULL;
+
+    ProError    err = PRO_TK_GENERAL_ERROR;
+    ProElement  elem_tree;
+    ProElempath elem_path = NULL;
+
     struct creo_conv_info *cinfo = pinfo->cinfo;
     struct directory *dp = RT_DIR_NULL;
     vect_t a, b, c, d, h;
 
-    if (pinfo->cinfo->do_facets_only) {
+    if (pinfo->cinfo->do_facets_only)
         return (pinfo->diameter < cinfo->min_hole_diameter) ? 1 : 0;
-    }
 
     struct hole_info *hinfo;
     BU_GET(hinfo, struct hole_info);
-    hinfo->feat = pinfo->feat;
-    hinfo->radius = pinfo->radius;
+    hinfo->feat     = pinfo->feat;
+    hinfo->radius   = pinfo->radius;
     hinfo->diameter = pinfo->diameter;
 
     /* Do a more detailed characterization of the hole elements */
-    ret = ProFeatureElemtreeExtract(hinfo->feat, NULL, PRO_FEAT_EXTRACT_NO_OPTS, &elem_tree);
-    if (ret == PRO_TK_NO_ERROR) {
-	ret=ProElemtreeElementVisit(elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)hinfo);
-	if (ret != PRO_TK_NO_ERROR) {
-            if (ProElementFree(&elem_tree) != PRO_TK_NO_ERROR) {fprintf(stderr, "Error freeing element tree\n");}
+    err = ProFeatureElemtreeExtract(hinfo->feat, NULL, PRO_FEAT_EXTRACT_NO_OPTS, &elem_tree);
+    if (err == PRO_TK_NO_ERROR) {
+        err = ProElemtreeElementVisit(elem_tree, elem_path, hole_elem_filter, hole_elem_visit, (ProAppData)hinfo);
+        if (err != PRO_TK_NO_ERROR) {
+            if (ProElementFree(&elem_tree) != PRO_TK_NO_ERROR)
+                fprintf(stderr, "Error freeing element tree\n");
             BU_PUT(hinfo, struct hole_info);
-            return ret;
+            return 0;
         }
         ProElementFree(&elem_tree);
     }
 
     /* Need more info to recreate holes */
-    ret = ProFeatureGeomitemVisit(pinfo->feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)pinfo);
-    if (ret != PRO_TK_NO_ERROR)
-	return ret;
+    err = ProFeatureGeomitemVisit(pinfo->feat, PRO_AXIS, geomitem_visit, geomitem_filter, (ProAppData)pinfo);
+    if (err != PRO_TK_NO_ERROR)
+        return 0;
 
     /* Will need parent object name for naming */
-    ProMdlMdlnameGet(pinfo->model, wname);
+    (void)ProMdlMdlnameGet(pinfo->model, wname);
 
     /* Make a replacement hole using CSG */
     if (hinfo->hole_type == PRO_HLE_NEW_TYPE_STRAIGHT) {
         /* Plain old straight hole */
-        if (hinfo->diameter < cinfo->min_hole_diameter) return 1;
+        if (hinfo->diameter < cinfo->min_hole_diameter)
+            return 1;
         VSUB2(h, hinfo->end1, hinfo->end2);
         bn_vec_ortho(a, h);
         VCROSS(b, a, h);
@@ -235,7 +252,9 @@ subtract_hole(struct part_conv_info *pinfo)
         VSCALE(h, h, cinfo->creo_to_brl_conv);
         hname = tgc_hole_name(cinfo, wname, "s");
         mk_tgc(cinfo->wdbp, bu_vls_addr(hname), hinfo->end2, h, a, b, a, b);
-        if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) pinfo->subtractions->push_back(dp);
+        dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET);
+        if (dp != RT_DIR_NULL)
+            pinfo->subtractions->push_back(dp);
         bu_vls_free(hname);
         BU_PUT(hname, struct bu_vls);
     } else if (hinfo->hole_type == PRO_HLE_NEW_TYPE_STANDARD) {
@@ -243,10 +262,11 @@ subtract_hole(struct part_conv_info *pinfo)
         point_t start;
         vect_t dir;
         double cb_radius;
-        double accum_depth=0.0;
-        double hole_radius=hinfo->hole_diam / 2.0;
+        double accum_depth = 0.0;
+        double hole_radius = hinfo->hole_diam / 2.0;
 
-        if (hinfo->hole_diam < cinfo->min_hole_diameter) return 1;
+        if (hinfo->hole_diam < cinfo->min_hole_diameter)
+            return 1;
 
         VSUB2(dir, hinfo->end1, hinfo->end2);
         VUNITIZE(dir);
@@ -264,7 +284,8 @@ subtract_hole(struct part_conv_info *pinfo)
             VSCALE(h, dir, hinfo->cb_depth * cinfo->creo_to_brl_conv);
             hname = tgc_hole_name(cinfo, wname, "s");
             mk_tgc(cinfo->wdbp, bu_vls_addr(hname), start, h, a, b, a, b);
-            if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) pinfo->subtractions->push_back(dp);
+            if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL)
+                pinfo->subtractions->push_back(dp);
             bu_vls_free(hname);
             BU_PUT(hname, struct bu_vls);
 
@@ -289,7 +310,8 @@ subtract_hole(struct part_conv_info *pinfo)
             VSCALE(d, d, hinfo->hole_diam * cinfo->creo_to_brl_conv / 2.0);
             hname = tgc_hole_name(cinfo, wname, "s");
             mk_tgc(cinfo->wdbp, bu_vls_addr(hname), start, h, a, b, c, d);
-            if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) pinfo->subtractions->push_back(dp);
+            if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL)
+                pinfo->subtractions->push_back(dp);
             bu_vls_free(hname);
             BU_PUT(hname, struct bu_vls);
 
@@ -310,12 +332,14 @@ subtract_hole(struct part_conv_info *pinfo)
         VSCALE(h, dir, (hinfo->hole_depth - accum_depth) * cinfo->creo_to_brl_conv);
         hname = tgc_hole_name(cinfo, wname, "s");
         mk_tgc(cinfo->wdbp, bu_vls_addr(hname), start, h, a, b, c, d);
-        if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) pinfo->subtractions->push_back(dp);
+        dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET);
+        if (dp != RT_DIR_NULL)
+            pinfo->subtractions->push_back(dp);
         bu_vls_free(hname);
         BU_PUT(hname, struct bu_vls);
 
         VADD2(start, start, h);
-        hinfo->hole_diam = 0.0;
+        hinfo->hole_diam  = 0.0;
         hinfo->hole_depth = 0.0;
 
         if (hinfo->hole_depth_type == PRO_HLE_STD_VAR_DEPTH) {
@@ -333,7 +357,9 @@ subtract_hole(struct part_conv_info *pinfo)
             VSCALE(d, d, MIN_RADIUS);
             hname = tgc_hole_name(cinfo, wname, "s");
             mk_tgc(cinfo->wdbp, bu_vls_addr(hname), start, h, a, b, c, d);
-            if ((dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET)) != RT_DIR_NULL) pinfo->subtractions->push_back(dp);
+            dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET);
+            if (dp != RT_DIR_NULL)
+                pinfo->subtractions->push_back(dp);
             bu_vls_free(hname);
             BU_PUT(hname, struct bu_vls);
 
@@ -342,7 +368,8 @@ subtract_hole(struct part_conv_info *pinfo)
     } else {
         char pname[CREO_NAME_MAX];
         ProWstringToString(pname, wname);
-        creo_log(cinfo, MSG_DEBUG, "%s: unrecognized hole type\n", pname);
+        lower_case(pname);
+        creo_log(cinfo, MSG_DEBUG, "Failed to recognize \"%s\" hole type\n", pname);
         BU_PUT(hinfo, struct hole_info);
         return 0;
     }
@@ -359,4 +386,3 @@ subtract_hole(struct part_conv_info *pinfo)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-

@@ -6,7 +6,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2002, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,35 +31,34 @@
 #include "gdal_frmts.h"
 #include "rawdataset.h"
 
-CPL_CVSID("$Id$");
-
 /************************************************************************/
 /* ==================================================================== */
 /*                              GSCDataset                              */
 /* ==================================================================== */
 /************************************************************************/
 
-class GSCDataset : public RawDataset
+class GSCDataset final : public RawDataset
 {
-    VSILFILE    *fpImage;  // image data file.
+    VSILFILE *fpImage;  // image data file.
 
-    double      adfGeoTransform[6];
+    double adfGeoTransform[6];
+
+    CPL_DISALLOW_COPY_ASSIGN(GSCDataset)
 
   public:
-                GSCDataset();
-                ~GSCDataset();
+    GSCDataset();
+    ~GSCDataset();
 
-    CPLErr      GetGeoTransform( double * padfTransform ) override;
+    CPLErr GetGeoTransform(double *padfTransform) override;
 
-    static GDALDataset *Open( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
 };
 
 /************************************************************************/
 /*                            GSCDataset()                             */
 /************************************************************************/
 
-GSCDataset::GSCDataset() :
-    fpImage(NULL)
+GSCDataset::GSCDataset() : fpImage(nullptr)
 {
     adfGeoTransform[0] = 0.0;
     adfGeoTransform[1] = 1.0;
@@ -76,19 +75,19 @@ GSCDataset::GSCDataset() :
 GSCDataset::~GSCDataset()
 
 {
-    FlushCache();
-    if( fpImage != NULL )
-        CPL_IGNORE_RET_VAL(VSIFCloseL( fpImage ));
+    FlushCache(true);
+    if (fpImage != nullptr)
+        CPL_IGNORE_RET_VAL(VSIFCloseL(fpImage));
 }
 
 /************************************************************************/
 /*                          GetGeoTransform()                           */
 /************************************************************************/
 
-CPLErr GSCDataset::GetGeoTransform( double * padfTransform )
+CPLErr GSCDataset::GetGeoTransform(double *padfTransform)
 
 {
-    memcpy( padfTransform, adfGeoTransform, sizeof(double) * 6 );
+    memcpy(padfTransform, adfGeoTransform, sizeof(double) * 6);
 
     return CE_None;
 }
@@ -97,85 +96,77 @@ CPLErr GSCDataset::GetGeoTransform( double * padfTransform )
 /*                                Open()                                */
 /************************************************************************/
 
-GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
+GDALDataset *GSCDataset::Open(GDALOpenInfo *poOpenInfo)
 
 {
 
-/* -------------------------------------------------------------------- */
-/*      Does this plausible look like a GSC Geogrid file?               */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->nHeaderBytes < 20 )
-        return NULL;
+    /* -------------------------------------------------------------------- */
+    /*      Does this plausible look like a GSC Geogrid file?               */
+    /* -------------------------------------------------------------------- */
+    if (poOpenInfo->nHeaderBytes < 20)
+        return nullptr;
 
-    if( poOpenInfo->pabyHeader[12] != 0x02
-        || poOpenInfo->pabyHeader[13] != 0x00
-        || poOpenInfo->pabyHeader[14] != 0x00
-        || poOpenInfo->pabyHeader[15] != 0x00 )
-        return NULL;
+    if (poOpenInfo->pabyHeader[12] != 0x02 ||
+        poOpenInfo->pabyHeader[13] != 0x00 ||
+        poOpenInfo->pabyHeader[14] != 0x00 ||
+        poOpenInfo->pabyHeader[15] != 0x00)
+        return nullptr;
 
     int nRecordLen =
-        CPL_LSBWORD32(reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader)[0] );
+        CPL_LSBWORD32(reinterpret_cast<GInt32 *>(poOpenInfo->pabyHeader)[0]);
     const int nPixels =
-        CPL_LSBWORD32(reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader)[1] );
+        CPL_LSBWORD32(reinterpret_cast<GInt32 *>(poOpenInfo->pabyHeader)[1]);
     const int nLines =
-        CPL_LSBWORD32(reinterpret_cast<GInt32 *>( poOpenInfo->pabyHeader)[2] );
+        CPL_LSBWORD32(reinterpret_cast<GInt32 *>(poOpenInfo->pabyHeader)[2]);
 
-    if( nPixels < 1 || nLines < 1 || nPixels > 100000 || nLines > 100000 )
-        return NULL;
+    if (nPixels < 1 || nLines < 1 || nPixels > 100000 || nLines > 100000)
+        return nullptr;
 
-    if( nRecordLen != nPixels * 4 )
-        return NULL;
+    if (nRecordLen != nPixels * 4)
+        return nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Confirm the requested access is supported.                      */
-/* -------------------------------------------------------------------- */
-    if( poOpenInfo->eAccess == GA_Update )
+    /* -------------------------------------------------------------------- */
+    /*      Confirm the requested access is supported.                      */
+    /* -------------------------------------------------------------------- */
+    if (poOpenInfo->eAccess == GA_Update)
     {
-        CPLError( CE_Failure, CPLE_NotSupported,
-                  "The GSC driver does not support update access to existing "
-                  "datasets." );
-        return NULL;
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "The GSC driver does not support update access to existing "
+                 "datasets.");
+        return nullptr;
     }
 
     nRecordLen += 8;  // For record length markers.
 
-/* -------------------------------------------------------------------- */
-/*      Create a corresponding GDALDataset.                             */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create a corresponding GDALDataset.                             */
+    /* -------------------------------------------------------------------- */
     GSCDataset *poDS = new GSCDataset();
 
     poDS->nRasterXSize = nPixels;
     poDS->nRasterYSize = nLines;
+    poDS->fpImage = poOpenInfo->fpL;
+    poOpenInfo->fpL = nullptr;
 
-/* -------------------------------------------------------------------- */
-/*      Assume ownership of the file handled from the GDALOpenInfo.     */
-/* -------------------------------------------------------------------- */
-    poDS->fpImage = VSIFOpenL(poOpenInfo->pszFilename, "rb");
-    if( poDS->fpImage == NULL )
-    {
-        delete poDS;
-        return NULL;
-    }
+    /* -------------------------------------------------------------------- */
+    /*      Read the header information in the second record.               */
+    /* -------------------------------------------------------------------- */
+    float afHeaderInfo[8] = {0.0};
 
-/* -------------------------------------------------------------------- */
-/*      Read the header information in the second record.               */
-/* -------------------------------------------------------------------- */
-    float afHeaderInfo[8] = { 0.0 };
-
-    if( VSIFSeekL( poDS->fpImage, nRecordLen + 12, SEEK_SET ) != 0
-        || VSIFReadL( afHeaderInfo, sizeof(float), 8, poDS->fpImage ) != 8 )
+    if (VSIFSeekL(poDS->fpImage, nRecordLen + 12, SEEK_SET) != 0 ||
+        VSIFReadL(afHeaderInfo, sizeof(float), 8, poDS->fpImage) != 8)
     {
         CPLError(
             CE_Failure, CPLE_FileIO,
             "Failure reading second record of GSC file with %d record length.",
-            nRecordLen );
+            nRecordLen);
         delete poDS;
-        return NULL;
+        return nullptr;
     }
 
-    for( int i = 0; i < 8; i++ )
+    for (int i = 0; i < 8; i++)
     {
-        CPL_LSBPTR32( afHeaderInfo + i );
+        CPL_LSBPTR32(afHeaderInfo + i);
     }
 
     poDS->adfGeoTransform[0] = afHeaderInfo[2];
@@ -194,24 +185,23 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
     const bool bNative = false;
 #endif
 
-    RawRasterBand *poBand = new RawRasterBand( poDS, 1, poDS->fpImage,
-                                               nRecordLen * 2 + 4,
-                                               sizeof(float), nRecordLen,
-                                               GDT_Float32, bNative, TRUE );
-    poDS->SetBand( 1, poBand );
+    RawRasterBand *poBand = new RawRasterBand(
+        poDS, 1, poDS->fpImage, nRecordLen * 2 + 4, sizeof(float), nRecordLen,
+        GDT_Float32, bNative, RawRasterBand::OwnFP::NO);
+    poDS->SetBand(1, poBand);
 
-    poBand->SetNoDataValue( -1.0000000150474662199e+30 );
+    poBand->SetNoDataValue(-1.0000000150474662199e+30);
 
-/* -------------------------------------------------------------------- */
-/*      Initialize any PAM information.                                 */
-/* -------------------------------------------------------------------- */
-    poDS->SetDescription( poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Initialize any PAM information.                                 */
+    /* -------------------------------------------------------------------- */
+    poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->TryLoadXML();
 
-/* -------------------------------------------------------------------- */
-/*      Check for overviews.                                            */
-/* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize( poDS, poOpenInfo->pszFilename );
+    /* -------------------------------------------------------------------- */
+    /*      Check for overviews.                                            */
+    /* -------------------------------------------------------------------- */
+    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
 
     return poDS;
 }
@@ -223,20 +213,18 @@ GDALDataset *GSCDataset::Open( GDALOpenInfo * poOpenInfo )
 void GDALRegister_GSC()
 
 {
-    if( GDALGetDriverByName( "GSC" ) != NULL )
+    if (GDALGetDriverByName("GSC") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "GSC" );
-    poDriver->SetMetadataItem( GDAL_DCAP_RASTER, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "GSC Geogrid" );
-    // poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC,
-    //                            "frmt_various.html#GSC" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription("GSC");
+    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "GSC Geogrid");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/gsc.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 
     poDriver->pfnOpen = GSCDataset::Open;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

@@ -1,7 +1,7 @@
 /*                       S U M M A R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2022 United States Government as represented by
+ * Copyright (c) 1990-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #include "./iges_extern.h"
 
 void
-Summary()
+Summary(void)
 {
     size_t i;
     size_t indep_entities = 0;
@@ -45,7 +45,7 @@ Summary()
 
 
 void
-Zero_counts()
+Zero_counts(void)
 {
     size_t i;
 

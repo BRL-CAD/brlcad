@@ -54,7 +54,7 @@ proc colorsFree {w {red 31} {green 245} {blue 192}} {
 
 
 test frame-1.1 {frame configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f -class NewFrame
     .f configure -class
@@ -71,7 +71,7 @@ test frame-1.2 {frame configuration options} -setup {
 } -returnCodes error -result {can't modify -class option after widget is created}
 
 test frame-1.3 {frame configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f -colormap new
     .f configure -colormap
@@ -88,7 +88,7 @@ test frame-1.4 {frame configuration options} -setup {
 } -returnCodes error -result {can't modify -colormap option after widget is created}
 
 test frame-1.5 {frame configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f -visual default
     .f configure -visual
@@ -105,14 +105,14 @@ test frame-1.6 {frame configuration options} -setup {
 } -returnCodes error -result {can't modify -visual option after widget is created}
 
 test frame-1.7 {frame configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f -screen bogus
 } -cleanup {
     deleteWindows
 } -returnCodes error -result {unknown option "-screen"}
 test frame-1.8 {frame configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f -container true
 } -cleanup {
@@ -127,14 +127,14 @@ test frame-1.9 {frame configuration options} -setup {
     deleteWindows
 } -result {-container container Container 0 1}
 test frame-1.10 {frame configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f -container bogus
 } -cleanup {
     deleteWindows
 } -returnCodes error -result {expected boolean value but got "bogus"}
 test frame-1.11 {frame configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f
     .f configure -container 1
@@ -142,7 +142,7 @@ test frame-1.11 {frame configuration options} -setup {
     deleteWindows
 } -returnCodes error -result {can't modify -container option after widget is created}
 test frame-1.12 {frame configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     # Make sure all options can be set to the default value
     frame .f
@@ -287,7 +287,7 @@ destroy .f
 
 
 test frame-2.1 {toplevel configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 200 -height 100 -class NewClass
     wm geometry .t +0+0
@@ -306,7 +306,7 @@ test frame-2.2 {toplevel configuration options} -setup {
 } -returnCodes error -result {can't modify -class option after widget is created}
 
 test frame-2.3 {toplevel configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 200 -height 100 -colormap new
     wm geometry .t +0+0
@@ -325,7 +325,7 @@ test frame-2.4 {toplevel configuration options} -setup {
 } -returnCodes error -result {can't modify -colormap option after widget is created}
 
 test frame-2.5 {toplevel configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 200 -height 100
     wm geometry .t +0+0
@@ -346,7 +346,7 @@ test frame-2.6 {toplevel configuration options} -setup {
 } -result {-container container Container 0 0}
 
 test frame-2.7 {toplevel configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 200 -height 100 -colormap bogus
 } -cleanup {
@@ -357,7 +357,7 @@ test frame-2.7 {toplevel configuration options} -setup {
 test frame-2.8 {toplevel configuration options} -constraints {
     win
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     catch {destroy .t}
     toplevel .t -width 200 -height 100
@@ -395,7 +395,7 @@ test frame-2.10 {toplevel configuration options} -constraints {
 test frame-2.11 {toplevel configuration options} -constraints {
     nonwin
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     catch {destroy .t}
     toplevel .t -width 200 -height 100
@@ -407,7 +407,7 @@ test frame-2.11 {toplevel configuration options} -constraints {
 } -result {-use use Use {} {}}
 
 test frame-2.12 {toplevel configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     catch {destroy .t}
     toplevel .t -width 200 -height 100 -visual default
@@ -428,14 +428,14 @@ test frame-2.13 {toplevel configuration options} -setup {
 } -returnCodes error -result {can't modify -visual option after widget is created}
 
 test frame-2.14 {toplevel configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 200 -height 100 -visual who_knows?
 } -cleanup {
     deleteWindows
 } -returnCodes error -result {unknown or ambiguous visual name "who_knows?": class must be best, directcolor, grayscale, greyscale, pseudocolor, staticcolor, staticgray, staticgrey, truecolor, or default}
 test frame-2.15 {toplevel configuration options} -constraints haveDISPLAY -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 200 -height 100 -screen $env(DISPLAY)
     wm geometry .t +0+0
@@ -454,14 +454,14 @@ test frame-2.16 {toplevel configuration options} -constraints haveDISPLAY -setup
 } -returnCodes error -result {can't modify -screen option after widget is created}
 
 test frame-2.17 {toplevel configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 200 -height 100 -screen bogus
 } -cleanup {
     deleteWindows
 } -returnCodes error -result {couldn't connect to display "bogus"}
 test frame-2.18 {toplevel configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -container 1 -width 300 -height 120
     wm geometry .t +0+0
@@ -470,7 +470,7 @@ test frame-2.18 {toplevel configuration options} -setup {
     deleteWindows
 } -returnCodes error -result {windows cannot have both the -use and the -container option set}
 test frame-2.19 {toplevel configuration options} -setup {
-	deleteWindows
+    deleteWindows
     set opts {}
 } -body {
     # Make sure all options can be set to the default value
@@ -582,7 +582,7 @@ test frame-3.1 {TkCreateFrame procedure} -body {
     frame
 } -returnCodes error -result {wrong # args: should be "frame pathName ?-option value ...?"}
 test frame-3.2 {TkCreateFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
     frame .f
 } -body {
     .f configure -class
@@ -590,7 +590,7 @@ test frame-3.2 {TkCreateFrame procedure} -setup {
     deleteWindows
 } -result {-class class Class Frame Frame}
 test frame-3.3 {TkCreateFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
     toplevel .t
     wm geometry .t +0+0
 } -body {
@@ -599,7 +599,7 @@ test frame-3.3 {TkCreateFrame procedure} -setup {
     deleteWindows
 } -result {-class class Class Toplevel Toplevel}
 test frame-3.4 {TkCreateFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 350 -class NewClass -bg black -visual default -height 90
     wm geometry .t +0+0
@@ -614,7 +614,7 @@ test frame-3.4 {TkCreateFrame procedure} -setup {
 # Be sure that the -class, -colormap, and -visual options are processed
 # before configuring the widget.
 test frame-3.5 {TkCreateFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     option add *NewFrame.background #123456
     frame .f -class NewFrame
@@ -624,7 +624,7 @@ test frame-3.5 {TkCreateFrame procedure} -setup {
     option clear
 } -result {#123456}
 test frame-3.7 {TkCreateFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     option add *NewFrame.background #332211
     option add *f.class NewFrame
@@ -635,7 +635,7 @@ test frame-3.7 {TkCreateFrame procedure} -setup {
     option clear
 } -result {NewFrame #332211}
 test frame-3.8 {TkCreateFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     option add *Silly.background #122334
     option add *f.Class Silly
@@ -648,7 +648,7 @@ test frame-3.8 {TkCreateFrame procedure} -setup {
 test frame-3.9 {TkCreateFrame procedure, -use option} -constraints {
     unix
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -container 1 -width 300 -height 120
     wm geometry .t +0+0
@@ -658,12 +658,6 @@ test frame-3.9 {TkCreateFrame procedure, -use option} -constraints {
 	    [expr {[winfo rooty .x] - [winfo rooty .t]}] \
 	    [winfo width .t] [winfo height .t]
 } -cleanup {
-# This call to update idletasks was added to prevent a crash that was
-# observed on OSX 10.12 (Sierra) only.  Any change, such as using the
-# Development version to make debugging symbols available, adding a print
-# statement, or calling update idletasks here, would make the test pass
-# with no segfault.
-    update idletasks
     deleteWindows
 } -result {0 0 140 300}
 test frame-3.10 {TkCreateFrame procedure, -use option} -constraints {
@@ -704,7 +698,7 @@ if {[testConstraint defaultPseudocolor8]} {
 test frame-3.11 {TkCreateFrame procedure} -constraints {
 	defaultPseudocolor8 nonPortable
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 300 -height 200 -bg #475601
     wm geometry .t +0+0
@@ -716,7 +710,7 @@ test frame-3.11 {TkCreateFrame procedure} -constraints {
 test frame-3.12 {TkCreateFrame procedure} -constraints {
 	defaultPseudocolor8 nonPortable
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 300 -height 200 -bg #475601 -colormap new
     wm geometry .t +0+0
@@ -728,7 +722,7 @@ test frame-3.12 {TkCreateFrame procedure} -constraints {
 test frame-3.13 {TkCreateFrame procedure} -constraints {
 	defaultPseudocolor8 nonPortable
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     option add *t.class Toplevel2
     option add *Toplevel2.colormap new
@@ -743,7 +737,7 @@ test frame-3.13 {TkCreateFrame procedure} -constraints {
 test frame-3.14 {TkCreateFrame procedure} -constraints {
 	defaultPseudocolor8 nonPortable
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     option add *t.class Toplevel3
     option add *Toplevel3.Colormap new
@@ -771,7 +765,7 @@ test frame-3.15 {TkCreateFrame procedure, -use and -colormap} -constraints {
 test frame-3.16 {TkCreateFrame procedure} -constraints {
 	defaultPseudocolor8 nonPortable
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 300 -height 200 -bg #475601 -visual default
     wm geometry .t +0+0
@@ -783,7 +777,7 @@ test frame-3.16 {TkCreateFrame procedure} -constraints {
 test frame-3.17 {TkCreateFrame procedure} -constraints {
 	defaultPseudocolor8 nonPortable
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 300 -height 200 -bg #475601 -visual default \
 	    -colormap new
@@ -796,7 +790,7 @@ test frame-3.17 {TkCreateFrame procedure} -constraints {
 test frame-3.18 {TkCreateFrame procedure} -constraints {
 	defaultPseudocolor8 haveGrayscale8 nonPortable
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -visual {grayscale 8} -width 300 -height 200 -bg #434343
     wm geometry .t +0+0
@@ -808,7 +802,7 @@ test frame-3.18 {TkCreateFrame procedure} -constraints {
 test frame-3.19 {TkCreateFrame procedure} -constraints {
 	defaultPseudocolor8 haveGrayscale8 nonPortable
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     option add *t.class T4
     option add *T4.visual {grayscale 8}
@@ -823,7 +817,7 @@ test frame-3.19 {TkCreateFrame procedure} -constraints {
 test frame-3.20 {TkCreateFrame procedure} -constraints {
 	defaultPseudocolor8 haveGrayscale8 nonPortable
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     set x ok
     option add *t.class T5
@@ -839,7 +833,7 @@ test frame-3.20 {TkCreateFrame procedure} -constraints {
 test frame-3.21 {TkCreateFrame procedure} -constraints {
 	defaultPseudocolor8 haveGrayscale8 nonPortable
 } -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     set x ok
     toplevel .t -visual {grayscale 8} -width 300 -height 200 -bg #434343
@@ -854,7 +848,7 @@ if {[testConstraint defaultPseudocolor8]} {
 }
 
 test frame-3.22 {TkCreateFrame procedure, default dimensions} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t
     wm geometry .t +0+0
@@ -881,13 +875,13 @@ test frame-3.24 {TkCreateFrame procedure} -setup {
 
 
 test frame-4.1 {TkCreateFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     catch {frame .f -gorp glob}
     winfo exists .f
 } -result 0
 test frame-4.2 {TkCreateFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     list [frame .f -width 200 -height 100] [winfo exists .f]
 } -cleanup {
@@ -944,7 +938,7 @@ test frame-5.13 {FrameWidgetCommand procedure, configure option} -body {
 destroy .f
 
 test frame-6.1 {ConfigureFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f -width 150
     list [winfo reqwidth .f] [winfo reqheight .f]
@@ -952,7 +946,7 @@ test frame-6.1 {ConfigureFrame procedure} -setup {
     deleteWindows
 } -result {150 1}
 test frame-6.2 {ConfigureFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f -height 97
     list [winfo reqwidth .f] [winfo reqheight .f]
@@ -960,7 +954,7 @@ test frame-6.2 {ConfigureFrame procedure} -setup {
     deleteWindows
 } -result {1 97}
 test frame-6.3 {ConfigureFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f
     set result {}
@@ -974,7 +968,7 @@ test frame-6.3 {ConfigureFrame procedure} -setup {
 } -result {1 1 100 180 100 180}
 
 test frame-7.1 {FrameEventProc procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .frame2
     set result [info commands .frame2]
@@ -982,7 +976,7 @@ test frame-7.1 {FrameEventProc procedure} -setup {
     lappend result [info commands .frame2]
 } -result {.frame2 {}}
 test frame-7.2 {FrameEventProc procedure} -setup {
-	deleteWindows
+    deleteWindows
     set x {}
 } -body {
     frame .f1 -bg #543210
@@ -996,7 +990,7 @@ test frame-7.2 {FrameEventProc procedure} -setup {
 } -result {.f1 #543210 {} {}}
 
 test frame-8.1 {FrameCmdDeletedProc procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     frame .f1
     rename .f1 {}
@@ -1005,7 +999,7 @@ test frame-8.1 {FrameCmdDeletedProc procedure} -setup {
     deleteWindows
 } -result {{} {}}
 test frame-8.2 {FrameCmdDeletedProc procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .f1 -menu .m
     wm geometry .f1 +0+0
@@ -1036,18 +1030,18 @@ test frame-8.2 {FrameCmdDeletedProc procedure} -setup {
 #} -result {{} .m}
 
 test frame-9.1 {MapFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 100 -height 400
     wm geometry .t +0+0
     set result [winfo ismapped .t]
-    update idletasks
+    update
     lappend result [winfo ismapped .t]
 } -cleanup {
     deleteWindows
 } -result {0 1}
 test frame-9.2 {MapFrame procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t -width 100 -height 400
     wm geometry .t +0+0
@@ -1056,7 +1050,7 @@ test frame-9.2 {MapFrame procedure} -setup {
     winfo exists .t
 } -result {0}
 test frame-9.3 {MapFrame procedure, window deleted while mapping} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     toplevel .t2 -width 200 -height 200
     wm geometry .t2 +0+0
@@ -1066,7 +1060,7 @@ test frame-9.3 {MapFrame procedure, window deleted while mapping} -setup {
     frame .t2.f -width 50 -height 50
     bind .t2.f <Configure> {destroy .t}
     pack .t2.f -side top
-    update idletasks
+    update
     winfo exists .t
 } -cleanup {
     deleteWindows
@@ -1074,7 +1068,7 @@ test frame-9.3 {MapFrame procedure, window deleted while mapping} -setup {
 
 
 test frame-10.1 {frame widget vs hidden commands} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     set l [interp hidden]
     frame .t
@@ -1087,7 +1081,7 @@ test frame-10.1 {frame widget vs hidden commands} -setup {
 
 
 test frame-11.1 {TkInstallFrameMenu} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     menu .m1
     .m1 add cascade -menu .m1.system
@@ -1098,7 +1092,7 @@ test frame-11.1 {TkInstallFrameMenu} -setup {
     deleteWindows
 } -result {.t}
 test frame-11.2 {TkInstallFrameMenu - frame renamed} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     catch {rename foo {}}
     menu .m1
@@ -1113,7 +1107,7 @@ test frame-11.2 {TkInstallFrameMenu - frame renamed} -setup {
 
 
 test frame-12.1 {FrameWorldChanged procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     # Test -bd -padx and -pady
     frame .f -borderwidth 2 -padx 3 -pady 4
@@ -1125,7 +1119,7 @@ test frame-12.1 {FrameWorldChanged procedure} -setup {
     deleteWindows
 } -result {5 6 30 28}
 test frame-12.2 {FrameWorldChanged procedure} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     # Test all -labelanchor positions
     set font {helvetica 12}
@@ -1161,27 +1155,19 @@ test frame-12.2 {FrameWorldChanged procedure} -setup {
     deleteWindows
 } -result {1 1 1 1 1 1 1 1 1 1 1 1}
 test frame-12.3 {FrameWorldChanged procedure} -setup {
-	deleteWindows
-	update idletasks
+    deleteWindows
 } -body {
     # Check reaction on font change
     font create myfont -family courier -size 10
     labelframe .f -font myfont -text Mupp
     place .f -x 0 -y 0 -width 40 -height 40
     pack [frame .f.f] -fill both -expand 1
-    if {[tk windowingsystem] eq "aqua"} {
-	update idletasks
-    } else {
-	update
-    }
+    update
     set h1 [font metrics myfont -linespace]
     set y1 [winfo y .f.f]
     font configure myfont -size 20
-    if {[tk windowingsystem] eq "aqua"} {
-	update idletasks
-    } else {
-	update
-    }
+    update  ; # services the "TheWorldHasChanged" event, queues "TkWorldChanged" events
+    update  ; # services the queued "TkWorldChanged" events
     set h2 [font metrics myfont -linespace]
     set y2 [winfo y .f.f]
     expr {($h2 - $h1) - ($y2 - $y1)}
@@ -1208,28 +1194,28 @@ test frame-13.2 {labelframe configuration options} -setup {
     deleteWindows
 } -returnCodes error -result {can't modify -class option after widget is created}
 test frame-13.3 {labelframe configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     labelframe .f -colormap new
 } -cleanup {
     deleteWindows
 } -result {.f}
 test frame-13.4 {labelframe configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     labelframe .f -visual default
 } -cleanup {
     deleteWindows
 } -result {.f}
 test frame-13.5 {labelframe configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     labelframe .f -screen bogus
 } -cleanup {
     deleteWindows
 } -returnCodes error -result {unknown option "-screen"}
 test frame-13.6 {labelframe configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     labelframe .f -container true
 } -cleanup {
@@ -1244,14 +1230,14 @@ test frame-13.7 {labelframe configuration options} -setup {
     deleteWindows
 } -result {-container container Container 0 1}
 test frame-13.8 {labelframe configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
      labelframe .f -container bogus
 } -cleanup {
     deleteWindows
 } -returnCodes error -result {expected boolean value but got "bogus"}
 test frame-13.9 {labelframe configuration options} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     labelframe .f
     .f configure -container 1
@@ -1427,7 +1413,7 @@ destroy .f
 
 
 test frame-14.1 {labelframe labelwidget option} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     # Test that label is moved in stacking order
     label .l -text Mupp -font {helvetica 8}
@@ -1442,7 +1428,7 @@ test frame-14.1 {labelframe labelwidget option} -setup {
     deleteWindows
 } -result {{.f .l} 54 52}
 test frame-14.2 {labelframe labelwidget option} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     # Test the labelframe's reaction if the label is destroyed
     label .l -text Aratherlonglabel
@@ -1461,7 +1447,7 @@ test frame-14.2 {labelframe labelwidget option} -setup {
     deleteWindows
 } -result {.l 12 {} 4}
 test frame-14.3 {labelframe labelwidget option} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     # Test the labelframe's reaction if the label is stolen
     label .l -text Aratherlonglabel
@@ -1480,7 +1466,7 @@ test frame-14.3 {labelframe labelwidget option} -setup {
     deleteWindows
 } -result {.l 12 {} 4}
 test frame-14.4 {labelframe labelwidget option} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     # Test the label's reaction if the labelframe is destroyed
     label .l -text Mupp
@@ -1494,7 +1480,7 @@ test frame-14.4 {labelframe labelwidget option} -setup {
     deleteWindows
 } -result {labelframe {}}
 test frame-14.5 {labelframe labelwidget option} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     # Test that the labelframe reacts on changes in label
     label .l -text Aratherlonglabel
@@ -1517,7 +1503,7 @@ test frame-14.5 {labelframe labelwidget option} -setup {
     deleteWindows
 } -result {12 12 1 12 1}
 test frame-14.6 {labelframe labelwidget option} -setup {
-	deleteWindows
+    deleteWindows
 } -body {
     # Destroying a labelframe with a child label caused a crash
     # when not handling mapping of the label correctly.

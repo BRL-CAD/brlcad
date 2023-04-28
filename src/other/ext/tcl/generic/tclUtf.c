@@ -448,8 +448,7 @@ Tcl_UtfToUniChar(
 	 * A three-byte-character lead-byte not followed by two trail-bytes
 	 * represents itself.
 	 */
-    }
-    else if (byte < 0xF5) {
+    } else if (byte < 0xF5) {
 	if (((src[1] & 0xC0) == 0x80) && ((src[2] & 0xC0) == 0x80)) {
 	    /*
 	     * Four-byte-character lead byte followed by at least two trail bytes.

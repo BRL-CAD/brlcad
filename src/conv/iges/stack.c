@@ -1,7 +1,7 @@
 /*                         S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2022 United States Government as represented by
+ * Copyright (c) 1990-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@ static union tree **stk;
 static int jtop, stklen;
 
 void
-Initstack()
+Initstack(void)
 {
 
     jtop = (-1);
@@ -65,7 +65,7 @@ Push(union tree *ptr)
 
 
 union tree *
-Pop()
+Pop(void)
 {
     union tree *ptr;
 
@@ -81,7 +81,7 @@ Pop()
 
 
 void
-Freestack()
+Freestack(void)
 {
     jtop = (-1);
     return;

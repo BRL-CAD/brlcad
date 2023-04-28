@@ -2,10 +2,10 @@
  *
  * Project:  PDS Translator
  * Purpose:  Implements OGRPDSDriver.
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,8 +29,6 @@
 #include "cpl_conv.h"
 #include "ogr_pds.h"
 
-CPL_CVSID("$Id$");
-
 extern "C" void RegisterOGRPDS();
 
 using namespace OGRPDS;
@@ -39,22 +37,22 @@ using namespace OGRPDS;
 /*                                Open()                                */
 /************************************************************************/
 
-static GDALDataset *OGRPDSDriverOpen( GDALOpenInfo* poOpenInfo )
+static GDALDataset *OGRPDSDriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if( poOpenInfo->eAccess == GA_Update ||
-        poOpenInfo->fpL == NULL )
-        return NULL;
+    if (poOpenInfo->eAccess == GA_Update || poOpenInfo->fpL == nullptr)
+        return nullptr;
 
-    if( strstr((const char*)poOpenInfo->pabyHeader, "PDS_VERSION_ID") == NULL )
-        return NULL;
+    if (strstr((const char *)poOpenInfo->pabyHeader, "PDS_VERSION_ID") ==
+        nullptr)
+        return nullptr;
 
     OGRPDSDataSource *poDS = new OGRPDSDataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename ) )
+    if (!poDS->Open(poOpenInfo->pszFilename))
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -67,19 +65,20 @@ static GDALDataset *OGRPDSDriverOpen( GDALOpenInfo* poOpenInfo )
 void RegisterOGRPDS()
 
 {
-    if( GDALGetDriverByName( "OGR_PDS" ) != NULL )
+    if (GDALGetDriverByName("OGR_PDS") != nullptr)
         return;
 
     GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "OGR_PDS" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "Planetary Data Systems TABLE" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_pds.html" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetDescription("OGR_PDS");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "Planetary Data Systems TABLE");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/pds.html");
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
     poDriver->pfnOpen = OGRPDSDriverOpen;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

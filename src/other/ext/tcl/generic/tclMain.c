@@ -28,7 +28,7 @@
  * The default prompt used when the user has not overridden it.
  */
 
-#define DEFAULT_PRIMARY_PROMPT	"% "
+static const char DEFAULT_PRIMARY_PROMPT[] = "% ";
 
 /*
  * This file can be compiled on Windows in UNICODE mode, as well as on all
@@ -95,7 +95,7 @@ typedef enum {
     PROMPT_CONTINUE		/* Print prompt for command continuation */
 } PromptType;
 
-typedef struct InteractiveState {
+typedef struct {
     Tcl_Channel input;		/* The standard input channel from which lines
 				 * are read. */
     int tty;			/* Non-zero means standard input is a
@@ -229,7 +229,7 @@ Tcl_SourceRCFile(
     const char *fileName;
     Tcl_Channel chan;
 
-    fileName = Tcl_GetVar(interp, "tcl_rcFileName", TCL_GLOBAL_ONLY);
+    fileName = Tcl_GetVar2(interp, "tcl_rcFileName", NULL, TCL_GLOBAL_ONLY);
     if (fileName != NULL) {
 	Tcl_Channel c;
 	const char *fullName;
@@ -515,7 +515,7 @@ Tcl_MainEx(
 	     * error messages troubles deeper in, so lop it back off.
 	     */
 
-	    Tcl_GetStringFromObj(is.commandPtr, &length);
+	    (void)Tcl_GetStringFromObj(is.commandPtr, &length);
 	    Tcl_SetObjLength(is.commandPtr, --length);
 	    code = Tcl_RecordAndEvalObj(interp, is.commandPtr,
 		    TCL_EVAL_GLOBAL);
@@ -532,7 +532,7 @@ Tcl_MainEx(
 	    } else if (is.tty) {
 		resultPtr = Tcl_GetObjResult(interp);
 		Tcl_IncrRefCount(resultPtr);
-		Tcl_GetStringFromObj(resultPtr, &length);
+		(void)Tcl_GetStringFromObj(resultPtr, &length);
 		chan = Tcl_GetStdChannel(TCL_STDOUT);
 		if ((length > 0) && chan) {
 		    Tcl_WriteObj(chan, resultPtr);
@@ -745,17 +745,18 @@ TclFullFinalizationRequested(void)
  *----------------------------------------------------------------------
  */
 
-    /* ARGSUSED */
 static void
 StdinProc(
     ClientData clientData,	/* The state of interactive cmd line */
     int mask)			/* Not used. */
 {
-    int code, length;
-    InteractiveState *isPtr = clientData;
+    int code;
+    int length;
+    InteractiveState *isPtr = (InteractiveState *)clientData;
     Tcl_Channel chan = isPtr->input;
     Tcl_Obj *commandPtr = isPtr->commandPtr;
     Tcl_Interp *interp = isPtr->interp;
+    (void)mask;
 
     if (Tcl_IsShared(commandPtr)) {
 	Tcl_DecrRefCount(commandPtr);
@@ -791,7 +792,7 @@ StdinProc(
 	goto prompt;
     }
     isPtr->prompt = PROMPT_START;
-    Tcl_GetStringFromObj(commandPtr, &length);
+    (void)Tcl_GetStringFromObj(commandPtr, &length);
     Tcl_SetObjLength(commandPtr, --length);
 
     /*
@@ -823,7 +824,7 @@ StdinProc(
 	chan = Tcl_GetStdChannel(TCL_STDOUT);
 
 	Tcl_IncrRefCount(resultPtr);
-	Tcl_GetStringFromObj(resultPtr, &length);
+	(void)Tcl_GetStringFromObj(resultPtr, &length);
 	if ((length > 0) && (chan != NULL)) {
 	    Tcl_WriteObj(chan, resultPtr);
 	    Tcl_WriteChars(chan, "\n", 1);
@@ -886,7 +887,7 @@ Prompt(
 	    chan = Tcl_GetStdChannel(TCL_STDOUT);
 	    if (chan != NULL) {
 		Tcl_WriteChars(chan, DEFAULT_PRIMARY_PROMPT,
-			strlen(DEFAULT_PRIMARY_PROMPT));
+			sizeof(DEFAULT_PRIMARY_PROMPT) - 1);
 	    }
 	}
     } else {
@@ -925,7 +926,7 @@ static void
 FreeMainInterp(
     ClientData clientData)
 {
-    Tcl_Interp *interp = clientData;
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
 
     /*if (TclInExit()) return;*/
 

@@ -247,9 +247,9 @@ MODULE_SCOPE void Ttk_TagSetApplyStyle(Ttk_TagTable,Ttk_Style,Ttk_State,void*);
  * String tables for widget resource specifications:
  */
 
-MODULE_SCOPE const char *ttkOrientStrings[];
-MODULE_SCOPE const char *ttkCompoundStrings[];
-MODULE_SCOPE const char *ttkDefaultStrings[];
+MODULE_SCOPE const char *const ttkOrientStrings[];
+MODULE_SCOPE const char *const ttkCompoundStrings[];
+MODULE_SCOPE const char *const ttkDefaultStrings[];
 
 /*
  * ... other option types...

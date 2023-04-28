@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2022 United States Government as represented by
+# Copyright (c) 2010-2023 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,11 +47,18 @@ include_directories(
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
 
-add_executable(debug2c debug2c.cxx)
+add_executable(debug2c debug2c.cpp)
 if (O3_COMPILER_FLAG)
   # If we have the O3 flag, use it
   target_compile_options(debug2c PRIVATE "-O3")
 endif (O3_COMPILER_FLAG)
+
+if(COMMAND CMAKEFILES)
+  CMAKEFILES(
+    CMakeLists.txt
+    debug2c.cpp
+    )
+endif()
 
 # Local Variables:
 # tab-width: 8

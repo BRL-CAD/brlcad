@@ -4,9 +4,10 @@
  *	Contains the Mac implementation of the common dialog boxes.
  *
  * Copyright (c) 1996-1997 Sun Microsystems, Inc.
- * Copyright 2001-2009, Apple Inc.
+ * Copyright (c) 2001-2009, Apple Inc.
  * Copyright (c) 2006-2009 Daniel A. Steffen <das@users.sourceforge.net>
- * Copyright (c) 2017 Christian Gollwitzer.
+ * Copyright (c) 2017 Christian Gollwitzer
+ * Copyright (c) 2022 Marc Culler
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -25,6 +26,30 @@
 #endif // MAC_OS_X_VERSION_MIN_REQUIRED < 1090
 #define modalOther  -1 // indicates that the -command option was used.
 #define modalError  -2
+
+static void setAllowedFileTypes(
+    NSSavePanel *panel,
+    NSMutableArray *extensions)
+{
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 110000
+/* UTType exists in the SDK */
+    if (@available(macOS 11.0, *)) {
+	NSMutableArray<UTType *> *allowedTypes = [NSMutableArray array];
+	for (NSString *ext in extensions) {
+	    UTType *uttype = [UTType typeWithFilenameExtension: ext];
+	    [allowedTypes addObject:uttype];
+	}
+	[panel setAllowedContentTypes:allowedTypes];
+    } else {
+# if MAC_OS_X_VERSION_MIN_REQUIRED < 110000
+/* setAllowedFileTypes is not deprecated */
+	[panel setAllowedFileTypes:extensions];
+#endif
+    }
+#else
+    [panel setAllowedFileTypes:extensions];
+#endif
+}
 
 /*
  * Vars for filtering in "open file" and "save file" dialogs.
@@ -93,7 +118,7 @@ static const char *const chooseOptionStrings[] = {
 };
 enum chooseOptions {
     CHOOSE_INITDIR, CHOOSE_MESSAGE, CHOOSE_MUSTEXIST, CHOOSE_PARENT,
-    CHOOSE_TITLE, CHOOSE_COMMAND,
+    CHOOSE_TITLE, CHOOSE_COMMAND
 };
 typedef struct {
     Tcl_Interp *interp;
@@ -107,7 +132,7 @@ static const char *const alertOptionStrings[] = {
 };
 enum alertOptions {
     ALERT_DEFAULT, ALERT_DETAIL, ALERT_ICON, ALERT_MESSAGE, ALERT_PARENT,
-    ALERT_TITLE, ALERT_TYPE, ALERT_COMMAND,
+    ALERT_TITLE, ALERT_TYPE, ALERT_COMMAND
 };
 typedef struct {
     Tcl_Interp *interp;
@@ -219,9 +244,9 @@ getFileURL(
 
 - (void) tkFilePanelDidEnd: (NSSavePanel *) panel
 		returnCode: (NSModalResponse) returnCode
-	       contextInfo: (void *) contextInfo
+	       contextInfo: (const void *) contextInfo
 {
-    FilePanelCallbackInfo *callbackInfo = (FilePanelCallbackInfo *)contextInfo;
+    const FilePanelCallbackInfo *callbackInfo = (const FilePanelCallbackInfo *)contextInfo;
 
     if (returnCode == modalOK) {
 	Tcl_Obj *resultObj;
@@ -254,17 +279,11 @@ getFileURL(
     } else if (returnCode == modalCancel) {
 	Tcl_ResetResult(callbackInfo->interp);
     }
-    if (callbackInfo->cmdObj) {
-	Tcl_DecrRefCount(callbackInfo->cmdObj);
-    }
-    if (callbackInfo) {
-	ckfree(callbackInfo);
-    }
     [NSApp stopModalWithCode:returnCode];
 }
 
 - (void) tkAlertDidEnd: (NSAlert *) alert returnCode: (NSInteger) returnCode
-	contextInfo: (void *) contextInfo
+	contextInfo: (const void *) contextInfo
 {
     AlertCallbackInfo *callbackInfo = (AlertCallbackInfo *)contextInfo;
 
@@ -293,10 +312,6 @@ getFileURL(
     if ([alert window] == [NSApp modalWindow]) {
 	[NSApp stopModalWithCode:returnCode];
     }
-    if (callbackInfo->cmdObj) {
-	Tcl_DecrRefCount(callbackInfo->cmdObj);
-	ckfree(callbackInfo);
-    }
 }
 
 - (void)selectFormat:(id)sender  {
@@ -312,11 +327,11 @@ getFileURL(
 	 * any file.
 	 */
 
-	[openpanel setAllowedFileTypes:nil];
+	setAllowedFileTypes(openpanel, nil);
     } else {
 	NSMutableArray *allowedtypes =
 		[filterInfo.fileTypeExtensions objectAtIndex:filterInfo.fileTypeIndex];
-	[openpanel setAllowedFileTypes:allowedtypes];
+	setAllowedFileTypes(openpanel, allowedtypes);
 	[openpanel setAllowsOtherFileTypes:NO];
     }
 
@@ -329,11 +344,11 @@ getFileURL(
 
     if ([[filterInfo.fileTypeAllowsAll objectAtIndex:filterInfo.fileTypeIndex] boolValue]) {
 	[savepanel setAllowsOtherFileTypes:YES];
-	[savepanel setAllowedFileTypes:nil];
+	setAllowedFileTypes(savepanel, nil);
     } else {
 	NSMutableArray *allowedtypes =
 		[filterInfo.fileTypeExtensions objectAtIndex:filterInfo.fileTypeIndex];
-	[savepanel setAllowedFileTypes:allowedtypes];
+	setAllowedFileTypes(savepanel, allowedtypes);
 	[savepanel setAllowsOtherFileTypes:NO];
     }
 
@@ -347,10 +362,13 @@ getFileURL(
 static NSInteger showOpenSavePanel(
     NSSavePanel *panel,
     NSWindow *parent,
-    FilePanelCallbackInfo *callbackInfo)
+    Tcl_Interp *interp,
+    Tcl_Obj *cmdObj,
+    int multiple)
 {
     NSInteger modalReturnCode;
     int OSVersion = [NSApp macOSVersion];
+    const FilePanelCallbackInfo callbackInfo = {interp, cmdObj, multiple};
 
     /*
      * Use a sheet if -parent is specified (unless there is already a sheet).
@@ -362,7 +380,7 @@ static NSInteger showOpenSavePanel(
 			  completionHandler:^(NSModalResponse returnCode) {
 		    [NSApp tkFilePanelDidEnd:panel
 				  returnCode:returnCode
-				 contextInfo:callbackInfo ];
+				 contextInfo:&callbackInfo ];
 		}];
 	    modalReturnCode = [NSApp runModalForWindow:panel];
 	} else if (OSVersion < 110000) {
@@ -370,7 +388,7 @@ static NSInteger showOpenSavePanel(
 			  completionHandler:^(NSModalResponse returnCode) {
 		    [NSApp tkFilePanelDidEnd:panel
 				  returnCode:returnCode
-				 contextInfo:callbackInfo ];
+				 contextInfo:&callbackInfo ];
 		}];
 	    modalReturnCode = [panel runModal];
 	} else {
@@ -378,16 +396,16 @@ static NSInteger showOpenSavePanel(
 	    modalReturnCode = [panel runModal];
 	    [NSApp tkFilePanelDidEnd:panel
 			  returnCode:modalReturnCode
-			 contextInfo:callbackInfo ];
+			 contextInfo:&callbackInfo ];
 	    [parent endSheet:panel];
 	}
     } else {
 	modalReturnCode = [panel runModal];
 	[NSApp tkFilePanelDidEnd:panel
 		      returnCode:modalReturnCode
-		     contextInfo:callbackInfo ];
+		     contextInfo:&callbackInfo ];
     }
-    return callbackInfo->cmdObj ? modalOther : modalReturnCode;
+    return cmdObj ? modalOther : modalReturnCode;
 }
 
 /*
@@ -468,7 +486,7 @@ Tk_ChooseColorObjCmd(
     [colorPanel setShowsAlpha: NO];
     [colorPanel _setUseModalAppearance:YES];
     if (title) {
-	NSString *s = [[NSString alloc] initWithUTF8String:title];
+	NSString *s = [[TKNSString alloc] initWithTclUtfBytes:title length:-1];
 
 	[colorPanel setTitle:s];
 	[s release];
@@ -540,7 +558,7 @@ parseFileFilters(
     if (filterInfo.doFileTypes) {
 	for (FileFilter *filterPtr = fl.filters; filterPtr;
 		filterPtr = filterPtr->next) {
-	    NSString *name = [[NSString alloc] initWithUTF8String: filterPtr->name];
+	    NSString *name = [[TKNSString alloc] initWithTclUtfBytes: filterPtr->name length:-1];
 
 	    [filterInfo.fileTypeNames addObject:name];
 	    [name release];
@@ -558,7 +576,7 @@ parseFileFilters(
 		    	str++;
 		    }
 		    if (*str) {
-			NSString *extension = [[NSString alloc] initWithUTF8String:str];
+			NSString *extension = [[TKNSString alloc] initWithTclUtfBytes:str length:-1];
 			if (![filterInfo.allowedExtensions containsObject:extension]) {
 			    [filterInfo.allowedExtensions addObject:extension];
 			}
@@ -611,7 +629,7 @@ parseFileFilters(
 		const char *selectedFileType =
 			Tcl_GetString(selectedFileTypeObj);
 		NSString *selectedFileTypeStr =
-			[[NSString alloc] initWithUTF8String:selectedFileType];
+			[[TKNSString alloc] initWithTclUtfBytes:selectedFileType length:-1];
 		NSUInteger index =
 			[filterInfo.fileTypeNames indexOfObject:selectedFileTypeStr];
 
@@ -675,8 +693,6 @@ Tk_GetOpenFileObjCmd(
     int i, result = TCL_ERROR, haveParentOption = 0;
     int index, len, multiple = 0;
     Tcl_Obj *cmdObj = NULL, *typeVariablePtr = NULL, *fileTypesPtr = NULL;
-    FilePanelCallbackInfo callbackInfoStruct;
-    FilePanelCallbackInfo *callbackInfo = &callbackInfoStruct;
     NSString *directory = nil, *filename = nil;
     NSString *message = nil, *title = nil;
     NSWindow *parent;
@@ -704,20 +720,21 @@ Tk_GetOpenFileObjCmd(
 	case OPEN_INITDIR:
 	    str = Tcl_GetStringFromObj(objv[i + 1], &len);
 	    if (len) {
-		directory = [[[NSString alloc] initWithUTF8String:str]
+		directory = [[[TKNSString alloc] initWithTclUtfBytes:str length:len]
 			autorelease];
 	    }
 	    break;
 	case OPEN_INITFILE:
 	    str = Tcl_GetStringFromObj(objv[i + 1], &len);
 	    if (len) {
-		filename = [[[NSString alloc] initWithUTF8String:str]
+		filename = [[[TKNSString alloc] initWithTclUtfBytes:str length:len]
 			autorelease];
 	    }
 	    break;
 	case OPEN_MESSAGE:
-	    message = [[NSString alloc] initWithUTF8String:
-		    Tcl_GetString(objv[i + 1])];
+	    str = Tcl_GetStringFromObj(objv[i + 1], &len);
+	    message = [[TKNSString alloc] initWithTclUtfBytes:
+		    str length:len];
 	    break;
 	case OPEN_MULTIPLE:
 	    if (Tcl_GetBooleanFromObj(interp, objv[i + 1],
@@ -734,8 +751,9 @@ Tk_GetOpenFileObjCmd(
 	    haveParentOption = 1;
 	    break;
 	case OPEN_TITLE:
-	    title = [[NSString alloc] initWithUTF8String:
-		    Tcl_GetString(objv[i + 1])];
+	    str = Tcl_GetStringFromObj(objv[i + 1], &len);
+	    title = [[TKNSString alloc] initWithTclUtfBytes:
+		    str length:len];
 	    break;
 	case OPEN_TYPEVARIABLE:
 	    typeVariablePtr = objv[i + 1];
@@ -810,9 +828,9 @@ Tk_GetOpenFileObjCmd(
 	    [openpanel setAllowedFileTypes:filterInfo.fileTypeExtensions[filterInfo.fileTypeIndex]];
 	    */
 
-	    [openpanel setAllowedFileTypes:filterInfo.allowedExtensions];
+	    setAllowedFileTypes(openpanel, filterInfo.allowedExtensions);
 	} else {
-	    [openpanel setAllowedFileTypes:filterInfo.allowedExtensions];
+	    setAllowedFileTypes(openpanel, filterInfo.allowedExtensions);
 	}
 	if (filterInfo.allowedExtensionsAllowAll) {
 	    [openpanel setAllowsOtherFileTypes:YES];
@@ -833,10 +851,6 @@ Tk_GetOpenFileObjCmd(
 	}
 	Tcl_IncrRefCount(cmdObj);
     }
-    callbackInfo = (FilePanelCallbackInfo *)ckalloc(sizeof(FilePanelCallbackInfo));
-    callbackInfo->cmdObj = cmdObj;
-    callbackInfo->interp = interp;
-    callbackInfo->multiple = multiple;
     if (directory || filename) {
 	NSURL *fileURL = getFileURL(directory, filename);
 
@@ -849,7 +863,10 @@ Tk_GetOpenFileObjCmd(
 	parent = nil;
 	parentIsKey = False;
     }
-    modalReturnCode = showOpenSavePanel(openpanel, parent, callbackInfo);
+    modalReturnCode = showOpenSavePanel(openpanel, parent, interp, cmdObj, multiple);
+    if (cmdObj) {
+	Tcl_DecrRefCount(cmdObj);
+    }
     result = (modalReturnCode != modalError) ? TCL_OK : TCL_ERROR;
     if (parentIsKey) {
 	[parent makeKeyWindow];
@@ -948,8 +965,6 @@ Tk_GetSaveFileObjCmd(
     int confirmOverwrite = 1;
     int index, len;
     Tcl_Obj *cmdObj = NULL, *typeVariablePtr = NULL, *fileTypesPtr = NULL;
-    FilePanelCallbackInfo callbackInfoStruct;
-    FilePanelCallbackInfo *callbackInfo = &callbackInfoStruct;
     NSString *directory = nil, *filename = nil, *defaultType = nil;
     NSString *message = nil, *title = nil;
     NSWindow *parent;
@@ -972,10 +987,10 @@ Tk_GetSaveFileObjCmd(
 	    case SAVE_DEFAULT:
 		str = Tcl_GetStringFromObj(objv[i + 1], &len);
 		while (*str && (*str == '*' || *str == '.')) {
-		    str++;
+		    str++; len--;
 		}
 		if (*str) {
-		    defaultType = [[[NSString alloc] initWithUTF8String:str]
+		    defaultType = [[[TKNSString alloc] initWithTclUtfBytes:str length:len]
 			    autorelease];
 		}
 		break;
@@ -985,21 +1000,22 @@ Tk_GetSaveFileObjCmd(
 	    case SAVE_INITDIR:
 		str = Tcl_GetStringFromObj(objv[i + 1], &len);
 		if (len) {
-		    directory = [[[NSString alloc] initWithUTF8String:str]
+		    directory = [[[TKNSString alloc] initWithTclUtfBytes:str length:len]
 			    autorelease];
 		}
 		break;
 	    case SAVE_INITFILE:
 		str = Tcl_GetStringFromObj(objv[i + 1], &len);
 		if (len) {
-		    filename = [[[NSString alloc] initWithUTF8String:str]
+		    filename = [[[TKNSString alloc] initWithTclUtfBytes:str length:len]
 			    autorelease];
 		    [savepanel setNameFieldStringValue:filename];
 		}
 		break;
 	    case SAVE_MESSAGE:
-		message = [[NSString alloc] initWithUTF8String:
-			Tcl_GetString(objv[i + 1])];
+		str = Tcl_GetStringFromObj(objv[i + 1], &len);
+		message = [[TKNSString alloc] initWithTclUtfBytes:
+			str length:len];
 		break;
 	    case SAVE_PARENT:
 		str = Tcl_GetStringFromObj(objv[i + 1], &len);
@@ -1010,8 +1026,9 @@ Tk_GetSaveFileObjCmd(
 		haveParentOption = 1;
 		break;
 	    case SAVE_TITLE:
-		title = [[NSString alloc] initWithUTF8String:
-			Tcl_GetString(objv[i + 1])];
+		str = Tcl_GetStringFromObj(objv[i + 1], &len);
+		title = [[TKNSString alloc] initWithTclUtfBytes:
+			str length:len];
 		break;
 	    case SAVE_TYPEVARIABLE:
 		typeVariablePtr = objv[i + 1];
@@ -1084,7 +1101,8 @@ Tk_GetSaveFileObjCmd(
 
 	[savepanel setAccessoryView:accessoryView];
 
-	[savepanel setAllowedFileTypes:[filterInfo.fileTypeExtensions objectAtIndex:filterInfo.fileTypeIndex]];
+	setAllowedFileTypes(savepanel,
+	    [filterInfo.fileTypeExtensions objectAtIndex:filterInfo.fileTypeIndex]);
 	[savepanel setAllowsOtherFileTypes:filterInfo.allowedExtensionsAllowAll];
     } else if (defaultType) {
 	/*
@@ -1096,7 +1114,7 @@ Tk_GetSaveFileObjCmd(
 	NSMutableArray *AllowedFileTypes = [NSMutableArray array];
 
 	[AllowedFileTypes addObject:defaultType];
-	[savepanel setAllowedFileTypes:AllowedFileTypes];
+	setAllowedFileTypes(savepanel, AllowedFileTypes);
 	[savepanel setAllowsOtherFileTypes:YES];
     }
 
@@ -1109,10 +1127,6 @@ Tk_GetSaveFileObjCmd(
 	}
 	Tcl_IncrRefCount(cmdObj);
     }
-    callbackInfo = (FilePanelCallbackInfo *)ckalloc(sizeof(FilePanelCallbackInfo));
-    callbackInfo->cmdObj = cmdObj;
-    callbackInfo->interp = interp;
-    callbackInfo->multiple = 0;
 
     if (directory) {
 	[savepanel setDirectoryURL:[NSURL fileURLWithPath:directory isDirectory:YES]];
@@ -1135,7 +1149,10 @@ Tk_GetSaveFileObjCmd(
 	parent = nil;
 	parentIsKey = False;
     }
-    modalReturnCode = showOpenSavePanel(savepanel, parent, callbackInfo);
+    modalReturnCode = showOpenSavePanel(savepanel, parent, interp, cmdObj, 0);
+    if (cmdObj) {
+	Tcl_DecrRefCount(cmdObj);
+    }
     result = (modalReturnCode != modalError) ? TCL_OK : TCL_ERROR;
     if (parentIsKey) {
 	[parent makeKeyWindow];
@@ -1189,8 +1206,6 @@ Tk_ChooseDirectoryObjCmd(
     int i, result = TCL_ERROR, haveParentOption = 0;
     int index, len, mustexist = 0;
     Tcl_Obj *cmdObj = NULL;
-    FilePanelCallbackInfo callbackInfoStruct;
-    FilePanelCallbackInfo *callbackInfo = &callbackInfoStruct;
     NSString *directory = nil;
     NSString *message, *title;
     NSWindow *parent;
@@ -1213,13 +1228,14 @@ Tk_ChooseDirectoryObjCmd(
 	case CHOOSE_INITDIR:
 	    str = Tcl_GetStringFromObj(objv[i + 1], &len);
 	    if (len) {
-		directory = [[[NSString alloc] initWithUTF8String:str]
+		directory = [[[TKNSString alloc] initWithTclUtfBytes:str length:len]
 			autorelease];
 	    }
 	    break;
 	case CHOOSE_MESSAGE:
-	    message = [[NSString alloc] initWithUTF8String:
-		    Tcl_GetString(objv[i + 1])];
+	    str = Tcl_GetStringFromObj(objv[i + 1], &len);
+	    message = [[TKNSString alloc] initWithTclUtfBytes:
+		    str length:len];
 	    [panel setMessage:message];
 	    [message release];
 	    break;
@@ -1238,8 +1254,9 @@ Tk_ChooseDirectoryObjCmd(
 	    haveParentOption = 1;
 	    break;
 	case CHOOSE_TITLE:
-	    title = [[NSString alloc] initWithUTF8String:
-		    Tcl_GetString(objv[i + 1])];
+	    str = Tcl_GetStringFromObj(objv[i + 1], &len);
+	    title = [[TKNSString alloc] initWithTclUtfBytes:
+		    str length:len];
 	    [panel setTitle:title];
 	    [title release];
 	    break;
@@ -1258,10 +1275,6 @@ Tk_ChooseDirectoryObjCmd(
 	}
 	Tcl_IncrRefCount(cmdObj);
     }
-    callbackInfo = (FilePanelCallbackInfo *)ckalloc(sizeof(FilePanelCallbackInfo));
-    callbackInfo->cmdObj = cmdObj;
-    callbackInfo->interp = interp;
-    callbackInfo->multiple = 0;
 
     /*
      * Check for directory value, set to root if not specified; otherwise
@@ -1280,7 +1293,10 @@ Tk_ChooseDirectoryObjCmd(
 	parent = nil;
 	parentIsKey = False;
     }
-    modalReturnCode = showOpenSavePanel(panel, parent, callbackInfo);
+    modalReturnCode = showOpenSavePanel(panel, parent, interp, cmdObj, 0);
+    if (cmdObj) {
+	Tcl_DecrRefCount(cmdObj);
+    }
     result = (modalReturnCode != modalError) ? TCL_OK : TCL_ERROR;
     if (parentIsKey) {
 	[parent makeKeyWindow];
@@ -1371,7 +1387,7 @@ Tk_MessageBoxObjCmd(
     int index, typeIndex, iconIndex, indexDefaultOption = 0;
     int defaultNativeButtonIndex = 1; /* 1, 2, 3: right to left */
     Tcl_Obj *cmdObj = NULL;
-    AlertCallbackInfo callbackInfoStruct, *callbackInfo = &callbackInfoStruct;
+    AlertCallbackInfo callbackInfo;
     NSString *message, *title;
     NSWindow *parent;
     NSArray *buttons;
@@ -1403,8 +1419,9 @@ Tk_MessageBoxObjCmd(
 	    break;
 
 	case ALERT_DETAIL:
-	    message = [[NSString alloc] initWithUTF8String:
-		    Tcl_GetString(objv[i + 1])];
+	    str = Tcl_GetString(objv[i + 1]);
+	    message = [[TKNSString alloc] initWithTclUtfBytes:
+		    str length:-1];
 	    [alert setInformativeText:message];
 	    [message release];
 	    break;
@@ -1417,8 +1434,9 @@ Tk_MessageBoxObjCmd(
 	    break;
 
 	case ALERT_MESSAGE:
-	    message = [[NSString alloc] initWithUTF8String:
-		    Tcl_GetString(objv[i + 1])];
+	    str = Tcl_GetString(objv[i + 1]);
+	    message = [[TKNSString alloc] initWithTclUtfBytes:
+		    str length:-1];
 	    [alert setMessageText:message];
 	    [message release];
 	    break;
@@ -1433,8 +1451,9 @@ Tk_MessageBoxObjCmd(
 	    break;
 
 	case ALERT_TITLE:
-	    title = [[NSString alloc] initWithUTF8String:
-		    Tcl_GetString(objv[i + 1])];
+	    str = Tcl_GetString(objv[i + 1]);
+	    title = [[TKNSString alloc] initWithTclUtfBytes:
+		    str length:-1];
 	    [[alert window] setTitle:title];
 	    [title release];
 	    break;
@@ -1499,10 +1518,9 @@ Tk_MessageBoxObjCmd(
 	}
 	Tcl_IncrRefCount(cmdObj);
     }
-    callbackInfo = (AlertCallbackInfo *)ckalloc(sizeof(AlertCallbackInfo));
-    callbackInfo->cmdObj = cmdObj;
-    callbackInfo->interp = interp;
-    callbackInfo->typeIndex = typeIndex;
+    callbackInfo.cmdObj = cmdObj;
+    callbackInfo.interp = interp;
+    callbackInfo.typeIndex = typeIndex;
     parent = TkMacOSXGetNSWindowForDrawable(((TkWindow *)tkwin)->window);
     if (haveParentOption && parent && ![parent attachedSheet]) {
 	parentIsKey = [parent isKeyWindow];
@@ -1511,20 +1529,23 @@ Tk_MessageBoxObjCmd(
 	       completionHandler:^(NSModalResponse returnCode) {
 	    [NSApp tkAlertDidEnd:alert
 		    returnCode:returnCode
-		    contextInfo:callbackInfo];
+		    contextInfo:&callbackInfo];
 	}];
 #else
 	[alert beginSheetModalForWindow:parent
 	       modalDelegate:NSApp
 	       didEndSelector:@selector(tkAlertDidEnd:returnCode:contextInfo:)
-	       contextInfo:callbackInfo];
+	       contextInfo:&callbackInfo];
 #endif
 	modalReturnCode = cmdObj ? 0 :
 	    [alert runModal];
     } else {
 	modalReturnCode = [alert runModal];
 	[NSApp tkAlertDidEnd:alert returnCode:modalReturnCode
-		contextInfo:callbackInfo];
+		contextInfo:&callbackInfo];
+    }
+    if (cmdObj) {
+	Tcl_DecrRefCount(cmdObj);
     }
     result = (modalReturnCode >= NSAlertFirstButtonReturn) ? TCL_OK : TCL_ERROR;
   end:

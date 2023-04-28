@@ -1,7 +1,7 @@
 /*                    M E T A B A L L _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2022 United States Government as represented by
+ * Copyright (c) 1985-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,7 +105,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     *r = nmg_mrsv(m);	/* new empty nmg */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
-    /* the incredibly naïve approach. Time could be cut in half by simply
+    /* the incredibly naive approach. Time could be cut in half by simply
      * caching 4 point values, more by actually marching or doing active
      * refinement. This is the simplest pattern for now.
      */

@@ -396,15 +396,14 @@ X11_OBJS = tkUnix.o tkUnix3d.o tkUnixButton.o tkUnixColor.o tkUnixConfig.o \
 AQUA_OBJS = tkMacOSXBitmap.o tkMacOSXButton.o tkMacOSXClipboard.o \
 	tkMacOSXColor.o tkMacOSXConfig.o tkMacOSXCursor.o tkMacOSXDebug.o \
 	tkMacOSXDialog.o tkMacOSXDraw.o tkMacOSXEmbed.o tkMacOSXEntry.o \
-	tkMacOSXEvent.o tkMacOSXFont.o tkMacOSXHLEvents.o tkMacOSXImage.o \
-	tkMacOSXInit.o tkMacOSXKeyboard.o tkMacOSXKeyEvent.o \
-	tkMacOSXMenu.o \
-	tkMacOSXMenubutton.o tkMacOSXMenus.o tkMacOSXMouseEvent.o \
-	tkMacOSXNotify.o tkMacOSXRegion.o tkMacOSXScrlbr.o tkMacOSXSend.o \
-	tkMacOSXServices.o tkMacOSXSubwindows.o tkMacOSXWindowEvent.o \
-	tkMacOSXWm.o tkMacOSXXStubs.o \
-	tkFileFilter.o tkMacWinMenu.o tkPointer.o tkUnix3d.o tkUnixScale.o \
-	xcolors.o xdraw.o xgc.o ximage.o xutil.o \
+	tkMacOSXEvent.o tkMacOSXFileTypes.o tkMacOSXFont.o tkMacOSXHLEvents.o \
+        tkMacOSXImage.o tkMacOSXInit.o tkMacOSXKeyboard.o tkMacOSXKeyEvent.o \
+	tkMacOSXMenu.o tkMacOSXMenubutton.o tkMacOSXMenus.o \
+        tkMacOSXMouseEvent.o tkMacOSXNotify.o tkMacOSXRegion.o \
+	tkMacOSXScrlbr.o tkMacOSXSend.o tkMacOSXServices.o \
+	tkMacOSXSubwindows.o tkMacOSXWindowEvent.o tkMacOSXWm.o \
+	tkMacOSXXStubs.o tkFileFilter.o tkMacWinMenu.o tkPointer.o tkUnix3d.o \
+	tkUnixScale.o xcolors.o xdraw.o xgc.o ximage.o xutil.o \
 	ttkMacOSXTheme.o
 
 AQUA_TKTEST_OBJS = tkMacOSXTest.o
@@ -521,8 +520,8 @@ AQUA_SRCS = \
 	$(MAC_OSX_DIR)/tkMacOSXDebug.c $(MAC_OSX_DIR)/tkMacOSXDialog.c \
 	$(MAC_OSX_DIR)/tkMacOSXDraw.c $(MAC_OSX_DIR)/tkMacOSXEmbed.c \
 	$(MAC_OSX_DIR)/tkMacOSXEntry.c $(MAC_OSX_DIR)/tkMacOSXEvent.c \
-	$(MAC_OSX_DIR)/tkMacOSXFont.c $(MAC_OSX_DIR)/tkMacOSXHLEvents.c \
-	$(MAC_OSX_DIR)/tkMacOSXImage.c \
+	$(MAC_OSX_DIR)/tkMacOSXFont.c $(MAC_OSX_DIR)/tkMacOSXFileTypes.c\
+	$(MAC_OSX_DIR)/tkMacOSXHLEvents.c $(MAC_OSX_DIR)/tkMacOSXImage.c \
 	$(MAC_OSX_DIR)/tkMacOSXInit.c $(MAC_OSX_DIR)/tkMacOSXKeyboard.c \
 	$(MAC_OSX_DIR)/tkMacOSXKeyEvent.c \
 	$(MAC_OSX_DIR)/tkMacOSXMenu.c \
@@ -553,7 +552,8 @@ AQUA_XLIB_HDRS = $(XLIB_DIR)/X11/*.h $(XLIB_DIR)/xbytes.h
 
 AQUA_PRIVATE_HDRS = $(MAC_OSX_DIR)/tkMacOSXPort.h $(MAC_OSX_DIR)/tkMacOSXInt.h
 
-X11_PRIVATE_HDRS = $(UNIX_DIR)/tkUnixPort.h $(UNIX_DIR)/tkUnixInt.h $(GENERIC_DIR)/tkIntXlibDecls.h
+X11_PRIVATE_HDRS = $(UNIX_DIR)/tkUnixPort.h $(UNIX_DIR)/tkUnixInt.h $(GENERIC_DIR)/tkIntXlibDecls.h \
+	$(UNIX_DIR)/tkUnixDefault.h
 
 # Currently private, eventually public
 TTK_HDRS = $(TTK_DIR)/ttkTheme.h $(TTK_DIR)/ttkDecls.h
@@ -911,7 +911,7 @@ clean:
 
 distclean: clean
 	rm -rf Makefile config.status config.cache config.log tkConfig.sh \
-		tkConfig.h *.plist Tk.framework tk.pc
+		tkConfig.h *.plist Tk.framework tk.pc tkUuid.h
 
 depend:
 	makedepend -- $(DEPEND_SWITCHES) -- $(SRCS)
@@ -1032,8 +1032,8 @@ tkUtil.o: $(GENERIC_DIR)/tkUtil.c
 tkVisual.o: $(GENERIC_DIR)/tkVisual.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkVisual.c
 
-tkWindow.o: $(GENERIC_DIR)/tkWindow.c
-	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkWindow.c
+tkWindow.o: $(GENERIC_DIR)/tkWindow.c tkUuid.h
+	$(CC) -c $(CC_SWITCHES) -I. $(GENERIC_DIR)/tkWindow.c
 
 tkButton.o: $(GENERIC_DIR)/tkButton.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkButton.c
@@ -1131,7 +1131,7 @@ tkImgPhInstance.o: $(GENERIC_DIR)/tkImgPhInstance.c $(GENERIC_DIR)/tkImgPhoto.h
 tkOldTest.o: $(GENERIC_DIR)/tkOldTest.c
 	$(CC) -c $(APP_CC_SWITCHES) $(GENERIC_DIR)/tkOldTest.c
 
-tkTest.o: $(GENERIC_DIR)/tkTest.c
+tkTest.o: $(GENERIC_DIR)/tkTest.c tkUuid.h
 	$(CC) -c $(APP_CC_SWITCHES) $(GENERIC_DIR)/tkTest.c
 
 tkText.o: $(GENERIC_DIR)/tkText.c
@@ -1273,6 +1273,9 @@ tkMacOSXEntry.o: $(MAC_OSX_DIR)/tkMacOSXEntry.c
 
 tkMacOSXEvent.o: $(MAC_OSX_DIR)/tkMacOSXEvent.c
 	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/tkMacOSXEvent.c
+
+tkMacOSXFileTypes.o: $(MAC_OSX_DIR)/tkMacOSXFileTypes.c
+	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/tkMacOSXFileTypes.c
 
 tkMacOSXFont.o: $(MAC_OSX_DIR)/tkMacOSXFont.c
 	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/tkMacOSXFont.c
@@ -1458,6 +1461,11 @@ ttkWidget.o: $(TTK_DIR)/ttkWidget.c
 ttkMacOSXTheme.o: $(MAC_OSX_DIR)/ttkMacOSXTheme.c
 	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/ttkMacOSXTheme.c
 
+tkUuid.h: $(TOP_DIR)/manifest.uuid
+	echo "#define TK_VERSION_UUID \\" >$@
+	cat $(TOP_DIR)/manifest.uuid >>$@
+	echo "" >>$@
+
 .c.o:
 	$(CC) -c $(CC_SWITCHES) $<
 
@@ -1550,10 +1558,10 @@ $(UNIX_DIR)/tkConfig.h.in: $(MAC_OSX_DIR)/configure
 	cd $(MAC_OSX_DIR); autoheader; touch $@
 
 $(TOP_DIR)/manifest.uuid:
-	printf "git." >$(TOP_DIR)/manifest.uuid
-	git rev-parse HEAD >>$(TOP_DIR)/manifest.uuid
+	printf "git-" >$(TOP_DIR)/manifest.uuid
+	(cd $(TOP_DIR); git rev-parse HEAD >>$(TOP_DIR)/manifest.uuid || printf "unknown" >$(TOP_DIR)/manifest.uuid)
 
-dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(UNIX_DIR)/tk.pc.in $(MAC_OSX_DIR)/configure $(TOP_DIR)/doc/man.macros $(TOP_DIR)/manifest.uuid
+dist: $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(UNIX_DIR)/tk.pc.in $(MAC_OSX_DIR)/configure $(TOP_DIR)/doc/man.macros $(TOP_DIR)/manifest.uuid
 	rm -rf $(DISTDIR)
 	mkdir -p $(DISTDIR)/unix
 	cp -p $(TOP_DIR)/manifest.uuid $(DISTDIR)
@@ -1586,9 +1594,8 @@ dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(UNIX_DIR)/tk.pc.in $(M
 		$(TTK_DIR)/ttkGenStubs.tcl $(DISTDIR)/generic/ttk
 	mkdir $(DISTDIR)/win
 	cp $(TOP_DIR)/win/Makefile.in $(DISTDIR)/win
-	cp $(TOP_DIR)/win/configure.in \
-		$(TOP_DIR)/win/configure \
-		$(TOP_DIR)/win/tkConfig.sh.in \
+	cp $(TOP_DIR)/win/configure \
+		$(TOP_DIR)/win/*.in \
 		$(TOP_DIR)/win/aclocal.m4 $(TOP_DIR)/win/tcl.m4 \
 		$(DISTDIR)/win
 	cp -p $(TOP_DIR)/win/*.[ch] $(TOP_DIR)/win/*.bat $(DISTDIR)/win

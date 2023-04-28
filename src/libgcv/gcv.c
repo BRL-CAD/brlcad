@@ -1,7 +1,7 @@
 /*                           G C V . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2022 United States Government as represented by
+ * Copyright (c) 2015-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -330,7 +330,7 @@ static void
 _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path, struct gcv_context *c)
 {
     void *info_val;
-    const struct gcv_plugin *(*plugin_info)();
+    const struct gcv_plugin *(*plugin_info)(void);
     const struct gcv_plugin *plugin;
     const struct gcv_filter * const *current;
     void *dl_handle;
@@ -346,7 +346,7 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path, struct gcv_con
     }
 
     info_val = bu_dlsym(dl_handle, "gcv_plugin_info");
-    plugin_info = (const struct gcv_plugin *(*)())(intptr_t)info_val;
+    plugin_info = (const struct gcv_plugin *(*)(void))(intptr_t)info_val;
 
     if (!plugin_info) {
 	const char * const error_msg = bu_dlerror();

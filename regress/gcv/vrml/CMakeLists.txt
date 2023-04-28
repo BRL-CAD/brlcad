@@ -1,14 +1,8 @@
-BRLCAD_REGRESSION_TEST(regress-vrml "gcv;gcv-vrml" EXEC gcv)
-
-DISTCLEAN(
-  "${CMAKE_CURRENT_BINARY_DIR}/regress-vrml.log"
-  "${CMAKE_CURRENT_BINARY_DIR}/vrml_example.g"
-  )
+GCV_regress_util("vrml" "vrml_example.wrl")
 
 CMAKEFILES(
   CMakeLists.txt
   vrml_example.wrl
-  regress-vrml.cmake.in
   )
 
 # Local Variables:

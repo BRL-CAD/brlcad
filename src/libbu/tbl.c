@@ -1,7 +1,7 @@
 /*                           T B L . C
  * BRL-CAD
  *
- * Copyright (c) 2020-2022 United States Government as represented by
+ * Copyright (c) 2020-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ struct bu_tbl {
 
 
 struct bu_tbl *
-bu_tbl_create()
+bu_tbl_create(void)
 {
     struct bu_tbl *tbl = NULL;
 

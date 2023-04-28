@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -751,7 +751,7 @@ fbs_close(struct fbserv_obj *fbsp)
 }
 
 struct pkg_switch *
-fbs_pkg_switch()
+fbs_pkg_switch(void)
 {
     static struct pkg_switch pswitch[] = {
 	{ MSG_FBOPEN, fbs_rfbopen, "Open Framebuffer", NULL },

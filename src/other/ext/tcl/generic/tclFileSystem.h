@@ -1,7 +1,7 @@
 /*
  * tclFileSystem.h --
  *
- *	This file contains the common defintions and prototypes for use by
+ *	This file contains the common definitions and prototypes for use by
  *	Tcl's filesystem and path handling layers.
  *
  * Copyright (c) 2003 Vince Darley.

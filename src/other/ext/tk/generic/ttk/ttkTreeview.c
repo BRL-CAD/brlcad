@@ -195,8 +195,8 @@ static Tk_OptionSpec TagOptionSpecs[] = {
 	NULL, Tk_Offset(DisplayItem,imageObj), -1,
 	TK_OPTION_NULL_OK,0,0 },
     {TK_OPTION_ANCHOR, "-anchor", "anchor", "Anchor",
-	NULL, Tk_Offset(DisplayItem,anchorObj), -1,
-	TK_OPTION_NULL_OK, 0, GEOMETRY_CHANGED},	/* <<NOTE-ANCHOR>> */
+	"center", Tk_Offset(DisplayItem,anchorObj), -1,
+	0, 0, GEOMETRY_CHANGED},	/* <<NOTE-ANCHOR>> */
     {TK_OPTION_COLOR, "-background", "windowColor", "WindowColor",
 	NULL, Tk_Offset(DisplayItem,backgroundObj), -1,
 	TK_OPTION_NULL_OK,0,0 },
@@ -241,8 +241,8 @@ typedef struct {
 
 static void InitColumn(TreeColumn *column)
 {
-    column->width = 200;
-    column->minWidth = 20;
+    column->width = atoi(DEF_COLWIDTH);
+    column->minWidth = atoi(DEF_MINWIDTH);
     column->stretch = 1;
     column->idObj = 0;
     column->anchorObj = 0;
@@ -319,14 +319,14 @@ static Tk_OptionSpec HeadingOptionSpecs[] = {
 
 #define DEFAULT_SHOW	"tree headings"
 
-static const char *showStrings[] = {
+static const char *const showStrings[] = {
     "tree", "headings", NULL
 };
 
 static int GetEnumSetFromObj(
     Tcl_Interp *interp,
     Tcl_Obj *objPtr,
-    const char *table[],
+    const char *const table[],
     unsigned *resultPtr)
 {
     unsigned result = 0;
@@ -433,7 +433,7 @@ typedef struct {
 #define SCROLLCMD_CHANGED	(USER_MASK<<2)
 #define SHOW_CHANGED 		(USER_MASK<<3)
 
-static const char *SelectModeStrings[] = { "none", "browse", "extended", NULL };
+static const char *const SelectModeStrings[] = { "none", "browse", "extended", NULL };
 
 static Tk_OptionSpec TreeviewOptionSpecs[] = {
     {TK_OPTION_STRING, "-columns", "columns", "Columns",
@@ -448,7 +448,7 @@ static Tk_OptionSpec TreeviewOptionSpecs[] = {
 
     {TK_OPTION_STRING_TABLE, "-selectmode", "selectMode", "SelectMode",
 	"extended", Tk_Offset(Treeview,tree.selectModeObj), -1,
-	0,(ClientData)SelectModeStrings,0 },
+	0,SelectModeStrings,0 },
 
     {TK_OPTION_PIXELS, "-height", "height", "Height",
 	DEF_TREE_ROWS, Tk_Offset(Treeview,tree.heightObj), -1,
@@ -1501,7 +1501,7 @@ typedef enum {
     REGION_CELL
 } TreeRegion;
 
-static const char *regionStrings[] = {
+static const char *const regionStrings[] = {
     "nothing", "heading", "separator", "tree", "cell", 0
 };
 
@@ -2263,7 +2263,7 @@ done:
 static int TreeviewIdentifyCommand(
     void *recordPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
-    static const char *submethodStrings[] =
+    static const char *const submethodStrings[] =
 	 { "region", "item", "column", "row", "element", NULL };
     enum { I_REGION, I_ITEM, I_COLUMN, I_ROW, I_ELEMENT };
 
@@ -2679,7 +2679,7 @@ static int TreeviewDeleteCommand(
 {
     Treeview *tv = recordPtr;
     TreeItem **items, *delq;
-    int i, selItemDeleted = 0;
+    int i, selChange = 0;
 
     if (objc != 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "items");
@@ -2707,7 +2707,7 @@ static int TreeviewDeleteCommand(
     delq = 0;
     for (i=0; items[i]; ++i) {
         if (items[i]->state & TTK_STATE_SELECTED) {
-            selItemDeleted = 1;
+            selChange = 1;
         }
 	delq = DeleteItems(items[i], delq);
     }
@@ -2725,7 +2725,7 @@ static int TreeviewDeleteCommand(
     }
 
     ckfree(items);
-    if (selItemDeleted) {
+    if (selChange) {
         TtkSendVirtualEvent(tv->core.tkwin, "TreeviewSelect");
     }
     TtkRedisplayWidget(&tv->core);
@@ -2949,12 +2949,12 @@ static int TreeviewSelectionCommand(
     enum {
 	SELECTION_SET, SELECTION_ADD, SELECTION_REMOVE, SELECTION_TOGGLE
     };
-    static const char *selopStrings[] = {
+    static const char *const selopStrings[] = {
 	"set", "add", "remove", "toggle", NULL
     };
 
     Treeview *tv = recordPtr;
-    int selop, i;
+    int selop, i, selChange = 0;
     TreeItem *item, **items;
 
     if (objc == 2) {
@@ -2985,29 +2985,46 @@ static int TreeviewSelectionCommand(
     switch (selop)
     {
 	case SELECTION_SET:
+	    /* Clear */
 	    for (item=tv->tree.root; item; item=NextPreorder(item)) {
-		item->state &= ~TTK_STATE_SELECTED;
+		if (item->state & TTK_STATE_SELECTED) {
+		    item->state &= ~TTK_STATE_SELECTED;
+		    selChange = 1;
+		}
 	    }
-	    /*FALLTHRU*/
-	case SELECTION_ADD:
 	    for (i=0; items[i]; ++i) {
 		items[i]->state |= TTK_STATE_SELECTED;
+		selChange = 1;
+	    }
+	    break;
+	case SELECTION_ADD:
+	    for (i=0; items[i]; ++i) {
+		if (!(items[i]->state & TTK_STATE_SELECTED)) {
+		    items[i]->state |= TTK_STATE_SELECTED;
+		    selChange = 1;
+		}
 	    }
 	    break;
 	case SELECTION_REMOVE:
 	    for (i=0; items[i]; ++i) {
-		items[i]->state &= ~TTK_STATE_SELECTED;
+		if (items[i]->state & TTK_STATE_SELECTED) {
+		    items[i]->state &= ~TTK_STATE_SELECTED;
+		    selChange = 1;
+		}
 	    }
 	    break;
 	case SELECTION_TOGGLE:
 	    for (i=0; items[i]; ++i) {
 		items[i]->state ^= TTK_STATE_SELECTED;
+		selChange = 1;
 	    }
 	    break;
     }
 
     ckfree(items);
-    TtkSendVirtualEvent(tv->core.tkwin, "TreeviewSelect");
+    if (selChange) {
+	TtkSendVirtualEvent(tv->core.tkwin, "TreeviewSelect");
+    }
     TtkRedisplayWidget(&tv->core);
 
     return TCL_OK;

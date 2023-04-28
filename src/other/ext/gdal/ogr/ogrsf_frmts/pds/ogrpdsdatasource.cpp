@@ -2,10 +2,10 @@
  *
  * Project:  PDS Translator
  * Purpose:  Implements OGRPDSDataSource class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2010-2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,19 +30,16 @@
 #include "cpl_string.h"
 #include "ogr_pds.h"
 
-CPL_CVSID("$Id$");
-
 using namespace OGRPDS;
 
 /************************************************************************/
 /*                           OGRPDSDataSource()                         */
 /************************************************************************/
 
-OGRPDSDataSource::OGRPDSDataSource() :
-    pszName(NULL),
-    papoLayers(NULL),
-    nLayers(0)
-{}
+OGRPDSDataSource::OGRPDSDataSource()
+    : pszName(nullptr), papoLayers(nullptr), nLayers(0)
+{
+}
 
 /************************************************************************/
 /*                        ~OGRPDSDataSource()                           */
@@ -51,18 +48,18 @@ OGRPDSDataSource::OGRPDSDataSource() :
 OGRPDSDataSource::~OGRPDSDataSource()
 
 {
-    for( int i = 0; i < nLayers; i++ )
+    for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
-    CPLFree( papoLayers );
+    CPLFree(papoLayers);
 
-    CPLFree( pszName );
+    CPLFree(pszName);
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRPDSDataSource::TestCapability( const char * /* pszCap */ )
+int OGRPDSDataSource::TestCapability(const char * /* pszCap */)
 {
     return FALSE;
 }
@@ -71,11 +68,11 @@ int OGRPDSDataSource::TestCapability( const char * /* pszCap */ )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRPDSDataSource::GetLayer( int iLayer )
+OGRLayer *OGRPDSDataSource::GetLayer(int iLayer)
 
 {
-    if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+    if (iLayer < 0 || iLayer >= nLayers)
+        return nullptr;
 
     return papoLayers[iLayer];
 }
@@ -84,30 +81,29 @@ OGRLayer *OGRPDSDataSource::GetLayer( int iLayer )
 /*                          GetKeywordSub()                             */
 /************************************************************************/
 
-const char * OGRPDSDataSource::GetKeywordSub( const char *pszPath,
-                                              int iSubscript,
-                                              const char *pszDefault )
+const char *OGRPDSDataSource::GetKeywordSub(const char *pszPath, int iSubscript,
+                                            const char *pszDefault)
 
 {
-    const char *pszResult = oKeywords.GetKeyword( pszPath, NULL );
+    const char *pszResult = oKeywords.GetKeyword(pszPath, nullptr);
 
-    if( pszResult == NULL )
+    if (pszResult == nullptr)
         return pszDefault;
 
-    if( pszResult[0] != '(' )
+    if (pszResult[0] != '(')
         return pszDefault;
 
-    char **papszTokens = CSLTokenizeString2( pszResult, "(,)",
-                                             CSLT_HONOURSTRINGS );
+    char **papszTokens =
+        CSLTokenizeString2(pszResult, "(,)", CSLT_HONOURSTRINGS);
 
-    if( iSubscript <= CSLCount(papszTokens) )
+    if (iSubscript <= CSLCount(papszTokens))
     {
-        osTempResult = papszTokens[iSubscript-1];
-        CSLDestroy( papszTokens );
+        osTempResult = papszTokens[iSubscript - 1];
+        CSLDestroy(papszTokens);
         return osTempResult.c_str();
     }
 
-    CSLDestroy( papszTokens );
+    CSLDestroy(papszTokens);
     return pszDefault;
 }
 
@@ -118,26 +114,26 @@ const char * OGRPDSDataSource::GetKeywordSub( const char *pszPath,
 /* The change is made in-place to CPLString.                            */
 /************************************************************************/
 
-void OGRPDSDataSource::CleanString( CPLString &osInput )
+void OGRPDSDataSource::CleanString(CPLString &osInput)
 
 {
-    if( ( osInput.size() < 2 ) ||
-      ((osInput.at(0) != '"'   || osInput.at(osInput.size()-1) != '"' ) &&
-       ( osInput.at(0) != '\'' || osInput.at(osInput.size()-1) != '\'')) )
-         return;
+    if ((osInput.size() < 2) ||
+        ((osInput.at(0) != '"' || osInput.at(osInput.size() - 1) != '"') &&
+         (osInput.at(0) != '\'' || osInput.at(osInput.size() - 1) != '\'')))
+        return;
 
     char *pszWrk = CPLStrdup(osInput.c_str() + 1);
 
-    pszWrk[strlen(pszWrk)-1] = '\0';
+    pszWrk[strlen(pszWrk) - 1] = '\0';
 
-    for( int i = 0; pszWrk[i] != '\0'; i++ )
+    for (int i = 0; pszWrk[i] != '\0'; i++)
     {
-        if( pszWrk[i] == ' ' )
+        if (pszWrk[i] == ' ')
             pszWrk[i] = '_';
     }
 
     osInput = pszWrk;
-    CPLFree( pszWrk );
+    CPLFree(pszWrk);
 }
 
 /************************************************************************/
@@ -149,9 +145,8 @@ static CPLString MakeAttr(CPLString os1, CPLString os2)
     return os1 + "." + os2;
 }
 
-bool OGRPDSDataSource::LoadTable( const char* pszFilename,
-                                  int nRecordSize,
-                                  CPLString osTableID )
+bool OGRPDSDataSource::LoadTable(const char *pszFilename, int nRecordSize,
+                                 CPLString osTableID)
 {
     CPLString osTableFilename;
     int nStartBytes = 0;
@@ -159,39 +154,47 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
     CPLString osTableLink = "^";
     osTableLink += osTableID;
 
-    CPLString osTable = oKeywords.GetKeyword( osTableLink, "" );
-    if( osTable[0] == '(' )
+    CPLString osTable = oKeywords.GetKeyword(osTableLink, "");
+    if (osTable[0] == '(')
     {
         osTableFilename = GetKeywordSub(osTableLink, 1, "");
         CPLString osStartRecord = GetKeywordSub(osTableLink, 2, "");
-        nStartBytes = (atoi(osStartRecord.c_str()) - 1) * nRecordSize;
-        if (osTableFilename.empty() || osStartRecord.empty() ||
-            nStartBytes < 0)
+        nStartBytes = atoi(osStartRecord.c_str());
+        if (nStartBytes <= 0 ||
+            ((nRecordSize > 0 && nStartBytes > INT_MAX / nRecordSize)))
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                    "Cannot parse %s line", osTableLink.c_str());
+            CPLError(CE_Failure, CPLE_NotSupported, "Invalid StartBytes value");
+            return false;
+        }
+        nStartBytes--;
+        nStartBytes *= nRecordSize;
+        if (osTableFilename.empty() || osStartRecord.empty() || nStartBytes < 0)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported, "Cannot parse %s line",
+                     osTableLink.c_str());
             return false;
         }
         CPLString osTPath = CPLGetPath(pszFilename);
-        CleanString( osTableFilename );
-        osTableFilename = CPLFormCIFilename( osTPath, osTableFilename, NULL );
+        CleanString(osTableFilename);
+        osTableFilename = CPLFormCIFilename(osTPath, osTableFilename, nullptr);
     }
     else
     {
-        osTableFilename = oKeywords.GetKeyword( osTableLink, "" );
+        osTableFilename = oKeywords.GetKeyword(osTableLink, "");
         if (!osTableFilename.empty() && osTableFilename[0] >= '0' &&
             osTableFilename[0] <= '9')
         {
-            nStartBytes = atoi(osTableFilename.c_str()) - 1;
-            if( nStartBytes < 0)
+            nStartBytes = atoi(osTableFilename.c_str());
+            if (nStartBytes <= 1)
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                        "Cannot parse %s line", osTableFilename.c_str());
+                CPLError(CE_Failure, CPLE_NotSupported, "Cannot parse %s line",
+                         osTableFilename.c_str());
                 return false;
             }
-            if (strstr(osTableFilename.c_str(), "<BYTES>") == NULL)
+            nStartBytes = nStartBytes - 1;
+            if (strstr(osTableFilename.c_str(), "<BYTES>") == nullptr)
             {
-                if( nRecordSize > 0 && nStartBytes > INT_MAX / nRecordSize )
+                if (nRecordSize > 0 && nStartBytes > INT_MAX / nRecordSize)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Too big StartBytes value");
@@ -204,31 +207,29 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
         else
         {
             CPLString osTPath = CPLGetPath(pszFilename);
-            CleanString( osTableFilename );
+            CleanString(osTableFilename);
             osTableFilename =
-                CPLFormCIFilename( osTPath, osTableFilename, NULL );
+                CPLFormCIFilename(osTPath, osTableFilename, nullptr);
             nStartBytes = 0;
         }
     }
 
     CPLString osTableName =
-        oKeywords.GetKeyword( MakeAttr(osTableID, "NAME"), "" );
+        oKeywords.GetKeyword(MakeAttr(osTableID, "NAME"), "");
     if (osTableName.empty())
     {
-        if (GetLayerByName(osTableID.c_str()) == NULL)
+        if (GetLayerByName(osTableID.c_str()) == nullptr)
             osTableName = osTableID;
         else
-            osTableName = CPLSPrintf("Layer_%d", nLayers+1);
+            osTableName = CPLSPrintf("Layer_%d", nLayers + 1);
     }
     CleanString(osTableName);
     CPLString osTableInterchangeFormat =
-            oKeywords.GetKeyword( MakeAttr(osTableID, "INTERCHANGE_FORMAT"),
-                                  "" );
+        oKeywords.GetKeyword(MakeAttr(osTableID, "INTERCHANGE_FORMAT"), "");
     CPLString osTableRows =
-        oKeywords.GetKeyword( MakeAttr(osTableID, "ROWS"), "" );
+        oKeywords.GetKeyword(MakeAttr(osTableID, "ROWS"), "");
     const int nRecords = atoi(osTableRows);
-    if (osTableInterchangeFormat.empty() ||
-        osTableRows.empty() || nRecords < 0)
+    if (osTableInterchangeFormat.empty() || osTableRows.empty() || nRecords < 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "One of TABLE.INTERCHANGE_FORMAT or TABLE.ROWS is missing");
@@ -244,8 +245,8 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
         return false;
     }
 
-    VSILFILE* fp = VSIFOpenL(osTableFilename, "rb");
-    if (fp == NULL)
+    VSILFILE *fp = VSIFOpenL(osTableFilename, "rb");
+    if (fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s",
                  osTableFilename.c_str());
@@ -253,30 +254,28 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
     }
 
     CPLString osTableStructure =
-        oKeywords.GetKeyword( MakeAttr(osTableID, "^STRUCTURE"), "" );
+        oKeywords.GetKeyword(MakeAttr(osTableID, "^STRUCTURE"), "");
     if (!osTableStructure.empty())
     {
         CPLString osTPath = CPLGetPath(pszFilename);
-        CleanString( osTableStructure );
-        osTableStructure = CPLFormCIFilename( osTPath, osTableStructure, NULL );
+        CleanString(osTableStructure);
+        osTableStructure =
+            CPLFormCIFilename(osTPath, osTableStructure, nullptr);
     }
 
-    GByte* pabyRecord = (GByte*) VSI_MALLOC_VERBOSE(nRecordSize + 1);
-    if (pabyRecord == NULL)
+    GByte *pabyRecord = (GByte *)VSI_MALLOC_VERBOSE(nRecordSize + 1);
+    if (pabyRecord == nullptr)
     {
         VSIFCloseL(fp);
         return false;
     }
     pabyRecord[nRecordSize] = 0;
 
-    papoLayers = static_cast<OGRLayer**>(
-        CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer*)));
+    papoLayers = static_cast<OGRLayer **>(
+        CPLRealloc(papoLayers, (nLayers + 1) * sizeof(OGRLayer *)));
     papoLayers[nLayers] = new OGRPDSLayer(
-        osTableID, osTableName, fp,
-        pszFilename,
-        osTableStructure,
-        nRecords, nStartBytes,
-        nRecordSize, pabyRecord,
+        osTableID, osTableName, fp, pszFilename, osTableStructure, nRecords,
+        nStartBytes, nRecordSize, pabyRecord,
         osTableInterchangeFormat.compare("ASCII") == 0);
     nLayers++;
 
@@ -287,26 +286,26 @@ bool OGRPDSDataSource::LoadTable( const char* pszFilename,
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRPDSDataSource::Open( const char * pszFilename )
+int OGRPDSDataSource::Open(const char *pszFilename)
 
 {
-    pszName = CPLStrdup( pszFilename );
+    pszName = CPLStrdup(pszFilename);
 
-// --------------------------------------------------------------------
-//      Does this appear to be a .PDS table file?
-// --------------------------------------------------------------------
+    // --------------------------------------------------------------------
+    //      Does this appear to be a .PDS table file?
+    // --------------------------------------------------------------------
 
-    VSILFILE* fp = VSIFOpenL(pszFilename, "rb");
-    if (fp == NULL)
+    VSILFILE *fp = VSIFOpenL(pszFilename, "rb");
+    if (fp == nullptr)
         return FALSE;
 
     char szBuffer[512];
-    int nbRead = static_cast<int>(
-        VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp));
+    int nbRead =
+        static_cast<int>(VSIFReadL(szBuffer, 1, sizeof(szBuffer) - 1, fp));
     szBuffer[nbRead] = '\0';
 
-    const char* pszPos = strstr(szBuffer, "PDS_VERSION_ID");
-    const bool bIsPDS = pszPos != NULL;
+    const char *pszPos = strstr(szBuffer, "PDS_VERSION_ID");
+    const bool bIsPDS = pszPos != nullptr;
 
     if (!bIsPDS)
     {
@@ -321,12 +320,13 @@ int OGRPDSDataSource::Open( const char * pszFilename )
     }
 
     VSIFCloseL(fp);
-    CPLString osRecordType = oKeywords.GetKeyword( "RECORD_TYPE", "" );
-    CPLString osFileRecords = oKeywords.GetKeyword( "FILE_RECORDS", "" );
-    CPLString osRecordBytes = oKeywords.GetKeyword( "RECORD_BYTES", "" );
+    CPLString osRecordType = oKeywords.GetKeyword("RECORD_TYPE", "");
+    CPLString osFileRecords = oKeywords.GetKeyword("FILE_RECORDS", "");
+    CPLString osRecordBytes = oKeywords.GetKeyword("RECORD_BYTES", "");
     int nRecordSize = atoi(osRecordBytes);
     if (osRecordType.empty() || osFileRecords.empty() ||
-        osRecordBytes.empty() || nRecordSize <= 0)
+        osRecordBytes.empty() || nRecordSize <= 0 ||
+        nRecordSize > 10 * 1024 * 1024)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "One of RECORD_TYPE, FILE_RECORDS or RECORD_BYTES is missing");
@@ -340,7 +340,7 @@ int OGRPDSDataSource::Open( const char * pszFilename )
         return FALSE;
     }
 
-    CPLString osTable = oKeywords.GetKeyword( "^TABLE", "" );
+    CPLString osTable = oKeywords.GetKeyword("^TABLE", "");
     if (!osTable.empty())
     {
         LoadTable(pszFilename, nRecordSize, "TABLE");
@@ -348,28 +348,32 @@ int OGRPDSDataSource::Open( const char * pszFilename )
     else
     {
         fp = VSIFOpenL(pszFilename, "rb");
-        if (fp == NULL)
+        if (fp == nullptr)
             return FALSE;
 
-        while( true )
+        // To avoid performance issues with datasets generated by oss-fuzz
+        int nErrors = 0;
+        while (nErrors < 10)
         {
             CPLPushErrorHandler(CPLQuietErrorHandler);
-            const char* pszLine = CPLReadLine2L(fp, 256, NULL);
+            const char *pszLine = CPLReadLine2L(fp, 256, nullptr);
             CPLPopErrorHandler();
             CPLErrorReset();
-            if (pszLine == NULL)
+            if (pszLine == nullptr)
                 break;
-            char** papszTokens =
-                CSLTokenizeString2( pszLine, " =", CSLT_HONOURSTRINGS );
+            char **papszTokens =
+                CSLTokenizeString2(pszLine, " =", CSLT_HONOURSTRINGS);
             int nTokens = CSLCount(papszTokens);
-            if (nTokens == 2 &&
-                papszTokens[0][0] == '^' &&
-                strstr(papszTokens[0], "TABLE") != NULL)
+            if (nTokens == 2 && papszTokens[0][0] == '^' &&
+                strstr(papszTokens[0], "TABLE") != nullptr)
             {
-                LoadTable(pszFilename, nRecordSize, papszTokens[0] + 1);
+                if (!LoadTable(pszFilename, nRecordSize, papszTokens[0] + 1))
+                {
+                    nErrors++;
+                }
             }
             CSLDestroy(papszTokens);
-            papszTokens = NULL;
+            papszTokens = nullptr;
         }
         VSIFCloseL(fp);
     }

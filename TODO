@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* race condition causing bus errors on exit
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -117,6 +119,27 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* Investigate OpenMesh decimation capabilities, identifying a good working
+  default setup for a decimate command.  Probably will need bounding box
+  based tolerance defaults, as well as enabling one or more of the filters
+  that constrain triangle shape.
+
+* See if we can eliminate BRL-CAD use of re2c/lemon/perplex.  Upstream
+  stepcode project is considering a part11 parser rewrite not using
+  them.  wfobj uses it, but with the pending Asset Import Library support
+  in gcv that capability may be eclipsed, and the csg parser isn't
+  active and is at a very early stage.  DPLOT support for brep command
+  would need to be rewritten, but other than that we may be in a position
+  to eliminate usage of those tools in BRL-CAD and (eventually) stepcode.
+
+  The main motivation for this: our versions of these tools ended up being
+  a one-off - re2c didn't end up adopting the lemon port and the code has
+  moved on, and perplex is our own one off.  STEPcode was the main
+  motivation for the creation of that toolset (needing a portable
+  alternative to the flex/bison solution originally used).  We've not
+  ended up needing the re2c/lemon/perplex toolchain for other parts of
+  BRL-CAD much, which means it now makes sense to see if we can simplify.
 
 * consider user interface and usability implications of gchecker
   and/or overlap_tool as commands that kick off GUI.  need to consider

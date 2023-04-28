@@ -256,14 +256,21 @@ test httpold-4.11 {httpEvent} {
     http_reset $token
     http_status $token
 } {reset}
-test httpold-4.12 {httpEvent} {
+test httpold-4.12 {httpEvent} -body {
+    set tout {}
     update
     set x {}
-    after 500 {lappend x ok}
-    set token [http_get $url -timeout 1 -command {lappend x fail}]
-    vwait x
-    list [http_status $token] $x
-} {timeout ok}
+    set token [http_get $url?delay=500 -timeout 1 -command {lappend x fail}]
+    set i 0; while {$x eq {} && [incr i] < 50} {
+	set tout [after 20 {set x progress}]
+	vwait x
+	if {$x ne "progress"} break
+	set x [http_status $token]
+    }
+    set x
+} -cleanup {
+    if {$tout ne {}} {after cancel $tout}
+} -result timeout
 
 test httpold-5.1 {http_formatQuery} {
     http_formatQuery name1 value1 name2 "value two"
