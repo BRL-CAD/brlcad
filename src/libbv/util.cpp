@@ -41,6 +41,145 @@
 
 #define VIEW_NAME_MAXTRIES 100000
 
+static void
+_data_tclcad_init(struct bv_data_tclcad *d)
+{
+    d->gv_polygon_mode = 0;
+    d->gv_hide = 0;
+
+    d->gv_data_arrows.gdas_draw = 0;
+    d->gv_data_arrows.gdas_color[0] = 0;
+    d->gv_data_arrows.gdas_color[1] = 0;
+    d->gv_data_arrows.gdas_color[2] = 0;
+    d->gv_data_arrows.gdas_line_width = 0;
+    d->gv_data_arrows.gdas_tip_length = 0;
+    d->gv_data_arrows.gdas_tip_width = 0;
+    d->gv_data_arrows.gdas_num_points = 0;
+    d->gv_data_arrows.gdas_points = NULL;
+
+    d->gv_data_axes.draw = 0;
+    d->gv_data_axes.color[0] = 0;
+    d->gv_data_axes.color[1] = 0;
+    d->gv_data_axes.color[2] = 0;
+    d->gv_data_axes.line_width = 0;
+    d->gv_data_axes.size = 0;
+    d->gv_data_axes.num_points = 0;
+    d->gv_data_axes.points = NULL;
+
+    d->gv_data_labels.gdls_draw = 0;
+    d->gv_data_labels.gdls_color[0] = 0;
+    d->gv_data_labels.gdls_color[1] = 0;
+    d->gv_data_labels.gdls_color[2] = 0;
+    d->gv_data_labels.gdls_num_labels = 0;
+    d->gv_data_labels.gdls_size = 0;
+    d->gv_data_labels.gdls_labels = NULL;
+    d->gv_data_labels.gdls_points = NULL;
+
+    d->gv_data_lines.gdls_draw = 0;
+    d->gv_data_lines.gdls_color[0] = 0;
+    d->gv_data_lines.gdls_color[1] = 0;
+    d->gv_data_lines.gdls_color[2] = 0;
+    d->gv_data_lines.gdls_line_width = 0;
+    d->gv_data_lines.gdls_num_points = 0;
+    d->gv_data_lines.gdls_points = NULL;
+
+    d->gv_data_polygons.gdps_draw = 0;
+    d->gv_data_polygons.gdps_moveAll = 0;
+    d->gv_data_polygons.gdps_color[0] = 0;
+    d->gv_data_polygons.gdps_color[1] = 0;
+    d->gv_data_polygons.gdps_color[2] = 0;
+    d->gv_data_polygons.gdps_line_width = 0;
+    d->gv_data_polygons.gdps_line_style = 0;
+    d->gv_data_polygons.gdps_cflag = 0;
+    d->gv_data_polygons.gdps_target_polygon_i = 0;
+    d->gv_data_polygons.gdps_curr_polygon_i = 0;
+    d->gv_data_polygons.gdps_curr_point_i = 0;
+    d->gv_data_polygons.gdps_prev_point[0] = 0;
+    d->gv_data_polygons.gdps_prev_point[1] = 0;
+    d->gv_data_polygons.gdps_prev_point[2] = 0;
+    d->gv_data_polygons.gdps_clip_type = bg_Union;
+    d->gv_data_polygons.gdps_scale = 0;
+    d->gv_data_polygons.gdps_origin[0] = 0;
+    d->gv_data_polygons.gdps_origin[1] = 0;
+    d->gv_data_polygons.gdps_origin[2] = 0;
+    MAT_ZERO(d->gv_data_polygons.gdps_rotation);
+    MAT_ZERO(d->gv_data_polygons.gdps_view2model);
+    MAT_ZERO(d->gv_data_polygons.gdps_model2view);
+    d->gv_data_polygons.gdps_polygons.num_polygons = 0;
+    d->gv_data_polygons.gdps_polygons.polygon = NULL;
+    d->gv_data_polygons.gdps_data_vZ = 0;
+
+    d->gv_sdata_arrows.gdas_draw = 0;
+    d->gv_sdata_arrows.gdas_color[0] = 0;
+    d->gv_sdata_arrows.gdas_color[1] = 0;
+    d->gv_sdata_arrows.gdas_color[2] = 0;
+    d->gv_sdata_arrows.gdas_line_width = 0;
+    d->gv_sdata_arrows.gdas_tip_length = 0;
+    d->gv_sdata_arrows.gdas_tip_width = 0;
+    d->gv_sdata_arrows.gdas_num_points = 0;
+    d->gv_sdata_arrows.gdas_points = NULL;
+
+    d->gv_sdata_axes.draw = 0;
+    d->gv_sdata_axes.color[0] = 0;
+    d->gv_sdata_axes.color[1] = 0;
+    d->gv_sdata_axes.color[2] = 0;
+    d->gv_sdata_axes.line_width = 0;
+    d->gv_sdata_axes.size = 0;
+    d->gv_sdata_axes.num_points = 0;
+    d->gv_sdata_axes.points = NULL;
+
+    d->gv_sdata_labels.gdls_draw = 0;
+    d->gv_sdata_labels.gdls_color[0] = 0;
+    d->gv_sdata_labels.gdls_color[1] = 0;
+    d->gv_sdata_labels.gdls_color[2] = 0;
+    d->gv_sdata_labels.gdls_num_labels = 0;
+    d->gv_sdata_labels.gdls_size = 0;
+    d->gv_sdata_labels.gdls_labels = NULL;
+    d->gv_sdata_labels.gdls_points = NULL;
+
+    d->gv_sdata_lines.gdls_draw = 0;
+    d->gv_sdata_lines.gdls_color[0] = 0;
+    d->gv_sdata_lines.gdls_color[1] = 0;
+    d->gv_sdata_lines.gdls_color[2] = 0;
+    d->gv_sdata_lines.gdls_line_width = 0;
+    d->gv_sdata_lines.gdls_num_points = 0;
+    d->gv_sdata_lines.gdls_points = NULL;
+
+    d->gv_sdata_polygons.gdps_draw = 0;
+    d->gv_sdata_polygons.gdps_moveAll = 0;
+    d->gv_sdata_polygons.gdps_color[0] = 0;
+    d->gv_sdata_polygons.gdps_color[1] = 0;
+    d->gv_sdata_polygons.gdps_color[2] = 0;
+    d->gv_sdata_polygons.gdps_line_width = 0;
+    d->gv_sdata_polygons.gdps_line_style = 0;
+    d->gv_sdata_polygons.gdps_cflag = 0;
+    d->gv_sdata_polygons.gdps_target_polygon_i = 0;
+    d->gv_sdata_polygons.gdps_curr_polygon_i = 0;
+    d->gv_sdata_polygons.gdps_curr_point_i = 0;
+    d->gv_sdata_polygons.gdps_prev_point[0] = 0;
+    d->gv_sdata_polygons.gdps_prev_point[1] = 0;
+    d->gv_sdata_polygons.gdps_prev_point[2] = 0;
+    d->gv_sdata_polygons.gdps_clip_type = bg_Union;
+    d->gv_sdata_polygons.gdps_scale = 0;
+    d->gv_sdata_polygons.gdps_origin[0] = 0;
+    d->gv_sdata_polygons.gdps_origin[1] = 0;
+    d->gv_sdata_polygons.gdps_origin[2] = 0;
+    MAT_ZERO(d->gv_sdata_polygons.gdps_rotation);
+    MAT_ZERO(d->gv_sdata_polygons.gdps_view2model);
+    MAT_ZERO(d->gv_sdata_polygons.gdps_model2view);
+    d->gv_sdata_polygons.gdps_polygons.num_polygons = 0;
+    d->gv_sdata_polygons.gdps_polygons.polygon = NULL;
+    d->gv_sdata_polygons.gdps_data_vZ = 0;
+
+    d->gv_prim_labels.gos_draw = 0;
+    d->gv_prim_labels.gos_line_color[0] = 0;
+    d->gv_prim_labels.gos_line_color[1] = 0;
+    d->gv_prim_labels.gos_line_color[2] = 0;
+    d->gv_prim_labels.gos_text_color[0] = 0;
+    d->gv_prim_labels.gos_text_color[1] = 0;
+    d->gv_prim_labels.gos_text_color[2] = 0;
+}
+
 void
 bv_init(struct bview *gvp, struct bview_set *s)
 {
@@ -150,6 +289,10 @@ bv_init(struct bview *gvp, struct bview_set *s)
     // Initial scaling factors are 1
     gvp->gv_base2local = 1.0;
     gvp->gv_local2base = 1.0;
+
+    // Initialize tclcad specific data (primarily doing this so hashing calculations
+    // can succeed)
+    _data_tclcad_init(&gvp->gv_tcl);
 
     bv_update(gvp);
 }
