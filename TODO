@@ -195,6 +195,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * default tops to undecorated, deprecate -n, add tops -p
 
+* document tops options in man page
+
 * default ls to undecorated, deprecate -n, add ls -p
 
 * make mv and mvall not accept slashes on destination:
@@ -252,6 +254,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * add script/command for changing metaball weights in masse
 
 * dbconcat option to override / merge over existing objects
+
+* dbconcat option to auto-update incoming combs when affixes are
+  auto-added.  this would address the caution mentioned in the man
+  page.
 
 * gdiff in mged appears to be broken?  get "no primitives found" on
   second comb when specifying two combs (gdiff comb1 comb2).
