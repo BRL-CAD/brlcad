@@ -181,6 +181,31 @@ void InformationGatherer::getMainComp() {
             break;
         }
     }
+
+    if (largestComponents.size() != 0) {
+        return;
+    } else {
+        const char* cmd[5] = { "search",  ".",  "-type", "comb", NULL };
+
+        ged_exec(g, 4, cmd);
+        std::stringstream ss(bu_vls_addr(g->ged_result_str));
+        std::string val;
+        std::vector<ComponentData> topComponents;
+
+        while (getline(ss, val)) {
+            int entities = getNumEntities(val);
+            double volume = getVolume(val);
+            topComponents.push_back({entities, volume, val});
+        }
+
+        sort(topComponents.rbegin(), topComponents.rend());
+        for (int i = 0; i < topComponents.size(); i++) {
+            if (topComponents[i].volume != std::numeric_limits<double>::infinity()) {
+                largestComponents.push_back(topComponents[i]);
+                break;
+            }
+        }
+    }
 }
 
 int InformationGatherer::getEntityData(char* buf) {
@@ -282,9 +307,11 @@ bool InformationGatherer::gatherInformation(std::string name)
 
 
     getMainComp();
-    getSubComp();
-    if (largestComponents.size() == 0)
+    if (largestComponents.size() == 0) {
+        std::cout << "dbg ran\n";
         return false;
+    }
+    getSubComp();
     std::cout << "Largest Components\n";
     for (ComponentData x : largestComponents) {
         std::cout << x.name << " " << x.numEntities << " " << x.volume << std::endl;
