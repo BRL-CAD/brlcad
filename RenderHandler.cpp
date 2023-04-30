@@ -416,11 +416,6 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 		}
 	}
 
-	coordinates[coordinates.size() - 1].push_back(ambientC == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][0]);
-	coordinates[coordinates.size() - 1].push_back(ambientR == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][1]);
-	coordinates[coordinates.size() - 1].push_back(secWidth);
-	coordinates[coordinates.size() - 1].push_back(secHeight);
-
 	// iterate through all of the rows, shifting them over if necessary
 	for (int r = 0; r < numRows; ++r)
 	{
@@ -437,11 +432,26 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 		double rowWidth = coordinates[r * rowLen + numCols - 1][2];
 		double extraSpace = (secWidth - rowWidth) / (numCols - 1);
 
-		// now, space out the row
-		for (int c = 1; c < numCols; ++c)
+		// if columns are locked, then space out the rest of the rows as well to ensure alignment
+		if (!lockRows)
 		{
-			coordinates[r * rowLen + c][0] += extraSpace * c;
-			coordinates[r * rowLen + c][2] += extraSpace * c;
+			for (int r2 = 0; r2 < numRows; ++r2)
+			{
+				for (int c = 1; c < numCols; ++c)
+				{
+					coordinates[r2 * rowLen + c][0] += extraSpace * c;
+					coordinates[r2 * rowLen + c][2] += extraSpace * c;
+				}
+			}
+		}
+		else
+		{
+			// otherwise, space out just this row
+			for (int c = 1; c < numCols; ++c)
+			{
+				coordinates[r * rowLen + c][0] += extraSpace * c;
+				coordinates[r * rowLen + c][2] += extraSpace * c;
+			}
 		}
 	}
 
@@ -468,6 +478,11 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 			coordinates[r * rowLen + c][3] += extraSpace * r;
 		}
 	}
+
+	coordinates[coordinates.size() - 1].push_back(ambientC == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][0]);
+	coordinates[coordinates.size() - 1].push_back(ambientR == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][1]);
+	coordinates[coordinates.size() - 1].push_back(secWidth);
+	coordinates[coordinates.size() - 1].push_back(secHeight);
 }
 
 double LayoutChoice::getTotalCoverage()
@@ -537,6 +552,7 @@ std::vector<LayoutChoice> initLayouts()
 
 	// tall models
 	layouts.emplace_back("LFRBTb\n....AA\n", false);
+	layouts.emplace_back("LBTb\nFRAA\n", false);
 
 	return layouts;
 }
@@ -544,8 +560,8 @@ std::vector<LayoutChoice> initLayouts()
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
 	double modelDepth = std::stod(info.getInfo("dimX"));
-	double modelLength = std::stod(info.getInfo("dimY"));;
-	double modelHeight = std::stod(info.getInfo("dimZ"));;
+	double modelLength = std::stod(info.getInfo("dimY"));
+	double modelHeight = std::stod(info.getInfo("dimZ"));
 
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
