@@ -92,6 +92,10 @@ void Options::setNotes(std::string n) {
 	notes = n;
 }
 
+void Options::setTopComp(std::string t) {
+	topComp = t;
+}
+
 std::string Options::getFilepath() {
 	return filepath;
 }
@@ -154,4 +158,8 @@ std::string Options::getOrientationZYUp() {
 
 std::string Options::getNotes() {
 	return notes;
+}
+
+std::string Options::getTopComp() {
+	return topComp;
 }

@@ -29,6 +29,7 @@ public:
 	void setOrientationRightLeft(bool rL);
 	void setOrientationZYUp(bool zy);
 	void setNotes(std::string n);
+	void setTopComp(std::string t);
 
 	//Getter functions
 	std::string getFilepath();
@@ -47,6 +48,7 @@ public:
 	std::string getOrientationRightLeft();
 	std::string getOrientationZYUp();
 	std::string getNotes();
+	std::string getTopComp();
 private:
 	//Path to file that will be used to generate report
 	std::string filepath;
@@ -80,4 +82,6 @@ private:
 	std::string zY;
 	//Notes
 	std::string notes;
+    // top component
+    std::string topComp;
 };

@@ -46,7 +46,7 @@ bool readParameters(int argc, char** argv, Options &opt)
     int opts;
 
 
-    while ((opts = bu_getopt(argc, argv, "g?cOop:F:P:f:n:T:E:N:Z")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "g?cOop:F:P:f:n:T:E:N:Z:t:")) != -1) {
         switch (opts) {
             case 'p':
                 hasFile = true;
@@ -91,6 +91,10 @@ bool readParameters(int argc, char** argv, Options &opt)
             case 'Z':
                 opt.setOverrideImages();
                 break;
+            case 't':
+                opt.setTopComp(bu_optarg);
+                std::cout << "Top component: " << opt.getTopComp() << std::endl;
+                break;
             case '?':
                 h = true;
                 break;
@@ -117,6 +121,7 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up");
         bu_log("    N = notes that a user would like to add to be specified in the report");
         bu_log("    Z = option to re-use pre-made renders in the output folder.  Should only be used when running on the same model multiple times.");
+        bu_log("    t = option to specify the top component of the report. Useful when there are multiple tops");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help

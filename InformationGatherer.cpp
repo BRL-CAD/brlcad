@@ -161,6 +161,14 @@ int InformationGatherer::getNumEntities(std::string component) {
 }
 
 void InformationGatherer::getMainComp() {
+    if (opt->getTopComp() != "") {
+        std::cout << opt->getTopComp() << std::endl;
+        int entities = getNumEntities(opt->getTopComp());
+        double volume = getVolume(opt->getTopComp());
+        largestComponents.push_back({entities, volume, opt->getTopComp()});
+        return;
+    } 
+
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
 
     ged_exec(g, 7, cmd);
@@ -307,10 +315,8 @@ bool InformationGatherer::gatherInformation(std::string name)
 
 
     getMainComp();
-    if (largestComponents.size() == 0) {
-        std::cout << "dbg ran\n";
+    if (largestComponents.size() == 0)
         return false;
-    }
     getSubComp();
     std::cout << "Largest Components\n";
     for (ComponentData x : largestComponents) {
