@@ -26,8 +26,8 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
     std::string fileInput = extractFileName(pathToInput);
     std::string pathToOutput = "output/";
     std::string fileOutput = fileInput.substr(0, fileInput.find_last_of("."));
-    std::cout << "Path to input: " << pathToInput << " " << fileOutput << std::endl;
-    std::cout << "Component: " << component << std::endl;
+    // std::cout << "Path to input: " << pathToInput << " " << fileOutput << std::endl;
+    // std::cout << "Component: " << component << std::endl;
 
     // do directory traversal checks
     if (fileOutput.find("../") != std::string::npos) {
@@ -35,12 +35,12 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
         return "";
     }
 
-    std::cout << "Path to output: " << pathToOutput << std::endl;
-    std::cout << "Processing file: " << fileInput << std::endl;
+    // std::cout << "Path to output: " << pathToOutput << std::endl;
+    // std::cout << "Processing file: " << fileInput << std::endl;
 
     std::string fileString = component.substr(0, component.find("."));
     fileString = fileString.substr(0, fileString.find("/"));
-    std::cout << "File string: " << fileString << std::endl;
+    // std::cout << "File string: " << fileString << std::endl;
     std::string outputname = pathToOutput + fileOutput + "_" + fileString;
     std::replace(outputname.begin(), outputname.end(), ' ', '_');
     if (outputname.size() > 150) {
@@ -96,7 +96,8 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
             break;
     }
 
-    std::cout << render << std::endl;
+    // std::cout << render << std::endl;
+    render = render + ">/dev/null 2>&1";
 
 
     if (opt.getOverrideImages() || std::remove(outputname.c_str()) != 0) {

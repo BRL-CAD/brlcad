@@ -7,6 +7,12 @@
 #	include <aclapi.h>
 #endif 
 
+
+#ifdef __APPLE__
+#  include <pwd.h>
+#  include <unistd.h>
+#endif
+
 void getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::string az, std::string el, std::string comp, double& surfArea) {
     std::string command = opt->getTemppath() + "rtarea -u " + map["units"] + " -a " + az + " -e " + el + " " + opt->getFilepath() + " " + comp + " 2>&1";
     char buffer[128];
@@ -198,7 +204,7 @@ void InformationGatherer::getSubComp() {
     // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
     std::string pathToOutput = "output/sub_comp.txt";
     std::string retrieveSub = opt->getTemppath() + "mged -c " + opt->getFilepath() + " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" > " + pathToOutput;
-    std::cout << retrieveSub << std::endl;
+    // std::cout << retrieveSub << std::endl;
     system(retrieveSub.c_str());
     std::fstream scFile(pathToOutput);
     if (!scFile.is_open()) {
@@ -213,7 +219,7 @@ void InformationGatherer::getSubComp() {
     while (scFile >> comp >> numEntities) {
         double volume = getVolume(comp);
         subComps.push_back({numEntities, volume, comp});
-        std::cout << " in subcomp " << comp << " " << numEntities << " " << volume << std::endl;
+        // std::cout << " in subcomp " << comp << " " << numEntities << " " << volume << std::endl;
     }
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());
@@ -285,9 +291,9 @@ bool InformationGatherer::gatherInformation(std::string name)
     getSubComp();
     if (largestComponents.size() == 0)
         return false;
-    std::cout << "Largest Components\n";
+    // std::cout << "Largest Components\n";
     for (ComponentData x : largestComponents) {
-        std::cout << x.name << " " << x.numEntities << " " << x.volume << std::endl;
+        // std::cout << x.name << " " << x.numEntities << " " << x.volume << std::endl;
     }
 
     // Gather dimensions
@@ -367,11 +373,11 @@ bool InformationGatherer::gatherInformation(std::string name)
     bool hasExplicit = false;
     bool hasImplicit = false;
     const char* tfilter = "-type brep";
-    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasExplicit = true;
     }
     tfilter = "-below -type region -not -type comb -not -type brep";
-    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasImplicit = true;
     }
     if (hasExplicit && hasImplicit) {
@@ -389,7 +395,7 @@ bool InformationGatherer::gatherInformation(std::string name)
 
     //Gather assemblies
     tfilter = "-above -type region";
-    int assemblies = db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL);
+    int assemblies = db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL);
     infoMap.insert(std::pair<std::string, std::string>("assemblies", std::to_string(assemblies)));
 
     //Gather entity total
@@ -453,6 +459,17 @@ bool InformationGatherer::gatherInformation(std::string name)
         }
     }
     CloseHandle(hFile);
+#endif
+#ifdef __APPLE__
+    struct stat fileInfo;
+    stat(opt->getFilepath().c_str(), &fileInfo);
+    uid_t ownerUID = fileInfo.st_uid;
+    struct passwd *pw = getpwuid(ownerUID);
+    if (pw == NULL) {
+        owner = "N/A";
+    } else {
+        owner = pw->pw_name;
+    }
 #endif
 
     infoMap.insert(std::pair<std::string, std::string>("owner", owner));
