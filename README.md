@@ -11,13 +11,13 @@ This code has been run and tested on:
 * C++
 * Visual Studio
 * BRL-CAD
-* Appleseed
 
 
 ## External Deps  ##
 
 * BRL-CAD - Download latest version at https://brlcad.org/wiki/Compiling 
 * Appleseed - Download latest version at appleseed - A modern, open source production renderer (appleseedhq.net)
+* OpenCV C++ - Download lastest version at https://docs.opencv.org/4.x/df/d65/tutorial_table_of_content_introduction.html
 * Boost - Download required version at Boost C++ Libraries download | SourceForge.net
 * CMake - Download latest CMake at https://cmake.org/
 * Git - Download latest version at https://git-scm.com/book/en/v2/Getting-Started-Installing-Git 
@@ -34,6 +34,7 @@ Download this code repository by using git:
 No test suites are available yet, but will be listed here soon.
 
 ## Execute Code ##
+### Setting up BRL-CAD
 To build the code, run the following command in the build directory through terminal
 `cmake .. -DBRLCAD_ENABLE_STRICT=NO -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release`
 
@@ -44,16 +45,34 @@ To run BRL-CAD, run one of the two commands
 `bin/mged`
 `bin/archer`
 
-Currently, we do not need the exact instructions for running the report. However, it will be ran through the terminal in the future. 
+### Running the report generator through command line
+Open terminal, and navigate to `brlcad/src/gtools/`. Clone the repository into the folder using
+
+`git clone https://github.com/SP23-CSCE482/visualization`
+
+Then, navigate into the cloned repository and create an output directory.
+
+`cd visualization && mkdir output`
+
+Compile the program using
+
+`g++ $(pkg-config --cflags --libs opencv4) -std=c++17 -I ../../../build/include/openNURBS -I ../../../build/include -I ../../../include *.cpp -L ../../../build/lib -lged -lrt -lbu -Wl,-rpath -Wl,../../../build/lib`
+
+Run the program using 
+
+`./a.out -p path/to/file.g -f report.png`
+
+Example
+
+`./a.out -p ../../../build/share/db/m35.g -f report.png`
 
 ## Environmental Variables/Files ##
 
 No environmental variables are needed yet, but they will be listed here soon.
 
-
 ## Deployment ##
 
-To deploy the code, we are planning to allow the user to input parameters into the terminals, which then will output a novel “one page” summary report (which you will also help design) that includes visual, textual, and contextual information about a given 3D model. Once we get further into coding more informtion will be provided in this read-me
+Since this application is a command line tool, no deployment is required.
 
 ## References ##
 
