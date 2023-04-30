@@ -216,10 +216,10 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 				}
 			}
 		}
-		if (ambientXOffset > orthoWidth / 2)
-			workingWidth *= orthoWidth / 2 / ambientXOffset;
 		if (ambientYOffset > orthoHeight / 2)
-			workingHeight *= 2 * orthoHeight / 2 / ambientYOffset;
+			workingHeight *= orthoHeight / 2 / ambientYOffset;
+		else if (ambientXOffset > orthoWidth / 2)
+			workingWidth *= orthoWidth / 2 / ambientXOffset;
 	}
 
 	// get aspect ratios
@@ -471,11 +471,28 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 		double colHeight = coordinates[(numRows - 1) * rowLen + c][3];
 		double extraSpace = (secHeight - colHeight) / (numRows - 1);
 
-		// now, space out the column
-		for (int r = 1; r < numRows; ++r)
+		
+		// if rows are locked, then space out the rest of the columns as well to ensure alignment
+		if (lockRows)
 		{
-			coordinates[r * rowLen + c][1] += extraSpace * r;
-			coordinates[r * rowLen + c][3] += extraSpace * r;
+			for (int c2 = 0; c2 < numCols; ++c2)
+			{
+				// now, space out the column
+				for (int r = 1; r < numRows; ++r)
+				{
+					coordinates[r * rowLen + c2][1] += extraSpace * r;
+					coordinates[r * rowLen + c2][3] += extraSpace * r;
+				}
+			}
+		}
+		else
+		{
+			// now, just space out this column
+			for (int r = 1; r < numRows; ++r)
+			{
+				coordinates[r * rowLen + c][1] += extraSpace * r;
+				coordinates[r * rowLen + c][3] += extraSpace * r;
+			}
 		}
 	}
 
@@ -545,6 +562,7 @@ std::vector<LayoutChoice> initLayouts()
 	// long models
 	layouts.emplace_back("TbFR\n..BL\n..AA\n", false);
 	layouts.emplace_back("TLR\nFAA\nbAA\nBAA\n", false);
+	layouts.emplace_back("BLA\nFRA\nTbA\n", true);
 
 	// flat models
 	layouts.emplace_back("TLBA\nFRbA", false);
@@ -552,7 +570,7 @@ std::vector<LayoutChoice> initLayouts()
 
 	// tall models
 	layouts.emplace_back("LFRBTb\n....AA\n", false);
-	layouts.emplace_back("LBTb\nFRAA\n", false);
+	layouts.emplace_back("BLTb\nFRAA\n", false);
 
 	return layouts;
 }
