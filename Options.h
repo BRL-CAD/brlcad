@@ -29,6 +29,8 @@ public:
 	void setOrientationRightLeft(bool rL);
 	void setOrientationZYUp(bool zy);
 	void setNotes(std::string n);
+	void setUnitLength(std::string l);
+	void setUnitMass(std::string m);
 
 	//Getter functions
 	std::string getFilepath();
@@ -47,19 +49,23 @@ public:
 	std::string getOrientationRightLeft();
 	std::string getOrientationZYUp();
 	std::string getNotes();
+	std::string getUnitLength();
+	std::string getUnitMass();
+	bool isDefaultLength();
+	bool isDefaultMass();
 private:
-	//Path to file that will be used to generate report
+	// Path to file that will be used to generate report
 	std::string filepath;
-	//Path to temporary directory to store the info
+	// Path to temporary directory to store the info
 	std::string temppath;
-	//Pixels per inch
+	// Pixels per inch
 	int ppi;
-	//Dimensions of the output, in pixels
+	// Dimensions of the output, in pixels
 	int width;
 	int length;
-	//Whether path is a folder with multiple files or not
+	// Whether path is a folder with multiple files or not
 	bool isFolder;
-	//Whether user specifices to open GUI as well
+	// Whether user specifices to open GUI as well
 	bool openGUI;
 	//Whether user decides to export to a png
 	bool exportToFile;
@@ -71,13 +77,19 @@ private:
 	std::string folderName;
     // Name of folder you want to create report.png in 
 	std::string exportFolderName;
-	//Name of preparer
+	// Name of preparer
 	std::string name;
-	//Classification word
+	// Classification word
 	std::string classification;
-	//Orientation
+	// Orientation
 	std::string rightLeft;
 	std::string zY;
-	//Notes
+	// Notes
 	std::string notes;
+	// Unit length
+	std::string uLength;
+	bool defaultLength;
+	// Unit mass
+	std::string uMass;
+	bool defaultMass;
 };

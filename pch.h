@@ -18,18 +18,11 @@
 #include<cstdio>
 #include<filesystem>
 #include <sys/stat.h>
-#ifdef HAVE_PWD_H
-#  include <pwd.h>
-#endif
-#ifdef HAVE_WINDOWS_H
-    #include <windows.h>
-    #include <stdio.h>
-    #include <aclapi.h>
-#endif 
 
 // BRL-CAD header files
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/units.h"
 #include "ged.h"
 
 // Visualization project header files
