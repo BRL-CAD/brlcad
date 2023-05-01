@@ -1022,7 +1022,7 @@ static bool TranslateArray(
                 indexingVarSpec = srcIndexVar->GetFullName();
             }
         }
-        if (srcIndexVar &&
+        if (srcIndexVar && !indexingVarSpec.empty() &&
             srcIndexVar->GetFullName() != srcArray->GetFullName())
         {
             if (poSrcRootGroup)
@@ -1683,20 +1683,7 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         (!psOptions->aosArraySpec.empty() || !psOptions->aosGroup.empty() ||
          !psOptions->aosSubset.empty() || !psOptions->aosScaleFactor.empty()))
     {
-        auto poVRTDriver = GDALDriver::FromHandle(GDALGetDriverByName("VRT"));
-        if (!poVRTDriver)
-        {
-#ifdef this_is_dead_code_for_now
-            if (bCloseOutDSOnError)
-#endif
-            {
-                GDALClose(hDstDS);
-                hDstDS = nullptr;
-            }
-            return nullptr;
-        }
-        poTmpDS.reset(
-            poVRTDriver->CreateMultiDimensional("", nullptr, nullptr));
+        poTmpDS.reset(VRTDataset::CreateMultiDimensional("", nullptr, nullptr));
         CPLAssert(poTmpDS);
         poTmpSrcDS = poTmpDS.get();
 

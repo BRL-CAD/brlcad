@@ -19,9 +19,6 @@ if (BRLCAD_OPENMESH_BUILD)
   set(OM_PATCH_VERSION 0)
 
   if (MSVC)
-    if ("${CMAKE_BUILD_TYPE}" MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
-      set(OPENMESH_DEBUG_POSTFIX "d")
-    endif("${CMAKE_BUILD_TYPE}" MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
     set(OPENMESH_BASENAME OpenMesh)
     set(OPENMESH_STATICNAME OpenMesh-static)
     set(OPENMESH_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
@@ -66,7 +63,7 @@ if (BRLCAD_OPENMESH_BUILD)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/OPENMESH_BLD-prefix")
 
   # Tell the parent build about files and libraries
-  set(OPENMESH_LIBS Core${OPENMESH_DEBUG_POSTFIX} Tools${OPENMESH_DEBUG_POSTFIX})
+  set(OPENMESH_LIBS Core Tools)
   foreach(OMLIB ${OPENMESH_LIBS})
     ExternalProject_Target(SHARED ${OMLIB} OPENMESH_BLD ${OPENMESH_INSTDIR}
     ${OPENMESH_BASENAME}${OMLIB}${OPENMESH_SUFFIX}

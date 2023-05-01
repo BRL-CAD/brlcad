@@ -380,12 +380,6 @@ set_target_properties(
 set_property(TARGET ${GDAL_LIB_TARGET_NAME} PROPERTY PLUGIN_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/gdalplugins")
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/gdalplugins")
 
-if (MSVC)
-  set(GDAL_DEBUG_POSTFIX
-      "d"
-      CACHE STRING "Postfix to add to the GDAL dll name for debug builds")
-  set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES DEBUG_POSTFIX "${GDAL_DEBUG_POSTFIX}")
-endif ()
 if (MINGW AND BUILD_SHARED_LIBS)
     set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES SUFFIX "-${GDAL_SOVERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif ()
@@ -459,8 +453,8 @@ else ()
         ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
         ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}
       )
-      if( NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "" )
-          message(WARNING "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} will be ignored and replaced with ${base};${base}/${relDir} due to GDAL_SET_INSTALL_RELATIVE_RPATH being set")
+      if( NOT "${CMAKE_INSTALL_RPATH}" STREQUAL "" )
+          message(WARNING "CMAKE_INSTALL_RPATH=${CMAKE_INSTALL_RPATH} will be ignored and replaced with ${base};${base}/${relDir} due to GDAL_SET_INSTALL_RELATIVE_RPATH being set")
       endif()
       set(CMAKE_INSTALL_RPATH ${base} ${base}/${relDir})
   endif()

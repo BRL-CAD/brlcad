@@ -40,6 +40,7 @@ check_include_file("dlfcn.h" HAVE_DLFCN_H)
 
 check_type_size("int" SIZEOF_INT)
 check_type_size("unsigned long" SIZEOF_UNSIGNED_LONG)
+check_type_size("long int" SIZEOF_LONG_INT)
 check_type_size("void*" SIZEOF_VOIDP)
 check_type_size("size_t" SIZEOF_SIZE_T)
 
@@ -109,15 +110,15 @@ else ()
     "
         #define _GNU_SOURCE
         #include <pthread.h>
-        int main() { pthread_spinlock_t spin; return 1; }
+        int main() { pthread_spinlock_t spin; return pthread_spin_lock(&spin); }
         "
-    HAVE_PTHREAD_SPINLOCK)
+    HAVE_PTHREAD_SPIN_LOCK)
 
   check_c_source_compiles(
     "
         #define _GNU_SOURCE
         #include <sys/mman.h>
-        int main() { return (mremap(0,0,0,0,0)); }
+        int main() { return (mremap(0,0,0,0,0) != 0); }
         "
     HAVE_5ARGS_MREMAP)
 

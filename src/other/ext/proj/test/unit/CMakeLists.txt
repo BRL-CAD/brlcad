@@ -129,6 +129,7 @@ add_executable(proj_test_cpp_api
   main.cpp
   test_util.cpp
   test_common.cpp
+  test_coordinates.cpp
   test_crs.cpp
   test_metadata.cpp
   test_io.cpp
@@ -160,9 +161,15 @@ add_executable(test_network
   main.cpp
   test_network.cpp)
 if(CURL_ENABLED)
-  include_directories(${CURL_INCLUDE_DIR})
   target_compile_definitions(test_network PRIVATE -DCURL_ENABLED)
-  target_link_libraries(test_network PRIVATE ${CURL_LIBRARY})
+  if( CMAKE_VERSION VERSION_LESS 3.11 AND CMAKE_CROSSCOMPILING )
+      # Hack needed for ubuntu:18.04 mingw64 cross compiling to avoid
+      # -isystem to be emitted (similar to https://discourse.cmake.org/t/use-of-isystem/1574)
+      target_include_directories(test_network PRIVATE ${CURL_INCLUDE_DIRS})
+      target_link_libraries(test_network PRIVATE ${CURL_LIBRARIES})
+  else()
+      target_link_libraries(test_network PRIVATE CURL::libcurl)
+  endif()
 endif()
 target_link_libraries(test_network
   PRIVATE GTest::gtest
@@ -202,8 +209,8 @@ add_test(NAME test_misc COMMAND test_misc)
 set_property(TEST test_misc
   PROPERTY ENVIRONMENT ${PROJ_TEST_ENVIRONMENT})
 
-if (USE_THREAD AND Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
-add_definitions(-DMUTEX_pthread)
+if (Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
+add_definitions(-DPROJ_HAS_PTHREADS)
 add_executable(test_fork
   test_fork.c)
 target_link_libraries(test_fork

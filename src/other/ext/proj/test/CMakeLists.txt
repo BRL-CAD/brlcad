@@ -57,6 +57,7 @@ proj_add_gie_test("guyou" "gie/guyou.gie")
 proj_add_gie_test("peirce_q" "gie/peirce_q.gie")
 proj_add_gie_test("defmodel" "gie/defmodel.gie")
 proj_add_gie_test("tinshift" "gie/tinshift.gie")
+proj_add_gie_test("gridshift" "gie/gridshift.gie")
 
 if(CURL_ENABLED AND RUN_NETWORK_DEPENDENT_TESTS)
 proj_add_gie_network_dependent_test("nkg" "gie/nkg.gie")
@@ -106,3 +107,4 @@ proj_add_gie_test("GIGS-5208" "gigs/5208.gie")
 
 add_subdirectory(cli)
 add_subdirectory(unit)
+add_subdirectory(benchmark)

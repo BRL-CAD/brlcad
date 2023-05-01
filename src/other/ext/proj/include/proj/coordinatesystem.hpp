@@ -110,6 +110,34 @@ class AxisDirection : public util::CodeList {
 
 // ---------------------------------------------------------------------------
 
+/** \brief Meaning of the axis value range specified through minimumValue and
+ * maximumValue
+ *
+ * \remark Implements RangeMeaning from \ref ISO_19111_2019
+ * \since 9.2
+ */
+class RangeMeaning : public util::CodeList {
+  public:
+    //! @cond Doxygen_Suppress
+    PROJ_DLL static const RangeMeaning *
+    valueOf(const std::string &nameIn) noexcept;
+    //! @endcond
+
+    PROJ_DLL static const RangeMeaning EXACT;
+    PROJ_DLL static const RangeMeaning WRAPAROUND;
+
+  protected:
+    friend class util::optional<RangeMeaning>;
+    RangeMeaning();
+
+  private:
+    explicit RangeMeaning(const std::string &nameIn);
+
+    static std::map<std::string, const RangeMeaning *> registry;
+};
+
+// ---------------------------------------------------------------------------
+
 class Meridian;
 /** Shared pointer of Meridian. */
 using MeridianPtr = std::shared_ptr<Meridian>;
@@ -181,6 +209,7 @@ class PROJ_GCC_DLL CoordinateSystemAxis final : public common::IdentifiedObject,
     PROJ_DLL const common::UnitOfMeasure &unit() PROJ_PURE_DECL;
     PROJ_DLL const util::optional<double> &minimumValue() PROJ_PURE_DECL;
     PROJ_DLL const util::optional<double> &maximumValue() PROJ_PURE_DECL;
+    PROJ_DLL const util::optional<RangeMeaning> &rangeMeaning() PROJ_PURE_DECL;
     PROJ_DLL const MeridianPtr &meridian() PROJ_PURE_DECL;
 
     // Non-standard
@@ -188,6 +217,15 @@ class PROJ_GCC_DLL CoordinateSystemAxis final : public common::IdentifiedObject,
     create(const util::PropertyMap &properties,
            const std::string &abbreviationIn, const AxisDirection &directionIn,
            const common::UnitOfMeasure &unitIn,
+           const MeridianPtr &meridianIn = nullptr);
+
+    PROJ_DLL static CoordinateSystemAxisNNPtr
+    create(const util::PropertyMap &properties,
+           const std::string &abbreviationIn, const AxisDirection &directionIn,
+           const common::UnitOfMeasure &unitIn,
+           const util::optional<double> &minimumValueIn,
+           const util::optional<double> &maximumValueIn,
+           const util::optional<RangeMeaning> &rangeMeaningIn,
            const MeridianPtr &meridianIn = nullptr);
 
     PROJ_PRIVATE :
@@ -540,6 +578,56 @@ class PROJ_GCC_DLL CartesianCS final : public CoordinateSystem {
 
   private:
     CartesianCS(const CartesianCS &other) = delete;
+};
+
+// ---------------------------------------------------------------------------
+
+class AffineCS;
+/** Shared pointer of AffineCS. */
+using AffineCSPtr = std::shared_ptr<AffineCS>;
+/** Non-null shared pointer of AffineCS. */
+using AffineCSNNPtr = util::nn<AffineCSPtr>;
+
+/** \brief A two- or three-dimensional coordinate system in Euclidean space
+ * with straight axes that are not necessarily orthogonal.
+ *
+ * \remark Implements AffineCS from \ref ISO_19111_2019
+ * \since 9.2
+ */
+class PROJ_GCC_DLL AffineCS final : public CoordinateSystem {
+  public:
+    //! @cond Doxygen_Suppress
+    PROJ_DLL ~AffineCS() override;
+    //! @endcond
+
+    PROJ_DLL static AffineCSNNPtr
+    create(const util::PropertyMap &properties,
+           const CoordinateSystemAxisNNPtr &axis1,
+           const CoordinateSystemAxisNNPtr &axis2);
+    PROJ_DLL static AffineCSNNPtr
+    create(const util::PropertyMap &properties,
+           const CoordinateSystemAxisNNPtr &axis1,
+           const CoordinateSystemAxisNNPtr &axis2,
+           const CoordinateSystemAxisNNPtr &axis3);
+
+    PROJ_PRIVATE :
+        //! @cond Doxygen_Suppress
+        PROJ_INTERNAL AffineCSNNPtr
+        alterUnit(const common::UnitOfMeasure &unit) const;
+
+    //! @endcond
+
+  protected:
+    PROJ_INTERNAL explicit AffineCS(
+        const std::vector<CoordinateSystemAxisNNPtr> &axisIn);
+    INLINED_MAKE_SHARED
+
+    PROJ_INTERNAL std::string getWKT2Type(bool) const override {
+        return "affine";
+    }
+
+  private:
+    AffineCS(const AffineCS &other) = delete;
 };
 
 // ---------------------------------------------------------------------------

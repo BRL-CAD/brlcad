@@ -1,7 +1,7 @@
 {
-  "$id": "https://proj.org/schemas/v0.5/projjson.schema.json",
+  "$id": "https://proj.org/schemas/v0.6/projjson.schema.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "description": "Schema for PROJJSON (v0.5)",
+  "description": "Schema for PROJJSON (v0.6)",
   "$comment": "This file exists both in data/ and in schemas/vXXX/. Keep both in sync. And if changing the value of $id, change PROJJSON_DEFAULT_VERSION accordingly in io.cpp",
 
   "oneOf": [
@@ -11,7 +11,8 @@
     { "$ref": "#/definitions/ellipsoid" },
     { "$ref": "#/definitions/prime_meridian" },
     { "$ref": "#/definitions/single_operation" },
-    { "$ref": "#/definitions/concatenated_operation" }
+    { "$ref": "#/definitions/concatenated_operation" },
+    { "$ref": "#/definitions/coordinate_metadata" }
   ],
 
   "definitions": {
@@ -22,6 +23,10 @@
         "$schema" : { "type": "string" },
         "type": { "type": "string", "enum": ["AbridgedTransformation"] },
         "name": { "type": "string" },
+        "source_crs": {
+            "$ref": "#/definitions/crs",
+            "$comment": "Only present when the source_crs of the bound_crs does not match the source_crs of the AbridgedTransformation. No equivalent in WKT"
+        },
         "method": { "$ref": "#/definitions/method" },
         "parameters": {
             "type": "array",
@@ -87,6 +92,9 @@
                                  "unspecified" ] },
         "meridian": { "$ref": "#/definitions/meridian" },
         "unit": { "$ref": "#/definitions/unit" },
+        "minimum_value": { "type": "number" },
+        "maximum_value": { "type": "number" },
+        "range_meaning": { "type": "string", "enum": [ "exact", "wraparound"] },
         "id": { "$ref": "#/definitions/id" },
         "ids": { "$ref": "#/definitions/ids" }
       },
@@ -204,6 +212,18 @@
       "additionalProperties": false
     },
 
+    "coordinate_metadata": {
+      "type": "object",
+      "properties": {
+        "$schema" : { "type": "string" },
+        "type": { "type": "string", "enum": ["CoordinateMetadata"] },
+        "crs": { "$ref": "#/definitions/crs" },
+        "coordinateEpoch": { "type": "number" }
+      },
+      "required" : [ "crs" ],
+      "additionalProperties": false
+    },
+
     "coordinate_system": {
       "type": "object",
       "properties": {
@@ -217,6 +237,7 @@
                               "vertical",
                               "ordinal",
                               "parametric",
+                              "affine",
                               "TemporalDateTime",
                               "TemporalCount",
                               "TemporalMeasure"]  },
@@ -457,11 +478,12 @@
 
     "dynamic_geodetic_reference_frame": {
       "type": "object",
-      "allOf": [{ "$ref": "#/definitions/geodetic_reference_frame" }],
+      "allOf": [{ "$ref": "#/definitions/object_usage" }],
       "properties": {
         "type": { "type": "string", "enum": ["DynamicGeodeticReferenceFrame"] },
         "name": {},
         "anchor": {},
+        "anchor_epoch": {},
         "ellipsoid": {},
         "prime_meridian": {},
         "frame_reference_epoch": { "type": "number" },
@@ -481,11 +503,12 @@
 
     "dynamic_vertical_reference_frame": {
       "type": "object",
-      "allOf": [{ "$ref": "#/definitions/vertical_reference_frame" }],
+      "allOf": [{ "$ref": "#/definitions/object_usage" }],
       "properties": {
         "type": { "type": "string", "enum": ["DynamicVerticalReferenceFrame"] },
         "name": {},
         "anchor": {},
+        "anchor_epoch": {},
         "frame_reference_epoch": { "type": "number" },
         "$schema" : {},
         "scope": {},
@@ -634,6 +657,7 @@
         "type": { "type": "string", "enum": ["GeodeticReferenceFrame"] },
         "name": { "type": "string" },
         "anchor": { "type": "string" },
+        "anchor_epoch": { "type": "number" },
         "ellipsoid": { "$ref": "#/definitions/ellipsoid" },
         "prime_meridian": { "$ref": "#/definitions/prime_meridian" },
         "$schema" : {},
@@ -1130,6 +1154,7 @@
         "type": { "type": "string", "enum": ["VerticalReferenceFrame"] },
         "name": { "type": "string" },
         "anchor": { "type": "string" },
+        "anchor_epoch": { "type": "number" },
         "$schema" : {},
         "scope": {},
         "area": {},

@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-#define PJ_LIB__
+#define PJ_LIB_
 
 #include <math.h>
 
@@ -36,22 +36,21 @@
 PROJ_HEAD(geoc, "Geocentric Latitude");
 
 /* Geographical to geocentric */
-static PJ_COORD forward(PJ_COORD coo, PJ *P) {
-    return pj_geocentric_latitude (P, PJ_FWD, coo);
+static void forward(PJ_COORD &coo, PJ *P) {
+    coo = pj_geocentric_latitude(P, PJ_FWD, coo);
 }
 
 /* Geocentric to geographical */
-static PJ_COORD inverse(PJ_COORD coo, PJ *P) {
-    return pj_geocentric_latitude (P, PJ_INV, coo);
+static void inverse(PJ_COORD &coo, PJ *P) {
+    coo = pj_geocentric_latitude(P, PJ_INV, coo);
 }
-
 
 static PJ *CONVERSION(geoc, 1) {
     P->inv4d = inverse;
     P->fwd4d = forward;
 
-    P->left   =  PJ_IO_UNITS_RADIANS;
-    P->right  =  PJ_IO_UNITS_RADIANS;
+    P->left = PJ_IO_UNITS_RADIANS;
+    P->right = PJ_IO_UNITS_RADIANS;
 
     P->is_latlong = 1;
     return P;

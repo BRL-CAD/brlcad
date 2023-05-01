@@ -1,6 +1,7 @@
 set(proj_ignore_files
 AUTHORS
 CITATION
+CITATION.cff
 CMakeLists.txt
 COPYING
 ChangeLog
@@ -22,6 +23,7 @@ cmake/policies.cmake
 cmake/proj_config.cmake.in
 cmake/project-config-version.cmake.in
 cmake/project-config.cmake.in
+cmake/uninstall.cmake.in
 data/CH
 data/CMakeLists.txt
 data/GL27
@@ -37,6 +39,9 @@ data/nad83
 data/other.extra
 data/proj.ini
 data/projjson.schema.json
+data/sql/CRS.png
+data/sql/README.md
+data/sql/Transformations.png
 data/sql/alias_name.sql
 data/sql/axis.sql
 data/sql/begin.sql
@@ -50,6 +55,7 @@ data/sql/coordinate_system.sql
 data/sql/customizations.sql
 data/sql/customizations_early.sql
 data/sql/deprecation.sql
+data/sql/diagram.xmi
 data/sql/ellipsoid.sql
 data/sql/esri.sql
 data/sql/extent.sql
@@ -64,6 +70,7 @@ data/sql/helmert_transformation.sql
 data/sql/iau.sql
 data/sql/ignf.sql
 data/sql/metadata.sql
+data/sql/nadcon5_concatenated_operations.sql
 data/sql/nkg.sql
 data/sql/nkg_post_customizations.sql
 data/sql/other_transformation.sql
@@ -85,6 +92,7 @@ data/tests/conus
 data/tests/egm96_15_downsampled.gtx
 data/tests/egm96_15_uncompressed_truncated.tif
 data/tests/nkgrf03vel_realigned_extract.tif
+data/tests/nkgrf03vel_realigned_extract_tiled_256x256.tif
 data/tests/nkgrf03vel_realigned_xy_extract.ct2
 data/tests/nkgrf03vel_realigned_z_extract.gtx
 data/tests/ntf_r93.gsb
@@ -153,12 +161,15 @@ data/tests/tinshift_fallback_nearest_side.json
 data/tests/tinshift_simplified_kkj_etrs.json
 data/tests/tinshift_simplified_n60_n2000.json
 data/tests/us_noaa_geoid06_ak_subset_at_antimeridian.tif
+data/tests/us_noaa_nadcon5_nad83_2007_nad83_2011_alaska_extract.tif
+data/tests/us_noaa_nadcon5_nad83_2007_nad83_2011_conus_extract.tif
 data/triangulation.schema.json
 data/world
 include/CMakeLists.txt
 include/proj/CMakeLists.txt
 include/proj/common.hpp
 include/proj/coordinateoperation.hpp
+include/proj/coordinates.hpp
 include/proj/coordinatesystem.hpp
 include/proj/crs.hpp
 include/proj/datum.hpp
@@ -168,7 +179,6 @@ include/proj/internal/include_nlohmann_json.hpp
 include/proj/internal/internal.hpp
 include/proj/internal/io_internal.hpp
 include/proj/internal/lru_cache.hpp
-include/proj/internal/mutex.hpp
 include/proj/internal/tracing.hpp
 include/proj/internal/vendor/nlohmann/json.hpp
 include/proj/io.hpp
@@ -248,6 +258,7 @@ src/internal.cpp
 src/inv.cpp
 src/iso19111/c_api.cpp
 src/iso19111/common.cpp
+src/iso19111/coordinates.cpp
 src/iso19111/coordinatesystem.cpp
 src/iso19111/crs.cpp
 src/iso19111/datum.cpp
@@ -279,7 +290,6 @@ src/list.cpp
 src/log.cpp
 src/malloc.cpp
 src/mlfn.cpp
-src/mlfn.hpp
 src/msfn.cpp
 src/mutex.cpp
 src/networkfilemanager.cpp
@@ -354,13 +364,11 @@ src/projections/latlong.cpp
 src/projections/lcc.cpp
 src/projections/lcca.cpp
 src/projections/loxim.cpp
-src/projections/lsat.cpp
 src/projections/mbt_fps.cpp
 src/projections/mbtfpp.cpp
 src/projections/mbtfpq.cpp
 src/projections/merc.cpp
 src/projections/mill.cpp
-src/projections/misrsom.cpp
 src/projections/mod_ster.cpp
 src/projections/moll.cpp
 src/projections/natearth.cpp
@@ -389,6 +397,7 @@ src/projections/rpoly.cpp
 src/projections/s2.cpp
 src/projections/sch.cpp
 src/projections/sconics.cpp
+src/projections/som.cpp
 src/projections/somerc.cpp
 src/projections/stere.cpp
 src/projections/sterea.cpp
@@ -428,6 +437,7 @@ src/transformations/defmodel.hpp
 src/transformations/defmodel_exceptions.hpp
 src/transformations/defmodel_impl.hpp
 src/transformations/deformation.cpp
+src/transformations/gridshift.cpp
 src/transformations/helmert.cpp
 src/transformations/hgridshift.cpp
 src/transformations/horner.cpp
@@ -455,6 +465,8 @@ src/wkt_parser.cpp
 src/wkt_parser.hpp
 src/zpoly1.cpp
 test/CMakeLists.txt
+test/benchmark/CMakeLists.txt
+test/benchmark/bench_proj_trans.cpp
 test/cli/CMakeLists.txt
 test/cli/input_with_utf8_bom.txt
 test/cli/ntv2_out.dist
@@ -493,6 +505,7 @@ test/gie/defmodel.gie
 test/gie/deformation.gie
 test/gie/ellipsoid.gie
 test/gie/geotiff_grids.gie
+test/gie/gridshift.gie
 test/gie/guyou.gie
 test/gie/more_builtins.gie
 test/gie/nkg.gie
@@ -530,6 +543,7 @@ test/unit/proj_context_test.cpp
 test/unit/proj_errno_string_test.cpp
 test/unit/test_c_api.cpp
 test/unit/test_common.cpp
+test/unit/test_coordinates.cpp
 test/unit/test_crs.cpp
 test/unit/test_datum.cpp
 test/unit/test_defmodel.cpp
@@ -549,4 +563,5 @@ test/unit/test_util.cpp
 if (COMMAND CMAKEFILES_IN_DIR)
   CMAKEFILES_IN_DIR(proj_ignore_files proj)
 endif (COMMAND CMAKEFILES_IN_DIR)
+
 

@@ -75,6 +75,9 @@ class PROJ_GCC_DLL Grid {
     PROJ_FOR_TEST const ExtentAndRes &extentAndRes() const { return m_extent; }
     PROJ_FOR_TEST const std::string &name() const { return m_name; }
 
+    virtual const std::string &metadataItem(const std::string &key,
+                                            int sample = -1) const = 0;
+
     PROJ_FOR_TEST virtual bool isNullGrid() const { return false; }
     PROJ_FOR_TEST virtual bool hasChanged() const = 0;
 };
@@ -90,7 +93,8 @@ class PROJ_GCC_DLL VerticalShiftGrid : public Grid {
                                     int heightIn, const ExtentAndRes &extentIn);
     PROJ_FOR_TEST ~VerticalShiftGrid() override;
 
-    PROJ_FOR_TEST const VerticalShiftGrid *gridAt(double lon, double lat) const;
+    PROJ_FOR_TEST const VerticalShiftGrid *gridAt(double longitude,
+                                                  double lat) const;
 
     PROJ_FOR_TEST virtual bool isNodata(float /*val*/,
                                         double /* multiplier */) const = 0;
@@ -123,7 +127,8 @@ class PROJ_GCC_DLL VerticalShiftGridSet {
     grids() const {
         return m_grids;
     }
-    PROJ_FOR_TEST const VerticalShiftGrid *gridAt(double lon, double lat) const;
+    PROJ_FOR_TEST const VerticalShiftGrid *gridAt(double longitude,
+                                                  double lat) const;
 
     PROJ_FOR_TEST virtual void reassign_context(PJ_CONTEXT *ctx);
     PROJ_FOR_TEST virtual bool reopen(PJ_CONTEXT *ctx);
@@ -141,13 +146,13 @@ class PROJ_GCC_DLL HorizontalShiftGrid : public Grid {
                                       const ExtentAndRes &extentIn);
     PROJ_FOR_TEST ~HorizontalShiftGrid() override;
 
-    PROJ_FOR_TEST const HorizontalShiftGrid *gridAt(double lon,
+    PROJ_FOR_TEST const HorizontalShiftGrid *gridAt(double longitude,
                                                     double lat) const;
 
     // x = 0 is western-most column, y = 0 is southern-most line
     PROJ_FOR_TEST virtual bool valueAt(int x, int y,
                                        bool compensateNTConvention,
-                                       float &lonShift,
+                                       float &longShift,
                                        float &latShift) const = 0;
 
     PROJ_FOR_TEST virtual void reassign_context(PJ_CONTEXT *ctx) = 0;
@@ -175,7 +180,7 @@ class PROJ_GCC_DLL HorizontalShiftGridSet {
     grids() const {
         return m_grids;
     }
-    PROJ_FOR_TEST const HorizontalShiftGrid *gridAt(double lon,
+    PROJ_FOR_TEST const HorizontalShiftGrid *gridAt(double longitude,
                                                     double lat) const;
 
     PROJ_FOR_TEST virtual void reassign_context(PJ_CONTEXT *ctx);
@@ -196,18 +201,22 @@ class PROJ_GCC_DLL GenericShiftGrid : public Grid {
 
     PROJ_FOR_TEST const GenericShiftGrid *gridAt(double x, double y) const;
 
+    virtual const std::string &type() const = 0;
+
     PROJ_FOR_TEST virtual std::string unit(int sample) const = 0;
 
     PROJ_FOR_TEST virtual std::string description(int sample) const = 0;
-
-    PROJ_FOR_TEST virtual std::string metadataItem(const std::string &key,
-                                                   int sample = -1) const = 0;
 
     PROJ_FOR_TEST virtual int samplesPerPixel() const = 0;
 
     // x = 0 is western-most column, y = 0 is southern-most line
     PROJ_FOR_TEST virtual bool valueAt(int x, int y, int sample,
                                        float &out) const = 0;
+
+    PROJ_FOR_TEST virtual bool valuesAt(int x_start, int y_start, int x_count,
+                                        int y_count, int sample_count,
+                                        const int *sample_idx,
+                                        float *out) const;
 
     PROJ_FOR_TEST virtual void reassign_context(PJ_CONTEXT *ctx) = 0;
 };
@@ -235,6 +244,8 @@ class PROJ_GCC_DLL GenericShiftGridSet {
         return m_grids;
     }
     PROJ_FOR_TEST const GenericShiftGrid *gridAt(double x, double y) const;
+    PROJ_FOR_TEST const GenericShiftGrid *gridAt(const std::string &type,
+                                                 double x, double y) const;
 
     PROJ_FOR_TEST virtual void reassign_context(PJ_CONTEXT *ctx);
     PROJ_FOR_TEST virtual bool reopen(PJ_CONTEXT *ctx);

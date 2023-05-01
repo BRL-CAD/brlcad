@@ -8,19 +8,9 @@ message(STATUS "Configuring proj library:")
 option(BUILD_SHARED_LIBS
   "Build PROJ library shared." ON)
 
-option(USE_THREAD "Build libproj with thread/mutex support " ON)
-if(NOT USE_THREAD)
-  add_definitions(-DMUTEX_stub)
-endif()
 find_package(Threads QUIET)
-if(USE_THREAD AND Threads_FOUND AND CMAKE_USE_WIN32_THREADS_INIT)
-  add_definitions(-DMUTEX_win32)
-elseif(USE_THREAD AND Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
-  add_definitions(-DMUTEX_pthread)
-elseif(USE_THREAD AND NOT Threads_FOUND)
-  message(FATAL_ERROR
-    "No thread library found and thread/mutex support is "
-    "required by USE_THREAD option")
+if(Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
+  add_definitions(-DPROJ_HAS_PTHREADS)
 endif()
 
 option(ENABLE_IPO
@@ -67,8 +57,7 @@ set(SRC_LIBPROJ_PROJECTIONS
   projections/eqc.cpp
   projections/gall.cpp
   projections/labrd.cpp
-  projections/lsat.cpp
-  projections/misrsom.cpp
+  projections/som.cpp
   projections/merc.cpp
   projections/mill.cpp
   projections/ocea.cpp
@@ -167,6 +156,7 @@ set(SRC_LIBPROJ_CONVERSIONS
 set(SRC_LIBPROJ_TRANSFORMATIONS
   transformations/affine.cpp
   transformations/deformation.cpp
+  transformations/gridshift.cpp
   transformations/helmert.cpp
   transformations/hgridshift.cpp
   transformations/horner.cpp
@@ -183,6 +173,7 @@ set(SRC_LIBPROJ_ISO19111
   iso19111/util.cpp
   iso19111/metadata.cpp
   iso19111/common.cpp
+  iso19111/coordinates.cpp
   iso19111/crs.cpp
   iso19111/datum.cpp
   iso19111/coordinatesystem.cpp
@@ -314,7 +305,7 @@ add_custom_target(check_wkt1_grammar_md5 ALL
                   COMMAND ${CMAKE_COMMAND}
                       "-DIN_FILE=wkt1_grammar.y"
                       "-DTARGET=generate_wkt1_parser"
-                      "-DEXPECTED_MD5SUM=04ba1095339aeac27105f5782d6297de"
+                      "-DEXPECTED_MD5SUM=5b4495c1ec6d2ae26b7028a9bb5d8819"
                       -P "${CMAKE_CURRENT_SOURCE_DIR}/check_md5sum.cmake"
                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
                   DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/wkt1_grammar.y"
@@ -336,7 +327,7 @@ add_custom_target(check_wkt2_grammar_md5 ALL
                   COMMAND ${CMAKE_COMMAND}
                       "-DIN_FILE=wkt2_grammar.y"
                       "-DTARGET=generate_wkt2_parser"
-                      "-DEXPECTED_MD5SUM=f9ee543089ae55a895ae6e16cd0a68b2"
+                      "-DEXPECTED_MD5SUM=289572eebe9dab3c7225bd48c445c287"
                       -P "${CMAKE_CURRENT_SOURCE_DIR}/check_md5sum.cmake"
                   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
                   DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/wkt2_grammar.y"
@@ -443,7 +434,7 @@ if(UNIX)
     target_link_libraries(proj PRIVATE -ldl)
   endif()
 endif()
-if(USE_THREAD AND Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
+if(Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
   target_link_libraries(proj PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
@@ -458,16 +449,28 @@ endif()
 
 if(TIFF_ENABLED)
   target_compile_definitions(proj PRIVATE -DTIFF_ENABLED)
-  target_include_directories(proj PRIVATE ${TIFF_INCLUDE_DIR})
-  target_link_libraries(proj PRIVATE ${TIFF_LIBRARY})
+  if( CMAKE_VERSION VERSION_LESS 3.11 AND CMAKE_CROSSCOMPILING )
+      # Hack needed for ubuntu:18.04 mingw64 cross compiling to avoid
+      # -isystem to be emitted (similar to https://discourse.cmake.org/t/use-of-isystem/1574)
+      target_include_directories(proj PRIVATE ${TIFF_INCLUDE_DIRS})
+      target_link_libraries(proj PRIVATE ${TIFF_LIBRARIES})
+  else()
+      target_link_libraries(proj PRIVATE TIFF::TIFF)
+  endif()
 endif()
 
 if(CURL_ENABLED)
   target_compile_definitions(proj PRIVATE -DCURL_ENABLED)
-  target_include_directories(proj PRIVATE ${CURL_INCLUDE_DIRS})
+  if( CMAKE_VERSION VERSION_LESS 3.11 AND CMAKE_CROSSCOMPILING )
+      # Hack needed for ubuntu:18.04 mingw64 cross compiling to avoid
+      # -isystem to be emitted (similar to https://discourse.cmake.org/t/use-of-isystem/1574)
+      target_include_directories(proj PRIVATE ${CURL_INCLUDE_DIRS})
+      target_link_libraries(proj PRIVATE ${CURL_LIBRARIES})
+  else()
+      target_link_libraries(proj PRIVATE CURL::libcurl)
+  endif()
   target_link_libraries(proj
     PRIVATE
-      ${CURL_LIBRARIES}
       $<$<CXX_COMPILER_ID:MSVC>:ws2_32>
       $<$<CXX_COMPILER_ID:MSVC>:wldap32>
       $<$<CXX_COMPILER_ID:MSVC>:advapi32>

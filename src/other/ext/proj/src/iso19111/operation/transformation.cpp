@@ -535,11 +535,10 @@ TransformationNNPtr Transformation::createGeocentricTranslations(
         properties, sourceCRSIn, targetCRSIn, nullptr,
         createMethodMapNameEPSGCode(useOperationMethodEPSGCodeIfPresent(
             properties,
-            isGeocentric
-                ? EPSG_CODE_METHOD_GEOCENTRIC_TRANSLATION_GEOCENTRIC
-                : isGeog2D
-                      ? EPSG_CODE_METHOD_GEOCENTRIC_TRANSLATION_GEOGRAPHIC_2D
-                      : EPSG_CODE_METHOD_GEOCENTRIC_TRANSLATION_GEOGRAPHIC_3D)),
+            isGeocentric ? EPSG_CODE_METHOD_GEOCENTRIC_TRANSLATION_GEOCENTRIC
+            : isGeog2D
+                ? EPSG_CODE_METHOD_GEOCENTRIC_TRANSLATION_GEOGRAPHIC_2D
+                : EPSG_CODE_METHOD_GEOCENTRIC_TRANSLATION_GEOGRAPHIC_3D)),
         VectorOfParameters{
             createOpParamNameEPSGCode(EPSG_CODE_PARAMETER_X_AXIS_TRANSLATION),
             createOpParamNameEPSGCode(EPSG_CODE_PARAMETER_Y_AXIS_TRANSLATION),
@@ -594,10 +593,9 @@ TransformationNNPtr Transformation::createPositionVector(
         properties,
         createMethodMapNameEPSGCode(useOperationMethodEPSGCodeIfPresent(
             properties,
-            isGeocentric
-                ? EPSG_CODE_METHOD_POSITION_VECTOR_GEOCENTRIC
-                : isGeog2D ? EPSG_CODE_METHOD_POSITION_VECTOR_GEOGRAPHIC_2D
-                           : EPSG_CODE_METHOD_POSITION_VECTOR_GEOGRAPHIC_3D)),
+            isGeocentric ? EPSG_CODE_METHOD_POSITION_VECTOR_GEOCENTRIC
+            : isGeog2D   ? EPSG_CODE_METHOD_POSITION_VECTOR_GEOGRAPHIC_2D
+                         : EPSG_CODE_METHOD_POSITION_VECTOR_GEOGRAPHIC_3D)),
         sourceCRSIn, targetCRSIn, translationXMetre, translationYMetre,
         translationZMetre, rotationXArcSecond, rotationYArcSecond,
         rotationZArcSecond, scaleDifferencePPM, accuracies);
@@ -644,10 +642,9 @@ TransformationNNPtr Transformation::createCoordinateFrameRotation(
         properties,
         createMethodMapNameEPSGCode(useOperationMethodEPSGCodeIfPresent(
             properties,
-            isGeocentric
-                ? EPSG_CODE_METHOD_COORDINATE_FRAME_GEOCENTRIC
-                : isGeog2D ? EPSG_CODE_METHOD_COORDINATE_FRAME_GEOGRAPHIC_2D
-                           : EPSG_CODE_METHOD_COORDINATE_FRAME_GEOGRAPHIC_3D)),
+            isGeocentric ? EPSG_CODE_METHOD_COORDINATE_FRAME_GEOCENTRIC
+            : isGeog2D   ? EPSG_CODE_METHOD_COORDINATE_FRAME_GEOGRAPHIC_2D
+                         : EPSG_CODE_METHOD_COORDINATE_FRAME_GEOGRAPHIC_3D)),
         sourceCRSIn, targetCRSIn, translationXMetre, translationYMetre,
         translationZMetre, rotationXArcSecond, rotationYArcSecond,
         rotationZArcSecond, scaleDifferencePPM, accuracies);
@@ -733,8 +730,9 @@ static TransformationNNPtr createFifteenParamsTransform(
  * the sign of
  * the rotation terms is inverted.
  *
- * This method is defined as [EPSG:1053]
- * (https://www.epsg-registry.org/export.htm?gml=urn:ogc:def:method:EPSG::1053)
+ * This method is defined as
+ * <a href="https://epsg.org/coord-operation-method_1053/index.html">
+ * EPSG:1053</a>.
  *
  * @param properties See \ref general_properties of the Transformation.
  * At minimum the name should be defined.
@@ -790,9 +788,9 @@ TransformationNNPtr Transformation::createTimeDependentPositionVector(
             properties,
             isGeocentric
                 ? EPSG_CODE_METHOD_TIME_DEPENDENT_POSITION_VECTOR_GEOCENTRIC
-                : isGeog2D
-                      ? EPSG_CODE_METHOD_TIME_DEPENDENT_POSITION_VECTOR_GEOGRAPHIC_2D
-                      : EPSG_CODE_METHOD_TIME_DEPENDENT_POSITION_VECTOR_GEOGRAPHIC_3D)),
+            : isGeog2D
+                ? EPSG_CODE_METHOD_TIME_DEPENDENT_POSITION_VECTOR_GEOGRAPHIC_2D
+                : EPSG_CODE_METHOD_TIME_DEPENDENT_POSITION_VECTOR_GEOGRAPHIC_3D)),
         sourceCRSIn, targetCRSIn, translationXMetre, translationYMetre,
         translationZMetre, rotationXArcSecond, rotationYArcSecond,
         rotationZArcSecond, scaleDifferencePPM, rateTranslationX,
@@ -809,8 +807,9 @@ TransformationNNPtr Transformation::createTimeDependentPositionVector(
  * of
  * the rotation terms is inverted.
  *
- * This method is defined as [EPSG:1056]
- * (https://www.epsg-registry.org/export.htm?gml=urn:ogc:def:method:EPSG::1056)
+ * This method is defined as
+ * <a href="https://epsg.org/coord-operation-method_1056/index.html">
+ * EPSG:1056</a>.
  *
  * @param properties See \ref general_properties of the Transformation.
  * At minimum the name should be defined.
@@ -868,9 +867,9 @@ TransformationNNPtr Transformation::createTimeDependentCoordinateFrameRotation(
             properties,
             isGeocentric
                 ? EPSG_CODE_METHOD_TIME_DEPENDENT_COORDINATE_FRAME_GEOCENTRIC
-                : isGeog2D
-                      ? EPSG_CODE_METHOD_TIME_DEPENDENT_COORDINATE_FRAME_GEOGRAPHIC_2D
-                      : EPSG_CODE_METHOD_TIME_DEPENDENT_COORDINATE_FRAME_GEOGRAPHIC_3D)),
+            : isGeog2D
+                ? EPSG_CODE_METHOD_TIME_DEPENDENT_COORDINATE_FRAME_GEOGRAPHIC_2D
+                : EPSG_CODE_METHOD_TIME_DEPENDENT_COORDINATE_FRAME_GEOGRAPHIC_3D)),
         sourceCRSIn, targetCRSIn, translationXMetre, translationYMetre,
         translationZMetre, rotationXArcSecond, rotationYArcSecond,
         rotationZArcSecond, scaleDifferencePPM, rateTranslationX,
@@ -916,8 +915,9 @@ static TransformationNNPtr _createMolodensky(
  *
  * @see createAbridgedMolodensky() for a related method.
  *
- * This method is defined as [EPSG:9604]
- * (https://www.epsg-registry.org/export.htm?gml=urn:ogc:def:method:EPSG::9604)
+ * This method is defined as
+ * <a href="https://epsg.org/coord-operation-method_9604/index.html">
+ * EPSG:9604</a>.
  *
  * @param properties See \ref general_properties of the Transformation.
  * At minimum the name should be defined.
@@ -952,8 +952,9 @@ TransformationNNPtr Transformation::createMolodensky(
  *
  * @see createdMolodensky() for a related method.
  *
- * This method is defined as [EPSG:9605]
- * (https://www.epsg-registry.org/export.htm?gml=urn:ogc:def:method:EPSG::9605)
+ * This method is defined as
+ * <a href="https://epsg.org/coord-operation-method_9605/index.html">
+ * EPSG:9605</a>.
  *
  * @param properties See \ref general_properties of the Transformation.
  * At minimum the name should be defined.
@@ -1147,9 +1148,10 @@ buildAccuracyZero() {
 
 /** \brief Instantiate a transformation with method Longitude rotation
  *
- * This method is defined as [EPSG:9601]
- * (https://www.epsg-registry.org/export.htm?gml=urn:ogc:def:method:EPSG::9601)
- * *
+ * This method is defined as
+ * <a href="https://epsg.org/coord-operation-method_9601/index.html">
+ * EPSG:9601</a>.
+ *
  * @param properties See \ref general_properties of the Transformation.
  * At minimum the name should be defined.
  * @param sourceCRSIn Source CRS.
@@ -1173,22 +1175,23 @@ TransformationNNPtr Transformation::createLongitudeRotation(
 
 /** \brief Instantiate a transformation with method Geographic 2D offsets
  *
- * This method is defined as [EPSG:9619]
- * (https://www.epsg-registry.org/export.htm?gml=urn:ogc:def:method:EPSG::9619)
- * *
+ * This method is defined as
+ * <a href="https://epsg.org/coord-operation-method_9619/index.html">
+ * EPSG:9619</a>.
+ *
  * @param properties See \ref general_properties of the Transformation.
  * At minimum the name should be defined.
  * @param sourceCRSIn Source CRS.
  * @param targetCRSIn Target CRS.
  * @param offsetLat Latitude offset to add.
- * @param offsetLon Longitude offset to add.
+ * @param offsetLong Longitude offset to add.
  * @param accuracies Vector of positional accuracy (might be empty).
  * @return new Transformation.
  */
 TransformationNNPtr Transformation::createGeographic2DOffsets(
     const util::PropertyMap &properties, const crs::CRSNNPtr &sourceCRSIn,
     const crs::CRSNNPtr &targetCRSIn, const common::Angle &offsetLat,
-    const common::Angle &offsetLon,
+    const common::Angle &offsetLong,
     const std::vector<metadata::PositionalAccuracyNNPtr> &accuracies) {
     return create(
         properties, sourceCRSIn, targetCRSIn, nullptr,
@@ -1196,22 +1199,23 @@ TransformationNNPtr Transformation::createGeographic2DOffsets(
         VectorOfParameters{
             createOpParamNameEPSGCode(EPSG_CODE_PARAMETER_LATITUDE_OFFSET),
             createOpParamNameEPSGCode(EPSG_CODE_PARAMETER_LONGITUDE_OFFSET)},
-        VectorOfValues{offsetLat, offsetLon}, accuracies);
+        VectorOfValues{offsetLat, offsetLong}, accuracies);
 }
 
 // ---------------------------------------------------------------------------
 
 /** \brief Instantiate a transformation with method Geographic 3D offsets
  *
- * This method is defined as [EPSG:9660]
- * (https://www.epsg-registry.org/export.htm?gml=urn:ogc:def:method:EPSG::9660)
- * *
+ * This method is defined as
+ * <a href="https://epsg.org/coord-operation-method_9660/index.html">
+ * EPSG:9660</a>.
+ *
  * @param properties See \ref general_properties of the Transformation.
  * At minimum the name should be defined.
  * @param sourceCRSIn Source CRS.
  * @param targetCRSIn Target CRS.
  * @param offsetLat Latitude offset to add.
- * @param offsetLon Longitude offset to add.
+ * @param offsetLong Longitude offset to add.
  * @param offsetHeight Height offset to add.
  * @param accuracies Vector of positional accuracy (might be empty).
  * @return new Transformation.
@@ -1219,7 +1223,7 @@ TransformationNNPtr Transformation::createGeographic2DOffsets(
 TransformationNNPtr Transformation::createGeographic3DOffsets(
     const util::PropertyMap &properties, const crs::CRSNNPtr &sourceCRSIn,
     const crs::CRSNNPtr &targetCRSIn, const common::Angle &offsetLat,
-    const common::Angle &offsetLon, const common::Length &offsetHeight,
+    const common::Angle &offsetLong, const common::Length &offsetHeight,
     const std::vector<metadata::PositionalAccuracyNNPtr> &accuracies) {
     return create(
         properties, sourceCRSIn, targetCRSIn, nullptr,
@@ -1228,7 +1232,7 @@ TransformationNNPtr Transformation::createGeographic3DOffsets(
             createOpParamNameEPSGCode(EPSG_CODE_PARAMETER_LATITUDE_OFFSET),
             createOpParamNameEPSGCode(EPSG_CODE_PARAMETER_LONGITUDE_OFFSET),
             createOpParamNameEPSGCode(EPSG_CODE_PARAMETER_VERTICAL_OFFSET)},
-        VectorOfValues{offsetLat, offsetLon, offsetHeight}, accuracies);
+        VectorOfValues{offsetLat, offsetLong, offsetHeight}, accuracies);
 }
 
 // ---------------------------------------------------------------------------
@@ -1237,15 +1241,16 @@ TransformationNNPtr Transformation::createGeographic3DOffsets(
  * height
  * offsets
  *
- * This method is defined as [EPSG:9618]
- * (https://www.epsg-registry.org/export.htm?gml=urn:ogc:def:method:EPSG::9618)
- * *
+ * This method is defined as
+ * <a href="https://epsg.org/coord-operation-method_9618/index.html">
+ * EPSG:9618</a>.
+ *
  * @param properties See \ref general_properties of the Transformation.
  * At minimum the name should be defined.
  * @param sourceCRSIn Source CRS.
  * @param targetCRSIn Target CRS.
  * @param offsetLat Latitude offset to add.
- * @param offsetLon Longitude offset to add.
+ * @param offsetLong Longitude offset to add.
  * @param offsetHeight Geoid undulation to add.
  * @param accuracies Vector of positional accuracy (might be empty).
  * @return new Transformation.
@@ -1253,7 +1258,7 @@ TransformationNNPtr Transformation::createGeographic3DOffsets(
 TransformationNNPtr Transformation::createGeographic2DWithHeightOffsets(
     const util::PropertyMap &properties, const crs::CRSNNPtr &sourceCRSIn,
     const crs::CRSNNPtr &targetCRSIn, const common::Angle &offsetLat,
-    const common::Angle &offsetLon, const common::Length &offsetHeight,
+    const common::Angle &offsetLong, const common::Length &offsetHeight,
     const std::vector<metadata::PositionalAccuracyNNPtr> &accuracies) {
     return create(
         properties, sourceCRSIn, targetCRSIn, nullptr,
@@ -1263,16 +1268,17 @@ TransformationNNPtr Transformation::createGeographic2DWithHeightOffsets(
             createOpParamNameEPSGCode(EPSG_CODE_PARAMETER_LATITUDE_OFFSET),
             createOpParamNameEPSGCode(EPSG_CODE_PARAMETER_LONGITUDE_OFFSET),
             createOpParamNameEPSGCode(EPSG_CODE_PARAMETER_GEOID_UNDULATION)},
-        VectorOfValues{offsetLat, offsetLon, offsetHeight}, accuracies);
+        VectorOfValues{offsetLat, offsetLong, offsetHeight}, accuracies);
 }
 
 // ---------------------------------------------------------------------------
 
 /** \brief Instantiate a transformation with method Vertical Offset.
  *
- * This method is defined as [EPSG:9616]
- * (https://www.epsg-registry.org/export.htm?gml=urn:ogc:def:method:EPSG::9616)
- * *
+ * This method is defined as
+ * <a href="https://epsg.org/coord-operation-method_9616/index.html">
+ * EPSG:9616</a>.
+ *
  * @param properties See \ref general_properties of the Transformation.
  * At minimum the name should be defined.
  * @param sourceCRSIn Source CRS.
@@ -1297,8 +1303,9 @@ TransformationNNPtr Transformation::createVerticalOffset(
 /** \brief Instantiate a transformation based on the Change of Vertical Unit
  * method.
  *
- * This method is defined as [EPSG:1069]
- * (https://www.epsg-registry.org/export.htm?gml=urn:ogc:def:method:EPSG::1069)
+ * This method is defined as
+ * <a href="https://epsg.org/coord-operation-method_1069/index.html">
+ * EPSG:1069</a> [DEPRECATED].
  *
  * @param properties See \ref general_properties of the conversion. If the name
  * is not provided, it is automatically set.
@@ -1787,6 +1794,12 @@ void Transformation::_exportToJSON(
             writer->AddObjKey("interpolation_crs");
             formatter->setAllowIDInImmediateChild();
             l_interpolationCRS->_exportToJSON(formatter);
+        }
+    } else {
+        if (formatter->abridgedTransformationWriteSourceCRS()) {
+            writer->AddObjKey("source_crs");
+            formatter->setAllowIDInImmediateChild();
+            sourceCRS()->_exportToJSON(formatter);
         }
     }
 

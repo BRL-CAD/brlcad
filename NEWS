@@ -13,16 +13,23 @@ changes made.  See document footer for additional details.
 --- 202X-XX-XX  Release 7.36.0                                     ---
 ----------------------------------------------------------------------
 
-* Added a point-inside-object subcmd "inside" to analyze - Cliff Yapp 
+* Added a point-inside-object subcmd "inside" to analyze - Cliff Yapp
+* Added "flip" subcommand to BoT's for normal flipping - Cliff Yapp
+* Fixed g-ply converter on Windows - Chris McGregor
+* Fixed infinite loop in noise generation - Sean Morrison
 * Fixed analyze in/out test for multi-segment ray hits - Cliff Yapp
 * Fixed analyze cmd crash when specifying invalid objects - Cliff Yapp
 * Fixed search -attr behavior with names having spaces - Cliff Yapp
+* Fixed nirt hanging on hits with a lot of output - Chris McGregor
+* nirt -b is now default behavior - Chris McGregor
+* Updated OpenNURBS library, 3dm-g now supports ver. 7 files
+	- Cliff Yapp, Chris McGregor
 * Updated OpenMesh library to version 9.0 - Cliff Yapp
 * Updated Open Asset Import Library - v5.2.5 + fix - Chris McGregor
 * Updated Tcl/Tk to version 8.6.13 - Cliff Yapp
 * Updated NETPBM library to version 10.73.42 - Cliff Yapp
-* Updated GDAL library to version 3.6.2 - Cliff Yapp
-* Updated PROJ library to version 9.1.1 - Cliff Yapp
+* Updated GDAL library to version 3.6.3 - Cliff Yapp
+* Updated PROJ library to version 9.2.0 - Cliff Yapp
 * Updated PNG library to version 1.6.39 - Cliff Yapp
 
 

@@ -42,7 +42,6 @@
 #include "proj/internal/internal.hpp"
 #include "proj/internal/io_internal.hpp"
 #include "proj/internal/lru_cache.hpp"
-#include "proj/internal/mutex.hpp"
 #include "proj/internal/tracing.hpp"
 
 #include "operation/coordinateoperation_internal.hpp"
@@ -61,6 +60,7 @@
 #include <locale>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <sstream> // std::ostringstream
 #include <stdexcept>
 #include <string>
@@ -79,8 +79,8 @@
 // parallel. This is slightly faster
 #define ENABLE_CUSTOM_LOCKLESS_VFS
 
-#if defined(_WIN32) && defined(MUTEX_pthread)
-#undef MUTEX_pthread
+#if defined(_WIN32) && defined(PROJ_HAS_PTHREADS)
+#undef PROJ_HAS_PTHREADS
 #endif
 
 /* SQLite3 might use seak()+read() or pread[64]() to read data */
@@ -88,7 +88,7 @@
 /* children of a parent process, while the former doesn't. */
 /* So we use pthread_atfork() to set a flag in forked children, to ask them */
 /* to close and reopen their database handle. */
-#if defined(MUTEX_pthread) && !defined(SQLITE_USE_PREAD)
+#if defined(PROJ_HAS_PTHREADS) && !defined(SQLITE_USE_PREAD)
 #include <pthread.h>
 #define REOPEN_SQLITE_DB_AFTER_FORK
 #endif
@@ -577,7 +577,7 @@ class SQLiteHandleCache {
     bool firstTime_ = true;
 #endif
 
-    NS_PROJ::mutex sMutex_{};
+    std::mutex sMutex_{};
 
     // Map dbname to SQLiteHandle
     lru11::Cache<std::string, std::shared_ptr<SQLiteHandle>> cache_{};
@@ -606,7 +606,7 @@ SQLiteHandleCache &SQLiteHandleCache::get() {
 // ---------------------------------------------------------------------------
 
 void SQLiteHandleCache::clear() {
-    NS_PROJ::lock_guard<NS_PROJ::mutex> lock(sMutex_);
+    std::lock_guard<std::mutex> lock(sMutex_);
     cache_.clear();
 }
 
@@ -614,7 +614,7 @@ void SQLiteHandleCache::clear() {
 
 std::shared_ptr<SQLiteHandle>
 SQLiteHandleCache::getHandle(const std::string &path, PJ_CONTEXT *ctx) {
-    NS_PROJ::lock_guard<NS_PROJ::mutex> lock(sMutex_);
+    std::lock_guard<std::mutex> lock(sMutex_);
 
 #ifdef REOPEN_SQLITE_DB_AFTER_FORK
     if (firstTime_) {
@@ -637,7 +637,7 @@ SQLiteHandleCache::getHandle(const std::string &path, PJ_CONTEXT *ctx) {
 // ---------------------------------------------------------------------------
 
 void SQLiteHandleCache::invalidateHandles() {
-    NS_PROJ::lock_guard<NS_PROJ::mutex> lock(sMutex_);
+    std::lock_guard<std::mutex> lock(sMutex_);
     const auto lambda =
         [](const lru11::KeyValuePair<std::string, std::shared_ptr<SQLiteHandle>>
                &kvp) { kvp.value->invalidate(); };
@@ -1804,11 +1804,11 @@ void DatabaseContext::Private::identify(const DatabaseContextNNPtr &dbContext,
                     return;
                 }
                 if (authName == metadata::Identifier::EPSG && code == "6422") {
-                    // preferred coordinate system for geographic lat, lon
+                    // preferred coordinate system for geographic lat, long
                     return;
                 }
                 if (authName == metadata::Identifier::EPSG && code == "6423") {
-                    // preferred coordinate system for geographic lat, lon, h
+                    // preferred coordinate system for geographic lat, long, h
                     return;
                 }
             }
@@ -1931,7 +1931,10 @@ void DatabaseContext::Private::identifyOrInsertUsages(
                 scopeCode = row[1];
             } else {
                 scopeAuthName = authName;
-                scopeCode = "SCOPE_" + tableName + "_" + code;
+                scopeCode = "SCOPE_";
+                scopeCode += tableName;
+                scopeCode += '_';
+                scopeCode += code;
                 const auto sqlToInsert = formatStatement(
                     "INSERT INTO scope VALUES('%q','%q','%q',0);",
                     scopeAuthName.c_str(), scopeCode.c_str(), scope->c_str());
@@ -1972,7 +1975,10 @@ void DatabaseContext::Private::identifyOrInsertUsages(
                         extentCode = row[1];
                     } else {
                         extentAuthName = authName;
-                        extentCode = "EXTENT_" + tableName + "_" + code;
+                        extentCode = "EXTENT_";
+                        extentCode += tableName;
+                        extentCode += '_';
+                        extentCode += code;
                         std::string description(*(extent->description()));
                         if (description.empty()) {
                             description = "unknown";
@@ -3243,8 +3249,16 @@ bool DatabaseContext::lookForGridInfo(
     std::string &fullFilename, std::string &packageName, std::string &url,
     bool &directDownload, bool &openLicense, bool &gridAvailable) const {
     Private::GridInfoCache info;
-    const std::string key(projFilename +
-                          (considerKnownGridsAsAvailable ? "true" : "false"));
+
+    auto ctxt = d->pjCtxt();
+    if (ctxt == nullptr) {
+        ctxt = pj_get_default_ctx();
+        d->setPjCtxt(ctxt);
+    }
+
+    std::string key(projFilename);
+    key += proj_context_is_network_enabled(ctxt) ? "true" : "false";
+    key += considerKnownGridsAsAvailable ? "true" : "false";
     if (d->getGridInfoFromCache(key, info)) {
         fullFilename = info.fullFilename;
         packageName = info.packageName;
@@ -3262,11 +3276,6 @@ bool DatabaseContext::lookForGridInfo(
     directDownload = false;
 
     fullFilename.resize(2048);
-    auto ctxt = d->pjCtxt();
-    if (ctxt == nullptr) {
-        ctxt = pj_get_default_ctx();
-        d->setPjCtxt(ctxt);
-    }
     int errno_before = proj_context_errno(ctxt);
     gridAvailable = NS_PROJ::FileManager::open_resource_file(
                         ctxt, projFilename.c_str(), &fullFilename[0],
@@ -3413,7 +3422,11 @@ DatabaseContext::getAliasFromOfficialName(const std::string &officialName,
     }
     sql += " ORDER BY deprecated";
     auto res = d->run(sql, {officialName});
-    if (res.empty()) {
+    // Sorry for the hack excluding NAD83 + geographic_3D_crs, but otherwise
+    // EPSG has a weird alias from NAD83 to EPSG:4152 which happens to be
+    // NAD83(HARN), and that's definitely not desirable.
+    if (res.empty() &&
+        !(officialName == "NAD83" && tableName == "geographic_3D_crs")) {
         res = d->run(
             "SELECT auth_name, code FROM alias_name WHERE table_name = ? AND "
             "alt_name = ? AND source IN ('EPSG', 'PROJ')",
@@ -3867,26 +3880,40 @@ util::PropertyMap AuthorityFactory::Private::createPropertiesSearchUsages(
     const std::string &table_name, const std::string &code,
     const std::string &name, bool deprecated) {
 
-    const std::string sql(
-        "SELECT extent.description, extent.south_lat, "
-        "extent.north_lat, extent.west_lon, extent.east_lon, "
-        "scope.scope, "
-        "(CASE WHEN scope.scope LIKE '%large scale%' THEN 0 ELSE 1 END) "
-        "AS score "
-        "FROM usage "
-        "JOIN extent ON usage.extent_auth_name = extent.auth_name AND "
-        "usage.extent_code = extent.code "
-        "JOIN scope ON usage.scope_auth_name = scope.auth_name AND "
-        "usage.scope_code = scope.code "
-        "WHERE object_table_name = ? AND object_auth_name = ? AND "
-        "object_code = ? AND "
-        // We voluntary exclude extent and scope with a specific code
-        "NOT (usage.extent_auth_name = 'PROJ' AND "
-        "usage.extent_code = 'EXTENT_UNKNOWN') AND "
-        "NOT (usage.scope_auth_name = 'PROJ' AND "
-        "usage.scope_code = 'SCOPE_UNKNOWN') "
-        "ORDER BY score, usage.auth_name, usage.code");
-    auto res = run(sql, {table_name, authority(), code});
+    SQLResultSet res;
+    if (table_name == "geodetic_crs" && code == "4326" &&
+        authority() == "EPSG") {
+        // EPSG v10.077 has changed the extent from 1262 to 2830, whose
+        // description is super verbose.
+        // Cf https://epsg.org/closed-change-request/browse/id/2022.086
+        // To avoid churn in our WKT2 output, hot patch to the usage of
+        // 10.076 and earlier
+        res = run("SELECT extent.description, extent.south_lat, "
+                  "extent.north_lat, extent.west_lon, extent.east_lon, "
+                  "scope.scope, 0 AS score FROM extent, scope WHERE "
+                  "extent.code = 1262 and scope.code = 1183");
+    } else {
+        const std::string sql(
+            "SELECT extent.description, extent.south_lat, "
+            "extent.north_lat, extent.west_lon, extent.east_lon, "
+            "scope.scope, "
+            "(CASE WHEN scope.scope LIKE '%large scale%' THEN 0 ELSE 1 END) "
+            "AS score "
+            "FROM usage "
+            "JOIN extent ON usage.extent_auth_name = extent.auth_name AND "
+            "usage.extent_code = extent.code "
+            "JOIN scope ON usage.scope_auth_name = scope.auth_name AND "
+            "usage.scope_code = scope.code "
+            "WHERE object_table_name = ? AND object_auth_name = ? AND "
+            "object_code = ? AND "
+            // We voluntary exclude extent and scope with a specific code
+            "NOT (usage.extent_auth_name = 'PROJ' AND "
+            "usage.extent_code = 'EXTENT_UNKNOWN') AND "
+            "NOT (usage.scope_auth_name = 'PROJ' AND "
+            "usage.scope_code = 'SCOPE_UNKNOWN') "
+            "ORDER BY score, usage.auth_name, usage.code");
+        res = run(sql, {table_name, authority(), code});
+    }
     std::vector<ObjectDomainNNPtr> usages;
     for (const auto &row : res) {
         try {
@@ -7528,7 +7555,8 @@ AuthorityFactory::createBetweenGeodeticCRSWithDatumBasedIntermediates(
             trfm.south = c_locale_stod(row[8]);
             trfm.east = c_locale_stod(row[9]);
             trfm.north = c_locale_stod(row[10]);
-            const std::string key = datum_auth_name + ':' + datum_code;
+            const std::string key =
+                std::string(datum_auth_name).append(":").append(datum_code);
             if (trfm.situation == "src_is_tgt" ||
                 trfm.situation == "src_is_src")
                 mapIntermDatumOfSource[key].emplace_back(std::move(trfm));

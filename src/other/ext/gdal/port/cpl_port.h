@@ -1148,7 +1148,7 @@ extern "C++"
 #define TRUE 1
 #endif
 
-#if defined(__clang_major__) && ( __clang_major__ >= 4 || (__clang_major__ == 3 && __clang_minor__ >= 8) )
+#if defined(__clang_major__) && (__clang_major__ >= 4 || ( __clang_major__ == 3 && __clang_minor__ >= 8) )
 #define CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW                                   \
     __attribute__((no_sanitize("unsigned-integer-overflow")))
 #else
