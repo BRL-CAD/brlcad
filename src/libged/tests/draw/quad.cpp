@@ -433,6 +433,8 @@ main(int ac, char *av[]) {
     /* Open the temp file */
     const char *s_av[15] = {NULL};
     dbp = ged_open("db", "moss_quad_tmp.g", 1);
+    // We don't want the default GED views for this test
+    bv_set_rm_view(&dbp->ged_views, NULL);
 
     // Set callback so database changes will update dbi_state
     db_add_changed_clbk(dbp->dbip, &ged_changed_callback, (void *)dbp);
