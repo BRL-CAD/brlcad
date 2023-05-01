@@ -58,7 +58,7 @@ set(faceplate_test_ctrls
   fp008_ctrl.png
   fp009_ctrl.png
   )
-BRLCAD_ADDEXEC(ged_test_faceplate faceplate.cpp "libged;libdm" TEST)
+BRLCAD_ADDEXEC(ged_test_faceplate "faceplate.cpp;util.cpp" "libged;libdm" TEST)
 add_dependencies(ged_test_faceplate ${test_deps})
 BRLCAD_ADD_TEST(NAME ged_test_drawing_faceplate COMMAND ged_test_faceplate "${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -71,7 +71,7 @@ set(lod_test_ctrls
   lod005_ctrl.png
   lod006_ctrl.png
   )
-BRLCAD_ADDEXEC(ged_test_lod lod.cpp "libged;libdm" TEST)
+BRLCAD_ADDEXEC(ged_test_lod "lod.cpp;util.cpp" "libged;libdm" TEST)
 add_dependencies(ged_test_lod ${test_deps})
 BRLCAD_ADD_TEST(NAME ged_test_drawing_lod COMMAND ged_test_lod "${CMAKE_CURRENT_SOURCE_DIR}")
 
