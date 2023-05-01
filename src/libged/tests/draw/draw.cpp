@@ -24,192 +24,17 @@
  */
 
 #include "common.h"
-
-#include <inttypes.h>
-#include <stdio.h>
 #include <fstream>
 
-#define XXH_STATIC_LINKING_ONLY
-#define XXH_IMPLEMENTATION
-#include "xxhash.h"
-
 #include <bu.h>
-#include <bg/lod.h>
-#include <icv.h>
 #define DM_WITH_RT
 #include <dm.h>
 #include <ged.h>
 
-// In order to handle changes to .g geometry contents, we need to defined
-// callbacks for the librt hooks that will update the working data structures.
-// In Qt we have libqtcad handle this, but as we are not using a QgModel we
-// need to do it ourselves.
-//
-// TODO - can probably make this a "standard" callback in libged, set up by
-// default but something that can be overridden/augmented if the app needs to
-// do extra work.
-extern "C" void
-ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
-{
-    XXH64_state_t h_state;
-    unsigned long long hash;
-    struct ged *gedp = (struct ged *)u_data;
-    DbiState *ctx = gedp->dbi_state;
-
-    // Clear cached GED drawing data and update
-    ctx->clear_cache(dp);
-
-    // Need to invalidate any LoD caches associated with this dp
-    if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp) {
-	unsigned long long key = bg_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
-	if (key) {
-	    bg_mesh_lod_clear_cache(ctx->gedp->ged_lod, key);
-	    bg_mesh_lod_key_put(ctx->gedp->ged_lod, dp->d_namep, 0);
-	}
-    }
-
-    switch(mode) {
-	case 0:
-	    ctx->changed.insert(dp);
-	    break;
-	case 1:
-	    ctx->added.insert(dp);
-	    break;
-	case 2:
-	    // When this callback is made, dp is still valid, but in subsequent
-	    // processing it will not be.  We need to capture everything we
-	    // will need from this dp now, for later use when updating state
-	    XXH64_reset(&h_state, 0);
-	    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
-	    hash = (unsigned long long)XXH64_digest(&h_state);
-	    ctx->removed.insert(hash);
-	    ctx->old_names[hash] = std::string(dp->d_namep);
-	    break;
-	default:
-	    bu_log("changed callback mode error: %d\n", mode);
-    }
-}
-
-void
-dm_refresh(struct ged *gedp)
-{
-    gedp->dbi_state->update();
-
-    struct bview *v= gedp->ged_gvp;
-    struct dm *dmp = (struct dm *)v->dmp;
-    unsigned char *dm_bg1;
-    unsigned char *dm_bg2;
-    dm_get_bg(&dm_bg1, &dm_bg2, dmp);
-    dm_set_bg(dmp, dm_bg1[0], dm_bg1[1], dm_bg1[2], dm_bg2[0], dm_bg2[1], dm_bg2[2]);
-    dm_set_dirty(dmp, 0);
-    dm_draw_objs(v, NULL, NULL);
-    dm_draw_end(dmp);
-}
-
-void
-scene_clear(struct ged *gedp)
-{
-    const char *s_av[2] = {NULL};
-    s_av[0] = "Z";
-    ged_exec(gedp, 1, s_av);
-    dm_refresh(gedp);
-}
-
-void
-img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, int approximate_check)
-{
-    icv_image_t *ctrl, *timg;
-    struct bu_vls tname = BU_VLS_INIT_ZERO;
-    struct bu_vls cname = BU_VLS_INIT_ZERO;
-    if (id <= 0) {
-	bu_vls_sprintf(&tname, "clear.png");
-	bu_vls_sprintf(&cname, "%s/empty.png", cdir);
-    } else {
-	bu_vls_sprintf(&tname, "v%03d.png", id);
-	bu_vls_sprintf(&cname, "%s/v%03d_ctrl.png", cdir, id);
-    }
-
-    dm_refresh(gedp);
-    const char *s_av[2] = {NULL};
-    s_av[0] = "screengrab";
-    s_av[1] = bu_vls_cstr(&tname);
-    ged_exec(gedp, 2, s_av);
-
-    timg = icv_read(bu_vls_cstr(&tname), BU_MIME_IMAGE_PNG, 0, 0);
-    if (!timg) {
-	if (soft_fail) {
-	    bu_log("Failed to read %s\n", bu_vls_cstr(&tname));
-	    if (clear)
-		scene_clear(gedp);
-	    bu_vls_free(&tname);
-	    return;
-	}
-	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&tname));
-    }
-    ctrl = icv_read(bu_vls_cstr(&cname), BU_MIME_IMAGE_PNG, 0, 0);
-    if (!ctrl) {
-	if (soft_fail) {
-	    bu_log("Failed to read %s\n", bu_vls_cstr(&cname));
-	    if (clear)
-		scene_clear(gedp);
-	    bu_vls_free(&tname);
-	    bu_vls_free(&cname);
-	    return;
-	}
-	bu_exit(EXIT_FAILURE, "failed to read %s\n", bu_vls_cstr(&cname));
-    }
-    bu_vls_free(&cname);
-    int matching_cnt = 0;
-    int off_by_1_cnt = 0;
-    int off_by_many_cnt = 0;
-    int iret = icv_diff(&matching_cnt, &off_by_1_cnt, &off_by_many_cnt, ctrl, timg);
-    if (iret) {
-	if (approximate_check) {
-	    // First, if we're allowing approximate and all we have are off by one errors,
-	    // allow it.
-	    if (!off_by_many_cnt) {
-		bu_log("%d approximate matching enabled, no off by many - passing.  %d matching, %d off by 1\n", id, matching_cnt, off_by_1_cnt);
-		iret = 0;
-		// We don't need it as a pass/fail, but for information report the
-		// Hamming distance on the approximate match
-		uint32_t pret = icv_pdiff(ctrl, timg);
-		bu_log("icv_pdiff Hamming distance(%d): %" PRIu32 "\n", id, pret);
-	    } else {
-		// We have off by many - do perceptual hashing difference calculation
-		uint32_t pret = icv_pdiff(ctrl, timg);
-		// The return is a Hamming distance .  The scale of possible
-		// returns ranges from 0 (same) to ~500 (completely different)
-		bu_log("icv_pdiff Hamming distance(%d): %" PRIu32 "\n", id, pret);
-		if (pret < (uint32_t)approximate_check) {
-		    iret = 0;
-		}
-	    }
-	}
-
-	if (iret) {
-	    if (soft_fail) {
-		bu_log("%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
-		icv_destroy(ctrl);
-		icv_destroy(timg);
-		if (clear)
-		    scene_clear(gedp);
-		return;
-	    }
-	    bu_exit(EXIT_FAILURE, "%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
-	}
-    }
-
-    icv_destroy(ctrl);
-    icv_destroy(timg);
-
-    // Image comparison done and successful - clear image
-    bu_file_delete(bu_vls_cstr(&tname));
-    bu_vls_free(&tname);
-
-    if (clear)
-	scene_clear(gedp);
-}
-
+extern "C" void ged_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data);
+extern "C" void dm_refresh(struct ged *gedp);
+extern "C" void scene_clear(struct ged *gedp);
+extern "C" void img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, int approximate_check, const char *clear_root, const char *img_root);
 
 /* We will often want to do multiple different operations with
  * similar shapes - to make this easier, we encapsulate the
@@ -474,43 +299,43 @@ main(int ac, char *av[]) {
     s_av[2] = "25";
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
-    img_cmp(1, dbp, av[1], true, soft_fail, 0);
+    img_cmp(1, dbp, av[1], true, soft_fail, 0, "clear", "v");
 
     // Check that everything is in fact cleared
-    img_cmp(0, dbp, av[1], false, soft_fail, 0);
+    img_cmp(0, dbp, av[1], false, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Polygon circle *****/
     bu_log("Testing view polygon circle draw...\n");
     poly_circ(dbp);
-    img_cmp(2, dbp, av[1], true, soft_fail, 0);
+    img_cmp(2, dbp, av[1], true, soft_fail, 0, "clear", "v");
 
     // Check that everything is in fact cleared
-    img_cmp(0, dbp, av[1], false, soft_fail, 0);
+    img_cmp(0, dbp, av[1], false, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Polygon ellipse *****/
     bu_log("Testing view polygon ellipse draw...\n");
     poly_ell(dbp);
-    img_cmp(3, dbp, av[1], true, soft_fail, 0);
+    img_cmp(3, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Polygon square *****/
     bu_log("Testing view polygon square draw...\n");
     poly_sq(dbp);
-    img_cmp(4, dbp, av[1], true, soft_fail, 0);
+    img_cmp(4, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Polygon rectangle *****/
     bu_log("Testing view polygon rectangle draw...\n");
     poly_rect(dbp);
-    img_cmp(5, dbp, av[1], true, soft_fail, 0);
+    img_cmp(5, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Polygon general *****/
     bu_log("Testing view general polygon draw...\n");
     poly_general(dbp);
-    img_cmp(6, dbp, av[1], true, soft_fail, 0);
+    img_cmp(6, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test draw UP and DOWN *****/
@@ -525,14 +350,14 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 5, s_av);
     // Should be an empty scene - make sure we don't clear after this
     // comparison, as we want to re-enable the drawing of this object.
-    img_cmp(0, dbp, av[1], false, soft_fail, 0);
+    img_cmp(0, dbp, av[1], false, soft_fail, 0, "clear", "v");
 
     s_av[4] = "UP";
     s_av[5] = NULL;
     ged_exec(dbp, 5, s_av);
     // Enabling the draw should produce the same visual as the general polygon
     // draw test above, so we can check using the same image
-    img_cmp(6, dbp, av[1], true, soft_fail, 0);
+    img_cmp(6, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test view polygon booleans: union ****/
@@ -559,7 +384,7 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 5, s_av);
 
     // See if we got what we expected
-    img_cmp(7, dbp, av[1], true, soft_fail, 0);
+    img_cmp(7, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test view polygon booleans: subtraction ****/
@@ -586,7 +411,7 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 5, s_av);
 
     // See if we got what we expected
-    img_cmp(8, dbp, av[1], true, soft_fail, 0);
+    img_cmp(8, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test view polygon booleans: intersection ****/
@@ -613,7 +438,7 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 5, s_av);
 
     // See if we got what we expected
-    img_cmp(9, dbp, av[1], true, soft_fail, 0);
+    img_cmp(9, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
 
@@ -629,7 +454,7 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 5, s_av);
 
     // See if we got what we expected
-    img_cmp(10, dbp, av[1], true, soft_fail, 0);
+    img_cmp(10, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test fill ****/
@@ -647,7 +472,7 @@ main(int ac, char *av[]) {
     ged_exec(dbp, 8, s_av);
 
     // See if we got what we expected
-    img_cmp(11, dbp, av[1], true, soft_fail, 0);
+    img_cmp(11, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test label ****/
@@ -676,7 +501,7 @@ main(int ac, char *av[]) {
     s_av[12] = NULL;
     ged_exec(dbp, 12, s_av);
 
-    img_cmp(12, dbp, av[1], false, soft_fail, 30);
+    img_cmp(12, dbp, av[1], false, soft_fail, 30, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "10";
@@ -684,7 +509,7 @@ main(int ac, char *av[]) {
     s_av[3] = "11";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(13, dbp, av[1], false, soft_fail, 30);
+    img_cmp(13, dbp, av[1], false, soft_fail, 30, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "270";
@@ -692,7 +517,7 @@ main(int ac, char *av[]) {
     s_av[3] = "0";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(14, dbp, av[1], false, soft_fail, 30);
+    img_cmp(14, dbp, av[1], false, soft_fail, 30, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "48";
@@ -700,7 +525,7 @@ main(int ac, char *av[]) {
     s_av[3] = "143";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(15, dbp, av[1], false, soft_fail, 50);
+    img_cmp(15, dbp, av[1], false, soft_fail, 50, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "40";
@@ -708,7 +533,7 @@ main(int ac, char *av[]) {
     s_av[3] = "180";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(16, dbp, av[1], false, soft_fail, 60);
+    img_cmp(16, dbp, av[1], false, soft_fail, 60, "clear", "v");
 
     s_av[0] = "ae";
     s_av[1] = "250";
@@ -716,7 +541,7 @@ main(int ac, char *av[]) {
     s_av[3] = "-140";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
-    img_cmp(17, dbp, av[1], true, soft_fail, 35);
+    img_cmp(17, dbp, av[1], true, soft_fail, 35, "clear", "v");
 
     // Restore view to ae 35/25
     s_av[0] = "ae";
@@ -749,7 +574,7 @@ main(int ac, char *av[]) {
     s_av[8] = NULL;
     ged_exec(dbp, 8, s_av);
 
-    img_cmp(18, dbp, av[1], false, soft_fail, 0);
+    img_cmp(18, dbp, av[1], false, soft_fail, 0, "clear", "v");
 
     s_av[0] = "view";
     s_av[1] = "obj";
@@ -760,7 +585,7 @@ main(int ac, char *av[]) {
     s_av[6] = NULL;
     ged_exec(dbp, 6, s_av);
 
-    img_cmp(19, dbp, av[1], true, soft_fail, 0);
+    img_cmp(19, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     /***** Test shaded modes ****/
@@ -791,7 +616,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(20, dbp, av[1], true, soft_fail, 0);
+    img_cmp(20, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing shaded mode 2 drawing (unevaluated primitive shading). (Note: does not use Level-of-Detail)...\n");
@@ -805,7 +630,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(21, dbp, av[1], true, soft_fail, 0);
+    img_cmp(21, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing mode 3 drawing (evaluated wireframe)...\n");
@@ -819,7 +644,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(22, dbp, av[1], true, soft_fail, 30);
+    img_cmp(22, dbp, av[1], true, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing mode 4 drawing (hidden lines)...\n");
@@ -833,7 +658,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(23, dbp, av[1], true, soft_fail, 30);
+    img_cmp(23, dbp, av[1], true, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Testing mode 5 drawing (point based triangles)...\n");
@@ -847,7 +672,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(24, dbp, av[1], true, soft_fail, 30);
+    img_cmp(24, dbp, av[1], true, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
 
     bu_log("Test clearing of previous drawing mode (shaded and wireframe)...\n");
@@ -867,7 +692,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(1, dbp, av[1], true, soft_fail, 0);
+    img_cmp(1, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
 
@@ -889,7 +714,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(25, dbp, av[1], true, soft_fail, 0);
+    img_cmp(25, dbp, av[1], true, soft_fail, 0, "clear", "v");
     bu_log("Done.\n");
 
 
@@ -918,7 +743,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(26, dbp, av[1], true, soft_fail, 30);
+    img_cmp(26, dbp, av[1], true, soft_fail, 30, "clear", "v");
     bu_log("Done.\n");
 
     ged_close(dbp);

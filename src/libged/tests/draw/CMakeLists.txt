@@ -42,7 +42,7 @@ set(basic_view_test_ctrls
   v025_ctrl.png
   v026_ctrl.png
   )
-BRLCAD_ADDEXEC(ged_test_draw draw.cpp "libged;libdm" TEST)
+BRLCAD_ADDEXEC(ged_test_draw "draw.cpp;util.cpp" "libged;libdm" TEST)
 add_dependencies(ged_test_draw ${test_deps})
 BRLCAD_ADD_TEST(NAME ged_test_drawing_basic COMMAND ged_test_draw "${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -121,7 +121,7 @@ set(select_test_ctrls
   select023_ctrl.png
   select024_ctrl.png
   )
-BRLCAD_ADDEXEC(ged_test_select_draw select.cpp "libged;libdm" TEST)
+BRLCAD_ADDEXEC(ged_test_select_draw "select.cpp;util.cpp" "libged;libdm" TEST)
 add_dependencies(ged_test_select_draw ${test_deps})
 BRLCAD_ADD_TEST(NAME ged_test_drawing_select COMMAND ged_test_select_draw "${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -169,6 +169,7 @@ CMAKEFILES(
   moss.g
   moss.png
   rook.g
+  util.cpp
   ${basic_view_test_ctrls}
   ${faceplate_test_ctrls}
   ${lod_test_ctrls}
