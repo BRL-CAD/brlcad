@@ -448,7 +448,6 @@ main(int ac, char *av[]) {
 	if (!i)
 	    dbp->ged_gvp = v;
 	bv_init(v, &dbp->ged_views);
-	v->independent = 0;
 	bu_vls_sprintf(&v->gv_name, "V%zd", i);
 	bv_set_add_view(&dbp->ged_views, v);
 	bu_ptbl_ins(&dbp->ged_free_views, (long *)v);
