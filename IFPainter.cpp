@@ -299,8 +299,8 @@ void IFPainter::justify(int x, int y, int height, int width, std::vector<std::st
 
 void IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
 {
-	int confidentialWidth = getTextWidth(height, width, centerWord, flags);
-	drawTextCentered(width / 2, y, height, width, centerWord, flags);
+	int confidentialWidth = getTextWidth(height, width, centerWord, flags | TO_BOLD);
+	drawTextCentered(width / 2, y, height, width, centerWord, flags | TO_BOLD);
 	int totalLeftWidth = 0;
 	for (size_t i = 0; i < leftText.size(); i++) {
 		totalLeftWidth += getTextWidth(height, width, leftText[i], flags);

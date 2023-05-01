@@ -15,7 +15,6 @@ set(RGEN_SRCS
   Options.cpp
   PerspectiveGatherer.cpp
   RenderHandler.cpp
-  sample_code.cpp
   Position.cpp
   )
 
@@ -23,9 +22,6 @@ BRLCAD_ADDEXEC(rgen "${RGEN_SRCS}"  "libbu;librt;libged;")
 
 set(rgen_ignore_files
   CMakeLists.txt
-  .DS_STORE
-  a.out
-  README.md
   FactsHandler.h
   IFPainter.h
   InformationGatherer.h

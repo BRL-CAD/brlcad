@@ -618,7 +618,16 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		if (i == 1) me << std::setprecision(5) << modelDepth;
 		if (i == 2) me << std::setprecision(5) << modelHeight;
 
-		me << " " << info.getInfo("units");
+		//Determine units
+		std::string unit;
+		if (opt.isDefaultLength()) {
+			unit = info.getInfo("units");
+		}
+		else {
+			unit = opt.getUnitLength();
+		}
+
+		me << " " << unit;
 
 		if (det.second == 0) // draw to the right
 		{
