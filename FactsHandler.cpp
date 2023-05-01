@@ -3,7 +3,12 @@
 
 void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
 	//Draw black rectangle
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0,0,0));
+	if (info.getInfo("classification") == "CONFIDENTIAL") {
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 255));
+	}
+	else {
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
+	}
 
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
@@ -12,7 +17,7 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 
 	if (info.getInfo("classification") != "") {
 		text.push_back("Owner: " + info.getInfo("owner"));
-		text.push_back("Checksum: " + info.getInfo("checksum"));
+		text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 		text2.push_back("Last Updated: " + info.getInfo("lastUpdate"));
 		text2.push_back("Source File: " + info.getInfo("file"));
 		img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
@@ -28,7 +33,12 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 
 void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) { 
 	//Draw black rectangle
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
+	if (info.getInfo("classification") == "CONFIDENTIAL") {
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 255));
+	}
+	else {
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
+	}
 
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
@@ -48,6 +58,15 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 }
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
+	//Determine units
+	std::string unit;
+	if (opt.isDefaultLength()) {
+		unit = info.getInfo("units");
+	}
+	else {
+		unit = opt.getUnitLength();
+	}
+
 	// draw bounding rectangle
 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
 
@@ -76,13 +95,15 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Entity Summary", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("assemblies") + " assemblies, " + info.getInfo("total") + " total");
-
-	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Surface Area - Projected", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("surfaceArea"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Units", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
+	curiX++;
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Dimensions (x, y, z)", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("dimX") + " " + unit + ", " + info.getInfo("dimY") + " " + unit + ", " + info.getInfo("dimZ") + " " + unit);
+	curiX++;
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Surface Area - Projected", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("surfaceArea"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Approximate Volume", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("volume"));
@@ -91,7 +112,7 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("mass"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Notes", TO_BOLD);
-	img.textWrapping(offsetX + textOffset, offsetY + curiX * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight * 8, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/4750);
+	img.textWrapping(offsetX + textOffset, offsetY + curiX * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight * 4, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/9500);
 
 }
 

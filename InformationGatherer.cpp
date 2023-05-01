@@ -326,7 +326,9 @@ bool InformationGatherer::gatherInformation(std::string name)
         try {
             double length = stod(token);
             double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
-            infoMap[dim_data[dim_idx++]] = std::to_string(length * convFactor);
+            std::stringstream ss2 = std::stringstream();
+            ss2 << std::setprecision(5) << length*convFactor;
+            infoMap[dim_data[dim_idx++]] = ss2.str();
         } catch (const std::exception& e){
             continue;
         }
@@ -366,13 +368,13 @@ bool InformationGatherer::gatherInformation(std::string name)
     double surfArea = 0;
     getVerificationData(g, opt, infoMap, volume, mass, surfArea, lUnit, mUnit);
     ss = std::stringstream();
-    ss << volume;
+    ss << std::setprecision(5) << volume;
     std::string vol = ss.str();
     ss = std::stringstream();
-    ss << surfArea;
+    ss << std::setprecision(5) << surfArea;
     std::string surf = ss.str();
     ss = std::stringstream();
-    ss << mass;
+    ss << std::setprecision(5) << mass;
     std::string ma = ss.str();
     infoMap.insert(std::pair<std::string, std::string>("volume", vol + " " + lUnit + "^3"));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea", surf + " " + lUnit + "^2"));
