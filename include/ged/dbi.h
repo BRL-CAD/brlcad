@@ -291,7 +291,7 @@ class GED_EXPORT DbiState {
 	bool valid_hash(unsigned long long phash);
 	bool valid_hash_path(std::vector<unsigned long long> &phashes);
 	bool print_hash(struct bu_vls *opath, unsigned long long phash);
-	void print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, size_t pmax = 0);
+	void print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, size_t pmax = 0, int verbsose = 0);
 
 	const char *pathstr(std::vector<unsigned long long> &path, size_t pmax = 0);
 	const char *hashstr(unsigned long long);

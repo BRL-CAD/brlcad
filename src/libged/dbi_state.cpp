@@ -776,7 +776,7 @@ DbiState::print_hash(struct bu_vls *opath, unsigned long long phash)
 }
 
 void
-DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, size_t pmax)
+DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path, size_t pmax, int verbose)
 {
     if (!opath || !path.size())
 	return;
@@ -785,6 +785,17 @@ DbiState::print_path(struct bu_vls *opath, std::vector<unsigned long long> &path
     for (size_t i = 0; i < path.size(); i++) {
 	if (pmax && i == pmax)
 	    break;
+	if (i > 0 && verbose) {
+	    std::unordered_map<unsigned long long, std::unordered_map<unsigned long long, std::vector<fastf_t>>>::iterator m_it;
+	    m_it = matrices.find(path[i-1]);
+	    if (m_it != matrices.end()) {
+		std::unordered_map<unsigned long long, std::vector<fastf_t>>::iterator mv_it;
+		mv_it = m_it->second.find(path[i]);
+		if (mv_it == m_it->second.end()) {
+		    bu_vls_printf(opath, "[M]");
+		}
+	    }
+	}
 	if (!print_hash(opath, path[i]))
 	    continue;
 	if (i < path.size() - 1 && (!pmax || i < pmax - 1))
@@ -1728,7 +1739,7 @@ DbiState::print_leaves(
     // Print leaf
     if (leaf) {
 	struct bu_vls p = BU_VLS_INIT_ZERO;
-	print_path(&p, path_hashes, 0);
+	print_path(&p, path_hashes, 0, 1);
 	leaves.insert(std::string(bu_vls_cstr(&p)));
 	bu_vls_free(&p);
     }
