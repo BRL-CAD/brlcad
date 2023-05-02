@@ -188,14 +188,14 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, i
 
 	if (iret) {
 	    if (soft_fail) {
-		bu_log("%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
+		bu_log("%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
 		icv_destroy(ctrl);
 		icv_destroy(timg);
 		if (clear)
 		    scene_clear(gedp);
 		return;
 	    }
-	    bu_exit(EXIT_FAILURE, "%d wireframe diff failed.  %d matching, %d off by 1, %d off by many\n", id, matching_cnt, off_by_1_cnt, off_by_many_cnt);
+	    bu_exit(EXIT_FAILURE, "%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
 	}
     }
 
