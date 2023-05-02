@@ -17,6 +17,21 @@ class IFPainter;
 class InformationGatherer;
 class Options;
 
+/**
+ * The LayoutChoice class stores a layout encoding along with providing the functionality to determine
+ * how to place elements on a page if that layout were to be selected.  The class encodes a layout using
+ * two variables: map and "lockRows".
+ * 
+ * The map is encoded as a string, storing the 2D grid which makes up how the images will be placed.
+ * Depending on the value of "lockRows", either a row-major (true) or column-major (false) ordering
+ * will be followed when placing the images.
+ * 
+ * When lockRows is true, all images on the same row MUST have the same height.
+ * When lockRows is false, all images on the same column MUST have the same width.
+ * 
+ * The initCoordinates() "initializes" the layout, properly setting the coordinates of each image depending on the
+ * model bounding box, maintaining both proportionality and maximum space usage.
+*/
 struct LayoutChoice
 {
 private:
