@@ -444,6 +444,10 @@ main(int ac, char *av[]) {
     s_av[3] = NULL;
     ged_exec(dbp, 3, s_av);
 
+    bu_log("Pre lod CSG state:\n");
+    dbp->dbi_state->print_dbi_state();
+    bu_log("\n");
+
     bu_log("Sanity - basic LoD wireframe, no selection...\n");
 
     s_av[0] = "view";
@@ -452,6 +456,10 @@ main(int ac, char *av[]) {
     s_av[3] = "1";
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
+
+    bu_log("Post csg state:\n");
+    dbp->dbi_state->print_dbi_state();
+    bu_log("\n");
 
     s_av[0] = "draw";
     s_av[1] = "-m0";

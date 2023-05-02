@@ -30,6 +30,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <map>
 #include <thread>
 #include <fstream>
 #include <sstream>
@@ -455,6 +456,51 @@ populate_walk_tree(union tree *tp, void *d, int subtract_skip, int p_op,
 	    bu_log("unrecognized operator %d\n", tp->tr_op);
 	    bu_bomb("draw walk\n");
     }
+}
+
+
+DbiState::DbiState(struct ged *ged_p)
+{
+    bu_vls_init(&path_string);
+    bu_vls_init(&hash_string);
+    BU_GET(res, struct resource);
+    rt_init_resource(res, 0, NULL);
+    shared_vs = new BViewState(this);
+    default_selected = new BSelectState(this);
+    selected_sets[std::string("default")] = default_selected;
+    gedp = ged_p;
+    if (!gedp)
+	return;
+    dbip = gedp->dbip;
+    if (!dbip)
+	return;
+
+    // Set up cache
+    dcache = dbi_cache_open(dbip->dbi_filename);
+
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	struct directory *dp;
+	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    update_dp(dp, 0);
+	}
+    }
+}
+
+
+DbiState::~DbiState()
+{
+    bu_vls_free(&path_string);
+    bu_vls_free(&hash_string);
+    std::unordered_map<std::string, BSelectState *>::iterator ss_it;
+    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
+	delete ss_it->second;
+    }
+    delete shared_vs;
+    rt_clean_resource_basic(NULL, res);
+    BU_PUT(res, struct resource);
+
+    if (dcache)
+	dbi_cache_close(dcache);
 }
 
 
@@ -1653,48 +1699,74 @@ DbiState::update()
     return ret;
 }
 
-
-DbiState::DbiState(struct ged *ged_p)
+void
+DbiState::print_leaves(
+	std::set<std::string> &leaves,
+	unsigned long long c_hash,
+	std::vector<unsigned long long> &path_hashes
+	)
 {
-    bu_vls_init(&path_string);
-    bu_vls_init(&hash_string);
-    BU_GET(res, struct resource);
-    rt_init_resource(res, 0, NULL);
-    shared_vs = new BViewState(this);
-    default_selected = new BSelectState(this);
-    selected_sets[std::string("default")] = default_selected;
-    gedp = ged_p;
-    if (!gedp)
-	return;
-    dbip = gedp->dbip;
-    if (!dbip)
-	return;
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    path_hashes.push_back(c_hash);
 
-    // Set up cache
-    dcache = dbi_cache_open(dbip->dbi_filename);
+    bool leaf = path_addition_cyclic(path_hashes); 
 
-    for (int i = 0; i < RT_DBNHASH; i++) {
-	struct directory *dp;
-	for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    update_dp(dp, 0);
+    if (!leaf) {
+	/* Not cyclic - keep going */
+	pc_it = p_c.find(c_hash);
+	if (pc_it == p_c.end()) {
+	    leaf = true;
 	}
     }
+
+    if (!leaf) {
+	std::unordered_set<unsigned long long>::iterator c_it;
+	for (c_it = pc_it->second.begin(); c_it != pc_it->second.end(); c_it++)
+	    print_leaves(leaves, *c_it, path_hashes);
+    }
+
+    // Print leaf
+    if (leaf) {
+	struct bu_vls p = BU_VLS_INIT_ZERO;
+	print_path(&p, path_hashes, 0);
+	leaves.insert(std::string(bu_vls_cstr(&p)));
+	bu_vls_free(&p);
+    }
+
+    /* Done with branch - restore path */
+    path_hashes.pop_back();
 }
 
-DbiState::~DbiState()
+void
+DbiState::print_dbi_state(struct bu_vls *outvls)
 {
-    bu_vls_free(&path_string);
-    bu_vls_free(&hash_string);
-    std::unordered_map<std::string, BSelectState *>::iterator ss_it;
-    for (ss_it = selected_sets.begin(); ss_it != selected_sets.end(); ss_it++) {
-	delete ss_it->second;
+    struct bu_vls *o = outvls;
+    if (!o) {
+	BU_GET(o, struct bu_vls);
+	bu_vls_init(o);
     }
-    delete shared_vs;
-    rt_clean_resource_basic(NULL, res);
-    BU_PUT(res, struct resource);
 
-    if (dcache)
-	dbi_cache_close(dcache);
+    std::vector<unsigned long long> top_objs = tops(true);
+    std::set<std::string> leaves;
+    // Report each path to its leaves (or to cyclic termination)
+    std::vector<unsigned long long> path_hashes;
+    for (size_t i = 0; i < top_objs.size(); i++) {
+	path_hashes.clear();
+	print_leaves(leaves, top_objs[i], path_hashes);
+    }
+
+    std::set<std::string>::iterator l_it;
+    if (o != outvls) {
+	for (l_it = leaves.begin(); l_it != leaves.end(); l_it++) {
+	    std::cout << l_it->c_str() << "\n";
+	}
+	bu_vls_free(o);
+	BU_PUT(o, struct bu_vls);
+    } else {
+	for (l_it = leaves.begin(); l_it != leaves.end(); l_it++) {
+	    bu_vls_printf(o, "%s", l_it->c_str());
+	}
+    }
 }
 
 BViewState::BViewState(DbiState *s)

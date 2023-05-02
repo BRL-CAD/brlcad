@@ -42,6 +42,7 @@
 #include "bu/vls.h"
 
 #ifdef __cplusplus
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
@@ -310,7 +311,7 @@ class GED_EXPORT DbiState {
 	std::vector<std::string> list_selection_sets();
 
 	// These maps are the ".g ground truth" of the comb structures - the set
-	// associated with each has contains all the child hashes from the comb
+	// associated with each hash contains all the child hashes from the comb
 	// definition in the database for quick lookup, and the vector preserves
 	// the comb ordering for listing.
 	std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>> p_c;
@@ -385,9 +386,19 @@ class GED_EXPORT DbiState {
 
 	bool need_update_nref = true;
 
+	// Debugging methods for printing out current states - the use of hashes
+	// means direct inspection of most data isn't informative, so we provide
+	// convenience methods that decode it to user-comprehensible info.
+	void print_dbi_state(struct bu_vls *o = NULL);
+
     private:
 	void gather_cyclic(
 		std::unordered_set<unsigned long long> &cyclic,
+		unsigned long long c_hash,
+		std::vector<unsigned long long> &path_hashes
+		);
+	void print_leaves(
+		std::set<std::string> &leaves,
 		unsigned long long c_hash,
 		std::vector<unsigned long long> &path_hashes
 		);
