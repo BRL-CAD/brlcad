@@ -167,7 +167,8 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 	{
 		double ambientXOffset = 0;
 		double ambientYOffset = 0;
-		// ambient occlusion is in middle; search row/col to get dimensions
+		// ambient occlusion is in middle; search row/col to get top-left dimensions of ambient view
+		// this check is done to ensure that at least half of the section is for ambient occlusion
 		if (lockRows)
 		{
 			for (int i = 0; i < ambientR; ++i)
@@ -216,6 +217,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 				}
 			}
 		}
+		// if half of page is not used for ambient occlusion view, then adjust properly
 		if (ambientYOffset > orthoHeight / 2)
 			workingHeight *= orthoHeight / 2 / ambientYOffset;
 		else if (ambientXOffset > orthoWidth / 2)
@@ -312,6 +314,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 
 				curX += curWidth;
 
+				// add extra padding for dimensions if one exists here
 				for (std::pair<int, int> dim : dimDetails)
 				{
 					if (dim.first % rowLen == c && dim.second == 0)
@@ -325,6 +328,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 			curX = offsetX;
 			curY += curHeight;
 
+			// add extra padding for dimensions if one exists here
 			for (std::pair<int, int> dim : dimDetails)
 			{
 				if (dim.first / rowLen == r && dim.second == 1)
@@ -496,6 +500,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 		}
 	}
 
+	// add coordinates of ambient occlusion view
 	coordinates[coordinates.size() - 1].push_back(ambientC == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][0]);
 	coordinates[coordinates.size() - 1].push_back(ambientR == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][1]);
 	coordinates[coordinates.size() - 1].push_back(secWidth);
@@ -557,7 +562,12 @@ char LayoutChoice::getMapChar(int index)
 
 std::vector<LayoutChoice> initLayouts()
 {
+	// create layout encodings
 	std::vector<LayoutChoice> layouts;
+
+	// extremely long or tall models
+	layouts.emplace_back("T.\nF.\nb.\nB.\nRA\nLA\n", true);
+	layouts.emplace_back("LFRBTb\n....AA\n", false);
 
 	// long models
 	layouts.emplace_back("TbFR\n..BL\n..AA\n", false);
@@ -569,7 +579,6 @@ std::vector<LayoutChoice> initLayouts()
 	layouts.emplace_back("TFR\nbBL\n.AA\n", false);
 
 	// tall models
-	layouts.emplace_back("LFRBTb\n....AA\n", false);
 	layouts.emplace_back("BLTb\nFRAA\n", false);
 
 	return layouts;
@@ -577,13 +586,17 @@ std::vector<LayoutChoice> initLayouts()
 
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
+	// harvest model dimensions
 	double modelDepth = std::stod(info.getInfo("dimX"));
 	double modelLength = std::stod(info.getInfo("dimY"));
 	double modelHeight = std::stod(info.getInfo("dimZ"));
 
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
+	// find the layout to use
 	LayoutChoice bestLayout = selectLayout(width, height, modelLength, modelDepth, modelHeight);
+
+	// SCALE: shrinking factor on images placed onto the IFPainter
 	double SCALE = 0.92;
 
 	// render all layour elements
@@ -602,7 +615,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		default: // draw face
 			std::string render = renderPerspective(faceDetails[next].face, opt, info.largestComponents[0].name);
 
-			//double GAP_PIXELS = 80;
+			// find new coordinates using scaling factor
 			double oldW = coords[2] - coords[0];
 			double oldH = coords[3] - coords[1];
 			double newW = oldW * SCALE;
@@ -666,6 +679,7 @@ LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, doubl
 	double bestScore = -1;
 	LayoutChoice* bestLayout = NULL;
 
+	// iterate through every layout, selecting the one that covers the most whitespace.
 	for (LayoutChoice& lc : allLayouts)
 	{
 		lc.initCoordinates(secWidth, secHeight, modelLength, modelDepth, modelHeight);
