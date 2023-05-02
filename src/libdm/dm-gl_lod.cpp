@@ -196,6 +196,10 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	glNewList(s->s_dlist, GL_COMPILE);
     } else {
 	bu_log("Not using dlist\n");
+	// Straight-up drawing - set up the matrix
+	MAT_COPY(save_mat, s->s_v->gv_model2view);
+	bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
+	dm_loadmatrix(dmp, draw_mat, 0);
     }
 
     // Wireframe
@@ -247,6 +251,10 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 
 	if (mvars->transparency_on)
 	    glDisable(GL_BLEND);
+
+	// Without dlist, we had to set the matrix - restore
+	if (!s->s_dlist)
+	    dm_loadmatrix(dmp, save_mat, 0);
 
 	return BRLCAD_OK;
     }
@@ -354,6 +362,10 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 
 	glLineWidth(originalLineWidth);
 
+	// If we're not using a pre-baked dlist, restore matrix
+	if (!s->s_dlist)
+	    dm_loadmatrix(dmp, save_mat, 0);
+
 	return BRLCAD_OK;
     }
 
@@ -436,6 +448,10 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 	glNewList(s->s_dlist, GL_COMPILE);
     } else {
 	bu_log("Not using dlist\n");
+	// Straight-up drawing - set up the matrix
+	MAT_COPY(save_mat, s->s_v->gv_model2view);
+	bn_mat_mul(draw_mat, s->s_v->gv_model2view, s->s_mat);
+	dm_loadmatrix(dmp, draw_mat, 0);
     }
 
     int first = 1;
@@ -515,6 +531,10 @@ gl_csg_lod(struct dm *dmp, struct bv_scene_obj *s)
 
     glPointSize(originalPointSize);
     glLineWidth(originalLineWidth);
+
+    // Without dlist, we had to set the matrix - restore
+    if (!s->s_dlist)
+	dm_loadmatrix(dmp, save_mat, 0);
 
     return BRLCAD_OK;
 }
