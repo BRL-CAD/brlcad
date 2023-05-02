@@ -3028,7 +3028,15 @@ BViewState::print_view_state(struct bu_vls *outvls)
 	bu_vls_init(o);
     }
 
-    bu_vls_printf(o, "Object count: %zd", s_keys.size());
+    bu_vls_printf(o, "Object count: %zd\n", s_keys.size());
+    std::unordered_map<unsigned long long, std::vector<unsigned long long>>::iterator k_it;
+    for (k_it = s_keys.begin(); k_it != s_keys.end(); k_it++) {
+	std::vector<unsigned long long> &path = k_it->second;
+	struct bu_vls pstr = BU_VLS_INIT_ZERO;
+	dbis->print_path(&pstr, path, 0, 1);
+	bu_vls_printf(o, "%s\n", bu_vls_cstr(&pstr));
+	bu_vls_free(&pstr);
+    }
 
     if (o != outvls) {
 	bu_vls_free(o);
