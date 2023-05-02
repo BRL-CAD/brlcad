@@ -1720,7 +1720,7 @@ DbiState::print_leaves(
     std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
     path_hashes.push_back(c_hash);
 
-    bool leaf = path_addition_cyclic(path_hashes); 
+    bool leaf = path_addition_cyclic(path_hashes);
 
     if (!leaf) {
 	/* Not cyclic - keep going */
@@ -1749,7 +1749,7 @@ DbiState::print_leaves(
 }
 
 void
-DbiState::print_dbi_state(struct bu_vls *outvls)
+DbiState::print_dbi_state(struct bu_vls *outvls, bool report_view_states)
 {
     struct bu_vls *o = outvls;
     if (!o) {
@@ -1767,16 +1767,48 @@ DbiState::print_dbi_state(struct bu_vls *outvls)
     }
 
     std::set<std::string>::iterator l_it;
-    if (o != outvls) {
-	for (l_it = leaves.begin(); l_it != leaves.end(); l_it++) {
-	    std::cout << l_it->c_str() << "\n";
+    for (l_it = leaves.begin(); l_it != leaves.end(); l_it++)
+	bu_vls_printf(o, "%s\n", l_it->c_str());
+
+    if (report_view_states) {
+	if (gedp->ged_gvp) {
+	    BViewState *vs = get_view_state(gedp->ged_gvp);
+	    bu_vls_printf(o, "\nDefault:\n");
+	    vs->print_view_state(o);
 	}
+	if (view_states.size()) {
+	    std::unordered_map<struct bview *, BViewState *>::iterator v_it;
+	    std::map<std::string, std::set<BViewState *>> oviews;
+	    for (v_it = view_states.begin(); v_it != view_states.end(); v_it++) {
+		if (v_it->first == gedp->ged_gvp)
+		    continue;
+		std::string vname(bu_vls_cstr(&v_it->first->gv_name));
+		oviews[vname].insert(v_it->second);
+	    }
+	    if (oviews.size()) {
+		bu_vls_printf(o, "\nViews:\n");
+		std::map<std::string, std::set<BViewState *>>::iterator o_it;
+		for (o_it = oviews.begin(); o_it != oviews.end(); o_it++) {
+		    std::set<BViewState *> &vset = o_it->second;
+		    if (vset.size() > 1) {
+			std::cout << "Warning:  " << vset.size() << " views with name " << o_it->first << "\n";
+		    }
+		    std::set<BViewState *>::iterator vs_it;
+		    for (vs_it = vset.begin(); vs_it != vset.end(); vs_it++) {
+			bu_vls_printf(o, "\n%s:\n", o_it->first.c_str());
+			(*vs_it)->print_view_state(o);
+		    }
+		}
+	    }
+	}
+    }
+
+    if (!outvls) 
+	std::cout << bu_vls_cstr(o) << "\n";
+
+    if (o != outvls) {
 	bu_vls_free(o);
 	BU_PUT(o, struct bu_vls);
-    } else {
-	for (l_it = leaves.begin(); l_it != leaves.end(); l_it++) {
-	    bu_vls_printf(o, "%s", l_it->c_str());
-	}
     }
 }
 
@@ -2985,6 +3017,23 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     cache_collapsed();
 
     return ret;
+}
+
+void
+BViewState::print_view_state(struct bu_vls *outvls)
+{
+    struct bu_vls *o = outvls;
+    if (!o) {
+	BU_GET(o, struct bu_vls);
+	bu_vls_init(o);
+    }
+
+    bu_vls_printf(o, "Object count: %zd", s_keys.size());
+
+    if (o != outvls) {
+	bu_vls_free(o);
+	BU_PUT(o, struct bu_vls);
+    }
 }
 
 // Added dps present their own challenge, in terms of whether or not to

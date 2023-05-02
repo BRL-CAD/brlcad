@@ -169,6 +169,11 @@ class GED_EXPORT BViewState {
 	// Allow callers to calculate the drawing hash of a path
 	unsigned long long path_hash(std::vector<unsigned long long> &path, size_t max_len);
 
+	// Debugging methods for printing out current states - the use of hashes
+	// means direct inspection of most data isn't informative, so we provide
+	// convenience methods that decode it to user-comprehensible info.
+	void print_view_state(struct bu_vls *o = NULL);
+
     private:
 	// Sets defining all drawn solid paths (including invalid paths).  The
 	// s_keys holds the ordered individual keys of each drawn solid path - it
@@ -389,7 +394,7 @@ class GED_EXPORT DbiState {
 	// Debugging methods for printing out current states - the use of hashes
 	// means direct inspection of most data isn't informative, so we provide
 	// convenience methods that decode it to user-comprehensible info.
-	void print_dbi_state(struct bu_vls *o = NULL);
+	void print_dbi_state(struct bu_vls *o = NULL, bool report_view_states = false);
 
     private:
 	void gather_cyclic(
