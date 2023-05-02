@@ -21,7 +21,6 @@ The following guidelines will help you understand how to contribute to this proj
 ### Pull Requests
 
 - Fork the repository and create your branch from `main`.
-- If you've added code that should be tested, add tests.
 - If you've changed APIs, update the documentation.
 - Ensure the test suite passes.
 - Issue that pull request with a description of the issue name and number it aims to resolve!
