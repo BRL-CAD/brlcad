@@ -2,7 +2,7 @@
 
 ## Introduction ##
 
-The goal of this effort is to auto-generate beautiful concise summaries of 3D geometry models in BRL-CAD, an open source computer-aided design (CAD) system. BRL-CAD is used by academia, industry, and government to represent and visualize 3D models, to help analyze safety, and communicate suitability.  Developing this prototype will involve elements of computer graphics, verification and validation, physically-based rendering, automatic layout algorithms, graphic design, C/C++, Qt, and more. Leveraging capabilities in BRL-CAD, you’ll work on creating a tool that produces a novel “one page” summary report (which you will also help design) that includes visual, textual, and contextual information about a given 3D model.
+The goal of this effort is to auto-generate beautiful concise summaries of 3D geometry models in BRL-CAD, an open source computer-aided design (CAD) system. Leveraging capabilities in BRL-CAD, we worked on creating a tool that produces a novel “one page” summary report that includes visual, textual, and contextual information about a given 3D model.
 
 ## Requirements ##
 
@@ -10,7 +10,7 @@ This code has been run and tested on:
 
 * C++
 * Visual Studio
-* BRL-CAD
+* CMake
 
 
 ## External Deps  ##
@@ -26,7 +26,7 @@ This code has been run and tested on:
 
 Download this code repository by using git:
 
- `git clone https://github.com/SP23-CSCE482/visualization-sprint-1.git`
+ `git clone https://github.com/SP23-CSCE482/visualization.git`
 
 
 ## Tests ##
@@ -65,6 +65,13 @@ Run the program using
 Example
 
 `./a.out -p ../../../build/share/db/m35.g -f report.png`
+
+### Windows OS Setup
+1. Download and install OpenCV. Be sure to select “Windows” and the 4.6.0 version.
+2. Download, install and compile BRL-CAD.
+3. Open “BRLCAD.sln” in the build folder.
+4. Search the Visual Studio Selection Explorer for “rgen”. When found, right click and click “Set as Startup Project”.
+5. Press the green play button towards the top middle to run!
 
 ## Environmental Variables/Files ##
 
