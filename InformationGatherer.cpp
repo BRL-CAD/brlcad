@@ -101,7 +101,7 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
             volume += stod(result);
         }
         //Get mass of region
-        command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\"," + mUnit + " " + opt->getFilepath() + " -f C:\\Users\\bhosk\\VSC_Projects\\CSCE_482\\brlcad\\build\\Release\\share\\data\\GQA_SAMPLE_DENSITIES " + val + " 2>&1";
+        command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\"," + mUnit + " " + opt->getFilepath() + " " + val + " 2>&1";
         result = "";
         pipe = popen(command.c_str(), "r");
         if (!pipe) throw std::runtime_error("popen() failed!");
@@ -240,21 +240,6 @@ InformationGatherer::~InformationGatherer()
 
 bool InformationGatherer::gatherInformation(std::string name)
 {
-    //Get units to use
-    std::string lUnit;
-    if (opt->isDefaultLength()) {
-        lUnit = infoMap["units"];
-    }
-    else {
-        lUnit = opt->getUnitLength();
-    }
-    std::string mUnit;
-    if (opt->isDefaultMass()) {
-        mUnit = "g";
-    }
-    else {
-        mUnit = opt->getUnitMass();
-    }
 
 	//Open database
     std::string filePath = opt->getFilepath();
@@ -301,6 +286,22 @@ bool InformationGatherer::gatherInformation(std::string name)
 	std::size_t first = result.find_first_of("\'");
 	std::size_t last = result.find_last_of("\'");
     infoMap["units"] = result.substr(first+1, last-first-1);
+
+    //Get units to use
+    std::string lUnit;
+    if (opt->isDefaultLength()) {
+        lUnit = infoMap["units"];
+    }
+    else {
+        lUnit = opt->getUnitLength();
+    }
+    std::string mUnit;
+    if (opt->isDefaultMass()) {
+        mUnit = "g";
+    }
+    else {
+        mUnit = opt->getUnitMass();
+    }
 
 
     getMainComp();
