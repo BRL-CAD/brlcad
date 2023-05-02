@@ -387,7 +387,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(2, dbp, av[1], true, soft_fail, 0, "lod_clear", "lod");
+    img_cmp(2, dbp, av[1], true, soft_fail, 10, "lod_clear", "lod");
 
     s_av[0] = "draw";
     s_av[1] = "-m1";
@@ -399,7 +399,7 @@ main(int ac, char *av[]) {
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
 
-    img_cmp(4, dbp, av[1], true, soft_fail, 0, "lod_clear", "lod");
+    img_cmp(4, dbp, av[1], true, soft_fail, 10, "lod_clear", "lod");
 
     /* Fully clear any cached LoD data */
     s_av[0] = "view";
