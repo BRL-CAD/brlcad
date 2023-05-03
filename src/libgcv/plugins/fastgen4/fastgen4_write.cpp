@@ -1390,8 +1390,8 @@ get_cutout(db_i &db, const db_full_path &parent_path, DBInternal &outer,
 	|| t.tb_left->tr_op != OP_DB_LEAF || t.tb_right->tr_op != OP_DB_LEAF)
 	return false;
 
-    const directory &outer_dir = DBInternal::lookup(db, t.tb_left->tr_l.tl_name);
-    const directory &inner_dir = DBInternal::lookup(db, t.tb_right->tr_l.tl_name);
+    const directory outer_dir = DBInternal::lookup(db, t.tb_left->tr_l.tl_name);
+    const directory inner_dir = DBInternal::lookup(db, t.tb_right->tr_l.tl_name);
     outer.load(db, outer_dir);
     inner.load(db, inner_dir);
 
@@ -1679,7 +1679,7 @@ get_unioned(const db_i &db, const tree *tree, LeafMap &results)
 
     switch (tree->tr_op) {
 	case OP_DB_LEAF: {
-	    const directory &dir = DBInternal::lookup(db, tree->tr_l.tl_name);
+	    const directory dir = DBInternal::lookup(db, tree->tr_l.tl_name);
 	    results.insert(std::make_pair(&dir, Matrix(tree->tr_l.tl_mat)));
 	    break;
 	}
