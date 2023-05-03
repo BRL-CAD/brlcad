@@ -112,8 +112,6 @@ Target lexical_cast(const Source &value)
 void
 comb_to_region(db_i &db, const std::string &name)
 {
-    RT_CK_DBI(&db);
-
     if (directory * const dir = db_lookup(&db, name.c_str(), true)) {
 	if (dir->d_flags & RT_DIR_COMB) {
 	    if (db5_update_attribute(name.c_str(), "region", "R", &db))
@@ -129,7 +127,6 @@ comb_to_region(db_i &db, const std::string &name)
 void
 comb_region_name_check(std::map<const directory *, std::string> &renamed, db_i &db, const std::string &name)
 {
-    RT_CK_DBI(&db);
     // If name doesn't have a .r suffix, add it
     struct bu_vls ext = BU_VLS_INIT_ZERO;
     bool add_ext = false;
