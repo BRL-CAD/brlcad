@@ -115,6 +115,9 @@ csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int flag)
     if (!v->gv_s->adaptive_plot_csg)
 	return 0;
 
+    if (BU_STR_EQUAL("all.g/ellipse.r/ellipse.s", bu_vls_cstr(&vo->s_name)))
+	bu_log("csg_wireframe_update %s[%s]\n", bu_vls_cstr(&vo->s_name), bu_vls_cstr(&v->gv_name));
+
     bv_log(1, "csg_wireframe_update %s[%s]", bu_vls_cstr(&vo->s_name), bu_vls_cstr(&v->gv_name));
 
     vo->csg_obj = 1;
@@ -127,6 +130,9 @@ csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int flag)
     //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(vo->bmin), V3ARGS(vo->bmax));
     if (!(v->gv_perspective > SMALL_FASTF) && !bg_sat_aabb_obb(vo->bmin, vo->bmax, v->obb_center, v->obb_extent1, v->obb_extent2, v->obb_extent3))
 	return 0;
+
+    if (BU_STR_EQUAL("all.g/ellipse.r/ellipse.s", bu_vls_cstr(&vo->s_name)))
+	bu_log("is visible\n");
 
     bool rework = (flag) ? true : false;
 
@@ -144,6 +150,9 @@ csg_wireframe_update(struct bv_scene_obj *vo, struct bview *v, int flag)
     }
     if (!rework)
 	return 0;
+
+    if (BU_STR_EQUAL("all.g/ellipse.r/ellipse.s", bu_vls_cstr(&vo->s_name)))
+	bu_log("do rework\n");
 
     // We're going to redraw - sync with view
     vo->curve_scale = v->gv_s->curve_scale;
@@ -543,6 +552,8 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
     // Standard (view independent) wireframe
     if (!v || !v->gv_s->adaptive_plot_csg) {
 	if (ip->idb_meth->ft_plot) {
+	    if (BU_STR_EQUAL("all.g/ellipse.r/ellipse.s", bu_vls_cstr(&s->s_name)))
+		bu_log("non-adaptive plot\n");
 	    ip->idb_meth->ft_plot(&s->s_vlist, ip, ttol, tol, s->s_v);
 	    // Because this data is view independent, it only needs to be
 	    // generated once rather than per-view.
@@ -553,9 +564,15 @@ wireframe_plot(struct bv_scene_obj *s, struct bview *v, struct rt_db_internal *i
 
     // If we're adaptive, call the primitive's adaptive plotting, if any.
     if (ip->idb_meth->ft_adaptive_plot) {
+	if (BU_STR_EQUAL("all.g/ellipse.r/ellipse.s", bu_vls_cstr(&s->s_name)))
+	    bu_log("adaptive plot\n");
+
 	struct bv_scene_obj *vo = bv_obj_for_view(s, v);
 	if (!vo) {
 	    vo = bv_obj_get_vo(s, v);
+
+	    if (BU_STR_EQUAL("all.g/ellipse.r/ellipse.s", bu_vls_cstr(&s->s_name)))
+		bu_log("new adaptive scene object\n");
 
 	    // Make a copy of the draw info for vo.
 	    struct draw_update_data_t *ld;
