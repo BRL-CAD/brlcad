@@ -1513,7 +1513,16 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 	VMOVE(sp->bmin, s->bmin);
 	VMOVE(sp->bmax, s->bmax);
 	sp->s_size = s->s_size;
+
+	if (BU_STR_EQUAL("all.g/ellipse.r/ellipse.s", bu_vls_cstr(&sp->s_name))) {
+	    bu_log("  (calc) bmin: %f %f %f  bmax: %f %f %f\n", V3ARGS(sp->bmin), V3ARGS(sp->bmax));
+	}
+
 	return 1;
+    }
+
+    if (BU_STR_EQUAL("all.g/ellipse.r/ellipse.s", bu_vls_cstr(&sp->s_name))) {
+	bu_log("(nocalc) bmin: %f %f %f  bmax: %f %f %f\n", V3ARGS(sp->bmin), V3ARGS(sp->bmax));
     }
     return 0;
 }
