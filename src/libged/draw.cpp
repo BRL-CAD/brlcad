@@ -624,7 +624,7 @@ draw_scene(struct bv_scene_obj *s, struct bview *v)
     bv_log(1, "draw_scene %s[%s]", bu_vls_cstr(&s->s_name), (v) ? bu_vls_cstr(&v->gv_name) : "NULL");
 
     // If we're not adaptive, trigger the view insensitive drawing routines
-    if (v && !v->gv_s->adaptive_plot_csg && !v->gv_s->adaptive_plot_mesh && !v->gv_s->adaptive_plot_csg) {
+    if (v && !v->gv_s->adaptive_plot_csg && !v->gv_s->adaptive_plot_mesh) {
 	return draw_scene(s, NULL);
     }
 
