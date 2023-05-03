@@ -171,8 +171,6 @@ Matrix::Matrix(const fastf_t *values) :
 bool
 Matrix::equal(const Matrix &other, const bn_tol &tol) const
 {
-    BN_CK_TOL(&tol);
-
     return bn_mat_is_equal(m_value, other.m_value, &tol) != 0;
 }
 
@@ -202,8 +200,6 @@ private:
 const directory &
 DBInternal::lookup(const db_i &db, const std::string &name)
 {
-    RT_CK_DBI(&db);
-
     const directory * const dir = db_lookup(&db, name.c_str(), LOOKUP_QUIET);
 
     if (!dir)
@@ -223,9 +219,6 @@ DBInternal::DBInternal(const db_i &db, const directory &dir) :
     m_valid(false),
     m_internal()
 {
-    RT_CK_DBI(&db);
-    RT_CK_DIR(&dir);
-
     load(db, dir);
 }
 
@@ -240,9 +233,6 @@ DBInternal::~DBInternal()
 void
 DBInternal::load(const db_i &db, const directory &dir)
 {
-    RT_CK_DBI(&db);
-    RT_CK_DIR(&dir);
-
     if (m_valid) {
 	rt_db_free_internal(&m_internal);
 	m_valid = false;
@@ -252,7 +242,6 @@ DBInternal::load(const db_i &db, const directory &dir)
 	throw std::runtime_error("rt_db_get_internal() failed");
 
     m_valid = true;
-    RT_CK_DB_INTERNAL(&m_internal);
 }
 
 
@@ -1166,8 +1155,6 @@ Section::write_hexahedron(const fastf_t vpoints[8][3], fastf_t thickness,
 static std::pair<fastf_t, bool>
 get_face_info(const rt_bot_internal &bot, std::size_t i)
 {
-    RT_BOT_CK_MAGIC(&bot);
-
     if (i > bot.num_faces)
 	throw std::invalid_argument("invalid face index");
 
@@ -1187,8 +1174,6 @@ get_face_info(const rt_bot_internal &bot, std::size_t i)
 static void
 write_bot(Section &section, const rt_bot_internal &bot)
 {
-    RT_BOT_CK_MAGIC(&bot);
-
     for (std::size_t i = 0; i < bot.num_faces; ++i) {
 	const int * const face = &bot.faces[i * 3];
 	const std::pair<fastf_t, bool> face_info = get_face_info(bot, i);
@@ -1223,8 +1208,6 @@ write_bot(Section &section, const rt_bot_internal &bot)
 static bool
 ell_is_sphere(const rt_ell_internal &ell)
 {
-    RT_ELL_CK_MAGIC(&ell);
-
     // validate that |A| > 0, |B| > 0, |C| > 0
     if (NEAR_ZERO(MAGNITUDE(ell.a), RT_LEN_TOL)
 	|| NEAR_ZERO(MAGNITUDE(ell.b), RT_LEN_TOL)
@@ -1275,8 +1258,6 @@ mutually_orthogonal(const fastf_t *vect_a, const fastf_t *vect_b,
 static bool
 tgc_is_ccone2(const rt_tgc_internal &tgc)
 {
-    RT_TGC_CK_MAGIC(&tgc);
-
     if (NEAR_ZERO(MAGNITUDE(tgc.h), RT_LEN_TOL))
 	return false;
 
@@ -1318,9 +1299,6 @@ tgc_is_ccone2(const rt_tgc_internal &tgc)
 static void
 path_to_mat(db_i &db, const db_full_path &path, mat_t &result)
 {
-    RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&path);
-
     db_full_path temp;
     const AutoPtr<db_full_path, db_free_full_path> autofree_path(&temp);
     db_full_path_init(&temp);
@@ -1334,9 +1312,6 @@ path_to_mat(db_i &db, const db_full_path &path, mat_t &result)
 static void
 apply_path_xform(db_i &db, const mat_t &matrix, rt_db_internal &internal)
 {
-    RT_CK_DBI(&db);
-    RT_CK_DB_INTERNAL(&internal);
-
     if (rt_obj_xform(&internal, matrix, &internal, 0, &db))
 	throw std::runtime_error("rt_obj_xform() failed");
 }
@@ -1345,8 +1320,6 @@ apply_path_xform(db_i &db, const mat_t &matrix, rt_db_internal &internal)
 static const db_full_path
 get_parent_path(const db_full_path &path)
 {
-    RT_CK_FULL_PATH(&path);
-
     if (path.fp_len < 2)
 	throw std::invalid_argument("toplevel");
 
@@ -1360,8 +1333,6 @@ get_parent_path(const db_full_path &path)
 static const directory &
 get_region_dir(const db_full_path &path)
 {
-    RT_CK_FULL_PATH(&path);
-
     for (std::size_t i = 0; i < path.fp_len; ++i)
 	if (DB_FULL_PATH_GET(&path, i)->d_flags & RT_DIR_REGION)
 	    return *DB_FULL_PATH_GET(&path, i);
@@ -1374,8 +1345,6 @@ get_region_dir(const db_full_path &path)
 static const db_full_path
 get_region_path(const db_full_path &path)
 {
-    RT_CK_FULL_PATH(&path);
-
     const directory &region_dir = get_region_dir(path);
     db_full_path result = path;
 
@@ -1389,9 +1358,6 @@ get_region_path(const db_full_path &path)
 static bool
 path_is_subtracted(db_i &db, const db_full_path &path)
 {
-    RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&path);
-
     db_tree_state tree_state = rt_initial_tree_state;
     tree_state.ts_resp = &rt_uniresource;
     tree_state.ts_dbip = &db;
@@ -1413,9 +1379,6 @@ static bool
 get_cutout(db_i &db, const db_full_path &parent_path, DBInternal &outer,
 	   DBInternal &inner)
 {
-    RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&parent_path);
-
     DBInternal comb_db_internal(db, *DB_FULL_PATH_CUR_DIR(&parent_path));
     const rt_comb_internal &comb_internal = *static_cast<rt_comb_internal *>
 					    (comb_db_internal.get().idb_ptr);
@@ -1460,9 +1423,6 @@ static bool
 get_ccone1_cutout_helper(Section &section, const std::string &name,
 			 const rt_tgc_internal &outer_tgc, const rt_tgc_internal &inner_tgc)
 {
-    RT_TGC_CK_MAGIC(&outer_tgc);
-    RT_TGC_CK_MAGIC(&inner_tgc);
-
     const fastf_t radius1 = MAGNITUDE(outer_tgc.a);
     const fastf_t radius2 = MAGNITUDE(outer_tgc.c);
     const fastf_t length = MAGNITUDE(outer_tgc.h);
@@ -1528,9 +1488,6 @@ static bool
 find_ccone_cutout(Section &section, db_i &db, const db_full_path &parent_path,
 		  std::set<const directory *> &completed)
 {
-    RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&parent_path);
-
     // Sanity.
     if (parent_path.fp_len <= 0)
 	return false;
@@ -1555,8 +1512,6 @@ find_ccone_cutout(Section &section, db_i &db, const db_full_path &parent_path,
 				       (internal_first.get().idb_ptr);
     const rt_tgc_internal &inner_tgc = *static_cast<rt_tgc_internal *>
 				       (internal_second.get().idb_ptr);
-    RT_TGC_CK_MAGIC(&outer_tgc);
-    RT_TGC_CK_MAGIC(&inner_tgc);
 
     // check cone geometry
     if (!tgc_is_ccone2(outer_tgc) || !tgc_is_ccone2(inner_tgc))
@@ -1596,9 +1551,6 @@ static bool
 find_csphere_cutout(Section &section, db_i &db, const db_full_path &parent_path,
 		    std::set<const directory *> &completed)
 {
-    RT_CK_DBI(&db);
-    RT_CK_FULL_PATH(&parent_path);
-
     // Sanity.
     if (parent_path.fp_len <= 0)
 	return false;
@@ -1623,8 +1575,6 @@ find_csphere_cutout(Section &section, db_i &db, const db_full_path &parent_path,
 				       (internal_first.get().idb_ptr);
     const rt_ell_internal &inner_ell = *static_cast<rt_ell_internal *>
 				       (internal_second.get().idb_ptr);
-    RT_ELL_CK_MAGIC(&outer_ell);
-    RT_ELL_CK_MAGIC(&inner_ell);
 
     if (!VNEAR_EQUAL(outer_ell.v, inner_ell.v, RT_LEN_TOL))
 	return false;
@@ -1651,8 +1601,6 @@ find_csphere_cutout(Section &section, db_i &db, const db_full_path &parent_path,
 static bool
 get_chex1(Section &section, const rt_bot_internal &bot)
 {
-    RT_BOT_CK_MAGIC(&bot);
-
     if (bot.num_vertices != 8 || bot.num_faces != 12)
 	return false;
 
@@ -1724,8 +1672,6 @@ typedef std::map<const directory *, Matrix> LeafMap;
 static void
 get_unioned(const db_i &db, const tree *tree, LeafMap &results)
 {
-    RT_CK_DBI(&db);
-
     if (!tree)
 	return;
 
@@ -1756,8 +1702,6 @@ get_unioned(const db_i &db, const tree *tree, LeafMap &results)
 static void
 get_intersected(const db_i &db, const tree *tree, LeafMap &results)
 {
-    RT_CK_DBI(&db);
-
     if (!tree)
 	return;
 
@@ -1789,8 +1733,6 @@ get_intersected(const db_i &db, const tree *tree, LeafMap &results)
 static void
 get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 {
-    RT_CK_DBI(&db);
-
     if (!tree)
 	return;
 
@@ -1824,10 +1766,6 @@ static CompspltID
 identify_compsplt(const db_i &db, const directory &parent_region_dir,
 		  const directory &half_dir)
 {
-    RT_CK_DBI(&db);
-    RT_CK_DIR(&parent_region_dir);
-    RT_CK_DIR(&half_dir);
-
     if (half_dir.d_minor_type != ID_HALF)
 	throw std::invalid_argument("identify_compsplt(): not a halfspace");
 
@@ -1863,10 +1801,6 @@ WallsInfo;
 static WallsInfo
 find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 {
-    RT_CK_DBI(&db);
-    RT_CK_DIR(&region_dir);
-    BN_CK_TOL(&tol);
-
     WallsInfo results;
     LeafMap subtracted;
     {
@@ -2003,9 +1937,6 @@ FastgenConversion::RegionManager::RegionManager(const db_i &db,
     m_compsplt(false, 0.0),
     m_sections()
 {
-    RT_CK_DBI(&db);
-    RT_CK_DIR(&m_region_dir);
-    BN_CK_TOL(&tol);
 }
 
 
@@ -2094,8 +2025,6 @@ bool
 FastgenConversion::RegionManager::member_ignored(
     const db_full_path &member_path) const
 {
-    RT_CK_FULL_PATH(&member_path);
-
     if (!m_enabled)
 	return true;
 
@@ -2111,8 +2040,6 @@ void
 FastgenConversion::RegionManager::create_section(const db_full_path
 	&region_instance_path)
 {
-    RT_CK_FULL_PATH(&region_instance_path);
-
     if (DB_FULL_PATH_CUR_DIR(&region_instance_path) != &m_region_dir)
 	throw std::invalid_argument("invalid path");
 
@@ -2133,8 +2060,6 @@ Section &
 FastgenConversion::RegionManager::get_section(const db_full_path
 	&region_instance_path)
 {
-    RT_CK_FULL_PATH(&region_instance_path);
-
     const std::string name = AutoPtr<char>(db_path_to_string(
 	    &region_instance_path)).ptr;
     return *m_sections.at(name);
@@ -2146,9 +2071,6 @@ static bool
 find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	      const rt_half_internal &half)
 {
-    RT_CK_FULL_PATH(&half_path);
-    RT_HALF_CK_MAGIC(&half);
-
     // Sanity.
     if (half_path.fp_len <= 0)
 	return false;
@@ -2220,9 +2142,6 @@ FastgenConversion::FastgenConversion(db_i &db, const bn_tol &tol,
     m_regions(),
     m_toplevels()
 {
-    RT_CK_DBI(&m_db);
-    BN_CK_TOL(&m_tol);
-
     AutoPtr<directory *> region_dirs;
     const std::size_t num_regions = db_ls(&db, DB_LS_REGION, NULL,
 					  &region_dirs.ptr);
@@ -2289,8 +2208,6 @@ FastgenConversion::~FastgenConversion()
 FastgenConversion::RegionManager &
 FastgenConversion::get_region(const directory &region_dir)
 {
-    RT_CK_DIR(&region_dir);
-
     return *m_regions.at(&region_dir);
 }
 
@@ -2298,8 +2215,6 @@ FastgenConversion::get_region(const directory &region_dir)
 Section &
 FastgenConversion::get_section(const db_full_path &path)
 {
-    RT_CK_FULL_PATH(&path);
-
     const directory *region_dir;
 
     try {
@@ -2330,9 +2245,6 @@ static bool
 convert_primitive(FastgenConversion &data, const db_full_path &path,
 		  const rt_db_internal &internal, bool subtracted)
 {
-    RT_CK_FULL_PATH(&path);
-    RT_CK_DB_INTERNAL(&internal);
-
     // Sanity.
     if (path.fp_len <= 0)
 	return false;
@@ -2346,8 +2258,6 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	case ID_CLINE: {
 	    const rt_cline_internal &cline = *static_cast<rt_cline_internal *>
 					     (internal.idb_ptr);
-	    RT_CLINE_CK_MAGIC(&cline);
-
 	    point_t v2;
 	    VADD2(v2, cline.v, cline.h);
 	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
@@ -2358,8 +2268,6 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	case ID_ELL:
 	case ID_SPH: {
 	    const rt_ell_internal &ell = *static_cast<rt_ell_internal *>(internal.idb_ptr);
-	    RT_ELL_CK_MAGIC(&ell);
-
 	    if (internal.idb_type != ID_SPH && !ell_is_sphere(ell))
 		return false;
 
@@ -2376,8 +2284,6 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	case ID_TGC:
 	case ID_REC: {
 	    const rt_tgc_internal &tgc = *static_cast<rt_tgc_internal *>(internal.idb_ptr);
-	    RT_TGC_CK_MAGIC(&tgc);
-
 	    if (!tgc_is_ccone2(tgc))
 		return false;
 
@@ -2395,8 +2301,6 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 
 	case ID_ARB8: {
 	    const rt_arb_internal &arb = *static_cast<rt_arb_internal *>(internal.idb_ptr);
-	    RT_ARB_CK_MAGIC(&arb);
-
 	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 	    section.write_hexahedron(arb.pt, 0.0);
 	    break;
@@ -2404,8 +2308,6 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 
 	case ID_BOT: {
 	    const rt_bot_internal &bot = *static_cast<rt_bot_internal *>(internal.idb_ptr);
-	    RT_BOT_CK_MAGIC(&bot);
-
 	    section.write_name(DB_FULL_PATH_CUR_DIR(&path)->d_namep);
 
 	    if (!get_chex1(section, bot))
@@ -2417,8 +2319,6 @@ convert_primitive(FastgenConversion &data, const db_full_path &path,
 	case ID_HALF: {
 	    const rt_half_internal &half = *static_cast<rt_half_internal *>
 					   (internal.idb_ptr);
-	    RT_HALF_CK_MAGIC(&half);
-
 	    return find_compsplt(data, path, half);
 	}
 
@@ -2437,7 +2337,6 @@ write_nmg_region(nmgregion *nmg_region, const db_full_path *path,
 {
     NMG_CK_REGION(nmg_region);
     NMG_CK_MODEL(nmg_region->m_p);
-    RT_CK_FULL_PATH(path);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
     Section &section = data.get_section(*path);
@@ -2471,7 +2370,6 @@ convert_region_start(db_tree_state *tree_state, const db_full_path *path,
 		     const rt_comb_internal * comb, void *client_data)
 {
     RT_CK_DBTS(tree_state);
-    RT_CK_FULL_PATH(path);
     RT_CK_COMB(comb);
 
     // Sanity.
@@ -2490,8 +2388,6 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	     rt_db_internal *internal, void *client_data)
 {
     RT_CK_DBTS(tree_state);
-    RT_CK_FULL_PATH(path);
-    RT_CK_DB_INTERNAL(internal);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
     const directory *region_dir;
@@ -2533,7 +2429,6 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
 		   tree *current_tree, void *client_data)
 {
     RT_CK_DBTS(tree_state);
-    RT_CK_FULL_PATH(path);
     RT_CK_TREE(current_tree);
 
     FastgenConversion &data = *static_cast<FastgenConversion *>(client_data);
@@ -2553,8 +2448,6 @@ do_conversion(db_i &db, const struct gcv_opts &gcv_options,
 	      const std::set<const directory *> &facetize_regions =
 		  std::set<const directory *>())
 {
-    RT_CK_DBI(&db);
-
     AutoPtr<model, nmg_km> nmg_model;
     db_tree_state initial_tree_state = rt_initial_tree_state;
     initial_tree_state.ts_tol = &gcv_options.calculational_tolerance;
