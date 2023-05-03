@@ -446,9 +446,6 @@ main(int ac, char *av[]) {
 
     bu_log("Sanity - basic LoD wireframe, no selection...\n");
 
-    bu_log("Pre lod csg:\n");
-    dbp->dbi_state->print_dbi_state(NULL, true);
-
     s_av[0] = "view";
     s_av[1] = "lod";
     s_av[2] = "csg";
@@ -465,9 +462,6 @@ main(int ac, char *av[]) {
     s_av[0] = "autoview";
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
-
-    bu_log("Post lod csg:\n");
-    dbp->dbi_state->print_dbi_state(NULL, true);
 
     img_cmp(13, dbp, av[1], false, soft_fail, 0, "select_clear", "select");
     bu_log("Done.\n");

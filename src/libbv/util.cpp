@@ -1435,6 +1435,8 @@ bv_find_child(struct bv_scene_obj *s, const char *vname)
 int
 bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 {
+    if (BU_STR_EQUAL("all.g/ellipse.r/ellipse.s", bu_vls_cstr(&sp->s_name)))
+	bu_log("bounding %s\n", bu_vls_cstr(&sp->s_name));
     int cmd;
     VSET(sp->bmin, INFINITY, INFINITY, INFINITY);
     VSET(sp->bmax, -INFINITY, -INFINITY, -INFINITY);
