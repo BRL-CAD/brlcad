@@ -96,7 +96,7 @@ main(int ac, char *av[]) {
     // Set callback so database changes will update dbi_state
     db_add_changed_clbk(dbp->dbip, &ged_changed_callback, (void *)dbp);
 
-    // Set view name
+    // Set the view name
     bu_vls_sprintf(&dbp->ged_gvp->gv_name, "default");
 
     /* To generate images that will allow us to check if the drawing

@@ -95,12 +95,8 @@ main(int ac, char *av[]) {
     // Set callback so database changes will update dbi_state
     db_add_changed_clbk(dbp->dbip, &ged_changed_callback, (void *)dbp);
 
-    // Set up the view
-    BU_GET(dbp->ged_gvp, struct bview);
-    bv_init(dbp->ged_gvp, &dbp->ged_views);
+    // Set the view name
     bu_vls_sprintf(&dbp->ged_gvp->gv_name, "default");
-    bv_set_add_view(&dbp->ged_views, dbp->ged_gvp);
-    bu_ptbl_ins(&dbp->ged_free_views, (long *)dbp->ged_gvp);
 
     /* To generate images that will allow us to check if the drawing
      * is proceeding as expected, we use the swrast off-screen dm. */
