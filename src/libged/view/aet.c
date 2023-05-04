@@ -39,7 +39,6 @@ ged_aet_core(struct ged *gedp, int argc, const char *argv[])
     int iflag = 0;
     static const char *usage = "[[-i] az el [tw]]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 

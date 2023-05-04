@@ -40,7 +40,6 @@ ged_size_core(struct ged *gedp, int argc, const char *argv[])
     double size;
     static const char *usage = "[s]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -49,8 +48,11 @@ ged_size_core(struct ged *gedp, int argc, const char *argv[])
 
     /* get view size */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "%g",
-		      gedp->ged_gvp->gv_size * gedp->dbip->dbi_base2local);
+	if (gedp->dbip) {
+	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_size * gedp->dbip->dbi_base2local);
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%g", gedp->ged_gvp->gv_size);
+	}
 	return BRLCAD_OK;
     }
 
@@ -64,7 +66,7 @@ ged_size_core(struct ged *gedp, int argc, const char *argv[])
 	    return BRLCAD_ERROR;
 	}
 
-	gedp->ged_gvp->gv_size = gedp->dbip->dbi_local2base * size;
+	gedp->ged_gvp->gv_size = (gedp->dbip) ? gedp->dbip->dbi_local2base * size : size;
 	if (gedp->ged_gvp->gv_size < BV_MINVIEWSIZE)
 	    gedp->ged_gvp->gv_size = BV_MINVIEWSIZE;
 	gedp->ged_gvp->gv_isize = 1.0 / gedp->ged_gvp->gv_size;
