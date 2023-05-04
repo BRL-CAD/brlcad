@@ -30,7 +30,7 @@ image/spm					spm
 image/sun					sun
 image/yuv					yuv
 model/dxf					dxf
-model/gltf                  gltf glb
+model/gltf					gltf glb
 model/obj					obj
 model/ply					ply
 model/shp					shp
@@ -43,4 +43,4 @@ model/vnd.gift					cg comgeom
 model/vnd.intaval				tgf
 model/vnd.rhino					3dm
 model/vnd.gdal					gdal dem dted tif tiff
-model/vnd.assetimport				assetimport
+model/vnd.assetimport				assetimport 3ds 3mf dae fbx lwo x x3d assbin json assxml
