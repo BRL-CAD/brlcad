@@ -219,6 +219,7 @@ add_subdirectory(x3d)
 CMAKEFILES(
   CMakeLists.txt
   README
+  testing_status.txt
   tetra.g           # used for exporters - keep in root to eliminate copying duplicate file to all subdirectories
   )
 

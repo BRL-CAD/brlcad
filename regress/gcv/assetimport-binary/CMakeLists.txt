@@ -5,6 +5,7 @@ endif (TARGET gcv-assetimport)
 
 CMAKEFILES(
   CMakeLists.txt
+  tetra.assbin
   )
 
 # Local Variables:
