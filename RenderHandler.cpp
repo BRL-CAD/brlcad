@@ -540,51 +540,8 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 		}
 	}
 
-	//coordinates[coordinates.size() - 1].push_back(ambientC == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][0]);
-	//coordinates[coordinates.size() - 1].push_back(ambientR == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][1]);
 	coordinates[coordinates.size() - 1].push_back(secWidth);
 	coordinates[coordinates.size() - 1].push_back(secHeight);
-}
-
-double LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
-{
-	double sum = 0;
-	for (int i = 0; i < map.size(); ++i)
-	{
-		switch (map[i])
-		{
-		case ' ': case '\n': case '-': case '|': case '.': // items with no area
-			break;
-		default:
-			if (coordinates[i].empty())
-			{
-				std::cerr << "ISSUE: coordinates for an important map section not initialized!" << std::endl;
-				break;
-			}
-			sum += (coordinates[i][2] - coordinates[i][0]) * (coordinates[i][3] - coordinates[i][1]);
-		}
-	}
-
-	// add ambient occlusion after accounting for fitting
-	double maxAWidth = coordinates[map.size()][2] - coordinates[map.size()][0];
-	double maxAHeight = coordinates[map.size()][3] - coordinates[map.size()][1];
-
-	double actRatio = ambientWidth / ambientHeight;
-
-	if (maxAWidth / maxAHeight < actRatio)
-	{
-		// height is too large; cap the height
-		maxAHeight = maxAWidth / actRatio;
-	}
-	else
-	{
-		// width is too large; cap the width
-		maxAWidth = maxAHeight * actRatio;
-	}
-	
-	sum += 1.8 * maxAWidth * maxAHeight;
-
-	return sum;
 }
 
 std::vector<int> LayoutChoice::getCoordinates(int mapIndex)
@@ -615,29 +572,7 @@ char LayoutChoice::getMapChar(int index)
 	return map[index];
 }
 
-std::vector<LayoutChoice> initLayouts()
-{
-	// create layout encodings
-	std::vector<LayoutChoice> layouts;
 
-	// extremely long or tall models
-	layouts.emplace_back("T.\nF.\nb.\nB.\nRA\nLA\n", true);
-	layouts.emplace_back("LFRBTb\n....AA\n", false);
-
-	// long models
-	layouts.emplace_back("TbFR\n..BL\n..AA\n", false);
-	layouts.emplace_back("TLR\nFAA\nbAA\nBAA\n", false);
-	layouts.emplace_back("BLA\nFRA\nTbA\n", true);
-
-	// flat models
-	layouts.emplace_back("TLBA\nFRbA", false);
-	layouts.emplace_back("TFR\nbBL\n.AA\n", false);
-
-	// tall models
-	layouts.emplace_back("BLTb\nFRAA\n", false);
-
-	return layouts;
-}
 
 LayoutChoice genLayout(double modelLength, double modelDepth, double modelHeight)
 {
@@ -679,12 +614,15 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
-	// get ambient occlusion image
+
+	// DEPRECATED: old heuristic call
 	//std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
 	//std::pair<int, int> ambientDims = img.getCroppedImageDims(render);
-
-	// find the layout to use
 	//LayoutChoice bestLayout = selectLayout(width, height, modelLength, modelDepth, modelHeight, ambientDims);
+	// END DEPRECATED code
+
+
+	// select the layout
 	LayoutChoice bestLayout = genLayout(modelLength, modelDepth, modelHeight);
 	bestLayout.initCoordinates(width, height, modelLength, modelDepth, modelHeight);
 
@@ -773,6 +711,76 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render, title);
 }
 
+
+
+
+
+/* DEPRECATED: OLD VERSION OF HEURISTIC
+double LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
+{
+	double sum = 0;
+	for (int i = 0; i < map.size(); ++i)
+	{
+		switch (map[i])
+		{
+		case ' ': case '\n': case '-': case '|': case '.': // items with no area
+			break;
+		default:
+			if (coordinates[i].empty())
+			{
+				std::cerr << "ISSUE: coordinates for an important map section not initialized!" << std::endl;
+				break;
+			}
+			sum += (coordinates[i][2] - coordinates[i][0]) * (coordinates[i][3] - coordinates[i][1]);
+		}
+	}
+
+	// add ambient occlusion after accounting for fitting
+	double maxAWidth = coordinates[map.size()][2] - coordinates[map.size()][0];
+	double maxAHeight = coordinates[map.size()][3] - coordinates[map.size()][1];
+
+	double actRatio = ambientWidth / ambientHeight;
+
+	if (maxAWidth / maxAHeight < actRatio)
+	{
+		// height is too large; cap the height
+		maxAHeight = maxAWidth / actRatio;
+	}
+	else
+	{
+		// width is too large; cap the width
+		maxAWidth = maxAHeight * actRatio;
+	}
+
+	sum += 1.8 * maxAWidth * maxAHeight;
+
+	return sum;
+}
+
+std::vector<LayoutChoice> initLayouts()
+{
+	// create layout encodings
+	std::vector<LayoutChoice> layouts;
+
+	// extremely long or tall models
+	layouts.emplace_back("T.\nF.\nb.\nB.\nRA\nLA\n", true);
+	layouts.emplace_back("LFRBTb\n....AA\n", false);
+
+	// long models
+	layouts.emplace_back("TbFR\n..BL\n..AA\n", false);
+	layouts.emplace_back("TLR\nFAA\nbAA\nBAA\n", false);
+	layouts.emplace_back("BLA\nFRA\nTbA\n", true);
+
+	// flat models
+	layouts.emplace_back("TLBA\nFRbA", false);
+	layouts.emplace_back("TFR\nbBL\n.AA\n", false);
+
+	// tall models
+	layouts.emplace_back("BLTb\nFRAA\n", false);
+
+	return layouts;
+}
+
 LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
 {
 	std::vector<LayoutChoice> allLayouts = initLayouts();
@@ -802,3 +810,4 @@ LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, doubl
 
 	return *bestLayout;
 }
+*/
