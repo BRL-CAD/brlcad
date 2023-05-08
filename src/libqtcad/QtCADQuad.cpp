@@ -383,6 +383,15 @@ QtCADQuad::get(const QPoint &gpos)
 	QWidget *cw = (QWidget *)cv;
 	QRect br = cw->geometry();
 	QPoint lp = cw->mapFromGlobal(gpos);
+	int x0, y0, x1, y1;
+	br.getCoords(&x0, &y0, &x1, &y1);
+	int gx, gy, lx, ly;
+	gx = gpos.x();
+	gy = gpos.y();
+	lx = lp.x();
+	ly = lp.y();
+	bu_log("wbox: (%d,%d) (%d,%d)\n", x0, y0, x1, y1);
+	bu_log("gpos: (%d,%d) lpos: (%d,%d)\n", gx, gy, lx, ly);
 	if (br.contains(lp)) {
 	    retv = cv;
 	    break;
