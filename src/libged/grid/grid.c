@@ -54,10 +54,11 @@ grid_vsnap(struct ged *gedp)
 static void
 grid_vls_print(struct ged *gedp)
 {
+    double blval = (gedp->dbip) ? gedp->dbip->dbi_base2local : 1.0;
     bu_vls_printf(gedp->ged_result_str, "anchor = %g %g %g\n",
-		  gedp->ged_gvp->gv_s->gv_grid.anchor[0] * gedp->dbip->dbi_base2local,
-		  gedp->ged_gvp->gv_s->gv_grid.anchor[1] * gedp->dbip->dbi_base2local,
-		  gedp->ged_gvp->gv_s->gv_grid.anchor[2] * gedp->dbip->dbi_base2local);
+		  gedp->ged_gvp->gv_s->gv_grid.anchor[0] * blval,
+		  gedp->ged_gvp->gv_s->gv_grid.anchor[1] * blval,
+		  gedp->ged_gvp->gv_s->gv_grid.anchor[2] * blval);
     bu_vls_printf(gedp->ged_result_str, "color = %d %d %d\n",
 		  gedp->ged_gvp->gv_s->gv_grid.color[0],
 		  gedp->ged_gvp->gv_s->gv_grid.color[1],
@@ -65,8 +66,8 @@ grid_vls_print(struct ged *gedp)
     bu_vls_printf(gedp->ged_result_str, "draw = %d\n", gedp->ged_gvp->gv_s->gv_grid.draw);
     bu_vls_printf(gedp->ged_result_str, "mrh = %d\n", gedp->ged_gvp->gv_s->gv_grid.res_major_h);
     bu_vls_printf(gedp->ged_result_str, "mrv = %d\n", gedp->ged_gvp->gv_s->gv_grid.res_major_v);
-    bu_vls_printf(gedp->ged_result_str, "rh = %g\n", gedp->ged_gvp->gv_s->gv_grid.res_h * gedp->dbip->dbi_base2local);
-    bu_vls_printf(gedp->ged_result_str, "rv = %g\n", gedp->ged_gvp->gv_s->gv_grid.res_v * gedp->dbip->dbi_base2local);
+    bu_vls_printf(gedp->ged_result_str, "rh = %g\n", gedp->ged_gvp->gv_s->gv_grid.res_h * blval);
+    bu_vls_printf(gedp->ged_result_str, "rv = %g\n", gedp->ged_gvp->gv_s->gv_grid.res_v * blval);
     bu_vls_printf(gedp->ged_result_str, "snap = %d\n", gedp->ged_gvp->gv_s->gv_grid.snap);
 }
 
@@ -100,8 +101,9 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
     char **argp = (char **)argv;
     double user_pt[3];		/* Value(s) provided by user */
     int i;
+    double blval = (gedp->dbip) ? gedp->dbip->dbi_base2local : 1.0;
+    double lbval = (gedp->dbip) ? gedp->dbip->dbi_local2base : 1.0;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -188,10 +190,10 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
     if (BU_STR_EQUAL(parameter, "rh")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%g",
-			  gedp->ged_gvp->gv_s->gv_grid.res_h * gedp->dbip->dbi_base2local);
+			  gedp->ged_gvp->gv_s->gv_grid.res_h * blval);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    gedp->ged_gvp->gv_s->gv_grid.res_h = user_pt[X] * gedp->dbip->dbi_local2base;
+	    gedp->ged_gvp->gv_s->gv_grid.res_h = user_pt[X] * lbval;
 
 	    return BRLCAD_OK;
 	}
@@ -203,10 +205,10 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
     if (BU_STR_EQUAL(parameter, "rv")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%g",
-			  gedp->ged_gvp->gv_s->gv_grid.res_v * gedp->dbip->dbi_base2local);
+			  gedp->ged_gvp->gv_s->gv_grid.res_v * blval);
 	    return BRLCAD_OK;
 	} else if (argc == 1) {
-	    gedp->ged_gvp->gv_s->gv_grid.res_v = user_pt[X] * gedp->dbip->dbi_local2base;
+	    gedp->ged_gvp->gv_s->gv_grid.res_v = user_pt[X] * lbval;
 
 	    return BRLCAD_OK;
 	}
@@ -246,14 +248,14 @@ ged_grid_core(struct ged *gedp, int argc, const char *argv[])
     if (BU_STR_EQUAL(parameter, "anchor")) {
 	if (argc == 0) {
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g",
-			  gedp->ged_gvp->gv_s->gv_grid.anchor[X] * gedp->dbip->dbi_base2local,
-			  gedp->ged_gvp->gv_s->gv_grid.anchor[Y] * gedp->dbip->dbi_base2local,
-			  gedp->ged_gvp->gv_s->gv_grid.anchor[Z] * gedp->dbip->dbi_base2local);
+			  gedp->ged_gvp->gv_s->gv_grid.anchor[X] * blval,
+			  gedp->ged_gvp->gv_s->gv_grid.anchor[Y] * blval,
+			  gedp->ged_gvp->gv_s->gv_grid.anchor[Z] * blval);
 	    return BRLCAD_OK;
 	} else if (argc == 3) {
-	    gedp->ged_gvp->gv_s->gv_grid.anchor[0] = user_pt[X] * gedp->dbip->dbi_local2base;
-	    gedp->ged_gvp->gv_s->gv_grid.anchor[1] = user_pt[Y] * gedp->dbip->dbi_local2base;
-	    gedp->ged_gvp->gv_s->gv_grid.anchor[2] = user_pt[Z] * gedp->dbip->dbi_local2base;
+	    gedp->ged_gvp->gv_s->gv_grid.anchor[0] = user_pt[X] * lbval;
+	    gedp->ged_gvp->gv_s->gv_grid.anchor[1] = user_pt[Y] * lbval;
+	    gedp->ged_gvp->gv_s->gv_grid.anchor[2] = user_pt[Z] * lbval;
 
 	    return BRLCAD_OK;
 	}
