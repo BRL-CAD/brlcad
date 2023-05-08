@@ -42,6 +42,8 @@ ged_model2grid_lu_core(struct ged *gedp, int argc, const char *argv[])
     point_t diff;
     double scan[3];
     static const char *usage = "x y z";
+    double l2bval = (gedp->dbip) ? gedp->dbip->dbi_local2base : 1.0;
+    double b2lval = (gedp->dbip) ? gedp->dbip->dbi_base2local : 1.0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -60,10 +62,10 @@ ged_model2grid_lu_core(struct ged *gedp, int argc, const char *argv[])
 	sscanf(argv[3], "%lf", &scan[Z]) != 1)
 	goto bad;
 
-    VSCALE(model_pt, scan, gedp->dbip->dbi_local2base);
+    VSCALE(model_pt, scan, l2bval);
     MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
     VSUB2(diff, view_pt, mo_view_pt);
-    f = gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local;
+    f = gedp->ged_gvp->gv_scale * b2lval;
     VSCALE(diff, diff, f);
     bu_vls_printf(gedp->ged_result_str, "%.15e %.15e", diff[X], diff[Y]);
 

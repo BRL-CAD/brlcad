@@ -125,7 +125,6 @@ ged_png_core(struct ged *gedp, int argc, const char *argv[])
     int r, g, b;
     static const char *usage = "[-c r/g/b] [-s size] file";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
