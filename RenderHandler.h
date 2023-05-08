@@ -46,7 +46,7 @@ public:
 
 	void initCoordinates(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight);
 
-	double getTotalCoverage();
+	double getTotalCoverage(double ambientWidth, double ambientHeight);
 
 	std::vector<int> getCoordinates(int mapIndex);
 
@@ -61,5 +61,8 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 std::vector<LayoutChoice> initLayouts();
 
 // uses a simple heuristic to determine which layout is the best for the object.
-LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight);
+LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims);
+
+// the currently used method which manually picks layouts based on model dimensions
+LayoutChoice genLayout(double modelLength, double modelDepth, double modelHeight);
 

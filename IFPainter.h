@@ -34,6 +34,8 @@ public:
 	IFPainter(int width, int height);
 	~IFPainter();
 
+	std::pair<int, int> getCroppedImageDims(std::string imgPath);
+
 	void drawImage(int x, int y, int width, int height, std::string imgPath);
 	void drawImageFitted(int x, int y, int width, int height, std::string imgPath);
 	void drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text);

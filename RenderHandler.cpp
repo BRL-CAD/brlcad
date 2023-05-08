@@ -500,14 +500,53 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 		}
 	}
 
+	// edge case: square models need extra alignment
+	if (this->map == "TbA\nFRA\nBLA\n")
+	{
+		double minX = secWidth, maxX = 0;
+		// iterate through the second column to align everything
+		for (int r = 0; r < numRows; ++r)
+		{
+			int i = r * rowLen + 1;
+			minX = std::min(minX, coordinates[i][0]);
+			maxX = std::max(maxX, coordinates[i][2]);
+		}
+		for (int r = 0; r < numRows; ++r)
+		{
+			int i = r * rowLen + 1;
+			double offset = ((maxX - minX) - (coordinates[i][2] - coordinates[i][0])) / 2;
+			coordinates[i][0] += offset;
+			coordinates[i][2] += offset;
+		}
+	}
+
 	// add coordinates of ambient occlusion view
-	coordinates[coordinates.size() - 1].push_back(ambientC == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][0]);
-	coordinates[coordinates.size() - 1].push_back(ambientR == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][1]);
+	coordinates[coordinates.size() - 1].push_back(0);
+	if (ambientC != 0)
+	{
+		for (int r = ambientR; r < numRows; ++r)
+		{
+			int i = r * rowLen + ambientC;
+			coordinates[coordinates.size() - 1][0] = std::max(coordinates[coordinates.size() - 1][0], coordinates[i][0]);
+		}
+	}
+	coordinates[coordinates.size() - 1].push_back(0);
+	if (ambientR != 0)
+	{
+		for (int c = ambientC; c < numCols; ++c)
+		{
+			int i = ambientR * rowLen + c;
+			coordinates[coordinates.size() - 1][1] = std::max(coordinates[coordinates.size() - 1][1], coordinates[i][1]);
+		}
+	}
+
+	//coordinates[coordinates.size() - 1].push_back(ambientC == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][0]);
+	//coordinates[coordinates.size() - 1].push_back(ambientR == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][1]);
 	coordinates[coordinates.size() - 1].push_back(secWidth);
 	coordinates[coordinates.size() - 1].push_back(secHeight);
 }
 
-double LayoutChoice::getTotalCoverage()
+double LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
 {
 	double sum = 0;
 	for (int i = 0; i < map.size(); ++i)
@@ -526,8 +565,24 @@ double LayoutChoice::getTotalCoverage()
 		}
 	}
 
-	// add ambient occlusion
-	sum += 0.55 * ((coordinates[map.size()][2] - coordinates[map.size()][0]) * (coordinates[map.size()][3] - coordinates[map.size()][1]));
+	// add ambient occlusion after accounting for fitting
+	double maxAWidth = coordinates[map.size()][2] - coordinates[map.size()][0];
+	double maxAHeight = coordinates[map.size()][3] - coordinates[map.size()][1];
+
+	double actRatio = ambientWidth / ambientHeight;
+
+	if (maxAWidth / maxAHeight < actRatio)
+	{
+		// height is too large; cap the height
+		maxAHeight = maxAWidth / actRatio;
+	}
+	else
+	{
+		// width is too large; cap the width
+		maxAWidth = maxAHeight * actRatio;
+	}
+	
+	sum += 1.8 * maxAWidth * maxAHeight;
 
 	return sum;
 }
@@ -584,6 +639,37 @@ std::vector<LayoutChoice> initLayouts()
 	return layouts;
 }
 
+LayoutChoice genLayout(double modelLength, double modelDepth, double modelHeight)
+{
+	double lengthHeight = modelLength / modelHeight;
+	double lengthDepth = modelLength / modelDepth;
+	double heightDepth = modelHeight / modelDepth;
+
+	// flat models
+	if (lengthHeight > 2 && heightDepth < 0.5)
+		return LayoutChoice("TFR\nbBL\n.AA\n", false);
+	if (lengthDepth > 2 && heightDepth > 2)
+		return LayoutChoice("TLB\nFRb\n.AA\n", false);
+	if (lengthDepth < 0.5 && lengthHeight < 0.5)
+		return LayoutChoice("TLB\nFRb\n.AA\n", false);
+
+	// tall models
+	if (lengthHeight < 0.5 && heightDepth > 2)
+		return LayoutChoice("BLTb\nFRAA\n", false);
+
+	// long models
+	if (lengthHeight > 2 && lengthDepth > 2)
+		return LayoutChoice("TLR\nFAA\nbAA\nBAA\n", false);
+	if (lengthDepth < 0.33 && heightDepth < 0.33)
+		return LayoutChoice("TbFR\n..BL\n..AA\n", false);
+	if (lengthDepth < 0.5 && heightDepth < 0.5)
+		return LayoutChoice("TFR\nbBL\n.AA\n", false);
+	
+
+	return LayoutChoice("TbA\nFRA\nBLA\n", true);
+
+}
+
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
 	// harvest model dimensions
@@ -593,13 +679,19 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
+	// get ambient occlusion image
+	//std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
+	//std::pair<int, int> ambientDims = img.getCroppedImageDims(render);
+
 	// find the layout to use
-	LayoutChoice bestLayout = selectLayout(width, height, modelLength, modelDepth, modelHeight);
+	//LayoutChoice bestLayout = selectLayout(width, height, modelLength, modelDepth, modelHeight, ambientDims);
+	LayoutChoice bestLayout = genLayout(modelLength, modelDepth, modelHeight);
+	bestLayout.initCoordinates(width, height, modelLength, modelDepth, modelHeight);
 
 	// SCALE: shrinking factor on images placed onto the IFPainter
 	double SCALE = 0.92;
 
-	// render all layour elements
+	// render all layout elements
 	for (int i = 0; i < bestLayout.getMapSize(); ++i)
 	{
 		char next = bestLayout.getMapChar(i);
@@ -673,15 +765,15 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	}
 
 	// render ambient occlusion view
-	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
 	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
+	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
 	std::string title = info.getInfo("title");
 	if (title.size() > 29)
 		title = title.substr(0, 27) + "...";
 	img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render, title);
 }
 
-LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight)
+LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
 {
 	std::vector<LayoutChoice> allLayouts = initLayouts();
 
@@ -693,7 +785,7 @@ LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, doubl
 	{
 		lc.initCoordinates(secWidth, secHeight, modelLength, modelDepth, modelHeight);
 
-		double score = lc.getTotalCoverage();
+		double score = lc.getTotalCoverage((double) ambientDims.first, (double) ambientDims.second);
 
 		if (score > bestScore)
 		{

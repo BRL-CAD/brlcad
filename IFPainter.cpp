@@ -35,6 +35,26 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 	resized_image.copyTo(destRoi);
 }
 
+std::pair<int, int> IFPainter::getCroppedImageDims(std::string imgPath)
+{
+	cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+	// Convert the image to grayscale for creating the mask
+	cv::Mat gray_image;
+	cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
+	// Create a mask of non-white pixels
+	cv::Mat mask = gray_image < 255;
+	// Find the bounding rectangle of non-white pixels
+	cv::Rect bounding_rect = boundingRect(mask);
+	// Crop the image to the bounding rectangle
+	cv::Mat lilImage = imageRaw(bounding_rect);
+
+
+	int imgWidth = lilImage.size().width;
+	int imgHeight = lilImage.size().height;
+
+	return std::pair(imgWidth, imgHeight);
+}
+
 void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
 {
 	cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
