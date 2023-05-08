@@ -97,7 +97,6 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
     }
 
     // std::cout << render << std::endl;
-    render = render + ">/dev/null 2>&1";
 
 
     if (opt.getOverrideImages() || std::remove(outputname.c_str()) != 0) {
