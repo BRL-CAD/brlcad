@@ -263,11 +263,6 @@ if (BRLCAD_ENABLE_QT)
 
   endif(NOT Qt6Widgets_FOUND AND BRLCAD_ENABLE_QT)
 
-  # There are a few source level incompatibilities between Qt6 and Qt5 - set
-  # configure flag so we know what we need to do.
-  if (Qt6Widgets_FOUND)
-    CONFIG_H_APPEND(BRLCAD "#define USE_QT6 1\n")
-  endif (Qt6Widgets_FOUND)
   if (Qt6Test_FOUND)
     CONFIG_H_APPEND(BRLCAD "#define USE_QTTEST 1\n")
   endif (Qt6Test_FOUND)

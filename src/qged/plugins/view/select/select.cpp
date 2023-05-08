@@ -23,6 +23,7 @@
 
 #include <QGroupBox>
 #include <QCheckBox>
+#include <QtGlobal>
 #include "qtcad/QToolPalette.h"
 #include "../../plugin.h"
 #include "./widget.h"

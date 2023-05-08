@@ -27,6 +27,7 @@
 #include <QTimer>
 #include <QEvent>
 #include <QMouseEvent>
+#include <QtGlobal>
 #include "app.h"
 #include "event_filter.h"
 #include "qtcad/QgModel.h"
@@ -72,10 +73,10 @@ bool QGEDFilter::eventFilter(QObject *, QEvent *e)
     if (!c || !c->w)
 	return false;
 
-#ifdef USE_QT6
-    QPoint gpos = m_e->globalPosition().toPoint();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QPoint gpos = m_e->globalPos();
+#else
+    QPoint gpos = m_e->globalPosition().toPoint();
 #endif
     int smode = c->w->InteractionMode(gpos);
     if (smode == -1)

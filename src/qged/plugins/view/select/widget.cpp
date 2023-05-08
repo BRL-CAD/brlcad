@@ -716,12 +716,12 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 
     if (e->type() == QEvent::MouseButtonPress) {
 	if (use_rect_select_button->isChecked()) {
-#ifdef USE_QT6
-	    px = m_e->position().x();
-	    py = m_e->position().y();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 	    px = m_e->x();
 	    py = m_e->y();
+#else
+	    px = m_e->position().x();
+	    py = m_e->position().y();
 #endif
 	    struct bv_interactive_rect_state *grsp = &gedp->ged_gvp->gv_s->gv_rect;
 	    grsp->line_width = 1;
@@ -741,12 +741,12 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
     }
 
     if (e->type() == QEvent::MouseMove && enabled && use_rect_select_button->isChecked()) {
-#ifdef USE_QT6
-	vx = m_e->position().x();
-	vy = m_e->position().y();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 	vx = m_e->x();
 	vy = m_e->y();
+#else
+	vx = m_e->position().x();
+	vy = m_e->position().y();
 #endif
 	struct bv_interactive_rect_state *grsp = &gedp->ged_gvp->gv_s->gv_rect;
 	grsp->draw = 1;
@@ -773,12 +773,12 @@ CADViewSelecter::eventFilter(QObject *, QEvent *e)
 	    return false;
 	}
 
-#ifdef USE_QT6
-	vx = m_e->position().x();
-	vy = m_e->position().y();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 	vx = m_e->x();
 	vy = m_e->y();
+#else
+	vx = m_e->position().x();
+	vy = m_e->position().y();
 #endif
 	int ix = (int)vx;
 	int iy = (int)vy;

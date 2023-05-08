@@ -24,6 +24,7 @@
 #include "common.h"
 #include <QMouseEvent>
 #include <QVBoxLayout>
+#include <QtGlobal>
 #include "../../../app.h"
 
 #include "bu/opt.h"
@@ -125,12 +126,12 @@ CADViewMeasure::get_point(QMouseEvent *m_e)
     struct bview *v = gedp->ged_gvp;
 
     fastf_t vx, vy;
-#ifdef USE_QT6
-    vx = m_e->position().x();
-    vy = m_e->position().y();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     vx = m_e->x();
     vy = m_e->y();
+#else
+    vx = m_e->position().x();
+    vy = m_e->position().y();
 #endif
     int x = (int)vx;
     int y = (int)vy;
