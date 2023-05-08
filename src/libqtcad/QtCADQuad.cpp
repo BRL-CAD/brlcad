@@ -380,7 +380,7 @@ QtCADQuad::get(const QPoint &gpos)
 	QtCADView *cv = views[i];
 	if (cv == nullptr)
 	    continue;
-	QWidget *cw = (QWidget *)retv;
+	QWidget *cw = (QWidget *)cv;
 	QRect br = cw->geometry();
 	QPoint lp = cw->mapFromGlobal(gpos);
 	if (br.contains(lp)) {
