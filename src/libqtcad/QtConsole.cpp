@@ -57,6 +57,7 @@
 #include <QPlainTextEdit>
 #include <QVBoxLayout>
 #include <QScrollBar>
+#include <QtGlobal>
 
 #include "bu.h"
 #include "ged.h"
@@ -538,7 +539,7 @@ QtConsole::QtConsole(QWidget* Parent) :
     Implementation(new pqImplementation(*this))
 {
     QVBoxLayout* const l = new QVBoxLayout(this);
-#ifndef USE_QT6
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     // TODO - figure out what to do for Qt6 here...
     l->setMargin(0);
 #endif

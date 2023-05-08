@@ -26,6 +26,7 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include <QRect>
+#include <QtGlobal>
 #include "qtcad/QgDockWidget.h"
 
 QgDockWidget::QgDockWidget(const QString &title, QWidget *parent)
@@ -64,10 +65,10 @@ QgDockWidget::event(QEvent *e)
 	moving = false;
 	return QDockWidget::event(e);
     }
-#ifdef USE_QT6
-    QPoint gpos = m_e->globalPosition().toPoint();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QPoint gpos = m_e->globalPos();
+#else
+    QPoint gpos = m_e->globalPosition().toPoint();
 #endif
     QRect trect = this->geometry();
     if (!trect.contains(gpos))

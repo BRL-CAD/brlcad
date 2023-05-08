@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include <QOpenGLWidget>
+#include <QtGlobal>
 
 extern "C" {
 #include "bu/malloc.h"
@@ -223,12 +224,12 @@ void QtGL::mousePressEvent(QMouseEvent *e) {
 	emit changed();
     }
 
-#ifdef USE_QT6
-    x_press_pos = e->position().x();
-    y_press_pos = e->position().y();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     x_press_pos = (double)e->x();
     y_press_pos = (double)e->y();
+#else
+    x_press_pos = e->position().x();
+    y_press_pos = e->position().y();
 #endif
     //bu_log("X,Y: %g, %g\n", x_press_pos, y_press_pos);
 
@@ -275,12 +276,12 @@ void QtGL::mouseMoveEvent(QMouseEvent *e)
     }
 
     // Current positions are the new previous positions
-#ifdef USE_QT6
-    x_prev = e->position().x();
-    y_prev = e->position().y();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     x_prev = e->x();
     y_prev = e->y();
+#else
+    x_prev = e->position().x();
+    y_prev = e->position().y();
 #endif
 
     QOpenGLWidget::mouseMoveEvent(e);

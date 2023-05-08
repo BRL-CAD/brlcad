@@ -150,7 +150,7 @@ QSize QFlowLayout::minimumSize() const
     foreach (item, itemList)
         size = size.expandedTo(item->minimumSize());
 
-#ifndef USE_QT6
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     // TODO - figure out the right Qt6 logic here...
     size += QSize(2*margin(), 2*margin());
 #endif

@@ -41,6 +41,7 @@
 #include "common.h"
 
 #include <QGridLayout>
+#include <QtGlobal>
 
 #include "bu/str.h"
 #include "bv.h"
@@ -395,10 +396,10 @@ QtCADQuad::get(QEvent *e)
     if (e->type() != QEvent::MouseButtonPress)
 	return NULL;
     QMouseEvent *m_e = (QMouseEvent *)e;
-#ifdef USE_QT6
-    QPoint gpos = m_e->globalPosition().toPoint();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QPoint gpos = m_e->globalPos();
+#else
+    QPoint gpos = m_e->globalPosition().toPoint();
 #endif
     return get(gpos);
 }

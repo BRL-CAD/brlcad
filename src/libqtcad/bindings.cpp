@@ -24,6 +24,7 @@
  */
 
 #include "common.h"
+#include <QtGlobal>
 
 extern "C" {
 #include "bn/str.h"
@@ -169,12 +170,12 @@ int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UN
     }
 
     double cx, cy;
-#ifdef USE_QT6
-    cx = e->position().x();
-    cy = e->position().y();
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     cx = (double)e->x();
     cy = (double)e->y();
+#else
+    cx = e->position().x();
+    cy = e->position().y();
 #endif
     if ((fabs(cx - x_press) > 10) || (fabs(cy - y_press) > 10))
 	return 0;
@@ -263,12 +264,12 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, i
     if (!e->buttons().testFlag(Qt::LeftButton))
 	return 0;
 
-#ifdef USE_QT6
-    int dx = e->position().x() - x_prev;
-    int dy = e->position().y() - y_prev;
-#else
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     int dx = e->x() - x_prev;
     int dy = e->y() - y_prev;
+#else
+    int dx = e->position().x() - x_prev;
+    int dy = e->position().y() - y_prev;
 #endif
 
     if (view_flags == BV_SCALE) {
