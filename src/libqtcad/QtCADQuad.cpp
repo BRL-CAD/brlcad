@@ -381,8 +381,9 @@ QtCADQuad::get(const QPoint &gpos)
 	if (cv == nullptr)
 	    continue;
 	QWidget *cw = (QWidget *)cv;
+	QWidget *pcw = (QWidget *)cw->parent();
 	QRect br = cw->geometry();
-	QPoint lp = cw->mapFromGlobal(gpos);
+	QPoint lp = pcw->mapFromGlobal(gpos);
 	int x0, y0, x1, y1;
 	br.getCoords(&x0, &y0, &x1, &y1);
 	int gx, gy, lx, ly;
