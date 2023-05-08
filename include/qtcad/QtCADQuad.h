@@ -64,6 +64,8 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 
 	void default_views(int); // Set the aet of the four quadrants to their standard defaults.  If 0 is supplied the upper right quadrant isn't altered, if 1 is supplied all are adjusted.
 	QtCADView *get(int quadrant_num = UPPER_RIGHT_QUADRANT);
+	QtCADView *get(const QPoint &p); // Test is global point coordinates correspond to one of the quad view
+	QtCADView *get(QEvent *e); // Given a MouseButtonPress QEvent, see if the point identifies a view
 	struct bview * view(int quadrant_id = UPPER_RIGHT_QUADRANT);
 
 	void select(int quadrant_num);

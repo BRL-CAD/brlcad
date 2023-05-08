@@ -371,6 +371,38 @@ QtCADQuad::get(int quadrantId)
     return currentView;
 }
 
+QtCADView *
+QtCADQuad::get(const QPoint &gpos)
+{
+    QtCADView *retv = NULL;
+    for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
+	if (views[i] == nullptr)
+	    continue;
+	retv = views[i];
+	QWidget *cw = (QWidget *)retv;
+	QRect br = cw->geometry();
+	QPoint lp = cw->mapFromGlobal(gpos);
+	if (br.contains(lp))
+	    break;
+    }
+
+    return retv;
+}
+
+QtCADView *
+QtCADQuad::get(QEvent *e)
+{
+    if (e->type() != QEvent::MouseButtonPress)
+	return NULL;
+    QMouseEvent *m_e = (QMouseEvent *)e;
+#ifdef USE_QT6
+    QPoint gpos = m_e->globalPosition().toPoint();
+#else
+    QPoint gpos = m_e->globalPos();
+#endif
+    return get(gpos);
+}
+
 void
 QtCADQuad::select(int quadrantId)
 {
