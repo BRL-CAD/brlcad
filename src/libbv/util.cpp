@@ -389,7 +389,7 @@ _bound_objs_view(int *is_empty, vect_t min, vect_t max, struct bu_ptbl *so, stru
                 continue;
         }
         if (bv_scene_obj_bound(s, v)) {
-            is_empty = 0;
+            (*is_empty) = 0;
             minus[X] = s->s_center[X] - s->s_size;
             minus[Y] = s->s_center[Y] - s->s_size;
             minus[Z] = s->s_center[Z] - s->s_size;
