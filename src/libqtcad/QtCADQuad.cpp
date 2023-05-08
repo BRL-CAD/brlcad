@@ -381,31 +381,13 @@ QtCADQuad::get(const QPoint &gpos)
 	if (cv == nullptr)
 	    continue;
 	QWidget *cw = (QWidget *)cv;
-	QWidget *pcw = (QWidget *)cw->parent();
 	QRect br = cw->geometry();
+	QWidget *pcw = (QWidget *)cw->parent();
 	QPoint lp = pcw->mapFromGlobal(gpos);
-	int x0, y0, x1, y1;
-	br.getCoords(&x0, &y0, &x1, &y1);
-	int gx, gy, lx, ly;
-	gx = gpos.x();
-	gy = gpos.y();
-	lx = lp.x();
-	ly = lp.y();
-	bu_log("wbox: (%d,%d) (%d,%d)\n", x0, y0, x1, y1);
-	bu_log("gpos: (%d,%d) lpos: (%d,%d)\n", gx, gy, lx, ly);
-
-	QPoint box1(x0, y0);
-	QPoint box2(x1, y1);
-
-	QPoint gbox1 = cw->mapToGlobal(box1);
-	QPoint gbox2 = cw->mapToGlobal(box2);
-	bu_log("gbox: (%d,%d) (%d,%d)\n", gbox1.x(), gbox1.y(), gbox2.x(), gbox2.y());
-
 	if (br.contains(lp)) {
 	    retv = cv;
 	    break;
 	}
-
     }
 
     return retv;
