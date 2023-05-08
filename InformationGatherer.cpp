@@ -328,7 +328,7 @@ bool InformationGatherer::gatherInformation(std::string name)
             double length = stod(token);
             double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
             std::stringstream ss2 = std::stringstream();
-            ss2 << std::setprecision(3) << length*convFactor;
+            ss2 << std::setprecision(5) << length*convFactor;
             infoMap[dim_data[dim_idx++]] = ss2.str();
         } catch (const std::exception& e){
             continue;
@@ -506,11 +506,6 @@ bool InformationGatherer::gatherInformation(std::string name)
 	std::string file = opt->getFilepath().substr(last+1, opt->getFilepath().length()-1);
 
 	infoMap.insert(std::pair < std::string, std::string>("file", file));
-
-	//Gather file extension
-	last = file.find_last_of(".");
-	std::string ext = file.substr(last, file.length() - 1);
-    infoMap["extension"] = ext;
 
 	//Gather date of generation
 	std::time_t now = time(0);
