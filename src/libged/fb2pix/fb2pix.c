@@ -109,7 +109,6 @@ ged_fb2pix_core(struct ged *gedp, int argc, const char *argv[])
     char usage[] = "Usage: fb-pix [-h -i -c] \n\
 	[-s squaresize] [-w width] [-n height] [file.pix]\n";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     if (!gedp->ged_gvp) {
