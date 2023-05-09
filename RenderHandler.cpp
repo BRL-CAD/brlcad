@@ -80,7 +80,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 				dimDetails[fdet.widthContributor] = std::pair(i, 1);
 				workingHeight -= DIM_ROW_SPACE;
 			}
-				
+
 		}
 	}
 
@@ -167,7 +167,8 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 	{
 		double ambientXOffset = 0;
 		double ambientYOffset = 0;
-		// ambient occlusion is in middle; search row/col to get dimensions
+		// ambient occlusion is in middle; search row/col to get top-left dimensions of ambient view
+		// this check is done to ensure that at least half of the section is for ambient occlusion
 		if (lockRows)
 		{
 			for (int i = 0; i < ambientR; ++i)
@@ -216,10 +217,11 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 				}
 			}
 		}
-		if (ambientXOffset > orthoWidth / 2)
-			workingWidth *= orthoWidth / 2 / ambientXOffset;
+		// if half of page is not used for ambient occlusion view, then adjust properly
 		if (ambientYOffset > orthoHeight / 2)
-			workingHeight *= 2 * orthoHeight / 2 / ambientYOffset;
+			workingHeight *= orthoHeight / 2 / ambientYOffset;
+		else if (ambientXOffset > orthoWidth / 2)
+			workingWidth *= orthoWidth / 2 / ambientXOffset;
 	}
 
 	// get aspect ratios
@@ -249,11 +251,11 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 	}
 
 	// calculating variables used for finding the actual coordinates
-	double offsetX = ambientC > 0 ? 0 : (workingWidth - actualOrthoWidth) / 2;
-	double offsetY = ambientR > 0 ? 0 : (workingHeight - actualOrthoHeight) / 2;
+	double offsetX = 0;
+	double offsetY = 0;
 	double widthConversionFactor = actualOrthoWidth / orthoWidth;
 	double heightConversionFactor = actualOrthoHeight / orthoHeight;
-	
+
 	// now, filling out the coordinates
 	if (lockRows)
 	{
@@ -286,10 +288,10 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 					// search for a neighbor that has a usable width (or use your own width, if valid)
 					if (faceDetails.find(map[i]) != faceDetails.end())
 						fdet = faceDetails[map[i]];
-					else if (r > 0 && faceDetails.find(map[i-rowLen]) != faceDetails.end())
-						fdet = faceDetails[map[i-rowLen]];
-					else if (r < numRows - 1 && faceDetails.find(map[i+rowLen]) != faceDetails.end())
-						fdet = faceDetails[map[i+rowLen]];
+					else if (r > 0 && faceDetails.find(map[i - rowLen]) != faceDetails.end())
+						fdet = faceDetails[map[i - rowLen]];
+					else if (r < numRows - 1 && faceDetails.find(map[i + rowLen]) != faceDetails.end())
+						fdet = faceDetails[map[i + rowLen]];
 					else
 					{
 						std::cerr << "FATAL: couldn't find a width to use for rendering!" << std::endl;
@@ -312,6 +314,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 
 				curX += curWidth;
 
+				// add extra padding for dimensions if one exists here
 				for (std::pair<int, int> dim : dimDetails)
 				{
 					if (dim.first % rowLen == c && dim.second == 0)
@@ -325,13 +328,14 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 			curX = offsetX;
 			curY += curHeight;
 
+			// add extra padding for dimensions if one exists here
 			for (std::pair<int, int> dim : dimDetails)
 			{
 				if (dim.first / rowLen == r && dim.second == 1)
 				{
 					curY += DIM_ROW_SPACE;
 					break;
-				}	
+				}
 			}
 		}
 	}
@@ -362,14 +366,14 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 					break;
 				default: // either ' ' or a rendering face
 					FaceDetails fdet;
-					
+
 					// search for a neighbor that has a usable height (or use your own height, if valid)
 					if (faceDetails.find(map[i]) != faceDetails.end())
 						fdet = faceDetails[map[i]];
 					else if (c > 0 && faceDetails.find(map[i - 1]) != faceDetails.end())
 						fdet = faceDetails[map[i - 1]];
 					else if (c < numCols - 1 && faceDetails.find(map[i + 1]) != faceDetails.end())
-						fdet = faceDetails[map[i+1]];
+						fdet = faceDetails[map[i + 1]];
 					else
 					{
 						std::cerr << "FATAL: couldn't find a height to use for rendering!" << std::endl;
@@ -416,11 +420,6 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 		}
 	}
 
-	coordinates[coordinates.size() - 1].push_back(ambientC == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][0]);
-	coordinates[coordinates.size() - 1].push_back(ambientR == 0 ? 0 : coordinates[ambientR * rowLen + ambientC][1]);
-	coordinates[coordinates.size() - 1].push_back(secWidth);
-	coordinates[coordinates.size() - 1].push_back(secHeight);
-
 	// iterate through all of the rows, shifting them over if necessary
 	for (int r = 0; r < numRows; ++r)
 	{
@@ -432,16 +431,31 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 				works = false;
 		}
 
-		if (! works || numCols <= 1)
+		if (!works || numCols <= 1)
 			continue;
 		double rowWidth = coordinates[r * rowLen + numCols - 1][2];
 		double extraSpace = (secWidth - rowWidth) / (numCols - 1);
 
-		// now, space out the row
-		for (int c = 1; c < numCols; ++c)
+		// if columns are locked, then space out the rest of the rows as well to ensure alignment
+		if (!lockRows)
 		{
-			coordinates[r * rowLen + c][0] += extraSpace * c;
-			coordinates[r * rowLen + c][2] += extraSpace * c;
+			for (int r2 = 0; r2 < numRows; ++r2)
+			{
+				for (int c = 1; c < numCols; ++c)
+				{
+					coordinates[r2 * rowLen + c][0] += extraSpace * c;
+					coordinates[r2 * rowLen + c][2] += extraSpace * c;
+				}
+			}
+		}
+		else
+		{
+			// otherwise, space out just this row
+			for (int c = 1; c < numCols; ++c)
+			{
+				coordinates[r * rowLen + c][0] += extraSpace * c;
+				coordinates[r * rowLen + c][2] += extraSpace * c;
+			}
 		}
 	}
 
@@ -458,41 +472,76 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 
 		if (!works || numRows <= 1)
 			continue;
-		double colHeight = coordinates[(numRows-1) * rowLen + c][3];
+		double colHeight = coordinates[(numRows - 1) * rowLen + c][3];
 		double extraSpace = (secHeight - colHeight) / (numRows - 1);
 
-		// now, space out the column
-		for (int r = 1; r < numRows; ++r)
+		
+		// if rows are locked, then space out the rest of the columns as well to ensure alignment
+		if (lockRows)
 		{
-			coordinates[r * rowLen + c][1] += extraSpace * r;
-			coordinates[r * rowLen + c][3] += extraSpace * r;
-		}
-	}
-}
-
-double LayoutChoice::getTotalCoverage()
-{
-	double sum = 0;
-	for (int i = 0; i < map.size(); ++i)
-	{
-		switch (map[i])
-		{
-		case ' ': case '\n': case '-': case '|': case '.': // items with no area
-			break;
-		default:
-			if (coordinates[i].empty())
+			for (int c2 = 0; c2 < numCols; ++c2)
 			{
-				std::cerr << "ISSUE: coordinates for an important map section not initialized!" << std::endl;
-				break;
+				// now, space out the column
+				for (int r = 1; r < numRows; ++r)
+				{
+					coordinates[r * rowLen + c2][1] += extraSpace * r;
+					coordinates[r * rowLen + c2][3] += extraSpace * r;
+				}
 			}
-			sum += (coordinates[i][2] - coordinates[i][0]) * (coordinates[i][3] - coordinates[i][1]);
+		}
+		else
+		{
+			// now, just space out this column
+			for (int r = 1; r < numRows; ++r)
+			{
+				coordinates[r * rowLen + c][1] += extraSpace * r;
+				coordinates[r * rowLen + c][3] += extraSpace * r;
+			}
 		}
 	}
 
-	// add ambient occlusion
-	sum += (coordinates[map.size()][2] - coordinates[map.size()][0])* (coordinates[map.size()][3] - coordinates[map.size()][1]);
+	// edge case: square models need extra alignment
+	if (this->map == "TbA\nFRA\nBLA\n")
+	{
+		double minX = secWidth, maxX = 0;
+		// iterate through the second column to align everything
+		for (int r = 0; r < numRows; ++r)
+		{
+			int i = r * rowLen + 1;
+			minX = std::min(minX, coordinates[i][0]);
+			maxX = std::max(maxX, coordinates[i][2]);
+		}
+		for (int r = 0; r < numRows; ++r)
+		{
+			int i = r * rowLen + 1;
+			double offset = ((maxX - minX) - (coordinates[i][2] - coordinates[i][0])) / 2;
+			coordinates[i][0] += offset;
+			coordinates[i][2] += offset;
+		}
+	}
 
-	return sum;
+	// add coordinates of ambient occlusion view
+	coordinates[coordinates.size() - 1].push_back(0);
+	if (ambientC != 0)
+	{
+		for (int r = ambientR; r < numRows; ++r)
+		{
+			int i = r * rowLen + ambientC;
+			coordinates[coordinates.size() - 1][0] = std::max(coordinates[coordinates.size() - 1][0], coordinates[i][0]);
+		}
+	}
+	coordinates[coordinates.size() - 1].push_back(0);
+	if (ambientR != 0)
+	{
+		for (int c = ambientC; c < numCols; ++c)
+		{
+			int i = ambientR * rowLen + c;
+			coordinates[coordinates.size() - 1][1] = std::max(coordinates[coordinates.size() - 1][1], coordinates[i][1]);
+		}
+	}
+
+	coordinates[coordinates.size() - 1].push_back(secWidth);
+	coordinates[coordinates.size() - 1].push_back(secHeight);
 }
 
 std::vector<int> LayoutChoice::getCoordinates(int mapIndex)
@@ -523,29 +572,64 @@ char LayoutChoice::getMapChar(int index)
 	return map[index];
 }
 
-std::vector<LayoutChoice> initLayouts()
+
+
+LayoutChoice genLayout(double modelLength, double modelDepth, double modelHeight)
 {
-	std::vector<LayoutChoice> layouts;
+	double lengthHeight = modelLength / modelHeight;
+	double lengthDepth = modelLength / modelDepth;
+	double heightDepth = modelHeight / modelDepth;
 
-	layouts.emplace_back("TBRL\nFbAA", false);
-	layouts.emplace_back("TFR\nbBL\n.AA\n", false);
-	layouts.emplace_back("TbFR\n..BL\n..AA\n", false);
+	// flat models
+	if (lengthHeight > 2 && heightDepth < 0.5)
+		return LayoutChoice("TFR\nbBL\n.AA\n", false);
+	if (lengthDepth > 2 && heightDepth > 2)
+		return LayoutChoice("TLB\nFRb\n.AA\n", false);
+	if (lengthDepth < 0.5 && lengthHeight < 0.5)
+		return LayoutChoice("TLB\nFRb\n.AA\n", false);
 
-	return layouts;
+	// tall models
+	if (lengthHeight < 0.5 && heightDepth > 2)
+		return LayoutChoice("BLTb\nFRAA\n", false);
+
+	// long models
+	if (lengthHeight > 2 && lengthDepth > 2)
+		return LayoutChoice("TLR\nFAA\nbAA\nBAA\n", false);
+	if (lengthDepth < 0.33 && heightDepth < 0.33)
+		return LayoutChoice("TbFR\n..BL\n..AA\n", false);
+	if (lengthDepth < 0.5 && heightDepth < 0.5)
+		return LayoutChoice("TFR\nbBL\n.AA\n", false);
+	
+
+	return LayoutChoice("TbA\nFRA\nBLA\n", true);
+
 }
 
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
 {
+	// harvest model dimensions
 	double modelDepth = std::stod(info.getInfo("dimX"));
-	double modelLength = std::stod(info.getInfo("dimY"));;
-	double modelHeight = std::stod(info.getInfo("dimZ"));;
+	double modelLength = std::stod(info.getInfo("dimY"));
+	double modelHeight = std::stod(info.getInfo("dimZ"));
 
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
-	LayoutChoice bestLayout = selectLayout(width, height, modelLength, modelDepth, modelHeight);
+
+	// DEPRECATED: old heuristic call
+	//std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
+	//std::pair<int, int> ambientDims = img.getCroppedImageDims(render);
+	//LayoutChoice bestLayout = selectLayout(width, height, modelLength, modelDepth, modelHeight, ambientDims);
+	// END DEPRECATED code
+
+
+	// select the layout
+	LayoutChoice bestLayout = genLayout(modelLength, modelDepth, modelHeight);
+	bestLayout.initCoordinates(width, height, modelLength, modelDepth, modelHeight);
+
+	// SCALE: shrinking factor on images placed onto the IFPainter
 	double SCALE = 0.92;
 
-	// render all layour elements
+	// render all layout elements
 	for (int i = 0; i < bestLayout.getMapSize(); ++i)
 	{
 		char next = bestLayout.getMapChar(i);
@@ -561,7 +645,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		default: // draw face
 			std::string render = renderPerspective(faceDetails[next].face, opt, info.largestComponents[0].name);
 
-			//double GAP_PIXELS = 80;
+			// find new coordinates using scaling factor
 			double oldW = coords[2] - coords[0];
 			double oldH = coords[3] - coords[1];
 			double newW = oldW * SCALE;
@@ -569,17 +653,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 			double newX = coords[0] + oldW / 2 - newW / 2;
 			double newY = coords[1] + oldH / 2 - newH / 2;
 
-			img.drawImageFitted((int) (offsetX + newX), (int) (offsetY + newY), (int) std::ceil(newW), (int) std::ceil(newH), render);
-			/*
-			if (next == '0')
-			{
-				img.drawLine(offsetX + newX + GAP_PIXELS / 8, offsetY + newY - GAP_PIXELS / 8, offsetX + newX + newW - GAP_PIXELS/8, offsetY + newY - GAP_PIXELS / 8, 2, cv::Scalar(160, 160, 160));
-				img.drawLine(offsetX + newX - GAP_PIXELS / 8, offsetY + newY + GAP_PIXELS / 8, offsetX + newX - GAP_PIXELS / 8, offsetY + newY + newH - GAP_PIXELS / 8, 2, cv::Scalar(160, 160, 160));
-			}
-			if (next == '1')
-			{
-				img.drawLine(offsetX + newX - GAP_PIXELS / 8, offsetY + newY + GAP_PIXELS / 8, offsetX + newX - GAP_PIXELS / 8, offsetY + newY + newH - GAP_PIXELS / 8, 2, cv::Scalar(160, 160, 160));
-			}*/
+			img.drawImageFitted((int)(offsetX + newX), (int)(offsetY + newY), (int)std::ceil(newW), (int)std::ceil(newH), render);
 			break;
 		}
 	}
@@ -600,41 +674,126 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		double offset = 30;
 		double textHeight = 40;
 
-		std::string me = "unknown";
-		if (i == 0) me = std::to_string(modelLength);
-		if (i == 1) me = std::to_string(modelDepth);
-		if (i == 2) me = std::to_string(modelHeight);
+		std::stringstream me;
+		if (i == 0) me << std::setprecision(5) << modelLength;
+		if (i == 1) me << std::setprecision(5) << modelDepth;
+		if (i == 2) me << std::setprecision(5) << modelHeight;
+
+		//Determine units
+		std::string unit;
+		if (opt.isDefaultLength()) {
+			unit = info.getInfo("units");
+		}
+		else {
+			unit = opt.getUnitLength();
+		}
+
+		me << " " << unit;
 
 		if (det.second == 0) // draw to the right
 		{
 			img.drawLine(newX + newW + offset, newY, newX + newW + offset, newY + newH, 5, cv::Scalar(160, 0, 0));
-			img.drawText(newX + newW + 3 * offset / 2, newY + newH / 2 - textHeight / 2, textHeight, 220, me, TO_BLUE);
+			img.drawText(newX + newW + 3 * offset / 2, newY + newH / 2 - textHeight / 2, textHeight, 220, me.str(), TO_BLUE);
 		}
 		else // draw below
 		{
 			img.drawLine(newX, newY + newH + offset, newX + newW, newY + newH + offset, 5, cv::Scalar(160, 0, 0));
-			img.drawTextCentered(newX + newW / 2, newY + newH + 3 * offset / 2, textHeight, 220, me, TO_BLUE);
+			img.drawTextCentered(newX + newW / 2, newY + newH + 3 * offset / 2, textHeight, 220, me.str(), TO_BLUE);
 		}
 	}
 
 	// render ambient occlusion view
-	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
 	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
-	img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render, info.getInfo("title"));
+	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
+	std::string title = info.getInfo("title");
+	if (title.size() > 29)
+		title = title.substr(0, 27) + "...";
+	img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render, title);
 }
 
-LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight)
+
+
+
+
+/* DEPRECATED: OLD VERSION OF HEURISTIC
+double LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
+{
+	double sum = 0;
+	for (int i = 0; i < map.size(); ++i)
+	{
+		switch (map[i])
+		{
+		case ' ': case '\n': case '-': case '|': case '.': // items with no area
+			break;
+		default:
+			if (coordinates[i].empty())
+			{
+				std::cerr << "ISSUE: coordinates for an important map section not initialized!" << std::endl;
+				break;
+			}
+			sum += (coordinates[i][2] - coordinates[i][0]) * (coordinates[i][3] - coordinates[i][1]);
+		}
+	}
+
+	// add ambient occlusion after accounting for fitting
+	double maxAWidth = coordinates[map.size()][2] - coordinates[map.size()][0];
+	double maxAHeight = coordinates[map.size()][3] - coordinates[map.size()][1];
+
+	double actRatio = ambientWidth / ambientHeight;
+
+	if (maxAWidth / maxAHeight < actRatio)
+	{
+		// height is too large; cap the height
+		maxAHeight = maxAWidth / actRatio;
+	}
+	else
+	{
+		// width is too large; cap the width
+		maxAWidth = maxAHeight * actRatio;
+	}
+
+	sum += 1.8 * maxAWidth * maxAHeight;
+
+	return sum;
+}
+
+std::vector<LayoutChoice> initLayouts()
+{
+	// create layout encodings
+	std::vector<LayoutChoice> layouts;
+
+	// extremely long or tall models
+	layouts.emplace_back("T.\nF.\nb.\nB.\nRA\nLA\n", true);
+	layouts.emplace_back("LFRBTb\n....AA\n", false);
+
+	// long models
+	layouts.emplace_back("TbFR\n..BL\n..AA\n", false);
+	layouts.emplace_back("TLR\nFAA\nbAA\nBAA\n", false);
+	layouts.emplace_back("BLA\nFRA\nTbA\n", true);
+
+	// flat models
+	layouts.emplace_back("TLBA\nFRbA", false);
+	layouts.emplace_back("TFR\nbBL\n.AA\n", false);
+
+	// tall models
+	layouts.emplace_back("BLTb\nFRAA\n", false);
+
+	return layouts;
+}
+
+LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
 {
 	std::vector<LayoutChoice> allLayouts = initLayouts();
 
 	double bestScore = -1;
 	LayoutChoice* bestLayout = NULL;
 
+	// iterate through every layout, selecting the one that covers the most whitespace.
 	for (LayoutChoice& lc : allLayouts)
 	{
 		lc.initCoordinates(secWidth, secHeight, modelLength, modelDepth, modelHeight);
 
-		double score = lc.getTotalCoverage();
+		double score = lc.getTotalCoverage((double) ambientDims.first, (double) ambientDims.second);
 
 		if (score > bestScore)
 		{
@@ -651,3 +810,4 @@ LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, doubl
 
 	return *bestLayout;
 }
+*/

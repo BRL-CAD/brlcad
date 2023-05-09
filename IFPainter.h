@@ -52,5 +52,7 @@ public:
 	void openInGUI();
 	void exportToFile(std::string filePath);
 
+	// DEPRECATED: OLD VERSION OF HEURISTIC
+	// std::pair<int, int> getCroppedImageDims(std::string imgPath);
 };
 

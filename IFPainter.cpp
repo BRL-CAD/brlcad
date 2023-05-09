@@ -299,8 +299,8 @@ void IFPainter::justify(int x, int y, int height, int width, std::vector<std::st
 
 void IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
 {
-	int confidentialWidth = getTextWidth(height, width, centerWord, flags);
-	drawTextCentered(width / 2, y, height, width, centerWord, flags);
+	int confidentialWidth = getTextWidth(height, width, centerWord, flags | TO_BOLD);
+	drawTextCentered(width / 2, y, height, width, centerWord, flags | TO_BOLD);
 	int totalLeftWidth = 0;
 	for (size_t i = 0; i < leftText.size(); i++) {
 		totalLeftWidth += getTextWidth(height, width, leftText[i], flags);
@@ -442,3 +442,27 @@ void IFPainter::exportToFile(std::string filePath)
 {
 	cv::imwrite(filePath, this->img);
 }
+
+
+
+/* DEPRECATED: OLD VERSION OF HEURISTIC
+std::pair<int, int> IFPainter::getCroppedImageDims(std::string imgPath)
+{
+	cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+	// Convert the image to grayscale for creating the mask
+	cv::Mat gray_image;
+	cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
+	// Create a mask of non-white pixels
+	cv::Mat mask = gray_image < 255;
+	// Find the bounding rectangle of non-white pixels
+	cv::Rect bounding_rect = boundingRect(mask);
+	// Crop the image to the bounding rectangle
+	cv::Mat lilImage = imageRaw(bounding_rect);
+
+
+	int imgWidth = lilImage.size().width;
+	int imgHeight = lilImage.size().height;
+
+	return std::pair(imgWidth, imgHeight);
+}
+*/

@@ -19,6 +19,10 @@ Options::Options()
 	rightLeft = "Right hand";
 	zY = "+Z-up";
 	notes = "N/A";
+	uLength = "m";
+	defaultLength = true;
+	uMass = "g";
+	defaultMass = true;
 }
 
 Options::~Options()
@@ -92,8 +96,18 @@ void Options::setNotes(std::string n) {
 	notes = n;
 }
 
+
 void Options::setTopComp(std::string t) {
 	topComp = t;
+}
+void Options::setUnitLength(std::string l) {
+	uLength = l;
+	defaultLength = false;
+}
+
+void Options::setUnitMass(std::string m) {
+	uMass = m;
+	defaultMass = false;
 }
 
 std::string Options::getFilepath() {
@@ -160,6 +174,22 @@ std::string Options::getNotes() {
 	return notes;
 }
 
+
 std::string Options::getTopComp() {
 	return topComp;
+
+std::string Options::getUnitLength() {
+	return uLength;
+}
+
+std::string Options::getUnitMass() {
+	return uMass;
+}
+
+bool Options::isDefaultLength() {
+	return defaultLength;
+}
+
+bool Options::isDefaultMass() {
+	return defaultMass;
 }
