@@ -51,20 +51,23 @@ public:
 	int getMapSize();
 	char getMapChar(int index);
 
-	// DEPRECATED: OLD VERSION OF HEURISTIC
-	// double getTotalCoverage(double ambientWidth, double ambientHeight);
+	double getTotalCoverage(double ambientWidth, double ambientHeight);
 };
 
 // calls selectLayout to find the most effective layout, then paints it onto the designated area.
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt);
 
-// the currently used method which manually picks layouts based on model dimensions
-LayoutChoice genLayout(double modelLength, double modelDepth, double modelHeight);
+// generate a list of layouts
+std::vector<LayoutChoice> initLayouts();
 
-
-// DEPRECATED: OLD VERSION OF HEURISTIC
-// generate the list of layouts
-//std::vector<LayoutChoice> initLayouts();
 // uses a simple heuristic to determine which layout is the best for the object.
-//LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims);
+LayoutChoice selectLayoutFromHeuristic(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims);
+
+// the currently used method which manually picks layouts based on model dimension ratios
+// if a fit isn't found (i.e. awkward dimensions), then the heuristic is called to find the best model that
+LayoutChoice genLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims);
+
+
+
+
 
