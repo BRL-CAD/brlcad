@@ -33,7 +33,12 @@ void getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::s
         result = result.substr(result.find("Total Exposed Area"));
         result = result.substr(0, result.find("square") - 1);
         result = result.substr(result.find("=") + 1);
-        surfArea += stod(result);
+        try {
+            surfArea += stod(result);
+        } catch (const std::invalid_argument& ia) {
+            std::cerr << "Invalid argument for surface area: " << result << " " << ia.what() << '\n';
+            bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
+        }
     }
 }
 
@@ -98,7 +103,12 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
         result = result.substr(result.find("Average total volume:") + 22);
         result = result.substr(0, result.find("cu") - 1);
         if (result.find("inf") == std::string::npos) {
-            volume += stod(result);
+            try {
+                volume += stod(result);
+            } catch (const std::invalid_argument& ia) {
+                std::cerr << "Invalid argument for volume: " << result << " " << ia.what() << '\n';
+                bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
+            }
         }
         //Get mass of region
         command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\"," + mUnit + " " + opt->getFilepath() + " " + val + " 2>&1";
@@ -120,14 +130,20 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
             result = result.substr(result.find("Average total weight:") + 22);
             result = result.substr(0, result.find(" "));
             //Mass cannot be negative or infinite
-            if (result.find("inf") == std::string::npos) {
-                if (result[0] == '-') {
-                    result = result.substr(1);
-                    mass += stod(result);
+
+            try {
+                if (result.find("inf") == std::string::npos) {
+                    if (result[0] == '-') {
+                        result = result.substr(1);
+                        mass += stod(result);
+                    }
+                    else {
+                        mass += stod(result);
+                    }
                 }
-                else {
-                    mass += stod(result);
-                }
+            } catch (const std::invalid_argument& ia) {
+                std::cerr << "Invalid argument for mass: " << result << " " << ia.what() << '\n';
+                bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
             }
         }
     }
@@ -168,7 +184,16 @@ int InformationGatherer::getNumEntities(std::string component) {
 
 void InformationGatherer::getMainComp() {
     if (opt->getTopComp() != "") {
-        std::cout << opt->getTopComp() << std::endl;
+        std::cout << "User input top: " << opt->getTopComp() << std::endl;
+        // check if main comp exists
+        const char* cmd[3] = { "l", opt->getTopComp().c_str(), NULL };
+        ged_exec(g, 2, cmd);
+        std::string res = bu_vls_addr(g->ged_result_str);
+        if (res.size() == 0) {
+            std::cerr << "Could not find component: " << opt->getTopComp() << std::endl;
+            bu_exit(BRLCAD_ERROR, "aborting.\n");
+        }
+
         int entities = getNumEntities(opt->getTopComp());
         double volume = getVolume(opt->getTopComp());
         largestComponents.push_back({entities, volume, opt->getTopComp()});
@@ -237,8 +262,14 @@ void InformationGatherer::getSubComp() {
     // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
     std::string pathToOutput = "output/sub_comp.txt";
     std::string retrieveSub = opt->getTemppath() + "mged -c " + opt->getFilepath() + " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" > " + pathToOutput;
-    // std::cout << retrieveSub << std::endl;
     system(retrieveSub.c_str());
+
+    if (!bu_file_exists(pathToOutput.c_str(), NULL)) {
+        bu_log("ERROR: %s doesn't exist\n", pathToOutput.c_str()); 
+        bu_log("Make sure to create output directory at the same level as main.cpp!\n"); 
+        bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
+    }
+
     std::fstream scFile(pathToOutput);
     if (!scFile.is_open()) {
         std::cerr << "failed to open file\n";
@@ -345,7 +376,7 @@ bool InformationGatherer::gatherInformation(std::string name)
     std::cout << "Largest Components\n";
 
     for (ComponentData x : largestComponents) {
-        // std::cout << x.name << " " << x.numEntities << " " << x.volume << std::endl;
+        std::cout << x.name << " " << x.numEntities << " " << x.volume << std::endl;
     }
 
     // Gather dimensions

@@ -47,7 +47,7 @@ bool readParameters(int argc, char** argv, Options &opt)
 
 
 
-    while ((opts = bu_getopt(argc, argv, "g?OoZp:F:P:f:n:T:E:N:l:m:c:t:")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "g?Oop:F:P:f:n:T:E:N:l:m:c:t:Z:")) != -1) {
 
         switch (opts) {
             case 'p':
@@ -96,6 +96,7 @@ bool readParameters(int argc, char** argv, Options &opt)
             case 't':
                 opt.setTopComp(bu_optarg);
                 std::cout << "Top component: " << opt.getTopComp() << std::endl;
+                break;
             case 'l':
                 opt.setUnitLength(bu_optarg);
                 break;
@@ -137,6 +138,15 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
         bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
         return false;
+    } else if (!bu_file_exists(opt.getFilepath().c_str(), NULL)) {
+        bu_log("ERROR: %s doesn't exist\n", opt.getFilepath().c_str()); 
+        bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
+    } else if (bu_file_exists(opt.getFileName().c_str(), NULL)) {
+        std::cout << "File already exists: " << opt.getFileName() << std::endl;
+        std::cout << "Overwrite? (y/n): ";
+        char token; std::cin >> token;
+        if (token != 'y' && token != 'Y') 
+            return false;
     }
 
     return true;

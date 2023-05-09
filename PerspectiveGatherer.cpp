@@ -109,6 +109,11 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
         std::cerr << e.what() << std::endl;
     }
 
+    if (!bu_file_exists(outputname.c_str(), NULL)) {
+        bu_log("ERROR: %s doesn't exist\n", outputname.c_str()); 
+        bu_log("Rendering not generated"); 
+        bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
+    }
     std::cout << "Successfully generated perspective rendering png file\n";
 
 	return outputname;
