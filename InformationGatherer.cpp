@@ -243,7 +243,7 @@ void InformationGatherer::getSubComp() {
     if (!scFile.is_open()) {
         std::cerr << "failed to open file\n";
         return;
-    }
+    } 
 
     std::string comp;
     int numEntities = 0;
@@ -257,7 +257,7 @@ void InformationGatherer::getSubComp() {
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());
     largestComponents.insert(largestComponents.end(), subComps.begin(), subComps.end());
-    scFile.close();
+    scFile.close(); 
 }
 
 
@@ -273,6 +273,12 @@ InformationGatherer::~InformationGatherer()
 
 bool InformationGatherer::gatherInformation(std::string name)
 {
+    //Create folder output if needed
+    std::string path = std::filesystem::current_path().string() + "\\output";
+    std::cout << path << std::endl;
+    if (!std::filesystem::exists(std::filesystem::path(path))) {
+        std::filesystem::create_directory("output");
+    }
 
 	//Open database
     std::string filePath = opt->getFilepath();
