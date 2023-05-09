@@ -37,7 +37,7 @@ void getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::s
     }
 }
 
-void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, double &surfArea, std::string lUnit, std::string mUnit) {
+void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit) {
     //Get tops
     const char* cmd[3] = { "tops", NULL, NULL };
     ged_exec(g, 1, cmd);
@@ -47,9 +47,9 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
     std::vector<std::string> toVisit;
     while (ss >> val) {
         //Get surface area
-        getSurfaceArea(opt, map, "0", "0", val, surfArea, lUnit);
-        getSurfaceArea(opt, map, "90", "0", val, surfArea, lUnit);
-        getSurfaceArea(opt, map, "0", "90", val, surfArea, lUnit);
+        getSurfaceArea(opt, map, "0", "0", val, surfArea00, lUnit);
+        getSurfaceArea(opt, map, "90", "0", val, surfArea090, lUnit);
+        getSurfaceArea(opt, map, "0", "90", val, surfArea900, lUnit);
         //Next, get regions underneath to calculate volume and mass
         const char* cmd[3] = { "l", val.c_str(), NULL };
         ged_exec(g, 2, cmd);
@@ -401,19 +401,29 @@ bool InformationGatherer::gatherInformation(std::string name)
     //Gather volume and mass
     double volume = 0;
     double mass = 0;
-    double surfArea = 0;
-    getVerificationData(g, opt, infoMap, volume, mass, surfArea, lUnit, mUnit);
+    double surfArea00 = 0;
+    double surfArea090 = 0;
+    double surfArea900 = 0;
+    getVerificationData(g, opt, infoMap, volume, mass, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
     ss = std::stringstream();
     ss << std::setprecision(5) << volume;
     std::string vol = ss.str();
     ss = std::stringstream();
-    ss << std::setprecision(5) << surfArea;
-    std::string surf = ss.str();
-    ss = std::stringstream();
     ss << std::setprecision(5) << mass;
     std::string ma = ss.str();
+    ss = std::stringstream();
+    ss << std::setprecision(5) << surfArea00;
+    std::string surf00 = ss.str();
+    ss = std::stringstream();
+    ss << std::setprecision(5) << surfArea090;
+    std::string surf090 = ss.str();
+    ss = std::stringstream();
+    ss << std::setprecision(5) << surfArea900;
+    std::string surf900 = ss.str();
     infoMap.insert(std::pair<std::string, std::string>("volume", vol + " " + lUnit + "^3"));
-    infoMap.insert(std::pair<std::string, std::string>("surfaceArea", surf + " " + lUnit + "^2"));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea00", surf00 + " " + lUnit + "^2"));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090 + " " + lUnit + "^2"));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea900", surf900 + " " + lUnit + "^2"));
     if (mass == 0) {
         infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
     }
