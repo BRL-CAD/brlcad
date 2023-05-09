@@ -276,6 +276,8 @@ void IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::s
     }
 }
 
+/*This function will evenly space out all of the texts in the header and footer. The algorithm is to get the total lenght of all of the words combined and then the spacing is the total 
+length divided by how many words there are*/
 void IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
 {
 	int totalTextWidth = 0;
@@ -296,7 +298,8 @@ void IFPainter::justify(int x, int y, int height, int width, std::vector<std::st
 		xPosition += spacing + getTextWidth(height, width, text[i], flags);
 	}
 }
-
+/*This is justification with a word being centered right in the middle. This is tricky now since the spacing is not going to be super straightforward. Essentially I split the section
+into 2 and I used the same justify algorithm for the left and right side. Which ever side had the smallest spacing is the spacing I will choose for between the words.*/
 void IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
 {
 	int confidentialWidth = getTextWidth(height, width, centerWord, flags | TO_BOLD);
@@ -340,6 +343,7 @@ void IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::
 	}
 }
 
+//This is a text wrapping function. If a text goes beyond the set x or y, it will wrap around to the next line. It also has ellipsis fucntion.
 void IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags)
 {
 	if (ellipsis == TO_ELLIPSIS) {
