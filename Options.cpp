@@ -96,6 +96,10 @@ void Options::setNotes(std::string n) {
 	notes = n;
 }
 
+
+void Options::setTopComp(std::string t) {
+	topComp = t;
+}
 void Options::setUnitLength(std::string l) {
 	uLength = l;
 	defaultLength = false;
@@ -169,6 +173,10 @@ std::string Options::getOrientationZYUp() {
 std::string Options::getNotes() {
 	return notes;
 }
+
+
+std::string Options::getTopComp() {
+	return topComp;
 
 std::string Options::getUnitLength() {
 	return uLength;
