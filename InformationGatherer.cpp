@@ -48,8 +48,8 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
     while (ss >> val) {
         //Get surface area
         getSurfaceArea(opt, map, "0", "0", val, surfArea00, lUnit);
-        getSurfaceArea(opt, map, "90", "0", val, surfArea090, lUnit);
-        getSurfaceArea(opt, map, "0", "90", val, surfArea900, lUnit);
+        getSurfaceArea(opt, map, "0", "90", val, surfArea090, lUnit);
+        getSurfaceArea(opt, map, "90", "0", val, surfArea900, lUnit);
         //Next, get regions underneath to calculate volume and mass
         const char* cmd[3] = { "l", val.c_str(), NULL };
         ged_exec(g, 2, cmd);
