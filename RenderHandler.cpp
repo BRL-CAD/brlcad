@@ -562,6 +562,47 @@ std::vector<int> LayoutChoice::getCoordinates(int mapIndex)
 	return output;
 }
 
+double LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
+{
+	double sum = 0;
+	for (int i = 0; i < map.size(); ++i)
+	{
+		switch (map[i])
+		{
+		case ' ': case '\n': case '-': case '|': case '.': // items with no area
+			break;
+		default:
+			if (coordinates[i].empty())
+			{
+				std::cerr << "ISSUE: coordinates for an important map section not initialized!" << std::endl;
+				break;
+			}
+			sum += (coordinates[i][2] - coordinates[i][0]) * (coordinates[i][3] - coordinates[i][1]);
+		}
+	}
+
+	// add ambient occlusion after accounting for fitting
+	double maxAWidth = coordinates[map.size()][2] - coordinates[map.size()][0];
+	double maxAHeight = coordinates[map.size()][3] - coordinates[map.size()][1];
+
+	double actRatio = ambientWidth / ambientHeight;
+
+	if (maxAWidth / maxAHeight < actRatio)
+	{
+		// height is too large; cap the height
+		maxAHeight = maxAWidth / actRatio;
+	}
+	else
+	{
+		// width is too large; cap the width
+		maxAWidth = maxAHeight * actRatio;
+	}
+
+	sum += 0.6 * maxAWidth * maxAHeight;
+
+	return sum;
+}
+
 int LayoutChoice::getMapSize()
 {
 	return map.size();
@@ -574,7 +615,65 @@ char LayoutChoice::getMapChar(int index)
 
 
 
-LayoutChoice genLayout(double modelLength, double modelDepth, double modelHeight)
+
+std::vector<LayoutChoice> initLayouts()
+{
+	// create layout encodings
+	std::vector<LayoutChoice> layouts;
+
+	// extremely long or tall models
+	layouts.emplace_back("T.\nF.\nb.\nB.\nRA\nLA\n", true);
+	layouts.emplace_back("LFRBTb\n....AA\n", false);
+
+	// long models
+	layouts.emplace_back("TLR\nFAA\nbAA\nBAA\n", false);
+	layouts.emplace_back("TbFR\n..BL\n..AA\n", false);
+	layouts.emplace_back("TFR\nbBL\n.AA\n", false);
+
+	// flat models
+	layouts.emplace_back("TFR\nbBL\n.AA\n", false);
+	layouts.emplace_back("TLB\nFRb\n.AA\n", false);
+
+	// tall models
+	layouts.emplace_back("BLTb\nFRAA\n", false);
+
+	// square models
+	layouts.emplace_back("TbA\nFRA\nBLA\n", true);
+
+	return layouts;
+}
+
+LayoutChoice selectLayoutFromHeuristic(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
+{
+	std::vector<LayoutChoice> allLayouts = initLayouts();
+
+	double bestScore = -1;
+	LayoutChoice* bestLayout = NULL;
+
+	// iterate through every layout, selecting the one that covers the most whitespace.
+	for (LayoutChoice& lc : allLayouts)
+	{
+		lc.initCoordinates(secWidth, secHeight, modelLength, modelDepth, modelHeight);
+
+		double score = lc.getTotalCoverage((double)ambientDims.first, (double)ambientDims.second);
+
+		if (score > bestScore)
+		{
+			bestScore = score;
+			bestLayout = &lc;
+		}
+	}
+
+	if (bestLayout == NULL)
+	{
+		std::cerr << "ISSUE: no layouts found.  This is a major problem!  In selectLayout() in RenderHandler.cpp" << std::endl;
+		return LayoutChoice("", true);
+	}
+
+	return *bestLayout;
+}
+
+LayoutChoice genLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
 {
 	double lengthHeight = modelLength / modelHeight;
 	double lengthDepth = modelLength / modelDepth;
@@ -599,10 +698,12 @@ LayoutChoice genLayout(double modelLength, double modelDepth, double modelHeight
 		return LayoutChoice("TbFR\n..BL\n..AA\n", false);
 	if (lengthDepth < 0.5 && heightDepth < 0.5)
 		return LayoutChoice("TFR\nbBL\n.AA\n", false);
-	
 
-	return LayoutChoice("TbA\nFRA\nBLA\n", true);
+	// cube models
+	if (lengthDepth < 1.5 && lengthDepth > 0.667 && heightDepth < 1.5 && heightDepth > 0.667 && lengthHeight < 1.5 && lengthHeight > 0.667)
+		return LayoutChoice("TbA\nFRA\nBLA\n", true);
 
+	return selectLayoutFromHeuristic(secWidth, secHeight, modelLength, modelDepth, modelHeight, ambientDims);
 }
 
 void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
@@ -614,16 +715,12 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 	std::map<char, FaceDetails> faceDetails = getFaceDetails();
 
-
-	// DEPRECATED: old heuristic call
-	//std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
-	//std::pair<int, int> ambientDims = img.getCroppedImageDims(render);
-	//LayoutChoice bestLayout = selectLayout(width, height, modelLength, modelDepth, modelHeight, ambientDims);
-	// END DEPRECATED code
-
+	// get ambient occlusion render
+	std::string aRender = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
+	std::pair<int, int> ambientDims = img.getCroppedImageDims(aRender);
 
 	// select the layout
-	LayoutChoice bestLayout = genLayout(modelLength, modelDepth, modelHeight);
+	LayoutChoice bestLayout = genLayout(width, height, modelLength, modelDepth, modelHeight, ambientDims);
 	bestLayout.initCoordinates(width, height, modelLength, modelDepth, modelHeight);
 
 	// SCALE: shrinking factor on images placed onto the IFPainter
@@ -708,106 +805,11 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	std::string title = info.getInfo("title");
 	if (title.size() > 29)
 		title = title.substr(0, 27) + "...";
-	img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], render, title);
+	img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
 }
 
 
 
 
 
-/* DEPRECATED: OLD VERSION OF HEURISTIC
-double LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
-{
-	double sum = 0;
-	for (int i = 0; i < map.size(); ++i)
-	{
-		switch (map[i])
-		{
-		case ' ': case '\n': case '-': case '|': case '.': // items with no area
-			break;
-		default:
-			if (coordinates[i].empty())
-			{
-				std::cerr << "ISSUE: coordinates for an important map section not initialized!" << std::endl;
-				break;
-			}
-			sum += (coordinates[i][2] - coordinates[i][0]) * (coordinates[i][3] - coordinates[i][1]);
-		}
-	}
 
-	// add ambient occlusion after accounting for fitting
-	double maxAWidth = coordinates[map.size()][2] - coordinates[map.size()][0];
-	double maxAHeight = coordinates[map.size()][3] - coordinates[map.size()][1];
-
-	double actRatio = ambientWidth / ambientHeight;
-
-	if (maxAWidth / maxAHeight < actRatio)
-	{
-		// height is too large; cap the height
-		maxAHeight = maxAWidth / actRatio;
-	}
-	else
-	{
-		// width is too large; cap the width
-		maxAWidth = maxAHeight * actRatio;
-	}
-
-	sum += 1.8 * maxAWidth * maxAHeight;
-
-	return sum;
-}
-
-std::vector<LayoutChoice> initLayouts()
-{
-	// create layout encodings
-	std::vector<LayoutChoice> layouts;
-
-	// extremely long or tall models
-	layouts.emplace_back("T.\nF.\nb.\nB.\nRA\nLA\n", true);
-	layouts.emplace_back("LFRBTb\n....AA\n", false);
-
-	// long models
-	layouts.emplace_back("TbFR\n..BL\n..AA\n", false);
-	layouts.emplace_back("TLR\nFAA\nbAA\nBAA\n", false);
-	layouts.emplace_back("BLA\nFRA\nTbA\n", true);
-
-	// flat models
-	layouts.emplace_back("TLBA\nFRbA", false);
-	layouts.emplace_back("TFR\nbBL\n.AA\n", false);
-
-	// tall models
-	layouts.emplace_back("BLTb\nFRAA\n", false);
-
-	return layouts;
-}
-
-LayoutChoice selectLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims)
-{
-	std::vector<LayoutChoice> allLayouts = initLayouts();
-
-	double bestScore = -1;
-	LayoutChoice* bestLayout = NULL;
-
-	// iterate through every layout, selecting the one that covers the most whitespace.
-	for (LayoutChoice& lc : allLayouts)
-	{
-		lc.initCoordinates(secWidth, secHeight, modelLength, modelDepth, modelHeight);
-
-		double score = lc.getTotalCoverage((double) ambientDims.first, (double) ambientDims.second);
-
-		if (score > bestScore)
-		{
-			bestScore = score;
-			bestLayout = &lc;
-		}
-	}
-
-	if (bestLayout == NULL)
-	{
-		std::cerr << "ISSUE: no layouts found.  This is a major problem!  In selectLayout() in RenderHandler.cpp" << std::endl;
-		return LayoutChoice("", true);
-	}
-
-	return *bestLayout;
-}
-*/
