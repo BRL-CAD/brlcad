@@ -26,11 +26,28 @@ class Options;
  * Depending on the value of "lockRows", either a row-major (true) or column-major (false) ordering
  * will be followed when placing the images.
  * 
+ * Each orthogonal face is encoded as a character.  Each row is terminated by a '\n'.
+ * The mapping is as follows: F: front, T: top, R: right, L: left, B: back, b: bottom, A: ambient occlusion
+ * Empty space is encoded as a '.', where nothing should be placed.
+ * 
  * When lockRows is true, all images on the same row MUST have the same height.
  * When lockRows is false, all images on the same column MUST have the same width.
  * 
+ * Here's an example of how LayoutChoice("TbFR\n..BL\n..AA\n", false) will be represented:
+ * 
+ *  ---------------    The diagram to the left shows the grid layout for the above layout.  Since "lockRows" is false,
+ * | T | b | F | R |   a column-major ordering is used.  The top, bottom, front, and right views will be placed first
+ * |---|---|---|---|   at the top of the page.  Then, the back view will be placed immediately below the front view,
+ * |   |   | B | L |   with the same width as the front view.  A similar process is followed for the left view (placed
+ * |---|---|-------|   below the right view).  Finally, the ambient view is placed just below the back and left views.
+ * |   |   |  Amb  |   The ambient view will not protrude any space that is not marked as "A".  The layout to the left
+ *  ---------------    is therefore useful for models where the top/bottom images are tall whilst the other views aren't.
+ * 
  * The initCoordinates() "initializes" the layout, properly setting the coordinates of each image depending on the
  * model bounding box, maintaining both proportionality and maximum space usage.
+ * 
+ * The getTotalCoverage() returns a determined value proportional to the amount of whitespace used.  Generally, the higher
+ * this value, the better match this layout is for a model.
 */
 struct LayoutChoice
 {
