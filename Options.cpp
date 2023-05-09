@@ -177,6 +177,7 @@ std::string Options::getNotes() {
 
 std::string Options::getTopComp() {
 	return topComp;
+}
 
 std::string Options::getUnitLength() {
 	return uLength;
