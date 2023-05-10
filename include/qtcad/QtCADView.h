@@ -111,7 +111,11 @@ class QTCAD_EXPORT QPolyFilter : public QObject
     Q_OBJECT
 
     public:
-	bg_clip_t op = bg_None;
+	// Initialization common to the various polygon filter types
+	QMouseEvent *view_sync(QEvent *e);
+
+	bool close_polygon();
+
 	QtCADView *cv = NULL;
 	struct bv_scene_obj *p = NULL;
 	int ptype = BV_POLYGON_CIRCLE;
@@ -133,6 +137,9 @@ class QTCAD_EXPORT QPolyCreateFilter : public QPolyFilter
 	bool eventFilter(QObject *, QEvent *e);
 	void finalize(bool);
 
+	bg_clip_t op = bg_None;
+	struct bu_ptbl bool_objs = BU_PTBL_INIT_ZERO;
+
     signals:
         void view_updated(int);
         void finalized();
@@ -144,6 +151,13 @@ class QTCAD_EXPORT QPolyUpdateFilter : public QPolyFilter
 
     public:
 	bool eventFilter(QObject *, QEvent *e);
+
+	bg_clip_t op = bg_None;
+	struct bu_ptbl bool_objs = BU_PTBL_INIT_ZERO;
+
+    signals:
+        void view_updated(int);
+        void finalized();
 };
 
 class QTCAD_EXPORT QPolySelectFilter : public QPolyFilter

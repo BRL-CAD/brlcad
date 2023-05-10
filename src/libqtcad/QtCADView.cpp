@@ -416,18 +416,18 @@ QtCADView::do_init_done()
     emit init_done();
 }
 
-bool
-QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
+QMouseEvent *
+QPolyFilter::view_sync(QEvent *e)
 {
     if (!cv)
-	return false;
+	return NULL;
 
     // If we don't have one of the relevant mouse operations, there's nothing to do
     QMouseEvent *m_e = NULL;
     if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease || e->type() == QEvent::MouseButtonDblClick || e->type() == QEvent::MouseMove)
 	m_e = (QMouseEvent *)e;
     if (!m_e)
-	return false;
+	return NULL;
 
     // We're going to need the mouse position
     int e_x, e_y;
@@ -448,13 +448,51 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 
     // If we have modifiers, we're most likely doing shift grips
     if (m_e->modifiers() != Qt::NoModifier)
+	return NULL;
+
+    return m_e;
+}
+
+bool
+QPolyFilter::close_polygon()
+{
+    // Close the general polygon - if that's what we're creating,
+    // at this point it will still be open.
+    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+    if (ip->polygon.contour[0].open) {
+
+	if (ip->polygon.contour[0].num_points < 3) {
+	    // If we're trying to finalize and we have less than
+	    // three points, just remove - we didn't get enough
+	    // to make a closed polygon.
+	    bg_polygon_free(&ip->polygon);
+	    BU_PUT(ip, struct bv_polygon);
+	    bv_obj_put(p);
+	    p = NULL;
+	    return false;
+	}
+
+	ip->polygon.contour[0].open = 0;
+	bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
+    }
+
+    return true;
+}
+
+bool
+QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
+{
+    QMouseEvent *m_e = view_sync(e);
+    if (!m_e)
 	return false;
+
+    struct bview *v = cv->view();
 
     // Handle Left Click
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 
 	if (!p) {
-	    p = bv_create_polygon(v, BV_VIEW_OBJS, ptype, e_x, e_y);
+	    p = bv_create_polygon(v, BV_VIEW_OBJS, ptype, v->gv_mouse_x, v->gv_mouse_x);
 	    p->s_v = v;
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 
@@ -489,15 +527,15 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	    return true;
 	}
 
-	// If we don't have a polygon by this point, we're done - subsequent logic assumes it	
+	// If we don't have a polygon at this point, we're done - subsequent logic assumes it	
 	if (!p)
 	    return true;
 
 	// If we've got a general polygon, append point
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	if (ip->type == BV_POLYGON_GENERAL) {
-	    p->s_v->gv_mouse_x = e_x;
-	    p->s_v->gv_mouse_y = e_y;
+	    p->s_v->gv_mouse_x = v->gv_mouse_x;
+	    p->s_v->gv_mouse_y = v->gv_mouse_y;
 	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
 	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
@@ -560,7 +598,6 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	if (ip->type == BV_POLYGON_GENERAL) {
 	    // General polygons are finalized by an explicit close
-	    // (either right mouse click or the close checkbox)
 	    return true;
 	}
 
@@ -580,39 +617,20 @@ QPolyCreateFilter::finalize(bool)
     if (!p)
 	return;
 
-    // Close the general polygon - if that's what we're creating,
-    // at this point it will still be open.
-    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-    if (ip->polygon.contour[0].open) {
-
-	if (ip->polygon.contour[0].num_points < 3) {
-	    // If we're trying to finalize and we have less than
-	    // three points, just remove - we didn't get enough
-	    // to make a closed polygon.
-	    bg_polygon_free(&ip->polygon);
-	    BU_PUT(ip, struct bv_polygon);
-	    bv_obj_put(p);
-	    op = bg_None;
-	    p = NULL;
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    emit finalized();
-	    return;
-	}
-
-	ip->polygon.contour[0].open = 0;
-	bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
-    }
+    if (!close_polygon())
+	return;
 
     int pcnt = 0;
     struct bview *v = cv->view();
-    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-    if (!view_objs) {
+    if (!BU_PTBL_LEN(&bool_objs)) {
 	emit finalized();
 	return;
     }
     if (op != bg_None) {
-	pcnt = bv_polygon_csg(view_objs, p, op, 1);
+	pcnt = bv_polygon_csg(&bool_objs, p, op, 1);
     }
+    
+    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
     if (pcnt || op != bg_Union) {
 	bg_polygon_free(&ip->polygon);
 	BU_PUT(ip, struct bv_polygon);
@@ -621,6 +639,7 @@ QPolyCreateFilter::finalize(bool)
 
 	// Check if we have a name collision - if we do, it's no go
 	bool colliding = false;
+	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	    if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname.c_str())) {
@@ -652,26 +671,42 @@ QPolyCreateFilter::finalize(bool)
 }
 
 bool
-QPolyUpdateFilter::eventFilter(QObject *, QEvent *)
+QPolyUpdateFilter::eventFilter(QObject *, QEvent *e)
 {
+    QMouseEvent *m_e = view_sync(e);
+    if (!m_e)
+	return false;
+
     return false;
 }
 
 bool
-QPolySelectFilter::eventFilter(QObject *, QEvent *)
+QPolySelectFilter::eventFilter(QObject *, QEvent *e)
 {
+    QMouseEvent *m_e = view_sync(e);
+    if (!m_e)
+	return false;
+
     return false;
 }
 
 bool
-QPolySelectPointFilter::eventFilter(QObject *, QEvent *)
+QPolySelectPointFilter::eventFilter(QObject *, QEvent *e)
 {
+    QMouseEvent *m_e = view_sync(e);
+    if (!m_e)
+	return false;
+
     return false;
 }
 
 bool
-QPolyMoveFilter::eventFilter(QObject *, QEvent *)
+QPolyMoveFilter::eventFilter(QObject *, QEvent *e)
 {
+    QMouseEvent *m_e = view_sync(e);
+    if (!m_e)
+	return false;
+
     return false;
 }
 
