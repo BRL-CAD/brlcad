@@ -1,0 +1,23 @@
+* Instead of total projected surface area, projected surface area for front/back, left/right, and top/bottom would be more meaningful.
+* Compute mass data (lots of requests, need density data)
+* Showing axes vs showing "z up". Or give user options
+* Include hashing method on Checksum (SHA1):  120EAB...
+* Classification markings (overall with normal declass instructions). _GLOBAL attribute. Use RED box if classified
+* Possibly include model filesize
+* Bounding box information in gray area
+
+
+Future
+* Would be great if material data can be displayed in another page. List out the different materials used in the models, perhaps even broken down by percentage of total
+* There will often be more than one top level assembly in each file and specifying which assembly may need to be an option.
+* Geometry Type should breakdown the numbers of primitives (types of solids) - CSG, BOT, NURBS, NMG, DSP with CSG being all <arb8|arb7|arb6|arb5|arb4|arbn|ars|datum|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>
+* Option to display location of Ground_Plane_Offset attribute if not at the bottom of the target.  For example, a small boat in the water.
+* physically based rendering
+* colors and shaders set automatically based on naming patterns
+* a second page that goes into more detail – e.g., exploded hierarchy diagram. (Would be great if a bigger hierarchy can be displayed in another page. More subassemblies (hierarchy))
+* ability to add my agency/organization’s logo in the bottom right-hand corner
+* show model origin?
+* both metric and imperial units
+
+NOTE:
+When running rtwizard -s 1024 -a 35 -e 25 -i sample_models/shipping_container.g -c container_air.r -g shipping_container -G 10 -o "output/test.png", this does not throw an error although container_air.r is void air. Instead, it just generates a black image
