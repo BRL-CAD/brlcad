@@ -480,6 +480,25 @@ QPolyFilter::close_polygon()
 }
 
 bool
+QPolyFilter::bool_exec(bg_clip_t &op, struct bu_ptbl *bool_objs)
+{
+    if (op == bg_None || !bool_objs || !BU_PTBL_LEN(bool_objs))
+	return false;
+    int pcnt = bv_polygon_csg(bool_objs, p, op, 1);
+    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+    if (pcnt || op != bg_Union) {
+	// TODO - is this what we want to do here?
+	bg_polygon_free(&ip->polygon);
+	BU_PUT(ip, struct bv_polygon);
+	bv_obj_put(p);
+    } else {
+	// TODO - check for name collisions (?)
+    }
+    return true;
+}
+
+
+bool
 QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 {
     QMouseEvent *m_e = view_sync(e);

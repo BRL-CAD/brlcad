@@ -114,7 +114,11 @@ class QTCAD_EXPORT QPolyFilter : public QObject
 	// Initialization common to the various polygon filter types
 	QMouseEvent *view_sync(QEvent *e);
 
+
+
 	bool close_polygon();
+
+	bool bool_exec(bg_clip_t &op, struct bu_ptbl *bool_objs);
 
 	QtCADView *cv = NULL;
 	struct bv_scene_obj *p = NULL;
