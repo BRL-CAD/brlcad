@@ -111,19 +111,11 @@ class QTCAD_EXPORT QPolyFilter : public QObject
     Q_OBJECT
 
     public:
-	bool eventFilter(QObject *, QEvent *e);
-	void finalize(bool);
-
-    signals:
-	void view_updated(int);
-	void finalized();
-
-    public:
 	bg_clip_t op = bg_None;
 	QtCADView *cv = NULL;
 	struct bv_scene_obj *p = NULL;
 	int ptype = BV_POLYGON_CIRCLE;
-	bool close_general_poly = false;
+	bool close_general_poly = true; // set to false if application wants to allow non-closed polygons
 	struct bu_color fill_color;
 	struct bu_color edge_color;
 	bool fill_poly = false;
@@ -131,6 +123,51 @@ class QTCAD_EXPORT QPolyFilter : public QObject
 	double fill_slope_y = 1.0;
 	double fill_density = 10.0;
 	std::string vname;
+};
+
+class QTCAD_EXPORT QPolyCreateFilter : public QPolyFilter
+{
+    Q_OBJECT
+
+    public:
+	bool eventFilter(QObject *, QEvent *e);
+	void finalize(bool);
+
+    signals:
+        void view_updated(int);
+        void finalized();
+};
+
+class QTCAD_EXPORT QPolyUpdateFilter : public QPolyFilter
+{
+    Q_OBJECT
+
+    public:
+	bool eventFilter(QObject *, QEvent *e);
+};
+
+class QTCAD_EXPORT QPolySelectFilter : public QPolyFilter
+{
+    Q_OBJECT
+
+    public:
+	bool eventFilter(QObject *, QEvent *e);
+};
+
+class QTCAD_EXPORT QPolySelectPointFilter : public QPolyFilter
+{
+    Q_OBJECT
+
+    public:
+	bool eventFilter(QObject *, QEvent *e);
+};
+
+class QTCAD_EXPORT QPolyMoveFilter : public QPolyFilter
+{
+    Q_OBJECT
+
+    public:
+	bool eventFilter(QObject *, QEvent *e);
 };
 
 

@@ -417,44 +417,44 @@ QtCADView::do_init_done()
 }
 
 bool
-QPolyFilter::eventFilter(QObject *, QEvent *e)
+QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 {
     if (!cv)
 	return false;
 
-    struct bview *v = cv->view();
-
+    // If we don't have one of the relevant mouse operations, there's nothing to do
     QMouseEvent *m_e = NULL;
-
-    if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease || e->type() == QEvent::MouseButtonDblClick || e->type() == QEvent::MouseMove) {
-
+    if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease || e->type() == QEvent::MouseButtonDblClick || e->type() == QEvent::MouseMove)
 	m_e = (QMouseEvent *)e;
-
-	v->gv_prevMouseX = v->gv_mouse_x;
-	v->gv_prevMouseY = v->gv_mouse_y;
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	v->gv_mouse_x = m_e->x();
-	v->gv_mouse_y = m_e->y();
-#else
-	v->gv_mouse_x = m_e->position().x();
-	v->gv_mouse_y = m_e->position().y();
-#endif
-    }
-
     if (!m_e)
 	return false;
+
+    // We're going to need the mouse position
+    int e_x, e_y;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    e_x = m_e->x();
+    e_y = m_e->y();
+#else
+    e_x = m_e->position().x();
+    e_y = m_e->position().y();
+#endif
+
+    // Update relevant bview variables
+    struct bview *v = cv->view();
+    v->gv_prevMouseX = v->gv_mouse_x;
+    v->gv_prevMouseY = v->gv_mouse_y;
+    v->gv_mouse_x = e_x;
+    v->gv_mouse_y = e_y;
 
     // If we have modifiers, we're most likely doing shift grips
     if (m_e->modifiers() != Qt::NoModifier)
 	return false;
 
+    // Handle Left Click
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
+
 	if (!p) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	    p = bv_create_polygon(v, BV_VIEW_OBJS, ptype, m_e->x(), m_e->y());
-#else
-	    p = bv_create_polygon(v, BV_VIEW_OBJS, ptype, m_e->position().x(), m_e->position().y());
-#endif
+	    p = bv_create_polygon(v, BV_VIEW_OBJS, ptype, e_x, e_y);
 	    p->s_v = v;
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 
@@ -479,27 +479,26 @@ QPolyFilter::eventFilter(QObject *, QEvent *e)
 
 	    // Name appropriately
 	    bu_vls_init(&p->s_uuid);
+	    bu_vls_init(&p->s_name);
 
 	    // It doesn't get a "proper" name until its finalized
 	    bu_vls_printf(&p->s_uuid, "_tmp_view_polygon");
+	    bu_vls_printf(&p->s_name, "_tmp_view_polygon");
 
 	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
 
-	// If we're creating a general polygon, we're appending points after
-	// the initial creation
+	// If we don't have a polygon by this point, we're done - subsequent logic assumes it	
+	if (!p)
+	    return true;
+
+	// If we've got a general polygon, append point
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	if (ip->type == BV_POLYGON_GENERAL) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	    p->s_v->gv_mouse_x = m_e->x();
-	    p->s_v->gv_mouse_y = m_e->y();
-#else
-	    p->s_v->gv_mouse_x = m_e->position().x();
-	    p->s_v->gv_mouse_y = m_e->position().y();
-#endif
+	    p->s_v->gv_mouse_x = e_x;
+	    p->s_v->gv_mouse_y = e_y;
 	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
-
 	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}
@@ -576,7 +575,7 @@ QPolyFilter::eventFilter(QObject *, QEvent *e)
 }
 
 void
-QPolyFilter::finalize(bool)
+QPolyCreateFilter::finalize(bool)
 {
     if (!p)
 	return;
@@ -650,6 +649,30 @@ QPolyFilter::finalize(bool)
     p = NULL;
     emit view_updated(QTCAD_VIEW_REFRESH);
     emit finalized();
+}
+
+bool
+QPolyUpdateFilter::eventFilter(QObject *, QEvent *)
+{
+    return false;
+}
+
+bool
+QPolySelectFilter::eventFilter(QObject *, QEvent *)
+{
+    return false;
+}
+
+bool
+QPolySelectPointFilter::eventFilter(QObject *, QEvent *)
+{
+    return false;
+}
+
+bool
+QPolyMoveFilter::eventFilter(QObject *, QEvent *)
+{
+    return false;
 }
 
 // Local Variables:
