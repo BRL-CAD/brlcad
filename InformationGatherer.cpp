@@ -260,12 +260,18 @@ int InformationGatherer::getEntityData(char* buf) {
 
 void InformationGatherer::getSubComp() {
     // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
+
+    if (!bu_file_exists((opt->getTemppath() + "mged").c_str(), NULL) && !bu_file_exists((opt->getTemppath() + "mged.exe").c_str(), NULL)) {
+        bu_log("ERROR: File to executables (%s) is invalid\nPlease use (or check) the -T parameter\n", opt->getTemppath().c_str());
+        bu_exit(BRLCAD_ERROR, "Bad folder, aborting.\n");
+    }
+
     std::string pathToOutput = "output/sub_comp.txt";
     std::string retrieveSub = opt->getTemppath() + "mged -c " + opt->getFilepath() + " \"foreach {s} \\[ lt " + largestComponents[0].name + " \\] { set o \\[lindex \\$s 1\\] ; puts \\\"\\$o \\[llength \\[search \\$o \\] \\] \\\" }\" > " + pathToOutput;
     system(retrieveSub.c_str());
 
     if (!bu_file_exists(pathToOutput.c_str(), NULL)) {
-        bu_log("ERROR: %s doesn't exist\n", pathToOutput.c_str()); 
+        bu_log("ERROR: %s doesn't exist\n", pathToOutput.c_str());
         bu_log("Make sure to create output directory at the same level as main.cpp!\n"); 
         bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
     }
@@ -306,7 +312,7 @@ bool InformationGatherer::gatherInformation(std::string name)
 {
     //Create folder output if needed
     std::string path = std::filesystem::current_path().string() + "\\output";
-    std::cout << path << std::endl;
+    std::cout << "Writing intermediate output files to " << path << std::endl;
     if (!std::filesystem::exists(std::filesystem::path(path))) {
         std::filesystem::create_directory("output");
     }

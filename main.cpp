@@ -47,7 +47,7 @@ bool readParameters(int argc, char** argv, Options &opt)
 
 
 
-    while ((opts = bu_getopt(argc, argv, "g?Oop:F:P:f:n:T:E:N:l:m:c:t:Z:")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "g?Oop:F:P:f:n:T:E:N:l:m:c:t:Z")) != -1) {
 
         switch (opts) {
             case 'p':
@@ -122,7 +122,7 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    g = GUI output\n");
         bu_log("    f = filepath of png export, MUST end in .png\n");
         bu_log("    n = name of preparer, to be used in report\n");
-        bu_log("    T = temporary directory to store intermediate files\n");
+        bu_log("    T = directory where rt and rtwizard executables are stored\n");
         bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report. If the classification is \"confidential\", the header and footer will be red.\n");
         bu_log("    o = orientation of the file, default is right hand, flag will change orientation output to left hand");
         bu_log("    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up");
