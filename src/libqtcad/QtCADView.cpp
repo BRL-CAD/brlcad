@@ -28,6 +28,7 @@
 
 #include "bg/polygon.h"
 #include "bv.h"
+#include "raytrace.h" // For finalize polygon sketch export functionality (TODO - need to move...)
 #include "qtcad/QtCADView.h"
 #include "qtcad/SignalFlags.h"
 
@@ -577,6 +578,78 @@ QPolyFilter::eventFilter(QObject *, QEvent *e)
 void
 QPolyFilter::finalize(bool)
 {
+    if (!p)
+	return;
+
+    // Close the general polygon - if that's what we're creating,
+    // at this point it will still be open.
+    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+    if (ip->polygon.contour[0].open) {
+
+	if (ip->polygon.contour[0].num_points < 3) {
+	    // If we're trying to finalize and we have less than
+	    // three points, just remove - we didn't get enough
+	    // to make a closed polygon.
+	    bg_polygon_free(&ip->polygon);
+	    BU_PUT(ip, struct bv_polygon);
+	    bv_obj_put(p);
+	    op = bg_None;
+	    p = NULL;
+	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit finalized();
+	    return;
+	}
+
+	ip->polygon.contour[0].open = 0;
+	bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
+    }
+
+    int pcnt = 0;
+    struct bview *v = cv->view();
+    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
+    if (!view_objs) {
+	emit finalized();
+	return;
+    }
+    if (op != bg_None) {
+	pcnt = bv_polygon_csg(view_objs, p, op, 1);
+    }
+    if (pcnt || op != bg_Union) {
+	bg_polygon_free(&ip->polygon);
+	BU_PUT(ip, struct bv_polygon);
+	bv_obj_put(p);
+    } else {
+
+	// Check if we have a name collision - if we do, it's no go
+	bool colliding = false;
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname.c_str())) {
+		colliding = true;
+	    }
+	}
+	if (colliding) {
+	    bg_polygon_free(&ip->polygon);
+	    BU_PUT(ip, struct bv_polygon);
+	    bv_obj_put(p);
+	    op = bg_None;
+	    p = NULL;
+	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit finalized();
+	    return;
+	}
+
+	// Either a non-boolean creation or a Union with no interactions -
+	// either way we're keeping it, so assign a proper name
+	bu_vls_sprintf(&p->s_uuid, "%s", vname.c_str());
+
+	// No longer need mouse movements to adjust parameters - turn off callback
+	p->s_update_callback = NULL;
+    }
+
+    p = NULL;
+    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit finalized();
 }
 
 // Local Variables:
