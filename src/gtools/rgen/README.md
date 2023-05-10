@@ -4,6 +4,8 @@
 
 The goal of this effort is to auto-generate beautiful concise summaries of 3D geometry models in BRL-CAD, an open source computer-aided design (CAD) system. Leveraging capabilities in BRL-CAD, we worked on creating a tool that produces a novel “one page” summary report that includes visual, textual, and contextual information about a given 3D model.
 
+This tool was developed by Zhuo (Danny) Chen, Allyson Hoskinson, Andrew Plant, Mark Sturtevant, and Michael Tao, under the mentorship of Sean Morrison and Chris McGregor.
+
 ## Requirements ##
 
 This code has been run and tested on:
