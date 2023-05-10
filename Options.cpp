@@ -35,6 +35,8 @@ void Options::setFilepath(std::string f) {
 }
 
 void Options::setTemppath(std::string f) {
+	if (f[f.size() - 1] != '/' && f[f.size() - 1] != '\\')
+		f = f + '\\';
 	temppath = f;
 }
 
