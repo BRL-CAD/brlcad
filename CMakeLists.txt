@@ -42,7 +42,6 @@ set(rgen_ignore_files
   picohash.h
   CONTRIBUTING.md
   README.md
-  report.png
   )
 CMAKEFILES(${rgen_ignore_files})
 
