@@ -37,7 +37,7 @@ __BEGIN_DECLS
 
 /* The following data types are originally from bv - we keep them
  * separate here to maximize their ease of reuse */
-typedef enum { bg_Union, bg_Difference, bg_Intersection, bg_Xor } bg_clip_t;
+typedef enum { bg_None, bg_Union, bg_Difference, bg_Intersection, bg_Xor } bg_clip_t;
 
 struct bg_poly_contour {
     size_t    num_points;

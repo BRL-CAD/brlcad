@@ -28,6 +28,7 @@
 
 extern "C" {
 #include "bu/ptbl.h"
+#include "bg/polygon.h"
 #include "bv.h"
 #include "dm.h"
 }
@@ -103,6 +104,33 @@ class QTCAD_EXPORT QtCADView : public QWidget
         QtGL *canvas_gl = NULL;
 #endif
 };
+
+// Filters designed for specific editing modes
+class QTCAD_EXPORT QPolyFilter : public QObject
+{
+    Q_OBJECT
+
+    public:
+	bool eventFilter(QObject *, QEvent *e);
+	void finalize(bool);
+
+    signals:
+	void view_updated(int);
+
+    public:
+	bg_clip_t op = bg_None;
+	QtCADView *cv = NULL;
+	struct bv_scene_obj *p = NULL;
+	int ptype = BV_POLYGON_CIRCLE;
+	bool close_general_poly = false;
+	struct bu_color fill_color;
+	struct bu_color edge_color;
+	bool fill_poly = false;
+	double fill_slope_x = 1.0;
+	double fill_slope_y = 1.0;
+	double fill_density = 10.0;
+};
+
 
 #endif /* QTCADVIEW_H */
 

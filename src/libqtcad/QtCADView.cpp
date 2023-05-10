@@ -26,7 +26,10 @@
 
 #include "common.h"
 
+#include "bg/polygon.h"
+#include "bv.h"
 #include "qtcad/QtCADView.h"
+#include "qtcad/SignalFlags.h"
 
 extern "C" {
 #include "bu/malloc.h"
@@ -410,6 +413,170 @@ QtCADView::do_init_done()
 {
     QTCAD_SLOT("QtCADView::do_init_done", 1);
     emit init_done();
+}
+
+bool
+QPolyFilter::eventFilter(QObject *, QEvent *e)
+{
+    if (!cv)
+	return false;
+
+    struct bview *v = cv->view();
+
+    QMouseEvent *m_e = NULL;
+
+    if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease || e->type() == QEvent::MouseButtonDblClick || e->type() == QEvent::MouseMove) {
+
+	m_e = (QMouseEvent *)e;
+
+	v->gv_prevMouseX = v->gv_mouse_x;
+	v->gv_prevMouseY = v->gv_mouse_y;
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+	v->gv_mouse_x = m_e->x();
+	v->gv_mouse_y = m_e->y();
+#else
+	v->gv_mouse_x = m_e->position().x();
+	v->gv_mouse_y = m_e->position().y();
+#endif
+    }
+
+    if (!m_e)
+	return false;
+
+    // If we have modifiers, we're most likely doing shift grips
+    if (m_e->modifiers() != Qt::NoModifier)
+	return false;
+
+    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
+	if (!p) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+	    p = bv_create_polygon(v, BV_VIEW_OBJS, ptype, m_e->x(), m_e->y());
+#else
+	    p = bv_create_polygon(v, BV_VIEW_OBJS, ptype, m_e->position().x(), m_e->position().y());
+#endif
+	    p->s_v = v;
+	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+
+	    // Get edge color
+	    bu_color_to_rgb_chars(&edge_color, p->s_color);
+
+	    // fill color
+	    BU_COLOR_CPY(&ip->fill_color, &fill_color);
+
+	    // fill settings
+	    vect2d_t vdir = V2INIT_ZERO;
+	    vdir[0] = fill_slope_x;
+	    vdir[1] = fill_slope_y;
+	    V2MOVE(ip->fill_dir, vdir);
+	    ip->fill_delta = fill_density;
+
+	    // Set fill
+	    if (fill_poly) {
+		ip->fill_flag = 1;
+		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
+	    }
+
+	    // Name appropriately
+	    bu_vls_init(&p->s_uuid);
+
+	    // It doesn't get a "proper" name until its finalized
+	    bu_vls_printf(&p->s_uuid, "_tmp_view_polygon");
+
+	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    return true;
+	}
+
+	// If we're creating a general polygon, we're appending points after
+	// the initial creation
+	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	if (ip->type == BV_POLYGON_GENERAL) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+	    p->s_v->gv_mouse_x = m_e->x();
+	    p->s_v->gv_mouse_y = m_e->y();
+#else
+	    p->s_v->gv_mouse_x = m_e->position().x();
+	    p->s_v->gv_mouse_y = m_e->position().y();
+#endif
+	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
+
+	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    return true;
+	}
+
+	// When we're dealing with polygons stray left clicks shouldn't zoom - just
+	// consume them if we're not using them above.
+	return true;
+    }
+
+    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::RightButton)) {
+	// No-op if no current polygon is defined
+	if (!p)
+	    return true;
+
+	// Non-general polygon creation doesn't use right click.
+	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	if (ip->type != BV_POLYGON_GENERAL) {
+	    return true;
+	}
+
+	// General polygon, have right click - finish up.
+	finalize(true);
+	return true;
+    }
+
+    if (m_e->type() == QEvent::MouseButtonPress) {
+	// We also don't want other stray mouse clicks to do something surprising
+	return true;
+    }
+
+    // During initial add/creation of non-general polygons, mouse movement
+    // adjusts the shape
+    if (m_e->type() == QEvent::MouseMove) {
+	// No-op if no current polygon is defined
+	if (!p)
+	    return true;
+
+	// General polygon creation doesn't use mouse movement.
+	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	if (ip->type == BV_POLYGON_GENERAL) {
+	    return true;
+	}
+
+	// For every other polygon type, call the libbv update routine
+	// with the view's x,y coordinates
+	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
+	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    return true;
+	}
+    }
+
+    if (m_e->type() == QEvent::MouseButtonRelease) {
+
+	// No-op if no current polygon is defined
+	if (!p)
+	    return true;
+
+	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	if (ip->type == BV_POLYGON_GENERAL) {
+	    // General polygons are finalized by an explicit close
+	    // (either right mouse click or the close checkbox)
+	    return true;
+	}
+
+	// For all non-general polygons, mouse release is the signal
+	// to finish up.
+	finalize(true);
+
+	return true;
+    }
+
+    return false;
+}
+
+void
+QPolyFilter::finalize(bool)
+{
 }
 
 // Local Variables:
