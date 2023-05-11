@@ -204,7 +204,12 @@ QPolyCreate::finalize(bool)
     if (!view_objs)
 	return;
     if (do_bool) {
-	pcnt = bv_polygon_csg(view_objs, p, op);
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    if (!(target->s_type_flags & BV_POLYGONS))
+		continue;
+	    pcnt += bv_polygon_csg(target, p, op);
+	}
     }
     if (pcnt || op != bg_Union) {
 	bg_polygon_free(&ip->polygon);

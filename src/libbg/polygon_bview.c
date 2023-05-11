@@ -85,6 +85,9 @@ bv_fill_polygon(struct bv_scene_obj *s)
 	return;
     }
 
+    if (!p->polygon.num_contours)
+	return;
+
     struct bg_polygon *fill = bg_polygon_fill_segments(&p->polygon, p->fill_dir, p->fill_delta);
     if (!fill)
 	return;

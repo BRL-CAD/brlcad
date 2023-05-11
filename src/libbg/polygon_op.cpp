@@ -630,64 +630,51 @@ bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *cli
 
 
 int
-bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op)
+bv_polygon_csg(struct bv_scene_obj *target, struct bv_scene_obj *stencil, bg_clip_t op)
 {
-    if (!objs || !p)
+    // Need data
+    if (!target || !stencil)
 	return -1;
 
-    struct bu_ptbl null_polys = BU_PTBL_INIT_ZERO;
-    int pcnt = 0;
-    struct bv_scene_obj *bp = p;
+    // Need polygons
+    if (!(target->s_type_flags & BV_POLYGONS) || !(stencil->s_type_flags & BV_POLYGONS))
+	return -1;
 
-    for (size_t i = 0; i < BU_PTBL_LEN(objs); i++) {
-	struct bv_scene_obj *vp = (struct bv_scene_obj *)BU_PTBL_GET(objs, i);
-	if (!(vp->s_type_flags & BV_POLYGONS))
-	    continue;
-	if (p == vp)
-	    continue;
-	struct bv_polygon *polyA = (struct bv_polygon *)vp->s_i_data;
-	struct bv_polygon *polyB = (struct bv_polygon *)bp->s_i_data;
+    // None op == no change
+    if (op == bg_None)
+	return 0;
 
-	// Make sure the polygons overlap before we operate, since clipper results are
-	// always general polygons.  We don't want to perform a no-op clip and lose our
-	// type info.
-	const struct bn_tol poly_tol = BN_TOL_INIT_TOL;
-	int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &poly_tol, polyA->v.gv_scale);
-	if (!ovlp)
-	    continue;
+    struct bv_polygon *polyA = (struct bv_polygon *)target->s_i_data;
+    struct bv_polygon *polyB = (struct bv_polygon *)stencil->s_i_data;
 
-	// Perform the specified operation
-	struct bg_polygon *cp = bg_clip_polygon(op, &polyA->polygon, &polyB->polygon, CLIPPER_MAX, polyA->v.gv_model2view, polyA->v.gv_view2model);
-	bg_polygon_free(&polyA->polygon);
-	polyA->polygon.num_contours = cp->num_contours;
-	polyA->polygon.hole = cp->hole;
-	polyA->polygon.contour = cp->contour;
+    // Make sure the polygons overlap before we operate, since clipper results are
+    // always general polygons.  We don't want to perform a no-op clip and lose our
+    // type info.
+    const struct bn_tol poly_tol = BN_TOL_INIT_TOL;
+    int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &poly_tol, polyA->v.gv_scale);
+    if (!ovlp)
+	return 0;
 
-	// clipper results are always general polygons
-	polyA->type = BV_POLYGON_GENERAL;
+    // Perform the specified operation and get the new polygon
+    struct bg_polygon *cp = bg_clip_polygon(op, &polyA->polygon, &polyB->polygon, CLIPPER_MAX, polyA->v.gv_model2view, polyA->v.gv_view2model);
 
-	if (!polyA->polygon.num_contours) {
-	    // operation eliminated polyA - stash for removal from view
-	    bu_ptbl_ins_unique(&null_polys, (long *)vp);
-	} else {
-	    bv_update_polygon(vp, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
-	}
+    // Replace the original target polygon with the result
+    bg_polygon_free(&polyA->polygon);
+    polyA->polygon.num_contours = cp->num_contours;
+    polyA->polygon.hole = cp->hole;
+    polyA->polygon.contour = cp->contour;
 
-	BU_PUT(cp, struct bg_polygon);
-	pcnt++;
-    }
+    // We stole the data from cp and put it in polyA - no longer need the
+    // original cp container
+    BU_PUT(cp, struct bg_polygon);
 
-    // If we're eliminating any polygons from the view as a result of the operations, do it now
-    for (size_t i = 0; i < BU_PTBL_LEN(&null_polys); i++) {
-	struct bv_scene_obj *np = (struct bv_scene_obj *)BU_PTBL_GET(&null_polys, i);
-	struct bv_polygon *ip = (struct bv_polygon *)np->s_i_data;
-	bg_polygon_free(&ip->polygon);
-	BU_PUT(ip, struct bv_polygon);
-	np->s_i_data = NULL;
-	bv_obj_put(np);
-    }
+    // clipper results are always general polygons
+    polyA->type = BV_POLYGON_GENERAL;
 
-    return pcnt;
+    // Make sure everything's current
+    bv_update_polygon(target, target->s_v, BV_POLYGON_UPDATE_DEFAULT);
+
+    return 1;
 }
 
 

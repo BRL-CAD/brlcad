@@ -373,14 +373,20 @@ BG_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s);
 BG_EXPORT extern struct bv_scene_obj *bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s);
 
 
-// For all polygon objects in the objs table, apply the specified boolean op
-// using p and replace the original polygons in objs with the results (NOTE:  p
-// will not act on itself if it is in objs):
+// For all polygon bv_scene_objs in the objs table, apply the specified boolean
+// op using p and replace the original polygon geometry in objs with the
+// results (NOTE:  p will not act on itself if it is in objs):
 //
 // u : objs[i] u p  (unions p with objs[i])
 // - : objs[i] - p  (removes p from objs[i])
 // + : objs[i] + p  (intersects p with objs[i])
-BG_EXPORT extern int bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op);
+//
+// At a data structure level, what happens is the bg_polygon geometry stored in
+// the bv_polygon stored as the data entry for a bv_scene_obj is replaced.  The
+// bv_scene_obj and bv_polygon pointers should remain valid, but the bg_polygon
+// contained in bv_polygon is replaced - calling code should not rely on the
+// bg_polygon pointer remaining the same after a boolean operation.
+BG_EXPORT extern int bv_polygon_csg(struct bv_scene_obj *target, struct bv_scene_obj *stencil, bg_clip_t op);
 
 __END_DECLS
 

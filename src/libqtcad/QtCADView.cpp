@@ -484,16 +484,13 @@ QPolyFilter::bool_exec(bg_clip_t &op, struct bu_ptbl *bool_objs)
 {
     if (op == bg_None || !bool_objs || !BU_PTBL_LEN(bool_objs))
 	return false;
-    int pcnt = bv_polygon_csg(bool_objs, p, op);
-    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-    if (pcnt || op != bg_Union) {
-	// TODO - is this what we want to do here?
-	bg_polygon_free(&ip->polygon);
-	BU_PUT(ip, struct bv_polygon);
-	bv_obj_put(p);
-    } else {
-	// TODO - check for name collisions (?)
+
+    for (size_t i = 0; i < BU_PTBL_LEN(bool_objs); i++) {
+	struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(bool_objs, i);
+	bv_polygon_csg(target, p, op);
     }
+
+    // TODO - check for name collisions (?)
     return true;
 }
 
@@ -646,7 +643,10 @@ QPolyCreateFilter::finalize(bool)
 	return;
     }
     if (op != bg_None) {
-	pcnt = bv_polygon_csg(&bool_objs, p, op);
+	for (size_t i = 0; i < BU_PTBL_LEN(&bool_objs); i++) {
+	    struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(&bool_objs, i);
+	    bv_polygon_csg(target, p, op);
+	}
     }
     
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;

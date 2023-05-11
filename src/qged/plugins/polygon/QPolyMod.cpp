@@ -210,6 +210,8 @@ QPolyMod::mod_names_reset()
 void
 QPolyMod::poly_type_settings(struct bv_polygon *ip)
 {
+    if (!ip->polygon.contour)
+	return;
     if (ip->type == BV_POLYGON_GENERAL) {
 	general_mode_opts->setEnabled(true);
 	close_general_poly->setEnabled(true);
@@ -419,6 +421,10 @@ QPolyMod::toggle_closed_poly(bool checked)
 
     clear_pnt_selection(false);
 
+    // If we don't have a valid polygon, bail
+    if (!ip->polygon.contour)
+	return;
+
     if (checked && ptype == BV_POLYGON_GENERAL) {
 	// A contour with less than 3 points can't be closed
 	if (ip->polygon.contour[0].num_points < 3) {
@@ -471,7 +477,13 @@ QPolyMod::toggle_closed_poly(bool checked)
 	    }
 	    // If we're closing a general polygon and we're in boolean op mode,
 	    // that's our signal to complete the operation
-	    int pcnt = bv_polygon_csg(view_objs, p, op);
+	    int pcnt = 0;
+	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+		struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+		if (!(target->s_type_flags & BV_POLYGONS))
+		    continue;
+		pcnt += bv_polygon_csg(target, p, op);
+	    }
 	    if (pcnt || op != bg_Union) {
 		bg_polygon_free(&ip->polygon);
 		BU_PUT(ip, struct bv_polygon);
@@ -502,6 +514,10 @@ QPolyMod::apply_bool_op()
 	return;
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+
+    if (!ip->polygon.contour)
+	return;
+
     if (ip->polygon.contour[0].open) {
 	return;
     }
@@ -516,17 +532,11 @@ QPolyMod::apply_bool_op()
 
     struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
     if (view_objs) {
-	int pcnt = bv_polygon_csg(view_objs, p, op);
-	if (pcnt || op != bg_Union) {
-	    bg_polygon_free(&ip->polygon);
-	    BU_PUT(ip, struct bv_polygon);
-	    bv_obj_put(p);
-	    mod_names->setCurrentIndex(0);
-	    if (mod_names->currentText().length()) {
-		select(mod_names->currentText());
-	    } else {
-		p = NULL;
-	    }
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    if (!(target->s_type_flags & BV_POLYGONS))
+		continue;
+	    bv_polygon_csg(target, p, op);
 	}
     }
 
