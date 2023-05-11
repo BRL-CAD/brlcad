@@ -471,7 +471,7 @@ QPolyMod::toggle_closed_poly(bool checked)
 	    }
 	    // If we're closing a general polygon and we're in boolean op mode,
 	    // that's our signal to complete the operation
-	    int pcnt = bv_polygon_csg(view_objs, p, op, 1);
+	    int pcnt = bv_polygon_csg(view_objs, p, op);
 	    if (pcnt || op != bg_Union) {
 		bg_polygon_free(&ip->polygon);
 		BU_PUT(ip, struct bv_polygon);
@@ -516,7 +516,7 @@ QPolyMod::apply_bool_op()
 
     struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
     if (view_objs) {
-	int pcnt = bv_polygon_csg(view_objs, p, op, 1);
+	int pcnt = bv_polygon_csg(view_objs, p, op);
 	if (pcnt || op != bg_Union) {
 	    bg_polygon_free(&ip->polygon);
 	    BU_PUT(ip, struct bv_polygon);

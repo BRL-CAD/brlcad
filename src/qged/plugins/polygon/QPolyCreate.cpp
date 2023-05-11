@@ -204,7 +204,7 @@ QPolyCreate::finalize(bool)
     if (!view_objs)
 	return;
     if (do_bool) {
-	pcnt = bv_polygon_csg(view_objs, p, op, 1);
+	pcnt = bv_polygon_csg(view_objs, p, op);
     }
     if (pcnt || op != bg_Union) {
 	bg_polygon_free(&ip->polygon);

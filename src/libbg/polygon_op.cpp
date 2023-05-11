@@ -630,7 +630,7 @@ bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *cli
 
 
 int
-bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op, int merge)
+bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op)
 {
     if (!objs || !p)
 	return -1;
@@ -665,20 +665,6 @@ bv_polygon_csg(struct bu_ptbl *objs, struct bv_scene_obj *p, bg_clip_t op, int m
 
 	// clipper results are always general polygons
 	polyA->type = BV_POLYGON_GENERAL;
-
-	if (op != bg_Difference && merge && polyA->polygon.num_contours) {
-
-	    // The seed polygon is handled elsewhere, but if we're
-	    // consolidating other view polygons into polyA we need to log the
-	    // consolidated polys for removal here.
-	    if (bp != p) {
-		bu_ptbl_ins_unique(&null_polys, (long *)bp);
-	    }
-
-	    // If we're merging results, subsequent operations will be done
-	    // using the results of this operation, not the original polygon
-	    bp = vp;
-	}
 
 	if (!polyA->polygon.num_contours) {
 	    // operation eliminated polyA - stash for removal from view

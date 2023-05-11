@@ -484,7 +484,7 @@ QPolyFilter::bool_exec(bg_clip_t &op, struct bu_ptbl *bool_objs)
 {
     if (op == bg_None || !bool_objs || !BU_PTBL_LEN(bool_objs))
 	return false;
-    int pcnt = bv_polygon_csg(bool_objs, p, op, 1);
+    int pcnt = bv_polygon_csg(bool_objs, p, op);
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
     if (pcnt || op != bg_Union) {
 	// TODO - is this what we want to do here?
@@ -646,7 +646,7 @@ QPolyCreateFilter::finalize(bool)
 	return;
     }
     if (op != bg_None) {
-	pcnt = bv_polygon_csg(&bool_objs, p, op, 1);
+	pcnt = bv_polygon_csg(&bool_objs, p, op);
     }
     
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
