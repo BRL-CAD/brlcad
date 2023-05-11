@@ -114,10 +114,16 @@ class QTCAD_EXPORT QPolyFilter : public QObject
 	// Initialization common to the various polygon filter types
 	QMouseEvent *view_sync(QEvent *e);
 
+	// We want to be able to swap derived QPolyFilter classes in
+	// parent calling code - make eventFilter virtual to help
+	// simplify doing so.
+	virtual bool eventFilter(QObject *, QEvent *) { return false; };
 
+    signals:
+        void view_updated(int);
 
+    public:
 	bool close_polygon();
-
 	bool bool_exec(bg_clip_t &op, struct bu_ptbl *bool_objs);
 
 	QtCADView *cv = NULL;
@@ -145,7 +151,6 @@ class QTCAD_EXPORT QPolyCreateFilter : public QPolyFilter
 	struct bu_ptbl bool_objs = BU_PTBL_INIT_ZERO;
 
     signals:
-        void view_updated(int);
         void finalized();
 };
 
@@ -158,10 +163,6 @@ class QTCAD_EXPORT QPolyUpdateFilter : public QPolyFilter
 
 	bg_clip_t op = bg_None;
 	struct bu_ptbl bool_objs = BU_PTBL_INIT_ZERO;
-
-    signals:
-        void view_updated(int);
-        void finalized();
 };
 
 class QTCAD_EXPORT QPolySelectFilter : public QPolyFilter
@@ -172,7 +173,7 @@ class QTCAD_EXPORT QPolySelectFilter : public QPolyFilter
 	bool eventFilter(QObject *, QEvent *e);
 };
 
-class QTCAD_EXPORT QPolySelectPointFilter : public QPolyFilter
+class QTCAD_EXPORT QPolyPointFilter : public QPolyFilter
 {
     Q_OBJECT
 

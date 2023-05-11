@@ -510,7 +510,16 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	if (!p) {
 	    p = bv_create_polygon(v, BV_VIEW_OBJS, ptype, v->gv_mouse_x, v->gv_mouse_x);
 	    p->s_v = v;
+
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	    if (ptype == BV_POLYGON_GENERAL) {
+		// For general polygons, we need to identify the active contour
+		// for update operations to work.
+		//
+		// TODO: At some point we'll need to add support for adding and
+		// removing contours...
+		ip->curr_contour_i = 0;
+	    }
 
 	    // Get edge color
 	    bu_color_to_rgb_chars(&edge_color, p->s_color);
@@ -543,11 +552,12 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	    return true;
 	}
 
-	// If we don't have a polygon at this point, we're done - subsequent logic assumes it	
+	// If we don't have a polygon at this point, we're done - subsequent logic assumes it
 	if (!p)
 	    return true;
 
-	// If we've got a general polygon, append point
+	// If we are in the process of creating a general polygon, after the initial creation
+	// left clicks will append new points
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	if (ip->type == BV_POLYGON_GENERAL) {
 	    p->s_v->gv_mouse_x = v->gv_mouse_x;
@@ -563,23 +573,23 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
     }
 
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::RightButton)) {
-	// No-op if no current polygon is defined
+	// No-op if we're not in the process of creating a polygon
 	if (!p)
 	    return true;
 
 	// Non-general polygon creation doesn't use right click.
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type != BV_POLYGON_GENERAL) {
+	if (ip->type != BV_POLYGON_GENERAL)
 	    return true;
-	}
 
-	// General polygon, have right click - finish up.
+	// When creating a general polygon, right click indicates we're done.
 	finalize(true);
+
 	return true;
     }
 
     if (m_e->type() == QEvent::MouseButtonPress) {
-	// We also don't want other stray mouse clicks to do something surprising
+	// We don't want other stray mouse clicks to do something surprising
 	return true;
     }
 
@@ -592,9 +602,8 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 
 	// General polygon creation doesn't use mouse movement.
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL) {
+	if (ip->type == BV_POLYGON_GENERAL)
 	    return true;
-	}
 
 	// For every other polygon type, call the libbv update routine
 	// with the view's x,y coordinates
@@ -605,17 +614,20 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	}
     }
 
+    // For the constrained polygon shapes, we're done creating once we release
+    // the mouse button (i.e. a "click, hold and move" creation paradigm)
     if (m_e->type() == QEvent::MouseButtonRelease) {
 
 	// No-op if no current polygon is defined
 	if (!p)
 	    return true;
 
+	// General polygons are finalized by a right-click close, since
+	// appending multiple points requires multiple mouse click-and-release
+	// operations
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL) {
-	    // General polygons are finalized by an explicit close
+	if (ip->type == BV_POLYGON_GENERAL)
 	    return true;
-	}
 
 	// For all non-general polygons, mouse release is the signal
 	// to finish up.
@@ -636,8 +648,6 @@ QPolyCreateFilter::finalize(bool)
     if (!close_polygon())
 	return;
 
-    int pcnt = 0;
-    struct bview *v = cv->view();
     if (!BU_PTBL_LEN(&bool_objs)) {
 	emit finalized();
 	return;
@@ -648,43 +658,10 @@ QPolyCreateFilter::finalize(bool)
 	    bv_polygon_csg(target, p, op);
 	}
     }
-    
-    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-    if (pcnt || op != bg_Union) {
-	bg_polygon_free(&ip->polygon);
-	BU_PUT(ip, struct bv_polygon);
-	bv_obj_put(p);
-    } else {
 
-	// Check if we have a name collision - if we do, it's no go
-	bool colliding = false;
-	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname.c_str())) {
-		colliding = true;
-	    }
-	}
-	if (colliding) {
-	    bg_polygon_free(&ip->polygon);
-	    BU_PUT(ip, struct bv_polygon);
-	    bv_obj_put(p);
-	    op = bg_None;
-	    p = NULL;
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    emit finalized();
-	    return;
-	}
+    // No longer need mouse movements to adjust parameters - turn off callback
+    p->s_update_callback = NULL;
 
-	// Either a non-boolean creation or a Union with no interactions -
-	// either way we're keeping it, so assign a proper name
-	bu_vls_sprintf(&p->s_uuid, "%s", vname.c_str());
-
-	// No longer need mouse movements to adjust parameters - turn off callback
-	p->s_update_callback = NULL;
-    }
-
-    p = NULL;
     emit view_updated(QTCAD_VIEW_REFRESH);
     emit finalized();
 }
@@ -696,6 +673,32 @@ QPolyUpdateFilter::eventFilter(QObject *, QEvent *e)
     if (!m_e)
 	return false;
 
+    // The update filter needs an active polygon to operate on
+    if (!p)
+	return false;
+
+    // We don't want other stray mouse clicks to do something surprising
+    if (m_e->type() == QEvent::MouseButtonPress || m_e->type() == QEvent::MouseButtonRelease) {
+	return true;
+    }
+   
+    if (m_e->type() == QEvent::MouseMove) {
+
+	// General polygon creation doesn't use mouse movement.
+	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	if (ip->type == BV_POLYGON_GENERAL)
+	    return true;
+
+	// For every other polygon type, call the libbv update routine
+	// with the view's x,y coordinates
+	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
+	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    return true;
+	}
+
+    }
+
     return false;
 }
 
@@ -706,15 +709,80 @@ QPolySelectFilter::eventFilter(QObject *, QEvent *e)
     if (!m_e)
 	return false;
 
+
+    // Handle Left Click
+    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
+	struct bview *v = cv->view();
+	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
+	if (view_objs) {
+	    p = bv_select_polygon(view_objs, v);
+	    if (!p)
+		return true;
+	    struct bv_polygon *vp = (struct bv_polygon *)p->s_i_data;
+	    ptype = vp->type;
+	    close_general_poly = (vp->polygon.contour) ? vp->polygon.contour[0].open : 1;
+	    // TODO - either set or sync other C++ class setting copies (color, fill, etc.)
+	}
+
+	return true;
+    }
+
+    // We also don't want other stray mouse clicks to do something surprising
+    if (m_e->type() == QEvent::MouseButtonPress || m_e->type() == QEvent::MouseButtonRelease)
+	return true;
+
     return false;
 }
 
 bool
-QPolySelectPointFilter::eventFilter(QObject *, QEvent *e)
+QPolyPointFilter::eventFilter(QObject *, QEvent *e)
 {
     QMouseEvent *m_e = view_sync(e);
     if (!m_e)
 	return false;
+
+    // The point filter needs an active general polygon to operate on
+    if (!p || ptype != BV_POLYGON_GENERAL)
+	return false;
+
+    struct bv_polygon *vp = (struct bv_polygon *)p->s_i_data;
+
+    // Handle Left Click - either selects or clears a point selection (the
+    // latter occurs if the click is too far from any active points)
+    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
+	if (vp->curr_point_i < 0) {
+	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_SELECT);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
+	}
+	return true;
+    }
+
+    // Handle Right Click - clear point selection
+    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::RightButton)) {
+	vp->curr_point_i = -1;
+	bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
+	emit view_updated(QTCAD_VIEW_REFRESH);
+	return true;
+    }
+
+    // We also don't want other stray mouse clicks to do something surprising
+    if (m_e->type() == QEvent::MouseButtonPress || m_e->type() == QEvent::MouseButtonRelease)
+	return true;
+
+    // Handle Mouse Move - move selected point with a left button click-and-hold
+    if (m_e->type() == QEvent::MouseMove) {
+	if (vp->curr_point_i < 0) {
+	    // No selected point
+	    return true;
+	}
+	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
+	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_MOVE);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    return true;
+	}
+
+	return true;
+    }
 
     return false;
 }
@@ -725,6 +793,24 @@ QPolyMoveFilter::eventFilter(QObject *, QEvent *e)
     QMouseEvent *m_e = view_sync(e);
     if (!m_e)
 	return false;
+
+    // The move filter needs an active polygon to operate on
+    if (!p)
+	return false;
+
+    // We don't want other stray mouse clicks to do something surprising
+    if (m_e->type() == QEvent::MouseButtonPress || m_e->type() == QEvent::MouseButtonRelease) {
+	return true;
+    }
+
+    // If we're clicking-and-holding, move the polygon
+    if (m_e->type() == QEvent::MouseMove) {
+	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
+	    bv_move_polygon(p);
+	    emit view_updated(QTCAD_VIEW_REFRESH);
+	}
+	return true;
+    }
 
     return false;
 }
