@@ -22,6 +22,7 @@
  */
 
 #include "common.h"
+#include <vector>
 #include <QLabel>
 #include <QLineEdit>
 #include <QButtonGroup>
@@ -478,11 +479,24 @@ QPolyMod::toggle_closed_poly(bool checked)
 	    // If we're closing a general polygon and we're in boolean op mode,
 	    // that's our signal to complete the operation
 	    int pcnt = 0;
+	    std::vector<struct bv_scene_obj *> cleanup;
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 		struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+		if (target == p)
+		    continue;
 		if (!(target->s_type_flags & BV_POLYGONS))
 		    continue;
 		pcnt += bv_polygon_csg(target, p, op);
+		struct bv_polygon *vp = (struct bv_polygon *)target->s_i_data;
+		if (!vp->polygon.num_contours || !vp->polygon.contour)
+		    cleanup.push_back(target);
+	    }
+	    for (size_t i = 0; i < cleanup.size(); i++) {
+		struct bv_polygon *vp = (struct bv_polygon *)cleanup[i]->s_i_data;
+		bg_polygon_free(&vp->polygon);
+		BU_PUT(vp, struct bv_polygon);
+		cleanup[i]->s_i_data = NULL;
+		bv_obj_put(cleanup[i]);
 	    }
 	    if (pcnt || op != bg_Union) {
 		bg_polygon_free(&ip->polygon);
@@ -532,11 +546,24 @@ QPolyMod::apply_bool_op()
 
     struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
     if (view_objs) {
+	std::vector<struct bv_scene_obj *> cleanup;
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    if (target == p)
+		continue;
 	    if (!(target->s_type_flags & BV_POLYGONS))
 		continue;
 	    bv_polygon_csg(target, p, op);
+	    struct bv_polygon *vp = (struct bv_polygon *)target->s_i_data;
+	    if (!vp->polygon.num_contours || !vp->polygon.contour)
+		cleanup.push_back(target);
+	}
+	for (size_t i = 0; i < cleanup.size(); i++) {
+	    struct bv_polygon *vp = (struct bv_polygon *)cleanup[i]->s_i_data;
+	    bg_polygon_free(&vp->polygon);
+	    BU_PUT(vp, struct bv_polygon);
+	    cleanup[i]->s_i_data = NULL;
+	    bv_obj_put(cleanup[i]);
 	}
     }
 
