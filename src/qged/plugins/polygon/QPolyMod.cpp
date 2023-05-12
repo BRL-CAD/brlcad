@@ -888,16 +888,11 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
     cf = puf;
     if (select_mode->isChecked())
 	cf = psf;
-    if (move_mode->isChecked()) {
+    if (move_mode->isChecked())
 	cf = pmf;
-    } else {
-	if (append_pnt->isChecked() || select_pnt->isChecked()) {
-	    if (!p)
-		return false;    
-	    if (!ip || ip->type != BV_POLYGON_GENERAL)
-		return false;    
+    if (ip && ip->type == BV_POLYGON_GENERAL) {
+	if (append_pnt->isChecked() || select_pnt->isChecked())
 	    cf = ppf;
-	}
     }
 
     // Set libqtcad know what the current polygon is

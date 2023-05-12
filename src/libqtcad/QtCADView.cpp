@@ -684,7 +684,7 @@ QPolyUpdateFilter::eventFilter(QObject *, QEvent *e)
     if (m_e->type() == QEvent::MouseButtonPress || m_e->type() == QEvent::MouseButtonRelease) {
 	return true;
     }
-   
+
     if (m_e->type() == QEvent::MouseMove) {
 
 	// General polygon creation doesn't use mouse movement.
