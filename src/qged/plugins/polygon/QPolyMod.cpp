@@ -542,6 +542,9 @@ QPolyMod::apply_bool_op()
     }
 
     bg_clip_t op = bg_Union;
+    if (csg_modes->currentText() == "Union") {
+	op = bg_Union;
+    }
     if (csg_modes->currentText() == "Subtraction") {
 	op = bg_Difference;
     }
@@ -890,7 +893,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 	cf = psf;
     if (move_mode->isChecked())
 	cf = pmf;
-    if (ip && ip->type == BV_POLYGON_GENERAL) {
+    if (update_mode->isChecked() && ip && ip->type == BV_POLYGON_GENERAL) {
 	if (append_pnt->isChecked() || select_pnt->isChecked())
 	    cf = ppf;
     }
@@ -905,6 +908,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
     QObject::connect(cf, &QPolyFilter::view_updated, this, &QPolyMod::propagate_update);
 
     // Match the settings
+    cf->op = bg_None;
     cf->fill_poly = (ps->fill_poly->isChecked()) ? true : false;
     cf->fill_slope_x = (fastf_t)(ps->fill_slope_x->text().toDouble());
     cf->fill_slope_y = (fastf_t)(ps->fill_slope_y->text().toDouble());

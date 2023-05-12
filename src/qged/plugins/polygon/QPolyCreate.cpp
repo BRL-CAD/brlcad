@@ -162,149 +162,84 @@ QPolyCreate::finalize(bool)
     if (!gedp)
 	return;
 
-    // Close the general polygon - if that's what we're creating,
-    // at this point it will still be open.
-    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-    if (ip->polygon.contour[0].open) {
-
-	if (ip->polygon.contour[0].num_points < 3) {
-	    // If we're trying to finalize and we have less than
-	    // three points, just remove - we didn't get enough
-	    // to make a closed polygon.
-	    bg_polygon_free(&ip->polygon);
-	    BU_PUT(ip, struct bv_polygon);
-	    bv_obj_put(p);
-	    do_bool = false;
-	    p = NULL;
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return;
-	}
-
-	ip->polygon.contour[0].open = 0;
-	bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
-    }
-
     close_general_poly->blockSignals(true);
     close_general_poly->setChecked(true);
     close_general_poly->blockSignals(false);
     close_general_poly->setDisabled(true);
 
-    // Have close polygon - do boolean operation, if any.  Whether the new
-    // polygon becomes its own object or just alters existing object
-    // definitions depends on the boolean op setting.
-    op = bg_Union;
-    if (do_bool) {
-	if (csg_modes->currentText() == "Subtraction") {
-	    op = bg_Difference;
-	}
-	if (csg_modes->currentText() == "Intersection") {
-	    op = bg_Intersection;
-	}
-    }
-
+#if 0
     int pcnt = 0;
     struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-    if (!view_objs)
-	return;
-    if (do_bool) {
-	std::vector<struct bv_scene_obj *> cleanup;
-	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (target == p)
-		continue;
-	    if (!(target->s_type_flags & BV_POLYGONS))
-		continue;
-	    pcnt += bv_polygon_csg(target, p, op);
-	    struct bv_polygon *vp = (struct bv_polygon *)target->s_i_data;
-	    if (!vp->polygon.num_contours || !vp->polygon.contour)
-		cleanup.push_back(target);
-	}
-	for (size_t i = 0; i < cleanup.size(); i++) {
-	    struct bv_polygon *vp = (struct bv_polygon *)cleanup[i]->s_i_data;
-	    bg_polygon_free(&vp->polygon);
-	    BU_PUT(vp, struct bv_polygon);
-	    cleanup[i]->s_i_data = NULL;
-	    bv_obj_put(cleanup[i]);
+    // Check if we have a name collision - if we do, it's no go
+    char *vname = NULL;
+    if (ps->view_name->placeholderText().length()) {
+	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
+    }
+    if (ps->view_name->text().length()) {
+	bu_free(vname, "vname");
+	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
+    }
+    bool colliding = false;
+    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
+	    colliding = true;
 	}
     }
-    if (pcnt || op != bg_Union) {
+    bu_free(vname, "vname");
+    if (colliding) {
 	bg_polygon_free(&ip->polygon);
 	BU_PUT(ip, struct bv_polygon);
 	bv_obj_put(p);
-    } else {
-
-	// Check if we have a name collision - if we do, it's no go
-	char *vname = NULL;
-	if (ps->view_name->placeholderText().length()) {
-	    vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
-	}
-	if (ps->view_name->text().length()) {
-	    bu_free(vname, "vname");
-	    vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
-	}
-	bool colliding = false;
-	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
-		colliding = true;
-	    }
-	}
-	bu_free(vname, "vname");
-	if (colliding) {
-	    bg_polygon_free(&ip->polygon);
-	    BU_PUT(ip, struct bv_polygon);
-	    bv_obj_put(p);
-	    do_bool = false;
-	    p = NULL;
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return;
-	}
-
-	// Either a non-boolean creation or a Union with no interactions -
-	// either way we're keeping it, so assign a proper name
-	if (ps->view_name->text().length()) {
-	    bu_vls_sprintf(&p->s_name, "%s", ps->view_name->text().toLocal8Bit().data());
-	} else {
-	    bu_vls_sprintf(&p->s_name, "%s", ps->view_name->placeholderText().toLocal8Bit().data());
-	}
-
-	// Done processing view object - increment name
-	poly_cnt++;
-	ps->view_name->clear();
-	struct bu_vls pname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
-	ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
-	bu_vls_free(&pname);
-
-	// No longer need mouse movements to adjust parameters - turn off callback
-	p->s_update_callback = NULL;
-
-	// If we're also writing this out as a sketch, take care of that.
-	if (ps->sketch_sync->isChecked()) {
-	    char *sk_name = NULL;
-	    if (ps->sketch_name->placeholderText().length()) {
-		sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
-	    }
-	    if (ps->sketch_name->text().length()) {
-		bu_free(sk_name, "sk_name");
-		sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
-	    }
-	    if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
-		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
-		emit view_updated(QTCAD_VIEW_DB);
-	    }
-	    bu_free(sk_name, "name cpy");
-	} else {
-	    ip->u_data = NULL;
-	}
-
-	// Done with sketch - update name for next polygon
-	ps->sketch_name->setPlaceholderText("");
-	ps->sketch_name->setText("");
-	sketch_sync();
+	do_bool = false;
+	p = NULL;
+	emit view_updated(QTCAD_VIEW_REFRESH);
+	return;
     }
 
-    do_bool = false;
+    // Either a non-boolean creation or a Union with no interactions -
+    // either way we're keeping it, so assign a proper name
+    if (ps->view_name->text().length()) {
+	bu_vls_sprintf(&p->s_name, "%s", ps->view_name->text().toLocal8Bit().data());
+    } else {
+	bu_vls_sprintf(&p->s_name, "%s", ps->view_name->placeholderText().toLocal8Bit().data());
+    }
+
+    // Done processing view object - increment name
+    poly_cnt++;
+    ps->view_name->clear();
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
+    ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+    bu_vls_free(&pname);
+
+    // No longer need mouse movements to adjust parameters - turn off callback
+    p->s_update_callback = NULL;
+
+    // If we're also writing this out as a sketch, take care of that.
+    if (ps->sketch_sync->isChecked()) {
+	char *sk_name = NULL;
+	if (ps->sketch_name->placeholderText().length()) {
+	    sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
+	}
+	if (ps->sketch_name->text().length()) {
+	    bu_free(sk_name, "sk_name");
+	    sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
+	}
+	if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
+	    emit view_updated(QTCAD_VIEW_DB);
+	}
+	bu_free(sk_name, "name cpy");
+    } else {
+	ip->u_data = NULL;
+    }
+
+    // Done with sketch - update name for next polygon
+    ps->sketch_name->setPlaceholderText("");
+    ps->sketch_name->setText("");
+    sketch_sync();
+#endif
     p = NULL;
     emit view_updated(QTCAD_VIEW_REFRESH);
 }
@@ -655,6 +590,17 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	    cf->ptype = BV_POLYGON_GENERAL;
 	}
 
+	cf->op = bg_None;
+	if (csg_modes->currentText() == "Union") {
+	    cf->op = bg_Union;
+	}
+	if (csg_modes->currentText() == "Subtraction") {
+	    cf->op = bg_Difference;
+	}
+	if (csg_modes->currentText() == "Intersection") {
+	    cf->op = bg_Intersection;
+	}
+
 	cf->fill_poly = (ps->fill_poly->isChecked()) ? true : false;
 	cf->fill_slope_x = (fastf_t)(ps->fill_slope_x->text().toDouble());
 	cf->fill_slope_y = (fastf_t)(ps->fill_slope_y->text().toDouble());
@@ -667,6 +613,11 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 
     // Retrieve the scene object from the libqtcad data container
     p = cf->wp;
+
+    // For this particular application, we want to apply booleans to
+    // all polygons
+    if (p)
+	bu_ptbl_ins(&pcf->bool_objs, (long *)p);
 
     if (cf->ptype == BV_POLYGON_GENERAL) {
 	close_general_poly->setEnabled(true);

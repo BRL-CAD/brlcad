@@ -479,14 +479,23 @@ QPolyFilter::close_polygon()
 }
 
 bool
-QPolyFilter::bool_exec(bg_clip_t &op, struct bu_ptbl *bool_objs)
+QPolyFilter::bool_exec(struct bu_ptbl *bool_objs)
 {
     if (op == bg_None || !bool_objs || !BU_PTBL_LEN(bool_objs))
 	return false;
 
+    int icnt = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(bool_objs); i++) {
 	struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(bool_objs, i);
-	bv_polygon_csg(target, wp, op);
+	icnt += bv_polygon_csg(target, wp, op);
+    }
+
+    // When doing boolean operations, the convention is if there were one
+    // or more interactions with other polygons, the original polygon is
+    // not retained
+    if (icnt) {
+	bv_obj_put(wp);
+	wp = NULL;
     }
 
     // TODO - check for name collisions (?)
@@ -649,15 +658,11 @@ QPolyCreateFilter::finalize(bool)
     if (!close_polygon())
 	return;
 
-    if (op != bg_None) {
-	for (size_t i = 0; i < BU_PTBL_LEN(&bool_objs); i++) {
-	    struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(&bool_objs, i);
-	    bv_polygon_csg(target, wp, op);
-	}
-    }
+    bool_exec(&bool_objs);
 
     // No longer need mouse movements to adjust parameters - turn off callback
-    wp->s_update_callback = NULL;
+    if (wp)
+	wp->s_update_callback = NULL;
 
     emit view_updated(QTCAD_VIEW_REFRESH);
     emit finalized(true);

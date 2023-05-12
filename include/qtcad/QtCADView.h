@@ -125,9 +125,10 @@ class QTCAD_EXPORT QPolyFilter : public QObject
 
     public:
 	bool close_polygon();
-	bool bool_exec(bg_clip_t &op, struct bu_ptbl *bool_objs);
+	bool bool_exec(struct bu_ptbl *bool_objs);
 
 	struct bview *v = NULL;
+	bg_clip_t op = bg_None;
 	struct bv_scene_obj *wp = NULL;
 	int ptype = BV_POLYGON_CIRCLE;
 	bool close_general_poly = true; // set to false if application wants to allow non-closed polygons
@@ -148,7 +149,6 @@ class QTCAD_EXPORT QPolyCreateFilter : public QPolyFilter
 	bool eventFilter(QObject *, QEvent *e);
 	void finalize(bool);
 
-	bg_clip_t op = bg_None;
 	struct bu_ptbl bool_objs = BU_PTBL_INIT_ZERO;
 };
 
@@ -159,7 +159,6 @@ class QTCAD_EXPORT QPolyUpdateFilter : public QPolyFilter
     public:
 	bool eventFilter(QObject *, QEvent *e);
 
-	bg_clip_t op = bg_None;
 	struct bu_ptbl bool_objs = BU_PTBL_INIT_ZERO;
 };
 

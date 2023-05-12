@@ -634,11 +634,11 @@ bv_polygon_csg(struct bv_scene_obj *target, struct bv_scene_obj *stencil, bg_cli
 {
     // Need data
     if (!target || !stencil)
-	return -1;
+	return 0;
 
     // Need polygons
     if (!(target->s_type_flags & BV_POLYGONS) || !(stencil->s_type_flags & BV_POLYGONS))
-	return -1;
+	return 0;
 
     // None op == no change
     if (op == bg_None)
