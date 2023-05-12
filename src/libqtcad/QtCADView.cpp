@@ -506,7 +506,7 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 
 	if (!wp) {
-	    wp = bv_create_polygon(v, BV_VIEW_OBJS, ptype, v->gv_mouse_x, v->gv_mouse_x);
+	    wp = bv_create_polygon(v, BV_VIEW_OBJS, ptype, v->gv_mouse_x, v->gv_mouse_y);
 	    wp->s_v = v;
 
 	    struct bv_polygon *ip = (struct bv_polygon *)wp->s_i_data;
