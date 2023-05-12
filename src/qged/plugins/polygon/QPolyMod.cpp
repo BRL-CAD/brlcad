@@ -159,6 +159,11 @@ QPolyMod::QPolyMod()
     select_mode->setChecked(true);
     mod_names_reset();
     toplevel_config(true);
+
+    puf = new QPolyUpdateFilter();
+    psf = new QPolySelectFilter();
+    ppf = new QPolyPointFilter();
+    pmf = new QPolyMoveFilter();
 }
 
 QPolyMod::~QPolyMod()

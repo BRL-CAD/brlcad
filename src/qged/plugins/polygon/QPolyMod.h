@@ -102,10 +102,11 @@ class QPolyMod : public QWidget
 	struct bv_scene_obj *p = NULL;
 	bool do_bool = false;
 
-	QPolyUpdateFilter puf;
-	QPolySelectFilter psf;
-	QPolyPointFilter ppf;
-	QPolyMoveFilter pmf;
+	QPolyFilter *cf = NULL;
+	QPolyUpdateFilter *puf;
+	QPolySelectFilter *psf;
+	QPolyPointFilter *ppf;
+	QPolyMoveFilter *pmf;
 };
 
 
