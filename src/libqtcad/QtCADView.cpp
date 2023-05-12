@@ -533,9 +533,13 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	    ip->fill_delta = fill_density;
 
 	    // Set fill
-	    if (fill_poly) {
+	    if (fill_poly && !ip->fill_flag) {
 		ip->fill_flag = 1;
 		bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
+	    }
+	    if (!fill_poly && ip->fill_flag) {
+		ip->fill_flag = 0;
+		bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_DEFAULT);
 	    }
 
 	    // Name appropriately

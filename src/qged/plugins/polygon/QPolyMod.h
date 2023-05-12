@@ -74,6 +74,7 @@ class QPolyMod : public QWidget
 	void app_mod_names_reset(void *);
 	void mod_names_reset();
 	void polygon_update_props();
+	void propagate_update(int);
 
     private slots:
 	void toplevel_config(bool);

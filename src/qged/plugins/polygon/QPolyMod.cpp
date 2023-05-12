@@ -216,7 +216,7 @@ QPolyMod::mod_names_reset()
 void
 QPolyMod::poly_type_settings(struct bv_polygon *ip)
 {
-    if (!ip->polygon.contour)
+    if (!ip || !ip->polygon.contour)
 	return;
     if (ip->type == BV_POLYGON_GENERAL) {
 	general_mode_opts->setEnabled(true);
@@ -863,6 +863,13 @@ QPolyMod::view_name_update()
 
 }
 
+void
+QPolyMod::propagate_update(int)
+{
+    emit view_updated(QTCAD_VIEW_REFRESH);
+}
+
+
 bool
 QPolyMod::eventFilter(QObject *, QEvent *e)
 {
@@ -873,126 +880,65 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
     if (!gedp)
 	return false;
 
-    QMouseEvent *m_e = NULL;
+    // We might be selecting or modifying - if the former, we may
+    // not have a current polygon.
+    struct bv_polygon *ip = (p) ? (struct bv_polygon *)p->s_i_data : NULL;
 
-    if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease || e->type() == QEvent::MouseButtonDblClick || e->type() == QEvent::MouseMove) {
-
-	m_e = (QMouseEvent *)e;
-
-	gedp->ged_gvp->gv_prevMouseX = gedp->ged_gvp->gv_mouse_x;
-	gedp->ged_gvp->gv_prevMouseY = gedp->ged_gvp->gv_mouse_y;
-
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	gedp->ged_gvp->gv_mouse_x = m_e->x();
-	gedp->ged_gvp->gv_mouse_y = m_e->y();
-#else
-	gedp->ged_gvp->gv_mouse_x = m_e->position().x();
-	gedp->ged_gvp->gv_mouse_y = m_e->position().y();
-#endif
-    }
-
-    if (!m_e)
-	return false;
-
-    printf("polygon mod\n");
-
-    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
-
-	if (select_mode->isChecked()) {
-	    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-	    if (view_objs) {
-		p = bv_select_polygon(view_objs, gedp->ged_gvp);
-		if (p) {
-		    int cind = mod_names->findText(bu_vls_cstr(&p->s_uuid));
-		    mod_names->blockSignals(true);
-		    mod_names->setCurrentIndex(cind);
-		    mod_names->blockSignals(false);
-		    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-		    poly_type_settings(ip);
-		    ps->settings_sync(p);
-		}
-	    }
-	    return true;
-	}
-
-	if (move_mode->isChecked()) {
-	    // Left click is a no-op in move mode
-	    return true;
-	}
-
-	if (!p) {
-	    return true;
-	}
-
-	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (append_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	    p->s_v->gv_mouse_x = m_e->x();
-	    p->s_v->gv_mouse_y = m_e->y();
-#else
-	    p->s_v->gv_mouse_x = m_e->position().x();
-	    p->s_v->gv_mouse_y = m_e->position().y();
-#endif
-	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
-
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return true;
-	}
-
-	if (!move_mode->isChecked() && select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	    p->s_v->gv_mouse_x = m_e->x();
-	    p->s_v->gv_mouse_y = m_e->y();
-#else
-	    p->s_v->gv_mouse_x = m_e->position().x();
-	    p->s_v->gv_mouse_y = m_e->position().y();
-#endif
-	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_SELECT);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return true;
-	}
-
-	// When we're dealing with polygons stray left clicks shouldn't zoom - just
-	// consume them if we're not using them above.
-	return true;
-    }
-
-    if (m_e->type() == QEvent::MouseButtonPress) {
-	// We also don't want other stray mouse clicks to do something surprising
-	return true;
-    }
-
-    if (m_e->type() == QEvent::MouseMove) {
-	if (p && m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
-
-	    if (select_mode->isChecked()) {
-		// Move is a no-op in select mode
-		return true;
-	    }
-
-	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	    if (!move_mode->isChecked() && select_pnt->isChecked() && ip->type == BV_POLYGON_GENERAL) {
-		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_MOVE);
-		emit view_updated(QTCAD_VIEW_REFRESH);
-	    } else if (move_mode->isChecked()) {
-		bu_log("move polygon mode\n");
-		clear_pnt_selection(false);
-		bv_move_polygon(p);
-		emit view_updated(QTCAD_VIEW_REFRESH);
-	    } else {
-		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
-		emit view_updated(QTCAD_VIEW_REFRESH);
-	    }
-	    return true;
+    // The mouse filter to use depends on the mode - find out
+    cf = puf;
+    if (select_mode->isChecked())
+	cf = psf;
+    if (move_mode->isChecked()) {
+	cf = pmf;
+    } else {
+	if (append_pnt->isChecked() || select_pnt->isChecked()) {
+	    if (!p)
+		return false;    
+	    if (!ip || ip->type != BV_POLYGON_GENERAL)
+		return false;    
+	    cf = ppf;
 	}
     }
 
-    if (m_e->type() == QEvent::MouseButtonRelease) {
-	emit view_updated(QTCAD_VIEW_REFRESH);
-	return true;
+    // Set libqtcad know what the current polygon is
+    cf->wp = p;
+    cf->v = (p) ? p->s_v : gedp->ged_gvp;
+    cf->ptype = (ip) ? ip->type : BV_POLYGON_GENERAL;
+
+    // Connect whatever the current filter is to pass on updating signals from
+    // the libqtcad logic.
+    QObject::connect(cf, &QPolyFilter::view_updated, this, &QPolyMod::propagate_update);
+
+    // Match the settings
+    cf->fill_poly = (ps->fill_poly->isChecked()) ? true : false;
+    cf->fill_slope_x = (fastf_t)(ps->fill_slope_x->text().toDouble());
+    cf->fill_slope_y = (fastf_t)(ps->fill_slope_y->text().toDouble());
+    cf->fill_density = (fastf_t)(ps->fill_density->text().toDouble());
+    BU_COLOR_CPY(&cf->fill_color, &ps->fill_color->bc);
+    BU_COLOR_CPY(&cf->edge_color, &ps->edge_color->bc);
+
+    // Run the guts of the libqtcad filter
+    bool ret = cf->eventFilter(NULL, e);
+
+    // Retrieve the scene object from the libqtcad data container
+    p = cf->wp;
+    ip = (p) ? (struct bv_polygon *)p->s_i_data : NULL;
+
+    // If we need to, update our selected list entry
+    if (select_mode->isChecked() && p) {
+	int cind = mod_names->findText(bu_vls_cstr(&p->s_uuid));
+	mod_names->blockSignals(true);
+	mod_names->setCurrentIndex(cind);
+	mod_names->blockSignals(false);
+	poly_type_settings(ip);
+	ps->settings_sync(p);
     }
 
-    return false;
+    // Because the active filter may change, we only maintain the
+    // signal connection for the duration of the event
+    QObject::disconnect(cf, &QPolyFilter::view_updated, this, &QPolyMod::propagate_update);
+
+    return ret;
 }
 
 
