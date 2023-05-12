@@ -32,6 +32,7 @@
 #include <QRadioButton>
 #include "bg/polygon_types.h"
 #include "qtcad/QColorRGB.h"
+#include "qtcad/QtCADView.h"
 #include "QPolySettings.h"
 
 class QPolyCreate : public QWidget
@@ -76,6 +77,7 @@ class QPolyCreate : public QWidget
 	void finalize(bool);
 	void do_import_sketch();
 	void do_vpoly_copy();
+	void propagate_update(int);
 
 	void sketch_sync_bool(bool);
 	void sketch_sync_str(const QString &);
@@ -91,6 +93,9 @@ class QPolyCreate : public QWidget
 	int poly_cnt = 0;
 	struct bv_scene_obj *p = NULL;
 	bool do_bool = false;
+
+	QPolyFilter *cf = NULL;
+	QPolyCreateFilter *pcf;
 };
 
 #endif //QPOLYCREATE_H

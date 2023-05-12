@@ -144,6 +144,8 @@ QPolyCreate::QPolyCreate()
     // By default, start in circle addition mode
     circle_mode->setChecked(true);
     toplevel_config(true);
+
+    pcf = new QPolyCreateFilter();
 }
 
 QPolyCreate::~QPolyCreate()
@@ -599,6 +601,12 @@ QPolyCreate::toplevel_config(bool)
 	emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
+void
+QPolyCreate::propagate_update(int)
+{
+    emit view_updated(QTCAD_VIEW_REFRESH);
+}
+
 bool
 QPolyCreate::eventFilter(QObject *, QEvent *e)
 {
@@ -611,193 +619,51 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     if (!gedp->ged_gvp)
 	return false;
 
-    QMouseEvent *m_e = NULL;
+    cf = pcf;
+    pcf->wp = p;
+    pcf->v = (p) ? p->s_v : gedp->ged_gvp;
 
-    if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease || e->type() == QEvent::MouseButtonDblClick || e->type() == QEvent::MouseMove) {
+    // Connect whatever the current filter is to pass on updating signals from
+    // the libqtcad logic
+    QObject::connect(cf, &QPolyFilter::view_updated, this, &QPolyCreate::propagate_update);
 
-	m_e = (QMouseEvent *)e;
-
-	gedp->ged_gvp->gv_prevMouseX = gedp->ged_gvp->gv_mouse_x;
-	gedp->ged_gvp->gv_prevMouseY = gedp->ged_gvp->gv_mouse_y;
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	gedp->ged_gvp->gv_mouse_x = m_e->x();
-	gedp->ged_gvp->gv_mouse_y = m_e->y();
-#else
-	gedp->ged_gvp->gv_mouse_x = m_e->position().x();
-	gedp->ged_gvp->gv_mouse_y = m_e->position().y();
-#endif
-    }
-
-    if (!m_e)
-	return false;
-
-    // If we have modifiers, we're most likely doing shift grips
-    if (m_e->modifiers() != Qt::NoModifier)
-	return false;
-
-    printf("polygon add\n");
-
-    do_bool = false;
-    if (csg_modes->currentText() != "None") {
-	do_bool = true;
-    }
-
-
-    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
-	if (!p) {
-	    int ptype = BV_POLYGON_CIRCLE;
-	    if (ellipse_mode->isChecked()) {
-		ptype = BV_POLYGON_ELLIPSE;
-	    }
-	    if (square_mode->isChecked()) {
-		ptype = BV_POLYGON_SQUARE;
-	    }
-	    if (rectangle_mode->isChecked()) {
-		ptype = BV_POLYGON_RECTANGLE;
-	    }
-	    if (general_mode->isChecked()) {
-		ptype = BV_POLYGON_GENERAL;
-	    }
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	    p = bv_create_polygon(gedp->ged_gvp, BV_VIEW_OBJS, ptype, m_e->x(), m_e->y());
-#else
-	    p = bv_create_polygon(gedp->ged_gvp, BV_VIEW_OBJS, ptype, m_e->position().x(), m_e->position().y());
-#endif
-	    p->s_v = gedp->ged_gvp;
-	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-
-	    if (ptype == BV_POLYGON_GENERAL) {
-
-		// For general polygons, we need to identify the active contour
-		// for update operations to work.
-		//
-		// At some point we'll need to add support for adding and removing
-		// contours...
-		ip->curr_contour_i = 0;
-
-		close_general_poly->setEnabled(true);
-		close_general_poly->blockSignals(true);
-		close_general_poly->setChecked(false);
-		close_general_poly->blockSignals(false);
-	    } else {
-		close_general_poly->setEnabled(false);
-	    }
-
-	    // Get edge color
-	    bu_color_to_rgb_chars(&ps->edge_color->bc, p->s_color);
-
-	    // fill color
-	    BU_COLOR_CPY(&ip->fill_color, &ps->fill_color->bc);
-
-	    // fill settings
-	    vect2d_t vdir = V2INIT_ZERO;
-	    vdir[0] = (fastf_t)(ps->fill_slope_x->text().toDouble());
-	    vdir[1] = (fastf_t)(ps->fill_slope_y->text().toDouble());
-	    V2MOVE(ip->fill_dir, vdir);
-	    ip->fill_delta = (fastf_t)(ps->fill_density->text().toDouble());
-
-	    // Set fill
-	    if (ps->fill_poly->isChecked()) {
-		ip->fill_flag = 1;
-		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
-	    }
-
-	    // Name appropriately
-	    bu_vls_init(&p->s_uuid);
-
-	    // It doesn't get a "proper" name until its finalized
-	    bu_vls_printf(&p->s_uuid, "_tmp_view_polygon");
-
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return true;
-	}
-
-	// If we're creating a general polygon, we're appending points after
-	// the initial creation
+    if (p) {
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	    p->s_v->gv_mouse_x = m_e->x();
-	    p->s_v->gv_mouse_y = m_e->y();
-#else
-	    p->s_v->gv_mouse_x = m_e->position().x();
-	    p->s_v->gv_mouse_y = m_e->position().y();
-#endif
-	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
-
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return true;
+	pcf->ptype = ip->type;
+    } else {
+	if (ellipse_mode->isChecked()) {
+	    pcf->ptype = BV_POLYGON_ELLIPSE;
 	}
-
-	// When we're dealing with polygons stray left clicks shouldn't zoom - just
-	// consume them if we're not using them above.
-	return true;
-    }
-
-    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::RightButton)) {
-	// No-op if no current polygon is defined
-	if (!p)
-	    return true;
-
-	// Non-general polygon creation doesn't use right click.
-	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type != BV_POLYGON_GENERAL) {
-	    return true;
+	if (square_mode->isChecked()) {
+	    pcf->ptype = BV_POLYGON_SQUARE;
 	}
-
-	// General polygon, have right click - finish up.
-	finalize(true);
-	return true;
-    }
-
-    if (m_e->type() == QEvent::MouseButtonPress) {
-	// We also don't want other stray mouse clicks to do something surprising
-	return true;
-    }
-
-    // During initial add/creation of non-general polygons, mouse movement
-    // adjusts the shape
-    if (m_e->type() == QEvent::MouseMove) {
-	// No-op if no current polygon is defined
-	if (!p)
-	    return true;
-
-	// General polygon creation doesn't use mouse movement.
-	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL) {
-	    return true;
+	if (rectangle_mode->isChecked()) {
+	    pcf->ptype = BV_POLYGON_RECTANGLE;
 	}
-
-	// For every other polygon type, call the libbv update routine
-	// with the view's x,y coordinates
-	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
-	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return true;
+	if (general_mode->isChecked()) {
+	    pcf->ptype = BV_POLYGON_GENERAL;
 	}
     }
 
-    if (m_e->type() == QEvent::MouseButtonRelease) {
-
-	// No-op if no current polygon is defined
-	if (!p)
-	    return true;
-
-	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL) {
-	    // General polygons are finalized by an explicit close
-	    // (either right mouse click or the close checkbox)
-	    return true;
-	}
-
-	// For all non-general polygons, mouse release is the signal
-	// to finish up.
-	finalize(true);
-
-	return true;
+    bool ret = pcf->eventFilter(NULL, e);
+    p = cf->wp;
+    if (pcf->ptype == BV_POLYGON_GENERAL) {
+	close_general_poly->setEnabled(true);
+	close_general_poly->blockSignals(true);
+	close_general_poly->setChecked(false);
+	close_general_poly->blockSignals(false);
+    } else {
+	close_general_poly->setEnabled(false);
     }
 
-    return false;
+    // Because the active filter may change, we only maintain the
+    // signal connection for the duration of the event
+    QObject::disconnect(cf, &QPolyFilter::view_updated, this, &QPolyCreate::propagate_update);
+
+
+    // TODO - also handle signal/slot for finalize here...
+
+    return ret;
 }
 
 // Local Variables:

@@ -126,12 +126,12 @@ class QTCAD_EXPORT QPolyFilter : public QObject
 	bool close_polygon();
 	bool bool_exec(bg_clip_t &op, struct bu_ptbl *bool_objs);
 
-	QtCADView *cv = NULL;
-	struct bv_scene_obj *p = NULL;
+	struct bview *v = NULL;
+	struct bv_scene_obj *wp = NULL;
 	int ptype = BV_POLYGON_CIRCLE;
 	bool close_general_poly = true; // set to false if application wants to allow non-closed polygons
-	struct bu_color fill_color;
-	struct bu_color edge_color;
+	struct bu_color fill_color = BU_COLOR_INIT_ZERO;
+	struct bu_color edge_color = BU_COLOR_INIT_ZERO;
 	bool fill_poly = false;
 	double fill_slope_x = 1.0;
 	double fill_slope_y = 1.0;
