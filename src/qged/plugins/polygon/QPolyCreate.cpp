@@ -623,8 +623,8 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 
     // If we're mid-creation (i.e. p != NULL) we need to keep processing the
     // polygon from the last event - otherwise, start fresh with p == NULL
-    pcf->wp = p;
-    pcf->v = (p) ? p->s_v : gedp->ged_gvp;
+    cf->wp = p;
+    cf->v = (p) ? p->s_v : gedp->ged_gvp;
 
     // Connect whatever the current filter is to pass on updating signals from
     // the libqtcad logic.  (For the moment we've only got the one filter, but
@@ -639,35 +639,35 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     //  settings
     if (p) {
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	pcf->ptype = ip->type;
+	cf->ptype = ip->type;
     } else {
 	if (ellipse_mode->isChecked()) {
-	    pcf->ptype = BV_POLYGON_ELLIPSE;
+	    cf->ptype = BV_POLYGON_ELLIPSE;
 	}
 	if (square_mode->isChecked()) {
-	    pcf->ptype = BV_POLYGON_SQUARE;
+	    cf->ptype = BV_POLYGON_SQUARE;
 	}
 	if (rectangle_mode->isChecked()) {
-	    pcf->ptype = BV_POLYGON_RECTANGLE;
+	    cf->ptype = BV_POLYGON_RECTANGLE;
 	}
 	if (general_mode->isChecked()) {
-	    pcf->ptype = BV_POLYGON_GENERAL;
+	    cf->ptype = BV_POLYGON_GENERAL;
 	}
 
-	pcf->fill_poly = (ps->fill_poly->isChecked()) ? true : false;
-	pcf->fill_slope_x = (fastf_t)(ps->fill_slope_x->text().toDouble());
-	pcf->fill_slope_y = (fastf_t)(ps->fill_slope_y->text().toDouble());
-	pcf->fill_density = (fastf_t)(ps->fill_density->text().toDouble());
-    	BU_COLOR_CPY(&pcf->fill_color, &ps->fill_color->bc);
-	BU_COLOR_CPY(&pcf->edge_color, &ps->edge_color->bc);
+	cf->fill_poly = (ps->fill_poly->isChecked()) ? true : false;
+	cf->fill_slope_x = (fastf_t)(ps->fill_slope_x->text().toDouble());
+	cf->fill_slope_y = (fastf_t)(ps->fill_slope_y->text().toDouble());
+	cf->fill_density = (fastf_t)(ps->fill_density->text().toDouble());
+    	BU_COLOR_CPY(&cf->fill_color, &ps->fill_color->bc);
+	BU_COLOR_CPY(&cf->edge_color, &ps->edge_color->bc);
     }
 
-    bool ret = pcf->eventFilter(NULL, e);
+    bool ret = cf->eventFilter(NULL, e);
 
     // Retrieve the scene object from the libqtcad data container
     p = cf->wp;
 
-    if (pcf->ptype == BV_POLYGON_GENERAL) {
+    if (cf->ptype == BV_POLYGON_GENERAL) {
 	close_general_poly->setEnabled(true);
 	close_general_poly->blockSignals(true);
 	close_general_poly->setChecked(false);
