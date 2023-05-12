@@ -121,6 +121,7 @@ class QTCAD_EXPORT QPolyFilter : public QObject
 
     signals:
         void view_updated(int);
+        void finalized(bool);
 
     public:
 	bool close_polygon();
@@ -149,9 +150,6 @@ class QTCAD_EXPORT QPolyCreateFilter : public QPolyFilter
 
 	bg_clip_t op = bg_None;
 	struct bu_ptbl bool_objs = BU_PTBL_INIT_ZERO;
-
-    signals:
-        void finalized();
 };
 
 class QTCAD_EXPORT QPolyUpdateFilter : public QPolyFilter

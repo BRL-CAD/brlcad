@@ -649,10 +649,6 @@ QPolyCreateFilter::finalize(bool)
     if (!close_polygon())
 	return;
 
-    if (!BU_PTBL_LEN(&bool_objs)) {
-	emit finalized();
-	return;
-    }
     if (op != bg_None) {
 	for (size_t i = 0; i < BU_PTBL_LEN(&bool_objs); i++) {
 	    struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(&bool_objs, i);
@@ -664,7 +660,7 @@ QPolyCreateFilter::finalize(bool)
     wp->s_update_callback = NULL;
 
     emit view_updated(QTCAD_VIEW_REFRESH);
-    emit finalized();
+    emit finalized(true);
 }
 
 bool
