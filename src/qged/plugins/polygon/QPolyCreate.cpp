@@ -620,13 +620,23 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	return false;
 
     cf = pcf;
+
+    // If we're mid-creation (i.e. p != NULL) we need to keep processing the
+    // polygon from the last event - otherwise, start fresh with p == NULL
     pcf->wp = p;
     pcf->v = (p) ? p->s_v : gedp->ged_gvp;
 
     // Connect whatever the current filter is to pass on updating signals from
-    // the libqtcad logic
+    // the libqtcad logic.  (For the moment we've only got the one filter, but
+    // defining the connect/disconnect pattern this way to be flexible if we
+    // need to shift filters at some point in the future.  Polygon modding, for
+    // example, has multiple filters depending on the activity and will need
+    // this...)
     QObject::connect(cf, &QPolyFilter::view_updated, this, &QPolyCreate::propagate_update);
 
+    //  If we're continuing to edit the existing polygon, the options are
+    //  whatever is already established - otherwise, grab from the widget
+    //  settings
     if (p) {
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	pcf->ptype = ip->type;
@@ -643,10 +653,20 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	if (general_mode->isChecked()) {
 	    pcf->ptype = BV_POLYGON_GENERAL;
 	}
+
+	pcf->fill_poly = (ps->fill_poly->isChecked()) ? true : false;
+	pcf->fill_slope_x = (fastf_t)(ps->fill_slope_x->text().toDouble());
+	pcf->fill_slope_y = (fastf_t)(ps->fill_slope_y->text().toDouble());
+	pcf->fill_density = (fastf_t)(ps->fill_density->text().toDouble());
+    	BU_COLOR_CPY(&pcf->fill_color, &ps->fill_color->bc);
+	BU_COLOR_CPY(&pcf->edge_color, &ps->edge_color->bc);
     }
 
     bool ret = pcf->eventFilter(NULL, e);
+
+    // Retrieve the scene object from the libqtcad data container
     p = cf->wp;
+
     if (pcf->ptype == BV_POLYGON_GENERAL) {
 	close_general_poly->setEnabled(true);
 	close_general_poly->blockSignals(true);
