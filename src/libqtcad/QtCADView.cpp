@@ -558,7 +558,6 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	if (!wp)
 	    return true;
 
-	bu_log("process wp\n");
 	// If we are in the process of creating a general polygon, after the initial creation
 	// left clicks will append new points
 	struct bv_polygon *ip = (struct bv_polygon *)wp->s_i_data;
