@@ -100,8 +100,8 @@ _poly_cmd_create(void *bs, int argc, const char **argv)
 	bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", gd->vobj);
 	return BRLCAD_ERROR;
     }
-    bu_vls_init(&s->s_uuid);
-    bu_vls_printf(&s->s_uuid, "%s", gd->vobj);
+    bu_vls_init(&s->s_name);
+    bu_vls_printf(&s->s_name, "%s", gd->vobj);
 
     return BRLCAD_OK;
 }
@@ -578,7 +578,7 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
     if (view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (BU_STR_EQUAL(argv[0], bu_vls_cstr(&stest->s_uuid))) {
+	    if (BU_STR_EQUAL(argv[0], bu_vls_cstr(&stest->s_name))) {
 		s2 = stest;
 		break;
 	    }
@@ -589,7 +589,7 @@ _poly_cmd_overlap(void *bs, int argc, const char **argv)
 	if (local_view_objs) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
 		struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
-		if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_uuid))) {
+		if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_name))) {
 		    s2 = stest;
 		    break;
 		}
@@ -824,15 +824,7 @@ _poly_cmd_fill_color(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    struct bv_scene_obj *fobj = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
-	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s_c->s_uuid), "fill")) {
-	    fobj = s_c;
-	    break;
-	}
-    }
-
+    struct bv_scene_obj *fobj = bv_find_child(s, "*fill*");
     if (fobj) {
 	bu_color_to_rgb_chars(&p->fill_color, fobj->s_color);
     }
@@ -894,7 +886,7 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
     if (view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_uuid))) {
+	    if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_name))) {
 		s2 = stest;
 		break;
 	    }
@@ -905,7 +897,7 @@ _poly_cmd_csg(void *bs, int argc, const char **argv)
 	if (local_view_objs) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
 		struct bv_scene_obj *stest = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
-		if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_uuid))) {
+		if (BU_STR_EQUAL(argv[1], bu_vls_cstr(&stest->s_name))) {
 		    s2 = stest;
 		    break;
 		}

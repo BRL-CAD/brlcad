@@ -543,11 +543,9 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	    }
 
 	    // Name appropriately
-	    bu_vls_init(&wp->s_uuid);
 	    bu_vls_init(&wp->s_name);
 
 	    // It doesn't get a "proper" name until its finalized
-	    bu_vls_printf(&wp->s_uuid, "_tmp_view_polygon");
 	    bu_vls_printf(&wp->s_name, "_tmp_view_polygon");
 
 	    emit view_updated(QTCAD_VIEW_REFRESH);

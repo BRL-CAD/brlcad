@@ -226,8 +226,8 @@ end:
 	BU_PUT(p, struct bv_polygon);
 	return NULL;
     }
-    bu_vls_init(&s->s_uuid);
-    bu_vls_printf(&s->s_uuid, "%s", sname);
+    bu_vls_init(&s->s_name);
+    bu_vls_printf(&s->s_name, "%s", sname);
 
     // check attributes for visual properties
     int have_view = 1;

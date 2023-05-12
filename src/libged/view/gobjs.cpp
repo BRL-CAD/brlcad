@@ -128,7 +128,6 @@ _gobjs_cmd_create(void *bs, int argc, const char **argv)
     db_full_path_init((struct db_full_path *)g->s_path);
     db_dup_full_path((struct db_full_path *)g->s_path, fp);
     db_path_to_vls(&g->s_name, fp);
-    bu_vls_sprintf(&g->s_uuid, "%s", argv[1]);
     g->s_i_data = (void *)ip;
     g->s_free_callback = &gobjs_scene_free;
 
@@ -243,24 +242,21 @@ _view_cmd_gobjs(void *bs, int argc, const char **argv)
 	if (view_objs) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		// TODO - strip gobjs:: prefix
-		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
 	    }
 	}
 	struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
 	if (local_view_objs) {
 	    for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
-		// TODO - strip gobjs:: prefix
-		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+		bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
 	    }
 	}
 	return BRLCAD_OK;
     }
 
     gd->s = NULL;
-    // TODO - append gobjs:: prefix
- 
+
     if (!gd->s) {
 	// View object doesn't already exist.  subcommands will either need to create it
 	// or handle the error case

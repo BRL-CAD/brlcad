@@ -149,7 +149,7 @@ _objs_cmd_color(void *bs, int argc, const char **argv)
 	    while (!sobjs.empty()) {
 		struct bv_scene_obj *sc = sobjs.front();
 		sobjs.pop();
-		bu_vls_printf(gedp->ged_result_str, "%s: %d/%d/%d\n", bu_vls_cstr(&sc->s_uuid), sc->s_color[0], sc->s_color[1], sc->s_color[2]);
+		bu_vls_printf(gedp->ged_result_str, "%s: %d/%d/%d\n", bu_vls_cstr(&sc->s_name), sc->s_color[0], sc->s_color[1], sc->s_color[2]);
 		for (size_t i = 0; i < BU_PTBL_LEN(&sc->children); i++) {
 		    struct bv_scene_obj *scn = (struct bv_scene_obj *)BU_PTBL_GET(&sc->children, i);
 		    sobjs.push(scn);
@@ -434,7 +434,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	    if (view_objs) {
 		for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
 		}
 	    }
 
@@ -442,7 +442,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	    if (local_view_objs) {
 		for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
 		    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
-		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_uuid));
+		    bu_vls_printf(gd->gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->s_name));
 		}
 	    }
 	}
@@ -468,7 +468,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_uuid))) {
+		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_name))) {
 		    gd->s = s;
 		    break;
 		}
@@ -478,7 +478,7 @@ _view_cmd_objs(void *bs, int argc, const char **argv)
 	    struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_uuid))) {
+		if (BU_STR_EQUAL(gd->vobj, bu_vls_cstr(&s->s_name))) {
 		    gd->s = s;
 		    break;
 		}

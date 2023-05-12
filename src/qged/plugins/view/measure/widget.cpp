@@ -384,8 +384,8 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 	    VMOVE(p1, mpnt);
 	    VMOVE(p2, mpnt);
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
-	    bu_vls_init(&s->s_uuid);
-	    bu_vls_printf(&s->s_uuid, "tool:measurement");
+	    bu_vls_init(&s->s_name);
+	    bu_vls_printf(&s->s_name, "tool:measurement");
 	    emit view_updated(QTCAD_VIEW_REFRESH);
 	    return true;
 	}

@@ -195,13 +195,13 @@ QPolyMod::mod_names_reset()
 	    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 		if (s->s_type_flags & BV_POLYGONS) {
-		    mod_names->addItem(bu_vls_cstr(&s->s_uuid));
+		    mod_names->addItem(bu_vls_cstr(&s->s_name));
 		}
 	    }
 	}
     }
     if (p) {
-	int cind = mod_names->findText(bu_vls_cstr(&p->s_uuid));
+	int cind = mod_names->findText(bu_vls_cstr(&p->s_name));
 	mod_names->setCurrentIndex(cind);
     } else {
 	mod_names->setCurrentIndex(0);
@@ -379,7 +379,7 @@ QPolyMod::select(const QString &poly)
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	    if (s->s_type_flags & BV_POLYGONS) {
-		QString pname(bu_vls_cstr(&s->s_uuid));
+		QString pname(bu_vls_cstr(&s->s_name));
 		if (pname == poly) {
 		    p = s;
 		    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
@@ -806,7 +806,7 @@ QPolyMod::view_name_edit()
     if (view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (p != s && BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+	    if (p != s && BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
 		colliding = true;
 	    }
 	}
@@ -847,7 +847,7 @@ QPolyMod::view_name_update()
     if (view_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (p != s && BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+	    if (p != s && BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
 		colliding = true;
 	    }
 	}
@@ -856,7 +856,7 @@ QPolyMod::view_name_update()
 	    return;
 	}
 
-	bu_vls_sprintf(&p->s_uuid, "%s", vname);
+	bu_vls_sprintf(&p->s_name, "%s", vname);
     }
     bu_free(vname, "vname");
     emit view_updated(QTCAD_VIEW_REFRESH);
@@ -921,7 +921,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 
     // If we need to, update our selected list entry
     if (select_mode->isChecked() && p) {
-	int cind = mod_names->findText(bu_vls_cstr(&p->s_uuid));
+	int cind = mod_names->findText(bu_vls_cstr(&p->s_name));
 	mod_names->blockSignals(true);
 	mod_names->setCurrentIndex(cind);
 	mod_names->blockSignals(false);

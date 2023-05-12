@@ -94,7 +94,7 @@ bv_fill_polygon(struct bv_scene_obj *s)
 
     // Got fill, create lines
     fobj = bv_obj_get_child(s);
-    bu_vls_printf(&fobj->s_uuid, ":fill");
+    bu_vls_printf(&fobj->s_name, ":fill");
     fobj->s_os->s_line_width = 1;
     fobj->s_soldash = 0;
     bu_color_to_rgb_chars(&p->fill_color, fobj->s_color);
@@ -881,8 +881,8 @@ bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
     bv_polygon_vlist(np);
 
     // Set new name
-    bu_vls_init(&np->s_uuid);
-    bu_vls_sprintf(&np->s_uuid, "%s", nname);
+    bu_vls_init(&np->s_name);
+    bu_vls_sprintf(&np->s_name, "%s", nname);
 
     // Return new object
     return np;

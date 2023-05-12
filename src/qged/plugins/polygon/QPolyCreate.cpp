@@ -245,7 +245,7 @@ QPolyCreate::finalize(bool)
 	bool colliding = false;
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+	    if (BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
 		colliding = true;
 	    }
 	}
@@ -263,9 +263,9 @@ QPolyCreate::finalize(bool)
 	// Either a non-boolean creation or a Union with no interactions -
 	// either way we're keeping it, so assign a proper name
 	if (ps->view_name->text().length()) {
-	    bu_vls_sprintf(&p->s_uuid, "%s", ps->view_name->text().toLocal8Bit().data());
+	    bu_vls_sprintf(&p->s_name, "%s", ps->view_name->text().toLocal8Bit().data());
 	} else {
-	    bu_vls_sprintf(&p->s_uuid, "%s", ps->view_name->placeholderText().toLocal8Bit().data());
+	    bu_vls_sprintf(&p->s_name, "%s", ps->view_name->placeholderText().toLocal8Bit().data());
 	}
 
 	// Done processing view object - increment name
@@ -334,7 +334,7 @@ QPolyCreate::do_vpoly_copy()
 	return;
     for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
 	    colliding = true;
 	}
     }
@@ -352,7 +352,7 @@ QPolyCreate::do_vpoly_copy()
     struct bv_scene_obj *src_obj = NULL;
     for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	struct bv_scene_obj *cobj = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&cobj->s_uuid), sname)) {
+	if (BU_STR_EQUAL(bu_vls_cstr(&cobj->s_name), sname)) {
 	    src_obj = cobj;
 	}
     }
@@ -408,7 +408,7 @@ QPolyCreate::do_import_sketch()
 	return;
     for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
 	    colliding = true;
 	}
     }
@@ -547,7 +547,7 @@ QPolyCreate::view_sync()
 	return;
     for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
+	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
 	    colliding = true;
 	}
     }
