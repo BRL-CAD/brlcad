@@ -1,7 +1,7 @@
 if (TARGET gcv-assetimport)
   set(dep_str DEPS "gcv;gcv-obj;gcv-assetimport" CONVERTERS "assetimport")
 
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/conv-tetra.mtl")   # hard to track companion files
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/conv-tetra-assetimport.mtl")   # hard to track companion files
 else()
   set(dep_str "")
 endif (TARGET gcv-assetimport)
