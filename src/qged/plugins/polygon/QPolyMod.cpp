@@ -796,74 +796,33 @@ QPolyMod::view_name_edit()
     if (!gedp)
 	return;
 
-    char *vname = NULL;
-    if (ps->view_name->placeholderText().length()) {
-	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
+    if (!ps->uniq_obj_name(NULL, gedp->ged_gvp)) {
+	ps->view_name->setStyleSheet("color: rgb(255,0,0)");
+    } else {
+	ps->view_name->setStyleSheet("");
     }
-    if (ps->view_name->text().length()) {
-	bu_free(vname, "vname");
-	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
-    }
-    bool colliding = false;
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-    if (view_objs) {
-	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (p != s && BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
-		colliding = true;
-	    }
-	}
-	if (colliding) {
-	    ps->view_name->setStyleSheet("color: rgb(255,0,0)");
-	} else {
-	    ps->view_name->setStyleSheet("");
-	}
-    }
-
-    bu_free(vname, "vname");
 }
 
 void
 QPolyMod::view_name_update()
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
-    if (!m)
+    if (!m || !p)
 	return;
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
 
-    char *vname = NULL;
-    if (ps->view_name->placeholderText().length()) {
-	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
-    }
-    if (ps->view_name->text().length()) {
-	bu_free(vname, "vname");
-	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
-    }
-
-    if (!vname)
+    // Make sure the name is unique
+    struct bu_vls vname = BU_VLS_INIT_ZERO;
+    if (!ps->uniq_obj_name(&vname, gedp->ged_gvp)) {
+	bu_vls_free(&vname);
 	return;
-
-    bool colliding = false;
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-    if (view_objs) {
-	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (p != s && BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
-		colliding = true;
-	    }
-	}
-	if (colliding) {
-	    bu_free(vname, "vname");
-	    return;
-	}
-
-	bu_vls_sprintf(&p->s_name, "%s", vname);
     }
-    bu_free(vname, "vname");
-    emit view_updated(QTCAD_VIEW_REFRESH);
 
+    bu_vls_sprintf(&p->s_name, "%s", bu_vls_cstr(&vname));
+    bu_vls_free(&vname);
+    emit view_updated(QTCAD_VIEW_REFRESH);
 }
 
 void

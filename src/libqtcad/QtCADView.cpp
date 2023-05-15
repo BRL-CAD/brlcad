@@ -481,8 +481,11 @@ QPolyFilter::close_polygon()
 bool
 QPolyFilter::bool_exec(struct bu_ptbl *bool_objs)
 {
-    if (op == bg_None || !bool_objs || !BU_PTBL_LEN(bool_objs))
+    if (op == bg_None || !bool_objs || !BU_PTBL_LEN(bool_objs)) {
+	// No interactions, so we're keeping it - assign a proper name
+	bu_vls_sprintf(&wp->s_name, "%s", vname.c_str());
 	return false;
+    }
 
     int icnt = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(bool_objs); i++) {
@@ -493,12 +496,14 @@ QPolyFilter::bool_exec(struct bu_ptbl *bool_objs)
     // When doing boolean operations, the convention is if there were one
     // or more interactions with other polygons, the original polygon is
     // not retained
-    if (icnt) {
+    if (icnt || op == bg_Difference || op == bg_Intersection) {
 	bv_obj_put(wp);
 	wp = NULL;
+    } else {
+	// No interactions, so we're keeping it - assign a proper name
+	bu_vls_sprintf(&wp->s_name, "%s", vname.c_str());
     }
 
-    // TODO - check for name collisions (?)
     return true;
 }
 

@@ -156,7 +156,7 @@ void
 QPolyCreate::finalize(bool)
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
-    if (!m || !p)
+    if (!m)
 	return;
     struct ged *gedp = m->gedp;
     if (!gedp)
@@ -167,54 +167,19 @@ QPolyCreate::finalize(bool)
     close_general_poly->blockSignals(false);
     close_general_poly->setDisabled(true);
 
-#if 0
-    int pcnt = 0;
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-    // Check if we have a name collision - if we do, it's no go
-    char *vname = NULL;
-    if (ps->view_name->placeholderText().length()) {
-	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
-    }
-    if (ps->view_name->text().length()) {
-	bu_free(vname, "vname");
-	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
-    }
-    bool colliding = false;
-    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
-	    colliding = true;
-	}
-    }
-    bu_free(vname, "vname");
-    if (colliding) {
-	bg_polygon_free(&ip->polygon);
-	BU_PUT(ip, struct bv_polygon);
-	bv_obj_put(p);
-	do_bool = false;
-	p = NULL;
-	emit view_updated(QTCAD_VIEW_REFRESH);
+    // If we're not keeping the polygon due to its being
+    // used for previous boolean ops, we're done
+    if (!p)
 	return;
-    }
 
-    // Either a non-boolean creation or a Union with no interactions -
-    // either way we're keeping it, so assign a proper name
-    if (ps->view_name->text().length()) {
-	bu_vls_sprintf(&p->s_name, "%s", ps->view_name->text().toLocal8Bit().data());
-    } else {
-	bu_vls_sprintf(&p->s_name, "%s", ps->view_name->placeholderText().toLocal8Bit().data());
-    }
-
-    // Done processing view object - increment name
+    // If we're keeping the object, there are some housekeeping
+    // steps to complete
     poly_cnt++;
     ps->view_name->clear();
     struct bu_vls pname = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
     ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
     bu_vls_free(&pname);
-
-    // No longer need mouse movements to adjust parameters - turn off callback
-    p->s_update_callback = NULL;
 
     // If we're also writing this out as a sketch, take care of that.
     if (ps->sketch_sync->isChecked()) {
@@ -227,19 +192,18 @@ QPolyCreate::finalize(bool)
 	    sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
 	}
 	if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	    ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
 	    emit view_updated(QTCAD_VIEW_DB);
 	}
 	bu_free(sk_name, "name cpy");
-    } else {
-	ip->u_data = NULL;
     }
 
     // Done with sketch - update name for next polygon
     ps->sketch_name->setPlaceholderText("");
     ps->sketch_name->setText("");
     sketch_sync();
-#endif
+
     p = NULL;
     emit view_updated(QTCAD_VIEW_REFRESH);
 }
@@ -255,54 +219,30 @@ QPolyCreate::do_vpoly_copy()
 	return;
 
     // Check if we have a name collision - if we do, it's no go
-    char *vname = NULL;
-    if (ps->view_name->placeholderText().length()) {
-	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
-    }
-    if (ps->view_name->text().length()) {
-	bu_free(vname, "vname");
-	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
-    }
-    bool colliding = false;
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-    if (!view_objs)
-	return;
-    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
-	    colliding = true;
-	}
-    }
-    if (colliding) {
-	bu_free(vname, "name cpy");
+    struct bu_vls vname = BU_VLS_INIT_ZERO;
+    if (!ps->uniq_obj_name(&vname, gedp->ged_gvp)) {
+	bu_vls_free(&vname);
 	return;
     }
 
     // See if we've got a valid dp name
     if (!vpoly_name->text().length()) {
-	bu_free(vname, "name cpy");
+	bu_vls_free(&vname);
 	return;
     }
     char *sname = bu_strdup(vpoly_name->text().toLocal8Bit().data());
-    struct bv_scene_obj *src_obj = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	struct bv_scene_obj *cobj = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&cobj->s_name), sname)) {
-	    src_obj = cobj;
-	}
-    }
+    struct bv_scene_obj *src_obj = bv_find_obj(gedp->ged_gvp, sname);
     bu_free(sname, "name cpy");
     if (!src_obj) {
-	bu_free(vname, "name cpy");
+	bu_vls_free(&vname);
 	return;
     }
 
     // Names are valid, src_obj is ready - do the copy
-    p = bg_dup_view_polygon(vname, src_obj);
-    bu_free(vname, "name cpy");
-    if (!p) {
+    p = bg_dup_view_polygon(bu_vls_cstr(&vname), src_obj);
+    bu_vls_free(&vname);
+    if (!p)
 	return;
-    }
     p->s_v = gedp->ged_gvp;
 
     // Done processing view object - increment name
@@ -329,48 +269,30 @@ QPolyCreate::do_import_sketch()
 	return;
 
     // Check if we have a name collision - if we do, it's no go
-    char *vname = NULL;
-    if (ps->view_name->placeholderText().length()) {
-	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
-    }
-    if (ps->view_name->text().length()) {
-	bu_free(vname, "vname");
-	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
-    }
-    bool colliding = false;
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-    if (!view_objs)
-	return;
-    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
-	    colliding = true;
-	}
-    }
-    if (colliding) {
-	bu_free(vname, "vname");
+    struct bu_vls vname = BU_VLS_INIT_ZERO;
+    if (!ps->uniq_obj_name(&vname, gedp->ged_gvp)) {
+	bu_vls_free(&vname);
 	return;
     }
 
     // See if we've got a valid dp name
     if (!import_name->text().length()) {
-	bu_free(vname, "name cpy");
+	bu_vls_free(&vname);
 	return;
     }
     char *sname = bu_strdup(import_name->text().toLocal8Bit().data());
     struct directory *dp = db_lookup(gedp->dbip, sname, LOOKUP_QUIET);
     bu_free(sname, "name cpy");
     if (dp == RT_DIR_NULL) {
-	bu_free(vname, "name cpy");
+	bu_vls_free(&vname);
 	return;
     }
 
     // Names are valid, dp is ready - try the sketch import
-    p = db_sketch_to_scene_obj(vname, gedp->dbip, dp, gedp->ged_gvp, BV_VIEW_OBJS);
-    bu_free(vname, "name cpy");
-    if (!p) {
+    p = db_sketch_to_scene_obj(bu_vls_cstr(&vname), gedp->dbip, dp, gedp->ged_gvp, BV_VIEW_OBJS);
+    bu_vls_free(&vname);
+    if (!p)
 	return;
-    }
     p->s_v = gedp->ged_gvp;
 
     // Done processing view object - increment name
@@ -468,26 +390,7 @@ QPolyCreate::view_sync()
     if (!gedp)
 	return;
 
-    char *vname = NULL;
-    if (ps->view_name->placeholderText().length()) {
-	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
-    }
-    if (ps->view_name->text().length()) {
-	bu_free(vname, "vname");
-	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
-    }
-    bool colliding = false;
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-    if (!view_objs)
-	return;
-    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_name), vname)) {
-	    colliding = true;
-	}
-    }
-    bu_free(vname, "vname");
-    if (colliding) {
+    if (!ps->uniq_obj_name(NULL, gedp->ged_gvp)) {
 	ps->view_name->setStyleSheet("color: rgb(255,0,0)");
     } else {
 	ps->view_name->setStyleSheet("");
@@ -607,6 +510,15 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	cf->fill_density = (fastf_t)(ps->fill_density->text().toDouble());
     	BU_COLOR_CPY(&cf->fill_color, &ps->fill_color->bc);
 	BU_COLOR_CPY(&cf->edge_color, &ps->edge_color->bc);
+
+	// Check if we have a name collision - if we do, it's no go
+	struct bu_vls dname = BU_VLS_INIT_ZERO;
+	if (!ps->uniq_obj_name(&dname, gedp->ged_gvp)) {
+	    bu_vls_free(&dname);
+	    return false;
+	}
+	cf->vname = std::string(bu_vls_cstr(&dname));
+	bu_vls_free(&dname);
     }
 
     bool ret = cf->eventFilter(NULL, e);

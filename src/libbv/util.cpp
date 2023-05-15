@@ -31,6 +31,7 @@
 #include "bu/path.h"
 #include "bu/ptbl.h"
 #include "bu/str.h"
+#include "bu/vls.h"
 #include "bn/mat.h"
 #include "bv/defines.h"
 #include "bv/vlist.h"
@@ -1255,6 +1256,65 @@ bv_find_obj(struct bview *v, const char *name)
     }
 
     return NULL;
+}
+
+static bool
+_uniq_name(const char *name, struct bview *v)
+{
+    if (v->vset) {
+	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_db_objs); i++) {
+	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_db_objs, i);
+	    if (BU_STR_EQUAL(name, bu_vls_cstr(&s_c->s_name)))
+		return false;
+	}
+	for (size_t i = 0; i < BU_PTBL_LEN(&v->vset->i->shared_view_objs); i++) {
+	    struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&v->vset->i->shared_view_objs, i);
+	    if (BU_STR_EQUAL(name, bu_vls_cstr(&s_c->s_name)))
+		return false;
+	}
+    }
+
+    // Next look locally
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.db_objs); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.db_objs, i);
+	if (BU_STR_EQUAL(name, bu_vls_cstr(&s_c->s_name)))
+	    return false;
+    }
+
+    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_objs.view_objs); i++) {
+	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_objs.view_objs, i);
+	if (BU_STR_EQUAL(name, bu_vls_cstr(&s_c->s_name)))
+	    return false;
+    }
+
+    return true;
+}
+
+void
+bv_uniq_obj_name(struct bu_vls *oname, const char *seed, struct bview *v)
+{
+    if (!oname || !v)
+	return;
+
+    struct bu_vls vseed = BU_VLS_INIT_ZERO;
+    if (seed) {
+	bu_vls_sprintf(&vseed, "%s", seed);
+    } else {
+	bu_vls_sprintf(&vseed, "%s:obj_0", bu_vls_cstr(&v->gv_name));
+    }
+
+
+    const char *npattern = "([-_:]*[0-9]+[-_:]*)[^0-9]*$";
+    long int loop_guard = 0;
+    bool is_uniq = _uniq_name(bu_vls_cstr(&vseed), v);
+    while (!is_uniq && loop_guard < LONG_MAX) {
+	(void)bu_vls_incr(&vseed, npattern, NULL, NULL, NULL);
+	is_uniq = _uniq_name(bu_vls_cstr(&vseed), v);
+	loop_guard++;
+    }
+
+    bu_vls_sprintf(oname, "%s", bu_vls_cstr(&vseed));
+    bu_vls_free(&vseed);
 }
 
 struct bv_scene_obj *

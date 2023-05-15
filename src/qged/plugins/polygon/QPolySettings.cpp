@@ -23,6 +23,8 @@
 
 #include <QLabel>
 #include <QString>
+#include <QMessageBox>
+#include "bu/malloc.h"
 #include "bg/polygon.h"
 #include "QPolySettings.h"
 
@@ -120,6 +122,44 @@ QPolySettings::QPolySettings()
 
 QPolySettings::~QPolySettings()
 {
+}
+
+bool
+QPolySettings::uniq_obj_name(struct bu_vls *oname, struct bview *v)
+{
+    if (!v || !oname)
+	return false;
+
+    char *vname = NULL;
+    if (view_name->placeholderText().length()) {
+	vname = bu_strdup(view_name->placeholderText().toLocal8Bit().data());
+    }
+    // If we have a full entry, overwrite the placeholder
+    if (view_name->text().length()) {
+	bu_free(vname, "vname");
+	vname = bu_strdup(view_name->text().toLocal8Bit().data());
+    }
+
+    // See if the supplied name will collide.  If it will, then reject.  If we want
+    // an output name, fail with a message box
+    struct bu_vls ovname = BU_VLS_INIT_ZERO;
+    bv_uniq_obj_name(&ovname, vname, v);
+    if (!BU_STR_EQUAL(bu_vls_cstr(&ovname), vname)) {
+	if (!oname)
+	    return false;
+	QMessageBox msgBox;
+	msgBox.setText("Proposed object name already exists in view.");
+	msgBox.exec();
+	bu_vls_free(&ovname);
+	bu_free(vname, "vname");
+	return false;
+    }
+
+    // Unique.  If we want it returned, do the printing
+    if (oname)
+	bu_vls_sprintf(oname, "%s", vname);
+
+    return true;
 }
 
 void

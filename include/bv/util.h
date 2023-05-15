@@ -175,6 +175,14 @@ bv_find_child(struct bv_scene_obj *s, const char *vname);
 BV_EXPORT struct bv_scene_obj *
 bv_find_obj(struct bview *v, const char *vname);
 
+/* Given a seed name, generate a name that does not collide with any existing
+ * object names in the top level.  If the seed name does not collide, it is
+ * returned as the result - otherwise, a name based on the seed name will be
+ * generated.
+ */
+BV_EXPORT void
+bv_uniq_obj_name(struct bu_vls *oname, const char *seed, struct bview *v);
+
 /* For the specified object/view pairing, return the appropriate scene object
  * to use with that view.  Usually this will return s, but if a Level of Detail
  * scheme or some other view-aware rendering of the object is active, that object
