@@ -7,8 +7,8 @@ At some point, it would nice to automate this.
 # legend
 ###
 x	: gcv recognized, regress testing setup; no known issues
+.	: some external testing done, no regress testing in place
 **	: not all file versions supported
-.	: some external testing done, full capability unknown
 -	: known issues / does not work
 *	: converter needs to be integrated with gcv (g-fmt / fmt-g)
 
@@ -27,7 +27,7 @@ x	: gcv recognized, regress testing setup; no known issues
 [x] FASTGEN
 [] GIFT*
 [] INTAVAL*
-[] RHINO
+[x] RHINO
 
 ###
 # Standalone Export Formats
@@ -116,13 +116,4 @@ x	: gcv recognized, regress testing setup; no known issues
 [x] STL
 [x] X
 [x] X3D
-
-
-
-
-
-
-
-
-
 
