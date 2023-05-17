@@ -125,7 +125,6 @@ class QTCAD_EXPORT QPolyFilter : public QObject
 
     public:
 	bool close_polygon();
-	bool bool_exec(struct bu_ptbl *bool_objs);
 
 	struct bview *v = NULL;
 	bg_clip_t op = bg_None;

@@ -479,36 +479,6 @@ QPolyFilter::close_polygon()
 }
 
 bool
-QPolyFilter::bool_exec(struct bu_ptbl *bool_objs)
-{
-    if (op == bg_None || !bool_objs || !BU_PTBL_LEN(bool_objs)) {
-	// No interactions, so we're keeping it - assign a proper name
-	bu_vls_sprintf(&wp->s_name, "%s", vname.c_str());
-	return false;
-    }
-
-    int icnt = 0;
-    for (size_t i = 0; i < BU_PTBL_LEN(bool_objs); i++) {
-	struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(bool_objs, i);
-	icnt += bv_polygon_csg(target, wp, op);
-    }
-
-    // When doing boolean operations, the convention is if there were one
-    // or more interactions with other polygons, the original polygon is
-    // not retained
-    if (icnt || op == bg_Difference || op == bg_Intersection) {
-	bv_obj_put(wp);
-	wp = NULL;
-    } else {
-	// No interactions, so we're keeping it - assign a proper name
-	bu_vls_sprintf(&wp->s_name, "%s", vname.c_str());
-    }
-
-    return true;
-}
-
-
-bool
 QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 {
     QMouseEvent *m_e = view_sync(e);
@@ -663,7 +633,28 @@ QPolyCreateFilter::finalize(bool)
     if (!close_polygon())
 	return;
 
-    bool_exec(&bool_objs);
+    if (op == bg_None || !BU_PTBL_LEN(&bool_objs)) {
+	// No interactions, so we're keeping it - assign a proper name
+	bu_vls_sprintf(&wp->s_name, "%s", vname.c_str());
+    } else {
+
+	int icnt = 0;
+	for (size_t i = 0; i < BU_PTBL_LEN(&bool_objs); i++) {
+	    struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(&bool_objs, i);
+	    icnt += bv_polygon_csg(target, wp, op);
+	}
+
+	// When doing boolean operations, the convention is if there were one
+	// or more interactions with other polygons, the original polygon is
+	// not retained
+	if (icnt || op == bg_Difference || op == bg_Intersection) {
+	    bv_obj_put(wp);
+	    wp = NULL;
+	} else {
+	    // No interactions, so we're keeping it - assign a proper name
+	    bu_vls_sprintf(&wp->s_name, "%s", vname.c_str());
+	}
+    }
 
     // No longer need mouse movements to adjust parameters - turn off callback
     if (wp)
