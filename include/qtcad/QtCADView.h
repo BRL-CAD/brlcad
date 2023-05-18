@@ -137,6 +137,7 @@ class QTCAD_EXPORT QPolyFilter : public QObject
 	double fill_slope_x = 1.0;
 	double fill_slope_y = 1.0;
 	double fill_density = 10.0;
+	double vZ = 0.0;
 	std::string vname;
 };
 

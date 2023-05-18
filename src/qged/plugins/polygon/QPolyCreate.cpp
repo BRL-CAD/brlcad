@@ -510,6 +510,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	cf->fill_density = (fastf_t)(ps->fill_density->text().toDouble());
     	BU_COLOR_CPY(&cf->fill_color, &ps->fill_color->bc);
 	BU_COLOR_CPY(&cf->edge_color, &ps->edge_color->bc);
+	cf->vZ = (fastf_t)(ps->vZ->text().toDouble());
 
 	// Check if we have a name collision - if we do, it's no go
 	struct bu_vls dname = BU_VLS_INIT_ZERO;

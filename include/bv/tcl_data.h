@@ -120,20 +120,41 @@ typedef struct {
 } bv_data_polygon_state;
 
 
+/* A note about the vZ parameter...
+ *
+ * gv_data_vZ is an internal parameter used by commands creating and
+ * manipulating data objects.  Geometrically, it is a magnitude in the
+ * direction of the Z vector of the view plane. Functionally, what it
+ * allows the code to do is define a 2D plane embedded in in 3D space that
+ * is offset from but parallel to the view plane - in an orthogonal view
+ * this corresponds to objects drawn in that plane being "above" or "below"
+ * objects defined within the view plane itself.
+ *
+ * Visually, objects drawn in this fashion in orthogonal views will be
+ * indistinguishable regardless of their vZ offset - it is only when the
+ * view is rotated that the user will be able to see the "above" and
+ * "below" effect of creating view objects with differing vZ values.
+ *
+ * Users will generally not want to set gv_data_vZ directly, as it is a view
+ * space value and may not behave intuitively.  Commands are defined to
+ * calculate vZ values based on model spaces inputs, and these should be
+ * used to generate the value supplied to gv_data_vZ.
+ */
 struct bv_data_tclcad {
-    int           gv_polygon_mode;  // libtclcad polygon modes
-    int		  gv_hide;          // libtclcad setting for hiding view - unused?
-    struct bv_data_arrow_state       gv_data_arrows;
-    struct bv_data_axes_state        gv_data_axes;
-    struct bv_data_label_state       gv_data_labels;
-    struct bv_data_line_state        gv_data_lines;
-    bv_data_polygon_state            gv_data_polygons;
-    struct bv_data_arrow_state       gv_sdata_arrows;
-    struct bv_data_axes_state        gv_sdata_axes;
-    struct bv_data_label_state       gv_sdata_labels;
-    struct bv_data_line_state        gv_sdata_lines;
-    bv_data_polygon_state            gv_sdata_polygons;
-    struct bv_other_state            gv_prim_labels;
+    int           		gv_polygon_mode;  // libtclcad polygon modes
+    int		  		gv_hide;          // libtclcad setting for hiding view - unused?
+    fastf_t       		gv_data_vZ;
+    struct bv_data_arrow_state	gv_data_arrows;
+    struct bv_data_axes_state	gv_data_axes;
+    struct bv_data_label_state	gv_data_labels;
+    struct bv_data_line_state	gv_data_lines;
+    bv_data_polygon_state	gv_data_polygons;
+    struct bv_data_arrow_state	gv_sdata_arrows;
+    struct bv_data_axes_state	gv_sdata_axes;
+    struct bv_data_label_state	gv_sdata_labels;
+    struct bv_data_line_state	gv_sdata_lines;
+    bv_data_polygon_state	gv_sdata_polygons;
+    struct bv_other_state	gv_prim_labels;
 };
 
 #endif /* DM_BV_TCL_DATA_H */

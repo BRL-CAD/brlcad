@@ -368,7 +368,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
     argc = ac;
 
     if (print_help || (calc_near.set && calc_far.set)) {
-	bu_vls_printf(gedp->ged_result_str, "Usage:\n%s", usage_string);
+	bu_vls_printf(gedp->ged_result_str, "[WARNING] this command is deprecated - vZ values should be set on data objects\n\nUsage:\n%s", usage_string);
 	return GED_HELP;
     }
 
@@ -522,7 +522,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 
 
     if (!argc) {
-	bu_vls_printf(gedp->ged_result_str, "%g\n", gd->cv->gv_data_vZ);
+	bu_vls_printf(gedp->ged_result_str, "%g\n", gd->cv->gv_tcl.gv_data_vZ);
 	return BRLCAD_OK;
     }
 
@@ -530,7 +530,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
     if (argc == 1) {
 	fastf_t val;
 	if (bu_opt_fastf_t(NULL, 1, (const char **)&argv[0], (void *)&val) == 1) {
-	    gd->cv->gv_data_vZ = val;
+	    gd->cv->gv_tcl.gv_data_vZ = val;
 	    return BRLCAD_OK;
 	}
     }
@@ -545,7 +545,7 @@ _view_cmd_vZ(void *bs, int argc, const char **argv)
 	}
 	vect_t vpt;
 	MAT4X3PNT(vpt, gd->cv->gv_model2view, mpt);
-	gd->cv->gv_data_vZ = vpt[Z];
+	gd->cv->gv_tcl.gv_data_vZ = vpt[Z];
 	return BRLCAD_OK;
     }
 

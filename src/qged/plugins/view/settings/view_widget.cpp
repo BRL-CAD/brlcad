@@ -73,18 +73,6 @@ CADViewSettings::CADViewSettings(QWidget *)
     wl->addWidget(viewaxes_ckbx);
     QObject::connect(viewaxes_ckbx, &QCheckBox::stateChanged, this, &CADViewSettings::view_update_int);
 
-    QWidget *zw = new QWidget();
-    QHBoxLayout *zl = new QHBoxLayout();
-    zl->setSpacing(0);
-    zl->setContentsMargins(1,1,1,1);
-    QLabel *zlbl = new QLabel("Data vZ");
-    vZ = new QLineEdit(QString("0"));
-    QObject::connect(vZ, &QLineEdit::editingFinished, this, &CADViewSettings::view_update);
-    zl->addWidget(zlbl);
-    zl->addWidget(vZ);
-    zw->setLayout(zl);
-    wl->addWidget(zw);
-
     this->setLayout(wl);
 }
 
@@ -219,10 +207,6 @@ CADViewSettings::checkbox_refresh(unsigned long long)
 	viewaxes_ckbx->setCheckState(Qt::Unchecked);
     }
     viewaxes_ckbx->blockSignals(false);
-
-    vZ->blockSignals(true);
-    vZ->setText(QVariant(v->gv_data_vZ).toString());
-    vZ->blockSignals(false);
 }
 
 void
@@ -296,29 +280,6 @@ CADViewSettings::view_refresh(unsigned long long)
     } else {
 	v->gv_s->gv_view_axes.draw = 0;
     }
-
-    char *vZstr = bu_strdup(vZ->text().toLocal8Bit().data());
-    fastf_t val;
-    if (bu_opt_fastf_t(NULL, 1, (const char **)&vZstr, (void *)&val) == 1) {
-	v->gv_data_vZ = val;
-    } else {
-	char **av = (char **)bu_calloc(strlen(vZstr) + 1, sizeof(char *), "argv array");
-	int nargs = bu_argv_from_string(av, strlen(vZstr), vZstr);
-	if (nargs) {
-	    vect_t mpt;
-	    int acnt = bu_opt_vect_t(NULL, nargs, (const char **)av, (void *)&mpt);
-	    if (acnt == 1 || acnt == 3) {
-		vect_t vpt;
-		MAT4X3PNT(vpt, v->gv_model2view, mpt);
-		v->gv_data_vZ = vpt[Z];
-		vZ->blockSignals(true);
-		vZ->setText(QVariant(v->gv_data_vZ).toString());
-		vZ->blockSignals(false);
-	    }
-	}
-	bu_free(av, "argv array");
-    }
-    bu_free(vZstr, "vZstr cpy");
 
     emit settings_changed(QTCAD_VIEW_DRAWN);
 }

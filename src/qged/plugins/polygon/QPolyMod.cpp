@@ -874,6 +874,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
     cf->fill_density = (fastf_t)(ps->fill_density->text().toDouble());
     BU_COLOR_CPY(&cf->fill_color, &ps->fill_color->bc);
     BU_COLOR_CPY(&cf->edge_color, &ps->edge_color->bc);
+    cf->vZ = (fastf_t)(ps->vZ->text().toDouble());
 
     // Run the guts of the libqtcad filter
     bool ret = cf->eventFilter(NULL, e);

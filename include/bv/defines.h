@@ -565,29 +565,6 @@ struct bview {
     vect_t gv_lookat;
     double radius;
 
-
-    /*
-     * gv_data_vZ is an internal parameter used by commands creating and
-     * manipulating data objects.  Geometrically, it is a magnitude in the
-     * direction of the Z vector of the view plane. Functionally, what it
-     * allows the code to do is define a 2D plane embedded in in 3D space that
-     * is offset from but parallel to the view plane - in an orthogonal view
-     * this corresponds to objects drawn in that plane being "above" or "below"
-     * objects defined within the view plane itself.
-     *
-     * Visually, objects drawn in this fashion in orthogonal views will be
-     * indistinguishable regardless of their vZ offset - it is only when the
-     * view is rotated that the user will be able to see the "above" and
-     * "below" effect of creating view objects with differing vZ values.
-     *
-     * Users will generally not want to set gv_data_vZ directly, as it is a view
-     * space value and may not behave intuitively.  Commands are defined to
-     * calculate vZ values based on model spaces inputs, and these should be
-     * used to generate the value supplied to gv_data_vZ.
-     */
-    fastf_t       gv_data_vZ;
-
-
     // libtclcad data
     struct bv_data_tclcad gv_tcl;
 

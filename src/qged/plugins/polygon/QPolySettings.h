@@ -49,6 +49,8 @@ class QPolySettings : public QWidget
 	QLineEdit *sketch_name;
 	QCheckBox *sketch_sync;
 
+	QLineEdit *vZ;
+
 	bool uniq_obj_name(struct bu_vls *oname, struct bview *v);
 
     signals:

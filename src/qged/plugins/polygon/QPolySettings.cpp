@@ -117,6 +117,18 @@ QPolySettings::QPolySettings()
     dw->setLayout(hd);
     l->addWidget(dw);
 
+    QWidget *zw = new QWidget();
+    QHBoxLayout *zl = new QHBoxLayout();
+    zl->setSpacing(0);
+    zl->setContentsMargins(1,1,1,1);
+    QLabel *zlbl = new QLabel("vZ");
+    vZ = new QLineEdit(QString("0"));
+    QObject::connect(vZ, &QLineEdit::editingFinished, this, &QPolySettings::do_settings_changed);
+    zl->addWidget(zlbl);
+    zl->addWidget(vZ);
+    zw->setLayout(zl);
+    l->addWidget(zw);
+
     this->setLayout(l);
 }
 
@@ -221,6 +233,10 @@ QPolySettings::settings_sync(struct bv_scene_obj *p)
 	fill_poly->setChecked(false);
     }
     fill_poly->blockSignals(false);
+
+    vZ->blockSignals(true);
+    vZ->setText(QVariant(ip->vZ).toString());
+    vZ->blockSignals(false);
 
     // Values set, now update the button colors
     this->blockSignals(true);

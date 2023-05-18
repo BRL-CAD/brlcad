@@ -232,11 +232,7 @@ bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
     }
 
     point_t v_pt, m_pt;
-    if (v->gv_s) {
-	VSET(v_pt, fx, fy, v->gv_data_vZ);
-    } else {
-	VSET(v_pt, fx, fy, 0);
-    }
+    VSET(v_pt, fx, fy, 0);
     MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
     VMOVE(p->prev_point, v_pt);
 
@@ -297,7 +293,7 @@ bv_append_polygon_pt(struct bv_scene_obj *s)
     }
 
     point_t v_pt;
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, p->vZ);
 
     struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
     c->num_points++;
@@ -314,8 +310,8 @@ bv_append_polygon_pt(struct bv_scene_obj *s)
     return 0;
 }
 
-// NOTE: This is a naive brute force search for the closest edge at the
-// moment...  Would be better for repeated sampling of relatively static
+// NOTE: This is a naive brute force search for the closest projected edge at
+// the moment...  Would be better for repeated sampling of relatively static
 // scenes to build an RTree first...
 struct bv_scene_obj *
 bv_select_polygon(struct bu_ptbl *objs, struct bview *v)
@@ -327,17 +323,21 @@ bv_select_polygon(struct bu_ptbl *objs, struct bview *v)
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
-    point_t v_pt, m_pt;
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
-    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
-
     struct bv_scene_obj *closest = NULL;
     double dist_min_sq = DBL_MAX;
 
     for (size_t i = 0; i < BU_PTBL_LEN(objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(objs, i);
 	if (s->s_type_flags & BV_POLYGONS) {
+	    point_t v_pt, m_pt;
 	    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+	    // Because we're working in 2D orthogonal when processing polygons,
+	    // the specific value of Z for each individual polygon isn't
+	    // relevant - we want to find the closest edge in the projected
+	    // view plane.  Accordingly, always construct the point using
+	    // whatever the current vZ is for the polygon being tested.
+	    VSET(v_pt, fx, fy, p->vZ);
+	    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
 	    for (size_t j = 0; j < p->polygon.num_contours; j++) {
 		struct bg_poly_contour *c = &p->polygon.contour[j];
 		for (size_t k = 0; k < c->num_points; k++) {
@@ -381,7 +381,7 @@ bv_select_polygon_pt(struct bv_scene_obj *s)
     }
 
     point_t v_pt, m_pt;
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, p->vZ);
     MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
 
 
@@ -440,7 +440,7 @@ bv_move_polygon(struct bv_scene_obj *s)
     fastf_t dy = fy - pfy;
 
     point_t v_pt, m_pt;
-    VSET(v_pt, dx, dy, v->gv_data_vZ);
+    VSET(v_pt, dx, dy, p->vZ);
     // Use the polygon's view context for actually moving the point
     MAT4X3PNT(m_pt, p->v.gv_view2model, v_pt);
 
@@ -491,7 +491,7 @@ bv_move_polygon_pt(struct bv_scene_obj *s)
     }
 
     point_t v_pt, m_pt;
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, p->vZ);
     // Use the polygon's view context for actually moving the point
     MAT4X3PNT(m_pt, p->v.gv_view2model, v_pt);
 
@@ -534,7 +534,7 @@ bv_update_polygon_circle(struct bv_scene_obj *s, struct bview *v)
 	bv_snap_grid_2d(v, &fx, &fy);
     }
 
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, p->vZ);
     VSUB2(vdiff, v_pt, p->prev_point);
     r = MAGNITUDE(vdiff);
 
@@ -565,7 +565,7 @@ bv_update_polygon_circle(struct bv_scene_obj *s, struct bview *v)
 
 	curr_fx = cos(ang*DEG2RAD) * r + p->prev_point[X];
 	curr_fy = sin(ang*DEG2RAD) * r + p->prev_point[Y];
-	VSET(v_pt, curr_fx, curr_fy, v->gv_data_vZ);
+	VSET(v_pt, curr_fx, curr_fy, p->vZ);
 	// Use the polygon's view context for actually adding the points
 	MAT4X3PNT(gpp->contour[0].point[n], p->v.gv_view2model, v_pt);
     }
@@ -655,7 +655,7 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, struct bview *v)
 
 	// Note - don't set Z until after elliptical point is calculated -
 	// if we set it beforehand we get ellipses not in the view plane.
-	ellout[Z] = v->gv_data_vZ;
+	ellout[Z] = p->vZ;
 
 	// Use the polygon's view context for actually adding the points
 	MAT4X3PNT(gpp->contour[0].point[n], p->v.gv_view2model, ellout);
@@ -698,11 +698,11 @@ bv_update_polygon_rectangle(struct bv_scene_obj *s, struct bview *v)
     // Use the polygon's view context for actually adjusting the points
     point_t v_pt;
     MAT4X3PNT(p->polygon.contour[0].point[0], p->v.gv_view2model, p->prev_point);
-    VSET(v_pt, p->prev_point[X], fy, v->gv_data_vZ);
+    VSET(v_pt, p->prev_point[X], fy, p->vZ);
     MAT4X3PNT(p->polygon.contour[0].point[1], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, p->vZ);
     MAT4X3PNT(p->polygon.contour[0].point[2], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, p->prev_point[Y], v->gv_data_vZ);
+    VSET(v_pt, fx, p->prev_point[Y], p->vZ);
     MAT4X3PNT(p->polygon.contour[0].point[3], p->v.gv_view2model, v_pt);
     p->polygon.contour[0].open = 0;
 
@@ -751,11 +751,11 @@ bv_update_polygon_square(struct bv_scene_obj *s, struct bview *v)
     // Use the polygon's view context for actually adjusting the points
     point_t v_pt;
     MAT4X3PNT(p->polygon.contour[0].point[0], p->v.gv_view2model, p->prev_point);
-    VSET(v_pt, p->prev_point[X], fy, v->gv_data_vZ);
+    VSET(v_pt, p->prev_point[X], fy, p->vZ);
     MAT4X3PNT(p->polygon.contour[0].point[1], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, fy, v->gv_data_vZ);
+    VSET(v_pt, fx, fy, p->vZ);
     MAT4X3PNT(p->polygon.contour[0].point[2], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, p->prev_point[Y], v->gv_data_vZ);
+    VSET(v_pt, fx, p->prev_point[Y], p->vZ);
     MAT4X3PNT(p->polygon.contour[0].point[3], p->v.gv_view2model, v_pt);
     p->polygon.contour[0].open = 0;
 

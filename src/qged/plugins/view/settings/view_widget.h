@@ -49,7 +49,6 @@ class CADViewSettings : public QWidget
 	QCheckBox *scale_ckbx;
 	QCheckBox *viewaxes_ckbx;
 
-	QLineEdit *vZ;
     signals:
 	void settings_changed(unsigned long long);
 

@@ -335,8 +335,12 @@ struct bv_polygon {
      * to it for future 2D alterations */
     struct bview v;
 
+    /* Offset of polygon plane from the plane of v.  Allows for moving
+     * the polygon "towards" and "away from" the viewer. */
+    fastf_t vZ;
+
     /* Actual polygon info */
-    struct bg_polygon   polygon;
+    struct bg_polygon polygon;
 
     /* Arbitrary data */
     void *u_data;

@@ -243,8 +243,6 @@ bv_init(struct bview *gvp, struct bview_set *s)
     gvp->gv_sscale = 2.0;
     gvp->gv_perspective = 0.0;
 
-    gvp->gv_data_vZ = 0.0;
-
     /* Initialize local settings */
     bv_settings_init(&gvp->gv_ls);
 
