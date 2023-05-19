@@ -512,6 +512,7 @@ bv_settings_init(struct bview_settings *s)
     VSET(s->gv_adc.tick_color, 255, 255, 255);
 
     s->gv_grid.draw = 0;
+    s->gv_grid.snap = 0;
     VSET(s->gv_grid.anchor, 0.0, 0.0, 0.0);
     s->gv_grid.res_h = 1.0;
     s->gv_grid.res_v = 1.0;
