@@ -522,15 +522,23 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 	bu_vls_free(&dname);
     }
 
+    // For this particular application, we want to apply booleans to
+    // all polygons
+    bu_ptbl_reset(&pcf->bool_objs);
+    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+    if (view_objs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    if (s->s_type_flags & BV_POLYGONS && s != p) {
+		bu_ptbl_ins(&pcf->bool_objs, (long *)s);
+	    }
+	}
+    }
+
     bool ret = cf->eventFilter(NULL, e);
 
     // Retrieve the scene object from the libqtcad data container
     p = cf->wp;
-
-    // For this particular application, we want to apply booleans to
-    // all polygons
-    if (p)
-	bu_ptbl_ins(&pcf->bool_objs, (long *)p);
 
     if (cf->ptype == BV_POLYGON_GENERAL) {
 	close_general_poly->setEnabled(true);
