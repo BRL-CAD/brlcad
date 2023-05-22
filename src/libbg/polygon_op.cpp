@@ -515,13 +515,39 @@ bv_polygon_csg(struct bv_scene_obj *target, struct bv_scene_obj *stencil, bg_cli
     struct bv_polygon *polyA = (struct bv_polygon *)target->s_i_data;
     struct bv_polygon *polyB = (struct bv_polygon *)stencil->s_i_data;
 
+    // If the stencil is empty, it's all moot
+    if (!polyB->polygon.num_contours)
+	return 0;
+
     // Make sure the polygons overlap before we operate, since clipper results are
     // always general polygons.  We don't want to perform a no-op clip and lose our
-    // type info.
-    const struct bn_tol poly_tol = BN_TOL_INIT_TOL;
-    int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &poly_tol, polyA->v.gv_scale);
-    if (!ovlp)
-	return 0;
+    // type info.  There is however one exception to this - if our target is empty
+    // and our op is a union, we still want to proceed even without an overlap.
+    if (polyA->polygon.num_contours || op != bg_Union) {
+	const struct bn_tol poly_tol = BN_TOL_INIT_TOL;
+	int ovlp = bg_polygons_overlap(&polyA->polygon, &polyB->polygon, polyA->v.gv_model2view, &poly_tol, polyA->v.gv_scale);
+	if (!ovlp)
+	    return 0;
+    } else {
+	// In the case of a union into an empty polygon, what we do is copy the
+	// stencil intact into target and preserve its type - no need to use
+	// bg_clip_polygon and lose the type info
+	bg_polygon_free(&polyA->polygon);
+	bg_polygon_cpy(&polyA->polygon, &polyB->polygon);
+
+	// We want to leave the color and fill settings in dest, but we should
+	// sync some of the information so the target polygon shape can be
+	// updated correctly.  In particular, for a non-generic polygon,
+	// prev_point is important to updating.
+	polyA->type = polyB->type;
+	polyA->vZ = polyB->vZ;
+	polyA->curr_contour_i = polyB->curr_contour_i;
+	polyA->curr_point_i = polyB->curr_point_i;
+	VMOVE(polyA->prev_point, polyB->prev_point);
+	bv_sync(&polyA->v, &polyB->v);
+	bv_update_polygon(target, target->s_v, BV_POLYGON_UPDATE_DEFAULT);
+	return 1;
+    }
 
     // Perform the specified operation and get the new polygon
     struct bg_polygon *cp = bg_clip_polygon(op, &polyA->polygon, &polyB->polygon, CLIPPER_MAX, polyA->v.gv_model2view, polyA->v.gv_view2model);
