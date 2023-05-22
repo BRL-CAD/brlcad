@@ -638,6 +638,8 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 void
 QPolyCreateFilter::finalize(bool)
 {
+    int icnt = 0;
+
     if (!wp)
 	return;
 
@@ -649,7 +651,6 @@ QPolyCreateFilter::finalize(bool)
 	bu_vls_sprintf(&wp->s_name, "%s", vname.c_str());
     } else {
 
-	int icnt = 0;
 	for (size_t i = 0; i < BU_PTBL_LEN(&bool_objs); i++) {
 	    struct bv_scene_obj *target = (struct bv_scene_obj *)BU_PTBL_GET(&bool_objs, i);
 	    icnt += bv_polygon_csg(target, wp, op);
@@ -672,7 +673,7 @@ QPolyCreateFilter::finalize(bool)
 	wp->s_update_callback = NULL;
 
     emit view_updated(QTCAD_VIEW_REFRESH);
-    emit finalized(true);
+    emit finalized((icnt > 0) ? true : false);
 }
 
 bool
