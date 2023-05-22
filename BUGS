@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* MGED on Mac hides the main command window on File->Open when you
+  cancel the open.  Presumably the withdraw is somehow getting routed
+  to the window and not just the open dialog.
+
 * running pkgIndex and/or mkIndex during build appears to be randomly
   crashing on Mac using bundled libs
 
