@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* running pkgIndex and/or mkIndex during build appears to be randomly
+  crashing on Mac using bundled libs
+
 * garbage_collect -c wipes out custom attributes on _GLOBAL
   > attr set _GLOBAL foo bar
   > garbage_collect -c
