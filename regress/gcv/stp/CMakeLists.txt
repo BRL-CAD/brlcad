@@ -1,5 +1,5 @@
 if (TARGET gcv-assetimport)
-  GCV_regress_util("stp" "tetra.g" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--output-format=assetimport" EXPECTED_FILE_SIZE "7380" EXPORTER)
+  GCV_regress_util("stp" "tetra.g" DEPS "gcv;gcv-assetimport" GCV_OPTIONS "--output-format=assetimport" EXPECTED_FILE_SIZE "7100" EXPORTER)
 endif (TARGET gcv-assetimport)
 
 CMAKEFILES(

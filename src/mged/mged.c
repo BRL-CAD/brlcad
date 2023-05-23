@@ -2516,6 +2516,7 @@ mged_finish(int exitcode)
 
     struct tclcad_io_data *giod = (struct tclcad_io_data *)GEDP->ged_io_data;
     ged_close(GEDP);
+    GEDP = GED_NULL;
     if (giod) {
 	tclcad_destroy_io_data(giod);
     }

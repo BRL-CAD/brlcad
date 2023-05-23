@@ -12,9 +12,28 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 --- 202X-XX-XX  Release 7.36.0                                     ---
 ----------------------------------------------------------------------
+This major release of BRL-CAD introduces significant updates to
+geometry conversion support. The update includes modernization for
+NURBS importing and interaction, BoT manipulation, and incorporates
+many new formats for importing and exporting to BRL-CAD database
+files.
+
+The geometry conversion tool (GCV) now supports mesh importing
+from: 3D, 3DS, 3MF, AC, AMF, ASE, ASSBIN, B3D, BVH, COB, COLLADA, CSM,
+FBX, GLTF/GLB 1.0 + 2.0, HMP, IFC-STEP, IQM, IRR, IRRMESH, LWO, LWS,
+M3D, MD2, MD3, MD5, MDC, MDL, MMD, MS3D, NDO, NFF, OFF, OGRE, OPENGEX,
+Q3BSP, Q3D, RAW, SIB, SMD, TERRAGEN, X, X3D, XGL.
+Additionally, GCV now supports mesh exporting to: 3DS, 3MF, ASSBIN,
+ASSJSON, ASSXML, COLLADA, GLTF, PBRT, STEP, X, X3D.
+
+This release also introduces new BoT subcommands to improve
+manipulation and preparation. The subdivision "subd" command
+incorporates 5 new subdivision algorithms. The "flip" command will
+flip surface normals - effectively turning the BoT 'inside out'.
+Lastly, the "smooth" command will smooth the BoT's topology.
 
 * Added a point-inside-object subcmd "inside" to analyze - Cliff Yapp
-* Added "flip" subcommand to BoT's for normal flipping - Cliff Yapp
+* Added "flip" "subd" and "smooth" subcommands to BoT - Cliff Yapp
 * Fixed g-ply converter on Windows - Chris McGregor
 * Fixed infinite loop in noise generation - Sean Morrison
 * Fixed analyze in/out test for multi-segment ray hits - Cliff Yapp

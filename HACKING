@@ -456,12 +456,10 @@ colocated with any corresponding source files.
 Header files private to a library go into that library's directory.
 Public header files go into the include/ directory on the top level.
 Public header files should not include any headers that are private.
-Headers should include any other headers that they require for correct
-parsing (this is an on-going clean-up effort).  Public header files
-should not include the common header.
+Headers should include any other headers required for correct parsing.
+Public header files should not include the common header.
 
-Headers should be included in a particular order.  That order is
-generally as follows:
+Headers should generally be included in a particular order:
 
   - any single "interface" header [optional]
   - the common header (unless the interface header includes it)
@@ -472,13 +470,15 @@ generally as follows:
 Applications may optionally provide an interface header that defines
 common structures applicable to most or all files being compiled for
 that application.  That interface header will generally be the first
-file to be included, as it usually includes the common header and
-system headers.  The common header should always be included before
-any system header.  Standard C system headers should be included
-before library system headers.  Headers should be written to be
-self-contained, not requiring other headers to be necessarily included
-before they may be used.  If another header is necessary for a header
-to function correctly, it should include it.
+file to be included as it usually includes the common header and
+system headers.
+
+The common header should always be included before any system header.
+
+Standard system headers should be included before library system
+headers.  Headers should be written to be self-contained, not
+requiring other headers be included.  If another header is necessary
+for a header to function correctly, it should include it.
 
 Build System:
 

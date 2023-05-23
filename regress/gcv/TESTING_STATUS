@@ -1,0 +1,119 @@
+This file attempts to track the current condition of gcv usability and testing. 
+
+Currently, this is all manual - format recognition and status. 
+At some point, it would nice to automate this.
+
+###
+# legend
+###
+x	: gcv recognized, regress testing setup; no known issues
+.	: some external testing done, no regress testing in place
+**	: not all file versions supported
+-	: known issues / does not work
+*	: converter needs to be integrated with gcv (g-fmt / fmt-g)
+
+###
+# Standalone Import Formats
+###
+[] DXF*
+[**] GLTF + GLB
+[x] OBJ
+[x] PLY
+[] SHP*
+[] STEP*
+[x] STL
+[x] VRML
+[] ASC*
+[x] FASTGEN
+[] GIFT*
+[] INTAVAL*
+[x] RHINO
+
+###
+# Standalone Export Formats
+###
+[.] FASTGEN
+[x] OBJ
+[x] PLY
+[x] STL
+
+###
+# GDAL Library Import Formats
+###
+[x] DEM
+[.] DTED
+[.] TIFF
+
+###
+# Asset Importer Library Import Formats
+# NOTE: currently only supports mesh import and limited color data
+###
+[.] 3D
+[x] 3DS
+[x] 3MF
+[.] AC
+[.] AMF
+[.] ASE
+[x] ASSBIN
+[.] B3D
+[**] BLEND (Ver 2.X and below supported)
+[.] BVH
+[.] COB
+[x] COLLADA
+[.] CSM
+[**] DXF
+[x] FBX
+[x] GLTF/GLB 1.0 + 2.0
+[.] HMP
+[.] IFC-STEP
+[.] IQM
+[.] IRR
+[.] IRRMESH
+[x] LWO
+[.] LWS
+[.] M3D
+[.] MD2
+[.] MD3
+[.] MD5
+[.] MDC
+[.] MDL
+[.] MMD
+[.] MS3D
+[.] NDO
+[.] NFF
+[x] OBJ
+[.] OFF
+[.] OGRE
+[.] OPENGEX
+[x] PLY
+[.] Q3BSP
+[.] Q3D
+[.] RAW
+[.] SIB
+[.] SMD
+[x] STL
+[.] TERRAGEN
+[x] X
+[x] X3D
+[.] XGL
+
+###
+# Asset Importer Library Export Formats
+# NOTE: currently only supports mesh export and limited color data
+###
+[x] 3DS
+[x] 3MF
+[x] ASSBIN
+[x] ASSJSON
+[x] ASSXML
+[x] COLLADA
+[-] FBX
+[x] GLTF
+[x] OBJ
+[.] PBRT
+[x] PLY
+[x] STEP
+[x] STL
+[x] X
+[x] X3D
+

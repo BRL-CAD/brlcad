@@ -165,13 +165,6 @@ foreach(out_file ${OUTPUT_FILES})
   # cleanup file from build dir
   file(REMOVE \"\${out_file}\")
 endforeach(out_file ${OUTPUT_FILES})
-
-# this is probably a bad idea 
-# - need a better way to automatically track / remove generated companion files (i.e. obj creates mtl)
-file(GLOB companion_files \${CBDIR}/conv-*)
-foreach(cf \${companion_files})
-  file(REMOVE \"\${cf}\")
-endforeach(cf \${companion_files})
     ")
 
   # assume the fmt is the gcv dependency unless specified
@@ -202,11 +195,14 @@ add_subdirectory(assetimport-xml)
 add_subdirectory(dae)
 add_subdirectory(dem)
 add_subdirectory(fastgen)
+add_subdirectory(fbx)
 add_subdirectory(gltf)
 add_subdirectory(json)
 add_subdirectory(lwo)
 add_subdirectory(obj)
+add_subdirectory(off)
 add_subdirectory(ply)
+add_subdirectory(rhino)
 add_subdirectory(stl)
 add_subdirectory(stp)
 add_subdirectory(vrml)
@@ -216,6 +212,7 @@ add_subdirectory(x3d)
 CMAKEFILES(
   CMakeLists.txt
   README
+  TESTING_STATUS
   tetra.g           # used for exporters - keep in root to eliminate copying duplicate file to all subdirectories
   )
 
