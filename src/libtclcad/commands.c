@@ -3333,11 +3333,7 @@ to_fit_png_image(struct ged *gedp,
 	int UNUSED(maxargs))
 {
     icv_image_t *img;
-    size_t i_w, i_n;
     size_t o_w_requested, o_n_requested;
-    size_t o_w_used, o_n_used;
-    size_t x_offset, y_offset;
-    fastf_t ar_w;
     fastf_t sf;
 
     /* initialize result */
@@ -3363,61 +3359,11 @@ to_fit_png_image(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    i_w = img->width;
-    i_n = img->height;
-    ar_w = o_w_requested / (fastf_t)i_w;
-
-    o_w_used = (size_t)(i_w * ar_w * sf);
-    o_n_used = (size_t)(i_n * ar_w * sf);
-
-    if (icv_resize(img, ICV_RESIZE_BINTERP, o_w_used, o_n_used, 1) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: icv_resize failed", argv[0]);
+    int ret = icv_fit(img, gedp->ged_result_str, o_w_requested, o_n_requested, sf);
+    if (ret == BRLCAD_ERROR) {
 	icv_destroy(img);
-	return BRLCAD_ERROR;
+	return ret;
     }
-
-    if (NEAR_EQUAL(sf, 1.0, BN_TOL_DIST)) {
-	fastf_t ar_n = o_n_requested / (fastf_t)i_n;
-
-	if (ar_w > ar_n && !NEAR_EQUAL(ar_w, ar_n, BN_TOL_DIST)) {
-	    /* need to crop final image height so that we keep the center of the image */
-	    size_t x_orig = 0;
-	    size_t y_orig = (o_n_used - o_n_requested) * 0.5;
-
-	    if (icv_rect(img, x_orig, y_orig, o_w_requested, o_n_requested) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "%s: icv_rect failed", argv[0]);
-		icv_destroy(img);
-		return BRLCAD_ERROR;
-	    }
-
-	    x_offset = 0;
-	    y_offset = 0;
-	} else {
-	    /* user needs to offset final image in the window */
-	    x_offset = 0;
-	    y_offset = (size_t)((o_n_requested - o_n_used) * 0.5);
-	}
-    } else {
-	if (sf > 1.0) {
-	    size_t x_orig = (o_w_used - o_w_requested) * 0.5;
-	    size_t y_orig = (o_n_used - o_n_requested) * 0.5;
-
-	    if (icv_rect(img, x_orig, y_orig, o_w_requested, o_n_requested) < 0) {
-		bu_vls_printf(gedp->ged_result_str, "%s: icv_rect failed", argv[0]);
-		icv_destroy(img);
-		return BRLCAD_ERROR;
-	    }
-
-	    x_offset = 0;
-	    y_offset = 0;
-	} else {
-	    /* user needs to offset final image in the window */
-	    x_offset = (size_t)((o_w_requested - o_w_used) * 0.5);
-	    y_offset = (size_t)((o_n_requested - o_n_used) * 0.5);
-	}
-    }
-
-    bu_vls_printf(gedp->ged_result_str, "%zu %zu %zu %zu", img->width, img->height, x_offset, y_offset);
 
     /* icv_write should return < 0 for errors but doesn't */
     if (icv_write(img, argv[5], BU_MIME_IMAGE_PNG) == 0) {

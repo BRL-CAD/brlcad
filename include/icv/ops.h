@@ -28,6 +28,8 @@
 
 #include "common.h"
 #include <stddef.h> /* for size_t */
+#include "vmath.h"
+#include "bu/vls.h"
 #include "icv/defines.h"
 
 __BEGIN_DECLS
@@ -204,7 +206,10 @@ ICV_EXPORT extern int icv_diff(int *matching, int *off_by_1, int *off_by_many, i
  */
 ICV_EXPORT extern uint32_t icv_pdiff(icv_image_t *img1, icv_image_t *img2);
 
-
+/**
+ * Fit an image to suggested dimensions.
+ */
+ICV_EXPORT extern int icv_fit(icv_image_t *img, struct bu_vls *msg, size_t o_width_req, size_t o_height_req, fastf_t sf);
 
 /** @} */
 

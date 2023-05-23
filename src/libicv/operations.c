@@ -33,6 +33,7 @@
 #include "bu/log.h"
 #include "bu/magic.h"
 #include "bu/malloc.h"
+#include "bn/tol.h"
 #include "vmath.h"
 
 
@@ -357,6 +358,77 @@ icv_diff(
     bu_free(d2, "image 2 rgb");
 
     return ret;
+}
+
+int
+icv_fit(icv_image_t *img, struct bu_vls *msg, size_t o_width_req, size_t o_height_req, fastf_t sf)
+{
+    if (!img)
+	return BRLCAD_ERROR;
+
+    size_t i_w, i_n;
+    size_t o_w_used, o_n_used;
+    size_t x_offset, y_offset;
+    fastf_t ar_w;
+
+    i_w = img->width;
+    i_n = img->height;
+    ar_w = o_width_req / (fastf_t)i_w;
+
+    o_w_used = (size_t)(i_w * ar_w * sf);
+    o_n_used = (size_t)(i_n * ar_w * sf);
+
+    if (icv_resize(img, ICV_RESIZE_BINTERP, o_w_used, o_n_used, 1) < 0) {
+	if (msg)
+	    bu_vls_printf(msg, "icv_resize failed");
+	return BRLCAD_ERROR;
+    }
+
+    if (NEAR_EQUAL(sf, 1.0, BN_TOL_DIST)) {
+	fastf_t ar_n = o_height_req / (fastf_t)i_n;
+
+	if (ar_w > ar_n && !NEAR_EQUAL(ar_w, ar_n, BN_TOL_DIST)) {
+	    /* need to crop final image height so that we keep the center of the image */
+	    size_t x_orig = 0;
+	    size_t y_orig = (o_n_used - o_height_req) * 0.5;
+
+	    if (icv_rect(img, x_orig, y_orig, o_width_req, o_height_req) < 0) {
+		if (msg)
+		    bu_vls_printf(msg, "icv_rect failed");
+		return BRLCAD_ERROR;
+	    }
+
+	    x_offset = 0;
+	    y_offset = 0;
+	} else {
+	    /* user needs to offset final image in the window */
+	    x_offset = 0;
+	    y_offset = (size_t)((o_height_req - o_n_used) * 0.5);
+	}
+    } else {
+	if (sf > 1.0) {
+	    size_t x_orig = (o_w_used - o_width_req) * 0.5;
+	    size_t y_orig = (o_n_used - o_height_req) * 0.5;
+
+	    if (icv_rect(img, x_orig, y_orig, o_width_req, o_height_req) < 0) {
+		if (msg)
+		    bu_vls_printf(msg, "icv_rect failed");
+		return BRLCAD_ERROR;
+	    }
+
+	    x_offset = 0;
+	    y_offset = 0;
+	} else {
+	    /* user needs to offset final image in the window */
+	    x_offset = (size_t)((o_width_req - o_w_used) * 0.5);
+	    y_offset = (size_t)((o_height_req - o_n_used) * 0.5);
+	}
+    }
+
+    if (msg)
+	bu_vls_printf(msg, "%zu %zu %zu %zu", img->width, img->height, x_offset, y_offset);
+
+    return BRLCAD_OK;
 }
 
 /*
