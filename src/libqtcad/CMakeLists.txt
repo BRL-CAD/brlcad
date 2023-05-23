@@ -45,6 +45,7 @@ set(qtcad_srcs
   QColorRGB.cpp
   QFlowLayout.cpp
   QKeyVal.cpp
+  QPolyFilter.cpp
   QToolPalette.cpp
   QViewCtrl.cpp
   QgDockWidget.cpp
@@ -74,6 +75,7 @@ set(qth_names
   QAccordion
   QColorRGB
   QKeyVal
+  QPolyFilter
   QToolPalette
   QViewCtrl
   QgDockWidget
