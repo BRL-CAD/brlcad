@@ -64,23 +64,6 @@ struct ged *_ged_current_gedp;
 vect_t _ged_eye_model;
 mat_t _ged_viewrot;
 
-/* FIXME: this function should not exist.  passing pointers as strings
- * indicates a failure in design and lazy coding.
- */
-int
-ged_decode_dbip(const char *dbip_string, struct db_i **dbipp)
-{
-    if (sscanf(dbip_string, "%p", (void **)dbipp) != 1) {
-	return BRLCAD_ERROR;
-    }
-
-    /* Could core dump */
-    RT_CK_DBI(*dbipp);
-
-    return BRLCAD_OK;
-}
-
-
 void
 ged_close(struct ged *gedp)
 {
