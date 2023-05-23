@@ -30,6 +30,7 @@
 #include "bv.h"
 #include "ged.h"
 #include "qtcad/QColorRGB.h"
+#include "qtcad/QMeasureFilter.h"
 
 class CADViewMeasure : public QWidget
 {
@@ -57,6 +58,7 @@ class CADViewMeasure : public QWidget
     public slots:
         void adjust_text();
         void adjust_text_db(void *);
+	void do_filter_view_update();
 
     private slots:
 	void update_color();
@@ -65,28 +67,10 @@ class CADViewMeasure : public QWidget
 	bool eventFilter(QObject *, QEvent *);
 
     private:
-
-	bool get_point(QMouseEvent *);
-	point_t mpnt;
-
 	struct bv_scene_obj *s = NULL;
-	int mode = 0;  // 0 == uninitialized, 1 = length measurement in progress, 2 = length measurement complete, 3 = angle measurement in progress, 4 = angle measurement complete
-	point_t p1;
-	point_t p2;
-	point_t p3;
-	double length;
-	double angle;
-	bool enabled = true;
-	struct bu_vls buffer = BU_VLS_INIT_ZERO;
-
-	// Raytracing related information
-	int prev_cnt = 0;
-	int scene_obj_set_cnt = 0;
-	struct bv_scene_obj **scene_obj_set = NULL;
-	struct application *ap = NULL;
-	struct rt_i *rtip = NULL;
-	struct resource *resp = NULL;
-
+	QMeasureFilter *mf = NULL;
+	QMeasure2DFilter *f2d = NULL;
+	QMeasure3DFilter *f3d = NULL;
 };
 
 // Local Variables:

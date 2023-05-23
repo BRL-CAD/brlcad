@@ -554,9 +554,6 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     QObject::disconnect(cf, &QPolyFilter::view_updated, this, &QPolyCreate::propagate_update);
     QObject::disconnect(cf, &QPolyFilter::finalized, this, &QPolyCreate::finalize);
 
-
-    // TODO - also handle signal/slot for finalize here...
-
     return ret;
 }
 

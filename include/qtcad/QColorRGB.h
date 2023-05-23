@@ -51,7 +51,7 @@ class QTCAD_EXPORT QColorRGB: public QWidget
 	struct bu_color bc;
 
     signals:
-	void color_changed();
+	void color_changed(struct bu_color *);
 
     public slots:
 	void set_color_from_text();
