@@ -234,6 +234,8 @@ bv_init(struct bview *gvp, struct bview_set *s)
     VSET(gvp->gv_eye_pos, 0.0, 0.0, 1.0);
     MAT_IDN(gvp->gv_rotation);
     MAT_IDN(gvp->gv_center);
+    MAT_IDN(gvp->gv_view2model);
+    MAT_IDN(gvp->gv_model2view);
     VSETALL(gvp->gv_keypoint, 0.0);
     gvp->gv_coord = 'v';
     gvp->gv_rotate_about = 'v';
