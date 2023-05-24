@@ -119,6 +119,7 @@ class QTCAD_EXPORT QPolyMoveFilter : public QPolyFilter
 
     public:
 	bool eventFilter(QObject *, QEvent *e);
+	struct bu_ptbl move_objs = BU_PTBL_INIT_ZERO;
 };
 
 

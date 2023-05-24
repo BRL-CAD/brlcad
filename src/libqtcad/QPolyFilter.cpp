@@ -423,7 +423,7 @@ QPolyMoveFilter::eventFilter(QObject *, QEvent *e)
 	return false;
 
     // The move filter needs an active polygon to operate on
-    if (!wp)
+    if (!wp && !BU_PTBL_LEN(&move_objs))
 	return false;
 
     // We don't want other stray mouse clicks to do something surprising
@@ -431,10 +431,17 @@ QPolyMoveFilter::eventFilter(QObject *, QEvent *e)
 	return true;
     }
 
-    // If we're clicking-and-holding, move the polygon
+    // If we're clicking-and-holding, it's time to move
     if (m_e->type() == QEvent::MouseMove) {
 	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
-	    bv_move_polygon(wp);
+	    if (BU_PTBL_LEN(&move_objs)) {
+		for (size_t i = 0; i < BU_PTBL_LEN(&move_objs); i++) {
+		    struct bv_scene_obj *mpoly = (struct bv_scene_obj *)BU_PTBL_GET(&move_objs, i);
+		    bv_move_polygon(mpoly);
+		}
+	    } else {
+		bv_move_polygon(wp);
+	    }
 	    emit view_updated(QTCAD_VIEW_REFRESH);
 	}
 	return true;
