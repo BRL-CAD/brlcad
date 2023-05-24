@@ -441,8 +441,15 @@ bv_move_polygon(struct bv_scene_obj *s)
 
     point_t v_pt, m_pt;
     VSET(v_pt, dx, dy, p->vZ);
-    // Use the polygon's view context for actually moving the point
-    MAT4X3PNT(m_pt, p->v.gv_view2model, v_pt);
+
+    // Use the polygon's view2model matrix, sans any "delta" component (see
+    // vmath.h) for actually moving the points.
+    mat_t v2m;
+    MAT_COPY(v2m, p->v.gv_view2model);
+    v2m[3] = 0;
+    v2m[7] = 0;
+    v2m[11] = 0;
+    MAT4X3PNT(m_pt, v2m, v_pt);
 
     for (size_t j = 0; j < p->polygon.num_contours; j++) {
 	struct bg_poly_contour *c = &p->polygon.contour[j];
