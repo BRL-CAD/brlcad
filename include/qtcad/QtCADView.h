@@ -33,6 +33,7 @@ extern "C" {
 #include "dm.h"
 }
 
+#include <vector>
 #include <QBoxLayout>
 #include <QObject>
 #include <QWidget>
@@ -78,7 +79,15 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	QObject *curr_event_filter = NULL;
 	void set_draw_custom(void (*draw_custom)(struct bview *, void *), void *draw_udata);
 
+	// Wrappers around Qt's facility for adding eventFilter objects to
+	// widgets.  This is how custom key binding modes are enabled and
+	// disabled in QtCADView windows.
 	void add_event_filter(QObject *);
+
+	// If a filter object is supplied, remove just that filter.  If NULL is
+	// passed in, remove all filters added using add_event_filter.  Does
+	// not clear all event filters of any sort (i.e. internal filters used
+	// by Qt), just those managed using these methods.
 	void clear_event_filter(QObject *);
 
 	void enableDefaultKeyBindings();
@@ -103,6 +112,7 @@ class QTCAD_EXPORT QtCADView : public QWidget
 #ifdef BRLCAD_OPENGL
         QtGL *canvas_gl = NULL;
 #endif
+	std::vector<QObject *> filters;
 };
 
 #endif /* QTCADVIEW_H */

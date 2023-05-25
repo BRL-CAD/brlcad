@@ -282,6 +282,7 @@ void
 QtCADView::add_event_filter(QObject *o)
 {
     curr_event_filter = o;
+    filters.push_back(o);
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
 	canvas_gl->installEventFilter(o);
@@ -297,15 +298,27 @@ QtCADView::add_event_filter(QObject *o)
 void
 QtCADView::clear_event_filter(QObject *o)
 {
-    if (!o)
-	return;
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
-	canvas_gl->removeEventFilter(o);
+	if (o) {
+	    canvas_gl->removeEventFilter(o);
+	} else {
+	    for (size_t i = 0; i < filters.size(); i++) {
+		canvas_gl->removeEventFilter(filters[i]);
+	    }
+	    filters.clear();
+	}
     }
 #endif
     if (canvas_sw) {
-	canvas_sw->removeEventFilter(o);
+	if (o) {
+	    canvas_sw->removeEventFilter(o);
+	} else {
+	    for (size_t i = 0; i < filters.size(); i++) {
+		canvas_sw->removeEventFilter(filters[i]);
+	    }
+	    filters.clear();
+	}
     }
     curr_event_filter = NULL;
 }
