@@ -72,6 +72,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_metaball_internal *metaball_ip;
     struct rt_pnts_internal *pnts_ip;
     struct rt_cline_internal *cline_ip;
+	struct rt_brep_internal *brep_ip;
 
     /* intentionally not included: cline */
     static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|datum|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
@@ -915,6 +916,14 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	next_ip->w = 1.0;
 	datum_ip->next->next->next->next->next->next = next_ip;
 
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "brep")) {
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	internal.idb_type = ID_BREP;
+	internal.idb_meth = &OBJ[ID_BREP];
+	BU_ALLOC(internal.idb_ptr, struct rt_brep_internal);
+	brep_ip = (struct rt_brep_internal *)internal.idb_ptr;
+	brep_ip->magic = RT_BREP_INTERNAL_MAGIC;
+	brep_ip->brep = (ON_Brep*)rt_brep_create_empty();
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
