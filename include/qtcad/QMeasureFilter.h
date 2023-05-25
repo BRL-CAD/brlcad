@@ -75,6 +75,12 @@ class QTCAD_EXPORT QMeasureFilter : public QObject
 	virtual bool get_point() { return false; };
 	point_t mpnt;
 
+	// If the client code only wants a simple length measurement,
+	// without the follow-on behavior of a second angle measuring
+	// line, setting this variable to true will alter the mouse
+	// binding behavior accordingly.
+	bool length_only = false;
+
     signals:
         void view_updated(int);
         void finalized(bool);
