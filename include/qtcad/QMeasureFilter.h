@@ -83,7 +83,6 @@ class QTCAD_EXPORT QMeasureFilter : public QObject
 
     signals:
         void view_updated(int);
-        void finalized(bool);
 
     public:
 	struct bview *v = NULL;
