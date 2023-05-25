@@ -66,6 +66,7 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	QtCADView *get(int quadrant_num = UPPER_RIGHT_QUADRANT);
 	QtCADView *get(const QPoint &p); // Test is global point coordinates correspond to one of the quad view
 	QtCADView *get(QEvent *e); // Given a MouseButtonPress QEvent, see if the point identifies a view
+	QtCADView *curr_view(); // return the currently selected view
 	struct bview * view(int quadrant_id = UPPER_RIGHT_QUADRANT);
 
 	void select(int quadrant_num);

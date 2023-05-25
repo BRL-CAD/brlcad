@@ -95,6 +95,13 @@ QtCADQuad::~QtCADQuad()
 	delete spacerCenter;
 }
 
+QtCADView *
+QtCADQuad::curr_view()
+{
+    int s = get_selected();
+    return get(s);
+}
+
 /**
  * @brief Creates a view for the viewport. Convenience method of common things that need to be done to the view.
  *
