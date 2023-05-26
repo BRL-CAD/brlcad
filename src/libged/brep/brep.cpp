@@ -1260,6 +1260,206 @@ _brep_cmd_valid(void *bs, int argc, const char **argv)
     return brep_valid(gedp->ged_result_str, &gb->intern, argc, argv);
 }
 
+enum {
+    A, B, C, D
+};
+/*
+ * This example is used to generate a single NURBS surface w/o thickness.
+ */
+ON_Brep *
+brep_single_surf(fastf_t thickness = 0.0)
+{
+    /*
+     * Four vertices for the NURBS surface
+     *
+     *          D ---------- C
+     *          |            |
+     *          |            |
+     *          |            |
+     *          A ---------- B
+     */
+
+    // control points
+    ON_3dPoint point[4] = {
+	ON_3dPoint(0.0, 0.0, 11.0), // Point A
+	ON_3dPoint(10.0, 0.0, 12.0), // Point B
+	ON_3dPoint(10.0, 8.0, 13.0), // Point C
+	ON_3dPoint(0.0, 6.0, 12.0), // Point D
+    };
+
+    ON_Brep* b = ON_Brep::New();
+    ON_TextLog error_log;
+
+    // create vertices
+    for (int i = 0; i < 4; i++) {
+	ON_BrepVertex& v = b->NewVertex(point[i]);
+	v.m_tolerance = 0.0;
+    }
+
+    // create 3D lines
+    ON_Curve* c3d_ab = new ON_LineCurve(point[A], point[B]);
+    c3d_ab->SetDomain(0.0, 1.0);
+    b->m_C3.Append(c3d_ab);
+
+    ON_Curve* c3d_bc = new ON_LineCurve(point[B], point[C]);
+    c3d_bc->SetDomain(0.0, 1.0);
+    b->m_C3.Append(c3d_bc);
+
+    ON_Curve* c3d_cd = new ON_LineCurve(point[C], point[D]);
+    c3d_cd->SetDomain(0.0, 1.0);
+    b->m_C3.Append(c3d_cd);
+
+    ON_Curve* c3d_da = new ON_LineCurve(point[D], point[A]);
+    c3d_da->SetDomain(0.0, 1.0);
+    b->m_C3.Append(c3d_da);
+
+    // create edges
+    ON_BrepEdge& e_ab = b->NewEdge(b->m_V[A], b->m_V[B], 0);
+    e_ab.m_tolerance = 0.0;
+
+    ON_BrepEdge& e_bc = b->NewEdge(b->m_V[B], b->m_V[C], 1);
+    e_bc.m_tolerance = 0.0;
+
+    ON_BrepEdge& e_cd = b->NewEdge(b->m_V[C], b->m_V[D], 2);
+    e_cd.m_tolerance = 0.0;
+
+    ON_BrepEdge& e_da = b->NewEdge(b->m_V[D], b->m_V[A], 3);
+    e_da.m_tolerance = 0.0;
+
+    // create the single surface
+    ON_NurbsSurface* s = new ON_NurbsSurface(3, 0, 2, 2, 2, 2);
+    s->SetCV(0, 0, point[A]);
+    s->SetCV(1, 0, point[B]);
+    s->SetCV(1, 1, point[C]);
+    s->SetCV(0, 1, point[D]);
+    s->SetKnot(0, 0, 0.0);
+    s->SetKnot(0, 1, 1.0);
+    s->SetKnot(1, 0, 0.0);
+    s->SetKnot(1, 1, 1.0);
+    b->m_S.Append(s);
+
+    // create the single face
+    ON_BrepFace& f = b->NewFace(0);
+    ON_BrepLoop& l = b->NewLoop(ON_BrepLoop::outer, f);
+
+    int c2i = 0;
+    ON_Surface::ISO iso = ON_Surface::not_iso;
+
+    for (int side = 0; side < 4; side++) {
+	ON_2dPoint from, to;
+	double u0, u1, v0, v1;
+	s->GetDomain(0, &u0, &u1);
+	s->GetDomain(1, &v0, &v1);
+
+	switch (side) {
+	case 0:
+	    from.x = u0; from.y = v0;
+	    to.x   = u1; to.y   = v0;
+	    iso = ON_Surface::S_iso;
+	    break;
+	case 1:
+	    from.x = u1; from.y = v0;
+	    to.x   = u1; to.y   = v1;
+	    iso = ON_Surface::E_iso;
+	    break;
+	case 2:
+	    from.x = u1; from.y = v1;
+	    to.x   = u0; to.y   = v1;
+	    iso = ON_Surface::N_iso;
+	    break;
+	case 3:
+	    from.x = u0; from.y = v1;
+	    to.x   = u0; to.y   = v0;
+	    iso = ON_Surface::W_iso;
+	    break;
+	}
+
+	ON_Curve* c2d = new ON_LineCurve(from, to);
+	c2d->SetDomain(0.0, 1.0);
+	c2i = b->m_C2.Count();
+	b->m_C2.Append(c2d);
+
+	ON_BrepTrim& t = b->NewTrim(b->m_E[side], 0, l, c2i);
+	t.m_iso = iso;
+	t.m_type = ON_BrepTrim::boundary;
+	t.m_tolerance[0] = 0.0;
+	t.m_tolerance[1] = 0.0;
+    }
+
+    /* if brep is a solid model, set the thickness to 0 */
+    if (b->IsSolid())
+	thickness = 0.0;
+
+    /* assign the value to the whole brep */
+    if (!NEAR_ZERO(thickness, 0.001) && b->m_F.Count()) {
+	ON_U u;
+	u.d = thickness;
+	b->m_brep_user = u;
+
+	for (int fi = 0; fi < b->m_F.Count(); fi++)
+	    b->m_F[fi].m_face_user = u;
+    }
+
+    b->Standardize();
+    b->Compact();
+
+    if (b && !b->IsValid(&error_log)) {
+	error_log.Print("Invalid single NURBS surface");
+	delete b;
+	b = NULL;
+    }
+
+    return b;
+}
+
+extern "C" int
+_brep_cmd_create_curve(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> create_curve <curve_info>";
+    const char *purpose_string = "create a new NURBS curve";
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
+
+    ON_NurbsCurve* curve = new ON_NurbsCurve(3, true, 3, 4);
+    curve->SetCV(0, ON_3dPoint(0, 0, 0));
+    curve->SetCV(1, ON_3dPoint(1, 0, 0));
+    curve->SetCV(2, ON_3dPoint(1, 1, 0));
+    curve->SetCV(3, ON_3dPoint(0, 1, 0));
+    curve->SetKnot(0, 0);
+    curve->SetKnot(1, 0);
+    curve->SetKnot(2, 0.5);
+    curve->SetKnot(3, 1);
+    curve->SetKnot(4, 1);
+    b_ip->brep->AddEdgeCurve(curve);
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
 #if 0
 extern "C" int
 _brep_cmd_weld(void *bs, int argc, const char **argv)
@@ -1303,6 +1503,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "tikz",            _brep_cmd_tikz},
     { "valid",           _brep_cmd_valid},
     //{ "weld",            _brep_cmd_weld},
+    { "create_curve",    _brep_cmd_create_curve},
     { (char *)NULL,      NULL}
 };
 
