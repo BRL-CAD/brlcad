@@ -1466,6 +1466,66 @@ _brep_cmd_create_curve(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+extern "C" int
+_brep_cmd_move_curve_control_Vertex(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> move_curve_CV <curve_id> <CV_id> <x> <y> <z> <w>";
+    const char *purpose_string = "move the control vertex of a NURBS curve";
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+    
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return BRLCAD_ERROR;
+    }
+
+    if(argc<6)
+    {
+        bu_vls_printf(gb->gedp->ged_result_str, " not enough arguments\n");
+	    bu_vls_printf(gb->gedp->ged_result_str, "%s\n", usage_string);
+        return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
+    
+    ON_NurbsCurve* curve = dynamic_cast<ON_NurbsCurve *>(b_ip->brep->m_C3[atoi(argv[1])]);
+    if(!curve)
+    {
+        bu_vls_printf(gb->gedp->ged_result_str, ": curve %s is not a NURBS curve\n", argv[1]);
+        return BRLCAD_ERROR;
+    }
+
+    ON_4dPoint p = ON_4dPoint(atof(argv[3]), atof(argv[4]), atof(argv[5]), argc==7?atof(argv[6]):1.0);
+    int flag = curve->SetCV(atoi(argv[2]), p);
+    if(!flag)
+    {
+        if(atoi(argv[2])<0 || atoi(argv[2])>=curve->CVCount())
+            bu_vls_printf(gb->gedp->ged_result_str, ": control vertex index %s is out of range\n", argv[2]);
+        else
+            bu_vls_printf(gb->gedp->ged_result_str, ": failed to move control vertex %s of curve %s\n", argv[2], argv[1]);
+        return BRLCAD_ERROR;
+    }
+    
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
 #if 0
 extern "C" int
 _brep_cmd_weld(void *bs, int argc, const char **argv)
@@ -1510,6 +1570,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "valid",           _brep_cmd_valid},
     //{ "weld",            _brep_cmd_weld},
     { "create_curve",    _brep_cmd_create_curve},
+    { "move_curve_CV",    _brep_cmd_move_curve_control_Vertex},
     { (char *)NULL,      NULL}
 };
 
