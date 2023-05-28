@@ -1415,7 +1415,7 @@ brep_single_surf(fastf_t thickness = 0.0)
 extern "C" int
 _brep_cmd_create_curve(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> create_curve <curve_info>";
+    const char *usage_string = "brep [options] <objname> create_curve <x> <y> <z>";
     const char *purpose_string = "create a new NURBS curve";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -1430,16 +1430,22 @@ _brep_cmd_create_curve(void *bs, int argc, const char **argv)
 
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
 
+    // Create a template nurbs curve
     ON_NurbsCurve* curve = new ON_NurbsCurve(3, true, 3, 4);
-    curve->SetCV(0, ON_3dPoint(0, 0, 0));
-    curve->SetCV(1, ON_3dPoint(1, 0, 0));
-    curve->SetCV(2, ON_3dPoint(1, 1, 0));
-    curve->SetCV(3, ON_3dPoint(0, 1, 0));
+    curve->SetCV(0, ON_3dPoint(-0.1, -1.5, 0));
+    curve->SetCV(1, ON_3dPoint(0.1, -0.5, 0));
+    curve->SetCV(2, ON_3dPoint(0.1, 0.5, 0));
+    curve->SetCV(3, ON_3dPoint(-0.1, 1.5, 0));
     curve->SetKnot(0, 0);
     curve->SetKnot(1, 0);
     curve->SetKnot(2, 0.5);
     curve->SetKnot(3, 1);
     curve->SetKnot(4, 1);
+
+    // if position is specified, translate the curve to that position
+    if(argc==4)
+        curve->Translate(ON_3dVector(atof(argv[1]), atof(argv[2]), atof(argv[3])));
+
     b_ip->brep->AddEdgeCurve(curve);
 
     // Delete the old object
