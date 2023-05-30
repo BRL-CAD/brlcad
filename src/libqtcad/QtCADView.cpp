@@ -131,7 +131,7 @@ void
 QtCADView::do_view_changed()
 {
     QTCAD_SLOT("QtCADView::do_view_changed", 1);
-    emit changed();
+    emit changed(this);
 }
 
 void

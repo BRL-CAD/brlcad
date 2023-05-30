@@ -295,6 +295,11 @@ QtCADQuad::changeToQuadFrame()
 	}
     }
 
+    for (int i = UPPER_RIGHT_QUADRANT + 1; i < LOWER_RIGHT_QUADRANT + 1; i++) {
+	views[i]->view()->gv_width = views[UPPER_RIGHT_QUADRANT]->view()->gv_width;
+	views[i]->view()->gv_height = views[UPPER_RIGHT_QUADRANT]->view()->gv_height;
+    }
+
     // Current view selection pieces
     select(UPPER_RIGHT_QUADRANT);
     gedp->ged_gvp = views[UPPER_RIGHT_QUADRANT]->view();
