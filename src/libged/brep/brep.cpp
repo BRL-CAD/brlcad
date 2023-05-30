@@ -1466,6 +1466,20 @@ _brep_cmd_create_curve(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+
+// TODO: add more options about knot vector
+extern "C" int
+_brep_cmd_in_curve(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> in_curve <is_rational> <order> <CV_count> <cv1_x> <cv1_y> <cv1_z> <cv_w>(if rational) ...";
+    const char *purpose_string = "create a new NURBS curve given detailed description";
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    return BRLCAD_OK;
+}
+
 extern "C" int
 _brep_cmd_move_curve_control_Vertex(void *bs, int argc, const char **argv)
 {
@@ -1570,6 +1584,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "valid",           _brep_cmd_valid},
     //{ "weld",            _brep_cmd_weld},
     { "create_curve",    _brep_cmd_create_curve},
+    { "in_curve",    _brep_cmd_in_curve},
     { "move_curve_CV",    _brep_cmd_move_curve_control_Vertex},
     { (char *)NULL,      NULL}
 };
