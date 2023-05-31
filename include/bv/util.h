@@ -225,6 +225,10 @@ BV_EXPORT void
 bv_log(int level, const char *fmt, ...)  _BU_ATTR_PRINTF23;
 
 
+/* Debugging function for printing contents of views */
+BV_EXPORT void
+bv_view_print(const char *title, struct bview *v, int verbosity);
+
 __END_DECLS
 
 /** @} */

@@ -1669,6 +1669,63 @@ bv_log(int UNUSED(level), const char *UNUSED(fmt), ...)
 #endif
 }
 
+void
+bv_view_print(const char *title, struct bview *v, int UNUSED(verbosity))
+{
+    if (!v)
+	return;
+
+    struct bu_vls vtitle = BU_VLS_INIT_ZERO;
+    if (title) {
+	bu_vls_sprintf(&vtitle, "%s", title);
+    } else {
+	bu_vls_sprintf(&vtitle, "%s", bu_vls_cstr(&v->gv_name));
+    }
+
+    bu_log("%s\n", bu_vls_cstr(&vtitle));
+    bu_vls_free(&vtitle);
+
+    bu_log("Size info:\n");
+    bu_log("  i_scale:      %f\n", v->gv_i_scale);
+    bu_log("  a_scale:      %f\n", v->gv_a_scale);
+    bu_log("  scale:        %f\n", v->gv_scale);
+    bu_log("  size:         %f\n", v->gv_size);
+    bu_log("  isize:        %f\n", v->gv_isize);
+    bu_log("  base2local:   %f\n", v->gv_base2local);
+    bu_log("  local2base:   %f\n", v->gv_local2base);
+    bu_log("  rscale:       %f\n", v->gv_rscale);
+    bu_log("  sscale:       %f\n", v->gv_sscale);
+
+    bu_log("Window info:");
+    bu_log("  width:        %d\n", v->gv_width);
+    bu_log("  height:       %d\n", v->gv_height);
+    bu_log("  wmin:         %f\n, %f", v->gv_wmin[0], v->gv_wmin[1]);
+    bu_log("  wmax:         %f\n, %f", v->gv_wmax[0], v->gv_wmax[1]);
+
+    bu_log("Camera info:");
+    bu_log("  perspective:  %f\n", v->gv_perspective);
+    bu_log("  aet:          %f %f %f\n", V3ARGS(v->gv_aet));
+    bu_log("  eye_pos:      %f %f %f\n", V3ARGS(v->gv_eye_pos));
+    bu_log("  keypoint:     %f %f %f\n", V3ARGS(v->gv_keypoint));
+    bu_log("  coord:        %c\n", v->gv_coord);
+    bu_log("  rotate_about: %c\n", v->gv_rotate_about);
+    bn_mat_print("rotation", v->gv_rotation);
+    bn_mat_print("center", v->gv_center);
+    bn_mat_print("model2view", v->gv_model2view);
+    bn_mat_print("pmodel2view", v->gv_pmodel2view);
+    bn_mat_print("view2model", v->gv_view2model);
+    bn_mat_print("perspective", v->gv_pmat);
+
+    bu_log("Keyboard/mouse info:");
+    bu_log("  prevMouseX:   %f\n", v->gv_prevMouseX);
+    bu_log("  prevMouseY:   %f\n", v->gv_prevMouseY);
+    bu_log("  mouse_x:      %d\n", v->gv_mouse_x);
+    bu_log("  mouse_y:      %d\n", v->gv_mouse_y);
+    bu_log("  key:          %c\n", v->gv_key);
+    bu_log("  mod_flags:    %ld\n", v->gv_mod_flags);
+    bu_log("  minMousedelta:%f\n", v->gv_minMouseDelta);
+    bu_log("  maxMousedelta:%f\n", v->gv_maxMouseDelta);
+}
 
 // Local Variables:
 // tab-width: 8
