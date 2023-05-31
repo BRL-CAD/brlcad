@@ -1491,7 +1491,7 @@ _brep_cmd_in_curve(void *bs, int argc, const char **argv)
 
     if (argc < 4 + CV_count * (3 + (is_rational ? 1 : 0)))
     {
-    bu_vls_printf(gb->gedp->ged_result_str, " not enough arguments, you need to input %d args\n", 4 + CV_count * (3 + (is_rational ? 1 : 0)));
+    bu_vls_printf(gb->gedp->ged_result_str, " not enough arguments, you need to input %d more args about control vertices\n", 4 + CV_count * (3 + (is_rational ? 1 : 0)) - argc);
     bu_vls_printf(gb->gedp->ged_result_str, "%s\n", usage_string);
     return BRLCAD_ERROR;
     }
