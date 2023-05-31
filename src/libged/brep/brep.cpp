@@ -1271,65 +1271,18 @@ _brep_cmd_curve(void *bs, int argc, const char **argv)
 	return BRLCAD_OK;
     }
     if (argc >= 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	return brep_curve(gb, 0, NULL);
-    }
-    return BRLCAD_OK;
-}
-
-extern "C" int
-_brep_cmd_create_curve(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "brep [options] <objname> create_curve <x> <y> <z>";
-    const char *purpose_string = "create a new NURBS curve";
-    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return BRLCAD_OK;
+	return brep_curve(gb, argc, argv);
     }
 
-    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-    
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return BRLCAD_ERROR;
     }
 
-    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
+    argc--; argv++;
 
-    // Create a template nurbs curve
-    ON_NurbsCurve* curve = new ON_NurbsCurve(3, true, 3, 4);
-    curve->SetCV(0, ON_3dPoint(-0.1, -1.5, 0));
-    curve->SetCV(1, ON_3dPoint(0.1, -0.5, 0));
-    curve->SetCV(2, ON_3dPoint(0.1, 0.5, 0));
-    curve->SetCV(3, ON_3dPoint(-0.1, 1.5, 0));
-    curve->SetKnot(0, 0);
-    curve->SetKnot(1, 0);
-    curve->SetKnot(2, 0.5);
-    curve->SetKnot(3, 1);
-    curve->SetKnot(4, 1);
-
-    // if position is specified, translate the curve to that position
-    if(argc==4)
-        curve->Translate(ON_3dVector(atof(argv[1]), atof(argv[2]), atof(argv[3])));
-
-    b_ip->brep->AddEdgeCurve(curve);
-
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
-    // Make the new one
-    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
-	return BRLCAD_ERROR;
-    }
-    return BRLCAD_OK;
+    return brep_curve(gb, argc, argv);
 }
-
 
 // TODO: add more options about knot vector
 extern "C" int
@@ -1502,7 +1455,6 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "valid",           _brep_cmd_valid},
     //{ "weld",            _brep_cmd_weld},
     { "curve",           _brep_cmd_curve},
-    { "create_curve",    _brep_cmd_create_curve},
     { "in_curve",        _brep_cmd_in_curve},
     { "move_curve_CV",   _brep_cmd_move_curve_control_Vertex},
     { (char *)NULL,      NULL}
