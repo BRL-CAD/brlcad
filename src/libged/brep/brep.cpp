@@ -1505,6 +1505,9 @@ _brep_cmd_in_curve(void *bs, int argc, const char **argv)
         curve->SetWeight(i, atof(argv[7 + i * (3 + is_rational)]));
     }
 
+    // make uniform knot vector
+    curve->MakeClampedUniformKnotVector();
+
     // add the curve to the brep
     b_ip->brep->AddEdgeCurve(curve);
 
