@@ -1260,6 +1260,22 @@ _brep_cmd_valid(void *bs, int argc, const char **argv)
     return brep_valid(gedp->ged_result_str, &gb->intern, argc, argv);
 }
 
+
+extern "C" int
+_brep_cmd_curve(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    const char *purpose_string = "NURBS curves editing support for brep objects";
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
+	return BRLCAD_OK;
+    }
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	return brep_curve(gb, 0, NULL);
+    }
+    return BRLCAD_OK;
+}
+
 extern "C" int
 _brep_cmd_create_curve(void *bs, int argc, const char **argv)
 {
@@ -1485,6 +1501,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "tikz",            _brep_cmd_tikz},
     { "valid",           _brep_cmd_valid},
     //{ "weld",            _brep_cmd_weld},
+    { "curve",           _brep_cmd_curve},
     { "create_curve",    _brep_cmd_create_curve},
     { "in_curve",        _brep_cmd_in_curve},
     { "move_curve_CV",   _brep_cmd_move_curve_control_Vertex},
