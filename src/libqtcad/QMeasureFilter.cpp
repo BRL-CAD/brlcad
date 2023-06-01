@@ -168,17 +168,6 @@ QMeasureFilter::eventFilter(QObject *, QEvent *e)
 	if (mode == 2) {
 	    if (!get_point())
 		return true;
-
-	    if (length_only) {
-		// Angle measurement disabled, starting over
-		if (s)
-		    bv_obj_put(s);
-		mode = 0;
-		emit view_updated(QTCAD_VIEW_REFRESH);
-		return true;
-	    }
-
-	    // Not length only, so now we're doing an angle measurement
 	    mode = 3;
 	    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
@@ -235,6 +224,14 @@ QMeasureFilter::eventFilter(QObject *, QEvent *e)
 	if (mode == 1) {
 	    if (!get_point())
 		return true;
+
+	    if (length_only) {
+		// Angle measurement disabled, starting over
+		mode = 0;
+		emit view_updated(QTCAD_VIEW_REFRESH);
+		return true;
+	    }
+
 	    mode = 2;
 	    BV_FREE_VLIST(s->vlfree, &s->s_vlist);
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
