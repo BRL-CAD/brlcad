@@ -61,6 +61,36 @@ bg_polygons_free(struct bg_polygons *gpp)
     gpp->num_polygons = 0;
 }
 
+void
+bg_polygon_view_bbox(point2d_t *bmin, point2d_t *bmax, struct bg_polygon *p, matp_t model2view)
+{
+    if (!bmin || !bmax || !p)
+	return;
+
+    // Initialize
+    V2SET(*bmin, INFINITY, INFINITY);
+    V2SET(*bmax, -INFINITY, -INFINITY);
+
+    if (!p->num_contours || !p->contour)
+	return;
+
+    // NOTE:  Holes don't define positive area, so their points are not
+    // considered for the bbox dimensions even if they are outside the positive
+    // contours.  ONLY considering positive contour points.
+    for (size_t i = 0; i < p->num_contours; i++) {
+	struct bg_poly_contour *c = &p->contour[i];
+	if (!c->num_points)
+	    continue;
+	for (size_t j = 0; j < c->num_points; j++) {
+	    point_t vpoint;
+	    MAT4X3PNT(vpoint, model2view, c->point[j]);
+	    point2d_t v2d;
+	    v2d[0] = vpoint[0];
+	    v2d[1] = vpoint[1];
+	    V2MINMAX(*bmin, *bmax, v2d);
+	}
+    }
+}
 
 int
 bg_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts)

@@ -98,6 +98,16 @@ BG_EXPORT extern void bg_polygons_free(struct bg_polygons *gpp);
 
 BG_EXPORT extern void bg_polygon_cpy(struct bg_polygon *dest, struct bg_polygon *src);
 
+/**
+ * @brief
+ * Find the 2D axis aligned bounding box of a bg_polygon in view coordinates.
+ *
+ * NOTE:  If the polygon's internal data is defined in the XY plane and no view
+ * projection is desired, pass MAT_IDN to model2view to get the raw data's
+ * bbox.
+ */
+BG_EXPORT extern void
+bg_polygon_view_bbox(point2d_t *bmin, point2d_t *bmax, struct bg_polygon *p, matp_t model2view);
 
 /********************************
  * Operations on 2D point types *
@@ -122,7 +132,6 @@ BG_EXPORT extern void bg_polygon_cpy(struct bg_polygon *dest, struct bg_polygon 
  * @return 0 if the test failed
  */
 BG_EXPORT extern int bg_polygon_direction(size_t npts, const point2d_t *pts, const int *pt_indices);
-
 
 /**
  * @brief
