@@ -32,12 +32,14 @@ extern "C" {
 #include "bv/util.h"
 }
 
+#include "qtcad/defines.h"
 #include "bindings.h"
 
 // TODO - look into QShortcut, see if it might be a better way
 // to manage this
 int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QKeyEvent *k)
 {
+    QTCAD_EVENT("keyPress", 1);
     if (!v)
 	return 0;
 #if 0
@@ -121,6 +123,7 @@ int CADkeyPressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QK
 
 int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e)
 {
+    QTCAD_EVENT("mousePress", 1);
 
     if (!v)
 	return 0;
@@ -151,6 +154,7 @@ int CADmousePressEvent(struct bview *v, int UNUSED(x_prev), int UNUSED(y_prev), 
 
 int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UNUSED(x_prev), int UNUSED(y_prev), QMouseEvent *e, int mode)
 {
+    QTCAD_EVENT("mouseRelease", 1);
 
     if (!v)
 	return 0;
@@ -218,6 +222,7 @@ int CADmouseReleaseEvent(struct bview *v, double x_press, double y_press, int UN
 
 int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, int mode)
 {
+    QTCAD_EVENT("mouseMove", 2);
 
     if (!v)
 	return 0;
@@ -301,6 +306,7 @@ int CADmouseMoveEvent(struct bview *v, int x_prev, int y_prev, QMouseEvent *e, i
 
 int CADwheelEvent(struct bview *v, QWheelEvent *e)
 {
+    QTCAD_EVENT("mouseWheel", 1);
 
     if (!v)
 	return 0;

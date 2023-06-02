@@ -69,6 +69,23 @@
 #  define QTCAD_SLOT(slot_name, level)
 #endif
 
+// Uncomment to allow the env command to enable printouts
+// reporting on when libqtcad events are being called
+#define QTCAD_SUPPORT_ENV_EVENT_REPORTING 1
+#ifdef QTCAD_SUPPORT_ENV_EVENT_REPORTING
+#  define QTCAD_EVENT(event_name, level) {\
+    const char *qrsig = getenv("QTCAD_REPORT_EVENTS");\
+    if (qrsig) {\
+	int qlev = atoi(qrsig);\
+	if (qlev == level) {\
+	    bu_log("%s\n", event_name); \
+	} \
+    }\
+}
+#else
+#  define QTCAD_EVENT(event_name, level)
+#endif
+
 #endif  /* QTCAD_DEFINES_H */
 
 /*
