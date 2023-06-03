@@ -1,4 +1,4 @@
-/*                       B R E P . H
+/*                       B O O L E A N . H
  * BRL-CAD
  *
  * Copyright (c) 2007-2023 United States Government as represented by
@@ -17,37 +17,23 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbrep
+/** @addtogroup brep_edit
  * @brief
- * Define surface and curve structures for Non-Uniform Rational
- * B-Spline (NURBS) curves and surfaces. Uses openNURBS library.
+ * Implementation of edit support for brep.
  */
-/** @{ */
-/** @file include/brep.h */
-#ifndef BREP_H
-#define BREP_H
+#ifndef BREP_EDIT_H
+#define BREP_EDIT_H
 
 #include "common.h"
-
-__BEGIN_DECLS
-
 #include "brep/defines.h"
-#include "brep/util.h"
-#include "brep/ray.h"
-#include "brep/brnode.h"
-#include "brep/curvetree.h"
-#include "brep/bbnode.h"
-#include "brep/edit.h"
-#include "brep/surfacetree.h"
-#include "brep/pullback.h"
-#include "brep/intersect.h"
-#include "brep/boolean.h"
-#include "brep/cdt.h"
-#include "brep/csg.h"
 
-__END_DECLS
+/** @{ */
+/** @file brep/edit.h */
 
-#endif  /* BREP_H */
+BREP_EXPORT extern void *
+create_empty_brep();
+
+#endif  /* BREP_EDIT_H */
 /** @} */
 /*
  * Local Variables:

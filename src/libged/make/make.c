@@ -923,7 +923,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	BU_ALLOC(internal.idb_ptr, struct rt_brep_internal);
 	brep_ip = (struct rt_brep_internal *)internal.idb_ptr;
 	brep_ip->magic = RT_BREP_INTERNAL_MAGIC;
-	brep_ip->brep = (ON_Brep*)rt_brep_create_empty();
+	brep_ip->brep = (ON_Brep*)create_empty_brep();
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
