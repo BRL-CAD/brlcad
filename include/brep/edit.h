@@ -29,9 +29,12 @@
 
 /** @{ */
 /** @file brep/edit.h */
+__BEGIN_DECLS
 
 BREP_EXPORT extern void *
-create_empty_brep();
+brep_create_empty_brep();
+
+__END_DECLS
 
 #endif  /* BREP_EDIT_H */
 /** @} */

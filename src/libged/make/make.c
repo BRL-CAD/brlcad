@@ -75,7 +75,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	struct rt_brep_internal *brep_ip;
 
     /* intentionally not included: cline */
-    static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|datum|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
+    static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|brep|datum|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_READ_ONLY(gedp, BRLCAD_ERROR);
@@ -117,7 +117,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	    case 'T':
 		if (argc == 2) {
 		    /* intentionally not included: cline */
-		    bu_vls_printf(gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot datum ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
+		    bu_vls_printf(gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot brep datum ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
 		    return GED_HELP;
 		}
 
@@ -923,7 +923,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	BU_ALLOC(internal.idb_ptr, struct rt_brep_internal);
 	brep_ip = (struct rt_brep_internal *)internal.idb_ptr;
 	brep_ip->magic = RT_BREP_INTERNAL_MAGIC;
-	brep_ip->brep = (ON_Brep*)create_empty_brep();
+	brep_ip->brep = brep_create_empty_brep();
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;

@@ -39,7 +39,7 @@
 #include "brep_except.h"
 #include "brep_defines.h"
 
-void *create_empty_brep()
+void *brep_create_empty_brep()
 {
     ON_Brep *brep = new ON_Brep();
     return (void *)brep;
