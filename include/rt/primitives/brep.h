@@ -66,9 +66,6 @@ RT_EXPORT extern int rt_brep_plate_mode(const struct rt_db_internal *ip);
  * if an object is or isn't plate mode*/
 RT_EXPORT extern void rt_brep_plate_mode_getvals(double *pthickness, int *nocos, const struct rt_db_internal *ip);
 
-/* create an empty brep */
-RT_EXPORT extern void*  rt_brep_create_empty();
-
 /** @} */
 
 __END_DECLS

@@ -89,7 +89,6 @@ extern "C" {
     int rt_brep_plate_mode(const struct rt_db_internal *ip);
     void rt_brep_plate_mode_getvals(double *pthickness, int *nocos, const struct rt_db_internal *ip);
     int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
-	void* rt_brep_create_empty();
 #ifdef __cplusplus
 }
 #endif
@@ -3000,12 +2999,6 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 
 	return 0;
     }
-}
-
-void *rt_brep_create_empty()
-{
-    ON_Brep *brep = ON_Brep::New();
-    return (void *)brep;
 }
 
 int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
