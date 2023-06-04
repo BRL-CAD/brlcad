@@ -920,10 +920,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_BREP;
 	internal.idb_meth = &OBJ[ID_BREP];
-	BU_ALLOC(internal.idb_ptr, struct rt_brep_internal);
-	brep_ip = (struct rt_brep_internal *)internal.idb_ptr;
-	brep_ip->magic = RT_BREP_INTERNAL_MAGIC;
-	brep_ip->brep = brep_create_empty_brep();
+	internal.idb_ptr = brep_create_empty_brep();
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
