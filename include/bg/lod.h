@@ -34,6 +34,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "bv.h"
+#include "bu/ptbl.h"
 #include "bg/defines.h"
 
 __BEGIN_DECLS
@@ -47,17 +48,18 @@ __BEGIN_DECLS
 BG_EXPORT extern void
 bg_view_bounds(struct bview *v);
 
-/* Given a screen x,y coordinate, construct and return the set of all scene
- * objects whose AABB intersect with the OBB created by the projection of that
- * pixel through the scene. */
+/* Given a screen x,y coordinate, construct the set of all scene objects whose
+ * AABB intersect with the OBB created by the projection of that pixel through
+ * the scene. sset holds the struct bv_scene_obj pointers of the selected
+ * objects.  */
 BG_EXPORT int
-bg_view_objs_select(struct bv_scene_obj ***set, struct bview *v, int x, int y);
+bg_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y);
 
 /* Given a screen x1,y1,x2,y2 rectangle, construct and return the set of all scene
  * objects whose AABB intersect with the OBB created by the projection of that
  * rectangle through the scene. */
 BG_EXPORT int
-bg_view_objs_rect_select(struct bv_scene_obj ***set, struct bview *v, int x1, int y1, int x2, int y2);
+bg_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, int x2, int y2);
 
 /* Storing and reading from a lot of small, individual files doesn't work very
  * well on some platforms.  We provide a "context" to manage bookkeeping of data

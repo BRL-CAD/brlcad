@@ -97,7 +97,7 @@ class CADViewSelector : public QWidget
 	fastf_t vx = -FLT_MAX;
 	fastf_t vy = -FLT_MAX;
 	int scnt = 0;
-	struct bv_scene_obj **sset = NULL;
+	struct bu_ptbl sset = BU_PTBL_INIT_ZERO;
 	unsigned long long ohash = 0;
 	unsigned long long omhash = 0;
 };

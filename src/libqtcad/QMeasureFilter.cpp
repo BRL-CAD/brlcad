@@ -277,6 +277,14 @@ QMeasure2DFilter::eventFilter(QObject *o, QEvent *e)
     return QMeasureFilter::eventFilter(o, e);
 }
 
+QMeasure3DFilter::QMeasure3DFilter()
+{
+}
+
+QMeasure3DFilter::~QMeasure3DFilter()
+{
+    bu_ptbl_free(&scene_obj_set);
+}
 
 struct rec_state {
     double cdist;
@@ -326,29 +334,30 @@ QMeasure3DFilter::get_point()
     // only those objects whose bounding boxes are currently under the mouse.
     // Under most circumstances that should substantially cut down the
     // interrogation time for large models.
-    struct bv_scene_obj **sset = NULL;
+    struct bu_ptbl sset = BU_PTBL_INIT_ZERO;
     int scnt = bg_view_objs_select(&sset, v, v->gv_mouse_x, v->gv_mouse_y);
 
     // If we didn't see anything, we have a no-op
     if (!scnt) {
 	prev_cnt = scnt;
+	bu_ptbl_free(&sset);
 	return false;
     }
 
     bool need_prep = (!ap || !rtip || !resp) ? true : false;
-    if (need_prep || !scene_obj_set_cnt || prev_cnt != scnt || scnt != scene_obj_set_cnt) {
+    if (need_prep || prev_cnt != scnt || scnt != (int)BU_PTBL_LEN(&scene_obj_set)) {
 	// Something changed - need to reset the raytrace data
-	if (scene_obj_set)
-	    bu_free(scene_obj_set, "old set");
-	scene_obj_set_cnt = scnt;
-	scene_obj_set = sset;
+	bu_ptbl_reset(&scene_obj_set);
+	bu_ptbl_cat(&scene_obj_set, &sset);
 	need_prep = true;
     }
     if (!need_prep) {
-	// We may be able to reuse the existing prep - make
-	// sure the scene obj sets match
-	for (int i = 0; i < scene_obj_set_cnt; i++) {
-	    if (sset[i] != scene_obj_set[i]) {
+	// We may be able to reuse the existing prep - make sure the scene obj
+	// sets match.  The above check should ensure that the lengths of sset
+	// and scene_obj_set match - if they don't, we already know we need to
+	// re-prep.
+	for (size_t i = 0; i < BU_PTBL_LEN(&scene_obj_set); i++) {
+	    if (BU_PTBL_GET(&sset, i) != BU_PTBL_GET(&scene_obj_set, i)) {
 		need_prep = true;
 		break;
 	    }
@@ -381,9 +390,9 @@ QMeasure3DFilter::get_point()
 	ap->a_resource = resp;
 	ap->a_rt_i = rtip;
 
-	const char **objs = (const char **)bu_calloc(scene_obj_set_cnt + 1, sizeof(char *), "objs");
-	for (int i = 0; i < scene_obj_set_cnt; i++) {
-	    struct bv_scene_obj *l_s = scene_obj_set[i];
+	const char **objs = (const char **)bu_calloc(BU_PTBL_LEN(&scene_obj_set) + 1, sizeof(char *), "objs");
+	for (size_t i = 0; i < BU_PTBL_LEN(&scene_obj_set); i++) {
+	    struct bv_scene_obj *l_s = (struct bv_scene_obj *)BU_PTBL_GET(&scene_obj_set, i);
 	    objs[i] = bu_vls_cstr(&l_s->s_name);
 	}
 	if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
@@ -392,14 +401,15 @@ QMeasure3DFilter::get_point()
 	    rtip = NULL;
 	    BU_PUT(resp, struct resource);
 	    resp = NULL;
+	    bu_ptbl_free(&sset);
 	    return false;
 	}
 	size_t ncpus = bu_avail_cpus();
 	rt_prep_parallel(rtip, (int)ncpus);
 	bu_free(objs, "objs");
-    } else {
-	bu_free(sset, "unneeded new set");
     }
+
+    bu_ptbl_free(&sset);
 
     // Set up data container for result
     struct rec_state rc;

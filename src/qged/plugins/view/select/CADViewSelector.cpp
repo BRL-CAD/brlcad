@@ -277,8 +277,8 @@ CADViewSelector::process_obj_bbox(int mode)
 	    // erase_obj_bbox
 	    const char **av = (const char **)bu_calloc(scnt+2, sizeof(char *), "av");
 	    av[0] = "erase";
-	    for (int i = 0; i < scnt; i++) {
-		struct bv_scene_obj *s = sset[i];
+	    for (size_t i = 0; i < BU_PTBL_LEN(&sset); i++) {
+		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&sset, i);
 		av[i+1] = bu_vls_cstr(&s->s_name);
 	    }
 	    ged_exec(gedp, scnt+1, av);
@@ -291,8 +291,8 @@ CADViewSelector::process_obj_bbox(int mode)
 	    return false;
 
 	struct bu_vls dpath = BU_VLS_INIT_ZERO;
-	for (int i = 0; i < scnt; i++) {
-	    struct bv_scene_obj *s = sset[i];
+	for (size_t i = 0; i < BU_PTBL_LEN(&sset); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&sset, i);
 	    bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
 	    if (bu_vls_cstr(&dpath)[0] != '/')
 		bu_vls_prepend(&dpath, "/");
@@ -339,8 +339,8 @@ CADViewSelector::process_obj_bbox(int mode)
     VADD2(mpnt, mpnt, dir);
     VUNITIZE(dir);
     bg_ray_invdir(&dir, dir);
-    for (int i = 0; i < scnt; i++) {
-	struct bv_scene_obj *s = sset[i];
+    for (size_t i = 0; i < BU_PTBL_LEN(&sset); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&sset, i);
 	if (bg_isect_aabb_ray(rmin, rmax, mpnt, dir, s->bmin, s->bmax)){
 	    double ndist = DIST_PNT_PNT(rmin, v->gv_vc_backout);
 	    if (ndist < dist) {
@@ -426,8 +426,8 @@ CADViewSelector::process_obj_ray(int mode)
     ap->a_resource = resp;
     ap->a_rt_i = rtip;
     const char **objs = (const char **)bu_calloc(scnt + 1, sizeof(char *), "objs");
-    for (int i = 0; i < scnt; i++) {
-	struct bv_scene_obj *s = sset[i];
+    for (size_t i = 0; i < BU_PTBL_LEN(&sset); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&sset, i);
 	objs[i] = bu_vls_cstr(&s->s_name);
     }
     if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
@@ -683,7 +683,6 @@ CADViewSelector::eventFilter(QObject *, QEvent *e)
 	return false;
     struct bview *v = gedp->ged_gvp;
     scnt = 0;
-    sset = NULL;
     vx = -FLT_MAX;
     vy = -FLT_MAX;
 
@@ -785,6 +784,7 @@ CADViewSelector::eventFilter(QObject *, QEvent *e)
 	int ix = (int)vx;
 	int iy = (int)vy;
 
+	bu_ptbl_reset(&sset);
 	if (use_rect_select_button->isChecked()) {
 	    int ipx = (int)px;
 	    int ipy = (int)py;
@@ -812,7 +812,7 @@ CADViewSelector::eventFilter(QObject *, QEvent *e)
 		bool ret = erase_obj_bbox();
 		if (ret)
 		    emit view_changed(QTCAD_VIEW_DRAWN);
-		bu_free(sset, "sset");
+		bu_ptbl_reset(&sset);
 		return true;
 	    }
 
@@ -820,7 +820,7 @@ CADViewSelector::eventFilter(QObject *, QEvent *e)
 		bool ret = erase_obj_ray();
 		if (ret)
 		    emit view_changed(QTCAD_VIEW_DRAWN);
-		bu_free(sset, "sset");
+		bu_ptbl_reset(&sset);
 		return ret;
 	    }
 
@@ -833,7 +833,7 @@ CADViewSelector::eventFilter(QObject *, QEvent *e)
 		bool ret = add_obj_bbox();
 		if (ret)
 		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
-		bu_free(sset, "sset");
+		bu_ptbl_reset(&sset);
 		return true;
 	    }
 
@@ -841,7 +841,7 @@ CADViewSelector::eventFilter(QObject *, QEvent *e)
 		bool ret = add_obj_ray();
 		if (ret)
 		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
-		bu_free(sset, "sset");
+		bu_ptbl_reset(&sset);
 		return ret;
 	    }
 
@@ -855,7 +855,7 @@ CADViewSelector::eventFilter(QObject *, QEvent *e)
 		bool ret = rm_obj_bbox();
 		if (ret)
 		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
-		bu_free(sset, "sset");
+		bu_ptbl_reset(&sset);
 		return true;
 	    }
 
@@ -863,7 +863,7 @@ CADViewSelector::eventFilter(QObject *, QEvent *e)
 		bool ret = rm_obj_ray();
 		if (ret)
 		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
-		bu_free(sset, "sset");
+		bu_ptbl_reset(&sset);
 		return ret;
 	    }
 

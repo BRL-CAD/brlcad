@@ -368,10 +368,12 @@ _find_active_objs(std::set<struct bv_scene_obj *> &active, struct bv_scene_obj *
 }
 
 int
-bg_view_objs_select(struct bv_scene_obj ***sset, struct bview *v, int x, int y)
+bg_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
 {
     if (!v || !sset || !v->gv_width || !v->gv_height)
 	return 0;
+
+    bu_ptbl_reset(sset);
 
     if (x < 0 || y < 0 || x > v->gv_width || y > v->gv_height)
 	return 0;
@@ -449,11 +451,8 @@ bg_view_objs_select(struct bv_scene_obj ***sset, struct bview *v, int x, int y)
     }
     if (active.size()) {
 	std::set<struct bv_scene_obj *>::iterator a_it;
-	(*sset) = (struct bv_scene_obj **)bu_calloc(active.size(), sizeof(struct bv_scene_obj *), "objs");
-	int i = 0;
 	for (a_it = active.begin(); a_it != active.end(); a_it++) {
-	    (*sset)[i] = *a_it;
-	    i++;
+	    bu_ptbl_ins(sset, (long *)*a_it);
 	}
     }
 
@@ -461,10 +460,12 @@ bg_view_objs_select(struct bv_scene_obj ***sset, struct bview *v, int x, int y)
 }
 
 int
-bg_view_objs_rect_select(struct bv_scene_obj ***sset, struct bview *v, int x1, int y1, int x2, int y2)
+bg_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, int x2, int y2)
 {
     if (!v || !sset || !v->gv_width || !v->gv_height)
 	return 0;
+
+    bu_ptbl_reset(sset);
 
     if (x1 < 0 || y1 < 0 || x1 > v->gv_width || y1 > v->gv_height)
 	return 0;
@@ -548,11 +549,8 @@ bg_view_objs_rect_select(struct bv_scene_obj ***sset, struct bview *v, int x1, i
     }
     if (active.size()) {
 	std::set<struct bv_scene_obj *>::iterator a_it;
-	(*sset) = (struct bv_scene_obj **)bu_calloc(active.size(), sizeof(struct bv_scene_obj *), "objs");
-	int i = 0;
 	for (a_it = active.begin(); a_it != active.end(); a_it++) {
-	    (*sset)[i] = *a_it;
-	    i++;
+	    bu_ptbl_ins(sset, (long *)*a_it);
 	}
     }
 

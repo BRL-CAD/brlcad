@@ -115,6 +115,8 @@ class QTCAD_EXPORT QMeasure3DFilter : public QMeasureFilter
     Q_OBJECT
 
     public:
+	QMeasure3DFilter();
+	~QMeasure3DFilter();
 	bool eventFilter(QObject *, QEvent *e);
 	struct db_i *dbip = NULL;
 
@@ -122,8 +124,7 @@ class QTCAD_EXPORT QMeasure3DFilter : public QMeasureFilter
 	bool get_point();
 
 	int prev_cnt = 0;
-	int scene_obj_set_cnt = 0;
-	struct bv_scene_obj **scene_obj_set = NULL;
+	struct bu_ptbl scene_obj_set = BU_PTBL_INIT_ZERO;
 	struct application *ap = NULL;
 	struct rt_i *rtip = NULL;
 	struct resource *resp = NULL;
