@@ -34,6 +34,7 @@
 #include <QListWidget>
 #include <QRadioButton>
 #include "ged.h"
+#include "qtcad/QSelectFilter.h"
 
 class CADViewSelector : public QWidget
 {
@@ -60,16 +61,8 @@ class CADViewSelector : public QWidget
 	QPushButton *draw_selections;
 	QPushButton *erase_selections;
 
-	bool erase_obj_bbox();
-	bool erase_obj_ray();
 
-	bool add_obj_bbox();
-	bool add_obj_ray();
-
-	bool rm_obj_bbox();
-	bool rm_obj_ray();
-
-    signals:
+signals:
 	void view_changed(unsigned long long);
 
     public slots:
@@ -87,17 +80,16 @@ class CADViewSelector : public QWidget
 	bool eventFilter(QObject *, QEvent *);
 
     private:
+	void select_objs();
+	void deselect_objs();
+	void erase_objs();
 
-	bool process_obj_bbox(int);
-	bool process_obj_ray(int);
+	QSelectFilter *cf = NULL;
+	QSelectPntFilter *pf;
+	QSelectBoxFilter *bf;
+	QSelectRayFilter *rf;
 
-	bool enabled = true;
-	fastf_t px = -FLT_MAX;
-	fastf_t py = -FLT_MAX;
-	fastf_t vx = -FLT_MAX;
-	fastf_t vy = -FLT_MAX;
-	int scnt = 0;
-	struct bu_ptbl sset = BU_PTBL_INIT_ZERO;
+	struct ged *gedp = NULL;
 	unsigned long long ohash = 0;
 	unsigned long long omhash = 0;
 };

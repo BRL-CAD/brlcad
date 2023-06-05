@@ -38,6 +38,7 @@
 #include "bg/lod.h"
 #include "app.h"
 
+#include "qtcad/QSelectFilter.h"
 #include "./CADViewSelector.h"
 
 CADViewSelector::CADViewSelector(QWidget *)
@@ -133,6 +134,11 @@ CADViewSelector::CADViewSelector(QWidget *)
     wl->addWidget(smode_box );
 
     this->setLayout(wl);
+
+    pf = new QSelectPntFilter();
+    bf = new QSelectBoxFilter();
+    rf = new QSelectRayFilter();
+    cf = pf;
 }
 
 CADViewSelector::~CADViewSelector()
@@ -188,10 +194,6 @@ CADViewSelector::disable_useall_opt(bool)
 void
 CADViewSelector::do_view_update(unsigned long long flags)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->gedp;
     if (!gedp || !gedp->dbi_state)
 	return;
 
@@ -217,402 +219,72 @@ CADViewSelector::do_view_update(unsigned long long flags)
     }
 }
 
-
-
-
-struct rec_state {
-    std::unordered_set<std::string> active;
-    int rec_all;
-    double cdist;
-    std::string closest;
-};
-
-static int
-_obj_record(struct application *ap, struct partition *p_hp, struct seg *UNUSED(segs))
+void
+CADViewSelector::select_objs()
 {
-    struct rec_state *rc = (struct rec_state *)ap->a_uptr;
-    for (struct partition *pp = p_hp->pt_forw; pp != p_hp; pp = pp->pt_forw) {
-	if (rc->rec_all) {
-	    rc->active.insert(std::string(pp->pt_regionp->reg_name));
-	} else {
-	    struct hit *hitp = pp->pt_inhit;
-	    if (hitp->hit_dist < rc->cdist) {
-		rc->closest = std::string(pp->pt_regionp->reg_name);
-		rc->cdist = hitp->hit_dist;
-	    }
-	}
-    }
-    bu_log("hit\n");
-    return 1;
-}
+    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    if (!ss)
+	return;
 
-static int
-_ovlp_record(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *UNUSED(ihp))
-{
-    struct rec_state *rc = (struct rec_state *)ap->a_uptr;
-    if (rc->rec_all) {
-	rc->active.insert(std::string(reg1->reg_name));
-	rc->active.insert(std::string(reg2->reg_name));
-    } else {
-	rc->closest = std::string(reg1->reg_name);
-	rc->cdist = pp->pt_inhit->hit_dist;
-    }
-    bu_log("ovlp\n");
-    return 1;
-}
-
-bool
-CADViewSelector::process_obj_bbox(int mode)
-{
-    QgModel *m = ((CADApp *)qApp)->mdl;
-    if (!m)
-	return false;
-    struct ged *gedp = m->gedp;
-    if (!gedp || !gedp->ged_gvp)
-	return false;
-    struct bview *v = gedp->ged_gvp;
-
-    if (select_all_depth_ckbx->isChecked() || use_rect_select_button->isChecked()) {
-	if (mode == 0) {
-	    // erase_obj_bbox
-	    const char **av = (const char **)bu_calloc(scnt+2, sizeof(char *), "av");
-	    av[0] = "erase";
-	    for (size_t i = 0; i < BU_PTBL_LEN(&sset); i++) {
-		struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&sset, i);
-		av[i+1] = bu_vls_cstr(&s->s_name);
-	    }
-	    ged_exec(gedp, scnt+1, av);
-	    bu_free(av, "av");
-	    return true;
-	}
-
-	BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
-	if (!ss)
-	    return false;
-
-	struct bu_vls dpath = BU_VLS_INIT_ZERO;
-	for (size_t i = 0; i < BU_PTBL_LEN(&sset); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&sset, i);
-	    bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
-	    if (bu_vls_cstr(&dpath)[0] != '/')
-		bu_vls_prepend(&dpath, "/");
-
-	    if (mode == 1) {
-		// add_obj_bbox
-		if (!ss->select_path(bu_vls_cstr(&dpath), false)) {
-		    bu_vls_free(&dpath);
-		    return false;
-		}
-	    }
-	    if (mode == 2) {
-		// rm_obj_bbox
-		if (!ss->deselect_path(bu_vls_cstr(&dpath), false)) {
-		    bu_vls_free(&dpath);
-		    return false;
-		}
-	    }
-	}
-	bu_vls_free(&dpath);
-
-	ss->characterize();
-	ss->draw_sync();
-
-	return true;
-    }
-
-    // Only removing one object, not using all-up librt raytracing -
-    // need to find the first bbox intersection, then run the select
-    // command.
-    struct bv_scene_obj *s_closest = NULL;
-    double dist = DBL_MAX;
-    int ix = (int)vx;
-    int iy = (int)vy;
-    bv_screen_to_view(v, &vx, &vy, ix, iy);
-    point_t vpnt, mpnt;
-    VSET(vpnt, vx, vy, 0);
-    MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
-    point_t rmin, rmax;
-    vect_t dir;
-    VMOVEN(dir, v->gv_rotation + 8, 3);
-    VUNITIZE(dir);
-    VSCALE(dir, dir, v->radius);
-    VADD2(mpnt, mpnt, dir);
-    VUNITIZE(dir);
-    bg_ray_invdir(&dir, dir);
-    for (size_t i = 0; i < BU_PTBL_LEN(&sset); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&sset, i);
-	if (bg_isect_aabb_ray(rmin, rmax, mpnt, dir, s->bmin, s->bmax)){
-	    double ndist = DIST_PNT_PNT(rmin, v->gv_vc_backout);
-	    if (ndist < dist) {
-		dist = ndist;
-		s_closest = s;
-	    }
-	}
-    }
-    if (s_closest) {
-
-	if (mode == 0) {
-	    const char **av = (const char **)bu_calloc(3, sizeof(char *), "av");
-	    av[0] = "erase";
-	    av[1] = bu_vls_cstr(&s_closest->s_name);
-	    ged_exec(gedp, 2, av);
-	    bu_free(av, "av");
-	    return true;
-	}
-
-	BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
-	if (!ss)
-	    return false;
-
-	struct bu_vls dpath = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s_closest->s_name));
+    struct bu_vls dpath = BU_VLS_INIT_ZERO;
+    for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
+	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
 	if (bu_vls_cstr(&dpath)[0] != '/')
 	    bu_vls_prepend(&dpath, "/");
-
-	if (mode == 1) {
-	    // add_obj_bbox
-	    if (!ss->select_path(bu_vls_cstr(&dpath), false)) {
-		bu_vls_free(&dpath);
-		return false;
-	    }
-	}
-	if (mode == 2) {
-	    // rm_obj_bbox
-	    if (!ss->deselect_path(bu_vls_cstr(&dpath), false)) {
-		bu_vls_free(&dpath);
-		return false;
-	    }
-	}
-
-	bu_vls_free(&dpath);
-
-	ss->characterize();
-	ss->draw_sync();
-
-	return true;
-
-    } else {
-	// no-op
-	return false;
-    }
-}
-
-
-bool
-CADViewSelector::process_obj_ray(int mode)
-{
-    QgModel *m = ((CADApp *)qApp)->mdl;
-    if (!m)
-	return false;
-    struct ged *gedp = m->gedp;
-    if (!gedp || !gedp->ged_gvp)
-	return false;
-    struct bview *v = gedp->ged_gvp;
-
-    // librt intersection test.
-    struct application *ap;
-    BU_GET(ap, struct application);
-    RT_APPLICATION_INIT(ap);
-    ap->a_onehit = 0;
-    ap->a_hit = _obj_record;
-    ap->a_miss = NULL;
-    ap->a_overlap = _ovlp_record;
-    ap->a_logoverlap = NULL;
-
-    struct rt_i *rtip = rt_new_rti(gedp->dbip);
-    struct resource *resp = NULL;
-    BU_GET(resp, struct resource);
-    rt_init_resource(resp, 0, rtip);
-    ap->a_resource = resp;
-    ap->a_rt_i = rtip;
-    const char **objs = (const char **)bu_calloc(scnt + 1, sizeof(char *), "objs");
-    for (size_t i = 0; i < BU_PTBL_LEN(&sset); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&sset, i);
-	objs[i] = bu_vls_cstr(&s->s_name);
-    }
-    if (rt_gettrees_and_attrs(rtip, NULL, scnt, objs, 1)) {
-	bu_free(objs, "objs");
-	rt_free_rti(rtip);
-	BU_PUT(resp, struct resource);
-	BU_PUT(ap, struct appliation);
-	return false;
-    }
-    size_t ncpus = bu_avail_cpus();
-    rt_prep_parallel(rtip, (int)ncpus);
-    int ix = (int)vx;
-    int iy = (int)vy;
-    bv_screen_to_view(v, &vx, &vy, ix, iy);
-    point_t vpnt, mpnt;
-    VSET(vpnt, vx, vy, 0);
-    MAT4X3PNT(mpnt, v->gv_view2model, vpnt);
-    vect_t dir;
-    VMOVEN(dir, v->gv_rotation + 8, 3);
-    VUNITIZE(dir);
-    VSCALE(dir, dir, v->radius);
-    VADD2(ap->a_ray.r_pt, mpnt, dir);
-    VUNITIZE(dir);
-    VSCALE(ap->a_ray.r_dir, dir, -1);
-
-    struct rec_state rc;
-
-    // Since most of the work of the raytracing approach is the same,
-    // we just change what we record in the hit function based on
-    // the checkbox settings
-    if (select_all_depth_ckbx->isChecked()) {
-	rc.rec_all = 1;
-    } else {
-	rc.rec_all = 0;
-	rc.cdist = INFINITY;
-    }
-    ap->a_uptr = (void *)&rc;
-
-    (void)rt_shootray(ap);
-    bu_free(objs, "objs");
-    rt_free_rti(rtip);
-    BU_PUT(resp, struct resource);
-    BU_PUT(ap, struct appliation);
-
-    if (select_all_depth_ckbx->isChecked()) {
-	if (rc.active.size()) {
-	    std::unordered_set<std::string>::iterator a_it;
-	    if (mode == 0) {
-		const char **av = (const char **)bu_calloc(rc.active.size()+2, sizeof(char *), "av");
-		av[0] = bu_strdup("erase");
-		int i = 0;
-		for (a_it = rc.active.begin(); a_it != rc.active.end(); a_it++) {
-		    av[i+1] = bu_strdup(a_it->c_str());
-		    i++;
-		}
-		ged_exec(gedp, rc.active.size()+1, av);
-		bu_argv_free(rc.active.size()+1, (char **)av);
-		return true;
-	    }
-	    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
-	    if (!ss)
-		return false;
-
-	    struct bu_vls dpath = BU_VLS_INIT_ZERO;
-	    for (a_it = rc.active.begin(); a_it != rc.active.end(); a_it++) {
-		bu_vls_sprintf(&dpath, "%s",  a_it->c_str());
-		if (bu_vls_cstr(&dpath)[0] != '/')
-		    bu_vls_prepend(&dpath, "/");
-
-		if (mode == 1) {
-		    if (!ss->select_path(bu_vls_cstr(&dpath), false)) {
-			bu_vls_free(&dpath);
-			return false;
-		    }
-		}
-		if (mode == 2) {
-		    if (!ss->deselect_path(bu_vls_cstr(&dpath), false)) {
-			bu_vls_free(&dpath);
-			return false;
-		    }
-		}
-	    }
+	if (!ss->select_path(bu_vls_cstr(&dpath), false)) {
 	    bu_vls_free(&dpath);
-
-	    ss->characterize();
-	    ss->draw_sync();
-
-	    return true;
-
-	} else {
-
-	    return false;
-
-	}
-    } else {
-	if (rc.cdist < INFINITY) {
-	    if (mode == 0) {
-		const char **av = (const char **)bu_calloc(3, sizeof(char *), "av");
-		av[0] = "erase";
-		av[1] = bu_strdup(rc.closest.c_str());
-		ged_exec(gedp, 2, av);
-		bu_free((void *)av[1], "ncpy");
-		return true;
-	    }
-
-	    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
-	    if (!ss)
-		return false;
-
-	    struct bu_vls dpath = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&dpath, "%s",  rc.closest.c_str());
-	    if (bu_vls_cstr(&dpath)[0] != '/')
-		bu_vls_prepend(&dpath, "/");
-
-	    if (mode == 1) {
-		if (!ss->select_path(bu_vls_cstr(&dpath), false)) {
-		    bu_vls_free(&dpath);
-		    return false;
-		}
-	    }
-	    if (mode == 2) {
-		if (!ss->deselect_path(bu_vls_cstr(&dpath), false)) {
-		    bu_vls_free(&dpath);
-		    return false;
-		}
-	    }
-
-	    bu_vls_free(&dpath);
-
-	    ss->characterize();
-	    ss->draw_sync();
-
-	    return true;
-
-	} else {
-
-	    return false;
-
+	    return;
 	}
     }
+
+    bu_vls_free(&dpath);
+    ss->characterize();
+    ss->draw_sync();
 }
 
-bool
-CADViewSelector::erase_obj_bbox()
+void
+CADViewSelector::deselect_objs()
 {
-    return process_obj_bbox(0);
+    BSelectState *ss = gedp->dbi_state->find_selected_state(NULL);
+    if (!ss)
+	return;
+
+    struct bu_vls dpath = BU_VLS_INIT_ZERO;
+    for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
+	bu_vls_sprintf(&dpath, "%s",  bu_vls_cstr(&s->s_name));
+	if (bu_vls_cstr(&dpath)[0] != '/')
+	    bu_vls_prepend(&dpath, "/");
+	if (!ss->deselect_path(bu_vls_cstr(&dpath), false)) {
+	    bu_vls_free(&dpath);
+	    return;
+	}
+    }
+
+    bu_vls_free(&dpath);
+    ss->characterize();
+    ss->draw_sync();
 }
 
-bool
-CADViewSelector::erase_obj_ray()
-{
-    return process_obj_ray(0);
-}
 
-bool
-CADViewSelector::add_obj_bbox()
+void
+CADViewSelector::erase_objs()
 {
-    return process_obj_bbox(1);
-}
-
-bool
-CADViewSelector::add_obj_ray()
-{
-    return process_obj_ray(1);
-}
-
-bool
-CADViewSelector::rm_obj_bbox()
-{
-    return process_obj_bbox(2);
-}
-
-bool
-CADViewSelector::rm_obj_ray()
-{
-    return process_obj_ray(2);
+    // erase_obj_bbox
+    const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&cf->selected_set)+2, sizeof(char *), "av");
+    av[0] = "erase";
+    for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
+	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
+	av[i+1] = bu_vls_cstr(&s->s_name);
+    }
+    ged_exec(gedp, (int)(BU_PTBL_LEN(&cf->selected_set)+1), av);
+    bu_free(av, "av");
 }
 
 void
 CADViewSelector::do_draw_selections()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return;
 
@@ -642,10 +314,6 @@ CADViewSelector::do_draw_selections()
 void
 CADViewSelector::do_erase_selections()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
-    if (!m)
-	return;
-    struct ged *gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return;
 
@@ -673,210 +341,61 @@ CADViewSelector::do_erase_selections()
 }
 
 bool
-CADViewSelector::eventFilter(QObject *, QEvent *e)
+CADViewSelector::eventFilter(QObject *o, QEvent *e)
 {
+    if (QApplication::keyboardModifiers() != Qt::NoModifier)
+	return false;
+
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)
 	return false;
-    struct ged *gedp = m->gedp;
+    gedp = m->gedp;
     if (!gedp || !gedp->ged_gvp)
 	return false;
     struct bview *v = gedp->ged_gvp;
-    scnt = 0;
-    vx = -FLT_MAX;
-    vy = -FLT_MAX;
 
-    // If this isn't a mouse event, we're done
-    if (e->type() != QEvent::MouseButtonPress &&
-	    e->type() != QEvent::MouseButtonRelease &&
-	    e->type() != QEvent::MouseButtonDblClick &&
-	    e->type() != QEvent::MouseMove &&
-	    e->type() != QEvent::Wheel
-       )
-	return false;
-
-    QMouseEvent *m_e = (QMouseEvent *)e;
-
-    if (e->type() == QEvent::MouseButtonDblClick)
-	return true;
-
-    if (QApplication::keyboardModifiers() != Qt::NoModifier) {
-	enabled = false;
-	return false;
+    // Set the libqtcad filter based on current options
+    cf = pf;
+    if (use_rect_select_button->isChecked())
+	cf = bf;
+    if (use_ray_test_ckbx->isChecked()) {
+	rf->dbip = gedp->dbip;
+	cf = rf;
     }
 
-    // If certain kinds of mouse events take place, we know we are manipulating the
-    // view to achieve something other than erasure.  Flag accordingly, so we don't
-    // fire off the select event at the end of whatever we're doing instead.
-    if (e->type() == QEvent::MouseMove && !use_rect_select_button->isChecked()) {
-	// TODO - may want to tolerate a few pixels of movement if we're enabled...
-	// hard to hold the mouse completely steady while pressing...
-	enabled = false;
+    // Inform the filter of the current settings and view
+    cf->v = v;
+    cf->first_only = select_all_depth_ckbx->isChecked() ? false : true;
+
+    // TODO - create and/or connect the signals and slots so cf can
+    // properly trigger updating and drawing
+    bool ret = cf->eventFilter(o, e);
+    if (!ret)
 	return false;
-    }
 
-    if (e->type() == QEvent::MouseButtonPress) {
-	if (use_rect_select_button->isChecked()) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	    px = m_e->x();
-	    py = m_e->y();
-#else
-	    px = m_e->position().x();
-	    py = m_e->position().y();
-#endif
-	    struct bv_interactive_rect_state *grsp = &gedp->ged_gvp->gv_s->gv_rect;
-	    grsp->line_width = 1;
-	    grsp->dim[0] = 0;
-	    grsp->dim[1] = 0;
-	    grsp->x = px;
-	    grsp->y = dm_get_height((struct dm *)gedp->ged_gvp->dmp) - py;
-	    grsp->pos[0] = grsp->x;
-	    grsp->pos[1] = grsp->y;
-	    grsp->cdim[0] = dm_get_width((struct dm *)gedp->ged_gvp->dmp);
-	    grsp->cdim[1] = dm_get_height((struct dm *)gedp->ged_gvp->dmp);
-	    grsp->aspect = (fastf_t)gedp->ged_gvp->gv_s->gv_rect.cdim[X] / gedp->ged_gvp->gv_s->gv_rect.cdim[Y];
-	    emit view_changed(QTCAD_VIEW_DRAWN);
-	}
-	enabled = true;
-	return true;
-    }
-
-    if (e->type() == QEvent::MouseMove && enabled && use_rect_select_button->isChecked()) {
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	vx = m_e->x();
-	vy = m_e->y();
-#else
-	vx = m_e->position().x();
-	vy = m_e->position().y();
-#endif
-	struct bv_interactive_rect_state *grsp = &gedp->ged_gvp->gv_s->gv_rect;
-	grsp->draw = 1;
-	grsp->dim[0] = vx - px;
-	grsp->dim[1] = (dm_get_height((struct dm *)gedp->ged_gvp->dmp) - vy) - gedp->ged_gvp->gv_s->gv_rect.pos[1];
-	grsp->x = (grsp->pos[X] / (fastf_t)grsp->cdim[X] - 0.5) * 2.0;
-	grsp->y = ((0.5 - (grsp->cdim[Y] - grsp->pos[Y]) / (fastf_t)grsp->cdim[Y]) / grsp->aspect * 2.0);
-	grsp->width = grsp->dim[X] * 2.0 / (fastf_t)grsp->cdim[X];
-	grsp->height = grsp->dim[Y] * 2.0 / (fastf_t)grsp->cdim[X];
-
+    if (erase_from_scene_button->isChecked()) {
+	erase_objs();
 	emit view_changed(QTCAD_VIEW_DRAWN);
+	bu_ptbl_reset(&cf->selected_set);
 	return true;
     }
 
-    if (e->type() == QEvent::MouseButtonRelease) {
-
-	if (m_e->button() == Qt::RightButton)
-	    return true;
-
-	// If we were doing something else and the mouse release signals we're
-	// done, re-enable the select behavior
-	if (!enabled) {
-	    enabled = true;
-	    return false;
-	}
-
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	vx = m_e->x();
-	vy = m_e->y();
-#else
-	vx = m_e->position().x();
-	vy = m_e->position().y();
-#endif
-	int ix = (int)vx;
-	int iy = (int)vy;
-
-	bu_ptbl_reset(&sset);
-	if (use_rect_select_button->isChecked()) {
-	    int ipx = (int)px;
-	    int ipy = (int)py;
-	    scnt = bg_view_objs_rect_select(&sset, v, ipx, ipy, ix, iy);
-
-	    // reset rectangle
-	    struct bv_interactive_rect_state *grsp = &gedp->ged_gvp->gv_s->gv_rect;
-	    grsp->draw = 0;
-	    grsp->line_width = 0;
-	    grsp->pos[0] = 0;
-	    grsp->pos[1] = 0;
-	    grsp->dim[0] = 0;
-	    grsp->dim[1] = 0;
-	    emit view_changed(QTCAD_VIEW_DRAWN);
-	} else {
-	    scnt = bg_view_objs_select(&sset, v, ix, iy);
-	}
-
-	// If we didn't select anything, we have a no-op
-	if (!scnt)
-	    return false;
-
-	if (erase_from_scene_button->isChecked()) {
-	    if (!use_ray_test_ckbx->isChecked() || use_rect_select_button->isChecked()) {
-		bool ret = erase_obj_bbox();
-		if (ret)
-		    emit view_changed(QTCAD_VIEW_DRAWN);
-		bu_ptbl_reset(&sset);
-		return true;
-	    }
-
-	    if (use_pnt_select_button->isChecked() && use_ray_test_ckbx->isChecked()) {
-		bool ret = erase_obj_ray();
-		if (ret)
-		    emit view_changed(QTCAD_VIEW_DRAWN);
-		bu_ptbl_reset(&sset);
-		return ret;
-	    }
-
-	    // If we didn't process by this point, no-op
-	    return false;
-	}
-
-	if (add_to_group_button->isChecked()) {
-	    if (!use_ray_test_ckbx->isChecked() || use_rect_select_button->isChecked()) {
-		bool ret = add_obj_bbox();
-		if (ret)
-		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
-		bu_ptbl_reset(&sset);
-		return true;
-	    }
-
-	    if (use_pnt_select_button->isChecked() && use_ray_test_ckbx->isChecked()) {
-		bool ret = add_obj_ray();
-		if (ret)
-		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
-		bu_ptbl_reset(&sset);
-		return ret;
-	    }
-
-	    // If we didn't process by this point, no-op
-	    return false;
-	}
-
-
-	if (rm_from_group_button->isChecked()) {
-	    if (!use_ray_test_ckbx->isChecked() || use_rect_select_button->isChecked()) {
-		bool ret = rm_obj_bbox();
-		if (ret)
-		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
-		bu_ptbl_reset(&sset);
-		return true;
-	    }
-
-	    if (use_pnt_select_button->isChecked() && use_ray_test_ckbx->isChecked()) {
-		bool ret = rm_obj_ray();
-		if (ret)
-		    emit view_changed(QTCAD_VIEW_SELECT|QTCAD_VIEW_DRAWN);
-		bu_ptbl_reset(&sset);
-		return ret;
-	    }
-
-	    // If we didn't process by this point, no-op
-	    return false;
-	}
-
-	// If we didn't process by this point (??), no-op
-	return false;
-
+    if (add_to_group_button->isChecked()) {
+	select_objs();
+	emit view_changed(QTCAD_VIEW_DRAWN);
+	bu_ptbl_reset(&cf->selected_set);
+	return true;
     }
 
-    return false;
+    if (rm_from_group_button->isChecked()) {
+	deselect_objs();
+	emit view_changed(QTCAD_VIEW_DRAWN);
+	bu_ptbl_reset(&cf->selected_set);
+	return true;
+    }
+
+    // Shouldn't get here...
+    return true;
 }
 
 // Local Variables:

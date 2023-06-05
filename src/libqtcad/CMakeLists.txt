@@ -47,6 +47,7 @@ set(qtcad_srcs
   QKeyVal.cpp
   QMeasureFilter.cpp
   QPolyFilter.cpp
+  QSelectFilter.cpp
   QToolPalette.cpp
   QViewCtrl.cpp
   QgDockWidget.cpp
@@ -78,6 +79,7 @@ set(qth_names
   QKeyVal
   QMeasureFilter
   QPolyFilter
+  QSelectFilter
   QToolPalette
   QViewCtrl
   QgDockWidget

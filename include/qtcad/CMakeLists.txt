@@ -3,6 +3,7 @@ set(qtcad_headers
   QColorRGB.h
   QMeasureFilter.h
   QPolyFilter.h
+  QSelectFilter.h
   QFlowLayout.h
   QKeyVal.h
   QToolPalette.h
