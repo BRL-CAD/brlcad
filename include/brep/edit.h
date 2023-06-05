@@ -26,15 +26,11 @@
 
 #include "common.h"
 #include "brep/defines.h"
-#include "rt/geom.h"
 
 /** @{ */
 /** @file brep/edit.h */
 __BEGIN_DECLS
 
-/**
- * create an rt_brep_internal structure with empty brep
- */
 BREP_EXPORT extern void *
 brep_create_empty_brep();
 

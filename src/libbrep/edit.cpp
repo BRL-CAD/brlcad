@@ -41,9 +41,6 @@
 
 void *brep_create_empty_brep()
 {
-    rt_brep_internal *brep_internal;
-	BU_ALLOC(brep_internal, struct rt_brep_internal);
-	brep_internal->magic = RT_BREP_INTERNAL_MAGIC;
-    brep_internal->brep = new ON_Brep();
-    return (void *)brep_internal;
+    ON_Brep *brep = new ON_Brep();
+    return (void *)brep;
 }
