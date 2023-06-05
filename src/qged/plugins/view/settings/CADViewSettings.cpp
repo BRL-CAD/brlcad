@@ -1,7 +1,7 @@
-/*                 V I E W _ W I D G E T . C P P
+/*             C A D V I E W S E T T I N G S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_widget.cpp
+/** @file CADViewSettings.cpp
+ *
+ * Brief description
  *
  */
 
@@ -29,7 +31,7 @@
 #include "qtcad/SignalFlags.h"
 #include "app.h"
 
-#include "view_widget.h"
+#include "CADViewSettings.h"
 
 CADViewSettings::CADViewSettings(QWidget *)
 {

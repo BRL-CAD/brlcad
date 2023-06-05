@@ -1,7 +1,7 @@
-/*                V I E W _ W I D G E T . H
+/*               C A D V I E W S E T T I N G S . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_widget.h
+/** @file CADViewSettings.h
+ *
+ * Brief description
  *
  */
 

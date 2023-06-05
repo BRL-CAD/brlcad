@@ -25,7 +25,7 @@
 #include <QCheckBox>
 #include "qtcad/QToolPalette.h"
 #include "../../plugin.h"
-#include "view_widget.h"
+#include "CADViewSettings.h"
 
 void *
 view_settings_tool_create()
