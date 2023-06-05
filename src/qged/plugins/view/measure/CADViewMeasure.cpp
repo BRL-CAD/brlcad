@@ -1,7 +1,7 @@
-/*                 V I E W _ W I D G E T . C P P
+/*              C A D V I E W M E A S U R E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_widget.cpp
+/** @file CADViewMeasure.cpp
+ *
+ * Brief description
  *
  */
 
@@ -34,7 +36,7 @@
 #include "bg/plane.h"
 #include "bg/lod.h"
 
-#include "./widget.h"
+#include "./CADViewMeasure.h"
 
 CADViewMeasure::CADViewMeasure(QWidget *)
 {
@@ -188,3 +190,4 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
+

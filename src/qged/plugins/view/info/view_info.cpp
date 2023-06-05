@@ -23,7 +23,7 @@
 
 #include "qtcad/QToolPalette.h"
 #include "../../plugin.h"
-#include "view_model.h"
+#include "CADViewModel.h"
 
 void *
 view_info_tool_create()

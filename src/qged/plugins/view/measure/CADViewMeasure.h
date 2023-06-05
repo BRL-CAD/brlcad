@@ -1,4 +1,4 @@
-/*                     W I D G E T . H
+/*                  C A D V I E W M E A S U R E . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_widget.h
+/** @file CADViewMeasure.h
  *
  */
 

@@ -25,7 +25,7 @@
 #include <QCheckBox>
 #include "qtcad/QToolPalette.h"
 #include "../../plugin.h"
-#include "./widget.h"
+#include "./CADViewMeasure.h"
 
 void *
 view_measure_tool_create()

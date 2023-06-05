@@ -15,11 +15,11 @@ endif(BRLCAD_ENABLE_QT)
 
 set(select_srcs
   select.cpp
-  widget.cpp
+  CADViewSelector.cpp
   )
 
 set(select_moc_hdrs
-  widget.h
+  CADViewSelector.h
   )
 
 if(BRLCAD_ENABLE_QT)
@@ -43,7 +43,7 @@ if(BRLCAD_ENABLE_QT)
 
   DISTCLEAN(
     icon.qrc.depends
-    moc_widget.cpp_parameters
+    moc_CADViewSelector.cpp_parameters
     )
 
 endif(BRLCAD_ENABLE_QT)

@@ -1,7 +1,7 @@
-/*                     W I D G E T . H
+/*               C A D V I E W S E L E C T O R . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_widget.h
+/** @file CADViewSelector.h
+ *
+ * Brief description
  *
  */
 
@@ -33,13 +35,13 @@
 #include <QRadioButton>
 #include "ged.h"
 
-class CADViewSelecter : public QWidget
+class CADViewSelector : public QWidget
 {
     Q_OBJECT
 
     public:
-	CADViewSelecter(QWidget *p = 0);
-	~CADViewSelecter();
+	CADViewSelector(QWidget *p = 0);
+	~CADViewSelector();
 
 	QRadioButton *use_pnt_select_button;
 	QRadioButton *use_rect_select_button;

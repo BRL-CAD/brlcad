@@ -1,4 +1,4 @@
-/*                    V I E W _ M O D E L . H
+/*                  C A D V I E W M O D E L . H
  * BRL-CAD
  *
  * Copyright (c) 2020-2023 United States Government as represented by
@@ -17,14 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_model.h
+/** @file CADViewModel.h
  *
  * Brief description
  *
  */
 
-#ifndef VIEW_MODEL_H
-#define VIEW_MODEL_H
+#ifndef CADVIEWMODEL_H
+#define CADVIEWMODEL_H
 
 #include "qtcad/QKeyVal.h"
 
@@ -48,7 +48,7 @@ class CADViewModel : public QKeyValModel
 	void update();
 };
 
-#endif /*VIEW_MODEL_H*/
+#endif /*CADVIEWMODEL_H*/
 
 /*
  * Local Variables:

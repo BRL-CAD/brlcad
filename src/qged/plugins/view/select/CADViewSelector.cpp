@@ -1,7 +1,7 @@
-/*                     W I D G E T . C P P
+/*             C A D V I E W S E L E C T O R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2023 United States Government as represented by
+ * Copyright (c) 2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file widget.cpp
+/** @file CADViewSelector.cpp
+ *
+ * Brief description
  *
  */
 
@@ -36,9 +38,9 @@
 #include "bg/lod.h"
 #include "app.h"
 
-#include "./widget.h"
+#include "./CADViewSelector.h"
 
-CADViewSelecter::CADViewSelecter(QWidget *)
+CADViewSelector::CADViewSelector(QWidget *)
 {
     QVBoxLayout *wl = new QVBoxLayout;
     wl->setAlignment(Qt::AlignTop);
@@ -62,10 +64,10 @@ CADViewSelecter::CADViewSelecter(QWidget *)
     select_all_depth_ckbx = new QCheckBox("Use All Intersections");
     use_ray_test_ckbx = new QCheckBox("Test with Raytracing");
 
-    QObject::connect(use_pnt_select_button, &QRadioButton::clicked, this, &CADViewSelecter::enable_raytrace_opt);
-    QObject::connect(use_pnt_select_button, &QRadioButton::clicked, this, &CADViewSelecter::enable_useall_opt);
-    QObject::connect(use_rect_select_button, &QRadioButton::clicked, this, &CADViewSelecter::disable_raytrace_opt);
-    QObject::connect(use_rect_select_button, &QRadioButton::clicked, this, &CADViewSelecter::disable_useall_opt);
+    QObject::connect(use_pnt_select_button, &QRadioButton::clicked, this, &CADViewSelector::enable_raytrace_opt);
+    QObject::connect(use_pnt_select_button, &QRadioButton::clicked, this, &CADViewSelector::enable_useall_opt);
+    QObject::connect(use_rect_select_button, &QRadioButton::clicked, this, &CADViewSelector::disable_raytrace_opt);
+    QObject::connect(use_rect_select_button, &QRadioButton::clicked, this, &CADViewSelector::disable_useall_opt);
 
     QGroupBox *smode_box = new QGroupBox("Selection Mode");
     QVBoxLayout *smode_gl = new QVBoxLayout;
@@ -92,11 +94,11 @@ CADViewSelecter::CADViewSelecter(QWidget *)
 
     draw_selections = new QPushButton("Draw selected");
     sgrp_gl->addWidget(draw_selections);
-    QObject::connect(draw_selections, &QPushButton::clicked, this, &CADViewSelecter::do_draw_selections);
+    QObject::connect(draw_selections, &QPushButton::clicked, this, &CADViewSelector::do_draw_selections);
 
     erase_selections = new QPushButton("Erase selected");
     sgrp_gl->addWidget(erase_selections);
-    QObject::connect(erase_selections, &QPushButton::clicked, this, &CADViewSelecter::do_erase_selections);
+    QObject::connect(erase_selections, &QPushButton::clicked, this, &CADViewSelector::do_erase_selections);
 
 
     QWidget *sgrp = new QWidget();
@@ -116,9 +118,9 @@ CADViewSelecter::CADViewSelecter(QWidget *)
 
     disable_groups(false);
 
-    QObject::connect(erase_from_scene_button , &QRadioButton::clicked, this, &CADViewSelecter::disable_groups);
-    QObject::connect(add_to_group_button , &QRadioButton::clicked, this, &CADViewSelecter::enable_groups);
-    QObject::connect(rm_from_group_button , &QRadioButton::clicked, this, &CADViewSelecter::enable_groups);
+    QObject::connect(erase_from_scene_button , &QRadioButton::clicked, this, &CADViewSelector::disable_groups);
+    QObject::connect(add_to_group_button , &QRadioButton::clicked, this, &CADViewSelector::enable_groups);
+    QObject::connect(rm_from_group_button , &QRadioButton::clicked, this, &CADViewSelector::enable_groups);
 
     wgroups->setLayout(sgrp_gl);
     smode_gl->addWidget(wgroups);
@@ -133,12 +135,12 @@ CADViewSelecter::CADViewSelecter(QWidget *)
     this->setLayout(wl);
 }
 
-CADViewSelecter::~CADViewSelecter()
+CADViewSelector::~CADViewSelector()
 {
 }
 
 void
-CADViewSelecter::enable_groups(bool)
+CADViewSelector::enable_groups(bool)
 {
     //current_group->setEnabled(true);
     group_contents->setEnabled(true);
@@ -149,7 +151,7 @@ CADViewSelecter::enable_groups(bool)
 }
 
 void
-CADViewSelecter::disable_groups(bool)
+CADViewSelector::disable_groups(bool)
 {
     //current_group->setEnabled(false);
     group_contents->setEnabled(false);
@@ -160,31 +162,31 @@ CADViewSelecter::disable_groups(bool)
 }
 
 void
-CADViewSelecter::enable_raytrace_opt(bool)
+CADViewSelector::enable_raytrace_opt(bool)
 {
     use_ray_test_ckbx->setEnabled(true);
 }
 
 void
-CADViewSelecter::disable_raytrace_opt(bool)
+CADViewSelector::disable_raytrace_opt(bool)
 {
     use_ray_test_ckbx->setEnabled(false);
 }
 
 void
-CADViewSelecter::enable_useall_opt(bool)
+CADViewSelector::enable_useall_opt(bool)
 {
     select_all_depth_ckbx->setEnabled(true);
 }
 
 void
-CADViewSelecter::disable_useall_opt(bool)
+CADViewSelector::disable_useall_opt(bool)
 {
     select_all_depth_ckbx->setEnabled(false);
 }
 
 void
-CADViewSelecter::do_view_update(unsigned long long flags)
+CADViewSelector::do_view_update(unsigned long long flags)
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)
@@ -260,7 +262,7 @@ _ovlp_record(struct application *ap, struct partition *pp, struct region *reg1, 
 }
 
 bool
-CADViewSelecter::process_obj_bbox(int mode)
+CADViewSelector::process_obj_bbox(int mode)
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)
@@ -397,7 +399,7 @@ CADViewSelecter::process_obj_bbox(int mode)
 
 
 bool
-CADViewSelecter::process_obj_ray(int mode)
+CADViewSelector::process_obj_ray(int mode)
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)
@@ -569,43 +571,43 @@ CADViewSelecter::process_obj_ray(int mode)
 }
 
 bool
-CADViewSelecter::erase_obj_bbox()
+CADViewSelector::erase_obj_bbox()
 {
     return process_obj_bbox(0);
 }
 
 bool
-CADViewSelecter::erase_obj_ray()
+CADViewSelector::erase_obj_ray()
 {
     return process_obj_ray(0);
 }
 
 bool
-CADViewSelecter::add_obj_bbox()
+CADViewSelector::add_obj_bbox()
 {
     return process_obj_bbox(1);
 }
 
 bool
-CADViewSelecter::add_obj_ray()
+CADViewSelector::add_obj_ray()
 {
     return process_obj_ray(1);
 }
 
 bool
-CADViewSelecter::rm_obj_bbox()
+CADViewSelector::rm_obj_bbox()
 {
     return process_obj_bbox(2);
 }
 
 bool
-CADViewSelecter::rm_obj_ray()
+CADViewSelector::rm_obj_ray()
 {
     return process_obj_ray(2);
 }
 
 void
-CADViewSelecter::do_draw_selections()
+CADViewSelector::do_draw_selections()
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)
@@ -638,7 +640,7 @@ CADViewSelecter::do_draw_selections()
 }
 
 void
-CADViewSelecter::do_erase_selections()
+CADViewSelector::do_erase_selections()
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)
@@ -671,7 +673,7 @@ CADViewSelecter::do_erase_selections()
 }
 
 bool
-CADViewSelecter::eventFilter(QObject *, QEvent *e)
+CADViewSelector::eventFilter(QObject *, QEvent *e)
 {
     QgModel *m = ((CADApp *)qApp)->mdl;
     if (!m)

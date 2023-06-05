@@ -1,4 +1,4 @@
-/*                    V I E W _ M O D E L . C P P
+/*                  C A D V I E W M O D E L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file view_model.cpp
+/** @file CADViewModel.cpp
  *
  * Brief description
  *
@@ -26,12 +26,12 @@
 #include <QPainter>
 #include <QString>
 
-#include "view_model.h"
 #include "bu/sort.h"
 #include "bu/avs.h"
 #include "bu/malloc.h"
 #include "qtcad/SignalFlags.h"
 #include "app.h"
+#include "CADViewModel.h"
 
 CADViewModel::CADViewModel(QObject *parentobj)
     : QKeyValModel(parentobj)
