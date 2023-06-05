@@ -1,4 +1,4 @@
-/*                       B O O L E A N . H
+/*                            E D I T . H
  * BRL-CAD
  *
  * Copyright (c) 2007-2023 United States Government as represented by
@@ -31,8 +31,11 @@
 /** @file brep/edit.h */
 __BEGIN_DECLS
 
+/**
+ * create an empty ON_Brep
+ */
 BREP_EXPORT extern void *
-brep_create_empty_brep();
+brep_create();
 
 __END_DECLS
 

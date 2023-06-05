@@ -1,4 +1,4 @@
-/*                        N M G _ M K . C
+/*                        E D I T . C P P
  * BRL-CAD
  *
  * Copyright (c) 1994-2023 United States Government as represented by
@@ -23,24 +23,19 @@
  *
  */
 
-
-#include "common.h"
-
-#include <stddef.h>
-#include <math.h>
-#include <string.h>
-
-#include "vmath.h"
-#include "bu/log.h"
-#include "brep/defines.h"
 #include "brep/edit.h"
 
-#include "debug_plot.h"
-#include "brep_except.h"
-#include "brep_defines.h"
-
-void *brep_create_empty_brep()
+void *brep_create()
 {
-    ON_Brep *brep = new ON_Brep();
+    ON_Brep* brep = new ON_Brep();
     return (void *)brep;
 }
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
