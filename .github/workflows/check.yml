@@ -116,8 +116,9 @@ jobs:
           # verify multi-config building is working as expected - to shorten build times
           # but still have a test of the key components, just build MGED
       - name: Build
-        run: cmake --build build --config Debug   --target mged
-        run: cmake --build build --config Release --target mged
+        run: |
+          cmake --build build --config Debug   --target mged
+          cmake --build build --config Release --target mged
 
   linux:
     name: Ubuntu Latest GCC
