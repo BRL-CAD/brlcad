@@ -364,8 +364,8 @@ QSelectRayFilter::eventFilter(QObject *, QEvent *e)
     struct bu_vls dpath = BU_VLS_INIT_ZERO;
     if (first_only) {
 	bu_vls_sprintf(&dpath, "%s",  rc.closest.c_str());
-	if (bu_vls_cstr(&dpath)[0] != '/')
-	    bu_vls_prepend(&dpath, "/");
+	if (bu_vls_cstr(&dpath)[0] == '/')
+	    bu_vls_nibble(&dpath, 1);
 	struct bv_scene_obj *so = bv_find_obj(v, bu_vls_cstr(&dpath));
 	if (so)
 	    bu_ptbl_ins(&selected_set, (long *)so);
@@ -373,8 +373,8 @@ QSelectRayFilter::eventFilter(QObject *, QEvent *e)
 	std::unordered_set<std::string>::iterator a_it;
 	for (a_it = rc.active.begin(); a_it != rc.active.end(); a_it++) {
 	    bu_vls_sprintf(&dpath, "%s",  a_it->c_str());
-	    if (bu_vls_cstr(&dpath)[0] != '/')
-		bu_vls_prepend(&dpath, "/");
+	    if (bu_vls_cstr(&dpath)[0] == '/')
+		bu_vls_nibble(&dpath, 1);
 	    struct bv_scene_obj *so = bv_find_obj(v, bu_vls_cstr(&dpath));
 	    if (so)
 		bu_ptbl_ins(&selected_set, (long *)so);
