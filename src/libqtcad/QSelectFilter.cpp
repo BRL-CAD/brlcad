@@ -38,8 +38,7 @@ extern "C" {
 #include "qtcad/QSelectFilter.h"
 #include "qtcad/SignalFlags.h"
 
-// Find the
-// first bbox intersection under the XY view point.
+// Find the first bbox intersection under the XY view point.
 static struct bv_scene_obj *
 closest_obj_bbox(struct bu_ptbl *sset, struct bview *v)
 {
@@ -203,8 +202,12 @@ QSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 	int ipy = (int)py;
 	bg_view_objs_rect_select(&selected_set, v, ipx, ipy, v->gv_mouse_x, v->gv_mouse_y);
 
-	// If we want only the closest object (or more precisely, in this mode, the
-	// object with the closest bounding box) there's more work to do.
+	// If we want only the closest object (or more precisely, in this mode,
+	// the object with the closest bounding box) there's more work to do.
+	// TODO - this is the wrong test for the selection rectangle - should
+	// be the distance between an aabb and a view plane.  Looks like we
+	// need to add that one to libbg... there's DIST_PNT_PLANE and
+	// MAT4X3VEC(view_pl, v->gv_view2model, dir) as starting points...
 	struct bv_scene_obj *s_closest = closest_obj_bbox(&selected_set, v);
 	bu_ptbl_reset(&selected_set);
 	bu_ptbl_ins(&selected_set, (long *)s_closest);
