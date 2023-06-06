@@ -230,7 +230,7 @@ QSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 }
 
 
-struct rec_state {
+struct select_rec_state {
     std::unordered_set<std::string> active;
     int rec_all;
     double cdist;
@@ -240,7 +240,7 @@ struct rec_state {
 static int
 _obj_record(struct application *ap, struct partition *p_hp, struct seg *UNUSED(segs))
 {
-    struct rec_state *rc = (struct rec_state *)ap->a_uptr;
+    struct select_rec_state *rc = (struct select_rec_state *)ap->a_uptr;
     for (struct partition *pp = p_hp->pt_forw; pp != p_hp; pp = pp->pt_forw) {
 	if (rc->rec_all) {
 	    rc->active.insert(std::string(pp->pt_regionp->reg_name));
@@ -259,7 +259,7 @@ _obj_record(struct application *ap, struct partition *p_hp, struct seg *UNUSED(s
 static int
 _ovlp_record(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *UNUSED(ihp))
 {
-    struct rec_state *rc = (struct rec_state *)ap->a_uptr;
+    struct select_rec_state *rc = (struct select_rec_state *)ap->a_uptr;
     if (rc->rec_all) {
 	rc->active.insert(std::string(reg1->reg_name));
 	rc->active.insert(std::string(reg2->reg_name));
@@ -341,7 +341,7 @@ QSelectRayFilter::eventFilter(QObject *, QEvent *e)
     VUNITIZE(dir);
     VSCALE(ap->a_ray.r_dir, dir, -1);
 
-    struct rec_state rc;
+    struct select_rec_state rc;
 
     // Decide what we record in the hit function based on whether we want the
     // closest or all hits.

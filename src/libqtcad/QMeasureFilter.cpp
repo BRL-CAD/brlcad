@@ -286,7 +286,7 @@ QMeasure3DFilter::~QMeasure3DFilter()
     bu_ptbl_free(&scene_obj_set);
 }
 
-struct rec_state {
+struct measure_rec_state {
     double cdist;
     point_t pt;
 };
@@ -294,7 +294,7 @@ struct rec_state {
 static int
 _cpnt_hit(struct application *ap, struct partition *p_hp, struct seg *UNUSED(segs))
 {
-    struct rec_state *rc = (struct rec_state *)ap->a_uptr;
+    struct measure_rec_state *rc = (struct measure_rec_state *)ap->a_uptr;
     for (struct partition *pp = p_hp->pt_forw; pp != p_hp; pp = pp->pt_forw) {
 	struct hit *hitp = pp->pt_inhit;
 	if (hitp->hit_dist < rc->cdist) {
@@ -308,7 +308,7 @@ _cpnt_hit(struct application *ap, struct partition *p_hp, struct seg *UNUSED(seg
 static int
 _cpnt_ovlp(struct application *ap, struct partition *pp, struct region *UNUSED(reg1), struct region *UNUSED(reg2), struct partition *UNUSED(ihp))
 {
-    struct rec_state *rc = (struct rec_state *)ap->a_uptr;
+    struct measure_rec_state *rc = (struct measure_rec_state *)ap->a_uptr;
     struct hit *hitp = pp->pt_inhit;
     rc->cdist = hitp->hit_dist;
     VJOIN1(rc->pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
@@ -412,7 +412,7 @@ QMeasure3DFilter::get_point()
     bu_ptbl_free(&sset);
 
     // Set up data container for result
-    struct rec_state rc;
+    struct measure_rec_state rc;
     rc.cdist = INFINITY;
     ap->a_uptr = (void *)&rc;
 
