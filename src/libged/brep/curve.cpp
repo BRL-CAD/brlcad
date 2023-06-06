@@ -60,7 +60,7 @@ _brep_curve_msgs(void *bs, int argc, const char **argv, const char *us, const ch
 extern "C" int
 _brep_cmd_create_curve(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> create_curve <x> <y> <z>";
+    const char *usage_string = "brep [options] <objname> curve create <x> <y> <z>";
     const char *purpose_string = "create a new NURBS curve";
     if (_brep_curve_msgs(bs, argc, argv, usage_string, purpose_string))
     {
@@ -103,6 +103,72 @@ _brep_cmd_create_curve(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+extern "C" int
+_brep_cmd_in_curve(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> curve in <is_rational> <order> <cv_count> <cv1_x> <cv1_y> <cv1_z> <cv_w>(if rational) ...";
+    const char *purpose_string = "create a new NURBS curve given detailed description";
+    if (_brep_curve_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_icurve *gib = (struct _ged_brep_icurve *)bs;
+    if (argc < 4)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+    return BRLCAD_ERROR;
+    }
+
+    bool is_rational = atoi(argv[1]);
+    int order = atoi(argv[2]);
+    int cv_count = atoi(argv[3]);
+
+    if(order <= 0 || cv_count <= 0 || cv_count < order)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " invalid order or cv_count\n");
+    return BRLCAD_ERROR;
+    }
+
+    if (argc < 4 + cv_count * (3 + (is_rational ? 1 : 0)))
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments, you need to input %d more args about control vertices\n", 4 + cv_count * (3 + (is_rational ? 1 : 0)) - argc);
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+    return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+
+    argc--;argv++;
+    ON_NurbsCurve *curve = brep_in_curve(argc, argv);
+    if(curve == NULL)
+    {
+        bu_vls_printf(gib->gb->gedp->ged_result_str, " failed to create curve\n");
+        return BRLCAD_ERROR;
+    }
+
+    // add the curve to the brep
+    b_ip->brep->AddEdgeCurve(curve);
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
 static void
 _brep_curve_help(struct _ged_brep_icurve *bs, int argc, const char **argv)
 {
@@ -134,6 +200,7 @@ _brep_curve_help(struct _ged_brep_icurve *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _brep_curve_cmds[] = {
     {"create", _brep_cmd_create_curve},
+    {"in", _brep_cmd_in_curve},
     {(char *)NULL, NULL}};
 
 int

@@ -1260,7 +1260,6 @@ _brep_cmd_valid(void *bs, int argc, const char **argv)
     return brep_valid(gedp->ged_result_str, &gb->intern, argc, argv);
 }
 
-
 extern "C" int
 _brep_cmd_curve(void *bs, int argc, const char **argv)
 {
@@ -1284,68 +1283,6 @@ _brep_cmd_curve(void *bs, int argc, const char **argv)
     return brep_curve(gb, argc, argv);
 }
 
-// TODO: add more options about knot vector
-extern "C" int
-_brep_cmd_in_curve(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "brep [options] <objname> in_curve <is_rational> <order> <CV_count> <cv1_x> <cv1_y> <cv1_z> <cv_w>(if rational) ...";
-    const char *purpose_string = "create a new NURBS curve given detailed description";
-    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return BRLCAD_OK;
-    }
-
-    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-    if (argc < 4)
-    {
-    bu_vls_printf(gb->gedp->ged_result_str, " not enough arguments\n");
-    bu_vls_printf(gb->gedp->ged_result_str, "%s\n", usage_string);
-    return BRLCAD_ERROR;
-    }
-
-    bool is_rational = atoi(argv[1]);
-    int order = atoi(argv[2]);
-    int CV_count = atoi(argv[3]);
-
-    if (argc < 4 + CV_count * (3 + (is_rational ? 1 : 0)))
-    {
-    bu_vls_printf(gb->gedp->ged_result_str, " not enough arguments, you need to input %d more args about control vertices\n", 4 + CV_count * (3 + (is_rational ? 1 : 0)) - argc);
-    bu_vls_printf(gb->gedp->ged_result_str, "%s\n", usage_string);
-    return BRLCAD_ERROR;
-    }
-
-    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
-    ON_NurbsCurve *curve = new ON_NurbsCurve(3, is_rational, order, CV_count);
-    for (int i = 0; i < CV_count; i++)
-    {
-    curve->SetCV(i, ON_3dPoint(atof(argv[4 + i * (3 + is_rational)]), atof(argv[5 + i * (3 + is_rational)]), atof(argv[6 + i * (3 + is_rational)])));
-    if (is_rational)
-        curve->SetWeight(i, atof(argv[7 + i * (3 + is_rational)]));
-    }
-
-    // make uniform knot vector
-    curve->MakeClampedUniformKnotVector();
-
-    // add the curve to the brep
-    b_ip->brep->AddEdgeCurve(curve);
-
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
-    // Make the new one
-    struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
 
 extern "C" int
 _brep_cmd_move_curve_control_Vertex(void *bs, int argc, const char **argv)
@@ -1455,7 +1392,6 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "valid",           _brep_cmd_valid},
     //{ "weld",            _brep_cmd_weld},
     { "curve",           _brep_cmd_curve},
-    { "in_curve",        _brep_cmd_in_curve},
     { "move_curve_CV",   _brep_cmd_move_curve_control_Vertex},
     { (char *)NULL,      NULL}
 };

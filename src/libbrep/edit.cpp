@@ -47,6 +47,34 @@ ON_NurbsCurve *brep_make_curve(int argc, const char **argv)
         curve->Translate(ON_3dVector(atof(argv[0]), atof(argv[1]), atof(argv[2])));
     return curve;
 }
+
+
+// TODO: add more options about knot vector
+ON_NurbsCurve *brep_in_curve(int argc, const char **argv)
+{
+    bool is_rational = atoi(argv[0]);
+    int order = atoi(argv[1]);
+    int cv_count = atoi(argv[2]);
+    int dim = 3;
+    if (argc != 3 + cv_count * (dim + is_rational))
+    {
+        return NULL;
+    }
+
+    ON_NurbsCurve *curve = new ON_NurbsCurve(dim, is_rational, order, cv_count);
+    
+    for (int i = 0; i < cv_count; i++)
+    {
+    curve->SetCV(i, ON_3dPoint(atof(argv[3 + i * (dim + is_rational)]), atof(argv[4 + i * (dim + is_rational)]), atof(argv[5 + i * (dim + is_rational)])));
+    if (is_rational)
+        curve->SetWeight(i, atof(argv[6 + i * (dim + is_rational)]));
+    }
+
+    // make uniform knot vector
+    curve->MakeClampedUniformKnotVector();
+    return curve;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

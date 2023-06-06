@@ -45,10 +45,17 @@ __END_DECLS
 extern "C++" {
 
 /**
- * create an nurbs curve
+ * create an nurbs curve using a template
+ * position can be specified if argc == 3
  */
 BREP_EXPORT extern ON_NurbsCurve *
 brep_make_curve(int argc, const char **argv);
+
+/**
+ * create an nurbs curve given detailed information
+ */
+BREP_EXPORT extern ON_NurbsCurve *
+brep_in_curve(int argc, const char **argv);
 
 } /* extern C++ */
 #endif
