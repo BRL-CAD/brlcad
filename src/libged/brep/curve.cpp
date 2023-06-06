@@ -77,21 +77,9 @@ _brep_cmd_create_curve(void *bs, int argc, const char **argv)
 
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
 
+    argc--;argv++;
     // Create a template nurbs curve
-    ON_NurbsCurve *curve = new ON_NurbsCurve(3, true, 3, 4);
-    curve->SetCV(0, ON_3dPoint(-0.1, -1.5, 0));
-    curve->SetCV(1, ON_3dPoint(0.1, -0.5, 0));
-    curve->SetCV(2, ON_3dPoint(0.1, 0.5, 0));
-    curve->SetCV(3, ON_3dPoint(-0.1, 1.5, 0));
-    curve->SetKnot(0, 0);
-    curve->SetKnot(1, 0);
-    curve->SetKnot(2, 0.5);
-    curve->SetKnot(3, 1);
-    curve->SetKnot(4, 1);
-
-    // if position is specified, translate the curve to that position
-    if (argc == 4)
-        curve->Translate(ON_3dVector(atof(argv[1]), atof(argv[2]), atof(argv[3])));
+    ON_NurbsCurve *curve = brep_make_curve(argc, argv);
 
     b_ip->brep->AddEdgeCurve(curve);
 

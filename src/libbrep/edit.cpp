@@ -31,6 +31,22 @@ void *brep_create()
     return (void *)brep;
 }
 
+ON_NurbsCurve *brep_make_curve(int argc, const char **argv)
+{
+    ON_NurbsCurve *curve = new ON_NurbsCurve(3, true, 3, 4);
+    curve->SetCV(0, ON_3dPoint(-0.1, -1.5, 0));
+    curve->SetCV(1, ON_3dPoint(0.1, -0.5, 0));
+    curve->SetCV(2, ON_3dPoint(0.1, 0.5, 0));
+    curve->SetCV(3, ON_3dPoint(-0.1, 1.5, 0));
+    curve->SetKnot(0, 0);
+    curve->SetKnot(1, 0);
+    curve->SetKnot(2, 0.5);
+    curve->SetKnot(3, 1);
+    curve->SetKnot(4, 1);
+    if (argc == 3)
+        curve->Translate(ON_3dVector(atof(argv[0]), atof(argv[1]), atof(argv[2])));
+    return curve;
+}
 // Local Variables:
 // tab-width: 8
 // mode: C++

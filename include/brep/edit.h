@@ -29,6 +29,7 @@
 
 /** @{ */
 /** @file brep/edit.h */
+
 __BEGIN_DECLS
 
 /**
@@ -38,6 +39,20 @@ BREP_EXPORT extern void *
 brep_create();
 
 __END_DECLS
+
+#ifdef __cplusplus
+
+extern "C++" {
+
+/**
+ * create an nurbs curve
+ */
+BREP_EXPORT extern ON_NurbsCurve *
+brep_make_curve(int argc, const char **argv);
+
+} /* extern C++ */
+#endif
+
 
 #endif  /* BREP_EDIT_H */
 /** @} */
