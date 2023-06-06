@@ -194,6 +194,7 @@ QSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 	grsp->width = grsp->dim[X] * 2.0 / (fastf_t)grsp->cdim[X];
 	grsp->height = grsp->dim[Y] * 2.0 / (fastf_t)grsp->cdim[X];
 	emit view_updated(QTCAD_VIEW_DRAWN);
+	return true;
     }
 
     if (e->type() == QEvent::MouseButtonRelease) {
@@ -221,6 +222,7 @@ QSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 	grsp->dim[0] = 0;
 	grsp->dim[1] = 0;
 	emit view_updated(QTCAD_VIEW_DRAWN);
+	return true;
     }
 
     // Shouldn't get here
