@@ -323,6 +323,9 @@ bv_free(struct bview *gvp)
 	sp = nsp;
     }
     BU_PUT(gvp->gv_objs.free_scene_obj, struct bv_scene_obj);
+    if (gvp->gv_s)
+	bu_ptbl_free(&gvp->gv_s->gv_snap_objs);
+    bu_ptbl_free(&gvp->gv_ls.gv_snap_objs);
 
     if (gvp->gv_ls.gv_selected) {
 	bu_ptbl_free(gvp->gv_ls.gv_selected);
@@ -584,6 +587,8 @@ bv_settings_init(struct bview_settings *s)
     // Higher values indicate more aggressive behavior (i.e. points further away will be snapped).
     s->gv_snap_tol_factor = 10;
     s->gv_snap_lines = 0;
+    BU_PTBL_INIT(&s->gv_snap_objs);
+    s->gv_snap_flags = 0;
 }
 
 // TODO - investigate saveview/loadview logic, see if anything

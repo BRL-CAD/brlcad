@@ -35,7 +35,7 @@
 #include "bg/lseg.h"
 #include "bv.h"
 
-struct bv_cp_info {
+struct bv_cp_info_tcl {
     double ctol_sq; // square of the distance that defines "close to a line"
 
     struct bv_data_line_state *c_lset; // container holding closest line
@@ -48,11 +48,11 @@ struct bv_cp_info {
     int c_l2;   // index of 2nd closest line
     double dsq2; // squared distance to 2nd closest line
 };
-#define BV_CP_INFO_INIT {BN_TOL_DIST, NULL, VINIT_ZERO, -1, DBL_MAX, NULL, VINIT_ZERO, -1, DBL_MAX}
+#define BV_CP_INFO_TCL_INIT {BN_TOL_DIST, NULL, VINIT_ZERO, -1, DBL_MAX, NULL, VINIT_ZERO, -1, DBL_MAX}
 
 static
 int
-_find_closest_point(struct bv_cp_info *s, point_t *p, struct bv_data_line_state *lines)
+_find_closest_tcl_point(struct bv_cp_info_tcl *s, point_t *p, struct bv_data_line_state *lines)
 {
     int ret = 0;
     point_t P0, P1;
@@ -107,7 +107,7 @@ _find_closest_point(struct bv_cp_info *s, point_t *p, struct bv_data_line_state 
 }
 
 void
-_find_close_isect(struct bv_cp_info *s, point_t *p)
+_find_close_isect_tcl(struct bv_cp_info_tcl *s, point_t *p)
 {
     point_t P0, P1, Q0, Q1;
     point_t c1, c2;
@@ -155,7 +155,7 @@ _find_close_isect(struct bv_cp_info *s, point_t *p)
 }
 
 static double
-line_tol_sq(struct bview *v, struct bv_data_line_state *gdlsp)
+line_tol_sq_tcl(struct bview *v, struct bv_data_line_state *gdlsp)
 {
     if (!v || !gdlsp)
 	return 100*100;
@@ -178,7 +178,7 @@ line_tol_sq(struct bview *v, struct bv_data_line_state *gdlsp)
 int
 bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
 {
-    struct bv_cp_info cpinfo = BV_CP_INFO_INIT;
+    struct bv_cp_info_tcl cpinfo = BV_CP_INFO_TCL_INIT;
 
     if (!p || !v) return BRLCAD_ERROR;
 
@@ -188,16 +188,16 @@ bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
     // probably want to prefer intersections between lines to closest line
     // point if we are close to multiple lines...
     int ret = 0;
-    cpinfo.ctol_sq = line_tol_sq(v, &v->gv_tcl.gv_data_lines);
-    ret += _find_closest_point(&cpinfo, p, &v->gv_tcl.gv_data_lines);
-    cpinfo.ctol_sq = line_tol_sq(v, &v->gv_tcl.gv_sdata_lines);
-    ret += _find_closest_point(&cpinfo, p, &v->gv_tcl.gv_sdata_lines);
+    cpinfo.ctol_sq = line_tol_sq_tcl(v, &v->gv_tcl.gv_data_lines);
+    ret += _find_closest_tcl_point(&cpinfo, p, &v->gv_tcl.gv_data_lines);
+    cpinfo.ctol_sq = line_tol_sq_tcl(v, &v->gv_tcl.gv_sdata_lines);
+    ret += _find_closest_tcl_point(&cpinfo, p, &v->gv_tcl.gv_sdata_lines);
 
     // Check if we are close enough to two line segments to warrant using the
     // closest approach point.  The intersection may not be close enough to
     // use, but if it is prefer it as it satisfies two lines instead of one.
     if (ret > 1) {
-	_find_close_isect(&cpinfo, p);
+	_find_close_isect_tcl(&cpinfo, p);
     }
 
     // If we found something, we can snap
