@@ -54,8 +54,7 @@ struct bv_cp_info_tcl {
 };
 #define BV_CP_INFO_TCL_INIT {BV_CP_INFO_INIT, NULL, -1, NULL, -1}
 
-static
-int
+static int
 _find_closest_tcl_point(struct bv_cp_info_tcl *s, point_t *p, struct bv_data_line_state *lines)
 {
     int ret = 0;
@@ -168,6 +167,61 @@ _find_close_isect_tcl(struct bv_cp_info_tcl *s, point_t *p)
     _find_close_isect(&s->c, p, &P0, &P1, &Q0, &Q1);
 }
 
+static int
+_find_closest_obj_point(struct bv_cp_info *s, point_t *p, struct bv_scene_obj *o)
+{
+    int ret = 0;
+    if (!s || !p || !o)
+	return 0;
+    if (!bu_list_len(&o->s_vlist))
+	return 0;
+
+    struct bv_vlist *tvp;
+    for (BU_LIST_FOR(tvp, bv_vlist, &o->s_vlist)) {
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
+	point_t *pt1 = NULL;
+	point_t *pt2 = NULL;
+	for (int i = 0; i < nused; i++, cmd++, pt++) {
+	    switch (*cmd) {
+		case BV_VLIST_LINE_MOVE:
+		    pt2 = pt;
+		    break;
+		case BV_VLIST_LINE_DRAW:
+		    pt1 = pt2;
+		    pt2 = pt;
+		    break;
+	    }
+	    if (pt1 && pt2) {
+		point_t c;
+		double dsq = bg_distsq_lseg3_pt(&c, *pt1, *pt2, *p);
+		// If this is the closest we've seen, record it
+		if (s->dsq > dsq) {
+		    // Closest is now second closest
+		    VMOVE(s->cp2, s->cp);
+		    s->dsq2 = s->dsq;
+
+		    // set new closest
+		    VMOVE(s->cp, c);
+		    s->dsq = dsq;
+		    ret = 1;
+		    continue;
+		}
+		// Not the closest - is it closer than the second closest?
+		if (s->dsq2 > dsq) {
+		    VMOVE(s->cp2, c);
+		    s->dsq2 = dsq;
+		    ret = 2;
+		    continue;
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static double
 line_tol_sq(struct bview *v, int lwidth)
 {
@@ -194,29 +248,89 @@ line_tol_sq(struct bview *v, int lwidth)
 int
 bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
 {
+    int ret = 0;
+    struct bview_settings *gv_s = (v->gv_s) ? v->gv_s : &v->gv_ls;
     struct bv_cp_info_tcl cpinfo = BV_CP_INFO_TCL_INIT;
 
     if (!p || !v) return BRLCAD_ERROR;
+
+    // If we're not in Tcl mode only, we are looking at objects - either
+    // all of them, or a specified subset
+    if (gv_s->gv_snap_flags != BV_SNAP_TCL) {
+	struct bv_cp_info *s = &cpinfo.c;
+	s->ctol_sq = line_tol_sq(v, 1);
+	if (BU_PTBL_LEN(&gv_s->gv_snap_objs) > 0) {
+	    for (size_t i = 0; i < BU_PTBL_LEN(&gv_s->gv_snap_objs); i++) {
+		struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(&gv_s->gv_snap_objs, i);
+		if (gv_s->gv_snap_flags) {
+		    if (gv_s->gv_snap_flags == BV_SNAP_DB && (!(so->s_type_flags & BV_DB_OBJS)))
+			continue;
+		    if (gv_s->gv_snap_flags == BV_SNAP_VIEW && (!(so->s_type_flags & BV_VIEW_OBJS)))
+			continue;
+		}
+		struct bv_obj_settings *s_os = (so->s_os) ? so->s_os : &so->s_local_os;
+		s->ctol_sq = line_tol_sq(v, (s_os->s_line_width) ? s_os->s_line_width : 1);
+		ret += _find_closest_obj_point(s, p, so);
+	    }
+	} else {
+	    if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_DB)) {
+		if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_SHARED)) {
+		    struct bu_ptbl *sobjs = bv_view_objs(v, BV_DB_OBJS);
+		    for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
+			struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sobjs, i);
+			ret += _find_closest_obj_point(s, p, so);
+		    }
+		}
+		if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_LOCAL)) {
+		    struct bu_ptbl *sobjs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
+		    for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
+			struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sobjs, i);
+			ret += _find_closest_obj_point(s, p, so);
+		    }
+		}
+	    }
+	    if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_VIEW)) {
+		if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_SHARED)) {
+		    struct bu_ptbl *sobjs = bv_view_objs(v, BV_VIEW_OBJS);
+		    for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
+			struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sobjs, i);
+			ret += _find_closest_obj_point(s, p, so);
+		    }
+		}
+		if (!gv_s->gv_snap_flags || (gv_s->gv_snap_flags & BV_SNAP_LOCAL)) {
+		    struct bu_ptbl *sobjs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
+		    for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
+			struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(sobjs, i);
+			ret += _find_closest_obj_point(s, p, so);
+		    }
+		}
+	    }
+	}
+    }
 
     // There are some issues with line snapping that don't come up with grid
     // snapping - in particular, when are we "close enough" to a line to snap,
     // and how do we handle snapping when close enough to multiple lines?  We
     // probably want to prefer intersections between lines to closest line
     // point if we are close to multiple lines...
-    int ret = 0;
-    int lwidth;
-    lwidth = (v->gv_tcl.gv_data_lines.gdls_line_width) ? v->gv_tcl.gv_data_lines.gdls_line_width : 1;
-    cpinfo.c.ctol_sq = line_tol_sq(v, lwidth);
-    ret += _find_closest_tcl_point(&cpinfo, p, &v->gv_tcl.gv_data_lines);
-    lwidth = (v->gv_tcl.gv_sdata_lines.gdls_line_width) ? v->gv_tcl.gv_sdata_lines.gdls_line_width : 1;
-    cpinfo.c.ctol_sq = line_tol_sq(v, lwidth);
-    ret += _find_closest_tcl_point(&cpinfo, p, &v->gv_tcl.gv_sdata_lines);
+    if (!gv_s->gv_snap_flags || gv_s->gv_snap_flags & BV_SNAP_TCL) {
+	int lwidth;
+	lwidth = (v->gv_tcl.gv_data_lines.gdls_line_width) ? v->gv_tcl.gv_data_lines.gdls_line_width : 1;
+	cpinfo.c.ctol_sq = line_tol_sq(v, lwidth);
+	ret += _find_closest_tcl_point(&cpinfo, p, &v->gv_tcl.gv_data_lines);
+	lwidth = (v->gv_tcl.gv_sdata_lines.gdls_line_width) ? v->gv_tcl.gv_sdata_lines.gdls_line_width : 1;
+	cpinfo.c.ctol_sq = line_tol_sq(v, lwidth);
+	ret += _find_closest_tcl_point(&cpinfo, p, &v->gv_tcl.gv_sdata_lines);
 
-    // Check if we are close enough to two line segments to warrant using the
-    // closest approach point.  The intersection may not be close enough to
-    // use, but if it is prefer it as it satisfies two lines instead of one.
-    if (ret > 1) {
-	_find_close_isect_tcl(&cpinfo, p);
+	// Check if we are close enough to two line segments to warrant using the
+	// closest approach point.  The intersection may not be close enough to
+	// use, but if it is prefer it as it satisfies two lines instead of one.
+	//
+	// TODO - as implemented this will only prefer the intersection between
+	// two Tcl lines, rather than all lines...
+	if (ret > 1) {
+	    _find_close_isect_tcl(&cpinfo, p);
+	}
     }
 
     // If we found something, we can snap

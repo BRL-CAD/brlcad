@@ -400,7 +400,9 @@ struct bv_mesh_lod {
 /* Flags to identify categories of objects to snap */
 #define BV_SNAP_SHARED 0x1
 #define BV_SNAP_LOCAL  0x2
-#define BV_SNAP_TCL    0x4
+#define BV_SNAP_DB  0x4
+#define BV_SNAP_VIEW    0x8
+#define BV_SNAP_TCL    0x10
 
 /* We encapsulate non-camera settings into a container mainly to allow for
  * easier re-use of the same settings between different views - if a common
