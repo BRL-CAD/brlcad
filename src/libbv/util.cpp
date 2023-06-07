@@ -325,7 +325,8 @@ bv_free(struct bview *gvp)
     BU_PUT(gvp->gv_objs.free_scene_obj, struct bv_scene_obj);
     if (gvp->gv_s)
 	bu_ptbl_free(&gvp->gv_s->gv_snap_objs);
-    bu_ptbl_free(&gvp->gv_ls.gv_snap_objs);
+    if (gvp->gv_s != &gvp->gv_ls)
+	bu_ptbl_free(&gvp->gv_ls.gv_snap_objs);
 
     if (gvp->gv_ls.gv_selected) {
 	bu_ptbl_free(gvp->gv_ls.gv_selected);
