@@ -231,9 +231,8 @@ bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
 	}
     }
 
-    point_t v_pt, m_pt;
+    point_t v_pt;
     VSET(v_pt, fx, fy, 0);
-    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
     VMOVE(p->prev_point, v_pt);
 
     int pcnt = 1;
@@ -253,6 +252,8 @@ bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
     p->polygon.contour[0].open = 0;
     p->polygon.contour[0].point = (point_t *)bu_calloc(pcnt, sizeof(point_t), "point");
     p->polygon.hole[0] = 0;
+    point_t m_pt;
+    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
     for (int i = 0; i < pcnt; i++) {
 	VMOVE(p->polygon.contour[0].point[i], m_pt);
     }

@@ -137,14 +137,7 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 
 	    // Z offset
 	    ip->vZ = vZ;
-
-	    // Correct the prev_point calculation for the supplied vZ
-	    fastf_t fx, fy;
-	    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) >= 0) {
-		point_t v_pt;
-		VSET(v_pt, fx, fy, ip->vZ);
-		VMOVE(ip->prev_point, v_pt);
-	    }
+	    ip->prev_point[2] = ip->vZ;
 
 	    // Set fill
 	    if (fill_poly && !ip->fill_flag) {
