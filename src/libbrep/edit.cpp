@@ -76,22 +76,41 @@ ON_NurbsCurve *brep_in_curve(int argc, const char **argv)
     return curve;
 }
 
-bool brep_curve_move_cv(ON_Brep* brep, int curve_id, int cv_id, ON_4dPoint point)
+ON_NurbsCurve *brep_get_nurbs_curve(ON_Brep* brep, int curve_id)
 {
     if(curve_id<0 || curve_id>=brep->m_C3.Count())
     {
 		bu_log("curve_id is out of range\n");
-        return false;
+        return NULL;
     }
     ON_NurbsCurve *curve = dynamic_cast<ON_NurbsCurve *>(brep->m_C3[curve_id]);
-    
+
     if (!curve)
     {
 		bu_log("curve %d is not a NURBS curve\n", curve_id);
+        return NULL;
+    }
+    return curve;
+}
+
+bool brep_curve_move_cv(ON_Brep* brep, int curve_id, int cv_id, ON_4dPoint point)
+{
+    ON_NurbsCurve *curve = brep_get_nurbs_curve(brep, curve_id);
+    if (!curve)
+    {
         return false;
     }
-    
     return curve->SetCV(cv_id, point);
+}
+
+bool brep_curve_reverse(ON_Brep* brep, int curve_id)
+{
+    ON_NurbsCurve *curve = brep_get_nurbs_curve(brep, curve_id);
+    if (!curve)
+    {
+        return false;
+    }
+    return curve->Reverse();
 }
 
 // Local Variables:

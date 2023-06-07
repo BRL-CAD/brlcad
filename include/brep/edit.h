@@ -63,6 +63,13 @@ brep_in_curve(int argc, const char **argv);
 BREP_EXPORT extern bool
 brep_curve_move_cv(ON_Brep* brep, int curve_id, int cv_id, ON_4dPoint point);
 
+/**
+ * Reverse parameterizatrion by negating all knots
+ * and reversing the order of the control vertices.
+ */
+BREP_EXPORT extern bool
+brep_curve_reverse(ON_Brep* brep, int curve_id);
+
 } /* extern C++ */
 #endif
 

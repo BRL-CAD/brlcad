@@ -166,7 +166,7 @@ _brep_cmd_curve_in(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_curve_move_cv(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> curve move_CV <curve_id> <CV_id> <x> <y> <z> [<w>]";
+    const char *usage_string = "brep [options] <objname> curve move_cv <curve_id> <CV_id> <x> <y> <z> [<w>]";
     const char *purpose_string = "move the control vertex of a NURBS curve";
     if (_brep_curve_msgs(bs, argc, argv, usage_string, purpose_string))
     {
@@ -211,32 +211,91 @@ _brep_cmd_curve_move_cv(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+
+extern "C" int
+_brep_cmd_curve_flip(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> curve flip <curve_id>";
+    const char *purpose_string = "Flip the direction of a NURBS curve";
+    if (_brep_curve_msgs(bs, argc, argv, usage_string, purpose_string))
+    {
+    return BRLCAD_OK;
+    }
+
+    struct _ged_brep_icurve *gib = (struct _ged_brep_icurve *)bs;
+    if(argc < 2)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+    return BRLCAD_ERROR;
+    }
+
+    int curve_id = 0;
+    try
+    {
+    curve_id = std::stoi(argv[1]);
+    }
+    catch(const std::exception& e)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " invalid curve id\n");
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " %s\n", e.what());
+    return BRLCAD_ERROR;
+    }
+    
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    
+    bool flag = brep_curve_reverse(b_ip->brep, curve_id);
+    if (!flag)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to reverse curve %s\n", argv[1]);
+    return BRLCAD_ERROR;
+    }
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep))
+    {
+    return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
 static void
 _brep_curve_help(struct _ged_brep_icurve *bs, int argc, const char **argv)
 {
     struct _ged_brep_icurve *gb = (struct _ged_brep_icurve *)bs;
     if (!argc || !argv)
     {
-        bu_vls_printf(gb->vls, "brep [options] <objname> curve <subcommand> [args]\n");
-        bu_vls_printf(gb->vls, "Available subcommands:\n");
-        const struct bu_cmdtab *ctp = NULL;
-        int ret;
-        const char *helpflag[2];
-        helpflag[1] = PURPOSEFLAG;
-        for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++)
-        {
-            bu_vls_printf(gb->vls, "  %s\t\t", ctp->ct_name);
-            helpflag[0] = ctp->ct_name;
-            bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
-        }
+    bu_vls_printf(gb->vls, "brep [options] <objname> curve <subcommand> [args]\n");
+    bu_vls_printf(gb->vls, "Available subcommands:\n");
+    const struct bu_cmdtab *ctp = NULL;
+    int ret;
+    const char *helpflag[2];
+    helpflag[1] = PURPOSEFLAG;
+    for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++)
+    {
+    bu_vls_printf(gb->vls, "  %s\t\t", ctp->ct_name);
+    helpflag[0] = ctp->ct_name;
+    bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
+    }
     }
     else
     {
-        int ret;
-        const char *helpflag[2];
-        helpflag[0] = argv[0];
-        helpflag[1] = HELPFLAG;
-        bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
+    int ret;
+    const char *helpflag[2];
+    helpflag[0] = argv[0];
+    helpflag[1] = HELPFLAG;
+    bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
     }
 }
 
@@ -244,6 +303,7 @@ const struct bu_cmdtab _brep_curve_cmds[] = {
     {"create", _brep_cmd_curve_create},
     {"in", _brep_cmd_curve_in},
     {"move_cv", _brep_cmd_curve_move_cv},
+    {"flip", _brep_cmd_curve_flip},
     {(char *)NULL, NULL}};
 
 int
@@ -257,23 +317,23 @@ brep_curve(struct _ged_brep_info *gb, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gb->intern.idb_ptr))->brep;
     if (brep == NULL)
     {
-        bu_vls_printf(gib.vls, "not a brep object\n");
-        return BRLCAD_ERROR;
+    bu_vls_printf(gib.vls, "not a brep object\n");
+    return BRLCAD_ERROR;
     }
 
     if (!argc)
     {
-        _brep_curve_help(&gib, 0, NULL);
-        return BRLCAD_OK;
+    _brep_curve_help(&gib, 0, NULL);
+    return BRLCAD_OK;
     }
 
     // TODO: add help flag
     if (argc > 1 && BU_STR_EQUAL(argv[1], HELPFLAG))
     {
-        argc--;argv++;
-        argc--;argv++;
-        _brep_curve_help(&gib, argc, argv);
-        return BRLCAD_OK;
+    argc--;argv++;
+    argc--;argv++;
+    _brep_curve_help(&gib, argc, argv);
+    return BRLCAD_OK;
     }
 
     // Must have valid subcommand to process
