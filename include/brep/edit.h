@@ -57,6 +57,12 @@ brep_make_curve(int argc, const char **argv);
 BREP_EXPORT extern ON_NurbsCurve *
 brep_in_curve(int argc, const char **argv);
 
+/**
+ * move control vertex of a curve
+ */
+BREP_EXPORT extern bool
+brep_curve_move_cv(ON_Brep* brep, int curve_id, int cv_id, ON_4dPoint point);
+
 } /* extern C++ */
 #endif
 

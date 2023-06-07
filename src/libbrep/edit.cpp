@@ -24,6 +24,7 @@
  */
 
 #include "brep/edit.h"
+#include "bu/log.h"
 
 void *brep_create()
 {
@@ -73,6 +74,24 @@ ON_NurbsCurve *brep_in_curve(int argc, const char **argv)
     // make uniform knot vector
     curve->MakeClampedUniformKnotVector();
     return curve;
+}
+
+bool brep_curve_move_cv(ON_Brep* brep, int curve_id, int cv_id, ON_4dPoint point)
+{
+    if(curve_id<0 || curve_id>=brep->m_C3.Count())
+    {
+		bu_log("curve_id is out of range\n");
+        return false;
+    }
+    ON_NurbsCurve *curve = dynamic_cast<ON_NurbsCurve *>(brep->m_C3[curve_id]);
+    
+    if (!curve)
+    {
+		bu_log("curve %d is not a NURBS curve\n", curve_id);
+        return false;
+    }
+    
+    return curve->SetCV(cv_id, point);
 }
 
 // Local Variables:
