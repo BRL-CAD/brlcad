@@ -1212,6 +1212,10 @@ bv_obj_put(struct bv_scene_obj *s)
 	bv_obj_put(cg);
     }
 
+    // If this object was selected for snapping, it is no longer a valid candidate
+    if (s->s_v)
+	bu_ptbl_rm(&s->s_v->gv_s->gv_snap_objs, (long *)s);
+
     bv_obj_reset(s);
 
     // Clear names
