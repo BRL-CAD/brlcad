@@ -111,6 +111,9 @@ QPolyCreate::QPolyCreate()
     QObject::connect(ps->view_name, &QLineEdit::textEdited, this, &QPolyCreate::sketch_sync_str);
     QObject::connect(ps->sketch_name, &QLineEdit::textEdited, this, &QPolyCreate::sketch_sync_str);
 
+    // If the view changes, adjust
+    QObject::connect(ps, &QPolySettings::snapping_changed, this, &QPolyCreate::toggle_snapping);
+
     default_gl->addWidget(ps);
     defaultBox->setLayout(default_gl);
     l->addWidget(defaultBox);
@@ -373,6 +376,40 @@ QPolyCreate::sketch_sync()
     }
 }
 
+void
+QPolyCreate::toggle_snapping(bool s)
+{
+    snapping = s;
+}
+
+void
+QPolyCreate::config_snapping(struct bview *v, struct bv_scene_obj *co)
+{
+    if (!v)
+	return;
+    v->gv_s->gv_snap_flags = BV_SNAP_VIEW;
+    bu_ptbl_reset(&v->gv_s->gv_snap_objs);
+    if (!snapping) {
+	v->gv_s->gv_snap_lines = 0;
+    } else {
+	// Turn snapping on if we have other polygons to snap to
+	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
+	if (!view_objs)
+	    return;
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    if (s == co)
+		continue;
+	    if (s->s_type_flags & BV_POLYGONS)
+		bu_ptbl_ins(&v->gv_s->gv_snap_objs, (long *)s);
+	}
+	if (BU_PTBL_LEN(&v->gv_s->gv_snap_objs)) {
+	    v->gv_s->gv_snap_lines = 1;
+	} else {
+	    v->gv_s->gv_snap_lines = 0;
+	}
+    }
+}
 
 void
 QPolyCreate::view_sync_str(const QString &)
@@ -463,6 +500,7 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     // polygon from the last event - otherwise, start fresh with p == NULL
     cf->wp = p;
     cf->v = (p) ? p->s_v : gedp->ged_gvp;
+    config_snapping(cf->v, cf->wp);
 
     // Connect whatever the current filter is to pass on updating signals from
     // the libqtcad logic.  (For the moment we've only got the one filter, but

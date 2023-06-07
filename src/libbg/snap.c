@@ -252,7 +252,7 @@ bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
     struct bview_settings *gv_s = (v->gv_s) ? v->gv_s : &v->gv_ls;
     struct bv_cp_info_tcl cpinfo = BV_CP_INFO_TCL_INIT;
 
-    if (!p || !v) return BRLCAD_ERROR;
+    if (!p || !v) return 0;
 
     // If we're not in Tcl mode only, we are looking at objects - either
     // all of them, or a specified subset
@@ -354,7 +354,7 @@ bv_snap_lines_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
     point_t p = VINIT_ZERO;
     MAT4X3PNT(p, v->gv_view2model, vp);
     point_t out_pt = VINIT_ZERO;
-    if (bv_snap_lines_3d(&out_pt, v, &p) == BRLCAD_OK) {
+    if (bv_snap_lines_3d(&out_pt, v, &p) == 1) {
 	MAT4X3PNT(vp, v->gv_model2view, out_pt);
 	(*vx) = vp[0];
 	(*vy) = vp[1];

@@ -51,13 +51,17 @@ class QPolySettings : public QWidget
 
 	QLineEdit *vZ;
 
+	QCheckBox *snapping;
+
 	bool uniq_obj_name(struct bu_vls *oname, struct bview *v);
 
     signals:
 	void settings_changed();
+	void snapping_changed(bool);
 
     public slots:
 	void do_settings_changed();
+	void do_snapping_changed();
 	void settings_sync(struct bv_scene_obj *p);
 
     private slots:

@@ -129,6 +129,10 @@ QPolySettings::QPolySettings()
     zw->setLayout(zl);
     l->addWidget(zw);
 
+    snapping = new QCheckBox("View Snapping");
+    l->addWidget(snapping);
+    QObject::connect(snapping, &QCheckBox::toggled, this, &QPolySettings::do_snapping_changed);
+
     this->setLayout(l);
 }
 
@@ -194,6 +198,14 @@ QPolySettings::do_settings_changed()
 {
     emit settings_changed();
 }
+
+
+void
+QPolySettings::do_snapping_changed()
+{
+    emit snapping_changed(snapping->isChecked());
+}
+
 
 void
 QPolySettings::settings_sync(struct bv_scene_obj *p)
