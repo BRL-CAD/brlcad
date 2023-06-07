@@ -196,6 +196,10 @@ _find_closest_obj_point(struct bv_cp_info *s, point_t *p, struct bv_scene_obj *o
 	    if (pt1 && pt2) {
 		point_t c;
 		double dsq = bg_distsq_lseg3_pt(&c, *pt1, *pt2, *p);
+		// If we're outside tolerance, continue
+		if (dsq > s->ctol_sq) {
+		    continue;
+		}
 		// If this is the closest we've seen, record it
 		if (s->dsq > dsq) {
 		    // Closest is now second closest
