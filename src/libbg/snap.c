@@ -318,13 +318,14 @@ bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
     // probably want to prefer intersections between lines to closest line
     // point if we are close to multiple lines...
     if (!gv_s->gv_snap_flags || gv_s->gv_snap_flags & BV_SNAP_TCL) {
+	int tret = 0;
 	int lwidth;
 	lwidth = (v->gv_tcl.gv_data_lines.gdls_line_width) ? v->gv_tcl.gv_data_lines.gdls_line_width : 1;
 	cpinfo.c.ctol_sq = line_tol_sq(v, lwidth);
-	ret += _find_closest_tcl_point(&cpinfo, p, &v->gv_tcl.gv_data_lines);
+	tret += _find_closest_tcl_point(&cpinfo, p, &v->gv_tcl.gv_data_lines);
 	lwidth = (v->gv_tcl.gv_sdata_lines.gdls_line_width) ? v->gv_tcl.gv_sdata_lines.gdls_line_width : 1;
 	cpinfo.c.ctol_sq = line_tol_sq(v, lwidth);
-	ret += _find_closest_tcl_point(&cpinfo, p, &v->gv_tcl.gv_sdata_lines);
+	tret += _find_closest_tcl_point(&cpinfo, p, &v->gv_tcl.gv_sdata_lines);
 
 	// Check if we are close enough to two line segments to warrant using the
 	// closest approach point.  The intersection may not be close enough to
@@ -332,9 +333,10 @@ bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p)
 	//
 	// TODO - as implemented this will only prefer the intersection between
 	// two Tcl lines, rather than all lines...
-	if (ret > 1) {
+	if (tret > 1) {
 	    _find_close_isect_tcl(&cpinfo, p);
 	}
+	ret += tret;
     }
 
     // If we found something, we can snap
