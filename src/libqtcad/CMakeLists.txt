@@ -41,26 +41,26 @@ add_subdirectory(images)
 
 set(qtcad_srcs
   bindings.cpp
+  QToolPalette.cpp
+  QViewCtrl.cpp
   QgAccordion.cpp
+  QgAppExecDialog.cpp
   QgColorRGB.cpp
+  QgDockWidget.cpp
   QgFlowLayout.cpp
   QgKeyVal.cpp
   QgMeasureFilter.cpp
+  QgModel.cpp
   QgPolyFilter.cpp
   QgSelectFilter.cpp
-  QToolPalette.cpp
-  QViewCtrl.cpp
-  QgDockWidget.cpp
-  QgModel.cpp
   QgTreeSelectionModel.cpp
   QgTreeView.cpp
   QgUtil.cpp
-  QtAppExecDialog.cpp
-  QtSW.cpp
   QtCADQuad.cpp
   QtCADView.cpp
   QtConsole.cpp
   QtConsoleListener.cpp
+  QtSW.cpp
   )
 if (OPENGL_LIBS)
   set(qtcad_srcs ${qtcad_srcs} QtGL.cpp)
@@ -74,21 +74,21 @@ endif (OPENGL_LIBS)
 # and file-cleanup lists.
 set(QTCAD_HDR_DIR ${BRLCAD_SOURCE_DIR}/include/qtcad)
 set(qth_names
-  QgAccordion
-  QgColorRGB
-  QgKeyVal
-  QgMeasureFilter
-  QgPolyFilter
-  QgSelectFilter
   QToolPalette
   QViewCtrl
+  QgAccordion
+  QgAppExecDialog
+  QgColorRGB
   QgDockWidget
+  QgKeyVal
+  QgMeasureFilter
   QgModel
+  QgPolyFilter
+  QgSelectFilter
   QgTreeSelectionModel
   QgTreeView
-  QtAppExecDialog
-  QtCADView
   QtCADQuad
+  QtCADView
   QtConsole
   QtConsoleListener
   QtSW

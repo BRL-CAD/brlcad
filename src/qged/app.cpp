@@ -31,7 +31,7 @@
 #include <QTextStream>
 #include "bu/malloc.h"
 #include "bu/file.h"
-#include "qtcad/QtAppExecDialog.h"
+#include "qtcad/QgAppExecDialog.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "app.h"
 #include "fbserv.h"
@@ -590,7 +590,7 @@ CADApp::exec_console_app_in_window(QString command, QStringList options, QString
 {
     if (command.length() > 0) {
 
-	QtAppExecDialog *out_win = new QtAppExecDialog(0, command, options, lfile);
+	QgAppExecDialog *out_win = new QgAppExecDialog(0, command, options, lfile);
 	QString win_title("Running ");
 	win_title.append(command);
 	out_win->setWindowTitle(win_title);
@@ -603,9 +603,9 @@ CADApp::exec_console_app_in_window(QString command, QStringList options, QString
 	out_win->console->printString(QString("\n"));
 	out_win->proc->setProgram(command);
 	out_win->proc->setArguments(options);
-	connect(out_win->proc, &QProcess::readyReadStandardOutput, out_win, &QtAppExecDialog::read_stdout);
-	connect(out_win->proc, &QProcess::readyReadStandardError, out_win, &QtAppExecDialog::read_stderr);
-	connect(out_win->proc, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), out_win, &QtAppExecDialog::process_done);
+	connect(out_win->proc, &QProcess::readyReadStandardOutput, out_win, &QgAppExecDialog::read_stdout);
+	connect(out_win->proc, &QProcess::readyReadStandardError, out_win, &QgAppExecDialog::read_stderr);
+	connect(out_win->proc, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), out_win, &QgAppExecDialog::process_done);
 	out_win->proc->start();
 	out_win->exec();
     }

@@ -1,4 +1,4 @@
-/*                  Q T A P P E X E C D I A L O G . H
+/*                  Q G A P P E X E C D I A L O G . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef QTAPPEXECDIALOG_H
-#define QTAPPEXECDIALOG_H
+#ifndef QGAPPEXECDIALOG_H
+#define QGAPPEXECDIALOG_H
 
 #include <QObject>
 #include <QString>
@@ -39,13 +39,13 @@
 #include "qtcad/defines.h"
 #include "qtcad/QtConsole.h"
 
-class QTCAD_EXPORT QtAppExecDialog : public QDialog
+class QTCAD_EXPORT QgAppExecDialog : public QDialog
 {
     Q_OBJECT
 
     public:
-	QtAppExecDialog(QWidget *pparent, QString executable, QStringList args, QString lfile = "");
-	~QtAppExecDialog() {}
+	QgAppExecDialog(QWidget *pparent, QString executable, QStringList args, QString lfile = "");
+	~QgAppExecDialog() {}
 
     public slots:
 	void read_stdout();
@@ -60,7 +60,7 @@ class QTCAD_EXPORT QtAppExecDialog : public QDialog
         QDialogButtonBox *buttonBox;
 };
 
-#endif // QTAPPEXECDIALOG_H
+#endif // QGAPPEXECDIALOG_H
 
 /*
  * Local Variables:
