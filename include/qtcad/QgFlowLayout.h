@@ -38,8 +38,8 @@
  **
  ****************************************************************************/
 
-#ifndef Q_FLOWLAYOUT_H
-#define Q_FLOWLAYOUT_H
+#ifndef QgFLOWLAYOUTH
+#define QgFLOWLAYOUTH
 
 #include "common.h"
 
@@ -48,12 +48,12 @@
 #include <QStyle>
 #include "qtcad/defines.h"
 
-class QTCAD_EXPORT QFlowLayout : public QLayout
+class QTCAD_EXPORT QgFlowLayout : public QLayout
 {
     public:
-	explicit QFlowLayout(QWidget *parent, int margin = -1, int hSpacing = -1, int vSpacing = -1);
-	explicit QFlowLayout(int margin = -1, int hSpacing = -1, int vSpacing = -1);
-	~QFlowLayout();
+	explicit QgFlowLayout(QWidget *parent, int margin = -1, int hSpacing = -1, int vSpacing = -1);
+	explicit QgFlowLayout(int margin = -1, int hSpacing = -1, int vSpacing = -1);
+	~QgFlowLayout();
 
 	void addItem(QLayoutItem *item);
 	int horizontalSpacing() const;
@@ -79,7 +79,7 @@ class QTCAD_EXPORT QFlowLayout : public QLayout
 	int m_vSpace;
 };
 
-#endif // Q_FLOWLAYOUT_H
+#endif // QgFLOWLAYOUTH
 
 
 /*

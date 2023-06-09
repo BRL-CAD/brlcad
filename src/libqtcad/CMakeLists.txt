@@ -43,7 +43,7 @@ set(qtcad_srcs
   bindings.cpp
   QgAccordion.cpp
   QgColorRGB.cpp
-  QFlowLayout.cpp
+  QgFlowLayout.cpp
   QKeyVal.cpp
   QMeasureFilter.cpp
   QPolyFilter.cpp

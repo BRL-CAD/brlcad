@@ -4,12 +4,12 @@ set(qtcad_headers
   QMeasureFilter.h
   QPolyFilter.h
   QSelectFilter.h
-  QFlowLayout.h
   QKeyVal.h
   QToolPalette.h
   QViewCtrl.h
   QgDockWidget.h
   QgEdit.h
+  QgFlowLayout.h
   QgModel.h
   QgTreeSelectionModel.h
   QgTreeView.h

@@ -47,7 +47,7 @@
 #include <QScrollArea>
 #include <QSplitter>
 #include "qtcad/defines.h"
-#include "qtcad/QFlowLayout.h"
+#include "qtcad/QgFlowLayout.h"
 #include "qtcad/SignalFlags.h"
 
 class QTCAD_EXPORT QToolPaletteElement;
@@ -200,7 +200,7 @@ class QTCAD_EXPORT QToolPalette: public QWidget
 	int icon_height;
 	QSplitter *splitter;
 	QWidget *button_container;
-	QFlowLayout *button_layout;
+	QgFlowLayout *button_layout;
 	QScrollArea *control_container;
 	QSet<QToolPaletteElement *> elements;
 };
