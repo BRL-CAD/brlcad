@@ -41,7 +41,7 @@ add_subdirectory(images)
 
 set(qtcad_srcs
   bindings.cpp
-  QAccordion.cpp
+  QgAccordion.cpp
   QColorRGB.cpp
   QFlowLayout.cpp
   QKeyVal.cpp
@@ -74,7 +74,7 @@ endif (OPENGL_LIBS)
 # and file-cleanup lists.
 set(QTCAD_HDR_DIR ${BRLCAD_SOURCE_DIR}/include/qtcad)
 set(qth_names
-  QAccordion
+  QgAccordion
   QColorRGB
   QKeyVal
   QMeasureFilter

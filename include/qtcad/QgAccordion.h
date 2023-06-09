@@ -1,4 +1,4 @@
-/*                  Q A C C O R D I O N . H
+/*                  Q G A C C O R D I O N . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QAccordionWidget.h
+/** @file QgAccordion.h
  *
  * Show one of a stack of widgets
  */
 
-#ifndef QACCORDIANWIDGET_H
-#define QACCORDIANWIDGET_H
+#ifndef QGACCORDIANWIDGET_H
+#define QGACCORDIANWIDGET_H
 
 #include "common.h"
 
@@ -36,18 +36,18 @@
 
 #include "qtcad/defines.h"
 
-class QTCAD_EXPORT QAccordionObject : public QWidget
+class QTCAD_EXPORT QgAccordionObject : public QWidget
 {
     Q_OBJECT
 
     public:
-	QAccordionObject(QWidget *pparent = 0, QWidget *object = 0, QString header_title = QString(""));
-	~QAccordionObject();
+	QgAccordionObject(QWidget *pparent = 0, QWidget *object = 0, QString header_title = QString(""));
+	~QgAccordionObject();
 	QPushButton *toggle;
 	QScrollArea *objscrollarea;
 
     signals:
-	void select(QAccordionObject *);
+	void select(QgAccordionObject *);
 
     public slots:
 	void toggleVisibility();
@@ -57,25 +57,25 @@ class QTCAD_EXPORT QAccordionObject : public QWidget
 	QString title;
 };
 
-class QTCAD_EXPORT QAccordion : public QWidget
+class QTCAD_EXPORT QgAccordion : public QWidget
 {
     Q_OBJECT
 
     public:
-	QAccordion(QWidget *pparent = 0);
-	~QAccordion();
-	void addObject(QAccordionObject *object);
+	QgAccordion(QWidget *pparent = 0);
+	~QgAccordion();
+	void addObject(QgAccordionObject *object);
 
     public slots:
-	void open(QAccordionObject *);
+	void open(QgAccordionObject *);
 
     private:
-        QSet<QAccordionObject *> objs;
-        QAccordionObject *selected = NULL;
+        QSet<QgAccordionObject *> objs;
+        QgAccordionObject *selected = NULL;
         QVBoxLayout *mlayout;
 };
 
-#endif /* QACCORDIANWIDGET_H */
+#endif /* QGACCORDIANWIDGET_H */
 
 /*
  * Local Variables:
