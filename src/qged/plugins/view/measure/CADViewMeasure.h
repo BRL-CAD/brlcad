@@ -30,7 +30,7 @@
 #include "bv.h"
 #include "ged.h"
 #include "qtcad/QgColorRGB.h"
-#include "qtcad/QMeasureFilter.h"
+#include "qtcad/QgMeasureFilter.h"
 
 class CADViewMeasure : public QWidget
 {
@@ -68,7 +68,7 @@ class CADViewMeasure : public QWidget
 
     private:
 	struct bv_scene_obj *s = NULL;
-	QMeasureFilter *mf = NULL;
+	QgMeasureFilter *mf = NULL;
 	QMeasure2DFilter *f2d = NULL;
 	QMeasure3DFilter *f3d = NULL;
 };

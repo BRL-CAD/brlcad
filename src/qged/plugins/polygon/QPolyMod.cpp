@@ -864,7 +864,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 
     // Connect whatever the current filter is to pass on updating signals from
     // the libqtcad logic.
-    QObject::connect(cf, &QPolyFilter::view_updated, this, &QPolyMod::propagate_update);
+    QObject::connect(cf, &QgPolyFilter::view_updated, this, &QPolyMod::propagate_update);
 
     // Match the settings
     cf->op = bg_None;
@@ -895,7 +895,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
 
     // Because the active filter may change, we only maintain the
     // signal connection for the duration of the event
-    QObject::disconnect(cf, &QPolyFilter::view_updated, this, &QPolyMod::propagate_update);
+    QObject::disconnect(cf, &QgPolyFilter::view_updated, this, &QPolyMod::propagate_update);
 
     return ret;
 }

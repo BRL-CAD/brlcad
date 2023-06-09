@@ -38,7 +38,7 @@
 #include "bg/lod.h"
 #include "app.h"
 
-#include "qtcad/QSelectFilter.h"
+#include "qtcad/QgSelectFilter.h"
 #include "./CADViewSelector.h"
 
 CADViewSelector::CADViewSelector(QWidget *)

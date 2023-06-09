@@ -508,8 +508,8 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     // need to shift filters at some point in the future.  Polygon modding, for
     // example, has multiple filters depending on the activity and will need
     // this...)
-    QObject::connect(cf, &QPolyFilter::view_updated, this, &QPolyCreate::propagate_update);
-    QObject::connect(cf, &QPolyFilter::finalized, this, &QPolyCreate::finalize);
+    QObject::connect(cf, &QgPolyFilter::view_updated, this, &QPolyCreate::propagate_update);
+    QObject::connect(cf, &QgPolyFilter::finalized, this, &QPolyCreate::finalize);
 
     //  If we're continuing to edit the existing polygon, the options are
     //  whatever is already established - otherwise, grab from the widget
@@ -589,8 +589,8 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
 
     // Because the active filter may change, we only maintain the
     // signal connection for the duration of the event
-    QObject::disconnect(cf, &QPolyFilter::view_updated, this, &QPolyCreate::propagate_update);
-    QObject::disconnect(cf, &QPolyFilter::finalized, this, &QPolyCreate::finalize);
+    QObject::disconnect(cf, &QgPolyFilter::view_updated, this, &QPolyCreate::propagate_update);
+    QObject::disconnect(cf, &QgPolyFilter::finalized, this, &QPolyCreate::finalize);
 
     return ret;
 }

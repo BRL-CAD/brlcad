@@ -45,9 +45,9 @@ set(qtcad_srcs
   QgColorRGB.cpp
   QgFlowLayout.cpp
   QgKeyVal.cpp
-  QMeasureFilter.cpp
-  QPolyFilter.cpp
-  QSelectFilter.cpp
+  QgMeasureFilter.cpp
+  QgPolyFilter.cpp
+  QgSelectFilter.cpp
   QToolPalette.cpp
   QViewCtrl.cpp
   QgDockWidget.cpp
@@ -77,9 +77,9 @@ set(qth_names
   QgAccordion
   QgColorRGB
   QgKeyVal
-  QMeasureFilter
-  QPolyFilter
-  QSelectFilter
+  QgMeasureFilter
+  QgPolyFilter
+  QgSelectFilter
   QToolPalette
   QViewCtrl
   QgDockWidget

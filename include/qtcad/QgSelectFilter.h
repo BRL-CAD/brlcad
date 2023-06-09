@@ -1,4 +1,4 @@
-/*                  Q S E L E C T F I L T E R . H
+/*                  Q G S E L E C T F I L T E R . H
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QMeasureFilter.h
+/** @file QgMeasureFilter.h
  *
  *  Qt mouse filters for graphically selecting elements in a view.
  */
 
-#ifndef QSELECTFILTER_H
-#define QSELECTFILTER_H
+#ifndef QGSELECTFILTER_H
+#define QGSELECTFILTER_H
 
 #include "common.h"
 
@@ -43,7 +43,7 @@ extern "C" {
 #include "qtcad/defines.h"
 
 // Filters designed for specific editing modes
-class QTCAD_EXPORT QSelectFilter : public QObject
+class QTCAD_EXPORT QgSelectFilter : public QObject
 {
     Q_OBJECT
 
@@ -70,7 +70,7 @@ class QTCAD_EXPORT QSelectFilter : public QObject
         void view_updated(int);
 };
 
-class QTCAD_EXPORT QSelectPntFilter: public QSelectFilter
+class QTCAD_EXPORT QSelectPntFilter: public QgSelectFilter
 {
     Q_OBJECT
 
@@ -78,7 +78,7 @@ class QTCAD_EXPORT QSelectPntFilter: public QSelectFilter
 	bool eventFilter(QObject *, QEvent *e);
 };
 
-class QTCAD_EXPORT QSelectBoxFilter: public QSelectFilter
+class QTCAD_EXPORT QSelectBoxFilter: public QgSelectFilter
 {
     Q_OBJECT
 
@@ -90,7 +90,7 @@ class QTCAD_EXPORT QSelectBoxFilter: public QSelectFilter
 	fastf_t py = -FLT_MAX;
 };
 
-class QTCAD_EXPORT QSelectRayFilter: public QSelectFilter
+class QTCAD_EXPORT QSelectRayFilter: public QgSelectFilter
 {
     Q_OBJECT
 
@@ -100,7 +100,7 @@ class QTCAD_EXPORT QSelectRayFilter: public QSelectFilter
 	struct db_i *dbip = NULL;
 };
 
-#endif /* QSELECTFILTER_H */
+#endif /* QGSELECTFILTER_H */
 
 // Local Variables:
 // tab-width: 8

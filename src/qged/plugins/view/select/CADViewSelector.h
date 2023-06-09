@@ -34,7 +34,7 @@
 #include <QListWidget>
 #include <QRadioButton>
 #include "ged.h"
-#include "qtcad/QSelectFilter.h"
+#include "qtcad/QgSelectFilter.h"
 
 class CADViewSelector : public QWidget
 {
@@ -84,7 +84,7 @@ signals:
 	void deselect_objs();
 	void erase_objs();
 
-	QSelectFilter *cf = NULL;
+	QgSelectFilter *cf = NULL;
 	QSelectPntFilter *pf;
 	QSelectBoxFilter *bf;
 	QSelectRayFilter *rf;

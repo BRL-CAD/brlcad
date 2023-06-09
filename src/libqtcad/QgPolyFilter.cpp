@@ -1,4 +1,4 @@
-/*                   Q P O L Y F I L T E R . C P P
+/*                   Q G P O L Y F I L T E R . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QPolyFilter.cpp
+/** @file QgPolyFilter.cpp
  *
  * Polygon interaction logic for Qt views.
  *
@@ -32,11 +32,11 @@ extern "C" {
 #include "raytrace.h" // For finalize polygon sketch export functionality (TODO - need to move...)
 }
 
-#include "qtcad/QPolyFilter.h"
+#include "qtcad/QgPolyFilter.h"
 #include "qtcad/SignalFlags.h"
 
 QMouseEvent *
-QPolyFilter::view_sync(QEvent *e)
+QgPolyFilter::view_sync(QEvent *e)
 {
     if (!v)
 	return NULL;
@@ -72,7 +72,7 @@ QPolyFilter::view_sync(QEvent *e)
 }
 
 bool
-QPolyFilter::close_polygon()
+QgPolyFilter::close_polygon()
 {
     // Close the general polygon - if that's what we're creating,
     // at this point it will still be open.

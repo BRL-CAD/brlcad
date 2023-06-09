@@ -79,7 +79,7 @@ CADViewMeasure::CADViewMeasure(QWidget *)
 
     f2d = new QMeasure2DFilter();
     f3d = new QMeasure3DFilter();
-    mf = (measure_3d->isChecked()) ? (QMeasureFilter *)f3d : (QMeasureFilter *)f2d;
+    mf = (measure_3d->isChecked()) ? (QgMeasureFilter *)f3d : (QgMeasureFilter *)f2d;
 }
 
 CADViewMeasure::~CADViewMeasure()
@@ -162,7 +162,7 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 
     f3d->dbip = gedp->dbip;
 
-    mf = (measure_3d->isChecked()) ? (QMeasureFilter *)f3d : (QMeasureFilter *)f2d;
+    mf = (measure_3d->isChecked()) ? (QgMeasureFilter *)f3d : (QgMeasureFilter *)f2d;
 
     mf->s = s;
     mf->v = v;
@@ -170,14 +170,14 @@ CADViewMeasure::eventFilter(QObject *, QEvent *e)
 
     // Connect whatever the current filter is to pass on updating signals from
     // the libqtcad logic.
-    QObject::connect(mf, &QMeasureFilter::view_updated, this, &CADViewMeasure::do_filter_view_update);
+    QObject::connect(mf, &QgMeasureFilter::view_updated, this, &CADViewMeasure::do_filter_view_update);
 
     bool ret = mf->eventFilter(NULL, e);
 
     // Retrieve the scene object from the libqtcad data container
     s = mf->s;
 
-    QObject::disconnect(mf, &QMeasureFilter::view_updated, this, &CADViewMeasure::do_filter_view_update);
+    QObject::disconnect(mf, &QgMeasureFilter::view_updated, this, &CADViewMeasure::do_filter_view_update);
 
     return ret;
 }

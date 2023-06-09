@@ -1,4 +1,4 @@
-/*                  Q M E A S U R E F I L T E R . H
+/*                  Q G M E A S U R E F I L T E R . H
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,14 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QMeasureFilter.h
+/** @file QgMeasureFilter.h
  *
  *  Qt mouse filters for 2D and 3D dimensional measurement
  *  in a view.
  */
 
-#ifndef QMEASUREFILTER_H
-#define QMEASUREFILTER_H
+#ifndef QGMEASUREFILTER_H
+#define QGMEASUREFILTER_H
 
 #include "common.h"
 
@@ -44,7 +44,7 @@ extern "C" {
 #include "qtcad/defines.h"
 
 // Filters designed for specific editing modes
-class QTCAD_EXPORT QMeasureFilter : public QObject
+class QTCAD_EXPORT QgMeasureFilter : public QObject
 {
     Q_OBJECT
 
@@ -98,7 +98,7 @@ class QTCAD_EXPORT QMeasureFilter : public QObject
 	point_t p3 = VINIT_ZERO;
 };
 
-class QTCAD_EXPORT QMeasure2DFilter : public QMeasureFilter
+class QTCAD_EXPORT QMeasure2DFilter : public QgMeasureFilter
 {
     Q_OBJECT
 
@@ -110,7 +110,7 @@ class QTCAD_EXPORT QMeasure2DFilter : public QMeasureFilter
 };
 
 
-class QTCAD_EXPORT QMeasure3DFilter : public QMeasureFilter
+class QTCAD_EXPORT QMeasure3DFilter : public QgMeasureFilter
 {
     Q_OBJECT
 
@@ -130,7 +130,7 @@ class QTCAD_EXPORT QMeasure3DFilter : public QMeasureFilter
 	struct resource *resp = NULL;
 };
 
-#endif /* QMEASUREFILTER_H */
+#endif /* QGMEASUREFILTER_H */
 
 // Local Variables:
 // tab-width: 8

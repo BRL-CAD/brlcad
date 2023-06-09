@@ -1,4 +1,4 @@
-/*                 Q S E L E C T F I L T E R . C P P
+/*                 Q G S E L E C T F I L T E R . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QSelectFilter.cpp
+/** @file QgSelectFilter.cpp
  *
  * Graphical selection tool for Qt views.
  *
@@ -35,7 +35,7 @@ extern "C" {
 }
 
 #include <unordered_set>
-#include "qtcad/QSelectFilter.h"
+#include "qtcad/QgSelectFilter.h"
 #include "qtcad/SignalFlags.h"
 
 // Find the first bbox intersection under the XY view point.
@@ -73,7 +73,7 @@ closest_obj_bbox(struct bu_ptbl *sset, struct bview *v)
 }
 
 QMouseEvent *
-QSelectFilter::view_sync(QEvent *e)
+QgSelectFilter::view_sync(QEvent *e)
 {
     if (!v)
 	return NULL;

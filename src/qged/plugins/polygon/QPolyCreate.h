@@ -32,7 +32,7 @@
 #include <QRadioButton>
 #include "bg/polygon_types.h"
 #include "qtcad/QgColorRGB.h"
-#include "qtcad/QPolyFilter.h"
+#include "qtcad/QgPolyFilter.h"
 #include "qtcad/QtCADView.h"
 #include "QPolySettings.h"
 
@@ -98,7 +98,7 @@ class QPolyCreate : public QWidget
 	bool do_bool = false;
 	bool snapping = false;
 
-	QPolyFilter *cf = NULL;
+	QgPolyFilter *cf = NULL;
 	QPolyCreateFilter *pcf;
 };
 

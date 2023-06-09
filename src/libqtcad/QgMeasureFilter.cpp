@@ -1,4 +1,4 @@
-/*                 Q M E A S U R E F I L T E R . C P P
+/*                 Q G M E A S U R E F I L T E R . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QMeasureFilter.cpp
+/** @file QgMeasureFilter.cpp
  *
  * Measurement tool for Qt views.
  *
@@ -33,11 +33,11 @@ extern "C" {
 #include "raytrace.h"
 }
 
-#include "qtcad/QMeasureFilter.h"
+#include "qtcad/QgMeasureFilter.h"
 #include "qtcad/SignalFlags.h"
 
 QMouseEvent *
-QMeasureFilter::view_sync(QEvent *e)
+QgMeasureFilter::view_sync(QEvent *e)
 {
     if (!v)
 	return NULL;
@@ -73,13 +73,13 @@ QMeasureFilter::view_sync(QEvent *e)
 }
 
 double
-QMeasureFilter::length1()
+QgMeasureFilter::length1()
 {
     return DIST_PNT_PNT(p1, p2);
 }
 
 double
-QMeasureFilter::length2()
+QgMeasureFilter::length2()
 {
     if (mode < 3)
 	return 0.0;
@@ -88,7 +88,7 @@ QMeasureFilter::length2()
 }
 
 double
-QMeasureFilter::angle(bool radians)
+QgMeasureFilter::angle(bool radians)
 {
     if (mode < 3)
 	return 0.0;
@@ -105,7 +105,7 @@ QMeasureFilter::angle(bool radians)
 }
 
 void
-QMeasureFilter::update_color(struct bu_color *c)
+QgMeasureFilter::update_color(struct bu_color *c)
 {
     if (!s || !c)
 	return;
@@ -113,7 +113,7 @@ QMeasureFilter::update_color(struct bu_color *c)
 }
 
 bool
-QMeasureFilter::eventFilter(QObject *, QEvent *e)
+QgMeasureFilter::eventFilter(QObject *, QEvent *e)
 {
     QMouseEvent *m_e = view_sync(e);
     if (!m_e)
@@ -274,7 +274,7 @@ QMeasure2DFilter::get_point()
 bool
 QMeasure2DFilter::eventFilter(QObject *o, QEvent *e)
 {
-    return QMeasureFilter::eventFilter(o, e);
+    return QgMeasureFilter::eventFilter(o, e);
 }
 
 QMeasure3DFilter::QMeasure3DFilter()
@@ -438,7 +438,7 @@ QMeasure3DFilter::get_point()
 bool
 QMeasure3DFilter::eventFilter(QObject *o, QEvent *e)
 {
-    return QMeasureFilter::eventFilter(o, e);
+    return QgMeasureFilter::eventFilter(o, e);
 }
 
 

@@ -28,7 +28,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include "qtcad/QgColorRGB.h"
-#include "qtcad/QPolyFilter.h"
+#include "qtcad/QgPolyFilter.h"
 #include "qtcad/QtCADView.h"
 #include "qtcad/SignalFlags.h"
 #include "QPolySettings.h"
@@ -104,7 +104,7 @@ class QPolyMod : public QWidget
 	struct bv_scene_obj *p = NULL;
 	bool do_bool = false;
 
-	QPolyFilter *cf = NULL;
+	QgPolyFilter *cf = NULL;
 	QPolyUpdateFilter *puf;
 	QPolySelectFilter *psf;
 	QPolyPointFilter *ppf;

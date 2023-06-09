@@ -1,4 +1,4 @@
-/*                    Q P O L Y F I L T E R . H
+/*                    Q G P O L Y F I L T E R . H
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QPolyFilter.h
+/** @file QgPolyFilter.h
  *
  *  Qt mouse filters for polygon editing modes
  */
 
-#ifndef QPOLYFILTER_H
-#define QPOLYFILTER_H
+#ifndef QGPOLYFILTER_H
+#define QGPOLYFILTER_H
 
 #include "common.h"
 
@@ -41,7 +41,7 @@ extern "C" {
 #include "qtcad/defines.h"
 
 // Filters designed for specific editing modes
-class QTCAD_EXPORT QPolyFilter : public QObject
+class QTCAD_EXPORT QgPolyFilter : public QObject
 {
     Q_OBJECT
 
@@ -49,7 +49,7 @@ class QTCAD_EXPORT QPolyFilter : public QObject
 	// Initialization common to the various polygon filter types
 	QMouseEvent *view_sync(QEvent *e);
 
-	// We want to be able to swap derived QPolyFilter classes in
+	// We want to be able to swap derived QgPolyFilter classes in
 	// parent calling code - make eventFilter virtual to help
 	// simplify doing so.
 	virtual bool eventFilter(QObject *, QEvent *) { return false; };
@@ -76,7 +76,7 @@ class QTCAD_EXPORT QPolyFilter : public QObject
 	std::string vname;
 };
 
-class QTCAD_EXPORT QPolyCreateFilter : public QPolyFilter
+class QTCAD_EXPORT QPolyCreateFilter : public QgPolyFilter
 {
     Q_OBJECT
 
@@ -87,7 +87,7 @@ class QTCAD_EXPORT QPolyCreateFilter : public QPolyFilter
 	struct bu_ptbl bool_objs = BU_PTBL_INIT_ZERO;
 };
 
-class QTCAD_EXPORT QPolyUpdateFilter : public QPolyFilter
+class QTCAD_EXPORT QPolyUpdateFilter : public QgPolyFilter
 {
     Q_OBJECT
 
@@ -97,7 +97,7 @@ class QTCAD_EXPORT QPolyUpdateFilter : public QPolyFilter
 	struct bu_ptbl bool_objs = BU_PTBL_INIT_ZERO;
 };
 
-class QTCAD_EXPORT QPolySelectFilter : public QPolyFilter
+class QTCAD_EXPORT QPolySelectFilter : public QgPolyFilter
 {
     Q_OBJECT
 
@@ -105,7 +105,7 @@ class QTCAD_EXPORT QPolySelectFilter : public QPolyFilter
 	bool eventFilter(QObject *, QEvent *e);
 };
 
-class QTCAD_EXPORT QPolyPointFilter : public QPolyFilter
+class QTCAD_EXPORT QPolyPointFilter : public QgPolyFilter
 {
     Q_OBJECT
 
@@ -113,7 +113,7 @@ class QTCAD_EXPORT QPolyPointFilter : public QPolyFilter
 	bool eventFilter(QObject *, QEvent *e);
 };
 
-class QTCAD_EXPORT QPolyMoveFilter : public QPolyFilter
+class QTCAD_EXPORT QPolyMoveFilter : public QgPolyFilter
 {
     Q_OBJECT
 
@@ -123,7 +123,7 @@ class QTCAD_EXPORT QPolyMoveFilter : public QPolyFilter
 };
 
 
-#endif /* QPOLYFILTER_H */
+#endif /* QGPOLYFILTER_H */
 
 // Local Variables:
 // tab-width: 8
