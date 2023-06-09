@@ -269,6 +269,27 @@ bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
     return s;
 }
 
+void
+bv_polygon_cpy(struct bv_polygon *dest, struct bv_polygon *src)
+{
+    if (!src || !dest)
+	return;
+
+    dest->type = src->type;
+    dest->fill_flag = src->fill_flag;
+    V2MOVE(dest->fill_dir, src->fill_dir);
+    dest->fill_delta = src->fill_delta;
+    BU_COLOR_CPY(&dest->fill_color, &src->fill_color);
+    dest->curr_contour_i = src->curr_contour_i;
+    dest->curr_point_i = src->curr_point_i;
+    VMOVE(dest->prev_point, src->prev_point);
+    bv_sync(&dest->v, &src->v);
+    dest->vZ = src->vZ;
+    bg_polygon_free(&dest->polygon);
+    bg_polygon_cpy(&dest->polygon, &src->polygon);
+    dest->u_data = src->u_data;
+}
+
 int
 bv_append_polygon_pt(struct bv_scene_obj *s)
 {

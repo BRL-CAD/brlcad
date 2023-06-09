@@ -385,6 +385,11 @@ BG_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, st
 BG_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s);
 BG_EXPORT extern struct bv_scene_obj *bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s);
 
+// Copy a bv polygon.  Note that this also performs a
+// view sync - if the user is copying the polygon into
+// another view, they will have to update the output's
+// bview to match their target view.
+BG_EXPORT extern void bv_polygon_cpy(struct bv_polygon *dest , struct bv_polygon *src);
 
 // For all polygon bv_scene_objs in the objs table, apply the specified boolean
 // op using p and replace the original polygon geometry in objs with the
