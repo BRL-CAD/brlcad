@@ -1,4 +1,4 @@
-/*                      Q T C A D V I E W . C P P
+/*                      Q G V I E W . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QtCADView.cpp
+/** @file QgView.cpp
  *
  * Wrapper widget that handles the various widget types which may
  * constitute a Qt based geometry view.
@@ -29,7 +29,7 @@
 #include "bg/polygon.h"
 #include "bv.h"
 #include "raytrace.h" // For finalize polygon sketch export functionality (TODO - need to move...)
-#include "qtcad/QtCADView.h"
+#include "qtcad/QgView.h"
 #include "qtcad/SignalFlags.h"
 
 extern "C" {
@@ -37,7 +37,7 @@ extern "C" {
 }
 
 
-QtCADView::QtCADView(QWidget *parent, int type, struct fb *fbp)
+QgView::QgView(QWidget *parent, int type, struct fb *fbp)
     : QWidget(parent)
 {
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -47,22 +47,22 @@ QtCADView::QtCADView(QWidget *parent, int type, struct fb *fbp)
 
     switch (type) {
 #ifdef BRLCAD_OPENGL
-	case QtCADView_GL:
+	case QgView_GL:
 	    canvas_gl = new QtGL(this, fbp);
 	    canvas_gl->setMinimumSize(50,50);
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_gl);
-	    QObject::connect(canvas_gl, &QtGL::changed, this, &QtCADView::do_view_changed);
-	    QObject::connect(canvas_gl, &QtGL::init_done, this, &QtCADView::do_init_done);
+	    QObject::connect(canvas_gl, &QtGL::changed, this, &QgView::do_view_changed);
+	    QObject::connect(canvas_gl, &QtGL::init_done, this, &QgView::do_init_done);
 	    break;
 #endif
-	case QtCADView_SW:
+	case QgView_SW:
 	    canvas_sw = new QtSW(this, fbp);
 	    canvas_sw->setMinimumSize(50,50);
 	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_sw);
-	    QObject::connect(canvas_sw, &QtSW::changed, this, &QtCADView::do_view_changed);
-	    QObject::connect(canvas_sw, &QtSW::init_done, this, &QtCADView::do_init_done);
+	    QObject::connect(canvas_sw, &QtSW::changed, this, &QgView::do_view_changed);
+	    QObject::connect(canvas_sw, &QtSW::init_done, this, &QgView::do_init_done);
 	    break;
 	default:
 #ifdef BRLCAD_OPENGL
@@ -70,21 +70,21 @@ QtCADView::QtCADView(QWidget *parent, int type, struct fb *fbp)
 	    canvas_gl->setMinimumSize(50,50);
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_gl);
-	    QObject::connect(canvas_gl, &QtGL::changed, this, &QtCADView::do_view_changed);
-	    QObject::connect(canvas_gl, &QtGL::init_done, this, &QtCADView::do_init_done);
+	    QObject::connect(canvas_gl, &QtGL::changed, this, &QgView::do_view_changed);
+	    QObject::connect(canvas_gl, &QtGL::init_done, this, &QgView::do_init_done);
 #else
 	    canvas_sw = new QtSW(this, fbp);
 	    canvas_sw->setMinimumSize(50,50);
 	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_sw);
-	    QObject::connect(canvas_sw, &QtSW::changed, this, &QtCADView::do_view_changed);
-	    QObject::connect(canvas_sw, &QtSW::init_done, this, &QtCADView::do_init_done);
+	    QObject::connect(canvas_sw, &QtSW::changed, this, &QgView::do_view_changed);
+	    QObject::connect(canvas_sw, &QtSW::init_done, this, &QgView::do_init_done);
 #endif
 	    return;
     }
 }
 
-QtCADView::~QtCADView()
+QgView::~QgView()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl)
@@ -95,7 +95,7 @@ QtCADView::~QtCADView()
 }
 
 bool
-QtCADView::isValid()
+QgView::isValid()
 {
     if (canvas_sw)
 	return true;
@@ -109,36 +109,36 @@ QtCADView::isValid()
 }
 
 int
-QtCADView::view_type()
+QgView::view_type()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl)
-	return QtCADView_GL;
+	return QgView_GL;
 #endif
     if (canvas_sw)
-	return QtCADView_SW;
+	return QgView_SW;
 
     return -1;
 }
 
 
 void
-QtCADView::save_image(int UNUSED(quad))
+QgView::save_image(int UNUSED(quad))
 {
 }
 
 void
-QtCADView::do_view_changed()
+QgView::do_view_changed()
 {
-    QTCAD_SLOT("QtCADView::do_view_changed", 1);
+    QTCAD_SLOT("QgView::do_view_changed", 1);
     emit changed(this);
 }
 
 void
-QtCADView::need_update(unsigned long long)
+QgView::need_update(unsigned long long)
 {
-    bv_log(4, "QtCADView::need_update");
-    QTCAD_SLOT("QtCADView::need_update", 1);
+    bv_log(4, "QgView::need_update");
+    QTCAD_SLOT("QgView::need_update", 1);
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
 	canvas_gl->need_update();
@@ -152,7 +152,7 @@ QtCADView::need_update(unsigned long long)
 }
 
 struct bview *
-QtCADView::view()
+QgView::view()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl)
@@ -165,7 +165,7 @@ QtCADView::view()
 }
 
 struct dm *
-QtCADView::dmp()
+QgView::dmp()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl)
@@ -178,7 +178,7 @@ QtCADView::dmp()
 }
 
 struct fb *
-QtCADView::ifp()
+QgView::ifp()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl)
@@ -191,7 +191,7 @@ QtCADView::ifp()
 }
 
 void
-QtCADView::set_view(struct bview *nv)
+QgView::set_view(struct bview *nv)
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -210,7 +210,7 @@ QtCADView::set_view(struct bview *nv)
 }
 
 void
-QtCADView::stash_hashes()
+QgView::stash_hashes()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -223,7 +223,7 @@ QtCADView::stash_hashes()
 }
 
 bool
-QtCADView::diff_hashes()
+QgView::diff_hashes()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -238,7 +238,7 @@ QtCADView::diff_hashes()
 }
 
 void
-QtCADView::aet(double a, double e, double t)
+QgView::aet(double a, double e, double t)
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -251,7 +251,7 @@ QtCADView::aet(double a, double e, double t)
 }
 
 void
-QtCADView::set_current(int i)
+QgView::set_current(int i)
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -264,7 +264,7 @@ QtCADView::set_current(int i)
 }
 
 int
-QtCADView::current()
+QgView::current()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -279,7 +279,7 @@ QtCADView::current()
 }
 
 void
-QtCADView::add_event_filter(QObject *o)
+QgView::add_event_filter(QObject *o)
 {
     curr_event_filter = o;
     filters.push_back(o);
@@ -296,7 +296,7 @@ QtCADView::add_event_filter(QObject *o)
 }
 
 void
-QtCADView::clear_event_filter(QObject *o)
+QgView::clear_event_filter(QObject *o)
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -324,7 +324,7 @@ QtCADView::clear_event_filter(QObject *o)
 }
 
 void
-QtCADView::set_draw_custom(void (*draw_custom)(struct bview *, void *), void *draw_udata)
+QgView::set_draw_custom(void (*draw_custom)(struct bview *, void *), void *draw_udata)
 {
 
 #ifdef BRLCAD_OPENGL
@@ -342,7 +342,7 @@ QtCADView::set_draw_custom(void (*draw_custom)(struct bview *, void *), void *dr
 }
 
 void
-QtCADView::enableDefaultKeyBindings()
+QgView::enableDefaultKeyBindings()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -357,7 +357,7 @@ QtCADView::enableDefaultKeyBindings()
 }
 
 void
-QtCADView::disableDefaultKeyBindings()
+QgView::disableDefaultKeyBindings()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -372,7 +372,7 @@ QtCADView::disableDefaultKeyBindings()
 }
 
 void
-QtCADView::enableDefaultMouseBindings()
+QgView::enableDefaultMouseBindings()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -389,7 +389,7 @@ QtCADView::enableDefaultMouseBindings()
 }
 
 void
-QtCADView::disableDefaultMouseBindings()
+QgView::disableDefaultMouseBindings()
 {
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -405,9 +405,9 @@ QtCADView::disableDefaultMouseBindings()
 
 
 void
-QtCADView::set_lmouse_move_default(int mm)
+QgView::set_lmouse_move_default(int mm)
 {
-    QTCAD_SLOT("QtCADView::set_lmouse_move_default", 1);
+    QTCAD_SLOT("QgView::set_lmouse_move_default", 1);
 
 #ifdef BRLCAD_OPENGL
     if (canvas_gl) {
@@ -423,9 +423,9 @@ QtCADView::set_lmouse_move_default(int mm)
 
 
 void
-QtCADView::do_init_done()
+QgView::do_init_done()
 {
-    QTCAD_SLOT("QtCADView::do_init_done", 1);
+    QTCAD_SLOT("QgView::do_init_done", 1);
     emit init_done();
 }
 

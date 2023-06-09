@@ -95,7 +95,7 @@ QgQuadView::~QgQuadView()
 	delete spacerCenter;
 }
 
-QtCADView *
+QgView *
 QgQuadView::curr_view()
 {
     int s = get_selected();
@@ -106,12 +106,12 @@ QgQuadView::curr_view()
  * @brief Creates a view for the viewport. Convenience method of common things that need to be done to the view.
  *
  * @param index of the view names to use from the constant list of names
- * @return QtCADView*
+ * @return QgView*
  */
-QtCADView *
+QgView *
 QgQuadView::createView(unsigned int index)
 {
-    QtCADView *view = new QtCADView(this, graphicsType);
+    QgView *view = new QgView(this, graphicsType);
     bu_vls_sprintf(&view->view()->gv_name, "%s", VIEW_NAMES[index]);
     view->set_current(0);
     view->installEventFilter(this);
@@ -119,8 +119,8 @@ QgQuadView::createView(unsigned int index)
     view->view()->vset = &gedp->ged_views;
     view->view()->independent = 0;
 
-    QObject::connect(view, &QtCADView::changed, this, &QgQuadView::do_view_changed);
-    QObject::connect(view, &QtCADView::init_done, this, &QgQuadView::do_init_done);
+    QObject::connect(view, &QgView::changed, this, &QgQuadView::do_view_changed);
+    QObject::connect(view, &QgView::init_done, this, &QgQuadView::do_init_done);
     return view;
 }
 
@@ -372,7 +372,7 @@ QgQuadView::view(int quadrantId)
     return currentView->view();
 }
 
-QtCADView *
+QgView *
 QgQuadView::get(int quadrantId)
 {
     if (quadrantId > LOWER_RIGHT_QUADRANT || quadrantId < UPPER_RIGHT_QUADRANT) quadrantId = UPPER_RIGHT_QUADRANT;
@@ -384,12 +384,12 @@ QgQuadView::get(int quadrantId)
     return currentView;
 }
 
-QtCADView *
+QgView *
 QgQuadView::get(const QPoint &gpos)
 {
-    QtCADView *retv = NULL;
+    QgView *retv = NULL;
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
-	QtCADView *cv = views[i];
+	QgView *cv = views[i];
 	if (cv == nullptr)
 	    continue;
 	QWidget *cw = (QWidget *)cv;
@@ -405,7 +405,7 @@ QgQuadView::get(const QPoint &gpos)
     return retv;
 }
 
-QtCADView *
+QgView *
 QgQuadView::get(QEvent *e)
 {
     if (e->type() != QEvent::MouseButtonPress)
@@ -424,7 +424,7 @@ QgQuadView::select(int quadrantId)
 {
     if (quadrantId > LOWER_RIGHT_QUADRANT || quadrantId < UPPER_RIGHT_QUADRANT) quadrantId = UPPER_RIGHT_QUADRANT;
 
-    QtCADView *oc = currentView;
+    QgView *oc = currentView;
 
     // Set new selection
     if (views[quadrantId] != nullptr) {

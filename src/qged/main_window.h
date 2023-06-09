@@ -41,10 +41,10 @@
 #include "ged.h"
 #include "qtcad/SignalFlags.h"
 #include "qtcad/QgQuadView.h"
-#include "qtcad/QtCADView.h"
+#include "qtcad/QgView.h"
 #include "qtcad/QgDockWidget.h"
 #include "qtcad/QgTreeView.h"
-#include "qtcad/QtCADView.h"
+#include "qtcad/QgView.h"
 #include "qtcad/QtConsole.h"
 #include "qtcad/QViewCtrl.h"
 
@@ -67,7 +67,7 @@ class BRLCAD_MainWindow : public QMainWindow
 	bool isDisplayActive();
 
 	// Get the currently active view of the quad/central display widget
-	QtCADView * CurrentDisplay();
+	QgView * CurrentDisplay();
 	struct bview * CurrentView();
 
 	// Checkpoint display state (used for subsequent diff)

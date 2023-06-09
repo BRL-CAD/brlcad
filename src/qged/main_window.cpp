@@ -421,7 +421,7 @@ BRLCAD_MainWindow::isDisplayActive()
     return widget_active(c4);
 }
 
-QtCADView *
+QgView *
 BRLCAD_MainWindow::CurrentDisplay()
 {
     return c4->get();

@@ -1,4 +1,4 @@
-/*                     Q T C A D V I E W . H
+/*                     Q G V I E W . H
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QtCADView.h
+/** @file QgView.h
  *
  */
 
-#ifndef QTCADVIEW_H
-#define QTCADVIEW_H
+#ifndef QGVIEW_H
+#define QGVIEW_H
 
 #include "common.h"
 
@@ -43,19 +43,19 @@ extern "C" {
 #  include "qtcad/QtGL.h"
 #endif
 
-#define QtCADView_AUTO 0
-#define QtCADView_SW 1
+#define QgView_AUTO 0
+#define QgView_SW 1
 #ifdef BRLCAD_OPENGL
-#  define QtCADView_GL 2
+#  define QgView_GL 2
 #endif
 
-class QTCAD_EXPORT QtCADView : public QWidget
+class QTCAD_EXPORT QgView : public QWidget
 {
     Q_OBJECT
 
     public:
-	explicit QtCADView(QWidget *parent = nullptr, int type = 0, struct fb *fbp = NULL);
-	~QtCADView();
+	explicit QgView(QWidget *parent = nullptr, int type = 0, struct fb *fbp = NULL);
+	~QgView();
 
 	int view_type();
 	void set_current(int);
@@ -81,7 +81,7 @@ class QTCAD_EXPORT QtCADView : public QWidget
 
 	// Wrappers around Qt's facility for adding eventFilter objects to
 	// widgets.  This is how custom key binding modes are enabled and
-	// disabled in QtCADView windows.
+	// disabled in QgView windows.
 	void add_event_filter(QObject *);
 
 	// If a filter object is supplied, remove just that filter.  If NULL is
@@ -97,7 +97,7 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	void disableDefaultMouseBindings();
 
     signals:
-	void changed(QtCADView *);
+	void changed(QgView *);
 	void init_done();
 
     public slots:
@@ -115,7 +115,7 @@ class QTCAD_EXPORT QtCADView : public QWidget
 	std::vector<QObject *> filters;
 };
 
-#endif /* QTCADVIEW_H */
+#endif /* QGVIEW_H */
 
 // Local Variables:
 // tab-width: 8

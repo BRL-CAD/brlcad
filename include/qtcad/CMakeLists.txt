@@ -16,7 +16,7 @@ set(qtcad_headers
   QgTreeView.h
   QgUtil.h
   QgQuadView.h
-  QtCADView.h
+  QgView.h
   QtConsole.h
   QtConsoleListener.h
   QtGL.h

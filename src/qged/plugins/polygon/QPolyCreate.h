@@ -33,7 +33,7 @@
 #include "bg/polygon_types.h"
 #include "qtcad/QgColorRGB.h"
 #include "qtcad/QgPolyFilter.h"
-#include "qtcad/QtCADView.h"
+#include "qtcad/QgView.h"
 #include "QPolySettings.h"
 
 class QPolyCreate : public QWidget

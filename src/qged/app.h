@@ -88,7 +88,7 @@ class CADApp : public QApplication
 	// the responsibility to notify GUI elements of a view change via
 	// do_view_change, after updating the current gedp->ged_gvp pointer to
 	// refer to the now-current view.
-	void do_quad_view_change(QtCADView *);
+	void do_quad_view_change(QgView *);
 
        	/* Utility slots */
     public slots:

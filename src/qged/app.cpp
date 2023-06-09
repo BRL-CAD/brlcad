@@ -168,11 +168,11 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
     // the system native OpenGL or our fallback software rasterizer
     int type = w->CurrentDisplay()->view_type();
 #ifdef BRLCAD_OPENGL
-    if (type == QtCADView_GL) {
+    if (type == QgView_GL) {
 	gedp->fbs_open_client_handler = &qdm_open_client_handler;
     }
 #endif
-    if (type == QtCADView_SW) {
+    if (type == QgView_SW) {
 	gedp->fbs_open_client_handler = &qdm_open_sw_client_handler;
     }
     gedp->fbs_close_client_handler = &qdm_close_client_handler;
@@ -276,7 +276,7 @@ CADApp::~CADApp() {
 }
 
 void
-CADApp::do_quad_view_change(QtCADView *cv)
+CADApp::do_quad_view_change(QgView *cv)
 {
     QTCAD_SLOT("CADApp::do_quad_view_change", 1);
     mdl->gedp->ged_gvp = cv->view();
@@ -568,7 +568,7 @@ CADApp::element_selected(QToolPaletteElement *el)
 	return;
     }
 
-    QtCADView *curr_view = w->CurrentDisplay();
+    QgView *curr_view = w->CurrentDisplay();
 
     if (curr_view->curr_event_filter) {
 	curr_view->clear_event_filter(curr_view->curr_event_filter);

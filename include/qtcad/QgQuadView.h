@@ -35,7 +35,7 @@ extern "C" {
 }
 
 #include "qtcad/defines.h"
-#include "qtcad/QtCADView.h"
+#include "qtcad/QgView.h"
 
 // Abbreviations:
 //
@@ -63,10 +63,10 @@ class QTCAD_EXPORT QgQuadView : public QWidget
 	bool isValid();
 
 	void default_views(int); // Set the aet of the four quadrants to their standard defaults.  If 0 is supplied the upper right quadrant isn't altered, if 1 is supplied all are adjusted.
-	QtCADView *get(int quadrant_num = UPPER_RIGHT_QUADRANT);
-	QtCADView *get(const QPoint &p); // Test is global point coordinates correspond to one of the quad view
-	QtCADView *get(QEvent *e); // Given a MouseButtonPress QEvent, see if the point identifies a view
-	QtCADView *curr_view(); // return the currently selected view
+	QgView *get(int quadrant_num = UPPER_RIGHT_QUADRANT);
+	QgView *get(const QPoint &p); // Test is global point coordinates correspond to one of the quad view
+	QgView *get(QEvent *e); // Given a MouseButtonPress QEvent, see if the point identifies a view
+	QgView *curr_view(); // return the currently selected view
 	struct bview * view(int quadrant_id = UPPER_RIGHT_QUADRANT);
 
 	void select(int quadrant_num);
@@ -84,8 +84,8 @@ class QTCAD_EXPORT QgQuadView : public QWidget
 	void disableDefaultMouseBindings();
 
     signals:
-	void changed(QtCADView *);
-	void selected(QtCADView *);
+	void changed(QgView *);
+	void selected(QgView *);
 	void init_done();
 
     public slots:
@@ -96,14 +96,14 @@ class QTCAD_EXPORT QgQuadView : public QWidget
 
     private:
         bool eventFilter(QObject*, QEvent*);
-        QtCADView *createView(unsigned int index);
+        QgView *createView(unsigned int index);
         QGridLayout *createLayout();
 
-        int graphicsType = QtCADView_SW;
+        int graphicsType = QgView_SW;
         // Holds up to 4 views in single view only the first view is constructed
         // The other views are constructed if quad view mode is selected by the user
-	QtCADView *views[4] = {nullptr, nullptr, nullptr, nullptr};
-        QtCADView *currentView;
+	QgView *views[4] = {nullptr, nullptr, nullptr, nullptr};
+        QgView *currentView;
         // We need to hang on to this because we don't create the other quad views until the user switches mode
         struct ged *gedp;
 
