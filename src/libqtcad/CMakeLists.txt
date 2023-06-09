@@ -56,7 +56,7 @@ set(qtcad_srcs
   QgTreeSelectionModel.cpp
   QgTreeView.cpp
   QgUtil.cpp
-  QtCADQuad.cpp
+  QgQuadView.cpp
   QtCADView.cpp
   QtConsole.cpp
   QtConsoleListener.cpp
@@ -87,7 +87,7 @@ set(qth_names
   QgSelectFilter
   QgTreeSelectionModel
   QgTreeView
-  QtCADQuad
+  QgQuadView
   QtCADView
   QtConsole
   QtConsoleListener

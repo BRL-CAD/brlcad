@@ -154,7 +154,7 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
      * those assignment */
     struct ged *gedp = mdl->gedp;
 
-    // Let GED know to use the QtCADQuad view as its current view
+    // Let GED know to use the QgQuadView view as its current view
     gedp->ged_gvp = w->CurrentView();
 
     // Set up the connections needed for embedded raytracing

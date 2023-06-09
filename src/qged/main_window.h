@@ -40,7 +40,7 @@
 
 #include "ged.h"
 #include "qtcad/SignalFlags.h"
-#include "qtcad/QtCADQuad.h"
+#include "qtcad/QgQuadView.h"
 #include "qtcad/QtCADView.h"
 #include "qtcad/QgDockWidget.h"
 #include "qtcad/QgTreeView.h"
@@ -115,7 +115,7 @@ class BRLCAD_MainWindow : public QMainWindow
 
 	// Central widgets
 	QViewCtrl *vcw = NULL;
-	QtCADQuad *c4 = NULL;
+	QgQuadView *c4 = NULL;
 	QAction *cad_single_view = NULL;
 	QAction *cad_quad_view = NULL;
 

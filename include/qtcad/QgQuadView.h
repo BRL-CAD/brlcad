@@ -1,4 +1,4 @@
-/*                      Q T G L Q U A D . H
+/*                    Q G Q U A D V I E W . H
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QtGLQuad.h
+/** @file QgQuadView.h
  *
  */
 
-#ifndef QTCADQUAD_H
-#define QTCADQUAD_H
+#ifndef QGQUADVIEW_H
+#define QGQUADVIEW_H
 
 #include "common.h"
 
@@ -49,13 +49,13 @@ extern "C" {
 #define LOWER_LEFT_QUADRANT 2
 #define LOWER_RIGHT_QUADRANT 3
 
-class QTCAD_EXPORT QtCADQuad : public QWidget
+class QTCAD_EXPORT QgQuadView : public QWidget
 {
     Q_OBJECT
 
     public:
-	explicit QtCADQuad(QWidget *parent, struct ged *gedpRef, int type);
-	~QtCADQuad();
+	explicit QgQuadView(QWidget *parent, struct ged *gedpRef, int type);
+	~QgQuadView();
 
 	void stash_hashes(); // Store current dmp and v hash values
 	bool diff_hashes();  // Set dmp dirty flags if current hashes != stashed hashes.  (Does not update stored hash values - use stash_hashes for that operation.)
@@ -122,7 +122,7 @@ class QTCAD_EXPORT QtCADQuad : public QWidget
 	bool init_done_flag = false;
 };
 
-#endif /* QTCADQUAD_H */
+#endif /* QGQUADVIEW_H */
 
 // Local Variables:
 // tab-width: 8

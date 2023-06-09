@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QtCADQuad.cpp
+/** @file QgQuadView.cpp
  *
  * TODO - initialize non-current views to the standard views (check MGED for
  * what the defaults should be.)  Also, need to implement an event filter for
@@ -48,7 +48,7 @@
 #include "bg/lod.h"
 #include "ged/defines.h"
 #include "ged/commands.h"
-#include "qtcad/QtCADQuad.h"
+#include "qtcad/QgQuadView.h"
 
 static const char *VIEW_NAMES[] = {"Q1", "Q2", "Q3", "Q4"};
 
@@ -59,7 +59,7 @@ static const char *VIEW_NAMES[] = {"Q1", "Q2", "Q3", "Q4"};
  * @param gedpRef  Associated GED struct
  * @param type     Requesting either a GL or SWRAST display mechanism
  */
-QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(parent)
+QgQuadView::QgQuadView(QWidget *parent, struct ged *gedpRef, int type) : QWidget(parent)
 {
     gedp = gedpRef;
     graphicsType = type;
@@ -74,7 +74,7 @@ QtCADQuad::QtCADQuad(QWidget *parent, struct ged *gedpRef, int type) : QWidget(p
     default_views(1);
 }
 
-QtCADQuad::~QtCADQuad()
+QgQuadView::~QgQuadView()
 {
     for (int i = 0; i < 4; i++) {
 	if (views[i] != nullptr) {
@@ -96,7 +96,7 @@ QtCADQuad::~QtCADQuad()
 }
 
 QtCADView *
-QtCADQuad::curr_view()
+QgQuadView::curr_view()
 {
     int s = get_selected();
     return get(s);
@@ -109,7 +109,7 @@ QtCADQuad::curr_view()
  * @return QtCADView*
  */
 QtCADView *
-QtCADQuad::createView(unsigned int index)
+QgQuadView::createView(unsigned int index)
 {
     QtCADView *view = new QtCADView(this, graphicsType);
     bu_vls_sprintf(&view->view()->gv_name, "%s", VIEW_NAMES[index]);
@@ -119,8 +119,8 @@ QtCADQuad::createView(unsigned int index)
     view->view()->vset = &gedp->ged_views;
     view->view()->independent = 0;
 
-    QObject::connect(view, &QtCADView::changed, this, &QtCADQuad::do_view_changed);
-    QObject::connect(view, &QtCADView::init_done, this, &QtCADQuad::do_init_done);
+    QObject::connect(view, &QtCADView::changed, this, &QgQuadView::do_view_changed);
+    QObject::connect(view, &QtCADView::init_done, this, &QgQuadView::do_init_done);
     return view;
 }
 
@@ -130,7 +130,7 @@ QtCADQuad::createView(unsigned int index)
  * @return QGridLayout*
  */
 QGridLayout *
-QtCADQuad::createLayout()
+QgQuadView::createLayout()
 {
     QGridLayout *layout = new QGridLayout(this);
     layout->setSpacing(0);
@@ -152,7 +152,7 @@ QtCADQuad::createLayout()
  *
  */
 void
-QtCADQuad::changeToSingleFrame()
+QgQuadView::changeToSingleFrame()
 {
     QGridLayout *layout = (QGridLayout *)this->layout();
     if (layout == nullptr) {
@@ -194,7 +194,7 @@ QtCADQuad::changeToSingleFrame()
  *
  */
 void
-QtCADQuad::changeToQuadFrame()
+QgQuadView::changeToQuadFrame()
 {
     for (int i = UPPER_RIGHT_QUADRANT + 1; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] == nullptr) {
@@ -308,14 +308,14 @@ QtCADQuad::changeToQuadFrame()
 }
 
 void
-QtCADQuad::do_view_changed()
+QgQuadView::do_view_changed()
 {
-    QTCAD_SLOT("QtCADQuad::do_view_changed", 1);
+    QTCAD_SLOT("QgQuadView::do_view_changed", 1);
     emit changed(currentView);
 }
 
 bool
-QtCADQuad::isValid()
+QgQuadView::isValid()
 {
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr && !views[i]->isValid())
@@ -325,7 +325,7 @@ QtCADQuad::isValid()
 }
 
 bool
-QtCADQuad::eventFilter(QObject *t, QEvent *e)
+QgQuadView::eventFilter(QObject *t, QEvent *e)
 {
     if (e->type() == QEvent::KeyPress || e->type() == QEvent::MouseButtonPress) {
 	for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
@@ -339,7 +339,7 @@ QtCADQuad::eventFilter(QObject *t, QEvent *e)
 }
 
 void
-QtCADQuad::default_views(int all_views)
+QgQuadView::default_views(int all_views)
 {
     if (all_views && views[UPPER_RIGHT_QUADRANT] != nullptr) {
 	if (views[UPPER_LEFT_QUADRANT] == nullptr) {
@@ -361,7 +361,7 @@ QtCADQuad::default_views(int all_views)
 }
 
 struct bview *
-QtCADQuad::view(int quadrantId)
+QgQuadView::view(int quadrantId)
 {
     if (quadrantId > LOWER_RIGHT_QUADRANT || quadrantId < UPPER_RIGHT_QUADRANT) quadrantId = UPPER_RIGHT_QUADRANT;
 
@@ -373,7 +373,7 @@ QtCADQuad::view(int quadrantId)
 }
 
 QtCADView *
-QtCADQuad::get(int quadrantId)
+QgQuadView::get(int quadrantId)
 {
     if (quadrantId > LOWER_RIGHT_QUADRANT || quadrantId < UPPER_RIGHT_QUADRANT) quadrantId = UPPER_RIGHT_QUADRANT;
 
@@ -385,7 +385,7 @@ QtCADQuad::get(int quadrantId)
 }
 
 QtCADView *
-QtCADQuad::get(const QPoint &gpos)
+QgQuadView::get(const QPoint &gpos)
 {
     QtCADView *retv = NULL;
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
@@ -406,7 +406,7 @@ QtCADQuad::get(const QPoint &gpos)
 }
 
 QtCADView *
-QtCADQuad::get(QEvent *e)
+QgQuadView::get(QEvent *e)
 {
     if (e->type() != QEvent::MouseButtonPress)
 	return NULL;
@@ -420,7 +420,7 @@ QtCADQuad::get(QEvent *e)
 }
 
 void
-QtCADQuad::select(int quadrantId)
+QgQuadView::select(int quadrantId)
 {
     if (quadrantId > LOWER_RIGHT_QUADRANT || quadrantId < UPPER_RIGHT_QUADRANT) quadrantId = UPPER_RIGHT_QUADRANT;
 
@@ -481,7 +481,7 @@ QtCADQuad::select(int quadrantId)
 }
 
 void
-QtCADQuad::select(const char *quadrant_id)
+QgQuadView::select(const char *quadrant_id)
 {
     if (BU_STR_EQUIV(quadrant_id, "ur")) {
 	select(UPPER_RIGHT_QUADRANT);
@@ -503,7 +503,7 @@ QtCADQuad::select(const char *quadrant_id)
 
 
 int
-QtCADQuad::get_selected()
+QgQuadView::get_selected()
 {
     if (currentView == views[UPPER_RIGHT_QUADRANT]) {
 	return 0;
@@ -522,10 +522,10 @@ QtCADQuad::get_selected()
 }
 
 void
-QtCADQuad::do_view_update(unsigned long long flags)
+QgQuadView::do_view_update(unsigned long long flags)
 {
-    bv_log(4, "QtCADQuad::do_view_update");
-    QTCAD_SLOT("QtCADQuad::do_view_update", 1);
+    bv_log(4, "QgQuadView::do_view_update");
+    QTCAD_SLOT("QgQuadView::do_view_update", 1);
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->need_update(flags);
@@ -534,7 +534,7 @@ QtCADQuad::do_view_update(unsigned long long flags)
 }
 
 void
-QtCADQuad::stash_hashes()
+QgQuadView::stash_hashes()
 {
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
@@ -544,7 +544,7 @@ QtCADQuad::stash_hashes()
 }
 
 bool
-QtCADQuad::diff_hashes()
+QgQuadView::diff_hashes()
 {
     bool ret = false;
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
@@ -559,7 +559,7 @@ QtCADQuad::diff_hashes()
 }
 
 void
-QtCADQuad::enableDefaultKeyBindings()
+QgQuadView::enableDefaultKeyBindings()
 {
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
@@ -569,7 +569,7 @@ QtCADQuad::enableDefaultKeyBindings()
 }
 
 void
-QtCADQuad::disableDefaultKeyBindings()
+QgQuadView::disableDefaultKeyBindings()
 {
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
@@ -579,7 +579,7 @@ QtCADQuad::disableDefaultKeyBindings()
 }
 
 void
-QtCADQuad::enableDefaultMouseBindings()
+QgQuadView::enableDefaultMouseBindings()
 {
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
@@ -589,7 +589,7 @@ QtCADQuad::enableDefaultMouseBindings()
 }
 
 void
-QtCADQuad::disableDefaultMouseBindings()
+QgQuadView::disableDefaultMouseBindings()
 {
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
@@ -599,9 +599,9 @@ QtCADQuad::disableDefaultMouseBindings()
 }
 
 void
-QtCADQuad::set_lmouse_move_default(int mm)
+QgQuadView::set_lmouse_move_default(int mm)
 {
-    QTCAD_SLOT("QtCADQuad::set_lmouse_move_default", 1);
+    QTCAD_SLOT("QgQuadView::set_lmouse_move_default", 1);
     for (int i = UPPER_RIGHT_QUADRANT; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	if (views[i] != nullptr) {
 	    views[i]->set_lmouse_move_default(mm);
@@ -610,9 +610,9 @@ QtCADQuad::set_lmouse_move_default(int mm)
 }
 
 void
-QtCADQuad::do_init_done()
+QgQuadView::do_init_done()
 {
-    QTCAD_SLOT("QtCADQuad::do_init_done", 1);
+    QTCAD_SLOT("QgQuadView::do_init_done", 1);
     if (!init_done_flag) {
 	init_done_flag = true;
 	emit init_done();

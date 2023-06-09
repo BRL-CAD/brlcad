@@ -15,7 +15,7 @@ set(qtcad_headers
   QgTreeSelectionModel.h
   QgTreeView.h
   QgUtil.h
-  QtCADQuad.h
+  QgQuadView.h
   QtCADView.h
   QtConsole.h
   QtConsoleListener.h

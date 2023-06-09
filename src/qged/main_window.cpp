@@ -90,12 +90,12 @@ BRLCAD_MainWindow::CreateWidgets(int canvas_type)
     // of either a single display or showing 4 views in a grid arrangement
     // (the "quad" view).  By default it displays a single view, unless
     // overridden by a user option.
-    c4 = new QtCADQuad(cw, gedp, canvas_type);
+    c4 = new QgQuadView(cw, gedp, canvas_type);
     if (!c4) {
 	QMessageBox *msgbox = new QMessageBox();
-	msgbox->setText("Fatal error: unable to create QtCADQuad widget");
+	msgbox->setText("Fatal error: unable to create QgQuadView widget");
 	msgbox->exec();
-	bu_exit(EXIT_FAILURE, "Unable to create QtCADQuad widget\n");
+	bu_exit(EXIT_FAILURE, "Unable to create QgQuadView widget\n");
     }
     c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
@@ -220,23 +220,23 @@ BRLCAD_MainWindow::ConnectWidgets()
     // response to commands or widgets taking actions that will impact the
     // scene.  Camera view changes, adding/removing objects or view elements
     // from the scene, and updates such as incremental display of raytracing
-    // results in an embedded framebuffer all need to notify the QtCADQuad
+    // results in an embedded framebuffer all need to notify the QgQuadView
     // it is time to update.
-    QObject::connect(ap, &CADApp::view_update, c4, &QtCADQuad::do_view_update);
+    QObject::connect(ap, &CADApp::view_update, c4, &QgQuadView::do_view_update);
 
     // 3D graphical widget
-    QObject::connect(c4, &QtCADQuad::selected, ap, &CADApp::do_quad_view_change);
-    QObject::connect(c4, &QtCADQuad::changed, ap, &CADApp::do_quad_view_change);
+    QObject::connect(c4, &QgQuadView::selected, ap, &CADApp::do_quad_view_change);
+    QObject::connect(c4, &QgQuadView::changed, ap, &CADApp::do_quad_view_change);
     // Some of the dm initialization has to be delayed - make the connections so we can
     // do the work after widget initialization is complete.
-    QObject::connect(c4, &QtCADQuad::init_done, this, &BRLCAD_MainWindow::do_dm_init);
+    QObject::connect(c4, &QgQuadView::init_done, this, &BRLCAD_MainWindow::do_dm_init);
 
 
     // Graphical toolbar
     QObject::connect(vcw, &QViewCtrl::view_changed, ap, &CADApp::do_view_changed);
     QObject::connect(ap, &CADApp::view_update, vcw, &QViewCtrl::do_view_update);
     // Make the connection so the view control can change the mouse mode of the Quad View
-    QObject::connect(vcw, &QViewCtrl::lmouse_mode, c4, &QtCADQuad::set_lmouse_move_default);
+    QObject::connect(vcw, &QViewCtrl::lmouse_mode, c4, &QgQuadView::set_lmouse_move_default);
 
     // The makeCurrent connections enforce an either/or paradigm
     // for the view and object editing panels.
@@ -336,7 +336,7 @@ BRLCAD_MainWindow::SetupMenu()
 
 
 
-// These commands can only be successfully executed after the QtCADQuad widget
+// These commands can only be successfully executed after the QgQuadView widget
 // initialization is *fully* complete.  Consequently, these steps are separated
 // out from the main constructor.
 void
