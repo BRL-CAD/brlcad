@@ -27,7 +27,7 @@
 #include "common.h"
 
 #include <iostream>
-#include "qtcad/QtConsoleListener.h"
+#include "qtcad/QgConsoleListener.h"
 
 #define RT_MAXLINE 10240
 

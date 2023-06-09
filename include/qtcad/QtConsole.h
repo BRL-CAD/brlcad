@@ -53,7 +53,7 @@
 
 #include "ged.h"
 #include "qtcad/defines.h"
-#include "qtcad/QtConsoleListener.h"
+#include "qtcad/QgConsoleListener.h"
 
 class QTCAD_EXPORT QtConsoleWidgetCompleter : public QCompleter
 {

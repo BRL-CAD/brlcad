@@ -59,7 +59,7 @@ set(qtcad_srcs
   QgQuadView.cpp
   QgView.cpp
   QtConsole.cpp
-  QtConsoleListener.cpp
+  QgConsoleListener.cpp
   QtSW.cpp
   )
 if (OPENGL_LIBS)
@@ -90,7 +90,7 @@ set(qth_names
   QgQuadView
   QgView
   QtConsole
-  QtConsoleListener
+  QgConsoleListener
   QtSW
   )
 if (OPENGL_LIBS)

@@ -18,7 +18,7 @@ set(qtcad_headers
   QgQuadView.h
   QgView.h
   QtConsole.h
-  QtConsoleListener.h
+  QgConsoleListener.h
   QtGL.h
   QtSW.h
   SignalFlags.h
