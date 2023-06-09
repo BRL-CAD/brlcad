@@ -59,7 +59,7 @@ struct swrastinfo {
     char **av;
 #ifdef SWRAST_QT
     QApplication *qapp = NULL;
-    QtSWWin *mw = NULL;
+    QgSWWin *mw = NULL;
 #endif
     int cmap_size;		/* hardware colormap size */
     int win_width;              /* actual window width */
@@ -384,7 +384,7 @@ fb_swrast_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 
 #ifdef SWRAST_QT
     qi->qapp = new QApplication(qi->ac, qi->av);
-    qi->mw = new QtSWWin(ifp);
+    qi->mw = new QgSWWin(ifp);
 
     BU_GET(qi->mw->canvas->v, struct bview);
     bv_init(qi->mw->canvas->v, NULL);

@@ -48,37 +48,37 @@ QgView::QgView(QWidget *parent, int type, struct fb *fbp)
     switch (type) {
 #ifdef BRLCAD_OPENGL
 	case QgView_GL:
-	    canvas_gl = new QtGL(this, fbp);
+	    canvas_gl = new QgGL(this, fbp);
 	    canvas_gl->setMinimumSize(50,50);
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_gl);
-	    QObject::connect(canvas_gl, &QtGL::changed, this, &QgView::do_view_changed);
-	    QObject::connect(canvas_gl, &QtGL::init_done, this, &QgView::do_init_done);
+	    QObject::connect(canvas_gl, &QgGL::changed, this, &QgView::do_view_changed);
+	    QObject::connect(canvas_gl, &QgGL::init_done, this, &QgView::do_init_done);
 	    break;
 #endif
 	case QgView_SW:
-	    canvas_sw = new QtSW(this, fbp);
+	    canvas_sw = new QgSW(this, fbp);
 	    canvas_sw->setMinimumSize(50,50);
 	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_sw);
-	    QObject::connect(canvas_sw, &QtSW::changed, this, &QgView::do_view_changed);
-	    QObject::connect(canvas_sw, &QtSW::init_done, this, &QgView::do_init_done);
+	    QObject::connect(canvas_sw, &QgSW::changed, this, &QgView::do_view_changed);
+	    QObject::connect(canvas_sw, &QgSW::init_done, this, &QgView::do_init_done);
 	    break;
 	default:
 #ifdef BRLCAD_OPENGL
-	    canvas_gl = new QtGL(this, fbp);
+	    canvas_gl = new QgGL(this, fbp);
 	    canvas_gl->setMinimumSize(50,50);
 	    canvas_gl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_gl);
-	    QObject::connect(canvas_gl, &QtGL::changed, this, &QgView::do_view_changed);
-	    QObject::connect(canvas_gl, &QtGL::init_done, this, &QgView::do_init_done);
+	    QObject::connect(canvas_gl, &QgGL::changed, this, &QgView::do_view_changed);
+	    QObject::connect(canvas_gl, &QgGL::init_done, this, &QgView::do_init_done);
 #else
-	    canvas_sw = new QtSW(this, fbp);
+	    canvas_sw = new QgSW(this, fbp);
 	    canvas_sw->setMinimumSize(50,50);
 	    canvas_sw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	    l->addWidget(canvas_sw);
-	    QObject::connect(canvas_sw, &QtSW::changed, this, &QgView::do_view_changed);
-	    QObject::connect(canvas_sw, &QtSW::init_done, this, &QgView::do_init_done);
+	    QObject::connect(canvas_sw, &QgSW::changed, this, &QgView::do_view_changed);
+	    QObject::connect(canvas_sw, &QgSW::init_done, this, &QgView::do_init_done);
 #endif
 	    return;
     }

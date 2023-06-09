@@ -1,4 +1,4 @@
-/*                          Q T S W . C P P
+/*                          Q G S W . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QtSW.cpp
+/** @file QgSW.cpp
  *
  * Qt widget for visualizing libosmesa OpenGL software rasterizer output.
  */
@@ -34,7 +34,7 @@ extern "C" {
 #include "bu/malloc.h"
 }
 #include "bindings.h"
-#include "qtcad/QtSW.h"
+#include "qtcad/QgSW.h"
 
 // Using the full GED_MIN/GED_MAX was causing drawing artifacts with moss I
 // in shaded mode (I think I was seeing the "Z-fighting" problem:
@@ -46,7 +46,7 @@ extern "C" {
 #define QTSW_ZMIN -100
 #define QTSW_ZMAX 100
 
-QtSW::QtSW(QWidget *parent, struct fb *fbp)
+QgSW::QgSW(QWidget *parent, struct fb *fbp)
     : QWidget(parent), ifp(fbp)
 {
     // Provide a view specific to this widget - set gedp->ged_gvp to v
@@ -72,7 +72,7 @@ QtSW::QtSW(QWidget *parent, struct fb *fbp)
     setFocusPolicy(Qt::WheelFocus);
 }
 
-QtSW::~QtSW()
+QgSW::~QgSW()
 {
     if (dmp)
 	dm_close(dmp);
@@ -82,14 +82,14 @@ QtSW::~QtSW()
     BU_PUT(local_v, struct bv);
 }
 
-void QtSW::need_update()
+void QgSW::need_update()
 {
-    QTCAD_SLOT("QtSW::need_update", 1);
+    QTCAD_SLOT("QgSW::need_update", 1);
     dm_set_dirty(dmp, 1);
     update();
 }
 
-void QtSW::paintEvent(QPaintEvent *e)
+void QgSW::paintEvent(QPaintEvent *e)
 {
     // Go ahead and set the flag, but (unlike the rendering thread
     // implementation) we need to do the draw routine every time in paintGL, or
@@ -181,7 +181,7 @@ void QtSW::paintEvent(QPaintEvent *e)
     QWidget::paintEvent(e);
 }
 
-void QtSW::resizeEvent(QResizeEvent *e)
+void QgSW::resizeEvent(QResizeEvent *e)
 {
     QWidget::resizeEvent(e);
     if (dmp && v) {
@@ -198,7 +198,7 @@ void QtSW::resizeEvent(QResizeEvent *e)
     }
 }
 
-void QtSW::keyPressEvent(QKeyEvent *k) {
+void QgSW::keyPressEvent(QKeyEvent *k) {
 
     if (!dmp || !v || !current || !use_default_keybindings) {
 	QWidget::keyPressEvent(k);
@@ -219,7 +219,7 @@ void QtSW::keyPressEvent(QKeyEvent *k) {
     QWidget::keyPressEvent(k);
 }
 
-void QtSW::mousePressEvent(QMouseEvent *e) {
+void QgSW::mousePressEvent(QMouseEvent *e) {
 
     if (!dmp || !v || !current || !use_default_mousebindings) {
 	QWidget::mousePressEvent(e);
@@ -249,7 +249,7 @@ void QtSW::mousePressEvent(QMouseEvent *e) {
     QWidget::mousePressEvent(e);
 }
 
-void QtSW::mouseReleaseEvent(QMouseEvent *e) {
+void QgSW::mouseReleaseEvent(QMouseEvent *e) {
     if (!v) {
 	QWidget::mouseReleaseEvent(e);
 	return;
@@ -270,7 +270,7 @@ void QtSW::mouseReleaseEvent(QMouseEvent *e) {
 }
 
 
-void QtSW::mouseMoveEvent(QMouseEvent *e)
+void QgSW::mouseMoveEvent(QMouseEvent *e)
 {
     if (!dmp || !v || !current || !use_default_mousebindings) {
 	QWidget::mouseMoveEvent(e);
@@ -300,7 +300,7 @@ void QtSW::mouseMoveEvent(QMouseEvent *e)
     QWidget::mouseMoveEvent(e);
 }
 
-void QtSW::wheelEvent(QWheelEvent *e) {
+void QgSW::wheelEvent(QWheelEvent *e) {
 
     if (!dmp || !v || !current || !use_default_mousebindings) {
 	QWidget::wheelEvent(e);
@@ -321,7 +321,7 @@ void QtSW::wheelEvent(QWheelEvent *e) {
     QWidget::wheelEvent(e);
 }
 
-void QtSW::stash_hashes()
+void QgSW::stash_hashes()
 {
     if (!dmp) {
 	prev_dhash = 0;
@@ -331,7 +331,7 @@ void QtSW::stash_hashes()
     prev_vhash = bv_hash(v);
 }
 
-bool QtSW::diff_hashes()
+bool QgSW::diff_hashes()
 {
     bool ret = false;
     unsigned long long c_dhash = 0;
@@ -366,7 +366,7 @@ bool QtSW::diff_hashes()
     return ret;
 }
 
-void QtSW::save_image() {
+void QgSW::save_image() {
     // Set up a QImage with the rendered output..
     unsigned char *dm_image;
     if (dm_get_display_image(dmp, &dm_image, 1, 1)) {
@@ -377,7 +377,7 @@ void QtSW::save_image() {
     img32.save("file.png");
 }
 
-void QtSW::aet(double a, double e, double t)
+void QgSW::aet(double a, double e, double t)
 {
     if (!v)
 	return;
@@ -409,33 +409,33 @@ void QtSW::aet(double a, double e, double t)
 }
 
 void
-QtSW::enableDefaultKeyBindings()
+QgSW::enableDefaultKeyBindings()
 {
     use_default_keybindings = true;
 }
 
 void
-QtSW::disableDefaultKeyBindings()
+QgSW::disableDefaultKeyBindings()
 {
     use_default_keybindings = false;
 }
 
 void
-QtSW::enableDefaultMouseBindings()
+QgSW::enableDefaultMouseBindings()
 {
     use_default_mousebindings = true;
 }
 
 void
-QtSW::disableDefaultMouseBindings()
+QgSW::disableDefaultMouseBindings()
 {
     use_default_mousebindings = false;
 }
 
 void
-QtSW::set_lmouse_move_default(int mm)
+QgSW::set_lmouse_move_default(int mm)
 {
-    QTCAD_SLOT("QtSW::set_lmouse_move_default", 1);
+    QTCAD_SLOT("QgSW::set_lmouse_move_default", 1);
     lmouse_mode = mm;
 }
 

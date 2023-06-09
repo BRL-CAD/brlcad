@@ -60,10 +60,10 @@ set(qtcad_srcs
   QgView.cpp
   QgConsole.cpp
   QgConsoleListener.cpp
-  QtSW.cpp
+  QgSW.cpp
   )
 if (OPENGL_LIBS)
-  set(qtcad_srcs ${qtcad_srcs} QtGL.cpp)
+  set(qtcad_srcs ${qtcad_srcs} QgGL.cpp)
 endif (OPENGL_LIBS)
 
 # We need to run Qt's Meta-Object Compiler on some of the
@@ -91,10 +91,10 @@ set(qth_names
   QgView
   QgConsole
   QgConsoleListener
-  QtSW
+  QgSW
   )
 if (OPENGL_LIBS)
-  set(qth_names ${qth_names} QtGL)
+  set(qth_names ${qth_names} QgGL)
 endif (OPENGL_LIBS)
 
 foreach(qh ${qth_names})
@@ -138,7 +138,7 @@ set(qtcad_ignore_srcs
   ${qtcad_moc_hdrs}
   bindings.h
   qtcad_resources.qrc
-  QtGL.cpp
+  QgGL.cpp
   )
 
 CMAKEFILES(${qtcad_ignore_srcs})

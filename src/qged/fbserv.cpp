@@ -38,8 +38,8 @@
 #include "bu/vls.h"
 #include "dm.h"
 #include "./fbserv.h"
-#include "qtcad/QtGL.h"
-#include "qtcad/QtSW.h"
+#include "qtcad/QgGL.h"
+#include "qtcad/QgSW.h"
 
 void
 QFBSocket::client_handler()
@@ -204,9 +204,9 @@ qdm_open_client_handler(struct fbserv_obj *fbsp, int i, void *data)
     QFBSocket *s = (QFBSocket *)data;
     QObject::connect(s->s, &QTcpSocket::readyRead, s, &QFBSocket::client_handler, Qt::QueuedConnection);
 
-    QtGL *ctx = (QtGL *)dm_get_ctx(fb_get_dm(fbsp->fbs_fbp));
+    QgGL *ctx = (QgGL *)dm_get_ctx(fb_get_dm(fbsp->fbs_fbp));
     if (ctx) {
-	QObject::connect(s, &QFBSocket::updated, ctx, &QtGL::need_update, Qt::QueuedConnection);
+	QObject::connect(s, &QFBSocket::updated, ctx, &QgGL::need_update, Qt::QueuedConnection);
     }
 }
 #endif
@@ -229,9 +229,9 @@ qdm_open_sw_client_handler(struct fbserv_obj *fbsp, int i, void *data)
     QFBSocket *s = (QFBSocket *)data;
     QObject::connect(s->s, &QTcpSocket::readyRead, s, &QFBSocket::client_handler, Qt::QueuedConnection);
 
-    QtSW *ctx = (QtSW *)dm_get_udata(fb_get_dm(fbsp->fbs_fbp));
+    QgSW *ctx = (QgSW *)dm_get_udata(fb_get_dm(fbsp->fbs_fbp));
     if (ctx) {
-	QObject::connect(s, &QFBSocket::updated, ctx, &QtSW::need_update, Qt::QueuedConnection);
+	QObject::connect(s, &QFBSocket::updated, ctx, &QgSW::need_update, Qt::QueuedConnection);
     }
 }
 

@@ -23,9 +23,9 @@
 
 #include "swrastwin.h"
 
-QtSWWin::QtSWWin(struct fb *fbp)
+QgSWWin::QgSWWin(struct fb *fbp)
 {
-    canvas = new QtSW(this, fbp);
+    canvas = new QgSW(this, fbp);
     this->setCentralWidget(canvas);
     canvas->setMinimumSize(1,1);
 }

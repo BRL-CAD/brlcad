@@ -38,9 +38,9 @@ extern "C" {
 #include <QObject>
 #include <QWidget>
 #include "qtcad/defines.h"
-#include "qtcad/QtSW.h"
+#include "qtcad/QgSW.h"
 #ifdef BRLCAD_OPENGL
-#  include "qtcad/QtGL.h"
+#  include "qtcad/QgGL.h"
 #endif
 
 #define QgView_AUTO 0
@@ -108,9 +108,9 @@ class QTCAD_EXPORT QgView : public QWidget
 
     private:
         QBoxLayout *l = NULL;
-	QtSW *canvas_sw = NULL;
+	QgSW *canvas_sw = NULL;
 #ifdef BRLCAD_OPENGL
-        QtGL *canvas_gl = NULL;
+        QgGL *canvas_gl = NULL;
 #endif
 	std::vector<QObject *> filters;
 };

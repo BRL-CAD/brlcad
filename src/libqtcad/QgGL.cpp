@@ -1,4 +1,4 @@
-/*                      Q T G L . C P P
+/*                      Q G G L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QtGL.cpp
+/** @file QgGL.cpp
  *
  * Use a QOpenGLWidget to display libdm drawing content.
  *
@@ -32,7 +32,7 @@ extern "C" {
 #include "bu/malloc.h"
 }
 #include "bindings.h"
-#include "qtcad/QtGL.h"
+#include "qtcad/QgGL.h"
 
 // FROM MGED
 #define XMIN            (-2048)
@@ -44,7 +44,7 @@ extern "C" {
 #define QTGL_ZMIN -2048
 #define QTGL_ZMAX 2047
 
-QtGL::QtGL(QWidget *parent, struct fb *fbp)
+QgGL::QgGL(QWidget *parent, struct fb *fbp)
     : QOpenGLWidget(parent), ifp(fbp)
 {
     // Provide a view specific to this widget - set gedp->ged_gvp to v
@@ -71,7 +71,7 @@ QtGL::QtGL(QWidget *parent, struct fb *fbp)
     setFocusPolicy(Qt::WheelFocus);
 }
 
-QtGL::~QtGL()
+QgGL::~QgGL()
 {
     if (dmp)
 	dm_close(dmp);
@@ -82,7 +82,7 @@ QtGL::~QtGL()
 }
 
 
-void QtGL::paintGL()
+void QgGL::paintGL()
 {
     int w = width();
     int h = height();
@@ -160,7 +160,7 @@ void QtGL::paintGL()
     dm_draw_end(dmp);
 }
 
-void QtGL::resizeGL(int, int)
+void QgGL::resizeGL(int, int)
 {
     if (!dmp || !v)
 	return;
@@ -175,17 +175,17 @@ void QtGL::resizeGL(int, int)
     emit changed();
 }
 
-void QtGL::need_update()
+void QgGL::need_update()
 {
-    bv_log(4, "QtGL::need_update");
-    QTCAD_SLOT("QtGL::need_update", 1);
+    bv_log(4, "QgGL::need_update");
+    QTCAD_SLOT("QgGL::need_update", 1);
     if (!dmp)
 	return;
     dm_set_dirty(dmp, 1);
     update();
 }
 
-void QtGL::keyPressEvent(QKeyEvent *k) {
+void QgGL::keyPressEvent(QKeyEvent *k) {
 
     if (!dmp || !v || !current || !use_default_keybindings) {
 	QOpenGLWidget::keyPressEvent(k);
@@ -206,7 +206,7 @@ void QtGL::keyPressEvent(QKeyEvent *k) {
     QOpenGLWidget::keyPressEvent(k);
 }
 
-void QtGL::mousePressEvent(QMouseEvent *e) {
+void QgGL::mousePressEvent(QMouseEvent *e) {
 
     if (!dmp || !v || !current || !use_default_mousebindings) {
 	QOpenGLWidget::mousePressEvent(e);
@@ -236,7 +236,7 @@ void QtGL::mousePressEvent(QMouseEvent *e) {
     QOpenGLWidget::mousePressEvent(e);
 }
 
-void QtGL::mouseReleaseEvent(QMouseEvent *e) {
+void QgGL::mouseReleaseEvent(QMouseEvent *e) {
 
     if (!v) {
 	QOpenGLWidget::mouseReleaseEvent(e);
@@ -257,7 +257,7 @@ void QtGL::mouseReleaseEvent(QMouseEvent *e) {
     QOpenGLWidget::mouseReleaseEvent(e);
 }
 
-void QtGL::mouseMoveEvent(QMouseEvent *e)
+void QgGL::mouseMoveEvent(QMouseEvent *e)
 {
     if (!dmp || !v || !current || !use_default_mousebindings) {
 	QOpenGLWidget::mouseMoveEvent(e);
@@ -287,7 +287,7 @@ void QtGL::mouseMoveEvent(QMouseEvent *e)
     QOpenGLWidget::mouseMoveEvent(e);
 }
 
-void QtGL::wheelEvent(QWheelEvent *e) {
+void QgGL::wheelEvent(QWheelEvent *e) {
 
     if (!dmp || !v || !current || !use_default_mousebindings) {
 	QOpenGLWidget::wheelEvent(e);
@@ -308,7 +308,7 @@ void QtGL::wheelEvent(QWheelEvent *e) {
     QOpenGLWidget::wheelEvent(e);
 }
 
-void QtGL::stash_hashes()
+void QgGL::stash_hashes()
 {
     if (!dmp) {
 	prev_dhash = 0;
@@ -318,7 +318,7 @@ void QtGL::stash_hashes()
     prev_vhash = bv_hash(v);
 }
 
-bool QtGL::diff_hashes()
+bool QgGL::diff_hashes()
 {
     bool ret = false;
     unsigned long long c_dhash = 0;
@@ -350,12 +350,12 @@ bool QtGL::diff_hashes()
     return ret;
 }
 
-void QtGL::save_image() {
+void QgGL::save_image() {
     QImage image = this->grabFramebuffer();
     image.save("file.png");
 }
 
-void QtGL::aet(double a, double e, double t)
+void QgGL::aet(double a, double e, double t)
 {
     if (!v)
 	return;
@@ -387,33 +387,33 @@ void QtGL::aet(double a, double e, double t)
 }
 
 void
-QtGL::enableDefaultKeyBindings()
+QgGL::enableDefaultKeyBindings()
 {
     use_default_keybindings = true;
 }
 
 void
-QtGL::disableDefaultKeyBindings()
+QgGL::disableDefaultKeyBindings()
 {
     use_default_keybindings = false;
 }
 
 void
-QtGL::enableDefaultMouseBindings()
+QgGL::enableDefaultMouseBindings()
 {
     use_default_mousebindings = true;
 }
 
 void
-QtGL::disableDefaultMouseBindings()
+QgGL::disableDefaultMouseBindings()
 {
     use_default_mousebindings = false;
 }
 
 void
-QtGL::set_lmouse_move_default(int mm)
+QgGL::set_lmouse_move_default(int mm)
 {
-    QTCAD_SLOT("QtGL::set_lmouse_move_default", 1);
+    QTCAD_SLOT("QgGL::set_lmouse_move_default", 1);
     lmouse_mode = mm;
 }
 

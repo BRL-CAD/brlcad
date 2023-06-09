@@ -1,4 +1,4 @@
-/*                           Q T S W . H
+/*                        Q G G L . H
  * BRL-CAD
  *
  * Copyright (c) 2021-2023 United States Government as represented by
@@ -17,28 +17,23 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file qtcad/QtSW.h
+/** @file QgGL.h
  *
- * This defines a Qt widget for displaying the visualization results of the
- * bundled libosmesa OpenGL software rasterizer, using the swrast libdm
- * backend.
- *
- * Unlike the standard QtGL widget, this can display OpenGL rendered graphics
- * even if the OpenGL stack on the host operating system is non-functional (it
- * will be a great deal slower, but since it does not rely on any system
- * capabilities to produce its images it should work in any environment where a
- * basic Qt gui can load.)
  */
 
-#ifndef QTCAD_QTSW_H
-#define QTCAD_QTSW_H
+#ifndef QGGL_H
+#define QGGL_H
 
 #include "common.h"
 
+#include <QKeyEvent>
+#include <QImage>
+#include <QKeyEvent>
 #include <QMouseEvent>
-#include <QPaintEvent>
-#include <QResizeEvent>
-#include <QResizeEvent>
+#include <QObject>
+#include <QOpenGLFunctions>
+#include <QOpenGLWidget>
+#include <QPainter>
 #include <QWheelEvent>
 #include <QWidget>
 
@@ -51,20 +46,20 @@ extern "C" {
 
 #include "qtcad/defines.h"
 
-class QTCAD_EXPORT QtSW : public QWidget
+// Use QOpenGLFunctions so we don't have to prefix all OpenGL calls with "f->"
+class QTCAD_EXPORT QgGL : public QOpenGLWidget, protected QOpenGLFunctions
 {
     Q_OBJECT
 
     public:
-	explicit QtSW(QWidget *parent = nullptr, struct fb *fbp = NULL);
-	~QtSW();
+	explicit QgGL(QWidget *parent = nullptr, struct fb *fbp = NULL);
+	~QgGL();
 
 	void stash_hashes(); // Store current dmp and v hash values
-	bool diff_hashes();  // Set dmp dirty flag if current hashes != stashed hashes.  (Does not update   stored hash values - use stash_hashes for that operation.)
-
-	void save_image();
+	bool diff_hashes();  // Set dmp dirty flag if current hashes != stashed hashes.  (Does not update stored hash values - use stash_hashes for that operation.)
 
 	void aet(double a, double e, double t);
+	void save_image();
 
 	int current = 1;
 	struct bview *v = NULL;
@@ -90,8 +85,8 @@ class QTCAD_EXPORT QtSW : public QWidget
         void set_lmouse_move_default(int);
 
     protected:
-	void paintEvent(QPaintEvent *e) override;
-	void resizeEvent(QResizeEvent *e) override;
+	void paintGL() override;
+	void resizeGL(int w, int h) override;
 
 	void keyPressEvent(QKeyEvent *k) override;
 	void mouseMoveEvent(QMouseEvent *e) override;
@@ -116,7 +111,7 @@ class QTCAD_EXPORT QtSW : public QWidget
 	struct bview *local_v = NULL;
 };
 
-#endif /* QTCAD_QTSW_H */
+#endif /* QGGL_H */
 
 // Local Variables:
 // tab-width: 8
