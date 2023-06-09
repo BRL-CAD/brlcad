@@ -37,7 +37,7 @@
 #include <QTextStream>
 
 #include "qtcad/defines.h"
-#include "qtcad/QtConsole.h"
+#include "qtcad/QgConsole.h"
 
 class QTCAD_EXPORT QgAppExecDialog : public QDialog
 {
@@ -55,7 +55,7 @@ class QTCAD_EXPORT QgAppExecDialog : public QDialog
 
     public:
 	QFile *logfile;
-        QtConsole *console;
+        QgConsole *console;
         QProcess *proc;
         QDialogButtonBox *buttonBox;
 };

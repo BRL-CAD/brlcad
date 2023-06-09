@@ -121,7 +121,7 @@ BRLCAD_MainWindow::CreateWidgets(int canvas_type)
     vc->makeCurrent(vc);
 
     // Command console
-    console = new QtConsole(console_dock);
+    console = new QgConsole(console_dock);
     console->prompt("$ ");
     console_dock = new QgDockWidget("Console", this);
     console_dock->setObjectName("Console");
@@ -270,7 +270,7 @@ BRLCAD_MainWindow::ConnectWidgets()
     // application, so rather than embedding the command execution logic in the
     // widget we use a signal/slot connection to have the application's slot
     // execute the command.
-    QObject::connect(console, &QtConsole::executeCommand, ap, &CADApp::run_qcmd);
+    QObject::connect(console, &QgConsole::executeCommand, ap, &CADApp::run_qcmd);
 
     // Geometry Tree
     connect(tree_dock, &QgDockWidget::topLevelChanged, tree_dock, &QgDockWidget::toWindow);

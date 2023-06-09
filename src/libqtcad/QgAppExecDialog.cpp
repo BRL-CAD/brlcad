@@ -35,7 +35,7 @@ QgAppExecDialog::QgAppExecDialog(QWidget *pparent, QString executable, QStringLi
     QVBoxLayout *dlayout = new QVBoxLayout;
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel);
     QObject::connect(buttonBox, &QDialogButtonBox::rejected, this, &QgAppExecDialog::process_abort);
-    console = new QtConsole(this);
+    console = new QgConsole(this);
     console->prompt("");
     setLayout(dlayout);
     dlayout->addWidget(console);

@@ -40,8 +40,8 @@
  * This widget is based off of ParaView's pqConsoleWidget
  */
 
-#ifndef QTCAD_CONSOLE_H
-#define QTCAD_CONSOLE_H
+#ifndef QGCONSOLE_H
+#define QGCONSOLE_H
 
 #include "common.h"
 
@@ -55,7 +55,7 @@
 #include "qtcad/defines.h"
 #include "qtcad/QgConsoleListener.h"
 
-class QTCAD_EXPORT QtConsoleWidgetCompleter : public QCompleter
+class QTCAD_EXPORT QgConsoleWidgetCompleter : public QCompleter
 {
 public:
   /**
@@ -67,7 +67,7 @@ public:
 };
 
 /* Completion class specific to GED command line */
-class QTCAD_EXPORT GEDShellCompleter : public QtConsoleWidgetCompleter
+class QTCAD_EXPORT GEDShellCompleter : public QgConsoleWidgetCompleter
 {
 public:
   GEDShellCompleter(QWidget *p, struct ged *ged_ptr);
@@ -85,13 +85,13 @@ public:
   signals and written by slots.  Users should not attempt to manipulate the
   underlying QPlainTextEdit widget directly.
 */
-class QTCAD_EXPORT QtConsole : public QWidget
+class QTCAD_EXPORT QgConsole : public QWidget
 {
   Q_OBJECT
 
 public:
-  QtConsole(QWidget* Parent);
-  virtual ~QtConsole();
+  QgConsole(QWidget* Parent);
+  virtual ~QgConsole();
 
   /// Returns the current font
   QFont getFont();
@@ -99,7 +99,7 @@ public:
   void setFont(const QFont &font);
 
   /// Set a completer for this console widget
-  void setCompleter(QtConsoleWidgetCompleter* completer);
+  void setCompleter(QgConsoleWidgetCompleter* completer);
 
   QPoint getCursorPosition();
 
@@ -151,8 +151,8 @@ public slots:
   void insertCompletion(const QString& text);
 
 private:
-  QtConsole(const QtConsole&);
-  QtConsole& operator=(const QtConsole&);
+  QgConsole(const QgConsole&);
+  QgConsole& operator=(const QgConsole&);
 
   // Used by printStringBeforePrompt to queue up a timed repetition of printing
   // to catch anything recently added but not subsequently printed successfully
@@ -179,5 +179,14 @@ private:
 };
 
 
-#endif // !QTCAD_CONSOLE_H
+#endif // !QGCONSOLE_H
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
 

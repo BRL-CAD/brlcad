@@ -48,7 +48,7 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t 
 	return;
 
     CADApp *ca = (CADApp *)p->gedp->ged_io_data;
-    QtConsole *c = ca->w->console;
+    QgConsole *c = ca->w->console;
     c->listen(fd, p, t, callback, data);
 
     switch (t) {
@@ -70,7 +70,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
     if (!p) return;
 
     CADApp *ca = (CADApp *)p->gedp->ged_io_data;
-    QtConsole *c = ca->w->console;
+    QgConsole *c = ca->w->console;
 
     // Since these callbacks are invoked from the listener, we can't call
     // the listener destructors directly.  We instead call a routine that
@@ -461,7 +461,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 		char *tstr = bu_strdup(argv[i]);
 		tmp_av.push_back(tstr);
 	    }
-	    QtConsole *console = w->console;
+	    QgConsole *console = w->console;
 	    if (console)
 		history_mark_start = console->historyCount() - 2;
 	}
@@ -474,7 +474,7 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	    }
 	    tmp_av.clear();
 	    // let the console know that we're done with MORE
-	    QtConsole *console = w->console;
+	    QgConsole *console = w->console;
 	    if (console)
 		history_mark_end = console->historyCount() - 1;
 	}
@@ -495,7 +495,7 @@ CADApp::run_qcmd(const QString &command)
     if (!w)
 	return;
 
-    QtConsole *console = w->console;
+    QgConsole *console = w->console;
     const char *cmd = bu_strdup(command.toLocal8Bit().data());
 
     if (BU_STR_EQUAL(cmd, "q")) {

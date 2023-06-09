@@ -45,7 +45,7 @@
 #include "qtcad/QgDockWidget.h"
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QgView.h"
-#include "qtcad/QtConsole.h"
+#include "qtcad/QgConsole.h"
 #include "qtcad/QViewCtrl.h"
 
 #include "plugins/plugin.h"
@@ -58,7 +58,7 @@ class BRLCAD_MainWindow : public QMainWindow
     public:
 	BRLCAD_MainWindow(int canvas_type = 0, int quad_view = 0);
 
-	QtConsole *console;
+	QgConsole *console;
 
 	// Post-show methods for checking validity of OpenGL initialization
 	bool isValid3D();

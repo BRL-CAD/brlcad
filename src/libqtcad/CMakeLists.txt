@@ -58,7 +58,7 @@ set(qtcad_srcs
   QgUtil.cpp
   QgQuadView.cpp
   QgView.cpp
-  QtConsole.cpp
+  QgConsole.cpp
   QgConsoleListener.cpp
   QtSW.cpp
   )
@@ -89,7 +89,7 @@ set(qth_names
   QgTreeView
   QgQuadView
   QgView
-  QtConsole
+  QgConsole
   QgConsoleListener
   QtSW
   )

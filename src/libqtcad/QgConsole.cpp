@@ -37,12 +37,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
- * This widget is based off of ParaView's QtConsole
+ * This widget is based off of ParaView's QgConsole
  */
 
 #include "common.h"
 
-#include "qtcad/QtConsole.h"
+#include "qtcad/QgConsole.h"
 
 #include <QAbstractItemView>
 #include <QApplication>
@@ -131,9 +131,9 @@ GEDShellCompleter::updateCompletionModel(const QString& console_txt)
     const char **completions = NULL;
     struct bu_vls prefix = BU_VLS_INIT_ZERO;
     int completion_cnt = ged_geom_completions(&completions, &prefix, gedp->dbip, seed);
-    ((QtConsole *)(parent()))->split_slash = 0;
+    ((QgConsole *)(parent()))->split_slash = 0;
     if (!BU_STR_EQUAL(bu_vls_cstr(&prefix), seed))
-	((QtConsole *)(parent()))->split_slash = 1;
+	((QgConsole *)(parent()))->split_slash = 1;
     QStringList clist = QStringList();
     for (int i = 0; i < completion_cnt; i++) {
 	clist.append(QString(completions[i]));
@@ -153,13 +153,13 @@ GEDShellCompleter::updateCompletionModel(const QString& console_txt)
 }
 
 /////////////////////////////////////////////////////////////////////////
-// QtConsole::pqImplementation
+// QgConsole::pqImplementation
 
-class QtConsole::pqImplementation :
+class QgConsole::pqImplementation :
     public QPlainTextEdit
 {
     public:
-	pqImplementation(QtConsole& p) :
+	pqImplementation(QgConsole& p) :
 	    QPlainTextEdit(&p),
 	    Parent(p),
 	    InteractivePosition(documentEnd())
@@ -503,24 +503,24 @@ class QtConsole::pqImplementation :
 	    this->Parent.internalExecuteCommand(command);
 	}
 
-	void setCompleter(QtConsoleWidgetCompleter* completer)
+	void setCompleter(QgConsoleWidgetCompleter* completer)
 	{
 	    if (this->Completer) {
 		this->Completer->setWidget(nullptr);
-		QObject::disconnect(this->Completer, QOverload<const QString &>::of(&QCompleter::activated), &this->Parent, &QtConsole::insertCompletion);
+		QObject::disconnect(this->Completer, QOverload<const QString &>::of(&QCompleter::activated), &this->Parent, &QgConsole::insertCompletion);
 	    }
 	    this->Completer = completer;
 	    if (this->Completer) {
 		this->Completer->setWidget(this);
-		QObject::connect(this->Completer, QOverload<const QString &>::of(&QCompleter::activated), &this->Parent, &QtConsole::insertCompletion);
+		QObject::connect(this->Completer, QOverload<const QString &>::of(&QCompleter::activated), &this->Parent, &QgConsole::insertCompletion);
 	    }
 	}
 
 	/// Stores a back-reference to our owner
-	QtConsole& Parent;
+	QgConsole& Parent;
 
 	/// A custom completer
-	QPointer<QtConsoleWidgetCompleter> Completer;
+	QPointer<QgConsoleWidgetCompleter> Completer;
 
 	/** Stores the beginning of the area of interactive input, outside which
 	  changes can't be made to the text edit contents */
@@ -532,9 +532,9 @@ class QtConsole::pqImplementation :
 };
 
 /////////////////////////////////////////////////////////////////////////
-// QtConsole
+// QgConsole
 
-QtConsole::QtConsole(QWidget* Parent) :
+QgConsole::QgConsole(QWidget* Parent) :
     QWidget(Parent),
     Implementation(new pqImplementation(*this))
 {
@@ -544,47 +544,47 @@ QtConsole::QtConsole(QWidget* Parent) :
     l->setMargin(0);
 #endif
     l->addWidget(this->Implementation);
-    QObject::connect(this, &QtConsole::queued_log, this, &QtConsole::printStringBeforePrompt);
+    QObject::connect(this, &QgConsole::queued_log, this, &QgConsole::printStringBeforePrompt);
 }
 
 //-----------------------------------------------------------------------------
-QtConsole::~QtConsole()
+QgConsole::~QgConsole()
 {
     delete this->Implementation;
 }
 
 //-----------------------------------------------------------------------------
-QFont QtConsole::getFont()
+QFont QgConsole::getFont()
 {
     return this->Implementation->getFont();
 }
 
 //-----------------------------------------------------------------------------
-bool QtConsole::consolidateHistory(size_t start, size_t end)
+bool QgConsole::consolidateHistory(size_t start, size_t end)
 {
     return this->Implementation->consolidateHistory(start, end);
 }
 
 //-----------------------------------------------------------------------------
-size_t QtConsole::historyCount()
+size_t QgConsole::historyCount()
 {
     return this->Implementation->CommandHistory.count();
 }
 
 //-----------------------------------------------------------------------------
-std::string QtConsole::historyAt(size_t ind)
+std::string QgConsole::historyAt(size_t ind)
 {
     return this->Implementation->historyAt(ind);
 }
 
 //-----------------------------------------------------------------------------
-void QtConsole::setFont(const QFont& i_font)
+void QgConsole::setFont(const QFont& i_font)
 {
     this->Implementation->setFont(i_font);
 }
 
 //-----------------------------------------------------------------------------
-QPoint QtConsole::getCursorPosition()
+QPoint QgConsole::getCursorPosition()
 {
     QTextCursor tc = this->Implementation->textCursor();
 
@@ -592,17 +592,17 @@ QPoint QtConsole::getCursorPosition()
 }
 
 //-----------------------------------------------------------------------------
-void QtConsole::listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d)
+void QgConsole::listen(int fd, struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t c, void *d)
 {
     QConsoleListener *l = new QConsoleListener(fd, p, t, c, d);
     bu_log("Start listening: %d\n", (int)t);
-    QObject::connect(l, &QConsoleListener::newLine, this, &QtConsole::printStringBeforePrompt);
-    QObject::connect(l, &QConsoleListener::is_finished, this, &QtConsole::detach);
+    QObject::connect(l, &QConsoleListener::newLine, this, &QgConsole::printStringBeforePrompt);
+    QObject::connect(l, &QConsoleListener::is_finished, this, &QgConsole::detach);
     listeners[std::make_pair(p, t)] = l;
 }
-void QtConsole::detach(struct ged_subprocess *p, int t)
+void QgConsole::detach(struct ged_subprocess *p, int t)
 {
-    QTCAD_SLOT("QtConsole::detach", 1);
+    QTCAD_SLOT("QgConsole::detach", 1);
     std::map<std::pair<struct ged_subprocess *, int>, QConsoleListener *>::iterator l_it, si_it, so_it, e_it;
     l_it = listeners.find(std::make_pair(p,t));
 
@@ -640,15 +640,15 @@ void QtConsole::detach(struct ged_subprocess *p, int t)
 }
 
 //-----------------------------------------------------------------------------
-void QtConsole::setCompleter(QtConsoleWidgetCompleter* completer)
+void QgConsole::setCompleter(QgConsoleWidgetCompleter* completer)
 {
     this->Implementation->setCompleter(completer);
 }
 
 //-----------------------------------------------------------------------------
-void QtConsole::insertCompletion(const QString& completion)
+void QgConsole::insertCompletion(const QString& completion)
 {
-    QTCAD_SLOT("QtConsole::insertCompletion", 1);
+    QTCAD_SLOT("QgConsole::insertCompletion", 1);
     QTextCursor tc = this->Implementation->textCursor();
     tc.setPosition(tc.position(), QTextCursor::MoveAnchor);
     QString text = tc.selectedText();
@@ -673,9 +673,9 @@ void QtConsole::insertCompletion(const QString& completion)
 
 
 //-----------------------------------------------------------------------------
-void QtConsole::printString(const QString& Text)
+void QgConsole::printString(const QString& Text)
 {
-    QTCAD_SLOT("QtConsole::printString", 1);
+    QTCAD_SLOT("QgConsole::printString", 1);
     QTextCursor text_cursor = this->Implementation->textCursor();
     text_cursor.setPosition(this->Implementation->documentEnd());
     this->Implementation->setTextCursor(text_cursor);
@@ -699,11 +699,11 @@ void QtConsole::printString(const QString& Text)
 // QPlainTextEdit and the output another, so they could operate independently -
 // this approach will still introduce brief periods where the input prompt
 // disappears and reappears during updating.  However, that would
-// require restructuring QtConsole's widget design - for now this functions,
+// require restructuring QgConsole's widget design - for now this functions,
 // and if this becomes the production solution we can/should revisit it later.
-void QtConsole::printStringBeforePrompt(const QString& Text)
+void QgConsole::printStringBeforePrompt(const QString& Text)
 {
-    QTCAD_SLOT("QtConsole::printStringBeforePrompt", 1);
+    QTCAD_SLOT("QgConsole::printStringBeforePrompt", 1);
     logbuf.append(Text);
     int64_t ctime = bu_gettime();
     double elapsed = ((double)ctime - (double)log_timestamp)/1000000.0;
@@ -766,22 +766,22 @@ void QtConsole::printStringBeforePrompt(const QString& Text)
 
     // If there is anything queued up, we need to make sure we print it soon(ish)
     if (logbuf.length()) {
-	QTimer::singleShot(1000, this, &QtConsole::emit_queued);
+	QTimer::singleShot(1000, this, &QgConsole::emit_queued);
     }
 }
 
 //-----------------------------------------------------------------------------
-void QtConsole::printCommand(const QString& cmd)
+void QgConsole::printCommand(const QString& cmd)
 {
-    QTCAD_SLOT("QtConsole::printCommand", 1);
+    QTCAD_SLOT("QgConsole::printCommand", 1);
     this->Implementation->textCursor().insertText(cmd);
     this->Implementation->updateCommandBuffer();
 }
 
 //-----------------------------------------------------------------------------
-void QtConsole::prompt(const QString& text)
+void QgConsole::prompt(const QString& text)
 {
-    QTCAD_SLOT("QtConsole::prompt", 1);
+    QTCAD_SLOT("QgConsole::prompt", 1);
     QTextCursor text_cursor = this->Implementation->textCursor();
 
     // if the cursor is currently on a clean line, do nothing, otherwise we move
@@ -803,9 +803,9 @@ void QtConsole::prompt(const QString& text)
 }
 
 //-----------------------------------------------------------------------------
-void QtConsole::clear()
+void QgConsole::clear()
 {
-    QTCAD_SLOT("QtConsole::clear", 1);
+    QTCAD_SLOT("QgConsole::clear", 1);
     this->Implementation->clear();
 
     // For some reason the QCompleter tries to set the focus policy to
@@ -814,7 +814,7 @@ void QtConsole::clear()
 }
 
 //-----------------------------------------------------------------------------
-void QtConsole::internalExecuteCommand(const QString& Command)
+void QgConsole::internalExecuteCommand(const QString& Command)
 {
     emit this->executeCommand(Command);
 }
