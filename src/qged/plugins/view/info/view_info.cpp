@@ -21,7 +21,7 @@
  *
  */
 
-#include "qtcad/QToolPalette.h"
+#include "qtcad/QgToolPalette.h"
 #include "../../plugin.h"
 #include "CADViewModel.h"
 
@@ -34,8 +34,8 @@ view_info_tool_create()
     vview->setModel(vmodel);
     vview->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     vview->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vview);
-    QObject::connect(el, &QToolPaletteElement::element_view_update, vmodel, &CADViewModel::refresh);
+    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, vview);
+    QObject::connect(el, &QgToolPaletteElement::element_view_update, vmodel, &CADViewModel::refresh);
 
     return el;
 }

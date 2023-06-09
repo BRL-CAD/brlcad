@@ -1,4 +1,4 @@
-/*                Q T O O L P A L E T T E . C X X
+/*                Q G T O O L P A L E T T E . C X X
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QToolPalette.cxx
+/** @file QgToolPalette.cxx
  *
  * Qt Tool Palette implementation
  *
@@ -27,48 +27,48 @@
 
 #include <QScrollBar>
 #include <iostream>
-#include "qtcad/QToolPalette.h"
+#include "qtcad/QgToolPalette.h"
 
-QToolPaletteButton::QToolPaletteButton(QWidget *bparent, QIcon *iicon, QToolPaletteElement *eparent) : QPushButton(bparent)
+QgToolPaletteButton::QgToolPaletteButton(QWidget *bparent, QIcon *iicon, QgToolPaletteElement *eparent) : QPushButton(bparent)
 {
     setIcon(*iicon);
     element = eparent;
-    QObject::connect(this, &QToolPaletteButton::clicked, this, &QToolPaletteButton::select_element);
+    QObject::connect(this, &QgToolPaletteButton::clicked, this, &QgToolPaletteButton::select_element);
 }
 
 
 void
-QToolPaletteButton::select_element()
+QgToolPaletteButton::select_element()
 {
-   QTCAD_SLOT("QToolPaletteButton::select_element", 1);
+   QTCAD_SLOT("QgToolPaletteButton::select_element", 1);
    emit element_selected(element);
 }
 
 void
-QToolPaletteButton::setButtonElement(QIcon *iicon, QToolPaletteElement *n_element)
+QgToolPaletteButton::setButtonElement(QIcon *iicon, QgToolPaletteElement *n_element)
 {
     setIcon(*iicon);
     element = n_element;
 }
 
 
-QToolPaletteElement::QToolPaletteElement(QIcon *iicon, QWidget *control)
+QgToolPaletteElement::QgToolPaletteElement(QIcon *iicon, QWidget *control)
 {
-    button = new QToolPaletteButton(this, iicon, this);
+    button = new QgToolPaletteButton(this, iicon, this);
     button->setCheckable(true);
     controls = control;
     controls->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 }
 
-QToolPaletteElement::~QToolPaletteElement()
+QgToolPaletteElement::~QgToolPaletteElement()
 {
     delete button;
 }
 
 #if 0
 bool
-QToolPaletteElement::eventFilter(QObject *o, QEvent *e)
+QgToolPaletteElement::eventFilter(QObject *o, QEvent *e)
 {
     if (!o || !e)
 	return false;
@@ -80,40 +80,40 @@ QToolPaletteElement::eventFilter(QObject *o, QEvent *e)
 #endif
 
 void
-QToolPaletteElement::setButton(QToolPaletteButton *n_button)
+QgToolPaletteElement::setButton(QgToolPaletteButton *n_button)
 {
     button = n_button;
 }
 
 void
-QToolPaletteElement::setControls(QWidget *n_control)
+QgToolPaletteElement::setControls(QWidget *n_control)
 {
     controls = n_control;
 }
 
 void
-QToolPaletteElement::element_view_changed(unsigned long long flags)
+QgToolPaletteElement::element_view_changed(unsigned long long flags)
 {
-    QTCAD_SLOT("QToolPaletteElement::element_view_changed", 1);
+    QTCAD_SLOT("QgToolPaletteElement::element_view_changed", 1);
     emit view_changed(flags);
 }
 
 void
-QToolPaletteElement::do_view_update(unsigned long long flags)
+QgToolPaletteElement::do_view_update(unsigned long long flags)
 {
-    QTCAD_SLOT("QToolPaletteElement::do_view_update", 1);
+    QTCAD_SLOT("QgToolPaletteElement::do_view_update", 1);
     // TODO - do any element level updating (button highlighting?)
     emit element_view_update(flags);
 }
 
 void
-QToolPaletteElement::do_element_unhide(void *)
+QgToolPaletteElement::do_element_unhide(void *)
 {
-    QTCAD_SLOT("QToolPaletteElement::do_element_unhide", 1);
+    QTCAD_SLOT("QgToolPaletteElement::do_element_unhide", 1);
     emit element_unhide();
 }
 
-QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
+QgToolPalette::QgToolPalette(QWidget *pparent) : QWidget(pparent)
 {
     always_selected = 1;
     icon_width = 30;
@@ -144,14 +144,14 @@ QToolPalette::QToolPalette(QWidget *pparent) : QWidget(pparent)
     this->setLayout(mlayout);
 }
 
-QToolPalette::~QToolPalette()
+QgToolPalette::~QgToolPalette()
 {
 }
 
 void
-QToolPalette::button_layout_resize()
+QgToolPalette::button_layout_resize()
 {
-    QTCAD_SLOT("QToolPalette::button_layout_resize", 1);
+    QTCAD_SLOT("QgToolPalette::button_layout_resize", 1);
     div_t layout_dim = div(button_container->size().width()-1, icon_width);
     div_t layout_grid = div((int)elements.count(), (int)layout_dim.quot);
     if (layout_grid.rem > 0) {
@@ -164,17 +164,17 @@ QToolPalette::button_layout_resize()
 }
 
 void
-QToolPalette::resizeEvent(QResizeEvent *pevent)
+QgToolPalette::resizeEvent(QResizeEvent *pevent)
 {
     QWidget::resizeEvent(pevent);
     button_layout_resize();
 }
 
 void
-QToolPalette::setIconWidth(int iwidth)
+QgToolPalette::setIconWidth(int iwidth)
 {
     icon_width = iwidth;
-    foreach(QToolPaletteElement *el, elements) {
+    foreach(QgToolPaletteElement *el, elements) {
 	el->button->setMinimumWidth(icon_height);
 	el->button->setMaximumWidth(icon_height);
     }
@@ -182,10 +182,10 @@ QToolPalette::setIconWidth(int iwidth)
 }
 
 void
-QToolPalette::setIconHeight(int iheight)
+QgToolPalette::setIconHeight(int iheight)
 {
     icon_height = iheight;
-    foreach(QToolPaletteElement *el, elements) {
+    foreach(QgToolPaletteElement *el, elements) {
 	el->button->setMinimumHeight(icon_height);
 	el->button->setMaximumHeight(icon_height);
     }
@@ -194,7 +194,7 @@ QToolPalette::setIconHeight(int iheight)
 
 
 void
-QToolPalette::setAlwaysSelected(int toggle)
+QgToolPalette::setAlwaysSelected(int toggle)
 {
     always_selected = toggle;
     if (always_selected && selected == NULL) {
@@ -203,22 +203,22 @@ QToolPalette::setAlwaysSelected(int toggle)
 }
 
 void
-QToolPalette::do_view_update(unsigned long long flags)
+QgToolPalette::do_view_update(unsigned long long flags)
 {
-    QTCAD_SLOT("QToolPalette::do_element_unhide", 1);
+    QTCAD_SLOT("QgToolPalette::do_element_unhide", 1);
     emit palette_view_update(flags);
 }
 
 
 void
-QToolPalette::palette_do_view_changed(unsigned long long flags)
+QgToolPalette::palette_do_view_changed(unsigned long long flags)
 {
-    QTCAD_SLOT("QToolPalette::palette_do_view_changed", 1);
+    QTCAD_SLOT("QgToolPalette::palette_do_view_changed", 1);
     emit view_changed(flags);
 }
 
 void
-QToolPalette::addElement(QToolPaletteElement *element)
+QgToolPalette::addElement(QgToolPaletteElement *element)
 {
     element->button->setMinimumWidth(icon_width);
     element->button->setMaximumWidth(icon_width);
@@ -227,10 +227,10 @@ QToolPalette::addElement(QToolPaletteElement *element)
     button_layout->addWidget(element->button);
     elements.insert(element);
 
-    QObject::connect(element->button, &QToolPaletteButton::element_selected, this, &QToolPalette::palette_displayElement);
+    QObject::connect(element->button, &QgToolPaletteButton::element_selected, this, &QgToolPalette::palette_displayElement);
 
-    QObject::connect(this, &QToolPalette::palette_view_update, element, &QToolPaletteElement::do_view_update);
-    QObject::connect(element, &QToolPaletteElement::view_changed, this, &QToolPalette::palette_do_view_changed);
+    QObject::connect(this, &QgToolPalette::palette_view_update, element, &QgToolPaletteElement::do_view_update);
+    QObject::connect(element, &QgToolPaletteElement::view_changed, this, &QgToolPalette::palette_do_view_changed);
 
 
     updateGeometry();
@@ -241,7 +241,7 @@ QToolPalette::addElement(QToolPaletteElement *element)
 }
 
 void
-QToolPalette::deleteElement(QToolPaletteElement *element)
+QgToolPalette::deleteElement(QgToolPaletteElement *element)
 {
     elements.remove(element);
     if (selected == element) {
@@ -253,9 +253,9 @@ QToolPalette::deleteElement(QToolPaletteElement *element)
 }
 
 void
-QToolPalette::palette_displayElement(QToolPaletteElement *element)
+QgToolPalette::palette_displayElement(QgToolPaletteElement *element)
 {
-    QTCAD_SLOT("QToolPalette::palette_displayElement", 1);
+    QTCAD_SLOT("QgToolPalette::palette_displayElement", 1);
     if (element) {
 	if (element == selected) {
 	    if (!always_selected) {
@@ -279,7 +279,7 @@ QToolPalette::palette_displayElement(QToolPaletteElement *element)
 	    element->do_element_unhide(NULL);
 	    control_container->verticalScrollBar()->setSliderPosition(element->scroll_pos);
 	    selected = element;
-	    foreach(QToolPaletteElement *el, elements) {
+	    foreach(QgToolPaletteElement *el, elements) {
 		if (el != selected) {
 		    el->button->setDown(false);
 		    el->button->setStyleSheet("");

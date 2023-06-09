@@ -46,7 +46,7 @@
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QgView.h"
 #include "qtcad/QgConsole.h"
-#include "qtcad/QViewCtrl.h"
+#include "qtcad/QgViewCtrl.h"
 
 #include "plugins/plugin.h"
 #include "attributes.h"
@@ -114,7 +114,7 @@ class BRLCAD_MainWindow : public QMainWindow
 	QWidget *cw = NULL;
 
 	// Central widgets
-	QViewCtrl *vcw = NULL;
+	QgViewCtrl *vcw = NULL;
 	QgQuadView *c4 = NULL;
 	QAction *cad_single_view = NULL;
 	QAction *cad_quad_view = NULL;

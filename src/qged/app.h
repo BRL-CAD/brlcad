@@ -93,7 +93,7 @@ class CADApp : public QApplication
        	/* Utility slots */
     public slots:
 	void run_qcmd(const QString &command);
-	void element_selected(QToolPaletteElement *el);
+	void element_selected(QgToolPaletteElement *el);
 
     public:
 	BRLCAD_MainWindow *w = NULL;

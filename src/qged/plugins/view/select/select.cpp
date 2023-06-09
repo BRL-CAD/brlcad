@@ -24,7 +24,7 @@
 #include <QGroupBox>
 #include <QCheckBox>
 #include <QtGlobal>
-#include "qtcad/QToolPalette.h"
+#include "qtcad/QgToolPalette.h"
 #include "../../plugin.h"
 #include "./CADViewSelector.h"
 
@@ -35,10 +35,10 @@ view_select_tool_create()
 
     CADViewSelector *er = new CADViewSelector();
 
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, er);
+    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, er);
 
-    QObject::connect(er, &CADViewSelector::view_changed, el, &QToolPaletteElement::element_view_changed);
-    QObject::connect(el, &QToolPaletteElement::element_view_update, er, &CADViewSelector::do_view_update);
+    QObject::connect(er, &CADViewSelector::view_changed, el, &QgToolPaletteElement::element_view_changed);
+    QObject::connect(el, &QgToolPaletteElement::element_view_update, er, &CADViewSelector::do_view_update);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.

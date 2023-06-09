@@ -25,7 +25,7 @@
 
 #include <QTimer>
 #include <QMessageBox>
-#include "qtcad/QViewCtrl.h"
+#include "qtcad/QgViewCtrl.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "main_window.h"
 #include "app.h"
@@ -100,7 +100,7 @@ BRLCAD_MainWindow::CreateWidgets(int canvas_type)
     c4->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     // Define a graphical toolbar with control widgets
-    vcw = new QViewCtrl(cw, gedp);
+    vcw = new QgViewCtrl(cw, gedp);
     vcw->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     // Having set up the central widget's components, we now define dockable
@@ -233,10 +233,10 @@ BRLCAD_MainWindow::ConnectWidgets()
 
 
     // Graphical toolbar
-    QObject::connect(vcw, &QViewCtrl::view_changed, ap, &CADApp::do_view_changed);
-    QObject::connect(ap, &CADApp::view_update, vcw, &QViewCtrl::do_view_update);
+    QObject::connect(vcw, &QgViewCtrl::view_changed, ap, &CADApp::do_view_changed);
+    QObject::connect(ap, &CADApp::view_update, vcw, &QgViewCtrl::do_view_update);
     // Make the connection so the view control can change the mouse mode of the Quad View
-    QObject::connect(vcw, &QViewCtrl::lmouse_mode, c4, &QgQuadView::set_lmouse_move_default);
+    QObject::connect(vcw, &QgViewCtrl::lmouse_mode, c4, &QgQuadView::set_lmouse_move_default);
 
     // The makeCurrent connections enforce an either/or paradigm
     // for the view and object editing panels.
@@ -253,16 +253,16 @@ BRLCAD_MainWindow::ConnectWidgets()
     // procedure by making vc the current palette.)
     // TODO - need to figure out how this should (or shouldn't) be rolled into
     // do_view_changed
-    QObject::connect(vc->tpalette, &QToolPalette::palette_element_selected, ap, &CADApp::element_selected);
-    QObject::connect(oc->tpalette, &QToolPalette::palette_element_selected, ap, &CADApp::element_selected);
+    QObject::connect(vc->tpalette, &QgToolPalette::palette_element_selected, ap, &CADApp::element_selected);
+    QObject::connect(oc->tpalette, &QgToolPalette::palette_element_selected, ap, &CADApp::element_selected);
 
     // The tools in the view and edit panels may have consequences for the view.
     // Connect to the palette signals and slots (the individual tool connections
     // are handled by the palette container.)
-    QObject::connect(ap, &CADApp::view_update, vc->tpalette, &QToolPalette::do_view_update);
-    QObject::connect(vc->tpalette, &QToolPalette::view_changed, ap, &CADApp::do_view_changed);
-    QObject::connect(ap, &CADApp::view_update, oc->tpalette, &QToolPalette::do_view_update);
-    QObject::connect(oc->tpalette, &QToolPalette::view_changed, ap, &CADApp::do_view_changed);
+    QObject::connect(ap, &CADApp::view_update, vc->tpalette, &QgToolPalette::do_view_update);
+    QObject::connect(vc->tpalette, &QgToolPalette::view_changed, ap, &CADApp::do_view_changed);
+    QObject::connect(ap, &CADApp::view_update, oc->tpalette, &QgToolPalette::do_view_update);
+    QObject::connect(oc->tpalette, &QgToolPalette::view_changed, ap, &CADApp::do_view_changed);
 
     // Console
     connect(console_dock, &QgDockWidget::topLevelChanged, console_dock, &QgDockWidget::toWindow);

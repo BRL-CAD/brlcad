@@ -1,26 +1,26 @@
 set(qtcad_headers
-  QToolPalette.h
-  QViewCtrl.h
   QgAccordion.h
   QgAppExecDialog.h
   QgColorRGB.h
+  QgConsole.h
+  QgConsoleListener.h
   QgDockWidget.h
   QgEdit.h
   QgFlowLayout.h
+  QgGL.h
   QgKeyVal.h
   QgMeasureFilter.h
   QgModel.h
   QgPolyFilter.h
+  QgQuadView.h
+  QgSW.h
   QgSelectFilter.h
+  QgToolPalette.h
   QgTreeSelectionModel.h
   QgTreeView.h
   QgUtil.h
-  QgQuadView.h
   QgView.h
-  QgConsole.h
-  QgConsoleListener.h
-  QgGL.h
-  QgSW.h
+  QgViewCtrl.h
   SignalFlags.h
   defines.h
   )

@@ -1,4 +1,4 @@
-/*                      Q V I E W C T R L . C P P
+/*                      Q G V I E W C T R L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2022-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QViewCtrl.cpp
+/** @file QgViewCtrl.cpp
  *
  * Qt BRL-CAD View Control button panel implementation
  *
@@ -26,11 +26,11 @@
 #include "common.h"
 
 #include "bu/env.h"
-#include "qtcad/QViewCtrl.h"
+#include "qtcad/QgViewCtrl.h"
 #include "qtcad/SignalFlags.h"
 
 
-QViewCtrl::QViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
+QgViewCtrl::QgViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
 {
     gedp = pgedp;
 
@@ -48,52 +48,52 @@ QViewCtrl::QViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
     fb_clear = addAction(QIcon(QPixmap(":images/view/framebuffer_clear.png")), "Clear Framebuffer");
 
     // Connect buttons to standard actions
-    connect(sca, &QAction::triggered, this, &QViewCtrl::sca_mode);
-    connect(rot, &QAction::triggered, this, &QViewCtrl::rot_mode);
-    connect(tra, &QAction::triggered, this, &QViewCtrl::tra_mode);
-    connect(center, &QAction::triggered, this, &QViewCtrl::center_mode);
-    connect(raytrace, &QAction::triggered, this, &QViewCtrl::raytrace_cmd);
-    connect(fb_clear, &QAction::triggered, this, &QViewCtrl::fbclear_cmd);
-    connect(fb_mode, &QAction::triggered, this, &QViewCtrl::fb_mode_cmd);
+    connect(sca, &QAction::triggered, this, &QgViewCtrl::sca_mode);
+    connect(rot, &QAction::triggered, this, &QgViewCtrl::rot_mode);
+    connect(tra, &QAction::triggered, this, &QgViewCtrl::tra_mode);
+    connect(center, &QAction::triggered, this, &QgViewCtrl::center_mode);
+    connect(raytrace, &QAction::triggered, this, &QgViewCtrl::raytrace_cmd);
+    connect(fb_clear, &QAction::triggered, this, &QgViewCtrl::fbclear_cmd);
+    connect(fb_mode, &QAction::triggered, this, &QgViewCtrl::fb_mode_cmd);
 }
 
-QViewCtrl::~QViewCtrl()
+QgViewCtrl::~QgViewCtrl()
 {
 }
 
 void
-QViewCtrl::sca_mode()
+QgViewCtrl::sca_mode()
 {
-    QTCAD_SLOT("QViewCtrl::sca_mode", 1);
+    QTCAD_SLOT("QgViewCtrl::sca_mode", 1);
     emit lmouse_mode(BV_SCALE);
 }
 
 void
-QViewCtrl::rot_mode()
+QgViewCtrl::rot_mode()
 {
-    QTCAD_SLOT("QViewCtrl::rot_mode", 1);
+    QTCAD_SLOT("QgViewCtrl::rot_mode", 1);
     emit lmouse_mode(BV_ROT);
 }
 
 void
-QViewCtrl::tra_mode()
+QgViewCtrl::tra_mode()
 {
-    QTCAD_SLOT("QViewCtrl::tra_mode", 1);
+    QTCAD_SLOT("QgViewCtrl::tra_mode", 1);
     emit lmouse_mode(BV_TRANS);
 }
 
 void
-QViewCtrl::center_mode()
+QgViewCtrl::center_mode()
 {
-    QTCAD_SLOT("QViewCtrl::center_mode", 1);
+    QTCAD_SLOT("QgViewCtrl::center_mode", 1);
     emit lmouse_mode(BV_CENTER);
 }
 
 
 void
-QViewCtrl::fbclear_cmd()
+QgViewCtrl::fbclear_cmd()
 {
-    QTCAD_SLOT("QViewCtrl::fbclear_cmd", 1);
+    QTCAD_SLOT("QgViewCtrl::fbclear_cmd", 1);
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     const char *av[2] = {NULL};
     av[0] = "fbclear";
@@ -102,9 +102,9 @@ QViewCtrl::fbclear_cmd()
 }
 
 void
-QViewCtrl::fb_mode_cmd()
+QgViewCtrl::fb_mode_cmd()
 {
-    QTCAD_SLOT("QViewCtrl::fb_mode_cmd", 1);
+    QTCAD_SLOT("QgViewCtrl::fb_mode_cmd", 1);
     if (!gedp->ged_gvp)
 	return;
     struct bview *v = gedp->ged_gvp;
@@ -125,9 +125,9 @@ QViewCtrl::fb_mode_cmd()
 }
 
 void
-QViewCtrl::do_view_update(unsigned long long flags)
+QgViewCtrl::do_view_update(unsigned long long flags)
 {
-    QTCAD_SLOT("QViewCtrl::do_view_update", 1);
+    QTCAD_SLOT("QgViewCtrl::do_view_update", 1);
     if (!gedp->ged_gvp || !flags)
 	return;
     struct bview *v = gedp->ged_gvp;
@@ -148,20 +148,20 @@ QViewCtrl::do_view_update(unsigned long long flags)
 
 void rt_cmd_start(int pid, void *ctx)
 {
-    QViewCtrl *vctrl = (QViewCtrl *)ctx;
+    QgViewCtrl *vctrl = (QgViewCtrl *)ctx;
     vctrl->raytrace_start(pid);
 }
 
 void rt_cmd_done(int pid, void *ctx)
 {
-    QViewCtrl *vctrl = (QViewCtrl *)ctx;
+    QgViewCtrl *vctrl = (QgViewCtrl *)ctx;
     vctrl->raytrace_done(pid);
 }
 
 void
-QViewCtrl::raytrace_cmd()
+QgViewCtrl::raytrace_cmd()
 {
-    QTCAD_SLOT("QViewCtrl::raytrace_cmd", 1);
+    QTCAD_SLOT("QgViewCtrl::raytrace_cmd", 1);
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     const char *av[4] = {NULL};
     struct bu_vls pid_str = BU_VLS_INIT_ZERO;
@@ -193,18 +193,18 @@ cmd_cleanup:
 }
 
 void
-QViewCtrl::raytrace_start(int rpid)
+QgViewCtrl::raytrace_start(int rpid)
 {
-    QTCAD_SLOT("QViewCtrl::raytrace_start", 1);
+    QTCAD_SLOT("QgViewCtrl::raytrace_start", 1);
     raytrace->setIcon(QIcon(QPixmap(":images/view/raytrace_abort.png")));
     raytrace_running = true;
     pid = rpid;
 }
 
 void
-QViewCtrl::raytrace_done(int)
+QgViewCtrl::raytrace_done(int)
 {
-    QTCAD_SLOT("QViewCtrl::raytrace_done", 1);
+    QTCAD_SLOT("QgViewCtrl::raytrace_done", 1);
     raytrace->setIcon(QIcon(QPixmap(":images/view/raytrace.png")));
     raytrace_running = false;
     pid = -1;

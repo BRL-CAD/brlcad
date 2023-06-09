@@ -557,7 +557,7 @@ CADApp::run_qcmd(const QString &command)
 }
 
 void
-CADApp::element_selected(QToolPaletteElement *el)
+CADApp::element_selected(QgToolPaletteElement *el)
 {
     QTCAD_SLOT("CADApp::element_selected", 1);
     if (!el->controls->isVisible()) {

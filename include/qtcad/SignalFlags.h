@@ -80,7 +80,7 @@
 
 #include "common.h"
 
-#ifndef SIGNAL_FLAGS_H
+#ifndef QTCAD_SIGNAL_FLAGS_H
 
 #define QTCAD_VIEW_REFRESH  0x00000001  // Potential camera updates, no structural changes
 #define QTCAD_VIEW_DRAWN    0x00000002  // Used when what is drawn in the scene changes
@@ -88,7 +88,7 @@
 #define QTCAD_VIEW_MODE     0x00000008  // Used when mode-aware highlighting or drawing changes
 #define QTCAD_VIEW_DB       0x00000010  // Used when .g database content changes
 
-#endif // SIGNAL_FLAGS_H
+#endif // QTCAD_SIGNAL_FLAGS_H
 /*
  * Local Variables:
  * tab-width: 8

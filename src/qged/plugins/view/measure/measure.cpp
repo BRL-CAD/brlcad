@@ -23,7 +23,7 @@
 
 #include <QGroupBox>
 #include <QCheckBox>
-#include "qtcad/QToolPalette.h"
+#include "qtcad/QgToolPalette.h"
 #include "../../plugin.h"
 #include "./CADViewMeasure.h"
 
@@ -34,9 +34,9 @@ view_measure_tool_create()
 
     CADViewMeasure *er = new CADViewMeasure();
 
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, er);
+    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, er);
 
-    QObject::connect(er, &CADViewMeasure::view_updated, el, &QToolPaletteElement::element_view_changed);
+    QObject::connect(er, &CADViewMeasure::view_updated, el, &QgToolPaletteElement::element_view_changed);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.

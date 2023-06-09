@@ -26,7 +26,7 @@
 #ifndef CADPALETTES_H
 #define CADPALETTES_H
 #include <iostream>
-#include "qtcad/QToolPalette.h"
+#include "qtcad/QgToolPalette.h"
 
 class CADPalette : public QWidget
 {
@@ -36,9 +36,9 @@ class CADPalette : public QWidget
 	CADPalette(int mode = 0, QWidget *pparent = 0);
 	~CADPalette();
 
-	void addTool(QToolPaletteElement *e);
+	void addTool(QgToolPaletteElement *e);
 
-	QToolPalette *tpalette;
+	QgToolPalette *tpalette;
 
     signals:
 	void current(QWidget *);

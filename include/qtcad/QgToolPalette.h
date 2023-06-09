@@ -1,4 +1,4 @@
-/*                  Q T O O L P A L E T T E . H
+/*                  Q G T O O L P A L E T T E . H
  * BRL-CAD
  *
  * Copyright (c) 2020-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QToolPalette.h
+/** @file QgToolPalette.h
  *
  * Signals/slots in Palettes and Elements
  *
@@ -25,17 +25,17 @@
  * a tiered system of signals and slots which are connected to by
  * various aspects of this system:
  *
- * The QToolPalette widget is what is directly added to application
+ * The QgToolPalette widget is what is directly added to application
  * widget hierarchies, and it is that widget's signals and slots which
  * are connected to the top level view updating signal/slot system as
  * articulated in SignalFlags.h.  Individual elements (i.e.tools) are
- * connected to QToolPalette, and the implementation specific "guts"
+ * connected to QgToolPalette, and the implementation specific "guts"
  * of the various tools connect to their parent element.
  *
  */
 
-#ifndef QTOOLPALETTE_H
-#define QTOOLPALETTE_H
+#ifndef QGTOOLPALETTE_H
+#define QGTOOLPALETTE_H
 
 #include "common.h"
 
@@ -50,38 +50,38 @@
 #include "qtcad/QgFlowLayout.h"
 #include "qtcad/SignalFlags.h"
 
-class QTCAD_EXPORT QToolPaletteElement;
+class QTCAD_EXPORT QgToolPaletteElement;
 
-class QTCAD_EXPORT QToolPaletteButton: public QPushButton
+class QTCAD_EXPORT QgToolPaletteButton: public QPushButton
 {
     Q_OBJECT
 
     public:
-	QToolPaletteButton(QWidget *bparent, QIcon *iicon = 0, QToolPaletteElement *eparent = 0);
-	~QToolPaletteButton(){};
+	QgToolPaletteButton(QWidget *bparent, QIcon *iicon = 0, QgToolPaletteElement *eparent = 0);
+	~QgToolPaletteButton(){};
 
-	void setButtonElement(QIcon *iicon, QToolPaletteElement *n_element);
+	void setButtonElement(QIcon *iicon, QgToolPaletteElement *n_element);
 
     public slots:
 	void select_element();
 
     signals:
-	void element_selected(QToolPaletteElement *);
+	void element_selected(QgToolPaletteElement *);
 
     private:
-	QToolPaletteElement *element;
+	QgToolPaletteElement *element;
 };
 
 
-class QTCAD_EXPORT QToolPaletteElement: public QWidget
+class QTCAD_EXPORT QgToolPaletteElement: public QWidget
 {
     Q_OBJECT
 
     public:
-	QToolPaletteElement(QIcon *iicon = 0, QWidget *control = 0);
-	~QToolPaletteElement();
+	QgToolPaletteElement(QIcon *iicon = 0, QWidget *control = 0);
+	~QgToolPaletteElement();
 
-	void setButton(QToolPaletteButton *n_button);
+	void setButton(QgToolPaletteButton *n_button);
 	void setControls(QWidget *n_controls);
 
     signals:
@@ -126,7 +126,7 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 	void element_view_changed(unsigned long long);
 
     public:
-	QToolPaletteButton *button;
+	QgToolPaletteButton *button;
 	QWidget *controls;
 	int scroll_pos = 0;
 
@@ -134,22 +134,22 @@ class QTCAD_EXPORT QToolPaletteElement: public QWidget
 
 };
 
-class QTCAD_EXPORT QToolPalette: public QWidget
+class QTCAD_EXPORT QgToolPalette: public QWidget
 {
     Q_OBJECT
 
     public:
-	QToolPalette(QWidget *pparent = 0);
-	~QToolPalette();
-	void addElement(QToolPaletteElement *element);
-	void deleteElement(QToolPaletteElement *element);
+	QgToolPalette(QWidget *pparent = 0);
+	~QgToolPalette();
+	void addElement(QgToolPaletteElement *element);
+	void deleteElement(QgToolPaletteElement *element);
 	void setIconWidth(int iwidth);
 	void setIconHeight(int iheight);
 	void setAlwaysSelected(int iheight);  // If 0 can disable all tools, if 1 some tool is always selected
 
 	void resizeEvent(QResizeEvent *pevent);
 
-	QToolPaletteElement *selected;
+	QgToolPaletteElement *selected;
 	QString selected_style = QString("");
 
 	QVBoxLayout *mlayout;
@@ -164,7 +164,7 @@ class QTCAD_EXPORT QToolPalette: public QWidget
 
 	// INTERNAL, for elements:
 	// Emitted when an element is selected.
-	void palette_element_selected(QToolPaletteElement *);
+	void palette_element_selected(QgToolPaletteElement *);
 
 	// INTERNAL, for elements:
 	// Emitted when the palette gets word of an app level view change.
@@ -190,7 +190,7 @@ class QTCAD_EXPORT QToolPalette: public QWidget
 	// we're selecting  instances in the tree, but we don't want to kick in
 	// the event filters and create the edit wireframes until one of the buttons
 	// is actually selected.
-	void palette_displayElement(QToolPaletteElement *);
+	void palette_displayElement(QgToolPaletteElement *);
 	void button_layout_resize();
 	void palette_do_view_changed(unsigned long long);
 
@@ -202,10 +202,10 @@ class QTCAD_EXPORT QToolPalette: public QWidget
 	QWidget *button_container;
 	QgFlowLayout *button_layout;
 	QScrollArea *control_container;
-	QSet<QToolPaletteElement *> elements;
+	QSet<QgToolPaletteElement *> elements;
 };
 
-#endif //QTOOLPALETTE_H
+#endif //QGTOOLPALETTE_H
 
 /*
  * Local Variables:

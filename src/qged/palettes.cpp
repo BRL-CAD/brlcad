@@ -40,7 +40,7 @@ CADPalette::CADPalette(int mode, QWidget *pparent)
     QVBoxLayout *mlayout = new QVBoxLayout();
     mlayout->setSpacing(0);
     mlayout->setContentsMargins(0,0,0,0);
-    tpalette = new QToolPalette(this);
+    tpalette = new QgToolPalette(this);
     tpalette->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     mlayout->addWidget(tpalette);
 
@@ -55,7 +55,7 @@ CADPalette::CADPalette(int mode, QWidget *pparent)
     struct bu_vls plugin_pattern = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&plugin_pattern, "*%s", QGED_PLUGIN_SUFFIX);
     size_t nfiles = bu_file_list(ppath, bu_vls_cstr(&plugin_pattern), &filenames);
-    std::map<int, std::set<QToolPaletteElement *>> c_map;
+    std::map<int, std::set<QgToolPaletteElement *>> c_map;
     for (size_t i = 0; i < nfiles; i++) {
 	char pfile[MAXPATHLEN] = {0};
 	bu_dir(pfile, MAXPATHLEN, BU_DIR_LIBEXEC, "qged", filenames[i], NULL);
@@ -110,7 +110,7 @@ CADPalette::CADPalette(int mode, QWidget *pparent)
 	    if (ptype == (uint32_t)mode) {
 		for (int c = 0; c < plugin->cmd_cnt; c++) {
 		    const struct qged_tool *cmd = cmds[c];
-		    QToolPaletteElement *el = (QToolPaletteElement *)(*cmd->i->tool_create)();
+		    QgToolPaletteElement *el = (QgToolPaletteElement *)(*cmd->i->tool_create)();
 		    c_map[cmd->palette_priority].insert(el);
 		}
 	    }
@@ -119,11 +119,11 @@ CADPalette::CADPalette(int mode, QWidget *pparent)
     bu_argv_free(nfiles, filenames);
     bu_vls_free(&plugin_pattern);
 
-    std::map<int, std::set<QToolPaletteElement *>>::iterator e_it;
+    std::map<int, std::set<QgToolPaletteElement *>>::iterator e_it;
     for (e_it = c_map.begin(); e_it != c_map.end(); e_it++) {
-	std::set<QToolPaletteElement *>::iterator el_it;
+	std::set<QgToolPaletteElement *>::iterator el_it;
 	for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
-	    QToolPaletteElement *el = *el_it;
+	    QgToolPaletteElement *el = *el_it;
 	    addTool(el);
 	}
     }
@@ -133,13 +133,13 @@ CADPalette::CADPalette(int mode, QWidget *pparent)
 	QIcon *obj_icon = new QIcon();
 	QString obj_label("primitive controls ");
 	QPushButton *obj_control = new QPushButton(obj_label);
-	QToolPaletteElement *el = new QToolPaletteElement(obj_icon, obj_control);
+	QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, obj_control);
 	addTool(el);
     }
 }
 
 void
-CADPalette::addTool(QToolPaletteElement *e)
+CADPalette::addTool(QgToolPaletteElement *e)
 {
     tpalette->addElement(e);
 }

@@ -23,7 +23,7 @@
 
 #include <QGroupBox>
 #include <QCheckBox>
-#include "qtcad/QToolPalette.h"
+#include "qtcad/QgToolPalette.h"
 #include "../../plugin.h"
 #include "CADViewSettings.h"
 
@@ -34,10 +34,10 @@ view_settings_tool_create()
 
     CADViewSettings *vs = new CADViewSettings();
 
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, vs);
+    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, vs);
 
-    QObject::connect(el, &QToolPaletteElement::element_view_update, vs, &CADViewSettings::checkbox_refresh);
-    QObject::connect(vs, &CADViewSettings::settings_changed, el, &QToolPaletteElement::element_view_changed);
+    QObject::connect(el, &QgToolPaletteElement::element_view_update, vs, &CADViewSettings::checkbox_refresh);
+    QObject::connect(vs, &CADViewSettings::settings_changed, el, &QgToolPaletteElement::element_view_changed);
 
     return el;
 }

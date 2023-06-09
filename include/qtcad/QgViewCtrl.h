@@ -1,4 +1,4 @@
-/*                        Q V I E W C T R L . H
+/*                        Q G V I E W C T R L . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QViewCtrl.h
+/** @file QgViewCtrl.h
  *
  * Array of buttons for toggling between various view control modes.
  * Provides only the buttons and the signals - must be connected up
  * to an actual view widget to impact a view
  */
 
-#ifndef QVIEWCTRL_H
-#define QVIEWCTRL_H
+#ifndef QGVIEWCTRL_H
+#define QGVIEWCTRL_H
 
 #include "common.h"
 
@@ -42,13 +42,13 @@
 // instances under the mouse click, adding and removing objects from
 // selection sets, and creating an initial set with a rectangle selection
 
-class QTCAD_EXPORT QViewCtrl : public QToolBar
+class QTCAD_EXPORT QgViewCtrl : public QToolBar
 {
     Q_OBJECT
 
     public:
-        QViewCtrl(QWidget *p, struct ged *pgedp);
-        ~QViewCtrl();
+        QgViewCtrl(QWidget *p, struct ged *pgedp);
+        ~QgViewCtrl();
 
 	struct ged *gedp = NULL;
 	int icon_size = 25;
@@ -97,7 +97,7 @@ class QTCAD_EXPORT QViewCtrl : public QToolBar
 };
 
 
-#endif //QVIEWCTRL_H
+#endif //QGVIEWCTRL_H
 
 // Local Variables:
 // tab-width: 8
