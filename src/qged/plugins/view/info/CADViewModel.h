@@ -26,7 +26,7 @@
 #ifndef CADVIEWMODEL_H
 #define CADVIEWMODEL_H
 
-#include "qtcad/QKeyVal.h"
+#include "qtcad/QgKeyVal.h"
 
 #ifndef Q_MOC_RUN
 #include "bu/avs.h"
@@ -35,7 +35,7 @@
 #include "ged.h"
 #endif
 
-class CADViewModel : public QKeyValModel
+class CADViewModel : public QgKeyValModel
 {
     Q_OBJECT
 

@@ -44,7 +44,7 @@ set(qtcad_srcs
   QgAccordion.cpp
   QgColorRGB.cpp
   QgFlowLayout.cpp
-  QKeyVal.cpp
+  QgKeyVal.cpp
   QMeasureFilter.cpp
   QPolyFilter.cpp
   QSelectFilter.cpp
@@ -76,7 +76,7 @@ set(QTCAD_HDR_DIR ${BRLCAD_SOURCE_DIR}/include/qtcad)
 set(qth_names
   QgAccordion
   QgColorRGB
-  QKeyVal
+  QgKeyVal
   QMeasureFilter
   QPolyFilter
   QSelectFilter

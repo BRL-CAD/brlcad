@@ -35,7 +35,7 @@
 #include "bu/malloc.h"
 
 CADAttributesModel::CADAttributesModel(QObject *parentobj, struct db_i *dbip, struct directory *dp, int show_standard, int show_user)
-    : QKeyValModel(parentobj)
+    : QgKeyValModel(parentobj)
 {
     int i = 0;
     current_dbip = dbip;
@@ -50,7 +50,7 @@ CADAttributesModel::CADAttributesModel(QObject *parentobj, struct db_i *dbip, st
     } else {
 	user_visible = 0;
     }
-    m_root = new QKeyValNode();
+    m_root = new QgKeyValNode();
     BU_GET(avs, struct bu_attribute_value_set);
     bu_avs_init_empty(avs);
     if (std_visible) {
@@ -80,7 +80,7 @@ attr_children(const char *attr)
 
 bool CADAttributesModel::canFetchMore(const QModelIndex &idx) const
 {
-    QKeyValNode *curr_node = IndexNode(idx);
+    QgKeyValNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return false;
     if (rowCount(idx)) {
 	return false;
@@ -91,7 +91,7 @@ bool CADAttributesModel::canFetchMore(const QModelIndex &idx) const
 }
 
 void
-CADAttributesModel::add_Children(const char *name, QKeyValNode *curr_node)
+CADAttributesModel::add_Children(const char *name, QgKeyValNode *curr_node)
 {
     if (BU_STR_EQUAL(name, "color")) {
 	QString val(bu_avs_get(avs, name));
@@ -111,7 +111,7 @@ CADAttributesModel::add_Children(const char *name, QKeyValNode *curr_node)
 
 void CADAttributesModel::fetchMore(const QModelIndex &idx)
 {
-    QKeyValNode *curr_node = IndexNode(idx);
+    QgKeyValNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return;
     int cnt = attr_children(curr_node->name.toLocal8Bit());
     if (cnt) { // && !idx.child(cnt-1, 0).isValid()) {
@@ -123,7 +123,7 @@ void CADAttributesModel::fetchMore(const QModelIndex &idx)
 
 bool CADAttributesModel::hasChildren(const QModelIndex &idx) const
 {
-    QKeyValNode *curr_node = IndexNode(idx);
+    QgKeyValNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return true;
     if (curr_node->value == QString("")) return false;
     int cnt = attr_children(curr_node->name.toLocal8Bit());
@@ -136,9 +136,9 @@ int CADAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
     current_dp = new_dp;
     current_dbip = new_dbip;
     if (current_dbip != DBI_NULL && current_dp != RT_DIR_NULL) {
-	QMap<QString, QKeyValNode*> standard_nodes;
+	QMap<QString, QgKeyValNode*> standard_nodes;
 	int i = 0;
-	m_root = new QKeyValNode();
+	m_root = new QgKeyValNode();
 	beginResetModel();
 	struct bu_attribute_value_pair *avpp;
 	for (BU_AVS_FOR(avpp, avs)) {
@@ -155,7 +155,7 @@ int CADAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
 		if (db5_is_standard_attribute(avpp->name)) {
 		    if (standard_nodes.find(avpp->name) != standard_nodes.end()) {
 			QString new_value(avpp->value);
-			QKeyValNode *snode = standard_nodes.find(avpp->name).value();
+			QgKeyValNode *snode = standard_nodes.find(avpp->name).value();
 			snode->value = new_value;
 		    } else {
 			add_pair(avpp->name, avpp->value, m_root, db5_standardize_attribute(avpp->name));
@@ -172,7 +172,7 @@ int CADAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
 	}
 	endResetModel();
     } else {
-	m_root = new QKeyValNode();
+	m_root = new QgKeyValNode();
 	beginResetModel();
 	endResetModel();
     }

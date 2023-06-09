@@ -26,7 +26,7 @@
 #ifndef CAD_ATTRIBUTES_H
 #define CAD_ATTRIBUTES_H
 
-#include "qtcad/QKeyVal.h"
+#include "qtcad/QgKeyVal.h"
 
 #ifndef Q_MOC_RUN
 #include "bu/avs.h"
@@ -35,7 +35,7 @@
 #include "ged.h"
 #endif
 
-class CADAttributesModel : public QKeyValModel
+class CADAttributesModel : public QgKeyValModel
 {
     Q_OBJECT
 
@@ -54,7 +54,7 @@ class CADAttributesModel : public QKeyValModel
 	void fetchMore(const QModelIndex &parent);
 
     private:
-	void add_Children(const char *name, QKeyValNode *curr_node);
+	void add_Children(const char *name, QgKeyValNode *curr_node);
 	struct db_i *current_dbip;
 	struct directory *current_dp;
 	struct bu_attribute_value_set *avs;

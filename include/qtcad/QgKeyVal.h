@@ -1,4 +1,4 @@
-/*                        Q K E Y V A L . H
+/*                       Q G K E Y V A L . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,12 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QKeyVal.h
+/** @file QgKeyVal.h
  *
  */
 
-#ifndef QKEYVAL_H
-#define QKEYVAL_H
+#ifndef QGKEYVAL_H
+#define QGKEYVAL_H
 
 #include "common.h"
 
@@ -36,71 +36,71 @@
 
 #include "qtcad/defines.h"
 
-class QTCAD_EXPORT QKeyValNode
+class QTCAD_EXPORT QgKeyValNode
   {
   public:
-      QKeyValNode(QKeyValNode *aParent=0);
-      ~QKeyValNode();
+      QgKeyValNode(QgKeyValNode *aParent=0);
+      ~QgKeyValNode();
 
       QString name;
       QString value;
       int attr_type;
 
-      QKeyValNode *parent;
-      QList<QKeyValNode*> children;
+      QgKeyValNode *parent;
+      QList<QgKeyValNode*> children;
 };
 
-class QTCAD_EXPORT QKeyValModel : public QAbstractItemModel
+class QTCAD_EXPORT QgKeyValModel : public QAbstractItemModel
 {
     Q_OBJECT
 
     public:
-	QKeyValModel(QObject *p = NULL);
-	~QKeyValModel();
+	QgKeyValModel(QObject *p = NULL);
+	~QgKeyValModel();
 
 	QModelIndex index(int row, int column, const QModelIndex &parent) const;
 	QModelIndex parent(const QModelIndex &child) const;
 	int rowCount(const QModelIndex &child) const;
 	int columnCount(const QModelIndex &child) const;
 
-	void setRootNode(QKeyValNode *root);
-	QKeyValNode* rootNode();
+	void setRootNode(QgKeyValNode *root);
+	QgKeyValNode* rootNode();
 
 	QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 	QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
 	bool setData(const QModelIndex & index, const QVariant & value, int role = Qt::EditRole);
 
-	QKeyValNode *m_root;
-	QModelIndex NodeIndex(QKeyValNode *node) const;
-	QKeyValNode *IndexNode(const QModelIndex &index) const;
+	QgKeyValNode *m_root;
+	QModelIndex NodeIndex(QgKeyValNode *node) const;
+	QgKeyValNode *IndexNode(const QModelIndex &index) const;
 
-	QKeyValNode *add_pair(const char *name, const char *value, QKeyValNode *curr_node, int type);
+	QgKeyValNode *add_pair(const char *name, const char *value, QgKeyValNode *curr_node, int type);
 
-	int NodeRow(QKeyValNode *node) const;
+	int NodeRow(QgKeyValNode *node) const;
 };
 
-class QTCAD_EXPORT QKeyValDelegate : public QStyledItemDelegate
+class QTCAD_EXPORT QgKeyValDelegate : public QStyledItemDelegate
 {
     Q_OBJECT
 
     public:
-	QKeyValDelegate(QWidget *pparent = 0) : QStyledItemDelegate(pparent) {}
+	QgKeyValDelegate(QWidget *pparent = 0) : QStyledItemDelegate(pparent) {}
 
 	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const;
 	QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const;
 };
 
-class QTCAD_EXPORT QKeyValView : public QTreeView
+class QTCAD_EXPORT QgKeyValView : public QTreeView
 {
     Q_OBJECT
 
     public:
-	QKeyValView(QWidget *pparent, int decorate_tree = 0);
-	~QKeyValView() {};
+	QgKeyValView(QWidget *pparent, int decorate_tree = 0);
+	~QgKeyValView() {};
 };
 
 
-#endif /* QKEYVAL_H */
+#endif /* QGKEYVAL_H */
 
 

@@ -4,7 +4,7 @@ set(qtcad_headers
   QMeasureFilter.h
   QPolyFilter.h
   QSelectFilter.h
-  QKeyVal.h
+  QgKeyVal.h
   QToolPalette.h
   QViewCtrl.h
   QgDockWidget.h

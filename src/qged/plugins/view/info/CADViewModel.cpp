@@ -34,7 +34,7 @@
 #include "CADViewModel.h"
 
 CADViewModel::CADViewModel(QObject *parentobj)
-    : QKeyValModel(parentobj)
+    : QgKeyValModel(parentobj)
 {
     m_root = NULL;
     refresh(QTCAD_VIEW_REFRESH);
@@ -65,11 +65,11 @@ CADViewModel::refresh(unsigned long long)
 
     struct bview *v = gedp->ged_gvp;
     struct bu_vls val = BU_VLS_INIT_ZERO;
-    QMap<QString, QKeyValNode*> standard_nodes;
+    QMap<QString, QgKeyValNode*> standard_nodes;
     int i = 0;
     if (m_root)
 	delete m_root;
-    m_root = new QKeyValNode();
+    m_root = new QgKeyValNode();
     beginResetModel();
 
     standard_nodes.insert("Name", add_pair("Name", bu_vls_cstr(&v->gv_name), m_root, i));

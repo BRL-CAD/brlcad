@@ -143,14 +143,14 @@ BRLCAD_MainWindow::CreateWidgets(int canvas_type)
     sattrd = new QDockWidget("Standard Attributes", this);
     sattrd->setObjectName("Standard_Attributes");
     stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
-    QKeyValView *stdpropview = new QKeyValView(this, 1);
+    QgKeyValView *stdpropview = new QgKeyValView(this, 1);
     stdpropview->setModel(stdpropmodel);
     sattrd->setWidget(stdpropview);
 
     uattrd = new QDockWidget("User Attributes", this);
     uattrd->setObjectName("User_Attributes");
     userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
-    QKeyValView *userpropview = new QKeyValView(this, 0);
+    QgKeyValView *userpropview = new QgKeyValView(this, 0);
     userpropview->setModel(userpropmodel);
     uattrd->setWidget(userpropview);
 

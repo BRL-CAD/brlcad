@@ -1,4 +1,4 @@
-/*                    Q K E Y V A L . C P P
+/*                    Q G K E Y V A L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020-2023 United States Government as represented by
@@ -17,17 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QKeyVal.cpp
+/** @file QgKeyVal.cpp
  *
  */
 
 #include <QPainter>
 
-#include "qtcad/QKeyVal.h"
+#include "qtcad/QgKeyVal.h"
 
 // *********** Node **************
 
-QKeyValNode::QKeyValNode(QKeyValNode *aParent)
+QgKeyValNode::QgKeyValNode(QgKeyValNode *aParent)
 : parent(aParent)
 {
     if(parent) {
@@ -35,24 +35,24 @@ QKeyValNode::QKeyValNode(QKeyValNode *aParent)
     }
 }
 
-QKeyValNode::~QKeyValNode()
+QgKeyValNode::~QgKeyValNode()
 {
     qDeleteAll(children);
 }
 
 // *********** Model **************
 
-QKeyValModel::QKeyValModel(QObject *aParent)
+QgKeyValModel::QgKeyValModel(QObject *aParent)
 : QAbstractItemModel(aParent)
 {
 }
 
-QKeyValModel::~QKeyValModel()
+QgKeyValModel::~QgKeyValModel()
 {
 }
 
 QVariant
-QKeyValModel::headerData(int section, Qt::Orientation, int role) const
+QgKeyValModel::headerData(int section, Qt::Orientation, int role) const
 {
     if (role != Qt::DisplayRole) return QVariant();
     if (section == 0) return QString("Property");
@@ -61,22 +61,22 @@ QKeyValModel::headerData(int section, Qt::Orientation, int role) const
 }
 
 QVariant
-QKeyValModel::data(const QModelIndex & idx, int role) const
+QgKeyValModel::data(const QModelIndex & idx, int role) const
 {
     if (!idx.isValid()) return QVariant();
-    QKeyValNode *curr_node = IndexNode(idx);
+    QgKeyValNode *curr_node = IndexNode(idx);
     if (role == Qt::DisplayRole && idx.column() == 0) return QVariant(curr_node->name);
     if (role == Qt::DisplayRole && idx.column() == 1) return QVariant(curr_node->value);
     return QVariant();
 }
 
 bool
-QKeyValModel::setData(const QModelIndex & idx, const QVariant & value, int role)
+QgKeyValModel::setData(const QModelIndex & idx, const QVariant & value, int role)
 {
     if (!idx.isValid()) return false;
     QVector<int> roles;
     bool ret = false;
-    QKeyValNode *curr_node = IndexNode(idx);
+    QgKeyValNode *curr_node = IndexNode(idx);
     if (role == Qt::DisplayRole) {
 	curr_node->name = value.toString();
 	roles.append(Qt::DisplayRole);
@@ -86,63 +86,63 @@ QKeyValModel::setData(const QModelIndex & idx, const QVariant & value, int role)
     return ret;
 }
 
-void QKeyValModel::setRootNode(QKeyValNode *root)
+void QgKeyValModel::setRootNode(QgKeyValNode *root)
 {
     m_root = root;
     beginResetModel();
     endResetModel();
 }
 
-QModelIndex QKeyValModel::index(int row, int column, const QModelIndex &parent_idx) const
+QModelIndex QgKeyValModel::index(int row, int column, const QModelIndex &parent_idx) const
 {
     if (hasIndex(row, column, parent_idx)) {
-	QKeyValNode *cnode = IndexNode(parent_idx)->children.at(row);
+	QgKeyValNode *cnode = IndexNode(parent_idx)->children.at(row);
 	return createIndex(row, column, cnode);
     }
     return QModelIndex();
 }
 
-QModelIndex QKeyValModel::parent(const QModelIndex &child) const
+QModelIndex QgKeyValModel::parent(const QModelIndex &child) const
 {
-    QKeyValNode *pnode = IndexNode(child)->parent;
+    QgKeyValNode *pnode = IndexNode(child)->parent;
     if (pnode == m_root) return QModelIndex();
     return createIndex(NodeRow(pnode), 0, pnode);
 }
 
-int QKeyValModel::rowCount(const QModelIndex &parent_idx) const
+int QgKeyValModel::rowCount(const QModelIndex &parent_idx) const
 {
     return IndexNode(parent_idx)->children.count();
 }
 
-int QKeyValModel::columnCount(const QModelIndex &parent_idx) const
+int QgKeyValModel::columnCount(const QModelIndex &parent_idx) const
 {
     Q_UNUSED(parent_idx);
     return 2;
 }
 
-QModelIndex QKeyValModel::NodeIndex(QKeyValNode *node) const
+QModelIndex QgKeyValModel::NodeIndex(QgKeyValNode *node) const
 {
     if (node == m_root) return QModelIndex();
     return createIndex(NodeRow(node), 0, node);
 }
 
-QKeyValNode * QKeyValModel::IndexNode(const QModelIndex &idx) const
+QgKeyValNode * QgKeyValModel::IndexNode(const QModelIndex &idx) const
 {
     if (idx.isValid()) {
-	return static_cast<QKeyValNode *>(idx.internalPointer());
+	return static_cast<QgKeyValNode *>(idx.internalPointer());
     }
     return m_root;
 }
 
-int QKeyValModel::NodeRow(QKeyValNode *node) const
+int QgKeyValModel::NodeRow(QgKeyValNode *node) const
 {
     return node->parent->children.indexOf(node);
 }
 
-QKeyValNode *
-QKeyValModel::add_pair(const char *name, const char *value, QKeyValNode *curr_node, int type)
+QgKeyValNode *
+QgKeyValModel::add_pair(const char *name, const char *value, QgKeyValNode *curr_node, int type)
 {
-    QKeyValNode *new_node = new QKeyValNode(curr_node);
+    QgKeyValNode *new_node = new QgKeyValNode(curr_node);
     new_node->name = name;
     new_node->value = value;
     new_node->attr_type = type;
@@ -151,20 +151,20 @@ QKeyValModel::add_pair(const char *name, const char *value, QKeyValNode *curr_no
 
 
 // *********** View **************
-void QKeyValDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void QgKeyValDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     QString text = index.data().toString();
     painter->drawText(option.rect, text, QTextOption(Qt::AlignLeft));
 }
 
-QSize QKeyValDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
+QSize QgKeyValDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
 {
     QSize name_size = option.fontMetrics.size(Qt::TextSingleLine, index.data().toString());
     return name_size;
 }
 
 
-QKeyValView::QKeyValView(QWidget *pparent, int tree_decorate) : QTreeView(pparent)
+QgKeyValView::QgKeyValView(QWidget *pparent, int tree_decorate) : QTreeView(pparent)
 {
     //this->setContextMenuPolicy(Qt::CustomContextMenu);
     if (!tree_decorate) {
