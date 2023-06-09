@@ -28,7 +28,7 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include "bv.h"
-#include "qtcad/QColorRGB.h"
+#include "qtcad/QgColorRGB.h"
 
 class QPolySettings : public QWidget
 {
@@ -38,9 +38,9 @@ class QPolySettings : public QWidget
 	QPolySettings();
 	~QPolySettings();
 
-	QColorRGB *edge_color;
+	QgColorRGB *edge_color;
 	QCheckBox *fill_poly;
-	QColorRGB *fill_color;
+	QgColorRGB *fill_color;
 	QLineEdit *fill_slope_x;
 	QLineEdit *fill_slope_y;
 	QLineEdit *fill_density;

@@ -29,7 +29,7 @@
 #include <QLineEdit>
 #include "bv.h"
 #include "ged.h"
-#include "qtcad/QColorRGB.h"
+#include "qtcad/QgColorRGB.h"
 #include "qtcad/QMeasureFilter.h"
 
 class CADViewMeasure : public QWidget
@@ -49,8 +49,8 @@ class CADViewMeasure : public QWidget
 	QLabel *ma_label;
 	QLineEdit *angle_report;
 
-	QColorRGB *color_2d;
-	QColorRGB *color_3d;
+	QgColorRGB *color_2d;
+	QgColorRGB *color_3d;
 
     signals:
 	void view_updated(unsigned long long);

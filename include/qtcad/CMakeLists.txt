@@ -1,6 +1,6 @@
 set(qtcad_headers
   QgAccordion.h
-  QColorRGB.h
+  QgColorRGB.h
   QMeasureFilter.h
   QPolyFilter.h
   QSelectFilter.h

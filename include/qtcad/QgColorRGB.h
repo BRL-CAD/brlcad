@@ -1,4 +1,4 @@
-/*                     Q C O L O R R G B . H
+/*                     Q G C O L O R R G B . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QColorRGB.h
+/** @file QgColorRGB.h
  *
  * Set a color either via dialog or r/g/b text entry
  */
 
-#ifndef QCOLORRGB_H
-#define QCOLORRGB_H
+#ifndef QGCOLORRGB_H
+#define QGCOLORRGB_H
 
 #include "common.h"
 
@@ -38,13 +38,13 @@
 #include "bu/opt.h"
 #include "qtcad/defines.h"
 
-class QTCAD_EXPORT QColorRGB: public QWidget
+class QTCAD_EXPORT QgColorRGB: public QWidget
 {
     Q_OBJECT
 
     public:
-	QColorRGB(QWidget *p = NULL, QString lstr = QString("Color:"), QColor dcolor = QColor(Qt::red));
-	~QColorRGB();
+	QgColorRGB(QWidget *p = NULL, QString lstr = QString("Color:"), QColor dcolor = QColor(Qt::red));
+	~QgColorRGB();
 
 	QLineEdit *rgbtext;
 	QPushButton *rgbcolor;

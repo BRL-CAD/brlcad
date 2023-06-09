@@ -1,4 +1,4 @@
-/*                   Q C O L O R R G B . C P P
+/*                  Q G C O L O R R G B . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file QColorRGB.cpp
+/** @file QgColorRGB.cpp
  *
  * Color selection widget
  *
@@ -28,9 +28,9 @@
 #include <QLabel>
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "qtcad/QColorRGB.h"
+#include "qtcad/QgColorRGB.h"
 
-QColorRGB::QColorRGB(QWidget *p, QString lstr, QColor dcolor) : QWidget(p)
+QgColorRGB::QgColorRGB(QWidget *p, QString lstr, QColor dcolor) : QWidget(p)
 {
     mlayout = new QHBoxLayout();
     mlayout->setSpacing(0);
@@ -62,18 +62,18 @@ QColorRGB::QColorRGB(QWidget *p, QString lstr, QColor dcolor) : QWidget(p)
 
     this->setLayout(mlayout);
 
-    QObject::connect(rgbcolor, &QPushButton::clicked, this, &QColorRGB::set_color_from_button);
-    QObject::connect(rgbtext, &QLineEdit::returnPressed, this, &QColorRGB::set_color_from_text);
+    QObject::connect(rgbcolor, &QPushButton::clicked, this, &QgColorRGB::set_color_from_button);
+    QObject::connect(rgbtext, &QLineEdit::returnPressed, this, &QgColorRGB::set_color_from_text);
 }
 
-QColorRGB::~QColorRGB()
+QgColorRGB::~QgColorRGB()
 {
 }
 
 void
-QColorRGB::set_color_from_button()
+QgColorRGB::set_color_from_button()
 {
-    QTCAD_SLOT("QColorRGB::set_color_from_button", 1);
+    QTCAD_SLOT("QgColorRGB::set_color_from_button", 1);
 
     QColor nc = QColorDialog::getColor(qc);
     if (nc.isValid() && nc != qc) {
@@ -94,9 +94,9 @@ QColorRGB::set_color_from_button()
 }
 
 void
-QColorRGB::set_color_from_text()
+QgColorRGB::set_color_from_text()
 {
-    QTCAD_SLOT("QColorRGB::set_color_from_text", 1);
+    QTCAD_SLOT("QgColorRGB::set_color_from_text", 1);
 
     QString colstr = rgbtext->text();
     if (!colstr.length())

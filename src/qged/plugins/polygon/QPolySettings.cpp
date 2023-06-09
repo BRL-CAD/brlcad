@@ -58,15 +58,15 @@ QPolySettings::QPolySettings()
     sn->setLayout(snl);
     l->addWidget(sn);
 
-    edge_color = new QColorRGB(this, "Edge:", QColor(Qt::yellow));
+    edge_color = new QgColorRGB(this, "Edge:", QColor(Qt::yellow));
     l->addWidget(edge_color);
-    QObject::connect(edge_color, &QColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
+    QObject::connect(edge_color, &QgColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
     fill_poly = new QCheckBox("Shade polygon interiors");
     l->addWidget(fill_poly);
     QObject::connect(fill_poly, &QCheckBox::toggled, this, &QPolySettings::do_settings_changed);
-    fill_color = new QColorRGB(this, "Fill:", QColor(Qt::blue));
+    fill_color = new QgColorRGB(this, "Fill:", QColor(Qt::blue));
     l->addWidget(fill_color);
-    QObject::connect(fill_color, &QColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
+    QObject::connect(fill_color, &QgColorRGB::color_changed, this, &QPolySettings::do_settings_changed);
 
     QFont f("");
     f.setStyleHint(QFont::Monospace);

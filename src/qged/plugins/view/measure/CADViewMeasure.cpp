@@ -68,12 +68,12 @@ CADViewMeasure::CADViewMeasure(QWidget *)
     wl->addWidget(ma_label);
     wl->addWidget(angle_report);
 
-    color_2d = new QColorRGB(this, "2D:", QColor(Qt::yellow));
+    color_2d = new QgColorRGB(this, "2D:", QColor(Qt::yellow));
     wl->addWidget(color_2d);
-    color_3d = new QColorRGB(this, "3D:", QColor(Qt::green));
+    color_3d = new QgColorRGB(this, "3D:", QColor(Qt::green));
     wl->addWidget(color_3d);
-    QObject::connect(color_2d, &QColorRGB::color_changed, this, &CADViewMeasure::update_color);
-    QObject::connect(color_3d, &QColorRGB::color_changed, this, &CADViewMeasure::update_color);
+    QObject::connect(color_2d, &QgColorRGB::color_changed, this, &CADViewMeasure::update_color);
+    QObject::connect(color_3d, &QgColorRGB::color_changed, this, &CADViewMeasure::update_color);
 
     this->setLayout(wl);
 

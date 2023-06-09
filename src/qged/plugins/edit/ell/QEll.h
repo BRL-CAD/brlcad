@@ -31,7 +31,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include "raytrace.h"
-#include "qtcad/QColorRGB.h"
+#include "qtcad/QgColorRGB.h"
 
 class QEll : public QWidget
 {

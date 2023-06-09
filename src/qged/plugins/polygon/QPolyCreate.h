@@ -31,7 +31,7 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include "bg/polygon_types.h"
-#include "qtcad/QColorRGB.h"
+#include "qtcad/QgColorRGB.h"
 #include "qtcad/QPolyFilter.h"
 #include "qtcad/QtCADView.h"
 #include "QPolySettings.h"

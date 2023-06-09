@@ -27,7 +27,7 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QRadioButton>
-#include "qtcad/QColorRGB.h"
+#include "qtcad/QgColorRGB.h"
 #include "qtcad/QPolyFilter.h"
 #include "qtcad/QtCADView.h"
 #include "qtcad/SignalFlags.h"
