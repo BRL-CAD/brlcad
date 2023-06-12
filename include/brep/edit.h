@@ -30,19 +30,21 @@
 /** @{ */
 /** @file brep/edit.h */
 
+/// function below are C interface
 __BEGIN_DECLS
 
 /**
- * create an empty ON_Brep
+ * create an empty ON_Brep.
  */
 BREP_EXPORT extern void *
 brep_create();
 
 __END_DECLS
 
+/// function below are C++ interface
 #ifdef __cplusplus
-
 extern "C++" {
+#include <vector>
 
 /**
  * create an nurbs curve using a template
@@ -70,7 +72,6 @@ brep_curve_move_cv(ON_Brep* brep, int curve_id, int cv_id, ON_4dPoint point);
 BREP_EXPORT extern bool
 brep_curve_reverse(ON_Brep* brep, int curve_id);
 
-
 /**
  * insert knots into a curve
  */
@@ -83,9 +84,15 @@ brep_curve_insert_knot(ON_Brep* brep, int curve_id, double knot, int multiplicit
 BREP_EXPORT extern bool
 brep_curve_trim(ON_Brep* brep, int curve_id, double t0, double t1);
 
+/**
+ * create an nurbs curve using a template
+ * position can be specified if argc == 3
+ */
+BREP_EXPORT extern ON_NurbsSurface *
+brep_make_surface(std::vector<double> position);
+
 } /* extern C++ */
 #endif
-
 
 #endif  /* BREP_EDIT_H */
 /** @} */

@@ -25,6 +25,7 @@
 
 #include "brep/edit.h"
 #include "bu/log.h"
+#include <vector>
 
 void *brep_create()
 {
@@ -132,6 +133,32 @@ bool brep_curve_trim(ON_Brep* brep, int curve_id, double t0, double t1)
     }
     ON_Interval interval(t0, t1);
     return curve->Trim(interval);
+}
+
+ON_NurbsSurface* brep_make_surface(std::vector<double> position)
+{
+    ON_NurbsSurface *surface = new ON_NurbsSurface(3, true, 3, 3, 4, 4);
+    surface->SetCV(0, 0, ON_4dPoint(-1.5, -1.5, 0, 1));
+    surface->SetCV(0, 1, ON_4dPoint(-0.5, -1.5, 0, 1));
+    surface->SetCV(0, 2, ON_4dPoint(0.5, -1.5, 0, 1));
+    surface->SetCV(0, 3, ON_4dPoint(1.5, -1.5, 0, 1));
+    surface->SetCV(1, 0, ON_4dPoint(-1.5, -0.5, 0, 1));
+    surface->SetCV(1, 1, ON_4dPoint(-0.5, -0.5, 0.5, 1));
+    surface->SetCV(1, 2, ON_4dPoint(0.5, -0.5, 0.5, 1));
+    surface->SetCV(1, 3, ON_4dPoint(1.5, -0.5, 0, 1));
+    surface->SetCV(2, 0, ON_4dPoint(-1.5, 0.5, 0, 1));
+    surface->SetCV(2, 1, ON_4dPoint(-0.5, 0.5, 0.5, 1));
+    surface->SetCV(2, 2, ON_4dPoint(0.5, 0.5, 0.5, 1));
+    surface->SetCV(2, 3, ON_4dPoint(1.5, 0.5, 0, 1));
+    surface->SetCV(3, 0, ON_4dPoint(-1.5, 1.5, 0, 1));
+    surface->SetCV(3, 1, ON_4dPoint(-0.5, 1.5, 0, 1));
+    surface->SetCV(3, 2, ON_4dPoint(0.5, 1.5, 0, 1));
+    surface->SetCV(3, 3, ON_4dPoint(1.5, 1.5, 0, 1));
+    surface->MakeClampedUniformKnotVector(0, 1);
+    surface->MakeClampedUniformKnotVector(1, 1);
+    surface->Translate(ON_3dVector(position[0], position[1], position[2]));
+    return surface;
+    
 }
 
 // Local Variables:
