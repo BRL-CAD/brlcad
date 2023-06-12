@@ -270,6 +270,89 @@ _brep_cmd_curve_flip(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+
+extern "C" int
+_brep_cmd_curve_insert_knot(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> insert_knot <curve_id> <knot_value> <multiplicity>";
+    const char *purpose_string = "Insert a knot into a NURBS curve";
+    if (_brep_curve_msgs(bs, argc, argv, usage_string, purpose_string))
+    {
+    return BRLCAD_OK;
+    }
+    argc--;argv++;
+    struct _ged_brep_icurve *gib = (struct _ged_brep_icurve *)bs;
+    if(argc < 2)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+    return BRLCAD_ERROR;
+    }
+
+    int curve_id = 0;
+    try
+    {
+    curve_id = std::stoi(argv[0]);
+    }
+    catch(const std::exception& e)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " invalid curve id\n");
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " %s\n", e.what());
+    return BRLCAD_ERROR;
+    }
+
+    double knot_value = 0;
+    try
+    {
+    knot_value = std::stod(argv[1]);
+    }
+    catch(const std::exception& e)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " invalid knot value\n");
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " %s\n", e.what());
+    return BRLCAD_ERROR;
+    }
+
+    int multiplicity = 0;
+    try
+    {
+    multiplicity = std::stoi(argv[2]);
+    }
+    catch(const std::exception& e)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " invalid multiplicity\n");
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " %s\n", e.what());
+    return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    bool flag = brep_curve_insert_knot(b_ip->brep, curve_id, knot_value, multiplicity);
+    if (!flag)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to insert knot into curve %s\n", argv[0]);
+    return BRLCAD_ERROR;
+    }
+
+    // Delete the old object
+
+    const char *av[3];
+    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep))
+    {
+    return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
 static void
 _brep_curve_help(struct _ged_brep_icurve *bs, int argc, const char **argv)
 {
@@ -304,6 +387,7 @@ const struct bu_cmdtab _brep_curve_cmds[] = {
     {"in", _brep_cmd_curve_in},
     {"move_cv", _brep_cmd_curve_move_cv},
     {"flip", _brep_cmd_curve_flip},
+    {"insert_knot", _brep_cmd_curve_insert_knot},
     {(char *)NULL, NULL}};
 
 int

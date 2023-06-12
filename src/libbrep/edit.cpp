@@ -113,6 +113,16 @@ bool brep_curve_reverse(ON_Brep* brep, int curve_id)
     return curve->Reverse();
 }
 
+bool brep_curve_insert_knot(ON_Brep* brep, int curve_id, double knot, int multiplicity)
+{
+    ON_NurbsCurve *curve = brep_get_nurbs_curve(brep, curve_id);
+    if (!curve)
+    {
+        return false;
+    }
+    return curve->InsertKnot(knot, multiplicity);
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

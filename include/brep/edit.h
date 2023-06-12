@@ -70,6 +70,13 @@ brep_curve_move_cv(ON_Brep* brep, int curve_id, int cv_id, ON_4dPoint point);
 BREP_EXPORT extern bool
 brep_curve_reverse(ON_Brep* brep, int curve_id);
 
+
+/**
+ * insert knots into a curve
+ */
+BREP_EXPORT extern bool
+brep_curve_insert_knot(ON_Brep* brep, int curve_id, double knot, int multiplicity);
+
 } /* extern C++ */
 #endif
 
