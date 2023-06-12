@@ -123,6 +123,17 @@ bool brep_curve_insert_knot(ON_Brep* brep, int curve_id, double knot, int multip
     return curve->InsertKnot(knot, multiplicity);
 }
 
+bool brep_curve_trim(ON_Brep* brep, int curve_id, double t0, double t1)
+{
+    ON_NurbsCurve *curve = brep_get_nurbs_curve(brep, curve_id);
+    if (!curve)
+    {
+        return false;
+    }
+    ON_Interval interval(t0, t1);
+    return curve->Trim(interval);
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

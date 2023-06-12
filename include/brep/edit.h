@@ -77,6 +77,12 @@ brep_curve_reverse(ON_Brep* brep, int curve_id);
 BREP_EXPORT extern bool
 brep_curve_insert_knot(ON_Brep* brep, int curve_id, double knot, int multiplicity);
 
+/**
+ * trim a curve using a parameter range
+ */
+BREP_EXPORT extern bool
+brep_curve_trim(ON_Brep* brep, int curve_id, double t0, double t1);
+
 } /* extern C++ */
 #endif
 
