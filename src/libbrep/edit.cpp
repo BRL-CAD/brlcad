@@ -215,6 +215,17 @@ bool brep_surface_move_cv(ON_Brep* brep, int surface_id, int cv_id_u, int cv_id_
     return surface->SetCV(cv_id_u, cv_id_v, point);
 }
 
+bool brep_surface_trim(ON_Brep* brep, int surface_id, int dir, double t0, double t1)
+{
+    ON_NurbsSurface *surface = brep_get_nurbs_surface(brep, surface_id);
+    if (!surface)
+    {
+        return false;
+    }
+    ON_Interval interval(t0, t1);
+    return surface->Trim(dir, interval);
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

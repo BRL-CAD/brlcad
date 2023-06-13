@@ -110,6 +110,14 @@ brep_surface_move(ON_Brep* brep, int surface_id, ON_3dPoint point);
 BREP_EXPORT extern bool
 brep_surface_move_cv(ON_Brep* brep, int surface_id, int cv_id_u, int cv_id_v, ON_4dPoint point);
 
+/**
+ * trim a surface using a parameter range
+ * dir = 0: u direction
+ * dir = 1: v direction
+ */
+BREP_EXPORT extern bool
+brep_surface_trim(ON_Brep* brep, int surface_id, int dir, double t0, double t1);
+
 } /* extern C++ */
 #endif
 
