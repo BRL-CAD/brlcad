@@ -79,7 +79,7 @@ ON_NurbsCurve *brep_in_curve(int argc, const char **argv)
 
 ON_NurbsCurve *brep_get_nurbs_curve(ON_Brep* brep, int curve_id)
 {
-    if(curve_id<0 || curve_id>=brep->m_C3.Count())
+    if(curve_id<0 || curve_id>=brep->m_C3.Count()-1)
     {
 		bu_log("curve_id is out of range\n");
         return NULL;
@@ -97,10 +97,10 @@ ON_NurbsCurve *brep_get_nurbs_curve(ON_Brep* brep, int curve_id)
 bool brep_curve_move(ON_Brep* brep, int curve_id, ON_3dPoint point)
 {
     /// the curve could be a NURBS curve or not
-    if(curve_id<0 || curve_id>=brep->m_C3.Count())
+    if(curve_id<0 || curve_id>=brep->m_C3.Count()-1)
     {
 		bu_log("curve_id is out of range\n");
-        return NULL;
+        return false;
     }
     ON_Curve *curve = brep->m_C3[curve_id];
     if (!curve)
@@ -172,6 +172,20 @@ int brep_surface_make(ON_Brep* brep, std::vector<double> position)
     surface->MakeClampedUniformKnotVector(1, 1);
     surface->Translate(ON_3dVector(position[0], position[1], position[2]));
     return brep->AddSurface(surface);
+}
+
+bool brep_surface_move(ON_Brep* brep, int surface_id, ON_3dPoint point)
+{
+    /// the surface could be a NURBS surface or not
+    if(surface_id<0 || surface_id>=brep->m_S.Count()-1)
+    {
+        bu_log("surface_id is out of range\n");
+        return false;
+    }
+    ON_Surface *surface = brep->m_S[surface_id];
+    if (!surface)
+        return false;
+    return surface->Translate(ON_3dVector(point));
 }
 
 // Local Variables:

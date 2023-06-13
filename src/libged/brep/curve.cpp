@@ -191,7 +191,6 @@ _brep_cmd_curve_move(void *bs, int argc, const char **argv)
     return BRLCAD_ERROR;
     }
 
-
     // Delete the old object
     const char *av[3];
     char *ncpy = bu_strdup(gib->gb->solid_name.c_str());

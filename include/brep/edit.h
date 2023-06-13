@@ -98,6 +98,12 @@ brep_curve_trim(ON_Brep* brep, int curve_id, double t0, double t1);
 BREP_EXPORT extern int
 brep_surface_make(ON_Brep* brep, std::vector<double> position);
 
+/**
+ * move surface to a new position
+ */
+BREP_EXPORT extern bool
+brep_surface_move(ON_Brep* brep, int surface_id, ON_3dPoint point);
+
 } /* extern C++ */
 #endif
 

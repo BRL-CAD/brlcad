@@ -36,7 +36,7 @@
 
 using namespace brlcad;
 
-struct _ged_brep_isurf {
+struct _ged_brep_isurface {
     struct _ged_brep_info *gb;
     struct bu_vls *vls;
     const struct bu_cmdtab *cmds;
@@ -45,7 +45,7 @@ struct _ged_brep_isurf {
 static int
 _brep_surface_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
 {
-    struct _ged_brep_isurf *gb = (struct _ged_brep_isurf *)bs;
+    struct _ged_brep_isurface *gb = (struct _ged_brep_isurface *)bs;
     if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
 	bu_vls_printf(gb->vls, "%s\n%s\n", us, ps);
 	return 1;
@@ -67,7 +67,7 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
         return BRLCAD_OK;
     }
 
-    struct _ged_brep_isurf *gib = (struct _ged_brep_isurf *)bs;
+    struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     argc--;argv++;
     std::vector<double> position;
@@ -105,10 +105,57 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-static void
-_brep_surface_help(struct _ged_brep_isurf *bs, int argc, const char **argv)
+extern "C" int
+_brep_cmd_surface_move(void *bs, int argc, const char **argv)
 {
-    struct _ged_brep_isurf *gb = (struct _ged_brep_isurf *)bs;
+    const char *usage_string = "brep [options] <objname> surface move      <surface_id> <x> <y> <z>";
+    const char *purpose_string = "move a NURBS surface to a specified position";
+    if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string))
+    {
+    return BRLCAD_OK;
+    }
+
+    argc--;argv++;
+    struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
+    if (argc < 4)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+    return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    ON_3dPoint p = ON_3dPoint(atof(argv[1]), atof(argv[2]), atof(argv[3]));
+    bool flag = brep_surface_move(b_ip->brep, atoi(argv[0]), p);
+    if (!flag)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to move surface %s\n", argv[0]);
+    return BRLCAD_ERROR;
+    }
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep))
+    {
+    return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+static void
+_brep_surface_help(struct _ged_brep_isurface *bs, int argc, const char **argv)
+{
+    struct _ged_brep_isurface *gb = (struct _ged_brep_isurface *)bs;
     if (!argc || !argv)
     {
     bu_vls_printf(gb->vls, "brep [options] <objname> surface <subcommand> [args]\n");
@@ -136,13 +183,14 @@ _brep_surface_help(struct _ged_brep_isurf *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _brep_surface_cmds[] = {
     {"create", _brep_cmd_surface_create},
+    {"move", _brep_cmd_surface_move},
     {(char *)NULL, NULL}
 };
 
 int
 brep_surface(struct _ged_brep_info *gb, int argc, const char **argv)
 {
-    struct _ged_brep_isurf gib;
+    struct _ged_brep_isurface gib;
     gib.gb = gb;
     gib.vls = gb->gedp->ged_result_str;
     gib.cmds = _brep_surface_cmds;
