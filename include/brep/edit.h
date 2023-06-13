@@ -60,6 +60,12 @@ BREP_EXPORT extern ON_NurbsCurve *
 brep_in_curve(int argc, const char **argv);
 
 /**
+ * move curve to a new position
+ */
+BREP_EXPORT extern bool
+brep_curve_move(ON_Brep* brep, int curve_id, ON_3dPoint point);
+
+/**
  * move control vertex of a curve
  */
 BREP_EXPORT extern bool

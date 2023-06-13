@@ -94,6 +94,20 @@ ON_NurbsCurve *brep_get_nurbs_curve(ON_Brep* brep, int curve_id)
     return curve;
 }
 
+bool brep_curve_move(ON_Brep* brep, int curve_id, ON_3dPoint point)
+{
+    /// the curve could be a NURBS curve or not
+    if(curve_id<0 || curve_id>=brep->m_C3.Count())
+    {
+		bu_log("curve_id is out of range\n");
+        return NULL;
+    }
+    ON_Curve *curve = brep->m_C3[curve_id];
+    if (!curve)
+        return false;
+    return curve->Translate(ON_3dVector(point));
+}
+
 bool brep_curve_move_cv(ON_Brep* brep, int curve_id, int cv_id, ON_4dPoint point)
 {
     ON_NurbsCurve *curve = brep_get_nurbs_curve(brep, curve_id);

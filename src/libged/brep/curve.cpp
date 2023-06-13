@@ -162,6 +162,55 @@ _brep_cmd_curve_in(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+
+extern "C" int
+_brep_cmd_curve_move(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> curve move      <curve_id> <x> <y> <z>";
+    const char *purpose_string = "move a NURBS curve to a specified position";
+    if (_brep_curve_msgs(bs, argc, argv, usage_string, purpose_string))
+    {
+    return BRLCAD_OK;
+    }
+
+    argc--;argv++;
+    struct _ged_brep_icurve *gib = (struct _ged_brep_icurve *)bs;
+    if (argc < 4)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+    return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    ON_3dPoint p = ON_3dPoint(atof(argv[1]), atof(argv[2]), atof(argv[3]));
+    bool flag = brep_curve_move(b_ip->brep, atoi(argv[0]), p);
+    if (!flag)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to move curve %s\n", argv[0]);
+    return BRLCAD_ERROR;
+    }
+
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep))
+    {
+    return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
 extern "C" int
 _brep_cmd_curve_move_cv(void *bs, int argc, const char **argv)
 {
@@ -464,6 +513,7 @@ _brep_curve_help(struct _ged_brep_icurve *bs, int argc, const char **argv)
 const struct bu_cmdtab _brep_curve_cmds[] = {
     {"create", _brep_cmd_curve_create},
     {"in", _brep_cmd_curve_in},
+    {"move", _brep_cmd_curve_move},
     {"move_cv", _brep_cmd_curve_move_cv},
     {"flip", _brep_cmd_curve_flip},
     {"insert_knot", _brep_cmd_curve_insert_knot},
