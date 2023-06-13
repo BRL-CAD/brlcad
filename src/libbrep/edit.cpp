@@ -135,7 +135,7 @@ bool brep_curve_trim(ON_Brep* brep, int curve_id, double t0, double t1)
     return curve->Trim(interval);
 }
 
-ON_NurbsSurface* brep_make_surface(std::vector<double> position)
+int brep_make_surface(ON_Brep* brep, std::vector<double> position)
 {
     ON_NurbsSurface *surface = new ON_NurbsSurface(3, true, 3, 3, 4, 4);
     surface->SetCV(0, 0, ON_4dPoint(-1.5, -1.5, 0, 1));
@@ -157,8 +157,7 @@ ON_NurbsSurface* brep_make_surface(std::vector<double> position)
     surface->MakeClampedUniformKnotVector(0, 1);
     surface->MakeClampedUniformKnotVector(1, 1);
     surface->Translate(ON_3dVector(position[0], position[1], position[2]));
-    return surface;
-    
+    return brep->AddSurface(surface);
 }
 
 // Local Variables:

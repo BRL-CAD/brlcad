@@ -87,9 +87,10 @@ brep_curve_trim(ON_Brep* brep, int curve_id, double t0, double t1);
 /**
  * create an nurbs curve using a template
  * position can be specified if argc == 3
+ * return id of the surface
  */
-BREP_EXPORT extern ON_NurbsSurface *
-brep_make_surface(std::vector<double> position);
+BREP_EXPORT extern int
+brep_make_surface(ON_Brep* brep, std::vector<double> position);
 
 } /* extern C++ */
 #endif

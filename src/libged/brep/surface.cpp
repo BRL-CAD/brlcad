@@ -83,10 +83,8 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
         position.push_back(atof(argv[1]));
         position.push_back(atof(argv[2]));
     }
-    ON_NurbsSurface *surf = brep_make_surface(position);
+    int surfcode = brep_make_surface(b_ip->brep, position);
 
-    b_ip->brep->AddSurface(surf);
-    
     // Delete the old object
     const char *av[3];
     char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
@@ -103,7 +101,7 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
     {
         return BRLCAD_ERROR;
     }
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", b_ip->brep->m_S.Count() - 1);
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surfcode);
     return BRLCAD_OK;
 }
 
