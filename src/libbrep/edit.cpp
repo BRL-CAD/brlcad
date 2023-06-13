@@ -79,7 +79,7 @@ ON_NurbsCurve *brep_in_curve(int argc, const char **argv)
 
 ON_NurbsCurve *brep_get_nurbs_curve(ON_Brep* brep, int curve_id)
 {
-    if(curve_id<0 || curve_id>=brep->m_C3.Count()-1)
+    if(curve_id<0 || curve_id>=brep->m_C3.Count())
     {
 		bu_log("curve_id is out of range\n");
         return NULL;
@@ -94,10 +94,27 @@ ON_NurbsCurve *brep_get_nurbs_curve(ON_Brep* brep, int curve_id)
     return curve;
 }
 
+ON_NurbsSurface *brep_get_nurbs_surface(ON_Brep* brep, int surface_id)
+{
+    if(surface_id<0 || surface_id>=brep->m_C3.Count())
+    {
+		bu_log("surface_id is out of range\n");
+        return NULL;
+    }
+    ON_NurbsSurface *surface = dynamic_cast<ON_NurbsSurface *>(brep->m_S[surface_id]);
+
+    if (!surface)
+    {
+		bu_log("surface %d is not a NURBS surface\n", surface_id);
+        return NULL;
+    }
+    return surface;
+}
+
 bool brep_curve_move(ON_Brep* brep, int curve_id, ON_3dPoint point)
 {
     /// the curve could be a NURBS curve or not
-    if(curve_id<0 || curve_id>=brep->m_C3.Count()-1)
+    if(curve_id<0 || curve_id>=brep->m_C3.Count())
     {
 		bu_log("curve_id is out of range\n");
         return false;
@@ -177,7 +194,7 @@ int brep_surface_make(ON_Brep* brep, std::vector<double> position)
 bool brep_surface_move(ON_Brep* brep, int surface_id, ON_3dPoint point)
 {
     /// the surface could be a NURBS surface or not
-    if(surface_id<0 || surface_id>=brep->m_S.Count()-1)
+    if(surface_id<0 || surface_id>=brep->m_S.Count())
     {
         bu_log("surface_id is out of range\n");
         return false;
@@ -186,6 +203,16 @@ bool brep_surface_move(ON_Brep* brep, int surface_id, ON_3dPoint point)
     if (!surface)
         return false;
     return surface->Translate(ON_3dVector(point));
+}
+
+bool brep_surface_move_cv(ON_Brep* brep, int surface_id, int cv_id_u, int cv_id_v, ON_4dPoint point)
+{
+    ON_NurbsSurface *surface = brep_get_nurbs_surface(brep, surface_id);
+    if (!surface)
+    {
+        return false;
+    }
+    return surface->SetCV(cv_id_u, cv_id_v, point);
 }
 
 // Local Variables:

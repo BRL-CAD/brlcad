@@ -104,6 +104,12 @@ brep_surface_make(ON_Brep* brep, std::vector<double> position);
 BREP_EXPORT extern bool
 brep_surface_move(ON_Brep* brep, int surface_id, ON_3dPoint point);
 
+/**
+ * move control vertex of a curve
+ */
+BREP_EXPORT extern bool
+brep_surface_move_cv(ON_Brep* brep, int surface_id, int cv_id_u, int cv_id_v, ON_4dPoint point);
+
 } /* extern C++ */
 #endif
 

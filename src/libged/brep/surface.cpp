@@ -152,6 +152,53 @@ _brep_cmd_surface_move(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+extern "C" int
+_brep_cmd_surface_move_cv(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> surface move_cv   <surface_id> <cv_id_u> <cv_id_v> <x> <y> <z> [<w>]";
+    const char *purpose_string = "move a control vertex of a NURBS surface to a specified position";
+    if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string))
+    {
+    return BRLCAD_OK;
+    }
+
+    argc--;argv++;
+    struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
+    if (argc < 6)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+    return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    ON_4dPoint p = ON_4dPoint(atof(argv[3]), atof(argv[4]), atof(argv[5]), argc == 7 ? atof(argv[6]) : 1);
+    bool flag = brep_surface_move_cv(b_ip->brep, atoi(argv[0]), atoi(argv[1]), atoi(argv[2]), p);
+    if (!flag)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to move surface cv \n");
+    return BRLCAD_ERROR;
+    }
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep))
+    {
+    return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
 static void
 _brep_surface_help(struct _ged_brep_isurface *bs, int argc, const char **argv)
 {
@@ -184,6 +231,7 @@ _brep_surface_help(struct _ged_brep_isurface *bs, int argc, const char **argv)
 const struct bu_cmdtab _brep_surface_cmds[] = {
     {"create", _brep_cmd_surface_create},
     {"move", _brep_cmd_surface_move},
+    {"move_cv", _brep_cmd_surface_move_cv},
     {(char *)NULL, NULL}
 };
 
