@@ -90,7 +90,7 @@ brep_curve_trim(ON_Brep* brep, int curve_id, double t0, double t1);
  * return id of the surface
  */
 BREP_EXPORT extern int
-brep_make_surface(ON_Brep* brep, std::vector<double> position);
+brep_surface_make(ON_Brep* brep, std::vector<double> position);
 
 } /* extern C++ */
 #endif

@@ -135,7 +135,7 @@ bool brep_curve_trim(ON_Brep* brep, int curve_id, double t0, double t1)
     return curve->Trim(interval);
 }
 
-int brep_make_surface(ON_Brep* brep, std::vector<double> position)
+int brep_surface_make(ON_Brep* brep, std::vector<double> position)
 {
     ON_NurbsSurface *surface = new ON_NurbsSurface(3, true, 3, 3, 4, 4);
     surface->SetCV(0, 0, ON_4dPoint(-1.5, -1.5, 0, 1));

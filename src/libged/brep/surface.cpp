@@ -83,7 +83,7 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
         position.push_back(atof(argv[1]));
         position.push_back(atof(argv[2]));
     }
-    int surfcode = brep_make_surface(b_ip->brep, position);
+    int surfcode = brep_surface_make(b_ip->brep, position);
 
     // Delete the old object
     const char *av[3];
