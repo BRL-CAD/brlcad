@@ -34,7 +34,7 @@
 __BEGIN_DECLS
 
 /**
- * create an empty ON_Brep.
+ * create an empty ON_Brep. return pointer to the ON_Brep object created in void* format
  */
 BREP_EXPORT extern void *
 brep_create();
@@ -47,20 +47,22 @@ extern "C++" {
 #include <vector>
 
 /**
- * create an nurbs curve using a template
- * position can be specified if argc == 3
+ * create an nurbs curve using a template.
+ * position can be specified if position != NULL
+ * return id of the curve
  */
-BREP_EXPORT extern ON_NurbsCurve *
-brep_make_curve(int argc, const char **argv);
+BREP_EXPORT extern int
+brep_make_curve(ON_Brep* brep, ON_3dVector* position);
 
 /**
  * create an nurbs curve given detailed information
+ * return id of the curve
  */
-BREP_EXPORT extern ON_NurbsCurve *
-brep_in_curve(int argc, const char **argv);
+BREP_EXPORT extern int
+brep_in_curve(ON_Brep* brep, bool is_rational, int order, int cv_count, std::vector<ON_4dPoint> cv);
 
 /**
- * move curve to a new position
+ * move curve along a vector.
  */
 BREP_EXPORT extern bool
 brep_curve_move(ON_Brep* brep, int curve_id, ON_3dPoint point);

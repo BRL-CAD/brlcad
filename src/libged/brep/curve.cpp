@@ -71,10 +71,19 @@ _brep_cmd_curve_create(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
 
     argc--;argv++;
+    ON_3dVector* position = NULL;
+    if(argc != 0 && argc != 3)
+    {
+        bu_vls_printf(gib->gb->gedp->ged_result_str, " invalid arguments\n");
+        bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+        return BRLCAD_ERROR;
+    }
+    if(argc == 3)
+    {
+        position = new ON_3dVector(atof(argv[0]), atof(argv[1]), atof(argv[2]));
+    }
     // Create a template nurbs curve
-    ON_NurbsCurve *curve = brep_make_curve(argc, argv);
-
-    b_ip->brep->AddEdgeCurve(curve);
+    int curve_id = brep_make_curve(b_ip->brep, position);
 
     // Delete the old object
     const char *av[3];
@@ -92,7 +101,7 @@ _brep_cmd_curve_create(void *bs, int argc, const char **argv)
     {
         return BRLCAD_ERROR;
     }
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "create C3 curve! id = %d", b_ip->brep->m_C3.Count() - 1);
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create C3 curve! id = %d", curve_id);
     return BRLCAD_OK;
 }
 
@@ -133,15 +142,25 @@ _brep_cmd_curve_in(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
 
     argc--;argv++;
-    ON_NurbsCurve *curve = brep_in_curve(argc, argv);
-    if(curve == NULL)
+    std::vector<ON_4dPoint> cv;
+    for(int i=0;i<cv_count;i++)
     {
-        bu_vls_printf(gib->gb->gedp->ged_result_str, " failed to create curve\n");
-        return BRLCAD_ERROR;
+    ON_4dPoint p;
+    p.x = atof(argv[3 + i * (3 + (is_rational ? 1 : 0))]);
+    p.y = atof(argv[3 + i * (3 + (is_rational ? 1 : 0)) + 1]);
+    p.z = atof(argv[3 + i * (3 + (is_rational ? 1 : 0)) + 2]);
+    if(is_rational)
+    p.w = atof(argv[3 + i * (3 + (is_rational ? 1 : 0)) + 3]);
+    else
+    p.w = 1.0;
+    cv.push_back(p);
     }
-
-    // add the curve to the brep
-    b_ip->brep->AddEdgeCurve(curve);
+    int curve_id = brep_in_curve(b_ip->brep, is_rational, order, cv_count, cv);
+    if(curve_id <= 0)
+    {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, " failed to create curve\n");
+    return BRLCAD_ERROR;
+    }
 
     // Delete the old object
     const char *av[3];
@@ -158,7 +177,7 @@ _brep_cmd_curve_in(void *bs, int argc, const char **argv)
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
 	return BRLCAD_ERROR;
     }
-
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create C3 curve! id = %d", curve_id);
     return BRLCAD_OK;
 }
 

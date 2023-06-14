@@ -33,7 +33,7 @@ void *brep_create()
     return (void *)brep;
 }
 
-ON_NurbsCurve *brep_make_curve(int argc, const char **argv)
+int brep_make_curve(ON_Brep* brep, ON_3dVector* position)
 {
     ON_NurbsCurve *curve = new ON_NurbsCurve(3, true, 3, 4);
     curve->SetCV(0, ON_3dPoint(-0.1, -1.5, 0));
@@ -45,36 +45,32 @@ ON_NurbsCurve *brep_make_curve(int argc, const char **argv)
     curve->SetKnot(2, 0.5);
     curve->SetKnot(3, 1);
     curve->SetKnot(4, 1);
-    if (argc == 3)
-        curve->Translate(ON_3dVector(atof(argv[0]), atof(argv[1]), atof(argv[2])));
-    return curve;
+    if (position)
+        curve->Translate(*position);
+    return brep->AddEdgeCurve(curve);
 }
 
 
 // TODO: add more options about knot vector
-ON_NurbsCurve *brep_in_curve(int argc, const char **argv)
+int brep_in_curve(ON_Brep* brep, bool is_rational, int order, int cv_count, std::vector<ON_4dPoint> cv)
 {
-    bool is_rational = atoi(argv[0]);
-    int order = atoi(argv[1]);
-    int cv_count = atoi(argv[2]);
     int dim = 3;
-    if (argc != 3 + cv_count * (dim + is_rational))
+    if(cv.size()!=(size_t)cv_count)
     {
-        return NULL;
+        bu_log("cv_count is not equal to cv.size()\n");
+        return -1;
     }
 
     ON_NurbsCurve *curve = new ON_NurbsCurve(dim, is_rational, order, cv_count);
     
     for (int i = 0; i < cv_count; i++)
     {
-    curve->SetCV(i, ON_3dPoint(atof(argv[3 + i * (dim + is_rational)]), atof(argv[4 + i * (dim + is_rational)]), atof(argv[5 + i * (dim + is_rational)])));
-    if (is_rational)
-        curve->SetWeight(i, atof(argv[6 + i * (dim + is_rational)]));
+    curve->SetCV(i, cv[i]);
     }
 
     // make uniform knot vector
     curve->MakeClampedUniformKnotVector();
-    return curve;
+    return brep->AddEdgeCurve(curve);
 }
 
 ON_NurbsCurve *brep_get_nurbs_curve(ON_Brep* brep, int curve_id)
