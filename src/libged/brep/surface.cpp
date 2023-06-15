@@ -36,7 +36,8 @@
 
 using namespace brlcad;
 
-struct _ged_brep_isurface {
+struct _ged_brep_isurface
+{
     struct _ged_brep_info *gb;
     struct bu_vls *vls;
     const struct bu_cmdtab *cmds;
@@ -46,13 +47,15 @@ static int
 _brep_surface_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
 {
     struct _ged_brep_isurface *gb = (struct _ged_brep_isurface *)bs;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	bu_vls_printf(gb->vls, "%s\n%s\n", us, ps);
-	return 1;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG))
+    {
+        bu_vls_printf(gb->vls, "%s\n%s\n", us, ps);
+        return 1;
     }
-    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	bu_vls_printf(gb->vls, "%s\n", ps);
-	return 1;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG))
+    {
+        bu_vls_printf(gb->vls, "%s\n", ps);
+        return 1;
     }
     return 0;
 }
@@ -69,9 +72,10 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
 
     struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
-    argc--;argv++;
+    argc--;
+    argv++;
     std::vector<double> position;
-    if(argc != 3)
+    if (argc != 3)
     {
         position.push_back(0.0);
         position.push_back(0.0);
@@ -118,8 +122,9 @@ _brep_cmd_surface_create_from_curves(void *bs, int argc, const char **argv)
 
     struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
-    argc--;argv++;
-    if(argc != 2)
+    argc--;
+    argv++;
+    if (argc != 2)
     {
         bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
         bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
@@ -148,7 +153,7 @@ _brep_cmd_surface_create_from_curves(void *bs, int argc, const char **argv)
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep))
     {
-    return BRLCAD_ERROR;
+        return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surfcode);
     return BRLCAD_OK;
@@ -161,16 +166,17 @@ _brep_cmd_surface_move(void *bs, int argc, const char **argv)
     const char *purpose_string = "move a NURBS surface to a specified position";
     if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string))
     {
-    return BRLCAD_OK;
+        return BRLCAD_OK;
     }
 
-    argc--;argv++;
+    argc--;
+    argv++;
     struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
     if (argc < 4)
     {
-    bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
-    return BRLCAD_ERROR;
+        bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+        bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+        return BRLCAD_ERROR;
     }
 
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
@@ -178,8 +184,8 @@ _brep_cmd_surface_move(void *bs, int argc, const char **argv)
     bool flag = brep_surface_move(b_ip->brep, atoi(argv[0]), p);
     if (!flag)
     {
-    bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to move surface %s\n", argv[0]);
-    return BRLCAD_ERROR;
+        bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to move surface %s\n", argv[0]);
+        return BRLCAD_ERROR;
     }
 
     // Delete the old object
@@ -196,7 +202,7 @@ _brep_cmd_surface_move(void *bs, int argc, const char **argv)
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep))
     {
-    return BRLCAD_ERROR;
+        return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
 }
@@ -208,16 +214,17 @@ _brep_cmd_surface_move_cv(void *bs, int argc, const char **argv)
     const char *purpose_string = "move a control vertex of a NURBS surface to a specified position";
     if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string))
     {
-    return BRLCAD_OK;
+        return BRLCAD_OK;
     }
 
-    argc--;argv++;
+    argc--;
+    argv++;
     struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
     if (argc < 6)
     {
-    bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
-    return BRLCAD_ERROR;
+        bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+        bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+        return BRLCAD_ERROR;
     }
 
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
@@ -225,8 +232,8 @@ _brep_cmd_surface_move_cv(void *bs, int argc, const char **argv)
     bool flag = brep_surface_move_cv(b_ip->brep, atoi(argv[0]), atoi(argv[1]), atoi(argv[2]), p);
     if (!flag)
     {
-    bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to move surface cv \n");
-    return BRLCAD_ERROR;
+        bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to move surface cv \n");
+        return BRLCAD_ERROR;
     }
 
     // Delete the old object
@@ -243,7 +250,7 @@ _brep_cmd_surface_move_cv(void *bs, int argc, const char **argv)
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep))
     {
-    return BRLCAD_ERROR;
+        return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
 }
@@ -255,15 +262,16 @@ _brep_cmd_surface_trim(void *bs, int argc, const char **argv)
     const char *purpose_string = "trim a NURBS surface using start and end parameters.";
     if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string))
     {
-    return BRLCAD_OK;
+        return BRLCAD_OK;
     }
-    argc--;argv++;
+    argc--;
+    argv++;
     struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
     if (argc < 4)
     {
-    bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
-    return BRLCAD_ERROR;
+        bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+        bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+        return BRLCAD_ERROR;
     }
 
     int surface_id = atoi(argv[0]);
@@ -274,8 +282,8 @@ _brep_cmd_surface_trim(void *bs, int argc, const char **argv)
     bool flag = brep_surface_trim(b_ip->brep, surface_id, dir, start_param, end_param);
     if (!flag)
     {
-    bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to trim surface %s\n", argv[0]);
-    return BRLCAD_ERROR;
+        bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to trim surface %s\n", argv[0]);
+        return BRLCAD_ERROR;
     }
 
     // Delete the old object
@@ -292,7 +300,7 @@ _brep_cmd_surface_trim(void *bs, int argc, const char **argv)
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep))
     {
-    return BRLCAD_ERROR;
+        return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
 }
@@ -303,26 +311,26 @@ _brep_surface_help(struct _ged_brep_isurface *bs, int argc, const char **argv)
     struct _ged_brep_isurface *gb = (struct _ged_brep_isurface *)bs;
     if (!argc || !argv)
     {
-    bu_vls_printf(gb->vls, "brep [options] <objname> surface <subcommand> [args]\n");
-    bu_vls_printf(gb->vls, "Available subcommands:\n");
-    const struct bu_cmdtab *ctp = NULL;
-    int ret;
-    const char *helpflag[2];
-    helpflag[1] = PURPOSEFLAG;
-    for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++)
-    {
-    bu_vls_printf(gb->vls, "  %s\t\t", ctp->ct_name);
-    helpflag[0] = ctp->ct_name;
-    bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
-    }
+        bu_vls_printf(gb->vls, "brep [options] <objname> surface <subcommand> [args]\n");
+        bu_vls_printf(gb->vls, "Available subcommands:\n");
+        const struct bu_cmdtab *ctp = NULL;
+        int ret;
+        const char *helpflag[2];
+        helpflag[1] = PURPOSEFLAG;
+        for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++)
+        {
+            bu_vls_printf(gb->vls, "  %s\t\t", ctp->ct_name);
+            helpflag[0] = ctp->ct_name;
+            bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
+        }
     }
     else
     {
-    int ret;
-    const char *helpflag[2];
-    helpflag[0] = argv[0];
-    helpflag[1] = HELPFLAG;
-    bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
+        int ret;
+        const char *helpflag[2];
+        helpflag[0] = argv[0];
+        helpflag[1] = HELPFLAG;
+        bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
     }
 }
 
@@ -332,11 +340,9 @@ const struct bu_cmdtab _brep_surface_cmds[] = {
     {"move", _brep_cmd_surface_move},
     {"move_cv", _brep_cmd_surface_move_cv},
     {"trim", _brep_cmd_surface_trim},
-    {(char *)NULL, NULL}
-};
+    {(char *)NULL, NULL}};
 
-int
-brep_surface(struct _ged_brep_info *gb, int argc, const char **argv)
+int brep_surface(struct _ged_brep_info *gb, int argc, const char **argv)
 {
     struct _ged_brep_isurface gib;
     gib.gb = gb;
@@ -346,35 +352,39 @@ brep_surface(struct _ged_brep_info *gb, int argc, const char **argv)
     const ON_Brep *brep = ((struct rt_brep_internal *)(gb->intern.idb_ptr))->brep;
     if (brep == NULL)
     {
-    bu_vls_printf(gib.vls, "not a brep object\n");
-    return BRLCAD_ERROR;
+        bu_vls_printf(gib.vls, "not a brep object\n");
+        return BRLCAD_ERROR;
     }
 
     if (!argc)
     {
-    _brep_surface_help(&gib, 0, NULL);
-    return BRLCAD_OK;
+        _brep_surface_help(&gib, 0, NULL);
+        return BRLCAD_OK;
     }
 
     // TODO: add help flag
     if (argc > 1 && BU_STR_EQUAL(argv[1], HELPFLAG))
     {
-    argc--;argv++;
-    argc--;argv++;
-    _brep_surface_help(&gib, argc, argv);
-    return BRLCAD_OK;
+        argc--;
+        argv++;
+        argc--;
+        argv++;
+        _brep_surface_help(&gib, argc, argv);
+        return BRLCAD_OK;
     }
 
     // Must have valid subcommand to process
-    if (bu_cmd_valid(_brep_surface_cmds, argv[0]) != BRLCAD_OK) {
-	bu_vls_printf(gib.vls, "invalid subcommand \"%s\" specified\n", argv[0]);
-	_brep_surface_help(&gib, 0, NULL);
-	return BRLCAD_ERROR;
+    if (bu_cmd_valid(_brep_surface_cmds, argv[0]) != BRLCAD_OK)
+    {
+        bu_vls_printf(gib.vls, "invalid subcommand \"%s\" specified\n", argv[0]);
+        _brep_surface_help(&gib, 0, NULL);
+        return BRLCAD_ERROR;
     }
 
     int ret;
-    if (bu_cmd(_brep_surface_cmds, argc, argv, 0, (void *)&gib, &ret) == BRLCAD_OK) {
-	return ret;
+    if (bu_cmd(_brep_surface_cmds, argc, argv, 0, (void *)&gib, &ret) == BRLCAD_OK)
+    {
+        return ret;
     }
     return BRLCAD_ERROR;
 }

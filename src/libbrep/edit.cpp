@@ -29,11 +29,11 @@
 
 void *brep_create()
 {
-    ON_Brep* brep = new ON_Brep();
+    ON_Brep *brep = new ON_Brep();
     return (void *)brep;
 }
 
-int brep_make_curve(ON_Brep* brep, ON_3dVector* position)
+int brep_make_curve(ON_Brep *brep, ON_3dVector *position)
 {
     ON_NurbsCurve *curve = new ON_NurbsCurve(3, true, 3, 4);
     curve->SetCV(0, ON_3dPoint(-0.1, -1.5, 0));
@@ -50,22 +50,21 @@ int brep_make_curve(ON_Brep* brep, ON_3dVector* position)
     return brep->AddEdgeCurve(curve);
 }
 
-
 // TODO: add more options about knot vector
-int brep_in_curve(ON_Brep* brep, bool is_rational, int order, int cv_count, std::vector<ON_4dPoint> cv)
+int brep_in_curve(ON_Brep *brep, bool is_rational, int order, int cv_count, std::vector<ON_4dPoint> cv)
 {
     int dim = 3;
-    if(cv.size()!=(size_t)cv_count)
+    if (cv.size() != (size_t)cv_count)
     {
         bu_log("cv_count is not equal to cv.size()\n");
         return -1;
     }
 
     ON_NurbsCurve *curve = new ON_NurbsCurve(dim, is_rational, order, cv_count);
-    
+
     for (int i = 0; i < cv_count; i++)
     {
-    curve->SetCV(i, cv[i]);
+        curve->SetCV(i, cv[i]);
     }
 
     // make uniform knot vector
@@ -73,46 +72,46 @@ int brep_in_curve(ON_Brep* brep, bool is_rational, int order, int cv_count, std:
     return brep->AddEdgeCurve(curve);
 }
 
-ON_NurbsCurve *brep_get_nurbs_curve(ON_Brep* brep, int curve_id)
+ON_NurbsCurve *brep_get_nurbs_curve(ON_Brep *brep, int curve_id)
 {
-    if(curve_id<0 || curve_id>=brep->m_C3.Count())
+    if (curve_id < 0 || curve_id >= brep->m_C3.Count())
     {
-		bu_log("curve_id is out of range\n");
+        bu_log("curve_id is out of range\n");
         return NULL;
     }
     ON_NurbsCurve *curve = dynamic_cast<ON_NurbsCurve *>(brep->m_C3[curve_id]);
 
     if (!curve)
     {
-		bu_log("curve %d is not a NURBS curve\n", curve_id);
+        bu_log("curve %d is not a NURBS curve\n", curve_id);
         return NULL;
     }
     return curve;
 }
 
-ON_NurbsSurface *brep_get_nurbs_surface(ON_Brep* brep, int surface_id)
+ON_NurbsSurface *brep_get_nurbs_surface(ON_Brep *brep, int surface_id)
 {
-    if(surface_id<0 || surface_id>=brep->m_C3.Count())
+    if (surface_id < 0 || surface_id >= brep->m_C3.Count())
     {
-		bu_log("surface_id is out of range\n");
+        bu_log("surface_id is out of range\n");
         return NULL;
     }
     ON_NurbsSurface *surface = dynamic_cast<ON_NurbsSurface *>(brep->m_S[surface_id]);
 
     if (!surface)
     {
-		bu_log("surface %d is not a NURBS surface\n", surface_id);
+        bu_log("surface %d is not a NURBS surface\n", surface_id);
         return NULL;
     }
     return surface;
 }
 
-bool brep_curve_move(ON_Brep* brep, int curve_id, ON_3dPoint point)
+bool brep_curve_move(ON_Brep *brep, int curve_id, ON_3dPoint point)
 {
     /// the curve could be a NURBS curve or not
-    if(curve_id<0 || curve_id>=brep->m_C3.Count())
+    if (curve_id < 0 || curve_id >= brep->m_C3.Count())
     {
-		bu_log("curve_id is out of range\n");
+        bu_log("curve_id is out of range\n");
         return false;
     }
     ON_Curve *curve = brep->m_C3[curve_id];
@@ -121,7 +120,7 @@ bool brep_curve_move(ON_Brep* brep, int curve_id, ON_3dPoint point)
     return curve->Translate(ON_3dVector(point));
 }
 
-bool brep_curve_move_cv(ON_Brep* brep, int curve_id, int cv_id, ON_4dPoint point)
+bool brep_curve_move_cv(ON_Brep *brep, int curve_id, int cv_id, ON_4dPoint point)
 {
     ON_NurbsCurve *curve = brep_get_nurbs_curve(brep, curve_id);
     if (!curve)
@@ -131,7 +130,7 @@ bool brep_curve_move_cv(ON_Brep* brep, int curve_id, int cv_id, ON_4dPoint point
     return curve->SetCV(cv_id, point);
 }
 
-bool brep_curve_reverse(ON_Brep* brep, int curve_id)
+bool brep_curve_reverse(ON_Brep *brep, int curve_id)
 {
     ON_NurbsCurve *curve = brep_get_nurbs_curve(brep, curve_id);
     if (!curve)
@@ -141,7 +140,7 @@ bool brep_curve_reverse(ON_Brep* brep, int curve_id)
     return curve->Reverse();
 }
 
-bool brep_curve_insert_knot(ON_Brep* brep, int curve_id, double knot, int multiplicity)
+bool brep_curve_insert_knot(ON_Brep *brep, int curve_id, double knot, int multiplicity)
 {
     ON_NurbsCurve *curve = brep_get_nurbs_curve(brep, curve_id);
     if (!curve)
@@ -151,7 +150,7 @@ bool brep_curve_insert_knot(ON_Brep* brep, int curve_id, double knot, int multip
     return curve->InsertKnot(knot, multiplicity);
 }
 
-bool brep_curve_trim(ON_Brep* brep, int curve_id, double t0, double t1)
+bool brep_curve_trim(ON_Brep *brep, int curve_id, double t0, double t1)
 {
     ON_NurbsCurve *curve = brep_get_nurbs_curve(brep, curve_id);
     if (!curve)
@@ -162,7 +161,7 @@ bool brep_curve_trim(ON_Brep* brep, int curve_id, double t0, double t1)
     return curve->Trim(interval);
 }
 
-int brep_surface_make(ON_Brep* brep, std::vector<double> position)
+int brep_surface_make(ON_Brep *brep, std::vector<double> position)
 {
     ON_NurbsSurface *surface = new ON_NurbsSurface(3, true, 3, 3, 4, 4);
     surface->SetCV(0, 0, ON_4dPoint(-1.5, -1.5, 0, 1));
@@ -187,10 +186,10 @@ int brep_surface_make(ON_Brep* brep, std::vector<double> position)
     return brep->AddSurface(surface);
 }
 
-bool brep_surface_move(ON_Brep* brep, int surface_id, ON_3dPoint point)
+bool brep_surface_move(ON_Brep *brep, int surface_id, ON_3dPoint point)
 {
     /// the surface could be a NURBS surface or not
-    if(surface_id<0 || surface_id>=brep->m_S.Count())
+    if (surface_id < 0 || surface_id >= brep->m_S.Count())
     {
         bu_log("surface_id is out of range\n");
         return false;
@@ -201,7 +200,7 @@ bool brep_surface_move(ON_Brep* brep, int surface_id, ON_3dPoint point)
     return surface->Translate(ON_3dVector(point));
 }
 
-bool brep_surface_move_cv(ON_Brep* brep, int surface_id, int cv_id_u, int cv_id_v, ON_4dPoint point)
+bool brep_surface_move_cv(ON_Brep *brep, int surface_id, int cv_id_u, int cv_id_v, ON_4dPoint point)
 {
     ON_NurbsSurface *surface = brep_get_nurbs_surface(brep, surface_id);
     if (!surface)
@@ -211,7 +210,7 @@ bool brep_surface_move_cv(ON_Brep* brep, int surface_id, int cv_id_u, int cv_id_
     return surface->SetCV(cv_id_u, cv_id_v, point);
 }
 
-bool brep_surface_trim(ON_Brep* brep, int surface_id, int dir, double t0, double t1)
+bool brep_surface_trim(ON_Brep *brep, int surface_id, int dir, double t0, double t1)
 {
     ON_NurbsSurface *surface = brep_get_nurbs_surface(brep, surface_id);
     if (!surface)
@@ -222,7 +221,7 @@ bool brep_surface_trim(ON_Brep* brep, int surface_id, int dir, double t0, double
     return surface->Trim(dir, interval);
 }
 
-int brep_surface_create_ruled(ON_Brep* brep, int curve_id0, int curve_id1)
+int brep_surface_create_ruled(ON_Brep *brep, int curve_id0, int curve_id1)
 {
     ON_NurbsCurve *curve0 = brep_get_nurbs_curve(brep, curve_id0);
     ON_NurbsCurve *curve1 = brep_get_nurbs_curve(brep, curve_id1);
