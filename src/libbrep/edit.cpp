@@ -222,6 +222,23 @@ bool brep_surface_trim(ON_Brep* brep, int surface_id, int dir, double t0, double
     return surface->Trim(dir, interval);
 }
 
+int brep_surface_create_ruled(ON_Brep* brep, int curve_id0, int curve_id1)
+{
+    ON_NurbsCurve *curve0 = brep_get_nurbs_curve(brep, curve_id0);
+    ON_NurbsCurve *curve1 = brep_get_nurbs_curve(brep, curve_id1);
+    if (!curve0 || !curve1)
+    {
+        return false;
+    }
+    ON_NurbsSurface *surface = new ON_NurbsSurface();
+    if (!surface->CreateRuledSurface(*curve0, *curve1))
+    {
+        delete surface;
+        return false;
+    }
+    return brep->AddSurface(surface);
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

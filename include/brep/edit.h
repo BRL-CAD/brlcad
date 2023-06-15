@@ -120,6 +120,15 @@ brep_surface_move_cv(ON_Brep* brep, int surface_id, int cv_id_u, int cv_id_v, ON
 BREP_EXPORT extern bool
 brep_surface_trim(ON_Brep* brep, int surface_id, int dir, double t0, double t1);
 
+/**
+ * create a ruled surface.
+ * The two curves must have the same NURBS form knots.
+ * srf(s,t) = (1.0-t)*curveA(s) + t*curveB(s).
+ * return id of the surface
+ */
+
+BREP_EXPORT extern int
+brep_surface_create_ruled(ON_Brep* brep, int curve_id0, int curve_id1);
 } /* extern C++ */
 #endif
 
