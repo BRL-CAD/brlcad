@@ -161,6 +161,44 @@ bool brep_curve_trim(ON_Brep *brep, int curve_id, double t0, double t1)
     return curve->Trim(interval);
 }
 
+int brep_curve_join(ON_Brep *brep, int curve_id_1, int curve_id_2)
+{
+    ON_NurbsCurve *curve1 = brep_get_nurbs_curve(brep, curve_id_1);
+    ON_NurbsCurve *curve2 = brep_get_nurbs_curve(brep, curve_id_2);
+    if (!curve1 || !curve2)
+    {
+        return -1;
+    }
+
+    /// force move ends of the two curves to the same location
+    if (!ON_ForceMatchCurveEnds(*curve1, 1, *curve2, 0))
+    {
+        bu_log("ON_ForceMatchCurveEnds failed\n");
+        return -1;
+    }
+
+    ON_SimpleArray<const ON_Curve *> in_curves;
+    in_curves.Append(curve1);
+    in_curves.Append(curve2);
+
+    ON_SimpleArray<ON_Curve *> out_curves;
+    /// join the two curves
+    int joined_num = ON_JoinCurves(in_curves, out_curves, 0.0f, 0.0f, false);
+    bu_log("out_curves size%d\n", out_curves.Count());
+    if (joined_num != 1)
+    {
+        bu_log("ON_JoinCurves failed\n");
+        return -1;
+    }
+
+    /// remove the two curves.
+    /// Remark: the index of m_C3 is massed up after removing the curves!
+    brep->m_C3.Remove(curve_id_1);
+    brep->m_C3.Remove(curve_id_2 - (curve_id_1 < curve_id_2 ? 1 : 0));
+
+    return brep->AddEdgeCurve(*out_curves.At(0));
+}
+
 int brep_surface_make(ON_Brep *brep, std::vector<double> position)
 {
     ON_NurbsSurface *surface = new ON_NurbsSurface(3, true, 3, 3, 4, 4);

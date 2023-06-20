@@ -423,6 +423,7 @@ _brep_cmd_curve_insert_knot(void *bs, int argc, const char **argv)
     }
     return BRLCAD_OK;
 }
+
 extern "C" int
 _brep_cmd_curve_trim(void *bs, int argc, const char **argv)
 {
@@ -505,6 +506,67 @@ _brep_cmd_curve_trim(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+extern "C" int
+_brep_cmd_curve_join(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> join <curve_id_1> <curve_id_2>";
+    const char *purpose_string = "join end of curve 1 to start of curve 2";
+    if (_brep_curve_msgs(bs, argc, argv, usage_string, purpose_string))
+    {
+        return BRLCAD_OK;
+    }
+    argc--;
+    argv++;
+    struct _ged_brep_icurve *gib = (struct _ged_brep_icurve *)bs;
+    if (argc < 2)
+    {
+        bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+        bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+        return BRLCAD_ERROR;
+    }
+
+    int curve_id_1 = 0;
+    int curve_id_2 = 0;
+    try
+    {
+        curve_id_1 = std::stoi(argv[0]);
+        curve_id_2 = std::stoi(argv[1]);
+    }
+    catch (const std::exception &e)
+    {
+        bu_vls_printf(gib->gb->gedp->ged_result_str, " invalid curve id\n");
+        bu_vls_printf(gib->gb->gedp->ged_result_str, " %s\n", e.what());
+        return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    int flag = brep_curve_join(b_ip->brep, curve_id_1, curve_id_2);
+    if (flag < 0)
+    {
+        bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to join curve %s and curve %s\n", argv[0], argv[1]);
+        return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, ": join curve id %d\n", flag);
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep))
+    {
+        return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
 static void
 _brep_curve_help(struct _ged_brep_icurve *bs, int argc, const char **argv)
 {
@@ -542,6 +604,7 @@ const struct bu_cmdtab _brep_curve_cmds[] = {
     {"flip", _brep_cmd_curve_flip},
     {"insert_knot", _brep_cmd_curve_insert_knot},
     {"trim", _brep_cmd_curve_trim},
+    {"join", _brep_cmd_curve_join},
     {(char *)NULL, NULL}};
 
 int brep_curve(struct _ged_brep_info *gb, int argc, const char **argv)

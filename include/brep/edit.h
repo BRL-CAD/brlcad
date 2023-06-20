@@ -94,12 +94,19 @@ extern "C++"
     brep_curve_trim(ON_Brep *brep, int curve_id, double t0, double t1);
 
     /**
+     * join two curves. Join the end of curve_id_1 to the start of curve_id_2.
+     * return id of the new curve, delete the two old curves.
+     * Remark: the index of C3 is changed after join!!!
+     */
+    BREP_EXPORT extern int
+    brep_curve_join(ON_Brep *brep, int curve_id_1, int curve_id_2);
+
+    /**
      * create an nurbs curve using a template
      * position can be specified if argc == 3
      * return id of the surface
      */
-    BREP_EXPORT extern int
-    brep_surface_make(ON_Brep *brep, std::vector<double> position);
+    BREP_EXPORT extern int brep_surface_make(ON_Brep *brep, std::vector<double> position);
 
     /**
      * move surface to a new position
