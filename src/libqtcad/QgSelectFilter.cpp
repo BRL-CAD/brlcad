@@ -203,6 +203,7 @@ QgSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 	int ipy = (int)py;
 	bg_view_objs_rect_select(&selected_set, v, ipx, ipy, v->gv_mouse_x, v->gv_mouse_y);
 
+#if 0
 	// If we want only the closest object (or more precisely, in this mode,
 	// the object with the closest bounding box) there's more work to do.
 	// TODO - this is the wrong test for the selection rectangle - should
@@ -212,6 +213,7 @@ QgSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 	struct bv_scene_obj *s_closest = closest_obj_bbox(&selected_set, v);
 	bu_ptbl_reset(&selected_set);
 	bu_ptbl_ins(&selected_set, (long *)s_closest);
+#endif
 
 	// reset rectangle
 	struct bv_interactive_rect_state *grsp = &v->gv_s->gv_rect;

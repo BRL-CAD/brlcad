@@ -274,11 +274,15 @@ CADViewSelector::erase_objs()
     // erase_obj_bbox
     const char **av = (const char **)bu_calloc(BU_PTBL_LEN(&cf->selected_set)+2, sizeof(char *), "av");
     av[0] = "erase";
+    int scnt = 0;
     for (size_t i = 0; i < BU_PTBL_LEN(&cf->selected_set); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(&cf->selected_set, i);
+	if (!s)
+	    continue;
 	av[i+1] = bu_vls_cstr(&s->s_name);
+	scnt++;
     }
-    ged_exec(gedp, (int)(BU_PTBL_LEN(&cf->selected_set)+1), av);
+    ged_exec(gedp, scnt, av);
     bu_free(av, "av");
 }
 
