@@ -85,9 +85,9 @@ signals:
 	void erase_objs();
 
 	QgSelectFilter *cf = NULL;
-	QSelectPntFilter *pf;
-	QSelectBoxFilter *bf;
-	QSelectRayFilter *rf;
+	QgSelectPntFilter *pf;
+	QgSelectBoxFilter *bf;
+	QgSelectRayFilter *rf;
 
 	struct ged *gedp = NULL;
 	unsigned long long ohash = 0;

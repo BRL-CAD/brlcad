@@ -70,7 +70,7 @@ class QTCAD_EXPORT QgSelectFilter : public QObject
         void view_updated(int);
 };
 
-class QTCAD_EXPORT QSelectPntFilter: public QgSelectFilter
+class QTCAD_EXPORT QgSelectPntFilter: public QgSelectFilter
 {
     Q_OBJECT
 
@@ -78,7 +78,7 @@ class QTCAD_EXPORT QSelectPntFilter: public QgSelectFilter
 	bool eventFilter(QObject *, QEvent *e);
 };
 
-class QTCAD_EXPORT QSelectBoxFilter: public QgSelectFilter
+class QTCAD_EXPORT QgSelectBoxFilter: public QgSelectFilter
 {
     Q_OBJECT
 
@@ -90,7 +90,7 @@ class QTCAD_EXPORT QSelectBoxFilter: public QgSelectFilter
 	fastf_t py = -FLT_MAX;
 };
 
-class QTCAD_EXPORT QSelectRayFilter: public QgSelectFilter
+class QTCAD_EXPORT QgSelectRayFilter: public QgSelectFilter
 {
     Q_OBJECT
 

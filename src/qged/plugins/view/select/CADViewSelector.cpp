@@ -135,9 +135,9 @@ CADViewSelector::CADViewSelector(QWidget *)
 
     this->setLayout(wl);
 
-    pf = new QSelectPntFilter();
-    bf = new QSelectBoxFilter();
-    rf = new QSelectRayFilter();
+    pf = new QgSelectPntFilter();
+    bf = new QgSelectBoxFilter();
+    rf = new QgSelectRayFilter();
     cf = pf;
 }
 

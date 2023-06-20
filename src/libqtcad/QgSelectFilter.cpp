@@ -110,7 +110,7 @@ QgSelectFilter::view_sync(QEvent *e)
 
 
 bool
-QSelectPntFilter::eventFilter(QObject *, QEvent *e)
+QgSelectPntFilter::eventFilter(QObject *, QEvent *e)
 {
     QMouseEvent *m_e = view_sync(e);
     if (!m_e)
@@ -149,7 +149,7 @@ QSelectPntFilter::eventFilter(QObject *, QEvent *e)
 }
 
 bool
-QSelectBoxFilter::eventFilter(QObject *, QEvent *e)
+QgSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 {
     QMouseEvent *m_e = view_sync(e);
     if (!m_e)
@@ -272,7 +272,7 @@ _ovlp_record(struct application *ap, struct partition *pp, struct region *reg1, 
 }
 
 bool
-QSelectRayFilter::eventFilter(QObject *, QEvent *e)
+QgSelectRayFilter::eventFilter(QObject *, QEvent *e)
 {
     QMouseEvent *m_e = view_sync(e);
     if (!m_e)
