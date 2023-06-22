@@ -40,11 +40,7 @@ int brep_make_curve(ON_Brep *brep, ON_3dVector *position)
     curve->SetCV(1, ON_3dPoint(0.1, -0.5, 0));
     curve->SetCV(2, ON_3dPoint(0.1, 0.5, 0));
     curve->SetCV(3, ON_3dPoint(-0.1, 1.5, 0));
-    curve->SetKnot(0, 0);
-    curve->SetKnot(1, 0);
-    curve->SetKnot(2, 0.5);
-    curve->SetKnot(3, 1);
-    curve->SetKnot(4, 1);
+    curve->MakeClampedUniformKnotVector();
     if (position)
         curve->Translate(*position);
     return brep->AddEdgeCurve(curve);
