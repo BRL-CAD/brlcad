@@ -74,7 +74,7 @@ _brep_cmd_curve_create(void *bs, int argc, const char **argv)
 
     argc--;
     argv++;
-    ON_3dVector *position = NULL;
+    ON_3dPoint position(0, 0, 0);
     if (argc != 0 && argc != 3)
     {
         bu_vls_printf(gib->gb->gedp->ged_result_str, " invalid arguments\n");
@@ -83,7 +83,7 @@ _brep_cmd_curve_create(void *bs, int argc, const char **argv)
     }
     if (argc == 3)
     {
-        position = new ON_3dVector(atof(argv[0]), atof(argv[1]), atof(argv[2]));
+        position = ON_3dPoint(atof(argv[0]), atof(argv[1]), atof(argv[2]));
     }
     // Create a template nurbs curve
     int curve_id = brep_make_curve(b_ip->brep, position);
@@ -236,10 +236,10 @@ _brep_cmd_curve_move(void *bs, int argc, const char **argv)
 }
 
 extern "C" int
-_brep_cmd_curve_move_cv(void *bs, int argc, const char **argv)
+_brep_cmd_curve_set_cv(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> curve move_cv <curve_id> <CV_id> <x> <y> <z> [<w>]";
-    const char *purpose_string = "move the control vertex of a NURBS curve";
+    const char *usage_string = "brep [options] <objname> curve set_cv <curve_id> <CV_id> <x> <y> <z> [<w>]";
+    const char *purpose_string = "set the control vertex of a NURBS curve";
     if (_brep_curve_msgs(bs, argc, argv, usage_string, purpose_string))
     {
         return BRLCAD_OK;
@@ -257,7 +257,7 @@ _brep_cmd_curve_move_cv(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
 
     ON_4dPoint p = ON_4dPoint(atof(argv[3]), atof(argv[4]), atof(argv[5]), argc == 7 ? atof(argv[6]) : 1.0);
-    bool flag = brep_curve_move_cv(b_ip->brep, atoi(argv[1]), atoi(argv[2]), p);
+    bool flag = brep_curve_set_cv(b_ip->brep, atoi(argv[1]), atoi(argv[2]), p);
     if (!flag)
     {
         bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to move control vertex %s of curve %s\n", argv[2], argv[1]);
@@ -600,7 +600,7 @@ const struct bu_cmdtab _brep_curve_cmds[] = {
     {"create", _brep_cmd_curve_create},
     {"in", _brep_cmd_curve_in},
     {"move", _brep_cmd_curve_move},
-    {"move_cv", _brep_cmd_curve_move_cv},
+    {"set_cv", _brep_cmd_curve_set_cv},
     {"flip", _brep_cmd_curve_flip},
     {"insert_knot", _brep_cmd_curve_insert_knot},
     {"trim", _brep_cmd_curve_trim},

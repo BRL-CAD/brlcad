@@ -33,7 +33,7 @@ void *brep_create()
     return (void *)brep;
 }
 
-int brep_make_curve(ON_Brep *brep, ON_3dVector *position)
+int brep_make_curve(ON_Brep *brep, const ON_3dPoint &position)
 {
     ON_NurbsCurve *curve = new ON_NurbsCurve(3, true, 3, 4);
     curve->SetCV(0, ON_3dPoint(-0.1, -1.5, 0));
@@ -42,7 +42,7 @@ int brep_make_curve(ON_Brep *brep, ON_3dVector *position)
     curve->SetCV(3, ON_3dPoint(-0.1, 1.5, 0));
     curve->MakeClampedUniformKnotVector();
     if (position)
-        curve->Translate(*position);
+        curve->Translate(position);
     return brep->AddEdgeCurve(curve);
 }
 
@@ -102,7 +102,7 @@ ON_NurbsSurface *brep_get_nurbs_surface(ON_Brep *brep, int surface_id)
     return surface;
 }
 
-bool brep_curve_move(ON_Brep *brep, int curve_id, ON_3dPoint point)
+bool brep_curve_move(ON_Brep *brep, int curve_id, const ON_3dVector &point)
 {
     /// the curve could be a NURBS curve or not
     if (curve_id < 0 || curve_id >= brep->m_C3.Count())
@@ -113,10 +113,10 @@ bool brep_curve_move(ON_Brep *brep, int curve_id, ON_3dPoint point)
     ON_Curve *curve = brep->m_C3[curve_id];
     if (!curve)
         return false;
-    return curve->Translate(ON_3dVector(point));
+    return curve->Translate(point);
 }
 
-bool brep_curve_move_cv(ON_Brep *brep, int curve_id, int cv_id, ON_4dPoint point)
+bool brep_curve_set_cv(ON_Brep *brep, int curve_id, int cv_id, const ON_4dPoint &point)
 {
     ON_NurbsCurve *curve = brep_get_nurbs_curve(brep, curve_id);
     if (!curve)
@@ -195,7 +195,7 @@ int brep_curve_join(ON_Brep *brep, int curve_id_1, int curve_id_2)
     return brep->AddEdgeCurve(*out_curves.At(0));
 }
 
-int brep_surface_make(ON_Brep *brep, std::vector<double> position)
+int brep_surface_make(ON_Brep *brep, const ON_3dPoint &position)
 {
     ON_NurbsSurface *surface = new ON_NurbsSurface(3, true, 3, 3, 4, 4);
     surface->SetCV(0, 0, ON_4dPoint(-1.5, -1.5, 0, 1));
@@ -216,11 +216,11 @@ int brep_surface_make(ON_Brep *brep, std::vector<double> position)
     surface->SetCV(3, 3, ON_4dPoint(1.5, 1.5, 0, 1));
     surface->MakeClampedUniformKnotVector(0, 1);
     surface->MakeClampedUniformKnotVector(1, 1);
-    surface->Translate(ON_3dVector(position[0], position[1], position[2]));
+    surface->Translate(position);
     return brep->AddSurface(surface);
 }
 
-bool brep_surface_move(ON_Brep *brep, int surface_id, ON_3dPoint point)
+bool brep_surface_move(ON_Brep *brep, int surface_id, const ON_3dVector &point)
 {
     /// the surface could be a NURBS surface or not
     if (surface_id < 0 || surface_id >= brep->m_S.Count())
@@ -231,10 +231,10 @@ bool brep_surface_move(ON_Brep *brep, int surface_id, ON_3dPoint point)
     ON_Surface *surface = brep->m_S[surface_id];
     if (!surface)
         return false;
-    return surface->Translate(ON_3dVector(point));
+    return surface->Translate(point);
 }
 
-bool brep_surface_move_cv(ON_Brep *brep, int surface_id, int cv_id_u, int cv_id_v, ON_4dPoint point)
+bool brep_surface_set_cv(ON_Brep *brep, int surface_id, int cv_id_u, int cv_id_v, const ON_4dPoint &point)
 {
     ON_NurbsSurface *surface = brep_get_nurbs_surface(brep, surface_id);
     if (!surface)
@@ -261,13 +261,13 @@ int brep_surface_create_ruled(ON_Brep *brep, int curve_id0, int curve_id1)
     ON_NurbsCurve *curve1 = brep_get_nurbs_curve(brep, curve_id1);
     if (!curve0 || !curve1)
     {
-        return false;
+        return -1;
     }
     ON_NurbsSurface *surface = new ON_NurbsSurface();
     if (!surface->CreateRuledSurface(*curve0, *curve1))
     {
         delete surface;
-        return false;
+        return -1;
     }
     return brep->AddSurface(surface);
 }

@@ -74,18 +74,10 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     argc--;
     argv++;
-    std::vector<double> position;
-    if (argc != 3)
+    ON_3dPoint position(0, 0, 0);
+    if (argc >= 3)
     {
-        position.push_back(0.0);
-        position.push_back(0.0);
-        position.push_back(0.0);
-    }
-    else
-    {
-        position.push_back(atof(argv[0]));
-        position.push_back(atof(argv[1]));
-        position.push_back(atof(argv[2]));
+        position = ON_3dPoint(atof(argv[0]), atof(argv[1]), atof(argv[2]));
     }
     int surfcode = brep_surface_make(b_ip->brep, position);
 
@@ -208,10 +200,10 @@ _brep_cmd_surface_move(void *bs, int argc, const char **argv)
 }
 
 extern "C" int
-_brep_cmd_surface_move_cv(void *bs, int argc, const char **argv)
+_brep_cmd_set_cv(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> surface move_cv   <surface_id> <cv_id_u> <cv_id_v> <x> <y> <z> [<w>]";
-    const char *purpose_string = "move a control vertex of a NURBS surface to a specified position";
+    const char *usage_string = "brep [options] <objname> surface set_cv   <surface_id> <cv_id_u> <cv_id_v> <x> <y> <z> [<w>]";
+    const char *purpose_string = "set a control vertex of a NURBS surface to a specified position";
     if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string))
     {
         return BRLCAD_OK;
@@ -229,7 +221,7 @@ _brep_cmd_surface_move_cv(void *bs, int argc, const char **argv)
 
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     ON_4dPoint p = ON_4dPoint(atof(argv[3]), atof(argv[4]), atof(argv[5]), argc == 7 ? atof(argv[6]) : 1);
-    bool flag = brep_surface_move_cv(b_ip->brep, atoi(argv[0]), atoi(argv[1]), atoi(argv[2]), p);
+    bool flag = brep_surface_set_cv(b_ip->brep, atoi(argv[0]), atoi(argv[1]), atoi(argv[2]), p);
     if (!flag)
     {
         bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to move surface cv \n");
@@ -338,7 +330,7 @@ const struct bu_cmdtab _brep_surface_cmds[] = {
     {"create", _brep_cmd_surface_create},
     {"create_from_curves", _brep_cmd_surface_create_from_curves},
     {"move", _brep_cmd_surface_move},
-    {"move_cv", _brep_cmd_surface_move_cv},
+    {"set_cv", _brep_cmd_set_cv},
     {"trim", _brep_cmd_surface_trim},
     {(char *)NULL, NULL}};
 

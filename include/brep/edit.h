@@ -20,6 +20,7 @@
 /** @addtogroup brep_edit
  * @brief
  * Implementation of edit support for brep.
+ * C functions and Cpp functions are provided.
  */
 #ifndef BREP_EDIT_H
 #define BREP_EDIT_H
@@ -53,7 +54,7 @@ extern "C++"
      * return id of the curve
      */
     BREP_EXPORT extern int
-    brep_make_curve(ON_Brep *brep, ON_3dVector *position);
+    brep_make_curve(ON_Brep *brep, const ON_3dPoint &position);
 
     /**
      * create an nurbs curve given detailed information
@@ -66,13 +67,13 @@ extern "C++"
      * move curve along a vector.
      */
     BREP_EXPORT extern bool
-    brep_curve_move(ON_Brep *brep, int curve_id, ON_3dPoint point);
+    brep_curve_move(ON_Brep *brep, int curve_id, const ON_3dVector &point);
 
     /**
-     * move control vertex of a curve
+     * set control vertex of a curve
      */
     BREP_EXPORT extern bool
-    brep_curve_move_cv(ON_Brep *brep, int curve_id, int cv_id, ON_4dPoint point);
+    brep_curve_set_cv(ON_Brep *brep, int curve_id, int cv_id, const ON_4dPoint &point);
 
     /**
      * Reverse parameterizatrion by negating all knots
@@ -106,19 +107,20 @@ extern "C++"
      * position can be specified if argc == 3
      * return id of the surface
      */
-    BREP_EXPORT extern int brep_surface_make(ON_Brep *brep, std::vector<double> position);
+    BREP_EXPORT extern int
+    brep_surface_make(ON_Brep *brep, const ON_3dPoint &position);
 
     /**
      * move surface to a new position
      */
     BREP_EXPORT extern bool
-    brep_surface_move(ON_Brep *brep, int surface_id, ON_3dPoint point);
+    brep_surface_move(ON_Brep *brep, int surface_id, const ON_3dVector &point);
 
     /**
-     * move control vertex of a curve
+     * set control vertex of a curve
      */
     BREP_EXPORT extern bool
-    brep_surface_move_cv(ON_Brep *brep, int surface_id, int cv_id_u, int cv_id_v, ON_4dPoint point);
+    brep_surface_set_cv(ON_Brep *brep, int surface_id, int cv_id_u, int cv_id_v, const ON_4dPoint &point);
 
     /**
      * trim a surface using a parameter range
@@ -132,7 +134,7 @@ extern "C++"
      * create a ruled surface.
      * The two curves must have the same NURBS form knots.
      * srf(s,t) = (1.0-t)*curveA(s) + t*curveB(s).
-     * return id of the surface
+     * return: if successful, id of the new surface; otherwise, -1.
      */
 
     BREP_EXPORT extern int
