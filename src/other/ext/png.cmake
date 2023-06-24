@@ -31,6 +31,11 @@ if (BRLCAD_PNG_BUILD)
 
   if (MSVC)
     set(PNG_BASENAME lib${PNG_LIB_NAME})
+    # NOTE: when we bump to libpng 1.6.40, they expose a PNG_DEBUG_POSTFIX which we can supply empty at build
+    # time to remove the extra debug checks
+    if ("${CMAKE_BUILD_TYPE}" MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
+      set(PNG_BASENAME "${PNG_BASENAME}d")
+    endif ("${CMAKE_BUILD_TYPE}" MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
     set(PNG_STATICNAME lib${PNG_LIB_NAME}_static)
     set(PNG_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
     set(PNG_SYMLINK_1 ${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
