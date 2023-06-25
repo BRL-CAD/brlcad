@@ -180,7 +180,6 @@ int brep_curve_join(ON_Brep *brep, int curve_id_1, int curve_id_2)
     ON_SimpleArray<ON_Curve *> out_curves;
     /// join the two curves
     int joined_num = ON_JoinCurves(in_curves, out_curves, 0.0f, 0.0f, false);
-    bu_log("out_curves size%d\n", out_curves.Count());
     if (joined_num != 1)
     {
         bu_log("ON_JoinCurves failed\n");
