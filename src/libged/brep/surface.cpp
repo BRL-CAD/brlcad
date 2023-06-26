@@ -90,10 +90,10 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
 }
 
 extern "C" int
-_brep_cmd_surface_create_from_curves(void *bs, int argc, const char **argv)
+_brep_cmd_surface_birail(void *bs, int argc, const char **argv)
 {
 
-    const char *usage_string = "brep [options] <objname> surface create_c <curve_id_1> <curve_id_2>";
+    const char *usage_string = "brep [options] <objname> surface birail <curve_id_1> <curve_id_2>";
     const char *purpose_string = "create a new NURBS surface using two curves";
     if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -137,7 +137,7 @@ _brep_cmd_surface_create_from_curves(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_move(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> surface move      <surface_id> <x> <y> <z>";
+    const char *usage_string = "brep [options] <objname> surface move <surface_id> <x> <y> <z>";
     const char *purpose_string = "move a NURBS surface to a specified position";
     if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -180,7 +180,7 @@ _brep_cmd_surface_move(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_set_cv(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> surface set_cv   <surface_id> <cv_id_u> <cv_id_v> <x> <y> <z> [<w>]";
+    const char *usage_string = "brep [options] <objname> surface set_cv <surface_id> <cv_id_u> <cv_id_v> <x> <y> <z> [<w>]";
     const char *purpose_string = "set a control vertex of a NURBS surface to a specified position";
     if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -292,12 +292,12 @@ _brep_surface_help(struct _ged_brep_isurface *bs, int argc, const char **argv)
 }
 
 const struct bu_cmdtab _brep_surface_cmds[] = {
-    {"create",		  _brep_cmd_surface_create},
-    {"create_from_curves",      _brep_cmd_surface_create_from_curves},
-    {"move",		    _brep_cmd_surface_move},
-    {"set_cv",		  _brep_cmd_set_cv},
-    {"trim",		    _brep_cmd_surface_trim},
-    {(char *)NULL, NULL}
+    { "create",              _brep_cmd_surface_create},
+    { "birail",              _brep_cmd_surface_birail},
+    { "move",                _brep_cmd_surface_move},
+    { "set_cv",              _brep_cmd_set_cv},
+    { "trim",                _brep_cmd_surface_trim},
+    { (char *)NULL,          NULL}
 };
 
 int brep_surface(struct _ged_brep_info *gb, int argc, const char **argv)

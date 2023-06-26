@@ -524,15 +524,15 @@ _brep_curve_help(struct _ged_brep_icurve *bs, int argc, const char **argv)
 }
 
 const struct bu_cmdtab _brep_curve_cmds[] = {
-    {"create",	  _brep_cmd_curve_create},
-    {"in",	      _brep_cmd_curve_in},
-    {"move",	    _brep_cmd_curve_move},
-    {"set_cv",	  _brep_cmd_curve_set_cv},
-    {"flip",	    _brep_cmd_curve_flip},
-    {"insert_knot",     _brep_cmd_curve_insert_knot},
-    {"trim",	    _brep_cmd_curve_trim},
-    {"join",	    _brep_cmd_curve_join},
-    {(char *)NULL, NULL}
+    { "create",          _brep_cmd_curve_create},
+    { "in",              _brep_cmd_curve_in},
+    { "move",            _brep_cmd_curve_move},
+    { "set_cv",          _brep_cmd_curve_set_cv},
+    { "flip",            _brep_cmd_curve_flip},
+    { "insert_knot",     _brep_cmd_curve_insert_knot},
+    { "trim",            _brep_cmd_curve_trim},
+    { "join",            _brep_cmd_curve_join},
+    { (char *)NULL,      NULL}
 };
 
 int brep_curve(struct _ged_brep_info *gb, int argc, const char **argv)
