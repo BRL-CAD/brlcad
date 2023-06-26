@@ -101,7 +101,7 @@ extern "C++"
      */
     BREP_EXPORT extern int
     brep_curve_join(ON_Brep *brep, int curve_id_1, int curve_id_2);
-
+    
     /**
      * create an nurbs curve using a template
      * position can be specified if argc == 3
