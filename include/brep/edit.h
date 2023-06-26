@@ -35,7 +35,7 @@
 __BEGIN_DECLS
 
 /**
- * create an empty ON_Brep. return pointer to the ON_Brep object created in void* format
+ * create an empty ON_Brep. return pointer to the ON_Brep object
  */
 BREP_EXPORT extern void *
 brep_create();
@@ -95,7 +95,7 @@ extern "C++"
     brep_curve_trim(ON_Brep *brep, int curve_id, double t0, double t1);
 
     /**
-     * join two curves. Join the end of curve_id_1 to the start of curve_id_2.
+     * Join the end of curve_id_1 to the start of curve_id_2.
      * return id of the new curve, delete the two old curves.
      * Remark: the index of C3 is changed after join!!!
      */
