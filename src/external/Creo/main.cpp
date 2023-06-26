@@ -55,8 +55,6 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->mtl_rec = -1;
 
     cinfo->xform_mode = XFORM_NONE;                   /* xform mode         */
-    cinfo->reg_id     = 1000;                         /* region counter     */
-    cinfo->lmin       = 30;                           /* minimum luminance  */
 
     cinfo->wdbp = NULL;
 
@@ -65,15 +63,13 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->local_tol         = 0.0;
     cinfo->local_tol_sq      = 0.0;
 
-    /* Facetization settings */
-    cinfo->max_error         = 1.5;
-    cinfo->min_error         = 1.5;
+    /* Tessellation settings */
+    cinfo->max_chord         = 2.0;
+    cinfo->min_chord         = 0.2;
     cinfo->tol_dist          = 0.0005;
-    cinfo->max_angle_cntrl   = 0.5;
-    cinfo->min_angle_cntrl   = 0.5;
-    cinfo->max_to_min_steps  = 1;
-    cinfo->error_increment   = 0.0;
-    cinfo->angle_increment   = 0.0;
+    cinfo->max_angle         = 1.0;
+    cinfo->min_angle         = 0.1;
+    cinfo->max_steps         = 30;
 
     /* CSG settings */
     cinfo->min_hole_diameter = 0.0;
@@ -81,14 +77,7 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->min_round_radius  = 0.0;
 
     /* Tessellation results */
-    cinfo->tess_chord        = -1.0;
-    cinfo->tess_angle        = -1.0;
-
-    /* Conversion Process results */
-    cinfo->asm_count         = 0;
-    cinfo->asm_total         = 0;
-    cinfo->prt_count         = 0;
-    cinfo->prt_total         = 0;
+    cinfo->tess_bbox = 0;
 
     cinfo->parts  = new std::set<wchar_t *, WStrCmp>;
     cinfo->assems = new std::set<wchar_t *, WStrCmp>;
@@ -102,8 +91,8 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
     cinfo->brlcad_names = new std::set<struct bu_vls *, StrCmp>;
     cinfo->creo_names   = new std::set<struct bu_vls *, StrCmp>;
 
-    cinfo->model_parameters = new std::vector<char *>;
-    cinfo->attrs            = new std::vector<char *>;
+    cinfo->obj_name_params = new std::vector<char *>;
+    cinfo->obj_attr_params = new std::vector<char *>;
 
     cinfo->warn_feature_unsuppress = 0;
 
@@ -148,14 +137,14 @@ creo_conv_info_free(struct creo_conv_info *cinfo)
         BU_PUT(v, struct bu_vls);
     }
 
-    for (unsigned int i = 0; i < cinfo->model_parameters->size(); i++) {
-        char *str = cinfo->model_parameters->at(i);
-        bu_free(str, "free model param string");
+    for (unsigned int i = 0; i < cinfo->obj_name_params->size(); i++) {
+        char *str = cinfo->obj_name_params->at(i);
+        bu_free(str, "free obj name params string");
     }
 
-    for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
-        char *str = cinfo->attrs->at(i);
-        bu_free(str, "free attrs string");
+    for (unsigned int i = 0; i < cinfo->obj_attr_params->size(); i++) {
+        char *str = cinfo->obj_attr_params->at(i);
+        bu_free(str, "free obj attr params string");
     }
 
     delete cinfo->parts;
@@ -188,7 +177,7 @@ output_parts(struct creo_conv_info *cinfo)
 {
     std::set<wchar_t *, WStrCmp>::iterator d_it;
 
-    unsigned int prt_count = 1;
+    unsigned int prt_count = 0;
     for (d_it = cinfo->parts->begin(); d_it != cinfo->parts->end(); d_it++) {
         wchar_t wname[CREO_NAME_MAX];
         struct bu_vls *rname;
@@ -212,9 +201,8 @@ output_parts(struct creo_conv_info *cinfo)
         rdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(rname), LOOKUP_QUIET);
         if (rdp != RT_DIR_NULL && ProMdlVerstampGet(model, &cstamp) == PRO_TK_NO_ERROR) {
             const char *vs = NULL;
-            struct bu_attribute_value_set r_avs;
-            db5_get_attributes(cinfo->wdbp->dbip, &r_avs, rdp);
-            vs = bu_avs_get(&r_avs, "ptc_version_stamp");
+            db5_get_attributes(cinfo->wdbp->dbip, &cinfo->avs, rdp);
+            vs = bu_avs_get(&cinfo->avs, "ptc_version_stamp");
             if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR
                    && ProVerstampEqual(cstamp, gstamp)          == PRO_B_TRUE) {
                 /*
@@ -252,16 +240,14 @@ output_parts(struct creo_conv_info *cinfo)
         /* All set - process the part */
         if (output_part(cinfo, model) == PRO_TK_NOT_EXIST) {
             creo_log(cinfo, MSG_STATUS, "Part \"%s\" failed to convert", bu_vls_addr(rname));
-            cinfo->empty->insert(*d_it);
-        } else {
-            creo_log(cinfo, MSG_STATUS, "Part %d of %zu converted", prt_count, cinfo->parts->size());
-            if (prt_count < cinfo->parts->size())
-                prt_count++;
-        }
+            if (!cinfo->tess_bbox)
+                cinfo->empty->insert(*d_it);
+        } else
+            creo_log(cinfo, MSG_STATUS, "Part %d of %zu converted", ++prt_count, cinfo->parts->size());
 
     }
 
-    /* Retain part process results */
+    /* Retain conversion process results */
     cinfo->prt_count = prt_count;
     cinfo->prt_total = cinfo->parts->size();
 }
@@ -272,7 +258,7 @@ output_assems(struct creo_conv_info *cinfo)
 {
     std::set<wchar_t *, WStrCmp>::iterator d_it;
 
-    unsigned int asm_count = 1;
+    unsigned int asm_count = 0;
     for (d_it = cinfo->assems->begin(); d_it != cinfo->assems->end(); d_it++) {
         wchar_t wname[CREO_NAME_MAX];
         struct bu_vls *aname;
@@ -294,9 +280,8 @@ output_assems(struct creo_conv_info *cinfo)
         adp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(aname), LOOKUP_QUIET);
         if (adp != RT_DIR_NULL && ProMdlVerstampGet(parent, &cstamp) == PRO_TK_NO_ERROR) {
             const char *vs = NULL;
-            struct bu_attribute_value_set a_avs;
-            db5_get_attributes(cinfo->wdbp->dbip, &a_avs, adp);
-            vs = bu_avs_get(&a_avs, "ptc_version_stamp");
+            db5_get_attributes(cinfo->wdbp->dbip, &cinfo->avs, adp);
+            vs = bu_avs_get(&cinfo->avs, "ptc_version_stamp");
             if (vs && ProStringVerstampGet((char *)vs, &gstamp) == PRO_TK_NO_ERROR
                    && ProVerstampEqual(cstamp, gstamp)          == PRO_B_TRUE) {
                 /*
@@ -304,7 +289,8 @@ output_assems(struct creo_conv_info *cinfo)
                  * version of the object that exists currently in the
                  * Creo file
                  */
-                creo_log(cinfo, MSG_SUCCESS, "Assembly name \"%s\" exists and is current, skipping...\n", bu_vls_addr(aname));
+                creo_log(cinfo, MSG_SUCCESS, "Assembly name \"%s\" exists and is current, skipping...\n",
+                         bu_vls_addr(aname));
                 continue;
             } else {
                 /* Kill the existing object - it's out of sync with Creo */
@@ -321,11 +307,9 @@ output_assems(struct creo_conv_info *cinfo)
         /* All set - process the assembly */
         if (output_assembly(cinfo, parent) != PRO_TK_NO_ERROR)
             creo_log(cinfo, MSG_STATUS, "Assembly \"%s\" failed to convert", bu_vls_addr(aname));
-        else {
-            creo_log(cinfo, MSG_STATUS, "Assembly %d of %zu succeeded", asm_count, cinfo->assems->size());
-            if (asm_count < cinfo->assems->size())
-                asm_count++;
-        }
+        else
+            creo_log(cinfo, MSG_STATUS, "Assembly %d of %zu succeeded", ++asm_count, cinfo->assems->size());
+
     }
 
     /* Retain assembly process results */
@@ -365,7 +349,7 @@ objects_gather(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
     lower_case(name);
 
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(cinfo, MSG_DEBUG, "Failed to get the file type for \"%s\"\n", name);
+        creo_log(cinfo, MSG_PLAIN, "   FILE: Failed to get type for \"%s\"\n", name);
         (void)ProWstringFree(wname);
         return PRO_TK_NO_ERROR;
     }
@@ -373,21 +357,21 @@ objects_gather(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
     /* Get assembly component model */
     err = ProAsmcompMdlGet(feat, &model);
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(cinfo, MSG_DEBUG, "Failed to get model handle for \"%s\"\n", name);
+        creo_log(cinfo, MSG_PLAIN, "  MODEL: Failed to get handle for \"%s\"\n", name);
         return PRO_TK_NO_ERROR;
     }
 
     /* Get model type (only a part or assembly should make it here) */
     err = ProMdlTypeGet(model, &mtype);
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(cinfo, MSG_DEBUG, "Failed to get model type for \"%s\"\n", name);
+        creo_log(cinfo, MSG_PLAIN, "  MODEL: Failed to get type for \"%s\"\n", name);
         return PRO_TK_NO_ERROR;
     }
 
     /* If this is a skeleton, we're done */
     ProMdlIsSkeleton(model, &is_skel);
     if (is_skel) {
-        creo_log(cinfo, MSG_DEBUG, "\"%s\" is a \"skeleton\" model, skipping...\n", name);
+        creo_log(cinfo, MSG_PLAIN, "  MODEL: \"%s\" is a \"skeleton\", skipping...\n", name);
         return PRO_TK_NO_ERROR;
     }
 
@@ -398,7 +382,7 @@ objects_gather(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
                 wname_saved = (wchar_t *)bu_calloc(wcslen(wname)+1, sizeof(wchar_t), "ptc_asm_name");
                 wcsncpy(wname_saved, wname, wcslen(wname)+1);
                 cinfo->assems->insert(wname_saved);
-                creo_log(cinfo, MSG_DEBUG, "Walking into \"%s\"\n", name);
+                creo_log(cinfo, MSG_PLAIN, "  ASSEM: Walking into \"%s\"\n", name);
                 ProSolidFeatVisit(ProMdlToPart(model), objects_gather, (ProFeatureFilterAction)component_filter, app_data);
             }
             break;
@@ -410,7 +394,7 @@ objects_gather(ProFeature *feat, ProError UNUSED(status), ProAppData app_data)
             }
             break;
         default:
-            creo_log(cinfo, MSG_DEBUG, "\"%s\" is not a PART or an ASSEMBLY, skipping...\n", name);
+            creo_log(cinfo, MSG_PLAIN, "  MODEL: \"%s\" is not a PART or an ASSEMBLY, skipping...\n", name);
             return PRO_TK_NO_ERROR;
     }
 
@@ -466,7 +450,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType m
             output_assems(cinfo);
             break;
         default:
-            creo_log(cinfo, MSG_DEBUG, "Top-level object \"%s\" is not a PART or an ASSEMBLY, skipping...", name);
+            creo_log(cinfo, MSG_PLAIN, "  MODEL: Top-level object \"%s\" is not a PART or an ASSEMBLY, skipping...", name);
             return;
     }
 
@@ -494,7 +478,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType m
     (void)mk_addmember(bu_vls_addr(comb_name), &(wcomb.l), xform, WMOP_UNION);
 
     /* Guarantee we have a non-colliding top level name */
-    bu_vls_sprintf(&top_name, "all.g");
+    bu_vls_sprintf(&top_name, "all");
     tdp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(&top_name), LOOKUP_QUIET);
     if (tdp != RT_DIR_NULL) {
         bu_vls_sprintf(&top_name, "all-1.g");
@@ -503,7 +487,7 @@ output_top_level_object(struct creo_conv_info *cinfo, ProMdl model, ProMdlType m
             (void)bu_vls_incr(&top_name, NULL, "0:0:0:0:-", NULL, NULL);
             count++;
             if (count >= MAX_UNIQUE_NAMES) {
-                creo_log(cinfo, MSG_DEBUG, "\"%s\" failed top-level name generation\n", bu_vls_cstr(cinfo->out_fname));
+                creo_log(cinfo, MSG_PLAIN, "   NAME: \"%s\" failed top-level generation\n", bu_vls_cstr(cinfo->out_fname));
                 break;
             }
         }
@@ -536,9 +520,9 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     memset(padstr, ' ', 17);
     padstr[17] = '\0';
 
-    time_t start;
-    time_t finish;
-    time_t elapsed;
+    int64_t start;
+    int     time_hr, time_min;
+    double  elapsed, time_sec;
 
     /* This replaces the global variables used in the original Creo converter */
     struct creo_conv_info *cinfo = new creo_conv_info;
@@ -695,26 +679,26 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         (void)ProWstringFree(tmp_str);
 
         /* Open material file when name is provided */
-	if (strlen(mtl_fname) > 0) {
-	    if (bu_file_exists(mtl_fname, NULL)) {
-		if ((cinfo->fpmtl=fopen(mtl_fname, "r")) == NULL) {
-		    creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to open material file \"%s\"  ", mtl_fname);
-		    creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to open material file \"%s\"\n", mtl_fname);
-		    creo_conv_info_free(cinfo);
-		    ProUIDialogDestroy("creo_brl");
-		    delete cinfo;
-		    return;
-		} else 
-		    cinfo->mtl_rec = get_mtl_input(cinfo->fpmtl, &(cinfo->mtl_str[0][0]) , &(cinfo->mtl_id[0]), &(cinfo->mtl_los[0]));
-	    } else {
-		cinfo->fpmtl = (FILE *)NULL;
-	    }
-	}
+        if (strlen(mtl_fname) > 0) {
+            if (bu_file_exists(mtl_fname, NULL)) {
+                if ((cinfo->fpmtl=fopen(mtl_fname, "r")) == NULL) {
+                    creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to open material file \"%s\"  ", mtl_fname);
+                    creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to open material file \"%s\"\n", mtl_fname);
+                    creo_conv_info_free(cinfo);
+                    ProUIDialogDestroy("creo_brl");
+                    delete cinfo;
+                    return;
+                } else 
+                    cinfo->mtl_rec = get_mtl_input(cinfo->fpmtl, &(cinfo->mtl_str[0][0]) , &(cinfo->mtl_id[0]), &(cinfo->mtl_los[0]));
+            } else
+                cinfo->fpmtl = (FILE *)NULL;
+        }
 
         /* Store the material filename for later use */
         sprintf(cinfo->mtl_fname, "%s", mtl_fname);
     }
 
+    /* Begin echoing the input summary */
     creo_log(cinfo, MSG_PLAIN, "#                  Output file name: \"%s\"\n", bu_vls_cstr(cinfo->out_fname));
     creo_log(cinfo, MSG_PLAIN, "#              Process log criteria: \"%s\"\n", bu_vls_cstr(cinfo->logger_str));
     creo_log(cinfo, MSG_PLAIN, "#             Process log file name: \"%s\"\n", bu_vls_cstr(cinfo->log_fname));
@@ -729,9 +713,9 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /* Read user-supplied list of model parameters for object names */
     {
         /* Get string from dialog */
-        char attr_rename[MAXPATHLEN];
-        wchar_t *w_attr_rename;
-        err = ProUIInputpanelValueGet("creo_brl", "attr_rename", &w_attr_rename);
+        char param_rename[MAXPATHLEN];
+        wchar_t *w_param_rename;
+        err = ProUIInputpanelValueGet("creo_brl", "param_rename", &w_param_rename);
         if (err != PRO_TK_NO_ERROR) {
             creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value(s): \"Create object names\"  ");
             creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value(s): \"Create object names\"\n");
@@ -741,77 +725,38 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
             return;
         }
 
-        ProWstringToString(attr_rename, w_attr_rename);
-        (void)ProWstringFree(w_attr_rename);
+        ProWstringToString(param_rename, w_param_rename);
+        (void)ProWstringFree(w_param_rename);
 
-        if (strlen(attr_rename) > 0) {
-            std::string pfilestr(attr_rename);
-            std::istringstream ss(pfilestr);
-            std::string line;
-            while (std::getline(ss, line)) {
-                std::string pkey;
-                std::istringstream ls(line);
-                while (std::getline(ls, pkey, ',')) {
-                    /* Scrub leading and trailing whitespace */
-                    size_t startpos = pkey.find_first_not_of(" \t\n\v\f\r");
-                    if (std::string::npos != startpos)
-                        pkey = pkey.substr(startpos);
-                    size_t endpos = pkey.find_last_not_of(" \t\n\v\f\r");
-                    if (std::string::npos != endpos)
-                        pkey = pkey.substr(0 ,endpos+1);
-                    if (pkey.length() > 0) {
-                        creo_log(cinfo, MSG_PLAIN, "#              Creates object names: \"%s\"\n", pkey.c_str());
-                        cinfo->model_parameters->push_back(bu_strdup(pkey.c_str()));
-                    }
-                }
-            }
+        if (strlen(param_rename) > 0) {
+            parse_param_list(cinfo, param_rename, NAME_PARAMS);
             creo_log(cinfo, MSG_PLAIN, "#%s#\n", linestr);
         } else
-            creo_log(cinfo, MSG_PLAIN, "#               Create object names: \"%s\"\n", attr_rename);
+            creo_log(cinfo, MSG_PLAIN, "#              Creates object names: \"%s\"\n", param_rename);
     }
 
     /* Read user-supplied list of model attributes for conversion */
     {
         /* Get string from dialog */
-        char attr_save[MAXPATHLEN];
-        wchar_t *w_attr_save;
-        err = ProUIInputpanelValueGet("creo_brl", "attr_save", &w_attr_save);
+        char param_save[MAXPATHLEN];
+        wchar_t *w_param_save;
+        err = ProUIInputpanelValueGet("creo_brl", "param_save", &w_param_save);
         if (err != PRO_TK_NO_ERROR) {
-            creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value(s): \"Preserve as attributes\"  ");
-            creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value(s): \"Preserve as attributes\"\n");
+            creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value(s): \"Preserved attributes\"  ");
+            creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value(s): \"Preserved attributes\"\n");
             creo_conv_info_free(cinfo);
             ProUIDialogDestroy("creo_brl");
             delete cinfo;
             return;
         }
 
-        ProWstringToString(attr_save, w_attr_save);
-        (void)ProWstringFree(w_attr_save);
+        ProWstringToString(param_save, w_param_save);
+        (void)ProWstringFree(w_param_save);
 
-        if (strlen(attr_save) > 0) {
-            /* Parse attribute list into separate parameter keys */
-            std::string afilestr(attr_save);
-            std::istringstream ss(afilestr);
-            std::string line;
-            while (std::getline(ss, line)) {
-                std::string pkey;
-                std::istringstream ls(line);
-                while (std::getline(ls, pkey, ',')) {
-                    /* Scrub leading and trailing whitespace */
-                    size_t startpos = pkey.find_first_not_of(" \t\n\v\f\r");
-                    if (std::string::npos != startpos)
-                        pkey = pkey.substr(startpos);
-                    size_t endpos = pkey.find_last_not_of(" \t\n\v\f\r");
-                    if (std::string::npos != endpos)
-                        pkey = pkey.substr(0 ,endpos+1);
-                    if (pkey.length() > 0) {
-                        creo_log(cinfo, MSG_PLAIN, "#            Preserved as attribute: \"%s\"\n", pkey.c_str());
-                        cinfo->attrs->push_back(bu_strdup(pkey.c_str()));
-                    }
-                }
-            }
-        } else
-              creo_log(cinfo, MSG_PLAIN, "#            Preserve as attributes: \"%s\"\n", attr_save);
+        if (strlen(param_save) > 0)
+            parse_param_list(cinfo, param_save,   ATTR_PARAMS);
+        else
+            creo_log(cinfo, MSG_PLAIN, "#               Preserved attribute: \"%s\"\n", param_save);
     }
 
     creo_log(cinfo, MSG_PLAIN, "#%s#\n", linestr);
@@ -864,7 +809,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         ProUIDialogDestroy("creo_brl");
         return;
     } else {
-        cinfo->reg_id = wstr_to_long(cinfo, tmp_str);
+        cinfo->reg_id = (int)wstr_to_long(cinfo, tmp_str);
         creo_log(cinfo, MSG_PLAIN, "#            Initial region counter: %d\n", cinfo->reg_id);
         V_MAX(cinfo->reg_id, 1);
         (void)ProWstringFree(tmp_str);
@@ -873,15 +818,15 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     /* Get minimum luminance threshold */
     err = ProUIInputpanelValueGet("creo_brl", "min_luminance", &tmp_str);
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Min luminance threshold\"  ");
-        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Min luminance threshold\"\n");
+        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Min luminance\"  ");
+        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Min luminance\"\n");
         creo_conv_info_free(cinfo);
         ProUIDialogDestroy("creo_brl");
         return;
     } else {
-        cinfo->lmin = wstr_to_long(cinfo, tmp_str);
-        creo_log(cinfo, MSG_PLAIN, "#        Min luminance threshold, %s: %d\n", "%", cinfo->lmin);
-        cinfo->lmin = std::min<int>(std::max<int>(cinfo->lmin,0),100);
+        int lmin = (int)wstr_to_long(cinfo, tmp_str);
+        creo_log(cinfo, MSG_PLAIN, "#                  Min luminance, %s: %d\n", "%", lmin);
+        cinfo->lmin = std::min<int>(std::max<int>(lmin,0),100);
         (void)ProWstringFree(tmp_str);
     }
 
@@ -891,84 +836,81 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     creo_log(cinfo, MSG_PLAIN,  "%s#\n",  padstr);
     creo_log(cinfo, MSG_PLAIN, "#%s#\n", linestr);
 
-    /* Get max tessellation error */
-    err = ProUIInputpanelValueGet("creo_brl", "max_error", &tmp_str);
+    /* Get max chord height */
+    err = ProUIInputpanelValueGet("creo_brl", "max_chord", &tmp_str);
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Max chord error\"  ");
-        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Max chord error\"\n");
+        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Max chord\"  ");
+        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Max chord\"\n");
         creo_conv_info_free(cinfo);
         ProUIDialogDestroy("creo_brl");
         return;
     } else {
-        cinfo->max_error = wstr_to_double(cinfo, tmp_str);
-        creo_log(cinfo, MSG_PLAIN, "#               Max chord error, mm: %8.6f\n", cinfo->max_error);
+        cinfo->max_chord = wstr_to_double(cinfo, tmp_str);
+        creo_log(cinfo, MSG_PLAIN, "#              Max chord height, mm: %8.6f\n", cinfo->max_chord);
         (void)ProWstringFree(tmp_str);
     }
 
-    /* Get min tessellation error */
-    err = ProUIInputpanelValueGet("creo_brl", "min_error", &tmp_str);
+    /* Get min chord height */
+    err = ProUIInputpanelValueGet("creo_brl", "min_chord", &tmp_str);
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Min chord error\"  ");
-        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Min chord error\"\n");
+        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Min chord\"  ");
+        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Min chord\"\n");
         creo_conv_info_free(cinfo);
         ProUIDialogDestroy("creo_brl");
         return;
     } else {
-        cinfo->min_error = wstr_to_double(cinfo, tmp_str);
-        creo_log(cinfo, MSG_PLAIN, "#               Min chord error, mm: %8.6f\n", cinfo->min_error);
-        V_MAX(cinfo->max_error, cinfo->min_error);
+        cinfo->min_chord = wstr_to_double(cinfo, tmp_str);
+        creo_log(cinfo, MSG_PLAIN, "#              Min chord height, mm: %8.6f\n", cinfo->min_chord);
+        V_MAX(cinfo->max_chord, cinfo->min_chord);
         (void)ProWstringFree(tmp_str);
     }
 
     /* Get the max angle control */
-    err = ProUIInputpanelValueGet("creo_brl", "max_angle_ctrl", &tmp_str);
+    err = ProUIInputpanelValueGet("creo_brl", "max_angle", &tmp_str);
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Max angle control\"  ");
-        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Max angle control\"\n");
+        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Max angle\"  ");
+        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Max angle\"\n");
         creo_conv_info_free(cinfo);
         ProUIDialogDestroy("creo_brl");
         return;
     } else {
-        cinfo->max_angle_cntrl = wstr_to_double(cinfo, tmp_str);
-        creo_log(cinfo, MSG_PLAIN, "#            Max angle control, deg: %8.6f\n", cinfo->max_angle_cntrl);
+        cinfo->max_angle = wstr_to_double(cinfo, tmp_str);
+        creo_log(cinfo, MSG_PLAIN, "#                 Max angle control: %8.6f\n", cinfo->max_angle);
         (void)ProWstringFree(tmp_str);
     }
 
     /* Get the min angle control */
-    err = ProUIInputpanelValueGet("creo_brl", "min_angle_ctrl", &tmp_str);
+    err = ProUIInputpanelValueGet("creo_brl", "min_angle", &tmp_str);
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Min angle control\"  ");
-        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Min angle control\"\n");
+        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Min angle\"  ");
+        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Min angle\"\n");
         creo_conv_info_free(cinfo);
         ProUIDialogDestroy("creo_brl");
         return;
     } else {
-        cinfo->min_angle_cntrl = wstr_to_double(cinfo, tmp_str);
-        creo_log(cinfo, MSG_PLAIN, "#            Min angle control, deg: %8.6f\n", cinfo->min_angle_cntrl);
-        V_MAX(cinfo->max_angle_cntrl, cinfo->min_angle_cntrl);
+        cinfo->min_angle = wstr_to_double(cinfo, tmp_str);
+        creo_log(cinfo, MSG_PLAIN, "#                 Min angle control: %8.6f\n", cinfo->min_angle);
+        V_MAX(cinfo->max_angle, cinfo->min_angle);
         (void)ProWstringFree(tmp_str);
     }
 
-    /* Get the max to min steps */
-    err = ProUIInputpanelValueGet("creo_brl", "isteps", &tmp_str);
+    /* Get the max number of steps */
+    err = ProUIInputpanelValueGet("creo_brl", "max_steps", &tmp_str);
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Max to Min control steps\"  ");
-        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Max to Min control steps\"\n");
+        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get value: \"Max steps\"  ");
+        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get value: \"Max steps\"\n");
         creo_conv_info_free(cinfo);
         ProUIDialogDestroy("creo_brl");
         return;
     } else {
-        cinfo->max_to_min_steps = wstr_to_long(cinfo, tmp_str);
-        creo_log(cinfo, MSG_PLAIN, "#          Max to Min control steps: %d\n", cinfo->max_to_min_steps);
+        cinfo->max_steps = (int)wstr_to_long(cinfo, tmp_str);
+        creo_log(cinfo, MSG_PLAIN, "#               Max number of steps: %d\n", cinfo->max_steps);
         (void)ProWstringFree(tmp_str);
-        if (cinfo->max_to_min_steps <= 0)
-            cinfo->max_to_min_steps = 0;
-        else {
-            cinfo->error_increment = (ZERO((cinfo->max_error - cinfo->min_error))) ? 0 : (cinfo->max_error - cinfo->min_error) / (double)cinfo->max_to_min_steps;
-            cinfo->angle_increment = (ZERO((cinfo->max_angle_cntrl - cinfo->min_angle_cntrl))) ? 0 : (cinfo->max_angle_cntrl - cinfo->min_angle_cntrl) / (double)cinfo->max_to_min_steps;
-            if (ZERO(cinfo->error_increment) && ZERO(cinfo->angle_increment))
-                cinfo->max_to_min_steps = 0;
-        }
+
+        /* Utilize adaptive tessellation settings? */
+        cinfo->tess_adapt = (ZERO(cinfo->max_chord) &&
+                             ZERO(cinfo->min_chord) &&
+                             cinfo->max_steps > 0 );
     }
 
     creo_log(cinfo, MSG_PLAIN, "#%s#\n", linestr);
@@ -978,7 +920,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     creo_log(cinfo, MSG_PLAIN, "#%s#\n", linestr);
 
     /* Check if user wants to eliminate small features */
-    err = ProUICheckbuttonGetState("creo_brl", "elim_small", &cinfo->do_elims);
+    err = ProUICheckbuttonGetState("creo_brl", "elim_small", &cinfo->elim_small);
     if (err != PRO_TK_NO_ERROR) {
         creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get check button state: \"ignore minimum sizes\"  ");
         creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get check button state: \"ignore minimum sizes\"\n");
@@ -987,9 +929,9 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         delete cinfo;
         return;
     } else
-        creo_log(cinfo, MSG_PLAIN, "#              Ignore minimum sizes: %s\n", cinfo->do_elims ? "ON" : "OFF");
+        creo_log(cinfo, MSG_PLAIN, "#              Ignore minimum sizes: %s\n", cinfo->elim_small ? "ON" : "OFF");
 
-    if (cinfo->do_elims) {
+    if (cinfo->elim_small) {
         /* Get the minimum hole diameter */
         err = ProUIInputpanelValueGet("creo_brl", "min_hole", &tmp_str);
         if (err != PRO_TK_NO_ERROR) {
@@ -1051,7 +993,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     creo_log(cinfo, MSG_PLAIN, "#%s#\n", linestr);
 
     /* Check if user wants to do any CSG */
-    err = ProUICheckbuttonGetState("creo_brl", "facets_only", &cinfo->do_facets_only);
+    err = ProUICheckbuttonGetState("creo_brl", "facets_only", &cinfo->facets_only);
     if (err != PRO_TK_NO_ERROR) {
         creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get check button state: \"facets only\"  ");
         creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get check button state: \"facets only\"\n");
@@ -1060,19 +1002,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         delete cinfo;
         return;
     } else 
-        creo_log(cinfo, MSG_PLAIN, "#     Facetize everything, (no CSG): %s\n", cinfo->do_facets_only ? "ON" : "OFF");
-
-    /* Check if user wants surface normals in the BOT's */
-    err = ProUICheckbuttonGetState("creo_brl", "get_normals", &cinfo->get_normals);
-    if (err != PRO_TK_NO_ERROR) {
-        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get check button state: \"write surface normals\"  ");
-        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get check button state: \"write surface normals\"\n");
-        creo_conv_info_free(cinfo);
-        ProUIDialogDestroy("creo_brl");
-        delete cinfo;
-        return;
-    } else
-        creo_log(cinfo, MSG_PLAIN, "#             Write surface normals: %s\n", cinfo->get_normals ? "ON" : "OFF");
+        creo_log(cinfo, MSG_PLAIN, "#     Facetize everything, (no CSG): %s\n", cinfo->facets_only ? "ON" : "OFF");
 
     /* Check if user wants to test solidity */
     err = ProUICheckbuttonGetState("creo_brl", "check_solidity", &cinfo->check_solidity);
@@ -1087,7 +1017,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         creo_log(cinfo, MSG_PLAIN, "#    Reject BoTs that fail solidity: %s\n", cinfo->check_solidity ? "ON" : "OFF");
 
     /* Check if user wants to use bounding boxes */
-    err = ProUICheckbuttonGetState("creo_brl", "debug_bboxes", &cinfo->debug_bboxes);
+    err = ProUICheckbuttonGetState("creo_brl", "create_boxes", &cinfo->create_boxes);
     if (err != PRO_TK_NO_ERROR) {
         creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get check button state: \"bounding box for failed part\"  ");
         creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get check button state: \"bounding box for failed part\"\n");
@@ -1096,30 +1026,49 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
         delete cinfo;
         return;
     } else
-        creo_log(cinfo, MSG_PLAIN, "# Bounding box replaces failed part: %s\n", cinfo->debug_bboxes ? "ON" : "OFF");
+        creo_log(cinfo, MSG_PLAIN, "# Bounding box replaces failed part: %s\n", cinfo->create_boxes ? "ON" : "OFF");
+
+    /* Check if user wants surface normals in the BOT's */
+    err = ProUICheckbuttonGetState("creo_brl", "get_normals", &cinfo->get_normals);
+    if (err != PRO_TK_NO_ERROR) {
+        creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to get check button state: \"write surface normals\"  ");
+        creo_log(cinfo, MSG_PLAIN,  "FAILURE: Unable to get check button state: \"write surface normals\"\n");
+        creo_conv_info_free(cinfo);
+        ProUIDialogDestroy("creo_brl");
+        delete cinfo;
+        return;
+    } else
+        creo_log(cinfo, MSG_PLAIN, "#             Write surface normals: %s\n", cinfo->get_normals ? "ON" : "OFF");
 
     creo_log(cinfo, MSG_PLAIN, "#%s#\n", linestr);
-
-    /* Input summary now complete, restore user-specified logger type */
-    cinfo->logger_type = user_logger_type;
 
     /* Report status of material file */
     if (int(strlen(cinfo->mtl_fname)) > 0) {
         if (cinfo->fpmtl == NULL)
-            creo_log(cinfo, MSG_DEBUG, "Unknown material translation file \"%s\"\n",
+            creo_log(cinfo, MSG_PLAIN,  "   MATL: Unknown material translation file \"%s\"\n",
                      cinfo->mtl_fname);
         else if (cinfo->mtl_rec > 0) {
-            creo_log(cinfo, MSG_DEBUG, "Found material translation file \"%s\"\n",
+            creo_log(cinfo, MSG_PLAIN,  "   MATL: Found material translation file \"%s\"\n",
                      cinfo->mtl_fname);
-            creo_log(cinfo, MSG_DEBUG, "Found %d valid material translation entries\n",
+            creo_log(cinfo, MSG_PLAIN,  "   MATL: Found %d valid material translation entries\n",
                      cinfo->mtl_rec);
+            creo_log(cinfo, MSG_PLAIN,  "   MATL: ==========================================================\n");
+            creo_log(cinfo, MSG_PLAIN,  "   MATL:    n          ptc_material_name         material_id  los\n");
+            creo_log(cinfo, MSG_PLAIN , "   MATL: ----------------------------------------------------------\n");
+            for (int n = 0; n < cinfo->mtl_rec; n++)
+                creo_log(cinfo, MSG_PLAIN, "   MATL:  %3d  %-32s      %3d      %3d\n",
+                                           n+1, cinfo->mtl_str[n], cinfo->mtl_id[n], cinfo->mtl_los[n]);
+            creo_log(cinfo, MSG_PLAIN,  "   MATL: ----------------------------------------------------------\n");
         } else
             creo_log(cinfo, MSG_FAIL, "File \"%s\" has no valid material translation entries\n",
                      cinfo->mtl_fname);
     } else {
-        creo_log(cinfo, MSG_DEBUG, "No material translation file was specified\n");
+        creo_log(cinfo, MSG_PLAIN, "   MATL: No translation file was specified\n");
         cinfo->mtl_rec = -1;
     }
+
+    /* Input summary now complete, restore user-specified logger type */
+    cinfo->logger_type = user_logger_type;
 
     /* Get currently displayed model in Creo */
     err = ProMdlCurrentGet(&model);
@@ -1160,7 +1109,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     cinfo->local_tol    = cinfo->tol_dist / cinfo->creo_to_brl_conv;
     cinfo->local_tol_sq = cinfo->local_tol * cinfo->local_tol;
 
-    (void)time(&start);
+    start = bu_gettime();
 
     /*
      * Output the top-level object
@@ -1232,14 +1181,16 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
     } else
         creo_log(cinfo, MSG_PLAIN, "#                  Conversion ratio: 100%s\n", "%");
 
-    (void)time(&finish);
-    elapsed = finish - start;
-
     creo_log(cinfo, MSG_PLAIN, "#%s#\n", linestr);
-    creo_log(cinfo, MSG_PLAIN,     "#                      Elapsed time: %02d:%02d:%02d\n",
-                                    (int)elapsed/3600,
-                                    (int)elapsed%3600/60,
-                                    (int)elapsed%60);
+
+    /* Bin the elapsed run time for display as:  hh:mm:ss.sss */
+    elapsed  = (double)(bu_gettime() - start)/1000000.0;
+    time_hr  = (int)(elapsed)/3600;
+    time_min = ((int)(elapsed)-3600*time_hr)/60;
+    time_sec = elapsed - 3600*time_hr - 60*time_min;
+
+    creo_log(cinfo, MSG_PLAIN,     "#                      Elapsed time: %02d:%02d:%06.3f\n",
+                                                           time_hr, time_min, time_sec);
 
     creo_log(cinfo, MSG_PLAIN, "#%s#\n", linestr);
     creo_log(cinfo, MSG_PLAIN,    "#%s",  padstr);
@@ -1259,7 +1210,6 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
                                      cinfo->asm_total - cinfo->asm_count);
     else
         creo_log(cinfo, MSG_STATUS, "No Assembly failures found");
-    creo_log(cinfo, MSG_STATUS, "---------------------------------");
 
     creo_conv_info_free(cinfo);
     delete cinfo;
@@ -1292,7 +1242,7 @@ elim_small_activate(char *dialog_name, char *button_name, ProAppData UNUSED(data
         }
     } else {
         if (ProUIInputpanelReadOnly(dialog_name, "min_hole") != PRO_TK_NO_ERROR) {
-            creo_log(NULL, MSG_STATUS, "FAILURE: Unable to de-activate: \"Hole diameter\"vv");
+            creo_log(NULL, MSG_STATUS, "FAILURE: Unable to de-activate: \"Hole diameter\"  ");
             return;
         }
         if (ProUIInputpanelReadOnly(dialog_name, "min_chamfer") != PRO_TK_NO_ERROR) {
@@ -1387,15 +1337,15 @@ creo_brl(uiCmdCmdId UNUSED(command), uiCmdValue *UNUSED(p_value), void *UNUSED(p
      * users to input lists directly... to do so, need to increase char
      * limit
      */
-    ProUIInputpanelMaxlenSet("creo_brl", "attr_rename", MAXPATHLEN - 1);
-    ProUIInputpanelMaxlenSet("creo_brl", "attr_save",   MAXPATHLEN - 1);
+    ProUIInputpanelMaxlenSet("creo_brl", "param_rename", MAXPATHLEN - 1);
+    ProUIInputpanelMaxlenSet("creo_brl", "param_save",   MAXPATHLEN - 1);
 
     if (ProUIDialogActivate("creo_brl", &err) != PRO_TK_NO_ERROR)
         bu_vls_printf(&vls, "FAILURE: Unexpected error in creo-brl dialog returned %d\n", err);
 
     print_msg:
     if (bu_vls_strlen(&vls) > 0) {
-        creo_log(NULL, MSG_DEBUG, bu_vls_addr(&vls));
+        creo_log(NULL, MSG_PLAIN, bu_vls_addr(&vls));
         bu_vls_free(&vls);
     }
     if (destroy_dialog)
