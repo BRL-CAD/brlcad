@@ -1225,15 +1225,15 @@ have_part:
         creo_log(cinfo, MSG_PLAIN,     "  SOLID: ---------- \"%s\" ----------\n", pname);
 
         /* Create volume attribute */
-        bu_vls_sprintf(&vstr, "%g", max(massprops.volume,0.0));
+        bu_vls_sprintf(&vstr, "%g", std::max<fastf_t>(massprops.volume,0.0));
         bu_avs_add(&cinfo->avs, "volume"      , bu_vls_addr(&vstr));
 
         /* Create surface area attribute */
-        bu_vls_sprintf(&vstr, "%g", max(massprops.surface_area,0.0));
+        bu_vls_sprintf(&vstr, "%g", std::max<fastf_t>(massprops.surface_area,0.0));
         bu_avs_add(&cinfo->avs, "surface_area", bu_vls_addr(&vstr));
 
         /* Create mass attribute */
-        bu_vls_sprintf(&vstr, "%g", max(massprops.mass,0.0));
+        bu_vls_sprintf(&vstr, "%g", std::max<fastf_t>(massprops.mass,0.0));
         bu_avs_add(&cinfo->avs, "mass"        , bu_vls_addr(&vstr));
         bu_vls_free(&vstr);
 

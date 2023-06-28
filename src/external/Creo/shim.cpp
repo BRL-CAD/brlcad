@@ -21,6 +21,7 @@
 /* Functions */
 extern "C" int ProArrayAlloc(int,int,int,void**) {return 0;}
 extern "C" int ProArrayFree(void**) {return 0;}
+extern "C" int ProArrayObjectAdd(ProArray *, int, int, void*) {return 0;};
 extern "C" int ProArraySizeGet(ProArray,int*) {return 0;}
 extern "C" int ProAsmcompMdlGet(ProFeature*,void**) {return 0;}
 extern "C" int ProAsmcompMdlMdlnameGet(ProFeature*,int*,wchar_t*) {return 0;}

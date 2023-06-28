@@ -23,32 +23,32 @@
  */
 
 
-/*                                                                                     */
-/* Synopsis of Utiliity Routines:                                                      */
-/*                                                                                     */
-/* component_filter      /* Component item filter for the feature visit routine        */
-/* creo_log              /* Report conversion status and log file messages             */
-/* creo_model_units      /* Extracts Creo model units and conversion factor            */
-/* creo_param_name       /* Returns first valid alpha-numeric parameter name string    */
-/* creo_param_val        /* Extract parameter value from specified Creo model          */
-/* find_matl             /* Determine if specified material is on the material list    */
-/* get_brlcad_name       /* Returns a unique BRL-CAD object name                       */
-/* get_mtl_input         /* Process input from specified material translation file     */
-/* lower_case            /* Converts string to lower case                              */
-/* param_append          /* Append parameter to the array                              */
-/* param_collect         /* Collect available parameters from the specified model      */
-/* param_export          /* Export list of model parameters                            */
-/* param_preserve        /* Preserve available model parameters                        */
-/* params_to_attrs       /* Preserve a list of model-specific parameters as attributes */
-/* parse_param_list      /* Parse list of user-supplied parameters                     */
-/* PopupMsg              /* Display a message in a Creo dialog box                     */
-/* regex_key             /* Utilize regular expression match for Creo parameter name   */
-/* rgb4lmin              /* Modify RGB values to achieve minimum luminance threshold   */
-/* scrub_vls             /* Removes unwanted characters from a variable-length string  */
-/* stable_wchar          /* Map a string to the "stable" version found in parts/assems */
-/* trim                  /* Purge string of leading and trailing whitespace            */
-/* wstr_to_double        /* Convert wide string to double precision value              */
-/* wstr_to_long          /* Convert wide string to long int value                      */
+/*                                                                                  */
+/* Synopsis of Utiliity Routines:                                                   */
+/*                                                                                  */
+/* component_filter      Component item filter for the feature visit routine        */
+/* creo_log              Report conversion status and log file messages             */
+/* creo_model_units      Extracts Creo model units and conversion factor            */
+/* creo_param_name       Returns first valid alpha-numeric parameter name string    */
+/* creo_param_val        Extract parameter value from specified Creo model          */
+/* find_matl             Determine if specified material is on the material list    */
+/* get_brlcad_name       Returns a unique BRL-CAD object name                       */
+/* get_mtl_input         Process input from specified material translation file     */
+/* lower_case            Converts string to lower case                              */
+/* param_append          Append parameter to the array                              */
+/* param_collect         Collect available parameters from the specified model      */
+/* param_export          Export list of model parameters                            */
+/* param_preserve        Preserve available model parameters                        */
+/* params_to_attrs       Preserve a list of model-specific parameters as attributes */
+/* parse_param_list      Parse list of user-supplied parameters                     */
+/* PopupMsg              Display a message in a Creo dialog box                     */
+/* regex_key             Utilize regular expression match for Creo parameter name   */
+/* rgb4lmin              Modify RGB values to achieve minimum luminance threshold   */
+/* scrub_vls             Removes unwanted characters from a variable-length string  */
+/* stable_wchar          Map a string to the "stable" version found in parts/assems */
+/* trim                  Purge string of leading and trailing whitespace            */
+/* wstr_to_double        Convert wide string to double precision value              */
+/* wstr_to_long          Convert wide string to long int value                      */
 
 
 
@@ -462,7 +462,7 @@ get_mtl_input(FILE *fpmtl, char *mtl_str, int *mtl_id, int *mtl_los)
         firstc = buf[0];
         if(strchr(comments, firstc))   /* skip comments */
             continue;
-        else if (sscanf(buf, "%s%d%d", &mtl, &id, &los) != 3)
+        else if (sscanf(buf, "%s%d%d", mtl, &id, &los) != 3)
             continue;                  /* skip invalid input */
         else if (recs < MAX_FILE_RECS) {
             for (int n = 0; mtl[n]; n++)
@@ -495,9 +495,9 @@ lower_case( char *name )
 
 /* Append parameter to the array */
 extern "C" ProError
-param_append(void *p_object, ProError filt_err, ProAppData app_data)
+param_append(void *p_object, ProError UNUSED(filt_err), ProAppData app_data)
 {
-    ProError err = PRO_TK_GENERAL_ERROR; 
+    ProError err = PRO_TK_GENERAL_ERROR;
     ProArray *p_array;
 
     p_array = (ProArray*)((void**)app_data)[0];

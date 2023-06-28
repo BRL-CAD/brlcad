@@ -190,10 +190,12 @@ typedef struct pvdm {__internal_ProValueData v;} ProValueData;
 /* Function types */
 typedef int (*ProFeatureFilterAction)(ProFeature*,void*);
 typedef int (*uiCmdCmdActFn)(int,int*,void*);
+typedef int (*ProParameterAction)(ProParameter*,int,void*);
 
 /* Functions */
 extern "C" int ProArrayAlloc(int,int,int,void**);
 extern "C" int ProArrayFree(void**);
+extern "C" int ProArrayObjectAdd(ProArray *, int, int, void*);
 extern "C" int ProArraySizeGet(ProArray,int*);
 extern "C" int ProAsmcompMdlGet(ProFeature*,void**);
 extern "C" int ProAsmcompMdlMdlnameGet(ProFeature*,int*,wchar_t*);
