@@ -137,15 +137,11 @@ _ged_facetize_attr(int method)
     static const char *nmg_flag = "facetize:NMG";
     static const char *continuation_flag = "facetize:CM";
     static const char *spsr_flag = "facetize:SPSR";
-#ifdef USE_IRMB
     static const char *irmb_flag = "facetize:IRMB";
-#endif
     if (method == FACETIZE_NMGBOOL) return nmg_flag;
     if (method == FACETIZE_CONTINUATION) return continuation_flag;
     if (method == FACETIZE_SPSR) return spsr_flag;
-#ifdef USE_IRMB
     if (method == FACETIZE_IRMB) return irmb_flag;
-#endif
     return NULL;
 }
 
@@ -1508,7 +1504,19 @@ ged_nmg_obj_memfree:
     return ret;
 }
 
-#ifdef USE_IRMB
+#ifndef USE_IRMB
+long
+  bool_meshes(
+          double **UNUSED(o_coords), int *UNUSED(o_clen), unsigned int **UNUSED(o_tris), int *UNUSED(o_tricnt),
+          int UNUSED(b_op),
+          double *UNUSED(a_coords), int UNUSED(a_clen), unsigned int *UNUSED(a_tris), int UNUSED(a_tricnt),
+          double *UNUSED(b_coords), int UNUSED(b_clen), unsigned int *UNUSED(b_tris), int UNUSED(b_tricnt)
+          )
+  {
+      return -1;
+  }
+#endif
+
 struct irmb_mesh {
     int num_vertices;
     int num_faces;
@@ -1775,7 +1783,6 @@ ged_irmb_obj_memfree:
 
     return ret;
 }
-#endif // USE_IRMB
 
 int
 _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
@@ -1857,7 +1864,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		continue;
 	    }
 	}
-#ifdef USE_IRMB
+
 	if (flags & FACETIZE_IRMB) {
 	    if (argc == 1) {
 		bu_vls_sprintf(opts->nmg_log_header, "IRMB: tessellating %s...\n", argv[0]);
@@ -1877,7 +1884,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		continue;
 	    }
 	}
-#endif
+
 	if (flags & FACETIZE_CONTINUATION) {
 	    if (argc != 1) {
 		if (opts->verbosity) {
@@ -2002,12 +2009,10 @@ _ged_methodcomb_add(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     struct bu_vls method_cname = BU_VLS_INIT_ZERO;
     if (!objname || method == FACETIZE_NULL) return BRLCAD_ERROR;
 
-#ifdef USE_IRMB
     if (method == FACETIZE_IRMB && !bu_vls_strlen(opts->irmb_comb)) {
 	bu_vls_sprintf(opts->irmb_comb, "%s_IRMB-0", bu_vls_addr(opts->froot));
 	bu_vls_incr(opts->irmb_comb, NULL, NULL, &_db_uniq_test, (void *)gedp);
     }
-#endif
     if (method == FACETIZE_NMGBOOL && !bu_vls_strlen(opts->nmg_comb)) {
 	bu_vls_sprintf(opts->nmg_comb, "%s_NMGBOOL-0", bu_vls_addr(opts->froot));
 	bu_vls_incr(opts->nmg_comb, NULL, NULL, &_db_uniq_test, (void *)gedp);
@@ -2031,11 +2036,9 @@ _ged_methodcomb_add(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 	case FACETIZE_SPSR:
 	    bu_vls_sprintf(&method_cname, "%s", bu_vls_addr(opts->spsr_comb));
 	    break;
-#ifdef USE_IRMB
 	case FACETIZE_IRMB:
 	    bu_vls_sprintf(&method_cname, "%s", bu_vls_addr(opts->irmb_comb));
 	    break;
-#endif
 	default:
 	    bu_vls_free(&method_cname);
 	    return BRLCAD_ERROR;
@@ -2151,7 +2154,6 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 	return BRLCAD_ERROR;
     }
 
-#ifdef USE_IRMB
     if (cmethod == FACETIZE_IRMB) {
 
 	/* We're staring a new object, so we want to write out the header in the
@@ -2175,8 +2177,6 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 
 	return ret;
     }
-#endif
-
 
     if (cmethod == FACETIZE_NMGBOOL) {
 
@@ -3199,8 +3199,12 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[17], "",  "max-pnts",      "#", &bu_opt_int,     &(opts->max_pnts),                "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT(d[18], "B",  "",             "",  NULL,  &nonovlp_brep,              "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
     BU_OPT(d[19], "t",  "threshold",    "#",  &bu_opt_fastf_t, &(opts->nonovlp_threshold),  "EXPERIMENTAL: max ovlp threshold length.");
+#ifdef USE_IRMB
     BU_OPT(d[20],  "",  "IRMB",           "",  NULL,  &(opts->irmb),          "Use the experimental IRMB boolean evaluation");
     BU_OPT_NULL(d[21]);
+#else
+    BU_OPT_NULL(d[20]);
+#endif
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
@@ -3257,9 +3261,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 	opts->method_flags |= FACETIZE_NMGBOOL;
 	opts->method_flags |= FACETIZE_CONTINUATION;
     } else {
-#ifdef USE_IRMB
 	if (opts->irmb)          opts->method_flags |= FACETIZE_IRMB;
-#endif
 	if (opts->nmgbool)          opts->method_flags |= FACETIZE_NMGBOOL;
 	if (opts->screened_poisson) opts->method_flags |= FACETIZE_SPSR;
 	if (opts->continuation)    opts->method_flags |= FACETIZE_CONTINUATION;
