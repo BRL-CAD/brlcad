@@ -1146,9 +1146,9 @@ have_part:
         for (int n = 0; mname[n]; n++)
             mname[n] = tolower(mname[n]);
     } else
-        strcpy(mname,"undefined");
+        bu_strlcpy(mname, "undefined", MAX_MATL_NAME);
 
-    strcpy(cinfo->mtl_key, mname);
+    bu_strlcpy(cinfo->mtl_key, mname, MAX_MATL_NAME);
     creo_log(cinfo, MSG_PLAIN, "   MATL: Part \"%s\" has ptc_material_name = \"%s\"\n", 
              pname, cinfo->mtl_key);
 

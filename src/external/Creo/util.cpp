@@ -457,7 +457,7 @@ get_mtl_input(FILE *fpmtl, char *mtl_str, int *mtl_id, int *mtl_los)
 
     /* Initialize counter */
     recs = 0;
-    while (fgets(buf, mbuf, fpmtl) != NULL) {
+    while (bu_fgets(buf, mbuf, fpmtl) != NULL) {
         trim(buf);
         firstc = buf[0];
         if(strchr(comments, firstc))   /* skip comments */
