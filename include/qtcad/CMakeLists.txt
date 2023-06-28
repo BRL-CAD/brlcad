@@ -7,6 +7,7 @@ set(qtcad_headers
   QgDockWidget.h
   QgEdit.h
   QgFlowLayout.h
+  QgGeomImport.h
   QgGL.h
   QgKeyVal.h
   QgMeasureFilter.h

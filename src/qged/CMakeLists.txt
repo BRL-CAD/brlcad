@@ -29,7 +29,6 @@ set(qged_srcs
   attributes.cpp
   event_filter.cpp
   fbserv.cpp
-  import.cpp
   palettes.cpp
   )
 
@@ -38,7 +37,6 @@ set(qth_names
   attributes
   event_filter
   fbserv
-  import
   main_window
   palettes
   )

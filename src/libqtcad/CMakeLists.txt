@@ -48,6 +48,7 @@ set(qtcad_srcs
   QgConsoleListener.cpp
   QgDockWidget.cpp
   QgFlowLayout.cpp
+  QgGeomImport.cpp
   QgKeyVal.cpp
   QgMeasureFilter.cpp
   QgModel.cpp
@@ -80,6 +81,7 @@ set(qth_names
   QgConsole
   QgConsoleListener
   QgDockWidget
+  QgGeomImport
   QgKeyVal
   QgMeasureFilter
   QgModel

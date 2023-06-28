@@ -1,4 +1,4 @@
-/*                   C A D I M P O R T . C X X
+/*                 Q G G E O M I M P O R T . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,34 +17,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadimport.cxx
- *
- * Logic for launching command line importers.  Eventually libgcv
- * will probably replace the explicit program running, but the option
- * dialogs will still be necessary in some form...
+/** @file QgGeomImport.cpp
  *
  */
 
+#include <QCoreApplication>
+#include <QFileDialog>
 #include <QFileInfo>
-#include <QFormLayout>
+#include "qtcad/QgAppExecDialog.h"
+#include "qtcad/QgGeomImport.h"
 
-#include "app.h"
-#include "import.h"
-
-#include "bu.h"
-
-#include "brlcad_config.h" // For EXECUTABLE_SUFFIX
-
-RhinoImportDialog::RhinoImportDialog(QString filename)
+RhinoImportDialog::RhinoImportDialog(QString filename, QString g_path, QString l_path)
 {
     input_file = filename;
-    QFileInfo fileinfo(filename);
-    QString g_path(fileinfo.path());
-    g_path.append("/");
-    g_path.append(fileinfo.baseName());
-    QString l_path(g_path);
-    g_path.append(".g");
-    l_path.append(".log");
 
     db_path = new QLineEdit;
     db_path->insert(g_path);
@@ -69,8 +54,7 @@ RhinoImportDialog::RhinoImportDialog(QString filename)
     flayout->addRow(new QLabel("Log File"), log_path);
     formGroupBox->setLayout(flayout);
 
-    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
-	    | QDialogButtonBox::Cancel);
+    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 
     connect(buttonBox, &QDialogButtonBox::accepted, this, &RhinoImportDialog::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, this, &RhinoImportDialog::reject);
@@ -80,7 +64,6 @@ RhinoImportDialog::RhinoImportDialog(QString filename)
     setLayout(mainLayout);
     resize(600,300);
     setWindowTitle(tr("Rhino 3DM Importer (3dm-g)"));
-
 }
 
 QString
@@ -112,7 +95,6 @@ RhinoImportDialog::options()
     if (random_colors->isChecked()) process_args.append("-r");
     if (uuid->isChecked()) process_args.append("-u");
 
-    // TODO - pop up a message and quit if we don't have an output file
     process_args.append("-o");
     process_args.append(db_path->text());
 
@@ -121,17 +103,9 @@ RhinoImportDialog::options()
     return process_args;
 }
 
-
-STEPImportDialog::STEPImportDialog(QString filename)
+STEPImportDialog::STEPImportDialog(QString filename, QString g_path, QString l_path)
 {
     input_file = filename;
-    QFileInfo fileinfo(filename);
-    QString g_path(fileinfo.path());
-    g_path.append("/");
-    g_path.append(fileinfo.baseName());
-    QString l_path(g_path);
-    g_path.append(".g");
-    l_path.append(".log");
 
     db_path = new QLineEdit;
     db_path->insert(g_path);
@@ -147,8 +121,7 @@ STEPImportDialog::STEPImportDialog(QString filename)
     flayout->addRow(new QLabel("Log File"), log_path);
     formGroupBox->setLayout(flayout);
 
-    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok
-	    | QDialogButtonBox::Cancel);
+    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 
     connect(buttonBox, &QDialogButtonBox::accepted, this, &STEPImportDialog::accept);
     connect(buttonBox, &QDialogButtonBox::rejected, this, &STEPImportDialog::reject);
@@ -176,7 +149,6 @@ STEPImportDialog::options()
 
     if (verbosity->isChecked()) process_args.append("-v");
 
-    // TODO - pop up a message and quit if we don't have an output file
     process_args.append("-o");
     process_args.append(db_path->text());
 
@@ -185,42 +157,135 @@ STEPImportDialog::options()
     return process_args;
 }
 
-
-
-QString
-convert_to_g(QString filename) {
-
-    QFileInfo fileinfo(filename);
-    QString g_path("");
-    QString l_path("");
-    QString conversion_command;
-
-    if (!fileinfo.suffix().compare("g", Qt::CaseInsensitive)) return filename;
-
-    /* If we're not a .g, time for the conversion */
-
-    if (!fileinfo.suffix().compare("3dm", Qt::CaseInsensitive)) {
-       RhinoImportDialog dialog(filename);
-       dialog.exec();
-       g_path = dialog.db_path->text();
-       l_path = dialog.log_path->text();
-       // TODO - integrate logging mechanism into command execution
-       ((CADApp *)qApp)->exec_console_app_in_window(dialog.command(),dialog.options(), l_path);
-    }
-
-    if (!fileinfo.suffix().compare("stp", Qt::CaseInsensitive) || !fileinfo.suffix().compare("step", Qt::CaseInsensitive)) {
-       STEPImportDialog dialog(filename);
-       dialog.exec();
-       g_path = dialog.db_path->text();
-       l_path = dialog.log_path->text();
-       // TODO - integrate logging mechanism into command execution
-       ((CADApp *)qApp)->exec_console_app_in_window(dialog.command(),dialog.options(), l_path);
-    }
-
-    return g_path;
+QgGeomImport::QgGeomImport(QWidget *pparent) : QObject(pparent)
+{
 }
 
+QgGeomImport::~QgGeomImport()
+{
+}
 
+int
+QgGeomImport::exec_console_app_in_window(QString command, QStringList options, QString lfile)
+{
+    if (command.length() > 0) {
+
+	QgAppExecDialog *out_win = new QgAppExecDialog(0, command, options, lfile);
+	QString win_title("Running ");
+	win_title.append(command);
+	out_win->setWindowTitle(win_title);
+	out_win->proc = new QProcess(out_win);
+	out_win->console->setMinimumHeight(800);
+	out_win->console->setMinimumWidth(800);
+	out_win->console->printString(command);
+	out_win->console->printString(QString(" "));
+	out_win->console->printString(options.join(" "));
+	out_win->console->printString(QString("\n"));
+	out_win->proc->setProgram(command);
+	out_win->proc->setArguments(options);
+	connect(out_win->proc, &QProcess::readyReadStandardOutput, out_win, &QgAppExecDialog::read_stdout);
+	connect(out_win->proc, &QProcess::readyReadStandardError, out_win, &QgAppExecDialog::read_stderr);
+	connect(out_win->proc, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), out_win, &QgAppExecDialog::process_done);
+	out_win->proc->start();
+	out_win->exec();
+    }
+    return 0;
+}
+
+static int
+uniq_test(struct bu_vls *p, void *UNUSED(data))
+{
+    if (!p)
+	return 1;
+    if (bu_file_exists(bu_vls_cstr(p), NULL))
+	return 0;
+    return 1;
+}
+
+QString
+QgGeomImport::gfile(const char *tfile)
+{
+    if (tfile) {
+	fileName = QString(tfile);
+    } else {
+	const char *file_filters =
+	    "BRL-CAD (*.g *.asc);;"
+	    "Rhino (*.3dm);;"
+	    "STEP (*.stp *.step);;"
+	    "All Files (*)";
+	fileName = QFileDialog::getOpenFileName((QWidget *)this->parent(),
+              "Open Geometry File",
+              QCoreApplication::applicationDirPath(),
+              file_filters,
+              NULL,
+              QFileDialog::DontUseNativeDialog);
+    }
+
+    if (fileName.isEmpty())
+          return QString();
+
+    QFileInfo fileinfo(fileName);
+
+    if (!fileinfo.suffix().compare("g", Qt::CaseSensitive))
+       	return fileName;
+
+    /* If we don't already have a filename that claims to be a .g file, see
+     * about a conversion. No matter what we're doing, we'll want a target
+     * .g filename. */
+    QString g_path(fileinfo.path());
+    g_path.append("/");
+    g_path.append(fileinfo.baseName());
+
+    /* Try to find a target name that doesn't already exist */
+    struct bu_vls u_name = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&u_name, "%s.g", g_path.toLocal8Bit().data());
+    if (bu_file_exists(bu_vls_cstr(&u_name), NULL)) {
+	bu_vls_sprintf(&u_name, "%s0.g", g_path.toLocal8Bit().data());
+	if (bu_vls_incr(&u_name, NULL, "4:0:0:0:_", &uniq_test, NULL) < 0) {
+	    bu_vls_free(&u_name);
+	    return QString();
+	}
+    }
+    g_path = QString(bu_vls_cstr(&u_name));
+
+    /* Also specify a logging filename */
+    QString l_path(bu_vls_cstr(&u_name));
+    l_path.append(".log");
+
+
+    /* Now, we need to handle the format specific aspects of conversion options. */
+
+    // Rhino / 3DM
+    if (!fileinfo.suffix().compare("3dm", Qt::CaseInsensitive)) {
+	RhinoImportDialog dialog(fileName, g_path, l_path);
+	dialog.exec();
+	g_path = dialog.db_path->text();
+	l_path = dialog.log_path->text();
+	exec_console_app_in_window(dialog.command(), dialog.options(), l_path);
+	bu_vls_sprintf(&u_name, "%s", g_path.toLocal8Bit().data());
+	if (!bu_file_exists(bu_vls_cstr(&u_name), NULL)) {
+	    bu_vls_free(&u_name);
+	    return QString();
+	}
+    }
+
+    // STEP
+    if (!fileinfo.suffix().compare("stp", Qt::CaseInsensitive) || !fileinfo.suffix().compare("step", Qt::CaseInsensitive)) {
+	STEPImportDialog dialog(fileName, g_path, l_path);
+	dialog.exec();
+	g_path = dialog.db_path->text();
+	l_path = dialog.log_path->text();
+	exec_console_app_in_window(dialog.command(),dialog.options(), l_path);
+	bu_vls_sprintf(&u_name, "%s", g_path.toLocal8Bit().data());
+	if (!bu_file_exists(bu_vls_cstr(&u_name), NULL)) {
+	    bu_vls_free(&u_name);
+	    return QString();
+	}
+    }
+
+    bu_vls_free(&u_name);
+    return g_path;
+}
 
 /*
  * Local Variables:

@@ -1,4 +1,4 @@
-/*                     C A D I M P O R T . H
+/*                   Q G G E O M I M P O R T . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,31 +17,41 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadimport.h
+/** @file cadappexec.h
  *
- * Import dialogs for specific geometry file format types
+ * Encapsulates a graphical process for getting a path to a .g file to
+ * open, wrapping patterns for graphical configuration and in-dialogue
+ * running of converter processes into a reusable package.
  *
+ * The final result is a QString with the path to the .g file suitable for
+ * opening with libged's "open" command, or an empty string if no such .g file
+ * ends up being available.  For 3dm, STEP, etc. files that path will be to the
+ * output of the converter, but if the original specified file is already a.g
+ * file this will function like a normal file open dialog from Qt.
  */
 
-#ifndef CADIMPORT_H
-#define CADIMPORT_H
+#ifndef QGGEOMIMPORT_H
+#define QGGEOMIMPORT_H
 
+#include <QCheckBox>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QFormLayout>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLineEdit>
 #include <QObject>
 #include <QString>
 #include <QStringList>
-#include <QDialog>
-#include <QLineEdit>
-#include <QCheckBox>
-#include <QGroupBox>
-#include <QDialogButtonBox>
-#include <QLabel>
+
+#include "qtcad/defines.h"
 
 class RhinoImportDialog : public QDialog
 {
     Q_OBJECT
 
     public:
-	RhinoImportDialog(QString filename);
+	RhinoImportDialog(QString filename, QString g_path, QString l_path);
 
 	QString command();
 	QStringList options();
@@ -69,7 +79,7 @@ class STEPImportDialog : public QDialog
     Q_OBJECT
 
     public:
-	STEPImportDialog(QString filename);
+	STEPImportDialog(QString filename, QString g_path, QString l_path);
 
 	QString command();
 	QStringList options();
@@ -87,7 +97,22 @@ class STEPImportDialog : public QDialog
 };
 
 
-#endif // CADIMPORT_H
+class QTCAD_EXPORT QgGeomImport : public QObject
+{
+    Q_OBJECT
+
+    public:
+	QgGeomImport(QWidget *pparent = NULL);
+	~QgGeomImport();
+
+	QString gfile(const char *tfile = NULL);
+
+    private:
+	int exec_console_app_in_window(QString command, QStringList options, QString lfile);
+	QString fileName;
+};
+
+#endif // QGGEOMIMPORT_H
 
 /*
  * Local Variables:
