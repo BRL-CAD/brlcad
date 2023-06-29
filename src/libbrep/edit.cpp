@@ -33,7 +33,7 @@ void *brep_create()
     return (void *)brep;
 }
 
-int brep_make_curve(ON_Brep *brep, const ON_3dPoint &position)
+int brep_curve_make(ON_Brep *brep, const ON_3dPoint &position)
 {
     ON_NurbsCurve *curve = ON_NurbsCurve::New(3, true, 3, 4);
     curve->SetCV(0, ON_3dPoint(-0.1, -1.5, 0));
@@ -48,7 +48,7 @@ int brep_make_curve(ON_Brep *brep, const ON_3dPoint &position)
 }
 
 // TODO: add more options about knot vector
-int brep_in_curve(ON_Brep *brep, bool is_rational, int order, int cv_count, std::vector<ON_4dPoint> cv)
+int brep_curve_in(ON_Brep *brep, bool is_rational, int order, int cv_count, std::vector<ON_4dPoint> cv)
 {
     int dim = 3;
     if (cv.size() != (size_t)cv_count) {

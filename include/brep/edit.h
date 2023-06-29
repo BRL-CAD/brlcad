@@ -54,14 +54,14 @@ extern "C++"
      * return id of the curve
      */
     BREP_EXPORT extern int
-    brep_make_curve(ON_Brep *brep, const ON_3dPoint &position);
+    brep_curve_make(ON_Brep *brep, const ON_3dPoint &position);
 
     /**
      * create an nurbs curve given detailed information
      * return id of the curve
      */
     BREP_EXPORT extern int
-    brep_in_curve(ON_Brep *brep, bool is_rational, int order, int cv_count, std::vector<ON_4dPoint> cv);
+    brep_curve_in(ON_Brep *brep, bool is_rational, int order, int cv_count, std::vector<ON_4dPoint> cv);
 
     /**
      * move curve along a vector.

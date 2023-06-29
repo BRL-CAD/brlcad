@@ -76,7 +76,7 @@ _brep_cmd_curve_create(void *bs, int argc, const char **argv)
 	position = ON_3dPoint(atof(argv[0]), atof(argv[1]), atof(argv[2]));
     }
     // Create a template nurbs curve
-    int curve_id = brep_make_curve(b_ip->brep, position);
+    int curve_id = brep_curve_make(b_ip->brep, position);
 
     // Delete the old object
     const char *av[3];
@@ -145,7 +145,7 @@ _brep_cmd_curve_in(void *bs, int argc, const char **argv)
 	}
 	cv.push_back(p);
     }
-    int curve_id = brep_in_curve(b_ip->brep, is_rational, order, cv_count, cv);
+    int curve_id = brep_curve_in(b_ip->brep, is_rational, order, cv_count, cv);
     if (curve_id <= 0) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create curve\n");
 	return BRLCAD_ERROR;
