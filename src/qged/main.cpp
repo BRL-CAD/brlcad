@@ -37,7 +37,7 @@
 #include "brlcad_version.h"
 
 #include "main_window.h"
-#include "app.h"
+#include "CADApp.h"
 #include "fbserv.h"
 
 static void

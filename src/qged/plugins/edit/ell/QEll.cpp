@@ -26,7 +26,7 @@
 #include <QLineEdit>
 #include <QButtonGroup>
 #include <QGroupBox>
-#include "../../../app.h"
+#include "../../../CADApp.h"
 #include "QEll.h"
 
 QEll::QEll()

@@ -27,7 +27,7 @@
 #include <QMouseEvent>
 #include <QVBoxLayout>
 #include <QtGlobal>
-#include "../../../app.h"
+#include "../../../CADApp.h"
 
 #include "bu/opt.h"
 #include "bu/malloc.h"

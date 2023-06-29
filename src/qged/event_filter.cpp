@@ -28,7 +28,7 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include <QtGlobal>
-#include "app.h"
+#include "CADApp.h"
 #include "event_filter.h"
 #include "qtcad/QgModel.h"
 

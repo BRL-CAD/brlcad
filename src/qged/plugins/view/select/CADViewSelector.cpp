@@ -28,7 +28,7 @@
 #include <QVBoxLayout>
 #include <string>
 #include <set>
-#include "../../../app.h"
+#include "../../../CADApp.h"
 
 #include "bu/opt.h"
 #include "bu/malloc.h"
@@ -36,7 +36,6 @@
 #include "bg/aabb_ray.h"
 #include "bg/plane.h"
 #include "bg/lod.h"
-#include "app.h"
 
 #include "qtcad/QgSelectFilter.h"
 #include "./CADViewSelector.h"

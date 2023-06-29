@@ -28,7 +28,7 @@
 #include <QButtonGroup>
 #include <QGroupBox>
 #include <QtGlobal>
-#include "../../app.h"
+#include "../../CADApp.h"
 #include "QPolyCreate.h"
 #include "QPolyMod.h"
 

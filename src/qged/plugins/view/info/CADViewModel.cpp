@@ -30,7 +30,7 @@
 #include "bu/avs.h"
 #include "bu/malloc.h"
 #include "qtcad/SignalFlags.h"
-#include "app.h"
+#include "CADApp.h"
 #include "CADViewModel.h"
 
 CADViewModel::CADViewModel(QObject *parentobj)

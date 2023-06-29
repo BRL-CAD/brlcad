@@ -29,7 +29,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "qtcad/SignalFlags.h"
-#include "app.h"
+#include "CADApp.h"
 
 #include "CADViewSettings.h"
 

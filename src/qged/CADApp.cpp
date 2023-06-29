@@ -1,4 +1,4 @@
-/*                      C A D A P P . C X X
+/*                      C A D A P P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadapp.cxx
+/** @file CADApp.cpp
  *
  * Application level data and functionality implementations.
  *
@@ -33,7 +33,7 @@
 #include "bu/file.h"
 #include "qtcad/QgGeomImport.h"
 #include "qtcad/QgTreeSelectionModel.h"
-#include "app.h"
+#include "CADApp.h"
 #include "fbserv.h"
 #include "event_filter.h"
 
@@ -593,14 +593,12 @@ CADApp::write_settings()
     // BRLCAD_MainWindow closeEvent
 }
 
-/*
- * Local Variables:
- * mode: C++
- * tab-width: 8
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// mode: C++
+// tab-width: 8
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
 

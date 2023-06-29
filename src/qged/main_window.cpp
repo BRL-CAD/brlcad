@@ -28,7 +28,7 @@
 #include "qtcad/QgViewCtrl.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "main_window.h"
-#include "app.h"
+#include "CADApp.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {

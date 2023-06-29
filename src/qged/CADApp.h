@@ -17,11 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadapp.h
+/** @file CADApp.h
  *
- *  Specialization of QApplication that adds information specific
- *  to BRL-CAD's data and functionality
- *
+ * Specialization of QApplication that adds information specific
+ * to BRL-CAD's data and functionality
  */
 
 #ifndef CADAPP_H
@@ -38,6 +37,7 @@
 #include "bv.h"
 #include "raytrace.h"
 #include "ged.h"
+#include "qtcad/QgModel.h"
 #include "qtcad/QgTreeView.h"
 #include "qtcad/SignalFlags.h"
 
@@ -110,14 +110,12 @@ QString convert_to_g(QString filename);
 
 #endif // CADAPP_H
 
-/*
- * Local Variables:
- * mode: C++
- * tab-width: 8
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// mode: C++
+// tab-width: 8
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
 
