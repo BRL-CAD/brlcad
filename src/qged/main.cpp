@@ -37,7 +37,7 @@
 #include "brlcad_version.h"
 
 #include "main_window.h"
-#include "CADApp.h"
+#include "QgEdApp.h"
 #include "fbserv.h"
 
 static void
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
     }
 
     // We derive our own app type from QApplication
-    CADApp app(argc, argv, swrast_mode, quad_mode);
+    QgEdApp app(argc, argv, swrast_mode, quad_mode);
 
     // Setup complete - time to enter the interactive event loop
     return app.exec();

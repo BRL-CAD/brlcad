@@ -1,4 +1,4 @@
-/*                      C A D A P P . C P P
+/*                      Q G E D A P P . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CADApp.cpp
+/** @file QgEdApp.cpp
  *
  * Application level data and functionality implementations.
  *
@@ -33,7 +33,7 @@
 #include "bu/file.h"
 #include "qtcad/QgGeomImport.h"
 #include "qtcad/QgTreeSelectionModel.h"
-#include "CADApp.h"
+#include "QgEdApp.h"
 #include "fbserv.h"
 #include "QgEdFilter.h"
 
@@ -47,7 +47,7 @@ qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t 
     if (fd < 0)
 	return;
 
-    CADApp *ca = (CADApp *)p->gedp->ged_io_data;
+    QgEdApp *ca = (QgEdApp *)p->gedp->ged_io_data;
     QgConsole *c = ca->w->console;
     c->listen(fd, p, t, callback, data);
 
@@ -69,7 +69,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 {
     if (!p) return;
 
-    CADApp *ca = (CADApp *)p->gedp->ged_io_data;
+    QgEdApp *ca = (QgEdApp *)p->gedp->ged_io_data;
     QgConsole *c = ca->w->console;
 
     // Since these callbacks are invoked from the listener, we can't call
@@ -114,7 +114,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 }
 
 
-CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplication(argc, argv)
+QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplication(argc, argv)
 {
     setOrganizationName("BRL-CAD");
     setOrganizationDomain("brlcad.org");
@@ -273,24 +273,24 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
     }
 }
 
-CADApp::~CADApp() {
+QgEdApp::~QgEdApp() {
     delete mdl;
     // TODO - free RTG.rtg_vlfree?
 }
 
 void
-CADApp::do_quad_view_change(QgView *cv)
+QgEdApp::do_quad_view_change(QgView *cv)
 {
-    QTCAD_SLOT("CADApp::do_quad_view_change", 1);
+    QTCAD_SLOT("QgEdApp::do_quad_view_change", 1);
     mdl->gedp->ged_gvp = cv->view();
     emit view_update(QTCAD_VIEW_REFRESH);
 }
 
 void
-CADApp::do_view_changed(unsigned long long flags)
+QgEdApp::do_view_changed(unsigned long long flags)
 {
-    bv_log(1, "CADApp::do_view_changed");
-    QTCAD_SLOT("CADApp::do_view_changed", 1);
+    bv_log(1, "QgEdApp::do_view_changed");
+    QTCAD_SLOT("QgEdApp::do_view_changed", 1);
 
     if (flags & QTCAD_VIEW_DRAWN) {
 	// For all associated view states, execute any necessary changes to
@@ -316,9 +316,9 @@ CADApp::do_view_changed(unsigned long long flags)
 }
 
 void
-CADApp::open_file()
+QgEdApp::open_file()
 {
-    QTCAD_SLOT("CADApp::open_file", 1);
+    QTCAD_SLOT("QgEdApp::open_file", 1);
 
     QgGeomImport importer((QWidget *)this->w);
     QString fileName = importer.gfile();
@@ -361,19 +361,19 @@ qged_view_update(struct ged *gedp)
 extern "C" void
 raytrace_start(int val, void *ctx)
 {
-    CADApp *ap = (CADApp *)ctx;
+    QgEdApp *ap = (QgEdApp *)ctx;
     ap->w->IndicateRaytraceStart(val);
 }
 
 extern "C" void
 raytrace_done(int val, void *ctx)
 {
-    CADApp *ap = (CADApp *)ctx;
+    QgEdApp *ap = (QgEdApp *)ctx;
     ap->w->IndicateRaytraceDone(val);
 }
 
 int
-CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
+QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 {
     int ret = BRLCAD_OK;
     int view_flags = 0;
@@ -489,9 +489,9 @@ CADApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 }
 
 void
-CADApp::run_qcmd(const QString &command)
+QgEdApp::run_qcmd(const QString &command)
 {
-    QTCAD_SLOT("CADApp::run_qcmd", 1);
+    QTCAD_SLOT("QgEdApp::run_qcmd", 1);
     if (!w)
 	return;
 
@@ -557,9 +557,9 @@ CADApp::run_qcmd(const QString &command)
 }
 
 void
-CADApp::element_selected(QgToolPaletteElement *el)
+QgEdApp::element_selected(QgToolPaletteElement *el)
 {
-    QTCAD_SLOT("CADApp::element_selected", 1);
+    QTCAD_SLOT("QgEdApp::element_selected", 1);
     if (!el->controls->isVisible()) {
 	// Apparently this can happen when we have docked widgets
 	// closed and we click on the border between the view and
@@ -586,9 +586,9 @@ CADApp::element_selected(QgToolPaletteElement *el)
 }
 
 void
-CADApp::write_settings()
+QgEdApp::write_settings()
 {
-    QTCAD_SLOT("CADApp::write_settings", 1);
+    QTCAD_SLOT("QgEdApp::write_settings", 1);
     QSettings settings("BRL-CAD", "QGED");
 
     // TODO - write user settings here.  Window state saving is handled by

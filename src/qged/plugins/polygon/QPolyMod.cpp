@@ -28,7 +28,7 @@
 #include <QButtonGroup>
 #include <QGroupBox>
 #include <QtGlobal>
-#include "../../CADApp.h"
+#include "../../QgEdApp.h"
 #include "QPolyCreate.h"
 #include "QPolyMod.h"
 
@@ -179,7 +179,7 @@ QPolyMod::app_mod_names_reset(void *)
 void
 QPolyMod::mod_names_reset()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -250,7 +250,7 @@ QPolyMod::poly_type_settings(struct bv_polygon *ip)
 void
 QPolyMod::polygon_update_props()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -285,7 +285,7 @@ void
 QPolyMod::toplevel_config(bool)
 {
     // Initialize
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -353,7 +353,7 @@ QPolyMod::clear_pnt_selection(bool checked)
 
     bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
 
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -366,7 +366,7 @@ QPolyMod::clear_pnt_selection(bool checked)
 void
 QPolyMod::select(const QString &poly)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -462,7 +462,7 @@ QPolyMod::toggle_closed_poly(bool checked)
     append_pnt->blockSignals(false);
     select_pnt->blockSignals(false);
 
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -525,7 +525,7 @@ QPolyMod::toggle_closed_poly(bool checked)
 void
 QPolyMod::apply_bool_op()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m || !p)
 	return;
     struct ged *gedp = m->gedp;
@@ -581,7 +581,7 @@ QPolyMod::apply_bool_op()
 void
 QPolyMod::align_to_poly()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m || !p)
 	return;
     struct ged *gedp = m->gedp;
@@ -598,7 +598,7 @@ QPolyMod::align_to_poly()
 void
 QPolyMod::delete_poly()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m || !p)
 	return;
     struct ged *gedp = m->gedp;
@@ -635,7 +635,7 @@ QPolyMod::sketch_name_edit_str(const QString &)
 void
 QPolyMod::sketch_name_edit()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -712,7 +712,7 @@ QPolyMod::sketch_name_edit()
 void
 QPolyMod::sketch_name_update()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -789,7 +789,7 @@ QPolyMod::view_name_edit_str(const QString &)
 void
 QPolyMod::view_name_edit()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -806,7 +806,7 @@ QPolyMod::view_name_edit()
 void
 QPolyMod::view_name_update()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m || !p)
 	return;
     struct ged *gedp = m->gedp;
@@ -835,7 +835,7 @@ QPolyMod::propagate_update(int)
 bool
 QPolyMod::eventFilter(QObject *, QEvent *e)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return false;
     struct ged *gedp = m->gedp;

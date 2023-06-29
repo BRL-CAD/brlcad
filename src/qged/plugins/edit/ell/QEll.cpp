@@ -26,7 +26,7 @@
 #include <QLineEdit>
 #include <QButtonGroup>
 #include <QGroupBox>
-#include "../../../CADApp.h"
+#include "../../../QgEdApp.h"
 #include "QEll.h"
 
 QEll::QEll()
@@ -93,7 +93,7 @@ QEll::~QEll()
 void
 QEll::read_from_db()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -127,7 +127,7 @@ QEll::write_to_db()
 {
     if (!bu_vls_strlen(&oname))
 	return;
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -166,7 +166,7 @@ QEll::write_to_db()
 void
 QEll::update_obj_wireframe()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -221,7 +221,7 @@ QEll::update_obj_wireframe()
 void
 QEll::update_viewobj_name(const QString &)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;

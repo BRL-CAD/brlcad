@@ -29,7 +29,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "qtcad/SignalFlags.h"
-#include "CADApp.h"
+#include "QgEdApp.h"
 
 #include "CADViewSettings.h"
 
@@ -103,7 +103,7 @@ CADViewSettings::view_update_int(int)
 void
 CADViewSettings::checkbox_refresh(unsigned long long)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -214,7 +214,7 @@ CADViewSettings::checkbox_refresh(unsigned long long)
 void
 CADViewSettings::view_refresh(unsigned long long)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;

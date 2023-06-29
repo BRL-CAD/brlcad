@@ -28,7 +28,7 @@
 #include <QButtonGroup>
 #include <QGroupBox>
 #include <QtGlobal>
-#include "../../CADApp.h"
+#include "../../QgEdApp.h"
 #include "QPolyCreate.h"
 #include "qtcad/SignalFlags.h"
 
@@ -158,7 +158,7 @@ QPolyCreate::~QPolyCreate()
 void
 QPolyCreate::finalize(bool)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -214,7 +214,7 @@ QPolyCreate::finalize(bool)
 void
 QPolyCreate::do_vpoly_copy()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -264,7 +264,7 @@ QPolyCreate::do_vpoly_copy()
 void
 QPolyCreate::do_import_sketch()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -326,7 +326,7 @@ QPolyCreate::sketch_sync_str(const QString &)
 void
 QPolyCreate::sketch_sync()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -420,7 +420,7 @@ QPolyCreate::view_sync_str(const QString &)
 void
 QPolyCreate::view_sync()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -438,7 +438,7 @@ void
 QPolyCreate::toplevel_config(bool)
 {
     // Initialize
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -485,7 +485,7 @@ QPolyCreate::propagate_update(int)
 bool
 QPolyCreate::eventFilter(QObject *, QEvent *e)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return false;
     struct ged *gedp = m->gedp;

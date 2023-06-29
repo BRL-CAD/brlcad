@@ -28,7 +28,7 @@
 #include <QVBoxLayout>
 #include <string>
 #include <set>
-#include "../../../CADApp.h"
+#include "../../../QgEdApp.h"
 
 #include "bu/opt.h"
 #include "bu/malloc.h"
@@ -349,7 +349,7 @@ CADViewSelector::eventFilter(QObject *o, QEvent *e)
     if (QApplication::keyboardModifiers() != Qt::NoModifier)
 	return false;
 
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return false;
     gedp = m->gedp;

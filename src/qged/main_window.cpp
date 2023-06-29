@@ -28,11 +28,11 @@
 #include "qtcad/QgViewCtrl.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "main_window.h"
-#include "CADApp.h"
+#include "QgEdApp.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
-    CADApp *ap = (CADApp *)qApp;
+    QgEdApp *ap = (QgEdApp *)qApp;
     ap->w = this;
 
 #ifdef BRLCAD_OPENGL
@@ -76,7 +76,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 void
 BRLCAD_MainWindow::CreateWidgets(int canvas_type)
 {
-    CADApp *ap = (CADApp *)qApp;
+    QgEdApp *ap = (QgEdApp *)qApp;
     QgModel *m = ap->mdl;
     struct ged *gedp = m->gedp;
 
@@ -208,11 +208,11 @@ BRLCAD_MainWindow::LocateWidgets()
 void
 BRLCAD_MainWindow::ConnectWidgets()
 {
-    CADApp *ap = (CADApp *)qApp;
+    QgEdApp *ap = (QgEdApp *)qApp;
     QgModel *m = ap->mdl;
 
     // If the model does something that it things should trigger a view update, let the app know
-    QObject::connect(m, &QgModel::view_change, ap, &CADApp::do_view_changed);
+    QObject::connect(m, &QgModel::view_change, ap, &QgEdApp::do_view_changed);
 
     // Make the fundamental connection that allows the view to update in
     // response to commands or widgets taking actions that will impact the
@@ -220,19 +220,19 @@ BRLCAD_MainWindow::ConnectWidgets()
     // from the scene, and updates such as incremental display of raytracing
     // results in an embedded framebuffer all need to notify the QgQuadView
     // it is time to update.
-    QObject::connect(ap, &CADApp::view_update, c4, &QgQuadView::do_view_update);
+    QObject::connect(ap, &QgEdApp::view_update, c4, &QgQuadView::do_view_update);
 
     // 3D graphical widget
-    QObject::connect(c4, &QgQuadView::selected, ap, &CADApp::do_quad_view_change);
-    QObject::connect(c4, &QgQuadView::changed, ap, &CADApp::do_quad_view_change);
+    QObject::connect(c4, &QgQuadView::selected, ap, &QgEdApp::do_quad_view_change);
+    QObject::connect(c4, &QgQuadView::changed, ap, &QgEdApp::do_quad_view_change);
     // Some of the dm initialization has to be delayed - make the connections so we can
     // do the work after widget initialization is complete.
     QObject::connect(c4, &QgQuadView::init_done, this, &BRLCAD_MainWindow::do_dm_init);
 
 
     // Graphical toolbar
-    QObject::connect(vcw, &QgViewCtrl::view_changed, ap, &CADApp::do_view_changed);
-    QObject::connect(ap, &CADApp::view_update, vcw, &QgViewCtrl::do_view_update);
+    QObject::connect(vcw, &QgViewCtrl::view_changed, ap, &QgEdApp::do_view_changed);
+    QObject::connect(ap, &QgEdApp::view_update, vcw, &QgViewCtrl::do_view_update);
     // Make the connection so the view control can change the mouse mode of the Quad View
     QObject::connect(vcw, &QgViewCtrl::lmouse_mode, c4, &QgQuadView::set_lmouse_move_default);
 
@@ -251,16 +251,16 @@ BRLCAD_MainWindow::ConnectWidgets()
     // procedure by making vc the current palette.)
     // TODO - need to figure out how this should (or shouldn't) be rolled into
     // do_view_changed
-    QObject::connect(vc, &QgToolPalette::palette_element_selected, ap, &CADApp::element_selected);
-    QObject::connect(oc, &QgToolPalette::palette_element_selected, ap, &CADApp::element_selected);
+    QObject::connect(vc, &QgToolPalette::palette_element_selected, ap, &QgEdApp::element_selected);
+    QObject::connect(oc, &QgToolPalette::palette_element_selected, ap, &QgEdApp::element_selected);
 
     // The tools in the view and edit panels may have consequences for the view.
     // Connect to the palette signals and slots (the individual tool connections
     // are handled by the palette container.)
-    QObject::connect(ap, &CADApp::view_update, vc, &QgToolPalette::do_view_update);
-    QObject::connect(vc, &QgToolPalette::view_changed, ap, &CADApp::do_view_changed);
-    QObject::connect(ap, &CADApp::view_update, oc, &QgToolPalette::do_view_update);
-    QObject::connect(oc, &QgToolPalette::view_changed, ap, &CADApp::do_view_changed);
+    QObject::connect(ap, &QgEdApp::view_update, vc, &QgToolPalette::do_view_update);
+    QObject::connect(vc, &QgToolPalette::view_changed, ap, &QgEdApp::do_view_changed);
+    QObject::connect(ap, &QgEdApp::view_update, oc, &QgToolPalette::do_view_update);
+    QObject::connect(oc, &QgToolPalette::view_changed, ap, &QgEdApp::do_view_changed);
 
     // Console
     connect(console_dock, &QgDockWidget::topLevelChanged, console_dock, &QgDockWidget::toWindow);
@@ -268,16 +268,16 @@ BRLCAD_MainWindow::ConnectWidgets()
     // application, so rather than embedding the command execution logic in the
     // widget we use a signal/slot connection to have the application's slot
     // execute the command.
-    QObject::connect(console, &QgConsole::executeCommand, ap, &CADApp::run_qcmd);
+    QObject::connect(console, &QgConsole::executeCommand, ap, &QgEdApp::run_qcmd);
 
     // Geometry Tree
     connect(tree_dock, &QgDockWidget::topLevelChanged, tree_dock, &QgDockWidget::toWindow);
     connect(tree_dock, &QgDockWidget::banner_click, m, &QgModel::toggle_hierarchy);
     connect(vm_treeview_mode_toggle, &QAction::triggered, m, &QgModel::toggle_hierarchy);
     connect(m, &QgModel::opened_item, treeview, &QgTreeView::qgitem_select_sync);
-    connect(m, &QgModel::view_change, ap, &CADApp::do_view_changed);
-    QObject::connect(treeview, &QgTreeView::view_changed, ap, &CADApp::do_view_changed);
-    QObject::connect(ap, &CADApp::view_update, treeview, &QgTreeView::do_view_update);
+    connect(m, &QgModel::view_change, ap, &QgEdApp::do_view_changed);
+    QObject::connect(treeview, &QgTreeView::view_changed, ap, &QgEdApp::do_view_changed);
+    QObject::connect(ap, &QgEdApp::view_update, treeview, &QgTreeView::do_view_update);
     // We need to record the expanded/contracted state of the tree items,
     // and restore them after a model reset
     connect(treeview, &QgTreeView::expanded, m, &QgModel::item_expanded);
@@ -286,12 +286,12 @@ BRLCAD_MainWindow::ConnectWidgets()
     connect(m, &QgModel::check_highlights, treeview, &QgTreeView::redo_highlights);
 
     // Update props if we change the dbip or select a new item in the tree.
-    QObject::connect(ap, &CADApp::dbi_update, stdpropmodel, &QgAttributesModel::do_dbi_update);
+    QObject::connect(ap, &QgEdApp::dbi_update, stdpropmodel, &QgAttributesModel::do_dbi_update);
     QObject::connect(treeview, &QgTreeView::clicked, stdpropmodel, &QgAttributesModel::refresh);
-    QObject::connect(ap, &CADApp::view_update, stdpropmodel, &QgAttributesModel::db_change_refresh);
-    QObject::connect(ap, &CADApp::dbi_update, userpropmodel, &QgAttributesModel::do_dbi_update);
+    QObject::connect(ap, &QgEdApp::view_update, stdpropmodel, &QgAttributesModel::db_change_refresh);
+    QObject::connect(ap, &QgEdApp::dbi_update, userpropmodel, &QgAttributesModel::do_dbi_update);
     QObject::connect(treeview, &QgTreeView::clicked, userpropmodel, &QgAttributesModel::refresh);
-    QObject::connect(ap, &CADApp::view_update, userpropmodel, &QgAttributesModel::db_change_refresh);
+    QObject::connect(ap, &QgEdApp::view_update, userpropmodel, &QgAttributesModel::db_change_refresh);
 
 }
 
@@ -300,11 +300,11 @@ BRLCAD_MainWindow::SetupMenu()
 {
     QMenu *file_menu = menuBar()->addMenu("File");
     cad_open = new QAction("Open", this);
-    QObject::connect(cad_open, &QAction::triggered, ((CADApp *)qApp), &CADApp::open_file);
+    QObject::connect(cad_open, &QAction::triggered, ((QgEdApp *)qApp), &QgEdApp::open_file);
     file_menu->addAction(cad_open);
 
     cad_save_settings = new QAction("Save Settings", this);
-    connect(cad_save_settings, &QAction::triggered, ((CADApp *)qApp), &CADApp::write_settings);
+    connect(cad_save_settings, &QAction::triggered, ((QgEdApp *)qApp), &QgEdApp::write_settings);
     file_menu->addAction(cad_save_settings);
 
 #if 0
@@ -344,7 +344,7 @@ void
 BRLCAD_MainWindow::do_dm_init()
 {
     QTCAD_SLOT("BRLCAD_MainWindow::do_dm_init", 1);
-    CADApp *ap = (CADApp *)qApp;
+    QgEdApp *ap = (QgEdApp *)qApp;
     QgModel *m = ap->mdl;
     struct ged *gedp = m->gedp;
 

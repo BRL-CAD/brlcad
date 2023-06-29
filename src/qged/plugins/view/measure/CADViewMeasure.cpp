@@ -27,7 +27,7 @@
 #include <QMouseEvent>
 #include <QVBoxLayout>
 #include <QtGlobal>
-#include "../../../CADApp.h"
+#include "../../../QgEdApp.h"
 
 #include "bu/opt.h"
 #include "bu/malloc.h"
@@ -111,7 +111,7 @@ CADViewMeasure::adjust_text_db(void *)
 void
 CADViewMeasure::adjust_text()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -152,7 +152,7 @@ CADViewMeasure::do_filter_view_update()
 bool
 CADViewMeasure::eventFilter(QObject *, QEvent *e)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return false;
     struct ged *gedp = m->gedp;

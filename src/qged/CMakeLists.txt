@@ -25,14 +25,14 @@ BRLCAD_INCLUDE_DIRS(QG_DIRS)
 
 set(qged_srcs
   main_window.cpp
-  CADApp.cpp
+  QgEdApp.cpp
   QgEdFilter.cpp
   fbserv.cpp
   QgEdPalette.cpp
   )
 
 set(qth_names
-  CADApp
+  QgEdApp
   QgEdFilter
   fbserv
   main_window

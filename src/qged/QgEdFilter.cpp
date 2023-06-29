@@ -27,13 +27,13 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include <QtGlobal>
-#include "CADApp.h"
+#include "QgEdApp.h"
 #include "QgEdFilter.h"
 #include "qtcad/QgModel.h"
 
 bool QgEdFilter::eventFilter(QObject *, QEvent *e)
 {
-    CADApp *c = (CADApp *)qApp;
+    QgEdApp *c = (QgEdApp *)qApp;
     if (!c || !c->w)
 	return false;
 

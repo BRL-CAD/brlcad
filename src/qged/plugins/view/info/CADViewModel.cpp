@@ -30,7 +30,7 @@
 #include "bu/avs.h"
 #include "bu/malloc.h"
 #include "qtcad/SignalFlags.h"
-#include "CADApp.h"
+#include "QgEdApp.h"
 #include "CADViewModel.h"
 
 CADViewModel::CADViewModel(QObject *parentobj)
@@ -56,7 +56,7 @@ CADViewModel::update()
 void
 CADViewModel::refresh(unsigned long long)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;

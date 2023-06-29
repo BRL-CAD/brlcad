@@ -1,4 +1,4 @@
-/*                        C A D A P P . H
+/*                        Q G E D A P P . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,14 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CADApp.h
+/** @file QgEdApp.h
  *
  * Specialization of QApplication that adds information specific
  * to BRL-CAD's data and functionality
  */
 
-#ifndef CADAPP_H
-#define CADAPP_H
+#ifndef QGEDAPP_H
+#define QGEDAPP_H
 
 #include <QApplication>
 #include <QObject>
@@ -51,13 +51,13 @@
  * application wide facilities like the current GED pointer and the ability
  * to run commands are defined here. */
 
-class CADApp : public QApplication
+class QgEdApp : public QApplication
 {
     Q_OBJECT
 
     public:
-	CADApp(int &argc, char *argv[], int swrast_mode = 0, int quad_mode = 0);
-	~CADApp();
+	QgEdApp(int &argc, char *argv[], int swrast_mode = 0, int quad_mode = 0);
+	~QgEdApp();
 
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
 
@@ -106,9 +106,7 @@ class CADApp : public QApplication
 	long history_mark_end = -1;
 };
 
-QString convert_to_g(QString filename);
-
-#endif // CADAPP_H
+#endif // QGEDAPP_H
 
 // Local Variables:
 // mode: C++
