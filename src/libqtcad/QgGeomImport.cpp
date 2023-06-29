@@ -27,6 +27,52 @@
 #include "qtcad/QgAppExecDialog.h"
 #include "qtcad/QgGeomImport.h"
 
+ASCImportDialog::ASCImportDialog(QString filename, QString g_path, QString l_path)
+{
+    input_file = filename;
+
+    db_path = new QLineEdit;
+    db_path->insert(g_path);
+    log_path = new QLineEdit;
+    log_path->insert(l_path);
+
+    formGroupBox = new QGroupBox("Import Options");
+    QFormLayout *flayout = new QFormLayout;
+    flayout->addRow(new QLabel("Output File"), db_path);
+    flayout->addRow(new QLabel("Log File"), log_path);
+    formGroupBox->setLayout(flayout);
+
+    buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+
+    connect(buttonBox, &QDialogButtonBox::accepted, this, &ASCImportDialog::accept);
+    connect(buttonBox, &QDialogButtonBox::rejected, this, &ASCImportDialog::reject);
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(formGroupBox);
+    mainLayout->addWidget(buttonBox);
+    setLayout(mainLayout);
+    resize(600,300);
+    setWindowTitle(tr("BRL-CAD ASCII Importer"));
+}
+
+QString
+ASCImportDialog::command()
+{
+    QString prog_name(bu_dir(NULL, 0, BU_DIR_BIN, "gcv", BU_DIR_EXT, NULL));
+    return prog_name;
+}
+
+
+QStringList
+ASCImportDialog::options()
+{
+    QStringList process_args;
+
+    process_args.append(input_file);
+    process_args.append(db_path->text());
+
+    return process_args;
+}
+
 RhinoImportDialog::RhinoImportDialog(QString filename, QString g_path, QString l_path)
 {
     input_file = filename;
@@ -163,6 +209,7 @@ QgGeomImport::QgGeomImport(QWidget *pparent) : QObject(pparent)
 
 QgGeomImport::~QgGeomImport()
 {
+    bu_vls_free(&conv_msg);
 }
 
 int
@@ -209,7 +256,8 @@ QgGeomImport::gfile(const char *tfile)
 	fileName = QString(tfile);
     } else {
 	const char *file_filters =
-	    "BRL-CAD (*.g *.asc);;"
+	    "BRL-CAD (*.g);;"
+	    "BRL-CAD ASCII (*.asc);;"
 	    "Rhino (*.3dm);;"
 	    "STEP (*.stp *.step);;"
 	    "All Files (*)";
@@ -226,8 +274,17 @@ QgGeomImport::gfile(const char *tfile)
 
     QFileInfo fileinfo(fileName);
 
+    // TODO - at least do a basic validity check... just checking for a .g
+    // suffix is pretty weak...
     if (!fileinfo.suffix().compare("g", Qt::CaseSensitive))
        	return fileName;
+
+    // If it's not a .g, check if the calling program wants us to
+    // go any further first.
+    if (!enable_conversion) {
+	bu_vls_sprintf(&conv_msg, "%s does not appear to be a .g file\n", fileName.toLocal8Bit().data());
+	return QString();
+    }
 
     /* If we don't already have a filename that claims to be a .g file, see
      * about a conversion. No matter what we're doing, we'll want a target
@@ -243,6 +300,7 @@ QgGeomImport::gfile(const char *tfile)
 	bu_vls_sprintf(&u_name, "%s0.g", g_path.toLocal8Bit().data());
 	if (bu_vls_incr(&u_name, NULL, "4:0:0:0:_", &uniq_test, NULL) < 0) {
 	    bu_vls_free(&u_name);
+	    bu_vls_sprintf(&conv_msg, "unable to generate a conversion output name for %s\n", fileName.toLocal8Bit().data());
 	    return QString();
 	}
     }
@@ -255,6 +313,21 @@ QgGeomImport::gfile(const char *tfile)
 
     /* Now, we need to handle the format specific aspects of conversion options. */
 
+    // ASC - BRL-CAD ASCII data
+    if (!fileinfo.suffix().compare("asc", Qt::CaseSensitive)) {
+	ASCImportDialog dialog(fileName, g_path, l_path);
+	dialog.exec();
+	g_path = dialog.db_path->text();
+	l_path = dialog.log_path->text();
+	exec_console_app_in_window(dialog.command(),dialog.options(), l_path);
+	bu_vls_sprintf(&u_name, "%s", g_path.toLocal8Bit().data());
+	if (!bu_file_exists(bu_vls_cstr(&u_name), NULL)) {
+	    bu_vls_free(&u_name);
+	    bu_vls_sprintf(&conv_msg, "ASC import failed for %s\n", fileName.toLocal8Bit().data());
+	    return QString();
+	}
+    }
+
     // Rhino / 3DM
     if (!fileinfo.suffix().compare("3dm", Qt::CaseInsensitive)) {
 	RhinoImportDialog dialog(fileName, g_path, l_path);
@@ -265,6 +338,7 @@ QgGeomImport::gfile(const char *tfile)
 	bu_vls_sprintf(&u_name, "%s", g_path.toLocal8Bit().data());
 	if (!bu_file_exists(bu_vls_cstr(&u_name), NULL)) {
 	    bu_vls_free(&u_name);
+	    bu_vls_sprintf(&conv_msg, "3DM import failed for %s\n", fileName.toLocal8Bit().data());
 	    return QString();
 	}
     }
@@ -279,6 +353,7 @@ QgGeomImport::gfile(const char *tfile)
 	bu_vls_sprintf(&u_name, "%s", g_path.toLocal8Bit().data());
 	if (!bu_file_exists(bu_vls_cstr(&u_name), NULL)) {
 	    bu_vls_free(&u_name);
+	    bu_vls_sprintf(&conv_msg, "STEP import failed for %s\n", fileName.toLocal8Bit().data());
 	    return QString();
 	}
     }

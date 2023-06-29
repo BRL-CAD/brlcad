@@ -60,6 +60,7 @@ class QgEdApp : public QApplication
 	~QgEdApp();
 
 	int run_cmd(struct bu_vls *msg, int argc, const char **argv);
+	int load_g_file(const char *gfile = NULL, bool do_conversion = true);
 
 	QgModel *mdl = NULL;
 
@@ -97,7 +98,6 @@ class QgEdApp : public QApplication
 
     public:
 	QgEdMainWindow *w = NULL;
-	struct bu_vls init_msgs = BU_VLS_INIT_ZERO; // for plugin initialization reporting
 
     private:
 	std::vector<char *> tmp_av;

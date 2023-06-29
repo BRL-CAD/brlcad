@@ -46,6 +46,46 @@
 
 #include "qtcad/defines.h"
 
+class QTCAD_EXPORT QgGeomImport : public QObject
+{
+    Q_OBJECT
+
+    public:
+	QgGeomImport(QWidget *pparent = NULL);
+	~QgGeomImport();
+
+	QString gfile(const char *tfile = NULL);
+
+	bool enable_conversion = true;
+
+	struct bu_vls conv_msg = BU_VLS_INIT_ZERO;
+
+    private:
+	int exec_console_app_in_window(QString command, QStringList options, QString lfile);
+	QString fileName;
+};
+
+// GUI dialogues for specific format conversion options
+
+class ASCImportDialog : public QDialog
+{
+    Q_OBJECT
+
+    public:
+	ASCImportDialog(QString filename, QString g_path, QString l_path);
+
+	QString command();
+	QStringList options();
+	QLineEdit *db_path;
+	QLineEdit *log_path;
+
+    private:
+
+	QString input_file;
+	QGroupBox *formGroupBox;
+	QDialogButtonBox *buttonBox;
+};
+
 class RhinoImportDialog : public QDialog
 {
     Q_OBJECT
@@ -94,22 +134,6 @@ class STEPImportDialog : public QDialog
 
 	QGroupBox *formGroupBox;
 	QDialogButtonBox *buttonBox;
-};
-
-
-class QTCAD_EXPORT QgGeomImport : public QObject
-{
-    Q_OBJECT
-
-    public:
-	QgGeomImport(QWidget *pparent = NULL);
-	~QgGeomImport();
-
-	QString gfile(const char *tfile = NULL);
-
-    private:
-	int exec_console_app_in_window(QString command, QStringList options, QString lfile);
-	QString fileName;
 };
 
 #endif // QGGEOMIMPORT_H

@@ -199,15 +199,15 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     // loading settings so the window size matches the saved config, if any)
     w->show();
 
-    // If the 3D view didn't set up appropriately, try the fallback rendering
-    // mode.  We must do this after the show() call, because it isn't until
-    // after that point that we know whether the setup of the system's OpenGL
-    // context setup was successful.
+    // If the 3D view didn't set up appropriately, let the user know they
+    // should try the fallback SW rendering mode.  We must do this after the
+    // show() call, because it isn't until after that point that we know
+    // whether the setup of the system's OpenGL context setup was successful.
     if (!w->isValid3D()) {
 	bu_exit(EXIT_FAILURE, "OpenGL failed to initialize properly.  Recommend running qged with '-s' option to use fallback swrast rendering.");
     }
 
-    // If we have a default .g file supplied, open it.  We've delayed doing so
+    // If we have a default filename supplied, open it.  We've delayed doing so
     // until now in order to have the display related containers from graphical
     // initialization/show() available - the GED structure will need to know
     // about some of them to have drawing commands connect properly to the 3D
@@ -220,14 +220,9 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 	    bu_free(fname, "path");
 	    fname = bu_strdup(bu_path_normalize(argv[0]));
 	}
-	int ac = 2;
-	const char *av[3];
-	av[0] = "open";
-	av[1] = fname;
-	av[2] = NULL;
-	int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
+	int ret = load_g_file(fname, false);
 	if (ret != BRLCAD_OK) {
-	    bu_exit(EXIT_FAILURE, "Error opening file %s\n", av[1]);
+	    bu_exit(EXIT_FAILURE, "Error opening file %s\n", fname);
 	}
 	bu_free(fname, "path");
 	emit dbi_update(mdl->gedp->dbip);
@@ -260,11 +255,6 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 	    w->console->printString("\n");
 	    have_msg = 1;
 	}
-    }
-    if (bu_vls_strlen(&init_msgs)) {
-	w->console->printString(bu_vls_cstr(&init_msgs));
-	w->console->printString("\n");
-	have_msg = 1;
     }
 
     // If we did write any messages, need to restore the prompt
@@ -320,10 +310,22 @@ QgEdApp::open_file()
 {
     QTCAD_SLOT("QgEdApp::open_file", 1);
 
+    load_g_file();
+}
+
+int
+QgEdApp::load_g_file(const char *gfile, bool do_conversion)
+{
+    QTCAD_SLOT("QgEdApp::load_g_file", 1);
+
     QgGeomImport importer((QWidget *)this->w);
-    QString fileName = importer.gfile();
-    if (fileName.isEmpty())
-	return;
+    importer.enable_conversion = do_conversion;
+    QString fileName = importer.gfile(gfile);
+    if (fileName.isEmpty()) {
+	if (w)
+	    w->statusBar()->showMessage(bu_vls_cstr(&importer.conv_msg));
+	return BRLCAD_ERROR;
+    }
 
     int ac = 2;
     const char *av[3];
@@ -333,14 +335,15 @@ QgEdApp::open_file()
     int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
     bu_free((void *)av[1], "filename cpy");
     emit dbi_update(mdl->gedp->dbip);
-    if (!w)
-	return;
-
-    if (ret) {
-	w->statusBar()->showMessage("open failed");
-    } else {
-	w->statusBar()->showMessage(fileName);
+    if (w) {
+	if (ret) {
+	    w->statusBar()->showMessage("open failed");
+	} else {
+	    w->statusBar()->showMessage(fileName);
+	}
     }
+
+    return ret;
 }
 
 int
