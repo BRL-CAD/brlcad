@@ -1,4 +1,4 @@
-/*                   C A D P A L E T T E . C P P
+/*                   Q G E D P A L E T T E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CADPalette.cpp
+/** @file QgEdPalette.cpp
  *
  */
 
@@ -29,9 +29,9 @@
 #include "bu/file.h"
 #include "bu/str.h"
 #include "plugins/plugin.h"
-#include "CADPalette.h"
+#include "QgEdPalette.h"
 
-CADPalette::CADPalette(int mode, QWidget *pparent)
+QgEdPalette::QgEdPalette(int mode, QWidget *pparent)
     : QgToolPalette(pparent)
 {
     m_mode = mode;
@@ -126,9 +126,9 @@ CADPalette::CADPalette(int mode, QWidget *pparent)
 }
 
 void
-CADPalette::makeCurrent(QWidget *w)
+QgEdPalette::makeCurrent(QWidget *w)
 {
-    QTCAD_SLOT("CADPalette::makeCurrent", 1);
+    QTCAD_SLOT("QgEdPalette::makeCurrent", 1);
     if (w == this) {
 	if (selected)
 	    palette_displayElement(selected);
@@ -139,7 +139,7 @@ CADPalette::makeCurrent(QWidget *w)
     }
 }
 
-CADPalette::~CADPalette()
+QgEdPalette::~QgEdPalette()
 {
 }
 

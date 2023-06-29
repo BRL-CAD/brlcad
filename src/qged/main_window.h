@@ -50,7 +50,7 @@
 #include "qtcad/QgViewCtrl.h"
 
 #include "plugins/plugin.h"
-#include "CADPalette.h"
+#include "QgEdPalette.h"
 
 class BRLCAD_MainWindow : public QMainWindow
 {
@@ -122,8 +122,8 @@ class BRLCAD_MainWindow : public QMainWindow
 	// Docked widgets
 	QgAttributesModel *stdpropmodel = NULL;
 	QgAttributesModel *userpropmodel = NULL;
-	CADPalette *oc = NULL;
-	CADPalette *vc = NULL;
+	QgEdPalette *oc = NULL;
+	QgEdPalette *vc = NULL;
 	QgTreeView *treeview = NULL;
 
 	// Action for toggling treeview's ls or tree view

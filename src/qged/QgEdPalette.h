@@ -1,4 +1,4 @@
-/*                    C A D P A L E T T E . H
+/*                    Q G E D P A L E T T E . H
  * BRL-CAD
  *
  * Copyright (c) 2020-2023 United States Government as represented by
@@ -17,24 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file CADPalette.h
+/** @file QgEdPalette.h
  *
- * The main job of CADPalette is to handle the population of the
+ * The main job of QgEdPalette is to handle the population of the
  * QgToolPalette widget with the QGED tools supplied by plugins.
  */
 
-#ifndef CADPALETTES_H
-#define CADPALETTES_H
+#ifndef QGEDPALETTE_H
+#define QGEDPALETTE_H
 #include <iostream>
 #include "qtcad/QgToolPalette.h"
 
-class CADPalette : public QgToolPalette
+class QgEdPalette : public QgToolPalette
 {
     Q_OBJECT
 
     public:
-	CADPalette(int mode = 0, QWidget *pparent = 0);
-	~CADPalette();
+	QgEdPalette(int mode = 0, QWidget *pparent = 0);
+	~QgEdPalette();
 
     signals:
 	void current(QWidget *);
@@ -47,7 +47,7 @@ class CADPalette : public QgToolPalette
 	int m_mode = 0;
 };
 
-#endif /* CADPALETTES_H */
+#endif /* QGEDPALETTE_H */
 
 /*
  * Local Variables:

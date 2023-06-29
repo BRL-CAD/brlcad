@@ -106,11 +106,11 @@ BRLCAD_MainWindow::CreateWidgets(int canvas_type)
     // attached and detached from the main window.
 
     // Palettes and their associated dock widgets
-    vc = new CADPalette(QGED_VC_TOOL_PLUGIN, this);
+    vc = new QgEdPalette(QGED_VC_TOOL_PLUGIN, this);
     vcd = new QDockWidget("View Controls", this);
     vcd->setObjectName("View_Controls");
     vcd->setWidget(vc);
-    oc = new CADPalette(QGED_OC_TOOL_PLUGIN, this);
+    oc = new QgEdPalette(QGED_OC_TOOL_PLUGIN, this);
     ocd = new QDockWidget("Object Editing", this);
     ocd->setObjectName("Object_Editing");
     ocd->setWidget(oc);
@@ -238,10 +238,10 @@ BRLCAD_MainWindow::ConnectWidgets()
 
     // The makeCurrent connections enforce an either/or paradigm
     // for the view and object editing panels.
-    connect(vc, &CADPalette::current, oc, &CADPalette::makeCurrent);
-    connect(vc, &CADPalette::current, vc, &CADPalette::makeCurrent);
-    connect(oc, &CADPalette::current, oc, &CADPalette::makeCurrent);
-    connect(oc, &CADPalette::current, vc, &CADPalette::makeCurrent);
+    connect(vc, &QgEdPalette::current, oc, &QgEdPalette::makeCurrent);
+    connect(vc, &QgEdPalette::current, vc, &QgEdPalette::makeCurrent);
+    connect(oc, &QgEdPalette::current, oc, &QgEdPalette::makeCurrent);
+    connect(oc, &QgEdPalette::current, vc, &QgEdPalette::makeCurrent);
 
     // Now that we've got everything set up, connect the palette selection
     // signals so they can update the view event filter as needed.  We don't do

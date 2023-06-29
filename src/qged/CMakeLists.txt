@@ -28,7 +28,7 @@ set(qged_srcs
   CADApp.cpp
   QgEdFilter.cpp
   fbserv.cpp
-  CADPalette.cpp
+  QgEdPalette.cpp
   )
 
 set(qth_names
@@ -36,7 +36,7 @@ set(qth_names
   QgEdFilter
   fbserv
   main_window
-  CADPalette
+  QgEdPalette
   )
 foreach(qh ${qth_names})
   set(moc_headers ${moc_headers} ${qh}.h)
@@ -47,7 +47,7 @@ if (BRLCAD_ENABLE_QT)
 
   # Let main_window know what the platform's extension is so it knows
   # what plugin filenames to look for
-  set_property(SOURCE CADPalette.cpp APPEND PROPERTY
+  set_property(SOURCE QgEdPalette.cpp APPEND PROPERTY
     COMPILE_DEFINITIONS "QGED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
   if(Qt6Widgets_FOUND)
