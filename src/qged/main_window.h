@@ -40,6 +40,7 @@
 
 #include "ged.h"
 #include "qtcad/SignalFlags.h"
+#include "qtcad/QgAttributesModel.h"
 #include "qtcad/QgQuadView.h"
 #include "qtcad/QgView.h"
 #include "qtcad/QgDockWidget.h"
@@ -49,7 +50,6 @@
 #include "qtcad/QgViewCtrl.h"
 
 #include "plugins/plugin.h"
-#include "attributes.h"
 #include "palettes.h"
 
 class BRLCAD_MainWindow : public QMainWindow
@@ -120,8 +120,8 @@ class BRLCAD_MainWindow : public QMainWindow
 	QAction *cad_quad_view = NULL;
 
 	// Docked widgets
-	CADAttributesModel *stdpropmodel = NULL;
-	CADAttributesModel *userpropmodel = NULL;
+	QgAttributesModel *stdpropmodel = NULL;
+	QgAttributesModel *userpropmodel = NULL;
 	CADPalette *oc = NULL;
 	CADPalette *vc = NULL;
 	QgTreeView *treeview = NULL;

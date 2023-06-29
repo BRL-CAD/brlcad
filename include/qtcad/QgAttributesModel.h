@@ -1,4 +1,4 @@
-/*                 C A D A T T R I B U T E S . H
+/*               Q G A T T R I B U T E S M O D E L . H
  * BRL-CAD
  *
  * Copyright (c) 2020-2023 United States Government as represented by
@@ -17,16 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadattributes.h
+/** @file QgAttributesModel.h
  *
- * Brief description
- *
+ * Model for reflecting a BRL-CAD object's attribute keys and values in a way
+ * suitable for use in a Qt view.
  */
 
-#ifndef CAD_ATTRIBUTES_H
-#define CAD_ATTRIBUTES_H
-
-#include "qtcad/QgKeyVal.h"
+#ifndef QGATTRIBUTESMODEL_H
+#define QGATTRIBUTESMODEL_H
 
 #ifndef Q_MOC_RUN
 #include "bu/avs.h"
@@ -35,19 +33,27 @@
 #include "ged.h"
 #endif
 
-class CADAttributesModel : public QgKeyValModel
+#include "qtcad/defines.h"
+#include "qtcad/QgKeyVal.h"
+
+class QTCAD_EXPORT QgAttributesModel : public QgKeyValModel
 {
     Q_OBJECT
 
     public:  // "standard" custom tree model functions
-	explicit CADAttributesModel(QObject *parent = 0, struct db_i *dbip = DBI_NULL, struct directory *dp = RT_DIR_NULL, int show_std = 0, int show_user = 0);
-	~CADAttributesModel();
+	explicit QgAttributesModel(QObject *parent = 0, struct db_i *dbip = DBI_NULL, struct directory *dp = RT_DIR_NULL, int show_std = 0, int show_user = 0);
+	~QgAttributesModel();
 
 	bool hasChildren(const QModelIndex &parent) const;
 	int update(struct db_i *new_dbip, struct directory *dp);
 
     public slots:
+	// Used when a selection in the model has changed
 	void refresh(const QModelIndex &idx);
+        // Used when the values may have changed in the underlying .g
+	void db_change_refresh();
+	// Used when the currently opened database changes
+	void do_dbi_update(struct db_i *dbip);
 
     protected:
 	bool canFetchMore(const QModelIndex &parent) const;
@@ -62,16 +68,14 @@ class CADAttributesModel : public QgKeyValModel
 	int user_visible;
 };
 
+#endif /* QGATTRIBUTESMODEL */
 
-#endif /*CAD_ATTRIBUTES_H*/
-
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
 

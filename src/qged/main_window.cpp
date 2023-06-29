@@ -29,8 +29,6 @@
 #include "qtcad/QgTreeSelectionModel.h"
 #include "main_window.h"
 #include "app.h"
-#include "palettes.h"
-#include "attributes.h"
 
 BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 {
@@ -142,14 +140,14 @@ BRLCAD_MainWindow::CreateWidgets(int canvas_type)
     /* Object Attribute widgets */
     sattrd = new QDockWidget("Standard Attributes", this);
     sattrd->setObjectName("Standard_Attributes");
-    stdpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
+    stdpropmodel = new QgAttributesModel(0, DBI_NULL, RT_DIR_NULL, 1, 0);
     QgKeyValView *stdpropview = new QgKeyValView(this, 1);
     stdpropview->setModel(stdpropmodel);
     sattrd->setWidget(stdpropview);
 
     uattrd = new QDockWidget("User Attributes", this);
     uattrd->setObjectName("User_Attributes");
-    userpropmodel = new CADAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
+    userpropmodel = new QgAttributesModel(0, DBI_NULL, RT_DIR_NULL, 0, 1);
     QgKeyValView *userpropview = new QgKeyValView(this, 0);
     userpropview->setModel(userpropmodel);
     uattrd->setWidget(userpropview);
@@ -287,10 +285,13 @@ BRLCAD_MainWindow::ConnectWidgets()
     connect(m, &QgModel::mdl_changed_db, treeview, &QgTreeView::redo_expansions);
     connect(m, &QgModel::check_highlights, treeview, &QgTreeView::redo_highlights);
 
-    // Update props if we select a new item in the tree.  TODO - these need to be updated when
-    // we have a app_changed_db as well, since the change may have been to edit attributes...
-    QObject::connect(treeview, &QgTreeView::clicked, stdpropmodel, &CADAttributesModel::refresh);
-    QObject::connect(treeview, &QgTreeView::clicked, userpropmodel, &CADAttributesModel::refresh);
+    // Update props if we change the dbip or select a new item in the tree.
+    QObject::connect(ap, &CADApp::dbi_update, stdpropmodel, &QgAttributesModel::do_dbi_update);
+    QObject::connect(treeview, &QgTreeView::clicked, stdpropmodel, &QgAttributesModel::refresh);
+    QObject::connect(ap, &CADApp::view_update, stdpropmodel, &QgAttributesModel::db_change_refresh);
+    QObject::connect(ap, &CADApp::dbi_update, userpropmodel, &QgAttributesModel::do_dbi_update);
+    QObject::connect(treeview, &QgTreeView::clicked, userpropmodel, &QgAttributesModel::refresh);
+    QObject::connect(ap, &CADApp::view_update, userpropmodel, &QgAttributesModel::db_change_refresh);
 
 }
 

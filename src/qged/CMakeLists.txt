@@ -26,7 +26,6 @@ BRLCAD_INCLUDE_DIRS(QG_DIRS)
 set(qged_srcs
   main_window.cpp
   app.cpp
-  attributes.cpp
   event_filter.cpp
   fbserv.cpp
   palettes.cpp
@@ -34,7 +33,6 @@ set(qged_srcs
 
 set(qth_names
   app
-  attributes
   event_filter
   fbserv
   main_window

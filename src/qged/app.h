@@ -65,6 +65,7 @@ class CADApp : public QApplication
 
     signals:
 	void view_update(unsigned long long);
+	void dbi_update(struct db_i *dbip);
 
         /* Menu slots */
     public slots:

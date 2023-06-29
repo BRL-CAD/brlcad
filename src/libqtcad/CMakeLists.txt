@@ -43,6 +43,7 @@ set(qtcad_srcs
   bindings.cpp
   QgAccordion.cpp
   QgAppExecDialog.cpp
+  QgAttributesModel.cpp
   QgColorRGB.cpp
   QgConsole.cpp
   QgConsoleListener.cpp
@@ -77,6 +78,7 @@ set(QTCAD_HDR_DIR ${BRLCAD_SOURCE_DIR}/include/qtcad)
 set(qth_names
   QgAccordion
   QgAppExecDialog
+  QgAttributesModel
   QgColorRGB
   QgConsole
   QgConsoleListener

@@ -1,4 +1,4 @@
-/*               C A D A T T R I B U T E S . C P P
+/*              Q G A T T R I B U T E S M O D E L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020-2023 United States Government as represented by
@@ -17,9 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadattributes.cpp
- *
- * Brief description
+/** @file QgAttributesModel.cpp
  *
  */
 
@@ -28,13 +26,13 @@
 #include <QString>
 #include <QtGlobal>
 
-#include "attributes.h"
-#include "app.h"
 #include "bu/sort.h"
 #include "bu/avs.h"
 #include "bu/malloc.h"
+#include "qtcad/QgAttributesModel.h"
+#include "qtcad/QgModel.h"
 
-CADAttributesModel::CADAttributesModel(QObject *parentobj, struct db_i *dbip, struct directory *dp, int show_standard, int show_user)
+QgAttributesModel::QgAttributesModel(QObject *parentobj, struct db_i *dbip, struct directory *dp, int show_standard, int show_user)
     : QgKeyValModel(parentobj)
 {
     int i = 0;
@@ -64,7 +62,7 @@ CADAttributesModel::CADAttributesModel(QObject *parentobj, struct db_i *dbip, st
     }
 }
 
-CADAttributesModel::~CADAttributesModel()
+QgAttributesModel::~QgAttributesModel()
 {
     bu_avs_free(avs);
     BU_PUT(avs, struct bu_attribute_value_set);
@@ -78,7 +76,7 @@ attr_children(const char *attr)
 }
 
 
-bool CADAttributesModel::canFetchMore(const QModelIndex &idx) const
+bool QgAttributesModel::canFetchMore(const QModelIndex &idx) const
 {
     QgKeyValNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return false;
@@ -91,7 +89,7 @@ bool CADAttributesModel::canFetchMore(const QModelIndex &idx) const
 }
 
 void
-CADAttributesModel::add_Children(const char *name, QgKeyValNode *curr_node)
+QgAttributesModel::add_Children(const char *name, QgKeyValNode *curr_node)
 {
     if (BU_STR_EQUAL(name, "color")) {
 	QString val(bu_avs_get(avs, name));
@@ -109,7 +107,7 @@ CADAttributesModel::add_Children(const char *name, QgKeyValNode *curr_node)
 }
 
 
-void CADAttributesModel::fetchMore(const QModelIndex &idx)
+void QgAttributesModel::fetchMore(const QModelIndex &idx)
 {
     QgKeyValNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return;
@@ -121,7 +119,7 @@ void CADAttributesModel::fetchMore(const QModelIndex &idx)
     }
 }
 
-bool CADAttributesModel::hasChildren(const QModelIndex &idx) const
+bool QgAttributesModel::hasChildren(const QModelIndex &idx) const
 {
     QgKeyValNode *curr_node = IndexNode(idx);
     if (curr_node == m_root) return true;
@@ -131,7 +129,7 @@ bool CADAttributesModel::hasChildren(const QModelIndex &idx) const
     return false;
 }
 
-int CADAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
+int QgAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
 {
     current_dp = new_dp;
     current_dbip = new_dbip;
@@ -180,21 +178,36 @@ int CADAttributesModel::update(struct db_i *new_dbip, struct directory *new_dp)
 }
 
 void
-CADAttributesModel::refresh(const QModelIndex &idx)
+QgAttributesModel::refresh(const QModelIndex &idx)
 {
-    QTCAD_SLOT("CADAttributesModel::refresh", 1);
-    QgModel *m = ((CADApp *)qApp)->mdl;
-    if (!m)
-	return;
-
-    struct ged *gedp = m->gedp;
-    if (!gedp)
-	return;
-
+    QTCAD_SLOT("QgAttributesModel::refresh", 1);
     current_dp = (struct directory *)(idx.data(QgModel::DirectoryInternalRole).value<void *>());
-    update(gedp->dbip, current_dp);
+    update(current_dbip, current_dp);
 }
 
+void
+QgAttributesModel::db_change_refresh()
+{
+    QTCAD_SLOT("QgAttributesModel::db_change_refresh", 1);
+    update(current_dbip, current_dp);
+}
+
+void
+QgAttributesModel::do_dbi_update(struct db_i *dbip)
+{
+    QTCAD_SLOT("QgAttributesModel::do_dbi_update", 1);
+    current_dbip = dbip;
+    m_root = new QgKeyValNode();
+    beginResetModel();
+    endResetModel();
+    if (std_visible) {
+	int i = 0;
+	while (i != ATTR_NULL) {
+	    add_pair(db5_standard_attribute(i), "", m_root, i);
+	    i++;
+	}
+    }
+}
 
 // Local Variables:
 // tab-width: 8
@@ -204,5 +217,4 @@ CADAttributesModel::refresh(const QModelIndex &idx)
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
-
 

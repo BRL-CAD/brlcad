@@ -228,6 +228,7 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
 	    bu_exit(EXIT_FAILURE, "Error opening file %s\n", av[1]);
 	}
 	bu_free(fname, "path");
+	emit dbi_update(mdl->gedp->dbip);
     }
 
     // Assign QGED specific I/O handlers to the gedp
@@ -329,6 +330,7 @@ CADApp::open_file()
     av[2] = NULL;
     int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
     bu_free((void *)av[1], "filename cpy");
+    emit dbi_update(mdl->gedp->dbip);
     if (!w)
 	return;
 

@@ -1,6 +1,7 @@
 set(qtcad_headers
   QgAccordion.h
   QgAppExecDialog.h
+  QgAttributesModel.h
   QgColorRGB.h
   QgConsole.h
   QgConsoleListener.h
