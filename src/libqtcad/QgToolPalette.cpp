@@ -140,8 +140,10 @@ QgToolPalette::QgToolPalette(QWidget *pparent) : QWidget(pparent)
 
     selected = NULL;
 
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-    this->setLayout(mlayout);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    setLayout(mlayout);
+
+    selected_style = QString("border: 1px solid rgb(255, 255, 0)");
 }
 
 QgToolPalette::~QgToolPalette()

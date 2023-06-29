@@ -17,9 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadpalette.cpp
- *
- * Brief description
+/** @file CADPalette.cpp
  *
  */
 
@@ -31,23 +29,12 @@
 #include "bu/file.h"
 #include "bu/str.h"
 #include "plugins/plugin.h"
-#include "palettes.h"
+#include "CADPalette.h"
 
 CADPalette::CADPalette(int mode, QWidget *pparent)
-    : QWidget(pparent)
+    : QgToolPalette(pparent)
 {
     m_mode = mode;
-    QVBoxLayout *mlayout = new QVBoxLayout();
-    mlayout->setSpacing(0);
-    mlayout->setContentsMargins(0,0,0,0);
-    tpalette = new QgToolPalette(this);
-    tpalette->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-    mlayout->addWidget(tpalette);
-
-    tpalette->selected_style = QString("border: 1px solid rgb(255, 255, 0)");
-
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
-    this->setLayout(mlayout);
 
     // Load plugins for this particular palette type
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "qged", NULL);
@@ -124,7 +111,7 @@ CADPalette::CADPalette(int mode, QWidget *pparent)
 	std::set<QgToolPaletteElement *>::iterator el_it;
 	for (el_it = e_it->second.begin(); el_it != e_it->second.end(); el_it++) {
 	    QgToolPaletteElement *el = *el_it;
-	    addTool(el);
+	    addElement(el);
 	}
     }
 
@@ -134,14 +121,8 @@ CADPalette::CADPalette(int mode, QWidget *pparent)
 	QString obj_label("primitive controls ");
 	QPushButton *obj_control = new QPushButton(obj_label);
 	QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, obj_control);
-	addTool(el);
+	addElement(el);
     }
-}
-
-void
-CADPalette::addTool(QgToolPaletteElement *e)
-{
-    tpalette->addElement(e);
 }
 
 void
@@ -149,25 +130,17 @@ CADPalette::makeCurrent(QWidget *w)
 {
     QTCAD_SLOT("CADPalette::makeCurrent", 1);
     if (w == this) {
-	if (this->tpalette->selected)
-	    this->tpalette->palette_displayElement(this->tpalette->selected);
+	if (selected)
+	    palette_displayElement(selected);
 	emit interaction_mode(m_mode);
     } else {
-	if (this->tpalette->selected)
-	    this->tpalette->selected->button->setStyleSheet("");
+	if (selected)
+	    selected->button->setStyleSheet("");
     }
-}
-
-void
-CADPalette::reflow()
-{
-    QTCAD_SLOT("CADPalette::reflow", 1);
-    tpalette->button_layout_resize();
 }
 
 CADPalette::~CADPalette()
 {
-    delete tpalette;
 }
 
 /*

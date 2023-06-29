@@ -17,10 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cadpalette.h
+/** @file CADPalette.h
  *
- * Brief description
- *
+ * The main job of CADPalette is to handle the population of the
+ * QgToolPalette widget with the QGED tools supplied by plugins.
  */
 
 #ifndef CADPALETTES_H
@@ -28,7 +28,7 @@
 #include <iostream>
 #include "qtcad/QgToolPalette.h"
 
-class CADPalette : public QWidget
+class CADPalette : public QgToolPalette
 {
     Q_OBJECT
 
@@ -36,16 +36,11 @@ class CADPalette : public QWidget
 	CADPalette(int mode = 0, QWidget *pparent = 0);
 	~CADPalette();
 
-	void addTool(QgToolPaletteElement *e);
-
-	QgToolPalette *tpalette;
-
     signals:
 	void current(QWidget *);
 	void interaction_mode(int);
 
     public slots:
-	void reflow();
 	void makeCurrent(QWidget *);
 
     private:

@@ -50,7 +50,7 @@
 #include "qtcad/QgViewCtrl.h"
 
 #include "plugins/plugin.h"
-#include "palettes.h"
+#include "CADPalette.h"
 
 class BRLCAD_MainWindow : public QMainWindow
 {

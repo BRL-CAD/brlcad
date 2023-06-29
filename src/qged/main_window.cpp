@@ -251,16 +251,16 @@ BRLCAD_MainWindow::ConnectWidgets()
     // procedure by making vc the current palette.)
     // TODO - need to figure out how this should (or shouldn't) be rolled into
     // do_view_changed
-    QObject::connect(vc->tpalette, &QgToolPalette::palette_element_selected, ap, &CADApp::element_selected);
-    QObject::connect(oc->tpalette, &QgToolPalette::palette_element_selected, ap, &CADApp::element_selected);
+    QObject::connect(vc, &QgToolPalette::palette_element_selected, ap, &CADApp::element_selected);
+    QObject::connect(oc, &QgToolPalette::palette_element_selected, ap, &CADApp::element_selected);
 
     // The tools in the view and edit panels may have consequences for the view.
     // Connect to the palette signals and slots (the individual tool connections
     // are handled by the palette container.)
-    QObject::connect(ap, &CADApp::view_update, vc->tpalette, &QgToolPalette::do_view_update);
-    QObject::connect(vc->tpalette, &QgToolPalette::view_changed, ap, &CADApp::do_view_changed);
-    QObject::connect(ap, &CADApp::view_update, oc->tpalette, &QgToolPalette::do_view_update);
-    QObject::connect(oc->tpalette, &QgToolPalette::view_changed, ap, &CADApp::do_view_changed);
+    QObject::connect(ap, &CADApp::view_update, vc, &QgToolPalette::do_view_update);
+    QObject::connect(vc, &QgToolPalette::view_changed, ap, &CADApp::do_view_changed);
+    QObject::connect(ap, &CADApp::view_update, oc, &QgToolPalette::do_view_update);
+    QObject::connect(oc, &QgToolPalette::view_changed, ap, &CADApp::do_view_changed);
 
     // Console
     connect(console_dock, &QgDockWidget::topLevelChanged, console_dock, &QgDockWidget::toWindow);
@@ -473,8 +473,8 @@ BRLCAD_MainWindow::IndicateRaytraceDone(int val)
 int
 BRLCAD_MainWindow::InteractionMode(QPoint &gpos)
 {
-    if (vc->tpalette) {
-	QWidget *vcp = vc->tpalette;
+    if (vc) {
+	QWidget *vcp = vc;
 	QRect lrect = vcp->geometry();
 	QPoint mpos = vcp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos)) {
@@ -482,8 +482,8 @@ BRLCAD_MainWindow::InteractionMode(QPoint &gpos)
 	}
     }
 
-    if (oc->tpalette) {
-	QWidget *ocp = oc->tpalette;
+    if (oc) {
+	QWidget *ocp = oc;
 	QRect lrect = ocp->geometry();
 	QPoint mpos = ocp->mapFromGlobal(gpos);
 	if (lrect.contains(mpos)) {
