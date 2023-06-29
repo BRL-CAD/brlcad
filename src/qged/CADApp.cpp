@@ -35,7 +35,7 @@
 #include "qtcad/QgTreeSelectionModel.h"
 #include "CADApp.h"
 #include "fbserv.h"
-#include "event_filter.h"
+#include "QgEdFilter.h"
 
 extern "C" void
 qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t callback, void *data)
@@ -135,7 +135,9 @@ CADApp::CADApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QApplic
     mdl = new QgModel();
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
-    QGEDFilter *efilter = new QGEDFilter();
+    // Install a filter to handle the top level key bindings and other
+    // interactive event management requiring global application knowledge.
+    QgEdFilter *efilter = new QgEdFilter();
     installEventFilter(efilter);
 
     // Use the dark theme from https://github.com/Alexhuszagh/BreezeStyleSheets

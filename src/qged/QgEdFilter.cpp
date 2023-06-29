@@ -1,4 +1,4 @@
-/*                E V E N T _ F I L T E R . C P P
+/*                  Q G E D F I L T E R . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020-2023 United States Government as represented by
@@ -17,8 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file event_filter.cpp
- *
+/** @file QgEdFilter.cpp
  *
  */
 
@@ -29,10 +28,10 @@
 #include <QMouseEvent>
 #include <QtGlobal>
 #include "CADApp.h"
-#include "event_filter.h"
+#include "QgEdFilter.h"
 #include "qtcad/QgModel.h"
 
-bool QGEDFilter::eventFilter(QObject *, QEvent *e)
+bool QgEdFilter::eventFilter(QObject *, QEvent *e)
 {
     CADApp *c = (CADApp *)qApp;
     if (!c || !c->w)

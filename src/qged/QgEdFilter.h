@@ -1,4 +1,4 @@
-/*                   E D I T _ F I L T E R . H
+/*                   Q G E D F I L T E R . H
  * BRL-CAD
  *
  * Copyright (c) 2020-2023 United States Government as represented by
@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file edit_filter.h
+/** @file QgEdFilter.h
 */
 
 #include <QObject>
 #include "qtcad/defines.h"
 
-class QGEDFilter : public QObject
+class QgEdFilter : public QObject
 {
     Q_OBJECT
 
