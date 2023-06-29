@@ -150,7 +150,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     setStyleSheet(stream.readAll());
 
     // Create the windows
-    w = new BRLCAD_MainWindow(swrast_mode, quad_mode);
+    w = new QgEdMainWindow(swrast_mode, quad_mode);
 
     /* GED needs some information and methods from QGED - make
      * those assignment */
@@ -592,7 +592,7 @@ QgEdApp::write_settings()
     QSettings settings("BRL-CAD", "QGED");
 
     // TODO - write user settings here.  Window state saving is handled by
-    // BRLCAD_MainWindow closeEvent
+    // QgEdMainWindow closeEvent
 }
 
 // Local Variables:

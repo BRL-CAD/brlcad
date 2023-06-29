@@ -36,7 +36,6 @@
 #include "bu/opt.h"
 #include "brlcad_version.h"
 
-#include "main_window.h"
 #include "QgEdApp.h"
 #include "fbserv.h"
 

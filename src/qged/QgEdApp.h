@@ -41,7 +41,7 @@
 #include "qtcad/QgTreeView.h"
 #include "qtcad/SignalFlags.h"
 
-#include "main_window.h"
+#include "QgEdMainWindow.h"
 
 /* Command type for application level commands */
 
@@ -96,7 +96,7 @@ class QgEdApp : public QApplication
 	void element_selected(QgToolPaletteElement *el);
 
     public:
-	BRLCAD_MainWindow *w = NULL;
+	QgEdMainWindow *w = NULL;
 	struct bu_vls init_msgs = BU_VLS_INIT_ZERO; // for plugin initialization reporting
 
     private:

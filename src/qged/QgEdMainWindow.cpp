@@ -1,4 +1,4 @@
-/*                 M A I N _ W I N D O W . C P P
+/*                 Q G E D M A I N W I N D O W . C P P
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main_window.cpp
+/** @file QgEdMainWindow.cpp
  *
  * Implementation code for toplevel window for BRL-CAD GUI.
  *
@@ -27,10 +27,10 @@
 #include <QMessageBox>
 #include "qtcad/QgViewCtrl.h"
 #include "qtcad/QgTreeSelectionModel.h"
-#include "main_window.h"
+#include "QgEdMainWindow.h"
 #include "QgEdApp.h"
 
-BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
+QgEdMainWindow::QgEdMainWindow(int canvas_type, int quad_view)
 {
     QgEdApp *ap = (QgEdApp *)qApp;
     ap->w = this;
@@ -74,7 +74,7 @@ BRLCAD_MainWindow::BRLCAD_MainWindow(int canvas_type, int quad_view)
 }
 
 void
-BRLCAD_MainWindow::CreateWidgets(int canvas_type)
+QgEdMainWindow::CreateWidgets(int canvas_type)
 {
     QgEdApp *ap = (QgEdApp *)qApp;
     QgModel *m = ap->mdl;
@@ -155,7 +155,7 @@ BRLCAD_MainWindow::CreateWidgets(int canvas_type)
 }
 
 void
-BRLCAD_MainWindow::LocateWidgets()
+QgEdMainWindow::LocateWidgets()
 {
     // Central widget will hold the 3D display widget + Icon toolbar.
     // Create a layout to organize them
@@ -206,7 +206,7 @@ BRLCAD_MainWindow::LocateWidgets()
 }
 
 void
-BRLCAD_MainWindow::ConnectWidgets()
+QgEdMainWindow::ConnectWidgets()
 {
     QgEdApp *ap = (QgEdApp *)qApp;
     QgModel *m = ap->mdl;
@@ -227,7 +227,7 @@ BRLCAD_MainWindow::ConnectWidgets()
     QObject::connect(c4, &QgQuadView::changed, ap, &QgEdApp::do_quad_view_change);
     // Some of the dm initialization has to be delayed - make the connections so we can
     // do the work after widget initialization is complete.
-    QObject::connect(c4, &QgQuadView::init_done, this, &BRLCAD_MainWindow::do_dm_init);
+    QObject::connect(c4, &QgQuadView::init_done, this, &QgEdMainWindow::do_dm_init);
 
 
     // Graphical toolbar
@@ -296,7 +296,7 @@ BRLCAD_MainWindow::ConnectWidgets()
 }
 
 void
-BRLCAD_MainWindow::SetupMenu()
+QgEdMainWindow::SetupMenu()
 {
     QMenu *file_menu = menuBar()->addMenu("File");
     cad_open = new QAction("Open", this);
@@ -309,20 +309,20 @@ BRLCAD_MainWindow::SetupMenu()
 
 #if 0
     cad_save_image = new QAction("Save Image", this);
-    connect(cad_save_image, &QAction::triggered, this, &BRLCAD_MainWindow::save_image);
+    connect(cad_save_image, &QAction::triggered, this, &QgEdMainWindow::save_image);
     file_menu->addAction(cad_save_image);
 #endif
 
     cad_single_view = new QAction("Single View", this);
-    connect(cad_single_view, &QAction::triggered, this, &BRLCAD_MainWindow::SingleDisplay);
+    connect(cad_single_view, &QAction::triggered, this, &QgEdMainWindow::SingleDisplay);
     file_menu->addAction(cad_single_view);
 
     cad_quad_view = new QAction("Quad View", this);
-    connect(cad_quad_view, &QAction::triggered, this, &BRLCAD_MainWindow::QuadDisplay);
+    connect(cad_quad_view, &QAction::triggered, this, &QgEdMainWindow::QuadDisplay);
     file_menu->addAction(cad_quad_view);
 
     cad_exit = new QAction("Exit", this);
-    QObject::connect(cad_exit, &QAction::triggered, this, &BRLCAD_MainWindow::close);
+    QObject::connect(cad_exit, &QAction::triggered, this, &QgEdMainWindow::close);
     file_menu->addAction(cad_exit);
 
     QMenu *view_menu = menuBar()->addMenu("View");
@@ -341,9 +341,9 @@ BRLCAD_MainWindow::SetupMenu()
 // initialization is *fully* complete.  Consequently, these steps are separated
 // out from the main constructor.
 void
-BRLCAD_MainWindow::do_dm_init()
+QgEdMainWindow::do_dm_init()
 {
-    QTCAD_SLOT("BRLCAD_MainWindow::do_dm_init", 1);
+    QTCAD_SLOT("QgEdMainWindow::do_dm_init", 1);
     QgEdApp *ap = (QgEdApp *)qApp;
     QgModel *m = ap->mdl;
     struct ged *gedp = m->gedp;
@@ -374,20 +374,20 @@ BRLCAD_MainWindow::do_dm_init()
 
 
 bool
-BRLCAD_MainWindow::isValid3D()
+QgEdMainWindow::isValid3D()
 {
     return c4->isValid();
 }
 
 void
-BRLCAD_MainWindow::close()
+QgEdMainWindow::close()
 {
     closeEvent(NULL);
     QMainWindow::close();
 }
 
 void
-BRLCAD_MainWindow::closeEvent(QCloseEvent* e)
+QgEdMainWindow::closeEvent(QCloseEvent* e)
 {
     QSettings settings("BRL-CAD", "QGED");
     // https://bugreports.qt.io/browse/QTBUG-16252?focusedCommentId=250562&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-250562
@@ -417,61 +417,61 @@ widget_active(QWidget *w)
 }
 
 bool
-BRLCAD_MainWindow::isDisplayActive()
+QgEdMainWindow::isDisplayActive()
 {
     return widget_active(c4);
 }
 
 QgView *
-BRLCAD_MainWindow::CurrentDisplay()
+QgEdMainWindow::CurrentDisplay()
 {
     return c4->get();
 }
 
 struct bview *
-BRLCAD_MainWindow::CurrentView()
+QgEdMainWindow::CurrentView()
 {
     return c4->view();
 }
 
 void
-BRLCAD_MainWindow::DisplayCheckpoint()
+QgEdMainWindow::DisplayCheckpoint()
 {
     c4->stash_hashes();
 }
 
 bool
-BRLCAD_MainWindow::DisplayDiff()
+QgEdMainWindow::DisplayDiff()
 {
     return c4->diff_hashes();
 }
 
 void
-BRLCAD_MainWindow::QuadDisplay()
+QgEdMainWindow::QuadDisplay()
 {
     c4->changeToQuadFrame();
 }
 
 void
-BRLCAD_MainWindow::SingleDisplay()
+QgEdMainWindow::SingleDisplay()
 {
     c4->changeToSingleFrame();
 }
 
 void
-BRLCAD_MainWindow::IndicateRaytraceStart(int val)
+QgEdMainWindow::IndicateRaytraceStart(int val)
 {
     vcw->raytrace_start(val);
 }
 
 void
-BRLCAD_MainWindow::IndicateRaytraceDone(int val)
+QgEdMainWindow::IndicateRaytraceDone(int val)
 {
     vcw->raytrace_done(val);
 }
 
 int
-BRLCAD_MainWindow::InteractionMode(QPoint &gpos)
+QgEdMainWindow::InteractionMode(QPoint &gpos)
 {
     if (vc) {
 	QWidget *vcp = vc;
@@ -494,13 +494,12 @@ BRLCAD_MainWindow::InteractionMode(QPoint &gpos)
     return -1;
 }
 
-/*
- * Local Variables:
- * mode: C++
- * tab-width: 8
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// mode: C++
+// tab-width: 8
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
+

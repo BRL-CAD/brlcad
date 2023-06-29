@@ -24,7 +24,7 @@ BRLCAD_INCLUDE_DIRS(QG_DIRS)
 # want to run the automatic moc logic for all of them.
 
 set(qged_srcs
-  main_window.cpp
+  QgEdMainWindow.cpp
   QgEdApp.cpp
   QgEdFilter.cpp
   fbserv.cpp
@@ -35,7 +35,7 @@ set(qth_names
   QgEdApp
   QgEdFilter
   fbserv
-  main_window
+  QgEdMainWindow
   QgEdPalette
   )
 foreach(qh ${qth_names})
@@ -45,7 +45,7 @@ endforeach(qh ${qth_names})
 
 if (BRLCAD_ENABLE_QT)
 
-  # Let main_window know what the platform's extension is so it knows
+  # Let the plugin lookup know what the platform's extension is so it knows
   # what plugin filenames to look for
   set_property(SOURCE QgEdPalette.cpp APPEND PROPERTY
     COMPILE_DEFINITIONS "QGED_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")

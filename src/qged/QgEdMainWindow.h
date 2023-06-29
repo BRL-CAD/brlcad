@@ -1,4 +1,4 @@
-/*                   M A I N _ W I N D O W . H
+/*                 Q G E D M A I N W I N D O W . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2023 United States Government as represented by
@@ -17,15 +17,18 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main_window.h
+/** @file QgEdMainWindow.h
  *
- * Defines the toplevel window for the BRL-CAD GUI, into which other
- * windows are docked.
+ * Defines the toplevel window for the BRL-CAD GUI, into which other windows
+ * are docked.
  *
+ * This widget is also responsible for connections between widgets - typically
+ * this takes the form of Qt signals/slots that pass information to/from
+ * widgets and keep the graphically displayed information in sync.
  */
 
-#ifndef BRLCAD_MAINWINDOW_H
-#define BRLCAD_MAINWINDOW_H
+#ifndef QGEDMAINWINDOW_H
+#define QGEDMAINWINDOW_H
 #include <QAction>
 #include <QDockWidget>
 #include <QFileDialog>
@@ -52,11 +55,11 @@
 #include "plugins/plugin.h"
 #include "QgEdPalette.h"
 
-class BRLCAD_MainWindow : public QMainWindow
+class QgEdMainWindow : public QMainWindow
 {
     Q_OBJECT
     public:
-	BRLCAD_MainWindow(int canvas_type = 0, int quad_view = 0);
+	QgEdMainWindow(int canvas_type = 0, int quad_view = 0);
 
 	QgConsole *console;
 
@@ -139,16 +142,14 @@ class BRLCAD_MainWindow : public QMainWindow
 	QgDockWidget *tree_dock = NULL;
 };
 
-#endif /* BRLCAD_MAINWINDOW_H */
+#endif /* QGEDMAINWINDOW_H */
 
-/*
- * Local Variables:
- * mode: C++
- * tab-width: 8
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+// Local Variables:
+// mode: C++
+// tab-width: 8
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
 
