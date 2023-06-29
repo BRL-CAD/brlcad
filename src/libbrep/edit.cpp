@@ -96,6 +96,33 @@ ON_NurbsSurface *brep_get_nurbs_surface(ON_Brep *brep, int surface_id)
     return surface;
 }
 
+/**
+ * calculate tangent vectors for each point
+ */
+std::vector<ON_3dVector> calculateTangentVectors(const std::vector<ON_3dPoint> &points);
+
+/**
+ * calculate control points and knot vector for interpolating a curve
+ */
+void calcuBsplineCVsKnots(std::vector<ON_3dPoint> &cvs, std::vector<double> &knots, const std::vector<ON_3dPoint> &endPoints, const std::vector<ON_3dVector> &tangentVectors);
+
+int brep_curve_interpCrv(ON_Brep *brep, std::vector<ON_3dPoint> points)
+{
+    std::vector<ON_3dVector> tangentVectors = calculateTangentVectors(points);
+    std::vector<ON_3dPoint> controlPs;
+    std::vector<double> knotVector;
+
+    calcuBsplineCVsKnots(controlPs, knotVector, points, tangentVectors);
+    ON_NurbsCurve *curve = ON_NurbsCurve::New(3, false, 4, controlPs.size());
+    for (size_t i = 0; i < controlPs.size(); i++) {
+	curve->SetCV(i, controlPs[i]);
+    }
+    for(size_t i = 0; i < knotVector.size(); i++) {
+	curve->SetKnot(i, knotVector[i]);
+    }
+    return brep->AddEdgeCurve(curve);
+}
+
 bool brep_curve_move(ON_Brep *brep, int curve_id, const ON_3dVector &point)
 {
     /// the curve could be a NURBS curve or not
@@ -252,6 +279,101 @@ int brep_surface_create_ruled(ON_Brep *brep, int curve_id0, int curve_id1)
 	return -1;
     }
     return brep->AddSurface(surface);
+}
+
+
+std::vector<ON_3dVector> calculateTangentVectors(const std::vector<ON_3dPoint> &points)
+{
+    int n = points.size() - 1;
+
+    /// calculate qk
+    ON_3dVectorArray qk(n + 3);
+    ON_3dVector q_;
+    for (size_t i = 1; i < points.size(); ++i) {
+	qk[(int)i] = ON_3dVector(points[i] - points[i - 1]);
+    }
+    qk[0] = 2 * qk[1] - qk[2];
+    q_ = 2 * qk[0] - qk[1];
+    qk[n + 1] = 2 * qk[n] - qk[n - 1];
+    qk[n + 2] = 2 * qk[n + 1] - qk[n];
+
+    /// tk is a middle variable for calculating ak. tk=|qk-1 x qk|
+    double *tk = new double[n + 3];
+    tk[0] = ON_CrossProduct(q_, qk[0]).Length();
+    for (int i = 1; i < n + 3; ++i) {
+	tk[i] = ON_CrossProduct(qk[i - 1], qk[i]).Length();
+    }
+
+    /// calculate ak
+    double *ak = new double[n + 1];
+    for (int i = 0; i < n + 1; ++i) {
+	ak[i] = tk[i] / (tk[i] + tk[i + 2]);
+    }
+
+    /// calculate vk
+    ON_3dVectorArray vk(n + 1);
+    for (int i = 0; i < n + 1; ++i) {
+	vk[i] = (1 - ak[i]) * qk[i] + ak[i] * qk[i];
+    }
+
+    std::vector<ON_3dVector> tangentVectors;
+
+    for (int i = 0; i < n + 1; ++i) {
+	tangentVectors.push_back(vk[i].UnitVector());
+    }
+    return tangentVectors;
+}
+
+double getPosRoot(const double a, const double b,const double c)
+{
+    double delta = b * b - 4 * a * c;
+    if (delta < 0) {
+	return -1;
+    }
+    else if (NEAR_ZERO(delta, 1e-6)) {
+	return -b / (2 * a);
+    }
+    else {
+	double x1 = (-b + sqrt(delta)) / (2 * a);
+	if (x1 > 0) {
+	    return x1;
+	}
+	else {
+	    return -1;
+	}
+    }
+
+}
+
+void calcuBsplineCVsKnots(std::vector<ON_3dPoint> &cvs, std::vector<double> &knots, const std::vector<ON_3dPoint> &endPoints, const std::vector<ON_3dVector> &tangentVectors)
+{
+    std::vector<double> uk;
+    uk.push_back(0);
+    for (size_t i = 0; i < endPoints.size() - 1; i++) {
+	cvs.push_back(endPoints[i]);
+	double a = 16 - (tangentVectors[i] + tangentVectors[i + 1]).LengthSquared();
+	double b = 12 * (tangentVectors[i] + tangentVectors[i + 1])*(endPoints[i + 1] - endPoints[i]);
+	double c = -36 * (endPoints[i + 1] - endPoints[i]).LengthSquared();
+	double d = getPosRoot(a, b, c);
+	ON_3dPoint p1 = endPoints[i] + tangentVectors[i] * d / 3.0;
+	ON_3dPoint p2 = endPoints[i + 1] - tangentVectors[i + 1] * d / 3.0;
+	cvs.push_back(p1);
+	cvs.push_back(p2);
+	uk.push_back(uk[i] + 3 * (p1.DistanceTo(p2)));
+    }
+    cvs.push_back(endPoints[endPoints.size() - 1]);
+
+
+    knots.clear();
+    for (size_t i = 0; i < 3; i++)
+	knots.push_back(0);
+    for (size_t i = 1; i < uk.size() - 1; i++) {
+	knots.push_back(uk[i] / uk[uk.size() - 1]);
+	knots.push_back(uk[i] / uk[uk.size() - 1]);
+	knots.push_back(uk[i] / uk[uk.size() - 1]);
+    }
+    for (size_t i = 0; i < 3; i++)
+	knots.push_back(1);
 }
 
 // Local Variables:

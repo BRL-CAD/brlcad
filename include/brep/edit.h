@@ -64,6 +64,15 @@ extern "C++"
     brep_curve_in(ON_Brep *brep, bool is_rational, int order, int cv_count, std::vector<ON_4dPoint> cv);
 
     /**
+     * create a cubic nurbs curve by interpolating a set of points
+     * return id of the curve
+     * method: Local cubic interpolation with C1 continuity
+     * reference: The NURBS Book (2nd Edition), chapter 9.3.4
+     */
+    BREP_EXPORT extern int
+    brep_curve_interpCrv(ON_Brep *brep, std::vector<ON_3dPoint> points);
+
+    /**
      * move curve along a vector.
      */
     BREP_EXPORT extern bool
