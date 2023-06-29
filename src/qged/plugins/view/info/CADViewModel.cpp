@@ -29,7 +29,7 @@
 #include "bu/sort.h"
 #include "bu/avs.h"
 #include "bu/malloc.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 #include "QgEdApp.h"
 #include "CADViewModel.h"
 
@@ -37,7 +37,7 @@ CADViewModel::CADViewModel(QObject *parentobj)
     : QgKeyValModel(parentobj)
 {
     m_root = NULL;
-    refresh(QTCAD_VIEW_REFRESH);
+    refresh(QG_VIEW_REFRESH);
 }
 
 CADViewModel::~CADViewModel()
@@ -50,7 +50,7 @@ void
 CADViewModel::update()
 {
     printf("view model update\n");
-    refresh(QTCAD_VIEW_REFRESH);
+    refresh(QG_VIEW_REFRESH);
 }
 
 void

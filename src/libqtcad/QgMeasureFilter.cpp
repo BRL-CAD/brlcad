@@ -34,7 +34,7 @@ extern "C" {
 }
 
 #include "qtcad/QgMeasureFilter.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 QMouseEvent *
 QgMeasureFilter::view_sync(QEvent *e)
@@ -127,14 +127,14 @@ QgMeasureFilter::eventFilter(QObject *, QEvent *e)
 	    VSETALL(p1, 0.0);
 	    VSETALL(p2, 0.0);
 	    VSETALL(p3, 0.0);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	    return true;
 	}
 	if (mode == 4) {
 	    if (s)
 		bv_obj_put(s);
 	    mode = 0;
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	    return true;
 	}
 	if (!mode) {
@@ -155,7 +155,7 @@ QgMeasureFilter::eventFilter(QObject *, QEvent *e)
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
 	    bu_vls_init(&s->s_name);
 	    bu_vls_printf(&s->s_name, "%s", oname.c_str());
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	    return true;
 	}
 	if (mode == 1) {
@@ -174,7 +174,7 @@ QgMeasureFilter::eventFilter(QObject *, QEvent *e)
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    VMOVE(p3, mpnt);
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	}
 	return true;
     }
@@ -190,7 +190,7 @@ QgMeasureFilter::eventFilter(QObject *, QEvent *e)
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
 	    VMOVE(p2, mpnt);
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	}
 	if (mode == 3) {
 	    if (!get_point())
@@ -201,7 +201,7 @@ QgMeasureFilter::eventFilter(QObject *, QEvent *e)
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    VMOVE(p3, mpnt);
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	}
 	return true;
     }
@@ -211,7 +211,7 @@ QgMeasureFilter::eventFilter(QObject *, QEvent *e)
 	    mode = 0;
 	    if (s) {
 		bv_obj_put(s);
-		emit view_updated(QTCAD_VIEW_REFRESH);
+		emit view_updated(QG_VIEW_REFRESH);
 	    }
 	    s = NULL;
 	    return true;
@@ -228,7 +228,7 @@ QgMeasureFilter::eventFilter(QObject *, QEvent *e)
 	    if (length_only) {
 		// Angle measurement disabled, starting over
 		mode = 0;
-		emit view_updated(QTCAD_VIEW_REFRESH);
+		emit view_updated(QG_VIEW_REFRESH);
 		return true;
 	    }
 
@@ -237,7 +237,7 @@ QgMeasureFilter::eventFilter(QObject *, QEvent *e)
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p1, BV_VLIST_LINE_MOVE);
 	    VMOVE(p2, mpnt);
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	    return true;
 	}
 	if (mode == 3) {
@@ -249,7 +249,7 @@ QgMeasureFilter::eventFilter(QObject *, QEvent *e)
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p2, BV_VLIST_LINE_DRAW);
 	    VMOVE(p3, mpnt);
 	    BV_ADD_VLIST(s->vlfree, &s->s_vlist, p3, BV_VLIST_LINE_DRAW);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	    return true;
 	}
 

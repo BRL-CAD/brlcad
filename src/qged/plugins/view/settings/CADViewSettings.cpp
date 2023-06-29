@@ -28,7 +28,7 @@
 #include "bu/opt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 #include "QgEdApp.h"
 
 #include "CADViewSettings.h"
@@ -283,7 +283,7 @@ CADViewSettings::view_refresh(unsigned long long)
 	v->gv_s->gv_view_axes.draw = 0;
     }
 
-    emit settings_changed(QTCAD_VIEW_DRAWN);
+    emit settings_changed(QG_VIEW_DRAWN);
 }
 
 

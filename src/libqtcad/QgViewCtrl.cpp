@@ -27,7 +27,7 @@
 
 #include "bu/env.h"
 #include "qtcad/QgViewCtrl.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 
 QgViewCtrl::QgViewCtrl(QWidget *pparent, struct ged *pgedp) : QToolBar(pparent)
@@ -98,7 +98,7 @@ QgViewCtrl::fbclear_cmd()
     const char *av[2] = {NULL};
     av[0] = "fbclear";
     ged_exec(gedp, 1, (const char **)av);
-    emit view_changed(QTCAD_VIEW_REFRESH);
+    emit view_changed(QG_VIEW_REFRESH);
 }
 
 void
@@ -121,7 +121,7 @@ QgViewCtrl::fb_mode_cmd()
 	default:
 	    bu_log("Error - invalid fb mode: %d\n", v->gv_s->gv_fb_mode);
     }
-    emit view_changed(QTCAD_VIEW_REFRESH);
+    emit view_changed(QG_VIEW_REFRESH);
 }
 
 void
@@ -183,7 +183,7 @@ QgViewCtrl::raytrace_cmd()
 
     av[0] = "ert";
     ged_exec(gedp, 1, (const char **)av);
-    emit view_changed(QTCAD_VIEW_REFRESH);
+    emit view_changed(QG_VIEW_REFRESH);
 
 cmd_cleanup:
     gedp->ged_subprocess_init_callback = NULL;

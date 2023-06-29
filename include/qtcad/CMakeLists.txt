@@ -8,8 +8,8 @@ set(qtcad_headers
   QgDockWidget.h
   QgEdit.h
   QgFlowLayout.h
-  QgGeomImport.h
   QgGL.h
+  QgGeomImport.h
   QgKeyVal.h
   QgMeasureFilter.h
   QgModel.h
@@ -17,13 +17,13 @@ set(qtcad_headers
   QgQuadView.h
   QgSW.h
   QgSelectFilter.h
+  QgSignalFlags.h
   QgToolPalette.h
   QgTreeSelectionModel.h
   QgTreeView.h
   QgUtil.h
   QgView.h
   QgViewCtrl.h
-  SignalFlags.h
   defines.h
   )
 BRLCAD_MANAGE_FILES(qtcad_headers ${INCLUDE_DIR}/brlcad/qtcad)

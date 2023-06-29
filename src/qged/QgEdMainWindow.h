@@ -42,14 +42,14 @@
 #include <QTreeView>
 
 #include "ged.h"
-#include "qtcad/SignalFlags.h"
 #include "qtcad/QgAttributesModel.h"
-#include "qtcad/QgQuadView.h"
-#include "qtcad/QgView.h"
+#include "qtcad/QgConsole.h"
 #include "qtcad/QgDockWidget.h"
+#include "qtcad/QgQuadView.h"
+#include "qtcad/QgSignalFlags.h"
 #include "qtcad/QgTreeView.h"
 #include "qtcad/QgView.h"
-#include "qtcad/QgConsole.h"
+#include "qtcad/QgView.h"
 #include "qtcad/QgViewCtrl.h"
 
 #include "plugins/plugin.h"

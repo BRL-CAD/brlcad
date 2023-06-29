@@ -28,7 +28,7 @@
  * The QgToolPalette widget is what is directly added to application
  * widget hierarchies, and it is that widget's signals and slots which
  * are connected to the top level view updating signal/slot system as
- * articulated in SignalFlags.h.  Individual elements (i.e.tools) are
+ * articulated in QgSignalFlags.h.  Individual elements (i.e.tools) are
  * connected to QgToolPalette, and the implementation specific "guts"
  * of the various tools connect to their parent element.
  *
@@ -48,7 +48,7 @@
 #include <QSplitter>
 #include "qtcad/defines.h"
 #include "qtcad/QgFlowLayout.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 class QTCAD_EXPORT QgToolPaletteElement;
 

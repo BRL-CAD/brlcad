@@ -160,7 +160,7 @@ QEll::write_to_db()
 
     rt_db_free_internal(&intern);
 
-    emit view_updated(QTCAD_VIEW_DB);
+    emit view_updated(QG_VIEW_DB);
 }
 
 void
@@ -215,7 +215,7 @@ QEll::update_obj_wireframe()
     // TODO - we should be able to set UP or DOWN on the various labels
     // when their respective controls are enabled/disabled...
 
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -257,7 +257,7 @@ QEll::update_viewobj_name(const QString &)
 	} else {
 	    // Turning off wireframe - obj name is now invalid
 	    p->s_flag = DOWN;
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	}
     }
 }

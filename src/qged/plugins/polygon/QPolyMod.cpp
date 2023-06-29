@@ -278,7 +278,7 @@ QPolyMod::polygon_update_props()
 
     // TODO - this should be a visual-properties-only update, but libbg doesn't support that yet.
     bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -327,7 +327,7 @@ QPolyMod::toplevel_config(bool)
     }
 
     if (draw_change && gedp)
-	emit view_updated(QTCAD_VIEW_REFRESH);
+	emit view_updated(QG_VIEW_REFRESH);
 }
 
 
@@ -360,7 +360,7 @@ QPolyMod::clear_pnt_selection(bool checked)
     if (!gedp)
 	return;
 
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -519,7 +519,7 @@ QPolyMod::toggle_closed_poly(bool checked)
 
     toplevel_config(false);
 
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -575,7 +575,7 @@ QPolyMod::apply_bool_op()
 	}
     }
 
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -592,7 +592,7 @@ QPolyMod::align_to_poly()
     bv_sync(gedp->ged_gvp, &ip->v);
     bv_update(gedp->ged_gvp);
 
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -616,7 +616,7 @@ QPolyMod::delete_poly()
 	p = NULL;
     }
 
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -773,7 +773,7 @@ QPolyMod::sketch_name_update()
     }
 
     ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
-    emit view_updated(QTCAD_VIEW_DB);
+    emit view_updated(QG_VIEW_DB);
 
     bu_free(sk_name, "name copy");
 }
@@ -822,13 +822,13 @@ QPolyMod::view_name_update()
 
     bu_vls_sprintf(&p->s_name, "%s", bu_vls_cstr(&vname));
     bu_vls_free(&vname);
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
 QPolyMod::propagate_update(int)
 {
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 

@@ -36,7 +36,7 @@ extern "C" {
 
 #include <unordered_set>
 #include "qtcad/QgSelectFilter.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 // Find the first bbox intersection under the XY view point.
 static struct bv_scene_obj *
@@ -180,7 +180,7 @@ QgSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 	grsp->cdim[0] = v->gv_width;
 	grsp->cdim[1] = v->gv_height;
 	grsp->aspect = (fastf_t)v->gv_s->gv_rect.cdim[X] / v->gv_s->gv_rect.cdim[Y];
-	emit view_updated(QTCAD_VIEW_DRAWN);
+	emit view_updated(QG_VIEW_DRAWN);
 	return true;
     }
 
@@ -193,7 +193,7 @@ QgSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 	grsp->y = ((0.5 - (grsp->cdim[Y] - grsp->pos[Y]) / (fastf_t)grsp->cdim[Y]) / grsp->aspect * 2.0);
 	grsp->width = grsp->dim[X] * 2.0 / (fastf_t)grsp->cdim[X];
 	grsp->height = grsp->dim[Y] * 2.0 / (fastf_t)grsp->cdim[X];
-	emit view_updated(QTCAD_VIEW_DRAWN);
+	emit view_updated(QG_VIEW_DRAWN);
 	return true;
     }
 
@@ -223,7 +223,7 @@ QgSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 	grsp->pos[1] = 0;
 	grsp->dim[0] = 0;
 	grsp->dim[1] = 0;
-	emit view_updated(QTCAD_VIEW_DRAWN);
+	emit view_updated(QG_VIEW_DRAWN);
 	return true;
     }
 

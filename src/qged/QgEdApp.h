@@ -39,7 +39,7 @@
 #include "ged.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeView.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 #include "QgEdMainWindow.h"
 

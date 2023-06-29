@@ -58,7 +58,7 @@
 #include "raytrace.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgUtil.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 struct QgItem_cmp {
     inline bool operator() (const QgItem *i1, const QgItem *i2)
@@ -452,7 +452,7 @@ QgModel::g_update(struct db_i *n_dbip)
 	items->clear();
 	tops_items.clear();
 	emit mdl_changed_db((void *)gedp);
-	emit view_change(QTCAD_VIEW_DRAWN);
+	emit view_change(QG_VIEW_DRAWN);
 	emit layoutChanged();
 	changed_db_flag = 0;
 	endResetModel();
@@ -901,7 +901,7 @@ QgModel::draw(const char *inst_path)
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     int ret = ged_exec(gedp, 2, argv);
 
-    emit view_change(QTCAD_VIEW_DRAWN);
+    emit view_change(QG_VIEW_DRAWN);
     return ret;
 }
 
@@ -934,7 +934,7 @@ QgModel::erase(const char *inst_path)
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     int ret = ged_exec(gedp, 2, argv);
 
-    emit view_change(QTCAD_VIEW_DRAWN);
+    emit view_change(QG_VIEW_DRAWN);
     return ret;
 }
 

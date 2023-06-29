@@ -33,7 +33,7 @@ extern "C" {
 }
 
 #include "qtcad/QgPolyFilter.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 QMouseEvent *
 QgPolyFilter::view_sync(QEvent *e)
@@ -155,7 +155,7 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	    // It doesn't get a "proper" name until its finalized
 	    bu_vls_printf(&wp->s_name, "_tmp_view_polygon");
 
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	    return true;
 	}
 
@@ -170,7 +170,7 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	    wp->s_v->gv_mouse_x = v->gv_mouse_x;
 	    wp->s_v->gv_mouse_y = v->gv_mouse_y;
 	    bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PT_APPEND);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	    return true;
 	}
 
@@ -216,7 +216,7 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	// with the view's x,y coordinates
 	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
 	    bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_DEFAULT);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	    return true;
 	}
     }
@@ -284,7 +284,7 @@ QPolyCreateFilter::finalize(bool)
     if (wp)
 	wp->s_update_callback = NULL;
 
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
     emit finalized((icnt > 0) ? true : false);
 }
 
@@ -315,7 +315,7 @@ QPolyUpdateFilter::eventFilter(QObject *, QEvent *e)
 	// with the view's x,y coordinates
 	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
 	    bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_DEFAULT);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	    return true;
 	}
 
@@ -373,7 +373,7 @@ QPolyPointFilter::eventFilter(QObject *, QEvent *e)
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 	if (vp->curr_point_i < 0) {
 	    bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PT_SELECT);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	}
 	return true;
     }
@@ -382,7 +382,7 @@ QPolyPointFilter::eventFilter(QObject *, QEvent *e)
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::RightButton)) {
 	vp->curr_point_i = -1;
 	bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
-	emit view_updated(QTCAD_VIEW_REFRESH);
+	emit view_updated(QG_VIEW_REFRESH);
 	return true;
     }
 
@@ -398,7 +398,7 @@ QPolyPointFilter::eventFilter(QObject *, QEvent *e)
 	}
 	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
 	    bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PT_MOVE);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	    return true;
 	}
 
@@ -435,7 +435,7 @@ QPolyMoveFilter::eventFilter(QObject *, QEvent *e)
 	    } else {
 		bv_move_polygon(wp);
 	    }
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	}
 	return true;
     }

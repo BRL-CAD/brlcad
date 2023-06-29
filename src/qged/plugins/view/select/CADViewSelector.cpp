@@ -201,7 +201,7 @@ CADViewSelector::do_view_update(unsigned long long flags)
 	return;
 
     unsigned long long chash = ss->state_hash();
-    if ((flags & QTCAD_VIEW_SELECT) || chash != ohash) {
+    if ((flags & QG_VIEW_SELECT) || chash != ohash) {
 	group_contents->clear();
 	ohash = chash;
 
@@ -311,7 +311,7 @@ CADViewSelector::do_draw_selections()
     }
     bu_free(av, "av");
 
-    emit view_changed(QTCAD_VIEW_DRAWN|QTCAD_VIEW_SELECT);
+    emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
 }
 
 void
@@ -340,7 +340,7 @@ CADViewSelector::do_erase_selections()
     }
     bu_free(av, "av");
 
-    emit view_changed(QTCAD_VIEW_DRAWN|QTCAD_VIEW_SELECT);
+    emit view_changed(QG_VIEW_DRAWN|QG_VIEW_SELECT);
 }
 
 bool
@@ -378,21 +378,21 @@ CADViewSelector::eventFilter(QObject *o, QEvent *e)
 
     if (erase_from_scene_button->isChecked()) {
 	erase_objs();
-	emit view_changed(QTCAD_VIEW_DRAWN);
+	emit view_changed(QG_VIEW_DRAWN);
 	bu_ptbl_reset(&cf->selected_set);
 	return true;
     }
 
     if (add_to_group_button->isChecked()) {
 	select_objs();
-	emit view_changed(QTCAD_VIEW_DRAWN);
+	emit view_changed(QG_VIEW_DRAWN);
 	bu_ptbl_reset(&cf->selected_set);
 	return true;
     }
 
     if (rm_from_group_button->isChecked()) {
 	deselect_objs();
-	emit view_changed(QTCAD_VIEW_DRAWN);
+	emit view_changed(QG_VIEW_DRAWN);
 	bu_ptbl_reset(&cf->selected_set);
 	return true;
     }

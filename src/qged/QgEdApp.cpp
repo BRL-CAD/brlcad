@@ -110,7 +110,7 @@ qt_delete_io_handler(struct ged_subprocess *p, bu_process_io_t t)
 	    p->end_clbk(0, p->end_clbk_data);
     }
 
-    emit ca->view_update(QTCAD_VIEW_REFRESH);
+    emit ca->view_update(QG_VIEW_REFRESH);
 }
 
 
@@ -235,7 +235,7 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 
     // Send a view_change signal so widgets depending on view information
     // can initialize themselves
-    emit view_update(QTCAD_VIEW_REFRESH);
+    emit view_update(QG_VIEW_REFRESH);
 
     // Generally speaking if we're going to have trouble initializing, it will
     // be with either the GED plugins or the dm plugins.  Print relevant
@@ -273,7 +273,7 @@ QgEdApp::do_quad_view_change(QgView *cv)
 {
     QTCAD_SLOT("QgEdApp::do_quad_view_change", 1);
     mdl->gedp->ged_gvp = cv->view();
-    emit view_update(QTCAD_VIEW_REFRESH);
+    emit view_update(QG_VIEW_REFRESH);
 }
 
 void
@@ -282,7 +282,7 @@ QgEdApp::do_view_changed(unsigned long long flags)
     bv_log(1, "QgEdApp::do_view_changed");
     QTCAD_SLOT("QgEdApp::do_view_changed", 1);
 
-    if (flags & QTCAD_VIEW_DRAWN) {
+    if (flags & QG_VIEW_DRAWN) {
 	// For all associated view states, execute any necessary changes to
 	// view objects and lists
 	std::unordered_map<BViewState *, std::unordered_set<struct bview *>> vmap;
@@ -356,7 +356,7 @@ qged_view_update(struct ged *gedp)
 
     unsigned long long updated = gedp->dbi_state->update();
     if (updated & GED_DBISTATE_VIEW_CHANGE)
-	view_flags |= QTCAD_VIEW_DRAWN;
+	view_flags |= QG_VIEW_DRAWN;
 
     return view_flags;
 }
@@ -444,15 +444,15 @@ QgEdApp::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 	// the who list, since we can set different update flags for each case...
 	// that's a complexity vs. performance trade-off determination
 	if (w->DisplayDiff())
-	    view_flags |= QTCAD_VIEW_DRAWN;
+	    view_flags |= QG_VIEW_DRAWN;
 
 	unsigned long long cs_hash = (ss) ? ss->state_hash() : 0;
 	if (cs_hash != select_hash) {
-	    view_flags |= QTCAD_VIEW_SELECT;
+	    view_flags |= QG_VIEW_SELECT;
 	    // This is what notifies currently drawn solids to update
 	    // in response to a command line selection change
 	    if (ss->draw_sync())
-		view_flags |= QTCAD_VIEW_DRAWN;
+		view_flags |= QG_VIEW_DRAWN;
 	}
     }
 

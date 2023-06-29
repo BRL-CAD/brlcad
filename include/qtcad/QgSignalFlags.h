@@ -1,4 +1,4 @@
-/*                   S I G N A L F L A G S . H
+/*                  Q G S I G N A L F L A G S . H
  * BRL-CAD
  *
  * Copyright (c) 2022-2023 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file SignalFlags.h
+/** @file QgSignalFlags.h
  *
  * Qt uses a signals/slots mechanism to communicate when (for example)
  * application UI elements need to update in response to data changes.
@@ -80,15 +80,15 @@
 
 #include "common.h"
 
-#ifndef QTCAD_SIGNAL_FLAGS_H
+#ifndef QGSIGNALFLAGS_H
 
-#define QTCAD_VIEW_REFRESH  0x00000001  // Potential camera updates, no structural changes
-#define QTCAD_VIEW_DRAWN    0x00000002  // Used when what is drawn in the scene changes
-#define QTCAD_VIEW_SELECT   0x00000004  // Used when what is selected changes
-#define QTCAD_VIEW_MODE     0x00000008  // Used when mode-aware highlighting or drawing changes
-#define QTCAD_VIEW_DB       0x00000010  // Used when .g database content changes
+#define QG_VIEW_REFRESH  0x00000001  // Potential camera updates, no structural changes
+#define QG_VIEW_DRAWN    0x00000002  // Used when what is drawn in the scene changes
+#define QG_VIEW_SELECT   0x00000004  // Used when what is selected changes
+#define QG_VIEW_MODE     0x00000008  // Used when mode-aware highlighting or drawing changes
+#define QG_VIEW_DB       0x00000010  // Used when .g database content changes
 
-#endif // QTCAD_SIGNAL_FLAGS_H
+#endif // QGSIGNALFLAGS_H
 /*
  * Local Variables:
  * tab-width: 8

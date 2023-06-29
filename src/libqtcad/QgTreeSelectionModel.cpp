@@ -31,7 +31,7 @@
 #include "qtcad/QgUtil.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 void
 QgTreeSelectionModel::clear_all()
@@ -94,9 +94,9 @@ QgTreeSelectionModel::select(const QItemSelection &selection, QItemSelectionMode
     // Done manipulating paths - update metadata
     ss->characterize();
 
-    unsigned long long sflags = QTCAD_VIEW_SELECT;
+    unsigned long long sflags = QG_VIEW_SELECT;
     if (ss->draw_sync())
-	sflags |= QTCAD_VIEW_REFRESH;
+	sflags |= QG_VIEW_REFRESH;
 
     emit treeview->view_changed(sflags);
     emit treeview->m->layoutChanged();
@@ -126,9 +126,9 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 	// Done manipulating paths - update metadata
 	ss->characterize();
 
-	unsigned long long sflags = QTCAD_VIEW_SELECT;
+	unsigned long long sflags = QG_VIEW_SELECT;
 	if (ss->draw_sync())
-	    sflags |= QTCAD_VIEW_REFRESH;
+	    sflags |= QG_VIEW_REFRESH;
 
 	emit treeview->view_changed(sflags);
 	emit treeview->m->layoutChanged();
@@ -143,9 +143,9 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
 	    ss->deselect_hpath(path_hashes);
 	    // Done manipulating paths - update metadata
 	    ss->characterize();
-	    unsigned long long sflags = QTCAD_VIEW_SELECT;
+	    unsigned long long sflags = QG_VIEW_SELECT;
 	    if (ss->draw_sync())
-		sflags |= QTCAD_VIEW_REFRESH;
+		sflags |= QG_VIEW_REFRESH;
 	    emit treeview->view_changed(sflags);
 	    emit treeview->m->layoutChanged();
 	    return;
@@ -164,9 +164,9 @@ QgTreeSelectionModel::select(const QModelIndex &index, QItemSelectionModel::Sele
     // Done manipulating paths - update metadata
     ss->characterize();
 
-    unsigned long long sflags = QTCAD_VIEW_SELECT;
+    unsigned long long sflags = QG_VIEW_SELECT;
     if (ss->draw_sync())
-	sflags |= QTCAD_VIEW_REFRESH;
+	sflags |= QG_VIEW_REFRESH;
 
     emit treeview->view_changed(sflags);
     emit treeview->m->layoutChanged();

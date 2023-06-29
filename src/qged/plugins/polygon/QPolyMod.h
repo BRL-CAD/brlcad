@@ -30,7 +30,7 @@
 #include "qtcad/QgColorRGB.h"
 #include "qtcad/QgPolyFilter.h"
 #include "qtcad/QgView.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 #include "QPolySettings.h"
 
 class QPolyMod : public QWidget

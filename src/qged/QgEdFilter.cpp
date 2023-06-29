@@ -82,7 +82,7 @@ bool QgEdFilter::eventFilter(QObject *, QEvent *e)
 	return false;
     if (c->mdl->interaction_mode != smode) {
 	c->mdl->interaction_mode = smode;
-	emit c->view_update(QTCAD_VIEW_MODE);
+	emit c->view_update(QG_VIEW_MODE);
 	return false;
     }
     return false;

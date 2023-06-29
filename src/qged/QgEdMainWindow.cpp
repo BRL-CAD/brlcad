@@ -368,7 +368,7 @@ QgEdMainWindow::do_dm_init()
     av[3] = "1";
     ged_exec(gedp, 4, (const char **)av);
 
-    emit ap->view_update(QTCAD_VIEW_REFRESH);
+    emit ap->view_update(QG_VIEW_REFRESH);
     ///////////////////////////////////////////////////////////////////////////
 }
 

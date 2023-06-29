@@ -36,7 +36,7 @@
 #include "qtcad/QgModel.h"
 #include "qtcad/QgTreeSelectionModel.h"
 #include "qtcad/QgTreeView.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 void gObjDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 {

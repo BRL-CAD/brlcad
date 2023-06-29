@@ -30,7 +30,7 @@
 #include "bv.h"
 #include "raytrace.h" // For finalize polygon sketch export functionality (TODO - need to move...)
 #include "qtcad/QgView.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 extern "C" {
 #include "bu/malloc.h"

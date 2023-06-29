@@ -30,7 +30,7 @@
 #include <QtGlobal>
 #include "../../QgEdApp.h"
 #include "QPolyCreate.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 QPolyCreate::QPolyCreate()
     : QWidget()
@@ -197,7 +197,7 @@ QPolyCreate::finalize(bool)
 	if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
 	    ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
-	    emit view_updated(QTCAD_VIEW_DB);
+	    emit view_updated(QG_VIEW_DB);
 	}
 	bu_free(sk_name, "name cpy");
     }
@@ -208,7 +208,7 @@ QPolyCreate::finalize(bool)
     sketch_sync();
 
     p = NULL;
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -258,7 +258,7 @@ QPolyCreate::do_vpoly_copy()
 
     do_bool = false;
     p = NULL;
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -308,7 +308,7 @@ QPolyCreate::do_import_sketch()
 
     do_bool = false;
     p = NULL;
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -473,13 +473,13 @@ QPolyCreate::toplevel_config(bool)
     }
 
     if (draw_change && gedp)
-	emit view_updated(QTCAD_VIEW_REFRESH);
+	emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
 QPolyCreate::propagate_update(int)
 {
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 bool

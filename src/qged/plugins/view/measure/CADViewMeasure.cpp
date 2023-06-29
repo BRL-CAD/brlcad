@@ -95,11 +95,11 @@ CADViewMeasure::update_color()
 	return;
     if (measure_3d->isChecked()) {
 	mf->update_color(&color_3d->bc);
-	emit view_updated(QTCAD_VIEW_REFRESH);
+	emit view_updated(QG_VIEW_REFRESH);
 	return;
     }
     mf->update_color(&color_2d->bc);
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -145,7 +145,7 @@ void
 CADViewMeasure::do_filter_view_update()
 {
     adjust_text();
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 
