@@ -4342,6 +4342,8 @@ save_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
 	n[2].ui = id;
 	n[3].i = len;
 	n[4].data = programCopy;
+    } else {
+	free(programCopy);
     }
     if (ctx->ExecuteFlag) {
 	CALL_LoadProgramNV(ctx->Exec, (target, id, len, program));
@@ -4365,6 +4367,8 @@ save_RequestResidentProgramsNV(GLsizei num, const GLuint * ids)
     if (n) {
 	n[1].i = num;
 	n[2].data = idCopy;
+    } else {
+	free(idCopy);
     }
     if (ctx->ExecuteFlag) {
 	CALL_RequestResidentProgramsNV(ctx->Exec, (num, ids));
@@ -4540,6 +4544,8 @@ save_ProgramNamedParameter4fNV(GLuint id, GLsizei len, const GLubyte * name,
 	n[5].f = y;
 	n[6].f = z;
 	n[7].f = w;
+    } else {
+	free(nameCopy);
     }
     if (ctx->ExecuteFlag) {
 	CALL_ProgramNamedParameter4fNV(ctx->Exec, (id, len, name, x, y, z, w));
@@ -4637,6 +4643,8 @@ save_ProgramStringARB(GLenum target, GLenum format, GLsizei len,
 	n[2].e = format;
 	n[3].i = len;
 	n[4].data = programCopy;
+    } else {
+	free(programCopy);
     }
     if (ctx->ExecuteFlag) {
 	CALL_ProgramStringARB(ctx->Exec, (target, format, len, string));

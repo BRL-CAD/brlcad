@@ -1252,11 +1252,14 @@ static void cache_item(struct texenvprog_cache *cache,
     cache->n_items++;
     // I think this is a false positive from clang?  % triggers a
     // core.UndefinedBinaryOperatorResult with clang 12
-    #ifndef __clang_analyzer__
+#ifndef __clang_analyzer__
     size_t hmod = hash % cache->size;
     c->next = cache->items[hmod];
     cache->items[hmod] = c;
-    #endif
+#else
+    // Be quiet clang_analyzer...
+    free(c);
+#endif
 }
 
 static GLuint hash_key(const struct state_key *key)

@@ -580,8 +580,8 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
     }
 
     /* unpack and transfer the source image */
-    tempImage = (GLchan *) malloc(srcWidth * srcHeight * srcDepth
-					* components * sizeof(GLchan));
+    tempImage = (GLchan *) calloc(srcWidth * srcHeight * srcDepth
+					* components, sizeof(GLchan));
     if (!tempImage) {
 	if (convImage)
 	    free(convImage);
@@ -629,8 +629,8 @@ _mesa_make_temp_chan_image(GLcontext *ctx, GLuint dims,
 	 */
 	ASSERT(texComponents >= logComponents);
 
-	newImage = (GLchan *) malloc(srcWidth * srcHeight * srcDepth
-					   * texComponents * sizeof(GLchan));
+	newImage = (GLchan *) calloc(srcWidth * srcHeight * srcDepth
+					   * texComponents, sizeof(GLchan));
 	if (!newImage) {
 	    free(tempImage);
 	    return NULL;

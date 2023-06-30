@@ -573,13 +573,15 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
 	ASSERT(j >= 0);
 	/* copy state indexes */
 	if (p->Type == PROGRAM_STATE_VAR) {
-	    GLint k;
 	    struct gl_program_parameter *q = clone->Parameters + j;
-	    for (k = 0; k < STATE_LENGTH; k++) {
-		q->StateIndexes[k] = p->StateIndexes[k];
+	    if (q) {
+		for (GLint k = 0; k < STATE_LENGTH; k++) {
+		    q->StateIndexes[k] = p->StateIndexes[k];
+		}
 	    }
 	} else {
-	    clone->Parameters[j].Size = p->Size;
+	    if (clone->Parameters)
+		clone->Parameters[j].Size = p->Size;
 	}
     }
 

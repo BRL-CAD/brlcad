@@ -139,7 +139,7 @@ read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
     ASSERT(depthRb);
     ASSERT(stencilRb);
 
-    image = (GLuint *) malloc(width * height * sizeof(GLuint));
+    image = (GLuint *) calloc(width * height, sizeof(GLuint));
     if (!image)
 	return NULL;
 

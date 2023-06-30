@@ -1458,11 +1458,13 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
 	parseState.pos = programString + 7;
     } else if (strncmp((const char *) programString, "!!FCP1.0", 8) == 0) {
 	/* fragment / register combiner program - not supported */
+	free(programString);
 	_mesa_set_program_error(ctx, 0, "Invalid fragment program header");
 	_mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV(bad header)");
 	return;
     } else {
 	/* invalid header */
+	free(programString);
 	_mesa_set_program_error(ctx, 0, "Invalid fragment program header");
 	_mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV(bad header)");
 	return;
@@ -1470,6 +1472,7 @@ _mesa_parse_nv_fragment_program(GLcontext *ctx, GLenum dstTarget,
 
     /* make sure target and header match */
     if (target != dstTarget) {
+	free(programString);
 	_mesa_error(ctx, GL_INVALID_OPERATION,
 		    "glLoadProgramNV(target mismatch 0x%x != 0x%x)",
 		    target, dstTarget);

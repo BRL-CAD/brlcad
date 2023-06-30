@@ -570,7 +570,7 @@ static GLboolean alloc_texgen_data(GLcontext *ctx,
     for (i = 0 ; i < ctx->Const.MaxTextureCoordUnits ; i++)
 	_mesa_vector4f_alloc(&store->texcoord[i], 0, VB->Size, 32);
 
-    store->tmp_f = (GLfloat(*)[3]) malloc(VB->Size * sizeof(GLfloat) * 3);
+    store->tmp_f = (GLfloat(*)[3]) malloc(VB->Size * sizeof(GLfloat[3]));
     store->tmp_m = (GLfloat *) malloc(VB->Size * sizeof(GLfloat));
 
     return GL_TRUE;

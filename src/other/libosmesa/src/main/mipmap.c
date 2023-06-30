@@ -490,6 +490,9 @@ make_1d_mipmap(const struct gl_texture_format *format, GLint border,
 	       GLint srcWidth, const GLubyte *srcPtr,
 	       GLint dstWidth, GLubyte *dstPtr)
 {
+    if (!srcPtr || !dstPtr)
+	return;
+
     const GLint bpt = format->TexelBytes;
     const GLubyte *src;
     GLubyte *dst;
@@ -521,6 +524,9 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
 	       GLint srcWidth, GLint srcHeight, const GLubyte *srcPtr,
 	       GLint dstWidth, GLint dstHeight, GLubyte *dstPtr)
 {
+    if (!srcPtr || !dstPtr)
+	return;
+
     const GLint bpt = format->TexelBytes;
     const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
     const GLint dstWidthNB = dstWidth - 2 * border;
@@ -605,6 +611,9 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
 	       GLint dstWidth, GLint dstHeight, GLint dstDepth,
 	       GLubyte *dstPtr)
 {
+    if (!srcPtr || !dstPtr)
+	return;
+
     const GLint bpt = format->TexelBytes;
     const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
     const GLint srcDepthNB = srcDepth - 2 * border;
@@ -898,6 +907,10 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	/* get dest gl_texture_image */
 	dstImage = _mesa_get_tex_image(ctx, texObj, target, level + 1);
 	if (!dstImage) {
+	    if (srcData)
+		free((void *)srcData);
+	    if (dstData)
+		free(dstData);
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
 	    return;
 	}

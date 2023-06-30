@@ -754,7 +754,7 @@ copy_depth_stencil_pixels(GLcontext *ctx,
 	    GLuint zBytes;
 
 	    /* get depth values */
-	    if (overlapping) {
+	    if (overlapping && depthPtr) {
 		memcpy(depth, depthPtr, width * sizeof(GLfloat));
 		depthPtr += width;
 	    } else {

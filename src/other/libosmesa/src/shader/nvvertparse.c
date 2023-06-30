@@ -1279,12 +1279,14 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
     } else {
 	/* invalid header */
 	ctx->Program.ErrorPos = 0;
+	free(programString);
 	_mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV(bad header)");
 	return;
     }
 
     /* make sure target and header match */
     if (target != dstTarget) {
+	free(programString);
 	_mesa_error(ctx, GL_INVALID_OPERATION,
 		    "glLoadProgramNV(target mismatch)");
 	return;
