@@ -1012,22 +1012,15 @@ generic_nop(void)
 /**
  * Allocate and initialize a new dispatch table.
  */
+#define DISPATCH_TABLE_SIZE (sizeof(struct _glapi_table) / sizeof(void *))
 static struct _glapi_table *
 alloc_dispatch_table(void)
 {
-    /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
-     * In practice, this'll be the same for stand-alone Mesa.  But for DRI
-     * Mesa we do this to accomodate different versions of libGL and various
-     * DRI drivers.
-     */
-    GLint numEntries = MAX2(_glapi_get_dispatch_table_size(),
-			    sizeof(struct _glapi_table) / sizeof(_glapi_proc));
-    struct _glapi_table *table =
-	(struct _glapi_table *) malloc(numEntries * sizeof(_glapi_proc));
+    struct _glapi_table *table = (struct _glapi_table *)malloc(sizeof(struct _glapi_table));
     if (table) {
 	_glapi_proc *entry = (_glapi_proc *) table;
 	GLint i;
-	for (i = 0; i < numEntries; i++) {
+	for (i = 0; i < DISPATCH_TABLE_SIZE; i++) {
 	    entry[i] = (_glapi_proc) generic_nop;
 	}
     }
