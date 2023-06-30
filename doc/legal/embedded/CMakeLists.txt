@@ -50,7 +50,7 @@ set(embedded_licenses
   pstdint.txt
   qconsolelistener.txt
   qsort.txt
-  QFlowLayout.txt
+  QgFlowLayout.txt
   QuickHull.txt
   rply.txt
   RTree.txt
