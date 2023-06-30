@@ -91,7 +91,7 @@ IF (OPENCL_INCLUDE_DIR AND OPENCL_LIBRARY)
 #include <stdio.h>
 #include <stdlib.h>
 
-int main()
+int main(void)
 {
     char *version;
     cl_int result;
