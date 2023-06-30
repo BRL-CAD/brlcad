@@ -51,7 +51,7 @@ YYSTYPE yylval;
     Express yyexpresult;    /* hook to everything built by parser */
 
     Symbol *interface_schema;    /* schema of interest in use/ref clauses */
-    void (*interface_func)();    /* func to attach rename clauses */
+    void (*interface_func)(struct Scope_ *, Symbol *, Symbol *, Symbol *);    /* func to attach rename clauses */
 
     /* record schemas found in a single parse here, allowing them to be */
     /* differentiated from other schemas parsed earlier */
@@ -106,7 +106,7 @@ YYSTYPE yylval;
 
 #define ERROR(code)    ERRORreport(code, yylineno)
 
-void parserInitState()
+void parserInitState( void )
 {
     scope = scopes;
     /* no need to define scope->this */
@@ -402,8 +402,7 @@ aggregate_type(A) ::= TOK_AGGREGATE TOK_OF parameter_type(B).
         Symbol sym;
         sym.line = yylineno;
         sym.filename = current_filename;
-        ERRORreport_with_symbol(UNLABELLED_PARAM_TYPE, &sym,
-        CURRENT_SCOPE_NAME);
+        ERRORreport_with_symbol(UNLABELLED_PARAM_TYPE, &sym, CURRENT_SCOPE_NAME);
     }
 }
 aggregate_type(A) ::= TOK_AGGREGATE TOK_COLON TOK_IDENTIFIER(B) TOK_OF

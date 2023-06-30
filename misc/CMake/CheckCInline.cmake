@@ -75,11 +75,11 @@ macro(CHECK_C_INLINE RESULT)
 
       check_c_source_compiles("typedef int foo_t;
 			       static inline foo_t
-			       static_foo() {
+			       static_foo(void) {
 			         return 0;
 			       }
 			       foo_t
-			       foo() {
+			       foo(void) {
 			         return 0;
 			       }
 			       int
