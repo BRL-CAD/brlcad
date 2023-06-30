@@ -273,6 +273,9 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	struct db_full_path *fp = (struct db_full_path *)s->s_path;
 	struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
 
+	if (!dp)
+	    return;
+
 	// We need the key to look up the LoD data from the cache, and if we don't
 	// already have cache data for this bot we need to generate it.
 	unsigned long long key = bg_mesh_lod_key_get(d->mesh_c, dp->d_namep);
@@ -407,6 +410,10 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	struct db_i *dbip = d->dbip;
 	struct db_full_path *fp = (struct db_full_path *)s->s_path;
 	struct directory *dp = (fp) ? DB_FULL_PATH_CUR_DIR(fp) : (struct directory *)s->dp;
+
+	if (!dp)
+	    return;
+
 	const struct bn_tol *tol = d->tol;
 	const struct bg_tess_tol *ttol = d->ttol;
 	struct bv_mesh_lod *lod = NULL;
