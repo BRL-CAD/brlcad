@@ -100,7 +100,7 @@
 * BPR 2.1 alpha
 * */
 #include <ctype.h>
-#ifndef isascii
+#if !defined(isascii) && defined(__isascii)
 #  define isascii __isascii
 #endif
 #include "express/basic.h"
