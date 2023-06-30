@@ -517,6 +517,10 @@ getSurfacePoints(const ON_BrepFace &face,
 	    }
 	}
 
+	// Sanity
+	if (!bGrowBox)
+	    return;
+
 	ON_BoundingBox tight_bbox;
 	if (brep->GetTightBoundingBox(tight_bbox)) {
 	    dist = DIST_PNT_PNT(tight_bbox.m_min, tight_bbox.m_max);
