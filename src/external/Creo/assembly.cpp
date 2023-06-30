@@ -94,9 +94,9 @@ find_empty_assemblies(struct creo_conv_info *cinfo)
                         wchar_t *stable = stable_wchar(cinfo, *d_it);
                         ProWstringToString(ename, *d_it);
                         if (!stable)
-                            creo_log(cinfo, MSG_DEBUG, "\"%s\" is an empty assembly, but no stable version of name found\n", ename);
+                            creo_log(cinfo, MSG_PLAIN, "  ASSEM: \"%s\" is empty, but no stable version of name found\n", ename);
                         else {
-                            creo_log(cinfo, MSG_DEBUG, "All contents of assembly \"%s\" are empty, skipping...\n", ename);
+                            creo_log(cinfo, MSG_PLAIN, "  ASSEM: All contents of \"%s\" are empty, skipping...\n", ename);
                             cinfo->empty->insert(stable);
                             steady_state = 0;
                         }
@@ -165,14 +165,14 @@ assembly_entry_matrix(struct creo_conv_info *cinfo, ProMdl parent, ProFeature *f
     id_table[0] = feat->id;
     err = ProAsmcomppathInit(ProMdlToSolid(parent), id_table, 1, &comp_path);
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(cinfo, MSG_DEBUG, "\"%s\" failed to get path from \"%s\" to \"%s\", aborting...\n", pname, pname, cname);
+        creo_log(cinfo, MSG_PLAIN, "FAILURE: Unknown path from \"%s\" to \"%s\", aborting...\n", pname, cname);
         return err;
     }
 
     /* Accumulate the xform matrix along the path created above */
     err = ProAsmcomppathTrfGet(&comp_path, PRO_B_TRUE, xform);
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(cinfo, MSG_DEBUG, "Transformation matrix for \"%s\" failed: \"%s/%s\", aborting...\n", pname, pname, cname);
+        creo_log(cinfo, MSG_PLAIN, "FAILURE: Transformation matrix for \"%s\" failed: \"%s/%s\", aborting...\n", pname, pname, cname);
         return err;
     }
 
@@ -314,7 +314,7 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
 
     /* Add children */
     ProSolidFeatVisit(ProMdlToPart(model), assembly_write_entry, (ProFeatureFilterAction)component_filter, (ProAppData)ainfo);
-    creo_log(cinfo, MSG_DEBUG, "All children of assembly \"%s\" were visited\n", cname);
+    creo_log(cinfo, MSG_PLAIN, "  ASSEM: All children of \"%s\" were visited\n", cname);
 
     /* Get BRL-CAD name */
     comb_name = get_brlcad_name(cinfo, wname, NULL, N_ASSEM);
@@ -327,32 +327,22 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
      * on the user-supplied list.
      */
     struct directory *dp = db_lookup(cinfo->wdbp->dbip, bu_vls_addr(comb_name), LOOKUP_QUIET);
-    struct bu_attribute_value_set avs;
-    db5_get_attributes(cinfo->wdbp->dbip, &avs, dp);
+    db5_get_attributes(cinfo->wdbp->dbip, &cinfo->avs, dp);
 
     /* Write the object ID as an attribute */
     obj_name = get_brlcad_name(cinfo, wname, NULL, N_CREO);
-    bu_avs_add(&avs, "ptc_name", bu_vls_addr(obj_name));
+    bu_avs_add(&cinfo->avs, "ptc_name", bu_vls_addr(obj_name));
 
     ProWVerstamp cstamp;
     if (ProMdlVerstampGet(model, &cstamp) == PRO_TK_NO_ERROR) {
         char *verstr;
         if (ProVerstampStringGet(cstamp, &verstr) == PRO_TK_NO_ERROR)
-            bu_avs_add(&avs, "ptc_version_stamp", verstr);
+            bu_avs_add(&cinfo->avs, "ptc_version_stamp", verstr);
         ProVerstampStringFree(&verstr);
     }
 
-    /* If we have a user-supplied list of attributes to save, do it */
-    if (cinfo->attrs->size() > 0)
-        for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
-            char *attr_val = NULL;
-            const char *arg = cinfo->attrs->at(i);
-            creo_attribute_val(&attr_val, arg, model);
-            if (attr_val) {
-                bu_avs_add(&avs, arg, attr_val);
-                bu_free(attr_val, "value string");
-            }
-        }
+    /* Export user-supplied list of parameters */
+    param_export(cinfo, model, cname);
 
     /*
      * Solid mass properties are handled separately in Creo,
@@ -364,29 +354,29 @@ output_assembly(struct creo_conv_info *cinfo, ProMdl model)
     if (err == PRO_TK_NO_ERROR) {
         if (massprops.volume > 0.0) {
             bu_vls_sprintf(&vstr, "%g", massprops.volume);
-            bu_avs_add(&avs, "volume", bu_vls_addr(&vstr));
+            bu_avs_add(&cinfo->avs, "volume", bu_vls_addr(&vstr));
         }
         if (massprops.surface_area > 0.0) {
             bu_vls_sprintf(&vstr, "%g", massprops.surface_area);
-            bu_avs_add(&avs, "surface_area", bu_vls_addr(&vstr));
+            bu_avs_add(&cinfo->avs, "surface_area", bu_vls_addr(&vstr));
         }
         if (massprops.density > 0.0) {
             bu_vls_sprintf(&vstr, "%g", massprops.density);
-            bu_avs_add(&avs, "density", bu_vls_addr(&vstr));
+            bu_avs_add(&cinfo->avs, "density", bu_vls_addr(&vstr));
         }
         if (massprops.mass > 0.0) {
             bu_vls_sprintf(&vstr, "%g", massprops.mass);
-            bu_avs_add(&avs, "mass", bu_vls_addr(&vstr));
+            bu_avs_add(&cinfo->avs, "mass", bu_vls_addr(&vstr));
         }
     bu_vls_free(&vstr);
     }
 
 
     /* Standardize and write */
-    db5_standardize_avs(&avs);
-    db5_update_attributes(dp, &avs, cinfo->wdbp->dbip);
+    db5_standardize_avs(&cinfo->avs);
+    db5_update_attributes(dp, &cinfo->avs, cinfo->wdbp->dbip);
 
-    creo_log(cinfo, MSG_DEBUG, "Conversion of assembly \"%s\" complete\n", cname);
+    creo_log(cinfo, MSG_PLAIN, "  ASSEM: Conversion of assembly \"%s\" complete\n", cname);
     /* Free local container */
     BU_PUT(ainfo, struct assem_conv_info);
     return PRO_TK_NO_ERROR;

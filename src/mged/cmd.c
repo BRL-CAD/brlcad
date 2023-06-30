@@ -387,8 +387,21 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
 		break;
 	}
     }
-    argc -= bu_optind-1;
-    argv += bu_optind-1;
+
+    if (bu_optind > 1) {
+	int offset = bu_optind - 1;
+	// we've handled the flags - remove them but keep the rest of the string intact
+	for (int i = 1; i < argc - offset; i++) {
+	    argv[i] = argv[i + offset];
+	}
+	// null out the rest
+	for (int i = argc - offset; i < argc; i++) {
+	    argv[i] = NULL;
+	}
+
+	// update count
+	argc -= offset;
+    }
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     if (ret & GED_MORE)

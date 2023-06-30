@@ -2,7 +2,7 @@
  *                          S H I M . H
  * BRL-CAD
  *
- * Published in 2022 by the United States Government.
+ * Published in 2023 by the United States Government.
  * This work is in the public domain.
  *
  */
@@ -68,7 +68,6 @@
 #define PRO_FEAT_PIPE                           46
 #define PRO_FEAT_PROTRUSION                     47
 #define PRO_FEAT_REPLACE_SURF                   48
-
 #define PRO_FEAT_RIB                            49
 #define PRO_FEAT_ROUND                          50
 #define PRO_FEAT_SHAFT                          51
@@ -191,10 +190,12 @@ typedef struct pvdm {__internal_ProValueData v;} ProValueData;
 /* Function types */
 typedef int (*ProFeatureFilterAction)(ProFeature*,void*);
 typedef int (*uiCmdCmdActFn)(int,int*,void*);
+typedef int (*ProParameterAction)(ProParameter*,int,void*);
 
 /* Functions */
 extern "C" int ProArrayAlloc(int,int,int,void**);
 extern "C" int ProArrayFree(void**);
+extern "C" int ProArrayObjectAdd(ProArray *, int, int, void*);
 extern "C" int ProArraySizeGet(ProArray,int*);
 extern "C" int ProAsmcompMdlGet(ProFeature*,void**);
 extern "C" int ProAsmcompMdlMdlnameGet(ProFeature*,int*,wchar_t*);
@@ -264,6 +265,7 @@ extern "C" int ProUIRadiogroupSelectednamesGet(const char*,const char*,int*,char
 extern "C" int ProUITextareaValueSet(const char *,const char *,wchar_t*);
 extern "C" int ProUnitConversionCalculate(void**,void**,ProUnitConversion*);
 extern "C" int ProUnitsystemUnitGet(void**,int,void**);
+extern "C" int ProUtilCollectParameters(void**,void**);
 extern "C" int ProValueDataGet(void*,ProValueData*);
 extern "C" int ProVerstampEqual(void*, void*);
 extern "C" int ProVerstampStringFree(char**);
@@ -279,9 +281,9 @@ extern "C" void ProMessageClear();
 extern "C" void ProPartTessellationFree(ProSurfaceTessellationData**);
 extern "C" void ProStringToWstring(wchar_t*,const char*);
 extern "C" void ProSurfaceContourVisit(void*,int(*)(void*,int,void*),int(*)(void*,void*), void*);
-extern "C" void ProSurfacedataGet(void*,int*,double*,double*,int*,void**,int*);
 extern "C" void ProSurfaceIdGet(void*,int*);
 extern "C" void ProSurfaceToNURBS(void*,void***);
+extern "C" void ProSurfacedataGet(void*,int*,double*,double*,int*,void**,int*);
 extern "C" void ProUIInputpanelMaxlenSet(const char*,const char*,int);
 extern "C" void ProUIMessageDialogDisplay(int,const wchar_t *,const wchar_t *,ProUIMessageButton*,int,ProUIMessageButton*);
 extern "C" void ProUnitInit(void*,const wchar_t *,void**);

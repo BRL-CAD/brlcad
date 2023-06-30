@@ -664,6 +664,7 @@ struct _ged_facetize_opts {
     int triangulate;
     int make_nmg;
     int nmgbool;
+    int irmb;
     int screened_poisson;
     int continuation;
     int method_flags;
@@ -689,6 +690,7 @@ struct _ged_facetize_opts {
     int fnull;
 
     struct bu_vls *froot;
+    struct bu_vls *irmb_comb;
     struct bu_vls *nmg_comb;
     struct bu_vls *continuation_comb;
     struct bu_vls *spsr_comb;
