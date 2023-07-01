@@ -25,6 +25,7 @@
 
 #include "brep/edit.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include <vector>
 
 void *brep_create()
@@ -296,23 +297,25 @@ std::vector<ON_3dVector> calculateTangentVectors(const std::vector<ON_3dPoint> &
     qk[n + 2] = 2 * qk[n + 1] - qk[n];
 
     /// tk is a middle variable for calculating ak. tk=|qk-1 x qk|
-    double *tk = new double[n + 3];
+    double *tk = (double *)bu_calloc(n + 3, sizeof(double), "tk");
     tk[0] = ON_CrossProduct(q_, qk[0]).Length();
     for (int i = 1; i < n + 3; ++i) {
 	tk[i] = ON_CrossProduct(qk[i - 1], qk[i]).Length();
     }
 
     /// calculate ak
-    double *ak = new double[n + 1];
+    double *ak = (double *)bu_calloc(n + 1, sizeof(double), "ak");
     for (int i = 0; i < n + 1; ++i) {
 	ak[i] = tk[i] / (tk[i] + tk[i + 2]);
     }
+    bu_free(tk, "tk");
 
     /// calculate vk
     ON_3dVectorArray vk(n + 1);
     for (int i = 0; i < n + 1; ++i) {
 	vk[i] = (1 - ak[i]) * qk[i] + ak[i] * qk[i];
     }
+    bu_free(ak, "ak");
 
     std::vector<ON_3dVector> tangentVectors;
 
