@@ -38,7 +38,7 @@ __BEGIN_DECLS
  * create an empty ON_Brep. return pointer to the ON_Brep object
  */
 BREP_EXPORT extern void *
-brep_create();
+brep_create(void);
 
 __END_DECLS
 
