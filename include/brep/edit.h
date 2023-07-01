@@ -145,7 +145,6 @@ extern "C++"
      * srf(s,t) = (1.0-t)*curveA(s) + t*curveB(s).
      * return: if successful, id of the new surface; otherwise, -1.
      */
-
     BREP_EXPORT extern int
     brep_surface_create_ruled(ON_Brep *brep, int curve_id0, int curve_id1);
 } /* extern C++ */
