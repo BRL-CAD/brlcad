@@ -52,7 +52,7 @@ _brep_surface_msgs(void *bs, int argc, const char **argv, const char *us, const 
     return 0;
 }
 
-extern "C" int
+static int
 _brep_cmd_surface_create(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> surface create <x> <y> <z>";
@@ -89,7 +89,7 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_surface_birail(void *bs, int argc, const char **argv)
 {
 
@@ -134,7 +134,7 @@ _brep_cmd_surface_birail(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_surface_move(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> surface move <surface_id> <x> <y> <z>";
@@ -177,7 +177,7 @@ _brep_cmd_surface_move(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_set_cv(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> surface set_cv <surface_id> <cv_id_u> <cv_id_v> <x> <y> <z> [<w>]";
@@ -220,7 +220,7 @@ _brep_cmd_set_cv(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_surface_trim(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> trim <surface_id> <dir> <start_param> <end_param>";

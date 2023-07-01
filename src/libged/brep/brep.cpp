@@ -1260,7 +1260,7 @@ _brep_cmd_valid(void *bs, int argc, const char **argv)
     return brep_valid(gedp->ged_result_str, &gb->intern, argc, argv);
 }
 
-extern "C" int
+static int
 _brep_cmd_curve(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
@@ -1284,7 +1284,7 @@ _brep_cmd_curve(void *bs, int argc, const char **argv)
 }
 
 
-extern "C" int
+static int
 _brep_cmd_surface(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;

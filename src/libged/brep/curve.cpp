@@ -52,7 +52,7 @@ _brep_curve_msgs(void *bs, int argc, const char **argv, const char *us, const ch
     return 0;
 }
 
-extern "C" int
+static int
 _brep_cmd_curve_create(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> curve create <x> <y> <z>";
@@ -97,7 +97,7 @@ _brep_cmd_curve_create(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_curve_in(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> curve in <is_rational> <order> <cv_count> <cv1_x> <cv1_y> <cv1_z> <cv_w>(if rational) ...";
@@ -170,7 +170,7 @@ _brep_cmd_curve_in(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_curve_interp(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> curve interp <cv_count> <cv1_x> <cv1_y> <cv1_z> ...";
@@ -236,7 +236,7 @@ _brep_cmd_curve_interp(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_curve_move(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> curve move  <curve_id> <x> <y> <z>";
@@ -279,7 +279,7 @@ _brep_cmd_curve_move(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_curve_set_cv(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> curve set_cv <curve_id> <CV_id> <x> <y> <z> [<w>]";
@@ -323,7 +323,7 @@ _brep_cmd_curve_set_cv(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_curve_flip(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> curve flip <curve_id>";
@@ -374,7 +374,7 @@ _brep_cmd_curve_flip(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_curve_insert_knot(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> insert_knot <curve_id> <knot_value> <multiplicity>";
@@ -443,7 +443,7 @@ _brep_cmd_curve_insert_knot(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_curve_trim(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> trim <curve_id> <start_param> <end_param>";
@@ -511,7 +511,7 @@ _brep_cmd_curve_trim(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
-extern "C" int
+static int
 _brep_cmd_curve_join(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> join <curve_id_1> <curve_id_2>";
