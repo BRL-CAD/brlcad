@@ -92,7 +92,7 @@ extern "C++"
     brep_curve_set_cv(ON_Brep *brep, int curve_id, int cv_id, const ON_4dPoint &point);
 
     /**
-     * Reverse parameterizatrion by negating all knots
+     * reverse parameterizatrion by negating all knots
      * and reversing the order of the control vertices.
      */
     BREP_EXPORT extern bool
@@ -111,7 +111,13 @@ extern "C++"
     brep_curve_trim(ON_Brep *brep, int curve_id, double t0, double t1);
 
     /**
-     * Join the end of curve_id_1 to the start of curve_id_2.
+     * split a curve at a parameter. Old curve will be deleted.
+     */
+    BREP_EXPORT extern bool
+    brep_curve_split(ON_Brep *brep, int curve_id, double t);
+
+    /**
+     * join the end of curve_id_1 to the start of curve_id_2.
      * return id of the new curve, delete the two old curves.
      * @attention the index of m_C3 is changed after join!!!
      */

@@ -183,6 +183,24 @@ bool brep_curve_trim(ON_Brep *brep, int curve_id, double t0, double t1)
     return curve->Trim(interval);
 }
 
+bool brep_curve_split(ON_Brep *brep, int curve_id, double t)
+{
+    ON_NurbsCurve *curve = brep_get_nurbs_curve(brep, curve_id);
+    if (!curve) {
+	return false;
+    }
+    ON_Curve *curve1 = NULL;
+    ON_Curve *curve2 = NULL;
+    bool flag = curve->Split(t, curve1, curve2);
+    if (flag) {
+	brep->m_C3.Remove(curve_id);
+	brep->m_C3.Append(curve1);
+	brep->m_C3.Append(curve2);
+	bu_log("old curve removed, id: %d, new curve id: %d, %d\n", curve_id, brep->m_C3.Count() - 2, brep->m_C3.Count() - 1);
+    }
+    return flag;
+}
+
 int brep_curve_join(ON_Brep *brep, int curve_id_1, int curve_id_2)
 {
     ON_NurbsCurve *curve1 = brep_get_nurbs_curve(brep, curve_id_1);
