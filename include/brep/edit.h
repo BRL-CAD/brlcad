@@ -74,7 +74,7 @@ extern "C++"
 
     /**
      * remove a curve from brep
-     * @attention the index of C3 is changed after remove!!!
+     * @attention the index of m_C3 is changed after remove!!!
      */
     BREP_EXPORT extern bool
     brep_curve_remove(ON_Brep *brep, int curve_id);
@@ -113,7 +113,7 @@ extern "C++"
     /**
      * Join the end of curve_id_1 to the start of curve_id_2.
      * return id of the new curve, delete the two old curves.
-     * @attention the index of C3 is changed after join!!!
+     * @attention the index of m_C3 is changed after join!!!
      */
     BREP_EXPORT extern int
     brep_curve_join(ON_Brep *brep, int curve_id_1, int curve_id_2);
@@ -154,6 +154,13 @@ extern "C++"
      */
     BREP_EXPORT extern int
     brep_surface_create_ruled(ON_Brep *brep, int curve_id0, int curve_id1);
+
+    /**
+     * remove a surface from brep
+     * @attention the index of m_S is changed after remove!!!
+     */
+    BREP_EXPORT extern bool
+    brep_surface_remove(ON_Brep *brep, int surface_id);
 } /* extern C++ */
 #endif
 

@@ -290,6 +290,15 @@ int brep_surface_create_ruled(ON_Brep *brep, int curve_id0, int curve_id1)
     return brep->AddSurface(surface);
 }
 
+bool brep_surface_remove(ON_Brep *brep, int surface_id)
+{
+    if (surface_id < 0 || surface_id >= brep->m_S.Count()) {
+	bu_log("surface_id is out of range\n");
+	return false;
+    }
+    brep->m_S.Remove(surface_id);
+    return true;
+}
 
 std::vector<ON_3dVector> calculateTangentVectors(const std::vector<ON_3dPoint> &points)
 {
