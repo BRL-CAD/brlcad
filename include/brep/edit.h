@@ -73,6 +73,13 @@ extern "C++"
     brep_curve_interpCrv(ON_Brep *brep, std::vector<ON_3dPoint> points);
 
     /**
+     * remove a curve from brep
+     * @attention the index of C3 is changed after remove!!!
+     */
+    BREP_EXPORT extern bool
+    brep_curve_remove(ON_Brep *brep, int curve_id);
+
+    /**
      * move curve along a vector.
      */
     BREP_EXPORT extern bool
@@ -106,7 +113,7 @@ extern "C++"
     /**
      * Join the end of curve_id_1 to the start of curve_id_2.
      * return id of the new curve, delete the two old curves.
-     * Remark: the index of C3 is changed after join!!!
+     * @attention the index of C3 is changed after join!!!
      */
     BREP_EXPORT extern int
     brep_curve_join(ON_Brep *brep, int curve_id_1, int curve_id_2);

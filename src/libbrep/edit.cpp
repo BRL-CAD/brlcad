@@ -122,6 +122,16 @@ int brep_curve_interpCrv(ON_Brep *brep, std::vector<ON_3dPoint> points)
     return brep->AddEdgeCurve(curve);
 }
 
+bool brep_curve_remove(ON_Brep *brep, int curve_id)
+{
+    if (curve_id < 0 || curve_id >= brep->m_C3.Count()) {
+	bu_log("curve_id is out of range\n");
+	return false;
+    }
+    brep->m_C3.Remove(curve_id);
+    return true;
+}
+
 bool brep_curve_move(ON_Brep *brep, int curve_id, const ON_3dVector &point)
 {
     /// the curve could be a NURBS curve or not
