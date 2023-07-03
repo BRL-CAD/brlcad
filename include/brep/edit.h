@@ -153,6 +153,12 @@ extern "C++"
     brep_surface_trim(ON_Brep *brep, int surface_id, int dir, double t0, double t1);
 
     /**
+     * split a surface at a parameter. Old surface will be deleted.
+     */
+    BREP_EXPORT extern bool
+    brep_surface_split(ON_Brep *brep, int surface_id, int dir, double t);
+
+    /**
      * create a ruled surface.
      * The two curves must have the same NURBS form knots.
      * srf(s,t) = (1.0-t)*curveA(s) + t*curveB(s).

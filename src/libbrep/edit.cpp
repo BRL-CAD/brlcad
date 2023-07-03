@@ -194,8 +194,8 @@ bool brep_curve_split(ON_Brep *brep, int curve_id, double t)
     bool flag = curve->Split(t, curve1, curve2);
     if (flag) {
 	brep->m_C3.Remove(curve_id);
-	brep->m_C3.Append(curve1);
-	brep->m_C3.Append(curve2);
+	brep->AddEdgeCurve(curve1);
+	brep->AddEdgeCurve(curve2);
 	bu_log("old curve removed, id: %d, new curve id: %d, %d\n", curve_id, brep->m_C3.Count() - 2, brep->m_C3.Count() - 1);
     }
     return flag;
@@ -291,6 +291,23 @@ bool brep_surface_trim(ON_Brep *brep, int surface_id, int dir, double t0, double
     }
     ON_Interval interval(t0, t1);
     return surface->Trim(dir, interval);
+}
+
+bool brep_surface_split(ON_Brep *brep, int surface_id, int dir, double t)
+{
+    ON_NurbsSurface *surface = brep_get_nurbs_surface(brep, surface_id);
+    if (!surface) {
+	return false;
+    }
+    ON_Surface *surf1=NULL, *surf2=NULL;
+    bool flag = surface->Split(dir, t, surf1, surf2);
+    if (flag) {
+	brep->m_S.Remove(surface_id);
+	brep->AddSurface(surf1);
+	brep->AddSurface(surf2);
+    bu_log("brep_surface_split: split surface %d into %d and %d\n", surface_id, brep->m_S.Count()-2, brep->m_S.Count()-1);
+    }
+    return flag;
 }
 
 int brep_surface_create_ruled(ON_Brep *brep, int curve_id0, int curve_id1)
