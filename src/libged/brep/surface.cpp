@@ -353,8 +353,8 @@ _brep_cmd_surface_split(void *bs, int argc, const char **argv)
 static int
 _brep_cmd_surface_tensor_product(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> tensor birail <curve_id_1> <curve_id_2>";
-    const char *purpose_string = "create a new NURBS surface by tensor product of two curves";
+    const char *usage_string = "brep [options] <objname> tensor <curve_id_1> <curve_id_2>";
+    const char *purpose_string = "create a new NURBS surface by extruding the first curve along the second curve.";
     if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
