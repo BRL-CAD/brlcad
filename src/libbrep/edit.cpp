@@ -325,6 +325,25 @@ int brep_surface_create_ruled(ON_Brep *brep, int curve_id0, int curve_id1)
     return brep->AddSurface(surface);
 }
 
+int brep_surface_tensor_product(ON_Brep *brep, int curve_id0, int curve_id1)
+{
+    ON_NurbsCurve *curve0 = brep_get_nurbs_curve(brep, curve_id0);
+    ON_NurbsCurve *curve1 = brep_get_nurbs_curve(brep, curve_id1);
+    if (!curve0 || !curve1) {
+	return -1;
+    }
+    ON_SumSurface *surface = ON_SumSurface::New();
+    if(!surface->Create(*curve0, *curve1)) {
+	return -1;
+    }
+    ON_NurbsSurface *nurbs_surface = surface->NurbsSurface();
+    delete surface;
+    if(nurbs_surface == NULL) {
+	return -1;
+    }
+    return brep->AddSurface(nurbs_surface);
+}
+
 bool brep_surface_remove(ON_Brep *brep, int surface_id)
 {
     if (surface_id < 0 || surface_id >= brep->m_S.Count()) {

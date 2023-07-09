@@ -168,6 +168,13 @@ extern "C++"
     brep_surface_create_ruled(ON_Brep *brep, int curve_id0, int curve_id1);
 
     /**
+     * create a surface by extruding a curve along another curve.
+     * return: if successful, id of the new surface; otherwise, -1.
+     */
+    BREP_EXPORT extern int
+    brep_surface_tensor_product(ON_Brep *brep, int curve_id0, int curve_id1);
+
+    /**
      * remove a surface from brep
      * @attention the index of m_S is changed after remove!!!
      */
