@@ -6,6 +6,7 @@ set(brep_headers
   cdt.h
   csg.h
   curvetree.h
+  edit.h
   intersect.h
   pullback.h
   ray.h

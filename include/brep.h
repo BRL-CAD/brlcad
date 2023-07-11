@@ -37,6 +37,7 @@ __BEGIN_DECLS
 #include "brep/brnode.h"
 #include "brep/curvetree.h"
 #include "brep/bbnode.h"
+#include "brep/edit.h"
 #include "brep/surfacetree.h"
 #include "brep/pullback.h"
 #include "brep/intersect.h"
