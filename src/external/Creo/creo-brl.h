@@ -62,6 +62,7 @@ extern "C" {
 #include <ProNotify.h>
 #include <ProParameter.h>
 #include <ProPart.h>
+#include <ProSizeConst.h>
 #include <ProSkeleton.h>
 #include <ProSolid.h>
 #include <ProSolidBody.h>
@@ -127,13 +128,27 @@ extern "C" {
 
 #define MAX_UNIQUE_NAMES                  65535  /* maximum unique name generation count */
 
-
                                                  /*  Log message types */
 #define MSG_FAIL                              0  /* Failure            */
 #define MSG_SUCCESS                           1  /* Success            */
 #define MSG_DEBUG                             2  /* Debug              */
-#define MSG_PLAIN                             3  /* [unlabeled]        */
-#define MSG_STATUS                            4  /* Status window only */
+#define MSG_STATUS                            3  /* Status window only */
+#define MSG_PLAIN                             4  /* [unlabeled]        */
+#define MSG_ASSEM                             5  /* Assem              */
+#define MSG_COLOR                             6  /* Color              */
+#define MSG_FEAT                              7  /* Feat               */
+#define MSG_FILE                              8  /* File               */
+#define MSG_MASS                              9  /* Mass               */
+#define MSG_MATL                             10  /* Matl               */
+#define MSG_MODEL                            11  /* Model              */
+#define MSG_NAME                             12  /* Name               */
+#define MSG_PARAM                            13  /* Param              */
+#define MSG_PART                             14  /* Part               */
+#define MSG_SOLID                            15  /* Solid              */
+#define MSG_STRING                           16  /* String             */
+#define MSG_TESS                             17  /* Tess               */
+#define MSG_UNITS                            18  /* Units              */
+#define MSG_WARN                             19  /* Warning            */
 
 #define PRO_FEAT_DELETE_NO_OPTS               0  /* Feature delete options         */
 #define PRO_FEAT_DELETE_CLIP                  1  /* Delete with children           */
@@ -174,13 +189,11 @@ struct CharCmp {
     }
 };
 
-
 struct WStrCmp {
     bool operator()(wchar_t *str1, wchar_t *str2) const {
         return (wcscmp(str1, str2) < 0);
     }
 };
-
 
 /* structure to hold info about CSG operations for current part */
 struct csg_ops {
@@ -197,17 +210,33 @@ struct empty_parts {
 
 struct creo_conv_info {
 
-    struct bu_vls *out_fname;               /* output file name  */
-    struct bu_vls *logger_str;              /* log file criteria */
-    struct bu_vls *log_fname;               /* log file name     */
+    struct bu_vls *out_fname;               /* output file name     */
+    struct bu_vls *log_mode;                /* log file mode        */
+    struct bu_vls *log_fname;               /* log file name        */
+    struct bu_vls *mtl_fname;               /* material file name   */
+    struct bu_vls *param_rename;            /* renaming parameters  */
+    struct bu_vls *param_save;              /* preserved parameters */
+    struct bu_vls *curr_pname;              /* current part name    */
+    struct bu_vls *comb_name;               /* combination name     */
+    struct bu_vls *unitsys;                 /* unit system          */
+    struct bu_vls *aunits;                  /* angle units          */
+    struct bu_vls *funits;                  /* force units          */
+    struct bu_vls *munits;                  /* mass units           */
+    struct bu_vls *lunits;                  /* length units         */
+    struct bu_vls *tunits;                  /* time units           */
 
-    FILE *fplog;                            /* log file settings */
-    int   logger_type;
-    int   curr_msg_type;
+    FILE *fplog;                            /* log file ptr         */
+    FILE *fpmtl;                            /* material file ptr    */
 
-    FILE *fpmtl;                            /* material file data */
-    char mtl_fname[MAXPATHLEN];
-    char mtl_key[MAX_MATL_NAME + 1];
+    ProMdl curr_parent;                     /* current parent model */
+    ProMdl curr_model;                      /* current model        */
+
+    int curr_log_type;                      /* current log type     */
+    int curr_mdl_type;                      /* current model type   */
+    int curr_msg_type;                      /* current msg type     */
+    int curr_reg_id;                        /* current region id    */
+
+    char mtl_key[MAX_MATL_NAME + 1];        /* material file data   */
     char mtl_str[MAX_FILE_RECS][MAX_MATL_NAME + 1];
     int  mtl_id[MAX_FILE_RECS];
     int  mtl_los[MAX_FILE_RECS];
@@ -215,35 +244,36 @@ struct creo_conv_info {
     int  mtl_rec;
 
     int  xform_mode;                        /* coordinate transformation mode */
-    int  reg_id;                            /* region ident number (incremented with each part) */
-    int  lmin;                              /* user-established minimum luminance threshold */
+    int  region_counter;                    /* region counter (incremented with each part) */
+    int  min_luminance;                     /* user-established minimum luminance threshold */
 
-    /* units - model */
-    double creo_to_brl_conv;                /* inches to mm */
-    double local_tol;                       /* tolerance in Creo units */
-    double local_tol_sq;                    /* tolerance squared */
+    /* Units - model */
+    double main_to_mm;                      /* convert top-level units to mm */
+    double part_to_mm;                      /* convert part units to mm      */
+    double local_tol;                       /* tolerance in Creo units       */
+    double local_tol_sq;                    /* tolerance squared             */
 
     /* Conversion control settings */
     ProBool facets_only;                    /* flag to indicate no CSG should be done */
     ProBool check_solidity;                 /* flag to control testing BoTs for solidity */
     ProBool create_boxes;                   /* flag indicating that bounding boxes should replace failed parts */
-    ProBool get_normals;                    /* flag indicating surface normals should be extracted from geometry */
+    ProBool write_normals;                  /* flag indicating surface normals should be extracted from geometry */
     ProBool elim_small;                     /* flag indicating that small features are to be eliminated */
 
     /* Tessellation settings */
-    double max_chord;                       /* max chord height in facetized approximation, mm  */
-    double min_chord;                       /* min chord height in facetized approximation, mm  */
-    double tol_dist;                        /* min distance between two distinct vertices, mm   */
     double max_angle;                       /* max angle control for tessellation ( 0.0 - 1.0 ) */
     double min_angle;                       /* min angle control for tessellation ( 0.0 - 1.0 ) */
-    int    max_steps;                       /* max number of tessellation attempts */
-    int    tess_adapt;                      /* adaptive tessellation settings are in use */
+    double max_chord;                       /* max chord height in facetized approximation, %   */
+    double min_chord;                       /* min chord height in facetized approximation, %   */
+    double min_edge;                        /* min distance between two distinct vertices, mm   */
+    int    max_facets;                      /* max facet count per tessellated solid            */
+    int    max_steps;                       /* max number of tessellation attempts              */
 
     /* CSG settings */
-    double min_hole_diameter;               /* if > 0.0, all holes features smaller than this will be deleted */
-    double min_chamfer_dim;                 /* if > 0.0, all chamfers with both dimensions less */
+    double min_hole;                        /* if > 0.0, all holes features smaller than this will be deleted */
+    double min_chamfer;                     /* if > 0.0, all chamfers with both dimensions less */
                                             /* than this value will be deleted */
-    double min_round_radius;                /* if > 0.0, all rounds with radius less than this */
+    double min_round;                       /* if > 0.0, all rounds with radius less than this */
                                             /* value will be deleted */
 
     /* Bounding box results */
@@ -278,26 +308,25 @@ struct creo_conv_info {
     std::set<struct bu_vls *, StrCmp> *creo_names;                   /* set of active creo id strings */
     std::vector<char *> *obj_name_params;                            /* model parameters used to create object names */
     std::vector<char *> *obj_attr_params;                            /* model parameters preserved as object attributes */
-    int warn_feature_unsuppress;                                     /* flag to determine if we need to warn the user feature unsuppression failed */
+    int warn_feature_resume;                                         /* flag for user warning when feature resume failed */
 };
 
 /* Part processing container */
 struct part_conv_info {
     struct creo_conv_info *cinfo;                                    /* global state */
     int csg_holes_supported;
-    ProMdl model;
     std::vector<int> *suppressed_features;                           /* list of features to suppress when generating output. */
     std::vector<struct directory *> *subtractions;                   /* objects to subtract from primary shape. */
 
-    /* generic feature suppression processing parameters */
+    /* Generic feature suppression processing parameters */
     ProFeature *feat;
     ProFeattype type;
     double radius;
     double diameter;
-    double distance1;
-    double distance2;
-    int got_diameter;
-    int got_distance1;
+    double dist1;
+    double dist2;
+    int    ok_dia;
+    int    ok_dist;
 };
 
 /* Generic container used when we need to pass around something in addition to creo_conv_info */
@@ -308,27 +337,31 @@ struct adata {
 
 /* assembly */
 extern "C" void find_empty_assemblies(struct creo_conv_info *);
-extern "C" ProError output_assembly(struct creo_conv_info *, ProMdl model);
-extern "C" ProError assembly_entry_matrix(struct creo_conv_info *, ProMdl parent, ProFeature *, mat_t *);
+extern "C" ProError output_assembly(struct creo_conv_info *);
+extern "C" ProError assembly_entry_matrix(struct creo_conv_info *, ProFeature *, mat_t *);
 
 /* part */
-extern "C" ProError output_part(struct creo_conv_info *, ProMdl model);
+extern "C" ProError output_part(struct creo_conv_info *);
 
 /* util */
 extern "C" ProError component_filter(ProFeature *, ProAppData *);
 extern "C" void creo_log(struct creo_conv_info *, int, const char *, ...);
-extern "C" ProError creo_model_units(double *, ProMdl);
+extern "C" ProError creo_conv_to_mm(double *, ProMdl);
+extern "C" ProError creo_model_units(struct creo_conv_info *);
 extern "C" char * creo_param_name(struct creo_conv_info *, wchar_t *, int);
-extern "C" ProError creo_param_val(char **, const char *, ProMdl );
+extern "C" ProError creo_param_val(char **, const char *, ProMdl);
 extern "C" int find_matl(struct creo_conv_info *);
 /*     "C" struct bu_vls * get_brlcad_name  (see comments below) */
 extern "C" int get_mtl_input(FILE *, char *, int *, int *);
+extern "C" const char* get_unit_abbr(int );
+extern "C" int get_unit_str(const char *);
+extern "C" const char* get_unit_sys(int );
 extern "C" void lower_case( char *);
 extern "C" ProError param_append(void *, ProError, ProAppData);
 extern "C" ProError param_collect(ProModelitem *, ProParameter **);
-extern "C" void param_export(struct creo_conv_info *, ProMdl, const char *);
-extern "C" ProError param_preserve(struct creo_conv_info *, ProMdl , const char *);
-extern "C" ProError params_to_attrs(struct creo_conv_info *, ProMdl, ProParameter *);
+extern "C" void param_export(struct creo_conv_info *, const char *);
+extern "C" ProError param_preserve(struct creo_conv_info *, const char *);
+extern "C" ProError params_to_attrs(struct creo_conv_info *, ProParameter *);
 extern "C" void parse_param_list(struct creo_conv_info *, const char *, int);
 extern "C" ProError PopupMsg(const char *, const char *);
 extern "C" ProError regex_key(ProParameter *, ProError, ProAppData );
@@ -338,7 +371,6 @@ extern "C" wchar_t* stable_wchar(struct creo_conv_info *, wchar_t *);
 extern "C" void trim(char *);
 extern "C" double wstr_to_double(struct creo_conv_info *, wchar_t *);
 extern "C" long int wstr_to_long(struct creo_conv_info *, wchar_t *);
-
 
 /*
  * This function is highly important - it is responsible for all name
@@ -356,7 +388,6 @@ extern "C" struct bu_vls *get_brlcad_name(struct creo_conv_info *cinfo, wchar_t 
 
 /* CSG */
 extern "C" int subtract_hole(struct part_conv_info *pinfo);
-
 
 #endif /*CREO_BRL_H*/
 

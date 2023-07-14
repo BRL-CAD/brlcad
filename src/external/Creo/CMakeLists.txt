@@ -2,7 +2,7 @@
 # Title:   CMakeLists.txt                                              #
 # Purpose: Configure and generate build files for CREO2BRL project     #
 # Note:    Requires an active Creo Pro/Toolkit license                 #
-# Revised: 3/22/2023                                                   #
+# Revised: 7/14/2023                                                   #
 #----------------------------------------------------------------------#
 
 # Establish the list of Source files - this is needed
@@ -29,7 +29,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #----------------------------------------------------------------------#
 
   # Set CMake project name
-  set(project_name "CREO2BRL")
+  set(project_name CREO2BRL)
   project(${project_name})
 
   # Set Project Version
@@ -53,7 +53,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #        |        |        |        |        |        |        |       #
   #        v        v        v        v        v        v        v       #
 
-  set(BRLCAD_ROOT_DIR "C:/Workspace/BRL-CAD/Source"          CACHE PATH "BRL-CAD root directory")
+  set(BRLCAD_ROOT_DIR "C:/Workspace/BRL-CAD/Source_20230626" CACHE PATH "BRL-CAD root directory")
   set(CREO_ROOT_DIR   "C:/Program Files/PTC/Creo 8.0.8.0"    CACHE PATH "Creo root directory")
 
   #        ^        ^        ^        ^        ^        ^        ^       #
@@ -70,7 +70,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(BRLCAD_REL_DIR       "${BRLCAD_ROOT_DIR}/Build/Release")
 
   # Creo platform version
-  set(CREO_OS_VERSION x86e_win64)
+  set(CREO_OS_VERSION      x86e_win64)
 
   # Creo relative paths
   set(CREO_DAT_REL         "Common Files/protoolkit")
@@ -97,8 +97,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO_PTK_UNLOCKER    "${CREO_ROOT_DIR}/Parametric/bin/protk_unlock.bat")
 
   # Locate Creo libraries
-  find_file(CREO_PTK_DLL_LIBS NAMES "protk_dll_NU.lib" "protk_dll.lib" PATHS "${CREO_PTK_DIR}")
-  find_file(CREO_PTK_EXE_LIBS NAMES "protoolkit_NU.lib" "protoolkit.lib" PATHS "${CREO_PTK_DIR}")
+  find_file(CREO_PTK_DLL_LIBS NAMES "protk_dll_NU.lib"  PATHS "${CREO_PTK_DIR}")
+  find_file(CREO_PTK_EXE_LIBS NAMES "protoolkit_NU.lib" PATHS "${CREO_PTK_DIR}")
   foreach(libname "ucore.lib" "udata.lib")
     set(unicode_lib "${CREO_PTK_DIR}/${libname}")
     if(EXISTS ${unicode_lib})
@@ -211,7 +211,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   endforeach()
 
   # Enforce use of the /MT and /EHsc flags
-  set(c_flag_list   ${c_flag_list} /MT /EHsc)
+  set(c_flag_list   ${c_flag_list}   /MT /EHsc)
   set(cxx_flag_list ${cxx_flag_list} /MT /EHsc)
 
   # Append the Creo specific compiler options
@@ -236,7 +236,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   string(REPLACE ";" " " cxx_flag_list "${cxx_flag_list}")
 
   # Settings global to all configurations
-  set(CMAKE_C_FLAGS             "${c_flag_list} ${brlcad_defs}"     CACHE STRING "" FORCE)
+  set(CMAKE_C_FLAGS             "${c_flag_list}   ${brlcad_defs}"   CACHE STRING "" FORCE)
   set(CMAKE_CXX_FLAGS           "${cxx_flag_list} ${brlcad_defs}"   CACHE STRING "" FORCE)
   set(CMAKE_SHARED_LINKER_FLAGS "/subsystem:console /machine:amd64" CACHE STRING "" FORCE)
   set(CMAKE_EXE_LINKER_FLAGS    "/subsystem:console /machine:amd64" CACHE STRING "" FORCE)
@@ -296,15 +296,6 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
         message("-- # safely ignored as long as the UNLOCK step is performed.              #")
         message("-- #----------------------------------------------------------------------#")
         message("--")
-        message("-- #----------------------------------------------------------------------#")
-        message("-- # NOTICE: For installation follow this BUILD sequence                  #")
-        message("-- #----------------------------------------------------------------------#")
-        message("-- # BUILD:                                                               #")
-        message("-- #   1) creo-brl                                                        #")
-        message("-- #   2) unlock                                                          #")
-        message("-- #   3) install                                                         #")
-        message("-- #----------------------------------------------------------------------#")
-        message("--")
         endif()
     endif()
   endforeach()
@@ -336,13 +327,13 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(brlcadlibs_notinstalled)
   foreach(blib ${BRLCAD_LIBS})
     foreach(ctype ${CMAKE_CONFIGURATION_TYPES})
-      configure_file(${BRLCAD_BIN_DIR}/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${ctype}/${blib}.dll COPYONLY)
+      configure_file("${BRLCAD_BIN_DIR}/${blib}.dll" "${CMAKE_CURRENT_BINARY_DIR}/${ctype}/${blib}.dll" COPYONLY)
     endforeach()
-    configure_file(${BRLCAD_BIN_DIR}/${blib}.dll ${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll COPYONLY)
+    configure_file("${BRLCAD_BIN_DIR}/${blib}.dll" "${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll" COPYONLY)
     set(BRLCAD_STATIC_LIBS ${BRLCAD_STATIC_LIBS} "${BRLCAD_LIB_DIR}/${blib}.lib")
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${blib}.dll" DESTINATION ${CREO_OBJ_REL})
     if(NOT EXISTS "${CREO_OBJ_DIR}/${blib}.dll")
-      set(brlcadlibs_notinstalled ${brlcadlibs_notinstalled} ${blib}.dll)
+      set(brlcadlibs_notinstalled ${brlcadlibs_notinstalled} "${blib}.dll")
     endif()
   endforeach()
 
@@ -383,7 +374,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #                                                                      #
   #     Files                  Creo Installation Sub-Directory           #
   #  ------------------------------------------------------------------  #
-  #  BRL-CAD dlls     --> Common Files/protoolkit/${WIN_OS_VERSION}/obj  #
+  #  BRL-CAD dlls     --> Common Files/protoolkit/${CREO_OS_VERSION}/obj #
   #  creo_brl.dat     --> Common Files/protoolkit                        #
   #  creo_brl.res     --> Common Files/text/resource                     #
   #  creo-brl-msg.txt --> Common Files/text/usascii                      #
@@ -401,22 +392,23 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #                                                                      #
   #----------------------------------------------------------------------#
 
-  # Win32 libraries
+  # Win32 libraries (excludes libcmt.lib)
   set(WIN_LIBS
-    #libcmt.lib
-    kernel32.lib
-    user32.lib
-    wsock32.lib
     advapi32.lib
-    mpr.lib
-    winspool.lib
-    netapi32.lib
-    psapi.lib
-    gdi32.lib
-    shell32.lib
     comdlg32.lib
+    gdi32.lib
+    kernel32.lib
+    mpr.lib
+    netapi32.lib
     ole32.lib
+    psapi.lib
+    shell32.lib
+    user32.lib
+    version.lib
+    winmm.lib
+    winspool.lib
     ws2_32.lib
+    wsock32.lib
     )
 
   add_library(creo-brl SHARED ${CREO2BRL_SOURCES})
@@ -426,8 +418,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(DAT_STARTUP "dll")
   set(DAT_EXEC_FILE "${CREO_OBJ_DIR}/creo-brl.dll")
   set(DAT_TEXT_DIR  ${CREO_MSG_DIR})
-  configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat @ONLY)
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" DESTINATION ${CREO_PTK_REL})
+  configure_file(creo-brl.dat.in "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" @ONLY)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/creo-brl.dat" DESTINATION ${CREO_DAT_REL})
 
   #----------------------------------------------------------------------#
   # Debugging executable version of plugin - only use this if necessary. #
@@ -449,7 +441,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   endif()
 
   # Install the resource files
-  file(GLOB RESOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res)
+  file(GLOB RESOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/*.res")
   set(rfiles_installed 1)
   foreach(rfile ${RESOURCE_FILES})
     install(FILES ${rfile} DESTINATION ${CREO_RES_REL})
@@ -477,6 +469,15 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     message("--")
   endif()
 
+  message("--")
+  message("-- #----------------------------------------------------------------------#")
+  message("-- # NOTICE: For installation follow this BUILD sequence                  #")
+  message("-- #----------------------------------------------------------------------#")
+  message("-- # BUILD:                                                               #")
+  message("-- #   1) creo-brl                                                        #")
+  message("-- #   2) unlock                                                          #")
+  message("-- #   3) install                                                         #")
+  message("-- #----------------------------------------------------------------------#")
   message("--")
 
   #----------------------------------------------------------------------#

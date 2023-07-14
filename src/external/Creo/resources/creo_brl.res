@@ -2,7 +2,7 @@
 !* Title:   creo_brl.res
 !* Purpose: Dialog box resource file for Creo to BRL-CAD Converter
 !* Version: Created for use with Creo version 7.0.9.0
-!* Date:    3/22/2023
+!* Date:    6/8/2023
 !*
 !* Notes:
 !*  1) Refer to: ..\src\external\Creo\main.cpp for more information
@@ -44,8 +44,8 @@
         (SubLayout   transform_controls)
         (Separator   separator2)
         (SubLayout   process_controls)
-        (SubLayout   small_feature_controls)
         (SubLayout   tessellation_controls)
+        (SubLayout   small_feature_controls)
         (SubLayout   surface_controls)
         (Separator   separator3)
         (SubLayout   action_buttons)
@@ -83,10 +83,10 @@
                 (Grid (Rows 1) (Cols 1 1) 
                     (Grid (Rows 1 1) (Cols 1) 
                         process_controls
-                        tessellation_controls
+                        small_feature_controls
                     )
                     (Grid (Rows 1 1) (Cols 1) 
-                        small_feature_controls
+                        tessellation_controls
                         surface_controls
                     )
                 )
@@ -185,7 +185,7 @@
         (param_save.HelpText           "Enter a comma-separated list of Creo parameters to preserve in the BRL-CAD .g file (optional)")
         (param_save.LeftOffset         0)
         (param_save.RightOffset        4)
-        (param_save.Value              "nomenclature,part_name")
+        (param_save.Value              "nomenclature,part_number,ptc_material_name")
         (.AttachTop                    True)
         (.BottomOffset                 4)
         (.Decorated                    False)
@@ -223,12 +223,12 @@
         (transform_l.RightOffset       4)
         (transform_rg.Alignment        0)
         (transform_rg.AttachLeft       True)
-        (transform_rg.Labels           "None"
-                                       "x to z"
-                                       "y to z")
-        (transform_rg.Names            "none"
-                                       "x_to_z"
-                                       "y_to_z")
+        (transform_rg.Labels           "y -> z  "
+                                       "x -> z  "
+                                       "None")
+        (transform_rg.Names            "y -> z"
+                                       "x -> z"
+                                       "none")
         (transform_rg.LeftOffset       0)
         (transform_rg.Orientation      False)
         (transform_rg.RightOffset      4)
@@ -255,7 +255,7 @@
     (Resources
         (region_counter_l.AttachRight  True)
         (region_counter_l.Label        "Initial region counter:")
-        (region_counter_l.LeftOffset   16)
+        (region_counter_l.LeftOffset   2)
         (region_counter_l.RightOffset  0)
         (region_counter.AttachLeft     True)
         (region_counter.HelpText       "Enter desired value for intial region counter")
@@ -292,104 +292,15 @@
     )
 )
 
-(Layout tessellation_controls
-    (Components
-        (Label        max_chord_l)
-        (InputPanel   max_chord)
-        (Label        min_chord_l)
-        (InputPanel   min_chord)
-        (Label        max_angle_l)
-        (InputPanel   max_angle)
-        (Label        min_angle_l)
-        (InputPanel   min_angle)
-        (Label        max_steps_l)
-        (InputPanel   max_steps)
-    )
-    (Resources
-        (max_chord_l.AttachRight       True)
-        (max_chord_l.Label             "Max chord height, mm:")
-        (max_chord_l.LeftOffset        2)
-        (max_chord_l.RightOffset       0)
-        (max_chord.AttachLeft          True)
-        (max_chord.HelpText            "Enter maximum chord height for tessellation of curved surfaces")
-        (max_chord.InputType           3)
-        (max_chord.LeftOffset          0)
-        (max_chord.RightOffset         2)
-        (max_chord.Value               "0.0")
-        (min_chord_l.AttachRight       True)
-        (min_chord_l.Label             "Min chord height, mm:")
-        (min_chord_l.LeftOffset        2)
-        (min_chord_l.RightOffset       0)
-        (min_chord.AttachLeft          True)
-        (min_chord.HelpText            "Enter minimum chord height for tessellation of curved surfaces")
-        (min_chord.InputType           3)
-        (min_chord.LeftOffset          0)
-        (min_chord.RightOffset         2)
-        (min_chord.Value               "0.0")
-        (max_angle_l.AttachRight       True)
-        (max_angle_l.Label             "Max angle control:")
-        (max_angle_l.LeftOffset        2)
-        (max_angle_l.RightOffset       0)
-        (max_angle.AttachLeft          True)
-        (max_angle.HelpText            "Larger values here produce finer tessellations [0.0 to 1.0]")
-        (max_angle.InputType           3)
-        (max_angle.LeftOffset          0)
-        (max_angle.RightOffset         2)
-        (max_angle.Value               "1.0")
-        (min_angle_l.AttachRight       True)
-        (min_angle_l.Label             "Min angle control:")
-        (min_angle_l.LeftOffset        2)
-        (min_angle_l.RightOffset       0)
-        (min_angle.AttachLeft          True)
-        (min_angle.HelpText            "Larger values here produce finer tessellations [0.0 to 1.0]")
-        (min_angle.InputType           3)
-        (min_angle.LeftOffset          0)
-        (min_angle.RightOffset         2)
-        (min_angle.Value               "0.1")
-        (max_steps_l.AttachRight       True)
-        (max_steps_l.Label             "Maximum number of steps:")
-        (max_steps_l.LeftOffset        2)
-        (max_steps_l.RightOffset       0)
-        (max_steps.AttachLeft          True)
-        (max_steps.HelpText            "Enter maximum number of tessellation attempts")
-        (max_steps.InputType           2)
-        (max_steps.LeftOffset          0)
-        (max_steps.RightOffset         2)
-        (max_steps.Value               "50")
-        (.Alignment                    0)
-        (.AttachLeft                   True)
-        (.AttachTop                    True)
-        (.Decorated                    True)
-        (.Label                        "Tessellation Controls")
-        (.LeftOffset                   10)
-        (.RightOffset                  2)
-        (.TopOffset                    1)
-        (.Layout
-            (Grid (Rows 1 1 1 1 1) (Cols 1 1)
-                max_chord_l
-                max_chord
-                min_chord_l
-                min_chord
-                max_angle_l
-                max_angle
-                min_angle_l
-                min_angle
-                max_steps_l
-                max_steps
-            )
-        )
-    )
-)
-
 (Layout small_feature_controls
     (Components
-        (CheckButton   elim_small)
-        (Label         min_hole_l)
-        (InputPanel    min_hole)
-        (Label         min_chamfer_l)
-        (InputPanel    min_chamfer)
-        (Label         min_round_l)
-        (InputPanel    min_round)
+        (CheckButton  elim_small)
+        (Label        min_hole_l)
+        (InputPanel   min_hole)
+        (Label        min_chamfer_l)
+        (InputPanel   min_chamfer)
+        (Label        min_round_l)
+        (InputPanel   min_round)
     )
     (Resources
         (elim_small.AttachRight        True)
@@ -421,7 +332,7 @@
         (min_chamfer_l.AttachTop       True)
         (min_chamfer_l.BottomOffset    0)
         (min_chamfer_l.Label           "Chamfer dimension, mm:")
-        (min_chamfer_l.LeftOffset      2)
+        (min_chamfer_l.LeftOffset      9)
         (min_chamfer_l.RightOffset     0)
         (min_chamfer_l.TopOffset       0)
         (min_chamfer.AttachLeft        True)
@@ -456,9 +367,9 @@
         (.AttachTop                    True)
         (.Decorated                    True)
         (.Label                        "Small Feature Controls")
-        (.LeftOffset                   2)
-        (.RightOffset                  10)
-        (.TopOffset                    0)
+        (.LeftOffset                   10)
+        (.RightOffset                  2)
+        (.TopOffset                    1)
         (.Layout
             (Grid (Rows 1 1) (Cols 1)
                 elim_small
@@ -475,12 +386,59 @@
     )
 )
 
+(Layout tessellation_controls
+    (Components
+        (Label        max_chord_l)
+        (InputPanel   max_chord)
+        (Label        min_angle_l)
+        (InputPanel   min_angle)
+    )
+    (Resources
+        (max_chord_l.AttachRight       True)
+        (max_chord_l.Label             "Max chord height, %:")
+        (max_chord_l.LeftOffset        2)
+        (max_chord_l.RightOffset       0)
+        (max_chord.AttachLeft          True)
+        (max_chord.HelpText            "Enter maximum chord height for tessellation of curved surfaces [0 to 100] percent")
+        (max_chord.InputType           3)
+        (max_chord.LeftOffset          0)
+        (max_chord.RightOffset         2)
+        (max_chord.Value               "0.30")
+        (min_angle_l.AttachRight       True)
+        (min_angle_l.Label             "Min angle control, rad:")
+        (min_angle_l.LeftOffset        2)
+        (min_angle_l.RightOffset       0)
+        (min_angle.AttachLeft          True)
+        (min_angle.HelpText            "Larger values here produce finer tessellations [0 to 1] radians")
+        (min_angle.InputType           3)
+        (min_angle.LeftOffset          0)
+        (min_angle.RightOffset         2)
+        (min_angle.Value               "0.50")
+        (.Alignment                    0)
+        (.AttachLeft                   True)
+        (.AttachTop                    True)
+        (.Decorated                    True)
+        (.Label                        "Tessellation Controls")
+        (.LeftOffset                   2)
+        (.RightOffset                  10)
+        (.TopOffset                    0)
+        (.Layout
+            (Grid (Rows 1 1) (Cols 1 1)
+                max_chord_l
+                max_chord
+                min_angle_l
+                min_angle
+            )
+        )
+    )
+)
+
 (Layout surface_controls
     (Components
         (CheckButton   facets_only)
         (CheckButton   check_solidity)
         (CheckButton   create_boxes)
-        (CheckButton   get_normals)
+        (CheckButton   write_normals)
     )
     (Resources
         (facets_only.AttachLeft        True)
@@ -488,7 +446,7 @@
         (facets_only.BottomOffset      0)
         (facets_only.HelpText          "Select this to produce a faceted approximation for each region with no CSG")
         (facets_only.Label             "Facetize everything, (no CSG)")
-        (facets_only.LeftOffset        0)
+        (facets_only.LeftOffset        7)
         (facets_only.RightOffset       88)
         (facets_only.Set               True)
         (facets_only.TopOffset         0)
@@ -497,28 +455,28 @@
         (check_solidity.BottomOffset   0)
         (check_solidity.HelpText       "Select this to reject BoTs that fail the solidity test (no unmated edges)")
         (check_solidity.Label          "Reject BoTs that fail solidity")
-        (check_solidity.LeftOffset     0)
+        (check_solidity.LeftOffset     7)
         (check_solidity.RightOffset    88)
-        (check_solidity.Set            True)
+        (check_solidity.Set            False)
         (check_solidity.TopOffset      1)
         (create_boxes.AttachLeft       True)
         (create_boxes.AttachTop        True)
         (create_boxes.BottomOffset     0)
         (create_boxes.HelpText         "Select this to create a bounding box solid from the Creo part upon part tessellation failure")
         (create_boxes.Label            "Bounding box replaces failed part")
-        (create_boxes.LeftOffset       0)
+        (create_boxes.LeftOffset       7)
         (create_boxes.RightOffset      88)
-        (create_boxes.Set              True)
+        (create_boxes.Set              False)
         (create_boxes.TopOffset        1)
-        (get_normals.AttachLeft        True)
-        (get_normals.AttachTop         True)
-        (get_normals.BottomOffset      0)
-        (get_normals.HelpText          "Select this to save surface normals in BoTs (raytracing looks smoother)")
-        (get_normals.Label             "Write surface normals")
-        (get_normals.LeftOffset        0)
-        (get_normals.RightOffset       88)
-        (get_normals.Set               False)
-        (get_normals.TopOffset         1)
+        (write_normals.AttachLeft      True)
+        (write_normals.AttachTop       True)
+        (write_normals.BottomOffset    10)
+        (write_normals.HelpText        "Select this to save surface normals in BoTs (raytracing looks smoother)")
+        (write_normals.Label           "Write surface normals")
+        (write_normals.LeftOffset      7)
+        (write_normals.RightOffset     88)
+        (write_normals.Set             False)
+        (write_normals.TopOffset       1)
         (.Alignment                    0)
         (.AttachLeft                   True)
         (.AttachTop                    True)
@@ -526,13 +484,13 @@
         (.Label                        "Surface Controls")
         (.LeftOffset                   2)
         (.RightOffset                  10)
-        (.TopOffset                    1)
+        (.TopOffset                    2)
         (.Layout
             (Grid (Rows 1 1 1 1) (Cols 1)
                 facets_only
                 check_solidity
                 create_boxes
-                get_normals
+                write_normals
             )
         )
     )

@@ -84,26 +84,33 @@
 #define PRO_MDLFILE_PART                        62
 #define PRO_MDL_ASSEMBLY                        63
 #define PRO_MDL_PART                            64
-#define PRO_PARAM_STRING                        65
-#define PRO_SRF_B_SPL                           66
-#define PRO_SURF_ORIENT_IN                      67
-#define PRO_TK_BAD_CONTEXT                      68
-#define PRO_TK_BAD_INPUTS                       69
-#define PRO_TK_CONTINUE                         70
-#define PRO_TK_GENERAL_ERROR                    71
-#define PRO_TK_NO_ERROR                         72
-#define PRO_TK_NOT_EXIST                        73
-#define PRO_TK_SUPP_PARENTS                     74
-#define PRO_UI_MESSAGE_OK                       75
-#define PRO_UNITTYPE_LENGTH                     76
-#define PRO_VALUE_UNUSED                        77
-#define uiProe2ndImmediate                      78
-#define PRO_PARAM_INTEGER                       79
-#define PRO_PARAM_BOOLEAN                       80
-#define PRO_PARAM_DOUBLE                        81
-#define PRO_VALUE_TYPE_INT                      82
-#define PRO_VALUE_TYPE_DOUBLE                   83
-#define PRO_FEAT_EXTRACT_NO_OPTS                84
+#define PRO_NAME_SIZE                           65
+#define PRO_PARAM_STRING                        66
+#define PRO_SRF_B_SPL                           67
+#define PRO_SURF_ORIENT_IN                      68
+#define PRO_TK_BAD_CONTEXT                      69
+#define PRO_TK_BAD_INPUTS                       70
+#define PRO_TK_CONTINUE                         71
+#define PRO_TK_GENERAL_ERROR                    72
+#define PRO_TK_NO_ERROR                         73
+#define PRO_TK_NOT_EXIST                        74
+#define PRO_TK_NOT_VALID                        75
+#define PRO_TK_SUPP_PARENTS                     76
+#define PRO_UI_MESSAGE_OK                       77
+#define PRO_UNITSYSTEM_MLT                      78
+#define PRO_UNITTYPE_ANGLE                      79
+#define PRO_UNITTYPE_FORCE                      80
+#define PRO_UNITTYPE_MASS                       81
+#define PRO_UNITTYPE_LENGTH                     82
+#define PRO_UNITTYPE_TIME                       83
+#define PRO_VALUE_UNUSED                        84
+#define uiProe2ndImmediate                      85
+#define PRO_PARAM_INTEGER                       86
+#define PRO_PARAM_BOOLEAN                       87
+#define PRO_PARAM_DOUBLE                        88
+#define PRO_VALUE_TYPE_INT                      89
+#define PRO_VALUE_TYPE_DOUBLE                   90
+#define PRO_FEAT_EXTRACT_NO_OPTS                91
 
 /* Eight definitions sourced from ProObjects.h */
 #define ProMdlToSolid(mdl)    ((ProSolid) mdl)
@@ -134,6 +141,7 @@ typedef int   ProSrftype;
 typedef int   ProSurfaceOrient;
 typedef int   ProType;
 typedef int   ProUIMessageButton;
+typedef int   ProUnitsystemType;
 typedef int   ProValueDataType;
 typedef int   uiCmdAccessMode;
 typedef int   uiCmdAccessState;
@@ -160,12 +168,12 @@ typedef void* ProSolidBody;
 typedef void* ProSurface;
 typedef void* ProSurfacedata;
 typedef void* ProSurfaceshapedata;
-typedef void* ProUnititem;
 typedef void* ProUnitsystem;
 typedef void* ProValue;
 typedef void* ProWVerstamp;
 typedef wchar_t ProFileName[1];
 typedef wchar_t ProLine[1];
+typedef wchar_t ProName[1];
 
 /* 
  * Definitions where we need to provide internal structure
@@ -184,18 +192,19 @@ typedef struct proparam {wchar_t *id;} ProParameter;
 typedef struct prouc {double scale;} ProUnitConversion;
 typedef struct psap {double color_rgb[3];double transparency;double shininess;double diffuse;double highlite;} ProSurfaceAppearanceProps;
 typedef struct pst {int n_facets;__internal_facetset *facets;point_t *vertices;point_t *normals;} ProSurfaceTessellationData;
+typedef struct puitm {ProMdl owner; ProName name;} ProUnititem;
 typedef struct pvdi {int i; int d;} __internal_ProValueData;
 typedef struct pvdm {__internal_ProValueData v;} ProValueData;
 
 /* Function types */
 typedef int (*ProFeatureFilterAction)(ProFeature*,void*);
-typedef int (*uiCmdCmdActFn)(int,int*,void*);
 typedef int (*ProParameterAction)(ProParameter*,int,void*);
+typedef int (*uiCmdCmdActFn)(int,int*,void*);
 
 /* Functions */
 extern "C" int ProArrayAlloc(int,int,int,void**);
 extern "C" int ProArrayFree(void**);
-extern "C" int ProArrayObjectAdd(ProArray *, int, int, void*);
+extern "C" int ProArrayObjectAdd(ProArray*,int,int,void*);
 extern "C" int ProArraySizeGet(ProArray,int*);
 extern "C" int ProAsmcompMdlGet(ProFeature*,void**);
 extern "C" int ProAsmcompMdlMdlnameGet(ProFeature*,int*,wchar_t*);
@@ -213,6 +222,7 @@ extern "C" int ProElementIntegerGet(void*,void*,int*);
 extern "C" int ProElementValueGet(void*,void**);
 extern "C" int ProElementValuetypeGet(void*,int*);
 extern "C" int ProElemtreeElementVisit(void*,void*,int (*)(void*,void*,void*,void*),int (*)(void*,void*,void*,void*),void*);
+extern "C" int ProFeatureChildrenGet(void*,int**,int*);
 extern "C" int ProFeatureDimensionVisit(ProFeature *,int (*)(void* *,int ,void*),int (*)(void**,void*),void*);
 extern "C" int ProFeatureElemtreeCreate(ProFeature *,void**);
 extern "C" int ProFeatureElemtreeExtract(ProFeature *,void*,int,void**);
@@ -237,7 +247,7 @@ extern "C" int ProMessageDisplay(wchar_t *,const char *,const char *);
 extern "C" int ProParameterInit(void *,wchar_t *,void *);
 extern "C" int ProParameterValueGet(ProParameter *,void *);
 extern "C" int ProParameterValueWithUnitsGet(ProParameter *,void *,void *);
-extern "C" int ProParameterVisit (void **, void*,int (*)(ProParameter*,int,void*),void *);
+extern "C" int ProParameterVisit(void **, void*, int (*)(ProParameter*, int, void*), void *);
 extern "C" int ProParamvalueTypeGet(void **,void *);
 extern "C" int ProParamvalueValueGet(void **,int,void *);
 extern "C" int ProPartDensityGet(void*,double*);
@@ -263,8 +273,9 @@ extern "C" int ProUILabelTextSet(const char *,const char *,wchar_t *);
 extern "C" int ProUIPushbuttonActivateActionSet(const char *,const char *,void (*)(char*,char *,void*),void*);
 extern "C" int ProUIRadiogroupSelectednamesGet(const char*,const char*,int*,char***);
 extern "C" int ProUITextareaValueSet(const char *,const char *,wchar_t*);
-extern "C" int ProUnitConversionCalculate(void**,void**,ProUnitConversion*);
-extern "C" int ProUnitsystemUnitGet(void**,int,void**);
+extern "C" int ProUnitConversionCalculate(ProUnititem*,ProUnititem*,ProUnitConversion*);
+extern "C" int ProUnitsystemTypeGet(void**,ProUnitsystemType*);
+extern "C" int ProUnitsystemUnitGet(void**,int,ProUnititem*);
 extern "C" int ProUtilCollectParameters(void**,void**);
 extern "C" int ProValueDataGet(void*,ProValueData*);
 extern "C" int ProVerstampEqual(void*, void*);
@@ -286,7 +297,7 @@ extern "C" void ProSurfaceToNURBS(void*,void***);
 extern "C" void ProSurfacedataGet(void*,int*,double*,double*,int*,void**,int*);
 extern "C" void ProUIInputpanelMaxlenSet(const char*,const char*,int);
 extern "C" void ProUIMessageDialogDisplay(int,const wchar_t *,const wchar_t *,ProUIMessageButton*,int,ProUIMessageButton*);
-extern "C" void ProUnitInit(void*,const wchar_t *,void**);
+extern "C" void ProUnitInit(void*,const wchar_t *,ProUnititem*);
 extern "C" void ProWstringToString(char*,wchar_t*);
 extern "C" void** PRO_CURVE_DATA(void*);
 

@@ -22,35 +22,37 @@
  * @file util.cpp
  */
 
-
-/*                                                                                  */
-/* Synopsis of Utiliity Routines:                                                   */
-/*                                                                                  */
-/* component_filter      Component item filter for the feature visit routine        */
-/* creo_log              Report conversion status and log file messages             */
-/* creo_model_units      Extracts Creo model units and conversion factor            */
-/* creo_param_name       Returns first valid alpha-numeric parameter name string    */
-/* creo_param_val        Extract parameter value from specified Creo model          */
-/* find_matl             Determine if specified material is on the material list    */
-/* get_brlcad_name       Returns a unique BRL-CAD object name                       */
-/* get_mtl_input         Process input from specified material translation file     */
-/* lower_case            Converts string to lower case                              */
-/* param_append          Append parameter to the array                              */
-/* param_collect         Collect available parameters from the specified model      */
-/* param_export          Export list of model parameters                            */
-/* param_preserve        Preserve available model parameters                        */
-/* params_to_attrs       Preserve a list of model-specific parameters as attributes */
-/* parse_param_list      Parse list of user-supplied parameters                     */
-/* PopupMsg              Display a message in a Creo dialog box                     */
-/* regex_key             Utilize regular expression match for Creo parameter name   */
-/* rgb4lmin              Modify RGB values to achieve minimum luminance threshold   */
-/* scrub_vls             Removes unwanted characters from a variable-length string  */
-/* stable_wchar          Map a string to the "stable" version found in parts/assems */
-/* trim                  Purge string of leading and trailing whitespace            */
-/* wstr_to_double        Convert wide string to double precision value              */
-/* wstr_to_long          Convert wide string to long int value                      */
-
-
+/*                                                                               */
+/* Synopsis of Utility Routines:                                                 */
+/*                                                                               */
+/* component_filter   Component item filter for the feature visit routine        */
+/* creo_log           Report conversion status and log file messages             */
+/* creo_conv_to_mm    Extracts scale factor to convert model units to mm         */
+/* creo_model_units   Extracts Creo model units                                  */
+/* creo_param_name    Returns first valid alpha-numeric parameter name string    */
+/* creo_param_val     Extract parameter value from specified Creo model          */
+/* find_matl          Determine if specified material is on the material list    */
+/* get_brlcad_name    Returns a unique BRL-CAD object name                       */
+/* get_mtl_input      Process input from specified material translation file     */
+/* get_unit_str       Returns location of unit string in reference table         */
+/* get_unit_abbr      Returns unit abbreviation from reference table             */
+/* get_unit_sys       Returns unit system from reference table                   */
+/* lower_case         Converts string to lower case                              */
+/* param_append       Append parameter to the array                              */
+/* param_collect      Collect available parameters from the specified model      */
+/* param_export       Export list of model parameters                            */
+/* param_preserve     Preserve available model parameters                        */
+/* params_to_attrs    Preserve a list of model-specific parameters as attributes */
+/* parse_param_list   Parse list of user-supplied parameters                     */
+/* PopupMsg           Display a message in a Creo dialog box                     */
+/* regex_key          Utilize regular expression match for Creo parameter name   */
+/* rgb4lmin           Modify RGB values to achieve minimum luminance threshold   */
+/* scrub_vls          Removes unwanted characters from a variable-length string  */
+/* stable_wchar       Map a string to the "stable" version found in parts/assems */
+/* trim               Purge string of leading and trailing whitespace            */
+/* wstr_to_double     Convert wide string to double precision value              */
+/* wstr_to_long       Convert wide string to long int value                      */
+/*                                                                               */
 
 #include "common.h"
 #include <algorithm>
@@ -107,7 +109,7 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
         cinfo->curr_msg_type = msg_type;
         struct bu_vls vmsg = BU_VLS_INIT_ZERO;
 
-        if (cinfo->logger_type == LOGGER_TYPE_NONE)
+        if (cinfo->curr_log_type == LOGGER_TYPE_NONE)
             return;
 
         switch (cinfo->curr_msg_type) {
@@ -120,17 +122,63 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
             case MSG_DEBUG:
                 bu_vls_sprintf(&vmsg, "  DEBUG: %s", msg);
                 break;
+            case MSG_STATUS:
+                break;
             case MSG_PLAIN:
                 bu_vls_sprintf(&vmsg, "%s", msg);
                 break;
+            case MSG_ASSEM:
+                bu_vls_sprintf(&vmsg, "  ASSEM: %s", msg);
+                break;
+            case MSG_COLOR:
+                bu_vls_sprintf(&vmsg, "  COLOR: %s", msg);
+                break;
+            case MSG_FEAT:
+                bu_vls_sprintf(&vmsg, "   FEAT: %s", msg);
+                break;
+            case MSG_FILE:
+                bu_vls_sprintf(&vmsg, "   FILE: %s", msg);
+                break;
+            case MSG_MASS:
+                bu_vls_sprintf(&vmsg, "   MASS: %s", msg);
+                break;
+            case MSG_MATL:
+                bu_vls_sprintf(&vmsg, "   MATL: %s", msg);
+                break;
+            case MSG_MODEL:
+                bu_vls_sprintf(&vmsg, "  MODEL: %s", msg);
+                break;
+            case MSG_NAME:
+                bu_vls_sprintf(&vmsg, "   NAME: %s", msg);
+                break;
+            case MSG_PARAM:
+                bu_vls_sprintf(&vmsg, "  PARAM: %s", msg);
+                break;
+            case MSG_PART:
+                bu_vls_sprintf(&vmsg, "   PART: %s", msg);
+                break;
+            case MSG_SOLID:
+                bu_vls_sprintf(&vmsg, "  SOLID: %s", msg);
+                break;
+            case MSG_STRING:
+                bu_vls_sprintf(&vmsg, " STRING: %s", msg);
+                break;
+            case MSG_TESS:
+                bu_vls_sprintf(&vmsg, "   TESS: %s", msg);
+                break;
+            case MSG_UNITS:
+                bu_vls_sprintf(&vmsg, "  UNITS: %s", msg);
+                break;
+            case MSG_WARN:
+                bu_vls_sprintf(&vmsg, "WARNING: %s", msg);
             default:
                 bu_vls_sprintf(&vmsg, "  OTHER: %s", msg);
             }
 
-        if ((cinfo->curr_msg_type == MSG_FAIL    && cinfo->logger_type != LOGGER_TYPE_SUCCESS)            ||
-            (cinfo->curr_msg_type == MSG_SUCCESS && cinfo->logger_type != LOGGER_TYPE_FAILURE)            ||
-            (cinfo->curr_msg_type != MSG_DEBUG   && cinfo->logger_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) ||
-            (cinfo->logger_type == LOGGER_TYPE_ALL)) {
+        if ((cinfo->curr_msg_type == MSG_FAIL    && cinfo->curr_log_type != LOGGER_TYPE_SUCCESS)            ||
+            (cinfo->curr_msg_type == MSG_SUCCESS && cinfo->curr_log_type != LOGGER_TYPE_FAILURE)            ||
+            (cinfo->curr_msg_type != MSG_DEBUG   && cinfo->curr_log_type == LOGGER_TYPE_FAILURE_OR_SUCCESS) ||
+            (cinfo->curr_log_type == LOGGER_TYPE_ALL)) {
             fprintf(cinfo->fplog, "%s", bu_vls_addr(&vmsg));
             fflush(cinfo->fplog);
         }
@@ -139,9 +187,9 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
 }
 
 
-/* Extracts Creo model units and conversion factor */
+/* Extracts scale factor to convert model units to mm */
 extern "C" ProError
-creo_model_units(double *scale, ProMdl mdl)
+creo_conv_to_mm(double *scale, ProMdl model)
 {
     ProError          err = PRO_TK_GENERAL_ERROR;
     ProUnitsystem     us;
@@ -151,7 +199,7 @@ creo_model_units(double *scale, ProMdl mdl)
     if (!scale)
         return err;
 
-    err = ProMdlPrincipalunitsystemGet(mdl, &us);
+    err = ProMdlPrincipalunitsystemGet(model, &us);
     if (err != PRO_TK_NO_ERROR)
         return err;
 
@@ -159,13 +207,179 @@ creo_model_units(double *scale, ProMdl mdl)
     if (err != PRO_TK_NO_ERROR)
         return err;
 
-    ProUnitInit(mdl, L"mm", &mmu);
+    ProUnitInit(model, L"mm", &mmu);
 
     err = ProUnitConversionCalculate(&lmu, &mmu, &conv);
     if (err != PRO_TK_NO_ERROR)
         return err;
 
     (*scale) = conv.scale;
+    return PRO_TK_NO_ERROR;
+}
+
+
+/*----------------------------------------------------------------------*/
+/* Type           System                     Force       Mass   Length  */
+/*----------------------------------------------------------------------*/
+/*  FLT  Foot Pound Second (FPS)              lbf        slug     ft    */
+/*  FLT  Inch Pound Second (IPS)              lbf        blob     in    */
+/*  FLT  millimeter Newton Second (mmNs)       N        tonne     mm    */
+/*  MLT  Centimeter Gram Second (CGS)         dyne        g       cm    */
+/*  MLT  Inch lbm Second (Pro/E Default)  lbm-in/sec^2   lbm      in    */
+/*  MLT  Meter Kilogram Second (MKS)           N         kg        m    */
+/*  MLT  millimeter Kilogram Sec (mmKs)       mN         kg       mm    */
+/*----------------------------------------------------------------------*/
+
+struct units_table
+{
+    char* usys;
+    char* ustr;
+    char* abbr;
+    int   indx;
+};
+
+/* Reference table for equivalent units */
+static units_table unit_equiv[] = {                    /* System */
+    {"PTC" , "[lbm-in]/sec^2", "[lbm-in]/sec^2",  1},  /*  PTC   */
+    {"CGS" , "[g-cm]/sec^2"  , "dyne"          ,  2},  /*  CGS   */
+    {"FPS" , "[lbf-sec^2]/ft", "slug"          ,  3},  /*  FPS   */
+    {"IPS" , "[lbf-sec^2]/in", "blob"          ,  4},  /*  IPS   */
+    {"MKS" , "[kg-m]/sec^2"  , "N"             ,  5},  /*  MKS   */
+    {"MMKS", "[kg-mm]/sec^2" , "mN"            ,  6},  /*  MMKS  */
+    {"MMNS", "[N-sec^2]/mm"  , "tonne"         ,  7},  /*  MMNS  */
+    { NULL ,   NULL          , "---"           , -1}
+};
+
+
+/* Return location of unit string in reference table */
+extern "C" int
+get_unit_str(const char *name)
+{
+    int* p;
+
+    for (units_table *p = unit_equiv; p->usys != NULL; ++p) {
+        if (strcmp(p->ustr, name) == 0)
+            return p->indx;
+    }
+
+    return -1;
+}
+
+
+/* Return unit abbreviation from reference table */
+extern "C" const char*
+get_unit_abbr(int index)
+{
+    int* p;
+
+    for (units_table *p = unit_equiv; p->usys != NULL; ++p) {
+        if (p->indx == index)
+            return p->abbr;
+    }
+
+    return NULL;
+}
+
+
+/* Return unit system from reference table */
+extern "C" const char*
+get_unit_sys(int index)
+{
+    int* p;
+
+    for (units_table *p = unit_equiv; p->usys != NULL; ++p) {
+        if (p->indx == index)
+            return p->usys;
+    }
+
+    return NULL;
+}
+
+
+/* Extracts Creo model units */
+extern "C" ProError
+creo_model_units(struct creo_conv_info *cinfo)
+{
+    ProError      err   = PRO_TK_GENERAL_ERROR;
+    ProMdl        model = cinfo->curr_model;
+    ProUnitsystem unit_sys;
+    ProUnititem   angle, force, mass, length, time;
+
+    /* Unit system flag, 1 => MLT or 2 => FLT */
+    ProUnitsystemType unit_sys_type;
+
+    char  astr[PRO_NAME_SIZE + 1];
+    char  fstr[PRO_NAME_SIZE + 1];
+    char  mstr[PRO_NAME_SIZE + 1];
+    char  lstr[PRO_NAME_SIZE + 1];
+    char  tstr[PRO_NAME_SIZE + 1];
+    char   tmp[PRO_NAME_SIZE + 1];
+
+    int loc = -1;
+
+    err = ProMdlPrincipalunitsystemGet(model, &unit_sys);
+    if (err != PRO_TK_NO_ERROR)
+        return err;
+
+    /* Extract the unit system type */
+    err = ProUnitsystemTypeGet(&unit_sys, &unit_sys_type);
+    if (err != PRO_TK_NO_ERROR)
+        return err;
+
+    /* Extract the angle units */
+    err = ProUnitsystemUnitGet(&unit_sys, PRO_UNITTYPE_ANGLE, &angle);
+    if (err != PRO_TK_NO_ERROR)
+        return err;
+    else
+        ProWstringToString(astr, angle.name);
+
+    if (unit_sys_type == PRO_UNITSYSTEM_MLT) {
+        /* MLT: Force defined by:  mass, length, time */
+        ProUnitsystemUnitGet(&unit_sys, PRO_UNITTYPE_MASS,   &mass);
+        ProUnitsystemUnitGet(&unit_sys, PRO_UNITTYPE_LENGTH, &length);
+        ProUnitsystemUnitGet(&unit_sys, PRO_UNITTYPE_TIME,   &time);
+        ProWstringToString(mstr,   mass.name);
+        ProWstringToString(lstr, length.name);
+        ProWstringToString(tstr,   time.name);
+        /* Substitute equivalent force units */
+        sprintf(tmp,"[%s-%s]/%s^2", mstr, lstr, tstr);   /* [M-L]/t^2 */
+        loc = get_unit_str(tmp);
+        if (loc > 0) {
+            bu_vls_sprintf(cinfo->unitsys, "%s", get_unit_sys(loc));
+            bu_vls_sprintf(cinfo->funits , "%s", get_unit_abbr(loc));
+        } else {
+            bu_vls_sprintf(cinfo->unitsys, "%s", "Unknown");
+            bu_vls_sprintf(cinfo->funits,  "%s", tmp);
+        }
+        /* Accept existing mass units */
+        bu_vls_sprintf(cinfo->munits, "%s", mstr);
+    } else {
+        /* FLT: Mass defined by:  force, length, time */
+        ProUnitsystemUnitGet(&unit_sys, PRO_UNITTYPE_FORCE,  &force);
+        ProUnitsystemUnitGet(&unit_sys, PRO_UNITTYPE_LENGTH, &length);
+        ProUnitsystemUnitGet(&unit_sys, PRO_UNITTYPE_TIME,   &time);
+        ProWstringToString(fstr,  force.name);
+        ProWstringToString(lstr, length.name);
+        ProWstringToString(tstr,   time.name);
+        /* Substitute equivalent mass units */
+        sprintf(tmp,"[%s-%s^2]/%s", fstr, tstr, lstr);   /* [F-T^2]/L */
+        loc = get_unit_str(tmp);
+        if (loc > 0) {
+            bu_vls_sprintf(cinfo->unitsys, "%s", get_unit_sys(loc));
+            bu_vls_sprintf(cinfo->munits,  "%s", get_unit_abbr(loc));
+        } else {
+            bu_vls_sprintf(cinfo->unitsys, "%s", "Unknown");
+            bu_vls_sprintf(cinfo->munits,  "%s", tmp);
+        }
+        /* Accept existing force units */
+        bu_vls_sprintf(cinfo->funits, "%s", fstr);
+    }
+
+    /* Retain units for angle, length, time */
+    bu_vls_sprintf(cinfo->aunits, "%s", astr);
+    bu_vls_sprintf(cinfo->lunits, "%s", lstr);
+    bu_vls_sprintf(cinfo->tunits, "%s", tstr);
+
     return PRO_TK_NO_ERROR;
 }
 
@@ -183,11 +397,11 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, int flag)
 {
     struct pparam_data pdata;
     pdata.cinfo = cinfo;
-    pdata.val = NULL;
-    char *val = NULL;
+    pdata.val   = NULL;
+    char *val   = NULL;
 
+    ProMdl       model;
     ProModelitem mitm;
-    ProMdl model;
 
     if (flag == N_REGION || flag == N_SOLID) {
         if (ProMdlnameInit(creo_name, PRO_MDLFILE_PART, &model) != PRO_TK_NO_ERROR)
@@ -322,13 +536,13 @@ find_matl(struct creo_conv_info *cinfo)
 
 /* Returns a unique BRL-CAD object name */
 extern "C" struct bu_vls *
-get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix, int flag)
+get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *wname, const char *suffix, int flag)
 {
     struct bu_vls  gname_root = BU_VLS_INIT_ZERO;
     struct bu_vls *gname;
     char *param_name = NULL;
     long count = 0;
-    wchar_t *stable = stable_wchar(cinfo, name);
+    wchar_t *stable = stable_wchar(cinfo, wname);
     std::map<wchar_t *, struct bu_vls *, WStrCmp>::iterator n_it;
     std::map<wchar_t *, struct bu_vls *, WStrCmp> *nmap = NULL;
     std::set<struct bu_vls *, StrCmp> *nset = cinfo->brlcad_names;
@@ -337,33 +551,31 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     const char *keep_chars = "+-.=_";
     const char *collapse_chars = "_";
 
-    ProWstringToString(astr, name);
+    ProWstringToString(astr, wname);
     lower_case(astr);
 
     if (!stable) {
-        creo_log(cinfo, MSG_PLAIN, "   NAME: \"%s\" unable to find stable version of name\n", astr);
+        creo_log(cinfo, MSG_NAME, "No stable version of \"%s\" was found\n", astr);
         return NULL;
     }
-
-    creo_log(cinfo, MSG_PLAIN, "   NAME: Generating name for \"%s\"...\n", astr);
 
     switch (flag) {
         case N_REGION:
             nmap = cinfo->region_name_map;
-            creo_log(cinfo, MSG_PLAIN, "   NAME: Name type: region\n");
+            creo_log(cinfo, MSG_NAME, "Region \"%s\"\n", astr);
             break;
         case N_ASSEM:
             nmap = cinfo->assem_name_map;
-            creo_log(cinfo, MSG_PLAIN, "   NAME: Name type: assembly\n");
+            creo_log(cinfo, MSG_NAME, "Assembly \"%s\"\n", astr);
             break;
         case N_SOLID:
             nmap = cinfo->solid_name_map;
-            creo_log(cinfo, MSG_PLAIN, "   NAME: Name type: solid\n");
+            creo_log(cinfo, MSG_NAME, "Solid \"%s\"\n", astr);
             break;
         case N_CREO:
             nmap = cinfo->creo_name_map;
             nset = cinfo->creo_names;
-            creo_log(cinfo, MSG_PLAIN, "   NAME: Name type: Creo name\n");
+            creo_log(cinfo, MSG_NAME, "Part \"%s\"\n", astr);
             break;
         default:
             return NULL;               /* Ignore unknown name type */
@@ -374,10 +586,10 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
         return NULL;
 
     /* If we've already got something, return it. */
-    n_it = nmap->find(name);
+    n_it = nmap->find(wname);
     if (n_it != nmap->end()) {
         gname = n_it->second;
-        creo_log(cinfo, MSG_PLAIN, "   NAME: \"%s\" already exists\n", bu_vls_addr(gname));
+        creo_log(cinfo, MSG_NAME, "Found \"%s\" already exists\n", bu_vls_addr(gname));
         return gname;
     }
 
@@ -387,14 +599,14 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
 
     /* First try the parameters, if the user specified any */
     if (flag != N_CREO) {
-        param_name = creo_param_name(cinfo, name, flag);
+        param_name = creo_param_name(cinfo, wname, flag);
         bu_vls_sprintf(&gname_root, "%s", param_name);
     }
 
     /* If we don't already have a name, use the Creo name */
     if (!param_name) {
         char val[CREO_NAME_MAX];
-        ProWstringToString(val, name);
+        ProWstringToString(val, wname);
         bu_vls_sprintf(&gname_root, "%s", val);
     } else
         bu_free(param_name, "free original param name");
@@ -419,11 +631,12 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
         for (count = 0; nset->find(gname) != nset->end(); count++) {
             (void)bu_vls_incr(gname, NULL, NULL, NULL, NULL);
             if (count == 2)
-                creo_log(cinfo, MSG_PLAIN, "   NAME: Seeking unique object name \"%s\"\n", bu_vls_addr(&gname_root));
+                creo_log(cinfo, MSG_NAME, "Using \"%s\" to seek a unique object name\n",
+                                          bu_vls_addr(&gname_root));
             else if (count >= MAX_UNIQUE_NAMES) {
                 bu_vls_free(gname);
                 BU_PUT(gname, struct bu_vls);
-                creo_log(cinfo, MSG_PLAIN, "   NAME: Failed name generation for \"%s\"\n", astr);
+                creo_log(cinfo, MSG_NAME, "Failed with \"%s\" in name generation\n", astr);
                 return NULL;
             }
         }
@@ -435,8 +648,6 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
      */
     nset->insert(gname);
     nmap->insert(std::pair<wchar_t *, struct bu_vls *>(stable, gname));
-
-    creo_log(cinfo, MSG_PLAIN, "   NAME: \"%s\" succeeded\n", bu_vls_addr(gname));
 
     return gname;
 }
@@ -455,9 +666,12 @@ get_mtl_input(FILE *fpmtl, char *mtl_str, int *mtl_id, int *mtl_los)
     int  id, los;
     int  recs;
 
+    /* TODO: Determine why substition of bu_fgets for fgets */
+    /*       in the while loop below produces no records    */
+
     /* Initialize counter */
     recs = 0;
-    while (bu_fgets(buf, mbuf, fpmtl) != NULL) {
+    while (fgets(buf, mbuf, fpmtl) != NULL) {
         trim(buf);
         firstc = buf[0];
         if(strchr(comments, firstc))   /* skip comments */
@@ -536,50 +750,49 @@ param_collect(ProModelitem *p_modelitem, ProParameter **p_parameters)
 
 /* Export list of model parameters */
 extern "C" void
-param_export(struct creo_conv_info *cinfo, ProMdl model, const char *name)
+param_export(struct creo_conv_info *cinfo, const char *name)
 {
-
     if (cinfo->obj_attr_params->size() > 0)
         for (unsigned int i = 0; i < cinfo->obj_attr_params->size(); i++) {
             char *attr_val = NULL;
             const char *arg = cinfo->obj_attr_params->at(i);
-            creo_param_val(&attr_val, arg, model);
+            creo_param_val(&attr_val, arg, cinfo->curr_model);
             if (attr_val) {
                 bu_avs_add(&cinfo->avs, arg, attr_val);
                 bu_free(attr_val, "value string");
                 }
         }
     else
-        (void) param_preserve(cinfo, model, name);
+        (void) param_preserve(cinfo, name);
 
 }
 
 
 /* Preserve available model parameters */
 extern "C" ProError
-param_preserve(struct creo_conv_info *cinfo, ProMdl model, const char *name)
+param_preserve(struct creo_conv_info *cinfo, const char *name)
 {
     ProError      err = PRO_TK_GENERAL_ERROR;
     ProModelitem  mitm;
     ProParameter *pars;
 
-    err = ProMdlToModelitem(model, &mitm);
+    err = ProMdlToModelitem(cinfo->curr_model, &mitm);
     if (err != PRO_TK_NO_ERROR) {
-        creo_log(cinfo, MSG_PLAIN, "FAILURE: Unable to get \"%s\" model item identifier\n", name);
+        creo_log(cinfo, MSG_WARN, "Unable to get \"%s\" model item identifier\n", name);
         return err;
     }
 
     err = param_collect(&mitm, &pars);
     if (err == PRO_TK_BAD_INPUTS)
-        creo_log(cinfo, MSG_PLAIN, "FAILURE: Invalid inputs for \"%s\" parameter collection\n", name);
+        creo_log(cinfo, MSG_WARN, "Invalid inputs for \"%s\" parameter collection\n", name);
     else if (err != PRO_TK_NO_ERROR)
-        creo_log(cinfo, MSG_PLAIN, "FAILURE: Unable to collect \"%s\" model parameters\n", name);
+        creo_log(cinfo, MSG_WARN, "Unable to collect \"%s\" model parameters\n", name);
     else {
-        err = params_to_attrs(cinfo, model, pars);
+        err = params_to_attrs(cinfo, pars);
         if (err == PRO_TK_BAD_INPUTS)
-            creo_log(cinfo, MSG_PLAIN, "FAILURE: Invalid inputs for \"%s\" attribute creation\n", name);
+            creo_log(cinfo, MSG_WARN, "Invalid inputs for \"%s\" attribute creation\n", name);
         else if (err == PRO_TK_NOT_EXIST)
-            creo_log(cinfo, MSG_PLAIN, "  PARAM: No parameters for \"%s\" are available\n", name);
+            creo_log(cinfo, MSG_WARN, "No parameters for \"%s\" are available\n", name);
     }
 
     (void)ProArrayFree((ProArray*)&pars);
@@ -589,7 +802,7 @@ param_preserve(struct creo_conv_info *cinfo, ProMdl model, const char *name)
 
 /* Preserve a list of model-specific parameters as attributes */
 extern "C" ProError
-params_to_attrs(struct creo_conv_info *cinfo, ProMdl model, ProParameter* pars)
+params_to_attrs(struct creo_conv_info *cinfo, ProParameter* pars)
 {
     ProError  err = PRO_TK_GENERAL_ERROR;
     int count = 0;
@@ -608,36 +821,36 @@ params_to_attrs(struct creo_conv_info *cinfo, ProMdl model, ProParameter* pars)
 
         ProWstringToString(attr_nam, pars[i].id);
         lower_case(attr_nam);
-        creo_param_val(&attr_val, attr_nam, model);
+        creo_param_val(&attr_val, attr_nam, cinfo->curr_model);
 
         if (attr_val) {
             found++;
             if (found == 1) {
-                creo_log(cinfo, MSG_PLAIN, "  PARAM: ==========================================================\n");
-                creo_log(cinfo, MSG_PLAIN, "  PARAM:    n          ptc_parameter_name               value\n");
-                                                  /*  xxx  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  xxxxxxxxxxxxxxxxxxxxx */
-                creo_log(cinfo, MSG_PLAIN, "  PARAM: ----------------------------------------------------------\n");
+                creo_log(cinfo, MSG_PARAM, "==========================================================\n");
+                creo_log(cinfo, MSG_PARAM, "   n         ptc_parameter_name               value\n");
+                                          /* xxx  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  xxxxxxxxxxxxxxxxxxxxx */
+                creo_log(cinfo, MSG_PARAM, "----------------------------------------------------------\n");
             }
-            creo_log(cinfo, MSG_PLAIN, "  PARAM:  %3d  %-32s  %-s\n", found, attr_nam, attr_val);
+            creo_log(cinfo, MSG_PARAM,     " %3d  %-32s  %-s\n", found, attr_nam, attr_val);
             bu_avs_add(&cinfo->avs, attr_nam, attr_val);
             bu_free(attr_val, "value string");
             }
     }
 
     if (found > 0) {
-        creo_log(cinfo, MSG_PLAIN, "  PARAM: ----------------------------------------------------------\n");
-        creo_log(cinfo, MSG_PLAIN, "  PARAM: Processed %d model parameters\n",      count);
+        creo_log(cinfo, MSG_PARAM,     "----------------------------------------------------------\n");
+        creo_log(cinfo, MSG_PARAM,     "Processed %d model parameters\n",      count);
         if (found == 1)
-            creo_log(cinfo, MSG_PLAIN, "  PARAM: Extracted a single non-empty parameter\n");
+            creo_log(cinfo, MSG_PARAM, "Extracted a single non-empty parameter\n");
         else
-            creo_log(cinfo, MSG_PLAIN, "  PARAM: Extracted %d non-empty parameters \n", found);
+            creo_log(cinfo, MSG_PARAM, "Extracted %d non-empty parameters \n", found);
         if (count > found)
-            creo_log(cinfo, MSG_PLAIN, "  PARAM: Extraction ratio: %.1f%s\n",
-                     double(found)/double(count)*100.0, "%");
+            creo_log(cinfo, MSG_PARAM, "Extraction ratio: %.1f%s\n",
+                                        double(found)/double(count)*100.0, "%");
         else
-            creo_log(cinfo, MSG_PLAIN, "  PARAM: Extraction ratio: 100%s\n", "%");
+            creo_log(cinfo, MSG_PARAM, "Extraction ratio: 100%s\n", "%");
     } else
-        creo_log(cinfo, MSG_PLAIN, "  PARAM: No model parameters were found\n");
+        creo_log(cinfo, MSG_PARAM,     "No model parameters were found\n");
 
     return PRO_TK_NO_ERROR;
 }
@@ -692,12 +905,12 @@ PopupMsg(const char *title, const char *msg)
     ProUIMessageButton* button = NULL;
     ProUIMessageButton bresult;
 
-    ProArrayAlloc(1, sizeof(ProUIMessageButton), 1, (ProArray*)&button);
+    (void)ProArrayAlloc(1, sizeof(ProUIMessageButton), 1, (ProArray*)&button);
     button[0] = PRO_UI_MESSAGE_OK;
     ProStringToWstring(wtitle, (char *)title);
     ProStringToWstring(wmsg, (char *)msg);
     ProUIMessageDialogDisplay(PROUIMESSAGE_INFO, wtitle, wmsg, button, PRO_UI_MESSAGE_OK, &bresult);
-    ProArrayFree((ProArray*)&button);
+    (void)ProArrayFree((ProArray*)&button);
 
     return PRO_TK_NO_ERROR;
 }
@@ -911,7 +1124,7 @@ wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     ret = strtod(astr, &endptr);
     if (endptr != NULL && strlen(endptr) > 0) {
         /* Had some invalid character in the input, fail */
-        creo_log(cinfo, MSG_PLAIN, " STRING: Invalid data \"%s\" specified for type double\n", astr);
+        creo_log(cinfo, MSG_STRING, "Invalid data \"%s\" specified for type double\n", astr);
         return -1.0;
     }
     return ret;
@@ -931,7 +1144,7 @@ wstr_to_long(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     ret = strtol(astr, &endptr, 0);
     if (endptr != NULL && strlen(endptr) > 0) {
         /* Had some invalid character in the input, fail */
-        creo_log(cinfo, MSG_PLAIN, " STRING: Invalid data \"%s\" specified for integer type\n", astr);
+        creo_log(cinfo, MSG_STRING, " Invalid data \"%s\" specified for integer type\n", astr);
         return -1;
     }
     return ret;
