@@ -137,12 +137,12 @@ main(void) {
 	}
     } while (client == PKC_NULL);
 
-    /* send the first message to the server */
+    /* send the first message from the server */
     bu_vls_sprintf(&buffer, "This is a message from the server.");
     bytes = pkg_send(MSG_DATA, bu_vls_addr(&buffer), (size_t)bu_vls_strlen(&buffer)+1, client);
     if (bytes < 0) goto failure;
 
-    /* send another message to the server */
+    /* send another message from the server */
     bu_vls_sprintf(&buffer, "Yet another message from the server.");
     bytes = pkg_send(MSG_DATA, bu_vls_addr(&buffer), (size_t)bu_vls_strlen(&buffer)+1, client);
     if (bytes < 0) goto failure;
