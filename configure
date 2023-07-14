@@ -114,6 +114,10 @@ do
                                   shift;;
      --disable-regex)                options="$options -DBRLCAD_REGEX=SYSTEM";
                                   shift;;
+     --enable-uv)                options="$options -DBRLCAD_UV=BUNDLED";
+                                  shift;;
+     --disable-uv)                options="$options -DBRLCAD_UV=SYSTEM";
+                                  shift;;
      --enable-netpbm)                options="$options -DBRLCAD_NETPBM=BUNDLED";
                                   shift;;
      --disable-netpbm)                options="$options -DBRLCAD_NETPBM=SYSTEM";

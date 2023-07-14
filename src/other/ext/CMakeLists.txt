@@ -270,6 +270,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/zlib.cmake)
 # libregex regular expression matching
 include(${CMAKE_CURRENT_SOURCE_DIR}/regex.cmake)
 
+# libuv - Inter-Process Communication (IPC) wrapper library
+include(${CMAKE_CURRENT_SOURCE_DIR}/uv.cmake)
+
 # netpbm library - support for pnm,ppm,pbm, etc. image files
 # http://netpbm.sourceforge.net/
 #
@@ -374,6 +377,7 @@ if (COMMAND CMAKEFILES)
     CMake/FindSTEPCODE.cmake
     CMake/FindTCL.cmake
     CMake/FindUTAHRLE.cmake
+    CMake/FindUV.cmake
     CMake/Path_Setup.cmake
     CMake/RPath_Setup.cmake
     CMake/ThirdParty.cmake
