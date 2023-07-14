@@ -82,36 +82,31 @@ struct pkg_header {
     unsigned char pkh_len[4];	/**< @brief Byte count of remainder */
 };
 
-#define	PKG_STREAMLEN	(32*1024)
+struct pkg_conn_impl;
 struct pkg_conn {
-    int	pkc_fd;					/**< @brief TCP connection fd */
-    int pkc_in_fd;                              /**< @brief input connection fd */
-    int pkc_out_fd;                             /**< @brief output connection fd */
-    const struct pkg_switch *pkc_switch;	/**< @brief Array of message handlers */
-    pkg_errlog pkc_errlog;			/**< @brief Error message logger */
-    struct pkg_header pkc_hdr;			/**< @brief hdr of cur msg */
-    size_t pkc_len;				/**< @brief pkg_len, in host order */
-    unsigned short pkc_type;			/**< @brief pkg_type, in host order */
-    void *pkc_user_data;                        /**< @brief User defined pointer to data for the current pkg_type */
-    /* OUTPUT BUFFER */
-    char pkc_stream[PKG_STREAMLEN];		/**< @brief output stream */
-    unsigned int pkc_magic;			/**< @brief for validating pointers */
-    int pkc_strpos;				/**< @brief index into stream buffer */
-    /* FIRST LEVEL INPUT BUFFER */
-    char *pkc_inbuf;				/**< @brief input stream buffer */
-    int pkc_incur;				/**< @brief current pos in inbuf */
-    int pkc_inend;				/**< @brief first unused pos in inbuf */
-    int pkc_inlen;				/**< @brief length of pkc_inbuf */
-    /* DYNAMIC BUFFER FOR USER */
-    int pkc_left;				/**< @brief #  bytes pkg_get expects */
-    /* neg->read new hdr, 0->all here, >0 ->more to come */
-    char *pkc_buf;				/**< @brief start of dynamic buf */
-    char *pkc_curpos;				/**< @brief current position in pkg_buf */
-    void *pkc_server_data;			/**< @brief used to hold server data for callbacks */
+    struct pkg_conn_impl *i;
 };
 #define PKC_NULL	((struct pkg_conn *)0)
 #define PKC_ERROR	((struct pkg_conn *)(-1L))
 
+
+PKG_EXPORT void *pkg_conn_server_data_get(struct pkg_conn *c);
+PKG_EXPORT void pkg_conn_server_data_set(struct pkg_conn *c, void *sdata);
+
+// Note - the notion of user data appears to have been added back in 2010, and
+// doesn't see much (any?) real use in the code... do we still need this?
+PKG_EXPORT void *pkg_conn_user_data_get(struct pkg_conn *c);
+PKG_EXPORT void pkg_conn_user_data_set(struct pkg_conn *c, void *udata);
+
+PKG_EXPORT const struct pkg_switch *pkg_conn_msg_handlers_get(struct pkg_conn *c);
+PKG_EXPORT void pkg_conn_msg_handlers_set(struct pkg_conn *c, struct pkg_switch *s);
+
+PKG_EXPORT unsigned short pkg_conn_type(struct pkg_conn *c);
+
+// Returns fd (or -1 if no valid fd is present for the connection)
+PKG_EXPORT int pkg_conn_fd(struct pkg_conn *c);
+
+PKG_EXPORT int pkg_conn_len(struct pkg_conn *c);
 
 /**
  * Sends a VLS as a given message type across a pkg connection.

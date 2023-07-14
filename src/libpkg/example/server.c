@@ -158,7 +158,7 @@ main(void) {
 	(void)pkg_process(client);
 	(void)pkg_suckin(client);
 	(void)pkg_process(client);
-    } while (client->pkc_type != MSG_CIAO);
+    } while (pkg_conn_type(client) != MSG_CIAO);
 
 
     /* Confirm the client is done */

@@ -67,7 +67,7 @@ static void
 fb_server_fb_unknown(struct pkg_conn *pcp, char *buf)
 {
     fb_log("fb_server_fb_unknown: message type %d not part of remote LIBFB protocol, ignored.\n",
-	   pcp->pkc_type);
+	   pkg_conn_type(pcp));
     (void)free(buf);
 }
 
@@ -273,7 +273,7 @@ fb_server_fb_write(struct pkg_conn *pcp, char *buf)
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
     num = pkg_glong(&buf[2*NET_LONG_LEN]);
-    type = pcp->pkc_type;
+    type = pkg_conn_type(pcp);
     ret = fb_write(fb_server_fbp, x, y, (unsigned char *)&buf[3*NET_LONG_LEN], num);
 
     if (type < MSG_NORETURN) {
@@ -353,7 +353,7 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
     height = pkg_glong(&buf[3*NET_LONG_LEN]);
 
-    type = pcp->pkc_type;
+    type = pkg_conn_type(pcp);
     ret = fb_writerect(fb_server_fbp, x, y, width, height,
 		       (unsigned char *)&buf[4*NET_LONG_LEN]);
 
@@ -434,7 +434,7 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
     height = pkg_glong(&buf[3*NET_LONG_LEN]);
 
-    type = pcp->pkc_type;
+    type = pkg_conn_type(pcp);
     ret = fb_bwwriterect(fb_server_fbp, x, y, width, height,
 			 (unsigned char *)&buf[4*NET_LONG_LEN]);
 
@@ -513,7 +513,7 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
     ret = fb_setcursor(fb_server_fbp, (unsigned char *)&buf[4*NET_LONG_LEN],
 		       xbits, ybits, xorig, yorig);
 
-    if (pcp->pkc_type < MSG_NORETURN) {
+    if (pkg_conn_type(pcp) < MSG_NORETURN) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
@@ -683,7 +683,7 @@ fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
     if (pcp == PKC_NULL)
 	return;
 
-    if (pcp->pkc_len == 0)
+    if (pkg_conn_len(pcp) == 0)
 	ret = fb_wmap(fb_server_fbp, COLORMAP_NULL);
     else {
 	for (i = 0; i < 256; i++) {
@@ -710,7 +710,7 @@ fb_server_fb_flush(struct pkg_conn *pcp, char *buf)
 
     ret = fb_flush(fb_server_fbp);
 
-    if (pcp->pkc_type < MSG_NORETURN) {
+    if (pkg_conn_type(pcp) < MSG_NORETURN) {
 	(void)pkg_plong(rbuf, ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }

@@ -201,7 +201,7 @@ server_args(struct pkg_conn *connection, char *buf)
     bu_strlcpy(stash->srv_argv[stash->srv_argc - 1], buf, strlen(buf)+1);
 
     bu_log("Planning to shoot at %s\n", buf);
-    connection->pkc_server_data = stash;
+    pkg_conn_server_data_set(connection, stash);
     free(buf);
 }
 
@@ -214,7 +214,7 @@ server_geom(struct pkg_conn *connection, char *buf)
     int flags;
 
     server_data *stash;
-    stash =(server_data*) connection->pkc_server_data;
+    stash =(server_data*) pkg_conn_server_data_get(connection);
 
     if (stash->DBIP == NULL) {
 	/* first geometry received, initialize */
@@ -247,7 +247,7 @@ server_ciao(struct pkg_conn* connection, char *buf)
     server_data *stash;
 
     bu_log("CIAO encountered\n");
-    stash = (server_data*) connection->pkc_server_data;
+    stash = (server_data*) pkg_conn_server_data_get(connection);
     /* shoot some rays just to show that we can if server was
      * invoked with specific geometry.
      */

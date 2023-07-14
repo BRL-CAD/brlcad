@@ -242,19 +242,19 @@ rem_open(register struct fb *ifp, const char *file, int width, int height)
 	}
     }
     PCPL(ifp) = (char *)pc;		/* stash in u1 */
-    ifp->i->if_fd = pc->pkc_fd;		/* unused */
+    ifp->i->if_fd = pkg_conn_fd(pc);		/* unused */
 
 #ifdef HAVE_SYS_SOCKET_H
     {
 	int n;
 	int val;
 	val = 32767;
-	n = setsockopt(pc->pkc_fd, SOL_SOCKET, SO_SNDBUF, (char *)&val, sizeof(val));
+	n = setsockopt(pkg_conn_fd(pc), SOL_SOCKET, SO_SNDBUF, (char *)&val, sizeof(val));
 	if (n < 0)
 	    perror("setsockopt: SO_SNDBUF");
 
 	val = 32767;
-	n = setsockopt(pc->pkc_fd, SOL_SOCKET, SO_RCVBUF, (char *)&val, sizeof(val));
+	n = setsockopt(pkg_conn_fd(pc), SOL_SOCKET, SO_RCVBUF, (char *)&val, sizeof(val));
 	if (n < 0)
 	    perror("setsockopt: SO_RCVBUF");
     }

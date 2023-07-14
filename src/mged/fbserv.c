@@ -370,8 +370,8 @@ fbserv_new_client(struct pkg_conn *pcp)
 
 	/* Found an available slot */
 	clients[i].c_pkg = pcp;
-	clients[i].c_fd = pcp->pkc_fd;
-	fbserv_setup_socket(pcp->pkc_fd);
+	clients[i].c_fd = pkg_conn_fd(pcp);
+	fbserv_setup_socket(pkg_conn_fd(pcp));
 
 	Tcl_CreateFileHandler(clients[i].c_fd, TCL_READABLE,
 			      fbserv_existing_client_handler, (ClientData)(size_t)clients[i].c_fd);
@@ -488,7 +488,7 @@ fb_server_fb_unknown(struct pkg_conn *pcp, char *buf)
 	return;
     }
 
-    bu_log("fbserv: unable to handle message type %d\n", pcp->pkc_type);
+    bu_log("fbserv: unable to handle message type %d\n", pkg_conn_type(pcp));
     (void)free(buf);
 }
 
@@ -638,7 +638,7 @@ fb_server_fb_write(struct pkg_conn *pcp, char *buf)
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
     num = pkg_glong(&buf[2*NET_LONG_LEN]);
-    type = pcp->pkc_type;
+    type = pkg_conn_type(pcp);
     ret = fb_write(fbp, x, y, (unsigned char *)&buf[3*NET_LONG_LEN], num);
 
     if (type < MSG_NORETURN) {
@@ -714,7 +714,7 @@ fb_server_fb_writerect(struct pkg_conn *pcp, char *buf)
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
     height = pkg_glong(&buf[3*NET_LONG_LEN]);
 
-    type = pcp->pkc_type;
+    type = pkg_conn_type(pcp);
     ret = fb_writerect(fbp, x, y, width, height,
 		       (unsigned char *)&buf[4*NET_LONG_LEN]);
 
@@ -792,7 +792,7 @@ fb_server_fb_bwwriterect(struct pkg_conn *pcp, char *buf)
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
     height = pkg_glong(&buf[3*NET_LONG_LEN]);
 
-    type = pcp->pkc_type;
+    type = pkg_conn_type(pcp);
     ret = fb_writerect(fbp, x, y, width, height,
 		       (unsigned char *)&buf[4*NET_LONG_LEN]);
 
@@ -866,7 +866,7 @@ fb_server_fb_setcursor(struct pkg_conn *pcp, char *buf)
     ret = fb_setcursor(fbp, (unsigned char *)&buf[4*NET_LONG_LEN],
 		       xbits, ybits, xorig, yorig);
 
-    if (pcp->pkc_type < MSG_NORETURN) {
+    if (pkg_conn_type(pcp) < MSG_NORETURN) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
@@ -1031,7 +1031,7 @@ fb_server_fb_wmap(struct pkg_conn *pcp, char *buf)
 	return;
     }
 
-    if (pcp->pkc_len == 0)
+    if (pkg_conn_len(pcp) == 0)
 	ret = fb_wmap(fbp, COLORMAP_NULL);
     else {
 	for (i = 0; i < 256; i++) {
@@ -1056,7 +1056,7 @@ fb_server_fb_flush(struct pkg_conn *pcp, char *buf)
 
     ret = fb_flush(fbp);
 
-    if (pcp->pkc_type < MSG_NORETURN) {
+    if (pkg_conn_type(pcp) < MSG_NORETURN) {
 	(void)pkg_plong(rbuf, ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }

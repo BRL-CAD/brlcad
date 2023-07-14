@@ -177,7 +177,7 @@ server_main(int UNUSED(argc), const char *UNUSED(argv)) {
 	(void)pkg_process(client);
 	(void)pkg_suckin(client);
 	(void)pkg_process(client);
-    } while (client->pkc_type != MSG_CIAO);
+    } while (pkg_conn_type(client) != MSG_CIAO);
 
 
     /* Confirm the client is done */
@@ -206,8 +206,11 @@ client_unexpected(struct pkg_conn *UNUSED(connection), char *UNUSED(buf))
 void
 client_data(struct pkg_conn *connection, char *buf)
 {
+    struct bu_vls *udata = (struct bu_vls *)pkg_conn_user_data_get(connection);
+    if (!udata)
+	return;
     bu_log("Received file data: %s\n", buf);
-    bu_vls_printf((struct bu_vls *)connection->pkc_user_data, "\n%s\n", buf);
+    bu_vls_printf(udata, "\n%s\n", buf);
     free(buf);
 }
 
@@ -259,7 +262,7 @@ client_main(int UNUSED(argc), const char **UNUSED(argv)) {
 	bu_exit(-1, "Client exiting\n");
     }
 
-    connection->pkc_switch = callbacks;
+    pkg_conn_msg_handlers_set(connection, callbacks);
 
     /* let the server know we're cool. */
     bytes = pkg_send(MSG_HELO, MAGIC_ID, strlen(MAGIC_ID) + 1, connection);
@@ -299,7 +302,7 @@ client_main(int UNUSED(argc), const char **UNUSED(argv)) {
 	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
 	}
 
-    } while (connection->pkc_type != MSG_CIAO);
+    } while (pkg_conn_type(connection) != MSG_CIAO);
 
     /* server's done, send our own message back to it */
     bytes = pkg_send(MSG_DATA, "Message from client", 20, connection);

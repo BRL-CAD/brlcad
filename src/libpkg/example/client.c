@@ -55,7 +55,11 @@ void
 client_data(struct pkg_conn *connection, char *buf)
 {
     bu_log("Received file data: %s\n", buf);
-    bu_vls_printf((struct bu_vls *)connection->pkc_user_data, "\n%s\n", buf);
+    if (!connection || !pkg_conn_user_data_get(connection)) {
+	free(buf);
+	return;
+    }
+    bu_vls_printf((struct bu_vls *)pkg_conn_user_data_get(connection), "\n%s\n", buf);
     free(buf);
 }
 
@@ -95,7 +99,7 @@ main(void) {
 	bu_log("Connection to %s, port %d, failed.\n", server, port);
 	bu_bomb("ERROR: Unable to open a connection to the server\n");
     }
-    connection->pkc_switch = callbacks;
+    pkg_conn_msg_handlers_set(connection, callbacks);
 
     /* let the server know we're cool. */
     bytes = pkg_send(MSG_HELO, MAGIC_ID, strlen(MAGIC_ID) + 1, connection);
@@ -135,7 +139,7 @@ main(void) {
 	    bu_log("Processed %d packet%s\n", pkg_result, pkg_result == 1 ? "" : "s");
 	}
 
-    } while (connection->pkc_type != MSG_CIAO);
+    } while (pkg_conn_type(connection) != MSG_CIAO);
 
     /* server's done, send our own message back to it */
     bytes = pkg_send(MSG_DATA, "Message from client", 20, connection);

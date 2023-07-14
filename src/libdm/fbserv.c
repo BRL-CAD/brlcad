@@ -60,7 +60,7 @@ drop_client(struct fbserv_obj *fbsp, int sub)
 static void
 fbs_rfbunknown(struct pkg_conn *pcp, char *buf)
 {
-    bu_log("fbserv: unable to handle message type %d\n", pcp->pkc_type);
+    bu_log("fbserv: unable to handle message type %d\n", pkg_conn_type(pcp));
     if (buf) {
 	(void)free(buf);
     }
@@ -72,7 +72,7 @@ fbs_rfbunknown(struct pkg_conn *pcp, char *buf)
 static void
 fbs_rfbopen(struct pkg_conn *pcp, char *buf)
 {
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
     char rbuf[5*NET_LONG_LEN+1] = {0};
     int want;
 
@@ -96,7 +96,7 @@ fbs_rfbopen(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbclose(struct pkg_conn *pcp, char *buf)
 {
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
     char rbuf[NET_LONG_LEN+1] = {0};
 
     /*
@@ -136,7 +136,7 @@ fbs_rfbfree(struct pkg_conn *pcp, char *buf)
 void
 fbs_rfbclear(struct pkg_conn *pcp, char *buf)
 {
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
     RGBpixel bg;
     char rbuf[NET_LONG_LEN+1] = {0};
 
@@ -164,7 +164,7 @@ fbs_rfbread(struct pkg_conn *pcp, char *buf)
     int ret;
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbread: null buffer\n");
@@ -204,7 +204,7 @@ fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int type;
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbwrite: null buffer\n");
@@ -214,7 +214,7 @@ fbs_rfbwrite(struct pkg_conn *pcp, char *buf)
     x = pkg_glong(&buf[0*NET_LONG_LEN]);
     y = pkg_glong(&buf[1*NET_LONG_LEN]);
     num = pkg_glong(&buf[2*NET_LONG_LEN]);
-    type = pcp->pkc_type;
+    type = pkg_conn_type(pcp);
     ret = fb_write(curr_fbp, x, y, (unsigned char *)&buf[3*NET_LONG_LEN], (size_t)num);
 
     if (type < MSG_NORETURN) {
@@ -234,7 +234,7 @@ fbs_rfbreadrect(struct pkg_conn *pcp, char *buf)
     int ret;
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbreadrect: null buffer\n");
@@ -277,7 +277,7 @@ fbs_rfbwriterect(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int type;
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbwriterect: null buffer\n");
@@ -289,7 +289,7 @@ fbs_rfbwriterect(struct pkg_conn *pcp, char *buf)
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
     height = pkg_glong(&buf[3*NET_LONG_LEN]);
 
-    type = pcp->pkc_type;
+    type = pkg_conn_type(pcp);
     ret = fb_writerect(curr_fbp, x, y, width, height,
 		       (unsigned char *)&buf[4*NET_LONG_LEN]);
 
@@ -310,7 +310,7 @@ fbs_rfbbwreadrect(struct pkg_conn *pcp, char *buf)
     int ret;
     static unsigned char *scanbuf = NULL;
     static int buflen = 0;
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbbwreadrect: null buffer\n");
@@ -353,7 +353,7 @@ fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1] = {0};
     int ret;
     int type;
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbbwwriterect: null buffer\n");
@@ -365,7 +365,7 @@ fbs_rfbbwwriterect(struct pkg_conn *pcp, char *buf)
     width = pkg_glong(&buf[2*NET_LONG_LEN]);
     height = pkg_glong(&buf[3*NET_LONG_LEN]);
 
-    type = pcp->pkc_type;
+    type = pkg_conn_type(pcp);
     ret = fb_writerect(curr_fbp, x, y, width, height,
 		       (unsigned char *)&buf[4*NET_LONG_LEN]);
 
@@ -382,7 +382,7 @@ fbs_rfbcursor(struct pkg_conn *pcp, char *buf)
 {
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbcursor: null buffer\n");
@@ -405,7 +405,7 @@ fbs_rfbgetcursor(struct pkg_conn *pcp, char *buf)
     int ret;
     int mode, x, y;
     char rbuf[4*NET_LONG_LEN+1] = {0};
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     ret = fb_getcursor(curr_fbp, &mode, &x, &y);
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -427,7 +427,7 @@ fbs_rfbsetcursor(struct pkg_conn *pcp, char *buf)
     int ret;
     int xbits, ybits;
     int xorig, yorig;
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfsetcursor: null buffer\n");
@@ -442,7 +442,7 @@ fbs_rfbsetcursor(struct pkg_conn *pcp, char *buf)
     ret = fb_setcursor(curr_fbp, (unsigned char *)&buf[4*NET_LONG_LEN],
 		       xbits, ybits, xorig, yorig);
 
-    if (pcp->pkc_type < MSG_NORETURN) {
+    if (pkg_conn_type(pcp) < MSG_NORETURN) {
 	(void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
@@ -456,7 +456,7 @@ fbs_rfbscursor(struct pkg_conn *pcp, char *buf)
 {
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbscursor: null buffer\n");
@@ -479,7 +479,7 @@ fbs_rfbwindow(struct pkg_conn *pcp, char *buf)
 {
     int x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbwindow: null buffer\n");
@@ -502,7 +502,7 @@ fbs_rfbzoom(struct pkg_conn *pcp, char *buf)
 {
     int x, y;
     char rbuf[NET_LONG_LEN+1] = {0};
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbzoom: null buffer\n");
@@ -524,7 +524,7 @@ fbs_rfbview(struct pkg_conn *pcp, char *buf)
     int ret;
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1] = {0};
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbv: null buffer\n");
@@ -549,7 +549,7 @@ fbs_rfbgetview(struct pkg_conn *pcp, char *buf)
     int ret;
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[5*NET_LONG_LEN+1] = {0};
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     ret = fb_getview(curr_fbp, &xcenter, &ycenter, &xzoom, &yzoom);
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], ret);
@@ -572,7 +572,7 @@ fbs_rfbrmap(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1] = {0};
     ColorMap map;
     unsigned char cm[256*2*3];
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], fb_rmap(curr_fbp, &map));
     for (i = 0; i < 256; i++) {
@@ -602,14 +602,14 @@ fbs_rfbwmap(struct pkg_conn *pcp, char *buf)
     char rbuf[NET_LONG_LEN+1] = {0};
     long ret;
     ColorMap map;
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbwmap: null buffer\n");
 	return;
     }
 
-    if (pcp->pkc_len == 0) {
+    if (pkg_conn_len(pcp) == 0) {
 	ret = fb_wmap(curr_fbp, COLORMAP_NULL);
     } else {
 	for (i = 0; i < 256; i++) {
@@ -630,11 +630,11 @@ fbs_rfbflush(struct pkg_conn *pcp, char *buf)
 {
     int ret;
     char rbuf[NET_LONG_LEN+1] = {0};
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     ret = fb_flush(curr_fbp);
 
-    if (pcp->pkc_type < MSG_NORETURN) {
+    if (pkg_conn_type(pcp) < MSG_NORETURN) {
 	(void)pkg_plong(rbuf, ret);
 	pkg_send(MSG_RETURN, rbuf, NET_LONG_LEN, pcp);
     }
@@ -651,7 +651,7 @@ fbs_rfbpoll(struct pkg_conn *pcp, char *buf)
     if (pcp == PKC_ERROR) {
 	return;
     }
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     (void)fb_poll(curr_fbp);
     if (buf) {
@@ -669,7 +669,7 @@ fbs_rfbhelp(struct pkg_conn *pcp, char *buf)
 {
     long ret;
     char rbuf[NET_LONG_LEN+1] = {0};
-    struct fb *curr_fbp = (struct fb *)pcp->pkc_server_data;
+    struct fb *curr_fbp = (struct fb *)pkg_conn_server_data_get(pcp);
 
     if (!buf) {
 	bu_log("fbs_rfbhelp: null buffer\n");
@@ -842,7 +842,7 @@ fbs_existing_client_handler(void *clientData, int UNUSED(mask))
 	if (fbsp->fbs_clients[i].fbsc_fd == 0)
 	    continue;
 
-	fbsp->fbs_clients[i].fbsc_pkg->pkc_server_data = (void *)curr_fbp;
+	pkg_conn_server_data_set(fbsp->fbs_clients[i].fbsc_pkg, (void *)curr_fbp);
 
 	if ((pkg_process(fbsp->fbs_clients[i].fbsc_pkg)) < 0)
 	    bu_log("pkg_process error encountered (1)\n");
@@ -882,10 +882,10 @@ fbs_new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, void *data)
 	    continue;
 
 	/* Found an available slot */
-	fbsp->fbs_clients[i].fbsc_fd = pcp->pkc_fd;
+	fbsp->fbs_clients[i].fbsc_fd = pkg_conn_fd(pcp);
 	fbsp->fbs_clients[i].fbsc_pkg = pcp;
 	fbsp->fbs_clients[i].fbsc_fbsp = fbsp;
-	fbs_setup_socket(pcp->pkc_fd);
+	fbs_setup_socket(pkg_conn_fd(pcp));
 
 	(*fbsp->fbs_open_client_handler)(fbsp, i, data);
 

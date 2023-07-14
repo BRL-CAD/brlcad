@@ -220,7 +220,7 @@ main(int argc, char **argv)
      */
     {
 	int val = 32767;
-	n = setsockopt(pcsrv->pkc_fd, SOL_SOCKET, SO_SNDBUF, (const void *)&val, sizeof(val));
+	n = setsockopt(pkg_conn_fd(pcsrv), SOL_SOCKET, SO_SNDBUF, (const void *)&val, sizeof(val));
 	if (n < 0)
 	    perror("setsockopt: SO_SNDBUF");
     }
@@ -343,11 +343,11 @@ main(int argc, char **argv)
 
 	/* Second, see if any input to read */
 	FD_ZERO(&ifds);
-	FD_SET(pcsrv->pkc_fd, &ifds);
+	FD_SET(pkg_conn_fd(pcsrv), &ifds);
 	tv.tv_sec = BU_LIST_NON_EMPTY(&WorkHead) ? 0L : 9999L;
 	tv.tv_usec = 0L;
 
-	if (select(pcsrv->pkc_fd+1, &ifds, (fd_set *)0, (fd_set *)0, &tv) != 0) {
+	if (select(pkg_conn_fd(pcsrv)+1, &ifds, (fd_set *)0, (fd_set *)0, &tv) != 0) {
 	    n = pkg_suckin(pcsrv);
 	    if (n < 0) {
 		bu_log("pkg_suckin error\n");
@@ -410,7 +410,7 @@ ph_enqueue(struct pkg_conn *pc, char *buf)
 	fprintf(stderr, "ph_enqueue: %s\n", buf);
 
     BU_GET(lp, struct pkg_queue);
-    lp->type = pc->pkc_type;
+    lp->type = pkg_conn_type(pc);
     lp->buf = buf;
     BU_LIST_INSERT(&WorkHead, &lp->l);
 }
@@ -895,12 +895,16 @@ ph_unexp(struct pkg_conn *pc, char *buf)
     if (debug)
 	fprintf(stderr, "ph_unexp %s\n", buf);
 
-    for (i=0; pc->pkc_switch[i].pks_handler != NULL; i++) {
-	if (pc->pkc_switch[i].pks_type == pc->pkc_type)
+    const struct pkg_switch *pswitch = pkg_conn_msg_handlers_get(pc);
+    if (!pswitch)
+	return;
+
+    for (i=0; pswitch[i].pks_handler != NULL; i++) {
+	if (pswitch[i].pks_type == pkg_conn_type(pc))
 	    break;
     }
-    bu_log("ph_unexp: unable to handle %s message: len %zu",
-	   pc->pkc_switch[i].pks_title, pc->pkc_len);
+    bu_log("ph_unexp: unable to handle %s message: len %d",
+	   pswitch[i].pks_title, pkg_conn_len(pc));
     *buf = '*';
     (void)free(buf);
 }

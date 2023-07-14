@@ -19,7 +19,10 @@ SET_TARGET_PROPERTIES(libpkg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(example)
 add_subdirectory(example_qt)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  pkg_private.h
+  )
 
 # Local Variables:
 # tab-width: 8

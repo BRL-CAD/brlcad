@@ -263,7 +263,7 @@ fbserv_drop_client(int sub)
     if (clients[sub] == PKC_NULL)
 	return;
 
-    fd = clients[sub]->pkc_fd;
+    fd = pkg_conn_fd(clients[sub]);
 
     FD_CLR(fd, &select_list);
     pkg_close(clients[sub]);
@@ -282,9 +282,9 @@ fbserv_new_client(struct pkg_conn *pcp)
 	if (clients[i] != NULL) continue;
 	/* Found an available slot */
 	clients[i] = pcp;
-	FD_SET(pcp->pkc_fd, &select_list);
-	V_MAX(max_fd, pcp->pkc_fd);
-	fbserv_setup_socket(pcp->pkc_fd);
+	FD_SET(pkg_conn_fd(pcp), &select_list);
+	V_MAX(max_fd, pkg_conn_fd(pcp));
+	fbserv_setup_socket(pkg_conn_fd(pcp));
 	return;
     }
     fprintf(stderr, "fbserv: too many clients\n");
@@ -348,7 +348,7 @@ main_loop(void)
 	    if (pkg_process(clients[i]) < 0) {
 		fprintf(stderr, "pkg_process error encountered (1)\n");
 	    }
-	    if (! FD_ISSET(clients[i]->pkc_fd, &infds)) continue;
+	    if (! FD_ISSET(pkg_conn_fd(clients[i]), &infds)) continue;
 	    if (pkg_suckin(clients[i]) <= 0) {
 		/* Probably EOF */
 		fbserv_drop_client(i);

@@ -499,12 +499,12 @@ drop_server(struct servers *sp, char *why)
     }
 
     /* Clear the bits from "clients" now, to prevent further select()s */
-    fd = pc->pkc_fd;
+    fd = pkg_conn_fd(pc);
     if (fd <= 3 || fd >= (int)MAXSERVERS) {
 	bu_log("drop_server: fd=%d is unreasonable, forget it!\n", fd);
 	return;
     }
-    FD_CLR(sp->sr_pc->pkc_fd, &clients);
+    FD_CLR(pkg_conn_fd(sp->sr_pc), &clients);
 
     if (oldstate != SRST_READY && oldstate != SRST_NEED_TREE) return;
 
@@ -599,7 +599,7 @@ addclient(struct pkg_conn *pc)
     struct sockaddr_in from;
     int fd;
 
-    fd = pc->pkc_fd;
+    fd = pkg_conn_fd(pc);
 
     fromlen = (socklen_t) sizeof (from);
 
@@ -1809,7 +1809,7 @@ schedule(struct timeval *nowp)
 	    case SRST_CLOSING:
 		/* Handle final closing */
 		if (rem_debug>1) bu_log("%s Final close on %s\n", stamp(), sp->sr_host->ht_name);
-		FD_CLR(sp->sr_pc->pkc_fd, &clients);
+		FD_CLR(pkg_conn_fd(sp->sr_pc), &clients);
 		pkg_close(sp->sr_pc);
 
 		sp->sr_pc = PKC_NULL;
@@ -2479,7 +2479,7 @@ cd_status(const int UNUSED(argc), const char **UNUSED(argv))
     for (sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++) {
 	if (sp->sr_pc == PKC_NULL) continue;
 	bu_log("  %2d  %s %s",
-	       sp->sr_pc->pkc_fd, sp->sr_host->ht_name,
+	       pkg_conn_fd(sp->sr_pc), sp->sr_host->ht_name,
 	       state_to_string(sp->sr_state));
 	if (sp->sr_curframe != FRAME_NULL) {
 	    CHECK_FRAME(sp->sr_curframe);
@@ -3032,11 +3032,15 @@ ph_default(struct pkg_conn *pc, char *buf)
 {
     int i;
 
-    for (i = 0; pc->pkc_switch[i].pks_handler != NULL; i++) {
-	if (pc->pkc_switch[i].pks_type == pc->pkc_type) break;
+    const struct pkg_switch *pswitch = pkg_conn_msg_handlers_get(pc);
+    if (!pswitch)
+	return;
+
+    for (i = 0; pswitch[i].pks_handler != NULL; i++) {
+	if (pswitch[i].pks_type == pkg_conn_type(pc)) break;
     }
-    bu_log("ctl: unable to handle %s message: len %zu",
-	   pc->pkc_switch[i].pks_title, pc->pkc_len);
+    bu_log("ctl: unable to handle %s message: len %d",
+	   pswitch[i].pks_title, pkg_conn_len(pc));
     *buf = '*';
     (void)free(buf);
 }
@@ -3052,14 +3056,14 @@ ph_dirbuild_reply(struct pkg_conn *pc, char *buf)
 {
     struct servers *sp;
 
-    sp = &servers[pc->pkc_fd];
+    sp = &servers[pkg_conn_fd(pc)];
     bu_log("%s %s dirbuild OK (%s)\n",
 	   stamp(),
 	   sp->sr_host->ht_name,
 	   buf);
     if (buf) (void)free(buf);
     if (sp->sr_pc != pc) {
-	bu_log("unexpected MSG_DIRBUILD_REPLY from fd %d\n", pc->pkc_fd);
+	bu_log("unexpected MSG_DIRBUILD_REPLY from fd %d\n", pkg_conn_fd(pc));
 	return;
     }
     if (sp->sr_state != SRST_DOING_DIRBUILD) {
@@ -3081,14 +3085,14 @@ ph_gettrees_reply(struct pkg_conn *pc, char *buf)
 {
     struct servers *sp;
 
-    sp = &servers[pc->pkc_fd];
+    sp = &servers[pkg_conn_fd(pc)];
     bu_log("%s %s gettrees OK (%s)\n",
 	   stamp(),
 	   sp->sr_host->ht_name,
 	   buf);
     if (buf) (void)free(buf);
     if (sp->sr_pc != pc) {
-	bu_log("unexpected MSG_GETTREES_REPLY from fd %d\n", pc->pkc_fd);
+	bu_log("unexpected MSG_GETTREES_REPLY from fd %d\n", pkg_conn_fd(pc));
 	return;
     }
     if (sp->sr_state != SRST_DOING_GETTREES) {
@@ -3107,7 +3111,7 @@ ph_print(struct pkg_conn *pc, char *buf)
     if (print_on) {
 	bu_log("%s %s: %s",
 	       stamp(),
-	       servers[pc->pkc_fd].sr_host->ht_name,
+	       servers[pkg_conn_fd(pc)].sr_host->ht_name,
 	       buf);
 	if (buf[strlen(buf)-1] != '\n')
 	    bu_log("\n");
@@ -3121,7 +3125,7 @@ ph_version(struct pkg_conn *pc, char *buf)
 {
     struct servers *sp;
 
-    sp = &servers[pc->pkc_fd];
+    sp = &servers[pkg_conn_fd(pc)];
     if (!BU_STR_EQUAL(PROTOCOL_VERSION, buf)) {
 	bu_log("ERROR %s: protocol version mis-match\n",
 	       sp->sr_host->ht_name);
@@ -3144,7 +3148,7 @@ ph_cmd(struct pkg_conn *pc, char *buf)
 {
     struct servers *sp;
 
-    sp = &servers[pc->pkc_fd];
+    sp = &servers[pkg_conn_fd(pc)];
     bu_log("%s %s: cmd '%s'\n", stamp(), sp->sr_host->ht_name, buf);
     (void)rt_do_cmd((struct rt_i *)0, buf, cmd_tab);
     if (buf) (void)free(buf);
@@ -3171,7 +3175,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
 
     (void)gettimeofday(&tvnow, (struct timezone *)0);
 
-    sp = &servers[pc->pkc_fd];
+    sp = &servers[pkg_conn_fd(pc)];
     if (sp->sr_state != SRST_READY && sp->sr_state != SRST_NEED_TREE &&
 	sp->sr_state != SRST_DOING_GETTREES) {
 	bu_log("%s Ignoring MSG_PIXELS from %s\n",
@@ -3256,9 +3260,9 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     /* Stash pixels in bottom-to-top .pix order */
     npix = info.li_endpix - info.li_startpix + 1;
     i = npix*3;
-    if (pc->pkc_len - ext.ext_nbytes < i) {
+    if (pkg_conn_len(pc) - ext.ext_nbytes < i) {
 	bu_log("short scanline, s/b=%zu, was=%zu\n",
-	       i, pc->pkc_len - ext.ext_nbytes);
+	       i, pkg_conn_len(pc) - ext.ext_nbytes);
 	drop_server(sp, "short scanline");
 	goto out;
     }
