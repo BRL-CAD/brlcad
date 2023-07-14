@@ -24,6 +24,7 @@ set(other_licenses
   tk.txt
   tkhtml.txt
   tktable.txt
+  uv.txt
   zlib.txt
   )
 
