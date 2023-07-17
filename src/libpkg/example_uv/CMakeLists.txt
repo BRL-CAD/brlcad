@@ -1,0 +1,21 @@
+set(PKG_EXAMPLE_INCLUDES
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BU_INCLUDE_DIRS}
+  ${PKG_INCLUDE_DIRS}
+  ${UV_INCLUDE_DIRS}
+  )
+LIST(REMOVE_DUPLICATES PKG_EXAMPLE_INCLUDES)
+include_directories(${PKG_EXAMPLE_INCLUDES})
+
+BRLCAD_ADDEXEC(pkg_uv_test_server server.c "libbu;libpkg;${UV_LIBRARIES}" NO_INSTALL)
+BRLCAD_ADDEXEC(pkg_uv_test_client client.c "libbu;libpkg;${UV_LIBRARIES}" NO_INSTALL)
+
+CMAKEFILES(ncp.h)
+CMAKEFILES(CMakeLists.txt)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

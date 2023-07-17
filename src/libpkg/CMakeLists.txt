@@ -19,6 +19,7 @@ SET_TARGET_PROPERTIES(libpkg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(example)
 add_subdirectory(example_qt)
+add_subdirectory(example_uv)
 CMAKEFILES(
   CMakeLists.txt
   pkg_private.h
