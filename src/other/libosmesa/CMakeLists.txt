@@ -23,7 +23,7 @@ endif (HAVE_M_LIBRARY)
 # prefixing
 add_definitions(-DUSE_MGL_NAMESPACE)
 
-# The primarly libosmesa library
+# The primary libosmesa library
 add_subdirectory(src)
 
 # For testing purposes, the build defines a number
