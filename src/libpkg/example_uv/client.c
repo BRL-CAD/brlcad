@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include "uv.h"
 #include "bio.h"
 
 /* interface headers */
@@ -37,6 +38,7 @@
 #include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
+#include "bu/str.h"
 #include "bu/vls.h"
 #include "pkg.h"
 #include "ncp.h"
@@ -71,8 +73,57 @@ client_ciao(struct pkg_conn *UNUSED(connection), char *buf)
     free(buf);
 }
 
+typedef struct {
+    uv_write_t req;
+    uv_buf_t buf;
+} write_req_t;
+
+void free_write_req(uv_write_t *req) {
+    write_req_t *wr = (write_req_t*) req;
+    free(wr->buf.base);
+    free(wr);
+}
+
+void on_write(uv_write_t *UNUSED(req), int status) {
+    if (status < 0) {
+      fprintf(stderr, "write error %s\n", uv_err_name(status));
+    } else {
+      puts("done.");
+    }
+    //free_write_req(req);
+}
+
+void on_connect(uv_connect_t* connect, int status){
+  if (status < 0) {
+    bu_exit(EXIT_FAILURE, "failed!");
+  } else {
+    bu_log("connected! sending msg...");
+    write_req_t *req = (write_req_t*) malloc(sizeof(write_req_t));
+    req->buf = uv_buf_init("Hello World!", 13);
+    uv_write((uv_write_t*) req, connect->handle, &req->buf, 1, on_write);
+  }
+}
+
+// First, try to get https://stackoverflow.com/a/43687518 working...
 int
 main(void) {
+
+    uv_loop_t *loop = uv_default_loop();
+    if (!loop)
+	return -1;
+    uv_pipe_t* handle = (uv_pipe_t*)malloc(sizeof(uv_pipe_t));
+    if (!handle)
+	return -1;
+    uv_connect_t* connect = (uv_connect_t*)malloc(sizeof(uv_connect_t));
+    if (!connect)
+	return -1;
+
+    uv_pipe_init(loop, handle, 0);
+    uv_pipe_connect(connect, handle, "/tmp/pkg_uv_pipe", &on_connect);
+
+    uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+    bu_exit(EXIT_SUCCESS, "Done");
+
     int port = 2000;
     const char *server = "127.0.0.1";
     struct bu_vls all_msgs = BU_VLS_INIT_ZERO;
