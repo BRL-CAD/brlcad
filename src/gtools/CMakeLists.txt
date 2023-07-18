@@ -42,8 +42,26 @@ add_subdirectory(gdiff)
 
 add_subdirectory(tests)
 
+# We use the std::filesystem from C++17 in this utility, so only try to build
+# it if we know we have a compiler that supports it - BRL-CAD as a whole does
+# not yet require C++17, so until we do this target may need to be disabled
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-std=c++17" COMPILER_SUPPORTS_CXX17)
+if (COMPILER_SUPPORTS_CXX17)
+  BRLCAD_ADDEXEC(gsurvey gsurvey.cpp "librt;libbu" NO_INSTALL)
+  target_compile_features(gsurvey PRIVATE cxx_std_17)
+  check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
+  if (O3_COMPILER_FLAG)
+    # If we have the O3 flag, use it
+    target_compile_options(gsurvey PRIVATE "-O3")
+  endif (O3_COMPILER_FLAG)
+endif (COMPILER_SUPPORTS_CXX17)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  gsurvey.cpp
+  md5.hpp
+  )
 
 # Local Variables:
 # tab-width: 8
