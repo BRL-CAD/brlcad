@@ -101,19 +101,25 @@ void echo_write(uv_write_t *req, int status) {
     if (status < 0) {
         fprintf(stderr, "Write error %s\n", uv_err_name(status));
     }
+    write_req_t *wr = (write_req_t *)req;
+    if (wr->buf.base) {
+	printf("Read: %s\n", wr->buf.base);
+    }
+
     free_write_req(req);
 }
 
 void echo_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
+
     if (nread > 0) {
-        write_req_t *req = (write_req_t*) malloc(sizeof(write_req_t));
-        req->buf = uv_buf_init(buf->base, nread);
-        uv_write((uv_write_t*) req, client, &req->buf, 1, echo_write);
-        return;
+	write_req_t *req = (write_req_t*) malloc(sizeof(write_req_t));
+	req->buf = uv_buf_init(buf->base, nread);
+	uv_write((uv_write_t*) req, client, &req->buf, 1, echo_write);
+	return;
     }
 
     if (nread < 0) {
-        if (nread != UV_EOF)
+	if (nread != UV_EOF)
             fprintf(stderr, "Read error %s\n", uv_err_name(nread));
         uv_close((uv_handle_t*) client, NULL);
     }

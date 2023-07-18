@@ -79,27 +79,26 @@ typedef struct {
 } write_req_t;
 
 void free_write_req(uv_write_t *req) {
-    write_req_t *wr = (write_req_t*) req;
-    free(wr->buf.base);
-    free(wr);
+    free(req);
 }
 
-void on_write(uv_write_t *UNUSED(req), int status) {
+void on_write(uv_write_t *req, int status) {
     if (status < 0) {
       fprintf(stderr, "write error %s\n", uv_err_name(status));
     } else {
-      puts("done.");
+	write_req_t *wr = (write_req_t*) req;
+	printf("Wrote %s\n", wr->buf.base);
     }
-    //free_write_req(req);
+    free_write_req(req);
 }
 
 void on_connect(uv_connect_t* connect, int status){
   if (status < 0) {
     bu_exit(EXIT_FAILURE, "failed!");
   } else {
-    bu_log("connected! sending msg...");
+    bu_log("connected! sending msg...\n");
     write_req_t *req = (write_req_t*) malloc(sizeof(write_req_t));
-    req->buf = uv_buf_init("Hello World!", 13);
+    req->buf = uv_buf_init("Hello World!\n", 14);
     uv_write((uv_write_t*) req, connect->handle, &req->buf, 1, on_write);
   }
 }
