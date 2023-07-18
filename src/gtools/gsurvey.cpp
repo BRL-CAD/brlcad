@@ -128,6 +128,40 @@ scan_path(std::vector<std::filesystem::path> &g_files, const char *p)
     }
 }
 
+static void
+analyze_g(GData &gdata, std::string &path, unsigned long long fhash)
+{
+    struct db_i *dbip = db_open(path.c_str(), DB_OPEN_READONLY);
+    if (dbip == DBI_NULL)
+	return;
+    if (db_dirbuild(dbip) < 0)
+	return;
+    db_update_nref(dbip, &rt_uniresource);
+    for (int i = 0; i < RT_DBNHASH; i++) {
+	for (struct directory *dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+	    if (dp->d_flags & RT_DIR_HIDDEN)
+		continue;
+	    unsigned long long objname_hash = hash_string(dp->d_namep);
+	    gdata.string_map[objname_hash] = std::string(dp->d_namep);
+	    gdata.names_files[objname_hash].insert(fhash);
+	    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
+	    if (db_get_external(&ext, dp, dbip))
+		continue;
+	    XXH64_state_t h_state;
+	    XXH64_reset(&h_state, 0);
+	    XXH64_update(&h_state, ext.ext_buf, ext.ext_nbytes*sizeof(uint8_t));
+	    XXH64_hash_t hash_val = XXH64_digest(&h_state);
+	    unsigned long long objdata_hash = (unsigned long long)hash_val;
+	    gdata.string_map[objdata_hash] = std::string(dp->d_namep);
+	    gdata.file_objects[fhash].insert(objdata_hash);
+	    gdata.object_files[objdata_hash].insert(fhash);
+	    gdata.name_objects[objname_hash].insert(objdata_hash);
+	    gdata.object_names[objdata_hash].insert(objname_hash);
+	}
+    }
+    db_close(dbip);
+}
+
 int main(int argc, const char **argv)
 {
     std::vector<std::filesystem::path> g_files;
@@ -136,6 +170,9 @@ int main(int argc, const char **argv)
 
     // Stash the program name
     bu_setprogname(argv[0]);
+
+    // Global initialization
+    rt_init_resource(&rt_uniresource, 0, NULL);
 
     argc--;argv++;
 
@@ -190,7 +227,13 @@ int main(int argc, const char **argv)
 	// Only need to analyze one path for unique contents - .g contents are the same
 	unsigned long long phash = *d_it->second.begin();
 	std::string gpath = gdata.string_map[phash];
-	std::cout << "TODO: analyze " << gpath << "\n";
+	std::cout << "Analyzing " << gpath << "\n";
+	analyze_g(gdata, gpath, d_it->first);
+    }
+
+    for (d_it = gdata.names_files.begin(); d_it != gdata.names_files.end(); d_it++) {
+	std::string oname = gdata.string_map[d_it->first];
+	std::cout << oname << " count: " << d_it->second.size() << "\n";
     }
 
     return 0;
