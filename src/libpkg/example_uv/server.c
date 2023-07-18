@@ -109,7 +109,7 @@ void echo_write(uv_write_t *req, int status) {
     free_write_req(req);
 }
 
-void echo_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
+void after_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
 
     if (nread > 0) {
 	write_req_t *req = (write_req_t*) malloc(sizeof(write_req_t));
@@ -119,15 +119,18 @@ void echo_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf) {
     }
 
     if (nread < 0) {
-	if (nread != UV_EOF)
+	if (nread != UV_EOF && nread != UV_ECONNRESET)
             fprintf(stderr, "Read error %s\n", uv_err_name(nread));
         uv_close((uv_handle_t*) client, NULL);
+	uv_fs_t req;
+	uv_fs_unlink(loop, &req, "/tmp/pkg_uv_pipe", NULL);
+	exit(0);
     }
 
     free(buf->base);
 }
 
-void on_new_connection(uv_stream_t *server, int status) {
+void on_listen(uv_stream_t *server, int status) {
     if (status == -1) {
         // error!
         return;
@@ -136,17 +139,11 @@ void on_new_connection(uv_stream_t *server, int status) {
     uv_pipe_t *client = (uv_pipe_t*) malloc(sizeof(uv_pipe_t));
     uv_pipe_init(loop, client, 0);
     if (uv_accept(server, (uv_stream_t*) client) == 0) {
-        uv_read_start((uv_stream_t*) client, alloc_buffer, echo_read);
+        uv_read_start((uv_stream_t*) client, alloc_buffer, after_read);
     }
     else {
         uv_close((uv_handle_t*) client, NULL);
     }
-}
-
-void remove_sock(int UNUSED(sig)) {
-    uv_fs_t req;
-    uv_fs_unlink(loop, &req, PIPENAME, NULL);
-    exit(0);
 }
 
 int
@@ -165,7 +162,7 @@ main(void) {
 	fprintf(stderr, "Bind error %s\n", uv_err_name(r));
 	return 1;
     }
-    if ((r = uv_listen((uv_stream_t*) server, 128, on_new_connection))) {
+    if ((r = uv_listen((uv_stream_t*) server, 128, on_listen))) {
 	fprintf(stderr, "Listen error %s\n", uv_err_name(r));
 	return 2;
     }
