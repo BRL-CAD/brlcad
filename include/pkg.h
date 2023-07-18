@@ -89,6 +89,8 @@ struct pkg_conn {
 #define PKC_NULL	((struct pkg_conn *)0)
 #define PKC_ERROR	((struct pkg_conn *)(-1L))
 
+PKG_EXPORT struct pkg_conn *pkg_conn_create(int fd);
+PKG_EXPORT void pkg_conn_destroy(struct pkg_conn *pc);
 
 PKG_EXPORT void *pkg_conn_server_data_get(struct pkg_conn *c);
 PKG_EXPORT void pkg_conn_server_data_set(struct pkg_conn *c, void *sdata);
@@ -107,6 +109,14 @@ PKG_EXPORT unsigned short pkg_conn_type(struct pkg_conn *c);
 PKG_EXPORT int pkg_conn_fd(struct pkg_conn *c);
 
 PKG_EXPORT int pkg_conn_len(struct pkg_conn *c);
+
+// If we need to "translate" data to the pkg container (see Qt example)
+// we need access to the pkg_conn's storage elements
+PKG_EXPORT char **pkg_conn_inbuf(struct pkg_conn *c);
+PKG_EXPORT int *pkg_conn_incur(struct pkg_conn *c);
+PKG_EXPORT int *pkg_conn_inlen(struct pkg_conn *c);
+PKG_EXPORT int *pkg_conn_inend(struct pkg_conn *c);
+
 
 /**
  * Sends a VLS as a given message type across a pkg connection.

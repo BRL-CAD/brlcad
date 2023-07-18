@@ -190,6 +190,46 @@ pkg_plong(char *buf, unsigned long l)
     return (char *)buf+4;
 }
 
+struct pkg_conn *
+pkg_conn_create(int fd)
+{
+    struct pkg_conn *pc;
+
+    if ((pc = (struct pkg_conn *)calloc(1, sizeof(struct pkg_conn)))==PKC_NULL) {
+	return NULL;
+    }
+    if ((pc->i = (struct pkg_conn_impl *)calloc(1, sizeof(struct pkg_conn_impl)))==NULL) {
+	return NULL;
+    }
+    pc->i->pkc_magic = PKG_MAGIC;
+    pc->i->pkc_fd = fd;
+    if (fd == PKG_STDIO_MODE) {
+	pc->i->pkc_in_fd = -1;
+	pc->i->pkc_out_fd = -1;
+    } else {
+	pc->i->pkc_in_fd = fd;
+	pc->i->pkc_out_fd = fd;
+    }
+    pc->i->pkc_switch = NULL;
+    pc->i->pkc_errlog = NULL;
+    pc->i->pkc_left = -1;
+    pc->i->pkc_buf = (char *)0;
+    pc->i->pkc_curpos = (char *)0;
+    pc->i->pkc_strpos = 0;
+    pc->i->pkc_incur = pc->i->pkc_inend = 0;
+
+    return pc;
+}
+
+void
+pkg_conn_destroy(struct pkg_conn *pc)
+{
+    if (!pc)
+	return;
+    if (pc->i)
+	free(pc->i);
+    free(pc);
+}
 
 /*******************************************
  * pkg_conn get/set functions
@@ -265,6 +305,39 @@ pkg_conn_len(struct pkg_conn *c)
     if (!c || !c->i)
 	return 0;
     return c->i->pkc_len;
+}
+
+char **
+pkg_conn_inbuf(struct pkg_conn *c)
+{
+    if (!c || !c->i)
+	return NULL;
+    return &c->i->pkc_inbuf;
+}
+
+int *
+pkg_conn_incur(struct pkg_conn *c)
+{
+    if (!c || !c->i)
+	return NULL;
+    return &c->i->pkc_incur;
+}
+
+int *
+pkg_conn_inlen(struct pkg_conn *c)
+{
+    if (!c || !c->i)
+	return NULL;
+    return &c->i->pkc_inlen;
+}
+
+int *
+pkg_conn_inend(struct pkg_conn *c)
+{
+    if (!c || !c->i)
+	return NULL;
+
+    return &c->i->pkc_inend;
 }
 
 /**
@@ -350,7 +423,6 @@ static
 struct pkg_conn *
 _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog)(const char *msg))
 {
-    struct pkg_conn *pc;
 
     if (_pkg_debug) {
 	_pkg_timestamp();
@@ -364,30 +436,13 @@ _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
     if (errlog == NULL)
 	errlog = _pkg_errlog;
 
-    if ((pc = (struct pkg_conn *)calloc(1, sizeof(struct pkg_conn)))==PKC_NULL) {
+    struct pkg_conn *pc = pkg_conn_create(fd);
+    if (!pc) {
 	_pkg_perror(errlog, "_pkg_makeconn: malloc failure\n");
 	return PKC_ERROR;
-    }
-    if ((pc->i = (struct pkg_conn_impl *)calloc(1, sizeof(struct pkg_conn_impl)))==NULL) {
-	_pkg_perror(errlog, "_pkg_makeconn: malloc failure\n");
-	return PKC_ERROR;
-    }
-    pc->i->pkc_magic = PKG_MAGIC;
-    pc->i->pkc_fd = fd;
-    if (fd == PKG_STDIO_MODE) {
-	pc->i->pkc_in_fd = -1;
-	pc->i->pkc_out_fd = -1;
-    } else {
-	pc->i->pkc_in_fd = fd;
-	pc->i->pkc_out_fd = fd;
     }
     pc->i->pkc_switch = switchp;
     pc->i->pkc_errlog = errlog;
-    pc->i->pkc_left = -1;
-    pc->i->pkc_buf = (char *)0;
-    pc->i->pkc_curpos = (char *)0;
-    pc->i->pkc_strpos = 0;
-    pc->i->pkc_incur = pc->i->pkc_inend = 0;
     return pc;
 }
 

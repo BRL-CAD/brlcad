@@ -50,7 +50,7 @@ QFBSocket::client_handler()
     struct pkg_conn *pkc = fbsp->fbs_clients[ind].fbsc_pkg;
 
     // Set the current framebuffer pointer for callback functions
-    pkc->pkc_server_data = (void *)fbsp->fbs_fbp;
+    pkg_conn_server_data_set(pkc, (void *)fbsp->fbs_fbp);
 
     // Read data.  NOTE:  we're using the Qt read routines rather than
     // pkg_suckin, so we can't call fbs_existing_client_hander from libdm.
@@ -68,10 +68,20 @@ QFBSocket::client_handler()
 
     // Now that we have the data read using Qt methods, prepare for processing
     // using libpkg data structures.
-    pkc->pkc_inbuf = (char *)realloc(pkc->pkc_inbuf, buff.length());
-    memcpy(pkc->pkc_inbuf, buff.data(), buff.length());
-    pkc->pkc_incur = 0;
-    pkc->pkc_inlen = pkc->pkc_inend = buff.length();
+    char **pkc_inbuf = pkg_conn_inbuf(pkc);
+    if (!pkc_inbuf)
+	return;
+    *pkc_inbuf = (char *)realloc(*pkc_inbuf, buff.length());
+    memcpy(*pkc_inbuf, buff.data(), buff.length());
+    int *pkc_incur = pkg_conn_incur(pkc);
+    int *pkc_inlen = pkg_conn_inlen(pkc);
+    int *pkc_inend = pkg_conn_inend(pkc);
+    if (pkc_incur)
+       *pkc_incur = 0;
+    if (pkc_inlen)
+       *pkc_inlen = buff.length();
+    if (pkc_inend)
+       *pkc_inend = buff.length();
 
     // Now it's up to libpkg - if anything is left over, we'll know it after
     // processing.  Clear buff so we're ready to preserve remaining data for
@@ -82,13 +92,13 @@ QFBSocket::client_handler()
     if ((pkg_process(pkc)) < 0)
 	bu_log("client_handler pkg_process error encountered\n");
 
-    if (pkc->pkc_inend != pkc->pkc_inlen - 1) {
+    if (*pkc_inend != *pkc_inlen - 1) {
 	// If pkg_process didn't use all of the read data, store the rest for
 	// the next cycle.
 	//
 	// TODO - need to find a way to test to to make sure we're copying the
 	// right part of the buffer
-	buff.append(&pkc->pkc_inbuf[pkc->pkc_inend], pkc->pkc_inlen - pkc->pkc_inend);
+	buff.append(&(*pkc_inbuf)[*pkc_inend], *pkc_inlen - *pkc_inend);
     }
 
     emit updated();
@@ -127,22 +137,13 @@ QFBServer::on_Connect()
 
     int fd = tcps->socketDescriptor();
     bu_log("fd: %d\n", fd);
-    struct pkg_conn *pc;
-    BU_GET(pc, struct pkg_conn);
-    pc->pkc_magic = PKG_MAGIC;
-    pc->pkc_fd = fd;
-    pc->pkc_switch = fbs_pkg_switch();
-    pc->pkc_errlog = 0;
-    pc->pkc_left = -1;
-    pc->pkc_buf = (char *)0;
-    pc->pkc_curpos = (char *)0;
-    pc->pkc_strpos = 0;
-    pc->pkc_incur = pc->pkc_inend = 0;
+    struct pkg_conn *pc = pkg_conn_create(fd);
+    pkg_conn_msg_handlers_set(pc, fbs_pkg_switch());
 
     fs->ind = fbs_new_client(fbsp, pc, (void *)fs);
     if (fs->ind == -1) {
 	bu_log("new connection failed");
-	BU_PUT(pc, struct pkg_conn);
+	pkg_conn_destroy(pc);
 	tcps->close();
     }
 }

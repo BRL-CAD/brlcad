@@ -51,9 +51,10 @@ PKGServer::PKGServer()
 
 PKGServer::~PKGServer()
 {
-    if (client->pkc_inbuf)
-	free(client->pkc_inbuf);
-    BU_PUT(client, struct pkg_conn);
+    char **pkc_inbuf = pkg_conn_inbuf(client);
+    if (pkc_inbuf && *pkc_inbuf)
+	free(*pkc_inbuf);
+    pkg_conn_destroy(client);
     bu_vls_free(&buffer);
 }
 
@@ -66,16 +67,8 @@ PKGServer::pgetc()
 
     int fd = s->socketDescriptor();
     bu_log("fd: %d\n", fd);
-    BU_GET(client, struct pkg_conn);
-    client->pkc_magic = PKG_MAGIC;
-    client->pkc_fd = fd;
-    client->pkc_switch = callbacks;
-    client->pkc_errlog = 0;
-    client->pkc_left = -1;
-    client->pkc_buf = (char *)0;
-    client->pkc_curpos = (char *)0;
-    client->pkc_strpos = 0;
-    client->pkc_incur = client->pkc_inend = 0;
+    client = pkg_conn_create(fd);
+    pkg_conn_msg_handlers_set(client, callbacks);
 
     int have_hello = 0;
     do {
@@ -104,27 +97,39 @@ PKGServer::pgetc()
 void
 PKGServer::print_and_respond()
 {
+    int *inlen = pkg_conn_inlen(client);
+    if (!inlen)
+	return;
+
     // Grab what the client sent us.  We use Qt's mechanisms for this rather than
     // libpkg - pkg_suckin doesn't appear to work with the Qt socket.
-    QByteArray dbuff = s->read(client->pkc_inlen);
+    QByteArray dbuff = s->read(*inlen);
 
     // Now that we have the data using Qt, prepare it for processing by libpkg
-    client->pkc_inbuf = (char *)realloc(client->pkc_inbuf, dbuff.length());
-    memcpy(client->pkc_inbuf, dbuff.data(), dbuff.length());
-    client->pkc_incur = 0;
-    client->pkc_inlen = client->pkc_inend = dbuff.length();
+    char **pkc_inbuf = pkg_conn_inbuf(client);
+    *pkc_inbuf = (char *)realloc(*pkc_inbuf, dbuff.length());
+    memcpy(*pkc_inbuf, dbuff.data(), dbuff.length());
+    int *pkc_incur = pkg_conn_incur(client);
+    int *pkc_inlen = pkg_conn_inlen(client);
+    int *pkc_inend = pkg_conn_inend(client);
+    if (pkc_incur)
+	*pkc_incur = 0;
+    if (pkc_inlen)
+	*pkc_inlen = dbuff.length();
+    if (pkc_inend)
+	*pkc_inend = dbuff.length();
 
     // Buffer is read and staged - process
     pkg_process(client);
 
     // Once we have confirmation from the client it got the done message, exit
-    if (client->pkc_type == MSG_CIAO) {
+    if (pkg_conn_type(client) == MSG_CIAO) {
 	bu_log("MSG_CIAO\n");
 	bu_exit(0, "done");
     }
 
     // We should have gotten a MSG_DATA input
-    if (client->pkc_type == MSG_DATA) {
+    if (pkg_conn_type(client) == MSG_DATA) {
 	bu_log("MSG_DATA\n");
     }
 
