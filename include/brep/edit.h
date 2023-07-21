@@ -173,6 +173,13 @@ extern "C++"
      */
     BREP_EXPORT extern int
     brep_surface_tensor_product(ON_Brep *brep, int curve_id0, int curve_id1);
+    
+    /**
+     * create a surface by rotating a curve around an axis.
+     * return: if successful, id of the new surface; otherwise, -1.
+     */
+    BREP_EXPORT extern int
+    brep_surface_revolution(ON_Brep *brep, int curve_id0, ON_3dPoint line_start, ON_3dPoint line_end, double angle = 2 * ON_PI);
 
     /**
      * remove a surface from brep

@@ -394,6 +394,55 @@ _brep_cmd_surface_tensor_product(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+static int
+_brep_cmd_surface_revolution(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> revolution <curve_id> <start_x> <start_y> <start_z> <end_x> <end_y> <end_z> [<angle>]";
+    const char *purpose_string = "create a new NURBS surface by rotating a curve around an axis by an angle.";
+    if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    if (argc < 7) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
+    }
+    int curve_id_1 = atoi(argv[0]);
+    ON_3dPoint line_start(atof(argv[1]), atof(argv[2]), atof(argv[3]));
+    ON_3dPoint line_end(atof(argv[4]), atof(argv[5]), atof(argv[6]));
+    double angle = 2 * ON_PI;
+    if(argc == 8) {
+	angle = atof(argv[7]);
+    }
+    int surfcode = brep_surface_revolution(b_ip->brep, curve_id_1, line_start, line_end, angle);
+    if (surfcode < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create surface\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surfcode);
+    return BRLCAD_OK;
+}
+
 static void
 _brep_surface_help(struct _ged_brep_isurface *bs, int argc, const char **argv)
 {
@@ -429,6 +478,7 @@ const struct bu_cmdtab _brep_surface_cmds[] = {
     { "trim",                _brep_cmd_surface_trim},
     { "split",               _brep_cmd_surface_split},
     { "tensor",              _brep_cmd_surface_tensor_product},
+    { "revolution",          _brep_cmd_surface_revolution},
     { (char *)NULL,          NULL}
 };
 

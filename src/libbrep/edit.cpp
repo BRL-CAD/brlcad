@@ -344,6 +344,32 @@ int brep_surface_tensor_product(ON_Brep *brep, int curve_id0, int curve_id1)
     return brep->AddSurface(nurbs_surface);
 }
 
+int brep_surface_revolution(ON_Brep *brep, int curve_id0, ON_3dPoint line_start, ON_3dPoint line_end, double angle)
+{
+
+    ON_NurbsCurve *curve0 = brep_get_nurbs_curve(brep, curve_id0);
+    if(!curve0) {
+	return -1;
+    }
+    ON_RevSurface* rev_surf = ON_RevSurface::New();
+    ON_Line line = ON_Line(line_start, line_end);
+    if(angle < ON_ZERO_TOLERANCE) {
+	angle = -angle;
+    line.Reverse();
+    }
+    if (angle > 2 * ON_PI) {
+	angle = 2 * ON_PI;
+    }
+    rev_surf->m_curve = curve0;
+    rev_surf->m_axis = line;
+    rev_surf->m_angle = ON_Interval(0, angle);
+
+    // Get the NURBS form of the surface
+    ON_NurbsSurface *nurbs_surface = ON_NurbsSurface::New();
+    rev_surf->GetNurbForm(*nurbs_surface, 0.0);
+    return brep->AddSurface(nurbs_surface);
+}
+
 bool brep_surface_remove(ON_Brep *brep, int surface_id)
 {
     if (surface_id < 0 || surface_id >= brep->m_S.Count()) {
