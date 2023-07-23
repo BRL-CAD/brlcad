@@ -254,7 +254,7 @@ _brep_cmd_curve_copy(void *bs, int argc, const char **argv)
 
     int curve_id = atoi(argv[1]);
 
-    if (curve_id <= 0) {
+    if (curve_id < 0) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid curve_id\n");
 	return BRLCAD_ERROR;
     }
