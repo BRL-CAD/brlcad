@@ -73,6 +73,13 @@ extern "C++"
     brep_curve_interpCrv(ON_Brep *brep, std::vector<ON_3dPoint> points);
 
     /**
+     * copy a curve from brep
+     * return id of the new curve
+     */
+    BREP_EXPORT extern int
+    brep_curve_copy(ON_Brep *brep, int curve_id);
+
+    /**
      * remove a curve from brep
      * @attention the index of m_C3 is changed after remove!!!
      */

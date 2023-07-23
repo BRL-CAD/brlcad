@@ -122,6 +122,20 @@ int brep_curve_interpCrv(ON_Brep *brep, std::vector<ON_3dPoint> points)
     return brep->AddEdgeCurve(curve);
 }
 
+int brep_curve_copy(ON_Brep *brep, int curve_id)
+{
+    if (curve_id < 0 || curve_id >= brep->m_C3.Count()) {
+    bu_log("curve_id is out of range\n");
+    return -1;
+    }
+    ON_Curve *curve = brep->m_C3[curve_id];
+    if (!curve) {
+    return -1;
+    }
+    ON_Curve *curve_copy = curve->DuplicateCurve();
+    return brep->AddEdgeCurve(curve_copy);
+}
+
 bool brep_curve_remove(ON_Brep *brep, int curve_id)
 {
     if (curve_id < 0 || curve_id >= brep->m_C3.Count()) {

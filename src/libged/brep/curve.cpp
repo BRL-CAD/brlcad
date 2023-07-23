@@ -237,6 +237,56 @@ _brep_cmd_curve_interp(void *bs, int argc, const char **argv)
 }
 
 static int
+_brep_cmd_curve_copy(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> curve copy <curve_id>";
+    const char *purpose_string = "copy a NURBS curve";
+    if (_brep_curve_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_icurve *gib = (struct _ged_brep_icurve *)bs;
+    if (argc < 2) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    int curve_id = atoi(argv[1]);
+
+    if (curve_id <= 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid curve_id\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+
+    int res = brep_curve_copy(b_ip->brep, curve_id);
+    if (!res) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to copy curve\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "successful copy C3 curve! new curve id = %d", res);
+    return BRLCAD_OK;
+}
+
+static int
 _brep_cmd_curve_remove(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> curve remove <curve_id>";
@@ -703,6 +753,7 @@ const struct bu_cmdtab _brep_curve_cmds[] = {
     { "create",          _brep_cmd_curve_create},
     { "in",              _brep_cmd_curve_in},
     { "inter",           _brep_cmd_curve_interp},
+    { "copy",            _brep_cmd_curve_copy},
     { "remove",          _brep_cmd_curve_remove},
     { "move",            _brep_cmd_curve_move},
     { "set_cv",          _brep_cmd_curve_set_cv},
