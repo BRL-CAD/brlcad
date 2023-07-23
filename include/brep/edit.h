@@ -140,6 +140,13 @@ extern "C++"
     brep_surface_make(ON_Brep *brep, const ON_3dPoint &position);
 
     /**
+     * copy a surface from brep
+     * return id of the new surface
+     */
+    BREP_EXPORT extern int
+    brep_surface_copy(ON_Brep *brep, int surface_id);
+
+    /**
      * move surface to a new position
      */
     BREP_EXPORT extern bool

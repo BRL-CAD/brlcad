@@ -90,6 +90,55 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
 }
 
 static int
+_brep_cmd_surface_copy(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> surface copy <surface_id>";
+    const char *purpose_string = "copy a NURBS surface";
+    if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
+    if (argc < 2) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    int surface_id = atoi(argv[1]);
+
+    if (surface_id < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid surface_id\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    int res = brep_surface_copy(b_ip->brep, surface_id);
+    if (res < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to copy surface\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "successful copy surface! new surface id = %d", res);
+    return BRLCAD_OK;
+}
+
+static int
 _brep_cmd_surface_birail(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> surface birail <curve_id_1> <curve_id_2>";
@@ -110,7 +159,7 @@ _brep_cmd_surface_birail(void *bs, int argc, const char **argv)
     int curve_id_2 = atoi(argv[1]);
     int surfcode = brep_surface_create_ruled(b_ip->brep, curve_id_1, curve_id_2);
     if (surfcode < 0) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to create surface\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create surface\n");
 	return BRLCAD_ERROR;
     }
 
@@ -471,6 +520,7 @@ _brep_surface_help(struct _ged_brep_isurface *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _brep_surface_cmds[] = {
     { "create",              _brep_cmd_surface_create},
+    { "copy",                _brep_cmd_surface_copy},
     { "birail",              _brep_cmd_surface_birail},
     { "remove",              _brep_cmd_surface_remove},
     { "move",                _brep_cmd_surface_move},

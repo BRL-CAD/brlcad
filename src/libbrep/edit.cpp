@@ -125,12 +125,12 @@ int brep_curve_interpCrv(ON_Brep *brep, std::vector<ON_3dPoint> points)
 int brep_curve_copy(ON_Brep *brep, int curve_id)
 {
     if (curve_id < 0 || curve_id >= brep->m_C3.Count()) {
-    bu_log("curve_id is out of range\n");
-    return -1;
+	bu_log("curve_id is out of range\n");
+	return -1;
     }
     ON_Curve *curve = brep->m_C3[curve_id];
     if (!curve) {
-    return -1;
+	return -1;
     }
     ON_Curve *curve_copy = curve->DuplicateCurve();
     return brep->AddEdgeCurve(curve_copy);
@@ -272,6 +272,20 @@ int brep_surface_make(ON_Brep *brep, const ON_3dPoint &position)
     surface->MakeClampedUniformKnotVector(1, 1);
     surface->Translate(position);
     return brep->AddSurface(surface);
+}
+
+int brep_surface_copy(ON_Brep *brep, int surface_id)
+{
+    if (surface_id < 0 || surface_id >= brep->m_S.Count()) {
+	bu_log("surface_id is out of range\n");
+	return -1;
+    }
+    ON_Surface *surface = brep->m_S[surface_id];
+    if (!surface) {
+	return -1;
+    }
+    ON_Surface *surface_copy = surface->DuplicateSurface();
+    return brep->AddSurface(surface_copy);
 }
 
 bool brep_surface_move(ON_Brep *brep, int surface_id, const ON_3dVector &point)
