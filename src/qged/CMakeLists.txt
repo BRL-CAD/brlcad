@@ -95,6 +95,7 @@ add_subdirectory(theme)
 set(qged_ignore_srcs
   ${qged_srcs}
   ${moc_headers}
+  BUILDING_QT
   CMakeLists.txt
   TODO
   fonts/Inconsolata-LICENSE.txt

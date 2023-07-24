@@ -1,0 +1,35 @@
+Although it is more typical for Qt to be pre-installed using system packages or
+installers, it is also possible to compile Qt from its source code.
+
+Before getting started, you'll want to be sure the necessary development
+packages are present.  For Linux, this is a good starting point:
+https://doc.qt.io/qt-6/linux-requirements.html
+
+Once the system is ready and we've downloaded the latest compressed tarball, we
+expand it and enter the directory in question:
+
+tar -xvf qt-everywhere-src-6.5.2.tar.xz && cd qt-everywhere-src-6.5.2
+
+The Qt system consists of a large number of individual modules, many of which
+are optional: https://doc.qt.io/qt-6/qtmodules.html Not all of these are
+required for BRL-CAD, and some of the unnecessary ones (particularly webengine)
+are hard to build.   Fortunately, Qt configure offers a way to disable them:
+https://doc.qt.io/qt-6/configure-options.html#excluding-qt-modules
+
+At present BRL-CAD uses a relatively small subset of Qt's functionality, so we
+can disable the majority of its optional modules:
+
+./configure -skip qt3d,qt5compat,qtactiveqt,qtcharts,qtcoap,qtconnectivity,qtdatavis3d,qtdeclarative,qtdoc,qtgrpc,qthttpserver,qtlanguageserver,qtlocation,qtlottie,qtmqtt,qtmultimedia,qtnetworkauth,qtopcua,qtpositioning,qtquick3d,qtquick3dphysics,qtquickeffectmaker,qtquicktimeline,qtremoteobjects,qtscxml,qtsensors,qtserialbus,qtserialport,qtshadertools,qtspeech,qttools,qttranslations,qtvirtualkeyboard,qtwayland,qtwebchannel,qtwebengine,qtwebsockets,qtwebview
+
+(You can optionally specify an installation prefix as well in the above line,
+i.e. --prefix=/opt/Qt6).  The build and install steps can then be invoked
+either via CMake (which is handy on Windows) or by directly calling the Ninja
+build tool.
+
+cmake --build . --parallel
+cmake --install .
+
+(Depending on the prefix for installation, the latter command may need root
+access to succeed in writing the files.)
+
+
