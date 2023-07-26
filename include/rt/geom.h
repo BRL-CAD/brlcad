@@ -368,6 +368,25 @@ struct rt_vol_internal {
     unsigned char *map;
 };
 #define RT_VOL_CK_MAGIC(_p) BU_CKMAG(_p, RT_VOL_INTERNAL_MAGIC, "rt_vol_internal")
+
+/** @addtogroup rt_vdb */
+/** @{ */
+/*
+ * ID_VOL
+ */
+#define RT_VDB_NAME_LEN 128
+struct rt_vdb_internal {
+	uint32_t magic;
+	char name[RT_VDB_NAME_LEN];
+
+	//to start, it will save the min and max of a bounding box - that will be changed to the vdb structure
+	vect_t minBB;
+	vect_t maxBB;
+
+};
+#define RT_VDB_CK_MAGIC(_p) BU_CKMAG(_p, RT_VDB_INTERNAL_MAGIC, "rt_vdb_internal")
+
+
 /** @} */
 
 /** @addtogroup rt_hf */
