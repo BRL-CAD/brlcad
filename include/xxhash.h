@@ -1547,6 +1547,9 @@ static void* XXH_memcpy(void* dest, const void* src, size_t size)
 #ifndef XXH_STATIC_ASSERT
 #  if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)    /* C11 */
 #    include <assert.h>
+#    if !defined(__cplusplus) && !defined(static_assert)
+#       define static_assert _Static_assert
+#    endif
 #    define XXH_STATIC_ASSERT_WITH_MESSAGE(c,m) do { static_assert((c),m); } while(0)
 #  elif defined(__cplusplus) && (__cplusplus >= 201103L)            /* C++11 */
 #    define XXH_STATIC_ASSERT_WITH_MESSAGE(c,m) do { static_assert((c),m); } while(0)
