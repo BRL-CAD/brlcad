@@ -111,8 +111,7 @@ namespace eval ::itk {\n\
  * ------------------------------------------------------------------------
  */
 static int
-Initialize(interp)
-    Tcl_Interp *interp;  /* interpreter to be updated */
+Initialize(Tcl_Interp *interp)
 {
     Tcl_Namespace *itkNs, *parserNs;
     ClientData parserInfo;
@@ -256,8 +255,7 @@ Initialize(interp)
  * ------------------------------------------------------------------------
  */
 int
-Itk_Init(interp)
-    Tcl_Interp *interp;  /* interpreter to be updated */
+Itk_Init(Tcl_Interp *interp)
 {
     if (Initialize(interp) != TCL_OK) {
 	return TCL_ERROR;
@@ -282,8 +280,7 @@ Itk_Init(interp)
  * ------------------------------------------------------------------------
  */  
 int 
-Itk_SafeInit(interp)
-    Tcl_Interp *interp;  /* interpreter to be updated */ 
+Itk_SafeInit(Tcl_Interp *interp)
 {   
     if (Initialize(interp) != TCL_OK) {
         return TCL_ERROR;
@@ -316,11 +313,7 @@ Itk_SafeInit(interp)
  */
 /* ARGSUSED */
 int
-Itk_ConfigBodyCmd(dummy, interp, objc, objv)
-    ClientData dummy;        /* unused */
-    Tcl_Interp *interp;      /* current interpreter */
-    int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+Itk_ConfigBodyCmd(ClientData dummy, Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[])
 {
     int result = TCL_OK;
 

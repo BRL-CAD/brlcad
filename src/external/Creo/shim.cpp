@@ -2,7 +2,7 @@
  *                        S H I M . C P P
  * BRL-CAD
  *
- * Published in 2022 by the United States Government.
+ * Published in 2023 by the United States Government.
  * This work is in the public domain.
  *
  */
@@ -21,6 +21,7 @@
 /* Functions */
 extern "C" int ProArrayAlloc(int,int,int,void**) {return 0;}
 extern "C" int ProArrayFree(void**) {return 0;}
+extern "C" int ProArrayObjectAdd(ProArray *, int, int, void*) {return 0;}
 extern "C" int ProArraySizeGet(ProArray,int*) {return 0;}
 extern "C" int ProAsmcompMdlGet(ProFeature*,void**) {return 0;}
 extern "C" int ProAsmcompMdlMdlnameGet(ProFeature*,int*,wchar_t*) {return 0;}
@@ -90,6 +91,7 @@ extern "C" int ProUIRadiogroupSelectednamesGet(const char*,const char*,int*,char
 extern "C" int ProUITextareaValueSet(const char *,const char *,wchar_t*) {return 0;}
 extern "C" int ProUnitConversionCalculate(void**,void**,ProUnitConversion*) {return 0;}
 extern "C" int ProUnitsystemUnitGet(void**,int,void**) {return 0;}
+extern "C" int ProUtilCollectParameters(void**,void**) {return 0;}
 extern "C" int ProValueDataGet(void*,ProValueData*) {return 0;}
 extern "C" int ProVerstampEqual(void*, void*) {return 0;}
 extern "C" int ProVerstampStringFree(char**) {return 0;}

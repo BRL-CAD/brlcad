@@ -65,6 +65,7 @@ if (BRLCAD_SQLITE3_BUILD)
 
   ExternalProject_ByProducts(sqlite3 SQLITE3_BLD ${SQLITE3_INSTDIR} ${INCLUDE_DIR}
     sqlite3.h
+    sqlite3ext.h
     )
 
   set(SQLite3_LIBRARY sqlite3 CACHE STRING "Building bundled sqlite3" FORCE)

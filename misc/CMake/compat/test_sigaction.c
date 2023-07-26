@@ -26,7 +26,7 @@ handler(int sig, siginfo_t *si, void *unused)
 }
 
 int
-main()
+main(void)
 {
     char *p;
     int pagesize;

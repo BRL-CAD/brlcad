@@ -22,7 +22,7 @@ static void	TableImageProc _ANSI_ARGS_((ClientData clientData, int x,
 static int	TableOptionReliefSet _ANSI_ARGS_((ClientData clientData,
 			Tcl_Interp *interp, Tk_Window tkwin,
 			CONST84 char *value, char *widgRec, int offset));
-static char *	TableOptionReliefGet _ANSI_ARGS_((ClientData clientData,
+static const char *TableOptionReliefGet _ANSI_ARGS_((ClientData clientData,
 			Tk_Window tkwin, char *widgRec, int offset,
 			Tcl_FreeProc **freeProcPtr));
 
@@ -1340,7 +1340,7 @@ TableOptionReliefSet(clientData, interp, tkwin, value, widgRec, offset)
  *----------------------------------------------------------------------
  */
 
-static char *
+static const char *
 TableOptionReliefGet(clientData, tkwin, widgRec, offset, freeProcPtr)
     ClientData clientData;		/* Type of struct being set. */
     Tk_Window tkwin;			/* Window containing canvas widget. */

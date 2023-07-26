@@ -17,7 +17,7 @@
 static int	StickyParseProc _ANSI_ARGS_((ClientData clientData,
 			Tcl_Interp *interp, Tk_Window tkwin,
 			CONST84 char *value, char *widgRec, int offset));
-static char *	StickyPrintProc _ANSI_ARGS_((ClientData clientData,
+static const char *StickyPrintProc _ANSI_ARGS_((ClientData clientData,
 			Tk_Window tkwin, char *widgRec, int offset,
 			Tcl_FreeProc **freeProcPtr));
 
@@ -117,7 +117,7 @@ static Tk_ConfigSpec winConfigSpecs[] = {
  *
  *----------------------------------------------------------------------
  */
-static char *
+static const char *
 StickyPrintProc(clientData, tkwin, widgRec, offset, freeProcPtr)
     ClientData clientData;		/* Ignored. */
     Tk_Window tkwin;			/* Window for text widget. */

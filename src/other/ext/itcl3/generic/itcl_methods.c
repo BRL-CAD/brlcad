@@ -731,8 +731,7 @@ Itcl_CreateMemberCode(interp, cdefn, arglist, body, mcodePtr)
  * ------------------------------------------------------------------------
  */
 void
-Itcl_DeleteMemberCode(cdata)
-    CONST char* cdata;  /* pointer to member function definition */
+Itcl_DeleteMemberCode(char *cdata)
 {
     ItclMemberCode* mcode = (ItclMemberCode*)cdata;
 
