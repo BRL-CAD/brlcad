@@ -29,13 +29,13 @@ if (BRLCAD_PNG_BUILD)
   set(PNG_VERSION_MINOR ${PNG_PATCH_VERSION})
   set(PNG_LIB_NAME png${PNG_VERSION_MAJOR})
 
+  # NOTE: when we bump to libpng 1.6.40, they expose a PNG_DEBUG_POSTFIX which
+  # we can supply empty at build time.  For the current version we've added a
+  # separate variable to achieve the same result.  Without a solution like
+  # that, we tend to get 'd' suffixes appearing in library names and playing
+  # havoc with file copy logic
   if (MSVC)
     set(PNG_BASENAME lib${PNG_LIB_NAME})
-    # NOTE: when we bump to libpng 1.6.40, they expose a PNG_DEBUG_POSTFIX which we can supply empty at build
-    # time to remove the extra debug checks
-    if ("${CMAKE_BUILD_TYPE}" MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
-      set(PNG_BASENAME "${PNG_BASENAME}d")
-    endif ("${CMAKE_BUILD_TYPE}" MATCHES "^([Dd][Ee][Bb][Uu][Gg])$")
     set(PNG_STATICNAME lib${PNG_LIB_NAME}_static)
     set(PNG_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
     set(PNG_SYMLINK_1 ${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
@@ -90,6 +90,7 @@ if (BRLCAD_PNG_BUILD)
     -DCMAKE_SKIP_BUILD_RPATH=${CMAKE_SKIP_BUILD_RPATH}
     -DPNG_LIB_NAME=${PNG_LIB_NAME}
     -DPNG_NO_DEBUG_POSTFIX=ON
+    -DPNG_DEBUG_POSTFIX=""
     -DPNG_PREFIX=brl_
     -DPNG_STATIC=${BUILD_STATIC_LIBS}
     -DPNG_TESTS=OFF
