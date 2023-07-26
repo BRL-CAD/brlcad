@@ -155,8 +155,11 @@ else (BRLCAD_PNG_BUILD)
 
 endif (BRLCAD_PNG_BUILD)
 
+mark_as_advanced(PNG_PNG_INCLUDE_DIR)
 mark_as_advanced(PNG_INCLUDE_DIRS)
 mark_as_advanced(PNG_LIBRARIES)
+mark_as_advanced(PNG_LIBRARY_DEBUG)
+mark_as_advanced(PNG_LIBRARY_RELEASE)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/png.dist")
 
