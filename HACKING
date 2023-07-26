@@ -1335,7 +1335,7 @@ Release steps are as follows:
 # 03: Commit the merge (if necessary) and push.
 
     # If merge conflict resolution was needed, make a merge commit:
-    MSHA1=$(git log -1 main --pretty=format:"%h")a
+    MSHA1=$(git log -1 main --pretty=format:"%h")
     echo $MSHA1
     git commit -m "merge of main $MSHA1 to RELEASE branch"
 
