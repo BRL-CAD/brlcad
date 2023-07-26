@@ -177,6 +177,10 @@ if (BRLCAD_ENABLE_TCL)
   endif (BUILD_ITCL)
 endif (BRLCAD_ENABLE_TCL)
 
+mark_as_advanced(ITCL_LIBRARY)
+mark_as_advanced(ITCL_LIBRARIES)
+mark_as_advanced(ITCL_VERSION)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/itcl3.dist")
 
 # Local Variables:

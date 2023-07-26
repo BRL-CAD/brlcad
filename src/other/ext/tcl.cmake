@@ -410,6 +410,8 @@ else (BRLCAD_TCL_BUILD)
 
 endif (BRLCAD_TCL_BUILD)
 
+mark_as_advanced(TCL_VERSION)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/tcl.dist")
 
 # Local Variables:

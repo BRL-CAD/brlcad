@@ -329,6 +329,9 @@ else (BRLCAD_OPENMESH_BUILD)
 
 endif (BRLCAD_OPENMESH_BUILD)
 
+mark_as_advanced(OPENMESH_INCLUDE_DIRS)
+mark_as_advanced(OPENMESH_LIBRARIES)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/openmesh.dist")
 
 # Local Variables:

@@ -326,6 +326,7 @@ if (BRLCAD_ENABLE_TK)
   # For FindTCL.cmake
   set(TCL_ENABLE_TK ON CACHE BOOL "enable tk")
 endif (BRLCAD_ENABLE_TK)
+mark_as_advanced(TCL_ENABLE_TK)
 include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/tk.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/itcl.cmake)

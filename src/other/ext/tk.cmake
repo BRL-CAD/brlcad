@@ -279,6 +279,9 @@ elseif (NOT BRLCAD_ENABLE_TK)
 
 endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK AND TK_DO_BUILD)
 
+mark_as_advanced(TK_X11_GRAPHICS)
+mark_as_advanced(HAVE_TK)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/tk.dist")
 
 # Local Variables:

@@ -155,6 +155,9 @@ else (BRLCAD_PNG_BUILD)
 
 endif (BRLCAD_PNG_BUILD)
 
+mark_as_advanced(PNG_INCLUDE_DIRS)
+mark_as_advanced(PNG_LIBRARIES)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/png.dist")
 
 # Local Variables:
