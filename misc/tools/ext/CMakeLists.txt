@@ -141,6 +141,10 @@ set(RE2C_EXECUTABLE re2c CACHE STRING "re2c" FORCE)
 set(PERPLEX_EXECUTABLE perplex CACHE STRING "perplex" FORCE)
 include("${CMAKE_CURRENT_SOURCE_DIR}/perplex.dist")
 CMAKEFILES_IN_DIR(perplex_ignore_files perplex)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/config.h)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/bootstrap_parser/parser.yy)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/perplex_wd/parser.y)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/re2c_parser/parser.yy)
 
 CMAKEFILES(
   CMakeLists.txt
