@@ -81,7 +81,7 @@ static Tk_OptionSpec BaseOptionSpecs[] =
      */
     {TK_OPTION_STRING_TABLE, "-compound", "compound", "Compound",
 	NULL, Tk_Offset(Base,base.compoundObj), -1,
-	TK_OPTION_NULL_OK, (void *)ttkCompoundStrings,
+	TK_OPTION_NULL_OK, ttkCompoundStrings,
 	GEOMETRY_CHANGED },
     {TK_OPTION_STRING, "-padding", "padding", "Pad",
 	NULL, Tk_Offset(Base,base.paddingObj), -1,
@@ -255,11 +255,11 @@ static Tk_OptionSpec LabelOptionSpecs[] =
 	NULL, Tk_Offset(Label,label.reliefObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
     {TK_OPTION_ANCHOR, "-anchor", "anchor", "Anchor",
-	NULL, Tk_Offset(Label,label.anchorObj), -1,
-	TK_OPTION_NULL_OK, 0, GEOMETRY_CHANGED},
+	"w", Tk_Offset(Label,label.anchorObj), -1,
+	0, 0, GEOMETRY_CHANGED},
     {TK_OPTION_JUSTIFY, "-justify", "justify", "Justify",
-	NULL, Tk_Offset(Label, label.justifyObj), -1,
-	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED },
+	"left", Tk_Offset(Label, label.justifyObj), -1,
+	0,0,GEOMETRY_CHANGED },
     {TK_OPTION_PIXELS, "-wraplength", "wrapLength", "WrapLength",
 	NULL, Tk_Offset(Label, label.wrapLengthObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED /*SB: SIZE_CHANGED*/ },
@@ -326,7 +326,7 @@ static Tk_OptionSpec ButtonOptionSpecs[] =
 	"", Tk_Offset(Button, button.commandObj), -1, 0,0,0},
     {TK_OPTION_STRING_TABLE, "-default", "default", "Default",
 	"normal", Tk_Offset(Button, button.defaultStateObj), -1,
-	0, (void *)ttkDefaultStrings, DEFAULTSTATE_CHANGED},
+	0, ttkDefaultStrings, DEFAULTSTATE_CHANGED},
 
     WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)
@@ -819,7 +819,7 @@ static Tk_OptionSpec MenubuttonOptionSpecs[] =
 	"", Tk_Offset(Menubutton, menubutton.menuObj), -1, 0,0,0},
     {TK_OPTION_STRING_TABLE, "-direction", "direction", "Direction",
 	"below", Tk_Offset(Menubutton, menubutton.directionObj), -1,
-	0, (void *)directionStrings, GEOMETRY_CHANGED},
+	0, directionStrings, GEOMETRY_CHANGED},
 
     WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)

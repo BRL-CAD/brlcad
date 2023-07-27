@@ -16,24 +16,22 @@
 
 #include "opennurbs.h"
 
-// If you are using opennurbs as a statically linked library, then
-// you may make calls to the same zlib that opennurbs uses.  This
-// zlib is compiled with z_ symbol projectection.  All the necessary
-// header files are included by opennurbs.h.
-// 
-// If you are using opennurbs as a DLL or writing a Rhino plug-in
-// and you want to use the same zlib that opennurbs uses, then
-// compile opennurbs_zlib_memory.cpp (this file) into your application
-// and statically link with the zlib library. All the necessary
-// header files are included by opennurbs.h.
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
 
+#include "opennurbs_zlib.h"
 
-voidpf zcalloc (voidpf, unsigned items, unsigned size)
+voidpf zcalloc(voidpf, unsigned items, unsigned size)
 {
-    return oncalloc(items, size);
+  return oncalloc(items, size);
 }
 
-void  zcfree (voidpf, voidpf ptr)
+void  zcfree(voidpf, voidpf ptr)
 {
-    onfree(ptr);
+  onfree(ptr);
 }

@@ -1,7 +1,7 @@
 /*                       B R E P . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@ __BEGIN_DECLS
 #include "brep/brnode.h"
 #include "brep/curvetree.h"
 #include "brep/bbnode.h"
+#include "brep/edit.h"
 #include "brep/surfacetree.h"
 #include "brep/pullback.h"
 #include "brep/intersect.h"

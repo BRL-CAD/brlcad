@@ -38,14 +38,14 @@ enum colorType {
     rgbColor,      /* The 24 bit value is an rgb color. */
     clearColor,    /* The unique rgba color with all channels 0. */
     HIBrush,       /* A HITheme brush color.*/
-    HIText,        /* A HITheme text color. */
-    HIBackground,  /* A HITheme background color. */
+    HIText,        /* A HITheme text color (32-bit only). */
+    HIBackground,  /* A HITheme background color (32-bit only). */
     ttkBackground, /* A background color which indicates nesting level.*/
     semantic,      /* A semantic NSColor.*/
 };
 
 typedef struct xpixel_t {
-    unsigned value: 24;     /* Either RGB or an index into systemColorMap. */
+    unsigned value: 24;     /* Either RGB or an index into systemColorData. */
     unsigned colortype: 8;
 } xpixel;
 
@@ -246,6 +246,7 @@ static SystemColorDatum systemColorData[] = {
 /* Color to use for selected button labels -- depends on OS version. */
 {"PressedButtonTextColor",	    semantic, 0, "textColor", 0, NULL },
 /* Semantic colors that we simulate on older systems which don't supoort them. */
+{"SelectedMenuItemTextColor",       semantic, 0, "selectedMenuItemTextColor", 0, NULL },
 {"ControlAccentColor",		    semantic, 0, "controlAccentColor", 0, NULL },
 {"LabelColor",                      semantic, 0, "blackColor", 0, NULL },
 {"LinkColor",			    semantic, 0, "blueColor", 0, NULL },

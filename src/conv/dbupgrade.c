@@ -1,7 +1,7 @@
 /*                    D B U P G R A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ main(int argc, char **argv)
     int in_arg;
     int out_arg;
     int in_version;
-    long errors = 0, skipped = 0;
+    long errors = 0;
     struct bn_tol tol;
     struct bu_vls colortab = BU_VLS_INIT_ZERO;
     struct db_i *dbip4 = NULL;
@@ -179,7 +179,6 @@ main(int argc, char **argv)
 	if (flag_revert && dp->d_major_type != DB5_MAJORTYPE_BRLCAD) {
 	    bu_log("\t%s not supported in version 4 databases, not converted\n",
 		   dp->d_namep);
-	    skipped++;
 	    continue;
 	}
 	id = rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource);
@@ -245,7 +244,6 @@ main(int argc, char **argv)
 	rt_db_free_internal(&intern);
     } FOR_ALL_DIRECTORY_END
 
-    wdb_close(fp);
     db_close(dbip4);
     db_close(dbip);
 

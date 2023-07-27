@@ -731,8 +731,7 @@ Itcl_CreateMemberCode(interp, cdefn, arglist, body, mcodePtr)
  * ------------------------------------------------------------------------
  */
 void
-Itcl_DeleteMemberCode(cdata)
-    CONST char* cdata;  /* pointer to member function definition */
+Itcl_DeleteMemberCode(char *cdata)
 {
     ItclMemberCode* mcode = (ItclMemberCode*)cdata;
 
@@ -1156,7 +1155,7 @@ Itcl_CreateArg(name, init)
     nameLen = strlen(name);
 
     localPtr = (CompiledLocal*)ckalloc(
-        (unsigned)(sizeof(CompiledLocal)-sizeof(localPtr->name) + nameLen+1)
+        TclOffset(CompiledLocal, name) + nameLen+1
     );
 
     localPtr->nextPtr = NULL;

@@ -18,13 +18,7 @@
 #define ON_OBJECT_HISTORY_INC_
 
 #if defined(ON_DLL_TEMPLATE)
-// This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
-// article ID Q168958 for details.
-#pragma warning( push )
-#pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray< class ON_Value* >;
-#pragma warning( pop )
 #endif
 
 class ON_CLASS ON_CurveProxyHistory
@@ -34,6 +28,8 @@ public:
   // reference in history records.
   ON_CurveProxyHistory();
   ~ON_CurveProxyHistory();
+  ON_CurveProxyHistory(const ON_CurveProxyHistory&) = default;
+  ON_CurveProxyHistory& operator=(const ON_CurveProxyHistory&) = default;
 
   ON_ObjRef m_curve_ref;                // from ON_CurveProxy.m_real_curve
   bool      m_bReversed;                // from ON_CurveProxy.m_bReversed
@@ -41,23 +37,21 @@ public:
   ON_Interval m_sub_real_curve_domain;  // from ON_CurveProxy.m_real_curve_domain
   ON_Interval m_proxy_curve_domain;     // from ON_CurveProxy.m_this_domain
 
+  // If these are empty intervals, they are from old files. Ignore them.
+  ON_Interval m_segment_edge_domain;
+  ON_Interval m_segment_trim_domain;
+
   void Destroy();
   bool Write( ON_BinaryArchive& ) const;
   bool Read( ON_BinaryArchive& );
   void Dump( ON_TextLog& ) const;
 
 private:
-  ON__UINT8 m_reserved[64];
+  ON__UINT8 m_reserved[32];
 };
 
 #if defined(ON_DLL_TEMPLATE)
-// This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
-// article ID Q168958 for details.
-#pragma warning( push )
-#pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_CurveProxyHistory>;
-#pragma warning( pop )
 #endif
 
 class ON_CLASS ON_PolyEdgeHistory
@@ -80,33 +74,36 @@ private:
   ON__UINT8 m_reserved[64];
 };
 
-class ON_CLASS ON_HistoryRecord : public ON_Object
+class ON_CLASS ON_HistoryRecord : public ON_ModelComponent
 {
   ON_OBJECT_DECLARE(ON_HistoryRecord);
 public:
-  ON_HistoryRecord();
-  ~ON_HistoryRecord();
+  static const ON_HistoryRecord Empty;
 
-  // The copy constructor and operator= create duplicates
-  // of the linked list of ON_Value classes.
+public:
+  ON_HistoryRecord() ON_NOEXCEPT;
+  ~ON_HistoryRecord();
   ON_HistoryRecord(const ON_HistoryRecord& src);
   ON_HistoryRecord& operator=(const ON_HistoryRecord& src);
 
-  // virtual ON_Object::IsValid override
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
-  // virtual ON_Object::Dump override
-  void Dump( ON_TextLog& ) const;
-  // virtual ON_Object::Write override
-  ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
-  // virtual ON_Object::Read override
-  ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
-  // virtual
-  ON_UUID ModelObjectId() const;
+private:
+  void Internal_Destroy();
+  void Internal_Copy(
+    const ON_HistoryRecord& src
+    );
 
-  //////////
-  // If history becomes invalid, call Destroy()
-  void Destroy();
+public:
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
+  void Dump( ON_TextLog& ) const override;
+  bool Write(ON_BinaryArchive& binary_archive) const override;
+  bool Read(ON_BinaryArchive& binary_archive) override;
 
+private:
+  bool Internal_WriteV5(ON_BinaryArchive& binary_archive) const;
+private:
+  bool Internal_ReadV5(ON_BinaryArchive& binary_archive);
+
+public:
   void DestroyValue( int value_id );
 
   /*
@@ -152,6 +149,14 @@ public:
   bool SetPointOnObjectValue( int value_id, const ON_ObjRef& oref, ON_3dPoint point );
   bool SetUuidValue(     int value_id, ON_UUID uuid );
   bool SetStringValue(   int value_id, const wchar_t* s );
+  /*
+  Parameters:
+    edge_chain - [in]
+      edge_chain.PersistentSubDId() must be non-nil and identify the parent subd in the model.
+      If the model is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+      If the model is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+  */
+  bool SetSubDEdgeChainValue(int value_id, const ON_SubDEdgeChain& edge_chain);
   bool SetGeometryValue( int value_id, ON_Geometry* g);
   bool SetPolyEdgeValue( int value_id, const ON_PolyEdgeHistory& polyedge );
 
@@ -199,7 +204,16 @@ public:
   bool SetStringValues(   int value_id, int count, const wchar_t* const* s );
   bool SetStringValues(   int value_id, const ON_ClassArray<ON_wString>& s );
   bool SetGeometryValues( int value_id, const ON_SimpleArray<ON_Geometry*> a);
-  bool SetPolyEdgeValues( int value_id, int count, const ON_PolyEdgeHistory* a );
+  /*
+  Parameters:
+    edge_chain - [in]
+      edge_chain.PersistentSubDId() must be non-nil and identify the parent subd in the model.
+      If the model is an ONX_Model, then the persistent id is the ON_ModelGeometryComponent.Id().
+      If the model is a CRhinoDoc, then the persistent id is CRhinoObject.ModelObjectId().
+  */
+  bool SetSubDEdgeChainValues(int value_id, const ON_ClassArray<ON_SubDEdgeChain>& edge_chains);
+  bool SetSubDEdgeChainValues(int value_id, const ON_SimpleArray<const ON_SubDEdgeChain*>& edge_chains);
+  bool SetPolyEdgeValues(int value_id, int count, const ON_PolyEdgeHistory* a);
 
   /*
   Description:
@@ -220,6 +234,7 @@ public:
   bool GetBrepValue( int value_id, const ON_Brep*& ) const;
   bool GetMeshValue( int value_id, const ON_Mesh*& ) const;
   bool GetGeometryValue( int value_id, const ON_Geometry*& ) const;
+  bool GetSubDEdgeChainValue(int value_id, const ON_SubDEdgeChain*& edge_chain) const;
   bool GetUuidValue( int value_id, ON_UUID* uuid ) const;
   bool GetPolyEdgeValue( int value_id, const ON_PolyEdgeHistory*& polyedge ) const;
 
@@ -233,6 +248,7 @@ public:
   int GetColorValues( int value_id, ON_SimpleArray<ON_Color>& ) const;
   int GetObjRefValues( int value_id, ON_ClassArray<ON_ObjRef>& objects ) const;
   int GetGeometryValues( int value_id, ON_SimpleArray<const ON_Geometry*>& ) const;
+  int GetSubDEdgeChainValues(int value_id, ON_SimpleArray<const ON_SubDEdgeChain*>& edge_chains) const;
   int GetUuidValues( int value_id, ON_SimpleArray<ON_UUID>& ) const;
   int GetPolyEdgeValues( int value_id, ON_SimpleArray<const ON_PolyEdgeHistory*>& ) const;
 
@@ -262,22 +278,21 @@ public:
   // CRhinoCommand::CommandId() value of the command that
   // created this history record.  Each time the command
   // is run, it can create a history record.
-  ON_UUID m_command_id;
+  ON_UUID m_command_id = ON_nil_uuid;
 
   // A YYYYMMDDn version number that gets updated when
   // a command changes.  This version is checked so that
   // new versions of a command's ReplayHistory don't 
   // attempt to use information saved in old files.
-  int m_version;
+  int m_version = 0;
 
-  enum RECORD_TYPE
+  enum class RECORD_TYPE : unsigned int
   {
     history_parameters = 0, // parameters for UpdateHistory
-    feature_parameters = 1, // parameters for a feature
-    force_32bit_record_type = 0xFFFFFFFF
+    feature_parameters = 1  // parameters for a feature
   };
 
-  RECORD_TYPE m_record_type;
+  RECORD_TYPE m_record_type = ON_HistoryRecord::RECORD_TYPE::history_parameters;
 
   /*
   Description:
@@ -288,11 +303,7 @@ public:
     ON_HistoryRecord::RECORD_TYPE enum with same value as i.
   */
   static
-  RECORD_TYPE RecordType(int i);
-
-  // Each history record has a unique id that is assigned
-  // when the record is added to Rhino's history record table.
-  ON_UUID m_record_id;
+  ON_HistoryRecord::RECORD_TYPE RecordType(int i);
 
   // List of object id values of antecedent objects that 
   // are referenced in the list of input events in m_value[].
@@ -318,11 +329,31 @@ public:
   */
   void RemapObjectIds( const ON_SimpleArray<ON_UuidPair>& uuid_remap );
 
+  /*
+  12 May, 2015 - Lowell
+  When an object is replaced and the old object has a history record with
+  CopyOnReplaceObject() set to tru, then history record is copied and 
+  attached to the new object.
+  That allows a descendant object to continue the history linkage after 
+  it is edited.  
+  See http://mcneel.myjetbrains.com/youtrack/issue/RH-30399
+  */
+  bool CopyOnReplaceObject() const;
+
+  void SetCopyOnReplaceObject(
+    bool bCopyOnReplaceObject
+    );
+
 private:
-  bool m_bValuesSorted;
+  bool m_bValuesSorted = true;
+  bool m_bCopyOnReplaceObject = false;
   ON_Value* FindValueHelper( int, int, bool ) const;
-  void CopyHelper( const ON_HistoryRecord&);
 };
 
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_HistoryRecord*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<const ON_HistoryRecord*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_ObjectArray<ON_HistoryRecord>;
+#endif
 
 #endif

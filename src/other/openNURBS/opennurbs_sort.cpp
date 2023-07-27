@@ -1,5 +1,13 @@
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
 /*
 If the speed of ON_qsort() functions on arrays that
 are nearly sorted is as good as heap sort, then define
@@ -8,7 +16,7 @@ ON__QSORT_FASTER_THAN_HSORT.
 
 #define ON_COMPILING_OPENNURBS_SORT_CPP
 
-#if defined(ON_OS_WINDOWS) && defined(ON_COMPILER_MSC)
+#if defined(ON_RUNTIME_WIN) && defined(ON_COMPILER_MSC)
 
 #pragma optimize("t", on)
 
@@ -24,10 +32,15 @@ ON__QSORT_FASTER_THAN_HSORT.
 
 #endif
 
-#if defined(ON_OS_WINDOWS) && defined(ON_COMPILER_MSC)
+#if defined(ON_RUNTIME_WIN) && defined(ON_COMPILER_MSC)
 
 // have a reliable thread safe CRT qsort with context that is
 // faster than the functions below.
+#define ON__HAVE_RELIABLE_SYSTEM_CONTEXT_QSORT
+#define ON__QSORT_FASTER_THAN_HSORT
+
+#elif defined(ON_COMPILER_CLANG)
+
 #define ON__HAVE_RELIABLE_SYSTEM_CONTEXT_QSORT
 #define ON__QSORT_FASTER_THAN_HSORT
 
@@ -50,7 +63,11 @@ ON_qsort( void *base, size_t nel, size_t width, int (*compar)(void*,const void *
   // find pivots, that calculation must be thread safe.
 #if defined(ON_COMPILER_MSC)
   qsort_s(base,nel,width,compar,context);
-#elif defined(ON_COMPILER_XCODE)
+#elif defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+  ON_hsort(base, nel, width, compar, context);
+#elif defined(ON_COMPILER_CLANG)
+  qsort_r(base,nel,width,context,compar);
+#elif defined(_GNU_SOURCE)
   qsort_r(base,nel,width,context,compar);
 #endif
 #else
@@ -185,16 +202,44 @@ ON_hsort(void *base, size_t nel, size_t width, int (*compar)(void*,const void*,c
 #undef ON_QSORT_FNAME
 #undef ON_HSORT_FNAME
 
+#define ON_SORT_TEMPLATE_TYPE double
+#define ON_QSORT_FNAME ON_qsort_double_decreasing
+#define ON_QSORT_GT(A,B) *A < *B
+#define ON_QSORT_LE(A,B) *A >= *B
+#define ON_QSORT_EQ(A,B) *A == *B
+#undef ON_QSORT_SHORT_SORT_FNAME
+#define ON_QSORT_SHORT_SORT_FNAME ON__shortsort_double_decreasing
+#include "opennurbs_qsort_template.h"
+#undef ON_SORT_TEMPLATE_TYPE
+#undef ON_QSORT_FNAME
+
 void ON_SortDoubleArray( 
         ON::sort_algorithm sort_algorithm,
         double* a,
         size_t nel
         )
 {
-  if ( ON::heap_sort == sort_algorithm )
+  if ( ON::sort_algorithm::heap_sort == sort_algorithm )
     ON_hsort_double(a,nel);
   else
     ON_qsort_double(a,nel);
+}
+
+void ON_SortDoubleArrayIncreasing(
+  double* a,
+  size_t nel
+  )
+{
+  ON_qsort_double(a, nel);
+}
+
+ON_DECL
+void ON_SortDoubleArrayDecreasing(
+  double* a,
+  size_t nel
+  )
+{
+  ON_qsort_double_decreasing(a, nel);
 }
 
 #define ON_SORT_TEMPLATE_TYPE float
@@ -212,7 +257,7 @@ void ON_SortFloatArray(
         size_t nel
         )
 {
-  if ( ON::heap_sort == sort_algorithm )
+  if ( ON::sort_algorithm::heap_sort == sort_algorithm )
     ON_hsort_float(a,nel);
   else
     ON_qsort_float(a,nel);
@@ -234,7 +279,7 @@ void ON_SortIntArray(
         size_t nel
         )
 {
-  if ( ON::heap_sort == sort_algorithm )
+  if ( ON::sort_algorithm::heap_sort == sort_algorithm )
     ON_hsort_int(a,nel);
   else
     ON_qsort_int(a,nel);
@@ -256,9 +301,31 @@ void ON_SortUnsignedIntArray(
         size_t nel
         )
 {
-  if ( ON::heap_sort == sort_algorithm )
+  if ( ON::sort_algorithm::heap_sort == sort_algorithm )
     ON_hsort_uint(a,nel);
   else
     ON_qsort_uint(a,nel);
+}
+
+
+#define ON_SORT_TEMPLATE_TYPE ON__UINT64
+#define ON_QSORT_FNAME ON_qsort_uint64
+#define ON_HSORT_FNAME ON_hsort_uint64
+#include "opennurbs_qsort_template.h"
+#include "opennurbs_hsort_template.h"
+#undef ON_SORT_TEMPLATE_TYPE
+#undef ON_QSORT_FNAME
+#undef ON_HSORT_FNAME
+
+void ON_SortUINT64Array(
+        ON::sort_algorithm sort_algorithm,
+        ON__UINT64* a,
+        size_t nel
+        )
+{
+  if ( ON::sort_algorithm::heap_sort == sort_algorithm )
+    ON_hsort_uint64(a,nel);
+  else
+    ON_qsort_uint64(a,nel);
 }
 

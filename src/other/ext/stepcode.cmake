@@ -44,9 +44,9 @@ if(BRLCAD_SC_BUILD)
   endif (MSVC)
 
   set(SC_DEPS)
-  if (TARGET PERPLEX_BLD)
-    list(APPEND SC_DEPS perplex_lemon perplex_re2c perplex_perplex)
-  endif (TARGET PERPLEX_BLD)
+  if (TARGET perplex)
+    list(APPEND SC_DEPS perplex)
+  endif (TARGET perplex)
 
   set(STEPCODE_INSTDIR "${CMAKE_BINARY_INSTALL_ROOT}/stepcode")
 
@@ -64,9 +64,10 @@ if(BRLCAD_SC_BUILD)
     -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=${CMAKE_INSTALL_RPATH_USE_LINK_PATH}
     -DCMAKE_SKIP_BUILD_RPATH=${CMAKE_SKIP_BUILD_RPATH}
     -DLEMON_ROOT=${CMAKE_BINARY_ROOT}
-    -DLEMON_TEMPLATE=${CMAKE_BINARY_ROOT}/${DATA_DIR}/lemon/lempar.c
+    -DLEMON_TEMPLATE=${LEMON_TEMPLATE}
     -DLIB_DIR=${LIB_DIR}
     -DPERPLEX_ROOT=${CMAKE_BINARY_ROOT}
+    -DPERPLEX_TEMPLATE=${PERPLEX_TEMPLATE}
     -DRE2C_ROOT=${CMAKE_BINARY_ROOT}
     -DSC_BUILD_SCHEMAS=
     -DSC_ENABLE_COVERAGE=OFF
@@ -285,6 +286,25 @@ if(BRLCAD_SC_BUILD)
   SetTargetFolder(STEPCODE_BLD "Third Party Libraries")
   SetTargetFolder(stepcode "Third Party Libraries")
 endif(BRLCAD_SC_BUILD)
+
+mark_as_advanced(EXP2CXX_EXECUTABLE)
+mark_as_advanced(EXPPP_EXECUTABLE)
+mark_as_advanced(STEPCODE_CORE_LIBRARY)
+mark_as_advanced(STEPCODE_DAI_DIR)
+mark_as_advanced(STEPCODE_DAI_LIBRARY)
+mark_as_advanced(STEPCODE_DIR)
+mark_as_advanced(STEPCODE_EDITOR_DIR)
+mark_as_advanced(STEPCODE_EDITOR_LIBRARY)
+mark_as_advanced(STEPCODE_EXPPP_DIR)
+mark_as_advanced(STEPCODE_EXPPP_LIBRARY)
+mark_as_advanced(STEPCODE_EXPRESS_DIR)
+mark_as_advanced(STEPCODE_EXPRESS_LIBRARY)
+mark_as_advanced(STEPCODE_INCLUDE_DIR)
+mark_as_advanced(STEPCODE_INCLUDE_DIRS)
+mark_as_advanced(STEPCODE_LIBRARIES)
+mark_as_advanced(STEPCODE_STEPCORE_DIR)
+mark_as_advanced(STEPCODE_UTILS_DIR)
+mark_as_advanced(STEPCODE_UTILS_LIBRARY)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/stepcode.dist")
 

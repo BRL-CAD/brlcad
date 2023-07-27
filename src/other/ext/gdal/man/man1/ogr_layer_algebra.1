@@ -1,0 +1,211 @@
+.\" Man page generated from reStructuredText.
+.
+.TH "OGR_LAYER_ALGEBRA" "1" "Mar 07, 2023" "" "GDAL"
+.SH NAME
+ogr_layer_algebra \- Performs various Vector layer algebraic operations
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.sp
+New in version 3.6.
+
+.SH SYNOPSIS
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+ogr_layer_algebra.py Union|Intersection|SymDifference|Identity|Update|Clip|Erase
+                    \-input_ds name [\-input_lyr name]
+                    \-method_ds [\-method_lyr name]
+                    \-output_ds name [\-output_lyr name] [\-overwrite]
+                    [\-opt NAME=VALUE]*
+                    [\-f format_name] [\-dsco NAME=VALUE]* [\-lco NAME=VALUE]*
+                    [\-input_fields NONE|ALL|fld1,fl2,...fldN] [\-method_fields NONE|ALL|fld1,fl2,...fldN]
+                    [\-nlt geom_type] [\-a_srs srs_def]
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SH DESCRIPTION
+.sp
+The \fBogr_layer_algebra.py\fP provides a command line utility to perform various vector layer algebraic operations. The utility takes a vector
+input source , a method source and generates the output of the operation in the specified output file
+.INDENT 0.0
+.TP
+.B <mode>
+Where <mode> is one of the seven available modes:
+.INDENT 7.0
+.IP \(bu 2
+\fBUnion\fP
+.INDENT 2.0
+.INDENT 3.5
+A union is a set of features, which represent areas that are in either of the operand layers.
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBIntersection\fP
+.INDENT 2.0
+.INDENT 3.5
+An intersection is a set of features, which represent the common areas of two layers.
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBSymDifference\fP
+.INDENT 2.0
+.INDENT 3.5
+A symmetric difference is a set of features, which represent areas that are in operand layers but which do not intersect.
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBIdentity\fP
+.INDENT 2.0
+.INDENT 3.5
+The identity method identifies features in the input layer with features in the method layer possibly splitting features into several features.
+By default the result layer has attributes from both operand layers.
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBUpdate\fP
+.INDENT 2.0
+.INDENT 3.5
+The update method creates a layer, which add features into the input layer from the method layer possibly cutting features in the input layer.
+By default the result layer has attributes only from the input layer.
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBClip\fP
+.INDENT 2.0
+.INDENT 3.5
+The clip method creates a layer, which has features from the input layer clipped to the areas of the features in the method layer.
+By default the result layer has attributes of the input layer.
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBErase\fP
+.INDENT 2.0
+.INDENT 3.5
+The erase method creates a layer, which has features from the input layer whose areas are erased by the features in the method layer.
+By default the result layer has attributes of the input layer.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-input_ds <path>
+Input data set path for the operation to be performed.
+For operations involving 2 datasets, this is one of the dataset.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-input_lyr <name>
+Layer name of the \fBinput_ds\fP for which the operations have to be performed ( Optional )
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-method_ds <path>
+Method data set path for the operation to be performed.
+This is usually the conditional data set supplied to the operation ( ex: clip , erase , update )
+This is the Second data set in the operation ( ex : Union, Intersection , SymDifference )
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-method_lyr <name>
+Layer name of the \fBmethod_ds\fP for which the operations have to be performed ( Optional )
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-output_ds <path>
+Output data set path for writing the result of the operations performed by ogr_layer_algebra
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-output_lyr_name <name>
+Layer name of the \fBoutput_lyr_name\fP where the output vector has to be written. ( Optional )
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-overwrite
+Indicates whether the \fBoutput_ds\fP have to be overwritten with the generated result of ogr_layer_algebra
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-opt <NAME=VALUE>
+Attributes for which the operation has to run on \fBinput_ds\fP and \fBmethod_ds\fP
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-f <format_name>
+Select the output format.If not specified,
+the format is guessed from the extension (previously was ESRI Shapefile).
+Use the short format name
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-dsco <NAME=VALUE>
+Dataset creation option (format specific)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-lco <NAME=VALUE>
+Layer creation option (format specific)
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-input_fields <NONE|ALL|fld1,fld2,fld3...>
+Comma\-delimited list of fields from input layer to copy to the output layer ,
+if eligible according to the operation
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-method_fields <NONE|ALL|fld1,fld2,fld3...>
+Comma\-delimited list of fields from method layer to copy to the output layer ,
+if eligible according to the operation
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-nlt <geom_type>
+Define the geometry type for the created layer.
+One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION,
+MULTIPOINT, MULTIPOLYGON, GEOMETRY25D, POINT25D, LINESTRING25D, POLYGON25D,
+GEOMETRYCOLLECTION25D, MULTIPOINT25D, MULTIPOLYGON25D.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-a_srs <srs_def>
+Assign an output SRS, but without reprojecting
+.sp
+The coordinate reference systems that can be passed are anything supported by the
+OGRSpatialReference.SetFromUserInput() call, which includes EPSG Projected,
+Geographic or Compound CRS (i.e. EPSG:4296), a well known text (WKT) CRS definition,
+PROJ.4 declarations, or the name of a .prj file containing a WKT CRS definition.
+.UNINDENT
+.SH COPYRIGHT
+1998-2023
+.\" Generated by docutils manpage writer.
+.

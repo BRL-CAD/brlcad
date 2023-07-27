@@ -745,6 +745,13 @@ test switch-14.16 {switch -regexp compilation} {
 	}
     }}
 } no
+test switch-14.17 {switch -regexp bug [c0bc269178]} {
+    set result {}
+    switch -regexp -matchvar m -indexvar i ac {
+	{(a)(b)?(c)} {set result $m}
+    }
+    set result
+} {ac a {} c}
 
 test switch-15.1 {coroutine safety of non-bytecoded switch} {*}{
     -body {

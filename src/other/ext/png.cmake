@@ -27,11 +27,16 @@ if (BRLCAD_PNG_BUILD)
 
   set(PNG_VERSION_MAJOR ${PNG_MAJOR_VERSION}${PNG_MINOR_VERSION})
   set(PNG_VERSION_MINOR ${PNG_PATCH_VERSION})
-  set(PNG_LIB_NAME png_brl)
+  set(PNG_LIB_NAME png${PNG_VERSION_MAJOR})
 
+  # NOTE: when we bump to libpng 1.6.40, they expose a PNG_DEBUG_POSTFIX which
+  # we can supply empty at build time.  For the current version we've added a
+  # separate variable to achieve the same result.  Without a solution like
+  # that, we tend to get 'd' suffixes appearing in library names and playing
+  # havoc with file copy logic
   if (MSVC)
-    set(PNG_BASENAME ${PNG_LIB_NAME})
-    set(PNG_STATICNAME ${PNG_LIB_NAME}_static)
+    set(PNG_BASENAME lib${PNG_LIB_NAME})
+    set(PNG_STATICNAME lib${PNG_LIB_NAME}_static)
     set(PNG_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
     set(PNG_SYMLINK_1 ${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX})
     set(PNG_SYMLINK_2 ${PNG_BASENAME}${CMAKE_SHARED_LIBRARY_SUFFIX}.${PNG_VERSION_MAJOR})
@@ -84,6 +89,8 @@ if (BRLCAD_PNG_BUILD)
     -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=${CMAKE_INSTALL_RPATH_USE_LINK_PATH}
     -DCMAKE_SKIP_BUILD_RPATH=${CMAKE_SKIP_BUILD_RPATH}
     -DPNG_LIB_NAME=${PNG_LIB_NAME}
+    -DPNG_NO_DEBUG_POSTFIX=ON
+    -DPNG_DEBUG_POSTFIX=""
     -DPNG_PREFIX=brl_
     -DPNG_STATIC=${BUILD_STATIC_LIBS}
     -DPNG_TESTS=OFF
@@ -147,6 +154,12 @@ else (BRLCAD_PNG_BUILD)
   endif (NOT DEFINED PNG_LIBRARIES)
 
 endif (BRLCAD_PNG_BUILD)
+
+mark_as_advanced(PNG_PNG_INCLUDE_DIR)
+mark_as_advanced(PNG_INCLUDE_DIRS)
+mark_as_advanced(PNG_LIBRARIES)
+mark_as_advanced(PNG_LIBRARY_DEBUG)
+mark_as_advanced(PNG_LIBRARY_RELEASE)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/png.dist")
 

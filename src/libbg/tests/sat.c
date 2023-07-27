@@ -1,7 +1,7 @@
 /*                           S A T . C
  * BRL-CAD
  *
- * Copyright (c) 2022 United States Government as represented by
+ * Copyright (c) 2022-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -187,7 +187,7 @@ obb_obb_test(
 #define ISECT 1
 
 void
-line_abb_run_tests()
+line_abb_run_tests(void)
 {
     point_t bcenter;
     point_t origin;
@@ -241,7 +241,7 @@ line_abb_run_tests()
 }
 
 void
-line_obb_run_tests()
+line_obb_run_tests(void)
 {
     point_t bcenter;
     point_t origin;
@@ -276,7 +276,7 @@ line_obb_run_tests()
 // Under the hood this is the obb test - just run it here to make sure the
 // wires stay connected.  Heavy duty testing in the obb version.
 void
-tri_aabb_run_tests()
+tri_aabb_run_tests(void)
 {
     point_t c, v[3];
     vect_t e;
@@ -291,7 +291,7 @@ tri_aabb_run_tests()
 }
 
 void
-tri_obb_run_tests()
+tri_obb_run_tests(void)
 {
     point_t v[3];
     vect_t c, AE[3], E[3];
@@ -326,7 +326,7 @@ tri_obb_run_tests()
 }
 
 void
-aabb_obb_run_tests()
+aabb_obb_run_tests(void)
 {
     point_t aabb_min, aabb_max;
     vect_t obb_c, obb_e1, obb_e2, obb_e3;
@@ -438,7 +438,7 @@ aabb_obb_run_tests()
 }
 
 void
-obb_obb_run_tests()
+obb_obb_run_tests(void)
 {
     vect_t obb1_c, obb1_e1, obb1_e2, obb1_e3;
     vect_t obb2_c, obb2_e1, obb2_e2, obb2_e3;

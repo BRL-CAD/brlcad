@@ -1,7 +1,7 @@
 /*                        R A N D O M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,9 +41,9 @@
 const char *usage = "Usage: random [-u] [-g [-c center]] [-s seed] [-v] low high";
 
 void
-printusage()
+printusage(void)
 {
-	bu_log("%s\n", usage);
+    bu_log("%s\n", usage);
 }
 
 int

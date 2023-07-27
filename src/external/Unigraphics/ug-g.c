@@ -1,7 +1,7 @@
 /*                          U G - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -5357,7 +5357,6 @@ int
 parse_args(struct ug_state *s, int ac, char *av[])
 {
     int  c;
-    char *strrchr();
 
     if (  ! (progname=strrchr(*av, '/'))  )
 	progname = *av;

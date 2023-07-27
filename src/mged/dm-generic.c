@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,11 +50,6 @@
 
 extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
-extern int scroll_select();		/* defined in scroll.c */
-extern int menu_select();		/* defined in menu.c */
-extern void rect_view2image();		/* defined in rect.c */
-extern void rb_set_dirty_flag();
-
 
 int
 common_dm(int argc, const char *argv[])

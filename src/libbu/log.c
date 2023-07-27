@@ -1,7 +1,7 @@
 /*                           L O G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ bu_log_hook_save_all(struct bu_hook_list *save_hlp)
 
 
 void
-bu_log_hook_delete_all()
+bu_log_hook_delete_all(void)
 {
     bu_hook_delete_all(&log_hook_list);
 }

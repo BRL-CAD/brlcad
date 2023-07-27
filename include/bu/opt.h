@@ -1,7 +1,7 @@
 /*                         O P T . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2022 United States Government as represented by
+ * Copyright (c) 2015-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -428,6 +428,18 @@ BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char *
  * verbosity.
  */
 BU_EXPORT extern int bu_opt_incr_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+
+/**
+ * Looking for a string that defines a language per ISO 639-1 language codes.
+ */
+BU_EXPORT extern int bu_opt_lang(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+
+/**
+ * Look for a valid man page section identifier (for BRL-CAD purposes valid
+ * choices are 1, 3, 5, n)
+ */
+#define BRLCAD_MAN_SECTIONS {'1', '3', '5', 'n', '\0'}
+BU_EXPORT extern int bu_opt_man_section(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
 
 __END_DECLS
 

@@ -1,7 +1,7 @@
 /*                      F I L E F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,19 +43,16 @@
  * Attempt to guess the file type. Understands ImageMagick style
  * FMT:filename as being preferred, but will attempt to guess based on
  * extension as well.
- *
- * I suck. I'll fix this later. Honest.
- *
- * FIXME: assuming trimmedname is BUFSIZ is a crash waiting to bite
- * someone down the road.  should pass a size or use a vls or have it
- * return the string as as return type (making the int type be an int*
- * argument instead that gets set).
  */
-bu_mime_image_t
-icv_guess_file_format(const char *filename, char *trimmedname)
+static bu_mime_image_t
+icv_guess_file_format(const char *filename, struct bu_vls *trimmedname)
 {
+    // If we have no filename, there's nothing to go on
+    if (!filename)
+	return BU_MIME_IMAGE_PIX;
+
     /* look for the FMT: header */
-#define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_MIME_IMAGE_##name; }
+#define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name))) {if (trimmedname) bu_vls_sprintf(trimmedname, "%s", filename+strlen(#name)+1); return BU_MIME_IMAGE_##name; }
     CMP(PIX);
     CMP(PNG);
     CMP(PPM);
@@ -65,7 +62,8 @@ icv_guess_file_format(const char *filename, char *trimmedname)
 #undef CMP
 
     /* no format header found, copy the name as it is */
-    bu_strlcpy(trimmedname, filename, BUFSIZ);
+    if (trimmedname)
+        bu_vls_sprintf(trimmedname, filename, BUFSIZ);
 
     /* and guess based on extension */
 #define CMP(name, ext) if (!bu_strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return BU_MIME_IMAGE_##name;
@@ -86,8 +84,7 @@ icv_image_t *
 icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height)
 {
     if (format == BU_MIME_IMAGE_AUTO) {
-	/* do some voodoo with the file magic or something... */
-	format = BU_MIME_IMAGE_PIX;
+	format = icv_guess_file_format(filename, NULL);
     }
 
     switch (format) {
@@ -111,31 +108,42 @@ icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t heig
 int
 icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
 {
-    /* FIXME: should not be introducing fixed size buffers */
-    char buf[BUFSIZ] = {0};
+    int ret = 0;
+    struct bu_vls ofilename = BU_VLS_INIT_ZERO;
+    const char *ofname = filename;
 
     if (format == BU_MIME_IMAGE_AUTO) {
-	format = icv_guess_file_format(filename, buf);
+	format = icv_guess_file_format(filename, &ofilename);
+	if (filename)
+	    ofname = bu_vls_cstr(&ofilename);
     }
 
     ICV_IMAGE_VAL_INT(bif);
 
     switch (format) {
 	/* case BU_MIME_IMAGE_BMP:
-	   return bmp_write(bif, filename); */
+	   return bmp_write(bif, ofname); */
 	case BU_MIME_IMAGE_PPM:
-	    return ppm_write(bif, filename);
+	    ret = ppm_write(bif, ofname);
+	    break;
 	case BU_MIME_IMAGE_PNG:
-	    return png_write(bif, filename);
+	    ret = png_write(bif, ofname);
+	    break;
 	case BU_MIME_IMAGE_PIX:
-	    return pix_write(bif, filename);
+	    ret = pix_write(bif, ofname);
+	    break;
 	case BU_MIME_IMAGE_BW:
-	    return bw_write(bif, filename);
+	    ret = bw_write(bif, ofname);
+	    break;
 	case BU_MIME_IMAGE_DPIX :
-	    return dpix_write(bif, filename);
+	    ret = dpix_write(bif, ofname);
+	    break;
 	default:
-	    return pix_write(bif, filename);
+	    ret = pix_write(bif, ofname);
     }
+
+    bu_vls_free(&ofilename);
+    return ret;
 }
 
 

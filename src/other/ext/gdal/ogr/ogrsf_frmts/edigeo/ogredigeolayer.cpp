@@ -2,10 +2,10 @@
  *
  * Project:  EDIGEO Translator
  * Purpose:  Implements OGREDIGEOLayer class.
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  ******************************************************************************
- * Copyright (c) 2011-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,28 +32,24 @@
 #include "ogr_p.h"
 #include "ogr_srs_api.h"
 
-CPL_CVSID("$Id$");
-
 /************************************************************************/
 /*                          OGREDIGEOLayer()                            */
 /************************************************************************/
 
-OGREDIGEOLayer::OGREDIGEOLayer( OGREDIGEODataSource* poDSIn,
-                                const char* pszName, OGRwkbGeometryType eType,
-                                OGRSpatialReference* poSRSIn ) :
-    poDS(poDSIn),
-    poFeatureDefn(new OGRFeatureDefn( pszName )),
-    poSRS(poSRSIn),
-    nNextFID(0)
+OGREDIGEOLayer::OGREDIGEOLayer(OGREDIGEODataSource *poDSIn, const char *pszName,
+                               OGRwkbGeometryType eType,
+                               OGRSpatialReference *poSRSIn)
+    : poDS(poDSIn), poFeatureDefn(new OGRFeatureDefn(pszName)), poSRS(poSRSIn),
+      nNextFID(0)
 {
-    if( poSRS )
+    if (poSRS)
         poSRS->Reference();
 
     poFeatureDefn->Reference();
-    poFeatureDefn->SetGeomType( eType );
-    if( poFeatureDefn->GetGeomFieldCount() != 0 )
+    poFeatureDefn->SetGeomType(eType);
+    if (poFeatureDefn->GetGeomFieldCount() != 0)
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-    SetDescription( poFeatureDefn->GetName() );
+    SetDescription(poFeatureDefn->GetName());
 }
 
 /************************************************************************/
@@ -63,7 +59,7 @@ OGREDIGEOLayer::OGREDIGEOLayer( OGREDIGEODataSource* poDSIn,
 OGREDIGEOLayer::~OGREDIGEOLayer()
 
 {
-    for(int i=0;i<(int)aosFeatures.size();i++)
+    for (int i = 0; i < (int)aosFeatures.size(); i++)
         delete aosFeatures[i];
 
     poFeatureDefn->Release();
@@ -83,31 +79,6 @@ void OGREDIGEOLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                           GetNextFeature()                           */
-/************************************************************************/
-
-OGRFeature *OGREDIGEOLayer::GetNextFeature()
-{
-
-    while( true )
-    {
-        OGRFeature *poFeature = GetNextRawFeature();
-        if (poFeature == NULL)
-            return NULL;
-
-        if((m_poFilterGeom == NULL
-            || FilterGeometry( poFeature->GetGeometryRef() ) )
-        && (m_poAttrQuery == NULL
-            || m_poAttrQuery->Evaluate( poFeature )) )
-        {
-            return poFeature;
-        }
-
-        delete poFeature;
-    }
-}
-
-/************************************************************************/
 /*                         GetNextRawFeature()                          */
 /************************************************************************/
 
@@ -115,35 +86,35 @@ OGRFeature *OGREDIGEOLayer::GetNextRawFeature()
 {
     if (nNextFID < (int)aosFeatures.size())
     {
-        OGRFeature* poFeature = aosFeatures[nNextFID]->Clone();
+        OGRFeature *poFeature = aosFeatures[nNextFID]->Clone();
         nNextFID++;
         return poFeature;
     }
     else
-        return NULL;
+        return nullptr;
 }
 
 /************************************************************************/
 /*                            GetFeature()                              */
 /************************************************************************/
 
-OGRFeature * OGREDIGEOLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGREDIGEOLayer::GetFeature(GIntBig nFID)
 {
     if (nFID >= 0 && nFID < (int)aosFeatures.size())
         return aosFeatures[(int)nFID]->Clone();
     else
-        return NULL;
+        return nullptr;
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGREDIGEOLayer::TestCapability( const char * pszCap )
+int OGREDIGEOLayer::TestCapability(const char *pszCap)
 
 {
     if (EQUAL(pszCap, OLCFastFeatureCount))
-        return m_poFilterGeom == NULL && m_poAttrQuery == NULL;
+        return m_poFilterGeom == nullptr && m_poAttrQuery == nullptr;
 
     else if (EQUAL(pszCap, OLCRandomRead))
         return TRUE;
@@ -176,9 +147,9 @@ OGRErr OGREDIGEOLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGREDIGEOLayer::GetFeatureCount( int bForce )
+GIntBig OGREDIGEOLayer::GetFeatureCount(int bForce)
 {
-    if (m_poFilterGeom != NULL || m_poAttrQuery != NULL)
+    if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
         return OGRLayer::GetFeatureCount(bForce);
 
     return (int)aosFeatures.size();
@@ -188,7 +159,7 @@ GIntBig OGREDIGEOLayer::GetFeatureCount( int bForce )
 /*                             AddFeature()                             */
 /************************************************************************/
 
-void OGREDIGEOLayer::AddFeature(OGRFeature* poFeature)
+void OGREDIGEOLayer::AddFeature(OGRFeature *poFeature)
 {
     poFeature->SetFID(aosFeatures.size());
     aosFeatures.push_back(poFeature);
@@ -198,10 +169,10 @@ void OGREDIGEOLayer::AddFeature(OGRFeature* poFeature)
 /*                         GetAttributeIndex()                          */
 /************************************************************************/
 
-int OGREDIGEOLayer::GetAttributeIndex(const CPLString& osRID)
+int OGREDIGEOLayer::GetAttributeIndex(const CPLString &osRID)
 {
-    std::map<CPLString,int>::iterator itAttrIndex =
-                                            mapAttributeToIndex.find(osRID);
+    std::map<CPLString, int>::iterator itAttrIndex =
+        mapAttributeToIndex.find(osRID);
     if (itAttrIndex != mapAttributeToIndex.end())
         return itAttrIndex->second;
     else
@@ -212,9 +183,8 @@ int OGREDIGEOLayer::GetAttributeIndex(const CPLString& osRID)
 /*                           AddFieldDefn()                             */
 /************************************************************************/
 
-void OGREDIGEOLayer::AddFieldDefn(const CPLString& osName,
-                                  OGRFieldType eType,
-                                  const CPLString& osRID)
+void OGREDIGEOLayer::AddFieldDefn(const CPLString &osName, OGRFieldType eType,
+                                  const CPLString &osRID)
 {
     if (!osRID.empty())
         mapAttributeToIndex[osRID] = poFeatureDefn->GetFieldCount();

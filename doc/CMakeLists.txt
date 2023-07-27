@@ -213,6 +213,7 @@ CMAKEFILES(
   CMakeLists.txt
   STARTERS
   STRATEGY
+  git/bisect.txt
   git/check.yml
   git/diffing.txt
   git/git2gource.cpp

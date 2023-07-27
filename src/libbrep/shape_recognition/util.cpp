@@ -1,7 +1,7 @@
 /*                        U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2022 United States Government as represented by
+ * Copyright (c) 2020-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -287,12 +287,12 @@ st_done:
 surface_t
 subbrep_highest_order_face(struct subbrep_island_data *data)
 {
-    int planar = 0;
-    int spherical = 0;
-    int cylindrical = 0;
-    int cone = 0;
-    int torus = 0;
-    int general = 0;
+    //int planar = 0;
+    //int spherical = 0;
+    //int cylindrical = 0;
+    //int cone = 0;
+    //int torus = 0;
+    //int general = 0;
     surface_t *fstypes = (surface_t *)data->face_surface_types;
     surface_t hofo = SURFACE_PLANE;
     for (int i = 0; i < data->island_faces_cnt; i++) {
@@ -300,37 +300,37 @@ subbrep_highest_order_face(struct subbrep_island_data *data)
 	int surface_type = (int)fstypes[ind];
 	switch (surface_type) {
 	    case SURFACE_PLANE:
-		planar++;
+		//planar++;
 		if (hofo < SURFACE_PLANE) {
 		    hofo = SURFACE_PLANE;
 		}
 		break;
 	    case SURFACE_SPHERE:
-		spherical++;
+		//spherical++;
 		if (hofo < SURFACE_SPHERE) {
 		    hofo = SURFACE_SPHERE;
 		}
 		break;
 	    case SURFACE_CYLINDER:
-		cylindrical++;
+		//cylindrical++;
 		if (hofo < SURFACE_CYLINDER) {
 		    hofo = SURFACE_CYLINDER;
 		}
 		break;
 	    case SURFACE_CONE:
-		cone++;
+		//cone++;
 		if (hofo < SURFACE_CONE) {
 		    hofo = SURFACE_CONE;
 		}
 		break;
 	    case SURFACE_TORUS:
-		torus++;
+		//torus++;
 		if (hofo < SURFACE_TORUS) {
 		    hofo = SURFACE_TORUS;
 		}
 		break;
 	    default:
-		general++;
+		//general++;
 		hofo = SURFACE_GENERAL;
 		//std::cout << "general surface(" << used_face.m_face_index << "): " << used_face.SurfaceIndexOf() << "\n";
 		break;

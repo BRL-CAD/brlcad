@@ -33,6 +33,7 @@ set(LIBBREP_SOURCES
   cdt/ovlps_simple.cpp
   cdt/tri_isect.cpp
   debug_plot.cpp
+  edit.cpp
   intersect.cpp
   tools/tools.cpp
   opennurbs_ext.cpp
@@ -52,9 +53,9 @@ BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbv;libbg;libbn;libbu;${OPENNURBS_
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(HIDE_INTERNAL_SYMBOLS)
-  set_property(TARGET libbrep APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
+  set_property(TARGET libbrep APPEND PROPERTY COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
   # Anyone who needs to import libbrep will also need to import openNURBS
-  set_property(TARGET libbrep APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
+  set_property(TARGET libbrep APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
 endif(HIDE_INTERNAL_SYMBOLS)
 
 add_subdirectory(tests)

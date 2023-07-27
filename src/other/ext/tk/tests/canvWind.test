@@ -139,6 +139,22 @@ test canvWind-1.4 {DisplayWinItem, windows off-screen horizontally} -setup {
     destroy .t
 } -result {{1 3} {1 -79} {0 -79} {1 255} {0 255}}
 
+test canvWind-2.1 {DisplayWinItem, window gets destroyed during <Configure>} -setup {
+    destroy .t
+} -body {
+    toplevel .t
+    canvas .t.c
+    pack .t.c
+    frame .t.c.f -width 50 -height 50 -background red
+    set id [.t.c create window 50 50 -window .t.c.f]
+    update
+    bind .t.c.f <Configure> {destroy .t.c.f}
+    .t.c coords $id 60 60 ;  # was crashing
+    update
+} -cleanup {
+    destroy .t
+} -result {}
+
 # cleanup
 cleanupTests
 return

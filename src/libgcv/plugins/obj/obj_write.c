@@ -1,7 +1,7 @@
 /*                     O B J _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2022 United States Government as represented by
+ * Copyright (c) 1996-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,6 @@ nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db
     struct bu_ptbl norms;
     char *region_name;
     size_t numverts = 0;		/* Number of vertices to output */
-    size_t numtri   = 0;		/* Number of triangles to output */
     size_t i;
 
     NMG_CK_REGION(r);
@@ -156,7 +155,6 @@ nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db
 		    bu_bomb("LU is not a triangle\n");
 		} else if (vert_count < 3)
 		    continue;
-		numtri++;
 	    }
 	}
     }

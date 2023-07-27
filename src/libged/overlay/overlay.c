@@ -1,7 +1,7 @@
 /*                         O V E R L A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -338,7 +338,7 @@ const struct ged_cmd *overlay_cmds[] = { &overlay_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  overlay_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

@@ -58,13 +58,18 @@ endif (NOT INCLUDE_DIR)
 
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/util
+  ${CMAKE_CURRENT_BINARY_DIR}/netpbm
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/util
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/netpbm
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/util/netpbm
   )
 
-set(NETPBM_VERSION 10.35.98)
+set(NETPBM_VERSION 10.73.42)
+
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/netpbm)
 configure_file(version.h.in ${CMAKE_CURRENT_BINARY_DIR}/version_new.h)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/version_new.h ${CMAKE_CURRENT_BINARY_DIR}/version.h)
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/version_new.h ${CMAKE_CURRENT_BINARY_DIR}/netpbm/version.h)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/version_new.h)
 #string(TIMESTAMP TIME_STAMP)
 set(TIME_STAMP "0000")
@@ -92,58 +97,60 @@ else(${INT_SIZE} GREATER ${LONG_SIZE})
 endif(${INT_SIZE} GREATER ${LONG_SIZE})
 
 configure_file(pm_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/pm_config_new.h)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/pm_config_new.h ${CMAKE_CURRENT_BINARY_DIR}/pm_config.h)
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/pm_config_new.h ${CMAKE_CURRENT_BINARY_DIR}/netpbm/pm_config.h)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/pm_config_new.h)
 
 set(NETPBM_SRCS
-  colorname.c
-  fileio.c
-  libpam.c
-  libpamcolor.c
-  libpammap.c
-  libpamn.c
-  libpamread.c
-  libpamwrite.c
-  libpbm1.c
-  libpbm2.c
-  libpbm3.c
-  libpbmfont.c
-  libpgm1.c
-  libpgm2.c
-  libpm.c
-  libpnm1.c
-  libpnm2.c
-  libpnm3.c
-  libppm1.c
-  libppm2.c
-  libppmcmap.c
-  libppmcolor.c
-  libppmd.c
-  libppmfloyd.c
-  libppmfuzzy.c
-  path.c
-  pmfileio.cxx
-  ppmdfont.c
-  standardppmdfont.c
-  util/bitio.c
-  util/mallocvar.c
+  lib/colorname.c
+  lib/fileio.c
+  lib/libpam.c
+  lib/libpamcolor.c
+  lib/libpammap.c
+  lib/libpamn.c
+  lib/libpamread.c
+  lib/libpamwrite.c
+  lib/libpbm1.c
+  lib/libpbm2.c
+  lib/libpbm3.c
+  lib/libpbmfont.c
+  lib/libpgm1.c
+  lib/libpgm2.c
+  lib/libpm.c
+  lib/libpnm1.c
+  lib/libpnm2.c
+  lib/libpnm3.c
+  lib/libppm1.c
+  lib/libppm2.c
+  lib/libppmcmap.c
+  lib/libppmcolor.c
+  lib/libppmd.c
+  lib/libppmfloyd.c
+  lib/libppmfuzzy.c
+  lib/path.c
+  lib/pmfileio.cxx
+  lib/ppmdfont.c
+  lib/standardppmdfont.c
+  lib/util/bitio.c
+  lib/util/mallocvar.c
+  lib/util/nstring.c
+  lib/util/vasprintf.c
   )
 
 set(NETPBM_HEADERS
-  colorname.h
-  pam.h
-  pammap.h
-  pbm.h
-  pbmfont.h
-  pgm.h
-  pm.h
-  pm_gamma.h
-  pnm.h
-  ppm.h
-  ppmcmap.h
-  ppmfloyd.h
-  util/bitio.h
-  ${CMAKE_CURRENT_BINARY_DIR}/pm_config.h
+  lib/netpbm/colorname.h
+  lib/netpbm/pam.h
+  lib/netpbm/pammap.h
+  lib/netpbm/pbm.h
+  lib/netpbm/pbmfont.h
+  lib/netpbm/pgm.h
+  lib/netpbm/pm.h
+  lib/netpbm/pm_gamma.h
+  lib/netpbm/pnm.h
+  lib/netpbm/ppm.h
+  lib/netpbm/ppmcmap.h
+  lib/netpbm/ppmfloyd.h
+  lib/util/netpbm/bitio.h
+  ${CMAKE_CURRENT_BINARY_DIR}/netpbm/pm_config.h
   )
 
 install (FILES ${NETPBM_HEADERS} DESTINATION ${INCLUDE_DIR}/netpbm)

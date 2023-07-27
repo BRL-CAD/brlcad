@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -130,7 +130,7 @@ struct _ged_funtab {
     char *ft_name;
     char *ft_parms;
     char *ft_comment;
-    int (*ft_func)();
+    int (*ft_func)(void);
     int ft_min;
     int ft_max;
     int tcl_converted;
@@ -527,13 +527,13 @@ GED_EXPORT extern int _ged_translate_tgc(struct ged *gedp,
 GED_EXPORT extern int _ged_do_rot(struct ged *gedp,
 		       char coord,
 		       mat_t rmat,
-		       int (*func)());
+		       int (*func)(struct ged *, char, char, mat_t));
 GED_EXPORT extern int _ged_do_slew(struct ged *gedp,
 			vect_t svec);
 GED_EXPORT extern int _ged_do_tra(struct ged *gedp,
 		       char coord,
 		       vect_t tvec,
-		       int (*func)());
+		       int (*func)(struct ged *, char, vect_t));
 
 /* Internal implementation of ged_results - since the
  * details of the struct are not for public access,
@@ -665,6 +665,7 @@ struct _ged_facetize_opts {
     int triangulate;
     int make_nmg;
     int nmgbool;
+    int irmb;
     int screened_poisson;
     int continuation;
     int method_flags;
@@ -690,6 +691,7 @@ struct _ged_facetize_opts {
     int fnull;
 
     struct bu_vls *froot;
+    struct bu_vls *irmb_comb;
     struct bu_vls *nmg_comb;
     struct bu_vls *continuation_comb;
     struct bu_vls *spsr_comb;

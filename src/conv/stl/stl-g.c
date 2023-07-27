@@ -1,7 +1,7 @@
 /*                         S T L - G . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2022 United States Government as represented by
+ * Copyright (c) 2002-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -364,7 +364,7 @@ void lswap(unsigned int *v)
 }
 
 static void
-Convert_part_binary()
+Convert_part_binary(void)
 {
     unsigned char buf[51];
     unsigned long num_facets=0;
@@ -494,7 +494,7 @@ Convert_part_binary()
 
 
 static void
-Convert_input()
+Convert_input(void)
 {
     char line[ MAX_LINE_SIZE ];
 

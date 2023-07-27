@@ -1,7 +1,7 @@
 /*                       R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2022 United States Government as represented by
+ * Copyright (c) 1990-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,8 +27,6 @@
 #include "./iges_extern.h"
 #include "vmath.h"
 
-void Addsub();
-
 
 struct subtracts
 {
@@ -48,6 +46,9 @@ struct trclist
     struct subtracts *subtr;
     struct trclist *next, *prev;
 };
+
+
+void Addsub(struct trclist *, struct trclist *);
 
 
 int

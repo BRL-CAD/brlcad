@@ -1,7 +1,7 @@
 /*                        N I R T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2647,7 +2647,7 @@ nirt_init(struct nirt_state *ns)
     n->base2local = 0.0;
     n->local2base = 0.0;
     n->use_air = 0;
-    n->backout = 0;
+    n->backout = 1;
 
     n->b_state = false;
     n->b_segs = false;

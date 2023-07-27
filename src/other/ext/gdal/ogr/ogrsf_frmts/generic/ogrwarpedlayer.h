@@ -3,10 +3,10 @@
  *
  * Project:  OpenGIS Simple Features Reference Implementation
  * Purpose:  Defines OGRWarpedLayer class
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2012-2014, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012-2014, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,56 +40,61 @@
 
 class OGRWarpedLayer : public OGRLayerDecorator
 {
+    CPL_DISALLOW_COPY_ASSIGN(OGRWarpedLayer)
+
   protected:
-      OGRFeatureDefn              *m_poFeatureDefn;
-      int                          m_iGeomField;
+    OGRFeatureDefn *m_poFeatureDefn;
+    int m_iGeomField;
 
-      OGRCoordinateTransformation *m_poCT;
-      OGRCoordinateTransformation *m_poReversedCT; /* may be NULL */
-      OGRSpatialReference         *m_poSRS;
+    OGRCoordinateTransformation *m_poCT;
+    OGRCoordinateTransformation *m_poReversedCT; /* may be NULL */
+    OGRSpatialReference *m_poSRS;
 
-      OGREnvelope                  sStaticEnvelope;
+    OGREnvelope sStaticEnvelope{};
 
-      static int ReprojectEnvelope( OGREnvelope* psEnvelope,
-                                    OGRCoordinateTransformation* poCT );
+    static int ReprojectEnvelope(OGREnvelope *psEnvelope,
+                                 OGRCoordinateTransformation *poCT);
 
-      OGRFeature *                 SrcFeatureToWarpedFeature(OGRFeature* poFeature);
-      OGRFeature *                 WarpedFeatureToSrcFeature(OGRFeature* poFeature);
+    OGRFeature *SrcFeatureToWarpedFeature(OGRFeature *poFeature);
+    OGRFeature *WarpedFeatureToSrcFeature(OGRFeature *poFeature);
 
   public:
+    OGRWarpedLayer(
+        OGRLayer *poDecoratedLayer, int iGeomField, int bTakeOwnership,
+        OGRCoordinateTransformation
+            *poCT, /* must NOT be NULL, ownership acquired by OGRWarpedLayer */
+        OGRCoordinateTransformation *
+            poReversedCT /* may be NULL, ownership acquired by OGRWarpedLayer */);
+    virtual ~OGRWarpedLayer();
 
-                       OGRWarpedLayer(OGRLayer* poDecoratedLayer,
-                                      int iGeomField,
-                                      int bTakeOwnership,
-                                      OGRCoordinateTransformation* poCT,  /* must NOT be NULL, ownership acquired by OGRWarpedLayer */
-                                      OGRCoordinateTransformation* poReversedCT /* may be NULL, ownership acquired by OGRWarpedLayer */);
-    virtual           ~OGRWarpedLayer();
+    void SetExtent(double dfXMin, double dfYMin, double dfXMax, double dfYMax);
 
-    void                SetExtent(double dfXMin, double dfYMin, double dfXMax, double dfYMax);
-
-    virtual void        SetSpatialFilter( OGRGeometry * ) override;
-    virtual void        SetSpatialFilterRect( double dfMinX, double dfMinY,
-                                              double dfMaxX, double dfMaxY ) override;
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry * ) override;
-    virtual void        SetSpatialFilterRect( int iGeomField, double dfMinX, double dfMinY,
-                                              double dfMaxX, double dfMaxY ) override;
+    virtual void SetSpatialFilter(OGRGeometry *) override;
+    virtual void SetSpatialFilterRect(double dfMinX, double dfMinY,
+                                      double dfMaxX, double dfMaxY) override;
+    virtual void SetSpatialFilter(int iGeomField, OGRGeometry *) override;
+    virtual void SetSpatialFilterRect(int iGeomField, double dfMinX,
+                                      double dfMinY, double dfMaxX,
+                                      double dfMaxY) override;
 
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature( GIntBig nFID ) override;
-    virtual OGRErr      ISetFeature( OGRFeature *poFeature ) override;
-    virtual OGRErr      ICreateFeature( OGRFeature *poFeature ) override;
+    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
+    virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual GIntBig     GetFeatureCount( int bForce = TRUE ) override;
-    virtual OGRErr      GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce = TRUE) override;
-    virtual OGRErr      GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
+    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
+                             int bForce = TRUE) override;
+    virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
 
-    virtual int         TestCapability( const char * ) override;
+    virtual int TestCapability(const char *) override;
 };
 
 #endif /* #ifndef DOXYGEN_SKIP */
 
-#endif //  OGRWARPEDLAYER_H_INCLUDED
+#endif  //  OGRWARPEDLAYER_H_INCLUDED

@@ -26,24 +26,28 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_conv.h"
-#include "cpl_string.h"
+#include "cpl_port.h"
 #include "ogr_mem.h"
 
-CPL_CVSID("$Id$");
+#include "cpl_conv.h"
+#include "cpl_string.h"
+#include "gdal.h"
+#include "ogr_core.h"
+#include "ogrsf_frmts.h"
 
 /************************************************************************/
 /*                          ~OGRMemDriver()                             */
 /************************************************************************/
 
-OGRMemDriver::~OGRMemDriver() {}
+OGRMemDriver::~OGRMemDriver()
+{
+}
 
 /************************************************************************/
 /*                              GetName()                               */
 /************************************************************************/
 
 const char *OGRMemDriver::GetName()
-
 {
     return "Memory";
 }
@@ -52,30 +56,30 @@ const char *OGRMemDriver::GetName()
 /*                                Open()                                */
 /************************************************************************/
 
-OGRDataSource *OGRMemDriver::Open( const char * /* pszFilename */, int )
+OGRDataSource *OGRMemDriver::Open(const char * /* pszFilename */, int)
 {
-    return NULL;
+    return nullptr;
 }
 
 /************************************************************************/
 /*                          CreateDataSource()                          */
 /************************************************************************/
 
-OGRDataSource *OGRMemDriver::CreateDataSource( const char * pszName,
-                                               char **papszOptions )
+OGRDataSource *OGRMemDriver::CreateDataSource(const char *pszName,
+                                              char **papszOptions)
 
 {
-    return new OGRMemDataSource( pszName, papszOptions );
+    return new OGRMemDataSource(pszName, papszOptions);
 }
 
 /************************************************************************/
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRMemDriver::TestCapability( const char * pszCap )
+int OGRMemDriver::TestCapability(const char *pszCap)
 
 {
-    if( EQUAL(pszCap,ODrCCreateDataSource) )
+    if (EQUAL(pszCap, ODrCCreateDataSource))
         return TRUE;
 
     return FALSE;
@@ -88,22 +92,44 @@ int OGRMemDriver::TestCapability( const char * pszCap )
 void RegisterOGRMEM()
 
 {
-    if( GDALGetDriverByName( "Memory" ) != NULL )
-      return;
+    if (GDALGetDriverByName("Memory") != nullptr)
+        return;
 
-    OGRSFDriver* poDriver = new OGRMemDriver;
+    OGRSFDriver *poDriver = new OGRMemDriver;
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_DELETE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_DELETE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_REORDER_FIELDS, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONFIELDDATATYPES,
         "Integer Integer64 Real String Date DateTime Time IntegerList "
-        "Integer64List RealList StringList Binary" );
+        "Integer64List RealList StringList Binary");
+    poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
+                              "Name WidthPrecision");
 
     poDriver->SetMetadataItem(
         GDAL_DS_LAYER_CREATIONOPTIONLIST,
         "<LayerCreationOptionList>"
         "  <Option name='ADVERTIZE_UTF8' type='boolean' description='Whether "
         "the layer will contain UTF-8 strings' default='NO'/>"
-        "</LayerCreationOptionList>" );
+        "</LayerCreationOptionList>");
 
-    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver( poDriver );
+    poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_FIELD_DOMAINS, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES,
+                              "Coded Range Glob");
+
+    poDriver->SetMetadataItem(GDAL_DMD_ALTER_GEOM_FIELD_DEFN_FLAGS,
+                              "Name Type Nullable SRS CoordinateEpoch");
+
+    OGRSFDriverRegistrar::GetRegistrar()->RegisterDriver(poDriver);
 }

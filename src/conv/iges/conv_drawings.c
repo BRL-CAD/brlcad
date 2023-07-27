@@ -1,7 +1,7 @@
 /*                 C O N V _ D R A W I N G S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2022 United States Government as represented by
+ * Copyright (c) 1994-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -722,7 +722,7 @@ Get_drawing(size_t entno, struct bu_ptbl *view_vis_list)
 	}
 
 void
-Conv_drawings()
+Conv_drawings(void)
 {
     size_t i;
     int tot_drawings = 0;

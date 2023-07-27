@@ -15,17 +15,6 @@
 #include "tkInt.h"
 
 /*
- * Values for "flags" field of Tk_ConfigSpec structures. Be sure to coordinate
- * these values with those defined in tk.h (TK_CONFIG_COLOR_ONLY, etc.) There
- * must not be overlap!
- *
- * INIT -		Non-zero means (char *) things have been converted to
- *			Tk_Uid's.
- */
-
-#define INIT		0x20
-
-/*
  * Forward declarations for functions defined later in this file:
  */
 

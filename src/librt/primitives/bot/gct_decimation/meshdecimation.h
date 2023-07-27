@@ -108,7 +108,7 @@ typedef struct {
  * This function exists only to read CPUID and NUMA information once in a thread safe
  * manner, in case you want to launch multiple mdMeshDecimation() simultaneously.
  */
-void mdInit();
+void mdInit(void);
 
 
 /*

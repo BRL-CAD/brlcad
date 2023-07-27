@@ -14,7 +14,7 @@ switch.
 GDAL/OGR General
 ----------------
 
-In general GDAL/OGR is licensed under an MIT/X style license with the
+In general GDAL/OGR is licensed under an MIT style license with the
 following terms:
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -36,8 +36,8 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
 
-gdal/frmts/gtiff/tif_float.c
-----------------------------
+port/cpl_float.cpp
+------------------
 
 Copyright (c) 2002, Industrial Light & Magic, a division of Lucas
 Digital Ltd. LLC
@@ -70,8 +70,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-gdal/frmts/hdf4/hdf-eos/*
-------------------------
+frmts/hdf4/hdf-eos/*
+--------------------
 
  Copyright (C) 1996 Hughes and Applied Research Corporation
 
@@ -81,8 +81,8 @@ gdal/frmts/hdf4/hdf-eos/*
  this permission notice appear in supporting documentation.
 
 
-gdal/frmts/pcraster/libcsf
---------------------------
+frmts/pcraster/libcsf
+---------------------
 
 Copyright (c) 1997-2003, Utrecht University
 All rights reserved.
@@ -115,8 +115,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-gdal/frmts/grib/degrib/*
-------------------------
+frmts/grib/degrib/*
+-------------------
 
 The degrib and g2clib source code are modified versions of code produced
 by NOAA NWS and are in the public domain subject to the following
@@ -214,8 +214,8 @@ freely, subject to the following restrictions:
        own source and binary releases.
 
 
-gdal/ogr/ogrsf_frmts/dxf/intronurbs.cpp
----------------------------------------
+ogr/ogrsf_frmts/dxf/intronurbs.cpp
+----------------------------------
 
 This code is derived from the code associated with the book "An Introduction
 to NURBS" by David F. Rogers.  More information on the book and the code is
@@ -251,8 +251,8 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-gdal/alg/thinplatespline.cpp
-----------------------------
+alg/thinplatespline.cpp
+-----------------------
 
 IEEE754 log() code derived from:
 @(#)e_log.c 1.3 95/01/18
@@ -265,8 +265,8 @@ software is freely granted, provided that this notice
 is preserved.
 
 
-gdal/alg/libqhull
------------------
+alg/libqhull
+------------
 
 Only applies when GDAL is compiled with internal qhull support
 
@@ -310,8 +310,8 @@ and redistributed under the following conditions:
    qhull_bug@qhull.org; the authors may or may not act on them as
    they desire.
 
-gdal/frmts/pdf/pdfdataset.cpp (method PDFiumRenderPageBitmap())
----------------------------------------------------------------
+frmts/pdf/pdfdataset.cpp (method PDFiumRenderPageBitmap())
+----------------------------------------------------------
 
 Copyright 2014 PDFium Authors. All rights reserved.
 
@@ -341,8 +341,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-gdal/frmts/mrf/* (apply when MRF driver included in build)
----------------------------------------------------------------
+frmts/mrf/* (apply when MRF driver included in build)
+------------------------------------------------------
 
 Copyright (c) 2002-2012, California Institute of Technology.
 All rights reserved.  Based on Government Sponsored Research under contracts NAS7-1407 and/or NAS7-03001.
@@ -376,6 +376,94 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+cmake/modules/3.* (backported CMake find modules)
+-------------------------------------------------
 
+CMake - Cross Platform Makefile Generator
+Copyright 2000-2022 Kitware, Inc. and Contributors
+All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
 
+* Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+
+* Neither the name of Kitware, Inc. nor the names of Contributors
+  may be used to endorse or promote products derived from this
+  software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+ogr/ogrsf_frmts/flatgeobuf
+--------------------------
+
+FlatGeobuf
+++++++++++
+
+ISC License
+
+Copyright (c) 2018, Bjorn Harrtell
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+Flatbush
+++++++++
+
+ISC License
+
+Copyright (c) 2018, Vladimir Agafonkin
+
+Permission to use, copy, modify, and/or distribute this software for any purpose
+with or without fee is hereby granted, provided that the above copyright notice
+and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
+
+ogr/ogrsf_frmts/flatgeobuf/flatbuffers
+--------------------------------------
+
+Copyright 2021 Google Inc. All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

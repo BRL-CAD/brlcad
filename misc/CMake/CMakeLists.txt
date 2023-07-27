@@ -20,6 +20,7 @@ set(cmake_ignore_files
   CheckCXX11Features/cxx11-test-nullptr.cpp
   CheckCXX11Features/cxx11-test-nullptr_fail_compile.cpp
   CheckCXX11Features/cxx11-test-lib_regex.cpp
+  CheckStructHasMember.cmake
   CompilerFlags.cmake
   Distcheck.cmake
   DocBook.cmake
@@ -27,7 +28,7 @@ set(cmake_ignore_files
   FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
   FindAppleseed.cmake
-  FindASSIMP.cmake
+  FindASSETIMPORT.cmake
   FindBlosc.cmake
   FindBSON.cmake
   FindFontconfig.cmake
@@ -37,6 +38,7 @@ set(cmake_ignore_files
   FindLibUV.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
+  FindOpenMesh.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOpenCL.cmake

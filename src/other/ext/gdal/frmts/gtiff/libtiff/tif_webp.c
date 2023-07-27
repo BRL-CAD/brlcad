@@ -35,6 +35,7 @@
 #include "webp/encode.h"
 
 #include <stdio.h>
+#include <stdbool.h>
 
 #define LSTATE_INIT_DECODE 0x01
 #define LSTATE_INIT_ENCODE 0x02
@@ -44,7 +45,7 @@
  */
 typedef struct {
   uint16_t           nSamples;               /* number of samples per pixel */
-  
+
   int              lossless;               /* lossy/lossless compression */
   int              quality_level;          /* compression level */
   WebPPicture      sPicture;               /* WebP Picture */
@@ -52,13 +53,13 @@ typedef struct {
   uint8_t*           pBuffer;                /* buffer to hold raw data on encoding */
   unsigned int     buffer_offset;          /* current offset into the buffer */
   unsigned int     buffer_size;
-  
+
   WebPIDecoder*    psDecoder;              /* WebPIDecoder */
   WebPDecBuffer    sDecBuffer;             /* Decoder buffer */
   int              last_y;                 /* Last row decoded */
-  
+
   int              state;                  /* state flags */
-  
+
 	TIFFVGetMethod   vgetparent;             /* super-class method */
 	TIFFVSetMethod   vsetparent;             /* super-class method */
 } WebPState;
@@ -76,7 +77,7 @@ int TWebPDatasetWriter(const uint8_t* data, size_t data_size,
 {
   static const char module[] = "TWebPDatasetWriter";
   TIFF* tif = (TIFF*)(picture->custom_ptr);
-  
+
   if ( (tif->tif_rawcc + (tmsize_t)data_size) > tif->tif_rawdatasize ) {
     TIFFErrorExt(tif->tif_clientdata, module,
                  "Buffer too small by %"TIFF_SIZE_FORMAT" bytes.",
@@ -86,7 +87,7 @@ int TWebPDatasetWriter(const uint8_t* data, size_t data_size,
     _TIFFmemcpy(tif->tif_rawcp, data, data_size);
     tif->tif_rawcc += data_size;
     tif->tif_rawcp += data_size;
-    return 1;    
+    return 1;
   }
 }
 
@@ -102,7 +103,7 @@ TWebPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
 
   assert(sp != NULL);
   assert(sp->state == LSTATE_INIT_ENCODE);
-    
+
   if((uint64_t)sp->buffer_offset +
      (uint64_t)cc > sp->buffer_size )
   {
@@ -116,7 +117,7 @@ TWebPEncode(TIFF* tif, uint8_t* bp, tmsize_t cc, uint16_t s)
   sp->buffer_offset += (unsigned)cc;
 
   return 1;
-  
+
 }
 
 static int
@@ -125,11 +126,77 @@ TWebPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
   static const char module[] = "WebPDecode";
   VP8StatusCode status = VP8_STATUS_OK;
   WebPState *sp = DecoderState(tif);
-  (void) s;  
+  uint32_t segment_width, segment_height;
+  bool decode_whole_strile = false;
+
+  (void) s;
 
   assert(sp != NULL);
   assert(sp->state == LSTATE_INIT_DECODE);
-  
+
+  if( sp->psDecoder == NULL )
+  {
+      TIFFDirectory* td = &tif->tif_dir;
+      uint32_t buffer_size;
+
+      if (isTiled(tif)) {
+        segment_width = td->td_tilewidth;
+        segment_height = td->td_tilelength;
+      } else {
+        segment_width = td->td_imagewidth;
+        segment_height = td->td_imagelength - tif->tif_row;
+        if (segment_height > td->td_rowsperstrip)
+          segment_height = td->td_rowsperstrip;
+      }
+
+      buffer_size = segment_width * segment_height * sp->nSamples;
+      if( occ == (tmsize_t)buffer_size )
+      {
+          /* If decoding the whole strip/tile, we can directly use the */
+          /* output buffer */
+          decode_whole_strile = true;
+      }
+      else if( sp->pBuffer == NULL || buffer_size > sp->buffer_size )
+      {
+          if (sp->pBuffer != NULL) {
+              _TIFFfree(sp->pBuffer);
+              sp->pBuffer = NULL;
+          }
+
+          sp->pBuffer = _TIFFmalloc(buffer_size);
+          if( !sp->pBuffer) {
+              TIFFErrorExt(tif->tif_clientdata, module, "Cannot allocate buffer");
+              return 0;
+          }
+          sp->buffer_size = buffer_size;
+      }
+
+      sp->last_y = 0;
+
+      WebPInitDecBuffer(&sp->sDecBuffer);
+
+      sp->sDecBuffer.is_external_memory = 1;
+      sp->sDecBuffer.width = segment_width;
+      sp->sDecBuffer.height = segment_height;
+      sp->sDecBuffer.u.RGBA.rgba = decode_whole_strile ? op : sp->pBuffer;
+      sp->sDecBuffer.u.RGBA.stride = segment_width * sp->nSamples;
+      sp->sDecBuffer.u.RGBA.size = buffer_size;
+
+      if (sp->nSamples > 3) {
+        sp->sDecBuffer.colorspace = MODE_RGBA;
+      } else {
+        sp->sDecBuffer.colorspace = MODE_RGB;
+      }
+
+      sp->psDecoder = WebPINewDecoder(&sp->sDecBuffer);
+
+      if (sp->psDecoder == NULL) {
+        TIFFErrorExt(tif->tif_clientdata, module,
+                    "Unable to allocate WebP decoder.");
+        return 0;
+      }
+  }
+
   if (occ % sp->sDecBuffer.u.RGBA.stride)
   {
     TIFFErrorExt(tif->tif_clientdata, module,
@@ -142,13 +209,13 @@ TWebPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
   if (status != VP8_STATUS_OK && status != VP8_STATUS_SUSPENDED) {
     if (status == VP8_STATUS_INVALID_PARAM) {
        TIFFErrorExt(tif->tif_clientdata, module,
-         "Invalid parameter used.");      
+         "Invalid parameter used.");
     } else if (status == VP8_STATUS_OUT_OF_MEMORY) {
       TIFFErrorExt(tif->tif_clientdata, module,
-        "Out of memory.");         
+        "Out of memory.");
     } else {
       TIFFErrorExt(tif->tif_clientdata, module,
-        "Unrecognized error.");   
+        "Unrecognized error.");
     }
     return 0;
   } else {
@@ -157,19 +224,43 @@ TWebPDecode(TIFF* tif, uint8_t* op, tmsize_t occ, uint16_t s)
 
     /* Returns the RGB/A image decoded so far */
     buf = WebPIDecGetRGB(sp->psDecoder, &current_y, NULL, NULL, &stride);
-    
+
     if ((buf != NULL) &&
         (occ <= (tmsize_t)stride * (current_y - sp->last_y))) {
-      memcpy(op,   
-         buf + (sp->last_y * stride),
-         occ);
+      const int numberOfExpectedLines = (int)(occ / sp->sDecBuffer.u.RGBA.stride);
+      if( decode_whole_strile )
+      {
+          if( current_y != numberOfExpectedLines )
+          {
+              TIFFErrorExt(tif->tif_clientdata, module,
+                           "Unable to decode WebP data: less lines than expected.");
+              return 0;
+          }
+      }
+      else
+      {
+          memcpy(op,
+             buf + (sp->last_y * stride),
+             occ);
+      }
 
       tif->tif_rawcp += tif->tif_rawcc;
       tif->tif_rawcc = 0;
-      sp->last_y += occ / sp->sDecBuffer.u.RGBA.stride;
+      sp->last_y += numberOfExpectedLines;
+
+      if( decode_whole_strile )
+      {
+          /* We can now free the decoder as we're completely done */
+          if (sp->psDecoder != NULL)
+          {
+            WebPIDelete(sp->psDecoder);
+            WebPFreeDecBuffer(&sp->sDecBuffer);
+            sp->psDecoder = NULL;
+          }
+      }
       return 1;
     } else {
-      TIFFErrorExt(tif->tif_clientdata, module, "Unable to decode WebP data."); 
+      TIFFErrorExt(tif->tif_clientdata, module, "Unable to decode WebP data.");
       return 0;
     }
   }
@@ -227,7 +318,7 @@ TWebPSetupDecode(TIFF* tif)
                 "WEBP driver requires 8 bit unsigned data");
     return 0;
   }
-  
+
   /* if we were last encoding, terminate this mode */
   if (sp->state & LSTATE_INIT_ENCODE) {
       WebPPictureFree(&sp->sPicture);
@@ -256,7 +347,7 @@ TWebPPreDecode(TIFF* tif, uint16_t s)
   TIFFDirectory* td = &tif->tif_dir;
   (void) s;
   assert(sp != NULL);
-  
+
   if (isTiled(tif)) {
     segment_width = td->td_tilewidth;
     segment_height = td->td_tilelength;
@@ -275,37 +366,13 @@ TWebPPreDecode(TIFF* tif, uint16_t s)
 
   if( (sp->state & LSTATE_INIT_DECODE) == 0 )
       tif->tif_setupdecode(tif);
-      
+
   if (sp->psDecoder != NULL) {
     WebPIDelete(sp->psDecoder);
     WebPFreeDecBuffer(&sp->sDecBuffer);
     sp->psDecoder = NULL;
   }
 
-  sp->last_y = 0;
-  
-  WebPInitDecBuffer(&sp->sDecBuffer);
-  
-  sp->sDecBuffer.is_external_memory = 0;
-  sp->sDecBuffer.width = segment_width;
-  sp->sDecBuffer.height = segment_height;
-  sp->sDecBuffer.u.RGBA.stride = segment_width * sp->nSamples;
-  sp->sDecBuffer.u.RGBA.size = segment_width * sp->nSamples * segment_height;
-  
-  if (sp->nSamples > 3) {
-    sp->sDecBuffer.colorspace = MODE_RGBA;
-  } else {
-    sp->sDecBuffer.colorspace = MODE_RGB;
-  }
-  
-  sp->psDecoder = WebPINewDecoder(&sp->sDecBuffer);
-  
-  if (sp->psDecoder == NULL) {
-    TIFFErrorExt(tif->tif_clientdata, module,
-                "Unable to allocate WebP decoder.");
-    return 0;
-  }
-  
   return 1;
 }
 
@@ -315,7 +382,7 @@ TWebPSetupEncode(TIFF* tif)
   static const char module[] = "WebPSetupEncode";
   uint16_t nBitsPerSample = tif->tif_dir.td_bitspersample;
   uint16_t sampleFormat = tif->tif_dir.td_sampleformat;
-  
+
   WebPState* sp = EncoderState(tif);
   assert(sp != NULL);
 
@@ -337,14 +404,14 @@ TWebPSetupEncode(TIFF* tif)
     sp->nSamples );
     return 0;
   }
-  
+
   /* check bits per sample and data type */
   if ((nBitsPerSample != 8) || (sampleFormat != SAMPLEFORMAT_UINT)) {
     TIFFErrorExt(tif->tif_clientdata, module,
                 "WEBP driver requires 8 bit unsigned data");
     return 0;
   }
-  
+
   if (sp->state & LSTATE_INIT_DECODE) {
     WebPIDelete(sp->psDecoder);
     WebPFreeDecBuffer(&sp->sDecBuffer);
@@ -417,7 +484,7 @@ TWebPPreEncode(TIFF* tif, uint16_t s)
   }
 
   if( segment_width > 16383 || segment_height > 16383 ) {
-      TIFFErrorExt(tif->tif_clientdata, module, 
+      TIFFErrorExt(tif->tif_clientdata, module,
                    "WEBP maximum image dimensions are 16383 x 16383.");
       return 0;
   }
@@ -425,12 +492,12 @@ TWebPPreEncode(TIFF* tif, uint16_t s)
   /* set up buffer for raw data */
   /* given above check and that nSamples <= 4, buffer_size is <= 1 GB */
   sp->buffer_size = segment_width * segment_height * sp->nSamples;
-  
+
   if (sp->pBuffer != NULL) {
       _TIFFfree(sp->pBuffer);
-      sp->pBuffer = NULL;    
+      sp->pBuffer = NULL;
   }
-  
+
   sp->pBuffer = _TIFFmalloc(sp->buffer_size);
   if( !sp->pBuffer) {
       TIFFErrorExt(tif->tif_clientdata, module, "Cannot allocate buffer");
@@ -476,7 +543,7 @@ TWebPPostEncode(TIFF* tif)
                     "WebPPictureImportRGB() failed");
       return 0;
   }
-  
+
   if (!WebPEncode(&sp->sEncoderConfig, &sp->sPicture)) {
 
 #if WEBP_ENCODER_ABI_VERSION >= 0x0100
@@ -554,10 +621,10 @@ TWebPCleanup(TIFF* tif)
     sp->psDecoder = NULL;
     sp->last_y = 0;
   }
-  
+
   if (sp->pBuffer != NULL) {
       _TIFFfree(sp->pBuffer);
-      sp->pBuffer = NULL;    
+      sp->pBuffer = NULL;
   }
 
   _TIFFfree(tif->tif_data);
@@ -593,7 +660,7 @@ TWebPVSetField(TIFF* tif, uint32_t tag, va_list ap)
                   "Need to upgrade WEBP driver, this version doesn't support "
                   "lossless compression.");
       return 0;
-    #endif 
+    #endif
   default:
     return (*sp->vsetparent)(tif, tag, ap);
   }
@@ -669,7 +736,7 @@ TIFFInitWebP(TIFF* tif, int scheme)
   sp->nSamples = 0;
   sp->psDecoder = NULL;
   sp->last_y = 0;
-  
+
   sp->buffer_offset = 0;
   sp->pBuffer = NULL;
 

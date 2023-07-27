@@ -37,6 +37,11 @@ unset(CMAKE_CXX_EXTENSIONS)
 unset(CMAKE_CXX_STANDARD_REQUIRED)
 unset(CMAKE_CXX_STANDARD)
 
+# When we need to have CMake treat includes as
+# system paths to avoid warnings, we add those
+# patterns to the SYS_INCLUDE_PATTERNS list
+mark_as_advanced(SYS_INCLUDE_PATTERNS)
+
 ###############################################################################
 # Unlike the misc/tools directory components built in src/other are part of
 # the distribution, not just the compilation.  Hence we need to make sure of
@@ -125,6 +130,9 @@ set(OPENNURBS_LIBRARY openNURBS CACHE STRING "Require opennurbs libraries" FORCE
 set(OPENNURBS_LIBRARIES openNURBS CACHE STRING "Require opennurbs libraries" FORCE)
 set(OPENNURBS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Require opennurbs header includes" FORCE)
 set(OPENNURBS_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Require opennurbs header includes" FORCE)
+# openNURBS headers trigger a number of warnings - treat them the same way we
+# do the ext headers
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS CACHE STRING "Bundled system include dirs" FORCE)
 mark_as_advanced(OPENNURBS_LIBRARY)
 mark_as_advanced(OPENNURBS_LIBRARIES)
 mark_as_advanced(OPENNURBS_INCLUDE_DIR)
@@ -184,6 +192,27 @@ mark_as_advanced(LMDB_LIBRARIES)
 mark_as_advanced(LMDB_INCLUDE_DIR)
 mark_as_advanced(LMDB_INCLUDE_DIRS)
 
+# Interactive Robust Mesh Booleans - slight modification of
+# https://github.com/gcherchi/InteractiveAndRobustMeshBooleans - to build, place libirmb
+# branch of https://github.com/starseeker/InteractiveAndRobustMeshBooleans at
+# src/other/irmb and define the USE_IRMB flag in src/libged/facetize/facetize.cpp
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/irmb")
+  add_subdirectory(irmb)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/irmb.dist")
+  CMAKEFILES_IN_DIR(irmb_ignore_files irmb)
+  set(IRMB_LIBRARY "irmb" CACHE STRING "Interactive Robust Mesh Booleans library" FORCE)
+  set(IRMB_LIBRARIES "irmb" CACHE STRING "Interactive Robust Mesh Booleans library" FORCE)
+  set(IRMB_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/irmb" CACHE STRING "Directory containing irmb header" FORCE)
+  set(IRMB_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/irmb" CACHE STRING "Directory containing irmb header" FORCE)
+  SetTargetFolder(irmb "Third Party Libraries")
+else (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/irmb")
+  set(IRMB_LIBRARIES "" CACHE STRING "Disabled" FORCE)
+  set(IRMB_INCLUDE_DIRS "" CACHE STRING "Disabled" FORCE)
+endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/irmb")
+mark_as_advanced(IRMB_LIBRARY)
+mark_as_advanced(IRMB_LIBRARIES)
+mark_as_advanced(IRMB_INCLUDE_DIR)
+mark_as_advanced(IRMB_INCLUDE_DIRS)
 
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)

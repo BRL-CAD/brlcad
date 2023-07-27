@@ -1,7 +1,7 @@
 /*                       D O C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2022 United States Government as represented by
+ * Copyright (c) 1990-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ unsigned char colortab[9][4] = {
     { 8, 255, 255, 255 }};
 
 void
-Docolor()
+Docolor(void)
 {
 
     size_t i;

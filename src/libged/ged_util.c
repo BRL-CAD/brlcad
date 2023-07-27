@@ -1,7 +1,7 @@
 /*                       G E D _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2022 United States Government as represented by
+ * Copyright (c) 2000-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1204,8 +1204,8 @@ _ged_editit(const char *editstring, const char *filename)
     const char *file = (const char *)filename;
 
 #if defined(SIGINT) && defined(SIGQUIT)
-    void (*s2)();
-    void (*s3)();
+    void (*s2)(int);
+    void (*s3)(int);
 #endif
 
     if (!file) {

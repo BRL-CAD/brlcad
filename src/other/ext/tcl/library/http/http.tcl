@@ -11,7 +11,7 @@
 package require Tcl 8.6-
 # Keep this in sync with pkgIndex.tcl and with the install directories in
 # Makefiles
-package provide http 2.9.5
+package provide http 2.9.8
 
 namespace eval http {
     # Allow resourcing to not clobber existing data
@@ -255,11 +255,35 @@ proc http::Finish {token {errormsg ""} {skipCB 0}} {
     if {[info commands ${token}EventCoroutine] ne {}} {
 	rename ${token}EventCoroutine {}
     }
+
+    # Is this an upgrade request/response?
+    set upgradeResponse \
+	[expr {    [info exists state(upgradeRequest)] && $state(upgradeRequest)
+		&& [info exists state(http)] && [ncode $token] eq {101}
+		&& [info exists state(connection)] && "upgrade" in $state(connection)
+		&& [info exists state(upgrade)] && "" ne $state(upgrade)}]
+
     if {  ($state(status) eq "timeout")
        || ($state(status) eq "error")
        || ($state(status) eq "eof")
-       || ([info exists state(-keepalive)] && !$state(-keepalive))
-       || ([info exists state(connection)] && ($state(connection) eq "close"))
+    } {
+	set closeQueue 1
+	set connId $state(socketinfo)
+	set sock $state(sock)
+	CloseSocket $state(sock) $token
+    } elseif {$upgradeResponse} {
+	# Special handling for an upgrade request/response.
+	# - geturl ensures that this is not a "persistent" socket used for
+	#   multiple HTTP requests, so a call to KeepSocket is not needed.
+	# - Leave socket open, so a call to CloseSocket is not needed either.
+	# - Remove fileevent bindings.  The caller will set its own bindings.
+	# - THE CALLER MUST PROCESS THE UPGRADED SOCKET IN THE CALLBACK COMMAND
+	#   PASSED TO http::geturl AS -command callback.
+	catch {fileevent $state(sock) readable {}}
+	catch {fileevent $state(sock) writable {}}
+    } elseif {
+          ([info exists state(-keepalive)] && !$state(-keepalive))
+       || ([info exists state(connection)] && ("close" in $state(connection)))
     } {
 	set closeQueue 1
 	set connId $state(socketinfo)
@@ -267,7 +291,7 @@ proc http::Finish {token {errormsg ""} {skipCB 0}} {
 	CloseSocket $state(sock) $token
     } elseif {
 	  ([info exists state(-keepalive)] && $state(-keepalive))
-       && ([info exists state(connection)] && ($state(connection) ne "close"))
+       && ([info exists state(connection)] && ("close" ni $state(connection)))
     } {
 	KeepSocket $token
     }
@@ -298,7 +322,7 @@ proc http::Finish {token {errormsg ""} {skipCB 0}} {
 #	queued task if possible.  Otherwise leave it idle and ready for its next
 #	use.
 #
-#	If $socketClosing(*), then ($state(connection) eq "close") and therefore
+#	If $socketClosing(*), then ("close" in $state(connection)) and therefore
 #	this command will not be called by Finish.
 #
 # Arguments:
@@ -447,7 +471,7 @@ proc http::KeepSocket {token} {
 		(!$state(-pipeline))
 	     && [info exists socketWrQueue($connId)]
 	     && [llength $socketWrQueue($connId)]
-	     && ($state(connection) ne "close")
+	     && ("close" ni $state(connection))
 	} {
 	    # If not pipelined, (socketRdState eq Rready) tells us that we are
 	    # ready for the next write - there is no need to check
@@ -733,7 +757,7 @@ proc http::geturl {url args} {
 	-strict		boolean
 	-timeout	integer
 	-validate	boolean
-	-headers	dict
+	-headers	list
     }
     set state(charset)	$defaultCharset
     set options {
@@ -747,12 +771,17 @@ proc http::geturl {url args} {
     foreach {flag value} $args {
 	if {[regexp -- $pat $flag]} {
 	    # Validate numbers
-	    if {($flag eq "-headers") ? [catch {dict size $value}] :
-		([info exists type($flag)] && ![string is $type($flag) -strict $value])
+	    if {    [info exists type($flag)]
+	        && (![string is $type($flag) -strict $value])
 	    } {
 		unset $token
 		return -code error \
 		    "Bad value for $flag ($value), must be $type($flag)"
+	    }
+	    if {($flag eq "-headers") && ([llength $value] % 2 != 0)} {
+		unset $token
+		return -code error \
+		    "Bad value for $flag ($value), number of list elements must be even"
 	    }
 	    set state($flag) $value
 	} else {
@@ -892,8 +921,12 @@ proc http::geturl {url args} {
 	    }
 	    return -code error "Illegal characters in URL path"
 	}
+	if {![regexp {^[^?#]+} $srvurl state(path)]} {
+	    set state(path) /
+	}
     } else {
 	set srvurl /
+	set state(path) /
     }
     if {$proto eq ""} {
 	set proto http
@@ -946,6 +979,15 @@ proc http::geturl {url args} {
     # c11a51c482]
     set state(accept-types) $http(-accept)
 
+    # Check whether this is an Upgrade request.
+    set connectionValues [SplitCommaSeparatedFieldValue \
+			      [GetFieldValue $state(-headers) Connection]]
+    set connectionValues [string tolower $connectionValues]
+    set upgradeValues [SplitCommaSeparatedFieldValue \
+			   [GetFieldValue $state(-headers) Upgrade]]
+    set state(upgradeRequest) [expr {    "upgrade" in $connectionValues
+				      && [llength $upgradeValues] >= 1}]
+
     if {$isQuery || $isQueryChannel} {
 	# It's a POST.
 	# A client wishing to send a non-idempotent request SHOULD wait to send
@@ -961,8 +1003,13 @@ proc http::geturl {url args} {
 	    # There is a small risk of a race against server timeout.
 	    set state(-pipeline) 0
 	}
+    } elseif {$state(upgradeRequest)} {
+	# It's an upgrade request.  Method must be GET (untested).
+	# Force -keepalive to 0 so the connection is not made over a persistent
+	# socket, i.e. one used for multiple HTTP requests.
+	set state(-keepalive) 0
     } else {
-	# It's a GET or HEAD.
+	# It's a non-upgrade GET or HEAD.
 	set state(-pipeline) $http(-pipeline)
     }
 
@@ -1310,8 +1357,7 @@ proc http::Connected {token proto phost srvurl} {
     set sock $state(sock)
     set isQueryChannel [info exists state(-querychannel)]
     set isQuery [info exists state(-query)]
-    set host [lindex [split $state(socketinfo) :] 0]
-    set port [lindex [split $state(socketinfo) :] 1]
+    regexp {^(.+):([^:]+)$} $state(socketinfo) {} host port
 
     set lower [string tolower $proto]
     set defport [lindex $urlTypes($lower) 0]
@@ -1357,14 +1403,18 @@ proc http::Connected {token proto phost srvurl} {
     if {[catch {
 	set state(method) $how
 	puts $sock "$how $srvurl HTTP/$state(-protocol)"
-	if {[dict exists $state(-headers) Host]} {
+	set hostValue [GetFieldValue $state(-headers) Host]
+	if {$hostValue ne {}} {
 	    # Allow Host spoofing. [Bug 928154]
-	    puts $sock "Host: [dict get $state(-headers) Host]"
+	    regexp {^[^:]+} $hostValue state(host)
+	    puts $sock "Host: $hostValue"
 	} elseif {$port == $defport} {
 	    # Don't add port in this case, to handle broken servers. [Bug
 	    # #504508]
+	    set state(host) $host
 	    puts $sock "Host: $host"
 	} else {
+	    set state(host) $host
 	    puts $sock "Host: $host:$port"
 	}
 	puts $sock "User-Agent: $http(-useragent)"
@@ -1389,7 +1439,7 @@ proc http::Connected {token proto phost srvurl} {
 	# Proxy-Connection header field in any requests"
 	set accept_encoding_seen 0
 	set content_type_seen 0
-	dict for {key value} $state(-headers) {
+	foreach {key value} $state(-headers) {
 	    set value [string map [list \n "" \r ""] $value]
 	    set key [string map {" " -} [string trim $key]]
 	    if {[string equal -nocase $key "host"]} {
@@ -2586,7 +2636,7 @@ proc http::Event {sock token} {
 
 		if {    ([info exists state(connection)])
 		     && ([info exists socketMapping($state(socketinfo))])
-		     && ($state(connection) eq "keep-alive")
+		     && ("keep-alive" in $state(connection))
 		     && ($state(-keepalive))
 		     && (!$state(reusing))
 		     && ($state(-pipeline))
@@ -2608,7 +2658,7 @@ proc http::Event {sock token} {
 
 		if {    ([info exists state(connection)])
 		     && ([info exists socketMapping($state(socketinfo))])
-		     && ($state(connection) eq "close")
+		     && ("close" in $state(connection))
 		     && ($state(-keepalive))
 		} {
 		    # The server warns that it will close the socket after this
@@ -2656,6 +2706,19 @@ proc http::Event {sock token} {
 
 		set state(state) body
 
+		# According to
+		# https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
+		# any comma-separated "Connection:" list implies keep-alive, but I
+		# don't see this in the RFC so we'll play safe and
+		# scan any list for "close".
+		# Done here to support combining duplicate header field's values.
+		if {   [info exists state(connection)]
+		    && ("close" ni $state(connection))
+		    && ("keep-alive" ni $state(connection))
+		} {
+		    lappend state(connection) "keep-alive"
+		}
+
 		# If doing a HEAD, then we won't get any body
 		if {$state(-validate)} {
 		    Log ^F$tk end of response for HEAD request - token $token
@@ -2679,7 +2742,7 @@ proc http::Event {sock token} {
 		#      (totalsize == 0).
 
 		if {    (!(    [info exists state(connection)]
-			    && ($state(connection) eq "close")
+			    && ("close" in $state(connection))
 			  )
 			)
 		     && (![info exists state(transfer)])
@@ -2745,32 +2808,14 @@ proc http::Event {sock token} {
 			}
 			proxy-connection -
 			connection {
-			    set tmpHeader [string trim [string tolower $value]]
 			    # RFC 7230 Section 6.1 states that a comma-separated
-			    # list is an acceptable value.  According to
-			    # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
-			    # any comma-separated list implies keep-alive, but I
-			    # don't see this in the RFC so we'll play safe and
-			    # scan any list for "close".
-			    if {$tmpHeader in {close keep-alive}} {
-				# The common cases, continue.
-			    } elseif {[string first , $tmpHeader] < 0} {
-				# Not a comma-separated list, not "close",
-				# therefore "keep-alive".
-				set tmpHeader keep-alive
-			    } else {
-				set tmpResult keep-alive
-				set tmpCsl [split $tmpHeader ,]
-				# Optional whitespace either side of separator.
-				foreach el $tmpCsl {
-				    if {[string trim $el] eq {close}} {
-					set tmpResult close
-					break
-				    }
-			        }
-				set tmpHeader $tmpResult
+			    # list is an acceptable value.
+			    foreach el [SplitCommaSeparatedFieldValue $value] {
+				lappend state(connection) [string tolower $el]
 			    }
-			    set state(connection) $tmpHeader
+			}
+			upgrade {
+			    set state(upgrade) [string trim $value]
 			}
 		    }
 		    lappend state(meta) $key [string trim $value]
@@ -3125,7 +3170,7 @@ proc http::BlockingGets {sock} {
     while 1 {
 	set count [gets $sock line]
 	set eof [eof $sock]
-	if {$count > -1 || $eof} {
+	if {$count >= 0 || $eof} {
 	    return $line
 	} else {
 	    yield
@@ -3421,7 +3466,7 @@ proc http::CharsetToEncoding {charset} {
 	set encoding "iso8859-$num"
     } elseif {[regexp {iso-?2022-(jp|kr)} $charset -> ext]} {
 	set encoding "iso2022-$ext"
-    } elseif {[regexp {shift[-_]?js} $charset]} {
+    } elseif {[regexp {shift[-_]?jis} $charset]} {
 	set encoding "shiftjis"
     } elseif {[regexp {(?:windows|cp)-?([0-9]+)} $charset -> num]} {
 	set encoding "cp$num"
@@ -3432,6 +3477,9 @@ proc http::CharsetToEncoding {charset} {
 	    5 {set encoding "iso8859-9"}
 	    1 - 2 - 3 {
 		set encoding "iso8859-$num"
+	    }
+	    default {
+		set encoding "binary"
 	    }
 	}
     } else {
@@ -3457,8 +3505,12 @@ proc http::ContentEncoding {token} {
 		gzip - x-gzip { lappend r gunzip }
 		compress - x-compress { lappend r decompress }
 		identity {}
+		br {
+		    return -code error\
+			    "content-encoding \"br\" not implemented"
+		}
 		default {
-		    return -code error "unsupported content-encoding \"$coding\""
+		    Log "unknown content-encoding \"$coding\" ignored"
 		}
 	    }
 	}
@@ -3494,6 +3546,52 @@ proc http::ReceiveChunked {chan command} {
 	    return
 	}
     }
+}
+
+# http::SplitCommaSeparatedFieldValue --
+# 	Return the individual values of a comma-separated field value.
+#
+# Arguments:
+#	fieldValue	Comma-separated header field value.
+#
+# Results:
+#       List of values.
+proc http::SplitCommaSeparatedFieldValue {fieldValue} {
+    set r {}
+    foreach el [split $fieldValue ,] {
+	lappend r [string trim $el]
+    }
+    return $r
+}
+
+
+# http::GetFieldValue --
+# 	Return the value of a header field.
+#
+# Arguments:
+#	headers	Headers key-value list
+#	fieldName	Name of header field whose value to return.
+#
+# Results:
+#       The value of the fieldName header field
+#
+# Field names are matched case-insensitively (RFC 7230 Section 3.2).
+#
+# If the field is present multiple times, it is assumed that the field is
+# defined as a comma-separated list and the values are combined (by separating
+# them with commas, see RFC 7230 Section 3.2.2) and returned at once.
+proc http::GetFieldValue {headers fieldName} {
+    set r {}
+    foreach {field value} $headers {
+	if {[string equal -nocase $fieldName $field]} {
+	    if {$r eq {}} {
+		set r $value
+	    } else {
+		append r ", $value"
+	    }
+	}
+    }
+    return $r
 }
 
 proc http::make-transformation-chunked {chan command} {

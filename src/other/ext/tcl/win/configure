@@ -1325,7 +1325,7 @@ SHELL=/bin/sh
 TCL_VERSION=8.6
 TCL_MAJOR_VERSION=8
 TCL_MINOR_VERSION=6
-TCL_PATCH_LEVEL=".12"
+TCL_PATCH_LEVEL=".13"
 VER=$TCL_MAJOR_VERSION$TCL_MINOR_VERSION
 
 TCL_DDE_VERSION=1.4
@@ -2729,7 +2729,6 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <ctype.h>
-#include <stdlib.h>
 #if ((' ' & 0x0FF) == 0x020)
 # define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
 # define TOUPPER(c) (ISLOWER(c) ? 'A' + ((c) - 'a') : (c))
@@ -3032,26 +3031,24 @@ fi
 
 echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 echo $ECHO_N "checking whether ${MAKE-make} sets \$(MAKE)... $ECHO_C" >&6
-set x ${MAKE-make}
-ac_make=`echo "" | sed 'y,:./+-,___p_,'`
+set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y,:./+-,___p_,'`
 if eval "test \"\${ac_cv_prog_make_${ac_make}_set+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.make <<\_ACEOF
-SHELL = /bin/sh
 all:
-	@echo '@@@%%%=$(MAKE)=@@@%%%'
+	@echo 'ac_maketemp="$(MAKE)"'
 _ACEOF
-# GNU make sometimes prints "make[1]: Entering ...", which would confuse us.
-case `${MAKE-make} -f conftest.make 2>/dev/null` in
-  *@@@%%%=?*=@@@%%%*)
-    eval ac_cv_prog_make_${ac_make}_set=yes;;
-  *)
-    eval ac_cv_prog_make_${ac_make}_set=no;;
-esac
+# GNU make sometimes prints "make[1]: Entering...", which would confuse us.
+eval `${MAKE-make} -f conftest.make 2>/dev/null | grep temp=`
+if test -n "$ac_maketemp"; then
+  eval ac_cv_prog_make_${ac_make}_set=yes
+else
+  eval ac_cv_prog_make_${ac_make}_set=no
+fi
 rm -f conftest.make
 fi
-if eval test \$ac_cv_prog_make_${ac_make}_set = yes; then
+if eval "test \"`echo '$ac_cv_prog_make_'${ac_make}_set`\" = yes"; then
   echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
   SET_MAKE=
@@ -3279,7 +3276,7 @@ fi
     SHLIB_SUFFIX=".dll"
 
     # MACHINE is IX86 for LINK, but this is used by the manifest,
-    # which requires x86|amd64|ia64.
+    # which requires x86|amd64|arm64|ia64.
     MACHINE="X86"
 
     if test "$GCC" = "yes"; then
@@ -3351,6 +3348,13 @@ echo "${ECHO_T}$ac_cv_cross" >&6
 		AR="x86_64-w64-mingw32-ar"
 		RANLIB="x86_64-w64-mingw32-ranlib"
 		RC="x86_64-w64-mingw32-windres"
+	    ;;
+	    arm64|aarch64)
+		CC="aarch64-w64-mingw32-${CC}"
+		LD="aarch64-w64-mingw32-ld"
+		AR="aarch64-w64-mingw32-ar"
+		RANLIB="aarch64-w64-mingw32-ranlib"
+		RC="aarch64-w64-mingw32-windres"
 	    ;;
 	    *)
 		CC="i686-w64-mingw32-${CC}"
@@ -3470,6 +3474,9 @@ echo "${ECHO_T}$ac_cv_win32" >&6
 echo "$as_me: error: ${CC} cannot produce win32 executables." >&2;}
    { (exit 1); exit 1; }; }
 	fi
+	if test "$do64bit" != "arm64"; then
+	    extra_cflags="$extra_cflags -DHAVE_CPUID=1"
+	fi
 
 	hold_cflags=$CFLAGS; CFLAGS="$CFLAGS -mwindows -municode -Dmain=xxmain"
 	echo "$as_me:$LINENO: checking for working -municode linker flag" >&5
@@ -3536,6 +3543,7 @@ echo "${ECHO_T}$ac_cv_municode" >&6
 	else
 	    extra_cflags="$extra_cflags -DTCL_BROKEN_MAINARGS"
 	fi
+	hold_cflags=$CFLAGS; CFLAGS="$CFLAGS -fno-lto"
 	echo "$as_me:$LINENO: checking for working -fno-lto" >&5
 echo $ECHO_N "checking for working -fno-lto... $ECHO_C" >&6
 if test "${ac_cv_nolto+set}" = set; then
@@ -3596,6 +3604,66 @@ echo "${ECHO_T}$ac_cv_nolto" >&6
 	else
 	    CFLAGS_NOLTO=""
 	fi
+    fi
+
+    hold_cflags=$CFLAGS; CFLAGS="$CFLAGS -Wl,--enable-auto-image-base"
+    echo "$as_me:$LINENO: checking for working --enable-auto-image-base" >&5
+echo $ECHO_N "checking for working --enable-auto-image-base... $ECHO_C" >&6
+if test "${ac_cv_enable_auto_image_base+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_enable_auto_image_base=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_enable_auto_image_base=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_enable_auto_image_base" >&5
+echo "${ECHO_T}$ac_cv_enable_auto_image_base" >&6
+    CFLAGS=$hold_cflags
+    if test "$ac_cv_enable_auto_image_base" == "yes" ; then
+	extra_ldflags="$extra_ldflags -Wl,--enable-auto-image-base"
     fi
 
     echo "$as_me:$LINENO: checking compiler flags" >&5
@@ -3702,10 +3770,15 @@ echo "$as_me: error: ${CC} does not support the -shared option.
 		echo "$as_me:$LINENO: result:    Using 64-bit $MACHINE mode" >&5
 echo "${ECHO_T}   Using 64-bit $MACHINE mode" >&6
 		;;
+	    arm64|aarch64)
+		MACHINE="ARM64"
+		echo "$as_me:$LINENO: result:    Using ARM64 $MACHINE mode" >&5
+echo "${ECHO_T}   Using ARM64 $MACHINE mode" >&6
+		;;
 	    ia64)
 		MACHINE="IA64"
-		echo "$as_me:$LINENO: result:    Using 64-bit $MACHINE mode" >&5
-echo "${ECHO_T}   Using 64-bit $MACHINE mode" >&6
+		echo "$as_me:$LINENO: result:    Using IA64 $MACHINE mode" >&5
+echo "${ECHO_T}   Using IA64 $MACHINE mode" >&6
 		;;
 	    *)
 		cat >conftest.$ac_ext <<_ACEOF
@@ -3759,9 +3832,9 @@ tcl_win_64bit=no
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 		if test "$tcl_win_64bit" = "yes" ; then
-			do64bit=amd64
-			MACHINE="AMD64"
-			echo "$as_me:$LINENO: result:    Using 64-bit $MACHINE mode" >&5
+		    do64bit=amd64
+		    MACHINE="AMD64"
+		    echo "$as_me:$LINENO: result:    Using 64-bit $MACHINE mode" >&5
 echo "${ECHO_T}   Using 64-bit $MACHINE mode" >&6
 		fi
 		;;
@@ -3802,6 +3875,9 @@ echo "${ECHO_T}using shared flags" >&6
 		amd64|x64|yes)
 		    MACHINE="AMD64" ; # assume AMD64 as default 64-bit build
 		    ;;
+		arm64|aarch64)
+		    MACHINE="ARM64"
+		    ;;
 		ia64)
 		    MACHINE="IA64"
 		    ;;
@@ -3823,8 +3899,7 @@ echo "${ECHO_T}   Using 64-bit $MACHINE mode" >&6
 	if test "$do64bit" != "no" ; then
 	    RC="rc"
 	    CFLAGS_DEBUG="-nologo -Zi -Od ${runtime}d"
-	    # Do not use -O2 for Win64 - this has proved buggy in code gen.
-	    CFLAGS_OPTIMIZE="-nologo -O1 ${runtime}"
+	    CFLAGS_OPTIMIZE="-nologo -O2 ${runtime}"
 	    lflags="${lflags} -nologo -MACHINE:${MACHINE}"
 	    LINKBIN="link"
 	    # Avoid 'unresolved external symbol __security_cookie' errors.
@@ -4317,14 +4392,34 @@ if test "$tcl_ok" = "yes"; then
 
   if test "$do64bit" != "no"; then
 
-    if test "$GCC" == "yes"; then
+    if test "$do64bit" = "arm64"; then
 
-      ZLIB_LIBS=\${ZLIB_DIR_NATIVE}/win64/libz.dll.a
+      if test "$GCC" == "yes"; then
+
+        ZLIB_LIBS=\${ZLIB_DIR_NATIVE}/win64-arm/libz.dll.a
 
 
 else
 
-      ZLIB_LIBS=\${ZLIB_DIR_NATIVE}/win64/zdll.lib
+        ZLIB_LIBS=\${ZLIB_DIR_NATIVE}/win64-arm/zdll.lib
+
+
+fi
+
+
+else
+
+      if test "$GCC" == "yes"; then
+
+        ZLIB_LIBS=\${ZLIB_DIR_NATIVE}/win64/libz.dll.a
+
+
+else
+
+        ZLIB_LIBS=\${ZLIB_DIR_NATIVE}/win64/zdll.lib
+
+
+fi
 
 
 fi
@@ -5208,7 +5303,7 @@ case "$TCL_PATCH_LEVEL" in
 esac
 TCL_WIN_VERSION="$TCL_VERSION.$TCL_RELEASE_LEVEL.`echo $TCL_PATCH_LEVEL | tr -d ab.`"
 
-# X86|AMD64|IA64 for manifest
+# X86|AMD64|ARM64|IA64 for manifest
 
 
 

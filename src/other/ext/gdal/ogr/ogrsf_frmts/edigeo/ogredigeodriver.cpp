@@ -2,10 +2,10 @@
  *
  * Project:  EDIGEO Translator
  * Purpose:  Implements OGREDIGEODriver.
- * Author:   Even Rouault, even dot rouault at mines dash paris dot org
+ * Author:   Even Rouault, even dot rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2011, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2011, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,20 +29,20 @@
 #include "ogr_edigeo.h"
 #include "cpl_conv.h"
 
-CPL_CVSID("$Id$");
-
 extern "C" void RegisterOGREDIGEO();
 
-// g++ -fPIC -g -Wall ogr/ogrsf_frmts/edigeo/*.cpp -shared -o ogr_EDIGEO.so -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/generic -Iogr/ogrsf_frmts/edigeo -L. -lgdal
+// g++ -fPIC -g -Wall ogr/ogrsf_frmts/edigeo/*.cpp -shared -o ogr_EDIGEO.so
+// -Iport -Igcore -Iogr -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/generic
+// -Iogr/ogrsf_frmts/edigeo -L. -lgdal
 
 /************************************************************************/
 /*                        OGREDIGEODriverIdentify()                     */
 /************************************************************************/
 
-static int OGREDIGEODriverIdentify( GDALOpenInfo * poOpenInfo )
+static int OGREDIGEODriverIdentify(GDALOpenInfo *poOpenInfo)
 
 {
-    return poOpenInfo->fpL != NULL &&
+    return poOpenInfo->fpL != nullptr &&
            EQUAL(CPLGetExtension(poOpenInfo->pszFilename), "thf");
 }
 
@@ -50,19 +50,19 @@ static int OGREDIGEODriverIdentify( GDALOpenInfo * poOpenInfo )
 /*                                Open()                                */
 /************************************************************************/
 
-static GDALDataset *OGREDIGEODriverOpen( GDALOpenInfo * poOpenInfo )
+static GDALDataset *OGREDIGEODriverOpen(GDALOpenInfo *poOpenInfo)
 
 {
-    if( poOpenInfo->eAccess == GA_Update ||
-        !OGREDIGEODriverIdentify(poOpenInfo) )
-        return NULL;
+    if (poOpenInfo->eAccess == GA_Update ||
+        !OGREDIGEODriverIdentify(poOpenInfo))
+        return nullptr;
 
-    OGREDIGEODataSource   *poDS = new OGREDIGEODataSource();
+    OGREDIGEODataSource *poDS = new OGREDIGEODataSource();
 
-    if( !poDS->Open( poOpenInfo->pszFilename ) )
+    if (!poDS->Open(poOpenInfo->pszFilename))
     {
         delete poDS;
-        poDS = NULL;
+        poDS = nullptr;
     }
 
     return poDS;
@@ -75,22 +75,25 @@ static GDALDataset *OGREDIGEODriverOpen( GDALOpenInfo * poOpenInfo )
 void RegisterOGREDIGEO()
 
 {
-    if( GDALGetDriverByName( "EDIGEO" ) != NULL )
+    if (GDALGetDriverByName("EDIGEO") != nullptr)
         return;
 
-    GDALDriver  *poDriver = new GDALDriver();
+    GDALDriver *poDriver = new GDALDriver();
 
-    poDriver->SetDescription( "EDIGEO" );
-    poDriver->SetMetadataItem( GDAL_DCAP_VECTOR, "YES" );
-    poDriver->SetMetadataItem( GDAL_DMD_LONGNAME,
-                               "French EDIGEO exchange format" );
-    poDriver->SetMetadataItem( GDAL_DMD_EXTENSION, "thf" );
-    poDriver->SetMetadataItem( GDAL_DMD_HELPTOPIC, "drv_edigeo.html" );
+    poDriver->SetDescription("EDIGEO");
+    poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
+                              "French EDIGEO exchange format");
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "thf");
+    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/vector/edigeo.html");
 
-    poDriver->SetMetadataItem( GDAL_DCAP_VIRTUALIO, "YES" );
+    poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_FEATURE_STYLES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
     poDriver->pfnOpen = OGREDIGEODriverOpen;
     poDriver->pfnIdentify = OGREDIGEODriverIdentify;
 
-    GetGDALDriverManager()->RegisterDriver( poDriver );
+    GetGDALDriverManager()->RegisterDriver(poDriver);
 }

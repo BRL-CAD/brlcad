@@ -1,5 +1,4 @@
-include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/../generic
-	)
-add_library(ogr_frmt_csv OBJECT ogrcsvdriver.cpp ogrcsvdatasource.cpp ogrcsvlayer.cpp)
+add_gdal_driver(TARGET ogr_CSV SOURCES ogr_csv.h ogrcsvdatasource.cpp ogrcsvdriver.cpp ogrcsvlayer.cpp PLUGIN_CAPABLE
+                                       NO_DEPS)
+gdal_standard_includes(ogr_CSV)
+target_include_directories(ogr_CSV PRIVATE $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)

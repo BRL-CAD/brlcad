@@ -16,41 +16,121 @@
 
 #include "opennurbs.h"
 
-ON_OBJECT_IMPLEMENT(ON_Layer,ON_Object,"95809813-E985-11d3-BFE5-0010830122F0");
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
+ON_OBJECT_IMPLEMENT(ON_Layer,ON_ModelComponent,"95809813-E985-11d3-BFE5-0010830122F0");
+
+const ON_Layer* ON_Layer::FromModelComponentRef(
+  const class ON_ModelComponentReference& model_component_reference,
+  const ON_Layer* none_return_value
+  )
+{
+  const ON_Layer* p = ON_Layer::Cast(model_component_reference.ModelComponent());
+  return (nullptr != p) ? p : none_return_value;
+}
+
+bool ON_Layer::UpdateReferencedComponents(
+  const class ON_ComponentManifest& source_manifest,
+  const class ON_ComponentManifest& destination_manifest,
+  const class ON_ManifestMap& manifest_map
+  )
+{
+  bool rc = true;
+
+  // Update render material reference
+  int material_index = RenderMaterialIndex();
+  if (material_index >= 0)
+  {
+    int destination_material_index = ON_UNSET_INT_INDEX;
+    if (manifest_map.GetAndValidateDestinationIndex(
+      ON_ModelComponent::Type::RenderMaterial,
+      material_index,
+      destination_manifest,
+      &destination_material_index))
+    {
+      material_index = destination_material_index;
+    }
+    else
+    {
+      ON_ERROR("Unable to update render material reference.");
+      rc = false;
+      material_index = ON_Layer::Default.RenderMaterialIndex();
+    }
+    SetRenderMaterialIndex(material_index);
+  }
+
+  // Update line pattern reference
+  int line_pattern_index = LinetypeIndex();
+  if (line_pattern_index >= 0)
+  {
+    int destination_line_pattern_index = ON_UNSET_INT_INDEX;
+    if (manifest_map.GetAndValidateDestinationIndex(
+      ON_ModelComponent::Type::LinePattern,
+      line_pattern_index,
+      destination_manifest,
+      &destination_line_pattern_index))
+    {
+      line_pattern_index = destination_line_pattern_index;
+    }
+    else
+    {
+      ON_ERROR("Unable to update line pattern reference.");
+      rc = false;
+      line_pattern_index = ON_Layer::Default.LinetypeIndex();
+    }
+    SetLinetypeIndex(line_pattern_index);
+  }
+
+  // Update parent layer reference
+  ON_UUID parent_layer_id = ParentLayerId();
+  if (ON_nil_uuid != parent_layer_id)
+  {
+    const ON_UUID manifest_item_id = destination_manifest.ItemFromId(
+      ON_ModelComponent::Type::Layer,
+      parent_layer_id
+      ).Id();
+    if ( ON_nil_uuid == manifest_item_id )
+    {
+      ON_ERROR("Unable to update parent layer id reference.");
+      rc = false;
+      parent_layer_id = ON_Layer::Default.ParentLayerId();
+    }
+    else
+    {
+      parent_layer_id = manifest_item_id;
+    }
+    SetParentLayerId(parent_layer_id);
+  }
+
+  return rc;
+}
 
 #define ON_BOZO_VACCINE_3E4904E6E9304fbcAA42EBD407AEFE3B
 #define ON_BOZO_VACCINE_BFB63C094BC7472789BB7CC754118200
 
-ON_Layer::ON_Layer() 
-: m_extension_bits(0)
-{
-  Default();
-}
+ON_Layer::ON_Layer() ON_NOEXCEPT
+  : ON_ModelComponent(ON_ModelComponent::Type::Layer)
+{}
 
-void ON_Layer::Default()
-{
-  m_layer_id = ON_nil_uuid;
-  m_parent_layer_id = ON_nil_uuid;
-  m_layer_index = -1; // 10 March 2006 Dale Lear - changed from 0 to -1
-  m_iges_level = -1; 
-  m_material_index = -1; 
-  m_rendering_attributes.Default();
-  m_linetype_index = -1;
-  m_color.SetRGB(0,0,0);
-  m_display_material_id = ON_nil_uuid;
-  m_plot_color = ON_UNSET_COLOR;
-  m_plot_weight_mm = 0.0;
-  m_name.Destroy();
-  m_bVisible = true;
-  m_bLocked = false;
-  m_bExpanded = true;
-  m_extension_bits = 0;
-}
-
-ON_Layer::~ON_Layer()
-{
-  m_name.Destroy();
-}
+ON_Layer::ON_Layer( const ON_Layer& src)
+  : ON_ModelComponent(ON_ModelComponent::Type::Layer,src)
+  , m_iges_level(src.m_iges_level)
+  , m_material_index(src.m_material_index)
+  , m_rendering_attributes(src.m_rendering_attributes)
+  , m_linetype_index(src.m_linetype_index)
+  , m_color(src.m_color)
+  , m_display_material_id(src.m_display_material_id)
+  , m_plot_color(src.m_plot_color)
+  , m_plot_weight_mm(src.m_plot_weight_mm)
+  , m_bExpanded(src.m_bExpanded)
+  , m_extension_bits(src.m_extension_bits)
+{}
 
 static void SetExtensionBit( unsigned char* layer_m_extension_bits, unsigned char mask )
 {
@@ -68,9 +148,9 @@ static bool ExtensionBit( unsigned char layer_m_extension_bits, unsigned char ma
   return (0 != (layer_m_extension_bits & mask));
 }
 
-ON_BOOL32 ON_Layer::IsValid( ON_TextLog* text_log ) const
+bool ON_Layer::IsValid( ON_TextLog* text_log ) const
 {
-  if ( m_name.IsEmpty() )
+  if ( NameIsEmpty() )
   {
     if ( text_log )
     {
@@ -81,208 +161,17 @@ ON_BOOL32 ON_Layer::IsValid( ON_TextLog* text_log ) const
   return true;
 }
 
-const wchar_t* ON::NameReferenceDelimiter()
-{
-  // If this string is changed, also update code
-  // in ON::NameReferenceDelimiterLength().
-  return L" : ";
-}
-
-unsigned int ON::NameReferenceDelimiterLength()
-{
-  return 3;
-}
-
-const wchar_t* ON::IsNameReferenceDelimiter(const wchar_t* s)
-{
-  const wchar_t* d = ON::NameReferenceDelimiter();
-  if ( 0 != s )
-  {
-    while ( 0 != *d && *d == *s )
-    {
-      d++;
-      s++;
-    }
-    if ( 0 == *d )
-      return s;
-  }
-  return 0;
-}
-
-
-
-const wchar_t* ON_Layer::LayerNameReferenceDelimiter()
-{
-  return ON::NameReferenceDelimiter();
-}
-
-const wchar_t* ON_Layer::LayerNamePathDelimiter()
-{
-  return L"::";
-}
-
-static const wchar_t* LayerFullName( const wchar_t* s0 )
-{
-  if ( 0 == s0 || 0 == s0[0] )
-    return 0;
-  const wchar_t* t;
-  const wchar_t* d;
-  const wchar_t* d0 = ON_Layer::LayerNameReferenceDelimiter();
-  const wchar_t* s = s0;
-
-  // start at the beginning and look for a reference delimiter
-  while ( 0 != *s )
-  {
-    if ( *s == *d0 )
-    {
-      d = d0;
-      t = s;
-      while ( *t == *d)
-      {
-        t++;
-        d++;
-        if ( 0 == *d )
-        {
-          return ((0 != *t) ? t : 0);
-        }
-      }
-    }
-    s++;
-  }
-  return s0;
-}
-
-
-static const wchar_t* LayerLeafName( const wchar_t* s )
-{
-  // this static helper function assumes s0 does not being with "reference : ".
-  if ( 0 == s || 0 == s[0] )
-    return 0;
-  
-  const wchar_t* t;
-  const wchar_t* d;
-  const wchar_t* d0 = ON_Layer::LayerNamePathDelimiter();
-  const wchar_t* s0 = s;
-  
-  while ( 0 != *s0 )
-  {
-    if ( *s0 == *d0 )
-    {
-      // NOTE:
-      //  This code must work for a delimiter of length one or more
-      //  so the string returned by ON_Layer::LayerNamePathDelimiter()
-      //  can be adjusted as needed.
-      d = d0;
-      t = s0;
-      while ( *t == *d)
-      {
-        t++;
-        d++;
-        if ( 0 == *d )
-        {
-          if ( 0 == *t )
-            return 0;
-          s = t;
-          s0 = t-1;
-          break;
-        }
-      }
-    }
-    s0++;
-  }
-
-  return s;
-}
-
-
-
-bool ON_Layer::GetLeafName( const wchar_t* layer_name, ON_wString& leaf_name)
-{
-  const wchar_t* s0 = LayerFullName(layer_name);
-  const wchar_t* s1 = LayerLeafName( s0 );
-  if ( 0 != s1 && 0 != *s1 )
-  {
-    leaf_name = s1;
-    return true;
-  }
-  leaf_name.Empty();
-  return false;
-}
-
-bool ON_Layer::GetParentName( const wchar_t* layer_name, ON_wString& parent_path_name)
-{
-  const wchar_t* s0 = LayerFullName(layer_name);
-  const wchar_t* s1 = LayerLeafName( s0 );
-  if ( 0 != s1 && 0 != *s1 && s0 < s1 )
-  {
-    // back up over the delimiter
-    const wchar_t* d0 = ON_Layer::LayerNamePathDelimiter();
-    const wchar_t* d = d0;
-    while (*d)
-      d++;
-    while ( d > d0 && s0 < s1 && d[-1] == s1[-1] )
-    {
-      d--;
-      s1--;
-    }
-    if ( s0 < s1 )
-    {
-      parent_path_name = s0;
-      parent_path_name.SetLength(s1-s0);
-      return true;
-    }
-  }
-  parent_path_name.Empty();
-  return false;
-}
-
-bool ON_Layer::RemoveReferenceName( const wchar_t* layer_name, ON_wString& layer_path_name)
-{
-  const wchar_t* s = LayerFullName(layer_name);
-  if ( 0 != s && 0 != *s )
-  {
-    layer_path_name = s;
-    return true;
-  }
-  layer_path_name.Empty();
-  return false;
-}
-
-bool ON_Layer::GetReferenceName( const wchar_t* layer_name, ON_wString& reference_name)
-{
-  const wchar_t* s0 = layer_name;
-  const wchar_t* s1 = LayerFullName(layer_name);
-  if ( 0 != s1 && 0 != *s1 && s0 < s1 )
-  {
-    const wchar_t* d = ON_Layer::LayerNameReferenceDelimiter();
-    while ( *d++ && s0 < s1 )
-      s1--;
-    if ( 0 != *s1 && s0 < s1 )
-    {
-      reference_name = s0;
-      reference_name.SetLength(s1-s0);
-      return true;
-    }
-  }
-  reference_name.Empty();
-  return false;
-}
-
 void ON_Layer::Dump( ON_TextLog& dump ) const
 {
-  const wchar_t* sName = LayerName();
-  if ( !sName )
-    sName = L"";
-  dump.Print("index = %d\n",m_layer_index);
-  dump.Print("name = \"%ls\"\n",sName);
-  dump.Print("display = %s\n",m_bVisible?"visible":"hidden");
-  dump.Print("picking = %s\n",m_bLocked?"locked":"unlocked");
+  ON_ModelComponent::Dump(dump);
+  dump.Print("display = %s\n",IsVisible()?"visible":"hidden");
+  dump.Print("picking = %s\n",IsLocked()?"locked":"unlocked");
   dump.Print("display color rgb = "); dump.PrintRGB(m_color); dump.Print("\n");
   dump.Print("plot color rgb = "); dump.PrintRGB(m_plot_color); dump.Print("\n");
   dump.Print("default material index = %d\n",m_material_index);
 }
 
-ON_BOOL32 ON_Layer::Write(
+bool ON_Layer::Write(
        ON_BinaryArchive& file // serialize definition to binary archive
      ) const
 {
@@ -309,13 +198,13 @@ ON_BOOL32 ON_Layer::Write(
     rc = file.WriteInt( i );
     if (!rc) break;
 
-    rc = file.WriteInt( m_layer_index );
+    rc = file.Write3dmReferencedComponentIndex( *this );
     if (!rc) break;
 
     rc = file.WriteInt( m_iges_level );
     if (!rc) break;
 
-    rc = file.WriteInt( m_material_index );
+    rc = file.Write3dmReferencedComponentIndex( ON_ModelComponent::Type::RenderMaterial, m_material_index );
     if (!rc) break;
 
     // Starting with version 200312110, this value is zero.  For files written
@@ -343,7 +232,49 @@ ON_BOOL32 ON_Layer::Write(
     }
     if (!rc) break;
 
-    rc = file.WriteString( m_name );
+    if (
+      file.Active3dmTable() == ON_3dmArchiveTableType::layer_table
+      && file.Archive3dmVersion() <= 4
+      && NameIsNotEmpty()
+      && ParentIdIsNotNil()
+      )
+    {
+      ON_wString name = Name();
+      // In V4 there are no parent layers and all V4 layer names must be unique.
+      // Since layers can be written in any order, we cannot know if there will
+      // eventually be a parent layer using the same name as this child layer.
+      // So, child layer names get a hash appended to insure they are unique.
+      ON_UUID parent_layer_id = ParentId();
+      ON__UINT16 hash = ON_CRC16(0, sizeof(parent_layer_id), &parent_layer_id);
+      ON_RandomNumberGenerator rng;
+      rng.Seed(hash);
+      for (int attempt_count = 0; attempt_count < 100; attempt_count++)
+      {
+        while ( 0 == hash )
+          hash = (ON__UINT16)(rng.RandomNumber() % 0xFFFFU);
+        ON_wString sublayer_name;
+        sublayer_name.Format(L"%ls (%04x)", static_cast<const wchar_t*>(name),hash);
+        
+        // Use ON_nil_uuid ast the parent id because we need a name that is uniques
+        // as a "top level" layer name for V4 files.
+        const ON_NameHash sublayer_name_hash = ON_NameHash::Create(ON_nil_uuid,sublayer_name);
+
+        if ( file.Manifest().ItemFromNameHash(ComponentType(), sublayer_name_hash).IsUnset() )
+        {
+          // have a unique name
+          name = sublayer_name;
+          const_cast< ON_ComponentManifest& >(file.Manifest()).ChangeComponentNameHash(Id(), sublayer_name_hash);
+          break;
+        }
+        hash = (ON__UINT16)(rng.RandomNumber() % 0xFFFFU);
+      }
+      rc = file.WriteString( name );
+    }
+    else
+    {
+      rc = file.WriteModelComponentName(*this);
+    }
+
     if (!rc) break;
 
     // 1.1 fields
@@ -351,7 +282,7 @@ ON_BOOL32 ON_Layer::Write(
     if (!rc) break;
 
     // 1.2 field
-    rc = file.WriteInt( m_linetype_index);
+    rc = file.Write3dmReferencedComponentIndex( ON_ModelComponent::Type::LinePattern, m_linetype_index );
     if (!rc) break;
 
     // 1.3 field - 23 March 2005 Dale Lear
@@ -366,11 +297,12 @@ ON_BOOL32 ON_Layer::Write(
     if (!rc) break;
 
     // 1.5 field
-    rc = file.WriteUuid( m_layer_id );
+    rc = file.WriteUuid( Id() );
     if (!rc) break;
 
     // 1.6 field
-    rc = file.WriteUuid( m_parent_layer_id );
+    ON_UUID parent_layer_id = ParentLayerId();
+    rc = file.WriteUuid( parent_layer_id );
     if (!rc) break;
 
     // 1.6 field
@@ -390,7 +322,7 @@ ON_BOOL32 ON_Layer::Write(
   return rc;
 }
 
-ON_BOOL32 ON_Layer::Read(
+bool ON_Layer::Read(
        ON_BinaryArchive& file // restore definition from binary archive
      )
 {
@@ -398,9 +330,9 @@ ON_BOOL32 ON_Layer::Read(
   int major_version=0;
   int minor_version=0;
   int mode = ON::normal_layer;
-  Default();
-  ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if ( rc && major_version == 1 ) 
+  *this = ON_Layer::Unset;
+  bool rc = file.Read3dmChunkVersion(&major_version,&minor_version);
+  if ( rc && major_version == 1 )
   {
     // common to all 1.x formats
     if ( rc ) rc = file.ReadInt( &mode );
@@ -409,28 +341,49 @@ ON_BOOL32 ON_Layer::Read(
       switch(mode)
       {
       case 0: // OBSOLETE ON::normal_layer
-        m_bVisible = true;
-        m_bLocked = false;
         break;
       case 1: // OBSOLETE ON::hidden_layer
-        m_bVisible = false;
-        m_bLocked = false;
+        SetHiddenModelComponentState(true);
         break;
       case 2: // OBSOLETE ON::locked_layer
-        m_bVisible = true;
-        m_bLocked = true;
+        SetLockedModelComponentState( true );
         break;
       default:
-        m_bVisible = true;
-        m_bLocked = false;
         break;
       }
     }
-    if ( rc ) rc = file.ReadInt( &m_layer_index );
+    int layer_index = Index();
+    if (rc)
+    {
+      // this is the archive layer index - it will probably change when the
+      // layer is added to the model. Since the layer has not been added to
+      // the model, there is not way to automatically update it at this time.
+      rc = file.ReadInt(&layer_index);
+    }
+    if (rc)
+      SetIndex(layer_index);
+
     if ( rc ) rc = file.ReadInt( &m_iges_level );
-    if ( rc ) rc = file.ReadInt( &m_material_index );
+
+    // render material index
+    int render_material_index = ON_UNSET_INT_INDEX;
+    if (rc) 
+      rc = file.Read3dmReferencedComponentIndex(ON_ModelComponent::Type::RenderMaterial,&render_material_index);
+    if (rc && ON_UNSET_INT_INDEX != render_material_index )
+      SetRenderMaterialIndex(render_material_index);
+
     if ( rc ) rc = file.ReadInt( &obsolete_value1 );
     if ( rc ) rc = file.ReadColor( m_color );
+
+    // 25 Aug 2021 S. Baer (RH-65410)
+    // Pre-V7 files ignored alpha on layer colors and in some cases
+    // alpha was being set to completely transparent. In this case,
+    // make the color opaque. Even V7 files with completely transparent
+    // color is strange, but it can be intentionally set for some reason
+    if (rc && m_color.Alpha() == 255 && m_color != ON_Color::UnsetColor && file.Archive3dmVersion() < 70)
+    {
+      m_color.SetAlpha(0);
+    }
 
     {
       // OBSOLETE line style was never used - read and discard the next 20 bytes
@@ -442,13 +395,27 @@ ON_BOOL32 ON_Layer::Read(
       if (rc) file.ReadDouble(&x);
     }
 
-    if ( rc ) rc = file.ReadString( m_name );
+    ON_wString layer_name;
+    if ( rc ) rc = file.ReadString( layer_name );
+    if (rc)
+      SetName(layer_name);
+
     if ( rc && minor_version >= 1 )
     {
-      rc = file.ReadBool(&m_bVisible);
+      bool bVisible = true;
+      rc = file.ReadBool(&bVisible);
+      if ( rc && false == bVisible)
+        SetHiddenModelComponentState(true);
+      bVisible = (false == ModelComponentStatus().IsHidden());
+
       if ( rc && minor_version >= 2 )
       {
-        rc = file.ReadInt( &m_linetype_index);
+        // line pattern index
+        int line_pattern_index = ON_UNSET_INT_INDEX;
+        rc = file.Read3dmReferencedComponentIndex( ON_ModelComponent::Type::LinePattern, &line_pattern_index );
+        if (rc && ON_UNSET_INT_INDEX != line_pattern_index)
+          SetLinetypeIndex(line_pattern_index);
+
         if (rc && minor_version >= 3 )
         {
           // 23 March 2005 Dale Lear
@@ -457,12 +424,20 @@ ON_BOOL32 ON_Layer::Read(
 
           if (rc && minor_version >= 4 )
           {
-            rc = file.ReadBool(&m_bLocked);
+            bool bLocked = false;
+            rc = file.ReadBool(&bLocked);
+            if (rc && bLocked )
+              SetLockedModelComponentState(bLocked);
+            bLocked = ModelComponentStatus().IsLocked();
+
             if (rc && minor_version >= 5 )
             {
-              rc = file.ReadUuid(m_layer_id);
-              if ( rc 
-                   && minor_version >= 6 
+              ON_UUID layer_id = ON_nil_uuid;
+              rc = file.ReadUuid(layer_id);
+              if (rc)
+                SetId(layer_id);
+              if ( rc
+                   && minor_version >= 6
                    && file.ArchiveOpenNURBSVersion() > 200505110
                  )
               {
@@ -470,15 +445,18 @@ ON_BOOL32 ON_Layer::Read(
                 // do not contain correctly written m_parent_layer_id
                 // and m_bExpanded values.
                 // It is ok to default these values.
-                rc = file.ReadUuid(m_parent_layer_id);
+                ON_UUID parent_layer_id = ON_nil_uuid;
+                rc = file.ReadUuid(parent_layer_id);
                 if (rc)
                 {
-                  if ( ON_UuidIsNotNil(m_parent_layer_id) )
+                  SetParentId(parent_layer_id);
+                  if ( ON_UuidIsNotNil(parent_layer_id) )
                   {
-                    if ( m_bVisible )
-                      SetPersistentVisibility(true);
-                    if ( !m_bLocked )
-                      SetPersistentLocking(false);
+                    //SetParentId(parent_layer_id);
+                    if ( ModelComponentStatus().IsHidden() )
+                      SetPersistentVisibility(false);
+                    if ( ModelComponentStatus().IsLocked())
+                      SetPersistentLocking(true);
                   }
                   rc = file.ReadBool(&m_bExpanded);
                 }
@@ -501,13 +479,14 @@ ON_BOOL32 ON_Layer::Read(
       }
     }
 
-    if ( ON_UuidIsNil(m_layer_id) )
+    if ( IdIsNil()  )
     {
       // old files didn't have layer ids and we need unique ones.
-      ON_CreateUuid(m_layer_id);
+      SetId();
     }
   }
-  else {
+  else
+  {
     ON_ERROR("ON_Layer::Read() encountered a layer written by future code.");
     rc = false;
   }
@@ -524,22 +503,6 @@ ON::object_type ON_Layer::ObjectType() const
 //
 // Interface
 
-bool ON_Layer::SetLayerName( const char* s )
-{
-  m_name = s;
-  return IsValid()?true:false;
-}
-
-bool ON_Layer::SetLayerName( const wchar_t* s )
-{
-  m_name = s;
-  return IsValid()?true:false;
-}
-
-const ON_wString& ON_Layer::LayerName() const
-{
-  return m_name;
-}
 
 void ON_Layer::SetColor( ON_Color c)
 {
@@ -563,8 +526,9 @@ ON_Color ON_Layer::PlotColor() const
 
 bool ON_Layer::SetLinetypeIndex( int index)
 {
-  if( index >= -1)
+  if( m_linetype_index != index )
   {
+    IncrementContentVersionNumber();
     m_linetype_index = index;
     return true;
   }
@@ -576,15 +540,31 @@ int ON_Layer::LinetypeIndex() const
   return m_linetype_index;
 }
 
+
+ON_UUID ON_Layer::ParentLayerId() const
+{
+  return ParentId();
+}
+
+void ON_Layer::SetParentLayerId(
+  ON_UUID parent_layer_id
+  )
+{
+  SetParentId(parent_layer_id);
+}
+
+
+
 bool ON_Layer::IsVisible() const
 {
-  return m_bVisible;
+  return IsHidden() ? false : true;
 }
 
 void ON_Layer::SetVisible( bool bVisible )
 {
-  m_bVisible = ( bVisible ? true : false );
-  if ( ON_UuidIsNil(m_parent_layer_id) )
+  SetHiddenModelComponentState( bVisible ? false : true );
+  bVisible = (false == IsHidden());
+  if ( ParentIdIsNil() )
     UnsetPersistentVisibility();
   else if ( bVisible )
   {
@@ -602,8 +582,10 @@ void ON_Layer::SetVisible( bool bVisible )
 
 void ON_Layer::SetLocked( bool bLocked )
 {
-  m_bLocked = ( bLocked ? true : false );
-  if ( ON_UuidIsNil(m_parent_layer_id) )
+  SetLockedModelComponentState(bLocked);
+  bLocked = IsLocked();
+
+  if ( ParentIdIsNil() )
     UnsetPersistentLocking();
   else if ( !bLocked )
   {
@@ -619,23 +601,20 @@ void ON_Layer::SetLocked( bool bLocked )
   }
 }
 
-bool ON_Layer::IsLocked() const
-{
-  return m_bLocked;
-}
-
 bool ON_Layer::IsVisibleAndNotLocked() const
 {
-  return (m_bVisible && !m_bLocked);
+  return (false == IsHidden() && false == IsLocked());
 }
 
 bool ON_Layer::IsVisibleAndLocked() const
 {
-  return (m_bVisible && m_bLocked);
+  return (false == IsHidden() && IsLocked());
 }
 
 bool ON_Layer::SetRenderMaterialIndex( int i )
 {
+  if ( i != m_material_index )
+    IncrementContentVersionNumber();
   m_material_index = i;
   return true;
 }
@@ -644,18 +623,6 @@ int ON_Layer::RenderMaterialIndex() const
 {
   return m_material_index;
 }
-
-bool ON_Layer::SetLayerIndex( int i )
-{
-  m_layer_index = i;
-  return true;
-}
-
-int ON_Layer::LayerIndex() const
-{
-  return m_layer_index;
-}
-
 
 bool ON_Layer::SetIgesLevel( int level )
 {
@@ -1015,7 +982,7 @@ bool ON__LayerPerViewSettings::Read(const ON_Layer& layer, ON_BinaryArchive& bin
       }
     }
 
-    if ( ON_UuidIsNil(layer.m_parent_layer_id) )
+    if ( layer.ParentIdIsNil() )
       m_persistent_visibility = 0;
     rc = true;
     break;
@@ -1054,19 +1021,19 @@ public:
 
 public:
   // virtual ON_Object override
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
   // virtual ON_Object override
-  unsigned int SizeOf() const;
+  unsigned int SizeOf() const override;
   // virtual ON_Object override
-  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const override;
   // virtual ON_Object override
-  ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
+  bool Write(ON_BinaryArchive& binary_archive) const override;
   // virtual ON_Object override
-  ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
+  bool Read(ON_BinaryArchive& binary_archive) override;
   // virtual ON_UserData override
-  ON_BOOL32 Archive() const;
+  bool Archive() const override;
   // virtual ON_UserData override
-  ON_BOOL32 GetDescription( ON_wString& description );
+  bool GetDescription( ON_wString& description ) override;
 
 public:
   bool IsEmpty() const;
@@ -1100,7 +1067,7 @@ ON_OBJECT_IMPLEMENT(ON__LayerExtensions,ON_UserData,"3E4904E6-E930-4fbc-AA42-EBD
 
 ON__LayerExtensions* ON__LayerExtensions::LayerExtensions(const ON_Layer& layer, const unsigned char* layer_m_extension_bits, bool bCreate)
 {
-  ON__LayerExtensions* ud = ON__LayerExtensions::Cast(layer.GetUserData(ON__LayerExtensions::m_ON__LayerExtensions_class_id.Uuid()));
+  ON__LayerExtensions* ud = ON__LayerExtensions::Cast(layer.GetUserData(ON_CLASS_ID(ON__LayerExtensions)));
 
   if ( 0 == ud )
   {
@@ -1137,7 +1104,7 @@ ON__LayerExtensions* ON__LayerExtensions::LayerExtensions(const ON_Layer& layer,
 
 ON__LayerExtensions::ON__LayerExtensions()
 {
-  m_userdata_uuid = ON__LayerExtensions::m_ON__LayerExtensions_class_id.Uuid();
+  m_userdata_uuid = ON_CLASS_ID(ON__LayerExtensions);
   m_application_uuid = ON_opennurbs5_id;
   m_userdata_copycount = 1;
 }
@@ -1147,7 +1114,7 @@ ON__LayerExtensions::~ON__LayerExtensions()
 }
 
 // virtual ON_Object override
-ON_BOOL32 ON__LayerExtensions::IsValid( ON_TextLog* text_log ) const
+bool ON__LayerExtensions::IsValid( ON_TextLog* text_log ) const
 {
   return true;
 }
@@ -1169,7 +1136,7 @@ ON__UINT32 ON__LayerExtensions::DataCRC(ON__UINT32 current_remainder) const
 }
 
 // virtual ON_Object override
-ON_BOOL32 ON__LayerExtensions::Write(ON_BinaryArchive& binary_archive) const
+bool ON__LayerExtensions::Write(ON_BinaryArchive& binary_archive) const
 {
   bool rc = binary_archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
   if ( !rc )
@@ -1199,7 +1166,7 @@ ON_BOOL32 ON__LayerExtensions::Write(ON_BinaryArchive& binary_archive) const
 }
 
 // virtual ON_Object override
-ON_BOOL32 ON__LayerExtensions::Read(ON_BinaryArchive& binary_archive)
+bool ON__LayerExtensions::Read(ON_BinaryArchive& binary_archive)
 {
   m_vp_settings.SetCount(0);
 
@@ -1251,13 +1218,13 @@ ON_BOOL32 ON__LayerExtensions::Read(ON_BinaryArchive& binary_archive)
 }
 
 // virtual ON_UserData override
-ON_BOOL32 ON__LayerExtensions::Archive() const
+bool ON__LayerExtensions::Archive() const
 {
   return !IsEmpty();
 }
 
 // virtual ON_UserData override
-ON_BOOL32 ON__LayerExtensions::GetDescription( ON_wString& description )
+bool ON__LayerExtensions::GetDescription( ON_wString& description )
 {
   description = L"Layer Extensions";
   return true;
@@ -1391,10 +1358,10 @@ void ON_Layer::SetPerViewportColor( ON_UUID viewport_id, ON_Color layer_color )
   }
 }
 
-void ON_Layer::SetColor( ON_Color layer_color, const ON_UUID& viewport_id )
-{
-  SetPerViewportColor( viewport_id, layer_color );
-}
+//void ON_Layer::SetColor( ON_Color layer_color, const ON_UUID& viewport_id )
+//{
+//  SetPerViewportColor( viewport_id, layer_color );
+//}
 
 ON_Color ON_Layer::PerViewportColor( ON_UUID viewport_id ) const
 {
@@ -1408,10 +1375,10 @@ ON_Color ON_Layer::PerViewportColor( ON_UUID viewport_id ) const
   return m_color;
 }
 
-ON_Color ON_Layer::Color( const ON_UUID& viewport_id ) const
-{
-  return PerViewportColor( viewport_id );
-}
+//ON_Color ON_Layer::Color( const ON_UUID& viewport_id ) const
+//{
+//  return PerViewportColor( viewport_id );
+//}
 
 void ON_Layer::SetPerViewportPlotColor( ON_UUID viewport_id, ON_Color plot_color )
 {
@@ -1433,10 +1400,10 @@ void ON_Layer::SetPerViewportPlotColor( ON_UUID viewport_id, ON_Color plot_color
   }
 }
 
-void ON_Layer::SetPlotColor( ON_Color plot_color, const ON_UUID& viewport_id )
-{
-  return SetPerViewportPlotColor( viewport_id, plot_color );
-}
+//void ON_Layer::SetPlotColor( ON_Color plot_color, const ON_UUID& viewport_id )
+//{
+//  return SetPerViewportPlotColor( viewport_id, plot_color );
+//}
 
 ON_Color ON_Layer::PerViewportPlotColor( ON_UUID viewport_id ) const
 {
@@ -1452,10 +1419,10 @@ ON_Color ON_Layer::PerViewportPlotColor( ON_UUID viewport_id ) const
   return PlotColor();
 }
 
-ON_Color ON_Layer::PlotColor( const ON_UUID& viewport_id ) const
+/*ON_Color ON_Layer::PlotColor( const ON_UUID& viewport_id ) const
 {
   return PerViewportPlotColor(viewport_id);
-}
+}*/
 
 void ON_Layer::SetPerViewportPlotWeight( ON_UUID viewport_id, double plot_weight_mm )
 {
@@ -1477,10 +1444,10 @@ void ON_Layer::SetPerViewportPlotWeight( ON_UUID viewport_id, double plot_weight
   }
 }
 
-void ON_Layer::SetPlotWeight( double plot_weight_mm, const ON_UUID& viewport_id )
-{
-  SetPerViewportPlotWeight( viewport_id, plot_weight_mm );
-}
+//void ON_Layer::SetPlotWeight( double plot_weight_mm, const ON_UUID& viewport_id )
+//{
+//  SetPerViewportPlotWeight( viewport_id, plot_weight_mm );
+//}
 
 double ON_Layer::PerViewportPlotWeight( ON_UUID viewport_id ) const
 {
@@ -1493,58 +1460,27 @@ double ON_Layer::PerViewportPlotWeight( ON_UUID viewport_id ) const
   return PlotWeight();
 }
 
-double ON_Layer::PlotWeight( const ON_UUID& viewport_id ) const
-{
-  return PerViewportPlotWeight(viewport_id);
-}
+//double ON_Layer::PlotWeight( const ON_UUID& viewport_id ) const
+//{
+//  return PerViewportPlotWeight(viewport_id);
+//}
 
 
 bool ON_Layer::PerViewportIsVisible( ON_UUID viewport_id ) const
 {
-  if ( !ExtensionBit(m_extension_bits,0x01) )
+  if ( false == ExtensionBit(m_extension_bits,0x01) && ON_nil_uuid != viewport_id )
   {
-    if ( ON_UuidIsNil(viewport_id) )
+    const ON__LayerPerViewSettings* vp_settings = ON__LayerExtensions::ViewportSettings( *this, &m_extension_bits, viewport_id, false );
+    if (vp_settings)
     {
-      // see if layer is possibly visible in any viewport
-      if ( !m_bVisible )
-      {
-        // default setting is off - check for per view visibility
-        const ON__LayerExtensions* ud = ON__LayerExtensions::LayerExtensions(*this,&m_extension_bits,false);
-        if ( 0 != ud )
-        {
-          int i, count = ud->m_vp_settings.Count();
-          for ( i = 0; i < count; i++ )
-          {
-            if ( 1 == ud->m_vp_settings[i].m_visible )
-              return true; // layer is visible in this viewport
-          }
-        }
-      }
-    }
-    else 
-    {
-      const ON__LayerPerViewSettings* vp_settings = ON__LayerExtensions::ViewportSettings( *this, &m_extension_bits, viewport_id, false );
-      if (vp_settings)
-      {
-        if ( 1 == vp_settings->m_visible )
-          return true;  // per viewport ON setting overrides layer setting
-        if ( 2 == vp_settings->m_visible )
-          return false; // per viewport OFF setting overrides layer setting
-      }
+      if ( 1 == vp_settings->m_visible )
+        return true;  // per viewport ON setting overrides layer setting
+      if ( 2 == vp_settings->m_visible )
+        return false; // per viewport OFF setting overrides layer setting
     }
   }
 
   return IsVisible(); // use layer setting
-}
-
-bool ON_Layer::IsVisible( const ON_UUID& viewport_id ) const
-{
-  return PerViewportIsVisible(viewport_id);
-}
-
-void ON_Layer::SetVisible( bool bVisible, const ON_UUID& viewport_id )
-{
-  SetPerViewportVisible(viewport_id,bVisible);
 }
 
 void ON_Layer::SetPerViewportVisible( ON_UUID viewport_id, bool bVisible )
@@ -1565,7 +1501,7 @@ void ON_Layer::SetPerViewportVisible( ON_UUID viewport_id, bool bVisible )
       vp_settings->m_visible = (bVisible)
         ? 1  // layer is on in this viewport
         : 2; // layer is off in this viewport
-      if ( ON_UuidIsNil(m_parent_layer_id) )
+      if ( ParentIdIsNil() )
         vp_settings->m_persistent_visibility = 0;
       else if ( bVisible )
         vp_settings->m_persistent_visibility = 1;
@@ -1583,7 +1519,7 @@ bool ON_Layer::PerViewportPersistentVisibility( ON_UUID viewport_id ) const
     {
       if ( 1 == vp_settings->m_visible )
         return true;
-      if ( ON_UuidIsNotNil(m_parent_layer_id) )
+      if ( ParentIdIsNotNil() )
       {
         if ( 1 == vp_settings->m_persistent_visibility )
           return true;
@@ -2001,409 +1937,9 @@ ON__UINT32 ON_Layer::PerViewportSettingsCRC() const
 ////////////////////////////////////////////////////////////////
 
 
-
-unsigned int ON_Layer::Differences( const ON_Layer& layer0, const ON_Layer& layer1 )
-{
-  /*
-  enum
-  {
-    none = 0,
-    userdata = 1,
-    color = 2,
-    plot_color = 4,
-    plot_weight = 8,
-    visible = 16,
-    locked = 32,
-    expanded = 64,
-    all = 0xFFFFFFFF
-  }
-  */
-  unsigned int differences = 0;
-
-
-  const ON_UserData* ud0 = layer0.FirstUserData();
-  const ON_UserData* ud1 = layer1.FirstUserData();
-  while ( 0 != ud0 && 0 != ud1 )
-  {
-    if ( ud0->m_userdata_uuid != ud1->m_userdata_uuid )
-      break;
-    ud0 = ud0->Next();
-    ud1 = ud1->Next();
-  }
-  if ( 0 != ud0 || 0 != ud1 )
-    differences |= ON_Layer::userdata_settings;
-
-  if ( layer0.m_color != layer1.m_color )
-    differences |= ON_Layer::color_settings;
-
-  if ( layer0.m_plot_color != layer1.m_plot_color )
-    differences |= ON_Layer::plot_color_settings;
-
-  if ( layer0.m_plot_weight_mm != layer1.m_plot_weight_mm )
-    differences |= ON_Layer::plot_weight_settings;
-
-  if ( layer0.m_bVisible != layer1.m_bVisible )
-    differences |= ON_Layer::visible_settings;
-
-  if ( layer0.m_bLocked != layer1.m_bLocked )
-    differences |= ON_Layer::locked_settings;
-
-  // Note:
-  //  This function is used for comparing layers from different
-  //  documents.  It does not make sense to compare values
-  //  like m_linetype_index, m_material_index and so on because
-  //  different indices may actually reference the same linetype
-  //  or material.  If there is a compelling reason to compare
-  //  other settings, they can be added.
-
-  return differences;
-}
-
-
-void ON_Layer::Set( unsigned int settings, const ON_Layer& settings_values )
-{
-  if ( 0 != (ON_Layer::userdata_settings & settings) )
-  {
-    // save original user data on this layer
-    ON_UserDataHolder ud; 
-    ud.MoveUserDataFrom(*this);
-
-    // make a complete copy of the userdata on settings_values
-    CopyUserData(settings_values);
-
-    // now restore any original user data that was not present on settings_values.
-    ud.MoveUserDataTo(*this,true);
-  }
-
-  if ( 0 != (ON_Layer::color_settings & settings) )
-  {
-    m_color = settings_values.m_color;
-  }
-
-  if ( 0 != (ON_Layer::plot_color_settings & settings) )
-  {
-    m_plot_color = settings_values.m_plot_color;
-  }
-
-  if ( 0 != (ON_Layer::plot_weight_settings & settings) )
-  {
-    m_plot_weight_mm = settings_values.m_plot_weight_mm;
-  }
-
-  if ( 0 != (ON_Layer::visible_settings & settings) )
-  {
-    m_bVisible = settings_values.m_bVisible ? true : false;
-  }
-
-  if ( 0 != (ON_Layer::locked_settings & settings) )
-  {
-    m_bLocked = settings_values.m_bLocked ? true : false;
-  }
-}
-
-class /*NEVER EXPORT THIS CLASS DEFINITION*/ ON__LayerSettingsUserData : public ON_UserData
-{
-#if !defined(ON_BOZO_VACCINE_BFB63C094BC7472789BB7CC754118200)
-#error Never copy this class definition or put this definition in a header file!
-#endif
-  ON_OBJECT_DECLARE(ON__LayerSettingsUserData);
-
-public:
-  ON__LayerSettingsUserData();
-  ~ON__LayerSettingsUserData();
-  // default copy constructor and operator= work fine.
-
-  static ON__LayerSettingsUserData* LayerSettings(const ON_Layer& layer,bool bCreate);
-
-
-public:
-  // virtual ON_Object override
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
-  // virtual ON_Object override
-  unsigned int SizeOf() const;
-  // virtual ON_Object override
-  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
-  // virtual ON_Object override
-  ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
-  // virtual ON_Object override
-  ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
-  // virtual ON_UserData override
-  ON_BOOL32 Archive() const;
-  // virtual ON_UserData override
-  ON_BOOL32 GetDescription( ON_wString& description );
-
-public:
-
-  enum 
-  {
-    valid_settings = 
-      (
-          ON_Layer::color_settings
-        | ON_Layer::plot_color_settings
-        | ON_Layer::visible_settings
-        | ON_Layer::locked_settings
-        | ON_Layer::plot_weight_settings
-      )
-  };
-
-  bool HaveSettings() const {return 0 != (m_settings & ON__LayerSettingsUserData::valid_settings);}
-
-  bool HaveColor() const {return 0 != (m_settings & ON_Layer::color_settings);}
-  bool HavePlotColor() const {return 0 != (m_settings & ON_Layer::plot_color_settings);}
-  bool HaveVisible() const {return 0 != (m_settings & ON_Layer::visible_settings);}
-  bool HaveLocked() const {return 0 != (m_settings & ON_Layer::locked_settings);}
-  bool HavePlotWeight() const {return 0 != (m_settings & ON_Layer::plot_weight_settings);}
-
-  void Defaults()
-  {
-    m_settings = 0;
-    m_color = 0;
-    m_plot_color = 0;
-    m_bVisible = 0;
-    m_bLocked = 0;
-    m_plot_weight_mm = 0.0;
-  }
-
-  unsigned int m_settings;
-  ON_Color m_color;
-  ON_Color m_plot_color;
-  bool m_bVisible;
-  bool m_bLocked;
-  double m_plot_weight_mm;
-
-};
-
-#undef ON_BOZO_VACCINE_BFB63C094BC7472789BB7CC754118200
-
-ON_OBJECT_IMPLEMENT(ON__LayerSettingsUserData,ON_UserData,"BFB63C09-4BC7-4727-89BB-7CC754118200");
-
-ON__LayerSettingsUserData* ON__LayerSettingsUserData::LayerSettings(const ON_Layer& layer,bool bCreate)
-{
-  ON__LayerSettingsUserData* ud = ON__LayerSettingsUserData::Cast(layer.GetUserData(ON__LayerSettingsUserData::m_ON__LayerSettingsUserData_class_id.Uuid()));
-  if ( !ud && bCreate )
-  {
-    ud = new ON__LayerSettingsUserData();
-    const_cast<ON_Layer&>(layer).AttachUserData(ud);
-  }
-  return ud;
-}
-
-ON__LayerSettingsUserData::ON__LayerSettingsUserData()
-{
-  m_userdata_uuid = ON__LayerSettingsUserData::m_ON__LayerSettingsUserData_class_id.Uuid();
-  m_application_uuid = ON_opennurbs5_id;
-  m_userdata_copycount = 1;
-  Defaults();
-}
-
-ON__LayerSettingsUserData::~ON__LayerSettingsUserData()
-{
-}
-
-// virtual ON_Object override
-ON_BOOL32 ON__LayerSettingsUserData::IsValid( ON_TextLog* text_log ) const
-{
-  return true;
-}
-
-// virtual ON_Object override
-unsigned int ON__LayerSettingsUserData::SizeOf() const
-{
-  return (unsigned int)(sizeof(*this));
-}
-
-// virtual ON_Object override
-ON__UINT32 ON__LayerSettingsUserData::DataCRC(ON__UINT32 current_remainder) const
-{
-  ON__UINT32 crc = current_remainder;
-  crc = ON_CRC32(crc,sizeof(m_settings),&m_settings);
-  if ( HaveColor() ) crc = ON_CRC32(crc,sizeof(m_color),&m_color);
-  if ( HavePlotColor() ) crc = ON_CRC32(crc,sizeof(m_plot_color),&m_plot_color);
-  if ( HaveVisible() ) crc = ON_CRC32(crc,sizeof(m_bVisible),&m_bVisible);
-  if ( HaveLocked() ) crc = ON_CRC32(crc,sizeof(m_bLocked),&m_bLocked);
-  if ( HavePlotWeight() ) crc = ON_CRC32(crc,sizeof(m_plot_weight_mm),&m_plot_weight_mm);
-  return crc;
-}
-
-// virtual ON_Object override
-ON_BOOL32 ON__LayerSettingsUserData::Write(ON_BinaryArchive& binary_archive) const
-{
-  bool rc = binary_archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
-  if ( !rc )
-    return false;
-
-  rc = false;
-  for(;;)
-  {
-    if ( !binary_archive.WriteInt(m_settings) )
-      break;
-    if ( HaveColor() && !binary_archive.WriteColor(m_color) )
-      break;
-    if ( HavePlotColor() && !binary_archive.WriteColor(m_plot_color) )
-      break;
-    if ( HaveVisible() && !binary_archive.WriteBool(m_bVisible) )
-      break;
-    if ( HaveLocked() && !binary_archive.WriteBool(m_bLocked) )
-      break;
-    if ( HavePlotWeight() && !binary_archive.WriteDouble(m_plot_weight_mm) )
-      break;
-
-    rc = true;
-    break;
-  }
-
-  if ( !binary_archive.EndWrite3dmChunk() )
-    rc = false;
-
-  return rc;
-}
-
-// virtual ON_Object override
-ON_BOOL32 ON__LayerSettingsUserData::Read(ON_BinaryArchive& binary_archive)
-{
-  Defaults();
-
-  int major_version = 0;
-  int minor_version = 0;
-  bool rc = binary_archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
-  if ( !rc )
-    return false;
-
-  rc = false;
-  while ( 1 == major_version )
-  {
-    if ( !binary_archive.ReadInt(&m_settings) )
-      break;
-    if ( HaveColor() && !binary_archive.ReadColor(m_color) )
-      break;
-    if ( HavePlotColor() && !binary_archive.ReadColor(m_plot_color) )
-      break;
-    if ( HaveVisible() && !binary_archive.ReadBool(&m_bVisible) )
-      break;
-    if ( HaveLocked() && !binary_archive.ReadBool(&m_bLocked) )
-      break;
-    if ( HavePlotWeight() && !binary_archive.ReadDouble(&m_plot_weight_mm) )
-      break;
-    rc = true;
-    break;
-  }
-
-  if ( !binary_archive.EndRead3dmChunk() )
-    rc = false;
-
-  return rc;
-}
-
-// virtual ON_UserData override
-ON_BOOL32 ON__LayerSettingsUserData::Archive() const
-{
-  // don't save empty settings
-  return HaveSettings();
-}
-
-// virtual ON_UserData override
-ON_BOOL32 ON__LayerSettingsUserData::GetDescription( ON_wString& description )
-{
-  description = L"Saved Layer Settings";
-  return true;
-}
-
-
-
-void ON_Layer::SaveSettings( unsigned int settings, bool bUpdate )
-{
-  ON__LayerSettingsUserData* ud;
-  if ( 0 == (settings & ON__LayerSettingsUserData::valid_settings) )
-  {
-    if ( !bUpdate )
-    {
-      // delete any existing user data
-      ud = ON__LayerSettingsUserData::LayerSettings(*this,false);
-      if ( ud )
-      {
-        delete ud;
-        ud = 0;
-      }
-    }
-  }
-  else
-  {
-    ud = ON__LayerSettingsUserData::LayerSettings(*this,true);
-    if ( !bUpdate )
-    {
-      ud->Defaults();
-      ud->m_settings = settings;
-    }
-    else
-    {
-      ud->m_settings |= settings;
-    }
-    if ( ud->HaveColor() )
-      ud->m_color = m_color;
-
-    if ( ud->HavePlotColor() )
-      ud->m_plot_color = m_plot_color;
-
-    if ( ud->HaveVisible() )
-      ud->m_bVisible = PersistentVisibility();
-
-    if ( ud->HaveLocked() )
-      ud->m_bLocked = PersistentLocking();
-
-    if ( ud->HavePlotWeight() )
-      ud->m_plot_weight_mm = m_plot_weight_mm;
-  }
-}
-
-unsigned int ON_Layer::SavedSettings() const
-{
-  const ON__LayerSettingsUserData* ud = ON__LayerSettingsUserData::LayerSettings(*this,false);
-  return ( 0 != ud ? ud->m_settings : 0 );
-}
-
-bool ON_Layer::GetSavedSettings( ON_Layer& layer, unsigned int& settings ) const
-{
-  const ON__LayerSettingsUserData* ud = ON__LayerSettingsUserData::LayerSettings(*this,false);
-  if ( 0 == ud )
-    return false;
-  bool rc = false;
-
-  if ( ud->HaveColor() )
-  {
-    layer.m_color = ud->m_color;
-    rc = true;
-  }
-
-  if ( ud->HavePlotColor() )
-  {
-    layer.m_plot_color = ud->m_plot_color;
-    rc = true;
-  }
-
-  if ( ud->HaveVisible() )
-  {
-    layer.m_bVisible = ud->m_bVisible;
-    rc = true;
-  }
-
-  if ( ud->HaveLocked() )
-  {
-    layer.m_bLocked = ud->m_bLocked;
-    rc = true;
-  }
-
-  if ( ud->HavePlotWeight() )
-  {
-    layer.m_plot_weight_mm = ud->m_plot_weight_mm;
-    rc = true;
-  }
-
-  return true;
-}
-
 bool ON_Layer::PersistentVisibility() const
 {
-  if ( !m_bVisible && ON_UuidIsNotNil(m_parent_layer_id) )
+  if ( !IsVisible() && ParentIdIsNotNil() )
   {
     switch ( 0x06 & m_extension_bits )
     {
@@ -2414,13 +1950,13 @@ bool ON_Layer::PersistentVisibility() const
     }
   }
 
-  return m_bVisible;
+  return IsVisible();
 }
 
 void ON_Layer::SetPersistentVisibility(bool bVisibleChild)
 {
   const unsigned char and_mask = 0xF9;
-  const unsigned char or_bit = ON_UuidIsNotNil(m_parent_layer_id) 
+  const unsigned char or_bit = ParentIdIsNotNil() 
                              ? (bVisibleChild ? 0x02 : 0x04)
                              : 0x00;
   m_extension_bits &= and_mask;
@@ -2435,7 +1971,7 @@ void ON_Layer::UnsetPersistentVisibility()
 
 bool ON_Layer::PersistentLocking() const
 {
-  if ( m_bLocked && ON_UuidIsNotNil(m_parent_layer_id) )
+  if ( IsLocked() && ParentIdIsNotNil() )
   {
     switch ( 0x18 & m_extension_bits )
     {
@@ -2446,13 +1982,13 @@ bool ON_Layer::PersistentLocking() const
     }
   }
 
-  return m_bLocked;
+  return IsLocked();
 }
 
 void ON_Layer::SetPersistentLocking(bool bLockedChild)
 {
   const unsigned char and_mask = 0xE7;
-  const unsigned char or_bit = ON_UuidIsNotNil(m_parent_layer_id)
+  const unsigned char or_bit = ParentIdIsNotNil()
                              ? (bLockedChild ? 0x08 : 0x10)
                              : 0x00;
   m_extension_bits &= and_mask;

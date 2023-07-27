@@ -1,7 +1,7 @@
 /*                       P Y R A M I D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2022 United States Government as represented by
+ * Copyright (c) 1986-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,39 +37,9 @@
 #include "wdb.h"
 
 
-void do_leaf(char *name), do_pleaf(), pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts), do_tree(char *name, char *lname, int level);
-
 double sin60;
 
 struct rt_wdb *outfp;
-
-int
-main(int argc, char **argv)
-{
-    int depth;
-
-    bu_setprogname(argv[0]);
-
-    if (argc != 2 || BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
-	fprintf(stderr, "Usage: pyramid recursion\n      (the argument is of type integer)\n");
-	return 1;
-    }
-    depth = atoi(argv[1]);
-    sin60 = sin(60.0 * DEG2RAD);
-
-    outfp = wdb_fopen("pyramid.g");
-    printf("Creating file pyramid.g\n");
-
-    mk_id(outfp, "3-D Pyramids");
-
-    do_leaf("leaf");
-    do_tree("tree", "leaf", depth);
-
-    db_close(outfp->dbip);
-
-    return 0;
-}
-
 
 /* Make a leaf node out of an ARB4 */
 void
@@ -84,7 +54,6 @@ do_leaf(char *name)
 
     mk_arb4(outfp, name, &pt[0][X]);
 }
-
 
 /*
  * Find the single outward pointing normal for a facet.
@@ -165,6 +134,33 @@ do_tree(char *name, char *lname, int level)
     }
 }
 
+
+int
+main(int argc, char **argv)
+{
+    int depth;
+
+    bu_setprogname(argv[0]);
+
+    if (argc != 2 || BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
+	fprintf(stderr, "Usage: pyramid recursion\n      (the argument is of type integer)\n");
+	return 1;
+    }
+    depth = atoi(argv[1]);
+    sin60 = sin(60.0 * DEG2RAD);
+
+    outfp = wdb_fopen("pyramid.g");
+    printf("Creating file pyramid.g\n");
+
+    mk_id(outfp, "3-D Pyramids");
+
+    do_leaf("leaf");
+    do_tree("tree", "leaf", depth);
+
+    db_close(outfp->dbip);
+
+    return 0;
+}
 
 /*
  * Local Variables:

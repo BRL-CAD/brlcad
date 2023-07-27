@@ -32,18 +32,14 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-CPL_CVSID("$Id$");
-
 /************************************************************************/
 /*                        OGRAVCE00DataSource()                         */
 /************************************************************************/
 
-OGRAVCE00DataSource::OGRAVCE00DataSource() :
-    nLayers(0),
-    pszName(NULL),
-    psE00(NULL),
-    papoLayers(NULL)
-{}
+OGRAVCE00DataSource::OGRAVCE00DataSource()
+    : nLayers(0), pszName(nullptr), psE00(nullptr), papoLayers(nullptr)
+{
+}
 
 /************************************************************************/
 /*                        ~OGRAVCE00DataSource()                        */
@@ -52,100 +48,101 @@ OGRAVCE00DataSource::OGRAVCE00DataSource() :
 OGRAVCE00DataSource::~OGRAVCE00DataSource()
 
 {
-    if( psE00 )
+    if (psE00)
     {
-        AVCE00ReadCloseE00( psE00 );
-        psE00 = NULL;
+        AVCE00ReadCloseE00(psE00);
+        psE00 = nullptr;
     }
 
-    CPLFree( pszName );
+    CPLFree(pszName);
 
-    for( int i = 0; i < nLayers; i++ )
+    for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
 
-    CPLFree( papoLayers );
+    CPLFree(papoLayers);
 }
 
 /************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
+int OGRAVCE00DataSource::Open(const char *pszNewName, int bTestOpen)
 
 {
-/* -------------------------------------------------------------------- */
-/*      Open the source file.  Suppress error reporting if we are in    */
-/*      TestOpen mode.                                                  */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Open the source file.  Suppress error reporting if we are in    */
+    /*      TestOpen mode.                                                  */
+    /* -------------------------------------------------------------------- */
     bool bCompressed = false;
 
-    if( bTestOpen )
-        CPLPushErrorHandler( CPLQuietErrorHandler );
+    if (bTestOpen)
+        CPLPushErrorHandler(CPLQuietErrorHandler);
 
     psE00 = AVCE00ReadOpenE00(pszNewName);
 
-    if( CPLGetLastErrorNo() == CPLE_OpenFailed
-        && strstr(CPLGetLastErrorMsg(), "compressed E00") != NULL )
+    if (CPLGetLastErrorNo() == CPLE_OpenFailed &&
+        strstr(CPLGetLastErrorMsg(), "compressed E00") != nullptr)
     {
         bCompressed = true;
     }
 
-    if( bTestOpen )
+    if (bTestOpen)
     {
         CPLPopErrorHandler();
         CPLErrorReset();
     }
 
-    if( psE00 == NULL )
+    if (psE00 == nullptr)
     {
-        if( bCompressed )
+        if (bCompressed)
         {
             CPLError(CE_Failure, CPLE_OpenFailed,
                      "This looks like a compressed E00 file and cannot be "
                      "processed directly. You may need to uncompress it "
                      "first using the E00compr library or the e00conv "
-                     "program." );
+                     "program.");
         }
         return FALSE;
     }
 
-    pszName = CPLStrdup( pszNewName );
+    pszName = CPLStrdup(pszNewName);
     /* pszCoverageName = CPLStrdup( psE00->pszCoverName ); */
-    pszCoverageName = CPLStrdup( pszNewName );
+    pszCoverageName = CPLStrdup(pszNewName);
 
-/* -------------------------------------------------------------------- */
-/*      Create layers for the "interesting" sections of the coverage.   */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Create layers for the "interesting" sections of the coverage.   */
+    /* -------------------------------------------------------------------- */
     papoLayers = static_cast<OGRAVCE00Layer **>(
-        CPLCalloc( sizeof(OGRAVCE00Layer *), psE00->numSections ) );
+        CPLCalloc(sizeof(OGRAVCE00Layer *), psE00->numSections));
     nLayers = 0;
 
-    for( int iSection = 0; iSection < psE00->numSections; iSection++ )
+    for (int iSection = 0; iSection < psE00->numSections; iSection++)
     {
         AVCE00Section *psSec = psE00->pasSections + iSection;
 
-        switch( psSec->eType )
+        switch (psSec->eType)
         {
-          case AVCFileARC:
-          case AVCFilePAL:
-          case AVCFileCNT:
-          case AVCFileLAB:
-          case AVCFileRPL:
-          case AVCFileTXT:
-            papoLayers[nLayers++] = new OGRAVCE00Layer( this, psSec );
-            break;
+            case AVCFileARC:
+            case AVCFilePAL:
+            case AVCFileCNT:
+            case AVCFileLAB:
+            case AVCFileRPL:
+            case AVCFileTXT:
+                papoLayers[nLayers++] = new OGRAVCE00Layer(this, psSec);
+                break;
 
-          case AVCFileTX6:
-            break;
+            case AVCFileTX6:
+                break;
 
-          case AVCFileTABLE:
-            CheckAddTable(psSec);
-            break;
+            case AVCFileTABLE:
+                CheckAddTable(psSec);
+                break;
 
-          case AVCFilePRJ:
-          {
+            case AVCFilePRJ:
+            {
 #if 0
               poSRS = new OGRSpatialReference();
+              poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
               AVCE00File *hFile
                   = AVCE00ReadOpen( psE00->pszCoverPath,
                                     psSec->pszFilename,
@@ -157,6 +154,7 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
                   char **papszPRJ = AVCE00ReadNextPrj( hFile );
 
                   poSRS = new OGRSpatialReference();
+                  poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                   if( poSRS->importFromESRI( papszPRJ ) != OGRERR_NONE )
                   {
                       CPLError( CE_Warning, CPLE_AppDefined,
@@ -167,23 +165,22 @@ int OGRAVCE00DataSource::Open( const char * pszNewName, int bTestOpen )
                   AVCE00ReadClose( hFile );
               }
 #endif
-          }
-          break;
+            }
+            break;
 
-          default:
-            ;
+            default:;
         }
     }
 
     return nLayers > 0;
 }
 
-int OGRAVCE00DataSource::CheckAddTable( AVCE00Section *psTblSection )
+int OGRAVCE00DataSource::CheckAddTable(AVCE00Section *psTblSection)
 {
     int nCount = 0;
     for (int i = 0; i < nLayers; ++i)
     {
-        if( papoLayers[i]->CheckSetupTable(psTblSection) )
+        if (papoLayers[i]->CheckSetupTable(psTblSection))
             ++nCount;
     }
     return nCount;
@@ -193,7 +190,7 @@ int OGRAVCE00DataSource::CheckAddTable( AVCE00Section *psTblSection )
 /*                           TestCapability()                           */
 /************************************************************************/
 
-int OGRAVCE00DataSource::TestCapability( const char * /* pszCap */ )
+int OGRAVCE00DataSource::TestCapability(const char * /* pszCap */)
 {
     return FALSE;
 }
@@ -202,11 +199,11 @@ int OGRAVCE00DataSource::TestCapability( const char * /* pszCap */ )
 /*                              GetLayer()                              */
 /************************************************************************/
 
-OGRLayer *OGRAVCE00DataSource::GetLayer( int iLayer )
+OGRLayer *OGRAVCE00DataSource::GetLayer(int iLayer)
 
 {
-    if( iLayer < 0 || iLayer >= nLayers )
-        return NULL;
+    if (iLayer < 0 || iLayer >= nLayers)
+        return nullptr;
 
     return papoLayers[iLayer];
 }
@@ -214,28 +211,36 @@ OGRLayer *OGRAVCE00DataSource::GetLayer( int iLayer )
 /************************************************************************/
 /*                           GetSpatialRef()                            */
 /************************************************************************/
-OGRSpatialReference *OGRAVCE00DataSource::GetSpatialRef()
+OGRSpatialReference *OGRAVCE00DataSource::DSGetSpatialRef()
 {
-    if (poSRS != NULL)
+    if (m_bSRSFetched)
         return poSRS;
-    if (psE00 == NULL)
-        return NULL;
+    m_bSRSFetched = true;
+    if (psE00 == nullptr)
+        return nullptr;
 
-    for( int iSection = 0; iSection < psE00->numSections; iSection++ )
+    for (int iSection = 0; iSection < psE00->numSections; iSection++)
     {
         AVCE00Section *psSec = psE00->pasSections + iSection;
         if (psSec->eType == AVCFilePRJ)
         {
             AVCE00ReadGotoSectionE00(psE00, psSec, 0);
-            char **pszPRJ
-                = static_cast<char **>( AVCE00ReadNextObjectE00(psE00) );
-            poSRS = new OGRSpatialReference();
-            if( poSRS->importFromESRI( pszPRJ ) != OGRERR_NONE )
+            void *obj = AVCE00ReadNextObjectE00(psE00);
+            if (psE00->hParseInfo->eFileType == AVCFilePRJ)
             {
-                CPLError( CE_Warning, CPLE_AppDefined,
-                          "Failed to parse PRJ section, ignoring." );
-                delete poSRS;
-                poSRS = NULL;
+                char **pszPRJ = static_cast<char **>(obj);
+                if (pszPRJ)
+                {
+                    poSRS = new OGRSpatialReference();
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    if (poSRS->importFromESRI(pszPRJ) != OGRERR_NONE)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Failed to parse PRJ section, ignoring.");
+                        delete poSRS;
+                        poSRS = nullptr;
+                    }
+                }
             }
             break;
         }

@@ -32,8 +32,6 @@
 #include "ogr_api.h"
 #include "cpl_error.h"
 
-CPL_CVSID("$Id$");
-
 /************************************************************************/
 /*                             OGRTriangle()                            */
 /************************************************************************/
@@ -43,8 +41,7 @@ CPL_CVSID("$Id$");
  *
  */
 
-OGRTriangle::OGRTriangle()
-{ }
+OGRTriangle::OGRTriangle() = default;
 
 /************************************************************************/
 /*                             OGRTriangle()                            */
@@ -55,9 +52,7 @@ OGRTriangle::OGRTriangle()
  *
  */
 
-OGRTriangle::OGRTriangle(const OGRTriangle& other) :
-    OGRPolygon(other)
-{ }
+OGRTriangle::OGRTriangle(const OGRTriangle &) = default;
 
 /************************************************************************/
 /*                             OGRTriangle()                            */
@@ -72,22 +67,21 @@ OGRTriangle::OGRTriangle(const OGRTriangle& other) :
  * is constructed successfully
  */
 
-OGRTriangle::OGRTriangle(const OGRPolygon& other, OGRErr &eErr)
+OGRTriangle::OGRTriangle(const OGRPolygon &other, OGRErr &eErr)
 {
     // In case of Polygon, we have to check that it is a valid triangle -
     // closed and contains one external ring of four points
     // If not, then eErr will contain the error description
     const OGRCurve *poCurve = other.getExteriorRingCurve();
-    if (other.getNumInteriorRings() == 0 &&
-        poCurve != NULL && poCurve->get_IsClosed() &&
-        poCurve->getNumPoints() == 4)
+    if (other.getNumInteriorRings() == 0 && poCurve != nullptr &&
+        poCurve->get_IsClosed() && poCurve->getNumPoints() == 4)
     {
         // everything is fine
-        eErr = addRing( const_cast<OGRCurve*>(poCurve) );
+        eErr = addRing(const_cast<OGRCurve *>(poCurve));
         if (eErr != OGRERR_NONE)
-            CPLError( CE_Failure, CPLE_NotSupported, "Invalid Triangle");
+            CPLError(CE_Failure, CPLE_NotSupported, "Invalid Triangle");
     }
-    assignSpatialReference( other.getSpatialReference() );
+    assignSpatialReference(other.getSpatialReference());
 }
 
 /************************************************************************/
@@ -123,9 +117,7 @@ OGRTriangle::OGRTriangle(const OGRPoint &p, const OGRPoint &q,
  *
  */
 
-OGRTriangle::~OGRTriangle()
-{
-}
+OGRTriangle::~OGRTriangle() = default;
 
 /************************************************************************/
 /*                    operator=( const OGRGeometry&)                    */
@@ -140,20 +132,30 @@ OGRTriangle::~OGRTriangle()
  *
  */
 
-OGRTriangle& OGRTriangle::operator=( const OGRTriangle& other )
+OGRTriangle &OGRTriangle::operator=(const OGRTriangle &other)
 {
-    if( this != &other)
+    if (this != &other)
     {
-        OGRPolygon::operator=( other );
+        OGRPolygon::operator=(other);
     }
     return *this;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRTriangle *OGRTriangle::clone() const
+
+{
+    return new (std::nothrow) OGRTriangle(*this);
 }
 
 /************************************************************************/
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char* OGRTriangle::getGeometryName() const
+const char *OGRTriangle::getGeometryName() const
 {
     return "TRIANGLE";
 }
@@ -164,11 +166,11 @@ const char* OGRTriangle::getGeometryName() const
 
 OGRwkbGeometryType OGRTriangle::getGeometryType() const
 {
-    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+    if ((flags & OGR_G_3D) && (flags & OGR_G_MEASURED))
         return wkbTriangleZM;
-    else if( flags & OGR_G_MEASURED  )
+    else if (flags & OGR_G_MEASURED)
         return wkbTriangleM;
-    else if( flags & OGR_G_3D )
+    else if (flags & OGR_G_3D)
         return wkbTriangleZ;
     else
         return wkbTriangle;
@@ -181,8 +183,7 @@ OGRwkbGeometryType OGRTriangle::getGeometryType() const
 bool OGRTriangle::quickValidityCheck() const
 {
     return oCC.nCurveCount == 0 ||
-           (oCC.nCurveCount == 1 &&
-            oCC.papoCurves[0]->getNumPoints() == 4 &&
+           (oCC.nCurveCount == 1 && oCC.papoCurves[0]->getNumPoints() == 4 &&
             oCC.papoCurves[0]->get_IsClosed());
 }
 
@@ -190,15 +191,16 @@ bool OGRTriangle::quickValidityCheck() const
 /*                           importFromWkb()                            */
 /************************************************************************/
 
-OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
-                                  int nSize,
-                                  OGRwkbVariant eWkbVariant )
+OGRErr OGRTriangle::importFromWkb(const unsigned char *pabyData, size_t nSize,
+                                  OGRwkbVariant eWkbVariant,
+                                  size_t &nBytesConsumedOut)
 {
-    OGRErr eErr = OGRPolygon::importFromWkb( pabyData, nSize, eWkbVariant );
-    if( eErr != OGRERR_NONE )
+    OGRErr eErr = OGRPolygon::importFromWkb(pabyData, nSize, eWkbVariant,
+                                            nBytesConsumedOut);
+    if (eErr != OGRERR_NONE)
         return eErr;
 
-    if ( !quickValidityCheck() )
+    if (!quickValidityCheck())
     {
         CPLDebug("OGR", "Triangle is not made of a closed rings of 3 points");
         empty();
@@ -215,21 +217,16 @@ OGRErr OGRTriangle::importFromWkb( unsigned char *pabyData,
 /*      Instantiate from "((x y, x y, ...),(x y, ...),...)"             */
 /************************************************************************/
 
-OGRErr OGRTriangle::importFromWKTListOnly( char ** ppszInput,
-                                          int bHasZ, int bHasM,
-                                          OGRRawPoint*& paoPoints,
-                                          int& nMaxPoints,
-                                          double*& padfZ )
+OGRErr OGRTriangle::importFromWKTListOnly(const char **ppszInput, int bHasZ,
+                                          int bHasM, OGRRawPoint *&paoPoints,
+                                          int &nMaxPoints, double *&padfZ)
 
 {
-    OGRErr eErr = OGRPolygon::importFromWKTListOnly(ppszInput,
-                                                    bHasZ, bHasM,
-                                                    paoPoints,
-                                                    nMaxPoints,
-                                                    padfZ );
-    if( eErr == OGRERR_NONE )
+    OGRErr eErr = OGRPolygon::importFromWKTListOnly(
+        ppszInput, bHasZ, bHasM, paoPoints, nMaxPoints, padfZ);
+    if (eErr == OGRERR_NONE)
     {
-        if( !quickValidityCheck() )
+        if (!quickValidityCheck())
         {
             CPLDebug("OGR",
                      "Triangle is not made of a closed rings of 3 points");
@@ -246,10 +243,10 @@ OGRErr OGRTriangle::importFromWKTListOnly( char ** ppszInput,
 /*                           addRingDirectly()                          */
 /************************************************************************/
 
-OGRErr OGRTriangle::addRingDirectly( OGRCurve * poNewRing )
+OGRErr OGRTriangle::addRingDirectly(OGRCurve *poNewRing)
 {
     if (oCC.nCurveCount == 0)
-        return addRingDirectlyInternal( poNewRing, TRUE );
+        return addRingDirectlyInternal(poNewRing, TRUE);
     else
         return OGRERR_FAILURE;
 }
@@ -259,19 +256,27 @@ OGRErr OGRTriangle::addRingDirectly( OGRCurve * poNewRing )
 /*                      GetCasterToPolygon()                            */
 /************************************************************************/
 
-OGRSurfaceCasterToPolygon OGRTriangle::GetCasterToPolygon() const {
-    return (OGRSurfaceCasterToPolygon) OGRTriangle::CastToPolygon;
+OGRPolygon *OGRTriangle::CasterToPolygon(OGRSurface *poSurface)
+{
+    OGRTriangle *poTriangle = poSurface->toTriangle();
+    OGRPolygon *poRet = new OGRPolygon(*poTriangle);
+    delete poTriangle;
+    return poRet;
+}
+
+OGRSurfaceCasterToPolygon OGRTriangle::GetCasterToPolygon() const
+{
+    return OGRTriangle::CasterToPolygon;
 }
 
 /************************************************************************/
 /*                        CastToPolygon()                               */
 /************************************************************************/
 
-OGRGeometry* OGRTriangle::CastToPolygon(OGRGeometry* poGeom)
+OGRGeometry *OGRTriangle::CastToPolygon(OGRGeometry *poGeom)
 {
-    OGRGeometry* poRet = new OGRPolygon( *(OGRPolygon*)poGeom );
+    OGRGeometry *poRet = new OGRPolygon(*(poGeom->toPolygon()));
     delete poGeom;
     return poRet;
 }
 //! @endcond
-

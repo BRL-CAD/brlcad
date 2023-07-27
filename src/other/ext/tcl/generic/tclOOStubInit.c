@@ -77,7 +77,10 @@ const TclOOStubs tclOOStubs = {
     Tcl_GetObjectName, /* 28 */
     0, /* 29 */
     0, /* 30 */
-    TclOOUnusedStubEntry, /* 31 */
+    0, /* 31 */
+    0, /* 32 */
+    0, /* 33 */
+    TclOOUnusedStubEntry, /* 34 */
 };
 
 /* !END!: Do not edit above this line. */

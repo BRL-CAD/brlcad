@@ -558,7 +558,6 @@ int Octree< Real >::SetTree( PointStream< PointReal >* pointStream , int minDept
 		if( _constrainValues )
 		{
 			Real pointScreeningWeight = useNormalWeights ? Real( normalLength ) : Real(1.f);
-			int d = 0;
 			TreeOctNode* temp = &tree;
 			myCenter = Point3D< Real >( Real(0.5) , Real(0.5) , Real(0.5) );
 			myWidth = Real(1.0);
@@ -589,7 +588,6 @@ int Octree< Real >::SetTree( PointStream< PointReal >* pointStream , int minDept
 				else		   myCenter[1] -= myWidth/2;
 				if( cIndex&4 ) myCenter[2] += myWidth/2;
 				else		   myCenter[2] -= myWidth/2;
-				d++;
 			}
 		}
 		cnt++;
@@ -705,7 +703,7 @@ void Octree< Real >::Finalize( std::vector< int >* map )
 	refineBoundary( map );
 }
 template< class Real >
-double Octree< Real >::GetLaplacian( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[] , const int off2[] , bool childParent ) const
+double Octree< Real >::GetLaplacian( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[3] , const int off2[3] , bool childParent ) const
 {
 	double vv[] =
 	{
@@ -722,17 +720,17 @@ double Octree< Real >::GetLaplacian( const typename BSplineData< 2 >::Integrator
 	return dd[0]*vv[1]*vv[2] + vv[0]*dd[1]*vv[2] + vv[0]*vv[1]*dd[2];
 }
 template< class Real >
-double Octree< Real >::GetDivergence1( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[] , const int off2[] , bool childParent , const Point3D< Real >& normal1 ) const
+double Octree< Real >::GetDivergence1( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[3] , const int off2[3] , bool childParent , const Point3D< Real >& normal1 ) const
 {
 	return Point3D< double >::Dot( GetDivergence1( integrator , d , off1 , off2 , childParent ) , normal1 );
 }
 template< class Real >
-double Octree< Real >::GetDivergence2( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[] , const int off2[] , bool childParent , const Point3D< Real >& normal2 ) const
+double Octree< Real >::GetDivergence2( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[3] , const int off2[3] , bool childParent , const Point3D< Real >& normal2 ) const
 {
 	return Point3D< double >::Dot( GetDivergence2( integrator , d , off1 , off2 , childParent ) , normal2 );
 }
 template< class Real >
-Point3D< double > Octree< Real >::GetDivergence1( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[] , const int off2[] , bool childParent ) const
+Point3D< double > Octree< Real >::GetDivergence1( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[3] , const int off2[3] , bool childParent ) const
 {
 	double vv[] =
 	{
@@ -761,7 +759,7 @@ Point3D< double > Octree< Real >::GetDivergence1( const typename BSplineData< 2 
 #endif // GRADIENT_DOMAIN_SOLUTION
 }
 template< class Real >
-Point3D< double > Octree< Real >::GetDivergence2( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[] , const int off2[] , bool childParent ) const
+Point3D< double > Octree< Real >::GetDivergence2( const typename BSplineData< 2 >::Integrator& integrator , int d , const int off1[3] , const int off2[3] , bool childParent ) const
 {
 	double vv[] =
 	{

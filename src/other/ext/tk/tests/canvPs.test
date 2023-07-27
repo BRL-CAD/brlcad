@@ -133,9 +133,7 @@ test canvPs-2.4 {test writing to channel and file, same output} -constraints {
 destroy .c
 
 
-test canvPs-3.1 {test ps generation with an embedded window} -constraints {
-    notAqua
-} -setup {
+test canvPs-3.1 {test ps generation with an embedded window} -setup {
     set bar [makeFile {} bar.ps]
     file delete $bar
 } -body {
@@ -178,6 +176,24 @@ test canvPs-3.2 {test ps generation with an embedded window not mapped} -setup {
 test canvPs-4.1 {test ps generation with single-point uncolored poly, bug 734498} -body {
     pack [canvas .c]
     .c create poly 10 20 10 20
+    .c postscript
+} -cleanup {
+    destroy .c
+} -returnCodes ok -match glob -result *
+
+
+test canvPs-5.1 {test ps generation with bitmap, bug 424773a00c} -body {
+    pack [canvas .c]
+    update
+    .c create bitmap 50 50 -bitmap questhead
+    .c postscript  ; # was crashing on macOS
+} -cleanup {
+    destroy .c
+} -returnCodes ok -match glob -result *
+test canvPs-5.2 {test ps generation with image} -body {
+    pack [canvas .c]
+    update
+    .c create image 50 50 -image ::tk::icons::information
     .c postscript
 } -cleanup {
     destroy .c

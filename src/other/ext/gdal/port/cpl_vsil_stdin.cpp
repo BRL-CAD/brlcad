@@ -2,10 +2,10 @@
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Implement VSI large file api for stdin
- * Author:   Even Rouault, <even dot rouault at mines dash paris dot org>
+ * Author:   Even Rouault, <even dot rouault at spatialys.com>
  *
  **********************************************************************
- * Copyright (c) 2010-2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010-2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,15 +33,17 @@
 
 #include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #if HAVE_FCNTL_H
-#  include <fcntl.h>
+#include <fcntl.h>
 #endif
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
 
 #include <algorithm>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -52,17 +54,15 @@
 #include <fcntl.h>
 #endif
 
-CPL_CVSID("$Id$");
-
-// We buffer the first 1MB of standard input to enable drivers
-// to autodetect data. In the first MB, backward and forward seeking
-// is allowed, after only forward seeking will work.
-// TODO(schwehr): Make BUFFER_SIZE a static const.
-#define BUFFER_SIZE (1024 * 1024)
-
-static GByte* pabyBuffer = NULL;
-static GUInt32 nBufferLen = 0;
-static GUIntBig nRealPos = 0;
+static std::string gosStdinFilename{};
+static FILE *gStdinFile = stdin;
+static GByte *gpabyBuffer = nullptr;
+static size_t gnBufferLimit = 0;  // maximum that can be allocated
+static size_t gnBufferAlloc = 0;  // current allocation
+static size_t gnBufferLen = 0;    // number of valid bytes in gpabyBuffer
+static uint64_t gnRealPos = 0;    // current offset on stdin
+static bool gbHasSoughtToEnd = false;
+static uint64_t gnFileSize = 0;
 
 /************************************************************************/
 /*                           VSIStdinInit()                             */
@@ -70,12 +70,14 @@ static GUIntBig nRealPos = 0;
 
 static void VSIStdinInit()
 {
-    if( pabyBuffer == NULL )
+    if (gpabyBuffer == nullptr)
     {
 #ifdef WIN32
-        setmode( fileno( stdin ), O_BINARY );
+        setmode(fileno(stdin), O_BINARY);
 #endif
-        pabyBuffer = static_cast<GByte *>(CPLMalloc(BUFFER_SIZE));
+        constexpr size_t MAX_INITIAL_ALLOC = 1024 * 1024;
+        gnBufferAlloc = std::min(gnBufferAlloc, MAX_INITIAL_ALLOC);
+        gpabyBuffer = static_cast<GByte *>(CPLMalloc(gnBufferAlloc));
     }
 }
 
@@ -85,18 +87,29 @@ static void VSIStdinInit()
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdinFilesystemHandler CPL_FINAL : public VSIFilesystemHandler
+class VSIStdinFilesystemHandler final : public VSIFilesystemHandler
 {
-public:
-                              VSIStdinFilesystemHandler();
-    virtual                  ~VSIStdinFilesystemHandler();
+    CPL_DISALLOW_COPY_ASSIGN(VSIStdinFilesystemHandler)
 
-    virtual VSIVirtualHandle *Open( const char *pszFilename,
-                                    const char *pszAccess,
-                                    bool bSetError ) override;
-    virtual int               Stat( const char *pszFilename,
-                                    VSIStatBufL *pStatBuf,
-                                    int nFlags ) override;
+  public:
+    VSIStdinFilesystemHandler();
+    ~VSIStdinFilesystemHandler() override;
+
+    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
+                           bool bSetError,
+                           CSLConstList /* papszOptions */) override;
+    int Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
+             int nFlags) override;
+    bool SupportsSequentialWrite(const char * /* pszPath */,
+                                 bool /* bAllowLocalTempFile */) override
+    {
+        return false;
+    }
+    bool SupportsRandomWrite(const char * /* pszPath */,
+                             bool /* bAllowLocalTempFile */) override
+    {
+        return false;
+    }
 };
 
 /************************************************************************/
@@ -105,63 +118,80 @@ public:
 /* ==================================================================== */
 /************************************************************************/
 
-class VSIStdinHandle CPL_FINAL : public VSIVirtualHandle
+class VSIStdinHandle final : public VSIVirtualHandle
 {
   private:
-    GUIntBig nCurOff;
-    int               ReadAndCache( void* pBuffer, int nToRead );
+    CPL_DISALLOW_COPY_ASSIGN(VSIStdinHandle)
+
+    bool m_bEOF = false;
+    uint64_t m_nCurOff = 0;
+    size_t ReadAndCache(void *pBuffer, size_t nToRead);
 
   public:
-                      VSIStdinHandle();
-    virtual          ~VSIStdinHandle();
+    VSIStdinHandle() = default;
+    ~VSIStdinHandle() override
+    {
+        VSIStdinHandle::Close();
+    }
 
-    virtual int       Seek( vsi_l_offset nOffset, int nWhence ) override;
-    virtual vsi_l_offset Tell() override;
-    virtual size_t    Read( void *pBuffer, size_t nSize,
-                            size_t nMemb ) override;
-    virtual size_t    Write( const void *pBuffer, size_t nSize,
-                             size_t nMemb ) override;
-    virtual int       Eof() override;
-    virtual int       Close() override;
+    int Seek(vsi_l_offset nOffset, int nWhence) override;
+    vsi_l_offset Tell() override;
+    size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
+    size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
+    int Eof() override;
+    int Close() override;
 };
-
-/************************************************************************/
-/*                           VSIStdinHandle()                           */
-/************************************************************************/
-
-VSIStdinHandle::VSIStdinHandle()
-{
-    nCurOff = 0;
-}
-
-/************************************************************************/
-/*                          ~VSIStdinHandle()                           */
-/************************************************************************/
-
-VSIStdinHandle::~VSIStdinHandle()
-{
-}
 
 /************************************************************************/
 /*                              ReadAndCache()                          */
 /************************************************************************/
 
-int VSIStdinHandle::ReadAndCache( void* pBuffer, int nToRead )
+size_t VSIStdinHandle::ReadAndCache(void *pUserBuffer, size_t nToRead)
 {
-    CPLAssert(nCurOff == nRealPos);
+    CPLAssert(m_nCurOff == gnRealPos);
 
-    int nRead = static_cast<int>(fread(pBuffer, 1, nToRead, stdin));
+    const size_t nRead = fread(pUserBuffer, 1, nToRead, gStdinFile);
 
-    if( nRealPos < BUFFER_SIZE )
+    if (gnRealPos < gnBufferLimit)
     {
-        const int nToCopy =
-            std::min(BUFFER_SIZE - static_cast<int>(nRealPos), nRead);
-        memcpy(pabyBuffer + nRealPos, pBuffer, nToCopy);
-        nBufferLen += nToCopy;
+        bool bCopyInBuffer = true;
+        const size_t nToCopy = static_cast<size_t>(
+            std::min(gnBufferLimit - gnRealPos, static_cast<uint64_t>(nRead)));
+        if (gnRealPos + nToCopy > gnBufferAlloc)
+        {
+            auto newAlloc = gnRealPos + nToCopy;
+            if (newAlloc < gnBufferLimit - newAlloc / 3)
+                newAlloc += newAlloc / 3;
+            else
+                newAlloc = gnBufferLimit;
+            GByte *newBuffer = static_cast<GByte *>(VSI_REALLOC_VERBOSE(
+                gpabyBuffer, static_cast<size_t>(newAlloc)));
+            if (newBuffer == nullptr)
+            {
+                bCopyInBuffer = false;
+            }
+            else
+            {
+                gpabyBuffer = newBuffer;
+                gnBufferAlloc = static_cast<size_t>(newAlloc);
+            }
+        }
+        if (bCopyInBuffer)
+        {
+            memcpy(gpabyBuffer + static_cast<size_t>(gnRealPos), pUserBuffer,
+                   nToCopy);
+            gnBufferLen += nToCopy;
+        }
     }
 
-    nCurOff += nRead;
-    nRealPos = nCurOff;
+    m_nCurOff += nRead;
+    gnRealPos = m_nCurOff;
+
+    if (nRead < nToRead)
+    {
+        gnFileSize = gnRealPos;
+        gbHasSoughtToEnd = true;
+    }
 
     return nRead;
 }
@@ -170,74 +200,79 @@ int VSIStdinHandle::ReadAndCache( void* pBuffer, int nToRead )
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSIStdinHandle::Seek( vsi_l_offset nOffset, int nWhence )
+int VSIStdinHandle::Seek(vsi_l_offset nOffset, int nWhence)
 
 {
-    if( nWhence == SEEK_SET && nOffset == nCurOff )
+    m_bEOF = false;
+
+    if (nWhence == SEEK_SET && nOffset == m_nCurOff)
         return 0;
 
     VSIStdinInit();
-    if( nRealPos < BUFFER_SIZE )
-    {
-        nRealPos += fread(pabyBuffer + nRealPos, 1,
-                          BUFFER_SIZE - static_cast<int>(nRealPos), stdin);
-        nBufferLen = static_cast<int>(nRealPos);
-    }
 
-    if( nWhence == SEEK_END )
+    if (nWhence == SEEK_END)
     {
-        if( nOffset != 0 )
+        if (nOffset != 0)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Seek(xx != 0, SEEK_END) unsupported on /vsistdin");
             return -1;
         }
 
-        if( nBufferLen < BUFFER_SIZE )
+        if (gbHasSoughtToEnd)
         {
-            nCurOff = nBufferLen;
+            m_nCurOff = gnFileSize;
             return 0;
         }
 
+        nOffset = static_cast<vsi_l_offset>(-1);
+    }
+    else if (nWhence == SEEK_CUR)
+    {
+        nOffset += m_nCurOff;
+    }
+
+    if (nWhence != SEEK_END && gnRealPos >= gnBufferLimit &&
+        nOffset >= gnBufferLimit)
+    {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Seek(SEEK_END) unsupported on /vsistdin when stdin > 1 MB");
+                 "Backward Seek() unsupported on /vsistdin beyond "
+                 "maximum buffer limit (" CPL_FRMT_GUIB " bytes).\n"
+                 "This limit can be extended by setting the "
+                 "CPL_VSISTDIN_BUFFER_LIMIT "
+                 "configuration option to a number of bytes, or by using the "
+                 "'/vsistdin?buffer_limit=number_of_bytes' filename.\n"
+                 "A limit of -1 means unlimited.",
+                 static_cast<GUIntBig>(gnBufferLimit));
         return -1;
     }
 
-    if( nWhence == SEEK_CUR )
-        nOffset += nCurOff;
-
-    if( nRealPos > nBufferLen && nOffset < nRealPos )
+    if (nOffset < gnBufferLen)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "backward Seek() unsupported on /vsistdin above first MB");
-        return -1;
-    }
-
-    if( nOffset < nBufferLen )
-    {
-        nCurOff = nOffset;
+        m_nCurOff = nOffset;
         return 0;
     }
 
-    if( nOffset == nCurOff )
+    if (nOffset == m_nCurOff)
         return 0;
 
     CPLDebug("VSI", "Forward seek from " CPL_FRMT_GUIB " to " CPL_FRMT_GUIB,
-             nCurOff, nOffset);
+             static_cast<GUIntBig>(m_nCurOff), nOffset);
 
     char abyTemp[8192] = {};
-    nCurOff = nRealPos;
-    while( true )
+    m_nCurOff = gnRealPos;
+    while (true)
     {
-        const vsi_l_offset nMaxToRead = 8192;
-        const int nToRead = static_cast<int>(std::min(nMaxToRead,
-                                                      nOffset - nCurOff));
-        const int nRead = ReadAndCache(abyTemp, nToRead);
+        const size_t nToRead = static_cast<size_t>(
+            std::min(static_cast<uint64_t>(sizeof(abyTemp)),
+                     static_cast<uint64_t>(nOffset - m_nCurOff)));
+        const size_t nRead = ReadAndCache(abyTemp, nToRead);
 
-        if( nRead < nToRead )
-            return -1;
-        if( nToRead < 8192 )
+        if (nRead < nToRead)
+        {
+            return nWhence == SEEK_END ? 0 : -1;
+        }
+        if (nToRead < sizeof(abyTemp))
             break;
     }
 
@@ -250,40 +285,63 @@ int VSIStdinHandle::Seek( vsi_l_offset nOffset, int nWhence )
 
 vsi_l_offset VSIStdinHandle::Tell()
 {
-    return nCurOff;
+    return m_nCurOff;
 }
 
 /************************************************************************/
 /*                                Read()                                */
 /************************************************************************/
 
-size_t VSIStdinHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
+size_t VSIStdinHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 
 {
     VSIStdinInit();
 
-    if( nCurOff < nBufferLen )
+    const size_t nBytesToRead = nSize * nCount;
+    if (nBytesToRead == 0)
+        return 0;
+
+    if (m_nCurOff < gnRealPos && gnRealPos >= gnBufferLimit &&
+        m_nCurOff + nBytesToRead > gnBufferLimit)
     {
-        if( nCurOff + nSize * nCount < nBufferLen )
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Backward Seek() unsupported on /vsistdin beyond "
+                 "maximum buffer limit (" CPL_FRMT_GUIB " bytes).\n"
+                 "This limit can be extended by setting the "
+                 "CPL_VSISTDIN_BUFFER_LIMIT "
+                 "configuration option to a number of bytes, or by using the "
+                 "'/vsistdin?buffer_limit=number_of_bytes' filename.\n"
+                 "A limit of -1 means unlimited.",
+                 static_cast<GUIntBig>(gnBufferLimit));
+        return 0;
+    }
+
+    if (m_nCurOff < gnBufferLen)
+    {
+        const size_t nAlreadyCached =
+            static_cast<size_t>(gnBufferLen - m_nCurOff);
+        if (nBytesToRead <= nAlreadyCached)
         {
-            memcpy(pBuffer, pabyBuffer + nCurOff, nSize * nCount);
-            nCurOff += nSize * nCount;
+            memcpy(pBuffer, gpabyBuffer + static_cast<size_t>(m_nCurOff),
+                   nBytesToRead);
+            m_nCurOff += nBytesToRead;
             return nCount;
         }
 
-        const int nAlreadyCached = static_cast<int>(nBufferLen - nCurOff);
-        memcpy(pBuffer, pabyBuffer + nCurOff, nAlreadyCached);
+        memcpy(pBuffer, gpabyBuffer + static_cast<size_t>(m_nCurOff),
+               nAlreadyCached);
+        m_nCurOff += nAlreadyCached;
 
-        nCurOff += nAlreadyCached;
-
-        const int nRead =
-            ReadAndCache( static_cast<GByte *>(pBuffer) + nAlreadyCached,
-                          static_cast<int>(nSize*nCount - nAlreadyCached) );
+        const size_t nRead =
+            ReadAndCache(static_cast<GByte *>(pBuffer) + nAlreadyCached,
+                         nBytesToRead - nAlreadyCached);
+        m_bEOF = nRead < nBytesToRead - nAlreadyCached;
 
         return (nRead + nAlreadyCached) / nSize;
     }
 
-    int nRead = ReadAndCache( pBuffer, static_cast<int>(nSize * nCount) );
+    const size_t nRead = ReadAndCache(pBuffer, nBytesToRead);
+    m_bEOF = nRead < nBytesToRead;
     return nRead / nSize;
 }
 
@@ -291,12 +349,10 @@ size_t VSIStdinHandle::Read( void * pBuffer, size_t nSize, size_t nCount )
 /*                               Write()                                */
 /************************************************************************/
 
-size_t VSIStdinHandle::Write( const void * /* pBuffer */,
-                              size_t /* nSize */,
-                              size_t /* nCount */ )
+size_t VSIStdinHandle::Write(const void * /* pBuffer */, size_t /* nSize */,
+                             size_t /* nCount */)
 {
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "Write() unsupported on /vsistdin");
+    CPLError(CE_Failure, CPLE_NotSupported, "Write() unsupported on /vsistdin");
     return 0;
 }
 
@@ -307,9 +363,7 @@ size_t VSIStdinHandle::Write( const void * /* pBuffer */,
 int VSIStdinHandle::Eof()
 
 {
-    if( nCurOff < nBufferLen )
-        return FALSE;
-    return feof(stdin);
+    return m_bEOF;
 }
 
 /************************************************************************/
@@ -319,6 +373,18 @@ int VSIStdinHandle::Eof()
 int VSIStdinHandle::Close()
 
 {
+    if (!gosStdinFilename.empty() &&
+        CPLTestBool(CPLGetConfigOption("CPL_VSISTDIN_FILE_CLOSE", "NO")))
+    {
+        if (gStdinFile != stdin)
+            fclose(gStdinFile);
+        gStdinFile = stdin;
+        gosStdinFilename.clear();
+        gnRealPos = ftell(stdin);
+        gnBufferLen = 0;
+        gbHasSoughtToEnd = false;
+        gnFileSize = 0;
+    }
     return 0;
 }
 
@@ -334,9 +400,6 @@ int VSIStdinHandle::Close()
 
 VSIStdinFilesystemHandler::VSIStdinFilesystemHandler()
 {
-    pabyBuffer = NULL;
-    nBufferLen = 0;
-    nRealPos = 0;
 }
 
 /************************************************************************/
@@ -345,8 +408,172 @@ VSIStdinFilesystemHandler::VSIStdinFilesystemHandler()
 
 VSIStdinFilesystemHandler::~VSIStdinFilesystemHandler()
 {
-    CPLFree(pabyBuffer);
-    pabyBuffer = NULL;
+    if (gStdinFile != stdin)
+        fclose(gStdinFile);
+    gStdinFile = stdin;
+    CPLFree(gpabyBuffer);
+    gpabyBuffer = nullptr;
+    gnBufferLimit = 0;
+    gnBufferAlloc = 0;
+    gnBufferLen = 0;
+    gnRealPos = 0;
+    gosStdinFilename.clear();
+}
+
+/************************************************************************/
+/*                           GetBufferLimit()                           */
+/************************************************************************/
+
+static size_t GetBufferLimit(const char *pszBufferLimit)
+{
+    uint64_t nVal =
+        static_cast<uint64_t>(std::strtoull(pszBufferLimit, nullptr, 10));
+
+    // -1 because on 64-bit builds with size_t==uint64_t, a static analyzer
+    // could complain that the ending nVal > MAX_BUFFER_LIMIT test is always
+    // false
+    constexpr size_t MAX_BUFFER_LIMIT = std::numeric_limits<size_t>::max() - 1;
+    if (strstr(pszBufferLimit, "MB") != nullptr)
+    {
+        constexpr size_t ONE_MB = 1024 * 1024;
+        if (nVal > MAX_BUFFER_LIMIT / ONE_MB)
+        {
+            nVal = MAX_BUFFER_LIMIT;
+        }
+        else
+        {
+            nVal *= ONE_MB;
+        }
+    }
+    else if (strstr(pszBufferLimit, "GB") != nullptr)
+    {
+        constexpr size_t ONE_GB = 1024 * 1024 * 1024;
+        if (nVal > MAX_BUFFER_LIMIT / ONE_GB)
+        {
+            nVal = MAX_BUFFER_LIMIT;
+        }
+        else
+        {
+            nVal *= ONE_GB;
+        }
+    }
+    if (nVal > MAX_BUFFER_LIMIT)
+    {
+        nVal = MAX_BUFFER_LIMIT;
+    }
+    return static_cast<size_t>(nVal);
+}
+
+/************************************************************************/
+/*                           ParseFilename()                            */
+/************************************************************************/
+
+static bool ParseFilename(const char *pszFilename)
+{
+    if (!(EQUAL(pszFilename, "/vsistdin/") ||
+          ((STARTS_WITH(pszFilename, "/vsistdin/?") ||
+            STARTS_WITH(pszFilename, "/vsistdin?")) &&
+           strchr(pszFilename, '.') == nullptr)))
+    {
+        return false;
+    }
+
+    if (!CPLTestBool(CPLGetConfigOption("CPL_ALLOW_VSISTDIN", "YES")))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "/vsistdin/ disabled. Set CPL_ALLOW_VSISTDIN to YES to "
+                 "enable it");
+        return false;
+    }
+
+    const char *pszBufferLimit =
+        CPLGetConfigOption("CPL_VSISTDIN_BUFFER_LIMIT", "1048576");
+    size_t nBufferLimit = GetBufferLimit(pszBufferLimit);
+
+    pszFilename += strlen("/vsistdin/");
+    if (*pszFilename == '?')
+        pszFilename++;
+    char **papszTokens = CSLTokenizeString2(pszFilename, "&", 0);
+    for (int i = 0; papszTokens[i] != nullptr; i++)
+    {
+        char *pszUnescaped =
+            CPLUnescapeString(papszTokens[i], nullptr, CPLES_URL);
+        CPLFree(papszTokens[i]);
+        papszTokens[i] = pszUnescaped;
+    }
+
+    for (int i = 0; papszTokens[i]; i++)
+    {
+        char *pszKey = nullptr;
+        const char *pszValue = CPLParseNameValue(papszTokens[i], &pszKey);
+        if (pszKey && pszValue)
+        {
+            if (EQUAL(pszKey, "buffer_limit"))
+            {
+                nBufferLimit = GetBufferLimit(pszValue);
+            }
+            else
+            {
+                CPLError(CE_Warning, CPLE_NotSupported,
+                         "Unsupported option: %s", pszKey);
+            }
+        }
+        CPLFree(pszKey);
+    }
+
+    CSLDestroy(papszTokens);
+
+    // For testing purposes
+    const char *pszStdinFilename =
+        CPLGetConfigOption("CPL_VSISTDIN_FILE", "stdin");
+    if (EQUAL(pszStdinFilename, "stdin"))
+    {
+        if (!gosStdinFilename.empty())
+        {
+            if (gStdinFile != stdin)
+                fclose(gStdinFile);
+            gStdinFile = stdin;
+            gosStdinFilename.clear();
+            gnRealPos = ftell(stdin);
+            gnBufferLen = 0;
+            gbHasSoughtToEnd = false;
+            gnFileSize = 0;
+        }
+    }
+    else
+    {
+        bool bReset = false;
+        if (gosStdinFilename != pszStdinFilename)
+        {
+            if (gStdinFile != stdin)
+                fclose(gStdinFile);
+            gStdinFile = fopen(pszStdinFilename, "rb");
+            if (gStdinFile == nullptr)
+            {
+                gStdinFile = stdin;
+                return false;
+            }
+            gosStdinFilename = pszStdinFilename;
+            bReset = true;
+        }
+        else
+        {
+            bReset = CPLTestBool(
+                CPLGetConfigOption("CPL_VSISTDIN_RESET_POSITION", "NO"));
+        }
+        if (bReset)
+        {
+            gnBufferLimit = 0;
+            gnBufferLen = 0;
+            gnRealPos = 0;
+            gbHasSoughtToEnd = false;
+            gnFileSize = 0;
+        }
+    }
+
+    gnBufferLimit = std::max(gnBufferLimit, nBufferLimit);
+
+    return true;
 }
 
 /************************************************************************/
@@ -354,47 +581,54 @@ VSIStdinFilesystemHandler::~VSIStdinFilesystemHandler()
 /************************************************************************/
 
 VSIVirtualHandle *
-VSIStdinFilesystemHandler::Open( const char *pszFilename,
-                                 const char *pszAccess,
-                                 bool /* bSetError */ )
+VSIStdinFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
+                                bool /* bSetError */,
+                                CSLConstList /* papszOptions */)
 
 {
-    if( strcmp(pszFilename, "/vsistdin/") != 0 )
-        return NULL;
+    if (!ParseFilename(pszFilename))
+    {
+        return nullptr;
+    }
 
-    if( strchr(pszAccess, 'w') != NULL ||
-        strchr(pszAccess, '+') != NULL )
+    if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, '+') != nullptr)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Write or update mode not supported on /vsistdin");
-        return NULL;
+        return nullptr;
     }
 
-    return new VSIStdinHandle;
+    return new VSIStdinHandle();
 }
 
 /************************************************************************/
 /*                                Stat()                                */
 /************************************************************************/
 
-int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
-                                     VSIStatBufL * pStatBuf,
-                                     int nFlags )
+int VSIStdinFilesystemHandler::Stat(const char *pszFilename,
+                                    VSIStatBufL *pStatBuf, int nFlags)
 
 {
-    memset( pStatBuf, 0, sizeof(VSIStatBufL) );
+    memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
-    if( strcmp(pszFilename, "/vsistdin/") != 0 )
-        return -1;
-
-    if( nFlags & VSI_STAT_SIZE_FLAG )
+    if (!ParseFilename(pszFilename))
     {
-        VSIStdinInit();
-        if( nBufferLen == 0 )
-            nRealPos = nBufferLen =
-                static_cast<int>(fread(pabyBuffer, 1, BUFFER_SIZE, stdin));
+        return -1;
+    }
 
-        pStatBuf->st_size = nBufferLen;
+    if (nFlags & VSI_STAT_SIZE_FLAG)
+    {
+        if (gbHasSoughtToEnd)
+            pStatBuf->st_size = gnFileSize;
+        else
+        {
+            auto handle = Open(pszFilename, "rb", false, nullptr);
+            if (handle == nullptr)
+                return -1;
+            handle->Seek(0, SEEK_END);
+            pStatBuf->st_size = handle->Tell();
+            delete handle;
+        }
     }
 
     pStatBuf->st_mode = S_IFREG;
@@ -407,19 +641,30 @@ int VSIStdinFilesystemHandler::Stat( const char * pszFilename,
 /*                       VSIInstallStdinHandler()                       */
 /************************************************************************/
 
-/**
- * \brief Install /vsistdin/ file system handler
- *
- * A special file handler is installed that allows reading from the standard
- * input steam.
- *
- * The file operations available are of course limited to Read() and
- * forward Seek() (full seek in the first MB of a file).
- *
- * @since GDAL 1.8.0
+/*!
+ \brief Install /vsistdin/ file system handler
+
+ A special file handler is installed that allows reading from the standard
+ input stream.
+
+ The file operations available are of course limited to Read() and
+ forward Seek() (full seek in the first MB of a file by default).
+
+ Starting with GDAL 3.6, this limit can be configured either by setting
+ the CPL_VSISTDIN_BUFFER_LIMIT configuration option to a number of bytes
+ (can be -1 for unlimited), or using the "/vsistdin?buffer_limit=value"
+ filename.
+
+ \verbatim embed:rst
+ See :ref:`/vsistdin/ documentation <vsistdin>`
+ \endverbatim
+
+ @since GDAL 1.8.0
  */
 void VSIInstallStdinHandler()
 
 {
-    VSIFileManager::InstallHandler("/vsistdin/", new VSIStdinFilesystemHandler);
+    auto poHandler = new VSIStdinFilesystemHandler;
+    VSIFileManager::InstallHandler("/vsistdin/", poHandler);
+    VSIFileManager::InstallHandler("/vsistdin?", poHandler);
 }

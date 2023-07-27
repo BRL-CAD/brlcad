@@ -52,7 +52,7 @@
 # turn on the 64-bit compiler, if your SDK has it.
 #
 # Basic macros and options usable on the commandline (see rules.vc for more info):
-#	OPTS=msvcrt,nothreads,pdbs,profile,static,staticpkg,symbols,thrdalloc,time64bit,unchecked,utfmax,none
+#	OPTS=msvcrt,nothreads,pdbs,profile,static,staticpkg,symbols,thrdalloc,time64bit,unchecked,utf16,none
 #		Sets special options for the core.  The default is for none.
 #		Any combination of the above may be used (comma separated).
 #		'none' will over-ride everything to nothing.
@@ -61,23 +61,23 @@
 #			    using libcmt(d) as the C runtime [by default] to
 #			    msvcrt(d). This is useful for static embedding
 #			    support.
+#		none      = Overrides all other options to nothing.
 #		nothreads = Turns off full multithreading support (default on).
-#		pbds      =  Produce separate debug symbol files.
-#		profile   =  Adds profiling hooks.  Map file is assumed.
+#		pdbs      = Produce separate debug symbol files.
+#		profile   = Adds profiling hooks.  Map file is assumed.
 #		static    = Builds a static library of the core instead of a
 #			    dll.  The shell will be static (and large), as well.
 #		staticpkg = Affects the static option only to switch
 #			    tclshXX.exe to have the dde and reg extension linked
 #			    inside it.
-#		symbols   =  Adds symbols for step debugging.
+#		symbols   = Adds symbols for step debugging.
 #		thrdalloc = Use the thread allocator (shared global free pool).
 #		time64bit = Forces a build using 64-bit time_t for 32-bit build
 #			    (CRT library should support this).
 #		unchecked = Allows a symbols build to not use the debug
 #			    enabled runtime (msvcrt.dll not msvcrtd.dll
 #			    or libcmt.lib not libcmtd.lib).
-#		utfmax    = Forces a build allowing 4-byte UTF-8 sequences
-#			    internally.
+#		utf16     = Forces a build using UTF-16 representation internally.
 #
 #	STATS=compdbg,memdbg,none
 #		Sets optional memory and bytecode compiler debugging code added
@@ -97,7 +97,7 @@
 #		nodep	 = Turns off compatibility macros to ensure the core
 #			    isn't being built with deprecated functions.
 #
-#	MACHINE=(ALPHA|AMD64|IA64|IX86)
+#	MACHINE=(ALPHA|AMD64|ARM64|IA64|IX86)
 #		Set the machine type used for the compiler, linker, and
 #		resource compiler.  This hook is needed to tell the tools
 #		when alternate platforms are requested.  IX86 is the default
@@ -171,7 +171,7 @@ VERSION         = $(TCL_MAJOR_VERSION)$(TCL_MINOR_VERSION)
    && [nmakehlp -V ..\library\dde\pkgIndex.tcl "dde " >> versions.vc]
 !endif
 !if [echo PKG_REG_VER =\>> versions.vc] \
-   && [nmakehlp -V ..\library\reg\pkgIndex.tcl registry >> versions.vc]
+   && [nmakehlp -V ..\library\reg\pkgIndex.tcl "registry " >> versions.vc]
 !endif
 
 !include versions.vc
@@ -738,6 +738,17 @@ $(TMP_DIR)\tclMainW.obj: $(GENERICDIR)\tclMain.c
 	$(cc32) $(pkgcflags) /DUNICODE /D_UNICODE \
 	    -Fo$@ $?
 
+$(ROOT)\manifest.uuid:
+	copy $(WIN_DIR)\gitmanifest.in $(ROOT)\manifest.uuid
+	git rev-parse HEAD >>$(ROOT)\manifest.uuid
+
+$(TMP_DIR)\tclUuid.h:	$(ROOT)\manifest.uuid
+	copy $(WIN_DIR)\tclUuid.h.in+$(ROOT)\manifest.uuid $(TMP_DIR)\tclUuid.h
+
+$(TMP_DIR)\tclEvent.obj: $(GENERICDIR)\tclEvent.c $(TMP_DIR)\tclUuid.h
+	$(cc32) $(pkgcflags) -I$(TMP_DIR) \
+	    -Fo$@ $(GENERICDIR)\tclEvent.c
+
 $(TMP_DIR)\tclTest.obj: $(GENERICDIR)\tclTest.c
 	$(cc32) $(appcflags) -Fo$@ $?
 
@@ -999,6 +1010,7 @@ tidy:
 clean: default-clean clean-pkgs
 hose: default-hose
 realclean: hose
+.PHONY:
 
 # Local Variables:
 # mode: makefile

@@ -1,2 +1,5 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(frmt_jaxapalsar OBJECT jaxapalsardataset.cpp)
+add_gdal_driver(
+  TARGET gdal_PALSARJaxa
+  DEF FRMT_jaxapalsar DRIVER_NAME_OPTION JAXAPALSAR
+  SOURCES jaxapalsardataset.cpp PLUGIN_CAPABLE NO_DEPS)
+gdal_standard_includes(gdal_PALSARJaxa)

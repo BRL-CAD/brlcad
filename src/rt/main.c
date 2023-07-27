@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2022 United States Government as represented by
+ * Copyright (c) 1985-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -140,7 +140,7 @@ memory_summary(void)
 }
 
 
-int fb_setup() {
+int fb_setup(void) {
     /* Framebuffer is desired */
     size_t xx, yy;
     int zoom;
@@ -211,7 +211,7 @@ initialize_resources(size_t cnt, struct resource *resp, struct rt_i *rtip)
 
 
 static void
-initialize_option_defaults()
+initialize_option_defaults(void)
 {
     /* GIFT defaults */
     azimuth = 35.0;

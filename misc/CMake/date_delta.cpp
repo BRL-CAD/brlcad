@@ -16,7 +16,7 @@
 #include <iostream>
 
 int
-main()
+main(void)
 {
     long t1 = 1602012807;
     long t2 = 1602114000;

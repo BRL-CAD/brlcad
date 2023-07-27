@@ -1,7 +1,7 @@
 /*                   P I X S A T U R A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,9 +48,9 @@
 char buf[3*16*1024];
 
 void
-printusage ()
+printusage(void)
 {
-	bu_exit(1, "Usage: pixsaturate saturation < infile.pix > outfile.pix\n");
+    bu_exit(1, "Usage: pixsaturate saturation < infile.pix > outfile.pix\n");
 }
 
 int

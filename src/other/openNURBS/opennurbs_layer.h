@@ -17,151 +17,66 @@
 #if !defined(OPENNURBS_LAYER_INC_)
 #define OPENNURBS_LAYER_INC_
 
-class ON_CLASS ON_Layer : public ON_Object
+class ON_CLASS ON_Layer : public ON_ModelComponent
 {
   ON_OBJECT_DECLARE(ON_Layer);
 
 public:
 
-  ON_Layer();
-  ~ON_Layer();
-  // C++ default copy construction and operator= work fine.
-  // Do not add custom versions.
+  ON_Layer()  ON_NOEXCEPT;
+  ~ON_Layer() = default;
+  ON_Layer(const ON_Layer&);
+  ON_Layer& operator=(const ON_Layer&) = default;
+
+  static const ON_Layer Unset;   // index = ON_UNSET_INT_INDEX, id = nil
+  static const ON_Layer Default; // index = -1, id set, unique and persistent
+
+  /*
+  Parameters:
+    model_component_reference - [in]
+    none_return_value - [in]
+      value to return if ON_Layer::Cast(model_component_ref.ModelComponent())
+      is nullptr
+  Returns:
+    If ON_Layer::Cast(model_component_ref.ModelComponent()) is not nullptr,
+    that pointer is returned.  Otherwise, none_return_value is returned. 
+  */
+  static const ON_Layer* FromModelComponentRef(
+    const class ON_ModelComponentReference& model_component_reference,
+    const ON_Layer* none_return_value
+    );
+
+  bool UpdateReferencedComponents(
+    const class ON_ComponentManifest& source_manifest,
+    const class ON_ComponentManifest& destination_manifest,
+    const class ON_ManifestMap& manifest_map
+    ) override;
 
   //////////////////////////////////////////////////////////////////////
   //
   // ON_Object overrides
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
-  /*
-  Description:
-    Tests an object to see if its data members are correctly
-    initialized.
-  Parameters:
-    text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
-        interface tool.
-  Returns:
-    @untitled table
-    true     object is valid
-    false    object is invalid, uninitialized, etc.
-  Remarks:
-    Overrides virtual ON_Object::IsValid
-  */
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  void Dump( ON_TextLog& ) const override; // for debugging
 
-  void Dump( ON_TextLog& ) const; // for debugging
-
-  ON_BOOL32 Write(
+  bool Write(
          ON_BinaryArchive&  // serialize definition to binary archive
-       ) const;
+       ) const override;
 
-  ON_BOOL32 Read(
+  bool Read(
          ON_BinaryArchive&  // restore definition from binary archive
-       );
+       ) override;
 
-  ON::object_type ObjectType() const;
-
-  ON_UUID ModelObjectId() const;
+  ON::object_type ObjectType() const override;
 
   //////////////////////////////////////////////////////////////////////
   //
   // Interface
 
-  void Default();
-
-  bool SetLayerName( const char* );
-  bool SetLayerName( const wchar_t* );
-	const ON_wString& LayerName() const;
-
-  /*
-  Description:
-    The string returned by ON_Layer::LayerNameReferenceDelimiter()
-    is used to separate the name of a reference file from the name of 
-    the layer in the file.
-  Example:
-    If a layer named "electrical" is in a file named "house plan.3dm"
-    and "house plan.3dm" is a reference file in a Rhino worksession,
-    then Rhino's user interface will use the string 
-    "house plan : electrical" to identify the layer.
-  Returns:
-    " : " (null terminated string space,colon,space)
-  Remarks:
-    Rhino does not save the names of reference files in 3dm archives.
-    Reference file names are used as runtime decorations.
-  */
-  static const wchar_t* LayerNameReferenceDelimiter();
-
-  /*
-  Description:
-    The string "::" (colon,colon) returned by LayerNamePathDelimiter()
-    is used to separate parent and child layer names.
-  Example:
-    If a model of a building has "level 1" and "level 2" as top level
-    layers, an architect might choose to have a "fixtures" sublayer
-    on each level.  The complete layer names would be
-    "level 1::fixtures" and "level 2::fixtures".
-  Returns:
-    "::" (null terminated string colon,colon)
-  */
-  static const wchar_t* LayerNamePathDelimiter();
-
-  /*
-  Description:
-    Get a layer name's "leaf" level name.
-  Example:
-    If a layer name is "refernce file : alpha::beta::gamma", 
-    then ON_Layer::GetLeafName() returns "gamma"
-  Returns:    
-    True if the layer has a valid non-empty leaf name.
-  */
-  static bool GetLeafName( const wchar_t* layer_name, ON_wString& leaf_name);
-
-  /*
-  Description:
-    Get the layer's "parent" path name.
-  Example:
-    If a layer name is "refenence file : alpha::beta::gamma", then
-    ON_Layer::GetParentPathName() returns "alpha::beta"
-  Returns:    
-    True if the layer has a valid non-empty parent path name.
-  */
-  static bool GetParentName( const wchar_t* layer_name, ON_wString& parent_path_name );
-
-  /*
-  Description:
-    Remove any "reference : " prefix from a layer's name.
-  Parameters:
-    layer_name - [in]
-    layer_path_name - [out]
-      layer_name with any reference prefix removed.
-  Example:
-    If a layer name is "refenence file : alpha::beta::gamma", then
-    ON_Layer::RemoveReferenceName() returns "alpha::beta::gamma"
-  Returns:    
-    True if layer_path_name is non-empty. If no reference prefix was present,
-    then the returned layer_path_name is identical to the input layer_name.
-  */
-  static bool RemoveReferenceName( const wchar_t* layer_name, ON_wString& layer_path_name );
-
-  /*
-  Description:
-    Get the layer's reference name.
-  Example:
-    If a layer name is "refenence file : alpha::beta::gamma", then
-    ON_Layer::GetReferenceFileName() returns "refenence file"
-  Returns:    
-    True if the layer has a valid non-empty reference file name.
-  */
-  static bool GetReferenceName( const wchar_t* layer_name, ON_wString& reference_name );
-
   // The PER_VIEWPORT_SETTINGS enum defines
   // the bits used to set masks in functions used
   // to specify and query per viewport layer settings.
-  enum PER_VIEWPORT_SETTINGS
+  enum PER_VIEWPORT_SETTINGS : unsigned int
   {
     per_viewport_none              =  0,
 
@@ -315,8 +230,8 @@ public:
   */
   void SetPerViewportColor( ON_UUID viewport_id, ON_Color layer_color );
 
-  /* use ON_Layer::SetPerViewportColor */
-  ON_DEPRECATED void SetColor( ON_Color, const ON_UUID& );
+  // /* use ON_Layer::SetPerViewportColor */
+  //ON_DEPRECATED void SetColor( ON_Color, const ON_UUID& );
 
   /*
   Parameters:
@@ -340,8 +255,8 @@ public:
   */
   ON_Color PerViewportColor( ON_UUID viewport_id ) const;
 
-  /* use ON_Layer::PerViewportColor */
-	ON_DEPRECATED ON_Color Color( const ON_UUID& ) const;
+  // /* use ON_Layer::PerViewportColor */
+	//ON_DEPRECATED ON_Color Color( const ON_UUID& ) const;
 
   /*
   Description:
@@ -370,8 +285,8 @@ public:
 
   void SetPerViewportPlotColor( ON_UUID viewport_id, ON_Color plot_color );
 
-  /* use ON_Layer::SetPerViewportPlotColor */
-  ON_DEPRECATED	void SetPlotColor( ON_Color, const ON_UUID& ); 
+  // /* use ON_Layer::SetPerViewportPlotColor */
+  //ON_DEPRECATED	void SetPlotColor( ON_Color, const ON_UUID& );
 
   /*
   Returns:
@@ -390,9 +305,9 @@ public:
     not have a per object color set.
   */
 	ON_Color PerViewportPlotColor( ON_UUID viewport_id ) const;
-  
-  /* use ON_Layer::PerViewportPlotColor */
-  ON_DEPRECATED	ON_Color PlotColor( const ON_UUID& ) const;
+
+  // /* use ON_Layer::PerViewportPlotColor */
+  //ON_DEPRECATED	ON_Color PlotColor( const ON_UUID& ) const;
 
   /*
   Description:
@@ -507,16 +422,13 @@ public:
   Parameters:
     viewport_id - [in]
       If viewport_id is not nil, then the visibility setting
-      for that viewport is returned.  If viewport_id
-      is nil, then true is returned if the layer is visible
-      in some viewport.
+      for that viewport is returned.  
+
+      If viewport_id is nil, the ON_Layer::IsVisible() is returned.
   Returns:
     Returns true if objects on layer are visible.
   */
-	bool PerViewportIsVisible( ON_UUID viewport_id ) const;	
-
-  /* use ON_Layer::PerViewportIsVisible */ 
-  ON_DEPRECATED bool IsVisible( const ON_UUID& ) const; 
+	bool PerViewportIsVisible( ON_UUID viewport_id ) const;
 
   /*
   Description:
@@ -532,10 +444,13 @@ public:
   See Also:
     ON_Layer::IsVisibleInViewport()
   */
-  void SetPerViewportVisible( ON_UUID viewport_id, bool bVisible );
-  
-  /* use ON_Layer::SetPerViewportVisible */ 
-  ON_DEPRECATED void SetVisible( bool, const ON_UUID& );
+  void SetPerViewportVisible( 
+    ON_UUID viewport_id, 
+    bool bVisible 
+  );
+
+  // /* use ON_Layer::SetPerViewportVisible */
+  // ON_DEPRECATED void SetVisible( bool, const ON_UUID& );
 
   /*
   Parameters:
@@ -607,14 +522,6 @@ public:
   void GetPerViewportVisibilityViewportIds(
     ON_SimpleArray<ON_UUID>& viewport_id_list
     ) const;
-
-  /*
-  Returns:
-    Returns true if objects on layer are locked.
-  See Also:
-    ON_Layer::SetLocked
-  */
-  bool IsLocked() const;
 
   /*
   Description:
@@ -702,9 +609,6 @@ public:
   bool SetRenderMaterialIndex( int ); // index of layer's rendering material
   int RenderMaterialIndex() const;
 
-  bool SetLayerIndex( int ); // index of this layer;
-  int LayerIndex() const;
-
   bool SetIgesLevel( int ); // IGES level for this layer
   int IgesLevel() const;
 
@@ -717,11 +621,11 @@ public:
     A thickness of -1.0 indicates the layer should not be printed.
   */
   double PlotWeight() const;
-  
+
   double PerViewportPlotWeight( ON_UUID viewport_id ) const;
 
-  /* use ON_Layer::PerViewportPlotWeight */ 
-  ON_DEPRECATED double PlotWeight( const ON_UUID& ) const;
+  // /* use ON_Layer::PerViewportPlotWeight */
+  // ON_DEPRECATED double PlotWeight( const ON_UUID& ) const;
 
   /*
   Description:
@@ -743,8 +647,8 @@ public:
   */
   void SetPerViewportPlotWeight(ON_UUID viewport_id, double plot_weight_mm);
 
-  /* use ON_Layer::SetPerViewportPlotWeight */ 
-  ON_DEPRECATED void SetPlotWeight(double, const ON_UUID& );
+  // /* use ON_Layer::SetPerViewportPlotWeight */
+  // ON_DEPRECATED void SetPlotWeight(double, const ON_UUID& );
 
   /*
   Description:
@@ -772,18 +676,19 @@ public:
 
 public:
 
-  int m_layer_index;       // index of this layer
-  ON_UUID m_layer_id;
-  ON_UUID m_parent_layer_id; // Layers are origanized in a hierarchical 
-                             // structure (like file folders).
-                             // If a layer is in a parent layer, 
-                             // then m_parent_layer_id is the id of 
-                             // the parent layer.
+  // Layers are origanized in a hierarchical
+  // structure (like file folders).
+  // If a layer is in a parent layer,
+  // then m_parent_layer_id is the id of
+  // the parent layer.
+  ON_UUID ParentLayerId() const;
 
-  int m_iges_level;        // IGES level number if this layer was made during IGES import
+  void SetParentLayerId(
+    ON_UUID parent_layer_id
+    );
 
-
-
+  int m_iges_level = -1;        // IGES level number if this layer was made during IGES import
+  
   // Rendering material:
   //   If you want something simple and fast, set 
   //   m_material_index to the index of your rendering material 
@@ -796,13 +701,13 @@ public:
   // Developers:
   //   As soon as m_rendering_attributes.m_materials[] is not empty,
   //   rendering material queries slow down.  Do not populate
-  //   m_rendering_attributes.m_materials[] when setting 
+  //   m_rendering_attributes.m_materials[] when setting
   //   m_material_index will take care of your needs.
-  int m_material_index; 
+  int m_material_index = -1;
   ON_RenderingAttributes m_rendering_attributes;
-  
-  int m_linetype_index;    // index of linetype
-  
+
+  int m_linetype_index = -1;    // index of linetype
+
   // Layer display attributes.
   //   If m_display_material_id is nil, then m_color is the layer color
   //   and defaults are used for all other display attributes.
@@ -812,100 +717,20 @@ public:
   //   deal with m_display_material_id.  In Rhino, m_display_material_id
   //   is used to identify a registry entry that contains user specific
   //   display preferences.
-  ON_Color m_color;
-  ON_UUID m_display_material_id;
+  ON_Color m_color = ON_Color::Black;
+  ON_UUID m_display_material_id = ON_nil_uuid;
 
   // Layer printing (plotting) attributes.
-  ON_Color m_plot_color;   // printing color
+  ON_Color m_plot_color = ON_Color::UnsetColor;   // printing color
                            // ON_UNSET_COLOR means use layer color
-  double m_plot_weight_mm; // printing pen thickness in mm
+  double m_plot_weight_mm = 0.0; // printing pen thickness in mm
                            //  0.0 means use the default width (a Rhino app setting)
                            // -1.0 means layer does not print (still visible on screen)
-  ON_wString m_name;
 
-  bool m_bVisible;  // If true, objects on this layer are visible.
-  bool m_bLocked;   // If true, objects on this layer cannot be modified.
-  bool m_bExpanded; // If true, when the layer table is displayed in
+  bool m_bExpanded = true; // If true, when the layer table is displayed in
                     // a tree control then the list of child layers is
                     // shown in the control.
 
-
-  //////////////////////////////////////////////////////////////
-  //
-  // Tools for saving layer settings.
-  //
-  enum LAYER_SETTINGS
-  {
-    no_layer_settings = 0,
-    userdata_settings = 1,
-    color_settings = 2,
-    plot_color_settings = 4,
-    plot_weight_settings = 8,
-    visible_settings = 16,
-    locked_settings = 32,
-    all_layer_settings = 0xFFFFFFFF
-  };
-
-  /*
-  Returns:
-    Bits in the returned value indicate if there are differences
-    between layer0 and layer1.  For example, if the layers have 
-    difference color, then the returned value would have the
-    "color" bit set.
-  */
-  static unsigned int Differences( const ON_Layer& layer0, const ON_Layer& layer1 );
-
-  /*
-  Description:
-    Use settings_values and settings to set the specified values 
-    on this layer.
-  Parameters:
-    settings_values - [in]
-    settings - [in]
-      LAYER_SETTINGS bits specify which values of this
-      should be set from settings_values.
-  */
-  void Set( unsigned int settings, const ON_Layer& settings_values  );
-
-  /*
-  Description:
-    Saves current values of the specified settings so
-    they can be retrieved by GetSettings().
-  Parameters:
-    settings - [in]
-      LAYER_SETTINGS bits specify which values to save.
-      if 0 == settings, then all saved settings are deleted.
-    bUpdate - [in]
-      If true, then previously saved settings for properties
-      not identified by the settings paramter are left intact.
-      If false, all previously saved settings are removed.
-  */
-  void SaveSettings( unsigned int settings, bool bUpdate );
-
-  /*
-  Returns:
-    0 if the layer does not have saved settings.
-    Nonzero value with LAYER_SETTINGS bits specifying which settings
-    are saved.  The saved that can be retrieved by calling 
-    GetSavedSettings().    
-  */
-  unsigned int SavedSettings() const;
-
-  /*
-  Description:
-    Gets values of the saved settings.
-  Parameters:
-    layer - [in/out]
-      values of saved settings are set and all other values are
-      left unchanged.
-    settings - [out]
-      LAYER_SETTINGS bits specify which layer values were set
-      by this call.
-  Returns:
-    True if there were saved settings.
-  */
-  bool GetSavedSettings( ON_Layer& layer, unsigned int& settings ) const;
-  
 private:
   // The following information may not be accurate and is subject
   // to change at any time.
@@ -931,9 +756,17 @@ private:
   //     0x08 = persistent locking = true
   //     0x10 = persistent locking = false
   //     0x18 = invalid value - treated as 0x00
-  unsigned char m_extension_bits;
+  ON__UINT8 m_extension_bits = 0;
+  ON__UINT16 m_reserved = 0;
+
+private:
+  ON__UINT_PTR m_reserved_ptr = 0;
 };
 
+#if defined(ON_DLL_TEMPLATE)
+ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Layer*>;
+ON_DLL_TEMPLATE template class ON_CLASS ON_ObjectArray<ON_Layer>;
+#endif
 
 #endif
 

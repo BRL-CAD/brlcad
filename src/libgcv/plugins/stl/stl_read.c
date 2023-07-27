@@ -1,7 +1,7 @@
 /*                      S T L _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2022 United States Government as represented by
+ * Copyright (c) 2002-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -678,7 +678,7 @@ static const struct gcv_filter * const filters[] = {&gcv_conv_stl_read, &gcv_con
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
 COMPILER_DLLEXPORT const struct gcv_plugin *
-gcv_plugin_info(){ return &gcv_plugin_info_s; }
+gcv_plugin_info(void){ return &gcv_plugin_info_s; }
 
 /*
  * Local Variables:

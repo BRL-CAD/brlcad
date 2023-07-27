@@ -99,6 +99,10 @@
 * Revision 4.1 90/09/13 16:29:00 clark
 * BPR 2.1 alpha
 * */
+#include <ctype.h>
+#if !defined(isascii) && defined(__isascii)
+#  define isascii __isascii
+#endif
 #include "express/basic.h"
 #include "express/error.h"
 #include "express/lexact.h"
@@ -617,7 +621,7 @@ getTokenText(perplex_t scanner)
 #define      yyextra  scanner->extra
 
 static perplex_t
-newScanner()
+newScanner(void)
 {
     perplex_t scanner;
     scanner = (perplex_t)calloc(1, sizeof(struct perplex));

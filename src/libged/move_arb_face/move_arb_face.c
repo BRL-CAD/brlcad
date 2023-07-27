@@ -1,7 +1,7 @@
 /*                         M O V E _ A R B _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -257,7 +257,7 @@ const struct ged_cmd *move_arb_face_cmds[] = { &move_arb_face_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  move_arb_face_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

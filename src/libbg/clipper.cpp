@@ -4349,10 +4349,10 @@ namespace ClipperLib {
 	    const IntPoint& pt, const IntPoint& ln1, const IntPoint& ln2)
     {
 	//The equation of a line in general form (Ax + By + C = 0)
-	//given 2 points (x¹,y¹) & (x²,y²) is ...
-	//(y¹ - y²)x + (x² - x¹)y + (y² - y¹)x¹ - (x² - x¹)y¹ = 0
-	//A = (y¹ - y²); B = (x² - x¹); C = (y² - y¹)x¹ - (x² - x¹)y¹
-	//perpendicular distance of point (x³,y³) = (Ax³ + By³ + C)/Sqrt(A² + B²)
+	//given 2 points (x^1,y^1) & (x^2,y^2) is ...
+	//(y^1 - y^2)x + (x^2 - x^1)y + (y^2 - y^1)x^1 - (x^2 - x^1)y^1 = 0
+	//A = (y^1 - y^2); B = (x^2 - x^1); C = (y^2 - y^1)x^1 - (x^2 - x^1)y^1
+	//perpendicular distance of point (x^3,y^3) = (Ax^3 + By^3 + C)/Sqrt(A^2 + B^2)
 	//see http://en.wikipedia.org/wiki/Perpendicular_distance
 	double A = double(ln1.Y - ln2.Y);
 	double B = double(ln2.X - ln1.X);

@@ -1021,7 +1021,7 @@ NRInterpCmd(
 	    return TCL_ERROR;
 	}
 	iiPtr = (InterpInfo *) ((Interp *) childInterp)->interpInfo;
-	resultPtr = Tcl_NewObj();
+	TclNewObj(resultPtr);
 	hPtr = Tcl_FirstHashEntry(&iiPtr->parent.childTable, &hashSearch);
 	for ( ; hPtr != NULL; hPtr = Tcl_NextHashEntry(&hashSearch)) {
 	    string = Tcl_GetHashKey(&iiPtr->parent.childTable, hPtr);
@@ -1748,10 +1748,11 @@ AliasList(
 {
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch hashSearch;
-    Tcl_Obj *resultPtr = Tcl_NewObj();
+    Tcl_Obj *resultPtr;
     Alias *aliasPtr;
     Child *childPtr;
 
+    TclNewObj(resultPtr);
     childPtr = &((InterpInfo *) ((Interp *) childInterp)->interpInfo)->child;
 
     entryPtr = Tcl_FirstHashEntry(&childPtr->aliasTable, &hashSearch);
@@ -2325,7 +2326,7 @@ ChildCreate(
     int isNew, objc;
     Tcl_Obj **objv;
 
-    if (Tcl_ListObjGetElements(interp, pathPtr, &objc, &objv) != TCL_OK) {
+    if (TclListObjGetElements(interp, pathPtr, &objc, &objv) != TCL_OK) {
 	return NULL;
     }
     if (objc < 2) {
@@ -2725,7 +2726,7 @@ ChildDebugCmd(
 
     iPtr = (Interp *) childInterp;
     if (objc == 0) {
-	resultPtr = Tcl_NewObj();
+	TclNewObj(resultPtr);
 	Tcl_ListObjAppendElement(NULL, resultPtr,
 		Tcl_NewStringObj("-frame", -1));
 	Tcl_ListObjAppendElement(NULL, resultPtr,
@@ -2994,11 +2995,12 @@ ChildHidden(
     Tcl_Interp *interp,		/* Interp for data return. */
     Tcl_Interp *childInterp)	/* Interp whose hidden commands to query. */
 {
-    Tcl_Obj *listObjPtr = Tcl_NewObj();	/* Local object pointer. */
+    Tcl_Obj *listObjPtr;	/* Local object pointer. */
     Tcl_HashTable *hTblPtr;		/* For local searches. */
     Tcl_HashEntry *hPtr;		/* For local searches. */
     Tcl_HashSearch hSearch;		/* For local searches. */
 
+    TclNewObj(listObjPtr);
     hTblPtr = ((Interp *) childInterp)->hiddenCmdTablePtr;
     if (hTblPtr != NULL) {
 	for (hPtr = Tcl_FirstHashEntry(hTblPtr, &hSearch);

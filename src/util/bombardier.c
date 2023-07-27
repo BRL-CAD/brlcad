@@ -1,7 +1,7 @@
 /*                    B O M B A R D I E R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -141,7 +141,7 @@ static struct bu_vls *report = NULL;
  * Tk_Main never returns
  */
 static void
-_free_report_memory()
+_free_report_memory(void)
 {
     /* release our report string */
     if (report) {

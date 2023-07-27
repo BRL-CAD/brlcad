@@ -1,7 +1,7 @@
 /*                       R E C S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2022 United States Government as represented by
+ * Copyright (c) 1990-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@
 		   */
 
 int
-Recsize()
+Recsize(void)
 {
 
     int i, j, k = (-1), recl = 0, length[NRECS] = {0}, ch;

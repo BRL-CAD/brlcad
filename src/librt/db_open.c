@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2022 United States Government as represented by
+ * Copyright (c) 1988-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -254,8 +254,10 @@ db_open(const char *name, const char *mode)
 
     if (dbip->dbi_version < 5) {
 	if (rt_db_flip_endian(dbip)) {
-	    if (dbip->dbi_version > 0)
+	    if (dbip->dbi_version > 0) {
+		/* version is stored as -4 to denote the flip */
 		dbip->dbi_version *= -1;
+	    }
 	    dbip->dbi_read_only = 1;
 	    bu_log("WARNING: Binary-incompatible v4 geometry database detected.\n");
 	    bu_log(" Endianness flipped.  Converting to READ ONLY.\n");
@@ -505,6 +507,38 @@ db_close(register struct db_i *dbip)
 
     dbip->dbi_magic = (uint32_t)0x10101010;
     bu_free((char *)dbip, "struct db_i");
+}
+
+int
+db_filetype(const char *fname)
+{
+    // If we can't open it, there's no way to tell if it's
+    // a .g file
+    if (!fname)
+	return -1;
+    FILE *fp = fopen(fname, "rb");
+    if (!fp)
+	return -1;
+
+    // Get the file header - if we can't do that, it's not
+    // a .g file
+    unsigned char header[8];
+    if (fread(header, sizeof(header), 1, fp) != 1) {
+	fclose(fp);
+	return -1;
+    }
+    fclose(fp);
+
+    // Have a header - decide based on the header contents
+    if (db5_header_is_valid(header))
+	return 5;
+    // Have encountered a leading 'I' character in some .tif
+    // files, so check for 'v' and '4' as well.
+    if (header[0] == 'I' && header[2] == 'v' && header[3] == '4')
+	return 4;
+
+    // Could not recognize
+    return -1;
 }
 
 int

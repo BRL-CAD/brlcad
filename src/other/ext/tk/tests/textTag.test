@@ -1580,6 +1580,24 @@ test textTag-15.3 {TkTextBindProc} -constraints haveCourier12 -setup {
     .t tag delete x y
 } -result {x-enter | x-down | | | x-up | x-leave y-enter}
 
+test textTag-15.4 {TkTextBindProc, key event with mouse outside the widget} -setup {
+    .t tag delete {*}[.t tag names]
+    wm geometry . +200+200 ; update
+} -body {
+    set res {}
+    .t tag add tag1 1.0 end
+    .t tag bind tag1 <KeyPress> {lappend res %K}
+    .t mark set insert 1.2
+    update
+    event generate .t <Motion> -warp 1 -x -50 -y -50
+    controlPointerWarpTiming
+    focus -force .t
+    event generate .t <KeyPress> -keysym a
+    set res
+} -cleanup {
+    .t tag delete tag1
+} -result {a}
+
 
 test textTag-16.1 {TkTextPickCurrent procedure} -constraints {
     haveCourier12

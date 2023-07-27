@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007,  Frank Warmerdam
- * Copyright (c) 2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,11 +36,11 @@
 
 CPL_C_START
 
-const SAHooks* VSI_SHP_GetHook(int b2GBLimit);
+const SAHooks *VSI_SHP_GetHook(int b2GBLimit);
 
-VSILFILE* VSI_SHP_GetVSIL( SAFile file );
-const char* VSI_SHP_GetFilename( SAFile file );
-int VSI_SHP_WriteMoreDataOK( SAFile file, SAOffset nExtraBytes );
+VSILFILE *VSI_SHP_GetVSIL(SAFile file);
+const char *VSI_SHP_GetFilename(SAFile file);
+int VSI_SHP_WriteMoreDataOK(SAFile file, SAOffset nExtraBytes);
 
 CPL_C_END
 

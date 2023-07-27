@@ -104,6 +104,7 @@ if (BRLCAD_TCL_BUILD)
     set(TCL_EXECNAME tclsh${TCL_MAJOR_VERSION}${TCL_MINOR_VERSION})
     set(TCL_SUFFIX ${CMAKE_SHARED_LIBRARY_SUFFIX})
 
+    # TODO - how to pass Z_PREFIX through nmake so zlib.h has the correct prefix?  Is https://stackoverflow.com/a/11041834 what we need?  Also, do we need to patch makefile.vc to reference our zlib dll?
     ExternalProject_Add(TCL_BLD
       URL "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
       BUILD_ALWAYS ${EXT_BUILD_ALWAYS} ${LOG_OPTS}
@@ -111,6 +112,7 @@ if (BRLCAD_TCL_BUILD)
       BINARY_DIR ${TCL_SRC_DIR}/win
       BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${TCL_INSTDIR} SUFX=
       INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${TCL_INSTDIR} SUFX=
+      DEPENDS ${ZLIB_TARGET} tcl_replace
       LOG_BUILD ${EXT_BUILD_QUIET}
       LOG_INSTALL ${EXT_BUILD_QUIET}
       LOG_OUTPUT_ON_FAILURE ${EXT_BUILD_QUIET}
@@ -386,6 +388,10 @@ if (BRLCAD_TCL_BUILD)
   # Anything using the executable needs everything in place
   add_dependencies(tclsh_exe tcl_stage)
 
+  # Scripts expect a non-versioned tclsh program, but the Tcl build doesn't provide one,
+  # we must provide it ourselves
+  install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:tclsh_exe> \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${BIN_DIR}/tclsh${CMAKE_EXECUTABLE_SUFFIX}\")")
+
   set(TCL_LIBRARY tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_STUB_LIBRARY tclstub CACHE STRING "Building bundled tcl" FORCE)
@@ -403,6 +409,10 @@ else (BRLCAD_TCL_BUILD)
   mark_as_advanced(BRLCAD_DISABLE_ODD_PATHNAMES_FLAGS)
 
 endif (BRLCAD_TCL_BUILD)
+
+mark_as_advanced(TCL_INCLUDE_DIRS)
+mark_as_advanced(TCL_LIBRARIES)
+mark_as_advanced(TCL_VERSION)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/tcl.dist")
 

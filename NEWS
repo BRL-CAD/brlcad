@@ -10,6 +10,49 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
+--- 2023-07-26  Release 7.36.0                                     ---
+----------------------------------------------------------------------
+This major release of BRL-CAD introduces significant updates to
+geometry conversion support. The update includes modernization for
+NURBS importing and interaction, BoT manipulation, and incorporates
+many new formats for importing and exporting to BRL-CAD database
+files.
+
+The geometry conversion tool (GCV) now supports mesh importing
+from: 3D, 3DS, 3MF, AC, AMF, ASE, ASSBIN, B3D, BVH, COB, COLLADA, CSM,
+FBX, GLTF/GLB 1.0 + 2.0, HMP, IFC-STEP, IQM, IRR, IRRMESH, LWO, LWS,
+M3D, MD2, MD3, MD5, MDC, MDL, MMD, MS3D, NDO, NFF, OFF, OGRE, OPENGEX,
+Q3BSP, Q3D, RAW, SIB, SMD, TERRAGEN, X, X3D, XGL.
+Additionally, GCV now supports mesh exporting to: 3DS, 3MF, ASSBIN,
+ASSJSON, ASSXML, COLLADA, GLTF, PBRT, STEP, X, X3D.
+
+This release also introduces new BoT subcommands to improve
+manipulation and preparation. The subdivision "subd" command
+incorporates 5 new subdivision algorithms. The "flip" command will
+flip surface normals - effectively turning the BoT 'inside out'.
+Lastly, the "smooth" command will smooth the BoT's topology.
+
+* Added a point-inside-object subcmd "inside" to analyze - Cliff Yapp
+* Added "flip" "subd" and "smooth" subcommands to BoT - Cliff Yapp
+* Fixed g-ply converter on Windows - Chris McGregor
+* Fixed infinite loop in noise generation - Sean Morrison
+* Fixed analyze in/out test for multi-segment ray hits - Cliff Yapp
+* Fixed analyze cmd crash when specifying invalid objects - Cliff Yapp
+* Fixed search -attr behavior with names having spaces - Cliff Yapp
+* Fixed nirt hanging on hits with a lot of output - Chris McGregor
+* nirt -b is now default behavior - Chris McGregor
+* Updated OpenNURBS library, 3dm-g now supports ver. 7 files
+	- Cliff Yapp, Chris McGregor
+* Updated OpenMesh library to version 9.0 - Cliff Yapp
+* Updated Open Asset Import Library - v5.2.5 + fix - Chris McGregor
+* Updated Tcl/Tk to version 8.6.13 - Cliff Yapp
+* Updated NETPBM library to version 10.73.42 - Cliff Yapp
+* Updated GDAL library to version 3.6.3 - Cliff Yapp
+* Updated PROJ library to version 9.2.0 - Cliff Yapp
+* Updated PNG library to version 1.6.39 - Cliff Yapp
+
+
+----------------------------------------------------------------------
 --- 2023-02-27  Release 7.34.2                                     ---
 ----------------------------------------------------------------------
 
@@ -26,6 +69,7 @@ changes made.  See document footer for additional details.
 * fixed nirt -f (fmt) to work within MGED - Chris McGregor
 * fixed nirt of objects with hyphens in name - Chris McGregor
 * correct facetall.sh to automatically restart on failure - Cliff Yapp
+
 
 ----------------------------------------------------------------------
 --- 2022-11-23  Release 7.34.0                                     ---

@@ -29,6 +29,15 @@ set(burst_old_SOURCES
 BRLCAD_ADDEXEC(burst "${burst_old_SOURCES}" "librt;libdm;${M_LIBRARY}")
 ADD_TARGET_DEPS(burst dm_plugins)
 
+# Burst coding style is very old, and tool is deprecated.  Not worth
+# updating it to satisfy the strict-prototypes flag
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-Wno-strict-prototypes NO_STRICT_PROTO_COMPILER_FLAG)
+if (NO_STRICT_PROTO_COMPILER_FLAG)
+  # If we have the Wno-strict-prototypes flag, use it
+  target_compile_options(burst PRIVATE "-Wno-strict-prototypes")
+endif (NO_STRICT_PROTO_COMPILER_FLAG)
+
 set(burst_old_noinst_HEADERS
   CMakeLists.txt
   ascii.h

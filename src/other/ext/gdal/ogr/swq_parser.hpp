@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.5.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,11 +31,14 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
+
 #ifndef YY_SWQ_SWQ_PARSER_HPP_INCLUDED
-# define YY_SWQ_SWQ_PARSER_HPP_INCLUDED
+#define YY_SWQ_SWQ_PARSER_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+#define YYDEBUG 0
 #endif
 #if YYDEBUG
 extern int swqdebug;
@@ -42,9 +46,9 @@ extern int swqdebug;
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
+#define YYTOKENTYPE
+enum yytokentype
+{
     END = 0,
     SWQT_INTEGER_NUMBER = 258,
     SWQT_FLOAT_NUMBER = 259,
@@ -52,46 +56,45 @@ extern int swqdebug;
     SWQT_IDENTIFIER = 261,
     SWQT_IN = 262,
     SWQT_LIKE = 263,
-    SWQT_ESCAPE = 264,
-    SWQT_BETWEEN = 265,
-    SWQT_NULL = 266,
-    SWQT_IS = 267,
-    SWQT_SELECT = 268,
-    SWQT_LEFT = 269,
-    SWQT_JOIN = 270,
-    SWQT_WHERE = 271,
-    SWQT_ON = 272,
-    SWQT_ORDER = 273,
-    SWQT_BY = 274,
-    SWQT_FROM = 275,
-    SWQT_AS = 276,
-    SWQT_ASC = 277,
-    SWQT_DESC = 278,
-    SWQT_DISTINCT = 279,
-    SWQT_CAST = 280,
-    SWQT_UNION = 281,
-    SWQT_ALL = 282,
-    SWQT_LIMIT = 283,
-    SWQT_OFFSET = 284,
-    SWQT_VALUE_START = 285,
-    SWQT_SELECT_START = 286,
-    SWQT_NOT = 287,
-    SWQT_OR = 288,
-    SWQT_AND = 289,
-    SWQT_UMINUS = 290,
-    SWQT_RESERVED_KEYWORD = 291
-  };
+    SWQT_ILIKE = 264,
+    SWQT_ESCAPE = 265,
+    SWQT_BETWEEN = 266,
+    SWQT_NULL = 267,
+    SWQT_IS = 268,
+    SWQT_SELECT = 269,
+    SWQT_LEFT = 270,
+    SWQT_JOIN = 271,
+    SWQT_WHERE = 272,
+    SWQT_ON = 273,
+    SWQT_ORDER = 274,
+    SWQT_BY = 275,
+    SWQT_FROM = 276,
+    SWQT_AS = 277,
+    SWQT_ASC = 278,
+    SWQT_DESC = 279,
+    SWQT_DISTINCT = 280,
+    SWQT_CAST = 281,
+    SWQT_UNION = 282,
+    SWQT_ALL = 283,
+    SWQT_LIMIT = 284,
+    SWQT_OFFSET = 285,
+    SWQT_VALUE_START = 286,
+    SWQT_SELECT_START = 287,
+    SWQT_NOT = 288,
+    SWQT_OR = 289,
+    SWQT_AND = 290,
+    SWQT_UMINUS = 291,
+    SWQT_RESERVED_KEYWORD = 292
+};
 #endif
 
 /* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
+#if !defined YYSTYPE && !defined YYSTYPE_IS_DECLARED
 typedef int YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
+#define YYSTYPE_IS_TRIVIAL 1
+#define YYSTYPE_IS_DECLARED 1
 #endif
 
-
-
-int swqparse (swq_parse_context *context);
+int swqparse(swq_parse_context *context);
 
 #endif /* !YY_SWQ_SWQ_PARSER_HPP_INCLUDED  */

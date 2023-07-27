@@ -1,7 +1,7 @@
 /*                        U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2022 United States Government as represented by
+ * Copyright (c) 2020-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ print_edges_table(struct ged *gedp, table_t *table)
 */
 
     int i;
-    int tcol, nd, nrow, nrows;
+    int tcol, nd, nrows;
     int maxwidth[] = {0, 0, 0,
 	0, 0, 0,
 	0, 0};
@@ -162,7 +162,6 @@ print_edges_table(struct ged *gedp, table_t *table)
     /* print the data lines */
     /* collect max table column widths */
     tcol = 0;
-    nrow = 0;
     for (i = 0; i < table->nrows; ++i) {
 	int field;
 
@@ -195,7 +194,6 @@ print_edges_table(struct ged *gedp, table_t *table)
 	    /* time for a newline to end the row */
 	    bu_vls_printf(gedp->ged_result_str, "\n");
 	    tcol = 0;
-	    ++nrow;
 	}
     }
 

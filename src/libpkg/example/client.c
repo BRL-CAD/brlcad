@@ -1,7 +1,7 @@
 /*                        C L I E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2022 United States Government as represented by
+ * Copyright (c) 2006-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ client_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 }
 
 int
-main() {
+main(void) {
     int port = 2000;
     const char *server = "127.0.0.1";
     struct bu_vls all_msgs = BU_VLS_INIT_ZERO;

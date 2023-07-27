@@ -37,125 +37,124 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
+#include "cpl_time.h"
 #include "gdal_mdreader.h"
-
-CPL_CVSID("$Id$");
 
 /**
  * GDALMDReaderALOS()
  */
 GDALMDReaderALOS::GDALMDReaderALOS(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                   char **papszSiblingFiles)
+    : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
     CPLString osDirName = CPLGetDirname(pszPath);
     CPLString osBaseName = CPLGetBasename(pszPath);
 
-    const char* pszIMDSourceFilename = CPLFormFilename(osDirName, "summary", ".txt");
-    if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+    CPLString osIMDSourceFilename =
+        CPLFormFilename(osDirName, "summary", ".txt");
+    if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osIMDSourceFilename = pszIMDSourceFilename;
+        m_osIMDSourceFilename = osIMDSourceFilename;
     }
     else
     {
-        pszIMDSourceFilename = CPLFormFilename( osDirName, "SUMMARY", ".TXT");
-        if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+        osIMDSourceFilename = CPLFormFilename(osDirName, "SUMMARY", ".TXT");
+        if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = pszIMDSourceFilename;
+            m_osIMDSourceFilename = osIMDSourceFilename;
         }
     }
 
-    const char *pszHDRFileName;
-    if( osBaseName.size() >= 6 )
+    if (osBaseName.size() >= 6)
     {
         // check if this is separate band or whole image
         // test without 6 symbols
-        pszHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
-                                                    osBaseName + 6), "txt");
-        if (CPLCheckForFile((char*)pszHDRFileName, papszSiblingFiles))
+        CPLString osHDRFileName = CPLFormFilename(
+            osDirName, CPLSPrintf("HDR%s", osBaseName + 6), "txt");
+        if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
         {
-            m_osHDRSourceFilename = pszHDRFileName;
+            m_osHDRSourceFilename = osHDRFileName;
         }
         else
         {
-            pszHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
-                                            osBaseName + 6), "TXT");
-            if (CPLCheckForFile((char*)pszHDRFileName, papszSiblingFiles))
+            osHDRFileName = CPLFormFilename(
+                osDirName, CPLSPrintf("HDR%s", osBaseName + 6), "TXT");
+            if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
             {
-                m_osHDRSourceFilename = pszHDRFileName;
+                m_osHDRSourceFilename = osHDRFileName;
             }
         }
     }
 
     // test without 3 symbols
-    if( osBaseName.size() >= 3 && m_osHDRSourceFilename.empty())
+    if (osBaseName.size() >= 3 && m_osHDRSourceFilename.empty())
     {
-        pszHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
-                                         osBaseName + 3), "txt");
-        if (CPLCheckForFile((char*)pszHDRFileName, papszSiblingFiles))
+        CPLString osHDRFileName = CPLFormFilename(
+            osDirName, CPLSPrintf("HDR%s", osBaseName + 3), "txt");
+        if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
         {
-            m_osHDRSourceFilename = pszHDRFileName;
+            m_osHDRSourceFilename = osHDRFileName;
         }
         else
         {
-            pszHDRFileName = CPLFormFilename(osDirName, CPLSPrintf("HDR%s",
-                                             osBaseName + 3), "TXT");
-            if (CPLCheckForFile((char*)pszHDRFileName, papszSiblingFiles))
+            osHDRFileName = CPLFormFilename(
+                osDirName, CPLSPrintf("HDR%s", osBaseName + 3), "TXT");
+            if (CPLCheckForFile(&osHDRFileName[0], papszSiblingFiles))
             {
-                m_osHDRSourceFilename = pszHDRFileName;
+                m_osHDRSourceFilename = osHDRFileName;
             }
         }
     }
 
     // test without 6 symbols
-    const char *pszRPCFileName;
-    if( osBaseName.size() >= 6 )
+    if (osBaseName.size() >= 6)
     {
-        pszRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
-                                                    osBaseName + 6), "txt");
-        if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
+        CPLString osRPCFileName = CPLFormFilename(
+            osDirName, CPLSPrintf("RPC%s", osBaseName + 6), "txt");
+        if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = pszRPCFileName;
+            m_osRPBSourceFilename = osRPCFileName;
         }
         else
         {
-            pszRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
-                                            osBaseName + 6), "TXT");
-            if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
+            osRPCFileName = CPLFormFilename(
+                osDirName, CPLSPrintf("RPC%s", osBaseName + 6), "TXT");
+            if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
-                m_osRPBSourceFilename = pszRPCFileName;
+                m_osRPBSourceFilename = osRPCFileName;
             }
         }
     }
 
     // test without 3 symbols
-    if( osBaseName.size() >= 3 && m_osRPBSourceFilename.empty())
+    if (osBaseName.size() >= 3 && m_osRPBSourceFilename.empty())
     {
-        pszRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
-                                         osBaseName + 3), "txt");
-        if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
+        CPLString osRPCFileName = CPLFormFilename(
+            osDirName, CPLSPrintf("RPC%s", osBaseName + 3), "txt");
+        if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = pszRPCFileName;
+            m_osRPBSourceFilename = osRPCFileName;
         }
         else
         {
-            pszRPCFileName = CPLFormFilename(osDirName, CPLSPrintf("RPC%s",
-                                             osBaseName + 3), "TXT");
-            if (CPLCheckForFile((char*)pszRPCFileName, papszSiblingFiles))
+            osRPCFileName = CPLFormFilename(
+                osDirName, CPLSPrintf("RPC%s", osBaseName + 3), "TXT");
+            if (CPLCheckForFile(&osRPCFileName[0], papszSiblingFiles))
             {
-                m_osRPBSourceFilename = pszRPCFileName;
+                m_osRPBSourceFilename = osRPCFileName;
             }
         }
     }
 
-    if(!m_osIMDSourceFilename.empty() )
-        CPLDebug( "MDReaderALOS", "IMD Filename: %s",
-              m_osIMDSourceFilename.c_str() );
-    if(!m_osHDRSourceFilename.empty() )
-        CPLDebug( "MDReaderALOS", "HDR Filename: %s",
-              m_osHDRSourceFilename.c_str() );
-    if(!m_osRPBSourceFilename.empty() )
-        CPLDebug( "MDReaderALOS", "RPB Filename: %s",
-              m_osRPBSourceFilename.c_str() );
+    if (!m_osIMDSourceFilename.empty())
+        CPLDebug("MDReaderALOS", "IMD Filename: %s",
+                 m_osIMDSourceFilename.c_str());
+    if (!m_osHDRSourceFilename.empty())
+        CPLDebug("MDReaderALOS", "HDR Filename: %s",
+                 m_osHDRSourceFilename.c_str());
+    if (!m_osRPBSourceFilename.empty())
+        CPLDebug("MDReaderALOS", "RPB Filename: %s",
+                 m_osRPBSourceFilename.c_str());
 }
 
 /**
@@ -173,7 +172,7 @@ bool GDALMDReaderALOS::HasRequiredFiles() const
     if (!m_osIMDSourceFilename.empty())
         return true;
 
-    if(!m_osHDRSourceFilename.empty() && !m_osRPBSourceFilename.empty())
+    if (!m_osHDRSourceFilename.empty() && !m_osRPBSourceFilename.empty())
         return true;
 
     return false;
@@ -182,15 +181,15 @@ bool GDALMDReaderALOS::HasRequiredFiles() const
 /**
  * GetMetadataFiles()
  */
-char** GDALMDReaderALOS::GetMetadataFiles() const
+char **GDALMDReaderALOS::GetMetadataFiles() const
 {
-    char **papszFileList = NULL;
-    if(!m_osIMDSourceFilename.empty())
-        papszFileList= CSLAddString( papszFileList, m_osIMDSourceFilename );
-    if(!m_osHDRSourceFilename.empty())
-        papszFileList= CSLAddString( papszFileList, m_osHDRSourceFilename );
-    if(!m_osRPBSourceFilename.empty())
-        papszFileList= CSLAddString( papszFileList, m_osRPBSourceFilename );
+    char **papszFileList = nullptr;
+    if (!m_osIMDSourceFilename.empty())
+        papszFileList = CSLAddString(papszFileList, m_osIMDSourceFilename);
+    if (!m_osHDRSourceFilename.empty())
+        papszFileList = CSLAddString(papszFileList, m_osHDRSourceFilename);
+    if (!m_osRPBSourceFilename.empty())
+        papszFileList = CSLAddString(papszFileList, m_osRPBSourceFilename);
 
     return papszFileList;
 }
@@ -200,23 +199,23 @@ char** GDALMDReaderALOS::GetMetadataFiles() const
  */
 void GDALMDReaderALOS::LoadMetadata()
 {
-    if(m_bIsMetadataLoad)
+    if (m_bIsMetadataLoad)
         return;
 
-    if(!m_osIMDSourceFilename.empty())
+    if (!m_osIMDSourceFilename.empty())
     {
         m_papszIMDMD = CSLLoad(m_osIMDSourceFilename);
     }
 
-    if(!m_osHDRSourceFilename.empty())
+    if (!m_osHDRSourceFilename.empty())
     {
-        if(NULL == m_papszIMDMD)
+        if (nullptr == m_papszIMDMD)
         {
             m_papszIMDMD = CSLLoad(m_osHDRSourceFilename);
         }
         else
         {
-            char** papszHDR = CSLLoad(m_osHDRSourceFilename);
+            char **papszHDR = CSLLoad(m_osHDRSourceFilename);
             m_papszIMDMD = CSLMerge(m_papszIMDMD, papszHDR);
             CSLDestroy(papszHDR);
         }
@@ -224,100 +223,101 @@ void GDALMDReaderALOS::LoadMetadata()
 
     m_papszRPCMD = LoadRPCTxtFile();
 
-    m_papszDEFAULTMD = CSLAddNameValue(m_papszDEFAULTMD, MD_NAME_MDTYPE, "ALOS");
+    m_papszDEFAULTMD =
+        CSLAddNameValue(m_papszDEFAULTMD, MD_NAME_MDTYPE, "ALOS");
 
     m_bIsMetadataLoad = true;
 
-    const char* pszSatId1 = CSLFetchNameValue(m_papszIMDMD, "Lbi_Satellite");
-    const char* pszSatId2 = CSLFetchNameValue(m_papszIMDMD, "Lbi_Sensor");
-    if(NULL != pszSatId1 && NULL != pszSatId2)
+    const char *pszSatId1 = CSLFetchNameValue(m_papszIMDMD, "Lbi_Satellite");
+    const char *pszSatId2 = CSLFetchNameValue(m_papszIMDMD, "Lbi_Sensor");
+    if (nullptr != pszSatId1 && nullptr != pszSatId2)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                           MD_NAME_SATELLITE, CPLSPrintf( "%s %s",
-                           CPLStripQuotes(pszSatId1).c_str(),
-                           CPLStripQuotes(pszSatId2).c_str()));
+        m_papszIMAGERYMD = CSLAddNameValue(
+            m_papszIMAGERYMD, MD_NAME_SATELLITE,
+            CPLSPrintf("%s %s", CPLStripQuotes(pszSatId1).c_str(),
+                       CPLStripQuotes(pszSatId2).c_str()));
     }
-    else if(NULL != pszSatId1 && NULL == pszSatId2)
+    else if (nullptr != pszSatId1 && nullptr == pszSatId2)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                MD_NAME_SATELLITE, CPLStripQuotes(pszSatId1));
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+                                           CPLStripQuotes(pszSatId1));
     }
-    else if(NULL == pszSatId1 && NULL != pszSatId2)
+    else if (nullptr == pszSatId1 && nullptr != pszSatId2)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                MD_NAME_SATELLITE, CPLStripQuotes(pszSatId2));
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
+                                           CPLStripQuotes(pszSatId2));
     }
 
-    const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD,
-                                                 "Img_CloudQuantityOfAllImage");
-    if(NULL != pszCloudCover)
+    const char *pszCloudCover =
+        CSLFetchNameValue(m_papszIMDMD, "Img_CloudQuantityOfAllImage");
+    if (nullptr != pszCloudCover)
     {
         int nCC = atoi(pszCloudCover);
-        if(nCC >= 99)
+        if (nCC >= 99)
         {
-            m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
-                                               MD_CLOUDCOVER_NA);
+            m_papszIMAGERYMD = CSLAddNameValue(
+                m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, MD_CLOUDCOVER_NA);
         }
         else
         {
-            m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                          MD_NAME_CLOUDCOVER, CPLSPrintf("%d", nCC * 10));
+            m_papszIMAGERYMD =
+                CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
+                                CPLSPrintf("%d", nCC * 10));
         }
     }
 
-    const char* pszDate = CSLFetchNameValue(m_papszIMDMD,
-                                                     "Img_SceneCenterDateTime");
+    const char *pszDate =
+        CSLFetchNameValue(m_papszIMDMD, "Img_SceneCenterDateTime");
 
-    if(NULL != pszDate)
+    if (nullptr != pszDate)
     {
         char buffer[80];
-        time_t timeMid = GetAcquisitionTimeFromString(CPLStripQuotes(pszDate));
-        strftime (buffer, 80, MD_DATETIMEFORMAT, localtime(&timeMid));
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                           MD_NAME_ACQDATETIME, buffer);
+        GIntBig timeMid = GetAcquisitionTimeFromString(CPLStripQuotes(pszDate));
+        struct tm tmBuf;
+        strftime(buffer, 80, MD_DATETIMEFORMAT,
+                 CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
+        m_papszIMAGERYMD =
+            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
     }
     else
     {
         pszDate = CSLFetchNameValue(m_papszIMDMD, "Lbi_ObservationDate");
-        if(NULL != pszDate)
+        if (nullptr != pszDate)
         {
-            const char* pszTime = "00:00:00.000";
+            const char *pszTime = "00:00:00.000";
 
             char buffer[80];
-            time_t timeMid = GetAcquisitionTimeFromString(CPLSPrintf( "%s %s",
-                                              CPLStripQuotes(pszDate).c_str(),
-                                              CPLStripQuotes(pszTime).c_str()));
-            strftime (buffer, 80, MD_DATETIMEFORMAT, localtime(&timeMid));
-            m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                               MD_NAME_ACQDATETIME, buffer);
+            GIntBig timeMid = GetAcquisitionTimeFromString(
+                CPLSPrintf("%s %s", CPLStripQuotes(pszDate).c_str(),
+                           CPLStripQuotes(pszTime).c_str()));
+            struct tm tmBuf;
+            strftime(buffer, 80, MD_DATETIMEFORMAT,
+                     CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
+            m_papszIMAGERYMD =
+                CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
         }
     }
 }
 
-static const char * const apszRPCTXT20ValItems[] =
-{
-    RPC_LINE_NUM_COEFF,
-    RPC_LINE_DEN_COEFF,
-    RPC_SAMP_NUM_COEFF,
-    RPC_SAMP_DEN_COEFF,
-    NULL
-};
+static const char *const apszRPCTXT20ValItems[] = {
+    RPC_LINE_NUM_COEFF, RPC_LINE_DEN_COEFF, RPC_SAMP_NUM_COEFF,
+    RPC_SAMP_DEN_COEFF, nullptr};
 
 /**
  * LoadRPCTxtFile
  */
-char** GDALMDReaderALOS::LoadRPCTxtFile()
+char **GDALMDReaderALOS::LoadRPCTxtFile()
 {
-    if(m_osRPBSourceFilename.empty())
-        return NULL;
+    if (m_osRPBSourceFilename.empty())
+        return nullptr;
 
-    char** papszLines = CSLLoad(m_osRPBSourceFilename);
-    if(NULL == papszLines)
-        return NULL;
+    char **papszLines = CSLLoad(m_osRPBSourceFilename);
+    if (nullptr == papszLines)
+        return nullptr;
 
-    const char* pszFirstRow = papszLines[0];
-    char** papszRPB = NULL;
-    if(NULL != pszFirstRow)
+    const char *pszFirstRow = papszLines[0];
+    char **papszRPB = nullptr;
+    if (nullptr != pszFirstRow)
     {
         char buff[50] = {0};
         int nOffset = 0;
@@ -362,17 +362,18 @@ char** GDALMDReaderALOS::LoadRPCTxtFile()
         papszRPB = CSLAddNameValue(papszRPB, RPC_HEIGHT_SCALE, buff);
 
         int i, j;
-        for( i = 0; apszRPCTXT20ValItems[i] != NULL; i++ )
+        for (i = 0; apszRPCTXT20ValItems[i] != nullptr; i++)
         {
             CPLString value;
-            for( j = 1; j < 21; j++ )
+            for (j = 1; j < 21; j++)
             {
                 CPLStrlcpy(buff, pszFirstRow + nOffset, 13);
                 nOffset += 12;
 
                 value = value + " " + CPLString(buff);
             }
-            papszRPB = CSLAddNameValue(papszRPB, apszRPCTXT20ValItems[i], value);
+            papszRPB =
+                CSLAddNameValue(papszRPB, apszRPCTXT20ValItems[i], value);
         }
     }
     CSLDestroy(papszLines);
@@ -383,10 +384,9 @@ char** GDALMDReaderALOS::LoadRPCTxtFile()
 /**
  * GetAcqisitionTimeFromString()
  */
-time_t GDALMDReaderALOS::GetAcquisitionTimeFromString(
-        const char* pszDateTime)
+GIntBig GDALMDReaderALOS::GetAcquisitionTimeFromString(const char *pszDateTime)
 {
-    if(NULL == pszDateTime)
+    if (nullptr == pszDateTime)
         return 0;
 
     int iYear;
@@ -396,8 +396,8 @@ time_t GDALMDReaderALOS::GetAcquisitionTimeFromString(
     int iMin;
     int iSec;
 
-    int r = sscanf ( pszDateTime, "%4d%2d%2d %d:%d:%d.%*d",
-                     &iYear, &iMonth, &iDay, &iHours, &iMin, &iSec);
+    int r = sscanf(pszDateTime, "%4d%2d%2d %d:%d:%d.%*d", &iYear, &iMonth,
+                   &iDay, &iHours, &iMin, &iSec);
 
     if (r != 6)
         return 0;
@@ -411,5 +411,5 @@ time_t GDALMDReaderALOS::GetAcquisitionTimeFromString(
     tmDateTime.tm_year = iYear - 1900;
     tmDateTime.tm_isdst = -1;
 
-    return mktime(&tmDateTime);
+    return CPLYMDHMSToUnixTime(&tmDateTime);
 }

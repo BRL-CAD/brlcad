@@ -49,6 +49,14 @@ http \- Client-side implementation of the HTTP/1.1 protocol
 \fB::http::registerError \fIport\fR ?\fImessage\fR?
 .sp
 \fB::http::unregister \fIproto\fR
+.SH "EXPORTED COMMANDS"
+.PP
+Namespace \fBhttp\fR exports the commands \fBconfig\fR, \fBformatQuery\fR,
+\fBgeturl\fR, \fBquoteString\fR, \fBregister\fR, \fBregisterError\fR,
+\fBreset\fR, \fBunregister\fR, and \fBwait\fR.
+.PP
+It does not export the commands \fBcleanup\fR, \fBcode\fR, \fBdata\fR,
+\fBerror\fR, \fBmeta\fR, \fBncode\fR, \fBsize\fR, or \fBstatus\fR.
 .BE
 .SH DESCRIPTION
 .PP
@@ -79,8 +87,9 @@ must be active.  In Tk applications this is always true.  For pure-Tcl
 applications, the caller can use \fB::http::wait\fR after calling
 \fB::http::geturl\fR to start the event loop.
 .PP
-\fBNote:\fR The event queue is even used without the \fB-command\fR option.
-As a side effect, arbitrary commands may be processed while \fBhttp::geturl\fR is running.
+\fBNote:\fR The event queue is even used without the \fB\-command\fR option.
+As a side effect, arbitrary commands may be processed while \fBhttp::geturl\fR
+is running.
 .SH COMMANDS
 .TP
 \fB::http::config\fR ?\fIoptions\fR?
@@ -111,9 +120,9 @@ is 1.
 \fB\-postfresh\fR \fIboolean\fR
 .
 Specifies whether requests that use the \fBPOST\fR method will always use a
-fresh socket, overriding the \fB-keepalive\fR option of
-command \fBhttp::geturl\fR.  See the \fBPERSISTENT SOCKETS\fR section for details.
-The default is 0.
+fresh socket, overriding the \fB\-keepalive\fR option of
+command \fBhttp::geturl\fR.  See the \fBPERSISTENT SOCKETS\fR section for
+details. The default is 0.
 .TP
 \fB\-proxyhost\fR \fIhostname\fR
 .
@@ -135,6 +144,13 @@ the proxy server and proxy port.  Otherwise the filter should return
 an empty list.  The default filter returns the values of the
 \fB\-proxyhost\fR and \fB\-proxyport\fR settings if they are
 non-empty.
+.RS
+.PP
+The \fB::http::geturl\fR command runs the \fB\-proxyfilter\fR callback inside
+a \fBcatch\fR command.  Therefore an error in the callback command does
+not call the \fBbgerror\fR handler.  See the \fBERRORS\fR section for
+details.
+.RE
 .TP
 \fB\-repost\fR \fIboolean\fR
 .
@@ -173,9 +189,9 @@ numbers of \fBhttp\fR and \fBTcl\fR.
 .
 If the value is boolean \fBtrue\fR, then by default requests will send a header
 .QW "\fBAccept-Encoding: gzip,deflate,compress\fR" .
-If the value is boolean \fBfalse\fR, then by default this header will not be sent.
-In either case the default can be overridden for an individual request by
-supplying a custom \fBAccept-Encoding\fR header in the \fB-headers\fR option
+If the value is boolean \fBfalse\fR, then by default this header will not be
+sent.  In either case the default can be overridden for an individual request by
+supplying a custom \fBAccept-Encoding\fR header in the \fB\-headers\fR option
 of \fBhttp::geturl\fR. The default is 1.
 .RE
 .TP
@@ -228,6 +244,11 @@ proc httpCallback {token} {
     # Access state as a Tcl array
 }
 .CE
+.PP
+The \fB::http::geturl\fR command runs the \fB\-command\fR callback inside
+a \fBcatch\fR command.  Therefore an error in the callback command does
+not call the \fBbgerror\fR handler.  See the \fBERRORS\fR section for
+details.
 .RE
 .TP
 \fB\-handler\fR \fIcallback\fR
@@ -254,9 +275,21 @@ proc httpHandlerCallback {socket token} {
 }
 .CE
 .PP
-The \fBhttp::geturl\fR code for the \fB-handler\fR option is not compatible with either compression or chunked transfer-encoding.  If \fB-handler\fR is specified, then to work around these issues \fBhttp::geturl\fR will reduce the HTTP protocol to 1.0, and override the \fB-zip\fR option (i.e. it will not send the header "\fBAccept-Encoding: gzip,deflate,compress\fR").
+The \fBhttp::geturl\fR code for the \fB\-handler\fR option is not compatible
+with either compression or chunked transfer-encoding.  If \fB\-handler\fR is
+specified, then to work around these issues \fBhttp::geturl\fR will reduce the
+HTTP protocol to 1.0, and override the \fB\-zip\fR option (i.e. it will not
+send the header "\fBAccept-Encoding: gzip,deflate,compress\fR").
 .PP
-If options \fB-handler\fR and \fB-channel\fR are used together, the handler is responsible for copying the data from the HTTP socket to the specified channel.  The name of the channel is available to the handler as element \fB-channel\fR of the token array.
+If options \fB\-handler\fR and \fB\-channel\fR are used together, the handler
+is responsible for copying the data from the HTTP socket to the specified
+channel.  The name of the channel is available to the handler as element
+\fB\-channel\fR of the token array.
+.PP
+The \fB::http::geturl\fR command runs the \fB\-handler\fR callback inside
+a \fBcatch\fR command.  Therefore an error in the callback command does
+not call the \fBbgerror\fR handler.  See the \fBERRORS\fR section for
+details.
 .RE
 .TP
 \fB\-headers\fR \fIkeyvaluelist\fR
@@ -284,8 +317,16 @@ multiple requests.  Default is 0.
 \fB\-method\fR \fItype\fR
 .
 Force the HTTP request method to \fItype\fR. \fB::http::geturl\fR will
-auto-select GET, POST or HEAD based on other options, but this option
-enables choices like PUT and DELETE for webdav support.
+auto-select GET, POST or HEAD based on other options, but this option overrides
+that selection and enables choices like PUT and DELETE for WebDAV support.
+.RS
+.PP
+It is the caller's responsibility to ensure that the headers and request body
+(if any) conform to the requirements of the request method.  For example, if
+using \fB\-method\fR \fIPOST\fR to send a POST with an empty request body, the
+caller must also supply the option
+.QW "\-headers {Content-Length 0}" .
+.RE
 .TP
 \fB\-myaddr\fR \fIaddress\fR
 .
@@ -318,12 +359,21 @@ otherwise complain about HTTP/1.1.
 .TP
 \fB\-query\fR \fIquery\fR
 .
-This flag causes \fB::http::geturl\fR to do a POST request that passes the
-\fIquery\fR as payload verbatim to the server.
-The content format (and encoding) of \fIquery\fR is announced by the header
-field \fBcontent-type\fR set by the option \fB-type\fR.
-\fIquery\fR is an x-url-encoding formatted query, if used for html forms.
-The \fB::http::formatQuery\fR procedure can be used to do the formatting.
+This flag (if the value is non-empty) causes \fB::http::geturl\fR to do a
+POST request that passes the string
+\fIquery\fR verbatim to the server as the request payload.
+The content format (and encoding) of \fIquery\fR is announced by the request
+header \fBContent-Type\fR which is set by the option \fB\-type\fR.  Any value
+of \fB\-type\fR is permitted, and it is the responsibility of the caller to
+supply \fIquery\fR in the correct format.
+.RS
+.PP
+If \fB\-type\fR is not specified, it defaults to
+\fIapplication/x-www-form-urlencoded\fR, which requires \fIquery\fR to be an
+x-url-encoding formatted query-string (this \fB\-type\fR and query format are
+used in a POST submitted from an html form).  The \fB::http::formatQuery\fR
+procedure can be used to do the formatting.
+.RE
 .TP
 \fB\-queryblocksize\fR \fIsize\fR
 .
@@ -522,6 +572,14 @@ to know the result of the asynchronous HTTP request, it can call
 \fB::http::wait\fR and then check status and error, just as the
 callback does.
 .PP
+The \fB::http::geturl\fR command runs the \fB\-command\fR, \fB\-handler\fR,
+and \fB\-proxyfilter\fR callbacks inside a \fBcatch\fR command.  Therefore
+an error in the callback command does not call the \fBbgerror\fR handler.
+When debugging one of these
+callbacks, it may be convenient to report errors by using a
+\fBcatch\fR command within the callback command itself, e.g. to write
+an error message to stdout.
+.PP
 In any case, you must still call
 \fB::http::cleanup\fR to delete the state array when you are done.
 .PP
@@ -592,7 +650,8 @@ if the HTTP response is text.
 \fBbody\fR
 .
 The contents of the URL.  This will be empty if the \fB\-channel\fR
-option has been specified.  This value is returned by the \fB::http::data\fR command.
+option has been specified.  This value is returned by the \fB::http::data\fR
+command.
 .TP
 \fBcharset\fR
 .
@@ -704,9 +763,9 @@ whether the server was modified by the failed POST request, before
 sending the same request again.
 .PP
 A HTTP request will use a persistent socket if the call to
-\fBhttp::geturl\fR has the option \fB-keepalive true\fR. It will use
+\fBhttp::geturl\fR has the option \fB\-keepalive true\fR. It will use
 pipelining where permitted if the \fBhttp::config\fR option
-\fB-pipeline\fR is boolean \fBtrue\fR (its default value).
+\fB\-pipeline\fR is boolean \fBtrue\fR (its default value).
 .PP
 The http package maintains no more than one persistent connection to each
 server (i.e. each value of
@@ -728,8 +787,8 @@ In accordance with RFC 7230, \fBhttp::geturl\fR does not pipeline
 requests that use the POST method.  If a POST uses a persistent
 connection and is not the first request on that connection,
 \fBhttp::geturl\fR waits until it has received the response for the previous
-request; or (if \fBhttp::config\fR option \fB-postfresh\fR is boolean \fBtrue\fR) it
-uses a new connection for each POST.
+request; or (if \fBhttp::config\fR option \fB\-postfresh\fR is boolean
+\fBtrue\fR) it uses a new connection for each POST.
 .PP
 If the server is processing a number of pipelined requests, and sends a
 response header
@@ -749,7 +808,7 @@ GET requests, \fBhttp::geturl\fR opens another connection and retransmits
 the failed request. However, if the request was a POST, RFC 7230 forbids
 automatic retry by default, suggesting either user confirmation, or
 confirmation by user-agent software that has semantic understanding of
-the application.  The \fBhttp::config\fR option \fB-repost\fR allows for
+the application.  The \fBhttp::config\fR option \fB\-repost\fR allows for
 either possibility.
 .PP
 Asynchronous close events can occur only in a short interval of time.  The
@@ -757,35 +816,70 @@ Asynchronous close events can occur only in a short interval of time.  The
 server.  Upon detection, the connection is also closed at the client end,
 and subsequent requests will use a fresh connection.
 .PP
-If the \fBhttp::geturl\fR command is called with option \fB-keepalive true\fR,
+If the \fBhttp::geturl\fR command is called with option \fB\-keepalive true\fR,
 then it will both try to use an existing persistent connection
 (if one is available), and it will send the server a
 .QW "\fBConnection: keep-alive\fR"
 request header asking to keep the connection open for future requests.
 .PP
-The \fBhttp::config\fR options \fB-pipeline\fR, \fB-postfresh\fR, and
-\fB-repost\fR relate to persistent connections.
+The \fBhttp::config\fR options \fB\-pipeline\fR, \fB\-postfresh\fR, and
+\fB\-repost\fR relate to persistent connections.
 .PP
-Option \fB-pipeline\fR, if boolean \fBtrue\fR, will pipeline GET and HEAD requests
-made
-over a persistent connection.  POST requests will not be pipelined - if the
+Option \fB\-pipeline\fR, if boolean \fBtrue\fR, will pipeline GET and HEAD
+requests made over a persistent connection.  POST requests will not be
+pipelined - if the
 POST is not the first transaction on the connection, its request will not
 be sent until the previous response has finished.  GET and HEAD requests
 made after a POST will not be sent until the POST response has been
 delivered, and will not be sent if the POST fails.
 .PP
-Option \fB-postfresh\fR, if boolean \fBtrue\fR, will override the \fBhttp::geturl\fR option
-\fB-keepalive\fR, and always open a fresh connection for a POST request.
+Option \fB\-postfresh\fR, if boolean \fBtrue\fR, will override the
+\fBhttp::geturl\fR option \fB\-keepalive\fR, and always open a fresh connection
+for a POST request.
 .PP
-Option \fB-repost\fR, if \fBtrue\fR, permits automatic retry of a POST request
+Option \fB\-repost\fR, if \fBtrue\fR, permits automatic retry of a POST request
 that fails because it uses a persistent connection that the server has
 half-closed (an
 .QW "asynchronous close event" ).
 Subsequent GET and HEAD requests in a failed pipeline will also be retried.
-\fIThe -repost option should be used only if the application understands
+\fIThe \-repost option should be used only if the application understands
 that the retry is appropriate\fR - specifically, the application must know
-that if the failed POST successfully modified the state of the server, a repeat POST
-would have no adverse effect.
+that if the failed POST successfully modified the state of the server, a repeat
+POST would have no adverse effect.
+.SH "PROTOCOL UPGRADES"
+.PP
+The HTTP/1.1 \fBConnection\fR and \fBUpgrade\fR client headers inform the server
+that the client wishes to change the protocol used over the existing connection
+(RFC 7230).  This mechanism can be used to request a WebSocket (RFC 6455), a
+higher version of the HTTP protocol (HTTP 2), or TLS encryption.  If the
+server accepts the upgrade request, its response code will be 101.
+.PP
+To request a protocol upgrade when calling \fBhttp::geturl\fR, the \fB\-headers\fR
+option must supply appropriate values for \fBConnection\fR and \fBUpgrade\fR, and
+the \fB\-command\fR option must supply a command that implements the requested
+protocol and can also handle the server response if the server refuses the
+protocol upgrade.  For upgrade requests \fBhttp::geturl\fR ignores the value of
+option \fB\-keepalive\fR, and always uses the value \fB0\fR so that the upgrade
+request is not made over a connection that is intended for multiple HTTP requests.
+.PP
+The Tcllib library \fBwebsocket\fR implements WebSockets, and makes the necessary
+calls to commands in the \fBhttp\fR package.
+.PP
+There is currently no native Tcl client library for HTTP/2.
+.PP
+The \fBUpgrade\fR mechanism is not used to request TLS in web browsers, because
+\fBhttp\fR and \fBhttps\fR are served over different ports.  It is used by
+protocols such as Internet Printing Protocol (IPP) that are built on top of
+\fBhttp(s)\fR and use the same TCP port number for both secure and insecure
+traffic.
+.PP
+In browsers, opportunistic encryption is instead implemented by the
+\fBUpgrade-Insecure-Requests\fR client header.  If a secure service is available,
+the server response code is a 307 redirect, and the response header
+\fBLocation\fR specifies the target URL.  The browser must call \fBhttp::geturl\fR
+again in order to fetch this URL.
+See https://w3c.github.io/webappsec-upgrade-insecure-requests/
+.PP
 .SH EXAMPLE
 .PP
 This example creates a procedure to copy a URL to a file while printing a
@@ -821,7 +915,7 @@ proc httpcopy { url file {chunk 4096} } {
     return $token
 }
 proc httpCopyProgress {args} {
-    puts -nonewline stderr .
+    puts \-nonewline stderr .
     flush stderr
 }
 .CE

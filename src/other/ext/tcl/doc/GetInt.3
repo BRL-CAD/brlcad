@@ -21,7 +21,7 @@ int
 \fBTcl_GetDouble\fR(\fIinterp, src, doublePtr\fR)
 .sp
 int
-\fBTcl_GetBoolean\fR(\fIinterp, src, boolPtr\fR)
+\fBTcl_GetBoolean\fR(\fIinterp, src, intPtr\fR)
 .SH ARGUMENTS
 .AS Tcl_Interp *doublePtr out
 .AP Tcl_Interp *interp in
@@ -33,8 +33,6 @@ Points to place to store integer value converted from \fIsrc\fR.
 .AP double *doublePtr out
 Points to place to store double-precision floating-point
 value converted from \fIsrc\fR.
-.AP int *boolPtr out
-Points to place to store boolean value (0 or 1) converted from \fIsrc\fR.
 .BE
 
 .SH DESCRIPTION
@@ -48,7 +46,7 @@ third argument.  If all goes well, each of the procedures returns
 \fBTCL_OK\fR.  If \fIsrc\fR does not have the proper syntax for the
 desired type then \fBTCL_ERROR\fR is returned, an error message is left
 in the interpreter's result, and nothing is stored at *\fIintPtr\fR
-or *\fIdoublePtr\fR or *\fIboolPtr\fR.
+or *\fIdoublePtr\fR.
 .PP
 \fBTcl_GetInt\fR expects \fIsrc\fR to consist of a collection
 of integer digits, optionally signed and optionally preceded and
@@ -91,9 +89,9 @@ inter-digit separator be present.
 \fBTcl_GetBoolean\fR expects \fIsrc\fR to specify a boolean
 value.  If \fIsrc\fR is any of \fB0\fR, \fBfalse\fR,
 \fBno\fR, or \fBoff\fR, then \fBTcl_GetBoolean\fR stores a zero
-value at \fI*boolPtr\fR.
+value at \fI*intPtr\fR.
 If \fIsrc\fR is any of \fB1\fR, \fBtrue\fR, \fByes\fR, or \fBon\fR,
-then 1 is stored at \fI*boolPtr\fR.
+then 1 is stored at \fI*intPtr\fR.
 Any of these values may be abbreviated, and upper-case spellings
 are also acceptable.
 

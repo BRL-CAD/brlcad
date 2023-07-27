@@ -1,5 +1,5 @@
-include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}
-	)
-
-add_library(ogr_frmt_mem OBJECT ogrmemdriver.cpp ogrmemdatasource.cpp ogrmemlayer.cpp)
+add_gdal_driver(
+  TARGET ogr_MEM
+  SOURCES ogrmemdatasource.cpp ogr_mem.h ogrmemdriver.cpp ogrmemlayer.cpp
+  BUILTIN)
+gdal_standard_includes(ogr_MEM)

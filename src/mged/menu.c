@@ -1,7 +1,7 @@
 /*                          M E N U . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2022 United States Government as represented by
+ * Copyright (c) 1985-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,9 +33,6 @@
 
 
 extern struct menu_item second_menu[], sed_menu[];
-
-void set_menucurrent();
-int set_arrowloc();
 
 int
 cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
@@ -310,7 +307,7 @@ mmenu_select(int pen_y, int do_func)
 	    menu_state->ms_flag = 1;
 	    /* It's up to the menu_func to set menu_state->ms_flag=0
 	     * if no arrow is desired */
-	    if (do_func && mptr->menu_func != ((void (*)())0))
+	    if (do_func && mptr->menu_func != NULL)
 		(*(mptr->menu_func))(mptr->menu_arg, menu, item);
 
 	    return 1;		/* menu claims pen value */

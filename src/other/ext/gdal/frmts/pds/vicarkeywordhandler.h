@@ -8,7 +8,8 @@
  * NOTE: This driver code is loosely based on the ISIS and PDS drivers.
  * It is not intended to diminish the contribution of the authors.
  ******************************************************************************
- * Copyright (c) 2014, Sebastian Walter <sebastian dot walter at fu-berlin dot de>
+ * Copyright (c) 2014, Sebastian Walter <sebastian dot walter at fu-berlin dot
+ *de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,26 +29,38 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
+#ifndef VICARKEYWORDHANDLER_H
+#define VICARKEYWORDHANDLER_H
+
+#include "cpl_json.h"
+
 class VICARKeywordHandler
 {
-    char     **papszKeywordList;
+    char **papszKeywordList;
 
     CPLString osHeaderText;
     const char *pszHeaderNext;
 
-    int     LabelSize;
+    CPLJSONObject oJSon;
 
-    void    SkipWhite();
-    int     ReadWord( CPLString &osWord );
-    int     ReadPair( CPLString &osName, CPLString &osValue );
-    int     ReadGroup( const char *pszPathPrefix );
+    void SkipWhite();
+    bool ReadName(CPLString &osWord);
+    bool ReadValue(CPLString &osWord, bool bInList, bool &bIsString);
+    bool ReadPair(CPLString &osName, CPLString &osValue, CPLJSONObject &oCur);
+    bool Parse();
 
-public:
+  public:
     VICARKeywordHandler();
     ~VICARKeywordHandler();
 
-    int     Ingest( VSILFILE *fp, GByte *pabyHeader );
+    bool Ingest(VSILFILE *fp, const GByte *pabyHeader);
 
-    const char *GetKeyword( const char *pszPath, const char *pszDefault );
-    char **GetKeywordList();
+    const char *GetKeyword(const char *pszPath, const char *pszDefault) const;
+    const CPLJSONObject &GetJsonObject() const
+    {
+        return oJSon;
+    }
 };
+
+#endif  // VICARKEYWORDHANDLER_H

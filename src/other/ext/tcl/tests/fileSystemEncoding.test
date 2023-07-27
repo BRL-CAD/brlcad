@@ -15,20 +15,7 @@ namespace eval ::tcl::test::fileSystemEncoding {
 
     variable fname1 \u767b\u9e1b\u9d72\u6a13
 
-    proc autopath {} {
-	global auto_path
-	set scriptpath [info script]
-	set scriptpathnorm [file dirname [file normalize $scriptpath/...]]
-	set dirnorm [file dirname $scriptpathnorm]
-	set idx [lsearch -exact $auto_path $dirnorm]
-	if {$idx >= 0} {
-	    set auto_path [lreplace $auto_path[set auto_path {}] $idx $idx {}]
-	}
-	set auto_path [linsert $auto_path[set auto_path {}] 0 0 $dirnorm]
-    }
-    autopath
-
-    package require tcltests
+    source [file join [file dirname [info script]] tcltests.tcl]
 
     test filesystemEncoding-1.0 {
 	issue bcd100410465

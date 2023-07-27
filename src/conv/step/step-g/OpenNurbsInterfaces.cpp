@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2022 United States Government as represented by
+ * Copyright (c) 1994-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1185,7 +1185,6 @@ Face::LoadONBrep(ON_Brep *brep)
     //TODO: Check for Outer bound if none check for
     // direction perhaps offer input option possibly
     // check for outer spanning to bounds
-    int cnt = 0;
     LIST_OF_FACE_BOUNDS::iterator i;
     for (i = bounds.begin(); i != bounds.end(); i++) {
 	(*i)->SetFaceIndex(ON_id);
@@ -1193,7 +1192,6 @@ Face::LoadONBrep(ON_Brep *brep)
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
-	cnt++;
     }
     return true;
 }
@@ -1806,10 +1804,10 @@ Plane::LoadONBrep(ON_Brep *brep)
 	return true;    // already loaded
     }
 
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
-    // ON_3dVector norm = GetNormal();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    ON_3dVector yaxis(GetYAxis());
+    // ON_3dVector norm(GetNormal());
 
     origin = origin * LocalUnits::length;
     xaxis.Unitize();
@@ -1853,10 +1851,10 @@ CylindricalSurface::LoadONBrep(ON_Brep *brep)
     if ((false) && (brep->m_S.Count() == 56)) {
 	std::cerr << "LoadONBrep for CylindricalSurface: " << 55 << std::endl;
     }
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
-    ON_3dVector norm = GetNormal();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    ON_3dVector yaxis(GetYAxis());
+    ON_3dVector norm(GetNormal());
 
     origin = origin * LocalUnits::length;
     xaxis.Unitize();
@@ -1902,10 +1900,10 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
 	return true;    // already loaded
     }
 
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
-    ON_3dVector norm = GetNormal();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    ON_3dVector yaxis(GetYAxis());
+    ON_3dVector norm(GetNormal());
 
     origin = origin * LocalUnits::length;
     xaxis.Unitize();
@@ -1987,9 +1985,9 @@ Circle::SetParameterTrim(double start_param, double end_param)
     if (s < t) {
 	s = s + 2 * ON_PI;
     }
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    ON_3dVector yaxis(GetYAxis());
 
     origin = origin * LocalUnits::length;
     xaxis.Unitize();
@@ -2038,9 +2036,9 @@ simplify_angle(double rad)
 static double
 radians_from_xaxis_to_ellipse_point(Conic *conic, ON_3dPoint p, double a = 1.0, double b = 1.0)
 {
-    ON_3dPoint origin = conic->GetOrigin();
-    ON_3dVector xaxis = conic->GetXAxis();
-    ON_3dVector yaxis = conic->GetYAxis();
+    ON_3dPoint origin(conic->GetOrigin());
+    ON_3dVector xaxis(conic->GetXAxis());
+    ON_3dVector yaxis(conic->GetYAxis());
 
     origin = origin * LocalUnits::length;
     xaxis.Unitize();
@@ -2076,9 +2074,9 @@ Circle::LoadONBrep(ON_Brep *brep)
 	std::cerr << "Debug:LoadONBrep for Circle:ID:" << id << std::endl;
     }
 
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    ON_3dVector yaxis(GetYAxis());
 
     origin = origin * LocalUnits::length;
     xaxis.Unitize();
@@ -2234,9 +2232,9 @@ Ellipse::SetParameterTrim(double start_param, double end_param)
     if (s < t) {
 	s = s + 2 * ON_PI;
     }
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    ON_3dVector yaxis(GetYAxis());
 
     origin = origin * LocalUnits::length;
     xaxis.Unitize();
@@ -2274,9 +2272,9 @@ Ellipse::LoadONBrep(ON_Brep *brep)
 
     //if (ON_id >= 0)
     //	return true; // already loaded
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    ON_3dVector yaxis(GetYAxis());
 
     origin = origin * LocalUnits::length;
     xaxis.Unitize();
@@ -2444,10 +2442,10 @@ Hyperbola::SetParameterTrim(double start_param, double end_param)
     t = start_param;
     s = end_param;
 
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
-    // ON_3dVector norm = GetNormal();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    ON_3dVector yaxis(GetYAxis());
+    // ON_3dVector norm(GetNormal());
 
     ON_3dPoint center = origin;
     double a = semi_axis;
@@ -2498,10 +2496,10 @@ Hyperbola::LoadONBrep(ON_Brep *brep)
     //if (ON_id >= 0)
     //	return true; // already loaded
 
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
-    ON_3dVector norm = GetNormal();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    ON_3dVector yaxis(GetYAxis());
+    ON_3dVector norm(GetNormal());
 
     norm.Unitize();
     xaxis.Unitize();
@@ -2612,10 +2610,10 @@ Parabola::SetParameterTrim(double start_param, double end_param)
     t = start_param;
     s = end_param;
 
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
     xaxis.Unitize();
-    ON_3dVector yaxis = GetYAxis();
+    ON_3dVector yaxis(GetYAxis());
     yaxis.Unitize();
 
     ON_3dPoint center = origin;
@@ -2665,10 +2663,10 @@ Parabola::LoadONBrep(ON_Brep *brep)
     //if (ON_id >= 0)
     //	return true; // already loaded
 
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
-    // ON_3dVector yaxis = GetYAxis();
-    // ON_3dVector normal = GetNormal();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    // ON_3dVector yaxis(GetYAxis());
+    // ON_3dVector normal(GetNormal());
 
     ON_3dPoint center = origin * LocalUnits::length;
     double fd = focal_dist * LocalUnits::length;
@@ -2738,8 +2736,8 @@ Line::SetParameterTrim(double start_param, double end_param)
     t = start_param;
     s = end_param;
 
-    ON_3dPoint ptstart = pnt->Point3d();
-    ON_3dVector vdir =  dir->Orientation();
+    ON_3dPoint ptstart(pnt->Point3d());
+    ON_3dVector vdir( dir->Orientation());
     ON_3dPoint ptend = ptstart + (vdir*dir->Magnitude());
     ON_Line l(ptstart, ptend);
 
@@ -2820,7 +2818,7 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
     trim_curve_3d_bbox->Union(curvebb);
     double bbdiag = trim_curve_3d_bbox->Diagonal().Length(); // already converted to local units;
 
-    ON_3dPoint dir = extrusion_axis->Orientation();
+    ON_3dPoint dir(extrusion_axis->Orientation());
     double mag = extrusion_axis->Magnitude() * LocalUnits::length;
     mag = FMAX(mag, bbdiag);
 
@@ -2893,10 +2891,10 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    ON_3dPoint start = axis_position->GetOrigin();
+    ON_3dPoint start(axis_position->GetOrigin());
     start = start * LocalUnits::length;
 
-    ON_3dVector dir = axis_position->GetNormal();
+    ON_3dVector dir(axis_position->GetNormal());
     ON_3dPoint end = start + dir;
 
     ON_Line axisline(start, end);
@@ -2929,13 +2927,13 @@ SphericalSurface::LoadONBrep(ON_Brep *brep)
     }
 
     // get sphere center
-    ON_3dPoint center = GetOrigin();
+    ON_3dPoint center(GetOrigin());
     center = center * LocalUnits::length;
 
     // Creates a sphere with given center and radius.
     ON_Sphere sphere(center, radius * LocalUnits::length);
 
-    ON_RevSurface *s = sphere.RevSurfaceForm();
+    ON_RevSurface *s = sphere.RevSurfaceForm(false, nullptr);
     if (s) {
 	double r = fabs(sphere.radius);
 	if (r <= ON_SQRT_EPSILON) {
@@ -2959,10 +2957,10 @@ ToroidalSurface::LoadONBrep(ON_Brep *brep)
 	return false;
     }
 
-    ON_3dPoint origin = GetOrigin();
-    ON_3dVector xaxis = GetXAxis();
-    ON_3dVector yaxis = GetYAxis();
-    // ON_3dVector norm = GetNormal();
+    ON_3dPoint origin(GetOrigin());
+    ON_3dVector xaxis(GetXAxis());
+    ON_3dVector yaxis(GetYAxis());
+    // ON_3dVector norm(GetNormal());
 
     origin = origin * LocalUnits::length;
 
@@ -3004,7 +3002,7 @@ VertexLoop::LoadONBrep(ON_Brep *brep)
     //load vertex
     loop_vertex->LoadONBrep(brep);
 
-    ON_3dPoint vertex = loop_vertex->Point3d();
+    ON_3dPoint vertex(loop_vertex->Point3d());
 
     // create singular trim;
     ON_BrepLoop &loop = brep->m_L[ON_loop_index];

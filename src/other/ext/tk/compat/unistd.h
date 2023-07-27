@@ -15,12 +15,9 @@
 #define _UNISTD
 
 #include <sys/types.h>
-#ifndef _TCL
-#   include <tcl.h>
-#endif
 
 #ifndef NULL
-#define NULL    0
+#   define NULL    0
 #endif
 
 /*
@@ -38,9 +35,9 @@ extern int		dup2(int oldfd, int newfd);
 extern int		execl(const char *path, ...);
 extern int		execle(const char *path, ...);
 extern int		execlp(const char *file, ...);
-extern int		execv(const char *path, char **argv);
-extern int		execve(const char *path, char **argv, char **envp);
-extern int		execvp(const char *file, char **argv);
+extern int		execv(const char *path, char *const argv[]);
+extern int		execve(const char *path, char *const argv[], char *const *envp);
+extern int		execvp(const char *file, char *const argv[]);
 extern pid_t		fork(void);
 extern char *		getcwd(char *buf, size_t size);
 extern gid_t		getegid(void);
@@ -77,4 +74,3 @@ extern int		vfork(void);
 #endif /* _POSIX_SOURCE */
 
 #endif /* _UNISTD */
-

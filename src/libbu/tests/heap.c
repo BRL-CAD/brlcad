@@ -1,7 +1,7 @@
 /*                       H E A P . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2022 United States Government as represented by
+ * Copyright (c) 2013-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 /* this should match what is in heap.c */
 #define HEAP_BINS 512
 
+#define CNTCALLS
 
 /*
  * FIXME: this routine should compare heap with malloc and make sure
@@ -45,8 +46,10 @@ main(int ac, char *av[])
 {
     int i;
     void *ptr;
+#ifdef CNTCALLS
     size_t allocalls = 0;
     size_t freecalls = 0;
+#endif
 
     // Normally this file is part of bu_test, so only set this if it looks like
     // the program name is still unset.
@@ -68,14 +71,17 @@ main(int ac, char *av[])
 #else
 	ptr = bu_heap_get(sz);
 #endif
+#ifdef CNTCALLS
 	allocalls++;
-
+#endif
 #ifdef USE_MALLOC
 	free(ptr);
 #else
 	bu_heap_put(ptr, sz);
 #endif
+#ifdef CNTCALLS
 	freecalls++;
+#endif
     }
 
 #ifdef USE_MALLOC
@@ -85,7 +91,9 @@ main(int ac, char *av[])
 #endif
     freecalls++;
 
-    /* bu_log("calls: %zd, free: %zd\n", allocalls, freecalls); */
+#ifdef CNTCALLS
+    bu_log("calls: %zd, free: %zd\n", allocalls, freecalls);
+#endif
 
     return 0;
 }

@@ -58,6 +58,10 @@
 /* Pointer difference type */
 #define TIFF_PTRDIFF_T ptrdiff_t
 
+#ifndef SIZEOF_SIZE_T
+#define SIZEOF_SIZE_T SIZEOF_VOIDP
+#endif
+
 /* Signed size type */
 #ifdef _WIN64
 #  define TIFF_SSIZE_T GIntBig
@@ -66,7 +70,7 @@
 #else
 #  define TIFF_SSIZE_T signed long
 #  define TIFF_SSIZE_FORMAT "ld"
-#  if SIZEOF_VOIDP == 8
+#  if SIZEOF_SIZE_T == 8
 #    define TIFF_SIZE_FORMAT "lu"
 #  else
 #    define TIFF_SIZE_FORMAT "u"
@@ -92,9 +96,10 @@
 #  define LIBJPEG_12_PATH "../../jpeg/libjpeg12/jpeglib.h"
 #endif
 
-#ifndef SIZEOF_SIZE_T
-#define SIZEOF_SIZE_T SIZEOF_VOIDP
-#endif
+#define HAVE_ASSERT_H
+
+/* we may lie, but there are so many other places where GDAL assumes IEEE fp */
+#define HAVE_IEEEFP 1
 
 #ifdef RENAME_INTERNAL_LIBTIFF_SYMBOLS
 #include "gdal_libtiff_symbol_rename.h"

@@ -10,9 +10,9 @@
 #       initially implemented by Mary Ann May-Pumphrey of Sun
 #	Microsystems.
 #
-# Copyright (c) 1994-1997 Sun Microsystems, Inc.
-# Copyright (c) 1998-1999 Scriptics Corporation.
-# Copyright (c) 2000 Ajuba Solutions
+# Copyright © 1994-1997 Sun Microsystems, Inc.
+# Copyright © 1998-1999 Scriptics Corporation.
+# Copyright © 2000 Ajuba Solutions
 # Contributions from Don Porter, NIST, 2002.  (not subject to US copyright)
 # All rights reserved.
 
@@ -22,7 +22,7 @@ namespace eval tcltest {
     # When the version number changes, be sure to update the pkgIndex.tcl file,
     # and the install directory in the Makefiles.  When the minor version
     # changes (new feature) be sure to update the man page as well.
-    variable Version 2.5.3
+    variable Version 2.5.5
 
     # Compatibility support for dumb variables defined in tcltest 1
     # Do not use these.  Call [package provide Tcl] and [info patchlevel]
@@ -399,6 +399,9 @@ namespace eval tcltest {
 	    }
 	    default {
 		set outputChannel [open $filename a]
+		if {[package vsatisfies [package provide Tcl] 8.7-]} {
+		    fconfigure $outputChannel -encoding utf-8
+		}
 		set ChannelsWeOpened($outputChannel) 1
 
 		# If we created the file in [temporaryDirectory], then
@@ -443,6 +446,9 @@ namespace eval tcltest {
 	    }
 	    default {
 		set errorChannel [open $filename a]
+		if {[package vsatisfies [package provide Tcl] 8.7-]} {
+		    fconfigure $errorChannel -encoding utf-8
+		}
 		set ChannelsWeOpened($errorChannel) 1
 
 		# If we created the file in [temporaryDirectory], then
@@ -785,6 +791,9 @@ namespace eval tcltest {
 	variable Option
 	if {$Option(-loadfile) eq {}} {return}
 	set tmp [open $Option(-loadfile) r]
+	if {[package vsatisfies [package provide Tcl] 8.7-]} {
+	    fconfigure $tmp -encoding utf-8
+	}
 	loadScript [read $tmp]
 	close $tmp
     }
@@ -1330,6 +1339,9 @@ proc tcltest::DefineConstraintInitializers {} {
     ConstraintInitializer stdio {
 	set code 0
 	if {![catch {set f [open "|[list [interpreter]]" w]}]} {
+	    if {[package vsatisfies [package provide Tcl] 8.7-]} {
+		fconfigure $f -encoding utf-8
+	    }
 	    if {![catch {puts $f exit}]} {
 		if {![catch {close $f}]} {
 		    set code 1
@@ -2129,7 +2141,7 @@ proc tcltest::test {name description args} {
     if {[IsVerbose msec] || [IsVerbose usec]} {
 	set t [expr {[clock microseconds] - $timeStart}]
 	if {[IsVerbose usec]} {
-	    puts [outputChannel] "++++ $name took $t μs"
+	    puts [outputChannel] "++++ $name took $t \xB5s"
 	}
 	if {[IsVerbose msec]} {
 	    puts [outputChannel] "++++ $name took [expr {round($t/1000.)}] ms"
@@ -2177,6 +2189,9 @@ proc tcltest::test {name description args} {
 	    set testFile [file normalize [uplevel 1 {info script}]]
 	    if {[file readable $testFile]} {
 		set testFd [open $testFile r]
+		if {[package vsatisfies [package provide Tcl] 8.7-]} {
+		    fconfigure $testFd -encoding utf-8
+		}
 		set testLine [expr {[lsearch -regexp \
 			[split [read $testFd] "\n"] \
 			"^\[ \t\]*test [string map {. \\.} $name] "] + 1}]
@@ -2885,6 +2900,9 @@ proc tcltest::runAllTests { {shell ""} } {
 	    if {[catch {
 		incr numTestFiles
 		set pipeFd [open $cmd "r"]
+		if {[package vsatisfies [package provide Tcl] 8.7-]} {
+		    fconfigure $pipeFd -encoding utf-8
+		}
 		while {[gets $pipeFd line] >= 0} {
 		    if {[regexp [join {
 			    {^([^:]+):\t}

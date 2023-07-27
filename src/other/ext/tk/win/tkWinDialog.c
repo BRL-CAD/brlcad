@@ -1900,7 +1900,7 @@ GetFileName(
  *
  * OFNHookProc --
  *
- *	Dialog box hook function. This is used to sets the "tk_dialog"
+ *	Dialog box hook function. This is used to set the "tk_dialog"
  *	variable for test/debugging when the dialog is ready to receive
  *	messages. When multiple file selection is enabled this function
  *	is used to process the list of names.
@@ -2779,7 +2779,7 @@ ChooseDirectoryValidateProc(
  *	See user documentation.
  *
  * Side effects:
- *	None. The MessageBox window will be destroy before this function
+ *	None. The MessageBox window will be destroyed before this function
  *	returns.
  *
  *----------------------------------------------------------------------

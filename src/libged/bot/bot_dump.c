@@ -1,7 +1,7 @@
 /*                         B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -160,7 +160,7 @@ obj_get_material(int red, int green, int blue, fastf_t transparency)
 
 
 static void
-obj_free_materials() {
+obj_free_materials(void) {
     struct _ged_obj_material *gomp;
 
     while (BU_LIST_WHILE(gomp, _ged_obj_material, &HeadObjMaterials)) {

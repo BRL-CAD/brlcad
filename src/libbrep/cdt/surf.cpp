@@ -1,7 +1,7 @@
 /*                        C D T _ S U R F . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -852,8 +852,8 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	 * right top    = uMvM
 	 */
 
-	ON_BOOL32 uclosed = s->IsClosed(0);
-	ON_BOOL32 vclosed = s->IsClosed(1);
+	bool uclosed = s->IsClosed(0);
+	bool vclosed = s->IsClosed(1);
 	double midx = (min.x + max.x) / 2.0;
 	double midy = (min.y + max.y) / 2.0;
 

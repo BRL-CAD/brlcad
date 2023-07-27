@@ -1,7 +1,7 @@
 /*                   R E D U C E _ D B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016-2022 United States Government as represented by
+ * Copyright (c) 2016-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,8 +94,6 @@ remove_dead_references_leaf_func(db_i *db, rt_comb_internal *comb, tree *tree,
 static void
 remove_dead_references(db_i &db)
 {
-    RT_CK_DBI(&db);
-
     AutoPtr<directory *> comb_dirs;
     std::size_t num_combs = db_ls(&db, DB_LS_COMB, NULL, &comb_dirs.ptr);
 

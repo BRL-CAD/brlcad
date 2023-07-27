@@ -1,7 +1,7 @@
 /*                        E X I T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, void *clientdata);
 /* TODO - missing functions, if we're not going to expose the bu_bomb hook
  * list.. is this the API we want? */
 BU_EXPORT extern void bu_bomb_save_all_hooks(struct bu_hook_list *save_hlp);
-BU_EXPORT extern void bu_bomb_delete_all_hooks();
+BU_EXPORT extern void bu_bomb_delete_all_hooks(void);
 BU_EXPORT extern void bu_bomb_restore_hooks(struct bu_hook_list *save_hlp);
 
 /**

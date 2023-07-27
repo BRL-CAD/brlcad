@@ -1,7 +1,7 @@
 /*                    E L L _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,7 +89,8 @@ rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
     point_t origin;
     VSET(origin, 0, 0, 0);
-    ON_Sphere sph(origin, 1);
+    ON_3dPoint oo(origin);
+    ON_Sphere sph(oo, 1);
 
     // Get the NURBS form of the surface
     ON_NurbsSurface *ellcurvedsurf = ON_NurbsSurface::New();

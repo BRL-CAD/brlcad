@@ -481,6 +481,36 @@ test stringObj-15.8 {Tcl_Append*ToObj: self appends} testobj {
     teststringobj appendself2 1 3
 } foo
 
+test stringObj-16.0 {Tcl_GetRange: normal case} testobj {
+    teststringobj set 1 abcde
+    teststringobj range 1 1 3
+} bcd
+test stringObj-16.1 {Tcl_GetRange: first > end} testobj {
+    teststringobj set 1 abcde
+    teststringobj range 1 10 5
+} {}
+test stringObj-16.2 {Tcl_GetRange: last > end} testobj {
+    teststringobj set 1 abcde
+    teststringobj range 1 3 13
+} de
+test stringObj-16.3 {Tcl_GetRange: first = -1} testobj {
+    teststringobj set 1 abcde
+    teststringobj range 1 -1 3
+} abcd
+test stringObj-16.4 {Tcl_GetRange: last = -1} testobj {
+    teststringobj set 1 abcde
+    teststringobj range 1 1 -1
+} bcde
+test stringObj-16.5 {Tcl_GetRange: fist = last = -1} testobj {
+    teststringobj set 1 abcde
+    teststringobj range 1 -1 -1
+} abcde
+test stringObj-16.6 {Tcl_GetRange: old anomaly} testobj {
+    # Older implementations could return "cde"
+    teststringobj set 1 abcde
+    teststringobj range 1 2 0
+} {}
+
 
 if {[testConstraint testobj]} {
     testobj freeallvars

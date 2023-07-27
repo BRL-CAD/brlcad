@@ -1,2 +1,8 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(frmt_mem OBJECT memdataset.cpp)
+add_gdal_driver(
+  TARGET gdal_MEM
+  SOURCES memdataset.cpp memdataset.h
+  BUILTIN)
+gdal_standard_includes(gdal_MEM)
+
+include(TargetPublicHeader)
+target_public_header(TARGET gdal HEADERS memdataset.h)

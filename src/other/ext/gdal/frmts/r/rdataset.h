@@ -7,7 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2009, Frank Warmerdam <warmerdam@pobox.com>
- * Copyright (c) 2009-2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,7 @@
 #include <cstring>
 #include <string>
 #if HAVE_FCNTL_H
-#  include <fcntl.h>
+#include <fcntl.h>
 #endif
 
 #include "cpl_conv.h"
@@ -46,12 +46,11 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 #include "gdal_priv.h"
-#include "../raw/rawdataset.h"
+#include "rawdataset.h"
 
-GDALDataset *
-RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
-             int bStrict, char ** papszOptions,
-             GDALProgressFunc pfnProgress, void * pProgressData );
+GDALDataset *RCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
+                         int bStrict, char **papszOptions,
+                         GDALProgressFunc pfnProgress, void *pProgressData);
 
 /************************************************************************/
 /* ==================================================================== */
@@ -59,29 +58,29 @@ RCreateCopy( const char * pszFilename, GDALDataset *poSrcDS,
 /* ==================================================================== */
 /************************************************************************/
 
-class RDataset : public GDALPamDataset
+class RDataset final : public GDALPamDataset
 {
     friend class RRasterBand;
-    VSILFILE   *fp;
-    int         bASCII;
-    CPLString   osLastStringRead;
+    VSILFILE *fp;
+    int bASCII;
+    CPLString osLastStringRead;
 
     vsi_l_offset nStartOfData;
 
-    double     *padfMatrixValues;
+    double *padfMatrixValues;
 
     const char *ASCIIFGets();
-    int         ReadInteger();
-    double      ReadFloat();
+    int ReadInteger();
+    double ReadFloat();
     const char *ReadString();
-    bool        ReadPair( CPLString &osItemName, int &nItemType );
+    bool ReadPair(CPLString &osItemName, int &nItemType);
 
   public:
-                RDataset();
-                ~RDataset();
+    RDataset();
+    ~RDataset();
 
-    static GDALDataset  *Open( GDALOpenInfo * );
-    static int          Identify( GDALOpenInfo * );
+    static GDALDataset *Open(GDALOpenInfo *);
+    static int Identify(GDALOpenInfo *);
 };
 
 /************************************************************************/
@@ -90,15 +89,17 @@ class RDataset : public GDALPamDataset
 /* ==================================================================== */
 /************************************************************************/
 
-class RRasterBand : public GDALPamRasterBand
+class RRasterBand final : public GDALPamRasterBand
 {
     friend class RDataset;
 
     const double *padfMatrixValues;
 
   public:
-                RRasterBand( RDataset *, int, const double * );
-    virtual ~RRasterBand() {}
+    RRasterBand(RDataset *, int, const double *);
+    virtual ~RRasterBand()
+    {
+    }
 
-    virtual CPLErr          IReadBlock( int, int, void * ) override;
+    virtual CPLErr IReadBlock(int, int, void *) override;
 };

@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2022 United States Government as represented by
+ * Copyright (c) 1985-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -387,8 +387,21 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
 		break;
 	}
     }
-    argc -= bu_optind-1;
-    argv += bu_optind-1;
+
+    if (bu_optind > 1) {
+	int offset = bu_optind - 1;
+	// we've handled the flags - remove them but keep the rest of the string intact
+	for (int i = 1; i < argc - offset; i++) {
+	    argv[i] = argv[i + offset];
+	}
+	// null out the rest
+	for (int i = argc - offset; i < argc; i++) {
+	    argv[i] = NULL;
+	}
+
+	// update count
+	argc -= offset;
+    }
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     if (ret & GED_MORE)

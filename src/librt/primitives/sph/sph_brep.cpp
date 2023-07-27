@@ -1,7 +1,7 @@
 /*                    S P H _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,8 @@ rt_sph_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     tip = (struct rt_ell_internal *)ip->idb_ptr;
     RT_ELL_CK_MAGIC(tip);
 
-    ON_Sphere sph(tip->v, MAGNITUDE(tip->a));
+    ON_3dPoint sp(tip->v);
+    ON_Sphere sph(sp, MAGNITUDE(tip->a));
 
     ON_Brep *sph_brep = ON_BrepSphere(sph);
     **b = *sph_brep;

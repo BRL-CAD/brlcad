@@ -1,7 +1,7 @@
 /*                 I C V _ S I Z E _ D O W N . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2022 United States Government as represented by
+ * Copyright (c) 2013-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "bu/str.h"
 #include "icv.h"
 
-void usage()
+void usage(void)
 {
     bu_log("\
 	    [-s squaresize] [-w width] [-n height] \n\

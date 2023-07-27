@@ -34,6 +34,11 @@ public:
     );
   ON_PointCloud( const ON_PointCloud& );
   ~ON_PointCloud();
+
+  ON_PointCloud(const ON_3dPoint* P0, int count);
+
+  // 0<dim<4 stride is dim+is_rat
+  ON_PointCloud(const double* P0, int dim, bool is_rat, int count); 
   ON_PointCloud& operator=( const ON_PointCloud& );
 
   ON_3dPoint& operator[](int);
@@ -46,7 +51,7 @@ public:
     ci - [in] a component index with m_typ set to ON_COMPONENT_INDEX::pointcloud_point
               and 0 <= m_index and m_index < m_P.Count().
   Returns:
-    Point at [ci.m_index] or ON_UNSET_POINT if ci is not valid.
+    Point at [ci.m_index] or ON_3dPoint::UnsetPoint if ci is not valid.
   */
   ON_3dPoint Point( ON_COMPONENT_INDEX ci ) const;
 
@@ -59,53 +64,48 @@ public:
   */
   void EmergencyDestroy();
 
-  // virtual ON_Object override
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
   // virtual ON_Object override
-  void Dump( ON_TextLog& ) const; // for debugging
+  void Dump( ON_TextLog& ) const override; // for debugging
 
   // virtual ON_Object override
-  ON_BOOL32 Write( ON_BinaryArchive& ) const;
+  bool Write( ON_BinaryArchive& ) const override;
 
   // virtual ON_Object override
-  ON_BOOL32 Read( ON_BinaryArchive& );
+  bool Read( ON_BinaryArchive& ) override;
 
   // virtual ON_Object override
-  ON::object_type ObjectType() const;
+  ON::object_type ObjectType() const override;
+
+  // virtual ON_Object::SizeOf override
+  unsigned int SizeOf() const override;
 
   // virtual ON_Geometry override
-  int Dimension() const;
+  int Dimension() const override;
+
+  // virtual ON_Geometry GetBBox override		
+  bool GetBBox( double* boxmin, double* boxmax, bool bGrowBox = false ) const override;
+
+  // virtual ON_Geometry GetTightBoundingBox override		
+  bool GetTightBoundingBox( class ON_BoundingBox& tight_bbox, bool bGrowBox = false, const class ON_Xform* xform = nullptr ) const override;
 
   // virtual ON_Geometry override
-  ON_BOOL32 GetBBox( // returns true if successful
-         double*,    // minimum
-         double*,    // maximum
-         ON_BOOL32 = false  // true means grow box
-         ) const;
-
-  // virtual ON_Geometry override
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
-      int bGrowBox = false,
-			const ON_Xform* xform = 0
-      ) const;
-
-  // virtual ON_Geometry override
-  ON_BOOL32 Transform( 
+  bool Transform( 
          const ON_Xform&
-         );
+         ) override;
 
   // virtual ON_Geometry override
-  bool IsDeformable() const;
+  bool IsDeformable() const override;
 
   // virtual ON_Geometry override
-  bool MakeDeformable();
+  bool MakeDeformable() override;
 
   // virtual ON_Geometry override
-  ON_BOOL32 SwapCoordinates(
+  bool SwapCoordinates(
         int, int        // indices of coords to swap
-        );
+        ) override;
+
 
   /*
   Description:
@@ -160,12 +160,18 @@ public:
   */
   bool HasPointColors() const;
 
+  /*
+  Returns:
+    True if m_V.Count() == m_P.Count().
+  */
+  bool HasPointValues() const;
 
   /*
   Returns:
     Number of points that are hidden.
   */
   int HiddenPointCount() const;
+  unsigned int HiddenPointUnsignedCount() const;
 
   /*
   Description:
@@ -178,7 +184,7 @@ public:
     If the point cloud has some hidden points, then an array
     of length PointCount() is returned and the i-th
     element is true if the i-th vertex is hidden.
-    If no ponts are hidden, NULL is returned.
+    If no ponts are hidden, nullptr is returned.
   */
   const bool* HiddenPointArray() const;
 
@@ -202,6 +208,30 @@ public:
   */
   bool PointIsHidden( int point_index ) const;
 
+  /*
+  Description:
+    Returns a random subsample of a point cloud.
+  Parameters:
+    source_point_cloud - [in] The point cloud to subsample.
+    subsample_point_count - [in] The number of points to keep.
+    destination_point_cloud - [out] If nullptr, then a new ON_PointCloud() 
+        will be the destination. This can be the source point cloud.
+    progress_reporter - [in] Optional progress reporter, can be nullptr.
+    terminator - [in] Optional terminator, can be nullptr.
+  Returns:
+    A new ON_PointCloud which is a subsample of source_point_cloud.
+    If destination_point_cloud == nullptr, then memory will be allocated for
+    the returned point cloud and becomes the responsibility of the caller.
+  */
+  static ON_PointCloud* RandomSubsample(
+    const ON_PointCloud* source_point_cloud,
+    const unsigned int subsample_point_count,
+    ON_PointCloud* destination_point_cloud,
+    ON_ProgressReporter* progress_reporter,
+    ON_Terminator* terminator
+  );
+
+
   /////////////////////////////////////////////////////////////////
   // Implementation
   ON_3dPointArray m_P;
@@ -216,9 +246,16 @@ public:
   /////////////////////////////////////////////////////////////////
   // Implementation - OPTIONAL point color
   //    Either m_C[] has zero count or it has the same
-  //    count as m_P[], in which case m_P[j] reports
+  //    count as m_P[], in which case m_C[j] reports
   //    the color assigned to m_P[j].
   ON_SimpleArray<ON_Color> m_C;
+
+  /////////////////////////////////////////////////////////////////
+  // Implementation - OPTIONAL point value (intensity)
+  //    Either m_V[] has zero count or it has the same
+  //    count as m_P[], in which case m_V[j] reports
+  //    the value assigned to m_P[j].
+  ON_SimpleArray<double> m_V;
 
   /////////////////////////////////////////////////////////////////
   // Implementation - RUNTIME point visibility - not saved in 3dm files.
@@ -227,12 +264,12 @@ public:
   //    is hidden.  Otherwise, all points are visible.
   //    m_hidden_count = number of true values in the m_H[] array.
   ON_SimpleArray<bool> m_H;
-  int m_hidden_count;
+  unsigned int m_hidden_count = 0;
 
   ON_Plane m_plane;
   ON_BoundingBox m_bbox;
-  unsigned int m_flags; // bit 1 is set if ordered
-                        // bit 2 is set if plane is set
+  unsigned int m_flags = 0; // bit 1 is set if ordered
+                            // bit 2 is set if plane is set
 
 };
 

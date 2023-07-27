@@ -1,0 +1,9 @@
+<map id="OpenMesh::BaseKernel" name="OpenMesh::BaseKernel">
+<area shape="rect" id="node1" title="This class provides low&#45;level property management like adding/removing properties and access to prope..." alt="" coords="5,85,165,112"/>
+<area shape="rect" id="node2" href="$a03426.html" title=" " alt="" coords="216,5,409,61"/>
+<area shape="rect" id="node4" href="$a02418.html" title="Mesh kernel using arrays for mesh item storage." alt="" coords="232,85,393,112"/>
+<area shape="rect" id="node7" href="$a03426.html" title="Helper class, extending functionaliy of OpenMesh::BaseKernel to OpenSG specific property adaptors." alt="" coords="213,137,412,178"/>
+<area shape="rect" id="node3" href="$a03414.html" title="This class adds the standard properties to the mesh type." alt="" coords="460,13,655,54"/>
+<area shape="rect" id="node5" href="$a02618.html" title="Connectivity Class for polygonal meshes." alt="" coords="461,85,653,112"/>
+<area shape="rect" id="node6" href="$a02794.html" title="Connectivity Class for Triangle Meshes." alt="" coords="703,85,884,112"/>
+</map>

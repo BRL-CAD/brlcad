@@ -1,7 +1,7 @@
 /*			M G E D _ D M . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2022 United States Government as represented by
+ * Copyright (c) 1985-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -434,9 +434,9 @@ struct mged_dm {
     struct _dlist_state	*dm_dlist_state;
 
     /* Hooks */
-    int			(*dm_cmd_hook)();
-    void			(*dm_viewpoint_hook)();
-    int			(*dm_eventHandler)();
+    int			(*dm_cmd_hook)(int, const char **);
+    void			(*dm_viewpoint_hook)(void);
+    int			(*dm_eventHandler)(void);
 };
 
 /* If we're changing the active DM, use this function so
@@ -584,7 +584,7 @@ extern void zclip_hook(const struct bu_structparse *, const char *, void *,const
 extern void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *, void *); /* defined in color_scheme.c */
 
 /* defined in setup.c */
-extern void mged_rtCmdNotify();
+extern void mged_rtCmdNotify(int);
 
 /* indices into which_dm[] */
 #define DM_PLOT_INDEX 0

@@ -1,7 +1,7 @@
 /*                         D X F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -285,7 +285,7 @@ make_brlcad_name(const char *nameline)
 
 
 static void
-get_layer()
+get_layer(void)
 {
     int i;
     int old_layer=curr_layer;
@@ -350,7 +350,7 @@ get_layer()
 
 
 static void
-create_nmg()
+create_nmg(void)
 {
     struct model *m;
     struct nmgregion *r;
@@ -3090,7 +3090,7 @@ nmg_wire_edges_to_sketch(struct model *m)
 
 
 int
-readcodes()
+readcodes(void)
 {
     int code;
     size_t line_len;

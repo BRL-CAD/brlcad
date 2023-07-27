@@ -1,2 +1,6 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(ogr_frmt_pgdump OBJECT ogrpgdumpdriver.cpp ogrpgdumpdatasource.cpp ogrpgdumplayer.cpp)
+# depend from pg
+add_gdal_driver(
+  TARGET ogr_PGDump
+  SOURCES ogr_pgdump.h ogrpgdumpdriver.cpp ogrpgdumpdatasource.cpp ogrpgdumplayer.cpp
+  BUILTIN)
+gdal_standard_includes(ogr_PGDump)

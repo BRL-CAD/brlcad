@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999, Frank Warmerdam
- * Copyright (c) 2010, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2010, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,7 +35,7 @@
 #include "cpl_port.h"
 
 CPL_C_START
-const char * GDALDefaultCSVFilename( const char *pszBasename );
+const char *GDALDefaultCSVFilename(const char *pszBasename);
 CPL_C_END
 
 #endif

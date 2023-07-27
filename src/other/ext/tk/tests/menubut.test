@@ -542,7 +542,7 @@ test menubutton-6.1 {MenuButtonCmdDeletedProc procedure} -setup {
     deleteWindows
 } -result {{} {}}
 
-if {[tk windowingsystem] == "aqua"} {
+if {[tk windowingsystem] eq "aqua"} {
     set extraWidth 36
 } else {
     set extraWidth 0

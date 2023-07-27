@@ -1,7 +1,7 @@
 /*                       N M G _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2022 United States Government as represented by
+ * Copyright (c) 1994-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1392,8 +1392,8 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
     struct loopuse *lu;
     struct edgeuse *eu;
     int edgeuse_vert_count = 0;
-    int non_consec_edgeuse_vert_count = 0;
-    int faceuse_loopuse_count = 0;
+    //int non_consec_edgeuse_vert_count = 0;
+    //int faceuse_loopuse_count = 0;
     struct vertex *prev_v_p = (struct vertex *)NULL;
     struct vertex *curr_v_p = (struct vertex *)NULL;
     struct vertex *first_v_p = (struct vertex *)NULL;
@@ -1409,7 +1409,7 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 	if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
 	    continue;
 	}
-	non_consec_edgeuse_vert_count = 0;
+	//non_consec_edgeuse_vert_count = 0;
 	edgeuse_vert_count = 0;
 	prev_v_p = (struct vertex *)NULL;
 	curr_v_p = (struct vertex *)NULL;
@@ -1418,7 +1418,7 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 	prev_eu = (struct edgeuse *)NULL;
 	first_eu = (struct edgeuse *)NULL;
 
-	faceuse_loopuse_count++;
+	//faceuse_loopuse_count++;
 
 	bu_vls_sprintf(&plot_file_name, "%s_faceuse_%p_loopuse_%p.pl",
 		       prefix, (void *)fu, (void *)lu);
@@ -1450,9 +1450,9 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 		}
 	    }
 	    edgeuse_vert_count++;
-	    if (curr_v_p != prev_v_p) {
-		non_consec_edgeuse_vert_count++;
-	    }
+	    //if (curr_v_p != prev_v_p) {
+		//non_consec_edgeuse_vert_count++;
+	    //}
 	    if (edgeuse_vert_count > 1) {
 		if (prev_v_p && curr_v_p) {
 		    bg_dist_pnt3_pnt3(prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);

@@ -211,7 +211,7 @@ test ttk-2.8 "bug 3223850: button state disabled during click" -setup {
 } -body {
     bind .b <ButtonPress-1> {after 0 {.b configure -state disabled}}
     after 1 {event generate .b <ButtonPress-1>}
-    after 20 {event generate .b <ButtonRelease-1>}
+    after 50 {event generate .b <ButtonRelease-1>}
     set aid [after 100 {set ::ttk28 [.b instate {disabled !pressed}]}]
     vwait ::ttk28
     after cancel $aid
@@ -439,6 +439,15 @@ test ttk-9.8 "-textvariable overrides -text" -body {
     .tl configure -text Bar
     .tl cget -text
 } -cleanup { destroy .tl } -result "Foo"
+
+test ttk-9.9 "default for -justify" -body {
+    ttk::label .tl
+    .tl cget -justify
+} -cleanup { destroy .tl } -result "left"
+test ttk-9.10 "default for -anchor" -body {
+    ttk::label .tl
+    .tl cget -anchor
+} -cleanup { destroy .tl } -result "w"
 
 #
 # Frame widget tests:

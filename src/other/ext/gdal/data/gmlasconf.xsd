@@ -489,7 +489,7 @@
               <xs:element name="ProxyAuth" minOccurs="0" type="xs:string">
                 <xs:annotation>
                   <xs:documentation>
-                    Proxy authentification method: one of Basic, NTLM, Digest
+                    Proxy authentication method: one of Basic, NTLM, Digest
                     or Any.
                     Default: none or value of GDAL_PROXY_AUTH
                     configuration option.
@@ -765,6 +765,21 @@
                 </xs:complexType>
               </xs:element>
 
+
+              <xs:element name="ResolveInternalXLinks" minOccurs="0" type="xs:boolean">
+                <xs:annotation>
+                    <xs:documentation>
+                    Whether xlink:href pointing to internal resources should be
+                    resolved, so as to establish cross-layer relationships.
+                    This options requires to keep in-memory xlink:href values
+                    as well as feature ids, which in the case of really large
+                    documents with many features and/or many cross-references
+                    could consume a lot of RAM.
+                    Default is true.
+                    </xs:documentation>
+                </xs:annotation>
+              </xs:element>
+
             </xs:sequence>
           </xs:complexType>
         </xs:element>
@@ -852,7 +867,7 @@
                 <xs:annotation>
                   <xs:documentation>
                     Number of spaces used to indent each level of nesting in
-                    XML ouput.
+                    XML output.
                     Default is 2.
                   </xs:documentation>
                 </xs:annotation>
@@ -1017,7 +1032,7 @@ Use ogr_gmlas:FeatureCollection / ogr_gmlas:featureMember wrapping
         When comparing the XPath exclusion rules and the
         XPath of the elements/attributes of the parsed
         documents, and when the namespace of the XPath
-        exclusion rule has been difined, the URI will be
+        exclusion rule has been defined, the URI will be
         used as the unambiguous key. Otherwise prefix
         matching will be used.
         </xs:documentation>

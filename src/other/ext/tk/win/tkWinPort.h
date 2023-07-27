@@ -95,6 +95,7 @@
  * See ticket [916c1095438eae56]: GetVersionExW triggers warnings
  */
 #if defined(_MSC_VER)
+#   pragma warning(disable:4090) /* see: https://developercommunity.visualstudio.com/t/c-compiler-incorrect-propagation-of-const-qualifie/390711 */
 #   pragma warning(disable:4146)
 #   pragma warning(disable:4267)
 #   pragma warning(disable:4244)
@@ -123,12 +124,6 @@
 
 #define TkpGetPixel(p) (((((p)->red >> 8) & 0xff) \
 	| ((p)->green & 0xff00) | (((p)->blue << 8) & 0xff0000)) | 0x20000000)
-
-/*
- * Used by tkWindow.c
- */
-
-#define TkpHandleMapOrUnmap(tkwin, event)  Tk_HandleEvent(event)
 
 /*
  * These calls implement native bitmaps which are not currently

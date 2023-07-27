@@ -1,7 +1,7 @@
 /*                   F B - S W R A S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1989-2022 United States Government as represented by
+ * Copyright (c) 1989-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1026,7 +1026,7 @@ struct fb swrast_interface = { &swrast_interface_impl };
 static const struct fb_plugin finfo = { &swrast_interface };
 
 extern "C" {
-COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info()
+COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info(void)
 {
     return &finfo;
 }

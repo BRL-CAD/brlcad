@@ -24,7 +24,7 @@ _RULES_VC = 1
 # For modifications that are not backward-compatible, you *must* change
 # the major version.
 RULES_VERSION_MAJOR = 1
-RULES_VERSION_MINOR = 9
+RULES_VERSION_MINOR = 10
 
 # The PROJECT macro must be defined by parent makefile.
 !if "$(PROJECT)" == ""
@@ -411,8 +411,8 @@ _INSTALLDIR=$(_INSTALLDIR)\lib
 #     compiler version 1200. This is kept only for legacy reasons as it
 #     does not make sense for recent Microsoft compilers. Only used for
 #     output directory names.
-# ARCH - set to IX86 or AMD64 depending on 32- or 64-bit target
-# NATIVE_ARCH - set to IX86 or AMD64 for the host machine
+# ARCH - set to IX86, ARM64 or AMD64 depending on 32- or 64-bit target
+# NATIVE_ARCH - set to IX86, ARM64 or AMD64 for the host machine
 # MACHINE - same as $(ARCH) - legacy
 # _VC_MANIFEST_EMBED_{DLL,EXE} - commands for embedding a manifest if needed
 
@@ -435,6 +435,8 @@ VCVER=0
     && ![echo ARCH=IX86 >> vercl.x] \
     && ![echo $(_HASH)elif defined(_M_AMD64) >> vercl.x] \
     && ![echo ARCH=AMD64 >> vercl.x] \
+    && ![echo $(_HASH)elif defined(_M_ARM64) >> vercl.x] \
+    && ![echo ARCH=ARM64 >> vercl.x] \
     && ![echo $(_HASH)endif >> vercl.x] \
     && ![$(cc32) -nologo -TC -P vercl.x 2>NUL]
 !include vercl.i
@@ -459,6 +461,9 @@ VCVER = $(VCVERSION)
 !if "$(MACHINE)" == "x86"
 !undef MACHINE
 MACHINE = IX86
+!elseif "$(MACHINE)" == "arm64"
+!undef MACHINE
+MACHINE = ARM64
 !elseif "$(MACHINE)" == "x64"
 !undef MACHINE
 MACHINE = AMD64
@@ -475,6 +480,8 @@ MACHINE=$(ARCH)
 # the Tcl platform::identify command
 !if "$(MACHINE)" == "AMD64"
 PLATFORM_IDENTIFY = win32-x86_64
+!elseif "$(MACHINE)" == "ARM64"
+PLATFORM_IDENTIFY = win32-arm
 !else
 PLATFORM_IDENTIFY = win32-ix86
 !endif
@@ -490,6 +497,8 @@ MULTIPLATFORM_INSTALL = 0
 
 !if ![reg query HKLM\Hardware\Description\System\CentralProcessor\0 /v Identifier | findstr /i x86]
 NATIVE_ARCH=IX86
+!elseif ![reg query HKLM\Hardware\Description\System\CentralProcessor\0 /v Identifier | findstr /i ARM | findstr /i 64-bit]
+NATIVE_ARCH=ARM64
 !else
 NATIVE_ARCH=AMD64
 !endif
@@ -541,7 +550,12 @@ NMAKEHLPC = $(_TCLDIR)\win\nmakehlp.c
 
 # We always build nmakehlp even if it exists since we do not know
 # what source it was built from.
+!if "$(MACHINE)" == "IX86" || "$(MACHINE)" == "$(NATIVE_ARCH)"
 !if [$(cc32) -nologo "$(NMAKEHLPC)" -link -subsystem:console > nul]
+!endif
+!else
+!if [copy $(NMAKEHLPC:nmakehlp.c=x86_64-w64-mingw32-nmakehlp.exe) nmakehlp.exe >NUL]
+!endif
 !endif
 
 ################################################################
@@ -679,7 +693,7 @@ LINKERFLAGS     = $(LINKERFLAGS) -ltcg
 !if [echo REM = This file is generated from rules.vc > versions.vc]
 !endif
 !if [echo TCL_MAJOR_VERSION = \>> versions.vc] \
-   && [nmakehlp -V "$(_TCL_H)" TCL_MAJOR_VERSION >> versions.vc]
+   && [nmakehlp -V "$(_TCL_H)" "define TCL_MAJOR_VERSION" >> versions.vc]
 !endif
 !if [echo TCL_MINOR_VERSION = \>> versions.vc] \
    && [nmakehlp -V "$(_TCL_H)" TCL_MINOR_VERSION >> versions.vc]
@@ -693,7 +707,7 @@ LINKERFLAGS     = $(LINKERFLAGS) -ltcg
 
 !if defined(_TK_H)
 !if [echo TK_MAJOR_VERSION = \>> versions.vc] \
-   && [nmakehlp -V $(_TK_H) TK_MAJOR_VERSION >> versions.vc]
+   && [nmakehlp -V $(_TK_H) "define TK_MAJOR_VERSION" >> versions.vc]
 !endif
 !if [echo TK_MINOR_VERSION = \>> versions.vc] \
    && [nmakehlp -V $(_TK_H) TK_MINOR_VERSION >> versions.vc]
@@ -802,8 +816,7 @@ DOTSEPARATED=$(DOTSEPARATED:b=.)
 #           configuration (ignored for Tcl itself)
 # _USE_64BIT_TIME_T - forces a build using 64-bit time_t for 32-bit build
 #           (CRT library should support this, not needed for Tcl 9.x)
-# TCL_UTF_MAX=4 - forces a build allowing 4-byte UTF-8 sequences internally.
-#           (Not needed for Tcl 9.x)
+# TCL_UTF_MAX=3 - forces a build using UTF-16 internally (not recommended).
 # Further, LINKERFLAGS are modified based on above.
 
 # Default values for all the above
@@ -870,9 +883,9 @@ USE_THREAD_ALLOC= 0
 _USE_64BIT_TIME_T = 1
 !endif
 
-!if [nmakehlp -f $(OPTS) "utfmax"]
-!message *** Force allowing 4-byte UTF-8 sequences internally
-TCL_UTF_MAX = 4
+!if [nmakehlp -f $(OPTS) "utf16"]
+!message *** Force UTF-16 internally
+TCL_UTF_MAX = 3
 !endif
 !endif
 
@@ -1370,7 +1383,7 @@ OPTDEFINES	= $(OPTDEFINES) /DUSE_THREAD_ALLOC=1
 OPTDEFINES	= $(OPTDEFINES) /DSTATIC_BUILD
 !elseif $(TCL_VERSION) > 86
 OPTDEFINES	= $(OPTDEFINES) /DTCL_WITH_EXTERNAL_TOMMATH
-!if "$(MACHINE)" == "AMD64"
+!if "$(MACHINE)" == "AMD64" || "$(MACHINE)" == "ARM64"
 OPTDEFINES	= $(OPTDEFINES) /DMP_64BIT
 !endif
 !endif
@@ -1398,23 +1411,23 @@ OPTDEFINES	= $(OPTDEFINES) /DTCL_CFG_OPTIMIZED
 !if $(PROFILE)
 OPTDEFINES	= $(OPTDEFINES) /DTCL_CFG_PROFILED
 !endif
-!if "$(MACHINE)" == "AMD64"
+!if "$(MACHINE)" == "AMD64" || "$(MACHINE)" == "ARM64"
 OPTDEFINES	= $(OPTDEFINES) /DTCL_CFG_DO64BIT
 !endif
 !if $(VCVERSION) < 1300
 OPTDEFINES	= $(OPTDEFINES) /DNO_STRTOI64=1
 !endif
 
-!if "$(TCL_MAJOR_VERSION)" == "8"
+!if $(TCL_MAJOR_VERSION) == 8
 !if "$(_USE_64BIT_TIME_T)" == "1"
 OPTDEFINES	= $(OPTDEFINES) /D_USE_64BIT_TIME_T=1
-!endif
-!if "$(TCL_UTF_MAX)" == "4"
-OPTDEFINES	= $(OPTDEFINES) /DTCL_UTF_MAX=4
 !endif
 
 # _ATL_XP_TARGETING - Newer SDK's need this to build for XP
 COMPILERFLAGS  = /D_ATL_XP_TARGETING
+!endif
+!if "$(TCL_UTF_MAX)" == "3"
+OPTDEFINES	= $(OPTDEFINES) /DTCL_UTF_MAX=3
 !endif
 
 # Like the TEA system only set this non empty for non-Tk extensions
@@ -1457,10 +1470,10 @@ cdebug = $(cdebug) -Zi
 
 !endif # $(DEBUG)
 
-# cwarn includes default warning levels.
-cwarn = $(WARNINGS)
+# cwarn includes default warning levels, also C4090 (buggy) and C4146 is useless.
+cwarn = $(WARNINGS) -wd4090 -wd4146
 
-!if "$(MACHINE)" == "AMD64"
+!if "$(MACHINE)" == "AMD64" || "$(MACHINE)" == "ARM64"
 # Disable pointer<->int warnings related to cast between different sizes
 # There are a gadzillion of these due to use of ClientData and
 # clutter up compiler
@@ -1474,6 +1487,11 @@ cwarn = $(cwarn) -wd4311 -wd4312
 carch = /D_ARM_WINAPI_PARTITION_DESKTOP_SDK_AVAILABLE
 !else
 carch =
+!endif
+
+# cpuid is only available on intel machines
+!if "$(MACHINE)" == "IX86" || "$(MACHINE)" == "AMD64"
+carch = $(carch) /DHAVE_CPUID=1
 !endif
 
 !if $(DEBUG)

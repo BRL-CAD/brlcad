@@ -1,7 +1,7 @@
 /*                    T O R _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@ Torus_RevSurfaceForm(const ON_Torus& torus )
 ON_Brep*
 Torus_Brep( const ON_Torus& torus)
 {
-    ON_BOOL32 bArcLengthParameterization = true;
+    bool bArcLengthParameterization = true;
     ON_Brep* brep = NULL;
     ON_RevSurface* pRevSurface = Torus_RevSurfaceForm(torus);
     if ( pRevSurface )

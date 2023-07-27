@@ -82,7 +82,6 @@ if {[tk windowingsystem] eq "aqua"} {
 	set bbh [expr {[winfo height $mb]} + $bevelPad]
 	set mw [winfo reqwidth $menu]
 	set bw [winfo width $mb]
-	set dF [expr {[winfo width $mb] - [winfo reqwidth $menu] - $menuPad}]
 	set entry [::tk::MenuFindName $menu [$mb cget -text]]
 	if {$entry < 0} {
 	    set entry 0
@@ -106,7 +105,7 @@ if {[tk windowingsystem] eq "aqua"} {
 		incr y $menuPad
 		incr x $bw
 	    }
-	    default {
+	    default {  # flush
 		incr y $bbh
 	    }
 	}
@@ -118,7 +117,6 @@ if {[tk windowingsystem] eq "aqua"} {
 	set bh [expr {[winfo height $mb]}]
 	set mw [expr {[winfo reqwidth $menu]}]
 	set bw [expr {[winfo width $mb]}]
-	set dF [expr {[winfo width $mb] - [winfo reqwidth $menu]}]
 	if {[tk windowingsystem] eq "win32"} {
 	    incr mh 6
 	    incr mw 16
@@ -154,13 +152,8 @@ if {[tk windowingsystem] eq "aqua"} {
 	    right {
 		incr x $bw
 	    }
-	    default {
-		if {[$mb cget -style] eq ""} {
-		    incr x [expr {([winfo width $mb] - \
-				   [winfo reqwidth $menu])/ 2}]
-		} else {
-		    incr y $bh
-		}
+	    default {  # flush
+		incr x [expr {([winfo width $mb] - [winfo reqwidth $menu])/ 2}]
 	    }
 	}
 	return [list $x $y $entry]

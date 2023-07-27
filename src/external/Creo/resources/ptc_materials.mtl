@@ -1,0 +1,210 @@
+#------------------------------------------------------------------------------#
+# Title:   ptc_materials.mtl
+# Purpose: Provides custom material translation table from Creo to BRL-CAD
+# Version: Created for use with Creo version 7.0.9.0
+# Date:    12/12/2022
+#
+# Notes:
+#  1) Identify any "ptc_material_name" value known to exist in the Creo model
+#  2) Specify corresponding values for the "material_id" and "los" attributes
+#  3) Assignment of attributes occurs with the first found "ptc_material_name"
+#  4) Identifying unknown "ptc_material_name" values have no effect
+#  5) Assigning a negative "material_id" will suppress creation of attributes
+#  6) Employ any of these characters "!@#$%^&*/<>?" to indicate a comment
+#  7) Create upto two-hundred fifty-six unique "ptc_material_name" values
+#  8) Input lines are limited to no more than eighty characters
+#
+# Example:
+#
+#   Assume the material translation file contains the following entries:
+#
+#   $------------------------------------------
+#   $ ptc_material_name   material_id    los  
+#   $------------------------------------------
+#       Aluminum               77         35
+#       Glass                  -6         60
+#       Steel                  70         85
+#   $------------------------------------------
+#
+#   After the conversion:
+#
+#   -------------------------------------------------------------
+#                 Creo to BRL-CAD Conversion Results
+#   -------------------------------------------------------------
+#                                  BRL-CAD Attribute Values
+#            Creo           -------------------------------------
+#    Case  Material          ptc_material_name  material_id  los
+#   -------------------------------------------------------------
+#      1   "STEEL"     -->         steel            70        85
+#      2   "ALUMINUM"  -->       aluminum           77        35
+#      3   "GLASS"     -->          N/A            N/A       N/A
+#   -------------------------------------------------------------
+#
+#   Notice that in the first two cases the attributes for "Steel" and
+#   "Aluminum" correspond as expected with the entries that appear in the
+#   material translation file.  However, notice that in "Case 3" of this
+#   example the attributes for "GLASS" are not available (N/A) in BRL-CAD.
+#   This occurs whenever a negative "material_id" appears in the material
+#   translation file.  In this instance, the entry for "Glass" corresponded
+#   with a negative "material_id" (-6) which signaled the converter to
+#   suppress all three of these BRL-CAD attributes.
+#
+#   The conditional suppression of attributes is intended to permit BRL-CAD
+#   users to quickly identify Creo parts which contain what the user may deem
+#   to be an unwanted Creo material assignment.  Resolving disparities with
+#   the material assigned in the upstream Creo part model is a desireable
+#   "best practice" in the conversion of CAD models from Creo to BRL-CAD in
+#   an effort to enhance process automation.
+#
+#------------------------------------------------------------------------------#
+#
+#                   Creo to BRL-CAD Material Translation Table
+#
+#------------------------------------------------------------------------------#
+# ptc_material_name                 material_id    los       ptc_category
+#------------------------------------------------------------------------------#
+   Undefined                             -1        100   #none
+   PTC_System_Mtrl_Props                 -1        100   #default
+   Alumina                                1        100   #ceramics_and_glasses
+   Aluminum_nitride                       2        100   #ceramics_and_glasses
+   Boron_carbide                          3        100   #ceramics_and_glasses
+   Borosilicate_glass                     4        100   #ceramics_and_glasses
+   Concrete                               5        100   #ceramics_and_glasses
+   Glass                                  6        100   #ceramics_and_glasses
+   Glass_ceramic                          7        100   #ceramics_and_glasses
+   Granite                                8        100   #ceramics_and_glasses
+   Laminated_glass                        9        100   #ceramics_and_glasses
+   Limestone                             10        100   #ceramics_and_glasses
+   Marble                                11        100   #ceramics_and_glasses
+   Sandstone                             12        100   #ceramics_and_glasses
+   Silica_glass                          13        100   #ceramics_and_glasses
+   Silicon_carbide                       14        100   #ceramics_and_glasses
+   Silicon_nitride                       15        100   #ceramics_and_glasses
+   Slate                                 16        100   #ceramics_and_glasses
+   Tungsten_carbide                      17        100   #ceramics_and_glasses
+   Zirconia                              18        100   #ceramics_and_glasses
+   Cyanate_ester-carbon_composite        19        100   #composites
+   EP-CF_composite                       20        100   #composites
+   EP-GF_composite                       21        100   #composites
+   PF-GF_composite                       22        100   #composites
+   UP_composite                          23        100   #composites
+   Silicone_rubber                       24        100   #elastomers_and_rubbers
+   Cast_iron_ductile                     25        100   #ferrous_metals
+   Cast_iron_gray                        26        100   #ferrous_metals
+   Cast_iron_malleable                   27        100   #ferrous_metals
+   Cast_iron_nodular                     28        100   #ferrous_metals
+   Stainless_steel_austenitic            29        100   #ferrous_metals
+   Stainless_steel_ferritic              30        100   #ferrous_metals
+   Stainless_steel_martensitic           31        100   #ferrous_metals
+   Steel_cast                            32        100   #ferrous_metals
+   Steel_galvanized                      33        100   #ferrous_metals
+   Steel_high_carbon                     34        100   #ferrous_metals
+   Steel_HSLA                            35        100   #ferrous_metals
+   Steel_low_alloy                       36        100   #ferrous_metals
+   Steel_low_carbon                      37        100   #ferrous_metals
+   Steel_low_carbon_heat_treated         38        100   #ferrous_metals
+   Steel_medium_carbon                   39        100   #ferrous_metals
+   Tool_steel_air_hardening              40        100   #ferrous_metals
+   Tool_steel_high_speed                 41        100   #ferrous_metals
+   Tool_steel_water_hardening            42        100   #ferrous_metals
+   Air                                   43        100   #fluid_materials
+   Carbon_dioxide                        44        100   #fluid_materials
+   Engine_oil                            45        100   #fluid_materials
+   Mercury                               46        100   #fluid_materials
+   Water                                 47        100   #fluid_materials
+   Water_Vapor                           48        100   #fluid_materials
+   PE_foam_flexible                      49        100   #foams
+   PF_foam_rigid                         50        100   #foams
+   PP_foam_flexible                      51        100   #foams
+   PS_foam_rigid                         52        100   #foams
+   PU_foam_elastomeric                   53        100   #foams
+   PU_foam_rigid                         54        100   #foams
+   Al2014                                55        100   #legacy-materials
+   Al6061                                56        100   #legacy-materials
+   Brass                                 57        100   #legacy-materials
+   Cu                                    58        100   #legacy-materials
+   Epoxy                                 59        100   #legacy-materials
+   FE20                                  60        100   #legacy-materials
+   FE30                                  61        100   #legacy-materials
+   FE40                                  62        100   #legacy-materials
+   FE60                                  63        100   #legacy-materials
+   FEMALL                                64        100   #legacy-materials
+   FENODR                                65        100   #legacy-materials
+   Mg                                    66        100   #legacy-materials
+   Nylon                                 67        100   #legacy-materials
+   PVC                                   68        100   #legacy-materials
+   SS                                    69        100   #legacy-materials
+   Steel                                 70        100   #legacy-materials
+   TiAlly                                71        100   #legacy-materials
+   TiPure                                72        100   #legacy-materials
+   Tungsten                              73        100   #legacy-materials
+   Al-Cu_alloy_wrought_HS                74        100   #non-ferrous metals
+   Al-Mg-Si_alloy_wrought                75        100   #non-ferrous metals
+   Al-Si-Cu_alloy_cast                   76        100   #non-ferrous metals
+   Aluminum_wrought                      77        100   #non-ferrous metals
+   Brass_cast                            78        100   #non-ferrous metals
+   Brass_wrought                         79        100   #non-ferrous metals
+   Bronze_cast                           80        100   #non-ferrous metals
+   Copper_cast                           81        100   #non-ferrous metals
+   Copper_wrought                        82        100   #non-ferrous metals
+   Cu-Al_alloy                           83        100   #non-ferrous metals
+   Gold                                  84        100   #non-ferrous metals
+   Lead                                  85        100   #non-ferrous metals
+   Mg-Al_alloy_cast                      86        100   #non-ferrous metals
+   Mg-Al-Zn_alloy_wrought                87        100   #non-ferrous metals
+   Nickel                                88        100   #non-ferrous metals
+   Ni-Co-Cr_alloy_cast                   89        100   #non-ferrous metals
+   Ni-Co-Cr_alloy_wrought                90        100   #non-ferrous metals
+   Ni-Cr_alloy                           91        100   #non-ferrous metals
+   Ni-Cu_alloy                           92        100   #non-ferrous metals
+   Pb-Sb_alloy_cast                      93        100   #non-ferrous metals
+   Silver                                94        100   #non-ferrous metals
+   Ti-Al-V_alloy                         95        100   #non-ferrous metals
+   Tin                                   96        100   #non-ferrous metals
+   Titanium                              97        100   #non-ferrous metals
+   W-Rh_alloy                            98        100   #non-ferrous metals
+   Zinc                                  99        100   #non-ferrous metals
+   Zn-Al_alloy_cast                     100        100   #non-ferrous metals
+   ABS                                  101        100   #plastics
+   EP                                   102        100   #plastics
+   EVA                                  103        100   #plastics
+   LCP                                  104        100   #plastics
+   PA6                                  105        100   #plastics
+   PA66                                 106        100   #plastics
+   PA66-GF                              107        100   #plastics
+   PA6-GF                               108        100   #plastics
+   PBT                                  109        100   #plastics
+   PBT-GF                               110        100   #plastics
+   PC                                   111        100   #plastics
+   PC-ABS                               112        100   #plastics
+   PEEK                                 113        100   #plastics
+   PE-HD                                114        100   #plastics
+   PE-LD                                115        100   #plastics
+   PE-LLD                               116        100   #plastics
+   PET                                  117        100   #plastics
+   PE-UHMW                              118        100   #plastics
+   PF                                   119        100   #plastics
+   PLA                                  120        100   #plastics
+   PMMA                                 121        100   #plastics
+   POM                                  122        100   #plastics
+   PP                                   123        100   #plastics
+   PPO-PS_Noryl                         124        100   #plastics
+   PPS                                  125        100   #plastics
+   PS                                   126        100   #plastics
+   PS-HI                                127        100   #plastics
+   PTFE_Teflon                          128        100   #plastics
+   PVC-P_flexible                       129        100   #plastics
+   PVC-U_rigid                          130        100   #plastics
+   SAN                                  131        100   #plastics
+   TPS                                  132        100   #plastics
+   Bamboo                               133        100   #woods
+   Cork                                 134        100   #woods
+   Hardboard                            135        100   #woods
+   Hardwood-birch                       136        100   #woods
+   Hardwood-cherry                      137        100   #woods
+   Hardwood-maple                       138        100   #woods
+   Hardwood-oak                         139        100   #woods
+   Hardwood-walnut                      140        100   #woods
+   Plywood                              141        100   #woods
+   Softwood-pine                        142        100   #woods
+#------------------------------------------------------------------------------#

@@ -126,8 +126,8 @@ It should have arguments and result that match the type
 typedef char *\fBTcl_VarTraceProc\fR(
         ClientData \fIclientData\fR,
         Tcl_Interp *\fIinterp\fR,
-        char *\fIname1\fR,
-        char *\fIname2\fR,
+        const char *\fIname1\fR,
+        const char *\fIname2\fR,
         int \fIflags\fR);
 .CE
 .PP

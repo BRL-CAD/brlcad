@@ -1,7 +1,7 @@
 /*                      P I X B L E N D . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2022 United States Government as represented by
+ * Copyright (c) 1995-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -160,7 +160,6 @@ main(int argc, char **argv)
     int threshold = 0;
     int gthreshold = 0;
 #endif
-    int c = 0;
     size_t ret;
 
     bu_setprogname(argv[0]);
@@ -207,7 +206,6 @@ main(int argc, char **argv)
 	unsigned char *cb3; 	/* current output buf ptr */
 	size_t r1, r2, len, todo;
 
-	++c;
 	r1 = fread(b1, 1, CHUNK, f1);
 	r2 = fread(b2, 1, CHUNK, f2);
 	len = r1;

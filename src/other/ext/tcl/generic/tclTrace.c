@@ -160,8 +160,8 @@ typedef struct StringTraceData {
 
 #define FOREACH_COMMAND_TRACE(interp, name, clientData) \
     (clientData) = NULL; \
-    while ((clientData = Tcl_CommandTraceInfo(interp, name, 0, \
-	    TraceCommandProc, clientData)) != NULL)
+    while (((clientData) = Tcl_CommandTraceInfo((interp), (name), 0, \
+	    TraceCommandProc, (clientData))) != NULL)
 
 /*
  *----------------------------------------------------------------------
@@ -434,7 +434,7 @@ TraceExecutionObjCmd(
 	 * pointer to its array of element pointers.
 	 */
 
-	result = Tcl_ListObjGetElements(interp, objv[4], &listLen, &elemPtrs);
+	result = TclListObjGetElements(interp, objv[4], &listLen, &elemPtrs);
 	if (result != TCL_OK) {
 	    return result;
 	}
@@ -604,7 +604,7 @@ TraceExecutionObjCmd(
 		TclNewLiteralStringObj(opObj, "leavestep");
 		Tcl_ListObjAppendElement(NULL, elemObjPtr, opObj);
 	    }
-	    Tcl_ListObjLength(NULL, elemObjPtr, &numOps);
+	    TclListObjLength(NULL, elemObjPtr, &numOps);
 	    if (0 == numOps) {
 		Tcl_DecrRefCount(elemObjPtr);
 		continue;
@@ -675,7 +675,7 @@ TraceCommandObjCmd(
 	 * pointer to its array of element pointers.
 	 */
 
-	result = Tcl_ListObjGetElements(interp, objv[4], &listLen, &elemPtrs);
+	result = TclListObjGetElements(interp, objv[4], &listLen, &elemPtrs);
 	if (result != TCL_OK) {
 	    return result;
 	}
@@ -799,7 +799,7 @@ TraceCommandObjCmd(
 		TclNewLiteralStringObj(opObj, "delete");
 		Tcl_ListObjAppendElement(NULL, elemObjPtr, opObj);
 	    }
-	    Tcl_ListObjLength(NULL, elemObjPtr, &numOps);
+	    TclListObjLength(NULL, elemObjPtr, &numOps);
 	    if (0 == numOps) {
 		Tcl_DecrRefCount(elemObjPtr);
 		continue;
@@ -874,7 +874,7 @@ TraceVariableObjCmd(
 	 * pointer to its array of element pointers.
 	 */
 
-	result = Tcl_ListObjGetElements(interp, objv[4], &listLen, &elemPtrs);
+	result = TclListObjGetElements(interp, objv[4], &listLen, &elemPtrs);
 	if (result != TCL_OK) {
 	    return result;
 	}
@@ -2104,10 +2104,6 @@ TraceVarProc(
  *	gives a handle to the command procedure that will be evaluated. The
  *	'objc' and 'objv' parameters give the parameter vector that will be
  *	passed to the command procedure. Proc does not return a value.
- *
- *	It is permissible for 'proc' to call Tcl_SetCommandTokenInfo to change
- *	the command procedure or client data for the command being evaluated,
- *	and these changes will take effect with the current evaluation.
  *
  *	The 'level' argument specifies the maximum nesting level of calls to
  *	be traced. If the execution depth of the interpreter exceeds 'level',

@@ -1,2 +1,2 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(frmt_tsx OBJECT tsxdataset.cpp)
+add_gdal_driver(TARGET gdal_TSX SOURCES tsxdataset.cpp PLUGIN_CAPABLE NO_DEPS)
+gdal_standard_includes(gdal_TSX)

@@ -2425,7 +2425,7 @@ test font-47.2 {Bug 3049518,TIP 608 - Canvas} -body {
 		    15                    [expr {15 + $theight}] \
 		    -width 1 -joinstyle round -smooth true -fill {} -outline blue]
     pack $c -fill both -expand 1 -side top
-    tkwait visibility $c
+    update
 
     # Lamda test functions
     set circle_text {{w user_data text circ} {
@@ -2440,33 +2440,34 @@ test font-47.2 {Bug 3049518,TIP 608 - Canvas} -body {
 	lassign [$w bbox $text] x0 y0 x1 y1
 	set offset 5
 	set coord [lmap expr {
-			      $x0-5 $y0-5   $x1+5 $y0-5
-			      $x1+5 $y1+5   $x0-5 $y1+5
+			      $x0-$offset $y0-$offset $x1+$offset $y0-$offset
+			      $x1+$offset $y1+$offset $x0-$offset $y1+$offset
 			  } {expr $expr}]
 	if {[catch {$w coord $circ $coord} err]} {
 	    puts Error:$err
 	}
     }}
-    set waitfor {{tag {time 333}} {after $time incr ::wait4; vwait ::wait4}}
     set enclosed {{can id} {$can find enclosed {*}[$can bbox $id]}}
 
     set results {}
     apply $circle_text $c FontChanged $textid $circid
+    update
     bind $c <<TkWorldChanged>> [list apply $circle_text %W %d $textid $circid]
-    apply $waitfor 1
 
     # Begin test:
     set results {}
     lappend results [apply $enclosed $c $circid]
     font configure MyFont -size 26
-    apply $waitfor 2
+    update  ; # services the "TheWorldHasChanged" event, queues "TkWorldChanged" events
+    update  ; # services the queued "TkWorldChanged" events
     lappend results [apply $enclosed $c $circid]
     font configure MyFont -size 9
-    apply $waitfor 3
+    update idletasks
+    update
     lappend results [apply $enclosed $c $circid]
-    apply $waitfor 4
     font configure MyFont -size 12
-    apply $waitfor 5
+    update idletasks
+    update
     lappend results [apply $enclosed $c $circid]
 } -cleanup {
     destroy $c
@@ -2510,11 +2511,6 @@ test font-47.3 {Bug 3049518, TIP 608 - Label} -body {
 	$w configure -image $img
     }}
 
-    set waitfor {{tag {time 500}} {
-	after $time incr ::wait4
-	vwait ::wait4
-    }}
-
     set check {{w} {
 	global results
 	set f [$w cget -font]
@@ -2529,19 +2525,22 @@ test font-47.3 {Bug 3049518, TIP 608 - Label} -body {
     set img [apply ${make-img} $size]
     set l [label .t.l -compound left -image $img -text $text -font MyFont]
     pack $l -side top -fill both -expand 1
+    update
     bind $l <<TkWorldChanged>> [list apply $testWorldChanged %W %d]
     set ::results {}
 
-    apply $waitfor 0
     apply $check $l
     font configure MyFont -size 26
-    apply $waitfor 1
+    update  ; # services the "TheWorldHasChanged" event, queues "TkWorldChanged" events
+    update  ; # services the queued "TkWorldChanged" events
     apply $check $l
     font configure MyFont -size 9
-    apply $waitfor 2
+    update idletasks
+    update
     apply $check $l
     font configure MyFont -size 13
-    apply $waitfor 3
+    update idletasks
+    update
     apply $check $l
     set results
 } -cleanup {

@@ -1,7 +1,7 @@
 /*                     W A L K _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -88,7 +88,6 @@ void usage(const char *name, const char *str)
 int parse_args(int ac, char *av[])
 {
     int c;
-    char *strrchr();
     char tmp_basename[MAXPATHLEN] = {0};
 
     /* Turn off bu_getopt's error messages */

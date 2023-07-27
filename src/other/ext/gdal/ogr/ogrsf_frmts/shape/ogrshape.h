@@ -8,7 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 1999,  Les Technologies SoftMap Inc.
- * Copyright (c) 2008-2013, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2008-2013, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,10 +32,15 @@
 #ifndef OGRSHAPE_H_INCLUDED
 #define OGRSHAPE_H_INCLUDED
 
+#ifdef RENAME_INTERNAL_SHAPELIB_SYMBOLS
+#include "gdal_shapelib_symbol_rename.h"
+#endif
+
 #include "ogrsf_frmts.h"
 #include "shapefil.h"
 #include "shp_vsi.h"
 #include "ogrlayerpool.h"
+#include <set>
 #include <vector>
 
 /* Was limited to 255 until OGR 1.10, but 254 seems to be a more */
@@ -47,46 +52,59 @@
 /* ==================================================================== */
 /*      Functions from Shape2ogr.cpp.                                   */
 /* ==================================================================== */
-OGRFeature *SHPReadOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
-                               OGRFeatureDefn * poDefn, int iShape,
-                               SHPObject *psShape, const char *pszSHPEncoding );
-OGRGeometry *SHPReadOGRObject( SHPHandle hSHP, int iShape, SHPObject *psShape );
-OGRFeatureDefn *SHPReadOGRFeatureDefn( const char * pszName,
-                                       SHPHandle hSHP, DBFHandle hDBF,
-                                       const char *pszSHPEncoding,
-                                       int bAdjustType );
-OGRErr SHPWriteOGRFeature( SHPHandle hSHP, DBFHandle hDBF,
-                           OGRFeatureDefn *poFeatureDefn,
-                           OGRFeature *poFeature, const char *pszSHPEncoding,
-                           bool* pbTruncationWarningEmitted,
-                           bool bRewind );
+OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
+                              OGRFeatureDefn *poDefn, int iShape,
+                              SHPObject *psShape, const char *pszSHPEncoding);
+OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape);
+OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
+                                      DBFHandle hDBF,
+                                      const char *pszSHPEncoding,
+                                      int bAdjustType);
+OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
+                          OGRFeatureDefn *poFeatureDefn, OGRFeature *poFeature,
+                          const char *pszSHPEncoding,
+                          bool *pbTruncationWarningEmitted, bool bRewind);
 
 /************************************************************************/
 /*                         OGRShapeGeomFieldDefn                        */
 /************************************************************************/
 
-class OGRShapeGeomFieldDefn CPL_FINAL: public OGRGeomFieldDefn
+class OGRShapeGeomFieldDefn final : public OGRGeomFieldDefn
 {
-    char* pszFullName;
-    bool  bSRSSet;
-    CPLString osPrjFile;
+    CPL_DISALLOW_COPY_ASSIGN(OGRShapeGeomFieldDefn)
 
-    public:
-        OGRShapeGeomFieldDefn( const char* pszFullNameIn,
-                               OGRwkbGeometryType eType,
-                               int bSRSSetIn, OGRSpatialReference *poSRSIn) :
-            OGRGeomFieldDefn("", eType),
-            pszFullName(CPLStrdup(pszFullNameIn)),
-            bSRSSet(CPL_TO_BOOL(bSRSSetIn))
-        {
-            poSRS = poSRSIn;
-        }
+    char *pszFullName = nullptr;
+    mutable bool bSRSSet = false;
+    mutable CPLString osPrjFile{};
 
-        virtual ~OGRShapeGeomFieldDefn() { CPLFree(pszFullName); }
+  public:
+    OGRShapeGeomFieldDefn(const char *pszFullNameIn, OGRwkbGeometryType eType,
+                          int bSRSSetIn, OGRSpatialReference *poSRSIn)
+        : OGRGeomFieldDefn("", eType), pszFullName(CPLStrdup(pszFullNameIn)),
+          bSRSSet(CPL_TO_BOOL(bSRSSetIn))
+    {
+        SetSpatialRef(poSRSIn);
+    }
 
-        virtual OGRSpatialReference* GetSpatialRef() override;
+    virtual ~OGRShapeGeomFieldDefn()
+    {
+        CPLFree(pszFullName);
+    }
 
-        const CPLString& GetPrjFilename() const { return osPrjFile; }
+    OGRSpatialReference *GetSpatialRef() const override;
+    void SetSRSSet()
+    {
+        bSRSSet = true;
+    }
+
+    const CPLString &GetPrjFilename() const
+    {
+        return osPrjFile;
+    }
+    void SetPrjFilename(const std::string &osFilename)
+    {
+        osPrjFile = osFilename;
+    }
 };
 
 /************************************************************************/
@@ -95,54 +113,56 @@ class OGRShapeGeomFieldDefn CPL_FINAL: public OGRGeomFieldDefn
 
 class OGRShapeDataSource;
 
-class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
+class OGRShapeLayer final : public OGRAbstractProxiedLayer
 {
-    OGRShapeDataSource  *poDS;
+    CPL_DISALLOW_COPY_ASSIGN(OGRShapeLayer)
 
-    OGRFeatureDefn     *poFeatureDefn;
-    int                 iNextShapeId;
-    int                 nTotalShapeCount;
+    OGRShapeDataSource *poDS;
 
-    char                *pszFullName;
+    OGRFeatureDefn *poFeatureDefn;
+    int iNextShapeId;
+    int nTotalShapeCount;
 
-    SHPHandle           hSHP;
-    DBFHandle           hDBF;
+    char *pszFullName;
 
-    bool                bUpdateAccess;
+    SHPHandle hSHP;
+    DBFHandle hDBF;
 
-    OGRwkbGeometryType  eRequestedGeomType;
-    int                 ResetGeomType( int nNewType );
+    bool bUpdateAccess;
 
-    bool                ScanIndices();
+    OGRwkbGeometryType eRequestedGeomType;
+    int ResetGeomType(int nNewType);
 
-    GIntBig            *panMatchingFIDs;
-    int                 iMatchingFID;
-    void                ClearMatchingFIDs();
+    bool ScanIndices();
 
-    OGRGeometry        *m_poFilterGeomLastValid;
-    int                 nSpatialFIDCount;
-    int                *panSpatialFIDs;
-    void                ClearSpatialFIDs();
+    GIntBig *panMatchingFIDs;
+    int iMatchingFID;
+    void ClearMatchingFIDs();
 
-    bool                bHeaderDirty;
-    bool                bSHPNeedsRepack;
-    bool                bCheckedForQIX;
-    SHPTreeDiskHandle   hQIX;
-    bool                CheckForQIX();
+    OGRGeometry *m_poFilterGeomLastValid;
+    int nSpatialFIDCount;
+    int *panSpatialFIDs;
+    void ClearSpatialFIDs();
 
-    bool                bCheckedForSBN;
-    SBNSearchHandle     hSBN;
-    bool                CheckForSBN();
+    bool bHeaderDirty;
+    bool bSHPNeedsRepack;
+    bool bCheckedForQIX;
+    SHPTreeDiskHandle hQIX;
+    bool CheckForQIX();
 
-    bool                bSbnSbxDeleted;
+    bool bCheckedForSBN;
+    SBNSearchHandle hSBN;
+    bool CheckForSBN();
 
-    CPLString           ConvertCodePage( const char * );
-    CPLString           osEncoding;
+    bool bSbnSbxDeleted;
 
-    bool                bTruncationWarningEmitted;
+    CPLString ConvertCodePage(const char *);
+    CPLString osEncoding{};
 
-    bool                bHSHPWasNonNULL; // Must try to reopen a .shp?
-    bool                bHDBFWasNonNULL; // Must try to reopen a .dbf
+    bool bTruncationWarningEmitted;
+
+    bool bHSHPWasNonNULL;  // Must try to reopen a .shp?
+    bool bHDBFWasNonNULL;  // Must try to reopen a .dbf
     // Current state of opening of file descriptor to .shp and .dbf.
 
     typedef enum
@@ -153,157 +173,217 @@ class OGRShapeLayer CPL_FINAL: public OGRAbstractProxiedLayer
     } FileDescriptorState;
     FileDescriptorState eFileDescriptorsState;
 
-    bool                TouchLayer();
-    bool                ReopenFileDescriptors();
+    bool TouchLayer();
+    bool ReopenFileDescriptors();
 
-    bool                bResizeAtClose;
+    bool bResizeAtClose;
 
-    void                TruncateDBF();
+    void TruncateDBF();
 
-    bool                bCreateSpatialIndexAtClose;
-    bool                bRewindOnWrite;
+    bool bCreateSpatialIndexAtClose;
+    bool bRewindOnWrite;
 
-    bool                m_bAutoRepack;
+    bool m_bAutoRepack;
     typedef enum
     {
         YES,
         NO,
         MAYBE
-    } NormandyState; /* French joke. "Peut'et' ben que oui, peut'et' ben que non." Sorry :-) */
-    NormandyState       m_eNeedRepack;
+    } NormandyState; /* French joke. "Peut'et' ben que oui, peut'et' ben que
+                        non." Sorry :-) */
+    NormandyState m_eNeedRepack;
 
-  protected:
+    // Set of field names (in upper case). Built and invalidated when convenient
+    std::set<CPLString> m_oSetUCFieldName{};
 
-    virtual void        CloseUnderlyingLayer() override;
+    bool StartUpdate(const char *pszOperation);
 
-// WARNING: Each of the below public methods should start with a call to
-// TouchLayer() and test its return value, so as to make sure that
-// the layer is properly re-opened if necessary.
+    void CloseUnderlyingLayer() override;
 
-  public:
-    OGRErr              CreateSpatialIndex( int nMaxDepth );
-    OGRErr              DropSpatialIndex();
-    OGRErr              Repack();
-    OGRErr              RecomputeExtent();
-    OGRErr              ResizeDBF();
-
-    void                SetResizeAtClose( bool bFlag )
-        { bResizeAtClose = bFlag; }
-
-    const char         *GetFullName() { return pszFullName; }
-
-    OGRFeature *        FetchShape( int iShapeId );
-    int                 GetFeatureCountWithSpatialFilterOnly();
+    // WARNING: Each of the below public methods should start with a call to
+    // TouchLayer() and test its return value, so as to make sure that
+    // the layer is properly re-opened if necessary.
 
   public:
-                        OGRShapeLayer( OGRShapeDataSource* poDSIn,
-                                       const char * pszName,
-                                       SHPHandle hSHP, DBFHandle hDBF,
-                                       OGRSpatialReference *poSRS, bool bSRSSet,
-                                       bool bUpdate,
-                                       OGRwkbGeometryType eReqType,
-                                       char ** papszCreateOptions = NULL);
-    virtual            ~OGRShapeLayer();
+    OGRErr CreateSpatialIndex(int nMaxDepth);
+    OGRErr DropSpatialIndex();
+    OGRErr Repack();
+    OGRErr RecomputeExtent();
+    OGRErr ResizeDBF();
 
-    void                ResetReading() override;
-    OGRFeature *        GetNextFeature() override;
-    virtual OGRErr      SetNextByIndex( GIntBig nIndex ) override;
+    void SetResizeAtClose(bool bFlag)
+    {
+        bResizeAtClose = bFlag;
+    }
 
-    OGRFeature         *GetFeature( GIntBig nFeatureId ) override;
-    OGRErr              ISetFeature( OGRFeature *poFeature ) override;
-    OGRErr              DeleteFeature( GIntBig nFID ) override;
-    OGRErr              ICreateFeature( OGRFeature *poFeature ) override;
-    OGRErr              SyncToDisk() override;
+    const char *GetFullName()
+    {
+        return pszFullName;
+    }
+    void UpdateFollowingDeOrRecompression();
 
-    OGRFeatureDefn *    GetLayerDefn() override { return poFeatureDefn; }
+    OGRFeature *FetchShape(int iShapeId);
+    int GetFeatureCountWithSpatialFilterOnly();
 
-    GIntBig             GetFeatureCount( int ) override;
-    OGRErr              GetExtent( OGREnvelope *psExtent, int bForce ) override;
-    virtual OGRErr      GetExtent( int iGeomField, OGREnvelope *psExtent,
-                                   int bForce ) override
-                { return OGRLayer::GetExtent(iGeomField, psExtent, bForce); }
+    OGRShapeLayer(OGRShapeDataSource *poDSIn, const char *pszName,
+                  SHPHandle hSHP, DBFHandle hDBF,
+                  const OGRSpatialReference *poSRS, bool bSRSSet, bool bUpdate,
+                  OGRwkbGeometryType eReqType,
+                  char **papszCreateOptions = nullptr);
+    virtual ~OGRShapeLayer();
 
-    virtual OGRErr      CreateField( OGRFieldDefn *poField,
-                                     int bApproxOK = TRUE ) override;
-    virtual OGRErr      DeleteField( int iField ) override;
-    virtual OGRErr      ReorderFields( int* panMap ) override;
-    virtual OGRErr      AlterFieldDefn( int iField,
-                                        OGRFieldDefn* poNewFieldDefn,
-                                        int nFlags ) override;
+    void ResetReading() override;
+    OGRFeature *GetNextFeature() override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
 
-    virtual int         TestCapability( const char * ) override;
-    virtual void        SetSpatialFilter( OGRGeometry * ) override;
-    virtual void        SetSpatialFilter( int iGeomField, OGRGeometry *poGeom ) override
-                { OGRLayer::SetSpatialFilter(iGeomField, poGeom); }
+    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRErr ISetFeature(OGRFeature *poFeature) override;
+    OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr ICreateFeature(OGRFeature *poFeature) override;
+    OGRErr SyncToDisk() override;
 
-    virtual OGRErr      SetAttributeFilter( const char * ) override;
+    OGRFeatureDefn *GetLayerDefn() override
+    {
+        return poFeatureDefn;
+    }
 
-    void                AddToFileList( CPLStringList& oFileList );
-    void                CreateSpatialIndexAtClose( int bFlag )
-        { bCreateSpatialIndexAtClose = CPL_TO_BOOL(bFlag); }
-    void                SetModificationDate( const char* pszStr );
-    void                SetAutoRepack(bool b) { m_bAutoRepack = b; }
-    void                SetWriteDBFEOFChar(bool b);
+    GIntBig GetFeatureCount(int) override;
+    OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
+    OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
+    {
+        return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
+    }
+
+    OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK = TRUE) override;
+    OGRErr DeleteField(int iField) override;
+    OGRErr ReorderFields(int *panMap) override;
+    OGRErr AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
+                          int nFlags) override;
+    OGRErr AlterGeomFieldDefn(int iGeomField,
+                              const OGRGeomFieldDefn *poNewGeomFieldDefn,
+                              int nFlagsIn) override;
+
+    int TestCapability(const char *) override;
+    void SetSpatialFilter(OGRGeometry *) override;
+    void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override
+    {
+        OGRLayer::SetSpatialFilter(iGeomField, poGeom);
+    }
+
+    OGRErr SetAttributeFilter(const char *) override;
+
+    OGRErr Rename(const char *pszNewName) override;
+
+    void AddToFileList(CPLStringList &oFileList);
+    void CreateSpatialIndexAtClose(int bFlag)
+    {
+        bCreateSpatialIndexAtClose = CPL_TO_BOOL(bFlag);
+    }
+    void SetModificationDate(const char *pszStr);
+    void SetAutoRepack(bool b)
+    {
+        m_bAutoRepack = b;
+    }
+    void SetWriteDBFEOFChar(bool b);
 };
 
 /************************************************************************/
 /*                          OGRShapeDataSource                          */
 /************************************************************************/
 
-class OGRShapeDataSource CPL_FINAL: public OGRDataSource
+class OGRShapeDataSource final : public OGRDataSource
 {
-    OGRShapeLayer     **papoLayers;
-    int                 nLayers;
-    char                *pszName;
-    bool                bDSUpdate;
-    bool                bSingleFileDataSource;
-    OGRLayerPool       *poPool;
+    OGRShapeLayer **papoLayers;
+    int nLayers;
+    char *pszName;
+    bool bSingleFileDataSource;
+    OGRLayerPool *poPool;
 
-    void                AddLayer( OGRShapeLayer* poLayer );
+    std::vector<CPLString> oVectorLayerName{};
 
-    std::vector<CPLString> oVectorLayerName;
+    bool b2GBLimit;
+    bool m_bIsZip = false;
+    bool m_bSingleLayerZip = false;
+    CPLString m_osTemporaryUnzipDir{};
+    CPLMutex *m_poRefreshLockFileMutex = nullptr;
+    CPLCond *m_poRefreshLockFileCond = nullptr;
+    VSILFILE *m_psLockFile = nullptr;
+    CPLJoinableThread *m_hRefreshLockFileThread = nullptr;
+    bool m_bExitRefreshLockFileThread = false;
+    double m_dfRefreshLockDelay = 0;
 
-    bool                b2GBLimit;
-    char              **papszOpenOptions;
+    std::vector<CPLString> GetLayerNames() const;
+    void AddLayer(OGRShapeLayer *poLayer);
+    static void RefreshLockFile(void *_self);
+    void RemoveLockFile();
+    bool RecompressIfNeeded(const std::vector<CPLString> &layerNames);
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRShapeDataSource)
 
   public:
-                        OGRShapeDataSource();
-    virtual            ~OGRShapeDataSource();
+    OGRShapeDataSource();
+    virtual ~OGRShapeDataSource();
 
-    OGRLayerPool       *GetPool() { return poPool; }
+    OGRLayerPool *GetPool() const
+    {
+        return poPool;
+    }
 
-    bool                Open( GDALOpenInfo* poOpenInfo, bool bTestOpen,
-                              bool bForceSingleFileDataSource = false );
-    bool                OpenFile( const char *, bool bUpdate );
+    bool Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
+              bool bForceSingleFileDataSource = false);
+    bool OpenFile(const char *, bool bUpdate);
+    bool OpenZip(GDALOpenInfo *poOpenInfo, const char *pszOriFilename);
+    bool CreateZip(const char *pszOriFilename);
 
-    virtual const char  *GetName() override { return pszName; }
+    const char *GetName() override
+    {
+        return pszName;
+    }
 
-    virtual int          GetLayerCount() override;
-    virtual OGRLayer    *GetLayer( int ) override;
-    virtual OGRLayer    *GetLayerByName( const char * ) override;
+    int GetLayerCount() override;
+    OGRLayer *GetLayer(int) override;
+    OGRLayer *GetLayerByName(const char *) override;
 
-    virtual OGRLayer    *ICreateLayer( const char *,
-                                       OGRSpatialReference * = NULL,
-                                       OGRwkbGeometryType = wkbUnknown,
-                                       char ** = NULL ) override;
+    OGRLayer *ICreateLayer(const char *, OGRSpatialReference * = nullptr,
+                           OGRwkbGeometryType = wkbUnknown,
+                           char ** = nullptr) override;
 
-    virtual OGRLayer    *ExecuteSQL( const char *pszStatement,
-                                     OGRGeometry *poSpatialFilter,
-                                     const char *pszDialect ) override;
+    OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
 
-    virtual int          TestCapability( const char * ) override;
-    virtual OGRErr       DeleteLayer( int iLayer ) override;
+    int TestCapability(const char *) override;
+    OGRErr DeleteLayer(int iLayer) override;
 
-    virtual char      **GetFileList() override;
+    char **GetFileList() override;
 
-    void                 SetLastUsedLayer( OGRShapeLayer* poLayer );
-    void                 UnchainLayer( OGRShapeLayer* poLayer );
+    void SetLastUsedLayer(OGRShapeLayer *poLayer);
+    void UnchainLayer(OGRShapeLayer *poLayer);
 
-    SHPHandle            DS_SHPOpen( const char * pszShapeFile,
-                                     const char * pszAccess );
-    DBFHandle            DS_DBFOpen( const char * pszDBFFile,
-                                     const char * pszAccess );
-    char               **GetOpenOptions() { return papszOpenOptions; }
+    bool UncompressIfNeeded();
+
+    SHPHandle DS_SHPOpen(const char *pszShapeFile, const char *pszAccess);
+    DBFHandle DS_DBFOpen(const char *pszDBFFile, const char *pszAccess);
+    char **GetOpenOptions()
+    {
+        return papszOpenOptions;
+    }
+
+    static const char *const *GetExtensionsForDeletion();
+    bool IsZip() const
+    {
+        return m_bIsZip;
+    }
+    CPLString GetVSIZipPrefixeDir() const
+    {
+        return CPLString("/vsizip/{") + pszName + '}';
+    }
+    const CPLString &GetTemporaryUnzipDir() const
+    {
+        return m_osTemporaryUnzipDir;
+    }
+
+    static bool CopyInPlace(VSILFILE *fpTarget,
+                            const CPLString &osSourceFilename);
 };
 
 #endif /* ndef OGRSHAPE_H_INCLUDED */

@@ -33,7 +33,7 @@ on: [push]
 
 jobs:
   windows:
-    name: Windows Latest MSVC
+    name: Windows Latest MSVC - Ninja
     runs-on: windows-latest
     strategy:
       fail-fast: true
@@ -87,9 +87,42 @@ jobs:
 #         name: BRLCAD_Windows
 #         path: ${{ github.workspace }}/build/BRL-CAD*exe
 
+  windows_std_tools:
+    name: Windows Latest MSVC - Standard Tools
+    runs-on: windows-latest
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Setup - CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Add github workspace to path
+        # https://github.community/t/deprecated-add-path/136621
+        run: echo "$ENV{GITHUB_WORKSPACE}" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -D ENABLE_ALL=ON
+          # We do the following in order to help ensure files are "flushed"
+          # to disk before compilation is attempted
+          # https://superuser.com/a/1553374/1286142
+          powershell Write-VolumeCache C
+          powershell Write-VolumeCache D
+
+          # At least for the moment, the main idea for this particular test is to try and
+          # verify multi-config building is working as expected - to shorten build times
+          # but still have a test of the key components, just build MGED
+      - name: Build
+        run: |
+          cmake --build build --config Debug   --target mged
+          cmake --build build --config Release --target mged
+
   linux:
     name: Ubuntu Latest GCC
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: true
     steps:

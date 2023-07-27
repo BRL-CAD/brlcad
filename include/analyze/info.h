@@ -1,7 +1,7 @@
 /*                           I N F O . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -170,7 +170,7 @@ perform_raytracing(struct current_state *context, struct db_i *dbip, char *names
  * functions to initialize and clear current_state struct
  */
 ANALYZE_EXPORT extern
-struct current_state * analyze_current_state_init();
+struct current_state * analyze_current_state_init(void);
 
 ANALYZE_EXPORT extern void
 analyze_free_current_state(struct current_state *context);

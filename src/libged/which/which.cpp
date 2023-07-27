@@ -1,7 +1,7 @@
 /*                         W H I C H . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -311,7 +311,7 @@ const struct ged_cmd *which_cmds[] = { &which_cmd,  &whichair_cmd, &whichid_cmd,
 
 static const struct ged_plugin pinfo = { GED_API,  which_cmds, 3 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

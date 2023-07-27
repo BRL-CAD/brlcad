@@ -1,7 +1,7 @@
 /*                           C A C H E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2018-2022 United States Government as represented by
+ * Copyright (c) 2018-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,8 @@ add_brep_sph(struct db_i *dbip, const char *name, point_t *v, double r, long int
 {
     struct directory *dp;
     struct rt_db_internal intern;
-    ON_Sphere sph(*v, r);
+    ON_3dPoint vp(*v);
+    ON_Sphere sph(vp, r);
     struct rt_brep_internal* bi;
 
     RT_DB_INTERNAL_INIT(&intern);

@@ -1,7 +1,7 @@
 /*                   C O V G C H E C K . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -135,10 +135,8 @@ cmd_cnt(regress_info_t &r, std::string &tfile, int verbosity)
     std::string fbuff((char *)ifile->buf);
     std::istringstream fs(fbuff);
 
-    int lcnt = 0;
     std::string sline;
     while (std::getline(fs, sline)) {
-	lcnt++;
 	std::map<std::string, std::vector<std::regex>>::iterator ff_it;
 	for (ff_it = r.cmd_filters.begin(); ff_it != r.cmd_filters.end(); ff_it++) {
 	    int passed = 0;

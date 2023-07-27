@@ -28,7 +28,7 @@ int
 \fBTcl_ListObjGetElements\fR(\fIinterp, listPtr, objcPtr, objvPtr\fR)
 .sp
 int
-\fBTcl_ListObjLength\fR(\fIinterp, listPtr, intPtr\fR)
+\fBTcl_ListObjLength\fR(\fIinterp, listPtr, lengthPtr\fR)
 .sp
 int
 \fBTcl_ListObjIndex\fR(\fIinterp, listPtr, index, objPtrPtr\fR)
@@ -76,7 +76,7 @@ An array of pointers to values.
 \fBTcl_NewListObj\fR will insert these values into a new list value
 and \fBTcl_ListObjReplace\fR will insert them into an existing \fIlistPtr\fR.
 Each value will become a separate list element.
-.AP int *intPtr out
+.AP int *lengthPtr out
 Points to location where \fBTcl_ListObjLength\fR
 stores the length of the list.
 .AP int index in
@@ -162,7 +162,7 @@ Otherwise it returns \fBTCL_OK\fR after storing the count and array pointer.
 .PP
 \fBTcl_ListObjLength\fR returns the number of elements in the list value
 referenced by \fIlistPtr\fR.
-It returns this count by storing an integer in the address \fIintPtr\fR.
+It returns this count by storing an integer in the address \fIlengthPtr\fR.
 If the value is not already a list value,
 \fBTcl_ListObjLength\fR will attempt to convert it to one;
 if the conversion fails, it returns \fBTCL_ERROR\fR

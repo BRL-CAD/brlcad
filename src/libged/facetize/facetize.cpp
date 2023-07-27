@@ -1,7 +1,7 @@
 /*                     F A C E T I Z E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,10 @@
 
 #include <string.h>
 
+#ifdef USE_IRMB
+#include "irmb/irmb.h"
+#endif
+
 #include "bu/env.h"
 #include "bu/exit.h"
 #include "bu/hook.h"
@@ -56,6 +60,7 @@
 #define FACETIZE_NMGBOOL  0x1
 #define FACETIZE_SPSR  0x2
 #define FACETIZE_CONTINUATION  0x4
+#define FACETIZE_IRMB  0x8
 
 #define FACETIZE_SUCCESS 0
 #define FACETIZE_FAILURE 1
@@ -132,9 +137,11 @@ _ged_facetize_attr(int method)
     static const char *nmg_flag = "facetize:NMG";
     static const char *continuation_flag = "facetize:CM";
     static const char *spsr_flag = "facetize:SPSR";
+    static const char *irmb_flag = "facetize:IRMB";
     if (method == FACETIZE_NMGBOOL) return nmg_flag;
     if (method == FACETIZE_CONTINUATION) return continuation_flag;
     if (method == FACETIZE_SPSR) return spsr_flag;
+    if (method == FACETIZE_IRMB) return irmb_flag;
     return NULL;
 }
 
@@ -206,6 +213,9 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     BU_GET(o->nmg_comb, struct bu_vls);
     bu_vls_init(o->nmg_comb);
 
+    BU_GET(o->irmb_comb, struct bu_vls);
+    bu_vls_init(o->irmb_comb);
+
     BU_GET(o->continuation_comb, struct bu_vls);
     bu_vls_init(o->continuation_comb);
 
@@ -244,6 +254,9 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
 
     bu_vls_free(o->nmg_comb);
     BU_PUT(o->nmg_comb, struct bu_vls);
+
+    bu_vls_free(o->irmb_comb);
+    BU_PUT(o->irmb_comb, struct bu_vls);
 
     bu_vls_free(o->continuation_comb);
     BU_PUT(o->continuation_comb, struct bu_vls);
@@ -1233,7 +1246,7 @@ _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, con
 		bu_log("CM: Too little available memory to continue, aborting\n");
 		ret = FACETIZE_FAILURE;
 		goto ged_facetize_continuation_memfree;
-	    } 
+	    }
 	    if (polygonize_failure == 2) {
 		if (!opts->quiet) {
 		    bu_log("CM: timed out after %d seconds with size %g\n", opts->max_time, feature_size);
@@ -1491,6 +1504,285 @@ ged_nmg_obj_memfree:
     return ret;
 }
 
+#ifndef USE_IRMB
+long
+  bool_meshes(
+          double **UNUSED(o_coords), int *UNUSED(o_clen), unsigned int **UNUSED(o_tris), int *UNUSED(o_tricnt),
+          int UNUSED(b_op),
+          double *UNUSED(a_coords), int UNUSED(a_clen), unsigned int *UNUSED(a_tris), int UNUSED(a_tricnt),
+          double *UNUSED(b_coords), int UNUSED(b_clen), unsigned int *UNUSED(b_tris), int UNUSED(b_tricnt)
+          )
+  {
+      return -1;
+  }
+#endif
+
+struct irmb_mesh {
+    int num_vertices;
+    int num_faces;
+    fastf_t *vertices;
+    unsigned int *faces;
+};
+
+
+static void
+irmb_subprocess(struct irmb_mesh **mesh, union tree *tp, struct db_i *dbip, int op, int *depth, int max_depth,
+	void (*traverse_func) (struct irmb_mesh **, struct directory *, struct db_i *, int, int *, int))
+{
+    struct directory *dp;
+    if (!tp) return;
+    RT_CHECK_DBI(dbip);
+    RT_CK_TREE(tp);
+    (*depth)++;
+    if (*depth > max_depth) {
+	(*depth)--;
+	return;
+    }
+    switch (tp->tr_op) {
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    irmb_subprocess(mesh, tp->tr_b.tb_left, dbip, OP_UNION, depth, max_depth, traverse_func);
+	    break;
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    irmb_subprocess(mesh, tp->tr_b.tb_left, dbip, OP_UNION, depth, max_depth, traverse_func);
+	    irmb_subprocess(mesh, tp->tr_b.tb_right, dbip, tp->tr_op, depth, max_depth, traverse_func);
+	    break;
+	case OP_DB_LEAF:
+	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+		(*depth)--;
+		return;
+	    } else {
+		if (!(dp->d_flags & RT_DIR_HIDDEN)) {
+		    traverse_func(mesh, dp, dbip, op, depth, max_depth);
+		}
+		(*depth)--;
+		break;
+	    }
+
+	default:
+	    bu_log("db_functree_subtree: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("db_functree_subtree: unrecognized operator\n");
+    }
+    return;
+}
+
+static void
+irmb_process(struct irmb_mesh **mesh, struct directory *dp, struct db_i *dbip, int op, int *depth, int max_depth)
+{
+    long irmb_ret = 0;
+    struct irmb_mesh *omesh = NULL;
+    struct irmb_mesh *bmesh = NULL;
+    if (!dp || !dbip)
+	return;
+    struct rt_db_internal in;
+    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0)
+	return;
+    struct rt_db_internal *ip = &in;
+
+    bu_log("%d:%s\n", op, dp->d_namep);
+
+    // Translate op for IRMB
+    int irmb_op = 0;
+    switch (op) {
+	case OP_UNION:
+	    irmb_op = 0;
+	    break;
+	case OP_INTERSECT:
+	    irmb_op = 2;
+	    break;
+	case OP_SUBTRACT:
+	    irmb_op = 1;
+	    break;
+	default:
+	    irmb_op = 0;
+    };
+
+    // If we have a non-comb obj, get the NMG tessellation and do the operation
+    if (!(dp->d_flags & RT_DIR_COMB)) {
+
+	// 1.  Make new triangle mesh with NMG of dp
+	if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
+	    bu_log("IRMB_ERROR(%s): NMG object tessellation support not available\n", dp->d_namep);
+	    rt_db_free_internal(ip);
+	    return;
+	}
+
+	// We need triangles.  If we already have a bot we're good - otherwise,
+	// try to tessellate.
+	struct rt_bot_internal *bot = NULL;
+	if (ip->idb_type == ID_BOT) {
+	    bot = (struct rt_bot_internal *)ip->idb_ptr;
+	} else {
+	    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+	    struct bn_tol *ntol = &(wdbp->wdb_tol);
+	    struct bg_tess_tol *nttol = &(wdbp->wdb_ttol);
+	    struct model *m = nmg_mm();
+	    struct nmgregion *r1 = (struct nmgregion *)NULL;
+	    if (ip->idb_meth->ft_tessellate(&r1, m, ip, nttol, ntol) < 0) {
+		bu_log("ERROR(%s): tessellation failure\n", dp->d_namep);
+		rt_db_free_internal(ip);
+		return;
+	    }
+	    // NMG doesn't give us a bot by default - post-process it to get one.
+	    if (!BU_SETJUMP) {
+		/* try */
+		bot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, ntol);
+	    } else {
+		/* catch */
+		BU_UNSETJUMP;
+		bu_log("WARNING: triangulation failed!!!\n");
+		rt_db_free_internal(ip);
+		return;
+	    } BU_UNSETJUMP;
+	}
+	/* Sanity */
+	if (!bot) {
+	    rt_db_free_internal(ip);
+	    return;
+	}
+	if (!bot->num_faces || !bot->num_vertices) {
+	    if (ip->idb_type != ID_BOT) {
+		if (bot->vertices)
+		    bu_free(bot->vertices, "verts");
+		if (bot->faces)
+		    bu_free(bot->faces, "faces");
+		BU_FREE(bot, struct rt_bot_internal);
+	    }
+	    rt_db_free_internal(ip);
+	    return;
+	}
+	BU_GET(bmesh, struct irmb_mesh);
+	bmesh->vertices = bot->vertices;
+	bmesh->num_vertices = bot->num_vertices;
+	bmesh->num_faces = bot->num_faces;
+	bmesh->faces = (unsigned int *)bu_calloc(bot->num_faces * 3, sizeof(unsigned int), "faces array");
+	for (size_t i = 0; i < bot->num_faces * 3; i++) {
+	    bmesh->faces[i] = bot->faces[i];
+	}
+	bmesh->vertices = (fastf_t *)bu_calloc(bot->num_vertices * 3, sizeof(fastf_t), "vert array");
+	for (size_t i = 0; i < bot->num_vertices * 3; i++) {
+	    bmesh->vertices[i] = bot->vertices[i];
+	}
+	// 2.  Do the op between *mesh and the NMG output from dp
+	if (!(*mesh)->num_faces) {
+	    if ((*mesh)->vertices)
+		bu_free((*mesh)->vertices, "verts");
+	    if ((*mesh)->faces)
+		bu_free((*mesh)->faces, "faces");
+	    BU_FREE(*mesh, struct irmb_mesh);
+	    *mesh = bmesh;
+	} else {
+	    BU_GET(omesh, struct irmb_mesh);
+	    irmb_ret = bool_meshes(
+		    (double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
+		    irmb_op,
+		    (double *)(*mesh)->vertices, (*mesh)->num_vertices*3, (*mesh)->faces, (*mesh)->num_faces,
+		    (double *)bmesh->vertices, bmesh->num_vertices*3, bmesh->faces, bmesh->num_faces
+		    );
+	    bu_log("irmb: %ld\n", irmb_ret);
+	    bu_free(bmesh->faces, "faces");
+	    bu_free(bmesh->vertices, "vertices");
+	    BU_PUT(bmesh, struct irmb_mesh);
+
+	    if (ip->idb_type != ID_BOT) {
+		// We created this locally if it wasn't originally a BoT - clean up
+		if (bot->vertices)
+		    bu_free(bot->vertices, "verts");
+		if (bot->faces)
+		    bu_free(bot->faces, "faces");
+		BU_FREE(bot, struct rt_bot_internal);
+	    }
+	    // Free the previous state
+	    if ((*mesh)->vertices)
+		bu_free((*mesh)->vertices, "verts");
+	    if ((*mesh)->faces)
+		bu_free((*mesh)->faces, "faces");
+	    BU_FREE(*mesh, struct irmb_mesh);
+	    // Assign the new state as "current"
+	    *mesh = omesh;
+	}
+	rt_db_free_internal(ip);
+	return;
+    }
+
+    struct rt_comb_internal *comb = (struct rt_comb_internal *)ip->idb_ptr;
+    irmb_subprocess(mesh, comb->tree, dbip, OP_UNION, depth, max_depth, irmb_process);
+    rt_db_free_internal(ip);
+}
+
+// For IRMB, we do a tree walk.  Each solid is individually triangulated, and
+// then the boolean op is applied with the result of the mesh generated thus
+// far.  This is conceptually similar to how NMG does its processing, with the
+// main difference being that the external code is actually doing the mesh
+// boolean processing rather than libnmg.
+int
+_ged_irmb_obj(struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
+{
+    int depth = 0;
+    struct irmb_mesh *mesh = NULL;
+    struct directory *dp = RT_DIR_NULL;
+    int ret = BRLCAD_ERROR;
+    if (!gedp || !objname || !newname || !opts)
+	goto ged_irmb_obj_memfree;
+
+    dp = db_lookup(gedp->dbip, objname, LOOKUP_QUIET);
+    if (!dp)
+	goto ged_irmb_obj_memfree;
+
+    // Conceptually, we start off by unioning the "root" object of the
+    // tree with the initial world mesh, which is the empty mesh.
+    BU_GET(mesh, struct irmb_mesh);
+    mesh->num_vertices = 0;
+    mesh->num_faces = 0;
+    irmb_process(&mesh, dp, gedp->dbip, OP_UNION, &depth, 100);
+
+    if (mesh && mesh->num_faces > 0) {
+	struct rt_bot_internal *bot;
+	BU_GET(bot, struct rt_bot_internal);
+	bot->magic = RT_BOT_INTERNAL_MAGIC;
+	bot->mode = RT_BOT_SOLID;
+	bot->orientation = RT_BOT_CCW;
+	bot->bot_flags = 0;
+	bot->num_vertices = mesh->num_vertices;
+	bot->num_faces = mesh->num_faces;
+	bot->thickness = NULL;
+	bot->face_mode = (struct bu_bitv *)NULL;
+	bot->num_normals = 0;
+	bot->num_face_normals = 0;
+	bot->normals = NULL;
+	bot->face_normals = NULL;
+	bot->vertices = (fastf_t *)bu_calloc(mesh->num_vertices * 3, sizeof(fastf_t), "vertices");
+	for (int i = 0; i < mesh->num_vertices * 3; i++) {
+	    bot->vertices[i] = mesh->vertices[i];
+	}
+	bot->faces = (int *)bu_calloc(mesh->num_faces * 3, sizeof(int), "faces");
+	for (int i = 0; i < mesh->num_faces * 3; i++) {
+	    bot->faces[i] = mesh->faces[i];
+	}
+
+	ret = _write_bot(gedp, bot, newname, opts);
+    } else {
+	goto ged_irmb_obj_memfree;
+    }
+
+ged_irmb_obj_memfree:
+    if (mesh) {
+	if (mesh->vertices)
+	    bu_free(mesh->vertices, "verts");
+	if (mesh->faces)
+	    bu_free(mesh->faces, "faces");
+	BU_FREE(mesh, struct irmb_mesh);
+    }
+    if (!opts->quiet && ret != BRLCAD_OK) {
+	bu_log("IRMB: failed to generate %s\n", newname);
+    }
+
+    return ret;
+}
 
 int
 _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *opts)
@@ -1573,6 +1865,25 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	    }
 	}
 
+	if (flags & FACETIZE_IRMB) {
+	    if (argc == 1) {
+		bu_vls_sprintf(opts->nmg_log_header, "IRMB: tessellating %s...\n", argv[0]);
+	    } else {
+		bu_vls_sprintf(opts->nmg_log_header, "IRMB: tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
+	    }
+	    /* Let the user know what's going on, unless output is suppressed */
+	    if (!opts->quiet) {
+		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
+	    }
+
+	    if (_ged_irmb_obj(gedp, argv[0], newname, opts) == BRLCAD_OK) {
+		ret = BRLCAD_OK;
+		break;
+	    } else {
+		flags = flags & ~(FACETIZE_IRMB);
+		continue;
+	    }
+	}
 
 	if (flags & FACETIZE_CONTINUATION) {
 	    if (argc != 1) {
@@ -1698,6 +2009,10 @@ _ged_methodcomb_add(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     struct bu_vls method_cname = BU_VLS_INIT_ZERO;
     if (!objname || method == FACETIZE_NULL) return BRLCAD_ERROR;
 
+    if (method == FACETIZE_IRMB && !bu_vls_strlen(opts->irmb_comb)) {
+	bu_vls_sprintf(opts->irmb_comb, "%s_IRMB-0", bu_vls_addr(opts->froot));
+	bu_vls_incr(opts->irmb_comb, NULL, NULL, &_db_uniq_test, (void *)gedp);
+    }
     if (method == FACETIZE_NMGBOOL && !bu_vls_strlen(opts->nmg_comb)) {
 	bu_vls_sprintf(opts->nmg_comb, "%s_NMGBOOL-0", bu_vls_addr(opts->froot));
 	bu_vls_incr(opts->nmg_comb, NULL, NULL, &_db_uniq_test, (void *)gedp);
@@ -1720,6 +2035,9 @@ _ged_methodcomb_add(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 	    break;
 	case FACETIZE_SPSR:
 	    bu_vls_sprintf(&method_cname, "%s", bu_vls_addr(opts->spsr_comb));
+	    break;
+	case FACETIZE_IRMB:
+	    bu_vls_sprintf(&method_cname, "%s", bu_vls_addr(opts->irmb_comb));
 	    break;
 	default:
 	    bu_vls_free(&method_cname);
@@ -1834,6 +2152,30 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 
     if (dp == RT_DIR_NULL) {
 	return BRLCAD_ERROR;
+    }
+
+    if (cmethod == FACETIZE_IRMB) {
+
+	/* We're staring a new object, so we want to write out the header in the
+	 * log file the first time we get an NMG logging event.  (Re)set the flag
+	 * so the logger knows to do so. */
+	opts->nmg_log_print_header = 1;
+	bu_vls_sprintf(opts->nmg_log_header, "IRMB: tessellating %s (%d of %d) with tolerances a=%g, r=%g, n=%g\n", oname, ocnt, max_cnt, opts->tol->abs, opts->tol->rel, opts->tol->norm);
+
+	/* Let the user know what's going on, unless output is suppressed */
+	if (!opts->quiet) {
+	    bu_log("%s", bu_vls_addr(opts->nmg_log_header));
+	}
+
+	ret = _ged_irmb_obj(gedp, oname, sname, opts);
+
+	if (ret != FACETIZE_FAILURE) {
+	    if (_ged_methodcomb_add(gedp, opts, sname, FACETIZE_IRMB) != BRLCAD_OK && opts->verbosity > 1) {
+		bu_log("Error adding %s to methodology combination\n", sname);
+	    }
+	}
+
+	return ret;
     }
 
     if (cmethod == FACETIZE_NMGBOOL) {
@@ -2427,6 +2769,12 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    cmethod = FACETIZE_NMGBOOL;
 	    methods = methods & ~(FACETIZE_NMGBOOL);
 	}
+#ifdef USE_IRMB
+	if (!cmethod && (methods & FACETIZE_IRMB)) {
+	    cmethod = FACETIZE_IRMB;
+	    methods = methods & ~(FACETIZE_IRMB);
+	}
+#endif
 
 	if (!cmethod && (methods & FACETIZE_CONTINUATION)) {
 	    cmethod = FACETIZE_CONTINUATION;
@@ -2828,7 +3176,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     int need_help = 0;
     int nonovlp_brep = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[21];
+    struct bu_opt_desc d[22];
     struct bu_opt_desc pd[4];
 
     BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
@@ -2851,7 +3199,12 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[17], "",  "max-pnts",      "#", &bu_opt_int,     &(opts->max_pnts),                "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT(d[18], "B",  "",             "",  NULL,  &nonovlp_brep,              "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
     BU_OPT(d[19], "t",  "threshold",    "#",  &bu_opt_fastf_t, &(opts->nonovlp_threshold),  "EXPERIMENTAL: max ovlp threshold length.");
+#ifdef USE_IRMB
+    BU_OPT(d[20],  "",  "IRMB",           "",  NULL,  &(opts->irmb),          "Use the experimental IRMB boolean evaluation");
+    BU_OPT_NULL(d[21]);
+#else
     BU_OPT_NULL(d[20]);
+#endif
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
@@ -2903,11 +3256,12 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Sort out which methods we can try */
-    if (!opts->nmgbool && !opts->screened_poisson && !opts->continuation) {
+    if (!opts->nmgbool && !opts->screened_poisson && !opts->continuation && !opts->irmb) {
 	/* Default to NMGBOOL and Continuation active */
 	opts->method_flags |= FACETIZE_NMGBOOL;
 	opts->method_flags |= FACETIZE_CONTINUATION;
     } else {
+	if (opts->irmb)          opts->method_flags |= FACETIZE_IRMB;
 	if (opts->nmgbool)          opts->method_flags |= FACETIZE_NMGBOOL;
 	if (opts->screened_poisson) opts->method_flags |= FACETIZE_SPSR;
 	if (opts->continuation)    opts->method_flags |= FACETIZE_CONTINUATION;
@@ -2925,7 +3279,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Check for a couple of non-valid combinations */
-    if ((opts->method_flags == FACETIZE_SPSR || opts->method_flags == FACETIZE_CONTINUATION) && opts->nmg_use_tnurbs) {
+    if ((opts->method_flags == FACETIZE_SPSR || opts->method_flags == FACETIZE_CONTINUATION || opts->method_flags == FACETIZE_IRMB) && opts->nmg_use_tnurbs) {
 	bu_vls_printf(gedp->ged_result_str, "Note: Specified reconstruction method(s) do not all support TNURBS output\n");
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_memfree;
@@ -2999,7 +3353,7 @@ const struct ged_cmd *facetize_cmds[] = { &facetize_cmd,  NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  facetize_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

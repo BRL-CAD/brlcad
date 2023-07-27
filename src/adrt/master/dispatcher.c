@@ -1,7 +1,7 @@
 /*                    D I S P A T C H E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ tienet_buffer_t dispatcher_mesg;
 
 
 void
-master_dispatcher_init ()
+master_dispatcher_init (void)
 {
     TIENET_BUFFER_INIT(dispatcher_mesg);
     dispatcher_frame = 1;
@@ -75,7 +75,7 @@ master_dispatcher_init ()
 
 
 void
-master_dispatcher_free ()
+master_dispatcher_free (void)
 {
     TIENET_BUFFER_FREE(dispatcher_mesg);
 }

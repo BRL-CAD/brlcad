@@ -1,7 +1,7 @@
 /*                      C O N V T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2022 United States Government as represented by
+ * Copyright (c) 1990-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,12 +29,12 @@
 #include "./iges_extern.h"
 
 
-union tree *Readtree();
-union tree *Copytree();
+union tree *Readtree(mat_t *);
+union tree *Copytree(struct node *, struct node *);
 
 
 void
-Convtree()
+Convtree(void)
 {
 
     int conv = 0;

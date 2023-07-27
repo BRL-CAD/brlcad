@@ -49,7 +49,7 @@ dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
 	}
 
 	info_val = bu_dlsym(dl_handle, psymbol);
-	const struct dylib_plugin *(*plugin_info)() = (const struct dylib_plugin *(*)())(intptr_t)info_val;
+	const struct dylib_plugin *(*plugin_info)(void) = (const struct dylib_plugin *(*)(void))(intptr_t)info_val;
 	if (!plugin_info) {
 	    const char * const error_msg = bu_dlerror();
 

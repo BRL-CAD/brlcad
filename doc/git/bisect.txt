@@ -1,0 +1,439 @@
+Experienced developers are typically aware that the only really practical
+approach when hunting a bug "blind" - i.e with no immediate insight into what's
+causing the issue - is to conduct a binary search of the version control
+history by testing checkouts to identify non-working and working states of the
+code.  With SVN (which has a linear revision numbering system) this is fairly
+straightforward, albeit somewhat tedious. Git repositories often have more
+complex histories, which can complicate matters.  Fortunately, binary searching
+(referred to as "bisecting") is a standard pattern, Git provides a 'bisect'
+command to assist developers with this process.
+
+To illustrate how it works, we will examine a bug introduced into db_lookup
+that caused a problem looking up objects with slashes in their names. (Note:
+this example was a real bug that was fixed by commit c299266b3.  This
+particular instance didn't need a bisect in real life, since I had additional
+knowledge of the likely source of the issue, but it serves as a good
+illustrative test case of what someone without that advantage might have needed
+to do to localize where the issue was coming from.)
+
+The problem statement:  a user has reported that they can't rename an object
+with a '/' character in its name.  BRL-CAD normally uses '/' to denote
+hierarchy, so it's an uncommon character to have in a name, but it's not
+actually forbidden by the I/O layer.  The user was thus having to convert the
+.g file to .asc format in order to rename the object.
+
+We know that if we use release 7.26.4, the rename works.  So at some point
+between the current state of the code (for the sake of this example, that's a
+bit before release 7.34.0 at commit a1a2c71fc89) and 7.26.4, a breaking change
+was introduced.  That range encompasses thousands of changes, so if we don't
+have any idea where the problem is coming from we need to zero in on when the
+breakage was introduced.  Given an exact commit or a small range of commits
+within which the breakage occurred, we have a much better starting point for
+investigation.
+
+To summarize, we know that:
+
+a1a2c71fc89 - broken
+7.26.4 - works
+
+(As an aside: we don't need it for bisecting, but we can decode the rel-7-26-4
+tag to its associated SHA1 (a0b01ab5a8e) with "git rev-parse rel-7-26-4")
+
+If we're going to bisect to find the breakage, we need a minimal test case to
+exercise the functionality in question.  We'll assume we have a test input
+~/bad.g with a problematic obj name (as it happens we can create one in MGED
+with the command 'make "test.s/" sph').  If all we know about the issue is that
+renaming is failing, we want to set up a test that will detect that failure.
+
+Unfortunately, when we test a failed rename for the return code, we see MGED
+doesn't exit with a failure:
+
+user@machine:~/brlcad/build (main) $ ./bin/mged -c -a nu test.g mv test.s\/ test.s
+db_lookup(test.s) failed: test.s does not exist
+db_string_to_path() of 'test.s/' failed on 'test.s'
+user@machine:~/brlcad/build (main) $ echo $?
+0
+user@machine:~/brlcad/build (main) $ ./bin/mged -c -a nu test.g ls
+test.s/
+
+The bad object name is still present, but MGED's exit code was 0 (success.)  We
+want a failed rename to return a non-success code, so Git's bisect command will
+be able to interpret the result.  To set this up, we prepare a shell script to
+do the test and check the result, saving it as ~/test.sh:
+
+############################################################################
+
+#!/bin/bash
+./bin/mged -c -a nu test.g mv test.s\/ test.s
+OBJ=$(./bin/mged -c -a nu test.g ls 2>&1)
+echo "OBJ:${OBJ}"
+CORRECT="test.s"
+if [ "$OBJ" = "$CORRECT" ]; then
+        exit 0
+else
+        exit 1
+fi
+
+############################################################################
+
+We manually confirm the script works and produces the expected return code:
+
+user@machine:~/brlcad/build (main) $ ~/test.sh
+db_lookup(test.s) failed: test.s does not exist
+db_string_to_path() of 'test.s/' failed on 'test.s'
+OBJ:test.s/
+user@machine:~/brlcad/build (main) $ echo $?
+1
+
+Since the mged and mv commands are consistent across the range of commits, this
+test should work for the bisect regardless of version.  (If this wasn't the
+case the test script might have to be adjusted manually as we bisected...)
+
+We now have our pass/fail test case.  However, particularly when facing a
+bisect with such a large commit range, we will face another practical problem.
+Compiling older code bases with newer tools is frequently problematic, and
+sometimes impossible without manual alterations to the older code.  This has
+a number of implications:
+
+  a.  When bisecting you want to compile the SMALLEST subset of the code that
+      will let you exercise the failing test, both for performance and to
+      minimize compile errors.  In this case, that would be MGED (which
+      unfortunately isn't particularly small, but is still less work than also
+      compiling code like step-g and GDAL.)
+  b.  We are likely to need an older CMake version for earlier revision
+      building - older BRL-CAD CMake build logic won't always work with the
+      latest CMake versions.
+  c.  Due to changing requirements during testing, it's often not practical
+      to fully automate a bisect - the developer will need to keep an eye
+      on things and adjust as necessary.
+
+For CMake, what we typically do is set up an older version of CMake to allow
+the older code to compile, targeting the version that would have been
+contemporary at the time of the oldest revision we need to test.  Then we can
+adjust the test script manually as needed to use older or newer CMake versions
+for each test iteration.
+
+The compiler can also be an issue - newer compilers introduce new error checks,
+and older code is often problematic with them.  The first tool for combating
+this is to add the configure flag -DBRLCAD_ENABLE_STRICT=OFF to your CMake
+configure line.  We aren't concerned with compiler warnings on older code, we
+just need the executable to test behavior - this instructs our build to not
+regard all warnings as errors.  The next fallback is to use an older compiler,
+although that will also complicate the bisect as our newer code assumes newer
+standards support.  In the worst case you may have to set up a virtual machine
+to fully replicate the environment an old codebase is expecting.
+
+In this case, the combination of an older CMake and the flag is enough - we can
+build the rel-7-26-2 MGED and confirm the test case succeeds:
+
+user@machine:~/brlcad/build ((rel-7-26-2)) $ ~/cmake-3.2.3/bin/cmake .. -G Ninja -DBRLCAD_ENABLE_STRICT=OFF
+user@machine:~/brlcad/build ((rel-7-26-2)) $ n mged
+[1403/1403] Linking C executable bin/mged
+user@machine:~/brlcad/build ((rel-7-26-2)) $ cp ~/bad.g test.g
+user@machine:~/brlcad/build ((rel-7-26-2)) $ ~/test.sh
+OBJ:test.s
+user@machine:~/brlcad/build ((rel-7-26-2)) $ echo $?
+0
+
+Knowing the necessary pieces, we then make a second script that encompasses the
+configure/build/test process and save it as ~/bisect.sh:
+
+############################################################################
+
+#!/bin/bash
+
+# Reset build directory.  Note that you may not always want to do this - it
+# can be faster to reuse cached configure results - but I tend to prefer this
+# even with the performance penalty as it avoids odd problems caused by CMake
+# seeing unexpected stale info in the build dir.
+rm -rf build
+mkdir build && cd build
+
+# Configure (uncomment appropriate CMake version,
+# comment out the other)
+~/cmake-3.2.3/bin/cmake .. -G Ninja -DBRLCAD_ENABLE_STRICT=OFF
+#cmake .. -G Ninja -DBRLCAD_ENABLE_STRICT=OFF
+
+# If configure failed, stop bisect by returning an exit code git will
+# interpret as a bisect-halting failure
+CEXIT=$?
+echo "CEXIT: $CEXIT"
+if [ $CEXIT != "0" ]; then
+   exit 200
+fi
+
+# Build MGED.  We use the -k option because we want
+# as much compilation work done as possible if something
+# is going to fail - that way, it's faster when we make
+# manual adjustments to get to a compiling state.
+ninja -k 1000 mged
+
+# If build failed, stop bisect by returning an exit code git will
+# interpret as a bisect-halting failure
+CEXIT=$?
+echo "CEXIT: $CEXIT"
+if [ $CEXIT != "0" ]; then
+   exit 200
+fi
+
+# Good to go, do test
+cp ~/test.sh .
+cp ~/bad.g test.g
+./test.sh
+CEXIT=$?
+
+# Test is complete, clear any local mods we had to make
+git reset --hard
+
+# Report test outcome
+if [ $CEXIT != "0" ]; then
+   exit 1
+fi
+exit 0
+
+############################################################################
+
+Since we know there's a chance we will need to switch CMake versions we check
+the CMake return code and deliberately exit with a code that will tell git
+bisect to stop if we have a configure failure.  We can then uncomment one CMake
+line or the other and resume.  Also, if we have a commit with a broken
+configure or build, we don't want to treat that as indicating a failure of the
+rename, so we similarly exit in those cases.
+
+In anticipation that we will sometimes have to mod the sources to compile, we
+add a "git reset" step after successfully running a test.  Without that, the
+git checkout for the next revision will fail due to warnings about losing
+changes in the working tree.
+
+
+
+Having prepared our tests, it is now time to being the bisect itself.  This
+process and the available options are documented at
+https://git-scm.com/docs/git-bisect
+
+user@machine:~/brlcad (main) $ git bisect start
+status: waiting for both good and bad commits
+user@machine:~/brlcad (main|BISECTING) $ git bisect bad
+status: waiting for good commit(s), bad commit known
+user@machine:~/brlcad (main|BISECTING) $ git bisect good rel-7-26-4
+Bisecting: a merge base must be tested
+[9b5b60585b310506a16d6ce58c64b89580f1db3e] update ChangeLog with the rt_arb_class bit
+user@machine:~/brlcad ((9b5b60585b...)|BISECTING) $ git bisect run ~/bisect.sh
+
+[snip]
+
+CMake Error at misc/CMake/FindGDAL.cmake:119 (separate_arguments):
+  separate_arguments given unknown argument NATIVE_COMMAND
+Call Stack (most recent call first):
+  misc/CMake/ThirdParty.cmake:199 (find_package)
+  src/other/CMakeLists.txt:975 (THIRD_PARTY)
+
+[snip]
+
+Elapsed configuration time: 60 seconds
+-- Configuring incomplete, errors occurred!
+See also "/home/cyapp/brlcad/build/CMakeFiles/CMakeOutput.log".
+See also "/home/cyapp/brlcad/build/CMakeFiles/CMakeError.log".
+CEXIT: 1
+error: bisect run failed: exit code 200 from ' '/home/cyapp/bisect.sh'' is < 0 or >= 128
+
+<** manually edit to remove offending line from FindGDAL.cmake - not needed for this test **>
+
+user@machine:~/brlcad ((9b5b60585b...)|BISECTING) $ git bisect run ~/bisect.sh
+
+[snip]
+
+[1398/1399] Linking C executable bin/mged
+CEXIT: 0
+OBJ:test.s
+HEAD is now at 9b5b60585b update ChangeLog with the rt_arb_class bit
+Bisecting: 4999 revisions left to test after this (roughly 12 steps)
+[0f2550c1fa1bf4d9c4799a0a5313a6d26d5fe41e] checkpoint
+running  '/home/cyapp/bisect.sh'
+
+<** build failure - cd into build, manually mod srcs to compile **>
+
+You are currently bisecting, started from branch 'main'.
+  (use "git bisect reset" to get back to the original branch)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        mmodified:   misc/CMake/FindGDAL.cmake
+        mmodified:   src/libbg/earcut.hpp
+        mmodified:   src/libged/brep/brep.cpp
+
+user@machine:~/brlcad ((0f2550c1fa...)|BISECTING) $ git bisect run ~/bisect.sh
+
+[snip]
+
+[1233/1234] Linking C executable bin/mged^[[K[1234/1234] Linking C executable bin/mged^[[K
+CEXIT: 0
+db_lookup(test.s) failed: test.s does not exist
+db_string_to_path() of 'test.s/' failed on 'test.s'
+OBJ:test.s/
+HEAD is now at 0f2550c1fa checkpoint
+Bisecting: 2497 revisions left to test after this (roughly 11 steps)
+[c309273a7478f92d43f49a251cd9fdd9649704fd] Still have at least one crasher in the new logic, but clearly won't need the separate cdt2 file for a whole new logic chain - fold back in.
+running  '/home/cyapp/bisect.sh'
+
+[snip]
+
+[1433/1433] Linking C executable bin/mged^[[K
+CEXIT: 0
+db_lookup(test.s) failed: test.s does not exist
+db_string_to_path() of 'test.s/' failed on 'test.s'
+OBJ:test.s/
+HEAD is now at c309273a74 Still have at least one crasher in the new logic, but clearly won't need the separate cdt2 file for a whole new logic chain - fold back in.
+Bisecting: 1247 revisions left to test after this (roughly 10 steps)
+[9dda8cd782538257155b295e420feb89c9007dd3] Add an available memory based abort, on platforms where we can know that.
+running  '/home/user/bisect.sh'
+
+[snip]
+
+[1423/1424] Linking C executable bin/mged
+CEXIT: 0
+db_lookup(test.s) failed: test.s does not exist
+db_string_to_path() of 'test.s/' failed on 'test.s'
+OBJ:test.s/
+HEAD is now at 9dda8cd782 Add an available memory based abort, on platforms where we can know that.
+Bisecting: 623 revisions left to test after this (roughly 9 steps)
+[30bdd31f812895a07b52249137680d69370ca692] Fix edge iteration for trimesh unmatched edge test.
+running  '/home/user/bisect.sh'
+
+[snip]
+
+[1397/1398] Linking C executable bin/mged
+CEXIT: 0
+OBJ:test.s
+HEAD is now at 30bdd31f81 Fix edge iteration for trimesh unmatched edge test.
+Bisecting: 311 revisions left to test after this (roughly 8 steps)
+[941a839b502bc5051adf9e3fb9e79043648ba3fe] Feed point generations into spsr, variety of logic moving and options which aren't really in final form yet.
+running  '/home/user/bisect.sh'
+
+[snip]
+
+[1418/1419] Linking C executable bin/mged
+CEXIT: 0
+db_lookup(test.s) failed: test.s does not exist
+db_string_to_path() of 'test.s/' failed on 'test.s'
+OBJ:test.s/
+HEAD is now at 941a839b50 Feed point generations into spsr, variety of logic moving and options which aren't really in final form yet.
+Bisecting: 155 revisions left to test after this (roughly 7 steps)
+[80102d292c2a6ba81ae66a60315f671db9d0ec93] Returning GED_ERROR is wrong; Any non-negative return value acts as an index to the obj_tbl array
+running  '/home/user/bisect.sh'
+
+[snip]
+
+[1400/1401] Linking C executable bin/mged
+CEXIT: 0
+OBJ:test.s
+HEAD is now at 80102d292c Returning GED_ERROR is wrong; Any non-negative return value acts as an index to the obj_tbl array
+Bisecting: 77 revisions left to test after this (roughly 6 steps)
+[a66f040b83b529793c847185e7acf4abeba468b5] separate the unimplemented globbing function api from the other path functions since it is its own succint api mirrored after system glob(3).  clean up and reduce the speculative API to a more minimal set of functionality that generalizes to both filesystem and object pathname use.
+running  '/home/user/bisect.sh'
+
+[snip]
+
+[1412/1413] Linking C executable bin/mged
+CEXIT: 0
+OBJ:test.s
+HEAD is now at a66f040b83 separate the unimplemented globbing function api from the other path functions since it is its own succint api mirrored after system glob(3).  clean up and reduce the speculative API to a more minimal set of functionality that generalizes to both filesystem and object pathname use.
+Bisecting: 38 revisions left to test after this (roughly 5 steps)
+[b0901e9f9d3d5b3e5787386fe9f361799c3ed0a2] previous commit has actual fix (init to negative, don't abort on zero), here's the new unit that tests that case.
+running  '/home/user/bisect.sh'
+
+[snip]
+
+[1416/1417] Linking C executable bin/mged
+CEXIT: 0
+OBJ:test.s
+HEAD is now at b0901e9f9d previous commit has actual fix (init to negative, don't abort on zero), here's the new unit that tests that case.
+Bisecting: 19 revisions left to test after this (roughly 4 steps)
+[cf40d976b2e7790ee9b596deceb88350c17b86ff] add 0.99 to grid->x_points before converting to int -- acts as ceil() function; helps to match the grid size with rtcheck
+running  '/home/user/bisect.sh'
+
+[snip]
+
+[1416/1417] Linking C executable bin/mged
+CEXIT: 0
+db_lookup(test.s) failed: test.s does not exist
+db_string_to_path() of 'test.s/' failed on 'test.s'
+OBJ:test.s/
+HEAD is now at cf40d976b2 add 0.99 to grid->x_points before converting to int -- acts as ceil() function; helps to match the grid size with rtcheck
+Bisecting: 9 revisions left to test after this (roughly 3 steps)
+[1c8dda7e59412cf194d4db14a08ce87c558a7ee3] Update algorithm for evaluation of surface area -- shoots grids at random az/el values and then finds the mean of the surf_area reported for each grid; Also includes some code clean-up
+running  '/home/user/bisect.sh'
+
+[snip]
+
+[1416/1417] Linking C executable bin/mged
+CEXIT: 0
+OBJ:test.s
+HEAD is now at 1c8dda7e59 Update algorithm for evaluation of surface area -- shoots grids at random az/el values and then finds the mean of the surf_area reported for each grid; Also includes some code clean-up
+Bisecting: 4 revisions left to test after this (roughly 2 steps)
+[f9f35cc60b3fef2879bd06ec99486873fc097291] Add MGED search -exec callback - GSoC work by Peter Pronai.
+running  '/home/user/bisect.sh'
+
+[snip]
+
+[1416/1417] Linking C executable bin/mged
+CEXIT: 0
+db_lookup(test.s) failed: test.s does not exist
+db_string_to_path() of 'test.s/' failed on 'test.s'
+OBJ:test.s/
+HEAD is now at f9f35cc60b Add MGED search -exec callback - GSoC work by Peter Pronai.
+Bisecting: 2 revisions left to test after this (roughly 1 step)
+[e88d212678b633c199ea54f435d7cc7f97c9e104] Add support to db_lookup for getting the leaf dp for a full path.  Based on GSoC work by Peter Pronai.  This is intended to allow search -exec to operate on object returned by full path names.  It also has the side effect of making ls return the leaf object of a path if it exists - e.g. ls all.g/platform.r will now return platform.r, instead of object not found.  This doesn't break make check, and is arguably an improvement over returning an error since the path input could never have been an object name to begin with.  However, it is not ideal in that a path-to-file ls on the Linux command line will return the full path not just the root file name.  I think this is OK to go with for now, since we can always handle ls behavior at the ls command level if we so desire, but before announcing the change in NEWS it warrants discussion/a second opinion.
+running  '/home/user/bisect.sh'
+
+[snip]
+
+[1416/1417] Linking C executable bin/mged
+CEXIT: 0
+db_lookup(test.s) failed: test.s does not exist
+db_string_to_path() of 'test.s/' failed on 'test.s'
+OBJ:test.s/
+HEAD is now at e88d212678 Add support to db_lookup for getting the leaf dp for a full path.  Based on GSoC work by Peter Pronai.  This is intended to allow search -exec to operate on object returned by full path names.  It also has the side effect of making ls return the leaf object of a path if it exists - e.g. ls all.g/platform.r will now return platform.r, instead of object not found.  This doesn't break make check, and is arguably an improvement over returning an error since the path input could never have been an object name to begin with.  However, it is not ideal in that a path-to-file ls on the Linux command line will return the full path not just the root file name.  I think this is OK to go with for now, since we can always handle ls behavior at the ls command level if we so desire, but before announcing the change in NEWS it warrants discussion/a second opinion.
+Bisecting: 0 revisions left to test after this (roughly 0 steps)
+[56a53883177e8c767d6ed60ab271374ca3ab75be] Add basic support for -exec option to search - GSoC work by Peter Pronai.  This commit stubs in the exec logic but doesn't expose it yet.
+running  '/home/user/bisect.sh'
+
+[snip]
+
+[1416/1417] Linking C executable bin/mged
+CEXIT: 0
+OBJ:test.s
+HEAD is now at 56a5388317 Add basic support for -exec option to search - GSoC work by Peter Pronai.  This commit stubs in the exec logic but doesn't expose it yet.
+e88d212678b633c199ea54f435d7cc7f97c9e104 is the first bad commit
+commit e88d212678b633c199ea54f435d7cc7f97c9e104
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Jul 28 02:40:53 2018 +0000
+
+    Add support to db_lookup for getting the leaf dp for a full path.  Based on
+    GSoC work by Peter Pronai.  This is intended to allow search -exec to operate
+    on object returned by full path names.  It also has the side effect of making
+    ls return the leaf object of a path if it exists - e.g. ls all.g/platform.r
+    will now return platform.r, instead of object not found.  This doesn't break
+    make check, and is arguably an improvement over returning an error since the
+    path input could never have been an object name to begin with.  However, it is
+    not ideal in that a path-to-file ls on the Linux command line will return the
+    full path not just the root file name.  I think this is OK to go with for now,
+    since we can always handle ls behavior at the ls command level if we so desire,
+    but before announcing the change in NEWS it warrants discussion/a second
+    opinion.
+
+    svn:revision:71281
+    svn:branch:trunk
+    svn:account:starseeker
+
+ include/rt/db_io.h    | 17 ++++++++----
+ src/librt/db_lookup.c | 74 ++++++++++++++++++++++++++++++++++++++-------------
+ 2 files changed, 68 insertions(+), 23 deletions(-)
+bisect found first bad commit
+
+
+Having found the problematic commit, we can now reset the state of the git repository:
+
+user@machine: ~/brlcad (main) $ git bisect reset
+

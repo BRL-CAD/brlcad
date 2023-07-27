@@ -1,7 +1,7 @@
 /*                        F B S E R V . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ __BEGIN_DECLS
 #define NET_LONG_LEN 4 /**< @brief # bytes to network long */
 #define MAX_CLIENTS 32
 #define MAX_PORT_TRIES 100
-#define FBS_CALLBACK_NULL (void (*)())NULL
+#define FBS_CALLBACK_NULL (void (*)(void))NULL
 #define FBSERV_OBJ_NULL (struct fbserv_obj *)NULL
 
 struct fbserv_obj;
@@ -95,7 +95,7 @@ struct fbserv_obj {
 
 DM_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
 DM_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
-DM_EXPORT extern struct pkg_switch *fbs_pkg_switch();
+DM_EXPORT extern struct pkg_switch *fbs_pkg_switch(void);
 DM_EXPORT extern void fbs_setup_socket(int fd);
 DM_EXPORT extern int fbs_new_client(struct fbserv_obj *fbsp, struct pkg_conn *pcp, void *data);
 DM_EXPORT extern void fbs_existing_client_handler(void *clientData, int mask);

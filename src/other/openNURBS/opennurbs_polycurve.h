@@ -33,58 +33,49 @@
 	reparamaterized from m_t[i] to m_t[i+1], i.e., m_segment[i].Domain()[0] 
 	is mapped to 	m_t[i] and m_segment[i].Domain()[1] is mapped to m_t[i+1]. 
 */
-class ON_PolyCurve;
 class ON_CLASS ON_PolyCurve : public ON_Curve
 {
   ON_OBJECT_DECLARE(ON_PolyCurve);
 
 public:
-  // virtual ON_Object::DestroyRuntimeCache override
-  void DestroyRuntimeCache( bool bDelete = true );
+  ON_PolyCurve() ON_NOEXCEPT;
+  virtual ~ON_PolyCurve();
+  ON_PolyCurve(const ON_PolyCurve&);
+	ON_PolyCurve& operator=(const ON_PolyCurve&);
+
+#if defined(ON_HAS_RVALUEREF)
+  // rvalue copy constructor
+  ON_PolyCurve( ON_PolyCurve&& ) ON_NOEXCEPT;
+
+  // The rvalue assignment operator calls ON_Object::operator=(ON_Object&&)
+  // which could throw exceptions.  See the implementation of
+  // ON_Object::operator=(ON_Object&&) for details.
+  ON_PolyCurve& operator=( ON_PolyCurve&& );
+#endif
 
 public:
-  ON_PolyCurve();
+  // virtual ON_Object::DestroyRuntimeCache override
+  void DestroyRuntimeCache( bool bDelete = true ) override;
+
   ON_PolyCurve( int ); // int = initial capacity - use when a good estimate
                         // of the number of segments is known.
-  ON_PolyCurve(const ON_PolyCurve&);
 
   void Destroy();
 
-  virtual ~ON_PolyCurve();
 
   void EmergencyDestroy(); // call if memory used by ON_PolyCurve becomes invalid
 
-	ON_PolyCurve& operator=(const ON_PolyCurve&);
   
   /////////////////////////////////////////////////////////////////
   // ON_Object overrides
 
   // virtual ON_Object::SizeOf override
-  unsigned int SizeOf() const;
+  unsigned int SizeOf() const override;
 
   // virtual ON_Object::DataCRC override
-  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const override;
 
-  /*
-  Description:
-    Tests an object to see if its data members are correctly
-    initialized.
-  Parameters:
-    text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
-        interface tool.
-  Returns:
-    @untitled table
-    true     object is valid
-    false    object is invalid, uninitialized, etc.
-  Remarks:
-    Overrides virtual ON_Object::IsValid
-  */
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
   /*
   Description:
@@ -95,7 +86,7 @@ public:
       If true, gaps are allowed between polycurve segments.
       If false, gaps are not allowed between polycurve segments.
     text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
+        is not nullptr, then a brief englis description of the
         reason the object is not valid is appened to the log.
         The information appended to text_log is suitable for 
         low-level debugging purposes by programmers and is 
@@ -111,71 +102,52 @@ public:
   bool IsValid( bool bAllowGaps, ON_TextLog* text_log ) const;
 
 
-  void Dump( ON_TextLog& ) const; // for debugging
+  void Dump( ON_TextLog& ) const override; // for debugging
 
-  ON_BOOL32 Write(
+  bool Write(
          ON_BinaryArchive&  // open binary file
-       ) const;
+       ) const override;
 
-  ON_BOOL32 Read(
+  bool Read(
          ON_BinaryArchive&  // open binary file
-       );
+       ) override;
 
   /////////////////////////////////////////////////////////////////
   // ON_Geometry overrides
 
-  int Dimension() const;
+  int Dimension() const override;
 
-  ON_BOOL32 GetBBox( // returns true if successful
-         double*,    // minimum
-         double*,    // maximum
-         ON_BOOL32 = false  // true means grow box
-         ) const;
+  // virtual ON_Geometry GetBBox override		
+  bool GetBBox( double* boxmin, double* boxmax, bool bGrowBox = false ) const override;
 
-  /*
-	Description:
-    Get tight bounding box.
-	Parameters:
-		tight_bbox - [in/out] tight bounding box
-		bGrowBox -[in]	(default=false)			
-      If true and the input tight_bbox is valid, then returned
-      tight_bbox is the union of the input tight_bbox and the 
-      curve's tight bounding box.
-		xform -[in] (default=NULL)
-      If not NULL, the tight bounding box of the transformed
-      curve is calculated.  The curve is not modified.
-	Returns:
-    True if a valid tight_bbox is returned.
-  */
-	bool GetTightBoundingBox( 
-			ON_BoundingBox& tight_bbox, 
-      int bGrowBox = false,
-			const ON_Xform* xform = 0
-      ) const;
+  // virtual ON_Geometry GetTightBoundingBox override		
+  bool GetTightBoundingBox( class ON_BoundingBox& tight_bbox, bool bGrowBox = false, const class ON_Xform* xform = nullptr ) const override;
 
-  ON_BOOL32 Transform( 
+  bool Transform( 
          const ON_Xform&
-         );
+         ) override;
 
   // virtual ON_Geometry::IsDeformable() override
-  bool IsDeformable() const;
+  bool IsDeformable() const override;
 
   // virtual ON_Geometry::MakeDeformable() override
-  bool MakeDeformable();
+  bool MakeDeformable() override;
 
-  ON_BOOL32 SwapCoordinates(
+  bool SwapCoordinates(
         int, int        // indices of coords to swap
-        );
+        ) override;
+
+
 
   // virtual ON_Geometry override
-  bool EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) const;
+  bool EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) const override;
 
   /////////////////////////////////////////////////////////////////
   // ON_Curve overrides
 
-  ON_Curve* DuplicateCurve() const;
+  ON_Curve* DuplicateCurve() const override;
 
-  ON_Interval Domain() const;
+  ON_Interval Domain() const override;
 
   // Description:
   //   virtual ON_Curve::SetDomain override.
@@ -185,14 +157,14 @@ public:
   //   t1 - [in] new domain will be [t0,t1]
   // Returns:
   //   true if successful.
-  ON_BOOL32 SetDomain(
+  bool SetDomain(
         double t0, 
         double t1 
-        );
+        ) override;
 
   bool ChangeDimension(
           int desired_dimension
-          );
+          ) override;
 
   /*
   Description:
@@ -206,24 +178,24 @@ public:
   Remarks:
     Overrides virtual ON_Curve::ChangeClosedCurveSeam
   */
-  ON_BOOL32 ChangeClosedCurveSeam( 
+  bool ChangeClosedCurveSeam( 
             double t 
-            );
+            ) override;
 
-  int SpanCount() const; // number of smooth spans in curve
+  int SpanCount() const override; // number of smooth spans in curve
 
-  ON_BOOL32 GetSpanVector( // span "knots" 
+  bool GetSpanVector( // span "knots" 
          double* // array of length SpanCount() + 1 
-         ) const; // 
+         ) const override; // 
 
   int Degree( // returns maximum algebraic degree of any span 
                   // ( or a good estimate if curve spans are not algebraic )
-    ) const; 
+    ) const override; 
 
-  ON_BOOL32 IsLinear( // true if curve locus is a line segment between
+  bool IsLinear( // true if curve locus is a line segment between
                  // between specified points
         double = ON_ZERO_TOLERANCE // tolerance to use when checking linearity
-        ) const;
+        ) const override;
 
   /*
   Description:
@@ -232,9 +204,9 @@ public:
     all of whose segments are some form of polyline.  IsPolyline tests
     a curve to see if it can be represented as a polyline.
   Parameters:
-    pline_points - [out] if not NULL and true is returned, then the
+    pline_points - [out] if not nullptr and true is returned, then the
         points of the polyline form are returned here.
-    t - [out] if not NULL and true is returned, then the parameters of
+    t - [out] if not nullptr and true is returned, then the parameters of
         the polyline points are returned here.
   Returns:
     @untitled table
@@ -242,43 +214,43 @@ public:
     >=2      number of points in polyline form
   */
   int IsPolyline(
-        ON_SimpleArray<ON_3dPoint>* pline_points = NULL,
-        ON_SimpleArray<double>* pline_t = NULL
-        ) const;
+        ON_SimpleArray<ON_3dPoint>* pline_points = nullptr,
+        ON_SimpleArray<double>* pline_t = nullptr
+        ) const override;
 
-  ON_BOOL32 IsArc( // ON_Arc.m_angle > 0 if curve locus is an arc between
+  bool IsArc( // ON_Arc.m_angle > 0 if curve locus is an arc between
               // specified points
-        const ON_Plane* = NULL, // if not NULL, test is performed in this plane
-        ON_Arc* = NULL, // if not NULL and true is returned, then arc parameters
+        const ON_Plane* = nullptr, // if not nullptr, test is performed in this plane
+        ON_Arc* = nullptr, // if not nullptr and true is returned, then arc parameters
                          // are filled in
         double = ON_ZERO_TOLERANCE    // tolerance to use when checking
-        ) const;
+        ) const override;
 
-  ON_BOOL32 IsPlanar(
-        ON_Plane* = NULL, // if not NULL and true is returned, then plane parameters
+  bool IsPlanar(
+        ON_Plane* = nullptr, // if not nullptr and true is returned, then plane parameters
                            // are filled in
         double = ON_ZERO_TOLERANCE    // tolerance to use when checking
-        ) const;
+        ) const override;
 
-  ON_BOOL32 IsInPlane(
+  bool IsInPlane(
         const ON_Plane&, // plane to test
         double = ON_ZERO_TOLERANCE    // tolerance to use when checking
-        ) const;
+        ) const override;
 
-  ON_BOOL32 IsClosed(  // true if curve is closed (either curve has
+  bool IsClosed(  // true if curve is closed (either curve has
         void      // clamped end knots and euclidean location of start
-        ) const;  // CV = euclidean location of end CV, or curve is
+        ) const override;  // CV = euclidean location of end CV, or curve is
                   // periodic.)
 
-  ON_BOOL32 IsPeriodic(  // true if curve is a single periodic segment
+  bool IsPeriodic(  // true if curve is a single periodic segment
         void 
-        ) const;
+        ) const override;
   
   /*
   Description:
     Search for a derivatitive, tangent, or curvature discontinuity.
   Parameters:
-    c - [in] type of continity to test for.  If ON::C1_continuous
+    c - [in] type of continity to test for.  If ON::continuity::C1_continuous
     t0 - [in] search begins at t0
     t1 - [in] (t0 < t1) search ends at t1
     t - [out] if a discontinuity is found, the *t reports the
@@ -286,21 +258,21 @@ public:
     hint - [in/out] if GetNextDiscontinuity will be called repeatedly,
        passing a "hint" with initial value *hint=0 will increase the speed
        of the search.       
-    dtype - [out] if not NULL, *dtype reports the kind of discontinuity
+    dtype - [out] if not nullptr, *dtype reports the kind of discontinuity
         found at *t.  A value of 1 means the first derivative or unit tangent
         was discontinuous.  A value of 2 means the second derivative or
         curvature was discontinuous.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only when
-        c is ON::G1_continuous or ON::G2_continuous.  If the cosine
+        c is ON::continuity::G1_continuous or ON::continuity::G2_continuous.  If the cosine
         of the angle between two tangent vectors 
         is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-        c is ON::G2_continuous or ON::Gsmooth_continuous.  
-        ON::G2_continuous:
+        c is ON::continuity::G2_continuous or ON::continuity::Gsmooth_continuous.  
+        ON::continuity::G2_continuous:
           If K0 and K1 are curvatures evaluated
           from above and below and |K0 - K1| > curvature_tolerance,
           then a curvature discontinuity is reported.
-        ON::Gsmooth_continuous:
+        ON::continuity::Gsmooth_continuous:
           If K0 and K1 are curvatures evaluated from above and below
           and the angle between K0 and K1 is at least twice angle tolerance
           or ||K0| - |K1|| > (max(|K0|,|K1|) > curvature_tolerance,
@@ -315,11 +287,11 @@ public:
                   double t0,
                   double t1,
                   double* t,
-                  int* hint=NULL,
-                  int* dtype=NULL,
+                  int* hint=nullptr,
+                  int* dtype=nullptr,
                   double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
                   double curvature_tolerance=ON_SQRT_EPSILON
-                  ) const;
+                  ) const override;
 
   /*
   Description:
@@ -335,16 +307,16 @@ public:
     d2_tolerance - [in] if the difference between two second derivatives is
         greater than d2_tolerance, then the curve is not C2.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only when
-        c is ON::G1_continuous or ON::G2_continuous.  If the cosine
+        c is ON::continuity::G1_continuous or ON::continuity::G2_continuous.  If the cosine
         of the angle between two tangent vectors 
         is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-        c is ON::G2_continuous or ON::Gsmooth_continuous.  
-        ON::G2_continuous:
+        c is ON::continuity::G2_continuous or ON::continuity::Gsmooth_continuous.  
+        ON::continuity::G2_continuous:
           If K0 and K1 are curvatures evaluated
           from above and below and |K0 - K1| > curvature_tolerance,
           then a curvature discontinuity is reported.
-        ON::Gsmooth_continuous:
+        ON::continuity::Gsmooth_continuous:
           If K0 and K1 are curvatures evaluated from above and below
           and the angle between K0 and K1 is at least twice angle tolerance
           or ||K0| - |K1|| > (max(|K0|,|K1|) > curvature_tolerance,
@@ -357,15 +329,15 @@ public:
   bool IsContinuous(
     ON::continuity c,
     double t, 
-    int* hint = NULL,
+    int* hint = nullptr,
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
     double d2_tolerance=ON_ZERO_TOLERANCE,
     double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
     double curvature_tolerance=ON_SQRT_EPSILON
-    ) const;
+    ) const override;
 
-  ON_BOOL32 Reverse();       // reverse parameterizatrion
+  bool Reverse() override;       // reverse parameterizatrion
                         // Domain changes from [a,b] to [-b,-a]
 
   /*
@@ -384,9 +356,9 @@ public:
     ON_Curve::PointAtEnd
   */
   // virtual
-  ON_BOOL32 SetStartPoint(
+  bool SetStartPoint(
           ON_3dPoint start_point
-          );
+          ) override;
 
   /*
   Description:
@@ -404,11 +376,11 @@ public:
     ON_Curve::PointAtEnd
   */
   //virtual
-  ON_BOOL32 SetEndPoint(
+  bool SetEndPoint(
           ON_3dPoint end_point
-          );
+          ) override;
 
-  ON_BOOL32 Evaluate( // returns false if unable to evaluate
+  bool Evaluate( // returns false if unable to evaluate
          double,         // evaluation parameter
          int,            // number of derivatives (>=0)
          int,            // array stride (>=Dimension())
@@ -419,7 +391,8 @@ public:
                          //      >  0 to evaluate from above
          int* = 0        // optional - evaluation hint (int) used to speed
                          //            repeated evaluations
-         ) const;
+         ) const override;
+
 
   // Description:
   //   virtual ON_Curve::Trim override.
@@ -430,9 +403,9 @@ public:
   //      removed.
   // Returns:
   //   true if successful.
-  ON_BOOL32 Trim(
+  bool Trim(
     const ON_Interval& domain
-    );
+    ) override;
 
   // Description:
   //   Where possible, analytically extends curve to include domain.
@@ -445,14 +418,14 @@ public:
   //   true if successful.
   bool Extend(
     const ON_Interval& domain
-    );
+    ) override;
 
   // Description:
   //   virtual ON_Curve::Split override.
   //   Divide the curve at the specified parameter.  The parameter
   //   must be in the interior of the curve's domain.  The pointers
-  //   passed to Split must either be NULL or point to an ON_Curve
-  //   object of the same of the same type.  If the pointer is NULL,
+  //   passed to Split must either be nullptr or point to an ON_Curve
+  //   object of the same of the same type.  If the pointer is nullptr,
   //   then a curve will be created in Split().  You may pass "this"
   //   as one of the pointers to Split().
   // Parameters:
@@ -467,11 +440,11 @@ public:
   //
   //   would split crv at the parametric midpoint, put the left side
   //   in crv, and return the right side in right_side.
-  ON_BOOL32 Split(
+  bool Split(
       double t,    // t = curve parameter to split curve at
       ON_Curve*& left_side, // left portion returned here
       ON_Curve*& right_side // right portion returned here
-    ) const;
+    ) const override;
 
   int GetNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
@@ -485,8 +458,8 @@ public:
                    //            desired accuracy.
         ON_NurbsCurve&,
         double = 0.0,
-        const ON_Interval* = NULL     // OPTIONAL subdomain of polycurve
-        ) const;
+        const ON_Interval* = nullptr     // OPTIONAL subdomain of polycurve
+        ) const override;
 
   int HasNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
@@ -498,26 +471,26 @@ public:
                    //            curve's parameterization and the NURBS
                    //            parameterization may not match to the 
                    //            desired accuracy.
-        ) const;
+        ) const override;
 
   // virtual ON_Curve::GetCurveParameterFromNurbFormParameter override
-  ON_BOOL32 GetCurveParameterFromNurbFormParameter(
+  bool GetCurveParameterFromNurbFormParameter(
         double, // nurbs_t
         double* // curve_t
-        ) const;
+        ) const override;
 
   // virtual ON_Curve::GetNurbFormParameterFromCurveParameter override
-  ON_BOOL32 GetNurbFormParameterFromCurveParameter(
+  bool GetNurbFormParameterFromCurveParameter(
         double, // curve_t
         double* // nurbs_t
-        ) const;
+        ) const override;
 
   /////////////////////////////////////////////////////////////////
   // Interface
 
   int Count() const; // number of segment curves
 
-  // These operator[] functions return NULL if index is out of range
+  // These operator[] functions return nullptr if index is out of range
   ON_Curve* operator[](int) const;
 
   /*
@@ -526,7 +499,7 @@ public:
   Parameters:
     segment_index - [in] 0 based index  (0 <= segment_index < Count() )
   Returns:
-    A pointer to the segment curve.  Returns NULL if segment_index < 0
+    A pointer to the segment curve.  Returns nullptr if segment_index < 0
     or segment_index >= Count().
   */
   ON_Curve* SegmentCurve(
@@ -611,9 +584,9 @@ public:
     int* segment_index1
     ) const;
 
-  ON_Curve* FirstSegmentCurve() const; // returns NULL if count = 0
+  ON_Curve* FirstSegmentCurve() const; // returns nullptr if count = 0
 
-  ON_Curve* LastSegmentCurve() const;  // returns NULL if count = 0
+  ON_Curve* LastSegmentCurve() const;  // returns nullptr if count = 0
 
   /*
   Description:
@@ -647,8 +620,8 @@ public:
   */
   bool HasGapAt( int segment_index ) const;
   
-  // Replace calls to HasGap() with FindNextGap(0)
-  ON_DEPRECATED int HasGap() const;
+  ON_DEPRECATED_MSG("Replace calls to HasGap() with FindNextGap(0)")
+  int HasGap() const;
 
   /*
   Description:
@@ -692,25 +665,25 @@ public:
   // ON_Curve pointers added with Prepend(), Append(), PrependAndMatch(), AppendANdMatch(),and Insert() are deleted
   // by ~ON_PolyCurve(). Use ON_CurveProxy( ON_Curve*) if you want
   // the original curve segment to survive ~ON_PolyCurve().
-  ON_BOOL32 Prepend( ON_Curve* ); // Prepend curve.
-  ON_BOOL32 Append( ON_Curve* );  // Append curve.
-  ON_BOOL32 Insert( 
+  bool Prepend( ON_Curve* ); // Prepend curve.
+  bool Append( ON_Curve* );  // Append curve.
+  bool Insert( 
            int, // segment_index,
            ON_Curve*
            );
 
   //PrependAndMatch() and AppendAndMatch() return false if this->IsCLosed() or 
   //this->Count() > 0 and curve is closed
-  ON_BOOL32 PrependAndMatch(ON_Curve*); //Prepend and match end of curve to start of polycurve
-  ON_BOOL32 AppendAndMatch(ON_Curve*);  //Append and match start of curve to end of polycurve
+  bool PrependAndMatch(ON_Curve*); //Prepend and match end of curve to start of polycurve
+  bool AppendAndMatch(ON_Curve*);  //Append and match start of curve to end of polycurve
 
-  ON_BOOL32 Remove(); // delete last segment and reduce count by 1
-  ON_BOOL32 Remove( int ); // delete specified segment and reduce count by 1
+  bool Remove(); // delete last segment and reduce count by 1
+  bool Remove( int ); // delete specified segment and reduce count by 1
 
   //////////
   // Use the HarvestSegment() function when you want to prevent a
   // segment from being destroyed by ~ON_PolyCurve().  HarvestSegment()
-  // replaces the polycurve segment with a NULL.  Count() and parameter
+  // replaces the polycurve segment with a nullptr.  Count() and parameter
   // information remains unchanged.
   ON_Curve* HarvestSegment( int );
 
@@ -720,13 +693,18 @@ public:
   */
   bool IsNested() const;
 
-	/*
+  /*
   Description:
-    Same as RemoveNestingEx().
-  Remarks:
-    RemoveNestingEx was added to avoid breaking the SDK.
+    If this has a single segment, return that single segment with user_data copied, 
+    reversed if necessary so the sense of the result is the same as this,
+    and domain adjusted to match this->Domain. If the single segment is a polycurve,
+    RemoveNesting should be called before calling ExplodeSingleSegmentCurve.
+  Returns:
+    NULL if not a single span polycurve
+    The single span, adjusted as described above;
   */
-	void RemoveNesting();
+
+  ON_Curve* ExplodeSingleSegmentCurve() const;
 
   /* 
   Description:
@@ -737,6 +715,9 @@ public:
     True if a nested polycurve was removed.  False
     if no nested polycurves were found.
   */
+  bool RemoveNesting();
+
+  ON_DEPRECATED_MSG("Use RemoveNesting(). RemoveNestingEx() will be removed in the next release.")
 	bool RemoveNestingEx();
 
   /* 

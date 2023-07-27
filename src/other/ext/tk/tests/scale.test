@@ -1396,6 +1396,25 @@ test scale-18.3 {Scale button 2 events [Bug 787065]} -setup {
     destroy .s
 } -result {0 {}}
 
+test scale-18.4 {Bug [415415ffff] - Long callback: One click -> Several steps} -setup {
+    catch {destroy .s}
+    scale .s -from 0 -to 5 -resolution 1 -variable x1 -orient horizontal -length 100 \
+            -command longCmd -repeatdelay 300
+    pack .s
+    update
+    proc longCmd {unused} {
+      after 500  ; # larger than -repeatdelay
+    }
+} -body {
+    foreach {x y} [.s coord 50] {}
+    event generate .s <Button-1> -x $x -y $y
+    update
+    event generate .s <ButtonRelease-1> -x $x -y $y
+    update
+    set x1
+} -cleanup {
+    destroy .s
+} -result {1}
 
 test scale-19 {Bug [3529885fff] - Click in through goes in wrong direction} \
     -setup {

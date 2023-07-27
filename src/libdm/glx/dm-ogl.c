@@ -1,7 +1,7 @@
 /*                        D M - O G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2022 United States Government as represented by
+ * Copyright (c) 1988-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,10 @@
 #include <math.h>
 #include <string.h>
 
+#if defined(__clang__)
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wdocumentation"
+#endif
 
 #ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
@@ -74,6 +78,11 @@
 #include "png.h"
 
 #include "tk.h"
+
+#if defined(__clang__)
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
+
 
 #undef VMIN		/* is used in vmath.h, too */
 
@@ -1534,7 +1543,7 @@ struct dm dm_ogl = { DM_MAGIC, &dm_ogl_impl, 0 };
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { DM_API, &dm_ogl };
 
-COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info(void)
 {
     return &pinfo;
 }

@@ -1,7 +1,7 @@
 /*                        C U T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -123,7 +123,7 @@ render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, vec
      * First intersect this ray with the plane and fire the ray from there
      * Plane: Ax + By + Cz + D = 0
      * Ray = O + td
-     * t = -(Pn · R0 + D) / (Pn · Rd)
+     * t = -(Pn * R0 + D) / (Pn * Rd)
      */
     t = (rd->plane[0]*ray->pos[0] + rd->plane[1]*ray->pos[1] + rd->plane[2]*ray->pos[2] + rd->plane[3]) /
 	(rd->plane[0]*ray->dir[0] + rd->plane[1]*ray->dir[1] + rd->plane[2]*ray->dir[2]);

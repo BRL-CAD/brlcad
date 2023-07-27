@@ -28,15 +28,17 @@
  * character set.
  */
 
-typedef struct CharSet {
+typedef struct {
+    Tcl_UniChar start;
+    Tcl_UniChar end;
+} Range;
+
+typedef struct {
     int exclude;		/* 1 if this is an exclusion set. */
     int nchars;
     Tcl_UniChar *chars;
     int nranges;
-    struct Range {
-	Tcl_UniChar start;
-	Tcl_UniChar end;
-    } *ranges;
+    Range *ranges;
 } CharSet;
 
 /*
@@ -101,9 +103,9 @@ BuildCharSet(
 	end += TclUtfToUniChar(end, &ch);
     }
 
-    cset->chars = ckalloc(sizeof(Tcl_UniChar) * (end - format - 1));
+    cset->chars = (Tcl_UniChar *)ckalloc(sizeof(Tcl_UniChar) * (end - format - 1));
     if (nranges > 0) {
-	cset->ranges = ckalloc(sizeof(struct Range) * nranges);
+	cset->ranges = (Range *)ckalloc(sizeof(Range) * nranges);
     } else {
 	cset->ranges = NULL;
     }
@@ -259,12 +261,12 @@ ValidateFormat(
     char *end;
     Tcl_UniChar ch = 0;
     int objIndex, xpgSize, nspace = numVars;
-    int *nassign = TclStackAlloc(interp, nspace * sizeof(int));
-    char buf[TCL_UTF_MAX+1] = "";
+    int *nassign = (int *)TclStackAlloc(interp, nspace * sizeof(int));
     Tcl_Obj *errorMsg;		/* Place to build an error messages. Note that
 				 * these are messy operations because we do
 				 * not want to use the formatting engine;
 				 * we're inside there! */
+    char buf[TCL_UTF_MAX+1] = "";
 
     /*
      * Initialize an array that records the number of times a variable is
@@ -483,7 +485,7 @@ ValidateFormat(
 		} else {
 		    nspace += 16;	/* formerly STATIC_LIST_SIZE */
 		}
-		nassign = TclStackRealloc(interp, nassign,
+		nassign = (int *)TclStackRealloc(interp, nassign,
 			nspace * sizeof(int));
 		for (i = value; i < nspace; i++) {
 		    nassign[i] = 0;
@@ -566,7 +568,6 @@ ValidateFormat(
  *----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 int
 Tcl_ScanObjCmd(
     ClientData dummy,		/* Not used. */
@@ -585,6 +586,7 @@ Tcl_ScanObjCmd(
     Tcl_UniChar ch = 0, sch = 0;
     Tcl_Obj **objs = NULL, *objPtr = NULL;
     int flags;
+    (void)dummy;
 
     if (objc < 3) {
 	Tcl_WrongNumArgs(interp, 1, objv,
@@ -608,7 +610,7 @@ Tcl_ScanObjCmd(
      */
 
     if (totalVars > 0) {
-	objs = ckalloc(sizeof(Tcl_Obj *) * totalVars);
+	objs = (Tcl_Obj **)ckalloc(sizeof(Tcl_Obj *) * totalVars);
 	for (i = 0; i < totalVars; i++) {
 	    objs[i] = NULL;
 	}
@@ -895,7 +897,7 @@ Tcl_ScanObjCmd(
 	    /*
 	     * Scan an unsigned or signed integer.
 	     */
-	    objPtr = Tcl_NewLongObj(0);
+	    TclNewIntObj(objPtr, 0);
 	    Tcl_IncrRefCount(objPtr);
 	    if (width == 0) {
 		width = ~0;
@@ -921,9 +923,10 @@ Tcl_ScanObjCmd(
 	    }
 	    if (flags & SCAN_LONGER) {
 		if (Tcl_GetWideIntFromObj(NULL, objPtr, &wideValue) != TCL_OK) {
-		    wideValue = ~(Tcl_WideUInt)0 >> 1;	/* WIDE_MAX */
 		    if (TclGetString(objPtr)[0] == '-') {
-			wideValue++;	/* WIDE_MAX + 1 = WIDE_MIN */
+			wideValue = WIDE_MIN;
+		    } else {
+			wideValue = WIDE_MAX;
 		    }
 		}
 		if ((flags & SCAN_UNSIGNED) && (wideValue < 0)) {
@@ -950,7 +953,7 @@ Tcl_ScanObjCmd(
 		    Tcl_SetWideIntObj(objPtr, (unsigned long)value);
 #endif
 		} else {
-		    Tcl_SetLongObj(objPtr, value);
+		    TclSetLongObj(objPtr, value);
 		}
 	    }
 	    objs[objIndex++] = objPtr;

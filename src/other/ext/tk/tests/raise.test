@@ -20,6 +20,7 @@ proc raise_setup {} {
     foreach i [winfo child .raise] {
 	        destroy $i
         }
+    update idletasks
     foreach i {a b c d e} {
 	    label .raise.$i -text $i -relief raised -bd 2
     }

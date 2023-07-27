@@ -341,7 +341,7 @@ TkMacOSXNotifyExitHandler(
  *       deQueue=NO so that it will not change anything on the AppKit event
  *       queue, because we only want the side effect that it runs drawRect. The
  *       only times when any NSViews have the needsDisplay property set to YES
- *       are during execution of this function or in the addDirtyRect method
+ *       are during execution of this function or in the addTkDirtyRect method
  *       of TKContentView.
  *
  *       The reason for running this function as an idle task is to try to

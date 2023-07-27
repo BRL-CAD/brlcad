@@ -16,6 +16,15 @@
 
 #include "opennurbs.h"
 
+#if !defined(ON_COMPILING_OPENNURBS)
+// This check is included in all opennurbs source .c and .cpp files to insure
+// ON_COMPILING_OPENNURBS is defined when opennurbs source is compiled.
+// When opennurbs source is being compiled, ON_COMPILING_OPENNURBS is defined 
+// and the opennurbs .h files alter what is declared and how it is declared.
+#error ON_COMPILING_OPENNURBS must be defined when compiling opennurbs
+#endif
+
+
 bool ON_Brep::IsValidForV2( const ON_BrepTrim& trim ) const
 {
   int ti = trim.m_trim_index;
@@ -63,6 +72,7 @@ bool ON_Brep::IsValidForV2( const ON_BrepTrim& trim ) const
   
   if ( curve->Domain() != trim.Domain() )
     return false;
+
 
   return true;
 }
@@ -114,6 +124,7 @@ bool ON_Brep::IsValidForV2( const ON_BrepEdge& edge ) const
   {
     return false;
   }
+
 
   return true;
 }

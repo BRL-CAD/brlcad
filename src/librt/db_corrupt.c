@@ -1,7 +1,7 @@
 /*                    D B _ C O R R U P T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2022 United States Government as represented by
+ * Copyright (c) 2011-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -128,10 +128,13 @@ rt_db_flip_endian(struct db_i *dbip)
     if (db_version(dbip) > 4)
 	return 0;
 
-    /* provide the user some means to override this automatic behavior */
+    /* provide a means to override the default automatic behavior.
+     * setting false value (e.g., LIBRT_V4FLIP=0) makes it not try
+     * flipping the data.
+     */
     v4flip = getenv("LIBRT_V4FLIP");
-    if (v4flip)
-	return bu_str_true(v4flip);
+    if (v4flip && !bu_str_true(v4flip))
+	return 0;
 
     /* iterate over all database objects looking for signs of
      * corruption keeping a tally of whether flipping the record fixed

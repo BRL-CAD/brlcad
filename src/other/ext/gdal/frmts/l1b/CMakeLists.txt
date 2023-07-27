@@ -1,2 +1,2 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_library(frmt_l1b OBJECT l1bdataset.cpp)
+add_gdal_driver(TARGET gdal_L1B SOURCES l1bdataset.cpp PLUGIN_CAPABLE NO_DEPS)
+gdal_standard_includes(gdal_L1B)

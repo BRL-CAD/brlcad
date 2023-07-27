@@ -1,7 +1,7 @@
 /*                         S L A V E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -442,7 +442,7 @@ static void info(int UNUSED(sig))
     return;
 }
 
-static void help()
+static void help(void)
 {
     fprintf(stderr,"%s\n", ADRT_VER_DETAIL);
     fprintf(stderr,"%s", "Usage: adrt_slave [options] [host]\n\

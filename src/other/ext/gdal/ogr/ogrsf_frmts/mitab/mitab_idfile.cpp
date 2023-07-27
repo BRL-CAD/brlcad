@@ -43,8 +43,6 @@
 #include "mitab_priv.h"
 #include "mitab_utils.h"
 
-CPL_CVSID("$Id$");
-
 /*=====================================================================
  *                      class TABIDFile
  *====================================================================*/
@@ -54,21 +52,21 @@ CPL_CVSID("$Id$");
  *
  * Constructor.
  **********************************************************************/
-TABIDFile::TABIDFile() :
-    m_pszFname(NULL),
-    m_fp(NULL),
-    m_eAccessMode(TABRead),
-    m_poIDBlock(NULL),
-    m_nBlockSize(0),
-    m_nMaxId(-1)
-{}
+TABIDFile::TABIDFile()
+    : m_pszFname(nullptr), m_fp(nullptr), m_eAccessMode(TABRead),
+      m_poIDBlock(nullptr), m_nBlockSize(0), m_nMaxId(-1)
+{
+}
 
 /**********************************************************************
  *                   TABIDFile::~TABIDFile()
  *
  * Destructor.
  **********************************************************************/
-TABIDFile::~TABIDFile() { Close(); }
+TABIDFile::~TABIDFile()
+{
+    Close();
+}
 
 /**********************************************************************
  *                   TABIDFile::Open()
@@ -80,9 +78,9 @@ TABIDFile::~TABIDFile() { Close(); }
 int TABIDFile::Open(const char *pszFname, const char *pszAccess)
 {
     // cppcheck-suppress nullPointer
-    if( STARTS_WITH_CI(pszAccess, "r") )
+    if (STARTS_WITH_CI(pszAccess, "r"))
         return Open(pszFname, TABRead);
-    if( STARTS_WITH_CI(pszAccess, "w") )
+    if (STARTS_WITH_CI(pszAccess, "w"))
         return Open(pszFname, TABWrite);
 
     CPLError(CE_Failure, CPLE_FileIO,
@@ -113,7 +111,7 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
     // Validate access mode and make sure we use binary access.
     // Note that in Write mode we need TABReadWrite since we do random
     // updates in the index as data blocks are split.
-    const char *pszAccess = NULL;
+    const char *pszAccess = nullptr;
     if (eAccess == TABRead)
     {
         m_eAccessMode = TABRead;
@@ -153,11 +151,11 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
     // Open file.
     m_fp = VSIFOpenL(m_pszFname, pszAccess);
 
-    if (m_fp == NULL)
+    if (m_fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Open() failed for %s", m_pszFname);
         CPLFree(m_pszFname);
-        m_pszFname = NULL;
+        m_pszFname = nullptr;
         return -1;
     }
 
@@ -166,7 +164,7 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
         // READ access:
         // Establish the number of object IDs from the size of the file.
         VSIStatBufL sStatBuf;
-        if ( VSIStatL(m_pszFname, &sStatBuf) == -1 )
+        if (VSIStatL(m_pszFname, &sStatBuf) == -1)
         {
             CPLError(CE_Failure, CPLE_FileIO, "stat() failed for %s",
                      m_pszFname);
@@ -174,8 +172,8 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
             return -1;
         }
 
-        if( static_cast<vsi_l_offset>(sStatBuf.st_size) >
-            static_cast<vsi_l_offset>(INT_MAX / 4) )
+        if (static_cast<vsi_l_offset>(sStatBuf.st_size) >
+            static_cast<vsi_l_offset>(INT_MAX / 4))
             m_nMaxId = INT_MAX / 4;
         else
             m_nMaxId = static_cast<int>(sStatBuf.st_size / 4);
@@ -220,7 +218,7 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
  **********************************************************************/
 int TABIDFile::Close()
 {
-    if (m_fp == NULL)
+    if (m_fp == nullptr)
         return 0;
 
     // Write access: commit latest changes to the file.
@@ -229,14 +227,14 @@ int TABIDFile::Close()
 
     // Delete all structures
     delete m_poIDBlock;
-    m_poIDBlock = NULL;
+    m_poIDBlock = nullptr;
 
     // Close file
     VSIFCloseL(m_fp);
-    m_fp = NULL;
+    m_fp = nullptr;
 
     CPLFree(m_pszFname);
-    m_pszFname = NULL;
+    m_pszFname = nullptr;
 
     return 0;
 }
@@ -247,14 +245,14 @@ int TABIDFile::Close()
 
 int TABIDFile::SyncToDisk()
 {
-    if( m_eAccessMode == TABRead )
+    if (m_eAccessMode == TABRead)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "SyncToDisk() can be used only with Write access.");
         return -1;
     }
 
-    if( m_poIDBlock == NULL)
+    if (m_poIDBlock == nullptr)
         return 0;
 
     return m_poIDBlock->CommitToFile();
@@ -274,7 +272,7 @@ int TABIDFile::SyncToDisk()
  **********************************************************************/
 GInt32 TABIDFile::GetObjPtr(GInt32 nObjId)
 {
-    if (m_poIDBlock == NULL)
+    if (m_poIDBlock == nullptr)
         return -1;
 
     if (nObjId < 1 || nObjId > m_nMaxId)
@@ -305,7 +303,7 @@ GInt32 TABIDFile::GetObjPtr(GInt32 nObjId)
  **********************************************************************/
 int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
 {
-    if (m_poIDBlock == NULL)
+    if (m_poIDBlock == nullptr)
         return -1;
 
     if (m_eAccessMode == TABRead)
@@ -356,7 +354,10 @@ int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
  *
  * Returns a value >= 0 on success, -1 on error.
  **********************************************************************/
-GInt32 TABIDFile::GetMaxObjId() { return m_nMaxId; }
+GInt32 TABIDFile::GetMaxObjId()
+{
+    return m_nMaxId;
+}
 
 /**********************************************************************
  *                   TABIDFile::Dump()
@@ -367,12 +368,12 @@ GInt32 TABIDFile::GetMaxObjId() { return m_nMaxId; }
 
 void TABIDFile::Dump(FILE *fpOut /*=NULL*/)
 {
-    if (fpOut == NULL)
+    if (fpOut == nullptr)
         fpOut = stdout;
 
     fprintf(fpOut, "----- TABIDFile::Dump() -----\n");
 
-    if (m_fp == NULL)
+    if (m_fp == nullptr)
     {
         fprintf(fpOut, "File is not opened.\n");
     }

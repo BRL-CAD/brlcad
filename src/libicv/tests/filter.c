@@ -1,7 +1,7 @@
 /*                    I C V _ F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2022 United States Government as represented by
+ * Copyright (c) 2013-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ struct kernels_info {
 };
 
 
-void usage()
+void usage(void)
 {
     int i;
 

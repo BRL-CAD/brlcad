@@ -3,10 +3,10 @@
  *
  * Project:  CPL - Common Portability Library
  * Purpose:  Private API for VSICurl
- * Author:   Even Rouault, even.rouault at mines-paris.org
+ * Author:   Even Rouault, even.rouault at spatialys.com
  *
  ******************************************************************************
- * Copyright (c) 2012, Even Rouault <even dot rouault at mines-paris dot org>
+ * Copyright (c) 2012, Even Rouault <even dot rouault at spatialys.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,17 +37,19 @@
 /* Used by the MBTiles driver for now. */
 
 /* Return TRUE to go on downloading, FALSE to stop. */
-typedef int (*VSICurlReadCbkFunc) (VSILFILE* fp, void *pabyBuffer,
-                                   size_t nBufferSize, void* pfnUserData);
+typedef int (*VSICurlReadCbkFunc)(VSILFILE *fp, void *pabyBuffer,
+                                  size_t nBufferSize, void *pfnUserData);
 
 /* fp must be a VSICurl file handle, otherwise bad things will happen. */
 /* bStopOnInterruptUntilUninstall must be set to TRUE if all downloads */
 /* must be canceled after a first one has been stopped by the callback */
 /* function.  In that case, downloads will restart after uninstalling the */
 /* callback. */
-int VSICurlInstallReadCbk( VSILFILE* fp, VSICurlReadCbkFunc pfnReadCbk,
-                           void* pfnUserData,
-                           int bStopOnInterruptUntilUninstall );
-int VSICurlUninstallReadCbk( VSILFILE* fp );
+int VSICurlInstallReadCbk(VSILFILE *fp, VSICurlReadCbkFunc pfnReadCbk,
+                          void *pfnUserData,
+                          int bStopOnInterruptUntilUninstall);
+int VSICurlUninstallReadCbk(VSILFILE *fp);
 
-#endif // CPL_VSIL_CURL_PRIV_H_INCLUDED
+void VSICurlAuthParametersChanged();
+
+#endif  // CPL_VSIL_CURL_PRIV_H_INCLUDED

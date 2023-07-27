@@ -1,7 +1,7 @@
 /*                         V U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2022 United States Government as represented by
+ * Copyright (c) 2008-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,11 +35,11 @@ int
 _ged_do_rot(struct ged *gedp,
 	    char coord,
 	    mat_t rmat,
-	    int (*func)())
+	    int (*func)(struct ged *, char, char, mat_t))
 {
     mat_t temp1, temp2;
 
-    if (func != (int (*)())0)
+    if (func != (int (*)(struct ged *, char, char, mat_t))0)
 	return (*func)(gedp, coord, gedp->ged_gvp->gv_rotate_about, rmat);
 
     switch (coord) {
@@ -113,13 +113,13 @@ int
 _ged_do_tra(struct ged *gedp,
 	    char coord,
 	    vect_t tvec,
-	    int (*func)())
+	    int (*func)(struct ged *, char, vect_t))
 {
     point_t delta;
     point_t work;
     point_t vc, nvc;
 
-    if (func != (int (*)())0)
+    if (func != (int (*)(struct ged *, char, vect_t))0)
 	return (*func)(gedp, coord, tvec);
 
     switch (coord) {

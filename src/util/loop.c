@@ -1,7 +1,7 @@
 /*                          L O O P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,9 +52,9 @@
 #define CHAR 2
 
 void
-usage()
+usage(void)
 {
-	bu_log("Usage: loop [-c] start finish [incr]\n       -c used for character (char) looping\n");
+    bu_log("Usage: loop [-c] start finish [incr]\n       -c used for character (char) looping\n");
 }
 
 int

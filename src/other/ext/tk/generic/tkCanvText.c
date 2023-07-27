@@ -140,7 +140,7 @@ static int		ConfigureText(Tcl_Interp *interp,
 			    Tcl_Obj *const objv[], int flags);
 static int		CreateText(Tcl_Interp *interp,
 			    Tk_Canvas canvas, struct Tk_Item *itemPtr,
-			    int argc, Tcl_Obj *const objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static void		DeleteText(Tk_Canvas canvas,
 			    Tk_Item *itemPtr, Display *display);
 static void		DisplayCanvText(Tk_Canvas canvas,
@@ -159,7 +159,7 @@ static void		SetTextCursor(Tk_Canvas canvas,
 			    Tk_Item *itemPtr, int index);
 static int		TextCoords(Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr,
-			    int argc, Tcl_Obj *const objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static void		TextDeleteChars(Tk_Canvas canvas,
 			    Tk_Item *itemPtr, int first, int last);
 static void		TextInsert(Tk_Canvas canvas,
@@ -562,7 +562,7 @@ ConfigureText(
 
 static void
 DeleteText(
-    Tk_Canvas canvas,		/* Info about overall canvas widget. */
+    TCL_UNUSED(Tk_Canvas),	/* Info about overall canvas widget. */
     Tk_Item *itemPtr,		/* Item that is being deleted. */
     Display *display)		/* Display containing window for canvas. */
 {
@@ -629,7 +629,7 @@ ComputeTextBbox(
     TextItem *textPtr)		/* Item whose bbox is to be recomputed. */
 {
     Tk_CanvasTextInfo *textInfoPtr;
-    int leftX, topY, width, height, fudge, i;
+    int width, height, fudge, i;
     Tk_State state = textPtr->header.state;
     double x[4], y[4], dx[4], dy[4], sinA, cosA, tmp;
 
@@ -651,8 +651,6 @@ ComputeTextBbox(
      * bounding box for the text item.
      */
 
-    leftX = ROUND(textPtr->x);
-    topY = ROUND(textPtr->y);
     for (i=0 ; i<4 ; i++) {
 	dx[i] = dy[i] = 0.0;
     }
@@ -662,21 +660,17 @@ ComputeTextBbox(
     case TK_ANCHOR_NE:
 	break;
 
-    case TK_ANCHOR_W:
-    case TK_ANCHOR_CENTER:
-    case TK_ANCHOR_E:
-	topY -= height / 2;
-	for (i=0 ; i<4 ; i++) {
-	    dy[i] = -height / 2;
-	}
-	break;
-
     case TK_ANCHOR_SW:
     case TK_ANCHOR_S:
     case TK_ANCHOR_SE:
-	topY -= height;
 	for (i=0 ; i<4 ; i++) {
 	    dy[i] = -height;
+	}
+	break;
+
+    default:
+	for (i=0 ; i<4 ; i++) {
+	    dy[i] = -height / 2;
 	}
 	break;
     }
@@ -686,21 +680,17 @@ ComputeTextBbox(
     case TK_ANCHOR_SW:
 	break;
 
-    case TK_ANCHOR_N:
-    case TK_ANCHOR_CENTER:
-    case TK_ANCHOR_S:
-	leftX -= width / 2;
-	for (i=0 ; i<4 ; i++) {
-	    dx[i] = -width / 2;
-	}
-	break;
-
     case TK_ANCHOR_NE:
     case TK_ANCHOR_E:
     case TK_ANCHOR_SE:
-	leftX -= width;
 	for (i=0 ; i<4 ; i++) {
 	    dx[i] = -width;
+	}
+	break;
+
+    default:
+	for (i=0 ; i<4 ; i++) {
+	    dx[i] = -width / 2;
 	}
 	break;
     }
@@ -835,7 +825,7 @@ DisplayCanvText(
     }
 
     selFirstChar = -1;
-    selLastChar = 0;		/* lint. */
+    selLastChar = 0;
     Tk_CanvasDrawableCoords(canvas, textPtr->drawOrigin[0],
 	    textPtr->drawOrigin[1], &drawableX, &drawableY);
 
@@ -1010,7 +1000,8 @@ TextInsert(
     Tcl_Obj *obj)		/* New characters to be inserted. */
 {
     TextItem *textPtr = (TextItem *) itemPtr;
-    int byteIndex, byteCount, charsAdded;
+    int byteIndex, charsAdded;
+    int byteCount;
     char *newStr, *text;
     const char *string;
     Tk_CanvasTextInfo *textInfoPtr = textPtr->textInfoPtr;
@@ -1606,7 +1597,6 @@ TextToPostscript(
 		Tcl_GetString(Tcl_GetObjResult(interp)));
     }
 
-    x = 0;  y = 0;  justify = NULL;
     switch (textPtr->anchor) {
     case TK_ANCHOR_NW:	   x = 0; y = 0; break;
     case TK_ANCHOR_N:	   x = 1; y = 0; break;
@@ -1616,12 +1606,12 @@ TextToPostscript(
     case TK_ANCHOR_S:	   x = 1; y = 2; break;
     case TK_ANCHOR_SW:	   x = 0; y = 2; break;
     case TK_ANCHOR_W:	   x = 0; y = 1; break;
-    case TK_ANCHOR_CENTER: x = 1; y = 1; break;
+    default: x = 1; y = 1; break;
     }
     switch (textPtr->justify) {
-    case TK_JUSTIFY_LEFT:   justify = "0";   break;
     case TK_JUSTIFY_CENTER: justify = "0.5"; break;
     case TK_JUSTIFY_RIGHT:  justify = "1";   break;
+    default:                justify = "0";   break;
     }
 
     Tk_GetFontMetrics(textPtr->tkfont, &fm);

@@ -727,7 +727,7 @@ TclOO_Object_VarName(
      * (including traversing variable links), convert back to a name.
      */
 
-    varNamePtr = Tcl_NewObj();
+    TclNewObj(varNamePtr);
     if (aryVar != NULL) {
 	Tcl_HashEntry *hPtr;
 	Tcl_HashSearch search;

@@ -1,7 +1,7 @@
 /*                     I N T E R R U P T . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2022 United States Government as represented by
+ * Copyright (c) 2009-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -181,7 +181,7 @@ interrupt_restore_signal(int signum)
 
 
 int
-bu_interrupt_suspend()
+bu_interrupt_suspend(void)
 {
     int ret = 0;
 
@@ -207,7 +207,7 @@ bu_interrupt_suspend()
 
 
 int
-bu_interrupt_restore()
+bu_interrupt_restore(void)
 {
     int ret = 0;
 

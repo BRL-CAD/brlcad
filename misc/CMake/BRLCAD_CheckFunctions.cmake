@@ -1,7 +1,7 @@
 #     B R L C A D _ C H E C K F U N C T I O N S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2022 United States Government as represented by
+# Copyright (c) 2011-2023 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -183,9 +183,9 @@ macro(BRLCAD_FUNCTION_EXISTS function)
 	    endif(ENABLE_ALL_CXX_COMPILE)
 	  else(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
 	    if(ENABLE_ALL_CXX_COMPILE)
-	      check_cxx_source_compiles("${standard_header_template}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
+	      check_cxx_source_compiles("${standard_header_template}\nint main(void) {(void)${function}; return 0;}" HAVE_DECL_${var})
 	    else(ENABLE_ALL_CXX_COMPILE)
-	      check_c_source_compiles("${standard_header_template}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
+	      check_c_source_compiles("${standard_header_template}\nint main(void) {(void)${function}; return 0;}" HAVE_DECL_${var})
 	    endif(ENABLE_ALL_CXX_COMPILE)
 	  endif(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
 	else()
@@ -430,7 +430,7 @@ function(BRLCAD_HEADER_SYS_WAIT)
 #ifndef WIFEXITED
 # define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #endif
-int main() {
+int main(void) {
   int s;
   wait(&s);
   s = WIFEXITED(s) ? WEXITSTATUS(s) : 1;
@@ -458,7 +458,7 @@ endfunction(BRLCAD_HEADER_SYS_WAIT)
 function(BRLCAD_ALLOCA)
   set(ALLOCA_HEADER_SRC "
 #include <alloca.h>
-int main() {
+int main(void) {
    char *p = (char *) alloca (2 * sizeof (int));
    if (p) return 0;
    ;
@@ -486,7 +486,7 @@ char *alloca ();
 # endif
 #endif
 
-int main() {
+int main(void) {
    char *p = (char *) alloca (1);
    if (p) return 0;
    ;

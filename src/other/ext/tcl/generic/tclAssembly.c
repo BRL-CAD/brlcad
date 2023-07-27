@@ -949,7 +949,7 @@ TclCompileAssembleCmd(
     Tcl_Interp *interp,		/* Used for error reporting. */
     Tcl_Parse *parsePtr,	/* Points to a parse structure for the command
 				 * created by Tcl_ParseCommand. */
-    Command *cmdPtr,		/* Points to defintion of command being
+    Command *cmdPtr,		/* Points to definition of command being
 				 * compiled. */
     CompileEnv *envPtr)		/* Holds resulting instructions. */
 {
@@ -1975,7 +1975,7 @@ CreateMirrorJumpTable(
 				 * table. */
     int i;
 
-    if (Tcl_ListObjGetElements(interp, jumps, &objc, &objv) != TCL_OK) {
+    if (TclListObjGetElements(interp, jumps, &objc, &objv) != TCL_OK) {
 	return TCL_ERROR;
     }
     if (objc % 2 != 0) {

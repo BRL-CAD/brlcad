@@ -1,7 +1,7 @@
 /*                       E D G E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -720,10 +720,8 @@ NMG_EXPORT extern int nmg_break_e_on_v(const uint32_t *magic_p,struct bu_list *v
       ==0     (==> X == 180) ON_FORW
    @endverbatim
  *
- * @retval WEDGE_LEFT
- * @retval WEDGE_CROSSING
- * @retval WEDGE_RIGHT
- * @retval WEDGE_ON
+ * Possible return values are WEDGE_LEFT, WEDGE_CROSSING, WEDGE_RIGHT, and
+ * WEDGE_ON
  */
 NMG_EXPORT extern int nmg_wedge_class(int        ass,    /* assessment of two edges forming wedge */
                                       double     a,

@@ -1,7 +1,7 @@
 /*                        I F _ O G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2408,7 +2408,7 @@ struct fb ogl_interface =  { &ogl_interface_impl };
 #ifdef DM_PLUGIN
 static const struct fb_plugin finfo = { &ogl_interface };
 
-COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info()
+COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info(void)
 {
     return &finfo;
 }

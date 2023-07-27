@@ -39,7 +39,7 @@ public:
   //   order - [in] (>=2) order = degree+1
   ON_PolynomialCurve(
     int dim,
-    ON_BOOL32 bIsRational,
+    bool bIsRational,
     int order
     );
 
@@ -59,9 +59,9 @@ public:
   //   dim - [in] dimension of the curve
   //   bIsRational - [in] true if rational
   //   order - [in] (>=2) order = degree+1
-  ON_BOOL32 Create(
+  bool Create(
     int dim,
-    ON_BOOL32 bIsRational,
+    bool bIsRational,
     int order
     );
 
@@ -82,7 +82,7 @@ public:
   //       etc.
   // Returns:
   //   false if unable to evaluate.
-  ON_BOOL32 Evaluate(
+  bool Evaluate(
          double t,
          int der_count,
          int v_stride,
@@ -111,7 +111,7 @@ public:
   ON_PolynomialSurface();
   ON_PolynomialSurface(
     int,  // dim,
-    ON_BOOL32, // true if rational
+    bool, // true if rational
     int,  // "u" order
     int   // "v" order
     );
@@ -121,15 +121,15 @@ public:
   ON_PolynomialSurface& operator=(const ON_PolynomialSurface&);
   ON_PolynomialSurface& operator=(const ON_BezierSurface&);
 
-  ON_BOOL32 Create(
+  bool Create(
     int,  // dim,
-    ON_BOOL32, // true if rational
+    bool, // true if rational
     int,  // "u" order
     int   // "v" order
     );
   void Destroy();
 
-  ON_BOOL32 Evaluate(          // returns false if unable to evaluate
+  bool Evaluate(          // returns false if unable to evaluate
          double s, 
          double t,        // evaluation parameter
          int der_count,   // number of derivatives (>=0)
@@ -159,7 +159,7 @@ public:
   //   order - [in] (>=2) order (=degree+1) of bezier curve
   ON_BezierCurve(
     int dim,
-    ON_BOOL32 bIsRational,
+    bool bIsRational,
     int order
     );
 
@@ -195,7 +195,7 @@ public:
   //   true if successful.
   bool Create(
     int dim,
-    ON_BOOL32 bIsRational,
+    bool bIsRational,
     int order
     );
 
@@ -257,7 +257,7 @@ public:
   bool GetBBox( // returns true if successful
          double* box_min,
          double* box_max,
-         int bGrowBox = false
+         bool bGrowBox = false
          ) const;
 
   // Description:
@@ -290,8 +290,8 @@ public:
       If true and the input tight_bbox is valid, then returned
       tight_bbox is the union of the input tight_bbox and the 
       tight bounding box of the bezier curve.
-		xform -[in] (default=NULL)
-      If not NULL, the tight bounding box of the transformed
+		xform -[in] (default=nullptr)
+      If not nullptr, the tight bounding box of the transformed
       bezier is calculated.  The bezier curve is not modified.
 	Returns:
     True if the returned tight_bbox is set to a valid 
@@ -299,8 +299,8 @@ public:
   */
 	bool GetTightBoundingBox( 
 			ON_BoundingBox& tight_bbox, 
-      int bGrowBox = false,
-			const ON_Xform* xform = 0
+      bool bGrowBox = false,
+			const ON_Xform* xform = nullptr
       ) const;
 
   // Description:
@@ -313,6 +313,7 @@ public:
   bool Transform( 
          const ON_Xform& xform
          );
+
 
   // Description:
   //   Rotates the bezier curve about the specified axis.  A positive
@@ -543,8 +544,9 @@ public:
   //   nurbs_curve - [out] NURBS curve form of a bezier.
   //       The domain is [0,1].
   // Returns:
-  //   true if successful
-  bool GetNurbForm( 
+  //   0 = failure
+  //   1 = success
+  int GetNurbForm( 
     ON_NurbsCurve& nurbs_curve
     ) const;
 
@@ -594,6 +596,22 @@ public:
   double* CV(
         int cv_index
         ) const;
+
+  /*
+  Parameters:
+    cv_index - [in]
+      zero based control point index
+  Returns:
+    Control point as an ON_4dPoint.
+  Remarks:
+    If cv_index or the bezier is not valid, then ON_4dPoint::Nan is returned.
+    If dim < 3, unused coordinates are zero.
+    If dim >= 4, the first three coordinates are returned.
+    If is_rat is false, the weight is 1.
+  */
+  const ON_4dPoint ControlPoint(
+    int cv_index
+  ) const;
 
   /*
   Description:
@@ -881,7 +899,8 @@ public:
           );
 
   // misspelled function name is obsolete
-  ON_DEPRECATED bool Reparametrize(double);
+  ON_DEPRECATED_MSG("misspelled - use Reparameterize")
+  bool Reparametrize(double);
 
   /*
   Description:
@@ -949,207 +968,6 @@ public:
           );
 
 
-  /*
-  Description:
-    Get the parameter of the point on the bezier curve
-    that is closest to the point P.
-  Parameters:
-    P - [in]
-    t - [out]
-      Closest point parameter.
-    maximum_distance - [in]
-      If maximum_distance > 0.0, then an answer is returned
-      only if the distance from the bezier curve to P
-      is <= maximum_distance.  If maximum_distance <= 0.0,
-      then maximum_distance is ignored.
-    sub_domain - [in]
-      If not NULL, the search is confined to the intersection
-      of the sub_domain interval and (0,1).
-  Returns:
-    True if a point is found.
-  See Also:
-    ON_CurveTreeNode::GetClosestPoint
-  Remarks:
-    This function is not efficient if you will be finding
-    multiple closest points to the same bezier.  To efficiently
-    find multiple closest points, make a curve tree and use it.
-    See the ON_BezierCurve::GetClosestPoint code for an example.
-  */
-  bool GetClosestPoint( 
-          ON_3dPoint P,
-          double* t,
-          double maximum_distance = 0.0,
-          const ON_Interval* sub_domain = 0
-          ) const;
-
-
-  /*
-  Description:
-    Get the parameter of the point on the bezier curve
-    that is locally closest to the point P when the search
-    begins at seed_parameter.
-  Parameters:
-    P - [in]
-    seed_parameter - [in]
-      Parameter where the search begins.
-    t - [out]
-      Closest point parameter.
-    sub_domain - [in]
-      If not NULL, the search is confined to the intersection
-      of the sub_domain interval and (0,1).
-  Returns:
-    True if a point is found.
-  */
-  bool GetLocalClosestPoint( 
-          ON_3dPoint P,
-          double seed_parameter,
-          double* t,
-          const ON_Interval* sub_domain = 0
-          ) const;
-
-
-  /*
-  Description:
-    Get a local curve-curve intersection point.
-  Parameters:
-    other_bezcrv - [in] other curve
-    this_seed_t - [in] this curve seed paramter
-    other_seed_t - [in] other curve seed paramter
-    this_t - [out] this curve paramter
-    other_t - [out] other curve paramter
-    this_domain - [in] optional this curve domain restriction
-    other_domain - [in] optional other curve domain restriction
-  Returns:
-    True if something is returned in (t,u,v).  Check
-    answer.
-  */
-  bool GetLocalCurveIntersection( 
-          const ON_BezierCurve* other_bezcrv,
-          double this_seed_t,
-          double other_seed_t,
-          double* this_t,
-          double* other_t,
-          const ON_Interval* this_domain = 0,
-          const ON_Interval* other_domain = 0
-          ) const;
-
-  /*
-  Description:
-    Find bezier self intersection points.
-  Parameters:
-    x - [out] 
-       Intersection events are appended to this array.
-    intersection_tolerance - [in]
-  Returns:
-    Number of intersection events appended to x.
-  */
-  int IntersectSelf( 
-          ON_SimpleArray<ON_X_EVENT>& x,
-          double intersection_tolerance = 0.0
-          ) const;
-
-  /*
-  Description:
-    Intersect this bezier with bezierB.
-  Parameters:
-    curveB - [in]
-    x - [out] Intersection events are appended to this array.
-    intersection_tolerance - [in]  If the distance from a point
-      on this curve to curveB is <= intersection tolerance,
-      then the point will be part of an intersection event.
-      If the input intersection_tolerance <= 0.0, then 0.001 is used.
-    overlap_tolerance - [in] If t1 and t2 are parameters of this 
-      curve's intersection events and the distance from curve(t) to 
-      curveB is <= overlap_tolerance for every t1 <= t <= t2,
-      then the event will be returened as an overlap event.
-      If the input overlap_tolerance <= 0.0, then 
-      intersection_tolerance*2.0 is used.
-    curveA_domain - [in] optional restriction on this bezier's domain
-    curveB_domain - [in] optional restriction on bezierB domain
-  Returns:
-    Number of intersection events appended to x.
-  Remarks:
-    If you are performing more than one intersection,
-    you should create curve trees and intersect them.
-    See the IntersectBezierCurve code for an example.
-  */
-  int IntersectCurve( 
-          const ON_BezierCurve* bezierB,
-          ON_SimpleArray<ON_X_EVENT>& x,
-          double intersection_tolerance = 0.0,
-          double overlap_tolerance = 0.0,
-          const ON_Interval* bezierA_domain = 0,
-          const ON_Interval* bezierB_domain = 0
-          ) const;
-
-  /*
-  Description:
-    Get a local curve-surface intersection point.
-  Parameters:
-    bezsrf - [in]
-    seed_t - [in] curve paramter
-    seed_u - [in] surface parameter
-    seed_v - [in] surface parameter
-    t - [out] curve paramter
-    u - [out] surface parameter
-    v - [out] surface parameter
-    tdomain - [in] optional curve domain restriction
-    udomain - [in] optional surface domain restriction
-    vdomain - [in] optional surface domain restriction
-  Returns:
-    True if something is returned in (t,u,v).  Check
-    answer.
-  */
-  bool GetLocalSurfaceIntersection( 
-          const ON_BezierSurface* bezsrf,
-          double seed_t,
-          double seed_u,
-          double seed_v,
-          double* t,
-          double* u,
-          double* v,
-          const ON_Interval* tdomain = 0,
-          const ON_Interval* udomain = 0,
-          const ON_Interval* vdomain = 0
-          ) const;
-
-
-  /*
-  Description:
-    Intersect this bezier curve with bezsrfB.
-  Parameters:
-    bezsrfB - [in]
-    x - [out] Intersection events are appended to this array.
-    intersection_tolerance - [in]  If the distance from a point
-      on this curve to the surface is <= intersection tolerance,
-      then the point will be part of an intersection event.
-      If the input intersection_tolerance <= 0.0, then 0.001 is used.
-    overlap_tolerance - [in] If t1 and t2 are curve parameters of
-      intersection events and the distance from curve(t) to the
-      surface is <= overlap_tolerance for every t1 <= t <= t2,
-      then the event will be returened as an overlap event.
-      If the input overlap_tolerance <= 0.0, then 
-      intersection_tolerance*2.0 is used.
-    curveA_domain - [in] optional restriction on this curve's domain
-    surfaceB_udomain - [in] optional restriction on surfaceB u domain
-    surfaceB_vdomain - [in] optional restriction on surfaceB v domain
-  Returns:
-    Number of intersection events appended to x.
-  Remarks:
-    If you are performing more than one intersection,
-    you should create curve and surface trees and 
-    intersect them. See the IntersectBezierSurface code
-    for an example.
-  */
-  int IntersectSurface( 
-          const ON_BezierSurface* bezsrfB,
-          ON_SimpleArray<ON_X_EVENT>& x,
-          double intersection_tolerance = 0.0,
-          double overlap_tolerance = 0.0,
-          const ON_Interval* bezierA_domain = 0,
-          const ON_Interval* bezsrfB_udomain = 0,
-          const ON_Interval* bezsrfB_vdomain = 0
-          ) const;
 
 
   /////////////////////////////////////////////////////////////////
@@ -1180,7 +998,7 @@ public:
   double* m_cv;
 
   // Number of doubles in m_cv array.  If m_cv_capacity is zero
-  // and m_cv is not NULL, an expert user is managing the m_cv
+  // and m_cv is not nullptr, an expert user is managing the m_cv
   // memory.  ~ON_BezierCurve will not deallocate m_cv unless
   // m_cv_capacity is greater than zero.
   int m_cv_capacity;
@@ -1200,7 +1018,7 @@ public:
   ON_BezierSurface();
   ON_BezierSurface(
     int dim,
-    int is_rat,
+    bool is_rat,
     int order0,
     int order1
     );
@@ -1217,7 +1035,7 @@ public:
 
   bool Create(
     int dim,
-    int is_rat,
+    bool is_rat,
     int order0,
     int order1
     );
@@ -1252,7 +1070,7 @@ public:
   bool GetBBox(        // returns true if successful
          double*,      // minimum
          double*,      // maximum
-         int bGrowBox = false  // true means grow box
+         bool bGrowBox = false  // true means grow box
          ) const;
 
   bool GetBoundingBox(
@@ -1265,6 +1083,7 @@ public:
   bool Transform( 
          const ON_Xform&
          );
+
 
   // Description:
   //   Rotates the bezier surface about the specified axis.  A positive
@@ -1347,7 +1166,12 @@ public:
 
   ON_3dPoint PointAt(double s, double t) const;
 
-  bool GetNurbForm( ON_NurbsSurface& ) const;
+  /*
+  Returns:
+    0 = failure.
+    1 = success.
+  */
+  int GetNurbForm( ON_NurbsSurface& ) const;
 
   bool IsRational() const;  // true if NURBS curve is rational
   
@@ -1470,7 +1294,7 @@ public:
                    // 1 first parameter is constant and second parameter varies
                    //   e.g., point on IsoCurve(1,c) at t is srf(c,t)
        double c,    // value of constant parameter
-			 ON_BezierCurve* iso=NULL	// When NULL result is constructed on the heap.
+			 ON_BezierCurve* iso=nullptr	// When nullptr result is constructed on the heap.
 			 ) const;
 
 	bool IsSingular( // true if surface side is collapsed to a point
@@ -1486,78 +1310,17 @@ public:
     );
 
 
-  /*
-  Description:
-    Get the parameters of the point on the bezier surface
-    that is closest to the point P.
-  Parameters:
-    P - [in]
-    s - [out]
-    t - [out]
-      Closest point parameters.
-    maximum_distance - [in]
-      If maximum_distance > 0.0, then an answer is returned
-      only if the distance from the bezier surface to P
-      is <= maximum_distance.  If maximum_distance <= 0.0,
-      then maximum_distance is ignored.
-    sub_domain0 - [in]
-      If not NULL, the search is confined to "s" parameters
-      in the intersection of the sub_domain0 interval and (0,1).
-    sub_domain1 - [in]
-      If not NULL, the search is confined to "t" parameters
-      in the intersection of the sub_domain1 interval and (0,1).
-  Returns:
-    True if a point is found.
-  See Also:
-    ON_SurfaceTreeNode::GetClosestPoint
-  Remarks:
-    This function is not efficient if you will be finding
-    multiple closest points to the same bezier.  To efficiently
-    find multiple closest points, make a surface tree and use it.
-    See the ON_BezierSurface::GetClosestPoint code for an example.
-  */
-  bool GetClosestPoint(
-          ON_3dPoint P,
-          double* s,
-          double* t,
-          double maximum_distance = 0.0,
-          const ON_Interval* sub_domain0 = 0,
-          const ON_Interval* sub_domain1 = 0
-          ) const;
-
-
-  /*
-  Description:
-    Get the parameter of the point on the bezier surface
-    that is locally closest to the point P when the search
-    begins at (s_seed,t_seed).
-  Parameters:
-    P - [in]
-    s_seed - [in]
-    t_seed - [in]
-      Parameters where the search begins.
-    s - [out]
-    t - [out]
-      Closest point parameter.
-    sub_domain0 - [in]
-      If not NULL, the search is confined to "s" parameters
-      in the intersection of the sub_domain0 interval and (0,1).
-    sub_domain1 - [in]
-      If not NULL, the search is confined to "t" parameters
-      in the intersection of the sub_domain1 interval and (0,1).
-  Returns:
-    True if a point is found.
-  */
-  bool GetLocalClosestPoint(
-          ON_3dPoint P,
-          double s_seed,
-          double t_seed,
-          double* s,
-          double* t,
-          const ON_Interval* sub_domain0 = 0,
-          const ON_Interval* sub_domain1 = 0
-          ) const;
-
+	/*
+	Description:
+		Get an estimate of the size of the rectangle that would
+		be created if the 3d surface where flattened into a rectangle.
+	Parameters:
+		width - [out]  (corresponds to the first surface parameter)
+		height - [out] (corresponds to the first surface parameter)
+	Returns:
+		true if successful.
+	*/
+	bool GetSurfaceSize(double* width, double* height) const;
 
   /////////////////////////////////////////////////////////////////
   // Implementation
@@ -1759,7 +1522,7 @@ public:
   /*
   Description:
     Sets all members to zero.  Does not free the CV array
-    even when m_cv is not NULL.  Generally used when the
+    even when m_cv is not nullptr.  Generally used when the
     CVs were allocated from a memory pool that no longer
     exists and the free done in ~ON_BezierCage would
     cause a crash.
@@ -1807,12 +1570,13 @@ public:
   bool GetBBox(
          double* boxmin,
          double* boxmax,
-         int bGrowBox = false 
+         bool bGrowBox = false 
          ) const;
 
   bool Transform( 
          const ON_Xform& xform
          );
+
 
   // Description:
   //   Rotates the bezier surface about the specified axis.  A positive
@@ -2081,7 +1845,8 @@ class ON_CLASS ON_BezierCageMorph : public ON_SpaceMorph
 {
 public:
   ON_BezierCageMorph();
-  ~ON_BezierCageMorph();
+  virtual ~ON_BezierCageMorph();
+
 
   /*
   Description:
@@ -2195,12 +1960,6 @@ private:
 };
 
 #if defined(ON_DLL_TEMPLATE)
-
-// This stuff is here because of a limitation in the way Microsoft
-// handles templates and DLLs.  See Microsoft's knowledge base 
-// article ID Q168958 for details.
-#pragma warning( push )
-#pragma warning( disable : 4231 )
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_BezierCurve>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_BezierCurve*>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_BezierSurface>;
@@ -2209,9 +1968,6 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_BezierCage>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_BezierCage*>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_BezierCageMorph>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_BezierCageMorph*>;
-#pragma warning( pop )
-
 #endif
 
 #endif
-

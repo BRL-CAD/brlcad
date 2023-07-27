@@ -1,7 +1,7 @@
 /*                      S H _ N O I S E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2022 United States Government as represented by
+ * Copyright (c) 1998-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -284,7 +284,7 @@ noise_free(void *cp)
  * Apply a noise function to the surface normal
  */
 static void
-norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*func) (/* ??? */), struct shadework *swp, int rescale)
+norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*func)(point_t, double, double, double), struct shadework *swp, int rescale)
 /* defined in material.h */
 {
     vect_t N, tmp;

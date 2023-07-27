@@ -1,7 +1,7 @@
 /*                 O P _ P N T S _ V O L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2022 United States Government as represented by
+ * Copyright (c) 2020-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,21 +65,23 @@ _tgc_hack_fix(struct partition *part, struct soltab *stp) {
 static int
 in_out_hit(struct application *ap, struct partition *partH, struct seg *UNUSED(segs))
 {
-    struct partition *part = partH->pt_forw;
-    struct soltab *stp = part->pt_inseg->seg_stp;
 
     struct ray_result *r= (struct ray_result *)(ap->a_uptr);
 
     RT_CK_APPLICATION(ap);
 
-    _tgc_hack_fix(part, stp);
 
     // Any partition containing the test point will have a hit distance less than
     // or at the test point.  If we find such a partition, set the flag.
-    bool t1 = ((part->pt_inhit->hit_dist < r->dist_test_pt) || NEAR_EQUAL(part->pt_inhit->hit_dist, r->dist_test_pt, VUNITIZE_TOL));
-    bool t2 = ((part->pt_outhit->hit_dist > r->dist_test_pt) || NEAR_EQUAL(part->pt_outhit->hit_dist, r->dist_test_pt, VUNITIZE_TOL));
-    if (t1 && t2) {
-	r->flag = -1;
+    struct partition *pp;
+    for (pp = partH->pt_forw; pp != partH; pp = pp->pt_forw) {
+	_tgc_hack_fix(pp, pp->pt_inseg->seg_stp);
+	bool t1 = ((pp->pt_inhit->hit_dist < r->dist_test_pt) || NEAR_EQUAL(pp->pt_inhit->hit_dist, r->dist_test_pt, VUNITIZE_TOL));
+	bool t2 = ((pp->pt_outhit->hit_dist > r->dist_test_pt) || NEAR_EQUAL(pp->pt_outhit->hit_dist, r->dist_test_pt, VUNITIZE_TOL));
+	if (t1 && t2) {
+	    r->flag = -1;
+	    return 0;
+	}
     }
 
     // Test point not on the partition
@@ -166,7 +168,7 @@ _pnt_in_vol(point_t *p, struct application *ap)
     ap->a_miss = a_miss;
     ap->a_uptr = uptr_stash;
 
-    return result.flag;
+    return (!result.flag) ? 0 : 1;
 }
 
 
@@ -260,7 +262,7 @@ op_pnts_vol(
     rt_init_resource(resp, 0, rtip);
     ap->a_rt_i = rtip;
     ap->a_resource = resp;
-    ap->a_onehit = 1;
+    ap->a_onehit = 0; // If the point is inside any segment along the ray, it's inside the volume
     ap->a_hit = NULL;
     ap->a_miss = NULL;
     ap->a_overlap = NULL;
@@ -416,6 +418,49 @@ pnts_internal_memfree:
     return pntcnt;
 }
 
+extern "C" int
+pnt_inside_vol(
+	struct ged *gedp,
+	point_t *p,
+	struct directory *dp
+	)
+{
+    // Sanity
+    if (!gedp || !dp)
+	return -1;
+
+    /* Set up the raytracing scaffolding */
+    struct application *ap;
+    struct resource *resp;
+    struct rt_i *rtip;
+    size_t ncpus;
+    BU_GET(ap, struct application);
+    RT_APPLICATION_INIT(ap);
+    BU_GET(resp, struct resource);
+    rtip = rt_new_rti(gedp->dbip);
+    rt_init_resource(resp, 0, rtip);
+    ap->a_rt_i = rtip;
+    ap->a_resource = resp;
+    ap->a_onehit = 0; // If the point is inside any segment along the ray, it's inside the volume
+    ap->a_hit = in_out_hit;
+    ap->a_miss = in_out_miss;
+    ap->a_overlap = NULL;
+    ap->a_logoverlap = rt_silent_logoverlap;
+    if ((rt_gettree(rtip, dp->d_namep) < 0)) {
+	return -1;
+    }
+    ncpus = bu_avail_cpus();
+    rt_prep_parallel(rtip, ncpus);
+
+    int ret = _pnt_in_vol(p, ap);
+
+    rt_clean_resource(rtip, resp);
+    rt_free_rti(rtip);
+    BU_PUT(resp, struct resource);
+    BU_PUT(ap, struct appliation);
+
+    return ret;
+}
 
 // Local Variables:
 // tab-width: 8

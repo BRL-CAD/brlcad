@@ -1,7 +1,7 @@
 /*                      P R O C E S S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -157,7 +157,15 @@ BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd,
  *
  * Returns 1 if interactive, else 0
  */
-BU_EXPORT extern int bu_interactive();
+BU_EXPORT extern int bu_interactive(void);
+
+
+/**
+ * @brief determine whether there is data pending on fd
+ *
+ * 1 if there is data, else 0
+ */
+BU_EXPORT extern int bu_process_pending(int fd);
 
 
 /**

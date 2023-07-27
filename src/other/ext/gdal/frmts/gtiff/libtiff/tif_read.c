@@ -751,15 +751,12 @@ TIFFFillStrip(TIFF* tif, uint32_t strip)
 			    (bytecount - 4096) / 10 > (uint64_t)stripsize  )
 			{
 				uint64_t newbytecount = (uint64_t)stripsize * 10 + 4096;
-				if( newbytecount == 0 || newbytecount > (uint64_t)TIFF_INT64_MAX )
-				{
-					TIFFErrorExt(tif->tif_clientdata, module,
-					  "Too large strip byte count %"PRIu64", strip %"PRIu32". Limiting to %"PRIu64,
-					     bytecount,
-					     strip,
-					     newbytecount);
-					bytecount = newbytecount;
-				}
+				TIFFErrorExt(tif->tif_clientdata, module,
+				  "Too large strip byte count %"PRIu64", strip %"PRIu32". Limiting to %"PRIu64,
+				     bytecount,
+				     strip,
+				     newbytecount);
+				bytecount = newbytecount;
 			}
 		}
 
@@ -1145,15 +1142,12 @@ TIFFFillTile(TIFF* tif, uint32_t tile)
 			    (bytecount - 4096) / 10 > (uint64_t)stripsize  )
 			{
 				uint64_t newbytecount = (uint64_t)stripsize * 10 + 4096;
-				if( newbytecount == 0 || newbytecount > (uint64_t)TIFF_INT64_MAX )
-				{
-					TIFFErrorExt(tif->tif_clientdata, module,
-					  "Too large tile byte count %"PRIu64", tile %"PRIu32". Limiting to %"PRIu64,
-					     bytecount,
-					     tile,
-					     newbytecount);
-					bytecount = newbytecount;
-				}
+				TIFFErrorExt(tif->tif_clientdata, module,
+				  "Too large tile byte count %"PRIu64", tile %"PRIu32". Limiting to %"PRIu64,
+				     bytecount,
+				     tile,
+				     newbytecount);
+				bytecount = newbytecount;
 			}
 		}
 
@@ -1499,7 +1493,8 @@ int      TIFFReadFromUserBuffer(TIFF* tif, uint32_t strile,
         TIFFReverseBits(inbuf, insize);
     }
 
-    tif->tif_flags = old_tif_flags;
+    tif->tif_flags = (old_tif_flags & (TIFF_MYBUFFER | TIFF_BUFFERMMAP)) |
+                     (tif->tif_flags & ~(TIFF_MYBUFFER | TIFF_BUFFERMMAP));
     tif->tif_rawdatasize = old_rawdatasize;
     tif->tif_rawdata = old_rawdata;
     tif->tif_rawdataoff = 0;

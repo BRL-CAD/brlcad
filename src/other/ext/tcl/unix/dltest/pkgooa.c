@@ -109,7 +109,7 @@ Pkgooa_Init(
 	return TCL_ERROR;
     }
     if (tclStubsPtr == NULL) {
-	Tcl_AppendResult(interp, "Tcl stubs are not inialized, "
+	Tcl_AppendResult(interp, "Tcl stubs are not initialized, "
 		"did you compile using -DUSE_TCL_STUBS? ");
 	return TCL_ERROR;
     }
@@ -117,11 +117,11 @@ Pkgooa_Init(
 	return TCL_ERROR;
     }
     if (tclOOStubsPtr == NULL) {
-	Tcl_AppendResult(interp, "TclOO stubs are not inialized");
+	Tcl_AppendResult(interp, "TclOO stubs are not initialized");
 	return TCL_ERROR;
     }
     if (tclOOIntStubsPtr == NULL) {
-	Tcl_AppendResult(interp, "TclOO internal stubs are not inialized");
+	Tcl_AppendResult(interp, "TclOO internal stubs are not initialized");
 	return TCL_ERROR;
     }
 

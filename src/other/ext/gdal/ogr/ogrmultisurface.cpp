@@ -37,8 +37,6 @@
 #include "ogr_core.h"
 #include "ogr_p.h"
 
-CPL_CVSID("$Id$");
-
 /************************************************************************/
 /*                          OGRMultiSurface()                           */
 /************************************************************************/
@@ -47,13 +45,13 @@ CPL_CVSID("$Id$");
  * \brief Create an empty multi surface collection.
  */
 
-OGRMultiSurface::OGRMultiSurface() {}
+OGRMultiSurface::OGRMultiSurface() = default;
 
 /************************************************************************/
 /*                         ~OGRMultiSurface()                           */
 /************************************************************************/
 
-OGRMultiSurface::~OGRMultiSurface() {}
+OGRMultiSurface::~OGRMultiSurface() = default;
 
 /************************************************************************/
 /*              OGRMultiSurface( const OGRMultiSurface& )               */
@@ -68,9 +66,7 @@ OGRMultiSurface::~OGRMultiSurface() {}
  * @since GDAL 2.1
  */
 
-OGRMultiSurface::OGRMultiSurface( const OGRMultiSurface& other ) :
-    OGRGeometryCollection(other)
-{}
+OGRMultiSurface::OGRMultiSurface(const OGRMultiSurface &) = default;
 
 /************************************************************************/
 /*                  operator=( const OGRMultiCurve&)                    */
@@ -85,13 +81,23 @@ OGRMultiSurface::OGRMultiSurface( const OGRMultiSurface& other ) :
  * @since GDAL 2.1
  */
 
-OGRMultiSurface& OGRMultiSurface::operator=( const OGRMultiSurface& other )
+OGRMultiSurface &OGRMultiSurface::operator=(const OGRMultiSurface &other)
 {
-    if( this != &other)
+    if (this != &other)
     {
-        OGRGeometryCollection::operator=( other );
+        OGRGeometryCollection::operator=(other);
     }
     return *this;
+}
+
+/************************************************************************/
+/*                               clone()                                */
+/************************************************************************/
+
+OGRMultiSurface *OGRMultiSurface::clone() const
+
+{
+    return new (std::nothrow) OGRMultiSurface(*this);
 }
 
 /************************************************************************/
@@ -101,11 +107,11 @@ OGRMultiSurface& OGRMultiSurface::operator=( const OGRMultiSurface& other )
 OGRwkbGeometryType OGRMultiSurface::getGeometryType() const
 
 {
-    if( (flags & OGR_G_3D) && (flags & OGR_G_MEASURED) )
+    if ((flags & OGR_G_3D) && (flags & OGR_G_MEASURED))
         return wkbMultiSurfaceZM;
-    else if( flags & OGR_G_MEASURED )
+    else if (flags & OGR_G_MEASURED)
         return wkbMultiSurfaceM;
-    else if( flags & OGR_G_3D )
+    else if (flags & OGR_G_3D)
         return wkbMultiSurfaceZ;
     else
         return wkbMultiSurface;
@@ -125,7 +131,7 @@ int OGRMultiSurface::getDimension() const
 /*                          getGeometryName()                           */
 /************************************************************************/
 
-const char * OGRMultiSurface::getGeometryName() const
+const char *OGRMultiSurface::getGeometryName() const
 
 {
     return "MULTISURFACE";
@@ -136,9 +142,11 @@ const char * OGRMultiSurface::getGeometryName() const
 /************************************************************************/
 
 OGRBoolean
-OGRMultiSurface::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
+OGRMultiSurface::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
 {
-    return OGR_GT_IsSurface(eGeomType);
+    OGRwkbGeometryType eFlattenGeomType = wkbFlatten(eGeomType);
+    return eFlattenGeomType == wkbPolygon ||
+           eFlattenGeomType == wkbCurvePolygon;
 }
 
 /************************************************************************/
@@ -147,19 +155,21 @@ OGRMultiSurface::isCompatibleSubType( OGRwkbGeometryType eGeomType ) const
 /*      Instantiate from well known text format.                        */
 /************************************************************************/
 
-OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
+OGRErr OGRMultiSurface::importFromWkt(const char **ppszInput)
 
 {
     int bHasZ = FALSE;
     int bHasM = FALSE;
     bool bIsEmpty = false;
-    OGRErr eErr = importPreambuleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
+    OGRErr eErr = importPreambleFromWkt(ppszInput, &bHasZ, &bHasM, &bIsEmpty);
     flags = 0;
-    if( eErr != OGRERR_NONE )
+    if (eErr != OGRERR_NONE)
         return eErr;
-    if( bHasZ ) flags |= OGR_G_3D;
-    if( bHasM ) flags |= OGR_G_MEASURED;
-    if( bIsEmpty )
+    if (bHasZ)
+        flags |= OGR_G_3D;
+    if (bHasM)
+        flags |= OGR_G_MEASURED;
+    if (bIsEmpty)
         return OGRERR_NONE;
 
     char szToken[OGR_WKT_TOKEN_MAX] = {};
@@ -167,96 +177,100 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
     eErr = OGRERR_NONE;
 
     // Skip first '('.
-    pszInput = OGRWktReadToken( pszInput, szToken );
+    pszInput = OGRWktReadToken(pszInput, szToken);
 
-/* ==================================================================== */
-/*      Read each surface in turn.  Note that we try to reuse the same  */
-/*      point list buffer from ring to ring to cut down on              */
-/*      allocate/deallocate overhead.                                   */
-/* ==================================================================== */
-    OGRRawPoint *paoPoints = NULL;
-    int          nMaxPoints = 0;
-    double      *padfZ = NULL;
+    /* ==================================================================== */
+    /*      Read each surface in turn.  Note that we try to reuse the same  */
+    /*      point list buffer from ring to ring to cut down on              */
+    /*      allocate/deallocate overhead.                                   */
+    /* ==================================================================== */
+    OGRRawPoint *paoPoints = nullptr;
+    int nMaxPoints = 0;
+    double *padfZ = nullptr;
 
     do
     {
-    /* -------------------------------------------------------------------- */
-    /*      Get the first token, which should be the geometry type.         */
-    /* -------------------------------------------------------------------- */
-        const char* pszInputBefore = pszInput;
-        pszInput = OGRWktReadToken( pszInput, szToken );
+        /* --------------------------------------------------------------------
+         */
+        /*      Get the first token, which should be the geometry type. */
+        /* --------------------------------------------------------------------
+         */
+        const char *pszInputBefore = pszInput;
+        pszInput = OGRWktReadToken(pszInput, szToken);
 
-        OGRSurface* poSurface = NULL;
+        OGRSurface *poSurface = nullptr;
 
-    /* -------------------------------------------------------------------- */
-    /*      Do the import.                                                  */
-    /* -------------------------------------------------------------------- */
-        if( EQUAL(szToken, "(") )
+        /* --------------------------------------------------------------------
+         */
+        /*      Do the import. */
+        /* --------------------------------------------------------------------
+         */
+        if (EQUAL(szToken, "("))
         {
             OGRPolygon *poPolygon = new OGRPolygon();
             poSurface = poPolygon;
             pszInput = pszInputBefore;
             eErr = poPolygon->importFromWKTListOnly(
-                const_cast<char **>(&pszInput), bHasZ, bHasM,
-                paoPoints, nMaxPoints, padfZ );
+                &pszInput, bHasZ, bHasM, paoPoints, nMaxPoints, padfZ);
         }
-        else if( EQUAL(szToken, "EMPTY") )
+        else if (EQUAL(szToken, "EMPTY"))
         {
             poSurface = new OGRPolygon();
         }
         // We accept POLYGON() but this is an extension to the BNF, also
         // accepted by PostGIS.
-        else if( EQUAL(szToken, "POLYGON") ||
-                 EQUAL(szToken, "CURVEPOLYGON") )
+        else if (STARTS_WITH_CI(szToken, "POLYGON") ||
+                 STARTS_WITH_CI(szToken, "CURVEPOLYGON"))
         {
-            OGRGeometry* poGeom = NULL;
+            OGRGeometry *poGeom = nullptr;
             pszInput = pszInputBefore;
-            eErr = OGRGeometryFactory::createFromWkt(
-                const_cast<char **>(&pszInput), NULL, &poGeom );
-            poSurface = dynamic_cast<OGRSurface*>(poGeom);
-            if( poSurface == NULL )
+            eErr =
+                OGRGeometryFactory::createFromWkt(&pszInput, nullptr, &poGeom);
+            if (poGeom == nullptr)
             {
-                delete poGeom;
                 eErr = OGRERR_CORRUPT_DATA;
                 break;
             }
+            poSurface = poGeom->toSurface();
         }
         else
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unexpected token : %s", szToken);
+            CPLError(CE_Failure, CPLE_AppDefined, "Unexpected token : %s",
+                     szToken);
             eErr = OGRERR_CORRUPT_DATA;
             break;
         }
 
-        if( eErr == OGRERR_NONE )
-            eErr = addGeometryDirectly( poSurface );
-        if( eErr != OGRERR_NONE )
+        if (eErr == OGRERR_NONE)
+            eErr = addGeometryDirectly(poSurface);
+        if (eErr != OGRERR_NONE)
         {
             delete poSurface;
             break;
         }
 
-/* -------------------------------------------------------------------- */
-/*      Read the delimiter following the surface.                       */
-/* -------------------------------------------------------------------- */
-        pszInput = OGRWktReadToken( pszInput, szToken );
-    } while( szToken[0] == ',' && eErr == OGRERR_NONE );
+        /* --------------------------------------------------------------------
+         */
+        /*      Read the delimiter following the surface. */
+        /* --------------------------------------------------------------------
+         */
+        pszInput = OGRWktReadToken(pszInput, szToken);
+    } while (szToken[0] == ',' && eErr == OGRERR_NONE);
 
-    CPLFree( paoPoints );
-    CPLFree( padfZ );
+    CPLFree(paoPoints);
+    CPLFree(padfZ);
 
-/* -------------------------------------------------------------------- */
-/*      freak if we don't get a closing bracket.                        */
-/* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      freak if we don't get a closing bracket.                        */
+    /* -------------------------------------------------------------------- */
 
-    if( eErr != OGRERR_NONE )
+    if (eErr != OGRERR_NONE)
         return eErr;
 
-    if( szToken[0] != ')' )
+    if (szToken[0] != ')')
         return OGRERR_CORRUPT_DATA;
 
-    *ppszInput = const_cast<char *>(pszInput);
+    *ppszInput = pszInput;
     return OGRERR_NONE;
 }
 
@@ -264,20 +278,21 @@ OGRErr OGRMultiSurface::importFromWkt( char ** ppszInput )
 /*                            exportToWkt()                             */
 /************************************************************************/
 
-OGRErr OGRMultiSurface::exportToWkt( char ** ppszDstText,
-                                     OGRwkbVariant /* eWkbVariant */ ) const
-
+std::string OGRMultiSurface::exportToWkt(const OGRWktOptions &opts,
+                                         OGRErr *err) const
 {
-    return exportToWktInternal( ppszDstText, wkbVariantIso, "POLYGON" );
+    OGRWktOptions optsModified(opts);
+    optsModified.variant = wkbVariantIso;
+    return exportToWktInternal(optsModified, err, "POLYGON");
 }
 
 /************************************************************************/
 /*                         hasCurveGeometry()                           */
 /************************************************************************/
 
-OGRBoolean OGRMultiSurface::hasCurveGeometry( int bLookForNonLinear ) const
+OGRBoolean OGRMultiSurface::hasCurveGeometry(int bLookForNonLinear) const
 {
-    if( bLookForNonLinear )
+    if (bLookForNonLinear)
         return OGRGeometryCollection::hasCurveGeometry(TRUE);
     return TRUE;
 }
@@ -296,7 +311,7 @@ OGRBoolean OGRMultiSurface::hasCurveGeometry( int bLookForNonLinear ) const
  * @return OGRERR_NONE if it succeeds or OGRERR_FAILURE otherwise.
  */
 
-OGRErr OGRMultiSurface::PointOnSurface( OGRPoint * poPoint ) const
+OGRErr OGRMultiSurface::PointOnSurface(OGRPoint *poPoint) const
 {
     return PointOnSurfaceInternal(poPoint);
 }
@@ -320,33 +335,19 @@ OGRErr OGRMultiSurface::PointOnSurface( OGRPoint * poPoint ) const
  * @return new geometry.
  */
 
-OGRMultiPolygon* OGRMultiSurface::CastToMultiPolygon( OGRMultiSurface* poMS )
+OGRMultiPolygon *OGRMultiSurface::CastToMultiPolygon(OGRMultiSurface *poMS)
 {
-    for( int i = 0; i < poMS->nGeomCount; i++ )
+    for (auto &&poSubGeom : *poMS)
     {
-        OGRSurface* poSurface = dynamic_cast<OGRSurface *>(poMS->papoGeoms[i]);
-        if( poSurface == NULL )
-        {
-            CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRSurface.");
-            delete poMS;
-            return NULL;
-        }
-        poMS->papoGeoms[i] = OGRSurface::CastToPolygon(poSurface);
-        if( poMS->papoGeoms[i] == NULL )
+        poSubGeom = OGRSurface::CastToPolygon(poSubGeom);
+        if (poSubGeom == nullptr)
         {
             delete poMS;
-            return NULL;
+            return nullptr;
         }
     }
 
-    OGRGeometryCollection *poGC =
-           TransferMembersAndDestroy(poMS, new OGRMultiPolygon());
-    OGRMultiPolygon* poMultiPolygon = dynamic_cast<OGRMultiPolygon *>(poGC);
-    if( poMultiPolygon == NULL )
-    {
-        CPLError(CE_Fatal, CPLE_AppDefined,
-                 "dynamic_cast failed.  Expected OGRMultiPolygon.");
-    }
-    return poMultiPolygon;
+    OGRMultiPolygon *poMP = new OGRMultiPolygon();
+    TransferMembersAndDestroy(poMS, poMP);
+    return poMP;
 }

@@ -1,4 +1,0 @@
-set(env2c_ignore_files
-CMakeLists.txt
-env2c.cxx
-)

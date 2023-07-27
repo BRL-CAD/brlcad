@@ -705,15 +705,17 @@ XSync(
     /*
      *  The main use of XSync is by the update command, which alternates
      *  between running an event loop to process all events without waiting and
-     *  calling XSync on all displays until no events are left.  There is
-     *  nothing for the mac to do with respect to syncing its one display but
-     *  it can (and, during regression testing, frequently does) happen that
-     *  timer events fire during the event loop. Processing those here seems
-     *  to make the update command work in a way that is more consistent with
-     *  its behavior on other platforms.
+     *  calling XSync on all displays until no events are left.  On X11 the
+     *  call to XSync might cause the window manager to generate more events
+     *  which would then get processed. Apparently this process stabilizes on
+     *  X11, leaving the window manager in a state where all events have been
+     *  generated and no additional events can be genereated by updating widgets.
+     *
+     *  It is not clear what the Aqua port should do when XSync is called, but
+     *  currently the best option seems to be to do nothing.  (See ticket
+     *  [da5f2266df].)
      */
 
-    while (Tcl_DoOneEvent(TCL_TIMER_EVENTS|TCL_DONT_WAIT)){}
     display->request++;
     return 0;
 }
@@ -726,7 +728,7 @@ XSetClipRectangles(
     int clip_y_origin,
     XRectangle* rectangles,
     int n,
-    int ordering)
+    TCL_UNUSED(int))
 {
     TkRegion clipRgn = TkCreateRegion();
 

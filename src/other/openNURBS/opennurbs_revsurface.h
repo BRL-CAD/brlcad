@@ -24,11 +24,11 @@ class ON_CLASS ON_RevSurface : public ON_Surface
 
 public:
   // virtual ON_Object::DestroyRuntimeCache override
-  void DestroyRuntimeCache( bool bDelete = true );
+  void DestroyRuntimeCache( bool bDelete = true ) override;
 
 public:
   // Revolute curve.
-  // If m_curve is not NULL, then ~ON_RevSurface() deletes m_curve.
+  // If m_curve is not nullptr, then ~ON_RevSurface() deletes m_curve.
   ON_Curve*   m_curve;
 
   // Axis of revolution.
@@ -53,7 +53,7 @@ public:
   // and the "v" parameter is the curve parameter.  
   // If true,  the "u" parameter is the curve parameter
   // and the "v" parameter is the angle parameter.  
-  ON_BOOL32 m_bTransposed;
+  bool m_bTransposed;
 
   // Bounding box of the surface of revolution.
   ON_BoundingBox m_bbox;
@@ -77,12 +77,12 @@ public:
 
   void Destroy();
 
-  ON_BOOL32 SetAngleRadians(
+  bool SetAngleRadians(
     double start_angle_radians,
     double end_angle_radians
     );
   
-  ON_BOOL32 SetAngleDegrees(
+  bool SetAngleDegrees(
     double start_angle_degrees,
     double end_angle_degrees
     );
@@ -93,79 +93,58 @@ public:
   //
 
   // virtual ON_Object::SizeOf override
-  unsigned int SizeOf() const;
+  unsigned int SizeOf() const override;
 
   // virtual ON_Object::DataCRC override
-  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const;
+  ON__UINT32 DataCRC(ON__UINT32 current_remainder) const override;
 
-  /*
-  Description:
-    Tests an object to see if its data members are correctly
-    initialized.
-  Parameters:
-    text_log - [in] if the object is not valid and text_log
-        is not NULL, then a brief englis description of the
-        reason the object is not valid is appened to the log.
-        The information appended to text_log is suitable for 
-        low-level debugging purposes by programmers and is 
-        not intended to be useful as a high level user 
-        interface tool.
-  Returns:
-    @untitled table
-    true     object is valid
-    false    object is invalid, uninitialized, etc.
-  Remarks:
-    Overrides virtual ON_Object::IsValid
-  */
-  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  bool IsValid( class ON_TextLog* text_log = nullptr ) const override;
 
-  void Dump( ON_TextLog& ) const; // for debugging
+  void Dump( ON_TextLog& ) const override; // for debugging
 
   // Use ON_BinaryArchive::WriteObject() and ON_BinaryArchive::ReadObject()
   // for top level serialization.  These Read()/Write() members should just
   // write/read specific definitions.  In particular, they should not write/
   // read any chunk typecode or length information.  The default 
   // implementations return false and do nothing.
-  ON_BOOL32 Write(
+  bool Write(
          ON_BinaryArchive&  // serialize definition to binary archive
-       ) const;
+       ) const override;
 
-  ON_BOOL32 Read(
+  bool Read(
          ON_BinaryArchive&  // restore definition from binary archive
-       );
+       ) override;
 
   ////////////////////////////////////////////////////////////
   //
   // overrides of virtual ON_Geometry functions
   //
-  int Dimension() const;
+  int Dimension() const override;
 
-  ON_BOOL32 GetBBox( // returns true if successful
-         double*,    // boxmin[dim]
-         double*,    // boxmax[dim]
-         ON_BOOL32 = false  // true means grow box
-         ) const;
+  // virtual ON_Geometry GetBBox override		
+  bool GetBBox( double* boxmin, double* boxmax, bool bGrowBox = false ) const override;
 
-  void ClearBoundingBox();
+  void ClearBoundingBox() override;
 
-  ON_BOOL32 Transform( 
+  bool Transform( 
          const ON_Xform&
-         );
+         ) override;
 
   ////////////////////////////////////////////////////////////
   //
   // overrides of virtual ON_Surface functions
   //
   
-  ON_BOOL32 SetDomain( 
+
+  bool SetDomain( 
     int dir, // 0 sets first parameter's domain, 1 gets second parameter's domain
     double t0, 
     double t1
-    );
+    ) override;
 
   ON_Interval Domain(
     int // 0 gets first parameter's domain, 1 gets second parameter's domain
-    ) const;
+    ) const override;
 
   /*
   Description:
@@ -179,45 +158,45 @@ public:
   Returns:
     true if successful.
   */
-  ON_BOOL32 GetSurfaceSize( 
+  bool GetSurfaceSize( 
       double* width, 
       double* height 
-      ) const;
+      ) const override;
 
   int SpanCount(
     int // 0 gets first parameter's domain, 1 gets second parameter's domain
-    ) const; // number of smooth spans in curve
+    ) const override; // number of smooth spans in curve
 
-  ON_BOOL32 GetSpanVector( // span "knots" 
+  bool GetSpanVector( // span "knots" 
     int, // 0 gets first parameter's domain, 1 gets second parameter's domain
     double* // array of length SpanCount() + 1 
-    ) const; // 
+    ) const override; // 
 
   int Degree( // returns maximum algebraic degree of any span 
                   // ( or a good estimate if curve spans are not algebraic )
     int // 0 gets first parameter's domain, 1 gets second parameter's domain
-    ) const; 
+    ) const override; 
 
-  ON_BOOL32 GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
+  bool GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
          int,     // 0 gets first parameter, 1 gets second parameter
          double,  // t = parameter in domain
          double*, // tminus
          double*  // tplus
-         ) const;
+         ) const override;
 
   /*
   Description:
     Test a surface of revolution to see if it is a portion
     of a sphere.
   Parameters:
-    sphere - [out] if not NULL and true is returned,
+    sphere - [out] if not nullptr and true is returned,
                   the sphere parameters are filled in.
     tolerance - [in] tolerance to use when checking
   Returns:
     true if the surface of revolution is a portion of a sphere.
   */
-  ON_BOOL32 IsSpherical(
-        ON_Sphere* sphere = NULL,
+  bool IsSpherical(
+        ON_Sphere* sphere = nullptr,
         double tolerance = ON_ZERO_TOLERANCE
         ) const;
 
@@ -226,14 +205,14 @@ public:
     Test a surface of revolution to see if it is a portion
     of a cylinder.
   Parameters:
-    cylinder - [out] if not NULL and true is returned,
+    cylinder - [out] if not nullptr and true is returned,
                   the cylinder parameters are filled in.
     tolerance - [in] tolerance to use when checking
   Returns:
     true if the surface of revolution is a portion of a cylinder.
   */
-  ON_BOOL32 IsCylindrical(
-        ON_Cylinder* cylinder = NULL,
+  bool IsCylindrical(
+        ON_Cylinder* cylinder = nullptr,
         double tolerance = ON_ZERO_TOLERANCE
         ) const;
 
@@ -242,14 +221,14 @@ public:
     Test a surface of revolution to see if it is a portion
     of a cone.
   Parameters:
-    cone - [out] if not NULL and true is returned,
+    cone - [out] if not nullptr and true is returned,
                   the cone parameters are filled in.
     tolerance - [in] tolerance to use when checking
   Returns:
     true if the surface of revolution is a portion of a cone.
   */
-  ON_BOOL32 IsConical(
-        ON_Cone* cone = NULL,
+  bool IsConical(
+        ON_Cone* cone = nullptr,
         double tolerance = ON_ZERO_TOLERANCE
         ) const;
 
@@ -257,7 +236,7 @@ public:
   Description:
     Test a surface to see if it is planar.
   Parameters:
-    plane - [out] if not NULL and true is returned,
+    plane - [out] if not nullptr and true is returned,
                   the plane parameters are filled in.
     tolerance - [in] tolerance to use when checking
   Returns:
@@ -266,23 +245,23 @@ public:
   Remarks:
     Overrides virtual ON_Surface::IsPlanar.
   */
-  ON_BOOL32 IsPlanar(
-        ON_Plane* plane = NULL,
+  bool IsPlanar(
+        ON_Plane* plane = nullptr,
         double tolerance = ON_ZERO_TOLERANCE
-        ) const;
+        ) const override;
 
-  ON_BOOL32 IsClosed(   // true if surface is closed in direction
+  bool IsClosed(   // true if surface is closed in direction
         int        // dir  0 = "s", 1 = "t"
-        ) const;
+        ) const override;
 
-  ON_BOOL32 IsPeriodic( // true if surface is periodic in direction
+  bool IsPeriodic( // true if surface is periodic in direction
         int        // dir  0 = "s", 1 = "t"
-        ) const;
+        ) const override;
 
-  ON_BOOL32 IsSingular( // true if surface side is collapsed to a point
+  bool IsSingular( // true if surface side is collapsed to a point
         int        // side of parameter space to test
                    // 0 = south, 1 = east, 2 = north, 3 = west
-        ) const;
+        ) const override;
   
   /*
   Description:
@@ -304,7 +283,7 @@ public:
     hint - [in/out] if GetNextDiscontinuity will be called 
        repeatedly, passing a "hint" with initial value *hint=0
        will increase the speed of the search.       
-    dtype - [out] if not NULL, *dtype reports the kind of 
+    dtype - [out] if not nullptr, *dtype reports the kind of 
         discontinuity found at *t.  A value of 1 means the first 
         derivative or unit tangent was discontinuous.  A value 
         of 2 means the second derivative or curvature was 
@@ -312,11 +291,11 @@ public:
         closed, a locus discontinuity test was applied, and
         t1 is at the start of end of the curve.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only
-        when c is ON::G1_continuous or ON::G2_continuous.  If the
+        when c is ON::continuity::G1_continuous or ON::continuity::G2_continuous.  If the
         cosine of the angle between two tangent vectors is 
         <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used 
-        only when c is ON::G2_continuous.  If K0 and K1 are 
+        only when c is ON::continuity::G2_continuous.  If K0 and K1 are 
         curvatures evaluated from above and below and 
         |K0 - K1| > curvature_tolerance, then a curvature 
         discontinuity is reported.
@@ -342,11 +321,11 @@ public:
                   double t0,
                   double t1,
                   double* t,
-                  int* hint=NULL,
-                  int* dtype=NULL,
+                  int* hint=nullptr,
+                  int* dtype=nullptr,
                   double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
                   double curvature_tolerance=ON_SQRT_EPSILON
-                  ) const;
+                  ) const override;
 
 /*
   Description:
@@ -363,11 +342,11 @@ public:
     d2_tolerance - [in] if the difference between two second derivatives is
         greater than d2_tolerance, then the surface is not C2.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only when
-        c is ON::G1_continuous or ON::G2_continuous.  If the cosine
+        c is ON::continuity::G1_continuous or ON::continuity::G2_continuous.  If the cosine
         of the angle between two normal vectors 
         is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-        c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
+        c is ON::continuity::G2_continuous.  If K0 and K1 are curvatures evaluated
         from above and below and |K0 - K1| > curvature_tolerance,
         then a curvature discontinuity is reported.
   Returns:
@@ -379,21 +358,21 @@ public:
     ON::continuity c,
     double s, 
     double t, 
-    int* hint = NULL,
+    int* hint = nullptr,
     double point_tolerance=ON_ZERO_TOLERANCE,
     double d1_tolerance=ON_ZERO_TOLERANCE,
     double d2_tolerance=ON_ZERO_TOLERANCE,
     double cos_angle_tolerance=ON_DEFAULT_ANGLE_TOLERANCE_COSINE,
     double curvature_tolerance=ON_SQRT_EPSILON
-    ) const;
+    ) const override;
 
-  ON_BOOL32 Reverse(  // reverse parameterizatrion, Domain changes from [a,b] to [-b,-a]
+  bool Reverse(  // reverse parameterizatrion, Domain changes from [a,b] to [-b,-a]
     int // dir  0 = "s", 1 = "t"
-    );
+    ) override;
 
-  ON_BOOL32 Transpose(); // transpose surface parameterization (swap "s" and "t")
+  bool Transpose() override; // transpose surface parameterization (swap "s" and "t")
 
-  ON_BOOL32 Evaluate( // returns false if unable to evaluate
+  bool Evaluate( // returns false if unable to evaluate
          double, double, // evaluation parameters  (see m_bTransposed)
          int,            // number of derivatives (>=0)
          int,            // array stride (>=Dimension())
@@ -406,7 +385,7 @@ public:
                          //         4 from SE quadrant
          int* = 0        // optional - evaluation hint (int[2]) used to speed
                          //            repeated evaluations
-         ) const;
+         ) const override;
 
   /*
   Description:
@@ -425,7 +404,12 @@ public:
   ON_Curve* IsoCurve(
          int dir,
          double c
-         ) const;
+         ) const override;
+
+
+  ON_Arc IsoArc(
+    double curve_parameter
+  ) const;
 
   /*
   Description:
@@ -443,10 +427,10 @@ public:
         (s,t) satisfying t < Domain(1).Min() or t > Domain(1).Max() 
         are trimmed away.
   */
-  ON_BOOL32 Trim(
+  bool Trim(
          int dir,
          const ON_Interval& domain
-         );
+         ) override;
 
   /*
    Description:
@@ -467,7 +451,7 @@ public:
   bool Extend(
     int dir,
     const ON_Interval& domain
-    );
+    ) override;
 
   /*
   Description:
@@ -495,12 +479,13 @@ public:
           srf.Split( dir, srf.Domain(dir).Mid() south_side, north_side );
 
   */
-  ON_BOOL32 Split(
+  bool Split(
          int dir,
          double c,
          ON_Surface*& west_or_south_side,
          ON_Surface*& east_or_north_side
-         ) const;
+         ) const override;
+
 
   int GetNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
@@ -514,7 +499,7 @@ public:
                    //            desired accuracy.
         ON_NurbsSurface&,
         double = 0.0
-        ) const;
+        ) const override;
 
   int HasNurbForm( // returns 0: unable to create NURBS representation
                    //            with desired accuracy.
@@ -526,17 +511,17 @@ public:
                    //            surface's parameterization and the NURBS
                    //            parameterization may not match to the 
                    //            desired accuracy.
-        ) const;
+        ) const override;
 
   bool GetSurfaceParameterFromNurbFormParameter(
         double nurbs_s, double nurbs_t,
         double* surface_s, double* surface_t
-        ) const;
+        ) const override;
 
   bool GetNurbFormParameterFromSurfaceParameter(
         double surface_s, double surface_t,
         double* nurbs_s,  double* nurbs_t
-        ) const;
+        ) const override;
 };
 
 #endif

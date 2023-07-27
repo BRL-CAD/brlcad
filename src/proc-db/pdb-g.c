@@ -1,7 +1,7 @@
 /*                         P D B - G . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2022 United States Government as represented by
+ * Copyright (c) 2012-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ read_pdb(char *fileName)
 
 
 void
-mk_protein()
+mk_protein(void)
 {
     return;
 }

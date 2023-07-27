@@ -1789,9 +1789,9 @@ DdeObjCmd(
 	    }
 
 	    if (result == TCL_OK) {
-		if (objc == 1)
+		if (objc == 1) {
 		    objPtr = objv[0];
-		else {
+		} else {
 		    objPtr = Tcl_ConcatObj(objc, objv);
 		}
 		if (riPtr->handlerPtr != NULL) {

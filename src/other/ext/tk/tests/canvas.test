@@ -216,9 +216,7 @@ test canvas-2.3 {CanvasWidgetCmd, xview option} -body {
     update
     lappend x [.c xview]
 } -result {{0.0 0.3} {0.4 0.7}}
-test canvas-2.4 {CanvasWidgetCmd, xview option} -constraints nonPortable -body {
-    # This test gives slightly different results on platforms such as NetBSD.
-    # I don't know why...
+test canvas-2.4 {CanvasWidgetCmd, xview option} -body {
     .c configure -xscrollincrement 0 -yscrollincrement 5
     .c xview moveto 0.6
     update

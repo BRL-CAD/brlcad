@@ -1,7 +1,7 @@
 /*                      A N A L Y Z E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2020-2022 United States Government as represented by
+ * Copyright (c) 2020-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -335,6 +335,62 @@ _analyze_cmd_summarize(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+extern "C" int
+_analyze_cmd_inside(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "analyze [options] inside obj x y z ";
+    const char *purpose_string = "Determine if the point x,y,z is inside the object obj";
+    if (_analyze_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_analyze_info *gc = (struct _ged_analyze_info *)bs;
+    struct ged *gedp = gc->gedp;
+
+    argc--; argv++;
+    if (!argc) {
+	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc != 2 && argc != 4) {
+	bu_vls_printf(gc->gedp->ged_result_str, "%s\n", usage_string);
+	return GED_HELP;
+    }
+
+    struct directory *dp = db_lookup(gedp->dbip, argv[0], LOOKUP_QUIET);
+    if (dp == RT_DIR_NULL) {
+	bu_vls_sprintf(gedp->ged_result_str, "specified object %s not found.\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    argc--; argv++;
+
+    point_t p;
+    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
+    if (bu_opt_vect_t(&opt_msg, argc, argv, (void *)&p) == -1) {
+	bu_vls_sprintf(gedp->ged_result_str, "invalid point specification:\n%s\n", bu_vls_cstr(&opt_msg));
+	bu_vls_free(&opt_msg);
+	return BRLCAD_ERROR;
+    }
+    bu_vls_free(&opt_msg);
+
+    int ret = pnt_inside_vol(gedp, &p, dp);
+    if (ret < 0) {
+	bu_vls_sprintf(gedp->ged_result_str, "point test failed\n");
+	return BRLCAD_ERROR;
+    }
+
+    bu_vls_sprintf(gedp->ged_result_str, "%d\n", ret);
+
+    return BRLCAD_OK;
+}
 static void
 clear_obj(struct ged *gedp, const char *name)
 {
@@ -419,7 +475,17 @@ _analyze_cmd_intersect(void *bs, int argc, const char **argv)
     long ret = 0;
     const char *tmpname = "___analyze_cmd_intersect_tmp_obj__";
     struct directory *dp1 = db_lookup(gedp->dbip, argv[0], LOOKUP_NOISY);
+    if (!dp1) {
+	bu_vls_sprintf(gedp->ged_result_str, "object %s does not exist.\n", argv[0]);
+	bu_vls_free(&oname);
+	return BRLCAD_ERROR;
+    }
     struct directory *dp2 = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
+    if (!dp2) {
+	bu_vls_sprintf(gedp->ged_result_str, "object %s does not exist.\n", argv[1]);
+	bu_vls_free(&oname);
+	return BRLCAD_ERROR;
+    }
     op_func_ptr of = _analyze_find_processor(gc, DB_OP_INTERSECT, dp1->d_minor_type, dp2->d_minor_type);
     if (!of) {
 	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
@@ -527,7 +593,17 @@ _analyze_cmd_subtract(void *bs, int argc, const char **argv)
     long ret = 0;
     const char *tmpname = "___analyze_cmd_subtract_tmp_obj__";
     struct directory *dp1 = db_lookup(gedp->dbip, argv[0], LOOKUP_NOISY);
+    if (!dp1) {
+	bu_vls_sprintf(gedp->ged_result_str, "object %s does not exist.\n", argv[0]);
+	bu_vls_free(&oname);
+	return BRLCAD_ERROR;
+    }
     struct directory *dp2 = db_lookup(gedp->dbip, argv[1], LOOKUP_NOISY);
+    if (!dp2) {
+	bu_vls_sprintf(gedp->ged_result_str, "object %s does not exist.\n", argv[1]);
+	bu_vls_free(&oname);
+	return BRLCAD_ERROR;
+    }
     op_func_ptr of = _analyze_find_processor(gc, DB_OP_SUBTRACT, dp1->d_minor_type, dp2->d_minor_type);
     if (!of) {
 	bu_vls_sprintf(gedp->ged_result_str, "Unsupported type pairing\n");
@@ -630,6 +706,7 @@ _analyze_cmd_help(void *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _analyze_cmds[] = {
     { "summarize",           _analyze_cmd_summarize},
+    { "inside",              _analyze_cmd_inside},
     { "intersect",           _analyze_cmd_intersect},
     { "subtract",            _analyze_cmd_subtract},
     { (char *)NULL,      NULL}
@@ -729,7 +806,7 @@ const struct ged_cmd *analyze_cmds[] = { &analyze_cmd, NULL };
 
 static const struct ged_plugin pinfo = { GED_API,  analyze_cmds, 1 };
 
-COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info()
+COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
     return &pinfo;
 }

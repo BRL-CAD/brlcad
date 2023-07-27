@@ -1,7 +1,7 @@
 /*                          W A V Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2022 United States Government as represented by
+ * Copyright (c) 1991-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,6 @@ interpolate_data(fastf_t *grid)
 {
     struct face_g_snurb **surfs;
     struct face_g_snurb *srf;
-    fastf_t rt_nurb_par_edge();
 
     BU_ALLOC(srf, struct face_g_snurb);
 
@@ -60,7 +59,7 @@ interpolate_data(fastf_t *grid)
 
 
 static void
-printusage()
+printusage(void)
 {
     bu_log("Usage: wavy [-d] [-H hscale]\n");
 }

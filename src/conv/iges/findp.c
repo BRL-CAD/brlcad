@@ -1,7 +1,7 @@
 /*                         F I N D P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2022 United States Government as represented by
+ * Copyright (c) 1990-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #include "./iges_extern.h"
 
 int
-Findp()
+Findp(void)
 {
     int saverec, rec2;
     size_t i;
@@ -92,7 +92,7 @@ Findp()
 
 
 void
-Free_dir()
+Free_dir(void)
 {
     size_t i;
 

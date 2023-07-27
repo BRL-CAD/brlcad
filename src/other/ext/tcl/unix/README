@@ -8,11 +8,11 @@ MacOSX platform too, but they all depend on UNIX (POSIX/ANSI C) interfaces and
 some of them only make sense under UNIX.
 
 Updated forms of the information found in this file is available at:
-	https://www.tcl-tk.org/doc/howto/compile.html#unix
+	https://www.tcl-lang.org/doc/howto/compile.html#unix
 
 For information on platforms where Tcl is known to compile, along with any
 porting notes for getting it to work on those platforms, see:
-	https://www.tcl-tk.org/software/tcltk/platforms.html
+	https://www.tcl-lang.org/software/tcltk/platforms.html
 
 The rest of this file contains instructions on how to do this. The release
 should compile and run either "out of the box" or with trivial changes on any

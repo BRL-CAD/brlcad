@@ -1,7 +1,7 @@
 /*                        L O A D _ G . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2009-2022 United States Government as represented by
+ * Copyright (c) 2009-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,7 +66,6 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 {
     struct model *m;
     struct shell *s;
-    int region_polys=0;
 
     NMG_CK_REGION(r);
 
@@ -122,7 +121,6 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 		    continue;
 
 		TIE_VAL(tie_push)(cur_tie, tribuf, 1, mesh, 0);
-		region_polys++;
 	    }
 	}
     }

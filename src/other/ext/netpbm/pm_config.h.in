@@ -1,12 +1,19 @@
 /**************************************************************************
                                NETPBM
-                           pm_config.h
+                           pm_config.in.h
 ***************************************************************************
   This file provides platform-dependent definitions for all Netpbm
   libraries and the programs that use them.
 
-**************************************************************************/
+  The make files generate pm_config.h by copying this file and adding
+  other stuff.  The Netpbm programs #include pm_config.h.
 
+  Wherever possible, Netpbm handles customization via the make files
+  instead of via this file.  However, Netpbm's make file philosophy
+  discourages lining up a bunch of -D options on every compile, so a 
+  #define here would be preferable to a -D compile option.
+
+**************************************************************************/
 #ifndef PM_CONFIG_H
 #define PM_CONFIG_H
 
@@ -211,26 +218,31 @@ extern int write();
 #if (defined(SYSV) && !defined(VMS))
 #include <malloc.h>
 #endif
-/* extern char* malloc(); */
-/* extern char* realloc(); */
-/* extern char* calloc(); */
 
-/* CONFIGURE: Some systems don't have vfprintf(), which we need for the
-** error-reporting routines.  If you compile and get a link error about
-** this routine, uncomment the first define, which gives you a vfprintf
-** that uses the theoretically non-portable but fairly common routine
-** _doprnt().  If you then get a link error about _doprnt, or
-** message-printing doesn't look like it's working, try the second
-** define instead.
-*/
-/* #define NEED_VFPRINTF1 */
-/* #define NEED_VFPRINTF2 */
+/* MSVCRT means we're using the Microsoft Visual C++ runtime library.
 
-/* CONFIGURE: Some systems don't have strstr(), which some routines need.
-** If you compile and get a link error about this routine, uncomment the
-** define, which gives you a strstr.
+   _WIN32, set by the compiler, apparently means the same thing; we see it set
+   in compiles using the Microsoft Visual C++ development environment and also
+   with Mingw, which is the Windows version of the GNU compiler (which brings
+   with it a runtime library which wraps around the Microsoft one).  We don't
+   see it set in Cygwin compiles, which use GNU libraries instead of the
+   Microsoft one.
+
+   There is also _MSC_VER, which is set by MSVC to the version number of the
+   MSVC runtime library and __MINGW32__.
+ */
+
+#ifdef _WIN32
+#define MSVCRT 1
+#else
+#define MSVCRT 0
+#endif
+
+/* WIN32 is a macro that some older compilers predefine (compilers aren't
+   supposed to because it doesn't start with an underscore, hence the change.
+   Many build systems (project files, etc.) set WIN32 explicitly for
+   backward compatibility.  Netpbm doesn't use it.
 */
-/* #define NEED_STRSTR */
 
 /* CONFIGURE: Set this option if your compiler uses strerror(errno)
 ** instead of sys_errlist[errno] for error messages.
@@ -329,10 +341,10 @@ typedef long int pm_filepos;
 #endif
 
 #if defined(_PLAN9)
-  #define TMPDIR "/tmp"
+#define TMPDIR "/tmp"
 #else
-  /* Use POSIX value P_tmpdir from libc */
-  #define TMPDIR P_tmpdir
+/* Use POSIX value P_tmpdir from libc */
+#define TMPDIR P_tmpdir
 #endif
 
 /* Note that if you _don't_ have mkstemp(), you'd better have a safe

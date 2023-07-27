@@ -1,7 +1,7 @@
 /*                       G A S T A N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include "wdb.h"
 
 void
-explain()
+explain(void)
 {
 	fprintf(stderr,"This program constructs a solid gas tank with all\n");
 	fprintf(stderr,"edges and corners rounded.  If not used interactively:\n");

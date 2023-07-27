@@ -1,7 +1,7 @@
 /*                       I N T E R S E C T . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2022 United States Government as represented by
+ * Copyright (c) 2007-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ public:
     ON_Curve *m_curve;
     ON_Interval m_t;
     Subcurve *m_children[2];
-    ON_BOOL32 m_islinear;
+    bool m_islinear;
 
     Subcurve();
     Subcurve(ON_Curve *curve);
@@ -79,7 +79,7 @@ public:
     ON_Surface *m_surf;
     ON_Interval m_u, m_v;
     Subsurface *m_children[4];
-    ON_BOOL32 m_isplanar;
+    bool m_isplanar;
 
     Subsurface();
     Subsurface(ON_Surface *surf);

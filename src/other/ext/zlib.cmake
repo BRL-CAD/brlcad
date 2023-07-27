@@ -92,6 +92,10 @@ else (BRLCAD_ZLIB_BUILD)
 
 endif (BRLCAD_ZLIB_BUILD)
 
+mark_as_advanced(ZLIB_INCLUDE_DIRS)
+mark_as_advanced(ZLIB_LIBRARIES)
+mark_as_advanced(Z_PREFIX_STR)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/zlib.dist")
 
 # Local Variables:

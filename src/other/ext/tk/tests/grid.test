@@ -366,9 +366,7 @@ test grid-6.8 {location (weights)} -body {
 } -cleanup {
     grid_reset 6.8
 } -result {{-10->-1 -1} {0->0 0} {16->0 1} {201->1 1}}
-test grid-6.9 {location: check updates pending} -constraints {
-    nonPortable
-} -body {
+test grid-6.9 {location: check updates pending} -body {
     set a ""
     foreach i {0 1 2} {
 	frame .$i -width 120 -height 75 -bg red

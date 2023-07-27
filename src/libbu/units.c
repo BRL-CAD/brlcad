@@ -1,7 +1,7 @@
 /*                         U N I T S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2022 United States Government as represented by
+ * Copyright (c) 1990-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -319,7 +319,7 @@ bu_units_string(register const double mm)
 
 
 struct bu_vls *
-bu_units_strings_vls()
+bu_units_strings_vls(void)
 {
     register const struct cvt_tab *tp;
     struct bu_vls *vlsp;

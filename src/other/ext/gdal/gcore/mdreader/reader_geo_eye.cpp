@@ -39,80 +39,71 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 #include "cpl_string.h"
-
-CPL_CVSID("$Id$");
+#include "cpl_time.h"
 
 /**
  * GDALMDReaderGeoEye()
  */
 GDALMDReaderGeoEye::GDALMDReaderGeoEye(const char *pszPath,
-        char **papszSiblingFiles) : GDALMDReaderBase(pszPath, papszSiblingFiles)
+                                       char **papszSiblingFiles)
+    : GDALMDReaderBase(pszPath, papszSiblingFiles)
 {
 
-    const char* pszBaseName = CPLGetBasename(pszPath);
-    const char* pszDirName = CPLGetDirname(pszPath);
-    size_t nBaseNameLen = strlen(pszBaseName);
-    if( nBaseNameLen > 511 )
-        return;
+    const CPLString osBaseName = CPLGetBasename(pszPath);
+    const CPLString osDirName = CPLGetDirname(pszPath);
 
     // get _metadata.txt file
 
     // split file name by _rgb_ or _pan_
-    char szMetadataName[512] = {0};
-    size_t i;
-    for(i = 0; i < nBaseNameLen; i++)
-    {
-        szMetadataName[i] = pszBaseName[i];
-        if(STARTS_WITH_CI(pszBaseName + i, "_rgb_") || STARTS_WITH_CI(pszBaseName + i, "_pan_"))
-        {
-            break;
-        }
-    }
+    CPLString osRadixMetadataName(osBaseName);
+    size_t i = osRadixMetadataName.ifind("_rgb_");
+    if (i == std::string::npos)
+        i = osRadixMetadataName.ifind("_pan_");
+    if (i != std::string::npos)
+        osRadixMetadataName.resize(i);
 
     // form metadata file name
-    CPLStrlcpy(szMetadataName + i, "_metadata.txt", 14);
-    const char* pszIMDSourceFilename = CPLFormFilename( pszDirName,
-                                                        szMetadataName, NULL );
-    if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+    CPLString osIMDSourceFilename = CPLFormFilename(
+        osDirName, (osRadixMetadataName + "_metadata.txt").c_str(), nullptr);
+    if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
     {
-        m_osIMDSourceFilename = pszIMDSourceFilename;
+        m_osIMDSourceFilename = osIMDSourceFilename;
     }
     else
     {
-        CPLStrlcpy(szMetadataName + i, "_METADATA.TXT", 14);
-        pszIMDSourceFilename = CPLFormFilename( pszDirName, szMetadataName, NULL );
-        if (CPLCheckForFile((char*)pszIMDSourceFilename, papszSiblingFiles))
+        osIMDSourceFilename = CPLFormFilename(
+            osDirName, (osRadixMetadataName + "_METADATA.txt").c_str(),
+            nullptr);
+        if (CPLCheckForFile(&osIMDSourceFilename[0], papszSiblingFiles))
         {
-            m_osIMDSourceFilename = pszIMDSourceFilename;
+            m_osIMDSourceFilename = osIMDSourceFilename;
         }
     }
 
     // get _rpc.txt file
 
-    const char* pszRPBSourceFilename = CPLFormFilename( pszDirName,
-                                                        CPLSPrintf("%s_rpc",
-                                                        pszBaseName),
-                                                        "txt" );
-    if (CPLCheckForFile((char*)pszRPBSourceFilename, papszSiblingFiles))
+    CPLString osRPBSourceFilename =
+        CPLFormFilename(osDirName, (osBaseName + "_rpc").c_str(), "txt");
+    if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
     {
-        m_osRPBSourceFilename = pszRPBSourceFilename;
+        m_osRPBSourceFilename = osRPBSourceFilename;
     }
     else
     {
-        pszRPBSourceFilename = CPLFormFilename( pszDirName, CPLSPrintf("%s_RPC",
-                                                pszBaseName), "TXT" );
-        if (CPLCheckForFile((char*)pszRPBSourceFilename, papszSiblingFiles))
+        osRPBSourceFilename =
+            CPLFormFilename(osDirName, (osBaseName + "_RPC").c_str(), "TXT");
+        if (CPLCheckForFile(&osRPBSourceFilename[0], papszSiblingFiles))
         {
-            m_osRPBSourceFilename = pszRPBSourceFilename;
+            m_osRPBSourceFilename = osRPBSourceFilename;
         }
     }
 
-    if( !m_osIMDSourceFilename.empty() )
-        CPLDebug( "MDReaderGeoEye", "IMD Filename: %s",
-                  m_osIMDSourceFilename.c_str() );
-    if( !m_osRPBSourceFilename.empty() )
-        CPLDebug( "MDReaderGeoEye", "RPB Filename: %s",
-                  m_osRPBSourceFilename.c_str() );
+    if (!m_osIMDSourceFilename.empty())
+        CPLDebug("MDReaderGeoEye", "IMD Filename: %s",
+                 m_osIMDSourceFilename.c_str());
+    if (!m_osRPBSourceFilename.empty())
+        CPLDebug("MDReaderGeoEye", "RPB Filename: %s",
+                 m_osRPBSourceFilename.c_str());
 }
 
 /**
@@ -139,13 +130,13 @@ bool GDALMDReaderGeoEye::HasRequiredFiles() const
 /**
  * GetMetadataFiles()
  */
-char** GDALMDReaderGeoEye::GetMetadataFiles() const
+char **GDALMDReaderGeoEye::GetMetadataFiles() const
 {
-    char **papszFileList = NULL;
-    if(!m_osIMDSourceFilename.empty())
-        papszFileList= CSLAddString( papszFileList, m_osIMDSourceFilename );
-    if(!m_osRPBSourceFilename.empty())
-        papszFileList = CSLAddString( papszFileList, m_osRPBSourceFilename );
+    char **papszFileList = nullptr;
+    if (!m_osIMDSourceFilename.empty())
+        papszFileList = CSLAddString(papszFileList, m_osIMDSourceFilename);
+    if (!m_osRPBSourceFilename.empty())
+        papszFileList = CSLAddString(papszFileList, m_osRPBSourceFilename);
 
     return papszFileList;
 }
@@ -155,67 +146,68 @@ char** GDALMDReaderGeoEye::GetMetadataFiles() const
  */
 void GDALMDReaderGeoEye::LoadMetadata()
 {
-    if(m_bIsMetadataLoad)
+    if (m_bIsMetadataLoad)
         return;
 
     if (!m_osIMDSourceFilename.empty())
     {
-        m_papszIMDMD = LoadIMDWktFile( );
+        m_papszIMDMD = LoadIMDWktFile();
     }
 
-    if(!m_osRPBSourceFilename.empty())
+    if (!m_osRPBSourceFilename.empty())
     {
-        m_papszRPCMD = GDALLoadRPCFile( m_osRPBSourceFilename );
+        m_papszRPCMD = GDALLoadRPCFile(m_osRPBSourceFilename);
     }
 
     m_papszDEFAULTMD = CSLAddNameValue(m_papszDEFAULTMD, MD_NAME_MDTYPE, "GE");
 
     m_bIsMetadataLoad = true;
 
-    if(NULL == m_papszIMDMD)
+    if (nullptr == m_papszIMDMD)
     {
         return;
     }
 
-    //extract imagery metadata
-    const char* pszSatId = CSLFetchNameValue(m_papszIMDMD,
-                                             "Source Image Metadata.Sensor");
-    if(NULL != pszSatId)
+    // extract imagery metadata
+    const char *pszSatId =
+        CSLFetchNameValue(m_papszIMDMD, "Source Image Metadata.Sensor");
+    if (nullptr != pszSatId)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                           MD_NAME_SATELLITE,
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_SATELLITE,
                                            CPLStripQuotes(pszSatId));
     }
 
-    const char* pszCloudCover = CSLFetchNameValue(m_papszIMDMD,
-                                   "Source Image Metadata.Percent Cloud Cover");
-    if(NULL != pszCloudCover)
+    const char *pszCloudCover = CSLFetchNameValue(
+        m_papszIMDMD, "Source Image Metadata.Percent Cloud Cover");
+    if (nullptr != pszCloudCover)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                           MD_NAME_CLOUDCOVER, pszCloudCover);
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
+                                           pszCloudCover);
     }
 
-    const char* pszDateTime = CSLFetchNameValue(m_papszIMDMD,
-                                 "Source Image Metadata.Acquisition Date/Time");
+    const char *pszDateTime = CSLFetchNameValue(
+        m_papszIMDMD, "Source Image Metadata.Acquisition Date/Time");
 
-    if(NULL != pszDateTime)
+    if (nullptr != pszDateTime)
     {
         char buffer[80];
-        time_t timeMid = GetAcquisitionTimeFromString(pszDateTime);
+        GIntBig timeMid = GetAcquisitionTimeFromString(pszDateTime);
 
-        strftime (buffer, 80, MD_DATETIMEFORMAT, localtime(&timeMid));
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                           MD_NAME_ACQDATETIME, buffer);
+        struct tm tmBuf;
+        strftime(buffer, 80, MD_DATETIMEFORMAT,
+                 CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
+        m_papszIMAGERYMD =
+            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
     }
 }
 
 /**
  * GetAcqisitionTimeFromString()
  */
-time_t GDALMDReaderGeoEye::GetAcquisitionTimeFromString(
-        const char* pszDateTime)
+GIntBig
+GDALMDReaderGeoEye::GetAcquisitionTimeFromString(const char *pszDateTime)
 {
-    if(NULL == pszDateTime)
+    if (nullptr == pszDateTime)
         return 0;
 
     int iYear;
@@ -227,8 +219,8 @@ time_t GDALMDReaderGeoEye::GetAcquisitionTimeFromString(
 
     // string example: Acquisition Date/Time: 2006-03-01 11:08 GMT
 
-    int r = sscanf ( pszDateTime, "%d-%d-%d %d:%d GMT", &iYear, &iMonth,
-                     &iDay, &iHours, &iMin);
+    int r = sscanf(pszDateTime, "%d-%d-%d %d:%d GMT", &iYear, &iMonth, &iDay,
+                   &iHours, &iMin);
 
     if (r != 5)
         return 0;
@@ -242,16 +234,16 @@ time_t GDALMDReaderGeoEye::GetAcquisitionTimeFromString(
     tmDateTime.tm_year = iYear - 1900;
     tmDateTime.tm_isdst = -1;
 
-    return mktime(&tmDateTime);
+    return CPLYMDHMSToUnixTime(&tmDateTime);
 }
 
 /**
  * LoadWKTIMDFile()
  */
-char** GDALMDReaderGeoEye::LoadIMDWktFile() const
+char **GDALMDReaderGeoEye::LoadIMDWktFile() const
 {
-    char** papszResultList = NULL;
-    char** papszLines = CSLLoad( m_osIMDSourceFilename );
+    char **papszResultList = nullptr;
+    char **papszLines = CSLLoad(m_osIMDSourceFilename);
     bool bBeginSection = false;
     CPLString osSection;
     CPLString osKeyLevel1;
@@ -260,117 +252,119 @@ char** GDALMDReaderGeoEye::LoadIMDWktFile() const
     int nLevel = 0;
     int nSpaceCount;
 
-    if( papszLines == NULL )
-        return NULL;
+    if (papszLines == nullptr)
+        return nullptr;
 
-    for( int i = 0; papszLines[i] != NULL; i++ )
+    for (int i = 0; papszLines[i] != nullptr; i++)
     {
         // skip section (=== or ---) lines
 
-        if(STARTS_WITH_CI(papszLines[i], "==="))
+        if (STARTS_WITH_CI(papszLines[i], "==="))
         {
             bBeginSection = true;
             continue;
         }
 
-        if(STARTS_WITH_CI(papszLines[i], "---") || CPLStrnlen(papszLines[i], 512) == 0)
+        if (STARTS_WITH_CI(papszLines[i], "---") ||
+            CPLStrnlen(papszLines[i], 512) == 0)
             continue;
 
         // check the metadata level
         nSpaceCount = 0;
-        for(int j = 0; j < 11; j++)
+        for (int j = 0; j < 11; j++)
         {
-            if(papszLines[i][j] != ' ')
+            if (papszLines[i][j] != ' ')
                 break;
             nSpaceCount++;
         }
 
-        if(nSpaceCount % 3 != 0)
-            continue; // not a metadata item
+        if (nSpaceCount % 3 != 0)
+            continue;  // not a metadata item
         nLevel = nSpaceCount / 3;
 
         const char *pszValue;
-        char *pszKey = NULL;
+        char *pszKey = nullptr;
         pszValue = CPLParseNameValue(papszLines[i], &pszKey);
 
-        if(NULL != pszValue && CPLStrnlen(pszValue, 512) > 0)
+        if (nullptr != pszValue && CPLStrnlen(pszValue, 512) > 0)
         {
 
             CPLString osCurrentKey;
-            if(nLevel == 0)
+            if (nLevel == 0)
             {
                 osCurrentKey = CPLOPrintf("%s", pszKey);
             }
-            else if(nLevel == 1)
+            else if (nLevel == 1)
             {
-                osCurrentKey = osKeyLevel1 + "." +
-                        CPLOPrintf("%s", pszKey + nSpaceCount);
+                osCurrentKey =
+                    osKeyLevel1 + "." + CPLOPrintf("%s", pszKey + nSpaceCount);
             }
-            else if(nLevel == 2)
+            else if (nLevel == 2)
             {
-                osCurrentKey = osKeyLevel1 + "." +
-                        osKeyLevel2 + "." + CPLOPrintf("%s", pszKey + nSpaceCount);
+                osCurrentKey = osKeyLevel1 + "." + osKeyLevel2 + "." +
+                               CPLOPrintf("%s", pszKey + nSpaceCount);
             }
-            else if(nLevel == 3)
+            else if (nLevel == 3)
             {
-                osCurrentKey = osKeyLevel1 + "." +
-                        osKeyLevel2 + "." + osKeyLevel3 + "." +
-                        CPLOPrintf("%s", pszKey + nSpaceCount);
+                osCurrentKey = osKeyLevel1 + "." + osKeyLevel2 + "." +
+                               osKeyLevel3 + "." +
+                               CPLOPrintf("%s", pszKey + nSpaceCount);
             }
 
-            if(!osSection.empty())
+            if (!osSection.empty())
             {
                 osCurrentKey = osSection + "." + osCurrentKey;
             }
 
-            papszResultList = CSLAddNameValue(papszResultList, osCurrentKey, pszValue);
+            papszResultList =
+                CSLAddNameValue(papszResultList, osCurrentKey, pszValue);
         }
 
-        if(NULL != pszKey && CPLStrnlen(pszKey, 512) > 0)
+        if (nullptr != pszKey && CPLStrnlen(pszKey, 512) > 0)
         {
-            if(bBeginSection)
+            if (bBeginSection)
             {
                 osSection = CPLOPrintf("%s", pszKey);
                 bBeginSection = false;
             }
-            else if(nLevel == 0)
+            else if (nLevel == 0)
             {
                 osKeyLevel1 = CPLOPrintf("%s", pszKey);
             }
-            else if(nLevel == 1)
+            else if (nLevel == 1)
             {
                 osKeyLevel2 = CPLOPrintf("%s", pszKey + nSpaceCount);
             }
-            else if(nLevel == 2)
+            else if (nLevel == 2)
             {
                 osKeyLevel3 = CPLOPrintf("%s", pszKey + nSpaceCount);
             }
         }
         else
         {
-            if(bBeginSection)
+            if (bBeginSection)
             {
                 osSection = CPLOPrintf("%s", papszLines[i]);
                 bBeginSection = false;
             }
-            else if(nLevel == 0)
+            else if (nLevel == 0)
             {
                 osKeyLevel1 = CPLOPrintf("%s", papszLines[i]);
             }
-            else if(nLevel == 1)
+            else if (nLevel == 1)
             {
                 osKeyLevel2 = CPLOPrintf("%s", papszLines[i] + nSpaceCount);
             }
-            else if(nLevel == 2)
+            else if (nLevel == 2)
             {
-                osKeyLevel3 = CPLOPrintf("%s", papszLines[i]+ nSpaceCount);
+                osKeyLevel3 = CPLOPrintf("%s", papszLines[i] + nSpaceCount);
             }
         }
 
-        CPLFree( pszKey );
+        CPLFree(pszKey);
     }
 
-    CSLDestroy( papszLines );
+    CSLDestroy(papszLines);
 
     return papszResultList;
 }

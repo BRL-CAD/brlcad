@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2022 United States Government as represented by
+ * Copyright (c) 2000-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 #include "rt/geom.h"
-
-extern struct rt_sketch_internal *sketch_start();
 
 struct rt_wdb *outfp;
 

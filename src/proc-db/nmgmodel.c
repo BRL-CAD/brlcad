@@ -1,7 +1,7 @@
 /*                      N M G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2022 United States Government as represented by
+ * Copyright (c) 2004-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -479,7 +479,7 @@ make_2manifold_bits(struct bn_tol *tol)
 
 
 void
-make_1manifold_bits()
+make_1manifold_bits(void)
 {
     struct edgeuse *eu;
 
@@ -496,7 +496,7 @@ make_1manifold_bits()
 
 
 void
-make_0manifold_bits()
+make_0manifold_bits(void)
 {
     struct shell *sp;
 

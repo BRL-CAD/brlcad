@@ -1,7 +1,7 @@
 /*                        S C R O L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2022 United States Government as represented by
+ * Copyright (c) 1985-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ struct scroll_item sl_menu[] = {
     { "xrot",	sl_rrtol,	4,	"x" },
     { "yrot",	sl_rrtol,	5,	"y" },
     { "zrot",	sl_rrtol,	6,	"z" },
-    { "",		(void (*)())NULL, 0,	"" }
+    { "",	NULL, 		0,	"" }
 };
 
 
@@ -71,7 +71,7 @@ struct scroll_item sl_abs_menu[] = {
     { "Xrot",	sl_artol,	4,	"ax" },
     { "Yrot",	sl_artol,	5,	"ay" },
     { "Zrot",	sl_artol,	6,	"az" },
-    { "",		(void (*)())NULL, 0,	"" }
+    { "",	NULL, 		0,	"" }
 };
 
 
@@ -81,7 +81,7 @@ struct scroll_item sl_adc_menu[] = {
     { "ang 1",	sl_adctol,	2,	"ang1" },
     { "ang 2",	sl_adctol,	3,	"ang2" },
     { "tick",	sl_itol,	4,	"distadc" },
-    { "",		(void (*)())NULL, 0, "" }
+    { "",	NULL, 		0, 	"" }
 };
 
 
@@ -120,7 +120,7 @@ set_scroll(void)
  * Reset all scroll bars to the zero position.
  */
 void
-sl_halt_scroll(void)
+sl_halt_scroll(int UNUSED(a), int UNUSED(b), int UNUSED(c))
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
@@ -131,7 +131,7 @@ sl_halt_scroll(void)
 
 
 void
-sl_toggle_scroll(void)
+sl_toggle_scroll(int UNUSED(a), int UNUSED(b), int UNUSED(c))
 {
     mged_variables->mv_sliders = mged_variables->mv_sliders ? 0 : 1;
 
@@ -735,7 +735,7 @@ scroll_select(int pen_x, int pen_y, int do_func)
 	    }
 
 	    /* See if hooked function has been specified */
-	    if (mptr->scroll_func == ((void (*)())0)) continue;
+	    if (!mptr->scroll_func) continue;
 
 	    if (do_func)
 		(*(mptr->scroll_func))(mptr, val);

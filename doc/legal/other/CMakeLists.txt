@@ -1,6 +1,7 @@
 set(other_licenses
   Eigen.txt
-  assimp.txt
+  assetimport.txt
+  openNURBS.txt
   gct.txt
   gdal.txt
   itcl3.txt
@@ -11,11 +12,13 @@ set(other_licenses
   linenoise.txt
   lmdb.txt
   netpbm.txt
+  openmesh.txt
   openNURBS.txt
   png.txt
   poly2tri.txt
-  proj-4.txt
+  proj.txt
   regex.txt
+  sqlite3.txt
   stepcode.txt
   tcl.txt
   tk.txt
