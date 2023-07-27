@@ -1,3 +1,77 @@
+commit 834994a075da397c581499ce41662d2f9d878ef2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 19:45:04 2023 -0400
+
+    Define static assert for Ghost BSD
+    
+    Similar to https://github.com/apache/mynewt-core/issues/2040#issuecomment-554571476
+
+commit 703c261a6c428deefd68401ce92e2bb728915424
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 16:32:52 2023 -0400
+
+    More advanced variables
+
+commit 028ba3e64c724ea2533b3846145d5990b775a7fd
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 16:10:36 2023 -0400
+
+    Mark various variables as advanced for CMake
+
+commit f9079cf1c46382d82932c5a12236b9638edcc644
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 14:35:25 2023 -0400
+
+    Remove odd_pathnames from distcheck-full set
+    
+    Too problematic with 3rd party builds - we'll just keep it as a
+    stand-alone test when conditions are right to run it.  We may be able to
+    make it standard again if we fully separate src/other/ext into its own
+    repository and make it a separate build, but that's down the road.
+
+commit 40f38f89ce4ae6d84378ba70b99ee66cf00f1a79
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 13:03:33 2023 -0400
+
+    Ah, apparently 1.6.40 png has this covered already...
+
+commit b6f71f4bec72d8d0781705056eab65dd7117b999
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 12:55:52 2023 -0400
+
+    Add a way to suppress the PNG use of 'd' suffix
+    
+    Grr.  If build type gets set to Debug, instead of being left empty,
+    Linux is also throwing in the 'd' suffix on debug build libs from png.
+    Add a way to specify at configure time not to do that - it really messes
+    with our build logic.  Should probably try to upstream this or something
+    like it.
+
+commit c5e99fcc9ba931e109a1cbbbcac4a102715855fb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 11:32:34 2023 -0400
+
+    Fix executable permission on sh files
+    
+    Looks like we lost executable settings in the 2023-02-02 year updating
+    commit.  Was manifesting in a distcheck failure when the check target's
+    invocation of benchmark clobber wasn't succeeding due to benchmark not
+    being executable, leaving behind files.  That calling of the benchmark
+    script didn't prefix with an explicit ${SH_EXEC} call, and thus relied
+    on benchmark being directly executable on its own.
+
+commit 8da7ea79d1740fba20d0f77d401247ded98cbe71
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 11:10:22 2023 -0400
+
+    List perplex outputs for distclean
+
+commit 8d7db5bab5fbc0087e55ed32e279ffb32e871890
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 10:04:46 2023 -0400
+
+    Update log with commits since 2023-02-27
+
 commit 3ed4f9a66ef72ba32fa9a696b3a66afcaf47af88
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Wed Jul 26 10:03:37 2023 -0400
@@ -1463,21 +1537,3 @@ Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
 Date:   Wed Mar 1 11:30:53 2023 -0500
 
     Merge branch 'RELEASE', bump PATCH number
-
-commit dc828f826d5d2b5cf4c4c958d06d0577ca3af6a2
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Feb 27 12:33:35 2023 -0500
-
-    Update log with commits since 2022-11-23
-
-commit 9ccc64779361b5a87c63f129346cd20c72bfb7f5
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Feb 27 12:32:58 2023 -0500
-
-    correct NEWS release date
-
-commit 5c481242c038cc0d9c72e3be60fc996c05a7764f
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Feb 27 12:25:04 2023 -0500
-
-    set misc version numbers
