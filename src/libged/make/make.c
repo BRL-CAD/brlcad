@@ -796,13 +796,17 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     }
 	else if (BU_STR_EQUAL(argv[bu_optind + 1], "vdb")) {
 
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	internal.idb_type = ID_VDB;
+	internal.idb_meth = &OBJ[ID_VDB];
+	BU_ALLOC(internal.idb_ptr, struct rt_vdb_internal);
+	vdb_ip = (struct rt_vdb_internal *)internal.idb_ptr;
+	vdb_ip->magic = RT_VDB_INTERNAL_MAGIC;
 
-	
+	VSET(vdb_ip->minBB, 0, 0, 0);
+	VSET(vdb_ip->maxBB, 1, 1, 1);
 
 	bu_log("it will create a vdb\n");
-
-
-
 
 	}
 	else if (BU_STR_EQUAL(argv[bu_optind+1], "cline")) {
