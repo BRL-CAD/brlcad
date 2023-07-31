@@ -109,11 +109,11 @@ _brep_cmd_surface_interp(void *bs, int argc, const char **argv)
     // Load and check the number of arguments
     int cv_count_x = atoi(argv[0]);
     int cv_count_y = atoi(argv[1]);
-    if (cv_count_x <= 0 || cv_count_y <= 0) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid cv_count\n");
+    if (cv_count_x <= 2 || cv_count_y <= 2) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid cv_count, cv_count >= 3\n");
 	return BRLCAD_ERROR;
     }
-
+    
     if (argc < 2 + (cv_count_x *cv_count_y) * 3) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments, you need to input %d more args about control 	vertices\n", 2 + (cv_count_x * cv_count_y) * 3 - argc);
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);

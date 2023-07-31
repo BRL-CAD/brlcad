@@ -297,6 +297,7 @@ int SurfMeshParams(int n, int m, std::vector<ON_3dPoint> points, std::vector<dou
  * global curve interpolation
  * input: n, knots, Q
  * output: P
+ * TODO: while n <= 3, the special case should be considered
  */
 void globalCurveInterp(int n, std::vector<double> &knots, const std::vector<ON_3dPoint> &Q, std::vector<ON_3dPoint> &P);
 
