@@ -288,7 +288,17 @@ int brep_surface_copy(ON_Brep *brep, int surface_id)
     return brep->AddSurface(surface_copy);
 }
 
+/**
+ * caculate parameter values of each point
+ */
 int SurfMeshParams(int n, int m, std::vector<ON_3dPoint> points, std::vector<double> &uk, std::vector<double> &ul);
+
+/**
+ * global curve interpolation
+ * input: n, knots, Q
+ * output: P
+ */
+void globalCurveInterp(int n, std::vector<double> &knots, const std::vector<ON_3dPoint> &Q, std::vector<ON_3dPoint> &P);
 
 int brep_surface_interpCrv(ON_Brep *brep, int cv_count_x, int cv_count_y, std::vector<ON_3dPoint> points)
 {
@@ -297,35 +307,62 @@ int brep_surface_interpCrv(ON_Brep *brep, int cv_count_x, int cv_count_y, std::v
     if (points.size() != (size_t)(cv_count_x * cv_count_y)) {
     return -1;
     }
+    int n = cv_count_x - 1;
+    int m = cv_count_y - 1;
 
     /// calculate parameter values of each point
     std::vector<double> uk, ul;
-    SurfMeshParams(cv_count_x - 1, cv_count_y - 1, points, uk, ul);
+    SurfMeshParams(n, m, points, uk, ul);
 
     /// calculate knots of the cubic B-spline surface
     std::vector<double> knots_u, knots_v;
-    for (size_t i = 0; i < 4; i++)
-    {
+    for (size_t i = 0; i < 4; i++) {
 	knots_u.push_back(0);
 	knots_v.push_back(0);
     }
-    for (size_t i = 1; i < uk.size() - 1; i++)
-    {
+    for (size_t i = 1; i < uk.size() - 1; i++) {
 	knots_u.push_back(uk[i]);
     }
-    for (size_t i = 1; i < ul.size() - 1; i++)
-    {
+    for (size_t i = 1; i < ul.size() - 1; i++) {
 	knots_v.push_back(ul[i]);
     }
-    for (int i = 0; i < 4; i++)
-    {
+    for (int i = 0; i < 4; i++) {
 	knots_u.push_back(1);
 	knots_v.push_back(1);
     }
-    if(!brep){
-    return -1;
+
+    /// curve interpolation in v direction
+    // temporary control points
+    std::vector<std::vector<ON_3dPoint>> R(n + 1, std::vector<ON_3dPoint>(m + 3));
+
+    for (int l = 0; l <= n; l++) {
+	std::vector<ON_3dPoint> Q(m + 1);
+	for (int k = 0; k <= m; k++) {
+	    Q[k] = points[l * (m + 1) + k];
+	}
+	globalCurveInterp(m, knots_v, Q, R[l]);
     }
-    return -1;
+
+    ON_NurbsSurface *surface = ON_NurbsSurface::New(3, false, 4, 4, n + 3, m + 3);
+    for (int i = 0; i < m + 3; i++) {
+	std::vector<ON_3dPoint> Q(n + 1);
+	for (int j = 0; j < n + 1; j++) {
+	    Q[j] = R[j][i];
+	}
+	std::vector<ON_3dPoint> P(n + 3);
+	globalCurveInterp(n, knots_u, Q, P);
+	for (int j = 0; j < n + 3; j++) {
+	    surface->SetCV(j, i, P[j]);
+	}
+    }
+    /// the knot vector of openNURBS is different from the NURBS book
+    for (size_t i = 1; i < knots_u.size() - 1; i++) {
+	surface->SetKnot(0, i - 1, knots_u[i]);
+    }
+    for (size_t i = 1; i < knots_v.size() - 1; i++) {
+	surface->SetKnot(1, i - 1, knots_v[i]);
+    }
+    return brep->AddSurface(surface);
 }
 
 bool brep_surface_move(ON_Brep *brep, int surface_id, const ON_3dVector &point)
@@ -545,6 +582,8 @@ void calcuBsplineCVsKnots(std::vector<ON_3dPoint> &cvs, std::vector<double> &kno
 }
 
 // caculate parameters of the surface
+// input: n, m, points
+// output: uk, ul
 int SurfMeshParams(int n, int m, std::vector<ON_3dPoint> points, std::vector<double> &uk, std::vector<double> &ul)
 {
     std::vector<double> cds;
@@ -555,11 +594,9 @@ int SurfMeshParams(int n, int m, std::vector<ON_3dPoint> points, std::vector<dou
     uk[n] = 1.0f;
     for (int i = 1; i < n; i++)
 	uk[i] = 0;
-    for (int i = 0; i <= m; i++)
-    {
+    for (int i = 0; i <= m; i++) {
 	double sum = 0;
-	for (int j = 1; j <= n; j++)
-	{
+	for (int j = 1; j <= n; j++) {
 	    cds[j] = points[i * (n + 1) + j].DistanceTo(points[i * (n + 1) + j - 1]);
 	    sum += cds[j];
 	}
@@ -586,11 +623,9 @@ int SurfMeshParams(int n, int m, std::vector<ON_3dPoint> points, std::vector<dou
     ul[m] = 1.0f;
     for (int i = 1; i < m; i++)
 	ul[i] = 0;
-    for (int i = 0; i <= n; i++)
-    {
+    for (int i = 0; i <= n; i++) {
 	double sum = 0;
-	for (int j = 1; j <= m; j++)
-	{
+	for (int j = 1; j <= m; j++) {
 	    cds[j] = points[j * (n + 1) + i].DistanceTo(points[(j - 1) * (n + 1) + i]);
 	    sum += cds[j];
 	}
@@ -613,6 +648,87 @@ int SurfMeshParams(int n, int m, std::vector<ON_3dPoint> points, std::vector<dou
     return 0;
 }
 
+void bsplineBasisFuns(int i, double u, int p, std::vector<double> U,  std::vector<double> &N)
+{
+    double *left = (double *)bu_calloc(p + 1, sizeof(double), "left");
+    double *right = (double *)bu_calloc(p + 1, sizeof(double), "right");
+    double saved, temp;
+    int j, r;
+    N[0] = 1.0;
+
+    for (j = 1; j <= p; j++) {
+	left[j] = u - U[i + 1 - j];
+	right[j] = U[i + j] - u;
+	saved = 0.0;
+
+	for (r = 0; r < j; r++) {
+	    temp = N[r] / (right[r + 1] + left[j - r]);
+	    N[r] = saved + right[r + 1] * temp;
+	    saved = left[j - r] * temp;
+	}
+	N[j] = saved;
+    }
+    bu_free(left, "left");
+    bu_free(right, "right");
+}
+
+/**
+ * solve tridiagonal equation for cubic spline interpolation
+ */
+int solveTridiagonalint(int n, std::vector<ON_3dPoint> Q, std::vector<double> U, std::vector<ON_3dPoint>& P)
+{
+    std::vector<double> abc(4);
+    std::vector<ON_3dPoint> R(n + 1);
+    std::vector<double> dd(n + 1);
+    double den;
+    int i;
+
+    for (i = 3; i < n; i++) {
+	R[i] = Q[i - 1];
+    }
+
+    bsplineBasisFuns(4, U[4], 3, U, abc);
+    den = abc[1];
+
+    /* P[2] */
+    P[2] = (Q[1] - abc[0] * P[1]) / den;
+
+    for (i = 3; i < n; i++) {
+	dd[i] = abc[2] / den;
+
+	bsplineBasisFuns(i + 2, U[i + 2], 3, U, abc);
+	den = abc[1] - abc[0] * dd[i];
+	P[i] = (R[i] - abc[0] * P[i - 1]) / den;
+    }
+
+    dd[n] = abc[2] / den;
+
+    bsplineBasisFuns(n + 2, U[n + 2], 3, U, abc);
+    den = abc[1] - abc[0] * dd[n];
+
+    P[n] = (Q[n - 1] - abc[2] * P[n + 1] - abc[0] * P[n - 1]) / den;
+
+    for (i = (n - 1); i >= 2; i--) {
+	P[i] = P[i] - dd[i + 1] * P[i + 1];
+    }
+
+    if (n == 2) {
+	P[2] /= 4.0f / 3.0f;
+    }
+    return 1;
+}
+
+void globalCurveInterp(int n, std::vector<double> &knots, const std::vector<ON_3dPoint> &Q, std::vector<ON_3dPoint> &P)
+{
+    /// initialize control points of P[0], P[1], P[n+1], P[n+2]
+    P.resize(n + 3);
+    P[0] = Q[0];
+    P[1] = Q[0] + (Q[1] - Q[0]) / 3.0f * knots[4];
+    P[n + 2] = Q[n];
+    P[n + 1] = Q[n] - (Q[n] - Q[n - 1]) / 3.0f * (1.0f - knots[n + 2]);
+
+    solveTridiagonalint(n, Q, knots, P);
+}
 // Local Variables:
 // tab-width: 8
 // mode: C++
