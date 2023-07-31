@@ -17,14 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
- /** @addtogroup rt_defines
-  *
-  * Common definitions for LIBRT
-  *
-  */
+/** @addtogroup rt_defines
+ *
+ * Common definitions for LIBRT
+ *
+ */
 
-  /** @{ */
-  /** @file rt/defines.h */
+/** @{ */
+/** @file rt/defines.h */
 
 #ifndef RT_DEFINES_H
 #define RT_DEFINES_H
@@ -105,15 +105,15 @@
 #define ID_CLINE        29      /**< @brief FASTGEN4 CLINE solid */
 #define ID_BOT          30      /**< @brief Bag o' triangles */
 
- /* Add a new primitive id above here (this is will break v5 format)
-  * NOTE: must update the non-geometric object id's below the
-  * ADD_BELOW_HERE marker
-  */
+/* Add a new primitive id above here (this is will break v5 format)
+ * NOTE: must update the non-geometric object id's below the
+ * ADD_BELOW_HERE marker
+ */
 #define ID_MAX_SOLID    48      /**< @brief Maximum defined ID_xxx for solids */
 
-  /*
-   * Non-geometric objects
-   */
+/*
+ * Non-geometric objects
+ */
 #define ID_COMBINATION  31      /**< @brief Combination Record */
 #define ID_UNUSED1      32      /**< @brief UNUSED (placeholder)  */
 #define ID_BINUNIF      33      /**< @brief Uniform-array binary */
@@ -121,8 +121,8 @@
 #define ID_CONSTRAINT   39      /**< @brief Constraint object */
 #define ID_MATERIAL     46      /**< @brief Material object */
 
-   /* - ADD_BELOW_HERE - */
-   /* superellipsoid should be 31, but is not v5 compatible */
+/* - ADD_BELOW_HERE - */
+/* superellipsoid should be 31, but is not v5 compatible */
 #define ID_SUPERELL     35      /**< @brief Superquadratic ellipsoid */
 #define ID_METABALL     36      /**< @brief Metaball */
 #define ID_BREP         37      /**< @brief B-rep object */
@@ -154,20 +154,20 @@
 					 */
 
 #if     ((RT_DBNHASH)&((RT_DBNHASH)-1)) != 0
-					 /**
-					  * DEPRECATED: external applications should use other LIBRT API to
-					  * access database objects.
-					  */
+/**
+ * DEPRECATED: external applications should use other LIBRT API to
+ * access database objects.
+ */
 #define RT_DBHASH(sum)  ((size_t)(sum) % (RT_DBNHASH))
 #else
-					 /**
-					  * DEPRECATED: external applications should use other LIBRT API to
-					  * access database objects.
-					  */
+/**
+ * DEPRECATED: external applications should use other LIBRT API to
+ * access database objects.
+ */
 #define RT_DBHASH(sum)  ((size_t)(sum) & ((RT_DBNHASH)-1))
 #endif
 
-					  /* Used to set globals declared in bot.c */
+/* Used to set globals declared in bot.c */
 #define RT_DEFAULT_MINPIECES            32
 #define RT_DEFAULT_TRIS_PER_PIECE       4
 #define RT_DEFAULT_MINTIE               0       /* TODO: find the best value */
@@ -182,7 +182,7 @@
 #define RT_BADNUM(n)    (!((n) >= -INFINITY && (n) <= INFINITY))
 #define RT_BADVEC(v)    (RT_BADNUM((v)[X]) || RT_BADNUM((v)[Y]) || RT_BADNUM((v)[Z]))
 
- /* FIXME: this is a dubious define that should be removed */
+/* FIXME: this is a dubious define that should be removed */
 #define RT_MAXLINE              10240
 
 #define RT_PART_NUBSPT  0
