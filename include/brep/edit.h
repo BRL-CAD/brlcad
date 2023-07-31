@@ -140,6 +140,13 @@ extern "C++"
     brep_surface_make(ON_Brep *brep, const ON_3dPoint &position);
 
     /**
+     * create a bicubic nurbs surface by interpolating a set of points
+     * return id of the curve
+     */
+    BREP_EXPORT extern int
+    brep_surface_interpCrv(ON_Brep *brep, int cv_count_x, int cv_count_y, std::vector<ON_3dPoint> points);
+
+    /**
      * copy a surface from brep
      * return id of the new surface
      */

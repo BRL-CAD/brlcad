@@ -90,6 +90,72 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
 }
 
 static int
+_brep_cmd_surface_interp(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> surface interp <cv_count_x> <cv_1_1_x> <cv_1_1_y> <cv_1_1_z> <cv_1_2_x> <cv_1_2_y> <cv_1_2_z> ...";
+    const char *purpose_string = "create a new NURBS surface";
+    if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
+    if (argc < 3) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    argc--;argv++;
+    // Load and check the number of arguments
+    int cv_count_x = atoi(argv[0]);
+    int cv_count_y = atoi(argv[1]);
+    if (cv_count_x <= 0 || cv_count_y <= 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid cv_count\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (argc < 2 + (cv_count_x *cv_count_y) * 3) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments, you need to input %d more args about control 	vertices\n", 2 + (cv_count_x * cv_count_y) * 3 - argc);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+
+    std::vector<ON_3dPoint> points;
+    for (int i = 0; i < (cv_count_x * cv_count_y); i++) {
+	ON_3dPoint p;
+	p.x = atof(argv[2 + i * 3]);
+	p.y = atof(argv[2 + i * 3 + 1]);
+	p.z = atof(argv[2 + i * 3 + 2]);
+	points.push_back(p);
+    }
+    int surface_id = brep_surface_interpCrv(b_ip->brep, cv_count_x, cv_count_y, points);
+    if(surface_id < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create surface\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surface_id);
+    return BRLCAD_OK;
+}
+
+static int
 _brep_cmd_surface_copy(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> surface copy <surface_id>";
@@ -520,6 +586,7 @@ _brep_surface_help(struct _ged_brep_isurface *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _brep_surface_cmds[] = {
     { "create",              _brep_cmd_surface_create},
+    { "interp",              _brep_cmd_surface_interp},
     { "copy",                _brep_cmd_surface_copy},
     { "birail",              _brep_cmd_surface_birail},
     { "remove",              _brep_cmd_surface_remove},

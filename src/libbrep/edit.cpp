@@ -288,6 +288,46 @@ int brep_surface_copy(ON_Brep *brep, int surface_id)
     return brep->AddSurface(surface_copy);
 }
 
+int SurfMeshParams(int n, int m, std::vector<ON_3dPoint> points, std::vector<double> &uk, std::vector<double> &ul);
+
+int brep_surface_interpCrv(ON_Brep *brep, int cv_count_x, int cv_count_y, std::vector<ON_3dPoint> points)
+{
+    cv_count_x = cv_count_x < 2 ? 2 : cv_count_x;
+    cv_count_y = cv_count_y < 2 ? 2 : cv_count_y;
+    if (points.size() != (size_t)(cv_count_x * cv_count_y)) {
+    return -1;
+    }
+
+    /// calculate parameter values of each point
+    std::vector<double> uk, ul;
+    SurfMeshParams(cv_count_x - 1, cv_count_y - 1, points, uk, ul);
+
+    /// calculate knots of the cubic B-spline surface
+    std::vector<double> knots_u, knots_v;
+    for (size_t i = 0; i < 4; i++)
+    {
+	knots_u.push_back(0);
+	knots_v.push_back(0);
+    }
+    for (size_t i = 1; i < uk.size() - 1; i++)
+    {
+	knots_u.push_back(uk[i]);
+    }
+    for (size_t i = 1; i < ul.size() - 1; i++)
+    {
+	knots_v.push_back(ul[i]);
+    }
+    for (int i = 0; i < 4; i++)
+    {
+	knots_u.push_back(1);
+	knots_v.push_back(1);
+    }
+    if(!brep){
+    return -1;
+    }
+    return -1;
+}
+
 bool brep_surface_move(ON_Brep *brep, int surface_id, const ON_3dVector &point)
 {
     /// the surface could be a NURBS surface or not
@@ -502,6 +542,75 @@ void calcuBsplineCVsKnots(std::vector<ON_3dPoint> &cvs, std::vector<double> &kno
     }
     for (size_t i = 0; i < 3; i++)
 	knots.push_back(1);
+}
+
+// caculate parameters of the surface
+int SurfMeshParams(int n, int m, std::vector<ON_3dPoint> points, std::vector<double> &uk, std::vector<double> &ul)
+{
+    std::vector<double> cds;
+    n > m ? cds.resize(n + 1) : cds.resize(m + 1);
+    int num = m + 1; // number of nondegenerate rows
+    uk.resize(n + 1);
+    uk[0] = 0.0f;
+    uk[n] = 1.0f;
+    for (int i = 1; i < n; i++)
+	uk[i] = 0;
+    for (int i = 0; i <= m; i++)
+    {
+	double sum = 0;
+	for (int j = 1; j <= n; j++)
+	{
+	    cds[j] = points[i * (n + 1) + j].DistanceTo(points[i * (n + 1) + j - 1]);
+	    sum += cds[j];
+	}
+	if (sum <= 0)
+	    num--;
+	else
+	{
+	    double d = 0.0f;
+	    for (int j = 1; j < n; j++)
+	    {
+		d += cds[j];
+		uk[j] += d / sum;
+	    }
+	}
+    }
+    if (num == 0)
+	return -1;
+    for (int i = 1; i < n; i++)
+	uk[i] /= num;
+
+    num = n + 1;
+    ul.resize(m + 1);
+    ul[0] = 0.0f;
+    ul[m] = 1.0f;
+    for (int i = 1; i < m; i++)
+	ul[i] = 0;
+    for (int i = 0; i <= n; i++)
+    {
+	double sum = 0;
+	for (int j = 1; j <= m; j++)
+	{
+	    cds[j] = points[j * (n + 1) + i].DistanceTo(points[(j - 1) * (n + 1) + i]);
+	    sum += cds[j];
+	}
+	if (sum <= 0)
+	    num--;
+	else
+	{
+	    double d = 0.0f;
+	    for (int j = 1; j < m; j++)
+	    {
+		d += cds[j];
+		ul[j] += d / sum;
+	    }
+	}
+    }
+    if (num == 0)
+	return -1;
+    for (int i = 1; i < m; i++)
+	ul[i] /= num;
+    return 0;
 }
 
 // Local Variables:

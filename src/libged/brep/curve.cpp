@@ -189,7 +189,7 @@ _brep_cmd_curve_interp(void *bs, int argc, const char **argv)
     int cv_count = atoi(argv[1]);
 
     if (cv_count <= 0) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid order or 	cv_count\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid cv_count\n");
 	return BRLCAD_ERROR;
     }
 
@@ -752,7 +752,7 @@ _brep_curve_help(struct _ged_brep_icurve *bs, int argc, const char **argv)
 const struct bu_cmdtab _brep_curve_cmds[] = {
     { "create",          _brep_cmd_curve_create},
     { "in",              _brep_cmd_curve_in},
-    { "inter",           _brep_cmd_curve_interp},
+    { "interp",          _brep_cmd_curve_interp},
     { "copy",            _brep_cmd_curve_copy},
     { "remove",          _brep_cmd_curve_remove},
     { "move",            _brep_cmd_curve_move},
