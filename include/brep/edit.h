@@ -141,7 +141,9 @@ extern "C++"
 
     /**
      * create a bicubic nurbs surface by interpolating a set of points
-     * return id of the curve
+     * return id of the surface
+     * method: Global cubic interpolation with C2 continuity
+     * reference: The NURBS Book (2nd Edition), chapter 9.2.5
      */
     BREP_EXPORT extern int
     brep_surface_interpCrv(ON_Brep *brep, int cv_count_x, int cv_count_y, std::vector<ON_3dPoint> points);

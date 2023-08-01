@@ -294,9 +294,10 @@ int brep_surface_copy(ON_Brep *brep, int surface_id)
 int SurfMeshParams(int n, int m, std::vector<ON_3dPoint> points, std::vector<double> &uk, std::vector<double> &ul);
 
 /**
- * global curve interpolation
+ * global cubic curve interpolation with C2 continuity
  * input: n, knots, Q
  * output: P
+ * reference: The NURBS Book (2nd Edition), chapter 9.2.3
  * TODO: while n <= 3, the special case should be considered
  */
 void globalCurveInterp(int n, std::vector<double> &knots, const std::vector<ON_3dPoint> &Q, std::vector<ON_3dPoint> &P);
