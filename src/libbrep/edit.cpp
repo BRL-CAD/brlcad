@@ -82,7 +82,7 @@ ON_NurbsCurve *brep_get_nurbs_curve(ON_Brep *brep, int curve_id)
 
 ON_NurbsSurface *brep_get_nurbs_surface(ON_Brep *brep, int surface_id)
 {
-    if (surface_id < 0 || surface_id >= brep->m_C3.Count()) {
+    if (surface_id < 0 || surface_id >= brep->m_S.Count()) {
 	bu_log("surface_id is out of range\n");
 	return NULL;
     }
