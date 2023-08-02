@@ -167,6 +167,14 @@ BU_EXPORT extern int bu_interactive(void);
  */
 BU_EXPORT extern int bu_process_pending(int fd);
 
+
+/**
+ * @brief determine whether there is data pending on fd
+ *
+ * 1 if there is data, else 0
+ */
+BU_EXPORT extern int bu_process_pending(int fd);
+
 /** @} */
 
 __END_DECLS

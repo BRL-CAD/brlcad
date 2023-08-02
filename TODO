@@ -18,11 +18,17 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* race condition causing bus errors on exit
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* race condition causing bus errors on exit
 
 * re-enable regress-asc and regress-weight
 
@@ -115,10 +121,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
-
-
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
 
 * Investigate OpenMesh decimation capabilities, identifying a good working
   default setup for a decimate command.  Probably will need bounding box

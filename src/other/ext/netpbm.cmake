@@ -84,6 +84,9 @@ if (BRLCAD_NETPBM_BUILD)
 
 endif (BRLCAD_NETPBM_BUILD)
 
+mark_as_advanced(NETPBM_INCLUDE_DIRS)
+mark_as_advanced(NETPBM_LIBRARIES)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/netpbm.dist")
 
 # Local Variables:

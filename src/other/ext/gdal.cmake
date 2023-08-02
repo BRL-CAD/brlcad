@@ -511,6 +511,9 @@ else (BRLCAD_GDAL_BUILD)
 
 endif (BRLCAD_GDAL_BUILD)
 
+mark_as_advanced(GDAL_INCLUDE_DIRS)
+mark_as_advanced(GDAL_LIBRARIES)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/gdal.dist")
 
 # Local Variables:

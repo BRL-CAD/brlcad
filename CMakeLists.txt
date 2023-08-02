@@ -1026,6 +1026,8 @@ if(NOT MSVC)
       SET(CMAKE_RANLIB "${GCC_RANLIB_LTO}" CACHE FILEPATH "Ranlib" FORCE)
     endif (GCC_RANLIB_LTO)
   endif (CMAKE_C_COMPILER_ID MATCHES "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.8)
+  mark_as_advanced(GCC_AR_LTO)
+  mark_as_advanced(GCC_RANLIB_LTO)
 
   # only omit the frame pointer if we have no interest in profiling or
   # debugging.
@@ -1301,7 +1303,7 @@ set(CMAKE_THREAD_LIBS_INIT ${CMAKE_THREAD_LIBS_INIT} CACHE STRING "Threads")
 set(CMAKE_USE_PTHREADS_INIT ${CMAKE_USE_PTHREADS_INIT} CACHE STRING "Threads")
 set(CMAKE_USE_WIN32_THREADS_INIT ${CMAKE_USE_WIN32_THREADS_INIT} CACHE STRING "Threads")
 mark_as_advanced(CMAKE_HP_PTHREADS_INIT)
-mark_as_advanced(CMAKE_THREADS_LIBS_INIT)
+mark_as_advanced(CMAKE_THREAD_LIBS_INIT)
 mark_as_advanced(CMAKE_USE_PTHREADS_INIT)
 mark_as_advanced(CMAKE_USE_WIN32_THREADS_INIT)
 
