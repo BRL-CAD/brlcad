@@ -34,7 +34,6 @@ set(public_hdrs
   gcv.h
   ged.h
   icv.h
-  libtermio.h
   nmg.h
   optical.h
   pc.h

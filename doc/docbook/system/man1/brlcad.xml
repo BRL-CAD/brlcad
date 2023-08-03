@@ -111,13 +111,6 @@ etc.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>libtermio</emphasis></term>
-  <listitem>
-<para>A library to handle terminal mode setting
-on both Berkeley or SystemV machines.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><emphasis remap='B'>libplot3</emphasis></term>
   <listitem>
 <para>A public-domain version of the UNIX-Plot library

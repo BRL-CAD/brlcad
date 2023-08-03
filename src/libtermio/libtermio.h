@@ -31,22 +31,6 @@
 
 #include "common.h"
 
-#if defined(HAVE_TERMIOS_H)
-#  undef SYSV
-#  undef BSD
-#  include <termios.h>
-#else	/* !defined(HAVE_TERMIOS_H) */
-#  ifdef SYSV
-#    undef BSD
-#    include <termio.h>
-#    include <memory.h>
-#  endif /* SYSV */
-#  ifdef BSD
-#    undef SYSV
-#    include <sys/ioctl.h>
-#  endif /* BSD */
-#endif /* HAVE_TERMIOS_H */
-
 #ifndef TERMIO_EXPORT
 #  if defined(TERMIO_DLL_EXPORTS) && defined(TERMIO_DLL_IMPORTS)
 #    error "Only TERMIO_DLL_EXPORTS or TERMIO_DLL_IMPORTS can be defined, not both."
@@ -61,34 +45,11 @@
 
 __BEGIN_DECLS
 
-void clr_Cbreak(int fd);
-TERMIO_EXPORT void set_Cbreak(int fd);
-void clr_Raw(int fd);
-TERMIO_EXPORT void set_Raw(int fd);
-void set_Echo(int fd);
 TERMIO_EXPORT void clr_Echo(int fd);
-void set_Tabs(int fd);
-void clr_Tabs(int fd);
-void set_HUPCL(int fd);
-void clr_CRNL(int fd);
-unsigned short get_O_Speed(int fd);
-TERMIO_EXPORT void save_Tty(int fd);
 TERMIO_EXPORT void reset_Tty(int fd);
-int save_Fil_Stat(int fd);
-int reset_Fil_Stat(int fd);
-int set_O_NDELAY(int fd);
-void prnt_Tio(
-    char *msg,
-#if defined(BSD)
-    struct sgttyb *tio_ptr
-#elif defined(SYSV)
-    struct termio *tio_ptr
-#elif defined(HAVE_TERMIOS_H)
-    struct termios *tio_ptr
-#else
-    void *tio_ptr
-#endif
-	     );
+TERMIO_EXPORT void save_Tty(int fd);
+TERMIO_EXPORT void set_Cbreak(int fd);
+TERMIO_EXPORT void set_Raw(int fd);
 
 __END_DECLS
 

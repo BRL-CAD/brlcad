@@ -31,7 +31,6 @@ set(embedded_licenses
   Inconsolata.txt
   image-hash.txt
   json.txt
-  libtermlib.txt
   lod.txt
   lseg_lseg.txt
   lseg_pt.txt

@@ -1,33 +1,18 @@
-set(TERMIO_SRCS
-  termio.c
-  termcap.c
-  tgoto.c
-  tputs.c
-  )
-
 if (NOT WIN32)
-  # Include directories needed by libtermio users
-  set(TERMIO_INCLUDE_DIRS
+  include_directories(
     ${BRLCAD_BINARY_DIR}/include
     ${BRLCAD_SOURCE_DIR}/include
-    )
-  BRLCAD_LIB_INCLUDE_DIRS(termio TERMIO_INCLUDE_DIRS "")
-
-   add_definitions(-DCM_N -DCM_GT -DCM_B -DCM_D
-     -DB_TERMCAP=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/termio/termcap\"
+    ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
-  BRLCAD_ADDDATA(termcap termio)
-
-  BRLCAD_ADDLIB(libtermio "${TERMIO_SRCS}" "libbu")
+  BRLCAD_ADDLIB(libtermio termio.c "libbu")
   set_target_properties(libtermio PROPERTIES VERSION 20.0.1 SOVERSION 20)
 endif(NOT WIN32)
 
 CMAKEFILES(
-  ${TERMIO_SRCS}
   CMakeLists.txt
-  termcap.h
-  termcap
+  termio.c
+  libtermio.h
   )
 
 # Local Variables:

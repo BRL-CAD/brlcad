@@ -44,7 +44,6 @@ liboptical - an optics library for raster image ray-tracing
 libpkg - a network package transport library
 librt - the BRL-CAD ray-trace library
 libtclcad - a library for Tcl routines related to CAD
-libtermio - a terminal I/O library
 libwdb - the write database library, for creating BRL-CAD geometry models
 mged - the Multi-device Geometry Editor, a CSG solid modeler
 nirt - Natalie's Interactive Ray-Tracer, an interactive ray-trace tool
