@@ -131,11 +131,6 @@ removed at any time.
 
 7.32
 ----
-burst
-	Point Burst Damage Assessment Model (PDAM) input preparation
-	tool.  Obsolete, no longer in use by upstream tools,
-	scheduling for removal
-
 include/bu/app.h
         bu_brlcad_root: replaced by bu_dir
         bu_brlcad_dir:  replaced by bu_dir
@@ -396,6 +391,11 @@ include/raytrace.h
 
 7.38.0
 ------
+burst
+	Point Burst Damage Assessment Model (PDAM) input preparation
+	tool.  Obsolete, no longer in use by upstream tools,
+	removed [deprecated 7.32]
+
 libtermio, libcursor
 	Public API scope reduction - any client code that needs
 	to interact with the terminal at these levels should handle

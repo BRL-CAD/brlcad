@@ -237,12 +237,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   once), but really should as it's the starting point for discovering
   what is in databases that are opened or imported.
 
-* nburst appears to be missing logging output (bounding volume lines)
-  and isn't outputting units (outputs NULL).  can run regress-burst
-  and regress-nburst to compare (have to manually save files).  the
-  ktank test isn't comprehensive, really should tests all the primary
-  options.
-
 * add metaball scaling feature (presently in a tclscript)
 
 * ability to visualize metaball centerpoints and with/without

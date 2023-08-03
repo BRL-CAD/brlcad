@@ -13,7 +13,6 @@ set(man1_EN
   brep_simple.xml
   brlcad-config.xml
   brlcad.xml
-  burst.xml
   bw-fb.xml
   bw-pix.xml
   bw-png.xml

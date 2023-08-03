@@ -2,7 +2,6 @@ Rendering Analysis Tools
 ========================
 adrt_master
 adrt_slave
-burst
 remrt
 reshoot
 rt

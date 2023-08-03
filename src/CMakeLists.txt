@@ -57,7 +57,6 @@ set(level_2_dirs
 
 set(level_3_dirs
   brlman
-  burst
   bwish
   conv
   fb
