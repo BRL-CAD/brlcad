@@ -248,7 +248,7 @@
   <example><title>Example1</title>
 
     <para>
-      <term><prompt>mged&gt; </prompt><userinput>exists object1.s</userinput></term>
+      <prompt>mged&gt; </prompt><userinput>exists object1.s</userinput>
     </para>
     <para>
     </para>

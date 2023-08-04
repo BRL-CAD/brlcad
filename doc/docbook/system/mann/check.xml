@@ -549,7 +549,7 @@
 
       <para>
 	The following will check objects hull, turret, and suspension for overlaps. The grid starts at 1 cm and is refined to 1 mm.
-    <literallayout><term><prompt>mged&gt; </prompt><userinput>check overlaps -g 1cm-1mm hull turret suspension</userinput></term></literallayout>
+    <literallayout><prompt>mged&gt; </prompt><userinput>check overlaps -g 1cm-1mm hull turret suspension</userinput></literallayout>
       </para>
 
     </example>
@@ -558,7 +558,7 @@
 
       <para>
 	The following computes volume of hull, turret, and suspension.  Results are reported in cubic centimeters (cc). The grid spacing starts at 5 in. and will not be refined below 0.3 mm spacing.
-    <literallayout><term><prompt>mged&gt; </prompt><userinput>check volume -g5in-0.3mm -u ft,cc,oz hull turret suspension</userinput></term></literallayout>
+    <literallayout><prompt>mged&gt; </prompt><userinput>check volume -g5in-0.3mm -u ft,cc,oz hull turret suspension</userinput></literallayout>
       </para>
 
     </example>
