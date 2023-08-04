@@ -53,9 +53,10 @@ set(mann_EN
   cpi.xml
   d.xml
   db.xml
-  dbfind.xml
   db_glob.xml
   dbconcat.xml
+  dbfind.xml
+  dbfindtree.xml
   dbupgrade.xml
   debug.xml
   debugbu.xml
