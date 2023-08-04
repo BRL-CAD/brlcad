@@ -1,0 +1,29 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="dbfindtree">
+  <refmeta>
+    <refentrytitle>DBFINDTREE</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>dbfindtree</refname>
+    <refpurpose>
+      Description...
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+
+  <refsection xml:id="author"><title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+  </refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to <email>devs@brlcad.org</email>
+  </para>
+  </refsection>
+</refentry>
