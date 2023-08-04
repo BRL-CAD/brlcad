@@ -175,6 +175,25 @@ void QgGL::resizeGL(int, int)
     emit changed();
 }
 
+void QgGL::resizeEvent(QResizeEvent *e)
+{
+    QOpenGLWidget::resizeEvent(e);
+    if (!dmp || !v)
+
+               return;
+    dm_set_width(dmp, width());
+    dm_set_height(dmp, height());
+    v->gv_width = width();
+    v->gv_height = height();
+    dm_configure_win(dmp, 0);
+    if (ifp) {
+	fb_configure_window(ifp, v->gv_width, v->gv_height);
+    }
+    if (dmp)
+	dm_set_dirty(dmp, 1);
+    emit changed();
+}
+
 void QgGL::need_update()
 {
     bv_log(4, "QgGL::need_update");
