@@ -1,4 +1,4 @@
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="e_command">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="e">
 
 <refmeta>
   <refentrytitle>e</refentrytitle>
@@ -8,7 +8,7 @@
 </refmeta>
 
 <refnamediv xml:id="name">
-  <refname>e_command</refname>
+  <refname>e</refname>
   <refpurpose>Adds the objects in the argument list to the display list so
   that they will appear on the <emphasis>MGED</emphasis> display. This is a
   synonym for the <command>draw</command> command.

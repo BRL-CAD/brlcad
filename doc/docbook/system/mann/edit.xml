@@ -259,14 +259,14 @@
     <variablelist>
       <varlistentry>
 	<term>
-	  <prompt>&gt; </prompt>
+	  <prompt>mged&gt; </prompt>
 	  <userinput>edit</userinput>
 	</term>
     <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
 	<term>
-	  <prompt>&gt; </prompt>
+	  <prompt>mged&gt; </prompt>
 	  <userinput>edit help</userinput>
 	</term>
 	<listitem>
@@ -282,7 +282,7 @@
     <variablelist>
       <varlistentry>
 	<term>
-	  <prompt>&gt; </prompt>
+	  <prompt>mged&gt; </prompt>
 	  <userinput>edit translate</userinput>
 	</term>
 	<listitem>
@@ -301,7 +301,7 @@
     <variablelist>
       <varlistentry>
 	<term>
-	  <prompt>&gt; </prompt>
+	  <prompt>mged&gt; </prompt>
 	  <userinput>edit translate help</userinput>
 	</term>
     <listitem><para/></listitem>
@@ -309,7 +309,7 @@
 
       <varlistentry>
 	<term>
-	  <prompt>&gt; </prompt>
+	  <prompt>mged&gt; </prompt>
 	  <userinput>edit help translate</userinput>
 	</term>
 	<listitem>
@@ -334,7 +334,7 @@
     <variablelist>
       <varlistentry>
 	<term>
-	  <prompt>&gt; </prompt>
+	  <prompt>mged&gt; </prompt>
 	  <userinput>edit fake_subcmd -B 12 -k sph.s 1.5 7 -a 0 0 0 cube.s</userinput>
 	</term>
 	<listitem>

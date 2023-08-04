@@ -549,7 +549,7 @@
 
       <para>
 	The following will check objects hull, turret, and suspension for overlaps. The grid starts at 1 cm and is refined to 1 mm.
-    <literallayout><userinput>check overlaps -g 1cm-1mm hull turret suspension</userinput></literallayout>
+    <literallayout><term><prompt>mged&gt; </prompt><userinput>check overlaps -g 1cm-1mm hull turret suspension</userinput></term></literallayout>
       </para>
 
     </example>
@@ -558,7 +558,7 @@
 
       <para>
 	The following computes volume of hull, turret, and suspension.  Results are reported in cubic centimeters (cc). The grid spacing starts at 5 in. and will not be refined below 0.3 mm spacing.
-    <literallayout><userinput>check volume -g5in-0.3mm -u ft,cc,oz hull turret suspension</userinput></literallayout>
+    <literallayout><term><prompt>mged&gt; </prompt><userinput>check volume -g5in-0.3mm -u ft,cc,oz hull turret suspension</userinput></term></literallayout>
       </para>
 
     </example>
@@ -566,7 +566,7 @@
     <para>For an example of some independent analysis type, consider the following:</para>
     <variablelist>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>check overlaps -g50,50 -u m,m^3,kg overlaps</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>check overlaps -g50,50 -u m,m^3,kg overlaps</userinput></term>
 	<listitem>
 	  <literallayout class="normal">
 Units:
@@ -586,7 +586,7 @@ SUMMARY
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>check exp_air -u m,m^3,kg exposed_air.g</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>check exp_air -u m,m^3,kg exposed_air.g</userinput></term>
 	<listitem>
 	  <literallayout class="normal">
 Units:
@@ -598,7 +598,7 @@ list Exposed Air:
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>check unconf_air -u m,m^3,kg unconf_air.g</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>check unconf_air -u m,m^3,kg unconf_air.g</userinput></term>
 	<listitem>
 	  <literallayout class="normal">
 Units:
@@ -610,7 +610,7 @@ list Unconfined Air:
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>check gap -u m,m^3,kg gap.g</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>check gap -u m,m^3,kg gap.g</userinput></term>
 	<listitem>
 	  <literallayout class="normal">
 Units:
@@ -623,7 +623,7 @@ list Gaps:
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>check volume -u m,m^3,kg closed_box.r</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>check volume -u m,m^3,kg closed_box.r</userinput></term>
 	<listitem>
 	  <literallayout class="normal">
 Units:
@@ -638,7 +638,7 @@ grid spacing 12.5mm  799 x 799 x 799
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>check surf_area -u m,m^3,kg closed_box.r</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>check surf_area -u m,m^3,kg closed_box.r</userinput></term>
 	<listitem>
 	  <literallayout class="normal">
 Units:  length: m volume: m^3 mass: kg
@@ -654,7 +654,7 @@ Surface Area:
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>%</prompt><userinput>check weight -u m,m^3,kg closed_box.r</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>check weight -u m,m^3,kg closed_box.r</userinput></term>
 	<listitem>
 	  <literallayout class="normal">
 Units:

@@ -31,7 +31,7 @@
       resulting faceted approximation of the actual objects will be displayed.
       Note that this is usually much slower than using the usual
       <command>draw</command> command. The <emphasis>-s</emphasis> option provides
-      a more accurate, but slower, approximation.
+      a more accurate, but slower, approximation. See also: the <command>ev</command> command.
     </para>
   </refsection>
 
