@@ -117,7 +117,7 @@
 
 
       <para>
-	<term><prompt>mged&gt; </prompt><userinput>bb havoc</userinput>
+	<term><prompt>mged&gt; </prompt><userinput>bb havoc</userinput></term>
 <literallayout class="normal">
 Bounding Box Dimensions, Object(s) havoc:
 X Length: 1988.4 cm
@@ -158,7 +158,7 @@ Bounding Box Volume: 340782488.9 cm^3
 
 
       <para>
-	<term><prompt>mged&gt; </prompt><userinput>bb -c havoc_parts_bbox.s havoc_front havoc_middle havoc_tail</userinput>
+	<term><prompt>mged&gt; </prompt><userinput>bb -c havoc_parts_bbox.s havoc_front havoc_middle havoc_tail</userinput></term>
 <literallayout class="normal">
 mged&gt; bb -c havoc_parts_bbox.s havoc_front havoc_middle havoc_tail
 Bounding Box Dimensions, Object(s) havoc_front,  havoc_middle,  havoc_tail:
