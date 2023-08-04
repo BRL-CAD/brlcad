@@ -582,7 +582,7 @@
 	The following command computes the weight of an object called <emphasis remap="I">wheel.r</emphasis>
 	reports the weight and volume, and checks for overlaps.  Assumes a _DENSITIES table object is present
 	in the database.
-    <literallayout><userinput>gqa wheel.r</userinput></literallayout>
+    <literallayout><term><prompt>mged&gt; </prompt><userinput>gqa wheel.r</userinput></term></literallayout>
       </para>
     </example>
 
@@ -592,7 +592,7 @@
 	The following will check objects hull, turret, and suspension for overlaps
 	and report exposed air. The grid starts at 1 cm and is refined to 1 mm unless overlaps or
 	exposed air are detected before the grid is refined to 1 mm.
-    <literallayout><userinput>gqa -g 1cm-1mm -Aoe hull turret suspension</userinput></literallayout>
+    <literallayout><term><prompt>mged&gt; </prompt><userinput>gqa -g 1cm-1mm -Aoe hull turret suspension</userinput></term></literallayout>
       </para>
     </example>
 
@@ -602,7 +602,7 @@
 	The following computes volume and weight of hull, turret, and suspension.  Results are
 	reported in cubic centimeters (cc) and ounces (oz).  The grid spacing starts at 5 in. and
 	will not be refined below 0.3 mm spacing.
-    <literallayout><userinput>gqa -g5in-0.3mm -Avw -u ft,cc,oz hull turret suspension</userinput></literallayout>
+    <literallayout><term><prompt>mged&gt; </prompt><userinput>gqa -g5in-0.3mm -Avw -u ft,cc,oz hull turret suspension</userinput></term></literallayout>
       </para>
     </example>
 

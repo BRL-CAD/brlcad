@@ -90,11 +90,11 @@
       <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
-	   <term><prompt>mged</prompt><userinput>units mm</userinput></term>
+	   <term><prompt>mged&gt; </prompt><userinput>units mm</userinput></term>
       <listitem><para/></listitem>
       </varlistentry>
       <varlistentry>
-	<term><prompt>mged</prompt><userinput>eval center [vadd2[center] {2 0 0}]</userinput></term>
+	<term><prompt>mged&gt; </prompt><userinput>eval center [vadd2[center] {2 0 0}]</userinput></term>
 	<listitem>
 	  <para>
 	    Moves the center point 2 mm in the model + x direction.
@@ -112,7 +112,7 @@
       <listitem><para/></listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><prompt>mged</prompt><userinput>db adjust sphere.s  V [center]</userinput></term>
+	  <term><prompt>mged&gt; </prompt><userinput>db adjust sphere.s  V [center]</userinput></term>
       <listitem><para/></listitem>
 	</varlistentry>
       </variablelist>
