@@ -247,11 +247,11 @@
   </para>
   <example><title>Example1</title>
 
-    <para>
-      <prompt>mged&gt; </prompt><userinput>exists object1.s</userinput>
-    </para>
-    <para>
-    </para>
+  <para>
+    <literallayout>
+<prompt>mged&gt; </prompt><userinput>exists object1.s</userinput>
+    </literallayout>
+  </para>
   </example>
 
 </refsection>
