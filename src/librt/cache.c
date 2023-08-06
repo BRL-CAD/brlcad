@@ -626,14 +626,14 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
     }
 
     db5_export_object3(&db_external, 0, name, 0, &attributes_external,
-	    &data_external, DB5_MAJORTYPE_BINARY_MIME, 0,
-			   DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
+		       &data_external, DB5_MAJORTYPE_BINARY_MIME, 0,
+		       DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED);
 
     focache = fopen(tmppath, "wb");
     if (!focache) {
-	    CACHE_DEBUG("++++++ [%lu.%lu] Failed to put cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
-	    return 0; /* can't stash */
-	}
+	CACHE_DEBUG("++++++ [%lu.%lu] Failed to put cache temp %s\n", bu_process_id(), bu_parallel_id(), tmpname);
+	return 0; /* can't stash */
+    }
 
     if (fwrite((void *)db_external.ext_buf, 1, db_external.ext_nbytes, focache) != db_external.ext_nbytes) {
 	fclose(focache);
@@ -677,7 +677,7 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	if (tmp_file_size != final_file_size) {
 	    CACHE_DEBUG("++++++ [%lu.%lu] BUT the file size of %s (%d) doesn't match that of %s (%d)!!!  Giving up.\n", bu_process_id(), bu_parallel_id(), path, final_file_size, tmpname, tmp_file_size);
 	    if (!cache->debug) {
-	bu_file_delete(tmppath);
+		bu_file_delete(tmppath);
 	    } else {
 		CACHE_DEBUG("++++++ [%lu.%lu] Note: temporary file %s has been left intact for debugging examination.\n", bu_process_id(), bu_parallel_id(), path, tmpname);
 	    }
@@ -691,9 +691,9 @@ cache_try_store(struct rt_cache *cache, const char *name, const struct rt_db_int
 	    CACHE_DEBUG("++++++ [%lu.%lu] Successfully read %s\n", bu_process_id(), bu_parallel_id(), name);
 	    return 1;
 	} else {
-	CACHE_DEBUG("++++++ [%lu.%lu] BUT we can't read %s !!!  Giving up.\n", bu_process_id(), bu_parallel_id(), name);
-	return 0;
-    }
+	    CACHE_DEBUG("++++++ [%lu.%lu] BUT we can't read %s !!!  Giving up.\n", bu_process_id(), bu_parallel_id(), name);
+	    return 0;
+	}
     }
 
     /* atomically flip it into place */
