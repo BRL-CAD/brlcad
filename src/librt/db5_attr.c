@@ -165,6 +165,8 @@ db5_is_standard_attribute(const char *attr_want)
 }
 
 
+#define COMMA ','
+
 int
 db5_standardize_attribute(const char *attr)
 {
@@ -181,7 +183,7 @@ db5_standardize_attribute(const char *attr)
 	}
 	curr_pos = db5_attr_std[curr_attr].aliases;
 	while (curr_pos && strlen(curr_pos) > 0) {
-	    next_pos = strchr(curr_pos+1, ', ');
+	    next_pos = strchr(curr_pos+1, COMMA);
 	    if (next_pos) {
 		bu_vls_strncpy(&alias, curr_pos, next_pos - curr_pos);
 		if (BU_STR_EQUIV(attr, bu_vls_addr(&alias))) {
