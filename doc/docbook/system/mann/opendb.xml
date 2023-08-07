@@ -71,8 +71,8 @@
   <example><title>Open and upgrade a binary-incompatible v4 file.</title>
 
     <para>
-      <prompt>mged&gt; </prompt><userinput>opendb -f model.g</userinput>
-      <prompt>mged&gt; </prompt><userinput>dbupgrade</userinput>
+      <term><prompt>mged&gt; </prompt><userinput>opendb -f model.g</userinput></term>
+      <term><prompt>mged&gt; </prompt><userinput>dbupgrade</userinput></term>
     </para>
     <para>Closes any currently open database and
       opens <emphasis>model.g</emphasis> as a binary-incompatible v4
