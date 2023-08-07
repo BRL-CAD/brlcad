@@ -17,7 +17,7 @@
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
       <command>arb</command>
-      <arg choice="req" rep="norepeat"> <replaceable>arb_name</replaceable>&gt;</arg>
+      <arg choice="req" rep="norepeat"> <replaceable>arb_name</replaceable></arg>
       <arg choice="req" rep="norepeat"> <replaceable>rotation</replaceable></arg>
       <arg choice="req" rep="norepeat"> <replaceable>fallback</replaceable></arg>
     </cmdsynopsis>

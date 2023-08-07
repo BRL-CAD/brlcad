@@ -6,7 +6,6 @@ set(mann_EN
   Z.xml
   adc.xml
   ae.xml
-  all_sf.xml
   analyze.xml
   animmate.xml
   apropos.xml
@@ -24,7 +23,6 @@ set(mann_EN
   bev.xml
   bo.xml
   bot.xml
-  bolt.xml
   bot_condense.xml
   bot_decimate.xml
   bot_face_fuse.xml
@@ -221,6 +219,7 @@ set(mann_EN
   track.xml
   translate.xml
   tree.xml
+  unhide.xml
   units.xml
   vars.xml
   vdraw.xml
