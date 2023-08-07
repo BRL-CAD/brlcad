@@ -39,7 +39,7 @@ specified <emphasis>new_ prefix</emphasis>.
   <example><title>Change the names of specified objects and references to them.</title>
 
     <para>
-      <prompt>mged</prompt><userinput>prefix test_ group1 regiona shapeb</userinput>
+      <prompt>mged&gt; </prompt><userinput>prefix test_ group1 regiona shapeb</userinput>
     </para>
     <para>Changes the names of objects <emphasis>group1, regiona,</emphasis> and <emphasis>		shapeb</emphasis> to test_group1, test_regiona, and test_shapeb. All references 		to these objects will reflect the new names.
     </para>
