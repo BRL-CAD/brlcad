@@ -68,7 +68,7 @@ set(mann_EN
   dm.xml
   draw.xml
   dup.xml
-  e.xml
+  e_command.xml
   eac.xml
   echo.xml
   edcodes.xml
