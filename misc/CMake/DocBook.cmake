@@ -154,7 +154,7 @@ if (TARGET brlcad_css)
   add_dependencies(docbook brlcad_css)
 endif (TARGET brlcad_css)
 
-macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
+function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
   # If we got the name of a list or an explicit list, translate into
   # the form we need.
@@ -282,7 +282,7 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
     endif(NOT "${all_outfiles}" STREQUAL "")
   endif(BRLCAD_EXTRADOCS)
 
-endmacro(ADD_DOCBOOK)
+endfunction(ADD_DOCBOOK)
 
 # Local Variables:
 # tab-width: 8
