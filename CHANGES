@@ -129,6 +129,11 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+7.38
+----
+MGED commands
+	E (a.k.a "big E") - replaced by "draw -m5"
+
 7.32
 ----
 include/bu/app.h

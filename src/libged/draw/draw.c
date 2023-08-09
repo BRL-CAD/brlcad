@@ -711,6 +711,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			case 4:
 			    shaded_mode_override = _GED_HIDDEN_LINE;
 			    break;
+			case 5:
+			    shaded_mode_override = _GED_WIREFRAME_EVAL;
+			    break;
 			default:
 			    if (shaded_mode_override < 0) {
 				shaded_mode_override = _GED_SHADED_MODE_UNSET;
@@ -847,6 +850,15 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		    dgcdp = dgcdp_save;
 		}
+	    } else if (dgcdp.vs.s_dmode == _GED_WIREFRAME_EVAL) {
+		const char **eav = (const char **)bu_calloc(argc+1, sizeof(const char *), "av");
+		eav[0] = "E";
+		for (int ie = 0; ie < argc; ie++) {
+		    eav[ie+1] = argv[ie];
+		}
+		int eret = ged_exec(gedp, argc+1, eav);
+		bu_free(eav, "eav");
+		return eret;
 	    } else {
 		struct display_list **paths_to_draw;
 		struct display_list *gdlp;
