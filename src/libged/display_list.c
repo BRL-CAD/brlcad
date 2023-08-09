@@ -690,6 +690,9 @@ dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *path
 	return;
 
     struct bv_scene_obj *sp = bv_obj_get(dgcdp->v, BV_DB_OBJS);
+    if (!sp)
+	return;
+
     struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
     if (!bdata) {
 	BU_GET(bdata, struct ged_bv_data);
