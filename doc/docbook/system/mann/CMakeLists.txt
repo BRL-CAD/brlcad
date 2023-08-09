@@ -1,7 +1,7 @@
 set(mann_EN
   3ptarb.xml
   B.xml
-  E.xml
+  bigE.xml
   M.xml
   Z.xml
   adc.xml
@@ -66,7 +66,7 @@ set(mann_EN
   dm.xml
   draw.xml
   dup.xml
-  e_command.xml
+  e.xml
   eac.xml
   echo.xml
   edcodes.xml

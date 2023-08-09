@@ -1,14 +1,14 @@
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="E">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bigE">
 
   <refmeta>
-    <refentrytitle>E</refentrytitle>
+    <refentrytitle>bigE</refentrytitle>
     <manvolnum>nged</manvolnum>
     <refmiscinfo class="source">BRL-CAD</refmiscinfo>
     <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
   </refmeta>
 
   <refnamediv xml:id="name">
-    <refname>E</refname>
+    <refname>bigE</refname>
     <refpurpose>
       Display <emphasis>objects</emphasis> in an evaluated form.
     </refpurpose>
