@@ -29,29 +29,81 @@
 #include <ctype.h>
 #include <string.h>
 #include "icv.h"
+#define DM_WITH_RT
 #include "dm.h"
 
 #include "../ged_private.h"
+
+struct image_mime_t {
+    bu_mime_image_t img;
+    bu_mime_application_t vec;
+};
+#define IMAGE_MIME_NULL {BU_MIME_IMAGE_UNKNOWN, BU_MIME_APPLICATION_UNKNOWN}
+
+#ifdef USE_GL2PS
+#include "gl2ps.h"
+int
+gl2ps_screengrab(struct ged *gedp, struct dm *dmp, bu_mime_application_t fmt, const char *ofile)
+{
+    GLint format = GL2PS_PS;
+    format = (fmt == BU_MIME_APPLICATION_PDF) ? GL2PS_PDF : format;
+    int buffsize = dm_get_width(dmp) * dm_get_height(dmp);
+    FILE *fp = fopen(ofile, "wb");
+    if (!fp)
+	return BRLCAD_ERROR;
+    gl2psBeginPage("GED Scene Capture", "screengrab", NULL, format, GL2PS_BSP_SORT,
+	    GL2PS_DRAW_BACKGROUND | GL2PS_USE_CURRENT_VIEWPORT,
+	    GL_RGBA, 0, NULL, 0, 0, 0, buffsize, fp, NULL);
+    dm_draw_begin(dmp);
+    dm_draw_objs(gedp->ged_gvp, NULL, NULL);
+    dm_draw_end(dmp);
+    gl2psEndPage();
+    fclose(fp);
+    return BRLCAD_OK;
+}
+#else
+int
+gl2ps_screengrab(struct ged *gedp, struct dm *UNUSED(dmp), bu_mime_application_t UNUSED(fmt), const char *ofile)
+{
+    bu_vls_printf(gedp->ged_result_str, "GL2PS disabled - image format of output %s is not supported", ofile);
+    return BRLCAD_ERROR;
+}
+#endif
+
 
 static int
 image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
-    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
-    bu_mime_image_t *set_type = (bu_mime_image_t *)set_mime;
+    bu_mime_image_t img_type = BU_MIME_IMAGE_UNKNOWN;
+    struct image_mime_t *set_type = (struct image_mime_t *)set_mime;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
 
     type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
-    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
-    if (type == BU_MIME_IMAGE_UNKNOWN) {
-	if (msg) {
-	    bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
+    img_type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
+    if (img_type == BU_MIME_IMAGE_UNKNOWN) {
+	// See if we've got a vector format requested
+	bu_mime_application_t app_type = BU_MIME_APPLICATION_UNKNOWN;
+	type_int = bu_file_mime(argv[0], BU_MIME_APPLICATION);
+	app_type = (type_int < 0) ? BU_MIME_APPLICATION_UNKNOWN : (bu_mime_application_t)type_int;
+	if (app_type == BU_MIME_APPLICATION_UNKNOWN) {
+	    if (msg)
+		bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
+	    return -1;
+	} else {
+	    if (app_type != BU_MIME_APPLICATION_POSTSCRIPT &&
+		    app_type != BU_MIME_APPLICATION_PDF) {
+		if (msg)
+		    bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
+		return -1;
+	    }
+	    if (set_type)
+		set_type->vec = app_type;
 	}
-	return -1;
-    }
-    if (set_type) {
-	(*set_type) = type;
+    } else {
+	if (set_type)
+	    set_type->img = img_type;
     }
     return 1;
 }
@@ -70,7 +122,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     struct icv_image *bif = NULL;	/**< icv image container for saving images */
     struct fb *fbp = NULL;
     struct bu_vls dm_name = BU_VLS_INIT_ZERO;
-    bu_mime_image_t type = BU_MIME_IMAGE_AUTO;
+    struct image_mime_t type = IMAGE_MIME_NULL;
     static char usage[] = "Usage: screengrab [-h] [-F] [-D name] [--format fmt] [file.img]\n";
 
     struct bu_opt_desc d[5];
@@ -143,6 +195,13 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 
     /* create image file */
     if (!grab_fb) {
+	if (type.img == BU_MIME_IMAGE_PS)
+	    type.vec = BU_MIME_APPLICATION_POSTSCRIPT;
+
+	if (type.img == BU_MIME_IMAGE_UNKNOWN && type.vec != BU_MIME_APPLICATION_UNKNOWN) {
+	    // Postscript or PDF output requested
+	    return gl2ps_screengrab(gedp, dmp, type.vec, argv[0]);
+	}
 
 	bytes_per_pixel = 3;
 	bytes_per_line = dm_get_width(dmp) * bytes_per_pixel;
@@ -174,7 +233,7 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    icv_write(bif, argv[0], type);
+    icv_write(bif, argv[0], type.img);
     icv_destroy(bif);
 
     return BRLCAD_OK;
