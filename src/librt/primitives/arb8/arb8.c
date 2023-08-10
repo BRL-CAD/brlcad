@@ -255,6 +255,7 @@ rt_arb_get_cgtype(
 	for (j = i + 1; j < 8; j++) {
 	    /* check if points are "equal" */
 	    if (VNEAR_EQUAL(arb->pt[i], arb->pt[j], tol->dist)) {
+		if (si >= 10) break;	/* too many equal points - can't write past array size */
 		svec[++si] = j;
 		unique = 0;
 	    }
