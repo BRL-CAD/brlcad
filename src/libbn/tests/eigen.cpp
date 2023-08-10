@@ -71,6 +71,14 @@ int main(int UNUSED(ac), const char **av)
 	bu_exit(BRLCAD_ERROR, "Vector assignment failed\n");
     bu_log("Updated Vector:  %g %g %g\n", V3ARGS(bn_vec));
 
+    // Unitize both the comparison vector (with libbn) and the original
+    // vector (with Eigen).  Make sure the results are the same.
+    VUNITIZE(cmp_vec);
+    evec.normalize();
+    if (!VNEAR_EQUAL(cmp_vec, bn_vec, SMALL_FASTF))
+	bu_exit(BRLCAD_ERROR, "Vector unitization failed\n");
+    bu_log("Normalized Vector:  %g %g %g\n", V3ARGS(bn_vec));
+
     return 0;
 }
 
