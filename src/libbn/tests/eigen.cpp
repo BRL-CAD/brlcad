@@ -31,6 +31,7 @@
 #include <Eigen/Geometry>
 #include "bu/app.h"
 #include "bu/exit.h"
+#include "bu/log.h"
 #include "bn/mat.h"
 
 int main(int UNUSED(ac), const char **av)
@@ -52,6 +53,23 @@ int main(int UNUSED(ac), const char **av)
     if (!bn_mat_is_identity(bn_mat))
 	bu_exit(BRLCAD_ERROR, "Identity matrix assignment failed\n");
     bn_mat_print("Identity Matrix", bn_mat);
+
+    // Set up a vmath vector
+    vect_t bn_vec = VINIT_ZERO;
+
+    // Establish an Eigen map to the vmath vect_t storage
+    Eigen::Map<Eigen::Vector<fastf_t, 3>> evec(bn_vec);
+    bu_log("Initial Vector:  %g %g %g\n", V3ARGS(bn_vec));
+
+    // Copy new vector values into evec
+    evec = Eigen::Vector<fastf_t, 3>(3,2,5);
+
+    // Verify the assigned vector contents
+    vect_t cmp_vec;
+    VSET(cmp_vec, 3, 2, 5);
+    if (!VNEAR_EQUAL(cmp_vec, bn_vec, SMALL_FASTF))
+	bu_exit(BRLCAD_ERROR, "Vector assignment failed\n");
+    bu_log("Updated Vector:  %g %g %g\n", V3ARGS(bn_vec));
 
     return 0;
 }
