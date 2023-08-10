@@ -163,6 +163,20 @@ BRLCAD_ADDEXEC(ged_test_quad quad.cpp "libged;libdm" TEST)
 add_dependencies(ged_test_quad ${test_deps})
 BRLCAD_ADD_TEST(NAME ged_test_drawing_quad COMMAND ged_test_quad "${CMAKE_CURRENT_SOURCE_DIR}")
 
+# The idea here is to test view stability across resize events
+set(aet_test_ctrls
+  aet_00_001_ctrl.png
+  aet_00_002_ctrl.png
+  aet_01_001_ctrl.png
+  aet_01_002_ctrl.png
+  aet_02_001_ctrl.png
+  aet_02_002_ctrl.png
+  aet_03_001_ctrl.png
+  aet_03_002_ctrl.png
+  )
+BRLCAD_ADDEXEC(ged_test_aet "aet.cpp;util.cpp" "libged;libdm" TEST)
+add_dependencies(ged_test_aet ${test_deps})
+
 CMAKEFILES(
   README
   empty.png
@@ -175,6 +189,7 @@ CMAKEFILES(
   ${lod_test_ctrls}
   ${select_test_ctrls}
   ${quad_test_ctrls}
+  ${aet_test_ctrls}
   )
 
 CMAKEFILES(CMakeLists.txt)
