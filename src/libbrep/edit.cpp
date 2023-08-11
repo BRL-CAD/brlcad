@@ -441,6 +441,7 @@ int brep_surface_tensor_product(ON_Brep *brep, int curve_id0, int curve_id1)
     }
     ON_SumSurface *surface = ON_SumSurface::New();
     if(!surface->Create(*curve0, *curve1)) {
+	delete surface;
 	return -1;
     }
     ON_NurbsSurface *nurbs_surface = surface->NurbsSurface();
@@ -474,6 +475,7 @@ int brep_surface_revolution(ON_Brep *brep, int curve_id0, ON_3dPoint line_start,
     // Get the NURBS form of the surface
     ON_NurbsSurface *nurbs_surface = ON_NurbsSurface::New();
     rev_surf->GetNurbForm(*nurbs_surface, 0.0);
+    delete rev_surf;
     return brep->AddSurface(nurbs_surface);
 }
 
