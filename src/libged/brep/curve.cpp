@@ -78,15 +78,6 @@ _brep_cmd_curve_create(void *bs, int argc, const char **argv)
     // Create a template nurbs curve
     int curve_id = brep_curve_make(b_ip->brep, position);
 
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
@@ -151,15 +142,6 @@ _brep_cmd_curve_in(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
@@ -217,15 +199,6 @@ _brep_cmd_curve_interp(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
@@ -266,15 +239,6 @@ _brep_cmd_curve_copy(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to copy curve\n");
 	return BRLCAD_ERROR;
     }
-
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
 
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -317,15 +281,6 @@ _brep_cmd_curve_remove(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
@@ -361,15 +316,6 @@ _brep_cmd_curve_move(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
@@ -404,15 +350,6 @@ _brep_cmd_curve_set_cv(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to move control vertex %s of curve %s\n", argv[2], argv[1]);
 	return BRLCAD_ERROR;
     }
-
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
 
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -455,15 +392,6 @@ _brep_cmd_curve_flip(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to reverse curve %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
-
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
 
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -593,15 +521,6 @@ _brep_cmd_curve_trim(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
@@ -652,15 +571,6 @@ _brep_cmd_curve_split(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
@@ -704,15 +614,6 @@ _brep_cmd_curve_join(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to join curve %s and curve %s\n", argv[0], argv[1]);
 	return BRLCAD_ERROR;
     }
-
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
 
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
