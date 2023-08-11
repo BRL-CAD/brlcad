@@ -561,15 +561,6 @@ _brep_cmd_flip(void *bs, int argc, const char **argv)
 
     b_ip->brep->Flip();
 
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -1021,15 +1012,6 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
 
     b_ip->brep->ShrinkSurfaces();
-
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
 
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);

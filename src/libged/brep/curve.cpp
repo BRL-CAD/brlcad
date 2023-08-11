@@ -452,16 +452,6 @@ _brep_cmd_curve_insert_knot(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Delete the old object
-
-    const char *av[3];
-    char *ncpy = bu_strdup(gib->gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gib->gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
