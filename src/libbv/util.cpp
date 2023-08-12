@@ -192,6 +192,10 @@ bv_init(struct bview *gvp, struct bview_set *s)
     if (!BU_VLS_IS_INITIALIZED(&gvp->gv_name)) {
 	bu_vls_init(&gvp->gv_name);
     }
+
+    // TODO - Archer doesn't seem to like it when we set initial
+    // view names
+#if 0
     // If we have a non-null set, go ahead and generate a unique
     // view name to start out with.  App may override, but make
     // sure we at least start out with a unique name
@@ -207,7 +211,7 @@ bv_init(struct bview *gvp, struct bview_set *s)
 	}
     }
     while (name_collide && view_try_cnt < VIEW_NAME_MAXTRIES) {
-	bu_vls_incr(&gvp->gv_name, NULL, "0:0:0:0:-", NULL, NULL);
+	bu_vls_incr(&gvp->gv_name, NULL, "0:0:0:0", NULL, NULL);
 	name_collide = false;
 	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
 	    struct bview *nv = (struct bview *)BU_PTBL_GET(views, i);
@@ -221,6 +225,7 @@ bv_init(struct bview *gvp, struct bview_set *s)
     if (view_try_cnt >= VIEW_NAME_MAXTRIES) {
 	bu_log("Warning - unable to generate view name unique to view set\n");
     }
+#endif
 
     // If we're part of a set, we're not independent
     gvp->independent = (gvp->vset) ? 0 : 1;
@@ -283,7 +288,9 @@ bv_init(struct bview *gvp, struct bview_set *s)
     gvp->gv_bounds_update= NULL;
 
     // Also don't have a display manager
-    gvp->dmp = NULL;
+    // TODO - What the heck Archer??? Initializing this to NULL causes
+    // problems even without the gv_name setting logic above?
+    //gvp->dmp = NULL;
 
     // Initial scaling factors are 1
     gvp->gv_base2local = 1.0;
