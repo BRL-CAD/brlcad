@@ -73,6 +73,20 @@ extern "C++"
     brep_curve_interpCrv(ON_Brep *brep, std::vector<ON_3dPoint> points);
 
     /**
+     * copy a curve from brep
+     * return id of the new curve
+     */
+    BREP_EXPORT extern int
+    brep_curve_copy(ON_Brep *brep, int curve_id);
+
+    /**
+     * remove a curve from brep
+     * @attention the index of m_C3 is changed after remove!!!
+     */
+    BREP_EXPORT extern bool
+    brep_curve_remove(ON_Brep *brep, int curve_id);
+
+    /**
      * move curve along a vector.
      */
     BREP_EXPORT extern bool
@@ -85,7 +99,7 @@ extern "C++"
     brep_curve_set_cv(ON_Brep *brep, int curve_id, int cv_id, const ON_4dPoint &point);
 
     /**
-     * Reverse parameterizatrion by negating all knots
+     * reverse parameterizatrion by negating all knots
      * and reversing the order of the control vertices.
      */
     BREP_EXPORT extern bool
@@ -104,9 +118,15 @@ extern "C++"
     brep_curve_trim(ON_Brep *brep, int curve_id, double t0, double t1);
 
     /**
-     * Join the end of curve_id_1 to the start of curve_id_2.
+     * split a curve at a parameter. Old curve will be deleted.
+     */
+    BREP_EXPORT extern bool
+    brep_curve_split(ON_Brep *brep, int curve_id, double t);
+
+    /**
+     * join the end of curve_id_1 to the start of curve_id_2.
      * return id of the new curve, delete the two old curves.
-     * Remark: the index of C3 is changed after join!!!
+     * @attention the index of m_C3 is changed after join!!!
      */
     BREP_EXPORT extern int
     brep_curve_join(ON_Brep *brep, int curve_id_1, int curve_id_2);
@@ -118,6 +138,22 @@ extern "C++"
      */
     BREP_EXPORT extern int
     brep_surface_make(ON_Brep *brep, const ON_3dPoint &position);
+
+    /**
+     * create a bicubic nurbs surface by interpolating a set of points
+     * return id of the surface
+     * method: Global cubic interpolation with C2 continuity
+     * reference: The NURBS Book (2nd Edition), chapter 9.2.5
+     */
+    BREP_EXPORT extern int
+    brep_surface_interpCrv(ON_Brep *brep, int cv_count_x, int cv_count_y, std::vector<ON_3dPoint> points);
+
+    /**
+     * copy a surface from brep
+     * return id of the new surface
+     */
+    BREP_EXPORT extern int
+    brep_surface_copy(ON_Brep *brep, int surface_id);
 
     /**
      * move surface to a new position
@@ -140,6 +176,12 @@ extern "C++"
     brep_surface_trim(ON_Brep *brep, int surface_id, int dir, double t0, double t1);
 
     /**
+     * split a surface at a parameter. Old surface will be deleted.
+     */
+    BREP_EXPORT extern bool
+    brep_surface_split(ON_Brep *brep, int surface_id, int dir, double t);
+
+    /**
      * create a ruled surface.
      * The two curves must have the same NURBS form knots.
      * srf(s,t) = (1.0-t)*curveA(s) + t*curveB(s).
@@ -147,6 +189,27 @@ extern "C++"
      */
     BREP_EXPORT extern int
     brep_surface_create_ruled(ON_Brep *brep, int curve_id0, int curve_id1);
+
+    /**
+     * create a surface by extruding a curve along another curve.
+     * return: if successful, id of the new surface; otherwise, -1.
+     */
+    BREP_EXPORT extern int
+    brep_surface_tensor_product(ON_Brep *brep, int curve_id0, int curve_id1);
+    
+    /**
+     * create a surface by rotating a curve around an axis.
+     * return: if successful, id of the new surface; otherwise, -1.
+     */
+    BREP_EXPORT extern int
+    brep_surface_revolution(ON_Brep *brep, int curve_id0, ON_3dPoint line_start, ON_3dPoint line_end, double angle = 2 * ON_PI);
+
+    /**
+     * remove a surface from brep
+     * @attention the index of m_S is changed after remove!!!
+     */
+    BREP_EXPORT extern bool
+    brep_surface_remove(ON_Brep *brep, int surface_id);
 } /* extern C++ */
 #endif
 
