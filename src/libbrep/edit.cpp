@@ -489,6 +489,13 @@ bool brep_surface_remove(ON_Brep *brep, int surface_id)
     return true;
 }
 
+int brep_vertex_create(ON_Brep *brep, ON_3dPoint point)
+{
+    ON_BrepVertex& v = brep->NewVertex(point);
+    v.m_tolerance = 0.0;
+    return brep->m_V.Count() - 1;
+}
+
 std::vector<ON_3dVector> calculateTangentVectors(const std::vector<ON_3dPoint> &points)
 {
     int n = points.size() - 1;

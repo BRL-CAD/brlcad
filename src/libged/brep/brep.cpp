@@ -1265,7 +1265,6 @@ _brep_cmd_curve(void *bs, int argc, const char **argv)
     return brep_curve(gb, argc, argv);
 }
 
-
 static int
 _brep_cmd_surface(void *bs, int argc, const char **argv)
 {
@@ -1287,6 +1286,29 @@ _brep_cmd_surface(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     return brep_surface(gb, argc, argv);
+}
+
+static int
+_brep_cmd_topo(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    const char *purpose_string = "NURBS topology editing support for brep objects";
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
+	return BRLCAD_OK;
+    }
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	return brep_topo(gb, argc, argv);
+    }
+
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return BRLCAD_ERROR;
+    }
+
+    argc--; argv++;
+
+    return brep_topo(gb, argc, argv);
 }
 
 #if 0
@@ -1334,6 +1356,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     //{ "weld",            _brep_cmd_weld},
     { "curve",           _brep_cmd_curve},
     { "surface",         _brep_cmd_surface},
+    { "topo",            _brep_cmd_topo},
     { (char *)NULL,      NULL}
 };
 
