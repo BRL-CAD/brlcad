@@ -9,7 +9,6 @@
 
   <refnamediv xml:id="name">
     <refname>CD</refname>
-    <arg choice="req" rep="norepeat"><replaceable>path</replaceable></arg>
     <refpurpose>Change the directory to the given path.
     </refpurpose>
   </refnamediv>
@@ -18,6 +17,7 @@
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
       <command>cd</command>
+      <arg choice="req" rep="norepeat"><replaceable>path</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -76,8 +76,6 @@
 	</varlistentry>
       </variablelist>
     </example>
-  </refsection>
-
   </refsection>
 
   <refsection xml:id="author"><title>AUTHOR</title>
