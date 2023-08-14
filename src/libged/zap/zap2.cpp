@@ -49,7 +49,7 @@ ged_zap2_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
     const char *usage = "zap [options]\n";
-    struct bview *v = gedp->ged_gvp;
+    struct bview *v = NULL;
 
     argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
 
