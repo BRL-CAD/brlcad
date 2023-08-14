@@ -1078,7 +1078,7 @@ bv_obj_get(struct bview *v, int type)
 
    int ltype = type;
    if (v->independent)
-       type |= BV_LOCAL_OBJS;
+       ltype |= BV_LOCAL_OBJS;
 
     struct bv_scene_obj *s = bv_obj_create(v, ltype);
     if (!s)
@@ -1515,6 +1515,9 @@ bv_scene_obj_bound(struct bv_scene_obj *sp, struct bview *v)
 	    } else if (bu_list_len(&lv->s_vlist)) {
 		int dismode;
 		cmd = bv_vlist_bbox(&lv->s_vlist, &lv->bmin, &lv->bmax, NULL, &dismode);
+		if (cmd) {
+		    bu_log("unknown vlist op %d\n", cmd);
+		}
 		calc = 1;
 	    }
 	    if (calc) {
