@@ -135,6 +135,7 @@ set(mann_EN
   material.xml
   matpick.xml
   mirface.xml
+  mirror.xml
   mrot.xml
   mv.xml
   mvall.xml
