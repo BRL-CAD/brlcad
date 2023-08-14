@@ -27,7 +27,10 @@
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Adjusts the current MGED viewing direction such that the eye
-	is positioned along the direction vector (<emphasis>dx dy dz</emphasis>) from the view center and is 	looking towards the view center. The <emphasis>angle</emphasis> (in degrees) allows for a twist about the 	viewing direction. The <command>ae</command> command provides a similar capability.
+	is positioned along the direction vector (<emphasis>dx dy dz</emphasis>) from the view center and is
+  looking towards the view center. The <emphasis>angle</emphasis> (in degrees) allows for a twist about the
+  viewing direction. The <command>ae</command> command provides a similar capability. See also the
+  <command>ae2dir</command> and <command>viewdir</command> commands.
   </para>
 </refsection>
 

@@ -6,6 +6,7 @@ set(mann_EN
   Z.xml
   adc.xml
   ae.xml
+  ae2dir.xml
   analyze.xml
   animmate.xml
   apropos.xml
@@ -229,6 +230,7 @@ set(mann_EN
   vars.xml
   vdraw.xml
   view.xml
+  viewdir.xml
   viewsize.xml
   vnirt.xml
   voxelize.xml
