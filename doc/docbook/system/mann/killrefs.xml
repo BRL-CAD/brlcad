@@ -31,6 +31,7 @@
   <option>-n</option> flag is passed. The <option>-n</option> flag
   causes the command to return a string of the objects that would be
   affected in a scriptable list format without actually editing them.
+  See also the <command>killall</command> command.
   </para>
 
   <para><emphasis remap="B" role="bold">Use this command with
