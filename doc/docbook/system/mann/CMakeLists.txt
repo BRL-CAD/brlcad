@@ -39,8 +39,10 @@ set(mann_EN
   build_region.xml
   c.xml
   cat.xml
+  cd.xml
   center.xml
   check.xml
+  clear.xml
   clone.xml
   color.xml
   comb.xml
@@ -65,6 +67,7 @@ set(mann_EN
   delay.xml
   dm.xml
   draw.xml
+  dump.xml
   dup.xml
   e.xml
   eac.xml
@@ -76,6 +79,7 @@ set(mann_EN
   edit.xml
   edit_translate.xml
   edmater.xml
+  env.xml
   eqn.xml
   erase.xml
   ev.xml
@@ -161,6 +165,7 @@ set(mann_EN
   push.xml
   put_comb.xml
   putmat.xml
+  pwd.xml
   q.xml
   qorot.xml
   qray.xml
