@@ -1916,6 +1916,28 @@ rt_epa_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
+void
+rt_epa_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_epa_internal* epa_ip;
+
+    intern->idb_type = ID_EPA;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(epa_ip, struct rt_epa_internal);
+    intern->idb_ptr = (void *)epa_ip;
+
+    epa_ip->epa_magic = RT_EPA_INTERNAL_MAGIC;
+    VSETALL(epa_ip->epa_V, 0);
+    VSET(epa_ip->epa_H, 0.0, 0.0, 1.0);
+    VSET(epa_ip->epa_Au, 0.0, 1.0, 0.0);
+    epa_ip->epa_r1 = 1.0;
+    epa_ip->epa_r2 = 1.0;
+}
+
 
 int
 rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
