@@ -117,6 +117,7 @@ set(mann_EN
   keypoint.xml
   kill.xml
   killall.xml
+  killrefs.xml
   killtree.xml
   knob.xml
   l.xml
