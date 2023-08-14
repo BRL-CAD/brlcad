@@ -31,7 +31,7 @@
       If <emphasis>from_object</emphasis> is a shape, then it is copied to a new shape named
       <emphasis>to_object</emphasis> that is mirrored across the given axis. If <emphasis>from_object</emphasis>
       is a combination, then a new combination is created that contains exactly the same members naned <emphasis>to_object</emphasis>.
-      Transformation matrices are added to mirror it across the requested axis. The <emphasis>-x, -y, & -z</emphasis> options tell the
+      Transformation matrices are added to mirror it across the requested axis. The <emphasis>-x, -y, &amp; -z</emphasis> options tell the
       command which axis to mirror the object. The <emphasis>-p</emphasis> can be used to specify a point to mirror about, and
       the <emphasis>-d</emphasis> can be used to specify a direction vector to mirror about.
   </para>
