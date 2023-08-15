@@ -17,14 +17,16 @@
 <refsynopsisdiv xml:id="synopsis">
   <cmdsynopsis sepchar=" ">
     <command>viewdir</command>
+    <arg choice="opt" rep="repeat"><replaceable>-i</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Returns the direction vector using the current azimuth and elevation as input. See also the
-  <command>ae2dir</command> and <command>qvrot</command> commands.
-
+  <para>Returns the direction vector using the current azimuth and elevation as input.
+	If the <emphasis>-i</emphasis> option is used the commmand will return the
+	inverse directional vector. See also the <command>ae2dir</command> and
+	<command>qvrot</command> commands.
   </para>
 </refsection>
 
