@@ -145,6 +145,7 @@ set(mann_EN
   nmg_simplify.xml
   npush.xml
   oed.xml
+  open.xml
   opendb.xml
   orientation.xml
   orot.xml
