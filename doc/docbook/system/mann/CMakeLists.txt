@@ -205,6 +205,7 @@ set(mann_EN
   search.xml
   sed.xml
   setview.xml
+  shaded_mode.xml
   shader.xml
   shells.xml
   showmats.xml
