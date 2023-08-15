@@ -212,6 +212,7 @@ set(mann_EN
   simulate.xml
   size.xml
   solids.xml
+  source.xml
   sph-part.xml
   stat.xml
   status.xml
