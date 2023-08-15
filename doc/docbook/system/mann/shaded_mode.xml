@@ -11,7 +11,7 @@
     <refname>shaded_mode</refname>
     <refpurpose>
       Changes the default behavior of <command>draw</command>, <command>e</command>, and <command>B</command> to use the 
-      <emphasis>-m1</emphais> or <emphasis>-m2</emphasis> options.
+      <emphasis>-m1</emphasis> or <emphasis>-m2</emphasis> options.
     </refpurpose>
   </refnamediv>
 

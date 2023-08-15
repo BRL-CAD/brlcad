@@ -77,8 +77,8 @@
 
     <para>
     <literallayout>
-<term><prompt>mged&gt; </prompt><userinput>opendb -f model.g</userinput></term>
-<term><prompt>mged&gt; </prompt><userinput>dbupgrade</userinput></term>
+<prompt>mged&gt; </prompt><userinput>opendb -f model.g</userinput>
+<prompt>mged&gt; </prompt><userinput>dbupgrade</userinput>
     </literallayout>
     </para>
     <para>Closes any currently open database and
