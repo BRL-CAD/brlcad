@@ -154,7 +154,7 @@ int
 ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
 {
     int aflag = 0;
-    static const char *usage = "path";
+    static const char *usage = "[-a] path";
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
