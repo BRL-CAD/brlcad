@@ -163,7 +163,7 @@ ged_showmats_core(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
-    if (argc == 1 || argc == 2 && argv[1][0] == '-') {
+    if (argc == 1 || (argc == 2 && argv[1][0] == '-')) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
