@@ -257,7 +257,7 @@ set mged_help_data(opendb)	{{[-f] [database.g] [y|n]}	{close any currently open 
 set mged_help_data(orientation)	$helplib_data(vo_orient)
 set mged_help_data(orot)	{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
 set mged_help_data(oscale)	{{factor}	{scale object by factor}}
-set mged_help_data(oerlaps_tool)	{{[-F][overlaps_file]}	{launch the overlaps tool}}
+set mged_help_data(overlaps_tool)	{{[-F][overlaps_file]}	{launch the overlaps tool}}
 set mged_help_data(overlay)	$helplib_data(dgo_overlay)
 set mged_help_data(p)		{{dx [dy dz]}	{set parameters}}
 set mged_help_data(pathlist)	$helplib_data(wdb_pathlist)
