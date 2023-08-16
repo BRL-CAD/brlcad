@@ -25,7 +25,7 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-     The <command>relos</command> sets the LOS value for all regions found under the given assembly the inputted value.
+     The <command>relos</command> sets the LOS value for all regions found under the given assembly to the inputted value.
       If a region is given, it will set the LOS for just that region.
     </para>
   </refsection>
@@ -39,7 +39,7 @@
       </title>
 	  <para><prompt>mged&gt; </prompt><userinput>relos example.c 50</userinput>
     </para>
-	    <para>All regions under example.c will have the LOS value reset to 50.
+	    <para>All regions under example.c will have their LOS value reset to 50.
 	    </para>
     </example>
   </refsection>
