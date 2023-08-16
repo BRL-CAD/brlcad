@@ -496,6 +496,15 @@ int brep_vertex_create(ON_Brep *brep, ON_3dPoint point)
     return brep->m_V.Count() - 1;
 }
 
+int brep_edge_create(ON_Brep *brep, int from, int to, int curve)
+{
+    ON_BrepVertex& v0 = brep->m_V[from];
+    ON_BrepVertex& v1 = brep->m_V[to];
+    ON_BrepEdge& edge = brep->NewEdge(v0, v1, curve);
+    edge.m_tolerance = 0.0;
+    return brep->m_E.Count() - 1;
+}
+
 std::vector<ON_3dVector> calculateTangentVectors(const std::vector<ON_3dPoint> &points)
 {
     int n = points.size() - 1;
