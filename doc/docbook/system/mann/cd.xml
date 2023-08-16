@@ -8,7 +8,7 @@
   </refmeta>
 
   <refnamediv xml:id="name">
-    <refname>CD</refname>
+    <refname>cd</refname>
     <refpurpose>Change the directory to the given path.
     </refpurpose>
   </refnamediv>
