@@ -137,7 +137,7 @@ _brep_cmd_curve_in(void *bs, int argc, const char **argv)
 	cv.push_back(p);
     }
     int curve_id = brep_curve_in(b_ip->brep, is_rational, order, cv_count, cv);
-    if (curve_id <= 0) {
+    if (curve_id < 0) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create curve\n");
 	return BRLCAD_ERROR;
     }
@@ -194,7 +194,7 @@ _brep_cmd_curve_interp(void *bs, int argc, const char **argv)
 	points.push_back(p);
     }
     int curve_id = brep_curve_interpCrv(b_ip->brep, points);
-    if (curve_id <= 0) {
+    if (curve_id < 0) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create 	curve\n");
 	return BRLCAD_ERROR;
     }
@@ -268,7 +268,7 @@ _brep_cmd_curve_remove(void *bs, int argc, const char **argv)
 
     int curve_id = atoi(argv[1]);
 
-    if (curve_id <= 0) {
+    if (curve_id < 0) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid curve_id\n");
 	return BRLCAD_ERROR;
     }
