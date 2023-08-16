@@ -137,6 +137,9 @@ X 21.  Figure out how to do a button bar in Qt
 
 11.  Predictor - is it useful, or can we remove it?
 
+12.  See if we can define libqtcad filters for the primitive editing behaviors that are
+     independent of qged, using the polygon editing as a model (that way the mouse behaviors
+     will be reusable even if the other widgets aren't...)
 
 Other nice to haves:
 
