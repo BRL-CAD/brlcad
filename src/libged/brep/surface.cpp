@@ -70,7 +70,7 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
     }
     int surfcode = brep_surface_make(b_ip->brep, position);
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -127,7 +127,7 @@ _brep_cmd_surface_interp(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -167,7 +167,7 @@ _brep_cmd_surface_copy(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -202,7 +202,7 @@ _brep_cmd_surface_birail(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -236,7 +236,7 @@ _brep_cmd_surface_remove(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -270,7 +270,7 @@ _brep_cmd_surface_move(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -304,7 +304,7 @@ _brep_cmd_set_cv(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -340,7 +340,7 @@ _brep_cmd_surface_trim(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -375,7 +375,7 @@ _brep_cmd_surface_split(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -409,7 +409,7 @@ _brep_cmd_surface_tensor_product(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -449,7 +449,7 @@ _brep_cmd_surface_revolution(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {

@@ -78,7 +78,7 @@ _brep_cmd_curve_create(void *bs, int argc, const char **argv)
     // Create a template nurbs curve
     int curve_id = brep_curve_make(b_ip->brep, position);
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -142,7 +142,7 @@ _brep_cmd_curve_in(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -199,7 +199,7 @@ _brep_cmd_curve_interp(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -240,7 +240,7 @@ _brep_cmd_curve_copy(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -281,7 +281,7 @@ _brep_cmd_curve_remove(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -316,7 +316,7 @@ _brep_cmd_curve_move(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -351,7 +351,7 @@ _brep_cmd_curve_set_cv(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -393,7 +393,7 @@ _brep_cmd_curve_flip(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -452,7 +452,7 @@ _brep_cmd_curve_insert_knot(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -511,7 +511,7 @@ _brep_cmd_curve_trim(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -561,7 +561,7 @@ _brep_cmd_curve_split(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -605,7 +605,7 @@ _brep_cmd_curve_join(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    // Make the new one
+    // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
