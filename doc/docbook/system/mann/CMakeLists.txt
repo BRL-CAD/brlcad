@@ -71,6 +71,7 @@ set(mann_EN
   dump.xml
   dup.xml
   e.xml
+  e_id.xml
   eac.xml
   echo.xml
   edcodes.xml
@@ -188,6 +189,8 @@ set(mann_EN
   regions.xml
   reid.xml
   release.xml
+  relos.xml
+  remat.xml
   rfarb.xml
   rm.xml
   rmater.xml
