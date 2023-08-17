@@ -47,6 +47,7 @@ set(cmake_ignore_files
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
+  FindPNG.cmake
   FindPOLY2TRI.cmake
   FindPROJ4.cmake
   FindRE2C.cmake
@@ -62,6 +63,7 @@ set(cmake_ignore_files
   FindWix.cmake
   FindXMLLINT.cmake
   FindXSLTPROC.cmake
+  FindZLIB.cmake
   NSIS.template.in
   NSIS_silent.template.in
   OpenVDBUtils.cmake
