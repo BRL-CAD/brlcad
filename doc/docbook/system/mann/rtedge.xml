@@ -10,7 +10,7 @@
 <refnamediv xml:id="name">
   <refname>rtedge</refname>
   <refpurpose>Executes the BRL-CAD <emphasis>rtedge</emphasis> program with the default options of
-	"-s50 -M."
+	"-s512 -M."
    </refpurpose>
 </refnamediv>
 
@@ -19,15 +19,17 @@
   <cmdsynopsis sepchar=" ">
     <command>rtedge</command>
     <arg choice="opt" rep="norepeat"><replaceable>options</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>-- objects</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Executes the BRL-CAD <emphasis>rtedge</emphasis> program with the default options of
-	"-s50 -M." If perspective is turned on, then the <emphasis>-p</emphasis> option will be 
+	"-s512 -M." If perspective is turned on, then the <emphasis>-p</emphasis> option will be 
 	included with the value of the perspective angle. The current database name is added to the
-	end of the <command>rtedge</command> command line along the list of currently displayed objects. The
+	end of the <command>rtedge</command> command line along with either the specified <emphasis>
+	objects</emphasis> or, if none is specified, the list of currently displayed objects. The
 	<emphasis>rtedge</emphasis> program is written such that options may be repeated, and the
 	last occurrence of an option will override any earlier occurrences.  This allows the user
 	to specify other <emphasis>size (-s)</emphasis> options. The
