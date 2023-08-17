@@ -52,6 +52,10 @@
 #
 # Note that rnv must be in the system path for this to work.
 
+find_program(XSLTPROC_EXECUTABLE xsltproc HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+mark_as_advanced(XSLTPROC_EXECUTABLE)
+find_program(XMLLINT_EXECUTABLE xmllint HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+mark_as_advanced(XMLLINT_EXECUTABLE)
 
 # Handle default exec and sanity checking for XML validation
 if(BRLCAD_ENABLE_STRICT)
