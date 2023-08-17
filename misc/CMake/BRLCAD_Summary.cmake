@@ -235,21 +235,101 @@ function(BRLCAD_Summary)
   # Spacer between flags and compilation status lists
   message(" ")
 
+
+  if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
+    ###################################################
+    #                                                 #
+    #            Bundled External Libraries           #
+    #                                                 #
+    ###################################################
+    # In current build logic, we're not building the external libs as part of our
+    # build anymore.  We have to check the library variables to see if we're
+    # using the bundled versions.
+    #
+    # NOTE: these two lists must stay in sync - the var in the second list must
+    # correspond to the library labeled in the same position in the first list
+    set(BUNDLED_LABELS
+      "Asset Import Library"
+      "Geospatial Data Abstraction Library"
+      "Netpbm"
+      "OpenMesh"
+      "Portable Network Graphics"
+      "Regex Library"
+      "STEPcode"
+      "Tcl"
+      "Tk"
+      "Zlib"
+      )
+
+    set(BUNDLED_VARS
+      ASSETIMPORT_LIBRARY
+      GDAL_LIBRARY
+      NETPBM_LIBRARY
+      OPENMESH_LIBRARIES
+      PNG_LIBRARY_RELEASE
+      REGEX_LIBRARY
+      STEPCODE_CORE_LIBRARY
+      TCL_LIBRARY
+      TK_LIBRARY
+      ZLIB_LIBRARY
+      )
+
+    # Find the maximum label length
+    set(LABEL_LENGTH 0)
+    foreach(label ${BUNDLED_LABELS})
+      string(LENGTH "${label}" CURRENT_LENGTH)
+      if(${CURRENT_LENGTH} GREATER ${LABEL_LENGTH})
+	set(LABEL_LENGTH ${CURRENT_LENGTH})
+      endif(${CURRENT_LENGTH} GREATER ${LABEL_LENGTH})
+    endforeach(label ${BUNDLED_LABELS})
+
+    # Add necessary periods to each label to make a uniform
+    # label size
+    set(BUNDLED_LABELS_TMP)
+    foreach(label ${BUNDLED_LABELS})
+      string(LENGTH "${label}" CURRENT_LENGTH)
+      while(${CURRENT_LENGTH} LESS ${LABEL_LENGTH})
+	set(label "${label}.")
+	string(LENGTH "${label}" CURRENT_LENGTH)
+      endwhile(${CURRENT_LENGTH} LESS ${LABEL_LENGTH})
+      set(label "${label}..:")
+      set(BUNDLED_LABELS_TMP ${BUNDLED_LABELS_TMP} ${label})
+    endforeach(label ${BUNDLED_LABELS})
+    set(BUNDLED_LABELS ${BUNDLED_LABELS_TMP})
+
+    # If we're referencing a local copy of the library,
+    # it's getting bundled.  Otherwise we're using a
+    # system version
+    set(bindex 0)
+    foreach(blabel ${BUNDLED_LABELS})
+      list(GET BUNDLED_VARS ${bindex} LVAR)
+      IS_SUBPATH("${CMAKE_BINARY_DIR}" "${${LVAR}}" LOCAL_TEST)
+      if (LOCAL_TEST)
+	message("${blabel} Bundled")
+      else (LOCAL_TEST)
+	message("${blabel} System")
+      endif (LOCAL_TEST)
+      math(EXPR bindex "${bindex} + 1")
+    endforeach(blabel ${BUNDLED_LABELS})
+  endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
+
   ###################################################
   #                                                 #
-  #   Set up primary report item lists and labels   #
+  #              Feature settings                   #
   #                                                 #
   ###################################################
 
   # Build options
-  set(BRLCAD_TCL_BUILD_LABEL "Compile Tcl ")
-  set(BRLCAD_TK_BUILD_LABEL "Compile Tk ")
-  set(BRLCAD_INCRTCL_BUILD_LABEL "Compile Itcl/Itk ")
-  set(BRLCAD_IWIDGETS_BUILD_LABEL "Compile Iwidgets ")
-  set(BRLCAD_PNG_BUILD_LABEL "Compile libpng ")
-  set(BRLCAD_REGEX_BUILD_LABEL "Compile libregex ")
-  set(BRLCAD_ZLIB_BUILD_LABEL "Compile zlib ")
-  set(BRLCAD_SC_BUILD_LABEL "Compile STEPcode")
+  if (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
+    set(BRLCAD_TCL_BUILD_LABEL "Compile Tcl ")
+    set(BRLCAD_TK_BUILD_LABEL "Compile Tk ")
+    set(BRLCAD_INCRTCL_BUILD_LABEL "Compile Itcl/Itk ")
+    set(BRLCAD_IWIDGETS_BUILD_LABEL "Compile Iwidgets ")
+    set(BRLCAD_PNG_BUILD_LABEL "Compile libpng ")
+    set(BRLCAD_REGEX_BUILD_LABEL "Compile libregex ")
+    set(BRLCAD_ZLIB_BUILD_LABEL "Compile zlib ")
+    set(BRLCAD_SC_BUILD_LABEL "Compile STEPcode")
+  endif (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
   set(BRLCAD_ENABLE_X11_LABEL "X11 support (optional) ")
   set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
   set(BRLCAD_ENABLE_QT_LABEL "Qt support (optional) ")
@@ -270,8 +350,12 @@ function(BRLCAD_Summary)
   set(ENABLE_ALL_CXX_COMPILE_LABEL "Build all C and C++ files with a C++ compiler ")
 
   # Make sets to use for iteration over all report items
-  set(BUILD_REPORT_ITEMS
-    TCL TK INCRTCL IWIDGETS PNG REGEX ZLIB SC)
+  if (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
+    set(BUILD_REPORT_ITEMS
+      TCL TK INCRTCL IWIDGETS PNG REGEX ZLIB SC)
+  else()
+    set(BUILD_REPORT_ITEMS)
+  endif (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
 
   set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_OPENGL
@@ -335,65 +419,61 @@ function(BRLCAD_Summary)
     set(${label} "${${label}}..:")
   endforeach(label ${ALL_LABELS})
 
-  ###################################################
-  #                                                 #
-  #                  Third Party                    #
-  #                                                 #
-  ###################################################
-  # The actual build state (as opposed to the AUTO/BUNDLED/SYSTEM setting)
-  # of the third party libraries is not present in the global cache and
-  # must be explicitly pulled from src/other
-  macro(GET_BUILD_STATE ITEM)
-  endmacro(GET_BUILD_STATE)
+  if (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
+    ###################################################
+    #                                                 #
+    #                  Third Party                    #
+    #                                                 #
+    ###################################################
+    # The actual build state (as opposed to the AUTO/BUNDLED/SYSTEM setting)
+    # of the third party libraries is not present in the global cache and
+    # must be explicitly pulled from src/other
+    macro(GET_BUILD_STATE ITEM)
+    endmacro(GET_BUILD_STATE)
 
-  # List of components to be reported on.
-  set(THIRD_PARTY_COMPONENT_LIST ${BUILD_REPORT_ITEMS})
-  # IncrTcl must be handled separately
-  list(REMOVE_ITEM THIRD_PARTY_COMPONENT_LIST "INCRTCL")
+    # List of components to be reported on.
+    set(THIRD_PARTY_COMPONENT_LIST ${BUILD_REPORT_ITEMS})
+    # IncrTcl must be handled separately
+    list(REMOVE_ITEM THIRD_PARTY_COMPONENT_LIST "INCRTCL")
 
-  # Set state messages for standard components
-  foreach(ITEM ${THIRD_PARTY_COMPONENT_LIST})
-    get_directory_property(BRLCAD_${ITEM}_BUILD DIRECTORY src/other/ext DEFINITION BRLCAD_${ITEM}_BUILD)
-    get_directory_property(BRLCAD_${ITEM}_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_${ITEM}_NOTFOUND)
-    if("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
-      set(BRLCAD_${ITEM}_BUILD "OFF!")
-    endif("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
-  endforeach(ITEM ${THIRD_PARTY_COMPONENT_LIST})
+    # Set state messages for standard components
+    foreach(ITEM ${THIRD_PARTY_COMPONENT_LIST})
+      get_directory_property(BRLCAD_${ITEM}_BUILD DIRECTORY src/other/ext DEFINITION BRLCAD_${ITEM}_BUILD)
+      get_directory_property(BRLCAD_${ITEM}_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_${ITEM}_NOTFOUND)
+      if("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
+	set(BRLCAD_${ITEM}_BUILD "OFF!")
+      endif("${BRLCAD_${ITEM}_BUILD}" STREQUAL "OFF" AND BRLCAD_${ITEM}_NOTFOUND)
+    endforeach(ITEM ${THIRD_PARTY_COMPONENT_LIST})
 
-  # IncrTcl is both ITCL and ITK - handle the various possibilities here
-  get_directory_property(BRLCAD_ITCL_BUILD DIRECTORY src/other/ext DEFINITION	BRLCAD_ITCL_BUILD)
-  get_directory_property(BRLCAD_ITK_BUILD DIRECTORY src/other/ext DEFINITION BRLCAD_ITK_BUILD)
-  get_directory_property(BRLCAD_ITCL_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_ITCL_NOTFOUND)
-  get_directory_property(BRLCAD_ITK_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_ITK_NOTFOUND)
-  if(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)
-    set(BRLCAD_INCRTCL_BUILD ON)
-  else(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)
-    if(BRLCAD_ITCL_BUILD AND NOT BRLCAD_ITK_BUILD)
-      set(BRLCAD_INCRTCL_BUILD "ON (Itcl only)")
-    endif(BRLCAD_ITCL_BUILD AND NOT BRLCAD_ITK_BUILD)
-    if(BRLCAD_ITK_BUILD AND NOT BRLCAD_ITCL_BUILD)
-      set(BRLCAD_INCRTCL_BUILD "ON (Itk only)")
-    endif(BRLCAD_ITK_BUILD AND NOT BRLCAD_ITCL_BUILD)
-    if(NOT BRLCAD_ITCL_BUILD AND NOT BRLCAD_ITK_BUILD)
-      if(BRLCAD_ITCL_NOTFOUND OR BRLCAD_ITK_NOTFOUND)
-	set(BRLCAD_INCRTCL_BUILD "OFF!")
-      else(BRLCAD_ITCL_NOTFOUND OR BRLCAD_ITK_NOTFOUND)
-	set(BRLCAD_INCRTCL_BUILD "OFF")
-      endif(BRLCAD_ITCL_NOTFOUND OR BRLCAD_ITK_NOTFOUND)
-    endif(NOT BRLCAD_ITCL_BUILD AND NOT BRLCAD_ITK_BUILD)
-  endif(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)
+    # IncrTcl is both ITCL and ITK - handle the various possibilities here
+    get_directory_property(BRLCAD_ITCL_BUILD DIRECTORY src/other/ext DEFINITION	BRLCAD_ITCL_BUILD)
+    get_directory_property(BRLCAD_ITK_BUILD DIRECTORY src/other/ext DEFINITION BRLCAD_ITK_BUILD)
+    get_directory_property(BRLCAD_ITCL_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_ITCL_NOTFOUND)
+    get_directory_property(BRLCAD_ITK_NOTFOUND DIRECTORY src/other/ext DEFINITION BRLCAD_ITK_NOTFOUND)
+    if(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)
+      set(BRLCAD_INCRTCL_BUILD ON)
+    else(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)
+      if(BRLCAD_ITCL_BUILD AND NOT BRLCAD_ITK_BUILD)
+	set(BRLCAD_INCRTCL_BUILD "ON (Itcl only)")
+      endif(BRLCAD_ITCL_BUILD AND NOT BRLCAD_ITK_BUILD)
+      if(BRLCAD_ITK_BUILD AND NOT BRLCAD_ITCL_BUILD)
+	set(BRLCAD_INCRTCL_BUILD "ON (Itk only)")
+      endif(BRLCAD_ITK_BUILD AND NOT BRLCAD_ITCL_BUILD)
+      if(NOT BRLCAD_ITCL_BUILD AND NOT BRLCAD_ITK_BUILD)
+	if(BRLCAD_ITCL_NOTFOUND OR BRLCAD_ITK_NOTFOUND)
+	  set(BRLCAD_INCRTCL_BUILD "OFF!")
+	else(BRLCAD_ITCL_NOTFOUND OR BRLCAD_ITK_NOTFOUND)
+	  set(BRLCAD_INCRTCL_BUILD "OFF")
+	endif(BRLCAD_ITCL_NOTFOUND OR BRLCAD_ITK_NOTFOUND)
+      endif(NOT BRLCAD_ITCL_BUILD AND NOT BRLCAD_ITK_BUILD)
+    endif(BRLCAD_ITCL_BUILD AND BRLCAD_ITK_BUILD)
 
-  foreach(item ${BUILD_REPORT_ITEMS})
-    message("${BRLCAD_${item}_BUILD_LABEL} ${BRLCAD_${item}_BUILD}")
-  endforeach(item ${BUILD_REPORT_ITEMS})
+    foreach(item ${BUILD_REPORT_ITEMS})
+      message("${BRLCAD_${item}_BUILD_LABEL} ${BRLCAD_${item}_BUILD}")
+    endforeach(item ${BUILD_REPORT_ITEMS})
+  endif (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
 
   message(" ")
-
-  ###################################################
-  #                                                 #
-  #                    Features                     #
-  #                                                 #
-  ###################################################
 
   # Note when the word size is automatically set.
   if(${BRLCAD_WORD_SIZE} MATCHES "AUTO")

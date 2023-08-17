@@ -57,6 +57,9 @@ function(SET_LANG_CXX SRC_FILES)
   endif(ENABLE_ALL_CXX_COMPILE)
 endfunction(SET_LANG_CXX SRC_FILES)
 
+# See if we've got astyle
+find_program(ASTYLE_EXECUTABLE astyle HINTS "${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR}")
+
 # BRL-CAD style checking with AStyle
 function(VALIDATE_STYLE targetname srcslist)
 
