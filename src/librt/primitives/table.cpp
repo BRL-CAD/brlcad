@@ -1936,7 +1936,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_metaball_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_metaball_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_metaball_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_metaball_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_metaball_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_metaball_bbox),
 	NULL, /* volume */
