@@ -35,10 +35,10 @@ set(gap242_LIBS
   libbrep
   libbn
   libbu
-  steputils
-  stepeditor
-  stepdai
-  stepcore
+  ${STEPCODE_UTILS_LIBRARY}
+  ${STEPCODE_EDITOR_LIBRARY}
+  ${STEPCODE_DAI_LIBRARY}
+  ${STEPCODE_CORE_LIBRARY}
   ${OPENNURBS_LIBRARIES}
   )
 list(APPEND gap242_LIBS ${gap242_LIBS})
