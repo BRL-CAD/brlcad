@@ -152,6 +152,27 @@ endif(BRLCAD_PRINT_MSGS)
 # do this early in the process.
 include(BRLCAD_Environment_Setup)
 
+# Populate these early, even though their main use is in
+# misc/CMake/BRLCAD_ExternalDeps.cmake - find_program and find_package calls
+# may also make use of them, particularly BRLCAD_EXT_NOINSTALL_DIR
+if (NOT DEFINED BRLCAD_EXT_DIR)
+  set(BRLCAD_EXT_DIR "$ENV{HOME}")
+endif (NOT DEFINED BRLCAD_EXT_DIR)
+
+if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+  set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/extinstall")
+endif (NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+# Need to handle the case where BRLCAD_EXT_DIR is a symlink - if it
+# is, we need to expand the symlink in order for the tar tricks we use
+# later for file copying to work...
+if (IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+  file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" EXT_PATH)
+  set(BRLCAD_EXT_INSTALL_DIR "${EXT_PATH}")
+endif (IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+
+if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR)
+  set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/extnoinstall")
+endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR)
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -2060,8 +2081,35 @@ mark_as_advanced(MISC_ADDED_DIRS)
 # options.)
 add_subdirectory(misc/tools)
 
-# The first order of business in src/other is the ext projects
-add_subdirectory(src/other/ext)
+if (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+  # The first order of business in src/other is the ext projects
+  add_subdirectory(src/other/ext)
+else (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+  # Now that the user options are set and we have misc/tools... if we're going to
+  # be bundling 3rd party dependencies, we need to get them staged - some of the
+  # build steps will require that dependencies work during the build process, and
+  # the most reliably way to do that is to get them in place in the build
+  # directory.  Because the feature flags may impact what we're looking to use,
+  # we wait until they are set to do the find_package calls.
+  #
+  # The way BRL-CAD handles bundled dependencies is simple - if a dependency
+  # is found in the specified BRLCAD_EXT_DIR directory by find_package, that
+  # version is used in preference to a system version.  If no bundled version
+  # is found the standard system search logic will kick in.  (System versions
+  # will NOT be bundled with BRL-CAD.)
+  #
+  # Note that while feature flags can change which elements of BRL-CAD are built,
+  # they WON'T change what's bundled with BRL-CAD for install - that's based
+  # strictly on the contents of the user's specified external dependencies
+  # directory.  If (for example) STEP support is disabled, this logic will not
+  # skip bundling the STEPCODE external dependencies - the user should set up an
+  # external dependencies repository without that component if they don't want to
+  # bundle it.
+  #
+  # This logic will also set up the necessary steps to install the bundling
+  # targets as part of BRL-CAD's install process
+  include(BRLCAD_ExternalDeps)
+endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
 
 # Now that we've done the system tests with BRL-CAD's compile flags,
 # add src/other to pick up any tests it needs.  We must add src/other
