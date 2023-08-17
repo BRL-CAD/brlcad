@@ -2464,6 +2464,9 @@ function(DIFF_FILE filename)
   endif(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
 endfunction(DIFF_FILE filename)
 
+# TODO - once we remove src/other/ext, eliminate this guard and
+# update INSTALL and configure to reflect the new approach.
+if (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
 # Finalize and check INSTALL file
 file(READ "${BRLCAD_SOURCE_DIR}/INSTALL" SRC_INSTALL_STR)
 string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX "${SRC_INSTALL_STR}")
@@ -2488,7 +2491,7 @@ DIFF_FILE(configure)
 if(CONFIG_FATAL_ERROR)
   message(FATAL_ERROR "Configure haulted because INSTALL and/or configure script are out of date.")
 endif(CONFIG_FATAL_ERROR)
-
+endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
 
 # Because the build-time-delta needs a configure-file but comes at the
 # end of the CMake configure, the preparation of the final distclean
