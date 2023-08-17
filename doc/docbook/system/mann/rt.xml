@@ -10,7 +10,7 @@
 <refnamediv xml:id="name">
   <refname>rt</refname>
   <refpurpose>Executes the BRL-CAD <emphasis>rt</emphasis> program with the default options of
-	"-s50 -M."
+	"-s512 -M."
    </refpurpose>
 </refnamediv>
 
@@ -27,7 +27,7 @@
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Executes the BRL-CAD <emphasis>rt</emphasis> program with the default options of
-	"-s50 -M." If perspective is turned on, then the <emphasis>-p</emphasis> option will be 
+	"-s512 -M." If perspective is turned on, then the <emphasis>-p</emphasis> option will be 
 	included with the value of the perspective angle. The current database name is added to the
 	end of the <command>rt</command> command line along with either the specified <emphasis>
 	objects</emphasis> or, if none is specified, the list of currently displayed objects. The
@@ -45,25 +45,34 @@
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <para>The first example shows the use of the <command>rt</command> command to run the rt 	program to produce a color-shaded image of the current view. The second example shows the 	use of the <command>rt</command> command to produce a color-shaded image of an object using 	MGED's current viewing parameters.
+  <para>The first example shows the use of the <command>rt</command> command to run the rt
+	program to produce a color-shaded image of the current view. The second example shows the
+	use of the <command>rt</command> command to produce a color-shaded image of an object using
+	MGED's current viewing parameters.
      </para>
 
-  <example><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of the current 	view in MGED.</title>
+  <example><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of the current
+	  view in MGED.</title>
 
     <para>
       <prompt>mged&gt; </prompt><userinput>rt -s1024 -F/dev/Xl</userinput>
     </para>
-    <para>Runs the <emphasis>rt</emphasis> program to produce a color-shaded image of the current 	view in the MGED display. The image will be 1024 pixels square and will be displayed on a
+    <para>Runs the <emphasis>rt</emphasis> program to produce a color-shaded image of the current
+	view in the MGED display. The image will be 1024 pixels square and will be displayed on a
 	lingering <emphasis>X</emphasis> framebuffer.
     </para>
   </example>
 
-  <example><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of an object  	using MGED's current viewing parameters.</title>
+  <example><title>Run the <emphasis>rt</emphasis> program to produce a color-shaded image of an object 
+	  using MGED's current viewing parameters.</title>
 
     <para>
       <prompt>mged&gt; </prompt><userinput>rt -C 200/200/255 -- roof</userinput>
     </para>
-    <para>Runs the <emphasis>rt</emphasis> program to produce a color-shaded image of the object 	<emphasis>roof</emphasis> using MGED's current viewing parameters. The image will have a 	sky-blue background and will be displayed on the framebuffer specified by the FB_FILE shell 	variable.
+    <para>Runs the <emphasis>rt</emphasis> program to produce a color-shaded image of the object
+	<emphasis>roof</emphasis> using MGED's current viewing parameters. The image will have a
+	sky-blue background and will be displayed on the framebuffer specified by the FB_FILE shell
+	variable.
     </para>
   </example>
 
