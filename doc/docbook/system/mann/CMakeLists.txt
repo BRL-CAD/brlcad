@@ -202,6 +202,7 @@ set(mann_EN
   rt.xml
   rtarea.xml
   rtcheck.xml
+  rtedge.xml
   saveview.xml
   sca.xml
   screengrab.xml
