@@ -524,15 +524,6 @@
     <para>BRL-CAD Team</para>
   </refsection>
 
-  <refsection xml:id="bugs">
-    <title>BUGS</title>
-
-    <para>Most deficiencies observed while using the
-    <command>rtwizard</command> program are a consequence of problems
-    in commands used by rtwizard to generate images, such as
-    rtedge.</para>
-  </refsection>
-
   <refsection xml:id="bug_reports">
     <title>BUG REPORTS</title>
 
