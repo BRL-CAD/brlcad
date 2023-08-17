@@ -1,4 +1,4 @@
-set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/ext/linenoise")
+set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/linenoise")
 
 set(NIRT_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}

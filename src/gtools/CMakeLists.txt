@@ -1,4 +1,4 @@
-set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/ext/linenoise")
+set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/linenoise")
 
 set(GTOOLS_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}

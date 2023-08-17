@@ -260,6 +260,17 @@ CMAKEFILES_IN_DIR(tkhtml_ignore_files tkhtml)
 include("${CMAKE_CURRENT_SOURCE_DIR}/tktable.dist")
 CMAKEFILES_IN_DIR(tktable_ignore_files tktable)
 
+# The above libraries are all compilation targets with libraries, and so have
+# build outputs that must be distributed with BRL-CAD.  The following are
+# either header-only libraries or built directly into executables, and as such
+# may remain in place - they are needed only for building.
+include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
+CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
+
+# linenoise is used by applications directly
+include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
+CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
+
 CMAKEFILES(
   README
   CMakeLists.txt

@@ -41,7 +41,7 @@ BRLCAD_ADDEXEC(bn_randsph randsph.c "libbu;libbn" TEST)
 
 # Testing with Eigen
 BRLCAD_ADDEXEC(bn_eigen eigen.cpp "libbu;libbn" TEST)
-target_include_directories(bn_eigen SYSTEM PRIVATE "${CMAKE_SOURCE_DIR}/src/other/ext/Eigen")
+target_include_directories(bn_eigen SYSTEM PRIVATE "${CMAKE_SOURCE_DIR}/src/other/Eigen")
 
 #
 #  *********** poly.c tests *************
