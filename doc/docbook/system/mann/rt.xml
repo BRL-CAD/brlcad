@@ -20,7 +20,7 @@
     <command>rt</command>
 
     <arg choice="opt" rep="norepeat"><replaceable>options</replaceable></arg>
-    <arg choice="opt" rep="norepeat"><replaceable>--objects</replaceable></arg>
+    <arg choice="opt" rep="norepeat"><replaceable>-- objects</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 
