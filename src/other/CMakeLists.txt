@@ -266,6 +266,7 @@ CMAKEFILES_IN_DIR(tktable_ignore_files tktable)
 # may remain in place - they are needed only for building.
 include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
 CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
 
 # linenoise is used by applications directly
 include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
