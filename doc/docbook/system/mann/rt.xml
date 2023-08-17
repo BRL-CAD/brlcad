@@ -27,7 +27,18 @@
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Executes the BRL-CAD <emphasis>rt</emphasis> program with the default options of
-	"-s50 M." If perspective is turned on, then the <emphasis>-p</emphasis> option will be 	included with the value of the perspective angle. The current database name is added to the 	end of the <command>rt</command> command line along with either the specified <emphasis>	objects</emphasis> or, if none is specified, the list of currently displayed objects. The 	<emphasis>rt</emphasis> program is written such that options may be repeated, and the 	last occurrence of an option will override any earlier occurrences.  This allows the user 	to specify other <emphasis>size (-s)</emphasis> options. The <command>rrt</command> command 	performs a similar function, but may be used to execute other programs as well. The 	<emphasis>-M</emphasis> option tells <emphasis>rt</emphasis> to read the viewing parameters 	from standard input.  See the <emphasis>man</emphasis> page on <emphasis>rt</emphasis>  	for details.  A related command is <command>saveview</command>, which can be used to 	create a shell script (batch job) to raytrace this view in the background.
+	"-s50 -M." If perspective is turned on, then the <emphasis>-p</emphasis> option will be 
+	included with the value of the perspective angle. The current database name is added to the
+	end of the <command>rt</command> command line along with either the specified <emphasis>
+	objects</emphasis> or, if none is specified, the list of currently displayed objects. The
+	<emphasis>rt</emphasis> program is written such that options may be repeated, and the
+	last occurrence of an option will override any earlier occurrences.  This allows the user
+	to specify other <emphasis>size (-s)</emphasis> options. The <command>rrt</command> command
+	performs a similar function, but may be used to execute other programs as well. The
+	<emphasis>-M</emphasis> option tells <emphasis>rt</emphasis> to read the viewing parameters
+	from standard input.  See the <emphasis>man1</emphasis> page on <emphasis>rt</emphasis>
+	for details.  A related command is <command>saveview</command>, which can be used to
+	create a shell script (batch job) to raytrace this view in the background.
 
   </para>
 </refsection>
