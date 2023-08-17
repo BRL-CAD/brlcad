@@ -120,64 +120,80 @@ find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR
 # Third party binaries can't relied on for rpath settings suitable for our
 # use cases.
 set(BINARY_FILES)
-if(PATCHELF_EXECUTABLE)
 
-  message("Identifying 3rd party lib and exe files...")
+message("Identifying 3rd party lib and exe files...")
 
-  # If patchelf returns a non-zero error code, the file isn't a binary file.
-  #
-  # TODO - while this is one way to sort out what files are the exe/lib
-  # binary files, is it the only way?  Not sure if depending on patchelf's
-  # error exit behavior is really a good/viable approach to this long term...
-  set(target_dirs bin lib)
-  foreach(lf ${THIRDPARTY_FILES})
-    set(CFILE)
-    foreach(tdir ${target_dirs})
-      if ("${lf}" MATCHES "${tdir}")
-	set(CFILE 1)
-      endif ("${lf}" MATCHES "${tdir}")
-    endforeach(tdir ${target_dirs})
-    if (NOT CFILE)
-      continue()
-    endif (NOT CFILE)
+# If patchelf returns a non-zero error code, the file isn't a binary file.
+#
+# TODO - while this is one way to sort out what files are the exe/lib
+# binary files, is it the only way?  Not sure if depending on patchelf's
+# error exit behavior is really a good/viable approach to this long term...
+set(target_dirs bin lib)
+foreach(lf ${THIRDPARTY_FILES})
+  set(CFILE)
+  foreach(tdir ${target_dirs})
+    if ("${lf}" MATCHES "${tdir}")
+      set(CFILE 1)
+    endif ("${lf}" MATCHES "${tdir}")
+  endforeach(tdir ${target_dirs})
+  if (NOT CFILE)
+    continue()
+  endif (NOT CFILE)
+  if (PATCHELF_EXECUTABLE)
     execute_process(COMMAND ${PATCHELF_EXECUTABLE} ${lf} RESULT_VARIABLE NOT_BIN_OBJ OUTPUT_VARIABLE NB_OUT ERROR_VARIABLE NB_ERR)
     if (NOT_BIN_OBJ)
       continue()
     endif (NOT_BIN_OBJ)
-    set(BINARY_FILES ${BINARY_FILES} ${lf})
-  endforeach(lf ${THIRDPARTY_FILES})
-  message("Identifying 3rd party lib and exe files... done.")
+  elseif (MSVC)
+    # We don't do RPATH management on Windows
+    continue()
+  elseif (APPLE)
+    execute_process(COMMAND otool -L ${lf} RESULT_VARIABLE ORESULT OUTPUT_VARIABLE OTOOL_OUT ERROR_VARIABLE NB_ERR)
+    if ("${OTOOL_OUT}" MATCHES "Archive")
+      message("${lf} is an Archive")
+      continue()
+    endif ("${OTOOL_OUT}" MATCHES "Archive")
+    if ("${OTOOL_OUT}" MATCHES "not an object")
+      message("${lf} is not an object")
+      continue()
+    endif ("${OTOOL_OUT}" MATCHES "not an object")
+  endif(PATCHELF_EXECUTABLE)
+  set(BINARY_FILES ${BINARY_FILES} ${lf})
+endforeach(lf ${THIRDPARTY_FILES})
+message("Identifying 3rd party lib and exe files... done.")
 
-  # (TODO - should the actual path altering be a custom build target executed
-  # early in the compile?  We're using patchelf to sort out exe/lib files
-  # from the dir contents here, which has implications for install target
-  # definitions, so we might have to do that part during configure...
-  # However, conceptually the step of actually altering the files might be a
-  # better fit for the build stage...)
-  message("Setting rpath on 3rd party lib and exe files...")
-  if (NOT CMAKE_CONFIGURATION_TYPES)
-    # Set local RPATH so the files will work during build
-    foreach(lf ${BINARY_FILES})
+message("Setting rpath on 3rd party lib and exe files...")
+if (NOT CMAKE_CONFIGURATION_TYPES)
+  # Set local RPATH so the files will work during build
+  foreach(lf ${BINARY_FILES})
+    if (PATCHELF_EXECUTABLE)
       execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf})
       execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf})
-    endforeach(lf ${BINARY_FILES})
-  else (NOT CMAKE_CONFIGURATION_TYPES)
-    # For multi-config, we set the RPATHs for each active configuration's build dir
-    # so the executables will work locally.  We don't need to set the top level copy
-    # being used for the install target since in multi-config those copies won't be
-    # used by build directory executables
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      foreach(lf ${BINARY_FILES})
+    elseif (APPLE)
+      execute_process(COMMAND install_name_tool --delete-rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} RESULT_VARIABLE ORESULT)
+      execute_process(COMMAND install_name_tool --add-rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf})
+    endif (PATCHELF_EXECUTABLE)
+  endforeach(lf ${BINARY_FILES})
+else (NOT CMAKE_CONFIGURATION_TYPES)
+  # For multi-config, we set the RPATHs for each active configuration's build dir
+  # so the executables will work locally.  We don't need to set the top level copy
+  # being used for the install target since in multi-config those copies won't be
+  # used by build directory executables
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    foreach(lf ${BINARY_FILES})
+      if (PATCHELF_EXECUTABLE)
 	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
 	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-      endforeach(lf ${BINARY_FILES})
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif (NOT CMAKE_CONFIGURATION_TYPES)
+      elseif (APPLE)
+	execute_process(COMMAND install_name_tool --delete-rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" RESULT_VARIABLE ORESULT)
+	execute_process(COMMAND install_name_tool --add-rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
+      endif (PATCHELF_EXECUTABLE)
+    endforeach(lf ${BINARY_FILES})
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+endif (NOT CMAKE_CONFIGURATION_TYPES)
 
-  message("Setting rpath on 3rd party lib and exe files... done.")
-
-endif(PATCHELF_EXECUTABLE)
+message("Setting rpath on 3rd party lib and exe files... done.")
 
 foreach(tf ${THIRDPARTY_FILES})
   # Rather than doing the PROGRAMS install for all binary files, we target just
@@ -195,19 +211,22 @@ foreach(tf ${THIRDPARTY_FILES})
   endif (${dir} MATCHES "${BIN_DIR}$")
 endforeach(tf ${THIRDPARTY_FILES})
 
-if(PATCHELF_EXECUTABLE)
-  # Need to fix RPATH on binary files.  Don't do it for symlinks since
-  # following them will just result in re-processing the same file's RPATH
-  # multiple times.
-  foreach(bf ${BINARY_FILES})
-    if (IS_SYMLINK ${bf})
-      continue()
-    endif (IS_SYMLINK ${bf})
+# Need to fix RPATH on binary files.  Don't do it for symlinks since
+# following them will just result in re-processing the same file's RPATH
+# multiple times.
+foreach(bf ${BINARY_FILES})
+  if (IS_SYMLINK ${bf})
+    continue()
+  endif (IS_SYMLINK ${bf})
+  if (PATCHELF_EXECUTABLE)
     install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
     install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELATIVE_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
-  endforeach(bf ${BINARY_FILES})
-endif(PATCHELF_EXECUTABLE)
-
+  elseif (APPLE)
+    # TODO - how to handle clearing multiconfig paths here - install_name_tool needs a path to remove...
+    install(CODE "execute_process(COMMAND install_name_tool --delete-rpath \"${CMAKE_BINARY_DIR}/${LIB_DIR}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" RESULT_VARIABLE ORESULT)")
+    install(CODE "execute_process(COMMAND install_name_tool --add-rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELATIVE_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
+  endif (PATCHELF_EXECUTABLE)
+endforeach(bf ${BINARY_FILES})
 
 # zlib compression/decompression library
 # https://zlib.net
