@@ -141,6 +141,41 @@ _brep_cmd_topo_create_face(void *bs, int argc, const char **argv)
     return BRLCAD_OK;
 }
 
+static int
+_brep_cmd_topo_create_loop(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> topo create_l <surface_id> <edge1_id> <edge1_orientation> ...";
+    const char *purpose_string = "create a new topology loop for a face with four edges";
+    if (_brep_topo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_itopo *gib = (struct _ged_brep_itopo *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    if (argc < 1) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+    int surface = atoi(argv[0]);
+    std::vector<int> edge_ids;
+    std::vector<int> orientations;
+    for (int i = 1; i < argc; i += 2) {
+	edge_ids.push_back(atoi(argv[i]));
+	orientations.push_back(atoi(argv[i+1]));
+    }
+    int face = brep_loop_create(b_ip->brep, surface);
+
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create face! id = %d", face);
+    return BRLCAD_OK;
+}
+
 static void
 _brep_topo_help(struct _ged_brep_itopo *bs, int argc, const char **argv)
 {

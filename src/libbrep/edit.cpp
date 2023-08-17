@@ -511,6 +511,109 @@ int brep_face_create(ON_Brep *brep, int surface)
     return brep->m_F.Count() - 1;
 }
 
+ON_Curve* getEdgeCurve(const ON_Surface& s, int side)
+{
+    ON_2dPoint from, to;
+    double u0, u1, v0, v1;
+    s.GetDomain(0, &u0, &u1);
+    s.GetDomain(1, &v0, &v1);
+
+    switch (side) {
+	case 0:
+	    from.x = u0; from.y = v0;
+	    to.x   = u1; to.y   = v0;
+	    break;
+	case 1:
+	    from.x = u1; from.y = v0;
+	    to.x   = u1; to.y   = v1;
+	    break;
+	case 2:
+	    from.x = u1; from.y = v1;
+	    to.x   = u0; to.y   = v1;
+	    break;
+	case 3:
+	    from.x = u0; from.y = v1;
+	    to.x   = u0; to.y   = v0;
+	    break;
+	default:
+	    return NULL;
+    }
+    ON_Curve* c2d = new ON_LineCurve(from, to);
+    c2d->SetDomain(0.0, 1.0);
+    return c2d;
+}
+
+int brep_loop_create(ON_Brep *brep, int face_id,
+			    int e0, int eo0, // edge index + orientation w.r.t surface trim
+			    int e1, int eo1,
+			    int e2, int eo2,
+			    int e3, int eo3)
+{
+    if(face_id < 0 || face_id >= brep->m_F.Count()) {
+	bu_log("face_id is out of range\n");
+	return -1;
+    }
+    ON_BrepFace& face = brep->m_F[face_id];
+    // get a reference to the surface
+    const ON_Surface& srf = *brep->m_S[face.m_si];
+
+    ON_BrepLoop& loop = brep->NewLoop(ON_BrepLoop::outer, face);
+
+    // create the trimming curves running counter-clockwise around the
+    // surface's domain, start at the south side
+    ON_Curve* c2;
+    int c2i, ei = 0, bRev3d = 0;
+
+    // flags for isoparametric curves
+    ON_Surface::ISO iso = ON_Surface::not_iso;
+
+    for (int side = 0; side < 4; side++) {
+	// side: 0=south, 1=east, 2=north, 3=west
+	c2 = getEdgeCurve(srf, side);
+	c2i = brep->m_C2.Count();
+	brep->m_C2.Append(c2);
+
+	switch (side) {
+	    case 0:
+		ei = e0;
+		bRev3d = (eo0 == -1);
+		iso = ON_Surface::S_iso;
+		break;
+	    case 1:
+		ei = e1;
+		bRev3d = (eo1 == -1);
+		iso = ON_Surface::E_iso;
+		break;
+	    case 2:
+		ei = e2;
+		bRev3d = (eo2 == -1);
+		iso = ON_Surface::N_iso;
+		break;
+	    case 3:
+		ei = e3;
+		bRev3d = (eo3 == -1);
+		iso = ON_Surface::W_iso;
+		break;
+	}
+
+	ON_BrepTrim& trim = brep->NewTrim(brep->m_E[ei], bRev3d, loop, c2i);
+	trim.m_iso = iso;
+
+	// the type gives metadata on the trim type in this case, "mated"
+	// means the trim is connected to an edge, is part of an
+	// outer/inner/slit loop, no other trim from the same edge is
+	// connected to the edge, and at least one trim from a different
+	// loop is connected to the edge
+	trim.m_type = ON_BrepTrim::mated; // i.e. this b-rep is closed, so
+	// all trims have mates
+
+	// not convinced these shouldn't be set with a member function
+	trim.m_tolerance[0] = 0.0; // exact
+	trim.m_tolerance[1] = 0.0; //
+    }
+    return loop.m_loop_index;
+}
+
 std::vector<ON_3dVector> calculateTangentVectors(const std::vector<ON_3dPoint> &points)
 {
     int n = points.size() - 1;
