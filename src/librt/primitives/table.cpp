@@ -1715,7 +1715,7 @@ const struct rt_functab OBJ[] = {
 	/* 32 available placeholder to not offset latter table indices
 	 * (was ID_BINEXPM)
 	 */
-	RT_FUNCTAB_MAGIC, "ID_UNUSED1", "unused1",
+	RT_FUNCTAB_MAGIC, "ID_UNUSED1", "UNUSED1",
 	0, /* ft_use_rpp */
 	NULL, /* prep */
 	NULL, /* shot */
@@ -1811,7 +1811,7 @@ const struct rt_functab OBJ[] = {
 	/* 34 available placeholder to not offset latter table indices
 	 * (was ID_BINMIME)
 	 */
-	RT_FUNCTAB_MAGIC, "ID_UNUSED2", "unused2",
+	RT_FUNCTAB_MAGIC, "ID_UNUSED2", "UNUSED2",
 	0, /* ft_use_rpp */
 	NULL, /* prep */
 	NULL, /* shot */
