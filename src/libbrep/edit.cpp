@@ -505,6 +505,12 @@ int brep_edge_create(ON_Brep *brep, int from, int to, int curve)
     return brep->m_E.Count() - 1;
 }
 
+int brep_face_create(ON_Brep *brep, int surface)
+{
+    brep->NewFace(surface);
+    return brep->m_F.Count() - 1;
+}
+
 std::vector<ON_3dVector> calculateTangentVectors(const std::vector<ON_3dPoint> &points)
 {
     int n = points.size() - 1;

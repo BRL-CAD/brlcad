@@ -85,7 +85,7 @@ static int
 _brep_cmd_topo_create_edge(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> topo create_e <v1> <v2> <c>";
-    const char *purpose_string = "create a new NURBS edge, given two vertices and a curve";
+    const char *purpose_string = "create a new topology edge, given two vertices and a curve";
     if (_brep_topo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
@@ -109,6 +109,35 @@ _brep_cmd_topo_create_edge(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create edge! id = %d", edge);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_topo_create_face(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> topo create_f <surface_id>";
+    const char *purpose_string = "create a new topology face, given a surface id";
+    if (_brep_topo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_itopo *gib = (struct _ged_brep_itopo *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    if (argc < 1) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+    int surface = atoi(argv[0]);
+    int face = brep_face_create(b_ip->brep, surface);
+
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create face! id = %d", face);
     return BRLCAD_OK;
 }
 
@@ -141,6 +170,7 @@ _brep_topo_help(struct _ged_brep_itopo *bs, int argc, const char **argv)
 const struct bu_cmdtab _brep_topo_cmds[] = {
     { "create_v",            _brep_cmd_topo_create_vertex},
     { "create_e",            _brep_cmd_topo_create_edge},
+    { "create_f",            _brep_cmd_topo_create_face},
     { (char *)NULL,          NULL}
 };
 

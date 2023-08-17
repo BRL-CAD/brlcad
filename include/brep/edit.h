@@ -222,6 +222,12 @@ extern "C++"
      */
     BREP_EXPORT extern int
     brep_edge_create(ON_Brep *brep, int from, int to, int curve);
+
+    /**
+     * create a brep face
+     */
+    BREP_EXPORT extern int
+    brep_face_create(ON_Brep *brep, int surface);
 } /* extern C++ */
 #endif
 
