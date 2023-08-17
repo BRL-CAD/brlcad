@@ -10,7 +10,7 @@
 <refnamediv xml:id="name">
   <refname>rt</refname>
   <refpurpose>Executes the BRL-CAD <emphasis>rt</emphasis> program with the default options of
-	"-s50  M."
+	"-s50 -M."
    </refpurpose>
 </refnamediv>
 
