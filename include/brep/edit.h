@@ -140,6 +140,12 @@ extern "C++"
     brep_surface_make(ON_Brep *brep, const ON_3dPoint &position);
 
     /**
+     * extract a vertex from a surface
+     */
+    BREP_EXPORT extern int
+    brep_surface_extract_vertex(ON_Brep *brep, int surface_id, double u, double v);
+
+    /**
      * extract a curve from a surface
      */
     BREP_EXPORT extern int

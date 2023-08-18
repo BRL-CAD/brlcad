@@ -274,6 +274,21 @@ int brep_surface_make(ON_Brep *brep, const ON_3dPoint &position)
     return brep->AddSurface(surface);
 }
 
+int brep_surface_extract_vertex(ON_Brep *brep, int surface_id, double u, double v)
+{
+    ON_NurbsSurface *surface = brep_get_nurbs_surface(brep, surface_id);
+    if (!surface) {
+	return -1;
+    }
+    ON_3dPoint point;
+    bool res = surface->Evaluate(u, v, 0, 3, point);
+    if(!res) {
+	return -1;
+    }
+    brep->NewVertex(point);
+    return brep->m_V.Count() - 1;
+}
+
 int brep_surface_extract_curve(ON_Brep *brep, int surface_id, int dir, double t)
 {
     ON_NurbsSurface *surface = brep_get_nurbs_surface(brep, surface_id);

@@ -68,7 +68,7 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
     if (argc >= 3) {
 	position = ON_3dPoint(atof(argv[0]), atof(argv[1]), atof(argv[2]));
     }
-    int surfcode = brep_surface_make(b_ip->brep, position);
+    int surf_id = brep_surface_make(b_ip->brep, position);
 
     // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -76,41 +76,7 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
 	return BRLCAD_ERROR;
     }
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surfcode);
-    return BRLCAD_OK;
-}
-
-static int
-_brep_cmd_surface_extract_curve(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "brep [options] <objname> surface ext_e <surface_id> <dir> <param>";
-    const char *purpose_string = "create a new NURBS surface";
-    if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return BRLCAD_OK;
-    }
-
-    struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
-    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
-    argc--;argv++;
-    
-    if (argc < 3) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
-	return BRLCAD_ERROR;
-    }
-    
-    int surface_id = atoi(argv[0]);
-    int dir = atoi(argv[1]);
-    double param = atof(argv[2]);
-    int curvecode = brep_surface_extract_curve(b_ip->brep, surface_id, dir, param);
-
-    // Update object in database
-    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
-    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
-	return BRLCAD_ERROR;
-    }
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "create curve! id = %d", curvecode);
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
     return BRLCAD_OK;
 }
 
@@ -230,8 +196,8 @@ _brep_cmd_surface_birail(void *bs, int argc, const char **argv)
     }
     int curve_id_1 = atoi(argv[0]);
     int curve_id_2 = atoi(argv[1]);
-    int surfcode = brep_surface_create_ruled(b_ip->brep, curve_id_1, curve_id_2);
-    if (surfcode < 0) {
+    int surf_id = brep_surface_create_ruled(b_ip->brep, curve_id_1, curve_id_2);
+    if (surf_id < 0) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create surface\n");
 	return BRLCAD_ERROR;
     }
@@ -242,7 +208,7 @@ _brep_cmd_surface_birail(void *bs, int argc, const char **argv)
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
 	return BRLCAD_ERROR;
     }
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surfcode);
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
     return BRLCAD_OK;
 }
 
@@ -437,8 +403,8 @@ _brep_cmd_surface_tensor_product(void *bs, int argc, const char **argv)
     }
     int curve_id_1 = atoi(argv[0]);
     int curve_id_2 = atoi(argv[1]);
-    int surfcode = brep_surface_tensor_product(b_ip->brep, curve_id_1, curve_id_2);
-    if (surfcode < 0) {
+    int surf_id = brep_surface_tensor_product(b_ip->brep, curve_id_1, curve_id_2);
+    if (surf_id < 0) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to create surface\n");
 	return BRLCAD_ERROR;
     }
@@ -449,7 +415,7 @@ _brep_cmd_surface_tensor_product(void *bs, int argc, const char **argv)
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
 	return BRLCAD_ERROR;
     }
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surfcode);
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
     return BRLCAD_OK;
 }
 
@@ -477,8 +443,8 @@ _brep_cmd_surface_revolution(void *bs, int argc, const char **argv)
     if(argc == 8) {
 	angle = atof(argv[7]);
     }
-    int surfcode = brep_surface_revolution(b_ip->brep, curve_id_1, line_start, line_end, angle);
-    if (surfcode < 0) {
+    int surf_id = brep_surface_revolution(b_ip->brep, curve_id_1, line_start, line_end, angle);
+    if (surf_id < 0) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create surface\n");
 	return BRLCAD_ERROR;
     }
@@ -489,7 +455,85 @@ _brep_cmd_surface_revolution(void *bs, int argc, const char **argv)
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
 	return BRLCAD_ERROR;
     }
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surfcode);
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_surface_extract_vertex(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> surface ext_v <surface_id> <u> <v>";
+    const char *purpose_string = "extract a vertex from a NURBS surface";
+    if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    
+    if (argc < 3) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+    
+    int surface_id = atoi(argv[0]);
+    double u = atof(argv[1]);
+    double v = atof(argv[2]);
+    int vertex_id = brep_surface_extract_vertex(b_ip->brep, surface_id, u, v);
+
+    if(vertex_id < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create vertex\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create vertex! id = %d", vertex_id);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_surface_extract_curve(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> surface ext_c <surface_id> <dir> <param>";
+    const char *purpose_string = "extract a curve from a NURBS surface";
+    if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    
+    if (argc < 3) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+    
+    int surface_id = atoi(argv[0]);
+    int dir = atoi(argv[1]);
+    double param = atof(argv[2]);
+    int curve_id = brep_surface_extract_curve(b_ip->brep, surface_id, dir, param);
+
+    if(curve_id < 0) {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create curve\n");
+    return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create curve! id = %d", curve_id);
     return BRLCAD_OK;
 }
 
@@ -521,7 +565,6 @@ _brep_surface_help(struct _ged_brep_isurface *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _brep_surface_cmds[] = {
     { "create",              _brep_cmd_surface_create},
-    { "extract_curve",       _brep_cmd_surface_extract_curve},
     { "interp",              _brep_cmd_surface_interp},
     { "copy",                _brep_cmd_surface_copy},
     { "birail",              _brep_cmd_surface_birail},
@@ -532,6 +575,8 @@ const struct bu_cmdtab _brep_surface_cmds[] = {
     { "split",               _brep_cmd_surface_split},
     { "tensor",              _brep_cmd_surface_tensor_product},
     { "revolution",          _brep_cmd_surface_revolution},
+    { "ext_v",               _brep_cmd_surface_extract_vertex},
+    { "ext_c",               _brep_cmd_surface_extract_curve},
     { (char *)NULL,          NULL}
 };
 
