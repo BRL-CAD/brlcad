@@ -140,6 +140,12 @@ extern "C++"
     brep_surface_make(ON_Brep *brep, const ON_3dPoint &position);
 
     /**
+     * extract a curve from a surface
+     */
+    BREP_EXPORT extern int
+    brep_surface_extract_curve(ON_Brep *brep, int surface_id, int dir, double t);
+
+    /**
      * create a bicubic nurbs surface by interpolating a set of points
      * return id of the surface
      * method: Global cubic interpolation with C2 continuity

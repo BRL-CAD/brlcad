@@ -274,6 +274,19 @@ int brep_surface_make(ON_Brep *brep, const ON_3dPoint &position)
     return brep->AddSurface(surface);
 }
 
+int brep_surface_extract_curve(ON_Brep *brep, int surface_id, int dir, double t)
+{
+    ON_NurbsSurface *surface = brep_get_nurbs_surface(brep, surface_id);
+    if (!surface) {
+	return -1;
+    }
+    ON_Curve *curve = surface->IsoCurve(dir, t);
+    if(!curve) {
+	return -1;
+    }
+    return brep->AddEdgeCurve(curve);
+}
+
 int brep_surface_copy(ON_Brep *brep, int surface_id)
 {
     if (surface_id < 0 || surface_id >= brep->m_S.Count()) {

@@ -81,6 +81,40 @@ _brep_cmd_surface_create(void *bs, int argc, const char **argv)
 }
 
 static int
+_brep_cmd_surface_extract_curve(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> surface ext_e <surface_id> <dir> <param>";
+    const char *purpose_string = "create a new NURBS surface";
+    if (_brep_surface_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_isurface *gib = (struct _ged_brep_isurface *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    
+    if (argc < 3) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+    
+    int surface_id = atoi(argv[0]);
+    int dir = atoi(argv[1]);
+    double param = atof(argv[2]);
+    int curvecode = brep_surface_extract_curve(b_ip->brep, surface_id, dir, param);
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create curve! id = %d", curvecode);
+    return BRLCAD_OK;
+}
+
+static int
 _brep_cmd_surface_interp(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> surface interp <cv_count_x> <cv_1_1_x> <cv_1_1_y> <cv_1_1_z> <cv_1_2_x> <cv_1_2_y> <cv_1_2_z> ...";
@@ -487,6 +521,7 @@ _brep_surface_help(struct _ged_brep_isurface *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _brep_surface_cmds[] = {
     { "create",              _brep_cmd_surface_create},
+    { "extract_curve",       _brep_cmd_surface_extract_curve},
     { "interp",              _brep_cmd_surface_interp},
     { "copy",                _brep_cmd_surface_copy},
     { "birail",              _brep_cmd_surface_birail},
