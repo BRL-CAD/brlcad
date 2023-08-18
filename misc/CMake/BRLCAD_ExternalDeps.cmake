@@ -123,14 +123,13 @@ set(BINARY_FILES)
 
 message("Identifying 3rd party lib and exe files...")
 
-# If patchelf returns a non-zero error code, the file isn't a binary file.
-#
-# TODO - while this is one way to sort out what files are the exe/lib
-# binary files, is it the only way?  Not sure if depending on patchelf's
-# error exit behavior is really a good/viable approach to this long term...
+# Use patchelf or otool to sort out which files are exec/lib files.
 set(target_dirs bin lib)
 foreach(lf ${THIRDPARTY_FILES})
   set(CFILE)
+  if (IS_SYMLINK ${lf})
+    continue()
+  endif (IS_SYMLINK ${lf})
   foreach(tdir ${target_dirs})
     if ("${lf}" MATCHES "${tdir}")
       set(CFILE 1)
