@@ -285,7 +285,8 @@ int brep_surface_extract_vertex(ON_Brep *brep, int surface_id, double u, double 
     if(!res) {
 	return -1;
     }
-    brep->NewVertex(point);
+    ON_BrepVertex& vertex = brep->NewVertex(point);
+    vertex.m_tolerance = 0.0;
     return brep->m_V.Count() - 1;
 }
 
