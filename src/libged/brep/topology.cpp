@@ -153,7 +153,7 @@ _brep_cmd_topo_create_loop(void *bs, int argc, const char **argv)
     struct _ged_brep_itopo *gib = (struct _ged_brep_itopo *)bs;
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     argc--;argv++;
-    if (argc < 1) {
+    if (argc < 1 || (argc - 1) % 2 != 0) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
 	return BRLCAD_ERROR;
@@ -163,16 +163,21 @@ _brep_cmd_topo_create_loop(void *bs, int argc, const char **argv)
     std::vector<int> orientations;
     for (int i = 1; i < argc; i += 2) {
 	edge_ids.push_back(atoi(argv[i]));
-	orientations.push_back(atoi(argv[i+1]));
+	orientations.push_back(atoi(argv[i + 1]));
     }
-    int face = brep_loop_create(b_ip->brep, surface);
+    int loop_id = brep_loop_create(b_ip->brep, surface, edge_ids, orientations);
+
+    if (loop_id <0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create loop\n");
+	return BRLCAD_ERROR;
+    }
 
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
 	return BRLCAD_ERROR;
     }
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "create face! id = %d", face);
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create loop! id = %d", loop_id);
     return BRLCAD_OK;
 }
 
@@ -206,6 +211,7 @@ const struct bu_cmdtab _brep_topo_cmds[] = {
     { "create_v",            _brep_cmd_topo_create_vertex},
     { "create_e",            _brep_cmd_topo_create_edge},
     { "create_f",            _brep_cmd_topo_create_face},
+    { "create_l",            _brep_cmd_topo_create_loop},
     { (char *)NULL,          NULL}
 };
 

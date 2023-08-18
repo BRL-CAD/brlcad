@@ -571,14 +571,16 @@ ON_Curve* getEdgeCurve(const ON_Surface& s, int side)
     return c2d;
 }
 
+// edge index + orientation w.r.t surface trim
 int brep_loop_create(ON_Brep *brep, int face_id,
-			    int e0, int eo0, // edge index + orientation w.r.t surface trim
-			    int e1, int eo1,
-			    int e2, int eo2,
-			    int e3, int eo3)
+                std::vector<int> e, std::vector<int> eo)
 {
     if(face_id < 0 || face_id >= brep->m_F.Count()) {
 	bu_log("face_id is out of range\n");
+	return -1;
+    }
+    if(e.size() != 4 || eo.size() != 4) {
+	bu_log("e or eo size is not 4, not supported now.\n");
 	return -1;
     }
     ON_BrepFace& face = brep->m_F[face_id];
@@ -603,23 +605,23 @@ int brep_loop_create(ON_Brep *brep, int face_id,
 
 	switch (side) {
 	    case 0:
-		ei = e0;
-		bRev3d = (eo0 == -1);
+		ei = e[0];
+		bRev3d = (e[0] == -1);
 		iso = ON_Surface::S_iso;
 		break;
 	    case 1:
-		ei = e1;
-		bRev3d = (eo1 == -1);
+		ei = e[1];
+		bRev3d = (e[1] == -1);
 		iso = ON_Surface::E_iso;
 		break;
 	    case 2:
-		ei = e2;
-		bRev3d = (eo2 == -1);
+		ei = e[2];
+		bRev3d = (e[2] == -1);
 		iso = ON_Surface::N_iso;
 		break;
 	    case 3:
-		ei = e3;
-		bRev3d = (eo3 == -1);
+		ei = e[3];
+		bRev3d = (e[3] == -1);
 		iso = ON_Surface::W_iso;
 		break;
 	}

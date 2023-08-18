@@ -245,7 +245,7 @@ extern "C++"
      * create a brep face loop
      */
     BREP_EXPORT extern int
-    brep_loop_create(ON_Brep *brep, int face_id, int e0, int eo0, int e1, int eo1, int e2, int eo2, int e3, int eo3);
+    brep_loop_create(ON_Brep *brep, int face_id, std::vector<int> e, std::vector<int> eo);
 } /* extern C++ */
 #endif
 
