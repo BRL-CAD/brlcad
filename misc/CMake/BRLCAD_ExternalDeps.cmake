@@ -201,9 +201,16 @@ foreach(tf ${THIRDPARTY_FILES})
     message("Error - unexpected toplevel ext file: ${tf} ")
     continue()
   endif (NOT dir)
+  # If we know it's a binary file, treat it accordingly
+  if ("${tf}" IN_LIST BINARY_FILES)
+    install(PROGRAMS "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
+    continue()
+  endif ("${tf}" IN_LIST BINARY_FILES)
+  # BIN_DIR may contain scripts that aren't explicitly binary files -
+  # catch those based on path
   if (${dir} MATCHES "${BIN_DIR}$")
     install(PROGRAMS "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
-  else (${dir} MATCHES "${BIN_DIR}%")
+  else (${dir} MATCHES "${BIN_DIR}$")
     install(FILES "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
   endif (${dir} MATCHES "${BIN_DIR}$")
 endforeach(tf ${THIRDPARTY_FILES})
