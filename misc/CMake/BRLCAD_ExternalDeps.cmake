@@ -215,6 +215,10 @@ foreach(tf ${THIRDPARTY_FILES})
   endif (${dir} MATCHES "${BIN_DIR}$")
 endforeach(tf ${THIRDPARTY_FILES})
 
+# If we got to extinstall through a symlink, we need to expand it so
+# we can spot the path that would have been used in extinstall files
+file(REAL_PATH "${BRLCAD_EXT_DIR}/extinstall" BRLCAD_EXT_DIR_REAL EXPAND_TILDE)
+
 # Need to fix RPATH on binary files.  Don't do it for symlinks since
 # following them will just result in re-processing the same file's RPATH
 # multiple times.
@@ -222,6 +226,11 @@ foreach(bf ${BINARY_FILES})
   if (IS_SYMLINK ${bf})
     continue()
   endif (IS_SYMLINK ${bf})
+  # Overwrite any stale paths in the binary files with spaces, to make sure
+  # they're not interfering with the behavior of the final executables
+  install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}\")")
+  install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
+  # Finalize the rpaths
   if (PATCHELF_EXECUTABLE)
     install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
     install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELATIVE_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
