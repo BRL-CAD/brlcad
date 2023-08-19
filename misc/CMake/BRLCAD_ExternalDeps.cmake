@@ -120,38 +120,34 @@ find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR
 # Third party binaries can't relied on for rpath settings suitable for our
 # use cases.
 set(BINARY_FILES)
+set(NONEXEC_FILES)
 
 message("Identifying 3rd party lib and exe files...")
 
 # Use patchelf or otool to sort out which files are exec/lib files.
-set(target_dirs bin lib)
 foreach(lf ${THIRDPARTY_FILES})
   set(CFILE)
   if (IS_SYMLINK ${lf})
     continue()
   endif (IS_SYMLINK ${lf})
-  foreach(tdir ${target_dirs})
-    if ("${lf}" MATCHES "${tdir}")
-      set(CFILE 1)
-    endif ("${lf}" MATCHES "${tdir}")
-  endforeach(tdir ${target_dirs})
-  if (NOT CFILE)
-    continue()
-  endif (NOT CFILE)
   if (PATCHELF_EXECUTABLE)
     execute_process(COMMAND ${PATCHELF_EXECUTABLE} ${lf} RESULT_VARIABLE NOT_BIN_OBJ OUTPUT_VARIABLE NB_OUT ERROR_VARIABLE NB_ERR)
     if (NOT_BIN_OBJ)
+      set(NONEXEC_FILES ${NONEXEC_FILES} ${lf})
       continue()
     endif (NOT_BIN_OBJ)
   elseif (MSVC)
     # We don't do RPATH management on Windows
+    set(NONEXEC_FILES ${NONEXEC_FILES} ${lf})
     continue()
   elseif (APPLE)
     execute_process(COMMAND otool -l ${lf} RESULT_VARIABLE ORESULT OUTPUT_VARIABLE OTOOL_OUT ERROR_VARIABLE NB_ERR)
     if ("${OTOOL_OUT}" MATCHES "Archive")
+      set(NONEXEC_FILES ${NONEXEC_FILES} ${lf})
       continue()
     endif ("${OTOOL_OUT}" MATCHES "Archive")
     if ("${OTOOL_OUT}" MATCHES "not an object")
+      set(NONEXEC_FILES ${NONEXEC_FILES} ${lf})
       continue()
     endif ("${OTOOL_OUT}" MATCHES "not an object")
   endif(PATCHELF_EXECUTABLE)
@@ -227,7 +223,7 @@ foreach(bf ${BINARY_FILES})
     continue()
   endif (IS_SYMLINK ${bf})
   # Overwrite any stale paths in the binary files with spaces, to make sure
-  # they're not interfering with the behavior of the final executables
+  # they're not interfering with the behavior of the final executables.
   install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}\")")
   install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
   # Finalize the rpaths
@@ -239,6 +235,18 @@ foreach(bf ${BINARY_FILES})
     install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELATIVE_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
   endif (PATCHELF_EXECUTABLE)
 endforeach(bf ${BINARY_FILES})
+
+# Also want to clear stale paths out of the non-binary files.  These files
+# are not suitable for rpath manipulation, but they may still be text or binary.
+# The strclear tool will replace paths in text files and null them out in
+# binary files.
+foreach(tf ${NONEXEC_FILES})
+  if (IS_SYMLINK ${tf})
+    continue()
+  endif (IS_SYMLINK ${tf})
+  # Overwrite or replace any stale paths in the files
+  install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"${BRLCAD_EXT_DIR_REAL}\" \"${CMAKE_INSTALL_PREFIX}\")")
+endforeach(tf ${NONEXEC_FILES})
 
 # zlib compression/decompression library
 # https://zlib.net

@@ -24,6 +24,12 @@ add_subdirectory(debug2c)
 SetTargetFolder(debug2c "Compilation Utilities")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 
+# strclear - utility for manipulating strings in files during the
+# BRL-CAD install process
+add_subdirectory(strclear)
+SetTargetFolder(strclear "Compilation Utilities")
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/strclear/Makefile)
+
 # inactvhdrs - utility that tries to find local headers unused by other
 # source code in a file hierarchy
 add_subdirectory(inactvhdrs)
