@@ -195,13 +195,6 @@ main(int argc, const char *argv[])
 	}
     }
 
-    // If we have a replacement string specified but we're in binary mode,
-    // error out
-    if (binary_mode && argc > 2) {
-	std::cerr << usage << "\n";
-	return -1;
-    }
-
     // Good to go - proceed with the correct mode
     if (binary_mode)
 	return process_binary(fname, target_str, verbose);
