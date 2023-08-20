@@ -222,10 +222,6 @@ foreach(bf ${BINARY_FILES})
   if (IS_SYMLINK ${bf})
     continue()
   endif (IS_SYMLINK ${bf})
-  # Overwrite any stale paths in the binary files with spaces, to make sure
-  # they're not interfering with the behavior of the final executables.
-  install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}\")")
-  install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
   # Finalize the rpaths
   if (PATCHELF_EXECUTABLE)
     install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
@@ -234,6 +230,9 @@ foreach(bf ${BINARY_FILES})
     install(CODE "execute_process(COMMAND install_name_tool -delete_rpath \"${CMAKE_BINARY_DIR}/${LIB_DIR}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)")
     install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELATIVE_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
   endif (PATCHELF_EXECUTABLE)
+  # Overwrite any stale paths in the binary files with null chars, to make sure
+  # they're not interfering with the behavior of the final executables.
+  install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v -b \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
 endforeach(bf ${BINARY_FILES})
 
 # Also want to clear stale paths out of the non-binary files.  These files
@@ -246,6 +245,7 @@ foreach(tf ${NONEXEC_FILES})
   endif (IS_SYMLINK ${tf})
   # Overwrite or replace any stale paths in the files
   install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"${BRLCAD_EXT_DIR_REAL}\" \"${CMAKE_INSTALL_PREFIX}\")")
+  install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"${CMAKE_BINARY_DIR}\" \"${CMAKE_INSTALL_PREFIX}\")")
 endforeach(tf ${NONEXEC_FILES})
 
 # zlib compression/decompression library

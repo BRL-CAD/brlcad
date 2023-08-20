@@ -53,7 +53,7 @@
 #include <vector>
 
 int
-process_binary(std::string &fname, std::string &target_str, bool verbose)
+process_binary(std::string &fname, std::vector<std::string> &target_strs, bool verbose)
 {
     // Read binary contents
     std::ifstream input_fs;
@@ -66,22 +66,26 @@ process_binary(std::string &fname, std::string &target_str, bool verbose)
     input_fs.close();
 
     // Set up vectors of target and array of null chars
-    std::vector<char> search_chars(target_str.begin(), target_str.end());
-    std::vector<char> null_chars;
-    for (size_t i = 0; i < search_chars.size(); i++)
-	null_chars.push_back('\0');
+    int grcnt = 0;
+    for (size_t i = 0; i < target_strs.size(); i++) {
+	std::vector<char> search_chars(target_strs[i].begin(), target_strs[i].end());
+	std::vector<char> null_chars;
+	for (size_t j = 0; j < search_chars.size(); j++)
+	    null_chars.push_back('\0');
 
-    // Find instances of target string in binary, and replace any we find
-    auto position = std::search(bin_contents.begin(), bin_contents.end(), search_chars.begin(), search_chars.end());
-    int rcnt = 0;
-    while (position != bin_contents.end()) {
-	std::copy(null_chars.begin(), null_chars.end(), position);
-	rcnt++;
-	if (verbose)
-	    std::cout << "Replacing instance #" << rcnt << " of " << target_str << "\n";
-	position = std::search(position, bin_contents.end(), search_chars.begin(), search_chars.end());
+	// Find instances of target string in binary, and replace any we find
+	auto position = std::search(bin_contents.begin(), bin_contents.end(), search_chars.begin(), search_chars.end());
+	int rcnt = 0;
+	while (position != bin_contents.end()) {
+	    std::copy(null_chars.begin(), null_chars.end(), position);
+	    rcnt++;
+	    if (verbose)
+		std::cout << "Replacing instance #" << rcnt << " of " << target_strs[i] << "\n";
+	    position = std::search(position, bin_contents.end(), search_chars.begin(), search_chars.end());
+	}
+	grcnt += rcnt;
     }
-    if (!rcnt)
+    if (!grcnt)
 	return 0;
 
     // If we changed the contents, write them back out
@@ -146,7 +150,8 @@ main(int argc, const char *argv[])
 {
     bool verbose = false;
     bool binary_mode = false;
-    const char *usage = "Usage: strclear [-v] [-b] file string_to_clear [replacement_string]";
+    bool text_mode = false;
+    const char *usage = "Usage: strclear [-v] [-b] [-t] file string_to_clear [replacement_string]";
 
     argc--; argv++;
 
@@ -166,39 +171,58 @@ main(int argc, const char *argv[])
 	    binary_mode = true;
 	    continue;
 	}
+	if (std::string(arg) == std::string("-t")) {
+	    text_mode = true;
+	    continue;
+	}
 	std::cerr << usage << "\n";
 	return -1;
     }
 
+    if (binary_mode && text_mode) {
+	std::cerr << "Error:  need to specify either binary or text mode, not both\n";
+	return -1;
+    }
+
+    // If we only have a filename and a single string, the only thing we can
+    // do is treat the file as binary and replace the string
+    if (argc == 2)
+	binary_mode = true;
+
     std::string fname(argv[0]);
-    std::string target_str(argv[1]);
+
+    // Determine if the file is a binary or text file, if we've not been told
+    // to treat it as binary explicitly with -b.
+    if (!binary_mode) {
+	std::ifstream check_fs;
+	check_fs.open(fname);
+	int c;
+	while ((c = check_fs.get()) != EOF && c < 128);
+	binary_mode = (c == EOF) ? false : true;
+	check_fs.close();
+    }
+
+    if (binary_mode && text_mode) {
+	if (verbose)
+	    std::cerr << "Text mode specified, but file is binary - no op\n";
+	return 0;
+    }
 
     // If we're explicitly in binary mode or we have no replacement
     // string, we're just nulling out the target string.
-    if (binary_mode || argc < 3)
-	return process_binary(fname, target_str, verbose);
-
-    // Not sure yet what we're doing - determine if the file is
-    // a binary or text file.  If the former, we can't do string
-    // replacement on it.
-    std::ifstream check_fs;
-    check_fs.open(fname);
-    int c;
-    while ((c = check_fs.get()) != EOF && c < 128);
-    binary_mode = (c == EOF) ? false : true;
-    check_fs.close();
-    if (verbose) {
-	if (binary_mode) {
-	    std::cout << fname << " detected as a binary file\n";
-	} else {
-	    std::cout << fname << " detected as a text file\n";
+    if (binary_mode) {
+	std::vector<std::string> target_strs;
+	for (int i = 1; i < argc; i++) {
+	    target_strs.push_back(std::string(argv[i]));
 	}
+	return process_binary(fname, target_strs, verbose);
     }
 
-    // Good to go - proceed with the correct mode
-    if (binary_mode)
-	return process_binary(fname, target_str, verbose);
-
+    if (argc > 3) {
+	std::cerr << "Error:  processing text file, but more than three args supplied.  For text files, the supported mode is to replace a single string with a replacement.\n";
+	return -1;
+    }
+    std::string target_str(argv[1]);
     std::string replace_str(argv[2]);
     return process_text(fname, target_str, replace_str, verbose);
 }
