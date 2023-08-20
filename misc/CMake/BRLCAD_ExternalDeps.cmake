@@ -89,7 +89,9 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
 	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${sd})
 	execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-	message("decompress to ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
+	foreach(tclf ${TCL_REMOVE_FILES})
+	  file(REMOVE "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}/${tclf})")
+	endforeach(tclf ${TCL_REMOVE_FILES})
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif (CMAKE_CONFIGURATION_TYPES)
     execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${sd}.tar)
@@ -105,6 +107,29 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
 
   # Files copied - build the list of everything we got from extinstall
   file(GLOB_RECURSE THIRDPARTY_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
+
+  # Tcl config files are problematic in that they contain information valid in
+  # the original build but incorrect for a BRL-CAD install.
+  set(TCL_REMOVE_FILES
+    itcl4.2.3/itclConfig.sh
+    tclConfig.sh
+    tdbc1.1.5/tdbcConfig.sh
+    tkConfig.sh
+    )
+  foreach(tclf ${TCL_REMOVE_FILES})
+    list(REMOVE_ITEM THIRDPARTY_FILES ${LIB_DIR}/${tclf})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f "${CMAKE_BINARY_DIR}/${LIB_DIR}/${tclf}")
+  endforeach(tclf ${TCL_REMOVE_FILES})
+  if (CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      foreach(tclf ${TCL_REMOVE_FILES})
+	execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}/${tclf}")
+      endforeach(tclf ${TCL_REMOVE_FILES})
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif (CMAKE_CONFIGURATION_TYPES)
+
+  # Write the scrubbed list
   string(REPLACE ";" "\n" THIRDPARTY_W "${THIRDPARTY_FILES}")
   file(WRITE "${THIRDPARTY_INVENTORY}" "${THIRDPARTY_W}")
 
@@ -239,6 +264,13 @@ endforeach(bf ${BINARY_FILES})
 # are not suitable for rpath manipulation, but they may still be text or binary.
 # The strclear tool will replace paths in text files and null them out in
 # binary files.
+# TODO - probably need to fix strclear to handle this case (maybe a -r mode to
+# either null out the first string only or replace if text...) now that binary
+# mode supports multiple strings specified - don't want to null out
+# TODO - this scrub (and the bin version too) should probably be performed at the
+# time the extinstall contents are copied in... gdal gcv plugin is getting GDAL_PREFIX
+# incorporated as is...
+# CMAKE_INSTALL_PREFIX...
 foreach(tf ${NONEXEC_FILES})
   if (IS_SYMLINK ${tf})
     continue()
