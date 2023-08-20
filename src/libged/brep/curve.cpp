@@ -80,11 +80,46 @@ _brep_cmd_curve_create(void *bs, int argc, const char **argv)
 
     // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create C3 curve! id = %d", curve_id);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_curve_create_2dline(void *bs, int argc, const char **argv)
+{
+
+    const char *usage_string = "brep [options] <objname> curve create_2dline <from_x> <from_y> <to_x> <to_y>";
+    const char *purpose_string = "create a 2D parameter space geometric line";
+    if (_brep_curve_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_icurve *gib = (struct _ged_brep_icurve *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+
+    argc--;argv++;
+
+    if (argc != 4) {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid arguments\n");
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+    return BRLCAD_ERROR;
+    }
+
+    ON_2dPoint from(atof(argv[0]), atof(argv[1]));
+    ON_2dPoint to(atof(argv[2]), atof(argv[3]));
+
+    // Create a 2d line
+    int curve_id = brep_curve_make_2dline(b_ip->brep, from, to);
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create C2 curve! id = %d", curve_id);
     return BRLCAD_OK;
 }
 
@@ -642,6 +677,7 @@ _brep_curve_help(struct _ged_brep_icurve *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _brep_curve_cmds[] = {
     { "create",          _brep_cmd_curve_create},
+    { "create_2dline",   _brep_cmd_curve_create_2dline},
     { "in",              _brep_cmd_curve_in},
     { "interp",          _brep_cmd_curve_interp},
     { "copy",            _brep_cmd_curve_copy},

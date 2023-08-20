@@ -46,6 +46,14 @@ int brep_curve_make(ON_Brep *brep, const ON_3dPoint &position)
     return brep->AddEdgeCurve(curve);
 }
 
+int brep_curve_make_2dline(ON_Brep *brep, const ON_2dPoint &from, const ON_2dPoint &to)
+{
+    ON_Curve* c2 = new ON_LineCurve(from, to);
+    c2->SetDomain(0.0, 1.0);
+	brep->m_C2.Append(c2);
+	return brep->m_C2.Count() - 1;
+}
+
 // TODO: add more options about knot vector
 int brep_curve_in(ON_Brep *brep, bool is_rational, int order, int cv_count, std::vector<ON_4dPoint> cv)
 {

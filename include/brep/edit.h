@@ -49,7 +49,7 @@ extern "C++"
 #include <vector>
 
     /**
-     * create an nurbs curve using a template.
+     * create a nurbs curve using a template.
      * position can be specified if position != NULL
      * return id of the curve
      */
@@ -57,7 +57,14 @@ extern "C++"
     brep_curve_make(ON_Brep *brep, const ON_3dPoint &position);
 
     /**
-     * create an nurbs curve given detailed information
+     * create a 2D parameter space geometric line
+     * return id of the curve2d
+     */
+    BREP_EXPORT extern int
+    brep_curve_make_2dline(ON_Brep *brep, const ON_2dPoint &start, const ON_2dPoint &end);
+
+    /**
+     * create a nurbs curve given detailed information
      * return id of the curve
      */
     BREP_EXPORT extern int
@@ -132,7 +139,7 @@ extern "C++"
     brep_curve_join(ON_Brep *brep, int curve_id_1, int curve_id_2);
     
     /**
-     * create an nurbs curve using a template
+     * create a nurbs curve using a template
      * position can be specified if argc == 3
      * return id of the surface
      */
