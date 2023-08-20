@@ -45,6 +45,7 @@ if (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
   message(WARNING "BRLCAD_EXT_NOINSTALL_DIR is set to ${BRLCAD_EXT_NOINSTALL_DIR} but that location does not exist.  This means BRL-CAD's build will be dependent on system versions of build tools such as patchelf and astyle being present.")
 endif (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
 
+find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
 
 # The relative RPATH is platform specific
 if (APPLE)
@@ -262,7 +263,7 @@ foreach(bf ${BINARY_FILES})
   # CMAKE_BINARY_DIR paths (if any are needed) on install... that will
   # probably mean strclear belongs in brlcad_externals' extnoinstall bin
   # collection so it's available at configure time here...
-  install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v -b \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
+  install(CODE "execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
 endforeach(bf ${BINARY_FILES})
 
 # Also want to clear stale paths out of the non-binary files.  These files
@@ -281,8 +282,8 @@ foreach(tf ${NONEXEC_FILES})
     continue()
   endif (IS_SYMLINK ${tf})
   # Overwrite or replace any stale paths in the files
-  install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"${BRLCAD_EXT_DIR_REAL}\" \"${CMAKE_INSTALL_PREFIX}\")")
-  install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"${CMAKE_BINARY_DIR}\" \"${CMAKE_INSTALL_PREFIX}\")")
+  install(CODE "execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"${BRLCAD_EXT_DIR_REAL}\" \"${CMAKE_INSTALL_PREFIX}\")")
+  install(CODE "execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"${CMAKE_BINARY_DIR}\" \"${CMAKE_INSTALL_PREFIX}\")")
 endforeach(tf ${NONEXEC_FILES})
 
 # zlib compression/decompression library
