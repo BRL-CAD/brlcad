@@ -31,9 +31,18 @@
 # WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-###
-#
+
+
+# Categorize a file as binary or text
+function(FILE_TYPE fname BINARY_LIST TEXT_LIST)
+  execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -B ${fname} RESULT_VARIABLE TXT_FILE)
+  if (TXT_FILE)
+    set(${TEXT_LIST} ${${TEXT_LIST}} ${fname} PARENT_SCOPE)
+  else (TXT_FILE)
+    set(${BINARY_LIST} ${${BINARY_LIST}} ${fname} PARENT_SCOPE)
+  endif (TXT_FILE)
+endfunction(FILE_TYPE)
+
 # Logic to set up third party dependences (either system installed
 # versions or prepared local versions to be bundled with BRL-CAD.)
 
@@ -45,6 +54,11 @@ if (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
   message(WARNING "BRLCAD_EXT_NOINSTALL_DIR is set to ${BRLCAD_EXT_NOINSTALL_DIR} but that location does not exist.  This means BRL-CAD's build will be dependent on system versions of build tools such as patchelf and astyle being present.")
 endif (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
 
+# If we got to extinstall through a symlink, we need to expand it so
+# we can spot the path that would have been used in extinstall files
+file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" BRLCAD_EXT_DIR_REAL EXPAND_TILDE)
+
+# Find the tool we use to scrub EXT paths from files
 find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
 
 # The relative RPATH is platform specific
@@ -146,6 +160,7 @@ find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR
 # Third party binaries can't relied on for rpath settings suitable for our
 # use cases.
 set(BINARY_FILES)
+set(TEXT_FILES)
 set(NONEXEC_FILES)
 
 message("Identifying 3rd party lib and exe files...")
@@ -159,12 +174,12 @@ foreach(lf ${THIRDPARTY_FILES})
   if (PATCHELF_EXECUTABLE)
     execute_process(COMMAND ${PATCHELF_EXECUTABLE} ${lf} RESULT_VARIABLE NOT_BIN_OBJ OUTPUT_VARIABLE NB_OUT ERROR_VARIABLE NB_ERR)
     if (NOT_BIN_OBJ)
-      set(NONEXEC_FILES ${NONEXEC_FILES} ${lf})
+      FILE_TYPE("${CMAKE_BINARY_DIR}/${lf}" NONEXEC_FILES TEXT_FILES)
       continue()
     endif (NOT_BIN_OBJ)
   elseif (MSVC)
     # We don't do RPATH management on Windows
-    set(NONEXEC_FILES ${NONEXEC_FILES} ${lf})
+    FILE_TYPE("${CMAKE_BINARY_DIR}/${lf}" NONEXEC_FILES TEXT_FILES)
     continue()
   elseif (APPLE)
     execute_process(COMMAND otool -l ${lf} RESULT_VARIABLE ORESULT OUTPUT_VARIABLE OTOOL_OUT ERROR_VARIABLE NB_ERR)
@@ -173,7 +188,7 @@ foreach(lf ${THIRDPARTY_FILES})
       continue()
     endif ("${OTOOL_OUT}" MATCHES "Archive")
     if ("${OTOOL_OUT}" MATCHES "not an object")
-      set(NONEXEC_FILES ${NONEXEC_FILES} ${lf})
+      FILE_TYPE("${CMAKE_BINARY_DIR}/${lf}" NONEXEC_FILES TEXT_FILES)
       continue()
     endif ("${OTOOL_OUT}" MATCHES "not an object")
   endif(PATCHELF_EXECUTABLE)
@@ -192,6 +207,8 @@ if (NOT CMAKE_CONFIGURATION_TYPES)
       execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
       execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf})
     endif (PATCHELF_EXECUTABLE)
+    # RPATH updates are complete - now clear out any other stale paths in the file
+    execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}" "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/")
   endforeach(lf ${BINARY_FILES})
 else (NOT CMAKE_CONFIGURATION_TYPES)
   # For multi-config, we set the RPATHs for each active configuration's build dir
@@ -208,11 +225,32 @@ else (NOT CMAKE_CONFIGURATION_TYPES)
 	execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
 	execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
       endif (PATCHELF_EXECUTABLE)
+      # RPATH updates are complete - now clear out any other stale paths in the file
+      execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}" "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/")
     endforeach(lf ${BINARY_FILES})
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 endif (NOT CMAKE_CONFIGURATION_TYPES)
 
 message("Setting rpath on 3rd party lib and exe files... done.")
+
+
+message("Scrubbing paths from txt and data files...")
+# Also want to clear stale paths out of the files.
+foreach(tf ${NONEXEC_FILES})
+  if (IS_SYMLINK ${tf})
+    continue()
+  endif (IS_SYMLINK ${tf})
+  # Replace any stale paths in the files
+  #message("${STRCLEAR_EXECUTABLE} -v -b -c ${tf} ${BRLCAD_EXT_DIR_REAL}")
+  execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v -b -c "${tf}" "${BRLCAD_EXT_DIR_REAL}")
+endforeach(tf ${NONEXEC_FILES})
+foreach(tf ${TEXT_FILES})
+  if (IS_SYMLINK ${tf})
+    continue()
+  endif (IS_SYMLINK ${tf})
+  execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v -r "${tf}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_INSTALL_PREFIX}")
+endforeach(tf ${NONEXEC_FILES})
+message("Scrubbing paths from txt and data files... done.")
 
 foreach(tf ${THIRDPARTY_FILES})
   # Rather than doing the PROGRAMS install for all binary files, we target just
@@ -237,10 +275,6 @@ foreach(tf ${THIRDPARTY_FILES})
   endif (${dir} MATCHES "${BIN_DIR}$")
 endforeach(tf ${THIRDPARTY_FILES})
 
-# If we got to extinstall through a symlink, we need to expand it so
-# we can spot the path that would have been used in extinstall files
-file(REAL_PATH "${BRLCAD_EXT_DIR}/extinstall" BRLCAD_EXT_DIR_REAL EXPAND_TILDE)
-
 # Need to fix RPATH on binary files.  Don't do it for symlinks since
 # following them will just result in re-processing the same file's RPATH
 # multiple times.
@@ -263,28 +297,8 @@ foreach(bf ${BINARY_FILES})
   # CMAKE_BINARY_DIR paths (if any are needed) on install... that will
   # probably mean strclear belongs in brlcad_externals' extnoinstall bin
   # collection so it's available at configure time here...
-  install(CODE "execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
+  install(CODE "execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
 endforeach(bf ${BINARY_FILES})
-
-# Also want to clear stale paths out of the non-binary files.  These files
-# are not suitable for rpath manipulation, but they may still be text or binary.
-# The strclear tool will replace paths in text files and null them out in
-# binary files.
-# TODO - probably need to fix strclear to handle this case (maybe a -r mode to
-# either null out the first string only or replace if text...) now that binary
-# mode supports multiple strings specified - don't want to null out
-# TODO - this scrub (and the bin version too) should probably be performed at the
-# time the extinstall contents are copied in... gdal gcv plugin is getting GDAL_PREFIX
-# incorporated as is...
-# CMAKE_INSTALL_PREFIX...
-foreach(tf ${NONEXEC_FILES})
-  if (IS_SYMLINK ${tf})
-    continue()
-  endif (IS_SYMLINK ${tf})
-  # Overwrite or replace any stale paths in the files
-  install(CODE "execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"${BRLCAD_EXT_DIR_REAL}\" \"${CMAKE_INSTALL_PREFIX}\")")
-  install(CODE "execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${tf}\" \"${CMAKE_BINARY_DIR}\" \"${CMAKE_INSTALL_PREFIX}\")")
-endforeach(tf ${NONEXEC_FILES})
 
 # zlib compression/decompression library
 # https://zlib.net
