@@ -257,6 +257,11 @@ foreach(bf ${BINARY_FILES})
   endif (PATCHELF_EXECUTABLE)
   # Overwrite any stale paths in the binary files with null chars, to make sure
   # they're not interfering with the behavior of the final executables.
+  # TODO - this should be in two stages, or perhaps done just on copy.  We
+  # should zap brlcad_external paths when doing the initial copy, and
+  # CMAKE_BINARY_DIR paths (if any are needed) on install... that will
+  # probably mean strclear belongs in brlcad_externals' extnoinstall bin
+  # collection so it's available at configure time here...
   install(CODE "execute_process(COMMAND  $<TARGET_FILE:strclear> -v -b \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}\" \"${BRLCAD_EXT_DIR_REAL}/\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
 endforeach(bf ${BINARY_FILES})
 
