@@ -226,7 +226,12 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
   # install directories we may have to be more selective about this in the
   # future, but for now let's try simplicity - the less we can couple this
   # logic to the specific contents of extinstall, the better.
-  message("Staging ${BRLCAD_EXT_INSTALL_DIR} third party files in build directory...")
+  if ("${BRLCAD_EXT_DIR}/extinstall" STREQUAL "${BRLCAD_EXT_INSTALL_DIR}")
+    set(EXT_DIR_STR "${BRLCAD_EXT_INSTALL_DIR}")
+  else ("${BRLCAD_EXT_DIR}/extinstall" STREQUAL "${BRLCAD_EXT_INSTALL_DIR}")
+    set(EXT_DIR_STR "${BRLCAD_EXT_INSTALL_DIR} (via symlink ${BRLCAD_EXT_DIR}/extinstall)")
+  endif ("${BRLCAD_EXT_DIR}/extinstall" STREQUAL "${BRLCAD_EXT_INSTALL_DIR}")
+  message("Staging third party files from ${EXT_DIR_STR} in build directory...")
   file(GLOB SDIRS LIST_DIRECTORIES true RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
   foreach(sd ${SDIRS})
     # Bundled up the sub-directory's contents so that the archive will expand with
@@ -270,7 +275,7 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
   foreach(tf ${THIRDPARTY_FILES})
     execute_process(COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/${tf}")
   endforeach(tf ${THIRDPARTY_FILES})
-  message("Staging ${BRLCAD_EXT_INSTALL_DIR} third party files in build directory... done.")
+  message("Staging third party files from ${EXT_DIR_STR} in build directory... done.")
 
   # NOTE - we may need to find and redo symlinks, if we get any that are full
   # paths - we expect .so and .so.* style symlinks on some platforms, and there
@@ -429,16 +434,34 @@ foreach(bf ${BINARY_FILES})
   install(CODE "execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
 endforeach(bf ${BINARY_FILES})
 
+# Not all packages will define all of these, but it shouldn't matter - an unset
+# of an unused variable shouldn't be harmful
+function(find_package_reset pname trigger_var)
+  if (NOT ${trigger_var})
+    return()
+  endif (NOT ${trigger_var})
+  unset(${pname}_FOUND CACHE)
+  unset(${pname}_INCLUDE_DIR CACHE)
+  unset(${pname}_INCLUDE_DIRS CACHE)
+  unset(${pname}_LIBRARIES CACHE)
+  unset(${pname}_LIBRARY CACHE)
+  unset(${pname}_DEFINITIONS CACHE)
+  unset(${pname}_VERSION_STRING CACHE)
+  unset(${pname}_CONFIG CACHE)
+endfunction(find_package_reset pname trigger_var)
+
 # zlib compression/decompression library
 # https://zlib.net
 #
 # Note - our copy is modified from Vanilla upstream to support specifying a
 # custom prefix - until a similar feature is available in upstream zlib, we
 # need this to reliably avoid conflicts between bundled and system zlib.
+find_package_reset(ZLIB RESET_THIRDPARTY)
 set(ZLIB_ROOT "${CMAKE_BINARY_DIR}")
 find_package(ZLIB REQUIRED)
 
 # libregex regular expression matching
+find_package_reset(REGEX RESET_THIRDPARTY)
 set(REGEX_ROOT "${CMAKE_BINARY_DIR}")
 find_package(REGEX REQUIRED)
 
@@ -451,11 +474,13 @@ find_package(REGEX REQUIRED)
 # form our netpbm copy isn't really a good fit for ext, but it is kept there
 # because a) there is an active upstream and b) we are unlikely to need to
 # modify these sources to our needs from a functional perspective.
+find_package_reset(NETPBM RESET_THIRDPARTY)
 set(NETPBM_ROOT "${CMAKE_BINARY_DIR}")
 find_package(NETPBM)
 
 # libpng - Portable Network Graphics image file support
 # http://www.libpng.org/pub/png/libpng.html
+find_package_reset(PNG RESET_THIRDPARTY)
 set(PNG_ROOT "${CMAKE_BINARY_DIR}")
 find_package(PNG)
 
@@ -467,6 +492,22 @@ find_package(PNG)
 # copy and a released upstream copy synced - in anticipation of that, stepcode
 # lives in ext.
 if (BRLCAD_ENABLE_STEP)
+  find_package_reset(STEPCODE RESET_THIRDPARTY)
+  if (RESET_THIRDPARTY)
+    unset(STEPCODE_CORE_LIBRARY    CACHE)
+    unset(STEPCODE_DAI_DIR         CACHE)
+    unset(STEPCODE_DAI_LIBRARY     CACHE)
+    unset(STEPCODE_EDITOR_DIR      CACHE)
+    unset(STEPCODE_EDITOR_LIBRARY  CACHE)
+    unset(STEPCODE_EXPPP_DIR       CACHE)
+    unset(STEPCODE_EXPPP_LIBRARY   CACHE)
+    unset(STEPCODE_EXPRESS_DIR     CACHE)
+    unset(STEPCODE_EXPRESS_LIBRARY CACHE)
+    unset(STEPCODE_INCLUDE_DIR     CACHE)
+    unset(STEPCODE_STEPCORE_DIR    CACHE)
+    unset(STEPCODE_UTILS_DIR       CACHE)
+    unset(STEPCODE_UTILS_LIBRARY   CACHE)
+  endif (RESET_THIRDPARTY)
   set(STEPCODE_ROOT "${CMAKE_BINARY_DIR}")
   find_package(STEPCODE)
 endif (BRLCAD_ENABLE_STEP)
@@ -474,6 +515,7 @@ endif (BRLCAD_ENABLE_STEP)
 # GDAL -  translator library for raster and vector geospatial data formats
 # https://gdal.org
 if (BRLCAD_ENABLE_GDAL)
+  find_package_reset(GDAL RESET_THIRDPARTY)
   set(GDAL_ROOT "${CMAKE_BINARY_DIR}")
   find_package(GDAL)
 endif (BRLCAD_ENABLE_GDAL)
@@ -482,6 +524,7 @@ endif (BRLCAD_ENABLE_GDAL)
 # Geometry file formats
 # https://github.com/assimp/assimp
 if (BRLCAD_ENABLE_ASSETIMPORT)
+  find_package_reset(ASSETIMPORT RESET_THIRDPARTY)
   set(ASSETIMPORT_ROOT "${CMAKE_BINARY_DIR}")
   find_package(ASSETIMPORT)
 endif (BRLCAD_ENABLE_ASSETIMPORT)
@@ -489,6 +532,15 @@ endif (BRLCAD_ENABLE_ASSETIMPORT)
 # OpenMesh Library - library for representing and manipulating polygonal meshes
 # https://www.graphics.rwth-aachen.de/software/openmesh/
 if (BRLCAD_ENABLE_OPENMESH)
+  find_package_reset(OPENMESH RESET_THIRDPARTY)
+  if (RESET_THIRDPARTY)
+    unset(OPENMESH_CORE_LIBRARY          CACHE)
+    unset(OPENMESH_CORE_LIBRARY_DEBUG    CACHE)
+    unset(OPENMESH_CORE_LIBRARY_RELEASE  CACHE)
+    unset(OPENMESH_TOOLS_LIBRARY         CACHE)
+    unset(OPENMESH_TOOLS_LIBRARY_DEBUG   CACHE)
+    unset(OPENMESH_TOOLS_LIBRARY_RELEASE CACHE)
+  endif (RESET_THIRDPARTY)
   set(OpenMesh_ROOT "${CMAKE_BINARY_DIR}")
   find_package(OpenMesh)
 endif (BRLCAD_ENABLE_OPENMESH)
@@ -500,6 +552,19 @@ if (BRLCAD_ENABLE_TK)
   set(TCL_ENABLE_TK ON CACHE BOOL "enable tk")
 endif (BRLCAD_ENABLE_TK)
 mark_as_advanced(TCL_ENABLE_TK)
+
+find_package_reset(TCL RESET_THIRDPARTY)
+if (RESET_THIRDPARTY)
+  unset(TCL_INCLUDE_PATH CACHE)
+  unset(TCL_STUB_LIBRARY CACHE)
+  unset(TCL_TCLSH CACHE)
+  unset(TK_INCLUDE_PATH CACHE)
+  unset(TK_STUB_LIBRARY CACHE)
+  unset(TK_WISH CACHE)
+  unset(TK_X11_GRAPHICS CACHE)
+  unset(TTK_STUB_LIBRARY CACHE)
+endif (RESET_THIRDPARTY)
+
 set(TCL_ROOT "${CMAKE_BINARY_DIR}")
 find_package(TCL)
 set(HAVE_TK 1)
