@@ -32,15 +32,56 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# These patterns are used to identify sets of files where we are assuming we
+# don't need to do post-processing to correct file paths from the external
+# install.
+set(NOPROCESS_PATTERNS ".*/include/.*" ".*/man/.*" ".*/msgs/.*" ".*/encodings/.*")
 
 # Categorize a file as binary or text
-function(FILE_TYPE fname BINARY_LIST TEXT_LIST)
-  execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -B ${fname} RESULT_VARIABLE TXT_FILE)
-  if (TXT_FILE)
+function(FILE_TYPE fname BINARY_LIST TEXT_LIST NOEXEC_LIST)
+  if (IS_SYMLINK ${CMAKE_BINARY_DIR}/${fname})
+    return()
+  endif (IS_SYMLINK ${CMAKE_BINARY_DIR}/${fname})
+  foreach (skp ${NOPROCESS_PATTERNS})
+    if ("${fname}" MATCHES "${skp}")
+      set(${TEXT_LIST} ${${TEXT_LIST}} ${fname} PARENT_SCOPE)
+      return()
+    endif ("${fname}" MATCHES "${skp}")
+  endforeach (skp ${NOPROCESS_PATTERNS})
+  execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -B ${CMAKE_BINARY_DIR}/${fname} RESULT_VARIABLE TXT_FILE)
+  if ("${TXT_FILE}" GREATER 0)
     set(${TEXT_LIST} ${${TEXT_LIST}} ${fname} PARENT_SCOPE)
-  else (TXT_FILE)
+    return()
+  endif ("${TXT_FILE}" GREATER 0)
+
+  # Some kind of binary file, can we set an RPATH?
+  if (PATCHELF_EXECUTABLE)
+    execute_process(COMMAND ${PATCHELF_EXECUTABLE} ${CMAKE_BINARY_DIR}/${lf} RESULT_VARIABLE NOT_BIN_OBJ OUTPUT_VARIABLE NB_OUT ERROR_VARIABLE NB_ERR)
+    if (NOT_BIN_OBJ)
+      set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
+      return()
+    else (NOT_BIN_OBJ)
+      set(${BINARY_LIST} ${${BINARY_LIST}} ${fname} PARENT_SCOPE)
+      return()
+    endif (NOT_BIN_OBJ)
+  endif(PATCHELF_EXECUTABLE)
+  if (APPLE)
+    execute_process(COMMAND otool -l ${CMAKE_BINARY_DIR}/${lf} RESULT_VARIABLE ORESULT OUTPUT_VARIABLE OTOOL_OUT ERROR_VARIABLE NB_ERR)
+    if ("${OTOOL_OUT}" MATCHES "Archive")
+      set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
+      return()
+    endif ("${OTOOL_OUT}" MATCHES "Archive")
+    if ("${OTOOL_OUT}" MATCHES "not an object")
+      set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
+      return()
+    endif ("${OTOOL_OUT}" MATCHES "not an object")
+    # Not one of the exceptions - binary
     set(${BINARY_LIST} ${${BINARY_LIST}} ${fname} PARENT_SCOPE)
-  endif (TXT_FILE)
+    return()
+  endif(APPLE)
+
+  # If we haven't figured it out, treat as noexec binary
+  set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
 endfunction(FILE_TYPE)
 
 # Logic to set up third party dependences (either system installed
@@ -76,6 +117,7 @@ endif (APPLE)
 # elements, we won't catch it.  There are things we can do about that, the
 # question is how much effort to put into it...
 set(THIRDPARTY_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
+set(THIRDPARTY_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
 if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
 
   # We bulk copy the contents of the BRLCAD_EXT_INSTALL_DIR tree into our own
@@ -148,109 +190,106 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
   string(REPLACE ";" "\n" THIRDPARTY_W "${THIRDPARTY_FILES}")
   file(WRITE "${THIRDPARTY_INVENTORY}" "${THIRDPARTY_W}")
 
+  # See if we have patchelf available
+  find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+
+  message("Characterizing bundled third party files...")
+  # Use various tools to sort out which files are exec/lib files.
+  set(BINARY_FILES)
+  set(TEXT_FILES)
+  set(NONEXEC_FILES)
+  foreach(lf ${THIRDPARTY_FILES})
+    FILE_TYPE("${lf}" BINARY_FILES TEXT_FILES NOEXEC_FILES)
+  endforeach(lf ${THIRDPARTY_FILES})
+  message("Characterizing bundled third party files... done.")
+
+  # Write the scrubbed binary list
+  string(REPLACE ";" "\n" THIRDPARTY_B "${BINARY_FILES}")
+  file(WRITE "${THIRDPARTY_INVENTORY_BINARIES}" "${THIRDPARTY_B}")
+
+  message("Setting rpath on 3rd party lib and exe files...")
+  if (NOT CMAKE_CONFIGURATION_TYPES)
+    # Set local RPATH so the files will work during build
+    foreach(lf ${BINARY_FILES})
+      if (PATCHELF_EXECUTABLE)
+	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+      elseif (APPLE)
+	execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR} OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
+	execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+      endif (PATCHELF_EXECUTABLE)
+      # RPATH updates are complete - now clear out any other stale paths in the file
+      #message("${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR}/${lf} ${BRLCAD_EXT_DIR_REAL}/${LIB_DIR} ${BRLCAD_EXT_DIR_REAL}/${BIN_DIR} ${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR} ${BRLCAD_EXT_DIR_REAL}/")
+      execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}" "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/")
+    endforeach(lf ${BINARY_FILES})
+  else (NOT CMAKE_CONFIGURATION_TYPES)
+    # For multi-config, we set the RPATHs for each active configuration's build dir
+    # so the executables will work locally.  We don't need to set the top level copy
+    # being used for the install target since in multi-config those copies won't be
+    # used by build directory executables
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      foreach(lf ${BINARY_FILES})
+	if (PATCHELF_EXECUTABLE)
+	  execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
+	  execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
+	elseif (APPLE)
+	  execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
+	  execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
+	endif (PATCHELF_EXECUTABLE)
+	# RPATH updates are complete - now clear out any other stale paths in the file
+	execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}" "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/")
+      endforeach(lf ${BINARY_FILES})
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif (NOT CMAKE_CONFIGURATION_TYPES)
+  message("Setting rpath on 3rd party lib and exe files... done.")
+
+
+  message("Scrubbing paths from txt and data files...")
+  # Also want to clear stale paths out of the files.
+  foreach(tf ${NONEXEC_FILES})
+    set(SKIP_FILE 0)
+    foreach (skp ${NOPROCESS_PATTERNS})
+      if ("${tf}" MATCHES "${skp}")
+	set(SKIP_FILE 1)
+	continue()
+      endif ("${tf}" MATCHES "${skp}")
+    endforeach (skp ${NOPROCESS_PATTERNS})
+    if (SKIP_FILE)
+      continue()
+    endif (SKIP_FILE)
+
+    # Replace any stale paths in the files
+    #message("${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR}/${tf} ${BRLCAD_EXT_DIR_REAL}")
+    execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v -b -c "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}")
+  endforeach(tf ${NONEXEC_FILES})
+
+  foreach(tf ${TEXT_FILES})
+    if (IS_SYMLINK ${tf})
+      continue()
+    endif (IS_SYMLINK ${tf})
+    set(SKIP_FILE 0)
+    foreach (skp ${NOPROCESS_PATTERNS})
+      if ("${tf}" MATCHES "${skp}")
+	set(SKIP_FILE 1)
+	continue()
+      endif ("${tf}" MATCHES "${skp}")
+    endforeach (skp ${NOPROCESS_PATTERNS})
+    if (SKIP_FILE)
+      continue()
+    endif (SKIP_FILE)
+
+    execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v -r "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_INSTALL_PREFIX}")
+  endforeach(tf ${NONEXEC_FILES})
+  message("Scrubbing paths from txt and data files... done.")
+
 else (NOT EXISTS "${THIRDPARTY_INVENTORY}")
 
   file(STRINGS "${THIRDPARTY_INVENTORY}" THIRDPARTY_FILES)
+  file(STRINGS "${THIRDPARTY_INVENTORY_BINARIES}" BINARY_FILES)
+  find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
 
 endif (NOT EXISTS "${THIRDPARTY_INVENTORY}")
-
-# See if we have patchelf available
-find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
-
-# Third party binaries can't relied on for rpath settings suitable for our
-# use cases.
-set(BINARY_FILES)
-set(TEXT_FILES)
-set(NONEXEC_FILES)
-
-message("Identifying 3rd party lib and exe files...")
-
-# Use patchelf or otool to sort out which files are exec/lib files.
-foreach(lf ${THIRDPARTY_FILES})
-  set(CFILE)
-  if (IS_SYMLINK ${lf})
-    continue()
-  endif (IS_SYMLINK ${lf})
-  if (PATCHELF_EXECUTABLE)
-    execute_process(COMMAND ${PATCHELF_EXECUTABLE} ${lf} RESULT_VARIABLE NOT_BIN_OBJ OUTPUT_VARIABLE NB_OUT ERROR_VARIABLE NB_ERR)
-    if (NOT_BIN_OBJ)
-      FILE_TYPE("${CMAKE_BINARY_DIR}/${lf}" NONEXEC_FILES TEXT_FILES)
-      continue()
-    endif (NOT_BIN_OBJ)
-  elseif (MSVC)
-    # We don't do RPATH management on Windows
-    FILE_TYPE("${CMAKE_BINARY_DIR}/${lf}" NONEXEC_FILES TEXT_FILES)
-    continue()
-  elseif (APPLE)
-    execute_process(COMMAND otool -l ${lf} RESULT_VARIABLE ORESULT OUTPUT_VARIABLE OTOOL_OUT ERROR_VARIABLE NB_ERR)
-    if ("${OTOOL_OUT}" MATCHES "Archive")
-      set(NONEXEC_FILES ${NONEXEC_FILES} ${lf})
-      continue()
-    endif ("${OTOOL_OUT}" MATCHES "Archive")
-    if ("${OTOOL_OUT}" MATCHES "not an object")
-      FILE_TYPE("${CMAKE_BINARY_DIR}/${lf}" NONEXEC_FILES TEXT_FILES)
-      continue()
-    endif ("${OTOOL_OUT}" MATCHES "not an object")
-  endif(PATCHELF_EXECUTABLE)
-  set(BINARY_FILES ${BINARY_FILES} ${lf})
-endforeach(lf ${THIRDPARTY_FILES})
-message("Identifying 3rd party lib and exe files... done.")
-
-message("Setting rpath on 3rd party lib and exe files...")
-if (NOT CMAKE_CONFIGURATION_TYPES)
-  # Set local RPATH so the files will work during build
-  foreach(lf ${BINARY_FILES})
-    if (PATCHELF_EXECUTABLE)
-      execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf})
-      execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf})
-    elseif (APPLE)
-      execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
-      execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf})
-    endif (PATCHELF_EXECUTABLE)
-    # RPATH updates are complete - now clear out any other stale paths in the file
-    execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}" "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/")
-  endforeach(lf ${BINARY_FILES})
-else (NOT CMAKE_CONFIGURATION_TYPES)
-  # For multi-config, we set the RPATHs for each active configuration's build dir
-  # so the executables will work locally.  We don't need to set the top level copy
-  # being used for the install target since in multi-config those copies won't be
-  # used by build directory executables
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    foreach(lf ${BINARY_FILES})
-      if (PATCHELF_EXECUTABLE)
-	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-      elseif (APPLE)
-	execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
-	execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-      endif (PATCHELF_EXECUTABLE)
-      # RPATH updates are complete - now clear out any other stale paths in the file
-      execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}" "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/")
-    endforeach(lf ${BINARY_FILES})
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-endif (NOT CMAKE_CONFIGURATION_TYPES)
-
-message("Setting rpath on 3rd party lib and exe files... done.")
-
-
-message("Scrubbing paths from txt and data files...")
-# Also want to clear stale paths out of the files.
-foreach(tf ${NONEXEC_FILES})
-  if (IS_SYMLINK ${tf})
-    continue()
-  endif (IS_SYMLINK ${tf})
-  # Replace any stale paths in the files
-  #message("${STRCLEAR_EXECUTABLE} -v -b -c ${tf} ${BRLCAD_EXT_DIR_REAL}")
-  execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v -b -c "${tf}" "${BRLCAD_EXT_DIR_REAL}")
-endforeach(tf ${NONEXEC_FILES})
-foreach(tf ${TEXT_FILES})
-  if (IS_SYMLINK ${tf})
-    continue()
-  endif (IS_SYMLINK ${tf})
-  execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v -r "${tf}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_INSTALL_PREFIX}")
-endforeach(tf ${NONEXEC_FILES})
-message("Scrubbing paths from txt and data files... done.")
 
 foreach(tf ${THIRDPARTY_FILES})
   # Rather than doing the PROGRAMS install for all binary files, we target just
