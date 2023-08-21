@@ -32,6 +32,44 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
+# Logic to set up third party dependences (either system installed
+# versions or prepared local versions to be bundled with BRL-CAD.)
+
+
+if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}")
+  message(WARNING "BRLCAD_EXT_INSTALL_DIR is set to ${BRLCAD_EXT_INSTALL_DIR} but that location does not exist.  This will result in only system libraries being used for compilation, with no external dependencies being bundled into installers.")
+endif (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}")
+
+if (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+  message(WARNING "BRLCAD_EXT_NOINSTALL_DIR is set to ${BRLCAD_EXT_NOINSTALL_DIR} but that location does not exist.  This means BRL-CAD's build will be dependent on system versions of build tools such as patchelf and astyle being present.")
+endif (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+
+# If we got to extinstall through a symlink, we need to expand it so
+# we can spot the path that would have been used in extinstall files
+file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" BRLCAD_EXT_DIR_REAL EXPAND_TILDE)
+
+# For repeat configure passes, we need to check any existing files copied
+# against the extinstall dir's contents, to detect if the latter has changed
+# and we need to redo the process.
+set(THIRDPARTY_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
+set(THIRDPARTY_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
+
+# Find the tool we use to scrub EXT paths from files
+find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+
+# The relative RPATH is platform specific
+if (APPLE)
+  set(RELATIVE_RPATH ";@loader_path/../${LIB_DIR}")
+else (APPLE)
+  set(RELATIVE_RPATH ":\\$ORIGIN/../${LIB_DIR}")
+endif (APPLE)
+
+# See if we have patchelf available.  If it is available, we will be using it
+# to manage the RPATH settings for third party exe/lib files.
+find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+
+
 # These patterns are used to identify sets of files where we are assuming we
 # don't need to do post-processing to correct file paths from the external
 # install.
@@ -67,7 +105,16 @@ function(STRIP_EXCLUDED RDIR EXPATTERNS)
   endforeach (ep ${${EXPATTERNS}})
 endfunction(STRIP_EXCLUDED)
 
-# Categorize a file as binary or text
+# For processing purposes, there are three categories of extinstall file:
+#
+# 1.  exe or shared library files needing RPATH adjustment (which also need
+#     to be installed with executable permissions)
+# 2.  binary files which are NOT executable files (images, etc.)
+# 3.  text files
+#
+# If we don't want to hard-code information about specific files we expect
+# to find in extinstall, we need a way to detect "on the fly" what we are
+# dealing with.
 function(FILE_TYPE fname BINARY_LIST TEXT_LIST NOEXEC_LIST)
   if (IS_SYMLINK ${CMAKE_BINARY_DIR}/${fname})
     return()
@@ -114,44 +161,57 @@ function(FILE_TYPE fname BINARY_LIST TEXT_LIST NOEXEC_LIST)
   set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
 endfunction(FILE_TYPE)
 
-# Logic to set up third party dependences (either system installed
-# versions or prepared local versions to be bundled with BRL-CAD.)
+# No matter what, we need to know what's in extinstall
+file(GLOB_RECURSE THIRDPARTY_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
+# Filter out the files removed via STRIP_EXCLUDED
+foreach(ep ${EXCLUDED_PATTERNS})
+  list(FILTER THIRDPARTY_FILES EXCLUDE REGEX ${ep})
+endforeach(ep ${EXCLUDED_PATTERNS})
 
-if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}")
-  message(WARNING "BRLCAD_EXT_INSTALL_DIR is set to ${BRLCAD_EXT_INSTALL_DIR} but that location does not exist.  This will result in only system libraries being used for compilation, with no external dependencies being bundled into installers.")
-endif (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}")
+# If we are repeating a configure process, we need to see what (if anything)
+# has changed.  Rather than get sophisticated about this, we take a brute force
+# approach - if the file list of extinstall differs or anything in extinstall
+# is newer than the local copy, clear all old extinstall file copes and start
+# fresh.
+if (EXISTS "${THIRDPARTY_INVENTORY}")
 
-if (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
-  message(WARNING "BRLCAD_EXT_NOINSTALL_DIR is set to ${BRLCAD_EXT_NOINSTALL_DIR} but that location does not exist.  This means BRL-CAD's build will be dependent on system versions of build tools such as patchelf and astyle being present.")
-endif (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
+  set(THIRDPARTY_CURRENT "${THIRDPARTY_FILES}")
+  file(READ "${THIRDPARTY_INVENTORY}" THIRDPARTY_P)
+  string(REPLACE "\n" ";" THIRDPARTY_PREVIOUS "${THIRDPARTY_P}")
+  set(THIRDPARTY_PREV ${THIRDPARTY_PREVIOUS})
 
-# If we got to extinstall through a symlink, we need to expand it so
-# we can spot the path that would have been used in extinstall files
-file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" BRLCAD_EXT_DIR_REAL EXPAND_TILDE)
+  list(REMOVE_ITEM THIRDPARTY_CURRENT ${THIRDPARTY_PREVIOUS})
+  list(REMOVE_ITEM THIRDPARTY_PREV ${THIRDPARTY_FILES})
 
-# Find the tool we use to scrub EXT paths from files
-find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+  set(RESET_THIRDPARTY FALSE)
+  if (THIRDPARTY_CURRENT OR THIRDPARTY_PREV)
+    set(RESET_THIRDPARTY TRUE)
+  else (THIRDPARTY_CURRENT OR THIRDPARTY_PREV)
+    foreach (ef ${THIRDPARTY_FILES})
+      if (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
+	file(TIMESTAMP "${BRLCAD_EXT_INSTALL_DIR}/${ef}" EXT_TIMESTAMP)
+	file(TIMESTAMP "${CMAKE_BINARY_DIR}/${ef}" LOCAL_TIMESTAMP)
+	message("${BRLCAD_EXT_INSTALL_DIR}/${ef} is newer than ${CMAKE_BINARY_DIR}/${ef}")
+	set(RESET_THIRDPARTY TRUE)
+	break()
+      endif (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
+    endforeach (ef ${THIRDPARTY_FILES})
+  endif (THIRDPARTY_CURRENT OR THIRDPARTY_PREV)
 
-# The relative RPATH is platform specific
-if (APPLE)
-  set(RELATIVE_RPATH ";@loader_path/../${LIB_DIR}")
-else (APPLE)
-  set(RELATIVE_RPATH ":\\$ORIGIN/../${LIB_DIR}")
-endif (APPLE)
+  if (RESET_THIRDPARTY)
+    message("Contents of ${BRLCAD_EXT_INSTALL_DIR} have changed.")
+    message("Clearing previous bundled file copies...")
+    foreach (ef ${THIRDPARTY_PREVIOUS})
+      file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
+    endforeach (ef ${THIRDPARTY_PREVIOUS})
+    file(REMOVE ${THIRDPARTY_INVENTORY})
+    file(REMOVE ${THIRDPARTY_INVENTORY_BINARIES})
+    message("Clearing previous bundled file copies... done.")
+  endif (RESET_THIRDPARTY)
 
-# See if we have patchelf available.  If it is available, we will be using it
-# to manage the RPATH settings for third party exe/lib files.
-find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+endif (EXISTS "${THIRDPARTY_INVENTORY}")
 
-# The first pass through the configure stage, we move the files we want to use
-# into place and prepare them for use with the build.
-
-# TODO - At the moment this is a one-shot affair... if the external directory
-# contents change after the initial configure or the user erases third party
-# elements, we won't catch it.  There are things we can do about that, the
-# question is how much effort to put into it...
-set(THIRDPARTY_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
-set(THIRDPARTY_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
+# Ready for the main work of setting up the bundled library copies.
 if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
 
   # We bulk copy the contents of the BRLCAD_EXT_INSTALL_DIR tree into our own
@@ -166,6 +226,7 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
   # install directories we may have to be more selective about this in the
   # future, but for now let's try simplicity - the less we can couple this
   # logic to the specific contents of extinstall, the better.
+  message("Staging ${BRLCAD_EXT_INSTALL_DIR} third party files in build directory...")
   file(GLOB SDIRS LIST_DIRECTORIES true RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
   foreach(sd ${SDIRS})
     # Bundled up the sub-directory's contents so that the archive will expand with
@@ -203,6 +264,14 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif (CMAKE_CONFIGURATION_TYPES)
 
+  # Unpacking the files doesn't update their timestamps.  If we want to be able to
+  # check if extinstall has changed, we need to make sure the build dir copies are
+  # newer than the extinstall copies for IS_NEWER_THAN testing.
+  foreach(tf ${THIRDPARTY_FILES})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/${tf}")
+  endforeach(tf ${THIRDPARTY_FILES})
+  message("Staging ${BRLCAD_EXT_INSTALL_DIR} third party files in build directory... done.")
+
   # NOTE - we may need to find and redo symlinks, if we get any that are full
   # paths - we expect .so and .so.* style symlinks on some platforms, and there
   # may be others.  If those paths are absolute in BRLCAD_EXT_INSTALL_DIR they will be
@@ -211,17 +280,7 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
   # another machine.  A quick tests suggests we don't have any like that right
   # now, but it's not clear we can count on that...
 
-  # Files copied - build the list of everything we got from extinstall.  Because
-  # CMAKE_BINARY_DIR will have other files than the extinstall contents present,
-  # we build up this list using the original extinstall file contents.
-  file(GLOB_RECURSE THIRDPARTY_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
-
-  # Filter out the files removed via STRIP_EXCLUDED
-  foreach(ep ${EXCLUDED_PATTERNS})
-    list(FILTER THIRDPARTY_FILES EXCLUDE REGEX ${ep})
-  endforeach(ep ${EXCLUDED_PATTERNS})
-
-    # Write the scrubbed list
+    # Write the current third party file list
   string(REPLACE ";" "\n" THIRDPARTY_W "${THIRDPARTY_FILES}")
   file(WRITE "${THIRDPARTY_INVENTORY}" "${THIRDPARTY_W}")
 
