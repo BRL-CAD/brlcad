@@ -130,22 +130,27 @@ _brep_cmd_topo_create_face(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     int surface = atoi(argv[0]);
-    int face = brep_face_create(b_ip->brep, surface);
+    int face_id = brep_face_create(b_ip->brep, surface);
+
+    if (face_id <0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create face\n");
+	return BRLCAD_ERROR;
+    }
 
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
 	return BRLCAD_ERROR;
     }
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "create face! id = %d", face);
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create face! id = %d", face_id);
     return BRLCAD_OK;
 }
 
 static int
 _brep_cmd_topo_create_loop(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> topo create_l <surface_id> <edge1_id> <edge1_orientation> ...";
-    const char *purpose_string = "create a new topology loop for a face with four edges";
+    const char *usage_string = "brep [options] <objname> topo create_l <surface_id>";
+    const char *purpose_string = "create a new topology loop for a face";
     if (_brep_topo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
@@ -153,19 +158,13 @@ _brep_cmd_topo_create_loop(void *bs, int argc, const char **argv)
     struct _ged_brep_itopo *gib = (struct _ged_brep_itopo *)bs;
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     argc--;argv++;
-    if (argc < 1 || (argc - 1) % 2 != 0) {
+    if (argc < 1) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
 	return BRLCAD_ERROR;
     }
     int surface = atoi(argv[0]);
-    std::vector<int> edge_ids;
-    std::vector<int> orientations;
-    for (int i = 1; i < argc; i += 2) {
-	edge_ids.push_back(atoi(argv[i]));
-	orientations.push_back(atoi(argv[i + 1]));
-    }
-    int loop_id = brep_loop_create(b_ip->brep, surface, edge_ids, orientations);
+    int loop_id = brep_loop_create(b_ip->brep, surface);
 
     if (loop_id <0) {
 	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create loop\n");
@@ -178,6 +177,43 @@ _brep_cmd_topo_create_loop(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create loop! id = %d", loop_id);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_topo_create_trim(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> topo create_t <loop_id> <edge_id> <orientation> <para_curve_id>";
+    const char *purpose_string = "create a new topology trim for a loop";
+    if (_brep_topo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_itopo *gib = (struct _ged_brep_itopo *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    if (argc < 4) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+    int loop_id = atoi(argv[0]);
+    int edge_id = atoi(argv[1]);
+    int orientation = atoi(argv[2]);
+    int para_curve_id = atoi(argv[3]);
+    int trim_id = brep_trim_create(b_ip->brep, loop_id, edge_id, orientation, para_curve_id);
+
+    if (trim_id <0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create trim\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create trim! id = %d", trim_id);
     return BRLCAD_OK;
 }
 
@@ -212,6 +248,7 @@ const struct bu_cmdtab _brep_topo_cmds[] = {
     { "create_e",            _brep_cmd_topo_create_edge},
     { "create_f",            _brep_cmd_topo_create_face},
     { "create_l",            _brep_cmd_topo_create_loop},
+    { "create_t",            _brep_cmd_topo_create_trim},
     { (char *)NULL,          NULL}
 };
 

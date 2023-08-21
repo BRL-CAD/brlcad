@@ -252,7 +252,13 @@ extern "C++"
      * create a brep face loop
      */
     BREP_EXPORT extern int
-    brep_loop_create(ON_Brep *brep, int face_id, std::vector<int> e, std::vector<int> eo);
+    brep_loop_create(ON_Brep *brep, int face_id);
+
+    /**
+     * create a trim of a loop
+     */
+    BREP_EXPORT extern int
+    brep_trim_create(ON_Brep *brep, int loop_id, int edge_id, int orientation, int para_curve_id);
 } /* extern C++ */
 #endif
 
