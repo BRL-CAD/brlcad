@@ -447,14 +447,16 @@ function(find_package_reset pname trigger_var)
   if (NOT ${trigger_var})
     return()
   endif (NOT ${trigger_var})
+  unset(${pname}_CONFIG CACHE)
+  unset(${pname}_DEFINITIONS CACHE)
   unset(${pname}_FOUND CACHE)
   unset(${pname}_INCLUDE_DIR CACHE)
   unset(${pname}_INCLUDE_DIRS CACHE)
   unset(${pname}_LIBRARIES CACHE)
   unset(${pname}_LIBRARY CACHE)
-  unset(${pname}_DEFINITIONS CACHE)
+  unset(${pname}_LIBRARY_DEBUG CACHE)
+  unset(${pname}_LIBRARY_RELEASE CACHE)
   unset(${pname}_VERSION_STRING CACHE)
-  unset(${pname}_CONFIG CACHE)
 endfunction(find_package_reset pname trigger_var)
 
 # zlib compression/decompression library
@@ -488,6 +490,9 @@ find_package(NETPBM)
 # libpng - Portable Network Graphics image file support
 # http://www.libpng.org/pub/png/libpng.html
 find_package_reset(PNG RESET_THIRDPARTY)
+if (RESET_THIRDPARTY)
+  unset(PNG_PNG_INCLUDE_DIR CACHE)
+endif (RESET_THIRDPARTY)
 set(PNG_ROOT "${CMAKE_BINARY_DIR}")
 find_package(PNG)
 
