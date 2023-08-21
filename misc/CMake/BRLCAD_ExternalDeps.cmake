@@ -566,6 +566,7 @@ endif (BRLCAD_ENABLE_TK)
 mark_as_advanced(TCL_ENABLE_TK)
 
 find_package_reset(TCL RESET_THIRDPARTY)
+find_package_reset(TK RESET_THIRDPARTY)
 if (RESET_THIRDPARTY)
   unset(TCL_INCLUDE_PATH CACHE)
   unset(TCL_STUB_LIBRARY CACHE)
