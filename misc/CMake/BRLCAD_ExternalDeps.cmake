@@ -457,6 +457,7 @@ function(find_package_reset pname trigger_var)
   unset(${pname}_LIBRARY_DEBUG CACHE)
   unset(${pname}_LIBRARY_RELEASE CACHE)
   unset(${pname}_VERSION_STRING CACHE)
+  unset(${pname}_PREFIX_STR CACHE)
 endfunction(find_package_reset pname trigger_var)
 
 # zlib compression/decompression library
@@ -468,6 +469,9 @@ endfunction(find_package_reset pname trigger_var)
 find_package_reset(ZLIB RESET_THIRDPARTY)
 set(ZLIB_ROOT "${CMAKE_BINARY_DIR}")
 find_package(ZLIB REQUIRED)
+if ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
+  set(Z_PREFIX_STR "brl_" CACHE STRING "Using local zlib" FORCE)
+endif ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
 
 # libregex regular expression matching
 find_package_reset(REGEX RESET_THIRDPARTY)
