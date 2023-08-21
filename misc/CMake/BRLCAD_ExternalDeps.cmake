@@ -35,7 +35,37 @@
 # These patterns are used to identify sets of files where we are assuming we
 # don't need to do post-processing to correct file paths from the external
 # install.
-set(NOPROCESS_PATTERNS ".*/include/.*" ".*/man/.*" ".*/msgs/.*" ".*/encodings/.*")
+set(NOPROCESS_PATTERNS
+  ".*/encodings/.*"
+  ".*/include/.*"
+  ".*/man/.*"
+  ".*/msgs/.*"
+  )
+
+# These patterns are to be excluded from extinstall bundling - i.e., even if
+# present in the specified extinstall directory, BRL-CAD will not incorporate
+# them.  Generally speaking this is used to avoid files needed for external
+# building but counterproductive in the BRL-CAD install.
+set(EXCLUDED_PATTERNS
+  ${LIB_DIR}/itcl4.2.3/itclConfig.sh
+  ${LIB_DIR}/tclConfig.sh
+  ${LIB_DIR}/tdbc1.1.5/tdbcConfig.sh
+  ${LIB_DIR}/tkConfig.sh
+  )
+
+# We may need to scrub excluded files out of multiple copies, so wrap logic
+# to do so into a function
+function(STRIP_EXCLUDED RDIR EXPATTERNS)
+  foreach (ep ${${EXPATTERNS}})
+    file(GLOB_RECURSE MATCHING_FILES LIST_DIRECTORIES false RELATIVE "${RDIR}" "${RDIR}/${ep}")
+    foreach(rf ${MATCHING_FILES})
+      file(REMOVE "${RDIR}/${rf}")
+      if (EXISTS ${RDIR}/${rf})
+	message(FATAL_ERROR "Removing ${RDIR}/${rf} failed")
+      endif (EXISTS ${RDIR}/${rf})
+    endforeach(rf ${MATCHING_FILES})
+  endforeach (ep ${${EXPATTERNS}})
+endfunction(STRIP_EXCLUDED)
 
 # Categorize a file as binary or text
 function(FILE_TYPE fname BINARY_LIST TEXT_LIST NOEXEC_LIST)
@@ -109,6 +139,10 @@ else (APPLE)
   set(RELATIVE_RPATH ":\\$ORIGIN/../${LIB_DIR}")
 endif (APPLE)
 
+# See if we have patchelf available.  If it is available, we will be using it
+# to manage the RPATH settings for third party exe/lib files.
+find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+
 # The first pass through the configure stage, we move the files we want to use
 # into place and prepare them for use with the build.
 
@@ -134,25 +168,40 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
   # logic to the specific contents of extinstall, the better.
   file(GLOB SDIRS LIST_DIRECTORIES true RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
   foreach(sd ${SDIRS})
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${sd})
+    # Bundled up the sub-directory's contents so that the archive will expand with
+    # paths relative to the extinstall root
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar cf ${CMAKE_BINARY_DIR}/${sd}.tar "${BRLCAD_EXT_INSTALL_DIR}/${sd}" WORKING_DIRECTORY "${BRLCAD_EXT_INSTALL_DIR}")
+
+    # Make sure the build directory has the target directory to write to
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${sd})
+
     # Whether we're single or multi config, do a top level decompression to give
     # the install targets a uniform source for all configurations.
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+
+    # For multi-config, we'll also need to decompress once for each active configuration's build dir
+    # so the executables will work locally...
     if (CMAKE_CONFIGURATION_TYPES)
-      # For multi-config, we'll also need to decompress once for each active configuration's build dir
-      # so the executables will work locally...
       foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${sd})
 	execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-	foreach(tclf ${TCL_REMOVE_FILES})
-	  file(REMOVE "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}/${tclf})")
-	endforeach(tclf ${TCL_REMOVE_FILES})
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif (CMAKE_CONFIGURATION_TYPES)
+
+    # Copying complete - remove the archive file
     execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/${sd}.tar)
   endforeach(sd ${SDIRS})
+
+  # The above copy is indiscriminate, so we follow behind it and strip out the
+  # files we don't wish to include
+  STRIP_EXCLUDED("${CMAKE_BINARY_DIR}" EXCLUDED_PATTERNS)
+  if (CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      STRIP_EXCLUDED("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" EXCLUDED_PATTERNS)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif (CMAKE_CONFIGURATION_TYPES)
 
   # NOTE - we may need to find and redo symlinks, if we get any that are full
   # paths - we expect .so and .so.* style symlinks on some platforms, and there
@@ -162,36 +211,19 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
   # another machine.  A quick tests suggests we don't have any like that right
   # now, but it's not clear we can count on that...
 
-  # Files copied - build the list of everything we got from extinstall
+  # Files copied - build the list of everything we got from extinstall.  Because
+  # CMAKE_BINARY_DIR will have other files than the extinstall contents present,
+  # we build up this list using the original extinstall file contents.
   file(GLOB_RECURSE THIRDPARTY_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
 
-  # Tcl config files are problematic in that they contain information valid in
-  # the original build but incorrect for a BRL-CAD install.
-  set(TCL_REMOVE_FILES
-    itcl4.2.3/itclConfig.sh
-    tclConfig.sh
-    tdbc1.1.5/tdbcConfig.sh
-    tkConfig.sh
-    )
-  foreach(tclf ${TCL_REMOVE_FILES})
-    list(REMOVE_ITEM THIRDPARTY_FILES ${LIB_DIR}/${tclf})
-    execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f "${CMAKE_BINARY_DIR}/${LIB_DIR}/${tclf}")
-  endforeach(tclf ${TCL_REMOVE_FILES})
-  if (CMAKE_CONFIGURATION_TYPES)
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      foreach(tclf ${TCL_REMOVE_FILES})
-	execute_process(COMMAND ${CMAKE_COMMAND} -E rm -f "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}/${tclf}")
-      endforeach(tclf ${TCL_REMOVE_FILES})
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  endif (CMAKE_CONFIGURATION_TYPES)
+  # Filter out the files removed via STRIP_EXCLUDED
+  foreach(ep ${EXCLUDED_PATTERNS})
+    list(FILTER THIRDPARTY_FILES EXCLUDE REGEX ${ep})
+  endforeach(ep ${EXCLUDED_PATTERNS})
 
-  # Write the scrubbed list
+    # Write the scrubbed list
   string(REPLACE ";" "\n" THIRDPARTY_W "${THIRDPARTY_FILES}")
   file(WRITE "${THIRDPARTY_INVENTORY}" "${THIRDPARTY_W}")
-
-  # See if we have patchelf available
-  find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
 
   message("Characterizing bundled third party files...")
   # Use various tools to sort out which files are exec/lib files.
@@ -287,7 +319,6 @@ else (NOT EXISTS "${THIRDPARTY_INVENTORY}")
 
   file(STRINGS "${THIRDPARTY_INVENTORY}" THIRDPARTY_FILES)
   file(STRINGS "${THIRDPARTY_INVENTORY_BINARIES}" BINARY_FILES)
-  find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
 
 endif (NOT EXISTS "${THIRDPARTY_INVENTORY}")
 
