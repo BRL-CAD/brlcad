@@ -2064,20 +2064,20 @@ const struct rt_functab OBJ[] = {
 	NULL, /* tess */
 	NULL, /* tnurb */
 	NULL, /* brep */
-	NULL, /* import5 */
+	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_constraint_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_constraint_export5),
 	NULL, /* import4 */
 	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_constraint_ifree),
-	NULL, /* describe */
+	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_constraint_describe),
 	NULL, /* xform */
-	NULL, /* parse */
-	0, /* sizeof(internal) */
-	0, /* magic */
-	NULL, /* get */
-	NULL, /* adjust */
+	rt_constraint_parse,
+	sizeof(struct rt_constraint_internal),
+	RT_CONSTRAINT_MAGIC,
+	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	NULL, /* form */
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_constraint_make),
 	NULL, /* params */
 	NULL, /* bbox */
 	NULL, /* volume */
