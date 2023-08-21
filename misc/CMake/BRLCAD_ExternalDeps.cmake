@@ -434,6 +434,13 @@ foreach(bf ${BINARY_FILES})
   install(CODE "execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
 endforeach(bf ${BINARY_FILES})
 
+# Because extinstall is handled at configure time (and indeed MUST be handled at
+# configure time so find_package results will be correct) we make the CMake
+# process depend on the extinstall files
+foreach (ef ${THIRDPARTY_FILES})
+  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_INSTALL_DIR}/${ef})
+endforeach (ef ${THIRDPARTY_FILES})
+
 # Not all packages will define all of these, but it shouldn't matter - an unset
 # of an unused variable shouldn't be harmful
 function(find_package_reset pname trigger_var)
