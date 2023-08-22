@@ -2549,13 +2549,13 @@ set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utili
 # NOTE: after we require a minimum of 3.19, set CMP0110 NEW and
 # remove the version check
 if (${CMAKE_VERSION} VERSION_LESS "3.19")
-  cmake_policy(SET CMP0110 NEW)
-  add_test(NAME "NOTE: some 'test' tests are expected to fail, 'regress' must pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
-else (${CMAKE_VERSION} VERSION_LESS "3.19")
   if(POLICY CMP0110)
     cmake_policy(SET CMP0110 OLD)
   endif(POLICY CMP0110)
   add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
+else (${CMAKE_VERSION} VERSION_LESS "3.19")
+  cmake_policy(SET CMP0110 NEW)
+  add_test(NAME "NOTE: some 'test' tests are expected to fail, 'regress' must pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
 endif (${CMAKE_VERSION} VERSION_LESS "3.19")
 
 # Local Variables:
