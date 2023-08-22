@@ -878,6 +878,7 @@ main(int argc, const char *argv[])
 		"misc/repowork",
 		"misc/tools",
 		"pkg.h",
+		"src/libdm/wgl/wintk/",
 		"src/libpkg",
 		"src/other/",
 		"~",
