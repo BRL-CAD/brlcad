@@ -101,11 +101,6 @@ if (POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif (POLICY CMP0074)
 
-# Test name character check - need to look into this one...
-if (POLICY CMP0110)
-  cmake_policy(SET CMP0110 OLD)
-endif (POLICY CMP0110)
-
 # cmake_dependent_option() supports full Condition Syntax
 if (POLICY CMP0127)
   cmake_policy(SET CMP0127 NEW)
@@ -2551,11 +2546,17 @@ add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   )
 set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
 
-# NOTE: set to NEW and remove slashes after 3.19 is required
-if(POLICY CMP0110)
-  cmake_policy(SET CMP0110 OLD)
-endif(POLICY CMP0110)
-add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
+# NOTE: after we require a minimum of 3.19, set CMP0110 NEW and
+# remove the version check
+if (${CMAKE_VERSION} VERSION_LESS "3.19")
+  cmake_policy(SET CMP0110 NEW)
+  add_test(NAME "NOTE: some 'test' tests are expected to fail, 'regress' must pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
+else (${CMAKE_VERSION} VERSION_LESS "3.19")
+  if(POLICY CMP0110)
+    cmake_policy(SET CMP0110 OLD)
+  endif(POLICY CMP0110)
+  add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
+endif (${CMAKE_VERSION} VERSION_LESS "3.19")
 
 # Local Variables:
 # tab-width: 8
