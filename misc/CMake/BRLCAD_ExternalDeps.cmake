@@ -461,6 +461,7 @@ function(find_package_reset pname trigger_var)
   if (NOT ${trigger_var})
     return()
   endif (NOT ${trigger_var})
+  unset(${pname}_DIR CACHE)
   unset(${pname}_CONFIG CACHE)
   unset(${pname}_DEFINITIONS CACHE)
   unset(${pname}_FOUND CACHE)
@@ -608,6 +609,65 @@ CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
 # so we set a flag in the configuration header to pass
 # on that information.
 CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TK\n")
+
+# Qt - cross-platform user interface/application development toolkit
+# https://download.qt.io/archive/qt
+if (BRLCAD_ENABLE_QT)
+
+  find_package_reset(Qt5 RESET_THIRDPARTY)
+  find_package_reset(Qt6 RESET_THIRDPARTY)
+
+  set(QtComponents Core Widgets Gui Svg OpenGLWidgets Network)
+  if (BRLCAD_ENABLE_OPENGL)
+    set(QtComponents  ${QtComponents} OpenGL)
+  endif (BRLCAD_ENABLE_OPENGL)
+
+  if (RESET_THIRDPARTY)
+    foreach(qc ${QtComponents})
+      unset(Qt6${qc}_DIR CACHE)
+      unset(Qt6${qc}_FOUND CACHE)
+      unset(Qt5${qc}_DIR CACHE)
+      unset(Qt5${qc}_FOUND CACHE)
+    endforeach(qc ${QtComponents})
+  endif (RESET_THIRDPARTY)
+
+  # First, see if we have a bundled version
+  set(Qt6_DIR_TMP "${Qt6_DIR}")
+  set(Qt6_DIR "${CMAKE_BINARY_DIR}/${LIB_DIR}/cmake/Qt6")
+  set(Qt6_ROOT ${CMAKE_BINARY_DIR})
+  find_package(Qt6 COMPONENTS ${QtComponents})
+  unset(Qt6_ROOT)
+
+  if (NOT Qt6Widgets_FOUND)
+    set(Qt6_DIR "${Qt6_DIR_TMP}")
+    find_package(Qt6 COMPONENTS ${QtComponents})
+  endif (NOT Qt6Widgets_FOUND)
+  if (NOT Qt6Widgets_FOUND)
+    # We didn't find 6, try 5.  For non-standard install locations, you may
+    # need to set the following CMake variables:
+    #
+    # Qt5_DIR=<install_dir>/lib/cmake/Qt5
+    # QT_QMAKE_EXECUTABLE=<install_dir>/bin/qmake
+    # AUTORCC_EXECUTABLE=<install_dir>/bin/rcc
+    find_package(Qt5 COMPONENTS ${QtComponents})
+  endif (NOT Qt6Widgets_FOUND)
+  if (NOT Qt6Widgets_FOUND AND NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+    message("Qt requested, but Qt installation not found - disabling")
+    set(BRLCAD_ENABLE_QT OFF)
+  endif (NOT Qt6Widgets_FOUND AND NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+  if (Qt6Widgets_FOUND)
+    find_package(Qt6 COMPONENTS Test)
+    if (Qt6Test_FOUND)
+      CONFIG_H_APPEND(BRLCAD "#define USE_QTTEST 1\n")
+    endif (Qt6Test_FOUND)
+  endif (Qt6Widgets_FOUND)
+  mark_as_advanced(Qt6Widgets_DIR)
+  mark_as_advanced(Qt6Core_DIR)
+  mark_as_advanced(Qt6Gui_DIR)
+  mark_as_advanced(Qt5Widgets_DIR)
+  mark_as_advanced(Qt5Core_DIR)
+  mark_as_advanced(Qt5Gui_DIR)
+endif (BRLCAD_ENABLE_QT)
 
 # Local Variables:
 # tab-width: 8

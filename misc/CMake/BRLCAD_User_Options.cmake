@@ -214,6 +214,7 @@ mark_as_advanced(BRLCAD_ENABLE_STEP)
 # Enable features requiring Qt
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
+if (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
 if (BRLCAD_ENABLE_QT)
 
   # Note - to use Qt6, set Qt6_DIR to <qt_install_dir>/lib/cmake/Qt6 and CMAKE_PREFIX_PATH
@@ -274,6 +275,7 @@ mark_as_advanced(Qt6Gui_DIR)
 mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
+endif (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
 
 # Enable features requiring OpenSceneGraph
 option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
