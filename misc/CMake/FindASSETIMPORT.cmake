@@ -39,36 +39,31 @@
 #
 #=============================================================================
 
+set(_ASSETIMPORT_SEARCHES)
 
-include (FindPackageHandleStandardArgs)
+# Search ASSETIMPORT_ROOT first if it is set.
+if(ASSETIMPORT_ROOT)
+  set(_ASSETIMPORT_SEARCH_ROOT PATHS ${ASSETIMPORT_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _ASSETIMPORT_SEARCHES _ASSETIMPORT_SEARCH_ROOT)
+endif()
 
-find_path (ASSETIMPORT_INCLUDE_DIR 
-            NAMES assimp/postprocess.h assimp/scene.h assimp/version.h assimp/config.h assimp/cimport.h
-	    PATHS /usr/local/include
-	    PATHS /usr/include/
-            HINTS 
-            ${ASSETIMPORT_ROOT}
-	    PATH_SUFFIXES
-            include
-	)
+set(ASSETIMPORT_NAMES assimp assimpd)
 
-find_library (ASSETIMPORT_LIBRARY
-  	    NAMES assimp
-            PATHS /usr/local/lib/
-	    PATHS /usr/lib64/
-	    PATHS /usr/lib/
-	    HINTS
-	    ${ASSETIMPORT_ROOT}
-	    PATH_SUFFIXES
-            bin
-  	    lib
-	    lib64
-	)
+# Try each search configuration.
+foreach(search ${_ASSETIMPORT_SEARCHES})
+  find_path(ASSETIMPORT_INCLUDE_DIR
+	  NAMES assimp/postprocess.h assimp/scene.h assimp/version.h assimp/config.h assimp/cimport.h
+	  ${${search}} PATH_SUFFIXES include)
+  find_library(ASSETIMPORT_LIBRARY
+	  NAMES ${ASSETIMPORT_NAMES}
+	  ${${search}} PATH_SUFFIXES lib lib64 bin)
+endforeach()
 
 # Handle the QUIETLY and REQUIRED arguments and set assetimport_FOUND.
-find_package_handle_standard_args (ASSETIMPORT DEFAULT_MSG
-    ASSETIMPORT_INCLUDE_DIR
+include (FindPackageHandleStandardArgs)
+find_package_handle_standard_args (ASSETIMPORT REQUIRED_VARS
     ASSETIMPORT_LIBRARY
+    ASSETIMPORT_INCLUDE_DIR
 )
 
 # Set the output variables.
