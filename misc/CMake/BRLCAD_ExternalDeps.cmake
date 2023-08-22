@@ -183,20 +183,25 @@ if (EXISTS "${THIRDPARTY_INVENTORY}")
   list(REMOVE_ITEM THIRDPARTY_CURRENT ${THIRDPARTY_PREVIOUS})
   list(REMOVE_ITEM THIRDPARTY_PREV ${THIRDPARTY_FILES})
 
+  # Unless we have a reason to reset, don't
   set(RESET_THIRDPARTY FALSE)
+
+  # If the directory file lists differ, reset
   if (THIRDPARTY_CURRENT OR THIRDPARTY_PREV)
     set(RESET_THIRDPARTY TRUE)
-  else (THIRDPARTY_CURRENT OR THIRDPARTY_PREV)
+  endif (THIRDPARTY_CURRENT OR THIRDPARTY_PREV)
+
+  # If the lists of files are the same, check the timestamps.  If at least one
+  # extinstall file is newer, need to reset.
+  if (NOT RESET_THIRDPARTY)
     foreach (ef ${THIRDPARTY_FILES})
       if (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
-	file(TIMESTAMP "${BRLCAD_EXT_INSTALL_DIR}/${ef}" EXT_TIMESTAMP)
-	file(TIMESTAMP "${CMAKE_BINARY_DIR}/${ef}" LOCAL_TIMESTAMP)
 	message("${BRLCAD_EXT_INSTALL_DIR}/${ef} is newer than ${CMAKE_BINARY_DIR}/${ef}")
 	set(RESET_THIRDPARTY TRUE)
 	break()
       endif (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
     endforeach (ef ${THIRDPARTY_FILES})
-  endif (THIRDPARTY_CURRENT OR THIRDPARTY_PREV)
+  endif (NOT RESET_THIRDPARTY)
 
   if (RESET_THIRDPARTY)
     message("Contents of ${BRLCAD_EXT_INSTALL_DIR} have changed.")
@@ -204,6 +209,15 @@ if (EXISTS "${THIRDPARTY_INVENTORY}")
     foreach (ef ${THIRDPARTY_PREVIOUS})
       file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
     endforeach (ef ${THIRDPARTY_PREVIOUS})
+    if (CMAKE_CONFIGURATION_TYPES)
+      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
+      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    endif (CMAKE_CONFIGURATION_TYPES)
+
+    # Old contents cleared - remove log files so subsequent logic
+    # knows to copy and process the new contents
     file(REMOVE ${THIRDPARTY_INVENTORY})
     file(REMOVE ${THIRDPARTY_INVENTORY_BINARIES})
     message("Clearing previous bundled file copies... done.")
