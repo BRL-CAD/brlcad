@@ -32,6 +32,7 @@ set(BREP_SRCS
   brep.cpp
   conversion.cpp
   csg.cpp
+  geometry.cpp
   info.cpp
   intersect.cpp
   pick.cpp
