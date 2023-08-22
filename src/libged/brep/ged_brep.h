@@ -96,7 +96,6 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 
 extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 
-extern int brep_curve(struct _ged_brep_info *gb, int argc, const char **argv);
 extern int brep_surface(struct _ged_brep_info *gb, int argc, const char **argv);
 extern int brep_geo(struct _ged_brep_info *gb, int argc, const char **argv);
 extern int brep_topo(struct _ged_brep_info *gb, int argc, const char **argv);
