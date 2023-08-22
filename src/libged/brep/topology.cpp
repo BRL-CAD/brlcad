@@ -55,7 +55,7 @@ _brep_topo_msgs(void *bs, int argc, const char **argv, const char *us, const cha
 static int
 _brep_cmd_topo_create_edge(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> topo create_e <v1> <v2> <c>";
+    const char *usage_string = "brep [options] <objname> topo e_create <v1> <v2> <c>";
     const char *purpose_string = "create a new topology edge, given two vertices and a curve";
     if (_brep_topo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -86,7 +86,7 @@ _brep_cmd_topo_create_edge(void *bs, int argc, const char **argv)
 static int
 _brep_cmd_topo_create_face(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> topo create_f <surface_id>";
+    const char *usage_string = "brep [options] <objname> topo f_create <surface_id>";
     const char *purpose_string = "create a new topology face, given a surface id";
     if (_brep_topo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -120,7 +120,7 @@ _brep_cmd_topo_create_face(void *bs, int argc, const char **argv)
 static int
 _brep_cmd_topo_create_loop(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> topo create_l <surface_id>";
+    const char *usage_string = "brep [options] <objname> topo l_create <surface_id>";
     const char *purpose_string = "create a new topology loop for a face";
     if (_brep_topo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -154,7 +154,7 @@ _brep_cmd_topo_create_loop(void *bs, int argc, const char **argv)
 static int
 _brep_cmd_topo_create_trim(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> topo create_t <loop_id> <edge_id> <orientation> <para_curve_id>";
+    const char *usage_string = "brep [options] <objname> topo t_create <loop_id> <edge_id> <orientation> <para_curve_id>";
     const char *purpose_string = "create a new topology trim for a loop";
     if (_brep_topo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -215,10 +215,10 @@ _brep_topo_help(struct _ged_brep_itopo *bs, int argc, const char **argv)
 }
 
 const struct bu_cmdtab _brep_topo_cmds[] = {
-    { "create_e",            _brep_cmd_topo_create_edge},
-    { "create_f",            _brep_cmd_topo_create_face},
-    { "create_l",            _brep_cmd_topo_create_loop},
-    { "create_t",            _brep_cmd_topo_create_trim},
+    { "e_create",            _brep_cmd_topo_create_edge},
+    { "f_create",            _brep_cmd_topo_create_face},
+    { "l_create",            _brep_cmd_topo_create_loop},
+    { "t_create",            _brep_cmd_topo_create_trim},
     { (char *)NULL,          NULL}
 };
 
