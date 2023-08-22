@@ -120,7 +120,7 @@ _brep_cmd_geo_curve2d_create_line(void *bs, int argc, const char **argv)
 static int
 _brep_cmd_geo_curve3d_create(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> c3_create <x> <y> <z>";
+    const char *usage_string = "brep [options] <objname> geo c3_create <x> <y> <z>";
     const char *purpose_string = "create a new NURBS curve";
     if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -469,7 +469,7 @@ _brep_cmd_geo_curve3d_flip(void *bs, int argc, const char **argv)
 static int
 _brep_cmd_geo_curve3d_insert_knot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> insert_knot <curve_id> <knot_value> <multiplicity>";
+    const char *usage_string = "brep [options] <objname> geo c3_insert_knot <curve_id> <knot_value> <multiplicity>";
     const char *purpose_string = "Insert a knot into a NURBS curve";
     if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -528,7 +528,7 @@ _brep_cmd_geo_curve3d_insert_knot(void *bs, int argc, const char **argv)
 static int
 _brep_cmd_geo_curve3d_trim(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> trim <curve_id> <start_param> <end_param>";
+    const char *usage_string = "brep [options] <objname> geo c3_trim <curve_id> <start_param> <end_param>";
     const char *purpose_string = "trim a NURBS curve using start and end parameters";
     if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -587,7 +587,7 @@ _brep_cmd_geo_curve3d_trim(void *bs, int argc, const char **argv)
 static int
 _brep_cmd_geo_curve3d_split(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> split <curve_id> <param>";
+    const char *usage_string = "brep [options] <objname> geo c3_split <curve_id> <param>";
     const char *purpose_string = "split a NURBS curve into two at a parameter";
     if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -638,7 +638,7 @@ _brep_cmd_geo_curve3d_split(void *bs, int argc, const char **argv)
 static int
 _brep_cmd_geo_curve3d_join(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> join <curve_id_1> <curve_id_2>";
+    const char *usage_string = "brep [options] <objname> geo c3_join <curve_id_1> <curve_id_2>";
     const char *purpose_string = "join end of curve 1 to start of curve 2";
     if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -676,6 +676,491 @@ _brep_cmd_geo_curve3d_join(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "joined curve id %d, old curves deleted.\n", flag);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_create(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_create <x> <y> <z>";
+    const char *purpose_string = "create a new NURBS surface";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    ON_3dPoint position(0, 0, 0);
+    if (argc >= 3) {
+	position = ON_3dPoint(atof(argv[0]), atof(argv[1]), atof(argv[2]));
+    }
+    int surf_id = brep_surface_make(b_ip->brep, position);
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_interp(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_interp <cv_count_x> <cv_1_1_x> <cv_1_1_y> <cv_1_1_z> <cv_1_2_x> <cv_1_2_y> <cv_1_2_z> ...";
+    const char *purpose_string = "create a new NURBS surface";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    if (argc < 3) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    argc--;argv++;
+    // Load and check the number of arguments
+    int cv_count_x = atoi(argv[0]);
+    int cv_count_y = atoi(argv[1]);
+    if (cv_count_x <= 2 || cv_count_y <= 2) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid cv_count, cv_count >= 3\n");
+	return BRLCAD_ERROR;
+    }
+    
+    if (argc < 2 + (cv_count_x *cv_count_y) * 3) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments, you need to input %d more args about control 	vertices\n", 2 + (cv_count_x * cv_count_y) * 3 - argc);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+
+    std::vector<ON_3dPoint> points;
+    for (int i = 0; i < (cv_count_x * cv_count_y); i++) {
+	ON_3dPoint p;
+	p.x = atof(argv[2 + i * 3]);
+	p.y = atof(argv[2 + i * 3 + 1]);
+	p.z = atof(argv[2 + i * 3 + 2]);
+	points.push_back(p);
+    }
+    int surface_id = brep_surface_interpCrv(b_ip->brep, cv_count_x, cv_count_y, points);
+    if(surface_id < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create surface\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surface_id);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_copy(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_copy <surface_id>";
+    const char *purpose_string = "copy a NURBS surface";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    if (argc < 2) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    int surface_id = atoi(argv[1]);
+
+    if (surface_id < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid surface_id\n");
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    int res = brep_surface_copy(b_ip->brep, surface_id);
+    if (res < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to copy surface\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "successful copy surface! new surface id = %d", res);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_birail(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_birail <curve_id_1> <curve_id_2>";
+    const char *purpose_string = "create a new NURBS surface using two curves";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    if (argc != 2) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
+    }
+    int curve_id_1 = atoi(argv[0]);
+    int curve_id_2 = atoi(argv[1]);
+    int surf_id = brep_surface_create_ruled(b_ip->brep, curve_id_1, curve_id_2);
+    if (surf_id < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create surface\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_remove(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_remove <surface_id>";
+    const char *purpose_string = "remove a NURBS surface";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    argc--;argv++;
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    if (argc < 1) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    bool flag = brep_surface_remove(b_ip->brep, atoi(argv[0]));
+    if (!flag) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to remove surface %s\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_move(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_move <surface_id> <x> <y> <z>";
+    const char *purpose_string = "move a NURBS surface to a specified position";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    argc--;argv++;
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    if (argc < 4) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    ON_3dPoint p = ON_3dPoint(atof(argv[1]), atof(argv[2]), atof(argv[3]));
+    bool flag = brep_surface_move(b_ip->brep, atoi(argv[0]), p);
+    if (!flag) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to move surface %s\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_set_cv(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_set_cv <surface_id> <cv_id_u> <cv_id_v> <x> <y> <z> [<w>]";
+    const char *purpose_string = "set a control vertex of a NURBS surface to a specified position";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    argc--;argv++;
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    if (argc < 6) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    ON_4dPoint p = ON_4dPoint(atof(argv[3]), atof(argv[4]), atof(argv[5]), argc == 7 ? atof(argv[6]) : 1);
+    bool flag = brep_surface_set_cv(b_ip->brep, atoi(argv[0]), atoi(argv[1]), atoi(argv[2]), p);
+    if (!flag) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to move surface cv \n");
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_trim(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_trim <surface_id> <dir> <start_param> <end_param>";
+    const char *purpose_string = "trim a NURBS surface using start and end parameters.";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+    argc--;argv++;
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    if (argc < 4) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    int surface_id = atoi(argv[0]);
+    int dir = atoi(argv[1]);
+    double start_param = atof(argv[2]);
+    double end_param = atof(argv[3]);
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    bool flag = brep_surface_trim(b_ip->brep, surface_id, dir, start_param, end_param);
+    if (!flag) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to trim surface %s\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_split(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_split <surface_id> <dir> <param>";
+    const char *purpose_string = "split a NURBS surface into two given a parameter value.";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+    argc--;argv++;
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    if (argc < 3) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
+    }
+
+    int surface_id = atoi(argv[0]);
+    int dir = atoi(argv[1]);
+    double param = atof(argv[2]);
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    bool flag = brep_surface_split(b_ip->brep, surface_id, dir, param);
+    if (!flag) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to split the surface %s\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_tensor_product(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_tensor <curve_id_1> <curve_id_2>";
+    const char *purpose_string = "create a new NURBS surface by extruding the first curve along the second curve.";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    if (argc != 2) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
+    }
+    int curve_id_1 = atoi(argv[0]);
+    int curve_id_2 = atoi(argv[1]);
+    int surf_id = brep_surface_tensor_product(b_ip->brep, curve_id_1, curve_id_2);
+    if (surf_id < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, ": failed to create surface\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_revolution(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_revolution <curve_id> <start_x> <start_y> <start_z> <end_x> <end_y> <end_z> [<angle>]";
+    const char *purpose_string = "create a new NURBS surface by rotating a curve around an axis by an angle.";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    if (argc < 7) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, " not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
+    }
+    int curve_id_1 = atoi(argv[0]);
+    ON_3dPoint line_start(atof(argv[1]), atof(argv[2]), atof(argv[3]));
+    ON_3dPoint line_end(atof(argv[4]), atof(argv[5]), atof(argv[6]));
+    double angle = 2 * ON_PI;
+    if(argc == 8) {
+	angle = atof(argv[7]);
+    }
+    int surf_id = brep_surface_revolution(b_ip->brep, curve_id_1, line_start, line_end, angle);
+    if (surf_id < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create surface\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create surface! id = %d", surf_id);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_extract_vertex(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_ext_v <surface_id> <u> <v>";
+    const char *purpose_string = "extract a vertex from a NURBS surface";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    
+    if (argc < 3) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+    
+    int surface_id = atoi(argv[0]);
+    double u = atof(argv[1]);
+    double v = atof(argv[2]);
+    int vertex_id = brep_surface_extract_vertex(b_ip->brep, surface_id, u, v);
+
+    if(vertex_id < 0) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create vertex\n");
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create vertex! id = %d", vertex_id);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_surface_extract_curve(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo s_ext_c3 <surface_id> <dir> <param>";
+    const char *purpose_string = "extract a curve from a NURBS surface";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    
+    if (argc < 3) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+    
+    int surface_id = atoi(argv[0]);
+    int dir = atoi(argv[1]);
+    double param = atof(argv[2]);
+    int curve_id = brep_surface_extract_curve(b_ip->brep, surface_id, dir, param);
+
+    if(curve_id < 0) {
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create curve\n");
+    return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "create curve! id = %d", curve_id);
     return BRLCAD_OK;
 }
 
@@ -720,6 +1205,19 @@ const struct bu_cmdtab _brep_geo_cmds[] = {
     { "c3_trim",                _brep_cmd_geo_curve3d_trim},
     { "c3_split",               _brep_cmd_geo_curve3d_split},
     { "c3_join",                _brep_cmd_geo_curve3d_join},
+    { "s_create",               _brep_cmd_geo_surface_create},
+    { "s_interp",               _brep_cmd_geo_surface_interp},
+    { "s_copy",                 _brep_cmd_geo_surface_copy},
+    { "s_birail",               _brep_cmd_geo_surface_birail},
+    { "s_remove",               _brep_cmd_geo_surface_remove},
+    { "s_move",                 _brep_cmd_geo_surface_move},
+    { "s_set_cv",               _brep_cmd_geo_surface_set_cv},
+    { "s_trim",                 _brep_cmd_geo_surface_trim},
+    { "s_split",                _brep_cmd_geo_surface_split},
+    { "s_tensor",               _brep_cmd_geo_surface_tensor_product},
+    { "s_revolution",           _brep_cmd_geo_surface_revolution},
+    { "s_ext_v",                _brep_cmd_geo_surface_extract_vertex},
+    { "s_ext_c3",               _brep_cmd_geo_surface_extract_curve},
     { (char *)NULL,             NULL}
 };
 

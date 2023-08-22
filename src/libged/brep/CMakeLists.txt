@@ -36,7 +36,6 @@ set(BREP_SRCS
   intersect.cpp
   pick.cpp
   plot.cpp
-  surface.cpp
   topology.cpp
   tikz.cpp
   valid.cpp
