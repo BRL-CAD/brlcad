@@ -237,6 +237,12 @@ extern "C++"
     brep_vertex_create(ON_Brep *brep, ON_3dPoint point);
 
     /**
+     * remove a brep vertex
+     */
+    BREP_EXPORT extern bool
+    brep_vertex_remove(ON_Brep *brep, int v_id);
+
+    /**
      * create a brep edge
      */
     BREP_EXPORT extern int

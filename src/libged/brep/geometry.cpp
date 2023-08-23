@@ -56,7 +56,7 @@ static int
 _brep_cmd_geo_vertex_create(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> geo v_create <x> <y> <z>";
-    const char *purpose_string = "create a new NURBS vertex";
+    const char *purpose_string = "create a new vertex";
     if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
     }
@@ -78,6 +78,39 @@ _brep_cmd_geo_vertex_create(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
     bu_vls_printf(gib->gb->gedp->ged_result_str, "create vertex! id = %d", vertex);
+    return BRLCAD_OK;
+}
+
+static int
+_brep_cmd_geo_vertex_remove(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> geo v_remove <v_id>";
+    const char *purpose_string = "remove a vertex";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+    argc--;argv++;
+    if (argc < 1) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	return BRLCAD_ERROR;
+    }
+    int v_id = atoi(argv[0]);
+    bool res = brep_vertex_remove(b_ip->brep, v_id);
+    if (!res) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to remove vertex %s\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+    // Make the new one
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "remove vertex %d", v_id);
     return BRLCAD_OK;
 }
 
@@ -1192,6 +1225,7 @@ _brep_geo_help(struct _ged_brep_igeo *bs, int argc, const char **argv)
 
 const struct bu_cmdtab _brep_geo_cmds[] = {
     { "v_create",               _brep_cmd_geo_vertex_create},
+    { "v_remove",               _brep_cmd_geo_vertex_remove},
     { "c2_create_line",         _brep_cmd_geo_curve2d_create_line},
     { "c3_create",              _brep_cmd_geo_curve3d_create},
     { "c3_in",                  _brep_cmd_geo_curve3d_in},

@@ -533,6 +533,16 @@ int brep_vertex_create(ON_Brep *brep, ON_3dPoint point)
     return brep->m_V.Count() - 1;
 }
 
+bool brep_vertex_remove(ON_Brep *brep, int v_id)
+{
+    if (v_id < 0 || v_id >= brep->m_V.Count()) {
+	bu_log("v_id is out of range\n");
+	return false;
+    }
+    brep->m_V.Remove(v_id);
+    return true;
+}
+
 int brep_edge_create(ON_Brep *brep, int from, int to, int curve)
 {
     ON_BrepVertex& v0 = brep->m_V[from];
