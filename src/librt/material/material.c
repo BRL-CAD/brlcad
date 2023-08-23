@@ -305,6 +305,76 @@ rt_material_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     BU_AVS_INIT(&ip->thermalProperties);
 }
 
+int
+rt_material_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
+{
+    struct rt_material_internal *material = (struct rt_material_internal *)intern->idb_ptr;
+
+    while (argv && argc >= 2) {
+        const char* prop = *argv++;
+        argc--;
+
+        if (BU_STR_EQUAL(prop, "name")) {
+            BU_VLS_INIT(&material->name);
+            bu_vls_strcpy(&material->name, *argv++);
+            argc--;
+        } else if (BU_STR_EQUAL(prop, "parent")) {
+            BU_VLS_INIT(&material->parent);
+            bu_vls_strcpy(&material->parent, *argv++);
+            argc--;
+        } else if (BU_STR_EQUAL(prop, "source")) {
+            BU_VLS_INIT(&material->source);
+            bu_vls_strcpy(&material->source, *argv++);
+            argc--;
+        } else if (BU_STR_EQUAL(prop, "physical")) {
+            if (argc < 2) {
+                bu_vls_printf(logstr, "Error: (%s) requres sub_property / value pair", prop);
+                return BRLCAD_ERROR;
+            }
+            const char* attr = *argv++;
+            const char* val = *argv++;
+            bu_avs_remove(&material->physicalProperties, attr);
+            bu_avs_add(&material->physicalProperties, attr, val);
+            argc -= 2;
+        }  else if (BU_STR_EQUAL(prop, "mechanical")) {
+            if (argc < 2) {
+                bu_vls_printf(logstr, "Error: (%s) requres sub_property / value pair", prop);
+                return BRLCAD_ERROR;
+            }
+            const char* attr = *argv++;
+            const char* val = *argv++;
+            bu_avs_remove(&material->mechanicalProperties, attr);
+            bu_avs_add(&material->mechanicalProperties, attr, val);
+            argc -= 2;
+        } else if (BU_STR_EQUAL(prop, "optical")) {
+            if (argc < 2) {
+                bu_vls_printf(logstr, "Error: (%s) requres sub_property / value pair", prop);
+                return BRLCAD_ERROR;
+            }
+            const char* attr = *argv++;
+            const char* val = *argv++;
+            bu_avs_remove(&material->opticalProperties, attr);
+            bu_avs_add(&material->opticalProperties, attr, val);
+            argc -= 2;
+        } else if (BU_STR_EQUAL(prop, "thermal")) {
+            if (argc < 2) {
+                bu_vls_printf(logstr, "Error: (%s) requres sub_property / value pair", prop);
+                return BRLCAD_ERROR;
+            }
+            const char* attr = *argv++;
+            const char* val = *argv++;
+            bu_avs_remove(&material->thermalProperties, attr);
+            bu_avs_add(&material->thermalProperties, attr, val);
+            argc -= 2;
+        } else {
+            bu_vls_printf(logstr, "an error occurred finding the material property group: (%s)", prop);
+            return BRLCAD_ERROR;
+        }
+    }
+
+    return BRLCAD_OK;
+}
+
 
 /**
  * Make human-readable formatted presentation of this object.  First

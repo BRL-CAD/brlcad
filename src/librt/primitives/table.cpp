@@ -2406,7 +2406,7 @@ const struct rt_functab OBJ[] = {
 	0, /* sizeof(internal) */
 	RT_MATERIAL_MAGIC,
 	NULL, /* get */
-	NULL, /* adjust */
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_material_adjust),
 	NULL, /* form */
 	RTFUNCTAB_FUNC_MAKE_CAST(rt_material_make),
 	NULL, /* params */
