@@ -281,6 +281,30 @@ int rt_material_export5(struct bu_external *ep, const struct rt_db_internal *ip,
     return 0; /* OK */
 }
 
+void
+rt_material_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_material_internal* ip;
+
+    intern->idb_type = ID_MATERIAL;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ip, struct rt_material_internal);
+    intern->idb_ptr = (void *)ip;
+
+    ip->magic = RT_MATERIAL_MAGIC;
+    BU_VLS_INIT(&ip->name);
+    BU_VLS_INIT(&ip->parent);
+    BU_VLS_INIT(&ip->source);
+    BU_AVS_INIT(&ip->physicalProperties);
+    BU_AVS_INIT(&ip->mechanicalProperties);
+    BU_AVS_INIT(&ip->opticalProperties);
+    BU_AVS_INIT(&ip->thermalProperties);
+}
+
 
 /**
  * Make human-readable formatted presentation of this object.  First

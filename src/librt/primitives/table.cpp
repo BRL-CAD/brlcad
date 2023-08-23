@@ -2404,11 +2404,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* xform */
 	NULL, /* parse */
 	0, /* sizeof(internal) */
-	0, /* magic */
+	RT_MATERIAL_MAGIC,
 	NULL, /* get */
 	NULL, /* adjust */
 	NULL, /* form */
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_material_make),
 	NULL, /* params */
 	NULL, /* bbox */
 	NULL, /* volume */
