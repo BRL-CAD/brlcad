@@ -49,25 +49,37 @@ extern "C++"
 #include <vector>
 
     /**
-     * create a nurbs curve using a template.
-     * position can be specified if position != NULL
-     * return id of the curve
+     * create a brep vertex
      */
     BREP_EXPORT extern int
-    brep_curve_make(ON_Brep *brep, const ON_3dPoint &position);
+    brep_vertex_create(ON_Brep *brep, ON_3dPoint point);
+
+    /**
+     * remove a brep vertex
+     */
+    BREP_EXPORT extern bool
+    brep_vertex_remove(ON_Brep *brep, int v_id);
 
     /**
      * create a 2D parameter space geometric line
      * return id of the curve2d
      */
     BREP_EXPORT extern int
-    brep_curve_make_2dline(ON_Brep *brep, const ON_2dPoint &start, const ON_2dPoint &end);
+    brep_curve2d_make_line(ON_Brep *brep, const ON_2dPoint &start, const ON_2dPoint &end);
 
     /**
      * remove a curve2d from brep
      */
     BREP_EXPORT extern bool 
     brep_curve2d_remove(ON_Brep *brep, int curve_id);
+
+    /**
+     * create a nurbs curve using a template.
+     * position can be specified if position != NULL
+     * return id of the curve
+     */
+    BREP_EXPORT extern int
+    brep_curve_make(ON_Brep *brep, const ON_3dPoint &position);
 
     /**
      * create a nurbs curve given detailed information
@@ -235,18 +247,6 @@ extern "C++"
      */
     BREP_EXPORT extern bool
     brep_surface_remove(ON_Brep *brep, int surface_id);
-
-    /**
-     * create a brep vertex
-     */
-    BREP_EXPORT extern int
-    brep_vertex_create(ON_Brep *brep, ON_3dPoint point);
-
-    /**
-     * remove a brep vertex
-     */
-    BREP_EXPORT extern bool
-    brep_vertex_remove(ON_Brep *brep, int v_id);
 
     /**
      * create a brep edge

@@ -139,7 +139,7 @@ _brep_cmd_geo_curve2d_create_line(void *bs, int argc, const char **argv)
     ON_2dPoint to(atof(argv[2]), atof(argv[3]));
 
     // Create a 2d line
-    int curve_id = brep_curve_make_2dline(b_ip->brep, from, to);
+    int curve_id = brep_curve2d_make_line(b_ip->brep, from, to);
 
     // Update object in database
     struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);

@@ -34,6 +34,41 @@ void *brep_create()
     return (void *)brep;
 }
 
+int brep_vertex_create(ON_Brep *brep, ON_3dPoint point)
+{
+    ON_BrepVertex& v = brep->NewVertex(point);
+    v.m_tolerance = 0.0;
+    return brep->m_V.Count() - 1;
+}
+
+bool brep_vertex_remove(ON_Brep *brep, int v_id)
+{
+    if (v_id < 0 || v_id >= brep->m_V.Count()) {
+	bu_log("v_id is out of range\n");
+	return false;
+    }
+    brep->m_V.Remove(v_id);
+    return true;
+}
+
+int brep_curve2d_make_line(ON_Brep *brep, const ON_2dPoint &from, const ON_2dPoint &to)
+{
+    ON_Curve* c2 = new ON_LineCurve(from, to);
+    c2->SetDomain(0.0, 1.0);
+    brep->m_C2.Append(c2);
+    return brep->m_C2.Count() - 1;
+}
+
+bool brep_curve2d_remove(ON_Brep *brep, int curve_id)
+{
+    if (curve_id < 0 || curve_id >= brep->m_C2.Count()) {
+	bu_log("curve_id is out of range\n");
+	return false;
+    }
+    brep->m_C2.Remove(curve_id);
+    return true;
+}
+
 int brep_curve_make(ON_Brep *brep, const ON_3dPoint &position)
 {
     ON_NurbsCurve *curve = ON_NurbsCurve::New(3, true, 3, 4);
@@ -44,25 +79,6 @@ int brep_curve_make(ON_Brep *brep, const ON_3dPoint &position)
     curve->MakeClampedUniformKnotVector();
     curve->Translate(position);
     return brep->AddEdgeCurve(curve);
-}
-
-int brep_curve_make_2dline(ON_Brep *brep, const ON_2dPoint &from, const ON_2dPoint &to)
-{
-    ON_Curve* c2 = new ON_LineCurve(from, to);
-    c2->SetDomain(0.0, 1.0);
-    brep->m_C2.Append(c2);
-    return brep->m_C2.Count() - 1;
-}
-
-
-bool brep_curve2d_remove(ON_Brep *brep, int curve_id)
-{
-    if (curve_id < 0 || curve_id >= brep->m_C2.Count()) {
-	bu_log("curve_id is out of range\n");
-	return false;
-    }
-    brep->m_C2.Remove(curve_id);
-    return true;
 }
 
 // TODO: add more options about knot vector
@@ -534,23 +550,6 @@ bool brep_surface_remove(ON_Brep *brep, int surface_id)
 	return false;
     }
     brep->m_S.Remove(surface_id);
-    return true;
-}
-
-int brep_vertex_create(ON_Brep *brep, ON_3dPoint point)
-{
-    ON_BrepVertex& v = brep->NewVertex(point);
-    v.m_tolerance = 0.0;
-    return brep->m_V.Count() - 1;
-}
-
-bool brep_vertex_remove(ON_Brep *brep, int v_id)
-{
-    if (v_id < 0 || v_id >= brep->m_V.Count()) {
-	bu_log("v_id is out of range\n");
-	return false;
-    }
-    brep->m_V.Remove(v_id);
     return true;
 }
 
