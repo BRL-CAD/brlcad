@@ -62,6 +62,8 @@ find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BI
 if (APPLE)
   set(RELATIVE_RPATH ";@loader_path/../${LIB_DIR}")
 else (APPLE)
+  # TODO - this is inadequate.  For things like Qt plugins or libdm plugins, the ORIGIN
+  # path we set here is incorrect.  Need to get more sophisticated about this...
   set(RELATIVE_RPATH ":\\$ORIGIN/../${LIB_DIR}")
 endif (APPLE)
 
