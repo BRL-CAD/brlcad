@@ -343,8 +343,15 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
 	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
       elseif (APPLE)
+	# ARRRRRGH.  It looks like OSX security features (particularly on ARM64) may be interfering
+	# with this trick:  https://developer.apple.com/documentation/security/updating_mac_software
+	# See if https://developer.apple.com/documentation/xcode/embedding-nonstandard-code-structures-in-a-bundle
+	# helps...
+	execute_process(COMMAND codesign --remove-signature ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR} OUTPUT_VARIABLE )
 	execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR} OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
 	execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+	# Trying https://stackoverflow.com/questions/71744856/install-name-tool-errors-on-arm64
+	execute_process(COMMAND codesign --force -s - ${lf})
       endif (PATCHELF_EXECUTABLE)
       # RPATH updates are complete - now clear out any other stale paths in the file
       #message("${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR}/${lf} ${BRLCAD_EXT_DIR_REAL}/${LIB_DIR} ${BRLCAD_EXT_DIR_REAL}/${BIN_DIR} ${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR} ${BRLCAD_EXT_DIR_REAL}/")
@@ -362,8 +369,10 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
 	  execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
 	  execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
 	elseif (APPLE)
+	  execute_process(COMMAND codesign --remove-signature ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR} OUTPUT_VARIABLE )
 	  execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
 	  execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
+	  execute_process(COMMAND codesign --force -s - ${lf})
 	endif (PATCHELF_EXECUTABLE)
 	# RPATH updates are complete - now clear out any other stale paths in the file
 	execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}" "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/")
@@ -455,8 +464,11 @@ foreach(bf ${BINARY_FILES})
     install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
     install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${REL_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
   elseif (APPLE)
+    install(CODE "execute_process(COMMAND codesign --remove-signature \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
     install(CODE "execute_process(COMMAND install_name_tool -delete_rpath \"${CMAKE_BINARY_DIR}/${LIB_DIR}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)")
     install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${REL_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
+    # Trying https://stackoverflow.com/questions/71744856/install-name-tool-errors-on-arm64
+    install(CODE "execute_process(COMMAND codesign --force -s - \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
   endif (PATCHELF_EXECUTABLE)
   # Overwrite any stale paths in the binary files with null chars, to make sure
   # they're not interfering with the behavior of the final executables.
