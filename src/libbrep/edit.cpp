@@ -572,6 +572,17 @@ int brep_face_create(ON_Brep *brep, int surface)
     return brep->m_F.Count() - 1;
 }
 
+bool brep_face_reverse(ON_Brep *brep, int face)
+{
+    if(face < 0 || face >= brep->m_F.Count()) {
+    bu_log("face is out of range\n");
+    return false;
+    }
+    ON_BrepFace& f = brep->m_F[face];
+    f.m_bRev = !f.m_bRev;
+    return true;
+}
+
 ON_Curve* getEdgeCurve(const ON_Surface& s, int side)
 {
     ON_2dPoint from, to;

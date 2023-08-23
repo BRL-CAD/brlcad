@@ -261,6 +261,12 @@ extern "C++"
     brep_face_create(ON_Brep *brep, int surface);
 
     /**
+     * reverse a brep face
+     */
+    BREP_EXPORT extern bool
+    brep_face_reverse(ON_Brep *brep, int face);
+
+    /**
      * create a brep face loop
      */
     BREP_EXPORT extern int
