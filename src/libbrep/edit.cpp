@@ -50,8 +50,19 @@ int brep_curve_make_2dline(ON_Brep *brep, const ON_2dPoint &from, const ON_2dPoi
 {
     ON_Curve* c2 = new ON_LineCurve(from, to);
     c2->SetDomain(0.0, 1.0);
-	brep->m_C2.Append(c2);
-	return brep->m_C2.Count() - 1;
+    brep->m_C2.Append(c2);
+    return brep->m_C2.Count() - 1;
+}
+
+
+bool brep_curve2d_remove(ON_Brep *brep, int curve_id)
+{
+    if (curve_id < 0 || curve_id >= brep->m_C2.Count()) {
+	bu_log("curve_id is out of range\n");
+	return false;
+    }
+    brep->m_C2.Remove(curve_id);
+    return true;
 }
 
 // TODO: add more options about knot vector

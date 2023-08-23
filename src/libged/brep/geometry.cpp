@@ -151,6 +151,45 @@ _brep_cmd_geo_curve2d_create_line(void *bs, int argc, const char **argv)
 }
 
 static int
+_brep_cmd_geo_curve2d_remove(void *bs, int argc, const char **argv)
+{
+
+    const char *usage_string = "brep [options] <objname> geo remove <curve_id>";
+    const char *purpose_string = "remove a 2D parameter space geometric curve";
+    if (_brep_geo_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
+
+    argc--;argv++;
+
+    if (argc != 1) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
+    }
+    
+    int curve_id = atoi(argv[0]);
+
+    // Create a 2d line
+    bool res = brep_curve2d_remove(b_ip->brep, curve_id);
+    if (!res) {
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to remove curve %s\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    // Update object in database
+    struct rt_wdb *wdbp = wdb_dbopen(gib->gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    if (mk_brep(wdbp, gib->gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return BRLCAD_ERROR;
+    }
+    bu_vls_printf(gib->gb->gedp->ged_result_str, "remove C2 curve %d", curve_id);
+    return BRLCAD_OK;
+}
+
+static int
 _brep_cmd_geo_curve3d_create(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> geo c3_create <x> <y> <z>";
@@ -1227,6 +1266,7 @@ const struct bu_cmdtab _brep_geo_cmds[] = {
     { "v_create",               _brep_cmd_geo_vertex_create},
     { "v_remove",               _brep_cmd_geo_vertex_remove},
     { "c2_create_line",         _brep_cmd_geo_curve2d_create_line},
+    { "c2_remove",              _brep_cmd_geo_curve2d_remove},
     { "c3_create",              _brep_cmd_geo_curve3d_create},
     { "c3_in",                  _brep_cmd_geo_curve3d_in},
     { "c3_interp",              _brep_cmd_geo_curve3d_interp},

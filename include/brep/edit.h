@@ -64,6 +64,12 @@ extern "C++"
     brep_curve_make_2dline(ON_Brep *brep, const ON_2dPoint &start, const ON_2dPoint &end);
 
     /**
+     * remove a curve2d from brep
+     */
+    BREP_EXPORT extern bool 
+    brep_curve2d_remove(ON_Brep *brep, int curve_id);
+
+    /**
      * create a nurbs curve given detailed information
      * return id of the curve
      */
