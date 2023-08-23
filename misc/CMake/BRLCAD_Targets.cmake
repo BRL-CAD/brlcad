@@ -211,12 +211,7 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
     endif(NOT WIN32 AND NOT E_TEST_USESDATA)
   else(E_NO_INSTALL OR E_TEST)
     if (NOT E_TEST_USESDATA)
-      # Primary install rule
       install(TARGETS ${execname} DESTINATION ${BIN_DIR})
-      # Set the RPATH target property
-      set_property(TARGET ${execname} PROPERTY INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../${LIB_DIR}")
-      # For OSX, set the INSTALL_NAME_DIR target property
-      set_property(TARGET ${execname} PROPERTY INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR};@loader/../${LIB_DIR}")
     endif (NOT E_TEST_USESDATA)
   endif(E_NO_INSTALL OR E_TEST)
 
@@ -385,10 +380,6 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
         RUNTIME DESTINATION ${BIN_DIR}
         LIBRARY DESTINATION ${LIB_DIR}
         ARCHIVE DESTINATION ${LIB_DIR})
-      # Set the RPATH target property
-      set_property(TARGET ${libname} PROPERTY INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../${LIB_DIR}")
-      # For OSX, set the INSTALL_NAME_DIR target property
-      set_property(TARGET ${libname} PROPERTY INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR};@loader/../${LIB_DIR}")
     endif(NOT L_NO_INSTALL)
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 
