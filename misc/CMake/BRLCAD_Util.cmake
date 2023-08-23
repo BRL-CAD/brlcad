@@ -142,6 +142,11 @@ function(PLUGIN_SETUP plugin_targets subdir)
       RUNTIME DESTINATION ${LIBEXEC_DIR}/${subdir}
       LIBRARY DESTINATION ${LIBEXEC_DIR}/${subdir}
       ARCHIVE DESTINATION ${LIBEXEC_DIR}/${subdir})
+    # Set the RPATH target property
+    set_property(TARGET ${target_name} PROPERTY INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../../${LIB_DIR}")
+    # For OSX, set the INSTALL_NAME_DIR target property
+    set_property(TARGET ${target_name} PROPERTY INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR};@loader/../../${LIB_DIR}")
+
   endforeach (target_name${plugins})
 endfunction(PLUGIN_SETUP)
 

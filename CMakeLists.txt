@@ -282,36 +282,60 @@ endif (IS_DIRECTORY /usr/local)
 include(BRLCAD_Install_Prefix)
 
 #---------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.  Thanks to plplot for
-# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
-# Documentation of these options is available at
-# http://www.cmake.org/Wiki/CMake_RPATH_handling
-if (NOT COMMAND std_build_rpath)
-  include(RPath_Setup)
-endif (NOT COMMAND std_build_rpath)
+# RPath is used on platforms such as Linux to allow programs to be
+# relocatable.  It is also used to help programs run from their
+# positions in the build directory.
+#
+# Managing this is somewhat involved - there are lots of situations
+# where the logic will work because of a full path present in the
+# rpath settings and mask a problem with the relative lookup.
 
 # We want the full RPATH set in the build tree so we can run programs without
 # needing to set LD_LIBRARY_PATH
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 
-# We DON'T want the final install directory RPATH set in the build directory
-# - it should only be set to the installation value when actually installed.
+# We DON'T want the final install directory RPATH set in the build directory -
+# it should only be set to the installation value when actually installed.
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 
 # Add the automatically determined parts of the RPATH which point to
 # directories outside the build tree to the install RPATH
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# Set RPATH value to use when installing.  This should be set to always
-# prefer the version in the installed path when possible, but fall back on a
-# location relative to the loading file's path if the installed version is
-# not present.  How to do so is platform specific.
-relative_rpath(RELPATH)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}")
+# The following logic is what allows binaries to run successfully in the build
+# directory AND install directory.  Thanks to plplot for identifying the
+# necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.  Documentation of these
+# options is available at http://www.cmake.org/Wiki/CMake_RPATH_handling
+#
+# TODO - it looks like this doesn't work reliably with relocation - for the new
+# ext setup, let's see if we can solve the per-target usage of the
+# INSTALL_RPATH property for a more precise solution.
+if (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+  if (NOT COMMAND std_build_rpath)
+    include(RPath_Setup)
+  endif (NOT COMMAND std_build_rpath)
 
-std_build_rpath()
+  # Set RPATH value to use when installing.  This should be set to always
+  # prefer the version in the installed path when possible, but fall back on a
+  # location relative to the loading file's path if the installed version is
+  # not present.  How to do so is platform specific.
+  relative_rpath(RELPATH)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}")
 
+  std_build_rpath()
+else (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+
+  # This will need to be overridden for some targets that have a different
+  # relative position to LIB_DIR using the INSTALL_RPATH target property.
+  # However, we can cover the most common case for RPATH setting using the
+  # global default.
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../${LIB_DIR}")
+  # For OSX, use the INSTALL_NAME_DIR target property
+  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR};@loader/../${LIB_DIR}")
+
+endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+
+#---------------------------------------------------------------------
 # For certain platforms (in particular Visual C++) we want to keep some pre-defined
 # flags that are commonly used in the build logic.
 if(NOT DEFINED CMAKE_C_FLAGS_DEFAULT)

@@ -58,14 +58,30 @@ set(THIRDPARTY_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_bin
 # Find the tool we use to scrub EXT paths from files
 find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
 
-# The relative RPATH is platform specific
-if (APPLE)
-  set(RELATIVE_RPATH ";@loader_path/../${LIB_DIR}")
-else (APPLE)
-  # TODO - this is inadequate.  For things like Qt plugins or libdm plugins, the ORIGIN
-  # path we set here is incorrect.  Need to get more sophisticated about this...
-  set(RELATIVE_RPATH ":\\$ORIGIN/../${LIB_DIR}")
-endif (APPLE)
+# The relative RPATH is specific to the location and platform
+function(find_relative_rpath fp rp)
+  # We don't want the filename to count, so offset our directory
+  # count down by 1
+  set(dcnt -1)
+  set(fp_cpy ${fp})
+  while (NOT "${fp_cpy}" STREQUAL "")
+    get_filename_component(pdir "${fp_cpy}" DIRECTORY)
+    set(fp_cpy ${pdir})
+    math(EXPR dcnt "${dcnt} + 1")
+  endwhile (NOT "${fp_cpy}" STREQUAL "")
+  if (APPLE)
+    set(RELATIVE_RPATH ";@loader_path")
+  else (APPLE)
+    set(RELATIVE_RPATH ":\\$ORIGIN")
+  endif (APPLE)
+  set(acnt 0)
+  while(acnt LESS dcnt)
+    set(RELATIVE_RPATH "${RELATIVE_RPATH}/..")
+    math(EXPR acnt "${acnt} + 1")
+  endwhile(acnt LESS dcnt)
+  set(RELATIVE_RPATH "${RELATIVE_RPATH}/${LIB_DIR}")
+  set(${rp} "${RELATIVE_RPATH}" PARENT_SCOPE)
+endfunction(find_relative_rpath)
 
 # See if we have patchelf available.  If it is available, we will be using it
 # to manage the RPATH settings for third party exe/lib files.
@@ -433,12 +449,14 @@ foreach(bf ${BINARY_FILES})
     continue()
   endif (IS_SYMLINK ${bf})
   # Finalize the rpaths
+  set(REL_RPATH)
+  find_relative_rpath("${bf}" REL_RPATH)
   if (PATCHELF_EXECUTABLE)
     install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
-    install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELATIVE_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
+    install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${REL_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
   elseif (APPLE)
     install(CODE "execute_process(COMMAND install_name_tool -delete_rpath \"${CMAKE_BINARY_DIR}/${LIB_DIR}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)")
-    install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELATIVE_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
+    install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${REL_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
   endif (PATCHELF_EXECUTABLE)
   # Overwrite any stale paths in the binary files with null chars, to make sure
   # they're not interfering with the behavior of the final executables.
