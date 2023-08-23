@@ -254,6 +254,7 @@ function(BRLCAD_Summary)
       "Netpbm"
       "OpenMesh"
       "Portable Network Graphics"
+      "Qt"
       "Regex Library"
       "STEPcode"
       "Tcl"
@@ -261,12 +262,23 @@ function(BRLCAD_Summary)
       "Zlib"
       )
 
+    # Because we may have a Qt5 from the system as well as a Qt6, we need to
+    # flatten the two variables for reporting
+    set(QtCore_Dir)
+    if (Qt6Core_DIR)
+      set(QtCore_DIR ${Qt6Core_DIR})
+    endif (Qt6Core_DIR)
+    if (Qt5Core_DIR)
+      set(QtCore_DIR ${Qt5Core_DIR})
+    endif (Qt5Core_DIR)
+
     set(BUNDLED_VARS
       ASSETIMPORT_LIBRARY
       GDAL_LIBRARY
       NETPBM_LIBRARY
       OPENMESH_LIBRARIES
       PNG_LIBRARY_RELEASE
+      QtCore_DIR
       REGEX_LIBRARY
       STEPCODE_CORE_LIBRARY
       TCL_LIBRARY
@@ -303,6 +315,11 @@ function(BRLCAD_Summary)
     set(bindex 0)
     foreach(blabel ${BUNDLED_LABELS})
       list(GET BUNDLED_VARS ${bindex} LVAR)
+      if (NOT ${LVAR})
+	message("${blabel} NotFound")
+	math(EXPR bindex "${bindex} + 1")
+	continue()
+      endif (NOT ${LVAR})
       IS_SUBPATH("${CMAKE_BINARY_DIR}" "${${LVAR}}" LOCAL_TEST)
       if (LOCAL_TEST)
 	message("${blabel} Bundled")
