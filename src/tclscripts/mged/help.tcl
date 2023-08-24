@@ -144,8 +144,9 @@ set mged_help_data(debugbu)	{{[hex_code]}	{show/set debugging bit vector for lib
 set mged_help_data(debugdir)	{{}	{Print in-memory directory, for debugging}}
 set mged_help_data(debuglib)	{{[hex_code]}	{show/set debugging bit vector for librt}}
 set mged_help_data(debugnmg)	{{[hex code]}	{show/set debugging bit vector for NMG}}
-set mged_help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
+set mged_help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connectedshells}} 
 set mged_help_data(delay)	{{sec usec}	{delay for the specified amount of time}}
+set mged_help_data(dir2ae)	{{[-i] dx dy dz}	{return azimuth and elevation using inputed direction vector}}	
 set mged_help_data(dm)		{{[type|valid|set] [dmtype|var [val]]}	{print/check the display-manager type or list/set specific variables}}
 set mged_help_data(draw)	$helplib_data(dgo_draw)
 set mged_help_data(dsp)         {{obj [command]} {work with DSP primitives}}
