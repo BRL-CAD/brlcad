@@ -168,6 +168,7 @@ set(mann_EN
   ps.xml
   pull.xml
   push.xml
+  put.xml
   put_comb.xml
   putmat.xml
   pwd.xml
