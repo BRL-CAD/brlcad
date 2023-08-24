@@ -56,6 +56,7 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
 
     cinfo->xform_mode = XFORM_NONE;                   /* xform mode         */
 
+    cinfo->dbip = NULL;
     cinfo->wdbp = NULL;
 
     /* Units - model */

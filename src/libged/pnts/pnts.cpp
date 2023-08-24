@@ -44,9 +44,9 @@ extern "C" {
 #include "rt/geom.h"
 #include "wdb.h"
 #include "analyze.h"
+}
 #include "../ged_private.h"
 #include "../pnts_util.h"
-}
 
 static void
 _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale, unsigned long pntcnt)

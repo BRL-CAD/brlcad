@@ -85,8 +85,18 @@ struct pkg_header {
 #define	PKG_STREAMLEN	(32*1024)
 struct pkg_conn {
     int	pkc_fd;					/**< @brief TCP connection fd */
+
+    // TODO - these were added to support PKG_STDIO_MODE back in 5/2021 as an
+    // experiment to test whether we could use stdout/stderr piping on Windows
+    // to enable local pkg support without TCP/IP. That didn't work, so look at
+    // replacing/repurposing these to use with libuv, which supplies a cross
+    // platform uv_pipe_t.  The places in the code checking for PKG_STDIO_MODE
+    // are a good start for where we will need logic to support a uv_pipe_t
+    // version, although the need for pipe names will most likely require
+    // further changes.
     int pkc_in_fd;                              /**< @brief input connection fd */
     int pkc_out_fd;                             /**< @brief output connection fd */
+
     const struct pkg_switch *pkc_switch;	/**< @brief Array of message handlers */
     pkg_errlog pkc_errlog;			/**< @brief Error message logger */
     struct pkg_header pkc_hdr;			/**< @brief hdr of cur msg */

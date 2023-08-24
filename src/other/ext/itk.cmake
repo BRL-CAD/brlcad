@@ -149,6 +149,10 @@ if (BRLCAD_ENABLE_TK)
 
 endif (BRLCAD_ENABLE_TK)
 
+mark_as_advanced(ITK_LIBRARY)
+mark_as_advanced(ITK_LIBRARIES)
+mark_as_advanced(ITK_VERSION)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/itk3.dist")
 
 # Local Variables:

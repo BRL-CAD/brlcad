@@ -312,8 +312,9 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 	    /* Discard right rpp */
 	    break;
 
-	    /* This case is especially for handling rt_db_internal formats which generally contain a "unloaded"
-	     * tree with tp->tr_op = OP_DB_LEAF
+	    /* This case is especially for handling rt_db_internal
+	     * formats which generally contain a "unloaded" tree with
+	     * tp->tr_op = OP_DB_LEAF
 	     */
 	case OP_DB_LEAF:
 	    {
@@ -331,8 +332,9 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 		stp = rt_find_solid(rtip, tp->tr_l.tl_name);
 		if (stp == NULL) {
 
-		    /* It was a comb! get an internal format and repeat the whole thing that got us here
-		     * in the 1st place
+		    /* It was a comb! get an internal format and
+		     * repeat the whole thing that got us here in the
+		     * 1st place
 		     */
 		    struct rt_db_internal intern;
 		    struct directory *dp;
@@ -344,11 +346,14 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 			return -1;
 		    }
 
-		    /* Why does recursion work with the internal format ?
-		     * The internal format does have the boolean op for a comb in the tr_a.tu_op field
-		     * in the root node, even though it has no prims at the leaves.
-		     * So recursive calls to load the prim further down the tree, will return the correct bb
-		     * as we are going through the proper switch case in each step down the tree
+		    /* Why does recursion work with the internal
+		     * format ?  The internal format does have the
+		     * boolean op for a comb in the tr_a.tu_op field
+		     * in the root node, even though it has no prims
+		     * at the leaves.  So recursive calls to load the
+		     * prim further down the tree, will return the
+		     * correct bb as we are going through the proper
+		     * switch case in each step down the tree
 		     */
 		    if (!rt_db_lookup_internal(rtip->rti_dbip, tp->tr_l.tl_name, &dp, &intern, LOOKUP_NOISY,
 					       &rt_uniresource)) {
@@ -357,11 +362,15 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
 			return -1;
 		    }
 
-		    /* The passed rt_db_internal should be a comb, prepare a rt_comb_internal */
+		    /* The passed rt_db_internal should be a comb,
+		     * prepare a rt_comb_internal
+		     */
 		    if (intern.idb_minor_type == ID_COMBINATION) {
 			combp = (struct rt_comb_internal *)intern.idb_ptr;
 		    } else {
-			/* if it's not a comb, then something else is cooking */
+			/* if it's not a comb, then something else is
+			 * cooking.
+			 */
 			bu_log("rt_traverse_tree: WARNING : rt_db_lookup_internal(%s) got the internal form of a primitive when it should not, the bounds may not be correct", tp->tr_l.tl_name);
 			return -1;
 		    }
@@ -401,15 +410,16 @@ rt_traverse_tree(struct rt_i *rtip, const union tree *tp, fastf_t *tree_min, fas
     return 0;
 }
 
+
 int
 rt_bound_instance(point_t *bmin, point_t *bmax,
-           struct directory *dp,
-           struct db_i *dbip,
-           const struct bg_tess_tol *ttol,
-           const struct bn_tol *tol,
-           mat_t *s_mat,
-           struct resource *res
-	)
+		  struct directory *dp,
+		  struct db_i *dbip,
+		  const struct bg_tess_tol *ttol,
+		  const struct bn_tol *tol,
+		  mat_t *s_mat,
+		  struct resource *res
+    )
 {
     if (UNLIKELY(!bmin || !bmax || !dp || !dbip || !res))
 	return -1;
@@ -429,10 +439,11 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
 	bbret = ip->idb_meth->ft_bbox(ip, bmin, bmax, tol);
 
     if (bbret < 0 && ip->idb_meth->ft_plot) {
-	/* As a fallback for primitives that don't have a bbox function,
-	 * (there are still some as of 2021) use the old bounding method of
-	 * calculating the default (non-adaptive) plot for the primitive
-	 * and using the extent of the plotted segments as the bounds.
+	/* As a fallback for primitives that don't have a bbox
+	 * function, (there are still some as of 2021) use the old
+	 * bounding method of calculating the default (non-adaptive)
+	 * plot for the primitive and using the extent of the plotted
+	 * segments as the bounds.
 	 */
 	struct bu_list vhead;
 	BU_LIST_INIT(&(vhead));
@@ -448,6 +459,7 @@ rt_bound_instance(point_t *bmin, point_t *bmax,
     rt_db_free_internal(&dbintern);
     return bbret;
 }
+
 
 int
 rt_bound_internal(struct db_i *dbip, struct directory *dp,
@@ -468,7 +480,9 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
 	return -1;
     }
 
-    /* Call rt_gettree() to get the bounds for primitives, else soltab ptr is null */
+    /* Call rt_gettree() to get the bounds for primitives, else soltab
+     * ptr is null
+     */
     if (rt_gettree(rtip, dp->d_namep) < 0) {
 	bu_log("rt_bound_internal: rt_gettree('%s') failed\n", dp->d_namep);
 	rt_free_rti(rtip);
@@ -482,11 +496,15 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
 	return -1;
     }
 
-    /* If passed rt_db_internal is a combination(a group or a region) then further calls needed */
+    /* If passed rt_db_internal is a combination(a group or a region)
+     * then further calls needed.
+     */
     if (intern.idb_minor_type == ID_COMBINATION) {
 	combp = (struct rt_comb_internal *)intern.idb_ptr;
     } else {
-	/* A primitive was passed, construct a struct rt_comb_internal with a single leaf node */
+	/* A primitive was passed, construct a struct rt_comb_internal
+	 * with a single leaf node.
+	 */
 	BU_ALLOC(combp, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(combp);
 	combp->region_flag = 0;
@@ -512,7 +530,9 @@ rt_bound_internal(struct db_i *dbip, struct directory *dp,
     VMOVE(rpp_min, tree_min);
     VMOVE(rpp_max, tree_max);
 
-    /* Check if the model bounds look correct e.g. if they are all 0, then it's not correct */
+    /* Check if the model bounds look correct e.g. if they are all 0,
+     * then it's not correct.
+     */
     if ((NEAR_ZERO(rpp_min[0], SMALL_FASTF) || rpp_min[0] <= -INFINITY || rpp_min[0] >= INFINITY) &&
 	(NEAR_ZERO(rpp_min[1], SMALL_FASTF) || rpp_min[1] <= -INFINITY || rpp_min[1] >= INFINITY) &&
 	(NEAR_ZERO(rpp_min[2], SMALL_FASTF) || rpp_min[2] <= -INFINITY || rpp_min[2] >= INFINITY) &&

@@ -191,7 +191,7 @@ static void NAME(GLcontext *ctx, const SWvertex *v0,
 #endif
 
     /*
-    printf("%s()\n", __FUNCTION__);
+    printf("%s()\n", __func__);
     printf("  %g, %g, %g\n", v0->win[0], v0->win[1], v0->win[2]);
     printf("  %g, %g, %g\n", v1->win[0], v1->win[1], v1->win[2]);
     printf("  %g, %g, %g\n", v2->win[0], v2->win[1], v2->win[2]);

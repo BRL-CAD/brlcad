@@ -559,13 +559,13 @@ static void emit_op3fn(struct tnl_program *p,
 
 
 #define emit_op3(p, op, dst, mask, src0, src1, src2) \
-   emit_op3fn(p, op, dst, mask, src0, src1, src2, __FUNCTION__, __LINE__)
+   emit_op3fn(p, op, dst, mask, src0, src1, src2, __func__, __LINE__)
 
 #define emit_op2(p, op, dst, mask, src0, src1) \
-    emit_op3fn(p, op, dst, mask, src0, src1, undef, __FUNCTION__, __LINE__)
+    emit_op3fn(p, op, dst, mask, src0, src1, undef, __func__, __LINE__)
 
 #define emit_op1(p, op, dst, mask, src0) \
-    emit_op3fn(p, op, dst, mask, src0, undef, undef, __FUNCTION__, __LINE__)
+    emit_op3fn(p, op, dst, mask, src0, undef, undef, __func__, __LINE__)
 
 
 static struct ureg make_temp(struct tnl_program *p, struct ureg reg)
@@ -1436,7 +1436,7 @@ create_new_program(const struct state_key *key,
 {
     struct tnl_program p;
 
-    _mesa_memset(&p, 0, sizeof(p));
+    memset(&p, 0, sizeof(p));
     p.state = key;
     p.program = program;
     p.eye_position = undef;
@@ -1471,7 +1471,7 @@ static void *search_cache(struct tnl_cache *cache,
     struct tnl_cache_item *c;
 
     for (c = cache->items[hash % cache->size]; c; c = c->next) {
-	if (c->hash == hash && _mesa_memcmp(c->key, key, keysize) == 0)
+	if (c->hash == hash && memcmp(c->key, key, keysize) == 0)
 	    return c->data;
     }
 
@@ -1485,8 +1485,8 @@ static void rehash(struct tnl_cache *cache)
     GLuint size, i;
 
     size = cache->size * 3;
-    items = (struct tnl_cache_item**) _mesa_malloc(size * sizeof(*items));
-    _mesa_memset(items, 0, size * sizeof(*items));
+    items = (struct tnl_cache_item**) malloc(size * sizeof(*items));
+    memset(items, 0, size * sizeof(*items));
 
     for (i = 0; i < cache->size; i++)
 	for (c = cache->items[i]; c; c = next) {
@@ -1495,7 +1495,7 @@ static void rehash(struct tnl_cache *cache)
 	    items[c->hash % size] = c;
 	}
 
-    FREE(cache->items);
+    free(cache->items);
     cache->items = items;
     cache->size = size;
 }
@@ -1505,7 +1505,7 @@ static void cache_item(struct tnl_cache *cache,
 		       void *key,
 		       void *data)
 {
-    struct tnl_cache_item *c = (struct tnl_cache_item*) _mesa_malloc(sizeof(*c));
+    struct tnl_cache_item *c = (struct tnl_cache_item*) malloc(sizeof(*c));
     c->hash = hash;
     c->key = key;
     c->data = data;
@@ -1567,7 +1567,7 @@ void _tnl_UpdateFixedFunctionProgram(GLcontext *ctx)
 
 	    cache_item(tnl->vp_cache, hash, key, ctx->VertexProgram._TnlProgram);
 	} else {
-	    FREE(key);
+	    free(key);
 	    if (0)
 		_mesa_printf("Found existing TNL program for key %x\n", hash);
 	}
@@ -1587,11 +1587,11 @@ void _tnl_ProgramCacheInit(GLcontext *ctx)
 {
     TNLcontext *tnl = TNL_CONTEXT(ctx);
 
-    tnl->vp_cache = (struct tnl_cache *) MALLOC(sizeof(*tnl->vp_cache));
+    tnl->vp_cache = (struct tnl_cache *) malloc(sizeof(*tnl->vp_cache));
     tnl->vp_cache->size = 17;
     tnl->vp_cache->n_items = 0;
     tnl->vp_cache->items = (struct tnl_cache_item**)
-			   _mesa_calloc(tnl->vp_cache->size * sizeof(*tnl->vp_cache->items));
+			   calloc(1,tnl->vp_cache->size * sizeof(*tnl->vp_cache->items));
 }
 
 void _tnl_ProgramCacheDestroy(GLcontext *ctx)
@@ -1603,13 +1603,13 @@ void _tnl_ProgramCacheDestroy(GLcontext *ctx)
     for (i = 0; i < tnl->vp_cache->size; i++)
 	for (c = tnl->vp_cache->items[i]; c; c = next) {
 	    next = c->next;
-	    FREE(c->key);
-	    FREE(c->data);
-	    FREE(c);
+	    free(c->key);
+	    free(c->data);
+	    free(c);
 	}
 
-    FREE(tnl->vp_cache->items);
-    FREE(tnl->vp_cache);
+    free(tnl->vp_cache->items);
+    free(tnl->vp_cache);
 }
 
 /*

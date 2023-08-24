@@ -7,7 +7,7 @@ BRLCAD_INCLUDE_DIRS(STEPCODE_INCLUDE_DIRS)
 
 link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
-set(STEP_SCHEMA_FILE ${CMAKE_SOURCE_DIR}/src/other/ext/stepcode/data/ap203/ap203.exp)
+set(STEP_SCHEMA_FILE ${CMAKE_CURRENT_SOURCE_DIR}/../step-g/ap203.exp)
 add_definitions(-DAP203)
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} list_elements)
@@ -17,10 +17,10 @@ set(list_elements_srcs ${express_srcs} list_elements.cpp)
 if (BRLCAD_ENABLE_STEP)
   set(lelem_LIBS
     libbu
-    steputils
-    stepeditor
-    stepdai
-    stepcore
+    ${STEPCODE_UTILS_LIBRARY}
+    ${STEPCODE_EDITOR_LIBRARY}
+    ${STEPCODE_DAI_LIBRARY}
+    ${STEPCODE_CORE_LIBRARY}
     )
 
   BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${lelem_LIBS}" NO_STRICT NO_INSTALL)

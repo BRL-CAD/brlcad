@@ -329,6 +329,21 @@ else (BRLCAD_OPENMESH_BUILD)
 
 endif (BRLCAD_OPENMESH_BUILD)
 
+mark_as_advanced(OPENMESH_INCLUDE_DIRS)
+mark_as_advanced(OPENMESH_LIBRARIES)
+mark_as_advanced(OPENMESH_CORE_GEOMETRY_DIR)
+mark_as_advanced(OPENMESH_CORE_IO_DIR)
+mark_as_advanced(OPENMESH_CORE_MESH_DIR)
+mark_as_advanced(OPENMESH_CORE_SYSTEM_DIR)
+mark_as_advanced(OPENMESH_CORE_UTILS_DIR)
+mark_as_advanced(OPENMESH_TOOLS_DECIMATER_DIR)
+mark_as_advanced(OPENMESH_TOOLS_DUALIZER_DIR)
+mark_as_advanced(OPENMESH_TOOLS_KERNERL_OSG_DIR)
+mark_as_advanced(OPENMESH_TOOLS_SMOOTHER_DIR)
+mark_as_advanced(OPENMESH_TOOLS_SUBDIVIDER_DIR)
+mark_as_advanced(OPENMESH_TOOLS_UTILS_DIR)
+mark_as_advanced(OPENMESH_TOOLS_VDPM_DIR)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/openmesh.dist")
 
 # Local Variables:

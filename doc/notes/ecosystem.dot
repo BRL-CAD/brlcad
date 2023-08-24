@@ -111,9 +111,8 @@ digraph BRLCADDeps{
 	libfb [color = "green", style = bold, shape = box, label = "Framebuffer (libfb)"];
 	libged [color = "green", style = bold, shape = box, label = "Geometry Editing Library (libged)"];
 	libtclcad [color = "green", style = bold, shape = box, label = "Tcl CAD library (libtclcad)"];
-	libtermio [color = "green", style = bold, shape = box, label = "Terminal IO library (libtermio)"];
 
-	{ rank = same; "BRL-CAD Libraries"; libbu; libpc; librt; libdm; libged; libtclcad; libtermio; }
+	{ rank = same; "BRL-CAD Libraries"; libbu; libpc; librt; libdm; libged; libtclcad; }
 
 	// BRL-CAD Application Categories
 	geomedit [color = "green", style = bold, shape = box, label = "Geometry Editing"];
@@ -163,7 +162,6 @@ digraph BRLCADDeps{
 	geomedit -> libdm;
 	geomedit -> libged;
 	geomedit -> libtclcad;
-	geomedit -> libtermio;
 	geomedit -> tkhtml;
 	geomedit -> tkpng;
 	geomedit -> tktable;

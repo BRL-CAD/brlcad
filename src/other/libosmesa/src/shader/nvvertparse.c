@@ -81,7 +81,7 @@ record_error(struct parse_state *parseState, const char *msg, int lineNo)
     _mesa_debug(parseState->ctx,
 		"nvfragparse.c(%d): line %d, column %d:%s (%s)\n",
 		lineNo, line, column, (char *) lineStr, msg);
-    _mesa_free((void *) lineStr);
+    free((void *) lineStr);
 #else
     (void) lineNo;
 #endif
@@ -230,7 +230,7 @@ Peek_Token(struct parse_state *parseState, GLubyte *token)
 	parseState->pos += (-i);
 	return GL_FALSE;
     }
-    len = (GLint)_mesa_strlen((const char *) token);
+    len = (GLint)strlen((const char *) token);
     parseState->pos += (i - len);
     return GL_TRUE;
 }
@@ -306,7 +306,7 @@ Parse_TempReg(struct parse_state *parseState, GLint *tempRegNum)
 	RETURN_ERROR1("Expected R##");
 
     if (IsDigit(token[1])) {
-	GLint reg = _mesa_atoi((char *)(token + 1));
+	GLint reg = atoi((char *)(token + 1));
 	if (reg >= MAX_NV_VERTEX_PROGRAM_TEMPS)
 	    RETURN_ERROR1("Bad temporary register name");
 	*tempRegNum = reg;
@@ -359,7 +359,7 @@ Parse_AbsParamReg(struct parse_state *parseState, GLint *regNum)
 
     if (IsDigit(token[0])) {
 	/* a numbered program parameter register */
-	GLint reg = _mesa_atoi((char *) token);
+	GLint reg = atoi((char *) token);
 	if (reg >= MAX_NV_VERTEX_PROGRAM_PARAMS)
 	    RETURN_ERROR1("Bad program parameter number");
 	*regNum = reg;
@@ -392,12 +392,12 @@ Parse_ParamReg(struct parse_state *parseState, struct prog_src_register *srcReg)
 	/* a numbered program parameter register */
 	GLint reg;
 	(void) Parse_Token(parseState, token);
-	reg = _mesa_atoi((char *) token);
+	reg = atoi((char *) token);
 	if (reg >= MAX_NV_VERTEX_PROGRAM_PARAMS)
 	    RETURN_ERROR1("Bad program parameter number");
 	srcReg->File = PROGRAM_ENV_PARAM;
 	srcReg->Index = reg;
-    } else if (_mesa_strcmp((const char *) token, "A0") == 0) {
+    } else if (strcmp((const char *) token, "A0") == 0) {
 	/* address register "A0.x" */
 	if (!Parse_AddrReg(parseState))
 	    RETURN_ERROR;
@@ -417,7 +417,7 @@ Parse_ParamReg(struct parse_state *parseState, struct prog_src_register *srcReg)
 		RETURN_ERROR;
 
 	    if (IsDigit(token[0])) {
-		const GLint k = _mesa_atoi((char *) token);
+		const GLint k = atoi((char *) token);
 		if (sign == '-') {
 		    if (k > 64)
 			RETURN_ERROR1("Bad address offset");
@@ -470,13 +470,13 @@ Parse_AttribReg(struct parse_state *parseState, GLint *tempRegNum)
 	RETURN_ERROR1("Only v[0] accessible in vertex state programs");
 
     if (IsDigit(token[0])) {
-	GLint reg = _mesa_atoi((char *) token);
+	GLint reg = atoi((char *) token);
 	if (reg >= MAX_NV_VERTEX_PROGRAM_INPUTS)
 	    RETURN_ERROR1("Bad vertex attribute register name");
 	*tempRegNum = reg;
     } else {
 	for (j = 0; InputRegisters[j]; j++) {
-	    if (_mesa_strcmp((const char *) token, InputRegisters[j]) == 0) {
+	    if (strcmp((const char *) token, InputRegisters[j]) == 0) {
 		*tempRegNum = j;
 		break;
 	    }
@@ -520,7 +520,7 @@ Parse_OutputReg(struct parse_state *parseState, GLint *outputRegNum)
 
     /* try to match an output register name */
     for (j = start; OutputRegisters[j]; j++) {
-	if (_mesa_strcmp((const char *) token, OutputRegisters[j]) == 0) {
+	if (strcmp((const char *) token, OutputRegisters[j]) == 0) {
 	    *outputRegNum = j;
 	    break;
 	}
@@ -1027,9 +1027,9 @@ Parse_PrintInstruction(struct parse_state *parseState, struct prog_instruction *
     for (len = 0; str[len] != '\''; len++) /* find closing quote */
 	;
     parseState->pos += len + 1;
-    msg = (GLubyte*) _mesa_malloc(len + 1);
+    msg = (GLubyte*) malloc(len + 1);
 
-    _mesa_memcpy(msg, str, len);
+    memcpy(msg, str, len);
     msg[len] = 0;
     inst->Data = msg;
 
@@ -1241,12 +1241,12 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
     GLubyte *programString;
 
     /* Make a null-terminated copy of the program string */
-    programString = (GLubyte *) MALLOC(len + 1);
+    programString = (GLubyte *) malloc(len + 1);
     if (!programString) {
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
 	return;
     }
-    MEMCPY(programString, str, len);
+    memcpy(programString, str, len);
     programString[len] = 0;
 
     /* Get ready to parse */
@@ -1263,28 +1263,30 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
     _mesa_set_program_error(ctx, -1, NULL);
 
     /* check the program header */
-    if (_mesa_strncmp((const char *) programString, "!!VP1.0", 7) == 0) {
+    if (strncmp((const char *) programString, "!!VP1.0", 7) == 0) {
 	target = GL_VERTEX_PROGRAM_NV;
 	parseState.pos = programString + 7;
 	parseState.isStateProgram = GL_FALSE;
-    } else if (_mesa_strncmp((const char *) programString, "!!VP1.1", 7) == 0) {
+    } else if (strncmp((const char *) programString, "!!VP1.1", 7) == 0) {
 	target = GL_VERTEX_PROGRAM_NV;
 	parseState.pos = programString + 7;
 	parseState.isStateProgram = GL_FALSE;
 	parseState.isVersion1_1 = GL_TRUE;
-    } else if (_mesa_strncmp((const char *) programString, "!!VSP1.0", 8) == 0) {
+    } else if (strncmp((const char *) programString, "!!VSP1.0", 8) == 0) {
 	target = GL_VERTEX_STATE_PROGRAM_NV;
 	parseState.pos = programString + 8;
 	parseState.isStateProgram = GL_TRUE;
     } else {
 	/* invalid header */
 	ctx->Program.ErrorPos = 0;
+	free(programString);
 	_mesa_error(ctx, GL_INVALID_OPERATION, "glLoadProgramNV(bad header)");
 	return;
     }
 
     /* make sure target and header match */
     if (target != dstTarget) {
+	free(programString);
 	_mesa_error(ctx, GL_INVALID_OPERATION,
 		    "glLoadProgramNV(target mismatch)");
 	return;
@@ -1315,7 +1317,7 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
 	newInst = _mesa_alloc_instructions(parseState.numInst);
 	if (!newInst) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glLoadProgramNV");
-	    _mesa_free(programString);
+	    free(programString);
 	    return;  /* out of memory */
 	}
 	_mesa_copy_instructions(newInst, instBuffer, parseState.numInst);
@@ -1323,12 +1325,12 @@ _mesa_parse_nv_vertex_program(GLcontext *ctx, GLenum dstTarget,
 	/* install the program */
 	program->Base.Target = target;
 	if (program->Base.String) {
-	    _mesa_free(program->Base.String);
+	    free(program->Base.String);
 	}
 	program->Base.String = programString;
 	program->Base.Format = GL_PROGRAM_FORMAT_ASCII_ARB;
 	if (program->Base.Instructions) {
-	    _mesa_free(program->Base.Instructions);
+	    free(program->Base.Instructions);
 	}
 	program->Base.Instructions = newInst;
 	program->Base.InputsRead = parseState.inputsRead;

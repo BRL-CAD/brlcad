@@ -141,9 +141,7 @@
       An example file might look like the following:
     </para>
 
-    <literallayout class="normal">
-      <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../../../misc/GQA_SAMPLE_DENSITIES" parse="text"/>
-    </literallayout>
+    <literallayout class="normal"><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../../../misc/GQA_SAMPLE_DENSITIES" parse="text"/></literallayout>
 
 
     <para>
@@ -152,8 +150,7 @@
     </para>
 
     <para>
-      <prompt>mged&gt; </prompt><userinput>mater -d import
-      <replaceable>filename</replaceable></userinput>
+      <literallayout><prompt>mged&gt; </prompt><userinput>mater -d import <replaceable>filename</replaceable></userinput></literallayout>
     </para>
 
     <para>
@@ -682,8 +679,8 @@
       <emphasis remap="I">wheel.r</emphasis> from the geometry
       database <emphasis remap="I">model.g</emphasis> and reports the
       weight and volume, and checks for overlaps.
-      <literallayout><userinput>gqa model.g
-      wheel.r</userinput></literallayout>
+
+      <literallayout><userinput>gqa model.g wheel.r</userinput></literallayout>
     </para>
 
     </example>
@@ -695,8 +692,8 @@
       for overlaps and report exposed air. The grid starts at 1 cm and
       is refined to 1 mm unless overlaps or exposed air are detected
       before the grid is refined to 1 mm.
-      <literallayout><userinput>gqa -g 1cm-1mm -A oe model.g hull
-      turret suspension</userinput></literallayout>
+
+      <literallayout><userinput>gqa -g 1cm-1mm -A oe model.g hull turret suspension</userinput></literallayout>
     </para>
 
     </example>
@@ -707,88 +704,75 @@
       The following computes volume and weight of hull, turret, and
       suspension.  Results are reported in cubic centimeters (cc) and
       ounces (oz).  The grid spacing starts at 5 in. and will not be
-      refined below 0.3 mm spacing.  <literallayout><userinput>gqa
-      -g5in-0.3mm -Avw -u ft, cc, oz test.g hull turret
-      suspension</userinput></literallayout>
+      refined below 0.3 mm spacing.
+
+      <literallayout><userinput>gqa -g5in-0.3mm -Avw -u ft, cc, oz test.g hull turret suspension</userinput></literallayout>
     </para>
 
     </example>
 
+    <example><title>Different Analysis Types</title>
+
     <para>For an example of each independent analysis type, consider
-    the following:</para>
-    <variablelist>
-      <varlistentry>
-        <term><prompt>%</prompt><userinput>gqa -u m, m^3, kg -Ao geometry.g overlaps</userinput></term>
-        <listitem>
-          <literallayout class="normal">
-            Units:
-            length: m volume: m^3 weight: kg
-            grid spacing 50mm  199 x 199 x 199
-            Summary:
-            list Overlaps:
-            /overlaps/overlap_obj.r /overlaps/closed_box.r count:32039 dist:8m @ (9050 1000 1000)
-          </literallayout>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><prompt>%</prompt><userinput>gqa -u m, m^3, kg -Ae geometry.g exposed_air.g</userinput></term>
-        <listitem>
-          <literallayout class="normal">
-            Units:
-            length: m volume: m^3 weight: kg
-            grid spacing 50mm  199 x 199 x 199
-            Summary:
-            list Exposed Air:
-            /exposed_air.g/exposed_air.r count:25921 dist:9m @ (10000 1000 1000)
-          </literallayout>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><prompt>%</prompt><userinput>gqa -u m, m^3, kg -Ag geometry.g gap.g</userinput></term>
-        <listitem>
-          <literallayout class="normal">
-            Units:
-            length: m volume: m^3 weight: kg
-            grid spacing 50mm  199 x 199 x 199
-            Summary:
-            list Gaps:
-            /gap.g/closed_box.r /gap.g/closed_box.r count:26082 dist:8m @ (9000 1000 1000)
-            /gap.g/adj_air2.r /gap.g/closed_box.r count:25921 dist:4m @ (1000 5000 1000)
-          </literallayout>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><prompt>%</prompt><userinput>gqa -u m, m^3, kg -Av geometry.g closed_box.r</userinput></term>
-        <listitem>
-          <literallayout class="normal">
-            Units:
-            length: m volume: m^3 weight: kg
-            setting volume tolerance to 1 m^3
-            grid spacing 50mm  199 x 199 x 199
-            grid spacing 25mm  399 x 399 x 399
-            grid spacing 12.5mm  799 x 799 x 799
-            Summary:
-            closed_box.r  484.195 m^3
-            Average total volume: 488.327 m^3
-          </literallayout>
-        </listitem>
-      </varlistentry>
-      <varlistentry>
-        <term><prompt>%</prompt><userinput>gqa -u m, m^3, kg -Aw geometry.g closed_box.r</userinput></term>
-        <listitem>
-          <literallayout class="normal">
-            Units:
-            length: m volume: m^3 weight: kg
-            setting weight tolerance to 768000 kg
-            grid spacing 50mm  199 x 199 x 199
-            Summary:
-            Weight:
-            closed_box.r  3.6375e+06 kg
-            Average total weight: 3.67541e+06 kg
-          </literallayout>
-        </listitem>
-      </varlistentry>
-    </variablelist>
+    the following:
+
+    <literallayout class="normal">
+<prompt></prompt><userinput>gqa -u m, m^3, kg -Ao geometry.g overlaps</userinput>
+Units:
+length: m volume: m^3 weight: kg
+grid spacing 50mm  199 x 199 x 199
+Summary:
+list Overlaps:
+/overlaps/overlap_obj.r /overlaps/closed_box.r count:32039 dist:8m @ (9050 1000 1000)
+    </literallayout>
+
+    <literallayout class="normal">
+<prompt></prompt><userinput>gqa -u m, m^3, kg -Ae geometry.g exposed_air.g</userinput>
+Units:
+length: m volume: m^3 weight: kg
+grid spacing 50mm  199 x 199 x 199
+Summary:
+list Exposed Air:
+/exposed_air.g/exposed_air.r count:25921 dist:9m @ (10000 1000 1000)
+    </literallayout>
+
+    <literallayout class="normal">
+<prompt></prompt><userinput>gqa -u m, m^3, kg -Ag geometry.g gap.g</userinput>
+Units:
+length: m volume: m^3 weight: kg
+grid spacing 50mm  199 x 199 x 199
+Summary:
+list Gaps:
+/gap.g/closed_box.r /gap.g/closed_box.r count:26082 dist:8m @ (9000 1000 1000)
+/gap.g/adj_air2.r /gap.g/closed_box.r count:25921 dist:4m @ (1000 5000 1000)
+    </literallayout>
+
+    <literallayout class="normal">
+<prompt></prompt><userinput>gqa -u m, m^3, kg -Av geometry.g closed_box.r</userinput>
+Units:
+length: m volume: m^3 weight: kg
+setting volume tolerance to 1 m^3
+grid spacing 50mm  199 x 199 x 199
+grid spacing 25mm  399 x 399 x 399
+grid spacing 12.5mm  799 x 799 x 799
+Summary:
+closed_box.r  484.195 m^3
+Average total volume: 488.327 m^3
+    </literallayout>
+
+    <literallayout class="normal">
+<prompt></prompt><userinput>gqa -u m, m^3, kg -Aw geometry.g closed_box.r</userinput>
+Units:
+length: m volume: m^3 weight: kg
+setting weight tolerance to 768000 kg
+grid spacing 50mm  199 x 199 x 199
+Summary:
+Weight:
+closed_box.r  3.6375e+06 kg
+Average total weight: 3.67541e+06 kg
+    </literallayout>
+    </para>
+    </example>
   </refsection>
 
   <refsection xml:id="author">

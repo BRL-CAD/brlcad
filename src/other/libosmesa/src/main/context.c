@@ -134,9 +134,6 @@
 #endif
 #include "shader_api.h"
 
-#ifdef USE_SPARC_ASM
-#include "sparc/sparc.h"
-#endif
 
 #ifndef MESA_VERBOSE
 int MESA_VERBOSE = 0;
@@ -216,7 +213,7 @@ _mesa_create_visual(GLboolean rgbFlag,
 		    GLint accumAlphaBits,
 		    GLint numSamples)
 {
-    GLvisual *vis = (GLvisual *) _mesa_calloc(sizeof(GLvisual));
+    GLvisual *vis = (GLvisual *) calloc(1,sizeof(GLvisual));
     if (vis) {
 	if (!_mesa_initialize_visual(vis, rgbFlag, dbFlag, stereoFlag,
 				     redBits, greenBits, blueBits, alphaBits,
@@ -224,7 +221,7 @@ _mesa_create_visual(GLboolean rgbFlag,
 				     accumRedBits, accumGreenBits,
 				     accumBlueBits, accumAlphaBits,
 				     numSamples)) {
-	    _mesa_free(vis);
+	    free(vis);
 	    return NULL;
 	}
     }
@@ -314,7 +311,7 @@ _mesa_initialize_visual(GLvisual *vis,
 void
 _mesa_destroy_visual(GLvisual *vis)
 {
-    _mesa_free(vis);
+    free(vis);
 }
 
 /*@}*/
@@ -372,9 +369,6 @@ one_time_init(GLcontext *ctx)
 	}
 #endif
 
-#ifdef USE_SPARC_ASM
-	_mesa_init_sparc_glapi_relocs();
-#endif
 	if (_mesa_getenv("MESA_DEBUG")) {
 	    _glapi_noop_enable_warnings(GL_TRUE);
 	    _glapi_set_warning_func((_glapi_warning_func) _mesa_warning);
@@ -536,7 +530,7 @@ cleanup:
     if (ss->DefaultRect)
 	(*ctx->Driver.DeleteTexture)(ctx, ss->DefaultRect);
     if (ss)
-	_mesa_free(ss);
+	free(ss);
     return GL_FALSE;
 }
 
@@ -751,7 +745,7 @@ free_shared_state(GLcontext *ctx, struct gl_shared_state *ss)
 
     _glthread_DESTROY_MUTEX(ss->Mutex);
 
-    _mesa_free(ss);
+    free(ss);
 }
 
 
@@ -797,7 +791,7 @@ init_natives(struct gl_program_constants *prog)
 
 /**
  * Initialize fields of gl_constants (aka ctx->Const.*).
- * Use defaults from config.h.  The device drivers will often override
+ * Use defaults from gllimits.h.  The device drivers will often override
  * some of these values (such as number of texture units).
  */
 static void
@@ -1018,22 +1012,15 @@ generic_nop(void)
 /**
  * Allocate and initialize a new dispatch table.
  */
+#define DISPATCH_TABLE_SIZE (sizeof(struct _glapi_table) / sizeof(void *))
 static struct _glapi_table *
 alloc_dispatch_table(void)
 {
-    /* Find the larger of Mesa's dispatch table and libGL's dispatch table.
-     * In practice, this'll be the same for stand-alone Mesa.  But for DRI
-     * Mesa we do this to accomodate different versions of libGL and various
-     * DRI drivers.
-     */
-    GLint numEntries = MAX2(_glapi_get_dispatch_table_size(),
-			    sizeof(struct _glapi_table) / sizeof(_glapi_proc));
-    struct _glapi_table *table =
-	(struct _glapi_table *) _mesa_malloc(numEntries * sizeof(_glapi_proc));
+    struct _glapi_table *table = (struct _glapi_table *)malloc(sizeof(struct _glapi_table));
     if (table) {
 	_glapi_proc *entry = (_glapi_proc *) table;
 	GLint i;
-	for (i = 0; i < numEntries; i++) {
+	for (i = 0; i < DISPATCH_TABLE_SIZE; i++) {
 	    entry[i] = (_glapi_proc) generic_nop;
 	}
     }
@@ -1119,7 +1106,7 @@ _mesa_initialize_context(GLcontext *ctx,
     if (!ctx->Exec || !ctx->Save) {
 	free_shared_state(ctx, ctx->Shared);
 	if (ctx->Exec) {
-	    _mesa_free(ctx->Exec);
+	    free(ctx->Exec);
 	    ctx->Exec = NULL;
 	}
     }
@@ -1176,7 +1163,7 @@ _mesa_create_context(const GLvisual *visual,
     ASSERT(visual);
     ASSERT(driverContext);
 
-    ctx = (GLcontext *) _mesa_calloc(sizeof(GLcontext));
+    ctx = (GLcontext *) calloc(1,sizeof(GLcontext));
     if (!ctx)
 	return NULL;
 
@@ -1184,7 +1171,7 @@ _mesa_create_context(const GLvisual *visual,
 				 driverFunctions, driverContext)) {
 	return ctx;
     } else {
-	_mesa_free(ctx);
+	free(ctx);
 	return NULL;
     }
 }
@@ -1230,8 +1217,8 @@ _mesa_free_context_data(GLcontext *ctx)
     _mesa_delete_array_object(ctx, ctx->Array.DefaultArrayObj);
 
     /* free dispatch tables */
-    _mesa_free(ctx->Exec);
-    _mesa_free(ctx->Save);
+    free(ctx->Exec);
+    free(ctx->Save);
 
     /* Shared context state (display lists, textures, etc) */
     _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
@@ -1244,7 +1231,7 @@ _mesa_free_context_data(GLcontext *ctx)
     }
 
     if (ctx->Extensions.String)
-	_mesa_free((void *) ctx->Extensions.String);
+	free((void *) ctx->Extensions.String);
 
     /* unbind the context if it's currently bound */
     if (ctx == _mesa_get_current_context()) {
@@ -1265,7 +1252,7 @@ _mesa_destroy_context(GLcontext *ctx)
 {
     if (ctx) {
 	_mesa_free_context_data(ctx);
-	_mesa_free((void *) ctx);
+	free((void *) ctx);
     }
 }
 

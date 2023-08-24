@@ -8,6 +8,7 @@ set(ICV_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(icv ICV_INCLUDE_DIRS "")
 
 set(LIBICV_SOURCES
+  PImgHash.cpp
   fileformat.c
   rot.c
   color_space.c
@@ -15,6 +16,7 @@ set(LIBICV_SOURCES
   filter.c
   encoding.c
   operations.c
+  pdiff.cpp
   stat.c
   size.c
   pix.c
@@ -50,6 +52,7 @@ add_subdirectory(tests)
 CMAKEFILES(
   CMakeLists.txt
   TODO
+  PImgHash.h
   icv_private.h
   )
 

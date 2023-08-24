@@ -14,9 +14,9 @@ if (BRLCAD_ENABLE_QT)
 
   add_executable(qgmodel qgmodel.cpp)
   if (Qt6Widgets_FOUND)
-    target_link_libraries(qgmodel libqtcad libged librt libbu Qt6::Widgets)
+    target_link_libraries(qgmodel libqtcad libged librt libbu Qt6::Widgets Qt6::Test)
   else()
-    target_link_libraries(qgmodel libqtcad libged librt libbu Qt5::Widgets)
+    target_link_libraries(qgmodel libqtcad libged librt libbu Qt5::Widgets Qt5::Test)
   endif (Qt6Widgets_FOUND)
   target_compile_definitions(qgmodel PRIVATE BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS qgmodel

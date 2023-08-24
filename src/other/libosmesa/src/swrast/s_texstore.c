@@ -74,7 +74,7 @@ read_color_image(GLcontext *ctx, GLint x, GLint y, GLenum type,
     GLint row;
     GLubyte *image, *dst;
 
-    image = (GLubyte *) _mesa_malloc(width * height * pixelSize);
+    image = (GLubyte *) malloc(width * height * pixelSize);
     if (!image)
 	return NULL;
 
@@ -105,7 +105,7 @@ read_depth_image(GLcontext *ctx, GLint x, GLint y,
     GLuint *image, *dst;
     GLint i;
 
-    image = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
+    image = (GLuint *) malloc(width * height * sizeof(GLuint));
     if (!image)
 	return NULL;
 
@@ -139,7 +139,7 @@ read_depth_stencil_image(GLcontext *ctx, GLint x, GLint y,
     ASSERT(depthRb);
     ASSERT(stencilRb);
 
-    image = (GLuint *) _mesa_malloc(width * height * sizeof(GLuint));
+    image = (GLuint *) calloc(width * height, sizeof(GLuint));
     if (!image)
 	return NULL;
 
@@ -268,7 +268,7 @@ _swrast_copy_teximage1d(GLcontext *ctx, GLenum target, GLint level,
 			       width, border,
 			       GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
 			       &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     } else if (is_depth_stencil_format(internalFormat)) {
 	/* read depth/stencil image from framebuffer */
 	GLuint *image = read_depth_stencil_image(ctx, x, y, width, 1);
@@ -281,7 +281,7 @@ _swrast_copy_teximage1d(GLcontext *ctx, GLenum target, GLint level,
 			       width, border,
 			       GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
 			       image, &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     } else {
 	/* read RGBA image from framebuffer */
 	const GLenum format = GL_RGBA;
@@ -295,7 +295,7 @@ _swrast_copy_teximage1d(GLcontext *ctx, GLenum target, GLint level,
 	ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
 			       width, border, format, type, image,
 			       &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     }
 
     /* GL_SGIS_generate_mipmap */
@@ -343,7 +343,7 @@ _swrast_copy_teximage2d(GLcontext *ctx, GLenum target, GLint level,
 			       width, height, border,
 			       GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
 			       &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     } else if (is_depth_stencil_format(internalFormat)) {
 	GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
 	if (!image) {
@@ -355,7 +355,7 @@ _swrast_copy_teximage2d(GLcontext *ctx, GLenum target, GLint level,
 			       width, height, border,
 			       GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
 			       image, &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     } else {
 	/* read RGBA image from framebuffer */
 	const GLenum format = GL_RGBA;
@@ -369,7 +369,7 @@ _swrast_copy_teximage2d(GLcontext *ctx, GLenum target, GLint level,
 	ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
 			       width, height, border, format, type, image,
 			       &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     }
 
     /* GL_SGIS_generate_mipmap */
@@ -410,7 +410,7 @@ _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
 	ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
 				  GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
 				  &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     } else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
 	/* read depth/stencil image from framebuffer */
 	GLuint *image = read_depth_stencil_image(ctx, x, y, width, 1);
@@ -422,7 +422,7 @@ _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
 	ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
 				  GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
 				  image, &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     } else {
 	/* read RGBA image from framebuffer */
 	const GLenum format = GL_RGBA;
@@ -436,7 +436,7 @@ _swrast_copy_texsubimage1d(GLcontext *ctx, GLenum target, GLint level,
 	ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
 				  format, type, image,
 				  &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     }
 
     /* GL_SGIS_generate_mipmap */
@@ -482,7 +482,7 @@ _swrast_copy_texsubimage2d(GLcontext *ctx,
 				  xoffset, yoffset, width, height,
 				  GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
 				  &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     } else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
 	/* read depth/stencil image from framebuffer */
 	GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
@@ -495,7 +495,7 @@ _swrast_copy_texsubimage2d(GLcontext *ctx,
 				  xoffset, yoffset, width, height,
 				  GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
 				  image, &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     } else {
 	/* read RGBA image from framebuffer */
 	const GLenum format = GL_RGBA;
@@ -510,7 +510,7 @@ _swrast_copy_texsubimage2d(GLcontext *ctx,
 				  xoffset, yoffset, width, height,
 				  format, type, image,
 				  &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     }
 
     /* GL_SGIS_generate_mipmap */
@@ -553,7 +553,7 @@ _swrast_copy_texsubimage3d(GLcontext *ctx,
 				  xoffset, yoffset, zoffset, width, height, 1,
 				  GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, image,
 				  &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     } else if (texImage->_BaseFormat == GL_DEPTH_STENCIL_EXT) {
 	/* read depth/stencil image from framebuffer */
 	GLuint *image = read_depth_stencil_image(ctx, x, y, width, height);
@@ -566,7 +566,7 @@ _swrast_copy_texsubimage3d(GLcontext *ctx,
 				  xoffset, yoffset, zoffset, width, height, 1,
 				  GL_DEPTH_STENCIL_EXT, GL_UNSIGNED_INT_24_8_EXT,
 				  image, &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     } else {
 	/* read RGBA image from framebuffer */
 	const GLenum format = GL_RGBA;
@@ -581,7 +581,7 @@ _swrast_copy_texsubimage3d(GLcontext *ctx,
 				  xoffset, yoffset, zoffset, width, height, 1,
 				  format, type, image,
 				  &ctx->DefaultPacking, texObj, texImage);
-	_mesa_free(image);
+	free(image);
     }
 
     /* GL_SGIS_generate_mipmap */

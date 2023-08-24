@@ -224,7 +224,9 @@ endif(PNG_HARDWARE_OPTIMIZATIONS)
 set(PNG_LIB_NAME png${PNGLIB_MAJOR}${PNGLIB_MINOR})
 
 # Distinguish between debug and release builds.
-set(CMAKE_DEBUG_POSTFIX "d")
+if(NOT PNG_NO_DEBUG_POSTFIX)
+	set(CMAKE_DEBUG_POSTFIX "d")
+endif(NOT PNG_NO_DEBUG_POSTFIX)
 
 include(CheckCSourceCompiles)
 option(ld-version-script "Enable linker version script" ON)

@@ -32,8 +32,8 @@ extern "C" {
 #include "bu/opt.h"
 #include "bg/trimesh.h"
 #include "raytrace.h"
-#include "../ged_private.h"
 }
+#include "../ged_private.h"
 
 struct _ged_lint_opts {
     int verbosity;

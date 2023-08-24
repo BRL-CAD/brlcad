@@ -479,6 +479,28 @@ rt_joint_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     return -1;
 }
 
+void
+rt_joint_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_joint_internal* ip;
+
+    intern->idb_type = ID_JOINT;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ip, struct rt_joint_internal);
+    intern->idb_ptr = (void *)ip;
+
+    ip->magic = RT_JOINT_INTERNAL_MAGIC;
+    struct bu_vls empty = BU_VLS_INIT_ZERO;
+    ip->reference_path_1 = empty;
+    ip->reference_path_2 = empty;
+    VSET(ip->vector1, 0.0, 1.0, 0.0);
+    VSET(ip->vector2, 0.0, 1.0, 0.0);
+}
+
 
 int
 rt_joint_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)

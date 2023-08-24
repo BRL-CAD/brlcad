@@ -99,7 +99,7 @@ namespace p2t {
 	    /**
 	     * Triangulate - do this AFTER you've added the polyline, holes, and Steiner points
 	     */
-	    P2T_EXPORT void Triangulate(bool finalize = true, int num_points = -1);
+	    P2T_EXPORT void Triangulate(bool finalize = true, int num_points = -1, long maxtime = POLY2TRI_MAXTIME);
 
 	    /**
 	     * Get CDT triangles

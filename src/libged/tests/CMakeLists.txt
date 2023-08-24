@@ -21,6 +21,8 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/ged_test_material.g)
 BRLCAD_ADDEXEC(ged_test_select test_select.c libged TEST)
 add_dependencies(ged_test_select ged_plugins)
 
+add_subdirectory(draw)
+
 # Note: it is particularly important that the lint tests in particular are kept
 # in a separate file, since its bad input examples stand an excellent chance of
 # breaking commands.

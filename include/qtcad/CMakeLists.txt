@@ -1,26 +1,30 @@
 set(qtcad_headers
-  QAccordion.h
-  QColorRGB.h
-  QFlowLayout.h
-  QKeyVal.h
-  QToolPalette.h
-  QViewCtrl.h
+  QgAccordion.h
+  QgAppExecDialog.h
+  QgAttributesModel.h
+  QgColorRGB.h
+  QgConsole.h
+  QgConsoleListener.h
   QgDockWidget.h
   QgEdit.h
+  QgFlowLayout.h
+  QgGL.h
+  QgGeomImport.h
+  QgKeyVal.h
+  QgMeasureFilter.h
   QgModel.h
+  QgPolyFilter.h
+  QgQuadView.h
+  QgSW.h
+  QgSelectFilter.h
+  QgSignalFlags.h
+  QgToolPalette.h
   QgTreeSelectionModel.h
   QgTreeView.h
   QgUtil.h
-  QtAppExecDialog.h
-  QtCADQuad.h
-  QtCADView.h
-  QtConsole.h
-  QtConsoleListener.h
-  QtGL.h
-  QtSW.h
-  SignalFlags.h
+  QgView.h
+  QgViewCtrl.h
   defines.h
-  gInstance.h
   )
 BRLCAD_MANAGE_FILES(qtcad_headers ${INCLUDE_DIR}/brlcad/qtcad)
 

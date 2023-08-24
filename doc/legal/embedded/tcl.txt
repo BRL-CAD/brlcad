@@ -40,6 +40,13 @@ permission to use and distribute the software in accordance with the
 terms specified in this license.
 
 file:/src/libbu/tcllist.c
+file:/src/libdm/wgl/wintk/tkWinPort.h
+file:/src/libdm/wgl/wintk/tkIntDecls.h
+file:/src/libdm/wgl/wintk/tkWinInt.h
+file:/src/libdm/wgl/wintk/tkInt.h
+file:/src/libdm/wgl/wintk/tkWin.h
+file:/src/libdm/wgl/wintk/tkIntPlatDecls.h
+file:/src/libdm/wgl/wintk/tkPort.h
 
 tkImgFmtPPM.c --
 

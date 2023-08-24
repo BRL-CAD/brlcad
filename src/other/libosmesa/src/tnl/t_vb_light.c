@@ -299,7 +299,7 @@ static GLboolean init_lighting(GLcontext *ctx,
     struct light_stage_data *store;
     GLuint size = tnl->vb.Size;
 
-    stage->privatePtr = MALLOC(sizeof(*store));
+    stage->privatePtr = malloc(sizeof(*store));
     store = LIGHT_STAGE_DATA(stage);
     if (!store)
 	return GL_FALSE;
@@ -344,7 +344,7 @@ static void dtr(struct tnl_pipeline_stage *stage)
 	_mesa_vector4f_free(&store->LitSecondary[1]);
 	_mesa_vector4f_free(&store->LitIndex[0]);
 	_mesa_vector4f_free(&store->LitIndex[1]);
-	FREE(store);
+	free(store);
 	stage->privatePtr = NULL;
     }
 }

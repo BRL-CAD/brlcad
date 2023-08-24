@@ -27,8 +27,10 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QRadioButton>
-#include "qtcad/QColorRGB.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgColorRGB.h"
+#include "qtcad/QgPolyFilter.h"
+#include "qtcad/QgView.h"
+#include "qtcad/QgSignalFlags.h"
 #include "QPolySettings.h"
 
 class QPolyMod : public QWidget
@@ -73,6 +75,7 @@ class QPolyMod : public QWidget
 	void app_mod_names_reset(void *);
 	void mod_names_reset();
 	void polygon_update_props();
+	void propagate_update(int);
 
     private slots:
 	void toplevel_config(bool);
@@ -100,6 +103,12 @@ class QPolyMod : public QWidget
 	int poly_cnt = 0;
 	struct bv_scene_obj *p = NULL;
 	bool do_bool = false;
+
+	QgPolyFilter *cf = NULL;
+	QPolyUpdateFilter *puf;
+	QPolySelectFilter *psf;
+	QPolyPointFilter *ppf;
+	QPolyMoveFilter *pmf;
 };
 
 

@@ -18,7 +18,7 @@
   <cmdsynopsis sepchar=" ">
     <command>eye_pt</command>
 
-    <arg choice="req" rep="norepeat"><replaceable>x y z&gt;</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>x y z</replaceable></arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 

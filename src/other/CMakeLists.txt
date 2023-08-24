@@ -37,6 +37,11 @@ unset(CMAKE_CXX_EXTENSIONS)
 unset(CMAKE_CXX_STANDARD_REQUIRED)
 unset(CMAKE_CXX_STANDARD)
 
+# When we need to have CMake treat includes as
+# system paths to avoid warnings, we add those
+# patterns to the SYS_INCLUDE_PATTERNS list
+mark_as_advanced(SYS_INCLUDE_PATTERNS)
+
 ###############################################################################
 # Unlike the misc/tools directory components built in src/other are part of
 # the distribution, not just the compilation.  Hence we need to make sure of
@@ -200,14 +205,14 @@ if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/irmb")
   set(IRMB_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/irmb" CACHE STRING "Directory containing irmb header" FORCE)
   set(IRMB_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/irmb" CACHE STRING "Directory containing irmb header" FORCE)
   SetTargetFolder(irmb "Third Party Libraries")
-  mark_as_advanced(IRMB_LIBRARY)
-  mark_as_advanced(IRMB_LIBRARIES)
-  mark_as_advanced(IRMB_INCLUDE_DIR)
-  mark_as_advanced(IRMB_INCLUDE_DIRS)
 else (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/irmb")
   set(IRMB_LIBRARIES "" CACHE STRING "Disabled" FORCE)
   set(IRMB_INCLUDE_DIRS "" CACHE STRING "Disabled" FORCE)
 endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/irmb")
+mark_as_advanced(IRMB_LIBRARY)
+mark_as_advanced(IRMB_LIBRARIES)
+mark_as_advanced(IRMB_INCLUDE_DIR)
+mark_as_advanced(IRMB_INCLUDE_DIRS)
 
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)
@@ -254,6 +259,18 @@ CMAKEFILES_IN_DIR(tkhtml_ignore_files tkhtml)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/tktable.dist")
 CMAKEFILES_IN_DIR(tktable_ignore_files tktable)
+
+# The above libraries are all compilation targets with libraries, and so have
+# build outputs that must be distributed with BRL-CAD.  The following are
+# either header-only libraries or built directly into executables, and as such
+# may remain in place - they are needed only for building.
+include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
+CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
+
+# linenoise is used by applications directly
+include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
+CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
 
 CMAKEFILES(
   README

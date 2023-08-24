@@ -64,9 +64,6 @@
 #define SET_NEG_INFINITY(x)  x = (GLfloat) -HUGE_VAL
 #endif
 
-#define SET_FLOAT_BITS(x, bits) ((fi_type *) (void *) &(x))->i = bits
-
-
 static const GLfloat ZeroVec[4] = { 0.0F, 0.0F, 0.0F, 0.0F };
 
 
@@ -584,7 +581,7 @@ _mesa_execute_program(GLcontext * ctx,
 		GLfloat a[4], result[4];
 		fetch_vector1(&inst->SrcReg[0], machine, a);
 		result[0] = result[1] = result[2] = result[3]
-						    = (GLfloat) _mesa_cos(a[0]);
+						    = (GLfloat) cos(a[0]);
 		store_vector4(inst, machine, result);
 	    }
 	    break;
@@ -674,7 +671,7 @@ _mesa_execute_program(GLcontext * ctx,
 		GLfloat a[4], result[4];
 		fetch_vector1(&inst->SrcReg[0], machine, a);
 		result[0] = result[1] = result[2] = result[3] =
-							(GLfloat) _mesa_pow(2.0, a[0]);
+							(GLfloat) pow(2.0, a[0]);
 		store_vector4(inst, machine, result);
 	    }
 	    break;
@@ -1018,7 +1015,7 @@ _mesa_execute_program(GLcontext * ctx,
 		fetch_vector1(&inst->SrcReg[0], machine, a);
 		fetch_vector1(&inst->SrcReg[1], machine, b);
 		result[0] = result[1] = result[2] = result[3]
-						    = (GLfloat) _mesa_pow(a[0], b[0]);
+						    = (GLfloat) pow(a[0], b[0]);
 		store_vector4(inst, machine, result);
 	    }
 	    break;
@@ -1071,8 +1068,8 @@ _mesa_execute_program(GLcontext * ctx,
 	    case OPCODE_SCS: {       /* sine and cos */
 		GLfloat a[4], result[4];
 		fetch_vector1(&inst->SrcReg[0], machine, a);
-		result[0] = (GLfloat) _mesa_cos(a[0]);
-		result[1] = (GLfloat) _mesa_sin(a[0]);
+		result[0] = (GLfloat) cos(a[0]);
+		result[1] = (GLfloat) sin(a[0]);
 		result[2] = 0.0;    /* undefined! */
 		result[3] = 0.0;    /* undefined! */
 		store_vector4(inst, machine, result);
@@ -1138,7 +1135,7 @@ _mesa_execute_program(GLcontext * ctx,
 		GLfloat a[4], result[4];
 		fetch_vector1(&inst->SrcReg[0], machine, a);
 		result[0] = result[1] = result[2] = result[3]
-						    = (GLfloat) _mesa_sin(a[0]);
+						    = (GLfloat) sin(a[0]);
 		store_vector4(inst, machine, result);
 	    }
 	    break;

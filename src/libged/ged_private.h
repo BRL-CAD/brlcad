@@ -68,6 +68,7 @@ __BEGIN_DECLS
 #define _GED_BOOL_EVAL          3
 #define _GED_HIDDEN_LINE        4
 #define _GED_SHADED_MODE_EVAL   5
+#define _GED_WIREFRAME_EVAL     6
 
 #define _GED_DRAW_WIREFRAME 1
 #define _GED_DRAW_NMG_POLY  3
@@ -215,7 +216,6 @@ struct draw_data_t {
     std::map<struct directory *, fastf_t> *s_size;
 #endif
 };
-GED_EXPORT void draw_scene(struct bv_scene_obj *s, struct bview *v);
 GED_EXPORT void draw_walk_tree(struct db_full_path *path, union tree *tp, mat_t *curr_mat,
           void (*traverse_func) (struct db_full_path *path, mat_t *, void *),
           void *client_data, void *comb_inst_map);

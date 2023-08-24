@@ -916,7 +916,7 @@ _swrast_write_index_span(GLcontext *ctx, SWspan *span)
 	/* mask was initialized by caller, probably glBitmap */
 	span->writeAll = GL_FALSE;
     } else {
-	_mesa_memset(span->array->mask, 1, span->end);
+	memset(span->array->mask, 1, span->end);
 	span->writeAll = GL_TRUE;
     }
 
@@ -1029,7 +1029,7 @@ _swrast_write_index_span(GLcontext *ctx, SWspan *span)
 
 	if (numDrawBuffers > 1) {
 	    /* save indexes for second, third renderbuffer writes */
-	    _mesa_memcpy(indexSave, span->array->index,
+	    memcpy(indexSave, span->array->index,
 			 span->end * sizeof(indexSave[0]));
 	}
 
@@ -1106,7 +1106,7 @@ _swrast_write_index_span(GLcontext *ctx, SWspan *span)
 
 	    if (buf + 1 < numDrawBuffers) {
 		/* restore original span values */
-		_mesa_memcpy(span->array->index, indexSave,
+		memcpy(span->array->index, indexSave,
 			     span->end * sizeof(indexSave[0]));
 	    }
 	} /* for buf */
@@ -1359,7 +1359,7 @@ _swrast_write_rgba_span(GLcontext *ctx, SWspan *span)
     GLboolean deferredTexture;
 
     /*
-    printf("%s()  interp 0x%x  array 0x%x\n", __FUNCTION__,
+    printf("%s()  interp 0x%x  array 0x%x\n", __func__,
            span->interpMask, span->arrayMask);
     */
 
@@ -1404,7 +1404,7 @@ _swrast_write_rgba_span(GLcontext *ctx, SWspan *span)
 	/* mask was initialized by caller, probably glBitmap */
 	span->writeAll = GL_FALSE;
     } else {
-	_mesa_memset(span->array->mask, 1, span->end);
+	memset(span->array->mask, 1, span->end);
 	span->writeAll = GL_TRUE;
     }
 
@@ -1558,7 +1558,7 @@ _swrast_write_rgba_span(GLcontext *ctx, SWspan *span)
 
 	    if (numDrawBuffers > 1) {
 		/* save colors for second, third renderbuffer writes */
-		_mesa_memcpy(rgbaSave, span->array->rgba,
+		memcpy(rgbaSave, span->array->rgba,
 			     4 * span->end * sizeof(GLchan));
 	    }
 
@@ -1593,7 +1593,7 @@ _swrast_write_rgba_span(GLcontext *ctx, SWspan *span)
 
 		if (buf + 1 < numDrawBuffers) {
 		    /* restore original span values */
-		    _mesa_memcpy(span->array->rgba, rgbaSave,
+		    memcpy(span->array->rgba, rgbaSave,
 				 4 * span->end * sizeof(GLchan));
 		}
 	    } /* for buf */

@@ -62,8 +62,8 @@ class QTCAD_EXPORT QgTreeView : public QTreeView
     public slots:
 	void tree_column_size(const QModelIndex &index);
 	void context_menu(const QPoint &point);
-	void expand_path(QString path);
-	void expand_link(const QUrl &link);
+	//void expand_path(QString path);
+	//void expand_link(const QUrl &link);
 	void redo_expansions(void *);
 	void redo_highlights();
 	void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected) override;

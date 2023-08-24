@@ -10,6 +10,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+set(LEMON_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}")
 find_package(LEMON)
 PERPLEX_TARGET(csg_scanner csg_scanner.perplex)
 LEMON_TARGET(csg_parser csg_parser.lemon)

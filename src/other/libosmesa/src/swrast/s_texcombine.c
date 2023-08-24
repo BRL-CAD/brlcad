@@ -1161,7 +1161,7 @@ _swrast_texture_span(GLcontext *ctx, SWspan *span)
      * Save copy of the incoming fragment colors (the GL_PRIMARY_COLOR)
      */
     if (swrast->_AnyTextureCombine)
-	MEMCPY(primary_rgba, span->array->rgba, 4 * span->end * sizeof(GLchan));
+	memcpy(primary_rgba, span->array->rgba, 4 * span->end * sizeof(GLchan));
 
     /*
      * Must do all texture sampling before combining in order to

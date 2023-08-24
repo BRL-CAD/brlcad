@@ -47,7 +47,7 @@ _tnl_CreateContext(GLcontext *ctx)
 
     /* Create the TNLcontext structure
      */
-    ctx->swtnl_context = tnl = (TNLcontext *) CALLOC(sizeof(TNLcontext));
+    ctx->swtnl_context = tnl = (TNLcontext *) calloc(1,sizeof(TNLcontext));
 
     if (!tnl) {
 	return GL_FALSE;
@@ -93,7 +93,7 @@ _tnl_DestroyContext(GLcontext *ctx)
     if (ctx->VertexProgram._MaintainTnlProgram)
 	_tnl_ProgramCacheDestroy(ctx);
 
-    FREE(tnl);
+    free(tnl);
     ctx->swtnl_context = NULL;
 }
 

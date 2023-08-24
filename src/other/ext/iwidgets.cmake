@@ -152,6 +152,8 @@ else (BRLCAD_ENABLE_TK)
 
 endif (BRLCAD_ENABLE_TK)
 
+mark_as_advanced(IWIDGETS_VERSION)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/iwidgets.dist")
 
 # Local Variables:

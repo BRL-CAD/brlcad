@@ -529,7 +529,6 @@ bv_plot_vlblock(FILE *fp, const struct bv_vlblock *vbp)
     } \
     bu_vls_init(&(p)->s_name); \
     (p)->s_path = NULL; \
-    bu_vls_init(&(p)->s_uuid); \
     BU_LIST_INIT( &((p)->s_vlist) ); }
 
 #define FREE_BV_SCENE_OBJ(p, fp, vlf) { \
@@ -569,7 +568,6 @@ bv_vlblock_to_objs(struct bu_ptbl *out, const char *name_root, struct bv_vlblock
 	    s->s_type_flags = BV_VIEWONLY;
 	    s->s_v = v;
 	    bu_vls_sprintf(&s->s_name, "%sobj%zd", name_root, i);
-	    bu_vls_sprintf(&s->s_uuid, "%sobj%zd", name_root, i);
 	    struct bv_vlist *bvl = (struct bv_vlist *)&vbp->head[i];
 	    long int rgb = vbp->rgb[i];
 	    s->s_vlen = bv_vlist_cmd_cnt(bvl);

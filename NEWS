@@ -10,7 +10,16 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 202X-XX-XX  Release 7.36.0                                     ---
+--- 20XX-0X-XX  Release 7.36.2                                     ---
+----------------------------------------------------------------------
+
+* improved and restructured rtwizard's manual page - Sean Morrison
+* fixed E command in MGED - Cliff Yapp
+* made improvements to a variety of manual pages - Josh Baker
+
+
+----------------------------------------------------------------------
+--- 2023-07-26  Release 7.36.0                                     ---
 ----------------------------------------------------------------------
 This major release of BRL-CAD introduces significant updates to
 geometry conversion support. The update includes modernization for

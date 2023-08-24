@@ -56,6 +56,7 @@
 #endif
 
 #ifdef HAVE_TIME_H
+#define __USE_POSIX // for localtime_r
 #include <time.h>
 #endif
 

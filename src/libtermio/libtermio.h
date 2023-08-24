@@ -1,0 +1,67 @@
+/*                     L I B T E R M I O . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2004-2023 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @addtogroup libtermio
+ *
+ * @brief
+ * Externs for the BRL-CAD library LIBTERMIO
+ *
+ */
+/** @{ */
+/** @file libtermio.h */
+
+#ifndef LIBTERMIO_H
+#define LIBTERMIO_H
+
+#include "common.h"
+
+#ifndef TERMIO_EXPORT
+#  if defined(TERMIO_DLL_EXPORTS) && defined(TERMIO_DLL_IMPORTS)
+#    error "Only TERMIO_DLL_EXPORTS or TERMIO_DLL_IMPORTS can be defined, not both."
+#  elif defined(TERMIO_DLL_EXPORTS)
+#    define TERMIO_EXPORT COMPILER_DLLEXPORT
+#  elif defined(TERMIO_DLL_IMPORTS)
+#    define TERMIO_EXPORT COMPILER_DLLIMPORT
+#  else
+#    define TERMIO_EXPORT
+#  endif
+#endif
+
+__BEGIN_DECLS
+
+TERMIO_EXPORT void clr_Echo(int fd);
+TERMIO_EXPORT void reset_Tty(int fd);
+TERMIO_EXPORT void save_Tty(int fd);
+TERMIO_EXPORT void set_Cbreak(int fd);
+TERMIO_EXPORT void set_Raw(int fd);
+
+__END_DECLS
+
+#endif /* LIBTERMIO_H */
+
+/** @} */
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

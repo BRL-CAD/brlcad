@@ -28,10 +28,6 @@
  * GL_EXT_texture_compression_s3tc support.
  */
 
-#ifndef USE_EXTERNAL_DXTN_LIB
-#define USE_EXTERNAL_DXTN_LIB 0
-#endif
-
 #include "glheader.h"
 #include "imports.h"
 #include "colormac.h"
@@ -41,21 +37,6 @@
 #include "texcompress.h"
 #include "texformat.h"
 #include "texstore.h"
-
-#if USE_EXTERNAL_DXTN_LIB && !defined(__MINGW32__)
-#include <dlfcn.h>
-#endif
-
-#ifdef __MINGW32__
-#define DXTN_LIBNAME "dxtn.dll"
-#define RTLD_LAZY 0
-#define RTLD_GLOBAL 0
-#elif defined(__DJGPP__)
-#define DXTN_LIBNAME "dxtn.dxe"
-#else
-#define DXTN_LIBNAME "libtxc_dxtn.so"
-#endif
-
 
 typedef void (*dxtFetchTexelFuncExt)(GLint srcRowstride, GLubyte *pixdata, GLint col, GLint row, GLvoid *texelOut);
 
@@ -78,50 +59,7 @@ _mesa_init_texture_s3tc(GLcontext *ctx)
 {
     /* called during context initialization */
     ctx->Mesa_DXTn = GL_FALSE;
-#if USE_EXTERNAL_DXTN_LIB
-    if (!dxtlibhandle) {
-	dxtlibhandle = _mesa_dlopen(DXTN_LIBNAME, RTLD_LAZY | RTLD_GLOBAL);
-	if (!dxtlibhandle) {
-	    _mesa_warning(ctx, "couldn't open " DXTN_LIBNAME ", software DXTn "
-			  "compression/decompression unavailable");
-	} else {
-	    /* the fetch functions are not per context! Might be problematic... */
-	    fetch_ext_rgb_dxt1 = (dxtFetchTexelFuncExt)
-				 _mesa_dlsym(dxtlibhandle, "fetch_2d_texel_rgb_dxt1");
-	    fetch_ext_rgba_dxt1 = (dxtFetchTexelFuncExt)
-				  _mesa_dlsym(dxtlibhandle, "fetch_2d_texel_rgba_dxt1");
-	    fetch_ext_rgba_dxt3 = (dxtFetchTexelFuncExt)
-				  _mesa_dlsym(dxtlibhandle, "fetch_2d_texel_rgba_dxt3");
-	    fetch_ext_rgba_dxt5 = (dxtFetchTexelFuncExt)
-				  _mesa_dlsym(dxtlibhandle, "fetch_2d_texel_rgba_dxt5");
-	    ext_tx_compress_dxtn = (dxtCompressTexFuncExt)
-				   _mesa_dlsym(dxtlibhandle, "tx_compress_dxtn");
-
-	    if (!fetch_ext_rgb_dxt1 ||
-		!fetch_ext_rgba_dxt1 ||
-		!fetch_ext_rgba_dxt3 ||
-		!fetch_ext_rgba_dxt5 ||
-		!ext_tx_compress_dxtn) {
-		_mesa_warning(ctx, "couldn't reference all symbols in "
-			      DXTN_LIBNAME ", software DXTn compression/decompression "
-			      "unavailable");
-		fetch_ext_rgb_dxt1 = NULL;
-		fetch_ext_rgba_dxt1 = NULL;
-		fetch_ext_rgba_dxt3 = NULL;
-		fetch_ext_rgba_dxt5 = NULL;
-		ext_tx_compress_dxtn = NULL;
-		_mesa_dlclose(dxtlibhandle);
-		dxtlibhandle = NULL;
-	    }
-	}
-    }
-    if (dxtlibhandle) {
-	ctx->Mesa_DXTn = GL_TRUE;
-	_mesa_warning(ctx, "software DXTn compression/decompression available");
-    }
-#else
     (void) ctx;
-#endif
 }
 
 /**
@@ -176,7 +114,7 @@ texstore_rgb_dxt1(TEXSTORE_PARAMS)
     }
 
     if (tempImage)
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
 
     return GL_TRUE;
 }
@@ -233,7 +171,7 @@ texstore_rgba_dxt1(TEXSTORE_PARAMS)
     }
 
     if (tempImage)
-	_mesa_free((void*) tempImage);
+	free((void*) tempImage);
 
     return GL_TRUE;
 }
@@ -290,7 +228,7 @@ texstore_rgba_dxt3(TEXSTORE_PARAMS)
     }
 
     if (tempImage)
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
 
     return GL_TRUE;
 }
@@ -347,7 +285,7 @@ texstore_rgba_dxt5(TEXSTORE_PARAMS)
     }
 
     if (tempImage)
-	_mesa_free((void *) tempImage);
+	free((void *) tempImage);
 
     return GL_TRUE;
 }

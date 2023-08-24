@@ -145,7 +145,7 @@ static void
 parse_identifier_str(slang_parse_ctx * C, char **id)
 {
     *id = (char *) C->I;
-    C->I += _mesa_strlen(*id) + 1;
+    C->I += strlen(*id) + 1;
 }
 
 static slang_atom
@@ -154,7 +154,7 @@ parse_identifier(slang_parse_ctx * C)
     const char *id;
 
     id = (const char *) C->I;
-    C->I += _mesa_strlen(id) + 1;
+    C->I += strlen(id) + 1;
     return slang_atom_pool_atom(C->atoms, id);
 }
 
@@ -192,9 +192,9 @@ parse_float(slang_parse_ctx * C, float *number)
     parse_identifier_str(C, &fractional);
     parse_identifier_str(C, &exponent);
 
-    whole = (char *) _slang_alloc((_mesa_strlen(integral) +
-				   _mesa_strlen(fractional) +
-				   _mesa_strlen(exponent) + 3) * sizeof(char));
+    whole = (char *) _slang_alloc((strlen(integral) +
+				   strlen(fractional) +
+				   strlen(exponent) + 3) * sizeof(char));
     if (whole == NULL) {
 	slang_info_log_memory(C->L);
 	return 0;
@@ -206,7 +206,7 @@ parse_float(slang_parse_ctx * C, float *number)
     slang_string_concat(whole, "E");
     slang_string_concat(whole, exponent);
 
-    *number = (float)(_mesa_strtod(whole, (char **) NULL));
+    *number = (float)(strtod(whole, (char **) NULL));
 
     _slang_free(whole);
 
@@ -2139,7 +2139,7 @@ _slang_compile(GLcontext *ctx, struct gl_shader *shader)
 
     /* free shader's prev info log */
     if (shader->InfoLog) {
-	_mesa_free(shader->InfoLog);
+	free(shader->InfoLog);
 	shader->InfoLog = NULL;
     }
 

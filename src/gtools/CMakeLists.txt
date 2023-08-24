@@ -1,4 +1,4 @@
-set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/ext/linenoise")
+set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/linenoise")
 
 set(GTOOLS_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
@@ -42,8 +42,9 @@ add_subdirectory(gdiff)
 
 add_subdirectory(tests)
 
-
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  )
 
 # Local Variables:
 # tab-width: 8

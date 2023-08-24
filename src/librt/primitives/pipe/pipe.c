@@ -4594,6 +4594,36 @@ rt_pipe_adjust(
     return (rt_pipe_ck(&pip->pipe_segs_head) == 0) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
+void
+rt_pipe_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_pipe_internal* pipe_ip;
+    struct wdb_pipe_pnt* pipe_pp;
+
+    intern->idb_type = ID_PIPE;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(pipe_ip, struct rt_pipe_internal);
+    intern->idb_ptr = (void *)pipe_ip;
+
+    pipe_ip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
+
+    BU_LIST_INIT(&pipe_ip->pipe_segs_head);
+    for (int i = 0; i < 2; i++) {
+	BU_ALLOC(pipe_pp, struct wdb_pipe_pnt);
+	pipe_pp->l.magic = WDB_PIPESEG_MAGIC;
+	VSETALL(pipe_pp->pp_coord, i);
+
+	pipe_pp->pp_od = 1;
+	pipe_pp->pp_id = 0.1 * pipe_pp->pp_od;
+	pipe_pp->pp_bendradius = pipe_pp->pp_od;
+	BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &pipe_pp->l);
+    }
+}
+
 
 int
 rt_pipe_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)

@@ -1,12 +1,12 @@
 set(mann_EN
   3ptarb.xml
   B.xml
-  E.xml
+  bigE.xml
   M.xml
   Z.xml
   adc.xml
   ae.xml
-  all_sf.xml
+  ae2dir.xml
   analyze.xml
   animmate.xml
   apropos.xml
@@ -24,7 +24,6 @@ set(mann_EN
   bev.xml
   bo.xml
   bot.xml
-  bolt.xml
   bot_condense.xml
   bot_decimate.xml
   bot_face_fuse.xml
@@ -41,8 +40,10 @@ set(mann_EN
   build_region.xml
   c.xml
   cat.xml
+  cd.xml
   center.xml
   check.xml
+  clear.xml
   clone.xml
   color.xml
   comb.xml
@@ -53,9 +54,10 @@ set(mann_EN
   cpi.xml
   d.xml
   db.xml
-  dbfind.xml
   db_glob.xml
   dbconcat.xml
+  dbfind.xml
+  dbfindtree.xml
   dbupgrade.xml
   debug.xml
   debugbu.xml
@@ -66,8 +68,10 @@ set(mann_EN
   delay.xml
   dm.xml
   draw.xml
+  dump.xml
   dup.xml
-  e_command.xml
+  e.xml
+  e_id.xml
   eac.xml
   echo.xml
   edcodes.xml
@@ -77,6 +81,7 @@ set(mann_EN
   edit.xml
   edit_translate.xml
   edmater.xml
+  env.xml
   eqn.xml
   erase.xml
   ev.xml
@@ -113,6 +118,7 @@ set(mann_EN
   keypoint.xml
   kill.xml
   killall.xml
+  killrefs.xml
   killtree.xml
   knob.xml
   l.xml
@@ -131,6 +137,7 @@ set(mann_EN
   material.xml
   matpick.xml
   mirface.xml
+  mirror.xml
   mrot.xml
   mv.xml
   mvall.xml
@@ -162,6 +169,7 @@ set(mann_EN
   push.xml
   put_comb.xml
   putmat.xml
+  pwd.xml
   q.xml
   qorot.xml
   qray.xml
@@ -181,6 +189,8 @@ set(mann_EN
   regions.xml
   reid.xml
   release.xml
+  relos.xml
+  remat.xml
   rfarb.xml
   rm.xml
   rmater.xml
@@ -192,18 +202,21 @@ set(mann_EN
   rt.xml
   rtarea.xml
   rtcheck.xml
+  rtedge.xml
   saveview.xml
   sca.xml
   screengrab.xml
   search.xml
   sed.xml
   setview.xml
+  shaded_mode.xml
   shader.xml
   shells.xml
   showmats.xml
   simulate.xml
   size.xml
   solids.xml
+  source.xml
   sph-part.xml
   stat.xml
   status.xml
@@ -220,10 +233,12 @@ set(mann_EN
   track.xml
   translate.xml
   tree.xml
+  unhide.xml
   units.xml
   vars.xml
   vdraw.xml
   view.xml
+  viewdir.xml
   viewsize.xml
   vnirt.xml
   voxelize.xml

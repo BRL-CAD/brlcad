@@ -53,12 +53,12 @@ _mesa_free_parameter_list(struct gl_program_parameter_list *paramList)
     GLuint i;
     for (i = 0; i < paramList->NumParameters; i++) {
 	if (paramList->Parameters[i].Name)
-	    _mesa_free((void *) paramList->Parameters[i].Name);
+	    free((void *) paramList->Parameters[i].Name);
     }
-    _mesa_free(paramList->Parameters);
+    free(paramList->Parameters);
     if (paramList->ParameterValues)
 	_mesa_align_free(paramList->ParameterValues);
-    _mesa_free(paramList);
+    free(paramList);
 }
 
 
@@ -116,7 +116,7 @@ _mesa_add_parameter(struct gl_program_parameter_list *paramList,
 
 	paramList->NumParameters = oldNum + sz4;
 
-	_mesa_memset(&paramList->Parameters[oldNum], 0,
+	memset(&paramList->Parameters[oldNum], 0,
 		     sz4 * sizeof(struct gl_program_parameter));
 
 	for (i = 0; i < sz4; i++) {
@@ -410,7 +410,7 @@ _mesa_add_state_reference(struct gl_program_parameter_list *paramList,
     paramList->StateFlags |= _mesa_program_state_flags(stateTokens);
 
     /* free name string here since we duplicated it in add_parameter() */
-    _mesa_free((void *) name);
+    free((void *) name);
 
     return index;
 }
@@ -450,15 +450,15 @@ _mesa_lookup_parameter_index(const struct gl_program_parameter_list *paramList,
 	/* name is null-terminated */
 	for (i = 0; i < (GLint) paramList->NumParameters; i++) {
 	    if (paramList->Parameters[i].Name &&
-		_mesa_strcmp(paramList->Parameters[i].Name, name) == 0)
+		strcmp(paramList->Parameters[i].Name, name) == 0)
 		return i;
 	}
     } else {
 	/* name is not null-terminated, use nameLen */
 	for (i = 0; i < (GLint) paramList->NumParameters; i++) {
 	    if (paramList->Parameters[i].Name &&
-		_mesa_strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
-		&& _mesa_strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
+		strncmp(paramList->Parameters[i].Name, name, nameLen) == 0
+		&& strlen(paramList->Parameters[i].Name) == (size_t)nameLen)
 		return i;
 	}
     }
@@ -573,13 +573,15 @@ _mesa_clone_parameter_list(const struct gl_program_parameter_list *list)
 	ASSERT(j >= 0);
 	/* copy state indexes */
 	if (p->Type == PROGRAM_STATE_VAR) {
-	    GLint k;
 	    struct gl_program_parameter *q = clone->Parameters + j;
-	    for (k = 0; k < STATE_LENGTH; k++) {
-		q->StateIndexes[k] = p->StateIndexes[k];
+	    if (q) {
+		for (GLint k = 0; k < STATE_LENGTH; k++) {
+		    q->StateIndexes[k] = p->StateIndexes[k];
+		}
 	    }
 	} else {
-	    clone->Parameters[j].Size = p->Size;
+	    if (clone->Parameters)
+		clone->Parameters[j].Size = p->Size;
 	}
     }
 
@@ -599,7 +601,7 @@ _mesa_longest_parameter_name(const struct gl_program_parameter_list *list,
 	return 0;
     for (i = 0; i < list->NumParameters; i++) {
 	if (list->Parameters[i].Type == type) {
-	    GLuint len = _mesa_strlen(list->Parameters[i].Name);
+	    GLuint len = strlen(list->Parameters[i].Name);
 	    if (len > maxLen)
 		maxLen = len;
 	}

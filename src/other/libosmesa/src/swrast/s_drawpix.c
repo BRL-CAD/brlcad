@@ -473,7 +473,7 @@ draw_depth_pixels(GLcontext *ctx, GLint x, GLint y,
 				 _mesa_image_address2d(unpack, pixels, width, height,
 					 GL_DEPTH_COMPONENT, type, row, 0);
 	    if (shift == 0) {
-		_mesa_memcpy(span.array->z, zSrc, width * sizeof(GLuint));
+		memcpy(span.array->z, zSrc, width * sizeof(GLuint));
 	    } else {
 		GLint col;
 		for (col = 0; col < width; col++)
@@ -565,14 +565,14 @@ draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
 	GLint row;
 	GLfloat *dest, *tmpImage;
 
-	tmpImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+	tmpImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 	if (!tmpImage) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
 	    return;
 	}
-	convImage = (GLfloat *) _mesa_malloc(width * height * 4 * sizeof(GLfloat));
+	convImage = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 	if (!convImage) {
-	    _mesa_free(tmpImage);
+	    free(tmpImage);
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glDrawPixels");
 	    return;
 	}
@@ -595,7 +595,7 @@ draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
 	    ASSERT(ctx->Pixel.Separable2DEnabled);
 	    _mesa_convolve_sep_image(ctx, &width, &height, tmpImage, convImage);
 	}
-	_mesa_free(tmpImage);
+	free(tmpImage);
 
 	/* continue transfer ops and draw the convolved image */
 	unpack = &ctx->DefaultPacking;
@@ -673,7 +673,7 @@ draw_rgba_pixels(GLcontext *ctx, GLint x, GLint y,
     }
 
     if (convImage) {
-	_mesa_free(convImage);
+	free(convImage);
     }
 }
 

@@ -28,11 +28,12 @@ set(LIBGED_SOURCES
   exec_mapping.cpp
   ged_init.cpp
   columns.c
+  dbi_state.cpp
   display_list.c
   draw.cpp
   facedef.c
-  ged.c
-  ged_util.c
+  ged.cpp
+  ged_util.cpp
   get_obj_bounds.c
   get_solid_kp.c
   inside.c
@@ -46,7 +47,6 @@ set(LIBGED_SOURCES
   rotate_extrude.c
   rotate_hyp.c
   rotate_tgc.c
-  select.cpp
   tab_complete.cpp
   trace.c
   track.c

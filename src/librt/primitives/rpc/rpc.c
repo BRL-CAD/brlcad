@@ -1608,6 +1608,28 @@ rt_rpc_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
+void
+rt_rpc_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_rpc_internal* rpc_ip;
+
+    intern->idb_type = ID_RPC;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(rpc_ip, struct rt_rpc_internal);
+    intern->idb_ptr = (void *)rpc_ip;
+
+    rpc_ip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
+    VSETALL(rpc_ip->rpc_V, 0);
+    VSET(rpc_ip->rpc_H, 0.0, 0.0, 1.0);
+    VSET(rpc_ip->rpc_B, 0.0, 1.0, 0.0);
+    rpc_ip->rpc_r = 1.0;
+
+}
+
 
 int
 rt_rpc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)

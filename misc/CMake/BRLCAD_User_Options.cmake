@@ -214,24 +214,25 @@ mark_as_advanced(BRLCAD_ENABLE_STEP)
 # Enable features requiring Qt
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
+if (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
 if (BRLCAD_ENABLE_QT)
 
   # Note - to use Qt6, set Qt6_DIR to <qt_install_dir>/lib/cmake/Qt6 and CMAKE_PREFIX_PATH
   # to <qt_install_dir>
   if(Qt6_DIR)
     if(BRLCAD_ENABLE_OPENGL)
-      find_package(Qt6 COMPONENTS Core Widgets Gui OpenGL OpenGLWidgets Network REQUIRED)
+      find_package(Qt6 COMPONENTS Core Widgets Gui Svg OpenGL OpenGLWidgets Network REQUIRED)
       find_package(Qt6 COMPONENTS Test)
     else()
-      find_package(Qt6 COMPONENTS Core Widgets Gui Network REQUIRED)
+      find_package(Qt6 COMPONENTS Core Widgets Gui Svg Network REQUIRED)
       find_package(Qt6 COMPONENTS Test)
     endif(BRLCAD_ENABLE_OPENGL)
   else()
     if(BRLCAD_ENABLE_OPENGL)
-      find_package(Qt6 COMPONENTS Core Widgets Gui OpenGL OpenGLWidgets Network QUIET)
+      find_package(Qt6 COMPONENTS Core Widgets Gui Svg OpenGL OpenGLWidgets Network QUIET)
       find_package(Qt6 COMPONENTS Test)
     else()
-      find_package(Qt6 COMPONENTS Core Widgets Gui Network QUIET)
+      find_package(Qt6 COMPONENTS Core Widgets Gui Svg Network QUIET)
       find_package(Qt6 COMPONENTS Test)
     endif(BRLCAD_ENABLE_OPENGL)
   endif(Qt6_DIR)
@@ -263,11 +264,9 @@ if (BRLCAD_ENABLE_QT)
 
   endif(NOT Qt6Widgets_FOUND AND BRLCAD_ENABLE_QT)
 
-  # There are a few source level incompatibilities between Qt6 and Qt5 - set
-  # configure flag so we know what we need to do.
-  if (Qt6Widgets_FOUND)
-    CONFIG_H_APPEND(BRLCAD "#define USE_QT6 1\n")
-  endif (Qt6Widgets_FOUND)
+  if (Qt6Test_FOUND)
+    CONFIG_H_APPEND(BRLCAD "#define USE_QTTEST 1\n")
+  endif (Qt6Test_FOUND)
 
 endif (BRLCAD_ENABLE_QT)
 mark_as_advanced(Qt6Widgets_DIR)
@@ -276,6 +275,7 @@ mark_as_advanced(Qt6Gui_DIR)
 mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
+endif (EXISTS "${CMAKE_SOURCE_DIR}/src/other/ext")
 
 # Enable features requiring OpenSceneGraph
 option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)

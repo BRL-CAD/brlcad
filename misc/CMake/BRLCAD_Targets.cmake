@@ -57,6 +57,9 @@ function(SET_LANG_CXX SRC_FILES)
   endif(ENABLE_ALL_CXX_COMPILE)
 endfunction(SET_LANG_CXX SRC_FILES)
 
+# See if we've got astyle
+find_program(ASTYLE_EXECUTABLE astyle HINTS "${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR}")
+
 # BRL-CAD style checking with AStyle
 function(VALIDATE_STYLE targetname srcslist)
 
@@ -381,6 +384,49 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 
 endfunction(BRLCAD_ADDLIB libname srcslist libslist)
+
+
+#-----------------------------------------------------------------------------
+# We need a way to tell whether one path is a subpath of another path without
+# relying on regular expressions, since file paths may have characters in them
+# that will trigger regex matching behavior when we don't want it.  (To test,
+# for example, use a build directory name of build++)
+#
+# Sets ${result_var} to 1 if the candidate subpath is actually a subpath of
+# the supplied "full" path, otherwise sets it to 0.
+#
+# The routine below does the check without using regex matching, in order to
+# handle path names that contain characters that would be interpreted as active
+# in a regex string.
+if (NOT COMMAND IS_SUBPATH)
+  function(IS_SUBPATH candidate_subpath full_path result_var)
+
+    # Just assume it isn't until we prove it is
+    set(${result_var} 0 PARENT_SCOPE)
+
+    # get the CMake form of the path so we have something consistent to work on
+    file(TO_CMAKE_PATH "${full_path}" c_full_path)
+    file(TO_CMAKE_PATH "${candidate_subpath}" c_candidate_subpath)
+
+    # check the string lengths - if the "subpath" is longer than the full path,
+    # there's not point in going further
+    string(LENGTH "${c_full_path}" FULL_LENGTH)
+    string(LENGTH "${c_candidate_subpath}" SUB_LENGTH)
+    if("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
+      return()
+    endif("${SUB_LENGTH}" GREATER "${FULL_LENGTH}")
+
+    # OK, maybe it's a subpath - time to actually check
+    string(SUBSTRING "${c_full_path}" 0 ${SUB_LENGTH} c_full_subpath)
+    if(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
+      return()
+    endif(NOT "${c_full_subpath}" STREQUAL "${c_candidate_subpath}")
+
+    # If we get here, it's a subpath
+    set(${result_var} 1 PARENT_SCOPE)
+
+  endfunction(IS_SUBPATH)
+endif (NOT COMMAND IS_SUBPATH)
 
 #---------------------------------------------------------------------
 # For situations when a local 3rd party library (say, zlib) has been

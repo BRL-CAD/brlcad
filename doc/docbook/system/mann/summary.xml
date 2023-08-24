@@ -18,7 +18,7 @@
   <cmdsynopsis sepchar=" ">
     <command>summary</command>
 
-    <arg choice="opt" rep="norepeat">s</arg>
+    <arg choice="opt" rep="norepeat">p</arg>
     <arg choice="opt" rep="norepeat">r</arg>
     <arg choice="opt" rep="norepeat">g</arg>
   </cmdsynopsis>
@@ -27,8 +27,11 @@
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>The <command>summary</command> command with no arguments lists the number of primitive shapes,
-	regions, and nonregion combinations in the current database. If the <emphasis>s</emphasis> argument is
-	supplied, then the name of each <emphasis>primitive shape</emphasis> is also listed. Similarly, the 	<emphasis>r</emphasis> flag asks for the <emphasis>region</emphasis> names, and <emphasis>g</emphasis> asks 	for the names of all the combinations (including <emphasis>region</emphasis>). The flags may be concatenated 	to get combined output.
+	regions, and nonregion combinations in the current database. If the <emphasis>p</emphasis> argument is
+	supplied, then the name of each <emphasis>primitive shape</emphasis> is also listed. Similarly, the 
+  <emphasis>r</emphasis> flag asks for the <emphasis>region</emphasis> names, and <emphasis>g</emphasis> asks 
+  for the names of all the combinations (including <emphasis>region</emphasis>). The flags may be concatenated 
+  to get combined output.
   </para>
 </refsection>
 
@@ -40,7 +43,7 @@
   <example><title>List a summary of primitive shapes and regions for the current database.</title>
 
     <para>
-      <prompt>mged&gt; </prompt><userinput>summary sr</userinput>
+      <prompt>mged&gt; </prompt><userinput>summary pr</userinput>
     </para>
     <para>Lists a summary of primitive shapes and regions for the current database.
     </para>

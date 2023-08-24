@@ -68,6 +68,7 @@ if (BRLCAD_ZLIB_BUILD)
     zlib.h
     )
 
+  set(ZLIB_LIBRARY zlib CACHE STRING "Building bundled zlib" FORCE)
   set(ZLIB_LIBRARY_DEBUG zlib CACHE STRING "Building bundled zlib" FORCE)
   set(ZLIB_LIBRARY_RELEASE zlib CACHE STRING "Building bundled zlib" FORCE)
   set(ZLIB_LIBRARIES zlib CACHE STRING "Building bundled zlib" FORCE)
@@ -91,6 +92,10 @@ else (BRLCAD_ZLIB_BUILD)
   set(ZLIB_INCLUDE_DIRS "${ZLIB_INCLUDE_DIR}" CACHE STRING "ZLIB include directory" FORCE)
 
 endif (BRLCAD_ZLIB_BUILD)
+
+mark_as_advanced(ZLIB_INCLUDE_DIRS)
+mark_as_advanced(ZLIB_LIBRARIES)
+mark_as_advanced(Z_PREFIX_STR)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/zlib.dist")
 

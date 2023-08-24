@@ -44,7 +44,17 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	if (gdvp->gv_s->gv_rect.draw) {
 	    go_draw(gdvp);
 
-	    dm_draw_viewobjs(wdbp, gdvp, &tgd->go_dmv, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+	    // TODO - I wouldn't expect these values to differ from the dbi
+	    // versions, but to preserve the old behavior where the factors
+	    // were passed explicitly we stash and restore.  Need to figure
+	    // out whether this is ever needed (shouldn't be?)
+	    double l2b = gdvp->gv_local2base;
+	    double b2l = gdvp->gv_base2local;
+	    gdvp->gv_local2base = gedp->dbip->dbi_local2base;
+	    gdvp->gv_base2local = gedp->dbip->dbi_base2local;
+	    dm_draw_viewobjs(wdbp, gdvp, &tgd->go_dmv);
+	    gdvp->gv_local2base = l2b;
+	    gdvp->gv_base2local = b2l;
 
 	    /* disable write to depth buffer */
 	    (void)dm_set_depth_mask((struct dm *)gdvp->dmp, 0);
@@ -118,7 +128,18 @@ go_refresh_draw(struct ged *gedp, struct bview *gdvp, int restore_zbuffer)
 	go_draw(gdvp);
     }
 
-    dm_draw_viewobjs(wdbp, gdvp, &tgd->go_dmv, gedp->dbip->dbi_base2local, gedp->dbip->dbi_local2base);
+    // TODO - I wouldn't expect these values to differ from the dbi versions,
+    // but to preserve the old behavior where the factors were passed
+    // explicitly we stash and restore.  Need to figure out whether this is
+    // ever needed (shouldn't be?)
+    double l2b = gdvp->gv_local2base;
+    double b2l = gdvp->gv_base2local;
+    gdvp->gv_local2base = gedp->dbip->dbi_local2base;
+    gdvp->gv_base2local = gedp->dbip->dbi_base2local;
+    dm_draw_viewobjs(wdbp, gdvp, &tgd->go_dmv);
+    dm_draw_viewobjs(wdbp, gdvp, &tgd->go_dmv);
+    gdvp->gv_local2base = l2b;
+    gdvp->gv_base2local = b2l;
 }
 
 void

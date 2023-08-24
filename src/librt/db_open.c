@@ -510,6 +510,38 @@ db_close(register struct db_i *dbip)
 }
 
 int
+db_filetype(const char *fname)
+{
+    // If we can't open it, there's no way to tell if it's
+    // a .g file
+    if (!fname)
+	return -1;
+    FILE *fp = fopen(fname, "rb");
+    if (!fp)
+	return -1;
+
+    // Get the file header - if we can't do that, it's not
+    // a .g file
+    unsigned char header[8];
+    if (fread(header, sizeof(header), 1, fp) != 1) {
+	fclose(fp);
+	return -1;
+    }
+    fclose(fp);
+
+    // Have a header - decide based on the header contents
+    if (db5_header_is_valid(header))
+	return 5;
+    // Have encountered a leading 'I' character in some .tif
+    // files, so check for 'v' and '4' as well.
+    if (header[0] == 'I' && header[2] == 'v' && header[3] == '4')
+	return 4;
+
+    // Could not recognize
+    return -1;
+}
+
+int
 db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 /* output */
 /* input */

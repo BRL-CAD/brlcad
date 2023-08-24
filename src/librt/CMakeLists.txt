@@ -395,9 +395,10 @@ if(HIDE_INTERNAL_SYMBOLS)
   endif (TARGET librt-obj)
 endif(HIDE_INTERNAL_SYMBOLS)
 
-# loudly append an underscore on musl so that we build by default but           
+# loudly append an underscore on musl so that we build by default but
 # not without protest.
-find_program(MUSL_LD NAMES /lib/ld-musl-x86_64.so.1) 
+find_program(MUSL_LD NAMES /lib/ld-musl-x86_64.so.1)
+mark_as_advanced(MUSL_LD)
 if (MUSL_LD)
   message("WARNING: MUSL LibC Detected.  Protecting BRL-CAD's librt.
 

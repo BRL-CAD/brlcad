@@ -425,10 +425,22 @@ sph_016/
 
   <refsection xml:id="examples"><title>EXAMPLES</title>
 
-    <example><title>Default</title>
+    <example><title>Push all matrices under a group down to the region level</title>
       <para>
-        <userinput>push sph1</userinput>
+        <prompt>mged&gt; </prompt><userinput>npush -r group</userinput>
       </para>
+      <para>Push all matrices under given group down to the region level (matrices will sit in group above regions).
+    </para>
+      <literallayout>
+      </literallayout>
+    </example>
+
+        <example><title>Push all matrices under a group down to the solid level</title>
+      <para>
+        <prompt>mged&gt; </prompt><userinput>npush -s group</userinput>
+      </para>
+      <para>Push all matrices under given group down to the solid level (matrices will sit below regions).
+    </para>
       <literallayout>
       </literallayout>
     </example>

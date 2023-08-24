@@ -15,9 +15,8 @@ if(WIN32 AND BRLCAD_ENABLE_OPENGL)
     ${OPENGL_INCLUDE_DIR_GL}
     ${TCL_INCLUDE_PATH}
     ${TK_INCLUDE_PATH}
-    # Needed for tkWinInt.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../other/ext/tk/generic
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../other/ext/tk/win
+    # Private Tk headers needed for the internal Tk function TkWinGetHWND
+    ${CMAKE_CURRENT_SOURCE_DIR}/wintk
     )
 
   set_property(SOURCE dm-wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
@@ -46,6 +45,13 @@ CMAKEFILES(
   ${WGL_SRCS}
   dm-wgl.h
   fb_wgl.h
+  wintk/tkWinPort.h
+  wintk/tkIntDecls.h
+  wintk/tkWinInt.h
+  wintk/tkInt.h
+  wintk/tkWin.h
+  wintk/tkIntPlatDecls.h
+  wintk/tkPort.h
   )
 
 # Local Variables:
@@ -54,3 +60,4 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+

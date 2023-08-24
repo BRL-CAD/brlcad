@@ -844,7 +844,7 @@ static struct ureg emit_combine(struct texenv_fragment_program *p,
 	    emit_arith(p, OPCODE_MAD, tmp0, WRITEMASK_XYZW, 0,
 		       two, src[0], neg1);
 
-	    if (_mesa_memcmp(&src[0], &src[1], sizeof(struct ureg)) == 0)
+	    if (memcmp(&src[0], &src[1], sizeof(struct ureg)) == 0)
 		tmp1 = tmp0;
 	    else
 		emit_arith(p, OPCODE_MAD, tmp1, WRITEMASK_XYZW, 0,
@@ -1052,7 +1052,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
     GLuint unit;
     struct ureg cf, out;
 
-    _mesa_memset(&p, 0, sizeof(p));
+    memset(&p, 0, sizeof(p));
     p.ctx = ctx;
     p.state = key;
     p.program = program;
@@ -1115,7 +1115,7 @@ create_new_program(GLcontext *ctx, struct state_key *key,
 	struct ureg s = register_input(&p, FRAG_ATTRIB_COL1);
 	emit_arith(&p, OPCODE_ADD, out, WRITEMASK_XYZ, 0, cf, s, undef);
 	emit_arith(&p, OPCODE_MOV, out, WRITEMASK_W, 0, cf, undef, undef);
-    } else if (_mesa_memcmp(&cf, &out, sizeof(cf)) != 0) {
+    } else if (memcmp(&cf, &out, sizeof(cf)) != 0) {
 	/* Will wind up in here if no texture enabled or a couple of
 	 * other scenarios (GL_REPLACE for instance).
 	 */
@@ -1193,8 +1193,8 @@ static void rehash(struct texenvprog_cache *cache)
     GLuint size, i;
 
     size = cache->size * 3;
-    items = (struct texenvprog_cache_item**) _mesa_malloc(size * sizeof(*items));
-    _mesa_memset(items, 0, size * sizeof(*items));
+    items = (struct texenvprog_cache_item**) malloc(size * sizeof(*items));
+    memset(items, 0, size * sizeof(*items));
 
     for (i = 0; i < cache->size; i++)
 	for (c = cache->items[i]; c; c = next) {
@@ -1203,7 +1203,7 @@ static void rehash(struct texenvprog_cache *cache)
 	    items[c->hash % size] = c;
 	}
 
-    _mesa_free(cache->items);
+    free(cache->items);
     cache->items = items;
     cache->size = size;
 }
@@ -1216,10 +1216,10 @@ static void clear_cache(struct texenvprog_cache *cache)
     for (i = 0; i < cache->size; i++) {
 	for (c = cache->items[i]; c; c = next) {
 	    next = c->next;
-	    _mesa_free(c->key);
+	    free(c->key);
 	    cache->ctx->Driver.DeleteProgram(cache->ctx,
 					     (struct gl_program *) c->data);
-	    _mesa_free(c);
+	    free(c);
 	}
 	cache->items[i] = NULL;
     }
@@ -1234,10 +1234,10 @@ static void cache_item(struct texenvprog_cache *cache,
 		       const struct state_key *key,
 		       void *data)
 {
-    struct texenvprog_cache_item *c = (struct texenvprog_cache_item *) MALLOC(sizeof(*c));
+    struct texenvprog_cache_item *c = (struct texenvprog_cache_item *) malloc(sizeof(*c));
     c->hash = hash;
 
-    c->key = _mesa_malloc(sizeof(*key));
+    c->key = malloc(sizeof(*key));
     memcpy(c->key, key, sizeof(*key));
 
     c->data = (struct gl_fragment_program *) data;
@@ -1252,11 +1252,14 @@ static void cache_item(struct texenvprog_cache *cache,
     cache->n_items++;
     // I think this is a false positive from clang?  % triggers a
     // core.UndefinedBinaryOperatorResult with clang 12
-    #ifndef __clang_analyzer__
+#ifndef __clang_analyzer__
     size_t hmod = hash % cache->size;
     c->next = cache->items[hmod];
     cache->items[hmod] = c;
-    #endif
+#else
+    // Be quiet clang_analyzer...
+    free(c);
+#endif
 }
 
 static GLuint hash_key(const struct state_key *key)
@@ -1339,7 +1342,7 @@ void _mesa_TexEnvProgramCacheInit(GLcontext *ctx)
     ctx->Texture.env_fp_cache.size = 17;
     ctx->Texture.env_fp_cache.n_items = 0;
     ctx->Texture.env_fp_cache.items = (struct texenvprog_cache_item **)
-				      _mesa_calloc(ctx->Texture.env_fp_cache.size *
+				      calloc(1,ctx->Texture.env_fp_cache.size *
 					      sizeof(struct texenvprog_cache_item *));
 }
 
@@ -1347,7 +1350,7 @@ void _mesa_TexEnvProgramCacheInit(GLcontext *ctx)
 void _mesa_TexEnvProgramCacheDestroy(GLcontext *ctx)
 {
     clear_cache(&ctx->Texture.env_fp_cache);
-    _mesa_free(ctx->Texture.env_fp_cache.items);
+    free(ctx->Texture.env_fp_cache.items);
 }
 
 /*

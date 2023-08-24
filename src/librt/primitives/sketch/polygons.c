@@ -85,7 +85,7 @@ _sketch_mat_aet(struct bview *gvp)
 }
 
 struct bv_scene_obj *
-db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bview *sv)
+db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bview *sv, int flags)
 {
     // Begin import
     size_t ncontours = 0;
@@ -220,14 +220,14 @@ end:
     bu_free((void *)all_segment_nodes, "all_segment_nodes");
 
     /* Create the scene object here so we can read a default color */
-    struct bv_scene_obj *s = bv_create_polygon_obj(sv, p);
+    struct bv_scene_obj *s = bv_create_polygon_obj(sv, flags, p);
     if (!s) {
 	bg_polygon_free(&p->polygon);
 	BU_PUT(p, struct bv_polygon);
 	return NULL;
     }
-    bu_vls_init(&s->s_uuid);
-    bu_vls_printf(&s->s_uuid, "%s", sname);
+    bu_vls_init(&s->s_name);
+    bu_vls_printf(&s->s_name, "%s", sname);
 
     // check attributes for visual properties
     int have_view = 1;
@@ -427,7 +427,7 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
 
     /* Project the origin onto the front of the viewing cube */
     MAT4X3PNT(vorigin, p->v.gv_model2view, p->v.gv_center);
-    vorigin[Z] = p->v.gv_data_vZ;
+    vorigin[Z] = p->vZ;
 
     /* Convert back to model coordinates for storage */
     MAT4X3PNT(sketch_ip->V, p->v.gv_view2model, vorigin);

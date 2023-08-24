@@ -106,6 +106,7 @@ add_subdirectory(shotvis)
 add_subdirectory(swidgets)
 add_subdirectory(tcllib)
 add_subdirectory(util)
+add_subdirectory(misc)
 
 set(tclscripts_TCLSCRIPTS
   cad_clrpick.tcl

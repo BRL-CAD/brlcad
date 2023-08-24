@@ -43,7 +43,6 @@ set(DOX_LIBS
   libdm
   libtclcad
   libpkg
-  libtermio
   )
 
 foreach(libname ${DOX_LIBS})
@@ -84,13 +83,6 @@ INPUT += \"${CMAKE_SOURCE_DIR}/include/nmg.h\"
     ")
   endif("${libname}" STREQUAL "librt")
 
-  # libtermio header doesn't fit the template
-  if("${libname}" STREQUAL "libtermio")
-    set(INPUTS "${INPUTS}
-INPUT += \"${CMAKE_SOURCE_DIR}/include/libtermio.h\"
-    ")
-  endif("${libname}" STREQUAL "libtermio")
-
   if(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
     set(INPUTS "${INPUTS}
 INPUT += \"${CMAKE_SOURCE_DIR}/src/${libname}/\"")
@@ -123,13 +115,6 @@ INPUT += \"${CMAKE_SOURCE_DIR}/include/raytrace.h\"
 INPUT += \"${CMAKE_SOURCE_DIR}/include/nmg.h\"
     ")
   endif("${libname}" STREQUAL "librt")
-
-  # libtermio header doesn't fit the template
-  if("${libname}" STREQUAL "libtermio")
-    set(lib_inputs "${lib_inputs}
-INPUT += \"${CMAKE_SOURCE_DIR}/include/libtermio.h\"
-    ")
-  endif("${libname}" STREQUAL "libtermio")
 
   if(DEFINED BRLCAD_DOXYGEN_ADD_SRCS)
     set(lib_inputs "${lib_inputs}
@@ -192,7 +177,6 @@ set(doxygen_ignore_files
   libpkg.dox
   librt.dox
   libtclcad.dox
-  libtermio.dox
   libwdb.dox
   vmath.dox
   )

@@ -98,7 +98,7 @@ x 16.  Qt palette widget - get plugin design finalized, into libqtcad
      Combination Editor, Bot Edit, Build Pattern and Overlap tool need to be studied,
      and probably others.
 
-21.  Figure out how to do a button bar in Qt
+X 21.  Figure out how to do a button bar in Qt
 
 22.  See if we can switch the text label for a Qt dock widget to be a menu when it is
      floating...
@@ -137,10 +137,13 @@ x 16.  Qt palette widget - get plugin design finalized, into libqtcad
 
 11.  Predictor - is it useful, or can we remove it?
 
+12.  See if we can define libqtcad filters for the primitive editing behaviors that are
+     independent of qged, using the polygon editing as a model (that way the mouse behaviors
+     will be reusable even if the other widgets aren't...)
 
 Other nice to haves:
 
-0.  Smarter, view aware wireframes for BoTs (RTree may be useful?  Can we do
+X 0.  Smarter, view aware wireframes for BoTs (RTree may be useful?  Can we do
     points with normals to represent small triangles?  Incorporate bounding box
     drawing in some fashion...)
 
@@ -185,19 +188,23 @@ https://github.com/Simsys/qhexedit2
 Node editor:
 https://github.com/paceholder/nodeeditor
 
+
+
 Qt is explicitly relocatable as of 5.14 (this is good news, as it is what we
 would want/need for a bundled Qt)
 https://www.qt.io/blog/qt-is-relocatable
 
-Potentially useful example of Qt related building with Github actions:
-https://www.qt.io/blog/building-qt-creator-plugins-with-github-actions
-
-Qt will be moving to CMake as its internal build system in Qt 6:
-https://www.qt.io/blog/versionless-cmake-targets-qt-5.15
 
 
-Tried the following but wasn't able to get it to work...
-https://www.qtcentre.org/threads/58630-Dock-Widget-Custom-Resizing
 
-The following is a handy tool:
+The following are handy tools:
 https://github.com/robertknight/Qt-Inspector
+https://github.com/KDAB/GammaRay
+
+
+Eventually, we may want to explore the possibilities of Paraview's QtTesting
+framework, which has potential for automated GUI regression testing:
+https://www.paraview.org/ParaView/index.php/Testing_Guide
+https://github.com/Kitware/QtTesting
+
+
