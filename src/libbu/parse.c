@@ -1423,8 +1423,6 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 	lastoff = (int)sdp->sp_offset;
 
 	loc = (char *)(base + sdp->sp_offset);
-	if (loc != NULL && loc[0] == '\0')
-	    break;
 
 	if (sdp->sp_fmt[0] == 'i') {
 	    struct bu_vls sub_str = BU_VLS_INIT_ZERO;
