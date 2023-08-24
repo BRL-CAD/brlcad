@@ -371,7 +371,7 @@ int brep_surface_interpCrv(ON_Brep *brep, int cv_count_x, int cv_count_y, std::v
     cv_count_x = cv_count_x < 2 ? 2 : cv_count_x;
     cv_count_y = cv_count_y < 2 ? 2 : cv_count_y;
     if (points.size() != (size_t)(cv_count_x * cv_count_y)) {
-    return -1;
+	return -1;
     }
     int n = cv_count_x - 1;
     int m = cv_count_y - 1;
@@ -575,8 +575,8 @@ int brep_face_create(ON_Brep *brep, int surface)
 bool brep_face_reverse(ON_Brep *brep, int face)
 {
     if(face < 0 || face >= brep->m_F.Count()) {
-    bu_log("face is out of range\n");
-    return false;
+	bu_log("face is out of range\n");
+	return false;
     }
     ON_BrepFace& f = brep->m_F[face];
     f.m_bRev = !f.m_bRev;

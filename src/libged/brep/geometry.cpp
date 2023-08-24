@@ -130,9 +130,9 @@ _brep_cmd_geo_curve2d_create_line(void *bs, int argc, const char **argv)
     argc--;argv++;
 
     if (argc != 4) {
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid arguments\n");
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
-    return BRLCAD_ERROR;
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "invalid arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
+	return BRLCAD_ERROR;
     }
 
     ON_2dPoint from(atof(argv[0]), atof(argv[1]));
@@ -1222,8 +1222,8 @@ _brep_cmd_geo_surface_extract_curve(void *bs, int argc, const char **argv)
     int curve_id = brep_surface_extract_curve(b_ip->brep, surface_id, dir, param);
 
     if(curve_id < 0) {
-    bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create curve\n");
-    return BRLCAD_ERROR;
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create curve\n");
+	return BRLCAD_ERROR;
     }
 
     // Update object in database
@@ -1241,7 +1241,7 @@ _brep_geo_help(struct _ged_brep_igeo *bs, int argc, const char **argv)
 {
     struct _ged_brep_igeo *gb = (struct _ged_brep_igeo *)bs;
     if (!argc || !argv) {
-	bu_vls_printf(gb->vls, "brep [options] <objname> topo <subcommand> [args]\n");
+	bu_vls_printf(gb->vls, "brep [options] <objname> geo <subcommand> [args]\n");
 	bu_vls_printf(gb->vls, "Available subcommands:\n");
 	const struct bu_cmdtab *ctp = NULL;
 	int ret;
