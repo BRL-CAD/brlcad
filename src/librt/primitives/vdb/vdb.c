@@ -144,20 +144,37 @@ int rt_vdb_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 
 
 	/* Compute bounding sphere */
-	vect_t center;
+	/*vect_t center;
 	VSUB2(center, eip2->maxBB, eip2->minBB);
 	VMOVE(stp->st_center, center);
 	
 	stp->st_aradius = stp->st_bradius = 3.4f;
 
-	if (rt_vdb_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;
+	
+	if (rt_vdb_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;*/
+
+	vect_t work;
+	register fastf_t f;
+
+	VMINMAX(stp->st_min, stp->st_max, eip2->maxBB);
+	VMINMAX(stp->st_min, stp->st_max, eip2->minBB);
+
+	VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+	VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
+
+	f = work[X];
+	if (work[Y] > f) f = work[Y];
+	if (work[Z] > f) f = work[Z];
+	stp->st_aradius = f;
+	stp->st_bradius = MAGNITUDE(work);
+
 
 	return 0;			/* OK */
 }
 
 
 /**
- * Intersect a ray with an the bouding box - later it will be with vdb
+ * Intersect a ray with an the bounding box - later it will be with vdb
  * Returns -
  * 0 MISS
  * >0 HIT
@@ -209,6 +226,15 @@ rt_vdb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		tmax = tzmax;
 
 	fprintf(stderr, "hit\n");
+
+	// recording the hit in and out - tmin and tmax
+	RT_GET_SEG(segp, ap->a_resource);
+	segp->seg_stp = stp;
+	segp->seg_in.hit_dist = tmin;
+
+	segp->seg_out.hit_dist = tmax;
+	BU_LIST_INSERT(&(seghead->l), &(segp->l));
+
 
 	return 2;
 
