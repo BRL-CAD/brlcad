@@ -66,6 +66,7 @@ set(mann_EN
   debugnmg.xml
   decompose.xml
   delay.xml
+  dir2ae.xml
   dm.xml
   draw.xml
   dump.xml
