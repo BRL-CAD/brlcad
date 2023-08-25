@@ -329,9 +329,13 @@ else (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
   # relative position to LIB_DIR using the INSTALL_RPATH target property.
   # However, we can cover the most common case for RPATH setting using the
   # global default.
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../${LIB_DIR}")
-  # For OSX, use the INSTALL_NAME_DIR target property
-  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR};@loader/../${LIB_DIR}")
+  if (NOT APPLE)
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../${LIB_DIR}")
+  else (NOT APPLE)
+    # For OSX, use the INSTALL_NAME_DIR target property
+    set(CMAKE_INSTALL_RPATH "@loader_path/../${LIB_DIR}")
+    set(CMAKE_INSTALL_NAME_DIR "@loader_path/../${LIB_DIR}")
+  endif (NOT APPLE)
 
 endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
 
