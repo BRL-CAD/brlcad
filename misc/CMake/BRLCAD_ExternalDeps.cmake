@@ -656,9 +656,9 @@ if (BRLCAD_ENABLE_QT)
   find_package_reset(Qt5 RESET_THIRDPARTY)
   find_package_reset(Qt6 RESET_THIRDPARTY)
 
-  set(QtComponents Core Widgets Gui Svg OpenGLWidgets Network)
+  set(QtComponents Core Widgets Gui Svg Network)
   if (BRLCAD_ENABLE_OPENGL)
-    set(QtComponents  ${QtComponents} OpenGL)
+    set(QtComponents  ${QtComponents} OpenGL OpenGLWidgets)
   endif (BRLCAD_ENABLE_OPENGL)
 
   if (RESET_THIRDPARTY)
@@ -688,6 +688,7 @@ if (BRLCAD_ENABLE_QT)
     # Qt5_DIR=<install_dir>/lib/cmake/Qt5
     # QT_QMAKE_EXECUTABLE=<install_dir>/bin/qmake
     # AUTORCC_EXECUTABLE=<install_dir>/bin/rcc
+    list(REMOVE_ITEM QtComponents OpenGLWidgets)
     find_package(Qt5 COMPONENTS ${QtComponents})
   endif (NOT Qt6Widgets_FOUND)
   if (NOT Qt6Widgets_FOUND AND NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
