@@ -333,8 +333,8 @@ else (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../${LIB_DIR}")
   else (NOT APPLE)
     # For OSX, use the INSTALL_NAME_DIR target property
-    set(CMAKE_INSTALL_RPATH "@loader_path/../${LIB_DIR}")
-    set(CMAKE_INSTALL_NAME_DIR "@loader_path/../${LIB_DIR}")
+    set(CMAKE_INSTALL_RPATH "@executable_path/../${LIB_DIR}")
+    set(CMAKE_INSTALL_NAME_DIR "@executable_path/../${LIB_DIR}")
   endif (NOT APPLE)
 
 endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
