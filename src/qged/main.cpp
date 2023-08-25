@@ -65,7 +65,7 @@ WinMain(HINSTANCE hInstance,
     char **argv = __argv;
 #else
 int
-main(int argc, const char **argv)
+main(int argc, char **argv)
 {
 #endif
 
