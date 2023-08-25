@@ -55,8 +55,10 @@ file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" BRLCAD_EXT_DIR_REAL)
 # For repeat configure passes, we need to check any existing files copied
 # against the extinstall dir's contents, to detect if the latter has changed
 # and we need to redo the process.
-set(THIRDPARTY_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
-set(THIRDPARTY_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
+set(TP_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
+set(TP_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
+set(TP_INVENTORY_TEXT "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_text.txt")
+set(TP_INVENTORY_NOEXEC "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_nonexec.txt")
 
 # Find the tool we use to scrub EXT paths from files
 find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
@@ -112,8 +114,8 @@ set(EXCLUDED_PATTERNS
   ${LIB_DIR}/tkConfig.sh
   )
 
-# We may need to scrub excluded files out of multiple copies, so wrap logic
-# to do so into a function
+# In multiconfig we need to scrub excluded files out of multiple extinstall
+# copies, so wrap logic to do so into a function.
 function(STRIP_EXCLUDED RDIR EXPATTERNS)
   foreach (ep ${${EXPATTERNS}})
     file(GLOB_RECURSE MATCHING_FILES LIST_DIRECTORIES false RELATIVE "${RDIR}" "${RDIR}/${ep}")
@@ -182,80 +184,29 @@ function(FILE_TYPE fname BINARY_LIST TEXT_LIST NOEXEC_LIST)
   set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
 endfunction(FILE_TYPE)
 
-# No matter what, we need to know what's in extinstall
-file(GLOB_RECURSE THIRDPARTY_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
+#####################################################################
+# Start of processing for BRLCAD_EXT_INSTALL_DIR contents
+# We need to keep the build directory copies of extinstall files in
+# sync with the BRLCAD_EXT_DIR originals, if they change.
+#####################################################################
+
+# Ascertain the current state of extinstall
+file(GLOB_RECURSE TP_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
 # Filter out the files removed via STRIP_EXCLUDED
 foreach(ep ${EXCLUDED_PATTERNS})
-  list(FILTER THIRDPARTY_FILES EXCLUDE REGEX ${ep})
+  list(FILTER TP_FILES EXCLUDE REGEX ${ep})
 endforeach(ep ${EXCLUDED_PATTERNS})
 
-# If we are repeating a configure process, we need to see what (if anything)
-# has changed.  Rather than get sophisticated about this, we take a brute force
-# approach - if the file list of extinstall differs or anything in extinstall
-# is newer than the local copy, clear all old extinstall file copes and start
-# fresh.
-if (EXISTS "${THIRDPARTY_INVENTORY}")
 
-  set(THIRDPARTY_CURRENT "${THIRDPARTY_FILES}")
-  file(READ "${THIRDPARTY_INVENTORY}" THIRDPARTY_P)
-  string(REPLACE "\n" ";" THIRDPARTY_PREVIOUS "${THIRDPARTY_P}")
-  set(THIRDPARTY_PREV ${THIRDPARTY_PREVIOUS})
+# For the very first pass w bulk copy the contents of the
+# BRLCAD_EXT_INSTALL_DIR tree into our own directory.  For some of the
+# external dependencies (like Tcl) library elements must be in sane relative
+# locations to binaries being executed, and leaving them in
+# BRLCAD_EXT_INSTALL_DIR won't work.  On Windows, the dlls for all the
+# dependencies will need to be located correctly relative to the bin build
+# directory.
+if (NOT EXISTS "${TP_INVENTORY}")
 
-  list(REMOVE_ITEM THIRDPARTY_CURRENT ${THIRDPARTY_PREVIOUS})
-  list(REMOVE_ITEM THIRDPARTY_PREV ${THIRDPARTY_FILES})
-
-  # Unless we have a reason to reset, don't
-  set(RESET_THIRDPARTY FALSE)
-
-  # If the directory file lists differ, reset
-  if (THIRDPARTY_CURRENT OR THIRDPARTY_PREV)
-    set(RESET_THIRDPARTY TRUE)
-  endif (THIRDPARTY_CURRENT OR THIRDPARTY_PREV)
-
-  # If the lists of files are the same, check the timestamps.  If at least one
-  # extinstall file is newer, need to reset.
-  if (NOT RESET_THIRDPARTY)
-    foreach (ef ${THIRDPARTY_FILES})
-      if (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
-	message("${BRLCAD_EXT_INSTALL_DIR}/${ef} is newer than ${CMAKE_BINARY_DIR}/${ef}")
-	set(RESET_THIRDPARTY TRUE)
-	break()
-      endif (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
-    endforeach (ef ${THIRDPARTY_FILES})
-  endif (NOT RESET_THIRDPARTY)
-
-  if (RESET_THIRDPARTY)
-    message("Contents of ${BRLCAD_EXT_INSTALL_DIR} have changed.")
-    message("Clearing previous bundled file copies...")
-    foreach (ef ${THIRDPARTY_PREVIOUS})
-      file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
-    endforeach (ef ${THIRDPARTY_PREVIOUS})
-    if (CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif (CMAKE_CONFIGURATION_TYPES)
-
-    # Old contents cleared - remove log files so subsequent logic
-    # knows to copy and process the new contents
-    file(REMOVE ${THIRDPARTY_INVENTORY})
-    file(REMOVE ${THIRDPARTY_INVENTORY_BINARIES})
-    message("Clearing previous bundled file copies... done.")
-  endif (RESET_THIRDPARTY)
-
-endif (EXISTS "${THIRDPARTY_INVENTORY}")
-
-# Ready for the main work of setting up the bundled library copies.
-if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
-
-  # We bulk copy the contents of the BRLCAD_EXT_INSTALL_DIR tree into our own
-  # directory.  For some of the external dependencies (like Tcl) library
-  # elements must be in sane relative locations to binaries being executed, and
-  # leaving them in BRLCAD_EXT_INSTALL_DIR won't work.  On Windows, the dlls for all
-  # the dependencies will need to be located correctly relative to the bin
-  # build directory.
-  #
   # Rather than complicate matters trying to pick and choose what to move, just
   # stage everything.  Depending on what the dependencies write into their
   # install directories we may have to be more selective about this in the
@@ -307,9 +258,9 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
   # Unpacking the files doesn't update their timestamps.  If we want to be able to
   # check if extinstall has changed, we need to make sure the build dir copies are
   # newer than the extinstall copies for IS_NEWER_THAN testing.
-  foreach(tf ${THIRDPARTY_FILES})
+  foreach(tf ${TP_FILES})
     execute_process(COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/${tf}")
-  endforeach(tf ${THIRDPARTY_FILES})
+  endforeach(tf ${TP_FILES})
   message("Staging third party files from ${EXT_DIR_STR} in build directory... done.")
 
   # NOTE - we may need to find and redo symlinks, if we get any that are full
@@ -320,28 +271,196 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
   # another machine.  A quick tests suggests we don't have any like that right
   # now, but it's not clear we can count on that...
 
-    # Write the current third party file list
-  string(REPLACE ";" "\n" THIRDPARTY_W "${THIRDPARTY_FILES}")
-  file(WRITE "${THIRDPARTY_INVENTORY}" "${THIRDPARTY_W}")
+  # With a clean copy, there aren't any previous files to check
+  set(TP_PREVIOUS)
 
-  message("Characterizing bundled third party files...")
-  # Use various tools to sort out which files are exec/lib files.
-  set(BINARY_FILES)
-  set(TEXT_FILES)
-  set(NONEXEC_FILES)
-  foreach(lf ${THIRDPARTY_FILES})
-    FILE_TYPE("${lf}" BINARY_FILES TEXT_FILES NOEXEC_FILES)
-  endforeach(lf ${THIRDPARTY_FILES})
-  message("Characterizing bundled third party files... done.")
+  # Write the current third party file list
+  string(REPLACE ";" "\n" TP_W "${TP_FILES}")
+  file(WRITE "${TP_INVENTORY}" "${TP_W}")
 
-  # Write the scrubbed binary list
-  string(REPLACE ";" "\n" THIRDPARTY_B "${BINARY_FILES}")
-  file(WRITE "${THIRDPARTY_INVENTORY_BINARIES}" "${THIRDPARTY_B}")
+else (NOT EXISTS "${TP_INVENTORY}")
 
-  message("Setting rpath on 3rd party lib and exe files...")
+  # If we are repeating a configure process, we need to see what (if anything)
+  # has changed.  Read in the previous list.
+  file(READ "${TP_INVENTORY}" TP_P)
+  string(REPLACE "\n" ";" TP_PREVIOUS "${TP_P}")
+
+  # Having retrieved the old state, update with the current state
+  string(REPLACE ";" "\n" TP_W "${TP_FILES}")
+  file(WRITE "${TP_INVENTORY}" "${TP_W}")
+
+endif (NOT EXISTS "${TP_INVENTORY}")
+
+# If we do have changes in a repeat configure process, we're going to have to
+# redo the find_package tests.  However, we don't want to repeat them if we
+# don't have to, so key the reset process on what we find.
+set(RESET_TP FALSE)
+
+# See if any new files have appeared compared to the previous state
+set(TP_NEW "${TP_FILES}")
+if (TP_PREVIOUS)
+  list(REMOVE_ITEM TP_NEW ${TP_PREVIOUS})
+endif (TP_PREVIOUS)
+
+# See if any files previously copied into the build dir have been removed
+set(TP_STALE ${TP_PREVIOUS})
+if (TP_FILES)
+  list(REMOVE_ITEM TP_STALE ${TP_FILES})
+endif (TP_FILES)
+# Clear copies of anything found to be stale
+if (TP_STALE)
+  message("Removing stale 3rd party files in build directory...")
+  foreach (ef ${TP_STALE})
+    file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
+    message("  ${CMAKE_BINARY_DIR}/${ef}")
+    if (CMAKE_CONFIGURATION_TYPES)
+      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
+	message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
+      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    endif (CMAKE_CONFIGURATION_TYPES)
+  endforeach (ef ${TP_STALE})
+  message("Removing stale 3rd party files in build directory... done.")
+endif (TP_STALE)
+
+# If the directory file lists differ, we have to reset find package
+if (TP_NEW OR TP_STALE)
+  set(RESET_TP TRUE)
+endif (TP_NEW OR TP_STALE)
+
+# We also need to see if any files are new based on timestamps.
+set(TP_CHANGED)
+set(TP_EXISTING ${TP_FILES})
+if (TP_NEW)
+  list(REMOVE_ITEM TP_EXISTING ${TP_NEW})
+endif (TP_NEW)
+foreach (ef ${TP_EXISTING})
+  if (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
+    set(TP_CHANGED ${TP_CHANGED} ${ef})
+  endif (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
+endforeach (ef ${TP_EXISTING})
+
+# Stage new files - we don't have the bulk tar mechanism going after the first
+# configure pass, so we have to do the copies needed explicitly
+if (TP_NEW AND TP_PREVIOUS)
+  message("Staging new 3rd party files from extinstall...")
+  foreach (ef ${TP_NEW})
+    file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
+    configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR}/${ef} COPYONLY)
+    message("  ${CMAKE_BINARY_DIR}/${ef}")
+    if (CMAKE_CONFIGURATION_TYPES)
+      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
+	configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef} COPYONLY)
+	message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
+      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    endif (CMAKE_CONFIGURATION_TYPES)
+  endforeach (ef ${TP_CHANGED})
+  message("Staging new 3rd party files from extinstall... done.")
+endif (TP_NEW AND TP_PREVIOUS)
+
+# Stage changed files
+if (TP_CHANGED)
+  message("Staging changed 3rd party files from extinstall...")
+  foreach (ef ${TP_CHANGED})
+    file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
+    configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR}/${ef} COPYONLY)
+    message("  ${CMAKE_BINARY_DIR}/${ef}")
+    if (CMAKE_CONFIGURATION_TYPES)
+      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
+	configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef} COPYONLY)
+	message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
+      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    endif (CMAKE_CONFIGURATION_TYPES)
+  endforeach (ef ${TP_CHANGED})
+  message("Staging changed 3rd party files from extinstall... done.")
+endif (TP_CHANGED)
+
+set(TP_PROCESS ${TP_CHANGED} ${TP_NEW})
+
+# To avoid repeating categorizations when there's no need, read in the
+# old lists for a starting point.  Filter out anything we've determined we
+# need to process.
+set(BINARY_FILES)
+set(TEXT_FILES)
+set(NOEXEC_FILES)
+if (EXISTS ${TP_INVENTORY_BINARIES})
+  file(READ "${TP_INVENTORY_BINARIES}" TP_B)
+  string(REPLACE "\n" ";" BINARY_FILES "${TP_B}")
+  if (TP_STALE)
+    list(REMOVE_ITEM BINARY_FILES ${TP_STALE})
+  endif (TP_STALE)
+  if (TP_NEW)
+    list(REMOVE_ITEM BINARY_FILES ${TP_NEW})
+  endif (TP_NEW)
+  if (TP_CHANGED)
+    list(REMOVE_ITEM BINARY_FILES ${TP_CHANGED})
+  endif (TP_CHANGED)
+endif (EXISTS ${TP_INVENTORY_BINARIES})
+
+if (EXISTS ${TP_INVENTORY_TEXT})
+  file(READ "${TP_INVENTORY_TEXT}" TP_T)
+  string(REPLACE "\n" ";" TEXT_FILES "${TP_T}")
+  if (TP_STALE)
+    list(REMOVE_ITEM TEXT_FILES ${TP_STALE})
+  endif (TP_STALE)
+  if (TP_NEW)
+    list(REMOVE_ITEM TEXT_FILES ${TP_NEW})
+  endif (TP_NEW)
+  if (TP_CHANGED)
+    list(REMOVE_ITEM TEXT_FILES ${TP_CHANGED})
+  endif (TP_CHANGED)
+endif (EXISTS ${TP_INVENTORY_TEXT})
+
+if (EXISTS ${TP_INVENTORY_NOEXEC})
+  file(READ "${TP_INVENTORY_NOEXEC}" TP_N)
+  string(REPLACE "\n" ";" NOEXEC_FILES "${TP_N}")
+  if (TP_STALE)
+    list(REMOVE_ITEM NOEXEC_FILES ${TP_STALE})
+  endif (TP_STALE)
+  if (TP_NEW)
+    list(REMOVE_ITEM NOEXEC_FILES ${TP_NEW})
+  endif (TP_NEW)
+  if (TP_CHANGED)
+    list(REMOVE_ITEM NOEXEC_FILES ${TP_CHANGED})
+  endif (TP_CHANGED)
+endif (EXISTS ${TP_INVENTORY_NOEXEC})
+
+# Use various tools to sort out which files are exec/lib files.
+message("Characterizing new or changed bundled third party files...")
+set(NBINARY_FILES)
+set(NTEXT_FILES)
+set(NNOEXEC_FILES)
+foreach(lf ${TP_CHANGED})
+  FILE_TYPE("${lf}" NBINARY_FILES NTEXT_FILES NNOEXEC_FILES)
+endforeach(lf ${TP_CHANGED})
+foreach(lf ${TP_NEW})
+  FILE_TYPE("${lf}" NBINARY_FILES NTEXT_FILES NNOEXEC_FILES)
+endforeach(lf ${TP_NEW})
+message("Characterizing new or changed bundled third party files... done.")
+
+# Write the lists back out to files
+set(ALL_BINARY_FILES ${BINARY_FILES} ${NBINARY_FILES})
+string(REPLACE ";" "\n" TP_B "${ALL_BINARY_FILES}")
+file(WRITE "${TP_INVENTORY_BINARIES}" "${TP_B}")
+
+set(ALL_TEXT_FILES ${TEXT_FILES} ${NTEXT_FILES})
+string(REPLACE ";" "\n" TP_T "${ALL_TEXT_FILES}")
+file(WRITE "${TP_INVENTORY_TEXT}" "${TP_T}")
+
+set(ALL_NOEXEC_FILES ${NOEXEC_FILES} ${NNOEXEC_FILES})
+string(REPLACE ";" "\n" TP_N "${ALL_NOEXEC_FILES}")
+file(WRITE "${TP_INVENTORY_NOEXEC}" "${TP_N}")
+
+if (NBINARY_FILES)
+  message("Setting rpath on new 3rd party lib and exe files...")
   if (NOT CMAKE_CONFIGURATION_TYPES)
     # Set local RPATH so the files will work during build
-    foreach(lf ${BINARY_FILES})
+    foreach(lf ${NBINARY_FILES})
       if (PATCHELF_EXECUTABLE)
 	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -360,7 +479,7 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
       if(APPLE)
 	execute_process(COMMAND codesign --force -s - ${lf})
       endif(APPLE)
-    endforeach(lf ${BINARY_FILES})
+    endforeach(lf ${NBINARY_FILES})
   else (NOT CMAKE_CONFIGURATION_TYPES)
     # For multi-config, we set the RPATHs for each active configuration's build dir
     # so the executables will work locally.  We don't need to set the top level copy
@@ -368,7 +487,7 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
     # used by build directory executables
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      foreach(lf ${BINARY_FILES})
+      foreach(lf ${NBINARY_FILES})
 	if (PATCHELF_EXECUTABLE)
 	  execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
 	  execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
@@ -382,15 +501,15 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
 	if(APPLE)
 	  execute_process(COMMAND codesign --force -s - ${lf})
 	endif(APPLE)
-      endforeach(lf ${BINARY_FILES})
+      endforeach(lf ${NBINARY_FILES})
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif (NOT CMAKE_CONFIGURATION_TYPES)
-  message("Setting rpath on 3rd party lib and exe files... done.")
+  message("Setting rpath on new 3rd party lib and exe files... done.")
+endif (NBINARY_FILES)
 
-
-  message("Scrubbing paths from txt and data files...")
-  # Also want to clear stale paths out of the files.
-  foreach(tf ${NONEXEC_FILES})
+if (NNOEXEC_FILES)
+  message("Scrubbing paths from new 3rd party data files...")
+  foreach(tf ${NNOEXEC_FILES})
     set(SKIP_FILE 0)
     foreach (skp ${NOPROCESS_PATTERNS})
       if ("${tf}" MATCHES "${skp}")
@@ -405,9 +524,13 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
     # Replace any stale paths in the files
     #message("${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR}/${tf} ${BRLCAD_EXT_DIR_REAL}")
     execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v -b -c "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}")
-  endforeach(tf ${NONEXEC_FILES})
+  endforeach(tf ${NNOEXEC_FILES})
+  message("Scrubbing paths from new 3rd party data files... done.")
+endif (NNOEXEC_FILES)
 
-  foreach(tf ${TEXT_FILES})
+if (NTEXT_FILES)
+  message("Replacing paths in new 3rd party text files...")
+  foreach(tf ${NTEXT_FILES})
     if (IS_SYMLINK ${tf})
       continue()
     endif (IS_SYMLINK ${tf})
@@ -423,17 +546,11 @@ if (NOT EXISTS "${THIRDPARTY_INVENTORY}")
     endif (SKIP_FILE)
 
     execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -v -r "${CMAKE_BINARY_DIR}/${tf}" "${BRLCAD_EXT_DIR_REAL}" "${CMAKE_INSTALL_PREFIX}")
-  endforeach(tf ${NONEXEC_FILES})
-  message("Scrubbing paths from txt and data files... done.")
+  endforeach(tf ${NTEXT_FILES})
+  message("Replacing paths in new 3rd party text files... done.")
+endif (NTEXT_FILES)
 
-else (NOT EXISTS "${THIRDPARTY_INVENTORY}")
-
-  file(STRINGS "${THIRDPARTY_INVENTORY}" THIRDPARTY_FILES)
-  file(STRINGS "${THIRDPARTY_INVENTORY_BINARIES}" BINARY_FILES)
-
-endif (NOT EXISTS "${THIRDPARTY_INVENTORY}")
-
-foreach(tf ${THIRDPARTY_FILES})
+foreach(tf ${TP_FILES})
   # Rather than doing the PROGRAMS install for all binary files, we target just
   # those in the bin directory - those are the ones we would expect to want
   # CMake's *_EXECUTE permissions during install.
@@ -443,10 +560,10 @@ foreach(tf ${THIRDPARTY_FILES})
     continue()
   endif (NOT dir)
   # If we know it's a binary file, treat it accordingly
-  if ("${tf}" IN_LIST BINARY_FILES)
+  if ("${tf}" IN_LIST ALL_BINARY_FILES)
     install(PROGRAMS "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
     continue()
-  endif ("${tf}" IN_LIST BINARY_FILES)
+  endif ("${tf}" IN_LIST ALL_BINARY_FILES)
   # BIN_DIR may contain scripts that aren't explicitly binary files -
   # catch those based on path
   if (${dir} MATCHES "${BIN_DIR}$")
@@ -454,12 +571,12 @@ foreach(tf ${THIRDPARTY_FILES})
   else (${dir} MATCHES "${BIN_DIR}$")
     install(FILES "${CMAKE_BINARY_DIR}/${tf}" DESTINATION "${dir}")
   endif (${dir} MATCHES "${BIN_DIR}$")
-endforeach(tf ${THIRDPARTY_FILES})
+endforeach(tf ${TP_FILES})
 
-# Need to fix RPATH on binary files.  Don't do it for symlinks since
-# following them will just result in re-processing the same file's RPATH
+# When installing, need to fix RPATH on binary files.  Don't do it for symlinks
+# since following them will just result in re-processing the same file's RPATH
 # multiple times.
-foreach(bf ${BINARY_FILES})
+foreach(bf ${ALL_BINARY_FILES})
   if (IS_SYMLINK ${bf})
     continue()
   endif (IS_SYMLINK ${bf})
@@ -485,14 +602,34 @@ foreach(bf ${BINARY_FILES})
     # Trying https://stackoverflow.com/questions/71744856/install-name-tool-errors-on-arm64
     install(CODE "execute_process(COMMAND codesign --force -s - \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
   endif (APPLE)
-endforeach(bf ${BINARY_FILES})
+endforeach(bf ${ALL_BINARY_FILES})
 
 # Because extinstall is handled at configure time (and indeed MUST be handled at
 # configure time so find_package results will be correct) we make the CMake
 # process depend on the extinstall files
-foreach (ef ${THIRDPARTY_FILES})
+foreach (ef ${TP_FILES})
   set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_INSTALL_DIR}/${ef})
-endforeach (ef ${THIRDPARTY_FILES})
+endforeach (ef ${TP_FILES})
+
+# TODO - add a extnoinstall touched file to also trigger CMake as above, to be updated whenever
+# the brlcad_externals repository is built...
+
+#####################################################################
+# Now that the staging process is complete, it's time to run (or
+# re-run) the find_package logic to let BRL-CAD know what to use.
+# For the re-running case, if something changed with the files from
+# the previous configure we need to reset the find_package variables.
+# There isn't a standard way to do this, so we must sometimes have
+# per-package logic for those projects using more complex variable
+# sets.
+#
+# One advantage of this approach is that there is no longer order
+# dependency between these find_package calls - because all 3rd
+# party compilation is done by the time we reach this step, the
+# results shouldn't vary.  (TODO - right now these are ordered
+# roughly by project complexity - should we switch to alphabetical
+# by project name?)
+#####################################################################
 
 # Not all packages will define all of these, but it shouldn't matter - an unset
 # of an unused variable shouldn't be harmful
@@ -520,7 +657,9 @@ endfunction(find_package_reset pname trigger_var)
 # Note - our copy is modified from Vanilla upstream to support specifying a
 # custom prefix - until a similar feature is available in upstream zlib, we
 # need this to reliably avoid conflicts between bundled and system zlib.
-find_package_reset(ZLIB RESET_THIRDPARTY)
+find_package_reset(ZLIB RESET_TP)
+unset(Z_PREFIX CACHE)
+unset(Z_PREFIX_STR CACHE)
 set(ZLIB_ROOT "${CMAKE_BINARY_DIR}")
 find_package(ZLIB REQUIRED)
 if ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
@@ -528,7 +667,7 @@ if ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
 endif ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
 
 # libregex regular expression matching
-find_package_reset(REGEX RESET_THIRDPARTY)
+find_package_reset(REGEX RESET_TP)
 set(REGEX_ROOT "${CMAKE_BINARY_DIR}")
 find_package(REGEX REQUIRED)
 
@@ -541,16 +680,16 @@ find_package(REGEX REQUIRED)
 # form our netpbm copy isn't really a good fit for ext, but it is kept there
 # because a) there is an active upstream and b) we are unlikely to need to
 # modify these sources to our needs from a functional perspective.
-find_package_reset(NETPBM RESET_THIRDPARTY)
+find_package_reset(NETPBM RESET_TP)
 set(NETPBM_ROOT "${CMAKE_BINARY_DIR}")
 find_package(NETPBM)
 
 # libpng - Portable Network Graphics image file support
 # http://www.libpng.org/pub/png/libpng.html
-find_package_reset(PNG RESET_THIRDPARTY)
-if (RESET_THIRDPARTY)
+find_package_reset(PNG RESET_TP)
+if (RESET_TP)
   unset(PNG_PNG_INCLUDE_DIR CACHE)
-endif (RESET_THIRDPARTY)
+endif (RESET_TP)
 set(PNG_ROOT "${CMAKE_BINARY_DIR}")
 find_package(PNG)
 
@@ -562,8 +701,8 @@ find_package(PNG)
 # copy and a released upstream copy synced - in anticipation of that, stepcode
 # lives in ext.
 if (BRLCAD_ENABLE_STEP)
-  find_package_reset(STEPCODE RESET_THIRDPARTY)
-  if (RESET_THIRDPARTY)
+  find_package_reset(STEPCODE RESET_TP)
+  if (RESET_TP)
     unset(STEPCODE_CORE_LIBRARY    CACHE)
     unset(STEPCODE_DAI_DIR         CACHE)
     unset(STEPCODE_DAI_LIBRARY     CACHE)
@@ -577,7 +716,7 @@ if (BRLCAD_ENABLE_STEP)
     unset(STEPCODE_STEPCORE_DIR    CACHE)
     unset(STEPCODE_UTILS_DIR       CACHE)
     unset(STEPCODE_UTILS_LIBRARY   CACHE)
-  endif (RESET_THIRDPARTY)
+  endif (RESET_TP)
   set(STEPCODE_ROOT "${CMAKE_BINARY_DIR}")
   find_package(STEPCODE)
 endif (BRLCAD_ENABLE_STEP)
@@ -585,7 +724,7 @@ endif (BRLCAD_ENABLE_STEP)
 # GDAL -  translator library for raster and vector geospatial data formats
 # https://gdal.org
 if (BRLCAD_ENABLE_GDAL)
-  find_package_reset(GDAL RESET_THIRDPARTY)
+  find_package_reset(GDAL RESET_TP)
   set(GDAL_ROOT "${CMAKE_BINARY_DIR}")
   find_package(GDAL)
 endif (BRLCAD_ENABLE_GDAL)
@@ -594,7 +733,7 @@ endif (BRLCAD_ENABLE_GDAL)
 # Geometry file formats
 # https://github.com/assimp/assimp
 if (BRLCAD_ENABLE_ASSETIMPORT)
-  find_package_reset(ASSETIMPORT RESET_THIRDPARTY)
+  find_package_reset(ASSETIMPORT RESET_TP)
   set(ASSETIMPORT_ROOT "${CMAKE_BINARY_DIR}")
   find_package(ASSETIMPORT)
 endif (BRLCAD_ENABLE_ASSETIMPORT)
@@ -602,15 +741,15 @@ endif (BRLCAD_ENABLE_ASSETIMPORT)
 # OpenMesh Library - library for representing and manipulating polygonal meshes
 # https://www.graphics.rwth-aachen.de/software/openmesh/
 if (BRLCAD_ENABLE_OPENMESH)
-  find_package_reset(OPENMESH RESET_THIRDPARTY)
-  if (RESET_THIRDPARTY)
+  find_package_reset(OPENMESH RESET_TP)
+  if (RESET_TP)
     unset(OPENMESH_CORE_LIBRARY          CACHE)
     unset(OPENMESH_CORE_LIBRARY_DEBUG    CACHE)
     unset(OPENMESH_CORE_LIBRARY_RELEASE  CACHE)
     unset(OPENMESH_TOOLS_LIBRARY         CACHE)
     unset(OPENMESH_TOOLS_LIBRARY_DEBUG   CACHE)
     unset(OPENMESH_TOOLS_LIBRARY_RELEASE CACHE)
-  endif (RESET_THIRDPARTY)
+  endif (RESET_TP)
   set(OpenMesh_ROOT "${CMAKE_BINARY_DIR}")
   find_package(OpenMesh)
 endif (BRLCAD_ENABLE_OPENMESH)
@@ -623,9 +762,9 @@ if (BRLCAD_ENABLE_TK)
 endif (BRLCAD_ENABLE_TK)
 mark_as_advanced(TCL_ENABLE_TK)
 
-find_package_reset(TCL RESET_THIRDPARTY)
-find_package_reset(TK RESET_THIRDPARTY)
-if (RESET_THIRDPARTY)
+find_package_reset(TCL RESET_TP)
+find_package_reset(TK RESET_TP)
+if (RESET_TP)
   unset(TCL_INCLUDE_PATH CACHE)
   unset(TCL_STUB_LIBRARY CACHE)
   unset(TCL_TCLSH CACHE)
@@ -634,7 +773,7 @@ if (RESET_THIRDPARTY)
   unset(TK_WISH CACHE)
   unset(TK_X11_GRAPHICS CACHE)
   unset(TTK_STUB_LIBRARY CACHE)
-endif (RESET_THIRDPARTY)
+endif (RESET_TP)
 
 set(TCL_ROOT "${CMAKE_BINARY_DIR}")
 find_package(TCL)
@@ -653,22 +792,22 @@ CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TK\n")
 # https://download.qt.io/archive/qt
 if (BRLCAD_ENABLE_QT)
 
-  find_package_reset(Qt5 RESET_THIRDPARTY)
-  find_package_reset(Qt6 RESET_THIRDPARTY)
+  find_package_reset(Qt5 RESET_TP)
+  find_package_reset(Qt6 RESET_TP)
 
   set(QtComponents Core Widgets Gui Svg Network)
   if (BRLCAD_ENABLE_OPENGL)
     set(QtComponents  ${QtComponents} OpenGL OpenGLWidgets)
   endif (BRLCAD_ENABLE_OPENGL)
 
-  if (RESET_THIRDPARTY)
+  if (RESET_TP)
     foreach(qc ${QtComponents})
       unset(Qt6${qc}_DIR CACHE)
       unset(Qt6${qc}_FOUND CACHE)
       unset(Qt5${qc}_DIR CACHE)
       unset(Qt5${qc}_FOUND CACHE)
     endforeach(qc ${QtComponents})
-  endif (RESET_THIRDPARTY)
+  endif (RESET_TP)
 
   # First, see if we have a bundled version
   set(Qt6_DIR_TMP "${Qt6_DIR}")
