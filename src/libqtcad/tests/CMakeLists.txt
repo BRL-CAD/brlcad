@@ -12,37 +12,34 @@ BRLCAD_INCLUDE_DIRS(QG_DIRS)
 
 if (BRLCAD_ENABLE_QT)
 
-  add_executable(qgmodel qgmodel.cpp)
-  if (Qt6Widgets_FOUND)
-    target_link_libraries(qgmodel libqtcad libged librt libbu Qt6::Widgets Qt6::Test)
-  else()
-    target_link_libraries(qgmodel libqtcad libged librt libbu Qt5::Widgets Qt5::Test)
-  endif (Qt6Widgets_FOUND)
-  target_compile_definitions(qgmodel PRIVATE BRLCADBUILD HAVE_CONFIG_H)
-  install(TARGETS qgmodel
-    RUNTIME DESTINATION ${BIN_DIR}
-    LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR})
+  set(QGMODEL_SRCS qgmodel.cpp)
+  set(QGVIEW_SRCS qgview.cpp)
 
-  add_executable(qgview qgview.cpp)
-  if (Qt6Widgets_FOUND)
+  if (TARGET Qt6::Test)
+    add_executable(qgmodel ${QGMODEL_SRCS})
+    target_link_libraries(qgmodel libqtcad libged librt libbu Qt6::Widgets Qt6::Test)
+    target_compile_definitions(qgmodel PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+    install(TARGETS qgmodel
+      RUNTIME DESTINATION ${BIN_DIR}
+      LIBRARY DESTINATION ${LIB_DIR}
+      ARCHIVE DESTINATION ${LIB_DIR})
+
+    add_executable(qgview ${QGVIEW_SRCS})
     target_link_libraries(qgview libqtcad libged librt libbu Qt6::Widgets)
-  else()
-    target_link_libraries(qgview libqtcad libged librt libbu Qt5::Widgets)
-  endif (Qt6Widgets_FOUND)
-  target_compile_definitions(qgview PRIVATE BRLCADBUILD HAVE_CONFIG_H)
-  install(TARGETS qgview
-    RUNTIME DESTINATION ${BIN_DIR}
-    LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR})
+    target_compile_definitions(qgview PRIVATE BRLCADBUILD HAVE_CONFIG_H)
+    install(TARGETS qgview
+      RUNTIME DESTINATION ${BIN_DIR}
+      LIBRARY DESTINATION ${LIB_DIR}
+      ARCHIVE DESTINATION ${LIB_DIR})
+  endif (TARGET Qt6::Test)
 
 endif (BRLCAD_ENABLE_QT)
 
 
 CMAKEFILES(
   CMakeLists.txt
-  qgmodel.cpp
-  qgview.cpp
+  ${QGMODEL_SRCS}
+  ${QGVIEW_SRCS}
   )
 
 # Local Variables:
