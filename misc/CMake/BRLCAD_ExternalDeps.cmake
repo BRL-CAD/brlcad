@@ -47,7 +47,10 @@ endif (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
 
 # If we got to extinstall through a symlink, we need to expand it so
 # we can spot the path that would have been used in extinstall files
-file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" BRLCAD_EXT_DIR_REAL EXPAND_TILDE)
+#
+# TODO - once we can require CMake 3.21 minimum, add EXPAND_TILDE to
+# the arguments list
+file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" BRLCAD_EXT_DIR_REAL)
 
 # For repeat configure passes, we need to check any existing files copied
 # against the extinstall dir's contents, to detect if the latter has changed
