@@ -63,7 +63,7 @@ if (BRLCAD_ENABLE_QT)
     QT5_ADD_RESOURCES(theme_qrc theme/breeze.qrc)
   endif(Qt6Widgets_FOUND)
 
-  add_executable(qged main.cpp ${qged_srcs} ${moc_srcs} ${theme_qrc})
+  add_executable(qged WIN32 main.cpp ${qged_srcs} ${moc_srcs} ${theme_qrc})
   # Note - Network is needed for async embedded raytracing display
   if(Qt6Widgets_FOUND)
     target_link_libraries(qged libqtcad libged librt libbu Qt6::Widgets Qt6::Network)

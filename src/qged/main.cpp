@@ -23,6 +23,8 @@
  *
  */
 
+#include "common.h"
+
 #include <iostream>
 
 #include <QTimer>
@@ -52,8 +54,21 @@ qged_usage(const char *cmd, struct bu_opt_desc *d) {
     bu_vls_free(&str);
 }
 
-int main(int argc, char *argv[])
+#ifdef HAVE_WINDOWS_H
+int APIENTRY
+WinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPSTR lpszCmdLine,
+	int nCmdShow)
 {
+    int argc = __argc;
+    char **argv = __argv;
+#else
+int
+main(int argc, const char **argv)
+{
+#endif
+
     int console_mode = 0;
     int swrast_mode = 0;
     int quad_mode = 0;
