@@ -52,45 +52,20 @@ endif (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
 # the arguments list
 file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" BRLCAD_EXT_DIR_REAL)
 
+
+# See if we have patchelf available.  If it is available, we will be using it
+# to manage the RPATH settings for third party exe/lib files.
+find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+
+# Find the tool we use to scrub EXT paths from files
+find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+
+
 # For repeat configure passes, we need to check any existing files copied
 # against the extinstall dir's contents, to detect if the latter has changed
 # and we need to redo the process.
 set(TP_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
 set(TP_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
-set(TP_INVENTORY_TEXT "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_text.txt")
-set(TP_INVENTORY_NOEXEC "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_nonexec.txt")
-
-# Find the tool we use to scrub EXT paths from files
-find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
-
-# The relative RPATH is specific to the location and platform
-function(find_relative_rpath fp rp)
-  # We don't want the filename to count, so offset our directory
-  # count down by 1
-  set(dcnt -1)
-  set(fp_cpy ${fp})
-  while (NOT "${fp_cpy}" STREQUAL "")
-    get_filename_component(pdir "${fp_cpy}" DIRECTORY)
-    set(fp_cpy ${pdir})
-    math(EXPR dcnt "${dcnt} + 1")
-  endwhile (NOT "${fp_cpy}" STREQUAL "")
-  if (APPLE)
-    set(RELATIVE_RPATH "@executable_path")
-  else (APPLE)
-    set(RELATIVE_RPATH ":\\$ORIGIN")
-  endif (APPLE)
-  set(acnt 0)
-  while(acnt LESS dcnt)
-    set(RELATIVE_RPATH "${RELATIVE_RPATH}/..")
-    math(EXPR acnt "${acnt} + 1")
-  endwhile(acnt LESS dcnt)
-  set(RELATIVE_RPATH "${RELATIVE_RPATH}/${LIB_DIR}")
-  set(${rp} "${RELATIVE_RPATH}" PARENT_SCOPE)
-endfunction(find_relative_rpath)
-
-# See if we have patchelf available.  If it is available, we will be using it
-# to manage the RPATH settings for third party exe/lib files.
-find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
 
 
 # These patterns are used to identify sets of files where we are assuming we
@@ -114,6 +89,12 @@ set(EXCLUDED_PATTERNS
   ${LIB_DIR}/tkConfig.sh
   )
 
+
+#####################################################################
+# Utility functions for use when processing extinstall files
+#####################################################################
+
+
 # In multiconfig we need to scrub excluded files out of multiple extinstall
 # copies, so wrap logic to do so into a function.
 function(STRIP_EXCLUDED RDIR EXPATTERNS)
@@ -127,6 +108,26 @@ function(STRIP_EXCLUDED RDIR EXPATTERNS)
     endforeach(rf ${MATCHING_FILES})
   endforeach (ep ${${EXPATTERNS}})
 endfunction(STRIP_EXCLUDED)
+
+
+
+# See if a file matches a pattern to skip its processing
+# Sets the variable held in SVAR in the parent scope
+function(SKIP_PROCESSING tf SVAR)
+  if (IS_SYMLINK ${tf})
+    set(${SVAR} 1 PARENT_SCOPE)
+    return()
+  endif (IS_SYMLINK ${tf})
+  foreach (skp ${NOPROCESS_PATTERNS})
+    if ("${tf}" MATCHES "${skp}")
+      set(${SVAR} 1 PARENT_SCOPE)
+      return()
+    endif ("${tf}" MATCHES "${skp}")
+  endforeach (skp ${NOPROCESS_PATTERNS})
+  set(${SVAR} 0 PARENT_SCOPE)
+endfunction(SKIP_PROCESSING)
+
+
 
 # For processing purposes, there are three categories of extinstall file:
 #
@@ -184,29 +185,10 @@ function(FILE_TYPE fname BINARY_LIST TEXT_LIST NOEXEC_LIST)
   set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
 endfunction(FILE_TYPE)
 
-#####################################################################
-# Start of processing for BRLCAD_EXT_INSTALL_DIR contents
-# We need to keep the build directory copies of extinstall files in
-# sync with the BRLCAD_EXT_DIR originals, if they change.
-#####################################################################
-
-# Ascertain the current state of extinstall
-file(GLOB_RECURSE TP_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
-# Filter out the files removed via STRIP_EXCLUDED
-foreach(ep ${EXCLUDED_PATTERNS})
-  list(FILTER TP_FILES EXCLUDE REGEX ${ep})
-endforeach(ep ${EXCLUDED_PATTERNS})
 
 
-# For the very first pass w bulk copy the contents of the
-# BRLCAD_EXT_INSTALL_DIR tree into our own directory.  For some of the
-# external dependencies (like Tcl) library elements must be in sane relative
-# locations to binaries being executed, and leaving them in
-# BRLCAD_EXT_INSTALL_DIR won't work.  On Windows, the dlls for all the
-# dependencies will need to be located correctly relative to the bin build
-# directory.
-if (NOT EXISTS "${TP_INVENTORY}")
-
+# Copy everything in extinstall into the build directory
+function(INITIALIZE_TP_FILES)
   # Rather than complicate matters trying to pick and choose what to move, just
   # stage everything.  Depending on what the dependencies write into their
   # install directories we may have to be more selective about this in the
@@ -270,13 +252,144 @@ if (NOT EXISTS "${TP_INVENTORY}")
   # machine since full path links will resolve, but will fail when installed on
   # another machine.  A quick tests suggests we don't have any like that right
   # now, but it's not clear we can count on that...
+endfunction(INITIALIZE_TP_FILES)
+
+
+
+# If we have a pre-existing list of files, we need to determine the status of the
+# current directories vs the list.  Sets three lists at the parent scope:
+# TP_NEW     - files in extinstall that are new since the previous list was generated
+# TP_STALE   - files in the old list that are no longer in extinstall
+# TP_CHANGED - files present in both lists but newer in extinstall
+#
+# Note that TP_NEW will be empty if there is no previous state.  The main logic
+# uses a different variable - TP_INIT - to notify the appropriate processing steps
+# that there are files to work on, since we don't want to do the copying step
+# with configure_file when the initialize routines have already done the work.
+function(TP_COMPARE_STATE TP_NEW_LIST TP_PREV_LIST)
+
+  # See if any new files have appeared compared to the previous state
+  set(LTP_NEW "${${TP_NEW_LIST}}")
+  set(LTP_PREVIOUS "${${TP_PREV_LIST}}")
+  if (LTP_PREVIOUS)
+    list(REMOVE_ITEM LTP_NEW ${LTP_PREVIOUS})
+  else (LTP_PREVIOUS)
+    # If everything is new, we're initializing
+    set(LTP_NEW)
+  endif (LTP_PREVIOUS)
+
+  # See if any files previously copied into the build dir have been removed
+  set(LTP_STALE ${LTP_PREVIOUS})
+  if (${TP_NEW_LIST})
+    list(REMOVE_ITEM LTP_STALE ${${TP_NEW_LIST}})
+  endif (${TP_NEW_LIST})
+
+  # We also need to see if any files are new based on timestamps.
+  set(LTP_CHANGED)
+  set(LTP_EXISTING ${${TP_NEW_LIST}})
+  if (LTP_NEW)
+    list(REMOVE_ITEM LTP_EXISTING ${LTP_NEW})
+  endif (LTP_NEW)
+  foreach (ef ${LTP_EXISTING})
+    if (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
+      set(LTP_CHANGED ${LTP_CHANGED} ${ef})
+    endif (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
+  endforeach (ef ${LTP_EXISTING})
+
+  set(TP_NEW "${LTP_NEW}" PARENT_SCOPE)
+  set(TP_STALE "${LTP_STALE}" PARENT_SCOPE)
+  set(TP_CHANGED "${LTP_CHANGED}" PARENT_SCOPE)
+
+endfunction(TP_COMPARE_STATE)
+
+
+
+# The relative RPATH is specific to the location and platform
+function(find_relative_rpath fp rp)
+  # We don't want the filename to count, so offset our directory
+  # count down by 1
+  set(dcnt -1)
+  set(fp_cpy ${fp})
+  while (NOT "${fp_cpy}" STREQUAL "")
+    get_filename_component(pdir "${fp_cpy}" DIRECTORY)
+    set(fp_cpy ${pdir})
+    math(EXPR dcnt "${dcnt} + 1")
+  endwhile (NOT "${fp_cpy}" STREQUAL "")
+  if (APPLE)
+    set(RELATIVE_RPATH "@executable_path")
+  else (APPLE)
+    set(RELATIVE_RPATH ":\\$ORIGIN")
+  endif (APPLE)
+  set(acnt 0)
+  while(acnt LESS dcnt)
+    set(RELATIVE_RPATH "${RELATIVE_RPATH}/..")
+    math(EXPR acnt "${acnt} + 1")
+  endwhile(acnt LESS dcnt)
+  set(RELATIVE_RPATH "${RELATIVE_RPATH}/${LIB_DIR}")
+  set(${rp} "${RELATIVE_RPATH}" PARENT_SCOPE)
+endfunction(find_relative_rpath)
+
+
+
+# Apply the RPATH settings to be used in the build directory.  This is a bit
+# different from what is done for the final install - the goal here is not
+# to produce relocatable files, but just have things work in place in the build
+# locations.  Parameterized to allow processing of both single and multiconfig
+# builds.
+function(RPATH_BUILD_DIR_PROCESS ROOT_DIR lf)
+  if (PATCHELF_EXECUTABLE)
+    execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY ${ROOT_DIR})
+    execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${ROOT_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${ROOT_DIR})
+  elseif (APPLE)
+    execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${ROOT_DIR} OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
+    execute_process(COMMAND install_name_tool -add_rpath "${ROOT_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+  endif (PATCHELF_EXECUTABLE)
+  # RPATH updates are complete - now clear out any other stale paths in the file
+  execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c ${ROOT_DIR}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}" "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/")
+  # Modern Apple security features (particularly on ARM64) complicate our manipulation of these
+  # files in this fashion.  For more info, see:
+  # https://developer.apple.com/documentation/security/updating_mac_software
+  # https://developer.apple.com/documentation/xcode/embedding-nonstandard-code-structures-in-a-bundle
+  # https://stackoverflow.com/questions/71744856/install-name-tool-errors-on-arm64
+  if (APPLE)
+    execute_process(COMMAND codesign --force -s - ${lf} WORKING_DIRECTORY ${ROOT_DIR})
+  endif (APPLE)
+endfunction(RPATH_BUILD_DIR_PROCESS)
+
+
+
+
+#####################################################################
+# Start of processing for BRLCAD_EXT_INSTALL_DIR contents
+# We need to keep the build directory copies of extinstall files in
+# sync with the BRLCAD_EXT_DIR originals, if they change.
+#####################################################################
+
+# Ascertain the current state of extinstall
+file(GLOB_RECURSE TP_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
+# Filter out the files removed via STRIP_EXCLUDED
+foreach(ep ${EXCLUDED_PATTERNS})
+  list(FILTER TP_FILES EXCLUDE REGEX ${ep})
+endforeach(ep ${EXCLUDED_PATTERNS})
+
+
+# For the very first pass w bulk copy the contents of the
+# BRLCAD_EXT_INSTALL_DIR tree into our own directory.  For some of the
+# external dependencies (like Tcl) library elements must be in sane relative
+# locations to binaries being executed, and leaving them in
+# BRLCAD_EXT_INSTALL_DIR won't work.  On Windows, the dlls for all the
+# dependencies will need to be located correctly relative to the bin build
+# directory.
+set(TP_INIT)
+if (NOT EXISTS "${TP_INVENTORY}")
+
+  INITIALIZE_TP_FILES()
+
+  # Special variable for when we need to know about first time initialization
+  set(TP_INIT "${TP_FILES}")
 
   # With a clean copy, there aren't any previous files to check
   set(TP_PREVIOUS)
-
-  # Write the current third party file list
-  string(REPLACE ";" "\n" TP_W "${TP_FILES}")
-  file(WRITE "${TP_INVENTORY}" "${TP_W}")
 
 else (NOT EXISTS "${TP_INVENTORY}")
 
@@ -285,106 +398,132 @@ else (NOT EXISTS "${TP_INVENTORY}")
   file(READ "${TP_INVENTORY}" TP_P)
   string(REPLACE "\n" ";" TP_PREVIOUS "${TP_P}")
 
-  # Having retrieved the old state, update with the current state
-  string(REPLACE ";" "\n" TP_W "${TP_FILES}")
-  file(WRITE "${TP_INVENTORY}" "${TP_W}")
-
 endif (NOT EXISTS "${TP_INVENTORY}")
+
+# Write the current third party file list
+string(REPLACE ";" "\n" TP_W "${TP_FILES}")
+file(WRITE "${TP_INVENTORY}" "${TP_W}")
+
+# Make sure both lists are sorted
+list(SORT TP_FILES)
+list(SORT TP_PREVIOUS)
+
+# See what the delta looks like between the previous extinstall state (if any)
+# and the current
+TP_COMPARE_STATE(TP_FILES TP_PREVIOUS)
 
 # If we do have changes in a repeat configure process, we're going to have to
 # redo the find_package tests.  However, we don't want to repeat them if we
 # don't have to, so key the reset process on what we find.
 set(RESET_TP FALSE)
 
-# See if any new files have appeared compared to the previous state
-set(TP_NEW "${TP_FILES}")
-if (TP_PREVIOUS)
-  list(REMOVE_ITEM TP_NEW ${TP_PREVIOUS})
-endif (TP_PREVIOUS)
+if (BRLCAD_TP_FULL_RESET)
 
-# See if any files previously copied into the build dir have been removed
-set(TP_STALE ${TP_PREVIOUS})
-if (TP_FILES)
-  list(REMOVE_ITEM TP_STALE ${TP_FILES})
-endif (TP_FILES)
-# Clear copies of anything found to be stale
-if (TP_STALE)
-  message("Removing stale 3rd party files in build directory...")
-  foreach (ef ${TP_STALE})
-    file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
-    message("  ${CMAKE_BINARY_DIR}/${ef}")
-    if (CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif (CMAKE_CONFIGURATION_TYPES)
-  endforeach (ef ${TP_STALE})
-  message("Removing stale 3rd party files in build directory... done.")
-endif (TP_STALE)
+  if (TP_NEW OR TP_CHANGED OR TP_STALE)
 
-# If the directory file lists differ, we have to reset find package
-if (TP_NEW OR TP_STALE)
-  set(RESET_TP TRUE)
-endif (TP_NEW OR TP_STALE)
+    # If the user has requested it, if anything has changed we do a full flush
+    # and re-copy of the extinstall contents.  This is useful if one is changing
+    # the extinstall directory to a completely different directory rather than
+    # incrementally updating the same directory.  In the former case, timestamps
+    # aren't a reliable indicator of what to update in the build tree.
+    #
+    # The tradeoff is a full re-initialization is usually slower, since it is
+    # doing more work.  On platforms where configure is slow, this can be
+    # significant.  Hence the user setting to control behavior.
 
-# We also need to see if any files are new based on timestamps.
-set(TP_CHANGED)
-set(TP_EXISTING ${TP_FILES})
-if (TP_NEW)
-  list(REMOVE_ITEM TP_EXISTING ${TP_NEW})
-endif (TP_NEW)
-foreach (ef ${TP_EXISTING})
-  if (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
-    set(TP_CHANGED ${TP_CHANGED} ${ef})
-  endif (${BRLCAD_EXT_INSTALL_DIR}/${ef} IS_NEWER_THAN ${CMAKE_BINARY_DIR}/${ef})
-endforeach (ef ${TP_EXISTING})
+    # Clear old files
+    foreach (ef ${TP_PREVIOUS})
+      file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
+      if (CMAKE_CONFIGURATION_TYPES)
+	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
+	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      endif (CMAKE_CONFIGURATION_TYPES)
+    endforeach (ef ${TP_PREVIOUS})
 
-# Stage new files - we don't have the bulk tar mechanism going after the first
-# configure pass, so we have to do the copies needed explicitly
-if (TP_NEW AND TP_PREVIOUS)
-  message("Staging new 3rd party files from extinstall...")
-  foreach (ef ${TP_NEW})
-    file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
-    configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR}/${ef} COPYONLY)
-    message("  ${CMAKE_BINARY_DIR}/${ef}")
-    if (CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef} COPYONLY)
-	message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif (CMAKE_CONFIGURATION_TYPES)
-  endforeach (ef ${TP_CHANGED})
-  message("Staging new 3rd party files from extinstall... done.")
-endif (TP_NEW AND TP_PREVIOUS)
+    # Redo full copy
+    INTIIALIZE_TP_FILES()
 
-# Stage changed files
-if (TP_CHANGED)
-  message("Staging changed 3rd party files from extinstall...")
-  foreach (ef ${TP_CHANGED})
-    file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
-    configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR}/${ef} COPYONLY)
-    message("  ${CMAKE_BINARY_DIR}/${ef}")
-    if (CMAKE_CONFIGURATION_TYPES)
-      foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef} COPYONLY)
-	message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
-      endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    endif (CMAKE_CONFIGURATION_TYPES)
-  endforeach (ef ${TP_CHANGED})
-  message("Staging changed 3rd party files from extinstall... done.")
-endif (TP_CHANGED)
+    # Reset all the find_package results
+    set(RESET_DP TRUE)
 
-set(TP_PROCESS ${TP_CHANGED} ${TP_NEW})
+  endif (TP_NEW OR TP_CHANGED OR TP_STALE)
 
-# To avoid repeating categorizations when there's no need, read in the
-# old lists for a starting point.  Filter out anything we've determined we
-# need to process.
+else (BRLCAD_TP_FULL_RESET)
+
+  # Clear copies of anything found to be stale
+  if (TP_STALE)
+    message("Removing stale 3rd party files in build directory...")
+    foreach (ef ${TP_STALE})
+      file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
+      message("  ${CMAKE_BINARY_DIR}/${ef}")
+      if (CMAKE_CONFIGURATION_TYPES)
+	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
+	  message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
+	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      endif (CMAKE_CONFIGURATION_TYPES)
+    endforeach (ef ${TP_STALE})
+    message("Removing stale 3rd party files in build directory... done.")
+  endif (TP_STALE)
+
+  # Stage new files - we don't have the bulk tar mechanism going after the first
+  # configure pass, so we have to do the copies needed explicitly.  TP_COMPARE_STATE
+  # shouldn't populate TP_NEW unless we have a previous state to compare to.
+  if (TP_NEW)
+    message("Staging new 3rd party files from extinstall...")
+    foreach (ef ${TP_NEW})
+      file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
+      configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR}/${ef} COPYONLY)
+      message("  ${CMAKE_BINARY_DIR}/${ef}")
+      if (CMAKE_CONFIGURATION_TYPES)
+	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
+	  configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef} COPYONLY)
+	  message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
+	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      endif (CMAKE_CONFIGURATION_TYPES)
+    endforeach (ef ${TP_CHANGED})
+    message("Staging new 3rd party files from extinstall... done.")
+  endif (TP_NEW)
+
+  # Stage changed files
+  if (TP_CHANGED)
+    message("Staging changed 3rd party files from extinstall...")
+    foreach (ef ${TP_CHANGED})
+      file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
+      configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR}/${ef} COPYONLY)
+      message("  ${CMAKE_BINARY_DIR}/${ef}")
+      if (CMAKE_CONFIGURATION_TYPES)
+	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
+	  configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef} COPYONLY)
+	  message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
+	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      endif (CMAKE_CONFIGURATION_TYPES)
+    endforeach (ef ${TP_CHANGED})
+    message("Staging changed 3rd party files from extinstall... done.")
+  endif (TP_CHANGED)
+
+  # If the directory file lists differ, we have to reset find package
+  if (TP_NEW OR TP_STALE OR TP_CHANGED)
+    set(RESET_TP TRUE)
+  endif (TP_NEW OR TP_STALE OR TP_CHANGED)
+
+endif (BRLCAD_TP_FULL_RESET)
+
+# We'll either have TP_INIT (on the first pass) or (possibly) one or both of the
+# others.  Regardless, the processing from here on out is the same.
+set(TP_PROCESS ${TP_CHANGED} ${TP_NEW} ${TP_INIT})
+
+# We're only going to characterize new files, but even on repeat configures
+# we need to know about ALL binary files, old and new, for defining the
+# install rules.  Read the cached list, if any, and scrub out any entries
+# that are in one of the processing or clean-up lists
 set(BINARY_FILES)
 set(TEXT_FILES)
 set(NOEXEC_FILES)
@@ -402,83 +541,31 @@ if (EXISTS ${TP_INVENTORY_BINARIES})
   endif (TP_CHANGED)
 endif (EXISTS ${TP_INVENTORY_BINARIES})
 
-if (EXISTS ${TP_INVENTORY_TEXT})
-  file(READ "${TP_INVENTORY_TEXT}" TP_T)
-  string(REPLACE "\n" ";" TEXT_FILES "${TP_T}")
-  if (TP_STALE)
-    list(REMOVE_ITEM TEXT_FILES ${TP_STALE})
-  endif (TP_STALE)
-  if (TP_NEW)
-    list(REMOVE_ITEM TEXT_FILES ${TP_NEW})
-  endif (TP_NEW)
-  if (TP_CHANGED)
-    list(REMOVE_ITEM TEXT_FILES ${TP_CHANGED})
-  endif (TP_CHANGED)
-endif (EXISTS ${TP_INVENTORY_TEXT})
-
-if (EXISTS ${TP_INVENTORY_NOEXEC})
-  file(READ "${TP_INVENTORY_NOEXEC}" TP_N)
-  string(REPLACE "\n" ";" NOEXEC_FILES "${TP_N}")
-  if (TP_STALE)
-    list(REMOVE_ITEM NOEXEC_FILES ${TP_STALE})
-  endif (TP_STALE)
-  if (TP_NEW)
-    list(REMOVE_ITEM NOEXEC_FILES ${TP_NEW})
-  endif (TP_NEW)
-  if (TP_CHANGED)
-    list(REMOVE_ITEM NOEXEC_FILES ${TP_CHANGED})
-  endif (TP_CHANGED)
-endif (EXISTS ${TP_INVENTORY_NOEXEC})
-
-# Use various tools to sort out which files are exec/lib files.
+# Use various tools to sort out which files are exec/lib files,
+# targeting only the files we've determined need processing (for
+# an initialization this is everything, but for subsequent passes
+# there is likely to be much less work to do.)
 message("Characterizing new or changed bundled third party files...")
 set(NBINARY_FILES)
 set(NTEXT_FILES)
 set(NNOEXEC_FILES)
-foreach(lf ${TP_CHANGED})
+foreach(lf ${TP_PROCESS})
   FILE_TYPE("${lf}" NBINARY_FILES NTEXT_FILES NNOEXEC_FILES)
-endforeach(lf ${TP_CHANGED})
-foreach(lf ${TP_NEW})
-  FILE_TYPE("${lf}" NBINARY_FILES NTEXT_FILES NNOEXEC_FILES)
-endforeach(lf ${TP_NEW})
+endforeach(lf ${TP_PROCESS})
 message("Characterizing new or changed bundled third party files... done.")
 
-# Write the lists back out to files
+# Combine the previous lists and the new determinations, writing
+# the final lists back out to files
 set(ALL_BINARY_FILES ${BINARY_FILES} ${NBINARY_FILES})
 string(REPLACE ";" "\n" TP_B "${ALL_BINARY_FILES}")
 file(WRITE "${TP_INVENTORY_BINARIES}" "${TP_B}")
-
-set(ALL_TEXT_FILES ${TEXT_FILES} ${NTEXT_FILES})
-string(REPLACE ";" "\n" TP_T "${ALL_TEXT_FILES}")
-file(WRITE "${TP_INVENTORY_TEXT}" "${TP_T}")
-
-set(ALL_NOEXEC_FILES ${NOEXEC_FILES} ${NNOEXEC_FILES})
-string(REPLACE ";" "\n" TP_N "${ALL_NOEXEC_FILES}")
-file(WRITE "${TP_INVENTORY_NOEXEC}" "${TP_N}")
 
 if (NBINARY_FILES)
   message("Setting rpath on new 3rd party lib and exe files...")
   if (NOT CMAKE_CONFIGURATION_TYPES)
     # Set local RPATH so the files will work during build
     foreach(lf ${NBINARY_FILES})
-      if (PATCHELF_EXECUTABLE)
-	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-	execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-      elseif (APPLE)
-	execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR} OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
-	execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_BINARY_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-      endif (PATCHELF_EXECUTABLE)
-      # RPATH updates are complete - now clear out any other stale paths in the file
-      #message("${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR}/${lf} ${BRLCAD_EXT_DIR_REAL}/${LIB_DIR} ${BRLCAD_EXT_DIR_REAL}/${BIN_DIR} ${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR} ${BRLCAD_EXT_DIR_REAL}/")
-      execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}" "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/")
-      # ARRRRRGH.  It looks like OSX security features (particularly on ARM64) may be interfering
-      # with this trick:  https://developer.apple.com/documentation/security/updating_mac_software
-      # See if https://developer.apple.com/documentation/xcode/embedding-nonstandard-code-structures-in-a-bundle
-      # helps...
-      # Trying https://stackoverflow.com/questions/71744856/install-name-tool-errors-on-arm64
-      if(APPLE)
-	execute_process(COMMAND codesign --force -s - ${lf})
-      endif(APPLE)
+      RPATH_BUILD_DIR_PROCESS("${CMAKE_BINARY_DIR}" "${lf}")
     endforeach(lf ${NBINARY_FILES})
   else (NOT CMAKE_CONFIGURATION_TYPES)
     # For multi-config, we set the RPATHs for each active configuration's build dir
@@ -488,19 +575,7 @@ if (NBINARY_FILES)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
       foreach(lf ${NBINARY_FILES})
-	if (PATCHELF_EXECUTABLE)
-	  execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-	  execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-	elseif (APPLE)
-	  execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
-	  execute_process(COMMAND install_name_tool -add_rpath "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${LIB_DIR}" ${lf} WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
-	endif (PATCHELF_EXECUTABLE)
-	# RPATH updates are complete - now clear out any other stale paths in the file
-	execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}" "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/")
-	# Trying https://stackoverflow.com/questions/71744856/install-name-tool-errors-on-arm64
-	if(APPLE)
-	  execute_process(COMMAND codesign --force -s - ${lf})
-	endif(APPLE)
+	RPATH_BUILD_DIR_PROCESS("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" "${lf}")
       endforeach(lf ${NBINARY_FILES})
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif (NOT CMAKE_CONFIGURATION_TYPES)
@@ -510,13 +585,7 @@ endif (NBINARY_FILES)
 if (NNOEXEC_FILES)
   message("Scrubbing paths from new 3rd party data files...")
   foreach(tf ${NNOEXEC_FILES})
-    set(SKIP_FILE 0)
-    foreach (skp ${NOPROCESS_PATTERNS})
-      if ("${tf}" MATCHES "${skp}")
-	set(SKIP_FILE 1)
-	continue()
-      endif ("${tf}" MATCHES "${skp}")
-    endforeach (skp ${NOPROCESS_PATTERNS})
+    SKIP_PROCESSING(${tf} SKIP_FILE)
     if (SKIP_FILE)
       continue()
     endif (SKIP_FILE)
@@ -531,16 +600,7 @@ endif (NNOEXEC_FILES)
 if (NTEXT_FILES)
   message("Replacing paths in new 3rd party text files...")
   foreach(tf ${NTEXT_FILES})
-    if (IS_SYMLINK ${tf})
-      continue()
-    endif (IS_SYMLINK ${tf})
-    set(SKIP_FILE 0)
-    foreach (skp ${NOPROCESS_PATTERNS})
-      if ("${tf}" MATCHES "${skp}")
-	set(SKIP_FILE 1)
-	continue()
-      endif ("${tf}" MATCHES "${skp}")
-    endforeach (skp ${NOPROCESS_PATTERNS})
+    SKIP_PROCESSING(${tf} SKIP_FILE)
     if (SKIP_FILE)
       continue()
     endif (SKIP_FILE)
@@ -550,6 +610,10 @@ if (NTEXT_FILES)
   message("Replacing paths in new 3rd party text files... done.")
 endif (NTEXT_FILES)
 
+# Everything until now has been setting the stage in the build directory. Now
+# we set up the install rules.  It is for these stages that we need complete
+# knowledge of the third party files, since configure re-defines all of these
+# rules on every pass.
 foreach(tf ${TP_FILES})
   # Rather than doing the PROGRAMS install for all binary files, we target just
   # those in the bin directory - those are the ones we would expect to want
@@ -573,9 +637,12 @@ foreach(tf ${TP_FILES})
   endif (${dir} MATCHES "${BIN_DIR}$")
 endforeach(tf ${TP_FILES})
 
-# When installing, need to fix RPATH on binary files.  Don't do it for symlinks
-# since following them will just result in re-processing the same file's RPATH
-# multiple times.
+# When installing, need to fix the RPATH on binary files again, similarly to
+# what we did when staging in the build directory.  Again we don't process
+# symlinks since following them will just result in re-processing the same
+# file's RPATH multiple times.  This time, in contrast to the build directory
+# setup, our goal is to define an RPATH that will allow the binary files to
+# work when the install directory is relocated.
 foreach(bf ${ALL_BINARY_FILES})
   if (IS_SYMLINK ${bf})
     continue()
@@ -591,15 +658,20 @@ foreach(bf ${ALL_BINARY_FILES})
     install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"${REL_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
   endif (PATCHELF_EXECUTABLE)
   # Overwrite any stale paths in the binary files with null chars, to make sure
-  # they're not interfering with the behavior of the final executables.
-  # TODO - this should be in two stages, or perhaps done just on copy.  We
-  # should zap brlcad_external paths when doing the initial copy, and
-  # CMAKE_BINARY_DIR paths (if any are needed) on install... that will
-  # probably mean strclear belongs in brlcad_externals' extnoinstall bin
-  # collection so it's available at configure time here...
+  # they're not interfering with the behavior of the final executables.  This
+  # is a little fraught in that there's no guarantee these changes aren't going
+  # to break something, but given that reliance on invalid full paths was going
+  # to break something in any case eventually doing this will let us find out
+  # about it sooner.  If the path is just a stale, unused leftover this should
+  # have no impact on functionality, and otherwise this offers a way to avoid
+  # "accidental success" where the program is using a build dir file to
+  # successfully run when we don't want it to see them.
   install(CODE "execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" \"${CMAKE_BINARY_DIR}/${LIB_DIR}\")")
   if (APPLE)
-    # Trying https://stackoverflow.com/questions/71744856/install-name-tool-errors-on-arm64
+    # As with the configure time processing, use codesign at install time to appease OSX:
+    # https://developer.apple.com/documentation/security/updating_mac_software
+    # https://developer.apple.com/documentation/xcode/embedding-nonstandard-code-structures-in-a-bundle
+    # https://stackoverflow.com/questions/71744856/install-name-tool-errors-on-arm64
     install(CODE "execute_process(COMMAND codesign --force -s - \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
   endif (APPLE)
 endforeach(bf ${ALL_BINARY_FILES})
