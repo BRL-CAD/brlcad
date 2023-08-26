@@ -53,9 +53,13 @@ endif (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
 file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" BRLCAD_EXT_DIR_REAL)
 
 
-# See if we have patchelf available.  If it is available, we will be using it
-# to manage the RPATH settings for third party exe/lib files.
-find_program(PATCHELF_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+# See if we have plief available for rpath manipulation.  If it is available,
+# we will be using it to manage the RPATH settings for third party exe/lib
+# files.  If not, see if patchelf is available instead.
+find_program(P_RPATH_EXECUTABLE NAMES plief HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+if (NOT P_RPATH_EXECUTABLE)
+  find_program(P_RPATH_EXECUTABLE NAMES patchelf HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+endif (NOT P_RPATH_EXECUTABLE)
 
 # Find the tool we use to scrub EXT paths from files
 find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
@@ -156,8 +160,8 @@ function(FILE_TYPE fname BINARY_LIST TEXT_LIST NOEXEC_LIST)
   endif ("${TXT_FILE}" GREATER 0)
 
   # Some kind of binary file, can we set an RPATH?
-  if (PATCHELF_EXECUTABLE)
-    execute_process(COMMAND ${PATCHELF_EXECUTABLE} ${CMAKE_BINARY_DIR}/${lf} RESULT_VARIABLE NOT_BIN_OBJ OUTPUT_VARIABLE NB_OUT ERROR_VARIABLE NB_ERR)
+  if (P_RPATH_EXECUTABLE)
+    execute_process(COMMAND ${P_RPATH_EXECUTABLE} ${CMAKE_BINARY_DIR}/${lf} RESULT_VARIABLE NOT_BIN_OBJ OUTPUT_VARIABLE NB_OUT ERROR_VARIABLE NB_ERR)
     if (NOT_BIN_OBJ)
       set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
       return()
@@ -165,7 +169,7 @@ function(FILE_TYPE fname BINARY_LIST TEXT_LIST NOEXEC_LIST)
       set(${BINARY_LIST} ${${BINARY_LIST}} ${fname} PARENT_SCOPE)
       return()
     endif (NOT_BIN_OBJ)
-  endif(PATCHELF_EXECUTABLE)
+  endif(P_RPATH_EXECUTABLE)
   if (APPLE)
     execute_process(COMMAND otool -l ${CMAKE_BINARY_DIR}/${lf} RESULT_VARIABLE ORESULT OUTPUT_VARIABLE OTOOL_OUT ERROR_VARIABLE NB_ERR)
     if ("${OTOOL_OUT}" MATCHES "Archive")
@@ -337,13 +341,15 @@ endfunction(find_relative_rpath)
 # locations.  Parameterized to allow processing of both single and multiconfig
 # builds.
 function(RPATH_BUILD_DIR_PROCESS ROOT_DIR lf)
-  if (PATCHELF_EXECUTABLE)
-    execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY ${ROOT_DIR})
-    execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath "${ROOT_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${ROOT_DIR})
+  if (P_RPATH_EXECUTABLE)
+    message("${P_RPATH_EXECUTABLE} --remove-rpath ${lf}")
+    execute_process(COMMAND ${P_RPATH_EXECUTABLE} --remove-rpath ${lf} WORKING_DIRECTORY ${ROOT_DIR})
+    message("${P_RPATH_EXECUTABLE} --set-rpath \"${ROOT_DIR}/${LIB_DIR}\" ${lf}")
+    execute_process(COMMAND ${P_RPATH_EXECUTABLE} --set-rpath "${ROOT_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${ROOT_DIR})
   elseif (APPLE)
     execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${ROOT_DIR} OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
     execute_process(COMMAND install_name_tool -add_rpath "${ROOT_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-  endif (PATCHELF_EXECUTABLE)
+  endif (P_RPATH_EXECUTABLE)
   # RPATH updates are complete - now clear out any other stale paths in the file
   execute_process(COMMAND  ${STRCLEAR_EXECUTABLE} -v -b -c ${ROOT_DIR}/${lf} "${BRLCAD_EXT_DIR_REAL}/${LIB_DIR}" "${BRLCAD_EXT_DIR_REAL}/${BIN_DIR}" "${BRLCAD_EXT_DIR_REAL}/${INCLUDE_DIR}" "${BRLCAD_EXT_DIR_REAL}/")
   # Modern Apple security features (particularly on ARM64) complicate our manipulation of these
@@ -650,13 +656,13 @@ foreach(bf ${ALL_BINARY_FILES})
   # Finalize the rpaths
   set(REL_RPATH)
   find_relative_rpath("${bf}" REL_RPATH)
-  if (PATCHELF_EXECUTABLE)
-    install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --remove-rpath \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
-    install(CODE "execute_process(COMMAND ${PATCHELF_EXECUTABLE} --set-rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${REL_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
+  if (P_RPATH_EXECUTABLE)
+    install(CODE "execute_process(COMMAND ${P_RPATH_EXECUTABLE} --remove-rpath \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
+    install(CODE "execute_process(COMMAND ${P_RPATH_EXECUTABLE} --set-rpath \"${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${REL_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
   elseif (APPLE)
     install(CODE "execute_process(COMMAND install_name_tool -delete_rpath \"${CMAKE_BINARY_DIR}/${LIB_DIR}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\" OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)")
     install(CODE "execute_process(COMMAND install_name_tool -add_rpath \"${REL_RPATH}\" \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${bf}\")")
-  endif (PATCHELF_EXECUTABLE)
+  endif (P_RPATH_EXECUTABLE)
   # Overwrite any stale paths in the binary files with null chars, to make sure
   # they're not interfering with the behavior of the final executables.  This
   # is a little fraught in that there's no guarantee these changes aren't going
