@@ -689,8 +689,19 @@ foreach (ef ${TP_FILES})
   set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_INSTALL_DIR}/${ef})
 endforeach (ef ${TP_FILES})
 
-# TODO - add a extnoinstall touched file to also trigger CMake as above, to be updated whenever
-# the brlcad_externals repository is built...
+# Add a extnoinstall touched file to also trigger CMake as above, to help
+# ensure a reconfigure whenever the brlcad_externals repository is built.
+# There should be a build-stamp file there that should be updated after each
+# build run in brlcad_externals, regardless of what happens with other files.
+file(GLOB_RECURSE TP_NOINST_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_NOINSTALL_DIR}" "${BRLCAD_EXT_NOINSTALL_DIR}/*")
+# For consistency, ignore files that would fall into the STRIP_EXCLUDED set
+foreach(ep ${EXCLUDED_PATTERNS})
+  list(FILTER TP_NOINST_FILES EXCLUDE REGEX ${ep})
+endforeach(ep ${EXCLUDED_PATTERNS})
+foreach (ef ${TP_NOINST_FILES})
+  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_NOINSTALL_DIR}/${ef})
+endforeach (ef ${TP_NOINST_FILES})
+
 
 #####################################################################
 # Now that the staging process is complete, it's time to run (or
