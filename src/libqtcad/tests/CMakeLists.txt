@@ -10,10 +10,10 @@ set(QG_DIRS
   )
 BRLCAD_INCLUDE_DIRS(QG_DIRS)
 
-if (BRLCAD_ENABLE_QT)
+set(QGMODEL_SRCS qgmodel.cpp)
+set(QGVIEW_SRCS qgview.cpp)
 
-  set(QGMODEL_SRCS qgmodel.cpp)
-  set(QGVIEW_SRCS qgview.cpp)
+if (BRLCAD_ENABLE_QT)
 
   if (TARGET Qt6::Test)
     add_executable(qgmodel ${QGMODEL_SRCS})
