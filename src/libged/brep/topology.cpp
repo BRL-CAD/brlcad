@@ -65,8 +65,8 @@ _brep_cmd_topo_create_edge(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     argc--;argv++;
     if (argc < 3) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
     int v1 = atoi(argv[0]);
@@ -96,8 +96,8 @@ _brep_cmd_topo_create_face(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     argc--;argv++;
     if (argc < 1) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
     int surface = atoi(argv[0]);
@@ -130,8 +130,8 @@ _brep_cmd_topo_reverse_face(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     argc--;argv++;
     if (argc < 1) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
     int face = atoi(argv[0]);
@@ -164,8 +164,8 @@ _brep_cmd_topo_create_loop(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     argc--;argv++;
     if (argc < 1) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
     int surface = atoi(argv[0]);
@@ -198,8 +198,8 @@ _brep_cmd_topo_create_trim(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     argc--;argv++;
     if (argc < 4) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
     int loop_id = atoi(argv[0]);

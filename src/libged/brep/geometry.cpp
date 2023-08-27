@@ -65,8 +65,8 @@ _brep_cmd_geo_vertex_create(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     argc--;argv++;
     if (argc < 3) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
     ON_3dPoint position(atof(argv[0]), atof(argv[1]), atof(argv[2]));
@@ -94,8 +94,8 @@ _brep_cmd_geo_vertex_remove(void *bs, int argc, const char **argv)
     struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gib->gb->intern.idb_ptr;
     argc--;argv++;
     if (argc < 1) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
     int v_id = atoi(argv[0]);
@@ -299,8 +299,8 @@ _brep_cmd_geo_curve3d_interp(void *bs, int argc, const char **argv)
 
     struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
     if (argc < 2) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
 
@@ -312,8 +312,8 @@ _brep_cmd_geo_curve3d_interp(void *bs, int argc, const char **argv)
     }
 
     if (argc < 2 + cv_count * 3) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments, you need to input %d more args about control 	vertices\n", 2 + cv_count * 3 - argc);
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments, you need to input %d more args about control vertices\n", 2 + cv_count * 3 - argc);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
 
@@ -331,7 +331,7 @@ _brep_cmd_geo_curve3d_interp(void *bs, int argc, const char **argv)
     }
     int curve_id = brep_curve_interpCrv(b_ip->brep, points);
     if (curve_id < 0) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create 	curve\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "failed to create curve\n");
 	return BRLCAD_ERROR;
     }
 
@@ -356,8 +356,8 @@ _brep_cmd_geo_curve3d_copy(void *bs, int argc, const char **argv)
 
     struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
     if (argc < 2) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
 
@@ -397,8 +397,8 @@ _brep_cmd_geo_curve3d_remove(void *bs, int argc, const char **argv)
 
     struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
     if (argc < 2) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
 
@@ -790,8 +790,8 @@ _brep_cmd_geo_surface_interp(void *bs, int argc, const char **argv)
 
     struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
     if (argc < 3) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
 
@@ -805,8 +805,8 @@ _brep_cmd_geo_surface_interp(void *bs, int argc, const char **argv)
     }
     
     if (argc < 2 + (cv_count_x *cv_count_y) * 3) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments, you need to input %d more args about control 	vertices\n", 2 + (cv_count_x * cv_count_y) * 3 - argc);
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments, you need to input %d more args about control vertices\n", 2 + (cv_count_x * cv_count_y) * 3 - argc);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
 
@@ -847,8 +847,8 @@ _brep_cmd_geo_surface_copy(void *bs, int argc, const char **argv)
 
     struct _ged_brep_igeo *gib = (struct _ged_brep_igeo *)bs;
     if (argc < 2) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
 
@@ -1172,8 +1172,8 @@ _brep_cmd_geo_surface_extract_vertex(void *bs, int argc, const char **argv)
     argc--;argv++;
     
     if (argc < 3) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
     
@@ -1211,8 +1211,8 @@ _brep_cmd_geo_surface_extract_curve(void *bs, int argc, const char **argv)
     argc--;argv++;
     
     if (argc < 3) {
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough 	arguments\n");
-	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", 	usage_string);
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "not enough arguments\n");
+	bu_vls_printf(gib->gb->gedp->ged_result_str, "%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
     
