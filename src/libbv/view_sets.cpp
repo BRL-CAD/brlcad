@@ -82,7 +82,7 @@ bv_set_add_view(struct bview_set *s, struct bview *v){
     if (!s || !v)
 	return;
 
-    bu_ptbl_ins(&s->i->views, (long *)v);
+    bu_ptbl_ins_unique(&s->i->views, (long *)v);
 
     v->vset = s;
 
