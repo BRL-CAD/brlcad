@@ -150,8 +150,12 @@ include(BRLCAD_Environment_Setup)
 # Populate these early, even though their main use is in
 # misc/CMake/BRLCAD_ExternalDeps.cmake - find_program and find_package calls
 # may also make use of them, particularly BRLCAD_EXT_NOINSTALL_DIR
+set(ENV_HOME "$ENV{HOME}")
+if (NOT ENV_HOME)
+  set(ENV_HOME "$ENV{USERPROFILE}")
+endif (NOT ENV_HOME)
 if (NOT DEFINED BRLCAD_EXT_DIR)
-  set(BRLCAD_EXT_DIR "$ENV{HOME}/brlcad_ext")
+  set(BRLCAD_EXT_DIR "${ENV_HOME}/brlcad_ext")
 endif (NOT DEFINED BRLCAD_EXT_DIR)
 
 if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
