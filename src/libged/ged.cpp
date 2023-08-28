@@ -340,10 +340,15 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 
     BU_GET(gedp, struct ged);
     GED_INIT(gedp, wdbp);
+#if 0
+    // Archer doesn't tolerate populating the GEDP with an initial view at the
+    // moment.  Probably should fix that, as there are lots of ged commands
+    // that only work correctly with a view present...
     BU_ALLOC(gedp->ged_gvp, struct bview);
     bv_init(gedp->ged_gvp, &gedp->ged_views);
     bv_set_add_view(&gedp->ged_views, gedp->ged_gvp);
     bu_ptbl_ins(&gedp->ged_free_views, (long *)gedp->ged_gvp);
+#endif
 
     db_update_nref(gedp->dbip, &rt_uniresource);
 
