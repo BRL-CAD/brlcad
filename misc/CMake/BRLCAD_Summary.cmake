@@ -252,6 +252,7 @@ function(BRLCAD_Summary)
       "Asset Import Library"
       "Geospatial Data Abstraction Library"
       "Netpbm"
+      "OpenCV"
       "OpenMesh"
       "Portable Network Graphics"
       "Qt"
@@ -276,6 +277,7 @@ function(BRLCAD_Summary)
       ASSETIMPORT_LIBRARY
       GDAL_LIBRARY
       NETPBM_LIBRARY
+      OpenCV_DIR
       OPENMESH_LIBRARIES
       PNG_LIBRARY_RELEASE
       QtCore_DIR
