@@ -839,6 +839,25 @@ if (BRLCAD_ENABLE_OPENMESH)
   find_package(OpenMesh)
 endif (BRLCAD_ENABLE_OPENMESH)
 
+
+# OpenCV - Open Source Computer Vision Library
+# http://opencv.org
+find_package_reset(OpenCV RESET_TP)
+
+# First, see if we have a bundled version
+set(OpenCV_DIR_TMP "${OpenCV_DIR}")
+set(OpenCV_DIR "${CMAKE_BINARY_DIR}/${LIB_DIR}/cmake/opencv4")
+set(OpenCV_ROOT ${CMAKE_BINARY_DIR})
+find_package(OpenCV COMPONENTS ${QtComponents})
+unset(OpenCV_ROOT)
+
+# If no bundled copy, see what the system has
+if (NOT OpenCV_FOUND)
+  set(OpenCV_DIR "${OpenCV_DIR_TMP}")
+  find_package(OpenCV)
+endif (NOT OpenCV_FOUND)
+
+
 # TCL - scripting language.  For Tcl/Tk builds we want
 # static lib building on so we get the stub libraries.
 if (BRLCAD_ENABLE_TK)
