@@ -1006,6 +1006,9 @@ solid_copy_vlist(struct db_i *UNUSED(dbip), struct bv_scene_obj *sp, struct bv_v
 int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy,
        	fastf_t transparency, int dmode, int csoltab)
 {
+    if (!gedp || !gedp->ged_gvp)
+	return 0;
+
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
     struct directory *dp;
