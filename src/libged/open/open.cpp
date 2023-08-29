@@ -36,7 +36,6 @@
 extern "C" int
 ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 {
-    struct db_i *new_dbip;
     static const char *usage = "[filename]";
 
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
@@ -50,88 +49,62 @@ ged_reopen_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    /* set database filename */
-    if (argc == 2) {
-	const char *av[2];
-	struct db_i *old_dbip = gedp->dbip;
-	struct mater *old_materp = rt_material_head();
-	struct mater *new_materp;
-
-	// TODO - need to look more carefully at material_head and what
-	// its expected behavior is through a dbip change...
-	rt_new_material_head(MATER_NULL);
-
-	if ((new_dbip = _ged_open_dbip(argv[1], 0)) == DBI_NULL) {
-	    /* Restore RT's material head */
-	    rt_new_material_head(old_materp);
-
-	    bu_vls_printf(gedp->ged_result_str, "ged_reopen_core: failed to open %s\n", argv[1]);
-	    return BRLCAD_ERROR;
-	}
-
-	av[0] = "zap";
-	av[1] = (char *)0;
-	ged_exec(gedp, 1, (const char **)av);
-
-	new_materp = rt_material_head();
-
-	gedp->dbip = old_dbip;
-	rt_new_material_head(old_materp);
-
-	/* close current database */
-	if (gedp->dbip)
-	    db_close(gedp->dbip);
-	gedp->dbip = NULL;
-	const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
-	if (use_dbi_state) {
-	    if (gedp->dbi_state)
-		delete gedp->dbi_state;
-	}
-	gedp->dbi_state = NULL;
-
-	/* Terminate any ged subprocesses */
-	if (gedp != GED_NULL) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(&gedp->ged_subp); i++) {
-		struct ged_subprocess *rrp = (struct ged_subprocess *)BU_PTBL_GET(&gedp->ged_subp, i);
-		if (!rrp->aborted) {
-		    bu_terminate(bu_process_pid(rrp->p));
-		    rrp->aborted = 1;
-		}
-		bu_ptbl_rm(&gedp->ged_subp, (long *)rrp);
-		BU_PUT(rrp, struct ged_subprocess);
-	    }
-	    bu_ptbl_reset(&gedp->ged_subp);
-	}
-
-	gedp->dbip = new_dbip;
-
-	rt_new_material_head(new_materp);
-
-	/* New database open, need to initialize reference counts */
-	db_update_nref(gedp->dbip, &rt_uniresource);
-
-
-	// LoD context creation (DbiState initialization can use info
-	// stored here, so do this first)
-	if (gedp->ged_lod)
-	    bg_mesh_lod_context_destroy(gedp->ged_lod);
-	gedp->ged_lod = bg_mesh_lod_context_create(argv[1]);
-
-	// Set up the DbiState container for fast structure access
-	if (use_dbi_state)
-	    gedp->dbi_state = new DbiState(gedp);
-
-	// Set the view units, if we have a view
-	if (gedp->ged_gvp) {
-	    gedp->ged_gvp->gv_base2local = gedp->dbip->dbi_base2local;
-	    gedp->ged_gvp->gv_local2base = gedp->dbip->dbi_local2base;
-	}
-
-	return BRLCAD_OK;
+    if (argc != 2) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
     }
 
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
+    /* Before proceeding with the full open logic, see if
+     * we can actually open what the caller provided */
+    struct db_i *new_dbip = NULL;
+    struct mater *old_materp = rt_material_head();
+    if ((new_dbip = _ged_open_dbip(argv[1], 0)) == DBI_NULL) {
+	/* Restore RT's material head */
+	rt_new_material_head(old_materp);
+
+	bu_vls_printf(gedp->ged_result_str, "ged_reopen_core: failed to open %s\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    /* Close current database, if we have one */
+    if (gedp->dbip) {
+	const char *av[2];
+	av[0] = "closedb";
+	av[1] = (char *)0;
+	ged_exec(gedp, 1, (const char **)av);
+    }
+
+    /* If the caller has work to do before open, trigger it */
+    if (gedp->ged_pre_opendb_callback)
+	(*gedp->ged_pre_opendb_callback)(gedp, gedp->ged_db_callback_udata);
+
+    /* Set up the new database info in gedp */
+    gedp->dbip = new_dbip;
+    rt_new_material_head(rt_material_head());
+
+    /* New database open, need to initialize reference counts */
+    db_update_nref(gedp->dbip, &rt_uniresource);
+
+    // LoD context creation (DbiState initialization can use info
+    // stored here, so do this first)
+    gedp->ged_lod = bg_mesh_lod_context_create(argv[1]);
+
+    // If enabled, set up the DbiState container for fast structure access
+    const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
+    if (use_dbi_state)
+	gedp->dbi_state = new DbiState(gedp);
+
+    // Set the view units, if we have a view
+    if (gedp->ged_gvp) {
+	gedp->ged_gvp->gv_base2local = gedp->dbip->dbi_base2local;
+	gedp->ged_gvp->gv_local2base = gedp->dbip->dbi_local2base;
+    }
+
+    // If the caller has work to do after open, trigger it
+    if (gedp->ged_post_opendb_callback)
+	(*gedp->ged_post_opendb_callback)(gedp, gedp->ged_db_callback_udata);
+
+    return BRLCAD_OK;
 }
 
 extern "C" {

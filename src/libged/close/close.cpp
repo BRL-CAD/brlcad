@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bg/lod.h"
 
 #include "../ged_private.h"
 
@@ -35,30 +36,40 @@
 extern "C" int
 ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 {
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
+    // If we don't have an open database, this is a no-op
+    if (!gedp->dbip)
+	return BRLCAD_OK;
+
+    // If the caller has work to do first, trigger it
+    if (gedp->ged_pre_closedb_callback)
+	(*gedp->ged_pre_closedb_callback)(gedp, gedp->ged_db_callback_udata);
 
     /* set result while we still have the info */
     bu_vls_sprintf(gedp->ged_result_str, "closed %s", gedp->dbip->dbi_filename);
 
     rt_new_material_head(MATER_NULL);
 
+    /* Clear any geometry displayed in application views.
+     * TODO - properly speaking, we should only be zapping geometry data here
+     * and not clearing all scene objects... */
     const char *av[2];
     av[0] = "zap";
     av[1] = (char *)0;
     ged_exec(gedp, 1, (const char **)av);
 
     /* close current database */
-    if (gedp->dbip) {
+    if (gedp->dbip)
 	db_close(gedp->dbip);
-    }
     gedp->dbip = NULL;
 
+    /* Clean up any old acceleration states, if present */
     const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
-    if (use_dbi_state) {
-	if (gedp->dbi_state)
-	    delete gedp->dbi_state;
-    }
+    if (use_dbi_state && gedp->dbi_state)
+	delete gedp->dbi_state;
     gedp->dbi_state = NULL;
+    if (gedp->ged_lod)
+	bg_mesh_lod_context_destroy(gedp->ged_lod);
+    gedp->ged_lod = NULL;
 
     /* Terminate any ged subprocesses */
     if (gedp != GED_NULL) {
@@ -73,6 +84,10 @@ ged_close_core(struct ged *gedp, int UNUSED(argc), const char **UNUSED(argv))
 	}
 	bu_ptbl_reset(&gedp->ged_subp);
     }
+
+    // If the caller has work to do after close, trigger it
+    if (gedp->ged_post_closedb_callback)
+	(*gedp->ged_post_closedb_callback)(gedp, gedp->ged_db_callback_udata);
 
     return BRLCAD_OK;
 }

@@ -278,6 +278,15 @@ struct ged {
     void			(*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void			(*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
+    /* Functions related to database open/close - if the parent application
+     * needs to take any action upon database opening or closing, it should
+     * register these callbacks so GED's opendb/closedb commands trigger
+     * the correct logic. */
+    void (*ged_pre_opendb_callback)(struct ged *, void *);
+    void (*ged_post_opendb_callback)(struct ged *, void *);
+    void (*ged_pre_closedb_callback)(struct ged *, void *);
+    void (*ged_post_closedb_callback)(struct ged *, void *);
+    void *ged_db_callback_udata;
 
     /* Functions assigned to ged_subprocess init_clbk and end_clbk
      * slots when the ged_subprocess is created.  TODO - eventually
