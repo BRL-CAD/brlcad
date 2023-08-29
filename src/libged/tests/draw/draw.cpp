@@ -719,7 +719,7 @@ main(int ac, char *av[]) {
 
 
     // Done with moss.g
-    s_av[0] = "close_db";
+    s_av[0] = "closedb";
     s_av[1] = NULL;
     ged_exec(dbp, 1, s_av);
     bu_file_delete("moss_tmp.g");
@@ -727,7 +727,7 @@ main(int ac, char *av[]) {
     /* The rook model is a more appropriate test case for mode 3, since its
      * wireframe is dramatically different when evaluated.*/
     bu_vls_sprintf(&fname, "%s/rook.g", av[1]);
-    s_av[0] = "open_db";
+    s_av[0] = "opendb";
     s_av[1] = bu_vls_cstr(&fname);
     s_av[2] = NULL;
     ged_exec(dbp, 2, s_av);

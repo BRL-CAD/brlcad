@@ -140,7 +140,7 @@ extern "C" {
 struct ged_cmd_impl reopen_cmd_impl = {"reopen", ged_reopen_core, GED_CMD_DEFAULT};
 const struct ged_cmd reopen_cmd = { &reopen_cmd_impl };
 
-struct ged_cmd_impl open_cmd_impl = {"open_db", ged_reopen_core, GED_CMD_DEFAULT};
+struct ged_cmd_impl open_cmd_impl = {"opendb", ged_reopen_core, GED_CMD_DEFAULT};
 const struct ged_cmd open_cmd = { &open_cmd_impl };
 
 

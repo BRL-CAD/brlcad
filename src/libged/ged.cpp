@@ -196,6 +196,9 @@ ged_init(struct ged *gedp)
     gedp->fbs_open_client_handler = NULL;
     gedp->fbs_close_client_handler = NULL;
 
+    gedp->ged_opendb_callback = NULL;
+    gedp->ged_closedb_callback = NULL;
+
     gedp->ged_subprocess_init_callback = NULL;
     gedp->ged_subprocess_end_callback = NULL;
 

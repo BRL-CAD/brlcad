@@ -232,11 +232,11 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 
     // If we got this far, we need to close the current database, open the new
     // one, and verify the data
-    av[0] = "close_db";
+    av[0] = "closedb";
     av[1] = NULL;
     ged_exec(gedp, 1, (const char **)av);
-
-    av[0] = "open_db";
+bu_exit(-1, "done");
+    av[0] = "opendb";
     av[1] = bu_vls_cstr(&working_file);
     av[2] = NULL;
     if (ged_exec(gedp, 2, (const char **)av) != BRLCAD_OK) {
@@ -273,14 +273,14 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     }
     if (ret == BRLCAD_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s has incorrect data!  Something is very wrong.  Aborting garbage collect, database unchanged\n", bu_vls_cstr(&working_file));
-	av[0] = "close_db";
+	av[0] = "closedb";
 	av[1] = NULL;
 	ged_exec(gedp, 1, (const char **)av);
 	goto gc_cleanup;
     }
 
     // Done verifying
-    av[0] = "close_db";
+    av[0] = "closedb";
     av[1] = NULL;
     ged_exec(gedp, 1, (const char **)av);
 
@@ -314,7 +314,7 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Open the renamed, garbage collected file
-    av[0] = "open_db";
+    av[0] = "opendb";
     av[1] = bu_vls_cstr(&fpath);
     av[2] = NULL;
     if (ged_exec(gedp, 2, (const char **)av) != BRLCAD_OK) {
