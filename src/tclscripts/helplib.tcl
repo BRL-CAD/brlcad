@@ -151,7 +151,7 @@ set helplib_data(vo_lookat)		{{"x y z"} {set the look-at point}}
 set helplib_data(vo_model2view)		{{} {get the model2view matrix}}
 set helplib_data(vo_mrot)		{{x y z} {rotate view using model x,y,z}}
 set helplib_data(vo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
-set helplib_data(vo_orient)		{{quat} {set the orientation from quaternion}}
+set helplib_data(vo_orient)		{{quat} {set the azimuth, elevation and twist using a quaternion}}
 set helplib_data(vo_perspective)	{{[angle]} {set/get the perspective angle}}
 set helplib_data(vo_pmat)		{{[mat]} {set/get the perspective matrix}}
 set helplib_data(vo_pmodel2view)	{{} {get the pmodel2view matrix}}
