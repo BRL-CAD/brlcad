@@ -232,11 +232,11 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 
     // If we got this far, we need to close the current database, open the new
     // one, and verify the data
-    av[0] = "close";
+    av[0] = "close_db";
     av[1] = NULL;
     ged_exec(gedp, 1, (const char **)av);
 
-    av[0] = "open";
+    av[0] = "open_db";
     av[1] = bu_vls_cstr(&working_file);
     av[2] = NULL;
     if (ged_exec(gedp, 2, (const char **)av) != BRLCAD_OK) {
@@ -273,14 +273,14 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     }
     if (ret == BRLCAD_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s has incorrect data!  Something is very wrong.  Aborting garbage collect, database unchanged\n", bu_vls_cstr(&working_file));
-	av[0] = "close";
+	av[0] = "close_db";
 	av[1] = NULL;
 	ged_exec(gedp, 1, (const char **)av);
 	goto gc_cleanup;
     }
 
     // Done verifying
-    av[0] = "close";
+    av[0] = "close_db";
     av[1] = NULL;
     ged_exec(gedp, 1, (const char **)av);
 
@@ -308,13 +308,13 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     // *Gulp* - here we go.  Swap the new file in for the old
     bu_file_delete(bu_vls_cstr(&fpath));
     if (std::rename(bu_vls_cstr(&working_file), bu_vls_cstr(&fpath))) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: %s cannot be renamed to %s!\nSomething is very wrong, aborting - user needs to manually restore %s to its original name/location.\n", bu_vls_cstr(&working_file), bu_vls_cstr(&fpath), bu_vls_cstr(&bkup_file));
+	bu_vls_printf(gedp->ged_result_str, "ERROR: %s cannot be renamed to %s: %s!\nSomething is very wrong, aborting - user needs to manually restore %s to its original name/location.\n", bu_vls_cstr(&working_file), bu_vls_cstr(&fpath), strerror(errno), bu_vls_cstr(&bkup_file));
 	ret = BRLCAD_ERROR;
 	goto gc_cleanup;
     }
 
     // Open the renamed, garbage collected file
-    av[0] = "open";
+    av[0] = "open_db";
     av[1] = bu_vls_cstr(&fpath);
     av[2] = NULL;
     if (ged_exec(gedp, 2, (const char **)av) != BRLCAD_OK) {
