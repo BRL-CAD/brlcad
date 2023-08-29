@@ -19,6 +19,7 @@ set(MGED_SOURCES
   edars.c
   edpipe.c
   edsol.c
+  f_db.c
   facedef.c
   fbserv.c
   grid.c

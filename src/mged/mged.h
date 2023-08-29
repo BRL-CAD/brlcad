@@ -90,6 +90,15 @@ extern struct ged *GEDP;    /* defined in mged.c */
 extern struct db_i *DBIP;   /* defined in mged.c */
 extern struct rt_wdb *WDBP; /* defined in mged.c */
 
+/* initialization states */
+extern int mged_init_flag;	/* >0 means in initialization stage */
+extern int classic_mged;        /* >0 means interactive. gets set to 0 if
+			         * there's libdm graphics support, and forced
+			         * with -c option. */
+extern char *dpy_string;
+extern int mged_db_upgrade;
+extern int mged_db_version;
+extern int mged_db_warn;
 
 /*
  * All GED files are stored in a fixed base unit (MM).  These factors
@@ -514,6 +523,10 @@ extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */
 void find_ars_nearest_pnt(int *crv, int *col, struct rt_ars_internal *ars, point_t pick_pt, vect_t dir);
+
+/* f_db.c */
+int f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
+int f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
 
 /* mged.c */
 int event_check(int non_blocking);
