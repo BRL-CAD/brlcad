@@ -154,7 +154,7 @@ set mged_help_data(dump)	$helplib_data(wdb_dump)
 set mged_help_data(dup)		$helplib_data(wdb_dup)
 set mged_help_data(E)		$helplib_data(dgo_E)
 set mged_help_data(e)		$helplib_data(dgo_draw)
-set mged_help_data(e_id)	{{regionID[-regionID] ...} {Edits object(s) with the specified region ID number or within the hyphenated range(s).
+set mged_help_data(e_id)	{{regionID[-regionID] ...} {Draws object(s) with the specified region ID number or within the hyphenated range(s).
 
 Example: e_id 1000 2000 3000-4000}}
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code(s) (i.e., numbers >=0)}}
