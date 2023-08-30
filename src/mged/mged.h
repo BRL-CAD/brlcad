@@ -525,8 +525,26 @@ extern int newedge;	/* new edge for arb editing */
 void find_ars_nearest_pnt(int *crv, int *col, struct rt_ars_internal *ars, point_t pick_pt, vect_t dir);
 
 /* f_db.c */
+struct mged_opendb_ctx {
+    int argc;
+    const char **argv;
+    int force_create;
+    int no_create;
+    int created_new_db;
+    int ret;
+    int ged_ret;
+    Tcl_Interp *interpreter;
+    struct db_i *old_dbip;
+};
+extern struct mged_opendb_ctx mged_global_db_ctx;
 int f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
 int f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
+void mged_output_handler(struct ged *, char *line);
+void mged_refresh_handler(void *clientdata);
+void mged_pre_opendb_clbk(struct ged *gedp, void *ctx);
+void mged_post_opendb_clbk(struct ged *gedp, void *ctx);
+void mged_pre_closedb_clbk(struct ged *gedp, void *ctx);
+void mged_post_closedb_clbk(struct ged *gedp, void *ctx);
 
 /* mged.c */
 int event_check(int non_blocking);
