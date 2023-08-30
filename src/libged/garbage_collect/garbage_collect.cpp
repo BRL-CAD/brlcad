@@ -235,7 +235,6 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     av[0] = "closedb";
     av[1] = NULL;
     ged_exec(gedp, 1, (const char **)av);
-bu_exit(-1, "done");
     av[0] = "opendb";
     av[1] = bu_vls_cstr(&working_file);
     av[2] = NULL;
