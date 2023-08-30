@@ -158,6 +158,7 @@ set(mann_EN
   paths.xml
   permute.xml
   plot.xml
+  pnts.xml
   postscript.xml
   prcolor.xml
   prefix.xml
