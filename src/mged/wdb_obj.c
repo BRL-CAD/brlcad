@@ -320,7 +320,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    /*XXX Temporary */
+    /*XXX Temporary.  TODO - why are we not using the applications GEDP here? */
     GED_INIT(&ged, wdbp);
 
     i = 1;
@@ -1957,6 +1957,7 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     int ret;
 
     /* look for the new libged commands before trying one of the old ones */
+    /* TODO - why are we not using the applications GEDP here? */
     GED_INIT(&ged, wdbp);
 
     bu_log_hook_save_all(&save_hook_list);
