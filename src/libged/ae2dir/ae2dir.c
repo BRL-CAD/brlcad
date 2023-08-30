@@ -71,7 +71,7 @@ ged_ae2dir_core(struct ged *gedp, int argc, const char *argv[])
 
     az *= DEG2RAD;
     el *= DEG2RAD;
-    V3DIR_FROM_AZEL(dir, az, el);
+    bn_vec_ae(dir, az, el);
 
     if (iflag)
 	VSCALE(dir, dir, -1);

@@ -465,7 +465,7 @@ aetolookat(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj 
     AZEL_FROM_V3DIR(az, el, vecdfoc);
     az = az * -DEG2RAD + x;
     el = el * -DEG2RAD + y;
-    V3DIR_FROM_AZEL(vecdfoc, az, el);
+    bn_vec_ae(vecdfoc, az, el);
     VUNITIZE(vecdfoc);
     VSCALE(vecdfoc, vecdfoc, mag_vec);
     VADD2(isst->camera.focus, isst->camera.pos, vecdfoc);
@@ -509,7 +509,7 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     if (el>M_PI_2) el=M_PI_2 - 0.001;
     if (el<-M_PI_2) el=-M_PI_2 + 0.001;
 
-    V3DIR_FROM_AZEL(vecdpos, az, el);
+    bn_vec_ae(vecdfoc, az, el);
     VSCALE(vecdpos, vecdpos, mag_pos);
     VADD2(isst->camera.pos, isst->camera_focus_init, vecdpos);
     if (mag_focus > 0) {
@@ -525,7 +525,7 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
 	if (el>M_PI_2) el=M_PI_2 - 0.001;
 	if (el<-M_PI_2) el=-M_PI_2 + 0.001;
 
-	V3DIR_FROM_AZEL(vecdfoc, az, el);
+	bn_vec_ae(vecdfoc, az, el);
 	VSCALE(vecdfoc, vecdfoc, mag_focus);
 	VADD2(isst->camera.focus, isst->camera_focus_init, vecdfoc);
     }
