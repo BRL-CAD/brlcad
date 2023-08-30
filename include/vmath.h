@@ -2063,7 +2063,7 @@ typedef enum vmath_matrix_component_ {
 
 /** Convert a direction vector to azimuth/elevation (in radians). */
 #define AZEL_FROM_V3DIR(_a, _e, _d) do { \
-	(_a) = ((NEAR_ZERO((_d)[X], SMALL_FASTF)) && (NEAR_ZERO((_d)[Y], SMALL_FASTF))) ? 0.0 : atan2(-((_d)[Y]), -((_d)[X])) * -RAD2DEG; \
+	(_a) = ((NEAR_ZERO((_d)[X], SMALL_FASTF)) && (NEAR_ZERO((_d)[Y], SMALL_FASTF))) ? 0.0 : atan2(-((_d)[Y]), ((_d)[X])) * -RAD2DEG; \
 	(_e) = atan2(-((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y])) * -RAD2DEG; \
     } while (0)
 
