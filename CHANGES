@@ -1684,3 +1684,12 @@ s/bu_whereis\(/bu_whence\(/g
 s/bu_which\(/bu_whence\(/g
 s/rt_gettree_muves\(/rt_gettrees_and_attrs\(/g
 
+7.34
+----
+...
+
+7.36
+----
+s/AZEL_FROM_V3DIR\([[:space:]]*([^,]*),[[:space:]]*([^,]*),/bn_ae_vec\(&\1, &\2/g
+s/V3DIR_FROM_AZEL\(/bn_vec_ae\(/g
+
