@@ -89,6 +89,13 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 	rt_new_material_head(old_materp);
 
 	bu_vls_printf(gedp->ged_result_str, "ged_opendb_core: failed to open %s\n", argv[0]);
+
+	// If the caller has work to do after opendb call, trigger it - even
+	// though the open in its current form can't succeed, the caller may
+	// want to try again
+	if (gedp->ged_post_opendb_callback)
+	    (*gedp->ged_post_opendb_callback)(gedp, gedp->ged_db_callback_udata);
+
 	return BRLCAD_ERROR;
     }
 
@@ -117,10 +124,6 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 	av[1] = (char *)0;
 	ged_exec(gedp, 1, (const char **)av);
     }
-
-    /* If the caller has work to do before open, trigger it */
-    if (gedp->ged_pre_opendb_callback)
-	(*gedp->ged_pre_opendb_callback)(gedp, gedp->ged_db_callback_udata);
 
     /* Set up the new database info in gedp */
     gedp->dbip = new_dbip;
