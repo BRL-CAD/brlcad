@@ -121,7 +121,7 @@ wdb_prep_dbip(const char *filename)
 	}
 
 	/* db_create does a db_dirbuild */
-	if ((dbip = db_create(filename, 5)) == DBI_NULL) {
+	if ((dbip = db_create(filename, BRLCAD_DB_FORMAT_LATEST)) == DBI_NULL) {
 	    bu_log("wdb_prep_dbip: failed to create %s\n", filename);
 
 	    if (dbip == DBI_NULL)

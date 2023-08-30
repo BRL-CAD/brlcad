@@ -237,7 +237,7 @@ diff3_merge(struct db_i *left_dbip, struct db_i *ancestor_dbip, struct db_i *rig
     if (bu_file_exists(bu_vls_addr(state->merge_file), NULL)) return -1;
     bu_log("Merging into %s\n", bu_vls_addr(state->merge_file));
 
-    if ((merged_dbip = db_create(bu_vls_addr(state->merge_file), 5)) == DBI_NULL) return -1;
+    if ((merged_dbip = db_create(bu_vls_addr(state->merge_file), BRLCAD_DB_FORMAT_LATEST)) == DBI_NULL) return -1;
 
     for (i = 0; i < (int)BU_PTBL_LEN(results); i++) {
 	int added = 0;

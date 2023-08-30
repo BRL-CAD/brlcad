@@ -397,7 +397,7 @@ _ged_open_dbip(const char *filename, int existing_only)
 	    return DBI_NULL;
 
 	/* db_create does a db_dirbuild */
-	if ((dbip = db_create(filename, 5)) == DBI_NULL) {
+	if ((dbip = db_create(filename, BRLCAD_DB_FORMAT_LATEST)) == DBI_NULL) {
 	    bu_log("_ged_open_dbip: failed to create %s\n", filename);
 
 	    return DBI_NULL;
