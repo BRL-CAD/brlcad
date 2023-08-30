@@ -181,7 +181,7 @@ int mged_db_warn = 0;
 int mged_db_upgrade = 0;
 
 /* force creation of specific database versions */
-int mged_db_version = 5;
+int mged_db_version = BRLCAD_DB_FORMAT_LATEST;
 
 struct bn_tol mged_tol;	/* calculation tolerance */
 struct bg_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
