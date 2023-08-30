@@ -31,9 +31,6 @@
 
 #include "../ged_private.h"
 
-#ifndef MIN
-#  define MIN(a,b) ((a) < (b) ? (a) : (b))
-#endif
 
 int
 ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
@@ -130,7 +127,7 @@ ged_pathsum_core(struct ged *gedp, int argc, const char *argv[])
 	/* path not found */
 	bu_vls_printf(gedp->ged_result_str, "PATH:  ");
 	/* NOTE: gtd.gtd_obj size is limited to _GED_MAX_LEVLES - make sure our loop bounds dont exceed */
-	for (i = 0; i < MIN(gtd.gtd_objpos, _GED_MAX_LEVELS); i++) {
+	for (i = 0; i < FMIN(gtd.gtd_objpos, _GED_MAX_LEVELS); i++) {
 	    bu_vls_printf(gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
 	}
 	bu_vls_printf(gedp->ged_result_str, "  NOT FOUND\n");
