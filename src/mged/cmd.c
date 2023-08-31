@@ -103,12 +103,6 @@ gui_output(void *UNUSED(clientData), void *str)
 }
 
 int
-mged_pr_output(Tcl_Interp *UNUSED(interp))
-{
-    return 0;
-}
-
-int
 mged_db_search_callback(int argc, const char *argv[], void *userdata)
 {
     /* FIXME: pretty much copied from tclcad, ideally this should call
