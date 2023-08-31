@@ -89,6 +89,10 @@
 extern struct ged *GEDP;    /* defined in mged.c */
 extern struct db_i *DBIP;   /* defined in mged.c */
 extern struct rt_wdb *WDBP; /* defined in mged.c */
+extern struct bu_vls tcl_output_cmd; /* cmd.c */
+extern struct bu_vls tcl_output_str; /* cmd.c */
+
+
 
 /* initialization states */
 extern int mged_init_flag;	/* >0 means in initialization stage */
