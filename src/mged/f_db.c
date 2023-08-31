@@ -62,7 +62,6 @@ _post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
     int argc = ctx->argc;
     const char **argv = ctx->argv;
     const char *fname = argv[argc-1];
-
     /*
      * Check to see if we can access the database
      */
@@ -136,22 +135,13 @@ _post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
 	}
     }
 
-    /* File does not exist, and should be created.  Because we are already in a
-     * callback, we temporarily de-fang the gedp callbacks to avoid recursion.
-     * We intentionally leave the pre-open and closedb calls intact since
-     * none of them were triggered if the open failed, and we still may
-     * need their work if the new approach succeeds */
-    db_clbk_t post_opendb_clbk = gedp->ged_post_opendb_callback;
-    gedp->ged_post_opendb_callback = NULL;
-
-    const char *av[3];
-    av[0] = "opendb";
-    av[1] = "-c";
-    av[2] = fname;
-    ctx->ged_ret = ged_exec(gedp, 3, (const char **)av);
-
-    /* ged_exec done, restore callbacks */
-    gedp->ged_post_opendb_callback = post_opendb_clbk;
+    if (ctx->post_open_cnt < 2) {
+	const char *av[3];
+	av[0] = "opendb";
+	av[1] = "-c";
+	av[2] = fname;
+	ctx->ged_ret = ged_exec(gedp, 3, (const char **)av);
+    }
 
     if (gedp->dbip == DBI_NULL) {
 	ctx->ret = TCL_ERROR;
@@ -189,11 +179,14 @@ void
 mged_post_opendb_clbk(struct ged *gedp, void *ctx)
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
+    mctx->post_open_cnt++;
 
     if (!gedp->dbip || mctx->old_dbip == gedp->dbip) {
 	_post_opendb_failed(gedp, mctx);
-	if (DBIP == DBI_NULL)
+	if (DBIP == DBI_NULL) {
+	    mctx->post_open_cnt--;
 	    return;
+	}
     }
 
     /* Opened existing database file */
@@ -210,6 +203,7 @@ mged_post_opendb_clbk(struct ged *gedp, void *ctx)
     if ((WDBP = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
 	Tcl_AppendResult(mctx->interpreter, "wdb_dbopen() failed?\n", (char *)NULL);
 	mctx->ret = TCL_ERROR;
+	mctx->post_open_cnt--;
 	return;
     }
 
@@ -309,6 +303,7 @@ mged_post_opendb_clbk(struct ged *gedp, void *ctx)
     /* Update the background colors now that we have a file open */
     cs_set_bg(NULL, NULL, NULL, NULL, NULL);
 
+    mctx->post_open_cnt--;
     mctx->ret = TCL_OK;
 }
 
