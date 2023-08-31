@@ -28,6 +28,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* ability to place/align/mate objects tangentially, e.g., having a
+  vehicle rest on a piece of terrain or putting one object next to
+  another object.
+
 * race condition causing bus errors on exit
 
 * re-enable regress-asc and regress-weight
