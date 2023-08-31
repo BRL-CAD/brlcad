@@ -436,6 +436,7 @@ f_closedb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     // we're using the one expected.
     struct mged_opendb_ctx ctx;
     ctx.interpreter = interpreter;
+    ctx.ret = TCL_OK;
 
     if (argc != 1) {
 	Tcl_AppendResult(interpreter, "Unexpected argument [%s]\n", (const char *)argv[1], NULL);
