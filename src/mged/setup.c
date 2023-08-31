@@ -501,6 +501,7 @@ mged_setup(Tcl_Interp **interpreter)
     mged_global_db_ctx.ged_ret = 0;
     mged_global_db_ctx.interpreter = *interpreter;
     mged_global_db_ctx.old_dbip = NULL;
+    mged_global_db_ctx.post_open_cnt = 0;
 
     BU_ALLOC(view_state->vs_gvp, struct bview);
     bv_init(view_state->vs_gvp, NULL);

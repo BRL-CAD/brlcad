@@ -535,6 +535,7 @@ struct mged_opendb_ctx {
     int ged_ret;
     Tcl_Interp *interpreter;
     struct db_i *old_dbip;
+    int post_open_cnt;
 };
 extern struct mged_opendb_ctx mged_global_db_ctx;
 int f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);

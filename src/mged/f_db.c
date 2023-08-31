@@ -62,7 +62,6 @@ _post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
     int argc = ctx->argc;
     const char **argv = ctx->argv;
     const char *fname = argv[argc-1];
-
     /*
      * Check to see if we can access the database
      */
@@ -119,7 +118,7 @@ _post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
 
 		if (Tcl_GetStringResult(ctx->interpreter)[0] == '1') {
 		    bu_log("opendb: no database is currently opened!\n");
-		    ctx->ret = TCL_ERROR;
+		    ctx->ret = TCL_OK;
 		    return;
 		}
 	    } /* classic */
@@ -136,22 +135,13 @@ _post_opendb_failed(struct ged *gedp, struct mged_opendb_ctx *ctx)
 	}
     }
 
-    /* File does not exist, and should be created.  Because we are already in a
-     * callback, we temporarily de-fang the gedp callbacks to avoid recursion.
-     * We intentionally leave the pre-open and closedb calls intact since
-     * none of them were triggered if the open failed, and we still may
-     * need their work if the new approach succeeds */
-    db_clbk_t post_opendb_clbk = gedp->ged_post_opendb_callback;
-    gedp->ged_post_opendb_callback = NULL;
-
-    const char *av[3];
-    av[0] = "opendb";
-    av[1] = "-c";
-    av[2] = fname;
-    ctx->ged_ret = ged_exec(gedp, 3, (const char **)av);
-
-    /* ged_exec done, restore callbacks */
-    gedp->ged_post_opendb_callback = post_opendb_clbk;
+    if (ctx->post_open_cnt < 2) {
+	const char *av[3];
+	av[0] = "opendb";
+	av[1] = "-c";
+	av[2] = fname;
+	ctx->ged_ret = ged_exec(gedp, 3, (const char **)av);
+    }
 
     if (gedp->dbip == DBI_NULL) {
 	ctx->ret = TCL_ERROR;
@@ -189,17 +179,19 @@ void
 mged_post_opendb_clbk(struct ged *gedp, void *ctx)
 {
     struct mged_opendb_ctx *mctx = (struct mged_opendb_ctx *)ctx;
+    mctx->post_open_cnt++;
 
-    if (!gedp->dbip || mctx->old_dbip == gedp->dbip) {
+    /* Sync global to GED results */
+    DBIP = gedp->dbip;
+
+    if (DBIP == DBI_NULL || mctx->old_dbip == gedp->dbip) {
 	_post_opendb_failed(gedp, mctx);
-	if (DBIP == DBI_NULL)
-	    return;
+	mctx->post_open_cnt--;
+	return;
     }
 
-    /* Opened existing database file */
-    DBIP = gedp->dbip;
+    /* Opened database file */
     mctx->old_dbip = gedp->dbip;
-
     if (DBIP->dbi_read_only)
 	bu_vls_printf(gedp->ged_result_str, "%s: READ ONLY\n", DBIP->dbi_filename);
 
@@ -210,6 +202,7 @@ mged_post_opendb_clbk(struct ged *gedp, void *ctx)
     if ((WDBP = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
 	Tcl_AppendResult(mctx->interpreter, "wdb_dbopen() failed?\n", (char *)NULL);
 	mctx->ret = TCL_ERROR;
+	mctx->post_open_cnt--;
 	return;
     }
 
@@ -309,6 +302,7 @@ mged_post_opendb_clbk(struct ged *gedp, void *ctx)
     /* Update the background colors now that we have a file open */
     cs_set_bg(NULL, NULL, NULL, NULL, NULL);
 
+    mctx->post_open_cnt--;
     mctx->ret = TCL_OK;
 }
 
@@ -365,10 +359,12 @@ f_opendb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     /* For the most part GED handles the options, but there is one
      * exception - the y/n option at the end of the command.  If
      * present, we replace that with a -c creation flag */
+    ctx.post_open_cnt = 0;
     ctx.force_create = 0;
     ctx.no_create = 0;
     ctx.created_new_db = 0;
     ctx.interpreter = interpreter;
+    ctx.ret = TCL_OK;
     if (BU_STR_EQUIV("y", argv[argc-1]) || BU_STR_EQUIV("n", argv[argc-1])) {
 	if (BU_STR_EQUIV("y", argv[argc-1]))
 	    ctx.force_create = 1;
@@ -440,6 +436,7 @@ f_closedb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, cons
     // we're using the one expected.
     struct mged_opendb_ctx ctx;
     ctx.interpreter = interpreter;
+    ctx.ret = TCL_OK;
 
     if (argc != 1) {
 	Tcl_AppendResult(interpreter, "Unexpected argument [%s]\n", (const char *)argv[1], NULL);
