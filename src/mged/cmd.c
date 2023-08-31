@@ -79,13 +79,13 @@ Tk_Window tkwin = NULL;
 
 /* GUI output hooks use this variable to store the Tcl function used to run to
  * produce output. */
-struct bu_vls tcl_output_cmd = BU_VLS_INIT_ZERO;
+static struct bu_vls tcl_output_cmd = BU_VLS_INIT_ZERO;
 
 /* Container to store up bu_log strings for eventual Tcl printing.  This is
  * done to ensure only one thread attempts to print to the Tcl output - bu_log
  * may be called from multiple threads, and if the hook itself tries to print
  * to Tcl Bad Things can happen. */
-struct bu_vls tcl_output_str = BU_VLS_INIT_ZERO;
+static struct bu_vls tcl_output_str = BU_VLS_INIT_ZERO;
 
 /**
  * Used as a hook for bu_log output.  Sends output to the Tcl
@@ -100,6 +100,28 @@ gui_output(void *UNUSED(clientData), void *str)
     bu_semaphore_release(BU_SEM_SYSCALL);
     int len = (int)strlen((const char *)str);
     return len;
+}
+
+void
+mged_pr_output(Tcl_Interp *interp)
+{
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    if (bu_vls_strlen(&tcl_output_str)) {
+	if (!bu_vls_strlen(&tcl_output_cmd))
+	    bu_vls_sprintf(&tcl_output_cmd, "output_callback");
+	Tcl_DString tclcommand;
+	Tcl_DStringInit(&tclcommand);
+	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&tcl_output_cmd));
+	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&tcl_output_str));
+	Tcl_Obj *save_result = Tcl_GetObjResult(interp);
+	Tcl_IncrRefCount(save_result);
+	Tcl_Eval(interp, Tcl_DStringValue(&tclcommand));
+	Tcl_SetObjResult(interp, save_result);
+	Tcl_DecrRefCount(save_result);
+	Tcl_DStringFree(&tclcommand);
+	bu_vls_trunc(&tcl_output_str, 0);
+    }
+    bu_semaphore_release(BU_SEM_SYSCALL);
 }
 
 int

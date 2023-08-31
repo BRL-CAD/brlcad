@@ -2266,24 +2266,9 @@ refresh(void)
     int do_time = 0;
 
     /* Print any text output that has accumulated to the command prompt */
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    if (bu_vls_strlen(&tcl_output_str)) {
-	if (!bu_vls_strlen(&tcl_output_cmd))
-	    bu_vls_sprintf(&tcl_output_cmd, "output_callback");
-	Tcl_DString tclcommand;
-	Tcl_DStringInit(&tclcommand);
-	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&tcl_output_cmd));
-	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&tcl_output_str));
-	Tcl_Obj *save_result = Tcl_GetObjResult(INTERP);
-	Tcl_IncrRefCount(save_result);
-	Tcl_Eval(INTERP, Tcl_DStringValue(&tclcommand));
-	Tcl_SetObjResult(INTERP, save_result);
-	Tcl_DecrRefCount(save_result);
-	Tcl_DStringFree(&tclcommand);
-	bu_vls_trunc(&tcl_output_str, 0);
-    }
-    bu_semaphore_release(BU_SEM_SYSCALL);
+    mged_pr_output(INTERP);
 
+    /* Display Manager / Views */
     for (size_t di = 0; di < BU_PTBL_LEN(&active_dm_set); di++) {
 	struct mged_dm *p = (struct mged_dm *)BU_PTBL_GET(&active_dm_set, di);
 	if (!p->dm_view_state)

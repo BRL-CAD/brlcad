@@ -89,10 +89,6 @@
 extern struct ged *GEDP;    /* defined in mged.c */
 extern struct db_i *DBIP;   /* defined in mged.c */
 extern struct rt_wdb *WDBP; /* defined in mged.c */
-extern struct bu_vls tcl_output_cmd; /* cmd.c */
-extern struct bu_vls tcl_output_str; /* cmd.c */
-
-
 
 /* initialization states */
 extern int mged_init_flag;	/* >0 means in initialization stage */
@@ -449,7 +445,6 @@ int mged_attach(const char *wp_name, int argc, const char *argv[]);
 void mged_link_vars(struct mged_dm *p);
 void mged_slider_free_vls(struct mged_dm *p);
 int gui_setup(const char *dstr);
-int gui_output(void *clientData, void *str);
 
 
 /* buttons.c */
@@ -479,6 +474,8 @@ extern void view_ring_destroy(struct mged_dm *dlp);
 int cmdline(struct bu_vls *vp, int record);
 int mged_cmd(int argc, const char *argv[], struct funtab in_functions[]);
 void mged_print_result(int status);
+int gui_output(void *clientData, void *str);
+void mged_pr_output(Tcl_Interp *interp);
 
 /* color_scheme.c */
 void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *, void *);
