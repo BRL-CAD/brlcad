@@ -885,7 +885,8 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     pnts = (struct rt_pnts_internal *)intern.idb_ptr;
     RT_PNTS_CK_MAGIC(pnts);
 
-    if (pnts->type != RT_PNT_TYPE_NRM) {
+    if (pnts->type == RT_PNT_UNKNOWN) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: unknown pnts type\n");
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
