@@ -76,7 +76,7 @@ ged_dir2ae_core(struct ged *gedp, int argc, const char *argv[])
     if (iflag)
 	VSCALE(dir, dir, -1);
 
-    AZEL_FROM_V3DIR(az, el, dir);
+    bn_ae_vec(&az, &el, dir);
     bu_vls_printf(gedp->ged_result_str, "%lf %lf", az, el);
 
     return BRLCAD_OK;

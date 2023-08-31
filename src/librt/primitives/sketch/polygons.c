@@ -358,7 +358,7 @@ end:
 
 	vect_t snorm;
 	VCROSS(snorm, sketch_ip->u_vec, sketch_ip->v_vec);
-	AZEL_FROM_V3DIR(p->v.gv_aet[0], p->v.gv_aet[1], snorm);
+	bn_ae_vec(&p->v.gv_aet[0], &p->v.gv_aet[1], snorm);
 	_sketch_mat_aet(&p->v);
     }
 

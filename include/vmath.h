@@ -2053,12 +2053,6 @@ typedef enum vmath_matrix_component_ {
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z])
 
-/** Convert a direction vector to azimuth/elevation (in radians). */
-#define AZEL_FROM_V3DIR(_a, _e, _d) do { \
-	(_a) = ((NEAR_ZERO((_d)[X], SMALL_FASTF)) && (NEAR_ZERO((_d)[Y], SMALL_FASTF))) ? 0.0 : atan2(-((_d)[Y]), ((_d)[X])) * -RAD2DEG; \
-	(_e) = atan2(-((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y])) * -RAD2DEG; \
-    } while (0)
-
 
 /** Swap two 3D vectors */
 #define VSWAP(_a, _b) do { \
