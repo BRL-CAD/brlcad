@@ -329,7 +329,7 @@ QgEdApp::load_g_file(const char *gfile, bool do_conversion)
 
     int ac = 2;
     const char *av[3];
-    av[0] = "open";
+    av[0] = "opendb";
     av[1] = bu_strdup(fileName.toLocal8Bit().data());
     av[2] = NULL;
     int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
