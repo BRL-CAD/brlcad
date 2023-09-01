@@ -25,7 +25,7 @@
 
   <para>Returns the direction vector using the current azimuth and elevation as input.
 	If the <emphasis>-i</emphasis> option is used the commmand will return the
-	inverse directional vector. See also the <command>ae2dir</command> and
+	inverse directional vector. See also the <command>ae2dir</command>, <command>dir2ae</command> and
 	<command>qvrot</command> commands.
   </para>
 </refsection>
