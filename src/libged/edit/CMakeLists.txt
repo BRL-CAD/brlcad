@@ -17,6 +17,7 @@ CMAKEFILES(
   CMakeLists.txt
   edit.c
   edit2.cpp
+  ged_edit2.h
   )
 
 # Local Variables:

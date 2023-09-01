@@ -31,6 +31,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <vector>
+#include <set>
+#include <string>
+
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
@@ -74,11 +78,40 @@ _ged_subcmd_help(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cm
 	const char *helpflag[2];
 	helpflag[1] = PURPOSEFLAG;
 	size_t maxcmdlen = 0;
+
+	// It's possible for a command table to associate multiple strings with
+	// the same function, for compatibility or convenience.  In those
+	// instances, rather than repeat the same line, we instead group all
+	// strings leading to the same subcommand together.
+	std::vector<const struct bu_cmdtab *> uniq_cmds;
+	std::map<int (*)(void *, int, const char *[]), std::set<std::string>> cmd_strings;
+	std::map<int (*)(void *, int, const char *[]), std::string> cmd_labels;
 	for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    maxcmdlen = (maxcmdlen > strlen(ctp->ct_name)) ? maxcmdlen : strlen(ctp->ct_name);
+	    cmd_strings[ctp->ct_func].insert(std::string(ctp->ct_name));
 	}
+	std::map<int (*)(void *, int, const char *[]), std::set<std::string>>::iterator c_it;
+	for (c_it = cmd_strings.begin(); c_it != cmd_strings.end(); c_it++) {
+	    std::set<std::string>::iterator s_it;
+	    std::string label;
+	    for (s_it = c_it->second.begin(); s_it != c_it->second.end(); s_it++) {
+		if (s_it != c_it->second.begin())
+		    label.append(std::string(","));
+		label.append(*s_it);
+	    }
+	    cmd_labels[c_it->first] = label;
+	}
+	std::map<int (*)(void *, int, const char *[]), std::string>::iterator l_it;
+	for (l_it = cmd_labels.begin(); l_it != cmd_labels.end(); l_it++)
+	    maxcmdlen = (maxcmdlen > l_it->second.length()) ? maxcmdlen : l_it->second.length();
+
+	std::set<int (*)(void *, int, const char *[])> processed_funcs;
+
 	for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    bu_vls_printf(gedp->ged_result_str, "  %s%*s", ctp->ct_name, (int)(maxcmdlen - strlen(ctp->ct_name)) +   2, " ");
+	    if (processed_funcs.find(ctp->ct_func) != processed_funcs.end())
+		continue;
+	    processed_funcs.insert(ctp->ct_func);
+	    std::string &lbl = cmd_labels[ctp->ct_func];
+	    bu_vls_printf(gedp->ged_result_str, "  %s%*s", lbl.c_str(), (int)(maxcmdlen - lbl.length()) +   2, " ");
 	    if (!BU_STR_EQUAL(ctp->ct_name, "help")) {
 		helpflag[0] = ctp->ct_name;
 		bu_cmd(cmds, 2, helpflag, 0, gd, &ret);
