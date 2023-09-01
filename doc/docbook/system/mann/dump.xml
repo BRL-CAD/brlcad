@@ -25,7 +25,9 @@
 
   <para>Copies the entire dababase to the <emphasis>keep_file</emphasis>.
   The <emphasis>keep_file</emphasis> is a <emphasis>BRL-CAD
-   </emphasis> database file. Note the new file might have a smaller filesize than the current 
+   </emphasis> database file and will be located in the current working direction
+   (use the <command>pwd</command> command to show the current working directory). Note the new
+   file might have a smaller filesize than the current 
    file as dumping the file has the same effect that the <command>garbage_collect</command> command has.
    See also the <command>keep</command> command.
   </para>
