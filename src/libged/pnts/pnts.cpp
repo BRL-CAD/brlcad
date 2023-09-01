@@ -809,10 +809,10 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
     pnts->count = pnts_cnt;
     fclose(fp);
 
+    bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points", pnt_prim, pnts->count);
+
     GED_DB_DIRADD(gedp, dp, pnt_prim, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
-
-    bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points", pnt_prim, pnts->count);
 
     bu_vls_free(&fmt);
     if (nums) bu_free(nums, "free old nums array");
