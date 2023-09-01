@@ -211,9 +211,6 @@ for further description of some of the arguments.
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
-
-  <para>The example shows the use of the <command>nirt</command> command to fire a single ray through the center of the MGED display.
-   </para>
   <example><title>Run the NIRT program to fire a ray through the MGED display.</title>
 
      <para>
@@ -222,24 +219,16 @@ for further description of some of the arguments.
     <para>Fires a single ray through the center of the MGED display.
     </para>
   </example>
-  
-  <para>The example shows the use of the <command>nirt</command> command to fire a single ray through the center of the MGED display
-  and report air regions.
-   </para>
+	
   <example><title>Run the NIRT program to fire a ray through the MGED display and report air.</title>
-
      <para>
       <prompt>mged&gt; </prompt><userinput>nirt -u 1</userinput>
     </para>
     <para>Fires a single ray through the center of the MGED display and report air regions.
     </para>
   </example>
-
-    <para>The example shows the use of the <command>nirt</command> command to fire a single ray through the center of the MGED display
-  and return LOS and material ID attibutes.
-   </para>
+	
   <example><title>Run the NIRT program to fire a ray through the MGED display and include LOS and material ID per region.</title>
-
      <para>
       <prompt>mged&gt; </prompt><userinput>nirt -A LOS -A material_id</userinput>
     </para>
