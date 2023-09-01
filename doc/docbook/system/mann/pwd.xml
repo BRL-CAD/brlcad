@@ -23,7 +23,7 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-      Prints the current working directoy. See also <command>cd</command>
+      Prints the current working directoy. See also the <command>cd</command> command.
     </para>
   </refsection>
 
