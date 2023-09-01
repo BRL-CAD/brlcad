@@ -25,7 +25,7 @@
 
     <para>
       Change the directory to the given path. This can change to a given folder in the current directory or
-      change to a full path. Double periods (..) can also be used to go up one level. See also <command>pwd</command>
+      change to a full path. Double periods (..) can also be used to go up one level. See also the <command>pwd</command> command.
     </para>
   </refsection>
 
