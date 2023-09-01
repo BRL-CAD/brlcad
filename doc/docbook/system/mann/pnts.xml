@@ -25,9 +25,9 @@
       <varlistentry><term></term><listitem>
       <cmdsynopsis sepchar=" ">
 	<command>read</command>
-	<arg choice="opt" rep="norepeat">-f</arg>
-	<arg choice="opt" rep="norepeat">-u</arg>
-	<arg choice="opt" rep="norepeat">--size</arg>
+	<arg choice="opt" rep="norepeat">-f [xyzijksrgb]</arg>
+	<arg choice="opt" rep="norepeat">-u unit</arg>
+	<arg choice="opt" rep="norepeat">--size #</arg>
 	<arg choice="req" rep="norepeat">input_file</arg>
 	<arg choice="req" rep="norepeat">pnts_obj</arg>
       </cmdsynopsis>
@@ -35,7 +35,7 @@
       <varlistentry><term></term><listitem>
       <cmdsynopsis sepchar=" ">
 	<command>write</command>
-	<arg choice="opt" rep="norepeat">-p</arg>
+	<arg choice="opt" rep="norepeat">-p #</arg>
 	<arg choice="opt" rep="norepeat">--ply</arg>
 	<arg choice="req" rep="norepeat">pnts_obj</arg>
 	<arg choice="req" rep="norepeat">output_filepnts </arg>
@@ -44,7 +44,7 @@
             <varlistentry><term></term><listitem>
       <cmdsynopsis sepchar=" ">
 	<command>gen</command>
-	<arg choice="opt" rep="norepeat">-t</arg>
+	<arg choice="opt" rep="norepeat">-t #</arg>
 	<arg choice="opt" rep="norepeat">--surface</arg>
 	<arg choice="opt" rep="norepeat">--grid</arg>
 	<arg choice="opt" rep="norepeat">--rand</arg>
@@ -58,7 +58,7 @@
       <varlistentry><term></term><listitem>
       <cmdsynopsis sepchar=" ">
 	<command>tri</command>
-	<arg choice="opt" rep="norepeat">-s</arg>
+	<arg choice="opt" rep="norepeat">-s #</arg>
       </cmdsynopsis>
       </listitem></varlistentry>
     </variablelist>
@@ -84,13 +84,13 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-u</option>unit</term>
+	<term><option>-u unit</option></term>
 	<listitem>
 	  <para>Sepcifies the units - either a named unit (e.g. in), number, or a unit expression (.15mm). Assumes millemeters by default.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>--size</option></term>
+	<term><option>--size #</option></term>
 	<listitem>
 	  <para>
 	   Sets the default size for each point (default is 0).
@@ -108,7 +108,7 @@
 	  </para>
    <variablelist remap="TP">
       <varlistentry>
-	<term><option>-p</option>#</term>
+	<term><option>-p #</option></term>
 	<listitem>
 	  <para>Specifies the number of significant digits (defualt 17).</para>
 	</listitem>
@@ -130,13 +130,13 @@
 	  </para>
    <variablelist remap="TP">
       <varlistentry>
-	<term><option>-t</option>#</term>
+	<term><option>-t #</option></term>
 	<listitem>
 	  <para>Specifies the sampling grid spacing (in mm)</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>--surface</option>unit</term>
+	<term><option>--surface</option></term>
 	<listitem>
 	  <para>Saves only first and last points along a ray.</para>
 	</listitem>
@@ -193,7 +193,7 @@
 	        </para>
    <variablelist remap="TP">
       <varlistentry>
-	<term><option>-s</option>#</term>
+	<term><option>-s #</option></term>
 	<listitem>
 	  <para>Specifies the scale factor to apply to unit triangles - scales the triangle to size with the triangle centered on the original point.</para>
 	</listitem>
@@ -212,7 +212,7 @@
     <para>
       Creates a "pnts" primitive named "point_cloud.s1" using the data file
       "pointsfile.txt" where the data file only contains the point
-      coordinates listed in the order "xyz". The units of the file data is "in"
+      coordinates listed in the order "xyz." The units of the file data is "in"
       and the default point size is set to "1.0" (in current model units).
     </para>
   </example>
