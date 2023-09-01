@@ -26,7 +26,7 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-      Draws all objects whose region IDs fall wihtin the given bounds. If only one input is given, <command>e_id</command>
+      Draws all objects whose region ID falls within the given bounds. If only one input is given, <command>e_id</command>
       will draw objects with that region ID.
     </para>
   </refsection>
