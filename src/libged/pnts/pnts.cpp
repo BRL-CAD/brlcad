@@ -953,6 +953,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
 		rt_db_free_internal(&intern);
+		fclose(fp);
 		return BRLCAD_ERROR;
 	    }
 	    fprintf(fp, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
