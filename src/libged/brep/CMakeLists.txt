@@ -27,16 +27,16 @@ include_directories(
 set(BREP_SRCS
   ${PERPLEX_${DPLOT_READER}_scanner_SRC}
   ${LEMON_${DPLOT_READER}_parser_SRC}
-  curve.cpp
   dplot.c
   brep.cpp
   conversion.cpp
   csg.cpp
+  geometry.cpp
   info.cpp
   intersect.cpp
   pick.cpp
   plot.cpp
-  surface.cpp
+  topology.cpp
   tikz.cpp
   valid.cpp
   )

@@ -49,7 +49,32 @@ extern "C++"
 #include <vector>
 
     /**
-     * create an nurbs curve using a template.
+     * create a brep vertex
+     */
+    BREP_EXPORT extern int
+    brep_vertex_create(ON_Brep *brep, ON_3dPoint point);
+
+    /**
+     * remove a brep vertex
+     */
+    BREP_EXPORT extern bool
+    brep_vertex_remove(ON_Brep *brep, int v_id);
+
+    /**
+     * create a 2D parameter space geometric line
+     * return id of the curve2d
+     */
+    BREP_EXPORT extern int
+    brep_curve2d_make_line(ON_Brep *brep, const ON_2dPoint &start, const ON_2dPoint &end);
+
+    /**
+     * remove a curve2d from brep
+     */
+    BREP_EXPORT extern bool 
+    brep_curve2d_remove(ON_Brep *brep, int curve_id);
+
+    /**
+     * create a nurbs curve using a template.
      * position can be specified if position != NULL
      * return id of the curve
      */
@@ -57,7 +82,7 @@ extern "C++"
     brep_curve_make(ON_Brep *brep, const ON_3dPoint &position);
 
     /**
-     * create an nurbs curve given detailed information
+     * create a nurbs curve given detailed information
      * return id of the curve
      */
     BREP_EXPORT extern int
@@ -132,12 +157,24 @@ extern "C++"
     brep_curve_join(ON_Brep *brep, int curve_id_1, int curve_id_2);
     
     /**
-     * create an nurbs curve using a template
+     * create a nurbs curve using a template
      * position can be specified if argc == 3
      * return id of the surface
      */
     BREP_EXPORT extern int
     brep_surface_make(ON_Brep *brep, const ON_3dPoint &position);
+
+    /**
+     * extract a vertex from a surface
+     */
+    BREP_EXPORT extern int
+    brep_surface_extract_vertex(ON_Brep *brep, int surface_id, double u, double v);
+
+    /**
+     * extract a curve from a surface
+     */
+    BREP_EXPORT extern int
+    brep_surface_extract_curve(ON_Brep *brep, int surface_id, int dir, double t);
 
     /**
      * create a bicubic nurbs surface by interpolating a set of points
@@ -210,6 +247,36 @@ extern "C++"
      */
     BREP_EXPORT extern bool
     brep_surface_remove(ON_Brep *brep, int surface_id);
+
+    /**
+     * create a brep edge
+     */
+    BREP_EXPORT extern int
+    brep_edge_create(ON_Brep *brep, int from, int to, int curve);
+
+    /**
+     * create a brep face
+     */
+    BREP_EXPORT extern int
+    brep_face_create(ON_Brep *brep, int surface);
+
+    /**
+     * reverse a brep face
+     */
+    BREP_EXPORT extern bool
+    brep_face_reverse(ON_Brep *brep, int face);
+
+    /**
+     * create a brep face loop
+     */
+    BREP_EXPORT extern int
+    brep_loop_create(ON_Brep *brep, int face_id);
+
+    /**
+     * create a trim of a loop
+     */
+    BREP_EXPORT extern int
+    brep_trim_create(ON_Brep *brep, int loop_id, int edge_id, int orientation, int para_curve_id);
 } /* extern C++ */
 #endif
 

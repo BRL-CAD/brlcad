@@ -34,6 +34,41 @@ void *brep_create()
     return (void *)brep;
 }
 
+int brep_vertex_create(ON_Brep *brep, ON_3dPoint point)
+{
+    ON_BrepVertex& v = brep->NewVertex(point);
+    v.m_tolerance = 0.0;
+    return brep->m_V.Count() - 1;
+}
+
+bool brep_vertex_remove(ON_Brep *brep, int v_id)
+{
+    if (v_id < 0 || v_id >= brep->m_V.Count()) {
+	bu_log("v_id is out of range\n");
+	return false;
+    }
+    brep->m_V.Remove(v_id);
+    return true;
+}
+
+int brep_curve2d_make_line(ON_Brep *brep, const ON_2dPoint &from, const ON_2dPoint &to)
+{
+    ON_Curve* c2 = new ON_LineCurve(from, to);
+    c2->SetDomain(0.0, 1.0);
+    brep->m_C2.Append(c2);
+    return brep->m_C2.Count() - 1;
+}
+
+bool brep_curve2d_remove(ON_Brep *brep, int curve_id)
+{
+    if (curve_id < 0 || curve_id >= brep->m_C2.Count()) {
+	bu_log("curve_id is out of range\n");
+	return false;
+    }
+    brep->m_C2.Remove(curve_id);
+    return true;
+}
+
 int brep_curve_make(ON_Brep *brep, const ON_3dPoint &position)
 {
     ON_NurbsCurve *curve = ON_NurbsCurve::New(3, true, 3, 4);
@@ -274,6 +309,35 @@ int brep_surface_make(ON_Brep *brep, const ON_3dPoint &position)
     return brep->AddSurface(surface);
 }
 
+int brep_surface_extract_vertex(ON_Brep *brep, int surface_id, double u, double v)
+{
+    ON_NurbsSurface *surface = brep_get_nurbs_surface(brep, surface_id);
+    if (!surface) {
+	return -1;
+    }
+    ON_3dPoint point;
+    bool res = surface->Evaluate(u, v, 0, 3, point);
+    if(!res) {
+	return -1;
+    }
+    ON_BrepVertex& vertex = brep->NewVertex(point);
+    vertex.m_tolerance = 0.0;
+    return brep->m_V.Count() - 1;
+}
+
+int brep_surface_extract_curve(ON_Brep *brep, int surface_id, int dir, double t)
+{
+    ON_NurbsSurface *surface = brep_get_nurbs_surface(brep, surface_id);
+    if (!surface) {
+	return -1;
+    }
+    ON_Curve *curve = surface->IsoCurve(dir, t);
+    if(!curve) {
+	return -1;
+    }
+    return brep->AddEdgeCurve(curve);
+}
+
 int brep_surface_copy(ON_Brep *brep, int surface_id)
 {
     if (surface_id < 0 || surface_id >= brep->m_S.Count()) {
@@ -307,7 +371,7 @@ int brep_surface_interpCrv(ON_Brep *brep, int cv_count_x, int cv_count_y, std::v
     cv_count_x = cv_count_x < 2 ? 2 : cv_count_x;
     cv_count_y = cv_count_y < 2 ? 2 : cv_count_y;
     if (points.size() != (size_t)(cv_count_x * cv_count_y)) {
-    return -1;
+	return -1;
     }
     int n = cv_count_x - 1;
     int m = cv_count_y - 1;
@@ -487,6 +551,105 @@ bool brep_surface_remove(ON_Brep *brep, int surface_id)
     }
     brep->m_S.Remove(surface_id);
     return true;
+}
+
+int brep_edge_create(ON_Brep *brep, int from, int to, int curve)
+{
+    ON_BrepVertex& v0 = brep->m_V[from];
+    ON_BrepVertex& v1 = brep->m_V[to];
+    ON_BrepEdge& edge = brep->NewEdge(v0, v1, curve);
+    edge.m_tolerance = 0.0;
+    return brep->m_E.Count() - 1;
+}
+
+int brep_face_create(ON_Brep *brep, int surface)
+{
+    if(surface < 0 || surface >= brep->m_S.Count()) {
+	bu_log("surface is out of range\n");
+	return -1;
+    }
+    brep->NewFace(surface);
+    return brep->m_F.Count() - 1;
+}
+
+bool brep_face_reverse(ON_Brep *brep, int face)
+{
+    if(face < 0 || face >= brep->m_F.Count()) {
+	bu_log("face is out of range\n");
+	return false;
+    }
+    ON_BrepFace& f = brep->m_F[face];
+    f.m_bRev = !f.m_bRev;
+    return true;
+}
+
+ON_Curve* getEdgeCurve(const ON_Surface& s, int side)
+{
+    ON_2dPoint from, to;
+    double u0, u1, v0, v1;
+    s.GetDomain(0, &u0, &u1);
+    s.GetDomain(1, &v0, &v1);
+
+    switch (side) {
+	case 0:
+	    from.x = u0; from.y = v0;
+	    to.x   = u1; to.y   = v0;
+	    break;
+	case 1:
+	    from.x = u1; from.y = v0;
+	    to.x   = u1; to.y   = v1;
+	    break;
+	case 2:
+	    from.x = u1; from.y = v1;
+	    to.x   = u0; to.y   = v1;
+	    break;
+	case 3:
+	    from.x = u0; from.y = v1;
+	    to.x   = u0; to.y   = v0;
+	    break;
+	default:
+	    return NULL;
+    }
+    ON_Curve* c2d = new ON_LineCurve(from, to);
+    c2d->SetDomain(0.0, 1.0);
+    return c2d;
+}
+
+int brep_loop_create(ON_Brep *brep, int face_id)
+{
+    if(face_id < 0 || face_id >= brep->m_F.Count()) {
+	bu_log("face_id is out of range\n");
+	return -1;
+    }
+    ON_BrepFace& face = brep->m_F[face_id];
+    ON_BrepLoop& loop = brep->NewLoop(ON_BrepLoop::outer, face);
+    return loop.m_loop_index;
+}
+
+int brep_trim_create(ON_Brep *brep, int loop_id, int edge_id, int orientation, int para_curve_id)
+{
+    if(loop_id < 0 || loop_id >= brep->m_L.Count()) {
+	bu_log("loop_id is out of range\n");
+	return -1;
+    }
+    if(edge_id < 0 || edge_id >= brep->m_E.Count()) {
+	bu_log("edge_id is out of range\n");
+	return -1;
+    }
+    if(para_curve_id < 0 || para_curve_id >= brep->m_C2.Count()) {
+	bu_log("para_curve_id is out of range\n");
+	return -1;
+    }
+    ON_BrepLoop& loop = brep->m_L[loop_id];
+    ON_BrepTrim& trim = brep->NewTrim(brep->m_E[edge_id], orientation, loop, para_curve_id);
+    trim.m_type = ON_BrepTrim::mated;
+    const ON_Curve* c2 = brep->m_C2[trim.m_c2i];
+    const ON_Surface* s = loop.SurfaceOf();
+    ON_Interval PD = trim.ProxyCurveDomain();
+    trim.m_iso = s->IsIsoparametric(*c2, &PD);
+    trim.m_tolerance[0] = 0.0;
+    trim.m_tolerance[1] = 0.0;
+    return trim.m_trim_index;
 }
 
 std::vector<ON_3dVector> calculateTangentVectors(const std::vector<ON_3dPoint> &points)
