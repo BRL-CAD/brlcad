@@ -260,6 +260,15 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // could then handle such states consistently regardless of selection state -
     // perhaps ghosting in the proposed new state unless the selection flag is
     // set, and ghosting the saved-to-disk state when selection is active.
+    //
+    // For command line, if we do have temporary editing objects, the edit
+    // command should reject an edit on an object with an intermediate state
+    // active unless an explicit flag is set to make sure user intent is clear.
+    // If no flag, error out with message and options.  If -i flag, edit the
+    // intermediate, non-disk temporary state.  if -f/-w, apply the operation
+    // (if any) and then finalize and write the intermediate state to disk.  If
+    // -F, erase the intermediate state and start over with the on-disk state -
+    // the equivalent to an MGED reset.
     if (opt_ret > 0) {
 	for (int gcnt = 0; gcnt < opt_ret; gcnt++) {
 	    einfo.geom_objs.push_back(std::string(argv[gcnt]));
