@@ -7,7 +7,6 @@ verbose_add_subdirectory("src/conv" 3dm)
 verbose_add_subdirectory("src/conv" asc)
 verbose_add_subdirectory("src/conv" gcv)
 verbose_add_subdirectory("src/conv" step)
-verbose_add_subdirectory("src/conv" csg)
 verbose_add_subdirectory("src/conv" gltf)
 
 verbose_add_subdirectory("src/conv" iges)
