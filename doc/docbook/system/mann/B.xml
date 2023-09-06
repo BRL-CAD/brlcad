@@ -38,10 +38,10 @@
       objects provided in the parameter list. Equivalent to the <command>Z</command> command followed by the
       command <command>draw</command> <emphasis>&lt;objects&gt;</emphasis>. The <emphasis>-C</emphasis> option
       provides the user a way to specify a color that overrides all other color specifications including
-      combination colors and region id-based colors. The <emphasis>-A </emphasis>and <emphasis>-o</emphasis>
+      combination colors and region id-based colors. The <emphasis>-A</emphasis> and <emphasis>-o</emphasis>
       options allow the user to select objects by attribute. The <emphasis>-s</emphasis> option specifies
       that subtracted and intersected objects should be drawn with solid lines rather than dot-dash lines.
-      The -R option means do not automatically resize the view if no other objects are displayed.
+      The <emphasis>-R</emphasis> option means do not automatically resize the view if no other objects are displayed.
       See the <command>draw</command> command for a detailed description of the options.
     </para>
   </refsection>
