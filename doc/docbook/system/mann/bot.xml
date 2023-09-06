@@ -67,7 +67,7 @@
 	<varlistentry><term></term><listitem>
 	  <cmdsynopsis sepchar=" ">
 		<command>flip</command>bot
-		<arg choice="req" rep="norepeat">input_bot</arg>		  
+		<arg choice="req" rep="norepeat">objname</arg>		  
 	  </cmdsynopsis>
      	</listitem></varlistentry>	    
 
