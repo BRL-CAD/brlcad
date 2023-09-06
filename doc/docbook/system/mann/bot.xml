@@ -1,4 +1,4 @@
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bot_split">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="bot">
   <refmeta>
     <refentrytitle>BOT</refentrytitle>
     <manvolnum>nged</manvolnum>
@@ -17,10 +17,58 @@
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
       <command>bot</command>
+      <arg rep="opt">options</arg>	    
       <arg rep="norepeat">subcommand</arg>
-      <arg rep="norepeat">options</arg>
+      <arg rep="norepeat">subcommand arguments</arg>
     </cmdsynopsis>
     <variablelist>
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>check</command>
+		<group choice="req" rep="norepeat">
+			<arg choice="plain">degen_faces</arg>
+			<arg choice="plain">extra_edges</arg>
+			<arg choice="plain">flipped_edges</arg>
+			<arg choice="plain">open_edges</arg>
+			<arg choice="plain">solid</arg>
+		</group>
+		<arg choice="req" rep="norepeat">objname</arg>
+	  </cmdsynopsis>
+     	</listitem></varlistentry>
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>chull</command>
+		<arg choice="req" rep="norepeat">input_bot</arg>
+		<arg choice="req" rep="norepeat">output_bot</arg>		  
+	  </cmdsynopsis>
+     	</listitem></varlistentry>
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>decimate</command>
+		<arg choice="opt" rep="norepeat">-f #</arg>
+		<arg choice="opt" rep="norepeat">-e #</arg>
+		<arg choice="req" rep="norepeat">input_bot</arg>
+		<arg choice="req" rep="norepeat">output_bot</arg>		  
+	  </cmdsynopsis>
+     	</listitem></varlistentry>
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>extrude</command>bot
+		<arg choice="req" rep="norepeat">input_bot</arg>
+		<arg choice="req" rep="norepeat">output_bot</arg>		  
+	  </cmdsynopsis>
+     	</listitem></varlistentry>
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>flip</command>bot
+		<arg choice="req" rep="norepeat">input_bot</arg>		  
+	  </cmdsynopsis>
+     	</listitem></varlistentry>	    
+
       <varlistentry><term></term><listitem>
       <cmdsynopsis sepchar=" ">
 	<command>get</command>
@@ -32,22 +80,90 @@
 	  <arg choice="plain">type</arg>
 	  <arg choice="plain">vertices</arg>
 	</group>
-	<arg choice="req" rep="norepeat">input_bot</arg>
+	<arg choice="req" rep="norepeat">objname</arg>
       </cmdsynopsis>
       </listitem></varlistentry>
-      <varlistentry><term></term><listitem>
-      <cmdsynopsis sepchar=" ">
-	<command>chull</command>
-	<arg choice="req" rep="norepeat">input_bot</arg>
-	<arg choice="req" rep="norepeat">output_bot</arg>
-      </cmdsynopsis>
-      </listitem></varlistentry>
-            <varlistentry><term></term><listitem>
-      <cmdsynopsis sepchar=" ">
-	<command>solid</command>
-	<arg choice="req" rep="norepeat">input_bot</arg>
-      </cmdsynopsis>
-      </listitem></varlistentry>
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>isect</command>bot
+		<arg choice="req" rep="norepeat">objname</arg>
+		<arg choice="req" rep="norepeat">objname2</arg>		  
+	  </cmdsynopsis>
+     	</listitem></varlistentry>	
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>remesh</command>bot
+		<arg choice="req" rep="norepeat">input_bot</arg>
+		<arg choice="req" rep="norepeat">output_bot</arg>		  
+	  </cmdsynopsis>
+     	</listitem></varlistentry>
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>set</command>
+		<group choice="req" rep="norepeat">
+			<arg choice="plain">orientation</arg>
+			<arg choice="plain">type</arg>
+		</group>
+		<arg choice="req" rep="norepeat">objname</arg>
+		<arg choice="req" rep="norepeat">value</arg>
+	  </cmdsynopsis>
+     	</listitem></varlistentry>
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>smooth</command>
+		<arg choice="opt" rep="norepeat">-c [0|1|2]</arg>
+		<arg choice="opt" rep="norepeat">-d [0|1|2]</arg>
+		<arg choice="opt" rep="norepeat">-e #</arg> 
+		<arg choice="opt" rep="norepeat">-E #</arg>
+		<arg choice="opt" rep="norepeat">-I #</arg>
+		<arg choice="req" rep="norepeat">input_bot</arg>
+		<arg choice="req" rep="norepeat">output_bot</arg>		  
+	  </cmdsynopsis>
+     	</listitem></varlistentry>
+
+#	This subcommand was already here but does not appear to be a current subcommand
+#	<varlistentry><term></term><listitem>
+#	  <cmdsynopsis sepchar=" ">
+#		<command>solid</command>
+#		<arg choice="req" rep="norepeat">objname</arg>
+#	  </cmdsynopsis>
+#     	</listitem></varlistentry>
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>split</command>
+		<arg choice="req" rep="norepeat">objname</arg>
+	  </cmdsynopsis>
+     	</listitem></varlistentry>
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>stat</command>
+		<arg choice="req" rep="norepeat">pattern</arg>
+	  </cmdsynopsis>
+     	</listitem></varlistentry>
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>subd</command>
+		<arg choice="opt" rep="norepeat">-A [1|2|3|4|5]</arg>
+		<arg choice="opt" rep="norepeat">-l #</arg>
+		<arg choice="req" rep="norepeat">input_bot</arg>
+		<arg choice="req" rep="norepeat">output_bot</arg>
+	  </cmdsynopsis>
+     	</listitem></varlistentry>
+
+	<varlistentry><term></term><listitem>
+	  <cmdsynopsis sepchar=" ">
+		<command>sync</command>
+		<arg choice="req" rep="norepeat">objname</arg>
+	  </cmdsynopsis>
+     	</listitem></varlistentry>
+	    
     </variablelist>
   </refsynopsisdiv>
 
