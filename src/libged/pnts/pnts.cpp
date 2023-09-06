@@ -633,7 +633,7 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
 	    continue;
 	}
 	if ((fc == 'r') || (fc == 'g') || (fc == 'b')) {
-	    _ged_pnt_c_set(point, pnts->type, fc, val);
+	    _ged_pnt_c_set(point, pnts->type, fc, val / 255.0);
 	    continue;
 	}
 	if (fc == 's') {
