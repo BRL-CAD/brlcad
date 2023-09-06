@@ -376,6 +376,35 @@
     </variablelist>
   </refsection>
 
+<refsection xml:id="examples"><title>EXAMPLES</title>
+  <example><title>Set the orientation of a BoT to right-hand</title>
+    <para>
+      <prompt>mged&gt; </prompt><userinput>bot set orientation bot_solid.s rh</userinput>
+    </para>
+    <para>
+      Sets the orientation of solid bot_solid.s to right-handed (counter-clockwise).
+    </para>
+  </example>
+  <example><title>Return the orientation of a solid.</title>
+    <para>
+      <prompt>mged&gt; </prompt><userinput>bot get orientation bot_solid.s</userinput>
+    </para>
+    <para>
+      Returns the orientation of bot_solid.s. Note that this will return ccw (right-handed), cw (left-handed)
+	    or none (unoriented).
+    </para>
+  </example>
+  <example><title>Return information of a solid.</title>
+    <para>
+      <prompt>mged&gt; </prompt><userinput>bot stat bot_solid.s</userinput>
+    </para>
+    <para>
+      Returns information about bot_solid.s.
+    </para>
+  </example>
+ 
+</refsection>
+	
   <refsection xml:id="author"><title>AUTHOR</title>
   <para>BRL-CAD Team</para>
   </refsection>
