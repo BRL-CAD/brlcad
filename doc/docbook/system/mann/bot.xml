@@ -58,7 +58,7 @@
 
 	<varlistentry><term></term><listitem>
 	  <cmdsynopsis sepchar=" ">
-		<command>extrude</command>bot
+		<command>extrude</command>
 		<arg choice="req" rep="norepeat">input_bot</arg>
 		<arg choice="req" rep="norepeat">output_bot</arg>		  
 	  </cmdsynopsis>
@@ -66,7 +66,7 @@
 
 	<varlistentry><term></term><listitem>
 	  <cmdsynopsis sepchar=" ">
-		<command>flip</command>bot
+		<command>flip</command>
 		<arg choice="req" rep="norepeat">objname</arg>		  
 	  </cmdsynopsis>
      	</listitem></varlistentry>	    
@@ -88,7 +88,7 @@
 
 	<varlistentry><term></term><listitem>
 	  <cmdsynopsis sepchar=" ">
-		<command>isect</command>bot
+		<command>isect</command>
 		<arg choice="req" rep="norepeat">objname</arg>
 		<arg choice="req" rep="norepeat">objname2</arg>		  
 	  </cmdsynopsis>
@@ -96,7 +96,7 @@
 
 	<varlistentry><term></term><listitem>
 	  <cmdsynopsis sepchar=" ">
-		<command>remesh</command>bot
+		<command>remesh</command>
 		<arg choice="req" rep="norepeat">input_bot</arg>
 		<arg choice="req" rep="norepeat">output_bot</arg>		  
 	  </cmdsynopsis>
