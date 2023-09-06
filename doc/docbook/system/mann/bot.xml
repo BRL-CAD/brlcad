@@ -261,8 +261,10 @@
 	<term><emphasis remap="B" role="bold">set</emphasis></term>
     	<listitem>
     	  <para>
-	       Sets the specified property of the provided bot. 
-#		note: need potential options here
+	       Sets the specified property of the provided bot. Properties that can be set are
+		<emphasis>orientation</emphasis> and <emphasis>type</emphasis>. Potential values for <emphasis>orientation</emphasis>
+		are none (no), ccw (rh), or cw (lh). Potential values for <emphasis>type</emphasis> are
+		surface, solid, plate, or plate_nocos.
 	</para>
 	      </listitem>
       </varlistentry>
