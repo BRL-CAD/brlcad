@@ -950,7 +950,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
-	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
 		rt_db_free_internal(&intern);
 		fclose(fp);
@@ -1027,7 +1027,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
-	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
 		rt_db_free_internal(&intern);
 		fclose(fp);
@@ -1054,7 +1054,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
-	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
 		rt_db_free_internal(&intern);
 		fclose(fp);
@@ -1114,7 +1114,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
-	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
 		rt_db_free_internal(&intern);
 		fclose(fp);
