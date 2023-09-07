@@ -55,6 +55,7 @@ CMAKEFILES(
   dplot_reader.c
   dplot_reader.h
   dplot_scanner.perplex
+  dplot.cpp
   )
 
 # Local Variables:
