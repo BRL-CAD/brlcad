@@ -219,6 +219,7 @@ set(LIBRT_SOURCES
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
   primitives/xxx/xxx.c
+  primitives/vdb/vdb.c
   reduce.c
   reduce_db.cpp
   regionfix.c
