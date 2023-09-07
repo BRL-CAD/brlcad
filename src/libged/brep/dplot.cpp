@@ -18,7 +18,7 @@
  * information.
  */
 /**
- *
+ * Command to display debug plotting from the BRep boolean process.
  */
 #include "common.h"
 
@@ -56,7 +56,7 @@ struct ssx {
     int face2_clipped_curves;
     int intersecting_brep1_isocurves;
     int intersecting_isocurves;
-    std::vector<int> isocsx;
+    std::vector<int> isocsx_events;
 };
 
 struct split_face {
@@ -129,7 +129,7 @@ process_ssx(struct dplot_data *data, std::vector<std::string> &lv)
 
     for (size_t i = 8; i < lv.size(); i++) {
 	int isocsx = std::stoi(lv[i]);
-	ssx->isocsx.push_back(isocsx);
+	ssx->isocsx_events.push_back(isocsx);
     }
 
     data->ssx.push_back(ssx);
@@ -193,7 +193,7 @@ dplot_load_file_data(struct dplot_info *info)
     }
 
     info->fdata.brep1_surface_count = info->fdata.brep2_surface_count = 0;
- 
+
     std::string line;
     while (std::getline(infile, line)) {
 	std::string c;
@@ -262,7 +262,7 @@ dplot_overlay(
 	int idx,
 	const char *name)
 {
-    const char *cmd_av[] = {"overlay", "[filename]", "1.0", "[name]"};
+    const char *cmd_av[] = {"overlay", "[filename]", "-N", "[name]"};
     int ret, cmd_ac = sizeof(cmd_av) / sizeof(char *);
     struct bu_vls overlay_name = BU_VLS_INIT_ZERO;
 
@@ -435,7 +435,7 @@ dplot_isocsx(
 	return BRLCAD_OK;
     }
 
-    if (info->fdata.ssx[info->ssx_idx].isocsx_events == NULL) {
+    if (!info->fdata.ssx[info->ssx_idx]->isocsx_events.size()) {
 	bu_vls_printf(info->gedp->ged_result_str, "The isocurves of neither "
 		"surface intersected the opposing surface in surface-surface"
 		" intersection %d.\n", info->ssx_idx);
@@ -784,7 +784,7 @@ ged_dplot_core(struct ged *gedp, int argc, const char *argv[])
     if (dplot_load_file_data(&info) != BRLCAD_OK) {
 	bu_vls_printf(gedp->ged_result_str, "couldn't open log file \"%s\"\n", filename);
 	return BRLCAD_ERROR;
-    }   
+    }
 
     /* filename before '.' is assumed to be the prefix for all
      * plot-file names
@@ -827,12 +827,8 @@ ged_dplot_core(struct ged *gedp, int argc, const char *argv[])
     info.brep2_surf_count = info.fdata.brep2_surface_count;
 
     if (info.mode == DPLOT_ISOCSX_EVENTS && info.fdata.ssx_count > 0) {
-	int *isocsx_events = info.fdata.ssx[info.ssx_idx].isocsx_events;
-
-	info.event_count = 0;
-	if (isocsx_events) {
-	    info.event_count = isocsx_events[info.event_idx];
-	}
+	std::vector<int> &isocsx_events = info.fdata.ssx[info.ssx_idx]->isocsx_events;
+	info.event_count = isocsx_events[info.event_idx];
     }
 
     ret = dplot_ssx(&info);
