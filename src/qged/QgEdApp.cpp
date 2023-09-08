@@ -37,6 +37,36 @@
 #include "fbserv.h"
 #include "QgEdFilter.h"
 
+void
+qged_pre_opendb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+{
+}
+
+void
+qged_post_opendb_clbk(struct ged *UNUSED(gedp), void *ctx)
+{
+    QgEdApp *a = (QgEdApp *)ctx;
+    emit a->dbi_update(a->mdl->gedp->dbip);
+    if (!a->w)
+	return;
+    if (!a->mdl->gedp->dbip) {
+	a->w->statusBar()->showMessage("open failed");
+	return;
+    }
+    QString fileName(a->mdl->gedp->dbip->dbi_filename);
+    a->w->statusBar()->showMessage(fileName);
+}
+
+void
+qged_pre_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+{
+}
+
+void
+qged_post_closedb_clbk(struct ged *UNUSED(gedp), void *UNUSED(ctx))
+{
+}
+
 extern "C" void
 qt_create_io_handler(struct ged_subprocess *p, bu_process_io_t t, ged_io_func_t callback, void *data)
 {
@@ -207,6 +237,18 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 	bu_exit(EXIT_FAILURE, "OpenGL failed to initialize properly.  Recommend running qged with '-s' option to use fallback swrast rendering.");
     }
 
+    // Assign QGED specific open/close db handlers to the gedp
+    mdl->gedp->ged_pre_opendb_callback = &qged_pre_opendb_clbk;
+    mdl->gedp->ged_post_opendb_callback = &qged_post_opendb_clbk;
+    mdl->gedp->ged_pre_closedb_callback = &qged_pre_closedb_clbk;
+    mdl->gedp->ged_post_closedb_callback = &qged_post_closedb_clbk;
+    mdl->gedp->ged_db_callback_udata = (void *)qApp;
+
+    // Assign QGED specific I/O handlers to the gedp
+    mdl->gedp->ged_create_io_handler = &qt_create_io_handler;
+    mdl->gedp->ged_delete_io_handler = &qt_delete_io_handler;
+    mdl->gedp->ged_io_data = (void *)qApp;
+
     // If we have a default filename supplied, open it.  We've delayed doing so
     // until now in order to have the display related containers from graphical
     // initialization/show() available - the GED structure will need to know
@@ -227,11 +269,6 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
 	bu_free(fname, "path");
 	emit dbi_update(mdl->gedp->dbip);
     }
-
-    // Assign QGED specific I/O handlers to the gedp
-    mdl->gedp->ged_create_io_handler = &qt_create_io_handler;
-    mdl->gedp->ged_delete_io_handler = &qt_delete_io_handler;
-    mdl->gedp->ged_io_data = (void *)qApp;
 
     // Send a view_change signal so widgets depending on view information
     // can initialize themselves
@@ -334,15 +371,6 @@ QgEdApp::load_g_file(const char *gfile, bool do_conversion)
     av[2] = NULL;
     int ret = mdl->run_cmd(mdl->gedp->ged_result_str, ac, (const char **)av);
     bu_free((void *)av[1], "filename cpy");
-    emit dbi_update(mdl->gedp->dbip);
-    if (w) {
-	if (ret) {
-	    w->statusBar()->showMessage("open failed");
-	} else {
-	    w->statusBar()->showMessage(fileName);
-	}
-    }
-
     return ret;
 }
 
