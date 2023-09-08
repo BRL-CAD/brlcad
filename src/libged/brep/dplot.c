@@ -1,7 +1,7 @@
-/*                       D P L O T . C P P
+/*                         D P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2023 United States Government as represented by
+ * Copyright (c) 2014-2023 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,23 +17,25 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/**
- * Command to display debug plotting from the BRep boolean process.
+/** @file dplot.c
+ *
+ * Brief description
+ *
  */
+
 #include "common.h"
 
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
+#include <stdlib.h>
+#include <string.h>
 
-#include "bu/defines.h"
-#include "bu/vls.h"
+#include "bu/color.h"
+#include "bu/opt.h"
+#include "raytrace.h"
+#include "rt/geom.h"
+#include "wdb.h"
 
 #include "../ged_private.h"
-#include "./ged_brep.h"
+#include "./dplot_reader.h"
 
 enum {
     DPLOT_INITIAL,
@@ -48,37 +50,11 @@ enum {
     DPLOT_SPLIT_FACES
 };
 
-struct ssx {
-    int brep1_surface;
-    int brep2_surface;
-    int final_curve_events;
-    int face1_clipped_curves;
-    int face2_clipped_curves;
-    int intersecting_brep1_isocurves;
-    int intersecting_isocurves;
-    std::vector<int> isocsx_events;
-};
-
-struct split_face {
-    int outerloop_curves;
-    int innerloop_curves;
-};
-
-struct dplot_data {
-    int brep1_surface_count;
-    int brep2_surface_count;
-    int linked_curve_count;
-    int ssx_count;
-    int split_face_count;
-    std::vector<struct ssx *> ssx;
-    struct split_face *face;
-};
-
 struct dplot_info {
     struct dplot_data fdata;
-    std::string logfile;
-    struct ged *gedp;
     int mode;
+    struct ged *gedp;
+    FILE *logfile;
     char *prefix;
     int ssx_idx;
     int isocsx_idx;
@@ -92,158 +68,11 @@ struct dplot_info {
     int isocsx_count;
 };
 
-static void
-process_surfaces(struct dplot_data *data, std::vector<std::string> &lv)
-{
-    if (!data)
-	return;
-    if (lv.size() != 3) {
-	std::cerr << "malformed surfaces line\n";
-	return;
-    }
-
-    data->brep1_surface_count = std::stoi(lv[1]);
-    data->brep2_surface_count = std::stoi(lv[2]);
-}
-
-static void
-process_ssx(struct dplot_data *data, std::vector<std::string> &lv)
-{
-    if (!data)
-	return;
-    if (lv.size() < 8) {
-    	std::cerr << "malformed ssx line\n";
-	return;
-    }
-
-    struct ssx *ssx;
-    BU_GET(ssx, struct ssx);
-
-    ssx->brep1_surface = std::stoi(lv[1]);
-    ssx->brep2_surface = std::stoi(lv[2]);
-    ssx->final_curve_events = std::stoi(lv[3]);
-    ssx->face1_clipped_curves = std::stoi(lv[4]);
-    ssx->face2_clipped_curves = std::stoi(lv[5]);
-    ssx->intersecting_brep1_isocurves = std::stoi(lv[6]);
-    ssx->intersecting_isocurves = std::stoi(lv[7]);
-
-    for (size_t i = 8; i < lv.size(); i++) {
-	int isocsx = std::stoi(lv[i]);
-	ssx->isocsx_events.push_back(isocsx);
-    }
-
-    data->ssx.push_back(ssx);
-}
-
-static void
-process_linkedcurves(struct dplot_data *data, std::vector<std::string> &lv)
-{
-    if (!data)
-	return;
-    if (lv.size() != 2) {
-	std::cerr << "malformed linkedcurves line\n";
-	return;
-    }
-    data->linked_curve_count = std::stoi(lv[1]);
-}
-
-static void
-process_splitfaces(struct dplot_data *data, std::vector<std::string> &lv)
-{
-    if (!data)
-	return;
-
-    if (lv.size() != 2) {
-	std::cerr << "malformed splitfaces line\n";
-	return;
-    }
-
-    data->split_face_count = std::stoi(lv[1]);
-    data->face = (struct split_face *)bu_malloc(data->split_face_count * sizeof(struct split_face), "split face array");
-}
-
-static void
-process_splitface(struct dplot_data *data, std::vector<std::string> &lv)
-{
-    if (!data)
-	return;
-
-    if (lv.size() != 4) {
-	std::cerr << "malformed splitface line\n";
-	return;
-    }
-
-    int i = std::stoi(lv[1]);
-    data->face[i].outerloop_curves = std::stoi(lv[2]);
-    data->face[i].innerloop_curves = std::stoi(lv[3]);
-}
-
-int
-dplot_load_file_data(struct dplot_info *info)
-{
-    if (!info || !info->logfile.size())
-	return BRLCAD_ERROR;
-
-    struct ged *gedp = info->gedp;
-
-    std::ifstream infile(info->logfile);
-    if (!infile.is_open()) {
-	bu_vls_printf(gedp->ged_result_str, "Error: unable to open %s for reading.\n", info->logfile.c_str());
-	return BRLCAD_ERROR;
-    }
-
-    info->fdata.brep1_surface_count = info->fdata.brep2_surface_count = 0;
-
-    std::string line;
-    while (std::getline(infile, line)) {
-	std::string c;
-	std::vector<std::string> lv;
-	std::stringstream sl(line);
-	while (std::getline(sl, c, ' ')) {
-	    lv.push_back(c);
-	}
-
-	if (lv[0] == std::string("surfaces")) {
-	    process_surfaces(&info->fdata, lv);
-	    continue;
-	}
-
-	if (lv[0] == std::string("ssx")) {
-	    process_ssx(&info->fdata, lv);
-	    continue;
-	}
-	if (lv[0] == std::string("linkedcurves")) {
-	    process_linkedcurves(&info->fdata, lv);
-	    continue;
-	}
-	if (lv[0] == std::string("splitfaces")) {
-	    process_splitfaces(&info->fdata, lv);
-	    continue;
-	}
-	if (lv[0] == std::string("splitface")) {
-	    process_splitface(&info->fdata, lv);
-	    continue;
-	}
-
-	std::cerr << "Unknown dplot key: " << lv[0] << "\n";
-    }
-
-    infile.close();
-
-#if 0
-    // Cleanup
-    for (size_t i = 0; i < data.ssx.size(); i++) {
-	bu_free(data.ssx[i], "ssx");
-    }
-#endif
-
-    return BRLCAD_OK;
-}
-
 #define CLEANUP \
+    fclose(info.logfile); \
     bu_free(info.prefix, "prefix"); \
     info.prefix = NULL; \
-    for (size_t i = 0; i < info.fdata.ssx.size(); i++) bu_free(info.fdata.ssx[i], "ssx entry");
+    if (info.fdata.ssx) bu_free(info.fdata.ssx, "ssx array");
 
 #define RETURN_MORE \
     CLEANUP \
@@ -262,7 +91,7 @@ dplot_overlay(
 	int idx,
 	const char *name)
 {
-    const char *cmd_av[] = {"overlay", "[filename]", "-N", "[name]"};
+    const char *cmd_av[] = {"overlay", "[filename]", "1.0", "[name]"};
     int ret, cmd_ac = sizeof(cmd_av) / sizeof(char *);
     struct bu_vls overlay_name = BU_VLS_INIT_ZERO;
 
@@ -435,7 +264,7 @@ dplot_isocsx(
 	return BRLCAD_OK;
     }
 
-    if (!info->fdata.ssx[info->ssx_idx]->isocsx_events.size()) {
+    if (info->fdata.ssx[info->ssx_idx].isocsx_events == NULL) {
 	bu_vls_printf(info->gedp->ged_result_str, "The isocurves of neither "
 		"surface intersected the opposing surface in surface-surface"
 		" intersection %d.\n", info->ssx_idx);
@@ -531,8 +360,8 @@ dplot_face_curves(struct dplot_info *info)
 	return BRLCAD_OK;
     }
 
-    f1_curves = info->fdata.ssx[info->ssx_idx]->face1_clipped_curves;
-    f2_curves = info->fdata.ssx[info->ssx_idx]->face2_clipped_curves;
+    f1_curves = info->fdata.ssx[info->ssx_idx].face1_clipped_curves;
+    f2_curves = info->fdata.ssx[info->ssx_idx].face2_clipped_curves;
     info->event_count = f1_curves + f2_curves;
 
     if (info->event_count == 0) {
@@ -676,6 +505,74 @@ dplot_linked_curves(
     return BRLCAD_OK;
 }
 
+static void *
+dplot_malloc(size_t s) {
+    return bu_malloc(s, "dplot_malloc");
+}
+
+static void
+dplot_free(void *p) {
+    bu_free(p, "dplot_free");
+}
+
+static void
+dplot_load_file_data(struct dplot_info *info)
+{
+    int i, j;
+    struct ssx *curr_ssx;
+    struct isocsx *curr_isocsx;
+    int token_id;
+    perplex_t scanner;
+    void *parser;
+
+    /* initialize scanner and parser */
+    parser = ParseAlloc(dplot_malloc);
+    scanner = perplexFileScanner(info->logfile);
+
+    info->fdata.brep1_surface_count = info->fdata.brep2_surface_count = 0;
+    info->fdata.ssx_count = 0;
+    BU_LIST_INIT(&info->fdata.ssx_list);
+    BU_LIST_INIT(&info->fdata.isocsx_list);
+    perplexSetExtra(scanner, (void *)&info->fdata);
+
+    /* parse */
+    while ((token_id = yylex(scanner)) != YYEOF) {
+	Parse(parser, token_id, info->fdata.token_data, &info->fdata);
+    }
+    Parse(parser, 0, info->fdata.token_data, &info->fdata);
+
+    /* clean up */
+    ParseFree(parser, dplot_free);
+    perplexFree(scanner);
+
+    /* move ssx to dynamic array for easy access */
+    info->fdata.ssx = NULL;
+    if (info->fdata.ssx_count > 0) {
+
+	info->fdata.ssx = (struct ssx *)bu_malloc(
+		sizeof(struct ssx) * info->fdata.ssx_count, "ssx array");
+
+	i = info->fdata.ssx_count - 1;
+	while (BU_LIST_WHILE(curr_ssx, ssx, &info->fdata.ssx_list)) {
+	    BU_LIST_DEQUEUE(&curr_ssx->l);
+
+	    curr_ssx->isocsx_events = NULL;
+	    if (curr_ssx->intersecting_isocurves > 0) {
+		curr_ssx->isocsx_events = (int *)bu_malloc(sizeof(int) *
+			curr_ssx->intersecting_isocurves, "isocsx array");
+
+		j = curr_ssx->intersecting_isocurves - 1;
+		while (BU_LIST_WHILE(curr_isocsx, isocsx, &curr_ssx->isocsx_list)) {
+		    BU_LIST_DEQUEUE(&curr_isocsx->l);
+		    curr_ssx->isocsx_events[j--] = curr_isocsx->events;
+		    BU_PUT(curr_isocsx, struct isocsx);
+		}
+	    }
+	    info->fdata.ssx[i--] = *curr_ssx;
+	    BU_PUT(curr_ssx, struct ssx);
+	}
+    }
+}
 
 int
 ged_dplot_core(struct ged *gedp, int argc, const char *argv[])
@@ -779,9 +676,8 @@ ged_dplot_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* open dplot log file */
-    info.logfile = std::string(filename);
- 
-    if (dplot_load_file_data(&info) != BRLCAD_OK) {
+    info.logfile = fopen(filename, "r");
+    if (!info.logfile) {
 	bu_vls_printf(gedp->ged_result_str, "couldn't open log file \"%s\"\n", filename);
 	return BRLCAD_ERROR;
     }
@@ -794,6 +690,8 @@ ged_dplot_core(struct ged *gedp, int argc, const char *argv[])
     if (dot) {
 	*dot = '\0';
     }
+
+    dplot_load_file_data(&info);
 
     if (info.mode == DPLOT_SSX_FIRST	||
 	    info.mode == DPLOT_SSX		||
@@ -815,20 +713,24 @@ ged_dplot_core(struct ged *gedp, int argc, const char *argv[])
 	}
     }
     if (info.fdata.ssx_count > 0) {
-	info.brep1_surf_idx = info.fdata.ssx[info.ssx_idx]->brep1_surface;
-	info.brep2_surf_idx = info.fdata.ssx[info.ssx_idx]->brep2_surface;
-	info.event_count = info.fdata.ssx[info.ssx_idx]->final_curve_events;
+	info.brep1_surf_idx = info.fdata.ssx[info.ssx_idx].brep1_surface;
+	info.brep2_surf_idx = info.fdata.ssx[info.ssx_idx].brep2_surface;
+	info.event_count = info.fdata.ssx[info.ssx_idx].final_curve_events;
 	info.brep1_isocsx_count =
-	    info.fdata.ssx[info.ssx_idx]->intersecting_brep1_isocurves;
+	    info.fdata.ssx[info.ssx_idx].intersecting_brep1_isocurves;
 	info.isocsx_count =
-	    info.fdata.ssx[info.ssx_idx]->intersecting_isocurves;
+	    info.fdata.ssx[info.ssx_idx].intersecting_isocurves;
     }
     info.brep1_surf_count = info.fdata.brep1_surface_count;
     info.brep2_surf_count = info.fdata.brep2_surface_count;
 
     if (info.mode == DPLOT_ISOCSX_EVENTS && info.fdata.ssx_count > 0) {
-	std::vector<int> &isocsx_events = info.fdata.ssx[info.ssx_idx]->isocsx_events;
-	info.event_count = isocsx_events[info.event_idx];
+	int *isocsx_events = info.fdata.ssx[info.ssx_idx].isocsx_events;
+
+	info.event_count = 0;
+	if (isocsx_events) {
+	    info.event_count = isocsx_events[info.event_idx];
+	}
     }
 
     ret = dplot_ssx(&info);
@@ -886,12 +788,12 @@ ged_dplot_core(struct ged *gedp, int argc, const char *argv[])
     return BRLCAD_OK;
 }
 
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
-
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
