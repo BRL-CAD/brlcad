@@ -803,7 +803,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	vdb_ip = (struct rt_vdb_internal *)internal.idb_ptr;
 	vdb_ip->magic = RT_VDB_INTERNAL_MAGIC;
 
-	VSET(vdb_ip->minBB, 0, 0, 0);
+	VSET(vdb_ip->minBB, -1, -1, -1);
 	VSET(vdb_ip->maxBB, 1, 1, 1);
 
 	bu_log("it will create a vdb\n");
