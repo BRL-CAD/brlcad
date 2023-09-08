@@ -267,7 +267,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	vo->mesh_obj = 1;
 
 	struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-	if (!d)
+	if (!d || !d->mesh_c)
 	    return;
 	struct db_i *dbip = d->dbip;
 	struct db_full_path *fp = (struct db_full_path *)s->s_path;
@@ -391,7 +391,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
     if (!s || !v)
 	return;
     struct draw_update_data_t *d = (struct draw_update_data_t *)s->s_i_data;
-    if (!d)
+    if (!d || !d->mesh_c)
 	return;
     bv_log(1, "brep_adaptive_plot %s[%s]", bu_vls_cstr(&s->s_name), (v) ? bu_vls_cstr(&v->gv_name) : "NULL");
 
