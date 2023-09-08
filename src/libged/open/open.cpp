@@ -134,7 +134,7 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
     // LoD context creation (DbiState initialization can use info
     // stored here, so do this first)
-    gedp->ged_lod = bg_mesh_lod_context_create(argv[1]);
+    gedp->ged_lod = bg_mesh_lod_context_create(argv[0]);
 
     // If enabled, set up the DbiState container for fast structure access
     const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
