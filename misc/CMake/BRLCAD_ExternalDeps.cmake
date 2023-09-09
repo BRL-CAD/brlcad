@@ -778,6 +778,11 @@ endif (RESET_TP)
 set(PNG_ROOT "${CMAKE_BINARY_DIR}")
 find_package(PNG)
 
+# libutahrle - Utah RLE Image library
+find_package_reset(UTAHRLE RESET_TP)
+set(UTAHRLE_ROOT "${CMAKE_BINARY_DIR}")
+find_package(UTAHRLE)
+
 # STEPcode - support for reading and writing STEP files
 # https://github.com/stepcode/stepcode
 #

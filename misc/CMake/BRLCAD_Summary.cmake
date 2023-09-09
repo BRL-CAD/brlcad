@@ -260,6 +260,7 @@ function(BRLCAD_Summary)
       "STEPcode"
       "Tcl"
       "Tk"
+      "UtahRLE"
       "Zlib"
       )
 
@@ -285,6 +286,7 @@ function(BRLCAD_Summary)
       STEPCODE_CORE_LIBRARY
       TCL_LIBRARY
       TK_LIBRARY
+      UTAHRLE_LIBRARY
       ZLIB_LIBRARY
       )
 
