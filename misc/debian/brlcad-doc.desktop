@@ -5,4 +5,4 @@ Comment=BRL-CAD Articles, Books and Lessons
 Exec=xdg-open /usr/brlcad/share/doc/html/toc.html
 Icon=brlcad-doc
 Type=Application
-Categories=BRL-CAD-doc;
+Categories=Graphics;Science;Education;Engineering;
