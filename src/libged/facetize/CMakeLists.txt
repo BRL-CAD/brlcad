@@ -7,18 +7,31 @@ set(FACETIZE_INCLUDE_DIRS
   )
 
 set(FACETIZE_LOCAL_INCLUDE_DIRS)
-if(NOT "${IRMB_INCLUDE_DIRS}" EQUAL "")
+
+# https://github.com/elalish/manifold
+set(MANIFOLD_INSTALL_DIR "")
+
+set(MANIFOLD_INCLUDE_DIRS "${MANIFOLD_INSTALL_DIR}/include")
+if(NOT "${MANIFOLD_INCLUDE_DIRS}" EQUAL "")
   set(FACETIZE_LOCAL_INCLUDE_DIRS
     ${FACETIZE_LOCAL_INCLUDE_DIRS}
-    ${IRMB_INCLUDE_DIRS}
+    ${MANIFOLD_INCLUDE_DIRS}
     )
-endif(NOT "${IRMB_INCLUDE_DIRS}" EQUAL "")
+endif(NOT "${MANIFOLD_INCLUDE_DIRS}" EQUAL "")
 
 set(FACETIZE_LIBS libged libbu)
 
-if (NOT "${IRMB_LIBRARIES}" EQUAL "")
-  set(FACETIZE_LIBS ${FACETIZE_LIBS} ${IRMB_LIBRARIES})
-endif (NOT "${IRMB_LIBRARIES}" EQUAL "")
+set(MANIFOLD_LIBRARIES 
+  ${MANIFOLD_INSTALL_DIR}/lib/libmanifold.so
+  ${MANIFOLD_INSTALL_DIR}/lib/libcross_section.so
+  ${MANIFOLD_INSTALL_DIR}/lib/libcollider.so
+  ${MANIFOLD_INSTALL_DIR}/lib/libpolygon.so
+  ${MANIFOLD_INSTALL_DIR}/lib/libgraphlite.so
+  ${MANIFOLD_INSTALL_DIR}/lib/libquickhull.so
+  )
+if (NOT "${MANIFOLD_LIBRARIES}" EQUAL "")
+  set(FACETIZE_LIBS ${FACETIZE_LIBS} ${MANIFOLD_LIBRARIES})
+endif (NOT "${MANIFOLD_LIBRARIES}" EQUAL "")
 
 # We want to include 3rd party libraries with -isystem - use
 # BRLCAD_LIB_INCLUDE_DIRS for that purpose

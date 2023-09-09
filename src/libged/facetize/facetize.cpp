@@ -31,8 +31,9 @@
 
 #include <string.h>
 
-#ifdef USE_IRMB
-#include "irmb/irmb.h"
+#define USE_MANIFOLD
+#ifdef USE_MANIFOLD
+#include "manifold/manifold.h"
 #endif
 
 #include "bu/env.h"
@@ -60,7 +61,7 @@
 #define FACETIZE_NMGBOOL  0x1
 #define FACETIZE_SPSR  0x2
 #define FACETIZE_CONTINUATION  0x4
-#define FACETIZE_IRMB  0x8
+#define FACETIZE_MANIFOLD  0x8
 
 #define FACETIZE_SUCCESS 0
 #define FACETIZE_FAILURE 1
@@ -137,11 +138,11 @@ _ged_facetize_attr(int method)
     static const char *nmg_flag = "facetize:NMG";
     static const char *continuation_flag = "facetize:CM";
     static const char *spsr_flag = "facetize:SPSR";
-    static const char *irmb_flag = "facetize:IRMB";
+    static const char *manifold_flag = "facetize:MANIFOLD";
     if (method == FACETIZE_NMGBOOL) return nmg_flag;
     if (method == FACETIZE_CONTINUATION) return continuation_flag;
     if (method == FACETIZE_SPSR) return spsr_flag;
-    if (method == FACETIZE_IRMB) return irmb_flag;
+    if (method == FACETIZE_MANIFOLD) return manifold_flag;
     return NULL;
 }
 
@@ -213,8 +214,8 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
     BU_GET(o->nmg_comb, struct bu_vls);
     bu_vls_init(o->nmg_comb);
 
-    BU_GET(o->irmb_comb, struct bu_vls);
-    bu_vls_init(o->irmb_comb);
+    BU_GET(o->manifold_comb, struct bu_vls);
+    bu_vls_init(o->manifold_comb);
 
     BU_GET(o->continuation_comb, struct bu_vls);
     bu_vls_init(o->continuation_comb);
@@ -255,8 +256,8 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
     bu_vls_free(o->nmg_comb);
     BU_PUT(o->nmg_comb, struct bu_vls);
 
-    bu_vls_free(o->irmb_comb);
-    BU_PUT(o->irmb_comb, struct bu_vls);
+    bu_vls_free(o->manifold_comb);
+    BU_PUT(o->manifold_comb, struct bu_vls);
 
     bu_vls_free(o->continuation_comb);
     BU_PUT(o->continuation_comb, struct bu_vls);
@@ -1504,20 +1505,78 @@ ged_nmg_obj_memfree:
     return ret;
 }
 
-#ifndef USE_IRMB
+#ifndef USE_MANIFOLD
 long
-  bool_meshes(
-          double **UNUSED(o_coords), int *UNUSED(o_clen), unsigned int **UNUSED(o_tris), int *UNUSED(o_tricnt),
-          int UNUSED(b_op),
-          double *UNUSED(a_coords), int UNUSED(a_clen), unsigned int *UNUSED(a_tris), int UNUSED(a_tricnt),
-          double *UNUSED(b_coords), int UNUSED(b_clen), unsigned int *UNUSED(b_tris), int UNUSED(b_tricnt)
-          )
-  {
-      return -1;
-  }
+bool_meshes(
+	double **UNUSED(o_coords), int *UNUSED(o_ccnt), unsigned int **UNUSED(o_tris), int *UNUSED(o_tricnt),
+	int UNUSED(b_op),
+	double *UNUSED(a_coords), int UNUSED(a_ccnt), unsigned int *UNUSED(a_tris), int UNUSED(a_tricnt),
+	double *UNUSED(b_coords), int UNUSED(b_ccnt), unsigned int *UNUSED(b_tris), int UNUSED(b_tricnt)
+	)
+{
+    return -1;
+}
+#else
+long
+bool_meshes(
+	double **o_coords, int *o_ccnt, unsigned int **o_tris, int *o_tricnt,
+	manifold::OpType b_op,
+	double *a_coords, int a_ccnt, unsigned int *a_tris, int a_tricnt,
+	double *b_coords, int b_ccnt, unsigned int *b_tris, int b_tricnt)
+{
+    if (!o_coords || !o_ccnt || !o_tris || !o_tricnt)
+	return 0;
+
+    manifold::Mesh a_mesh;
+    for (int i = 0; i < a_ccnt; i++)
+	a_mesh.vertPos.push_back(glm::vec3(a_coords[3*i], a_coords[3*i+1], a_coords[3*i+2]));
+    for (int i = 0; i < a_tricnt; i++)
+	a_mesh.triVerts.push_back(glm::vec3(a_tris[3*i], a_tris[3*i+1], a_tris[3*i+2]));
+    manifold::Mesh b_mesh;
+    for (int i = 0; i < b_ccnt; i++)
+	b_mesh.vertPos.push_back(glm::vec3(b_coords[3*i], b_coords[3*i+1], b_coords[3*i+2]));
+    for (int i = 0; i < b_tricnt; i++)
+	b_mesh.triVerts.push_back(glm::vec3(b_tris[3*i], b_tris[3*i+1], b_tris[3*i+2]));
+
+    manifold::Manifold a_manifold(a_mesh);
+    if (a_manifold.Status() != manifold::Manifold::Error::NoError) {
+	bu_log("Error - a invalid\n");
+	return 0;
+    }
+    manifold::Manifold b_manifold(b_mesh);
+    if (b_manifold.Status() != manifold::Manifold::Error::NoError) {
+	bu_log("Error - b invalid\n");
+	return 0;
+    }
+
+    manifold::Manifold result = a_manifold.Boolean(b_manifold, b_op);
+    if (result.Status() != manifold::Manifold::Error::NoError) {
+	bu_log("Error - bool result invalid\n");
+	return 0;
+    }
+    manifold::Mesh rmesh = result.GetMesh();
+
+    (*o_coords) = (double *)calloc(rmesh.vertPos.size()*3, sizeof(double));
+    (*o_tris) = (unsigned int *)calloc(rmesh.triVerts.size()*3, sizeof(unsigned int));
+    for (size_t i = 0; i < rmesh.vertPos.size(); i++) {
+	(*o_coords)[3*i] = rmesh.vertPos[i].x;
+	(*o_coords)[3*i+1] = rmesh.vertPos[i].y;
+	(*o_coords)[3*i+2] = rmesh.vertPos[i].z;
+    }
+    for (size_t i = 0; i < rmesh.triVerts.size(); i++) {
+	(*o_tris)[3*i] = rmesh.triVerts[i].x;
+	(*o_tris)[3*i+1] = rmesh.triVerts[i].y;
+	(*o_tris)[3*i+2] = rmesh.triVerts[i].z;
+    }
+    *o_ccnt = (int)rmesh.vertPos.size();
+    *o_tricnt = (int)rmesh.triVerts.size();
+
+    return rmesh.triVerts.size();
+}
 #endif
 
-struct irmb_mesh {
+
+struct manifold_mesh {
     int num_vertices;
     int num_faces;
     fastf_t *vertices;
@@ -1526,8 +1585,8 @@ struct irmb_mesh {
 
 
 static void
-irmb_subprocess(struct irmb_mesh **mesh, union tree *tp, struct db_i *dbip, int op, int *depth, int max_depth,
-	void (*traverse_func) (struct irmb_mesh **, struct directory *, struct db_i *, int, int *, int))
+manifold_subprocess(struct manifold_mesh **mesh, union tree *tp, struct db_i *dbip, int op, int *depth, int max_depth,
+	void (*traverse_func) (struct manifold_mesh **, struct directory *, struct db_i *, int, int *, int))
 {
     struct directory *dp;
     if (!tp) return;
@@ -1542,14 +1601,14 @@ irmb_subprocess(struct irmb_mesh **mesh, union tree *tp, struct db_i *dbip, int 
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-	    irmb_subprocess(mesh, tp->tr_b.tb_left, dbip, OP_UNION, depth, max_depth, traverse_func);
+	    manifold_subprocess(mesh, tp->tr_b.tb_left, dbip, OP_UNION, depth, max_depth, traverse_func);
 	    break;
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-	    irmb_subprocess(mesh, tp->tr_b.tb_left, dbip, OP_UNION, depth, max_depth, traverse_func);
-	    irmb_subprocess(mesh, tp->tr_b.tb_right, dbip, tp->tr_op, depth, max_depth, traverse_func);
+	    manifold_subprocess(mesh, tp->tr_b.tb_left, dbip, OP_UNION, depth, max_depth, traverse_func);
+	    manifold_subprocess(mesh, tp->tr_b.tb_right, dbip, tp->tr_op, depth, max_depth, traverse_func);
 	    break;
 	case OP_DB_LEAF:
 	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
@@ -1571,11 +1630,11 @@ irmb_subprocess(struct irmb_mesh **mesh, union tree *tp, struct db_i *dbip, int 
 }
 
 static void
-irmb_process(struct irmb_mesh **mesh, struct directory *dp, struct db_i *dbip, int op, int *depth, int max_depth)
+manifold_process(struct manifold_mesh **mesh, struct directory *dp, struct db_i *dbip, int op, int *depth, int max_depth)
 {
-    long irmb_ret = 0;
-    struct irmb_mesh *omesh = NULL;
-    struct irmb_mesh *bmesh = NULL;
+    long manifold_ret = 0;
+    struct manifold_mesh *omesh = NULL;
+    struct manifold_mesh *bmesh = NULL;
     if (!dp || !dbip)
 	return;
     struct rt_db_internal in;
@@ -1583,30 +1642,36 @@ irmb_process(struct irmb_mesh **mesh, struct directory *dp, struct db_i *dbip, i
 	return;
     struct rt_db_internal *ip = &in;
 
-    bu_log("%d:%s\n", op, dp->d_namep);
+    bu_log("Op %d:%s\n", op, dp->d_namep);
+    if (BU_STR_EQUAL(dp->d_namep, "frame"))
+	bu_log("trouble\n");
 
-    // Translate op for IRMB
-    int irmb_op = 0;
+    // Translate op for MANIFOLD
+#ifdef USE_MANIFOLD
+    manifold::OpType manifold_op = manifold::OpType::Add;
     switch (op) {
 	case OP_UNION:
-	    irmb_op = 0;
+	    manifold_op = manifold::OpType::Add;
 	    break;
 	case OP_INTERSECT:
-	    irmb_op = 2;
+	    manifold_op = manifold::OpType::Intersect;
 	    break;
 	case OP_SUBTRACT:
-	    irmb_op = 1;
+	    manifold_op = manifold::OpType::Subtract;
 	    break;
 	default:
-	    irmb_op = 0;
+	    manifold_op = manifold::OpType::Add;
     };
+#else
+    int manifold_op = 0;
+#endif
 
     // If we have a non-comb obj, get the NMG tessellation and do the operation
     if (!(dp->d_flags & RT_DIR_COMB)) {
 
 	// 1.  Make new triangle mesh with NMG of dp
 	if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
-	    bu_log("IRMB_ERROR(%s): NMG object tessellation support not available\n", dp->d_namep);
+	    bu_log("MANIFOLD_ERROR(%s): NMG object tessellation support not available\n", dp->d_namep);
 	    rt_db_free_internal(ip);
 	    return;
 	}
@@ -1655,7 +1720,7 @@ irmb_process(struct irmb_mesh **mesh, struct directory *dp, struct db_i *dbip, i
 	    rt_db_free_internal(ip);
 	    return;
 	}
-	BU_GET(bmesh, struct irmb_mesh);
+	BU_GET(bmesh, struct manifold_mesh);
 	bmesh->vertices = bot->vertices;
 	bmesh->num_vertices = bot->num_vertices;
 	bmesh->num_faces = bot->num_faces;
@@ -1673,20 +1738,20 @@ irmb_process(struct irmb_mesh **mesh, struct directory *dp, struct db_i *dbip, i
 		bu_free((*mesh)->vertices, "verts");
 	    if ((*mesh)->faces)
 		bu_free((*mesh)->faces, "faces");
-	    BU_FREE(*mesh, struct irmb_mesh);
+	    BU_FREE(*mesh, struct manifold_mesh);
 	    *mesh = bmesh;
 	} else {
-	    BU_GET(omesh, struct irmb_mesh);
-	    irmb_ret = bool_meshes(
+	    BU_GET(omesh, struct manifold_mesh);
+	    manifold_ret = bool_meshes(
 		    (double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
-		    irmb_op,
-		    (double *)(*mesh)->vertices, (*mesh)->num_vertices*3, (*mesh)->faces, (*mesh)->num_faces,
-		    (double *)bmesh->vertices, bmesh->num_vertices*3, bmesh->faces, bmesh->num_faces
+		    manifold_op,
+		    (double *)(*mesh)->vertices, (*mesh)->num_vertices, (*mesh)->faces, (*mesh)->num_faces,
+		    (double *)bmesh->vertices, bmesh->num_vertices, bmesh->faces, bmesh->num_faces
 		    );
-	    bu_log("irmb: %ld\n", irmb_ret);
+	    bu_log("manifold: %ld\n", manifold_ret);
 	    bu_free(bmesh->faces, "faces");
 	    bu_free(bmesh->vertices, "vertices");
-	    BU_PUT(bmesh, struct irmb_mesh);
+	    BU_PUT(bmesh, struct manifold_mesh);
 
 	    if (ip->idb_type != ID_BOT) {
 		// We created this locally if it wasn't originally a BoT - clean up
@@ -1701,7 +1766,7 @@ irmb_process(struct irmb_mesh **mesh, struct directory *dp, struct db_i *dbip, i
 		bu_free((*mesh)->vertices, "verts");
 	    if ((*mesh)->faces)
 		bu_free((*mesh)->faces, "faces");
-	    BU_FREE(*mesh, struct irmb_mesh);
+	    BU_FREE(*mesh, struct manifold_mesh);
 	    // Assign the new state as "current"
 	    *mesh = omesh;
 	}
@@ -1710,35 +1775,35 @@ irmb_process(struct irmb_mesh **mesh, struct directory *dp, struct db_i *dbip, i
     }
 
     struct rt_comb_internal *comb = (struct rt_comb_internal *)ip->idb_ptr;
-    irmb_subprocess(mesh, comb->tree, dbip, OP_UNION, depth, max_depth, irmb_process);
+    manifold_subprocess(mesh, comb->tree, dbip, OP_UNION, depth, max_depth, manifold_process);
     rt_db_free_internal(ip);
 }
 
-// For IRMB, we do a tree walk.  Each solid is individually triangulated, and
+// For MANIFOLD, we do a tree walk.  Each solid is individually triangulated, and
 // then the boolean op is applied with the result of the mesh generated thus
 // far.  This is conceptually similar to how NMG does its processing, with the
 // main difference being that the external code is actually doing the mesh
 // boolean processing rather than libnmg.
 int
-_ged_irmb_obj(struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
+_ged_manifold_obj(struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
 {
     int depth = 0;
-    struct irmb_mesh *mesh = NULL;
+    struct manifold_mesh *mesh = NULL;
     struct directory *dp = RT_DIR_NULL;
     int ret = BRLCAD_ERROR;
     if (!gedp || !objname || !newname || !opts)
-	goto ged_irmb_obj_memfree;
+	goto ged_manifold_obj_memfree;
 
     dp = db_lookup(gedp->dbip, objname, LOOKUP_QUIET);
     if (!dp)
-	goto ged_irmb_obj_memfree;
+	goto ged_manifold_obj_memfree;
 
     // Conceptually, we start off by unioning the "root" object of the
     // tree with the initial world mesh, which is the empty mesh.
-    BU_GET(mesh, struct irmb_mesh);
+    BU_GET(mesh, struct manifold_mesh);
     mesh->num_vertices = 0;
     mesh->num_faces = 0;
-    irmb_process(&mesh, dp, gedp->dbip, OP_UNION, &depth, 100);
+    manifold_process(&mesh, dp, gedp->dbip, OP_UNION, &depth, 100000);
 
     if (mesh && mesh->num_faces > 0) {
 	struct rt_bot_internal *bot;
@@ -1766,19 +1831,19 @@ _ged_irmb_obj(struct ged *gedp, const char *objname, const char *newname, struct
 
 	ret = _write_bot(gedp, bot, newname, opts);
     } else {
-	goto ged_irmb_obj_memfree;
+	goto ged_manifold_obj_memfree;
     }
 
-ged_irmb_obj_memfree:
+ged_manifold_obj_memfree:
     if (mesh) {
 	if (mesh->vertices)
 	    bu_free(mesh->vertices, "verts");
 	if (mesh->faces)
 	    bu_free(mesh->faces, "faces");
-	BU_FREE(mesh, struct irmb_mesh);
+	BU_FREE(mesh, struct manifold_mesh);
     }
     if (!opts->quiet && ret != BRLCAD_OK) {
-	bu_log("IRMB: failed to generate %s\n", newname);
+	bu_log("MANIFOLD: failed to generate %s\n", newname);
     }
 
     return ret;
@@ -1865,22 +1930,22 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 	    }
 	}
 
-	if (flags & FACETIZE_IRMB) {
+	if (flags & FACETIZE_MANIFOLD) {
 	    if (argc == 1) {
-		bu_vls_sprintf(opts->nmg_log_header, "IRMB: tessellating %s...\n", argv[0]);
+		bu_vls_sprintf(opts->nmg_log_header, "MANIFOLD: tessellating %s...\n", argv[0]);
 	    } else {
-		bu_vls_sprintf(opts->nmg_log_header, "IRMB: tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
+		bu_vls_sprintf(opts->nmg_log_header, "MANIFOLD: tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
 	    }
 	    /* Let the user know what's going on, unless output is suppressed */
 	    if (!opts->quiet) {
 		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
 	    }
 
-	    if (_ged_irmb_obj(gedp, argv[0], newname, opts) == BRLCAD_OK) {
+	    if (_ged_manifold_obj(gedp, argv[0], newname, opts) == BRLCAD_OK) {
 		ret = BRLCAD_OK;
 		break;
 	    } else {
-		flags = flags & ~(FACETIZE_IRMB);
+		flags = flags & ~(FACETIZE_MANIFOLD);
 		continue;
 	    }
 	}
@@ -2009,9 +2074,9 @@ _ged_methodcomb_add(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
     struct bu_vls method_cname = BU_VLS_INIT_ZERO;
     if (!objname || method == FACETIZE_NULL) return BRLCAD_ERROR;
 
-    if (method == FACETIZE_IRMB && !bu_vls_strlen(opts->irmb_comb)) {
-	bu_vls_sprintf(opts->irmb_comb, "%s_IRMB-0", bu_vls_addr(opts->froot));
-	bu_vls_incr(opts->irmb_comb, NULL, NULL, &_db_uniq_test, (void *)gedp);
+    if (method == FACETIZE_MANIFOLD && !bu_vls_strlen(opts->manifold_comb)) {
+	bu_vls_sprintf(opts->manifold_comb, "%s_MANIFOLD-0", bu_vls_addr(opts->froot));
+	bu_vls_incr(opts->manifold_comb, NULL, NULL, &_db_uniq_test, (void *)gedp);
     }
     if (method == FACETIZE_NMGBOOL && !bu_vls_strlen(opts->nmg_comb)) {
 	bu_vls_sprintf(opts->nmg_comb, "%s_NMGBOOL-0", bu_vls_addr(opts->froot));
@@ -2036,8 +2101,8 @@ _ged_methodcomb_add(struct ged *gedp, struct _ged_facetize_opts *opts, const cha
 	case FACETIZE_SPSR:
 	    bu_vls_sprintf(&method_cname, "%s", bu_vls_addr(opts->spsr_comb));
 	    break;
-	case FACETIZE_IRMB:
-	    bu_vls_sprintf(&method_cname, "%s", bu_vls_addr(opts->irmb_comb));
+	case FACETIZE_MANIFOLD:
+	    bu_vls_sprintf(&method_cname, "%s", bu_vls_addr(opts->manifold_comb));
 	    break;
 	default:
 	    bu_vls_free(&method_cname);
@@ -2154,23 +2219,23 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 	return BRLCAD_ERROR;
     }
 
-    if (cmethod == FACETIZE_IRMB) {
+    if (cmethod == FACETIZE_MANIFOLD) {
 
 	/* We're staring a new object, so we want to write out the header in the
 	 * log file the first time we get an NMG logging event.  (Re)set the flag
 	 * so the logger knows to do so. */
 	opts->nmg_log_print_header = 1;
-	bu_vls_sprintf(opts->nmg_log_header, "IRMB: tessellating %s (%d of %d) with tolerances a=%g, r=%g, n=%g\n", oname, ocnt, max_cnt, opts->tol->abs, opts->tol->rel, opts->tol->norm);
+	bu_vls_sprintf(opts->nmg_log_header, "MANIFOLD: tessellating %s (%d of %d) with tolerances a=%g, r=%g, n=%g\n", oname, ocnt, max_cnt, opts->tol->abs, opts->tol->rel, opts->tol->norm);
 
 	/* Let the user know what's going on, unless output is suppressed */
 	if (!opts->quiet) {
 	    bu_log("%s", bu_vls_addr(opts->nmg_log_header));
 	}
 
-	ret = _ged_irmb_obj(gedp, oname, sname, opts);
+	ret = _ged_manifold_obj(gedp, oname, sname, opts);
 
 	if (ret != FACETIZE_FAILURE) {
-	    if (_ged_methodcomb_add(gedp, opts, sname, FACETIZE_IRMB) != BRLCAD_OK && opts->verbosity > 1) {
+	    if (_ged_methodcomb_add(gedp, opts, sname, FACETIZE_MANIFOLD) != BRLCAD_OK && opts->verbosity > 1) {
 		bu_log("Error adding %s to methodology combination\n", sname);
 	    }
 	}
@@ -2769,10 +2834,10 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	    cmethod = FACETIZE_NMGBOOL;
 	    methods = methods & ~(FACETIZE_NMGBOOL);
 	}
-#ifdef USE_IRMB
-	if (!cmethod && (methods & FACETIZE_IRMB)) {
-	    cmethod = FACETIZE_IRMB;
-	    methods = methods & ~(FACETIZE_IRMB);
+#ifdef USE_MANIFOLD
+	if (!cmethod && (methods & FACETIZE_MANIFOLD)) {
+	    cmethod = FACETIZE_MANIFOLD;
+	    methods = methods & ~(FACETIZE_MANIFOLD);
 	}
 #endif
 
@@ -3199,8 +3264,8 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[17], "",  "max-pnts",      "#", &bu_opt_int,     &(opts->max_pnts),                "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT(d[18], "B",  "",             "",  NULL,  &nonovlp_brep,              "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
     BU_OPT(d[19], "t",  "threshold",    "#",  &bu_opt_fastf_t, &(opts->nonovlp_threshold),  "EXPERIMENTAL: max ovlp threshold length.");
-#ifdef USE_IRMB
-    BU_OPT(d[20],  "",  "IRMB",           "",  NULL,  &(opts->irmb),          "Use the experimental IRMB boolean evaluation");
+#ifdef USE_MANIFOLD
+    BU_OPT(d[20],  "",  "MANIFOLD",           "",  NULL,  &(opts->manifold),          "Use the experimental MANIFOLD boolean evaluation");
     BU_OPT_NULL(d[21]);
 #else
     BU_OPT_NULL(d[20]);
@@ -3256,12 +3321,12 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Sort out which methods we can try */
-    if (!opts->nmgbool && !opts->screened_poisson && !opts->continuation && !opts->irmb) {
+    if (!opts->nmgbool && !opts->screened_poisson && !opts->continuation && !opts->manifold) {
 	/* Default to NMGBOOL and Continuation active */
 	opts->method_flags |= FACETIZE_NMGBOOL;
 	opts->method_flags |= FACETIZE_CONTINUATION;
     } else {
-	if (opts->irmb)          opts->method_flags |= FACETIZE_IRMB;
+	if (opts->manifold)          opts->method_flags |= FACETIZE_MANIFOLD;
 	if (opts->nmgbool)          opts->method_flags |= FACETIZE_NMGBOOL;
 	if (opts->screened_poisson) opts->method_flags |= FACETIZE_SPSR;
 	if (opts->continuation)    opts->method_flags |= FACETIZE_CONTINUATION;
@@ -3279,7 +3344,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Check for a couple of non-valid combinations */
-    if ((opts->method_flags == FACETIZE_SPSR || opts->method_flags == FACETIZE_CONTINUATION || opts->method_flags == FACETIZE_IRMB) && opts->nmg_use_tnurbs) {
+    if ((opts->method_flags == FACETIZE_SPSR || opts->method_flags == FACETIZE_CONTINUATION || opts->method_flags == FACETIZE_MANIFOLD) && opts->nmg_use_tnurbs) {
 	bu_vls_printf(gedp->ged_result_str, "Note: Specified reconstruction method(s) do not all support TNURBS output\n");
 	ret = BRLCAD_ERROR;
 	goto ged_facetize_memfree;
