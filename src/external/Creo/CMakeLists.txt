@@ -520,7 +520,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO_DIRS
     "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
+    "${OPENNURBS_INCLUDE_DIRS}"
      )
   BRLCAD_INCLUDE_DIRS(CREO_DIRS)
 

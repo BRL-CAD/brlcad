@@ -4,7 +4,7 @@ set(ADRT_SLAVE_SOURCES
   tienet_slave.c
   )
 
-BRLCAD_ADDEXEC(adrt_slave "${ADRT_SLAVE_SOURCES}" "librt;librender")
+BRLCAD_ADDEXEC(adrt_slave "${ADRT_SLAVE_SOURCES}" "librt;librender;${ZLIB_LIBRARIES}")
 
 set(adrt_slave_ignore_files
   CMakeLists.txt
