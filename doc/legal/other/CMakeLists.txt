@@ -2,7 +2,6 @@ set(other_licenses
   Eigen.txt
   assetimport.txt
   openNURBS.txt
-  gct.txt
   gdal.txt
   itcl3.txt
   itk3.txt
