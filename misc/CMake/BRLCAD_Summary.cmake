@@ -254,6 +254,7 @@ function(BRLCAD_Summary)
       "Netpbm"
       "OpenCV"
       "OpenMesh"
+      "openNURBS"
       "Portable Network Graphics"
       "Qt"
       "Regex Library"
@@ -280,6 +281,7 @@ function(BRLCAD_Summary)
       NETPBM_LIBRARY
       OpenCV_DIR
       OPENMESH_LIBRARIES
+      OPENNURBS_LIBRARY
       PNG_LIBRARY_RELEASE
       QtCore_DIR
       REGEX_LIBRARY
