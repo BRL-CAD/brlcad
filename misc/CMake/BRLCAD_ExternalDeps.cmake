@@ -823,6 +823,12 @@ if (BRLCAD_ENABLE_GDAL)
   find_package(GDAL)
 endif (BRLCAD_ENABLE_GDAL)
 
+# Linenoise - line editing library
+# https://github.com/msteveb/linenoise
+find_package_reset(LINENOISE RESET_TP)
+set(LINENOISE_ROOT "${CMAKE_BINARY_DIR}")
+find_package(LINENOISE)
+
 # LMDB - Lightning Memory-Mapped Database
 # https://github.com/LMDB/lmdb
 find_package_reset(LMDB RESET_TP)
