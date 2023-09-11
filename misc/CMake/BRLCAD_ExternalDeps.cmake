@@ -823,6 +823,12 @@ if (BRLCAD_ENABLE_GDAL)
   find_package(GDAL)
 endif (BRLCAD_ENABLE_GDAL)
 
+# LMDB - Lightning Memory-Mapped Database
+# https://github.com/LMDB/lmdb
+find_package_reset(LMDB RESET_TP)
+set(LMDB_ROOT "${CMAKE_BINARY_DIR}")
+find_package(LMDB)
+
 # Open Asset Import Library - library for supporting I/O for a number of
 # Geometry file formats
 # https://github.com/assimp/assimp
@@ -849,6 +855,7 @@ if (BRLCAD_ENABLE_OPENMESH)
 endif (BRLCAD_ENABLE_OPENMESH)
 
 # openNURBS Non-Uniform Rational BSpline library
+# https://github.com/mcneel/opennurbs
 find_package_reset(OPENNURBS RESET_TP)
 if (RESET_TP)
   unset(OPENNURBS_X_INCLUDE_DIR CACHE)
@@ -876,6 +883,13 @@ if (NOT OpenCV_FOUND)
   set(OpenCV_DIR "${OpenCV_DIR_TMP}")
   find_package(OpenCV)
 endif (NOT OpenCV_FOUND)
+
+
+# OSMesa Off Screen Rendering library
+# https://github.com/starseeker/osmesa
+find_package_reset(OSMESA RESET_TP)
+set(OSMESA_ROOT "${CMAKE_BINARY_DIR}")
+find_package(OSMESA)
 
 
 # TCL - scripting language.  For Tcl/Tk builds we want

@@ -251,10 +251,12 @@ function(BRLCAD_Summary)
     set(BUNDLED_LABELS
       "Asset Import Library"
       "Geospatial Data Abstraction Library"
+      "Lightning Memory-Mapped Database"
       "Netpbm"
       "OpenCV"
       "OpenMesh"
       "openNURBS"
+      "OSMesa"
       "Portable Network Graphics"
       "Qt"
       "Regex Library"
@@ -278,10 +280,12 @@ function(BRLCAD_Summary)
     set(BUNDLED_VARS
       ASSETIMPORT_LIBRARY
       GDAL_LIBRARY
+      LMDB_LIBRARY
       NETPBM_LIBRARY
       OpenCV_DIR
       OPENMESH_LIBRARIES
       OPENNURBS_LIBRARY
+      OSMESA_LIBRARY
       PNG_LIBRARY_RELEASE
       QtCore_DIR
       REGEX_LIBRARY
