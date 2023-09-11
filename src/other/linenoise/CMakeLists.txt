@@ -44,9 +44,7 @@ cmake_minimum_required(VERSION 3.18)
 # Set CMake project name
 project(LN)
 
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 if (NOT DEFINED BIN_DIR)
   set (BIN_DIR bin)
@@ -55,6 +53,10 @@ endif (NOT DEFINED BIN_DIR)
 if (NOT DEFINED LIB_DIR)
   set (LIB_DIR lib)
 endif (NOT DEFINED LIB_DIR)
+
+if (NOT DEFINED INCLUDE_DIR)
+  set (INCLUDE_DIR include)
+endif (NOT DEFINED INCLUDE_DIR)
 
 set(LN_SRCS
   utf8.c
@@ -70,6 +72,13 @@ install(TARGETS linenoise
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR}
   )
+
+set(LN_HDRS
+  linenoise.h
+  stringbuf.h
+  utf8.h
+  )
+install(FILES ${LN_HDRS} DESTINATION ${INCLUDE_DIR}/linenoise)
 
 # Local Variables:
 # tab-width: 8
