@@ -220,11 +220,6 @@ mark_as_advanced(IRMB_LIBRARIES)
 mark_as_advanced(IRMB_INCLUDE_DIR)
 mark_as_advanced(IRMB_INCLUDE_DIRS)
 
-# GCT is a collection of algorithms for geometry processing and conversion
-#add_subdirectory(gct)
-include("${CMAKE_CURRENT_SOURCE_DIR}/gct.dist")
-CMAKEFILES_IN_DIR(gct_ignore_files gct)
-
 # OSMesa Library
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/libosmesa")
   add_subdirectory(libosmesa)
