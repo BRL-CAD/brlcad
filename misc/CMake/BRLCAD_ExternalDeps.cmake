@@ -36,6 +36,10 @@
 # Logic to set up third party dependences (either system installed
 # versions or prepared local versions to be bundled with BRL-CAD.)
 
+# When we need to have CMake treat includes as system paths to avoid warnings,
+# we add those patterns to the SYS_INCLUDE_PATTERNS list
+mark_as_advanced(SYS_INCLUDE_PATTERNS)
+
 
 if (NOT EXISTS "${BRLCAD_EXT_INSTALL_DIR}")
   message(WARNING "BRLCAD_EXT_INSTALL_DIR is set to ${BRLCAD_EXT_INSTALL_DIR} but that location does not exist.  This will result in only system libraries being used for compilation, with no external dependencies being bundled into installers.")
@@ -843,6 +847,17 @@ if (BRLCAD_ENABLE_OPENMESH)
   set(OpenMesh_ROOT "${CMAKE_BINARY_DIR}")
   find_package(OpenMesh)
 endif (BRLCAD_ENABLE_OPENMESH)
+
+# openNURBS Non-Uniform Rational BSpline library
+find_package_reset(OPENNURBS RESET_TP)
+if (RESET_TP)
+  unset(OPENNURBS_X_INCLUDE_DIR CACHE)
+endif (RESET_TP)
+set(OPENNURBS_ROOT "${CMAKE_BINARY_DIR}")
+find_package(OPENNURBS)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS)
+list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS CACHE STRING "Bundled system include dirs" FORCE)
 
 
 # OpenCV - Open Source Computer Vision Library
