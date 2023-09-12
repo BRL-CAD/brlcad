@@ -2144,7 +2144,9 @@ endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
 # targets.  Remember that src/other wipes the top level flags generated
 # by BRL-CAD for its own subdirectories - it is added after the BRL-CAD
 # tests so the CACHE reflects BRL-CAD's test results.
-add_subdirectory(src/other)
+if (EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  add_subdirectory(src/other)
+endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 # Now put back the BRL-CAD flags
 RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
