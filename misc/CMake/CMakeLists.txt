@@ -37,6 +37,7 @@ set(cmake_ignore_files
   FindGECODE.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
+  FindLINENOISE.cmake
   FindLMDB.cmake
   FindLibUV.cmake
   FindNETPBM.cmake
