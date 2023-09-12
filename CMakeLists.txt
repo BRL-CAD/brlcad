@@ -154,24 +154,35 @@ set(ENV_HOME "$ENV{HOME}")
 if (NOT ENV_HOME)
   set(ENV_HOME "$ENV{USERPROFILE}")
 endif (NOT ENV_HOME)
-if (NOT DEFINED BRLCAD_EXT_DIR)
+if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/brlcad_ext")
   set(BRLCAD_EXT_DIR "${ENV_HOME}/brlcad_ext")
-endif (NOT DEFINED BRLCAD_EXT_DIR)
+endif (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/brlcad_ext")
 
-if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/extinstall")
   set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/extinstall")
-endif (NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+endif (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/extinstall")
 # Need to handle the case where BRLCAD_EXT_DIR is a symlink - if it
 # is, we need to expand the symlink in order for the tar tricks we use
 # later for file copying to work...
-if (IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+if (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
   file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" EXT_PATH)
   set(BRLCAD_EXT_INSTALL_DIR "${EXT_PATH}")
-endif (IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+endif (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
 
-if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR)
+# For extnoinstall we don't need to worry about symlinks since we'll be using
+# the contents in place.
+if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/extnoinstall")
   set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/extnoinstall")
-endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR)
+endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/extnoinstall")
+
+# If we're doing the non-src-other build, we've got to have brlcad_externals
+# for at least a few custom components no matter how many system packages got
+# installed.
+if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
+  if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+    message(FATAL_ERROR "BRL-CAD requires a source for external components - please set BRLCAD_EXT_DIR to a directory location containing the extinstall and extnoinstall folders (the outputs produced by building https://github.com/BRL-CAD/brlcad_externals). By default this location is ${ENV_HOME}/brlcad_ext but it can be overridden.  In lieu of setting BRLCAD_EXT_DIR, it is also possible to directly set BRLCAD_EXT_INSTALL_DIR and BRLCAD_EXT_NOINSTALL_DIR to custom indivdiaul folders holding the necessary dependencies.")
+  endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
 
 #---------------------------------------------------------------------
 # Define various utilities.
