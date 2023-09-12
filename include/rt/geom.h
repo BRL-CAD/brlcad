@@ -47,7 +47,6 @@
 #include "../nmg.h" /* (temporarily?) needed for knot_vector */
 #include "brep.h"
 
-
 __BEGIN_DECLS
 
 #define NAMELEN 16	/* NAMESIZE from db.h (can't call it NAMESIZE!!!!!) */
@@ -382,6 +381,10 @@ struct rt_vdb_internal {
 	//to start, it will save the min and max of a bounding box - that will be changed to the vdb structure
 	vect_t minBB;
 	vect_t maxBB;
+	/*fastf_t a;*/
+	/*void *vdb;*/
+	void *vdb;
+	
 
 };
 #define RT_VDB_CK_MAGIC(_p) BU_CKMAG(_p, RT_VDB_INTERNAL_MAGIC, "rt_vdb_internal")

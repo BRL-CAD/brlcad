@@ -220,6 +220,7 @@ set(LIBRT_SOURCES
   primitives/vol/vol_mirror.c
   primitives/xxx/xxx.c
   primitives/vdb/vdb.c
+  primitives/vdb/vdb.cpp
   reduce.c
   reduce_db.cpp
   regionfix.c
