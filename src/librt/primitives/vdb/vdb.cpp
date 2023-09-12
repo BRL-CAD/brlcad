@@ -40,6 +40,7 @@ extern "C" {
 		struct rt_vdb_internal vdb_i;
 		nanovdb::NanoGrid <float>* h_grid;
 		nanovdb::GridHandle<nanovdb::HostBuffer> handler;
+		vect_t normalHit;
 	};
 
 
@@ -430,10 +431,14 @@ extern "C" {
 		RayT iRay = wRay.worldToIndex(*h_grid);
 		// intersect...
 		float t0;
-		if (intersector.intersectsIS(iRay, t0)) {
+		Vec3T normal(1,0,0);
+		Vec3T worldHit(0, 0, 0);
+		//if (intersector.intersectsIS(iRay, t0)) {
+		if (intersector.intersectsWS(wRay, worldHit, normal, t0)) {
 			// write distance to surface. (we assume it is a uniform voxel)
 			float wT0 = t0 * float(h_grid->voxelSize()[0]);
 
+			VSET(vdb->normalHit, normal.x(), normal.y(), normal.z());
 			fprintf(stderr, "hit\n");
 
 			RT_GET_SEG(segp, ap->a_resource);
@@ -462,10 +467,14 @@ extern "C" {
 		rt_vdb_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	{
 
+		struct vdb_specific *vdb =
+			(struct vdb_specific *)stp->st_specific;
+
 		vect_t xlated;
 		fastf_t scale;
 
-		VSET(hitp->hit_normal, 1, 0, 0);
+		VSET(hitp->hit_normal, vdb->normalHit[0], vdb->normalHit[1], vdb->normalHit[2]);
+		//VSET(hitp->hit_normal, 1, 0, 0);
 		hitp->hit_vpriv[X] = 1.0;
 
 
