@@ -40,17 +40,10 @@ VALIDATE_STYLE("${bn_test_srcs}" bn_test)
 BRLCAD_ADDEXEC(bn_randsph randsph.c "libbu;libbn" TEST)
 
 # Testing with Eigen
-if (DEFINED BRLCAD_EXT_NOINSTALL_DIR)
-  set(EIGEN_DIR "${BRLCAD_EXT_NOINSTALL_DIR}/share/eigen3/cmake")
-  find_package(Eigen3 NO_MODULE)
-  if (TARGET Eigen3::Eigen)
-    BRLCAD_ADDEXEC(bn_eigen eigen.cpp "libbu;libbn;Eigen3::Eigen" TEST)
-  endif (TARGET Eigen3::Eigen)
-  CMAKEFILES(eigen.cpp)
-else (DEFINED BRLCAD_EXT_NOINSTALL_DIR)
-  BRLCAD_ADDEXEC(bn_eigen eigen.cpp "libbu;libbn" TEST)
+BRLCAD_ADDEXEC(bn_eigen eigen.cpp "libbu;libbn" TEST)
+if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR)
   target_include_directories(bn_eigen SYSTEM PRIVATE "${CMAKE_SOURCE_DIR}/src/other/Eigen")
-endif (DEFINED BRLCAD_EXT_NOINSTALL_DIR)
+endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR)
 
 #
 #  *********** poly.c tests *************
