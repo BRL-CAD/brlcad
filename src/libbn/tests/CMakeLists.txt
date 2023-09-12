@@ -41,11 +41,11 @@ BRLCAD_ADDEXEC(bn_randsph randsph.c "libbu;libbn" TEST)
 
 # Testing with Eigen
 BRLCAD_ADDEXEC(bn_eigen eigen.cpp "libbu;libbn" TEST)
-if (DEFINED BRLCAD_EXT_NOINSTALL_DIR)
+if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other/Eigen")
   target_include_directories(bn_eigen SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIRS}")
-else (DEFINED BRLCAD_EXT_NOINSTALL_DIR)
+else (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other/Eigen")
   target_include_directories(bn_eigen SYSTEM PRIVATE "${CMAKE_SOURCE_DIR}/src/other/Eigen")
-endif (DEFINED BRLCAD_EXT_NOINSTALL_DIR)
+endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other/Eigen")
 
 #
 #  *********** poly.c tests *************
