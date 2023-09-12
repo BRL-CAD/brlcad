@@ -818,7 +818,7 @@ endif (BRLCAD_ENABLE_STEP)
 
 # Eigen - linear algebra library
 find_package_reset(Eigen3 RESET_TP)
-set(EIGEN_DIR "${BRLCAD_EXT_NOINSTALL_DIR}/share/eigen3/cmake")
+set(Eigen3_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}/share/eigen3/cmake")
 find_package(Eigen3 NO_MODULE)
 set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen)
 list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
