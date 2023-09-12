@@ -238,38 +238,48 @@ endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/libosmesa")
 
 if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK)
 
-  # Tkhtml doesn't have an active upstream
-  add_subdirectory(tkhtml)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tkhtml3.0")
-  SetTargetFolder(Tkhtml "Third Party Libraries")
-  SetTargetFolder(tkhtml_n_gen "Compilation Utilities")
+  if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tkhtml")
+    # Tkhtml doesn't have an active upstream
+    add_subdirectory(tkhtml)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl")
+    DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tkhtml3.0")
+    SetTargetFolder(Tkhtml "Third Party Libraries")
+    SetTargetFolder(tkhtml_n_gen "Compilation Utilities")
+  endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tkhtml")
 
-  # Tktable is a borderline case.  It does exist and is used in the Tcl/Tk
-  # ecosystem, but it is has the same problem we have generally with "package
-  # require" Tk package testing and there is very little upstream activity...
-  add_subdirectory(tktable)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tktable2.10")
-  SetTargetFolder(Tktable "Third Party Libraries")
-  SetTargetFolder(tktable_header_gen "Compilation Utilities")
+  if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tktable")
+    # Tktable is a borderline case.  It does exist and is used in the Tcl/Tk
+    # ecosystem, but it is has the same problem we have generally with "package
+    # require" Tk package testing and there is very little upstream activity...
+    add_subdirectory(tktable)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl")
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h")
+    DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tktable2.10")
+    SetTargetFolder(Tktable "Third Party Libraries")
+    SetTargetFolder(tktable_header_gen "Compilation Utilities")
+  endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tktable")
 
 endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK)
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/tkhtml.dist")
-CMAKEFILES_IN_DIR(tkhtml_ignore_files tkhtml)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tkhtml")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/tkhtml.dist")
+  CMAKEFILES_IN_DIR(tkhtml_ignore_files tkhtml)
+endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tkhtml")
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/tktable.dist")
-CMAKEFILES_IN_DIR(tktable_ignore_files tktable)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tktable")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/tktable.dist")
+  CMAKEFILES_IN_DIR(tktable_ignore_files tktable)
+endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tktable")
 
 # The above libraries are all compilation targets with libraries, and so have
 # build outputs that must be distributed with BRL-CAD.  The following are
 # either header-only libraries or built directly into executables, and as such
 # may remain in place - they are needed only for building.
-include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
-CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
-set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Eigen")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
+  CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
+endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Eigen")
 
 # linenoise is used by applications directly
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/linenoise")

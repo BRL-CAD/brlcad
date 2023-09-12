@@ -815,6 +815,16 @@ if (BRLCAD_ENABLE_STEP)
   find_package(STEPCODE)
 endif (BRLCAD_ENABLE_STEP)
 
+
+# Eigen - linear algebra library
+find_package_reset(Eigen3 RESET_TP)
+set(EIGEN_DIR "${BRLCAD_EXT_NOINSTALL_DIR}/share/eigen3/cmake")
+find_package(Eigen3 NO_MODULE)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen)
+list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
+
+
 # GDAL -  translator library for raster and vector geospatial data formats
 # https://gdal.org
 if (BRLCAD_ENABLE_GDAL)
@@ -898,6 +908,13 @@ set(OSMESA_ROOT "${CMAKE_BINARY_DIR}")
 find_package(OSMESA)
 
 
+# Poly2Tri - constrained Delaunay triangulation
+# https://github.com/jhasse/poly2tri
+find_package_reset(POLY2TRI RESET_TP)
+set(POLY2TRI_ROOT "${CMAKE_BINARY_DIR}")
+find_package(POLY2TRI REQUIRED)
+
+
 # TCL - scripting language.  For Tcl/Tk builds we want
 # static lib building on so we get the stub libraries.
 if (BRLCAD_ENABLE_TK)
@@ -931,6 +948,7 @@ CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
 # so we set a flag in the configuration header to pass
 # on that information.
 CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TK\n")
+
 
 # Qt - cross-platform user interface/application development toolkit
 # https://download.qt.io/archive/qt
