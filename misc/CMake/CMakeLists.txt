@@ -32,6 +32,7 @@ set(cmake_ignore_files
   FindASSETIMPORT.cmake
   FindBlosc.cmake
   FindBSON.cmake
+  FindEigen3.cmake
   FindFontconfig.cmake
   FindGECODE.cmake
   FindIlmBase.cmake
