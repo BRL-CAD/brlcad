@@ -58,7 +58,7 @@ unset(OSMESA_NAMES)
 mark_as_advanced(OSMESA_INCLUDE_DIR)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(OSMESA REQUIRED_VARS OSMESA_LIBRARY OSMESA_INCLUDE_DIR OSMESA_X_INCLUDE_DIR)
+find_package_handle_standard_args(OSMESA REQUIRED_VARS OSMESA_LIBRARY OSMESA_INCLUDE_DIR)
 
 if(OSMESA_FOUND)
     set(OSMESA_INCLUDE_DIRS ${OSMESA_INCLUDE_DIR})
