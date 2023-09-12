@@ -29,6 +29,10 @@
 
 #include "common.h"
 
+#include <map>
+#include <set>
+#include <string>
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -39,126 +43,204 @@
 #include "../ged_private.h"
 #include "./ged_edit2.h"
 
-static int
-_edit_cmd_msgs(void *einfop, int argc, const char **argv, const char *us, const char *ps)
-{
-    struct _ged_edit2_info *einfo = (struct _ged_edit2_info *)einfop;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n%s\n", us, ps);
-	return 1;
-    }
-    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n", ps);
-	return 1;
-    }
-    return 0;
-}
-
-extern "C" int
-_edit2_cmd_rotate(void *einfop, int argc, const char **argv)
-{
-    if (!einfop || !argc || !argv)
-	return BRLCAD_ERROR;
-
-    const char *usage_string = "edit [options] [geometry] rotate X Y Z";
-    const char *purpose_string = "rotate specified primitive or comb instance";
-    if (_edit_cmd_msgs(einfop, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    argc--; argv++;
-
-    struct _ged_edit2_info *einfo = (struct _ged_edit2_info *)einfop;
-    if (argc < 3 || !argv) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
-extern "C" int
-_edit2_cmd_tra(void *einfop, int argc, const char **argv)
-{
-    if (!einfop || !argc || !argv)
-	return BRLCAD_ERROR;
-
-    const char *usage_string = "edit [options] [geometry] tra X Y Z";
-    const char *purpose_string = "translate specified primitive or comb instance relative to its current position";
-    if (_edit_cmd_msgs(einfop, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    argc--; argv++;
-
-    struct _ged_edit2_info *einfo = (struct _ged_edit2_info *)einfop;
-    if (argc < 3 || !argv) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
-extern "C" int
-_edit2_cmd_translate(void *einfop, int argc, const char **argv)
-{
-    if (!einfop || !argc || !argv)
-	return BRLCAD_ERROR;
-
-    const char *usage_string = "edit [options] [geometry] translate X Y Z";
-    const char *purpose_string = "translate specified primitive or comb instance to the specified aeinfopolute position";
-    if (_edit_cmd_msgs(einfop, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    argc--; argv++;
-
-    struct _ged_edit2_info *einfo = (struct _ged_edit2_info *)einfop;
-    if (argc < 3 || !argv) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
-extern "C" int
-_edit2_cmd_scale(void *einfop, int argc, const char **argv)
-{
-    if (!einfop || !argc || !argv)
-	return BRLCAD_ERROR;
-
-    const char *usage_string = "edit [options] [geometry] scale factor";
-    const char *purpose_string = "scale specified primitive or comb instance by the specified factor (must be greater than 0)";
-    if (_edit_cmd_msgs(einfop, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    argc--; argv++;
-
-    struct _ged_edit2_info *einfo = (struct _ged_edit2_info *)einfop;
-    if (!argc || !argv) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
-const struct bu_cmdtab _edit2_cmds[] = {
-    { "rot",           _edit2_cmd_rotate},
-    { "rotate",        _edit2_cmd_rotate},
-    { "tra",           _edit2_cmd_tra},
-    { "translate",     _edit2_cmd_translate},
-    { "sca",           _edit2_cmd_scale},
-    { "scale",         _edit2_cmd_scale},
-    { (char *)NULL,    NULL}
+// Common base class method to allow subcmd help printing to collect and
+// format the help from all commands, as well as allow executing the
+// command from a map of class pointers.
+class ged_subcmd {
+    public:
+	virtual ~ged_subcmd() {}
+	virtual std::string usage()   { return std::string(""); }
+	virtual std::string purpose() { return std::string(""); }
+	virtual int exec(struct ged *, int, const char **) { return BRLCAD_ERROR; }
 };
 
+int
+_ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::string, ged_subcmd *> &subcmds, const char *cmdname, const char *cmdargs, int argc, const char **argv)
+{
+    if (!gedp || !gopts || !cmdname)
+	return BRLCAD_ERROR;
+
+    if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
+	bu_vls_printf(gedp->ged_result_str, "%s %s\n", cmdname, cmdargs);
+	if (gopts) {
+	    char *option_help = bu_opt_describe(gopts, NULL);
+	    if (option_help) {
+		bu_vls_printf(gedp->ged_result_str, "Options:\n%s\n", option_help);
+		bu_free(option_help, "help str");
+	    }
+	}
+	bu_vls_printf(gedp->ged_result_str, "Available subcommands:\n");
+
+	// It's possible for a command table to associate multiple strings with
+	// the same function, for compatibility or convenience.  In those
+	// instances, rather than repeat the same line, we instead group all
+	// strings leading to the same subcommand together.
+	
+	// Group the strings referencing the same method
+	std::map<ged_subcmd *, std::set<std::string>> cmd_strings;
+	std::map<std::string, ged_subcmd *>::iterator cm_it;
+	for (cm_it = subcmds.begin(); cm_it != subcmds.end(); cm_it++)
+	    cmd_strings[cm_it->second].insert(cm_it->first);
+	
+	// Generate the labels to be printed
+	std::map<ged_subcmd *, std::string> cmd_labels;
+	std::map<ged_subcmd *, std::set<std::string>>::iterator c_it;
+	for (c_it = cmd_strings.begin(); c_it != cmd_strings.end(); c_it++) {
+	    std::set<std::string>::iterator s_it;
+	    std::string label;
+	    for (s_it = c_it->second.begin(); s_it != c_it->second.end(); s_it++) {
+		if (s_it != c_it->second.begin())
+		    label.append(std::string(","));
+		label.append(*s_it);
+	    }
+	    cmd_labels[c_it->first] = label;
+	}
+
+	// Find the maximum label length we need to accommodate when printing
+	std::map<ged_subcmd *, std::string>::iterator l_it;
+	size_t maxcmdlen = 0;
+	for (l_it = cmd_labels.begin(); l_it != cmd_labels.end(); l_it++)
+	    maxcmdlen = (maxcmdlen > l_it->second.length()) ? maxcmdlen : l_it->second.length();
+
+	// Generate the help table
+	std::set<ged_subcmd *> processed_funcs;
+	for (cm_it = subcmds.begin(); cm_it != subcmds.end(); cm_it++) {
+	    // We're only going to print one line per unique, even if the
+	    // command has multiple aliases in the table
+	    if (processed_funcs.find(cm_it->second) != processed_funcs.end())
+		continue;
+	    processed_funcs.insert(cm_it->second);
+
+	    // Unseen command - print
+	    std::string &lbl = cmd_labels[cm_it->second];
+	    bu_vls_printf(gedp->ged_result_str, "  %s%*s", lbl.c_str(), (int)(maxcmdlen - lbl.length()) +   2, " ");
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", cm_it->second->purpose().c_str());
+	}
+    } else {
+
+	std::map<std::string, ged_subcmd *>::iterator cm_it = subcmds.find(std::string(cmdname));
+	if (cm_it == subcmds.end())
+	    return BRLCAD_ERROR;
+	bu_vls_printf(gedp->ged_result_str, "%s", cm_it->second->usage().c_str());
+	return BRLCAD_OK;
+
+    }
+
+    return BRLCAD_OK;
+}
+
+// Rotate command
+class cmd_rotate : public ged_subcmd {
+    public:
+	~cmd_rotate() {};
+	std::string usage()   { return std::string("edit [options] [geometry] rotate X Y Z"); }
+	std::string purpose() { return std::string("rotate specified primitive or comb instance"); }
+	int exec(struct ged *, int, const char **);
+};
+static cmd_rotate edit_rotate_cmd;
+
+int
+cmd_rotate::exec(struct ged *gedp, int argc, const char **argv)
+{
+    if (!gedp || !argc || !argv)
+	return BRLCAD_ERROR;
+
+    argc--; argv++;
+
+    if (argc < 3 || !argv) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", usage().c_str());
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+// Tra command
+class cmd_tra : public ged_subcmd {
+    public:
+	~cmd_tra() {};
+	std::string usage()   { return std::string("edit [options] [geometry] tra X Y Z"); }
+	std::string purpose() { return std::string("translate specified primitive or comb instance relative to its current position"); }
+	int exec(struct ged *, int, const char **);
+};
+static cmd_tra edit_tra_cmd;
+
+int
+cmd_tra::exec(struct ged *gedp, int argc, const char **argv)
+{
+    if (!gedp || !argc || !argv)
+	return BRLCAD_ERROR;
+
+    argc--; argv++;
+
+    if (argc < 3 || !argv) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", usage().c_str());
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+// Translate command
+class cmd_translate : public ged_subcmd {
+    public:
+	~cmd_translate() {};
+	std::string usage()   { return std::string("edit [options] [geometry] translate X Y Z"); }
+	std::string purpose() { return std::string("translate specified primitive or comb instance to the specified absolute position"); }
+	int exec(struct ged *, int, const char **);
+};
+static cmd_translate edit_translate_cmd;
+
+int
+cmd_translate::exec(struct ged *gedp, int argc, const char **argv)
+{
+    if (!gedp || !argc || !argv)
+	return BRLCAD_ERROR;
+
+    argc--; argv++;
+
+    if (argc < 3 || !argv) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", usage().c_str());
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+// Scale command
+class cmd_scale : public ged_subcmd {
+    public:
+	~cmd_scale() {};
+	std::string usage()   { return std::string("edit [options] [geometry] scale_factor"); }
+	std::string purpose() { return std::string("scale specified primitive or comb instance by the specified factor (must be greater than 0)"); }
+	int exec(struct ged *, int, const char **);
+};
+static cmd_scale edit_scale_cmd;
+
+int
+cmd_scale::exec(struct ged *gedp, int argc, const char **argv)
+{
+    if (!gedp || !argc || !argv)
+	return BRLCAD_ERROR;
+
+    argc--; argv++;
+
+    if (argc < 3 || !argv) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", usage().c_str());
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
 
 extern "C" int
 ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
 {
     int help = 0;
+    int verbosity = 0;
+    int cmd_pos = -1;
     struct bu_vls geom_specifier = BU_VLS_INIT_ZERO;
-    struct _ged_edit2_info einfo;
+    std::vector<std::string> geom_objs;
 
     // Clear results buffer
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -170,32 +252,34 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // We know we're the edit command
     argc--;argv++;
 
+    // Set up our command map
+    std::map<std::string, ged_subcmd *> edit_cmds;
+    edit_cmds[std::string("rot")]       = &edit_rotate_cmd;
+    edit_cmds[std::string("rotate")]    = &edit_rotate_cmd;
+    edit_cmds[std::string("tra")]       = &edit_tra_cmd;
+    edit_cmds[std::string("translate")] = &edit_translate_cmd;
+    edit_cmds[std::string("sca")]       = &edit_scale_cmd;
+    edit_cmds[std::string("scale")]     = &edit_scale_cmd;
+
     // See if we have any high level options set
     struct bu_opt_desc d[4];
     BU_OPT(d[0], "h", "help",     "",          NULL,         &help,            "Print help");
     BU_OPT(d[1], "G", "geometry", "specifier", &bu_opt_vls,  &geom_specifier,  "Specify geometry to operate on");
-    BU_OPT(d[2], "v", "verbose", "",           NULL,         &einfo.verbosity, "Verbose output");
+    BU_OPT(d[2], "v", "verbose", "",           NULL,         &verbosity,       "Verbose output");
     BU_OPT_NULL(d[3]);
 
-
     // Set up the edit container and initialize
-    const struct bu_cmdtab *bcmds = (const struct bu_cmdtab *)_edit2_cmds;
     struct bu_opt_desc *bdesc = (struct bu_opt_desc *)d;
-    einfo.verbosity = 0;
-    einfo.gedp = gedp;
-    einfo.cmds = bcmds;
-    einfo.gopts = bdesc;
 
     const char *bargs_help = "[options] [geometry] subcommand [args]";
     if (!argc) {
-	_ged_subcmd_help(gedp, bdesc, bcmds, "edit", bargs_help, &einfo, 0, NULL);
+	_ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
 	return BRLCAD_OK;
     }
 
     // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
     for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_edit2_cmds, argv[i]) == BRLCAD_OK) {
+	if (edit_cmds.find(std::string(argv[i])) != edit_cmds.end()) {
 	    cmd_pos = i;
 	    break;
 	}
@@ -209,9 +293,9 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
 	if (cmd_pos >= 0) {
 	    argc = argc - cmd_pos;
 	    argv = &argv[cmd_pos];
-	    _ged_subcmd_help(gedp, bdesc, bcmds, "edit", bargs_help, &einfo, argc, argv);
+	    _ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, argc, argv);
 	} else {
-	    _ged_subcmd_help(gedp, bdesc, bcmds, "edit", bargs_help, &einfo, 0, NULL);
+	    _ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
 	}
 	return BRLCAD_OK;
     }
@@ -219,7 +303,7 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // Must have a subcommand
     if (cmd_pos == -1) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
-	_ged_subcmd_help(gedp, bdesc, bcmds, "edit", bargs_help, &einfo, 0, NULL);
+	_ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
 	return BRLCAD_ERROR;
     }
 
@@ -271,18 +355,18 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // the equivalent to an MGED reset.
     if (opt_ret > 0) {
 	for (int gcnt = 0; gcnt < opt_ret; gcnt++) {
-	    einfo.geom_objs.push_back(std::string(argv[gcnt]));
+	    geom_objs.push_back(std::string(argv[gcnt]));
 	}
     } else {
 	// If nothing is specified, we need at least one selected geometry item or
 	// we have nothing to work on
 	std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states("default");
 	if (ss.size()) {
-	    einfo.geom_objs = ss[0]->list_selected_paths();
+	    geom_objs = ss[0]->list_selected_paths();
 	}
     }
 
-    if (!einfo.geom_objs.size()) {
+    if (!geom_objs.size()) {
 	bu_vls_printf(gedp->ged_result_str, "Error: no geometry objects specified or selected\n");
 	return BRLCAD_ERROR;
     }
@@ -292,14 +376,7 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     argv = &argv[cmd_pos];
 
     // Execute the subcommand
-    int ret;
-    if (bu_cmd(_edit2_cmds, argc, argv, 0, (void *)&einfo, &ret) == BRLCAD_OK) {
-	return ret;
-    } else {
-	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
-    }
-
-    return BRLCAD_ERROR;
+    return edit_cmds[std::string(argv[0])]->exec(gedp, argc, argv);
 }
 
 
