@@ -220,8 +220,14 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // High level options are only defined prior to the subcommand
     for (int i = 0; i < argc; i++) {
 	if (edit_cmds.find(std::string(argv[i])) != edit_cmds.end()) {
-	    cmd_pos = i;
-	    break;
+	    // To allow specifying an object for editing that has the same name as an edit
+	    // subcommand, recognize the case where the preceding argument is one of the
+	    // geometry specifier options.  If that's the case, we've matched a specifier
+	    // argument not a command and should continue.
+	    if (!i || (!BU_STR_EQUAL(argv[i-1], "-G") && !BU_STR_EQUAL(argv[i-1], "--geometry"))) {
+		cmd_pos = i;
+		break;
+	    }
 	}
     }
 
