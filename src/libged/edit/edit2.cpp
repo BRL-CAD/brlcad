@@ -63,7 +63,7 @@ static cmd_rotate edit_rotate_cmd;
 int
 cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 {
-    if (!gedp || u_data || !argc || !argv)
+    if (!gedp || !u_data || !argc || !argv)
 	return BRLCAD_ERROR;
 
     struct edit_info *einfo = (struct edit_info *)u_data;
@@ -93,7 +93,7 @@ static cmd_tra edit_tra_cmd;
 int
 cmd_tra::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 {
-    if (!gedp || u_data || !argc || !argv)
+    if (!gedp || !u_data || !argc || !argv)
 	return BRLCAD_ERROR;
 
     struct edit_info *einfo = (struct edit_info *)u_data;
@@ -123,7 +123,7 @@ static cmd_translate edit_translate_cmd;
 int
 cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 {
-    if (!gedp || u_data || !argc || !argv)
+    if (!gedp || !u_data || !argc || !argv)
 	return BRLCAD_ERROR;
 
     struct edit_info *einfo = (struct edit_info *)u_data;
@@ -153,7 +153,7 @@ static cmd_scale edit_scale_cmd;
 int
 cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
 {
-    if (!gedp || u_data || !argc || !argv)
+    if (!gedp || !u_data || !argc || !argv)
 	return BRLCAD_ERROR;
 
     struct edit_info *einfo = (struct edit_info *)u_data;
