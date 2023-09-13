@@ -143,6 +143,10 @@ set(PDF_DIR "${DOC_DIR}/pdf/")
 # different mechanism for handling this situation, and we need to
 # update the executable paths accordingly if they are configuration
 # dependent.
+#
+# TODO - is there some way generator expressions could be used to
+# improve this?  Maybe pass the build time location of these programs
+# to the scripts as -D arguments?
 if(CMAKE_CONFIGURATION_TYPES)
   string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
   string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
