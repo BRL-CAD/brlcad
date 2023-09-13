@@ -170,6 +170,83 @@ _ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cm
     return BRLCAD_OK;
 }
 
+int
+_ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::string, ged_subcmd *> &subcmds, const char *cmdname, const char *cmdargs, int argc, const char **argv)
+{
+    if (!gedp || !gopts || !cmdname)
+	return BRLCAD_ERROR;
+
+    if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
+	bu_vls_printf(gedp->ged_result_str, "%s %s\n", cmdname, cmdargs);
+	if (gopts) {
+	    char *option_help = bu_opt_describe(gopts, NULL);
+	    if (option_help) {
+		bu_vls_printf(gedp->ged_result_str, "Options:\n%s\n", option_help);
+		bu_free(option_help, "help str");
+	    }
+	}
+	bu_vls_printf(gedp->ged_result_str, "Available subcommands:\n");
+
+	// It's possible for a command table to associate multiple strings with
+	// the same function, for compatibility or convenience.  In those
+	// instances, rather than repeat the same line, we instead group all
+	// strings leading to the same subcommand together.
+
+	// Group the strings referencing the same method
+	std::map<ged_subcmd *, std::set<std::string>> cmd_strings;
+	std::map<std::string, ged_subcmd *>::iterator cm_it;
+	for (cm_it = subcmds.begin(); cm_it != subcmds.end(); cm_it++)
+	    cmd_strings[cm_it->second].insert(cm_it->first);
+
+	// Generate the labels to be printed
+	std::map<ged_subcmd *, std::string> cmd_labels;
+	std::map<ged_subcmd *, std::set<std::string>>::iterator c_it;
+	for (c_it = cmd_strings.begin(); c_it != cmd_strings.end(); c_it++) {
+	    std::set<std::string>::iterator s_it;
+	    std::string label;
+	    for (s_it = c_it->second.begin(); s_it != c_it->second.end(); s_it++) {
+		if (s_it != c_it->second.begin())
+		    label.append(std::string(","));
+		label.append(*s_it);
+	    }
+	    cmd_labels[c_it->first] = label;
+	}
+
+	// Find the maximum label length we need to accommodate when printing
+	std::map<ged_subcmd *, std::string>::iterator l_it;
+	size_t maxcmdlen = 0;
+	for (l_it = cmd_labels.begin(); l_it != cmd_labels.end(); l_it++)
+	    maxcmdlen = (maxcmdlen > l_it->second.length()) ? maxcmdlen : l_it->second.length();
+
+	// Generate the help table
+	std::set<ged_subcmd *> processed_funcs;
+	for (cm_it = subcmds.begin(); cm_it != subcmds.end(); cm_it++) {
+	    // We're only going to print one line per unique, even if the
+	    // command has multiple aliases in the table
+	    if (processed_funcs.find(cm_it->second) != processed_funcs.end())
+		continue;
+	    processed_funcs.insert(cm_it->second);
+
+	    // Unseen command - print
+	    std::string &lbl = cmd_labels[cm_it->second];
+	    bu_vls_printf(gedp->ged_result_str, "  %s%*s", lbl.c_str(), (int)(maxcmdlen - lbl.length()) +   2, " ");
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", cm_it->second->purpose().c_str());
+	}
+    } else {
+
+	std::map<std::string, ged_subcmd *>::iterator cm_it = subcmds.find(std::string(cmdname));
+	if (cm_it == subcmds.end())
+	    return BRLCAD_ERROR;
+	bu_vls_printf(gedp->ged_result_str, "%s", cm_it->second->usage().c_str());
+	return BRLCAD_OK;
+
+    }
+
+    return BRLCAD_OK;
+}
+
+
+
 void
 ged_push_scene_obj(struct ged *gedp, struct bv_scene_obj *sp)
 {

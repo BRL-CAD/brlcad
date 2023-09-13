@@ -719,6 +719,27 @@ _ged_subcmd_exec(struct ged *gedp, struct bu_opt_desc *gopts, const struct bu_cm
        	int help, int cmd_pos);
 
 
+// TODO:  alternative approach to the command structure supported by
+// _ged_subcmd_help - if we successfully migrate all the uses of the above
+// functions, rename this from subcmd2 to subcmd...
+//
+// Prototyping with edit/edit2.cpp
+#ifdef __cplusplus
+
+#include <string>
+#include <map>
+
+class ged_subcmd {
+    public:
+	virtual std::string usage()   { return std::string(""); }
+	virtual std::string purpose() { return std::string(""); }
+	virtual int exec(struct ged *, void *, int, const char **) { return BRLCAD_ERROR; }
+};
+
+GED_EXPORT extern int
+_ged_subcmd2_help(struct ged *gedp, struct bu_opt_desc *gopts, std::map<std::string, ged_subcmd *> &subcmds, const char *cmdname, const char *cmdargs, int argc, const char **argv);
+
+#endif
 
 __END_DECLS
 
