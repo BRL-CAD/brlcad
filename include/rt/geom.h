@@ -384,6 +384,7 @@ struct rt_vdb_internal {
 	/*fastf_t a;*/
 	/*void *vdb;*/
 	void *vdb;
+	void *vdbGrid;
 	
 
 };

@@ -40,13 +40,16 @@ extern "C" {
 		struct rt_vdb_internal vdb_i;
 		nanovdb::NanoGrid <float>* h_grid;
 		nanovdb::GridHandle<nanovdb::HostBuffer> handler;
+		openvdb::GridBase::Ptr srcGrid;
 		vect_t normalHit;
 	};
 
 
+	nanovdb::GridHandle<nanovdb::HostBuffer> vdbHandle;
+
 	int rt_vdb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 	{
-
+		bu_log("step import \n");
 		struct rt_vdb_internal *eip;
 
 		/* must be double for import and export */
@@ -77,8 +80,32 @@ extern "C" {
 		//bu_log("min eip:  %g %g  %g \n", eip->minBB[0], eip->minBB[1], eip->minBB[2]);
 		//bu_log("max eip:  %g %g  %g \n", eip->maxBB[0], eip->maxBB[1], eip->maxBB[2]);
 
-		//bu_log("min vec:  %g %g  %g \n", vec[0], vec[1], vec[2]);
+		bu_log("min vec:  %g %g  %g \n", vec[0], vec[1], vec[2]);
 		//bu_log("max vec:  %g %g  %g \n", vec[1], vec[4], vec[5]);
+
+		//eip->vdb = &nanovdb::createLevelSetSphere<float, float, nanovdb::HostBuffer>(100.0f, nanovdb::Vec3f(0, 0, 0), 1.0, 3.0, nanovdb::Vec3d(0), "sphere");
+		//nanovdb::GridHandle<nanovdb::HostBuffer> vdbHandler = *((nanovdb::GridHandle<nanovdb::HostBuffer> *)eip->vdb);
+		////eip->vdbGrid = &nanovdb::nanoToOpenVDB(*vdbHandler);
+		////auto grid = nanovdb::nanoToOpenVDB(*vdbHandler);
+		////eip->vdbGrid = grid.get();
+
+		//nanovdb::GridHandle<nanovdb::HostBuffer> vdbHandle;
+		//vdbHandle = nanovdb::createLevelSetSphere<float, float, nanovdb::HostBuffer>(100.0f, nanovdb::Vec3f(0, 0, 0), 1.0, 3.0, nanovdb::Vec3d(0), "sphere");
+		//vdbHandle = nanovdb::createLevelSetTorus<float, float, nanovdb::HostBuffer>(100.0f, 50.0f, nanovdb::Vec3f(0, 0, 0), 1.0, 3.0, nanovdb::Vec3d(0));
+		
+		vdbHandle = nanovdb::io::readGrid< nanovdb::HostBuffer>("test.nvdb");
+		std::string name = vdbHandle.gridMetaData()->shortGridName();
+		const int length = name.length();
+
+		// declaring character array (+1 for null terminator)
+		char* char_array = new char[length + 1];
+
+		// copying the contents of the
+		// string to char array
+		strcpy(char_array, name.c_str());
+		bu_log(char_array);
+		delete[] char_array;
+		eip->vdb = &vdbHandle;
 
 
 		return 0;		/* OK */
@@ -157,15 +184,29 @@ extern "C" {
 		struct rt_vdb_internal *eip = (struct rt_vdb_internal *)ip->idb_ptr;
 		RT_VDB_CK_MAGIC(eip);
 
+		nanovdb::GridHandle<nanovdb::HostBuffer> *vdbHandler = (nanovdb::GridHandle<nanovdb::HostBuffer> *)eip->vdb;
+		nanovdb::NanoGrid <float>* h_grid = vdbHandler->grid<float>();
+	
+		if (!h_grid)
+			bu_log("bad loading \n");
 
-		(*min)[X] = eip->minBB[X];
-		(*max)[X] = eip->maxBB[X];
+		float              wBBoxDimZ = (float)h_grid->worldBBox().dim()[2] * 2;
 
-		(*min)[Y] = eip->minBB[Y];
-		(*max)[Y] = eip->maxBB[Y];
+		vect_t minBoundingBox;
+		VSET(minBoundingBox, h_grid->worldBBox().min()[0], h_grid->worldBBox().min()[1], h_grid->worldBBox().min()[2]);
 
-		(*min)[Z] = eip->minBB[Z];
-		(*max)[Z] = eip->maxBB[Z];
+		vect_t maxBoundingBox;
+		VSET(maxBoundingBox, h_grid->worldBBox().max()[0], h_grid->worldBBox().max()[1], h_grid->worldBBox().max()[2]);
+
+
+		(*min)[X] = minBoundingBox[0];//eip->minBB[X];
+		(*max)[X] = maxBoundingBox[0];//eip->maxBB[X];
+
+		(*min)[Y] = minBoundingBox[1]; //eip->minBB[Y];
+		(*max)[Y] = maxBoundingBox[1];// eip->maxBB[Y];
+
+		(*min)[Z] = minBoundingBox[2];//eip->minBB[Z];
+		(*max)[Z] = maxBoundingBox[2];	//eip->maxBB[Z];
 
 		return 0;
 
@@ -188,6 +229,7 @@ extern "C" {
 		VMOVE(vdb->minBB, eip2->minBB);
 		VMOVE(vdb->maxBB, eip2->maxBB);
 
+		bu_log("step prep \n");
 		/*fprintf(stderr, "bb %lf %lf\n", eip2->minBB, eip2->maxBB);
 		fprintf(stderr, "bb2 %lf %lf\n", vdb->minBB, vdb->maxBB);*/
 		//bu_log("eip max:  %g %g  %g \n", eip2->maxBB[0], eip2->maxBB[1], eip2->maxBB[2]);
@@ -209,8 +251,8 @@ extern "C" {
 		vect_t work;
 		fastf_t f;
 
-		VMINMAX(stp->st_min, stp->st_max, eip2->maxBB);
-		VMINMAX(stp->st_min, stp->st_max, eip2->minBB);
+		/*VMINMAX(stp->st_min, stp->st_max, eip2->maxBB);
+		VMINMAX(stp->st_min, stp->st_max, eip2->minBB);*/
 
 		//VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
 		//VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
@@ -242,39 +284,72 @@ extern "C" {
 		bu_log("min vec:  %g \n", wBBoxDimZ);
 */
 		
-		VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+		/*VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
 		VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
 		
 		f = work[X];
 		if (work[Y] > f) f = work[Y];
 		if (work[Z] > f) f = work[Z];
 		stp->st_aradius = f;
-		stp->st_bradius = MAGNITUDE(work);
+		stp->st_bradius = MAGNITUDE(work);*/
 
 		//nanovdb::GridHandle<nanovdb::HostBuffer> handle;
 		//handle = nanovdb::createLevelSetSphere<float, float, nanovdb::HostBuffer>(1.0f, nanovdb::Vec3f(0, 0, 0), 0.01f, 3.0f, nanovdb::Vec3d(0), "sphere");
+		//handle = nanovdb::createLevelSetSphere<float, float, nanovdb::HostBuffer>(100.0f, nanovdb::Vec3f(0, 0, 0), 1.0, 3.0, nanovdb::Vec3d(0), "sphere");
 		//vdb->handler = nanovdb::createLevelSetSphere<float, float, nanovdb::HostBuffer>(100.0f, nanovdb::Vec3f(0, 0, 0), 1.0, 3.0, nanovdb::Vec3d(0), "sphere");
-		vdb->handler = nanovdb::createLevelSetSphere<float, float, nanovdb::HostBuffer>(1.0f, nanovdb::Vec3f(0, 0, 0), 0.01f, 3.0f, nanovdb::Vec3d(0), "sphere");
+		//vdb->handler = nanovdb::createLevelSetSphere<float, float, nanovdb::HostBuffer>(1.0f, nanovdb::Vec3f(0, 0, 0), 0.01f, 3.0f, nanovdb::Vec3d(0), "sphere");
 
 		/*auto srcGrid = nanovdb::nanoToOpenVDB(handle);
 		openvdb::FloatGrid* h_grid = (openvdb::FloatGrid *)srcGrid.get();
 		vdb->grid = &h_grid;*/
-		auto srcGrid = nanovdb::nanoToOpenVDB(vdb->handler);
+		//vdb->srcGrid = nanovdb::nanoToOpenVDB(vdb->handler);
 		//eip->vdb = (openvdb::FloatGrid *)srcGrid.get();
 
-		nanovdb::NanoGrid <float>* h_grid = vdb->handler.grid<float>();
+		nanovdb::GridHandle<nanovdb::HostBuffer> *vdbHandler = (nanovdb::GridHandle<nanovdb::HostBuffer> *)eip2->vdb;
+		vdb->srcGrid = nanovdb::nanoToOpenVDB(*vdbHandler);
+		nanovdb::NanoGrid <float>* h_grid = vdbHandler->grid<float>();
+
+		//nanovdb::NanoGrid <float>* h_grid = vdb->handler.grid<float>();
 		if (!h_grid)
 			bu_log("bad loading \n");
 
-		eip2->vdb = h_grid;
-		float              wBBoxDimZ = (float)h_grid->worldBBox().dim()[2] * 2;
-		bu_log("min vec:  %g \n", wBBoxDimZ);
+		//eip2->vdb = h_grid;
+		//float              wBBoxDimZ = (float)h_grid->worldBBox().dim()[2] * 2;
+		//bu_log("min vec:  %g \n", wBBoxDimZ);
 
-		nanovdb::NanoGrid <float>* h_grid2 = (nanovdb::NanoGrid <float> *)eip2->vdb;
+	/*	nanovdb::NanoGrid <float>* h_grid2 = (nanovdb::NanoGrid <float> *)eip2->vdb;
 		float              wBBoxDimZ2 = (float)h_grid2->worldBBox().dim()[2] * 2;
-		bu_log("min vec:  %g \n", wBBoxDimZ2);
+		bu_log("min vec:  %g \n", wBBoxDimZ2);*/
 
+		vect_t minBoundingBox;
+		VSET(minBoundingBox, h_grid->worldBBox().min()[0], h_grid->worldBBox().min()[1], h_grid->worldBBox().min()[2]);
 
+		vect_t maxBoundingBox;
+		VSET(maxBoundingBox, h_grid->worldBBox().max()[0], h_grid->worldBBox().max()[1], h_grid->worldBBox().max()[2]);
+
+		VMINMAX(stp->st_min, stp->st_max, minBoundingBox);
+		VMINMAX(stp->st_min, stp->st_max, maxBoundingBox);
+
+		bu_log("min vec:  %g %g %g \n", stp->st_min[0], stp->st_min[1], stp->st_min[2]);
+		bu_log("max vec:  %g %g %g \n", stp->st_max[0], stp->st_max[1], stp->st_max[2]);
+
+		bu_log("min vec:  %g %g %g \n", h_grid->worldBBox().min()[0], h_grid->worldBBox().min()[1], h_grid->worldBBox().min()[2]);
+		bu_log("max vec:  %g %g %g \n", h_grid->worldBBox().max()[0], h_grid->worldBBox().max()[1], h_grid->worldBBox().max()[2]);
+
+		/*VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+		VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
+
+		f = work[X];
+		if (work[Y] > f) f = work[Y];
+		if (work[Z] > f) f = work[Z];
+		stp->st_aradius = f;
+		stp->st_bradius = MAGNITUDE(work);*/
+		vect_t diam;
+		vect_t radvec;
+		VSUB2(diam, stp->st_max, stp->st_min);
+		VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+		VSCALE(radvec, diam, 0.5);
+		stp->st_aradius = stp->st_bradius = MAGNITUDE(radvec);
 
 		vdb->vdb_i = *eip2;		/* struct copy */
 		vdb->h_grid = h_grid;		/* struct copy */
@@ -414,24 +489,25 @@ extern "C" {
 		
 		//bu_log("min vec:  %g \n", wBBoxDimZ);
 
-		auto srcGrid = nanovdb::nanoToOpenVDB(vdb->handler);
+		auto srcGrid = vdb->srcGrid;//nanovdb::nanoToOpenVDB(vdb->handler);
 		openvdb::FloatGrid* h_grid = (openvdb::FloatGrid *)srcGrid.get();
 
 		auto  indexBBox = h_grid->evalActiveVoxelBoundingBox();
 		auto  gridXform = h_grid->transformPtr();
 		auto  worldBBox = gridXform->indexToWorld(indexBBox);
 		float wBBoxDimZ = (float)worldBBox.extents()[2] * 2;
-		bu_log("min vec:  %g \n", wBBoxDimZ);
+		//bu_log("min vec:  %g \n", wBBoxDimZ);
 
 		openvdb::tools::LevelSetRayIntersector<GridT, openvdb::tools::LinearSearchImpl<GridT, 0, RealT>, GridT::TreeType::RootNodeType::ChildNodeType::LEVEL, RayT> intersector(*h_grid);
 		Vec3T rayEye(rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
 		Vec3T rayDir(rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
+		rayDir.normalize();
 		RayT wRay(rayEye, rayDir);
 		// transform the ray to the grid's index-space.
 		RayT iRay = wRay.worldToIndex(*h_grid);
 		// intersect...
 		float t0;
-		Vec3T normal(1,0,0);
+		Vec3T normal(0,0,0);
 		Vec3T worldHit(0, 0, 0);
 		//if (intersector.intersectsIS(iRay, t0)) {
 		if (intersector.intersectsWS(wRay, worldHit, normal, t0)) {
@@ -439,11 +515,12 @@ extern "C" {
 			float wT0 = t0 * float(h_grid->voxelSize()[0]);
 
 			VSET(vdb->normalHit, normal.x(), normal.y(), normal.z());
-			fprintf(stderr, "hit\n");
+			//bu_log("normal vec:  %g %g %g \n", normal.x(), normal.y(), normal.z());
+			//fprintf(stderr, "hit\n");
 
 			RT_GET_SEG(segp, ap->a_resource);
 			segp->seg_stp = stp;
-			segp->seg_in.hit_dist = t0;
+			segp->seg_in.hit_dist = wT0;
 
 			//segp->seg_out.hit_dist = tmax;
 			BU_LIST_INSERT(&(seghead->l), &(segp->l));
@@ -475,7 +552,7 @@ extern "C" {
 
 		VSET(hitp->hit_normal, vdb->normalHit[0], vdb->normalHit[1], vdb->normalHit[2]);
 		//VSET(hitp->hit_normal, 1, 0, 0);
-		hitp->hit_vpriv[X] = 1.0;
+		//hitp->hit_vpriv[X] = 1.0;
 
 
 	}
