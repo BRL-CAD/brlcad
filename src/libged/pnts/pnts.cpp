@@ -624,7 +624,7 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
 	// trim trailing whitespace
 	char* num = (char*)nums[i];
 	int j = strlen(nums[i]) - 1;
-	while j > -1) {
+	while (j > -1) {
 	    if (num[j] == ' ') {
 		j--;
 	    } else {
