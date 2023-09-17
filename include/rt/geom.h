@@ -379,12 +379,12 @@ struct rt_vdb_internal {
 	char name[RT_VDB_NAME_LEN];
 
 	//to start, it will save the min and max of a bounding box - that will be changed to the vdb structure
-	vect_t minBB;
-	vect_t maxBB;
+	//vect_t minBB;
+	//vect_t maxBB;
 	/*fastf_t a;*/
 	/*void *vdb;*/
-	void *vdb;
-	void *vdbGrid;
+	void *vdb; // @pointer to void (to go from c to cpp code). It will point to the vdb handle in the import method.
+	//void *vdbGrid;
 	
 
 };

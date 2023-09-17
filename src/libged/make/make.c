@@ -802,11 +802,12 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	BU_ALLOC(internal.idb_ptr, struct rt_vdb_internal);
 	vdb_ip = (struct rt_vdb_internal *)internal.idb_ptr;
 	vdb_ip->magic = RT_VDB_INTERNAL_MAGIC;
+	bu_strlcpy(vdb_ip->name, argv[bu_optind + 2], sizeof(vdb_ip->name));
+	//VSET(vdb_ip->minBB, -1, -1, -1);
+	//VSET(vdb_ip->maxBB, 1, 1, 1);
+	
 
-	VSET(vdb_ip->minBB, -1, -1, -1);
-	VSET(vdb_ip->maxBB, 1, 1, 1);
-
-	bu_log("it will create a vdb\n");
+	bu_log("vdb done");
 
 	}
 	else if (BU_STR_EQUAL(argv[bu_optind+1], "cline")) {
