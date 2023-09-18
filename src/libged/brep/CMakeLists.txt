@@ -1,6 +1,10 @@
 
 set(DPLOT_READER dplot)
 
+find_package(PERPLEX)
+find_package(LEMON)
+find_package(RE2C)
+
 PERPLEX_TARGET(
   ${DPLOT_READER}_scanner
   ${DPLOT_READER}_scanner.perplex
