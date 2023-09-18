@@ -154,9 +154,14 @@ set(ENV_HOME "$ENV{HOME}")
 if (NOT ENV_HOME)
   set(ENV_HOME "$ENV{USERPROFILE}")
 endif (NOT ENV_HOME)
-if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/brlcad_ext")
-  set(BRLCAD_EXT_DIR "${ENV_HOME}/brlcad_ext")
-endif (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/brlcad_ext")
+
+# Check common location(s) in home directory
+set(EXT_CANDIDATES bext_install brlcad_ext)
+foreach(EC ${EXT_CANDIDATES})
+  if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
+    set(BRLCAD_EXT_DIR "${ENV_HOME}/${EC}")
+  endif (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
+endforeach(EC ${EXT_CANDIDATES})
 
 if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/extinstall")
   set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/extinstall")
