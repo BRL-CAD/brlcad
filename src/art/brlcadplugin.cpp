@@ -78,11 +78,11 @@
 #include "foundation/math/scalar.h"
 #include "foundation/math/vector.h"
 #include "foundation/utility/api/specializedapiarrays.h"
-#include "foundation/utility/containers/dictionary.h"
+#include "foundation/containers/dictionary.h"
 #include "foundation/utility/job/iabortswitch.h"
-#include "foundation/utility/log/consolelogtarget.h"
+#include "foundation/log/consolelogtarget.h"
 #include "foundation/utility/searchpaths.h"
-#include "foundation/utility/string.h"
+#include "foundation/string/string.h"
 
 
 /* appleseed.main headers */
@@ -170,9 +170,9 @@ brlcad_miss(struct application* UNUSED(ap))
 
 /* constructor when called from appleseed */
 BrlcadObject::BrlcadObject(
-    const char* name,
+    const char* bname,
     const asr::ParamArray& params)
-    : asr::ProceduralObject(name, params)
+    : asr::ProceduralObject(bname, params)
 {
     configure_raytrace_application(get_database().c_str(), get_object_count(), get_objects());
     VSET(min, m_params.get_required<double>("minX"), m_params.get_required<double>("minY"), m_params.get_required<double>("minZ"));
@@ -186,10 +186,10 @@ BrlcadObject::BrlcadObject(
 
 /* constructor when called from art.cpp */
 BrlcadObject:: BrlcadObject(
-    const char* name,
+    const char* bname,
     const asr::ParamArray& params,
     struct application* p_ap, struct resource* p_resources)
-    : asr::ProceduralObject(name, params)
+    : asr::ProceduralObject(bname, params)
 {
     // this->rtip = p_ap->a_rt_i;
     this->resources = p_resources;
