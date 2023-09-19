@@ -27,6 +27,14 @@ set(RT_LOCAL_INCLUDE_DIRS
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
 
 
+# include for openvdb
+include_directories(
+  ${CMAKE_SOURCE_DIR}/src/other/openVDB/openvdb
+  ${CMAKE_SOURCE_DIR}/src/other/openVDB/nanovdb
+  ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb
+  ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb
+)
+
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
 
 # FIXME: needs materialX
@@ -386,6 +394,23 @@ BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};libbrep;libnmg;libbg;libb
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
 # BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
+target_link_libraries(librt ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/openvdb.lib)
+
+set_property(TARGET librt PROPERTY CXX_STANDARD 17)
+set_property(TARGET librt-static PROPERTY CXX_STANDARD 17)
+
+if (MSVC)
+  #add_compile_options(/bigobj)
+  target_compile_options(librt PRIVATE /bigobj)
+   target_compile_options(librt-static PRIVATE /bigobj)
+else ()
+  #add_compile_options(-Wa,-mbig-obj)
+  target_compile_options(librt PRIVATE -Wa)
+  target_compile_options(librt PRIVATE -mbig-obj)
+  
+  target_compile_options(librt-static PRIVATE -Wa)
+  target_compile_options(librt-static PRIVATE -mbig-obj)
+endif ()
 
 set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(HIDE_INTERNAL_SYMBOLS)
