@@ -136,6 +136,40 @@ function(SKIP_PROCESSING tf SVAR)
 endfunction(SKIP_PROCESSING)
 
 
+# Since the checking process can be long, we want some sort
+# of feedback indicating we're progressing
+function(BFILE_TYPE_MSG ALL_CNT ALL_PROCESSED BINARY_LIST)
+  list(LENGTH ${BINARY_LIST} BCNT)
+  if (BCNT)
+    math(EXPR skip_msg  "${BCNT} % 100")
+    if (${skip_msg} EQUAL 0)
+      message("Found ${BCNT} shared object or executable files (characterized ${ALL_PROCESSED} of ${ALL_CNT} files.")
+      return()
+    endif (${skip_msg} EQUAL 0)
+  endif (BCNT)
+endfunction(BFILE_TYPE_MSG)
+
+function(NFILE_TYPE_MSG ALL_CNT ALL_PROCESSED NOEXEC_LIST)
+  list(LENGTH ${NOEXEC_LIST} NCNT)
+  if (NCNT)
+    math(EXPR skip_msg  "${NCNT} % 100")
+    if (${skip_msg} EQUAL 0)
+      message("Found ${NCNT} binary files (characterized ${ALL_PROCESSED} of ${ALL_CNT} files.")
+      return()
+    endif (${skip_msg} EQUAL 0)
+  endif (NCNT)
+endfunction(NFILE_TYPE_MSG)
+
+function(TFILE_TYPE_MSG ALL_CNT ALL_PROCESSED TEXT_LIST)
+  list(LENGTH ${TEXT_LIST} TCNT)
+  if (TCNT)
+    math(EXPR skip_msg  "${TCNT} % 500")
+    if (${skip_msg} EQUAL 0)
+      message("Found ${TCNT} text files (characterized ${ALL_PROCESSED} of ${ALL_CNT} files.")
+      return()
+    endif (${skip_msg} EQUAL 0)
+  endif (TCNT)
+endfunction(TFILE_TYPE_MSG)
 
 # For processing purposes, there are three categories of extinstall file:
 #
@@ -147,19 +181,27 @@ endfunction(SKIP_PROCESSING)
 # If we don't want to hard-code information about specific files we expect
 # to find in extinstall, we need a way to detect "on the fly" what we are
 # dealing with.
-function(FILE_TYPE fname BINARY_LIST TEXT_LIST NOEXEC_LIST)
+function(FILE_TYPE fname ALL_CNT BINARY_LIST TEXT_LIST NOEXEC_LIST)
   if (IS_SYMLINK ${CMAKE_BINARY_DIR}/${fname})
     return()
   endif (IS_SYMLINK ${CMAKE_BINARY_DIR}/${fname})
+
+  list(LENGTH ${BINARY_LIST} BCNT)
+  list(LENGTH ${TEXT_LIST} TCNT)
+  list(LENGTH ${NOEXEC_LIST} NCNT)
+  math(EXPR PCNT "${BCNT} + ${TCNT} + ${NCNT} + 1")
+
   foreach (skp ${NOPROCESS_PATTERNS})
     if ("${fname}" MATCHES "${skp}")
       set(${TEXT_LIST} ${${TEXT_LIST}} ${fname} PARENT_SCOPE)
+      TFILE_TYPE_MSG(${ALL_CNT} ${PCNT} ${TEXT_LIST})
       return()
     endif ("${fname}" MATCHES "${skp}")
   endforeach (skp ${NOPROCESS_PATTERNS})
   execute_process(COMMAND ${STRCLEAR_EXECUTABLE} -B ${CMAKE_BINARY_DIR}/${fname} RESULT_VARIABLE TXT_FILE)
   if ("${TXT_FILE}" GREATER 0)
     set(${TEXT_LIST} ${${TEXT_LIST}} ${fname} PARENT_SCOPE)
+    TFILE_TYPE_MSG(${ALL_CNT} ${PCNT} ${TEXT_LIST})
     return()
   endif ("${TXT_FILE}" GREATER 0)
 
@@ -168,9 +210,12 @@ function(FILE_TYPE fname BINARY_LIST TEXT_LIST NOEXEC_LIST)
     execute_process(COMMAND ${P_RPATH_EXECUTABLE} ${CMAKE_BINARY_DIR}/${lf} RESULT_VARIABLE NOT_BIN_OBJ OUTPUT_VARIABLE NB_OUT ERROR_VARIABLE NB_ERR)
     if (NOT_BIN_OBJ)
       set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
+      NFILE_TYPE_MSG(${ALL_CNT} ${PCNT} ${NOEXEC_LIST})
       return()
     else (NOT_BIN_OBJ)
+      #message("File needing RPATH setting: ${fname}")
       set(${BINARY_LIST} ${${BINARY_LIST}} ${fname} PARENT_SCOPE)
+      BFILE_TYPE_MSG(${ALL_CNT} ${PCNT} ${BINARY_LIST})
       return()
     endif (NOT_BIN_OBJ)
   endif(P_RPATH_EXECUTABLE)
@@ -178,19 +223,24 @@ function(FILE_TYPE fname BINARY_LIST TEXT_LIST NOEXEC_LIST)
     execute_process(COMMAND otool -l ${CMAKE_BINARY_DIR}/${lf} RESULT_VARIABLE ORESULT OUTPUT_VARIABLE OTOOL_OUT ERROR_VARIABLE NB_ERR)
     if ("${OTOOL_OUT}" MATCHES "Archive")
       set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
+      NFILE_TYPE_MSG(${ALL_CNT} ${PCNT} ${NOEXEC_LIST})
       return()
     endif ("${OTOOL_OUT}" MATCHES "Archive")
     if ("${OTOOL_OUT}" MATCHES "not an object")
       set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
+      NFILE_TYPE_MSG(${ALL_CNT} ${PCNT} ${NOEXEC_LIST})
       return()
     endif ("${OTOOL_OUT}" MATCHES "not an object")
     # Not one of the exceptions - binary
+    #message("File needing RPATH setting: ${fname}")
     set(${BINARY_LIST} ${${BINARY_LIST}} ${fname} PARENT_SCOPE)
+    BFILE_TYPE_MSG(${ALL_CNT} ${PCNT} ${BINARY_LIST})
     return()
   endif(APPLE)
 
   # If we haven't figured it out, treat as noexec binary
   set(${NOEXEC_LIST} ${${NOEXEC_LIST}} ${fname} PARENT_SCOPE)
+  NFILE_TYPE_MSG(${ALL_CNT} ${PCNT} ${NOEXEC_LIST})
 endfunction(FILE_TYPE)
 
 
@@ -226,7 +276,13 @@ function(INITIALIZE_TP_FILES)
     # Whether we're single or multi config, do a top level decompression to give
     # the install targets a uniform source for all configurations.
     message("Expanding ${sd}.tar in build directory...")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+    if ("${CMAKE_VERSION}" VERSION_LESS "3.24")
+      execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+    else ("${CMAKE_VERSION}" VERSION_LESS "3.24")
+      # If we have it, use --touch instead of the (very slow) per file -E touch update
+      # https://cmake.org/cmake/help/latest/manual/cmake.1.html#cmdoption-cmake-E_tar-touch
+      execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar --touch WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+    endif ("${CMAKE_VERSION}" VERSION_LESS "3.24")
     message("Expanding ${sd}.tar in build directory... done.")
 
     # For multi-config, we'll also need to decompress once for each active configuration's build dir
@@ -236,7 +292,13 @@ function(INITIALIZE_TP_FILES)
 	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${sd})
 	message("Expanding ${sd}.tar in configuration: ${CFG_TYPE} build directory...")
-	execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
+	if ("${CMAKE_VERSION}" VERSION_LESS "3.24")
+	  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
+	else ("${CMAKE_VERSION}" VERSION_LESS "3.24")
+	  # If we have it, use --touch instead of the (very slow) per file -E touch update
+	  # https://cmake.org/cmake/help/latest/manual/cmake.1.html#cmdoption-cmake-E_tar-touch
+	  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar --touch WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
+	endif ("${CMAKE_VERSION}" VERSION_LESS "3.24")
 	message("Expanding ${sd}.tar in configuration: ${CFG_TYPE} build directory... done.")
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif (CMAKE_CONFIGURATION_TYPES)
@@ -247,6 +309,7 @@ function(INITIALIZE_TP_FILES)
 
   # The above copy is indiscriminate, so we follow behind it and strip out the
   # files we don't wish to include
+  message("Removing files indicated by exclude patterns...")
   STRIP_EXCLUDED("${CMAKE_BINARY_DIR}" EXCLUDED_PATTERNS)
   if (CMAKE_CONFIGURATION_TYPES)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
@@ -254,13 +317,21 @@ function(INITIALIZE_TP_FILES)
       STRIP_EXCLUDED("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}" EXCLUDED_PATTERNS)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif (CMAKE_CONFIGURATION_TYPES)
+  message("Removing files indicated by exclude patterns... done.")
 
-  # Unpacking the files doesn't update their timestamps.  If we want to be able to
-  # check if extinstall has changed, we need to make sure the build dir copies are
-  # newer than the extinstall copies for IS_NEWER_THAN testing.
-  foreach(tf ${TP_FILES})
-    execute_process(COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/${tf}")
-  endforeach(tf ${TP_FILES})
+  # In older CMake, unpacking the files didn't come with the option to update
+  # their timestamps - see https://cmake.org/cmake/help/latest/manual/cmake.1.html#cmdoption-cmake-E_tar-touch
+  # If we want to be able to check if extinstall has changed, we need to make
+  # sure the build dir copies are newer than the extinstall copies for
+  # IS_NEWER_THAN testing.
+  if ("${CMAKE_VERSION}" VERSION_LESS "3.24")
+    message("Updating copied file timestamps...")
+    foreach(tf ${TP_FILES})
+      execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate "${CMAKE_BINARY_DIR}/${tf}")
+    endforeach(tf ${TP_FILES})
+    message("Updating copied file timestamps... done.")
+  endif ("${CMAKE_VERSION}" VERSION_LESS "3.24")
+
   message("Staging third party files from ${EXT_DIR_STR} in build directory... done.")
 
   # NOTE - we may need to find and redo symlinks, if we get any that are full
@@ -427,7 +498,9 @@ list(SORT TP_PREVIOUS)
 
 # See what the delta looks like between the previous extinstall state (if any)
 # and the current
+message("Comparing previous and current states...")
 TP_COMPARE_STATE(TP_FILES TP_PREVIOUS)
+message("Comparing previous and current states... done.")
 
 # If we do have changes in a repeat configure process, we're going to have to
 # redo the find_package tests.  However, we don't want to repeat them if we
@@ -574,8 +647,9 @@ message("Characterizing new or changed bundled third party files...")
 set(NBINARY_FILES)
 set(NTEXT_FILES)
 set(NNOEXEC_FILES)
+list(LENGTH TP_PROCESS ALL_PCNT)
 foreach(lf ${TP_PROCESS})
-  FILE_TYPE("${lf}" NBINARY_FILES NTEXT_FILES NNOEXEC_FILES)
+  FILE_TYPE("${lf}" ${ALL_PCNT} NBINARY_FILES NTEXT_FILES NNOEXEC_FILES)
 endforeach(lf ${TP_PROCESS})
 message("Characterizing new or changed bundled third party files... done.")
 
