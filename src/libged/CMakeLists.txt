@@ -96,7 +96,8 @@ BRLCAD_LIB_INCLUDE_DIRS(ged GED_INCLUDE_DIRS GED_LOCAL_INCLUDE_DIRS)
 BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libbv;libbg;libbn;libbu;libicv;libanalyze;${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-target_link_libraries(libged ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/openvdb.lib)
+target_link_libraries(libged debug ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/openvdb.lib)
+target_link_libraries(libged optimized ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/openvdb.lib)
 
 set_property(TARGET libged PROPERTY CXX_STANDARD 17)
 set_property(TARGET libged-static PROPERTY CXX_STANDARD 17)

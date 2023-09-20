@@ -394,7 +394,8 @@ BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};libbrep;libnmg;libbg;libb
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
 # BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
-target_link_libraries(librt ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/openvdb.lib)
+target_link_libraries(librt debug ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/openvdb.lib)
+target_link_libraries(librt optimized ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/openvdb.lib)
 
 set_property(TARGET librt PROPERTY CXX_STANDARD 17)
 set_property(TARGET librt-static PROPERTY CXX_STANDARD 17)
