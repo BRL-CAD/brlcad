@@ -202,6 +202,10 @@ function(INITIALIZE_TP_FILES)
   # install directories we may have to be more selective about this in the
   # future, but for now let's try simplicity - the less we can couple this
   # logic to the specific contents of extinstall, the better.
+  #
+  # Unfortuately, as implemented this is currently quite slow, but cmake's
+  # -E copy_directory command follows symlinks rather than duplicating them:
+  # https://cmake.org/cmake/help/latest/manual/cmake.1.html
   if ("${BRLCAD_EXT_DIR}/extinstall" STREQUAL "${BRLCAD_EXT_INSTALL_DIR}")
     set(EXT_DIR_STR "${BRLCAD_EXT_INSTALL_DIR}")
   else ("${BRLCAD_EXT_DIR}/extinstall" STREQUAL "${BRLCAD_EXT_INSTALL_DIR}")
@@ -212,14 +216,18 @@ function(INITIALIZE_TP_FILES)
   foreach(sd ${SDIRS})
     # Bundled up the sub-directory's contents so that the archive will expand with
     # paths relative to the extinstall root
+    message("Packing ${sd} subdirectory...")
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar cf ${CMAKE_BINARY_DIR}/${sd}.tar "${BRLCAD_EXT_INSTALL_DIR}/${sd}" WORKING_DIRECTORY "${BRLCAD_EXT_INSTALL_DIR}")
+    message("Packing ${sd} subdirectory... done.")
 
     # Make sure the build directory has the target directory to write to
     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${sd})
 
     # Whether we're single or multi config, do a top level decompression to give
     # the install targets a uniform source for all configurations.
+    message("Expanding ${sd}.tar in build directory...")
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+    message("Expanding ${sd}.tar in build directory... done.")
 
     # For multi-config, we'll also need to decompress once for each active configuration's build dir
     # so the executables will work locally...
@@ -227,7 +235,9 @@ function(INITIALIZE_TP_FILES)
       foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
 	file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${sd})
+	message("Expanding ${sd}.tar in configuration: ${CFG_TYPE} build directory...")
 	execute_process(COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_BINARY_DIR}/${sd}.tar WORKING_DIRECTORY "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}")
+	message("Expanding ${sd}.tar in configuration: ${CFG_TYPE} build directory... done.")
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif (CMAKE_CONFIGURATION_TYPES)
 
@@ -479,17 +489,23 @@ else (BRLCAD_TP_FULL_RESET)
   # Stage new files - we don't have the bulk tar mechanism going after the first
   # configure pass, so we have to do the copies needed explicitly.  TP_COMPARE_STATE
   # shouldn't populate TP_NEW unless we have a previous state to compare to.
+  #
+  # configure_file follows symlinks rather than copying them, so we can't use
+  # that for this application and have to fall back on file(COPY):
+  # https://gitlab.kitware.com/cmake/cmake/-/issues/14609
   if (TP_NEW)
     message("Staging new 3rd party files from extinstall...")
     foreach (ef ${TP_NEW})
       file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
-      configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR}/${ef} COPYONLY)
+      get_filename_component(EF_DIR ${ef} DIRECTORY)
+      get_filename_component(EF_NAME ${ef} NAME)
+      file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR}/${EF_DIR})
       message("  ${CMAKE_BINARY_DIR}/${ef}")
       if (CMAKE_CONFIGURATION_TYPES)
 	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
 	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	  configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef} COPYONLY)
+	  file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${EF_DIR})
 	  message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif (CMAKE_CONFIGURATION_TYPES)
@@ -502,13 +518,15 @@ else (BRLCAD_TP_FULL_RESET)
     message("Staging changed 3rd party files from extinstall...")
     foreach (ef ${TP_CHANGED})
       file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
-      configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR}/${ef} COPYONLY)
+      get_filename_component(EF_DIR ${ef} DIRECTORY)
+      get_filename_component(EF_NAME ${ef} NAME)
+      file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR}/${EF_DIR})
       message("  ${CMAKE_BINARY_DIR}/${ef}")
       if (CMAKE_CONFIGURATION_TYPES)
 	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
 	  file(REMOVE ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef})
-	  configure_file(${BRLCAD_EXT_INSTALL_DIR}/${ef} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef} COPYONLY)
+	  file(COPY ${BRLCAD_EXT_INSTALL_DIR}/${ef} DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${EF_DIR})
 	  message("  ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${ef}")
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif (CMAKE_CONFIGURATION_TYPES)
