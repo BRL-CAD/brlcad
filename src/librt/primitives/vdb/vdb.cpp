@@ -53,6 +53,75 @@ extern "C" {
 
 	nanovdb::GridHandle<nanovdb::HostBuffer> vdbHandle;
 
+
+
+	point_t* get_corners(point_t min, point_t max) {
+
+		point_t corners[8];
+	
+		VSET(corners[0], min[0], min[1], min[2]);
+		VSET(corners[1], min[0], max[1], min[2]);
+		VSET(corners[2], max[0], min[1], min[2]);
+		VSET(corners[3], min[0], min[1], max[2]);
+		VSET(corners[4], max[0], max[1], min[2]);
+		VSET(corners[5], max[0], min[1], max[2]);
+		VSET(corners[6], min[0], max[1], max[2]);
+		VSET(corners[7], max[0], max[1], max[2]);
+		return corners;
+
+	}
+
+	#define PLOT_FACE(vlist_vlfree, vlist_head, arb_pts, a, b, c, d) \
+    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[a], BV_VLIST_LINE_MOVE); \
+    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[b], BV_VLIST_LINE_DRAW); \
+    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[c], BV_VLIST_LINE_DRAW); \
+    BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[d], BV_VLIST_LINE_DRAW); \
+	BV_ADD_VLIST(vlist_vlfree, vlist_head, arb_pts[a], BV_VLIST_LINE_DRAW);
+
+	int
+	rt_vdb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct bview *UNUSED(info))
+	{
+		point_t *pts;
+		struct rt_vdb_internal *aip;
+		struct bu_list *vlfree = &RTG.rtg_vlfree;
+
+
+		BU_CK_LIST_HEAD(vhead);
+		RT_CK_DB_INTERNAL(ip);
+		/*aip = (struct rt_arb_internal *)ip->idb_ptr;
+		RT_ARB_CK_MAGIC(aip);*/
+
+		struct rt_vdb_internal *vdbip = (struct rt_vdb_internal *)ip->idb_ptr;
+		RT_VDB_CK_MAGIC(vdbip);
+
+		nanovdb::GridHandle<nanovdb::HostBuffer> *vdbHandler = (nanovdb::GridHandle<nanovdb::HostBuffer> *)vdbip->vdb;
+		nanovdb::NanoGrid <float>* h_grid = vdbHandler->grid<float>();
+
+		if (!h_grid)
+			bu_log("bad loading in plot \n");
+
+		point_t minBoundingBox;
+		VSET(minBoundingBox, h_grid->worldBBox().min()[0], h_grid->worldBBox().min()[1], h_grid->worldBBox().min()[2]);
+
+		point_t maxBoundingBox;
+		VSET(maxBoundingBox, h_grid->worldBBox().max()[0], h_grid->worldBBox().max()[1], h_grid->worldBBox().max()[2]);
+
+		pts = get_corners(minBoundingBox, maxBoundingBox);
+
+		PLOT_FACE(vlfree, vhead, pts, 0, 1, 4, 2);
+		PLOT_FACE(vlfree, vhead, pts, 0, 1, 6, 3);
+		PLOT_FACE(vlfree, vhead, pts, 2, 4, 7, 5);
+		PLOT_FACE(vlfree, vhead, pts, 3, 6, 7, 5);
+
+		/*pts = aip->pt;
+		ARB_FACE(vlfree, vhead, pts, 0, 1, 2, 3);
+		ARB_FACE(vlfree, vhead, pts, 4, 0, 3, 7);
+		ARB_FACE(vlfree, vhead, pts, 5, 4, 7, 6);
+		ARB_FACE(vlfree, vhead, pts, 1, 5, 6, 2);*/
+
+		return 0;
+	}
+
 	int rt_vdb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 	{
 		bu_log("step import \n");
@@ -270,7 +339,7 @@ extern "C" {
 	 * Compute the bounding
 	 */
 	int
-		rt_vdb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
+	rt_vdb_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct bn_tol *UNUSED(tol)) {
 
 		struct rt_vdb_internal *eip = (struct rt_vdb_internal *)ip->idb_ptr;
 		RT_VDB_CK_MAGIC(eip);

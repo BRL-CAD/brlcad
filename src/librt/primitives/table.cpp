@@ -2437,7 +2437,7 @@ const struct rt_functab OBJ[] = {
 		NULL, /* curve */
 		NULL, /* classify */
 		NULL, /* free */
-		NULL, /* plot */
+		RTFUNCTAB_FUNC_PLOT_CAST(rt_vdb_plot),
 		NULL, /* adaptive_plot */
 		NULL, /* vshot */
 		NULL, /* tess */
