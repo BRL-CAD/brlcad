@@ -794,22 +794,6 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	fprintf(stdout, "superell being made with %f and %f\n", superell_ip->n, superell_ip->e);
 
     }
-	else if (BU_STR_EQUAL(argv[bu_optind + 1], "vdb")) {
-
-	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	internal.idb_type = ID_VDB;
-	internal.idb_meth = &OBJ[ID_VDB];
-	BU_ALLOC(internal.idb_ptr, struct rt_vdb_internal);
-	vdb_ip = (struct rt_vdb_internal *)internal.idb_ptr;
-	vdb_ip->magic = RT_VDB_INTERNAL_MAGIC;
-	bu_strlcpy(vdb_ip->name, argv[bu_optind + 2], sizeof(vdb_ip->name));
-	//VSET(vdb_ip->minBB, -1, -1, -1);
-	//VSET(vdb_ip->maxBB, 1, 1, 1);
-	
-
-	bu_log("vdb done");
-
-	}
 	else if (BU_STR_EQUAL(argv[bu_optind+1], "cline")) {
 
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
