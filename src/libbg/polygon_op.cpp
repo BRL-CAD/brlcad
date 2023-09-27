@@ -514,6 +514,8 @@ bv_polygon_csg(struct bv_scene_obj *target, struct bv_scene_obj *stencil, bg_cli
 
     struct bv_polygon *polyA = (struct bv_polygon *)target->s_i_data;
     struct bv_polygon *polyB = (struct bv_polygon *)stencil->s_i_data;
+    if (!polyA || !polyB)
+	return 0;
 
     // If the stencil is empty, it's all moot
     if (!polyB->polygon.num_contours)

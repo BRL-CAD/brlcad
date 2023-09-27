@@ -77,7 +77,7 @@ QgPolyFilter::close_polygon()
     // Close the general polygon - if that's what we're creating,
     // at this point it will still be open.
     struct bv_polygon *ip = (struct bv_polygon *)wp->s_i_data;
-    if (ip->polygon.contour[0].open) {
+    if (ip && ip->polygon.contour[0].open) {
 
 	if (ip->polygon.contour[0].num_points < 3) {
 	    // If we're trying to finalize and we have less than
@@ -233,7 +233,7 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	// appending multiple points requires multiple mouse click-and-release
 	// operations
 	struct bv_polygon *ip = (struct bv_polygon *)wp->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL)
+	if (ip && ip->type == BV_POLYGON_GENERAL)
 	    return true;
 
 	// For all non-general polygons, mouse release is the signal
