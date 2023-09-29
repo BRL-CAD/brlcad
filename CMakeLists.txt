@@ -156,7 +156,7 @@ if (NOT ENV_HOME)
 endif (NOT ENV_HOME)
 
 # Check common location(s) in home directory
-set(EXT_CANDIDATES bext_install brlcad_ext)
+set(EXT_CANDIDATES bext_output brlcad_ext)
 foreach(EC ${EXT_CANDIDATES})
   if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
     set(BRLCAD_EXT_DIR "${ENV_HOME}/${EC}")
