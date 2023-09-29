@@ -49,8 +49,8 @@ if (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
   message(WARNING "BRLCAD_EXT_NOINSTALL_DIR is set to ${BRLCAD_EXT_NOINSTALL_DIR} but that location does not exist.  This means BRL-CAD's build will be dependent on system versions of build tools such as patchelf and astyle being present.")
 endif (NOT EXISTS "${BRLCAD_EXT_NOINSTALL_DIR}")
 
-# If we got to extinstall through a symlink, we need to expand it so
-# we can spot the path that would have been used in extinstall files
+# If we got to ${BRLCAD_EXT_DIR}/install through a symlink, we need to expand it so
+# we can spot the path that would have been used in ${BRLCAD_EXT_DIR}/install files
 #
 # TODO - once we can require CMake 3.21 minimum, add EXPAND_TILDE to
 # the arguments list
@@ -70,7 +70,7 @@ find_program(STRCLEAR_EXECUTABLE strclear HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BI
 
 
 # For repeat configure passes, we need to check any existing files copied
-# against the extinstall dir's contents, to detect if the latter has changed
+# against the ${BRLCAD_EXT_DIR}/install dir's contents, to detect if the latter has changed
 # and we need to redo the process.
 set(TP_INVENTORY "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty.txt")
 set(TP_INVENTORY_BINARIES "${CMAKE_BINARY_DIR}/CMakeFiles/thirdparty_binaries.txt")
@@ -86,8 +86,8 @@ set(NOPROCESS_PATTERNS
   ".*/msgs/.*"
   )
 
-# These patterns are to be excluded from extinstall bundling - i.e., even if
-# present in the specified extinstall directory, BRL-CAD will not incorporate
+# These patterns are to be excluded from ${BRLCAD_EXT_DIR}/install bundling - i.e., even if
+# present in the specified ${BRLCAD_EXT_DIR}/install directory, BRL-CAD will not incorporate
 # them.  Generally speaking this is used to avoid files needed for external
 # building but counterproductive in the BRL-CAD install.
 set(EXCLUDED_PATTERNS
@@ -99,11 +99,11 @@ set(EXCLUDED_PATTERNS
 
 
 #####################################################################
-# Utility functions for use when processing extinstall files
+# Utility functions for use when processing ${BRLCAD_EXT_DIR}/install files
 #####################################################################
 
 
-# In multiconfig we need to scrub excluded files out of multiple extinstall
+# In multiconfig we need to scrub excluded files out of multiple ${BRLCAD_EXT_DIR}/install
 # copies, so wrap logic to do so into a function.
 function(STRIP_EXCLUDED RDIR EXPATTERNS)
   foreach (ep ${${EXPATTERNS}})
@@ -171,7 +171,7 @@ function(TFILE_TYPE_MSG ALL_CNT ALL_PROCESSED TEXT_LIST)
   endif (TCNT)
 endfunction(TFILE_TYPE_MSG)
 
-# For processing purposes, there are three categories of extinstall file:
+# For processing purposes, there are three categories of ${BRLCAD_EXT_DIR}/install file:
 #
 # 1.  exe or shared library files needing RPATH adjustment (which also need
 #     to be installed with executable permissions)
@@ -179,7 +179,7 @@ endfunction(TFILE_TYPE_MSG)
 # 3.  text files
 #
 # If we don't want to hard-code information about specific files we expect
-# to find in extinstall, we need a way to detect "on the fly" what we are
+# to find in ${BRLCAD_EXT_DIR}/install, we need a way to detect "on the fly" what we are
 # dealing with.
 function(FILE_TYPE fname ALL_CNT BINARY_LIST TEXT_LIST NOEXEC_LIST)
   if (IS_SYMLINK ${CMAKE_BINARY_DIR}/${fname})
@@ -245,27 +245,27 @@ endfunction(FILE_TYPE)
 
 
 
-# Copy everything in extinstall into the build directory
+# Copy everything in ${BRLCAD_EXT_DIR}/install into the build directory
 function(INITIALIZE_TP_FILES)
   # Rather than complicate matters trying to pick and choose what to move, just
   # stage everything.  Depending on what the dependencies write into their
   # install directories we may have to be more selective about this in the
   # future, but for now let's try simplicity - the less we can couple this
-  # logic to the specific contents of extinstall, the better.
+  # logic to the specific contents of ${BRLCAD_EXT_DIR}/install, the better.
   #
   # Unfortuately, as implemented this is currently quite slow, but cmake's
   # -E copy_directory command follows symlinks rather than duplicating them:
   # https://cmake.org/cmake/help/latest/manual/cmake.1.html
-  if ("${BRLCAD_EXT_DIR}/extinstall" STREQUAL "${BRLCAD_EXT_INSTALL_DIR}")
+  if ("${BRLCAD_EXT_DIR}/install" STREQUAL "${BRLCAD_EXT_INSTALL_DIR}")
     set(EXT_DIR_STR "${BRLCAD_EXT_INSTALL_DIR}")
-  else ("${BRLCAD_EXT_DIR}/extinstall" STREQUAL "${BRLCAD_EXT_INSTALL_DIR}")
-    set(EXT_DIR_STR "${BRLCAD_EXT_INSTALL_DIR} (via symlink ${BRLCAD_EXT_DIR}/extinstall)")
-  endif ("${BRLCAD_EXT_DIR}/extinstall" STREQUAL "${BRLCAD_EXT_INSTALL_DIR}")
+  else ("${BRLCAD_EXT_DIR}/install" STREQUAL "${BRLCAD_EXT_INSTALL_DIR}")
+    set(EXT_DIR_STR "${BRLCAD_EXT_INSTALL_DIR} (via symlink ${BRLCAD_EXT_DIR}/install)")
+  endif ("${BRLCAD_EXT_DIR}/install" STREQUAL "${BRLCAD_EXT_INSTALL_DIR}")
   message("Staging third party files from ${EXT_DIR_STR} in build directory...")
   file(GLOB SDIRS LIST_DIRECTORIES true RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
   foreach(sd ${SDIRS})
     # Bundled up the sub-directory's contents so that the archive will expand with
-    # paths relative to the extinstall root
+    # paths relative to the ${BRLCAD_EXT_DIR}/install root
     message("Packing ${sd} subdirectory...")
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar cf ${CMAKE_BINARY_DIR}/${sd}.tar "${BRLCAD_EXT_INSTALL_DIR}/${sd}" WORKING_DIRECTORY "${BRLCAD_EXT_INSTALL_DIR}")
     message("Packing ${sd} subdirectory... done.")
@@ -321,8 +321,8 @@ function(INITIALIZE_TP_FILES)
 
   # In older CMake, unpacking the files didn't come with the option to update
   # their timestamps - see https://cmake.org/cmake/help/latest/manual/cmake.1.html#cmdoption-cmake-E_tar-touch
-  # If we want to be able to check if extinstall has changed, we need to make
-  # sure the build dir copies are newer than the extinstall copies for
+  # If we want to be able to check if ${BRLCAD_EXT_DIR}/install has changed, we need to make
+  # sure the build dir copies are newer than the ${BRLCAD_EXT_DIR}/install copies for
   # IS_NEWER_THAN testing.
   if ("${CMAKE_VERSION}" VERSION_LESS "3.24")
     message("Updating copied file timestamps...")
@@ -347,9 +347,9 @@ endfunction(INITIALIZE_TP_FILES)
 
 # If we have a pre-existing list of files, we need to determine the status of the
 # current directories vs the list.  Sets three lists at the parent scope:
-# TP_NEW     - files in extinstall that are new since the previous list was generated
-# TP_STALE   - files in the old list that are no longer in extinstall
-# TP_CHANGED - files present in both lists but newer in extinstall
+# TP_NEW     - files in ${BRLCAD_EXT_DIR}/install that are new since the previous list was generated
+# TP_STALE   - files in the old list that are no longer in ${BRLCAD_EXT_DIR}/install
+# TP_CHANGED - files present in both lists but newer in ${BRLCAD_EXT_DIR}/install
 #
 # Note that TP_NEW will be empty if there is no previous state.  The main logic
 # uses a different variable - TP_INIT - to notify the appropriate processing steps
@@ -429,7 +429,7 @@ function(RPATH_BUILD_DIR_PROCESS ROOT_DIR lf)
   if (P_RPATH_EXECUTABLE)
     execute_process(COMMAND ${P_RPATH_EXECUTABLE} --set-rpath "${ROOT_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${ROOT_DIR})
   elseif (APPLE)
-    execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/extinstall/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${ROOT_DIR} OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
+    execute_process(COMMAND install_name_tool -delete_rpath "${BRLCAD_EXT_DIR}/${BRLCAD_EXT_DIR}/install/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${ROOT_DIR} OUTPUT_VARIABLE OOUT RESULT_VARIABLE ORESULT ERROR_VARIABLE OERROR)
     execute_process(COMMAND install_name_tool -add_rpath "${ROOT_DIR}/${LIB_DIR}" ${lf} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
   endif (P_RPATH_EXECUTABLE)
   # RPATH updates are complete - now clear out any other stale paths in the file
@@ -449,11 +449,11 @@ endfunction(RPATH_BUILD_DIR_PROCESS)
 
 #####################################################################
 # Start of processing for BRLCAD_EXT_INSTALL_DIR contents
-# We need to keep the build directory copies of extinstall files in
+# We need to keep the build directory copies of ${BRLCAD_EXT_DIR}/install files in
 # sync with the BRLCAD_EXT_DIR originals, if they change.
 #####################################################################
 
-# Ascertain the current state of extinstall
+# Ascertain the current state of ${BRLCAD_EXT_DIR}/install
 file(GLOB_RECURSE TP_FILES LIST_DIRECTORIES false RELATIVE "${BRLCAD_EXT_INSTALL_DIR}" "${BRLCAD_EXT_INSTALL_DIR}/*")
 # Filter out the files removed via STRIP_EXCLUDED
 foreach(ep ${EXCLUDED_PATTERNS})
@@ -496,7 +496,7 @@ file(WRITE "${TP_INVENTORY}" "${TP_W}")
 list(SORT TP_FILES)
 list(SORT TP_PREVIOUS)
 
-# See what the delta looks like between the previous extinstall state (if any)
+# See what the delta looks like between the previous ${BRLCAD_EXT_DIR}/install state (if any)
 # and the current
 message("Comparing previous and current states...")
 TP_COMPARE_STATE(TP_FILES TP_PREVIOUS)
@@ -512,8 +512,8 @@ if (BRLCAD_TP_FULL_RESET)
   if (TP_NEW OR TP_CHANGED OR TP_STALE)
 
     # If the user has requested it, if anything has changed we do a full flush
-    # and re-copy of the extinstall contents.  This is useful if one is changing
-    # the extinstall directory to a completely different directory rather than
+    # and re-copy of the ${BRLCAD_EXT_DIR}/install contents.  This is useful if one is changing
+    # the ${BRLCAD_EXT_DIR}/install directory to a completely different directory rather than
     # incrementally updating the same directory.  In the former case, timestamps
     # aren't a reliable indicator of what to update in the build tree.
     #
@@ -567,7 +567,7 @@ else (BRLCAD_TP_FULL_RESET)
   # that for this application and have to fall back on file(COPY):
   # https://gitlab.kitware.com/cmake/cmake/-/issues/14609
   if (TP_NEW)
-    message("Staging new 3rd party files from extinstall...")
+    message("Staging new 3rd party files from ${BRLCAD_EXT_DIR}/install...")
     foreach (ef ${TP_NEW})
       file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
       get_filename_component(EF_DIR ${ef} DIRECTORY)
@@ -583,12 +583,12 @@ else (BRLCAD_TP_FULL_RESET)
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif (CMAKE_CONFIGURATION_TYPES)
     endforeach (ef ${TP_CHANGED})
-    message("Staging new 3rd party files from extinstall... done.")
+    message("Staging new 3rd party files from ${BRLCAD_EXT_DIR}/install... done.")
   endif (TP_NEW)
 
   # Stage changed files
   if (TP_CHANGED)
-    message("Staging changed 3rd party files from extinstall...")
+    message("Staging changed 3rd party files from ${BRLCAD_EXT_DIR}/install...")
     foreach (ef ${TP_CHANGED})
       file(REMOVE ${CMAKE_BINARY_DIR}/${ef})
       get_filename_component(EF_DIR ${ef} DIRECTORY)
@@ -604,7 +604,7 @@ else (BRLCAD_TP_FULL_RESET)
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif (CMAKE_CONFIGURATION_TYPES)
     endforeach (ef ${TP_CHANGED})
-    message("Staging changed 3rd party files from extinstall... done.")
+    message("Staging changed 3rd party files from ${BRLCAD_EXT_DIR}/install... done.")
   endif (TP_CHANGED)
 
   # If the directory file lists differ, we have to reset find package
@@ -774,9 +774,9 @@ foreach(bf ${ALL_BINARY_FILES})
   endif (APPLE)
 endforeach(bf ${ALL_BINARY_FILES})
 
-# Because extinstall is handled at configure time (and indeed MUST be handled at
+# Because ${BRLCAD_EXT_DIR}/install is handled at configure time (and indeed MUST be handled at
 # configure time so find_package results will be correct) we make the CMake
-# process depend on the extinstall files
+# process depend on the ${BRLCAD_EXT_DIR}/install files
 foreach (ef ${TP_FILES})
   set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BRLCAD_EXT_INSTALL_DIR}/${ef})
 endforeach (ef ${TP_FILES})
