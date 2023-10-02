@@ -40,6 +40,7 @@
 #include "./bv_private.h"
 
 #define VIEW_NAME_MAXTRIES 100000
+#define DM_DEFAULT_FONT_SIZE 20
 
 static void
 _data_tclcad_init(struct bv_data_tclcad *d)
@@ -172,6 +173,7 @@ _data_tclcad_init(struct bv_data_tclcad *d)
     d->gv_sdata_polygons.gdps_data_vZ = 0;
 
     d->gv_prim_labels.gos_draw = 0;
+    d->gv_prim_labels.gos_font_size = DM_DEFAULT_FONT_SIZE;
     d->gv_prim_labels.gos_line_color[0] = 0;
     d->gv_prim_labels.gos_line_color[1] = 0;
     d->gv_prim_labels.gos_line_color[2] = 0;
@@ -263,6 +265,7 @@ bv_init(struct bview *gvp, struct bview_set *s)
     /* bv_mat_aet(gvp); */
 
     gvp->gv_tcl.gv_prim_labels.gos_draw = 0;
+    gvp->gv_tcl.gv_prim_labels.gos_font_size = DM_DEFAULT_FONT_SIZE;
     VSET(gvp->gv_tcl.gv_prim_labels.gos_text_color, 255, 255, 0);
 
 
@@ -569,12 +572,15 @@ bv_settings_init(struct bview_settings *s)
     VSET(s->gv_model_axes.tick_major_color, 255, 0, 0);
 
     s->gv_center_dot.gos_draw = 0;
+    s->gv_center_dot.gos_font_size = DM_DEFAULT_FONT_SIZE;
     VSET(s->gv_center_dot.gos_line_color, 255, 255, 0);
 
     s->gv_view_params.gos_draw = 0;
+    s->gv_view_params.gos_font_size = DM_DEFAULT_FONT_SIZE;
     VSET(s->gv_view_params.gos_text_color, 255, 255, 0);
 
     s->gv_view_scale.gos_draw = 0;
+    s->gv_view_scale.gos_font_size = DM_DEFAULT_FONT_SIZE;
     VSET(s->gv_view_scale.gos_line_color, 255, 255, 0);
     VSET(s->gv_view_scale.gos_text_color, 255, 255, 255);
 

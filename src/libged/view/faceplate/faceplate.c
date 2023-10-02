@@ -279,7 +279,7 @@ _fp_cmd_scale(void *ds, int argc, const char **argv)
 int
 _fp_cmd_params(void *ds, int argc, const char **argv)
 {
-    const char *usage_string = "faceplate [options] params [0|1] [color r/g/b]";
+    const char *usage_string = "faceplate [options] params [0|1] [color r/g/b] [font_size [#]";
     const char *purpose_string = "Enable/disable params and set its color.";
     if (_fp_cmd_msgs(ds, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -311,24 +311,40 @@ _fp_cmd_params(void *ds, int argc, const char **argv)
 	    v->gv_s->gv_view_params.gos_draw = 0;
 	    return BRLCAD_OK;
 	}
-	bu_vls_printf(gedp->ged_result_str, "value %s is invalid - valid values are 0 or 1\n", argv[0]);
+	if (BU_STR_EQUAL("font_size", argv[0])) {
+	    bu_vls_printf(gedp->ged_result_str, "%d", v->gv_s->gv_view_params.gos_font_size);
+	    return BRLCAD_OK;
+	}
+	bu_vls_printf(gedp->ged_result_str, "input %s is invalid\n", argv[0]);
 	return BRLCAD_ERROR;
     }
 
     if (argc > 1) {
-	if (!BU_STR_EQUAL("color", argv[0])) {
+	if (!BU_STR_EQUAL("color", argv[0]) && !BU_STR_EQUAL("font_size", argv[0])) {
 	    bu_vls_printf(gedp->ged_result_str, "unknown subcommand %s\n", argv[0]);
 	    return BRLCAD_ERROR;
 	}
-	argc--; argv++;
-	struct bu_color c;
-	struct bu_vls msg = BU_VLS_INIT_ZERO;
-	if (bu_opt_color(&msg, argc, argv, &c) == -1) {
-	    bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
+	if (BU_STR_EQUAL("color", argv[0])) {
+	    argc--; argv++;
+	    struct bu_color c;
+	    struct bu_vls msg = BU_VLS_INIT_ZERO;
+	    if (bu_opt_color(&msg, argc, argv, &c) == -1) {
+		bu_vls_printf(gedp->ged_result_str, "invalid color specification\n");
+	    }
+	    int *cls = (int *)(v->gv_s->gv_view_params.gos_text_color);
+	    bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
+	    return BRLCAD_OK;
 	}
-	int *cls = (int *)(v->gv_s->gv_view_params.gos_text_color);
-	bu_color_to_rgb_ints(&c, &cls[0], &cls[1], &cls[2]);
-	return BRLCAD_OK;
+	if (BU_STR_EQUAL("font_size", argv[0])) {
+	    argc--; argv++;
+	    int fsize;
+	    struct bu_vls msg = BU_VLS_INIT_ZERO;
+	    if (bu_opt_int(&msg, argc, argv, &fsize) == -1) {
+		bu_vls_printf(gedp->ged_result_str, "invalid font size specification\n");
+	    }
+	    v->gv_s->gv_view_params.gos_font_size = fsize;
+	    return BRLCAD_OK;
+	}
     }
 
     bu_vls_printf(gedp->ged_result_str, "invalid command\n");

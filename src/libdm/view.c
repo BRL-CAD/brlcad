@@ -304,14 +304,16 @@ dm_draw_lines(struct dm *dmp, struct bv_data_line_state *gdlsp)
 void
 dm_draw_faceplate(struct bview *v)
 {
+    struct dm *dmp = (struct dm *)v->dmp;
+
     /* Center dot */
     if (v->gv_s->gv_center_dot.gos_draw) {
-	(void)dm_set_fg((struct dm *)v->dmp,
+	(void)dm_set_fg(dmp,
 			v->gv_s->gv_center_dot.gos_line_color[0],
 			v->gv_s->gv_center_dot.gos_line_color[1],
 			v->gv_s->gv_center_dot.gos_line_color[2],
 			1, 1.0);
-	(void)dm_draw_point_2d((struct dm *)v->dmp, 0.0, 0.0);
+	(void)dm_draw_point_2d(dmp, 0.0, 0.0);
     }
 
     /* Model axes */
@@ -323,7 +325,7 @@ dm_draw_faceplate(struct bview *v)
 	VSCALE(map, v->gv_s->gv_model_axes.axes_pos, v->gv_local2base);
 	MAT4X3PNT(v->gv_s->gv_model_axes.axes_pos, v->gv_model2view, map);
 
-	dm_draw_hud_axes((struct dm *)v->dmp,
+	dm_draw_hud_axes(dmp,
 		     v->gv_size,
 		     v->gv_rotation,
 		     &v->gv_s->gv_model_axes);
@@ -338,11 +340,11 @@ dm_draw_faceplate(struct bview *v)
 	fastf_t save_ypos;
 
 	save_ypos = v->gv_s->gv_view_axes.axes_pos[Y];
-	width = dm_get_width((struct dm *)v->dmp);
-	height = dm_get_height((struct dm *)v->dmp);
+	width = dm_get_width(dmp);
+	height = dm_get_height(dmp);
 	inv_aspect = (fastf_t)height / (fastf_t)width;
 	v->gv_s->gv_view_axes.axes_pos[Y] = save_ypos * inv_aspect;
-	dm_draw_hud_axes((struct dm *)v->dmp,
+	dm_draw_hud_axes(dmp,
 		     v->gv_size,
 		     v->gv_rotation,
 		     &v->gv_s->gv_view_axes);
@@ -353,7 +355,7 @@ dm_draw_faceplate(struct bview *v)
 
     /* View scale */
     if (v->gv_s->gv_view_scale.gos_draw)
-	dm_draw_scale((struct dm *)v->dmp,
+	dm_draw_scale(dmp,
 		      v->gv_size*v->gv_base2local,
 		      bu_units_string(1/v->gv_base2local),
 		      v->gv_s->gv_view_scale.gos_line_color,
@@ -362,26 +364,32 @@ dm_draw_faceplate(struct bview *v)
 
     /* Draw the angle distance cursor */
     if (v->gv_s->gv_adc.draw)
-	dm_draw_adc((struct dm *)v->dmp, &(v->gv_s->gv_adc), v->gv_view2model, v->gv_model2view);
+	dm_draw_adc(dmp, &(v->gv_s->gv_adc), v->gv_view2model, v->gv_model2view);
 
     /* Draw grid */
     if (v->gv_s->gv_grid.draw) {
-	dm_draw_grid((struct dm *)v->dmp, &v->gv_s->gv_grid, v->gv_scale, v->gv_model2view, v->gv_base2local);
+	dm_draw_grid(dmp, &v->gv_s->gv_grid, v->gv_scale, v->gv_model2view, v->gv_base2local);
     }
 
     /* Draw rect */
     if (v->gv_s->gv_rect.draw && v->gv_s->gv_rect.line_width)
-	dm_draw_rect((struct dm *)v->dmp, &v->gv_s->gv_rect);
+	dm_draw_rect(dmp, &v->gv_s->gv_rect);
 
     /* View parameters - drawn last so the FPS incorporates as much as possible
      * of the drawing work. */
     if (v->gv_s->gv_view_params.gos_draw || v->gv_s->gv_fps) {
+
+	// Save current font size
+	int ofontsize = dm_get_fontsize(dmp);
+	// Set font size for params
+	dm_set_fontsize(dmp, v->gv_s->gv_view_params.gos_font_size);
+
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	point_t center;
 	char *ustr = (char *)bu_units_string(v->gv_local2base);
 	MAT_DELTAS_GET_NEG(center, v->gv_center);
 	VSCALE(center, center, v->gv_base2local);
-	int64_t elapsed_time = bu_gettime() - ((struct dm *)v->dmp)->start_time;
+	int64_t elapsed_time = bu_gettime() - (dmp)->start_time;
 	/* Only use reasonable measurements */
 	if (elapsed_time > 10LL && elapsed_time < 30000000LL) {
 	    /* Smoothly transition to new speed */
@@ -408,13 +416,16 @@ dm_draw_faceplate(struct bview *v)
 
 	// TODO - really should put a rectangle behind this to ensure visibility...
 
-	(void)dm_set_fg((struct dm *)v->dmp,
+	(void)dm_set_fg(dmp,
 			v->gv_s->gv_view_params.gos_text_color[0],
 			v->gv_s->gv_view_params.gos_text_color[1],
 			v->gv_s->gv_view_params.gos_text_color[2],
 			1, 1.0);
-	(void)dm_draw_string_2d((struct dm *)v->dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
+	(void)dm_draw_string_2d(dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
 	bu_vls_free(&vls);
+
+	// Restore previous font setting
+	dm_set_fontsize(dmp, ofontsize);
     }
 }
 

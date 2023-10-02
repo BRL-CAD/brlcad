@@ -87,6 +87,7 @@ struct bv_other_state {
     int gos_draw;
     int gos_line_color[3];
     int gos_text_color[3];
+    int gos_font_size;
 };
 
 #endif /* DM_BV_FACEPLATE_H */
