@@ -575,16 +575,21 @@ bv_settings_init(struct bview_settings *s)
     s->gv_center_dot.gos_font_size = DM_DEFAULT_FONT_SIZE;
     VSET(s->gv_center_dot.gos_line_color, 255, 255, 0);
 
-    s->gv_view_params.gos_draw = 0;
-    s->gv_view_params.gos_font_size = DM_DEFAULT_FONT_SIZE;
-    VSET(s->gv_view_params.gos_text_color, 255, 255, 0);
+    s->gv_view_params.draw = 0;
+    s->gv_view_params.draw_size = 1;
+    s->gv_view_params.draw_center = 1;
+    s->gv_view_params.draw_az = 1;
+    s->gv_view_params.draw_el = 1;
+    s->gv_view_params.draw_tw = 1;
+    s->gv_view_params.draw_fps = 0;
+    VSET(s->gv_view_params.color, 255, 255, 0);
+    s->gv_view_params.font_size = DM_DEFAULT_FONT_SIZE;
 
     s->gv_view_scale.gos_draw = 0;
     s->gv_view_scale.gos_font_size = DM_DEFAULT_FONT_SIZE;
     VSET(s->gv_view_scale.gos_line_color, 255, 255, 0);
     VSET(s->gv_view_scale.gos_text_color, 255, 255, 255);
 
-    s->gv_fps = 0;
     s->gv_frametime = 1;
     s->gv_fb_mode = 0;
 

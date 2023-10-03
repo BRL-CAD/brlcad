@@ -83,6 +83,20 @@ struct bv_interactive_rect_state {
     fastf_t    aspect;     /* Canvas aspect ratio */
 };
 
+
+struct bv_params_state {
+    int draw;              /* Overall on/off toggle */
+    int draw_size;         /* Print view size */
+    int draw_center;       /* Print view X,Y,Z center point */
+    int draw_az;           /* Print view azimuth */
+    int draw_el;           /* Print view elevation */
+    int draw_tw;           /* Print view twist */
+    int draw_fps;          /* Print frame per second */
+    int color[3];          /* Set params color */
+    int font_size;         /* Set params font size */
+};
+
+
 struct bv_other_state {
     int gos_draw;
     int gos_line_color[3];

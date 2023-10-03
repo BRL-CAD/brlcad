@@ -175,8 +175,7 @@ extern "C" int
 ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
 {
     int help = 0;
-    int cmd_pos = -1;
-    struct bu_vls geom_specifier = BU_VLS_INIT_ZERO;
+    int optend_pos = -1;
     std::vector<std::string> geom_objs;
     struct edit_info einfo;
     einfo.verbosity = 0;
@@ -202,43 +201,39 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     edit_cmds[std::string("scale")]     = &edit_scale_cmd;
 
     // See if we have any high level options set
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",     "",          NULL,         &help,            "Print help");
-    BU_OPT(d[1], "G", "geometry", "specifier", &bu_opt_vls,  &geom_specifier,  "Specify geometry to operate on");
-    BU_OPT(d[2], "v", "verbose", "",           NULL,         &einfo.verbosity,       "Verbose output");
-    BU_OPT_NULL(d[3]);
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",     "",          NULL,         &help,              "Print help");
+    BU_OPT(d[1], "v", "verbose", "",           NULL,         &einfo.verbosity,   "Verbose output");
+    BU_OPT_NULL(d[2]);
 
     // Set up the edit container and initialize
     struct bu_opt_desc *bdesc = (struct bu_opt_desc *)d;
 
-    const char *bargs_help = "[options] [geometry] subcommand [args]";
+    const char *bargs_help = "[options] <geometry_specifier> subcommand [args]";
     if (!argc) {
 	_ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
 	return BRLCAD_OK;
     }
 
-    // High level options are only defined prior to the subcommand
+    // High level options are only defined prior to the geometry specifier
+    std::vector<unsigned long long> gs;
     for (int i = 0; i < argc; i++) {
-	if (edit_cmds.find(std::string(argv[i])) != edit_cmds.end()) {
-	    // To allow specifying an object for editing that has the same name as an edit
-	    // subcommand, recognize the case where the preceding argument is one of the
-	    // geometry specifier options.  If that's the case, we've matched a specifier
-	    // argument not a command and should continue.
-	    if (!i || (!BU_STR_EQUAL(argv[i-1], "-G") && !BU_STR_EQUAL(argv[i-1], "--geometry"))) {
-		cmd_pos = i;
-		break;
-	    }
+	// TODO - de-quote so we can support obj names matching options...
+	gs = gedp->dbi_state->digest_path(argv[i]);
+	if (gs.size()) {
+	    optend_pos = i;
+	    break;
 	}
     }
 
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
+    int acnt = (optend_pos >= 0) ? optend_pos : argc;
 
     int opt_ret = bu_opt_parse(NULL, acnt, argv, d);
 
     if (help || opt_ret < 0) {
-	if (cmd_pos >= 0) {
-	    argc = argc - cmd_pos;
-	    argv = &argv[cmd_pos];
+	if (optend_pos >= 0) {
+	    argc = argc - optend_pos;
+	    argv = &argv[optend_pos];
 	    _ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, argc, argv);
 	} else {
 	    _ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
@@ -246,11 +241,29 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
 	return BRLCAD_OK;
     }
 
-    // Must have a subcommand
-    if (cmd_pos == -1) {
-	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
+    // Must have a specifier
+    if (optend_pos == -1) {
+	bu_vls_printf(gedp->ged_result_str, ": no valid geometry specifier found, nothing to edit\n");
 	_ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
 	return BRLCAD_ERROR;
+    }
+
+    // There are some generic commands (rot, tra, etc.) that apply universally
+    // to all geometry, but the majority of editing operations are specific to
+    // each individual geometric primitive type.  We first decode the specifier,
+    // to determine what operations we're able to support.
+    struct directory *dp = gedp->dbi_state->get_hdp(gs[0]);
+    if (!dp) {
+	bu_vls_printf(gedp->ged_result_str, ": geometry specifier lookup failed for %s\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    if (gs.size() > 1) {
+	bu_log("Comb instance specifier - only generic edit operations.\n");
+    } else {
+	// TODO - once we have the object type, ask librt what subcommands and parameters are
+	// supported for this primitive.  We can offer these in addition to the standard
+	// commands.
     }
 
     // TODO - need to unpack and validate these prior to subcommand processing - this
@@ -318,8 +331,8 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     // Jump the processing past any options specified
-    argc = argc - cmd_pos;
-    argv = &argv[cmd_pos];
+    argc = argc - optend_pos;
+    argv = &argv[optend_pos];
 
     // Execute the subcommand
     return edit_cmds[std::string(argv[0])]->exec(gedp, &einfo, argc, argv);

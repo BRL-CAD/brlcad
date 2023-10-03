@@ -2366,19 +2366,10 @@ BViewState::scene_obj(
     sp = bv_obj_get(v, BV_DB_OBJS);
 
     // Find the leaf directory pointer
-    struct directory *dp = RT_DIR_NULL;
-    std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
-    d_it = dbis->d_map.find(path_hashes[path_hashes.size()-1]);
-    if (d_it == dbis->d_map.end()) {
-	// Lookup failed - try the instance map
-	std::unordered_map<unsigned long long, unsigned long long>::iterator m_it;
-	m_it = dbis->i_map.find(path_hashes[path_hashes.size()-1]);
-	if (m_it != dbis->i_map.end()) {
-	    d_it = dbis->d_map.find(m_it->second);
-	    dp = d_it->second;
-	}
-    } else {
-	dp = d_it->second;
+    struct directory *dp = dbis->get_hdp(path_hashes[path_hashes.size()-1]);
+    if (!dp) {
+	bu_log("dbi_state.cpp:%d - dp lookup failed!\n", __LINE__);
+	return NULL;
     }
 
     // Prepare draw data

@@ -172,6 +172,16 @@ _bv_grid_state_hash(XXH64_state_t *state, struct bv_grid_state *v)
 }
 
 static void
+_bv_params_state_hash(XXH64_state_t *state, struct bv_params_state *v)
+{
+    /* First, do sanity checks */
+    if (!v || !state)
+	return;
+
+    XXH64_update(state, v, sizeof(struct bv_params_state));
+}
+
+static void
 _bv_other_state_hash(XXH64_state_t *state, struct bv_other_state *v)
 {
     /* First, do sanity checks */
@@ -267,7 +277,7 @@ bv_settings_hash(XXH64_state_t *state, struct bview_settings *s)
     _bv_axes_hash(state, &s->gv_view_axes);
     _bv_grid_state_hash(state, &s->gv_grid);
     _bv_other_state_hash(state, &s->gv_center_dot);
-    _bv_other_state_hash(state, &s->gv_view_params);
+    _bv_params_state_hash(state, &s->gv_view_params);
     _bv_other_state_hash(state, &s->gv_view_scale);
     _bv_interactive_rect_state_hash(state, &s->gv_rect);
 

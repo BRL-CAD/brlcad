@@ -353,13 +353,13 @@ dm_draw_faceplate(struct bview *v)
     }
 
 
-    /* View scale */
+    /* View scale - TODO view_scale needs its own text color */
     if (v->gv_s->gv_view_scale.gos_draw)
 	dm_draw_scale(dmp,
 		      v->gv_size*v->gv_base2local,
 		      bu_units_string(1/v->gv_base2local),
 		      v->gv_s->gv_view_scale.gos_line_color,
-		      v->gv_s->gv_view_params.gos_text_color);
+		      v->gv_s->gv_view_params.color);
 
 
     /* Draw the angle distance cursor */
@@ -377,12 +377,12 @@ dm_draw_faceplate(struct bview *v)
 
     /* View parameters - drawn last so the FPS incorporates as much as possible
      * of the drawing work. */
-    if (v->gv_s->gv_view_params.gos_draw || v->gv_s->gv_fps) {
+    if (v->gv_s->gv_view_params.draw) {
 
 	// Save current font size
 	int ofontsize = dm_get_fontsize(dmp);
 	// Set font size for params
-	dm_set_fontsize(dmp, v->gv_s->gv_view_params.gos_font_size);
+	dm_set_fontsize(dmp, v->gv_s->gv_view_params.font_size);
 
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	point_t center;
@@ -396,30 +396,44 @@ dm_draw_faceplate(struct bview *v)
 	    v->gv_s->gv_frametime = 0.9 * v->gv_s->gv_frametime + 0.1 * elapsed_time / 1000000LL;
 	}
 
-	if (v->gv_s->gv_view_params.gos_draw && v->gv_s->gv_fps) {
-	    bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f) az:%.2f  el:%.2f  tw::%.2f  FPS:%.2f",
-		    ustr,
-		    v->gv_size * v->gv_base2local,
-		    V3ARGS(center),
-		    V3ARGS(v->gv_aet),
-		    1/v->gv_s->gv_frametime
-		    );
-	} else if (v->gv_s->gv_view_params.gos_draw && !v->gv_s->gv_fps) {
-	    bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f) az:%.2f  el:%.2f  tw::%.2f",
-		    ustr,
-		    v->gv_size * v->gv_base2local,
-		    V3ARGS(center),
-		    V3ARGS(v->gv_aet));
-	} else if (!v->gv_s->gv_view_params.gos_draw || v->gv_s->gv_fps) {
+	struct bv_params_state *ps = &v->gv_s->gv_view_params;
+	if (ps->draw_size) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
+	    bu_vls_printf(&vls, "size[%s]: %.2f", ustr, v->gv_size * v->gv_base2local);
+	}
+	if (ps->draw_center) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
+	    bu_vls_printf(&vls, "center[%s]: (%.2f, %.2f, %.2f)", ustr, V3ARGS(center));
+	}
+	if (ps->draw_az) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
+	    bu_vls_printf(&vls, "az:%.2f", v->gv_aet[0]);
+	}
+	if (ps->draw_el) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
+	    bu_vls_printf(&vls, "el:%.2f", v->gv_aet[1]);
+	}
+	if (ps->draw_tw) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
+	    bu_vls_printf(&vls, "tw:%.2f", v->gv_aet[2]);
+	}
+	if (ps->draw_fps) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
 	    bu_vls_printf(&vls, "FPS:%.2f", 1/v->gv_s->gv_frametime);
 	}
 
 	// TODO - really should put a rectangle behind this to ensure visibility...
 
 	(void)dm_set_fg(dmp,
-			v->gv_s->gv_view_params.gos_text_color[0],
-			v->gv_s->gv_view_params.gos_text_color[1],
-			v->gv_s->gv_view_params.gos_text_color[2],
+			v->gv_s->gv_view_params.color[0],
+			v->gv_s->gv_view_params.color[1],
+			v->gv_s->gv_view_params.color[2],
 			1, 1.0);
 	(void)dm_draw_string_2d(dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
 	bu_vls_free(&vls);

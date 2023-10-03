@@ -162,14 +162,6 @@ CADViewSettings::checkbox_refresh(unsigned long long)
     }
     fbo_ckbx->blockSignals(false);
 
-    fps_ckbx->blockSignals(true);
-    if (v->gv_s->gv_fps) {
-	fps_ckbx->setCheckState(Qt::Checked);
-    } else {
-	fps_ckbx->setCheckState(Qt::Unchecked);
-    }
-    fps_ckbx->blockSignals(false);
-
     grid_ckbx->blockSignals(true);
     if (v->gv_s->gv_grid.draw) {
 	grid_ckbx->setCheckState(Qt::Checked);
@@ -186,13 +178,25 @@ CADViewSettings::checkbox_refresh(unsigned long long)
     }
     mdlaxes_ckbx->blockSignals(false);
 
+
+    // TODO - add other params checkboxes
+    struct bv_params_state *pst = &v->gv_s->gv_view_params;
     params_ckbx->blockSignals(true);
-    if (v->gv_s->gv_view_params.gos_draw) {
+    if (pst->draw) {
 	params_ckbx->setCheckState(Qt::Checked);
     } else {
 	params_ckbx->setCheckState(Qt::Unchecked);
     }
     params_ckbx->blockSignals(false);
+
+    fps_ckbx->blockSignals(true);
+    if (pst->draw_fps) {
+	fps_ckbx->setCheckState(Qt::Checked);
+    } else {
+	fps_ckbx->setCheckState(Qt::Unchecked);
+    }
+    fps_ckbx->blockSignals(false);
+
 
     scale_ckbx->blockSignals(true);
     if (v->gv_s->gv_view_scale.gos_draw) {
@@ -252,10 +256,12 @@ CADViewSettings::view_refresh(unsigned long long)
     } else {
 	v->gv_s->gv_fb_mode = 0;
     }
+
+    struct bv_params_state *pst = &v->gv_s->gv_view_params;
     if (fps_ckbx->checkState() == Qt::Checked) {
-	v->gv_s->gv_fps = 1;
+	pst->draw_fps = 1;
     } else {
-	v->gv_s->gv_fps = 0;
+	pst->draw_fps = 0;
     }
     if (grid_ckbx->checkState() == Qt::Checked) {
 	v->gv_s->gv_grid.draw = 1;
@@ -268,9 +274,9 @@ CADViewSettings::view_refresh(unsigned long long)
 	v->gv_s->gv_model_axes.draw = 0;
     }
     if (params_ckbx->checkState() == Qt::Checked) {
-	v->gv_s->gv_view_params.gos_draw = 1;
+	pst->draw = 1;
     } else {
-	v->gv_s->gv_view_params.gos_draw = 0;
+	pst->draw = 0;
     }
     if (scale_ckbx->checkState() == Qt::Checked) {
 	v->gv_s->gv_view_scale.gos_draw = 1;
