@@ -129,9 +129,13 @@ QPolySettings::QPolySettings()
     zw->setLayout(zl);
     l->addWidget(zw);
 
-    snapping = new QCheckBox("View Snapping");
-    l->addWidget(snapping);
-    QObject::connect(snapping, &QCheckBox::toggled, this, &QPolySettings::do_snapping_changed);
+    line_snapping = new QCheckBox("Line Snapping");
+    l->addWidget(line_snapping);
+    QObject::connect(line_snapping, &QCheckBox::toggled, this, &QPolySettings::do_line_snapping_changed);
+
+    grid_snapping = new QCheckBox("Grid Snapping");
+    l->addWidget(grid_snapping);
+    QObject::connect(grid_snapping, &QCheckBox::toggled, this, &QPolySettings::do_grid_snapping_changed);
 
     this->setLayout(l);
 }
@@ -201,9 +205,15 @@ QPolySettings::do_settings_changed()
 
 
 void
-QPolySettings::do_snapping_changed()
+QPolySettings::do_line_snapping_changed()
 {
-    emit snapping_changed(snapping->isChecked());
+    emit line_snapping_changed(line_snapping->isChecked());
+}
+
+void
+QPolySettings::do_grid_snapping_changed()
+{
+    emit grid_snapping_changed(grid_snapping->isChecked());
 }
 
 

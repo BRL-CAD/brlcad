@@ -112,7 +112,8 @@ QPolyCreate::QPolyCreate()
     QObject::connect(ps->sketch_name, &QLineEdit::textEdited, this, &QPolyCreate::sketch_sync_str);
 
     // If the view changes, adjust
-    QObject::connect(ps, &QPolySettings::snapping_changed, this, &QPolyCreate::toggle_snapping);
+    QObject::connect(ps, &QPolySettings::line_snapping_changed, this, &QPolyCreate::toggle_line_snapping);
+    QObject::connect(ps, &QPolySettings::grid_snapping_changed, this, &QPolyCreate::toggle_grid_snapping);
 
     default_gl->addWidget(ps);
     defaultBox->setLayout(default_gl);
@@ -377,19 +378,25 @@ QPolyCreate::sketch_sync()
 }
 
 void
-QPolyCreate::toggle_snapping(bool s)
+QPolyCreate::toggle_line_snapping(bool s)
 {
-    snapping = s;
+    line_snapping = s;
 }
 
 void
-QPolyCreate::config_snapping(struct bview *v, struct bv_scene_obj *co)
+QPolyCreate::toggle_grid_snapping(bool s)
+{
+    grid_snapping = s;
+}
+
+void
+QPolyCreate::config_line_snapping(struct bview *v, struct bv_scene_obj *co)
 {
     if (!v)
 	return;
     v->gv_s->gv_snap_flags = BV_SNAP_VIEW;
     bu_ptbl_reset(&v->gv_s->gv_snap_objs);
-    if (!snapping) {
+    if (!line_snapping) {
 	v->gv_s->gv_snap_lines = 0;
     } else {
 	// Turn snapping on if we have other polygons to snap to
@@ -410,6 +417,20 @@ QPolyCreate::config_snapping(struct bview *v, struct bv_scene_obj *co)
 	}
     }
 }
+
+void
+QPolyCreate::config_grid_snapping(struct bview *v)
+{
+    if (!v)
+	return;
+    v->gv_s->gv_snap_flags = BV_SNAP_VIEW;
+    if (!grid_snapping) {
+	v->gv_s->gv_grid.snap = 0;
+    } else {
+	v->gv_s->gv_grid.snap = 1;
+    }
+}
+
 
 void
 QPolyCreate::view_sync_str(const QString &)
@@ -500,7 +521,8 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     // polygon from the last event - otherwise, start fresh with p == NULL
     cf->wp = p;
     cf->v = (p) ? p->s_v : gedp->ged_gvp;
-    config_snapping(cf->v, cf->wp);
+    config_line_snapping(cf->v, cf->wp);
+    config_grid_snapping(cf->v);
 
     // Connect whatever the current filter is to pass on updating signals from
     // the libqtcad logic.  (For the moment we've only got the one filter, but

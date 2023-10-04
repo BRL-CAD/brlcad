@@ -85,8 +85,10 @@ class QPolyCreate : public QWidget
 	void sketch_sync();
 	void view_sync_str(const QString &);
 	void view_sync();
-	void toggle_snapping(bool);
-	void config_snapping(struct bview *, struct bv_scene_obj *);
+	void toggle_line_snapping(bool);
+	void config_line_snapping(struct bview *, struct bv_scene_obj *);
+	void toggle_grid_snapping(bool);
+	void config_grid_snapping(struct bview *);
 
     protected:
 	bool eventFilter(QObject *, QEvent *);
@@ -96,7 +98,8 @@ class QPolyCreate : public QWidget
 	int poly_cnt = 0;
 	struct bv_scene_obj *p = NULL;
 	bool do_bool = false;
-	bool snapping = false;
+	bool line_snapping = false;
+	bool grid_snapping = false;
 
 	QgPolyFilter *cf = NULL;
 	QPolyCreateFilter *pcf;
