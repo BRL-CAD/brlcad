@@ -99,7 +99,7 @@ extern "C" {
 struct ged_cmd_impl closedb_cmd_impl = {"closedb", ged_close_core, GED_CMD_DEFAULT};
 const struct ged_cmd closedb_cmd = { &closedb_cmd_impl };
 
-struct ged_cmd_impl close_cmd_impl = {"closedb", ged_close_core, GED_CMD_DEFAULT};
+struct ged_cmd_impl close_cmd_impl = {"close", ged_close_core, GED_CMD_DEFAULT};
 const struct ged_cmd close_cmd = { &close_cmd_impl };
 
 const struct ged_cmd *close_cmds[] = { &closedb_cmd, &close_cmd, NULL };
