@@ -160,13 +160,15 @@ extern "C" {
 struct ged_cmd_impl reopen_cmd_impl = {"reopen", ged_opendb_core, GED_CMD_DEFAULT};
 const struct ged_cmd reopen_cmd = { &reopen_cmd_impl };
 
-struct ged_cmd_impl open_cmd_impl = {"opendb", ged_opendb_core, GED_CMD_DEFAULT};
+struct ged_cmd_impl opendb_cmd_impl = {"opendb", ged_opendb_core, GED_CMD_DEFAULT};
+const struct ged_cmd opendb_cmd = { &opendb_cmd_impl };
+
+struct ged_cmd_impl open_cmd_impl = {"open", ged_opendb_core, GED_CMD_DEFAULT};
 const struct ged_cmd open_cmd = { &open_cmd_impl };
 
+const struct ged_cmd *open_cmds[] = { &reopen_cmd, &opendb_cmd, &open_cmd, NULL };
 
-const struct ged_cmd *open_cmds[] = { &reopen_cmd, &open_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  open_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  open_cmds, 3 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {

@@ -96,12 +96,15 @@ extern "C" {
 #ifdef GED_PLUGIN
 #include "../include/plugin.h"
 
+struct ged_cmd_impl closedb_cmd_impl = {"closedb", ged_close_core, GED_CMD_DEFAULT};
+const struct ged_cmd closedb_cmd = { &closedb_cmd_impl };
+
 struct ged_cmd_impl close_cmd_impl = {"closedb", ged_close_core, GED_CMD_DEFAULT};
 const struct ged_cmd close_cmd = { &close_cmd_impl };
 
-const struct ged_cmd *close_cmds[] = { &close_cmd, NULL };
+const struct ged_cmd *close_cmds[] = { &closedb_cmd, &close_cmd, NULL };
 
-static const struct ged_plugin pinfo = { GED_API,  close_cmds, 1 };
+static const struct ged_plugin pinfo = { GED_API,  close_cmds, 2 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {
