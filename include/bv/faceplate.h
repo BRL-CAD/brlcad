@@ -57,6 +57,7 @@ struct bv_adc_state {
 struct bv_grid_state {
     int       rc;
     int       draw;               /* draw grid */
+    int       adaptive;           /* adapt to view size */
     int       snap;               /* snap to grid */
     fastf_t   anchor[3];
     fastf_t   res_h;              /* grid resolution in h */

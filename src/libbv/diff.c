@@ -331,6 +331,7 @@ _bv_grid_state_differ(struct bv_grid_state *v1, struct bv_grid_state *v2)
 
     BV_NDIFF(1,rc);
     BV_NDIFF(1,draw);
+    BV_NDIFF(1,adaptive);
     BV_NDIFF(1,snap);
     BV_VDIFF(1,anchor);
     BV_NDIFF(1,res_h);
