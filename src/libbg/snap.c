@@ -389,11 +389,8 @@ bv_snap_grid_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
 {
     int nh, nv;		/* whole grid units */
     point_t view_pt;
-    point_t view_grid_anchor;
-    fastf_t grid_units_h;		/* eventually holds only fractional horizontal grid units */
-    fastf_t grid_units_v;		/* eventually holds only fractional vertical grid units */
-    fastf_t sf;
-    fastf_t inv_sf;
+    point_t grid_origin;
+    fastf_t inv_grid_res_h, inv_grid_res_v;
 
     if (!v || !vx || !vy)
 	return 0;
@@ -404,39 +401,29 @@ bv_snap_grid_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
 	ZERO(gv_s->gv_grid.res_v))
 	return 0;
 
-    sf = v->gv_base2local;
-    inv_sf = 1 / sf;
+    inv_grid_res_h = 1/(gv_s->gv_grid.res_h * v->gv_base2local);
+    inv_grid_res_v = 1/(gv_s->gv_grid.res_v * v->gv_base2local);
 
     VSET(view_pt, *vx, *vy, 0.0);
-    VSCALE(view_pt, view_pt, sf);  /* view_pt now in local units */
+    VSCALE(view_pt, view_pt, v->gv_scale);
+    MAT4X3PNT(grid_origin, v->gv_model2view, gv_s->gv_grid.anchor);
+    VSCALE(grid_origin, grid_origin, v->gv_scale);
 
-    MAT4X3PNT(view_grid_anchor, v->gv_model2view, gv_s->gv_grid.anchor);
-    VSCALE(view_grid_anchor, view_grid_anchor, sf);  /* view_grid_anchor now in local units */
-
-    grid_units_h = (view_grid_anchor[X] - view_pt[X]) / (gv_s->gv_grid.res_h * v->gv_base2local);
-    grid_units_v = (view_grid_anchor[Y] - view_pt[Y]) / (gv_s->gv_grid.res_v * v->gv_base2local);
-    nh = grid_units_h;
-    nv = grid_units_v;
-
+    fastf_t grid_units_h = (view_pt[X] - grid_origin[X]) * inv_grid_res_h;
+    fastf_t grid_units_v = (view_pt[Y] - grid_origin[Y]) * inv_grid_res_v;
+    nh = floor(view_pt[X]);
+    nv = floor(view_pt[Y]);
     grid_units_h -= nh;		/* now contains only the fraction part */
     grid_units_v -= nv;		/* now contains only the fraction part */
+    int hstep = round(grid_units_h);
+    int vstep = round(grid_units_v);
+    nh = nh + hstep + grid_origin[X];
+    nv = nv + vstep + grid_origin[Y];
+    VSET(view_pt, (fastf_t)nh * gv_s->gv_grid.res_h * v->gv_base2local, (fastf_t)nv * gv_s->gv_grid.res_v * v->gv_base2local, 0.0);
+    VSCALE(view_pt, view_pt, 1.0/v->gv_scale);
 
-    if (grid_units_h <= -0.5)
-	*vx = view_grid_anchor[X] - ((nh - 1) * gv_s->gv_grid.res_h * v->gv_base2local);
-    else if (0.5 <= grid_units_h)
-	*vx = view_grid_anchor[X] - ((nh + 1) * gv_s->gv_grid.res_h * v->gv_base2local);
-    else
-	*vx = view_grid_anchor[X] - (nh * gv_s->gv_grid.res_h * v->gv_base2local);
-
-    if (grid_units_v <= -0.5)
-	*vy = view_grid_anchor[Y] - ((nv - 1) * gv_s->gv_grid.res_v * v->gv_base2local);
-    else if (0.5 <= grid_units_v)
-	*vy = view_grid_anchor[Y] - ((nv + 1) * gv_s->gv_grid.res_v * v->gv_base2local);
-    else
-	*vy = view_grid_anchor[Y] - (nv * gv_s->gv_grid.res_v * v->gv_base2local);
-
-    *vx *= inv_sf;
-    *vy *= inv_sf;
+    *vx = view_pt[X];
+    *vy = view_pt[Y];
 
     return 1;
 }
