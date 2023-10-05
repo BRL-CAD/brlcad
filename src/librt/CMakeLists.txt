@@ -399,6 +399,54 @@ target_link_libraries(librt optimized ${CMAKE_SOURCE_DIR}/src/other/openVDB/buil
 set_property(TARGET librt PROPERTY CXX_STANDARD 17)
 set_property(TARGET librt-static PROPERTY CXX_STANDARD 17)
 
+
+	
+# create a list of files to copy
+SET( THIRD_PARTY_DLLS
+    blosc.dll
+	openvdb.dll
+	zlib1.dll
+	zstd.dll)
+)
+
+SET(VDB_DLL_PATH
+    "$<$<CONFIG:Debug>:" "${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug" ">"
+    "$<$<NOT:$<CONFIG:Debug>>:" "${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release" ">"
+)
+
+SET(VDB_BIN_PATH
+    "$<$<CONFIG:Debug>:" "${CMAKE_SOURCE_DIR}/Debug/bin/" ">"
+    "$<$<NOT:$<CONFIG:Debug>>:" "${CMAKE_SOURCE_DIR}/Release/bin/" ">"
+)
+
+string(REPLACE ";" "" VDB_DLL_PATH ${RUNDIR})
+string(REPLACE ";" "" VDB_BIN_PATH ${RUNDIR})
+# do the copying
+foreach( file_i ${THIRD_PARTY_DLLS})
+    add_custom_command(
+    TARGET librt
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy 
+	${VDB_DLL_PATH}/${file_i} 
+	${VDB_BIN_PATH}
+)
+endforeach( file_i )
+
+
+ADD_CUSTOM_COMMAND(TARGET librt POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/lz4d.dll>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/lz4.dll>"
+        "$<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/Debug/bin/>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_SOURCE_DIR}/Release/bin/>" )
+		
+ADD_CUSTOM_COMMAND(TARGET librt POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/tbb12_debug.dll>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/tbb12.dll>"
+        "$<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/Debug/bin/>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_SOURCE_DIR}/Release/bin/>" )
+
 if (MSVC)
   #add_compile_options(/bigobj)
   target_compile_options(librt PRIVATE /bigobj)

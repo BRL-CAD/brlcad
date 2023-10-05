@@ -377,16 +377,7 @@ struct rt_vol_internal {
 struct rt_vdb_internal {
 	uint32_t magic;
 	char name[RT_VDB_NAME_LEN];
-
-	//to start, it will save the min and max of a bounding box - that will be changed to the vdb structure
-	//vect_t minBB;
-	//vect_t maxBB;
-	/*fastf_t a;*/
-	/*void *vdb;*/
 	void *vdb; // @pointer to void (to go from c to cpp code). It will point to the vdb handle in the import method.
-	//void *vdbGrid;
-	
-
 };
 #define RT_VDB_CK_MAGIC(_p) BU_CKMAG(_p, RT_VDB_INTERNAL_MAGIC, "rt_vdb_internal")
 
