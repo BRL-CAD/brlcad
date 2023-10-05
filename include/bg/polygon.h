@@ -391,6 +391,11 @@ BG_EXPORT extern struct bv_scene_obj *bg_dup_view_polygon(const char *nname, str
 // bview to match their target view.
 BG_EXPORT extern void bv_polygon_cpy(struct bv_polygon *dest , struct bv_polygon *src);
 
+// Calculate a suggested default fill delta based on the polygon structure.  The
+// idea is to try and strike a balance between line count and having enough fill
+// lines to highlight interior holes.
+BG_EXPORT extern int bv_polygon_calc_fdelta(struct bv_polygon *p);
+
 // For all polygon bv_scene_objs in the objs table, apply the specified boolean
 // op using p and replace the original polygon geometry in objs with the
 // results (NOTE:  p will not act on itself if it is in objs):

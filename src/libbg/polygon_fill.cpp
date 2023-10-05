@@ -200,6 +200,22 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     return poly_fill;
 }
 
+
+extern "C"
+int bv_polygon_calc_fdelta(struct bv_polygon *p)
+{
+    if (!p)
+	return 0;
+    // TODO - project all contours onto a 2d fit plane, get bounding boxes,
+    // and find the smallest diagonal.  Default fill delta will be 20%(?) of
+    // that dimension.
+    //
+    // Will need to sanity check smallest against average - if we have a huge
+    // polygon with a crazy tiny hole, we don't want a superdense fill to
+    // capture the hole.
+    return 0;
+}
+
 // Local Variables:
 // tab-width: 8
 // mode: C++
