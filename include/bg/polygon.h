@@ -372,8 +372,9 @@ BG_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int fla
 #define BV_POLYGON_UPDATE_DEFAULT 0
 #define BV_POLYGON_UPDATE_PROPS_ONLY 1
 #define BV_POLYGON_UPDATE_PT_SELECT 2
-#define BV_POLYGON_UPDATE_PT_MOVE 3
-#define BV_POLYGON_UPDATE_PT_APPEND 4
+#define BV_POLYGON_UPDATE_PT_SELECT_CLEAR 3
+#define BV_POLYGON_UPDATE_PT_MOVE 4
+#define BV_POLYGON_UPDATE_PT_APPEND 5
 BG_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s, struct bview *v, int utype);
 
 // Update just the scene obj vlist, without altering the source polygon

@@ -368,20 +368,17 @@ QPolyPointFilter::eventFilter(QObject *, QEvent *e)
 
     struct bv_polygon *vp = (struct bv_polygon *)wp->s_i_data;
 
-    // Handle Left Click - either selects or clears a point selection (the
-    // latter occurs if the click is too far from any active points)
-    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
-	if (vp->curr_point_i < 0) {
-	    bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PT_SELECT);
-	    emit view_updated(QG_VIEW_REFRESH);
-	}
+    // If we have a Left release, clear point selection
+    if (m_e->type() == QEvent::MouseButtonRelease) {
+	vp->curr_point_i = -1;
+	bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PT_SELECT_CLEAR);
+	emit view_updated(QG_VIEW_REFRESH);
 	return true;
     }
 
-    // Handle Right Click - clear point selection
-    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::RightButton)) {
-	vp->curr_point_i = -1;
-	bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
+    // Left press selects a point
+    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
+	bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PT_SELECT);
 	emit view_updated(QG_VIEW_REFRESH);
 	return true;
     }

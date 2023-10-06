@@ -447,6 +447,24 @@ bv_select_polygon_pt(struct bv_scene_obj *s)
     return 0;
 }
 
+
+void
+bv_select_clear_polygon_pt(struct bv_scene_obj *s)
+{
+    if (!s)
+	return;
+
+    if (s->s_type_flags & BV_POLYGONS) {
+	struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+	p->curr_point_i = -1;
+	p->curr_contour_i = -1;
+	bv_polygon_vlist(s);
+	/* Updated */
+	s->s_changed++;
+    }
+}
+
+
 int
 bv_move_polygon(struct bv_scene_obj *s)
 {
@@ -809,6 +827,11 @@ bv_update_general_polygon(struct bv_scene_obj *s, int utype)
 
     if (utype == BV_POLYGON_UPDATE_PT_SELECT) {
 	return bv_select_polygon_pt(s);
+    }
+
+    if (utype == BV_POLYGON_UPDATE_PT_SELECT_CLEAR) {
+	bv_select_clear_polygon_pt(s);
+	return 1;
     }
 
     if (utype == BV_POLYGON_UPDATE_PT_MOVE) {
