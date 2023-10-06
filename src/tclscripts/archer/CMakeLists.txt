@@ -44,11 +44,16 @@ set(archer_TCLSCRIPTS
   itk_redefines.tcl
   tabwindow.itk
   )
-BRLCAD_ADDDATA(archer_TCLSCRIPTS tclscripts/archer)
-pkgIndex_BUILD(tclscripts/archer)
-tclIndex_BUILD(tclscripts/archer)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(archer_TCLSCRIPTS tclscripts/archer)
+  pkgIndex_BUILD(tclscripts/archer)
+  tclIndex_BUILD(tclscripts/archer)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${archer_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

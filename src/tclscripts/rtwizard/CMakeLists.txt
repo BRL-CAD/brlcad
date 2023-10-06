@@ -4,9 +4,11 @@ set(rtwizard_TCLSCRIPTS
   RaytraceWizard.tcl
   rtwizard
   )
-BRLCAD_ADDDATA(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
-pkgIndex_BUILD(tclscripts/rtwizard)
-tclIndex_BUILD(tclscripts/rtwizard)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
+  pkgIndex_BUILD(tclscripts/rtwizard)
+  tclIndex_BUILD(tclscripts/rtwizard)
+endif (BRLCAD_ENABLE_TCL)
 
 # Examples
 
@@ -17,7 +19,9 @@ set(PictureTypeA_DATA
   examples/PictureTypeA/title.txt
   examples/PictureTypeA/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeA_DATA tclscripts/rtwizard/examples/PictureTypeA)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(PictureTypeA_DATA tclscripts/rtwizard/examples/PictureTypeA)
+endif (BRLCAD_ENABLE_TCL)
 
 set(PictureTypeB_DATA
   examples/PictureTypeB/desc.txt
@@ -26,7 +30,9 @@ set(PictureTypeB_DATA
   examples/PictureTypeB/title.txt
   examples/PictureTypeB/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeB_DATA tclscripts/rtwizard/examples/PictureTypeB)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(PictureTypeB_DATA tclscripts/rtwizard/examples/PictureTypeB)
+endif (BRLCAD_ENABLE_TCL)
 
 set(PictureTypeC_DATA
   examples/PictureTypeC/desc.txt
@@ -35,7 +41,9 @@ set(PictureTypeC_DATA
   examples/PictureTypeC/title.txt
   examples/PictureTypeC/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeC_DATA tclscripts/rtwizard/examples/PictureTypeC)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(PictureTypeC_DATA tclscripts/rtwizard/examples/PictureTypeC)
+endif (BRLCAD_ENABLE_TCL)
 
 set(PictureTypeD_DATA
   examples/PictureTypeD/desc.txt
@@ -44,7 +52,9 @@ set(PictureTypeD_DATA
   examples/PictureTypeD/title.txt
   examples/PictureTypeD/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeD_DATA tclscripts/rtwizard/examples/PictureTypeD)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(PictureTypeD_DATA tclscripts/rtwizard/examples/PictureTypeD)
+endif (BRLCAD_ENABLE_TCL)
 
 set(PictureTypeE_DATA
   examples/PictureTypeE/desc.txt
@@ -53,7 +63,9 @@ set(PictureTypeE_DATA
   examples/PictureTypeE/title.txt
   examples/PictureTypeE/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeE_DATA tclscripts/rtwizard/examples/PictureTypeE)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(PictureTypeE_DATA tclscripts/rtwizard/examples/PictureTypeE)
+endif (BRLCAD_ENABLE_TCL)
 
 set(PictureTypeF_DATA
   examples/PictureTypeF/desc.txt
@@ -62,9 +74,20 @@ set(PictureTypeF_DATA
   examples/PictureTypeF/title.txt
   examples/PictureTypeF/preview.small.gif
   )
-BRLCAD_ADDDATA(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${rtwizard_TCLSCRIPTS}
+  ${PictureTypeA_DATA}
+  ${PictureTypeB_DATA}
+  ${PictureTypeC_DATA}
+  ${PictureTypeD_DATA}
+  ${PictureTypeE_DATA}
+  ${PictureTypeF_DATA}
+  )
 
 # Local Variables:
 # tab-width: 8
