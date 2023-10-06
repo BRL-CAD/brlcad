@@ -396,6 +396,10 @@ BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};libbrep;libnmg;libbg;libb
 target_link_libraries(librt debug ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/openvdb.lib)
 target_link_libraries(librt optimized ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/openvdb.lib)
 
+target_link_libraries(librt debug ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/tbb12_debug.lib)
+target_link_libraries(librt optimized ${CMAKE_SOURCE_DIR}/src/ther/openVDB/build/openvdb/openvdb/openvdb/Release/tbb12.lib)
+
+
 set_property(TARGET librt PROPERTY CXX_STANDARD 17)
 set_property(TARGET librt-static PROPERTY CXX_STANDARD 17)
 
