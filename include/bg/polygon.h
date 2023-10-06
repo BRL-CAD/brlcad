@@ -242,7 +242,6 @@ bg_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_o
 	    const int *steiner, const size_t steiner_npts,
 	    const point2d_t *pts, const size_t npts, triangulation_t type);
 
-#if 0
 /**
  * @brief
  * Triangulate a bg_polygon.
@@ -258,9 +257,9 @@ bg_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_o
  * @return 1 if triangulation is unsuccessful
  */
 BG_EXPORT extern int
-bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_outpts,
 		       struct bg_polygon *p, triangulation_t type);
-#endif
+
 
 /* Test function - do not use */
 BG_EXPORT extern int
