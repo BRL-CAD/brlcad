@@ -66,7 +66,8 @@ struct vdb_specific {
 
 const struct bu_structparse rt_vdb_parse[] = {
 {"%s", RT_VDB_NAME_LEN, "file", bu_offsetof(struct rt_vdb_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-{"%s", RT_VDB_NAME_LEN, "name", bu_offsetof(struct rt_vdb_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+{"%s", RT_VDB_NAME_LEN, "name", bu_offsetof(struct rt_vdb_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+{"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 nanovdb::GridHandle<nanovdb::HostBuffer> vdbHandle;
