@@ -79,8 +79,7 @@ set(embedded_licenses
   xxhash.txt
   y2038.txt
   )
-
-ADD_DOC(embedded_licenses legal/embedded)
+BRLCAD_MANAGE_FILES(embedded_licenses ${DOC_DIR}/legal/embedded)
 
 CMAKEFILES(CMakeLists.txt)
 

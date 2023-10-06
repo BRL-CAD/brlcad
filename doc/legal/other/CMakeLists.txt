@@ -25,8 +25,7 @@ set(other_licenses
   tktable.txt
   zlib.txt
   )
-
-ADD_DOC(other_licenses legal/other)
+BRLCAD_MANAGE_FILES(other_licenses ${DOC_DIR}/legal/other)
 
 CMAKEFILES(CMakeLists.txt)
 
