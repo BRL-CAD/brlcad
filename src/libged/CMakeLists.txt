@@ -98,6 +98,8 @@ SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 target_link_libraries(libged debug ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/openvdb.lib)
 target_link_libraries(libged optimized ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/openvdb.lib)
+target_link_libraries(libged debug ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/tbb12_debug.lib)
+target_link_libraries(libged optimized ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/tbb12.lib)
 
 set_property(TARGET libged PROPERTY CXX_STANDARD 17)
 set_property(TARGET libged-static PROPERTY CXX_STANDARD 17)

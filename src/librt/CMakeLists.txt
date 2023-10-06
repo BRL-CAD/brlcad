@@ -397,8 +397,7 @@ target_link_libraries(librt debug ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/op
 target_link_libraries(librt optimized ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/openvdb.lib)
 
 target_link_libraries(librt debug ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/tbb12_debug.lib)
-target_link_libraries(librt optimized ${CMAKE_SOURCE_DIR}/src/ther/openVDB/build/openvdb/openvdb/openvdb/Release/tbb12.lib)
-
+target_link_libraries(librt optimized ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/tbb12.lib)
 
 set_property(TARGET librt PROPERTY CXX_STANDARD 17)
 set_property(TARGET librt-static PROPERTY CXX_STANDARD 17)
@@ -410,7 +409,7 @@ SET( THIRD_PARTY_DLLS
     blosc.dll
 	openvdb.dll
 	zlib1.dll
-	zstd.dll)
+	zstd.dll
 )
 
 SET(VDB_DLL_PATH
@@ -423,8 +422,8 @@ SET(VDB_BIN_PATH
     "$<$<NOT:$<CONFIG:Debug>>:" "${CMAKE_SOURCE_DIR}/Release/bin/" ">"
 )
 
-string(REPLACE ";" "" VDB_DLL_PATH ${RUNDIR})
-string(REPLACE ";" "" VDB_BIN_PATH ${RUNDIR})
+string(REPLACE ";" "" VDB_DLL_PATH ${VDB_DLL_PATH})
+string(REPLACE ";" "" VDB_BIN_PATH ${VDB_BIN_PATH})
 # do the copying
 foreach( file_i ${THIRD_PARTY_DLLS})
     add_custom_command(
@@ -536,4 +535,3 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-
