@@ -830,7 +830,7 @@ bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 
 
 extern "C" int
-bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 			      const int *poly, const size_t poly_pnts,
 			      const int **holes_array, const size_t *holes_npts, const size_t nholes,
 			      const int *steiner, const size_t steiner_npts,
@@ -924,7 +924,7 @@ bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, 
 }
 
 extern "C" int
-bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+bg_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *steiner, const size_t steiner_pnts,
 	const point2d_t *pts, const size_t npts, triangulation_t type)
 {
@@ -938,7 +938,7 @@ bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *nu
 	verts_ind[i] = (int)i;
     }
 
-    ret = bg_nested_polygon_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, steiner, steiner_pnts, pts, npts, type);
+    ret = bg_nested_poly_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, steiner, steiner_pnts, pts, npts, type);
 
     bu_free(verts_ind, "vert indices");
     return ret;

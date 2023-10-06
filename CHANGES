@@ -1688,3 +1688,9 @@ s/rt_gettree_muves\(/rt_gettrees_and_attrs\(/g
 ----
 s/V3DIR_FROM_AZEL\(/bn_vec_ae\(/g
 s/AZEL_FROM_V3DIR\([[:space:]]*([^,]*),[[:space:]]*([^,]*),/bn_ae_vec\(&\1, &\2/g
+
+7.38
+----
+s/bg_polygon_triangulate/bg_poly_triangulate/g
+s/bg_nested_polygon_triangulate/bg_nested_poly_triangulate/g
+

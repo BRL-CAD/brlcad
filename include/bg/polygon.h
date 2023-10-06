@@ -178,6 +178,9 @@ typedef enum {
  * If no holes are present, caller should pass NULL for holes_array and holes_npts,
  * and 0 for nholes, or use bg_polygon_triangulate instead.
  *
+ * This routine deliberately uses low level data types for both input and output
+ * to maximize the reusability of this logic.
+ *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
  * @param[out] out_pts  output points used by faces set. If an algorithm was selected that generates new points, this will be a new array.
@@ -196,11 +199,12 @@ typedef enum {
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-						   const int *poly, const size_t poly_npts,
-						   const int **holes_array, const size_t *holes_npts, const size_t nholes,
-						   const int *steiner, const size_t steiner_npts,
-						   const point2d_t *pts, const size_t npts, triangulation_t type);
+BG_EXPORT extern int
+bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+			   const int *poly, const size_t poly_npts,
+			   const int **holes_array, const size_t *holes_npts, const size_t nholes,
+			   const int *steiner, const size_t steiner_npts,
+			   const point2d_t *pts, const size_t npts, triangulation_t type);
 
 /**
  * @brief
@@ -217,6 +221,9 @@ BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * logic - this is a convenience function to simplify calling the routine when
  * specification of hole polygons is not needed.
  *
+ * This routine deliberately uses low level data types for both input and output
+ * to maximize the reusability of this logic.*
+ *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
  * @param[out] out_pts output points used by faces set, if an algorithm was selected that generates new points
@@ -230,10 +237,30 @@ BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-BG_EXPORT extern int bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-				   	    const int *steiner, const size_t steiner_npts,
-					    const point2d_t *pts, const size_t npts, triangulation_t type);
+BG_EXPORT extern int
+bg_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+	    const int *steiner, const size_t steiner_npts,
+	    const point2d_t *pts, const size_t npts, triangulation_t type);
 
+#if 0
+/**
+ * @brief
+ * Triangulate a bg_polygon.
+ *
+ * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
+ * @param[out] num_faces Number of faces created
+ * @param[out] out_pts output points used by faces set, if an algorithm was selected that generates new points
+ * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
+ * @param[in] p bg_polygon holding the polygon contours to be triangulated
+ * @param[in] type Triangulation type
+ *
+ * @return 0 if triangulation is successful
+ * @return 1 if triangulation is unsuccessful
+ */
+BG_EXPORT extern int
+bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+		       struct bg_polygon *p, triangulation_t type);
+#endif
 
 /* Test function - do not use */
 BG_EXPORT extern int
