@@ -406,7 +406,6 @@ set_property(TARGET librt-static PROPERTY CXX_STANDARD 17)
 SET( THIRD_PARTY_DLLS
     blosc.dll
 	openvdb.dll
-	zlib1.dll
 	zstd.dll
 )
 
@@ -445,6 +444,13 @@ ADD_CUSTOM_COMMAND(TARGET librt POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "$<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/tbb12_debug.dll>"
         "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/tbb12.dll>"
+        "$<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/Debug/bin/>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_BINARY_DIR}/Release/bin/>" )
+		
+ADD_CUSTOM_COMMAND(TARGET librt POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/zlibd1.dll>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/zlib1.dll>"
         "$<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/Debug/bin/>"
         "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_BINARY_DIR}/Release/bin/>" )
 
