@@ -47,7 +47,6 @@
 #include "../nmg.h" /* (temporarily?) needed for knot_vector */
 #include "brep.h"
 
-
 __BEGIN_DECLS
 
 #define NAMELEN 16	/* NAMESIZE from db.h (can't call it NAMESIZE!!!!!) */
@@ -368,6 +367,21 @@ struct rt_vol_internal {
     unsigned char *map;
 };
 #define RT_VOL_CK_MAGIC(_p) BU_CKMAG(_p, RT_VOL_INTERNAL_MAGIC, "rt_vol_internal")
+
+/** @addtogroup rt_vdb */
+/** @{ */
+/*
+ * ID_VOL
+ */
+#define RT_VDB_NAME_LEN 128
+struct rt_vdb_internal {
+	uint32_t magic;
+	char name[RT_VDB_NAME_LEN];
+	void *vdb; // @pointer to void (to go from c to cpp code). It will point to the vdb handle in the import method.
+};
+#define RT_VDB_CK_MAGIC(_p) BU_CKMAG(_p, RT_VDB_INTERNAL_MAGIC, "rt_vdb_internal")
+
+
 /** @} */
 
 /** @addtogroup rt_hf */

@@ -70,6 +70,7 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
     struct rt_arbn_internal *arbn_ip;
     struct rt_superell_internal *superell_ip;
     struct rt_metaball_internal *metaball_ip;
+	struct rt_vdb_internal *vdb_ip;
     struct rt_pnts_internal *pnts_ip;
     struct rt_cline_internal *cline_ip;
 	struct rt_brep_internal *brep_ip;
@@ -792,7 +793,8 @@ ged_make_core(struct ged *gedp, int argc, const char *argv[])
 	superell_ip->e = 1.0;
 	fprintf(stdout, "superell being made with %f and %f\n", superell_ip->n, superell_ip->e);
 
-    } else if (BU_STR_EQUAL(argv[bu_optind+1], "cline")) {
+    }
+	else if (BU_STR_EQUAL(argv[bu_optind+1], "cline")) {
 
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_CLINE;

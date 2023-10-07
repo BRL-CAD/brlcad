@@ -114,6 +114,7 @@ RT_DECLARE_INTERFACE(cline);
 RT_DECLARE_INTERFACE(bot);
 RT_DECLARE_INTERFACE(superell);
 RT_DECLARE_INTERFACE(metaball);
+RT_DECLARE_INTERFACE(vdb);
 RT_DECLARE_INTERFACE(hyp);
 RT_DECLARE_INTERFACE(revolve);
 RT_DECLARE_INTERFACE(constraint);
@@ -2421,6 +2422,53 @@ const struct rt_functab OBJ[] = {
 	NULL, /* serialize */
 	NULL  /* label */
     },
+
+	{
+		/* 47 */
+		RT_FUNCTAB_MAGIC, "ID_VDB", "vdb",
+		0, /* ft_use_rpp */
+		RTFUNCTAB_FUNC_PREP_CAST(rt_vdb_prep),
+		RTFUNCTAB_FUNC_SHOT_CAST(rt_vdb_shot),
+		NULL, /* print */
+		RTFUNCTAB_FUNC_NORM_CAST(rt_vdb_norm),
+		NULL, /* piece_shot */
+		NULL, /* piece_hitsegs */
+		NULL, /* uv */
+		NULL, /* curve */
+		NULL, /* classify */
+		NULL, /* free */
+		RTFUNCTAB_FUNC_PLOT_CAST(rt_vdb_plot),
+		NULL, /* adaptive_plot */
+		NULL, /* vshot */
+		NULL, /* tess */
+		NULL, /* tnurb */
+		NULL, /* brep */
+		RTFUNCTAB_FUNC_IMPORT5_CAST(rt_vdb_import5),
+		RTFUNCTAB_FUNC_EXPORT5_CAST(rt_vdb_export5),
+		NULL, /* import4 */
+		NULL, /* export4 */
+		NULL, /* ifree */
+		NULL, /* describe */
+		RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
+		NULL, /* parse */
+		sizeof(struct rt_vdb_internal), /* sizeof(internal) */
+		RT_VDB_INTERNAL_MAGIC, /* magic */
+		RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
+		RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
+		RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
+		NULL, /* make */
+		NULL, /* params */
+		RTFUNCTAB_FUNC_BBOX_CAST(rt_vdb_bbox),
+		NULL, /* volume */
+		NULL, /* surf_area */
+		NULL, /* centroid */
+		NULL, /* oriented_bbox */
+		NULL, /* find_selections */
+		NULL, /* evaluate_selection */
+		NULL, /* process_selection */
+		NULL, /* serialize */
+		NULL  /* label */
+	},
 
     {
 	/* this entry for sanity only */

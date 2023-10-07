@@ -30,6 +30,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <iterator>
 
 #include "bu/app.h"
 #include "bu/cmd.h"

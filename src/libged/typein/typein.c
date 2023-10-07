@@ -119,6 +119,10 @@ static const char *p_vol[] = {
     "Enter Z dimension of a cell: ",
 };
 
+static const char *p_vdb[] = {
+	"Enter file path: "
+};
+
 
 static const char *p_bot[] = {
     "Enter number of vertices: ",
@@ -1039,6 +1043,30 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     return BRLCAD_OK;
 }
 
+static int
+vdb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
+{
+	struct rt_vdb_internal *vdb_ip;
+
+	BU_ALLOC(vdb_ip, struct rt_vdb_internal);
+	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern->idb_type = ID_VDB;
+	intern->idb_meth = &OBJ[ID_VDB];
+	intern->idb_ptr = (void *)vdb_ip;
+	//vdb_ip = (struct rt_vdb_internal *)intern->idb_ptr;
+	vdb_ip->magic = RT_VDB_INTERNAL_MAGIC;
+	bu_strlcpy(vdb_ip->name, cmd_argvs[3], sizeof(vdb_ip->name));
+	//VSET(vdb_ip->minBB, -1, -1, -1);
+	//VSET(vdb_ip->maxBB, 1, 1, 1);
+	/*char message[200] = "";
+	strcat(message, cmd_argvs[3]);
+	strcat(message, " being made \n");
+	fprintf(stdout, message);*/
+
+	//bu_log(message);
+
+	return BRLCAD_OK;
+}
 
 static int
 bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
@@ -3432,7 +3460,12 @@ ged_in_core(struct ged *gedp, int argc, const char *argv[])
 	nvals = 10;
 	menu = p_vol;
 	fn_in = vol_in;
-    } else if (BU_STR_EQUAL(argv[2], "hf")) {
+	} else if (BU_STR_EQUAL(argv[2], "vdb")) {
+		nvals = 1;
+		menu = p_vdb;
+		fn_in = vdb_in;
+
+	} else if (BU_STR_EQUAL(argv[2], "hf")) {
 	if (db_version(gedp->dbip) < 5) {
 	    nvals = 19;
 	    menu = p_hf;

@@ -27,6 +27,14 @@ set(RT_LOCAL_INCLUDE_DIRS
 #  ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/source
 
 
+# include for openvdb
+include_directories(
+  ${CMAKE_SOURCE_DIR}/src/other/openVDB/openvdb
+  ${CMAKE_SOURCE_DIR}/src/other/openVDB/nanovdb
+  ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb
+  ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb
+)
+
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
 
 # FIXME: needs materialX
@@ -219,6 +227,7 @@ set(LIBRT_SOURCES
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
   primitives/xxx/xxx.c
+  primitives/vdb/vdb.cpp
   reduce.c
   reduce_db.cpp
   regionfix.c
@@ -384,6 +393,79 @@ BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};libbrep;libnmg;libbg;libb
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
 # BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
+target_link_libraries(librt debug ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/openvdb.lib)
+target_link_libraries(librt optimized ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/openvdb.lib)
+
+target_link_libraries(librt debug ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/tbb12_debug.lib)
+target_link_libraries(librt optimized ${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/tbb12.lib)
+
+set_property(TARGET librt PROPERTY CXX_STANDARD 17)
+set_property(TARGET librt-static PROPERTY CXX_STANDARD 17)
+
+# create a list of files to copy
+SET( THIRD_PARTY_DLLS
+    blosc.dll
+	openvdb.dll
+	zstd.dll
+)
+
+SET(VDB_DLL_PATH
+    "$<$<CONFIG:Debug>:" "${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug" ">"
+    "$<$<NOT:$<CONFIG:Debug>>:" "${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release" ">"
+)
+
+SET(VDB_BIN_PATH
+    "$<$<CONFIG:Debug>:" "${CMAKE_BINARY_DIR}/Debug/bin/" ">"
+    "$<$<NOT:$<CONFIG:Debug>>:" "${CMAKE_BINARY_DIR}/Release/bin/" ">"
+)
+
+string(REPLACE ";" "" VDB_DLL_PATH ${VDB_DLL_PATH})
+string(REPLACE ";" "" VDB_BIN_PATH ${VDB_BIN_PATH})
+# do the copying
+foreach( file_i ${THIRD_PARTY_DLLS})
+    add_custom_command(
+    TARGET librt
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy 
+	${VDB_DLL_PATH}/${file_i} 
+	${VDB_BIN_PATH}
+)
+endforeach( file_i )
+
+
+ADD_CUSTOM_COMMAND(TARGET librt POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/lz4d.dll>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/lz4.dll>"
+        "$<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/Debug/bin/>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_BINARY_DIR}/Release/bin/>" )
+		
+ADD_CUSTOM_COMMAND(TARGET librt POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/tbb12_debug.dll>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/tbb12.dll>"
+        "$<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/Debug/bin/>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_BINARY_DIR}/Release/bin/>" )
+		
+ADD_CUSTOM_COMMAND(TARGET librt POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "$<$<CONFIG:Debug>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Debug/zlibd1.dll>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_SOURCE_DIR}/src/other/openVDB/build/openvdb/openvdb/openvdb/Release/zlib1.dll>"
+        "$<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/Debug/bin/>"
+        "$<$<NOT:$<CONFIG:Debug>>:${CMAKE_BINARY_DIR}/Release/bin/>" )
+
+if (MSVC)
+  #add_compile_options(/bigobj)
+  target_compile_options(librt PRIVATE /bigobj)
+   target_compile_options(librt-static PRIVATE /bigobj)
+else ()
+  #add_compile_options(-Wa,-mbig-obj)
+  target_compile_options(librt PRIVATE -Wa)
+  target_compile_options(librt PRIVATE -mbig-obj)
+  
+  target_compile_options(librt-static PRIVATE -Wa)
+  target_compile_options(librt-static PRIVATE -mbig-obj)
+endif ()
 
 set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(HIDE_INTERNAL_SYMBOLS)
@@ -458,4 +540,3 @@ CMAKEFILES(
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-
