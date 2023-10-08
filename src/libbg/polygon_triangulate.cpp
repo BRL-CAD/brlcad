@@ -1015,10 +1015,10 @@ bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_
 	}
     }
 
-    int *tri_faces;
-    int tri_num_faces;
-    point2d_t *tri_out_pts;
-    int tri_num_outpts;
+    int *tri_faces = NULL;
+    int tri_num_faces = 0;
+    point2d_t *tri_out_pts = NULL;
+    int tri_num_outpts = 0;
     int ret = bg_nested_poly_triangulate(&tri_faces, &tri_num_faces, &tri_out_pts, &tri_num_outpts, ocontour, ocontour_cnt, (const int **)holes_array, (const size_t *)holes_npts, p->num_contours - 1, NULL, 0, pnts_2d, pnt_cnt, type); 
 
 
@@ -1027,7 +1027,7 @@ bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_
     for (int i = 0; i < pnt_cnt; i++) {
 	bg_plane_pt_at(&pnts_3d[i], pl, pnts_2d[i][0], pnts_2d[i][1]);
     }
-    
+
     // Assign outputs
     *faces = tri_faces;
     *num_faces = tri_num_faces;
