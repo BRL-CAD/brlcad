@@ -831,23 +831,14 @@ QPolyMod::view_name_update()
 void
 QPolyMod::toggle_line_snapping(bool s)
 {
-    line_snapping = s;
-}
-
-void
-QPolyMod::toggle_grid_snapping(bool s)
-{
-    grid_snapping = s;
-}
-
-void
-QPolyMod::config_line_snapping(struct bview *v, struct bv_scene_obj *co)
-{
-    if (!v)
+    struct bview *v = (cf) ? cf->v : NULL;
+    struct bv_scene_obj *co = (cf) ? cf->wp : NULL;
+    if (!v || !co)
 	return;
+
     v->gv_s->gv_snap_flags = BV_SNAP_VIEW;
     bu_ptbl_reset(&v->gv_s->gv_snap_objs);
-    if (!line_snapping) {
+    if (!s) {
 	v->gv_s->gv_snap_lines = 0;
     } else {
 	// Turn snapping on if we have other polygons to snap to
@@ -855,11 +846,11 @@ QPolyMod::config_line_snapping(struct bview *v, struct bv_scene_obj *co)
 	if (!view_objs)
 	    return;
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (s == co)
+	    struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    if (so == co)
 		continue;
-	    if (s->s_type_flags & BV_POLYGONS)
-		bu_ptbl_ins(&v->gv_s->gv_snap_objs, (long *)s);
+	    if (so->s_type_flags & BV_POLYGONS)
+		bu_ptbl_ins(&v->gv_s->gv_snap_objs, (long *)so);
 	}
 	if (BU_PTBL_LEN(&v->gv_s->gv_snap_objs)) {
 	    v->gv_s->gv_snap_lines = 1;
@@ -867,19 +858,49 @@ QPolyMod::config_line_snapping(struct bview *v, struct bv_scene_obj *co)
 	    v->gv_s->gv_snap_lines = 0;
 	}
     }
+
+    emit settings_changed(QG_VIEW_DRAWN);
 }
 
 void
-QPolyMod::config_grid_snapping(struct bview *v)
+QPolyMod::toggle_grid_snapping(bool s)
 {
+    struct bview *v = (cf) ? cf->v : NULL;
     if (!v)
 	return;
+
     v->gv_s->gv_snap_flags = BV_SNAP_VIEW;
-    if (!grid_snapping) {
+    if (!s) {
 	v->gv_s->gv_grid.snap = 0;
     } else {
 	v->gv_s->gv_grid.snap = 1;
     }
+
+    emit settings_changed(QG_VIEW_DRAWN);
+}
+
+void
+QPolyMod::checkbox_refresh(unsigned long long)
+{
+    struct bview *v = (cf) ? cf->v : NULL;
+    if (!v)
+	return;
+
+    ps->grid_snapping->blockSignals(true);
+    if (v->gv_s->gv_grid.snap) {
+	ps->grid_snapping->setCheckState(Qt::Checked);
+    } else {
+	ps->grid_snapping->setCheckState(Qt::Unchecked);
+    }
+    ps->grid_snapping->blockSignals(false);
+
+    ps->line_snapping->blockSignals(true);
+    if (v->gv_s->gv_snap_lines) {
+	ps->line_snapping->setCheckState(Qt::Checked);
+    } else {
+	ps->line_snapping->setCheckState(Qt::Unchecked);
+    }
+    ps->line_snapping->blockSignals(false);
 }
 
 void
@@ -918,9 +939,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
     cf->wp = p;
     cf->v = (p) ? p->s_v : gedp->ged_gvp;
     cf->ptype = (ip) ? ip->type : BV_POLYGON_GENERAL;
-
-    config_line_snapping(cf->v, cf->wp);
-    config_grid_snapping(cf->v);
+    checkbox_refresh(0);
 
     // Connect whatever the current filter is to pass on updating signals from
     // the libqtcad logic.

@@ -39,6 +39,8 @@ polygon_tool_create()
     // These creates may change the view - connect the internal widget signal
     // to the QgToolPaletteElement slot so the application can get the word when
     // that happens.
+    QObject::connect(el, &QgToolPaletteElement::element_view_update, poly_create, &QPolyCreate::checkbox_refresh);
+    QObject::connect(poly_create, &QPolyCreate::settings_changed, el, &QgToolPaletteElement::element_view_changed);
     QObject::connect(poly_create, &QPolyCreate::view_updated, el, &QgToolPaletteElement::element_view_changed);
 
     // Let the element (and hence the application) know that this tool has a
@@ -61,6 +63,8 @@ polygon_tool_modify()
     // These mods may change the view - connect the internal widget signal
     // to the QgToolPaletteElement slot so the application can get the word when
     // that happens.
+    QObject::connect(el, &QgToolPaletteElement::element_view_update, poly_mod, &QPolyMod::checkbox_refresh);
+    QObject::connect(poly_mod, &QPolyMod::settings_changed, el, &QgToolPaletteElement::element_view_changed);
     QObject::connect(poly_mod, &QPolyMod::view_updated, el, &QgToolPaletteElement::element_view_changed);
 
     // However the view changed, we need to make sure our list is current
