@@ -417,11 +417,24 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 			    regions[im].ignore = 0;
 			    regions[jm].ignore = 0;
 			}
+		    } else if (BU_STR_EQUAL(regions[im].region_id, "--") &&
+			      !BU_STR_EQUAL(regions[im].aircode, regions[jm].aircode)) {
+			 /* edge case:
+			  * aircodes usually do not have region_id
+			  *     if region_id are matching empty and aircodes do not match - this is not a match
+			  *
+			  * ie do nothing
+			  */
 		    } else {
 			/* Found match - set ignore flags */
 			regions[im].ignore = 0;
 			regions[jm].ignore = 0;
 		    }
+		} else if (BU_STR_EQUAL(regions[im].aircode, regions[jm].aircode) &&
+			  !BU_STR_EQUAL(regions[im].aircode, "--")) {
+		    /* Found matching aircodes - set ignore flags */
+		    regions[im].ignore = 0;
+		    regions[jm].ignore = 0;
 		}
 		jm++;
 	    }
