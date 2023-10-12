@@ -368,7 +368,9 @@ ged_lc_core(struct ged *gedp, int argc, const char *argv[])
 	    int jm = im + 1;
 	    int mismatch = 0;
 	    while (!found_all_matches) {
-		if (jm == (int)BU_PTBL_LEN(&results2) || bu_strcmp(regions[im].region_id, regions[jm].region_id)) {
+		if (jm == (int)BU_PTBL_LEN(&results2) || 
+		    bu_strcmp(regions[im].region_id, regions[jm].region_id) || 
+		    !bu_strcmp(regions[im].region_id, "--")) {
 		    /* Found all matches - set ignore flags */
 		    int km = 0;
 		    int ignored = (mismatch) ? 0 : 1;
