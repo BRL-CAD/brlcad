@@ -387,7 +387,6 @@ bv_view_center_linesnap(struct bview *v)
 int
 bv_snap_grid_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
 {
-    int nh, nv;		/* whole grid units */
     point_t view_pt;
     point_t grid_origin;
     fastf_t inv_grid_res_h, inv_grid_res_v;
@@ -411,15 +410,16 @@ bv_snap_grid_2d(struct bview *v, fastf_t *vx, fastf_t *vy)
 
     fastf_t grid_units_h = (view_pt[X] - grid_origin[X]) * inv_grid_res_h;
     fastf_t grid_units_v = (view_pt[Y] - grid_origin[Y]) * inv_grid_res_v;
+    int nh, nv;		/* whole grid units */
     nh = floor(view_pt[X]);
     nv = floor(view_pt[Y]);
     grid_units_h -= nh;		/* now contains only the fraction part */
     grid_units_v -= nv;		/* now contains only the fraction part */
     int hstep = round(grid_units_h);
     int vstep = round(grid_units_v);
-    nh = nh + hstep + grid_origin[X];
-    nv = nv + vstep + grid_origin[Y];
-    VSET(view_pt, (fastf_t)nh * gv_s->gv_grid.res_h * v->gv_base2local, (fastf_t)nv * gv_s->gv_grid.res_v * v->gv_base2local, 0.0);
+    fastf_t fnh = nh + hstep + grid_origin[X];
+    fastf_t fnv = nv + vstep + grid_origin[Y];
+    VSET(view_pt, fnh * gv_s->gv_grid.res_h * v->gv_base2local, fnv * gv_s->gv_grid.res_v * v->gv_base2local, 0.0);
     VSCALE(view_pt, view_pt, 1.0/v->gv_scale);
 
     *vx = view_pt[X];
