@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 20XX-0X-XX  Release 7.36.2                                     ---
 ----------------------------------------------------------------------
 
+* improved 'lc' -d and -m interactions with aircodes - Chris McGregor
+* fixed 'make bot' inverted face normals - Chris McGregor
 * fixed garbage_collect MGED command on Windows - Cliff Yapp
 * improved and restructured rtwizard's manual page - Sean Morrison
 * fixed E command in MGED - Cliff Yapp
