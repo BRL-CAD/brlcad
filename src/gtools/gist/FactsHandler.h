@@ -38,6 +38,8 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height);
 void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt);
 void makeVVSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height);
+
+
 /*
  * Local Variables:
  * tab-width: 8

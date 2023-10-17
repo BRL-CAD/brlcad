@@ -20,21 +20,6 @@
 
 #include "pch.h"
 
-bool readParameters(int argc, char** argv, Options &opt);
-void generateReport(Options opt);
-void handleFolder(Options& opt);
-
-int main(int argc, char **argv) {
-    Options options;
-    if (readParameters(argc, argv, options)) {
-        if (options.getIsFolder()) {
-            handleFolder(options);
-        } else {
-            generateReport(options);
-        }
-    }
-}
-
 
 /**
  * Takes in a list of parameters and updates program variables accordingly
@@ -47,7 +32,8 @@ int main(int argc, char **argv) {
  *
  * @returns if the given parameters are valid.
  */
-bool readParameters(int argc, char** argv, Options &opt)
+static bool
+readParameters(int argc, char** argv, Options &opt)
 {
     /*
      * A list of parameters is as follows:
@@ -176,8 +162,11 @@ bool readParameters(int argc, char** argv, Options &opt)
 /**
  * Checks if we are processing a folder of models
  */
-void handleFolder(Options& options) {
+static void
+handleFolder(Options& options)
+{
     int cnt = 1;
+
     for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
         options.setFilepath(entry.path().string());
         options.setExportToFile();
@@ -198,7 +187,8 @@ void handleFolder(Options& options) {
  *
  * @opt options to be used in report generation
  */
-void generateReport(Options opt)
+static void
+generateReport(Options opt)
 {
     // create image frame
     IFPainter img(opt.getLength(), opt.getWidth());
@@ -207,8 +197,7 @@ void generateReport(Options opt)
     InformationGatherer info(&opt);
 
     // read in all information from model file
-    if (!info.gatherInformation(opt.getName()))
-    {
+    if (!info.gatherInformation(opt.getName())) {
         std::cerr << "Error on Information Gathering.  Report Generation skipped..." << std::endl;
         return;
     }
@@ -232,7 +221,6 @@ void generateReport(Options opt)
     Position fileSection(imagePosition.right() - imagePosition.sixthWidth() - margin, topSection.bottom() + padding, imagePosition.sixthWidth(), hierarchySection.top() - topSection.bottom() - padding);
     Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
 
-
     // draw all sections
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
@@ -250,6 +238,21 @@ void generateReport(Options opt)
     // optionally, export the image
     if (opt.getExportToFile()) {
         img.exportToFile(opt.getFileName());
+    }
+}
+
+
+int
+main(int argc, char **argv)
+{
+    Options options;
+
+    if (readParameters(argc, argv, options)) {
+        if (options.getIsFolder()) {
+            handleFolder(options);
+        } else {
+            generateReport(options);
+        }
     }
 }
 

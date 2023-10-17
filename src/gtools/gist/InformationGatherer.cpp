@@ -31,23 +31,29 @@
 #  include <unistd.h>
 #endif
 
-void getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::string az, std::string el, std::string comp, double& surfArea, std::string unit) {
+
+void
+getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
+{
     //Run RTArea to get surface area
     std::string command = opt->getTemppath() + "rtarea -u " + unit + " -a " + az + " -e " + el + " " + opt->getFilepath() + " " + comp + " 2>&1";
     char buffer[128];
     std::string result = "";
     FILE* pipe = popen(command.c_str(), "r");
-    if (!pipe) throw std::runtime_error("popen() failed!");
+
+    if (!pipe)
+	throw std::runtime_error("popen() failed!");
+
     try {
         while (fgets(buffer, sizeof buffer, pipe) != NULL) {
             result += buffer;
         }
-    }
-    catch (...) {
+    } catch (...) {
         pclose(pipe);
         throw;
     }
     pclose(pipe);
+
     //If rtarea didn't fail, calculate area
     if (result.find("Total Exposed Area") != std::string::npos) {
         result = result.substr(result.find("Total Exposed Area"));
@@ -63,36 +69,47 @@ void getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::s
 }
 
 
-void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit) {
+void
+getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
+{
     //Get tops
     const char* cmd[3] = { "tops", NULL, NULL };
+
     ged_exec(g, 1, cmd);
+
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     std::map<std::string, bool> listed;
     std::vector<std::string> toVisit;
+
     while (ss >> val) {
         //Get surface area
         getSurfaceArea(opt, map, "0", "0", val, surfArea00, lUnit);
         getSurfaceArea(opt, map, "0", "90", val, surfArea090, lUnit);
         getSurfaceArea(opt, map, "90", "0", val, surfArea900, lUnit);
+
         //Next, get regions underneath to calculate volume and mass
         const char* cmd[3] = { "l", val.c_str(), NULL };
+
         ged_exec(g, 2, cmd);
+
         std::stringstream ss2(bu_vls_addr(g->ged_result_str));
         std::string val2;
         std::getline(ss2, val2); // ignore first line
+
         //Get initial regions
         while (getline(ss2, val2)) {
             //Parse components
             val2 = val2.erase(0, val2.find_first_not_of(" ")); // left trim
             val2 = val2.erase(val2.find_last_not_of(" ") + 1); // right trim
+
             if (val2[0] == 'u') {
                 val2 = val2.substr(val2.find(' ') + 1); // extract out u
                 val2 = val2.substr(0, val2.find('['));
                 if (val2.find(' ') != std::string::npos) {
                     val2 = val2.substr(0, val2.find(' '));
                 }
+
                 std::map<std::string, bool>::iterator it;
                 it = listed.find(val2);
                 if (it == listed.end()) {
@@ -102,6 +119,7 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
             }
         }
     }
+
     for (int i = 0; i < toVisit.size(); i++) {
         std::string val = toVisit[i];
         //Get volume of region
@@ -109,17 +127,20 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
         char buffer[128];
         std::string result = "";
         FILE* pipe = popen(command.c_str(), "r");
-        if (!pipe) throw std::runtime_error("popen() failed!");
+
+	if (!pipe)
+	    throw std::runtime_error("popen() failed!");
+
         try {
             while (fgets(buffer, sizeof buffer, pipe) != NULL) {
                 result += buffer;
             }
-        }
-        catch (...) {
+        } catch (...) {
             pclose(pipe);
             throw;
         }
         pclose(pipe);
+
         //Extract volume value
         result = result.substr(result.find("Average total volume:") + 22);
         result = result.substr(0, result.find("cu") - 1);
@@ -131,21 +152,23 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
                 bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
             }
         }
+
         //Get mass of region
         command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\", " + mUnit + " " + opt->getFilepath() + " " + val + " 2>&1";
         result = "";
         pipe = popen(command.c_str(), "r");
-        if (!pipe) throw std::runtime_error("popen() failed!");
+        if (!pipe)
+	    throw std::runtime_error("popen() failed!");
         try {
             while (fgets(buffer, sizeof buffer, pipe) != NULL) {
                 result += buffer;
             }
-        }
-        catch (...) {
+        } catch (...) {
             pclose(pipe);
             throw;
         }
         pclose(pipe);
+
         if (result.find("Average total weight:") != std::string::npos) {
             //Extract mass value
             result = result.substr(result.find("Average total weight:") + 22);
@@ -171,13 +194,18 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
 }
 
 
-double InformationGatherer::getVolume(std::string component) {
+double
+InformationGatherer::getVolume(std::string component)
+{
     // Gather dimensions
     const char* cmd[3] = { "bb", component.c_str(), NULL };
+
     ged_exec(g, 2, cmd);
+
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     int dim_idx = 0;
+
     while (ss >> val) {
         try {
             double temp = stod(val);
@@ -188,25 +216,35 @@ double InformationGatherer::getVolume(std::string component) {
             continue;
         }
     }
+
     return 0;
 }
 
 
-int InformationGatherer::getNumEntities(std::string component) {
+int
+InformationGatherer::getNumEntities(std::string component)
+{
     // Find number of entities
+
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
+
     ged_exec(g, 7, cmd);
+
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     int entities = 0;
+
     while (getline(ss, val)) {
         entities++;
     }
+
     return entities;
 }
 
 
-void InformationGatherer::getMainComp() {
+void
+InformationGatherer::getMainComp()
+{
     if (opt->getTopComp() != "") {
         std::cout << "User input top: " << opt->getTopComp() << std::endl;
         // check if main comp exists
@@ -272,18 +310,24 @@ void InformationGatherer::getMainComp() {
 }
 
 
-int InformationGatherer::getEntityData(char* buf) {
+int
+InformationGatherer::getEntityData(char* buf)
+{
     std::stringstream ss(buf);
     std::string token;
     int count = 0;
+
     while (getline(ss, token)) {
         count++;
     }
+
     return count;
 }
 
 
-void InformationGatherer::getSubComp() {
+void
+InformationGatherer::getSubComp()
+{
     // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
 
     if (!bu_file_exists((opt->getTemppath() + "mged").c_str(), NULL) && !bu_file_exists((opt->getTemppath() + "mged.exe").c_str(), NULL)) {
@@ -335,11 +379,13 @@ InformationGatherer::~InformationGatherer()
 }
 
 
-bool InformationGatherer::gatherInformation(std::string name)
+bool
+InformationGatherer::gatherInformation(std::string name)
 {
     //Create folder output if needed
     std::string path = std::filesystem::current_path().string() + "\\output";
     std::cout << "Writing intermediate output files to " << path << std::endl;
+
     if (!std::filesystem::exists(std::filesystem::path(path))) {
         std::filesystem::create_directory("output");
     }
@@ -380,7 +426,6 @@ bool InformationGatherer::gatherInformation(std::string name)
 	res = strtok(NULL, " ");
     }
 
-
     // Gather units
     cmd[0] = "units";
     cmd[1] = NULL;
@@ -405,7 +450,6 @@ bool InformationGatherer::gatherInformation(std::string name)
     else {
         mUnit = opt->getUnitMass();
     }
-
 
     getMainComp();
     if (largestComponents.size() == 0)
@@ -490,14 +534,15 @@ bool InformationGatherer::gatherInformation(std::string name)
     ss = std::stringstream();
     ss << std::setprecision(5) << surfArea900;
     std::string surf900 = ss.str();
+
     infoMap.insert(std::pair<std::string, std::string>("volume", vol + " " + lUnit + "^3"));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea00", surf00 + " " + lUnit + "^2"));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090 + " " + lUnit + "^2"));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea900", surf900 + " " + lUnit + "^2"));
+
     if (mass == 0) {
         infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
-    }
-    else {
+    } else {
         infoMap.insert(std::pair<std::string, std::string>("mass", ma + " " + mUnit));
     }
 
@@ -505,6 +550,7 @@ bool InformationGatherer::gatherInformation(std::string name)
     bool hasExplicit = false;
     bool hasImplicit = false;
     const char* tfilter = "-type brep -or -type bot -or -type vol -or -type sketch";
+
     if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasExplicit = true;
     }
@@ -560,29 +606,24 @@ bool InformationGatherer::gatherInformation(std::string name)
 
     if (hFile == INVALID_HANDLE_VALUE) {
         worked = false;
-    }
-    else {
+    } else {
         dwRtnCode = GetSecurityInfo(hFile, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION, &pSidOwner, NULL, NULL, NULL, &pSD);
         if (dwRtnCode != ERROR_SUCCESS) {
             worked = false;
-        }
-        else {
+        } else {
             bRtnBool = LookupAccountSid(NULL, pSidOwner, AcctName, (LPDWORD)&dwAcctName, DomainName, (LPDWORD)&dwDomainName, &eUse);
             AcctName = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwAcctName * sizeof(wchar_t));
             if (AcctName == NULL) {
                 worked = false;
-            }
-            else {
+            } else {
                 DomainName = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwDomainName * sizeof(wchar_t));
                 if (DomainName == NULL) {
                     worked = false;
-                }
-                else {
+                } eelse {
                     bRtnBool = LookupAccountSid(NULL, pSidOwner, AcctName, (LPDWORD)&dwAcctName, DomainName, (LPDWORD)&dwDomainName, &eUse);
                     if (bRtnBool == FALSE) {
                         worked = false;
-                    }
-                    else {
+                    } else {
                         owner = AcctName;
                     }
                 }
@@ -591,6 +632,7 @@ bool InformationGatherer::gatherInformation(std::string name)
     }
     CloseHandle(hFile);
 #endif
+
 #ifdef __APPLE__
     struct stat fileInfo;
     stat(opt->getFilepath().c_str(), &fileInfo);
@@ -670,7 +712,8 @@ bool InformationGatherer::gatherInformation(std::string name)
 }
 
 
-std::string InformationGatherer::getInfo(std::string key)
+std::string
+InformationGatherer::getInfo(std::string key)
 {
     return infoMap[key];
 }

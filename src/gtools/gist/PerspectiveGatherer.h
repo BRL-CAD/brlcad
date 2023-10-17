@@ -21,6 +21,8 @@
 #pragma once
 
 #include "pch.h"
+
+
 /**
  * The PerspectiveGatherer files contain utility methods for the
  * RenderHandler class.

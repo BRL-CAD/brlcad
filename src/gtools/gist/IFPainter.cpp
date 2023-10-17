@@ -27,8 +27,7 @@ IFPainter::IFPainter(int width, int height)
     , boldTextWeight(4)
     , heightToFontSizeMap()
 {
-    if (img.empty())
-    {
+    if (img.empty()) {
 	std::cerr << "ISSUE: Image Frame failed to load (in IFPainter.cpp)" << std::endl;
     }
 }
@@ -39,7 +38,8 @@ IFPainter::~IFPainter()
 }
 
 
-std::pair<int, int> IFPainter::getCroppedImageDims(std::string imgPath)
+std::pair<int, int>
+IFPainter::getCroppedImageDims(std::string imgPath)
 {
     cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
     // Convert the image to grayscale for creating the mask
@@ -52,7 +52,6 @@ std::pair<int, int> IFPainter::getCroppedImageDims(std::string imgPath)
     // Crop the image to the bounding rectangle
     cv::Mat lilImage = imageRaw(bounding_rect);
 
-
     int imgWidth = lilImage.size().width;
     int imgHeight = lilImage.size().height;
 
@@ -60,7 +59,8 @@ std::pair<int, int> IFPainter::getCroppedImageDims(std::string imgPath)
 }
 
 
-void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPath)
+void
+IFPainter::drawImage(int x, int y, int width, int height, std::string imgPath)
 {
     cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
     cv::Mat resized_image;
@@ -70,8 +70,7 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
     cv::Mat destRoi;
     try {
 	destRoi = img(cv::Rect(x, y, resized_image.cols, resized_image.rows));
-    }
-    catch (...) {
+    } catch (...) {
 	std::cerr << "Trying to create roi out of image boundaries" << std::endl;
 	return;
     }
@@ -79,7 +78,8 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 }
 
 
-void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
+void
+IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
 {
     cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
     // Convert the image to grayscale for creating the mask
@@ -92,21 +92,17 @@ void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string
     // Crop the image to the bounding rectangle
     cv::Mat lilImage = imageRaw(bounding_rect);
 
-
     int imgWidth = lilImage.size().width;
     int imgHeight = lilImage.size().height;
     int heightOffset = 0;
     int widthOffset = 0;
 
-    if ((double)imgWidth / imgHeight > (double)width / height)
-    {
+    if ((double)imgWidth / imgHeight > (double)width / height) {
 	// image width is too large; bound on width
 	int newHeight = (int)(width * (double)imgHeight / imgWidth);
 	heightOffset = (height - newHeight) / 2;
 	height = newHeight;
-    }
-    else
-    {
+    } else {
 	// image height is too large; bound on height
 	int newWidth = (int)(height * (double)imgWidth / imgHeight);
 	widthOffset = (width - newWidth) / 2;
@@ -116,8 +112,10 @@ void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string
     cv::Mat resized_image;
 
     // prevent crashes
-    if (width <= 0) width = 1;
-    if (height <= 0) height = 1;
+    if (width <= 0)
+	width = 1;
+    if (height <= 0)
+	height = 1;
 
     resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
@@ -125,8 +123,7 @@ void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string
     cv::Mat destRoi;
     try {
 	destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
-    }
-    catch (...) {
+    } catch (...) {
 	std::cerr << "Trying to create roi out of image boundaries" << std::endl;
 	return;
     }
@@ -134,7 +131,8 @@ void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string
 }
 
 
-void IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
+void
+IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
 {
     y += 65;
     height -= 65;
@@ -149,21 +147,17 @@ void IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::stri
     // Crop the image to the bounding rectangle
     cv::Mat lilImage = imageRaw(bounding_rect);
 
-
     int imgWidth = lilImage.size().width;
     int imgHeight = lilImage.size().height;
     int heightOffset = 0;
     int widthOffset = 0;
 
-    if ((double)imgWidth / imgHeight > (double)width / height)
-    {
+    if ((double)imgWidth / imgHeight > (double)width / height) {
 	// image width is too large; bound on width
 	int newHeight = (int)(width * (double)imgHeight / imgWidth);
 	heightOffset = (height - newHeight) / 2;
 	height = newHeight;
-    }
-    else
-    {
+    } else {
 	// image height is too large; bound on height
 	int newWidth = (int)(height * (double)imgWidth / imgHeight);
 	widthOffset = (width - newWidth) / 2;
@@ -177,8 +171,7 @@ void IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::stri
     cv::Mat destRoi;
     try {
 	destRoi = img(cv::Rect(x + widthOffset, y + heightOffset, resized_image.cols, resized_image.rows));
-    }
-    catch (...) {
+    } catch (...) {
 	std::cerr << "Trying to create roi out of image boundaries" << std::endl;
 	return;
     }
@@ -191,7 +184,8 @@ void IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::stri
 
 
 //Helper funciton to support getting the width of a text
-int IFPainter::getTextWidth(int height, int width, std::string text, int flags)
+int
+IFPainter::getTextWidth(int height, int width, std::string text, int flags)
 {
     int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
     int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
@@ -200,10 +194,10 @@ int IFPainter::getTextWidth(int height, int width, std::string text, int flags)
 }
 
 
-int IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string text)
+int
+IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string text)
 {
-    if (heightToFontSizeMap.find(height) != heightToFontSizeMap.end())
-    {
+    if (heightToFontSizeMap.find(height) != heightToFontSizeMap.end()) {
 	return heightToFontSizeMap[height];
     }
 
@@ -211,7 +205,7 @@ int IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string 
     while (getTextSize("I", cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).height < height)
 	fontSize++;
     fontSize--;
-	
+
     heightToFontSizeMap[height] = fontSize;
     while (getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).width > width) {
 	fontSize--;
@@ -220,7 +214,8 @@ int IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string 
 }
 
 
-void IFPainter::drawText(int x, int y, int height, int width, std::string text, int flags)
+void
+IFPainter::drawText(int x, int y, int height, int width, std::string text, int flags)
 {
     // for now, italic text is omitted
     int fontWeight = standardTextWeight;
@@ -232,7 +227,6 @@ void IFPainter::drawText(int x, int y, int height, int width, std::string text, 
     if (flags & TO_UNDERLINE) {
     	isUnderline = true;
     }
-	
 
     cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
     int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
@@ -254,7 +248,8 @@ void IFPainter::drawText(int x, int y, int height, int width, std::string text, 
 }
 
 
-void IFPainter::drawTextCentered(int x, int y, int height, int width, std::string text, int flags)
+void
+IFPainter::drawTextCentered(int x, int y, int height, int width, std::string text, int flags)
 {
     // for now, italic text is omitted
     int fontWeight = standardTextWeight;
@@ -266,7 +261,6 @@ void IFPainter::drawTextCentered(int x, int y, int height, int width, std::strin
     if (flags & TO_UNDERLINE) {
     	isUnderline = true;
     }
-
 
     cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
     int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
@@ -290,7 +284,8 @@ void IFPainter::drawTextCentered(int x, int y, int height, int width, std::strin
 }
 
 
-void IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string text, int flags)
+void
+IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string text, int flags)
 {
     // for now, italic text is omitted
     int fontWeight = standardTextWeight;
@@ -302,7 +297,6 @@ void IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::s
     if (flags & TO_UNDERLINE) {
     	isUnderline = true;
     }
-
 
     cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
     int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
@@ -326,11 +320,16 @@ void IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::s
 }
 
 
-/*This function will evenly space out all of the texts in the header and footer. The algorithm is to get the total lenght of all of the words combined and then the spacing is the total 
-  length divided by how many words there are*/
-void IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
+/* This function will evenly space out all of the texts in the header
+ * and footer. The algorithm is to get the total lenght of all of the
+ * words combined and then the spacing is the total length divided by
+ * how many words there are
+ */
+void
+IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
 {
     int totalTextWidth = 0;
+
     for (size_t i = 0; i < text.size(); i++) {
 	totalTextWidth += getTextWidth(height, width, text[i], flags);
     }
@@ -338,37 +337,53 @@ void IFPainter::justify(int x, int y, int height, int width, std::vector<std::st
 	throw std::invalid_argument("Text is larger than the bounding box");
 	return;
     }
+
     int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
     cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
     int spacing = (width - totalTextWidth) / (text.size() + 1);
     int xPosition = x + spacing;
+
     for (size_t i = 0; i < text.size(); i++) {
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text[i]);
 	cv::putText(img, text[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
 	xPosition += spacing + getTextWidth(height, width, text[i], flags);
     }
 }
-/*This is justification with a word being centered right in the middle. This is tricky now since the spacing is not going to be super straightforward. Essentially I split the section
-  into 2 and I used the same justify algorithm for the left and right side. Which ever side had the smallest spacing is the spacing I will choose for between the words.*/
-void IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
+
+
+/* This is justification with a word being centered right in the
+ * middle. This is tricky now since the spacing is not going to be
+ * super straightforward. Essentially I split the section into 2 and I
+ * used the same justify algorithm for the left and right side. Which
+ * ever side had the smallest spacing is the spacing I will choose for
+ * between the words.
+ */
+void
+IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
 {
     int confidentialWidth = getTextWidth(height, width, centerWord, flags | TO_BOLD);
+
     drawTextCentered(width / 2, y, height, width, centerWord, flags | TO_BOLD);
+
     int totalLeftWidth = 0;
     for (size_t i = 0; i < leftText.size(); i++) {
 	totalLeftWidth += getTextWidth(height, width, leftText[i], flags);
     }
+
     int totalRightWidth = 0;
     for (size_t i = 0; i < leftText.size(); i++) {
 	totalRightWidth += getTextWidth(height, width, rightText[i], flags);
     }
+
     if (totalLeftWidth >= (width / 2) - (confidentialWidth / 2) || totalRightWidth >= (width / 2) - (confidentialWidth / 2)) {
 	throw std::invalid_argument("Text is larger than either the left or right side");
 	return;
     }
+
     int leftSpacing = (((width / 2) - (confidentialWidth / 2)) - totalLeftWidth) / (leftText.size() + 1);
     int rightSpacing = (((width / 2) - (confidentialWidth / 2)) - totalRightWidth) / (rightText.size() + 1);
     int spacing;
+
     if (leftSpacing > rightSpacing) {
 	spacing = rightSpacing;
     }
@@ -379,6 +394,7 @@ void IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::
     int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
     cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
     int xPosition = width / 2 - confidentialWidth / 2;
+
     for (int i = leftText.size() - 1; i >= 0; i--) {
 	xPosition = xPosition - spacing - getTextWidth(height, width, leftText[i], flags);
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, leftText[i]);
@@ -394,8 +410,11 @@ void IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::
 }
 
 
-//This is a text wrapping function. If a text goes beyond the set x or y, it will wrap around to the next line. It also has ellipsis fucntion.
-void IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags)
+// This is a text wrapping function. If a text goes beyond the set x
+// or y, it will wrap around to the next line. It also has ellipsis
+// fucntion.
+void
+IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags)
 {
     if (ellipsis == TO_ELLIPSIS) {
 	if (numOfCharactersBeforeEllipsis < text.length()) {
@@ -406,29 +425,29 @@ void IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int heig
     std::vector<std::string> words;
 
     std::string word;
-    while (iss >> word) { 
+    while (iss >> word) {
 	words.push_back(word);
     }
+
     int x = x1;
     int y = y1;
     int wordWidth;
     int wordWidthWithSpace;
     int totalWordWidth;
+
     for (const auto& w : words) {
 	wordWidth = getTextWidth(height, width, w, flags);
 	wordWidthWithSpace = getTextWidth(height, width, w + " ", flags);
 	if (x + wordWidth <= x2) {
 	    drawText(x, y, height, width, w + " ", flags);
 	    x += wordWidthWithSpace;
-	}
-	else {
+	} else {
 	    if (y + height <= y2 - height) {
 		x = x1;
 		y += height;
 		drawText(x, y, height, width, w + " ", flags);
 		x += wordWidthWithSpace;
-	    }
-	    else {
+	    } else {
 		throw std::invalid_argument("Text is larger than the bounding box");
 		return;
 	    }
@@ -437,7 +456,8 @@ void IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int heig
 }
 
 
-void IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
+void
+IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
 {
     int lineType = cv::LINE_8;
     cv::Point start(x1, y1);
@@ -451,7 +471,8 @@ void IFPainter::drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar c
 }
 
 
-void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
+void
+IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar color)
 {
     cv::Point topLeft(x1, y1);
     cv::Point bottomRight(x2, y2);
@@ -464,14 +485,16 @@ void IFPainter::drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar c
 }
 
 
-void IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
+void
+IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
 {
     circle(img, cv::Point(x, y), radius, color, width, cv::LINE_8);
     // ellipse(img, cv::Point(x, y), cv::Size(radius, radius), 0, 0, 180, color, width, cv::LINE_8);
 }
 
 
-// void IFPainter::drawArc(int x, int y, int width, cv::Scalar color) {
+// void
+// IFPainter::drawArc(int x, int y, int width, cv::Scalar color) {
 // 	int lineType = cv::LINE_8;
 // 	cv::Point center(x, y);
 //     for(int i=10;i<=250;i=i+10)
@@ -481,24 +504,23 @@ void IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
 // }
 
 
-void IFPainter::openInGUI()
+void
+IFPainter::openInGUI()
 {
     cv::namedWindow("Report", cv::WINDOW_AUTOSIZE);
     cv::imshow("Report", this->img);
 
     cv::waitKey(0); //wait infinite time for a keypress
 
-    try
-    {
+    try {
 	cv::destroyWindow("Report");
-    }
-    catch (std::exception& e)
-    {
+    } catch (std::exception& e) {
     }
 }
 
 
-void IFPainter::exportToFile(std::string filePath)
+void
+IFPainter::exportToFile(std::string filePath)
 {
     cv::imwrite(filePath, this->img);
 }

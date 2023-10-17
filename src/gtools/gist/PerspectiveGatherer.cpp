@@ -20,7 +20,9 @@
 
 #include "PerspectiveGatherer.h"
 
-std::map<char, FaceDetails> getFaceDetails()
+
+std::map<char, FaceDetails>
+getFaceDetails()
 {
     std::map<char, FaceDetails> output;
 
@@ -36,12 +38,14 @@ std::map<char, FaceDetails> getFaceDetails()
 }
 
 
-std::string extractFileName(std::string filePath) {
+std::string
+extractFileName(std::string filePath) {
     return filePath.substr(filePath.find_last_of("/\\") + 1);
 }
 
 
-std::string renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
+std::string
+renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
 {
     // hardcode filename until options come out
     std::string pathToInput = opt.getFilepath();
@@ -65,9 +69,11 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
     // std::cout << "File string: " << fileString << std::endl;
     std::string outputname = pathToOutput + fileOutput + "_" + fileString;
     std::replace(outputname.begin(), outputname.end(), ' ', '_');
+
     if (outputname.size() > 150) {
         outputname = outputname.substr(0, 150);
     }
+
     std::string render;
 
     int a, e;

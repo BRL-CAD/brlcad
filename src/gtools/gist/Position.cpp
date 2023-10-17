@@ -20,6 +20,7 @@
 
 #include "Position.h"
 
+
 Position::Position(int x, int y, int width, int height) :
     x_(x),
     y_(y),

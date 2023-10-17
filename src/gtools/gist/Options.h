@@ -126,6 +126,7 @@ private:
     bool defaultMass;
 };
 
+
 /*
  * Local Variables:
  * tab-width: 8

@@ -20,7 +20,10 @@
 #include "FactsHandler.h"
 #include "RenderHandler.h"
 
-void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
+
+void
+makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
+{
     //Draw black rectangle
     if (info.getInfo("classification") == "CONFIDENTIAL") {
 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 255));
@@ -51,7 +54,9 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 }
 
 
-void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) { 
+void
+makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
+{
     //Draw black rectangle
     if (info.getInfo("classification") == "CONFIDENTIAL") {
 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 255));
@@ -78,7 +83,9 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 }
 
 
-void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
+void
+makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt)
+{
     //Determine units
     std::string unit;
     if (opt.isDefaultLength()) {
@@ -139,7 +146,9 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 }
 
 
-void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
+void
+makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
+{
     // img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
 
     int textOffset = width / 10;
@@ -204,8 +213,6 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     }
 }
 
-
-// Depricated Code
 
 
 // void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
@@ -283,6 +290,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
 // 	img.drawText(curX + textOffset, curY, textHeight, width, "Suitable for 3D Printing");
 // 	curY += textOffset;
 // }
+
 
 // Local Variables:
 // tab-width: 8

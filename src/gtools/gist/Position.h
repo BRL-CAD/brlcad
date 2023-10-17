@@ -22,6 +22,7 @@
 
 #include "pch.h"
 
+
 /**
  * The Position class allows for us create relative positioning
  * commands to layout sections and text on the image frame
@@ -30,8 +31,8 @@
  * the width and height of a given box and the x and y values it is
  * positioned at
  */
-
 class Position {
+
 public:
     Position(int x, int y, int width, int height);
 

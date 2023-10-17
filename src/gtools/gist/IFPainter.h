@@ -27,12 +27,13 @@
 #define TO_UNDERLINE 16
 #define TO_BLUE 32
 
-
 #include "pch.h"
 
+
 /*
- * The IFPainter class serves to store the actual image frame that will be modified and output in the report.
- * All drawing and exporting operations will be done via function calls to this class.
+ * The IFPainter class serves to store the actual image frame that
+ * will be modified and output in the report.  All drawing and
+ * exporting operations will be done via function calls to this class.
  *
  */
 
