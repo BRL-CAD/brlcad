@@ -214,7 +214,15 @@ dir_cache(char *buf, size_t len)
     if (!buf || !len)
 	return buf;
 
-    /* method #1a: platform standard (linux) */
+    /* method #1: BRL-CAD environment variable */
+    if (BU_STR_EMPTY(path)) {
+	env = getenv("BU_DIR_CACHE");
+	if (env && env[0] != '\0' && !BU_STR_EMPTY(env) && bu_file_writable(env) && bu_file_executable(env)) {
+	    bu_strlcpy(path, env, MAXPATHLEN);
+	}
+    }
+
+    /* method #2a: platform standard (linux) */
     if (BU_STR_EMPTY(path)) {
 	env = getenv("XDG_CACHE_HOME");
 	if (!BU_STR_EMPTY(env)) {
@@ -222,14 +230,14 @@ dir_cache(char *buf, size_t len)
 	}
     }
 
-    /* method #1b: platform standard (macosx) */
+    /* method #2b: platform standard (macosx) */
 #if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_CACHE_DIR)
     if (BU_STR_EMPTY(path)) {
 	confstr(_CS_DARWIN_CACHE_DIR, path, len);
     }
 #endif
 
-    /* method #1c: platform standard (windows) */
+    /* method #2c: platform standard (windows) */
 #ifdef HAVE_WINDOWS_H
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
@@ -240,7 +248,7 @@ dir_cache(char *buf, size_t len)
     }
 #endif
 
-    /* method 2: fallback to home directory subdir */
+    /* method 3: fallback to home directory subdir */
     if (BU_STR_EMPTY(path)) {
 	dir_home(temp, MAXPATHLEN);
 	bu_strlcat(path, temp, MAXPATHLEN);
@@ -248,7 +256,7 @@ dir_cache(char *buf, size_t len)
 	bu_strlcat(path, ".cache", MAXPATHLEN);
     }
 
-    /* method 3: fallback to temp directory subdir */
+    /* method 4: fallback to temp directory subdir */
     if (BU_STR_EMPTY(path)) {
 	dir_temp(temp, MAXPATHLEN);
 	bu_strlcat(path, temp, MAXPATHLEN);
