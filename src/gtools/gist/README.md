@@ -72,7 +72,7 @@ Example
 1. Download and install OpenCV. Be sure to select “Windows” and the 4.6.0 version.
 2. Download, install and compile BRL-CAD.
 3. Open “BRLCAD.sln” in the build folder.
-4. Search the Visual Studio Selection Explorer for “rgen”. When found, right click and click “Set as Startup Project”.
+4. Search the Visual Studio Selection Explorer for “gist”. When found, right click and click “Set as Startup Project”.
 5. Press the green play button towards the top middle to run!
 
 ## Environmental Variables/Files ##
