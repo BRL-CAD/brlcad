@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file main.cpp
- *
- * Brief description
- *
- */
 
 #include "pch.h"
 
@@ -40,36 +35,36 @@ int main(int argc, char **argv) {
     }
 }
 
+
 /**
  * Takes in a list of parameters and updates program variables accordingly
- * 
+ *
  * @argc the number of parameters
  * @argv the list of parameters
  * @opt options to be used in report generation
  * @h flag for help
  * @f flag for filepath specification
- * 
+ *
  * @returns if the given parameters are valid.
  */
 bool readParameters(int argc, char** argv, Options &opt)
 {
     /*
-    * A list of parameters is as follows:
-    * p = filepath
-    * w = width of output and window
-    * l = length of output and window
-    * F = path specified is a folder of models
-    * g = GUI output
-    * f = filename of png export
-    * E = folder name of png export
-    */
+     * A list of parameters is as follows:
+     * p = filepath
+     * w = width of output and window
+     * l = length of output and window
+     * F = path specified is a folder of models
+     * g = GUI output
+     * f = filename of png export
+     * E = folder name of png export
+     */
 
     bool h = false; // user requested help
     bool hasFile = 0; // user specified filepath
     bool hasFolder = false; // user specified filepath
 
     int opts;
-
 
 
     while ((opts = bu_getopt(argc, argv, "g?Oop:F:P:f:n:T:E:N:l:m:c:t:Z")) != -1) {
@@ -134,8 +129,8 @@ bool readParameters(int argc, char** argv, Options &opt)
             default:
                 std::cerr << "Unknown option\n";
                 break;
-        } 
-    } 
+        }
+    }
 
     if (h) {
         bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
@@ -164,22 +159,23 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
         return false;
     } else if (!bu_file_exists(opt.getFilepath().c_str(), NULL)) {
-        bu_log("ERROR: %s doesn't exist\n", opt.getFilepath().c_str()); 
+        bu_log("ERROR: %s doesn't exist\n", opt.getFilepath().c_str());
         bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
     } else if (bu_file_exists(opt.getFileName().c_str(), NULL)) {
         std::cout << "File already exists: " << opt.getFileName() << std::endl;
         std::cout << "Overwrite? (y/n): ";
         char token; std::cin >> token;
-        if (token != 'y' && token != 'Y') 
+        if (token != 'y' && token != 'Y')
             return false;
     }
 
     return true;
 }
 
+
 /**
  * Checks if we are processing a folder of models
-*/
+ */
 void handleFolder(Options& options) {
     int cnt = 1;
     for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
@@ -194,11 +190,12 @@ void handleFolder(Options& options) {
         generateReport(options);
         std::cout << "Finished Processing: " << cnt++ << std::endl;
     }
-} 
+}
+
 
 /**
- * Calls the necessary functions to generate the reports. 
- * 
+ * Calls the necessary functions to generate the reports.
+ *
  * @opt options to be used in report generation
  */
 void generateReport(Options opt)
@@ -222,19 +219,18 @@ void generateReport(Options opt)
     int padding = opt.getLength() / 250;
     int border_px = 3;
     int vvHeight = (opt.getLength() - 2*header_footer_height - 2*margin) / 3;
-    
+
 
     // Has same height and width as V&V Checks, offset X by V&V checks width
     // makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
 
     // define the position of all sections in the report
-    Position imagePosition(0,0,opt.getWidth(), opt.getLength());
+    Position imagePosition(0, 0, opt.getWidth(), opt.getLength());
     Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
     Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
     Position hierarchySection(imagePosition.right() - imagePosition.thirdWidth() - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.thirdWidth(), vvHeight);
     Position fileSection(imagePosition.right() - imagePosition.sixthWidth() - margin, topSection.bottom() + padding, imagePosition.sixthWidth(), hierarchySection.top() - topSection.bottom() - padding);
     Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
-    
 
 
     // draw all sections
@@ -243,7 +239,7 @@ void generateReport(Options opt)
     makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
     makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
-    
+
     // paint renderings
 
     // optionally, display the scene
@@ -256,6 +252,7 @@ void generateReport(Options opt)
         img.exportToFile(opt.getFileName());
     }
 }
+
 
 // Local Variables:
 // tab-width: 8

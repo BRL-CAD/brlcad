@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file InformationGatherer.h
- *
- * Brief description
- *
- */
 
 #pragma once
 
@@ -45,20 +40,21 @@ struct ComponentData {
     std::string name;
 
     bool operator<(const ComponentData& other) const {
-        if (numEntities != other.numEntities)
-            return numEntities < other.numEntities;
-        if (volume != other.volume)
-            return volume < other.volume;
-        return name < other.name;
+	if (numEntities != other.numEntities)
+	    return numEntities < other.numEntities;
+	if (volume != other.volume)
+	    return volume < other.volume;
+	return name < other.name;
     }
 };
+
 
 class InformationGatherer
 {
 private:
     Options* opt;
     struct ged* g;
-	std::map<std::string, std::string> infoMap;
+    std::map<std::string, std::string> infoMap;
     double getVolume(std::string component);
     int getNumEntities(std::string component);
     void getMainComp();
@@ -68,12 +64,12 @@ private:
 
 public:
     std::vector<ComponentData> largestComponents;
-	InformationGatherer(Options* options);
-	~InformationGatherer();
+    InformationGatherer(Options* options);
+    ~InformationGatherer();
 
-	bool gatherInformation(std::string name);
+    bool gatherInformation(std::string name);
 
-	std::string getInfo(std::string key);
+    std::string getInfo(std::string key);
 };
 /*
  * Local Variables:

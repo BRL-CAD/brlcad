@@ -17,32 +17,29 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file PerspectiveGatherer.cpp
- *
- * Brief description
- *
- */
 
 #include "PerspectiveGatherer.h"
 
 std::map<char, FaceDetails> getFaceDetails()
 {
-	std::map<char, FaceDetails> output;
+    std::map<char, FaceDetails> output;
 
-	output['F'] = {FRONT, "Front", LENGTH, HEIGHT};
-	output['T'] = {TOP, "Top", LENGTH, DEPTH};
-	output['R'] = {RIGHT, "Right", DEPTH, HEIGHT};
-	output['L'] = {LEFT, "Left", DEPTH, HEIGHT};
-	output['B'] = {BACK, "Back", LENGTH, HEIGHT};
-	output['b'] = {BOTTOM, "Bottom", LENGTH, DEPTH};
-	//output['A'] = {DETAILED, "Ambient Occlusion"};
+    output['F'] = {FRONT, "Front", LENGTH, HEIGHT};
+    output['T'] = {TOP, "Top", LENGTH, DEPTH};
+    output['R'] = {RIGHT, "Right", DEPTH, HEIGHT};
+    output['L'] = {LEFT, "Left", DEPTH, HEIGHT};
+    output['B'] = {BACK, "Back", LENGTH, HEIGHT};
+    output['b'] = {BOTTOM, "Bottom", LENGTH, DEPTH};
+    //output['A'] = {DETAILED, "Ambient Occlusion"};
 
-	return output;
+    return output;
 }
+
 
 std::string extractFileName(std::string filePath) {
     return filePath.substr(filePath.find_last_of("/\\") + 1);
 }
+
 
 std::string renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
 {
@@ -125,9 +122,9 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
 
 
     if (opt.getOverrideImages() || std::remove(outputname.c_str()) != 0) {
-       std::cerr << "Did not remove " << outputname << std::endl;
+	std::cerr << "Did not remove " << outputname << std::endl;
     }
-    
+
     try {
         auto result2 = system(render.c_str());
     } catch (std::exception& e) {
@@ -135,14 +132,16 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
     }
 
     if (!bu_file_exists(outputname.c_str(), NULL)) {
-        bu_log("ERROR: %s doesn't exist\n", outputname.c_str()); 
-        bu_log("Rendering not generated"); 
+        bu_log("ERROR: %s doesn't exist\n", outputname.c_str());
+        bu_log("Rendering not generated");
         bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
     }
     std::cout << "Successfully generated perspective rendering png file\n";
 
-	return outputname;
+    return outputname;
 }
+
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

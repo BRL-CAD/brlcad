@@ -16,11 +16,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file FactsHandler.h
- *
- * Brief description
- *
- */
 
 #pragma once
 

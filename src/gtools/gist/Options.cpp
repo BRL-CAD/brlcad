@@ -17,210 +17,243 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Options.cpp
- *
- * Brief description
- *
- */
 
 #include "Options.h"
 
 Options::Options()
 {
-	filepath = "";
-	temppath = "../../../build/bin/";
-	ppi = 300;
-	width = 3508;
-	length = 2480;
-	isFolder = false;
+    filepath = "";
+    temppath = "../../../build/bin/";
+    ppi = 300;
+    width = 3508;
+    length = 2480;
+    isFolder = false;
     folderName = "";
-	openGUI = false;
-	exportToFile = false;
-	overrideImages = false;
-	exportFolderName = "";
-	fileName = "";
-	name = "N/A";
-	classification = "";
-	rightLeft = "Right hand";
-	zY = "+Z-up";
-	notes = "N/A";
-	uLength = "m";
-	defaultLength = true;
-	uMass = "g";
-	defaultMass = true;
+    openGUI = false;
+    exportToFile = false;
+    overrideImages = false;
+    exportFolderName = "";
+    fileName = "";
+    name = "N/A";
+    classification = "";
+    rightLeft = "Right hand";
+    zY = "+Z-up";
+    notes = "N/A";
+    uLength = "m";
+    defaultLength = true;
+    uMass = "g";
+    defaultMass = true;
 }
+
 
 Options::~Options()
 {
 
 }
 
+
 void Options::setFilepath(std::string f) {
-	filepath = f;
+    filepath = f;
 }
+
 
 void Options::setTemppath(std::string f) {
-	if (f[f.size() - 1] != '/' && f[f.size() - 1] != '\\')
-		f = f + '\\';
-	temppath = f;
+    if (f[f.size() - 1] != '/' && f[f.size() - 1] != '\\')
+	f = f + '\\';
+    temppath = f;
 }
+
 
 void Options::setPPI(int p) {
-	ppi = p;
-	width = int(ppi * 11.69);
-	length = int(ppi * 8.27);
+    ppi = p;
+    width = int(ppi * 11.69);
+    length = int(ppi * 8.27);
 }
+
 
 void Options::setIsFolder() {
-	isFolder = true;
+    isFolder = true;
 }
+
 
 void Options::setOpenGUI() {
-	openGUI = true;
+    openGUI = true;
 }
+
 
 void Options::setExportToFile() {
-	exportToFile = true;
+    exportToFile = true;
 }
 
+
 void Options::setOverrideImages() {
-	overrideImages = true;
+    overrideImages = true;
 }
+
 
 void Options::setExportFolder(std::string fldr) {
     exportFolderName = fldr;
 }
 
+
 void Options::setFolder(std::string n) {
-	folderName = n;
+    folderName = n;
 }
+
 
 void Options::setFileName(std::string n) {
-	fileName = n;
+    fileName = n;
 }
+
 
 void Options::setName(std::string n) {
-	name = n;
+    name = n;
 }
+
 
 void Options::setClassification(std::string c) {
-	classification = c;
+    classification = c;
 }
+
 
 void Options::setOrientationRightLeft(bool rL) {
-	if (rL) {
-		rightLeft = "Left hand";
-	}
+    if (rL) {
+	rightLeft = "Left hand";
+    }
 }
+
 
 void Options::setOrientationZYUp(bool zy) {
-	if (zy) {
-		zY = "+Y-up";
-	}
+    if (zy) {
+	zY = "+Y-up";
+    }
 }
 
+
 void Options::setNotes(std::string n) {
-	notes = n;
+    notes = n;
 }
 
 
 void Options::setTopComp(std::string t) {
-	topComp = t;
+    topComp = t;
 }
 void Options::setUnitLength(std::string l) {
-	uLength = l;
-	defaultLength = false;
+    uLength = l;
+    defaultLength = false;
 }
+
 
 void Options::setUnitMass(std::string m) {
-	uMass = m;
-	defaultMass = false;
+    uMass = m;
+    defaultMass = false;
 }
+
 
 std::string Options::getFilepath() {
-	return filepath;
+    return filepath;
 }
 
+
 std::string Options::getFolder() {
-	return folderName;
+    return folderName;
 }
+
 
 std::string Options::getExportFolder() {
     return exportFolderName;
 }
 
+
 std::string Options::getTemppath() {
-	return temppath;
+    return temppath;
 }
+
 
 int Options::getWidth() {
-	return width;
+    return width;
 }
+
 
 int Options::getLength() {
-	return length;
+    return length;
 }
+
 
 bool Options::getIsFolder() {
-	return isFolder;
+    return isFolder;
 }
+
 
 bool Options::getOpenGUI() {
-	return openGUI;
+    return openGUI;
 }
+
 
 bool Options::getExportToFile() {
-	return exportToFile;
+    return exportToFile;
 }
+
 
 bool Options::getOverrideImages() {
-	return overrideImages;
+    return overrideImages;
 }
+
 
 std::string Options::getFileName() {
-	return fileName;
+    return fileName;
 }
+
 
 std::string Options::getName() {
-	return name;
+    return name;
 }
+
 
 std::string Options::getClassification() {
-	return classification;
+    return classification;
 }
+
 
 std::string Options::getOrientationRightLeft() {
-	return rightLeft;
+    return rightLeft;
 }
+
 
 std::string Options::getOrientationZYUp() {
-	return zY;
+    return zY;
 }
 
+
 std::string Options::getNotes() {
-	return notes;
+    return notes;
 }
 
 
 std::string Options::getTopComp() {
-	return topComp;
+    return topComp;
 }
+
 
 std::string Options::getUnitLength() {
-	return uLength;
+    return uLength;
 }
+
 
 std::string Options::getUnitMass() {
-	return uMass;
+    return uMass;
 }
+
 
 bool Options::isDefaultLength() {
-	return defaultLength;
+    return defaultLength;
 }
 
+
 bool Options::isDefaultMass() {
-	return defaultMass;
+    return defaultMass;
 }
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

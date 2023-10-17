@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file pch.h
- *
- * Brief description
- *
- */
 
 #pragma once
 
@@ -38,7 +33,7 @@
 #include <sstream>
 #include <vector>
 #include <ctime>
-#include <sys/stat.h> 
+#include <sys/stat.h>
 #include "picohash.h"
 #include<cstdio>
 #include<filesystem>

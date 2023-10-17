@@ -17,22 +17,18 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file Position.h
- *
- * Brief description
- *
- */
 
 #pragma once
 
 #include "pch.h"
 
 /**
- * The Position class allows for us create relative positioning commands 
- * to layout sections and text on the image frame
- * 
- * The code will make some commonly use positions to return based on the width and height of a given box
- * and the x and y values it is positioned at 
+ * The Position class allows for us create relative positioning
+ * commands to layout sections and text on the image frame
+ *
+ * The code will make some commonly use positions to return based on
+ * the width and height of a given box and the x and y values it is
+ * positioned at
  */
 
 class Position {
@@ -83,6 +79,8 @@ private:
     int width_;
     int height_;
 };
+
+
 /*
  * Local Variables:
  * tab-width: 8
