@@ -506,7 +506,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     db_close(newdbp);
 
     if (cc_data.copy_mode & OVERWRITE) {
-	bu_vls_printf(gedp->ged_result_str, "    [%d] objects overwritten", cc_data.overwritten);
+	bu_vls_printf(gedp->ged_result_str, "    [%ld] objects overwritten", cc_data.overwritten);
     }
 
     if (importColorTable) {
