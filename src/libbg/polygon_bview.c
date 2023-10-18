@@ -475,6 +475,18 @@ bv_move_polygon(struct bv_scene_obj *s)
 	return 0;
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
+
+    // If snapping is active, handle it
+    int snapped = 0;
+    if (v->gv_s) {
+	if (v->gv_s->gv_snap_lines) {
+	    snapped = bv_snap_lines_2d(v, &fx, &fy);
+	}
+	if (!snapped && v->gv_s->gv_grid.snap) {
+	    bv_snap_grid_2d(v, &fx, &fy);
+	}
+    }
+
     fastf_t dx = fx - pfx;
     fastf_t dy = fy - pfy;
 
@@ -528,6 +540,7 @@ bv_move_polygon_pt(struct bv_scene_obj *s)
     if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
 	return 0;
 
+    // If snapping is active, handle it
     int snapped = 0;
     if (v->gv_s->gv_snap_lines) {
 	snapped = bv_snap_lines_2d(v, &fx, &fy);
