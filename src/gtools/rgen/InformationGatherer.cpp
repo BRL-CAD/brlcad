@@ -149,6 +149,27 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
     }
 }
 
+std::string formatDouble(double d)
+{
+    std::stringstream ss;
+    ss << std::setprecision(2) << std::fixed << d;
+    std::string str = ss.str();
+
+    size_t dotPos = str.find('.');
+    if (dotPos != std::string::npos) { // string has decimal point
+        // remove trailing zeroes
+        str = str.substr(0, str.find_last_not_of('0')+1);
+        // if the decimal point is now the last character, remove that as well
+        if(str.find('.') == str.size()-1)
+        {
+            str = str.substr(0, str.size()-1);
+        }
+    }
+
+    return str;
+}
+
+
 double InformationGatherer::getVolume(std::string component) {
     // Gather dimensions
     const char* cmd[3] = { "bb", component.c_str(), NULL };
@@ -405,9 +426,7 @@ bool InformationGatherer::gatherInformation(std::string name)
         try {
             double length = stod(token);
             double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
-            std::stringstream ss2 = std::stringstream();
-            ss2 << std::setprecision(5) << length*convFactor;
-            infoMap[dim_data[dim_idx++]] = ss2.str();
+            infoMap[dim_data[dim_idx++]] = formatDouble(length*convFactor);
         } catch (const std::exception& e){
             continue;
         }
@@ -448,21 +467,11 @@ bool InformationGatherer::gatherInformation(std::string name)
     double surfArea090 = 0;
     double surfArea900 = 0;
     getVerificationData(g, opt, infoMap, volume, mass, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
-    ss = std::stringstream();
-    ss << std::setprecision(5) << volume;
-    std::string vol = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << mass;
-    std::string ma = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << surfArea00;
-    std::string surf00 = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << surfArea090;
-    std::string surf090 = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << surfArea900;
-    std::string surf900 = ss.str();
+    std::string vol = formatDouble(volume);
+    std::string ma = formatDouble(mass);
+    std::string surf00 = formatDouble(surfArea00);
+    std::string surf090 = formatDouble(surfArea090);
+    std::string surf900 = formatDouble(surfArea900);
     infoMap.insert(std::pair<std::string, std::string>("volume", vol + " " + lUnit + "^3"));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea00", surf00 + " " + lUnit + "^2"));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090 + " " + lUnit + "^2"));
