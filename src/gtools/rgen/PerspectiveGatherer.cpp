@@ -88,7 +88,9 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
         case GHOST:
             a = 35, e = 25;
             outputname += "_ghost.png";
-            render = opt.getTemppath() + "rtwizard -s 1024 -a " + std::to_string(a) + " -e " + std::to_string(e) + " -i " + pathToInput + " -c " + component + " -g " + ghost + " -G 10 -o " + outputname;
+            //REMOVE: tempfix for 'rtwizard' not working
+            render = opt.getTemppath() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
+            //PUT THIS LINE BACK IN -> //render = opt.getTemppath() + "rtwizard -s 1024 -a " + std::to_string(a) + " -e " + std::to_string(e) + " -i " + pathToInput + " -c " + component + " -g " + ghost + " -G 10 -o " + outputname;
             // render2 = "../../../build/bin/rtwizard -s 1024 -a " + a + " -e " + e + " -i " + pathToInput + " -g " + ghost + " -G 3 -o " + outputname;
             break;
         default:
