@@ -67,8 +67,10 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#define LIBTERMIO_IMPLEMENTATION
-#include "libtermio.h"
+#ifndef HAVE_WINDOWS_H
+#  define LIBTERMIO_IMPLEMENTATION
+#  include "libtermio.h"
+#endif
 #include "bv/util.h"
 #include "ged.h"
 #include "tclcad.h"
