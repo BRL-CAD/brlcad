@@ -9,7 +9,7 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	else {
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
 	}
-	//img.drawImage(100,100,24,24,"brlcadTextLogo.png");
+	img.drawImage(100,100,240,240,"brlcadTextLogo.png");
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
 	std::vector<std::string> text;
@@ -92,9 +92,9 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Entity Summary", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("assemblies") + " assemblies, " + info.getInfo("total") + " total");
-	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Units", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
+	//curiX++;
+	//img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Units", TO_BOLD);
+	//img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Dimensions (x, y, z)", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("dimX") + " " + unit);
