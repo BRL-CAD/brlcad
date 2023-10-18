@@ -9,7 +9,7 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	else {
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
 	}
-	img.drawImage(100,100,240,240,"brlcadTextLogo.png");
+	// img.drawImage(100,100,240,240,"brlcadTextLogo.png");
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
 	std::vector<std::string> text;
@@ -31,7 +31,7 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	}
 }
 
-void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) { 
+void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
 	//Draw black rectangle
 	if (info.getInfo("classification") == "CONFIDENTIAL") {
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 255));
@@ -154,8 +154,8 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
 	// img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Primitive Shapes:", TO_BOLD);
 	// img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("primitives"), TO_BOLD);
 
-    
-    
+
+
     // sub components
     for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
         render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
@@ -209,7 +209,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
 
 // 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Unit", TO_BOLD);
 // 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
-  
+
 // 	curiX++;
 // 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Approximate Volume", TO_BOLD);
 // 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("volume"));
