@@ -3,7 +3,7 @@
 Options::Options()
 {
 	filepath = "";
-	temppath = "../../../build/bin/";
+	temppath = "../build/bin/";
 	ppi = 300;
 	width = 3508;
 	length = 2480;
