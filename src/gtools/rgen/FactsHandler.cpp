@@ -9,6 +9,7 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	else {
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
 	}
+	// img.drawImage(100,100,240,240,"brlcadTextLogo.png");
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
 	std::vector<std::string> text;
