@@ -84,7 +84,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 		}
 	}
 
-	// to find the dimensions of the grid, 
+	// to find the dimensions of the grid,
 	std::vector<double> rowHeights;
 	std::vector<double> columnWidths;
 	// these variables represent the total height/width of the orthographic views, without extra space.
@@ -475,7 +475,7 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 		double colHeight = coordinates[(numRows - 1) * rowLen + c][3];
 		double extraSpace = (secHeight - colHeight) / (numRows - 1);
 
-		
+
 		// if rows are locked, then space out the rest of the columns as well to ensure alignment
 		if (lockRows)
 		{
@@ -778,7 +778,7 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 
 		//Determine units
 		std::string unit;
-		if (opt.isDefaultLength()) {
+		if (opt.isOriginalUnitsLength()) {
 			unit = info.getInfo("units");
 		}
 		else {
@@ -807,9 +807,3 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		title = title.substr(0, 27) + "...";
 	img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
 }
-
-
-
-
-
-

@@ -20,9 +20,9 @@ Options::Options()
 	zY = "+Z-up";
 	notes = "N/A";
 	uLength = "m";
-	defaultLength = true;
+	originalUnitsLength = true;
 	uMass = "g";
-	defaultMass = true;
+	originalUnitsMass = true;
 }
 
 Options::~Options()
@@ -104,12 +104,12 @@ void Options::setTopComp(std::string t) {
 }
 void Options::setUnitLength(std::string l) {
 	uLength = l;
-	defaultLength = false;
+	originalUnitsLength = false;
 }
 
 void Options::setUnitMass(std::string m) {
 	uMass = m;
-	defaultMass = false;
+	originalUnitsMass = false;
 }
 
 std::string Options::getFilepath() {
@@ -189,10 +189,10 @@ std::string Options::getUnitMass() {
 	return uMass;
 }
 
-bool Options::isDefaultLength() {
-	return defaultLength;
+bool Options::isOriginalUnitsLength() {
+	return originalUnitsLength;
 }
 
-bool Options::isDefaultMass() {
-	return defaultMass;
+bool Options::isOriginalUnitsMass() {
+	return originalUnitsMass;
 }

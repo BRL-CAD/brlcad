@@ -5,7 +5,7 @@
 #	include <windows.h>
 #	include <stdio.h>
 #	include <aclapi.h>
-#endif 
+#endif
 #ifdef __APPLE__
 #  include <pwd.h>
 #  include <unistd.h>
@@ -98,7 +98,7 @@ void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std:
             pclose(pipe);
             throw;
         }
-        pclose(pipe); 
+        pclose(pipe);
         //Extract volume value
         result = result.substr(result.find("Average total volume:") + 22);
         result = result.substr(0, result.find("cu") - 1);
@@ -170,7 +170,7 @@ double InformationGatherer::getVolume(std::string component) {
 }
 
 int InformationGatherer::getNumEntities(std::string component) {
-    // Find number of entities 
+    // Find number of entities
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
     ged_exec(g, 7, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
@@ -198,7 +198,7 @@ void InformationGatherer::getMainComp() {
         double volume = getVolume(opt->getTopComp());
         largestComponents.push_back({entities, volume, opt->getTopComp()});
         return;
-    } 
+    }
 
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
 
@@ -272,7 +272,7 @@ void InformationGatherer::getSubComp() {
 
     if (!bu_file_exists(pathToOutput.c_str(), NULL)) {
         bu_log("ERROR: %s doesn't exist\n", pathToOutput.c_str());
-        bu_log("Make sure to create output directory at the same level as main.cpp!\n"); 
+        bu_log("Make sure to create output directory at the same level as main.cpp!\n");
         bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
     }
 
@@ -280,7 +280,7 @@ void InformationGatherer::getSubComp() {
     if (!scFile.is_open()) {
         std::cerr << "failed to open file\n";
         return;
-    } 
+    }
 
     std::string comp;
     int numEntities = 0;
@@ -294,7 +294,7 @@ void InformationGatherer::getSubComp() {
     sort(subComps.rbegin(), subComps.rend());
     largestComponents.reserve(largestComponents.size() + subComps.size());
     largestComponents.insert(largestComponents.end(), subComps.begin(), subComps.end());
-    scFile.close(); 
+    scFile.close();
 }
 
 
@@ -365,14 +365,14 @@ bool InformationGatherer::gatherInformation(std::string name)
 
     //Get units to use
     std::string lUnit;
-    if (opt->isDefaultLength()) {
+    if (opt->isOriginalUnitsLength()) {
         lUnit = infoMap["units"];
     }
     else {
         lUnit = opt->getUnitLength();
     }
     std::string mUnit;
-    if (opt->isDefaultMass()) {
+    if (opt->isOriginalUnitsMass()) {
         mUnit = "g";
     }
     else {
@@ -590,7 +590,7 @@ bool InformationGatherer::gatherInformation(std::string name)
     std::size_t last1 = opt->getFilepath().find_last_of("/");
     std::size_t last2 = opt->getFilepath().find_last_of("\\");
     last = last1 < last2 ? last1 : last2;
-    
+
 	std::string file = opt->getFilepath().substr(last+1, opt->getFilepath().length()-1);
 
 	infoMap.insert(std::pair < std::string, std::string>("file", file));

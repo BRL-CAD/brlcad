@@ -60,7 +60,7 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
 	//Determine units
 	std::string unit;
-	if (opt.isDefaultLength()) {
+	if (opt.isOriginalUnitsLength()) {
 		unit = info.getInfo("units");
 	}
 	else {
