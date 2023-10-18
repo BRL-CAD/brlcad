@@ -262,7 +262,7 @@ void InformationGatherer::getSubComp() {
     // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
 
     if (!bu_file_exists((opt->getTemppath() + "mged").c_str(), NULL) && !bu_file_exists((opt->getTemppath() + "mged.exe").c_str(), NULL)) {
-        bu_log("ERROR: File to executables (%s) is invalid\nPlease use (or check) the -T parameter\n", opt->getTemppath().c_str());
+        bu_log("ERROR: File to executables (%s) is invalid or mged is missing\nPlease use (or check) the -T parameter\n", opt->getTemppath().c_str());
         bu_exit(BRLCAD_ERROR, "Bad folder, aborting.\n");
     }
 
