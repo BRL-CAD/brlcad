@@ -69,7 +69,6 @@
 #include "raytrace.h"
 #define LIBTERMIO_IMPLEMENTATION
 #include "libtermio.h"
-#include "rt/db4.h"
 #include "bv/util.h"
 #include "ged.h"
 #include "tclcad.h"
