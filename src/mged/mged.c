@@ -67,6 +67,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#define LIBTERMIO_IMPLEMENTATION
 #include "libtermio.h"
 #include "rt/db4.h"
 #include "bv/util.h"

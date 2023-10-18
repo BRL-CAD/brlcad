@@ -56,9 +56,6 @@ endif (HAVE_WINDOWS_H)
 
 
 set(mged_libs libtclcad libged libwdb libdm libnmg ${WS2_32_LIBRARY} ${OPENGL32_LIBRARY})
-if(TARGET libtermio)
-  set(mged_libs ${mged_libs} libtermio)
-endif(TARGET libtermio)
 
 # Ideally we'd build as GUI for Windows to avoid the command window popping up,
 # but I'm not sure if that would be a problem for scripting with mged.exe on

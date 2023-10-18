@@ -35,6 +35,7 @@
 #include <locale.h>
 #include "bio.h"
 
+#define LIBTERMIO_IMPLEMENTATION
 #include "libtermio.h"
 
 #ifdef HAVE_SYS_SELECT_H

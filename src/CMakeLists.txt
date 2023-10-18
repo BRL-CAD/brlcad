@@ -92,7 +92,6 @@ set(level_2_dirs
   libpc
   libqtcad
   libtclcad
-  libtermio
   )
 
 # Level 3 directories contain BRL-CAD's executables.  Setting
@@ -197,6 +196,7 @@ endif(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
 CMAKEFILES(
   CMakeLists.txt
   README
+  libtermio/libtermio.h
   )
 
 # Add a convenience directory that is only added to the
