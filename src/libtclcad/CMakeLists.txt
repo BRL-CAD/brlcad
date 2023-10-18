@@ -58,17 +58,7 @@ if (BRLCAD_ENABLE_TCL)
 
   BRLCAD_LIB_INCLUDE_DIRS(tclcad TCLCAD_INCLUDE_DIRS TCLCAD_LOCAL_INCLUDE_DIRS)
 
-  set(TCLCAD_LIBS
-    libged
-    libdm
-    libnmg
-    libbg
-    libbv
-    libbn
-    libbu
-    ${TCL_LIBRARY}
-    ${TCLCAD_XLIBS}
-    )
+  set(TCLCAD_LIBS ${libtclcad_deps} ${TCL_LIBRARY} ${TCLCAD_XLIBS})
   if (TK_LIBRARY)
     set(TCLCAD_LIBS ${TCLCAD_LIBS} ${TK_LIBRARY})
   endif (TK_LIBRARY)

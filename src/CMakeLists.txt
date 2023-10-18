@@ -38,13 +38,23 @@ set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} ext CACHE STRING "Bundled syste
 # also leverage this knowledge when activating or deactivating components in
 # partial build scenarios.
 set(libbu_deps)
-set(libbn_deps   libbu)
-set(libbv_deps   libbn libbu)
-set(libbg_deps   libbv libbn libbu)
-set(libnmg_deps  libbg libbv libbn libbu)
-set(libbrep_deps libbg libbv libbn libbu)
-set(librt_deps   libbrep libnmg libbg libbv libbn libbu)
-set(libwdb_deps  librt libbrep libnmg libbg libbv libbn libbu)
+set(libbn_deps      libbu)
+set(libbv_deps      libbn libbu)
+set(libbg_deps      libbv libbn libbu)
+set(libnmg_deps     libbg libbv libbn libbu)
+set(libbrep_deps    libbg libbv libbn libbu)
+set(librt_deps      libbrep libnmg libbg libbv libbn libbu)
+set(libwdb_deps     librt libbrep libnmg libbg libbv libbn libbu)
+set(libpkg_deps     libbu)
+set(libgcv_deps     libwdb librt libnmg libbu)
+set(libanalyze_deps librt libbu)
+set(liboptical_deps librt libbn libbu)
+set(libicv_deps     libbn libbu)
+set(libged_deps     libicv libanalyze libwdb liboptical librt libbrep libnmg libbv libbg libbn libbu)
+set(libdm_deps      librt libicv libbv libbn libbg libbu libpkg)
+set(libfft_deps)
+set(libqtcad_deps   libged libdm librt libbv libbu)
+set(libtclcad_deps  libged libdm libnmg libbg libbv libbn libbu)
 
 
 # We need to define a number of "components" to allow for easy building of
