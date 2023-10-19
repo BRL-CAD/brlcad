@@ -35,7 +35,6 @@ set(man1_EN
   comgeom-g.xml
   conv-vg2g.xml
   cv.xml
-  db.xml
   dbclean.xml
   dbupgrade.xml
   decimate.xml
