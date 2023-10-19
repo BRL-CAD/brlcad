@@ -162,6 +162,16 @@ if (TARGET brlcad_css)
   add_dependencies(docbook brlcad_css)
 endif (TARGET brlcad_css)
 
+# man1 or man3 man pages for which it is expected that there is no associated
+# build target.
+set(filtered_man
+  brlcad
+  brlcad-config
+  redblack
+  benchmark
+  dbclean
+  )
+
 function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
   # If we got the name of a list or an explicit list, translate into
@@ -197,6 +207,28 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
     # handle all the outputs to be produced from that file.
     foreach(fname ${xml_files})
       get_filename_component(fname_root "${fname}" NAME_WE)
+
+      # Almost all of the man1 and man3 man pages should have build targets -
+      # check and handle accordingly
+      if ("${outdir}" MATCHES "man*")
+	if (NOT "${outdir}" STREQUAL "man5" AND NOT "${outdir}" STREQUAL "mann")
+	  list(FIND filtered_man "${fname_root}" IS_FILTERED)
+	  if ("${IS_FILTERED}" EQUAL "-1")
+	    if (NOT TARGET "${fname_root}")
+	      if (BRLCAD_COMPONENTS)
+		continue()
+	      else (BRLCAD_COMPONENTS)
+		message(FATAL_ERROR "${outdir} man page ${fname_root} has no associated build target.")
+	      endif (BRLCAD_COMPONENTS)
+	    endif (NOT TARGET "${fname_root}")
+	  else ("${IS_FILTERED}" EQUAL "-1")
+	    if (TARGET "${fname_root}")
+	      message(FATAL_ERROR "${outdir} man page ${fname_root} is listed as not having a build target but one was found - remove from filtered list.")
+	    endif (TARGET "${fname_root}")
+	  endif ("${IS_FILTERED}" EQUAL "-1")
+	endif (NOT "${outdir}" STREQUAL "man5" AND NOT "${outdir}" STREQUAL "mann")
+      endif ("${outdir}" MATCHES "man*")
+
       get_filename_component(filename "${fname}" ABSOLUTE)
 
       # Find out which outputs we're actually going to produce,
