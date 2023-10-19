@@ -39,7 +39,7 @@ BRLCAD_ADDEXEC(ganalyze "${GANALYZE_SRCS}" "libanalyze;librt;libbu;libpkg" NO_IN
 
 add_subdirectory(beset)
 add_subdirectory(gdiff)
-
+# add_subdirectory(gist)
 add_subdirectory(tests)
 
 
