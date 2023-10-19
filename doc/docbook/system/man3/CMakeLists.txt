@@ -1,6 +1,5 @@
 set(man3_EN
   libbv.xml
-  libfb.xml
   libpkg.xml
   librt.xml
   libwdb.xml
