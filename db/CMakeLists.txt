@@ -51,8 +51,11 @@ function(ADD_G_TARGET in_model folder)
   # The 3DM conversion is rather different than the general pattern at the
   # moment (However, the 3dm approach is probably the "wave of the future" in
   # the sense that it uses libgcv...)
-  if(${MODEL_TYPE} STREQUAL "3dm")
+  set(CONVERTING)
 
+  if(${MODEL_TYPE} STREQUAL "3dm" AND TARGET 3dm-g)
+
+    set(CONVERTING 1)
     set(INPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}")
     set(OUTPUT_FILE "${output_file}")
     # Use the model name for the script, since the output file is specific to this input
@@ -67,11 +70,12 @@ function(ADD_G_TARGET in_model folder)
       DEPENDS 3dm-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
       )
 
-  endif(${MODEL_TYPE} STREQUAL "3dm")
+  endif(${MODEL_TYPE} STREQUAL "3dm" AND TARGET 3dm-g)
 
   # The rest of the conversions follow the simpler/older pattern:
 
-  if(${MODEL_TYPE} STREQUAL "asc")
+  if(${MODEL_TYPE} STREQUAL "asc" AND TARGET asc2g)
+    set(CONVERTING 1)
     if (BRLCAD_ENABLE_TCL)
       add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
@@ -86,27 +90,30 @@ function(ADD_G_TARGET in_model folder)
 	DEPENDS gcv "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}"
 	)
     endif (BRLCAD_ENABLE_TCL)
-  endif(${MODEL_TYPE} STREQUAL "asc")
+  endif(${MODEL_TYPE} STREQUAL "asc" AND TARGET asc2g)
 
-  if(${MODEL_TYPE} STREQUAL "comgeom")
+  if(${MODEL_TYPE} STREQUAL "comgeom" AND TARGET comgeom-g)
+    set(CONVERTING 1)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
       COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
       COMMAND comgeom-g -v 5 ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} > ${log_file} 2>&1
       DEPENDS comgeom-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
       )
-  endif(${MODEL_TYPE} STREQUAL "comgeom")
+  endif(${MODEL_TYPE} STREQUAL "comgeom" AND TARGET comgeom-g)
 
-  if(${MODEL_TYPE} STREQUAL "fg4")
+  if(${MODEL_TYPE} STREQUAL "fg4" AND TARGET fast4-g)
+    set(CONVERTING 1)
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
       COMMAND fast4-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} > ${log_file} 2>&1
       DEPENDS fast4-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
       )
-  endif(${MODEL_TYPE} STREQUAL "fg4")
+  endif(${MODEL_TYPE} STREQUAL "fg4" AND TARGET fast4-g)
 
-  if(${MODEL_TYPE} STREQUAL "stp")
+  if(${MODEL_TYPE} STREQUAL "stp" AND TARGET step-g)
     if (BRLCAD_ENABLE_STEP)
+      set(CONVERTING 1)
       add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
 	COMMAND step-g -O ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file} ${CMAKE_CURRENT_SOURCE_DIR}/${in_model} > ${log_file} 2>&1
@@ -115,9 +122,9 @@ function(ADD_G_TARGET in_model folder)
     else (BRLCAD_ENABLE_STEP)
       CMAKEFILES(${CMAKE_CURRENT_SOURCE_DIR}/${in_model})
     endif (BRLCAD_ENABLE_STEP)
-  endif(${MODEL_TYPE} STREQUAL "stp")
+  endif(${MODEL_TYPE} STREQUAL "stp" AND TARGET step-g)
 
-  if(NOT ${MODEL_TYPE} STREQUAL "stp" OR BRLCAD_ENABLE_STEP)
+  if(CONVERTING)
     add_custom_target(${in_model_root}.g ALL DEPENDS ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file})
     set_target_properties(${in_model_root}.g PROPERTIES FOLDER "${folder}")
 
@@ -129,7 +136,7 @@ function(ADD_G_TARGET in_model folder)
     # Clean-up
     set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${log_file}")
     DISTCLEAN("${log_file}")
-  endif(NOT ${MODEL_TYPE} STREQUAL "stp" OR BRLCAD_ENABLE_STEP)
+  endif(CONVERTING)
 
 endfunction(ADD_G_TARGET in_model folder)
 
@@ -198,7 +205,11 @@ if(SH_EXEC)
   set(conversion_g_files_fp)
   set(conversion_deps_list)
 
-  macro(Sh_Conversion_Test gfile depends_list)
+  function(Sh_Conversion_Test gfile depends_list)
+    if (NOT TARGET mged AND NOT TARGET gcv)
+      return()
+    endif (NOT TARGET mged AND NOT TARGET gcv)
+
     if (TARGET mged)
       add_custom_target(convert-${gfile} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile})
     else ()
@@ -211,7 +222,7 @@ if(SH_EXEC)
       add_dependencies(convert-${gfile} ${depends_list})
       set(conversion_deps_list ${conversion_deps_list} ${depends_list})
     endif(NOT "${depends_list}" STREQUAL "")
-  endmacro(Sh_Conversion_Test)
+  endfunction(Sh_Conversion_Test)
 
   foreach(g_input ${G_BENCHMARK_MODELS})
     get_filename_component(GROOT "${g_input}" NAME_WE)
@@ -230,18 +241,20 @@ if(SH_EXEC)
     endif (TARGET mged)
   endforeach(g_input ${G_SAMPLE_MODELS})
 
-  list(REMOVE_DUPLICATES conversion_deps_list)
-  foreach(gfile ${conversion_g_files})
-    set(conversion_g_files_fp ${conversion_g_files_fp} "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile}")
-  endforeach(gfile ${conversion_g_files})
-  if (TARGET mged)
-    add_custom_target(convert COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${conversion_g_files_fp})
-  else ()
-    add_custom_target(convert COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:gcv> ${conversion_g_files_fp})
-  endif (TARGET mged)
-  set_target_properties(convert PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-  set_target_properties(convert PROPERTIES FOLDER "BRL-CAD Conversion Tests")
-  add_dependencies(convert ${conversion_deps_list})
+  if (conversion_deps_list)
+    list(REMOVE_DUPLICATES conversion_deps_list)
+    foreach(gfile ${conversion_g_files})
+      set(conversion_g_files_fp ${conversion_g_files_fp} "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile}")
+    endforeach(gfile ${conversion_g_files})
+    if (TARGET mged)
+      add_custom_target(convert COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${conversion_g_files_fp})
+    else ()
+      add_custom_target(convert COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:gcv> ${conversion_g_files_fp})
+    endif (TARGET mged)
+    set_target_properties(convert PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+    set_target_properties(convert PROPERTIES FOLDER "BRL-CAD Conversion Tests")
+    add_dependencies(convert ${conversion_deps_list})
+  endif (conversion_deps_list)
 endif(SH_EXEC)
 
 CMAKEFILES(

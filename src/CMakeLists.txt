@@ -56,16 +56,30 @@ set(libfft_deps)
 set(libqtcad_deps   libged libdm librt libbv libbu)
 set(libtclcad_deps  libged libdm libnmg libbg libbv libbn libbu)
 
+set(ACTIVE_COMPONENTS)
+if (DEFINED BRLCAD_COMPONENTS)
+  set(WC ${BRLCAD_COMPONENTS})
+  set(NC)
+  while(WC)
+    foreach(component ${WC})
+      list(APPEND NC ${${component}_deps})
+      list(REMOVE_DUPLICATES NC)
+    endforeach(component ${WC})
+    list(APPEND ACTIVE_COMPONENTS ${WC})
+    list(REMOVE_DUPLICATES ACTIVE_COMPONENTS)
+    set(WC ${NC})
+    set(NC)
+  endwhile(WC)
+endif (DEFINED BRLCAD_COMPONENTS)
+if (ACTIVE_COMPONENTS)
+  list(SORT ACTIVE_COMPONENTS)
+  string(REPLACE ";" " " AC "${ACTIVE_COMPONENTS}")
+  message("Supplied BRLCAD_COMPONENTS (${BRLCAD_COMPONENTS} have activated the following:\n ${AC}")
+endif (ACTIVE_COMPONENTS)
 
-# We need to define a number of "components" to allow for easy building of
-# subsets of BRL-CAD.  We will control this process with an advanced
-# variable named BRLCAD_ENABLE_TARGETS - if set to 0 (default) everything
-# will be enabled.
-
-# Level 1 directories are required for all other BRL-CAD components.  If you
-# build anything else, you will need to build these.  If you want JUST librt
-# and its requirements, set BRLCAD_ENABLE_TARGETS to 1
-set(level_1_dirs
+# We next define a list of all src/ directories to be added, in their build
+# order.
+set(brlcad_lib_dirs
   libbu
   libbn
   libbv
@@ -74,13 +88,6 @@ set(level_1_dirs
   libbrep
   librt
   libwdb
-  )
-
-# Level 2 directories are the remainder of BRL-CAD's libraries.  Setting
-# the BRLCAD_ENABLE_TARGETS level to 2 will enable all libraries but no
-# programs.
-
-set(level_2_dirs
   libpkg
   libgcv
   libanalyze
@@ -94,10 +101,7 @@ set(level_2_dirs
   libtclcad
   )
 
-# Level 3 directories contain BRL-CAD's executables.  Setting
-# the BRLCAD_ENABLE_TARGETS level to 3 will enable all programs.
-
-set(level_3_dirs
+set(brlcad_app_dirs
   brlman
   bwish
   conv
@@ -127,70 +131,30 @@ set(level_3_dirs
   mged
   )
 
-# Now that we have our lists, proceed with the actual
-# add_subdirectory commands.  We find the highest
-# number used to define a level_#_dir, and add the
-# levels in order up to the limit specified by
-# BRLCAD_ENABLE_TARGETS (or all of them if the value
-# is 0)
-set(HIGHEST_TARGET_LEVEL 0)
-set(has_contents 1)
-while(has_contents)
-  math(EXPR current_level "${HIGHEST_TARGET_LEVEL} + 1")
-  if(NOT "${level_${current_level}_dirs}" STREQUAL "")
-    set(HIGHEST_TARGET_LEVEL ${current_level})
-  else(NOT "${level_${current_level}_dirs}" STREQUAL "")
-    set(has_contents 0)
-  endif(NOT "${level_${current_level}_dirs}" STREQUAL "")
-endwhile(has_contents)
+set(brlcad_dirs ${brlcad_lib_dirs} ${brlcad_app_dirs})
 
-# If we didn't already a limit, set to the highest level
-if(NOT BRLCAD_ENABLE_TARGETS)
-  set(BRLCAD_ENABLE_TARGETS ${HIGHEST_TARGET_LEVEL})
-else(NOT BRLCAD_ENABLE_TARGETS)
-  if(${BRLCAD_ENABLE_TARGETS} GREATER ${HIGHEST_TARGET_LEVEL})
-    message(WARNING "BRL-CAD Target level ${BRLCAD_ENABLE_TARGETS} specified, but highest level defined is ${HIGHEST_TARGET_LEVEL}")
-    set(BRLCAD_ENABLE_TARGETS ${HIGHEST_TARGET_LEVEL})
-  endif(${BRLCAD_ENABLE_TARGETS} GREATER ${HIGHEST_TARGET_LEVEL})
-endif(NOT BRLCAD_ENABLE_TARGETS)
-
-# Now we know what to do - proceed.  If we're not using it,
-# be sure to marked it as an ignored directory for CMake.
-set(current_level 0)
-while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
-  math(EXPR current_level "${current_level} + 1")
-  foreach(subdir ${level_${current_level}_dirs})
-    if(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )
+# Now we know what to do - proceed.
+foreach(subdir ${brlcad_dirs})
+  if (NOT ACTIVE_COMPONENTS)
+    verbose_add_subdirectory(src ${subdir})
+  else (NOT ACTIVE_COMPONENTS)
+    list(FIND ACTIVE_COMPONENTS ${subdir} IS_ACTIVE)
+    if (NOT "${IS_ACTIVE}" EQUAL "-1")
       verbose_add_subdirectory(src ${subdir})
-    endif(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )
-  endforeach(subdir ${level_${current_level}_dirs})
-endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
+    endif (NOT "${IS_ACTIVE}" EQUAL "-1")
+  endif (NOT ACTIVE_COMPONENTS)
+endforeach(subdir ${brlcad_dirs})
 
 # This corresponds roughly to the libbrlcad originally defined in BRL-CAD
 # autotools build.
 if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
-  set(current_level 1)
-  while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
-    set(wl 1)
-    math(EXPR cml "${current_level} + 1")
-    while(${wl} LESS ${cml})
-      foreach(llib ${level_${wl}_dirs})
-	if(TARGET ${llib})
-	  set(libbrlcad_objs ${libbrlcad_objs} $<TARGET_OBJECTS:${llib}-obj>)
-	endif(TARGET ${llib})
-      endforeach(llib ${level_${wl}_dirs})
-      math(EXPR wl "${wl} + 1")
-    endwhile(${wl} LESS ${cml})
-    if("${current_level}" EQUAL 1)
-      add_library(libbrlcad-core SHARED ${libbrlcad_objs})
-      add_library(libbrlcad-core-static STATIC ${libbrlcad_objs})
-    endif("${current_level}" EQUAL 1)
-    if("${current_level}" EQUAL 2)
-      add_library(libbrlcad SHARED ${libbrlcad_objs})
-      add_library(libbrlcad-static STATIC ${libbrlcad_objs})
-    endif("${current_level}" EQUAL 2)
-    math(EXPR current_level "${current_level} + 1")
-  endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
+  foreach(llib ${brlcad_lib_dirs})
+    if(TARGET ${llib})
+      set(libbrlcad_objs ${libbrlcad_objs} $<TARGET_OBJECTS:${llib}-obj>)
+    endif(TARGET ${llib})
+  endforeach(llib ${level_${wl}_dirs})
+  add_library(libbrlcad SHARED ${libbrlcad_objs})
+  add_library(libbrlcad-static STATIC ${libbrlcad_objs})
 endif(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
 
 CMAKEFILES(
@@ -198,16 +162,6 @@ CMAKEFILES(
   README
   libtermio/libtermio.h
   )
-
-# Add a convenience directory that is only added to the
-# build if it exists.  This directory is ignored by svn,
-# so it can be used for experimentation that needs to be
-# part of the build but the dev doesn't want to accidentally
-# commit.
-if("${BRLCAD_ENABLE_TARGETS}" GREATER 2 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
-  add_subdirectory(testing)
-endif("${BRLCAD_ENABLE_TARGETS}" GREATER 2 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
-
 
 # Local Variables:
 # tab-width: 8

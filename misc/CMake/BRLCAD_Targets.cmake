@@ -865,9 +865,20 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
 
   cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT;EXEC" "" ${ARGN})
 
+  # Before we try anything, see if the dependencies are defined.
+  if (NOT "${depends_list}" STREQUAL "")
+    foreach(dp ${depends_list})
+      message("${testname}: ${dp}")
+      if (NOT TARGET ${dp})
+	message("${testname} dependency ${dp} not defined - disabling")
+	return()
+      endif (NOT TARGET ${dp})
+    endforeach(dp ${depends_list})
+  endif (NOT "${depends_list}" STREQUAL "")
+
   if (NOT ${testname}_TEST_DEFINED)
 
-    # Test isn't yet defined - do the add_test setup
+      # Test isn't yet defined - do the add_test setup
     if (${testname}_TEST_SCRIPT)
       configure_file("${${testname}_TEST_SCRIPT}" "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake" @ONLY)
     else (${testname}_TEST_SCRIPT)
