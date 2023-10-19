@@ -25,11 +25,11 @@ LayoutChoice::LayoutChoice(std::string map, bool lockRows)
     : map(map), lockRows(lockRows), coordinates(), dimDetails()
 {
     // make a vector to store coordinates of each item on the map AND ALSO the ambient occlusion view
-    for (int i = 0; i < map.size() + 1; ++i)
+    for (size_t i = 0; i < map.size() + 1; ++i)
     {
 	coordinates.emplace_back();
     }
-    for (int i = 0; i < 3; ++i)
+    for (size_t i = 0; i < 3; ++i)
     {
 	dimDetails.emplace_back(-1, -1);
     }
@@ -50,7 +50,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
     std::vector<int> rowStartingIndex;
     rowStartingIndex.push_back(0);
 
-    for (int i = 1; i < map.size(); ++i) {
+    for (size_t i = 1; i < map.size(); ++i) {
 	// Each row starts after a "\n"
 	if (map[i - 1] == '\n')
 	    rowStartingIndex.push_back(i);
@@ -530,7 +530,7 @@ double
 LayoutChoice::getTotalCoverage(double ambientWidth, double ambientHeight)
 {
     double sum = 0;
-    for (int i = 0; i < map.size(); ++i) {
+    for (size_t i = 0; i < map.size(); ++i) {
 	switch (map[i]) {
 	    case ' ': case '\n': case '-': case '|': case '.': // items with no area
 		break;

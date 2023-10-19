@@ -105,9 +105,9 @@ makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 
     // Verification Calculations
     // Calculate column offsets
-    int col1Offset = (offsetX + width / 4) - textOffset;
-    int col2Offset = offsetX + width / 2;
-    int col3Offset = (offsetX + (width*3) / 4) + textOffset;
+//    int col1Offset = (offsetX + width / 4) - textOffset;
+//    int col2Offset = offsetX + width / 2;
+//    int col3Offset = (offsetX + (width*3) / 4) + textOffset;
 
     int curiX = 0;
 
@@ -151,14 +151,14 @@ makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 {
     // img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
 
-    int textOffset = width / 10;
+//    int textOffset = width / 10;
     int textHeight = height / 20;
-    int textXOffset = textHeight * 53 / 5;
-    int textYOffset = textHeight * 8 / 5;
+//    int textXOffset = textHeight * 53 / 5;
+//    int textYOffset = textHeight * 8 / 5;
 
     // img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Object Hierarchy", TO_BOLD);
 
-    int N = 4; // number of sub components you want
+    size_t N = 4; // number of sub components you want
     int offY = height / 2 + offsetY;
     int offX = offsetX + 5;
     int imgH = height / 2;
@@ -177,7 +177,7 @@ makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
     // img.drawCirc(centerPt, offY-30, 20, 3, cv::Scalar(94, 58, 32));
 
     // entity summary
-    int curiX = 0;
+//    int curiX = 0;
     // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Groups & Assemblies:", TO_BOLD);
     // img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("groups_assemblies"), TO_BOLD);
     // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Regions & Parts:", TO_BOLD);
@@ -201,7 +201,7 @@ makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
     if (info.largestComponents.size() > N) {
         // render the smaller sub components all in one
         std::string subcomponents = "";
-        for (int i = N; i < info.largestComponents.size(); i++)
+        for (size_t i = N; i < info.largestComponents.size(); i++)
             subcomponents += info.largestComponents[i].name + " ";
         render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
         img.drawImageFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);

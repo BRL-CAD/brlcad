@@ -359,7 +359,7 @@ IFPainter::justify(int x, int y, int height, int width, std::vector<std::string>
  * between the words.
  */
 void
-IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
+IFPainter::justifyWithCenterWord(int UNUSED(x), int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags)
 {
     int confidentialWidth = getTextWidth(height, width, centerWord, flags | TO_BOLD);
 
@@ -402,7 +402,7 @@ IFPainter::justifyWithCenterWord(int x, int y, int height, int width, std::strin
     }
 
     xPosition = width / 2 + confidentialWidth / 2 + spacing;
-    for (int i = 0; i < rightText.size(); i++) {
+    for (size_t i = 0; i < rightText.size(); i++) {
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, rightText[i]);
 	cv::putText(img, rightText[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
 	xPosition = xPosition + spacing + getTextWidth(height, width, rightText[i], flags);
@@ -417,7 +417,7 @@ void
 IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags)
 {
     if (ellipsis == TO_ELLIPSIS) {
-	if (numOfCharactersBeforeEllipsis < text.length()) {
+	if (numOfCharactersBeforeEllipsis < (int)text.length()) {
 	    text = text.substr(0, numOfCharactersBeforeEllipsis) + "...";
 	}
     }
@@ -433,7 +433,6 @@ IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int height, s
     int y = y1;
     int wordWidth;
     int wordWidthWithSpace;
-    int totalWordWidth;
 
     for (const auto& w : words) {
 	wordWidth = getTextWidth(height, width, w, flags);

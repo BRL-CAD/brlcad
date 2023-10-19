@@ -33,7 +33,7 @@
 
 
 void
-getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
+getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
 {
     //Run RTArea to get surface area
     std::string command = opt->getTemppath() + "rtarea -u " + unit + " -a " + az + " -e " + el + " " + opt->getFilepath() + " " + comp + " 2>&1";
@@ -73,9 +73,9 @@ void
 getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
 {
     //Get tops
-    const char* cmd[3] = { "tops", NULL, NULL };
+    const char* tops_cmd[3] = { "tops", NULL, NULL };
 
-    ged_exec(g, 1, cmd);
+    ged_exec(g, 1, tops_cmd);
 
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
@@ -120,10 +120,10 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
         }
     }
 
-    for (int i = 0; i < toVisit.size(); i++) {
-        std::string val = toVisit[i];
+    for (size_t i = 0; i < toVisit.size(); i++) {
+        std::string val2 = toVisit[i];
         //Get volume of region
-        std::string command = opt->getTemppath() + "gqa -Av -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\" " + opt->getFilepath() + " " + val + " 2>&1";
+        std::string command = opt->getTemppath() + "gqa -Av -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\" " + opt->getFilepath() + " " + val2 + " 2>&1";
         char buffer[128];
         std::string result = "";
         FILE* pipe = popen(command.c_str(), "r");
@@ -154,7 +154,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
         }
 
         //Get mass of region
-        command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\", " + mUnit + " " + opt->getFilepath() + " " + val + " 2>&1";
+        command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\", " + mUnit + " " + opt->getFilepath() + " " + val2 + " 2>&1";
         result = "";
         pipe = popen(command.c_str(), "r");
         if (!pipe)
@@ -208,7 +208,6 @@ InformationGatherer::getVolume(std::string component)
 
     while (ss >> val) {
         try {
-            double temp = stod(val);
             dim_idx++;
             if (dim_idx == 4)
                 return stod(val);
@@ -222,7 +221,7 @@ InformationGatherer::getVolume(std::string component)
 
 
 int
-InformationGatherer::getNumEntities(std::string component)
+InformationGatherer::getNumEntities(std::string UNUSED(component))
 {
     // Find number of entities
 
@@ -245,20 +244,22 @@ InformationGatherer::getNumEntities(std::string component)
 void
 InformationGatherer::getMainComp()
 {
-    if (opt->getTopComp() != "") {
-        std::cout << "User input top: " << opt->getTopComp() << std::endl;
+    const std::string topcomp = opt->getTopComp();
+    if (topcomp != "") {
+	const char *topname = topcomp.c_str();
+        std::cout << "User input top: " << topname << std::endl;
         // check if main comp exists
-        const char* cmd[3] = { "l", opt->getTopComp().c_str(), NULL };
+        const char* cmd[3] = { "l", topname, NULL };
         ged_exec(g, 2, cmd);
         std::string res = bu_vls_addr(g->ged_result_str);
         if (res.size() == 0) {
-            std::cerr << "Could not find component: " << opt->getTopComp() << std::endl;
+            std::cerr << "Could not find component: " << topname << std::endl;
             bu_exit(BRLCAD_ERROR, "aborting.\n");
         }
 
-        int entities = getNumEntities(opt->getTopComp());
-        double volume = getVolume(opt->getTopComp());
-        largestComponents.push_back({entities, volume, opt->getTopComp()});
+        int entities = getNumEntities(topname);
+        double volume = getVolume(topname);
+        largestComponents.push_back({entities, volume, topname});
         return;
     }
 
@@ -276,8 +277,8 @@ InformationGatherer::getMainComp()
     }
 
     sort(topComponents.rbegin(), topComponents.rend());
-    for (int i = 0; i < topComponents.size(); i++) {
-        if (topComponents[i].volume != std::numeric_limits<double>::infinity()) {
+    for (size_t i = 0; i < topComponents.size(); i++) {
+        if (!EQUAL(topComponents[i].volume, std::numeric_limits<double>::infinity())) {
             largestComponents.push_back(topComponents[i]);
             break;
         }
@@ -286,23 +287,23 @@ InformationGatherer::getMainComp()
     if (largestComponents.size() != 0) {
         return;
     } else {
-        const char* cmd[5] = { "search",  ".",  "-type", "comb", NULL };
+        const char* search_cmd[5] = { "search",  ".",  "-type", "comb", NULL };
 
-        ged_exec(g, 4, cmd);
-        std::stringstream ss(bu_vls_addr(g->ged_result_str));
-        std::string val;
-        std::vector<ComponentData> topComponents;
+        ged_exec(g, 4, search_cmd);
+        std::stringstream ss2(bu_vls_addr(g->ged_result_str));
+        std::string val2;
+        std::vector<ComponentData> topComponents2;
 
-        while (getline(ss, val)) {
-            int entities = getNumEntities(val);
-            double volume = getVolume(val);
-            topComponents.push_back({entities, volume, val});
+        while (getline(ss2, val2)) {
+            int entities = getNumEntities(val2);
+            double volume = getVolume(val2);
+            topComponents2.push_back({entities, volume, val2});
         }
 
-        sort(topComponents.rbegin(), topComponents.rend());
-        for (int i = 0; i < topComponents.size(); i++) {
-            if (topComponents[i].volume != std::numeric_limits<double>::infinity()) {
-                largestComponents.push_back(topComponents[i]);
+        sort(topComponents2.rbegin(), topComponents2.rend());
+        for (size_t i = 0; i < topComponents2.size(); i++) {
+            if (!EQUAL(topComponents2[i].volume, std::numeric_limits<double>::infinity())) {
+                largestComponents.push_back(topComponents2[i]);
                 break;
             }
         }
@@ -540,7 +541,7 @@ InformationGatherer::gatherInformation(std::string name)
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090 + " " + lUnit + "^2"));
     infoMap.insert(std::pair<std::string, std::string>("surfaceArea900", surf900 + " " + lUnit + "^2"));
 
-    if (mass == 0) {
+    if (ZERO(mass)) {
         infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
     } else {
         infoMap.insert(std::pair<std::string, std::string>("mass", ma + " " + mUnit));
@@ -551,11 +552,11 @@ InformationGatherer::gatherInformation(std::string name)
     bool hasImplicit = false;
     const char* tfilter = "-type brep -or -type bot -or -type vol -or -type sketch";
 
-    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasExplicit = true;
     }
     tfilter = "-below -type region -not -type comb -not -type brep -not -type bot -not -type vol -not -type sketch";
-    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasImplicit = true;
     }
     if (hasExplicit && hasImplicit) {
@@ -585,13 +586,13 @@ InformationGatherer::gatherInformation(std::string name)
     //Next, use other commands to extract info
 
     //Gather filename
-    bool worked = true;
     std::string owner = "username";
 
 #ifdef HAVE_WINDOWS_H
     /*
      * Code primarily taken from https://learn.microsoft.com/en-us/windows/win32/secauthz/finding-the-owner-of-a-file-object-in-c--
      */
+    bool worked = true;
     DWORD dwRtnCode = 0;
     PSID pSidOwner = NULL;
     BOOL bRtnBool = TRUE;
@@ -675,14 +676,13 @@ InformationGatherer::gatherInformation(std::string name)
 
     //Gather classification
     std::string classification = opt->getClassification();
-    for (int i = 0; i < classification.length(); i++) {
+    for (size_t i = 0; i < classification.length(); i++) {
         classification[i] = toupper(classification[i]);
     }
     infoMap.insert(std::pair < std::string, std::string>("classification", classification));
 
     //Gather checksum
     struct bu_mapped_file* gFile = NULL;
-    char* buf = NULL;
     gFile = bu_open_mapped_file(opt->getFilepath().c_str(), ".g file");
     picohash_ctx_t ctx;
     char digest[PICOHASH_MD5_DIGEST_LENGTH];

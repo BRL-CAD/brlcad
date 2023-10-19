@@ -131,7 +131,7 @@ std::vector<LayoutChoice> initLayouts();
 LayoutChoice selectLayoutFromHeuristic(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims);
 
 // the currently used method which manually picks layouts based on
-`// model dimension ratios.  if a fit isn't found (i.e. awkward
+// model dimension ratios.  if a fit isn't found (i.e. awkward
 // dimensions), then the heuristic is called to find the best model.
 LayoutChoice genLayout(int secWidth, int secHeight, double modelLength, double modelDepth, double modelHeight, std::pair<int, int> ambientDims);
 

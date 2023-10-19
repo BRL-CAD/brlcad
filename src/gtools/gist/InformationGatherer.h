@@ -44,7 +44,7 @@ struct ComponentData {
     bool operator<(const ComponentData& other) const {
 	if (numEntities != other.numEntities)
 	    return numEntities < other.numEntities;
-	if (volume != other.volume)
+	if (!EQUAL(volume, other.volume))
 	    return volume < other.volume;
 	return name < other.name;
     }

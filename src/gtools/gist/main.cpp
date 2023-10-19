@@ -160,29 +160,6 @@ readParameters(int argc, char** argv, Options &opt)
 
 
 /**
- * Checks if we are processing a folder of models
- */
-static void
-handleFolder(Options& options)
-{
-    int cnt = 1;
-
-    for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
-        options.setFilepath(entry.path().string());
-        options.setExportToFile();
-        std::string filename = options.getFilepath();
-        filename = filename.substr(filename.find_last_of("/\\") + 1);
-        filename = filename.substr(0, filename.find_last_of("."));
-        std::cout << "Processing: " << filename << std::endl;
-        std::string exportPath = options.getExportFolder() + "/" + filename + "_report.png";
-        options.setFileName(exportPath);
-        generateReport(options);
-        std::cout << "Finished Processing: " << cnt++ << std::endl;
-    }
-}
-
-
-/**
  * Calls the necessary functions to generate the reports.
  *
  * @opt options to be used in report generation
@@ -206,7 +183,6 @@ generateReport(Options opt)
     int margin = opt.getWidth() / 150;
     int header_footer_height = opt.getLength() / 25;
     int padding = opt.getLength() / 250;
-    int border_px = 3;
     int vvHeight = (opt.getLength() - 2*header_footer_height - 2*margin) / 3;
 
 
@@ -238,6 +214,29 @@ generateReport(Options opt)
     // optionally, export the image
     if (opt.getExportToFile()) {
         img.exportToFile(opt.getFileName());
+    }
+}
+
+
+/**
+ * Checks if we are processing a folder of models
+ */
+static void
+handleFolder(Options& options)
+{
+    int cnt = 1;
+
+    for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
+        options.setFilepath(entry.path().string());
+        options.setExportToFile();
+        std::string filename = options.getFilepath();
+        filename = filename.substr(filename.find_last_of("/\\") + 1);
+        filename = filename.substr(0, filename.find_last_of("."));
+        std::cout << "Processing: " << filename << std::endl;
+        std::string exportPath = options.getExportFolder() + "/" + filename + "_report.png";
+        options.setFileName(exportPath);
+        generateReport(options);
+        std::cout << "Finished Processing: " << cnt++ << std::endl;
     }
 }
 
