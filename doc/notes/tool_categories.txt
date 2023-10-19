@@ -48,7 +48,6 @@ obj-g
 off-g
 patch-g
 ply-g
-proe-g
 step-g
 stl-g
 tankill-g
@@ -194,7 +193,6 @@ pix-fb
 pixflip-fb
 plot3-fb
 polar-fb
-pp-fb
 rle-fb
 show.sh
 spm-fb
