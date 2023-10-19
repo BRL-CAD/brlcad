@@ -31,7 +31,6 @@ set(man1_EN
   bwthresh.xml
   cad_boundp.xml
   cad_parea.xml
-  canonize.xml
   coil.xml
   comgeom-g.xml
   conv-vg2g.xml
