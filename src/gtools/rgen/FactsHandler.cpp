@@ -29,7 +29,7 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 		text.push_back("Source File: " + info.getInfo("file") + "       ");
 		endTextXPosition = img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
-	img.drawImageFitted(endTextXPosition-100, offsetY, 100, 100, "brlLogo.jpg");
+	img.drawImageFitted(endTextXPosition-100, offsetY, 100, 90, "brlLogo.jpg");
 	std::cout << "TOPPP: " << endTextXPosition << std::endl;
 }
 
@@ -47,6 +47,7 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	std::vector<std::string> text;
 	std::vector<std::string> text2;
 
+	//int endTextXPosition = 0;
 	if (info.getInfo("classification") != "") {
 		text.push_back("Preparer: " + info.getInfo("preparer"));
 		text2.push_back("Date Generated : " + info.getInfo("dateGenerated"));
@@ -57,6 +58,7 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		text.push_back("Date Generated : " + info.getInfo("dateGenerated"));
 		img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
+	img.drawImageFitted(3350, 2360, 100, 90, "afcLogoB.jpg");
 }
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
