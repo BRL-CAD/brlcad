@@ -55,8 +55,8 @@ MACRO (COPY_DLL trgt libname)
   )
 ENDMACRO (COPY_DLL)
 
-COPY_DLL (gist opencv_world${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH})
-COPY_DLL (gist opencv_world${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH}d)
+# COPY_DLL (gist opencv_world${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH})
+# COPY_DLL (gist opencv_world${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH}d)
 
 
 # Local Variables:
