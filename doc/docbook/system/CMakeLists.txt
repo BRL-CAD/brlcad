@@ -39,7 +39,11 @@ set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-ma
 add_subdirectory(man1)
 add_subdirectory(man3)
 add_subdirectory(man5)
-add_subdirectory(mann)
+if (TARGET libged)
+  # As long as we're building libged, there's at least the potential for
+  # applications that use GED commands.
+  add_subdirectory(mann)
+endif (TARGET libged)
 
 CMAKEFILES(README)
 CMAKEFILES(CMakeLists.txt)
