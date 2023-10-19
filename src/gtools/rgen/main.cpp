@@ -213,12 +213,12 @@ void generateReport(Options opt)
 
 
     // draw all sections
-    makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
     makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
     makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
-    
+    makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
+    //img.drawImageFitted(1200, 1200, 100, 100,"brlLogo.jpg");
     // paint renderings
 
     // optionally, display the scene
