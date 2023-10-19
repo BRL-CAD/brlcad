@@ -201,14 +201,6 @@ See
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>fbed</emphasis></term>
-  <listitem>
-<para>An interactive, termcap-based frame-buffer image editor.
-See
-<citerefentry><refentrytitle>fbed</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><emphasis remap='B'>vdeck</emphasis></term>
   <listitem>
 <para>A program to convert

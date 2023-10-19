@@ -51,7 +51,6 @@ set(man1_EN
   fbclear.xml
   fbcmap.xml
   fbcolor.xml
-  fbed.xml
   fbfade.xml
   fbframe.xml
   fbfree.xml

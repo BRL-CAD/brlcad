@@ -171,7 +171,6 @@ fbclear
 fbcmap
 fbcmrot
 fbcolor
-fbed
 fbfade
 fbframe
 fbfree
