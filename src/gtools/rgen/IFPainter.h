@@ -47,7 +47,7 @@ public:
     void drawCirc(int x, int y, int radius, int width, cv::Scalar color);
 	// void drawArc(int x, int y, int width, cv::Scalar color);
 	int getTextWidth(int height, int width, std::string text, int flags = 0);
-	void justify(int x, int y, int height, int width, std::vector<std::string> text, int flags = 0);
+	int justify(int x, int y, int height, int width, std::vector<std::string> text, int flags = 0);
 	void justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags);
 	void textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags = 0);
 

@@ -58,8 +58,8 @@ public:
 
 	std::string getUnitLength();
 	std::string getUnitMass();
-	bool isDefaultLength();
-	bool isDefaultMass();
+	bool isOriginalUnitsLength();
+	bool isOriginalUnitsMass();
 
 private:
 	// Path to file that will be used to generate report
@@ -83,7 +83,7 @@ private:
 	std::string fileName;
     // Name of folder that contains input models
 	std::string folderName;
-    // Name of folder you want to create report.png in 
+    // Name of folder you want to create report.png in
 	std::string exportFolderName;
 	// Name of preparer
 	std::string name;
@@ -100,8 +100,8 @@ private:
 
 	// Unit length
 	std::string uLength;
-	bool defaultLength;
+	bool originalUnitsLength;
 	// Unit mass
 	std::string uMass;
-	bool defaultMass;
+	bool originalUnitsMass;
 };

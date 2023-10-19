@@ -299,7 +299,7 @@ void IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::s
 
 /*This function will evenly space out all of the texts in the header and footer. The algorithm is to get the total lenght of all of the words combined and then the spacing is the total 
 length divided by how many words there are*/
-void IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
+int IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
 {
 	int totalTextWidth = 0;
 	for (size_t i = 0; i < text.size(); i++) {
@@ -307,7 +307,7 @@ void IFPainter::justify(int x, int y, int height, int width, std::vector<std::st
 	}
 	if (totalTextWidth >= width) {
 		throw std::invalid_argument("Text is larger than the bounding box");
-		return;
+		return -1;
 	}
 	int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
 	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : cv::Scalar(0, 0, 0);
@@ -318,6 +318,7 @@ void IFPainter::justify(int x, int y, int height, int width, std::vector<std::st
 		cv::putText(img, text[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
 		xPosition += spacing + getTextWidth(height, width, text[i], flags);
 	}
+	return xPosition-spacing;	//end of text xPosition
 }
 /*This is justification with a word being centered right in the middle. This is tricky now since the spacing is not going to be super straightforward. Essentially I split the section
 into 2 and I used the same justify algorithm for the left and right side. Which ever side had the smallest spacing is the spacing I will choose for between the words.*/

@@ -9,12 +9,12 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	else {
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
 	}
-	img.drawImage(100,100,240,240,"brlcadTextLogo.png");
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
 	std::vector<std::string> text;
 	std::vector<std::string> text2;
 
+	int endTextXPosition = 0;
 	if (info.getInfo("classification") != "") {
 		text.push_back("Owner: " + info.getInfo("owner"));
 		text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
@@ -26,12 +26,14 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 		text.push_back("Owner: " + info.getInfo("owner"));
 		text.push_back("Checksum: " + info.getInfo("checksum"));
 		text.push_back("Last Updated : " + info.getInfo("lastUpdate"));
-		text.push_back("Source File : " + info.getInfo("file"));
-		img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+		text.push_back("Source File: " + info.getInfo("file") + "       ");
+		endTextXPosition = img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
+	img.drawImageFitted(endTextXPosition-100, offsetY, 100, 100, "brlLogo.jpg");
+	std::cout << "TOPPP: " << endTextXPosition << std::endl;
 }
 
-void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) { 
+void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
 	//Draw black rectangle
 	if (info.getInfo("classification") == "CONFIDENTIAL") {
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 255));
@@ -60,7 +62,7 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
 	//Determine units
 	std::string unit;
-	if (opt.isDefaultLength()) {
+	if (opt.isOriginalUnitsLength()) {
 		unit = info.getInfo("units");
 	}
 	else {
@@ -154,8 +156,8 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
 	// img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Primitive Shapes:", TO_BOLD);
 	// img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("primitives"), TO_BOLD);
 
-    
-    
+
+
     // sub components
     for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
         render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
@@ -209,7 +211,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
 
 // 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Unit", TO_BOLD);
 // 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
-  
+
 // 	curiX++;
 // 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Approximate Volume", TO_BOLD);
 // 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("volume"));
