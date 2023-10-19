@@ -698,21 +698,22 @@ std::string InformationGatherer::getFormattedInfo(std::string key)
 
 void InformationGatherer::correctDefaultUnits()
 {
-    for (auto& pair : unitsMap) {
-        const std::string& key = pair.first;
-        Unit& unit = pair.second;
+    // NOTES:
+    // * how to handle mass?
+    // * could this be appliable to not just incehs?
 
-        if(getInfo(key) == "N/A") {
-            continue;
-        }
-        double value = std::stod(getInfo(key));
+    if (infoMap["units"] == "in" || infoMap["units"] == "inch" || infoMap["units"] == "inches") {
 
-        bool oneDimension = unit.power == 1 && value > 200.0;
-        bool secondDimension = unit.power == 2 && value > 2000.0;
-        bool thirdDimension = unit.power == 3 && value > 20000.0;
+        if (std::stod(getInfo("volume")) > 15000) { // arbitraty size
+            for (auto& pair : unitsMap) {
+                const std::string& key = pair.first;
+                Unit& unit = pair.second;
 
-        if (unit.unit == "in") {
-            if (oneDimension || secondDimension || thirdDimension) {
+                if(getInfo(key) == "N/A") {
+                    continue;
+                }
+
+                double value = std::stod(getInfo(key));
                 std::string ft("ft");
                 double convFactor = pow(bu_units_conversion(unit.unit.c_str()), unit.power) / pow(bu_units_conversion(ft.c_str()), unit.power);
                 infoMap[key] = formatDouble(value*convFactor);
