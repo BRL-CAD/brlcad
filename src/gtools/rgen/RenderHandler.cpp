@@ -771,31 +771,31 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		double offset = 30;
 		double textHeight = 40;
 
-		std::stringstream me;
-		if (i == 0) me << std::setprecision(5) << modelLength;
-		if (i == 1) me << std::setprecision(5) << modelDepth;
-		if (i == 2) me << std::setprecision(5) << modelHeight;
+		std::string me;
+		if (i == 0) me = info.getFormattedInfo("dimY");
+		if (i == 1) me = info.getFormattedInfo("dimX");
+		if (i == 2) me = info.getFormattedInfo("dimZ");
 
-		//Determine units
-		std::string unit;
-		if (opt.isOriginalUnitsLength()) {
-			unit = info.getInfo("units");
-		}
-		else {
-			unit = opt.getUnitLength();
-		}
+		// //Determine units
+		// std::string unit;
+		// if (opt.isOriginalUnitsLength()) {
+		// 	unit = info.getInfo("units");
+		// }
+		// else {
+		// 	unit = opt.getUnitLength();
+		// }
 
-		me << " " << unit;
+		// me << " " << unit;
 
 		if (det.second == 0) // draw to the right
 		{
 			img.drawLine(newX + newW + offset, newY, newX + newW + offset, newY + newH, 5, cv::Scalar(160, 0, 0));
-			img.drawText(newX + newW + 3 * offset / 2, newY + newH / 2 - textHeight / 2, textHeight, 220, me.str(), TO_BLUE);
+			img.drawText(newX + newW + 3 * offset / 2, newY + newH / 2 - textHeight / 2, textHeight, 220, me, TO_BLUE);
 		}
 		else // draw below
 		{
 			img.drawLine(newX, newY + newH + offset, newX + newW, newY + newH + offset, 5, cv::Scalar(160, 0, 0));
-			img.drawTextCentered(newX + newW / 2, newY + newH + 3 * offset / 2, textHeight, 220, me.str(), TO_BLUE);
+			img.drawTextCentered(newX + newW / 2, newY + newH + 3 * offset / 2, textHeight, 220, me, TO_BLUE);
 		}
 	}
 

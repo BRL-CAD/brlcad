@@ -426,7 +426,17 @@ bool InformationGatherer::gatherInformation(std::string name)
         try {
             double length = stod(token);
             double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
-            infoMap[dim_data[dim_idx++]] = formatDouble(length*convFactor);
+            infoMap[dim_data[dim_idx]] = formatDouble(length*convFactor);
+
+            int dimensions = 1;
+            if (dim_idx == 3) {
+                dimensions = 3;
+            }
+
+            Unit u = {lUnit, dimensions};
+            unitsMap[dim_data[dim_idx]] = u;
+
+            dim_idx++;
         } catch (const std::exception& e){
             continue;
         }
@@ -472,16 +482,30 @@ bool InformationGatherer::gatherInformation(std::string name)
     std::string surf00 = formatDouble(surfArea00);
     std::string surf090 = formatDouble(surfArea090);
     std::string surf900 = formatDouble(surfArea900);
-    infoMap.insert(std::pair<std::string, std::string>("volume", vol + " " + lUnit + "^3"));
-    infoMap.insert(std::pair<std::string, std::string>("surfaceArea00", surf00 + " " + lUnit + "^2"));
-    infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090 + " " + lUnit + "^2"));
-    infoMap.insert(std::pair<std::string, std::string>("surfaceArea900", surf900 + " " + lUnit + "^2"));
+
+    infoMap.insert(std::pair<std::string, std::string>("volume", vol));
+    Unit u = {lUnit, 3};
+    unitsMap["volume"] = u;
+
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea00", surf00));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea900", surf900));
+    u = {lUnit, 2};
+    unitsMap["surfaceArea00"] = u;
+    unitsMap["surfaceArea090"] = u;
+    unitsMap["surfaceArea900"] = u;
+
     if (mass == 0) {
         infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
+        u = {mUnit, 0};
+        unitsMap["mass"] = u;
     }
     else {
-        infoMap.insert(std::pair<std::string, std::string>("mass", ma + " " + mUnit));
+        infoMap.insert(std::pair<std::string, std::string>("mass", ma));
+        u = {mUnit, 1};
+        unitsMap["mass"] = u;
     }
+
 
     //Gather representation
     bool hasExplicit = false;
@@ -656,9 +680,46 @@ std::string InformationGatherer::getInfo(std::string key)
 	return infoMap[key];
 }
 
+std::string InformationGatherer::getFormattedInfo(std::string key)
+{
+    auto it = unitsMap.find(key);
+    if (it != unitsMap.end()) { // if units are mapped
+        Unit u = unitsMap[key];
+        if (u.power > 1) {
+            return infoMap[key] + " " + u.unit + "^" + std::to_string(u.power);
+        } else if (u.power == 1){
+            return infoMap[key] + " " + u.unit;
+        }
+    }
+
+    // no units if power == 0 or no units mapping
+	return infoMap[key];
+}
+
 void InformationGatherer::correctDefaultUnits()
 {
+    for (auto& pair : unitsMap) {
+        const std::string& key = pair.first;
+        Unit& unit = pair.second;
 
+        if(getInfo(key) == "N/A") {
+            continue;
+        }
+        double value = std::stod(getInfo(key));
+
+        bool oneDimension = unit.power == 1 && value > 200.0;
+        bool secondDimension = unit.power == 2 && value > 2000.0;
+        bool thirdDimension = unit.power == 3 && value > 20000.0;
+
+        if (unit.unit == "in") {
+            if (oneDimension || secondDimension || thirdDimension) {
+                std::string ft("ft");
+                double convFactor = pow(bu_units_conversion(unit.unit.c_str()), unit.power) / pow(bu_units_conversion(ft.c_str()), unit.power);
+                infoMap[key] = formatDouble(value*convFactor);
+                unit.unit = "ft";
+            }
+        }
+    }
 }
 
 Unit InformationGatherer::getUnit(std::string name)
