@@ -56,6 +56,7 @@ public:
 	bool gatherInformation(std::string name);
 
 	std::string getInfo(std::string key);
+    std::string getFormattedInfo(std::string key);
 
     void correctDefaultUnits();
     Unit getUnit(std::string name);

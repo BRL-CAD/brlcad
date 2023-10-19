@@ -17,13 +17,13 @@ int main(int argc, char **argv) {
 
 /**
  * Takes in a list of parameters and updates program variables accordingly
- * 
+ *
  * @argc the number of parameters
  * @argv the list of parameters
  * @opt options to be used in report generation
  * @h flag for help
  * @f flag for filepath specification
- * 
+ *
  * @returns if the given parameters are valid.
  */
 bool readParameters(int argc, char** argv, Options &opt)
@@ -109,8 +109,8 @@ bool readParameters(int argc, char** argv, Options &opt)
             default:
                 std::cerr << "Unknown option\n";
                 break;
-        } 
-    } 
+        }
+    }
 
     if (h) {
         bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
@@ -139,13 +139,13 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
         return false;
     } else if (!bu_file_exists(opt.getFilepath().c_str(), NULL)) {
-        bu_log("ERROR: %s doesn't exist\n", opt.getFilepath().c_str()); 
+        bu_log("ERROR: %s doesn't exist\n", opt.getFilepath().c_str());
         bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
     } else if (bu_file_exists(opt.getFileName().c_str(), NULL)) {
         std::cout << "File already exists: " << opt.getFileName() << std::endl;
         std::cout << "Overwrite? (y/n): ";
         char token; std::cin >> token;
-        if (token != 'y' && token != 'Y') 
+        if (token != 'y' && token != 'Y')
             return false;
     }
 
@@ -169,11 +169,11 @@ void handleFolder(Options& options) {
         generateReport(options);
         std::cout << "Finished Processing: " << cnt++ << std::endl;
     }
-} 
+}
 
 /**
- * Calls the necessary functions to generate the reports. 
- * 
+ * Calls the necessary functions to generate the reports.
+ *
  * @opt options to be used in report generation
  */
 void generateReport(Options opt)
@@ -191,13 +191,18 @@ void generateReport(Options opt)
         return;
     }
 
+    // TODO SAM: mass distinction in correctDefaultUnits?
+    if (opt.isOriginalUnitsLength()) {
+        info.correctDefaultUnits();
+    }
+
     // Define commonly used ratio variables
     int margin = opt.getWidth() / 150;
     int header_footer_height = opt.getLength() / 25;
     int padding = opt.getLength() / 250;
     int border_px = 3;
     int vvHeight = (opt.getLength() - 2*header_footer_height - 2*margin) / 3;
-    
+
 
     // Has same height and width as V&V Checks, offset X by V&V checks width
     // makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
@@ -209,7 +214,7 @@ void generateReport(Options opt)
     Position hierarchySection(imagePosition.right() - imagePosition.thirdWidth() - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.thirdWidth(), vvHeight);
     Position fileSection(imagePosition.right() - imagePosition.sixthWidth() - margin, topSection.bottom() + padding, imagePosition.sixthWidth(), hierarchySection.top() - topSection.bottom() - padding);
     Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
-    
+
 
 
     // draw all sections
