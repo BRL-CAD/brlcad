@@ -28,17 +28,24 @@ struct ComponentData {
     }
 };
 
+struct Unit {
+    std::string unit;
+    int power;
+};
+
 class InformationGatherer
 {
 private:
     Options* opt;
     struct ged* g;
 	std::map<std::string, std::string> infoMap;
+    std::map<std::string, Unit> unitsMap;
     double getVolume(std::string component);
     int getNumEntities(std::string component);
     void getMainComp();
     void getSubComp();
     int getEntityData(char* buf);
+
 
 
 public:
@@ -49,4 +56,7 @@ public:
 	bool gatherInformation(std::string name);
 
 	std::string getInfo(std::string key);
+
+    void correctDefaultUnits();
+    Unit getUnit(std::string name);
 };

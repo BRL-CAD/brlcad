@@ -655,3 +655,18 @@ std::string InformationGatherer::getInfo(std::string key)
 {
 	return infoMap[key];
 }
+
+void InformationGatherer::correctDefaultUnits()
+{
+
+}
+
+Unit InformationGatherer::getUnit(std::string name)
+{
+    auto it = unitsMap.find(name);
+    if (it != unitsMap.end()) {
+        return it->second;
+    }
+
+    throw std::runtime_error("Unit not found for key: " + name);
+}
