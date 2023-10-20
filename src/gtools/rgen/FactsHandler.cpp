@@ -118,8 +118,10 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("mass"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Notes", TO_BOLD);
-	img.textWrapping(offsetX + textOffset, offsetY + curiX * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight * 3, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/11000);
-
+	img.textWrapping(offsetX + textOffset, offsetY + curiX++ * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight * 3, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/11000);
+	curiX++;
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Bio", TO_BOLD);
+	img.textWrapping(offsetX + textOffset, offsetY + curiX * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight * 3, width, textHeight, opt.getBio(), TO_ELLIPSIS, (width * height) / 11000);
 }
 
 void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
