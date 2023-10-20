@@ -28,7 +28,7 @@ BRLCAD_ADDEXEC(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)
 
 add_subdirectory(beset)
 add_subdirectory(gdiff)
-
+# add_subdirectory(gist)
 add_subdirectory(tests)
 
 CMAKEFILES(
