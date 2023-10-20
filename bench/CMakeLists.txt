@@ -17,6 +17,9 @@ configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/benchmark" COPYONLY)
 install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/benchmark" DESTINATION ${BIN_DIR})
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/benchmark")
 
+# TODO - with CMake 3.20, add_custom_command supports generator expressions in
+# OUTPUT, so once we can require that version we should look at retiring this
+# use of CMAKE_CFG_INTDIR
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/benchmark-${CMAKE_CFG_INTDIR}-done
   COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/run.sh $<TARGET_FILE_DIR:bark>/benchmark

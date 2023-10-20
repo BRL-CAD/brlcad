@@ -561,21 +561,35 @@ _brep_cmd_flip(void *bs, int argc, const char **argv)
 
     b_ip->brep->Flip();
 
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
 	return BRLCAD_ERROR;
     }
     return BRLCAD_OK;
+}
+
+extern "C" int
+_brep_cmd_geo(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    const char *purpose_string = "NURBS geometry editing support for brep objects";
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
+	return BRLCAD_OK;
+    }
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	return brep_geo(gb, argc, argv);
+    }
+
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return BRLCAD_ERROR;
+    }
+
+    argc--; argv++;
+
+    return brep_geo(gb, argc, argv);
 }
 
 extern "C" int
@@ -1022,15 +1036,6 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
 
     b_ip->brep->ShrinkSurfaces();
 
-    // Delete the old object
-    const char *av[3];
-    char *ncpy = bu_strdup(gb->solid_name.c_str());
-    av[0] = "kill";
-    av[1] = ncpy;
-    av[2] = NULL;
-    (void)ged_exec(gb->gedp, 2, (const char **)av);
-    bu_free(ncpy, "free name cpy");
-
     // Make the new one
     struct rt_wdb *wdbp = wdb_dbopen(gb->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     if (mk_brep(wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
@@ -1260,6 +1265,29 @@ _brep_cmd_valid(void *bs, int argc, const char **argv)
     return brep_valid(gedp->ged_result_str, &gb->intern, argc, argv);
 }
 
+static int
+_brep_cmd_topo(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    const char *purpose_string = "NURBS topology editing support for brep objects";
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
+	return BRLCAD_OK;
+    }
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	return brep_topo(gb, argc, argv);
+    }
+
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return BRLCAD_ERROR;
+    }
+
+    argc--; argv++;
+
+    return brep_topo(gb, argc, argv);
+}
+
 #if 0
 extern "C" int
 _brep_cmd_weld(void *bs, int argc, const char **argv)
@@ -1291,6 +1319,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "brep",            _brep_cmd_brep},
     { "csg",             _brep_cmd_csg},
     { "flip",            _brep_cmd_flip},
+    { "geo",             _brep_cmd_geo},
     { "info",            _brep_cmd_info},
     { "intersect",       _brep_cmd_intersect},
     { "pick",            _brep_cmd_pick},
@@ -1303,6 +1332,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "tikz",            _brep_cmd_tikz},
     { "valid",           _brep_cmd_valid},
     //{ "weld",            _brep_cmd_weld},
+    { "topo",            _brep_cmd_topo},
     { (char *)NULL,      NULL}
 };
 
@@ -1318,19 +1348,17 @@ _ged_brep_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *se
 extern "C" int
 ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int help = 0;
-    struct _ged_brep_info gb;
-    gb.gedp = gedp;
-    gb.wdbp = wdb_dbopen(gb.gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    gb.cmds = _brep_cmds;
-    gb.verbosity = 0;
-    struct bu_color *color = NULL;
-    int plotres = 100;
-
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
 	return BRLCAD_ERROR;
     }
+
+    int help = 0;
+    struct bu_color *color = NULL;
+    int plotres = 100;
+    struct _ged_brep_info gb;
+    gb.verbosity = 0;
+    gb.gedp = gedp;
 
     // Clear results
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1357,7 +1385,6 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 	_ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, 0, NULL);
 	return BRLCAD_OK;
     }
-
 
 
     // High level options are only defined prior to the subcommand
@@ -1405,6 +1432,9 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
+    gb.gedp = gedp;
+    gb.wdbp = wdb_dbopen(gb.gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    gb.cmds = _brep_cmds;
     gb.solid_name = std::string(argv[0]);
     gb.dp = db_lookup(gedp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
     if (gb.dp == RT_DIR_NULL) {

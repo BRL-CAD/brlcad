@@ -59,7 +59,7 @@ image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 int
 ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
 {
-
+    struct dm *dmp = NULL;
     int i;
     int print_help = 0;
     int bytes_per_pixel = 0;
@@ -69,39 +69,23 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     unsigned char *idata = NULL;
     struct icv_image *bif = NULL;	/**< icv image container for saving images */
     struct fb *fbp = NULL;
+    struct bu_vls dm_name = BU_VLS_INIT_ZERO;
     bu_mime_image_t type = BU_MIME_IMAGE_AUTO;
-    static char usage[] = "Usage: screengrab [-h] [-F] [--format fmt] [file.img]\n";
+    static char usage[] = "Usage: screengrab [-h] [-F] [-D name] [--format fmt] [file.img]\n";
 
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",           "",            NULL,      &print_help,       "Print help and exit");
+    struct bu_opt_desc d[5];
+    BU_OPT(d[0], "h", "help",           "",     NULL,             &print_help,       "Print help and exit");
     BU_OPT(d[1], "F", "fb",             "",     NULL,             &grab_fb,          "screengrab framebuffer instead of scene display");
-    BU_OPT(d[2], "",  "format",         "fmt",  &image_mime,      &type,             "output image file format");
-    BU_OPT_NULL(d[3]);
+    BU_OPT(d[2], "D", "dm",             "name", &bu_opt_vls,      &dm_name,          "name of DM to screengrab");
+    BU_OPT(d[3], "",  "format",         "fmt",  &image_mime,      &type,             "output image file format");
+    BU_OPT_NULL(d[4]);
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
-
-    if (!gedp->ged_gvp) {
-	bu_vls_printf(gedp->ged_result_str, ": no current view set\n");
-	return BRLCAD_ERROR;
-    }
-
-    struct dm *dmp = (struct dm *)gedp->ged_gvp->dmp;
-    if (!dmp) {
-	bu_vls_printf(gedp->ged_result_str, ": no current display manager set\n");
-	return BRLCAD_ERROR;
-    }
-
-    /* must be wanting help */
-    if (argc == 1) {
-	_ged_cmd_help(gedp, usage, d);
-	return GED_HELP;
-    }
 
     argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
 
@@ -113,6 +97,35 @@ ged_screen_grab_core(struct ged *gedp, int argc, const char *argv[])
     }
 
     argc = opt_ret;
+
+    struct dm *cdmp = (gedp->ged_gvp) ? (struct dm *)gedp->ged_gvp->dmp : NULL;
+
+    if (bu_vls_strlen(&dm_name) && gedp->ged_gvp) {
+	// We have a name - see if we can match it.
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t j = 0; j < BU_PTBL_LEN(views); j++) {
+	    if (dmp)
+		break;
+	    struct bview *gdvp = (struct bview *)BU_PTBL_GET(views, j);
+	    struct dm *ndmp = (struct dm *)gdvp->dmp;
+	    if (!bu_vls_strcmp(dm_get_pathname(ndmp), &dm_name))
+		dmp = ndmp;
+	}
+	if (!dmp) {
+	    bu_vls_sprintf(gedp->ged_result_str, "DM %s specified, but not found in active set\n", bu_vls_cstr(&dm_name));
+	    bu_vls_free(&dm_name);
+	    return BRLCAD_ERROR;
+	}
+    }
+    bu_vls_free(&dm_name);
+
+    if (!dmp)
+	dmp = cdmp;
+
+    if (!dmp) {
+	bu_vls_printf(gedp->ged_result_str, ": no current display manager set and no valid name specified\n");
+	return BRLCAD_ERROR;
+    }
 
     if (grab_fb) {
 	fbp = dm_get_fb(dmp);

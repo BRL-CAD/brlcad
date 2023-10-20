@@ -686,7 +686,13 @@ solid_append_vlist(struct bv_scene_obj *sp, struct bv_vlist *vlist)
 void
 dl_add_path(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, struct _ged_client_data *dgcdp)
 {
+    if (!dgcdp || !dgcdp->v)
+	return;
+
     struct bv_scene_obj *sp = bv_obj_get(dgcdp->v, BV_DB_OBJS);
+    if (!sp)
+	return;
+
     struct ged_bv_data *bdata = (sp->s_u_data) ? (struct ged_bv_data *)sp->s_u_data : NULL;
     if (!bdata) {
 	BU_GET(bdata, struct ged_bv_data);
@@ -1000,6 +1006,9 @@ solid_copy_vlist(struct db_i *UNUSED(dbip), struct bv_scene_obj *sp, struct bv_v
 int invent_solid(struct ged *gedp, char *name, struct bu_list *vhead, long int rgb, int copy,
        	fastf_t transparency, int dmode, int csoltab)
 {
+    if (!gedp || !gedp->ged_gvp)
+	return 0;
+
     struct bu_list *hdlp = gedp->ged_gdp->gd_headDisplay;
     struct db_i *dbip = gedp->dbip;
     struct directory *dp;

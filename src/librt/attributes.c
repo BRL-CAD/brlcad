@@ -58,7 +58,8 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
     }
 #if defined(USE_BINARY_ATTRIBUTES)
     /* Do we have binary attributes?  If so, they are after the last
-     * ASCII attribute. */
+     * ASCII attribute.
+     */
     if (ep > (cp+1)) {
 	/* Count binary attrs. */
 	/* format is: <ascii name> NULL <binary length [network order, must be decoded]> <bytes...> */
@@ -70,9 +71,9 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	    /* The next value is an unsigned integer of variable width
 	     * (a_width: DB5HDR_WIDTHCODE_x) so how do we get its
 	     * width?  We now have a new member of struct bu_external:
-	     * 'unsigned char widcode'.  Note that the integer
-	     * is in network order and must be properly decoded for
-	     * the local architecture.
+	     * 'unsigned char widcode'.  Note that the integer is in
+	     * network order and must be properly decoded for the
+	     * local architecture.
 	     */
 	    cp += db5_decode_length(&abinlen, (const unsigned char*)cp, ap->widcode);
 	    /* account for the abinlen bytes */
@@ -118,7 +119,9 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
 	/* Count binary attrs. */
 	/* format is: <ascii name> NULL <binary length [network order, must be decoded]> <bytes...> */
 	size_t abinlen;
-	cp += 2; /* We are now at the first byte of the first binary attribute... */
+	cp += 2; /* We are now at the first byte of the first binary
+		  * attribute...
+		  */
 	while (cp != ep) {
 	    const char *name = cp;  /* name */
 	    cp += strlen(cp)+1;	/* name */
@@ -331,7 +334,9 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 	}
     }
 
-    // set the material_id field using the material given by the material_name field
+    /* set the material_id field using the material given by the
+     * material_name field
+     */
     const char *material_name = bu_avs_get(avsp, "material_name");
     if (material_name != NULL && !BU_STR_EQUAL(material_name, "(null)") && !BU_STR_EQUAL(material_name, "del")) {
         struct directory *material_dp = db_lookup(dbip, material_name, LOOKUP_QUIET);
@@ -372,7 +377,7 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
 
     bu_free_external(&attr);
     bu_free_external(&ext2);
-    bu_free_external(&ext);		/* 'raw' is now invalid */
+    bu_free_external(&ext); /* 'raw' is now invalid */
     bu_avs_free(&old_avs);
     bu_avs_free(avsp);
 
@@ -414,7 +419,7 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
 	bu_log("db5_update_ident() WARNING: %s object is missing, creating new one.\nYou may have lost important global state when you deleted this object.\n",
 	       DB5_GLOBAL_OBJECT_NAME);
 
-	/* OK, make one.  It will be empty to start with, updated below. */
+	/* OK, make one. Will be empty to start, updated below. */
 	db5_export_object3(&global,
 			   DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 			   DB5_GLOBAL_OBJECT_NAME, DB5HDR_HFLAGS_HIDDEN_OBJECT, NULL, NULL,
@@ -441,8 +446,7 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
     bu_vls_free(&units);
     bu_avs_free(&avs);
 
-    /* protect from losing memory and from freeing what we are
-       about to dup */
+    /* protect from losing memory & freeing what we're about to dup */
     if (dbip->dbi_title) {
 	old_title = dbip->dbi_title;
     }

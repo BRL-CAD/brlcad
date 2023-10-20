@@ -110,7 +110,7 @@ texstore_rgb_fxt1(TEXSTORE_PARAMS)
 		dst, dstRowStride);
 
     if (tempImage)
-	_mesa_free((void*) tempImage);
+	free((void*) tempImage);
 
     return GL_TRUE;
 }
@@ -165,7 +165,7 @@ texstore_rgba_fxt1(TEXSTORE_PARAMS)
 		dst, dstRowStride);
 
     if (tempImage)
-	_mesa_free((void*) tempImage);
+	free((void*) tempImage);
 
     return GL_TRUE;
 }
@@ -482,7 +482,7 @@ fxt1_choose(GLfloat vec[][MAX_COMP], GLint nv,
     } hist[N_TEXELS];
     GLint lenh = 0;
 
-    _mesa_memset(hist, 0, sizeof(hist));
+    memset(hist, 0, sizeof(hist));
 
     for (k = 0; k < n; k++) {
 	GLint l;
@@ -1296,7 +1296,7 @@ fxt1_quantize(GLuint *cc, const GLubyte *lines[], GLint comps)
 
     if (comps == 3) {
 	/* make the whole block opaque */
-	_mesa_memset(input, -1, sizeof(input));
+	memset(input, -1, sizeof(input));
     }
 
     /* 8 texels each line */
@@ -1390,7 +1390,7 @@ fxt1_encode(GLuint width, GLuint height, GLint comps,
     if ((width & 7) | (height & 3)) {
 	GLint newWidth = (width + 7) & ~7;
 	GLint newHeight = (height + 3) & ~3;
-	newSource = _mesa_malloc(comps * newWidth * newHeight * sizeof(GLchan));
+	newSource = malloc(comps * newWidth * newHeight * sizeof(GLchan));
 	if (!newSource) {
 	    GET_CURRENT_CONTEXT(ctx);
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture compression");
@@ -1409,7 +1409,7 @@ fxt1_encode(GLuint width, GLuint height, GLint comps,
     if (CHAN_TYPE != GL_UNSIGNED_BYTE) {
 	const GLuint n = width * height * comps;
 	const GLchan *src = (const GLchan *) source;
-	GLubyte *dest = (GLubyte *) _mesa_malloc(n * sizeof(GLubyte));
+	GLubyte *dest = (GLubyte *) malloc(n * sizeof(GLubyte));
 	GLuint i;
 	if (!dest) {
 	    GET_CURRENT_CONTEXT(ctx);
@@ -1420,7 +1420,7 @@ fxt1_encode(GLuint width, GLuint height, GLint comps,
 	    dest[i] = CHAN_TO_UBYTE(src[i]);
 	}
 	if (newSource != NULL) {
-	    _mesa_free(newSource);
+	    free(newSource);
 	}
 	newSource = dest;  /* we'll free this buffer before returning */
 	source = dest;  /* the new, GLubyte incoming image */
@@ -1446,7 +1446,7 @@ fxt1_encode(GLuint width, GLuint height, GLint comps,
 
 cleanUp:
     if (newSource != NULL) {
-	_mesa_free(newSource);
+	free(newSource);
     }
 }
 

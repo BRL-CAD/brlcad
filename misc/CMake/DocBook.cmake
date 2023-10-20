@@ -36,21 +36,26 @@
 #
 # In principle, DocBook conversion and validation can be accomplished
 # with multiple programs.  BRL-CAD's CMake logic uses variables to
-# hold the "active" tools for each conversion operation, but will
-# set defaults if the user does not manually set them.
+# hold the "active" tools for each conversion operation, but will set
+# defaults if the user does not manually set them.
 
 # If a user wishes to use their own validation and/or conversion
 # tools, they can set the following variables to their executable
 # names and create <exec_name>.cmake.in files in misc/CMake.  To work,
 # the cmake.in files will need to produce the same validity "stamp"
 # files and fatal errors as the default tools upon success or failure.
-# For a worked example, see rnv.cmake.in - to test it, install rnv from
-# http://sourceforge.net/projects/rnv/ and configure BRL-CAD as follows:
+# For a worked example, see rnv.cmake.in - to test it, install rnv
+# from http://sourceforge.net/projects/rnv/ and configure BRL-CAD as
+# follows:
 #
 # cmake .. -DBRLCAD_EXTRADOCS_VALIDATE=ON -DVALIDATE_EXECUTABLE=rnv
 #
 # Note that rnv must be in the system path for this to work.
 
+find_program(XSLTPROC_EXECUTABLE xsltproc HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+mark_as_advanced(XSLTPROC_EXECUTABLE)
+find_program(XMLLINT_EXECUTABLE xmllint HINTS ${BRLCAD_EXT_NOINSTALL_DIR}/${BIN_DIR})
+mark_as_advanced(XMLLINT_EXECUTABLE)
 
 # Handle default exec and sanity checking for XML validation
 if(BRLCAD_ENABLE_STRICT)
@@ -88,9 +93,9 @@ else(CMAKE_CONFIGURATION_TYPES)
   set(bin_root "${CMAKE_BINARY_DIR}")
 endif(CMAKE_CONFIGURATION_TYPES)
 
-# xsltproc is finicky about slashes in names - do some
-# sanity scrubbing of the full root path string in
-# preparation for generating DocBook scripts
+# xsltproc is finicky about slashes in names - do some sanity
+# scrubbing of the full root path string in preparation for generating
+# DocBook scripts
 string(REGEX REPLACE "/+" "/" bin_root "${bin_root}")
 string(REGEX REPLACE "/$" "" bin_root "${bin_root}")
 
@@ -132,11 +137,16 @@ set(MAN5_DIR "${DOC_DIR}/../man/")
 set(MANN_DIR "${DOC_DIR}/../man/")
 set(PDF_DIR "${DOC_DIR}/pdf/")
 
-# The general pattern of the BRL-CAD build is to use CMAKE_CFG_INTDIR when
-# multi-configuration builds complicate the location of binaries.  In this
-# case, however, we are using a generated script with a different mechanism
-# for handling this situation, and we need to update the executable paths
-# accordingly if they are configuration dependent.
+# The general pattern of the BRL-CAD build is to use CMAKE_CFG_INTDIR
+# when multi-configuration builds complicate the location of binaries.
+# In this case, however, we are using a generated script with a
+# different mechanism for handling this situation, and we need to
+# update the executable paths accordingly if they are configuration
+# dependent.
+#
+# TODO - is there some way generator expressions could be used to
+# improve this?  Maybe pass the build time location of these programs
+# to the scripts as -D arguments?
 if(CMAKE_CONFIGURATION_TYPES)
   string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
   string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
@@ -152,10 +162,10 @@ if (TARGET brlcad_css)
   add_dependencies(docbook brlcad_css)
 endif (TARGET brlcad_css)
 
-macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
+function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
-  # If we got the name of a list or an explicit list,
-  # translate into the form we need.
+  # If we got the name of a list or an explicit list, translate into
+  # the form we need.
   list(GET ${in_xml_files} 0 xml_files)
   if("${xml_files}" MATCHES "NOTFOUND")
     set(xml_files ${in_xml_files})
@@ -163,8 +173,8 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
     set(xml_files ${${in_xml_files}})
   endif("${xml_files}" MATCHES "NOTFOUND")
 
-  # Get a target name that is unique but at least has
-  # some information about what/where the target is.
+  # Get a target name that is unique but at least has some information
+  # about what/where the target is.
   get_filename_component(dname_root1 "${CMAKE_CURRENT_SOURCE_DIR}" NAME_WE)
   get_filename_component(dname_path1  "${CMAKE_CURRENT_SOURCE_DIR}" PATH)
   get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
@@ -183,15 +193,15 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
   if(BRLCAD_EXTRADOCS)
     set(all_outfiles)
 
-    # Each file gets its own script file and custom command, which handle all
-    # the outputs to be produced from that file.
+    # Each file gets its own script file and custom command, which
+    # handle all the outputs to be produced from that file.
     foreach(fname ${xml_files})
       get_filename_component(fname_root "${fname}" NAME_WE)
       get_filename_component(filename "${fname}" ABSOLUTE)
 
-      # Find out which outputs we're actually going to produce, between
-      # what's currently enabled and what the command says the target
-      # *can* produce
+      # Find out which outputs we're actually going to produce,
+      # between what's currently enabled and what the command says the
+      # target *can* produce
       set(CURRENT_OUTPUT_FORMATS)
       foreach(fmt ${fmts})
 	list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
@@ -206,8 +216,9 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
 	if(NOT "${IN_LIST}" STREQUAL "-1")
 	  set(${fmt}_OUTFILE_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION}")
-	  # Use CMAKE_CFG_INTDIR for build system output list, but need
-	  # BUILD_TYPE form of path for scripts and install commands.
+	  # Use CMAKE_CFG_INTDIR for build system output list, but
+	  # need BUILD_TYPE form of path for scripts and install
+	  # commands.
 	  if(CMAKE_CONFIGURATION_TYPES)
 	    string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
 	  else(CMAKE_CONFIGURATION_TYPES)
@@ -218,19 +229,22 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	endif(NOT "${IN_LIST}" STREQUAL "-1")
       endforeach(fmt ${OUTPUT_FORMATS})
 
-      # If we have more outputs than the default, they need to be handled here.
+      # If we have more outputs than the default, they need to be
+      # handled here.
       foreach(fmt ${fmts})
 	list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
 	if(NOT "${IN_LIST}" STREQUAL "-1")
 	  set(${fmt}_EXTRAS)
 	  get_property(EXTRA_OUTPUTS SOURCE ${fname} PROPERTY EXTRA_${fmt}_OUTPUTS)
 	  foreach(extra_out ${EXTRA_OUTPUTS})
-	    # Pass the file name to the script's extras list, in case the script
-	    # has to manually place the file in the correct directory...
+	    # Pass the file name to the script's extras list, in case
+	    # the script has to manually place the file in the correct
+	    # directory...
 	    set(${fmt}_EXTRAS ${${fmt}_EXTRAS} "${extra_out}")
 
-	    # Use CMAKE_CFG_INTDIR for build system output list, but need
-	    # BUILD_TYPE form of path for scripts and install commands.
+	    # Use CMAKE_CFG_INTDIR for build system output list, but
+	    # need BUILD_TYPE form of path for scripts and install
+	    # commands.
 	    set(${fmt}_EXTRA_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${extra_out}")
 	    if(CMAKE_CONFIGURATION_TYPES)
 	      string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
@@ -246,7 +260,7 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
       set(all_outfiles ${all_outfiles} ${outputs})
 
-      # As long as we're outputting *something*, we have a target to produce
+      # Long as we're outputting, we have a target to produce
       if(NOT "${outputs}" STREQUAL "")
 	string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${fname}")
 	configure_file(${BRLCAD_CMAKE_DIR}/docbook.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake @ONLY)
@@ -255,9 +269,11 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	  OUTPUT ${outputs}
 	  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake
 	  DEPENDS ${fname} ${XMLLINT_EXECUTABLE_TARGET} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
-	  )
-	# For now, we'll skip generating per-input-file build targets - that's not normally how
-	# the docbook targets are built.
+	)
+
+	# For now, we'll skip generating per-input-file build targets
+	# - that's not normally how the docbook targets are built.
+
 	#add_custom_target(docbook-${fname_root}-${path_md5} DEPENDS ${outputs})
 	#set_target_properties(docbook-${fname_root}-${path_md5} PROPERTIES FOLDER "DocBook")
 	#if (TARGET brlcad_css)
@@ -274,7 +290,7 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
     endif(NOT "${all_outfiles}" STREQUAL "")
   endif(BRLCAD_EXTRADOCS)
 
-endmacro(ADD_DOCBOOK)
+endfunction(ADD_DOCBOOK)
 
 # Local Variables:
 # tab-width: 8

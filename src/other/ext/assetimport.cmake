@@ -197,6 +197,9 @@ else (BRLCAD_ASSETIMPORT_BUILD)
 
 endif (BRLCAD_ASSETIMPORT_BUILD)
 
+mark_as_advanced(ASSETIMPORT_INCLUDE_DIRS)
+mark_as_advanced(ASSETIMPORT_LIBRARIES)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/assetimport.dist")
 
 # Local Variables:

@@ -74,7 +74,7 @@ set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
 set helplib_data(wdb_color)		{{[-e] [low high r g b]} {text edit color table or make new color entry}}
 set helplib_data(wdb_comb)		{{comb_name [-c|-r] [-w|-f|-l] [-S] <operation solid>}	{create or extend combination w/booleans}}
 set helplib_data(wdb_comb_std)		{{[-cr] comb_name <boolean_expr>}	{create or extend a combination using standard notation}}
-set helplib_data(wdb_concat)		{{[-t] [-u] [-c] [-s|-p] file.g [suffix|prefix]} {import a database into the current database using an auto-incrementing or custom affix}}
+set helplib_data(wdb_concat)		{{[-t] [-u] [-c] [-s|-p] [-O] file.g [suffix|prefix]} {import a database into the current database using an auto-incrementing or custom affix}}
 set helplib_data(wdb_copy)		{{from to} {copy a database object}}
 set helplib_data(wdb_copyeval)		{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
 set helplib_data(wdb_dbip)		{{} {get dbip}}
@@ -120,7 +120,7 @@ set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_rt_gettrees)	{{procname [-i] [-u] treetops...} {create an rt instance object}}
 set helplib_data(wdb_search)		{{[path] [options]} {search database for objects matching parameters defined by options within the specified path}}
 set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into separate shells}}
-set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
+set helplib_data(wdb_showmats)		{{[-a] path}	{show xform matrices along path}}
 set helplib_data(wdb_bot_smooth)        {{[-t norm_tolerance_degrees] new_bot_name old_bot_name} {calculate vertex normals for BOT primitive}}
 set helplib_data(wdb_summary)		{{[p r g]}	{count/list primitives/regions/groups}}
 set helplib_data(wdb_title)		{{description} {set/get database title}}
@@ -151,7 +151,7 @@ set helplib_data(vo_lookat)		{{"x y z"} {set the look-at point}}
 set helplib_data(vo_model2view)		{{} {get the model2view matrix}}
 set helplib_data(vo_mrot)		{{x y z} {rotate view using model x,y,z}}
 set helplib_data(vo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
-set helplib_data(vo_orient)		{{quat} {set the orientation from quaternion}}
+set helplib_data(vo_orient)		{{quat} {set the azimuth, elevation and twist using a quaternion}}
 set helplib_data(vo_perspective)	{{[angle]} {set/get the perspective angle}}
 set helplib_data(vo_pmat)		{{[mat]} {set/get the perspective matrix}}
 set helplib_data(vo_pmodel2view)	{{} {get the pmodel2view matrix}}

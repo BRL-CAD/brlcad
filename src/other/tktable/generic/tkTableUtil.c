@@ -12,6 +12,9 @@
  */
 
 #include "tkTable.h"
+#ifndef panic
+#  define panic Tcl_Panic
+#endif
 
 static char *	Cmd_GetName _ANSI_ARGS_((const Cmd_Struct *cmds, int val));
 static int	Cmd_GetValue _ANSI_ARGS_((const Cmd_Struct *cmds,
@@ -169,7 +172,7 @@ TableOptionBdSet(clientData, interp, tkwin, value, widgRec, offset)
  *----------------------------------------------------------------------
  */
 
-char *
+const char *
 TableOptionBdGet(clientData, tkwin, widgRec, offset, freeProcPtr)
     ClientData clientData;		/* Type of struct being set. */
     Tk_Window tkwin;			/* Window containing canvas widget. */
@@ -329,13 +332,13 @@ Cmd_OptionSet(ClientData clientData, Tcl_Interp *interp,
  *----------------------------------------------------------------------
  */
 
-char *
+const char *
 Cmd_OptionGet(ClientData clientData, Tk_Window unused,
 	      char *widgRec, int offset, Tcl_FreeProc **freeProcPtr)
 {
   Cmd_Struct *p = (Cmd_Struct *)clientData;
   int mode = *((int*)(widgRec+offset));
-  return Cmd_GetName(p,mode);
+  return (const char *)Cmd_GetName(p,mode);
 }
 
 /*

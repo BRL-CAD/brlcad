@@ -28,17 +28,12 @@
 
 
 #include "glheader.h"
-#include "config.h"
+#include "gllimits.h"
 #include "math/m_vector.h"
 #include "math/m_matrix.h"
 
-#ifdef USE_X86_ASM
-#define _XFORMAPI _ASMAPI
-#define _XFORMAPIP _ASMAPIP
-#else
 #define _XFORMAPI
 #define _XFORMAPIP *
-#endif
 
 
 extern void

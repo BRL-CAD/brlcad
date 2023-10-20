@@ -165,8 +165,8 @@ _mesa_delete_buffer_object(GLcontext *ctx, struct gl_buffer_object *bufObj)
     (void) ctx;
 
     if (bufObj->Data)
-	_mesa_free(bufObj->Data);
-    _mesa_free(bufObj);
+	free(bufObj->Data);
+    free(bufObj);
 }
 
 
@@ -266,7 +266,7 @@ _mesa_buffer_data(GLcontext *ctx, GLenum target, GLsizeiptrARB size,
 	bufObj->Usage = usage;
 
 	if (data) {
-	    _mesa_memcpy(bufObj->Data, data, size);
+	    memcpy(bufObj->Data, data, size);
 	}
     }
 }
@@ -302,7 +302,7 @@ _mesa_buffer_subdata(GLcontext *ctx, GLenum target, GLintptrARB offset,
     ASSERT(size + offset <= bufObj->Size);
 
     if (bufObj->Data) {
-	_mesa_memcpy((GLubyte *) bufObj->Data + offset, data, size);
+	memcpy((GLubyte *) bufObj->Data + offset, data, size);
     }
 }
 
@@ -334,7 +334,7 @@ _mesa_buffer_get_subdata(GLcontext *ctx, GLenum target, GLintptrARB offset,
     (void) target;
 
     if (bufObj->Data && ((GLsizeiptrARB)(size + offset) <= bufObj->Size)) {
-	_mesa_memcpy(data, (GLubyte *) bufObj->Data + offset, size);
+	memcpy(data, (GLubyte *) bufObj->Data + offset, size);
     }
 }
 

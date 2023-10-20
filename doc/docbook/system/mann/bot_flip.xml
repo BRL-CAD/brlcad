@@ -29,6 +29,10 @@
     command will flip the normals resulting in all exterior facets to become shaded
     and all interior facets to become black. It is recommended to run the commands
     'bot_vertex_fuse' then 'bot_face_fuse' before running 'bot_flip'.</para>
+    <para>Note: using the <command>bot_flip</command> will toggle the orientation of
+    right and left-handed BOT primitives. The orientation of unoriented BOT
+    primitives will not change.
+    </para>
   </refsection>
 
   <refsection xml:id="author"><title>AUTHOR</title>

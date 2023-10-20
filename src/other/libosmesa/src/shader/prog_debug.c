@@ -116,7 +116,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
 
     /* make null-terminated copy of registerName */
     len = MIN2((unsigned int) len, sizeof(reg) - 1);
-    _mesa_memcpy(reg, registerName, len);
+    memcpy(reg, registerName, len);
     reg[len] = 0;
 
     switch (target) {
@@ -135,7 +135,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
 	    /* GL_NV_vertex_program */
 	    if (reg[0] == 'R') {
 		/* Temp register */
-		GLint i = _mesa_atoi(reg + 1);
+		GLint i = atoi(reg + 1);
 		if (i >= (GLint)ctx->Const.VertexProgram.MaxTemps) {
 		    _mesa_error(ctx, GL_INVALID_VALUE,
 				"glGetProgramRegisterfvMESA(registerName)");
@@ -149,8 +149,8 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
 		    const char *name = _mesa_nv_vertex_input_register_name(i);
 		    char number[10];
 		    _mesa_sprintf(number, "%d", i);
-		    if (_mesa_strncmp(reg + 2, name, 4) == 0 ||
-			_mesa_strncmp(reg + 2, number, _mesa_strlen(number)) == 0) {
+		    if (strncmp(reg + 2, name, 4) == 0 ||
+			strncmp(reg + 2, number, strlen(number)) == 0) {
 			ctx->Driver.GetProgramRegister(ctx, PROGRAM_INPUT, i, v);
 			return;
 		    }
@@ -162,7 +162,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
 		/* Vertex output attribute */
 	    }
 	    /* GL_ARB_vertex_program */
-	    else if (_mesa_strncmp(reg, "vertex.", 7) == 0) {
+	    else if (strncmp(reg, "vertex.", 7) == 0) {
 
 	    } else {
 		_mesa_error(ctx, GL_INVALID_VALUE,
@@ -196,7 +196,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
 	    }
 	    if (reg[0] == 'R') {
 		/* Temp register */
-		GLint i = _mesa_atoi(reg + 1);
+		GLint i = atoi(reg + 1);
 		if (i >= (GLint)ctx->Const.FragmentProgram.MaxTemps) {
 		    _mesa_error(ctx, GL_INVALID_VALUE,
 				"glGetProgramRegisterfvMESA(registerName)");
@@ -209,7 +209,7 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
 		GLuint i;
 		for (i = 0; i < ctx->Const.FragmentProgram.MaxAttribs; i++) {
 		    const char *name = _mesa_nv_fragment_input_register_name(i);
-		    if (_mesa_strncmp(reg + 2, name, 4) == 0) {
+		    if (strncmp(reg + 2, name, 4) == 0) {
 			ctx->Driver.GetProgramRegister(ctx, PROGRAM_INPUT, i, v);
 			return;
 		    }
@@ -217,15 +217,15 @@ _mesa_GetProgramRegisterfvMESA(GLenum target,
 		_mesa_error(ctx, GL_INVALID_VALUE,
 			    "glGetProgramRegisterfvMESA(registerName)");
 		return;
-	    } else if (_mesa_strcmp(reg, "o[COLR]") == 0) {
+	    } else if (strcmp(reg, "o[COLR]") == 0) {
 		/* Fragment output color */
 		ctx->Driver.GetProgramRegister(ctx, PROGRAM_OUTPUT,
 					       FRAG_RESULT_COLR, v);
-	    } else if (_mesa_strcmp(reg, "o[COLH]") == 0) {
+	    } else if (strcmp(reg, "o[COLH]") == 0) {
 		/* Fragment output color */
 		ctx->Driver.GetProgramRegister(ctx, PROGRAM_OUTPUT,
 					       FRAG_RESULT_COLH, v);
-	    } else if (_mesa_strcmp(reg, "o[DEPR]") == 0) {
+	    } else if (strcmp(reg, "o[DEPR]") == 0) {
 		/* Fragment output depth */
 		ctx->Driver.GetProgramRegister(ctx, PROGRAM_OUTPUT,
 					       FRAG_RESULT_DEPR, v);

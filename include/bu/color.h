@@ -70,6 +70,12 @@ typedef struct bu_color bu_color_t;
  */
 #define BU_COLOR_INIT_ZERO {{0, 0, 0, 0}}
 
+/* Initializers for commonly used colors */
+#define BU_COLOR_RED    {{1, 0, 0, 0}}
+#define BU_COLOR_GREEN  {{0, 1, 0, 0}}
+#define BU_COLOR_BLUE   {{0, 0, 1, 0}}
+#define BU_COLOR_YELLOW {{1, 1, 0, 0}}
+
 /**
  * Copy a bu_color
  */

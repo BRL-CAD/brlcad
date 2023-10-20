@@ -1078,7 +1078,9 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     sip->nsrf = ntohl(*(uint32_t *)cp);
     cp += SIZEOF_NETWORK_LONG;
-    sip->srfs = (struct face_g_snurb **) bu_calloc(sip->nsrf, sizeof(struct face_g_snurb *), "nurb srfs[]");
+
+    if (sip->nsrf > 0)
+	sip->srfs = (struct face_g_snurb **) bu_calloc(sip->nsrf, sizeof(struct face_g_snurb *), "nurb srfs[]");
 
     for (s = 0; s < sip->nsrf; s++) {
 	struct face_g_snurb *srf;

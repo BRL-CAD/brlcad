@@ -7,10 +7,10 @@ set(ADRT_INCLUDE_DIRS
 list(REMOVE_DUPLICATES ADRT_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(ADRT_INCLUDE_DIRS)
 
-if(NOT "${Z_PREFIX_STR}" STREQUAL "")
+IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ZLIB_LIBRARY}" LOCAL_TEST)
+if(LOCAL_TEST OR TARGET ZLIB_BLD)
   add_definitions(-DZ_PREFIX)
-  add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
-endif(NOT "${Z_PREFIX_STR}" STREQUAL "")
+endif(LOCAL_TEST OR TARGET ZLIB_BLD)
 
 set(LIBRENDER_SRCS
   load.c
@@ -40,7 +40,7 @@ set(LIBRENDER_SRCS
   librender/texture_perlin.c
   librender/texture_stack.c
   )
-BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv")
+BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv;${ZLIB_LIBRARIES}")
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 add_dependencies(librender gcv_plugins)
 

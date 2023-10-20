@@ -32,7 +32,7 @@ set(LIBBV_SRCS
   view_sets.cpp
   )
 
-BRLCAD_ADDLIB(libbv "${LIBBV_SRCS}" "libbn;libbu")
+BRLCAD_ADDLIB(libbv "${LIBBV_SRCS}" "${libbv_deps}")
 set_target_properties(libbv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)

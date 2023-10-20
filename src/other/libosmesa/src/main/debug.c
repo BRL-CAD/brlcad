@@ -126,16 +126,8 @@ void _mesa_print_info(void)
 #else
     _mesa_debug(NULL, "Mesa thread-safe: NO\n");
 #endif
-#if defined(USE_X86_ASM)
-    _mesa_debug(NULL, "Mesa x86-optimized: YES\n");
-#else
     _mesa_debug(NULL, "Mesa x86-optimized: NO\n");
-#endif
-#if defined(USE_SPARC_ASM)
-    _mesa_debug(NULL, "Mesa sparc-optimized: YES\n");
-#else
     _mesa_debug(NULL, "Mesa sparc-optimized: NO\n");
-#endif
 }
 
 
@@ -150,51 +142,40 @@ void _mesa_print_info(void)
 static void add_debug_flags(const char *debug)
 {
 #ifdef DEBUG
-    if (_mesa_strstr(debug, "varray"))
+    if (strstr(debug, "varray"))
 	MESA_VERBOSE |= VERBOSE_VARRAY;
 
-    if (_mesa_strstr(debug, "tex"))
+    if (strstr(debug, "tex"))
 	MESA_VERBOSE |= VERBOSE_TEXTURE;
 
-    if (_mesa_strstr(debug, "imm"))
+    if (strstr(debug, "imm"))
 	MESA_VERBOSE |= VERBOSE_IMMEDIATE;
 
-    if (_mesa_strstr(debug, "pipe"))
+    if (strstr(debug, "pipe"))
 	MESA_VERBOSE |= VERBOSE_PIPELINE;
 
-    if (_mesa_strstr(debug, "driver"))
+    if (strstr(debug, "driver"))
 	MESA_VERBOSE |= VERBOSE_DRIVER;
 
-    if (_mesa_strstr(debug, "state"))
+    if (strstr(debug, "state"))
 	MESA_VERBOSE |= VERBOSE_STATE;
 
-    if (_mesa_strstr(debug, "api"))
+    if (strstr(debug, "api"))
 	MESA_VERBOSE |= VERBOSE_API;
 
-    if (_mesa_strstr(debug, "list"))
+    if (strstr(debug, "list"))
 	MESA_VERBOSE |= VERBOSE_DISPLAY_LIST;
 
-    if (_mesa_strstr(debug, "lighting"))
+    if (strstr(debug, "lighting"))
 	MESA_VERBOSE |= VERBOSE_LIGHTING;
 
-    if (_mesa_strstr(debug, "disassem"))
+    if (strstr(debug, "disassem"))
 	MESA_VERBOSE |= VERBOSE_DISASSEM;
 
     /* Debug flag:
      */
-    if (_mesa_strstr(debug, "flush"))
+    if (strstr(debug, "flush"))
 	MESA_DEBUG_FLAGS |= DEBUG_ALWAYS_FLUSH;
-
-#if defined(_FPU_GETCW) && defined(_FPU_SETCW)
-    if (_mesa_strstr(debug, "fpexceptions")) {
-	/* raise FP exceptions */
-	fpu_control_t mask;
-	_FPU_GETCW(mask);
-	mask &= ~(_FPU_MASK_IM | _FPU_MASK_DM | _FPU_MASK_ZM
-		  | _FPU_MASK_OM | _FPU_MASK_UM);
-	_FPU_SETCW(mask);
-    }
-#endif
 
 #else
     (void) debug;

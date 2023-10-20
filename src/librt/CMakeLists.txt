@@ -379,7 +379,7 @@ if(BRLCAD_ENABLE_SPR)
 endif(BRLCAD_ENABLE_SPR)
 
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${librt_deps};${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 # set(MATERIALX_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXCore.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXFormat.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenOsl.lib;${CMAKE_CURRENT_SOURCE_DIR}/../../../MaterialXSource/lib/MaterialXGenShader.lib)
 # BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${MATERIALX_LIBS};${OPENCL_LIBS};libbrep;libnmg;libbg;libbv;libbn;libbu;${OPENNURBS_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
@@ -395,9 +395,10 @@ if(HIDE_INTERNAL_SYMBOLS)
   endif (TARGET librt-obj)
 endif(HIDE_INTERNAL_SYMBOLS)
 
-# loudly append an underscore on musl so that we build by default but           
+# loudly append an underscore on musl so that we build by default but
 # not without protest.
-find_program(MUSL_LD NAMES /lib/ld-musl-x86_64.so.1) 
+find_program(MUSL_LD NAMES /lib/ld-musl-x86_64.so.1)
+mark_as_advanced(MUSL_LD)
 if (MUSL_LD)
   message("WARNING: MUSL LibC Detected.  Protecting BRL-CAD's librt.
 

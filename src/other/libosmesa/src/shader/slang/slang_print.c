@@ -625,7 +625,7 @@ slang_print_function(const slang_function *f, GLboolean body)
     int i;
 
 #if 0
-    if (_mesa_strcmp((char *) f->header.a_name, "main") != 0)
+    if (strcmp((char *) f->header.a_name, "main") != 0)
 	return;
 #endif
 

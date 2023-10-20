@@ -94,7 +94,7 @@ void
 _mesa_delete_array_object(GLcontext *ctx, struct gl_array_object *obj)
 {
     (void) ctx;
-    _mesa_free(obj);
+    free(obj);
 }
 
 

@@ -479,13 +479,23 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     struct _ged_dm_info *gd = (struct _ged_dm_info *)ds;
     struct ged *gedp = gd->gedp;
     struct bu_vls dm_name = BU_VLS_INIT_ZERO;
+    struct bu_vls view_name = BU_VLS_INIT_ZERO;
 
-    if (argc != 1 && argc != 2) {
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "d", "dm", "dm_name", &bu_opt_vls, &dm_name, "name of display manager to be created");
+    BU_OPT(d[1], "V", "view", "view_name", &bu_opt_vls, &view_name, "view to associate with DM (defaults to gedp current view)");
+    BU_OPT_NULL(d[2]);
+
+    int ac = bu_opt_parse(NULL, argc, argv, d);
+
+    if (!ac) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s", usage_string);
+	bu_vls_free(&dm_name);
+	bu_vls_free(&view_name);
 	return BRLCAD_ERROR;
     }
 
-    if (argc == 1) {
+    if (ac == 1 && !bu_vls_strlen(&dm_name)) {
 	// No name - generate one
 	bu_vls_sprintf(&dm_name, "%s-0", argv[0]);
 	int exists = 0;
@@ -519,11 +529,20 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	if (tries == DM_MAX_TRIES) {
 	    bu_vls_printf(gedp->ged_result_str, "unable to generate DM name");
 	    bu_vls_free(&dm_name);
+	    bu_vls_free(&view_name);
 	    return BRLCAD_ERROR;
 	}
     } else {
+	if (ac == 2 && bu_vls_strlen(&dm_name) && !BU_STR_EQUAL(argv[1], bu_vls_cstr(&dm_name))) {
+	    bu_vls_printf(gedp->ged_result_str, "Two different dm names specified: %s and %s\n", argv[1], bu_vls_cstr(&dm_name));
+	    bu_vls_free(&dm_name);
+	    bu_vls_free(&view_name);
+	    return BRLCAD_ERROR;
+	}
+	if (ac == 2) {
+	    bu_vls_sprintf(&dm_name, "%s", argv[1]);
+	}
 	// Have name - see if it already exists
-	bu_vls_sprintf(&dm_name, "%s", argv[1]);
 	int exists = 0;
 	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
 	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
@@ -539,19 +558,46 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	if (exists) {
 	    bu_vls_printf(gedp->ged_result_str, "DM %s already exists", bu_vls_cstr(&dm_name));
 	    bu_vls_free(&dm_name);
+	    bu_vls_free(&view_name);
 	    return BRLCAD_ERROR;
 	}
     }
 
-    struct bview *target_view = (gedp->ged_gvp->dmp) ? NULL : gedp->ged_gvp;
+    struct bview *target_view = NULL;
+    if (bu_vls_strlen(&view_name)) {
+	struct bu_ptbl *views = bv_set_views(&gedp->ged_views);
+	for (size_t i = 0; i < BU_PTBL_LEN(views); i++) {
+	    struct bview *tview = (struct bview *)BU_PTBL_GET(views, i);
+	    if (!bu_vls_strcmp(&view_name, &tview->gv_name)) {
+		target_view = tview;
+		break;
+	    }
+	}
+    } else {
+	target_view = (gedp->ged_gvp->dmp) ? NULL : gedp->ged_gvp;
+    }
+
     if (!target_view) {
 	BU_GET(target_view, struct bview);
 	bv_init(target_view, &gedp->ged_views);
 	bv_set_add_view(&gedp->ged_views, target_view);
+	// This view is being created by GED, so it needs to be cleaned
+	// up by GED as well
+	bu_ptbl_ins(&gedp->ged_free_views, (long *)target_view);
+    }
+
+    if (target_view->dmp) {
+	bu_vls_printf(gedp->ged_result_str, "Target view %s of dm attach already has an associated dm\n", bu_vls_cstr(&target_view->gv_name));
+	bu_vls_free(&dm_name);
+	bu_vls_free(&view_name);
+	return BRLCAD_ERROR;
     }
 
     // Make sure the view width and height are non-zero if we're in a
-    // "headless" mode without a graphical display
+    // "headless" mode without a graphical display.  TODO - this
+    // either shouldn't be necessary or probably should come after
+    // dm_open has its chance to set up dm width and height (which
+    // should be used before the fallback)
     if (!target_view->gv_width) {
 	target_view->gv_width = 512;
     }
@@ -559,6 +605,8 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 	target_view->gv_height = 512;
     }
 
+    // If the application has not provided a toolkit specific context, use the
+    // view itself as the context
     if (!gedp->ged_ctx) {
 	gedp->ged_ctx = (void *)target_view;
     }
@@ -567,6 +615,8 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
     struct dm *dmp = dm_open(gedp->ged_ctx, gedp->ged_interp, argv[0], 1, &acmd);
     if (!dmp) {
 	bu_vls_printf(gedp->ged_result_str, "failed to create DM %s", bu_vls_cstr(&dm_name));
+	bu_vls_free(&dm_name);
+	bu_vls_free(&view_name);
 	return BRLCAD_ERROR;
     }
 
@@ -579,6 +629,9 @@ _dm_cmd_attach(void *ds, int argc, const char **argv)
 
     // We have the dmp - let the view know
     target_view->dmp = dmp;
+
+    bu_vls_free(&dm_name);
+    bu_vls_free(&view_name);
 
     return BRLCAD_OK;
 }

@@ -70,6 +70,12 @@
 
 #include "bg/defines.h"
 
+/* The most modern version of the .g database format.
+ * Code wanting to create the newest database format
+ * should use this define rather than hard coding the
+ * current latest format */
+#define BRLCAD_DB_FORMAT_LATEST 5
+
 /*
  * Values for Solid ID.
  */

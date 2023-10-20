@@ -142,9 +142,16 @@ main() {
 
     /* server's done, send our own message back to it */
     bytes = pkg_send(MSG_DATA, "Message from client", 20, connection);
+    if (bytes < 0) {
+	bu_log("Unable to cleanly send to %s, port %d.\n", server, port);
+    }
 
     /* let the server know we're done. */
     bytes = pkg_send(MSG_CIAO, "DONE", 5, connection);
+    if (bytes < 0) {
+	bu_log("Unable to cleanly send DONE to %s, port %d.\n", server, port);
+    }
+
     bytes = pkg_send(MSG_CIAO, "BYE", 4, connection);
     if (bytes < 0) {
 	bu_log("Unable to cleanly disconnect from %s, port %d.\n", server, port);

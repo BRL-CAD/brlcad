@@ -221,7 +221,7 @@ create_test_g_file(long int test_num, const char *gfile)
 	bu_exit(1, "Test %ld: Stale .g file %s exists\n", test_num, gfile);
     }
 
-    dbip = db_create(gfile, 5);
+    dbip = db_create(gfile, BRLCAD_DB_FORMAT_LATEST);
 
     if (dbip == DBI_NULL) {
 	bu_exit(1, "Test %ld: unable to create test file %s\n", test_num, gfile);

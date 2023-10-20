@@ -37,6 +37,7 @@
 #include "vmath.h"
 
 #include "dm.h"
+#define LIBTERMIO_IMPLEMENTATION
 #include "libtermio.h"
 
 

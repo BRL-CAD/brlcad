@@ -134,9 +134,9 @@ main(int argc, const char **argv)
     }
     Tcl_DeleteInterp(interp);
 
-#endif /* HAVE_TK */
 
     bu_free((void *)av, "argv cpy");
+#endif /* HAVE_TK */
 
     return status;
 }

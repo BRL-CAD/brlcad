@@ -22,9 +22,6 @@ add_subdirectory(asc)
 # Bag of Triangles Tests
 add_subdirectory(bots)
 
-# Burst Regression Tests
-add_subdirectory(burst)
-
 # comgeom Conversion Tests
 add_subdirectory(comgeom)
 

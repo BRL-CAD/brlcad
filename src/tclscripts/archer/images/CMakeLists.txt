@@ -309,10 +309,15 @@ set(archer_images
   l_i1_v1_s9.gif
   )
 
-BRLCAD_ADDDATA(archer_images tclscripts/archer/images)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(archer_images tclscripts/archer/images)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(License.txt)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  License.txt
+  ${archer_images}
+  )
 
 # Local Variables:
 # tab-width: 8

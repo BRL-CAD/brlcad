@@ -164,6 +164,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     CREATE_DISTCHECK(enableall_debug   "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
     CREATE_DISTCHECK(enableall_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=BUNDLED" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
 
+    # Basic set of common build configurations to test
     add_custom_target(distcheck-std
       # The source repository verification script is responsible for generating these files
       COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_remove_archives_if_invalid"
@@ -172,11 +173,21 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set_target_properties(distcheck-std PROPERTIES FOLDER "BRL-CAD Distribution Checking")
     set_target_properties(distcheck-std PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
+    # Unfortunately, with the new usage pattern of 3rd party build logic being part
+    # of the BRL-CAD build process, we can no longer guarantee robustness in the face
+    # of odd pathnames - therefore, we filter that specific case out of the distcheck-full
+    # test.  It can still be run in isolation, if system dependencies are available, to
+    # test BRL-CAD's own logic - however, as a system build doesn't guarantee that availably
+    # we're currently not enabling it as a standard test.
+    set(distcheck_targets_runnable ${distcheck_targets})
+    list(REMOVE_ITEM distcheck_targets_runnable distcheck-odd_pathnames)
+
+    # Aggressive set of many build configurations - this will be expensive
     add_custom_target(distcheck-full
       # The source repository verification script is responsible for generating these files
       COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_remove_archives_if_invalid"
       COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message"
-      DEPENDS ${distcheck_targets})
+      DEPENDS ${distcheck_targets_runnable})
     set_target_properties(distcheck-full PROPERTIES FOLDER "BRL-CAD Distribution Checking")
     set_target_properties(distcheck-full PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 

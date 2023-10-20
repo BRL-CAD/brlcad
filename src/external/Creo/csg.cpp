@@ -172,12 +172,12 @@ tgc_hole_name(struct creo_conv_info *cinfo, wchar_t *wname, const char *suffix)
     while (db_lookup(cinfo->wdbp->dbip, bu_vls_addr(hname), LOOKUP_QUIET) != RT_DIR_NULL) {
         (void)bu_vls_incr(hname, NULL, "0:0:0:0:-", NULL, NULL);
         count++;
-        creo_log(cinfo, MSG_DEBUG, "Generating hole name \"%s\"\n", bu_vls_addr(hname));
+        creo_log(cinfo, MSG_PLAIN, "   NAME: Generating hole name \"%s\"\n", bu_vls_addr(hname));
         if (count >= MAX_UNIQUE_NAMES) {
             bu_vls_free(hname);
             BU_PUT(hname, struct bu_vls);
             ProWstringToString(pname, wname);
-            creo_log(cinfo, MSG_DEBUG, "Hole \"%s\" failed name generation\n", pname);
+            creo_log(cinfo, MSG_PLAIN, "   NAME: Hole \"%s\" failed name generation\n", pname);
             return NULL;
         }
     }
@@ -207,7 +207,7 @@ subtract_hole(struct part_conv_info *pinfo)
     struct directory *dp = RT_DIR_NULL;
     vect_t a, b, c, d, h;
 
-    if (pinfo->cinfo->do_facets_only)
+    if (pinfo->cinfo->facets_only)
         return (pinfo->diameter < cinfo->min_hole_diameter) ? 1 : 0;
 
     struct hole_info *hinfo;
@@ -369,7 +369,7 @@ subtract_hole(struct part_conv_info *pinfo)
         char pname[CREO_NAME_MAX];
         ProWstringToString(pname, wname);
         lower_case(pname);
-        creo_log(cinfo, MSG_DEBUG, "Failed to recognize \"%s\" hole type\n", pname);
+        creo_log(cinfo, MSG_PLAIN, "FAILURE: Unable to recognize \"%s\" hole type\n", pname);
         BU_PUT(hinfo, struct hole_info);
         return 0;
     }

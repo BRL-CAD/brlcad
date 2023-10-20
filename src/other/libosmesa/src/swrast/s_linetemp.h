@@ -114,7 +114,7 @@ NAME(GLcontext *ctx, const SWvertex *vert0, const SWvertex *vert1)
     }
 
     /*
-    printf("%s():\n", __FUNCTION__);
+    printf("%s():\n", __func__);
     printf(" (%f, %f, %f) -> (%f, %f, %f)\n",
            vert0->win[0], vert0->win[1], vert0->win[2],
            vert1->win[0], vert1->win[1], vert1->win[2]);

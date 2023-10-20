@@ -77,11 +77,15 @@ static int output_as_return = 1;
 Tk_Window tkwin = NULL;
 
 
-/* The following is for GUI output hooks: contains name of function to
- * run with output.
- */
-static struct bu_vls tcl_output_hook = BU_VLS_INIT_ZERO;
+/* GUI output hooks use this variable to store the Tcl function used to run to
+ * produce output. */
+static struct bu_vls tcl_output_cmd = BU_VLS_INIT_ZERO;
 
+/* Container to store up bu_log strings for eventual Tcl printing.  This is
+ * done to ensure only one thread attempts to print to the Tcl output - bu_log
+ * may be called from multiple threads, and if the hook itself tries to print
+ * to Tcl Bad Things can happen. */
+static struct bu_vls tcl_output_str = BU_VLS_INIT_ZERO;
 
 /**
  * Used as a hook for bu_log output.  Sends output to the Tcl
@@ -89,38 +93,36 @@ static struct bu_vls tcl_output_hook = BU_VLS_INIT_ZERO;
  * Useful for user interface building.
  */
 int
-gui_output(void *clientData, void *str)
+gui_output(void *UNUSED(clientData), void *str)
 {
-    int len;
-    Tcl_DString tclcommand;
-    Tcl_Obj *save_result;
-    static int level = 0;
-
-    if (level > 50) {
-	bu_log_delete_hook(gui_output, clientData);
-	/* Now safe to run bu_log? */
-	bu_log("Ack! Something horrible just happened recursively.\n");
-	return 0;
-    }
-
-    Tcl_DStringInit(&tclcommand);
-    (void)Tcl_DStringAppendElement(&tclcommand, bu_vls_addr(&tcl_output_hook));
-    (void)Tcl_DStringAppendElement(&tclcommand, (const char *)str);
-
-    save_result = Tcl_GetObjResult(INTERP);
-    Tcl_IncrRefCount(save_result);
-    ++level;
-    Tcl_Eval((Tcl_Interp *)clientData, Tcl_DStringValue(&tclcommand));
-    --level;
-    Tcl_SetObjResult(INTERP, save_result);
-    Tcl_DecrRefCount(save_result);
-
-    Tcl_DStringFree(&tclcommand);
-
-    len = (int)strlen((const char *)str);
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    bu_vls_printf(&tcl_output_str, "%s", (const char *)str);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    int len = (int)strlen((const char *)str);
     return len;
 }
 
+void
+mged_pr_output(Tcl_Interp *interp)
+{
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    if (bu_vls_strlen(&tcl_output_str)) {
+	if (!bu_vls_strlen(&tcl_output_cmd))
+	    bu_vls_sprintf(&tcl_output_cmd, "output_callback");
+	Tcl_DString tclcommand;
+	Tcl_DStringInit(&tclcommand);
+	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&tcl_output_cmd));
+	(void)Tcl_DStringAppendElement(&tclcommand, bu_vls_cstr(&tcl_output_str));
+	Tcl_Obj *save_result = Tcl_GetObjResult(interp);
+	Tcl_IncrRefCount(save_result);
+	Tcl_Eval(interp, Tcl_DStringValue(&tclcommand));
+	Tcl_SetObjResult(interp, save_result);
+	Tcl_DecrRefCount(save_result);
+	Tcl_DStringFree(&tclcommand);
+	bu_vls_trunc(&tcl_output_str, 0);
+    }
+    bu_semaphore_release(BU_SEM_SYSCALL);
+}
 
 int
 mged_db_search_callback(int argc, const char *argv[], void *userdata)
@@ -387,8 +389,21 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interpreter, int argc, const char 
 		break;
 	}
     }
-    argc -= bu_optind-1;
-    argv += bu_optind-1;
+
+    if (bu_optind > 1) {
+	int offset = bu_optind - 1;
+	// we've handled the flags - remove them but keep the rest of the string intact
+	for (int i = 1; i < argc - offset; i++) {
+	    argv[i] = argv[i + offset];
+	}
+	// null out the rest
+	for (int i = argc - offset; i < argc; i++) {
+	    argv[i] = NULL;
+	}
+
+	// update count
+	argc -= offset;
+    }
 
     ret = (*ctp->ged_func)(GEDP, argc, (const char **)argv);
     if (ret & GED_MORE)
@@ -790,13 +805,14 @@ cmd_output_hook(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc
     /* Also, don't allow silly infinite loops. */
 
     if (BU_STR_EQUAL(argv[1], argv[0])) {
-	Tcl_AppendResult(interpreter, "Don't be silly.", (char *)NULL);
+	Tcl_AppendResult(interpreter, "Detected potential infinite loop in cmd_output_hook.", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    /* Set up the hook! */
-    bu_vls_init(&tcl_output_hook);
-    bu_vls_strcpy(&tcl_output_hook, argv[1]);
+    /* Set up the command */
+    bu_vls_sprintf(&tcl_output_cmd, "%s", argv[1]);
+
+    /* Set up the libbu hook */
     bu_log_add_hook(gui_output, (void *)interpreter);
 
     Tcl_ResetResult(interpreter);

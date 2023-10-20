@@ -31,7 +31,9 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include "bg/polygon_types.h"
-#include "qtcad/QColorRGB.h"
+#include "qtcad/QgColorRGB.h"
+#include "qtcad/QgPolyFilter.h"
+#include "qtcad/QgView.h"
 #include "QPolySettings.h"
 
 class QPolyCreate : public QWidget
@@ -69,19 +71,26 @@ class QPolyCreate : public QWidget
 
     signals:
 	void poly_added();
+	void settings_changed(unsigned long long);
 	void view_updated(unsigned long long);
+
+    public slots:
+	void checkbox_refresh(unsigned long long);
 
     private slots:
 	void toplevel_config(bool);
 	void finalize(bool);
 	void do_import_sketch();
 	void do_vpoly_copy();
+	void propagate_update(int);
 
 	void sketch_sync_bool(bool);
 	void sketch_sync_str(const QString &);
 	void sketch_sync();
 	void view_sync_str(const QString &);
 	void view_sync();
+	void toggle_line_snapping(bool);
+	void toggle_grid_snapping(bool);
 
     protected:
 	bool eventFilter(QObject *, QEvent *);
@@ -91,6 +100,9 @@ class QPolyCreate : public QWidget
 	int poly_cnt = 0;
 	struct bv_scene_obj *p = NULL;
 	bool do_bool = false;
+
+	QgPolyFilter *cf = NULL;
+	QPolyCreateFilter *pcf;
 };
 
 #endif //QPOLYCREATE_H

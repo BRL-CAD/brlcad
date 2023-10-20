@@ -117,6 +117,7 @@ set(PATCHELF_FILES
   patchelf/elf.h
   patchelf/UPGRADE_NOTE.txt
   )
+mark_as_advanced(PATCHELF_EXECUTABLE)
 CMAKEFILES(${PATCHELF_FILES})
 
 
@@ -139,8 +140,23 @@ set(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex/perplex_templa
 set(LEMON_EXECUTABLE lemon CACHE STRING "lemon" FORCE)
 set(RE2C_EXECUTABLE re2c CACHE STRING "re2c" FORCE)
 set(PERPLEX_EXECUTABLE perplex CACHE STRING "perplex" FORCE)
+mark_as_advanced(LEMON_TEMPLATE)
+mark_as_advanced(PERPLEX_TEMPLATE)
+mark_as_advanced(LEMON_EXECUTABLE)
+mark_as_advanced(RE2C_EXECUTABLE)
+mark_as_advanced(PERPLEX_EXECUTABLE)
+SetTargetFolder(perplex "Compilation Utilities")
+SetTargetFolder(lemon "Compilation Utilities")
+SetTargetFolder(re2c "Compilation Utilities")
+SetTargetFolder(re2c_bootstrap "Compilation Utilities")
 include("${CMAKE_CURRENT_SOURCE_DIR}/perplex.dist")
 CMAKEFILES_IN_DIR(perplex_ignore_files perplex)
+DISTCLEAN(
+  ${CMAKE_CURRENT_BINARY_DIR}/perplex/config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/perplex/bootstrap_parser/parser.yy
+  ${CMAKE_CURRENT_BINARY_DIR}/perplex/perplex_wd/parser.y
+  ${CMAKE_CURRENT_BINARY_DIR}/perplex/re2c_parser/parser.yy
+  )
 
 CMAKEFILES(
   CMakeLists.txt

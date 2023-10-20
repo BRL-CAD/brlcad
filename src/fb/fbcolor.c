@@ -37,6 +37,7 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "dm.h"
+#define LIBTERMIO_IMPLEMENTATION
 #include "libtermio.h"
 
 #define COMMA ','

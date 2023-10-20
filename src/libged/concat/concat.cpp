@@ -48,6 +48,7 @@ struct ged_concat_data {
     struct db_i *old_dbip;
     struct db_i *new_dbip;
     struct bu_vls affix;
+    long overwritten = 0;
 };
 
 
@@ -56,6 +57,7 @@ struct ged_concat_data {
 #define AUTO_SUFFIX	1<<2
 #define CUSTOM_PREFIX	1<<3
 #define CUSTOM_SUFFIX	1<<4
+#define OVERWRITE	1<<5
 
 
 /**
@@ -131,9 +133,9 @@ get_new_name(const char *name,
 	} else {
 	    /* no custom suffix/prefix specified, use prefix */
 	    if (num > 0) {
-		bu_vls_printf(&new_name, "_%ld", num);
+		bu_vls_printf(&new_name, "%ld_", num);
 	    }
-	    bu_vls_strcpy(&new_name, name);
+	    bu_vls_strcat(&new_name, name);
 	}
 
 	/* make sure it fits for v4 */
@@ -150,8 +152,8 @@ get_new_name(const char *name,
     } while (db_lookup(dbip, aname, LOOKUP_QUIET) != RT_DIR_NULL ||
 	     (used_names.find(std::string(aname)) != used_names.end()));
 
-    /* if they didn't get what they asked for, warn them */
-    if (num > 1) {
+    /* if they didn't get what they asked for, warn them (except when overwriting) */
+    if (num > 1 && !(cc_data->copy_mode & OVERWRITE)) {
 	if (cc_data->copy_mode & NO_AFFIX) {
 	    bu_log("WARNING: unable to import [%s] without an affix, imported as [%s]\n", name, bu_vls_addr(&new_name));
 	} else if (cc_data->copy_mode & CUSTOM_SUFFIX) {
@@ -179,6 +181,9 @@ adjust_names(union tree *trp,
 {
     std::string new_name;
     std::string old_name;
+
+    if (cc_data->copy_mode & OVERWRITE) /* we're overwriting conflicts, there's nothing to adjust */
+	return;
 
     if (trp == NULL) {
 	return;
@@ -228,6 +233,8 @@ copy_object(struct ged *gedp,
     struct rt_comb_internal *comb;
     struct directory *new_dp;
     std::string new_name;
+    struct directory* oride_dp = NULL;
+    std::string owrite_backup;
 
     if (rt_db_get_internal(&ip, input_dp, input_dbip, NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -275,6 +282,20 @@ copy_object(struct ged *gedp,
     if (!new_name.length()) {
 	new_name = std::string(input_dp->d_namep);
     }
+
+    /* if overwriting -
+     * move current to temp name before copying to avoid name collisions and data loss */
+    if (cc_data->copy_mode & OVERWRITE) {
+	oride_dp = db_lookup(gedp->dbip, input_dp->d_namep, 0);
+	if (oride_dp) { /* obj exists and needs to be moved out of the way */
+	    db_rename(cc_data->old_dbip, oride_dp, new_name.c_str());
+	    /* remember the backup's name so we can delete it later */
+	    owrite_backup = new_name;
+	    /* we've moved the orignal object out of the way. Reset new_name for the diradd */
+	    new_name = std::string(input_dp->d_namep);
+	}
+    }
+
     if ((new_dp = db_diradd(curr_dbip, new_name.c_str(), RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
 			    (void *)&input_dp->d_minor_type)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -294,6 +315,19 @@ copy_object(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
+    /* if overwriting -
+     * we've added the new object, its safe to delete the original */
+    if (oride_dp) {
+	_dl_eraseAllNamesFromDisplay(gedp, owrite_backup.c_str(), 0);
+	if (db_delete(gedp->dbip, oride_dp) != 0 || db_dirdelete(gedp->dbip, oride_dp) != 0) {
+	    /* Abort processing on first error */
+	    bu_vls_printf(gedp->ged_result_str, "an error occurred while deleting %s\n", owrite_backup.c_str());
+	    return BRLCAD_ERROR;
+	}
+	db_update_nref(gedp->dbip, &rt_uniresource);
+	cc_data->overwritten++;
+    }
+
     return BRLCAD_OK;
 }
 
@@ -310,7 +344,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     char *colorTab;
     struct ged_concat_data cc_data;
     const char *oldfile;
-    static const char *usage = "[-u] [-t] [-c] [-s|-p] file.g [suffix|prefix]";
+    static const char *usage = "[-u] [-t] [-c] [-s|-p] [-O] file.g [suffix|prefix]";
     int importUnits = 0;
     int importTitle = 0;
     int importColorTable = 0;
@@ -337,7 +371,7 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
     /* process args */
     bu_optind = 1;
     bu_opterr = 0;
-    while ((c=bu_getopt(argc, (char * const *)argv, "utcsp")) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "utcspO")) != -1) {
 	switch (c) {
 	    case 'u':
 		importUnits = 1;
@@ -353,6 +387,9 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 's':
 		cc_data.copy_mode |= AUTO_SUFFIX;
+		break;
+	    case 'O':
+	        cc_data.copy_mode |= OVERWRITE;
 		break;
 	    default: {
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
@@ -395,6 +432,8 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 		cc_data.copy_mode |= CUSTOM_SUFFIX;
 	    }
 
+	} else if (cc_data.copy_mode & OVERWRITE) {
+	    /* don't mess with affix */
 	} else {
 	    bu_vls_free(&cc_data.affix);
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", commandName, usage);
@@ -465,6 +504,10 @@ ged_concat_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Free all the directory entries, and close the input database */
     db_close(newdbp);
+
+    if (cc_data.copy_mode & OVERWRITE) {
+	bu_vls_printf(gedp->ged_result_str, "    [%ld] objects overwritten", cc_data.overwritten);
+    }
 
     if (importColorTable) {
 	if ((cp = bu_avs_get(&g_avs, "regionid_colortable")) != NULL) {

@@ -349,7 +349,7 @@ void _mesa_init_polygon(GLcontext * ctx)
 
 
     /* Polygon Stipple group */
-    MEMSET(ctx->PolygonStipple, 0xff, 32*sizeof(GLuint));
+    memset(ctx->PolygonStipple, 0xff, 32*sizeof(GLuint));
 }
 
 /*@}*/

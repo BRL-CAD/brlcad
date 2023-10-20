@@ -106,9 +106,9 @@ pp_annotate(slang_string *output, const char *fmt, ...)
     char buffer[1024];
 
     va_start(va, fmt);
-    _mesa_vsprintf(buffer, fmt, va);
+    vsprintf(buffer, fmt, va);
     va_end(va);
-    slang_string_pushs(output, buffer, _mesa_strlen(buffer));
+    slang_string_pushs(output, buffer, strlen(buffer));
 #else
     (GLvoid)(output);
     (GLvoid)(fmt);
@@ -204,8 +204,8 @@ execute_expression(slang_string *output, const byte *code, GLuint *pi, GLint *re
 	switch (code[i++]) {
 	    case OP_PUSHINT:
 		i++;
-		PUSH(_mesa_atoi((const char *)(&code[i])));
-		i += _mesa_strlen((const char *)(&code[i])) + 1;
+		PUSH(atoi((const char *)(&code[i])));
+		i += strlen((const char *)(&code[i])) + 1;
 		break;
 	    case OP_LOGICALOR:
 		BINARY(||);
@@ -388,7 +388,7 @@ pp_symbols_free(pp_symbols *self)
 
     for (i = 0; i < self->count; i++)
 	pp_symbol_free(&self->symbols[i]);
-    _mesa_free(self->symbols);
+    free(self->symbols);
 }
 
 static pp_symbol *
@@ -410,7 +410,7 @@ pp_symbols_erase(pp_symbols *self, pp_symbol *symbol)
     self->count--;
     pp_symbol_free(symbol);
     if (symbol < self->symbols + self->count)
-	_mesa_memcpy(symbol, symbol + 1, sizeof(pp_symbol) * (self->symbols + self->count - symbol));
+	memcpy(symbol, symbol + 1, sizeof(pp_symbol) * (self->symbols + self->count - symbol));
     self->symbols = (pp_symbol *)(_mesa_realloc(self->symbols, (self->count + 1) * sizeof(pp_symbol),
 				  self->count * sizeof(pp_symbol)));
     return self->symbols != NULL;
@@ -422,7 +422,7 @@ pp_symbols_find(pp_symbols *self, const char *name)
     GLuint i;
 
     for (i = 0; i < self->count; i++)
-	if (_mesa_strcmp(name, slang_string_cstr(&self->symbols[i].name)) == 0)
+	if (strcmp(name, slang_string_cstr(&self->symbols[i].name)) == 0)
 	    return &self->symbols[i];
     return NULL;
 }
@@ -501,9 +501,9 @@ pp_ext_init(pp_ext *self)
 static GLboolean
 pp_ext_set(pp_ext *self, const char *name, GLboolean enable)
 {
-    if (_mesa_strcmp(name, "MESA_shader_debug") == 0)
+    if (strcmp(name, "MESA_shader_debug") == 0)
 	self->MESA_shader_debug = enable;
-    else if (_mesa_strcmp(name, "GL_ARB_texture_rectangle") == 0)
+    else if (strcmp(name, "GL_ARB_texture_rectangle") == 0)
 	self->ARB_texture_rectangle = enable;
     /* Next extension name tests go here. */
     else
@@ -702,18 +702,18 @@ expand(expand_state *e, pp_symbols *symbols)
 	     * actually an operator that we must handle here and expand it either to " 0 " or " 1 ".
 	     * The other identifiers start with "__" and we expand it to appropriate values
 	     * taken from the preprocessor state. */
-	    if (_mesa_strcmp(id, "defined") == 0) {
+	    if (strcmp(id, "defined") == 0) {
 		if (!expand_defined(e, &buffer))
 		    return GL_FALSE;
-	    } else if (_mesa_strcmp(id, "__LINE__") == 0) {
+	    } else if (strcmp(id, "__LINE__") == 0) {
 		slang_string_pushc(e->output, ' ');
 		slang_string_pushi(e->output, e->state->line);
 		slang_string_pushc(e->output, ' ');
-	    } else if (_mesa_strcmp(id, "__FILE__") == 0) {
+	    } else if (strcmp(id, "__FILE__") == 0) {
 		slang_string_pushc(e->output, ' ');
 		slang_string_pushi(e->output, e->state->file);
 		slang_string_pushc(e->output, ' ');
-	    } else if (_mesa_strcmp(id, "__VERSION__") == 0) {
+	    } else if (strcmp(id, "__VERSION__") == 0) {
 		slang_string_pushc(e->output, ' ');
 		slang_string_pushi(e->output, e->state->version);
 		slang_string_pushc(e->output, ' ');
@@ -755,7 +755,7 @@ parse_if(slang_string *output, const byte *prod, GLuint *pi, GLint *result, pp_s
     GLuint len;
 
     text = (const char *)(&prod[*pi]);
-    len = _mesa_strlen(text);
+    len = strlen(text);
 
     if (state->cond.top->effective) {
 	slang_string expr;
@@ -882,7 +882,7 @@ preprocess_source(slang_string *output, const char *source, grammar pid, grammar
 
 		    /* Parse macro name. */
 		    id = (const char *)(&prod[i]);
-		    idlen = _mesa_strlen(id);
+		    idlen = strlen(id);
 		    if (state.cond.top->effective) {
 			pp_annotate(output, "// #define %s(", id);
 
@@ -905,7 +905,7 @@ preprocess_source(slang_string *output, const char *source, grammar pid, grammar
 			    pp_symbol *param;
 
 			    id = (const char *)(&prod[i]);
-			    idlen = _mesa_strlen(id);
+			    idlen = strlen(id);
 			    pp_annotate(output, "%s, ", id);
 			    param = pp_symbols_push(&symbol->parameters);
 			    if (param == NULL)
@@ -917,7 +917,7 @@ preprocess_source(slang_string *output, const char *source, grammar pid, grammar
 
 		    /* Parse macro replacement. */
 		    id = (const char *)(&prod[i]);
-		    idlen = _mesa_strlen(id);
+		    idlen = strlen(id);
 		    if (state.cond.top->effective) {
 			pp_annotate(output, ") %s", id);
 			slang_string_pushs(&symbol->replacement, id, idlen);
@@ -928,7 +928,7 @@ preprocess_source(slang_string *output, const char *source, grammar pid, grammar
 
 		case TOKEN_UNDEF:
 		    id = (const char *)(&prod[i]);
-		    i += _mesa_strlen(id) + 1;
+		    i += strlen(id) + 1;
 		    if (state.cond.top->effective) {
 			pp_symbol *symbol;
 
@@ -1017,7 +1017,7 @@ preprocess_source(slang_string *output, const char *source, grammar pid, grammar
 		case TOKEN_EXTENSION:
 		    /* Parse the extension name. */
 		    id = (const char *)(&prod[i]);
-		    i += _mesa_strlen(id) + 1;
+		    i += strlen(id) + 1;
 		    if (state.cond.top->effective)
 			pp_annotate(output, "// #extension %s: ", id);
 
@@ -1028,7 +1028,7 @@ preprocess_source(slang_string *output, const char *source, grammar pid, grammar
 			    case BEHAVIOR_REQUIRE:
 				pp_annotate(output, "require");
 				if (!pp_ext_set(&state.ext, id, GL_TRUE)) {
-				    if (_mesa_strcmp(id, "all") == 0) {
+				    if (strcmp(id, "all") == 0) {
 					slang_info_log_error(elog, "require: bad behavior for #extension all.");
 					goto error;
 				    } else {
@@ -1041,7 +1041,7 @@ preprocess_source(slang_string *output, const char *source, grammar pid, grammar
 			    case BEHAVIOR_ENABLE:
 				pp_annotate(output, "enable");
 				if (!pp_ext_set(&state.ext, id, GL_TRUE)) {
-				    if (_mesa_strcmp(id, "all") == 0) {
+				    if (strcmp(id, "all") == 0) {
 					slang_info_log_error(elog, "enable: bad behavior for #extension all.");
 					goto error;
 				    } else {
@@ -1053,7 +1053,7 @@ preprocess_source(slang_string *output, const char *source, grammar pid, grammar
 			    case BEHAVIOR_WARN:
 				pp_annotate(output, "warn");
 				if (!pp_ext_set(&state.ext, id, GL_TRUE)) {
-				    if (_mesa_strcmp(id, "all") != 0) {
+				    if (strcmp(id, "all") != 0) {
 					slang_info_log_warning(elog, "%s: enabled extension is not supported.", id);
 				    }
 				}
@@ -1062,7 +1062,7 @@ preprocess_source(slang_string *output, const char *source, grammar pid, grammar
 			    case BEHAVIOR_DISABLE:
 				pp_annotate(output, "disable");
 				if (!pp_ext_set(&state.ext, id, GL_FALSE)) {
-				    if (_mesa_strcmp(id, "all") == 0) {
+				    if (strcmp(id, "all") == 0) {
 					pp_ext_disable_all(&state.ext);
 				    } else {
 					slang_info_log_warning(elog, "%s: disabled extension is not supported.", id);
@@ -1078,7 +1078,7 @@ preprocess_source(slang_string *output, const char *source, grammar pid, grammar
 
 		case TOKEN_LINE:
 		    id = (const char *)(&prod[i]);
-		    i += _mesa_strlen(id) + 1;
+		    i += strlen(id) + 1;
 
 		    if (state.cond.top->effective) {
 			slang_string buffer;

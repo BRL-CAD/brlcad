@@ -17,7 +17,7 @@ int parse_line(std::string const& line)
 	return static_cast<int>(std::count(tmp.begin(), tmp.end(), 'V'));
 }
 
-int main()
+int main(void)
 {
 	bool test = (parse_line("f 7/7/7 -3/3/-3 2/-2/2") == 3) &&
 				(parse_line("f 7//7 3//-3 -2//2") == 3) &&

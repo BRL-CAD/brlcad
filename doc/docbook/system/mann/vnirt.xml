@@ -33,36 +33,22 @@ them to nirt. All other arguments are passed to nirt without modification.
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <para>
-
-  </para>
-  <example><title/>
-
-    <variablelist>
-      <varlistentry>
-	   <term><prompt/> <userinput/></term>
-	   <listitem>
-	     <para>
-		     </para>
-	   </listitem>
-      </varlistentry>
-      <varlistentry>
-	   <term><prompt/> <userinput/></term>
-	   <listitem>
-	     <para>
-
-	     </para>
-	   </listitem>
-      </varlistentry>
-    </variablelist>
-  </example>
-
-  <example><title/>
+  <example><title>Shoot a ray at 1000 pixels up and centered left/right</title>
 
     <para>
-      <prompt/><userinput/>
+      <prompt>mged&gt; </prompt><userinput>vnirt 0 1000</userinput>
     </para>
+    <para>Shoots a ray 1000 pixels up from center.
+
+    </para>
+  </example>
+  
+ <example><title>Shoot a ray centered top/bottom and 1000 pixels to the right.</title>
+
     <para>
+      <prompt>mged&gt; </prompt><userinput>vnirt 1000 0</userinput>
+    </para>
+    <para>Shoots a ray 1000 pixels to the right of center.
 
     </para>
   </example>

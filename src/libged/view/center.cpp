@@ -43,7 +43,6 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
     point_t center;
     static const char *usage = "[-v] | [x y z]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -53,7 +52,8 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
     /* get view center */
     if (argc == 1) {
 	MAT_DELTAS_GET_NEG(center, gedp->ged_gvp->gv_center);
-	VSCALE(center, center, gedp->dbip->dbi_base2local);
+	if (gedp->dbip)
+	    VSCALE(center, center, gedp->dbip->dbi_base2local);
 	bn_encode_vect(gedp->ged_result_str, center, 1);
 
 	return BRLCAD_OK;
@@ -62,7 +62,8 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
     if (argc == 2 && BU_STR_EQUAL(argv[1], "-v")) {
 	std::ostringstream ss;
 	MAT_DELTAS_GET_NEG(center, gedp->ged_gvp->gv_center);
-	VSCALE(center, center, gedp->dbip->dbi_base2local);
+	if (gedp->dbip)
+	    VSCALE(center, center, gedp->dbip->dbi_base2local);
 	ss << std::fixed << std::setprecision(std::numeric_limits<fastf_t>::max_digits10) << center[X];
 	ss << " ";
 	ss << std::fixed << std::setprecision(std::numeric_limits<fastf_t>::max_digits10) << center[Y];
@@ -143,7 +144,8 @@ ged_center_core(struct ged *gedp, int argc, const char *argv[])
 	VMOVE(center, scan);
     }
 
-    VSCALE(center, center, gedp->dbip->dbi_local2base);
+    if (gedp->dbip)
+	VSCALE(center, center, gedp->dbip->dbi_local2base);
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
     bv_update(gedp->ged_gvp);
 

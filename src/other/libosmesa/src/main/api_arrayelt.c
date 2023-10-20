@@ -1051,7 +1051,7 @@ GLboolean _ae_create_context(GLcontext *ctx)
     FogCoordFuncs[6] = _gloffset_FogCoordfvEXT;
     FogCoordFuncs[7] = _gloffset_FogCoorddvEXT;
 
-    ctx->aelt_context = CALLOC(sizeof(AEcontext));
+    ctx->aelt_context = calloc(1,sizeof(AEcontext));
     if (!ctx->aelt_context)
 	return GL_FALSE;
 
@@ -1063,7 +1063,7 @@ GLboolean _ae_create_context(GLcontext *ctx)
 void _ae_destroy_context(GLcontext *ctx)
 {
     if (AE_CONTEXT(ctx)) {
-	FREE(ctx->aelt_context);
+	free(ctx->aelt_context);
 	ctx->aelt_context = NULL;
     }
 }

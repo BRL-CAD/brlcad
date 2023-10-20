@@ -1,0 +1,92 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="cd">
+
+  <refmeta>
+    <refentrytitle>CD</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>cd</refname>
+    <refpurpose>Change the directory to the given path.
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>cd</command>
+      <arg choice="req" rep="norepeat"><replaceable>path</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id="description"><title>DESCRIPTION</title>
+
+    <para>
+      Change the directory to the given path. This can change to a given folder in the current directory or
+      change to a full path. Double periods (..) can also be used to go up one level. See also the <command>pwd</command> command.
+    </para>
+  </refsection>
+
+  <refsection xml:id="examples"><title>EXAMPLES</title>
+
+    <para>
+      Change directory to the given folder located in the current directory.
+    </para>
+    <example><title>Use <command>cd</command> to change the directory.
+      </title>
+      <variablelist>
+	<varlistentry>
+	  <term><prompt>mged&gt; </prompt><userinput>cd test_folder</userinput></term>
+	  <listitem>
+	    <para>Changes the current directroy to a folder named test_folder that is located within the current directory.
+	    </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </example>
+        <para>
+      Change directory to the given folder using the full path.
+    </para>
+    <example><title>Use <command>cd</command> to change the directory.
+      </title>
+      <variablelist>
+	<varlistentry>
+	  <term><prompt>mged&gt; </prompt><userinput>cd C:/geometry/test_folder</userinput></term>
+	  <listitem>
+	    <para>Changes the current directroy to a folder named test_folder located at C:/geometry/test_folder.
+	    </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </example>
+        <para>
+      Change directory to the folder above the current folder.
+    </para>
+    <example><title>Use <command>cd</command> to change the directory.
+      </title>
+      <variablelist>
+	<varlistentry>
+	  <term><prompt>mged&gt; </prompt><userinput>cd ..</userinput></term>
+	  <listitem>
+	    <para>Changes the current directroy to the folder above the current folder.
+	    </para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </example>
+  </refsection>
+
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to <email>devs@brlcad.org</email>
+    </para>
+  </refsection>
+</refentry>

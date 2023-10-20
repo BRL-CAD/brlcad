@@ -38,7 +38,6 @@ ged_debuglib_core(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[hex_code]";
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
     /* initialize result */

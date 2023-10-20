@@ -153,6 +153,9 @@ if (BRLCAD_PROJ_BUILD)
 
 endif (BRLCAD_PROJ_BUILD)
 
+mark_as_advanced(PROJ_INCLUDE_DIRS)
+mark_as_advanced(PROJ_LIBRARIES)
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/proj.dist")
 
 # Local Variables:

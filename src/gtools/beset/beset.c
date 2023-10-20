@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
 
     source_db = db_open(argv[ac+1], DB_OPEN_READWRITE);
     db_dirbuild(source_db);
-    pop.db_c = db_create("testdb", 5);
+    pop.db_c = db_create("testdb", BRLCAD_DB_FORMAT_LATEST);
     db_close(pop.db_c);
 
 
@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
 	total_fitness = 0.0f;
 
 	snprintf(dbname, 256, "gen%.3d", g);
-	pop.db_c = db_create(dbname, 5);
+	pop.db_c = db_create(dbname, BRLCAD_DB_FORMAT_LATEST);
 
 	pop_gop(REPRODUCE, argv[ac+2], NULL, argv[ac+2], NULL, source_db, pop.db_c, &rt_uniresource);
 

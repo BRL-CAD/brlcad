@@ -638,8 +638,8 @@ _brep_cmd_trim_info(void *bs, int argc, const char **argv)
 	const ON_Surface* trim_srf = trim.SurfaceOf();
 	const ON_BrepLoop &loop = brep->m_L[trim.m_li];
 	const ON_BrepFace &face = brep->m_F[loop.m_fi];
-	const char* sTrimType = "?";
-	const char* sTrimIso = "-?";
+	const char *sTrimType = NULL;
+	const char *sTrimIso = NULL;
 	const ON_Curve* c2 = trim.TrimCurveOf();
 	ON_NurbsCurve* nc2 = ON_NurbsCurve::New();
 	c2->GetNurbForm(*nc2, 0.0);

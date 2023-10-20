@@ -115,6 +115,18 @@ RT_EXPORT extern void db_close_client(struct db_i *dbip,
  */
 RT_EXPORT extern void db_close(struct db_i *dbip);
 
+/**
+ * Check if a specified path is a .g database file, based on identification (or
+ * not) of a valid .g file header.  Returns the dbi_version if the file has a
+ * valid header, and -1 otherwise.
+ *
+ * Note that this routine does NOT do the endian-flipping tests to spot
+ * big-endian v4 .g files in the case where a valid header is not found - files
+ * are assumed to be either v5 or little endian v4 formatted.  Codes willing to
+ * take the performance vs robustness tradeoff of the endian flipping check
+ * (which will do more file reading than this basic check) should use db_open.
+ */
+RT_EXPORT extern int db_filetype(const char *file_path);
 
 /* dump a full copy of a database */
 /**

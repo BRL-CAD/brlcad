@@ -1,0 +1,25 @@
+The tests in this directory are intended to detect breakage in the libdm
+drawing system and its integration into libged's drawing routines.  The images
+here are not "finalized" in the sense of the images used for raytracing
+regression testing - rather, they should reflect the current expected drawing
+output for the BRL-CAD scene drawing system.  If (for example) the faceplate
+axes or the grid drawing routines are updated, the control images related to
+those features should be updated to reflect the new expected answers, rather
+than trying to match the scene visuals to what is in these images.
+
+Historically, the primary OpenGL drawing logic of BRL-CAD's scene rendering
+could only be checked by manual, visual inspection of the drawing results in a
+graphical context.  Such an approach doesn't scale to a Continuous Integration
+context and makes comprehensive coverage impractical.  With the addition of the
+swrast libdm rendering backend, we can now test the actual results of the
+OpenGL drawing calls themselves in an automated fashion, even on CI runners
+without any graphics system.  Initially the focus is to get basic checks in
+place to spot when refactoring has completely broken a feature - in time, we
+may be able to work towards more "full coverage" CI testing of the drawing
+system's code paths.
+
+
+Tests to set up:
+
+multiple shared and independent attached dms, with view independent drawing
+(eventually) embedded framebuffer raytracing

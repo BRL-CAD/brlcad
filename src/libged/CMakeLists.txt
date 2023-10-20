@@ -28,11 +28,12 @@ set(LIBGED_SOURCES
   exec_mapping.cpp
   ged_init.cpp
   columns.c
+  dbi_state.cpp
   display_list.c
   draw.cpp
   facedef.c
-  ged.c
-  ged_util.c
+  ged.cpp
+  ged_util.cpp
   get_obj_bounds.c
   get_solid_kp.c
   inside.c
@@ -46,7 +47,6 @@ set(LIBGED_SOURCES
   rotate_extrude.c
   rotate_hyp.c
   rotate_tgc.c
-  select.cpp
   tab_complete.cpp
   trace.c
   track.c
@@ -85,40 +85,13 @@ set(GED_LOCAL_INCLUDE_DIRS
 
 BRLCAD_LIB_INCLUDE_DIRS(ged GED_INCLUDE_DIRS GED_LOCAL_INCLUDE_DIRS)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libbv;libbg;libbn;libbu;libicv;libanalyze;${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "${libged_deps};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 add_subdirectory(simulate/tests)
 
 BRLCAD_ADDEXEC(test_help help/test_help.c libged TEST)
-
-set(ged_ignore_files
-  CMakeLists.txt
-  NOTES
-  README
-  TODO
-  alphanum.h
-  bot/ged_bot.h
-  brep/ged_brep.h
-  check/check_private.h
-  ged_private.h
-  joint/joint.h
-  osg.cpp
-  pscale/pscale.h
-  pnts_util.h
-  qray.h
-  simulate/NOTES
-  simulate/rt_collision_algorithm.hpp
-  simulate/rt_collision_shape.hpp
-  simulate/rt_debug_draw.hpp
-  simulate/rt_instance.hpp
-  simulate/rt_motion_state.hpp
-  simulate/simulation.hpp
-  simulate/utility.hpp
-  include/plugin.h
-  )
-CMAKEFILES(${ged_ignore_files})
 
 # Plugins
 add_subdirectory(3ptarb)
@@ -354,6 +327,34 @@ add_subdirectory(wmater)
 add_subdirectory(xpush)
 add_subdirectory(zap)
 add_subdirectory(zoom)
+
+set(ged_ignore_files
+  CMakeLists.txt
+  NOTES
+  README
+  TODO
+  alphanum.h
+  bot/ged_bot.h
+  brep/ged_brep.h
+  check/check_private.h
+  ged_private.h
+  joint/joint.h
+  osg.cpp
+  pscale/pscale.h
+  pnts_util.h
+  qray.h
+  simulate/NOTES
+  simulate/rt_collision_algorithm.hpp
+  simulate/rt_collision_shape.hpp
+  simulate/rt_debug_draw.hpp
+  simulate/rt_instance.hpp
+  simulate/rt_motion_state.hpp
+  simulate/simulation.hpp
+  simulate/utility.hpp
+  include/plugin.h
+  )
+CMAKEFILES(${ged_ignore_files})
+
 
 # Local Variables:
 # tab-width: 8

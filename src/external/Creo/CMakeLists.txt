@@ -2,6 +2,7 @@
 # Title:   CMakeLists.txt                                              #
 # Purpose: Configure and generate build files for CREO2BRL project     #
 # Note:    Requires an active Creo Pro/Toolkit license                 #
+# Revised: 3/22/2023                                                   #
 #----------------------------------------------------------------------#
 
 # Establish the list of Source files - this is needed
@@ -52,8 +53,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   #        |        |        |        |        |        |        |       #
   #        v        v        v        v        v        v        v       #
 
-  set(BRLCAD_ROOT_DIR "C:/Workspace/BRL-CAD/Source"       CACHE PATH "BRL-CAD root directory")
-  set(CREO_ROOT_DIR   "C:/Program Files/PTC/Creo 7.0.9.0" CACHE PATH "Creo root directory")
+  set(BRLCAD_ROOT_DIR "C:/Workspace/BRL-CAD/Source"          CACHE PATH "BRL-CAD root directory")
+  set(CREO_ROOT_DIR   "C:/Program Files/PTC/Creo 8.0.8.0"    CACHE PATH "Creo root directory")
 
   #        ^        ^        ^        ^        ^        ^        ^       #
   #        |        |        |        |        |        |        |       #
@@ -295,7 +296,16 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
         message("-- # safely ignored as long as the UNLOCK step is performed.              #")
         message("-- #----------------------------------------------------------------------#")
         message("--")
-      endif()
+        message("-- #----------------------------------------------------------------------#")
+        message("-- # NOTICE: For installation follow this BUILD sequence                  #")
+        message("-- #----------------------------------------------------------------------#")
+        message("-- # BUILD:                                                               #")
+        message("-- #   1) creo-brl                                                        #")
+        message("-- #   2) unlock                                                          #")
+        message("-- #   3) install                                                         #")
+        message("-- #----------------------------------------------------------------------#")
+        message("--")
+        endif()
     endif()
   endforeach()
 
@@ -510,7 +520,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO_DIRS
     "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
+    "${OPENNURBS_INCLUDE_DIRS}"
      )
   BRLCAD_INCLUDE_DIRS(CREO_DIRS)
 

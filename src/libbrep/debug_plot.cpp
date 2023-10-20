@@ -749,8 +749,8 @@ DebugPlot::SplitFaces(
 	for (int j = 0; j < split_faces[i].Count(); ++j) {
 	    TrimmedFace *face = split_faces[i][j];
 
-	    unsigned char *outerloop_color = unknown_outerloop_color;
-	    unsigned char *innerloop_color = unknown_innerloop_color;
+	    unsigned char *outerloop_color = NULL;
+	    unsigned char *innerloop_color = NULL;
 	    switch (face->m_belong_to_final) {
 		case TrimmedFace::NOT_BELONG:
 		    outerloop_color = rejected_outerloop_color;

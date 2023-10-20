@@ -37,7 +37,7 @@
 
 #include "glheader.h"
 #include "OSMesa/internal/glcore.h"	/* __GLcontextModes (GLvisual) */
-#include "config.h"		/* Hardwired parameters */
+#include "gllimits.h"		/* Hardwired parameters */
 #include "glapitable.h"
 #include "glthread.h"
 #include "math/m_matrix.h"	/* GLmatrix */
@@ -2992,7 +2992,7 @@ extern const char *_mesa_prim_name[GL_POLYGON+4];
 #ifdef DEBUG
 extern int MESA_VERBOSE;
 extern int MESA_DEBUG_FLAGS;
-# define MESA_FUNCTION __FUNCTION__
+# define MESA_FUNCTION __func__
 #else
 # define MESA_VERBOSE 0
 # define MESA_DEBUG_FLAGS 0

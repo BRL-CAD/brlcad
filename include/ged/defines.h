@@ -39,7 +39,6 @@
 #include "dm/fbserv.h" // for fbserv_obj
 #include "rt/wdb.h" // for struct rt_wdb
 
-__BEGIN_DECLS
 
 #ifndef GED_EXPORT
 #  if defined(GED_DLL_EXPORTS) && defined(GED_DLL_IMPORTS)
@@ -184,8 +183,14 @@ struct ged_drawable {
     int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
 };
 
+/* Experimental work on a high-performance in-memory representation of
+ * database, view and selection states. We want this to be visible to C++ APIs
+ * like libqtcad, so they can reflect the state of the .g hierarchy in their
+ * own structures without us or them having to make copies of the data.
+ */
+#include "ged/dbi.h"
 
-
+__BEGIN_DECLS
 
 struct ged_cmd;
 
@@ -195,6 +200,7 @@ struct ged_results;
 struct ged {
     struct bu_vls               go_name;
     struct db_i                 *dbip;
+    DbiState			*dbi_state;
 
     /*************************************************************/
     /* Information pertaining to views and view objects .        */
@@ -203,6 +209,13 @@ struct ged {
     struct bview		*ged_gvp;
     /* The full set of views associated with this ged object */
     struct bview_set            ged_views;
+    /* Sometimes applications will supply GED views, and sometimes GED commands
+     * may create views.  In the latter case, ged_close will also need to free
+     * the views.  We define a container to hold those views that libged is
+     * managing, since ged_views views may belong to the application rather
+     * than GED. */
+    struct bu_ptbl              ged_free_views;
+
     /* Drawing data associated with this .g file */
     struct bg_mesh_lod_context  *ged_lod;
 
@@ -231,10 +244,8 @@ struct ged {
 
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
 
-    /* Selection data */
-    struct ged_selection_sets	*ged_selection_sets;
-    struct ged_selection_set    *ged_cset;
-
+    /* Old selection data containers used by joint and brep*/
+    struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
     /* FIXME -- this ugly hack needs to die.  the result string should
      * be stored before the call.
@@ -267,6 +278,15 @@ struct ged {
     void			(*ged_create_vlist_display_list_callback)(struct display_list *);	/**< @brief  function to call after all vlist created that loops through creating display list for each solid  */
     void			(*ged_destroy_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
+    /* Functions related to database open/close - if the parent application
+     * needs to take any action upon database opening or closing, it should
+     * register these callbacks so GED's opendb/closedb commands trigger
+     * the correct logic. */
+    void (*ged_pre_opendb_callback)(struct ged *, void *);
+    void (*ged_post_opendb_callback)(struct ged *, void *);
+    void (*ged_pre_closedb_callback)(struct ged *, void *);
+    void (*ged_post_closedb_callback)(struct ged *, void *);
+    void *ged_db_callback_udata;
 
     /* Functions assigned to ged_subprocess init_clbk and end_clbk
      * slots when the ged_subprocess is created.  TODO - eventually

@@ -58,7 +58,6 @@ nmg_to_adrt_internal(TIE_3 **tribuf, struct tie_s *cur_tie, struct adrt_mesh_s *
 {
     struct model *m;
     struct shell *s;
-    int region_polys=0;
 
     NMG_CK_REGION(r);
 
@@ -114,7 +113,6 @@ nmg_to_adrt_internal(TIE_3 **tribuf, struct tie_s *cur_tie, struct adrt_mesh_s *
 		    continue;
 
 		TIE_VAL(tie_push)(cur_tie, tribuf, 1, mesh, 0);
-		region_polys++;
 	    }
 	}
     }

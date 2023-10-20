@@ -37,6 +37,11 @@ unset(CMAKE_CXX_EXTENSIONS)
 unset(CMAKE_CXX_STANDARD_REQUIRED)
 unset(CMAKE_CXX_STANDARD)
 
+# When we need to have CMake treat includes as
+# system paths to avoid warnings, we add those
+# patterns to the SYS_INCLUDE_PATTERNS list
+mark_as_advanced(SYS_INCLUDE_PATTERNS)
+
 ###############################################################################
 # Unlike the misc/tools directory components built in src/other are part of
 # the distribution, not just the compilation.  Hence we need to make sure of
@@ -101,45 +106,49 @@ mark_as_advanced(SKIP_INSTALL_HEADERS)
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
 # and the include directory for utahrle are different, so override the
 # macro's setting of UTAHRLE_INCLUDE_DIRS here.
-if (BRLCAD_LEVEL3)
+if (BRLCAD_LEVEL3 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
   add_subdirectory(libutahrle)
   set(UTAHRLE_LIBRARY utahrle CACHE STRING "directory with rle.h header" FORCE)
   set(UTAHRLE_LIBRARIES utahrle CACHE STRING "directory with rle.h header" FORCE)
   set(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
   set(UTAHRLE_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
-  mark_as_advanced(UTAHRLE_LIBRARY)
-  mark_as_advanced(UTAHRLE_LIBRARIES)
-  mark_as_advanced(UTAHRLE_INCLUDE_DIR)
-  mark_as_advanced(UTAHRLE_INCLUDE_DIRS)
-endif (BRLCAD_LEVEL3)
-include("${CMAKE_CURRENT_SOURCE_DIR}/libutahrle.dist")
-CMAKEFILES_IN_DIR(libutahrle_ignore_files libutahrle)
+endif (BRLCAD_LEVEL3 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
+mark_as_advanced(UTAHRLE_LIBRARY)
+mark_as_advanced(UTAHRLE_LIBRARIES)
+mark_as_advanced(UTAHRLE_INCLUDE_DIR)
+mark_as_advanced(UTAHRLE_INCLUDE_DIRS)
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/libutahrle.dist")
+  CMAKEFILES_IN_DIR(libutahrle_ignore_files libutahrle)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
 
 
 # OpenNURBS Library
-add_subdirectory(openNURBS)
-SetTargetFolder(openNURBS "Third Party Libraries")
-SetTargetFolder(openNURBS-static "Third Party Libraries")
-SetTargetFolder(openNURBS-obj "Third Party Libraries")
-set(OPENNURBS_LIBRARY openNURBS CACHE STRING "Require opennurbs libraries" FORCE)
-set(OPENNURBS_LIBRARIES openNURBS CACHE STRING "Require opennurbs libraries" FORCE)
-set(OPENNURBS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Require opennurbs header includes" FORCE)
-set(OPENNURBS_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Require opennurbs header includes" FORCE)
-# openNURBS headers trigger a number of warnings - treat them the same way we
-# do the ext headers
-set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS CACHE STRING "Bundled system include dirs" FORCE)
-mark_as_advanced(OPENNURBS_LIBRARY)
-mark_as_advanced(OPENNURBS_LIBRARIES)
-mark_as_advanced(OPENNURBS_INCLUDE_DIR)
-mark_as_advanced(OPENNURBS_INCLUDE_DIRS)
-get_directory_property(openNURBS_headers_orig DIRECTORY openNURBS DEFINITION OPENNURBS_HEADERS)
-set(openNURBS_headers)
-foreach(onhfile ${openNURBS_headers_orig})
-  set(openNURBS_headers ${openNURBS_headers} openNURBS/${onhfile})
-endforeach(onhfile ${openNURBS_headers_orig})
-BRLCAD_MANAGE_FILES(openNURBS_headers ${INCLUDE_DIR}/openNURBS)
-include("${CMAKE_CURRENT_SOURCE_DIR}/openNURBS.dist")
-CMAKEFILES_IN_DIR(openNURBS_ignore_files openNURBS)
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
+  add_subdirectory(openNURBS)
+  SetTargetFolder(openNURBS "Third Party Libraries")
+  SetTargetFolder(openNURBS-static "Third Party Libraries")
+  SetTargetFolder(openNURBS-obj "Third Party Libraries")
+  set(OPENNURBS_LIBRARY openNURBS CACHE STRING "Require opennurbs libraries" FORCE)
+  set(OPENNURBS_LIBRARIES openNURBS CACHE STRING "Require opennurbs libraries" FORCE)
+  set(OPENNURBS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Require opennurbs header includes" FORCE)
+  set(OPENNURBS_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/openNURBS" CACHE STRING "Require opennurbs header includes" FORCE)
+  # openNURBS headers trigger a number of warnings - treat them the same way we
+  # do the ext headers
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS CACHE STRING "Bundled system include dirs" FORCE)
+  mark_as_advanced(OPENNURBS_LIBRARY)
+  mark_as_advanced(OPENNURBS_LIBRARIES)
+  mark_as_advanced(OPENNURBS_INCLUDE_DIR)
+  mark_as_advanced(OPENNURBS_INCLUDE_DIRS)
+  get_directory_property(openNURBS_headers_orig DIRECTORY openNURBS DEFINITION OPENNURBS_HEADERS)
+  set(openNURBS_headers)
+  foreach(onhfile ${openNURBS_headers_orig})
+    set(openNURBS_headers ${openNURBS_headers} openNURBS/${onhfile})
+  endforeach(onhfile ${openNURBS_headers_orig})
+  BRLCAD_MANAGE_FILES(openNURBS_headers ${INCLUDE_DIR}/openNURBS)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/openNURBS.dist")
+  CMAKEFILES_IN_DIR(openNURBS_ignore_files openNURBS)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
 
 
 # Poly2Tri CDT library
@@ -173,66 +182,120 @@ mark_as_advanced(POLY2TRI_INCLUDE_DIRS)
 
 # Lightning Memory-Mapped Database (LMDB)
 # Fast key-value store database from OpenLDAP Project.
-add_subdirectory(lmdb)
-include("${CMAKE_CURRENT_SOURCE_DIR}/lmdb.dist")
-CMAKEFILES_IN_DIR(lmdb_ignore_files lmdb)
-DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/lmdb/Makefile")
-set(LMDB_LIBRARY "lmdb" CACHE STRING "Lightning Memory-Mapped Database library" FORCE)
-set(LMDB_LIBRARIES "lmdb" CACHE STRING "Lightning Memory-Mapped Database library" FORCE)
-set(LMDB_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lmdb" CACHE STRING "Directory containing lmdb header" FORCE)
-set(LMDB_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/lmdb" CACHE STRING "Directory containing lmdb header" FORCE)
-SetTargetFolder(lmdb "Third Party Libraries")
-mark_as_advanced(LMDB_LIBRARY)
-mark_as_advanced(LMDB_LIBRARIES)
-mark_as_advanced(LMDB_INCLUDE_DIR)
-mark_as_advanced(LMDB_INCLUDE_DIRS)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lmdb")
+  add_subdirectory(lmdb)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/lmdb.dist")
+  CMAKEFILES_IN_DIR(lmdb_ignore_files lmdb)
+  DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/lmdb/Makefile")
+  set(LMDB_LIBRARY "lmdb" CACHE STRING "Lightning Memory-Mapped Database library" FORCE)
+  set(LMDB_LIBRARIES "lmdb" CACHE STRING "Lightning Memory-Mapped Database library" FORCE)
+  set(LMDB_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lmdb" CACHE STRING "Directory containing lmdb header" FORCE)
+  set(LMDB_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/lmdb" CACHE STRING "Directory containing lmdb header" FORCE)
+  SetTargetFolder(lmdb "Third Party Libraries")
+  mark_as_advanced(LMDB_LIBRARY)
+  mark_as_advanced(LMDB_LIBRARIES)
+  mark_as_advanced(LMDB_INCLUDE_DIR)
+  mark_as_advanced(LMDB_INCLUDE_DIRS)
+endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lmdb")
 
-
-# GCT is a collection of algorithms for geometry processing and conversion
-#add_subdirectory(gct)
-include("${CMAKE_CURRENT_SOURCE_DIR}/gct.dist")
-CMAKEFILES_IN_DIR(gct_ignore_files gct)
+# Interactive Robust Mesh Booleans - slight modification of
+# https://github.com/gcherchi/InteractiveAndRobustMeshBooleans - to build, place libirmb
+# branch of https://github.com/starseeker/InteractiveAndRobustMeshBooleans at
+# src/other/irmb and define the USE_IRMB flag in src/libged/facetize/facetize.cpp
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/irmb")
+  add_subdirectory(irmb)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/irmb.dist")
+  CMAKEFILES_IN_DIR(irmb_ignore_files irmb)
+  set(IRMB_LIBRARY "irmb" CACHE STRING "Interactive Robust Mesh Booleans library" FORCE)
+  set(IRMB_LIBRARIES "irmb" CACHE STRING "Interactive Robust Mesh Booleans library" FORCE)
+  set(IRMB_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/irmb" CACHE STRING "Directory containing irmb header" FORCE)
+  set(IRMB_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/irmb" CACHE STRING "Directory containing irmb header" FORCE)
+  SetTargetFolder(irmb "Third Party Libraries")
+else (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/irmb")
+  set(IRMB_LIBRARIES "" CACHE STRING "Disabled" FORCE)
+  set(IRMB_INCLUDE_DIRS "" CACHE STRING "Disabled" FORCE)
+endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/irmb")
+mark_as_advanced(IRMB_LIBRARY)
+mark_as_advanced(IRMB_LIBRARIES)
+mark_as_advanced(IRMB_INCLUDE_DIR)
+mark_as_advanced(IRMB_INCLUDE_DIRS)
 
 # OSMesa Library
-add_subdirectory(libosmesa)
-SetTargetFolder(osmesa "Third Party Libraries")
-set(OSMESA_LIBRARY osmesa CACHE STRING "Require opennurbs libraries" FORCE)
-set(OSMESA_LIBRARIES osmesa CACHE STRING "Require opennurbs libraries" FORCE)
-set(OSMESA_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libosmesa/include" CACHE STRING "Require osmesa header includes" FORCE)
-set(OSMESA_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/libosmesa/include" CACHE STRING "Require osmesa header includes" FORCE)
-mark_as_advanced(OSMESA_LIBRARY)
-mark_as_advanced(OSMESA_LIBRARIES)
-mark_as_advanced(OSMESA_INCLUDE_DIR)
-mark_as_advanced(OSMESA_INCLUDE_DIRS)
-include("${CMAKE_CURRENT_SOURCE_DIR}/libosmesa.dist")
-CMAKEFILES_IN_DIR(libosmesa_ignore_files libosmesa)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/libosmesa")
+  add_subdirectory(libosmesa)
+  SetTargetFolder(osmesa "Third Party Libraries")
+  set(OSMESA_LIBRARY osmesa CACHE STRING "Require osmesa libraries" FORCE)
+  set(OSMESA_LIBRARIES osmesa CACHE STRING "Require osmesa libraries" FORCE)
+  set(OSMESA_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libosmesa/include" CACHE STRING "Require osmesa header includes" FORCE)
+  set(OSMESA_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/libosmesa/include" CACHE STRING "Require osmesa header includes" FORCE)
+  mark_as_advanced(OSMESA_LIBRARY)
+  mark_as_advanced(OSMESA_LIBRARIES)
+  mark_as_advanced(OSMESA_INCLUDE_DIR)
+  mark_as_advanced(OSMESA_INCLUDE_DIRS)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/libosmesa.dist")
+  CMAKEFILES_IN_DIR(libosmesa_ignore_files libosmesa)
+endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/libosmesa")
 
 if (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK)
 
-  # Tkhtml doesn't have an active upstream
-  add_subdirectory(tkhtml)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tkhtml3.0")
-  SetTargetFolder(Tkhtml "Third Party Libraries")
-  SetTargetFolder(tkhtml_n_gen "Compilation Utilities")
+  if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tkhtml")
+    # Tkhtml doesn't have an active upstream
+    add_subdirectory(tkhtml)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl")
+    DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tkhtml3.0")
+    SetTargetFolder(Tkhtml "Third Party Libraries")
+    SetTargetFolder(tkhtml_n_gen "Compilation Utilities")
+  endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tkhtml")
 
-  # Tktable is a borderline case.  It does exist and is used in the Tcl/Tk
-  # ecosystem, but it is has the same problem we have generally with "package
-  # require" Tk package testing and there is very little upstream activity...
-  add_subdirectory(tktable)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tktable2.10")
-  SetTargetFolder(Tktable "Third Party Libraries")
-  SetTargetFolder(tktable_header_gen "Compilation Utilities")
+  if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tktable")
+    # Tktable is a borderline case.  It does exist and is used in the Tcl/Tk
+    # ecosystem, but it is has the same problem we have generally with "package
+    # require" Tk package testing and there is very little upstream activity...
+    add_subdirectory(tktable)
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl")
+    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h")
+    DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tktable2.10")
+    SetTargetFolder(Tktable "Third Party Libraries")
+    SetTargetFolder(tktable_header_gen "Compilation Utilities")
+  endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tktable")
 
 endif (BRLCAD_ENABLE_TCL AND BRLCAD_ENABLE_TK)
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/tkhtml.dist")
-CMAKEFILES_IN_DIR(tkhtml_ignore_files tkhtml)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tkhtml")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/tkhtml.dist")
+  CMAKEFILES_IN_DIR(tkhtml_ignore_files tkhtml)
+endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tkhtml")
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/tktable.dist")
-CMAKEFILES_IN_DIR(tktable_ignore_files tktable)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tktable")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/tktable.dist")
+  CMAKEFILES_IN_DIR(tktable_ignore_files tktable)
+endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tktable")
+
+# The above libraries are all compilation targets with libraries, and so have
+# build outputs that must be distributed with BRL-CAD.  The following are
+# either header-only libraries or built directly into executables, and as such
+# may remain in place - they are needed only for building.
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Eigen")
+  include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
+  CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
+  set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
+endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Eigen")
+
+# linenoise is used by applications directly
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/linenoise")
+  add_subdirectory(linenoise)
+  SetTargetFolder(linenoise "Third Party Libraries")
+  set(LINENOISE_LIBRARY linenoise CACHE STRING "Require linenoise libraries" FORCE)
+  set(LINENOISE_LIBRARIES linenoise CACHE STRING "Require linenoise libraries" FORCE)
+  set(LINENOISE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/linenoise" CACHE STRING "Require linenoise header includes" FORCE)
+  set(LINENOISE_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/linenoise" CACHE STRING "Require linenoise header includes" FORCE)
+  mark_as_advanced(LINENOISE_LIBRARY)
+  mark_as_advanced(LINENOISE_LIBRARIES)
+  mark_as_advanced(LINENOISE_INCLUDE_DIR)
+  mark_as_advanced(LINENOISE_INCLUDE_DIRS)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
+  CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
+endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/linenoise")
 
 CMAKEFILES(
   README

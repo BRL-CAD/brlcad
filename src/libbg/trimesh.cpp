@@ -381,7 +381,8 @@ bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges)
 	bedge_cnt = bg_trimesh_solid2(vcnt, fcnt, v, f, NULL);
     }
 
-    return bedge_cnt;
+    /* returns true when not solid */
+    return (bedge_cnt > 0) ? 1 : 0;
 }
 
 int

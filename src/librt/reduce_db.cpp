@@ -94,8 +94,6 @@ remove_dead_references_leaf_func(db_i *db, rt_comb_internal *comb, tree *tree,
 static void
 remove_dead_references(db_i &db)
 {
-    RT_CK_DBI(&db);
-
     AutoPtr<directory *> comb_dirs;
     std::size_t num_combs = db_ls(&db, DB_LS_COMB, NULL, &comb_dirs.ptr);
 

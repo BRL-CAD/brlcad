@@ -59,7 +59,7 @@ namespace p2t {
 	    /**
 	     * Triangulate
 	     */
-	    void Triangulate(SweepContext& tcx, bool finalize = true, int num_points = -1);
+	    void Triangulate(SweepContext& tcx, bool finalize = true, int num_points = -1, long maxtime = POLY2TRI_MAXTIME);
 
 	    /**
 	     * Destructor - clean up memory
@@ -255,6 +255,7 @@ namespace p2t {
 
 	    std::chrono::time_point<std::chrono::steady_clock> tri_start_time;
 	    std::chrono::time_point<std::chrono::steady_clock> curr_time;
+	    long timeout;
     };
 
 }

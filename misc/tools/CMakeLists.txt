@@ -5,7 +5,9 @@ function(SetTargetFolder targetname folder)
 endfunction(SetTargetFolder)
 
 # Convenience bundling of external third party build tools
-add_subdirectory(ext)
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/ext)
+  add_subdirectory(ext)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/ext)
 
 # The following are build or utility tools written by BRL-CAD developers
 # specifically for use with our build and maintenance processes

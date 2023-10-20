@@ -40,6 +40,7 @@ ged_view2model_core_lu(struct ged *gedp, int argc, const char *argv[])
     point_t model_pt;
     double scan[3];
     static const char *usage = "x y z";
+    double b2lval = (gedp->dbip) ? gedp->dbip->dbi_base2local : 1.0;
 
     GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
@@ -58,7 +59,7 @@ ged_view2model_core_lu(struct ged *gedp, int argc, const char *argv[])
     /* convert from double to fastf_t */
     VMOVE(view_pt, scan);
 
-    sf = 1.0 / (gedp->ged_gvp->gv_scale * gedp->dbip->dbi_base2local);
+    sf = 1.0 / (gedp->ged_gvp->gv_scale * b2lval);
     VSCALE(view_pt, view_pt, sf);
     MAT4X3PNT(model_pt, gedp->ged_gvp->gv_view2model, view_pt);
     VSCALE(model_pt, model_pt, gedp->dbip->dbi_base2local);

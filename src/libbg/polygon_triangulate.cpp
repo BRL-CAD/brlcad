@@ -62,6 +62,7 @@
 #include "bn/rand.h"
 #include "bv/plot3.h"
 #include "bg/polygon.h"
+#include "bg/plane.h"
 
 extern int polyline_2d_plot3(const char *fname, std::vector<std::pair<int64_t, int64_t>> &xy, fastf_t scale, struct bu_color *c);
 
@@ -830,7 +831,7 @@ bg_poly2tri(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 
 
 extern "C" int
-bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 			      const int *poly, const size_t poly_pnts,
 			      const int **holes_array, const size_t *holes_npts, const size_t nholes,
 			      const int *steiner, const size_t steiner_npts,
@@ -924,7 +925,7 @@ bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, 
 }
 
 extern "C" int
-bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+bg_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *steiner, const size_t steiner_pnts,
 	const point2d_t *pts, const size_t npts, triangulation_t type)
 {
@@ -938,7 +939,7 @@ bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *nu
 	verts_ind[i] = (int)i;
     }
 
-    ret = bg_nested_polygon_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, steiner, steiner_pnts, pts, npts, type);
+    ret = bg_nested_poly_triangulate(faces, num_faces, out_pts, num_outpts, verts_ind, npts, NULL, NULL, 0, steiner, steiner_pnts, pts, npts, type);
 
     bu_free(verts_ind, "vert indices");
     return ret;
@@ -967,7 +968,82 @@ bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const poin
     fclose(plot_file);
 }
 
+extern "C" int
+bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_outpts,
+	struct bg_polygon *p, triangulation_t type)
+{
+    if (!faces || !num_faces || !out_pts || !num_outpts || !p)
+	return -1;
 
+    // Fit the outer contour to get a 2D plane (bg_polygon is in principle a 3D data structure)
+    point_t pcenter;
+    vect_t  pnorm;
+    plane_t pl;
+    if (bg_fit_plane(&pcenter, &pnorm, p->contour[0].num_points, p->contour[0].point)) {
+	return -1;
+    }
+    bg_plane_pt_nrml(&pl, pcenter, pnorm);
+
+    // Count all points
+    int pnt_cnt = 0;
+    for (size_t i = 0; i < p->num_contours; ++i) {
+	pnt_cnt += p->contour[i].num_points;
+    }
+
+    // Translate the bg_polygon into bg_nested_poly_triangulate inputs
+    point2d_t *pnts_2d = (point2d_t *)bu_calloc(pnt_cnt, sizeof(point2d_t), "projected points");
+    int *ocontour = NULL;
+    int ocontour_cnt = 0;
+    int **holes_array = (int **)bu_calloc(p->num_contours - 1, sizeof(int *), "holes");
+    size_t *holes_npts = (size_t *)bu_calloc(p->num_contours - 1, sizeof(size_t), "holes_cnt");
+    int curr_pnt = 0;
+    for (size_t i = 0; i < p->num_contours; ++i) {
+	int *cpnts = (int *)bu_calloc(p->contour[i].num_points, sizeof(int), "point indices");
+	if (i > 0) {
+	    holes_array[i-1] = cpnts;
+	    holes_npts[i-1] = p->contour[i].num_points;
+	} else {
+	    ocontour = cpnts;
+	    ocontour_cnt = p->contour[i].num_points;
+	}
+	for (size_t j = 0; j < p->contour[i].num_points; ++j) {
+	    vect2d_t p2d;
+	    bg_plane_closest_pt(&p2d[0], &p2d[1], pl, p->contour[i].point[j]);
+	    V2MOVE(pnts_2d[curr_pnt], p2d);
+	    cpnts[j] = curr_pnt;
+	    curr_pnt++;
+	}
+    }
+
+    int *tri_faces = NULL;
+    int tri_num_faces = 0;
+    point2d_t *tri_out_pts = NULL;
+    int tri_num_outpts = 0;
+    int ret = bg_nested_poly_triangulate(&tri_faces, &tri_num_faces, &tri_out_pts, &tri_num_outpts, ocontour, ocontour_cnt, (const int **)holes_array, (const size_t *)holes_npts, p->num_contours - 1, NULL, 0, pnts_2d, pnt_cnt, type); 
+
+
+    // Translate 2D plane points into 3D points
+    point_t *pnts_3d = (point_t *)bu_calloc(pnt_cnt, sizeof(point_t), "3D points");
+    for (int i = 0; i < pnt_cnt; i++) {
+	bg_plane_pt_at(&pnts_3d[i], pl, pnts_2d[i][0], pnts_2d[i][1]);
+    }
+
+    // Assign outputs
+    *faces = tri_faces;
+    *num_faces = tri_num_faces;
+    *out_pts = pnts_3d;
+    *num_outpts = tri_num_outpts;
+
+    // Clean up 2D and translation arrays
+    bu_free(ocontour, "free ocontour");
+    for (size_t i = 0; i < p->num_contours - 1; i++) {
+	bu_free(holes_array[i], "free holes array");
+    }
+    bu_free(holes_npts, "hole cnts");
+    bu_free(pnts_2d, "2d pnts");
+
+    return ret;
+}
 
 // Local Variables:
 // tab-width: 8

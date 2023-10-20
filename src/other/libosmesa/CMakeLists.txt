@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.18)
 project(OSMESA)
 
 include(CheckCXXCompilerFlag)
-check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
+check_cxx_compiler_flag(-O2 O2_COMPILER_FLAG)
 
 find_package(Threads REQUIRED)
 if (CMAKE_USE_PTHREADS_INIT)
@@ -23,7 +23,7 @@ endif (HAVE_M_LIBRARY)
 # prefixing
 add_definitions(-DUSE_MGL_NAMESPACE)
 
-# The primarly libosmesa library
+# The primary libosmesa library
 add_subdirectory(src)
 
 # For testing purposes, the build defines a number

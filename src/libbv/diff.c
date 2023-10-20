@@ -331,6 +331,7 @@ _bv_grid_state_differ(struct bv_grid_state *v1, struct bv_grid_state *v2)
 
     BV_NDIFF(1,rc);
     BV_NDIFF(1,draw);
+    BV_NDIFF(1,adaptive);
     BV_NDIFF(1,snap);
     BV_VDIFF(1,anchor);
     BV_NDIFF(1,res_h);
@@ -338,6 +339,27 @@ _bv_grid_state_differ(struct bv_grid_state *v1, struct bv_grid_state *v2)
     BV_NDIFF(1,res_major_h);
     BV_NDIFF(1,res_major_v);
     BV_IVDIFF(1,color);
+    return 0;
+}
+
+static int
+_bv_params_state_differ(struct bv_params_state *v1, struct bv_params_state *v2)
+{
+    /* First, do sanity checks */
+    if (!v1 && !v2)
+	return -1;
+    if ((v1 && !v2) || (!v1 && v2))
+	return -1;
+
+    BV_NDIFF(1,draw);
+    BV_NDIFF(1,draw_size);
+    BV_NDIFF(1,draw_center);
+    BV_NDIFF(1,draw_az);
+    BV_NDIFF(1,draw_el);
+    BV_NDIFF(1,draw_tw);
+    BV_NDIFF(1,draw_fps);
+    BV_IVDIFF(1,color);
+    BV_NDIFF(1,font_size);
     return 0;
 }
 
@@ -408,7 +430,7 @@ _bv_settings_differ(struct bview_settings *v1, struct bview_settings *v2)
     BV_CDIFF(1, _bv_axes_differ, gv_view_axes);
     BV_CDIFF(1, _bv_grid_state_differ, gv_grid);
     BV_CDIFF(1, _bv_other_state_differ, gv_center_dot);
-    BV_CDIFF(1, _bv_other_state_differ, gv_view_params);
+    BV_CDIFF(1, _bv_params_state_differ, gv_view_params);
     BV_CDIFF(1, _bv_other_state_differ, gv_view_scale);
     BV_CDIFF(1, _bv_interactive_rect_state_differ, gv_rect);
 
@@ -467,7 +489,7 @@ bv_differ(struct bview *v1, struct bview *v2)
     BV_NDIFF(1,gv_rscale);
     BV_NDIFF(1,gv_sscale);
 
-    BV_NDIFF(1,gv_data_vZ);
+    BV_NDIFF(1, gv_tcl.gv_data_vZ);
 
     BV_CDIFF(1, _bv_data_arrow_state_differ, gv_tcl.gv_data_arrows);
     BV_CDIFF(1, _bv_data_axes_state_differ, gv_tcl.gv_data_axes);

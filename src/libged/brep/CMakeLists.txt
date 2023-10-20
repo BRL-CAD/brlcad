@@ -1,6 +1,10 @@
 
 set(DPLOT_READER dplot)
 
+find_package(PERPLEX)
+find_package(LEMON)
+find_package(RE2C)
+
 PERPLEX_TARGET(
   ${DPLOT_READER}_scanner
   ${DPLOT_READER}_scanner.perplex
@@ -27,15 +31,17 @@ include_directories(
 set(BREP_SRCS
   ${PERPLEX_${DPLOT_READER}_scanner_SRC}
   ${LEMON_${DPLOT_READER}_parser_SRC}
-  dplot.c
   brep.cpp
   conversion.cpp
   csg.cpp
+  dplot.c
+  geometry.cpp
   info.cpp
   intersect.cpp
   pick.cpp
   plot.cpp
   tikz.cpp
+  topology.cpp
   valid.cpp
   )
 

@@ -490,6 +490,9 @@ make_1d_mipmap(const struct gl_texture_format *format, GLint border,
 	       GLint srcWidth, const GLubyte *srcPtr,
 	       GLint dstWidth, GLubyte *dstPtr)
 {
+    if (!srcPtr || !dstPtr)
+	return;
+
     const GLint bpt = format->TexelBytes;
     const GLubyte *src;
     GLubyte *dst;
@@ -504,9 +507,9 @@ make_1d_mipmap(const struct gl_texture_format *format, GLint border,
 
     if (border) {
 	/* copy left-most pixel from source */
-	MEMCPY(dstPtr, srcPtr, bpt);
+	memcpy(dstPtr, srcPtr, bpt);
 	/* copy right-most pixel from source */
-	MEMCPY(dstPtr + (dstWidth - 1) * bpt,
+	memcpy(dstPtr + (dstWidth - 1) * bpt,
 	       srcPtr + (srcWidth - 1) * bpt,
 	       bpt);
     }
@@ -521,6 +524,9 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
 	       GLint srcWidth, GLint srcHeight, const GLubyte *srcPtr,
 	       GLint dstWidth, GLint dstHeight, GLubyte *dstPtr)
 {
+    if (!srcPtr || !dstPtr)
+	return;
+
     const GLint bpt = format->TexelBytes;
     const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
     const GLint dstWidthNB = dstWidth - 2 * border;
@@ -551,15 +557,15 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
     if (border > 0) {
 	/* fill in dest border */
 	/* lower-left border pixel */
-	MEMCPY(dstPtr, srcPtr, bpt);
+	memcpy(dstPtr, srcPtr, bpt);
 	/* lower-right border pixel */
-	MEMCPY(dstPtr + (dstWidth - 1) * bpt,
+	memcpy(dstPtr + (dstWidth - 1) * bpt,
 	       srcPtr + (srcWidth - 1) * bpt, bpt);
 	/* upper-left border pixel */
-	MEMCPY(dstPtr + dstWidth * (dstHeight - 1) * bpt,
+	memcpy(dstPtr + dstWidth * (dstHeight - 1) * bpt,
 	       srcPtr + srcWidth * (srcHeight - 1) * bpt, bpt);
 	/* upper-right border pixel */
-	MEMCPY(dstPtr + (dstWidth * dstHeight - 1) * bpt,
+	memcpy(dstPtr + (dstWidth * dstHeight - 1) * bpt,
 	       srcPtr + (srcWidth * srcHeight - 1) * bpt, bpt);
 	/* lower border */
 	do_row(format, srcWidthNB,
@@ -576,9 +582,9 @@ make_2d_mipmap(const struct gl_texture_format *format, GLint border,
 	if (srcHeight == dstHeight) {
 	    /* copy border pixel from src to dst */
 	    for (row = 1; row < srcHeight; row++) {
-		MEMCPY(dstPtr + dstWidth * row * bpt,
+		memcpy(dstPtr + dstWidth * row * bpt,
 		       srcPtr + srcWidth * row * bpt, bpt);
-		MEMCPY(dstPtr + (dstWidth * row + dstWidth - 1) * bpt,
+		memcpy(dstPtr + (dstWidth * row + dstWidth - 1) * bpt,
 		       srcPtr + (srcWidth * row + srcWidth - 1) * bpt, bpt);
 	    }
 	} else {
@@ -605,6 +611,9 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
 	       GLint dstWidth, GLint dstHeight, GLint dstDepth,
 	       GLubyte *dstPtr)
 {
+    if (!srcPtr || !dstPtr)
+	return;
+
     const GLint bpt = format->TexelBytes;
     const GLint srcWidthNB = srcWidth - 2 * border;  /* sizes w/out border */
     const GLint srcDepthNB = srcDepth - 2 * border;
@@ -620,12 +629,12 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
     (void) srcDepthNB; /* silence warnings */
 
     /* Need two temporary row buffers */
-    tmpRowA = _mesa_malloc(srcWidth * bpt);
+    tmpRowA = malloc(srcWidth * bpt);
     if (!tmpRowA)
 	return;
-    tmpRowB = _mesa_malloc(srcWidth * bpt);
+    tmpRowB = malloc(srcWidth * bpt);
     if (!tmpRowB) {
-	_mesa_free(tmpRowA);
+	free(tmpRowA);
 	return;
     }
 
@@ -692,8 +701,8 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
 	}
     }
 
-    _mesa_free(tmpRowA);
-    _mesa_free(tmpRowB);
+    free(tmpRowA);
+    free(tmpRowB);
 
     /* Luckily we can leverage the make_2d_mipmap() function here! */
     if (border > 0) {
@@ -715,28 +724,28 @@ make_3d_mipmap(const struct gl_texture_format *format, GLint border,
 		/* do border along [img][row=0][col=0] */
 		src = srcPtr + (img + 1) * bytesPerSrcImage;
 		dst = dstPtr + (img + 1) * bytesPerDstImage;
-		MEMCPY(dst, src, bpt);
+		memcpy(dst, src, bpt);
 
 		/* do border along [img][row=dstHeight-1][col=0] */
 		src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
 		      + (srcHeight - 1) * bytesPerSrcRow;
 		dst = dstPtr + (img + 1) * bytesPerDstImage
 		      + (dstHeight - 1) * bytesPerDstRow;
-		MEMCPY(dst, src, bpt);
+		memcpy(dst, src, bpt);
 
 		/* do border along [img][row=0][col=dstWidth-1] */
 		src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
 		      + (srcWidth - 1) * bpt;
 		dst = dstPtr + (img + 1) * bytesPerDstImage
 		      + (dstWidth - 1) * bpt;
-		MEMCPY(dst, src, bpt);
+		memcpy(dst, src, bpt);
 
 		/* do border along [img][row=dstHeight-1][col=dstWidth-1] */
 		src = srcPtr + (img * 2 + 1) * bytesPerSrcImage
 		      + (bytesPerSrcImage - bpt);
 		dst = dstPtr + (img + 1) * bytesPerDstImage
 		      + (bytesPerDstImage - bpt);
-		MEMCPY(dst, src, bpt);
+		memcpy(dst, src, bpt);
 	    }
 	} else {
 	    /* average border pixels from adjacent src image pairs */
@@ -824,15 +833,15 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	size = _mesa_bytes_per_pixel(srcImage->_BaseFormat, CHAN_TYPE)
 	       * srcImage->Width * srcImage->Height * srcImage->Depth + 20;
 	/* 20 extra bytes, just be safe when calling last FetchTexel */
-	srcData = (GLubyte *) _mesa_malloc(size);
+	srcData = (GLubyte *) malloc(size);
 	if (!srcData) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
 	    return;
 	}
-	dstData = (GLubyte *) _mesa_malloc(size / 2);  /* 1/4 would probably be OK */
+	dstData = (GLubyte *) malloc(size / 2);  /* 1/4 would probably be OK */
 	if (!dstData) {
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "generate mipmaps");
-	    _mesa_free((void *) srcData);
+	    free((void *) srcData);
 	    return;
 	}
 
@@ -889,21 +898,25 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	    dstDepth == srcDepth) {
 	    /* all done */
 	    if (srcData)
-		_mesa_free((void *)srcData);
+		free((void *)srcData);
 	    if (dstData)
-		_mesa_free(dstData);
+		free(dstData);
 	    return;
 	}
 
 	/* get dest gl_texture_image */
 	dstImage = _mesa_get_tex_image(ctx, texObj, target, level + 1);
 	if (!dstImage) {
+	    if (srcData)
+		free((void *)srcData);
+	    if (dstData)
+		free(dstData);
 	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
 	    return;
 	}
 
 	if (dstImage->ImageOffsets)
-	    _mesa_free(dstImage->ImageOffsets);
+	    free(dstImage->ImageOffsets);
 
 	/* Free old image data */
 	if (dstImage->Data)
@@ -938,9 +951,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	    if (!dstImage->Data) {
 		_mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
 		if (srcData)
-		    _mesa_free((void *)srcData);
+		    free((void *)srcData);
 		if (dstData)
-		    _mesa_free(dstData);
+		    free(dstData);
 		return;
 	    }
 	    /* srcData and dstData are already set */
@@ -955,9 +968,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	    /* If we're assigning these below, free up anything which has
 	     * been allocated first so we don't leak it */
 	    if (srcData)
-		_mesa_free((void *)srcData);
+		free((void *)srcData);
 	    if (dstData)
-		_mesa_free(dstData);
+		free(dstData);
 
 	    if (!dstImage->Data) {
 		_mesa_error(ctx, GL_OUT_OF_MEMORY, "generating mipmaps");
@@ -999,9 +1012,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
 	    default:
 		_mesa_problem(ctx, "bad dimensions in _mesa_generate_mipmaps");
 		if (srcData)
-		    _mesa_free((void *)srcData);
+		    free((void *)srcData);
 		if (dstData)
-		    _mesa_free(dstData);
+		    free(dstData);
 		return;
 	}
 
@@ -1030,9 +1043,9 @@ _mesa_generate_mipmap(GLcontext *ctx, GLenum target,
     } /* loop over mipmap levels */
 
     if (srcData)
-	_mesa_free((void *)srcData);
+	free((void *)srcData);
     if (dstData)
-	_mesa_free(dstData);
+	free(dstData);
 }
 
 

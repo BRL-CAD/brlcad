@@ -1,75 +1,84 @@
-#                 F I N D R E G E X . C M A K E
-# BRL-CAD
+#.rst:
+# FindREGEX
+# --------
 #
-# Copyright (c) 2011-2023 United States Government as represented by
-# the U.S. Army Research Laboratory.
+# Find the native REGEX includes and library.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
+# IMPORTED Targets
+# ^^^^^^^^^^^^^^^^
 #
-# 1. Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
+# This module defines :prop_tgt:`IMPORTED` target ``REGEX::REGEX``, if
+# REGEX has been found.
 #
-# 2. Redistributions in binary form must reproduce the above
-# copyright notice, this list of conditions and the following
-# disclaimer in the documentation and/or other materials provided
-# with the distribution.
+# Result Variables
+# ^^^^^^^^^^^^^^^^
 #
-# 3. The name of the author may not be used to endorse or promote
-# products derived from this software without specific prior written
-# permission.
+# This module defines the following variables:
 #
-# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
-# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# ::
 #
-###
-# - Find regex
-# Find the native REGEX includes and library
+#   REGEX_INCLUDE_DIRS   - where to find regex.h, etc.
+#   REGEX_LIBRARIES      - List of libraries when using regex.
+#   REGEX_FOUND          - True if regex found.
 #
-#  REGEX_INCLUDE_DIRS   - where to find regex.h, etc.
-#  REGEX_LIBRARIES      - List of libraries when using regex.
-#  REGEX_FOUND          - True if regex found.
 #
+# Hints
+# ^^^^^
+#
+# A user may set ``REGEX_ROOT`` to a regex installation root to tell this
+# module where to look.
+
 #=============================================================================
+# Copyright 2001-2011 Kitware, Inc.
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+# (To distribute this file outside of CMake, substitute the full
+#  License text for the above reference.)
 
-# Because at least one specific framework (Ruby) on OSX has been observed
-# to include its own regex.h copy, check frameworks last - /usr/include
-# is preferred to a package-specific copy for a generic regex search
-set(CMAKE_FIND_FRAMEWORK LAST)
-find_path(REGEX_INCLUDE_DIRS regex.h)
+set(_REGEX_SEARCHES)
 
-set(REGEX_NAMES c regex compat)
-foreach(rname ${REGEX_NAMES})
-  if(NOT REGEX_LIBRARY)
-    include(CheckLibraryExists)
-    check_library_exists(${rname} regcomp "" HAVE_REGEX_LIB)
-    if(HAVE_REGEX_LIB)
-      find_library(REGEX_LIBRARIES NAMES ${rname})
-    endif(HAVE_REGEX_LIB)
-  endif(NOT REGEX_LIBRARY)
-endforeach(rname ${REGEX_NAMES})
+# Search REGEX_ROOT first if it is set.
+if(REGEX_ROOT)
+  set(_REGEX_SEARCH_ROOT PATHS ${REGEX_ROOT} NO_DEFAULT_PATH)
+  list(APPEND _REGEX_SEARCHES _REGEX_SEARCH_ROOT)
+endif()
+
+# Normal search.
+set(_REGEX_SEARCH_NORMAL
+	PATHS "[HKEY_LOCAL_MACHINE\\SOFTWARE\\GnuWin32\\Regex;InstallPath]"
+        "$ENV{PROGRAMFILES}/regex"
+  )
+list(APPEND _REGEX_SEARCHES _REGEX_SEARCH_NORMAL)
+
+set(REGEX_NAMES regex_brl regex_brld regex regexd regexd1)
+
+# Try each search configuration.
+foreach(search ${_REGEX_SEARCHES})
+  find_path(REGEX_INCLUDE_DIR NAMES regex.h        ${${search}} PATH_SUFFIXES include)
+  find_library(REGEX_LIBRARY  NAMES ${REGEX_NAMES} ${${search}} PATH_SUFFIXES lib)
+endforeach()
 
 mark_as_advanced(REGEX_LIBRARY REGEX_INCLUDE_DIR)
 
 # handle the QUIETLY and REQUIRED arguments and set REGEX_FOUND to TRUE if
 # all listed variables are TRUE
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(REGEX DEFAULT_MSG REGEX_INCLUDE_DIRS REGEX_LIBRARIES)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(REGEX REQUIRED_VARS REGEX_LIBRARY REGEX_INCLUDE_DIR)
 
+if(REGEX_FOUND)
+    set(REGEX_INCLUDE_DIRS ${REGEX_INCLUDE_DIR})
+    set(REGEX_LIBRARIES ${REGEX_LIBRARY})
 
-# Local Variables:
-# tab-width: 8
-# mode: cmake
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=2 tabstop=8
+    if(NOT TARGET REGEX::REGEX)
+      add_library(REGEX::REGEX UNKNOWN IMPORTED)
+      set_target_properties(REGEX::REGEX PROPERTIES
+        IMPORTED_LOCATION "${REGEX_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${REGEX_INCLUDE_DIRS}")
+    endif()
+endif()

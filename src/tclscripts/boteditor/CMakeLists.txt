@@ -3,10 +3,15 @@ set(boteditor_TCLSCRIPTS
   botPropertyBox.tcl
   botTools.tcl
   )
-BRLCAD_ADDDATA(boteditor_TCLSCRIPTS tclscripts/boteditor)
-tclIndex_BUILD(tclscripts/boteditor)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(boteditor_TCLSCRIPTS tclscripts/boteditor)
+  tclIndex_BUILD(tclscripts/boteditor)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${boteditor_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

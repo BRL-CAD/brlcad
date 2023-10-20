@@ -99,7 +99,7 @@ pop_spawn (struct population *p)
 
     char shape[256];
 
-    p->db_p = db_create("gen000", 5);
+    p->db_p = db_create("gen000", BRLCAD_DB_FORMAT_LATEST);
     struct rt_wdb *wdbp = wdb_dbopen(p->db_p, RT_WDB_TYPE_DB_DISK);
 
     for (i = 0; i < p->size; i++) {

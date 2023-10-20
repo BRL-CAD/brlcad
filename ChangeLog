@@ -1,401 +1,1539 @@
-commit 9ccc64779361b5a87c63f129346cd20c72bfb7f5
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Feb 27 12:32:58 2023 -0500
-
-    correct NEWS release date
-
-commit 5c481242c038cc0d9c72e3be60fc996c05a7764f
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Feb 27 12:25:04 2023 -0500
-
-    set misc version numbers
-
-commit 6d317d3bfd57c6c05dddc7a762da8503dac94ebc
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Tue Feb 14 14:23:58 2023 -0500
-
-    add remaining NEWS lines for cherry-picked commits
-
-commit 1b804ae999bb6a0742d99195018f8c225697fc37
+commit 834994a075da397c581499ce41662d2f9d878ef2
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Feb 10 09:12:10 2023 -0500
+Date:   Wed Jul 26 19:45:04 2023 -0400
 
-    Add a few of the needed NEWS items
+    Define static assert for Ghost BSD
     
-    This just adds a few - there are more (man page viewer scrollbar, reair,
-    nirt items, etc.) in the previous thirty commits cherry-picked into
-    RELEASE that still need to be added.
+    Similar to https://github.com/apache/mynewt-core/issues/2040#issuecomment-554571476
 
-commit ea9330eb91c0f9c29378dd6b3461956f7876e24d
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Thu Feb 2 10:30:08 2023 -0500
-
-    correct an off-by-one error
-    
-    since our loop starts at i=1, we are not able to request a top matrix.
-    ie when requesting depth=1, the loop breaks on the first iteration -
-    always incorrectly returning the initialized identity matrix
-    
-    (cherry picked from commit fef36ef63d4cacf066f6d580747643dec259be0e)
-
-commit 6b138de6b0dd53ca8a7ecf7d788ec0608e45e3f7
+commit 703c261a6c428deefd68401ce92e2bb728915424
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Jan 24 20:40:32 2023 -0500
+Date:   Wed Jul 26 16:32:52 2023 -0400
 
-    Initialize a couple of spsr variables
-    
-    (cherry picked from commit e236ad15d15423a9a38054e13bfffaf5e63c0a56)
+    More advanced variables
 
-commit 3a6eb9b362755dd5e20126af72213451bb429161
+commit 028ba3e64c724ea2533b3846145d5990b775a7fd
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Jan 24 20:39:11 2023 -0500
+Date:   Wed Jul 26 16:10:36 2023 -0400
 
-    Initialize bestArea in RTree.h
-    
-    (cherry picked from commit 832d3dd11f6d4526a62ba7b04c412beccb87d153)
+    Mark various variables as advanced for CMake
 
-commit 8025339f1f31c8c44567ae9b50ad7b8d63012508
+commit f9079cf1c46382d82932c5a12236b9638edcc644
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Jan 24 17:26:51 2023 -0500
+Date:   Wed Jul 26 14:35:25 2023 -0400
 
-    Opening wdbp on the wrong dbip pointer for read - stashing data on the inmem, not the source disk dbip
+    Remove odd_pathnames from distcheck-full set
     
-    (cherry picked from commit f609047ab4561bf365b71c53f7bc2facd3df7b32)
+    Too problematic with 3rd party builds - we'll just keep it as a
+    stand-alone test when conditions are right to run it.  We may be able to
+    make it standard again if we fully separate src/other/ext into its own
+    repository and make it a separate build, but that's down the road.
 
-commit b279259a9b3d528bf8a0f0930ba6be4cef2eb8ca
+commit 40f38f89ce4ae6d84378ba70b99ee66cf00f1a79
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Tue Dec 13 19:56:25 2022 -0500
+Date:   Wed Jul 26 13:03:33 2023 -0400
 
-    Remove duplicate call to ged_init
-    
-    (cherry picked from commit c24595731fb063ddbb2a8db6bcbeea4fae43ca00)
+    Ah, apparently 1.6.40 png has this covered already...
 
-commit b4f2c871acb7358c00409e065b82a09d2940f172
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Jan 23 12:54:08 2023 -0500
-
-    add support to nirt non-drawn objects
-    
-    when in mged, pass supplied trailing object names to nirt and ignore
-    drawn objects.
-    Update 'help' usage string
-    
-    (cherry picked from commit 7145df050954ab983326be68a7b8169705375c7e)
-
-commit 18cd3bc737f79dabcade5b6d095d0170127b3f43
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Thu Jan 19 09:52:31 2023 -0500
-
-    default to terse listing for high-data primitives
-    
-    output minimal description for explicit shapes (bot, brep, datum,
-    nmg, pnts, sketch) rather than listing all data by default.
-    Add -v (verbose) flag to l command so all data can still be printed.
-    
-    (cherry picked from commit 8f278a9a728de18e2ec4776dcd32bb25e516d9df)
-
-commit d5e2fee85f288b8d234197622d18367f6d5bd757
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Jan 18 15:39:23 2023 -0500
-
-    static analyzer caught unused assignment here
-    
-    (cherry picked from commit 595a5542834c84dfeee9b22c81b11e57ca6347ca)
-
-commit 11dd09c47f72cfc1a87a3cb48e1c55ac805da5b0
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Jan 18 10:03:39 2023 -0500
-
-    don't cmp specific outputs available
-    
-    regex replace list of available formats with 'LIST' as long as 'default'
-    is availble. This will minimize false failures in the future should formats
-    be added / removed.
-    
-    (cherry picked from commit ccb3aa1b53cda6603b91d75cc2c3a83a44fca948)
-
-commit c8d9812f51554d62ebd19f6ed85b86b7e87dcc4d
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Tue Jan 17 13:17:45 2023 -0500
-
-    attr is aircode, not air
-    
-    (cherry picked from commit 9395cc24a024137ee68d6e559059147bc70337ee)
-
-commit c46af05e774399b62adf61b9dd97ad0ad3d54b01
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Fri Jan 13 12:17:24 2023 -0500
-
-    fix man page mouse scrolling on Windows
-    
-    (cherry picked from commit 061a0944c446d33b58262f2b988daacb3247723f)
-
-commit c6fca5935321a90163e12b0d34691c5b386b6dc6
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Thu Jan 12 09:45:43 2023 -0500
-
-    read from stderr before stdout
-    
-    nirt can write to stderr when loading in the model and obj. If this
-    happens stdin and stdout can get stuck while waiting to read.
-    
-    (cherry picked from commit 56e6887171a71ce369a282dce6819e4fe491ad31)
-
-commit 04bf933dc1fa94ed5dc010ced532c2b22165f40c
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Fri Jan 6 13:23:37 2023 -0500
-
-    use strncmp instead of strcmp
-    
-    check using just the string length to not worry with platform specific
-    terminations
-    
-    (cherry picked from commit 9003032cee94f38032bc229fd75474aa85b4385f)
-
-commit 8382a9b4cca409cc0f84e75db11e92653ddc2375
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Fri Jan 6 11:03:36 2023 -0500
-
-    creating a new file sets the extension by default
-    
-    add the -defaultextension option to tK_getSaveFile so when creating a
-    file from the MGED gui (File>New) the creation will use the extension
-    from the type dropdown if not explicitly specified
-    
-    (cherry picked from commit 81a6065b6fbf1713946cc9aff966fe17f1376e37)
-
-commit 1492b20ef21852d7606a28fe7b7a964aa4f9025b
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Thu Jan 5 15:49:52 2023 -0500
-
-    create 'reair' tcl proc and consolidate code
-    
-    create reair - shorthand to change air attribute for regions.
-    relos, remat, reid and now reair are all similar procedures. Consolidate
-    the four into one file and create a namespace for shared code blocks to
-    eliminate redundant code across multiple files.
-    
-    (cherry picked from commit ecc3d862606792f446f41c0a8cfe0d1424d40486)
-
-commit c489cb507dae065ac2f12349bbe0ab853f26f61c
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Jan 4 12:32:29 2023 -0500
-
-    add error checking when searching int attributes
-    
-    when using atol to convert a string, there is no guarantee
-    that there is an int at all - all strings without an int return 0. So if
-    searching for an attribute with value = 0 there are potentially
-    incorrect results.
-    Additionally, add a check to ensure the converted value fits inside the
-    long container.
-    
-    (cherry picked from commit 1ddec343404cdf757051b77bab77b710077a3521)
-
-commit b6dba0280a62e4784d58cd8d9ad42f78f6a9a4a3
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Dec 14 17:21:21 2022 -0500
-
-    update default nirt print formatting in mged
-    
-    trim down some of the decimal places, and shift headers to align better
-    with columns
-    
-    (cherry picked from commit 8449ce3209f22a3cfc8e6ba7fb6e96c5b6fd0e67)
-
-commit a3b10e1e25d12a6bdc2ef877629642368e64ca1f
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Dec 14 16:14:54 2022 -0500
-
-    reorder nirt ray firing order when in libged
-    
-    when run with graphics, restructure to fire nirt rays in order of
-    console printing ray -> partition report ray -> overlap report ray
-    instead of having the console printing ray last. Doing it this way
-    allows the formatting string to be changed from most to least
-    restrictive. Allowing for more user options (-f and -A) to be
-    used.
-    
-    (cherry picked from commit b8fc46cb9673aeddb4860d3dc85e1ee03e0a779c)
-
-commit 438db3418771e5463e3dc6012cce0a7d95ad6e72
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Dec 14 11:57:52 2022 -0500
-
-    dont try to run mged if it isnt in the path
-    
-    (cherry picked from commit 8a0e332ece5b9b37ddd0b0c6edc1afc8fcc38465)
-
-commit b195c2ba61796cc561f82ee4978a5da702a17357
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Tue Dec 13 10:38:16 2022 -0500
-
-    need to check for string equal instead of strstr
-    
-    an object with -e in the name (i.e. solid-extra.s) invoked just right will incorrectly
-    fall in strstr and sends the next drawn object name to nirt as a command
-    
-    (cherry picked from commit 15ce11e843f09c1b6e5cb2fd466a956d3017370c)
-
-commit c02279ef1acb3fe42ace2c46633cf583613a81d8
+commit b6f71f4bec72d8d0781705056eab65dd7117b999
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Dec 5 14:06:00 2022 -0500
+Date:   Wed Jul 26 12:55:52 2023 -0400
 
-    Doh - would help to use the right option.
+    Add a way to suppress the PNG use of 'd' suffix
     
-    (cherry picked from commit f27a4a6d195e3aaa5cf91560438d7baf1370bad5)
+    Grr.  If build type gets set to Debug, instead of being left empty,
+    Linux is also throwing in the 'd' suffix on debug build libs from png.
+    Add a way to specify at configure time not to do that - it really messes
+    with our build logic.  Should probably try to upstream this or something
+    like it.
 
-commit 57025cb1b3ead4d91909b69bb52e591fcea3b6a0
+commit c5e99fcc9ba931e109a1cbbbcac4a102715855fb
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Mon Dec 5 13:51:57 2022 -0500
+Date:   Wed Jul 26 11:32:34 2023 -0400
 
-    For this to work the way it should, we need to use --restart
+    Fix executable permission on sh files
     
-    (cherry picked from commit 6a17bdce0427efd1de1900e33d12277d04d807e9)
+    Looks like we lost executable settings in the 2023-02-02 year updating
+    commit.  Was manifesting in a distcheck failure when the check target's
+    invocation of benchmark clobber wasn't succeeding due to benchmark not
+    being executable, leaving behind files.  That calling of the benchmark
+    script didn't prefix with an explicit ${SH_EXEC} call, and thus relied
+    on benchmark being directly executable on its own.
 
-commit 88190f4cd6fea6ccc746cdc4f502a18715f2662c
+commit 8da7ea79d1740fba20d0f77d401247ded98cbe71
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Fri Dec 2 15:55:20 2022 -0500
+Date:   Wed Jul 26 11:10:22 2023 -0400
 
-    Don't report back points where we couldn't get a non-zero normal.
-    
-    (cherry picked from commit 3f3a0c536f99650f8f72802c81e268f15f599001)
+    List perplex outputs for distclean
 
-commit b58c1e6335d7aff0ecec456c769345488d38efaa
+commit 8d7db5bab5fbc0087e55ed32e279ffb32e871890
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Nov 30 13:36:11 2022 -0500
+Date:   Wed Jul 26 10:04:46 2023 -0400
 
-    install(CODE) needs $ENV{DESTDIR} for CPack RPM
-    
-    Thanks to Brad King for spotting the missing element - we need to mimic
-    the cmake_install.cmake scripts and prepend with DESTDIR for RPM:
-    https://gitlab.kitware.com/cmake/cmake/-/issues/24212#note_1283057
-    
-    TGZ and TBZ2 don't use DESTDIR, which is why they work without it.
-    Rather an unintuitive failure mode, but I suppose the use case is also
-    rather obscure.
-    
-    (cherry picked from commit 76aa62f026dfb99596a93010893e498ce82be105)
+    Update log with commits since 2023-02-27
 
-commit 43002bd3a2263b7d98155753e61d86369ede5dc6
+commit 3ed4f9a66ef72ba32fa9a696b3a66afcaf47af88
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Nov 30 13:29:52 2022 -0500
+Date:   Wed Jul 26 10:03:37 2023 -0400
 
-    Remove debug line
-    
-    (cherry picked from commit a836579d86019c73709ae9fce12649863eb9e3e9)
+    HACKING step 06: Update the version numbers
 
-commit c8be8b45e7c35e934dca9ad801be83a5670d8f03
+commit f6a4d2c29d55a4352f3c6461850c8a066b93a843
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Nov 30 12:31:47 2022 -0500
+Date:   Wed Jul 26 09:59:18 2023 -0400
 
-    Be a little more aggressive about path replacement
-    
-    Looking at tclConfig.sh and friends, the paths produced by a straight-up
-    replacement of the build directory with the install directory aren't
-    enough in all cases to produce valid results.  For the situations where
-    a Tcl source or build directory are referenced there's not much we can
-    do beyond pointing at the install directory - the original directories
-    won't be available in an install - but in some other cases a more
-    aggressive updating will improve the situation.
-    
-    (cherry picked from commit 5a526aea613cc291f1fdff157d78f12a3ab9af9c)
+    Set the NEWS release date
 
-commit a70f1e1ecd31640461d327fde4d858dd9e0ee8be
+commit eff35d92dbc2fbb3b5389ee81c9570f84d8e8573
 Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
-Date:   Wed Nov 30 12:06:11 2022 -0500
+Date:   Wed Jul 26 09:52:11 2023 -0400
 
-    Replace install(CODE) approach to path correction
+    Move the TODO entries down
     
-    Hit an issue with CPack and RPM package generation.  TGZ and TBZ2
-    versions of this work, but something about the internals of how RPM
-    package building works with CPack results in CMAKE_INSTALL_PREFIX being
-    set incorrectly for install(CODE).  Issue has been filed at
-    https://gitlab.kitware.com/cmake/cmake/-/issues/24212
-    
-    Until either we figure out a way to make this work with some currently
-    unknown setting or upstream makes an adjustment to how CPack+RPM handle
-    this case, fall back on making two copies of the file in question and
-    using the _install version for the installation process.
-    
-    (cherry picked from commit 5ae46bad5b8328acf371e82cc4d401a9bd1158b1)
+    Moving the TODO entries we weren't able to address this release to the
+    queue for later reassessment.
 
-commit 4998e8cc551063c67d9deecc0c47f42e012e4f5a
+commit d1a9f7acd7479d62eeb4f108306909964f3694b8
+Merge: 22d115d677 f7f03baa55
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 09:46:32 2023 -0400
+
+    merge of main f7f03baa55 to RELEASE branch
+
+commit f7f03baa55f03718e62e5ae83ed470c75dcfc985
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 09:45:40 2023 -0400
+
+    Stray 'a' character
+
+commit 767e96ebdddd101e0506b023285d649791623928
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 26 09:37:42 2023 -0400
+
+    Release mode with newer compilers on Linux wasn't seeing localtime_r without specifying POSIX...
+
+commit fda0db542eb9bc2b3c03d60f38bcf3dc99c83ea4
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jul 24 15:31:26 2023 -0400
+
+    Neither branch of the code frees memory, so we don't need to call out not doing it here.
+
+commit 8d5ce782a5da4051a10b8272401fe0dd305cb54f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jul 19 09:50:48 2023 -0400
+
+    Back out survey tool experiment
+    
+    VCS has this if it proves useful, but going to need to think about how
+    to output data in a way that allows for useful queries.  May warrant
+    dumping an SQLite database, but if we go that route we'll need to give
+    some thought to table designs so we can construct useful queries...
+
+commit f901b0a8935d78b23ea58c7a6bf647bf8339214f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 18 16:33:04 2023 -0400
+
+    First introspection into the .g contents
+
+commit b4a379837d345f25069d0773aaffa764f8e374ec
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 18 15:43:41 2023 -0400
+
+    Checkpoint some experiments with a tool to walk through a directory hierarchy, identify .g files, and analyze/compare their contents.
+
+commit 2f405a7271c499da9c1bc3034861701981762474
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 18 14:17:41 2023 -0400
+
+    Add a minimal 'is this a .g file' function, so we can quickly sort through a large pile of files to ID the .g databases based on headers.
+
+commit d76e12bcd05cbd3355ef56ff98a78d4f65700614
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Jul 18 13:45:01 2023 -0400
+
+    Document an MGED crash opening a .tif file that mis-identifies as a v4 .g file
+
+commit ef51671bbd3c680561a13f123cec67277a07d188
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Jul 1 19:06:10 2023 -0400
+
+    Initialize and free memory for static analyzer
+
+commit 27b0b4c402cf478fc878c8e0e2bfa8dcf74dadc4
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Jul 1 17:53:39 2023 -0400
+
+    Wstrict-prototypes change
+
+commit 3631cef6bb3b68a01343d4809c773e0729696e05
+Merge: f5de8feb5a 0b1a95f95a
+Author: Daniel Rossberg <33295041+drossberg@users.noreply.github.com>
+Date:   Sat Jul 1 18:44:50 2023 +0200
+
+    Merge pull request #80 from GregoryLi0/nurbs_editing
+    
+    Nurbs editing Milestone 1: Perform simple operations on brep geometries using command line.
+    
+    Curve operations:
+        create (using a pre-determined template)
+        in (given detailed description)
+        move
+        set control vertex
+        flip
+        insert knot
+        trim
+        join (join end of curve 1 to start of curve 2)
+    
+    Surface operations:
+        create (using a pre-determined template)
+        birail (create a surface between two curves)
+        move
+        set control vertex
+        trim
+    
+    It's a work in progress...
+
+commit 0b1a95f95ad78768cdb39dd7db61a48b2bd48c18
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sat Jul 1 14:43:08 2023 +0800
+
+    🎈 perf(libbrep): delete one if()
+
+commit 6c1d88b6f5f2a22b22c9cc9014db80c3f517e1a7
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sat Jul 1 14:40:37 2023 +0800
+
+    🌈 style: extern "C" to static
+
+commit 3808b03a9f8ad30b3c53e12e3c69488b7619c90e
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sat Jul 1 14:33:56 2023 +0800
+
+    🌈 style:
+    
+    spacing
+
+commit a83faaf4840f649b7e49445d9b44ca1def17f79b
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sat Jul 1 14:29:16 2023 +0800
+
+    🌈 style: file end
+
+commit 96b2287ea5d7fa4041c816f0e13a82f9defb2d19
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sat Jul 1 14:27:40 2023 +0800
+
+    🌈 style: copyright year
+
+commit f5de8feb5a6d0ad26d54dde37920a0033a7112b1
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Jun 30 18:38:32 2023 -0400
+
+    Fixes for older gcc building
+
+commit 992cd3585fd545010593d4a2fa12e9f7cc8521f9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Jun 30 12:02:56 2023 -0400
+
+    Only do the fallback isascii define if we actually have it...
+
+commit d2b206254db649984fd436cad7cecd0e7ed611f9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Jun 30 11:19:00 2023 -0400
+
+    Update compile tests for -Wstrict-prototypes
+    
+    The bu_file realpath regression test was failing with clang 16.  Upon
+    investigation, the realpath detection proved to not be succeeding due to
+    the following error:
+    
+    error: a function declaration without a prototype is deprecated in all
+    versions of C [-Werror,-Wstrict-prototypes]
+    int main() {(void)realpath; return 0;}
+            ^
+             void
+    1 error generated.
+    
+    This is a more general issue with our tests that define functions
+    without arguments, and is also triggered by CMake's own
+    CheckStructHasMember.cmake test.  Apparently
+    (https://stackoverflow.com/a/76371638) this has to do with support
+    for void func() style functions being obsolete for a long time, and
+    the compilers are now adding warnings about them.
+    
+    Looking in CMakeErrors.log for the warning message, we can identify
+    various cases in our code where tests were failing because of this
+    issue.  It's a little hard to check for by pattern searching, so tests
+    not run on this particular machine/configuration may still have issues
+    (and I've not checked at all to see if the third party build tests have
+    high enough strictness flags to hit this issue...)
+
+commit fc2352bfa98f38056b6a54a26f4338b55c6bc5eb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Jun 30 10:45:45 2023 -0400
+
+    Changes to itcl3, itk3, tkhtml and tktable sources for building with clang 16
+
+commit b0b8ed655071d0353b4ea88271fb87e696c685d4
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Jun 30 10:18:47 2023 -0400
+
+    Add a few build fixes for clang 16 + Linux with stepcode
+
+commit 47f93477674e8ed61aca5dc807c0ff88fd242eb7
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Thu Jun 29 10:55:03 2023 +0800
+
+    ✨ feat(libbrep/libged): curve interpolation
+    
+    add cmd "brep ... curve interp ..." to create a cubic nurbs curve by interpolating a set of points
+
+commit f1bc14c073d651fbcb7ef4de1424548648bfdf72
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Thu Jun 29 09:33:24 2023 +0800
+
+    🌈 style(libbrep): rename func
+
+commit 9b19a1acf093abe08f6fe4f0c3b57bf6bb430e45
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 28 11:06:54 2023 -0400
+
+    Minimize the amount of disabled code for the experimental option - goal is to avoid it getting stale, so we want it compiling.
+
+commit 6328c99eb9f6e31bb615ac8d16ba9af4d377d100
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 28 10:41:58 2023 -0400
+
+    Stash experimental code testing InteractiveAndRobustMeshBooleans
+    
+    The InteractiveAndRobustMeshBooleans research project at
+    https://github.com/gcherchi/InteractiveAndRobustMeshBooleans seeks to
+    implement fast and robust boolean operations on triangle meshes.  The
+    changes being merged here use the 'libirmb' branch in the fork located
+    at https://github.com/starseeker/InteractiveAndRobustMeshBooleans to try
+    this approach with a BRL-CAD CSG tree.
+    
+    This logic, combined with the libirmb branch, works to trigger the
+    boolean attempt.  However, it currently fails almost immediately on any
+    non-trivial CSG input due to how the upstream code is generating output
+    when coplanar faces (commonly found in CSG models) are involved.  They
+    don't currently generate manifold outputs in those cases
+    (https://github.com/gcherchi/InteractiveAndRobustMeshBooleans/issues/13)
+    which means (for example) a coplanar arb subtraction will likely result
+    in an open mesh, which is in turn invalid for subsequent processing.
+    
+    I'm mostly stashing this into main in the hopes that we might be
+    able to interest someone wanting to do follow-on IRMB work for the "need
+    manifold output" use-case. In theory, it might be possible to use the
+    available info in the boolean to assemble a manifold output in those
+    cases.  The idea would be to extending the original IRMB code to "fill
+    in" the currently produced non-manifold areas resulting from coplanar
+    interactions, which should be available (in principle) if the code is
+    able to "bite out" the areas producing the non-manifold outputs in the
+    first place.  Doing so would require a fairly deep understanding of the
+    IRMB processing code to identify the necessary information for coplanar
+    "patching" and injecting the results output mesh assembly logic.
+    
+    There appears to be work going on by the upstream team to improve
+    general robustness with the IRMB code, so we don't want to get too far
+    away from it - in an ideal world we could implement an "always produce
+    manifold output" mode that could be contributed back upstream to the
+    main IRMB codebase.
+
+commit a9ce2c24a2058dda75fa5739a3058a943c00c374
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 28 11:42:31 2023 -0400
+
+    distcheck fixes for Creo plugin code
+
+commit 0cc7665244a14006fabec2199fc30609376ad6cb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Jun 28 09:51:37 2023 -0400
+
+    Correct shim building for Creo plugin
+
+commit ab358bef2579bd132cea643505a00b31f173b1a7
+Merge: 68b0d503de 33f816854d
+Author: Red Carrera <80796073+redcarrera@users.noreply.github.com>
+Date:   Mon Jun 26 08:50:31 2023 -0400
+
+    Merge pull request #68 from redcarrera/20230322
+    
+    Creo to BRL-CAD Converter as of 3/22/2023
+
+commit 3661e50e534cb3b21b9d90bcea3fa1f705ce6501
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Mon Jun 26 12:06:20 2023 +0800
+
+    🎈 perf(libged): rename birail func
+    
+    change 'brep surface create_from_curves' to 'brep surface birail'
+
+commit 21d08e0d06165b023bc5f3c2296eda98be18516f
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Mon Jun 26 11:55:05 2023 +0800
+
+    🌈 style(libbrep/libged): modify whitespace
+
+commit b7dde9cdba550e2c83940de53db077cdeba51045
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Mon Jun 26 11:04:49 2023 +0800
+
+    🎈 perf(libbrep/libged): check styles: Braces
+
+commit e209b605ee5512975abda01ae10473f42dd3ef27
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sun Jun 25 10:48:01 2023 +0800
+
+    🎈 perf(libged): perf log outputs
+
+commit 4e85d1dcbe35f6a1dbfcb8005a0326fd9f0a0e2b
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sat Jun 24 12:00:50 2023 +0800
+
+    🎈 perf(libbrep): perf func names
+    
+    Canonical function names and parameters
+
+commit 75fda0b379ece611cf54e30e0888fa2f28614e50
+Merge: 0dfc169bbc 68b0d503de
+Author: Gregory Li <974749051@qq.com>
+Date:   Sat Jun 24 11:17:37 2023 +0800
+
+    Merge branch 'BRL-CAD:main' into nurbs_editing
+
+commit 0dfc169bbc773f1e89754ad4265642a9b858e85d
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Thu Jun 22 12:03:23 2023 +0800
+
+    🎈 perf(libbrep): make clamped knot
+
+commit ae67a3f89c0fd6ce7a86476bf101c9a08d14059c
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Tue Jun 20 10:57:30 2023 +0800
+
+    ✨ feat(libbrep,libged): join curves
+    
+    join two curves. Join the end of curve_id_1 to the start of curve_id_2.
+    Remark: the index of C3 is changed after join!!!
+
+commit 7b67769a32c0b51e26bbe2a1a650ac9a8c83ac2c
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Thu Jun 15 20:18:47 2023 +0800
+
+    🌈 style(libbrep, libged): code auto format
+    
+    code auto format using VScode
+
+commit 50ec62699af7925332ce588d0b9f41bcafd1731e
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Thu Jun 15 20:13:10 2023 +0800
+
+    ✨ feat: create ruled surf
+    
+    add cmd `brep .. surface create_from_curves ..``. cmd Name shall be checked
+
+commit 85d6c2bd87877c5d6311634e300ba89ea78e22fc
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Wed Jun 14 12:17:25 2023 +0800
+
+    🦄 refactor: change args to edit
+    
+    change args passed to libbrep/edit as (On_brep*, ...)
+
+commit 88c6e26bf397d0cae6023fe8d205dd14765cf3b2
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Tue Jun 13 10:37:07 2023 +0800
+
+    feat: add `surface trim` cmd
+
+commit d778b8ecec2b06d7eca1de1fb0dd2b77d5fc216d
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Tue Jun 13 10:21:04 2023 +0800
+
+    feat: add `surface move_cv` function
+    fix: wrong judgement about curve and surface index id
+
+commit 40b1881cfd239c8f7b3ff23c2167cd7c179c57b1
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Tue Jun 13 09:59:32 2023 +0800
+
+    feat: add `surface move` cmd
+
+commit 9cd6c1c8e127e04253719fa3073c6ea97bd748dc
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Tue Jun 13 09:44:56 2023 +0800
+
+    feat: add `curve move` cmd
+
+commit fa393c93abb3e3f52ce4ced3adce79442abb2842
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Tue Jun 13 09:29:19 2023 +0800
+
+    style: rename surface make function
+
+commit 9b26986cf470e299289b115641e66c21bf338e78
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Tue Jun 13 09:22:49 2023 +0800
+
+    feat: change `surface create` parameter of libbrep
+
+commit 8d31f286f6092ca7715584d47771229103eddf52
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Mon Jun 12 14:24:51 2023 +0800
+
+    feat: 1. add surface subcmd of brep
+    2. add `brep .. surface create command` to create a nurbs surface
+
+commit 8b4e98d5a4123e1a2da65088637e0df90b5e116c
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Mon Jun 12 10:56:47 2023 +0800
+
+    feat: add brep curve trim function
+
+commit 995d1937b2c9bdd3ff46ab3b8079422c26f3d811
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Mon Jun 12 10:31:04 2023 +0800
+
+    feat: add curve insert_knot function
+
+commit 68b0d503de5e69c3f11be553e6ac6b906f69ed44
 Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Nov 28 13:30:20 2022 -0500
+Date:   Thu Jun 8 15:52:21 2023 -0400
 
-    Bump to next revision after the 7.34.0 release
+    fix option handling for 'in' command
     
-    (cherry picked from commit 552e8f748d5134ea953d7771c78b7b8cd57a3076)
+    when shifting the command string forward by however many flags found,
+    the command name ('in') gets removed. ged_exec is then confused. Need to
+    instead remove the flags from argv before passing along.
 
-commit 45ddc6be581d95288e172ccbde0d85e5916a74c9
+commit 925cdaeb314af41e5043b1d7e71a2a2248a59b3b
 Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Nov 28 12:06:17 2022 -0500
+Date:   Thu Jun 8 15:51:59 2023 -0400
 
-    Update log with commits since 2022-11-23
+    fix libpng debug building on windows
 
-commit 72aca86c6abeac1ba23abf18de59ece35eca35fb
-Merge: 6eae7d24a4 c575918408
-Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Mon Nov 28 12:02:02 2022 -0500
+commit 52b0b499a434f8485905e68bdc32326d904d487d
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Wed Jun 7 14:12:55 2023 +0800
 
-    merge of main c575918408a into RELEASE branch
+    feat: add curve flip subcommand. No topology involved
 
-commit c5759184088c560bf80d1858fc76169b2a0ebea8
+commit 51876fbf84461e4e6a870a7e8d1b604584ed59b9
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Wed Jun 7 10:57:34 2023 +0800
+
+    feat: move curve_move_cv to libbrep
+    style: change curve editing function name
+
+commit d9e9cfabcb06253672fd9026937bb4026973e92e
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Tue Jun 6 16:00:02 2023 +0800
+
+    feat: move `curve in` function to libbrep
+    perf: optimize help command lines
+
+commit f05b5ac70f2f757d8587716b4d80ad69c70ec265
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Tue Jun 6 14:55:13 2023 +0800
+
+    feat: add brep_make_curve() in libbrep
+
+commit d8774995b8862379d354cc657794b418682e4700
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jun 5 09:31:21 2023 -0400
+
+    Adjust syntax
+
+commit 8387a412255c3ec9804b3bbc4805cfe1aeed26ca
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Jun 5 09:15:41 2023 -0400
+
+    See if we can add a multi-config build check
+    
+    For Windows, the Ninja build is fast and efficient but doesn't really
+    test the Debug/Release multi-config logic the way Visual Studio users
+    encounter it.  See if we can do a multi-config build with just MGED and
+    its dependencies to try and exercise that aspect of the build logic on a
+    regular basis.
+    
+    Immediate motivation is a re-emergence of the "different names for debug
+    and release libraries" causing a problem with a Debug Visual Studio
+    build.  Problem was observed in draw_rework branch, but most likely
+    cause is build changes due to reverting back to an almost completely
+    vanilla libpng.  The problem isn't fixed yet, so the expected result for
+    this is that the Debug build fails when the libpng naming triggers a
+    copy failure.  If not we'll have to see if there's another way to
+    trigger the issue...
+
+commit e52221f19bdaada555f65a27d8fab36e4db4b7e4
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Mon Jun 5 16:24:39 2023 +0800
+
+    feat:1. create ON_Brep instead of rt_brep_interval in libbrep
+    2. rename brep_create()
+    fix: 1. fix error in strict mode
+    style: 1. adapt the headers
+    2. recreate the includes
+
+commit df861f1bd356a411376ca007a9258b5fd5b34c6d
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Mon Jun 5 15:43:32 2023 +0800
+
+    Revert "feat: create rt_brep_internal instead of ON_Brep in edit.cpp"
+    
+    This reverts commit 9e18293ed8983ade0a50d0c541bd38282ba38228.
+
+commit 9e18293ed8983ade0a50d0c541bd38282ba38228
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sun Jun 4 13:02:58 2023 +0800
+
+    feat: create rt_brep_internal instead of ON_Brep in edit.cpp
+
+commit 2db59c9bf17dc56e8c57509c71ae4c74aab0a3e1
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sat Jun 3 15:48:18 2023 +0800
+
+    perf: remove rt_brep_create_brep() in librt
+
+commit 3aca3bdf5523ba4f9f1a931bb289867d7224345b
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sat Jun 3 15:15:43 2023 +0800
+
+    perf: rename create_empty_brep()
+    fix: extern "C" for brep_create_empty_brep()
+
+commit 0b9331233feb39018009f6b44537c9249841d605
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sat Jun 3 13:48:50 2023 +0800
+
+    feat: add create_empty_brep in libbrep
+
+commit 3de3f74e7555965564fc1469a732a65b6150fc82
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Wed May 31 13:32:21 2023 +0800
+
+    feat: move `brep .. create_curve` to sub cmd as `brep .. curve create`
+
+commit 78c79ddbea43390de7d602a366942188413d24e7
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Wed May 31 11:10:19 2023 +0800
+
+    feat: add brep [name] curve entry
+
+commit a84f16657280610c872d63006ff63dacba3c4d19
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Wed May 31 10:18:25 2023 +0800
+
+    perf: delete unused test codes
+
+commit 62b3a07483102fe9192598f004c4e45d0f271968
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Wed May 31 09:53:23 2023 +0800
+
+    perf: Optimize the parameter number description of in_curve cmd
+
+commit 0545e77fe7159a89e66031e1cb365abf53d08365
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Wed May 31 09:44:06 2023 +0800
+
+    feat: make uniform knot vector. Now the created curve is valid
+
+commit cfca0447c692c768f042481a9c23f754e38c12cc
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Wed May 31 09:36:02 2023 +0800
+
+    feat: check arg number and set cv of nurbs
+
+commit 71aec4f965319c69c8da0ca434ec6102143380f6
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Tue May 30 18:59:38 2023 +0800
+
+    feat: add an entry and usage of brep [name] in ..
+
+commit 5320e0f4dd6ec3cf416d2e58c7de3ed324e43877
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sun May 28 18:31:42 2023 +0800
+
+    feat: add `brep <objname> move_curve_CV ...` command
+
+commit 3c57fdbd99e52ee3baccfbd345debeae372a926e
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Sun May 28 18:03:52 2023 +0800
+
+    feat: if position is specified, translate the curve to that position
+
+commit 262452b1ec828de0fba464bb9746d12c569fc3f8
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Fri May 26 12:50:19 2023 +0800
+
+    feat: add subcommand `create_curve` of `brep`. Now generate curves only for pre-specified parameters.
+
+commit 3c4044baed37dd7ee0789b86ac24f256dbc1666f
+Author: GregoryLi0 <gregoryli@foxmail.com>
+Date:   Thu May 25 15:04:31 2023 +0800
+
+    add "make [name] brep" command to create an empty brep object
+
+commit 5c6cdb42151176a29d63e28c994c557befd41937
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue May 23 14:31:45 2023 -0400
+
+    For bu_hook deleting, if we're deleting the last entry in the array there's nothing to shift downward.  Clears another valgrind report cropping up on MGED exit.
+
+commit f3f6e76e9a3debe5920ca97c6e5557604d746325
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue May 23 14:30:04 2023 -0400
+
+    After closing, NULL out the GEDP pointer.  valgrind reported that doEvent was calling set_curr_dm after this ged_close, so we need to make sure the NULL GEDP check gets the right answer.
+
+commit 442c2aa69902ac39ecdbef7d1d1de241c65b1a6d
 Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Fri Nov 25 01:43:30 2022 -0500
+Date:   Mon May 22 16:20:41 2023 -0400
 
-    add a -C non-classic mode flag.
+    mged command window disappears when you cancel File->Open
+
+commit c89320f72c61a0fa2e0e89ba7666cffbea8904a5
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon May 22 16:19:17 2023 -0400
+
+    mac build segfaults randomly..
     
-    this essentially performs the opposite of the -c classic console mode flag.  It requests the GUI and interactivity.  note using the flag does not preclude non-GUI initialization if the command-line arguments indicate batch/scripting/redirection.
+    appears to be happening during tclscript processing.  crashes appear to be random.  workaround is to keep re-running make until all the index files are generated.
 
-commit 2184ef26ef9fd5b66cce3d12b40c5c9a36cea2a6
+commit ba3567860b1ea3f3224d8d1ebed57ae078e3084e
 Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Fri Nov 25 00:26:05 2022 -0500
+Date:   Mon May 22 15:30:00 2023 -0400
 
-    check for select error, which should restore previous behavior on Windows
-
-commit 84a0f08af2dcc58efc3e3ea5f1aae46a2c3f9a2b
-Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Thu Nov 24 12:30:24 2022 -0500
-
-    And need errno for errno..
-
-commit d72998b13cce41d6cad4a441553bdcb4783f241b
-Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Thu Nov 24 10:04:45 2022 -0500
-
-    Add string header for strerror
-
-commit d73c697158164dfe5e0fdb8f9172fb7f9949a05f
-Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Wed Nov 23 19:15:58 2022 -0500
-
-    only check if stdin is a tty.
+    denote system includes separately.
     
-    just because stdout has been redirected doesn't necessarily mean we don't want a gui or don't want to be able to type commands.  it could be that mged's output is being redirected to a file for logging purposes, invoked via some wrapper, but we can still issue commands via stdin.
+    this changes compiler warning emission, so we don't get things like documentation warnings in system headers.  in theory, all our includes should be separated this way and would likely make a lot of pragmas go away.
 
-commit 2f2908d66292909d34d7ef74a5f8a54150ce2c4c
+commit 59bb81848d775abd8eebfec3b4c47bbd4e60f449
 Author: Christopher Sean Morrison <brlcad@gmail.com>
-Date:   Wed Nov 23 19:06:12 2022 -0500
+Date:   Mon May 22 15:18:33 2023 -0400
 
-    print the error when select fails
+    make tk's configure line match tcl's
+    
+    the addition of --enable-64bit in particular causes tk to test for arm64e on Mac M2 platofrms.  that in turn results in an incompatible arch flag when linking against X11 and even Tcl libs.
 
-commit 6eae7d24a412cca42b32cbcacd07f474202787ca
+commit adea154ebaf0c2a2e282de41da00ebc562586f23
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon May 22 10:48:18 2023 -0400
+
+    Vanilla png build assigns lib prefix with MSVC
+
+commit cefc33c232f92df97423ec86f5b5cd75de8ade14
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon May 22 10:03:54 2023 -0400
+
+    Reapply use of targets, rather than files - needed for parallel building with a PNG_PREFIX set
+
+commit e057a6f03a61712430e54ffda32596907f050c4f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon May 22 10:01:29 2023 -0400
+
+    Use vanilla libpng sources from upstream
+
+commit 1bdeb01f33ce79598f178a81ce1973f0a438c551
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 3 16:42:03 2023 -0400
+
+    Another new GCC error - dangling-reference
+    
+    error: possibly dangling reference to a temporary [-Werror=dangling-reference]
+    (cherry picked from commit f39d68704d1febee6165510a2817668988b74533)
+
+commit f271bdf1c132e230fba7d35c1fe339cc420d1ca0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 3 16:40:56 2023 -0400
+
+    A lot of the fastgen4_write checks have the same problem with Werror=nonnull-compare
+    
+    (cherry picked from commit b0783f14bbf0064d7c58af3aace7846fb2b87207)
+
+commit 8c7e5340ee0a97e8cf479a88e8cf632802a2592d
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 3 16:35:39 2023 -0400
+
+    With new gcc, -Werror=nonnull-compare trips up on the magic check here - &db will never be NULL, and the BU_CKMAG macro expands to check for null args.
+    
+    (cherry picked from commit 3f99e0a194b80d03a56909d752538d32eb6e04aa)
+
+commit 0d7f70a77513cf9f071f62676efd2f1daad1f31f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed May 3 16:32:15 2023 -0400
+
+    gcc v13.0.1 doesn't like the std::move here
+    
+    Error: moving a temporary object prevents copy elision [-Werror=pessimizing-move]
+    note: remove ‘std::move’ call
+    (cherry picked from commit b848c7fd6dbc1fa869d20a5031a3ee49edad4633)
+
+commit 024109a0108fe8226da7ce60cfa285ea426e7cc7
 Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Nov 23 16:48:13 2022 -0500
+Date:   Tue May 16 15:30:53 2023 -0400
 
-    Update log with commits since 2022-11-22
+    remove .txt extension
 
-commit d82e981c99a755e4615e5b9553c7be41c2703c60
-Merge: 5ea2cbbf4c 74a3a9b76a
+commit dac151df5c4a2b44b45c187acda210bfecee12a4
 Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Nov 23 16:45:37 2022 -0500
+Date:   Tue May 16 15:26:06 2023 -0400
 
-    Merge branch 'main' into RELEASE
+    first draft for NEWS release writeup
 
-commit 74a3a9b76a51764db98fa1b90b6c759aa0730d2d
+commit 5c2227b80a4f8f9474a50874ba9921e719197fc1
 Author: f4alt <christopherjmacgregor@gmail.com>
-Date:   Wed Nov 23 16:42:05 2022 -0500
+Date:   Tue May 16 15:24:40 2023 -0400
 
-    remove ifdef to correct launching behavior
+    improve clarity on testing status
+
+commit 28266771469ab183d33902646762efb1f2d2e1e7
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Mon May 15 15:55:52 2023 -0400
+
+    track companion files for distclean
+
+commit 08bc039f6ae2d90c26057404a3880a40bbd900b3
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Mon May 15 15:21:12 2023 -0400
+
+    fix parallel gcv regress failures
+    
+    removing globbed files was deleting too many files and mimicing a fail
+    due to no file generation
+
+commit e6b195b405bb68266ed112e9431082a73354af92
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Mon May 15 15:20:52 2023 -0400
+
+    fix stp regress check size
+
+commit a55d4f86d12943dc4240e590e771c5190e818e24
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Mon May 15 12:22:49 2023 -0400
+
+    need to track sqlite3ext.h on BSD
+
+commit 7a61b3f714b79eb932699cdb297fbbf87dd66fc5
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat May 6 10:27:42 2023 -0400
+
+    tighten up the language on headers
+
+commit d91a3d5b37ec8d7d1e65c4b061dbb5a2838e8521
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sat Apr 29 11:35:03 2023 -0500
+
+    need to document tops options, and dbconcat could do better
+
+commit 1fc2e38e850e5ed94e320a2e9fa7b6cfbe6af444
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu May 4 15:44:51 2023 -0400
+
+    track added files
+
+commit f7d469a8d8526c21242871d6c80f98d78f40e2fe
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu May 4 13:31:14 2023 -0400
+
+    add a note for current test status
+
+commit 7fc90ed6984e036f66a1d18a5243f4a57852f26d
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu May 4 13:30:12 2023 -0400
+
+    make gcv recognize assetimport types we have testing for and no
+    conflicting converter
+
+commit f2aabf201cf4090c29e7584776a12f8636c0be7a
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu May 4 13:29:43 2023 -0400
+
+    add a few more gcv regression tests
+
+commit 3e8ba49a7e998851b21e20c1156fd43bbff4eeaa
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Fri Apr 28 11:53:36 2023 -0400
+
+    document a few more NEWS items
+
+commit 22d115d6774bdd1f76d0f5bef63527fb7219535f
+Merge: b343d98eb0 40ca15985b
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Fri Apr 28 09:47:07 2023 -0400
+
+    merge of main 40ca15985ba to RELEASE branch
+
+commit 40ca15985b91888e4f877a2315fdb9225781e38a
+Merge: d9162946b1 e229b27f94
+Author: Christopher McGregor <54115478+f4alt@users.noreply.github.com>
+Date:   Thu Apr 27 14:19:31 2023 -0500
+
+    Merge pull request #71 from BRL-CAD/msvc-patch
+    
+    removed the "d" in MS Windows Debug binaries
+
+commit d9162946b1b3c9d58ba082d8adcb83d8b132f9d6
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Apr 27 15:14:40 2023 -0400
+
+    update ply test file
+    
+    our converter didn't like 'alpha' property
+
+commit 66cc961102909108569a14d6f6b16542bf6bb956
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Apr 27 15:14:25 2023 -0400
+
+    better log message
+
+commit 4c62fffc535d28bfab0aae1d1b6be50c2264e337
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Apr 27 13:20:53 2023 -0400
+
+    use consistent type for key size
+    
+    on different systems (specifically 32 windows), sizeof(long) = 4 and
+    sizeof(long *) = 8. So our bu_hash_get were seeing a key size different
+    than bu_hash_set and never returning coordinates.
+
+commit faa0fec1686e8568eb3831dc5bebbdadfe076afa
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Mon Apr 24 11:26:39 2023 -0400
+
+    currently non-used test formats. Remove
+
+commit 719f36cecc22a184b1914c849c210f05f11180ea
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Mon Apr 24 09:34:32 2023 -0400
+
+    first pass at assetimport exporters
+
+commit 2a0bfe7662320922e10ae9ef8c871394af23a0b5
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Apr 20 15:18:12 2023 -0400
+
+    generalize to work for exporters
+
+commit 9c1773469977654b725a27793f9f9cdc4ce583f1
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Apr 20 11:33:40 2023 -0400
+
+    first pass at new assetimport regression tests
+    
+    Still quite a few formats to go, but working through in order of
+    popularity and availability.
+    
+    add option to specify converters for file types which support multiple
+    hammer on some options for gcv_to_g_util to allow maximum flexibility
+    for all tests.
+
+commit ad5bc308fee690ae7fbda16fb348438db36f5077
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Tue Apr 18 13:36:39 2023 -0400
+
+    handle more edge cases in gcv regress function
+    
+    check both src and build dir for input files,
+    flexible dependencies input for formats not following gcv-[fmt]
+
+commit e7293a9bb00d21e8ddd149542c75dac30ab2711b
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Apr 13 08:36:16 2023 -0400
+
+    first attempt at simplifying gcv regression tests
+    
+    pattern the cmake.in file setup into a function to allow for easier
+    regression test additions in preparation for all the new file types
+    supported by asset import lib.
+
+commit be355cae12edb8316aca52b8a79b72e8b0f5b4a0
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Apr 7 10:48:41 2023 -0400
+
+    Make a note about OpenMesh decimation work
+    
+    Need to figure out how to set up the bot decimate subcommand to have
+    sensible default behavior using OpenMesh's capabilities.  Might make a
+    good small-ish scale student project.
+
+commit 8b9de7c6663bab41fc517fa64918d007229685b7
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Apr 6 15:09:45 2023 -0400
+
+    Increase default timeout on 16384 mappedfile tests
+
+commit 7550b3373c807f90a1d260e15bf514f1371235ad
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Apr 5 16:53:51 2023 -0400
+
+    Update GDAL/PROJ news item version
+
+commit fc7141ad4b9cf0b5d94106992d0b0c220007798f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Apr 5 16:52:36 2023 -0400
+
+    Reapply 7d00f7264a.
+
+commit 14c4b4ac5e04d4fbc2c5f4b90003987ed8e3ff9f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Apr 5 16:29:25 2023 -0400
+
+    Dependency updates for SQLite3, PROJ and GDAL
+    
+    Versions:
+    SQLite3 3.41.2
+    PROJ 9.2.0
+    GDAL 3.6.3
+
+commit e229b27f9451d89afc0cd3329a126eb3cebc0a73
+Author: Daniel Rossberg <33295041+drossberg@users.noreply.github.com>
+Date:   Sat Apr 1 13:05:53 2023 +0200
+
+    removed the "d" for MS Windows Debug binaries
+    
+    in 3rd party libraries
+    they were in the way in post-processing
+
+commit b343d98eb0b9a360d54c78351c67108ffece8b99
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Mar 30 13:00:32 2023 -0400
+
+    oops. Get 64fd674 to build clean
+    
+    (cherry picked from commit d779aabea8bb6ecf7d32887c5e34a828d1f185d3)
+
+commit b4a291bef6a6113cbbc8c56a742c6476fe8d669f
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Mar 30 11:17:36 2023 -0400
+
+    fix nirt with a lot of output locking mged
+    
+    Since we were reading from stderr before stdout, when nirt wrote more
+    than a page worth to stdout the read from mged locked indefinitely.
+    
+    Add a helper function in process.c to check if there is data to be read
+    from a file descriptor
+    
+    Add error checking in nirt.c to check if there is any data to read
+    before blindly trying. Add sandwiching stderr reads to avoid future
+    locks.
+    
+    (cherry picked from commit 64fd6748d9843346f4bc61c5eda9c34b3f4fed34)
+
+commit d779aabea8bb6ecf7d32887c5e34a828d1f185d3
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Mar 30 13:00:32 2023 -0400
+
+    oops. Get 64fd674 to build clean
+
+commit 64fd6748d9843346f4bc61c5eda9c34b3f4fed34
+Author: f4alt <christopherjmacgregor@gmail.com>
+Date:   Thu Mar 30 11:17:36 2023 -0400
+
+    fix nirt with a lot of output locking mged
+    
+    Since we were reading from stderr before stdout, when nirt wrote more
+    than a page worth to stdout the read from mged locked indefinitely.
+    
+    Add a helper function in process.c to check if there is data to be read
+    from a file descriptor
+    
+    Add error checking in nirt.c to check if there is any data to read
+    before blindly trying. Add sandwiching stderr reads to avoid future
+    locks.
+
+commit 02144ddce9c8eaae3ff88dbe7d65544c825de96c
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 30 09:54:15 2023 -0400
+
+    Stash an example of using 'git bisect' to hunt a bug in the commit history.
+
+commit 63b117c7f83a741cdce5cdd3687f07381382fb47
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 30 07:43:14 2023 -0400
+
+    Spotted by Daniel Roßberg - correct case in CMake arguments specifying SQLite3 info.
+
+commit 3c3e41ebb49341e8b32f3a9001f5b4b2e6cb842b
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 29 07:43:06 2023 -0400
+
+    Update discussion of mime_types (or more precisely their absense) and Git
+
+commit 6199b28c17749b2f65a2fd2de5d020e9df577fc5
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 23 16:43:46 2023 -0400
+
+    Report on Mac that the X11 headers are causing a Wdocumentation problem.  See if we can suppress the warning just for the external headers.
+
+commit 33f816854d2a4382f4cde9e2f47f714c5c3000ac
+Author: Red Carrera <red.carrera.1987@gmail.com>
+Date:   Wed Mar 22 20:03:55 2023 -0400
+
+    Creo to BRL-CAD Converter as of 3/22/2023
+    
+    Signed-off-by: Red Carrera <red.carrera.1987@gmail.com>
+
+commit f97a72bba166120acac5da0557d0cd85d4c6dcf6
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 22 08:53:03 2023 -0400
+
+    Make a note to revisit use of re2c/lemon/perplex
+
+commit 04430833b27d6b8a9e2667d404e93729b1c473d9
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 22 08:03:00 2023 -0400
+
+    List the generated .h file explicitly
+    
+    We're still getting occasional compile problems with libexpress that
+    appear to be an attempt to compile an incompletely generated input.
+    
+    It looks like the stepcode versions of these files are different than
+    the ones in BRL-CAD proper - probably would make sense to check which
+    ones are the newer versions and sync up.
+
+commit 10125c24a128b638a9f78faca771ba1173b100e3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 20 15:43:05 2023 -0400
+
+    Don't need wdb_close here - db_close covers it
+
+commit 68d703816955f5a882e3278ff884f44313fd9720
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 19 03:12:22 2023 -0400
+
+    seeing bus errors on exit.
+    
+    variety of tools will randomly fail, but specific one is asc2g crashing.  crash happens after return from main().  crash does not happen in debugger implying race condition.  checked libbu atexit handlers (they're fine) so may need to bisect.
+
+commit 55bd3738b6c35bb45df8003ff2041b57c5f3b0fd
+Author: Christopher Sean Morrison <brlcad@mac.com>
+Date:   Sun Mar 19 02:50:53 2023 -0400
+
+    codeql workflow was removed, so don't try to ignore it.  otherwise we gets an error.
+
+commit c81be2bf5391c543ef1a4c72454fb2cae80a8283
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 19 02:46:07 2023 -0400
+
+    ugh, save typo
+
+commit a0dc2e526dc7d2451211cd0aa81085c81a83cfff
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 19 02:41:40 2023 -0400
+
+    fix an infinite loop condition during raytracing.
+    
+    rendering goliath, encountered an infinite loop in camo_render()->bn_noise_fbm()->bn_noise_perlin()->filter_args() due to Inf values in the source point.  when computing a noise position, an Inf results after a multiply operation that messed with the spacing folding logic.  this clamps Inf and NaN values to the maximum value we're folding over.
+
+commit 2e1d0db675d3092646e37fdc458de4031610914d
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 19 02:22:17 2023 -0400
+
+    update docs before fixing an infinite loop condition
+
+commit 402686475bf790bff1566a3bd3fa2c8f350ff6ce
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Sun Mar 19 00:04:26 2023 -0400
+
+    plug memory leak
+
+commit 96cfa79ca343d68ad3e66303ef0a7ceb8a1f4161
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Mar 18 23:00:50 2023 -0400
+
+    Temporarily remove CodeQL workflow
+    
+    Getting what appears to be an internal error from their processing.
+
+commit a752111783c09bdbd2d22d208554bb193cd992f8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Sat Mar 18 12:29:20 2023 -0400
+
+    part.cpp is also using max
+
+commit cb786f1cfae7f48f32befe8eec07cadc767dbf20
+Author: Erik Greenwald <erik@elfga.com>
+Date:   Fri Mar 17 22:40:51 2023 -0400
+
+    re-add misc/docker/dev/docker-compose.yaml to CMakeLists.txt
+
+commit d9cf9fc3a07e3668705198db7cb4fade2c555dfa
+Author: Erik Greenwald <erik@elfga.com>
+Date:   Fri Mar 17 21:54:10 2023 -0400
+
+    rename docker build targets so they don't conflict with directories. Update user dockerfile to 7.34.3. Reorg user dockerfile
+
+commit b4f32c97d0be8bdbc60173c4362d27ec78021cf9
+Author: Erik Greenwald <erik@elfga.com>
+Date:   Fri Mar 17 20:00:02 2023 -0400
+
+    Docker - remove common target. Remove build scripts. Embed all logic in Dockerfile.
+
+commit 00f2d7f9fa99ac73040f77c887a25d1064f84364
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 17 14:39:56 2023 -0400
+
+    Hmm... try https://stackoverflow.com/a/30924806
+
+commit 5fc19dedc36590cdccca65d9617087eda6ffe0a6
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 17 13:42:51 2023 -0400
+
+    Clear a few clang analyzer warnings
+
+commit e83eed1c31c7d7b8693f58995e760c167f58a599
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 17 12:05:43 2023 -0400
+
+    Add algorithm header for std::min and std::max
+
+commit 7834cc0d96bab1eb3f5ec238e5f31a09cdd1d3cb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 17 09:24:36 2023 -0400
+
+    Clear various Linux compiler warnings
+
+commit f2860cfd83596eec9c849e30edcf390b4f9c7de7
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 17 09:13:25 2023 -0400
+
+    More tweaks for regress and distcheck-repo_verify
+
+commit d83a3dd0b7e05b09eff4b4151f71662f50a1cd4e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 17 09:06:07 2023 -0400
+
+    We need the CREO2BRL_SOURCES list in both modes
+
+commit 6b963fa7dadf20f40e7536675dc6c95347d50017
+Merge: 79d7ad833a a07862ff70
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 17 08:46:08 2023 -0400
+
+    Merge pull request #63 from redcarrera/20221213
+    
+    Creo to BRL-CAD Converter as of 12/13/2022
+
+commit 79d7ad833ae06b513bb0dba735b648cc19474f9f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 17 07:36:31 2023 -0400
+
+    Oh, right - NULL filename outputs are valid (dumping to stdout) so we need to be a little more careful about when we use ofilename.  Fixes regress-dsp
+
+commit 6b552e98f9e910b4c8e0cc0715df942a841a8e4e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Thu Mar 16 18:52:28 2023 -0400
+
+    What the heck... icv_operations test wasn't handling png image as input.
+
+commit 880d2df785fe1caaedd11e6965161a995287bbf2
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 14 14:05:45 2023 -0400
+
+    Expose bot flipping as a bot subcommand
+    
+    Make the bot_flip functionality (defined in rt with rt_bot_flip)
+    available as a "flip" subcommand of the "bot" command.
+
+commit d66a4d782434dee34d1cdb10ff046da9b473788e
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 14 13:56:55 2023 -0400
+
+    Another input object validation check
+
+commit 0d4c51c5f9050cb7e1303a49c356d4b299783d33
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 14 13:49:21 2023 -0400
+
+    Various improvements to analyze inside/outside testing based commands
+    
+    Fixed an outright crasher when invalid object names were passed in, as
+    well as a more subtle problem where points were sometimes incorrectly
+    reported as not inside during testing due to checking only the first
+    partition along the ray rather than all partitions (resulting in
+    "shadowing" where geometry with a leading "in-out" segment in the
+    z direction would miss points above that segment that were still inside
+    the solid.)
+    
+    Also added a direct point-inside-object test where the user specifies
+    the object and x y z coordinates of the test point.
+
+commit 139668d5643e86584322d4bcd25b71074ecec475
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 14 07:43:19 2023 -0400
+
+    Correct stepcode configure vars for perplex/lemon
+
+commit 7f7f18d19f23d10c31d03c1997e3062d7cff5a03
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 14 07:08:23 2023 -0400
+
+    Correct ordering of misc/tools and src/other build
+    
+    Ah - PATCHELF_EXECUTABLE wasn't set when we got to src/other/ext when we
+    moved it to misc/tools, since we weren't building misc/tools first.  As
+    it happens, right now we can do misc/tools first since no code in that
+    directory is using src/other libraries.
+    
+    If we ever get into the situation where a tool in misc/tools requires a
+    src/other library, we're going to have to reconsider how we're
+    organizing misc/tools and src/other (or at least, how we maintain the
+    "don't install" vs "to be installed" distinction), but for now the
+    reordering should work.
+
+commit 33d109254de2a83649b80d97d569d64e2e1c08c4
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 14 06:46:14 2023 -0400
+
+    Reapply "Reorganize build tools in hierarchy"
+    
+    This reverts commit 697e70c727b0703f31ebea586a6050c7b8c183f8.
+    
+    Ah - we were building misc/tools after src/other, which (given the way
+    we're going to structure this) doesn't work.
+    
+    If anything in misc/tools needs a library in src/other we're going to
+    have a problem, but at least right now I don't think that's the case -
+    libxml is being built without ZLIB support since we don't need it for
+    Docbook processing.
+
+commit 3ac436d8cd1cb70db5cf9e95abea1b3d20bf60de
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Tue Mar 14 03:58:53 2023 -0400
+
+    convert version conditional to a switch, constify.
+    
+    this should give the compiler and code sanitizers a bit more knowledge and ability to warn/report when a new value ends up unhandled.
+
+commit a938fe3f0a25596c69541d3d0822b5602fb72c4b
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 13 16:41:37 2023 -0400
+
+    go through db_version() since this should match flipped too.
+
+commit e4e1227bdd04b5a702e2debd2cea4e76ef4f099a
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 13 16:40:35 2023 -0400
+
+    stale dbi_version mention
+
+commit 6f835a7714eb59732c53c40a0214396bb49730fd
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 13 16:29:17 2023 -0400
+
+    don't look directly at dbi_version, use db_version().
+    
+    negative value is how binary database flipping is encoded, so can't just assume negative means we need to stop.  going through the function, we get the desired indication of error.
+
+commit c5b9805d8dcfc4129ba5b16e9c36dbc6c0346ea3
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 13 16:26:54 2023 -0400
+
+    actually returns abs(ver) so comment was correct.
+    
+    document it on the field though.
+
+commit f4d8c2151b7dc6bf5916c4bf3de5c1f60117196e
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 13 16:15:40 2023 -0400
+
+    go through db_version() instead of direct, comment on the negation
+
+commit 4ed4839c3ccc333350c796d99b8216b992717e1e
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 13 16:14:10 2023 -0400
+
+    setting var to anything turned off flipping, but name implies otherwise.
+    
+    make it so only setting a false value turns off database flipping.
+
+commit 477200a6517b6ffb1a91a2fbb2555fa8972d3e20
+Author: Christopher Sean Morrison <brlcad@gmail.com>
+Date:   Mon Mar 13 16:10:48 2023 -0400
+
+    document the negative value on flipped databases
+
+commit 697e70c727b0703f31ebea586a6050c7b8c183f8
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 13 14:35:54 2023 -0400
+
+    Revert "Reorganize build tools in hierarchy"
+    
+    This reverts commit a93dcab8eca4d935a5af17d446414ecdc1925b55.
+    
+    CI reports breakage with rpath setting on Ubuntu
+
+commit a93dcab8eca4d935a5af17d446414ecdc1925b55
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 13 11:28:40 2023 -0400
+
+    Reorganize build tools in hierarchy
+    
+    Sean spotted where I wasn't grouping the various codes correctly -
+    move some "build only" tools to misc/tools, as well as various
+    adjustments and clean-ups.
+    
+    While we're at it, remove the unused dom2dox code and conditionally
+    activate the inactvhdrs compilation if the compiler explicitly supports
+    a C++17 option.  That check can go away once we bump to a broad C++17
+    requirement, but in the meantime this will check that inactvhdrs
+    compiles on at least some platforms.
+
+commit 60168f20df6e6d611c563e281794670fe2e24c88
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 10 23:28:38 2023 -0500
+
+    Define the set of valid man sections once
+
+commit 17aef2a4242808a30f671e105ecf09a956e71d4b
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 10 23:21:32 2023 -0500
+
+    Make a stab at having the GED man cmd launch brlman
+
+commit 97edac8eccbd69d25bf35448e45206c5ab9c3759
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 8 17:13:01 2023 -0500
+
+    Almost... off by one.  Index into array starts at 0, not one...  Add a couple explicit limit tests to check this behavior.
+
+commit 8c50e75d1d9c87b7dbef889793d51d859e985521
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 8 17:02:06 2023 -0500
+
+    Correct limit test
+
+commit 976b690d716c8e5cf86b20fdf8dbc87e536da6a3
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 8 12:09:18 2023 -0500
+
+    Enhance GED search cmd to accept values w/ spaces
+    
+    We had a user report that MGED's command line wouldn't allow users to
+    specify a search for attributes with spaces in their names.  Initial
+    testing confirmed this, with multiple contributing factors.
+    
+    The pipeline for the search command uses bu_argv_from_string to break
+    string arguments into argv arrays.  This operation is also performed by
+    the standard MGED command line, so to protect arguments with spaces as
+    active content it is necessary to quote them.  While the user can do
+    this on the command line itself, internal processing in the GED search
+    command was re-assembling arguments to pass to the librt db_search
+    function without providing similar protections where needed.
+    
+    Beyond libged, the bu_argv_from_string function itself appeared to be
+    somewhat lacking in its handling of quoting behaviors.  This commit
+    makes an attempt to rework the command to improve its overall processing
+    in such situations, as well as introducing various libbu unit tests to
+    ensure correct bu_argv_from_string behavior for various combinations of
+    quoted arguments with spaces.
+    
+    This warrants checking from others both for correct behavior and desired
+    behavior, but regression tests are passing and the following test on the
+    sample moss.g database was successful:
+    
+    mged> attr set platform.r "test 1" "val1"
+    mged> attr set tor.r "test 2" "val 2"
+    mged> attr set cone.r "test3" "val 3"
+    mged> search -attr \\"test 1\\"
+    platform.r
+    mged> search -attr \\"test*\\"
+    cone.r
+    platform.r
+    tor.r
+    mged> search -attr \\"test *\\"
+    platform.r
+    tor.r
+    mged> search -attr \\"* *\\"
+    platform.r
+    tor.r
+    mged> search -attr \\"test*=val*\\"
+    cone.r
+    platform.r
+    tor.r
+    mged> search -attr \\"test *=val*\\"
+    platform.r
+    tor.r
+    mged> search -attr \\"test *=val *\\"
+    tor.r
+    mged> search -attr \\"test *=val1\\"
+    platform.r
+    mged> search -attr \\"test*=val *\\"
+    cone.r
+    tor.r
+
+commit a184e332242d5a7a3663b104742c9dc460fa216f
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 7 23:02:46 2023 -0500
+
+    Set up to test bu_argv_from_string
+
+commit fbdbf042b2db4c7d46839a17bbf4985cdb81f0ae
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 7 22:18:37 2023 -0500
+
+    Vanilla Tcl build doesn't provide a tclsh executable without version info - use an install copy to provide one.
+
+commit 1c4d46a3e26a44bfe908950e6118d0c66d4f5055
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 7 20:32:17 2023 -0500
+
+    Remove [source -rsrc]. Only in Tcl 8.3 and only works on Max OS 9.
+    (Itcl3 94d9228227 )
+
+commit 1466cbbb64202fda3d296966ab24230a94eab180
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Tue Mar 7 20:29:16 2023 -0500
+
+    [SF Bug 279] Drop surplus quote. (Itcl 9c5d63471a)
+    
+    Per https://core.tcl-lang.org/itcl/tktview?name=171b58b82b the problem
+    Archer is having with Itcl 3.4.4 is specific to one change.  We'll grab
+    the other fixes from Itcl and apply them to our 3.4.3 copy.
+
+commit 2d9f909ec1d35e9eedef2260dceed676842bff54
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 6 10:16:01 2023 -0500
+
+    Remove the news item for Itcl3 version bump
+
+commit 5b243b5a78f52b60863179340fecb3181e9fe880
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Mon Mar 6 10:15:19 2023 -0500
+
+    Itcl 3.4.4 appears to be what breaks things - reverting back to our 2023-02-08 version lets Archer run again.
+
+commit b8680d830ce679574bf18dda8cd161225ff89a30
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 3 20:47:03 2023 -0500
+
+    Add TODO notes
+
+commit d5572ca6f99323d783e023fcbd0edf9cadba38ed
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 3 20:20:36 2023 -0500
+
+    Should technically be depending on ZLIB_TARGET on Windows too
+
+commit d17194ca536b604184bca3057c8fcbbf31957edc
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Fri Mar 3 19:00:27 2023 -0500
+
+    See if the zlib deltas in Tcl's makefile.vc from the upgrade are what broke the build.
+
+commit ee446de2cd615eec6931457b6250b2c8fb6b94eb
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 1 11:33:14 2023 -0500
+
+    Set version numbers for expected next release
+
+commit ca4742994e72675b0d5d7839f63aef427499ab52
+Merge: 1307e0d6ab dc828f826d
+Author: Clifford Yapp <238416+starseeker@users.noreply.github.com>
+Date:   Wed Mar 1 11:30:53 2023 -0500
+
+    Merge branch 'RELEASE', bump PATCH number

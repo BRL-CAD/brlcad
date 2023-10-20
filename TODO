@@ -18,11 +18,30 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* race condition causing bus errors on exit
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+
+
+THESE ARE UNSCHEDULED BACKLOG TASKS
+-----------------------------------
+
+* ability to draw lines, boxes, and text on rendered outputs/images.
+  we sort of have this ability through plot3 and composition tools
+  but end-user request was integration with rt* tools so, for
+  example, there could be a way to specify a coordinate frame overlay
+  on images output by rtwizard, using stippled lines.
+
+  some existing APIs with similar functionality include opencv,
+  matplotlib, matlab, and processing
+
+* ability to place/align/mate objects tangentially, e.g., having a
+  vehicle rest on a piece of terrain or putting one object next to
+  another object.
+
+* race condition causing bus errors on exit
 
 * re-enable regress-asc and regress-weight
 
@@ -115,10 +134,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * move the rt_*_timer timing facilities to libbu and rework to allow
   contexts, allowing for more than one timer to be active.  Make sure
   the old librt API can be obsoleted cleanly.
-
-
-THESE ARE UNSCHEDULED BACKLOG TASKS
------------------------------------
 
 * Investigate OpenMesh decimation capabilities, identifying a good working
   default setup for a decimate command.  Probably will need bounding box
@@ -234,12 +249,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * the mged tutorials apparently do not mention the tops command (even
   once), but really should as it's the starting point for discovering
   what is in databases that are opened or imported.
-
-* nburst appears to be missing logging output (bounding volume lines)
-  and isn't outputting units (outputs NULL).  can run regress-burst
-  and regress-nburst to compare (have to manually save files).  the
-  ktank test isn't comprehensive, really should tests all the primary
-  options.
 
 * add metaball scaling feature (presently in a tclscript)
 

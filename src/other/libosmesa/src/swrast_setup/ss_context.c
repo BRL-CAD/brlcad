@@ -48,7 +48,7 @@
 GLboolean
 _swsetup_CreateContext(GLcontext *ctx)
 {
-    SScontext *swsetup = (SScontext *)CALLOC(sizeof(SScontext));
+    SScontext *swsetup = (SScontext *)calloc(1,sizeof(SScontext));
 
     if (!swsetup)
 	return GL_FALSE;
@@ -71,7 +71,7 @@ _swsetup_DestroyContext(GLcontext *ctx)
     SScontext *swsetup = SWSETUP_CONTEXT(ctx);
 
     if (swsetup) {
-	FREE(swsetup);
+	free(swsetup);
 	ctx->swsetup_context = 0;
     }
 

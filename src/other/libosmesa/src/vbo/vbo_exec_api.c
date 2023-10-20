@@ -117,7 +117,7 @@ void vbo_exec_vtx_wrap(struct vbo_exec_context *exec)
     assert(exec->vtx.max_vert - exec->vtx.vert_count > exec->vtx.copied.nr);
 
     for (i = 0 ; i < exec->vtx.copied.nr ; i++) {
-	_mesa_memcpy(exec->vtx.vbptr, data,
+	memcpy(exec->vtx.vbptr, data,
 		     exec->vtx.vertex_size * sizeof(GLfloat));
 	exec->vtx.vbptr += exec->vtx.vertex_size;
 	data += exec->vtx.vertex_size;
@@ -373,7 +373,7 @@ do {								\
 } while (0)
 
 
-#define ERROR() _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ )
+#define ERROR() _mesa_error( ctx, GL_INVALID_ENUM, __func__ )
 #define TAG(x) vbo_##x
 
 #include "vbo_attrib_tmp.h"
@@ -402,12 +402,12 @@ static void GLAPIENTRY vbo_exec_EvalCoord1f(GLfloat u)
     }
 
 
-    _mesa_memcpy(exec->vtx.copied.buffer, exec->vtx.vertex,
+    memcpy(exec->vtx.copied.buffer, exec->vtx.vertex,
 		 exec->vtx.vertex_size * sizeof(GLfloat));
 
     vbo_exec_do_EvalCoord1f(exec, u);
 
-    _mesa_memcpy(exec->vtx.vertex, exec->vtx.copied.buffer,
+    memcpy(exec->vtx.vertex, exec->vtx.copied.buffer,
 		 exec->vtx.vertex_size * sizeof(GLfloat));
 }
 
@@ -432,12 +432,12 @@ static void GLAPIENTRY vbo_exec_EvalCoord2f(GLfloat u, GLfloat v)
 		vbo_exec_fixup_vertex(ctx, VBO_ATTRIB_NORMAL, 3);
     }
 
-    _mesa_memcpy(exec->vtx.copied.buffer, exec->vtx.vertex,
+    memcpy(exec->vtx.copied.buffer, exec->vtx.vertex,
 		 exec->vtx.vertex_size * sizeof(GLfloat));
 
     vbo_exec_do_EvalCoord2f(exec, u, v);
 
-    _mesa_memcpy(exec->vtx.vertex, exec->vtx.copied.buffer,
+    memcpy(exec->vtx.vertex, exec->vtx.copied.buffer,
 		 exec->vtx.vertex_size * sizeof(GLfloat));
 }
 

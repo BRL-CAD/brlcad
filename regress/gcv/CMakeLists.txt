@@ -165,13 +165,6 @@ foreach(out_file ${OUTPUT_FILES})
   # cleanup file from build dir
   file(REMOVE \"\${out_file}\")
 endforeach(out_file ${OUTPUT_FILES})
-
-# this is probably a bad idea 
-# - need a better way to automatically track / remove generated companion files (i.e. obj creates mtl)
-file(GLOB companion_files \${CBDIR}/conv-*)
-foreach(cf \${companion_files})
-  file(REMOVE \"\${cf}\")
-endforeach(cf \${companion_files})
     ")
 
   # assume the fmt is the gcv dependency unless specified
@@ -219,7 +212,7 @@ add_subdirectory(x3d)
 CMAKEFILES(
   CMakeLists.txt
   README
-  testing_status.txt
+  TESTING_STATUS
   tetra.g           # used for exporters - keep in root to eliminate copying duplicate file to all subdirectories
   )
 

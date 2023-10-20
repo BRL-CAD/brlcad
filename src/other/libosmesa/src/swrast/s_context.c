@@ -747,7 +747,7 @@ GLboolean
 _swrast_CreateContext(GLcontext *ctx)
 {
     GLuint i;
-    SWcontext *swrast = (SWcontext *)CALLOC(sizeof(SWcontext));
+    SWcontext *swrast = (SWcontext *)calloc(1,sizeof(SWcontext));
 
     if (SWRAST_DEBUG) {
 	_mesa_debug(ctx, "_swrast_CreateContext\n");
@@ -784,7 +784,7 @@ _swrast_CreateContext(GLcontext *ctx)
 
     swrast->SpanArrays = MALLOC_STRUCT(sw_span_arrays);
     if (!swrast->SpanArrays) {
-	FREE(swrast);
+	free(swrast);
 	return GL_FALSE;
     }
     swrast->SpanArrays->ChanType = CHAN_TYPE;
@@ -805,11 +805,11 @@ _swrast_CreateContext(GLcontext *ctx)
     swrast->PointSpan.facing = 0;
     swrast->PointSpan.array = swrast->SpanArrays;
 
-    swrast->TexelBuffer = (GLchan *) MALLOC(ctx->Const.MaxTextureImageUnits *
+    swrast->TexelBuffer = (GLchan *) malloc(ctx->Const.MaxTextureImageUnits *
 					    MAX_WIDTH * 4 * sizeof(GLchan));
     if (!swrast->TexelBuffer) {
-	FREE(swrast->SpanArrays);
-	FREE(swrast);
+	free(swrast->SpanArrays);
+	free(swrast);
 	return GL_FALSE;
     }
 
@@ -827,11 +827,11 @@ _swrast_DestroyContext(GLcontext *ctx)
 	_mesa_debug(ctx, "_swrast_DestroyContext\n");
     }
 
-    FREE(swrast->SpanArrays);
+    free(swrast->SpanArrays);
     if (swrast->ZoomedArrays)
-	FREE(swrast->ZoomedArrays);
-    FREE(swrast->TexelBuffer);
-    FREE(swrast);
+	free(swrast->ZoomedArrays);
+    free(swrast->TexelBuffer);
+    free(swrast);
 
     ctx->swrast_context = 0;
 }

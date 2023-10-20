@@ -142,7 +142,7 @@ zoom_span(GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
 
     if (!swrast->ZoomedArrays) {
 	/* allocate on demand */
-	swrast->ZoomedArrays = (SWspanarrays *) CALLOC(sizeof(SWspanarrays));
+	swrast->ZoomedArrays = (SWspanarrays *) calloc(1,sizeof(SWspanarrays));
 	if (!swrast->ZoomedArrays)
 	    return;
     }
@@ -320,14 +320,14 @@ zoom_span(GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
 	    ((zoomed.array->ChanType == GL_UNSIGNED_SHORT) ? 4 * sizeof(GLushort)
 	     : 4 * sizeof(GLfloat));
 	if (y1 - y0 > 1) {
-	    MEMCPY(rgbaSave, zoomed.array->rgba, zoomed.end * pixelSize);
+	    memcpy(rgbaSave, zoomed.array->rgba, zoomed.end * pixelSize);
 	}
 	for (zoomed.y = y0; zoomed.y < y1; zoomed.y++) {
 	    _swrast_write_rgba_span(ctx, &zoomed);
 	    zoomed.end = end;  /* restore */
 	    if (y1 - y0 > 1) {
 		/* restore the colors */
-		MEMCPY(zoomed.array->rgba, rgbaSave, zoomed.end * pixelSize);
+		memcpy(zoomed.array->rgba, rgbaSave, zoomed.end * pixelSize);
 	    }
 	}
     } else if (format == GL_COLOR_INDEX) {
@@ -335,14 +335,14 @@ zoom_span(GLcontext *ctx, GLint imgX, GLint imgY, const SWspan *span,
 	GLuint *indexSave = (GLuint *) zoomed.array->spec;
 	const GLint end = zoomed.end; /* save */
 	if (y1 - y0 > 1) {
-	    MEMCPY(indexSave, zoomed.array->index, zoomed.end * sizeof(GLuint));
+	    memcpy(indexSave, zoomed.array->index, zoomed.end * sizeof(GLuint));
 	}
 	for (zoomed.y = y0; zoomed.y < y1; zoomed.y++) {
 	    _swrast_write_index_span(ctx, &zoomed);
 	    zoomed.end = end;  /* restore */
 	    if (y1 - y0 > 1) {
 		/* restore the colors */
-		MEMCPY(zoomed.array->index, indexSave, zoomed.end * sizeof(GLuint));
+		memcpy(zoomed.array->index, indexSave, zoomed.end * sizeof(GLuint));
 	    }
 	}
     }

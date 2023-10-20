@@ -297,10 +297,6 @@ libtclcad: The Tcl-CAD library is a thin interface that assists in the
 binding of an image to a Tk graphics context.
 	Depends on: libbn libbu libfb libtcl libtk
 
-libtermio: The terminal I/O library is a TTY control library for
-managing a terminal interface.
-	Depends on nothing
-
 libwdb: The "write database" library provides a simple interface for
 the generation of BRL-CAD geometry files supporting a majority of the
 various primitives available as well as combination/region support.
@@ -1335,7 +1331,7 @@ Release steps are as follows:
 # 03: Commit the merge (if necessary) and push.
 
     # If merge conflict resolution was needed, make a merge commit:
-    MSHA1=$(git log -1 main --pretty=format:"%h")a
+    MSHA1=$(git log -1 main --pretty=format:"%h")
     echo $MSHA1
     git commit -m "merge of main $MSHA1 to RELEASE branch"
 

@@ -2539,7 +2539,7 @@ KEYWORD1 void KEYWORD2 NAME(UniformMatrix4x3fv)(GLint location, GLsizei count, G
     DISPATCH(UniformMatrix4x3fv, (location, count, transpose, value), (F, "glUniformMatrix4x3fv(%d, %d, %d, %p);\n", location, count, transpose, (const void *) value));
 }
 
-KEYWORD1 void KEYWORD2 NAME(LoadTransposeMatrixd)(const GLdouble * m)
+KEYWORD1 void KEYWORD2 NAME(LoadTransposeMatrixd)(const GLdouble m[16])
 {
     DISPATCH(LoadTransposeMatrixdARB, (m), (F, "glLoadTransposeMatrixd(%p);\n", (const void *) m));
 }
@@ -2549,7 +2549,7 @@ KEYWORD1 void KEYWORD2 NAME(LoadTransposeMatrixdARB)(const GLdouble * m)
     DISPATCH(LoadTransposeMatrixdARB, (m), (F, "glLoadTransposeMatrixdARB(%p);\n", (const void *) m));
 }
 
-KEYWORD1 void KEYWORD2 NAME(LoadTransposeMatrixf)(const GLfloat * m)
+KEYWORD1 void KEYWORD2 NAME(LoadTransposeMatrixf)(const GLfloat m[16])
 {
     DISPATCH(LoadTransposeMatrixfARB, (m), (F, "glLoadTransposeMatrixf(%p);\n", (const void *) m));
 }
@@ -2559,7 +2559,7 @@ KEYWORD1 void KEYWORD2 NAME(LoadTransposeMatrixfARB)(const GLfloat * m)
     DISPATCH(LoadTransposeMatrixfARB, (m), (F, "glLoadTransposeMatrixfARB(%p);\n", (const void *) m));
 }
 
-KEYWORD1 void KEYWORD2 NAME(MultTransposeMatrixd)(const GLdouble * m)
+KEYWORD1 void KEYWORD2 NAME(MultTransposeMatrixd)(const GLdouble m[16])
 {
     DISPATCH(MultTransposeMatrixdARB, (m), (F, "glMultTransposeMatrixd(%p);\n", (const void *) m));
 }
@@ -2569,7 +2569,7 @@ KEYWORD1 void KEYWORD2 NAME(MultTransposeMatrixdARB)(const GLdouble * m)
     DISPATCH(MultTransposeMatrixdARB, (m), (F, "glMultTransposeMatrixdARB(%p);\n", (const void *) m));
 }
 
-KEYWORD1 void KEYWORD2 NAME(MultTransposeMatrixf)(const GLfloat * m)
+KEYWORD1 void KEYWORD2 NAME(MultTransposeMatrixf)(const GLfloat m[16])
 {
     DISPATCH(MultTransposeMatrixfARB, (m), (F, "glMultTransposeMatrixf(%p);\n", (const void *) m));
 }

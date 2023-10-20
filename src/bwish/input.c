@@ -45,7 +45,10 @@
 
 /* interface headers */
 #include "tcl.h"
-#include "libtermio.h"
+
+#ifndef HAVE_WINDOWS_H
+#  include "libtermio.h"
+#endif
 
 /* for strict c90 */
 #ifndef HAVE_DECL_GETTIMEOFDAY

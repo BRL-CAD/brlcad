@@ -854,7 +854,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_arbn_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_arbn_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_arbn_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_arbn_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_arbn_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_arbn_volume),
@@ -901,7 +901,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_pipe_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_pipe_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_pipe_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_pipe_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_pipe_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_pipe_volume),
@@ -995,7 +995,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_rpc_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_rpc_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_rpc_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_rpc_volume),
@@ -1042,7 +1042,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_rhc_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_rhc_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_rhc_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_rhc_volume),
@@ -1089,7 +1089,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_epa_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_epa_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_epa_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_epa_volume),
@@ -1136,7 +1136,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_ehy_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_ehy_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_ehy_bbox),
 	NULL, /* volume */
@@ -1183,7 +1183,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_eto_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_eto_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_eto_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_eto_volume),
@@ -1277,7 +1277,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_joint_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_joint_params),
 	NULL, /* bbox */
 	NULL, /* volume */
@@ -1509,7 +1509,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_extrude_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_extrude_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_extrude_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_extrude_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_extrude_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_extrude_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_extrude_volume),
@@ -1556,7 +1556,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_submodel_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_submodel_params),
 	NULL, /* bbox */
 	NULL, /* volume */
@@ -1715,7 +1715,7 @@ const struct rt_functab OBJ[] = {
 	/* 32 available placeholder to not offset latter table indices
 	 * (was ID_BINEXPM)
 	 */
-	RT_FUNCTAB_MAGIC, "ID_UNUSED1", "unused1",
+	RT_FUNCTAB_MAGIC, "ID_UNUSED1", "UNUSED1",
 	0, /* ft_use_rpp */
 	NULL, /* prep */
 	NULL, /* shot */
@@ -1811,7 +1811,7 @@ const struct rt_functab OBJ[] = {
 	/* 34 available placeholder to not offset latter table indices
 	 * (was ID_BINMIME)
 	 */
-	RT_FUNCTAB_MAGIC, "ID_UNUSED2", "unused2",
+	RT_FUNCTAB_MAGIC, "ID_UNUSED2", "UNUSED2",
 	0, /* ft_use_rpp */
 	NULL, /* prep */
 	NULL, /* shot */
@@ -1936,7 +1936,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_metaball_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_metaball_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_metaball_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_metaball_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_metaball_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_metaball_bbox),
 	NULL, /* volume */
@@ -1983,7 +1983,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_brep_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_brep_adjust),
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_brep_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_brep_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_brep_bbox),
 	NULL, /* volume */
@@ -2064,20 +2064,20 @@ const struct rt_functab OBJ[] = {
 	NULL, /* tess */
 	NULL, /* tnurb */
 	NULL, /* brep */
-	NULL, /* import5 */
+	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_constraint_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_constraint_export5),
 	NULL, /* import4 */
 	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_constraint_ifree),
-	NULL, /* describe */
+	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_constraint_describe),
 	NULL, /* xform */
-	NULL, /* parse */
-	0, /* sizeof(internal) */
-	0, /* magic */
-	NULL, /* get */
-	NULL, /* adjust */
+	rt_constraint_parse,
+	sizeof(struct rt_constraint_internal),
+	RT_CONSTRAINT_MAGIC,
+	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
 	NULL, /* form */
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_constraint_make),
 	NULL, /* params */
 	NULL, /* bbox */
 	NULL, /* volume */
@@ -2361,7 +2361,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_GET_CAST(rt_script_get), 
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_script_adjust), 
 	RTFUNCTAB_FUNC_FORM_CAST(rt_script_form), 
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_script_make),
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_script_params), 
 	NULL, /* bbox */
 	NULL, /* volume */
@@ -2404,11 +2404,11 @@ const struct rt_functab OBJ[] = {
 	NULL, /* xform */
 	NULL, /* parse */
 	0, /* sizeof(internal) */
-	0, /* magic */
+	RT_MATERIAL_MAGIC,
 	NULL, /* get */
-	NULL, /* adjust */
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_material_adjust),
 	NULL, /* form */
-	NULL, /* make */
+	RTFUNCTAB_FUNC_MAKE_CAST(rt_material_make),
 	NULL, /* params */
 	NULL, /* bbox */
 	NULL, /* volume */

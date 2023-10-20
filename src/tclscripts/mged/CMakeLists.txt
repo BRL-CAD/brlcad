@@ -75,10 +75,12 @@ set(mged_TCLSCRIPTS
   tree.tcl
   xclone.tcl
   )
-BRLCAD_ADDDATA(mged_TCLSCRIPTS tclscripts/mged)
-# no packages in here (so far)
-# pkgIndex_BUILD(tclscripts/mged)
-tclIndex_BUILD(tclscripts/mged)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(mged_TCLSCRIPTS tclscripts/mged)
+  # no packages in here (so far)
+  # pkgIndex_BUILD(tclscripts/mged)
+  tclIndex_BUILD(tclscripts/mged)
+endif (BRLCAD_ENABLE_TCL)
 
 set(mged_tcl_DATA
   l_i0_v0_s0.gif
@@ -125,10 +127,16 @@ set(mged_tcl_DATA
   mike-tux.ppm
   mike-tux.png
   )
-BRLCAD_ADDDATA(mged_tcl_DATA tclscripts/mged)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(mged_tcl_DATA tclscripts/mged)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(rrmb.tcl)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  rrmb.tcl
+  ${mged_tcl_DATA}
+  ${mged_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

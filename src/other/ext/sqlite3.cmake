@@ -65,6 +65,7 @@ if (BRLCAD_SQLITE3_BUILD)
 
   ExternalProject_ByProducts(sqlite3 SQLITE3_BLD ${SQLITE3_INSTDIR} ${INCLUDE_DIR}
     sqlite3.h
+    sqlite3ext.h
     )
 
   set(SQLite3_LIBRARY sqlite3 CACHE STRING "Building bundled sqlite3" FORCE)
@@ -85,6 +86,12 @@ else (BRLCAD_SQLITE3_BUILD)
   set(SQLite3_EXECNAME "${SQLite3_EXECNAME}" CACHE STRING "Building bundled sqlite3" FORCE)
 
 endif (BRLCAD_SQLITE3_BUILD)
+
+mark_as_advanced(SQLite3_EXECNAME)
+mark_as_advanced(SQLite3_INCLUDE_DIR)
+mark_as_advanced(SQLite3_INCLUDE_DIRS)
+mark_as_advanced(SQLite3_LIBRARY)
+mark_as_advanced(SQLite3_LIBRARIES)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/sqlite3.dist")
 

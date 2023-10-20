@@ -230,10 +230,10 @@ set(ap203e2g_LIBS
   librt
   libbu
   libbrep
-  steputils
-  stepeditor
-  stepdai
-  stepcore
+  ${STEPCODE_UTILS_LIBRARY}
+  ${STEPCODE_EDITOR_LIBRARY}
+  ${STEPCODE_DAI_LIBRARY}
+  ${STEPCODE_CORE_LIBRARY}
   ${OPENNURBS_LIBRARIES}
   )
 list(APPEND ap203e2g_LIBS ${ap203e2g_LIBS})

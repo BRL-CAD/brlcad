@@ -1,5 +1,3 @@
-set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/ext/linenoise")
-
 set(GTOOLS_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
@@ -7,43 +5,35 @@ set(GTOOLS_INCLUDE_DIRS
   ${TCLCAD_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
   ${PKG_INCLUDE_DIRS}
-  ${LDIR}
+  ${LINENOISE_INCLUDE_DIRS}
   )
 list(REMOVE_DUPLICATES GTOOLS_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(GTOOLS_INCLUDE_DIRS)
 
 BRLCAD_ADDDATA(gtransfer.c sample_applications)
+
+BRLCAD_ADDEXEC(ganalyze ganalyze.cpp "libanalyze;librt;libbu;libpkg;${LINENOISE_LIBRARIES}" NO_INSTALL)
+set_property(TARGET ganalyze APPEND PROPERTY COMPILE_DEFINITIONS "LINENOISE_DLL_IMPORTS")
+
+BRLCAD_ADDEXEC(gchecker gchecker.cpp "libged;librt;libbu")
 BRLCAD_ADDEXEC(gex "gex.cpp" "libbu;librt")
 BRLCAD_ADDEXEC(glint glint.cpp "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(gqa gqa.c "libged;librt")
-BRLCAD_ADDEXEC(gchecker gchecker.cpp "libged;librt;libbu")
 
-set(GSH_SRCS
-  gsh.cpp
-  ${LDIR}/utf8.c
-  ${LDIR}/linenoise.c
-  ${LDIR}/stringbuf.c
-  )
-BRLCAD_ADDEXEC(gsh "${GSH_SRCS}"  "libged;libdm;libbu")
+BRLCAD_ADDEXEC(gsh gsh.cpp  "libged;libdm;libbu;${LINENOISE_LIBRARIES}")
+set_property(TARGET gsh APPEND PROPERTY COMPILE_DEFINITIONS "LINENOISE_DLL_IMPORTS")
 add_dependencies(gsh dm_plugins)
 
 BRLCAD_ADDEXEC(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)
-
-set(GANALYZE_SRCS
-  ganalyze.cpp
-  ${LDIR}/utf8.c
-  ${LDIR}/linenoise.c
-  ${LDIR}/stringbuf.c
-  )
-BRLCAD_ADDEXEC(ganalyze "${GANALYZE_SRCS}" "libanalyze;librt;libbu;libpkg" NO_INSTALL)
 
 add_subdirectory(beset)
 add_subdirectory(gdiff)
 # add_subdirectory(gist)
 add_subdirectory(tests)
 
-
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  )
 
 # Local Variables:
 # tab-width: 8
