@@ -29,7 +29,7 @@ public:
 	void setOrientationRightLeft(bool rL);
 	void setOrientationZYUp(bool zy);
 	void setNotes(std::string n);
-
+	void setBio(std::string b);
 	void setTopComp(std::string t);
 
 	void setUnitLength(std::string l);
@@ -53,14 +53,14 @@ public:
 	std::string getOrientationRightLeft();
 	std::string getOrientationZYUp();
 	std::string getNotes();
-
+	std::string getBio();
 	std::string getTopComp();
 
 	std::string getUnitLength();
 	std::string getUnitMass();
 	bool isOriginalUnitsLength();
 	bool isOriginalUnitsMass();
-
+	
 private:
 	// Path to file that will be used to generate report
 	std::string filepath;
@@ -104,4 +104,8 @@ private:
 	// Unit mass
 	std::string uMass;
 	bool originalUnitsMass;
+
+	//Optional Bio
+	std::string bio;
+
 };
