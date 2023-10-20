@@ -838,6 +838,8 @@ file(WRITE "${CMAKE_BINARY_DIR}/bext_dirs.cmake" "set(bext_dirs)\n")
 function(find_bpackage)
   string(TOLOWER "${ARGV0}" pdir)
   file(APPEND "${CMAKE_BINARY_DIR}/bext_dirs.cmake" "list(APPEND bext_dirs ${pdir})\n")
+  find_package_reset(${ARGV0} RESET_TP)
+  set(${ARGV0}_ROOT "${CMAKE_BINARY_DIR}")
   find_package(${ARGV})
 endfunction(find_bpackage)
 
@@ -847,18 +849,14 @@ endfunction(find_bpackage)
 # Note - our copy is modified from Vanilla upstream to support specifying a
 # custom prefix - until a similar feature is available in upstream zlib, we
 # need this to reliably avoid conflicts between bundled and system zlib.
-find_package_reset(ZLIB RESET_TP)
 unset(Z_PREFIX CACHE)
 unset(Z_PREFIX_STR CACHE)
-set(ZLIB_ROOT "${CMAKE_BINARY_DIR}")
 find_bpackage(ZLIB REQUIRED)
 if ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
   set(Z_PREFIX_STR "brl_" CACHE STRING "Using local zlib" FORCE)
 endif ("${ZLIB_LIBRARIES}" MATCHES "${CMAKE_BINARY_DIR}/.*")
 
 # libregex regular expression matching
-find_package_reset(REGEX RESET_TP)
-set(REGEX_ROOT "${CMAKE_BINARY_DIR}")
 find_bpackage(REGEX REQUIRED)
 
 # netpbm library - support for pnm,ppm,pbm, etc. image files
@@ -870,22 +868,16 @@ find_bpackage(REGEX REQUIRED)
 # form our netpbm copy isn't really a good fit for ext, but it is kept there
 # because a) there is an active upstream and b) we are unlikely to need to
 # modify these sources to our needs from a functional perspective.
-find_package_reset(NETPBM RESET_TP)
-set(NETPBM_ROOT "${CMAKE_BINARY_DIR}")
 find_bpackage(NETPBM)
 
 # libpng - Portable Network Graphics image file support
 # http://www.libpng.org/pub/png/libpng.html
-find_package_reset(PNG RESET_TP)
 if (RESET_TP)
   unset(PNG_PNG_INCLUDE_DIR CACHE)
 endif (RESET_TP)
-set(PNG_ROOT "${CMAKE_BINARY_DIR}")
 find_bpackage(PNG)
 
 # libutahrle - Utah RLE Image library
-find_package_reset(UTAHRLE RESET_TP)
-set(UTAHRLE_ROOT "${CMAKE_BINARY_DIR}")
 find_bpackage(UTAHRLE)
 
 # STEPcode - support for reading and writing STEP files
@@ -896,7 +888,6 @@ find_bpackage(UTAHRLE)
 # copy and a released upstream copy synced - in anticipation of that, stepcode
 # lives in ext.
 if (BRLCAD_ENABLE_STEP)
-  find_package_reset(STEPCODE RESET_TP)
   if (RESET_TP)
     unset(STEPCODE_CORE_LIBRARY    CACHE)
     unset(STEPCODE_DAI_DIR         CACHE)
@@ -912,15 +903,17 @@ if (BRLCAD_ENABLE_STEP)
     unset(STEPCODE_UTILS_DIR       CACHE)
     unset(STEPCODE_UTILS_LIBRARY   CACHE)
   endif (RESET_TP)
-  set(STEPCODE_ROOT "${CMAKE_BINARY_DIR}")
   find_bpackage(STEPCODE)
 endif (BRLCAD_ENABLE_STEP)
 
 
 # Eigen - linear algebra library
+# Because this comes from the non-install location and uses Eigen3 for a
+# package name, it needs a little custom logic
+file(APPEND "${CMAKE_BINARY_DIR}/bext_dirs.cmake" "list(APPEND bext_dirs eigen)\n")
 find_package_reset(Eigen3 RESET_TP)
 set(Eigen3_ROOT "${BRLCAD_EXT_NOINSTALL_DIR}/share/eigen3/cmake")
-find_bpackage(Eigen3 NO_MODULE)
+find_package(Eigen3 NO_MODULE)
 if (TARGET Eigen3::Eigen)
   get_target_property(EDIR Eigen3::Eigen INTERFACE_INCLUDE_DIRECTORIES)
   if ("${EDIR}" MATCHES "${BRLCAD_EXT_NOINSTALL_DIR}*")
@@ -931,41 +924,34 @@ endif (TARGET Eigen3::Eigen)
 set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen)
 list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
 set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} Eigen CACHE STRING "Bundled system include dirs" FORCE)
+list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
+set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS CACHE STRING "Bundled system include dirs" FORCE)
 
 
 # GDAL -  translator library for raster and vector geospatial data formats
 # https://gdal.org
 if (BRLCAD_ENABLE_GDAL)
-  find_package_reset(GDAL RESET_TP)
-  set(GDAL_ROOT "${CMAKE_BINARY_DIR}")
   find_bpackage(GDAL)
 endif (BRLCAD_ENABLE_GDAL)
 
 # Linenoise - line editing library
 # https://github.com/msteveb/linenoise
-find_package_reset(LINENOISE RESET_TP)
-set(LINENOISE_ROOT "${CMAKE_BINARY_DIR}")
 find_bpackage(LINENOISE)
 
 # LMDB - Lightning Memory-Mapped Database
 # https://github.com/LMDB/lmdb
-find_package_reset(LMDB RESET_TP)
-set(LMDB_ROOT "${CMAKE_BINARY_DIR}")
 find_bpackage(LMDB)
 
 # Open Asset Import Library - library for supporting I/O for a number of
 # Geometry file formats
 # https://github.com/assimp/assimp
 if (BRLCAD_ENABLE_ASSETIMPORT)
-  find_package_reset(ASSETIMPORT RESET_TP)
-  set(ASSETIMPORT_ROOT "${CMAKE_BINARY_DIR}")
   find_bpackage(ASSETIMPORT)
 endif (BRLCAD_ENABLE_ASSETIMPORT)
 
 # OpenMesh Library - library for representing and manipulating polygonal meshes
 # https://www.graphics.rwth-aachen.de/software/openmesh/
 if (BRLCAD_ENABLE_OPENMESH)
-  find_package_reset(OPENMESH RESET_TP)
   if (RESET_TP)
     unset(OPENMESH_CORE_LIBRARY          CACHE)
     unset(OPENMESH_CORE_LIBRARY_DEBUG    CACHE)
@@ -974,17 +960,14 @@ if (BRLCAD_ENABLE_OPENMESH)
     unset(OPENMESH_TOOLS_LIBRARY_DEBUG   CACHE)
     unset(OPENMESH_TOOLS_LIBRARY_RELEASE CACHE)
   endif (RESET_TP)
-  set(OpenMesh_ROOT "${CMAKE_BINARY_DIR}")
   find_bpackage(OpenMesh)
 endif (BRLCAD_ENABLE_OPENMESH)
 
 # openNURBS Non-Uniform Rational BSpline library
 # https://github.com/mcneel/opennurbs
-find_package_reset(OPENNURBS RESET_TP)
 if (RESET_TP)
   unset(OPENNURBS_X_INCLUDE_DIR CACHE)
 endif (RESET_TP)
-set(OPENNURBS_ROOT "${CMAKE_BINARY_DIR}")
 find_bpackage(OPENNURBS)
 set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS)
 list(REMOVE_DUPLICATES SYS_INCLUDE_PATTERNS)
@@ -993,33 +976,27 @@ set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} openNURBS CACHE STRING "Bundled
 
 # OpenCV - Open Source Computer Vision Library
 # http://opencv.org
-find_package_reset(OpenCV RESET_TP)
 
 # First, see if we have a bundled version
 set(OpenCV_DIR_TMP "${OpenCV_DIR}")
 set(OpenCV_DIR "${CMAKE_BINARY_DIR}/${LIB_DIR}/cmake/opencv4")
-set(OpenCV_ROOT ${CMAKE_BINARY_DIR})
 find_bpackage(OpenCV COMPONENTS core)
-unset(OpenCV_ROOT)
 
 # If no bundled copy, see what the system has
 if (NOT TARGET opencv_core)
+  unset(OpenCV_ROOT)
   set(OpenCV_DIR "${OpenCV_DIR_TMP}")
-  find_bpackage(OpenCV COMPONENTS core)
+  find_package(OpenCV COMPONENTS core)
 endif (NOT TARGET opencv_core)
 
 
 # OSMesa Off Screen Rendering library
 # https://github.com/starseeker/osmesa
-find_package_reset(OSMESA RESET_TP)
-set(OSMESA_ROOT "${CMAKE_BINARY_DIR}")
 find_bpackage(OSMESA)
 
 
 # Poly2Tri - constrained Delaunay triangulation
 # https://github.com/jhasse/poly2tri
-find_package_reset(POLY2TRI RESET_TP)
-set(POLY2TRI_ROOT "${CMAKE_BINARY_DIR}")
 find_bpackage(POLY2TRI REQUIRED)
 
 
@@ -1032,7 +1009,6 @@ if (BRLCAD_ENABLE_TCL)
   endif (BRLCAD_ENABLE_TK)
   mark_as_advanced(TCL_ENABLE_TK)
 
-  find_package_reset(TCL RESET_TP)
   find_package_reset(TK RESET_TP)
   if (RESET_TP)
     unset(TCL_INCLUDE_PATH CACHE)
@@ -1045,7 +1021,6 @@ if (BRLCAD_ENABLE_TCL)
     unset(TTK_STUB_LIBRARY CACHE)
   endif (RESET_TP)
 
-  set(TCL_ROOT "${CMAKE_BINARY_DIR}")
   find_bpackage(TCL)
   set(HAVE_TK 1)
   set(ITK_VERSION "3.4")
@@ -1064,8 +1039,8 @@ endif (BRLCAD_ENABLE_TCL)
 # https://download.qt.io/archive/qt
 if (BRLCAD_ENABLE_QT)
 
+  # Be sure to clear any Qt5 vars
   find_package_reset(Qt5 RESET_TP)
-  find_package_reset(Qt6 RESET_TP)
 
   set(QtComponents Core Widgets Gui Svg Network)
   if (BRLCAD_ENABLE_OPENGL)
