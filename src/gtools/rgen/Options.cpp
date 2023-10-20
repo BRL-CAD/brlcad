@@ -128,6 +128,10 @@ std::string Options::getTemppath() {
 	return temppath;
 }
 
+std::string Options::getBio() {
+	return bio;
+}
+
 int Options::getWidth() {
 	return width;
 }
