@@ -47,7 +47,7 @@ bool readParameters(int argc, char** argv, Options &opt)
 
 
 
-    while ((opts = bu_getopt(argc, argv, "g?Oop:F:P:f:n:T:E:N:l:m:c:t:Z")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "g?Oop:F:P:f:n:T:E:N:l:m:c:t:B:Z")) != -1) {
 
         switch (opts) {
             case 'p':
@@ -104,7 +104,7 @@ bool readParameters(int argc, char** argv, Options &opt)
                 opt.setUnitMass(bu_optarg);
                 break;
             case 'B':
-                
+                opt.setBio(bu_optarg);
                 break;
             case '?':
                 h = true;

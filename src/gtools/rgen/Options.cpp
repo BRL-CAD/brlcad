@@ -23,6 +23,7 @@ Options::Options()
 	originalUnitsLength = true;
 	uMass = "g";
 	originalUnitsMass = true;
+	bio = "N/A";
 }
 
 Options::~Options()
@@ -110,6 +111,10 @@ void Options::setUnitLength(std::string l) {
 void Options::setUnitMass(std::string m) {
 	uMass = m;
 	originalUnitsMass = false;
+}
+
+void Options::setBio(std::string b) {
+	bio = b;
 }
 
 std::string Options::getFilepath() {
