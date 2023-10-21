@@ -1,3 +1,30 @@
+set(gist_ignore_files
+  CMakeLists.txt
+  FactsHandler.h
+  IFPainter.h
+  InformationGatherer.h
+  Options.h
+  PerspectiveGatherer.h
+  RenderHandler.h
+  Position.h
+  picohash.h
+  CONTRIBUTING.md
+  README.md
+)
+
+set(GIST_SRCS
+  FactsHandler.cpp
+  IFPainter.cpp
+  InformationGatherer.cpp
+  main.cpp
+  Options.cpp
+  PerspectiveGatherer.cpp
+  Position.cpp
+  RenderHandler.cpp
+)
+
+CMAKEFILES(${gist_ignore_files} ${GIST_SRCS})
+
 FIND_PACKAGE(OpenCV)
 if(NOT OpenCV_FOUND)
   message("OpenCV is DISABLED")
@@ -15,35 +42,10 @@ set(GIST_INCLUDE_DIRS
 list(REMOVE_DUPLICATES GIST_INCLUDE_DIRS)
 include_directories(${GIST_INCLUDE_DIRS})
 
-set(GIST_SRCS
-  FactsHandler.cpp
-  IFPainter.cpp
-  InformationGatherer.cpp
-  main.cpp
-  Options.cpp
-  PerspectiveGatherer.cpp
-  Position.cpp
-  RenderHandler.cpp
-)
-
 BRLCAD_ADDEXEC(gist "${GIST_SRCS}"  "libbu;librt;libged;${OpenCV_LIBS};")
 
 target_compile_features(gist PRIVATE cxx_std_17)
 
-set(gist_ignore_files
-  CMakeLists.txt
-  FactsHandler.h
-  IFPainter.h
-  InformationGatherer.h
-  Options.h
-  PerspectiveGatherer.h
-  RenderHandler.h
-  Position.h
-  picohash.h
-  CONTRIBUTING.md
-  README.md
-)
-CMAKEFILES(${gist_ignore_files})
 
 
 MACRO (COPY_DLL trgt libname)
@@ -51,12 +53,14 @@ MACRO (COPY_DLL trgt libname)
     TARGET ${trgt}
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}
-    ARGS -E copy "${_OpenCV_LIB_PATH}/${libname}.dll" ${CMAKE_CURRENT_BINARY_DIR}
+    ARGS -E copy_if_different "${_OpenCV_LIB_PATH}/${libname}.dll" ${CMAKE_CURRENT_BINARY_DIR}
   )
 ENDMACRO (COPY_DLL)
 
-# COPY_DLL (gist opencv_world${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH})
-# COPY_DLL (gist opencv_world${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH}d)
+if (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
+  COPY_DLL(gist opencv_world${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH})
+  COPY_DLL(gist opencv_world${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH}d)
+endif (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
 
 
 # Local Variables:
