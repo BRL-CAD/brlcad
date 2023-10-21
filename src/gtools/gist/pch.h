@@ -30,16 +30,17 @@
 // Necessary C++ header files
 #include <iostream>
 #include <cstdlib>
+#include <cstdio>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <vector>
 #include <ctime>
+#include <filesystem>
 #include <sys/stat.h>
+#include <sys/stat.h>
+
 #include "picohash.h"
-#include<cstdio>
-#include<filesystem>
-#include <sys/stat.h>
 
 // BRL-CAD header files
 #include "bu/getopt.h"
