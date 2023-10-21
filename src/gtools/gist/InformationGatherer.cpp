@@ -31,6 +31,8 @@
 #  include <unistd.h>
 #endif
 
+#include "bu/log.h"
+
 
 void
 getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
@@ -45,7 +47,7 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
 	throw std::runtime_error("popen() failed!");
 
     try {
-        while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+        while (bu_fgets(buffer, sizeof buffer, pipe) != NULL) {
             result += buffer;
         }
     } catch (...) {
@@ -132,7 +134,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
 	    throw std::runtime_error("popen() failed!");
 
         try {
-            while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+            while (bu_fgets(buffer, sizeof buffer, pipe) != NULL) {
                 result += buffer;
             }
         } catch (...) {
@@ -160,7 +162,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
         if (!pipe)
 	    throw std::runtime_error("popen() failed!");
         try {
-            while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+            while (bu_fgets(buffer, sizeof buffer, pipe) != NULL) {
                 result += buffer;
             }
         } catch (...) {
