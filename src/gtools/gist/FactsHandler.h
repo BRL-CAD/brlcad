@@ -1,7 +1,8 @@
 /*                  F A C T S H A N D L E R . H
- * IFPainter.h
+ * BRL-CAD
  *
- * Copyright (c) 2023 InformationGatherer.h
+ * Copyright (c) 2023 United States Government as represented by
+ * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
