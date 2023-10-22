@@ -30,6 +30,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define LIBTERMIO_IMPLEMENTATION
+#if defined(HAVE_CONIO_H)
+#  include <conio.h>
+#else
+#  include "libtermio.h"
+#endif
+
 #include "bio.h"
 
 #include "bu/app.h"
@@ -37,8 +44,6 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "dm.h"
-#define LIBTERMIO_IMPLEMENTATION
-#include "libtermio.h"
 
 #define COMMA ','
 
@@ -131,9 +136,11 @@ main(int argc, char **argv)
 	fb_write(fbp, 0, i, buf, 256);
 
     /* Set RAW mode */
+#ifndef HAVE_CONIO_H
     save_Tty(0);
     set_Raw(0);
     clr_Echo(0);
+#endif
 
     do {
 	/* Build color map for current value */
@@ -174,7 +181,11 @@ main(int argc, char **argv)
     } while (doKeyPad());
 
     fb_wmap(fbp, &old_map);
+
+#ifndef HAVE_CONIO_H
     reset_Tty(0);
+#endif
+
     (void) fprintf(stdout,  "\n");	/* Move off of the output line.	*/
     return 0;
 }
@@ -194,13 +205,19 @@ i v	select intensity value\r\n\
 q	quit\r\n\
 \\n	Exit\r\n";
 
+
 int
 doKeyPad(void)
 {
     int ch;
 
+#if defined(HAVE_CONIO_H)
+    if ((ch = getch()) == EOF)
+	return 0;		/* done */
+#else
     if ((ch = getchar()) == EOF)
 	return 0;		/* done */
+#endif
 
     switch (ch) {
 	default :
