@@ -223,12 +223,15 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	      message("WARNING: ${outdir} man page ${fname_root} has no associated build target.")
 	      math(EXPR errors "${errors} + 1")
 	    endif (NOT TARGET "${fname_root}")
-	  else ("${IS_FILTERED}" EQUAL "-1")
-	    if (TARGET "${fname_root}")
-	      message("WARNING: ${outdir} man page ${fname_root} is listed as not having a build target but one was found - remove from filtered list.")
-	      math(EXPR errors "${errors} + 1")
-	    endif (TARGET "${fname_root}")
-	  endif ("${IS_FILTERED}" EQUAL "-1")
+	 # TODO - until we can ensure uniformity across all platforms for
+	 # definition of man1/man3 targets, we need to skip this check.
+	 # Instead we just ignore anything in the filtered list completely.
+	 #else ("${IS_FILTERED}" EQUAL "-1")
+	 #  if (TARGET "${fname_root}")
+	 #    message("WARNING: ${outdir} man page ${fname_root} is listed as not having a build target but one was found - remove from filtered list.")
+	 #    math(EXPR errors "${errors} + 1")
+	 #  endif (TARGET "${fname_root}")
+	 endif ("${IS_FILTERED}" EQUAL "-1")
 	endif (NOT "${outdir}" STREQUAL "man5" AND NOT "${outdir}" STREQUAL "mann")
       endif ("${outdir}" MATCHES "man*")
 
