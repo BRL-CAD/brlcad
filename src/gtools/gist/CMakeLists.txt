@@ -28,7 +28,8 @@ set(GIST_SRCS
 
 CMAKEFILES(${gist_ignore_files} ${GIST_SRCS})
 
-FIND_PACKAGE(OpenCV)
+find_package(OpenCV COMPONENTS core features2d imgproc highgui)
+# FIND_PACKAGE(OpenCV)
 if(NOT OpenCV_FOUND)
   message("OpenCV is DISABLED")
   return()
@@ -47,22 +48,14 @@ include_directories(${GIST_INCLUDE_DIRS})
 
 BRLCAD_ADDEXEC(gist "${GIST_SRCS}"  "libbu;librt;libged;${OpenCV_LIBS};")
 
+# FIXME: should be cxx_std_14, but uses std::filesystem.  should use libbu.
 target_compile_features(gist PRIVATE cxx_std_17)
 
-
-
-MACRO (COPY_DLL trgt libname)
-  ADD_CUSTOM_COMMAND (
-    TARGET ${trgt}
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND}
-    ARGS -E copy_if_different "${_OpenCV_LIB_PATH}/${libname}.dll" ${CMAKE_CURRENT_BINARY_DIR}
-  )
-ENDMACRO (COPY_DLL)
-
 if (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
-  COPY_DLL(gist opencv_world${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH})
-  COPY_DLL(gist opencv_world${OpenCV_VERSION_MAJOR}${OpenCV_VERSION_MINOR}${OpenCV_VERSION_PATCH}d)
+  add_custom_command(TARGET gist POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:gist> $<TARGET_FILE_DIR:gist>
+    COMMAND_EXPAND_LISTS
+  )
 endif (CMAKE_SHARED_LIBRARY_SUFFIX STREQUAL ".dll")
 
 
