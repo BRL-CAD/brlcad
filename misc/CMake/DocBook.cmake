@@ -202,6 +202,7 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
   if(BRLCAD_EXTRADOCS)
     set(all_outfiles)
+    set(errors 0)
 
     # Each file gets its own script file and custom command, which
     # handle all the outputs to be produced from that file.
@@ -218,12 +219,14 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	      if (BRLCAD_COMPONENTS)
 		continue()
 	      else (BRLCAD_COMPONENTS)
-		message(FATAL_ERROR "${outdir} man page ${fname_root} has no associated build target.")
+		message("${outdir} man page ${fname_root} has no associated build target.")
+		math(EXPR errors "${errors} + 1")
 	      endif (BRLCAD_COMPONENTS)
 	    endif (NOT TARGET "${fname_root}")
 	  else ("${IS_FILTERED}" EQUAL "-1")
 	    if (TARGET "${fname_root}")
-	      message(FATAL_ERROR "${outdir} man page ${fname_root} is listed as not having a build target but one was found - remove from filtered list.")
+	      message("${outdir} man page ${fname_root} is listed as not having a build target but one was found - remove from filtered list.")
+	      math(EXPR errors "${errors} + 1")
 	    endif (TARGET "${fname_root}")
 	  endif ("${IS_FILTERED}" EQUAL "-1")
 	endif (NOT "${outdir}" STREQUAL "man5" AND NOT "${outdir}" STREQUAL "mann")
@@ -314,6 +317,10 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
       endif(NOT "${outputs}" STREQUAL "")
 
     endforeach(fname ${xml_files})
+
+    if (errors GREATER "0")
+      message(FATAL_ERROR "Halting build due to previous DocBook error(s).")
+    endif (errors GREATER "0")
 
     if(NOT "${all_outfiles}" STREQUAL "")
       add_custom_target(docbook-${target_root} ALL DEPENDS ${all_outfiles})
