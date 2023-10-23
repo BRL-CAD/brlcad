@@ -1,15 +1,18 @@
 set(gist_ignore_files
   CMakeLists.txt
+  CONTRIBUTING.md
   FactsHandler.h
   IFPainter.h
   InformationGatherer.h
+  LICENSE
   Options.h
   PerspectiveGatherer.h
-  RenderHandler.h
   Position.h
-  picohash.h
-  CONTRIBUTING.md
   README.md
+  RenderHandler.h
+  TODO
+  pch.h
+  picohash.h
 )
 
 set(GIST_SRCS
