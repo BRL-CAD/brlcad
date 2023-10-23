@@ -55,7 +55,7 @@ IFPainter::getCroppedImageDims(std::string imgPath)
     int imgWidth = lilImage.size().width;
     int imgHeight = lilImage.size().height;
 
-    return std::pair(imgWidth, imgHeight);
+    return std::pair<int, int>(imgWidth, imgHeight);
 }
 
 
