@@ -20,7 +20,7 @@
 
 /*----------------------------------------------------------------------*/
 /* @file lod.h */
-/** @addtogroup bg_lod */
+/** @addtogroup bv_lod */
 /** @{ */
 
 /**
@@ -28,14 +28,13 @@
  *  particularly for meshes.
  */
 
-#ifndef BG_LOD_H
-#define BG_LOD_H
+#ifndef BV_LOD_H
+#define BV_LOD_H
 
 #include "common.h"
 #include "vmath.h"
-#include "bv.h"
 #include "bu/ptbl.h"
-#include "bg/defines.h"
+#include "bv/defines.h"
 
 __BEGIN_DECLS
 
@@ -45,30 +44,30 @@ __BEGIN_DECLS
  * camera is looking.  If the view width and height are not set or there is
  * some other problem, no volume is computed. This function is intended
  * primarily to be set as an updating callback for the bview structure. */
-BG_EXPORT extern void
-bg_view_bounds(struct bview *v);
+BV_EXPORT extern void
+bv_view_bounds(struct bview *v);
 
 /* Given a screen x,y coordinate, construct the set of all scene objects whose
  * AABB intersect with the OBB created by the projection of that pixel through
  * the scene. sset holds the struct bv_scene_obj pointers of the selected
  * objects.  */
-BG_EXPORT int
-bg_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y);
+BV_EXPORT int
+bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y);
 
 /* Given a screen x1,y1,x2,y2 rectangle, construct and return the set of all scene
  * objects whose AABB intersect with the OBB created by the projection of that
  * rectangle through the scene. */
-BG_EXPORT int
-bg_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, int x2, int y2);
+BV_EXPORT int
+bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, int x2, int y2);
 
 /* Storing and reading from a lot of small, individual files doesn't work very
  * well on some platforms.  We provide a "context" to manage bookkeeping of data
  * across objects. The details are implementation internal - the application
  * will simply create a context with a file name and provide it to the various
  * LoD calls. */
-struct bg_mesh_lod_context_internal;
-struct bg_mesh_lod_context {
-    struct bg_mesh_lod_context_internal *i;
+struct bv_mesh_lod_context_internal;
+struct bv_mesh_lod_context {
+    struct bv_mesh_lod_context_internal *i;
 };
 
 /* Create an LoD context using "name". If data is already present associated
@@ -79,21 +78,21 @@ struct bg_mesh_lod_context {
  * Note that "name" should be a full, unique path associated with the source
  * database.  libbu will manage where the context data is cached.
 */
-BG_EXPORT struct bg_mesh_lod_context *
-bg_mesh_lod_context_create(const char *name);
+BV_EXPORT struct bv_mesh_lod_context *
+bv_mesh_lod_context_create(const char *name);
 
 /* Free all memory associated with context c.  Note that this call does NOT
  * remove the on-disk data. */
-BG_EXPORT void
-bg_mesh_lod_context_destroy(struct bg_mesh_lod_context *c);
+BV_EXPORT void
+bv_mesh_lod_context_destroy(struct bv_mesh_lod_context *c);
 
 /* Remove cache data associated with key.  If key == 0, remove ALL cache data
  * associated with all LoD objects in c. (i.e. a full LoD cache reset for that
  * .g database).  If key == 0 AND c == NULL, clear all LoD cache data for all
  * .g databases associated with the current user's cache.
  */
-BG_EXPORT void
-bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key);
+BV_EXPORT void
+bv_mesh_lod_clear_cache(struct bv_mesh_lod_context *c, unsigned long long key);
 
 /**
  * Given a set of points and faces, calculate a lookup key and determine if the
@@ -106,14 +105,14 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key);
  *
  * If user_key != 0, it will be used instead of the mesh data hash as the db
  * key to be used for subsequent lookups.  Typically calculated with
- * bg_mesh_lod_custom_key from user supplied data, if the mesh data is not
+ * bv_mesh_lod_custom_key from user supplied data, if the mesh data is not
  * the desired source of the key.
  *
- * Note: to clear pre-existing cached data, run bg_mesh_lod_clear_cache();
+ * Note: to clear pre-existing cached data, run bv_mesh_lod_clear_cache();
  *
  * @return the lookup key calculated from the data */
-BG_EXPORT unsigned long long
-bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *f, size_t fcnt, unsigned long long user_key, fastf_t fratio);
+BV_EXPORT unsigned long long
+bv_mesh_lod_cache(struct bv_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *f, size_t fcnt, unsigned long long user_key, fastf_t fratio);
 
 
 /**
@@ -122,8 +121,8 @@ bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, 
  * on which to base a look-up key (for example, mesh data being used to represent
  * a non-mesh object.
  */
-BG_EXPORT unsigned long long
-bg_mesh_lod_custom_key(void *data, size_t data_size);
+BV_EXPORT unsigned long long
+bv_mesh_lod_custom_key(void *data, size_t data_size);
 
 
 
@@ -142,8 +141,8 @@ bg_mesh_lod_custom_key(void *data, size_t data_size);
  * a large model without having to hash the full mesh data of the model
  * to retrieve the data.
  */
-BG_EXPORT unsigned long long
-bg_mesh_lod_key_get(struct bg_mesh_lod_context *c, const char *name);
+BV_EXPORT unsigned long long
+bv_mesh_lod_key_get(struct bv_mesh_lod_context *c, const char *name);
 
 /**
  * Given a name and a key, instruct the context to associate that name with
@@ -151,34 +150,34 @@ bg_mesh_lod_key_get(struct bg_mesh_lod_context *c, const char *name);
  *
  * Returns 0 if successful, else error
  */
-BG_EXPORT int
-bg_mesh_lod_key_put(struct bg_mesh_lod_context *c, const char *name, unsigned long long key);
+BV_EXPORT int
+bv_mesh_lod_key_put(struct bv_mesh_lod_context *c, const char *name, unsigned long long key);
 
 /**
- * Set up the bg_mesh_lod container using cached LoD information associated
+ * Set up the bv_mesh_lod container using cached LoD information associated
  * with key.  If no cached data has been prepared, a NULL container is
- * returned - to prepare cached data, call bg_mesh_lod_cache with the original
+ * returned - to prepare cached data, call bv_mesh_lod_cache with the original
  * mesh input data.  This call is intended to be usable in situations where
  * we don't want to pull the full mesh data set into memory, so we can't assume
  * the original data is present.
  *
- * Note: bg_mesh_lod assumes a non-changing mesh - if the mesh is changed after
+ * Note: bv_mesh_lod assumes a non-changing mesh - if the mesh is changed after
  * it is created, the internal container does *NOT* automatically update.  In
  * that case the old struct should be destroyed and a new one created.
  *
- * A bg_mesh_lod return from this function will be initialized only to the
+ * A bv_mesh_lod return from this function will be initialized only to the
  * lowest level of data (i.e. the coarsest possible representation of the
- * object.) To tailor the data, use the bg_mesh_lod_view function.  For lower
- * level control, the bg_mesh_lod_level function may be used to explicitly
+ * object.) To tailor the data, use the bv_mesh_lod_view function.  For lower
+ * level control, the bv_mesh_lod_level function may be used to explicitly
  * manipulate the loaded LoD (usually used for debugging, but also useful if an
  * application wishes to visualize levels explicitly.)
  */
-BG_EXPORT struct bv_mesh_lod *
-bg_mesh_lod_create(struct bg_mesh_lod_context *c, unsigned long long key);
+BV_EXPORT struct bv_mesh_lod *
+bv_mesh_lod_create(struct bv_mesh_lod_context *c, unsigned long long key);
 
 /* Clean up the lod container. */
-BG_EXPORT void
-bg_mesh_lod_destroy(struct bv_mesh_lod *l);
+BV_EXPORT void
+bv_mesh_lod_destroy(struct bv_mesh_lod *l);
 
 /**
  * Given a scene object with mesh LoD data stored in s->draw_data, reduce
@@ -187,8 +186,8 @@ bg_mesh_lod_destroy(struct bv_mesh_lod *l);
  * currently is OpenGL display lists - once generated, we can clear the
  * internally stored LoD data until the level changes.  Note that there is a
  * re-loading performance penalty as a trade-off to the memory savings. */
-BG_EXPORT void
-bg_mesh_lod_memshrink(struct bv_scene_obj *s);
+BV_EXPORT void
+bv_mesh_lod_memshrink(struct bv_scene_obj *s);
 
 /**
  * Given a scene object with mesh LoD data stored in s->draw_data and a bview,
@@ -198,8 +197,8 @@ bg_mesh_lod_memshrink(struct bv_scene_obj *s);
  *
  * Returns the level selected.  If v == NULL, return current level of l.  If
  * there is an error or l == NULL, return -1; */
-BG_EXPORT int
-bg_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset);
+BV_EXPORT int
+bv_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset);
 
 /**
  * Given a scene object with mesh LoD data stored in s->draw_data and a detail
@@ -210,14 +209,14 @@ bg_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset);
  *
  * Returns the level selected.  If level == -1, return current level of l.  If
  * there is an error, return -1; */
-BG_EXPORT int
-bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset);
+BV_EXPORT int
+bv_mesh_lod_level(struct bv_scene_obj *s, int level, int reset);
 
 /* Free a scene object's LoD data.  Suitable as a s_free_callback function
  * for a bv_scene_obj.  This function will also trigger any additional
  * "free" callback functions which might be defined for the LoD container. */
-BG_EXPORT void
-bg_mesh_lod_free(struct bv_scene_obj *s);
+BV_EXPORT void
+bv_mesh_lod_free(struct bv_scene_obj *s);
 
 
 
@@ -226,16 +225,16 @@ bg_mesh_lod_free(struct bv_scene_obj *s);
  * to the core LoD management logic with callbacks */
 
 /* Set function callbacks for retrieving and freeing high levels of mesh detail */
-BG_EXPORT void
-bg_mesh_lod_detail_setup_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod *, void *), void *cb_data);
-BG_EXPORT void
-bg_mesh_lod_detail_clear_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod *, void *));
-BG_EXPORT void
-bg_mesh_lod_detail_free_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod *, void *));
+BV_EXPORT void
+bv_mesh_lod_detail_setup_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod *, void *), void *cb_data);
+BV_EXPORT void
+bv_mesh_lod_detail_clear_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod *, void *));
+BV_EXPORT void
+bv_mesh_lod_detail_free_clbk(struct bv_mesh_lod *lod, int (*clbk)(struct bv_mesh_lod *, void *));
 
 __END_DECLS
 
-#endif  /* BG_LOD_H */
+#endif  /* BV_LOD_H */
 /** @} */
 /*
  * Local Variables:

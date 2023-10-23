@@ -39,13 +39,14 @@
 #include <ctype.h>
 #include <time.h>
 
-#include "bv/plot3.h"
+//#include "bv/plot3.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bn/tol.h"
 #include "bg/tri_tri.h"
 #include "bg/trimesh.h"
 
+#if 0
 static void
 plot_faces(const char *fname, std::set<int> *faces, int *f, point_t *v)
 {
@@ -69,6 +70,7 @@ plot_faces(const char *fname, std::set<int> *faces, int *f, point_t *v)
     }
     fclose(plot_file);
 }
+#endif
 
 /* For NURBS refinement, we do this once and keep the set of "inside" faces from
  * each mesh.  If any of the vertices from those faces are still inside after a
@@ -212,11 +214,11 @@ bg_trimesh_isect(
 
     bu_log("m1_intersecting_faces size: %zd\n", m1_intersecting_faces.size());
 
-    plot_faces("m1.plot3", &m1_intersecting_faces, faces_1, vertices_1);
+    //plot_faces("m1.plot3", &m1_intersecting_faces, faces_1, vertices_1);
 
     bu_log("m2_intersecting_faces size: %zd\n", m2_intersecting_faces.size());
 
-    plot_faces("m2.plot3", &m2_intersecting_faces, faces_2, vertices_2);
+    //plot_faces("m2.plot3", &m2_intersecting_faces, faces_2, vertices_2);
 
 
 

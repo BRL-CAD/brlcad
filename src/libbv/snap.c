@@ -31,9 +31,14 @@
 #include <errno.h>
 
 #include "bu/opt.h"
+#include "bu/ptbl.h"
 #include "bu/vls.h"
+#include "bn/tol.h"
 #include "bg/lseg.h"
-#include "bv.h"
+#include "bv/defines.h"
+#include "bv/snap.h"
+#include "bv/util.h"
+#include "bv/vlist.h"
 
 struct bv_cp_info {
     double ctol_sq; // square of the distance that defines "close to a line"

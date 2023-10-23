@@ -311,6 +311,7 @@ bg_polygon_cpy(struct bg_polygon *dest, struct bg_polygon *src)
     }
 }
 
+#if 0
 void
 bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b)
 {
@@ -352,6 +353,7 @@ bg_polygon_plot(const char *filename, const point_t *pnts, int npnts, int r, int
 
     fclose(plot_file);
 }
+#endif
 
 /*
  * Local Variables:

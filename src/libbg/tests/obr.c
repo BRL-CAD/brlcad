@@ -27,8 +27,9 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
-#include "bv/plot3.h"
+//#include "bv/plot3.h"
 
+#if 0
 static
 void plot_obr(int test_num, const point_t *pnt_array, int pnt_cnt)
 {
@@ -50,6 +51,7 @@ void plot_obr(int test_num, const point_t *pnt_array, int pnt_cnt)
     fclose(plot_file);
     bu_vls_free(&name);
 }
+#endif
 
 
 int
@@ -71,7 +73,6 @@ main(int argc, const char **argv)
 	point2d_t pnts[4+1] = {{0}};
 	point2d_t expected[4+1] = {{0}};
 	point2d_t output_pnts[4+1] = {{0}};
-	point_t output_3d_pnts[4+1] = {{0}};
 	int n = 4;
 
 	V2SET(pnts[0], 1.5, 1.5);
@@ -109,13 +110,14 @@ main(int argc, const char **argv)
 	}
 	if (retval) {return -1;} else {bu_log("Test #001 Passed!\n");}
 	if (do_plotting) {
-	    VSET(output_3d_pnts[0], output_pnts[0][0], output_pnts[0][1], 0);
-	    VSET(output_3d_pnts[1], output_pnts[1][0], output_pnts[1][1], 0);
-	    VSET(output_3d_pnts[2], output_pnts[2][0], output_pnts[2][1], 0);
-	    VSET(output_3d_pnts[3], output_pnts[3][0], output_pnts[3][1], 0);
+	    //point_t output_3d_pnts[4+1] = {{0}};
+	    //VSET(output_3d_pnts[0], output_pnts[0][0], output_pnts[0][1], 0);
+	    //VSET(output_3d_pnts[1], output_pnts[1][0], output_pnts[1][1], 0);
+	    //VSET(output_3d_pnts[2], output_pnts[2][0], output_pnts[2][1], 0);
+	    //VSET(output_3d_pnts[3], output_pnts[3][0], output_pnts[3][1], 0);
 	    if (do_plotting) {
-		const point_t *const_output_3d_pnts = (const point_t *)output_3d_pnts;
-		plot_obr(1, const_output_3d_pnts, 4);
+		//const point_t *const_output_3d_pnts = (const point_t *)output_3d_pnts;
+		//plot_obr(1, const_output_3d_pnts, 4);
 	    }
 	}
     }
@@ -127,7 +129,6 @@ main(int argc, const char **argv)
 	point2d_t pnts[3+1] = {{0}};
 	point2d_t expected[4+1] = {{0}};
 	point2d_t output_pnts[4+1] = {{0}};
-	point_t output_3d_pnts[4+1] = {{0}};
 	int n = 3;
 
 	V2SET(pnts[0], 1.0, 0.0);
@@ -163,13 +164,14 @@ main(int argc, const char **argv)
 	    }
 	}
 	if (do_plotting) {
-	    VSET(output_3d_pnts[0], output_pnts[0][0], output_pnts[0][1], 0);
-	    VSET(output_3d_pnts[1], output_pnts[1][0], output_pnts[1][1], 0);
-	    VSET(output_3d_pnts[2], output_pnts[2][0], output_pnts[2][1], 0);
-	    VSET(output_3d_pnts[3], output_pnts[3][0], output_pnts[3][1], 0);
+	    //point_t output_3d_pnts[4+1] = {{0}};
+	    //VSET(output_3d_pnts[0], output_pnts[0][0], output_pnts[0][1], 0);
+	    //VSET(output_3d_pnts[1], output_pnts[1][0], output_pnts[1][1], 0);
+	    //VSET(output_3d_pnts[2], output_pnts[2][0], output_pnts[2][1], 0);
+	    //VSET(output_3d_pnts[3], output_pnts[3][0], output_pnts[3][1], 0);
 	    if (do_plotting) {
-		const point_t *const_output_3d_pnts = (const point_t *)output_3d_pnts;
-		plot_obr(8, const_output_3d_pnts, 4);
+		//const point_t *const_output_3d_pnts = (const point_t *)output_3d_pnts;
+		//plot_obr(8, const_output_3d_pnts, 4);
 	    }
 	}
 	if (retval) {return -1;} else {bu_log("Triangle Test Passed!\n");}
@@ -225,8 +227,8 @@ main(int argc, const char **argv)
 	}
 	if (retval) {return -1;} else {bu_log("Test #002 Passed!\n");}
 	if (do_plotting) {
-	    const point_t *const_output_pnts = (const point_t *)output_pnts;
-	    plot_obr(2, const_output_pnts, 4);
+	    //const point_t *const_output_pnts = (const point_t *)output_pnts;
+	    //plot_obr(2, const_output_pnts, 4);
 	}
 
     }
@@ -281,8 +283,8 @@ main(int argc, const char **argv)
 	}
 	if (retval) {return -1;} else {bu_log("Test #003 Passed!\n");}
 	if (do_plotting) {
-	    const point_t *const_output_pnts = (const point_t *)output_pnts;
-	    plot_obr(3, const_output_pnts, 4);
+	    //const point_t *const_output_pnts = (const point_t *)output_pnts;
+	    //plot_obr(3, const_output_pnts, 4);
 	}
 
 
@@ -330,8 +332,8 @@ main(int argc, const char **argv)
 	}
 	if (retval) {return -1;} else {bu_log("Test #004 Passed!\n");}
 	if (do_plotting) {
-	    const point_t *const_output_pnts = (const point_t *)output_pnts;
-	    plot_obr(4, const_output_pnts, 4);
+	    //const point_t *const_output_pnts = (const point_t *)output_pnts;
+	    //plot_obr(4, const_output_pnts, 4);
 	}
 
     }

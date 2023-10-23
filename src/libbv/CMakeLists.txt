@@ -18,7 +18,12 @@ set(LIBBV_SRCS
   diff.c
   font.c
   hash.c
+  lod.cpp
   plot3.c
+  polygon_bview.c
+  polygon_op.cpp
+  polygon_fill.cpp
+  snap.c
   tig/axis.c
   tig/list.c
   tig/marker.c

@@ -1,4 +1,4 @@
-/*                        B V . H
+/*                        S N A P . H
  * BRL-CAD
  *
  * Copyright (c) 1993-2023 United States Government as represented by
@@ -17,39 +17,35 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
-// TODO - bv currently conflates scene and camera concepts - for example,
-// data axes and polygons are properly scene objects being viewed by the
-// camera, but at the moment they're directly part of the bv struct.
-//
-// The plan is to address this, so until this notice is removed the bv data
-// structure and related data structures should be considered in flux.
-
-/** @addtogroup libbv */
-/** @{ */
-/** @file bv.h
+/** @addtogroup bv_snap
  *
  */
+/** @{ */
+/** @file bv/snap.h */
 
-#ifndef BV_H
-#define BV_H
+#ifndef BV_SNAP_H
+#define BV_SNAP_H
 
 #include "common.h"
-
 #include "vmath.h"
-#include "bu/vls.h"
-#include "bn.h"
+#include "bv/defines.h"
 
-#include "./bv/defines.h"
-#include "./bv/adc.h"
-#include "./bv/lod.h"
-#include "./bv/polygon.h"
-#include "./bv/snap.h"
-#include "./bv/util.h"
-#include "./bv/vlist.h"
-#include "./bv/view_sets.h"
+/* Logic for snapping points to their closes view lines. */
 
-#endif /* BV_H */
+/* Snap sample 2D point to lines active in the view.  If populated,
+ * v->gv_s->gv_snap_objs contains a subset of bv_scene_obj pointers indicating
+ * which view objects to consider for snapping.  If nonzero,
+ * v->gv_s->gv_snap_flags also tells the routine which categories of objects to
+ * consider - objs objects will also be evaluated against the flags before
+ * being used. */
+BV_EXPORT extern int bv_snap_lines_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
+
+BV_EXPORT extern void bv_view_center_linesnap(struct bview *v);
+
+BV_EXPORT extern int bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p);
+BV_EXPORT extern int bv_snap_grid_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
+
+#endif /* BV_SNAP_H */
 
 /** @} */
 /*

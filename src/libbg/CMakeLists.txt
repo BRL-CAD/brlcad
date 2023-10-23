@@ -62,19 +62,15 @@ set(LIBBG_SOURCES
   chull3d.cpp
   clip.c
   clipper.cpp
-  lod.cpp
   lseg_lseg.c
   lseg_pt.c
   obr.c
   plane.cpp
   polygon.c
-  polygon_bview.c
-  polygon_fill.cpp
   polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
   sat.c
-  snap.c
   spsr.c
   ${SPSR_srcs}
   tri_pt.c
@@ -82,7 +78,7 @@ set(LIBBG_SOURCES
   tri_tri.c
   trimesh.cpp
   trimesh_isect.cpp
-  trimesh_plot3.cpp
+  #trimesh_plot3.cpp
   trimesh_sync.cpp
   trimesh_split.cpp
   vert_tree.c

@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file libged/polyclip.cpp
+/** @file libbv/polygon_fill.cpp
  *
  * Add internal lines to polygons to indicate "filled" areas.
  */
@@ -32,12 +32,13 @@
 #include "bu/vls.h"
 #include "bg/plane.h" /* bg_fit_plane */
 #include "bg/polygon.h"
+#include "bv/polygon.h"
 
 /* Note - line_slope encodes the fill line slope as a vector.  Doing it as a
  * this way instead of a single number allows us to handle vertical lines (i.e.
  * infinite slope) cleanly */
 struct bg_polygon *
-bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t line_spacing)
+bv_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t line_spacing)
 {
     struct bg_polygon poly_2d;
 

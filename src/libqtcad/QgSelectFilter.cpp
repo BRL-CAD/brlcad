@@ -28,8 +28,6 @@
 extern "C" {
 #include "bu/malloc.h"
 #include "bg/aabb_ray.h"
-#include "bg/lod.h"
-#include "bg/polygon.h"
 #include "bv.h"
 #include "raytrace.h"
 }
@@ -133,7 +131,7 @@ QgSelectPntFilter::eventFilter(QObject *, QEvent *e)
     // scene.  This is faster than the raytrace-based test in some situations,
     // but trades off that speed by only producing an approximate answer based
     // on bounding boxes.
-    int scnt = bg_view_objs_select(&selected_set, v, v->gv_mouse_x, v->gv_mouse_y);
+    int scnt = bv_view_objs_select(&selected_set, v, v->gv_mouse_x, v->gv_mouse_y);
 
     // If the caller wants everything, or we got less than 2 objs, we're done
     if (scnt < 2 || !first_only)
@@ -201,7 +199,7 @@ QgSelectBoxFilter::eventFilter(QObject *, QEvent *e)
 	// Mouse release - time to use the rectangle to assemble the selected set
 	int ipx = (int)px;
 	int ipy = (int)py;
-	bg_view_objs_rect_select(&selected_set, v, ipx, ipy, v->gv_mouse_x, v->gv_mouse_y);
+	bv_view_objs_rect_select(&selected_set, v, ipx, ipy, v->gv_mouse_x, v->gv_mouse_y);
 
 #if 0
 	// If we want only the closest object (or more precisely, in this mode,
@@ -295,7 +293,7 @@ QgSelectRayFilter::eventFilter(QObject *, QEvent *e)
 
     // Pre-filter what we're going to be shooting using the bounding box tests.
     // If we have no intersections, there's no point in doing the raytrace.
-    int scnt = bg_view_objs_select(&selected_set, v, v->gv_mouse_x, v->gv_mouse_y);
+    int scnt = bv_view_objs_select(&selected_set, v, v->gv_mouse_x, v->gv_mouse_y);
     if (!scnt)
 	return true;
 

@@ -27,8 +27,6 @@
 
 extern "C" {
 #include "bu/malloc.h"
-#include "bg/lod.h"
-#include "bg/polygon.h"
 #include "bv.h"
 #include "raytrace.h"
 }
@@ -335,7 +333,7 @@ QMeasure3DFilter::get_point()
     // Under most circumstances that should substantially cut down the
     // interrogation time for large models.
     struct bu_ptbl sset = BU_PTBL_INIT_ZERO;
-    int scnt = bg_view_objs_select(&sset, v, v->gv_mouse_x, v->gv_mouse_y);
+    int scnt = bv_view_objs_select(&sset, v, v->gv_mouse_x, v->gv_mouse_y);
 
     // If we didn't see anything, we have a no-op
     if (!scnt) {

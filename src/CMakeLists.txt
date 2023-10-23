@@ -39,8 +39,8 @@ set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} ext CACHE STRING "Bundled syste
 # partial build scenarios.
 set(libbu_deps)
 set(libbn_deps      libbu)
-set(libbv_deps      libbn libbu)
-set(libbg_deps      libbv libbn libbu)
+set(libbg_deps      libbn libbu)
+set(libbv_deps      libbg libbn libbu)
 set(libnmg_deps     libbg libbv libbn libbu)
 set(libbrep_deps    libbg libbv libbn libbu)
 set(librt_deps      libbrep libnmg libbg libbv libbn libbu)
@@ -68,8 +68,8 @@ set(libtclcad_deps  libged libdm libnmg libbg libbv libbn libbu)
 set(level_1_dirs
   libbu
   libbn
-  libbv
   libbg
+  libbv
   libnmg
   libbrep
   librt

@@ -37,6 +37,9 @@
 #include "bg/lseg.h"
 #include "bg/plane.h"
 #include "bg/polygon.h"
+#include "bv/defines.h"
+#include "bv/polygon.h"
+#include "bv/snap.h"
 
 void
 bv_polygon_contour(struct bv_scene_obj *s, struct bg_poly_contour *c, int curr_c, int curr_i, int do_pnt)
@@ -87,7 +90,7 @@ bv_fill_polygon(struct bv_scene_obj *s)
     if (p->fill_delta < BN_TOL_DIST)
 	return;
 
-    struct bg_polygon *fill = bg_polygon_fill_segments(&p->polygon, p->fill_dir, p->fill_delta);
+    struct bg_polygon *fill = bv_polygon_fill_segments(&p->polygon, p->fill_dir, p->fill_delta);
     if (!fill)
 	return;
 

@@ -45,7 +45,6 @@
 
 #include "bu/str.h"
 #include "bv.h"
-#include "bg/lod.h"
 #include "ged/defines.h"
 #include "ged/commands.h"
 #include "qtcad/QgQuadView.h"
@@ -208,7 +207,7 @@ QgQuadView::changeToQuadFrame()
 
 	    // For initial layout calculations, we need to set a screen width
 	    // and height.  This won't be right in the end, but it gives
-	    // bg_view_bounds something to work with
+	    // bv_view_bounds something to work with
 	    views[i]->view()->gv_width = views[UPPER_RIGHT_QUADRANT]->view()->gv_width;
 	    views[i]->view()->gv_height = views[UPPER_RIGHT_QUADRANT]->view()->gv_height;
 	}
@@ -274,7 +273,7 @@ QgQuadView::changeToQuadFrame()
     // the draw logic it needs to do updates.
     for (int i = UPPER_RIGHT_QUADRANT + 1; i < LOWER_RIGHT_QUADRANT + 1; i++) {
 	bv_autoview(views[i]->view(), BV_AUTOVIEW_SCALE_DEFAULT, 0);
-	bg_view_bounds(views[i]->view());
+	bv_view_bounds(views[i]->view());
     }
     struct bu_ptbl *db_objs = bv_view_objs(views[UPPER_RIGHT_QUADRANT]->view(), BV_DB_OBJS);
     if (db_objs) {

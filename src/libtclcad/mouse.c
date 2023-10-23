@@ -22,7 +22,6 @@
 
 #include "bu/path.h"
 #include "bv.h"
-#include "bg/lseg.h"
 #include "tclcad.h"
 
 /* Private headers */

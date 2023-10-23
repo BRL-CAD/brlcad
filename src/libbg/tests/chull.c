@@ -27,8 +27,9 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
-#include "bv/plot3.h"
+//#include "bv/plot3.h"
 
+#if 0
 static
 void plot_chull(int test_num, const point_t *pnt_array, int pnt_cnt)
 {
@@ -124,6 +125,7 @@ void plot2d_chull2(int test_num, int *hull, int pnt_cnt, const point2d_t *pnt_ar
     fclose(plot_file);
     bu_vls_free(&name);
 }
+#endif
 
 
 int
@@ -172,7 +174,7 @@ main(int argc, const char **argv)
 	}
 	if (!retval) {return -1;} else {bu_log("Test #001 Passed!\n");}
 	if (do_plotting) {
-	    plot2d_chull(1, (const point2d_t *)hull_polyline, retval);
+	    //plot2d_chull(1, (const point2d_t *)hull_polyline, retval);
 	}
 
 	polyline = (int *)bu_calloc(n, sizeof(int), "polyline");
@@ -190,7 +192,7 @@ main(int argc, const char **argv)
 	    }
 	}
 	if (do_plotting) {
-	    plot2d_chull2(1, hull, hcnt, (const point2d_t *)test1_points);
+	    //plot2d_chull2(1, hull, hcnt, (const point2d_t *)test1_points);
 	}
 	if (!retval) {return -1;} else {bu_log("Test #001-1 Passed!\n");}
 
@@ -207,7 +209,7 @@ main(int argc, const char **argv)
 	}
 	if (!retval) {return -1;} else {bu_log("Test #002 Passed!\n");}
 	if (do_plotting) {
-	    plot2d_chull(1, (const point2d_t *)hull_pnts, retval);
+	    //plot2d_chull(1, (const point2d_t *)hull_pnts, retval);
 	}
 
 	hcnt = bg_2d_chull2(&hull, (const point2d_t *)test1_points, n);
@@ -221,7 +223,7 @@ main(int argc, const char **argv)
 	    }
 	}
 	if (do_plotting) {
-	    plot2d_chull2(1, hull, hcnt, (const point2d_t *)test1_points);
+	    //plot2d_chull2(1, hull, hcnt, (const point2d_t *)test1_points);
 	}
 	if (!retval) {return -1;} else {bu_log("Test #002-1 Passed!\n");}
 
@@ -311,9 +313,9 @@ main(int argc, const char **argv)
 	}
 
 	if (do_plotting) {
-	    const point_t *const_test3_hull_pnts = (const point_t *)test3_hull_pnts;
-	    plot_chull(3, const_test3_hull_pnts, retval);
-	    plot_chull2(3, hull, hcnt, (const point_t *)test3_points);
+	    //const point_t *const_test3_hull_pnts = (const point_t *)test3_hull_pnts;
+	    //plot_chull(3, const_test3_hull_pnts, retval);
+	    //plot_chull2(3, hull, hcnt, (const point_t *)test3_points);
 	}
 
 
@@ -355,9 +357,9 @@ main(int argc, const char **argv)
 	}
 
 	if (do_plotting) {
-	    const point_t *const_test4_hull_pnts = (const point_t *)test4_hull_pnts;
-	    plot_chull(4, const_test4_hull_pnts, retval);
-	    plot_chull2(4, hull, hcnt, (const point_t *)test4_points);
+	    //const point_t *const_test4_hull_pnts = (const point_t *)test4_hull_pnts;
+	    //plot_chull(4, const_test4_hull_pnts, retval);
+	    //plot_chull2(4, hull, hcnt, (const point_t *)test4_points);
 	}
     }
 
@@ -388,9 +390,9 @@ main(int argc, const char **argv)
 	}
 
 	if (do_plotting) {
-	    const point_t *const_test5_hull_pnts = (const point_t *)test5_hull_pnts;
-	    plot_chull(5, const_test5_hull_pnts, retval);
-	    plot_chull2(5, hull, hcnt, (const point_t *)test5_points);
+	    //const point_t *const_test5_hull_pnts = (const point_t *)test5_hull_pnts;
+	    //plot_chull(5, const_test5_hull_pnts, retval);
+	    //plot_chull2(5, hull, hcnt, (const point_t *)test5_points);
 	}
 
     }
