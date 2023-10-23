@@ -57,6 +57,7 @@ void set_Raw(int fd);
 
 /*
  * This file will work IFF one of these three flags is set:
+ * HAVE_CONIO_H         use Windows console IO
  * HAVE_TERMIOS_H	use POXIX termios and tcsetattr() call with XOPEN flags
  * SYSV			use SysV Rel3 termio and TCSETA ioctl
  * BSD			use Version 7 / BSD sgttyb and TIOCSETP ioctl
@@ -72,7 +73,8 @@ void set_Raw(int fd);
 #  undef BSD
 #  include <termios.h>
 
-static struct termios save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
+static struct termios save_tio[FOPEN_MAX] = {0};
+static struct termios curr_tio[FOPEN_MAX] = {0};
 
 #else	/* !defined(HAVE_TERMIOS_H) */
 
@@ -80,19 +82,27 @@ static struct termios save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
 #    undef BSD
 #    include <termio.h>
 #    include <memory.h>
-static struct termio save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
+static struct termio save_tio[FOPEN_MAX] = {0};
+static struct termio curr_tio[FOPEN_MAX] = {0};
 #  endif /* SYSV */
 
 #  ifdef BSD
 #    undef SYSV
 #    include <sys/ioctl.h>
 
-static struct sgttyb save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
+static struct sgttyb save_tio[FOPEN_MAX] = {0};
+static struct sgttyb curr_tio[FOPEN_MAX] = {0};
 #  endif /* BSD */
 
 #endif /* HAVE_TERMIOS_H */
 
-#include "libtermio.h"
+#if defined(HAVE_CONIO_H)
+#  include <conio.h>
+/* unused function pointers, but created for consistency */
+static int (*save_tio)(void)[FOPEN_MAX] = {0};
+static int (*curr_tio)(void)[FOPEN_MAX] = {0};
+#endif
+
 
 static void
 copy_Tio(
@@ -102,10 +112,13 @@ copy_Tio(
 	struct termio *to, struct termio *from
 #elif defined(HAVE_TERMIOS_H)
 	struct termios *to, struct termios*from
+#elif defined_HAVE_CONIO_H)
+	int (*to)(), int (*from)()
 #endif
 	)
 {
-    (void)memcpy((char *) to, (char *) from, sizeof(*from));
+    if (to && from)
+	(void)memcpy((char *) to, (char *) from, sizeof(*from));
     return;
 }
 
@@ -128,6 +141,9 @@ clr_Echo(int fd)
     curr_tio[fd].c_lflag &= ~ECHO;		/* Echo mode OFF.	*/
     (void)tcsetattr(fd, TCSANOW, &curr_tio[fd]);
 #endif
+#ifdef HAVE_CONIO_H
+    /* nothing to do */
+#endif
     return;
 }
 
@@ -147,6 +163,9 @@ reset_Tty(int fd)
 #ifdef HAVE_TERMIOS_H
     (void)tcsetattr(fd, TCSAFLUSH, &save_tio[fd]);
 #endif
+#ifdef HAVE_CONIO_H
+    curr_tio[fd] = save_tio[fd];
+ #endif
     return;
 }
 
@@ -164,6 +183,9 @@ save_Tty(int fd)
 #endif
 #ifdef HAVE_TERMIOS_H
     (void)tcgetattr(fd, &save_tio[fd]);
+#endif
+#ifdef HAVE_CONIO_H
+    /* nothing to do, 'cept copy */
 #endif
     copy_Tio(&curr_tio[fd], &save_tio[fd]);
     return;
@@ -191,6 +213,9 @@ set_Cbreak(int fd)
     curr_tio[fd].c_cc[VTIME] = 0;
     (void)tcsetattr(fd, TCSANOW, &curr_tio[fd]);
 #endif
+#ifdef HAVE_CONIO_H
+    /* concept doesn't exist */
+#endif
     return;
 }
 
@@ -217,6 +242,9 @@ set_Raw(int fd)
     curr_tio[fd].c_cc[VMIN] = 1;
     curr_tio[fd].c_cc[VTIME] = 0;
     (void)tcsetattr(fd, TCSANOW, &curr_tio[fd]);
+#endif
+#ifdef HAVE_CONIO_H
+    /* nothing to do, raw is default */
 #endif
     return;
 }
