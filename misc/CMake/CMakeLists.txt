@@ -46,6 +46,7 @@ set(cmake_ignore_files
   FindOSL.cmake
   FindOSMESA.cmake
   FindOpenCL.cmake
+  FindOpenCV.cmake
   FindOpenGL.cmake
   FindOpenVDB.cmake
   FindPERPLEX.cmake
