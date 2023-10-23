@@ -164,10 +164,14 @@ endif (TARGET brlcad_css)
 
 # man1 or man3 man pages for which it is expected that there is no associated
 # build target.
+#
+# NOTE:  for now, remrt is listed because the target is disabled on Windows.
+# If/when it works there, remove from this list
 set(filtered_man
   brlcad
   brlcad-config
   redblack
+  remrt
   benchmark
   dbclean
   )
