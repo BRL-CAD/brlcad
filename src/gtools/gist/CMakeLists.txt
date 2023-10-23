@@ -34,7 +34,7 @@ if(NOT OpenCV_FOUND)
   message("OpenCV is DISABLED")
   return()
 endif(NOT OpenCV_FOUND)
-message("Found OpenCV: ${OpenCV_LIBS}")
+message("Found OpenCV: ${OpenCV_LIBRARIES}")
 
 set(GIST_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
@@ -46,7 +46,7 @@ set(GIST_INCLUDE_DIRS
 list(REMOVE_DUPLICATES GIST_INCLUDE_DIRS)
 include_directories(${GIST_INCLUDE_DIRS})
 
-BRLCAD_ADDEXEC(gist "${GIST_SRCS}"  "libbu;librt;libged;${OpenCV_LIBS};")
+BRLCAD_ADDEXEC(gist "${GIST_SRCS}"  "libbu;librt;libged;${OpenCV_LIBRARIES};")
 
 # FIXME: should be cxx_std_14, but uses std::filesystem.  should use libbu.
 target_compile_features(gist PRIVATE cxx_std_17)
