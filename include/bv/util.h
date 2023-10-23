@@ -215,6 +215,10 @@ bv_illum_obj(struct bv_scene_obj *s, char ill_state);
 BV_EXPORT struct bu_ptbl *
 bv_view_objs(struct bview *v, int type);
 
+/* Given a view, construct the view plane */
+BV_EXPORT int
+bv_view_plane(plane_t *p, struct bview *v);
+
 
 /* Environment variable controlled logging.
  *

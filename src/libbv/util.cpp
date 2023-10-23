@@ -33,6 +33,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bn/mat.h"
+#include "bg/plane.h"
 #include "bv/defines.h"
 #include "bv/vlist.h"
 #include "bv/util.h"
@@ -916,6 +917,23 @@ bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t 
     }
 
     return 0;
+}
+
+int
+bv_view_plane(plane_t *p, struct bview *v)
+{
+    if (!p || !v)
+	return -1;
+
+    point_t cpt = VINIT_ZERO;
+    vect_t vnrml = VINIT_ZERO;
+
+    MAT_DELTAS_GET_NEG(cpt, v->gv_center);
+    VMOVEN(vnrml, v->gv_rotation + 8, 3);
+    VUNITIZE(vnrml);
+    VSCALE(vnrml, vnrml, -1.0);
+
+    return bg_plane_pt_nrml(p, cpt, vnrml);
 }
 
 size_t
