@@ -106,7 +106,7 @@ main(int argc, const char **argv)
     VSET(p1.contour[0].point[2], 3, 3, 0);
     VSET(p1.contour[0].point[3], -3, 3, 0);
     if (plot_files) {
-	//bg_polygon_plot("p1.plot3", (const point_t *)p1.contour[0].point, p1.contour[0].num_points, 255, 0, 0);
+	bg_polygon_plot("p1.plot3", (const point_t *)p1.contour[0].point, p1.contour[0].num_points, 255, 0, 0);
     }
 
     /* Polygon 2 */
@@ -120,7 +120,7 @@ main(int argc, const char **argv)
     VSET(p2.contour[0].point[2], 4, 5, 0);
     VSET(p2.contour[0].point[3], 0, 5, 0);
     if (plot_files) {
-	//bg_polygon_plot("p2.plot3", (const point_t *)p2.contour[0].point, p2.contour[0].num_points, 0, 255, 0);
+	bg_polygon_plot("p2.plot3", (const point_t *)p2.contour[0].point, p2.contour[0].num_points, 0, 255, 0);
     }
 
     /* Union expected result */
@@ -141,7 +141,7 @@ main(int argc, const char **argv)
     /* Calculate union and compare it with the expected result */
     struct bg_polygon *ur = bg_clip_polygon(bg_Union, &p1, &p2, 1.0, NULL, NULL);
     if (plot_files) {
-	//bg_polygon_plot("ur.plot3", (const point_t *)ur->contour[0].point, ur->contour[0].num_points, 0, 0, 255);
+	bg_polygon_plot("ur.plot3", (const point_t *)ur->contour[0].point, ur->contour[0].num_points, 0, 0, 255);
     }
     ret += _bg_polygon_diff(ur, &union_expected);
 
@@ -162,7 +162,7 @@ main(int argc, const char **argv)
     /* Calculate difference and compare it with the expected result */
     struct bg_polygon *dr = bg_clip_polygon(bg_Difference, &p1, &p2, 1.0, NULL, NULL);
     if (plot_files) {
-	//bg_polygon_plot("dr.plot3", (const point_t *)dr->contour[0].point, dr->contour[0].num_points, 0, 0, 255);
+	bg_polygon_plot("dr.plot3", (const point_t *)dr->contour[0].point, dr->contour[0].num_points, 0, 0, 255);
     }
     ret += _bg_polygon_diff(dr, &difference_expected);
 
@@ -180,7 +180,7 @@ main(int argc, const char **argv)
     /* Calculate intersection and compare it with the expected result */
     struct bg_polygon *ir = bg_clip_polygon(bg_Intersection, &p1, &p2, 1.0, NULL, NULL);
     if (plot_files) {
-	//bg_polygon_plot("ir.plot3", (const point_t *)ir->contour[0].point, ir->contour[0].num_points, 0, 0, 255);
+	bg_polygon_plot("ir.plot3", (const point_t *)ir->contour[0].point, ir->contour[0].num_points, 0, 0, 255);
     }
     ret += _bg_polygon_diff(ir, &intersection_expected);
 
@@ -201,7 +201,7 @@ main(int argc, const char **argv)
     VSET(p3.contour[0].point[2], 3, 3, 0);
     VSET(p3.contour[0].point[3], -3, 3, 0);
     if (plot_files) {
-	//bg_polygon_plot("p3.plot3", (const point_t *)p3.contour[0].point, p3.contour[0].num_points, 255, 0, 0);
+	bg_polygon_plot("p3.plot3", (const point_t *)p3.contour[0].point, p3.contour[0].num_points, 255, 0, 0);
     }
 
     /* Polygon 4 */
@@ -215,20 +215,20 @@ main(int argc, const char **argv)
     VSET(p4.contour[0].point[2], 2, 2, 0);
     VSET(p4.contour[0].point[3], -2, 2, 0);
     if (plot_files) {
-	//bg_polygon_plot("p4.plot3", (const point_t *)p4.contour[0].point, p4.contour[0].num_points, 0, 255, 0);
+	bg_polygon_plot("p4.plot3", (const point_t *)p4.contour[0].point, p4.contour[0].num_points, 0, 255, 0);
     }
 
     /* Calculate union and compare it with the expected result */
     struct bg_polygon *ucr = bg_clip_polygon(bg_Union, &p3, &p4, 1.0, NULL, NULL);
     if (plot_files) {
-	//bg_polygon_plot("ucr.plot3", (const point_t *)ucr->contour[0].point, ucr->contour[0].num_points, 0, 0, 255);
+	bg_polygon_plot("ucr.plot3", (const point_t *)ucr->contour[0].point, ucr->contour[0].num_points, 0, 0, 255);
     }
     ret += _bg_polygon_diff(ucr, &p3);
 
     /* Calculate intersection and compare it with the expected result */
     struct bg_polygon *icr = bg_clip_polygon(bg_Intersection, &p3, &p4, 1.0, NULL, NULL);
     if (plot_files) {
-	//bg_polygon_plot("icr.plot3", (const point_t *)icr->contour[0].point, icr->contour[0].num_points, 0, 0, 255);
+	bg_polygon_plot("icr.plot3", (const point_t *)icr->contour[0].point, icr->contour[0].num_points, 0, 0, 255);
     }
     ret += _bg_polygon_diff(icr, &p4);
 
@@ -257,8 +257,8 @@ main(int argc, const char **argv)
     /* Calculate difference and compare it with the expected result */
     struct bg_polygon *dcr = bg_clip_polygon(bg_Difference, &p3, &p4, 1.0, NULL, NULL);
     if (plot_files) {
-	//bg_polygon_plot("dcr_1.plot3", (const point_t *)dcr->contour[0].point, dcr->contour[0].num_points, 0, 0, 255);
-	//bg_polygon_plot("dcr_2.plot3", (const point_t *)dcr->contour[1].point, dcr->contour[0].num_points, 0, 0, 255);
+	bg_polygon_plot("dcr_1.plot3", (const point_t *)dcr->contour[0].point, dcr->contour[0].num_points, 0, 0, 255);
+	bg_polygon_plot("dcr_2.plot3", (const point_t *)dcr->contour[1].point, dcr->contour[0].num_points, 0, 0, 255);
     }
     ret += _bg_polygon_diff(dcr, &de2);
 

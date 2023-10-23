@@ -38,7 +38,7 @@
 static int plot_files;
 
 static void
-_tess_report(int *faces, int num_faces, const point2d_t *UNUSED(points), int test_num, int method_num)
+_tess_report(int *faces, int num_faces, const point2d_t *points, int test_num, int method_num)
 {
     bu_log("Test %d, method %d: generated %d faces: \n", test_num, method_num, num_faces);
     for (int i = 0; i < num_faces; i++) {
@@ -47,7 +47,7 @@ _tess_report(int *faces, int num_faces, const point2d_t *UNUSED(points), int tes
     if (plot_files) {
 	struct bu_vls tfile = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&tfile, "test_%d-%d_triangles.plot3", test_num, method_num);
-	//bg_tri_plot_2d(bu_vls_cstr(&tfile), faces, num_faces, points, 0, 255, 0);
+	bg_tri_plot_2d(bu_vls_cstr(&tfile), faces, num_faces, points, 0, 255, 0);
 	bu_vls_free(&tfile);
     }
 }
@@ -184,7 +184,7 @@ main(int argc, const char **argv)
 	    bu_log("multiple hole splitting failure!\n");
 	    return 1;
 	} else {
-	    //bg_trimesh_2d_plot3("poly2tri_new_pnts.plot3", faces, num_faces, (const point2d_t *)opnts, noutpnts);
+	    bg_trimesh_2d_plot3("poly2tri_new_pnts.plot3", faces, num_faces, (const point2d_t *)opnts, noutpnts);
 	    _tess_report(faces, num_faces, (const point2d_t *)opnts, 1, 1);
 	}
     }

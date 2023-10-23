@@ -19,7 +19,6 @@ set(LIBBV_SRCS
   font.c
   hash.c
   lod.cpp
-  plot3.c
   polygon_bview.c
   polygon_op.cpp
   polygon_fill.cpp
@@ -39,6 +38,12 @@ set(LIBBV_SRCS
 
 BRLCAD_ADDLIB(libbv "${LIBBV_SRCS}" "${libbv_deps}")
 set_target_properties(libbv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+if(HIDE_INTERNAL_SYMBOLS)
+  set_property(TARGET libbv APPEND PROPERTY COMPILE_DEFINITIONS "PLOT3_DLL_EXPORTS")
+  if (TARGET libbv-obj)
+    set_property(TARGET libbv-obj APPEND PROPERTY COMPILE_DEFINITIONS "PLOT3_DLL_EXPORTS")
+  endif (TARGET libbv-obj)
+endif(HIDE_INTERNAL_SYMBOLS)
 
 add_subdirectory(tests)
 

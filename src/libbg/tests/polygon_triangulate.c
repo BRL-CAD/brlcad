@@ -45,7 +45,7 @@
 static int plot_files;
 
 static void
-_tess_report(int *faces, int num_faces, const point2d_t *UNUSED(points), int test_num, int method_num)
+_tess_report(int *faces, int num_faces, const point2d_t *points, int test_num, int method_num)
 {
     bu_log("Test %d, method %d: generated %d faces: \n", test_num, method_num, num_faces);
     for (int i = 0; i < num_faces; i++) {
@@ -54,7 +54,7 @@ _tess_report(int *faces, int num_faces, const point2d_t *UNUSED(points), int tes
     if (plot_files) {
 	struct bu_vls tfile = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&tfile, "test_%d-%d_triangles.plot3", test_num, method_num);
-	//bg_tri_plot_2d(bu_vls_cstr(&tfile), faces, num_faces, points, 0, 255, 0);
+	bg_tri_plot_2d(bu_vls_cstr(&tfile), faces, num_faces, points, 0, 255, 0);
 	bu_vls_free(&tfile);
     }
 }
@@ -128,7 +128,7 @@ main(int argc, const char **argv)
 
 	num_points = sizeof(points) / sizeof(point2d_t);
 	if (plot_files) {
-	    //bg_polygon_plot_2d("test_1_polygon.plot3", (const point2d_t *)points, num_points, 255, 0, 0);
+	    bg_polygon_plot_2d("test_1_polygon.plot3", (const point2d_t *)points, num_points, 255, 0, 0);
 	}
 	ret = bg_poly_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
 	if (ret) {
@@ -173,7 +173,7 @@ main(int argc, const char **argv)
 
 	num_points = sizeof(points) / sizeof(point2d_t);
 	if (plot_files) {
-	    //bg_polygon_plot_2d("test_2_polygon.plot3", (const point2d_t *)points, num_points, 255, 0, 0);
+	    bg_polygon_plot_2d("test_2_polygon.plot3", (const point2d_t *)points, num_points, 255, 0, 0);
 	}
 	ret = bg_poly_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
 	if (ret) {
@@ -214,8 +214,8 @@ main(int argc, const char **argv)
 	hole_array[0] = (int *)hole;
 
 	if (plot_files) {
-	    //bg_polygon_plot_2d("test_3_polygon.plot3", (const point2d_t *)points, 12, 255, 0, 0);
-	    //bg_polygon_plot_2d("test_3_polygon_hole.plot3", (const point2d_t *)(points+12), 4, 0, 0, 255);
+	    bg_polygon_plot_2d("test_3_polygon.plot3", (const point2d_t *)points, 12, 255, 0, 0);
+	    bg_polygon_plot_2d("test_3_polygon_hole.plot3", (const point2d_t *)(points+12), 4, 0, 0, 255);
 	}
 
 	ret = bg_nested_poly_triangulate(&faces, &num_faces, NULL, NULL,
@@ -256,8 +256,8 @@ main(int argc, const char **argv)
 	hole_array[0] = (int *)hole;
 
 	if (plot_files) {
-	    //bg_polygon_plot_2d("test_4_polygon.plot3", (const point2d_t *)points, 8, 255, 0, 0);
-	    //bg_polygon_plot_2d("test_4_polygon_hole.plot3", (const point2d_t *)(points+8), 4, 0, 0, 255);
+	    bg_polygon_plot_2d("test_4_polygon.plot3", (const point2d_t *)points, 8, 255, 0, 0);
+	    bg_polygon_plot_2d("test_4_polygon_hole.plot3", (const point2d_t *)(points+8), 4, 0, 0, 255);
 	}
 
 	ret = bg_nested_poly_triangulate(&faces, &num_faces, NULL, NULL,
@@ -286,7 +286,7 @@ main(int argc, const char **argv)
 	V2SET(points[3], 0.80133910746824888, 2.30776174046776017);
 
 	if (plot_files) {
-	    //bg_polygon_plot_2d("test_5_polygon.plot3", (const point2d_t *)points, 4, 255, 0, 0);
+	    bg_polygon_plot_2d("test_5_polygon.plot3", (const point2d_t *)points, 4, 255, 0, 0);
 	}
 
 	num_points = sizeof(points) / sizeof(point2d_t);
