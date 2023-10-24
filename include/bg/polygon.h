@@ -55,7 +55,7 @@ BG_EXPORT extern fastf_t
 bg_find_polygon_area(
 	struct bg_polygon *gpoly,
 	fastf_t sf,
-	matp_t model2view,
+	plane_t *vp,
 	fastf_t size
 	);
 
@@ -63,31 +63,27 @@ BG_EXPORT extern int
 bg_polygons_overlap(
 	struct bg_polygon *polyA,
 	struct bg_polygon *polyB,
-	matp_t model2view,
+	plane_t *vp,
 	const struct bn_tol *tol,
 	fastf_t iscale
 	);
 
-/* model2view and view2model may be NULL, if the polygons are coplanar */
 BG_EXPORT extern struct bg_polygon *
 bg_clip_polygon(
 	bg_clip_t op,
        	struct bg_polygon *subj,
        	struct bg_polygon *clip,
        	fastf_t sf,
-       	matp_t model2view,
-       	matp_t view2model
+	plane_t *vp
 	);
 
-/* model2view and view2model may be NULL, if the polygons are coplanar */
 BG_EXPORT extern struct bg_polygon *
 bg_clip_polygons(
 	bg_clip_t op,
        	struct bg_polygons *subj,
        	struct bg_polygons *clip,
        	fastf_t sf,
-       	matp_t model2view,
-       	matp_t view2model
+	plane_t *vp
 	);
 
 BG_EXPORT extern void bg_polygon_free(struct bg_polygon *gpp);

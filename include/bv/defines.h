@@ -530,6 +530,7 @@ struct bview {
     fastf_t       gv_prevMouseY;
     int           gv_mouse_x;
     int           gv_mouse_y;
+    point_t       gv_point;
     char          gv_key;
     unsigned long gv_mod_flags;
     fastf_t       gv_minMouseDelta;

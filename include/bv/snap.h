@@ -30,6 +30,8 @@
 #include "vmath.h"
 #include "bv/defines.h"
 
+__BEGIN_DECLS
+
 /* Logic for snapping points to their closes view lines. */
 
 /* Snap sample 2D point to lines active in the view.  If populated,
@@ -44,6 +46,8 @@ BV_EXPORT extern void bv_view_center_linesnap(struct bview *v);
 
 BV_EXPORT extern int bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p);
 BV_EXPORT extern int bv_snap_grid_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
+
+__END_DECLS
 
 #endif /* BV_SNAP_H */
 

@@ -35,9 +35,10 @@
 #include "bn/mat.h"
 #include "bg/plane.h"
 #include "bv/defines.h"
-#include "bv/vlist.h"
+#include "bv/snap.h"
 #include "bv/util.h"
 #include "bv/view_sets.h"
+#include "bv/vlist.h"
 #include "./bv_private.h"
 
 #define VIEW_NAME_MAXTRIES 100000
@@ -916,6 +917,36 @@ bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t 
 	(*fy) = ty;
     }
 
+    // If snapping is enabled, apply it
+    int snapped = 0;
+    if (v->gv_s) {
+	if (v->gv_s->gv_snap_lines) {
+	    snapped = bv_snap_lines_2d(v, fx, fy);
+	}
+	if (!snapped && v->gv_s->gv_grid.snap) {
+	    bv_snap_grid_2d(v, fx, fy);
+	}
+    }
+
+    return 0;
+}
+
+int
+bv_screen_pt(point_t *p, fastf_t x, fastf_t y, struct bview *v)
+{
+    if (!p || !v)
+	return -1;
+
+    if (!v->gv_width || !v->gv_height)
+	return -1;
+
+    fastf_t tx, ty;
+    if (bv_screen_to_view(v, &tx, &ty, x, y))
+	return -1;
+
+    point_t vpt;
+    VSET(vpt, tx, ty, 0);
+    MAT4X3PNT(*p, v->gv_view2model, vpt);
     return 0;
 }
 

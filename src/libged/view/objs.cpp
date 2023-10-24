@@ -324,6 +324,7 @@ _objs_cmd_update(void *bs, int argc, const char **argv)
 	}
 	v->gv_mouse_x = x;
 	v->gv_mouse_y = y;
+	bv_screen_pt(&v->gv_point, x, y, v);
     }
 
     update_recurse(s, v, 0);

@@ -98,6 +98,7 @@ QgSelectFilter::view_sync(QEvent *e)
     v->gv_prevMouseY = v->gv_mouse_y;
     v->gv_mouse_x = e_x;
     v->gv_mouse_y = e_y;
+    bv_screen_pt(&v->gv_point, e_x, e_y, v);
 
     // If we have modifiers, we're most likely doing shift grips
     if (m_e->modifiers() != Qt::NoModifier)

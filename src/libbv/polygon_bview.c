@@ -1,4 +1,4 @@
-/*                P O L Y G O N _ B V I E W . C
+/*                     P O L Y G O N  . C
  * BRL-CAD
  *
  * Copyright (c) 2020-2023 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @file polygons.c
  *
- * Utility functions for working with polygons in a bv context.
+ * Utility functions for working with polygons in a view context.
  *
  */
 
@@ -90,7 +90,7 @@ bv_fill_polygon(struct bv_scene_obj *s)
     if (p->fill_delta < BN_TOL_DIST)
 	return;
 
-    struct bg_polygon *fill = bv_polygon_fill_segments(&p->polygon, p->fill_dir, p->fill_delta);
+    struct bg_polygon *fill = bv_polygon_fill_segments(&p->polygon, &p->vp, p->fill_dir, p->fill_delta);
     if (!fill)
 	return;
 
@@ -180,8 +180,8 @@ bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p)
     s->s_type_flags |= BV_POLYGONS;
     s->s_type_flags |= BV_VIEWONLY;
 
-    // Save the current view for later processing
-    bv_sync(&p->v, s->s_v);
+    // Construct the plane
+    bv_view_plane(&p->vp, v);
 
     s->s_os->s_line_width = 1;
     s->s_color[0] = 255;
@@ -200,7 +200,7 @@ bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p)
 }
 
 struct bv_scene_obj *
-bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
+bv_create_polygon(struct bview *v, int flags, int type, point_t fp)
 {
 
     struct bv_polygon *p;
@@ -213,29 +213,17 @@ bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
     unsigned char frgb[3] = {0, 0, 255};
     bu_color_from_rgb_chars(&p->fill_color, frgb);
 
-    // Let the view know these are now the previous x,y points
-    v->gv_prevMouseX = x;
-    v->gv_prevMouseY = y;
+    // Construct the plane
+    bv_view_plane(&p->vp, v);
 
-    // If snapping is active, handle it
+    // Construct closest point to fp on plane
     fastf_t fx, fy;
-    if (bv_screen_to_view(v, &fx, &fy, x, y) < 0) {
-	BU_PUT(p, struct bv_polygon);
-	return NULL;
-    }
-    int snapped = 0;
-    if (v->gv_s) {
-	if (v->gv_s->gv_snap_lines) {
-	    snapped = bv_snap_lines_2d(v, &fx, &fy);
-	}
-	if (!snapped && v->gv_s->gv_grid.snap) {
-	    bv_snap_grid_2d(v, &fx, &fy);
-	}
-    }
+    bg_plane_closest_pt(&fx, &fy, p->vp, fp);
+    point_t m_pt;
+    bg_plane_pt_at(&m_pt, p->vp, fx, fy);
 
-    point_t v_pt;
-    VSET(v_pt, fx, fy, 0);
-    VMOVE(p->prev_point, v_pt);
+    // This is now the previous point
+    VMOVE(p->prev_point, m_pt);
 
     int pcnt = 1;
     if (type == BV_POLYGON_CIRCLE)
@@ -254,8 +242,6 @@ bv_create_polygon(struct bview *v, int flags, int type, int x, int y)
     p->polygon.contour[0].open = 0;
     p->polygon.contour[0].point = (point_t *)bu_calloc(pcnt, sizeof(point_t), "point");
     p->polygon.hole[0] = 0;
-    point_t m_pt;
-    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
     for (int i = 0; i < pcnt; i++) {
 	VMOVE(p->polygon.contour[0].point[i], m_pt);
     }
@@ -285,7 +271,7 @@ bv_polygon_cpy(struct bv_polygon *dest, struct bv_polygon *src)
     dest->curr_contour_i = src->curr_contour_i;
     dest->curr_point_i = src->curr_point_i;
     VMOVE(dest->prev_point, src->prev_point);
-    bv_sync(&dest->v, &src->v);
+    HMOVE(dest->vp, src->vp);
     dest->vZ = src->vZ;
     bg_polygon_free(&dest->polygon);
     bg_polygon_cpy(&dest->polygon, &src->polygon);
@@ -293,7 +279,7 @@ bv_polygon_cpy(struct bv_polygon *dest, struct bv_polygon *src)
 }
 
 int
-bv_append_polygon_pt(struct bv_scene_obj *s)
+bv_append_polygon_pt(struct bv_scene_obj *s, point_t np)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     if (p->type != BV_POLYGON_GENERAL)
@@ -302,28 +288,16 @@ bv_append_polygon_pt(struct bv_scene_obj *s)
     if (p->curr_contour_i < 0)
 	return -1;
 
+    // Construct closest point to np on plane
     fastf_t fx, fy;
-
-    struct bview *v = s->s_v;
-    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
-	return 0;
-
-    int snapped = 0;
-    if (v->gv_s->gv_snap_lines) {
-	snapped = bv_snap_lines_2d(v, &fx, &fy);
-    }
-    if (!snapped && v->gv_s->gv_grid.snap) {
-	bv_snap_grid_2d(v, &fx, &fy);
-    }
-
-    point_t v_pt;
-    VSET(v_pt, fx, fy, p->vZ);
+    bg_plane_closest_pt(&fx, &fy, p->vp, np);
+    point_t m_pt;
+    bg_plane_pt_at(&m_pt, p->vp, fx, fy);
 
     struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
     c->num_points++;
     c->point = (point_t *)bu_realloc(c->point,c->num_points * sizeof(point_t), "realloc contour points");
-    // Use the polygon's view context for actually adding the point
-    MAT4X3PNT(c->point[c->num_points-1], p->v.gv_view2model, v_pt);
+    VMOVE(c->point[c->num_points-1], m_pt);
 
     /* Have new polygon, now update view object vlist */
     bv_polygon_vlist(s);
@@ -338,14 +312,10 @@ bv_append_polygon_pt(struct bv_scene_obj *s)
 // the moment...  Would be better for repeated sampling of relatively static
 // scenes to build an RTree first...
 struct bv_scene_obj *
-bv_select_polygon(struct bu_ptbl *objs, struct bview *v)
+bv_select_polygon(struct bu_ptbl *objs, point_t cp)
 {
     if (!objs)
 	return NULL;
-
-    fastf_t fx, fy;
-    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
-	return 0;
 
     struct bv_scene_obj *closest = NULL;
     double dist_min_sq = DBL_MAX;
@@ -353,15 +323,20 @@ bv_select_polygon(struct bu_ptbl *objs, struct bview *v)
     for (size_t i = 0; i < BU_PTBL_LEN(objs); i++) {
 	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(objs, i);
 	if (s->s_type_flags & BV_POLYGONS) {
-	    point_t v_pt, m_pt;
 	    struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 	    // Because we're working in 2D orthogonal when processing polygons,
 	    // the specific value of Z for each individual polygon isn't
 	    // relevant - we want to find the closest edge in the projected
-	    // view plane.  Accordingly, always construct the point using
+	    // view plane.  Accordingly, always construct the test point using
 	    // whatever the current vZ is for the polygon being tested.
-	    VSET(v_pt, fx, fy, p->vZ);
-	    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
+	    plane_t zpln;
+	    HMOVE(zpln, p->vp);  
+	    zpln[3] += p->vZ;
+	    fastf_t fx, fy;
+	    bg_plane_closest_pt(&fx, &fy, zpln, cp);
+	    point_t m_pt;
+	    bg_plane_pt_at(&m_pt, zpln, fx, fy);
+
 	    for (size_t j = 0; j < p->polygon.num_contours; j++) {
 		struct bg_poly_contour *c = &p->polygon.contour[j];
 		for (size_t k = 0; k < c->num_points; k++) {
@@ -384,30 +359,19 @@ bv_select_polygon(struct bu_ptbl *objs, struct bview *v)
 }
 
 int
-bv_select_polygon_pt(struct bv_scene_obj *s)
+bv_select_polygon_pt(struct bv_scene_obj *s, point_t cp)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     if (p->type != BV_POLYGON_GENERAL)
 	return -1;
 
+    plane_t zpln;
+    HMOVE(zpln, p->vp);  
+    zpln[3] += p->vZ;
     fastf_t fx, fy;
-
-    struct bview *v = s->s_v;
-    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
-	return 0;
-
-    int snapped = 0;
-    if (v->gv_s->gv_snap_lines) {
-	snapped = bv_snap_lines_2d(v, &fx, &fy);
-    }
-    if (!snapped && v->gv_s->gv_grid.snap) {
-	bv_snap_grid_2d(v, &fx, &fy);
-    }
-
-    point_t v_pt, m_pt;
-    VSET(v_pt, fx, fy, p->vZ);
-    MAT4X3PNT(m_pt, v->gv_view2model, v_pt);
-
+    bg_plane_closest_pt(&fx, &fy, zpln, cp);
+    point_t m_pt;
+    bg_plane_pt_at(&m_pt, zpln, fx, fy);
 
     // If a contour is selected, restrict our closest point candidates to
     // that contour's points
@@ -469,41 +433,22 @@ bv_select_clear_polygon_pt(struct bv_scene_obj *s)
 
 
 int
-bv_move_polygon(struct bv_scene_obj *s)
+bv_move_polygon(struct bv_scene_obj *s, point_t cp)
 {
     fastf_t pfx, pfy, fx, fy;
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
-    struct bview *v = s->s_v;
-    if (bv_screen_to_view(v, &pfx, &pfy, v->gv_prevMouseX, v->gv_prevMouseY) < 0)
-	return 0;
-    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
-	return 0;
 
-    // If snapping is active, handle it
-    int snapped = 0;
-    if (v->gv_s) {
-	if (v->gv_s->gv_snap_lines) {
-	    snapped = bv_snap_lines_2d(v, &fx, &fy);
-	}
-	if (!snapped && v->gv_s->gv_grid.snap) {
-	    bv_snap_grid_2d(v, &fx, &fy);
-	}
-    }
+    plane_t zpln;
+    HMOVE(zpln, p->vp);
+    zpln[3] += p->vZ;
+    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
+    bg_plane_closest_pt(&fx, &fy, zpln, cp);
 
     fastf_t dx = fx - pfx;
     fastf_t dy = fy - pfy;
 
-    point_t v_pt, m_pt;
-    VSET(v_pt, dx, dy, p->vZ);
-
-    // Use the polygon's view2model matrix, sans any "delta" component (see
-    // vmath.h) for actually moving the points.
-    mat_t v2m;
-    MAT_COPY(v2m, p->v.gv_view2model);
-    v2m[3] = 0;
-    v2m[7] = 0;
-    v2m[11] = 0;
-    MAT4X3PNT(m_pt, v2m, v_pt);
+    point_t m_pt;
+    bg_plane_pt_at(&m_pt, p->vp, dx, dy);
 
     for (size_t j = 0; j < p->polygon.num_contours; j++) {
 	struct bg_poly_contour *c = &p->polygon.contour[j];
@@ -517,8 +462,7 @@ bv_move_polygon(struct bv_scene_obj *s)
 
     // Shift the previous point so updates will start from the
     // correct point.
-    p->prev_point[0] = p->prev_point[0]+dx;
-    p->prev_point[1] = p->prev_point[1]+dy;
+    VMOVE(p->prev_point, m_pt);
 
     /* Updated */
     s->s_changed++;
@@ -527,7 +471,7 @@ bv_move_polygon(struct bv_scene_obj *s)
 }
 
 int
-bv_move_polygon_pt(struct bv_scene_obj *s)
+bv_move_polygon_pt(struct bv_scene_obj *s, point_t mp)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     if (p->type != BV_POLYGON_GENERAL)
@@ -538,24 +482,12 @@ bv_move_polygon_pt(struct bv_scene_obj *s)
 	return -1;
 
     fastf_t fx, fy;
-
-    struct bview *v = s->s_v;
-    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
-	return 0;
-
-    // If snapping is active, handle it
-    int snapped = 0;
-    if (v->gv_s->gv_snap_lines) {
-	snapped = bv_snap_lines_2d(v, &fx, &fy);
-    }
-    if (!snapped && v->gv_s->gv_grid.snap) {
-	bv_snap_grid_2d(v, &fx, &fy);
-    }
-
-    point_t v_pt, m_pt;
-    VSET(v_pt, fx, fy, p->vZ);
-    // Use the polygon's view context for actually moving the point
-    MAT4X3PNT(m_pt, p->v.gv_view2model, v_pt);
+    plane_t zpln;
+    HMOVE(zpln, p->vp);  
+    zpln[3] += p->vZ;
+    bg_plane_closest_pt(&fx, &fy, zpln, mp);
+    point_t m_pt;
+    bg_plane_pt_at(&m_pt, zpln, fx, fy);
 
     struct bg_poly_contour *c = &p->polygon.contour[p->curr_contour_i];
     VMOVE(c->point[p->curr_point_i], m_pt);
@@ -574,30 +506,27 @@ bv_move_polygon_pt(struct bv_scene_obj *s)
  * all the pieces needed to seed a circle at an XY point. */
 
 int
-bv_update_polygon_circle(struct bv_scene_obj *s, struct bview *v)
+bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t gv_scale)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     fastf_t curr_fx, curr_fy;
-    fastf_t fx, fy;
     fastf_t r, arc;
     int nsegs, n;
-    point_t v_pt;
     vect_t vdiff;
 
-    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
-	return 0;
 
-    int snapped = 0;
-    if (v->gv_s->gv_snap_lines) {
-	snapped = bv_snap_lines_2d(v, &fx, &fy);
-    }
-    if (!snapped && v->gv_s->gv_grid.snap) {
-	bv_snap_grid_2d(v, &fx, &fy);
-    }
+    fastf_t pfx, pfy, fx, fy;
+    plane_t zpln;
+    HMOVE(zpln, p->vp);
+    zpln[3] += p->vZ;
+    bg_plane_closest_pt(&fx, &fy, zpln, cp);
+    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
 
-    VSET(v_pt, fx, fy, p->vZ);
-    VSUB2(vdiff, v_pt, p->prev_point);
+    point_t pv_pt, v_pt;
+    VSET(pv_pt, pfx, pfy, 0);
+    VSET(v_pt, fx, fy, 0);
+    VSUB2(vdiff, v_pt, pv_pt);
     r = MAGNITUDE(vdiff);
 
     /* use a variable number of segments based on the size of the
@@ -607,7 +536,7 @@ bv_update_polygon_circle(struct bv_scene_obj *s, struct bview *v)
      *
      * circumference / 4 = PI * diameter / 4
      */
-    nsegs = M_PI_2 * r * v->gv_scale;
+    nsegs = M_PI_2 * r * gv_scale;
 
     if (nsegs < 32)
 	nsegs = 32;
@@ -625,11 +554,10 @@ bv_update_polygon_circle(struct bv_scene_obj *s, struct bview *v)
     for (n = 0; n < nsegs; ++n) {
 	fastf_t ang = n * arc;
 
-	curr_fx = cos(ang*DEG2RAD) * r + p->prev_point[X];
-	curr_fy = sin(ang*DEG2RAD) * r + p->prev_point[Y];
-	VSET(v_pt, curr_fx, curr_fy, p->vZ);
-	// Use the polygon's view context for actually adding the points
-	MAT4X3PNT(gpp->contour[0].point[n], p->v.gv_view2model, v_pt);
+	curr_fx = cos(ang*DEG2RAD) * r + pfx;
+	curr_fy = sin(ang*DEG2RAD) * r + pfy;
+	bg_plane_pt_at(&v_pt, p->vp, curr_fx, curr_fy);
+	VMOVE(gpp->contour[0].point[n], v_pt);
     }
 
     bg_polygon_free(&p->polygon);
@@ -649,31 +577,26 @@ bv_update_polygon_circle(struct bv_scene_obj *s, struct bview *v)
 }
 
 int
-bv_update_polygon_ellipse(struct bv_scene_obj *s, struct bview *v)
+bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t gv_scale)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
-    fastf_t fx, fy;
-
-    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
-	return 0;
-
-    int snapped = 0;
-    if (v->gv_s->gv_snap_lines) {
-	snapped = bv_snap_lines_2d(v, &fx, &fy);
-    }
-    if (!snapped && v->gv_s->gv_grid.snap) {
-	bv_snap_grid_2d(v, &fx, &fy);
-    }
-
+    fastf_t pfx, pfy, fx, fy;
+    plane_t zpln;
+    HMOVE(zpln, p->vp);
+    zpln[3] += p->vZ;
+    bg_plane_closest_pt(&fx, &fy, zpln, cp);
+    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
 
     fastf_t a, b, arc;
+    point_t pv_pt;
     point_t ellout;
     point_t A, B;
     int nsegs, n;
 
-    a = fx - p->prev_point[X];
-    b = fy - p->prev_point[Y];
+    VSET(pv_pt, pfx, pfy, 0);
+    a = fx - pfx;
+    b = fy - pfy;
 
     /*
      * For angle alpha, compute surface point as
@@ -694,7 +617,7 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, struct bview *v)
      * circumference / 4 = PI * diameter / 4
      *
      */
-    nsegs = M_PI_2 * FMAX(a, b) * v->gv_scale;
+    nsegs = M_PI_2 * FMAX(a, b) * gv_scale;
 
     if (nsegs < 32)
 	nsegs = 32;
@@ -713,14 +636,10 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, struct bview *v)
 	fastf_t cosa = cos(n * arc * DEG2RAD);
 	fastf_t sina = sin(n * arc * DEG2RAD);
 
-	VJOIN2(ellout, p->prev_point, cosa, A, sina, B);
+	VJOIN2(ellout, pv_pt, cosa, A, sina, B);
 
-	// Note - don't set Z until after elliptical point is calculated -
-	// if we set it beforehand we get ellipses not in the view plane.
-	ellout[Z] = p->vZ;
-
-	// Use the polygon's view context for actually adding the points
-	MAT4X3PNT(gpp->contour[0].point[n], p->v.gv_view2model, ellout);
+	// Use the polygon's plane for actually adding the points
+	bg_plane_pt_at(&gpp->contour[0].point[n], zpln, ellout[0], ellout[1]);
     }
 
     bg_polygon_free(&p->polygon);
@@ -740,32 +659,23 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, struct bview *v)
 }
 
 int
-bv_update_polygon_rectangle(struct bv_scene_obj *s, struct bview *v)
+bv_update_polygon_rectangle(struct bv_scene_obj *s, point_t cp)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
-    fastf_t fx, fy;
+    fastf_t pfx, pfy, fx, fy;
+    plane_t zpln;
+    HMOVE(zpln, p->vp);  
+    zpln[3] += p->vZ;
+    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
+    bg_plane_closest_pt(&fx, &fy, zpln, cp);
 
-    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
-	return 0;
+    // Use the polygon's plane for actually adjusting the points
+    bg_plane_pt_at(&p->polygon.contour[0].point[0], zpln, pfx, pfy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[1], zpln, pfx, fy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[2], zpln, fx, fy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[3], zpln, fx, pfy);
 
-    int snapped = 0;
-    if (v->gv_s->gv_snap_lines) {
-	snapped = bv_snap_lines_2d(v, &fx, &fy);
-    }
-    if (!snapped && v->gv_s->gv_grid.snap) {
-	bv_snap_grid_2d(v, &fx, &fy);
-    }
-
-    // Use the polygon's view context for actually adjusting the points
-    point_t v_pt;
-    MAT4X3PNT(p->polygon.contour[0].point[0], p->v.gv_view2model, p->prev_point);
-    VSET(v_pt, p->prev_point[X], fy, p->vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[1], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, fy, p->vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[2], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, p->prev_point[Y], p->vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[3], p->v.gv_view2model, v_pt);
     p->polygon.contour[0].open = 0;
 
     /* Polygon updated, now update view object vlist */
@@ -778,48 +688,38 @@ bv_update_polygon_rectangle(struct bv_scene_obj *s, struct bview *v)
 }
 
 int
-bv_update_polygon_square(struct bv_scene_obj *s, struct bview *v)
+bv_update_polygon_square(struct bv_scene_obj *s, point_t cp)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
-    fastf_t fx, fy;
+    fastf_t pfx, pfy, fx, fy;
+    plane_t zpln;
+    HMOVE(zpln, p->vp);  
+    zpln[3] += p->vZ;
+    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
+    bg_plane_closest_pt(&fx, &fy, zpln, cp);
 
-    if (bv_screen_to_view(v, &fx, &fy, v->gv_mouse_x, v->gv_mouse_y) < 0)
-	return 0;
-
-    int snapped = 0;
-    if (v->gv_s->gv_snap_lines) {
-	snapped = bv_snap_lines_2d(v, &fx, &fy);
-    }
-    if (!snapped && v->gv_s->gv_grid.snap) {
-	bv_snap_grid_2d(v, &fx, &fy);
-    }
-
-    fastf_t dx = fx - p->prev_point[X];
-    fastf_t dy = fy - p->prev_point[Y];
+    fastf_t dx = fx - pfx;
+    fastf_t dy = fy - pfy;
 
     if (fabs(dx) > fabs(dy)) {
 	if (dy < 0.0)
-	    fy = p->prev_point[Y] - fabs(dx);
+	    fy = pfy - fabs(dx);
 	else
-	    fy = p->prev_point[Y] + fabs(dx);
+	    fy = pfy + fabs(dx);
     } else {
 	if (dx < 0.0)
-	    fx = p->prev_point[X] - fabs(dy);
+	    fx = pfx - fabs(dy);
 	else
-	    fx = p->prev_point[X] + fabs(dy);
+	    fx = pfx + fabs(dy);
     }
 
-    // Use the polygon's view context for actually adjusting the points
-    point_t v_pt;
-    MAT4X3PNT(p->polygon.contour[0].point[0], p->v.gv_view2model, p->prev_point);
-    VSET(v_pt, p->prev_point[X], fy, p->vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[1], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, fy, p->vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[2], p->v.gv_view2model, v_pt);
-    VSET(v_pt, fx, p->prev_point[Y], p->vZ);
-    MAT4X3PNT(p->polygon.contour[0].point[3], p->v.gv_view2model, v_pt);
-    p->polygon.contour[0].open = 0;
+
+    // Use the polygon's plane for actually adjusting the points
+    bg_plane_pt_at(&p->polygon.contour[0].point[0], zpln, pfx, pfy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[1], zpln, pfx, fy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[2], zpln, fx, fy);
+    bg_plane_pt_at(&p->polygon.contour[0].point[3], zpln, fx, pfy);
 
     /* Polygon updated, now update view object vlist */
     bv_polygon_vlist(s);
@@ -831,18 +731,18 @@ bv_update_polygon_square(struct bv_scene_obj *s, struct bview *v)
 }
 
 int
-bv_update_general_polygon(struct bv_scene_obj *s, int utype)
+bv_update_general_polygon(struct bv_scene_obj *s, int utype, point_t cp)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     if (p->type != BV_POLYGON_GENERAL)
 	return 0;
 
     if (utype == BV_POLYGON_UPDATE_PT_APPEND) {
-	return bv_append_polygon_pt(s);
+	return bv_append_polygon_pt(s, cp);
     }
 
     if (utype == BV_POLYGON_UPDATE_PT_SELECT) {
-	return bv_select_polygon_pt(s);
+	return bv_select_polygon_pt(s, cp);
     }
 
     if (utype == BV_POLYGON_UPDATE_PT_SELECT_CLEAR) {
@@ -851,7 +751,7 @@ bv_update_general_polygon(struct bv_scene_obj *s, int utype)
     }
 
     if (utype == BV_POLYGON_UPDATE_PT_MOVE) {
-	return bv_move_polygon_pt(s);
+	return bv_move_polygon_pt(s, cp);
     }
 
     /* Polygon updated, now update view object vlist */
@@ -899,16 +799,16 @@ bv_update_polygon(struct bv_scene_obj *s, struct bview *v, int utype)
     }
 
     if (p->type == BV_POLYGON_CIRCLE)
-	return bv_update_polygon_circle(s, v);
+	return bv_update_polygon_circle(s, v->gv_point, v->gv_scale);
     if (p->type == BV_POLYGON_ELLIPSE)
-	return bv_update_polygon_ellipse(s, v);
+	return bv_update_polygon_ellipse(s, v->gv_point, v->gv_scale);
     if (p->type == BV_POLYGON_RECTANGLE)
-	return bv_update_polygon_rectangle(s, v);
+	return bv_update_polygon_rectangle(s, v->gv_point);
     if (p->type == BV_POLYGON_SQUARE)
-	return bv_update_polygon_square(s, v);
+	return bv_update_polygon_square(s, v->gv_point);
     if (p->type != BV_POLYGON_GENERAL)
 	return 0;
-    return bv_update_general_polygon(s, utype);
+    return bv_update_general_polygon(s, utype, v->gv_point);
 }
 
 struct bv_scene_obj *
@@ -919,30 +819,14 @@ bv_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
 
     struct bv_polygon *ip = (struct bv_polygon *)s->s_i_data;
 
-    // Since we want to create our copy using s's original creation frame and
-    // not (necessarily) the current s_v, make sure the s_v's vlfree list is
-    // set in the internal polygon's stored view.
-    //
-    // TODO - fix this...
-    // ip->v.gv_objs.vlfree = &s->s_v->vset->vlfree;
+    struct bv_polygon *p;
+    BU_GET(p, struct bv_polygon);
+    bv_polygon_cpy(p, ip);
 
-    struct bv_scene_obj *np = bv_create_polygon(&ip->v, s->s_type_flags, ip->type, ip->v.gv_prevMouseX, ip->v.gv_prevMouseY);
-
-    // Internal "creation" view is defined - now set the working view that s is
-    // using for normal operations.
-    np->s_v = s->s_v;
-
-    // Copy polygon geometry
-    struct bv_polygon *dp = (struct bv_polygon *)np->s_i_data;
-    bg_polygon_free(&dp->polygon);
-    bg_polygon_cpy(&dp->polygon, &ip->polygon);
+    struct bv_scene_obj *np = bv_create_polygon_obj(s->s_v, s->s_type_flags, p);
 
     // Have geometry, now copy visual settings
     VMOVE(np->s_color, s->s_color);
-    BU_COLOR_CPY(&dp->fill_color, &ip->fill_color);
-    V2MOVE(dp->fill_dir, ip->fill_dir);
-    dp->fill_delta = ip->fill_delta;
-    dp->fill_flag = ip->fill_flag;
 
     // Update scene obj vlist
     bv_polygon_vlist(np);
