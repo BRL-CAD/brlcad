@@ -5,7 +5,16 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	if (info.getInfo("classification") == "UNCLASSIFIED") {	//Green
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 122, 51));
 	}
-	else {
+	else if (info.getInfo("classification") == "CONFIDENTIAL") {	//Blue
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 51, 160));
+	}
+	else if (info.getInfo("classification") == "SECRET") {	//Red
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(200, 16, 46));
+	}
+	else if (info.getInfo("classification") == "TOP SECRET") {	//Orange
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(255, 103, 31));
+	}
+	else {	//Draw black rectangle
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
 	}
 	int textHeight = 3 * height / 8;
