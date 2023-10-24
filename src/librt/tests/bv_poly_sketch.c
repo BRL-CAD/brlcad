@@ -78,8 +78,21 @@ main(int argc, char *argv[])
 
     const struct bn_tol tol = BN_TOL_INIT_TOL;
     int dret = db_diff_dp(dbip, wfp->dbip, dp, odp, &tol, DB_COMPARE_PARAM, NULL);
-    if (dret)
+    if (dret) {
+	struct rt_db_internal ointern, nintern;
+	int old_id = rt_db_get_internal(&ointern, dp, dbip, NULL, &rt_uniresource);
+	int new_id = rt_db_get_internal(&nintern, odp, wfp->dbip, NULL, &rt_uniresource);
+	struct bu_vls msg = BU_VLS_INIT_ZERO;
+	if (OBJ[old_id].ft_describe)
+	    OBJ[old_id].ft_describe(&msg, &ointern, 100, dbip->dbi_base2local);
+	bu_log("Original sketch info: %s\n", bu_vls_cstr(&msg));
+	bu_vls_trunc(&msg, 0);
+	if (OBJ[new_id].ft_describe)
+	    OBJ[new_id].ft_describe(&msg, &nintern, 100, wfp->dbip->dbi_base2local);
+	bu_log("Exported sketch info: %s\n", bu_vls_cstr(&msg));
+	bu_vls_free(&msg);
 	bu_exit(EXIT_FAILURE, "Difference between imported sketch and written sketch\n");
+    }
 
     db_close(dbip);
     db_close(wfp->dbip);
