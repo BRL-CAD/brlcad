@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define LIBTERMIO_IMPLEMENTATION
 #if defined(HAVE_CONIO_H)
@@ -385,9 +386,6 @@ rgbhsv(int *rgb, int *hsv)
  *
  * convert hue saturation and value to red, green, blue
  */
-
-double modf(double, double *);
-
 void
 hsvrgb(int *hsv, int *rgb)
 {
