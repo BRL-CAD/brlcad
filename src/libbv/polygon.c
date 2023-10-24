@@ -330,7 +330,7 @@ bv_select_polygon(struct bu_ptbl *objs, point_t cp)
 	    // view plane.  Accordingly, always construct the test point using
 	    // whatever the current vZ is for the polygon being tested.
 	    plane_t zpln;
-	    HMOVE(zpln, p->vp);  
+	    HMOVE(zpln, p->vp);
 	    zpln[3] += p->vZ;
 	    fastf_t fx, fy;
 	    bg_plane_closest_pt(&fx, &fy, zpln, cp);
@@ -366,7 +366,7 @@ bv_select_polygon_pt(struct bv_scene_obj *s, point_t cp)
 	return -1;
 
     plane_t zpln;
-    HMOVE(zpln, p->vp);  
+    HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
     fastf_t fx, fy;
     bg_plane_closest_pt(&fx, &fy, zpln, cp);
@@ -483,7 +483,7 @@ bv_move_polygon_pt(struct bv_scene_obj *s, point_t mp)
 
     fastf_t fx, fy;
     plane_t zpln;
-    HMOVE(zpln, p->vp);  
+    HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
     bg_plane_closest_pt(&fx, &fy, zpln, mp);
     point_t m_pt;
@@ -665,7 +665,7 @@ bv_update_polygon_rectangle(struct bv_scene_obj *s, point_t cp)
 
     fastf_t pfx, pfy, fx, fy;
     plane_t zpln;
-    HMOVE(zpln, p->vp);  
+    HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
     bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
     bg_plane_closest_pt(&fx, &fy, zpln, cp);
@@ -694,7 +694,7 @@ bv_update_polygon_square(struct bv_scene_obj *s, point_t cp)
 
     fastf_t pfx, pfy, fx, fy;
     plane_t zpln;
-    HMOVE(zpln, p->vp);  
+    HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
     bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
     bg_plane_closest_pt(&fx, &fy, zpln, cp);
