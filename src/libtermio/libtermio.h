@@ -113,7 +113,7 @@ copy_Tio(
 #elif defined(HAVE_TERMIOS_H)
 	struct termios *to, struct termios*from
 #elif defined(HAVE_CONIO_H)
-	int (*to)(), int (*from)()
+	int (**to)(), int (**from)()
 #endif
 	)
 {
