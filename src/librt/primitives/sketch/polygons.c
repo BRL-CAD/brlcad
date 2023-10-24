@@ -195,6 +195,12 @@ end:
 	++j;
     }
 
+    /* Unlike interactive sketch creation, the plane of an imported sketch comes from the
+     * sketch parameters. */
+    vect_t pn;
+    VCROSS(pn, sketch_ip->u_vec, sketch_ip->v_vec);
+    bg_plane_pt_nrml(&p->vp, sketch_ip->V, pn);
+
     /* Clean up */
     bu_free((void *)all_segment_nodes, "all_segment_nodes");
 
@@ -343,9 +349,6 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
     struct rt_db_internal internal;
     struct rt_sketch_internal *sketch_ip;
     struct line_seg *lsg;
-    vect_t view;
-    point_t vorigin;
-    mat_t invRot;
 
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     for (size_t j = 0; j < p->polygon.num_contours; ++j)
@@ -369,36 +372,23 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
     sketch_ip->curve.reverse = (int *)bu_calloc(sketch_ip->curve.count, sizeof(int), "sketch_ip->curve.reverse");
     sketch_ip->curve.segment = (void **)bu_calloc(sketch_ip->curve.count, sizeof(void *), "sketch_ip->curve.segment");
 
-    bn_mat_inv(invRot, s->s_v->gv_rotation);
-    VSET(view, 1.0, 0.0, 0.0);
-    MAT4X3PNT(sketch_ip->u_vec, invRot, view);
 
-    VSET(view, 0.0, 1.0, 0.0);
-    MAT4X3PNT(sketch_ip->v_vec, invRot, view);
+    bg_plane_pt_at(&sketch_ip->u_vec, p->vp, 0, 1);
+    bg_plane_pt_at(&sketch_ip->v_vec, p->vp, 1, 0);
 
     /* should already be unit vectors */
     VUNITIZE(sketch_ip->u_vec);
     VUNITIZE(sketch_ip->v_vec);
 
-    /* Project the origin onto the front of the viewing cube */
-    MAT4X3PNT(vorigin, s->s_v->gv_model2view, s->s_v->gv_center);
-    vorigin[Z] = p->vZ;
-
-    /* Convert back to model coordinates for storage */
-    MAT4X3PNT(sketch_ip->V, s->s_v->gv_view2model, vorigin);
+    /* Plane origin is sketch origin */
+    bg_plane_pt_at(&sketch_ip->V, p->vp, 0, 0);
 
     int n = 0;
     for (size_t j = 0; j < p->polygon.num_contours; ++j) {
 	size_t cstart = n;
 	size_t k = 0;
 	for (k = 0; k < p->polygon.contour[j].num_points; ++k) {
-	    point_t vpt;
-	    vect_t vdiff;
-
-	    MAT4X3PNT(vpt, s->s_v->gv_model2view, p->polygon.contour[j].point[k]);
-	    VSUB2(vdiff, vpt, vorigin);
-	    VSCALE(vdiff, vdiff, s->s_v->gv_scale);
-	    V2MOVE(sketch_ip->verts[n], vdiff);
+	    bg_plane_closest_pt(&sketch_ip->verts[n][1], &sketch_ip->verts[n][0], p->vp, p->polygon.contour[j].point[k]);
 
 	    if (k) {
 		BU_ALLOC(lsg, struct line_seg);
