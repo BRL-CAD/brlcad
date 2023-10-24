@@ -18,12 +18,12 @@ Options::Options()
 	classification = "";
 	rightLeft = "Right hand";
 	zY = "+Z-up";
-	notes = "N/A";
+	notes = "";
 	uLength = "m";
 	originalUnitsLength = true;
 	uMass = "g";
 	originalUnitsMass = true;
-	bio = "N/A";
+	bio = "Bio: N/A";
 }
 
 Options::~Options()
@@ -114,7 +114,7 @@ void Options::setUnitMass(std::string m) {
 }
 
 void Options::setBio(std::string b) {
-	bio = b;
+	bio = "Bio: " + b;
 }
 
 std::string Options::getFilepath() {

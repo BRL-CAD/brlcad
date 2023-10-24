@@ -799,9 +799,9 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		}
 	}
 	std::string title = info.getInfo("title");
-	if (title.size() > 100)
+	if (title.size() > 88)
 	{
-		title = title.substr(0, 99);
+		title = title.substr(0, 88) + "...";
 	}
 	// render ambient occlusion view
 	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);

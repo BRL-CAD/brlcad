@@ -198,15 +198,15 @@ void generateReport(Options opt)
     }
 
     std::string title = info.getInfo("title");
-    if (title.size() > 100)
-    {
+    if (title.size() > 88) {
+        std::string continuation = title.substr(88);
+
         if (opt.getNotes() == "N/A") {
-            opt.setNotes("Title: " + title);
+            opt.setNotes("Continued Title: " + continuation);
         }
         else {
-            opt.setNotes(opt.getNotes() + " \nTitle: " + title);
+            opt.setNotes(opt.getNotes() + "\nContinued Title : " + continuation);
         }
-        
     }
 
     // TODO SAM: mass distinction in correctDefaultUnits?
