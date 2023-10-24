@@ -2,9 +2,8 @@
 #include "RenderHandler.h"
 
 void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-	//Draw black rectangle
-	if (info.getInfo("classification") == "CONFIDENTIAL") {
-		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 255));
+	if (info.getInfo("classification") == "UNCLASSIFIED") {	//Green
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 122, 51));
 	}
 	else {
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
