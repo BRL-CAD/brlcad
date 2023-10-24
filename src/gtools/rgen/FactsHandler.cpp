@@ -59,7 +59,7 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		text.push_back("Date Generated : " + info.getInfo("dateGenerated"));
 		img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
-	//img.drawImageFitted(3350, 2360, 100, 90, "../../../src/gtools/rgen/afcLogoB.jpg");
+	img.drawImageFitted(3350, 2360, 100, 90, "../src/gtools/rgen/afcLogo.jpg");
 }
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
