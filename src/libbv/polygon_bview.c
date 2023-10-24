@@ -912,7 +912,7 @@ bv_update_polygon(struct bv_scene_obj *s, struct bview *v, int utype)
 }
 
 struct bv_scene_obj *
-bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
+bv_dup_view_polygon(const char *nname, struct bv_scene_obj *s)
 {
     if (!nname || !s)
 	return NULL;
