@@ -98,9 +98,9 @@ static struct sgttyb curr_tio[FOPEN_MAX] = {0};
 
 #if defined(HAVE_CONIO_H)
 #  include <conio.h>
-/* unused function pointers, but created for consistency */
-static int (*save_tio)(void)[FOPEN_MAX] = {0};
-static int (*curr_tio)(void)[FOPEN_MAX] = {0};
+/* array of unused function pointers, but created for consistency */
+static int (*save_tio[FOPEN_MAX])(void) = {0};
+static int (*curr_tio[FOPEN_MAX])(void) = {0};
 #endif
 
 
@@ -112,7 +112,7 @@ copy_Tio(
 	struct termio *to, struct termio *from
 #elif defined(HAVE_TERMIOS_H)
 	struct termios *to, struct termios*from
-#elif defined_HAVE_CONIO_H)
+#elif defined(HAVE_CONIO_H)
 	int (*to)(), int (*from)()
 #endif
 	)
