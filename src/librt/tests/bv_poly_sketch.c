@@ -22,8 +22,6 @@
 
 #include "vmath.h"
 #include "bu/app.h"
-#include "bu/time.h"
-#include "bu/units.h"
 #include "bv.h"
 #include "raytrace.h"
 #include "rt/primitives/sketch.h"
