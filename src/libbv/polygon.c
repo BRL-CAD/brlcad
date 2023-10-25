@@ -501,43 +501,22 @@ bv_move_polygon_pt(struct bv_scene_obj *s, point_t mp)
     return 0;
 }
 
-/* TODO - need to adjust number of segments calculation logic.  gv_scale isn't
- * correct - if we're wanting segment lengths based on pixel size, that
- * calculation needs to happen closer to the app level, where we have a
- * notion of pixels. */
 int
-bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t gv_scale)
+bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
 
     fastf_t curr_fx, curr_fy;
     fastf_t r, arc;
     int nsegs, n;
-    vect_t vdiff;
 
-
-    fastf_t pfx, pfy, fx, fy;
-    plane_t zpln;
-    HMOVE(zpln, p->vp);
-    zpln[3] += p->vZ;
-    bg_plane_closest_pt(&fx, &fy, zpln, cp);
-    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
-
-    point_t pv_pt, v_pt;
-    VSET(pv_pt, pfx, pfy, 0);
-    VSET(v_pt, fx, fy, 0);
-    VSUB2(vdiff, v_pt, pv_pt);
-    r = MAGNITUDE(vdiff);
+    r = DIST_PNT_PNT(cp, p->prev_point);
 
     /* use a variable number of segments based on the size of the
      * circle being created so small circles have few segments and
-     * large ones are nice and smooth.  select a chord length that
-     * results in segments approximately 4 pixels in length.
-     *
-     * circumference / 4 = PI * diameter / 4
+     * large ones are nice and smooth.
      */
-    nsegs = M_PI_2 * r * gv_scale;
-
+    nsegs = M_PI_2 * r / pixel_size;
     if (nsegs < 32)
 	nsegs = 32;
 
@@ -550,12 +529,20 @@ bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t gv_scale)
     gpp->contour[0].open = 0;
     gpp->contour[0].point = (point_t *)bu_calloc(nsegs, sizeof(point_t), "point");
 
+    fastf_t pfx, pfy, fx, fy;
+    plane_t zpln;
+    HMOVE(zpln, p->vp);
+    zpln[3] += p->vZ;
+    bg_plane_closest_pt(&fx, &fy, zpln, cp);
+    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
+
     arc = 360.0 / nsegs;
     for (n = 0; n < nsegs; ++n) {
 	fastf_t ang = n * arc;
 
 	curr_fx = cos(ang*DEG2RAD) * r + pfx;
 	curr_fy = sin(ang*DEG2RAD) * r + pfy;
+	point_t v_pt;
 	bg_plane_pt_at(&v_pt, p->vp, curr_fx, curr_fy);
 	VMOVE(gpp->contour[0].point[n], v_pt);
     }
@@ -577,9 +564,28 @@ bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t gv_scale)
 }
 
 int
-bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t gv_scale)
+bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size)
 {
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
+
+    /* use a variable number of segments based on the size of the
+     * circle being created so small circles have few segments and
+     * large ones are nice and smooth.  select a chord length that
+     * results in segments approximately 4 pixels in length.
+     *
+     * circumference / 4 = PI * diameter / 4
+     *
+     */
+
+    fastf_t r = DIST_PNT_PNT(cp, p->prev_point);
+
+    /* use a variable number of segments based on the size of the
+     * circle being created so small circles have few segments and
+     * large ones are nice and smooth.
+     */
+    int nsegs = M_PI_2 * r / pixel_size;
+    if (nsegs < 32)
+	nsegs = 32;
 
     fastf_t pfx, pfy, fx, fy;
     plane_t zpln;
@@ -592,7 +598,6 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t gv_scale)
     point_t pv_pt;
     point_t ellout;
     point_t A, B;
-    int nsegs, n;
 
     VSET(pv_pt, pfx, pfy, 0);
     a = fx - pfx;
@@ -609,19 +614,6 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t gv_scale)
     VSET(A, a, 0, 0);
     VSET(B, 0, b, 0);
 
-    /* use a variable number of segments based on the size of the
-     * circle being created so small circles have few segments and
-     * large ones are nice and smooth.  select a chord length that
-     * results in segments approximately 4 pixels in length.
-     *
-     * circumference / 4 = PI * diameter / 4
-     *
-     */
-    nsegs = M_PI_2 * FMAX(a, b) * gv_scale;
-
-    if (nsegs < 32)
-	nsegs = 32;
-
     struct bg_polygon gp;
     struct bg_polygon *gpp = &gp;
     gpp->num_contours = 1;
@@ -632,7 +624,7 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t gv_scale)
     gpp->contour[0].point = (point_t *)bu_calloc(nsegs, sizeof(point_t), "point");
 
     arc = 360.0 / nsegs;
-    for (n = 0; n < nsegs; ++n) {
+    for (int n = 0; n < nsegs; ++n) {
 	fastf_t cosa = cos(n * arc * DEG2RAD);
 	fastf_t sina = sin(n * arc * DEG2RAD);
 
@@ -798,10 +790,26 @@ bv_update_polygon(struct bv_scene_obj *s, struct bview *v, int utype)
 	return 0;
     }
 
-    if (p->type == BV_POLYGON_CIRCLE)
-	return bv_update_polygon_circle(s, v->gv_point, v->gv_scale);
-    if (p->type == BV_POLYGON_ELLIPSE)
-	return bv_update_polygon_ellipse(s, v->gv_point, v->gv_scale);
+    /* Need pixel dimension for calculating segment approximations on these
+     * shapes - based on view info */
+    if (p->type == BV_POLYGON_CIRCLE || p->type == BV_POLYGON_ELLIPSE) {
+
+	// Need the length of the diagonal of a pixel
+	vect_t c1 = VINIT_ZERO;
+	vect_t c2 = VINIT_ZERO;
+	bv_screen_to_view(v, &c1[0], &c1[1], 0, 0);
+	bv_screen_to_view(v, &c2[0], &c2[1], 1, 1);
+	point_t p1, p2;
+	MAT4X3PNT(p1, v->gv_view2model, c1);
+	MAT4X3PNT(p2, v->gv_view2model, c2);
+	fastf_t d = DIST_PNT_PNT(p1, p2);
+
+	if (p->type == BV_POLYGON_CIRCLE)
+	    return bv_update_polygon_circle(s, v->gv_point, d);
+	if (p->type == BV_POLYGON_ELLIPSE)
+	    return bv_update_polygon_ellipse(s, v->gv_point, d);
+    }
+
     if (p->type == BV_POLYGON_RECTANGLE)
 	return bv_update_polygon_rectangle(s, v->gv_point);
     if (p->type == BV_POLYGON_SQUARE)
