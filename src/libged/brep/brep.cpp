@@ -1348,19 +1348,17 @@ _ged_brep_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *se
 extern "C" int
 ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 {
-    int help = 0;
-    struct _ged_brep_info gb;
-    gb.gedp = gedp;
-    gb.wdbp = wdb_dbopen(gb.gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    gb.cmds = _brep_cmds;
-    gb.verbosity = 0;
-    struct bu_color *color = NULL;
-    int plotres = 100;
-
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
 	return BRLCAD_ERROR;
     }
+
+    int help = 0;
+    struct bu_color *color = NULL;
+    int plotres = 100;
+    struct _ged_brep_info gb;
+    gb.verbosity = 0;
+    gb.gedp = gedp;
 
     // Clear results
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -1387,7 +1385,6 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
 	_ged_subcmd_help(gedp, bdesc, bcmds, "brep", bargs_help, &gb, 0, NULL);
 	return BRLCAD_OK;
     }
-
 
 
     // High level options are only defined prior to the subcommand
@@ -1435,6 +1432,9 @@ ged_brep_core(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
+    gb.gedp = gedp;
+    gb.wdbp = wdb_dbopen(gb.gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    gb.cmds = _brep_cmds;
     gb.solid_name = std::string(argv[0]);
     gb.dp = db_lookup(gedp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
     if (gb.dp == RT_DIR_NULL) {

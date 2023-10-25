@@ -1,4 +1,5 @@
 set(linenoise_ignore_files
+CMakeLists.txt
 README.markdown
 linenoise-win32.c
 linenoise.c

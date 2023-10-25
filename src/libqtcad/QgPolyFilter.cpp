@@ -63,6 +63,7 @@ QgPolyFilter::view_sync(QEvent *e)
     v->gv_prevMouseY = v->gv_mouse_y;
     v->gv_mouse_x = e_x;
     v->gv_mouse_y = e_y;
+    bv_screen_pt(&v->gv_point, e_x, e_y, v);
 
     // If we have modifiers, we're most likely doing shift grips
     if (m_e->modifiers() != Qt::NoModifier)
@@ -77,7 +78,7 @@ QgPolyFilter::close_polygon()
     // Close the general polygon - if that's what we're creating,
     // at this point it will still be open.
     struct bv_polygon *ip = (struct bv_polygon *)wp->s_i_data;
-    if (ip->polygon.contour[0].open) {
+    if (ip && ip->polygon.contour[0].open) {
 
 	if (ip->polygon.contour[0].num_points < 3) {
 	    // If we're trying to finalize and we have less than
@@ -109,7 +110,10 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 
 	if (!wp) {
-	    wp = bv_create_polygon(v, BV_VIEW_OBJS, ptype, v->gv_mouse_x, v->gv_mouse_y);
+
+	    bv_screen_pt(&v->gv_point, v->gv_mouse_x, v->gv_mouse_y, v);
+
+	    wp = bv_create_polygon(v, BV_VIEW_OBJS, ptype, v->gv_point);
 	    wp->s_v = v;
 
 	    struct bv_polygon *ip = (struct bv_polygon *)wp->s_i_data;
@@ -137,7 +141,6 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 
 	    // Z offset
 	    ip->vZ = vZ;
-	    ip->prev_point[2] = ip->vZ;
 
 	    // Set fill
 	    if (fill_poly && !ip->fill_flag) {
@@ -233,7 +236,7 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 	// appending multiple points requires multiple mouse click-and-release
 	// operations
 	struct bv_polygon *ip = (struct bv_polygon *)wp->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL)
+	if (ip && ip->type == BV_POLYGON_GENERAL)
 	    return true;
 
 	// For all non-general polygons, mouse release is the signal
@@ -336,7 +339,7 @@ QPolySelectFilter::eventFilter(QObject *, QEvent *e)
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	if (view_objs) {
-	    wp = bv_select_polygon(view_objs, v);
+	    wp = bv_select_polygon(view_objs, v->gv_point);
 	    if (!wp)
 		return true;
 	    struct bv_polygon *vp = (struct bv_polygon *)wp->s_i_data;
@@ -368,20 +371,17 @@ QPolyPointFilter::eventFilter(QObject *, QEvent *e)
 
     struct bv_polygon *vp = (struct bv_polygon *)wp->s_i_data;
 
-    // Handle Left Click - either selects or clears a point selection (the
-    // latter occurs if the click is too far from any active points)
-    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
-	if (vp->curr_point_i < 0) {
-	    bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PT_SELECT);
-	    emit view_updated(QG_VIEW_REFRESH);
-	}
+    // If we have a Left release, clear point selection
+    if (m_e->type() == QEvent::MouseButtonRelease) {
+	vp->curr_point_i = -1;
+	bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PT_SELECT_CLEAR);
+	emit view_updated(QG_VIEW_REFRESH);
 	return true;
     }
 
-    // Handle Right Click - clear point selection
-    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::RightButton)) {
-	vp->curr_point_i = -1;
-	bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
+    // Left press selects a point
+    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
+	bv_update_polygon(wp, wp->s_v, BV_POLYGON_UPDATE_PT_SELECT);
 	emit view_updated(QG_VIEW_REFRESH);
 	return true;
     }
@@ -421,6 +421,7 @@ QPolyMoveFilter::eventFilter(QObject *, QEvent *e)
 
     // We don't want other stray mouse clicks to do something surprising
     if (m_e->type() == QEvent::MouseButtonPress || m_e->type() == QEvent::MouseButtonRelease) {
+	VMOVE(v->gv_prev_point, v->gv_point);
 	return true;
     }
 
@@ -430,13 +431,14 @@ QPolyMoveFilter::eventFilter(QObject *, QEvent *e)
 	    if (BU_PTBL_LEN(&move_objs)) {
 		for (size_t i = 0; i < BU_PTBL_LEN(&move_objs); i++) {
 		    struct bv_scene_obj *mpoly = (struct bv_scene_obj *)BU_PTBL_GET(&move_objs, i);
-		    bv_move_polygon(mpoly);
+		    bv_move_polygon(mpoly, v->gv_point, v->gv_prev_point);
 		}
 	    } else {
-		bv_move_polygon(wp);
+		bv_move_polygon(wp, v->gv_point, v->gv_prev_point);
 	    }
 	    emit view_updated(QG_VIEW_REFRESH);
 	}
+	VMOVE(v->gv_prev_point, v->gv_point);
 	return true;
     }
 

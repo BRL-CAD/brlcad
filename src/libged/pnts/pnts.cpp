@@ -620,7 +620,20 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
     for (i = 0; i < numcnt; i++) {
 	fastf_t val;
 	fc = fmt[i];
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&nums[i], (void *)&val) == -1) {
+
+	// trim trailing whitespace
+	char* num = (char*)nums[i];
+	int j = strlen(nums[i]) - 1;
+	while (j > -1) {
+	    if (num[j] == ' ') {
+		j--;
+	    } else {
+		num[j+1] = '\0';
+		break;
+	    }
+	}
+
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&num, (void *)&val) == -1) {
 	    bu_log("Error - failed to read number %s\n", nums[i]);
 	    return BRLCAD_ERROR;
 	}

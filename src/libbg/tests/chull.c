@@ -27,6 +27,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bg.h"
+#define PLOT3_IMPLEMENTATION
 #include "bv/plot3.h"
 
 static

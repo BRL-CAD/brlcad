@@ -3,11 +3,16 @@ set(plot3-dm_TCLSCRIPTS
   help.tcl
   menu.tcl
   )
-BRLCAD_ADDDATA(plot3-dm_TCLSCRIPTS tclscripts/plot3-dm)
-pkgIndex_BUILD(tclscripts/plot3-dm)
-tclIndex_BUILD(tclscripts/plot3-dm)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(plot3-dm_TCLSCRIPTS tclscripts/plot3-dm)
+  pkgIndex_BUILD(tclscripts/plot3-dm)
+  tclIndex_BUILD(tclscripts/plot3-dm)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${plot3-dm_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

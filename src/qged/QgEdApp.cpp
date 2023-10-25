@@ -233,6 +233,15 @@ QgEdApp::QgEdApp(int &argc, char *argv[], int swrast_mode, int quad_mode) :QAppl
     // should try the fallback SW rendering mode.  We must do this after the
     // show() call, because it isn't until after that point that we know
     // whether the setup of the system's OpenGL context setup was successful.
+    //
+    // TODO - if we put up an Archer-style splash screen using OpenGL before
+    // we try to set up the main window, we might be able to find out the
+    // answer to "is OpenGL working" before we have to do the primary GUI
+    // setup.  We originally fell back automatically to swrast if OpenGL wasn't
+    // working, but that didn't end up working reliably - however, if we
+    // instead figure out a way to get the answer without having to try
+    // and recover the OpenGL state of the main app, we might still be able
+    // to achieve an automatic transparent fallback feature for the end user.
     if (!w->isValid3D()) {
 	bu_exit(EXIT_FAILURE, "OpenGL failed to initialize properly.  Recommend running qged with '-s' option to use fallback swrast rendering.");
     }

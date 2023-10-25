@@ -154,24 +154,40 @@ set(ENV_HOME "$ENV{HOME}")
 if (NOT ENV_HOME)
   set(ENV_HOME "$ENV{USERPROFILE}")
 endif (NOT ENV_HOME)
-if (NOT DEFINED BRLCAD_EXT_DIR)
-  set(BRLCAD_EXT_DIR "${ENV_HOME}/brlcad_ext")
-endif (NOT DEFINED BRLCAD_EXT_DIR)
 
-if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
-  set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/extinstall")
-endif (NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+# Check common location(s) in home directory
+set(EXT_CANDIDATES bext_output brlcad_ext)
+foreach(EC ${EXT_CANDIDATES})
+  if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
+    set(BRLCAD_EXT_DIR "${ENV_HOME}/${EC}")
+  endif (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
+endforeach(EC ${EXT_CANDIDATES})
+
+if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
+  set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
+endif (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
 # Need to handle the case where BRLCAD_EXT_DIR is a symlink - if it
 # is, we need to expand the symlink in order for the tar tricks we use
 # later for file copying to work...
-if (IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+if (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
   file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" EXT_PATH)
   set(BRLCAD_EXT_INSTALL_DIR "${EXT_PATH}")
-endif (IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+endif (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
 
-if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR)
-  set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/extnoinstall")
-endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR)
+# For noinstall we don't need to worry about symlinks since we'll be using
+# the contents in place.
+if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
+  set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/noinstall")
+endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
+
+# If we're doing the non-src-other build, we've got to have brlcad_externals
+# for at least a few custom components no matter how many system packages got
+# installed.
+if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
+  if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+    message(FATAL_ERROR "BRL-CAD requires a source for external components - please set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/brlcad_externals). By default this location is ${ENV_HOME}/brlcad_ext but it can be overridden.  In lieu of setting BRLCAD_EXT_DIR, it is also possible to directly set BRLCAD_EXT_INSTALL_DIR and BRLCAD_EXT_NOINSTALL_DIR to custom indivdiaul folders holding the necessary dependencies.")
+  endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -1498,6 +1514,7 @@ BRLCAD_HEADER_SYS_WAIT()
 BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
 
 BRLCAD_INCLUDE_FILE(arpa/inet.h HAVE_ARPA_INET_H)
+BRLCAD_INCLUDE_FILE(conio.h HAVE_CONIO_H)
 BRLCAD_INCLUDE_FILE(direct.h HAVE_DIRECT_H)
 BRLCAD_INCLUDE_FILE(dlfcn.h HAVE_DLFCN_H)
 BRLCAD_INCLUDE_FILE(dslib.h HAVE_DSLIB_H)
@@ -2144,7 +2161,9 @@ endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
 # targets.  Remember that src/other wipes the top level flags generated
 # by BRL-CAD for its own subdirectories - it is added after the BRL-CAD
 # tests so the CACHE reflects BRL-CAD's test results.
-add_subdirectory(src/other)
+if (EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  add_subdirectory(src/other)
+endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 # Now put back the BRL-CAD flags
 RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)

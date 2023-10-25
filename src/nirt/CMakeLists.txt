@@ -1,22 +1,14 @@
-set(LDIR "${BRLCAD_SOURCE_DIR}/src/other/linenoise")
-
 set(NIRT_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${ANALYZE_INCLUDE_DIRS}
-  ${LDIR}
+  ${LINENOISE_INCLUDE_DIRS}
   )
 BRLCAD_INCLUDE_DIRS(NIRT_INCLUDE_DIRS)
 
-set(NIRT_SRCS
-  main.cpp
-  ${LDIR}/utf8.c
-  ${LDIR}/linenoise.c
-  ${LDIR}/stringbuf.c
-  )
-
-BRLCAD_ADDEXEC(nirt "${NIRT_SRCS}" "libanalyze;librt;libbu;${M_LIBRARY}")
+BRLCAD_ADDEXEC(nirt main.cpp "libanalyze;librt;libbu;${LINENOISE_LIBRARIES};${M_LIBRARY}")
+set_property(TARGET nirt APPEND PROPERTY COMPILE_DEFINITIONS "LINENOISE_DLL_IMPORTS")
 
 BRLCAD_ADDEXEC(showshot showshot.c libbn)
 

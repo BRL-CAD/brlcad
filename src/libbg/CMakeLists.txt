@@ -7,9 +7,11 @@ set(BG_INCLUDE_DIRS
   ${POLY2TRI_INCLUDE_DIRS}
   ${SPSR_INCLUDE_DIR}
   ${LMDB_INCLUDE_DIR}
-  ${BRLCAD_SOURCE_DIR}/src/other/Eigen
+  ${EIGEN3_INCLUDE_DIRS}
   )
-
+if (EXISTS ${BRLCAD_SOURCE_DIR}/src/other/Eigen)
+  set(BG_INCLUDE_DIRS ${BG_INCLUDE_DIRS} ${BRLCAD_SOURCE_DIR}/src/other/Eigen)
+endif (EXISTS ${BRLCAD_SOURCE_DIR}/src/other/Eigen)
 BRLCAD_LIB_INCLUDE_DIRS(bg BG_INCLUDE_DIRS "")
 
 set(SPSR_srcs
@@ -60,19 +62,15 @@ set(LIBBG_SOURCES
   chull3d.cpp
   clip.c
   clipper.cpp
-  lod.cpp
   lseg_lseg.c
   lseg_pt.c
   obr.c
   plane.cpp
   polygon.c
-  polygon_bview.c
-  polygon_fill.cpp
   polygon_op.cpp
   polygon_triangulate.cpp
   polygon_point_in.c
   sat.c
-  snap.c
   spsr.c
   ${SPSR_srcs}
   tri_pt.c
@@ -87,7 +85,7 @@ set(LIBBG_SOURCES
   util.c
   )
 
-BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "libbv;libbn;libbu;${POLY2TRI_LIBRARIES};${LMDB_LIBRARIES}")
+BRLCAD_ADDLIB(libbg "${LIBBG_SOURCES}" "${libbg_deps};${POLY2TRI_LIBRARIES};${LMDB_LIBRARIES}")
 set_target_properties(libbg PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if (HIDE_INTERNAL_SYMBOLS)
   if (TARGET poly2tri OR HIDE_INTERNAL_SYMBOLS_EXT)

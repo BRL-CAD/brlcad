@@ -117,7 +117,7 @@ triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int lo
 	for (int i = 0; i < on2dpts.Count(); i++) verts_map[i] = vert_map[i];
     }
 
-    if (bg_polygon_triangulate(ffaces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)verts2d, on2dpts.Count(), TRI_EAR_CLIPPING)) {
+    if (bg_poly_triangulate(ffaces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)verts2d, on2dpts.Count(), TRI_EAR_CLIPPING)) {
 	bu_free(verts2d, "free verts2d");
 	bu_free(pt_ind, "free verts2d");
 	return 0;
@@ -216,7 +216,7 @@ triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_
 	h_npts[i] = holes_npts[i];
     }
 
-    bg_nested_polygon_triangulate(ffaces, &num_faces, NULL, NULL, outer_pt_ind, outer_npts, (const int **)h_arrays, h_npts, nholes, NULL, 0, (const point2d_t *)verts2d, on2dpts.Count(), TRI_EAR_CLIPPING);
+    bg_nested_poly_triangulate(ffaces, &num_faces, NULL, NULL, outer_pt_ind, outer_npts, (const int **)h_arrays, h_npts, nholes, NULL, 0, (const point2d_t *)verts2d, on2dpts.Count(), TRI_EAR_CLIPPING);
 
     // fix up vertex indices
     for (int i = 0; i < num_faces*3; i++) {

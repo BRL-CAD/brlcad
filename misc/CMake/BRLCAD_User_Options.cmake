@@ -516,6 +516,11 @@ if(APACHE_FOP)
   endif(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
 endif(APACHE_FOP)
 
+# Option controlling the installation of the non-Docbook based documentation
+# Doesn't impact the installation of the licenses
+option(BRLCAD_INSTALL_DOCS "Install core BRL-CAD documentation" ON)
+mark_as_advanced(BRLCAD_INSTALL_DOCS)
+
 # Toplevel variable that controls all DocBook based documentation.  Key it off
 # of what target level is enabled.
 if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)

@@ -175,7 +175,7 @@ set mged_help_data(expand)	$helplib_data(wdb_expand)
 set mged_help_data(extrude)	{{#### distance}	{extrude dist from face}}
 set mged_help_data(eye_pt)	$helplib_data(vo_eye)
 set mged_help_data(facedef)	{{####}	{define new face for an arb}}
-set mged_help_data(facetize)	{{[-mntT] [-P#] new_obj old_obj(s)}	{convert objects to faceted BOT objects (or NMG for -n option, with -m for marching cubes) at current tol}}
+set mged_help_data(facetize)	{{[ -nmhT | [--NMG] [--CM] [--SPSR] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]}	{Convert objects to faceted BOT objects. See man page ("man facetize") for all usage and examples}}
 set mged_help_data(form)	$helplib_data(wdb_form)
 set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face}}
 set mged_help_data(g)		$helplib_data(wdb_group)

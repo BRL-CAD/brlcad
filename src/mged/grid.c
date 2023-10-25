@@ -47,6 +47,7 @@ static void set_grid_res(const struct bu_structparse *, const char *, void *, co
 struct bv_grid_state default_grid_state = {
     /* rc */		1,
     /* draw */		0,
+    /* non-adaptive*/   0,
     /* snap */		0,
     /* anchor */	VINIT_ZERO,
     /* res_h */		1.0,

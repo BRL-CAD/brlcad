@@ -794,13 +794,17 @@ function(BRLCAD_ADDDATA datalist targetdir)
 endfunction(BRLCAD_ADDDATA)
 
 function(ADD_DOC doclist targetdir)
-  set(doc_target_dir ${DOC_DIR}/${targetdir})
-  BRLCAD_MANAGE_FILES(${doclist} ${doc_target_dir})
+  if (BRLCAD_INSTALL_DOCS)
+    set(doc_target_dir ${DOC_DIR}/${targetdir})
+    BRLCAD_MANAGE_FILES(${doclist} ${doc_target_dir})
+  endif (BRLCAD_INSTALL_DOCS)
 endfunction(ADD_DOC)
 
 function(ADD_MAN_PAGES num inmanlist)
-  set(man_target_dir ${MAN_DIR}/man${num})
-  BRLCAD_MANAGE_FILES(${inmanlist} ${man_target_dir})
+  if (BRLCAD_INSTALL_DOCS)
+    set(man_target_dir ${MAN_DIR}/man${num})
+    BRLCAD_MANAGE_FILES(${inmanlist} ${man_target_dir})
+  endif (BRLCAD_INSTALL_DOCS)
 endfunction(ADD_MAN_PAGES)
 
 

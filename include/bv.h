@@ -42,6 +42,9 @@
 
 #include "./bv/defines.h"
 #include "./bv/adc.h"
+#include "./bv/lod.h"
+#include "./bv/polygon.h"
+#include "./bv/snap.h"
 #include "./bv/util.h"
 #include "./bv/vlist.h"
 #include "./bv/view_sets.h"

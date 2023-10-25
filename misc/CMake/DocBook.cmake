@@ -143,6 +143,10 @@ set(PDF_DIR "${DOC_DIR}/pdf/")
 # different mechanism for handling this situation, and we need to
 # update the executable paths accordingly if they are configuration
 # dependent.
+#
+# TODO - is there some way generator expressions could be used to
+# improve this?  Maybe pass the build time location of these programs
+# to the scripts as -D arguments?
 if(CMAKE_CONFIGURATION_TYPES)
   string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
   string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
@@ -157,6 +161,20 @@ set_target_properties(docbook PROPERTIES FOLDER "DocBook")
 if (TARGET brlcad_css)
   add_dependencies(docbook brlcad_css)
 endif (TARGET brlcad_css)
+
+# man1 or man3 man pages for which it is expected that there is no associated
+# build target.
+#
+# NOTE:  for now, remrt is listed because the target is disabled on Windows.
+# If/when it works there, remove from this list
+set(filtered_man
+  brlcad
+  brlcad-config
+  redblack
+  remrt
+  benchmark
+  dbclean
+  )
 
 function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
@@ -188,11 +206,35 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
   if(BRLCAD_EXTRADOCS)
     set(all_outfiles)
+    set(errors 0)
 
     # Each file gets its own script file and custom command, which
     # handle all the outputs to be produced from that file.
     foreach(fname ${xml_files})
       get_filename_component(fname_root "${fname}" NAME_WE)
+
+      # Almost all of the man1 and man3 man pages should have build targets -
+      # check and handle accordingly
+      if ("${outdir}" MATCHES "man*")
+	if (NOT "${outdir}" STREQUAL "man5" AND NOT "${outdir}" STREQUAL "mann")
+	  list(FIND filtered_man "${fname_root}" IS_FILTERED)
+	  if ("${IS_FILTERED}" EQUAL "-1")
+	    if (NOT TARGET "${fname_root}")
+	      message("WARNING: ${outdir} man page ${fname_root} has no associated build target.")
+	      math(EXPR errors "${errors} + 1")
+	    endif (NOT TARGET "${fname_root}")
+	 # TODO - until we can ensure uniformity across all platforms for
+	 # definition of man1/man3 targets, we need to skip this check.
+	 # Instead we just ignore anything in the filtered list completely.
+	 #else ("${IS_FILTERED}" EQUAL "-1")
+	 #  if (TARGET "${fname_root}")
+	 #    message("WARNING: ${outdir} man page ${fname_root} is listed as not having a build target but one was found - remove from filtered list.")
+	 #    math(EXPR errors "${errors} + 1")
+	 #  endif (TARGET "${fname_root}")
+	 endif ("${IS_FILTERED}" EQUAL "-1")
+	endif (NOT "${outdir}" STREQUAL "man5" AND NOT "${outdir}" STREQUAL "mann")
+      endif ("${outdir}" MATCHES "man*")
+
       get_filename_component(filename "${fname}" ABSOLUTE)
 
       # Find out which outputs we're actually going to produce,
@@ -278,6 +320,10 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
       endif(NOT "${outputs}" STREQUAL "")
 
     endforeach(fname ${xml_files})
+
+    if (errors GREATER "0")
+      message(FATAL_ERROR "Halting build due to previous DocBook error(s).")
+    endif (errors GREATER "0")
 
     if(NOT "${all_outfiles}" STREQUAL "")
       add_custom_target(docbook-${target_root} ALL DEPENDS ${all_outfiles})

@@ -66,6 +66,8 @@ QPolyMod::QPolyMod()
     QObject::connect(ps->sketch_name, &QLineEdit::textEdited, this, &QPolyMod::sketch_name_edit_str);
     QObject::connect(ps->view_name, &QLineEdit::editingFinished, this, &QPolyMod::sketch_name_edit);
     QObject::connect(ps->sketch_name, &QLineEdit::editingFinished, this, &QPolyMod::sketch_name_update);
+    QObject::connect(ps, &QPolySettings::grid_snapping_changed, this, &QPolyMod::toggle_grid_snapping);
+    QObject::connect(ps, &QPolySettings::line_snapping_changed, this, &QPolyMod::toggle_line_snapping);
 
     QGroupBox *modpolyBox = new QGroupBox("Modify Polygon");
     QVBoxLayout *mod_poly_gl = new QVBoxLayout;
@@ -589,7 +591,16 @@ QPolyMod::align_to_poly()
 	return;
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-    bv_sync(gedp->ged_gvp, &ip->v);
+
+    point_t center;
+    vect_t dir = VINIT_ZERO;
+    VSET(dir, ip->vp[0], ip->vp[1], ip->vp[2]);
+    bg_plane_pt_at(&center, ip->vp, 0, 0);
+    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
+    bn_ae_vec(&gedp->ged_gvp->gv_aet[0], &gedp->ged_gvp->gv_aet[1], dir);
+    gedp->ged_gvp->gv_aet[2] = 0;
+    bv_mat_aet(gedp->ged_gvp);
+
     bv_update(gedp->ged_gvp);
 
     emit view_updated(QG_VIEW_REFRESH);
@@ -825,6 +836,82 @@ QPolyMod::view_name_update()
     emit view_updated(QG_VIEW_REFRESH);
 }
 
+
+void
+QPolyMod::toggle_line_snapping(bool s)
+{
+    struct bview *v = (cf) ? cf->v : NULL;
+    struct bv_scene_obj *co = (cf) ? cf->wp : NULL;
+    if (!v || !co)
+	return;
+
+    v->gv_s->gv_snap_flags = BV_SNAP_VIEW;
+    bu_ptbl_reset(&v->gv_s->gv_snap_objs);
+    if (!s) {
+	v->gv_s->gv_snap_lines = 0;
+    } else {
+	// Turn snapping on if we have other polygons to snap to
+	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
+	if (!view_objs)
+	    return;
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    if (so == co)
+		continue;
+	    if (so->s_type_flags & BV_POLYGONS)
+		bu_ptbl_ins(&v->gv_s->gv_snap_objs, (long *)so);
+	}
+	if (BU_PTBL_LEN(&v->gv_s->gv_snap_objs)) {
+	    v->gv_s->gv_snap_lines = 1;
+	} else {
+	    v->gv_s->gv_snap_lines = 0;
+	}
+    }
+
+    emit settings_changed(QG_VIEW_DRAWN);
+}
+
+void
+QPolyMod::toggle_grid_snapping(bool s)
+{
+    struct bview *v = (cf) ? cf->v : NULL;
+    if (!v)
+	return;
+
+    v->gv_s->gv_snap_flags = BV_SNAP_VIEW;
+    if (!s) {
+	v->gv_s->gv_grid.snap = 0;
+    } else {
+	v->gv_s->gv_grid.snap = 1;
+    }
+
+    emit settings_changed(QG_VIEW_DRAWN);
+}
+
+void
+QPolyMod::checkbox_refresh(unsigned long long)
+{
+    struct bview *v = (cf) ? cf->v : NULL;
+    if (!v)
+	return;
+
+    ps->grid_snapping->blockSignals(true);
+    if (v->gv_s->gv_grid.snap) {
+	ps->grid_snapping->setCheckState(Qt::Checked);
+    } else {
+	ps->grid_snapping->setCheckState(Qt::Unchecked);
+    }
+    ps->grid_snapping->blockSignals(false);
+
+    ps->line_snapping->blockSignals(true);
+    if (v->gv_s->gv_snap_lines) {
+	ps->line_snapping->setCheckState(Qt::Checked);
+    } else {
+	ps->line_snapping->setCheckState(Qt::Unchecked);
+    }
+    ps->line_snapping->blockSignals(false);
+}
+
 void
 QPolyMod::propagate_update(int)
 {
@@ -861,6 +948,7 @@ QPolyMod::eventFilter(QObject *, QEvent *e)
     cf->wp = p;
     cf->v = (p) ? p->s_v : gedp->ged_gvp;
     cf->ptype = (ip) ? ip->type : BV_POLYGON_GENERAL;
+    checkbox_refresh(0);
 
     // Connect whatever the current filter is to pass on updating signals from
     // the libqtcad logic.

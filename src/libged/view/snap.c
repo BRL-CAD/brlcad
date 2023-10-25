@@ -32,7 +32,7 @@
 
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bg/lseg.h"
+#include "bv/snap.h"
 #include "dm.h"
 #include "../ged_private.h"
 #include "./ged_view.h"

@@ -10,7 +10,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(SAT_DIRS
     "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
+    "${OPENNURBS_INCLUDE_DIRS}"
     ${ZLIB_INCLUDE_DIRS}
     ${REGEX_INCLUDE_DIRS}
     )

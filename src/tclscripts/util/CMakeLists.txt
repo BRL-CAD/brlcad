@@ -4,11 +4,16 @@ set(util_TCLSCRIPTS
   metastrength.tcl
   regionstobots.tcl
   )
-BRLCAD_ADDDATA(util_TCLSCRIPTS tclscripts/util)
-pkgIndex_BUILD(tclscripts/util)
-tclIndex_BUILD(tclscripts/util)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(util_TCLSCRIPTS tclscripts/util)
+  pkgIndex_BUILD(tclscripts/util)
+  tclIndex_BUILD(tclscripts/util)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${util_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

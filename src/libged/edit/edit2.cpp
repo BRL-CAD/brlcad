@@ -29,6 +29,10 @@
 
 #include "common.h"
 
+#include <map>
+#include <set>
+#include <string>
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -39,126 +43,143 @@
 #include "../ged_private.h"
 #include "./ged_edit2.h"
 
-static int
-_edit_cmd_msgs(void *einfop, int argc, const char **argv, const char *us, const char *ps)
-{
-    struct _ged_edit2_info *einfo = (struct _ged_edit2_info *)einfop;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n%s\n", us, ps);
-	return 1;
-    }
-    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n", ps);
-	return 1;
-    }
-    return 0;
-}
-
-extern "C" int
-_edit2_cmd_rotate(void *einfop, int argc, const char **argv)
-{
-    if (!einfop || !argc || !argv)
-	return BRLCAD_ERROR;
-
-    const char *usage_string = "edit [options] [geometry] rotate X Y Z";
-    const char *purpose_string = "rotate specified primitive or comb instance";
-    if (_edit_cmd_msgs(einfop, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    argc--; argv++;
-
-    struct _ged_edit2_info *einfo = (struct _ged_edit2_info *)einfop;
-    if (argc < 3 || !argv) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
-extern "C" int
-_edit2_cmd_tra(void *einfop, int argc, const char **argv)
-{
-    if (!einfop || !argc || !argv)
-	return BRLCAD_ERROR;
-
-    const char *usage_string = "edit [options] [geometry] tra X Y Z";
-    const char *purpose_string = "translate specified primitive or comb instance relative to its current position";
-    if (_edit_cmd_msgs(einfop, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    argc--; argv++;
-
-    struct _ged_edit2_info *einfo = (struct _ged_edit2_info *)einfop;
-    if (argc < 3 || !argv) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
-extern "C" int
-_edit2_cmd_translate(void *einfop, int argc, const char **argv)
-{
-    if (!einfop || !argc || !argv)
-	return BRLCAD_ERROR;
-
-    const char *usage_string = "edit [options] [geometry] translate X Y Z";
-    const char *purpose_string = "translate specified primitive or comb instance to the specified aeinfopolute position";
-    if (_edit_cmd_msgs(einfop, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    argc--; argv++;
-
-    struct _ged_edit2_info *einfo = (struct _ged_edit2_info *)einfop;
-    if (argc < 3 || !argv) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
-extern "C" int
-_edit2_cmd_scale(void *einfop, int argc, const char **argv)
-{
-    if (!einfop || !argc || !argv)
-	return BRLCAD_ERROR;
-
-    const char *usage_string = "edit [options] [geometry] scale factor";
-    const char *purpose_string = "scale specified primitive or comb instance by the specified factor (must be greater than 0)";
-    if (_edit_cmd_msgs(einfop, argc, argv, usage_string, purpose_string))
-	return BRLCAD_OK;
-
-    argc--; argv++;
-
-    struct _ged_edit2_info *einfo = (struct _ged_edit2_info *)einfop;
-    if (!argc || !argv) {
-	bu_vls_printf(einfo->gedp->ged_result_str, "%s\n", usage_string);
-	return BRLCAD_ERROR;
-    }
-
-    return BRLCAD_OK;
-}
-
-const struct bu_cmdtab _edit2_cmds[] = {
-    { "rot",           _edit2_cmd_rotate},
-    { "rotate",        _edit2_cmd_rotate},
-    { "tra",           _edit2_cmd_tra},
-    { "translate",     _edit2_cmd_translate},
-    { "sca",           _edit2_cmd_scale},
-    { "scale",         _edit2_cmd_scale},
-    { (char *)NULL,    NULL}
+// Container to hold information about top level options and
+// specified geometry options common to all the subcommands.
+struct edit_info {
+    int verbosity;
+    struct directory *dp;
 };
+
+
+// Rotate command
+class cmd_rotate : public ged_subcmd {
+    public:
+	std::string usage()   { return std::string("edit [options] [geometry] rotate X Y Z"); }
+	std::string purpose() { return std::string("rotate specified primitive or comb instance"); }
+	int exec(struct ged *, void *, int, const char **);
+};
+static cmd_rotate edit_rotate_cmd;
+
+int
+cmd_rotate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
+{
+    if (!gedp || !u_data || !argc || !argv)
+	return BRLCAD_ERROR;
+
+    struct edit_info *einfo = (struct edit_info *)u_data;
+    if (einfo->dp == RT_DIR_NULL)
+	return BRLCAD_ERROR;
+
+    argc--; argv++;
+
+    if (argc < 3 || !argv) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", usage().c_str());
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+
+// Tra command
+class cmd_tra : public ged_subcmd {
+    public:
+	std::string usage()   { return std::string("edit [options] [geometry] tra X Y Z"); }
+	std::string purpose() { return std::string("translate specified primitive or comb instance relative to its current position"); }
+	int exec(struct ged *, void *, int, const char **);
+};
+static cmd_tra edit_tra_cmd;
+
+int
+cmd_tra::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
+{
+    if (!gedp || !u_data || !argc || !argv)
+	return BRLCAD_ERROR;
+
+    struct edit_info *einfo = (struct edit_info *)u_data;
+    if (einfo->dp == RT_DIR_NULL)
+	return BRLCAD_ERROR;
+
+    argc--; argv++;
+
+    if (argc < 3 || !argv) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", usage().c_str());
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+
+// Translate command
+class cmd_translate : public ged_subcmd {
+    public:
+	std::string usage()   { return std::string("edit [options] [geometry] translate X Y Z"); }
+	std::string purpose() { return std::string("translate specified primitive or comb instance to the specified absolute position"); }
+	int exec(struct ged *, void *, int, const char **);
+};
+static cmd_translate edit_translate_cmd;
+
+int
+cmd_translate::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
+{
+    if (!gedp || !u_data || !argc || !argv)
+	return BRLCAD_ERROR;
+
+    struct edit_info *einfo = (struct edit_info *)u_data;
+    if (einfo->dp == RT_DIR_NULL)
+	return BRLCAD_ERROR;
+
+    argc--; argv++;
+
+    if (argc < 3 || !argv) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", usage().c_str());
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
+
+// Scale command
+class cmd_scale : public ged_subcmd {
+    public:
+	std::string usage()   { return std::string("edit [options] [geometry] scale_factor"); }
+	std::string purpose() { return std::string("scale specified primitive or comb instance by the specified factor (must be greater than 0)"); }
+	int exec(struct ged *, void *, int, const char **);
+};
+static cmd_scale edit_scale_cmd;
+
+int
+cmd_scale::exec(struct ged *gedp, void *u_data, int argc, const char **argv)
+{
+    if (!gedp || !u_data || !argc || !argv)
+	return BRLCAD_ERROR;
+
+    struct edit_info *einfo = (struct edit_info *)u_data;
+    if (einfo->dp == RT_DIR_NULL)
+	return BRLCAD_ERROR;
+
+    argc--; argv++;
+
+    if (argc < 3 || !argv) {
+	bu_vls_printf(gedp->ged_result_str, "%s\n", usage().c_str());
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
 
 
 extern "C" int
 ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
 {
     int help = 0;
-    struct bu_vls geom_specifier = BU_VLS_INIT_ZERO;
-    struct _ged_edit2_info einfo;
+    int optend_pos = -1;
+    std::vector<std::string> geom_objs;
+    struct edit_info einfo;
+    einfo.verbosity = 0;
+    einfo.dp = RT_DIR_NULL;
 
     // Clear results buffer
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -170,57 +191,79 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // We know we're the edit command
     argc--;argv++;
 
-    // See if we have any high level options set
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",     "",          NULL,         &help,            "Print help");
-    BU_OPT(d[1], "G", "geometry", "specifier", &bu_opt_vls,  &geom_specifier,  "Specify geometry to operate on");
-    BU_OPT(d[2], "v", "verbose", "",           NULL,         &einfo.verbosity, "Verbose output");
-    BU_OPT_NULL(d[3]);
+    // Set up our command map
+    std::map<std::string, ged_subcmd *> edit_cmds;
+    edit_cmds[std::string("rot")]       = &edit_rotate_cmd;
+    edit_cmds[std::string("rotate")]    = &edit_rotate_cmd;
+    edit_cmds[std::string("tra")]       = &edit_tra_cmd;
+    edit_cmds[std::string("translate")] = &edit_translate_cmd;
+    edit_cmds[std::string("sca")]       = &edit_scale_cmd;
+    edit_cmds[std::string("scale")]     = &edit_scale_cmd;
 
+    // See if we have any high level options set
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",     "",          NULL,         &help,              "Print help");
+    BU_OPT(d[1], "v", "verbose", "",           NULL,         &einfo.verbosity,   "Verbose output");
+    BU_OPT_NULL(d[2]);
 
     // Set up the edit container and initialize
-    const struct bu_cmdtab *bcmds = (const struct bu_cmdtab *)_edit2_cmds;
     struct bu_opt_desc *bdesc = (struct bu_opt_desc *)d;
-    einfo.verbosity = 0;
-    einfo.gedp = gedp;
-    einfo.cmds = bcmds;
-    einfo.gopts = bdesc;
 
-    const char *bargs_help = "[options] [geometry] subcommand [args]";
+    const char *bargs_help = "[options] <geometry_specifier> subcommand [args]";
     if (!argc) {
-	_ged_subcmd_help(gedp, bdesc, bcmds, "edit", bargs_help, &einfo, 0, NULL);
+	_ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
 	return BRLCAD_OK;
     }
 
-    // High level options are only defined prior to the subcommand
-    int cmd_pos = -1;
+    // High level options are only defined prior to the geometry specifier
+    std::vector<unsigned long long> gs;
     for (int i = 0; i < argc; i++) {
-	if (bu_cmd_valid(_edit2_cmds, argv[i]) == BRLCAD_OK) {
-	    cmd_pos = i;
+	// TODO - de-quote so we can support obj names matching options...
+	gs = gedp->dbi_state->digest_path(argv[i]);
+	if (gs.size()) {
+	    optend_pos = i;
 	    break;
 	}
     }
 
-    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
+    int acnt = (optend_pos >= 0) ? optend_pos : argc;
 
     int opt_ret = bu_opt_parse(NULL, acnt, argv, d);
 
     if (help || opt_ret < 0) {
-	if (cmd_pos >= 0) {
-	    argc = argc - cmd_pos;
-	    argv = &argv[cmd_pos];
-	    _ged_subcmd_help(gedp, bdesc, bcmds, "edit", bargs_help, &einfo, argc, argv);
+	if (optend_pos >= 0) {
+	    argc = argc - optend_pos;
+	    argv = &argv[optend_pos];
+	    _ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, argc, argv);
 	} else {
-	    _ged_subcmd_help(gedp, bdesc, bcmds, "edit", bargs_help, &einfo, 0, NULL);
+	    _ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
 	}
 	return BRLCAD_OK;
     }
 
-    // Must have a subcommand
-    if (cmd_pos == -1) {
-	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
-	_ged_subcmd_help(gedp, bdesc, bcmds, "edit", bargs_help, &einfo, 0, NULL);
+    // Must have a specifier
+    if (optend_pos == -1) {
+	bu_vls_printf(gedp->ged_result_str, ": no valid geometry specifier found, nothing to edit\n");
+	_ged_subcmd2_help(gedp, bdesc, edit_cmds, "edit", bargs_help, 0, NULL);
 	return BRLCAD_ERROR;
+    }
+
+    // There are some generic commands (rot, tra, etc.) that apply universally
+    // to all geometry, but the majority of editing operations are specific to
+    // each individual geometric primitive type.  We first decode the specifier,
+    // to determine what operations we're able to support.
+    struct directory *dp = gedp->dbi_state->get_hdp(gs[0]);
+    if (!dp) {
+	bu_vls_printf(gedp->ged_result_str, ": geometry specifier lookup failed for %s\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    if (gs.size() > 1) {
+	bu_log("Comb instance specifier - only generic edit operations.\n");
+    } else {
+	// TODO - once we have the object type, ask librt what subcommands and parameters are
+	// supported for this primitive.  We can offer these in addition to the standard
+	// commands.
     }
 
     // TODO - need to unpack and validate these prior to subcommand processing - this
@@ -271,35 +314,28 @@ ged_edit2_core(struct ged *gedp, int argc, const char *argv[])
     // the equivalent to an MGED reset.
     if (opt_ret > 0) {
 	for (int gcnt = 0; gcnt < opt_ret; gcnt++) {
-	    einfo.geom_objs.push_back(std::string(argv[gcnt]));
+	    geom_objs.push_back(std::string(argv[gcnt]));
 	}
     } else {
 	// If nothing is specified, we need at least one selected geometry item or
 	// we have nothing to work on
 	std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states("default");
 	if (ss.size()) {
-	    einfo.geom_objs = ss[0]->list_selected_paths();
+	    geom_objs = ss[0]->list_selected_paths();
 	}
     }
 
-    if (!einfo.geom_objs.size()) {
+    if (!geom_objs.size()) {
 	bu_vls_printf(gedp->ged_result_str, "Error: no geometry objects specified or selected\n");
 	return BRLCAD_ERROR;
     }
 
     // Jump the processing past any options specified
-    argc = argc - cmd_pos;
-    argv = &argv[cmd_pos];
+    argc = argc - optend_pos;
+    argv = &argv[optend_pos];
 
     // Execute the subcommand
-    int ret;
-    if (bu_cmd(_edit2_cmds, argc, argv, 0, (void *)&einfo, &ret) == BRLCAD_OK) {
-	return ret;
-    } else {
-	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
-    }
-
-    return BRLCAD_ERROR;
+    return edit_cmds[std::string(argv[0])]->exec(gedp, &einfo, argc, argv);
 }
 
 

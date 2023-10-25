@@ -3,12 +3,19 @@ set(checker_TCLSCRIPTS
   menu.tcl
   OverlapFileTool.tcl
   )
-BRLCAD_ADDDATA(checker_TCLSCRIPTS tclscripts/checker)
-pkgIndex_BUILD(tclscripts/checker)
-tclIndex_BUILD(tclscripts/checker)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(checker_TCLSCRIPTS tclscripts/checker)
+  pkgIndex_BUILD(tclscripts/checker)
+  tclIndex_BUILD(tclscripts/checker)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(check.sh test_checker.tcl TODO)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  check.sh
+  test_checker.tcl
+  TODO
+  ${checker_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

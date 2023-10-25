@@ -28,8 +28,8 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "bg/lod.h"
 #include "bu/opt.h"
+#include "bv/lod.h"
 
 #include "../ged_private.h"
 
@@ -134,7 +134,7 @@ ged_opendb_core(struct ged *gedp, int argc, const char *argv[])
 
     // LoD context creation (DbiState initialization can use info
     // stored here, so do this first)
-    gedp->ged_lod = bg_mesh_lod_context_create(argv[0]);
+    gedp->ged_lod = bv_mesh_lod_context_create(argv[0]);
 
     // If enabled, set up the DbiState container for fast structure access
     const char *use_dbi_state = getenv("LIBGED_DBI_STATE");
@@ -160,13 +160,15 @@ extern "C" {
 struct ged_cmd_impl reopen_cmd_impl = {"reopen", ged_opendb_core, GED_CMD_DEFAULT};
 const struct ged_cmd reopen_cmd = { &reopen_cmd_impl };
 
-struct ged_cmd_impl open_cmd_impl = {"opendb", ged_opendb_core, GED_CMD_DEFAULT};
+struct ged_cmd_impl opendb_cmd_impl = {"opendb", ged_opendb_core, GED_CMD_DEFAULT};
+const struct ged_cmd opendb_cmd = { &opendb_cmd_impl };
+
+struct ged_cmd_impl open_cmd_impl = {"open", ged_opendb_core, GED_CMD_DEFAULT};
 const struct ged_cmd open_cmd = { &open_cmd_impl };
 
+const struct ged_cmd *open_cmds[] = { &reopen_cmd, &opendb_cmd, &open_cmd, NULL };
 
-const struct ged_cmd *open_cmds[] = { &reopen_cmd, &open_cmd, NULL };
-
-static const struct ged_plugin pinfo = { GED_API,  open_cmds, 2 };
+static const struct ged_plugin pinfo = { GED_API,  open_cmds, 3 };
 
 COMPILER_DLLEXPORT const struct ged_plugin *ged_plugin_info(void)
 {

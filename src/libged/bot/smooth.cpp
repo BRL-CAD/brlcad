@@ -204,14 +204,14 @@ bot_smooth(struct ged *gedp, struct rt_bot_internal *input_bot, int component, i
 
 #else /* BUILD_OPENMESH_TOOLS */
 
-static bool
-bot_smooth(struct ged *gedp, struct rt_bot_internal *UNUSED(input_bot), int UNUSED(component), int UNUSED(continuity))
+static struct rt_bot_internal *
+bot_smooth(struct ged *gedp, struct rt_bot_internal *UNUSED(input_bot), int UNUSED(component), int UNUSED(continuity), double UNUSED(max_lerr), double UNUSED(max_aerr), int UNUSED(iterations))
 {
     bu_vls_printf(gedp->ged_result_str,
 	"WARNING: BoT OpenMesh subcommands are unavailable.\n"
 	"BRL-CAD needs to be compiled with OpenMesh support.\n"
 	"(cmake -DBRLCAD_ENABLE_OPENVDB=ON or set -DOPENMESH_ROOT=/path/to/openmesh)\n");
-    return false;
+    return NULL;
 }
 
 #endif /* BUILD_OPENMESH_TOOLS */

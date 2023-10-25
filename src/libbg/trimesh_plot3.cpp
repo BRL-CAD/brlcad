@@ -30,6 +30,7 @@
 #include "bu/log.h"
 #include "bu/list.h"
 #include "bu/malloc.h"
+#include "bu/color.h"
 #include "bu/sort.h"
 #include "bv/plot3.h"
 #include "bg/trimesh.h"

@@ -69,10 +69,12 @@ class QPolyMod : public QWidget
 	QPushButton *remove_poly;
 
     signals:
+	void settings_changed(unsigned long long);
 	void view_updated(unsigned long long);
 
     public slots:
 	void app_mod_names_reset(void *);
+	void checkbox_refresh(unsigned long long);
 	void mod_names_reset();
 	void polygon_update_props();
 	void propagate_update(int);
@@ -94,6 +96,8 @@ class QPolyMod : public QWidget
 	void view_name_edit_str(const QString &);
 	void view_name_edit();
 	void view_name_update();
+	void toggle_line_snapping(bool);
+	void toggle_grid_snapping(bool);
 
     protected:
 	bool eventFilter(QObject *, QEvent *);

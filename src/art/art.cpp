@@ -125,9 +125,9 @@
 #include "foundation/math/scalar.h"
 #include "foundation/math/transform.h"
 #include "foundation/math/vector.h"
-#include "foundation/utility/containers/dictionary.h"
-#include "foundation/utility/log/consolelogtarget.h"
-#include "foundation/utility/autoreleaseptr.h"
+#include "foundation/containers/dictionary.h"
+#include "foundation/log/consolelogtarget.h"
+#include "foundation/memory/autoreleaseptr.h"
 #include "foundation/utility/searchpaths.h"
 
 // appleseed header for ITileCallback - needs to be organized somewhere
@@ -228,15 +228,17 @@ color_hook(const struct bu_structparse *sp, const char *name, void *UNUSED(base)
 
 
 // holds application specific paramaters
-extern "C" struct bu_structparse view_parse[] = {
-    {"%d", 1, "samples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "s", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 3, "background", 0, color_hook, NULL, NULL},
-    {"%f", 3, "bg", 0, color_hook, NULL, NULL},
-    {"%d", 1, "light_intensity", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "li", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
+extern "C" {
+    struct bu_structparse view_parse[] = {
+	{"%d", 1, "samples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+	{"%d", 1, "s", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+	{"%f", 3, "background", 0, color_hook, NULL, NULL},
+	{"%f", 3, "bg", 0, color_hook, NULL, NULL},
+	{"%d", 1, "light_intensity", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+	{"%d", 1, "li", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+    };
+}
 
 
 /* Initializes module specific options
@@ -864,12 +866,12 @@ build_project(const char* file, const char* UNUSED(objects))
     asf::Transformd t;
     camera->transform_sequence().get_transform(0, time0, t);
 
+    /*
     const asf::Matrix<double, 4, 4>& l2p = t.get_local_to_parent();
     const asf::Matrix<double, 4, 4>& p2l = t.get_parent_to_local();
     mat_t ml2p, mp2l;
     MAT_COPY(ml2p, l2p);
     MAT_COPY(mp2l, p2l);
-    /*
       bn_mat_print("view2model AFTER: ", view2model);
       bn_mat_print("L2P TRANSFORM: ", ml2p);
       bn_mat_print("P2L TRANSFORM: ", mp2l);

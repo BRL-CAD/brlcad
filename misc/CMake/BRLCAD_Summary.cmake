@@ -250,16 +250,21 @@ function(BRLCAD_Summary)
     # correspond to the library labeled in the same position in the first list
     set(BUNDLED_LABELS
       "Asset Import Library"
+      "Eigen"
       "Geospatial Data Abstraction Library"
+      "Lightning Memory-Mapped Database"
       "Netpbm"
       "OpenCV"
       "OpenMesh"
+      "openNURBS"
+      "OSMesa"
       "Portable Network Graphics"
       "Qt"
       "Regex Library"
       "STEPcode"
       "Tcl"
       "Tk"
+      "UtahRLE"
       "Zlib"
       )
 
@@ -275,16 +280,21 @@ function(BRLCAD_Summary)
 
     set(BUNDLED_VARS
       ASSETIMPORT_LIBRARY
+      EIGEN3_INCLUDE_DIRS
       GDAL_LIBRARY
+      LMDB_LIBRARY
       NETPBM_LIBRARY
       OpenCV_DIR
       OPENMESH_LIBRARIES
+      OPENNURBS_LIBRARY
+      OSMESA_LIBRARY
       PNG_LIBRARY_RELEASE
       QtCore_DIR
       REGEX_LIBRARY
       STEPCODE_CORE_LIBRARY
       TCL_LIBRARY
       TK_LIBRARY
+      UTAHRLE_LIBRARY
       ZLIB_LIBRARY
       )
 
@@ -326,7 +336,14 @@ function(BRLCAD_Summary)
       if (LOCAL_TEST)
 	message("${blabel} Bundled")
       else (LOCAL_TEST)
-	message("${blabel} System")
+	# For header-only dependencies, we don't copy them into the build tree
+	# - check for the NOINSTALL directory
+	IS_SUBPATH("${BRLCAD_EXT_NOINSTALL_DIR}" "${${LVAR}}" EXT_TEST)
+	if (EXT_TEST)
+	  message("${blabel} Bundled")
+	else (EXT_TEST)
+	  message("${blabel} System")
+	endif (EXT_TEST)
       endif (LOCAL_TEST)
       math(EXPR bindex "${bindex} + 1")
     endforeach(blabel ${BUNDLED_LABELS})

@@ -55,7 +55,7 @@ BG_EXPORT extern fastf_t
 bg_find_polygon_area(
 	struct bg_polygon *gpoly,
 	fastf_t sf,
-	matp_t model2view,
+	plane_t *vp,
 	fastf_t size
 	);
 
@@ -63,35 +63,28 @@ BG_EXPORT extern int
 bg_polygons_overlap(
 	struct bg_polygon *polyA,
 	struct bg_polygon *polyB,
-	matp_t model2view,
+	plane_t *vp,
 	const struct bn_tol *tol,
 	fastf_t iscale
 	);
 
-/* model2view and view2model may be NULL, if the polygons are coplanar */
 BG_EXPORT extern struct bg_polygon *
 bg_clip_polygon(
 	bg_clip_t op,
        	struct bg_polygon *subj,
        	struct bg_polygon *clip,
        	fastf_t sf,
-       	matp_t model2view,
-       	matp_t view2model
+	plane_t *vp
 	);
 
-/* model2view and view2model may be NULL, if the polygons are coplanar */
 BG_EXPORT extern struct bg_polygon *
 bg_clip_polygons(
 	bg_clip_t op,
        	struct bg_polygons *subj,
        	struct bg_polygons *clip,
        	fastf_t sf,
-       	matp_t model2view,
-       	matp_t view2model
+	plane_t *vp
 	);
-
-BG_EXPORT extern struct bg_polygon *
-bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t line_spacing);
 
 BG_EXPORT extern void bg_polygon_free(struct bg_polygon *gpp);
 BG_EXPORT extern void bg_polygons_free(struct bg_polygons *gpp);
@@ -178,6 +171,9 @@ typedef enum {
  * If no holes are present, caller should pass NULL for holes_array and holes_npts,
  * and 0 for nholes, or use bg_polygon_triangulate instead.
  *
+ * This routine deliberately uses low level data types for both input and output
+ * to maximize the reusability of this logic.
+ *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
  * @param[out] out_pts  output points used by faces set. If an algorithm was selected that generates new points, this will be a new array.
@@ -196,11 +192,12 @@ typedef enum {
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-						   const int *poly, const size_t poly_npts,
-						   const int **holes_array, const size_t *holes_npts, const size_t nholes,
-						   const int *steiner, const size_t steiner_npts,
-						   const point2d_t *pts, const size_t npts, triangulation_t type);
+BG_EXPORT extern int
+bg_nested_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+			   const int *poly, const size_t poly_npts,
+			   const int **holes_array, const size_t *holes_npts, const size_t nholes,
+			   const int *steiner, const size_t steiner_npts,
+			   const point2d_t *pts, const size_t npts, triangulation_t type);
 
 /**
  * @brief
@@ -217,6 +214,9 @@ BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * logic - this is a convenience function to simplify calling the routine when
  * specification of hole polygons is not needed.
  *
+ * This routine deliberately uses low level data types for both input and output
+ * to maximize the reusability of this logic.*
+ *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
  * @param[out] out_pts output points used by faces set, if an algorithm was selected that generates new points
@@ -230,9 +230,28 @@ BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-BG_EXPORT extern int bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-				   	    const int *steiner, const size_t steiner_npts,
-					    const point2d_t *pts, const size_t npts, triangulation_t type);
+BG_EXPORT extern int
+bg_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+	    const int *steiner, const size_t steiner_npts,
+	    const point2d_t *pts, const size_t npts, triangulation_t type);
+
+/**
+ * @brief
+ * Triangulate a bg_polygon.
+ *
+ * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
+ * @param[out] num_faces Number of faces created
+ * @param[out] out_pts output points used by faces set, if an algorithm was selected that generates new points
+ * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
+ * @param[in] p bg_polygon holding the polygon contours to be triangulated
+ * @param[in] type Triangulation type
+ *
+ * @return 0 if triangulation is successful
+ * @return 1 if triangulation is unsuccessful
+ */
+BG_EXPORT extern int
+bg_polygon_triangulate(int **faces, int *num_faces, point_t **out_pts, int *num_outpts,
+		       struct bg_polygon *p, triangulation_t type);
 
 
 /* Test function - do not use */
@@ -320,91 +339,6 @@ BG_EXPORT extern int bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts,
 BG_EXPORT extern void bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b);
 BG_EXPORT extern void bg_polygon_plot(const char *filename, const point_t *pnts, int npnts, int r, int g, int b);
 BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b);
-
-
-/* BV related polygon logic and types */
-
-#define BV_POLYGON_GENERAL 0
-#define BV_POLYGON_CIRCLE 1
-#define BV_POLYGON_ELLIPSE 2
-#define BV_POLYGON_RECTANGLE 3
-#define BV_POLYGON_SQUARE 4
-
-struct bv_polygon {
-    int                 type;
-    int                 fill_flag;         /* set to shade the interior */
-    vect2d_t            fill_dir;
-    fastf_t             fill_delta;
-    struct bu_color     fill_color;
-    long                curr_contour_i;
-    long                curr_point_i;
-    point_t             prev_point;
-
-    /* We stash the view state on creation, so we know how to return
-     * to it for future 2D alterations */
-    struct bview v;
-
-    /* Offset of polygon plane from the plane of v.  Allows for moving
-     * the polygon "towards" and "away from" the viewer. */
-    fastf_t vZ;
-
-    /* Actual polygon info */
-    struct bg_polygon polygon;
-
-    /* Arbitrary data */
-    void *u_data;
-};
-
-// Given a polygon, create a scene object
-BG_EXPORT extern struct bv_scene_obj *bv_create_polygon_obj(struct bview *v, int flags, struct bv_polygon *p);
-
-// Note - for these functions it is important that the bv
-// gv_width and gv_height values are current!  I.e.:
-//
-//  v->gv_width  = dm_get_width((struct dm *)v->dmp);
-//  v->gv_height = dm_get_height((struct dm *)v->dmp);
-
-// Creates a scene object with a default polygon
-BG_EXPORT extern struct bv_scene_obj *bv_create_polygon(struct bview *v, int flags, int type, int x, int y);
-
-// Various update modes have similar logic - we pass in the flags to the update
-// routine to enable/disable specific portions of the overall flow.
-#define BV_POLYGON_UPDATE_DEFAULT 0
-#define BV_POLYGON_UPDATE_PROPS_ONLY 1
-#define BV_POLYGON_UPDATE_PT_SELECT 2
-#define BV_POLYGON_UPDATE_PT_MOVE 3
-#define BV_POLYGON_UPDATE_PT_APPEND 4
-BG_EXPORT extern int bv_update_polygon(struct bv_scene_obj *s, struct bview *v, int utype);
-
-// Update just the scene obj vlist, without altering the source polygon
-BG_EXPORT extern void bv_polygon_vlist(struct bv_scene_obj *s);
-
-// Find the closest polygon obj to a view's current x,y mouse points
-BG_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, struct bview *v);
-
-BG_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s);
-BG_EXPORT extern struct bv_scene_obj *bg_dup_view_polygon(const char *nname, struct bv_scene_obj *s);
-
-// Copy a bv polygon.  Note that this also performs a
-// view sync - if the user is copying the polygon into
-// another view, they will have to update the output's
-// bview to match their target view.
-BG_EXPORT extern void bv_polygon_cpy(struct bv_polygon *dest , struct bv_polygon *src);
-
-// For all polygon bv_scene_objs in the objs table, apply the specified boolean
-// op using p and replace the original polygon geometry in objs with the
-// results (NOTE:  p will not act on itself if it is in objs):
-//
-// u : objs[i] u p  (unions p with objs[i])
-// - : objs[i] - p  (removes p from objs[i])
-// + : objs[i] + p  (intersects p with objs[i])
-//
-// At a data structure level, what happens is the bg_polygon geometry stored in
-// the bv_polygon stored as the data entry for a bv_scene_obj is replaced.  The
-// bv_scene_obj and bv_polygon pointers should remain valid, but the bg_polygon
-// contained in bv_polygon is replaced - calling code should not rely on the
-// bg_polygon pointer remaining the same after a boolean operation.
-BG_EXPORT extern int bv_polygon_csg(struct bv_scene_obj *target, struct bv_scene_obj *stencil, bg_clip_t op);
 
 __END_DECLS
 

@@ -50,7 +50,7 @@ extern "C" {
 #include "bu/path.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
-#include "bg/lod.h"
+#include "bv/lod.h"
 #include "raytrace.h"
 #include "ged/defines.h"
 #include "ged/view/state.h"
@@ -1332,9 +1332,9 @@ DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned lon
 	return false;
     if (!have_bbox) {
 	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gedp->ged_lod) {
-	    key = bg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
+	    key = bv_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
 	    if (key) {
-		struct bv_mesh_lod *lod = bg_mesh_lod_create(gedp->ged_lod, key);
+		struct bv_mesh_lod *lod = bv_mesh_lod_create(gedp->ged_lod, key);
 		if (lod) {
 		    VMOVE(bmin, lod->bmin);
 		    VMOVE(bmax, lod->bmax);
@@ -2366,19 +2366,10 @@ BViewState::scene_obj(
     sp = bv_obj_get(v, BV_DB_OBJS);
 
     // Find the leaf directory pointer
-    struct directory *dp = RT_DIR_NULL;
-    std::unordered_map<unsigned long long, struct directory *>::iterator d_it;
-    d_it = dbis->d_map.find(path_hashes[path_hashes.size()-1]);
-    if (d_it == dbis->d_map.end()) {
-	// Lookup failed - try the instance map
-	std::unordered_map<unsigned long long, unsigned long long>::iterator m_it;
-	m_it = dbis->i_map.find(path_hashes[path_hashes.size()-1]);
-	if (m_it != dbis->i_map.end()) {
-	    d_it = dbis->d_map.find(m_it->second);
-	    dp = d_it->second;
-	}
-    } else {
-	dp = d_it->second;
+    struct directory *dp = dbis->get_hdp(path_hashes[path_hashes.size()-1]);
+    if (!dp) {
+	bu_log("dbi_state.cpp:%d - dp lookup failed!\n", __LINE__);
+	return NULL;
     }
 
     // Prepare draw data
@@ -2669,7 +2660,7 @@ BViewState::refresh(struct bview *v, int argc, const char **argv)
     unsigned long long ret = 0;
 
     // Make sure the view knows how to update the oriented bounding box
-    v->gv_bounds_update = &bg_view_bounds;
+    v->gv_bounds_update = &bv_view_bounds;
 
     // If we have specific paths specified, the leaves of those paths
     // denote which paths need refreshing.  We need to process them
@@ -2776,7 +2767,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     std::unordered_set<struct bview *>::iterator v_it;
     for (v_it = views.begin(); v_it != views.end(); v_it++) {
 	struct bview *v = *v_it;
-	v->gv_bounds_update = &bg_view_bounds;
+	v->gv_bounds_update = &bv_view_bounds;
     }
 
     // For most operations on objects, we need only the current view (for

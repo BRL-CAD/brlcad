@@ -89,6 +89,7 @@ set(debian_ignore_files
   icons/96x96/mged.png
   icons/96x96/rtwizard.png
   mged.desktop
+  org.brlcad.BRL_CAD.metainfo.xml
   rtwizard.desktop
   rules
   source/format

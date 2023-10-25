@@ -435,9 +435,8 @@ struct bview_settings {
     struct bv_axes           gv_view_axes;
     struct bv_grid_state     gv_grid;
     struct bv_other_state    gv_center_dot;
-    struct bv_other_state    gv_view_params;
+    struct bv_params_state   gv_view_params;
     struct bv_other_state    gv_view_scale;
-    int                      gv_fps; // Display Frames-Per-Second metric
     double                   gv_frametime;
 
     // Framebuffer visualization is possible if there is an attached dm and
@@ -531,6 +530,8 @@ struct bview {
     fastf_t       gv_prevMouseY;
     int           gv_mouse_x;
     int           gv_mouse_y;
+    point_t       gv_prev_point;
+    point_t       gv_point;
     char          gv_key;
     unsigned long gv_mod_flags;
     fastf_t       gv_minMouseDelta;

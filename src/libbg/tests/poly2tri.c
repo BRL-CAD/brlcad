@@ -224,7 +224,7 @@ main(int argc, const char **argv)
 	    bg_polygon_plot_2d("test_3_polygon_hole.plot3", (const point2d_t *)(points+12), 4, 0, 0, 255);
 	}
 
-	ret = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
+	ret = bg_nested_poly_triangulate(&faces, &num_faces, NULL, NULL,
 					    (const int *)poly, 12, (const int **)hole_array, (const size_t *)&hole_cnt, 1, NULL, 0,
 					    (const point2d_t *)points, 16, TRI_EAR_CLIPPING);
 	bu_free(hole_array, "free hole array");
@@ -266,7 +266,7 @@ main(int argc, const char **argv)
 	    bg_polygon_plot_2d("test_4_polygon_hole.plot3", (const point2d_t *)(points+8), 4, 0, 0, 255);
 	}
 
-	ret = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
+	ret = bg_nested_poly_triangulate(&faces, &num_faces, NULL, NULL,
 					    (const int *)poly, 8, (const int **)hole_array, (const size_t *)&hole_cnt, 1, NULL, 0,
 					    (const point2d_t *)points, 12, TRI_EAR_CLIPPING);
 	bu_free(hole_array, "free hole array");
@@ -296,7 +296,7 @@ main(int argc, const char **argv)
 	}
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
+	ret = bg_poly_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
 	if (ret) {
 	    bu_log("4 point triangle failure!\n");
 	    return 1;

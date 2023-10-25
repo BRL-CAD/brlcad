@@ -60,33 +60,12 @@ struct contour_node {
     struct bu_list head;
 };
 
-/**
- * FIXME: this routine is suspect and needs investigating.  if run
- * during view initialization, the shaders regression test fails.
- */
-void
-_sketch_mat_aet(struct bview *gvp)
-{
-    mat_t tmat;
-    fastf_t twist;
-    fastf_t c_twist;
-    fastf_t s_twist;
-
-    bn_mat_angles(gvp->gv_rotation,
-                  270.0 + gvp->gv_aet[1],
-                  0.0,
-                  270.0 - gvp->gv_aet[0]);
-
-    twist = -gvp->gv_aet[2] * DEG2RAD;
-    c_twist = cos(twist);
-    s_twist = sin(twist);
-    bn_mat_zrot(tmat, s_twist, c_twist);
-    bn_mat_mul2(tmat, gvp->gv_rotation);
-}
-
 struct bv_scene_obj *
 db_sketch_to_scene_obj(const char *sname, struct db_i *dbip, struct directory *dp, struct bview *sv, int flags)
 {
+    if (!sv)
+	return NULL;
+
     // Begin import
     size_t ncontours = 0;
     struct bu_list HeadSegmentNodes;
@@ -216,6 +195,12 @@ end:
 	++j;
     }
 
+    /* Unlike interactive sketch creation, the plane of an imported sketch comes from the
+     * sketch parameters. */
+    vect_t pn;
+    VCROSS(pn, sketch_ip->u_vec, sketch_ip->v_vec);
+    bg_plane_pt_nrml(&p->vp, sketch_ip->V, pn);
+
     /* Clean up */
     bu_free((void *)all_segment_nodes, "all_segment_nodes");
 
@@ -284,7 +269,7 @@ end:
 	if (have_view) {
 	    val = bu_avs_get(&lavs, "VIEWSCALE");
 	    if (val) {
-		bu_opt_fastf_t(NULL, 1, (const char **)&val, (void *)&p->v.gv_scale);
+		bu_opt_fastf_t(NULL, 1, (const char **)&val, (void *)&sv->gv_scale);
 	    } else {
 		have_view = 0;
 	    }
@@ -302,7 +287,7 @@ end:
 		    bu_opt_fastf_t(NULL, 1, (const char **)&av[1], (void *)&quat[1]);
 		    bu_opt_fastf_t(NULL, 1, (const char **)&av[2], (void *)&quat[2]);
 		    bu_opt_fastf_t(NULL, 1, (const char **)&av[3], (void *)&quat[3]);
-		    quat_quat2mat(p->v.gv_rotation, quat);
+		    quat_quat2mat(sv->gv_rotation, quat);
 		}
 		bu_free(lp, "val cpy");
 	    } else {
@@ -322,7 +307,7 @@ end:
 		    bu_opt_fastf_t(NULL, 1, (const char **)&av[1], (void *)&quat[1]);
 		    bu_opt_fastf_t(NULL, 1, (const char **)&av[2], (void *)&quat[2]);
 		    bu_opt_fastf_t(NULL, 1, (const char **)&av[3], (void *)&quat[3]);
-		    quat_quat2mat(p->v.gv_center, quat);
+		    quat_quat2mat(sv->gv_center, quat);
 		}
 		bu_free(lp, "val cpy");
 	    } else {
@@ -332,37 +317,10 @@ end:
     }
     bu_avs_free(&lavs);
 
-    /* If we didn't have a saved version, construct an appropriate bv from the
-     * sketch's 3D info so we can snap to it. autoview, then dir.  TODO - this
-     * needs improvement... */
+    /* TODO - if we didn't have a saved version, construct an appropriate plane from the
+     * sketch's 3D info so we can snap to it. */
     if (!have_view) {
-	struct bview *v = &p->v;
-	bv_init(v, NULL);
-	vect_t center = VINIT_ZERO;
-	vect_t min, max;
-	VSETALL(min, -dmax);
-	VSETALL(max, dmax);
-	vect_t radial;
-	VADD2SCALE(center, max, min, 0.5);
-	VSUB2(radial, max, center);
-	if (VNEAR_ZERO(radial, SQRT_SMALL_FASTF))
-	    VSETALL(radial, 1.0);
-	MAT_IDN(v->gv_center);
-	MAT_DELTAS_VEC_NEG(v->gv_center, center);
-	v->gv_scale = radial[X];
-	V_MAX(v->gv_scale, radial[Y]);
-	V_MAX(v->gv_scale, radial[Z]);
-	v->gv_size = 2.0 * v->gv_scale;
-	v->gv_isize = 1.0 / v->gv_size;
-	bv_update(v);
-
-	vect_t snorm;
-	VCROSS(snorm, sketch_ip->u_vec, sketch_ip->v_vec);
-	bn_ae_vec(&p->v.gv_aet[0], &p->v.gv_aet[1], snorm);
-	_sketch_mat_aet(&p->v);
     }
-
-    bv_update(&p->v);
 
     /* Have new polygon, now update view object vlist */
     bv_polygon_vlist(s);
@@ -384,13 +342,13 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
 	return NULL;
     }
 
+    if (!s->s_v)
+	return NULL;
+
     size_t num_verts = 0;
     struct rt_db_internal internal;
     struct rt_sketch_internal *sketch_ip;
     struct line_seg *lsg;
-    vect_t view;
-    point_t vorigin;
-    mat_t invRot;
 
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
     for (size_t j = 0; j < p->polygon.num_contours; ++j)
@@ -414,36 +372,23 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
     sketch_ip->curve.reverse = (int *)bu_calloc(sketch_ip->curve.count, sizeof(int), "sketch_ip->curve.reverse");
     sketch_ip->curve.segment = (void **)bu_calloc(sketch_ip->curve.count, sizeof(void *), "sketch_ip->curve.segment");
 
-    bn_mat_inv(invRot, p->v.gv_rotation);
-    VSET(view, 1.0, 0.0, 0.0);
-    MAT4X3PNT(sketch_ip->u_vec, invRot, view);
 
-    VSET(view, 0.0, 1.0, 0.0);
-    MAT4X3PNT(sketch_ip->v_vec, invRot, view);
+    bg_plane_pt_at(&sketch_ip->u_vec, p->vp, 0, 1);
+    bg_plane_pt_at(&sketch_ip->v_vec, p->vp, 1, 0);
 
     /* should already be unit vectors */
     VUNITIZE(sketch_ip->u_vec);
     VUNITIZE(sketch_ip->v_vec);
 
-    /* Project the origin onto the front of the viewing cube */
-    MAT4X3PNT(vorigin, p->v.gv_model2view, p->v.gv_center);
-    vorigin[Z] = p->vZ;
-
-    /* Convert back to model coordinates for storage */
-    MAT4X3PNT(sketch_ip->V, p->v.gv_view2model, vorigin);
+    /* Plane origin is sketch origin */
+    bg_plane_pt_at(&sketch_ip->V, p->vp, 0, 0);
 
     int n = 0;
     for (size_t j = 0; j < p->polygon.num_contours; ++j) {
 	size_t cstart = n;
 	size_t k = 0;
 	for (k = 0; k < p->polygon.contour[j].num_points; ++k) {
-	    point_t vpt;
-	    vect_t vdiff;
-
-	    MAT4X3PNT(vpt, p->v.gv_model2view, p->polygon.contour[j].point[k]);
-	    VSUB2(vdiff, vpt, vorigin);
-	    VSCALE(vdiff, vdiff, p->v.gv_scale);
-	    V2MOVE(sketch_ip->verts[n], vdiff);
+	    bg_plane_closest_pt(&sketch_ip->verts[n][1], &sketch_ip->verts[n][0], p->vp, p->polygon.contour[j].point[k]);
 
 	    if (k) {
 		BU_ALLOC(lsg, struct line_seg);
@@ -514,14 +459,14 @@ db_scene_obj_to_sketch(struct db_i *dbip, const char *sname, struct bv_scene_obj
 	}
 	bu_avs_add(&lavs, "POLYGON_TYPE", bu_vls_cstr(&val));
 	// Save view
-	bu_vls_sprintf(&val, "%.15e", p->v.gv_scale);
+	bu_vls_sprintf(&val, "%.15e", s->s_v->gv_scale);
 	bu_avs_add(&lavs, "VIEWSCALE", bu_vls_cstr(&val));
 	quat_t rquat;
-	quat_mat2quat(rquat, p->v.gv_rotation);
+	quat_mat2quat(rquat, s->s_v->gv_rotation);
 	bu_vls_sprintf(&val, "%.15e %.15e %.15e %.15e", V4ARGS(rquat));
 	bu_avs_add(&lavs, "ROTATION", bu_vls_cstr(&val));
 	quat_t cquat;
-	quat_mat2quat(cquat, p->v.gv_center);
+	quat_mat2quat(cquat, s->s_v->gv_center);
 	bu_vls_sprintf(&val, "%.15e %.15e %.15e %.15e", V4ARGS(cquat));
 	bu_avs_add(&lavs, "CENTER", bu_vls_cstr(&val));
     }

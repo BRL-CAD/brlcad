@@ -36,13 +36,17 @@ set(cmake_ignore_files
   FindGECODE.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
+  FindLINENOISE.cmake
+  FindLMDB.cmake
   FindLibUV.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
   FindOpenMesh.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
+  FindOSMESA.cmake
   FindOpenCL.cmake
+  FindOpenCV.cmake
   FindOpenGL.cmake
   FindOpenVDB.cmake
   FindPERPLEX.cmake
