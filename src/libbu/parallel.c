@@ -137,6 +137,26 @@ struct thread_data {
     struct parallel_info *parent;
 };
 
+int
+bu_thread_id(void)
+{
+    #if defined(HAVE_SYS_SYSCALL_H) || defined(__linux__)
+	return syscall(SYS_gettid);
+    #elif defined(_WIN32)
+	return GetCurrentThreadId();
+    #elif defined(__FreeBSD__)
+	long tid;
+	thr_self(&tid);
+	return (int)tid;
+    #elif defined(__NetBSD__)
+	return _lwp_self();
+    #elif defined(__OpenBSD__)
+	return getthrid();
+    #else
+	return -1;
+    #endif
+}
+
 
 int
 bu_parallel_id(void)
