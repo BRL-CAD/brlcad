@@ -501,10 +501,10 @@ bv_move_polygon_pt(struct bv_scene_obj *s, point_t mp)
     return 0;
 }
 
-/* Oof.  Followed the logic down the chain to_poly_circ_mode_func ->
- * to_data_polygons_func -> to_extract_contours_av to get what are hopefully
- * all the pieces needed to seed a circle at an XY point. */
-
+/* TODO - need to adjust number of segments calculation logic.  gv_scale isn't
+ * correct - if we're wanting segment lengths based on pixel size, that
+ * calculation needs to happen closer to the app level, where we have a
+ * notion of pixels. */
 int
 bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t gv_scale)
 {
