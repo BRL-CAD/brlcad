@@ -254,6 +254,13 @@ bv_init(struct bview *gvp, struct bview_set *s)
     gvp->gv_sscale = 2.0;
     gvp->gv_perspective = 0.0;
 
+    gvp->gv_prevMouseX = 0;
+    gvp->gv_prevMouseY = 0;
+    gvp->gv_mouse_x = 0;
+    gvp->gv_mouse_y = 0;
+    VSETALL(gvp->gv_prev_point, 0.0);
+    VSETALL(gvp->gv_point, 0.0);
+
     /* Initialize local settings */
     bv_settings_init(&gvp->gv_ls);
 
@@ -1802,6 +1809,8 @@ bv_view_print(const char *title, struct bview *v, int UNUSED(verbosity))
     bu_log("  prevMouseY:   %f\n", v->gv_prevMouseY);
     bu_log("  mouse_x:      %d\n", v->gv_mouse_x);
     bu_log("  mouse_y:      %d\n", v->gv_mouse_y);
+    bu_log("  gv_prev_point:%f %f %f\n", V3ARGS(v->gv_prev_point));
+    bu_log("  gv_point:     %f %f %f\n", V3ARGS(v->gv_point));
     bu_log("  key:          %c\n", v->gv_key);
     bu_log("  mod_flags:    %ld\n", v->gv_mod_flags);
     bu_log("  minMousedelta:%f\n", v->gv_minMouseDelta);

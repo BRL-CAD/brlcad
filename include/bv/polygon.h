@@ -55,7 +55,7 @@ struct bv_polygon {
     struct bu_color     fill_color;
     long                curr_contour_i;
     long                curr_point_i;
-    point_t             prev_point;
+    point_t             origin_point;      /* For non-general polygons  */
 
     /* We stash the view plane creation, so we know how to return
      * to it for future 2D alterations */
@@ -94,7 +94,7 @@ BV_EXPORT extern void bv_polygon_vlist(struct bv_scene_obj *s);
 // Find the closest polygon obj to a point
 BV_EXPORT extern struct bv_scene_obj *bv_select_polygon(struct bu_ptbl *objs, point_t cp);
 
-BV_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s, point_t cp);
+BV_EXPORT extern int bv_move_polygon(struct bv_scene_obj *s, point_t cp, point_t pp);
 BV_EXPORT extern struct bv_scene_obj *bv_dup_view_polygon(const char *nname, struct bv_scene_obj *s);
 
 // Copy a bv polygon.  Note that this also performs a

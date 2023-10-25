@@ -222,8 +222,8 @@ bv_create_polygon(struct bview *v, int flags, int type, point_t fp)
     point_t m_pt;
     bg_plane_pt_at(&m_pt, p->vp, fx, fy);
 
-    // This is now the previous point
-    VMOVE(p->prev_point, m_pt);
+    // This is now the origin point
+    VMOVE(p->origin_point, m_pt);
 
     int pcnt = 1;
     if (type == BV_POLYGON_CIRCLE)
@@ -270,7 +270,7 @@ bv_polygon_cpy(struct bv_polygon *dest, struct bv_polygon *src)
     BU_COLOR_CPY(&dest->fill_color, &src->fill_color);
     dest->curr_contour_i = src->curr_contour_i;
     dest->curr_point_i = src->curr_point_i;
-    VMOVE(dest->prev_point, src->prev_point);
+    VMOVE(dest->origin_point, src->origin_point);
     HMOVE(dest->vp, src->vp);
     dest->vZ = src->vZ;
     bg_polygon_free(&dest->polygon);
@@ -433,7 +433,7 @@ bv_select_clear_polygon_pt(struct bv_scene_obj *s)
 
 
 int
-bv_move_polygon(struct bv_scene_obj *s, point_t cp)
+bv_move_polygon(struct bv_scene_obj *s, point_t cp, point_t prev_point)
 {
     fastf_t pfx, pfy, fx, fy;
     struct bv_polygon *p = (struct bv_polygon *)s->s_i_data;
@@ -441,7 +441,7 @@ bv_move_polygon(struct bv_scene_obj *s, point_t cp)
     plane_t zpln;
     HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
-    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
+    bg_plane_closest_pt(&pfx, &pfy, zpln, prev_point);
     bg_plane_closest_pt(&fx, &fy, zpln, cp);
     point_t pm_pt, m_pt;
     bg_plane_pt_at(&pm_pt, p->vp, pfx, pfy);
@@ -459,9 +459,8 @@ bv_move_polygon(struct bv_scene_obj *s, point_t cp)
     /* Have new polygon, now update view object vlist */
     bv_polygon_vlist(s);
 
-    // Shift the previous point so updates will start from the
-    // correct point.
-    VADD2(p->prev_point, p->prev_point, v_mv);
+    // Shift the origin point.
+    VADD2(p->origin_point, p->origin_point, v_mv);
 
     /* Updated */
     s->s_changed++;
@@ -509,7 +508,7 @@ bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size)
     fastf_t r, arc;
     int nsegs, n;
 
-    r = DIST_PNT_PNT(cp, p->prev_point);
+    r = DIST_PNT_PNT(cp, p->origin_point);
 
     /* use a variable number of segments based on the size of the
      * circle being created so small circles have few segments and
@@ -533,7 +532,7 @@ bv_update_polygon_circle(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size)
     HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
     bg_plane_closest_pt(&fx, &fy, zpln, cp);
-    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
+    bg_plane_closest_pt(&pfx, &pfy, zpln, p->origin_point);
 
     arc = 360.0 / nsegs;
     for (n = 0; n < nsegs; ++n) {
@@ -576,7 +575,7 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size
      *
      */
 
-    fastf_t r = DIST_PNT_PNT(cp, p->prev_point);
+    fastf_t r = DIST_PNT_PNT(cp, p->origin_point);
 
     /* use a variable number of segments based on the size of the
      * circle being created so small circles have few segments and
@@ -591,7 +590,7 @@ bv_update_polygon_ellipse(struct bv_scene_obj *s, point_t cp, fastf_t pixel_size
     HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
     bg_plane_closest_pt(&fx, &fy, zpln, cp);
-    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
+    bg_plane_closest_pt(&pfx, &pfy, zpln, p->origin_point);
 
     fastf_t a, b, arc;
     point_t pv_pt;
@@ -658,7 +657,7 @@ bv_update_polygon_rectangle(struct bv_scene_obj *s, point_t cp)
     plane_t zpln;
     HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
-    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
+    bg_plane_closest_pt(&pfx, &pfy, zpln, p->origin_point);
     bg_plane_closest_pt(&fx, &fy, zpln, cp);
 
     // Use the polygon's plane for actually adjusting the points
@@ -687,7 +686,7 @@ bv_update_polygon_square(struct bv_scene_obj *s, point_t cp)
     plane_t zpln;
     HMOVE(zpln, p->vp);
     zpln[3] += p->vZ;
-    bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
+    bg_plane_closest_pt(&pfx, &pfy, zpln, p->origin_point);
     bg_plane_closest_pt(&fx, &fy, zpln, cp);
 
     fastf_t dx = fx - pfx;

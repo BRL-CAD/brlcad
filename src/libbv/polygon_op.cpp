@@ -79,12 +79,12 @@ bv_polygon_csg(struct bv_scene_obj *target, struct bv_scene_obj *stencil, bg_cli
 	// We want to leave the color and fill settings in dest, but we should
 	// sync some of the information so the target polygon shape can be
 	// updated correctly.  In particular, for a non-generic polygon,
-	// prev_point is important to updating.
+	// origin_point is important to updating.
 	polyA->type = polyB->type;
 	polyA->vZ = polyB->vZ;
 	polyA->curr_contour_i = polyB->curr_contour_i;
 	polyA->curr_point_i = polyB->curr_point_i;
-	VMOVE(polyA->prev_point, polyB->prev_point);
+	VMOVE(polyA->origin_point, polyB->origin_point);
 	HMOVE(polyA->vp, polyB->vp);
 	bv_update_polygon(target, target->s_v, BV_POLYGON_UPDATE_DEFAULT);
 	return 1;
