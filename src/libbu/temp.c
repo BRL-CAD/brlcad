@@ -40,6 +40,7 @@
 #include "bu/malloc.h"
 #include "bu/time.h"
 #include "bu/vls.h"
+#include "bu/str.h"
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
@@ -147,6 +148,29 @@ temp_add_to_list(const char *fn, int fd)
     all_temp_files.size++;
 }
 
+#define MAX_FILELEN 25	/* arbitrary len */
+static const char*
+bu_temp_file_name(char* filename, size_t len)
+{
+    static char buf[MAX_FILELEN] = {0};
+
+    memset(buf, 0, MAX_FILELEN);
+
+    /* create name in form of prefix_procID_threadID */
+    char* prefix = (filename && filename[0]) ? filename : PACKAGE_NAME;
+    int procID = bu_process_id();
+    int threadID = bu_thread_id();
+    snprintf(buf, MAX_FILELEN, "%s_%d_%d", prefix, procID, threadID);
+
+    /* if user supplied buffer, copy over */
+    if (len > 0 && strlen(buf) > 0) {
+	int maxlen = len > MAX_FILELEN ? MAX_FILELEN : len; /* cap len at MAX_FILELEN */
+	bu_strlcpy(filename, buf, len);
+	return filename;
+    }
+
+    return buf;
+}
 
 #ifndef HAVE_MKSTEMP
 static int
