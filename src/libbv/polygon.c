@@ -443,17 +443,16 @@ bv_move_polygon(struct bv_scene_obj *s, point_t cp)
     zpln[3] += p->vZ;
     bg_plane_closest_pt(&pfx, &pfy, zpln, p->prev_point);
     bg_plane_closest_pt(&fx, &fy, zpln, cp);
-
-    fastf_t dx = fx - pfx;
-    fastf_t dy = fy - pfy;
-
-    point_t m_pt;
-    bg_plane_pt_at(&m_pt, p->vp, dx, dy);
+    point_t pm_pt, m_pt;
+    bg_plane_pt_at(&pm_pt, p->vp, pfx, pfy);
+    bg_plane_pt_at(&m_pt, p->vp, fx, fy);
+    vect_t v_mv;
+    VSUB2(v_mv, m_pt, pm_pt);
 
     for (size_t j = 0; j < p->polygon.num_contours; j++) {
 	struct bg_poly_contour *c = &p->polygon.contour[j];
 	for (size_t i = 0; i < c->num_points; i++) {
-	    VADD2(c->point[i], c->point[i], m_pt);
+	    VADD2(c->point[i], c->point[i], v_mv);
 	}
     }
 
@@ -462,7 +461,7 @@ bv_move_polygon(struct bv_scene_obj *s, point_t cp)
 
     // Shift the previous point so updates will start from the
     // correct point.
-    VMOVE(p->prev_point, m_pt);
+    VADD2(p->prev_point, p->prev_point, v_mv);
 
     /* Updated */
     s->s_changed++;
