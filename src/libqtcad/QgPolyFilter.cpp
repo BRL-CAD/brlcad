@@ -141,7 +141,6 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 
 	    // Z offset
 	    ip->vZ = vZ;
-	    ip->prev_point[2] = ip->vZ;
 
 	    // Set fill
 	    if (fill_poly && !ip->fill_flag) {

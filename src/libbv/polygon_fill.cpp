@@ -64,7 +64,7 @@ bv_polygon_fill_segments(struct bg_polygon *poly, plane_t *vp, vect2d_t line_slo
 	}
     }
 
-    bg_polygon_plot("fill_mask.plot3", poly_2d.contour[0].point, poly_2d.contour[0].num_points, 255, 255, 0);
+    //bg_polygon_plot("fill_mask.plot3", poly_2d.contour[0].point, poly_2d.contour[0].num_points, 255, 255, 0);
 
     /* Generate lines with desired slope - enough to cover the bounding box with the
      * desired pattern.  Add these lines as non-closed contours into a bg_polygon.
@@ -148,7 +148,7 @@ bv_polygon_fill_segments(struct bg_polygon *poly, plane_t *vp, vect2d_t line_slo
 	return NULL;
     }
 
-#if 1
+#if 0
     for (size_t i = 0; i < fpoly->num_contours; i++) {
 	struct bu_vls fname = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&fname, "fpoly%ld.plot3", i);
