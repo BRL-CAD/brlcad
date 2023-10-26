@@ -18,7 +18,8 @@
   <refsynopsisdiv xml:id="synopsis">
     <cmdsynopsis sepchar=" ">
       <command>color</command>
-      <arg choice="req" rep="norepeat"><replaceable>low high r g b str</replaceable></arg>
+	<arg choice="opt" rep="norepeat"><replaceable>-e</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>low high r g b</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -29,13 +30,12 @@
       lookup table for displayed regions. The ident number for the region is used to find
       the appropriate color from the lookup table. The <emphasis>low</emphasis> and
       <emphasis>high</emphasis> values are the limits of region ident numbers to have the
-      indicated <emphasis>rgb</emphasis> color (0-255) applied. The <emphasis>str</emphasis>
-      parameter is intended to be an identifying character string, but is currently ignored.
+      indicated <emphasis>rgb</emphasis> color (0-255) applied.
       The current list of color table entries may be displayed with the
       <command>prcolor</command> command, and the entire color table may be edited using
-      the <command>edcolor</command> command. If a color lookup table exists, its entries
-      will override any color assigned using the <command>mater</command>
-      command.
+      the <emphasis>-e</emphasis> option and/or using the <command>edcolor</command> 
+      command. If a color lookup table exists, its entries will override any color 
+      assigned using the <command>mater</command> command.
     </para>
   </refsection>
 
@@ -49,10 +49,20 @@
       range of idents using the color red.</title>
 
       <para>
-	<prompt>mged&gt; </prompt><userinput>color 1100 1200 255 0 0 fake_string</userinput>
+	<prompt>mged&gt; </prompt><userinput>color 1100 1200 255 0 0</userinput>
       </para>
       <para>
 	Makes an entry in the color lookup table for regions with idents from 1100-1200 using the color red.
+      </para>
+    </example>
+
+    <example><title>Open the color table editor</title>
+
+      <para>
+	<prompt>mged&gt; </prompt><userinput>color -e</userinput>
+      </para>
+      <para>
+	Opens a text editor which displays and allows editing for the current color table
       </para>
     </example>
   </refsection>
