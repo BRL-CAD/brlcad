@@ -111,6 +111,16 @@ BV_EXPORT extern int bv_adjust(struct bview *v, int dx, int dy, point_t keypoint
  * calculation is impossible), else 0. */
 BV_EXPORT extern int bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t y);
 
+/* Return -1 if width and/or height are unset (and hence a meaningful
+ * calculation is impossible), else 0.
+ *
+ * x and y will normally be integers, but the types are float to allow for
+ * the possibility of sub-pixel coordinate specifications.
+ */
+BV_EXPORT extern int bv_screen_pt(point_t *p, fastf_t x, fastf_t y, struct bview *v);
+
+
+
 /* Compute the min, max, and center points of the scene object.
  * Return 1 if a bound was computed, else 0 */
 BV_EXPORT extern int bv_scene_obj_bound(struct bv_scene_obj *s, struct bview *v);
@@ -214,6 +224,10 @@ bv_illum_obj(struct bv_scene_obj *s, char ill_state);
  * set with bv_obj_for_view. */
 BV_EXPORT struct bu_ptbl *
 bv_view_objs(struct bview *v, int type);
+
+/* Given a view, construct the view plane */
+BV_EXPORT int
+bv_view_plane(plane_t *p, struct bview *v);
 
 
 /* Environment variable controlled logging.

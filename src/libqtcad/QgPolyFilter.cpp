@@ -63,6 +63,7 @@ QgPolyFilter::view_sync(QEvent *e)
     v->gv_prevMouseY = v->gv_mouse_y;
     v->gv_mouse_x = e_x;
     v->gv_mouse_y = e_y;
+    bv_screen_pt(&v->gv_point, e_x, e_y, v);
 
     // If we have modifiers, we're most likely doing shift grips
     if (m_e->modifiers() != Qt::NoModifier)
@@ -109,7 +110,10 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 
 	if (!wp) {
-	    wp = bv_create_polygon(v, BV_VIEW_OBJS, ptype, v->gv_mouse_x, v->gv_mouse_y);
+
+	    bv_screen_pt(&v->gv_point, v->gv_mouse_x, v->gv_mouse_y, v);
+
+	    wp = bv_create_polygon(v, BV_VIEW_OBJS, ptype, v->gv_point);
 	    wp->s_v = v;
 
 	    struct bv_polygon *ip = (struct bv_polygon *)wp->s_i_data;
@@ -137,7 +141,6 @@ QPolyCreateFilter::eventFilter(QObject *, QEvent *e)
 
 	    // Z offset
 	    ip->vZ = vZ;
-	    ip->prev_point[2] = ip->vZ;
 
 	    // Set fill
 	    if (fill_poly && !ip->fill_flag) {
@@ -336,7 +339,7 @@ QPolySelectFilter::eventFilter(QObject *, QEvent *e)
     if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
 	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
 	if (view_objs) {
-	    wp = bv_select_polygon(view_objs, v);
+	    wp = bv_select_polygon(view_objs, v->gv_point);
 	    if (!wp)
 		return true;
 	    struct bv_polygon *vp = (struct bv_polygon *)wp->s_i_data;
@@ -418,6 +421,7 @@ QPolyMoveFilter::eventFilter(QObject *, QEvent *e)
 
     // We don't want other stray mouse clicks to do something surprising
     if (m_e->type() == QEvent::MouseButtonPress || m_e->type() == QEvent::MouseButtonRelease) {
+	VMOVE(v->gv_prev_point, v->gv_point);
 	return true;
     }
 
@@ -427,13 +431,14 @@ QPolyMoveFilter::eventFilter(QObject *, QEvent *e)
 	    if (BU_PTBL_LEN(&move_objs)) {
 		for (size_t i = 0; i < BU_PTBL_LEN(&move_objs); i++) {
 		    struct bv_scene_obj *mpoly = (struct bv_scene_obj *)BU_PTBL_GET(&move_objs, i);
-		    bv_move_polygon(mpoly);
+		    bv_move_polygon(mpoly, v->gv_point, v->gv_prev_point);
 		}
 	    } else {
-		bv_move_polygon(wp);
+		bv_move_polygon(wp, v->gv_point, v->gv_prev_point);
 	    }
 	    emit view_updated(QG_VIEW_REFRESH);
 	}
+	VMOVE(v->gv_prev_point, v->gv_point);
 	return true;
     }
 

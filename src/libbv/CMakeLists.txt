@@ -19,7 +19,7 @@ set(LIBBV_SRCS
   font.c
   hash.c
   lod.cpp
-  polygon_bview.c
+  polygon.c
   polygon_op.cpp
   polygon_fill.cpp
   snap.c

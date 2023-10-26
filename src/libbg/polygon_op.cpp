@@ -37,10 +37,12 @@
 #include "bn/mat.h"
 #include "bg/plane.h"
 #include "bg/defines.h"
+extern "C" {
 #include "bg/polygon.h"
+}
 
 fastf_t
-bg_find_polygon_area(struct bg_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
+bg_find_polygon_area(struct bg_polygon *gpoly, fastf_t sf, plane_t *vp, fastf_t size)
 {
     size_t j, k, n;
     ClipperLib::Path poly;
@@ -53,13 +55,11 @@ bg_find_polygon_area(struct bg_polygon *gpoly, fastf_t sf, matp_t model2view, fa
         n = gpoly->contour[j].num_points;
         poly.resize(n);
         for (k = 0; k < n; k++) {
-            point_t vpoint;
+	    fastf_t fx, fy;
+	    bg_plane_closest_pt(&fx, &fy, *vp, gpoly->contour[j].point[k]);
 
-            /* Convert to view coordinates */
-            MAT4X3PNT(vpoint, model2view, gpoly->contour[j].point[k]);
-
-            poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
-            poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
+            poly[k].X = (ClipperLib::long64)(fx * sf);
+            poly[k].Y = (ClipperLib::long64)(fy * sf);
         }
 
         area += (fastf_t)ClipperLib::Area(poly);
@@ -82,8 +82,8 @@ typedef struct {
     poly_contour_2d     *p_contour;
 } polygon_2d;
 
-int
-bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, matp_t model2view, const struct bn_tol *tol, fastf_t iscale)
+extern "C" int
+bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, plane_t *vp, const struct bn_tol *tol, fastf_t iscale)
 {
     size_t beginA, endA, beginB, endB;
     fastf_t scale;
@@ -109,9 +109,9 @@ bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, matp_t m
 
 	for (size_t j = 0; j < polyA->contour[i].num_points; ++j) {
 	    point_t vpoint;
-
-	    MAT4X3PNT(vpoint, model2view, polyA->contour[i].point[j]);
-	    VSCALE(vpoint, vpoint, scale);
+	    fastf_t fx, fy;
+	    bg_plane_closest_pt(&fx, &fy, *vp, polyA->contour[i].point[j]);
+	    VSET(vpoint, fx * scale, fy * scale, 0);
 	    V2MOVE(polyA_2d.p_contour[i].pc_point[j], vpoint);
 	}
     }
@@ -127,9 +127,9 @@ bg_polygons_overlap(struct bg_polygon *polyA, struct bg_polygon *polyB, matp_t m
 
 	for (size_t j = 0; j < polyB->contour[i].num_points; ++j) {
 	    point_t vpoint;
-
-	    MAT4X3PNT(vpoint, model2view, polyB->contour[i].point[j]);
-	    VSCALE(vpoint, vpoint, scale);
+	    fastf_t fx, fy;
+	    bg_plane_closest_pt(&fx, &fy, *vp, polyB->contour[i].point[j]);
+	    VSET(vpoint, fx * scale, fy * scale, 0);
 	    V2MOVE(polyB_2d.p_contour[i].pc_point[j], vpoint);
 	}
     }
@@ -310,29 +310,23 @@ typedef struct {
 
 
 static fastf_t
-load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg_polygon *gpoly, fastf_t sf, matp_t mat)
+load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg_polygon *gpoly, fastf_t sf, plane_t *vp)
 {
     size_t j, k, n;
     ClipperLib::Path curr_poly;
     fastf_t vZ = 1.0;
-    mat_t idmat = MAT_INIT_IDN;
 
     for (j = 0; j < gpoly->num_contours; ++j) {
 	n = gpoly->contour[j].num_points;
 	curr_poly.resize(n);
 	for (k = 0; k < n; k++) {
-	    point_t vpoint;
+	    fastf_t fx = gpoly->contour[j].point[k][0];
+	    fastf_t fy = gpoly->contour[j].point[k][1];
+	    if (vp)
+		bg_plane_closest_pt(&fx, &fy, *vp, gpoly->contour[j].point[k]);
 
-	    /* Convert to view coordinates */
-	    if (mat) {
-		MAT4X3PNT(vpoint, mat, gpoly->contour[j].point[k]);
-	    } else {
-		MAT4X3PNT(vpoint, idmat, gpoly->contour[j].point[k]);
-	    }
-	    vZ = vpoint[Z];
-
-	    curr_poly[k].X = (ClipperLib::long64)(vpoint[X] * sf);
-	    curr_poly[k].Y = (ClipperLib::long64)(vpoint[Y] * sf);
+	    curr_poly[k].X = (ClipperLib::long64)(fx * sf);
+	    curr_poly[k].Y = (ClipperLib::long64)(fy * sf);
 	}
 
 	try {
@@ -346,13 +340,13 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg
 }
 
 static fastf_t
-load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg_polygons *subj, fastf_t sf, matp_t mat)
+load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct bg_polygons *subj, fastf_t sf, plane_t *vp)
 {
     size_t i;
     fastf_t vZ = 1.0;
 
     for (i = 0; i < subj->num_polygons; ++i)
-	vZ = load_polygon(clipper, ptype, &subj->polygon[i], sf, mat);
+	vZ = load_polygon(clipper, ptype, &subj->polygon[i], sf, vp);
 
     return vZ;
 }
@@ -361,12 +355,11 @@ load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, struct b
  * Process/extract the clipper_polys into a struct bg_polygon.
  */
 static struct bg_polygon *
-extract(ClipperLib::PolyTree &clipper_polytree, fastf_t sf, matp_t mat, fastf_t vZ)
+extract(ClipperLib::PolyTree &clipper_polytree, fastf_t sf, plane_t *vp)
 {
     size_t j, n;
     size_t num_contours = clipper_polytree.Total();
     struct bg_polygon *outp;
-    mat_t idmat = MAT_INIT_IDN;
 
     BU_ALLOC(outp, struct bg_polygon);
     outp->num_contours = num_contours;
@@ -380,7 +373,6 @@ extract(ClipperLib::PolyTree &clipper_polytree, fastf_t sf, matp_t mat, fastf_t 
     ClipperLib::PolyNode *polynode = clipper_polytree.GetFirst();
     n = 0;
     while (polynode) {
-	point_t vpoint;
 	ClipperLib::Path &path = polynode->Contour;
 
 	outp->hole[n] = polynode->IsHole();
@@ -389,13 +381,10 @@ extract(ClipperLib::PolyTree &clipper_polytree, fastf_t sf, matp_t mat, fastf_t 
 	outp->contour[n].point = (point_t *)bu_calloc(outp->contour[n].num_points, sizeof(point_t), "point");
 
 	for (j = 0; j < outp->contour[n].num_points; ++j) {
-	    VSET(vpoint, (fastf_t)(path[j].X) * sf, (fastf_t)(path[j].Y) * sf, vZ);
-
-	    /* Convert to model coordinates */
-	    if (mat) {
-		MAT4X3PNT(outp->contour[n].point[j], mat, vpoint);
+	    if (vp) {
+		bg_plane_pt_at(&outp->contour[n].point[j], *vp, (fastf_t)(path[j].X) * sf, (fastf_t)(path[j].Y) * sf);
 	    } else {
-		MAT4X3PNT(outp->contour[n].point[j], idmat, vpoint);
+		VSET(outp->contour[n].point[j], (fastf_t)(path[j].X) * sf, (fastf_t)(path[j].Y) * sf, 0);
 	    }
 	}
 
@@ -411,10 +400,9 @@ extract(ClipperLib::PolyTree &clipper_polytree, fastf_t sf, matp_t mat, fastf_t 
 
 
 struct bg_polygon *
-bg_clip_polygon(bg_clip_t op, struct bg_polygon *subj, struct bg_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model)
+bg_clip_polygon(bg_clip_t op, struct bg_polygon *subj, struct bg_polygon *clip, fastf_t sf, plane_t *vp)
 {
     fastf_t inv_sf;
-    fastf_t vZ;
     ClipperLib::Clipper clipper;
     ClipperLib::PolyTree result_clipper_polys;
     ClipperLib::ClipType ctOp;
@@ -424,10 +412,10 @@ bg_clip_polygon(bg_clip_t op, struct bg_polygon *subj, struct bg_polygon *clip, 
     /* need the inverse of the matrix above to put things back after clipping */
 
     /* Load subject polygon into clipper */
-    load_polygon(clipper, ClipperLib::ptSubject, subj, sf, model2view);
+    load_polygon(clipper, ClipperLib::ptSubject, subj, sf, vp);
 
     /* Load clip polygon into clipper */
-    vZ = load_polygon(clipper, ClipperLib::ptClip, clip, sf, model2view);
+    load_polygon(clipper, ClipperLib::ptClip, clip, sf, vp);
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
@@ -449,15 +437,14 @@ bg_clip_polygon(bg_clip_t op, struct bg_polygon *subj, struct bg_polygon *clip, 
     clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
 
     inv_sf = 1.0/sf;
-    return extract(result_clipper_polys, inv_sf, view2model, vZ);
+    return extract(result_clipper_polys, inv_sf, vp);
 }
 
 
 struct bg_polygon *
-bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model)
+bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *clip, fastf_t sf, plane_t *vp)
 {
     fastf_t inv_sf;
-    fastf_t vZ;
     ClipperLib::Clipper clipper;
     ClipperLib::PolyTree result_clipper_polys;
     ClipperLib::ClipType ctOp;
@@ -467,10 +454,10 @@ bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *cli
     /* need the inverse of the matrix above to put things back after clipping */
 
     /* Load subject polygons into clipper */
-    load_polygons(clipper, ClipperLib::ptSubject, subj, sf, model2view);
+    load_polygons(clipper, ClipperLib::ptSubject, subj, sf, vp);
 
     /* Load clip polygons into clipper */
-    vZ = load_polygons(clipper, ClipperLib::ptClip, clip, sf, model2view);
+    load_polygons(clipper, ClipperLib::ptClip, clip, sf, vp);
 
     /* Convert op from BRL-CAD to Clipper */
     switch (op) {
@@ -492,7 +479,7 @@ bg_clip_polygons(bg_clip_t op, struct bg_polygons *subj, struct bg_polygons *cli
     clipper.Execute(ctOp, result_clipper_polys, ClipperLib::pftEvenOdd, ClipperLib::pftEvenOdd);
 
     inv_sf = 1.0/sf;
-    return extract(result_clipper_polys, inv_sf, view2model, vZ);
+    return extract(result_clipper_polys, inv_sf, vp);
 }
 
 // Local Variables:

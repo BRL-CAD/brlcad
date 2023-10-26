@@ -587,12 +587,14 @@ to_data_polygons_func(Tcl_Interp *interp,
 	else if (bu_sscanf(argv[4], "%d", &op) != 1 || op > bg_Xor)
 	    goto bad;
 
+	plane_t pl;
+	bv_view_plane(&pl, gdvp);
+
 	gpp = bg_clip_polygon((bg_clip_t)op,
 			       &gdpsp->gdps_polygons.polygon[i],
 			       &gdpsp->gdps_polygons.polygon[j],
 			       CLIPPER_MAX,
-			       gdpsp->gdps_model2view,
-			       gdpsp->gdps_view2model);
+			       &pl);
 
 	/* Free the target polygon */
 	bg_polygon_free(&gdpsp->gdps_polygons.polygon[i]);
@@ -716,8 +718,11 @@ to_data_polygons_func(Tcl_Interp *interp,
 	    i >= gdpsp->gdps_polygons.num_polygons)
 	    goto bad;
 
+	plane_t pl;
+	bv_view_plane(&pl, gdvp);
+
 	area = bg_find_polygon_area(&gdpsp->gdps_polygons.polygon[i], CLIPPER_MAX,
-				     gdpsp->gdps_model2view, gdpsp->gdps_scale);
+				     &pl, gdpsp->gdps_scale);
 	bu_vls_printf(gedp->ged_result_str, "%lf", area);
 
 	return BRLCAD_OK;
