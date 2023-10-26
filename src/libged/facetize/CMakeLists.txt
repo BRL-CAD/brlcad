@@ -21,12 +21,11 @@ endif(NOT "${MANIFOLD_INCLUDE_DIRS}" EQUAL "")
 
 set(FACETIZE_LIBS libged libbu)
 
-set(MANIFOLD_LIBRARIES 
+set(MANIFOLD_LIBRARIES
   ${MANIFOLD_INSTALL_DIR}/lib/libmanifold.so
   ${MANIFOLD_INSTALL_DIR}/lib/libcross_section.so
   ${MANIFOLD_INSTALL_DIR}/lib/libcollider.so
   ${MANIFOLD_INSTALL_DIR}/lib/libpolygon.so
-  ${MANIFOLD_INSTALL_DIR}/lib/libgraphlite.so
   ${MANIFOLD_INSTALL_DIR}/lib/libquickhull.so
   )
 if (NOT "${MANIFOLD_LIBRARIES}" EQUAL "")
