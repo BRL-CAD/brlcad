@@ -522,7 +522,7 @@ bool InformationGatherer::gatherInformation(std::string name)
         infoMap.insert(std::pair<std::string, std::string>("representation", "Hybrid (Explicit and Implicit)"));
     }
     else if (hasImplicit) {
-        infoMap.insert(std::pair<std::string, std::string>("representation", "Implicit with Booleans"));
+        infoMap.insert(std::pair<std::string, std::string>("representation", "Implicit w/ Booleans"));
     }
     else if (hasExplicit) {
         infoMap.insert(std::pair<std::string, std::string>("representation", "Explicit Boundary"));

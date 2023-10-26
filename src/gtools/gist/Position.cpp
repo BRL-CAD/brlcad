@@ -1,25 +1,4 @@
-/*                    P O S I T I O N . C P P
- * BRL-CAD
- *
- * Copyright (c) 2023 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-
 #include "Position.h"
-
 
 Position::Position(int x, int y, int width, int height) :
     x_(x),
@@ -49,7 +28,7 @@ int Position::centerX() const {
 }
 
 int Position::centerY() const {
-    return y_ + width_ / 2;
+    return y_ + height_ / 2;
 }
 
 cv::Point Position::topLeft() const {
@@ -80,12 +59,10 @@ int Position::quarterWidth() const {
     return width_ / 4;
 }
 
-
 int Position::sixthWidth() const {
     return width_ / 6;
 }
-
-
+    
 int Position::eighthWidth() const {
     return width_ / 8;
 }
@@ -102,12 +79,10 @@ int Position::quarterHeight() const {
     return height_ / 4;
 }
 
-
 int Position::sixthHeight() const {
     return height_ / 6;
 }
-
-
+    
 int Position::eighthHeight() const {
     return height_ / 8;
 }
@@ -152,15 +127,7 @@ bool Position::contains(const cv::Point& point) const {
     return contains(point.x, point.y);
 }
 
-
 bool Position::intersects(const Position& other) const {
-    return right() > other.left() && left() < other.right() && bottom() > other.top() && top() < other.bottom();
+    return right() > other.left() && left() < other.right() &&
+           bottom() > other.top() && top() < other.bottom();
 }
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8

@@ -1,46 +1,22 @@
-/*                F A C T S H A N D L E R . C P P
- * BRL-CAD
- *
- * Copyright (c) 2023 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-
 #include "FactsHandler.h"
 #include "RenderHandler.h"
 
-
-void
-makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
-{
-    if (info.getInfo("classification") == "UNCLASSIFIED") {	//Green
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 122, 51));
+void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
+	if (info.getInfo("classification") == "UNCLASSIFIED") {		//Green
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 122, 51));
 	}
-	else if (info.getInfo("classification") == "CONFIDENTIAL") {	//Blue
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 51, 160));
+	else if (info.getInfo("classification") == "CONFIDENTIAL") {//Blue
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 51, 160));
 	}
-	else if (info.getInfo("classification") == "SECRET") {	//Red
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(200, 16, 46));
+	else if (info.getInfo("classification") == "SECRET") {		//Red
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(200, 16, 46));
 	}
 	else if (info.getInfo("classification") == "TOP SECRET") {	//Orange
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(255, 103, 31));
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(255, 103, 31));
 	}
 	else {	//Draw black rectangle
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
 	}
-	// img.drawImage(100,100,240,240,"brlcadTextLogo.png");
 	int textHeight = 3 * height / 8;
 	int textYOffset = (height - textHeight) / 2;
 	std::vector<std::string> text;
@@ -48,32 +24,40 @@ makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offse
 
 	int endTextXPosition = 0;
 	if (info.getInfo("classification") != "") {
-    text.push_back("Owner: " + info.getInfo("owner"));
-    text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
-    text2.push_back("Last Updated: " + info.getInfo("lastUpdate"));
-    text2.push_back("Source File: " + info.getInfo("file"));
-    img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
+		text.push_back("Owner: " + info.getInfo("owner"));
+		text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
+		text2.push_back("Last Updated: " + info.getInfo("lastUpdate"));
+		text2.push_back("Source File: " + info.getInfo("file"));
+		img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
 	}
 	else {
-    text.push_back("Owner: " + info.getInfo("owner"));
-    text.push_back("Checksum: " + info.getInfo("checksum"));
-    text.push_back("Last Updated : " + info.getInfo("lastUpdate"));
-    text.push_back("Source File: " + info.getInfo("file") + "       ");
-    endTextXPosition = img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+		text.push_back("Owner: " + info.getInfo("owner"));
+		text.push_back("Checksum: " + info.getInfo("checksum"));
+		text.push_back("Last Updated : " + info.getInfo("lastUpdate"));
+		text.push_back("Source File: " + info.getInfo("file") + "       ");
+		endTextXPosition = img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
-	//img.drawImageFitted(endTextXPosition-100, offsetY, 100, 90, "../../../src/gtools/gist/brlLogo.jpg");
+	//cv::Mat bLogo = imread("../src/gtools/rgen/brlLogo1.jpg", cv::IMREAD_UNCHANGED);
+	//imshow("Window Name", bLogo);
+	//img.drawImage(endTextXPosition-100, offsetY, 100, 90, "../src/gtools/rgen/brl-logo.png");
+	img.drawImageFitted(3200, 10, 200, 150, "../src/gtools/rgen/brlLogo.jpg");
 }
 
-
-void
-makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
-{
-    //Draw black rectangle
-	if (info.getInfo("classification") == "CONFIDENTIAL") {
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 255));
+void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
+	if (info.getInfo("classification") == "UNCLASSIFIED") {		//Green
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 122, 51));
 	}
-	else {
-	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
+	else if (info.getInfo("classification") == "CONFIDENTIAL") {//Blue
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 51, 160));
+	}
+	else if (info.getInfo("classification") == "SECRET") {		//Red
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(200, 16, 46));
+	}
+	else if (info.getInfo("classification") == "TOP SECRET") {	//Orange
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(255, 103, 31));
+	}
+	else {	//Draw black rectangle
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
 	}
 
 	int textHeight = 3 * height / 8;
@@ -83,48 +67,57 @@ makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 
 	//int endTextXPosition = 0;
 	if (info.getInfo("classification") != "") {
-    text.push_back("Preparer: " + info.getInfo("preparer"));
-    text2.push_back("Date Generated : " + info.getInfo("dateGenerated"));
-    img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
+		text.push_back("Preparer: " + info.getInfo("preparer"));
+		text2.push_back("Date Generated : " + info.getInfo("dateGenerated"));
+		img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
 	}
 	else {
-    text.push_back("Preparer: " + info.getInfo("preparer"));
-    text.push_back("Date Generated : " + info.getInfo("dateGenerated"));
-    img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
+		text.push_back("Preparer: " + info.getInfo("preparer"));
+		text.push_back("Date Generated : " + info.getInfo("dateGenerated"));
+		img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
-	img.drawImageFitted(3350, 2360, 100, 90, "../src/gtools/gist/afcLogo.jpg");
+	img.drawImageFitted(3350, 2360, 100, 90, "../src/gtools/rgen/afcLogoB.jpg");
 }
 
+void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
+	// //Determine units
+	// std::string unit;
+	// if (opt.isOriginalUnitsLength()) {
+	// 	unit = info.getInfo("units");
+	// }
+	// else {
+	// 	unit = opt.getUnitLength();
+	// }
 
-void
-makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt)
-{
-    // draw bounding rectangle
-    img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
+	// draw bounding rectangle
+	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
 
-    int headerOffset = width / 20;
-    int textOffset = width / 10;
-    int textHeight = height / 50;
-    int textYOffset = textHeight * 8 / 5;
+	int headerOffset = width / 20;
+	int textOffset = width / 10;
+	int textHeight = height / 50;
+	int textYOffset = textHeight * 8 / 5;
 
-    // Verification Calculations
-    // Calculate column offsets
-    // int col1Offset = (offsetX + width / 4) - textOffset;
-    // int col2Offset = offsetX + width / 2;
-    // int col3Offset = (offsetX + (width*3) / 4) + textOffset;
+	// Verification Calculations
+	 // Calculate column offsets
+	int col1Offset = (offsetX + width / 4) - textOffset;
+	int col2Offset = offsetX + width / 2;
+	int col3Offset = (offsetX + (width*3) / 4) + textOffset;
 
-    int curiX = 0;
+	int curiX = 0;
 
-    img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Geometry Type", TO_BOLD);
-    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("representation"));
-    curiX++;
-    img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Orientation", TO_BOLD);
-    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getOrientationRightLeft() + ", " + opt.getOrientationZYUp());
-    curiX++;
-    img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Entity Summary", TO_BOLD);
-    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");
-    img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("assemblies") + " assemblies, " + info.getInfo("total") + " total");
-    curiX++;
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Geometry Type", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("representation"));
+	curiX++;
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Orientation", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getOrientationRightLeft() + ", " + opt.getOrientationZYUp());
+	curiX++;
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Entity Summary", TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("assemblies") + " assemblies, " + info.getInfo("total") + " total");
+	//curiX++;
+	//img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Units", TO_BOLD);
+	//img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
+	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Dimensions (x, y, z)", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("dimX"));
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("dimY"));
@@ -142,49 +135,47 @@ makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("mass"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Notes", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getBio());
-	img.textWrapping(offsetX + textOffset, offsetY + curiX++ * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight * 3, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/11000);
+	img.textWrapping(offsetX + textOffset, offsetY + curiX * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight * 3, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/11000);
+
 }
 
+void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
+	// img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
 
-void
-makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
-{
-    // img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
+  int textOffset = width / 10;
+  int textHeight = height / 20;
+  int textXOffset = textHeight * 53 / 5;
+  int textYOffset = textHeight * 8 / 5;
 
-//    int textOffset = width / 10;
-    int textHeight = height / 20;
-//    int textXOffset = textHeight * 53 / 5;
-//    int textYOffset = textHeight * 8 / 5;
+	// img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Object Hierarchy", TO_BOLD);
 
-    // img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Object Hierarchy", TO_BOLD);
+  int N = 4; // number of sub components you want
+  int offY = height / 2 + offsetY;
+  int offX = offsetX + 5;
+  int imgH = height / 2;
+  int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
 
-    size_t N = 4; // number of sub components you want
-    int offY = height / 2 + offsetY;
-    int offX = offsetX + 5;
-    int imgH = height / 2;
-    int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
+  int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
 
-    int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
+  // main component
+  std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
+  //img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
+  img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width, info.largestComponents[0].name, TO_BOLD);
 
-    // main component
-    std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
-    //img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
-    img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width, info.largestComponents[0].name, TO_BOLD);
-
-    img.drawLine(offX + imgW/2, offY - 100, offX + fmin(N-1, info.largestComponents.size()-2)*imgW + imgW/2, offY - 100, 3, cv::Scalar(94, 58, 32));
-    img.drawLine(centerPt, offY-100, centerPt, offY-130, 3, cv::Scalar(94, 58, 32));
-    img.drawCirc(centerPt, offY-130, 7, -1, cv::Scalar(94, 58, 32));
-    // img.drawCirc(centerPt, offY-30, 20, 3, cv::Scalar(94, 58, 32));
+  img.drawLine(offX + imgW/2, offY - 100, offX + fmin(N-1, info.largestComponents.size()-2)*imgW + imgW/2, offY - 100, 3, cv::Scalar(94, 58, 32));
+  img.drawLine(centerPt, offY-100, centerPt, offY-130, 3, cv::Scalar(94, 58, 32));
+  img.drawCirc(centerPt, offY-130, 7, -1, cv::Scalar(94, 58, 32));
+  // img.drawCirc(centerPt, offY-30, 20, 3, cv::Scalar(94, 58, 32));
 
     // entity summary
-//    int curiX = 0;
+    int curiX = 0;
     // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Groups & Assemblies:", TO_BOLD);
     // img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("groups_assemblies"), TO_BOLD);
-    // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Regions & Parts:", TO_BOLD);
-    // img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("regions_parts"), TO_BOLD);
-    // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Primitive Shapes:", TO_BOLD);
-    // img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("primitives"), TO_BOLD);
+	// img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Regions & Parts:", TO_BOLD);
+	// img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("regions_parts"), TO_BOLD);
+	// img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Primitive Shapes:", TO_BOLD);
+	// img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("primitives"), TO_BOLD);
+
 
 
     // sub components
@@ -202,7 +193,7 @@ makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
     if (info.largestComponents.size() > N) {
         // render the smaller sub components all in one
         std::string subcomponents = "";
-        for (size_t i = N; i < info.largestComponents.size(); i++)
+        for (int i = N; i < info.largestComponents.size(); i++)
             subcomponents += info.largestComponents[i].name + " ";
         render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
         img.drawImageFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
@@ -213,6 +204,15 @@ makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
         // img.drawLine(offX + (N-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (N-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
     }
 }
+
+
+
+
+
+
+// Depricated Code
+
+
 
 
 
@@ -291,13 +291,3 @@ makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int
 // 	img.drawText(curX + textOffset, curY, textHeight, width, "Suitable for 3D Printing");
 // 	curY += textOffset;
 // }
-
-
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8

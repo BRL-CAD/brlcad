@@ -1,33 +1,12 @@
-/*           I N F O R M A T I O N G A T H E R E R . H
- * BRL-CAD
- *
- * Copyright (c) 2023 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-
 #pragma once
 
 #include "pch.h"
 
 /**
- * The InformationGatherer class gathers a multitude of information
- * about a 3D model and stores it in an accessible place that can be
- * used by other classes writing the report.  This class itself works
- * to gather all of the required information as specified in Sean
- * Morrison's specifications.
+ * The InformationGatherer class gathers a multitude of information about a 3D model
+ * and stores it in an accessible place that can be used by other classes writing
+ * the report.  This class itself works to gather all of the required information
+ * as specified in Sean Morrison's specifications.
  */
 
 // TODO: Arrange the class for this.
@@ -41,11 +20,11 @@ struct ComponentData {
     std::string name;
 
     bool operator<(const ComponentData& other) const {
-	if (numEntities != other.numEntities)
-	    return numEntities < other.numEntities;
-	if (!EQUAL(volume, other.volume))
-	    return volume < other.volume;
-	return name < other.name;
+        if (numEntities != other.numEntities)
+            return numEntities < other.numEntities;
+        if (volume != other.volume)
+            return volume < other.volume;
+        return name < other.name;
     }
 };
 
@@ -53,7 +32,6 @@ struct Unit {
     std::string unit;
     int power;
 };
-
 
 class InformationGatherer
 {
@@ -68,27 +46,18 @@ private:
     void getSubComp();
     int getEntityData(char* buf);
 
+
+
 public:
     std::vector<ComponentData> largestComponents;
-    InformationGatherer(Options* options);
-    ~InformationGatherer();
+	InformationGatherer(Options* options);
+	~InformationGatherer();
 
-    bool gatherInformation(std::string name);
+	bool gatherInformation(std::string name);
 
-    std::string getInfo(std::string key);
+	std::string getInfo(std::string key);
     std::string getFormattedInfo(std::string key);
 
     void correctDefaultUnits();
     Unit getUnit(std::string name);
 };
-
-
-/*
- * Local Variables:
- * tab-width: 8
- * mode: C
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */

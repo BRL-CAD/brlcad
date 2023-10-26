@@ -1,23 +1,3 @@
-/*         I N F O R M A T I O N G A T H E R E R . C P P
- * BRL-CAD
- *
- * Copyright (c) 2023 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-
 #include "pch.h"
 #include "InformationGatherer.h"
 
@@ -31,26 +11,19 @@
 #  include <unistd.h>
 #endif
 
-#include "bu/log.h"
-
-
-void
-getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std::string az, std::string el, std::string comp, double& surfArea, std::string unit)
-{
+void getSurfaceArea(Options* opt, std::map<std::string, std::string> map, std::string az, std::string el, std::string comp, double& surfArea, std::string unit) {
     //Run RTArea to get surface area
     std::string command = opt->getTemppath() + "rtarea -u " + unit + " -a " + az + " -e " + el + " " + opt->getFilepath() + " " + comp + " 2>&1";
     char buffer[128];
     std::string result = "";
     FILE* pipe = popen(command.c_str(), "r");
-
-    if (!pipe)
-	throw std::runtime_error("popen() failed!");
-
+    if (!pipe) throw std::runtime_error("popen() failed!");
     try {
-        while (bu_fgets(buffer, sizeof buffer, pipe) != NULL) {
+        while (fgets(buffer, sizeof buffer, pipe) != NULL) {
             result += buffer;
         }
-    } catch (...) {
+    }
+    catch (...) {
         pclose(pipe);
         throw;
     }
@@ -69,10 +42,7 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
     }
 }
 
-
-void
-getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
-{
+void getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit) {
     //Get tops
     const char* cmd[3] = { "tops", NULL, NULL };
     ged_exec(g, 1, cmd);
@@ -179,9 +149,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
     }
 }
 
-
-std::string
-formatDouble(double d)
+std::string formatDouble(double d)
 {
     std::stringstream ss;
     ss << std::setprecision(2) << std::fixed << d;
@@ -202,72 +170,54 @@ formatDouble(double d)
 }
 
 
-double
-InformationGatherer::getVolume(std::string component)
-{
+double InformationGatherer::getVolume(std::string component) {
     // Gather dimensions
     const char* cmd[3] = { "bb", component.c_str(), NULL };
-
     ged_exec(g, 2, cmd);
-
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     int dim_idx = 0;
-
     while (ss >> val) {
         try {
+            double temp = stod(val);
             dim_idx++;
             if (dim_idx == 4)
                 return stod(val);
-        } catch (const std::exception& e) {
+        } catch (const std::exception& e){
             continue;
         }
     }
-
     return 0;
 }
 
-
-int
-InformationGatherer::getNumEntities(std::string UNUSED(component))
-{
+int InformationGatherer::getNumEntities(std::string component) {
     // Find number of entities
-
     const char* cmd[8] = { "search",  ".",  "-type", "comb", "-not", "-type", "region", NULL };
-
     ged_exec(g, 7, cmd);
-
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     int entities = 0;
-
     while (getline(ss, val)) {
         entities++;
     }
-
     return entities;
 }
 
-
-void
-InformationGatherer::getMainComp()
-{
-    const std::string topcomp = opt->getTopComp();
-    if (topcomp != "") {
-	const char *topname = topcomp.c_str();
-        std::cout << "User input top: " << topname << std::endl;
+void InformationGatherer::getMainComp() {
+    if (opt->getTopComp() != "") {
+        std::cout << "User input top: " << opt->getTopComp() << std::endl;
         // check if main comp exists
-        const char* cmd[3] = { "l", topname, NULL };
+        const char* cmd[3] = { "l", opt->getTopComp().c_str(), NULL };
         ged_exec(g, 2, cmd);
         std::string res = bu_vls_addr(g->ged_result_str);
         if (res.size() == 0) {
-            std::cerr << "Could not find component: " << topname << std::endl;
+            std::cerr << "Could not find component: " << opt->getTopComp() << std::endl;
             bu_exit(BRLCAD_ERROR, "aborting.\n");
         }
 
-        int entities = getNumEntities(topname);
-        double volume = getVolume(topname);
-        largestComponents.push_back({entities, volume, topname});
+        int entities = getNumEntities(opt->getTopComp());
+        double volume = getVolume(opt->getTopComp());
+        largestComponents.push_back({entities, volume, opt->getTopComp()});
         return;
     }
 
@@ -285,8 +235,8 @@ InformationGatherer::getMainComp()
     }
 
     sort(topComponents.rbegin(), topComponents.rend());
-    for (size_t i = 0; i < topComponents.size(); i++) {
-        if (!EQUAL(topComponents[i].volume, std::numeric_limits<double>::infinity())) {
+    for (int i = 0; i < topComponents.size(); i++) {
+        if (topComponents[i].volume != std::numeric_limits<double>::infinity()) {
             largestComponents.push_back(topComponents[i]);
             break;
         }
@@ -295,52 +245,45 @@ InformationGatherer::getMainComp()
     if (largestComponents.size() != 0) {
         return;
     } else {
-        const char* search_cmd[5] = { "search",  ".",  "-type", "comb", NULL };
+        const char* cmd[5] = { "search",  ".",  "-type", "comb", NULL };
 
-        ged_exec(g, 4, search_cmd);
-        std::stringstream ss2(bu_vls_addr(g->ged_result_str));
-        std::string val2;
-        std::vector<ComponentData> topComponents2;
+        ged_exec(g, 4, cmd);
+        std::stringstream ss(bu_vls_addr(g->ged_result_str));
+        std::string val;
+        std::vector<ComponentData> topComponents;
 
-        while (getline(ss2, val2)) {
-            int entities = getNumEntities(val2);
-            double volume = getVolume(val2);
-            topComponents2.push_back({entities, volume, val2});
+        while (getline(ss, val)) {
+            int entities = getNumEntities(val);
+            double volume = getVolume(val);
+            topComponents.push_back({entities, volume, val});
         }
 
-        sort(topComponents2.rbegin(), topComponents2.rend());
-        for (size_t i = 0; i < topComponents2.size(); i++) {
-            if (!EQUAL(topComponents2[i].volume, std::numeric_limits<double>::infinity())) {
-                largestComponents.push_back(topComponents2[i]);
+        sort(topComponents.rbegin(), topComponents.rend());
+        for (int i = 0; i < topComponents.size(); i++) {
+            if (topComponents[i].volume != std::numeric_limits<double>::infinity()) {
+                largestComponents.push_back(topComponents[i]);
                 break;
             }
         }
     }
 }
 
-
-int
-InformationGatherer::getEntityData(char* buf)
-{
+int InformationGatherer::getEntityData(char* buf) {
     std::stringstream ss(buf);
     std::string token;
     int count = 0;
-
     while (getline(ss, token)) {
         count++;
     }
-
     return count;
 }
 
 
-void
-InformationGatherer::getSubComp()
-{
+void InformationGatherer::getSubComp() {
     // std::string prefix = "../../../build/bin/mged -c ../../../build/bin/share/db/moss.g ";
 
     if (!bu_file_exists((opt->getTemppath() + "mged").c_str(), NULL) && !bu_file_exists((opt->getTemppath() + "mged.exe").c_str(), NULL)) {
-        bu_log("ERROR: File to executables (%s) is invalid\nPlease use (or check) the -T parameter\n", opt->getTemppath().c_str());
+        bu_log("ERROR: File to executables (%s) is invalid or mged is missing\nPlease use (or check) the -T parameter\n", opt->getTemppath().c_str());
         bu_exit(BRLCAD_ERROR, "Bad folder, aborting.\n");
     }
 
@@ -386,9 +329,7 @@ InformationGatherer::~InformationGatherer()
 
 }
 
-
-bool
-InformationGatherer::gatherInformation(std::string name)
+bool InformationGatherer::gatherInformation(std::string name)
 {
     //Create folder output if needed
     std::string path = std::filesystem::current_path().string() + "\\output";
@@ -397,54 +338,55 @@ InformationGatherer::gatherInformation(std::string name)
         std::filesystem::create_directory("output");
     }
 
-    //Open database
+	//Open database
     std::string filePath = opt->getFilepath();
-    g = ged_open("db", filePath.c_str(), 1);
+	g = ged_open("db", filePath.c_str(), 1);
 
-    //Gather title
-    const char* cmd[6] = { "title", NULL, NULL, NULL, NULL };
-    ged_exec(g, 1, cmd);
+	//Gather title
+	const char* cmd[6] = { "title", NULL, NULL, NULL, NULL };
+	ged_exec(g, 1, cmd);
     infoMap["title"] = bu_vls_addr(g->ged_result_str);
 
 
-    //Gather DB Version
-    cmd[0] = "dbversion";
+	//Gather DB Version
+	cmd[0] = "dbversion";
     cmd[1] = NULL;
-    ged_exec(g, 1, cmd);
+	ged_exec(g, 1, cmd);
     infoMap["version"] = bu_vls_addr(g->ged_result_str);
 
     // CHECK
-    //Gather primitives, regions, total objects
-    cmd[0] = "summary";
-    ged_exec(g, 1, cmd);
-    char* res = strtok(bu_vls_addr(g->ged_result_str), " ");
-    int count = 0;
-    while (res != NULL) {
-	if (count == 1) {
-	    infoMap.insert(std::pair < std::string, std::string>("primitives", res));
+	//Gather primitives, regions, total objects
+	cmd[0] = "summary";
+	ged_exec(g, 1, cmd);
+	char* res = strtok(bu_vls_addr(g->ged_result_str), " ");
+	int count = 0;
+	while (res != NULL) {
+		if (count == 1) {
+			infoMap.insert(std::pair < std::string, std::string>("primitives", res));
+		}
+		else if (count == 3) {
+			infoMap.insert(std::pair < std::string, std::string>("regions", res));
+		}
+		else if (count == 5) {
+			infoMap.insert(std::pair < std::string, std::string>("non-regions", res));
+		}
+		count++;
+		res = strtok(NULL, " ");
 	}
-	else if (count == 3) {
-	    infoMap.insert(std::pair < std::string, std::string>("regions", res));
-	}
-	else if (count == 5) {
-	    infoMap.insert(std::pair < std::string, std::string>("non-regions", res));
-	}
-	count++;
-	res = strtok(NULL, " ");
-    }
+
 
     // Gather units
-    cmd[0] = "units";
+	cmd[0] = "units";
     cmd[1] = NULL;
-    ged_exec(g, 1, cmd);
-    std::string result = bu_vls_addr(g->ged_result_str);
-    std::size_t first = result.find_first_of("\'");
-    std::size_t last = result.find_last_of("\'");
+	ged_exec(g, 1, cmd);
+	std::string result = bu_vls_addr(g->ged_result_str);
+	std::size_t first = result.find_first_of("\'");
+	std::size_t last = result.find_last_of("\'");
     infoMap["units"] = result.substr(first+1, last-first-1);
 
     //Get units to use
     std::string lUnit;
-    if (opt->isOriginalUnitsMass()) {
+    if (opt->isOriginalUnitsLength()) {
         lUnit = infoMap["units"];
     }
     else {
@@ -458,6 +400,7 @@ InformationGatherer::gatherInformation(std::string name)
         mUnit = opt->getUnitMass();
     }
 
+
     getMainComp();
     if (largestComponents.size() == 0)
         return false;
@@ -470,10 +413,10 @@ InformationGatherer::gatherInformation(std::string name)
     }
 
     // Gather dimensions
-    cmd[0] = "bb";
-    cmd[1] = largestComponents[0].name.c_str();
-    cmd[2] = NULL;
-    ged_exec(g, 2, cmd);
+	cmd[0] = "bb";
+	cmd[1] = largestComponents[0].name.c_str();
+	cmd[2] = NULL;
+	ged_exec(g, 2, cmd);
 
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string token;
@@ -494,7 +437,7 @@ InformationGatherer::gatherInformation(std::string name)
             unitsMap[dim_data[dim_idx]] = u;
 
             dim_idx++;
-        } catch (const std::exception& e) {
+        } catch (const std::exception& e){
             continue;
         }
     }
@@ -524,7 +467,7 @@ InformationGatherer::gatherInformation(std::string name)
     ged_exec(g, 4, cmd);
     infoMap["regions_parts"] = std::to_string(getEntityData(bu_vls_addr(g->ged_result_str)));
 
-    //Gather name of preparer
+	//Gather name of preparer
     infoMap["preparer"] = name;
 
     //Gather volume and mass
@@ -568,19 +511,18 @@ InformationGatherer::gatherInformation(std::string name)
     bool hasExplicit = false;
     bool hasImplicit = false;
     const char* tfilter = "-type brep -or -type bot -or -type vol -or -type sketch";
-
-    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasExplicit = true;
     }
     tfilter = "-below -type region -not -type comb -not -type brep -not -type bot -not -type vol -not -type sketch";
-    if (db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL) > 0) {
+    if (db_search(NULL, NULL, tfilter, 0, NULL, g->dbip, NULL) > 0) {
         hasImplicit = true;
     }
     if (hasExplicit && hasImplicit) {
         infoMap.insert(std::pair<std::string, std::string>("representation", "Hybrid (Explicit and Implicit)"));
     }
     else if (hasImplicit) {
-        infoMap.insert(std::pair<std::string, std::string>("representation", "Implicit with Booleans"));
+        infoMap.insert(std::pair<std::string, std::string>("representation", "Implicit w/ Booleans"));
     }
     else if (hasExplicit) {
         infoMap.insert(std::pair<std::string, std::string>("representation", "Explicit Boundary"));
@@ -603,13 +545,13 @@ InformationGatherer::gatherInformation(std::string name)
     //Next, use other commands to extract info
 
     //Gather filename
+    bool worked = true;
     std::string owner = "username";
 
 #ifdef HAVE_WINDOWS_H
     /*
-     * Code primarily taken from https://learn.microsoft.com/en-us/windows/win32/secauthz/finding-the-owner-of-a-file-object-in-c--
-     */
-    bool worked = true;
+    * Code primarily taken from https://learn.microsoft.com/en-us/windows/win32/secauthz/finding-the-owner-of-a-file-object-in-c--
+    */
     DWORD dwRtnCode = 0;
     PSID pSidOwner = NULL;
     BOOL bRtnBool = TRUE;
@@ -624,24 +566,29 @@ InformationGatherer::gatherInformation(std::string name)
 
     if (hFile == INVALID_HANDLE_VALUE) {
         worked = false;
-    } else {
+    }
+    else {
         dwRtnCode = GetSecurityInfo(hFile, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION, &pSidOwner, NULL, NULL, NULL, &pSD);
         if (dwRtnCode != ERROR_SUCCESS) {
             worked = false;
-        } else {
+        }
+        else {
             bRtnBool = LookupAccountSid(NULL, pSidOwner, AcctName, (LPDWORD)&dwAcctName, DomainName, (LPDWORD)&dwDomainName, &eUse);
             AcctName = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwAcctName * sizeof(wchar_t));
             if (AcctName == NULL) {
                 worked = false;
-            } else {
+            }
+            else {
                 DomainName = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwDomainName * sizeof(wchar_t));
                 if (DomainName == NULL) {
                     worked = false;
-                } eelse {
+                }
+                else {
                     bRtnBool = LookupAccountSid(NULL, pSidOwner, AcctName, (LPDWORD)&dwAcctName, DomainName, (LPDWORD)&dwDomainName, &eUse);
                     if (bRtnBool == FALSE) {
                         worked = false;
-                    } else {
+                    }
+                    else {
                         owner = AcctName;
                     }
                 }
@@ -661,7 +608,10 @@ InformationGatherer::gatherInformation(std::string name)
         owner = pw->pw_name;
     }
 #endif
+
     infoMap.insert(std::pair<std::string, std::string>("owner", owner));
+
+    //Gather last date updated
     struct stat info;
     stat(opt->getFilepath().c_str(), &info);
     std::time_t update = info.st_mtime;
@@ -689,13 +639,14 @@ InformationGatherer::gatherInformation(std::string name)
 
     //Gather classification
     std::string classification = opt->getClassification();
-    for (size_t i = 0; i < classification.length(); i++) {
+    for (int i = 0; i < classification.length(); i++) {
         classification[i] = toupper(classification[i]);
     }
     infoMap.insert(std::pair < std::string, std::string>("classification", classification));
 
     //Gather checksum
     struct bu_mapped_file* gFile = NULL;
+    char* buf = NULL;
     gFile = bu_open_mapped_file(opt->getFilepath().c_str(), ".g file");
     picohash_ctx_t ctx;
     char digest[PICOHASH_MD5_DIGEST_LENGTH];

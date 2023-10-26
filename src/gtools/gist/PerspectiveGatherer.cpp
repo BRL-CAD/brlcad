@@ -1,51 +1,25 @@
-/*         P E R S P E C T I V E G A T H E R E R . C P P
- * BRL-CAD
- *
- * Copyright (c) 2023 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-
 #include "PerspectiveGatherer.h"
 
-
-std::map<char, FaceDetails>
-getFaceDetails()
+std::map<char, FaceDetails> getFaceDetails()
 {
-    std::map<char, FaceDetails> output;
+	std::map<char, FaceDetails> output;
 
-    output['F'] = {FRONT, "Front", LENGTH, HEIGHT};
-    output['T'] = {TOP, "Top", LENGTH, DEPTH};
-    output['R'] = {RIGHT, "Right", DEPTH, HEIGHT};
-    output['L'] = {LEFT, "Left", DEPTH, HEIGHT};
-    output['B'] = {BACK, "Back", LENGTH, HEIGHT};
-    output['b'] = {BOTTOM, "Bottom", LENGTH, DEPTH};
-    //output['A'] = {DETAILED, "Ambient Occlusion"};
+	output['F'] = {FRONT, "Front", LENGTH, HEIGHT};
+	output['T'] = {TOP, "Top", LENGTH, DEPTH};
+	output['R'] = {RIGHT, "Right", DEPTH, HEIGHT};
+	output['L'] = {LEFT, "Left", DEPTH, HEIGHT};
+	output['B'] = {BACK, "Back", LENGTH, HEIGHT};
+	output['b'] = {BOTTOM, "Bottom", LENGTH, DEPTH};
+	//output['A'] = {DETAILED, "Ambient Occlusion"};
 
-    return output;
+	return output;
 }
 
-
-std::string
-extractFileName(std::string filePath) {
+std::string extractFileName(std::string filePath) {
     return filePath.substr(filePath.find_last_of("/\\") + 1);
 }
 
-
-std::string
-renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
+std::string renderPerspective(RenderingFace face, Options& opt, std::string component, std::string ghost)
 {
     // hardcode filename until options come out
     std::string pathToInput = opt.getFilepath();
@@ -69,11 +43,9 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
     // std::cout << "File string: " << fileString << std::endl;
     std::string outputname = pathToOutput + fileOutput + "_" + fileString;
     std::replace(outputname.begin(), outputname.end(), ' ', '_');
-
     if (outputname.size() > 150) {
         outputname = outputname.substr(0, 150);
     }
-
     std::string render;
 
     int a, e;
@@ -118,7 +90,8 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
             outputname += "_ghost.png";
             //REMOVE: tempfix for 'rtwizard' not working
             render = opt.getTemppath() + "rtedge -s 1024 -W -R -a " + std::to_string(a) + " -e " + std::to_string(e) + " -o " + outputname + " -c \"set bs=1\" " + pathToInput + " " + component;
-            //PUT THIS LINE BACK IN -> //render = opt.getTemppath() + "rtwizard -s 1024 -a " + std::to_string(a) + " -e " + std::to_string(e) + " -i " + pathToInput + " -c " + component + " -g " + ghost + " -G 10 -o " + outputname;
+            //PUT THIS LINE BACK IN
+            //render = opt.getTemppath() + "rtwizard -s 1024 -a " + std::to_string(a) + " -e " + std::to_string(e) + " -i " + pathToInput + " -c " + component + " -g " + ghost + " -G 10 -o " + outputname;
             // render2 = "../../../build/bin/rtwizard -s 1024 -a " + a + " -e " + e + " -i " + pathToInput + " -g " + ghost + " -G 3 -o " + outputname;
             break;
         default:
@@ -130,34 +103,21 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
 
 
     if (opt.getOverrideImages() || std::remove(outputname.c_str()) != 0) {
-	std::cerr << "Did not remove " << outputname << std::endl;
+       std::cerr << "Did not remove " << outputname << std::endl;
     }
-
+    
     try {
         auto result2 = system(render.c_str());
-	if (result2 < 0 || result2 == 127) {
-	    bu_log("ERROR: failed to run: %s\n", render.c_str());
-	    bu_exit(BRLCAD_ERROR, "system() failed\n");
-	}
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
     }
 
     if (!bu_file_exists(outputname.c_str(), NULL)) {
-        bu_log("ERROR: %s doesn't exist\n", outputname.c_str());
-        bu_log("Rendering not generated");
+        bu_log("ERROR: %s doesn't exist\n", outputname.c_str()); 
+        bu_log("Rendering not generated"); 
         bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
     }
     std::cout << "Successfully generated perspective rendering png file\n";
 
-    return outputname;
+	return outputname;
 }
-
-
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8

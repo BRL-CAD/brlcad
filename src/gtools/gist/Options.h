@@ -1,23 +1,3 @@
-/*                       O P T I O N S . H
- * BRL-CAD
- *
- * Copyright (c) 2023 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
-
 #pragma once
 
 #include "pch.h"
@@ -49,7 +29,7 @@ public:
 	void setOrientationRightLeft(bool rL);
 	void setOrientationZYUp(bool zy);
 	void setNotes(std::string n);
-	void setBio(std::string b);
+
 	void setTopComp(std::string t);
 
 	void setUnitLength(std::string l);
@@ -73,7 +53,7 @@ public:
 	std::string getOrientationRightLeft();
 	std::string getOrientationZYUp();
 	std::string getNotes();
-	std::string getBio();
+
 	std::string getTopComp();
 
 	std::string getUnitLength();
@@ -124,8 +104,4 @@ private:
 	// Unit mass
 	std::string uMass;
 	bool originalUnitsMass;
-
-	//Optional Bio
-	std::string bio;
-
 };
