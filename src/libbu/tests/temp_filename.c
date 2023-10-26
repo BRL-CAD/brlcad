@@ -45,8 +45,8 @@ main(int argc, char *argv[])
 
     /* group tests so failures are easier to pinpoint */
     char* curr = NULL;
-    for (int i = 1; i < argc; i++) {
-	curr = argv[i];
+    for (int test = 1; test < argc; test++) {
+	curr = argv[test];
 
 	if (!bu_strcmp(curr, "single")) {
 	    // test with different configurations - all thread and proc ID's should be the same
@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 	    // prefix - buffer + no-buffer should match
 	    char prefix[25] = "prefix";
 	    bu_temp_file_name(prefix, 25);
-	    const char* prefix_non_alloc = bu_temp_file_name("prefix", 0);
+	    const char* prefix_non_alloc = bu_temp_file_name(prefix, 0);
 	    // validate
 	    if (bu_strncmp(prefix, prefix_non_alloc, strlen(prefix))) /* should match */
 		bu_exit(EXIT_FAILURE, "temp_filename failure: expected match, got [%s] | [%s]\n", prefix, prefix_non_alloc);
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 	    bu_temp_file_name(under_size, 5);
 	    // validate
 	    if (strlen(under_size) != 4)    /* buffer size -1 */
-		bu_exit(EXIT_FAILURE, "temp_filename failure: expected size [%d], got [%d]]\n", 4, strlen(under_size));
+		bu_exit(EXIT_FAILURE, "temp_filename failure: expected size [%d], got [%ld]]\n", 4, strlen(under_size));
 
 	} else if (!bu_strcmp(curr, "parallel")) {
 	    // test parallel / threaded -
