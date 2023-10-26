@@ -71,7 +71,7 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
 
 
 void
-getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
+getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, bool &hasDensities, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
 {
     //Get tops
     const char* cmd[3] = { "tops", NULL, NULL };
@@ -111,9 +111,10 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
             }
         }
     }
+
+    //Get volume of region
     for (int i = 0; i < toVisit.size(); i++) {
         std::string val = toVisit[i];
-        //Get volume of region
         std::string command = opt->getTemppath() + "gqa -Av -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\" " + opt->getFilepath() + " " + val + " 2>&1";
         char buffer[128];
         std::string result = "";
@@ -140,10 +141,39 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
                 bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
             }
         }
+    }
+
+    // See if component has densities
+        std::string command = opt->getTemppath() + "mged -c " + opt->getFilepath() + " mater -d get * " + "2>&1";
+        char buffer[128];
+        std::string result = "";
+        FILE* pipe = popen(command.c_str(), "r");
+        if (!pipe) throw std::runtime_error("popen() failed!");
+        try {
+            while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+                result += buffer;
+            }
+        }
+        catch (...) {
+            pclose(pipe);
+            throw;
+        }
+        pclose(pipe);
+        if (result.find("no density information found in database") != std::string::npos) {
+            mass = 0;
+            hasDensities = false;
+            return;
+        }
+
+
+    for (int i = 0; i < toVisit.size(); i++) {
+        std::string val = toVisit[i];
+
         //Get mass of region
-        command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\"," + mUnit + " " + opt->getFilepath() + " " + val + " 2>&1";
-        result = "";
-        pipe = popen(command.c_str(), "r");
+        std::string command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\"," + mUnit + " " + opt->getFilepath() + " " + val + " 2>&1";
+        char buffer[128];
+        std::string result = "";
+        FILE* pipe = popen(command.c_str(), "r");
         if (!pipe) throw std::runtime_error("popen() failed!");
         try {
             while (fgets(buffer, sizeof buffer, pipe) != NULL) {
@@ -530,10 +560,11 @@ InformationGatherer::gatherInformation(std::string name)
     //Gather volume and mass
     double volume = 0;
     double mass = 0;
+    bool hasDensities = true;
     double surfArea00 = 0;
     double surfArea090 = 0;
     double surfArea900 = 0;
-    getVerificationData(g, opt, infoMap, volume, mass, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
+    getVerificationData(g, opt, infoMap, volume, mass, hasDensities, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
     std::string vol = formatDouble(volume);
     std::string ma = formatDouble(mass);
     std::string surf00 = formatDouble(surfArea00);
@@ -552,16 +583,24 @@ InformationGatherer::gatherInformation(std::string name)
     unitsMap["surfaceArea090"] = u;
     unitsMap["surfaceArea900"] = u;
 
-    if (mass == 0) {
-        infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
+    if (!hasDensities) {
+        infoMap.insert(std::pair<std::string, std::string>("mass", "No Material Densities"));
         u = {mUnit, 0};
         unitsMap["mass"] = u;
+    } else {
+        if (mass == 0) {
+            infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
+            u = {mUnit, 0};
+            unitsMap["mass"] = u;
+        }
+        else {
+            infoMap.insert(std::pair<std::string, std::string>("mass", ma));
+            u = {mUnit, 1};
+            unitsMap["mass"] = u;
+        }
     }
-    else {
-        infoMap.insert(std::pair<std::string, std::string>("mass", ma));
-        u = {mUnit, 1};
-        unitsMap["mass"] = u;
-    }
+
+
 
 
     //Gather representation
