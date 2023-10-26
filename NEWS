@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 20XX-0X-XX  Release 7.36.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed 'edcolor' and 'color -e' on Windows - Chris McGregor
 * ported fbcolor, fblabel, fbpoint, fbzoom to Windows - Sean Morrison
 * new 'gist' tool for generating 1-page geometry info summary reports
 	- Allyson Hoskinson, Andrew Plant, Mark Sturtevant,
