@@ -4,7 +4,7 @@
 
 The goal of this effort is to auto-generate beautiful concise summaries of 3D geometry models in BRL-CAD, an open source computer-aided design (CAD) system. Leveraging capabilities in BRL-CAD, we worked on creating a tool that produces a novel “one page” summary report that includes visual, textual, and contextual information about a given 3D model.
 
-This tool was developed by Zhuo (Danny) Chen, Allyson Hoskinson, Andrew Plant, Mark Sturtevant, and Michael Tao, under the mentorship of Sean Morrison and Chris McGregor.
+This tool was developed by Zhuo (Danny) Chen, Allyson Hoskinson, Andrew Plant, Mark Sturtevant, and Michael Tao, under the mentorship of Sean Morrison and Chris McGregor. Further development by Yida Zou, Sam Hollenbeck, Leo Feng, Rohan Dhawan, and Timothy Pham, under the mentorship of Sean Morrison and Chris McGregor.
 
 ## Requirements ##
 
@@ -17,12 +17,12 @@ This code has been run and tested on:
 
 ## External Deps  ##
 
-* BRL-CAD - Download latest version at https://brlcad.org/wiki/Compiling 
+* BRL-CAD - Download latest version at https://brlcad.org/wiki/Compiling
 * Appleseed - Download latest version at appleseed - A modern, open source production renderer (appleseedhq.net)
 * OpenCV C++ - Download lastest version at https://docs.opencv.org/4.x/df/d65/tutorial_table_of_content_introduction.html
 * Boost - Download required version at Boost C++ Libraries download | SourceForge.net
 * CMake - Download latest CMake at https://cmake.org/
-* Git - Download latest version at https://git-scm.com/book/en/v2/Getting-Started-Installing-Git 
+* Git - Download latest version at https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
 ## Installation ##
 
@@ -60,7 +60,7 @@ Compile the program using
 
 `g++ $(pkg-config --cflags --libs opencv4) -std=c++17 -I ../../../build/include/openNURBS -I ../../../build/include -I ../../../include *.cpp -L ../../../build/lib -lged -lrt -lbu -Wl,-rpath -Wl,../../../build/lib`
 
-Run the program using 
+Run the program using
 
 `./a.out -p path/to/file.g -f report.png`
 
@@ -85,11 +85,10 @@ Since this application is a command line tool, no deployment is required.
 
 ## References ##
 
-https://brlcad.org/wiki/Compiling 
+https://brlcad.org/wiki/Compiling
 appleseed - A modern, open source production renderer (appleseedhq.net)
 
 ## Support ##
 
 Admins looking for support should first look at the application help page and BRL-CAD wiki.
 Users looking for help seek out assistance from the customer.
-

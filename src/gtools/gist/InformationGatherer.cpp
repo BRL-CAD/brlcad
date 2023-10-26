@@ -55,7 +55,6 @@ getSurfaceArea(Options* opt, std::map<std::string, std::string> UNUSED(map), std
         throw;
     }
     pclose(pipe);
-
     //If rtarea didn't fail, calculate area
     if (result.find("Total Exposed Area") != std::string::npos) {
         result = result.substr(result.find("Total Exposed Area"));
@@ -83,7 +82,6 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
     std::string val;
     std::map<std::string, bool> listed;
     std::vector<std::string> toVisit;
-
     while (ss >> val) {
         //Get surface area
         getSurfaceArea(opt, map, "0", "0", val, surfArea00, lUnit);
@@ -104,18 +102,13 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
             //Parse components
             val2 = val2.erase(0, val2.find_first_not_of(" ")); // left trim
             val2 = val2.erase(val2.find_last_not_of(" ") + 1); // right trim
-
             if (val2[0] == 'u') {
                 val2 = val2.substr(val2.find(' ') + 1); // extract out u
                 val2 = val2.substr(0, val2.find('['));
                 if (val2.find(' ') != std::string::npos) {
                     val2 = val2.substr(0, val2.find(' '));
                 }
-
-                std::map<std::string, bool>::iterator it;
                 it = listed.find(val2);
-                if (it == listed.end()) {
-                    listed[val2] = true;
                     toVisit.push_back(val2);
                 }
             }
@@ -142,7 +135,6 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
             throw;
         }
         pclose(pipe);
-
         //Extract volume value
         result = result.substr(result.find("Average total volume:") + 22);
         result = result.substr(0, result.find("cu") - 1);
@@ -157,7 +149,6 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
 
         //Get mass of region
         command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\", " + mUnit + " " + opt->getFilepath() + " " + val2 + " 2>&1";
-        result = "";
         pipe = popen(command.c_str(), "r");
         if (!pipe)
 	    throw std::runtime_error("popen() failed!");
@@ -166,11 +157,9 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
                 result += buffer;
             }
         } catch (...) {
-            pclose(pipe);
-            throw;
-        }
-        pclose(pipe);
-
+        //Get mass of region
+        command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\"," + mUnit + " " + opt->getFilepath() + " " + val + " 2>&1";
+        result = "";
         if (result.find("Average total weight:") != std::string::npos) {
             //Extract mass value
             result = result.substr(result.find("Average total weight:") + 22);
@@ -193,6 +182,27 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
             }
         }
     }
+}
+
+std::string
+formatDouble(double d)
+{
+    std::stringstream ss;
+    ss << std::setprecision(2) << std::fixed << d;
+    std::string str = ss.str();
+
+    size_t dotPos = str.find('.');
+    if (dotPos != std::string::npos) { // string has decimal point
+        // remove trailing zeroes
+        str = str.substr(0, str.find_last_not_of('0')+1);
+        // if the decimal point is now the last character, remove that as well
+        if(str.find('.') == str.size()-1)
+        {
+            str = str.substr(0, str.size()-1);
+        }
+    }
+
+    return str;
 }
 
 
@@ -375,7 +385,6 @@ InformationGatherer::InformationGatherer(Options* options)
     opt = options;
 }
 
-
 InformationGatherer::~InformationGatherer()
 {
 
@@ -388,7 +397,6 @@ InformationGatherer::gatherInformation(std::string name)
     //Create folder output if needed
     std::string path = std::filesystem::current_path().string() + "\\output";
     std::cout << "Writing intermediate output files to " << path << std::endl;
-
     if (!std::filesystem::exists(std::filesystem::path(path))) {
         std::filesystem::create_directory("output");
     }
@@ -440,14 +448,14 @@ InformationGatherer::gatherInformation(std::string name)
 
     //Get units to use
     std::string lUnit;
-    if (opt->isDefaultLength()) {
+    if (opt->isOriginalUnitsMass()) {
         lUnit = infoMap["units"];
     }
     else {
         lUnit = opt->getUnitLength();
     }
     std::string mUnit;
-    if (opt->isDefaultMass()) {
+    if (opt->isOriginalUnitsMass()) {
         mUnit = "g";
     }
     else {
@@ -479,9 +487,17 @@ InformationGatherer::gatherInformation(std::string name)
         try {
             double length = stod(token);
             double convFactor = bu_units_conversion(infoMap["units"].c_str()) / bu_units_conversion(lUnit.c_str());
-            std::stringstream ss2 = std::stringstream();
-            ss2 << std::setprecision(5) << length*convFactor;
-            infoMap[dim_data[dim_idx++]] = ss2.str();
+            infoMap[dim_data[dim_idx]] = formatDouble(length*convFactor);
+
+            int dimensions = 1;
+            if (dim_idx == 3) {
+                dimensions = 3;
+            }
+
+            Unit u = {lUnit, dimensions};
+            unitsMap[dim_data[dim_idx]] = u;
+
+            dim_idx++;
         } catch (const std::exception& e) {
             continue;
         }
@@ -522,32 +538,35 @@ InformationGatherer::gatherInformation(std::string name)
     double surfArea090 = 0;
     double surfArea900 = 0;
     getVerificationData(g, opt, infoMap, volume, mass, surfArea00, surfArea090, surfArea900, lUnit, mUnit);
-    ss = std::stringstream();
-    ss << std::setprecision(5) << volume;
-    std::string vol = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << mass;
-    std::string ma = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << surfArea00;
-    std::string surf00 = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << surfArea090;
-    std::string surf090 = ss.str();
-    ss = std::stringstream();
-    ss << std::setprecision(5) << surfArea900;
-    std::string surf900 = ss.str();
+    std::string vol = formatDouble(volume);
+    std::string ma = formatDouble(mass);
+    std::string surf00 = formatDouble(surfArea00);
+    std::string surf090 = formatDouble(surfArea090);
+    std::string surf900 = formatDouble(surfArea900);
 
-    infoMap.insert(std::pair<std::string, std::string>("volume", vol + " " + lUnit + "^3"));
-    infoMap.insert(std::pair<std::string, std::string>("surfaceArea00", surf00 + " " + lUnit + "^2"));
-    infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090 + " " + lUnit + "^2"));
-    infoMap.insert(std::pair<std::string, std::string>("surfaceArea900", surf900 + " " + lUnit + "^2"));
+    infoMap.insert(std::pair<std::string, std::string>("volume", vol));
+    Unit u = {lUnit, 3};
+    unitsMap["volume"] = u;
 
-    if (ZERO(mass)) {
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea00", surf00));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea090", surf090));
+    infoMap.insert(std::pair<std::string, std::string>("surfaceArea900", surf900));
+    u = {lUnit, 2};
+    unitsMap["surfaceArea00"] = u;
+    unitsMap["surfaceArea090"] = u;
+    unitsMap["surfaceArea900"] = u;
+
+    if (mass == 0) {
         infoMap.insert(std::pair<std::string, std::string>("mass", "N/A"));
-    } else {
-        infoMap.insert(std::pair<std::string, std::string>("mass", ma + " " + mUnit));
+        u = {mUnit, 0};
+        unitsMap["mass"] = u;
     }
+    else {
+        infoMap.insert(std::pair<std::string, std::string>("mass", ma));
+        u = {mUnit, 1};
+        unitsMap["mass"] = u;
+    }
+
 
     //Gather representation
     bool hasExplicit = false;
@@ -635,7 +654,6 @@ InformationGatherer::gatherInformation(std::string name)
     }
     CloseHandle(hFile);
 #endif
-
 #ifdef __APPLE__
     struct stat fileInfo;
     stat(opt->getFilepath().c_str(), &fileInfo);
@@ -647,10 +665,7 @@ InformationGatherer::gatherInformation(std::string name)
         owner = pw->pw_name;
     }
 #endif
-
     infoMap.insert(std::pair<std::string, std::string>("owner", owner));
-
-    //Gather last date updated
     struct stat info;
     stat(opt->getFilepath().c_str(), &info);
     std::time_t update = info.st_mtime;
@@ -658,19 +673,18 @@ InformationGatherer::gatherInformation(std::string name)
     std::string date = std::to_string(ltm->tm_mon + 1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year + 1900);
     infoMap.insert(std::pair < std::string, std::string>("lastUpdate", date));
 
+
     //Gather source file
+	//Gather source file
     std::size_t last1 = opt->getFilepath().find_last_of("/");
-    std::size_t last2 = opt->getFilepath().find_last_of("\\");
-    last = last1 < last2 ? last1 : last2;
+	std::string file = opt->getFilepath().substr(last+1, opt->getFilepath().length()-1);
 
-    std::string file = opt->getFilepath().substr(last+1, opt->getFilepath().length()-1);
+	infoMap.insert(std::pair < std::string, std::string>("file", file));
 
-    infoMap.insert(std::pair < std::string, std::string>("file", file));
-
-    //Gather date of generation
-    std::time_t now = time(0);
-    ltm = localtime(&now);
-    date = std::to_string(ltm->tm_mon+1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year+1900);
+	//Gather date of generation
+	std::time_t now = time(0);
+	ltm = localtime(&now);
+	date = std::to_string(ltm->tm_mon+1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year+1900);
     infoMap["dateGenerated"] = date;
 
     //Gather name of preparer
@@ -708,24 +722,65 @@ InformationGatherer::gatherInformation(std::string name)
         ss2 << curHex;
     }
 
-    infoMap.insert(std::pair<std::string, std::string>("checksum", ss2.str()));
+	infoMap.insert(std::pair<std::string, std::string>("checksum", ss2.str()));
 
-    return true;
+	return true;
 }
 
-
-std::string
-InformationGatherer::getInfo(std::string key)
+std::string InformationGatherer::getInfo(std::string key)
 {
-    return infoMap[key];
+	return infoMap[key];
 }
 
+std::string InformationGatherer::getFormattedInfo(std::string key)
+{
+    auto it = unitsMap.find(key);
+    if (it != unitsMap.end()) { // if units are mapped
+        Unit u = unitsMap[key];
+        if (u.power > 1) {
+            return infoMap[key] + " " + u.unit + "^" + std::to_string(u.power);
+        } else if (u.power == 1){
+            return infoMap[key] + " " + u.unit;
+        }
+    }
 
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+    // no units if power == 0 or no units mapping
+	return infoMap[key];
+}
+
+void InformationGatherer::correctDefaultUnits()
+{
+    // NOTES:
+    // * how to handle mass?
+    // * could this be appliable to not just incehs?
+
+    if (infoMap["units"] == "in" || infoMap["units"] == "inch" || infoMap["units"] == "inches") {
+
+        if (std::stod(getInfo("volume")) > 15000) { // arbitraty size
+            for (auto& pair : unitsMap) {
+                const std::string& key = pair.first;
+                Unit& unit = pair.second;
+
+                if(getInfo(key) == "N/A") {
+                    continue;
+                }
+
+                double value = std::stod(getInfo(key));
+                std::string ft("ft");
+                double convFactor = pow(bu_units_conversion(unit.unit.c_str()), unit.power) / pow(bu_units_conversion(ft.c_str()), unit.power);
+                infoMap[key] = formatDouble(value*convFactor);
+                unit.unit = "ft";
+            }
+        }
+    }
+}
+
+Unit InformationGatherer::getUnit(std::string name)
+{
+    auto it = unitsMap.find(name);
+    if (it != unitsMap.end()) {
+        return it->second;
+    }
+
+    throw std::runtime_error("Unit not found for key: " + name);
+}

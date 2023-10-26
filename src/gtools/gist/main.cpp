@@ -53,7 +53,8 @@ readParameters(int argc, char** argv, Options &opt)
     int opts;
 
 
-    while ((opts = bu_getopt(argc, argv, "g?Oop:F:P:f:n:T:E:N:l:m:c:t:Z")) != -1) {
+
+    while ((opts = bu_getopt(argc, argv, "g?Oop:F:P:f:n:T:E:N:l:m:c:t:B:Z")) != -1) {
 
         switch (opts) {
             case 'p':
@@ -109,6 +110,9 @@ readParameters(int argc, char** argv, Options &opt)
             case 'm':
                 opt.setUnitMass(bu_optarg);
                 break;
+            case 'B':
+                opt.setBio(bu_optarg);
+                break;
             case '?':
                 h = true;
                 break;
@@ -137,6 +141,7 @@ readParameters(int argc, char** argv, Options &opt)
         bu_log("    t = option to specify the top component of the report. Useful when there are multiple tops");
         bu_log("    l = override the default length units in a file.");
         bu_log("    m = override the default mass units in a file.");
+        bu_log("    B = option to add a bio ");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
@@ -179,6 +184,22 @@ generateReport(Options opt)
         return;
     }
 
+    // TODO SAM: mass distinction in correctDefaultUnits?
+    if (opt.isOriginalUnitsLength()) {
+        info.correctDefaultUnits();
+    }
+
+    std::string title = info.getInfo("title");
+    if (title.size() > 88) {
+        std::string continuation = title.substr(88);
+
+        if (opt.getNotes() == "N/A") {
+            opt.setNotes("Continued Title: " + continuation);
+        } else {
+            opt.setNotes(opt.getNotes() + "\nContinued Title : " + continuation);
+        }
+    }
+
     // Define commonly used ratio variables
     int margin = opt.getWidth() / 150;
     int header_footer_height = opt.getLength() / 25;
@@ -219,7 +240,10 @@ generateReport(Options opt)
 
 
 /**
- * Checks if we are processing a folder of models
+ * @brief
+ *
+ * @param options
+ * @return * Checks
  */
 static void
 handleFolder(Options& options)

@@ -325,7 +325,7 @@ IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::string
  * words combined and then the spacing is the total length divided by
  * how many words there are
  */
-void
+int
 IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
 {
     int totalTextWidth = 0;
@@ -335,7 +335,7 @@ IFPainter::justify(int x, int y, int height, int width, std::vector<std::string>
     }
     if (totalTextWidth >= width) {
 	throw std::invalid_argument("Text is larger than the bounding box");
-	return;
+	return -1;
     }
 
     int fontWeight = (flags & TO_BOLD) ? boldTextWeight : standardTextWeight;
@@ -348,6 +348,7 @@ IFPainter::justify(int x, int y, int height, int width, std::vector<std::string>
 	cv::putText(img, text[i], cv::Point(xPosition, y + height), cv::FONT_HERSHEY_DUPLEX, fontSize, color, fontWeight);
 	xPosition += spacing + getTextWidth(height, width, text[i], flags);
     }
+	return xPosition-spacing; // end of text xPosition
 }
 
 

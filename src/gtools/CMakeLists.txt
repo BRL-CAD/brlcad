@@ -31,7 +31,7 @@ add_subdirectory(gdiff)
 add_subdirectory(gist)
 add_subdirectory(tests)
 
-add_subdirectory(rgen)
+add_subdirectory(gist)
 
 CMAKEFILES(
   CMakeLists.txt

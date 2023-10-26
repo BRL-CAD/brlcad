@@ -39,11 +39,12 @@ Options::Options()
     classification = "";
     rightLeft = "Right hand";
     zY = "+Z-up";
-    notes = "N/A";
+    notes = "";
+	bio = "Bio: N/A";
     uLength = "m";
-    defaultLength = true;
+    originalUnitsLength = true;
     uMass = "g";
-    defaultMass = true;
+    originalUnitsMass = true;
 }
 
 
@@ -133,6 +134,10 @@ void Options::setOrientationZYUp(bool zy) {
 
 void Options::setNotes(std::string n) {
     notes = n;
+}
+
+void Options::setBio(std::string b) {
+	bio = "Bio: " + b;
 }
 
 
@@ -230,36 +235,27 @@ std::string Options::getNotes() {
     return notes;
 }
 
+std::string Options::getBio() {
+    return bio;
+}
+
 
 std::string Options::getTopComp() {
-    return topComp;
+	return topComp;
 }
-
 
 std::string Options::getUnitLength() {
-    return uLength;
+	return uLength;
 }
-
 
 std::string Options::getUnitMass() {
-    return uMass;
+	return uMass;
 }
 
-
-bool Options::isDefaultLength() {
-    return defaultLength;
+bool Options::isOriginalUnitsLength() {
+	return originalUnitsLength;
 }
 
-
-bool Options::isDefaultMass() {
-    return defaultMass;
+bool Options::isOriginalUnitsMass() {
+	return originalUnitsMass;
 }
-
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8

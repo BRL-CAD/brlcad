@@ -733,29 +733,19 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
 	double offset = 30;
 	double textHeight = 40;
 
-	std::stringstream me;
-	if (i == 0) me << std::setprecision(5) << modelLength;
-	if (i == 1) me << std::setprecision(5) << modelDepth;
-	if (i == 2) me << std::setprecision(5) << modelHeight;
-
-	//Determine units
-	std::string unit;
-	if (opt.isDefaultLength()) {
-	    unit = info.getInfo("units");
-	} else {
-	    unit = opt.getUnitLength();
-	}
-
-	me << " " << unit;
+	std::string me;
+	if (i == 0) me = info.getFormattedInfo("dimY");
+	if (i == 1) me = info.getFormattedInfo("dimX");
+	if (i == 2) me = info.getFormattedInfo("dimZ");
 
 	if (det.second == 0) {
 	    // draw to the right
 	    img.drawLine(newX + newW + offset, newY, newX + newW + offset, newY + newH, 5, cv::Scalar(160, 0, 0));
-	    img.drawText(newX + newW + 3 * offset / 2, newY + newH / 2 - textHeight / 2, textHeight, 220, me.str(), TO_BLUE);
+	    img.drawText(newX + newW + 3 * offset / 2, newY + newH / 2 - textHeight / 2, textHeight, 220, me, TO_BLUE);
 	} else {
 	    // draw below
 	    img.drawLine(newX, newY + newH + offset, newX + newW, newY + newH + offset, 5, cv::Scalar(160, 0, 0));
-	    img.drawTextCentered(newX + newW / 2, newY + newH + 3 * offset / 2, textHeight, 220, me.str(), TO_BLUE);
+	    img.drawTextCentered(newX + newW / 2, newY + newH + 3 * offset / 2, textHeight, 220, me, TO_BLUE);
 	}
     }
 
@@ -763,8 +753,8 @@ makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, int of
     std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
     std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
     std::string title = info.getInfo("title");
-    if (title.size() > 29)
-	title = title.substr(0, 27) + "...";
+    if (title.size() > 88)
+		title = title.substr(0, 88) + "...";
     img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
 }
 

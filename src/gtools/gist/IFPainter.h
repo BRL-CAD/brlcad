@@ -27,13 +27,12 @@
 #define TO_UNDERLINE 16
 #define TO_BLUE 32
 
+
 #include "pch.h"
 
-
 /*
- * The IFPainter class serves to store the actual image frame that
- * will be modified and output in the report.  All drawing and
- * exporting operations will be done via function calls to this class.
+ * The IFPainter class serves to store the actual image frame that will be modified and output in the report.
+ * All drawing and exporting operations will be done via function calls to this class.
  *
  */
 
@@ -68,7 +67,7 @@ public:
     void drawCirc(int x, int y, int radius, int width, cv::Scalar color);
     // void drawArc(int x, int y, int width, cv::Scalar color);
     int getTextWidth(int height, int width, std::string text, int flags = 0);
-    void justify(int x, int y, int height, int width, std::vector<std::string> text, int flags = 0);
+    int justify(int x, int y, int height, int width, std::vector<std::string> text, int flags = 0);
     void justifyWithCenterWord(int x, int y, int height, int width, std::string centerWord, std::vector<std::string> leftText, std::vector<std::string> rightText, int flags);
     void textWrapping(int x1, int y1, int x2, int y2, int width, int height, std::string text, int ellipsis, int numOfCharactersBeforeEllipsis, int flags = 0);
 
