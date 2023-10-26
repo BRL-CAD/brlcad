@@ -144,7 +144,11 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    fp = bu_temp_file(tmpfil, MAXPATHLEN);
+    const char* tmp_dir = bu_dir(NULL, 0, BU_DIR_TEMP, NULL);
+    const char* tmp_filename = bu_temp_file_name(NULL, 0);
+    snprintf(tmpfil, MAXPATHLEN, "%s%c%s", tmp_dir, BU_DIR_SEPARATOR, tmp_filename);
+
+    fp = fopen(tmpfil, "w+");
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: could not create tmp file", argv[0]);
 	return BRLCAD_ERROR;
