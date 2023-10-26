@@ -36,6 +36,10 @@ int Position::right() const {
     return x_ + width_;
 }
 
+int Position::top() const {
+    return y_;
+}
+
 int Position::bottom() const {
     return y_ + height_;
 }
@@ -150,8 +154,7 @@ bool Position::contains(const cv::Point& point) const {
 
 
 bool Position::intersects(const Position& other) const {
-    return right() > other.left() && left() < other.right() &&
-					      bottom() > other.top() && top() < other.bottom();
+    return right() > other.left() && left() < other.right() && bottom() > other.top() && top() < other.bottom();
 }
 // Local Variables:
 // tab-width: 8

@@ -145,14 +145,14 @@ void Options::setTopComp(std::string t) {
     topComp = t;
 }
 void Options::setUnitLength(std::string l) {
-    uLength = l;
-    defaultLength = false;
+	uLength = l;
+	originalUnitsLength = false;
 }
 
 
 void Options::setUnitMass(std::string m) {
     uMass = m;
-    defaultMass = false;
+    originalUnitsMass = false;
 }
 
 

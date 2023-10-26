@@ -74,10 +74,8 @@ void
 getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::string> map, double &volume, double &mass, double &surfArea00, double &surfArea090, double &surfArea900, std::string lUnit, std::string mUnit)
 {
     //Get tops
-    const char* tops_cmd[3] = { "tops", NULL, NULL };
-
-    ged_exec(g, 1, tops_cmd);
-
+    const char* cmd[3] = { "tops", NULL, NULL };
+    ged_exec(g, 1, cmd);
     std::stringstream ss(bu_vls_addr(g->ged_result_str));
     std::string val;
     std::map<std::string, bool> listed;
@@ -87,16 +85,12 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
         getSurfaceArea(opt, map, "0", "0", val, surfArea00, lUnit);
         getSurfaceArea(opt, map, "0", "90", val, surfArea090, lUnit);
         getSurfaceArea(opt, map, "90", "0", val, surfArea900, lUnit);
-
         //Next, get regions underneath to calculate volume and mass
         const char* cmd[3] = { "l", val.c_str(), NULL };
-
         ged_exec(g, 2, cmd);
-
         std::stringstream ss2(bu_vls_addr(g->ged_result_str));
         std::string val2;
         std::getline(ss2, val2); // ignore first line
-
         //Get initial regions
         while (getline(ss2, val2)) {
             //Parse components
@@ -108,29 +102,29 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
                 if (val2.find(' ') != std::string::npos) {
                     val2 = val2.substr(0, val2.find(' '));
                 }
+                std::map<std::string, bool>::iterator it;
                 it = listed.find(val2);
+                if (it == listed.end()) {
+                    listed[val2] = true;
                     toVisit.push_back(val2);
                 }
             }
         }
     }
-
-    for (size_t i = 0; i < toVisit.size(); i++) {
-        std::string val2 = toVisit[i];
+    for (int i = 0; i < toVisit.size(); i++) {
+        std::string val = toVisit[i];
         //Get volume of region
-        std::string command = opt->getTemppath() + "gqa -Av -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\" " + opt->getFilepath() + " " + val2 + " 2>&1";
+        std::string command = opt->getTemppath() + "gqa -Av -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\" " + opt->getFilepath() + " " + val + " 2>&1";
         char buffer[128];
         std::string result = "";
         FILE* pipe = popen(command.c_str(), "r");
-
-	if (!pipe)
-	    throw std::runtime_error("popen() failed!");
-
+        if (!pipe) throw std::runtime_error("popen() failed!");
         try {
-            while (bu_fgets(buffer, sizeof buffer, pipe) != NULL) {
+            while (fgets(buffer, sizeof buffer, pipe) != NULL) {
                 result += buffer;
             }
-        } catch (...) {
+        }
+        catch (...) {
             pclose(pipe);
             throw;
         }
@@ -146,20 +140,21 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
                 bu_exit(BRLCAD_ERROR, "No input, aborting.\n");
             }
         }
-
-        //Get mass of region
-        command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ", \"cu " + lUnit + "\", " + mUnit + " " + opt->getFilepath() + " " + val2 + " 2>&1";
-        pipe = popen(command.c_str(), "r");
-        if (!pipe)
-	    throw std::runtime_error("popen() failed!");
-        try {
-            while (bu_fgets(buffer, sizeof buffer, pipe) != NULL) {
-                result += buffer;
-            }
-        } catch (...) {
         //Get mass of region
         command = opt->getTemppath() + "gqa -Am -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\"," + mUnit + " " + opt->getFilepath() + " " + val + " 2>&1";
         result = "";
+        pipe = popen(command.c_str(), "r");
+        if (!pipe) throw std::runtime_error("popen() failed!");
+        try {
+            while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+                result += buffer;
+            }
+        }
+        catch (...) {
+            pclose(pipe);
+            throw;
+        }
+        pclose(pipe);
         if (result.find("Average total weight:") != std::string::npos) {
             //Extract mass value
             result = result.substr(result.find("Average total weight:") + 22);
@@ -183,6 +178,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
         }
     }
 }
+
 
 std::string
 formatDouble(double d)
