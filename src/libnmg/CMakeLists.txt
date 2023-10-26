@@ -65,7 +65,7 @@ CMAKEFILES(
   nmg_private.h
 )
 
-BRLCAD_ADDLIB(libnmg "${LIBNMG_SOURCES}" "libbg;libbv;libbn;libbu;${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(libnmg "${LIBNMG_SOURCES}" "${libnmg_deps};${STDCXX_LIBRARIES}")
 
 add_subdirectory(tests)
 

@@ -591,7 +591,16 @@ QPolyMod::align_to_poly()
 	return;
 
     struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-    bv_sync(gedp->ged_gvp, &ip->v);
+
+    point_t center;
+    vect_t dir = VINIT_ZERO;
+    VSET(dir, ip->vp[0], ip->vp[1], ip->vp[2]);
+    bg_plane_pt_at(&center, ip->vp, 0, 0);
+    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, center);
+    bn_ae_vec(&gedp->ged_gvp->gv_aet[0], &gedp->ged_gvp->gv_aet[1], dir);
+    gedp->ged_gvp->gv_aet[2] = 0;
+    bv_mat_aet(gedp->ged_gvp);
+
     bv_update(gedp->ged_gvp);
 
     emit view_updated(QG_VIEW_REFRESH);

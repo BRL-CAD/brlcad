@@ -32,7 +32,6 @@
 
 #include "common.h"
 #include "vmath.h"
-#include "bv.h"
 #include "bg/defines.h"
 
 __BEGIN_DECLS
@@ -51,33 +50,6 @@ bg_distsq_lseg3_pt(point_t *c, const point_t P0, const point_t P1, const point_t
 BG_EXPORT double
 bg_distsq_lseg3_lseg3(point_t *c1, point_t *c2,
 	const point_t P0, const point_t P1, const point_t Q0, const point_t Q1);
-
-
-/* Logic for snapping points to their closes view lines. */
-
-/* Snap sample 2D point to lines active in the view.  If populated,
- * v->gv_s->gv_snap_objs contains a subset of bv_scene_obj pointers indicating
- * which view objects to consider for snapping.  If nonzero,
- * v->gv_s->gv_snap_flags also tells the routine which categories of objects to
- * consider - objs objects will also be evaluated against the flags before
- * being used. */
-BG_EXPORT extern int bv_snap_lines_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
-
-/* Snap sample 3D point to lines active in the view.  If populated,
- * v->gv_s->gv_snap_objs contains a subset of bv_scene_obj pointers indicating
- * which view objects to consider for snapping.  If nonzero,
- * v->gv_s->gv_snap_flags also tells the routine which categories of objects to
- * consider - objs objects will also be evaluated against the flags before
- * being used. */
-BG_EXPORT extern int bv_snap_lines_3d(point_t *out_pt, struct bview *v, point_t *p);
-
-/* Snap sample 2D point to grid active in the view */
-BG_EXPORT extern int bv_snap_grid_2d(struct bview *v, fastf_t *fx, fastf_t *fy);
-
-
-BG_EXPORT extern void bv_view_center_linesnap(struct bview *v);
-
-
 
 __END_DECLS
 

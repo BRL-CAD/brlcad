@@ -15,10 +15,6 @@ if(TARGET libtclcad)
 
   set(btclsh_libs libtclcad libbu ${TCL_LIBRARY})
 
-  if(TARGET libtermio)
-    set(btclsh_libs ${btclsh_libs} libtermio)
-  endif(TARGET libtermio)
-
   # Define the btclsh target
   BRLCAD_ADDEXEC(btclsh "main.c;cmd.c;input.c" "${btclsh_libs}")
 
@@ -30,10 +26,6 @@ if(TARGET libtclcad)
   if(BRLCAD_ENABLE_TK)
 
     set(bwish_libs libtclcad libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
-
-    if(TARGET libtermio)
-      set(bwish_libs ${bwish_libs} libtermio)
-    endif(TARGET libtermio)
 
     BRLCAD_ADDEXEC(bwish "main.c;cmd.c;input.c" "${bwish_libs}" GUI)
     set_property(TARGET bwish APPEND PROPERTY COMPILE_DEFINITIONS "BWISH=1")

@@ -41,7 +41,7 @@ set(LIBWDB_SOURCES
   wdb.c
   )
 
-BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "librt;libnmg;libbn;libbu;${OPENNURBS_LIBRARIES}")
+BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "${libwdb_deps};${OPENNURBS_LIBRARIES}")
 set_target_properties(libwdb PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 CMAKEFILES(CMakeLists.txt)

@@ -243,7 +243,7 @@ QPolyCreate::do_vpoly_copy()
     }
 
     // Names are valid, src_obj is ready - do the copy
-    p = bg_dup_view_polygon(bu_vls_cstr(&vname), src_obj);
+    p = bv_dup_view_polygon(bu_vls_cstr(&vname), src_obj);
     bu_vls_free(&vname);
     if (!p)
 	return;

@@ -33,10 +33,12 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bn/mat.h"
+#include "bg/plane.h"
 #include "bv/defines.h"
-#include "bv/vlist.h"
+#include "bv/snap.h"
 #include "bv/util.h"
 #include "bv/view_sets.h"
+#include "bv/vlist.h"
 #include "./bv_private.h"
 
 #define VIEW_NAME_MAXTRIES 100000
@@ -251,6 +253,13 @@ bv_init(struct bview *gvp, struct bview_set *s)
     gvp->gv_rscale = 0.4;
     gvp->gv_sscale = 2.0;
     gvp->gv_perspective = 0.0;
+
+    gvp->gv_prevMouseX = 0;
+    gvp->gv_prevMouseY = 0;
+    gvp->gv_mouse_x = 0;
+    gvp->gv_mouse_y = 0;
+    VSETALL(gvp->gv_prev_point, 0.0);
+    VSETALL(gvp->gv_point, 0.0);
 
     /* Initialize local settings */
     bv_settings_init(&gvp->gv_ls);
@@ -915,7 +924,54 @@ bv_screen_to_view(struct bview *v, fastf_t *fx, fastf_t *fy, fastf_t x, fastf_t 
 	(*fy) = ty;
     }
 
+    // If snapping is enabled, apply it
+    int snapped = 0;
+    if (v->gv_s) {
+	if (v->gv_s->gv_snap_lines) {
+	    snapped = bv_snap_lines_2d(v, fx, fy);
+	}
+	if (!snapped && v->gv_s->gv_grid.snap) {
+	    bv_snap_grid_2d(v, fx, fy);
+	}
+    }
+
     return 0;
+}
+
+int
+bv_screen_pt(point_t *p, fastf_t x, fastf_t y, struct bview *v)
+{
+    if (!p || !v)
+	return -1;
+
+    if (!v->gv_width || !v->gv_height)
+	return -1;
+
+    fastf_t tx, ty;
+    if (bv_screen_to_view(v, &tx, &ty, x, y))
+	return -1;
+
+    point_t vpt;
+    VSET(vpt, tx, ty, 0);
+    MAT4X3PNT(*p, v->gv_view2model, vpt);
+    return 0;
+}
+
+int
+bv_view_plane(plane_t *p, struct bview *v)
+{
+    if (!p || !v)
+	return -1;
+
+    point_t cpt = VINIT_ZERO;
+    vect_t vnrml = VINIT_ZERO;
+
+    MAT_DELTAS_GET_NEG(cpt, v->gv_center);
+    VMOVEN(vnrml, v->gv_rotation + 8, 3);
+    VUNITIZE(vnrml);
+    VSCALE(vnrml, vnrml, -1.0);
+
+    return bg_plane_pt_nrml(p, cpt, vnrml);
 }
 
 size_t
@@ -1753,6 +1809,8 @@ bv_view_print(const char *title, struct bview *v, int UNUSED(verbosity))
     bu_log("  prevMouseY:   %f\n", v->gv_prevMouseY);
     bu_log("  mouse_x:      %d\n", v->gv_mouse_x);
     bu_log("  mouse_y:      %d\n", v->gv_mouse_y);
+    bu_log("  gv_prev_point:%f %f %f\n", V3ARGS(v->gv_prev_point));
+    bu_log("  gv_point:     %f %f %f\n", V3ARGS(v->gv_point));
     bu_log("  key:          %c\n", v->gv_key);
     bu_log("  mod_flags:    %ld\n", v->gv_mod_flags);
     bu_log("  minMousedelta:%f\n", v->gv_minMouseDelta);

@@ -44,6 +44,7 @@ set(embedded_licenses
   osl.txt
   ParaView.txt
   pbrt.txt
+  picohash.txt
   point_in_polygon.txt
   polygonizer.txt
   pstdint.txt

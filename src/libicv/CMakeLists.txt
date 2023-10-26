@@ -26,7 +26,7 @@ set(LIBICV_SOURCES
   dpix.c
   )
 
-BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARIES};${NETPBM_LIBRARY}")
+BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "${libicv_deps};${PNG_LIBRARIES};${NETPBM_LIBRARY}")
 set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(stgts png netpbm)

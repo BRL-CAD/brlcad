@@ -50,7 +50,7 @@ extern "C" {
 #include "bu/path.h"
 #include "bu/opt.h"
 #include "bu/sort.h"
-#include "bg/lod.h"
+#include "bv/lod.h"
 #include "raytrace.h"
 #include "ged/defines.h"
 #include "ged/view/state.h"
@@ -1332,9 +1332,9 @@ DbiState::get_bbox(point_t *bbmin, point_t *bbmax, matp_t curr_mat, unsigned lon
 	return false;
     if (!have_bbox) {
 	if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && gedp->ged_lod) {
-	    key = bg_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
+	    key = bv_mesh_lod_key_get(gedp->ged_lod, dp->d_namep);
 	    if (key) {
-		struct bv_mesh_lod *lod = bg_mesh_lod_create(gedp->ged_lod, key);
+		struct bv_mesh_lod *lod = bv_mesh_lod_create(gedp->ged_lod, key);
 		if (lod) {
 		    VMOVE(bmin, lod->bmin);
 		    VMOVE(bmax, lod->bmax);
@@ -2660,7 +2660,7 @@ BViewState::refresh(struct bview *v, int argc, const char **argv)
     unsigned long long ret = 0;
 
     // Make sure the view knows how to update the oriented bounding box
-    v->gv_bounds_update = &bg_view_bounds;
+    v->gv_bounds_update = &bv_view_bounds;
 
     // If we have specific paths specified, the leaves of those paths
     // denote which paths need refreshing.  We need to process them
@@ -2767,7 +2767,7 @@ BViewState::redraw(struct bv_obj_settings *vs, std::unordered_set<struct bview *
     std::unordered_set<struct bview *>::iterator v_it;
     for (v_it = views.begin(); v_it != views.end(); v_it++) {
 	struct bview *v = *v_it;
-	v->gv_bounds_update = &bg_view_bounds;
+	v->gv_bounds_update = &bv_view_bounds;
     }
 
     // For most operations on objects, we need only the current view (for

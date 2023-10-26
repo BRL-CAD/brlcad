@@ -23,6 +23,7 @@
 #include <stdio.h>
 
 #include "bu.h"
+#include "bn.h"
 #include "bg.h"
 
 void

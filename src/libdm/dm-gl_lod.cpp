@@ -34,7 +34,7 @@
 #include "bn.h"
 extern "C" {
 #include "bv/defines.h"
-#include "bg/lod.h"
+#include "bv/lod.h"
 #include "dm.h"
 #include "./dm-gl.h"
 #include "./include/private.h"
@@ -97,10 +97,10 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 	    // If we've had a memshrink, the loaded data isn't
 	    // going to be correct to generate new draw info.
 	    // First, find out the current level:
-	    int curr_level = bg_mesh_lod_level(s, -1, 0);
+	    int curr_level = bv_mesh_lod_level(s, -1, 0);
 
 	    // Trigger a load operation to restore it
-	    bg_mesh_lod_level(s, curr_level, 1);
+	    bv_mesh_lod_level(s, curr_level, 1);
 
 	    fcnt = lod->fcnt;
 	    pcnt = lod->pcnt;
@@ -237,7 +237,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 		// If the original data is sizable, clear it to save system memory.
 		// The dlist has what it needs, and the LoD code will re-load info
 		// as needed for updates.
-		bg_mesh_lod_memshrink(s);
+		bv_mesh_lod_memshrink(s);
 	    }
 
 	    MAT_COPY(save_mat, s->s_v->gv_model2view);
@@ -344,7 +344,7 @@ gl_draw_tri(struct dm *dmp, struct bv_mesh_lod *lod)
 		// If the original data is sizable, clear it to save system memory.
 		// The dlist has what it needs, and the LoD code will re-load info
 		// as needed for updates.
-		bg_mesh_lod_memshrink(s);
+		bv_mesh_lod_memshrink(s);
 	    }
 
 	    MAT_COPY(save_mat, s->s_v->gv_model2view);

@@ -3,6 +3,7 @@ set(bu_headers
   assert.h
   avs.h
   bitv.h
+  cache.h
   cmd.h
   color.h
   cv.h

@@ -945,7 +945,6 @@ bg_poly_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_o
     return ret;
 }
 
-
 extern "C" void
 bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b)
 {
