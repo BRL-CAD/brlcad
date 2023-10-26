@@ -167,7 +167,7 @@ bu_temp_file_name(char* filename, size_t len)
     /* if user supplied buffer, copy over */
     if (len > 0 && strlen(buf) > 0) {
 	int maxlen = len > MAX_FILELEN ? MAX_FILELEN : len; /* cap len at MAX_FILELEN */
-	bu_strlcpy(filename, buf, len);
+	bu_strlcpy(filename, buf, maxlen);
 	return filename;
     }
 
