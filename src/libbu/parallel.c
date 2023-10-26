@@ -34,6 +34,10 @@
 #  include <sys/time.h>
 #endif
 
+#ifdef HAVE_SYS_SYSCALL_H
+#  include <sys/syscall.h>
+#endif
+
 #ifdef linux
 #  include <sys/stat.h>
 #endif
@@ -140,7 +144,7 @@ struct thread_data {
 int
 bu_thread_id(void)
 {
-    #if defined(HAVE_SYS_SYSCALL_H) || defined(__linux__)
+    #if defined(HAVE_SYS_SYSCALL_H)
 	return syscall(SYS_gettid);
     #elif defined(_WIN32)
 	return GetCurrentThreadId();

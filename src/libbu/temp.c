@@ -41,6 +41,8 @@
 #include "bu/time.h"
 #include "bu/vls.h"
 #include "bu/str.h"
+#include "bu/parallel.h"
+#include "bu/process.h"
 
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
