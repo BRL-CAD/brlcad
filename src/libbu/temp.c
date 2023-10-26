@@ -151,7 +151,7 @@ temp_add_to_list(const char *fn, int fd)
 }
 
 #define MAX_FILELEN 25	/* arbitrary len */
-static const char*
+const char*
 bu_temp_file_name(char* filename, size_t len)
 {
     static char buf[MAX_FILELEN] = {0};
