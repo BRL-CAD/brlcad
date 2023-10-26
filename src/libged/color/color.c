@@ -156,7 +156,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 
     fprintf(fp, "%s", hdr);
     for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-	fprintf(fp, "%d\t%d\t%3d\t%3d\t%3d",
+	fprintf(fp, "%ld\t%ld\t%3d\t%3d\t%3d",
 		      mp->mt_low, mp->mt_high,
 		      mp->mt_r, mp->mt_g, mp->mt_b);
 	fprintf(fp, "\n");
