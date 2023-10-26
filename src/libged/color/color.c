@@ -144,9 +144,8 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    const char* tmp_dir = bu_dir(NULL, 0, BU_DIR_TEMP, NULL);
-    const char* tmp_filename = bu_temp_file_name(NULL, 0);
-    snprintf(tmpfil, MAXPATHLEN, "%s%c%s", tmp_dir, BU_DIR_SEPARATOR, tmp_filename);
+    /* build temp file path */
+    bu_dir(tmpfil, MAXPATHLEN, BU_DIR_TEMP, bu_temp_file_name(NULL, 0), NULL);
 
     fp = fopen(tmpfil, "w+");
     if (fp == NULL) {

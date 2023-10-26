@@ -210,9 +210,8 @@ BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
  *
  * // e.g., /path/to/temp/dir/BRL-CAD_123_456 -> combine with bu_dir for fullpath
  * char tmpfil[MAXPATHLEN];
- * const char* tmp_dir = bu_dir(NULL, 0, BU_DIR_TEMP, NULL);
  * const char* tmp_filename = bu_temp_file_name(NULL, 0);
- * snprintf(tmpfil, MAXPATHLEN, "%s%c%s", tmp_dir, BU_DIR_SEPARATOR, tmp_filename);
+ * bu_dir(tmpfil, MAXPATHLEN, BU_DIR_TEMP, tmp_filename, NULL);
  *
  * @endcode
  */
