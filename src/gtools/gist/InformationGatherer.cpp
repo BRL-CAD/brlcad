@@ -669,10 +669,11 @@ InformationGatherer::gatherInformation(std::string name)
     std::string date = std::to_string(ltm->tm_mon + 1) + "/" + std::to_string(ltm->tm_mday) + "/" + std::to_string(ltm->tm_year + 1900);
     infoMap.insert(std::pair < std::string, std::string>("lastUpdate", date));
 
-
-    //Gather source file
 	//Gather source file
     std::size_t last1 = opt->getFilepath().find_last_of("/");
+    std::size_t last2 = opt->getFilepath().find_last_of("\\");
+    last = last1 < last2 ? last1 : last2;
+
 	std::string file = opt->getFilepath().substr(last+1, opt->getFilepath().length()-1);
 
 	infoMap.insert(std::pair < std::string, std::string>("file", file));
