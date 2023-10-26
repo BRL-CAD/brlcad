@@ -1666,7 +1666,8 @@ manifold_process(struct manifold_mesh **mesh, struct directory *dp, struct db_i 
     int manifold_op = 0;
 #endif
 
-    // If we have a non-comb obj, get the NMG tessellation and do the operation
+    // If we have a non-comb obj, get the NMG tessellation - otherwise, we need to process the
+    // comb to get a mesh
     if (!(dp->d_flags & RT_DIR_COMB)) {
 
 	// 1.  Make new triangle mesh with NMG of dp
@@ -1732,51 +1733,57 @@ manifold_process(struct manifold_mesh **mesh, struct directory *dp, struct db_i 
 	for (size_t i = 0; i < bot->num_vertices * 3; i++) {
 	    bmesh->vertices[i] = bot->vertices[i];
 	}
-	// 2.  Do the op between *mesh and the NMG output from dp
-	if (!(*mesh)->num_faces) {
-	    if ((*mesh)->vertices)
-		bu_free((*mesh)->vertices, "verts");
-	    if ((*mesh)->faces)
-		bu_free((*mesh)->faces, "faces");
-	    BU_FREE(*mesh, struct manifold_mesh);
-	    *mesh = bmesh;
-	} else {
-	    BU_GET(omesh, struct manifold_mesh);
-	    manifold_ret = bool_meshes(
-		    (double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
-		    manifold_op,
-		    (double *)(*mesh)->vertices, (*mesh)->num_vertices, (*mesh)->faces, (*mesh)->num_faces,
-		    (double *)bmesh->vertices, bmesh->num_vertices, bmesh->faces, bmesh->num_faces
-		    );
-	    bu_log("manifold: %ld\n", manifold_ret);
-	    bu_free(bmesh->faces, "faces");
-	    bu_free(bmesh->vertices, "vertices");
-	    BU_PUT(bmesh, struct manifold_mesh);
 
-	    if (ip->idb_type != ID_BOT) {
-		// We created this locally if it wasn't originally a BoT - clean up
-		if (bot->vertices)
-		    bu_free(bot->vertices, "verts");
-		if (bot->faces)
-		    bu_free(bot->faces, "faces");
-		BU_FREE(bot, struct rt_bot_internal);
-	    }
-	    // Free the previous state
-	    if ((*mesh)->vertices)
-		bu_free((*mesh)->vertices, "verts");
-	    if ((*mesh)->faces)
-		bu_free((*mesh)->faces, "faces");
-	    BU_FREE(*mesh, struct manifold_mesh);
-	    // Assign the new state as "current"
-	    *mesh = omesh;
+	if (ip->idb_type != ID_BOT) {
+	    // We created this locally if it wasn't originally a BoT - clean up
+	    if (bot->vertices)
+		bu_free(bot->vertices, "verts");
+	    if (bot->faces)
+		bu_free(bot->faces, "faces");
+	    BU_FREE(bot, struct rt_bot_internal);
 	}
+
+    } else {
+	BU_GET(bmesh, struct manifold_mesh);
+	bmesh->num_vertices = 0;
+	bmesh->num_faces = 0;
+	struct rt_comb_internal *comb = (struct rt_comb_internal *)ip->idb_ptr;
+	manifold_subprocess(&bmesh, comb->tree, dbip, OP_UNION, depth, max_depth, manifold_process);
 	rt_db_free_internal(ip);
-	return;
     }
 
-    struct rt_comb_internal *comb = (struct rt_comb_internal *)ip->idb_ptr;
-    manifold_subprocess(mesh, comb->tree, dbip, OP_UNION, depth, max_depth, manifold_process);
+    // 2.  Do the op between *mesh and the output from dp
+    if (!(*mesh)->num_faces) {
+	if ((*mesh)->vertices)
+	    bu_free((*mesh)->vertices, "verts");
+	if ((*mesh)->faces)
+	    bu_free((*mesh)->faces, "faces");
+	BU_FREE(*mesh, struct manifold_mesh);
+	*mesh = bmesh;
+    } else {
+	BU_GET(omesh, struct manifold_mesh);
+	manifold_ret = bool_meshes(
+		(double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
+		manifold_op,
+		(double *)(*mesh)->vertices, (*mesh)->num_vertices, (*mesh)->faces, (*mesh)->num_faces,
+		(double *)bmesh->vertices, bmesh->num_vertices, bmesh->faces, bmesh->num_faces
+		);
+	bu_log("manifold: %ld\n", manifold_ret);
+	bu_free(bmesh->faces, "faces");
+	bu_free(bmesh->vertices, "vertices");
+	BU_PUT(bmesh, struct manifold_mesh);
+
+	// Free the previous state
+	if ((*mesh)->vertices)
+	    bu_free((*mesh)->vertices, "verts");
+	if ((*mesh)->faces)
+	    bu_free((*mesh)->faces, "faces");
+	BU_FREE(*mesh, struct manifold_mesh);
+	// Assign the new state as "current"
+	*mesh = omesh;
+    }
     rt_db_free_internal(ip);
+    return;
 }
 
 // For MANIFOLD, we do a tree walk.  Each solid is individually triangulated, and
