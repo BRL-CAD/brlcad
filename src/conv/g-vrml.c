@@ -308,7 +308,7 @@ leaf_tess1(struct db_tree_state *tsp, const struct db_full_path *pathp, struct r
 
     if (ip->idb_type != ID_BOT) {
 	pmp->num_nonbots++;
-	return nmg_booltree_leaf_tess(tsp, pathp, ip, client_data);
+	return rt_booltree_leaf_tess(tsp, pathp, ip, client_data);
     }
 
     bot = (struct rt_bot_internal *)ip->idb_ptr;
@@ -750,7 +750,7 @@ main(int argc, char **argv)
 			   &tree_state,
 			   0,
 			   nmg_region_end,
-			   nmg_booltree_leaf_tess,
+			   rt_booltree_leaf_tess,
 			   (void *)&pm);	/* in librt/nmg_bool.c */
 	goto out;
     }

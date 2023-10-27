@@ -963,7 +963,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       &wdbp->wdb_initial_tree_state,
 				       enable_fastpath ? draw_nmg_region_start : 0,
 				       draw_nmg_region_end,
-				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : rt_booltree_leaf_tess,
 				       (void *)&dgcdp);
 		}
 

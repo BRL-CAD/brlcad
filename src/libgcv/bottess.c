@@ -521,7 +521,7 @@ gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct bg_tess_tol *
     struct db_tree_state tree_state = rt_initial_tree_state;
     tree_state.ts_ttol = ttol;
 
-    if (db_walk_tree(dbip, argc, argv, 1, &tree_state, NULL, gcv_bottess_region_end, nmg_booltree_leaf_tess, NULL) < 0)
+    if (db_walk_tree(dbip, argc, argv, 1, &tree_state, NULL, gcv_bottess_region_end, rt_booltree_leaf_tess, NULL) < 0)
 	bu_log("gcv_bottess: db_walk_tree failure\n");
 
     return NULL;
