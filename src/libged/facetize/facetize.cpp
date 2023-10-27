@@ -48,6 +48,7 @@
 #include "brep/cdt.h"
 #include "rt/geom.h"
 #include "rt/op.h"
+#include "rt/conv.h"
 #include "rt/search.h"
 #include "raytrace.h"
 #include "analyze.h"
@@ -1583,71 +1584,17 @@ struct manifold_mesh {
     unsigned int *faces;
 };
 
-
-static void
-manifold_subprocess(struct manifold_mesh **mesh, union tree *tp, struct db_i *dbip, int op, int *depth, int max_depth,
-	void (*traverse_func) (struct manifold_mesh **, struct directory *, struct db_i *, int, int *, int))
+static int
+_manifold_do_bool(
+        union tree *tp, union tree *tl, union tree *tr,
+        int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol)
 {
-    struct directory *dp;
-    if (!tp) return;
-    RT_CHECK_DBI(dbip);
-    RT_CK_TREE(tp);
-    (*depth)++;
-    if (*depth > max_depth) {
-	(*depth)--;
-	return;
-    }
-    switch (tp->tr_op) {
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    manifold_subprocess(mesh, tp->tr_b.tb_left, dbip, OP_UNION, depth, max_depth, traverse_func);
-	    break;
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    manifold_subprocess(mesh, tp->tr_b.tb_left, dbip, OP_UNION, depth, max_depth, traverse_func);
-	    manifold_subprocess(mesh, tp->tr_b.tb_right, dbip, tp->tr_op, depth, max_depth, traverse_func);
-	    break;
-	case OP_DB_LEAF:
-	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
-		(*depth)--;
-		return;
-	    } else {
-		if (!(dp->d_flags & RT_DIR_HIDDEN)) {
-		    traverse_func(mesh, dp, dbip, op, depth, max_depth);
-		}
-		(*depth)--;
-		break;
-	    }
-
-	default:
-	    bu_log("db_functree_subtree: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("db_functree_subtree: unrecognized operator\n");
-    }
-    return;
-}
-
-static void
-manifold_process(struct manifold_mesh **mesh, struct directory *dp, struct db_i *dbip, int op, int *depth, int max_depth)
-{
-    long manifold_ret = 0;
-    struct manifold_mesh *omesh = NULL;
-    struct manifold_mesh *bmesh = NULL;
-    if (!dp || !dbip)
-	return;
-    struct rt_db_internal in;
-    if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0)
-	return;
-    struct rt_db_internal *ip = &in;
-
-    bu_log("Op %d:%s\n", op, dp->d_namep);
-    if (BU_STR_EQUAL(dp->d_namep, "frame"))
-	bu_log("trouble\n");
+#ifdef USE_MANIFOLD
+    struct rt_bot_internal *lbot = NULL;
+    struct rt_bot_internal *rbot = NULL;
+    struct manifold_mesh *lmesh, *rmesh, *omesh;
 
     // Translate op for MANIFOLD
-#ifdef USE_MANIFOLD
     manifold::OpType manifold_op = manifold::OpType::Add;
     switch (op) {
 	case OP_UNION:
@@ -1662,128 +1609,130 @@ manifold_process(struct manifold_mesh **mesh, struct directory *dp, struct db_i 
 	default:
 	    manifold_op = manifold::OpType::Add;
     };
+
+    // We're either working with the results of CSG NMG tessellations,
+    // or we have prior manifold_mesh results - figure out which.
+    // If it's the NMG results, we need to make manifold_meshes for
+    // processing.
+    if (tl->tr_d.td_r) {
+	lbot = (struct rt_bot_internal *)nmg_mdl_to_bot(tl->tr_d.td_r->m_p, &RTG.rtg_vlfree, tol);
+	BU_GET(lmesh, struct manifold_mesh);
+	lmesh->vertices = lbot->vertices;
+	lmesh->num_vertices = lbot->num_vertices;
+	lmesh->num_faces = lbot->num_faces;
+	lmesh->faces = (unsigned int *)bu_calloc(lbot->num_faces * 3, sizeof(unsigned int), "faces array");
+	for (size_t i = 0; i < lbot->num_faces * 3; i++) {
+	    lmesh->faces[i] = lbot->faces[i];
+	}
+	lmesh->vertices = (fastf_t *)bu_calloc(lbot->num_vertices * 3, sizeof(fastf_t), "vert array");
+	for (size_t i = 0; i < lbot->num_vertices * 3; i++) {
+	    lmesh->vertices[i] = lbot->vertices[i];
+	}
+	// We created this locally if it wasn't originally a BoT - clean up
+	if (lbot->vertices)
+	    bu_free(lbot->vertices, "verts");
+	if (lbot->faces)
+	    bu_free(lbot->faces, "faces");
+	BU_FREE(lbot, struct rt_bot_internal);
+	lbot = NULL;
+    } else {
+	lmesh = (struct manifold_mesh *)tl->tr_d.td_d;
+    }
+    if (tr->tr_d.td_r) {
+	rbot = (struct rt_bot_internal *)nmg_mdl_to_bot(tr->tr_d.td_r->m_p, &RTG.rtg_vlfree, tol);
+	BU_GET(rmesh, struct manifold_mesh);
+	rmesh->vertices = rbot->vertices;
+	rmesh->num_vertices = rbot->num_vertices;
+	rmesh->num_faces = rbot->num_faces;
+	rmesh->faces = (unsigned int *)bu_calloc(rbot->num_faces * 3, sizeof(unsigned int), "faces array");
+	for (size_t i = 0; i < rbot->num_faces * 3; i++) {
+	    rmesh->faces[i] = rbot->faces[i];
+	}
+	rmesh->vertices = (fastf_t *)bu_calloc(rbot->num_vertices * 3, sizeof(fastf_t), "vert array");
+	for (size_t i = 0; i < rbot->num_vertices * 3; i++) {
+	    rmesh->vertices[i] = rbot->vertices[i];
+	}
+	// We created this locally if it wasn't originally a BoT - clean up
+	if (rbot->vertices)
+	    bu_free(rbot->vertices, "verts");
+	if (rbot->faces)
+	    bu_free(rbot->faces, "faces");
+	BU_FREE(rbot, struct rt_bot_internal);
+	rbot = NULL;
+    } else {
+	rmesh = (struct manifold_mesh *)tr->tr_d.td_d;
+    }
+
+    BU_GET(omesh, struct manifold_mesh);
+    long manifold_ret = bool_meshes(
+	    (double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
+	    manifold_op,
+	    (double *)lmesh->vertices, lmesh->num_vertices, lmesh->faces, lmesh->num_faces,
+	    (double *)rmesh->vertices, rmesh->num_vertices, rmesh->faces, rmesh->num_faces
+	    );
+    bu_log("manifold: %ld\n", manifold_ret);
+
+    // TODO - memory cleanup
+
+    tp->tr_op = OP_TESS;
+    tp->tr_d.td_r = NULL;
+    tp->tr_d.td_d = omesh;
+
+    return 0;
 #else
-    int manifold_op = 0;
+    if (!tp || !tl || !tr || op < 0 || !vlfree || !tol)
+	return -1;
 #endif
 
-    // If we have a non-comb obj, get the NMG tessellation - otherwise, we need to process the
-    // comb to get a mesh
-    if (!(dp->d_flags & RT_DIR_COMB)) {
+    return 0;
+}
 
-	// 1.  Make new triangle mesh with NMG of dp
-	if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
-	    bu_log("MANIFOLD_ERROR(%s): NMG object tessellation support not available\n", dp->d_namep);
-	    rt_db_free_internal(ip);
-	    return;
-	}
+static struct manifold_mesh *
+_try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ged_facetize_opts *o)
+{
+    int i;
+    union tree *ftree = NULL;
+    struct manifold_mesh *omesh = NULL;
 
-	// We need triangles.  If we already have a bot we're good - otherwise,
-	// try to tessellate.
-	struct rt_bot_internal *bot = NULL;
-	if (ip->idb_type == ID_BOT) {
-	    bot = (struct rt_bot_internal *)ip->idb_ptr;
-	} else {
-	    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
-	    struct bn_tol *ntol = &(wdbp->wdb_tol);
-	    struct bg_tess_tol *nttol = &(wdbp->wdb_ttol);
-	    struct model *m = nmg_mm();
-	    struct nmgregion *r1 = (struct nmgregion *)NULL;
-	    if (ip->idb_meth->ft_tessellate(&r1, m, ip, nttol, ntol) < 0) {
-		bu_log("ERROR(%s): tessellation failure\n", dp->d_namep);
-		rt_db_free_internal(ip);
-		return;
-	    }
-	    // NMG doesn't give us a bot by default - post-process it to get one.
-	    if (!BU_SETJUMP) {
-		/* try */
-		bot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, ntol);
-	    } else {
-		/* catch */
-		BU_UNSETJUMP;
-		bu_log("WARNING: triangulation failed!!!\n");
-		rt_db_free_internal(ip);
-		return;
-	    } BU_UNSETJUMP;
-	}
-	/* Sanity */
-	if (!bot) {
-	    rt_db_free_internal(ip);
-	    return;
-	}
-	if (!bot->num_faces || !bot->num_vertices) {
-	    if (ip->idb_type != ID_BOT) {
-		if (bot->vertices)
-		    bu_free(bot->vertices, "verts");
-		if (bot->faces)
-		    bu_free(bot->faces, "faces");
-		BU_FREE(bot, struct rt_bot_internal);
-	    }
-	    rt_db_free_internal(ip);
-	    return;
-	}
-	BU_GET(bmesh, struct manifold_mesh);
-	bmesh->vertices = bot->vertices;
-	bmesh->num_vertices = bot->num_vertices;
-	bmesh->num_faces = bot->num_faces;
-	bmesh->faces = (unsigned int *)bu_calloc(bot->num_faces * 3, sizeof(unsigned int), "faces array");
-	for (size_t i = 0; i < bot->num_faces * 3; i++) {
-	    bmesh->faces[i] = bot->faces[i];
-	}
-	bmesh->vertices = (fastf_t *)bu_calloc(bot->num_vertices * 3, sizeof(fastf_t), "vert array");
-	for (size_t i = 0; i < bot->num_vertices * 3; i++) {
-	    bmesh->vertices[i] = bot->vertices[i];
-	}
+    struct db_tree_state init_state;
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
+    /* Establish tolerances */
+    init_state.ts_ttol = &wdbp->wdb_ttol;
+    init_state.ts_tol = &wdbp->wdb_tol;
+    init_state.ts_m = NULL;
+    union tree *facetize_tree = (union tree *)0;
 
-	if (ip->idb_type != ID_BOT) {
-	    // We created this locally if it wasn't originally a BoT - clean up
-	    if (bot->vertices)
-		bu_free(bot->vertices, "verts");
-	    if (bot->faces)
-		bu_free(bot->faces, "faces");
-	    BU_FREE(bot, struct rt_bot_internal);
-	}
-
+    if (!BU_SETJUMP) {
+	/* try */
+	i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
+			 1,
+			&init_state,
+			 0,			/* take all regions */
+			 facetize_region_end,
+			 rt_booltree_leaf_tess,
+			 (void *)&facetize_tree
+			);
     } else {
-	BU_GET(bmesh, struct manifold_mesh);
-	bmesh->num_vertices = 0;
-	bmesh->num_faces = 0;
-	struct rt_comb_internal *comb = (struct rt_comb_internal *)ip->idb_ptr;
-	manifold_subprocess(&bmesh, comb->tree, dbip, OP_UNION, depth, max_depth, manifold_process);
-	rt_db_free_internal(ip);
+	/* catch */
+	BU_UNSETJUMP;
+	_ged_facetize_log_default(o);
+	return NULL;
+    } BU_UNSETJUMP;
+
+    if (i < 0) {
+	/* Destroy NMG */
+	_ged_facetize_log_default(o);
+	return NULL;
     }
 
-    // 2.  Do the op between *mesh and the output from dp
-    if (!(*mesh)->num_faces) {
-	if ((*mesh)->vertices)
-	    bu_free((*mesh)->vertices, "verts");
-	if ((*mesh)->faces)
-	    bu_free((*mesh)->faces, "faces");
-	BU_FREE(*mesh, struct manifold_mesh);
-	*mesh = bmesh;
-    } else {
-	BU_GET(omesh, struct manifold_mesh);
-	manifold_ret = bool_meshes(
-		(double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
-		manifold_op,
-		(double *)(*mesh)->vertices, (*mesh)->num_vertices, (*mesh)->faces, (*mesh)->num_faces,
-		(double *)bmesh->vertices, bmesh->num_vertices, bmesh->faces, bmesh->num_faces
-		);
-	bu_log("manifold: %ld\n", manifold_ret);
-	bu_free(bmesh->faces, "faces");
-	bu_free(bmesh->vertices, "vertices");
-	BU_PUT(bmesh, struct manifold_mesh);
-
-	// Free the previous state
-	if ((*mesh)->vertices)
-	    bu_free((*mesh)->vertices, "verts");
-	if ((*mesh)->faces)
-	    bu_free((*mesh)->faces, "faces");
-	BU_FREE(*mesh, struct manifold_mesh);
-	// Assign the new state as "current"
-	*mesh = omesh;
+    if (facetize_tree) {
+	ftree = rt_booltree_evaluate(facetize_tree, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource, &_manifold_do_bool, 0);
+	if (!ftree)
+	    return NULL;
+	omesh = (struct manifold_mesh *)ftree->tr_d.td_d;
     }
-    rt_db_free_internal(ip);
-    return;
+    return omesh;
 }
 
 // For MANIFOLD, we do a tree walk.  Each solid is individually triangulated, and
@@ -1792,26 +1741,15 @@ manifold_process(struct manifold_mesh **mesh, struct directory *dp, struct db_i 
 // main difference being that the external code is actually doing the mesh
 // boolean processing rather than libnmg.
 int
-_ged_manifold_obj(struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
+_ged_manifold_obj(struct ged *gedp, int argc, const char **argv, const char *newname, struct _ged_facetize_opts *opts)
 {
-    int depth = 0;
-    struct manifold_mesh *mesh = NULL;
-    struct directory *dp = RT_DIR_NULL;
     int ret = BRLCAD_ERROR;
-    if (!gedp || !objname || !newname || !opts)
+    struct manifold_mesh *mesh = NULL;
+    if (!gedp || !argc || !argv || !opts)
 	goto ged_manifold_obj_memfree;
 
-    dp = db_lookup(gedp->dbip, objname, LOOKUP_QUIET);
-    if (!dp)
-	goto ged_manifold_obj_memfree;
-
-    // Conceptually, we start off by unioning the "root" object of the
-    // tree with the initial world mesh, which is the empty mesh.
-    BU_GET(mesh, struct manifold_mesh);
-    mesh->num_vertices = 0;
-    mesh->num_faces = 0;
-    manifold_process(&mesh, dp, gedp->dbip, OP_UNION, &depth, 100000);
-
+     mesh = _try_manifold_facetize(gedp, argc, argv, opts);
+   
     if (mesh && mesh->num_faces > 0) {
 	struct rt_bot_internal *bot;
 	BU_GET(bot, struct rt_bot_internal);
@@ -1948,7 +1886,7 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
 	    }
 
-	    if (_ged_manifold_obj(gedp, argv[0], newname, opts) == BRLCAD_OK) {
+	    if (_ged_manifold_obj(gedp, argc, argv, newname, opts) == BRLCAD_OK) {
 		ret = BRLCAD_OK;
 		break;
 	    } else {
@@ -2239,7 +2177,7 @@ _ged_facetize_region_obj(struct ged *gedp, const char *oname, const char *sname,
 	    bu_log("%s", bu_vls_addr(opts->nmg_log_header));
 	}
 
-	ret = _ged_manifold_obj(gedp, oname, sname, opts);
+	ret = _ged_manifold_obj(gedp, 1, (const char **)&oname, sname, opts);
 
 	if (ret != FACETIZE_FAILURE) {
 	    if (_ged_methodcomb_add(gedp, opts, sname, FACETIZE_MANIFOLD) != BRLCAD_OK && opts->verbosity > 1) {
