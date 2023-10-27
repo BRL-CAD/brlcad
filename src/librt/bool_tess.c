@@ -75,7 +75,8 @@ rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *path
 	return TREE_NULL;
     }
 
-    NMG_CK_MODEL(*tsp->ts_m);
+    if (tsp->ts_m)
+	NMG_CK_MODEL(*tsp->ts_m);
     BN_CK_TOL(tsp->ts_tol);
     BG_CK_TESS_TOL(tsp->ts_ttol);
     RT_CK_RESOURCE(tsp->ts_resp);
@@ -135,7 +136,6 @@ rt_booltree_evaluate(
 
     union tree *tl;
     union tree *tr;
-    int op = OP_UNION;      /* default value */
     const char *op_str = " u "; /* default value */
     size_t rem;
     char *name;
@@ -197,7 +197,7 @@ rt_booltree_evaluate(
 	/* left-r != null && right-r == null */
 	RT_CK_TREE(tp);
 	db_free_tree(tp->tr_b.tb_right, resp);
-	if (op == NMG_BOOL_ISECT) {
+	if (tp->tr_op == OP_INTERSECT) {
 	    /* OP_INTERSECT '+' */
 	    RT_CK_TREE(tp);
 	    db_free_tree(tl, resp);
@@ -226,7 +226,7 @@ rt_booltree_evaluate(
 	/* left-r == null && right-r != null */
 	RT_CK_TREE(tp);
 	db_free_tree(tp->tr_b.tb_left, resp);
-	if (op == OP_UNION) {
+	if (tp->tr_op == OP_UNION) {
 	    /* OP_UNION 'u' */
 	    /* copy everything from tr to tp no matter which union type
 	     * could probably have done a mem-copy
@@ -244,7 +244,7 @@ rt_booltree_evaluate(
 	    db_free_tree(tr, resp);
 	    return tp;
 
-	} else if ((op == OP_SUBTRACT) || (op == OP_INTERSECT)) {
+	} else if ((tp->tr_op == OP_SUBTRACT) || (tp->tr_op == OP_INTERSECT)) {
 	    /* for sub and intersect, if left-hand-side is null, result is null */
 	    RT_CK_TREE(tp);
 	    db_free_tree(tr, resp);
@@ -268,7 +268,7 @@ rt_booltree_evaluate(
     }
 
     // Execute the specified method that actually evaluates the mesh geometries
-    int b = do_bool(tp, tl, tr, op, vlfree, tol);
+    int b = do_bool(tp, tl, tr, tp->tr_op, vlfree, tol);
 
     if (b) {
 	/* result was null */
