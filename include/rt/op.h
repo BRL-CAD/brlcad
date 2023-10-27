@@ -46,7 +46,7 @@ __BEGIN_DECLS
 #define OP_NOT          MKOP(8)         /**< @brief  Unary:  not L */
 #define OP_GUARD        MKOP(9)         /**< @brief  Unary:  not L, or else! */
 #define OP_XNOP         MKOP(10)        /**< @brief  Unary:  L, mark region */
-#define OP_NMG_TESS     MKOP(11)        /**< @brief  Leaf: tr_stp -> nmgregion */
+#define OP_TESS         MKOP(11)        /**< @brief  Leaf: tr_d -> evaluated tessellation result */
 /* LIBWDB import/export interface to combinations */
 #define OP_DB_LEAF      MKOP(12)        /**< @brief  Leaf of combination, db fmt */
 #define OP_FREE         MKOP(13)        /**< @brief  Unary:  L has free chain */

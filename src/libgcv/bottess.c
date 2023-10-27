@@ -302,7 +302,7 @@ _tree_invert(union tree *tree)
     unsigned long int i;
 
     RT_CK_TREE(tree);
-    if (tree->tr_op != OP_NMG_TESS) {
+    if (tree->tr_op != OP_TESS) {
 	bu_log("Erm, this isn't an nmg tess\n");
 	return tree;
     }
@@ -408,7 +408,7 @@ evaluate(union tree *tr, const struct bg_tess_tol *ttol, const struct bn_tol *to
     switch (tr->tr_op) {
 	case OP_NOP:
 	    return tr;
-	case OP_NMG_TESS:
+	case OP_TESS:
 	    /* ugh, keep it as nmg_tess and just shove the rt_bot_internal ptr
 	     * in as nmgregion. :/ Also, only doing the first shell of the first
 	     * model. Primitives should only provide a single shell, right? */

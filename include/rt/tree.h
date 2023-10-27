@@ -168,7 +168,7 @@ union tree {
     } tr_c;
     struct tree_nmgregion {
 	uint32_t magic;
-	int td_op;                      /**< @brief  leaf, OP_NMG_TESS */
+	int td_op;                      /**< @brief  leaf, OP_TESS */
 	const char *td_name;            /**< @brief  If non-null, dynamic string describing heritage of this region */
 	struct nmgregion *td_r;         /**< @brief  ptr to NMG region */
     } tr_d;

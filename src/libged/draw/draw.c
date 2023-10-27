@@ -491,7 +491,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	    return (union tree *)NULL;
 	}
 
-    } else if (curtree->tr_op != OP_NMG_TESS) {
+    } else if (curtree->tr_op != OP_TESS) {
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
 	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;

@@ -2316,7 +2316,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
 
     BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
-    curtree->tr_op = OP_NMG_TESS;
+    curtree->tr_op = OP_TESS;
     curtree->tr_d.td_name = bu_strdup(dp->d_namep);
     curtree->tr_d.td_r = r1;
 
@@ -2373,7 +2373,7 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
 
     BU_GET(curtree, union tree);
     RT_TREE_INIT(curtree);
-    curtree->tr_op = OP_NMG_TESS;
+    curtree->tr_op = OP_TESS;
     curtree->tr_d.td_name = bu_strdup(dp->d_namep);
     curtree->tr_d.td_r = r1;
 
@@ -2396,7 +2396,7 @@ int nmg_bool_eval_silent=0;
  * Usually called from a do_region_end() handler from db_walk_tree().
  * For an example of several, see mged/dodraw.c.
  *
- * Returns an OP_NMG_TESS union tree node, which will contain the
+ * Returns an OP_TESS union tree node, which will contain the
  * resulting region and its name, as a dynamic string.  The caller is
  * responsible for releasing the string, and the node, by calling
  * db_free_tree() on the node.
@@ -2428,7 +2428,7 @@ nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const str
     switch (tp->tr_op) {
 	case OP_NOP:
 	    return TREE_NULL;
-	case OP_NMG_TESS:
+	case OP_TESS:
 	    /* Hit a tree leaf */
 	    if (nmg_debug & NMG_DEBUG_VERIFY) {
 		nmg_vshell(&tp->tr_d.td_r->s_hd, tp->tr_d.td_r);
@@ -2539,10 +2539,10 @@ nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const str
 	}
     }
 
-    if (tl->tr_op != OP_NMG_TESS) {
+    if (tl->tr_op != OP_TESS) {
 	bu_bomb("nmg_booltree_evaluate(): bad left tree\n");
     }
-    if (tr->tr_op != OP_NMG_TESS) {
+    if (tr->tr_op != OP_TESS) {
 	bu_bomb("nmg_booltree_evaluate(): bad right tree\n");
     }
 
@@ -2594,7 +2594,7 @@ nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const str
 	/* convert argument binary node into a result node */
 	NMG_CK_REGION(reg);
 	nmg_r_radial_check(reg, vlfree, tol);
-	tp->tr_op = OP_NMG_TESS;
+	tp->tr_op = OP_TESS;
 	tp->tr_d.td_r = reg;
 	tp->tr_d.td_name = name;
 
@@ -2655,7 +2655,7 @@ nmg_find_leaves(register union tree *tp, struct bu_ptbl *regions)
     switch (tp->tr_op) {
 	case OP_NOP:
 	    return;
-	case OP_NMG_TESS:
+	case OP_TESS:
 	    /* Hit a tree leaf */
 	    bu_ptbl_ins_unique(regions, (long *)tp->tr_d.td_r);
 	    return;
@@ -2757,8 +2757,8 @@ nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struc
 
     RT_CK_TREE(result);
 
-    if (tp->tr_op != OP_NMG_TESS) {
-	bu_log("nmg_boolean(): result of nmg_booltree_evaluate() op != OP_NMG_TESS\n");
+    if (tp->tr_op != OP_TESS) {
+	bu_log("nmg_boolean(): result of nmg_booltree_evaluate() op != OP_TESS\n");
 	rt_pr_tree(tp, 0);
 	ret = 1;
 	goto out;
