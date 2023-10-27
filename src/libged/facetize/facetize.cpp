@@ -1577,9 +1577,15 @@ bool_meshes(
 	return 0;
     }
 
-    manifold::Manifold result = a_manifold.Boolean(b_manifold, b_op);
-    if (result.Status() != manifold::Manifold::Error::NoError) {
-	bu_log("Error - bool result invalid\n");
+    manifold::Manifold result;
+    try {
+	result = a_manifold.Boolean(b_manifold, b_op);
+	if (result.Status() != manifold::Manifold::Error::NoError) {
+	    bu_log("Error - bool result invalid\n");
+	    return 0;
+	}
+    } catch (...) {
+	bu_log("Manifold boolean library threw failure\n");
 	return 0;
     }
     manifold::Mesh rmesh = result.GetMesh();
@@ -1662,13 +1668,12 @@ _manifold_do_bool(
     }
 
     BU_GET(omesh, struct manifold_mesh);
-    long manifold_ret = bool_meshes(
+    bool_meshes(
 	    (double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
 	    manifold_op,
 	    (double *)lmesh->vertices, lmesh->num_vertices, lmesh->faces, lmesh->num_faces,
 	    (double *)rmesh->vertices, rmesh->num_vertices, rmesh->faces, rmesh->num_faces
 	    );
-    bu_log("manifold: %ld\n", manifold_ret);
 
     // TODO - memory cleanup
 
