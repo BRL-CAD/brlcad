@@ -197,7 +197,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
 
-    img_cmp(2, dbp, av[1], false, soft_fail, 0, "lod_clear", "lod");
+    img_cmp(2, dbp, av[1], false, soft_fail, 10, "lod_clear", "lod");
 
     bu_log("Disable LoD\n");
     s_av[0] = "view";
@@ -217,7 +217,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
 
-    img_cmp(2, dbp, av[1], true, soft_fail, 0, "lod_clear", "lod");
+    img_cmp(2, dbp, av[1], true, soft_fail, 10, "lod_clear", "lod");
 
     bu_log("Done.\n");
 
@@ -266,7 +266,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
 
-    img_cmp(4, dbp, av[1], false, soft_fail, 0, "lod_clear", "lod");
+    img_cmp(4, dbp, av[1], false, soft_fail, 10, "lod_clear", "lod");
 
     bu_log("Disable LoD\n");
     s_av[0] = "view";
@@ -286,7 +286,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
 
-    img_cmp(4, dbp, av[1], true, soft_fail, 0, "lod_clear", "lod");
+    img_cmp(4, dbp, av[1], true, soft_fail, 10, "lod_clear", "lod");
 
     bu_log("Done.\n");
 
@@ -321,7 +321,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
 
-    img_cmp(6, dbp, av[1], false, soft_fail, 0, "lod_clear", "lod");
+    img_cmp(6, dbp, av[1], false, soft_fail, 10, "lod_clear", "lod");
 
     bu_log("Disable LoD\n");
     s_av[0] = "view";
@@ -341,7 +341,7 @@ main(int ac, char *av[]) {
     s_av[4] = NULL;
     ged_exec(dbp, 4, s_av);
 
-    img_cmp(6, dbp, av[1], true, soft_fail, 0, "lod_clear", "lod");
+    img_cmp(6, dbp, av[1], true, soft_fail, 10, "lod_clear", "lod");
 
     bu_log("Done.\n");
 

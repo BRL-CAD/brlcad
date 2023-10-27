@@ -38,6 +38,7 @@ set(LIBRT_SOURCES
   binunif/binunif.c
   binunif/db5_bin.c
   bool.c
+  bool_tess.c
   bundle.c
   cache.c
   cache_lz4.c

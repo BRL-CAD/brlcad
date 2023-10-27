@@ -178,6 +178,8 @@ __BEGIN_DECLS
 
 #include "./rt/binunif.h"
 
+#include "./rt/conv.h"
+
 #include "./rt/version.h"
 
 

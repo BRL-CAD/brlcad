@@ -196,7 +196,7 @@ tree_parse(struct bu_list *UNUSED(br), union tree *tr)
 	case OP_NOT: break;
 	case OP_GUARD: break;
 	case OP_XNOP: break;
-	case OP_NMG_TESS: break;
+	case OP_TESS: break;
 /* LIBWDB import/export interface to combinations */
 	case OP_DB_LEAF: break;
     }

@@ -68,6 +68,11 @@ __BEGIN_DECLS
 DEPRECATED BU_EXPORT extern int bu_is_parallel(void);
 
 /**
+ * returns the thread ID of the calling thread
+ */
+BU_EXPORT extern int bu_thread_id(void);
+
+/**
  * returns the CPU number of the current bu_parallel() invoked thread.
  */
 BU_EXPORT extern int bu_parallel_id(void);

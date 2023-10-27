@@ -636,7 +636,7 @@ main(int argc, char **argv)
 			&tree_state,
 			0,			/* take all regions */
 			do_region_end,
-			nmg_booltree_leaf_tess,
+			rt_booltree_leaf_tess,
 			(void *)NULL);	/* in librt/nmg_bool.c */
 
     if (regions_tried>0) {

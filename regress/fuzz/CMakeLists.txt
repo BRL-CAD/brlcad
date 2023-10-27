@@ -11,13 +11,25 @@ include(CheckCXXCompilerFlag)
 # anything with the results of computations
 check_cxx_compiler_flag(-Wno-unused-but-set-variable HAVE_NO_UNUSED_BUT_SET_VARIABLE)
 
-# We may need the fuzzer option to be a library
+# Check whether fuzzing support is available.
+cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS -fsanitize=fuzzer)
+    # Unreliable:
+    # check_cxx_compiler_flag(-fsanitize=fuzzer HAVE_FSANITIZE_FUZZER)
+    set(CHECK_FUZZER_CODE "#include <iostream>\nint main() { return 0; }")
+    check_cxx_source_compiles("${CHECK_FUZZER_CODE}" HAVE_FSANITIZE_FUZZER)
+cmake_pop_check_state()
+
+if (HAVE_FSANITIZE_FUZZER)
+    message(STATUS "The '-fsanitize=fuzzer' flag is supported.")
+else()
+    message(STATUS "The '-fsanitize=fuzzer' flag is not supported.")
+endif()
+
+# Set up the fuzzer option like a library
 set(FUZZER_LIBRARY)
 
-# Check whether fuzzing support is available.
-set(CMAKE_REQUIRED_FLAGS -fsanitize=fuzzer)
-check_cxx_compiler_flag(-fsanitize=fuzzer HAVE_FUZZER)
-if (NOT HAVE_FUZZER)
+if (NOT HAVE_FSANITIZE_FUZZER)
   set(LLVM_FUZZER_SRC "
 #include <stdint.h>
 #include <stddef.h>
@@ -33,16 +45,16 @@ extern \\\"C\\\" int LLVMFuzzerTestOneInput(const uint8_t *, size_t) {
   if (HAVE_LLVMFUZZER)
     set(FUZZER_LIBRARY "-fsanitize=fuzzer")
   endif (HAVE_LLVMFUZZER)
-endif (NOT HAVE_FUZZER)
+endif (NOT HAVE_FSANITIZE_FUZZER)
 
 set(FUZZ_GED_SRCS fuzz_ged.cpp)
 set(FUZZ_SHOOTRAY_SRCS fuzz_shootray.cpp)
 
-if (NOT HAVE_FUZZER AND NOT HAVE_LLVMFUZZER)
+if (NOT HAVE_FSANITIZE_FUZZER AND NOT HAVE_LLVMFUZZER)
   # provide simple main() so they at least compile and run
   set(FUZZ_GED_SRCS ${FUZZ_GED_SRCS} fuzz_stub.cpp)
   set(FUZZ_SHOOTRAY_SRCS ${FUZZ_SHOOTRAY_SRCS} fuzz_stub.cpp)
-endif (NOT HAVE_FUZZER AND NOT HAVE_LLVMFUZZER)
+endif (NOT HAVE_FSANITIZE_FUZZER AND NOT HAVE_LLVMFUZZER)
 
 BRLCAD_ADDEXEC(fuzz_ged_test "${FUZZ_GED_SRCS}" "libbu;librt;libged;${FUZZER_LIBRARY}" TEST)
 BRLCAD_ADDEXEC(fuzz_shootray_test "${FUZZ_SHOOTRAY_SRCS}" "libbu;librt;libged;${FUZZER_LIBRARY}" TEST)
@@ -52,15 +64,15 @@ BRLCAD_ADDEXEC(fuzz_shootray_test "${FUZZ_SHOOTRAY_SRCS}" "libbu;librt;libged;${
 #BRLCAD_ADD_TEST(NAME fuzz_ged COMMAND fuzz_ged_test)
 #BRLCAD_ADD_TEST(NAME fuzz_shootray COMMAND fuzz_shootray_test)
 
-if (HAVE_FUZZER OR HAVE_LLVMFUZZER)
+if (HAVE_FSANITIZE_FUZZER OR HAVE_LLVMFUZZER)
   target_compile_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
   target_compile_options(fuzz_shootray_test PRIVATE -fsanitize=fuzzer)
-endif (HAVE_FUZZER OR HAVE_LLVMFUZZER)
+endif (HAVE_FSANITIZE_FUZZER OR HAVE_LLVMFUZZER)
 
-if (HAVE_FUZZER)
+if (HAVE_FSANITIZE_FUZZER)
   target_link_options(fuzz_ged_test PRIVATE -fsanitize=fuzzer)
   target_link_options(fuzz_shootray_test PRIVATE -fsanitize=fuzzer)
-endif (HAVE_FUZZER)
+endif (HAVE_FSANITIZE_FUZZER)
 
 CMAKEFILES(
   CMakeLists.txt

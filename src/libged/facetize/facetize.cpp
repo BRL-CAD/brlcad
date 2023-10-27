@@ -567,7 +567,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
 			 facetize_region_end,
 			 nmg_use_tnurbs ?
 			 nmg_booltree_leaf_tnurb :
-			 nmg_booltree_leaf_tess,
+			 rt_booltree_leaf_tess,
 			 (void *)&facetize_tree
 			);
     } else {
