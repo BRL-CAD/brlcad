@@ -183,8 +183,8 @@ BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
  * Note that the filename parameter doubles as both a prefix specifier
  * as well as a return buffer.
  *
- * @param filename: prefixes the name, doubles as return buffer if len is set
- * @param len: total size of the available filename buffer
+ * @param filename prefixes the name, doubles as return buffer if len is set
+ * @param len total size of the available filename buffer
  *
  * @return
  * name in the form of prefix_procID_threadID.  This will be
