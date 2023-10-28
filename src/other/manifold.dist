@@ -1308,12 +1308,6 @@ src/smoothing.cpp
 src/sort.cpp
 thrust/LICENSE
 thrust/README.md
-thrust/dependencies/cub/.clang-format
-thrust/dependencies/cub/.clang-tidy
-thrust/dependencies/cub/.clangd
-thrust/dependencies/cub/.git
-thrust/dependencies/cub/.git-blame-ignore-revs
-thrust/dependencies/cub/.gitignore
 thrust/dependencies/cub/LICENSE.TXT
 thrust/dependencies/cub/cub/agent/agent_adjacent_difference.cuh
 thrust/dependencies/cub/cub/agent/agent_batch_memcpy.cuh
