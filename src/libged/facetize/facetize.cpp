@@ -1556,7 +1556,7 @@ tris_to_stl(const char *name, double *vertices, unsigned int *faces, int tricnt)
 	return;
     char buf[81];       /* need exactly 80 chars for header */
     memset(buf, 0, sizeof(buf));
-    snprintf(buf, MAXPATHLEN, "Manifold left input %s", name);
+    snprintf(buf, 80, "Manifold left input %s", name);
     if (write(fd, &buf, 80) < 0)
 	perror("stl write failure\n");
 
