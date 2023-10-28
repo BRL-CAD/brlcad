@@ -1665,7 +1665,7 @@ bool_meshes(
 	bu_log("Manifold boolean library threw failure\n");
 	const char *evar = getenv("GED_MANIFOLD_DEBUG");
 	// write out the failing inputs to files to aid in debugging
-	if (strlen(evar)) {
+	if (evar && strlen(evar)) {
 	    tris_to_stl(lname, a_coords, a_tris, a_tricnt);
 	    tris_to_stl(rname, b_coords, b_tris, b_tricnt);
 	    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.");
@@ -1980,6 +1980,26 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 
     while (!done_trying) {
 
+	if (flags & FACETIZE_MANIFOLD) {
+	    if (argc == 1) {
+		bu_vls_sprintf(opts->nmg_log_header, "MANIFOLD: tessellating %s...\n", argv[0]);
+	    } else {
+		bu_vls_sprintf(opts->nmg_log_header, "MANIFOLD: tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
+	    }
+	    /* Let the user know what's going on, unless output is suppressed */
+	    if (!opts->quiet) {
+		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
+	    }
+
+	    if (_ged_manifold_obj(gedp, argc, argv, newname, opts) == BRLCAD_OK) {
+		ret = BRLCAD_OK;
+		break;
+	    } else {
+		flags = flags & ~(FACETIZE_MANIFOLD);
+		continue;
+	    }
+	}
+
 	if (flags & FACETIZE_NMGBOOL) {
 	    opts->nmg_log_print_header = 1;
 	    if (argc == 1) {
@@ -1997,26 +2017,6 @@ _ged_facetize_objlist(struct ged *gedp, int argc, const char **argv, struct _ged
 		break;
 	    } else {
 		flags = flags & ~(FACETIZE_NMGBOOL);
-		continue;
-	    }
-	}
-
-	if (flags & FACETIZE_MANIFOLD) {
-	    if (argc == 1) {
-		bu_vls_sprintf(opts->nmg_log_header, "MANIFOLD: tessellating %s...\n", argv[0]);
-	    } else {
-		bu_vls_sprintf(opts->nmg_log_header, "MANIFOLD: tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
-	    }
-	    /* Let the user know what's going on, unless output is suppressed */
-	    if (!opts->quiet) {
-		bu_log("%s", bu_vls_addr(opts->nmg_log_header));
-	    }
-
-	    if (_ged_manifold_obj(gedp, argc, argv, newname, opts) == BRLCAD_OK) {
-		ret = BRLCAD_OK;
-		break;
-	    } else {
-		flags = flags & ~(FACETIZE_MANIFOLD);
 		continue;
 	    }
 	}
@@ -2477,6 +2477,10 @@ _ged_facetize_regions_resume(struct ged *gedp, int argc, const char **argv, stru
 	bu_ptbl_reset(ar);
 
 
+	if (!cmethod && (methods & FACETIZE_MANIFOLD)) {
+	    cmethod = FACETIZE_MANIFOLD;
+	    methods = methods & ~(FACETIZE_MANIFOLD);
+	}
 
 	if (!cmethod && (methods & FACETIZE_NMGBOOL)) {
 	    cmethod = FACETIZE_NMGBOOL;
@@ -2901,16 +2905,17 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	ssize_t avail_mem = 0;
 	bu_ptbl_reset(ar2);
 
-	if (!cmethod && (methods & FACETIZE_NMGBOOL)) {
-	    cmethod = FACETIZE_NMGBOOL;
-	    methods = methods & ~(FACETIZE_NMGBOOL);
-	}
 #ifdef USE_MANIFOLD
 	if (!cmethod && (methods & FACETIZE_MANIFOLD)) {
 	    cmethod = FACETIZE_MANIFOLD;
 	    methods = methods & ~(FACETIZE_MANIFOLD);
 	}
 #endif
+
+	if (!cmethod && (methods & FACETIZE_NMGBOOL)) {
+	    cmethod = FACETIZE_NMGBOOL;
+	    methods = methods & ~(FACETIZE_NMGBOOL);
+	}
 
 	if (!cmethod && (methods & FACETIZE_CONTINUATION)) {
 	    cmethod = FACETIZE_CONTINUATION;
@@ -3393,7 +3398,8 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Sort out which methods we can try */
     if (!opts->nmgbool && !opts->screened_poisson && !opts->continuation && !opts->manifold) {
-	/* Default to NMGBOOL and Continuation active */
+	/* Default to MANIFOLD, NMGBOOL and Continuation active */
+	opts->method_flags |= FACETIZE_MANIFOLD;
 	opts->method_flags |= FACETIZE_NMGBOOL;
 	opts->method_flags |= FACETIZE_CONTINUATION;
     } else {
