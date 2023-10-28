@@ -1548,7 +1548,10 @@ static void
 tris_to_stl(const char *name, double *vertices, unsigned int *faces, int tricnt)
 {
     char output_file[MAXPATHLEN];
-    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, name, NULL);
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fname, "%s.stl", name);
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, bu_vls_cstr(&fname), NULL);
+    bu_vls_free(&fname);
     int fd = open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
     if (fd < 0)
 	return;
@@ -1614,7 +1617,7 @@ bool_meshes(
 	int UNUSED(b_op),
 	double *UNUSED(a_coords), int UNUSED(a_ccnt), unsigned int *UNUSED(a_tris), int UNUSED(a_tricnt),
 	double *UNUSED(b_coords), int UNUSED(b_ccnt), unsigned int *UNUSED(b_tris), int UNUSED(b_tricnt)
-	)
+	const char *UNUSED(lname), const char *UNUSED(rname))
 {
     return -1;
 }
@@ -1624,7 +1627,8 @@ bool_meshes(
 	double **o_coords, int *o_ccnt, unsigned int **o_tris, int *o_tricnt,
 	manifold::OpType b_op,
 	double *a_coords, int a_ccnt, unsigned int *a_tris, int a_tricnt,
-	double *b_coords, int b_ccnt, unsigned int *b_tris, int b_tricnt)
+	double *b_coords, int b_ccnt, unsigned int *b_tris, int b_tricnt,
+	const char *lname, const char *rname)
 {
     if (!o_coords || !o_ccnt || !o_tris || !o_tricnt)
 	return 0;
@@ -1663,8 +1667,8 @@ bool_meshes(
 	const char *evar = getenv("GED_MANIFOLD_DEBUG");
 	// write out the failing inputs to files to aid in debugging
 	if (strlen(evar)) {
-	    tris_to_stl("a.stl", a_coords, a_tris, a_tricnt);
-	    tris_to_stl("b.stl", b_coords, b_tris, b_tricnt);
+	    tris_to_stl(lname, a_coords, a_tris, a_tricnt);
+	    tris_to_stl(rname, b_coords, b_tris, b_tricnt);
 	    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.");
 	}
 	return 0;
@@ -1753,7 +1757,9 @@ _manifold_do_bool(
 	    (double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
 	    manifold_op,
 	    (double *)lmesh->vertices, lmesh->num_vertices, lmesh->faces, lmesh->num_faces,
-	    (double *)rmesh->vertices, rmesh->num_vertices, rmesh->faces, rmesh->num_faces
+	    (double *)rmesh->vertices, rmesh->num_vertices, rmesh->faces, rmesh->num_faces,
+	    tl->tr_d.td_name,
+	    tr->tr_d.td_name
 	    );
 
     // TODO - memory cleanup
