@@ -1519,7 +1519,6 @@ bot_to_mmesh(struct rt_bot_internal *bot)
 {
     struct manifold_mesh *omesh = NULL;
     BU_GET(omesh, struct manifold_mesh);
-    omesh->vertices = bot->vertices;
     omesh->num_vertices = bot->num_vertices;
     omesh->num_faces = bot->num_faces;
     omesh->faces = (unsigned int *)bu_calloc(bot->num_faces * 3, sizeof(unsigned int), "faces array");
@@ -1762,7 +1761,29 @@ _manifold_do_bool(
 	    tr->tr_d.td_name
 	    );
 
-    // TODO - memory cleanup
+    // Memory cleanup
+    if (tl->tr_d.td_r) {
+	nmg_km(tl->tr_d.td_r->m_p);
+	tl->tr_d.td_r = NULL;
+    }
+    if (tr->tr_d.td_r) {
+	nmg_km(tr->tr_d.td_r->m_p);
+	tr->tr_d.td_r = NULL;
+    }
+    if (tl->tr_d.td_d) {
+	struct manifold_mesh *km = (struct manifold_mesh *)tl->tr_d.td_d;
+	bu_free(km->faces, "faces");
+	bu_free(km->vertices, "vertices");
+	BU_PUT(km, struct manifold_mesh);
+	tl->tr_d.td_d = NULL;
+    }
+    if (tr->tr_d.td_d) {
+	struct manifold_mesh *km = (struct manifold_mesh *)tr->tr_d.td_d;
+	bu_free(km->faces, "faces");
+	bu_free(km->vertices, "vertices");
+	BU_PUT(km, struct manifold_mesh);
+	tr->tr_d.td_d = NULL;
+    }
 
     tp->tr_op = OP_TESS;
     tp->tr_d.td_r = NULL;
