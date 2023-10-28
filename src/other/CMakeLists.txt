@@ -124,7 +124,7 @@ endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
 
 
 # OpenNURBS Library
-if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/openNURBS)
   add_subdirectory(openNURBS)
   SetTargetFolder(openNURBS "Third Party Libraries")
   SetTargetFolder(openNURBS-static "Third Party Libraries")
@@ -148,7 +148,7 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
   BRLCAD_MANAGE_FILES(openNURBS_headers ${INCLUDE_DIR}/openNURBS)
   include("${CMAKE_CURRENT_SOURCE_DIR}/openNURBS.dist")
   CMAKEFILES_IN_DIR(openNURBS_ignore_files openNURBS)
-endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/openNURBS)
 
 
 # Poly2Tri CDT library
@@ -179,6 +179,24 @@ mark_as_advanced(POLY2TRI_LIBRARIES)
 mark_as_advanced(POLY2TRI_INCLUDE_DIR)
 mark_as_advanced(POLY2TRI_INCLUDE_DIRS)
 
+# Manifold is a geometry library for operating on manifold triangle meshes:
+# https://github.com/elalish/manifold
+# (current configuration is from https://github.com/starseeker/manifold)
+if ("cxx_std_17" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+  add_subdirectory(manifold)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/manifold.dist")
+  CMAKEFILES_IN_DIR(manifold_ignore_files manifold)
+  DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/manifold/Makefile")
+  set(MANIFOLD_LIBRARY "manifold" CACHE STRING "Manifold library" FORCE)
+  set(MANIFOLD_LIBRARIES "manifold" CACHE STRING "Manifold library" FORCE)
+  set(MANIFOLD_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/manifold/include" CACHE STRING "Directory containing manifold headers" FORCE)
+  set(MANIFOLD_INCLUDE_DIRS "${MANIFOLD_INCLUDE_DIR}" CACHE STRING "Directory containing manifold headers" FORCE)
+  SetTargetFolder(manifold "Third Party Libraries")
+endif("cxx_std_17" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+mark_as_advanced(MANIFOLD_LIBRARY)
+mark_as_advanced(MANIFOLD_LIBRARIES)
+mark_as_advanced(MANIFOLD_INCLUDE_DIR)
+mark_as_advanced(MANIFOLD_INCLUDE_DIRS)
 
 # Lightning Memory-Mapped Database (LMDB)
 # Fast key-value store database from OpenLDAP Project.

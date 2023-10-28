@@ -8,33 +8,18 @@ set(FACETIZE_INCLUDE_DIRS
 
 set(FACETIZE_LOCAL_INCLUDE_DIRS)
 
-# https://github.com/elalish/manifold
-set(MANIFOLD_INSTALL_DIR "")
-
-set(MANIFOLD_INCLUDE_DIRS "${MANIFOLD_INSTALL_DIR}/include")
-if(NOT "${MANIFOLD_INCLUDE_DIRS}" EQUAL "")
+if (TARGET manifold)
   set(FACETIZE_LOCAL_INCLUDE_DIRS
     ${FACETIZE_LOCAL_INCLUDE_DIRS}
     ${MANIFOLD_INCLUDE_DIRS}
     )
-endif(NOT "${MANIFOLD_INCLUDE_DIRS}" EQUAL "")
-
-set(FACETIZE_LIBS libged libbu)
-
-set(MANIFOLD_LIBRARIES
-  ${MANIFOLD_INSTALL_DIR}/lib/libmanifold.so
-  ${MANIFOLD_INSTALL_DIR}/lib/libcross_section.so
-  ${MANIFOLD_INSTALL_DIR}/lib/libcollider.so
-  ${MANIFOLD_INSTALL_DIR}/lib/libpolygon.so
-  ${MANIFOLD_INSTALL_DIR}/lib/libquickhull.so
-  )
-if (NOT "${MANIFOLD_LIBRARIES}" EQUAL "")
-  set(FACETIZE_LIBS ${FACETIZE_LIBS} ${MANIFOLD_LIBRARIES})
-endif (NOT "${MANIFOLD_LIBRARIES}" EQUAL "")
-
+  add_definitions(-DUSE_MANIFOLD)
+endif (TARGET manifold)
 # We want to include 3rd party libraries with -isystem - use
 # BRLCAD_LIB_INCLUDE_DIRS for that purpose
 BRLCAD_LIB_INCLUDE_DIRS(facetize FACETIZE_INCLUDE_DIRS FACETIZE_LOCAL_INCLUDE_DIRS)
+
+set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES})
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-facetize SHARED facetize.cpp facetize_log.c)

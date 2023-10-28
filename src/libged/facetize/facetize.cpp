@@ -31,7 +31,6 @@
 
 #include <string.h>
 
-#define USE_MANIFOLD
 #ifdef USE_MANIFOLD
 #include "manifold/manifold.h"
 #endif
