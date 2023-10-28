@@ -1281,7 +1281,6 @@ include/thrust/version.h
 include/thrust/zip_function.h
 include/utils.h
 include/vec.h
-src/.CMakeLists.txt.swp
 src/CMakeLists.txt
 src/QuickHull.cpp
 src/boolean3.cpp
