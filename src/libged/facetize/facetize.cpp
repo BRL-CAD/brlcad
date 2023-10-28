@@ -1557,13 +1557,15 @@ tris_to_stl(const char *name, double *vertices, unsigned int *faces, int tricnt)
     char buf[81];       /* need exactly 80 chars for header */
     memset(buf, 0, sizeof(buf));
     snprintf(buf, MAXPATHLEN, "Manifold left input %s", name);
-    write(fd, &buf, 80);
+    if (write(fd, &buf, 80) < 0)
+	perror("stl write failure\n");
 
      /* Write out number of triangles */
     unsigned char tot_buffer[4];
     *(uint32_t *)tot_buffer = htonl((unsigned long)tricnt);
     lswap((unsigned int *)tot_buffer);
-    write(fd, tot_buffer, 4);
+    if (write(fd, tot_buffer, 4) < 0)
+	perror("stl write failure\n");
 
     /* Write out the vertex data for each triangle */
     point_t A, B, C;
@@ -1603,7 +1605,8 @@ tris_to_stl(const char *name, double *vertices, unsigned int *faces, int tricnt)
 	for (int j = 0; j < 12; j++) {
 	    lswap((unsigned int *)&vert_buffer[j*4]);
 	}
-	write(fd, vert_buffer, 50);
+	if (write(fd, vert_buffer, 50) < 0)
+	    perror("stl write failure\n");
     }
 
     close(fd);
