@@ -35,6 +35,7 @@
 #include "manifold/manifold.h"
 #endif
 
+#include "bu/app.h"
 #include "bu/env.h"
 #include "bu/exit.h"
 #include "bu/hook.h"
@@ -1532,6 +1533,80 @@ bot_to_mmesh(struct rt_bot_internal *bot)
     return omesh;
 }
 
+/* Byte swaps a four byte value */
+static void
+lswap(unsigned int *v)
+{
+    unsigned int r;
+
+    r =*v;
+    *v = ((r & 0xff) << 24) | ((r & 0xff00) << 8) | ((r & 0xff0000) >> 8)
+	| ((r & 0xff000000) >> 24);
+}
+
+static void
+tris_to_stl(const char *name, double *vertices, unsigned int *faces, int tricnt)
+{
+    char output_file[MAXPATHLEN];
+    bu_dir(output_file, MAXPATHLEN, BU_DIR_CURR, name, NULL);
+    int fd = open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+    if (fd < 0)
+	return;
+    char buf[81];       /* need exactly 80 chars for header */
+    memset(buf, 0, sizeof(buf));
+    snprintf(buf, MAXPATHLEN, "Manifold left input %s", name);
+    write(fd, &buf, 80);
+
+     /* Write out number of triangles */
+    unsigned char tot_buffer[4];
+    *(uint32_t *)tot_buffer = htonl((unsigned long)tricnt);
+    lswap((unsigned int *)tot_buffer);
+    write(fd, tot_buffer, 4);
+
+    /* Write out the vertex data for each triangle */
+    point_t A, B, C;
+    vect_t BmA, CmA, norm;
+    unsigned long vi;
+    for (int i = 0; i < tricnt; i++) {
+	float flts[12];
+	float *flt_ptr;
+	unsigned char vert_buffer[50];
+
+	vi = 3*faces[3*i];
+	VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
+	vi = 3*faces[3*i+1];
+	VSET(B, vertices[vi], vertices[vi+1], vertices[vi+2]);
+	vi = 3*faces[3*i+2];
+	VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
+
+	VSUB2(BmA, B, A);
+	VSUB2(CmA, C, A);
+	//if (bot->orientation != RT_BOT_CW) {
+	    //VCROSS(norm, BmA, CmA);
+	VCROSS(norm, CmA, BmA);
+	VUNITIZE(norm);
+
+	memset(vert_buffer, 0, sizeof(vert_buffer));
+
+	flt_ptr = flts;
+	VMOVE(flt_ptr, norm);
+	flt_ptr += 3;
+	VMOVE(flt_ptr, A);
+	flt_ptr += 3;
+	VMOVE(flt_ptr, B);
+	flt_ptr += 3;
+	VMOVE(flt_ptr, C);
+
+	bu_cv_htonf(vert_buffer, (const unsigned char *)flts, 12);
+	for (int j = 0; j < 12; j++) {
+	    lswap((unsigned int *)&vert_buffer[j*4]);
+	}
+	write(fd, vert_buffer, 50);
+    }
+
+    close(fd);
+}
+
 #ifndef USE_MANIFOLD
 long
 bool_meshes(
@@ -1585,6 +1660,13 @@ bool_meshes(
 	}
     } catch (...) {
 	bu_log("Manifold boolean library threw failure\n");
+	const char *evar = getenv("GED_MANIFOLD_DEBUG");
+	// write out the failing inputs to files to aid in debugging
+	if (strlen(evar)) {
+	    tris_to_stl("a.stl", a_coords, a_tris, a_tricnt);
+	    tris_to_stl("b.stl", b_coords, b_tris, b_tricnt);
+	    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.");
+	}
 	return 0;
     }
     manifold::Mesh rmesh = result.GetMesh();
