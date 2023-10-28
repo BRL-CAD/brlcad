@@ -1,5 +1,0 @@
-/home/cyapp/manifold-install/lib/libmanifold.so
-/home/cyapp/manifold-install/include/manifold/cross_section.h
-/home/cyapp/manifold-install/include/manifold/manifold.h
-/home/cyapp/manifold-install/include/manifold/public.h
-/home/cyapp/manifold-install/include/manifold/sdf.h
