@@ -24,7 +24,7 @@ set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES})
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-facetize SHARED facetize.cpp facetize_log.c)
 target_link_libraries(ged-facetize ${FACETIZE_LIBS})
-set_property(TARGET ged-facetize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H MANIFOLD_IMPORTS)
+set_property(TARGET ged-facetize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H MANIFOLD_DLL_IMPORTS)
 VALIDATE_STYLE(ged-facetize facetize.cpp)
 PLUGIN_SETUP(ged-facetize ged)
 
