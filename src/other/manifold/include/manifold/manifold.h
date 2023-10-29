@@ -117,12 +117,12 @@ class Manifold {
    *  Constructors
    */
   ///@{
-  Manifold();
-  ~Manifold();
-  Manifold(const Manifold& other);
-  Manifold& operator=(const Manifold& other);
-  Manifold(Manifold&&) noexcept;
-  Manifold& operator=(Manifold&&) noexcept;
+  MANIFOLD_EXPORT Manifold();
+  MANIFOLD_EXPORT ~Manifold();
+  MANIFOLD_EXPORT Manifold(const Manifold& other);
+  MANIFOLD_EXPORT Manifold& operator=(const Manifold& other);
+  MANIFOLD_EXPORT Manifold(Manifold&&) noexcept;
+  MANIFOLD_EXPORT Manifold& operator=(Manifold&&) noexcept;
 
   Manifold(const MeshGL&, const std::vector<float>& propertyTolerance = {});
   MANIFOLD_EXPORT Manifold(const Mesh&);
