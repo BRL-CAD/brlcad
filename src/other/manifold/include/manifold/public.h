@@ -30,6 +30,26 @@
 #include <sstream>
 #endif
 
+#if defined(_WIN32)
+# define COMPILER_DLLEXPORT __declspec(dllexport)
+# define COMPILER_DLLIMPORT __declspec(dllimport)
+#else
+# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#endif
+
+#ifndef MANIFOLD_EXPORT
+#  if defined(P2T_DLL_EXPORTS) && defined(P2T_DLL_IMPORTS)
+#    error "Only P2T_DLL_EXPORTS or P2T_DLL_IMPORTS can be defined, not both."
+#  elif defined(P2T_DLL_EXPORTS)
+#    define MANIFOLD_EXPORT COMPILER_DLLEXPORT
+#  elif defined(P2T_DLL_IMPORTS)
+#    define MANIFOLD_EXPORT COMPILER_DLLIMPORT
+#  else
+#    define MANIFOLD_EXPORT
+#  endif
+#endif
+
 namespace manifold {
 
 constexpr float kTolerance = 1e-5;

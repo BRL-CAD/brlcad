@@ -125,7 +125,7 @@ class Manifold {
   Manifold& operator=(Manifold&&) noexcept;
 
   Manifold(const MeshGL&, const std::vector<float>& propertyTolerance = {});
-  Manifold(const Mesh&);
+  MANIFOLD_EXPORT Manifold(const Mesh&);
 
   static Manifold Smooth(const MeshGL&,
                          const std::vector<Smoothness>& sharpenedEdges = {});
@@ -157,7 +157,7 @@ class Manifold {
    *  Details of the manifold
    */
   ///@{
-  Mesh GetMesh() const;
+  MANIFOLD_EXPORT Mesh GetMesh() const;
   MeshGL GetMeshGL(glm::ivec3 normalIdx = glm::ivec3(0)) const;
   bool IsEmpty() const;
   enum class Error {
@@ -218,7 +218,7 @@ class Manifold {
    *  Combine two manifolds
    */
   ///@{
-  Manifold Boolean(const Manifold& second, OpType op) const;
+  MANIFOLD_EXPORT Manifold Boolean(const Manifold& second, OpType op) const;
   static Manifold BatchBoolean(const std::vector<Manifold>& manifolds,
                                OpType op);
   // Boolean operation shorthand
