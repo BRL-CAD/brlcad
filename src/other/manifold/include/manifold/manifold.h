@@ -174,7 +174,7 @@ class Manifold {
     FaceIDWrongLength,
     InvalidConstruction,
   };
-  Error Status() const;
+  MANIFOLD_EXPORT Error Status() const;
   int NumVert() const;
   int NumEdge() const;
   int NumTri() const;
