@@ -39,11 +39,11 @@
 #endif
 
 #ifndef MANIFOLD_EXPORT
-#  if defined(P2T_DLL_EXPORTS) && defined(P2T_DLL_IMPORTS)
-#    error "Only P2T_DLL_EXPORTS or P2T_DLL_IMPORTS can be defined, not both."
-#  elif defined(P2T_DLL_EXPORTS)
+#  if defined(MANIFOLD_DLL_EXPORTS) && defined(MANIFOLD_DLL_IMPORTS)
+#    error "Only MANIFOLD_DLL_EXPORTS or MANIFOLD_DLL_IMPORTS can be defined, not both."
+#  elif defined(MANIFOLD_DLL_EXPORTS)
 #    define MANIFOLD_EXPORT COMPILER_DLLEXPORT
-#  elif defined(P2T_DLL_IMPORTS)
+#  elif defined(MANIFOLD_DLL_IMPORTS)
 #    define MANIFOLD_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define MANIFOLD_EXPORT
