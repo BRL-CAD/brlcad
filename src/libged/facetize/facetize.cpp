@@ -1532,6 +1532,7 @@ bot_to_mmesh(struct rt_bot_internal *bot)
     return omesh;
 }
 
+#ifdef USE_MANIFOLD
 /* Byte swaps a four byte value */
 static void
 lswap(unsigned int *v)
@@ -1611,6 +1612,7 @@ tris_to_stl(const char *name, double *vertices, unsigned int *faces, int tricnt)
 
     close(fd);
 }
+#endif
 
 #ifndef USE_MANIFOLD
 long
@@ -1618,7 +1620,7 @@ bool_meshes(
 	double **UNUSED(o_coords), int *UNUSED(o_ccnt), unsigned int **UNUSED(o_tris), int *UNUSED(o_tricnt),
 	int UNUSED(b_op),
 	double *UNUSED(a_coords), int UNUSED(a_ccnt), unsigned int *UNUSED(a_tris), int UNUSED(a_tricnt),
-	double *UNUSED(b_coords), int UNUSED(b_ccnt), unsigned int *UNUSED(b_tris), int UNUSED(b_tricnt)
+	double *UNUSED(b_coords), int UNUSED(b_ccnt), unsigned int *UNUSED(b_tris), int UNUSED(b_tricnt),
 	const char *UNUSED(lname), const char *UNUSED(rname))
 {
     return -1;
@@ -1794,7 +1796,7 @@ _manifold_do_bool(
 
     return 0;
 #else
-    if (!tp || !tl || !tr || op < 0 || !vlfree || !tol)
+    if (!tp || !tl || !tr || op < 0 || !tol)
 	return -1;
 #endif
 

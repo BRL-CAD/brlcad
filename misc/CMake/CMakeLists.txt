@@ -39,6 +39,7 @@ set(cmake_ignore_files
   FindLINENOISE.cmake
   FindLMDB.cmake
   FindLibUV.cmake
+  FindMANIFOLD.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
   FindOpenMesh.cmake
