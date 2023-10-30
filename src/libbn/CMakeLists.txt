@@ -34,7 +34,7 @@ set(LIBBN_SOURCES
   )
 
 
-BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" "libbu")
+BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" "${libbn_deps}")
 set_target_properties(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)

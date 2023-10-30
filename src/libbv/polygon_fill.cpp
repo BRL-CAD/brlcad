@@ -19,7 +19,7 @@
  */
 /** @addtogroup libged */
 /** @{ */
-/** @file libged/polyclip.cpp
+/** @file libbv/polygon_fill.cpp
  *
  * Add internal lines to polygons to indicate "filled" areas.
  */
@@ -32,28 +32,19 @@
 #include "bu/vls.h"
 #include "bg/plane.h" /* bg_fit_plane */
 #include "bg/polygon.h"
+#include "bv/polygon.h"
 
 /* Note - line_slope encodes the fill line slope as a vector.  Doing it as a
  * this way instead of a single number allows us to handle vertical lines (i.e.
  * infinite slope) cleanly */
 struct bg_polygon *
-bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t line_spacing)
+bv_polygon_fill_segments(struct bg_polygon *poly, plane_t *vp, vect2d_t line_slope, fastf_t line_spacing)
 {
     struct bg_polygon poly_2d;
 
-    if (poly->num_contours < 1 || poly->contour[0].num_points < 3)
+    if (poly->num_contours < 1 || poly->contour[0].num_points < 3 || !vp)
 	return NULL;
 
-    // Fit the outer contour to get a 2D plane (bg_polygon is in principle a 3D data structure)
-    point_t pcenter;
-    vect_t  pnorm;
-    plane_t pl;
-    if (bg_fit_plane(&pcenter, &pnorm, poly->contour[0].num_points, poly->contour[0].point)) {
-	return NULL;
-    }
-    bg_plane_pt_nrml(&pl, pcenter, pnorm);
-
-    /* Project poly onto the fit plane. While we're at it, build the 2D AABB */
     vect2d_t b2d_min = {MAX_FASTF, MAX_FASTF};
     vect2d_t b2d_max = {-MAX_FASTF, -MAX_FASTF};
 
@@ -66,7 +57,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	poly_2d.contour[i].point = (point_t *)bu_calloc(poly->contour[i].num_points, sizeof(point_t), "pc_point");
 	for (size_t j = 0; j < poly->contour[i].num_points; ++j) {
 	    vect2d_t p2d;
-	    bg_plane_closest_pt(&p2d[0], &p2d[1], pl, poly->contour[i].point[j]);
+	    bg_plane_closest_pt(&p2d[0], &p2d[1], *vp, poly->contour[i].point[j]);
 	    VSET(poly_2d.contour[i].point[j], p2d[0], p2d[1], 0);
 	    // bounding box
 	    V2MINMAX(b2d_min, b2d_max, p2d);
@@ -89,7 +80,6 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
     bcenter[1] = (b2d_max[1] - b2d_min[1]) * 0.5 + b2d_min[1];
     fastf_t ldiag = DIST_PNT2_PNT2(b2d_max, b2d_min);
     V2MOVE(lseg, line_slope);
-    lseg[0] = -1 * lseg[0]; // Looks like the projection flips this...
     V2UNITIZE(lseg);
     int dir_step_cnt = (int)(0.5*ldiag / fabs(line_spacing) + 1);
 
@@ -151,7 +141,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
      * fill lines */
     mat_t m;
     MAT_IDN(m);
-    struct bg_polygon *fpoly = bg_clip_polygon(bg_Intersection, &poly_lines, &poly_2d, CLIPPER_MAX, m, m);
+    struct bg_polygon *fpoly = bg_clip_polygon(bg_Intersection, &poly_lines, &poly_2d, CLIPPER_MAX, NULL);
     if (!fpoly || !fpoly->num_contours) {
 	bg_polygon_free(&poly_lines);
 	bg_polygon_free(&poly_2d);
@@ -179,7 +169,7 @@ bg_polygon_fill_segments(struct bg_polygon *poly, vect2d_t line_slope, fastf_t l
 	poly_fill->contour[i].num_points = fpoly->contour[i].num_points;
 	poly_fill->contour[i].point = (point_t *)bu_calloc(fpoly->contour[i].num_points, sizeof(point_t), "f_point");
 	for (size_t j = 0; j < fpoly->contour[i].num_points; ++j) {
-	    bg_plane_pt_at(&poly_fill->contour[i].point[j], pl, fpoly->contour[i].point[j][0], fpoly->contour[i].point[j][1]);
+	    bg_plane_pt_at(&poly_fill->contour[i].point[j], *vp, fpoly->contour[i].point[j][0], fpoly->contour[i].point[j][1]);
 	}
     }
 

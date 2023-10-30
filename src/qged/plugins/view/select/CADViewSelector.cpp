@@ -35,7 +35,6 @@
 #include "bu/str.h"
 #include "bg/aabb_ray.h"
 #include "bg/plane.h"
-#include "bg/lod.h"
 
 #include "qtcad/QgSelectFilter.h"
 #include "./CADViewSelector.h"

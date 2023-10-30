@@ -1,6 +1,5 @@
 set(man3_EN
-  libfb.xml
-  libplot3.xml
+  libbv.xml
   libpkg.xml
   librt.xml
   libwdb.xml

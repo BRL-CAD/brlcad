@@ -3,7 +3,10 @@ set(bv_headers
   defines.h
   events.h
   faceplate.h
+  lod.h
   plot3.h
+  polygon.h
+  snap.h
   tcl_data.h
   tig.h
   util.h

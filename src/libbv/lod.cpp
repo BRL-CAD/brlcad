@@ -55,6 +55,7 @@
  */
 
 #include "common.h"
+#include <cstring>
 #include <stdlib.h>
 #include <map>
 #include <set>
@@ -76,7 +77,6 @@
 
 extern "C" {
 #define XXH_STATIC_LINKING_ONLY
-#define XXH_IMPLEMENTATION
 #include "xxhash.h"
 
 #include "lmdb.h"
@@ -92,11 +92,13 @@ extern "C" {
 #include "bu/path.h"
 #include "bu/str.h"
 #include "bu/time.h"
-#include "bv/plot3.h"
-#include "bg/lod.h"
 #include "bg/plane.h"
 #include "bg/sat.h"
 #include "bg/trimesh.h"
+#include "bv/plot3.h"
+#include "bv/lod.h"
+#include "bv/util.h"
+#include "bv/view_sets.h"
 
 // Number of levels of detail to define
 #define POP_MAXLEVEL 16
@@ -280,7 +282,7 @@ _scene_radius(point_t *sbbc, fastf_t *radius, struct bview *v)
 }
 
 void
-bg_view_bounds(struct bview *v)
+bv_view_bounds(struct bview *v)
 {
     if (!v || !v->gv_width || !v->gv_height)
 	return;
@@ -368,7 +370,7 @@ _find_active_objs(std::set<struct bv_scene_obj *> &active, struct bv_scene_obj *
 }
 
 int
-bg_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
+bv_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
 {
     if (!v || !sset || !v->gv_width || !v->gv_height)
 	return 0;
@@ -460,7 +462,7 @@ bg_view_objs_select(struct bu_ptbl *sset, struct bview *v, int x, int y)
 }
 
 int
-bg_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, int x2, int y2)
+bv_view_objs_rect_select(struct bu_ptbl *sset, struct bview *v, int x1, int y1, int x2, int y2)
 {
     if (!v || !sset || !v->gv_width || !v->gv_height)
 	return 0;
@@ -607,7 +609,7 @@ _obj_visible(struct bv_scene_obj *s, struct bview *v)
     return 0;
 }
 
-struct bg_mesh_lod_context_internal {
+struct bv_mesh_lod_context_internal {
     MDB_env *lod_env;
     MDB_txn *lod_txn;
     MDB_dbi lod_dbi;
@@ -619,8 +621,8 @@ struct bg_mesh_lod_context_internal {
     struct bu_vls *fname;
 };
 
-struct bg_mesh_lod_context *
-bg_mesh_lod_context_create(const char *name)
+struct bv_mesh_lod_context *
+bv_mesh_lod_context_create(const char *name)
 {
     size_t mreaders = 0;
     int ncpus = 0;
@@ -644,10 +646,10 @@ bg_mesh_lod_context_create(const char *name)
     bu_vls_printf(&fname, "_%llu", hash);
 
     // Create the context
-    struct bg_mesh_lod_context *c;
-    BU_GET(c, struct bg_mesh_lod_context);
-    BU_GET(c->i, struct bg_mesh_lod_context_internal);
-    struct bg_mesh_lod_context_internal *i = c->i;
+    struct bv_mesh_lod_context *c;
+    BU_GET(c, struct bv_mesh_lod_context);
+    BU_GET(c->i, struct bv_mesh_lod_context_internal);
+    struct bv_mesh_lod_context_internal *i = c->i;
     BU_GET(i->fname, struct bu_vls);
     bu_vls_init(i->fname);
     bu_vls_sprintf(i->fname, "%s", bu_vls_cstr(&fname));
@@ -709,7 +711,7 @@ bg_mesh_lod_context_create(const char *name)
 	format_file.close();
 	if (disk_format_version	!= CACHE_CURRENT_FORMAT) {
 	    bu_log("Old mesh lod cache (%zd) found - clearing\n", disk_format_version);
-	    bg_mesh_lod_clear_cache(NULL, 0);
+	    bv_mesh_lod_clear_cache(NULL, 0);
 	}
 	FILE *fp = fopen(dir, "w");
 	if (!fp)
@@ -747,13 +749,13 @@ lod_context_close_lod_fail:
     mdb_env_close(i->lod_env);
 lod_context_fail:
     bu_vls_free(&fname);
-    BU_PUT(c->i, struct bg_mesh_lod_context_internal);
-    BU_PUT(c, struct bg_mesh_lod_context);
+    BU_PUT(c->i, struct bv_mesh_lod_context_internal);
+    BU_PUT(c, struct bv_mesh_lod_context);
     return NULL;
 }
 
 void
-bg_mesh_lod_context_destroy(struct bg_mesh_lod_context *c)
+bv_mesh_lod_context_destroy(struct bv_mesh_lod_context *c)
 {
     if (!c)
 	return;
@@ -761,12 +763,12 @@ bg_mesh_lod_context_destroy(struct bg_mesh_lod_context *c)
     mdb_env_close(c->i->lod_env);
     bu_vls_free(c->i->fname);
     BU_PUT(c->i->fname, struct bu_vls);
-    BU_PUT(c->i, struct bg_mesh_lod_context_internal);
-    BU_PUT(c, struct bg_mesh_lod_context);
+    BU_PUT(c->i, struct bv_mesh_lod_context_internal);
+    BU_PUT(c, struct bv_mesh_lod_context);
 }
 
 unsigned long long
-bg_mesh_lod_key_get(struct bg_mesh_lod_context *c, const char *name)
+bv_mesh_lod_key_get(struct bv_mesh_lod_context *c, const char *name)
 {
     MDB_val mdb_key, mdb_data;
 
@@ -805,7 +807,7 @@ bg_mesh_lod_key_get(struct bg_mesh_lod_context *c, const char *name)
 }
 
 int
-bg_mesh_lod_key_put(struct bg_mesh_lod_context *c, const char *name, unsigned long long key)
+bv_mesh_lod_key_put(struct bv_mesh_lod_context *c, const char *name, unsigned long long key)
 {
     // Database object names may be of arbitrary length - hash
     // to get something appropriate for a lookup key
@@ -849,7 +851,7 @@ class rec {
 
 
 class POPState;
-struct bg_mesh_lod_internal {
+struct bv_mesh_lod_internal {
     POPState *s;
 };
 
@@ -857,10 +859,10 @@ class POPState {
     public:
 
 	// Create cached data (doesn't create a usable container)
-	POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_face_cnt_threshold_ratio);
+	POPState(struct bv_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_face_cnt_threshold_ratio);
 
 	// Load cached data (DOES create a usable container)
-	POPState(struct bg_mesh_lod_context *ctx, unsigned long long key);
+	POPState(struct bv_mesh_lod_context *ctx, unsigned long long key);
 
 	// Cleanup
 	~POPState();
@@ -977,7 +979,7 @@ class POPState {
 	int *faces_array = NULL;
 
 	// Context
-	struct bg_mesh_lod_context *c;
+	struct bv_mesh_lod_context *c;
 };
 
 void
@@ -1094,7 +1096,7 @@ POPState::tri_process()
     //bu_log("Max LoD POP level: %zd\n", max_pop_threshold_level);
 }
 
-POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_facecnt_threshold_ratio)
+POPState::POPState(struct bv_mesh_lod_context *ctx, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, fastf_t pop_facecnt_threshold_ratio)
 {
     // Store the context
     c = ctx;
@@ -1189,7 +1191,7 @@ POPState::POPState(struct bg_mesh_lod_context *ctx, const point_t *v, size_t vcn
 #endif
 }
 
-POPState::POPState(struct bg_mesh_lod_context *ctx, unsigned long long key)
+POPState::POPState(struct bv_mesh_lod_context *ctx, unsigned long long key)
 {
     // Store the context
     c = ctx;
@@ -1923,7 +1925,7 @@ POPState::plot(const char *root)
 
 
 extern "C" unsigned long long
-bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, double fratio)
+bv_mesh_lod_cache(struct bv_mesh_lod_context *c, const point_t *v, size_t vcnt, const vect_t *vn, int *faces, size_t fcnt, unsigned long long user_key, double fratio)
 {
     unsigned long long key = 0;
 
@@ -1941,7 +1943,7 @@ bg_mesh_lod_cache(struct bg_mesh_lod_context *c, const point_t *v, size_t vcnt, 
 
 
 extern "C" unsigned long long
-bg_mesh_lod_custom_key(void *data, size_t data_size)
+bv_mesh_lod_custom_key(void *data, size_t data_size)
 {
     XXH64_state_t h_state;
     XXH64_reset(&h_state, 0);
@@ -1954,7 +1956,7 @@ bg_mesh_lod_custom_key(void *data, size_t data_size)
 
 
 extern "C" struct bv_mesh_lod *
-bg_mesh_lod_create(struct bg_mesh_lod_context *c, unsigned long long key)
+bv_mesh_lod_create(struct bv_mesh_lod_context *c, unsigned long long key)
 {
     if (!key)
 	return NULL;
@@ -1971,8 +1973,8 @@ bg_mesh_lod_create(struct bg_mesh_lod_context *c, unsigned long long key)
     // Set up info container
     struct bv_mesh_lod *lod;
     BU_GET(lod, struct bv_mesh_lod);
-    BU_GET(lod->i, struct bg_mesh_lod_internal);
-    ((struct bg_mesh_lod_internal *)lod->i)->s = p;
+    BU_GET(lod->i, struct bv_mesh_lod_internal);
+    ((struct bv_mesh_lod_internal *)lod->i)->s = p;
     lod->c = (void *)c;
     p->lod = lod;
 
@@ -1987,15 +1989,15 @@ bg_mesh_lod_create(struct bg_mesh_lod_context *c, unsigned long long key)
 }
 
 extern "C" void
-bg_mesh_lod_destroy(struct bv_mesh_lod *lod)
+bv_mesh_lod_destroy(struct bv_mesh_lod *lod)
 {
     if (!lod)
 	return;
 
-    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)lod->i;
+    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)lod->i;
     delete i->s;
     i->s = NULL;
-    BU_PUT(i, struct bg_mesh_lod_internal);
+    BU_PUT(i, struct bv_mesh_lod_internal);
     lod->i = NULL;
     BU_PUT(lod, struct bv_mesh_lod);
 }
@@ -2011,13 +2013,13 @@ dlist_stale(struct bv_scene_obj *s)
 }
 
 extern "C" int
-bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
+bv_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 {
     if (!s)
 	return -1;
 
     struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
-    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)l->i;
+    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
     POPState *sp = i->s;
     if (level < 0)
 	return sp->curr_level;
@@ -2050,7 +2052,7 @@ bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 	l->pcnt = (int)sp->lod_tri_pnts_snapped.size();
     }
 
-    bv_log(2, "bg_mesh_lod_level %s[%d](%d): %d", bu_vls_cstr(&s->s_name), level, reset, l->fcnt);
+    bv_log(2, "bv_mesh_lod_level %s[%d](%d): %d", bu_vls_cstr(&s->s_name), level, reset, l->fcnt);
 
     // If the data changed, any Display List we may have previously generated
     // is now obsolete
@@ -2062,7 +2064,7 @@ bg_mesh_lod_level(struct bv_scene_obj *s, int level, int reset)
 
 
 extern "C" int
-bg_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset)
+bv_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset)
 {
     if (!s || !v)
 	return -1;
@@ -2070,25 +2072,25 @@ bg_mesh_lod_view(struct bv_scene_obj *s, struct bview *v, int reset)
     if (!l)
 	return -1;
 
-    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)l->i;
+    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
     POPState *sp = i->s;
     int ret = sp->curr_level;
     int vscale = (int)((double)sp->get_level(v->gv_size) * v->gv_s->lod_scale);
     vscale = (vscale < 0) ? 0 : vscale;
     vscale = (vscale >= POP_MAXLEVEL) ? POP_MAXLEVEL-1 : vscale;
 
-    bv_log(2, "bg_mesh_lod_view %s[%s][%d]", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name), vscale);
+    bv_log(2, "bv_mesh_lod_view %s[%s][%d]", bu_vls_cstr(&s->s_name), bu_vls_cstr(&v->gv_name), vscale);
 
     // If the object is not visible in the scene, don't change the data
     //bu_log("min: %f %f %f max: %f %f %f\n", V3ARGS(s->bmin), V3ARGS(s->bmax));
     if (_obj_visible(s, v))
-	ret = bg_mesh_lod_level(s, vscale, reset);
+	ret = bv_mesh_lod_level(s, vscale, reset);
 
     return ret;
 }
 
 extern "C" void
-bg_mesh_lod_memshrink(struct bv_scene_obj *s)
+bv_mesh_lod_memshrink(struct bv_scene_obj *s)
 {
     if (!s)
 	return;
@@ -2096,14 +2098,14 @@ bg_mesh_lod_memshrink(struct bv_scene_obj *s)
     if (!l)
 	return;
 
-    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)l->i;
+    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
     POPState *sp = i->s;
     sp->shrink_memory();
     bu_log("memshrink\n");
 }
 
 static void
-bg_clear(const char *d)
+bv_clear(const char *d)
 {
     if (bu_file_directory(d)) {
 	char **filenames;
@@ -2115,7 +2117,7 @@ bg_clear(const char *d)
 		continue;
 	    char cdir[MAXPATHLEN] = {0};
 	    bu_dir(cdir, MAXPATHLEN, d, filenames[i], NULL);
-	    bg_clear((const char *)cdir);
+	    bv_clear((const char *)cdir);
 	}
 	bu_argv_free(nfiles, filenames);
     }
@@ -2123,7 +2125,7 @@ bg_clear(const char *d)
 }
 
 static void
-cache_del(struct bg_mesh_lod_context *c, unsigned long long hash, const char *component)
+cache_del(struct bv_mesh_lod_context *c, unsigned long long hash, const char *component)
 {
     // Construct lookup key
     MDB_val mdb_key;
@@ -2139,7 +2141,7 @@ cache_del(struct bg_mesh_lod_context *c, unsigned long long hash, const char *co
 
 
 extern "C" void
-bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
+bv_mesh_lod_clear_cache(struct bv_mesh_lod_context *c, unsigned long long key)
 {
     char dir[MAXPATHLEN];
 
@@ -2236,11 +2238,11 @@ bg_mesh_lod_clear_cache(struct bg_mesh_lod_context *c, unsigned long long key)
 
     // Clear everything
     bu_dir(dir, MAXPATHLEN, BU_DIR_CACHE, POP_CACHEDIR, NULL);
-    bg_clear((const char *)dir);
+    bv_clear((const char *)dir);
 }
 
 extern "C" void
-bg_mesh_lod_detail_setup_clbk(
+bv_mesh_lod_detail_setup_clbk(
 	struct bv_mesh_lod *lod,
 	int (*clbk)(struct bv_mesh_lod *, void *),
 	void *clbk_data
@@ -2249,14 +2251,14 @@ bg_mesh_lod_detail_setup_clbk(
     if (!lod || !clbk)
 	return;
 
-    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)lod->i;
+    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)lod->i;
     POPState *s = i->s;
     s->full_detail_setup_clbk = clbk;
     s->detail_clbk_data = clbk_data;
 }
 
 extern "C" void
-bg_mesh_lod_detail_clear_clbk(
+bv_mesh_lod_detail_clear_clbk(
 	struct bv_mesh_lod *lod,
 	int (*clbk)(struct bv_mesh_lod *, void *)
 	)
@@ -2264,13 +2266,13 @@ bg_mesh_lod_detail_clear_clbk(
     if (!lod || !clbk)
 	return;
 
-    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)lod->i;
+    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)lod->i;
     POPState *s = i->s;
     s->full_detail_clear_clbk = clbk;
 }
 
 extern "C" void
-bg_mesh_lod_detail_free_clbk(
+bv_mesh_lod_detail_free_clbk(
 	struct bv_mesh_lod *lod,
 	int (*clbk)(struct bv_mesh_lod *, void *)
 	)
@@ -2278,18 +2280,18 @@ bg_mesh_lod_detail_free_clbk(
     if (!lod || !clbk)
 	return;
 
-    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)lod->i;
+    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)lod->i;
     POPState *s = i->s;
     s->full_detail_free_clbk = clbk;
 }
 
 void
-bg_mesh_lod_free(struct bv_scene_obj *s)
+bv_mesh_lod_free(struct bv_scene_obj *s)
 {
     if (!s || !s->draw_data)
 	return;
     struct bv_mesh_lod *l = (struct bv_mesh_lod *)s->draw_data;
-    struct bg_mesh_lod_internal *i = (struct bg_mesh_lod_internal *)l->i;
+    struct bv_mesh_lod_internal *i = (struct bv_mesh_lod_internal *)l->i;
     delete i->s;
     s->draw_data = NULL;
 }

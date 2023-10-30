@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- lifted from troff+man by doclifter -->
-<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='libplot33'>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='libbv3'>
 <refmeta>
-    <refentrytitle>LIBPLOT3
+    <refentrytitle>LIBBV
 </refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
@@ -10,8 +10,8 @@
 </refmeta>
 
 <refnamediv>
-<refname>libplot3</refname>
-<refpurpose>graphics interface subroutines</refpurpose>
+<refname>libbv</refname>
+<refpurpose>BRL-CAD view graphics interface subroutines</refpurpose>
 </refnamediv>
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
@@ -246,7 +246,7 @@ of the effect of the remaining functions.</para>
 </refsect1>
 
 <refsect1 xml:id='files'><title>FILES</title>
-<para>/usr/brlcad/lib/libplot3<literal>.</literal>a	produces output for
+<para>/usr/brlcad/lib/libbv<literal>.</literal>a	produces output for
 <citerefentry><refentrytitle>plot</refentrytitle><manvolnum>1G</manvolnum></citerefentry>
 filters</para>
 <!-- .br -->

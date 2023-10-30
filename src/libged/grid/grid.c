@@ -31,7 +31,7 @@
 
 #include "vmath.h"
 #include "bv.h"
-#include "bg/lseg.h"
+#include "bv/snap.h"
 
 #include "../ged_private.h"
 

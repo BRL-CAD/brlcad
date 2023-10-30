@@ -31,12 +31,10 @@ set(man1_EN
   bwthresh.xml
   cad_boundp.xml
   cad_parea.xml
-  canonize.xml
   coil.xml
   comgeom-g.xml
   conv-vg2g.xml
   cv.xml
-  db.xml
   dbclean.xml
   dbupgrade.xml
   decimate.xml
@@ -52,7 +50,6 @@ set(man1_EN
   fbclear.xml
   fbcmap.xml
   fbcolor.xml
-  fbed.xml
   fbfade.xml
   fbframe.xml
   fbfree.xml
@@ -94,12 +91,9 @@ set(man1_EN
   icv.xml
   iges-g.xml
   imgdims.xml
-  ir-X.xml
-  irdisp.xml
   loop.xml
   mac-pix.xml
   mged.xml
-  morphedit.xml
   nastran-g.xml
   nirt.xml
   obj-g.xml
@@ -120,7 +114,6 @@ set(man1_EN
   pixborder.xml
   pixbustup.xml
   pixclump.xml
-  pixcmp.xml
   pixcolors.xml
   pixcrop.xml
   pixdiff.xml
@@ -155,8 +148,6 @@ set(man1_EN
   png-bw.xml
   png-fb.xml
   png-pix.xml
-  pp-fb.xml
-  proe-g.xml
   random.xml
   remrt.xml
   reshoot.xml

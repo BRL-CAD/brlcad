@@ -2,13 +2,13 @@
 #include "RenderHandler.h"
 
 void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-	if (info.getInfo("classification") == "UNCLASSIFIED") {	//Green
+	if (info.getInfo("classification") == "UNCLASSIFIED") {		//Green
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 122, 51));
 	}
-	else if (info.getInfo("classification") == "CONFIDENTIAL") {	//Blue
+	else if (info.getInfo("classification") == "CONFIDENTIAL") {//Blue
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 51, 160));
 	}
-	else if (info.getInfo("classification") == "SECRET") {	//Red
+	else if (info.getInfo("classification") == "SECRET") {		//Red
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(200, 16, 46));
 	}
 	else if (info.getInfo("classification") == "TOP SECRET") {	//Orange
@@ -39,14 +39,26 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	}
 	//img.drawImageFitted(endTextXPosition-100, offsetY, 100, 90, "../../../src/gtools/rgen/brlLogo.jpg");
 	std::cout << "TOPPP: " << endTextXPosition << std::endl;
+	//cv::Mat bLogo = imread("../src/gtools/rgen/brlLogo1.jpg", cv::IMREAD_UNCHANGED);
+	//imshow("Window Name", bLogo);
+	//img.drawImage(endTextXPosition-100, offsetY, 100, 90, "../src/gtools/rgen/brl-logo.png");
+	img.drawImageFitted(3200, 10, 200, 150, "../src/gtools/rgen/brlLogo.jpg");
 }
 
 void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-	//Draw black rectangle
-	if (info.getInfo("classification") == "CONFIDENTIAL") {
-		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 255));
+	if (info.getInfo("classification") == "UNCLASSIFIED") {		//Green
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 122, 51));
 	}
-	else {
+	else if (info.getInfo("classification") == "CONFIDENTIAL") {//Blue
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 51, 160));
+	}
+	else if (info.getInfo("classification") == "SECRET") {		//Red
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(200, 16, 46));
+	}
+	else if (info.getInfo("classification") == "TOP SECRET") {	//Orange
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(255, 103, 31));
+	}
+	else {	//Draw black rectangle
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
 	}
 

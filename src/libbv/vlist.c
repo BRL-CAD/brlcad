@@ -31,6 +31,7 @@
 #include "bu/list.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#define PLOT3_IMPLEMENTATION
 #include "bv/plot3.h"
 #include "bv/vlist.h"
 #include "bv/util.h"

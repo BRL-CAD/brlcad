@@ -41,8 +41,8 @@
 #include "bu/opt.h"
 #include "bu/sort.h"
 #include "bv/defines.h"
-#include "bg/lod.h"
 #include "bg/sat.h"
+#include "bv/lod.h"
 #include "nmg.h"
 #include "rt/view.h"
 
@@ -278,7 +278,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 
 	// We need the key to look up the LoD data from the cache, and if we don't
 	// already have cache data for this bot we need to generate it.
-	unsigned long long key = bg_mesh_lod_key_get(d->mesh_c, dp->d_namep);
+	unsigned long long key = bv_mesh_lod_key_get(d->mesh_c, dp->d_namep);
 	if (!key) {
 	    // We don't have a key associated with the name.  Get and check the BoT
 	    // data itself, creating the LoD data if we don't already have it
@@ -290,8 +290,8 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 		return;
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 	    RT_BOT_CK_MAGIC(bot);
-	    key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
-	    bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
+	    key = bv_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
+	    bv_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
 	    rt_db_free_internal(&dbintern);
 	}
 	if (!key)
@@ -299,11 +299,11 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 
 	// Once we have a valid key, proceed to create the necessary
 	// data structures and objects.
-	struct bv_mesh_lod *lod = bg_mesh_lod_create(d->mesh_c, key);
+	struct bv_mesh_lod *lod = bv_mesh_lod_create(d->mesh_c, key);
 	if (!lod) {
 	    // Stale key?  Clear it and try a regeneration
 	    unsigned long long old_key = key;
-	    bg_mesh_lod_clear_cache(d->mesh_c, key);
+	    bv_mesh_lod_clear_cache(d->mesh_c, key);
 
 	    // Load mesh and process
 	    struct rt_db_internal dbintern;
@@ -314,8 +314,8 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 		return;
 	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
 	    RT_BOT_CK_MAGIC(bot);
-	    key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
-	    bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
+	    key = bv_mesh_lod_cache(d->mesh_c, (const point_t *)bot->vertices, bot->num_vertices, NULL, bot->faces, bot->num_faces, 0, 0.66);
+	    bv_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
 	    rt_db_free_internal(&dbintern);
 
 	    // Sanity
@@ -323,14 +323,14 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 		bu_log("%s: LoD lookup by key failed, but regeneration generated the same key (?)\n", dp->d_namep);
 		return;
 	    }
-	    unsigned long long new_key = bg_mesh_lod_key_get(d->mesh_c, dp->d_namep);
+	    unsigned long long new_key = bv_mesh_lod_key_get(d->mesh_c, dp->d_namep);
 	    if (new_key == old_key) {
 		bu_log("%s: LoD regenerated with new key, but key lookup still returns old key (?)\n", dp->d_namep);
 		return;
 	    }
 
 	    // If after all that we STILL don't get an LoD struct, give up
-	    lod = bg_mesh_lod_create(d->mesh_c, key);
+	    lod = bv_mesh_lod_create(d->mesh_c, key);
 	    if (!lod)
 		return;
 	}
@@ -361,16 +361,16 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	cbd->dp = dp;
 	cbd->res = &rt_uniresource;
 	cbd->intern = NULL;
-	bg_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
-	bg_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
-	bg_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
+	bv_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
+	bv_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
+	bv_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
 
 	// LoD will need to re-check its level settings whenever the view changes
-	vo->s_update_callback = &bg_mesh_lod_view;
-	vo->s_free_callback = &bg_mesh_lod_free;
+	vo->s_update_callback = &bv_mesh_lod_view;
+	vo->s_free_callback = &bv_mesh_lod_free;
 
 	// Initialize the LoD data to the current view
-	int level = bg_mesh_lod_view(vo, vo->s_v, 0);
+	int level = bv_mesh_lod_view(vo, vo->s_v, 0);
 	if (level < 0) {
 	    bu_log("Error loading info for initial LoD view\n");
 	}
@@ -379,7 +379,7 @@ bot_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	vo->s_type_flags |= BV_MESH_LOD;
     }
 
-    bg_mesh_lod_view(vo, v, 0);
+    bv_mesh_lod_view(vo, v, 0);
     bv_obj_stale(vo);
 
     return;
@@ -420,7 +420,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 
 	// We need the key to look up the LoD data from the cache, and if we don't
 	// already have cache data for this brep we need to generate it.
-	unsigned long long key = bg_mesh_lod_key_get(d->mesh_c, dp->d_namep);
+	unsigned long long key = bv_mesh_lod_key_get(d->mesh_c, dp->d_namep);
 	if (!key) {
 	    // We don't have a key associated with the name.  Get and check the
 	    // Brep data itself, creating the mesh data and the corresponding LoD
@@ -428,14 +428,14 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	    struct bu_external ext = BU_EXTERNAL_INIT_ZERO;
 	    if (db_get_external(&ext, dp, dbip))
 		return;
-	    key = bg_mesh_lod_custom_key((void *)ext.ext_buf,  ext.ext_nbytes);
+	    key = bv_mesh_lod_custom_key((void *)ext.ext_buf,  ext.ext_nbytes);
 	    bu_free_external(&ext);
 	    if (!key)
 		return;
-	    lod = bg_mesh_lod_create(d->mesh_c, key);
+	    lod = bv_mesh_lod_create(d->mesh_c, key);
 	    if (!lod) {
 		// Just in case we have a stale key...
-		bg_mesh_lod_clear_cache(d->mesh_c, key);
+		bv_mesh_lod_clear_cache(d->mesh_c, key);
 
 		struct rt_db_internal dbintern;
 		RT_DB_INTERNAL_INIT(&dbintern);
@@ -464,10 +464,10 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 
 		// Because we won't have the internal data to use for a full detail scenario, we set the ratio
 		// to 1 rather than .66 for breps...
-		key = bg_mesh_lod_cache(d->mesh_c, (const point_t *)pnts, pnt_cnt, normals, faces, face_cnt, key, 1);
+		key = bv_mesh_lod_cache(d->mesh_c, (const point_t *)pnts, pnt_cnt, normals, faces, face_cnt, key, 1);
 
 		if (key)
-		    bg_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
+		    bv_mesh_lod_key_put(d->mesh_c, dp->d_namep, key);
 
 		rt_db_free_internal(&dbintern);
 
@@ -482,7 +482,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	// Once we have a valid key, proceed to create the necessary
 	// data structures and objects.  If the above didn't get us
 	// a valid mesh, no point in trying further
-	lod = bg_mesh_lod_create(d->mesh_c, key);
+	lod = bv_mesh_lod_create(d->mesh_c, key);
 	if (!lod)
 	    return;
 
@@ -512,16 +512,16 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	cbd->dp = dp;
 	cbd->res = &rt_uniresource;
 	cbd->intern = NULL;
-	bg_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
-	bg_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
-	bg_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
+	bv_mesh_lod_detail_setup_clbk(lod, &bot_mesh_info_clbk, (void *)cbd);
+	bv_mesh_lod_detail_clear_clbk(lod, &bot_mesh_info_clear_clbk);
+	bv_mesh_lod_detail_free_clbk(lod, &bot_mesh_info_free_clbk);
 
 	// LoD will need to re-check its level settings whenever the view changes
-	vo->s_update_callback = &bg_mesh_lod_view;
-	vo->s_free_callback = &bg_mesh_lod_free;
+	vo->s_update_callback = &bv_mesh_lod_view;
+	vo->s_free_callback = &bv_mesh_lod_free;
 
 	// Initialize the LoD data to the current view
-	int level = bg_mesh_lod_view(vo, vo->s_v, 0);
+	int level = bv_mesh_lod_view(vo, vo->s_v, 0);
 	if (level < 0) {
 	    bu_log("Error loading info for initial LoD view\n");
 	}
@@ -530,7 +530,7 @@ brep_adaptive_plot(struct bv_scene_obj *s, struct bview *v)
 	vo->s_type_flags |= BV_MESH_LOD;
     }
 
-    bg_mesh_lod_view(vo, vo->s_v, 0);
+    bv_mesh_lod_view(vo, vo->s_v, 0);
     bv_obj_stale(vo);
 
     return;

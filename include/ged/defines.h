@@ -36,6 +36,7 @@
 #include "bv/defines.h"
 #include "rt/search.h"
 #include "bv/defines.h"
+#include "bv/lod.h"
 #include "dm/fbserv.h" // for fbserv_obj
 #include "rt/wdb.h" // for struct rt_wdb
 
@@ -217,7 +218,7 @@ struct ged {
     struct bu_ptbl              ged_free_views;
 
     /* Drawing data associated with this .g file */
-    struct bg_mesh_lod_context  *ged_lod;
+    struct bv_mesh_lod_context  *ged_lod;
 
 
     void                        *u_data; /**< @brief User data associated with this ged instance */
