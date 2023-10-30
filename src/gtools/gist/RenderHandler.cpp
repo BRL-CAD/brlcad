@@ -21,8 +21,8 @@
 #include "RenderHandler.h"
 
 
-LayoutChoice::LayoutChoice(std::string map, bool lockRows)
-    : map(map), lockRows(lockRows), coordinates(), dimDetails()
+LayoutChoice::LayoutChoice(std::string l_map, bool l_lockRows)
+    : map(l_map), lockRows(l_lockRows), coordinates(), dimDetails()
 {
     // make a vector to store coordinates of each item on the map AND ALSO the ambient occlusion view
     for (size_t i = 0; i < map.size() + 1; ++i)
@@ -188,6 +188,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 			continue;
 		    case '\n': case ' ': case 'A':
 			std::cerr << "ISSUE: Found unexpected character!" << std::endl;
+			/* fallthrough */
 		    default:
 			ModelDimension dim = faceDetails[map[ambientR * rowLen + i]].widthContributor;
 
@@ -209,6 +210,7 @@ LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLength, d
 			continue;
 		    case '\n': case ' ': case 'A':
 			std::cerr << "ISSUE: Found unexpected character!" << std::endl;
+			/* fallthrough */
 		    default:
 			ModelDimension dim = faceDetails[map[i * rowLen + ambientC]].heightContributor;
 

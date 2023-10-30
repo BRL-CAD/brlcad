@@ -137,8 +137,8 @@ renderPerspective(RenderingFace face, Options& opt, std::string component, std::
 	    bu_log("ERROR: failed to run: %s\n", render.c_str());
 	    bu_exit(BRLCAD_ERROR, "system() failed\n");
 	}
-    } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    } catch (std::exception& er) {
+        std::cerr << er.what() << std::endl;
     }
 
     if (!bu_file_exists(outputname.c_str(), NULL)) {

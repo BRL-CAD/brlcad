@@ -645,9 +645,9 @@ inline void picohash_init_md5(picohash_ctx_t *ctx)
 {
     ctx->block_length = PICOHASH_MD5_BLOCK_LENGTH;
     ctx->digest_length = PICOHASH_MD5_DIGEST_LENGTH;
-    ctx->_reset = reinterpret_cast<void (__cdecl *)(void *)>(_picohash_md5_init);
-    ctx->_update = reinterpret_cast<void (__cdecl *)(void *, const void *, size_t)>(_picohash_md5_update);
-    ctx->_final = reinterpret_cast<void (__cdecl *)(void *, void *)>(_picohash_md5_final);
+    ctx->_reset = reinterpret_cast<void (*)(void*)>(_picohash_md5_init);
+    ctx->_update = reinterpret_cast<void (*)(void*, const void*, size_t)>(_picohash_md5_update);
+    ctx->_final = reinterpret_cast<void (*)(void*, void*)>(_picohash_md5_final);
 
     _picohash_md5_init(&ctx->_md5);
 }
@@ -656,9 +656,9 @@ inline void picohash_init_sha1(picohash_ctx_t *ctx)
 {
     ctx->block_length = PICOHASH_SHA1_BLOCK_LENGTH;
     ctx->digest_length = PICOHASH_SHA1_DIGEST_LENGTH;
-    ctx->_reset = reinterpret_cast<void(__cdecl*)(void*)>(_picohash_sha1_init);
-    ctx->_update = reinterpret_cast<void(__cdecl*)(void*, const void*, size_t)>(_picohash_sha1_update);
-    ctx->_final = reinterpret_cast<void(__cdecl*)(void*, void*)>(_picohash_sha1_final);
+    ctx->_reset = reinterpret_cast<void (*)(void*)>(_picohash_sha1_init);
+    ctx->_update = reinterpret_cast<void (*)(void*, const void*, size_t)>(_picohash_sha1_update);
+    ctx->_final = reinterpret_cast<void (*)(void*, void*)>(_picohash_sha1_final);
     _picohash_sha1_init(&ctx->_sha1);
 }
 
@@ -666,9 +666,9 @@ inline void picohash_init_sha224(picohash_ctx_t *ctx)
 {
     ctx->block_length = PICOHASH_SHA224_BLOCK_LENGTH;
     ctx->digest_length = PICOHASH_SHA224_DIGEST_LENGTH;
-    ctx->_reset = reinterpret_cast<void(__cdecl*)(void*)>(_picohash_sha224_init);
-    ctx->_update = reinterpret_cast<void(__cdecl*)(void*, const void*, size_t)>(_picohash_sha256_update);
-    ctx->_final = reinterpret_cast<void(__cdecl*)(void*, void*)>(_picohash_sha224_final);
+    ctx->_reset = reinterpret_cast<void (*)(void*)>(_picohash_sha224_init);
+    ctx->_update = reinterpret_cast<void (*)(void*, const void*, size_t)>(_picohash_sha256_update);
+    ctx->_final = reinterpret_cast<void (*)(void*, void*)>(_picohash_sha224_final);
     _picohash_sha224_init(&ctx->_sha256);
 }
 
@@ -676,9 +676,9 @@ inline void picohash_init_sha256(picohash_ctx_t *ctx)
 {
     ctx->block_length = PICOHASH_SHA256_BLOCK_LENGTH;
     ctx->digest_length = PICOHASH_SHA256_DIGEST_LENGTH;
-    ctx->_reset = reinterpret_cast<void(__cdecl*)(void*)>(_picohash_sha256_init);
-    ctx->_update = reinterpret_cast<void(__cdecl*)(void*, const void*, size_t)>(_picohash_sha256_update);
-    ctx->_final = reinterpret_cast<void(__cdecl*)(void*, void*)>(_picohash_sha256_final);
+    ctx->_reset = (void (*)(void*))_picohash_sha256_init;
+    ctx->_update = (void (*)(void*, const void*, size_t))_picohash_sha256_update;
+    ctx->_final = (void (*)(void*, void*))_picohash_sha256_final;
     _picohash_sha256_init(&ctx->_sha256);
 }
 
@@ -744,8 +744,8 @@ inline void picohash_init_hmac(picohash_ctx_t *ctx, void (*initf)(picohash_ctx_t
     /* replace reset and final function */
     ctx->_hmac.hash_reset = ctx->_reset;
     ctx->_hmac.hash_final = ctx->_final;
-    ctx->_reset = reinterpret_cast<void(__cdecl*)(void*)>(_picohash_hmac_reset);
-    ctx->_final = reinterpret_cast<void(__cdecl*)(void*, void*)>(_picohash_hmac_final);
+    ctx->_reset = reinterpret_cast<void (*)(void*)>(_picohash_hmac_reset);
+    ctx->_final = reinterpret_cast<void (*)(void*, void*)>(_picohash_hmac_final);
 
     /* start calculating the inner hash */
     _picohash_hmac_apply_key(ctx, 0x36);
