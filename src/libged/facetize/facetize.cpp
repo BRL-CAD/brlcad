@@ -1810,6 +1810,8 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     union tree *ftree = NULL;
     struct manifold_mesh *omesh = NULL;
 
+    _ged_facetize_log_nmg(o);
+
     struct db_tree_state init_state;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
@@ -1844,10 +1846,13 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 
     if (facetize_tree) {
 	ftree = rt_booltree_evaluate(facetize_tree, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource, &_manifold_do_bool, 0);
-	if (!ftree)
+	if (!ftree) {
+	    _ged_facetize_log_default(o);
 	    return NULL;
+	}
 	if (ftree->tr_d.td_d) {
 	    omesh = (struct manifold_mesh *)ftree->tr_d.td_d;
+	    _ged_facetize_log_default(o);
 	    return omesh;
 	} else if (ftree->tr_d.td_r) {
 	    // If we had only one NMG mesh, there was no bool
@@ -1863,6 +1868,8 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	    bot = NULL;
 	}
     }
+
+    _ged_facetize_log_default(o);
     return omesh;
 }
 
