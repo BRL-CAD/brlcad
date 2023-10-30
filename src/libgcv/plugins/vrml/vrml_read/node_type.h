@@ -33,14 +33,12 @@
 
 #define NODETYPEMAX             14
 
-using namespace std;
-
 class NODE;  //forward declaration of class
 
 class NODETYPE
 {
     public:
-    int findNodeType(string instring);
+    int findNodeType(std::string instring);
     int findNodeType(NODE *innode);
 };
 
