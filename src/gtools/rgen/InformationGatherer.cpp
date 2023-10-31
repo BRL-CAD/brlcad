@@ -732,3 +732,12 @@ Unit InformationGatherer::getUnit(std::string name)
 
     throw std::runtime_error("Unit not found for key: " + name);
 }
+
+std::string InformationGatherer::getPower(std::string key)
+{
+    Unit u = unitsMap[key];
+    if (u.power > 1) {
+        return "^" + std::to_string(u.power);
+    }
+    return "";
+}
