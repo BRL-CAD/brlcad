@@ -630,7 +630,7 @@ InformationGatherer::gatherInformation(std::string name)
 
     //Gather assemblies
     tfilter = "-above -type region";
-    int assemblies = db_search(NULL, 0, tfilter, 0, NULL, g->dbip, NULL);
+    int assemblies = db_search(NULL, 0, tfilter, 0, 0, g->dbip, NULL);
     infoMap.insert(std::pair<std::string, std::string>("assemblies", std::to_string(assemblies)));
 
     //Gather entity total
