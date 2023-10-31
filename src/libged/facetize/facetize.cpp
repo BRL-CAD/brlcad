@@ -1694,6 +1694,19 @@ bool_meshes(
     *o_ccnt = (int)rmesh.vertPos.size();
     *o_tricnt = (int)rmesh.triVerts.size();
 
+
+    int not_solid = bg_trimesh_solid2(*o_ccnt, *o_tricnt, (fastf_t *)*o_coords, (int *)*o_tris, NULL);
+    if (not_solid) {
+	*o_ccnt = 0;
+	*o_tricnt = 0;
+	bu_free(*o_coords, "coords");
+	*o_coords = NULL;
+	bu_free(*o_tris, "tris");
+	*o_tris = NULL;
+	bu_log("Error: Manifold boolean succeeded, but result reports as non-solid: failure.");
+	return 0;
+    }
+
     return rmesh.triVerts.size();
 }
 #endif
