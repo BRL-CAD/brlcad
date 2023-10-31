@@ -34,7 +34,7 @@ Future
   at the bottom of the target.  For example, a small boat in the
   water.
 
-* ✅ physically based rendering
+* physically based rendering
 
 * colors and shaders set automatically based on naming patterns
 
