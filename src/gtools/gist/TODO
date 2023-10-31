@@ -1,7 +1,7 @@
 Soon
 ----
 
-* Instead of total projected surface area, projected surface area for
+* ✅ Instead of total projected surface area, projected surface area for
   front/back, left/right, and top/bottom would be more meaningful.
 
 * Compute mass data (lots of requests, need density data)
@@ -10,12 +10,12 @@ Soon
 
 * Include hashing method on Checksum (SHA1):  120EAB...
 
-* Classification markings (overall with normal declass
+* ✅ Classification markings (overall with normal declass
   instructions). _GLOBAL attribute. Use RED box if classified
 
 * Possibly include model filesize
 
-* Bounding box information in gray area
+* ✅ Bounding box information in gray area
 
 
 Future
@@ -44,7 +44,7 @@ Future
   diagram. (Would be great if a bigger hierarchy can be displayed in
   another page. More subassemblies (hierarchy))
 
-* ability to add my agency/organization’s logo in the bottom
+* ✅ ability to add my agency/organization’s logo in the bottom
   right-hand corner
 
 * show model origin?
