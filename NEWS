@@ -13,6 +13,8 @@ changes made.  See document footer for additional details.
 --- 20XX-0X-XX  Release 7.36.2                                     ---
 ----------------------------------------------------------------------
 
+* improve 'x' default behavior in MGED - Chris McGregor
+* fixed 'edcolor' and 'color -e' on Windows - Chris McGregor
 * ported fbcolor, fblabel, fbpoint, fbzoom to Windows - Sean Morrison
 * new 'gist' tool for generating 1-page geometry info summary reports
 	- Allyson Hoskinson, Andrew Plant, Mark Sturtevant,
@@ -20,10 +22,18 @@ changes made.  See document footer for additional details.
 * add support for dbconcat -O (overwrite) - Chris McGregor
 * improved 'lc' -d and -m interactions with aircodes - Chris McGregor
 * fixed 'make bot' inverted face normals - Chris McGregor
+* fixed 'l' evaluation for pathed objects - Chris McGregor
+* improved MGED faceplate params control, added font_size - Cliff Yapp
+* fix MGED 'brep' command crashing without database open - Cliff Yapp
+* fix MGED 'pnts read' and 'make_pnts' commands - Chris McGregor
+* improved NURBS editing functionality - Gregory Li
+* fix MGED 'listval' crashing with max path lengths - Chris McGregor
 * fixed garbage_collect MGED command on Windows - Cliff Yapp
+* fixed archer crashing with 'make' command - Cliff Yapp
 * improved and restructured rtwizard's manual page - Sean Morrison
 * fixed E command in MGED - Cliff Yapp
 * made improvements to a variety of manual pages - Josh Baker
+* remove bundled burst tool (DEPRECATED 7.32) - Cliff Yapp
 
 
 ----------------------------------------------------------------------

@@ -544,7 +544,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(context->dbip, state.gcv_options->num_objects, (const char **)state.gcv_options->object_names,
-	    1, &tree_state, NULL, do_region_end, nmg_booltree_leaf_tess, (void *)&state);
+	    1, &tree_state, NULL, do_region_end, rt_booltree_leaf_tess, (void *)&state);
 
     if (state.regions_tried) {
 	double percent = ((double)state.regions_converted * 100.0) / state.regions_tried;

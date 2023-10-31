@@ -40,6 +40,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <locale>
+#include <codecvt>
 
 #include "bu/cmd.h"
 #include "bu/color.h"
@@ -540,6 +542,80 @@ _brep_cmd_csg(void *bs, int argc, const char **argv)
     return _ged_brep_to_csg(gedp, gb->dp->d_namep, gb->verbosity);
 }
 
+extern "C" int
+_brep_cmd_dump(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> dump <output_file_name>";
+    const char *purpose_string = "Write the BRep object(s) in the tree to a .3dm file";
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return BRLCAD_OK;
+    }
+
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    struct ged *gedp = gb->gedp;
+
+    argc--; argv++;
+
+    if (!argc) {
+	bu_vls_printf(gedp->ged_result_str, "need output filename to store 3DM output in.");
+	return BRLCAD_ERROR;
+    }
+    if (bu_file_exists(argv[0], NULL)) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: file %s already exists\n", argv[0]);
+	return BRLCAD_ERROR;
+    }
+
+    ONX_Model model;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&msg, "BRL-CAD 3dm dump of brep objects in %s obj %s", gedp->dbip->dbi_filename, gb->solid_name.c_str());
+    model.m_sStartSectionComments = bu_vls_cstr(&msg);
+    model.m_properties.m_Application.m_application_name = "BRL-CAD";
+    model.m_properties.m_Application.m_application_URL = "https://brlcad.org";
+
+    // Find all brep paths
+    struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
+    const char *brep_search = "-type brep";
+    db_update_nref(gedp->dbip, &rt_uniresource);
+    (void)db_search(&breps, DB_SEARCH_TREE, brep_search, 1, &gb->dp, gedp->dbip, NULL);
+    for (size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
+	struct db_full_path *fp = (struct db_full_path *)BU_PTBL_GET(&breps, i);
+	mat_t m;
+	struct bu_color c;
+	MAT_IDN(m);
+	db_path_to_mat(gedp->dbip, fp, m, 0, &rt_uniresource);
+	db_full_path_color(&c, fp, gedp->dbip, &rt_uniresource);
+	struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
+	struct rt_db_internal intern;
+	if (rt_db_get_internal(&intern, dp, gedp->dbip, m, &rt_uniresource) < 0) {
+	    bu_log("Error - unable to get internal of %s\n", dp->d_namep);
+	    continue;
+	}
+	ON_Brep *o_brep = ((struct rt_brep_internal *)intern.idb_ptr)->brep;
+	if (!o_brep) {
+	    bu_log("Error - no ON_Brep data found for %s\n", dp->d_namep);
+	    continue;
+	}
+
+	ON_3dmObjectAttributes attrs;
+
+	// https://stackoverflow.com/a/18597384/2037687
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> wcc;
+	std::wstring wc= wcc.from_bytes(dp->d_namep);
+	attrs.SetName(wc.c_str(), true);
+
+	int rgb[3];
+	bu_color_to_rgb_ints(&c, &rgb[0], &rgb[1], &rgb[2]);
+	attrs.m_color = ON_Color(rgb[0], rgb[1], rgb[2]);
+	attrs.SetColorSource(ON::color_from_object);
+
+	model.AddModelGeometryComponent(o_brep, &attrs, true);
+    }
+
+    ON_TextLog error_log; // errors printed to stdout
+    model.Write(argv[0], 0, &error_log);
+
+    return BRLCAD_OK;
+}
 
 extern "C" int
 _brep_cmd_flip(void *bs, int argc, const char **argv)
@@ -1318,6 +1394,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "bots",            _brep_cmd_bots},
     { "brep",            _brep_cmd_brep},
     { "csg",             _brep_cmd_csg},
+    { "dump",            _brep_cmd_dump},
     { "flip",            _brep_cmd_flip},
     { "geo",             _brep_cmd_geo},
     { "info",            _brep_cmd_info},

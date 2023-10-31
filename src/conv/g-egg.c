@@ -328,7 +328,7 @@ main(int argc, char *argv[])
 			    &tree_state,	/* state */
 			    NULL,		/* start func */
 			    use_mc?gcv_region_end_mc:use_bottess?gcv_bottess_region_end:gcv_region_end,	/* end func */
-			    use_mc?NULL:nmg_booltree_leaf_tess, /* leaf func */
+			    use_mc?NULL:rt_booltree_leaf_tess, /* leaf func */
 			    (void *)&gcvwriter);  /* client_data */
 	fprintf(conv_data.fp, "}\n");
     }

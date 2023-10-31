@@ -144,7 +144,10 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    fp = bu_temp_file(tmpfil, MAXPATHLEN);
+    /* build temp file path */
+    bu_dir(tmpfil, MAXPATHLEN, BU_DIR_TEMP, bu_temp_file_name(NULL, 0), NULL);
+
+    fp = fopen(tmpfil, "w+");
     if (fp == NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: could not create tmp file", argv[0]);
 	return BRLCAD_ERROR;
@@ -152,7 +155,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 
     fprintf(fp, "%s", hdr);
     for (mp = rt_material_head(); mp != MATER_NULL; mp = mp->mt_forw) {
-	fprintf(fp, "%d\t%d\t%3d\t%3d\t%3d",
+	fprintf(fp, "%ld\t%ld\t%3d\t%3d\t%3d",
 		      mp->mt_low, mp->mt_high,
 		      mp->mt_r, mp->mt_g, mp->mt_b);
 	fprintf(fp, "\n");
