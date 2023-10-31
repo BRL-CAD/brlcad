@@ -4,11 +4,11 @@ Soon
 * ✅ Instead of total projected surface area, projected surface area for
   front/back, left/right, and top/bottom would be more meaningful.
 
-* Compute mass data (lots of requests, need density data)
+* [TESTING] Compute mass data (lots of requests, need density data)
 
-* Showing axes vs showing "z up". Or give user options
+* [IN PROGRESS] Showing axes vs showing "z up". Or give user options
 
-* Include hashing method on Checksum (SHA1):  120EAB...
+*  ✅ Include hashing method on Checksum (SHA1):  120EAB...
 
 * ✅ Classification markings (overall with normal declass
   instructions). _GLOBAL attribute. Use RED box if classified
@@ -36,7 +36,7 @@ Future
   at the bottom of the target.  For example, a small boat in the
   water.
 
-* physically based rendering
+* ✅ physically based rendering
 
 * colors and shaders set automatically based on naming patterns
 
@@ -50,6 +50,8 @@ Future
 * show model origin?
 
 * both metric and imperial units
+
+* Possibly include model filesize
 
 NOTE:
 
