@@ -60,4 +60,5 @@ public:
 
     void correctDefaultUnits();
     Unit getUnit(std::string name);
+    std::string getPower(std::string key);
 };

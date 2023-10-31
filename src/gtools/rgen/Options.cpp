@@ -18,11 +18,12 @@ Options::Options()
 	classification = "";
 	rightLeft = "Right hand";
 	zY = "+Z-up";
-	notes = "N/A";
+	notes = "";
 	uLength = "m";
 	originalUnitsLength = true;
 	uMass = "g";
 	originalUnitsMass = true;
+	bio = "Bio: N/A";
 }
 
 Options::~Options()
@@ -112,6 +113,10 @@ void Options::setUnitMass(std::string m) {
 	originalUnitsMass = false;
 }
 
+void Options::setBio(std::string b) {
+	bio = "Bio: " + b;
+}
+
 std::string Options::getFilepath() {
 	return filepath;
 }
@@ -126,6 +131,10 @@ std::string Options::getExportFolder() {
 
 std::string Options::getTemppath() {
 	return temppath;
+}
+
+std::string Options::getBio() {
+	return bio;
 }
 
 int Options::getWidth() {

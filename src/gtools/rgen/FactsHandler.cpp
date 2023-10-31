@@ -2,18 +2,17 @@
 #include "RenderHandler.h"
 
 void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-	//scalar color order is BGR
 	if (info.getInfo("classification") == "UNCLASSIFIED") {		//Green
-		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(51, 122, 0));
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 122, 51));
 	}
 	else if (info.getInfo("classification") == "CONFIDENTIAL") {//Blue
-		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(160, 51, 0));
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 51, 160));
 	}
 	else if (info.getInfo("classification") == "SECRET") {		//Red
-		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(46, 16, 200));
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(200, 16, 46));
 	}
-	else if (info.getInfo("classification") == "TOP_SECRET") {	//Orange
-		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(31, 103, 255));
+	else if (info.getInfo("classification") == "TOP SECRET") {	//Orange
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(255, 103, 31));
 	}
 	else {	//Draw black rectangle
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
@@ -33,30 +32,31 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	}
 	else {
 		text.push_back("Owner: " + info.getInfo("owner"));
-		text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
+		text.push_back("Checksum: " + info.getInfo("checksum"));
 		text.push_back("Last Updated : " + info.getInfo("lastUpdate"));
 		text.push_back("Source File: " + info.getInfo("file") + "       ");
 		endTextXPosition = img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
+	//img.drawImageFitted(endTextXPosition-100, offsetY, 100, 90, "../../../src/gtools/rgen/brlLogo.jpg");
+	std::cout << "TOPPP: " << endTextXPosition << std::endl;
 	//cv::Mat bLogo = imread("../src/gtools/rgen/brlLogo1.jpg", cv::IMREAD_UNCHANGED);
 	//imshow("Window Name", bLogo);
 	//img.drawImage(endTextXPosition-100, offsetY, 100, 90, "../src/gtools/rgen/brl-logo.png");
-	//img.drawImageFitted(3200, 10, 300, 140, "../src/gtools/gist/brlLogoW.jpg");
+	img.drawImageFitted(3200, 10, 200, 150, "../src/gtools/rgen/brlLogo.jpg");
 }
 
 void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-	//scalar color order is BGR
 	if (info.getInfo("classification") == "UNCLASSIFIED") {		//Green
-		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(51, 122, 0));
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 122, 51));
 	}
 	else if (info.getInfo("classification") == "CONFIDENTIAL") {//Blue
-		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(160, 51, 0));
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 51, 160));
 	}
 	else if (info.getInfo("classification") == "SECRET") {		//Red
-		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(46, 16, 200));
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(200, 16, 46));
 	}
-	else if (info.getInfo("classification") == "TOP_SECRET") {	//Orange
-		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(31, 103, 255));
+	else if (info.getInfo("classification") == "TOP SECRET") {	//Orange
+		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(255, 103, 31));
 	}
 	else {	//Draw black rectangle
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(0, 0, 0));
@@ -78,7 +78,7 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		text.push_back("Date Generated : " + info.getInfo("dateGenerated"));
 		img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
-	//img.drawImageFitted(3350, 2360, 100, 90, "../src/gtools/gist/afcLogoB.jpg");
+	//img.drawImageFitted(3350, 2360, 100, 90, "../../../src/gtools/rgen/afcLogoB.jpg");
 }
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
@@ -120,10 +120,10 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	//img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Units", TO_BOLD);
 	//img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
 	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Dimensions (x, y, z)", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("dimX"));
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("dimY"));
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("dimZ"));
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Dimensions (x, y, z) " + info.getUnit("dimX").unit + info.getPower("dimX"), TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("dimX"));
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("dimY"));
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("dimZ"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Presented Area (az/el)", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("surfaceArea00") + " (0/0)");
@@ -137,8 +137,10 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("mass"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Notes", TO_BOLD);
-	img.textWrapping(offsetX + textOffset, offsetY + curiX * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight * 3, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/11000);
-
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getBio());
+	img.textWrapping(offsetX + textOffset, offsetY + curiX++ * textYOffset, offsetX + width, (offsetY + curiX * textYOffset) + textHeight * 3, width, textHeight, opt.getNotes(), TO_ELLIPSIS, (width*height)/11000);
+	
+	
 }
 
 void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
