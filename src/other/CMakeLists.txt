@@ -122,6 +122,10 @@ if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
   CMAKEFILES_IN_DIR(libutahrle_ignore_files libutahrle)
 endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/libutahrle)
 
+# OpenCV library
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/opencv)
+  add_subdirectory(opencv)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/opencv)
 
 # OpenNURBS Library
 if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/openNURBS)
