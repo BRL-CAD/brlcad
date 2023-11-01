@@ -1533,6 +1533,14 @@ bot_to_mmesh(struct rt_bot_internal *bot)
 }
 
 #ifdef USE_MANIFOLD
+
+// TODO - need to replace this with logic that uses Manifold's
+// upstream examples to write out .glb files in the failure
+// case.  See, for example,
+//
+// https://github.com/elalish/manifold/pull/581#pullrequestreview-1702123678
+// https://github.com/elalish/manifold/blob/master/test/samples_test.cpp#L258-L269
+
 /* Byte swaps a four byte value */
 static void
 lswap(unsigned int *v)
