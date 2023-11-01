@@ -24,6 +24,7 @@ Also in this release is an alpha version of the new "gist" tool, which
 leverages the OpenCV library to create one page summaries of the
 geometric information present in .g files.
 
+* add 'brep dump' subcommand to write out brep objects - Cliff Yapp
 * improve 'x' default behavior in MGED - Chris McGregor
 * fixed 'edcolor' and 'color -e' on Windows - Chris McGregor
 * ported fbcolor, fblabel, fbpoint, fbzoom to Windows - Sean Morrison
