@@ -10,8 +10,19 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 20XX-0X-XX  Release 7.36.2                                     ---
+--- 2023-11-0X  Release 7.38.0                                     ---
 ----------------------------------------------------------------------
+This major release of BRL-CAD introduces significant improvements to
+the robustness of the facetize command. Facetization is an operation
+that converts boolean CSG hierarchies to evaluated triangle meshes,
+commonly used as a preliminary step in geometry export).  Leveraging
+the Manifold library for boolean evaluation of meshes, this release
+shows significant improvement in the overall success rate of facetize
+when processing BRL-CAD's example geometry files:
+
+Also in this release is an alpha version of the new "gist" tool, which
+leverages the OpenCV library to create one page summaries of the
+geometric information present in .g files.
 
 * improve 'x' default behavior in MGED - Chris McGregor
 * fixed 'edcolor' and 'color -e' on Windows - Chris McGregor
