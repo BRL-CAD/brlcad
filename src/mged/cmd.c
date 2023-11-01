@@ -91,8 +91,65 @@ static struct bu_vls tcl_log_str = BU_VLS_INIT_ZERO;
 /**
  * Used as a hook for bu_log output.  Sends output to the Tcl
  * procedure whose name is contained in the vls "tcl_output_hook".
- * Useful for user interface building.
+ *
+ * NOTE:  There is a problem with this code - per Tcl's documentation
+ * (https://www.tcl.tk/doc/howto/thread_model.html) "errors will occur if you
+ * let more than one thread call into the same interpreter (e.g., with
+ * Tcl_Eval)"  However, gui_output may be called from multiple threads
+ * during (say) a parallel raytrace, when lower level routines encounter
+ * problems and bu_log about them.
+ *
+ * On some platforms we seem to get away with this despite the Tcl
+ * documentation warning, but on Windows we've frequently seen the MGED command
+ * prompt locking up - usually when we have heavy bu_log output from librt.
+ * Since we're going to freeze up anyway, in that situation we accumulate
+ * the output in a vls buffer rather than trying to force it to the Tcl
+ * prompt - this avoids putting the Tcl interp in a problematic state.
+ * Unfortunately, this comes at the expense of intermediate feedback reaching
+ * the end user - because ged_exec calls are made from the main thread,
+ * they are blocking as far as the refresh() call is concerned and we don't
+ * see any bu_log output until the command completes.
+ *
+ * The correct fix here is to set up a separate thread for ged_exec calls
+ * that doesn't block the main GUI thread.  That way, the intermediate
+ * results being accumulated into the tcl_log_str buffer can be flushed
+ * to the Tcl command prompt by refresh() while the GED command is still
+ * running.  Not clear yet how much effort that will take to implement.
  */
+#ifndef _WIN32
+int
+gui_output(void *clientData, void *str)
+{
+    int len;
+    Tcl_DString tclcommand;
+    Tcl_Obj *save_result;
+    static int level = 0;
+
+    if (level > 50) {
+	bu_log_delete_hook(gui_output, clientData);
+	/* Now safe to run bu_log? */
+	bu_log("Ack! Something horrible just happened recursively.\n");
+	return 0;
+    }
+
+    Tcl_DStringInit(&tclcommand);
+    (void)Tcl_DStringAppendElement(&tclcommand, bu_vls_addr(&tcl_output_cmd));
+    (void)Tcl_DStringAppendElement(&tclcommand, (const char *)str);
+
+    save_result = Tcl_GetObjResult(INTERP);
+    Tcl_IncrRefCount(save_result);
+    ++level;
+    Tcl_Eval((Tcl_Interp *)clientData, Tcl_DStringValue(&tclcommand));
+    --level;
+    Tcl_SetObjResult(INTERP, save_result);
+    Tcl_DecrRefCount(save_result);
+
+    Tcl_DStringFree(&tclcommand);
+
+    len = (int)strlen((const char *)str);
+    return len;
+}
+#else
 int
 gui_output(void *UNUSED(clientData), void *str)
 {
@@ -102,6 +159,7 @@ gui_output(void *UNUSED(clientData), void *str)
     int len = (int)strlen((const char *)str);
     return len;
 }
+#endif
 
 void
 mged_pr_output(Tcl_Interp *interp)
