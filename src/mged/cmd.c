@@ -116,7 +116,6 @@ static struct bu_vls tcl_log_str = BU_VLS_INIT_ZERO;
  * to the Tcl command prompt by refresh() while the GED command is still
  * running.  Not clear yet how much effort that will take to implement.
  */
-#ifndef _WIN32
 int
 gui_output(void *clientData, void *str)
 {
@@ -149,7 +148,10 @@ gui_output(void *clientData, void *str)
     len = (int)strlen((const char *)str);
     return len;
 }
-#else
+#if 0
+// Version of the above callback that just accumulates output in a buffer
+// rather than writing it immediately to the interp - should be a starting
+// point when we work on mulithreading ged_exec calls
 int
 gui_output(void *UNUSED(clientData), void *str)
 {
