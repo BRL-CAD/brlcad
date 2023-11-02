@@ -217,16 +217,16 @@ formatDouble(double d)
     ss << std::setprecision(2) << std::fixed << d;
     std::string str = ss.str();
 
-    size_t dotPos = str.find('.');
-    if (dotPos != std::string::npos) { // string has decimal point
-        // remove trailing zeroes
-        str = str.substr(0, str.find_last_not_of('0')+1);
-        // if the decimal point is now the last character, remove that as well
-        if(str.find('.') == str.size()-1)
-        {
-            str = str.substr(0, str.size()-1);
-        }
-    }
+    // size_t dotPos = str.find('.');
+    // if (dotPos != std::string::npos) { // string has decimal point
+    //     // remove trailing zeroes
+    //     str = str.substr(0, str.find_last_not_of('0')+1);
+    //     // if the decimal point is now the last character, remove that as well
+    //     if(str.find('.') == str.size()-1)
+    //     {
+    //         str = str.substr(0, str.size()-1);
+    //     }
+    // }
 
     return str;
 }
