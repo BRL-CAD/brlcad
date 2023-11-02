@@ -37,6 +37,7 @@ public:
 	std::pair<int, int> getCroppedImageDims(std::string imgPath);
 
 	void drawImage(int x, int y, int width, int height, std::string imgPath);
+	void drawTransparentImage(int x, int y, int width, int height, std::string imgPath);
 	void drawImageFitted(int x, int y, int width, int height, std::string imgPath);
 	void drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text);
 	void drawText(int x, int y, int height, int width, std::string text, int flags = 0);
@@ -45,7 +46,6 @@ public:
 	void drawLine(int x1, int y1, int x2, int y2, int width, cv::Scalar color);
 	void drawRect(int x1, int y1, int x2, int y2, int width, cv::Scalar color);
     void drawCirc(int x, int y, int radius, int width, cv::Scalar color);
-	void addTransparentImage(std::string bFile, std::string fFile);
 	// void drawArc(int x, int y, int width, cv::Scalar color);
 	int getTextWidth(int height, int width, std::string text, int flags = 0);
 	int justify(int x, int y, int height, int width, std::vector<std::string> text, int flags = 0);

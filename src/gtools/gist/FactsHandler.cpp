@@ -22,26 +22,26 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	int textYOffset = (height - textHeight) / 2;
 	std::vector<std::string> text;
 	std::vector<std::string> text2;
-
+	std::string concatFile = info.getInfo("file");
+	if (info.getInfo("file").size() > 20) {
+        concatFile = info.getInfo("file").substr(0,15) + "... .g";
+    }
 	int endTextXPosition = 0;
 	if (info.getInfo("classification") != "") {
 		text.push_back("Owner: " + info.getInfo("owner"));
 		text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 		text2.push_back("Last Updated: " + info.getInfo("lastUpdate"));
-		text2.push_back("Source File: " + info.getInfo("file"));
+		text2.push_back("Source File: " + concatFile);
 		img.justifyWithCenterWord(offsetX, offsetY + textYOffset, textHeight, width, info.getInfo("classification"), text, text2, TO_WHITE);
 	}
 	else {
 		text.push_back("Owner: " + info.getInfo("owner"));
 		text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 		text.push_back("Last Updated : " + info.getInfo("lastUpdate"));
-		text.push_back("Source File: " + info.getInfo("file") + "       ");
+		text.push_back("Source File: " + concatFile);
 		endTextXPosition = img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
-	//cv::Mat bLogo = imread("../src/gtools/rgen/brlLogo1.jpg", cv::IMREAD_UNCHANGED);
-	//imshow("Window Name", bLogo);
-	//img.drawImage(endTextXPosition-100, offsetY, 100, 90, "../src/gtools/rgen/brl-logo.png");
-	//img.drawImageFitted(3200, 10, 300, 140, "../src/gtools/gist/brlLogoW.jpg");
+	img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg");
 }
 
 void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
@@ -184,7 +184,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
         render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
         // std::cout << "INSIDE factshandler DBG: " << render << std::endl;
-        img.drawImageFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
+        img.drawTransparentImage(offX + (i-1)*imgW, offY, imgW, imgH, render);
         img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY-70, textHeight, width, info.largestComponents[i].name, TO_BOLD);
         img.drawLine(offX + (i-1)*imgW + imgW/2, offY-100, offX + (i-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
         img.drawCirc(offX + (i-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));

@@ -42,7 +42,7 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 {
 	cv::Mat lilImage = imread(imgPath, cv::IMREAD_UNCHANGED);
 	cv::Mat resized_image;
-	//resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
+	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
 
 	//Trying to copyto the image on to the private image frame, img
 	cv::Mat destRoi;
@@ -54,6 +54,23 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 		return;
 	}
 	resized_image.copyTo(destRoi);
+}
+
+void IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string imgPath)
+{
+	cv::Mat foreground = cv::imread(imgPath, cv::IMREAD_UNCHANGED);
+    cv::Mat resized_image;
+    resize(foreground, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
+    for(int r = 0; r < height; r++) {
+		for(int c = 0; c < width; c++) {
+			for(int i=0; i<3; i++){
+                cv::Vec3b color = resized_image.at<cv::Vec3b>(cv::Point(c,r));
+                if(color[0] < 240 && color[1] < 240 && color[2] < 240){
+                    img.at<cv::Vec3b>(cv::Point(c+x,r+y)) = resized_image.at<cv::Vec3b>(cv::Point(c,r));;
+                }
+			}
+	    }
+    }
 }
 
 void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string imgPath)
@@ -446,35 +463,6 @@ void IFPainter::drawCirc(int x, int y, int radius, int width, cv::Scalar color)
 //         ellipse( image, center, Size( i, i ), 0, 30, 150, color, width, lineType );
 //     }
 // }
-
-void IFPainter::addTransparentImage(std::string bFile, std::string fFile)
-{
-	/*
-	cv::Mat back = cv::imread(bFile, cv::IMREAD_UNCHANGED);
-	cv::Mat fore = cv::imread(fFile, cv::IMREAD_UNCHANGED);
-
-	std::vector<float> alpha_background;
-	std::vector<float> alpha_foreground;
-	//normalize alpha channels from 0-255 to 0-1
-	for(cv::Size i=0; i<back.size(); i = i+3){
-		std::vector<float> alpha_background.pushback(back[i] / 255.0);
-		std::vector<float> alpha_foreground.pushback(fore[i] / 255.0);
-	}
-	/*
-	# set adjusted colors
-	for(int i=0; i<3; i++){
-		background[:,:,color] = alpha_foreground * foreground[:,:,color] + \
-			alpha_background * background[:,:,color] * (1 - alpha_foreground)
-	}
-	# set adjusted alpha and denormalize back to 0-255
-	background[:,:,3] = (1 - (1 - alpha_foreground) * (1 - alpha_background)) * 255
-
-	# display the image
-	cv2.imshow("Composited image", background)
-	cv2.waitKey(0)
-	*/
-}
-
 
 void IFPainter::openInGUI()
 {
