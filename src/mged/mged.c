@@ -2267,7 +2267,10 @@ refresh(void)
     int64_t elapsed_time, start_time = bu_gettime();
     int do_time = 0;
 
-    /* Print any text output that has accumulated to the command prompt */
+    /* Print any text output that has accumulated to the command prompt
+     * TODO - this is currently a no-op because the gui_output callback
+     * is still in the old form of trying to immediately print the bu_log
+     * output to the interp. */
     mged_pr_output(INTERP);
 
     /* Display Manager / Views */
