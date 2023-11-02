@@ -78,7 +78,9 @@ public:
     std::string getInfo(std::string key);
     std::string getFormattedInfo(std::string key);
 
-    void correctDefaultUnits();
+    bool dimensionSizeCondition();
+    void correctDefaultUnitsLength();
+    void correctDefaultUnitsMass();
     Unit getUnit(std::string name);
 };
 

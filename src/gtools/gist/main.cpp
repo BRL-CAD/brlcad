@@ -184,10 +184,12 @@ generateReport(Options opt)
         return;
     }
 
-    // TODO SAM: mass distinction in correctDefaultUnits?
-    if (opt.isOriginalUnitsLength()) {
-        info.correctDefaultUnits();
-    }
+    // if (opt.isOriginalUnitsLength()) {
+    //     info.correctDefaultUnitsLength();
+    // }
+    // if (opt.isOriginalUnitsMass()) {
+    //     info.correctDefaultUnitsMass();
+    // }
 
     std::string title = info.getInfo("title");
     if (title.size() > 88) {
