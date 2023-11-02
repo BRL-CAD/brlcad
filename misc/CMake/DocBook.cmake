@@ -221,7 +221,10 @@ function(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	  if ("${IS_FILTERED}" EQUAL "-1")
 	    if (NOT TARGET "${fname_root}")
 	      message("WARNING: ${outdir} man page ${fname_root} has no associated build target.")
-	      math(EXPR errors "${errors} + 1")
+	      # TODO - if we disable Tcl, we don't build some of the man page tools - we need
+	      # to conditionalize the man page building the same way we do the targets for
+	      # this to be a fatal error...
+	      #math(EXPR errors "${errors} + 1")
 	    endif (NOT TARGET "${fname_root}")
 	 # TODO - until we can ensure uniformity across all platforms for
 	 # definition of man1/man3 targets, we need to skip this check.
