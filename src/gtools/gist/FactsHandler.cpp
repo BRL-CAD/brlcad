@@ -41,7 +41,6 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 		text.push_back("Source File: " + concatFile);
 		endTextXPosition = img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
-	img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg");
 }
 
 void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
