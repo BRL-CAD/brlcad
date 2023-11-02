@@ -7,27 +7,24 @@ set(FACETIZE_INCLUDE_DIRS
   )
 
 set(FACETIZE_LOCAL_INCLUDE_DIRS)
-if(NOT "${IRMB_INCLUDE_DIRS}" EQUAL "")
+
+if (MANIFOLD_LIBRARIES)
   set(FACETIZE_LOCAL_INCLUDE_DIRS
     ${FACETIZE_LOCAL_INCLUDE_DIRS}
-    ${IRMB_INCLUDE_DIRS}
+    ${MANIFOLD_INCLUDE_DIRS}
     )
-endif(NOT "${IRMB_INCLUDE_DIRS}" EQUAL "")
-
-set(FACETIZE_LIBS libged libbu)
-
-if (NOT "${IRMB_LIBRARIES}" EQUAL "")
-  set(FACETIZE_LIBS ${FACETIZE_LIBS} ${IRMB_LIBRARIES})
-endif (NOT "${IRMB_LIBRARIES}" EQUAL "")
-
+  add_definitions(-DUSE_MANIFOLD)
+endif (MANIFOLD_LIBRARIES)
 # We want to include 3rd party libraries with -isystem - use
 # BRLCAD_LIB_INCLUDE_DIRS for that purpose
 BRLCAD_LIB_INCLUDE_DIRS(facetize FACETIZE_INCLUDE_DIRS FACETIZE_LOCAL_INCLUDE_DIRS)
 
+set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES})
+
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-facetize SHARED facetize.cpp facetize_log.c)
 target_link_libraries(ged-facetize ${FACETIZE_LIBS})
-set_property(TARGET ged-facetize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
+set_property(TARGET ged-facetize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H MANIFOLD_DLL_IMPORTS)
 VALIDATE_STYLE(ged-facetize facetize.cpp)
 PLUGIN_SETUP(ged-facetize ged)
 

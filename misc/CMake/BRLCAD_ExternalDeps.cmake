@@ -962,6 +962,14 @@ if (BRLCAD_ENABLE_OPENMESH)
   find_package(OpenMesh)
 endif (BRLCAD_ENABLE_OPENMESH)
 
+
+# Manifold - Mesh library for boolean ops
+# https://github.com/elalish/manifold
+find_package_reset(MANIFOLD RESET_TP)
+set(MANIFOLD_ROOT "${CMAKE_BINARY_DIR}")
+find_package(MANIFOLD)
+
+
 # openNURBS Non-Uniform Rational BSpline library
 # https://github.com/mcneel/opennurbs
 find_package_reset(OPENNURBS RESET_TP)

@@ -42,13 +42,11 @@
 #include "node_type.h"
 #include "transform_node.h"
 
-using namespace std;
-
 char *getNextWord(char *instring, char *nextword);
 char *getNextWord( char *nextword);
 bool findKeyWord(char *inputstring, int kw);
-void stringcopy(string &str1, char *str2);
-int stringcompare(string &str1, char *str2);
+void stringcopy(std::string &str1, char *str2);
+int stringcompare(std::string &str1, char *str2);
 int findFieldName(char *instring);
 
 
@@ -87,7 +85,7 @@ PARSER::parseNodeString(char *instring, NODE *node) {
     if (findKeyWord(instring, KWPROTO)) {
 	char protoname[MAXSTRSIZE];
 	int sqbrcount = 0;
-	string protostring;
+	std::string protostring;
 
 	getNextWord(protoname);
 	stringcopy(protostring, protoname);
@@ -129,7 +127,7 @@ NODE *
 PARSER::parsekwdef(NODE * node)
 {
     char nextwd[MAXSTRSIZE];
-    string defstring;
+    std::string defstring;
 
     getNextWord(nextwd); //get the defnode idname
     stringcopy(defstring, nextwd);// convert defnode idname from type char *to c++ string
@@ -174,7 +172,7 @@ NODE *
 PARSER::parseNode(char *instring, NODE *node)
 {
 
-    string nextwd;
+    std::string nextwd;
     NODETYPE ntype;
     NODE tempnode;
     int nodeid, curly = 0;
@@ -232,7 +230,7 @@ PARSER::parseNode(char *instring, NODE *node)
 
 //Get list of children for specified node
 int
-PARSER::getChildNodeList(NODE *rtnode, vector<NODE*> &childlist)
+PARSER::getChildNodeList(NODE *rtnode, std::vector<NODE*> &childlist)
 {
     unsigned int i;
 
@@ -271,7 +269,7 @@ PARSER::findChild(NODE *node, int search) {
     int size;
     int i;
     NODETYPE ntype;
-    vector<NODE*> childlist;
+    std::vector<NODE*> childlist;
 
     getChildNodeList(node,childlist);
     size = static_cast<int>(childlist.size());
@@ -286,7 +284,7 @@ PARSER::findChild(NODE *node, int search) {
 }
 
 void
-PARSER::doColor(vector<NODE*> &childlist) {
+PARSER::doColor(std::vector<NODE*> &childlist) {
 
     int size = static_cast<int>(childlist.size());
     int i;
@@ -307,7 +305,7 @@ PARSER::doColor(vector<NODE*> &childlist) {
 }
 
 void
-PARSER::freeSceneNode(vector<NODE *> &childlist) {
+PARSER::freeSceneNode(std::vector<NODE *> &childlist) {
 
     int size = static_cast<int>(childlist.size());
     int i;

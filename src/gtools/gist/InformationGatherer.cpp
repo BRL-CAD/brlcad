@@ -188,16 +188,16 @@ std::string formatDouble(double d)
     ss << std::setprecision(2) << std::fixed << d;
     std::string str = ss.str();
 
-    size_t dotPos = str.find('.');
-    if (dotPos != std::string::npos) { // string has decimal point
-        // remove trailing zeroes
-        str = str.substr(0, str.find_last_not_of('0')+1);
-        // if the decimal point is now the last character, remove that as well
-        if(str.find('.') == str.size()-1)
-        {
-            str = str.substr(0, str.size()-1);
-        }
-    }
+    // size_t dotPos = str.find('.');
+    // if (dotPos != std::string::npos) { // string has decimal point
+    //     // remove trailing zeroes
+    //     str = str.substr(0, str.find_last_not_of('0')+1);
+    //     // if the decimal point is now the last character, remove that as well
+    //     if(str.find('.') == str.size()-1)
+    //     {
+    //         str = str.substr(0, str.size()-1);
+    //     }
+    // }
 
     return str;
 }
@@ -546,9 +546,6 @@ bool InformationGatherer::gatherInformation(std::string name)
         }
     }
 
-
-
-
     //Gather representation
     bool hasExplicit = false;
     bool hasImplicit = false;
@@ -738,31 +735,72 @@ std::string InformationGatherer::getFormattedInfo(std::string key)
 	return infoMap[key];
 }
 
-void InformationGatherer::correctDefaultUnits()
+bool InformationGatherer::dimensionSizeCondition()
 {
-    // NOTES:
-    // * how to handle mass?
-    // * could this be appliable to not just incehs?
+    if (std::stod(infoMap["dimX"]) > 200) return true;
+    if (std::stod(infoMap["dimY"]) > 200) return true;
+    if (std::stod(infoMap["dimZ"]) > 200) return true;
+    return false;
+}
 
-    if (infoMap["units"] == "in" || infoMap["units"] == "inch" || infoMap["units"] == "inches") {
+void InformationGatherer::correctDefaultUnitsLength()
+{
+    // length conditionals
+    bool isInches = infoMap["units"] == "in" || infoMap["units"] == "inch" || infoMap["units"] == "inches";
+    bool isCentimeters = infoMap["units"] == "cm";
+    bool isMillimeters = infoMap["units"] == "mm";
 
-        if (std::stod(getInfo("volume")) > 15000) { // arbitraty size
-            for (auto& pair : unitsMap) {
-                const std::string& key = pair.first;
-                Unit& unit = pair.second;
+    std::string toUnits = "";
 
-                if(getInfo(key) == "N/A") {
-                    continue;
-                }
+    if (dimensionSizeCondition()) {
+        if (isInches ) {
+            toUnits = "ft";
+        } else if (isCentimeters) {
+            toUnits = "m";
+        } else if (isMillimeters) {
+            toUnits = "cm";
+        }
+    }
 
-                double value = std::stod(getInfo(key));
-                std::string ft("ft");
-                double convFactor = pow(bu_units_conversion(unit.unit.c_str()), unit.power) / pow(bu_units_conversion(ft.c_str()), unit.power);
-                infoMap[key] = formatDouble(value*convFactor);
-                unit.unit = "ft";
+    if (toUnits.empty()) return;
+
+    for (auto& pair : unitsMap) {
+        const std::string& key = pair.first;
+        Unit& unit = pair.second;
+
+        if(key == "mass") {
+            continue;
+        }
+
+        double value = std::stod(getInfo(key));
+        double convFactor = pow(bu_units_conversion(unit.unit.c_str()), unit.power) / pow(bu_units_conversion(toUnits.c_str()), unit.power);
+        infoMap[key] = formatDouble(value*convFactor);
+        unit.unit = toUnits;
+    }
+}
+
+void InformationGatherer::correctDefaultUnitsMass()
+{
+    // mass conditionals
+    bool isGrams = infoMap["units"] == "g";
+    std::string toUnits = "";
+
+    if (isGrams) {
+        if (unitsMap["mass"].power != 0) { // mass exists
+            if (std::stod(infoMap["mass"]) > 20000) { // mass greater than 20,000 g
+                toUnits = "lbs";
             }
         }
     }
+
+    if (toUnits.empty()) return;
+
+    Unit& unit = unitsMap["mass"];
+
+    double value = std::stod(getInfo("mass"));
+    double convFactor = bu_units_conversion(unit.unit.c_str()) / bu_units_conversion(toUnits.c_str());
+    infoMap["mass"] = formatDouble(value*convFactor);
+    unit.unit = toUnits;
 }
 
 Unit InformationGatherer::getUnit(std::string name)

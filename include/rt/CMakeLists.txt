@@ -9,6 +9,7 @@ set(rt_headers
   calc.h
   cmd.h
   comb.h
+  conv.h
   db4.h
   db5.h
   db_attr.h

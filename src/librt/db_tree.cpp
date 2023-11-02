@@ -504,7 +504,7 @@ db_tree_del_lhs(union tree *tp, struct resource *resp)
 		case OP_NOP:
 		case OP_SOLID:
 		case OP_REGION:
-		case OP_NMG_TESS:
+		case OP_TESS:
 		case OP_DB_LEAF:
 		    /* lhs is indeed a leaf node */
 		    db_free_tree(tp->tr_b.tb_left, resp);
@@ -551,7 +551,7 @@ db_tree_del_rhs(union tree *tp, struct resource *resp)
 		case OP_NOP:
 		case OP_SOLID:
 		case OP_REGION:
-		case OP_NMG_TESS:
+		case OP_TESS:
 		case OP_DB_LEAF:
 		    /* rhs is indeed a leaf node */
 		    db_free_tree(tp->tr_b.tb_right, resp);
@@ -1276,7 +1276,7 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 	    new_tp->tr_b.tb_right = db_dup_subtree(tp->tr_b.tb_right, resp);
 	    return new_tp;
 
-	case OP_NMG_TESS: {
+	case OP_TESS: {
 	    /* FIXME: fake "copy" .. lie!!! */
 	    new_tp->tr_d.td_r = tp->tr_d.td_r;
 	    new_tp->tr_d.td_name = bu_strdup(tp->tr_d.td_name);
@@ -1371,7 +1371,7 @@ db_free_tree(union tree *tp, struct resource *resp)
 	    tp->tr_c.tc_ctsp = (struct combined_tree_state *)0;
 	    break;
 
-	case OP_NMG_TESS:
+	case OP_TESS:
 	    {
 		struct nmgregion *r = tp->tr_d.td_r;
 		if (tp->tr_d.td_name) {

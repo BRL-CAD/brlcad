@@ -110,6 +110,12 @@ std::string renderPerspective(RenderingFace face, Options& opt, std::string comp
         auto result2 = system(render.c_str());
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
+	if (result2 < 0 || result2 == 127) {
+	    bu_log("ERROR: failed to run: %s\n", render.c_str());
+	    bu_exit(BRLCAD_ERROR, "system() failed\n");
+	}
+    } catch (std::exception& er) {
+        std::cerr << er.what() << std::endl;
     }
 
     if (!bu_file_exists(outputname.c_str(), NULL)) {

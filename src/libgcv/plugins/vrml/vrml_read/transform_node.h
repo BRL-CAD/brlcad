@@ -37,7 +37,7 @@ class TRANSFORM
     public:
     void transformChild(NODE *pnode);
     void matrotate(double *Result, double Theta, double x, double y, double z);
-    void transformSceneVert(vector<NODE *> &scenenoderef);
+    void transformSceneVert(std::vector<NODE *> &scenenoderef);
 };
 
 

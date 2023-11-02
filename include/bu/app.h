@@ -172,6 +172,53 @@ BU_EXPORT extern FILE *bu_temp_file(char *filepath, size_t len);
 
 
 /**
+ * Generate a temporary file name using a prefix (if supplied),
+ * the current process ID, and the current thread's ID
+ *
+ * This function writes into buffer and returns a temporary file name
+ * that is unique to a process / thread pair. The caller can further
+ * distinguish the generated name using a specified filename prefix.
+ * When not supplied, the PACKAGE_NAME (BRL-CAD) is used as the prefix.
+ *
+ * Note that the filename parameter doubles as both a prefix specifier
+ * as well as a return buffer.
+ *
+ * @param filename prefixes the name, doubles as return buffer if len is set
+ * @param len total size of the available filename buffer
+ *
+ * @return
+ * name in the form of prefix_procID_threadID.  This will be
+ * 'filename' or, when NULL, a read-only STATIC buffer will be returned
+ * that will be the caller's responsibility to bu_strdup() or
+ * otherwise save before a subsequent call.
+ *
+ * @code
+ *
+ * // e.g., BRL-CAD_123_456
+ * const char *generic = bu_temp_file_name(NULL, 0);
+ *
+ * // e.g., BRL-CAD_123_456 -> saved to supplied buffer
+ * char generic[25] = {0};
+ * bu_temp_file_name(generic, 25);
+ *
+ * // e.g., prefix_123_456
+ * const char *prefix = bu_temp_file_name("prefix", 0);
+ *
+ * // e.g., prefix_123_456 -> saved to supplied buffer
+ * char prefix[25] = "prefix";
+ * bu_temp_file_name(prefix, 25);
+ *
+ * // e.g., /path/to/temp/dir/BRL-CAD_123_456 -> combine with bu_dir for fullpath
+ * char tmpfil[MAXPATHLEN];
+ * const char* tmp_filename = bu_temp_file_name(NULL, 0);
+ * bu_dir(tmpfil, MAXPATHLEN, BU_DIR_TEMP, tmp_filename, NULL);
+ *
+ * @endcode
+ */
+BU_EXPORT extern const char* bu_temp_file_name(char* filename, size_t len);
+
+
+/**
  * @brief Wrapper around fchmod.
  *
  * Portable wrapper for setting a file descriptor's permissions ala

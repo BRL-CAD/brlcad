@@ -84,7 +84,7 @@ pr_mater(struct ged *gedp,
 {
     char buf[128];
 
-    (void)sprintf(buf, "%5d..%d", mp->mt_low, mp->mt_high);
+    (void)sprintf(buf, "%5ld..%ld", mp->mt_low, mp->mt_high);
     pr_vls_col_item(gedp->ged_result_str, buf, ccp, clp);
     (void)sprintf(buf, "%3d, %3d, %3d", mp->mt_r, mp->mt_g, mp->mt_b);
     pr_vls_col_item(gedp->ged_result_str, buf, ccp, clp);

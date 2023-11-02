@@ -32,14 +32,12 @@
 #include "node.h"
 #include "parser.h"
 
-using namespace std;
-
 //Peforms transforms on transform node children
 void
 TRANSFORM::transformChild(NODE *pnode)
 {
     PARSER parse;
-    vector<NODE*> mychildlist;
+    std::vector<NODE*> mychildlist;
     unsigned int count;
     double tempvec[3];
     double temprotvec[3];
@@ -106,7 +104,7 @@ TRANSFORM::matrotate(double *output, double angle, double x, double y, double z)
 }
 
 void
-TRANSFORM::transformSceneVert(vector<NODE *> &scenenoderef)
+TRANSFORM::transformSceneVert(std::vector<NODE *> &scenenoderef)
 {
     int size = static_cast<int>(scenenoderef.size());
     int i;

@@ -309,7 +309,7 @@ GFile::load_g(const char *filename, int argc, const char *argv[])
 			&tree_state,		/* initial tree state */
 			nmg_to_adrt_regstart,	/* region start function */
 			gcv_region_end,		/* region end function */
-			nmg_booltree_leaf_tess,	/* leaf func */
+			rt_booltree_leaf_tess,	/* leaf func */
 			(void *)&gcvwriter);	/* client data */
 
     /* Release dynamic storage */

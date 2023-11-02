@@ -27,6 +27,7 @@
 
 #include "bu/parallel.h"
 #include "gcv/util.h"
+#include "rt/conv.h"
 #include "rt/db5.h"
 #include "rt/db_internal.h"
 #include "rt/wdb.h"
@@ -165,7 +166,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	nmg_model = nmg_mm();
 
 	if (db_walk_tree(db, 1, (const char **)&str_path, 1, &initial_tree_state, NULL,
-			 _gcv_facetize_region_end, nmg_booltree_leaf_tess, &facetize_tree)) {
+			 _gcv_facetize_region_end, rt_booltree_leaf_tess, &facetize_tree)) {
 	    bu_log("gcv_facetize(): error in db_walk_tree()\n");
 	    bu_free(str_path, "str_path");
 	    return _gcv_facetize_cleanup(nmg_model, facetize_tree);

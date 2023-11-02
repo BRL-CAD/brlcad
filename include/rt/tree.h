@@ -166,11 +166,12 @@ union tree {
 	struct region *tc_pad;          /**< @brief  unused */
 	struct combined_tree_state *tc_ctsp;
     } tr_c;
-    struct tree_nmgregion {
+    struct tree_tessellation {
 	uint32_t magic;
-	int td_op;                      /**< @brief  leaf, OP_NMG_TESS */
+	int td_op;                      /**< @brief  leaf, OP_TESS */
 	const char *td_name;            /**< @brief  If non-null, dynamic string describing heritage of this region */
 	struct nmgregion *td_r;         /**< @brief  ptr to NMG region */
+	void *td_d;                     /**< @brief  tessellation related data */
     } tr_d;
     struct tree_db_leaf {
 	uint32_t magic;
