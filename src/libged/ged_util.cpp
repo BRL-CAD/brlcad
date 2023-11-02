@@ -1296,7 +1296,7 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bv_vlblock *vbp, const char 
     }
 }
 
-#define WIN_EDITOR "\"c:/Program Files/Windows NT/Accessories/wordpad\""
+#define WIN_EDITOR "c:/Program Files/Windows NT/Accessories/wordpad.exe"
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
 #define EMACS_EDITOR "emacs"
 #define NANO_EDITOR "nano"

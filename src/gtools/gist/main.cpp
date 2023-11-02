@@ -153,9 +153,96 @@ bool readParameters(int argc, char** argv, Options &opt)
 }
 
 /**
- * Checks if we are processing a folder of models
-*/
-void handleFolder(Options& options) {
+ * Calls the necessary functions to generate the reports.
+ *
+ * @opt options to be used in report generation
+ */
+static void
+generateReport(Options opt)
+{
+    // create image frame
+    IFPainter img(opt.getLength(), opt.getWidth());
+
+    // create information gatherer
+    InformationGatherer info(&opt);
+
+    // read in all information from model file
+    if (!info.gatherInformation(opt.getName())) {
+        std::cerr << "Error on Information Gathering.  Report Generation skipped..." << std::endl;
+        return;
+    }
+
+    // TODO SAM: mass distinction in correctDefaultUnits?
+    if (opt.isOriginalUnitsLength()) {
+        info.correctDefaultUnits();
+    }
+
+    // if (opt.isOriginalUnitsLength()) {
+    //     info.correctDefaultUnitsLength();
+    // }
+    // if (opt.isOriginalUnitsMass()) {
+    //     info.correctDefaultUnitsMass();
+    // }
+
+    std::string title = info.getInfo("title");
+    if (title.size() > 88) {
+        std::string continuation = title.substr(88);
+
+        if (opt.getNotes() == "N/A") {
+            opt.setNotes("Continued Title: " + continuation);
+        } else {
+            opt.setNotes(opt.getNotes() + "\nContinued Title : " + continuation);
+        }
+    }
+
+    // Define commonly used ratio variables
+    int margin = opt.getWidth() / 150;
+    int header_footer_height = opt.getLength() / 25;
+    int padding = opt.getLength() / 250;
+    int vvHeight = (opt.getLength() - 2*header_footer_height - 2*margin) / 3;
+
+
+    // Has same height and width as V&V Checks, offset X by V&V checks width
+    // makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
+
+    // define the position of all sections in the report
+    Position imagePosition(0, 0, opt.getWidth(), opt.getLength());
+    Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
+    Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
+    Position hierarchySection(imagePosition.right() - imagePosition.thirdWidth() - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.thirdWidth(), vvHeight);
+    Position fileSection(imagePosition.right() - imagePosition.sixthWidth() - margin, topSection.bottom() + padding, imagePosition.sixthWidth(), hierarchySection.top() - topSection.bottom() - padding);
+    Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
+
+    // draw all sections
+    makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
+    makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
+    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
+    makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
+    makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
+
+    // paint renderings
+
+    // optionally, display the scene
+    if (opt.getOpenGUI()) {
+        img.openInGUI();
+    }
+
+    // optionally, export the image
+    if (opt.getExportToFile()) {
+        img.exportToFile(opt.getFileName());
+    }
+}
+
+
+/**
+ * @brief
+ *
+ * @param options
+ * @return * Checks
+ */
+static void
+handleFolder(Options& options)
+{
     int cnt = 1;
     for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
         options.setFilepath(entry.path().string());
@@ -168,70 +255,5 @@ void handleFolder(Options& options) {
         options.setFileName(exportPath);
         generateReport(options);
         std::cout << "Finished Processing: " << cnt++ << std::endl;
-    }
-}
-
-/**
- * Calls the necessary functions to generate the reports.
- *
- * @opt options to be used in report generation
- */
-void generateReport(Options opt)
-{
-    // create image frame
-    IFPainter img(opt.getLength(), opt.getWidth());
-
-    // create information gatherer
-    InformationGatherer info(&opt);
-
-    // read in all information from model file
-    if (!info.gatherInformation(opt.getName()))
-    {
-        std::cerr << "Error on Information Gathering.  Report Generation skipped..." << std::endl;
-        return;
-    }
-
-    // TODO SAM: mass distinction in correctDefaultUnits?
-    if (opt.isOriginalUnitsLength()) {
-        info.correctDefaultUnits();
-    }
-
-    // Define commonly used ratio variables
-    int margin = opt.getWidth() / 150;
-    int header_footer_height = opt.getLength() / 25;
-    int padding = opt.getLength() / 250;
-    int border_px = 3;
-    int vvHeight = (opt.getLength() - 2*header_footer_height - 2*margin) / 3;
-
-
-    // Has same height and width as V&V Checks, offset X by V&V checks width
-    // makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
-
-    // define the position of all sections in the report
-    Position imagePosition(0,0,opt.getWidth(), opt.getLength());
-    Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
-    Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
-    Position hierarchySection(imagePosition.right() - imagePosition.thirdWidth() - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.thirdWidth(), vvHeight);
-    Position fileSection(imagePosition.right() - imagePosition.sixthWidth() - margin, topSection.bottom() + padding, imagePosition.sixthWidth(), hierarchySection.top() - topSection.bottom() - padding);
-    Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
-
-
-
-    // draw all sections
-    makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
-    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
-    makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
-    makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
-    makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
-    // paint renderings
-
-    // optionally, display the scene
-    if (opt.getOpenGUI()) {
-        img.openInGUI();
-    }
-
-    // optionally, export the image
-    if (opt.getExportToFile()) {
-        img.exportToFile(opt.getFileName());
     }
 }

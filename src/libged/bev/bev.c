@@ -169,7 +169,7 @@ ged_bev_core(struct ged *gedp, int argc, const char *argv[])
 			 &wdbp->wdb_initial_tree_state,
 			 0,			/* take all regions */
 			 bev_facetize_region_end,
-			 nmg_booltree_leaf_tess,
+			 rt_booltree_leaf_tess,
 			 (void *)gedp);
 
 	if (i < 0) {

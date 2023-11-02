@@ -166,10 +166,6 @@ RT_EXPORT extern struct rt_bot_internal *nmg_mdl_to_bot(struct model *m,
 							struct bu_list *vlfree,
 							const struct bn_tol *tol);
 struct db_tree_state; /* forward declaration */
-RT_EXPORT extern union tree *nmg_booltree_leaf_tess(struct db_tree_state *tsp,
-						    const struct db_full_path *pathp,
-						    struct rt_db_internal *ip,
-						    void *client_data);
 RT_EXPORT extern union tree *nmg_booltree_leaf_tnurb(struct db_tree_state *tsp,
 						     const struct db_full_path *pathp,
 						     struct rt_db_internal *ip,

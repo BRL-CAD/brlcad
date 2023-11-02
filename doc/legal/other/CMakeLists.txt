@@ -10,6 +10,7 @@ set(other_licenses
   libutahrle.txt
   linenoise.txt
   lmdb.txt
+  manifold.txt
   netpbm.txt
   openmesh.txt
   openNURBS.txt

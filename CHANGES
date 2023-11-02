@@ -1693,4 +1693,7 @@ s/AZEL_FROM_V3DIR\([[:space:]]*([^,]*),[[:space:]]*([^,]*),/bn_ae_vec\(&\1, &\2/
 ----
 s/bg_polygon_triangulate/bg_poly_triangulate/g
 s/bg_nested_polygon_triangulate/bg_nested_poly_triangulate/g
+s/OP_NMG_TESS/OP_TESS/g
+s/tree_nmgregion/tree_tessellation/g
+s/nmg_booltree_leaf_tess/rt_booltree_leaf_tess/g
 

@@ -491,7 +491,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	    return (union tree *)NULL;
 	}
 
-    } else if (curtree->tr_op != OP_NMG_TESS) {
+    } else if (curtree->tr_op != OP_TESS) {
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
 	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
@@ -963,7 +963,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       &wdbp->wdb_initial_tree_state,
 				       enable_fastpath ? draw_nmg_region_start : 0,
 				       draw_nmg_region_end,
-				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : rt_booltree_leaf_tess,
 				       (void *)&dgcdp);
 		}
 

@@ -10,9 +10,27 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 20XX-0X-XX  Release 7.36.2                                     ---
+--- 2023-11-0X  Release 7.38.0                                     ---
 ----------------------------------------------------------------------
+This major release of BRL-CAD introduces significant improvements to
+the robustness of the facetize command. Facetization is an operation
+that converts boolean CSG hierarchies to evaluated triangle meshes,
+commonly used as a preliminary step in geometry export).  Leveraging
+the Manifold library for boolean evaluation of meshes, this release
+shows significant improvement in the overall success rate and speed of\
+facetize when processing regions and assemblies of BRL-CAD's example
+geometry (excluding those containing half primitives):
 
+% success, old: 98.1%  (2669 of 2721 ) Elapsed:  2097 seconds
+% success, new: 96.3%  (2621 of 2721 ) Elapsed: 12575 seconds
+
+Also in this release is an alpha version of the new "gist" tool, which
+leverages the OpenCV library to create one page summaries of the
+geometric information present in .g files.
+
+* add 'brep dump' subcommand to write out brep objects - Cliff Yapp
+* improve 'x' default behavior in MGED - Chris McGregor
+* fixed 'edcolor' and 'color -e' on Windows - Chris McGregor
 * ported fbcolor, fblabel, fbpoint, fbzoom to Windows - Sean Morrison
 * new 'gist' tool for generating 1-page geometry info summary reports
 	- Allyson Hoskinson, Andrew Plant, Mark Sturtevant,
@@ -20,10 +38,18 @@ changes made.  See document footer for additional details.
 * add support for dbconcat -O (overwrite) - Chris McGregor
 * improved 'lc' -d and -m interactions with aircodes - Chris McGregor
 * fixed 'make bot' inverted face normals - Chris McGregor
+* fixed 'l' evaluation for pathed objects - Chris McGregor
+* improved MGED faceplate params control, added font_size - Cliff Yapp
+* fix MGED 'brep' command crashing without database open - Cliff Yapp
+* fix MGED 'pnts read' and 'make_pnts' commands - Chris McGregor
+* improved NURBS editing functionality - Gregory Li
+* fix MGED 'listval' crashing with max path lengths - Chris McGregor
 * fixed garbage_collect MGED command on Windows - Cliff Yapp
+* fixed archer crashing with 'make' command - Cliff Yapp
 * improved and restructured rtwizard's manual page - Sean Morrison
 * fixed E command in MGED - Cliff Yapp
 * made improvements to a variety of manual pages - Josh Baker
+* remove bundled burst tool (DEPRECATED 7.32) - Cliff Yapp
 
 
 ----------------------------------------------------------------------
