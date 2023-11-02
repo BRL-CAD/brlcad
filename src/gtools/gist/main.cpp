@@ -157,8 +157,7 @@ bool readParameters(int argc, char** argv, Options &opt)
  *
  * @opt options to be used in report generation
  */
-static void
-generateReport(Options opt)
+void generateReport(Options opt)
 {
     // create image frame
     IFPainter img(opt.getLength(), opt.getWidth());
@@ -174,7 +173,7 @@ generateReport(Options opt)
 
     // TODO SAM: mass distinction in correctDefaultUnits?
     if (opt.isOriginalUnitsLength()) {
-        info.correctDefaultUnits();
+        info.correctDefaultUnitsMass();
     }
 
     // if (opt.isOriginalUnitsLength()) {
@@ -219,7 +218,9 @@ generateReport(Options opt)
     makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
     makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
-
+    //brl-cad logo
+    img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg");
+    
     // paint renderings
 
     // optionally, display the scene
@@ -240,8 +241,7 @@ generateReport(Options opt)
  * @param options
  * @return * Checks
  */
-static void
-handleFolder(Options& options)
+void handleFolder(Options& options)
 {
     int cnt = 1;
     for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {
