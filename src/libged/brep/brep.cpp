@@ -939,6 +939,32 @@ _brep_cmd_plot(void *bs, int argc, const char **argv)
 }
 
 extern "C" int
+_brep_cmd_repair(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    struct ged *gedp = gb->gedp;
+
+    const char *purpose_string = "attempt repairs on the BRep object";
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
+	return BRLCAD_OK;
+    }
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	return brep_info(gedp->ged_result_str, NULL, argc, argv);
+    }
+
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return BRLCAD_ERROR;
+    }
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
+
+    argc--; argv++;
+
+    return brep_repair(gedp, b_ip->brep, gb->solid_name.c_str(), argc, argv);
+}
+
+extern "C" int
 _brep_cmd_selection(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> selection <append/translate> <selection_name> startx starty startz dirx diry dirz";
@@ -1402,6 +1428,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "pick",            _brep_cmd_pick},
     { "plate_mode",      _brep_cmd_plate_mode},
     { "plot",            _brep_cmd_plot},
+    { "repair",          _brep_cmd_repair},
     { "selection",       _brep_cmd_selection},
     { "solid",           _brep_cmd_solid},
     { "split",           _brep_cmd_split},
