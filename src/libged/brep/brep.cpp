@@ -41,7 +41,6 @@
 #include <string>
 #include <vector>
 #include <locale>
-#include <codecvt>
 
 #include "bu/cmd.h"
 #include "bu/color.h"
@@ -598,9 +597,9 @@ _brep_cmd_dump(void *bs, int argc, const char **argv)
 
 	ON_3dmObjectAttributes attrs;
 
-	// https://stackoverflow.com/a/18597384/2037687
-	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> wcc;
-	std::wstring wc= wcc.from_bytes(dp->d_namep);
+	// NOTE: this naive conversion ONLY works on ASCII chars 
+	std::string dnamep_str(dp->d_namep);
+	std::wstring wc(dnamep_str.begin(), dnamep_str.end());
 	attrs.SetName(wc.c_str(), true);
 
 	int rgb[3];
