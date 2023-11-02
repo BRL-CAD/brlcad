@@ -13,6 +13,8 @@ Soon
 * ✅ Classification markings (overall with normal declass
   instructions). _GLOBAL attribute. Use RED box if classified
 
+* Possibly include model filesize
+
 * ✅ Bounding box information in gray area
 
 

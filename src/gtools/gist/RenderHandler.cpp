@@ -40,138 +40,22 @@ void LayoutChoice::initCoordinates(int secWidth, int secHeight, double modelLeng
 	int numCols = rowStartingIndex[1] - rowStartingIndex[0] - 1;
 	int rowLen = numCols + 1; // length of a row is the number of columns plus the newline character.
 
-	    if (dimDetails[fdet.heightContributor].first == -1) {
-		dimDetails[fdet.heightContributor] = std::pair(i, 0);
-		workingWidth -= DIM_COLUMN_SPACE;
-	    }
-	    if (dimDetails[fdet.widthContributor].first == -1) {
-		dimDetails[fdet.widthContributor] = std::pair(i, 1);
-		workingHeight -= DIM_ROW_SPACE;
-	    }
-
-	}
-    }
-
-    // to find the dimensions of the grid,
-    std::vector<double> rowHeights;
-    std::vector<double> columnWidths;
-    // these variables represent the total height/width of the orthographic views, without extra space.
-    double orthoHeight = 0;
-    double orthoWidth = 0;
-
-    // traverse the first row to gather the width
-    for (int i = 0; i < numCols; ++i) {
-	double colWidth = 0;
-	switch (map[i]) {
-	    case '\n': case '-': case '|': case '.': case 'A':// items with no area
-		break;
-	    default:
-		FaceDetails fdet;
-
-		if (map[i] == ' ')
-		    fdet = faceDetails[map[i + rowLen]]; // check the second row to snatch the width
-		else
-		    fdet = faceDetails[map[i]]; // or use myself
-
-		ModelDimension dim = fdet.widthContributor;
-
-		if (dim == LENGTH)
-		    colWidth = modelLength;
-		else if (dim == DEPTH)
-		    colWidth = modelDepth;
-		else if (dim == HEIGHT)
-		    colWidth = modelHeight;
-	}
-	if (!lockRows)
-	    columnWidths.push_back(colWidth);
-	orthoWidth += colWidth;
-    }
-
-    // traverse the first column to gather the height
-    for (int j = 0; j < numRows; ++j) {
-	int i = rowLen * j;
-	double rowHeight = 0;
-	switch (map[i]) {
-	    case '\n': case '-': case '|': case '.': case 'A':// items with no area
-		break;
-	    default:
-		FaceDetails fdet;
-
-		if (map[i] == ' ')
-		    fdet = faceDetails[map[i + 1]]; // check the second column to snatch the height
-		else
-		    fdet = faceDetails[map[i]];
-
-		ModelDimension dim = fdet.heightContributor;
-
-		if (dim == LENGTH)
-		    rowHeight = modelLength;
-		else if (dim == DEPTH)
-		    rowHeight = modelDepth;
-		else if (dim == HEIGHT)
-		    rowHeight = modelHeight;
-	}
-	if (lockRows)
-	    rowHeights.push_back(rowHeight);
-	orthoHeight += rowHeight;
-    }
-
-    // update workingWidth and workingHeight to incorporate ambient occ
-    if (ambientR == 0) {
-	// ambient occlusion is on right side; take off some part of working width
-	workingWidth *= 2.0 / 3;
-    } else if (ambientC == 0) {
-	// ambient occlusion is on bottom; take off some part of working height
-	workingHeight *= 2.0 / 3;
-    } else {
-	double ambientXOffset = 0;
-	double ambientYOffset = 0;
-	// ambient occlusion is in middle; search row/col to get top-left dimensions of ambient view
-	// this check is done to ensure that at least half of the section is for ambient occlusion
-	if (lockRows) {
-	    for (int i = 0; i < ambientR; ++i)
-		ambientYOffset += rowHeights[i];
-
-	    for (int i = 0; i < ambientC; ++i) {
-		switch (map[ambientR * rowLen + i]) {
-		    case '-': case '|': case '.':
-			continue;
-		    case '\n': case ' ': case 'A':
-			std::cerr << "ISSUE: Found unexpected character!" << std::endl;
-			/* fallthrough */
-		    default:
-			ModelDimension dim = faceDetails[map[ambientR * rowLen + i]].widthContributor;
-
-			if (dim == LENGTH)
-			    ambientXOffset += modelLength;
-			else if (dim == DEPTH)
-			    ambientXOffset += modelDepth;
-			else if (dim == HEIGHT)
-			    ambientXOffset += modelHeight;
+	int ambientR = -1;
+	int ambientC = -1;
+	for (int r = 0; r < numRows; ++r)
+	{
+		for (int c = 0; c < numCols; ++c)
+		{
+			int x = r * (numCols + 1) + c;
+			if (map[x] == 'A')
+			{
+				ambientR = r;
+				ambientC = c;
+				break;
+			}
 		}
-	    }
-	} else {
-	    for (int i = 0; i < ambientC; ++i)
-		ambientXOffset += columnWidths[i];
-
-	    for (int i = 0; i < ambientR; ++i) {
-		switch (map[i * rowLen + ambientC]) {
-		    case '-': case '|': case '.':
-			continue;
-		    case '\n': case ' ': case 'A':
-			std::cerr << "ISSUE: Found unexpected character!" << std::endl;
-			/* fallthrough */
-		    default:
-			ModelDimension dim = faceDetails[map[i * rowLen + ambientC]].heightContributor;
-
-			if (dim == LENGTH)
-			    ambientYOffset += modelLength;
-			else if (dim == DEPTH)
-			    ambientYOffset += modelDepth;
-			else if (dim == HEIGHT)
-			    ambientYOffset += modelHeight;
-		}
-	    }
+		if (ambientR != -1)
+			break;
 	}
 
 	// allocate some space for the dimensions
