@@ -27,8 +27,15 @@
 
 cmake_minimum_required(VERSION 3.1)
 cmake_policy(VERSION 3.1)
+if (POLICY CMP0074)
+	cmake_policy(SET CMP0074 NEW)
+endif (POLICY CMP0074)
 
 project(libpng C ASM)
+
+# Location of CMake modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+
 enable_testing()
 
 set(PNGLIB_MAJOR 1)
@@ -36,7 +43,7 @@ set(PNGLIB_MINOR 6)
 set(PNGLIB_REVISION 39)
 set(PNGLIB_SUBREVISION 0)
 #set(PNGLIB_SUBREVISION "git")
-set(PNGLIB_NAME libpng${PNGLIB_MAJOR}${PNGLIB_MINOR})
+set(PNGLIB_NAME libpng_brl${PNGLIB_MAJOR}${PNGLIB_MINOR})
 set(PNGLIB_VERSION ${PNGLIB_MAJOR}.${PNGLIB_MINOR}.${PNGLIB_REVISION})
 set(PNGLIB_SHARED_SOVERSION ${PNGLIB_MAJOR}${PNGLIB_MINOR})
 set(PNGLIB_SHARED_VERSION ${PNGLIB_SHARED_SOVERSION}.${PNGLIB_REVISION}.${PNGLIB_SUBREVISION})
@@ -221,7 +228,7 @@ endif()
 endif(PNG_HARDWARE_OPTIMIZATIONS)
 
 # Set PNG_LIB_NAME.
-set(PNG_LIB_NAME png${PNGLIB_MAJOR}${PNGLIB_MINOR})
+set(PNG_LIB_NAME png_brl${PNGLIB_MAJOR}${PNGLIB_MINOR})
 
 # Distinguish between debug and release builds.
 if(NOT PNG_NO_DEBUG_POSTFIX)
@@ -970,22 +977,22 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
   if(PNG_SHARED)
     # Create a symlink for libpng.dll.a => libpng16.dll.a on Cygwin
     if(CYGWIN OR MINGW)
-      create_symlink(libpng${CMAKE_IMPORT_LIBRARY_SUFFIX} TARGET png)
-      install(FILES $<TARGET_LINKER_FILE_DIR:png>/libpng${CMAKE_IMPORT_LIBRARY_SUFFIX}
+      create_symlink(libpng_brl${CMAKE_IMPORT_LIBRARY_SUFFIX} TARGET png)
+      install(FILES $<TARGET_LINKER_FILE_DIR:png>/libpng_brl${CMAKE_IMPORT_LIBRARY_SUFFIX}
               DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
 
     if(NOT WIN32)
-      create_symlink(libpng${CMAKE_SHARED_LIBRARY_SUFFIX} TARGET png)
-      install(FILES $<TARGET_LINKER_FILE_DIR:png>/libpng${CMAKE_SHARED_LIBRARY_SUFFIX}
+      create_symlink(libpng_brl${CMAKE_SHARED_LIBRARY_SUFFIX} TARGET png)
+      install(FILES $<TARGET_LINKER_FILE_DIR:png>/libpng_brl${CMAKE_SHARED_LIBRARY_SUFFIX}
               DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
   endif()
 
   if(PNG_STATIC)
     if(NOT WIN32 OR CYGWIN OR MINGW)
-      create_symlink(libpng${CMAKE_STATIC_LIBRARY_SUFFIX} TARGET png_static)
-      install(FILES $<TARGET_LINKER_FILE_DIR:png_static>/libpng${CMAKE_STATIC_LIBRARY_SUFFIX}
+      create_symlink(libpng_brl${CMAKE_STATIC_LIBRARY_SUFFIX} TARGET png_static)
+      install(FILES $<TARGET_LINKER_FILE_DIR:png_static>/libpng_brl${CMAKE_STATIC_LIBRARY_SUFFIX}
               DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endif()
   endif()
