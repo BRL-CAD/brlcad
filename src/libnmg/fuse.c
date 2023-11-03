@@ -2291,6 +2291,10 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	} else
 	    break;
     }
+
+    if (!rmax)
+	return;
+
     /* wires before min establish new rmin */
     first = rmin;
     for (;;) {
