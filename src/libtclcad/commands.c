@@ -4565,6 +4565,11 @@ to_new_view(struct ged *gedp,
 		NULL);
     }
 
+    // If we don't already have a default ged_gvp, set the one we just
+    // created as the new default
+    if (!gedp->ged_gvp)
+	gedp->ged_gvp = new_gdvp;
+
     bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&new_gdvp->gv_name));
     return BRLCAD_OK;
 }
