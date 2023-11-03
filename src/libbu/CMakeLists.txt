@@ -153,6 +153,15 @@ endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${Foundation_LIBRARIES};Threads::Threads;${libbu_deps};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${LMDB_LIBRARIES};${UUID_LIBRARIES};${M_LIBRARY}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
+# With newer GCC, our bitv structure triggers a compiler
+# warning about writing 1 byte into a region of size 0.
+if(${BRLCAD_OPTIMIZED} MATCHES "ON")
+  check_c_compiler_flag(-Wno-error=stringop-overflow= HAVE_NO_STRINGOP_OVERFLOW)
+  if (HAVE_NO_STRINGOP_OVERFLOW)
+    target_link_options(libbu PRIVATE -Wno-error=stringop-overflow=)
+  endif (HAVE_NO_STRINGOP_OVERFLOW)
+endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
+
 # Define a pre-build test for libbu to check the semaphores in BRL-CAD's headers for
 # ordering issues
 #set(BCAD_HDRS_FILE "${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
