@@ -37,6 +37,7 @@ jobs:
           ./clang-static-analyzer-run.sh
 
       - name: Summary
+        if: success() || failure()
         run: |
           sudo apt-get install html2text
           html2text build/scan-reports-all/*/index.html
