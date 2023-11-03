@@ -2275,6 +2275,8 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
     for (;;) {
 	struct nmg_radial *next;
 	next = rmax;
+	if (!next)
+	    break;
 	do {
 	    next = BU_LIST_PNEXT_CIRC(nmg_radial, next);
 	} while (next && next->fu == (struct faceuse *)NULL);
