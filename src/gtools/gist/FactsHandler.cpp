@@ -81,14 +81,6 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 }
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
-	// //Determine units
-	// std::string unit;
-	// if (opt.isOriginalUnitsLength()) {
-	// 	unit = info.getInfo("units");
-	// }
-	// else {
-	// 	unit = opt.getUnitLength();
-	// }
 
 	// draw bounding rectangle
 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
@@ -106,15 +98,17 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 
 	int curiX = 1;
 
+	std::string summaryTitle = "\"" + info.largestComponents[0].name + "\" Summary";
+
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Geometry Type", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("representation"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Orientation", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getOrientationRightLeft() + ", " + opt.getOrientationZYUp());
 	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Entity Summary", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("assemblies") + " assemblies, " + info.getInfo("total") + " total");
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, summaryTitle, TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions_parts") + " regions");
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("groups_assemblies") + " assemblies");
 	//curiX++;
 	//img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Units", TO_BOLD);
 	//img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
