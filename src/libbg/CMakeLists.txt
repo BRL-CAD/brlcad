@@ -106,6 +106,15 @@ if (TARGET libbg-obj)
   set_property(TARGET libbg-obj APPEND PROPERTY COMPILE_DEFINITIONS "EIGEN_DONT_VECTORIZE")
 endif (TARGET libbg-obj)
 
+# With newer GCC, optimized linking of SPSR triggers a compiler warning about a
+# new allocation potentially exceeding maximum object size.
+if(${BRLCAD_OPTIMIZED} MATCHES "ON")
+  check_c_compiler_flag(-Wno-error=alloc-size-larger-than= HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+  if (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+    target_link_options(libbg PRIVATE -Wno-error=alloc-size-larger-than=)
+  endif (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
+
 add_subdirectory(tests)
 
 set(bg_ignore
