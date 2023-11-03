@@ -21,8 +21,8 @@ shows significant improvement in the overall success rate and speed of
 facetize when processing regions and assemblies of BRL-CAD's example
 geometry (excluding those containing half primitives):
 
-% success, old: %  () Elapsed:  seconds
-% success, new: %  () Elapsed:  seconds
+% success, old: 88.9%  (249 of 280) Elapsed:  7256 seconds
+% success, new: 98.9%  (277 of 280) Elapsed:  1044 seconds
 
 Also in this release is an alpha version of the new "gist" tool, which
 leverages the OpenCV library to create one page summaries of the

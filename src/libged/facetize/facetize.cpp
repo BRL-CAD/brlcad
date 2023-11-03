@@ -1823,7 +1823,6 @@ _manifold_do_bool(
 	tr->tr_d.td_d = NULL;
     }
 
-    tp->tr_op = OP_TESS;
     tp->tr_d.td_r = NULL;
 
     if (failed) {
@@ -1831,6 +1830,7 @@ _manifold_do_bool(
 	return -1;
     }
 
+    tp->tr_op = OP_TESS;
     tp->tr_d.td_d = omesh;
     return 0;
 #else
