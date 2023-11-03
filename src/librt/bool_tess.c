@@ -134,11 +134,11 @@ rt_booltree_evaluate(
 	return TREE_NULL;
     }
 
-    union tree *tl;
-    union tree *tr;
-    const char *op_str = " u "; /* default value */
-    size_t rem;
-    char *name;
+    union tree *tl = NULL;
+    union tree *tr = NULL;
+    const char *op_str = NULL;
+    size_t rem = 0;
+    char *name = NULL;
 
     RT_CK_TREE(tp);
     if (tol)
