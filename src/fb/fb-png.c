@@ -62,7 +62,7 @@ int
 get_args(int argc, char **argv)
 {
     int c;
-    char *file_name = "-";
+    char *file_name = NULL;
 
     while ((c = bu_getopt(argc, argv, "ciF:s:w:n:g:#:h?")) != -1) {
 	switch (c) {
