@@ -1643,7 +1643,7 @@ bool_meshes(
 	const char *lname, const char *rname)
 {
     if (!o_coords || !o_ccnt || !o_tris || !o_tricnt)
-	return 0;
+	return -1;
 
     manifold::Mesh a_mesh;
     for (int i = 0; i < a_ccnt; i++)
@@ -1659,12 +1659,12 @@ bool_meshes(
     manifold::Manifold a_manifold(a_mesh);
     if (a_manifold.Status() != manifold::Manifold::Error::NoError) {
 	bu_log("Error - a invalid\n");
-	return 0;
+	return -1;
     }
     manifold::Manifold b_manifold(b_mesh);
     if (b_manifold.Status() != manifold::Manifold::Error::NoError) {
 	bu_log("Error - b invalid\n");
-	return 0;
+	return -1;
     }
 
     manifold::Manifold result;
@@ -1672,7 +1672,7 @@ bool_meshes(
 	result = a_manifold.Boolean(b_manifold, b_op);
 	if (result.Status() != manifold::Manifold::Error::NoError) {
 	    bu_log("Error - bool result invalid\n");
-	    return 0;
+	    return -1;
 	}
     } catch (...) {
 	bu_log("Manifold boolean library threw failure\n");
@@ -1683,7 +1683,7 @@ bool_meshes(
 	    tris_to_stl(rname, b_coords, b_tris, b_tricnt);
 	    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.");
 	}
-	return 0;
+	return -1;
     }
     manifold::Mesh rmesh = result.GetMesh();
 
@@ -1712,7 +1712,7 @@ bool_meshes(
 	bu_free(*o_tris, "tris");
 	*o_tris = NULL;
 	bu_log("Error: Manifold boolean succeeded, but result reports as non-solid: failure.");
-	return 0;
+	return -1;
     }
 
     return rmesh.triVerts.size();
@@ -1778,7 +1778,7 @@ _manifold_do_bool(
     }
 
     BU_GET(omesh, struct manifold_mesh);
-    bool_meshes(
+    int mret = bool_meshes(
 	    (double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
 	    manifold_op,
 	    (double *)lmesh->vertices, lmesh->num_vertices, lmesh->faces, lmesh->num_faces,
@@ -1786,6 +1786,18 @@ _manifold_do_bool(
 	    tl->tr_d.td_name,
 	    tr->tr_d.td_name
 	    );
+
+    int failed = (mret < 0) ? 1 : 0;
+
+    if (failed) {
+	// TODO - we should be able to try an NMG boolean op here as a
+	// fallback, but we may need to translate one or both of the inputs
+	// into NMG
+	bu_free(omesh->faces, "faces");
+	bu_free(omesh->vertices, "vertices");
+	BU_PUT(omesh, struct manifold_mesh);
+	omesh = NULL;
+    }
 
     // Memory cleanup
     if (tl->tr_d.td_r) {
@@ -1813,15 +1825,18 @@ _manifold_do_bool(
 
     tp->tr_op = OP_TESS;
     tp->tr_d.td_r = NULL;
-    tp->tr_d.td_d = omesh;
 
+    if (failed) {
+	tp->tr_d.td_d = NULL;
+	return -1;
+    }
+
+    tp->tr_d.td_d = omesh;
     return 0;
 #else
     if (!tp || !tl || !tr || op < 0 || !tol)
 	return -1;
 #endif
-
-    return 0;
 }
 
 static struct manifold_mesh *
