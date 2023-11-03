@@ -104,7 +104,7 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	int col2Offset = offsetX + width / 2;
 	int col3Offset = (offsetX + (width*3) / 4) + textOffset;
 
-	int curiX = 0;
+	int curiX = 1;
 
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Geometry Type", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("representation"));
