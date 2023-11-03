@@ -17,12 +17,12 @@ the robustness of the facetize command. Facetization is an operation
 that converts boolean CSG hierarchies to evaluated triangle meshes,
 commonly used as a preliminary step in geometry export).  Leveraging
 the Manifold library for boolean evaluation of meshes, this release
-shows significant improvement in the overall success rate and speed of\
+shows significant improvement in the overall success rate and speed of
 facetize when processing regions and assemblies of BRL-CAD's example
 geometry (excluding those containing half primitives):
 
-% success, old: 98.1%  (2669 of 2721 ) Elapsed:  2097 seconds
-% success, new: 96.3%  (2621 of 2721 ) Elapsed: 12575 seconds
+% success, old: %  () Elapsed:  seconds
+% success, new: %  () Elapsed:  seconds
 
 Also in this release is an alpha version of the new "gist" tool, which
 leverages the OpenCV library to create one page summaries of the
