@@ -54,9 +54,6 @@
 #if defined(__NetBSD__)
 #  include <lwp.h>     // for _lwp_self
 #endif
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>  //getthrid on OpenBSD
-#endif
 
 #ifdef __APPLE__
 #  include <sys/stat.h>
