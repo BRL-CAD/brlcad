@@ -502,7 +502,7 @@ int ON::CloseAllFiles()
   //#error TODO - call clang fcloseall()
   //fcloseall is not supported on OS X
   return EOF;
-#elif defined(ON_COMPILER_GNU)
+#elif defined(ON_COMPILER_GNU) && defined(__GLIBC__)
   fcloseall();
 #else
   // I can't find an fcloseall() or _fcloseall() in
