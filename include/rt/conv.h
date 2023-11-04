@@ -41,8 +41,9 @@ RT_EXPORT extern union tree *rt_booltree_evaluate(union tree *tp,
 						   struct bu_list *vlfree,
 						   const struct bn_tol *tol,
 						   struct resource *resp,
-						   int (*do_bool)(union tree *, union tree *, union tree *, int op, struct bu_list *, const struct bn_tol *),
-						   int verbose
+						   int (*do_bool)(union tree *, union tree *, union tree *, int op, struct bu_list *, const struct bn_tol *, void *),
+						   int verbose,
+						   void *data
 						   );
 
 __END_DECLS

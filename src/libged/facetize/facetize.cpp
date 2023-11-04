@@ -1723,12 +1723,13 @@ bool_meshes(
 static int
 _manifold_do_bool(
         union tree *tp, union tree *tl, union tree *tr,
-        int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol)
+        int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *UNUSED(data))
 {
 #ifdef USE_MANIFOLD
     struct rt_bot_internal *lbot = NULL;
     struct rt_bot_internal *rbot = NULL;
     struct manifold_mesh *lmesh, *rmesh, *omesh;
+    //struct _ged_facetize_opts *o = (struct _ged_facetize_opts *)data;
 
     // Translate op for MANIFOLD
     manifold::OpType manifold_op = manifold::OpType::Add;
@@ -1751,52 +1752,80 @@ _manifold_do_bool(
     // If it's the NMG results, we need to make manifold_meshes for
     // processing.
     if (tl->tr_d.td_r) {
-	lbot = (struct rt_bot_internal *)nmg_mdl_to_bot(tl->tr_d.td_r->m_p, &RTG.rtg_vlfree, tol);
-	lmesh = bot_to_mmesh(lbot);
-	// We created this locally if it wasn't originally a BoT - clean up
-	if (lbot->vertices)
-	    bu_free(lbot->vertices, "verts");
-	if (lbot->faces)
-	    bu_free(lbot->faces, "faces");
-	BU_FREE(lbot, struct rt_bot_internal);
-	lbot = NULL;
+	if (!BU_SETJUMP) {
+	    /* try */
+	    lbot = (struct rt_bot_internal *)nmg_mdl_to_bot(tl->tr_d.td_r->m_p, &RTG.rtg_vlfree, tol);
+	} else {
+	    /* catch */
+	    BU_UNSETJUMP;
+	    lbot = NULL;
+	    lmesh = NULL;
+	} BU_UNSETJUMP;
+
+	if (lbot) {
+	    lmesh = bot_to_mmesh(lbot);
+	    // We created this locally if it wasn't originally a BoT - clean up
+	    if (lbot->vertices)
+		bu_free(lbot->vertices, "verts");
+	    if (lbot->faces)
+		bu_free(lbot->faces, "faces");
+	    BU_FREE(lbot, struct rt_bot_internal);
+	    lbot = NULL;
+	}
     } else {
 	lmesh = (struct manifold_mesh *)tl->tr_d.td_d;
     }
     if (tr->tr_d.td_r) {
-	rbot = (struct rt_bot_internal *)nmg_mdl_to_bot(tr->tr_d.td_r->m_p, &RTG.rtg_vlfree, tol);
-	rmesh = bot_to_mmesh(rbot);
-	// We created this locally if it wasn't originally a BoT - clean up
-	if (rbot->vertices)
-	    bu_free(rbot->vertices, "verts");
-	if (rbot->faces)
-	    bu_free(rbot->faces, "faces");
-	BU_FREE(rbot, struct rt_bot_internal);
-	rbot = NULL;
+
+	if (!BU_SETJUMP) {
+	    /* try */
+	    rbot = (struct rt_bot_internal *)nmg_mdl_to_bot(tr->tr_d.td_r->m_p, &RTG.rtg_vlfree, tol);
+	} else {
+	    /* catch */
+	    BU_UNSETJUMP;
+	    rbot = NULL;
+	    rmesh = NULL;
+	} BU_UNSETJUMP;
+
+	if (rbot) {
+	    rmesh = bot_to_mmesh(rbot);
+	    // We created this locally if it wasn't originally a BoT - clean up
+	    if (rbot->vertices)
+		bu_free(rbot->vertices, "verts");
+	    if (rbot->faces)
+		bu_free(rbot->faces, "faces");
+	    BU_FREE(rbot, struct rt_bot_internal);
+	    rbot = NULL;
+	}
+
     } else {
 	rmesh = (struct manifold_mesh *)tr->tr_d.td_d;
     }
+    int failed = 0;
+    if (!lmesh || !rmesh) {
+	failed = 1;
+    } else {
+	BU_GET(omesh, struct manifold_mesh);
+	int mret = bool_meshes(
+		(double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
+		manifold_op,
+		(double *)lmesh->vertices, lmesh->num_vertices, lmesh->faces, lmesh->num_faces,
+		(double *)rmesh->vertices, rmesh->num_vertices, rmesh->faces, rmesh->num_faces,
+		tl->tr_d.td_name,
+		tr->tr_d.td_name
+		);
 
-    BU_GET(omesh, struct manifold_mesh);
-    int mret = bool_meshes(
-	    (double **)&omesh->vertices, &omesh->num_vertices, &omesh->faces, &omesh->num_faces,
-	    manifold_op,
-	    (double *)lmesh->vertices, lmesh->num_vertices, lmesh->faces, lmesh->num_faces,
-	    (double *)rmesh->vertices, rmesh->num_vertices, rmesh->faces, rmesh->num_faces,
-	    tl->tr_d.td_name,
-	    tr->tr_d.td_name
-	    );
+	failed = (mret < 0) ? 1 : 0;
 
-    int failed = (mret < 0) ? 1 : 0;
-
-    if (failed) {
-	// TODO - we should be able to try an NMG boolean op here as a
-	// fallback, but we may need to translate one or both of the inputs
-	// into NMG
-	bu_free(omesh->faces, "faces");
-	bu_free(omesh->vertices, "vertices");
-	BU_PUT(omesh, struct manifold_mesh);
-	omesh = NULL;
+	if (failed) {
+	    // TODO - we should be able to try an NMG boolean op here as a
+	    // fallback, but we may need to translate one or both of the inputs
+	    // into NMG
+	    bu_free(omesh->faces, "faces");
+	    bu_free(omesh->vertices, "vertices");
+	    BU_PUT(omesh, struct manifold_mesh);
+	    omesh = NULL;
+	}
     }
 
     // Memory cleanup
@@ -1881,7 +1910,7 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     }
 
     if (facetize_tree) {
-	ftree = rt_booltree_evaluate(facetize_tree, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource, &_manifold_do_bool, 0);
+	ftree = rt_booltree_evaluate(facetize_tree, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource, &_manifold_do_bool, 0, (void *)o);
 	if (!ftree) {
 	    _ged_facetize_log_default(o);
 	    return NULL;
@@ -1893,15 +1922,27 @@ _try_manifold_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	} else if (ftree->tr_d.td_r) {
 	    // If we had only one NMG mesh, there was no bool
 	    // operation - we need to set up a mesh
-	    struct rt_bot_internal *bot = (struct rt_bot_internal *)nmg_mdl_to_bot(ftree->tr_d.td_r->m_p, &RTG.rtg_vlfree, &wdbp->wdb_tol);
-	    omesh = bot_to_mmesh(bot);
-	    // We created this locally if it wasn't originally a BoT - clean up
-	    if (bot->vertices)
-		bu_free(bot->vertices, "verts");
-	    if (bot->faces)
-		bu_free(bot->faces, "faces");
-	    BU_FREE(bot, struct rt_bot_internal);
-	    bot = NULL;
+	    struct rt_bot_internal *bot = NULL;
+	    if (!BU_SETJUMP) {
+		/* try */
+		bot = (struct rt_bot_internal *)nmg_mdl_to_bot(ftree->tr_d.td_r->m_p, &RTG.rtg_vlfree, &wdbp->wdb_tol);
+	    } else {
+		/* catch */
+		BU_UNSETJUMP;
+		bot = NULL;
+		omesh = NULL;
+	    } BU_UNSETJUMP;
+
+	    if (bot) {
+		omesh = bot_to_mmesh(bot);
+		// We created this locally if it wasn't originally a BoT - clean up
+		if (bot->vertices)
+		    bu_free(bot->vertices, "verts");
+		if (bot->faces)
+		    bu_free(bot->faces, "faces");
+		BU_FREE(bot, struct rt_bot_internal);
+		bot = NULL;
+	    }
 	}
     }
 
