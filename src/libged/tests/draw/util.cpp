@@ -116,7 +116,7 @@ scene_clear(struct ged *gedp)
 }
 
 extern "C" void
-img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, int approximate_check, const char *clear_root, const char *img_root)
+img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear_image, int soft_fail, int approximate_check, const char *clear_root, const char *img_root)
 {
     icv_image_t *ctrl, *timg;
     struct bu_vls tname = BU_VLS_INIT_ZERO;
@@ -139,7 +139,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, i
     if (!timg) {
 	if (soft_fail) {
 	    bu_log("Failed to read %s\n", bu_vls_cstr(&tname));
-	    if (clear)
+	    if (clear_scene)
 		scene_clear(gedp);
 	    bu_vls_free(&tname);
 	    return;
@@ -150,7 +150,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, i
     if (!ctrl) {
 	if (soft_fail) {
 	    bu_log("Failed to read %s\n", bu_vls_cstr(&cname));
-	    if (clear)
+	    if (clear_scene)
 		scene_clear(gedp);
 	    bu_vls_free(&tname);
 	    bu_vls_free(&cname);
@@ -191,7 +191,7 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, i
 		bu_log("%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
 		icv_destroy(ctrl);
 		icv_destroy(timg);
-		if (clear)
+		if (clear_scene)
 		    scene_clear(gedp);
 		return;
 	    }
@@ -202,11 +202,13 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear, int soft_fail, i
     icv_destroy(ctrl);
     icv_destroy(timg);
 
-    // Image comparison done and successful - clear image
-    bu_file_delete(bu_vls_cstr(&tname));
+    if (clear_image) {
+	// Image comparison done and successful - clear image
+	bu_file_delete(bu_vls_cstr(&tname));
+    }
     bu_vls_free(&tname);
 
-    if (clear)
+    if (clear_scene)
 	scene_clear(gedp);
 }
 
