@@ -189,24 +189,49 @@ img_cmp(int id, struct ged *gedp, const char *cdir, bool clear_scene, bool clear
 	if (iret) {
 	    if (soft_fail) {
 		bu_log("%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
+
+		if (clear_image) {
+		    // We're in soft fail mode, so we're not keeping the image unless the user requested it
+		    // In hard fail, we leave the last image for inspection.
+		    bu_file_delete(bu_vls_cstr(&tname));
+		} else {
+		    // Keeping the image - also generate a diff image for debugging work
+		    struct bu_vls diff_name = BU_VLS_INIT_ZERO;
+		    icv_image_t *diff_img = icv_diffimg(ctrl, timg);
+		    if (diff_img) {
+			bu_vls_sprintf(&diff_name, "%s_%d_diff.png", img_root, id);
+			icv_write(diff_img, bu_vls_cstr(&diff_name), BU_MIME_IMAGE_PNG);
+		    }
+
+		}
+
 		icv_destroy(ctrl);
 		icv_destroy(timg);
+
 		if (clear_scene)
 		    scene_clear(gedp);
 		return;
+	    } else {
+		// Hard fail - generate a diff image for debugging work
+		struct bu_vls diff_name = BU_VLS_INIT_ZERO;
+		icv_image_t *diff_img = icv_diffimg(ctrl, timg);
+		if (diff_img) {
+		    bu_vls_sprintf(&diff_name, "%s_%d_diff.png", img_root, id);
+		    icv_write(diff_img, bu_vls_cstr(&diff_name), BU_MIME_IMAGE_PNG);
+		}
+		icv_destroy(ctrl);
+		icv_destroy(timg);
 	    }
 	    bu_exit(EXIT_FAILURE, "%d %s diff failed.  %d matching, %d off by 1, %d off by many\n", id, img_root, matching_cnt, off_by_1_cnt, off_by_many_cnt);
 	}
     }
 
+    if (clear_image)
+	bu_file_delete(bu_vls_cstr(&tname));
+
+    bu_vls_free(&tname);
     icv_destroy(ctrl);
     icv_destroy(timg);
-
-    if (clear_image) {
-	// Image comparison done and successful - clear image
-	bu_file_delete(bu_vls_cstr(&tname));
-    }
-    bu_vls_free(&tname);
 
     if (clear_scene)
 	scene_clear(gedp);
