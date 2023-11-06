@@ -861,6 +861,24 @@ rt_metaball_add_point(struct rt_metaball_internal *mb, const point_t *loc, const
     return 0;
 }
 
+void
+rt_metaball_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_metaball_internal* ip;
+
+    intern->idb_type = ID_METABALL;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ip, struct rt_metaball_internal);
+    intern->idb_ptr = (void *)ip;
+
+    ip->magic = RT_METABALL_INTERNAL_MAGIC;
+    BU_LIST_INIT(&ip->metaball_ctrl_head);
+}
+
 
 int
 rt_metaball_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)

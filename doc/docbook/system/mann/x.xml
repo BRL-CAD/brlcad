@@ -26,9 +26,8 @@
 
   <para>Lists all the primitive shapes currently drawn in the MGED display.
 The <emphasis>level</emphasis> determines how much detail should be included in the list. For <emphasis>level</emphasis> zero
-(the default), only a list of paths to shapes in the display list is produced. Each shape
-is prefixed by VIEW or -no-, indicating that the shape is actually being drawn or
-that it is being skipped, respectively.  If  <emphasis>level</emphasis> is greater than zero, the center, size,
+(the default), only a list of paths to shapes in the display list is produced. If  
+<emphasis>level</emphasis> is greater than zero, the center, size,
 ident number, RGB color assigned to the region, and the actual color used to draw the
 shape are also listed.  If <emphasis>level</emphasis> is greater than one, the number of vlist structures and
 the number of points in each vlist structure are also listed for each shape.  If <emphasis>level</emphasis> is

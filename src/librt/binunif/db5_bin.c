@@ -207,6 +207,8 @@ rt_binunif_export5(struct bu_external		*ep,
     RT_CK_DB_INTERNAL(ip);
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
     RT_CK_BINUNIF(bip);
+    if (bip->count <= 0)    /* nothing to convert */
+	return 0;
 
     BU_EXTERNAL_INIT(ep);
 

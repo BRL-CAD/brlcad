@@ -65,16 +65,20 @@ BRLCAD_ADD_TEST(NAME rt_cache_parallel_multiple_different_objects_hierarchy_1  C
 # lod testing
 BRLCAD_ADDEXEC(rt_lod lod.c "librt;libbg" TEST)
 
+# bv_polygon <-> sketch testing
+BRLCAD_ADDEXEC(rt_bv_poly_sketch bv_poly_sketch.c "librt;libbv" TEST)
+
 set(distcheck_files
   CMakeLists.txt
   arb_intersect.g
+  binary_attribute.c
   brep_boolean_tests.g
   cyclic_tests.g
+  extreme_ssi_test.g
   matrix_tests.g
   nurbs_surfaces.g
-  extreme_ssi_test.g
-  binary_attribute.c
   rt_datum.c
+  sketch.g
   )
 
 CMAKEFILES(${distcheck_files})

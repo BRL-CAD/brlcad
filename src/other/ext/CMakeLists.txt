@@ -341,19 +341,6 @@ if (COMMAND CONFIG_H_APPEND)
   CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TK\n")
 endif (COMMAND CONFIG_H_APPEND)
 
-
-# The above libraries are all compilation targets with libraries, and so have
-# build outputs that must be distributed with BRL-CAD.  The following are
-# either header-only libraries or built directly into executables, and as such
-# may remain in place - they are needed only for building.
-include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
-CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
-
-# linenoise is used by applications directly
-include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
-CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
-
-
 std_build_rpath()
 
 if (COMMAND CMAKEFILES)
@@ -383,7 +370,6 @@ if (COMMAND CMAKEFILES)
     CMake/buildpath_replace.cxx.in
     CMake/rpath_replace.cxx.in
     CMake/tcl_replace.cxx.in
-    Eigen.dist
     assetimport.cmake
     assetimport.dist
     gdal.cmake
@@ -394,7 +380,6 @@ if (COMMAND CMAKEFILES)
     itk3.dist
     iwidgets.cmake
     iwidgets.dist
-    linenoise.dist
     netpbm.cmake
     netpbm.dist
     openmesh.cmake

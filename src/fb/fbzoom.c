@@ -37,6 +37,7 @@
 #include "vmath.h"
 
 #include "dm.h"
+#define LIBTERMIO_IMPLEMENTATION
 #include "libtermio.h"
 
 
@@ -174,8 +175,13 @@ doKeyPad(void)
 {
     int ch;
 
+#if defined(HAVE_CONIO_H)
+    if ((ch = getch()) == EOF)
+	return 0;		/* done */
+#else
     if ((ch = getchar()) == EOF)
 	return 0;		/* done */
+#endif
     ch &= ~0x80;			/* strip off parity bit */
     switch (ch) {
 	case '?' :

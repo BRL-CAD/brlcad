@@ -723,7 +723,7 @@ ply_write_gcv(struct gcv_context* context, const struct gcv_opts* gcv_options, c
 			&tree_state,
 			0,		/* take all regions */
 			do_region_end,
-			nmg_booltree_leaf_tess,
+			rt_booltree_leaf_tess,
 			(void*)&state);
 
     if (state.ply_write_options->verbose || state.gcv_options->verbosity_level)

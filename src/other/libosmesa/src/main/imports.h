@@ -71,16 +71,10 @@ extern "C" {
 /** Memory macros */
 /*@{*/
 
-/** Allocate \p BYTES bytes */
-#define MALLOC(BYTES)      _mesa_malloc(BYTES)
-/** Allocate and zero \p BYTES bytes */
-#define CALLOC(BYTES)      _mesa_calloc(BYTES)
 /** Allocate a structure of type \p T */
-#define MALLOC_STRUCT(T)   (struct T *) _mesa_malloc(sizeof(struct T))
+#define MALLOC_STRUCT(T)   (struct T *) malloc(sizeof(struct T))
 /** Allocate and zero a structure of type \p T */
-#define CALLOC_STRUCT(T)   (struct T *) _mesa_calloc(sizeof(struct T))
-/** Free memory */
-#define FREE(PTR)          _mesa_free(PTR)
+#define CALLOC_STRUCT(T)   (struct T *) calloc(1,sizeof(struct T))
 
 /** Allocate \p BYTES aligned at \p N bytes */
 #define ALIGN_MALLOC(BYTES, N)     _mesa_align_malloc(BYTES, N)
@@ -92,11 +86,6 @@ extern "C" {
 #define ALIGN_CALLOC_STRUCT(T, N)  (struct T *) _mesa_align_calloc(sizeof(struct T), N)
 /** Free aligned memory */
 #define ALIGN_FREE(PTR)            _mesa_align_free(PTR)
-
-/** Copy \p BYTES bytes from \p SRC into \p DST */
-#define MEMCPY( DST, SRC, BYTES)   _mesa_memcpy(DST, SRC, BYTES)
-/** Set \p N bytes in \p DST to \p VAL */
-#define MEMSET( DST, VAL, N )      _mesa_memset(DST, VAL, N)
 
 /*@}*/
 
@@ -198,19 +187,6 @@ typedef union {
  *** LOG2: Log base 2 of float
  ***/
 #ifdef USE_IEEE
-#if 0
-/* This is pretty fast, but not accurate enough (only 2 fractional bits).
- * Based on code from http://www.stereopsis.com/log2.html
- */
-static INLINE GLfloat LOG2(GLfloat x)
-{
-    const GLfloat y = x * x * x * x;
-    const GLuint ix = *((GLuint *) &y);
-    const GLuint exp = (ix >> 23) & 0xFF;
-    const GLint log2 = ((GLint) exp) - 127;
-    return (GLfloat) log2 * (1.0 / 4.0);  /* 4, because of x^4 above */
-}
-#endif
 /* Pretty fast, and accurate.
  * Based on code from http://www.flipcode.com/totd/
  */
@@ -247,8 +223,6 @@ static INLINE int IS_INF_OR_NAN(float x)
 #elif defined(isfinite)
 #define IS_INF_OR_NAN(x)        (!isfinite(x))
 #elif defined(finite)
-#define IS_INF_OR_NAN(x)        (!finite(x))
-#elif defined(__VMS)
 #define IS_INF_OR_NAN(x)        (!finite(x))
 #elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #define IS_INF_OR_NAN(x)        (!isfinite(x))
@@ -318,47 +292,7 @@ static INLINE int GET_FLOAT_BITS(float x)
 /***
  *** IROUND: return (as an integer) float rounded to nearest integer
  ***/
-#if defined(USE_SPARC_ASM) && defined(__GNUC__) && defined(__sparc__)
-static INLINE int iround(float f)
-{
-    int r;
-    __asm__("fstoi %1, %0" : "=f"(r) : "f"(f));
-    return r;
-}
-#define IROUND(x)  iround(x)
-#elif defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__) && \
-			(!defined(__BEOS__) || (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 95)))
-static INLINE int iround(float f)
-{
-    int r;
-    __asm__("fistpl %0" : "=m"(r) : "t"(f) : "st");
-    return r;
-}
-#define IROUND(x)  iround(x)
-#elif defined(USE_X86_ASM) && defined(__MSC__) && defined(__WIN32__)
-static INLINE int iround(float f)
-{
-    int r;
-    _asm {
-	fld f
-	fistp r
-    }
-    return r;
-}
-#define IROUND(x)  iround(x)
-#elif defined(__WATCOMC__) && defined(__386__)
-long iround(float f);
-#pragma aux iround =                    \
-	"push   eax"                        \
-	"fistp  dword ptr [esp]"            \
-	"pop    eax"                        \
-	parm [8087]                         \
-	value [eax]                         \
-	modify exact [eax];
-#define IROUND(x)  iround(x)
-#else
 #define IROUND(f)  ((int) (((f) >= 0.0F) ? ((f) + 0.5F) : ((f) - 0.5F)))
-#endif
 
 
 /***
@@ -374,27 +308,7 @@ long iround(float f);
 /***
  *** IFLOOR: return (as an integer) floor of float
  ***/
-#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
-/*
- * IEEE floor for computers that round to nearest or even.
- * 'f' must be between -4194304 and 4194303.
- * This floor operation is done by "(iround(f + .5) + iround(f - .5)) >> 1",
- * but uses some IEEE specific tricks for better speed.
- * Contributed by Josh Vanderhoof
- */
-static INLINE int ifloor(float f)
-{
-    int ai, bi;
-    double af, bf;
-    af = (3 << 22) + 0.5 + (double)f;
-    bf = (3 << 22) + 0.5 - (double)f;
-    /* GCC generates an extra fstp/fld without this. */
-    __asm__("fstps %0" : "=m"(ai) : "t"(af) : "st");
-    __asm__("fstps %0" : "=m"(bi) : "t"(bf) : "st");
-    return (ai - bi) >> 1;
-}
-#define IFLOOR(x)  ifloor(x)
-#elif defined(USE_IEEE)
+#if   defined(USE_IEEE)
 static INLINE int ifloor(float f)
 {
     int ai, bi;
@@ -423,27 +337,7 @@ static INLINE int ifloor(float f)
 /***
  *** ICEIL: return (as an integer) ceiling of float
  ***/
-#if defined(USE_X86_ASM) && defined(__GNUC__) && defined(__i386__)
-/*
- * IEEE ceil for computers that round to nearest or even.
- * 'f' must be between -4194304 and 4194303.
- * This ceil operation is done by "(iround(f + .5) + iround(f - .5) + 1) >> 1",
- * but uses some IEEE specific tricks for better speed.
- * Contributed by Josh Vanderhoof
- */
-static INLINE int iceil(float f)
-{
-    int ai, bi;
-    double af, bf;
-    af = (3 << 22) + 0.5 + (double)f;
-    bf = (3 << 22) + 0.5 - (double)f;
-    /* GCC generates an extra fstp/fld without this. */
-    __asm__("fstps %0" : "=m"(ai) : "t"(af) : "st");
-    __asm__("fstps %0" : "=m"(bi) : "t"(bf) : "st");
-    return (ai - bi + 1) >> 1;
-}
-#define ICEIL(x)  iceil(x)
-#elif defined(USE_IEEE)
+#if   defined(USE_IEEE)
 static INLINE int iceil(float f)
 {
     int ai, bi;
@@ -553,37 +447,6 @@ do {									\
 do {									\
    __asm__ ( "fnclex ; fldcw %0" : : "m" (*&(x)) );			\
 } while (0)
-
-#elif defined(__WATCOMC__) && defined(__386__)
-#define DEFAULT_X86_FPU		0x037f /* See GCC comments above */
-#define FAST_X86_FPU		0x003f /* See GCC comments above */
-void _watcom_start_fast_math(unsigned short *x,unsigned short *mask);
-#pragma aux _watcom_start_fast_math =                                   \
-   "fnstcw  word ptr [eax]"                                             \
-   "fldcw   word ptr [ecx]"                                             \
-   parm [eax] [ecx]                                                     \
-   modify exact [];
-void _watcom_end_fast_math(unsigned short *x);
-#pragma aux _watcom_end_fast_math =                                     \
-   "fnclex"                                                             \
-   "fldcw   word ptr [eax]"                                             \
-   parm [eax]                                                           \
-   modify exact [];
-#if defined(NO_FAST_MATH)
-#define START_FAST_MATH(x)                                              \
-do {                                                                    \
-   static GLushort mask = DEFAULT_X86_FPU;	                            \
-   _watcom_start_fast_math(&x,&mask);                                   \
-} while (0)
-#else
-#define START_FAST_MATH(x)                                              \
-do {                                                                    \
-   static GLushort mask = FAST_X86_FPU;                                 \
-   _watcom_start_fast_math(&x,&mask);                                   \
-} while (0)
-#endif
-#define END_FAST_MATH(x)  _watcom_end_fast_math(&x)
-
 #elif defined(_MSC_VER) && defined(_M_IX86)
 #define DEFAULT_X86_FPU		0x037f /* See GCC comments above */
 #define FAST_X86_FPU		0x003f /* See GCC comments above */
@@ -628,15 +491,6 @@ _mesa_little_endian(void)
  */
 
 extern void *
-_mesa_malloc(size_t bytes);
-
-extern void *
-_mesa_calloc(size_t bytes);
-
-extern void
-_mesa_free(void *ptr);
-
-extern void *
 _mesa_align_malloc(size_t bytes, unsigned long alignment);
 
 extern void *
@@ -650,19 +504,7 @@ _mesa_align_realloc(void *oldBuffer, size_t oldSize, size_t newSize,
 		    unsigned long alignment);
 
 extern void *
-_mesa_exec_malloc(GLuint size);
-
-extern void
-_mesa_exec_free(void *addr);
-
-extern void *
 _mesa_realloc(void *oldBuffer, size_t oldSize, size_t newSize);
-
-extern void *
-_mesa_memcpy(void *dest, const void *src, size_t n);
-
-extern void
-_mesa_memset(void *dst, int val, size_t n);
 
 extern void
 _mesa_memset16(unsigned short *dst, unsigned short val, size_t n);
@@ -670,26 +512,14 @@ _mesa_memset16(unsigned short *dst, unsigned short val, size_t n);
 extern void
 _mesa_bzero(void *dst, size_t n);
 
-extern int
-_mesa_memcmp(const void *s1, const void *s2, size_t n);
-
-extern double
-_mesa_sin(double a);
-
 extern float
 _mesa_sinf(float a);
-
-extern double
-_mesa_cos(double a);
 
 extern float
 _mesa_asinf(float x);
 
 extern float
 _mesa_atanf(float x);
-
-extern double
-_mesa_sqrtd(double x);
 
 extern float
 _mesa_sqrtf(float x);
@@ -699,9 +529,6 @@ _mesa_inv_sqrtf(float x);
 
 extern void
 _mesa_init_sqrt_table(void);
-
-extern double
-_mesa_pow(double x, double y);
 
 extern int
 _mesa_ffs(int i);
@@ -722,52 +549,17 @@ _mesa_float_to_half(float f);
 extern float
 _mesa_half_to_float(GLhalfARB h);
 
-
-extern void *
-_mesa_bsearch(const void *key, const void *base, size_t nmemb, size_t size,
-	      int (*compar)(const void *, const void *));
-
 extern char *
 _mesa_getenv(const char *var);
 
 extern char *
-_mesa_strstr(const char *haystack, const char *needle);
-
-extern char *
-_mesa_strncat(char *dest, const char *src, size_t n);
-
-extern char *
-_mesa_strcpy(char *dest, const char *src);
-
-extern char *
-_mesa_strncpy(char *dest, const char *src, size_t n);
-
-extern size_t
-_mesa_strlen(const char *s);
-
-extern int
-_mesa_strcmp(const char *s1, const char *s2);
-
-extern int
-_mesa_strncmp(const char *s1, const char *s2, size_t n);
-
-extern char *
 _mesa_strdup(const char *s);
-
-extern int
-_mesa_atoi(const char *s);
-
-extern double
-_mesa_strtod(const char *s, char **end);
 
 extern int
 _mesa_sprintf(char *str, const char *fmt, ...);
 
 extern void
 _mesa_printf(const char *fmtString, ...);
-
-extern int
-_mesa_vsprintf(char *str, const char *fmt, va_list args);
 
 
 extern void

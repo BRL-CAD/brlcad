@@ -5,5 +5,5 @@ Comment=Archer - Constructive solid geometry (CSG) solid modeling computer-aided
 Exec=bash -c "cd /usr/brlcad/bin/ && /usr/brlcad/bin/archer %f"
 Icon=archer
 Type=Application
-Categories=BRL-CAD;
+Categories=Graphics;Science;Education;Engineering;
 MimeType=application/brlcad-v4;application/brlcad-v5;

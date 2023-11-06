@@ -5,6 +5,7 @@ set(cmake_ignore_files
   BRLCAD_CPackOptions.cmake.in
   BRLCAD_CheckFunctions.cmake
   BRLCAD_Environment_Setup.cmake
+  BRLCAD_ExternalDeps.cmake
   BRLCAD_Install_Prefix.cmake
   BRLCAD_Options.cmake
   BRLCAD_Regress_Util.cmake
@@ -35,17 +36,23 @@ set(cmake_ignore_files
   FindGECODE.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
+  FindLINENOISE.cmake
+  FindLMDB.cmake
   FindLibUV.cmake
+  FindMANIFOLD.cmake
   FindNETPBM.cmake
   FindNSIS.cmake
   FindOpenMesh.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
+  FindOSMESA.cmake
   FindOpenCL.cmake
+  FindOpenCV.cmake
   FindOpenGL.cmake
   FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
+  FindPNG.cmake
   FindPOLY2TRI.cmake
   FindPROJ4.cmake
   FindRE2C.cmake
@@ -61,6 +68,7 @@ set(cmake_ignore_files
   FindWix.cmake
   FindXMLLINT.cmake
   FindXSLTPROC.cmake
+  FindZLIB.cmake
   NSIS.template.in
   NSIS_silent.template.in
   OpenVDBUtils.cmake
@@ -68,6 +76,7 @@ set(cmake_ignore_files
   RPath_Setup.cmake
   ResetCache.cmake
   TCL_PKGINDEX.cmake
+  TrackFiles.cmake
   compat/README
   compat/README.compat
   compat/README.compat.c99

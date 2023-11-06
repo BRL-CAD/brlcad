@@ -503,7 +503,7 @@ static void
 link_error(struct gl_shader_program *shProg, const char *msg)
 {
     if (shProg->InfoLog) {
-	_mesa_free(shProg->InfoLog);
+	free(shProg->InfoLog);
     }
     shProg->InfoLog = _mesa_strdup(msg);
     shProg->LinkStatus = GL_FALSE;

@@ -21,6 +21,86 @@
  *
  * The select command.
  *
+ * "Sets" in BRL-CAD have some interesting complications, particularly when it
+ * comes to geometric scenes.  Graphically visible scene objects representing
+ * .g geometry always correspond to one instance of one solid, or a set of data
+ * representing an evaluation of a composite object.
+ *
+ * Because there may be thousands of such objects in a scene, commands such as
+ * "who" report "collapsed" top level groups that represent the highest level
+ * paths that contain beneath them all the drawn solids.   Generally this
+ * report will be more compact and informative to users than a detailed
+ * itemization of individual instance shape objects.
+ *
+ * However, when defining selection sets, it gets more complex.  Building selection
+ * sets graphically by interrogating the scene will build up sets of individual
+ * shape objects.  If the correct sub-sets of those objects are selected, we can
+ * conceptually regard a parent comb as being fully selected, if we so choose.
+ * However, we do not always want the "fully selected" parent comb to replace
+ * all of its children in the set, since different types of actions may
+ * want/need to operate on the individual comb instances rather than the parent
+ * comb as an aggregate whole.
+ *
+ * We thus need "expand" and "collapse" operations for sets, the former of
+ * which will take each entry in the set and replace it with all of its child
+ * leaf instances.
+ *
+ * Likewise, the "collapse" operation will look at the children contained in the set,
+ * and for cases where all children are present, those children will be replaced
+ * with one reference to the parent.  This will be done working "up" the various
+ * trees until either all potential collapses are missing one or more children, or
+ * all entries collapse to top level objects.
+ *
+ * Nor do we want to always either expand OR collapse - in some cases we want
+ * exactly what was selected.  For example, if we have the tree
+ *
+ * a
+ *  b
+ *   c
+ *    d
+ *     e
+ *
+ * and we want to select and operate on /a/b/c, we can't simply collapse (which
+ * will result in /a) or expand (which will result in /a/b/c/d/e).  If /a/b/c/d/e
+ * is part of a larger selection set and we want to replace it with /a/b/c, to
+ * avoid a confusing multiple-path-instance state the selection command will need
+ * to ensure all selections below /a/b/c are removed in favor of /a/b/c.
+ *
+ * As an exercise, we consider a potential use of sets - selecting an instance of
+ * an object in a scene for editing operations.  There are a number of things we
+ * will need to know:
+ *
+ * The solids associated with the selected instance itself.  If a solid was
+ * selected we already know where to get the editing wireframe, but if comb was
+ * selected from the tree, there's more work to do.  We have the advantage of
+ * explicitly knowing the level at which the editing operations will take place
+ * (a tree selection would correspond to the previously discussed "insert"
+ * operation to the set), but we will need a list of that comb's child solids
+ * so we can create appropriate editing wireframe visual objects to represent
+ * the comb in the scene.  In the event of multiple selections we would need to
+ * construct the instance set from multiple sources.
+ *
+ * If we are performing graphical selection operations, we may be either
+ * refining a set by selecting objects to be removed from it, or selecting
+ * objects not already part of the set to add to it.  In either case we will be
+ * operating at the individual instance level, and must provide ways to allow
+ * the user to refine their selection intent for editing purposes.
+ *
+ * If we want to (say) set all non-active objects to be highly transparent when
+ * an editing operation commences, we will also need to be able to construct the
+ * set of all scene objects which are NOT active in the currently processed set.
+ *
+ * If we want to edit primitive parameters, rather than comb instances, we will
+ * need to boil down a set of selected comb instances to one or a set of solid
+ * names.  (Usually a set count > 1 won't work for primitive editing if we have
+ * multiple different independent solid leaf objects... in that case we may
+ * want to just reject an attempt to solid edit...)  Given the solid, we will
+ * then need to extract the set of all drawn instances of that solid from the
+ * scene, so we can generate and update per-instance wireframes for all of them
+ * to visually reflect the impact of the edit (MGED's inability to do this is
+ * why solid editing is rejected if more than one instance of the object is
+ * drawn in the scene - we don't want that limitation.)
+
  */
 
 #include "common.h"
@@ -33,7 +113,6 @@
 struct _ged_select_info {
     struct ged *gedp;
     struct bu_vls curr_set;
-    const char *key;
 };
 
 int
@@ -64,67 +143,31 @@ _select_cmd_list(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
-    if (!gedp->ged_selection_sets)
+    if (!gedp->dbi_state || argc > 1)
 	return BRLCAD_ERROR;
 
-    if (!argc && !bu_vls_strlen(&gd->curr_set)) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "*");
-	if (scnt) {
-	    for (size_t i = 0; i < scnt; i++) {
-		struct ged_selection_set *s = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
-		bu_vls_printf(gedp->ged_result_str, "%s\n", bu_vls_cstr(&s->name));
-	    }
+    if (!argc) {
+	std::vector<std::string> ssets = gedp->dbi_state->list_selection_sets();
+	for (size_t i = 0; i < ssets.size(); i++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", ssets[i].c_str());
 	}
-	bu_ptbl_free(&ssets);
 	return BRLCAD_OK;
     }
 
-    if (bu_vls_strlen(&gd->curr_set)) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, bu_vls_cstr(&gd->curr_set));
-	if (!scnt) {
-	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", bu_vls_cstr(&gd->curr_set));
-	    return BRLCAD_ERROR;
-	}
-
-	for (size_t i = 0; i < scnt; i++) {
-	    struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
-	    char **selection_names = NULL;
-	    int ac = ged_selection_set_list(&selection_names, gs);
-	    if (ac) {
-		for (int j = 0; j < ac; j++) {
-		    bu_vls_printf(gedp->ged_result_str, "%s\n", selection_names[j]);
-		}
-		bu_argv_free(ac, selection_names);
-	    }
-	}
-	bu_ptbl_free(&ssets);
-
-	if (!argc || BU_STR_EQUAL(bu_vls_cstr(&gd->curr_set), argv[0]))
-	    return BRLCAD_OK;
-    }
-
-    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-    size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, argv[0]);
-    if (!scnt) {
-	bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", argv[0]);
+    const char *sname = argv[0];
+    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    if (!ss.size()) {
+	bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
 	return BRLCAD_ERROR;
     }
 
-    for (size_t i = 0; i < scnt; i++) {
-	struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
-	char **selection_names = NULL;
-	int ac = ged_selection_set_list(&selection_names, gs);
-	if (ac) {
-	    for (int j = 0; j < ac; j++) {
-		bu_vls_printf(gedp->ged_result_str, "%s\n", selection_names[j]);
-	    }
-	    bu_argv_free(ac, selection_names);
+    for (size_t i = 0; i < ss.size(); i++) {
+	std::vector<std::string> paths = ss[i]->list_selected_paths();
+
+	for (size_t j = 0; j < paths.size(); j++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", paths[j].c_str());
 	}
     }
-    bu_ptbl_free(&ssets);
-
     return BRLCAD_OK;
 }
 
@@ -141,52 +184,27 @@ _select_cmd_clear(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
-    if (!gedp->ged_selection_sets)
+
+    if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
 
-    if (!argc && !bu_vls_strlen(&gd->curr_set)) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-	if (scnt) {
-	    for (size_t i = 0; i < scnt; i++) {
-		struct ged_selection_set *s = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
-		ged_selection_set_clear(s);
-	    }
-	}
-	bu_ptbl_free(&ssets);
-	return BRLCAD_OK;
+    const char *sname = NULL;
+    if (argc) {
+	sname = argv[0];
+    } else if (bu_vls_strlen(&gd->curr_set)) {
+	sname = bu_vls_cstr(&gd->curr_set);
     }
 
-    if (bu_vls_strlen(&gd->curr_set)) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, bu_vls_cstr(&gd->curr_set));
-	if (!scnt) {
-	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", bu_vls_cstr(&gd->curr_set));
-	    return BRLCAD_ERROR;
-	}
-
-	for (size_t i = 0; i < scnt; i++) {
-	    struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
-	    ged_selection_set_clear(gs);
-	}
-	bu_ptbl_free(&ssets);
-
-	if (!argc || BU_STR_EQUAL(bu_vls_cstr(&gd->curr_set), argv[0]))
-	    return BRLCAD_OK;
-    }
-
-    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-    size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, argv[0]);
-    if (!scnt) {
-	bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", argv[0]);
+    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    if (!ss.size()) {
+	if (sname)
+	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
 	return BRLCAD_ERROR;
     }
 
-    for (size_t i = 0; i < scnt; i++) {
-	struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
-	ged_selection_set_clear(gs);
+    for (size_t i = 0; i < ss.size(); i++) {
+	ss[i]->clear();
     }
-    bu_ptbl_free(&ssets);
 
     return BRLCAD_OK;
 }
@@ -211,36 +229,36 @@ _select_cmd_add(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (!gedp->ged_selection_sets)
+    if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
 
-    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-    size_t scnt = 0;
-    if (bu_vls_strlen(&gd->curr_set)) {
-	scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, bu_vls_cstr(&gd->curr_set));
-    } else {
-	scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-    }
-    if (scnt != 1) {
-	bu_vls_printf(gedp->ged_result_str, "invalid name for current set: %s", (bu_vls_strlen(&gd->curr_set)) ? bu_vls_cstr(&gd->curr_set): "default");
+    const char *sname = NULL;
+    if (bu_vls_strlen(&gd->curr_set))
+	sname = bu_vls_cstr(&gd->curr_set);
+
+    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    if (ss.size() != 1) {
+	if (sname)
+	    bu_vls_printf(gedp->ged_result_str, ": %s does not match one selection set\n", sname);
 	return BRLCAD_ERROR;
     }
-
-    struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-    bu_ptbl_free(&ssets);
 
     struct bu_vls dpath = BU_VLS_INIT_ZERO;
     for (int i = 0; i < argc; i++) {
 	bu_vls_sprintf(&dpath, "%s", argv[i]);
 	if (bu_vls_cstr(&dpath)[0] != '/')
 	    bu_vls_prepend(&dpath, "/");
-	if (!ged_selection_insert(gs, bu_vls_cstr(&dpath))) {
-	    bu_vls_printf(gedp->ged_result_str, "unable to add path to selection: %s", argv[i]);
+	if (!ss[0]->select_path(bu_vls_cstr(&dpath), false)) {
+	    bu_vls_printf(gedp->ged_result_str, "Selection set %s: unable to add path: %s", (sname) ? sname : "default", argv[i]);
 	    bu_vls_free(&dpath);
 	    return BRLCAD_ERROR;
 	}
     }
+
+    ss[0]->characterize();
+
     bu_vls_free(&dpath);
+
     return BRLCAD_OK;
 }
 
@@ -263,27 +281,34 @@ _select_cmd_rm(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    if (!gedp->ged_selection_sets)
+    if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
 
-    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-    size_t scnt = 0;
-    if (bu_vls_strlen(&gd->curr_set)) {
-	scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, bu_vls_cstr(&gd->curr_set));
-    } else {
-	scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, "default");
-    }
-    if (scnt != 1) {
-	bu_vls_printf(gedp->ged_result_str, "invalid name for current set: %s", (bu_vls_strlen(&gd->curr_set)) ? bu_vls_cstr(&gd->curr_set): "default");
+    const char *sname = NULL;
+    if (bu_vls_strlen(&gd->curr_set))
+	sname = bu_vls_cstr(&gd->curr_set);
+
+    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    if (ss.size() != 1) {
+	if (sname)
+	    bu_vls_printf(gedp->ged_result_str, ": %s does not match one selection set\n", sname);
 	return BRLCAD_ERROR;
     }
 
-    struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, 0);
-    bu_ptbl_free(&ssets);
-
+    struct bu_vls dpath = BU_VLS_INIT_ZERO;
     for (int i = 0; i < argc; i++) {
-	ged_selection_remove(gs, argv[i]);
+	bu_vls_sprintf(&dpath, "%s", argv[i]);
+	if (bu_vls_cstr(&dpath)[0] != '/')
+	    bu_vls_prepend(&dpath, "/");
+	if (!ss[0]->deselect_path(bu_vls_cstr(&dpath), false)) {
+	    bu_vls_printf(gedp->ged_result_str, "Selection set %s: unable to remove path: %s", (sname) ? sname : "default", argv[i]);
+	    bu_vls_free(&dpath);
+	    return BRLCAD_ERROR;
+	}
     }
+    bu_vls_free(&dpath);
+
+    ss[0]->characterize();
 
     return BRLCAD_OK;
 }
@@ -301,44 +326,35 @@ _select_cmd_collapse(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
-    if (!gedp->ged_selection_sets)
+    if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
 
-    if (!argc && !bu_vls_strlen(&gd->curr_set)) {
-	bu_vls_printf(gedp->ged_result_str, ": no set specified\n");
-	return BRLCAD_OK;
+    const char *sname = NULL;
+    if (argc) {
+	sname = argv[0];
+    } else if (bu_vls_strlen(&gd->curr_set)) {
+	sname = bu_vls_cstr(&gd->curr_set);
     }
 
-    if (bu_vls_strlen(&gd->curr_set)) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, bu_vls_cstr(&gd->curr_set));
-	if (!scnt) {
-	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", bu_vls_cstr(&gd->curr_set));
-	    return BRLCAD_ERROR;
-	}
-
-	for (size_t i = 0; i < scnt; i++) {
-	    struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
-	    ged_selection_set_collapse(gs, gs);
-	}
-	bu_ptbl_free(&ssets);
-
-	if (!argc || BU_STR_EQUAL(bu_vls_cstr(&gd->curr_set), argv[0]))
-	    return BRLCAD_OK;
-    }
-
-    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-    size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, argv[0]);
-    if (!scnt) {
-	bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", argv[0]);
+    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    if (!ss.size()) {
+	if (sname)
+	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
 	return BRLCAD_ERROR;
     }
 
-    for (size_t i = 0; i < scnt; i++) {
-	struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
-	ged_selection_set_collapse(gs, gs);
+    for (size_t i = 0; i < ss.size(); i++) {
+	ss[i]->collapse();
     }
-    bu_ptbl_free(&ssets);
+
+    // TODO - for now, printing results - maybe tie this to a verbose option at some point... 
+    for (size_t i = 0; i < ss.size(); i++) {
+	std::vector<std::string> paths = ss[i]->list_selected_paths();
+
+	for (size_t j = 0; j < paths.size(); j++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", paths[j].c_str());
+	}
+    }
 
     return BRLCAD_OK;
 }
@@ -356,44 +372,36 @@ _select_cmd_expand(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct ged *gedp = gd->gedp;
-    if (!gedp->ged_selection_sets)
+
+    if (!gedp->dbi_state)
 	return BRLCAD_ERROR;
 
-    if (!argc && !bu_vls_strlen(&gd->curr_set)) {
-	bu_vls_printf(gedp->ged_result_str, ": no set specified\n");
-	return BRLCAD_OK;
+    const char *sname = NULL;
+    if (argc) {
+	sname = argv[0];
+    } else if (bu_vls_strlen(&gd->curr_set)) {
+	sname = bu_vls_cstr(&gd->curr_set);
     }
 
-    if (bu_vls_strlen(&gd->curr_set)) {
-	struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-	size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, bu_vls_cstr(&gd->curr_set));
-	if (!scnt) {
-	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", bu_vls_cstr(&gd->curr_set));
-	    return BRLCAD_ERROR;
-	}
-
-	for (size_t i = 0; i < scnt; i++) {
-	    struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
-	    ged_selection_set_expand(gs, gs);
-	}
-	bu_ptbl_free(&ssets);
-
-	if (!argc || BU_STR_EQUAL(bu_vls_cstr(&gd->curr_set), argv[0]))
-	    return BRLCAD_OK;
-    }
-
-    struct bu_ptbl ssets = BU_PTBL_INIT_ZERO;
-    size_t scnt = ged_selection_sets_lookup(&ssets, gedp->ged_selection_sets, argv[0]);
-    if (!scnt) {
-	bu_vls_printf(gedp->ged_result_str, ": %s does not match any sets\n", argv[0]);
+    std::vector<BSelectState *> ss = gedp->dbi_state->get_selected_states(sname);
+    if (!ss.size()) {
+	if (sname)
+	    bu_vls_printf(gedp->ged_result_str, ": %s does not match any selection sets\n", sname);
 	return BRLCAD_ERROR;
     }
 
-    for (size_t i = 0; i < scnt; i++) {
-	struct ged_selection_set *gs = (struct ged_selection_set *)BU_PTBL_GET(&ssets, i);
-	ged_selection_set_expand(gs, gs);
+    for (size_t i = 0; i < ss.size(); i++) {
+	ss[i]->expand();
     }
-    bu_ptbl_free(&ssets);
+
+    // TODO - for now, printing results - maybe tie this to a verbose option at some point...
+    for (size_t i = 0; i < ss.size(); i++) {
+	std::vector<std::string> paths = ss[i]->list_selected_paths();
+
+	for (size_t j = 0; j < paths.size(); j++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s\n", paths[j].c_str());
+	}
+    }
 
     return BRLCAD_OK;
 }
@@ -423,7 +431,6 @@ ged_select2_core(struct ged *gedp, int argc, const char *argv[])
     // Initialize select info
     gd.gedp = gedp;
     bu_vls_init(&gd.curr_set);
-    gd.key = NULL;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);

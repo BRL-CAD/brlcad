@@ -236,7 +236,7 @@ _ged_pnts_fmt_type(const char *fc)
     if (has_pnt && has_nrm) return RT_PNT_TYPE_NRM;
     if (has_pnt && has_s && has_c) return RT_PNT_TYPE_COL_SCA;
     if (has_pnt && has_s) return RT_PNT_TYPE_SCA;
-    if (has_pnt && has_c) return RT_PNT_TYPE_SCA;
+    if (has_pnt && has_c) return RT_PNT_TYPE_COL;
     if (has_pnt) return RT_PNT_TYPE_PNT;
 
     return RT_PNT_UNKNOWN;

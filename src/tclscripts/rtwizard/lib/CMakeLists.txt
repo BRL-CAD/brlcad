@@ -19,10 +19,16 @@ set(rtwizard_lib_TCLSCRIPTS
   PictureTypeF.itcl
   Wizard.itk
   )
-BRLCAD_ADDDATA(rtwizard_lib_TCLSCRIPTS tclscripts/rtwizard/lib)
-pkgIndex_BUILD(tclscripts/rtwizard/lib)
-tclIndex_BUILD(tclscripts/rtwizard/lib)
-CMAKEFILES(CMakeLists.txt)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(rtwizard_lib_TCLSCRIPTS tclscripts/rtwizard/lib)
+  pkgIndex_BUILD(tclscripts/rtwizard/lib)
+  tclIndex_BUILD(tclscripts/rtwizard/lib)
+endif (BRLCAD_ENABLE_TCL)
+
+CMAKEFILES(
+  CMakeLists.txt
+  ${rtwizard_lib_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

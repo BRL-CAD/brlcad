@@ -15,6 +15,7 @@ endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 # locally used but not needed by users of the library
 set(BU_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/y2038
+  ${LMDB_INCLUDE_DIR}
   )
 if (UUID_INCLUDE_DIR)
   set(BU_LOCAL_INCLUDE_DIRS ${BU_LOCAL_INCLUDE_DIRS} ${UUID_INCLUDE_DIR})
@@ -58,6 +59,7 @@ set(LIBBU_SOURCES
   booleanize.c
   brlcad_path.c
   bu_init.cpp
+  cache.cpp
   cmd.c
   color.cpp
   convert.c
@@ -148,8 +150,17 @@ else(NOT CMAKE_CXX_STANDARD EQUAL 98)
   CMAKEFILES(parallel_cpp11thread.cpp)
 endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${Foundation_LIBRARIES};Threads::Threads;${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${M_LIBRARY}")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${Foundation_LIBRARIES};Threads::Threads;${libbu_deps};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${LMDB_LIBRARIES};${UUID_LIBRARIES};${M_LIBRARY}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+# With newer GCC, our bitv structure triggers a compiler
+# warning about writing 1 byte into a region of size 0.
+if(${BRLCAD_OPTIMIZED} MATCHES "ON")
+  check_c_compiler_flag(-Wno-error=stringop-overflow= HAVE_NO_STRINGOP_OVERFLOW)
+  if (HAVE_NO_STRINGOP_OVERFLOW)
+    target_link_options(libbu PRIVATE -Wno-error=stringop-overflow=)
+  endif (HAVE_NO_STRINGOP_OVERFLOW)
+endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
 
 # Define a pre-build test for libbu to check the semaphores in BRL-CAD's headers for
 # ordering issues

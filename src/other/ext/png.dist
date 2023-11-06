@@ -3,6 +3,7 @@ ANNOUNCE
 AUTHORS
 CHANGES
 CMakeLists.txt
+CMake/FindZLIB.cmake
 INSTALL
 LICENSE
 Makefile.am

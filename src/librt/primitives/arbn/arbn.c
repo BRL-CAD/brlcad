@@ -1304,6 +1304,25 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
     return BRLCAD_OK;
 }
 
+void
+rt_arbn_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_arbn_internal *aip;
+
+    intern->idb_type = ID_ARBN;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(aip, struct rt_arbn_internal);
+    intern->idb_ptr = (void *)aip;
+
+    aip->magic = RT_ARBN_INTERNAL_MAGIC;
+    aip->neqn = 1;
+    aip->eqn = (plane_t *)bu_calloc(aip->neqn, sizeof(plane_t), "arbn plane");
+}
+
 
 int
 rt_arbn_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)

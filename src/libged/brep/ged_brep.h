@@ -96,10 +96,11 @@ _brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char 
 
 extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 
-extern int brep_curve(struct _ged_brep_info *gb, int argc, const char **argv);
-extern int brep_surface(struct _ged_brep_info *gb, int argc, const char **argv);
+extern int brep_geo(struct _ged_brep_info *gb, int argc, const char **argv);
+extern int brep_topo(struct _ged_brep_info *gb, int argc, const char **argv);
 
 extern int brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv);
+extern int brep_repair(struct ged *gedp, const ON_Brep *brep, const char *oname, int argc, const char **argv);
 extern int brep_pick(struct _ged_brep_info *gb, int argc, const char **argv);
 extern int brep_plot(struct _ged_brep_info *gb, int argc, const char **argv);
 extern int brep_tikz(struct _ged_brep_info *gb, const char *outfile);

@@ -40,7 +40,7 @@ static void vbo_exec_debug_verts(struct vbo_exec_context *exec)
     GLuint i;
 
     _mesa_printf("%s: %u vertices %d primitives, %d vertsize\n",
-		 __FUNCTION__,
+		 __func__,
 		 count,
 		 exec->vtx.prim_count,
 		 exec->vtx.vertex_size);
@@ -80,23 +80,23 @@ static GLuint vbo_copy_vertices(struct vbo_exec_context *exec)
 	case GL_LINES:
 	    ovf = nr&1;
 	    for (i = 0 ; i < ovf ; i++)
-		_mesa_memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat));
+		memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat));
 	    return i;
 	case GL_TRIANGLES:
 	    ovf = nr%3;
 	    for (i = 0 ; i < ovf ; i++)
-		_mesa_memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat));
+		memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat));
 	    return i;
 	case GL_QUADS:
 	    ovf = nr&3;
 	    for (i = 0 ; i < ovf ; i++)
-		_mesa_memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat));
+		memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat));
 	    return i;
 	case GL_LINE_STRIP:
 	    if (nr == 0)
 		return 0;
 	    else {
-		_mesa_memcpy(dst, src+(nr-1)*sz, sz * sizeof(GLfloat));
+		memcpy(dst, src+(nr-1)*sz, sz * sizeof(GLfloat));
 		return 1;
 	    }
 	case GL_LINE_LOOP:
@@ -105,11 +105,11 @@ static GLuint vbo_copy_vertices(struct vbo_exec_context *exec)
 	    if (nr == 0)
 		return 0;
 	    else if (nr == 1) {
-		_mesa_memcpy(dst, src+0, sz * sizeof(GLfloat));
+		memcpy(dst, src+0, sz * sizeof(GLfloat));
 		return 1;
 	    } else {
-		_mesa_memcpy(dst, src+0, sz * sizeof(GLfloat));
-		_mesa_memcpy(dst+sz, src+(nr-1)*sz, sz * sizeof(GLfloat));
+		memcpy(dst, src+0, sz * sizeof(GLfloat));
+		memcpy(dst+sz, src+(nr-1)*sz, sz * sizeof(GLfloat));
 		return 2;
 	    }
 	case GL_TRIANGLE_STRIP:
@@ -131,7 +131,7 @@ static GLuint vbo_copy_vertices(struct vbo_exec_context *exec)
 		    break;
 	    }
 	    for (i = 0 ; i < ovf ; i++)
-		_mesa_memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat));
+		memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz * sizeof(GLfloat));
 	    return i;
 	case GL_POLYGON+1:
 	    return 0;

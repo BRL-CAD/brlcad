@@ -96,8 +96,15 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 		ged_exec(gedp, 3, (const char **)tmp_argv);
 	    }
 	} else if (strchr(argv[arg], '/')) {
-	   // Still need to check if the slash containing string is an object first...
-	    if ((dp = db_lookup(gedp->dbip, argv[arg], LOOKUP_QUIET)) != RT_DIR_NULL) {
+	    if ((dp = db_lookup(gedp->dbip, argv[arg], LOOKUP_QUIET)) == RT_DIR_NULL) {
+		continue;
+	    }
+
+	    /* dp should have resolved to a shape. A slash still in d_namep likely means the 
+	     string is a name with a slash, not a path. 
+	     NOTE: this only works if the user is requesting a top-level name with a slash. 
+	     A slashed name anywhere else in the hierarchy will fail the db_lookup */
+	    if (strchr(dp->d_namep, '/')) {
 		_ged_do_list(gedp, dp, verbose);	/* very verbose */
 		continue;
 	    }
@@ -114,8 +121,6 @@ ged_list_core(struct ged *gedp, int argc, const char *argv[])
 
 	    if (db_follow_path_for_state(&ts, &path, argv[arg], 1))
 		continue;
-
-	    dp = DB_FULL_PATH_CUR_DIR(&path);
 
 	    if ((id = rt_db_get_internal(&intern, dp, gedp->dbip, ts.ts_mat, &rt_uniresource)) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);

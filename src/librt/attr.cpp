@@ -21,13 +21,14 @@
  *
  * Parsing logic for the ASCII v5 attr command.
  *
- * Many of the attr subcommands are intended for interactive use, and as such
- * would be a better conceptual fit for the LIBGED layer, but the BRL-CAD v5
- * ASCII .g serialization makes use of attr sub-commands to define its format.
- * Consequently, the "attr" command is not only an interactive tool but also an
- * integral part of the definition of one of the BRL-CAD geometry file formats
- * - hence the inclusion of the logic defining this command in a lower level
- * library.
+ * many of the attr subcommands are intended for interactive use, and
+ * as such would be a better conceptual fit for the LIBGED layer, but
+ * the BRL-CAD v5 ASCII .g serialization makes use of attr
+ * sub-commands to define its format.  Consequently, the "attr"
+ * command is not only an interactive tool but also an integral part
+ * of the definition of one of the BRL-CAD geometry file formats -
+ * hence the inclusion of the logic defining this command in a lower
+ * level library.
  */
 
 #include "common.h"
@@ -49,6 +50,7 @@
 #include "rt/functab.h"
 #include "rt/search.h"
 #include "rt/wdb.h"
+
 
 typedef enum {
     ATTR_APPEND,
@@ -171,6 +173,7 @@ attr_cmd(const char* arg)
 	return ATTR_UNKNOWN;
 }
 
+
 struct avsncmp {
     bool operator () (const std::pair<std::string, std::string> &p_left, const std::pair<std::string, std::string> &p_right) const
     {
@@ -195,6 +198,7 @@ struct avsncmp {
     }
 };
 
+
 static int
 attr_list(struct bu_vls *msg, struct db_i *dbip, size_t path_cnt, struct directory **paths, int argc, const char **argv)
 {
@@ -218,9 +222,11 @@ attr_list(struct bu_vls *msg, struct db_i *dbip, size_t path_cnt, struct directo
 	}
 	size_t j = 0;
 	for (j = 0, avpp = lavs.avp; j < lavs.count; j++, avpp++) {
-	    /* If we have a key-only filter, filter printing based on matching
-	     * to that filter.  If we also have a value filter, print the value as well according to value
-	     * matches. */
+	    /* If we have a key-only filter, filter printing based on
+	     * matching to that filter.  If we also have a value
+	     * filter, print the value as well according to value
+	     * matches.
+	     */
 	    if (!argc) {
 		uniq_avp.insert(std::make_pair(std::string(avpp->name), std::string("")));
 		continue;
@@ -260,6 +266,7 @@ attr_list(struct bu_vls *msg, struct db_i *dbip, size_t path_cnt, struct directo
     return BRLCAD_OK;
 }
 
+
 static void
 attr_print(struct bu_vls *msg, struct bu_attribute_value_set *avs, int argc, const char **argv)
 {
@@ -270,7 +277,7 @@ attr_print(struct bu_vls *msg, struct bu_attribute_value_set *avs, int argc, con
     struct bu_attribute_value_pair *avpp;
     size_t i, j;
     /* If we don't have a specified set, do everything */
-    /* find the max_attr_name_len  */
+    /* find the max_attr_name_len */
     if (argc == 0 || !argv) {
 	for (j = 0, avpp = avs->avp; j < avs->count; j++, avpp++) {
 	    size_t len = strlen(avpp->name);
@@ -412,10 +419,12 @@ rt_cmd_attr(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 		goto rt_attr_core_memfree;
 	    }
 	    if (argc == 3) {
-		/* just list the already sorted attribute-value pairs */
+		/* just list already sorted attribute-value pairs */
 		attr_print(msg, &avs, 0, NULL);
 	    } else {
-		/* argv[3] is the sort type: 'case', 'nocase', 'value', 'value-nocase' */
+		/* argv[3] is the sort type: 'case', 'nocase',
+		 * 'value', 'value-nocase'
+		 */
 		if (BU_STR_EQUIV(argv[3], NOCASE)) {
 		    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_nocase, NULL);
 		} else if (BU_STR_EQUIV(argv[3], VALUE)) {
@@ -423,7 +432,9 @@ rt_cmd_attr(struct bu_vls *msg, struct db_i *dbip, int argc, const char **argv)
 		} else if (BU_STR_EQUIV(argv[3], VALUE_NOCASE)) {
 		    bu_sort(&avs.avp[0], avs.count, sizeof(struct bu_attribute_value_pair), attr_cmp_value_nocase, NULL);
 		} else if (BU_STR_EQUIV(argv[3], CASE)) {
-		    ; /* don't need to do anything since this is the existing (default) sort */
+		    ; /* don't need to do anything since this is the
+		       * existing (default) sort
+		       */
 		}
 		/* just list the already sorted attribute-value pairs */
 		attr_print(msg, &avs, 0, NULL);
@@ -786,6 +797,7 @@ rt_attr_core_memfree:
 
     return ret;
 }
+
 
 // Local Variables:
 // tab-width: 8

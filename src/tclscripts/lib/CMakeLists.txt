@@ -30,11 +30,16 @@ set(lib_TCLSCRIPTS
   pattern.tcl
   pattern_gui.tcl
   )
-BRLCAD_ADDDATA(lib_TCLSCRIPTS tclscripts/lib)
-pkgIndex_BUILD(tclscripts/lib)
-tclIndex_BUILD(tclscripts/lib)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(lib_TCLSCRIPTS tclscripts/lib)
+  pkgIndex_BUILD(tclscripts/lib)
+  tclIndex_BUILD(tclscripts/lib)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${lib_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

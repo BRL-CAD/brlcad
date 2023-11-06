@@ -42,7 +42,6 @@ ged_get_eyemodel_core(struct ged *gedp, int argc, const char *argv[])
     quat_t quat;
     vect_t eye_model;
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);

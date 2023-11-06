@@ -29,8 +29,8 @@ set(embedded_licenses
   hv3_combobox.txt
   hv3_snit.txt
   Inconsolata.txt
+  image-hash.txt
   json.txt
-  libtermlib.txt
   lod.txt
   lseg_lseg.txt
   lseg_pt.txt
@@ -44,12 +44,13 @@ set(embedded_licenses
   osl.txt
   ParaView.txt
   pbrt.txt
+  picohash.txt
   point_in_polygon.txt
   polygonizer.txt
   pstdint.txt
   qconsolelistener.txt
   qsort.txt
-  QFlowLayout.txt
+  QgFlowLayout.txt
   QuickHull.txt
   rply.txt
   RTree.txt
@@ -79,8 +80,7 @@ set(embedded_licenses
   xxhash.txt
   y2038.txt
   )
-
-ADD_DOC(embedded_licenses legal/embedded)
+BRLCAD_MANAGE_FILES(embedded_licenses ${DOC_DIR}/legal/embedded)
 
 CMAKEFILES(CMakeLists.txt)
 

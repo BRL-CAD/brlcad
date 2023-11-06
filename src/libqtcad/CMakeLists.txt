@@ -41,27 +41,31 @@ add_subdirectory(images)
 
 set(qtcad_srcs
   bindings.cpp
-  gInstance.cpp
-  QAccordion.cpp
-  QColorRGB.cpp
-  QFlowLayout.cpp
-  QKeyVal.cpp
-  QToolPalette.cpp
-  QViewCtrl.cpp
+  QgAccordion.cpp
+  QgAppExecDialog.cpp
+  QgAttributesModel.cpp
+  QgColorRGB.cpp
+  QgConsole.cpp
+  QgConsoleListener.cpp
   QgDockWidget.cpp
+  QgFlowLayout.cpp
+  QgGeomImport.cpp
+  QgKeyVal.cpp
+  QgMeasureFilter.cpp
   QgModel.cpp
+  QgPolyFilter.cpp
+  QgQuadView.cpp
+  QgSW.cpp
+  QgSelectFilter.cpp
+  QgToolPalette.cpp
   QgTreeSelectionModel.cpp
   QgTreeView.cpp
   QgUtil.cpp
-  QtAppExecDialog.cpp
-  QtSW.cpp
-  QtCADQuad.cpp
-  QtCADView.cpp
-  QtConsole.cpp
-  QtConsoleListener.cpp
+  QgView.cpp
+  QgViewCtrl.cpp
   )
 if (OPENGL_LIBS)
-  set(qtcad_srcs ${qtcad_srcs} QtGL.cpp)
+  set(qtcad_srcs ${qtcad_srcs} QgGL.cpp)
 endif (OPENGL_LIBS)
 
 # We need to run Qt's Meta-Object Compiler on some of the
@@ -72,24 +76,29 @@ endif (OPENGL_LIBS)
 # and file-cleanup lists.
 set(QTCAD_HDR_DIR ${BRLCAD_SOURCE_DIR}/include/qtcad)
 set(qth_names
-  QAccordion
-  QColorRGB
-  QKeyVal
-  QToolPalette
-  QViewCtrl
+  QgAccordion
+  QgAppExecDialog
+  QgAttributesModel
+  QgColorRGB
+  QgConsole
+  QgConsoleListener
   QgDockWidget
+  QgGeomImport
+  QgKeyVal
+  QgMeasureFilter
   QgModel
+  QgPolyFilter
+  QgQuadView
+  QgSW
+  QgSelectFilter
+  QgToolPalette
   QgTreeSelectionModel
   QgTreeView
-  QtAppExecDialog
-  QtCADView
-  QtCADQuad
-  QtConsole
-  QtConsoleListener
-  QtSW
+  QgView
+  QgViewCtrl
   )
 if (OPENGL_LIBS)
-  set(qth_names ${qth_names} QtGL)
+  set(qth_names ${qth_names} QgGL)
 endif (OPENGL_LIBS)
 
 foreach(qh ${qth_names})
@@ -108,9 +117,9 @@ if(BRLCAD_ENABLE_QT)
     QT5_ADD_RESOURCES(qtcad_qrc qtcad_resources.qrc)
   endif (Qt6Widgets_FOUND)
   if (Qt6Widgets_FOUND)
-    BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs};${qtcad_qrc}" "libged;libdm;librt;libbv;libbu;Qt6::Core;Qt6::Widgets;${OPENGL_LIBS}" SHARED)
+    BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs};${qtcad_qrc}" "${libqtcad_deps};Qt6::Core;Qt6::Widgets;${OPENGL_LIBS}" SHARED)
   else()
-    BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs};${qtcad_qrc}" "libged;libdm;librt;libbv;libbu;Qt5::Core;Qt5::Widgets;${OPENGL_LIBS}" SHARED)
+    BRLCAD_ADDLIB(libqtcad "${qtcad_srcs};${qtcad_moc_srcs};${qtcad_qrc}" "${libqtcad_deps};Qt5::Core;Qt5::Widgets;${OPENGL_LIBS}" SHARED)
   endif (Qt6Widgets_FOUND)
   set_target_properties(libqtcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
   if (OPENGL_LIBS)
@@ -133,7 +142,7 @@ set(qtcad_ignore_srcs
   ${qtcad_moc_hdrs}
   bindings.h
   qtcad_resources.qrc
-  QtGL.cpp
+  QgGL.cpp
   )
 
 CMAKEFILES(${qtcad_ignore_srcs})

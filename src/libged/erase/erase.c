@@ -51,7 +51,6 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[[-r] | [[-o] -A attribute=value]] [object(s)]";
     const char *cmdName = argv[0];
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_DRAWABLE(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
 
@@ -119,6 +118,11 @@ ged_erase_core(struct ged *gedp, int argc, const char *argv[])
 	remaining_args = argc - last_opt - 1;
 	if (remaining_args < 2 || remaining_args%2) {
 	    bu_vls_printf(gedp->ged_result_str, "Error: must have even number of arguments (name/value pairs)\n");
+	    bu_vls_free(&vls);
+	    return BRLCAD_ERROR;
+	}
+	if (!gedp->dbip) {
+	    bu_vls_printf(gedp->ged_result_str, "Error: -A option requires an open database\n");
 	    bu_vls_free(&vls);
 	    return BRLCAD_ERROR;
 	}

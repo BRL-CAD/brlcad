@@ -65,17 +65,6 @@ typedef void (*_glapi_warning_func)(void *ctx, const char *str, ...);
  ** Define the GET_CURRENT_CONTEXT() macro.
  ** \param C local variable which will hold the current context.
  **/
-#if defined (GLX_USE_TLS)
-
-const extern void *_glapi_Context;
-const extern struct _glapi_table *_glapi_Dispatch;
-
-extern __thread void * _glapi_tls_Context
-__attribute__((tls_model("initial-exec")));
-
-# define GET_CURRENT_CONTEXT(C)  GLcontext *C = (GLcontext *) _glapi_tls_Context
-
-#else
 
 extern void *_glapi_Context;
 extern struct _glapi_table *_glapi_Dispatch;
@@ -86,7 +75,6 @@ extern struct _glapi_table *_glapi_Dispatch;
 #  define GET_CURRENT_CONTEXT(C)  GLcontext *C = (GLcontext *) _glapi_Context
 # endif
 
-#endif /* defined (GLX_USE_TLS) */
 
 
 /**
@@ -129,14 +117,6 @@ _glapi_end_dispatch_override(int layer);
 
 struct _glapi_table *
 _glapi_get_override_dispatch(int layer);
-
-
-extern GLuint
-_glapi_get_dispatch_table_size(void);
-
-
-extern void
-_glapi_check_table(const struct _glapi_table *table);
 
 
 extern int

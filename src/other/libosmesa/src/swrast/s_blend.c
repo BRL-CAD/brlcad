@@ -81,7 +81,7 @@ blend_noop(GLcontext *ctx, GLuint n, const GLubyte mask[],
     else
 	bytes = 4 * n * sizeof(GLfloat);
 
-    _mesa_memcpy(src, dst, bytes);
+    memcpy(src, dst, bytes);
 }
 
 
@@ -791,7 +791,7 @@ static void
 blend_general(GLcontext *ctx, GLuint n, const GLubyte mask[],
 	      void *src, const void *dst, GLenum chanType)
 {
-    GLfloat rgbaF[MAX_WIDTH][4] = {0.0}, destF[MAX_WIDTH][4] = {0.0};
+    GLfloat rgbaF[MAX_WIDTH][4] = {{0.0}}, destF[MAX_WIDTH][4] = {{0.0}};
 
     if (chanType == GL_UNSIGNED_BYTE) {
 	GLubyte(*rgba)[4] = (GLubyte(*)[4]) src;

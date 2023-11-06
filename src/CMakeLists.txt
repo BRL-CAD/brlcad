@@ -14,6 +14,49 @@ endif(MSVC)
 # globally consider anything in an 'ext' path a warning-free system header
 set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} ext CACHE STRING "Bundled system include dirs" FORCE)
 
+
+
+# The BRL-CAD package provides a large number of tools and utilities.  Not all
+# applications require all of these components, so we need a mechanism to allow
+# applications to specify subsets to build.  However, we also don't want those
+# specifications to be verbose - for example, if a client wants librt, what they
+# will need is librt and its immediate dependencies. Rather than requiring the
+# client to know and list all of those dependencies for building, we need to
+# bake that knowledge into the build itself.
+#
+# Obviously, the build definitions for each library must have knowledge of the
+# needed dependencies.  However, that knowledge isn't available to us at this
+# level since none of those subdirectories have been added.  Nor is it
+# necessarily trivial to programmatically extract that information from the
+# CMakeLists.txt files - the formatting and content of them is not particularly
+# constrained.
+#
+# To address this, we define the lists of the BRL-CAD dependencies used by various
+# library targets here, up front.  These lists are also used in the subdirectories
+# when targets are defined, so they represent the canonical dependency definitions
+# used to create the actual build targets.  Defining them here, in turn, lets us
+# also leverage this knowledge when activating or deactivating components in
+# partial build scenarios.
+set(libbu_deps)
+set(libbn_deps      libbu)
+set(libbg_deps      libbn libbu)
+set(libbv_deps      libbg libbn libbu)
+set(libnmg_deps     libbg libbv libbn libbu)
+set(libbrep_deps    libbg libbv libbn libbu)
+set(librt_deps      libbrep libnmg libbg libbv libbn libbu)
+set(libwdb_deps     librt libbrep libnmg libbg libbv libbn libbu)
+set(libpkg_deps     libbu)
+set(libgcv_deps     libwdb librt libnmg libbu)
+set(libanalyze_deps librt libbu)
+set(liboptical_deps librt libbn libbu)
+set(libicv_deps     libbn libbu)
+set(libged_deps     libicv libanalyze libwdb liboptical librt libbrep libnmg libbv libbg libbn libbu)
+set(libdm_deps      librt libicv libbv libbn libbg libbu libpkg)
+set(libfft_deps)
+set(libqtcad_deps   libged libdm librt libbv libbu)
+set(libtclcad_deps  libged libdm libnmg libbg libbv libbn libbu)
+
+
 # We need to define a number of "components" to allow for easy building of
 # subsets of BRL-CAD.  We will control this process with an advanced
 # variable named BRLCAD_ENABLE_TARGETS - if set to 0 (default) everything
@@ -25,8 +68,8 @@ set(SYS_INCLUDE_PATTERNS ${SYS_INCLUDE_PATTERNS} ext CACHE STRING "Bundled syste
 set(level_1_dirs
   libbu
   libbn
-  libbv
   libbg
+  libbv
   libnmg
   libbrep
   librt
@@ -49,7 +92,6 @@ set(level_2_dirs
   libpc
   libqtcad
   libtclcad
-  libtermio
   )
 
 # Level 3 directories contain BRL-CAD's executables.  Setting
@@ -57,7 +99,6 @@ set(level_2_dirs
 
 set(level_3_dirs
   brlman
-  burst
   bwish
   conv
   fb
@@ -155,6 +196,7 @@ endif(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
 CMAKEFILES(
   CMakeLists.txt
   README
+  libtermio/libtermio.h
   )
 
 # Add a convenience directory that is only added to the

@@ -110,11 +110,11 @@ _mesa_free_program_data(GLcontext *ctx)
     if (ctx->ATIFragmentShader.Current) {
 	ctx->ATIFragmentShader.Current->RefCount--;
 	if (ctx->ATIFragmentShader.Current->RefCount <= 0) {
-	    _mesa_free(ctx->ATIFragmentShader.Current);
+	    free(ctx->ATIFragmentShader.Current);
 	}
     }
 #endif
-    _mesa_free((void *) ctx->Program.ErrorString);
+    free((void *) ctx->Program.ErrorString);
 }
 
 
@@ -128,7 +128,7 @@ void
 _mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string)
 {
     ctx->Program.ErrorPos = pos;
-    _mesa_free((void *) ctx->Program.ErrorString);
+    free((void *) ctx->Program.ErrorString);
     if (!string)
 	string = "";
     ctx->Program.ErrorString = _mesa_strdup(string);
@@ -138,7 +138,7 @@ _mesa_set_program_error(GLcontext *ctx, GLint pos, const char *string)
 /**
  * Find the line number and column for 'pos' within 'string'.
  * Return a copy of the line which contains 'pos'.  Free the line with
- * _mesa_free().
+ * free().
  * \param string  the program string
  * \param pos     the position within the string
  * \param line    returns the line number corresponding to 'pos'.
@@ -170,8 +170,8 @@ _mesa_find_line_column(const GLubyte *string, const GLubyte *pos,
     while (*p != 0 && *p != '\n')
 	p++;
     len = p - lineStart;
-    s = (GLubyte *) _mesa_malloc(len + 1);
-    _mesa_memcpy(s, lineStart, len);
+    s = (GLubyte *) malloc(len + 1);
+    memcpy(s, lineStart, len);
     s[len] = 0;
 
     return s;
@@ -273,17 +273,17 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
 	return;
 
     if (prog->String)
-	_mesa_free(prog->String);
+	free(prog->String);
 
     if (prog->Instructions) {
 	GLuint i;
 	for (i = 0; i < prog->NumInstructions; i++) {
 	    if (prog->Instructions[i].Data)
-		_mesa_free(prog->Instructions[i].Data);
+		free(prog->Instructions[i].Data);
 	    if (prog->Instructions[i].Comment)
-		_mesa_free((char *) prog->Instructions[i].Comment);
+		free((char *) prog->Instructions[i].Comment);
 	}
-	_mesa_free(prog->Instructions);
+	free(prog->Instructions);
     }
 
     if (prog->Parameters) {
@@ -300,10 +300,10 @@ _mesa_delete_program(GLcontext *ctx, struct gl_program *prog)
     if (prog->Target == GL_VERTEX_PROGRAM_ARB) {
 	struct gl_vertex_program *vprog = (struct gl_vertex_program *) prog;
 	if (vprog->TnlData)
-	    _mesa_free(vprog->TnlData);
+	    free(vprog->TnlData);
     }
 
-    _mesa_free(prog);
+    free(prog);
 }
 
 

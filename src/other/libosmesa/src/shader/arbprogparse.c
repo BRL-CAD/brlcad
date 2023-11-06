@@ -542,7 +542,7 @@ struct var_cache {
 static GLvoid
 var_cache_create(struct var_cache **va)
 {
-    *va = (struct var_cache *) _mesa_malloc(sizeof(struct var_cache));
+    *va = (struct var_cache *) malloc(sizeof(struct var_cache));
     if (*va) {
 	(**va).name = NULL;
 	(**va).type = vt_none;
@@ -563,7 +563,7 @@ var_cache_destroy(struct var_cache **va)
 {
     if (*va) {
 	var_cache_destroy(&(**va).next);
-	_mesa_free(*va);
+	free(*va);
 	*va = NULL;
     }
 }
@@ -583,7 +583,7 @@ var_cache_find(struct var_cache *va, const GLubyte * name)
     /*struct var_cache *first = va;*/
 
     while (va) {
-	if (!_mesa_strcmp((const char*) name, (const char*) va->name)) {
+	if (!strcmp((const char*) name, (const char*) va->name)) {
 	    if (va->type == vt_alias)
 		return va->alias_binding;
 	    return va;
@@ -609,13 +609,13 @@ program_error(GLcontext *ctx, GLint position, const char *descrip)
 {
     if (descrip) {
 	const char *prefix = "glProgramString(", *suffix = ")";
-	char *str = (char *) _mesa_malloc(_mesa_strlen(descrip) +
-					  _mesa_strlen(prefix) +
-					  _mesa_strlen(suffix) + 1);
+	char *str = (char *) malloc(strlen(descrip) +
+					  strlen(prefix) +
+					  strlen(suffix) + 1);
 	if (str) {
 	    _mesa_sprintf(str, "%s%s%s", prefix, descrip, suffix);
 	    _mesa_error(ctx, GL_INVALID_OPERATION, str);
-	    _mesa_free(str);
+	    free(str);
 	}
     }
     _mesa_set_program_error(ctx, position, descrip);
@@ -629,27 +629,26 @@ static void
 program_error2(GLcontext *ctx, GLint position, const char *descrip,
 	       const char *var)
 {
-    char *str = NULL;
     if (descrip) {
 	const char *prefix = "glProgramString(", *suffix = ")";
-	char *str = (char *) _mesa_malloc(_mesa_strlen(descrip) +
-					  _mesa_strlen(": ") +
-					  _mesa_strlen(var) +
-					  _mesa_strlen(prefix) +
-					  _mesa_strlen(suffix) + 1);
+	char *str = (char *) malloc(strlen(descrip) +
+					  strlen(": ") +
+					  strlen(var) +
+					  strlen(prefix) +
+					  strlen(suffix) + 1);
 	if (str) {
 	    _mesa_sprintf(str, "%s%s: %s%s", prefix, descrip, var, suffix);
 	    _mesa_error(ctx, GL_INVALID_OPERATION, str);
-	    _mesa_free(str);
+	    free(str);
 	}
 
-	str = (char *) _mesa_malloc(_mesa_strlen(descrip) +
-					  _mesa_strlen(": ") +
-					  _mesa_strlen(var) + 1);
+	str = (char *) malloc(strlen(descrip) +
+					  strlen(": ") +
+					  strlen(var) + 1);
 	if (str) {
 	    _mesa_sprintf(str, "%s: %s", descrip, var);
 	    _mesa_set_program_error(ctx, position, str);
-	    _mesa_free(str);
+	    free(str);
 	}
     }
 }
@@ -689,7 +688,7 @@ parse_string(const GLubyte ** inst, struct var_cache **vc_head,
     struct var_cache *va = NULL;
     (void) Program;
 
-    *inst += _mesa_strlen((char *) i) + 1;
+    *inst += strlen((char *) i) + 1;
 
     va = var_cache_find(*vc_head, i);
 
@@ -713,7 +712,7 @@ parse_string_without_adding(const GLubyte ** inst, struct arb_program *Program)
     const GLubyte *i = *inst;
     (void) Program;
 
-    *inst += _mesa_strlen((char *) i) + 1;
+    *inst += strlen((char *) i) + 1;
 
     return (char *) i;
 }
@@ -760,7 +759,7 @@ parse_integer(const GLubyte ** inst, struct arb_program *Program)
     }
 
     /* parse the integer as you normally would do it */
-    value = _mesa_atoi(parse_string_without_adding(inst, Program));
+    value = atoi(parse_string_without_adding(inst, Program));
 
     /* now, after terminating 0 there is a position
      * to parse it - parse_position()
@@ -823,7 +822,7 @@ parse_float(const GLubyte ** inst, struct arb_program *Program)
 
     /* Assemble parts of floating-point number: */
     return (GLfloat)((whole + fraction / fracScale) *
-		     _mesa_pow(10.0, (GLfloat) exponent));
+		     pow(10.0, (GLfloat) exponent));
 }
 
 
@@ -3378,7 +3377,7 @@ debug_variables(GLcontext * ctx, struct var_cache *vc_head,
 			s = _mesa_program_state_string(Program->Base.Parameters->Parameters
 						       [a + b].StateIndexes);
 			fprintf(stderr, "%s\n", s);
-			_mesa_free((char *) s);
+			free((char *) s);
 		    } else
 			fprintf(stderr, "%f %f %f %f\n",
 				Program->Base.Parameters->ParameterValues[a + b][0],
@@ -3669,7 +3668,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
 			     &parsed, &parsed_len);
 
 	/* 'parsed' is unused here */
-	_mesa_free(parsed);
+	free(parsed);
 	parsed = NULL;
 
 	/* NOTE: we can't destroy grammar_syn_id right here because
@@ -3726,13 +3725,13 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
     }
 
     /* copy the program string to a null-terminated string */
-    strz = (GLubyte *) _mesa_malloc(len + 1);
+    strz = (GLubyte *) malloc(len + 1);
     if (!strz) {
 	_mesa_error(ctx, GL_OUT_OF_MEMORY, "glProgramStringARB");
 	grammar_destroy(arbprogram_syn_id);
 	return GL_FALSE;
     }
-    _mesa_memcpy(strz, str, len);
+    memcpy(strz, str, len);
     strz[len] = '\0';
 
     /* do a fast check on program string - initial production buffer is 4K */
@@ -3757,8 +3756,8 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
 	} while (0)
 #endif
 
-	    _mesa_free(strz);
-	_mesa_free(parsed);
+	    free(strz);
+	free(parsed);
 
 	grammar_destroy(arbprogram_syn_id);
 	return GL_FALSE;
@@ -3814,7 +3813,7 @@ _mesa_parse_arb_program(GLcontext *ctx, GLenum target,
     /* We're done with the parsed binary array */
     var_cache_destroy(&vc_head);
 
-    _mesa_free(parsed);
+    free(parsed);
 
     /* Reallocate the instruction array from size [MAX_INSTRUCTIONS]
      * to size [ap.Base.NumInstructions].
@@ -3871,7 +3870,7 @@ _mesa_parse_arb_fragment_program(GLcontext* ctx, GLenum target,
     program->UsesKill          = ap.UsesKill;
 
     if (program->Base.Instructions)
-	_mesa_free(program->Base.Instructions);
+	free(program->Base.Instructions);
     program->Base.Instructions = ap.Base.Instructions;
 
     if (program->Base.Parameters)
@@ -3924,7 +3923,7 @@ _mesa_parse_arb_vertex_program(GLcontext *ctx, GLenum target,
     program->IsPositionInvariant = ap.HintPositionInvariant;
 
     if (program->Base.Instructions)
-	_mesa_free(program->Base.Instructions);
+	free(program->Base.Instructions);
     program->Base.Instructions = ap.Base.Instructions;
 
     if (program->Base.Parameters)

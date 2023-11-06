@@ -41,7 +41,7 @@
   Consecutive delimiters are treated as one delimiter. Text files can be used
   from Windows or Unix systems without conversion. Numerical values can be
   listed in any order but ordering must be consistent. Numerical values can
-  optionally be ignored.</para>
+  optionally be ignored. See also the <command>pnts</command> command.</para>
 </refsection>
 
   <refsection xml:id="options"><title>OPTIONS</title>

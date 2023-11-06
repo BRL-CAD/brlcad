@@ -151,10 +151,12 @@ SetTargetFolder(re2c "Compilation Utilities")
 SetTargetFolder(re2c_bootstrap "Compilation Utilities")
 include("${CMAKE_CURRENT_SOURCE_DIR}/perplex.dist")
 CMAKEFILES_IN_DIR(perplex_ignore_files perplex)
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/config.h)
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/bootstrap_parser/parser.yy)
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/perplex_wd/parser.y)
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/re2c_parser/parser.yy)
+DISTCLEAN(
+  ${CMAKE_CURRENT_BINARY_DIR}/perplex/config.h
+  ${CMAKE_CURRENT_BINARY_DIR}/perplex/bootstrap_parser/parser.yy
+  ${CMAKE_CURRENT_BINARY_DIR}/perplex/perplex_wd/parser.y
+  ${CMAKE_CURRENT_BINARY_DIR}/perplex/re2c_parser/parser.yy
+  )
 
 CMAKEFILES(
   CMakeLists.txt

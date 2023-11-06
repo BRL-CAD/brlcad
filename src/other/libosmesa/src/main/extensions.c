@@ -437,7 +437,7 @@ set_extension(GLcontext *ctx, const char *name, GLboolean state)
     }
 
     for (i = 0 ; i < Elements(default_extensions) ; i++) {
-	if (_mesa_strcmp(default_extensions[i].name, name) == 0) {
+	if (strcmp(default_extensions[i].name, name) == 0) {
 	    if (default_extensions[i].flag_offset) {
 		GLboolean *enabled = base + default_extensions[i].flag_offset;
 		*enabled = state;
@@ -481,7 +481,7 @@ _mesa_extension_is_enabled(GLcontext *ctx, const char *name)
     GLuint i;
 
     for (i = 0 ; i < Elements(default_extensions) ; i++) {
-	if (_mesa_strcmp(default_extensions[i].name, name) == 0) {
+	if (strcmp(default_extensions[i].name, name) == 0) {
 	    if (!default_extensions[i].flag_offset)
 		return GL_TRUE;
 	    return *(base + default_extensions[i].flag_offset);
@@ -527,18 +527,18 @@ _mesa_make_extension_string(GLcontext *ctx)
     for (i = 0 ; i < Elements(default_extensions) ; i++) {
 	if (!default_extensions[i].flag_offset ||
 	    *(base + default_extensions[i].flag_offset)) {
-	    extStrLen += (GLuint)_mesa_strlen(default_extensions[i].name) + 1;
+	    extStrLen += (GLuint)strlen(default_extensions[i].name) + 1;
 	}
     }
-    s = (GLubyte *) _mesa_malloc(extStrLen);
+    s = (GLubyte *) malloc(extStrLen);
 
     /* second, build the extension string */
     extStrLen = 0;
     for (i = 0 ; i < Elements(default_extensions) ; i++) {
 	if (!default_extensions[i].flag_offset ||
 	    *(base + default_extensions[i].flag_offset)) {
-	    GLuint len = (GLuint)_mesa_strlen(default_extensions[i].name);
-	    _mesa_memcpy(s + extStrLen, default_extensions[i].name, len);
+	    GLuint len = (GLuint)strlen(default_extensions[i].name);
+	    memcpy(s + extStrLen, default_extensions[i].name, len);
 	    extStrLen += len;
 	    s[extStrLen] = (GLubyte) ' ';
 	    extStrLen++;

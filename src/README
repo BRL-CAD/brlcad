@@ -19,7 +19,6 @@ adrt - Advanced Distributed Ray-Tracer, high-performance triangle ray-trace tool
 anim - animation tools
 archer - Archer, a geometry modeler implemented in Tcl
 brlman - a 'man' tool that knows where to look for BRL-CAD manual pages
-burst - tool for simulation of burst effects
 bwish - BRL-CAD's version of 'tclsh' and 'wish' Tcl/Tk interpreters
 canon - tool to spool/queue image data to Canon printers via MDQS
 conv - codes for converting to/from BRL-CAD .g format and other TGM formats
@@ -44,7 +43,6 @@ liboptical - an optics library for raster image ray-tracing
 libpkg - a network package transport library
 librt - the BRL-CAD ray-trace library
 libtclcad - a library for Tcl routines related to CAD
-libtermio - a terminal I/O library
 libwdb - the write database library, for creating BRL-CAD geometry models
 mged - the Multi-device Geometry Editor, a CSG solid modeler
 nirt - Natalie's Interactive Ray-Tracer, an interactive ray-trace tool

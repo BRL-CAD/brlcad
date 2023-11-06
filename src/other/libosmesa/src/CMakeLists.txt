@@ -40,7 +40,6 @@ set(osmesa_srcs
   main/enable.c
   main/enums.c
   main/eval.c
-  main/execmem.c
   main/extensions.c
   main/fbobject.c
   main/feedback.c
@@ -197,10 +196,10 @@ set_property(TARGET osmesa APPEND PROPERTY COMPILE_DEFINITIONS "UTIL_ARCH_LITTLE
 set_property(TARGET osmesa APPEND PROPERTY COMPILE_DEFINITIONS "LIBRARYBUILD")
 set_property(TARGET osmesa APPEND PROPERTY COMPILE_DEFINITIONS "GL_DLL_EXPORTS")
 set_property(TARGET osmesa APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "GL_DLL_IMPORTS")
-if (O3_COMPILER_FLAG)
-  # If we have the O3 flag, use it
-  target_compile_options(osmesa PRIVATE "-O3")
-endif (O3_COMPILER_FLAG)
+if (O2_COMPILER_FLAG)
+  # If we have the O2 flag, use it
+  target_compile_options(osmesa PRIVATE "-O2")
+endif (O2_COMPILER_FLAG)
 
 # Local Variables:
 # tab-width: 8

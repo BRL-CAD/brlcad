@@ -12,6 +12,9 @@
  */
 
 #include "tkTable.h"
+#ifndef panic
+#  define panic Tcl_Panic
+#endif
 
 static TableTag *TableTagGetEntry _ANSI_ARGS_((Table *tablePtr, char *name,
 	int objc, CONST char **argv));

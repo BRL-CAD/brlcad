@@ -1246,7 +1246,7 @@ slang_find_asm_info(const char *name)
 {
     GLuint i;
     for (i = 0; AsmInfo[i].Name; i++) {
-	if (_mesa_strcmp(AsmInfo[i].Name, name) == 0) {
+	if (strcmp(AsmInfo[i].Name, name) == 0) {
 	    return AsmInfo + i;
 	}
     }
@@ -2995,7 +2995,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
     slang_ir_node *n;
     GLboolean success = GL_TRUE;
 
-    if (_mesa_strcmp((char *) fun->header.a_name, "main") != 0) {
+    if (strcmp((char *) fun->header.a_name, "main") != 0) {
 	/* we only really generate code for main, all other functions get
 	 * inlined.
 	 */
@@ -3082,7 +3082,7 @@ _slang_codegen_function(slang_assemble_ctx * A, slang_function * fun)
 
     /* free codegen context */
     /*
-    _mesa_free(A->codegen);
+    free(A->codegen);
     */
 
     return success;

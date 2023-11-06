@@ -9,7 +9,7 @@
 
 <refnamediv xml:id="name">
   <refname>hide</refname>
-  <refpurpose>Sets the hidden flag for the specified objects.
+  <refpurpose>Sets the hidden flag for the specified objects.
    </refpurpose>
 </refnamediv>
 
@@ -23,8 +23,11 @@
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Sets the hidden flag for the specified objects. When this flag
-	is set, the objects do not appear in <command>t</command> or <command>ls</command> command outputs. The 	<emphasis>-a</emphasis> option on the <command>ls</command> or <command>t</command> command will force 	hidden objects to appear in its output.
+  <para>Sets the hidden flag for the specified objects. When this flag
+	is set, the objects do not appear in <command>ls</command>, <command>t</command>, or
+  <command>tops</command> command outputs. The <emphasis>-a</emphasis> option on the 
+  <command>ls</command>, <command>t</command>, and <command>tops</command>
+  commands will force hidden objects to appear in its output.
   </para>
 </refsection>
 

@@ -7,7 +7,7 @@ include_directories(
   )
 
 add_definitions(-DGED_PLUGIN)
-ged_plugin_library(ged-close SHARED close.c)
+ged_plugin_library(ged-close SHARED close.cpp)
 target_link_libraries(ged-close libged libbu)
 set_property(TARGET ged-close APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 VALIDATE_STYLE(ged-close close.c)
@@ -15,7 +15,7 @@ PLUGIN_SETUP(ged-close ged)
 
 CMAKEFILES(
   CMakeLists.txt
-  close.c
+  close.cpp
   )
 
 # Local Variables:

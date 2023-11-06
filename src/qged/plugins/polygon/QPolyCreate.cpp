@@ -22,13 +22,15 @@
  */
 
 #include "common.h"
+#include <vector>
 #include <QLabel>
 #include <QLineEdit>
 #include <QButtonGroup>
 #include <QGroupBox>
-#include "../../app.h"
+#include <QtGlobal>
+#include "../../QgEdApp.h"
 #include "QPolyCreate.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 QPolyCreate::QPolyCreate()
     : QWidget()
@@ -109,6 +111,10 @@ QPolyCreate::QPolyCreate()
     QObject::connect(ps->view_name, &QLineEdit::textEdited, this, &QPolyCreate::sketch_sync_str);
     QObject::connect(ps->sketch_name, &QLineEdit::textEdited, this, &QPolyCreate::sketch_sync_str);
 
+    // If the view changes, adjust
+    QObject::connect(ps, &QPolySettings::line_snapping_changed, this, &QPolyCreate::toggle_line_snapping);
+    QObject::connect(ps, &QPolySettings::grid_snapping_changed, this, &QPolyCreate::toggle_grid_snapping);
+
     default_gl->addWidget(ps);
     defaultBox->setLayout(default_gl);
     l->addWidget(defaultBox);
@@ -142,6 +148,8 @@ QPolyCreate::QPolyCreate()
     // By default, start in circle addition mode
     circle_mode->setChecked(true);
     toplevel_config(true);
+
+    pcf = new QPolyCreateFilter();
 }
 
 QPolyCreate::~QPolyCreate()
@@ -151,144 +159,63 @@ QPolyCreate::~QPolyCreate()
 void
 QPolyCreate::finalize(bool)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
-    if (!m || !p)
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
+    if (!m)
 	return;
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
-
-    // Close the general polygon - if that's what we're creating,
-    // at this point it will still be open.
-    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-    if (ip->polygon.contour[0].open) {
-
-	if (ip->polygon.contour[0].num_points < 3) {
-	    // If we're trying to finalize and we have less than
-	    // three points, just remove - we didn't get enough
-	    // to make a closed polygon.
-	    bg_polygon_free(&ip->polygon);
-	    BU_PUT(ip, struct bv_polygon);
-	    bv_obj_put(p);
-	    do_bool = false;
-	    p = NULL;
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return;
-	}
-
-	ip->polygon.contour[0].open = 0;
-	bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
-    }
 
     close_general_poly->blockSignals(true);
     close_general_poly->setChecked(true);
     close_general_poly->blockSignals(false);
     close_general_poly->setDisabled(true);
 
-    // Have close polygon - do boolean operation, if any.  Whether the new
-    // polygon becomes its own object or just alters existing object
-    // definitions depends on the boolean op setting.
-    op = bg_Union;
-    if (do_bool) {
-	if (csg_modes->currentText() == "Subtraction") {
-	    op = bg_Difference;
+    // If we're not keeping the polygon due to its being
+    // used for previous boolean ops, we're done
+    if (!p)
+	return;
+
+    // If we're keeping the object, there are some housekeeping
+    // steps to complete
+    poly_cnt++;
+    ps->view_name->clear();
+    struct bu_vls pname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
+    ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
+    bu_vls_free(&pname);
+
+    // If we're also writing this out as a sketch, take care of that.
+    if (ps->sketch_sync->isChecked()) {
+	char *sk_name = NULL;
+	if (ps->sketch_name->placeholderText().length()) {
+	    sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
 	}
-	if (csg_modes->currentText() == "Intersection") {
-	    op = bg_Intersection;
+	if (ps->sketch_name->text().length()) {
+	    bu_free(sk_name, "sk_name");
+	    sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
 	}
+	if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
+	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
+	    ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
+	    emit view_updated(QG_VIEW_DB);
+	}
+	bu_free(sk_name, "name cpy");
     }
 
-    int pcnt = 0;
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-    if (do_bool) {
-	pcnt = bv_polygon_csg(view_objs, p, op, 1);
-    }
-    if (pcnt || op != bg_Union) {
-	bg_polygon_free(&ip->polygon);
-	BU_PUT(ip, struct bv_polygon);
-	bv_obj_put(p);
-    } else {
+    // Done with sketch - update name for next polygon
+    ps->sketch_name->setPlaceholderText("");
+    ps->sketch_name->setText("");
+    sketch_sync();
 
-	// Check if we have a name collision - if we do, it's no go
-	char *vname = NULL;
-	if (ps->view_name->placeholderText().length()) {
-	    vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
-	}
-	if (ps->view_name->text().length()) {
-	    bu_free(vname, "vname");
-	    vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
-	}
-	bool colliding = false;
-	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	    if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
-		colliding = true;
-	    }
-	}
-	bu_free(vname, "vname");
-	if (colliding) {
-	    bg_polygon_free(&ip->polygon);
-	    BU_PUT(ip, struct bv_polygon);
-	    bv_obj_put(p);
-	    do_bool = false;
-	    p = NULL;
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return;
-	}
-
-	// Either a non-boolean creation or a Union with no interactions -
-	// either way we're keeping it, so assign a proper name
-	if (ps->view_name->text().length()) {
-	    bu_vls_sprintf(&p->s_uuid, "%s", ps->view_name->text().toLocal8Bit().data());
-	} else {
-	    bu_vls_sprintf(&p->s_uuid, "%s", ps->view_name->placeholderText().toLocal8Bit().data());
-	}
-
-	// Done processing view object - increment name
-	poly_cnt++;
-	ps->view_name->clear();
-	struct bu_vls pname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&pname, "polygon_%09d", poly_cnt);
-	ps->view_name->setPlaceholderText(QString(bu_vls_cstr(&pname)));
-	bu_vls_free(&pname);
-
-	// No longer need mouse movements to adjust parameters - turn off callback
-	p->s_update_callback = NULL;
-
-	// If we're also writing this out as a sketch, take care of that.
-	if (ps->sketch_sync->isChecked()) {
-	    char *sk_name = NULL;
-	    if (ps->sketch_name->placeholderText().length()) {
-		sk_name = bu_strdup(ps->sketch_name->placeholderText().toLocal8Bit().data());
-	    }
-	    if (ps->sketch_name->text().length()) {
-		bu_free(sk_name, "sk_name");
-		sk_name = bu_strdup(ps->sketch_name->text().toLocal8Bit().data());
-	    }
-	    if (sk_name && db_lookup(gedp->dbip, sk_name, LOOKUP_QUIET) == RT_DIR_NULL) {
-		ip->u_data = (void *)db_scene_obj_to_sketch(gedp->dbip, sk_name, p);
-		emit view_updated(QTCAD_VIEW_DB);
-	    }
-	    bu_free(sk_name, "name cpy");
-	} else {
-	    ip->u_data = NULL;
-	}
-
-	// Done with sketch - update name for next polygon
-	ps->sketch_name->setPlaceholderText("");
-	ps->sketch_name->setText("");
-	sketch_sync();
-    }
-
-    do_bool = false;
     p = NULL;
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
 QPolyCreate::do_vpoly_copy()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -296,52 +223,30 @@ QPolyCreate::do_vpoly_copy()
 	return;
 
     // Check if we have a name collision - if we do, it's no go
-    char *vname = NULL;
-    if (ps->view_name->placeholderText().length()) {
-	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
-    }
-    if (ps->view_name->text().length()) {
-	bu_free(vname, "vname");
-	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
-    }
-    bool colliding = false;
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
-	    colliding = true;
-	}
-    }
-    if (colliding) {
-	bu_free(vname, "name cpy");
+    struct bu_vls vname = BU_VLS_INIT_ZERO;
+    if (!ps->uniq_obj_name(&vname, gedp->ged_gvp)) {
+	bu_vls_free(&vname);
 	return;
     }
 
     // See if we've got a valid dp name
     if (!vpoly_name->text().length()) {
-	bu_free(vname, "name cpy");
+	bu_vls_free(&vname);
 	return;
     }
     char *sname = bu_strdup(vpoly_name->text().toLocal8Bit().data());
-    struct bv_scene_obj *src_obj = NULL;
-    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	struct bv_scene_obj *cobj = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&cobj->s_uuid), sname)) {
-	    src_obj = cobj;
-	}
-    }
+    struct bv_scene_obj *src_obj = bv_find_obj(gedp->ged_gvp, sname);
     bu_free(sname, "name cpy");
     if (!src_obj) {
-	bu_free(vname, "name cpy");
+	bu_vls_free(&vname);
 	return;
     }
 
     // Names are valid, src_obj is ready - do the copy
-    p = bg_dup_view_polygon(vname, src_obj);
-    bu_free(vname, "name cpy");
-    if (!p) {
+    p = bv_dup_view_polygon(bu_vls_cstr(&vname), src_obj);
+    bu_vls_free(&vname);
+    if (!p)
 	return;
-    }
     p->s_v = gedp->ged_gvp;
 
     // Done processing view object - increment name
@@ -354,13 +259,13 @@ QPolyCreate::do_vpoly_copy()
 
     do_bool = false;
     p = NULL;
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
 QPolyCreate::do_import_sketch()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -368,46 +273,30 @@ QPolyCreate::do_import_sketch()
 	return;
 
     // Check if we have a name collision - if we do, it's no go
-    char *vname = NULL;
-    if (ps->view_name->placeholderText().length()) {
-	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
-    }
-    if (ps->view_name->text().length()) {
-	bu_free(vname, "vname");
-	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
-    }
-    bool colliding = false;
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
-	    colliding = true;
-	}
-    }
-    if (colliding) {
-	bu_free(vname, "vname");
+    struct bu_vls vname = BU_VLS_INIT_ZERO;
+    if (!ps->uniq_obj_name(&vname, gedp->ged_gvp)) {
+	bu_vls_free(&vname);
 	return;
     }
 
     // See if we've got a valid dp name
     if (!import_name->text().length()) {
-	bu_free(vname, "name cpy");
+	bu_vls_free(&vname);
 	return;
     }
     char *sname = bu_strdup(import_name->text().toLocal8Bit().data());
     struct directory *dp = db_lookup(gedp->dbip, sname, LOOKUP_QUIET);
     bu_free(sname, "name cpy");
     if (dp == RT_DIR_NULL) {
-	bu_free(vname, "name cpy");
+	bu_vls_free(&vname);
 	return;
     }
 
     // Names are valid, dp is ready - try the sketch import
-    p = db_sketch_to_scene_obj(vname, gedp->dbip, dp, gedp->ged_gvp);
-    bu_free(vname, "name cpy");
-    if (!p) {
+    p = db_sketch_to_scene_obj(bu_vls_cstr(&vname), gedp->dbip, dp, gedp->ged_gvp, BV_VIEW_OBJS);
+    bu_vls_free(&vname);
+    if (!p)
 	return;
-    }
     p->s_v = gedp->ged_gvp;
 
     // Done processing view object - increment name
@@ -420,7 +309,7 @@ QPolyCreate::do_import_sketch()
 
     do_bool = false;
     p = NULL;
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
@@ -438,7 +327,7 @@ QPolyCreate::sketch_sync_str(const QString &)
 void
 QPolyCreate::sketch_sync()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -488,6 +377,80 @@ QPolyCreate::sketch_sync()
     }
 }
 
+void
+QPolyCreate::toggle_line_snapping(bool s)
+{
+    struct bview *v = (cf) ? cf->v : NULL;
+    struct bv_scene_obj *co = (cf) ? cf->wp : NULL;
+    if (!v || !co)
+	return;
+
+    v->gv_s->gv_snap_flags = BV_SNAP_VIEW;
+    bu_ptbl_reset(&v->gv_s->gv_snap_objs);
+    if (!s) {
+	v->gv_s->gv_snap_lines = 0;
+    } else {
+	// Turn snapping on if we have other polygons to snap to
+	struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
+	if (!view_objs)
+	    return;
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *so = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    if (so == co)
+		continue;
+	    if (so->s_type_flags & BV_POLYGONS)
+		bu_ptbl_ins(&v->gv_s->gv_snap_objs, (long *)so);
+	}
+	if (BU_PTBL_LEN(&v->gv_s->gv_snap_objs)) {
+	    v->gv_s->gv_snap_lines = 1;
+	} else {
+	    v->gv_s->gv_snap_lines = 0;
+	}
+    }
+
+    emit settings_changed(QG_VIEW_DRAWN);
+}
+
+void
+QPolyCreate::toggle_grid_snapping(bool s)
+{
+    struct bview *v = (cf) ? cf->v : NULL;
+    if (!v)
+	return;
+
+    v->gv_s->gv_snap_flags = BV_SNAP_VIEW;
+    if (!s) {
+	v->gv_s->gv_grid.snap = 0;
+    } else {
+	v->gv_s->gv_grid.snap = 1;
+    }
+
+    emit settings_changed(QG_VIEW_DRAWN);
+}
+
+void
+QPolyCreate::checkbox_refresh(unsigned long long)
+{
+    struct bview *v = (cf) ? cf->v : NULL;
+    if (!v)
+	return;
+
+    ps->grid_snapping->blockSignals(true);
+    if (v->gv_s->gv_grid.snap) {
+	ps->grid_snapping->setCheckState(Qt::Checked);
+    } else {
+	ps->grid_snapping->setCheckState(Qt::Unchecked);
+    }
+    ps->grid_snapping->blockSignals(false);
+
+    ps->line_snapping->blockSignals(true);
+    if (v->gv_s->gv_snap_lines) {
+	ps->line_snapping->setCheckState(Qt::Checked);
+    } else {
+	ps->line_snapping->setCheckState(Qt::Unchecked);
+    }
+    ps->line_snapping->blockSignals(false);
+}
 
 void
 QPolyCreate::view_sync_str(const QString &)
@@ -498,31 +461,14 @@ QPolyCreate::view_sync_str(const QString &)
 void
 QPolyCreate::view_sync()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
     if (!gedp)
 	return;
 
-    char *vname = NULL;
-    if (ps->view_name->placeholderText().length()) {
-	vname = bu_strdup(ps->view_name->placeholderText().toLocal8Bit().data());
-    }
-    if (ps->view_name->text().length()) {
-	bu_free(vname, "vname");
-	vname = bu_strdup(ps->view_name->text().toLocal8Bit().data());
-    }
-    bool colliding = false;
-    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	if (BU_STR_EQUAL(bu_vls_cstr(&s->s_uuid), vname)) {
-	    colliding = true;
-	}
-    }
-    bu_free(vname, "vname");
-    if (colliding) {
+    if (!ps->uniq_obj_name(NULL, gedp->ged_gvp)) {
 	ps->view_name->setStyleSheet("color: rgb(255,0,0)");
     } else {
 	ps->view_name->setStyleSheet("");
@@ -533,7 +479,7 @@ void
 QPolyCreate::toplevel_config(bool)
 {
     // Initialize
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -550,6 +496,8 @@ QPolyCreate::toplevel_config(bool)
     // by a selection button.  Clear any selected points being displayed.
     if (gedp) {
 	struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+	if (!view_objs)
+	    return;
 	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
 	    if (s->s_type_flags & BV_POLYGONS) {
@@ -566,13 +514,19 @@ QPolyCreate::toplevel_config(bool)
     }
 
     if (draw_change && gedp)
-	emit view_updated(QTCAD_VIEW_REFRESH);
+	emit view_updated(QG_VIEW_REFRESH);
+}
+
+void
+QPolyCreate::propagate_update(int)
+{
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 bool
 QPolyCreate::eventFilter(QObject *, QEvent *e)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return false;
     struct ged *gedp = m->gedp;
@@ -581,193 +535,105 @@ QPolyCreate::eventFilter(QObject *, QEvent *e)
     if (!gedp->ged_gvp)
 	return false;
 
-    QMouseEvent *m_e = NULL;
+    cf = pcf;
 
-    if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease || e->type() == QEvent::MouseButtonDblClick || e->type() == QEvent::MouseMove) {
+    // If we're mid-creation (i.e. p != NULL) we need to keep processing the
+    // polygon from the last event - otherwise, start fresh with p == NULL
+    cf->wp = p;
+    cf->v = (p) ? p->s_v : gedp->ged_gvp;
+    checkbox_refresh(0);
 
-	m_e = (QMouseEvent *)e;
+    // Connect whatever the current filter is to pass on updating signals from
+    // the libqtcad logic.  (For the moment we've only got the one filter, but
+    // defining the connect/disconnect pattern this way to be flexible if we
+    // need to shift filters at some point in the future.  Polygon modding, for
+    // example, has multiple filters depending on the activity and will need
+    // this...)
+    QObject::connect(cf, &QgPolyFilter::view_updated, this, &QPolyCreate::propagate_update);
+    QObject::connect(cf, &QgPolyFilter::finalized, this, &QPolyCreate::finalize);
 
-	gedp->ged_gvp->gv_prevMouseX = gedp->ged_gvp->gv_mouse_x;
-	gedp->ged_gvp->gv_prevMouseY = gedp->ged_gvp->gv_mouse_y;
-#ifdef USE_QT6
-	gedp->ged_gvp->gv_mouse_x = m_e->position().x();
-	gedp->ged_gvp->gv_mouse_y = m_e->position().y();
-#else
-	gedp->ged_gvp->gv_mouse_x = m_e->x();
-	gedp->ged_gvp->gv_mouse_y = m_e->y();
-#endif
-    }
-
-    if (!m_e)
-	return false;
-
-    // If we have modifiers, we're most likely doing shift grips
-    if (m_e->modifiers() != Qt::NoModifier)
-	return false;
-
-    printf("polygon add\n");
-
-    do_bool = false;
-    if (csg_modes->currentText() != "None") {
-	do_bool = true;
-    }
-
-
-    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::LeftButton)) {
-	if (!p) {
-	    int ptype = BV_POLYGON_CIRCLE;
-	    if (ellipse_mode->isChecked()) {
-		ptype = BV_POLYGON_ELLIPSE;
-	    }
-	    if (square_mode->isChecked()) {
-		ptype = BV_POLYGON_SQUARE;
-	    }
-	    if (rectangle_mode->isChecked()) {
-		ptype = BV_POLYGON_RECTANGLE;
-	    }
-	    if (general_mode->isChecked()) {
-		ptype = BV_POLYGON_GENERAL;
-	    }
-#ifdef USE_QT6
-	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->position().x(), m_e->position().y());
-#else
-	    p = bv_create_polygon(gedp->ged_gvp, ptype, m_e->x(), m_e->y());
-#endif
-	    p->s_v = gedp->ged_gvp;
-	    struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-
-	    if (ptype == BV_POLYGON_GENERAL) {
-
-		// For general polygons, we need to identify the active contour
-		// for update operations to work.
-		//
-		// At some point we'll need to add support for adding and removing
-		// contours...
-		ip->curr_contour_i = 0;
-
-		close_general_poly->setEnabled(true);
-		close_general_poly->blockSignals(true);
-		close_general_poly->setChecked(false);
-		close_general_poly->blockSignals(false);
-	    } else {
-		close_general_poly->setEnabled(false);
-	    }
-
-	    // Get edge color
-	    bu_color_to_rgb_chars(&ps->edge_color->bc, p->s_color);
-
-	    // fill color
-	    BU_COLOR_CPY(&ip->fill_color, &ps->fill_color->bc);
-
-	    // fill settings
-	    vect2d_t vdir = V2INIT_ZERO;
-	    vdir[0] = (fastf_t)(ps->fill_slope_x->text().toDouble());
-	    vdir[1] = (fastf_t)(ps->fill_slope_y->text().toDouble());
-	    V2MOVE(ip->fill_dir, vdir);
-	    ip->fill_delta = (fastf_t)(ps->fill_density->text().toDouble());
-
-	    // Set fill
-	    if (ps->fill_poly->isChecked()) {
-		ip->fill_flag = 1;
-		bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PROPS_ONLY);
-	    }
-
-	    // Name appropriately
-	    bu_vls_init(&p->s_uuid);
-
-	    // It doesn't get a "proper" name until its finalized
-	    bu_vls_printf(&p->s_uuid, "_tmp_view_polygon");
-
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return true;
-	}
-
-	// If we're creating a general polygon, we're appending points after
-	// the initial creation
+    //  If we're continuing to edit the existing polygon, the options are
+    //  whatever is already established - otherwise, grab from the widget
+    //  settings
+    if (p) {
 	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL) {
-#ifdef USE_QT6
-	    p->s_v->gv_mouse_x = m_e->position().x();
-	    p->s_v->gv_mouse_y = m_e->position().y();
-#else
-	    p->s_v->gv_mouse_x = m_e->x();
-	    p->s_v->gv_mouse_y = m_e->y();
-#endif
-	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_PT_APPEND);
-
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return true;
+	cf->ptype = ip->type;
+    } else {
+	if (ellipse_mode->isChecked()) {
+	    cf->ptype = BV_POLYGON_ELLIPSE;
+	}
+	if (square_mode->isChecked()) {
+	    cf->ptype = BV_POLYGON_SQUARE;
+	}
+	if (rectangle_mode->isChecked()) {
+	    cf->ptype = BV_POLYGON_RECTANGLE;
+	}
+	if (general_mode->isChecked()) {
+	    cf->ptype = BV_POLYGON_GENERAL;
 	}
 
-	// When we're dealing with polygons stray left clicks shouldn't zoom - just
-	// consume them if we're not using them above.
-	return true;
-    }
-
-    if (m_e->type() == QEvent::MouseButtonPress && m_e->buttons().testFlag(Qt::RightButton)) {
-	// No-op if no current polygon is defined
-	if (!p)
-	    return true;
-
-	// Non-general polygon creation doesn't use right click.
-	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type != BV_POLYGON_GENERAL) {
-	    return true;
+	cf->op = bg_None;
+	if (csg_modes->currentText() == "Union") {
+	    cf->op = bg_Union;
+	}
+	if (csg_modes->currentText() == "Subtraction") {
+	    cf->op = bg_Difference;
+	}
+	if (csg_modes->currentText() == "Intersection") {
+	    cf->op = bg_Intersection;
 	}
 
-	// General polygon, have right click - finish up.
-	finalize(true);
-	return true;
-    }
+	cf->fill_poly = (ps->fill_poly->isChecked()) ? true : false;
+	cf->fill_slope_x = (fastf_t)(ps->fill_slope_x->text().toDouble());
+	cf->fill_slope_y = (fastf_t)(ps->fill_slope_y->text().toDouble());
+	cf->fill_density = (fastf_t)(ps->fill_density->text().toDouble());
+    	BU_COLOR_CPY(&cf->fill_color, &ps->fill_color->bc);
+	BU_COLOR_CPY(&cf->edge_color, &ps->edge_color->bc);
+	cf->vZ = (fastf_t)(ps->vZ->text().toDouble());
 
-    if (m_e->type() == QEvent::MouseButtonPress) {
-	// We also don't want other stray mouse clicks to do something surprising
-	return true;
-    }
-
-    // During initial add/creation of non-general polygons, mouse movement
-    // adjusts the shape
-    if (m_e->type() == QEvent::MouseMove) {
-	// No-op if no current polygon is defined
-	if (!p)
-	    return true;
-
-	// General polygon creation doesn't use mouse movement.
-	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL) {
-	    return true;
+	// Check if we have a name collision - if we do, it's no go
+	struct bu_vls dname = BU_VLS_INIT_ZERO;
+	if (!ps->uniq_obj_name(&dname, gedp->ged_gvp)) {
+	    bu_vls_free(&dname);
+	    return false;
 	}
+	cf->vname = std::string(bu_vls_cstr(&dname));
+	bu_vls_free(&dname);
+    }
 
-	// For every other polygon type, call the libbv update routine
-	// with the view's x,y coordinates
-	if (m_e->buttons().testFlag(Qt::LeftButton) && m_e->modifiers() == Qt::NoModifier) {
-	    bv_update_polygon(p, p->s_v, BV_POLYGON_UPDATE_DEFAULT);
-	    emit view_updated(QTCAD_VIEW_REFRESH);
-	    return true;
+    // For this particular application, we want to apply booleans to
+    // all polygons
+    bu_ptbl_reset(&pcf->bool_objs);
+    struct bu_ptbl *view_objs = bv_view_objs(gedp->ged_gvp, BV_VIEW_OBJS);
+    if (view_objs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    if (s->s_type_flags & BV_POLYGONS && s != p) {
+		bu_ptbl_ins(&pcf->bool_objs, (long *)s);
+	    }
 	}
     }
 
-    if (m_e->type() == QEvent::MouseButtonRelease) {
+    bool ret = cf->eventFilter(NULL, e);
 
-	// No-op if no current polygon is defined
-	if (!p)
-	    return true;
+    // Retrieve the scene object from the libqtcad data container
+    p = cf->wp;
 
-	struct bv_polygon *ip = (struct bv_polygon *)p->s_i_data;
-	if (ip->type == BV_POLYGON_GENERAL) {
-	    // General polygons are finalized by an explicit close
-	    // (either right mouse click or the close checkbox)
-	    return true;
-	}
-
-	// For all non-general polygons, mouse release is the signal
-	// to finish up.
-	finalize(true);
-
-	return true;
+    if (cf->ptype == BV_POLYGON_GENERAL) {
+	close_general_poly->setEnabled(true);
+	close_general_poly->blockSignals(true);
+	close_general_poly->setChecked(false);
+	close_general_poly->blockSignals(false);
+    } else {
+	close_general_poly->setEnabled(false);
     }
 
-    return false;
+    // Because the active filter may change, we only maintain the
+    // signal connection for the duration of the event
+    QObject::disconnect(cf, &QgPolyFilter::view_updated, this, &QPolyCreate::propagate_update);
+    QObject::disconnect(cf, &QgPolyFilter::finalized, this, &QPolyCreate::finalize);
+
+    return ret;
 }
 
 // Local Variables:

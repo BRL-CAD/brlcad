@@ -42,9 +42,6 @@
 #include "mtypes.h"
 
 
-#ifdef __VMS
-#define _mesa_sprintf sprintf
-#endif
 
 /**********************************************************************/
 /** \name Internal functions */
@@ -175,7 +172,7 @@ _mesa_delete_texture_object(GLcontext *ctx, struct gl_texture_object *texObj)
     _glthread_DESTROY_MUTEX(texObj->Mutex);
 
     /* free this object */
-    _mesa_free(texObj);
+    free(texObj);
 }
 
 

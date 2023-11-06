@@ -814,7 +814,7 @@ compute_row_addresses(OSMesaContext osmesa)
 static void
 osmesa_delete_renderbuffer(struct gl_renderbuffer *rb)
 {
-    _mesa_free(rb);
+    free(rb);
 }
 
 
@@ -1176,7 +1176,7 @@ OSMesaCreateContextExt(GLenum format, GLint depthBits, GLint stencilBits,
 						1            /* num samples */
 					       );
 	if (!osmesa->gl_visual) {
-	    _mesa_free(osmesa);
+	    free(osmesa);
 	    return NULL;
 	}
 
@@ -1193,7 +1193,7 @@ OSMesaCreateContextExt(GLenum format, GLint depthBits, GLint stencilBits,
 				      : (GLcontext *) NULL,
 				      &functions, (void *) osmesa)) {
 	    _mesa_destroy_visual(osmesa->gl_visual);
-	    _mesa_free(osmesa);
+	    free(osmesa);
 	    return NULL;
 	}
 
@@ -1206,7 +1206,7 @@ OSMesaCreateContextExt(GLenum format, GLint depthBits, GLint stencilBits,
 	if (!osmesa->gl_buffer) {
 	    _mesa_destroy_visual(osmesa->gl_visual);
 	    _mesa_free_context_data(&osmesa->mesa);
-	    _mesa_free(osmesa);
+	    free(osmesa);
 	    return NULL;
 	}
 
@@ -1243,7 +1243,7 @@ OSMesaCreateContextExt(GLenum format, GLint depthBits, GLint stencilBits,
 		!_swsetup_CreateContext(ctx)) {
 		_mesa_destroy_visual(osmesa->gl_visual);
 		_mesa_free_context_data(ctx);
-		_mesa_free(osmesa);
+		free(osmesa);
 		return NULL;
 	    }
 
@@ -1286,7 +1286,7 @@ OSMesaDestroyContext(OSMesaContext osmesa)
 	_mesa_unreference_framebuffer(&osmesa->gl_buffer);
 
 	_mesa_free_context_data(&osmesa->mesa);
-	_mesa_free(osmesa);
+	free(osmesa);
     }
 }
 
@@ -1556,7 +1556,7 @@ OSMesaGetProcAddress(const char *funcName)
 {
     int i;
     for (i = 0; functions[i].Name; i++) {
-	if (_mesa_strcmp(functions[i].Name, funcName) == 0)
+	if (strcmp(functions[i].Name, funcName) == 0)
 	    return functions[i].Function;
     }
     return _glapi_get_proc_address(funcName);

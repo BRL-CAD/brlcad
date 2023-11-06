@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <inttypes.h>
 #include <stdlib.h>
 
 #include "bio.h"
@@ -122,7 +123,11 @@ int main(int argc, char* argv[])
 	out_bif = icv_multiply(bif1, bif2);
     else if (BU_STR_EQUAL(operation, "*"))
 	out_bif = icv_divide(bif1, bif2);
-    else {
+    else if (BU_STR_EQUAL(operation, "pdiff")) {
+	uint32_t hd = icv_pdiff(bif1, bif2);
+	bu_log("%"PRIu32"\n", hd);
+	return 0;
+    } else {
 	bu_log("Using Default operation (+)");
 	out_bif = icv_add(bif1, bif2);
     }

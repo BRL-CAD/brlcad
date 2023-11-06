@@ -130,7 +130,7 @@ _mesa_light(GLcontext *ctx, GLuint lnum, GLenum pname, const GLfloat *params)
 		return;
 	    FLUSH_VERTICES(ctx, _NEW_LIGHT);
 	    light->SpotCutoff = params[0];
-	    light->_CosCutoffNeg = (GLfloat)(_mesa_cos(light->SpotCutoff * DEG2RAD));
+	    light->_CosCutoffNeg = (GLfloat)(cos(light->SpotCutoff * DEG2RAD));
 	    if (light->_CosCutoffNeg < 0)
 		light->_CosCutoff = 0;
 	    else
@@ -907,7 +907,7 @@ validate_spot_exp_table(struct gl_light *l)
 
     for (i = EXP_TABLE_SIZE - 1; i > 0 ; i--) {
 	if (clamp == 0) {
-	    tmp = _mesa_pow(i / (GLdouble)(EXP_TABLE_SIZE - 1), exponent);
+	    tmp = pow(i / (GLdouble)(EXP_TABLE_SIZE - 1), exponent);
 	    if (tmp < FLT_MIN * 100.0) {
 		tmp = 0.0;
 		clamp = 1;
@@ -968,7 +968,7 @@ validate_shine_table(GLcontext *ctx, GLuint side, GLfloat shininess)
 		GLdouble t, x = j / (GLfloat)(SHINE_TABLE_SIZE - 1);
 		if (x < 0.005) /* underflow check */
 		    x = 0.005;
-		t = _mesa_pow(x, shininess);
+		t = pow(x, shininess);
 		if (t > 1e-20)
 		    m[j] = (GLfloat) t;
 		else
@@ -1373,9 +1373,9 @@ _mesa_free_lighting_data(GLcontext *ctx)
 
     /* Free lighting shininess exponentiation table */
     foreach_s(s, tmps, ctx->_ShineTabList) {
-	_mesa_free(s);
+	free(s);
     }
-    _mesa_free(ctx->_ShineTabList);
+    free(ctx->_ShineTabList);
 }
 
 /*

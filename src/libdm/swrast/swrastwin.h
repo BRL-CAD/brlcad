@@ -28,14 +28,14 @@
 
 #include <QMainWindow>
 #include "dm.h"
-#include "qtcad/QtSW.h"
+#include "qtcad/QgSW.h"
 
-class QtSWWin : public QMainWindow
+class QgSWWin : public QMainWindow
 {
     Q_OBJECT
     public:
-	QtSWWin(struct fb *fbp);
-	QtSW *canvas = NULL;
+	QgSWWin(struct fb *fbp);
+	QgSW *canvas = NULL;
 };
 
 #endif /* QTSWRASTWIN_H */

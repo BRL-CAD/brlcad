@@ -101,11 +101,6 @@ if (POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif (POLICY CMP0074)
 
-# Test name character check - need to look into this one...
-if (POLICY CMP0110)
-  cmake_policy(SET CMP0110 OLD)
-endif (POLICY CMP0110)
-
 # cmake_dependent_option() supports full Condition Syntax
 if (POLICY CMP0127)
   cmake_policy(SET CMP0127 NEW)
@@ -152,6 +147,47 @@ endif(BRLCAD_PRINT_MSGS)
 # do this early in the process.
 include(BRLCAD_Environment_Setup)
 
+# Populate these early, even though their main use is in
+# misc/CMake/BRLCAD_ExternalDeps.cmake - find_program and find_package calls
+# may also make use of them, particularly BRLCAD_EXT_NOINSTALL_DIR
+set(ENV_HOME "$ENV{HOME}")
+if (NOT ENV_HOME)
+  set(ENV_HOME "$ENV{USERPROFILE}")
+endif (NOT ENV_HOME)
+
+# Check common location(s) in home directory
+set(EXT_CANDIDATES bext_output brlcad_ext)
+foreach(EC ${EXT_CANDIDATES})
+  if (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
+    set(BRLCAD_EXT_DIR "${ENV_HOME}/${EC}")
+  endif (NOT DEFINED BRLCAD_EXT_DIR AND EXISTS "${ENV_HOME}/${EC}")
+endforeach(EC ${EXT_CANDIDATES})
+
+if (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
+  set(BRLCAD_EXT_INSTALL_DIR "${BRLCAD_EXT_DIR}/install")
+endif (NOT DEFINED BRLCAD_EXT_INSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/install")
+# Need to handle the case where BRLCAD_EXT_DIR is a symlink - if it
+# is, we need to expand the symlink in order for the tar tricks we use
+# later for file copying to work...
+if (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+  file(REAL_PATH "${BRLCAD_EXT_INSTALL_DIR}" EXT_PATH)
+  set(BRLCAD_EXT_INSTALL_DIR "${EXT_PATH}")
+endif (DEFINED BRLCAD_EXT_INSTALL_DIR AND IS_SYMLINK ${BRLCAD_EXT_INSTALL_DIR})
+
+# For noinstall we don't need to worry about symlinks since we'll be using
+# the contents in place.
+if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
+  set(BRLCAD_EXT_NOINSTALL_DIR "${BRLCAD_EXT_DIR}/noinstall")
+endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR AND DEFINED BRLCAD_EXT_DIR AND EXISTS "${BRLCAD_EXT_DIR}/noinstall")
+
+# If we're doing the non-src-other build, we've got to have brlcad_externals
+# for at least a few custom components no matter how many system packages got
+# installed.
+if (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
+  if (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+    message(FATAL_ERROR "BRL-CAD requires a source for external components - please set BRLCAD_EXT_DIR to a directory location containing the install and noinstall folders (the outputs produced by building https://github.com/BRL-CAD/brlcad_externals). By default this location is ${ENV_HOME}/brlcad_ext but it can be overridden.  In lieu of setting BRLCAD_EXT_DIR, it is also possible to directly set BRLCAD_EXT_INSTALL_DIR and BRLCAD_EXT_NOINSTALL_DIR to custom indivdiaul folders holding the necessary dependencies.")
+  endif (NOT DEFINED BRLCAD_EXT_NOINSTALL_DIR OR NOT DEFINED BRLCAD_EXT_INSTALL_DIR)
+endif (NOT EXISTS "${CMAKE_SOURCE_DIR}/src/other")
 
 #---------------------------------------------------------------------
 # Define various utilities.
@@ -266,36 +302,64 @@ endif (IS_DIRECTORY /usr/local)
 include(BRLCAD_Install_Prefix)
 
 #---------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.  Thanks to plplot for
-# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
-# Documentation of these options is available at
-# http://www.cmake.org/Wiki/CMake_RPATH_handling
-if (NOT COMMAND std_build_rpath)
-  include(RPath_Setup)
-endif (NOT COMMAND std_build_rpath)
+# RPath is used on platforms such as Linux to allow programs to be
+# relocatable.  It is also used to help programs run from their
+# positions in the build directory.
+#
+# Managing this is somewhat involved - there are lots of situations
+# where the logic will work because of a full path present in the
+# rpath settings and mask a problem with the relative lookup.
 
 # We want the full RPATH set in the build tree so we can run programs without
 # needing to set LD_LIBRARY_PATH
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 
-# We DON'T want the final install directory RPATH set in the build directory
-# - it should only be set to the installation value when actually installed.
+# We DON'T want the final install directory RPATH set in the build directory -
+# it should only be set to the installation value when actually installed.
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 
 # Add the automatically determined parts of the RPATH which point to
 # directories outside the build tree to the install RPATH
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# Set RPATH value to use when installing.  This should be set to always
-# prefer the version in the installed path when possible, but fall back on a
-# location relative to the loading file's path if the installed version is
-# not present.  How to do so is platform specific.
-relative_rpath(RELPATH)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}")
+# The following logic is what allows binaries to run successfully in the build
+# directory AND install directory.  Thanks to plplot for identifying the
+# necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.  Documentation of these
+# options is available at http://www.cmake.org/Wiki/CMake_RPATH_handling
+#
+# TODO - it looks like this doesn't work reliably with relocation - for the new
+# ext setup, let's see if we can solve the per-target usage of the
+# INSTALL_RPATH property for a more precise solution.
+if (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+  if (NOT COMMAND std_build_rpath)
+    include(RPath_Setup)
+  endif (NOT COMMAND std_build_rpath)
 
-std_build_rpath()
+  # Set RPATH value to use when installing.  This should be set to always
+  # prefer the version in the installed path when possible, but fall back on a
+  # location relative to the loading file's path if the installed version is
+  # not present.  How to do so is platform specific.
+  relative_rpath(RELPATH)
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}${RELPATH}")
 
+  std_build_rpath()
+else (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+
+  # This will need to be overridden for some targets that have a different
+  # relative position to LIB_DIR using the INSTALL_RPATH target property.
+  # However, we can cover the most common case for RPATH setting using the
+  # global default.
+  if (NOT APPLE)
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../${LIB_DIR}")
+  else (NOT APPLE)
+    # For OSX, use the INSTALL_NAME_DIR target property
+    set(CMAKE_INSTALL_RPATH "@executable_path/../${LIB_DIR}")
+    set(CMAKE_INSTALL_NAME_DIR "@executable_path/../${LIB_DIR}")
+  endif (NOT APPLE)
+
+endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+
+#---------------------------------------------------------------------
 # For certain platforms (in particular Visual C++) we want to keep some pre-defined
 # flags that are commonly used in the build logic.
 if(NOT DEFINED CMAKE_C_FLAGS_DEFAULT)
@@ -350,7 +414,7 @@ string(STRIP "${C_STANDARD_FLAGS}" C_STANDARD_FLAGS)
 # C++
 unset(CXX_STANDARD_FLAGS)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CXX_STANDARD_FLAGS "${CMAKE_CXX_FLAGS_DEFAULT} ${CMAKE_CXX${CMAKE_CXX_STANDARD}_STANDARD_COMPILE_OPTION} ${API_FLAGS}")
 string(STRIP "${CXX_STANDARD_FLAGS}" CXX_STANDARD_FLAGS)
@@ -1450,6 +1514,7 @@ BRLCAD_HEADER_SYS_WAIT()
 BRLCAD_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
 
 BRLCAD_INCLUDE_FILE(arpa/inet.h HAVE_ARPA_INET_H)
+BRLCAD_INCLUDE_FILE(conio.h HAVE_CONIO_H)
 BRLCAD_INCLUDE_FILE(direct.h HAVE_DIRECT_H)
 BRLCAD_INCLUDE_FILE(dlfcn.h HAVE_DLFCN_H)
 BRLCAD_INCLUDE_FILE(dslib.h HAVE_DSLIB_H)
@@ -2060,8 +2125,35 @@ mark_as_advanced(MISC_ADDED_DIRS)
 # options.)
 add_subdirectory(misc/tools)
 
-# The first order of business in src/other is the ext projects
-add_subdirectory(src/other/ext)
+if (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+  # The first order of business in src/other is the ext projects
+  add_subdirectory(src/other/ext)
+else (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
+  # Now that the user options are set and we have misc/tools... if we're going to
+  # be bundling 3rd party dependencies, we need to get them staged - some of the
+  # build steps will require that dependencies work during the build process, and
+  # the most reliably way to do that is to get them in place in the build
+  # directory.  Because the feature flags may impact what we're looking to use,
+  # we wait until they are set to do the find_package calls.
+  #
+  # The way BRL-CAD handles bundled dependencies is simple - if a dependency
+  # is found in the specified BRLCAD_EXT_DIR directory by find_package, that
+  # version is used in preference to a system version.  If no bundled version
+  # is found the standard system search logic will kick in.  (System versions
+  # will NOT be bundled with BRL-CAD.)
+  #
+  # Note that while feature flags can change which elements of BRL-CAD are built,
+  # they WON'T change what's bundled with BRL-CAD for install - that's based
+  # strictly on the contents of the user's specified external dependencies
+  # directory.  If (for example) STEP support is disabled, this logic will not
+  # skip bundling the STEPCODE external dependencies - the user should set up an
+  # external dependencies repository without that component if they don't want to
+  # bundle it.
+  #
+  # This logic will also set up the necessary steps to install the bundling
+  # targets as part of BRL-CAD's install process
+  include(BRLCAD_ExternalDeps)
+endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
 
 # Now that we've done the system tests with BRL-CAD's compile flags,
 # add src/other to pick up any tests it needs.  We must add src/other
@@ -2069,7 +2161,9 @@ add_subdirectory(src/other/ext)
 # targets.  Remember that src/other wipes the top level flags generated
 # by BRL-CAD for its own subdirectories - it is added after the BRL-CAD
 # tests so the CACHE reflects BRL-CAD's test results.
-add_subdirectory(src/other)
+if (EXISTS ${CMAKE_SOURCE_DIR}/src/other)
+  add_subdirectory(src/other)
+endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other)
 
 # Now put back the BRL-CAD flags
 RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
@@ -2416,6 +2510,9 @@ function(DIFF_FILE filename)
   endif(NOT "${OLD_STR}" STREQUAL "${NEW_STR}")
 endfunction(DIFF_FILE filename)
 
+# TODO - once we remove src/other/ext, eliminate this guard and
+# update INSTALL and configure to reflect the new approach.
+if (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
 # Finalize and check INSTALL file
 file(READ "${BRLCAD_SOURCE_DIR}/INSTALL" SRC_INSTALL_STR)
 string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX "${SRC_INSTALL_STR}")
@@ -2440,7 +2537,7 @@ DIFF_FILE(configure)
 if(CONFIG_FATAL_ERROR)
   message(FATAL_ERROR "Configure haulted because INSTALL and/or configure script are out of date.")
 endif(CONFIG_FATAL_ERROR)
-
+endif (EXISTS ${CMAKE_SOURCE_DIR}/src/other/ext)
 
 # Because the build-time-delta needs a configure-file but comes at the
 # end of the CMake configure, the preparation of the final distclean
@@ -2500,11 +2597,17 @@ add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   )
 set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
 
-# NOTE: set to NEW and remove slashes after 3.19 is required
-if(POLICY CMP0110)
-  cmake_policy(SET CMP0110 OLD)
-endif(POLICY CMP0110)
-add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
+# NOTE: after we require a minimum of 3.19, set CMP0110 NEW and
+# remove the version check
+if (${CMAKE_VERSION} VERSION_LESS "3.19")
+  if(POLICY CMP0110)
+    cmake_policy(SET CMP0110 OLD)
+  endif(POLICY CMP0110)
+  add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
+else (${CMAKE_VERSION} VERSION_LESS "3.19")
+  cmake_policy(SET CMP0110 NEW)
+  add_test(NAME "NOTE: some 'test' tests are expected to fail, 'regress' must pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
+endif (${CMAKE_VERSION} VERSION_LESS "3.19")
 
 # Local Variables:
 # tab-width: 8

@@ -676,7 +676,7 @@ append_index(char *dst, GLint index)
 /**
  * Make a string from the given state vector.
  * For example, return "state.matrix.texture[2].inverse".
- * Use _mesa_free() to deallocate the string.
+ * Use free() to deallocate the string.
  */
 const char *
 _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
@@ -828,7 +828,7 @@ static void
 load_transpose_matrix(GLfloat registers[][4], GLuint pos,
 		      const GLfloat mat[16])
 {
-    MEMCPY(registers[pos], mat, 16 * sizeof(GLfloat));
+    memcpy(registers[pos], mat, 16 * sizeof(GLfloat));
 }
 
 

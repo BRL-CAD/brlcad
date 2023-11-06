@@ -12,6 +12,9 @@
  */
 
 #include "tkTable.h"
+#ifndef panic
+#  define panic Tcl_Panic
+#endif
 
 static char *	Cmd_GetName _ANSI_ARGS_((const Cmd_Struct *cmds, int val));
 static int	Cmd_GetValue _ANSI_ARGS_((const Cmd_Struct *cmds,

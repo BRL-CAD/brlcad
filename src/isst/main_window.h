@@ -30,10 +30,11 @@
 #include "common.h"
 
 #include <QMainWindow>
-#ifdef USE_QT6
-#include <QOpenGLWidget>
-#else
+#include <QtGlobal>
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QtWidgets/QOpenGLWidget>
+#else
+#include <QOpenGLWidget>
 #endif
 #include <QDockWidget>
 #include <QMenu>

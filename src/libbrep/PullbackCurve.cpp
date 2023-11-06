@@ -351,7 +351,10 @@ face_GetBoundingBox(
     // may be a smaller trimmed subset of surface so worth getting
     // face boundary
     bool growcurrent = bGrowBox != 0;
-    ON_3dPoint min, max;
+    // ON_Geometry::GetBoundingBox treats an invalid box input as
+    // empty, which is what we want for the initial calculation
+    ON_3dPoint min(DBL_MAX, DBL_MAX, DBL_MAX);
+    ON_3dPoint max(-DBL_MAX, -DBL_MAX, -DBL_MAX);
     for (int li = 0; li < face.LoopCount(); li++) {
 	for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
 	    ON_BrepTrim *trim = face.Loop(li)->Trim(ti);

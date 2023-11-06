@@ -60,11 +60,11 @@ _mesa_delete_ati_fragment_shader(GLcontext *ctx, struct ati_fragment_shader *s)
     GLuint i;
     for (i = 0; i < MAX_NUM_PASSES_ATI; i++) {
 	if (s->Instructions[i])
-	    _mesa_free(s->Instructions[i]);
+	    free(s->Instructions[i]);
 	if (s->SetupInst[i])
-	    _mesa_free(s->SetupInst[i]);
+	    free(s->SetupInst[i]);
     }
-    _mesa_free(s);
+    free(s);
 }
 
 
@@ -96,27 +96,27 @@ create_dst_mod_str(GLuint mod)
 {
     static char ret_str[1024];
 
-    _mesa_memset(ret_str, 0, 1024);
+    memset(ret_str, 0, 1024);
     if (mod & GL_2X_BIT_ATI)
-	_mesa_strncat(ret_str, "|2X", 1024);
+	strncat(ret_str, "|2X", 1024);
 
     if (mod & GL_4X_BIT_ATI)
-	_mesa_strncat(ret_str, "|4X", 1024);
+	strncat(ret_str, "|4X", 1024);
 
     if (mod & GL_8X_BIT_ATI)
-	_mesa_strncat(ret_str, "|8X", 1024);
+	strncat(ret_str, "|8X", 1024);
     if (mod & GL_HALF_BIT_ATI)
-	_mesa_strncat(ret_str, "|HA", 1024);
+	strncat(ret_str, "|HA", 1024);
     if (mod & GL_QUARTER_BIT_ATI)
-	_mesa_strncat(ret_str, "|QU", 1024);
+	strncat(ret_str, "|QU", 1024);
     if (mod & GL_EIGHTH_BIT_ATI)
-	_mesa_strncat(ret_str, "|EI", 1024);
+	strncat(ret_str, "|EI", 1024);
 
     if (mod & GL_SATURATE_BIT_ATI)
-	_mesa_strncat(ret_str, "|SAT", 1024);
+	strncat(ret_str, "|SAT", 1024);
 
-    if (_mesa_strlen(ret_str) == 0)
-	_mesa_strncat(ret_str, "NONE", 1024);
+    if (strlen(ret_str) == 0)
+	strncat(ret_str, "NONE", 1024);
     return ret_str;
 }
 
@@ -287,7 +287,7 @@ _mesa_DeleteFragmentShaderATI(GLuint id)
 	if (prog && (prog != &DummyShader)) {
 	    prog->RefCount--;
 	    if (prog->RefCount <= 0) {
-		_mesa_free(prog);
+		free(prog);
 	    }
 	}
     }
@@ -312,9 +312,9 @@ _mesa_BeginFragmentShaderATI(void)
     /* no idea if it's allowed to redefine a shader */
     for (i = 0; i < MAX_NUM_PASSES_ATI; i++) {
 	if (ctx->ATIFragmentShader.Current->Instructions[i])
-	    _mesa_free(ctx->ATIFragmentShader.Current->Instructions[i]);
+	    free(ctx->ATIFragmentShader.Current->Instructions[i]);
 	if (ctx->ATIFragmentShader.Current->SetupInst[i])
-	    _mesa_free(ctx->ATIFragmentShader.Current->SetupInst[i]);
+	    free(ctx->ATIFragmentShader.Current->SetupInst[i]);
     }
 
     /* malloc the instructions here - not sure if the best place but its
@@ -322,11 +322,11 @@ _mesa_BeginFragmentShaderATI(void)
     for (i = 0; i < MAX_NUM_PASSES_ATI; i++) {
 	ctx->ATIFragmentShader.Current->Instructions[i] =
 	    (struct atifs_instruction *)
-	    _mesa_calloc(sizeof(struct atifs_instruction) *
+	    calloc(1,sizeof(struct atifs_instruction) *
 			 (MAX_NUM_INSTRUCTIONS_PER_PASS_ATI));
 	ctx->ATIFragmentShader.Current->SetupInst[i] =
 	    (struct atifs_setupinst *)
-	    _mesa_calloc(sizeof(struct atifs_setupinst) *
+	    calloc(1,sizeof(struct atifs_setupinst) *
 			 (MAX_NUM_FRAGMENT_REGISTERS_ATI));
     }
 
@@ -466,7 +466,7 @@ _mesa_PassTexCoordATI(GLuint dst, GLuint coord, GLenum swizzle)
     curI->swizzle = swizzle;
 
 #if MESA_DEBUG_ATI_FS
-    _mesa_debug(ctx, "%s(%s, %s, %s)\n", __FUNCTION__,
+    _mesa_debug(ctx, "%s(%s, %s, %s)\n", __func__,
 		_mesa_lookup_enum_by_nr(dst), _mesa_lookup_enum_by_nr(coord),
 		_mesa_lookup_enum_by_nr(swizzle));
 #endif
@@ -539,7 +539,7 @@ _mesa_SampleMapATI(GLuint dst, GLuint interp, GLenum swizzle)
     curI->swizzle = swizzle;
 
 #if MESA_DEBUG_ATI_FS
-    _mesa_debug(ctx, "%s(%s, %s, %s)\n", __FUNCTION__,
+    _mesa_debug(ctx, "%s(%s, %s, %s)\n", __func__,
 		_mesa_lookup_enum_by_nr(dst), _mesa_lookup_enum_by_nr(interp),
 		_mesa_lookup_enum_by_nr(swizzle));
 #endif

@@ -98,7 +98,7 @@ plot_shaded(
 		(void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 		break;
 	    case DB5_MINORTYPE_BRLCAD_BREP:
-		(void)rt_brep_plot_poly(&vhead, pathp, ip, tsp->ts_ttol,
+		(void)rt_brep_plot_poly(&vhead, DB_FULL_PATH_CUR_DIR(pathp), ip, tsp->ts_ttol,
 			tsp->ts_tol, NULL);
 	}
 	_ged_drawH_part2(0, &vhead, pathp, tsp, dgcdp);
@@ -370,7 +370,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 		if (dgcdp->nmg_fast_wireframe_draw) {
 		    (void)rt_brep_plot(&vhead, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		} else {
-		    (void)rt_brep_plot_poly(&vhead, pathp, &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
+		    (void)rt_brep_plot_poly(&vhead, DB_FULL_PATH_CUR_DIR(pathp), &intern, tsp->ts_ttol, tsp->ts_tol, NULL);
 		}
 	    }
 	    goto out;
@@ -491,7 +491,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 	    return (union tree *)NULL;
 	}
 
-    } else if (curtree->tr_op != OP_NMG_TESS) {
+    } else if (curtree->tr_op != OP_TESS) {
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "Cannot use '-d' option when Boolean evaluation is required\n");
 	db_free_tree(curtree, tsp->ts_resp);
 	return (union tree *)NULL;
@@ -711,6 +711,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			case 4:
 			    shaded_mode_override = _GED_HIDDEN_LINE;
 			    break;
+			case 5:
+			    shaded_mode_override = _GED_WIREFRAME_EVAL;
+			    break;
 			default:
 			    if (shaded_mode_override < 0) {
 				shaded_mode_override = _GED_SHADED_MODE_UNSET;
@@ -847,6 +850,15 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		    dgcdp = dgcdp_save;
 		}
+	    } else if (dgcdp.vs.s_dmode == _GED_WIREFRAME_EVAL) {
+		const char **eav = (const char **)bu_calloc(argc+1, sizeof(const char *), "av");
+		eav[0] = "E";
+		for (int ie = 0; ie < argc; ie++) {
+		    eav[ie+1] = argv[ie];
+		}
+		int eret = ged_exec(gedp, argc+1, eav);
+		bu_free(eav, "eav");
+		return eret;
 	    } else {
 		struct display_list **paths_to_draw;
 		struct display_list *gdlp;
@@ -951,7 +963,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 				       &wdbp->wdb_initial_tree_state,
 				       enable_fastpath ? draw_nmg_region_start : 0,
 				       draw_nmg_region_end,
-				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+				       nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : rt_booltree_leaf_tess,
 				       (void *)&dgcdp);
 		}
 

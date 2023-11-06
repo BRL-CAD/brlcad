@@ -20,6 +20,9 @@ if(BRLCAD_EXTRADOCS_PDF)
   DISTCLEAN("${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf")
 endif(BRLCAD_EXTRADOCS_PDF)
 
+# TODO - with CMake 3.20, add_custom_command supports generator expressions in
+# OUTPUT, so once we can require that version we should look at retiring this
+# use of CMAKE_CFG_INTDIR
 # For the html files, we need brlcad.css
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/brlcad_css-${CMAKE_CFG_INTDIR}-done

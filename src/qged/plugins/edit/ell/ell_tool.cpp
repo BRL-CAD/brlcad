@@ -22,7 +22,7 @@
  */
 
 #include "QEll.h"
-#include "qtcad/QToolPalette.h"
+#include "qtcad/QgToolPalette.h"
 #include "../../plugin.h"
 
 void *
@@ -33,12 +33,12 @@ ell_tool()
     QEll *ell = new QEll();
     ell->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
-    QToolPaletteElement *el = new QToolPaletteElement(obj_icon, ell);
+    QgToolPaletteElement *el = new QgToolPaletteElement(obj_icon, ell);
 
     // Edit operations will usually change view objects - connect the internal
-    // widget signal to the QToolPaletteElement slot so the application can get
+    // widget signal to the QgToolPaletteElement slot so the application can get
     // the word when that happens.
-    QObject::connect(ell, &QEll::view_updated, el, &QToolPaletteElement::element_view_changed);
+    QObject::connect(ell, &QEll::view_updated, el, &QgToolPaletteElement::element_view_changed);
 
     // Let the element (and hence the application) know that this tool has a
     // locally customized event filter to use with the view widget.

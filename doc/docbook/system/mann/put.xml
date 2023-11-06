@@ -1,0 +1,210 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="put">
+
+    <refmeta>
+	<refentrytitle>put</refentrytitle>
+	<manvolnum>nged</manvolnum>
+	<refmiscinfo class="source">BRL-CAD</refmiscinfo>
+	<refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+    </refmeta>
+
+    <refnamediv xml:id="name">
+	<refname>put</refname>
+	<refpurpose>
+	    <emphasis>mged</emphasis> command which creates a new 
+	    object of indicated type with supplied attributes. 
+	    Similar to the <command>in</command> command, but without 
+	    prompting - making it especially useful for scripting.
+	</refpurpose>
+    </refnamediv>
+
+    <!-- body begins here -->
+    <refsynopsisdiv xml:id="synopsis">
+	<cmdsynopsis sepchar=" ">
+	    <command>put</command>
+	    <arg choice="req" rep="norepeat">object type</arg>
+	    <arg choice="opt" rep="repeat">attrs</arg>
+	</cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsection xml:id="description">
+	<title>DESCRIPTION</title>
+
+	<para>
+	    Creates a new <emphasis>object</emphasis> of indicated
+	    <emphasis>type</emphasis>. Objects attributes are 
+	    per-object dependent, although there are some 
+	    similarities among different object types
+	    (i.e. both sph and ell have a vertex 'V'). Use the 
+	    <command>form</command> command for possible attributes
+	    and correct paramater forming. Possible values for 
+	    <emphasis>type</emphasis> are:
+	</para>
+	<itemizedlist mark="bullet">
+	    <listitem>
+		<para> annot -- 2d annotations </para>
+	    </listitem>
+	    <listitem>
+		<para> arb8 -- ARB (eight vertices) </para>
+	    </listitem>
+	    <listitem>
+		<para> arbn -- ARB (n vertices) </para>
+	    </listitem>
+	    <listitem>
+		<para> ars -- Arbitrary faceted solid</para>
+	    </listitem>
+	    <listitem>
+		<para> binunif -- Uniform-array binary object</para>
+	    </listitem>
+	    <listitem>
+		<para> bot -- bag of triangles </para>
+	    </listitem>
+	    <listitem>
+		<para> brep -- Boundary Representation </para>
+	    </listitem>
+	    <listitem>
+		<para> cline -- Cline element</para>
+	    </listitem>
+	    <listitem>
+		<para> comb -- Combination</para>
+	    </listitem>
+	    <listitem>
+		<para> constrnt -- Constraint </para>
+	    </listitem>
+	    <listitem>
+		<para> datum -- Datum set</para>
+	    </listitem>
+	    <listitem>
+		<para> dsp -- Displacement map</para>
+	    </listitem>
+	    <listitem>
+		<para> ebm -- Extruded bitmap</para>
+	    </listitem>
+	    <listitem>
+		<para> ehy -- Elliptical Hyperboloid </para>
+	    </listitem>
+	    <listitem>
+		<para> ell -- Ellipsoid </para>
+	    </listitem>
+	    <listitem>
+		<para> epa -- Elliptical Paraboloid </para>
+	    </listitem>
+	    <listitem>
+		<para> eto -- Elliptical Torus </para>
+	    </listitem>
+	    <listitem>
+		<para> extrude -- 2d Extrusion </para>
+	    </listitem>
+	    <listitem>
+		<para> grip -- Support for joints </para>
+	    </listitem>
+	    <listitem>
+		<para> half -- Half space </para>
+	    </listitem>
+	    <listitem>
+		<para> hrt -- Heart </para>
+	    </listitem>
+	    <listitem>
+		<para> hyp -- Hyperboloid </para>
+	    </listitem>
+	    <listitem>
+		<para> joint -- Joint </para>
+	    </listitem>
+	    <listitem>
+		<para> material -- Material </para>
+	    </listitem>
+	    <listitem>
+		<para> metaball -- Metaball</para>
+	    </listitem>
+	    <listitem>
+		<para> nmg -- Non-Manifold Geometry </para>
+	    </listitem>
+	    <listitem>
+		<para> part -- Particle </para>
+	    </listitem>
+	    <listitem>
+		<para> pipe -- Pipe</para>
+	    </listitem>
+	    <listitem>
+		<para> pnts -- Collection of points </para>
+	    </listitem>
+	    <listitem>
+		<para> poly -- Polygon</para>
+	    </listitem>
+	    <listitem>
+		<para> rec -- Truncated General Cone (right elliptical cylinder) </para>
+	    </listitem>
+	    <listitem>
+		<para> revolve -- Truncated general revolve </para>
+	    </listitem>
+	    <listitem>
+		<para> rhc -- Right Hyperbolic Cylinder </para>
+	    </listitem>
+	    <listitem>
+		<para> rpc -- Right Parabolic Cylinder </para>
+	    </listitem>
+	    <listitem>
+		<para> script -- Procedural script </para>
+	    </listitem>
+	    <listitem>
+		<para> sketch -- 2d sketch </para>
+	    </listitem>
+	    <listitem>
+		<para> sph -- Ellipsoid (sphere) </para>
+	    </listitem>
+	    <listitem>
+		<para> submodel -- Instanced submodel </para>
+	    </listitem>
+	    <listitem>
+		<para> superell -- Superquadratic Ellipsoid</para>
+	    </listitem>
+	    <listitem>
+		<para> tgc -- Truncated General Cone </para>
+	    </listitem>
+	    <listitem>
+		<para> tor -- Torus </para>
+	    </listitem>
+	    <listitem>
+		<para> vol -- 3d volume </para>
+	    </listitem>
+	</itemizedlist>
+    </refsection>
+
+    <refsection xml:id="examples">
+	<title>EXAMPLES</title>
+
+	<para>
+	    The following are run from the MGED command prompt.
+	</para>
+	<example>
+	    <title>Create a sphere.</title>
+
+	    <variablelist>
+		<varlistentry>
+		    <term>
+			<prompt>mged&gt; </prompt>
+			<userinput>put ball sph V {0 0 0} A {100 0 0} B {0 100 0} C {0 0 100}</userinput>
+		    </term>
+		    <listitem>
+			<para>
+			    Creates a sphere named "ball", centered at (0,0,0), and with radius 100
+			</para>
+		    </listitem>
+		</varlistentry>
+	    </variablelist>
+	</example>
+    </refsection>
+
+    <refsection xml:id="author">
+	<title>AUTHOR</title>
+	<para>BRL-CAD Team</para>
+    </refsection>
+
+    <refsection xml:id="bug_reports">
+	<title>BUG REPORTS</title>
+
+	<para>
+	    Reports of bugs or problems should be submitted via electronic
+	    mail to <email>devs@brlcad.org</email>
+	</para>
+    </refsection>
+</refentry>

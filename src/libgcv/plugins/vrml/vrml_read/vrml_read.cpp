@@ -50,8 +50,6 @@ void formatString(char *instring);
 void get4vec(float *p);
 void get3vec(float *p);
 
-using namespace std;
-
 static struct bg_vert_tree *tree;
 static struct wmember all_head;
 static int *bot_faces=NULL;	 /* array of ints (indices into tree->the_array array) three per face */
@@ -176,7 +174,7 @@ parseNodeData(NODE* node)
 }
 
 static void
-Parse_input(vector<NODE*> &childlist)
+Parse_input(std::vector<NODE*> &childlist)
 {
     size_t size = childlist.size();
     size_t i;
@@ -203,8 +201,8 @@ Parse_input(vector<NODE*> &childlist)
 static int
 vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *UNUSED(options_data), const char *source_path)
 {
-    vector<NODE *> childlist;
-    vector<NODE *> parent;
+    std::vector<NODE *> childlist;
+    std::vector<NODE *> parent;
     NODE snode;
     TRANSFORM tnode;
     int type;

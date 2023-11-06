@@ -156,12 +156,10 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
      * will drawing without resize work?) */
     ncmd = getenv("GED_TEST_NEW_CMD_FORMS");
     if (BU_STR_EQUAL(ncmd, "1")) {
-	struct bu_ptbl *sg = bv_view_objs(gedp->ged_gvp, BV_DB_OBJS);
-	if (sg) {
-	    for (size_t i = 0; i < BU_PTBL_LEN(sg); i++) {
-		struct bv_scene_group *cg = (struct bv_scene_group *)BU_PTBL_GET(sg, i);
-		who_objs.push_back(std::string(bu_vls_cstr(&cg->s_name)));
-	    }
+	BViewState *bvs = gedp->dbi_state->get_view_state(gedp->ged_gvp);
+	std::vector<std::string> wpaths = bvs->list_drawn_paths(-1, false);
+	for (size_t i = 0; i < wpaths.size(); i++) {
+	    who_objs.push_back(wpaths[i]);
 	}
     } else {
 	struct display_list *gdlp;
@@ -234,11 +232,10 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
 
     // If we got this far, we need to close the current database, open the new
     // one, and verify the data
-    av[0] = "close";
+    av[0] = "closedb";
     av[1] = NULL;
     ged_exec(gedp, 1, (const char **)av);
-
-    av[0] = "open";
+    av[0] = "opendb";
     av[1] = bu_vls_cstr(&working_file);
     av[2] = NULL;
     if (ged_exec(gedp, 2, (const char **)av) != BRLCAD_OK) {
@@ -275,14 +272,14 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     }
     if (ret == BRLCAD_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s has incorrect data!  Something is very wrong.  Aborting garbage collect, database unchanged\n", bu_vls_cstr(&working_file));
-	av[0] = "close";
+	av[0] = "closedb";
 	av[1] = NULL;
 	ged_exec(gedp, 1, (const char **)av);
 	goto gc_cleanup;
     }
 
     // Done verifying
-    av[0] = "close";
+    av[0] = "closedb";
     av[1] = NULL;
     ged_exec(gedp, 1, (const char **)av);
 
@@ -310,13 +307,13 @@ ged_garbage_collect_core(struct ged *gedp, int argc, const char *argv[])
     // *Gulp* - here we go.  Swap the new file in for the old
     bu_file_delete(bu_vls_cstr(&fpath));
     if (std::rename(bu_vls_cstr(&working_file), bu_vls_cstr(&fpath))) {
-	bu_vls_printf(gedp->ged_result_str, "ERROR: %s cannot be renamed to %s!\nSomething is very wrong, aborting - user needs to manually restore %s to its original name/location.\n", bu_vls_cstr(&working_file), bu_vls_cstr(&fpath), bu_vls_cstr(&bkup_file));
+	bu_vls_printf(gedp->ged_result_str, "ERROR: %s cannot be renamed to %s: %s!\nSomething is very wrong, aborting - user needs to manually restore %s to its original name/location.\n", bu_vls_cstr(&working_file), bu_vls_cstr(&fpath), strerror(errno), bu_vls_cstr(&bkup_file));
 	ret = BRLCAD_ERROR;
 	goto gc_cleanup;
     }
 
     // Open the renamed, garbage collected file
-    av[0] = "open";
+    av[0] = "opendb";
     av[1] = bu_vls_cstr(&fpath);
     av[2] = NULL;
     if (ged_exec(gedp, 2, (const char **)av) != BRLCAD_OK) {

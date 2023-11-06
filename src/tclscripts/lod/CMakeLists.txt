@@ -1,10 +1,15 @@
 set(lod_TCLSCRIPTS
   LODDialog.tcl
   )
-BRLCAD_ADDDATA(lod_TCLSCRIPTS tclscripts/lod)
-tclIndex_BUILD(tclscripts/lod)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(lod_TCLSCRIPTS tclscripts/lod)
+  tclIndex_BUILD(tclscripts/lod)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${lod_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

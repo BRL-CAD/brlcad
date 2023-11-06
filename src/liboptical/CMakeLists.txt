@@ -5,7 +5,6 @@ set(OPTICAL_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
-  ${TCL_INCLUDE_PATH}
   )
 if (BRLCAD_ENABLE_TCL)
   set(OPTICAL_INCLUDE_DIRS ${OPTICAL_INCLUDE_DIRS} ${TCL_INCLUDE_PATH})
@@ -112,22 +111,18 @@ if(BRLCAD_ENABLE_OSL)
   # Add the osl shader to the list of shaders
   set(LIBOPTICAL_SOURCES ${LIBOPTICAL_SOURCES} sh_osl.cpp)
 
-  # Link liboptical with osl-renderer library
-  if (BRLCAD_ENABLE_TCL)
-    BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt;libbn;libbu;liboslrend;${TCL_LIBRARY}")
-  else (BRLCAD_ENABLE_TCL)
-    BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt;libbn;libbu;liboslrend")
-  endif (BRLCAD_ENABLE_TCL)
-
-else(BRLCAD_ENABLE_OSL)
-
-  if (BRLCAD_ENABLE_TCL)
-    BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt;libbn;libbu;${TCL_LIBRARY}")
-  else (BRLCAD_ENABLE_TCL)
-    BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "librt;libbn;libbu")
-  endif (BRLCAD_ENABLE_TCL)
-
 endif(BRLCAD_ENABLE_OSL)
+
+set(olibs "${liboptical_deps}")
+if (TARGET liboslrend)
+  set(olibs "${olibs};liboslrend")
+endif (TARGET liboslrend)
+if (BRLCAD_ENABLE_TCL)
+  set(olibs "${olibs};${TCL_LIBRARY}")
+endif (BRLCAD_ENABLE_TCL)
+
+BRLCAD_ADDLIB(liboptical "${LIBOPTICAL_SOURCES}" "${olibs}")
+
 
 CMAKEFILES(
   CMakeLists.txt

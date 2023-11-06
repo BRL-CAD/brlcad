@@ -25,20 +25,192 @@ intersect a single ray with the displayed objects.
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>Runs the NIRT program that is distributed with BRL-CAD to
-intersect a single ray with the displayed objects.  By default, NIRT is run using the
-current database and the currently displayed objects, and it uses the current eye point
-as the ray start point and the current viewing direction as the ray direction. This
+intersect a single ray with the displayed objects. By default, NIRT is run using the
+current database and the currently displayed objects, backing out the start of the ray
+from current center, and using the current viewing direction as the ray direction. This
 effectively fires a ray at the center of the MGED display. The resulting collection of
 intersections between the ray and the objects is listed.  Additional arguments may be
-supplied on the <command>nirt</command> command line. See the <emphasis>man</emphasis>page
-of <command>nirt</command> for more details.
+supplied on the command line. When in the graphics window, the hot
+key <emphasis>N</emphasis> will run <command>nirt</command> command with no arguments at the
+center of the screen. See the <emphasis>man1</emphasis> page of the <command>nirt</command>
+for further description of some of the arguments.
    </para>
 </refsection>
 
-<refsection xml:id="examples"><title>EXAMPLES</title>
+<refsection xml:id="options"><title>Options</title>
+  <variablelist>
+    <varlistentry>
+      <term><option>-A <replaceable>attribute_name...</replaceable></option></term>
+      <listitem>
+	<para>
+	  Adds the <emphasis>attribute_name</emphasis> to the list of attributes that will be reported.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-M</option></term>
+      <listitem>
+	<para>
+	  Causes <command>nirt</command>	to read the eye point and
+	  either the orientation quaternion (new format) or the
+	  view-rotation matrix (old format) from the standard input,
+	  and fire a single ray from the point in the specified direction.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-b</option></term>
+      <listitem>
+	<para>
+	  (Default behavior) Causes <command>nirt</command> to backout
+	  before firing the ray (rather than using the center
+    as the start of the ray).
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-B</option><replaceable> rt_bot_minpieces</replaceable></term>
+      <listitem>
+	<para>
+	  Causes <command>nirt</command> to adjust the setting of
+	  <emphasis>rt_bot_minpieces</emphasis>
+	  to the indicated value. A value of zero here indicates that
+	  the "pieces" methodology should not be used. A value greater
+	  than zero indicates that all BOT primitives containing more than
+	  <emphasis>rt_bot_minpieces</emphasis> triangles should
+	  be broken down into a separate piece for each triangle. This can result
+	  in significant improvement in raytrace speed at the cost of more memory
+	  use.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-c</option></term>
+      <listitem>
+	<para>
+	  Causes <command>nirt</command> to use the current center as the starting
+    point when firing the ray.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-e</option><replaceable> script</replaceable></term>
+      <listitem>
+	<para>
+	  Causes <command>nirt</command> to run the <emphasis>script</emphasis>
+	  string before reading the standard input. Multiple commands in
+	  <emphasis>script</emphasis> may be separated with a semicolon ';'.
+	  Scripts specified with either the <option>-e</option> or <option>-f</option>
+	  options are executed in the order in which they are specified
+	  on the command line.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-f </option><replaceable>format</replaceable></term>
+      <listitem>
+	<para>
+	  Causes <command>nirt</command> to load the predefined format
+	  (see <option>-L</option>) <emphasis>format</emphasis>
+    or script file before reading standard input.
+    Scripts specified with either the <option>-e</option> or
+    <option>-f</option> options are executed in the order in which
+    they are specified on the command line.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-E</option></term>
+      <listitem>
+	<para>
+	  Causes <command>nirt</command> to ignore any <option>-e</option> or <option>-f</option>
+	  options specified previously on the command line.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-L</option></term>
+      <listitem>
+	<para>
+	  List output formatting options.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-s</option></term>
+      <listitem>
+	<para>
+	  (Default behavior) Causes <command>nirt</command> to run in silent (that is, non-verbose) mode.
+	  In this mode,	which is useful in a pipeline,	<command>nirt</command>
+	  does not print its initial lines of output or the prompt.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-v</option></term>
+      <listitem>
+	<para>
+	  Causes <command>nirt</command> to run in verbose mode.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-H </option><replaceable>n</replaceable></term>
+      <listitem>
+	<para>
+          Set flag (<emphasis>n</emphasis>) for enable/disable informational header
+          (<emphasis>n</emphasis>=1 [on] by default, always off in silent mode). Useful
+          when combined with verbose mode (<option>-v</option>).
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-u</option><replaceable> n</replaceable></term>
+      <listitem>
+	<para>
+	  Reports air when <emphasis>n</emphasis>=1 (set to 0 by default).
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-O</option><replaceable> n</replaceable></term>
+      <listitem>
+	<para>
+	  Causes <command>nirt</command> to handle multiple regions' claims to segments of a ray
+	  according to action <emphasis>n</emphasis>.	The argument
+	  <emphasis>n</emphasis> may be any of the values 0, 1, 2, or 3,
+	  or their corresponding key words "resolve", "rebuild_fastgen", "rebuild_all", or "retain".
+	  See the discussion of the <emphasis>overlap_claims</emphasis>
+	  in the <command>nirt</command> entry of the <emphasis>man1</emphasis> manual.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-x</option><replaceable> v</replaceable></term>
+      <listitem>
+	<para>
+	  Sets the <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  debug flags to the hexadecimal bit vector <emphasis>v</emphasis>.
+	  See the discussion of the <emphasis>libdebug</emphasis>
+	  in the <command>nirt</command> entry of the <emphasis>man1</emphasis> manual.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-X</option><replaceable> v</replaceable></term>
+      <listitem>
+	<para>
+	  Sets <command>nirt</command>'s own debug flags to the hexadecimal
+	  bit vector <emphasis>v</emphasis>. See the discussion of the
+    <emphasis>debug</emphasis> in the <command>nirt</command>
+    entry of the <emphasis>man1</emphasis> manual.
+	</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+</refsection>
 
-  <para>The example shows the use of the <command>nirt</command> command to fire a single ray through the center of the MGED display.
-   </para>
+<refsection xml:id="examples"><title>EXAMPLES</title>
   <example><title>Run the NIRT program to fire a ray through the MGED display.</title>
 
      <para>
@@ -47,7 +219,23 @@ of <command>nirt</command> for more details.
     <para>Fires a single ray through the center of the MGED display.
     </para>
   </example>
-
+	
+  <example><title>Run the NIRT program to fire a ray through the MGED display and report air.</title>
+     <para>
+      <prompt>mged&gt; </prompt><userinput>nirt -u 1</userinput>
+    </para>
+    <para>Fires a single ray through the center of the MGED display and report air regions.
+    </para>
+  </example>
+	
+  <example><title>Run the NIRT program to fire a ray through the MGED display and include LOS and material ID per region.</title>
+     <para>
+      <prompt>mged&gt; </prompt><userinput>nirt -A LOS -A material_id</userinput>
+    </para>
+    <para>Fires a single ray through the center of the MGED display and includes LOS and material ID per region.
+    </para>
+  </example>
+  
 </refsection>
 
 <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>

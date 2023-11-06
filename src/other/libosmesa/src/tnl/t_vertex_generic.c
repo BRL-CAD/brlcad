@@ -1093,7 +1093,7 @@ void _tnl_generic_copy_pv(GLcontext *ctx, GLuint edst, GLuint esrc)
 	if (a[j].attrib == VERT_ATTRIB_COLOR0 ||
 	    a[j].attrib == VERT_ATTRIB_COLOR1) {
 
-	    _mesa_memcpy(vdst + a[j].vertoffset,
+	    memcpy(vdst + a[j].vertoffset,
 			 vsrc + a[j].vertoffset,
 			 a[j].vertattrsize);
 	}

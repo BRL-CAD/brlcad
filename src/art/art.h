@@ -73,7 +73,7 @@
 #include "renderer/api/object.h"
 
 /* appleseed.foundation headers */
-#include "foundation/utility/containers/dictionary.h"
+#include "foundation/containers/dictionary.h"
 
 #if defined(__GNUC__) && !defined(__clang__)
 #  pragma GCC diagnostic pop

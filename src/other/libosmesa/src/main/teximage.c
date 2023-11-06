@@ -712,8 +712,8 @@ _mesa_delete_texture_image(GLcontext *ctx, struct gl_texture_image *texImage)
 
     ASSERT(texImage->Data == NULL);
     if (texImage->ImageOffsets)
-	_mesa_free(texImage->ImageOffsets);
-    _mesa_free(texImage);
+	free(texImage->ImageOffsets);
+    free(texImage);
 }
 
 
@@ -1029,7 +1029,7 @@ make_null_texture(GLint width, GLint height, GLint depth, GLenum format)
 {
     const GLint components = _mesa_components_in_format(format);
     const GLint numPixels = width * height * depth;
-    GLubyte *data = (GLubyte *) MALLOC(numPixels * components * sizeof(GLubyte));
+    GLubyte *data = (GLubyte *) malloc(numPixels * components * sizeof(GLubyte));
 
 #ifdef DEBUG
     /*
@@ -1095,7 +1095,7 @@ clear_teximage_fields(struct gl_texture_image *img)
     img->Depth = 0;
     img->RowStride = 0;
     if (img->ImageOffsets) {
-	_mesa_free(img->ImageOffsets);
+	free(img->ImageOffsets);
 	img->ImageOffsets = NULL;
     }
     img->Width2 = 0;
@@ -1177,7 +1177,7 @@ _mesa_init_teximage_fields(GLcontext *ctx, GLenum target,
      * We allocate the array for 1D/2D textures too in order to avoid special-
      * case code in the texstore routines.
      */
-    img->ImageOffsets = (GLuint *) _mesa_malloc(depth * sizeof(GLuint));
+    img->ImageOffsets = (GLuint *) malloc(depth * sizeof(GLuint));
     for (i = 0; i < depth; i++) {
 	img->ImageOffsets[i] = i * width * height;
     }

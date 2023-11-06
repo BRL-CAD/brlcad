@@ -5,6 +5,7 @@ set(FBBIN_INCLUDE_DIRS
   ${PKG_INCLUDE_DIRS}
   ${DM_INCLUDE_DIRS}
   ${PNG_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio
   )
 BRLCAD_INCLUDE_DIRS(FBBIN_INCLUDE_DIRS)
 
@@ -27,13 +28,8 @@ BRLCAD_ADDEXEC(fbclear fbclear.c libdm FOLDER Fb)
 ADD_TARGET_DEPS(fbclear dm_plugins)
 BRLCAD_ADDEXEC(fbcmap fbcmap.c libdm FOLDER Fb)
 ADD_TARGET_DEPS(fbcmap dm_plugins)
-
-if(TARGET libtermio)
-  BRLCAD_ADDEXEC(fbcolor fbcolor.c "libdm;libtermio" FOLDER Fb)
-  ADD_TARGET_DEPS(fbcolor dm_plugins)
-else(TARGET libtermio)
-  CMAKEFILES(fbcolor.c)
-endif(TARGET libtermio)
+BRLCAD_ADDEXEC(fbcolor fbcolor.c "libdm" FOLDER Fb)
+ADD_TARGET_DEPS(fbcolor dm_plugins)
 BRLCAD_ADDEXEC(fbfade "fbfade.c;ioutil.c" libdm FOLDER Fb)
 ADD_TARGET_DEPS(fbfade dm_plugins)
 BRLCAD_ADDEXEC(fbframe fbframe.c libdm FOLDER Fb)
@@ -50,20 +46,12 @@ BRLCAD_ADDEXEC(fblabel fblabel.c libdm FOLDER Fb)
 ADD_TARGET_DEPS(fblabel dm_plugins)
 BRLCAD_ADDEXEC(fbline fbline.c libdm FOLDER Fb)
 ADD_TARGET_DEPS(fbline dm_plugins)
-if(TARGET libtermio)
-  BRLCAD_ADDEXEC(fbpoint fbpoint.c "libdm;libbu;libtermio;libpkg" FOLDER Fb)
-  ADD_TARGET_DEPS(fbpoint dm_plugins)
-else(TARGET libtermio)
-  CMAKEFILES(fbpoint.c)
-endif(TARGET libtermio)
+BRLCAD_ADDEXEC(fbpoint fbpoint.c "libdm;libbu;libpkg" FOLDER Fb)
+ADD_TARGET_DEPS(fbpoint dm_plugins)
 BRLCAD_ADDEXEC(fbstretch "fbstretch.c;ioutil.c" libdm FOLDER Fb)
 ADD_TARGET_DEPS(fbstretch dm_plugins)
-if(TARGET libtermio)
-  BRLCAD_ADDEXEC(fbzoom fbzoom.c "libdm;libtermio" FOLDER Fb)
-  ADD_TARGET_DEPS(fbzoom dm_plugins)
-else(TARGET libtermio)
-  CMAKEFILES(fbzoom.c)
-endif(TARGET libtermio)
+BRLCAD_ADDEXEC(fbzoom fbzoom.c "libdm" FOLDER Fb)
+ADD_TARGET_DEPS(fbzoom dm_plugins)
 BRLCAD_ADDEXEC(gif-fb "gif-fb.c;ioutil.c" libdm FOLDER Fb)
 ADD_TARGET_DEPS(gif-fb dm_plugins)
 BRLCAD_ADDEXEC(gif2fb gif2fb.c libdm FOLDER Fb)
@@ -80,7 +68,12 @@ ADD_TARGET_DEPS(png-fb dm_plugins)
 BRLCAD_ADDEXEC(spm-fb spm-fb.c "libdm;libbn" FOLDER Fb)
 ADD_TARGET_DEPS(spm-fb dm_plugins)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  fbcolor.c
+  fbpoint.c
+  fbzoom.c
+  )
 
 # Local Variables:
 # tab-width: 8

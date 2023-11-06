@@ -71,7 +71,7 @@ delete_wrapper(struct gl_renderbuffer *rb)
     if (dsrb->RefCount <= 0) {
 	dsrb->Delete(dsrb);
     }
-    _mesa_free(rb);
+    free(rb);
 }
 
 
@@ -647,7 +647,7 @@ _mesa_promote_stencil(GLcontext *ctx, struct gl_renderbuffer *stencilRb)
 	}
 	stencilRb->PutRow(ctx, stencilRb, width, 0, i, depthStencil, NULL);
     }
-    _mesa_free(data);
+    free(data);
 
     stencilRb->_BaseFormat = GL_DEPTH_STENCIL_EXT;
 }

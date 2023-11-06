@@ -345,7 +345,7 @@ main(int argc, char *argv[])
 			   &tree_state,
 			   0,			/* take all regions */
 			   do_nmg_region_end,
-			   nmg_booltree_leaf_tess,
+			   rt_booltree_leaf_tess,
 			   (void *)NULL);	/* in librt/nmg_bool.c */
 
 	if (ret)
@@ -392,7 +392,7 @@ main(int argc, char *argv[])
 			   &tree_state,
 			   0,			/* take all regions */
 			   do_nmg_region_end,
-			   nmg_booltree_leaf_tess,
+			   rt_booltree_leaf_tess,
 			   (void *)NULL);	/* in librt/nmg_bool.c */
 
 	if (ret)
@@ -544,45 +544,49 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	    if (output_file == NULL)
 		fp_dir = stdout;
 	    else {
-		char *multi_name;
-		size_t len;
-		int unique = 0;
-		char suffix[SUFFIX_LEN+1];
 
 		/* construct a unique file name */
-		len = strlen(output_file) + strlen(dp->d_namep) + 6 + SUFFIX_LEN;
-		multi_name = (char *)bu_malloc(sizeof(char)*len, "multi_name");
-		snprintf(multi_name, len, "%s/%s.igs", output_file, dp->d_namep);
-		bu_strlcpy(suffix, "a", sizeof(suffix));
-		suffix[0]--;
+		struct bu_vls multi_name = BU_VLS_INIT_ZERO;
+		bu_vls_sprintf(&multi_name, "%s/%s.igs", output_file, dp->d_namep);
+		int unique = bu_file_readable(bu_vls_cstr(&multi_name));
+		int suffix_len = 0;
 		while (!unique) {
-		    if (bu_file_readable(multi_name)) {
-			break;
-		    }
-
-		    /* not unique, try adding a suffix */
-		    len = strlen(suffix);
-		    i = len - 1;
-		    suffix[i]++;
-		    while (suffix[i] > 'z' && i > 0) {
-			suffix[i] = 'a';
-			i--;
-			suffix[i]++;
-		    }
-
-		    if (suffix[0] > 'z' && len < SUFFIX_LEN) {
-			for (i = 0; i <= len; i++)
-			    suffix[i] = 'a';
-		    } else if (suffix[0] > 'z' && len >= SUFFIX_LEN) {
+		    suffix_len++;
+		    if (suffix_len > SUFFIX_LEN) {
+			// Too long
+			bu_vls_free(&multi_name);
 			bu_log("too many files with the same name (%s)\n", dp->d_namep);
 			bu_exit(1, "Cannot create a unique filename, \n");
 		    }
-		    snprintf(multi_name, len, "%s/%s%.6s.igs", output_file, dp->d_namep, suffix);
+		    char cchar = 'a';
+		    bu_vls_putc(&multi_name, cchar);
+		    unique = bu_file_readable(bu_vls_cstr(&multi_name));
+		    if (unique)
+			break;
+
+		    /* not unique, try incrementing the final char suffix */
+		    while (cchar < 'z') {
+			bu_vls_trunc(&multi_name, -1);
+			cchar++;
+			bu_vls_putc(&multi_name, cchar);
+			unique = bu_file_readable(bu_vls_cstr(&multi_name));
+			if (unique)
+			    break;
+		    }
+		    if (unique)
+			break;
+
+		    /* No go - restore the letter to a and keep going */
+		    bu_vls_trunc(&multi_name, -1);
+		    bu_vls_putc(&multi_name, 'a');
 		}
-		if ((fp_dir = fopen(multi_name, "wb")) == NULL) {
+
+		if ((fp_dir = fopen(bu_vls_cstr(&multi_name), "wb")) == NULL) {
 		    perror("g-iges");
-		    bu_exit(1, "Cannot open output file: %s\n", multi_name);
+		    bu_exit(1, "Cannot open output file: %s\n", bu_vls_cstr(&multi_name));
 		}
+
+		bu_vls_free(&multi_name);
 	    }
 
 	    /* Open the temporary file for the parameter section */

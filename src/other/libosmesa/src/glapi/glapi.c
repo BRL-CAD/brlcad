@@ -31,10 +31,6 @@
  * current thread and to manage registration/dispatch of dynamically
  * added extension functions.
  *
- * It's intended that this file and the other glapi*.[ch] files are
- * flexible enough to be reused in several places:  XFree86, DRI-
- * based libGL.so, and perhaps the SGI SI.
- *
  * NOTE: There are no dependencies on Mesa in this code.
  *
  * Versions (API changes):
@@ -166,19 +162,6 @@ static GLint NoOpUnused(void)
  * between TLS enabled loaders and non-TLS DRI drivers.
  */
 /*@{*/
-#if defined(GLX_USE_TLS)
-
-PUBLIC __thread struct _glapi_table * _glapi_tls_Dispatch
-__attribute__((tls_model("initial-exec")))
-    = (struct _glapi_table *) __glapi_noop_table;
-
-PUBLIC __thread void * _glapi_tls_Context
-__attribute__((tls_model("initial-exec")));
-
-PUBLIC const struct _glapi_table *_glapi_Dispatch = NULL;
-PUBLIC const void *_glapi_Context = NULL;
-
-#else
 
 #if defined(THREADS)
 
@@ -201,7 +184,6 @@ PUBLIC struct _glapi_table *_glapi_Dispatch =
     (struct _glapi_table *) __glapi_noop_table;
 PUBLIC void *_glapi_Context = NULL;
 
-#endif /* defined(GLX_USE_TLS) */
 /*@}*/
 
 
@@ -259,9 +241,7 @@ PUBLIC void
 _glapi_set_context(void *context)
 {
     (void) __unused_noop_functions; /* silence a warning */
-#if defined(GLX_USE_TLS)
-    _glapi_tls_Context = context;
-#elif defined(THREADS)
+#if   defined(THREADS)
     _glthread_SetTSD(&ContextTSD, context);
     _glapi_Context = (ThreadSafe) ? NULL : context;
 #else
@@ -279,9 +259,7 @@ _glapi_set_context(void *context)
 PUBLIC void *
 _glapi_get_context(void)
 {
-#if defined(GLX_USE_TLS)
-    return _glapi_tls_Context;
-#elif defined(THREADS)
+#if   defined(THREADS)
     if (ThreadSafe) {
 	return _glthread_GetTSD(&ContextTSD);
     } else {
@@ -311,15 +289,8 @@ _glapi_set_dispatch(struct _glapi_table *dispatch)
 	/* use the no-op functions */
 	dispatch = (struct _glapi_table *) __glapi_noop_table;
     }
-#ifdef DEBUG
-    else {
-	_glapi_check_table(dispatch);
-    }
-#endif
 
-#if defined(GLX_USE_TLS)
-    _glapi_tls_Dispatch = dispatch;
-#elif defined(THREADS)
+#if   defined(THREADS)
     _glthread_SetTSD(&_gl_DispatchTSD, (void *) dispatch);
     _glapi_Dispatch = (ThreadSafe) ? NULL : dispatch;
 #else /*THREADS*/
@@ -336,9 +307,7 @@ PUBLIC struct _glapi_table *
 _glapi_get_dispatch(void)
 {
     struct _glapi_table * api;
-#if defined(GLX_USE_TLS)
-    api = _glapi_tls_Dispatch;
-#elif defined(THREADS)
+#if   defined(THREADS)
     api = (ThreadSafe)
 	  ? (struct _glapi_table *) _glthread_GetTSD(&_gl_DispatchTSD)
 	  : _glapi_Dispatch;
@@ -354,20 +323,7 @@ _glapi_get_dispatch(void)
  *** The rest of this file is pretty much concerned with GetProcAddress
  *** functionality.
  ***/
-
-#if defined(USE_X64_64_ASM) && defined(GLX_USE_TLS)
-# define DISPATCH_FUNCTION_SIZE  16
-#elif defined(USE_X86_ASM)
-# if defined(THREADS) && !defined(GLX_USE_TLS)
-#  define DISPATCH_FUNCTION_SIZE  32
-# else
-#  define DISPATCH_FUNCTION_SIZE  16
-# endif
-#endif
-
-#if !defined(DISPATCH_FUNCTION_SIZE) && !defined(XFree86Server) && !defined(XGLServer)
-# define NEED_FUNCTION_POINTER
-#endif
+#define NEED_FUNCTION_POINTER
 
 /* The code in this file is auto-generated with Python */
 #include "glprocs.h"
@@ -405,20 +361,6 @@ get_static_proc_offset(const char *funcName)
     return -1;
 }
 
-
-#if !defined(XFree86Server) && !defined(XGLServer)
-#ifdef USE_X86_ASM
-
-#if defined( GLX_USE_TLS )
-extern       GLubyte gl_dispatch_functions_start[];
-extern       GLubyte gl_dispatch_functions_end[];
-#else
-extern const GLubyte gl_dispatch_functions_start[];
-#endif
-
-#endif /* USE_X86_ASM */
-
-
 /**
  * Return dispatch function address for the named static (built-in) function.
  * Return NULL if function not found.
@@ -443,10 +385,6 @@ get_static_proc_address(const char *funcName)
 	return NULL;
     }
 }
-
-#endif /* !defined(XFree86Server) && !defined(XGLServer) */
-
-
 
 /**
  * Return the name of the function at the given offset in the dispatch
@@ -474,16 +412,6 @@ get_static_proc_name(GLuint offset)
  * Number of extension functions which we can dynamically add at runtime.
  */
 #define MAX_EXTENSION_FUNCS 300
-
-
-/*
- * The dispatch table size (number of entries) is the size of the
- * _glapi_table struct plus the number of dynamic entries we can add.
- * The extra slots can be filled in by DRI drivers that register new extension
- * functions.
- */
-#define DISPATCH_TABLE_SIZE (sizeof(struct _glapi_table) / sizeof(void *) + MAX_EXTENSION_FUNCS)
-
 
 /**
  * Track information about a function added to the GL API.
@@ -533,9 +461,6 @@ struct _glapi_function {
 static struct _glapi_function ExtEntryTable[MAX_EXTENSION_FUNCS];
 static GLuint NumExtEntryPoints = 0;
 
-#ifdef USE_SPARC_ASM
-extern void __glapi_sparc_icache_flush(unsigned int *);
-#endif
 
 /**
  * Generate a dispatch function (entrypoint) which jumps through
@@ -545,75 +470,8 @@ extern void __glapi_sparc_icache_flush(unsigned int *);
 static _glapi_proc
 generate_entrypoint(GLuint functionOffset)
 {
-#if defined(USE_X86_ASM)
-    /* 32 is chosen as something of a magic offset.  For x86, the dispatch
-     * at offset 32 is the first one where the offset in the
-     * "jmp OFFSET*4(%eax)" can't be encoded in a single byte.
-     */
-    const GLubyte * const template_func = gl_dispatch_functions_start
-					  + (DISPATCH_FUNCTION_SIZE * 32);
-    GLubyte * const code = (GLubyte *) malloc(DISPATCH_FUNCTION_SIZE);
-
-
-    if (code != NULL) {
-	(void) memcpy(code, template_func, DISPATCH_FUNCTION_SIZE);
-	fill_in_entrypoint_offset((_glapi_proc) code, functionOffset);
-    }
-
-    return (_glapi_proc) code;
-#elif defined(USE_SPARC_ASM)
-
-#ifdef __arch64__
-    static const unsigned int insn_template[] = {
-	0x05000000,	/* sethi	%uhi(_glapi_Dispatch), %g2	*/
-	0x03000000,	/* sethi	%hi(_glapi_Dispatch), %g1	*/
-	0x8410a000,	/* or		%g2, %ulo(_glapi_Dispatch), %g2	*/
-	0x82106000,	/* or		%g1, %lo(_glapi_Dispatch), %g1	*/
-	0x8528b020,	/* sllx		%g2, 32, %g2			*/
-	0xc2584002,	/* ldx		[%g1 + %g2], %g1		*/
-	0x05000000,	/* sethi	%hi(8 * glapioffset), %g2	*/
-	0x8410a000,	/* or		%g2, %lo(8 * glapioffset), %g2	*/
-	0xc6584002,	/* ldx		[%g1 + %g2], %g3		*/
-	0x81c0c000,	/* jmpl		%g3, %g0			*/
-	0x01000000	/*  nop						*/
-    };
-#else
-    static const unsigned int insn_template[] = {
-	0x03000000,	/* sethi	%hi(_glapi_Dispatch), %g1	  */
-	0xc2006000,	/* ld		[%g1 + %lo(_glapi_Dispatch)], %g1 */
-	0xc6006000,	/* ld		[%g1 + %lo(4*glapioffset)], %g3	  */
-	0x81c0c000,	/* jmpl		%g3, %g0			  */
-	0x01000000	/*  nop						  */
-    };
-#endif /* __arch64__ */
-    unsigned int *code = (unsigned int *) malloc(sizeof(insn_template));
-    unsigned long glapi_addr = (unsigned long) &_glapi_Dispatch;
-    if (code) {
-	memcpy(code, insn_template, sizeof(insn_template));
-
-#ifdef __arch64__
-	code[0] |= (glapi_addr >> (32 + 10));
-	code[1] |= ((glapi_addr & 0xffffffff) >> 10);
-	__glapi_sparc_icache_flush(&code[0]);
-	code[2] |= ((glapi_addr >> 32) & ((1 << 10) - 1));
-	code[3] |= (glapi_addr & ((1 << 10) - 1));
-	__glapi_sparc_icache_flush(&code[2]);
-	code[6] |= ((functionOffset * 8) >> 10);
-	code[7] |= ((functionOffset * 8) & ((1 << 10) - 1));
-	__glapi_sparc_icache_flush(&code[6]);
-#else
-	code[0] |= (glapi_addr >> 10);
-	code[1] |= (glapi_addr & ((1 << 10) - 1));
-	__glapi_sparc_icache_flush(&code[0]);
-	code[2] |= (functionOffset * 4);
-	__glapi_sparc_icache_flush(&code[2]);
-#endif /* __arch64__ */
-    }
-    return (_glapi_proc) code;
-#else
     (void) functionOffset;
     return NULL;
-#endif /* USE_*_ASM */
 }
 
 
@@ -624,43 +482,11 @@ generate_entrypoint(GLuint functionOffset)
 static void
 fill_in_entrypoint_offset(_glapi_proc entrypoint, GLuint offset)
 {
-#if defined(USE_X86_ASM)
-    GLubyte * const code = (GLubyte *) entrypoint;
-
-#if DISPATCH_FUNCTION_SIZE == 32
-    *((unsigned int *)(code + 11)) = 4 * offset;
-    *((unsigned int *)(code + 22)) = 4 * offset;
-#elif DISPATCH_FUNCTION_SIZE == 16 && defined( GLX_USE_TLS )
-    *((unsigned int *)(code +  8)) = 4 * offset;
-#elif DISPATCH_FUNCTION_SIZE == 16
-    *((unsigned int *)(code +  7)) = 4 * offset;
-#else
-# error Invalid DISPATCH_FUNCTION_SIZE!
-#endif
-
-#elif defined(USE_SPARC_ASM)
-
-    /* XXX this hasn't been tested! */
-    unsigned int *code = (unsigned int *) entrypoint;
-#ifdef __arch64__
-    code[6] = 0x05000000;  /* sethi	%hi(8 * glapioffset), %g2	*/
-    code[7] = 0x8410a000;  /* or		%g2, %lo(8 * glapioffset), %g2	*/
-    code[6] |= ((offset * 8) >> 10);
-    code[7] |= ((offset * 8) & ((1 << 10) - 1));
-    __glapi_sparc_icache_flush(&code[6]);
-#else /* __arch64__ */
-    code[2] = 0xc6006000;  /* ld		[%g1 + %lo(4*glapioffset)], %g3	  */
-    code[2] |= (offset * 4);
-    __glapi_sparc_icache_flush(&code[2]);
-#endif /* __arch64__ */
-
-#else
 
     /* an unimplemented architecture */
     (void) entrypoint;
     (void) offset;
 
-#endif /* USE_*_ASM */
 }
 
 
@@ -887,14 +713,12 @@ _glapi_get_proc_address(const char *funcName)
 	}
     }
 
-#if !defined( XFree86Server ) && !defined( XGLServer )
     /* search static functions */
     {
 	const _glapi_proc func = get_static_proc_address(funcName);
 	if (func)
 	    return func;
     }
-#endif /* !defined( XFree86Server ) */
 
     entry = add_function_name(funcName);
     return (entry == NULL) ? NULL : entry->dispatch_stub;
@@ -927,100 +751,6 @@ _glapi_get_proc_name(GLuint offset)
     return NULL;
 }
 
-
-
-/**
- * Return size of dispatch table struct as number of functions (or
- * slots).
- */
-PUBLIC GLuint
-_glapi_get_dispatch_table_size(void)
-{
-    return DISPATCH_TABLE_SIZE;
-}
-
-
-
-/**
- * Make sure there are no NULL pointers in the given dispatch table.
- * Intended for debugging purposes.
- */
-void
-_glapi_check_table(const struct _glapi_table *table)
-{
-#ifdef DEBUG
-    const GLuint entries = _glapi_get_dispatch_table_size();
-    const void **tab = (const void **) table;
-    GLuint i;
-    for (i = 1; i < entries; i++) {
-	assert(tab[i]);
-    }
-
-    /* Do some spot checks to be sure that the dispatch table
-     * slots are assigned correctly.
-     */
-    {
-	GLuint BeginOffset = _glapi_get_proc_offset("glBegin");
-	char *BeginFunc = (char*) &table->Begin;
-	GLuint offset = (BeginFunc - (char *) table) / sizeof(void *);
-	assert(BeginOffset == _gloffset_Begin);
-	assert(BeginOffset == offset);
-    }
-    {
-	GLuint viewportOffset = _glapi_get_proc_offset("glViewport");
-	char *viewportFunc = (char*) &table->Viewport;
-	GLuint offset = (viewportFunc - (char *) table) / sizeof(void *);
-	assert(viewportOffset == _gloffset_Viewport);
-	assert(viewportOffset == offset);
-    }
-    {
-	GLuint VertexPointerOffset = _glapi_get_proc_offset("glVertexPointer");
-	char *VertexPointerFunc = (char*) &table->VertexPointer;
-	GLuint offset = (VertexPointerFunc - (char *) table) / sizeof(void *);
-	assert(VertexPointerOffset == _gloffset_VertexPointer);
-	assert(VertexPointerOffset == offset);
-    }
-    {
-	GLuint ResetMinMaxOffset = _glapi_get_proc_offset("glResetMinmax");
-	char *ResetMinMaxFunc = (char*) &table->ResetMinmax;
-	GLuint offset = (ResetMinMaxFunc - (char *) table) / sizeof(void *);
-	assert(ResetMinMaxOffset == _gloffset_ResetMinmax);
-	assert(ResetMinMaxOffset == offset);
-    }
-    {
-	GLuint blendColorOffset = _glapi_get_proc_offset("glBlendColor");
-	char *blendColorFunc = (char*) &table->BlendColor;
-	GLuint offset = (blendColorFunc - (char *) table) / sizeof(void *);
-	assert(blendColorOffset == _gloffset_BlendColor);
-	assert(blendColorOffset == offset);
-    }
-    {
-	GLuint secondaryColor3fOffset = _glapi_get_proc_offset("glSecondaryColor3fEXT");
-	char *secondaryColor3fFunc = (char*) &table->SecondaryColor3fEXT;
-	GLuint offset = (secondaryColor3fFunc - (char *) table) / sizeof(void *);
-	assert(secondaryColor3fOffset == _gloffset_SecondaryColor3fEXT);
-	assert(secondaryColor3fOffset == offset);
-    }
-    {
-	GLuint pointParameterivOffset = _glapi_get_proc_offset("glPointParameterivNV");
-	char *pointParameterivFunc = (char*) &table->PointParameterivNV;
-	GLuint offset = (pointParameterivFunc - (char *) table) / sizeof(void *);
-	assert(pointParameterivOffset == _gloffset_PointParameterivNV);
-	assert(pointParameterivOffset == offset);
-    }
-    {
-	GLuint setFenceOffset = _glapi_get_proc_offset("glSetFenceNV");
-	char *setFenceFunc = (char*) &table->SetFenceNV;
-	GLuint offset = (setFenceFunc - (char *) table) / sizeof(void *);
-	assert(setFenceOffset == _gloffset_SetFenceNV);
-	assert(setFenceOffset == offset);
-    }
-#else
-    (void) table;
-#endif
-}
-
-
 #if defined(PTHREADS) || defined(GLX_USE_TLS)
 /**
  * Perform platform-specific GL API entry-point fixups.
@@ -1028,21 +758,6 @@ _glapi_check_table(const struct _glapi_table *table)
 static void
 init_glapi_relocs(void)
 {
-#if defined(USE_X86_ASM) && defined(GLX_USE_TLS) && !defined(GLX_X86_READONLY_TEXT)
-    extern unsigned long _x86_get_dispatch(void);
-    char run_time_patch[] = {
-	0x65, 0xa1, 0, 0, 0, 0 /* movl %gs:0,%eax */
-    };
-    GLuint *offset = (GLuint *) &run_time_patch[2]; /* 32-bits for x86/32 */
-    const GLubyte * const get_disp = (const GLubyte *) run_time_patch;
-    GLubyte * curr_func = (GLubyte *) gl_dispatch_functions_start;
-
-    *offset = _x86_get_dispatch();
-    while (curr_func != (GLubyte *) gl_dispatch_functions_end) {
-	(void) memcpy(curr_func, get_disp, sizeof(run_time_patch));
-	curr_func += DISPATCH_FUNCTION_SIZE;
-    }
-#endif
 }
 #endif /* defined(PTHREADS) || defined(GLX_USE_TLS) */
 

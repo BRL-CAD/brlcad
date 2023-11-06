@@ -42,7 +42,7 @@
  *
  *
  * The limits on the width and height of an image buffer are MAX_WIDTH and
- * MAX_HEIGHT as defined in src/main/config.h.  Defaults are 4096 and 4096.
+ * MAX_HEIGHT as defined in src/main/gllimits.h.  Defaults are 4096 and 4096.
  * You can increase them as needed but beware that many temporary arrays in
  * Mesa are dimensioned by MAX_WIDTH or MAX_HEIGHT.
  */

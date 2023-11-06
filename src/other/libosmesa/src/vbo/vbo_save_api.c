@@ -110,23 +110,23 @@ static GLuint _save_copy_vertices(GLcontext *ctx,
 	case GL_LINES:
 	    ovf = nr&1;
 	    for (i = 0 ; i < ovf ; i++)
-		_mesa_memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz*sizeof(GLfloat));
+		memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz*sizeof(GLfloat));
 	    return i;
 	case GL_TRIANGLES:
 	    ovf = nr%3;
 	    for (i = 0 ; i < ovf ; i++)
-		_mesa_memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz*sizeof(GLfloat));
+		memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz*sizeof(GLfloat));
 	    return i;
 	case GL_QUADS:
 	    ovf = nr&3;
 	    for (i = 0 ; i < ovf ; i++)
-		_mesa_memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz*sizeof(GLfloat));
+		memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz*sizeof(GLfloat));
 	    return i;
 	case GL_LINE_STRIP:
 	    if (nr == 0)
 		return 0;
 	    else {
-		_mesa_memcpy(dst, src+(nr-1)*sz, sz*sizeof(GLfloat));
+		memcpy(dst, src+(nr-1)*sz, sz*sizeof(GLfloat));
 		return 1;
 	    }
 	case GL_LINE_LOOP:
@@ -135,11 +135,11 @@ static GLuint _save_copy_vertices(GLcontext *ctx,
 	    if (nr == 0)
 		return 0;
 	    else if (nr == 1) {
-		_mesa_memcpy(dst, src+0, sz*sizeof(GLfloat));
+		memcpy(dst, src+0, sz*sizeof(GLfloat));
 		return 1;
 	    } else {
-		_mesa_memcpy(dst, src+0, sz*sizeof(GLfloat));
-		_mesa_memcpy(dst+sz, src+(nr-1)*sz, sz*sizeof(GLfloat));
+		memcpy(dst, src+0, sz*sizeof(GLfloat));
+		memcpy(dst+sz, src+(nr-1)*sz, sz*sizeof(GLfloat));
 		return 2;
 	    }
 	case GL_TRIANGLE_STRIP:
@@ -156,7 +156,7 @@ static GLuint _save_copy_vertices(GLcontext *ctx,
 		    break;
 	    }
 	    for (i = 0 ; i < ovf ; i++)
-		_mesa_memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz*sizeof(GLfloat));
+		memcpy(dst+i*sz, src+(nr-ovf+i)*sz, sz*sizeof(GLfloat));
 	    return i;
 	default:
 	    assert(0);
@@ -198,7 +198,7 @@ static void free_vertex_store(GLcontext *ctx, struct vbo_save_vertex_store *vert
     if (vertex_store->bufferobj)
 	ctx->Driver.DeleteBuffer(ctx, vertex_store->bufferobj);
 
-    FREE(vertex_store);
+    free(vertex_store);
 }
 
 static GLfloat *map_vertex_store(GLcontext *ctx, struct vbo_save_vertex_store *vertex_store)
@@ -272,7 +272,7 @@ static void _save_compile_vertex_list(GLcontext *ctx)
 
     /* Duplicate our template, increment refcounts to the storage structs:
      */
-    _mesa_memcpy(node->attrsz, save->attrsz, sizeof(node->attrsz));
+    memcpy(node->attrsz, save->attrsz, sizeof(node->attrsz));
     node->vertex_size = save->vertex_size;
     node->buffer_offset = (save->buffer - save->vertex_store->buffer) * sizeof(GLfloat);
     node->count = save->vert_count;
@@ -411,7 +411,7 @@ static void _save_wrap_filled_vertex(GLcontext *ctx)
     assert(save->max_vert - save->vert_count > save->copied.nr);
 
     for (i = 0 ; i < save->copied.nr ; i++) {
-	_mesa_memcpy(save->vbptr, data, save->vertex_size * sizeof(GLfloat));
+	memcpy(save->vbptr, data, save->vertex_size * sizeof(GLfloat));
 	data += save->vertex_size;
 	save->vbptr += save->vertex_size;
 	save->vert_count++;
@@ -591,7 +591,7 @@ static void _save_reset_vertex(GLcontext *ctx)
 
 
 
-#define ERROR()   _mesa_compile_error( ctx, GL_INVALID_ENUM, __FUNCTION__ );
+#define ERROR()   _mesa_compile_error( ctx, GL_INVALID_ENUM, __func__ );
 
 
 /* Only one size for each attribute may be active at once.  Eg. if
@@ -1095,7 +1095,7 @@ static void vbo_destroy_vertex_list(GLcontext *ctx, void *data)
 	free_vertex_store(ctx, node->vertex_store);
 
     if (--node->prim_store->refcount == 0)
-	FREE(node->prim_store);
+	free(node->prim_store);
 }
 
 

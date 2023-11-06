@@ -64,7 +64,7 @@ extern "C" char *
 bu_strnstr(const char *h, const char *n, size_t hlen);
 
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 227
+#define EXPECTED_PLATFORM_SYMBOLS 217
 
 class repo_info_t {
     public:
@@ -878,6 +878,7 @@ main(int argc, const char *argv[])
 		"misc/repowork",
 		"misc/tools",
 		"pkg.h",
+		"src/libdm/wgl/wintk/",
 		"src/libpkg",
 		"src/other/",
 		"~",

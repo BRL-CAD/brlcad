@@ -17,13 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  *
- * TODO - need to support more than just QToolPaletteElement types
+ * TODO - need to support more than just QgToolPaletteElement types
  * being created by plugins.  The four logical candidates so far:
  *
  * 1.  ged-style command line commands  (maybe should expand libged
  *     plugin setup to support hooking them in at that level, but may
  *     also want awareness of app level info in commands...)
- * 2.  QToolPaletteLElement (currently what we're using)
+ * 2.  QgToolPaletteLElement (currently what we're using)
  * 3.  QDockWidget items, equivalent to (say) the standard attributes
  *     dialog and able to be docked in the main GUI.
  * 4.  Full-fledged dialogs that are their own windows and launched

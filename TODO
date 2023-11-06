@@ -28,6 +28,26 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* explore whether we can write a command to replace bad brep
+  3d edge curves with ON_BezierCurve::Loft approximations of
+  3d points evaluated from a valid 2d parametric curve associated
+  with the same edge.  Hoping to use this to repair geometry
+  that has valid face and 2D parametric info but bad 3d edge curves.
+  Preliminary work is in the brep repair subcommand.
+
+* ability to draw lines, boxes, and text on rendered outputs/images.
+  we sort of have this ability through plot3 and composition tools
+  but end-user request was integration with rt* tools so, for
+  example, there could be a way to specify a coordinate frame overlay
+  on images output by rtwizard, using stippled lines.
+
+  some existing APIs with similar functionality include opencv,
+  matplotlib, matlab, and processing
+
+* ability to place/align/mate objects tangentially, e.g., having a
+  vehicle rest on a piece of terrain or putting one object next to
+  another object.
+
 * race condition causing bus errors on exit
 
 * re-enable regress-asc and regress-weight
@@ -236,12 +256,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * the mged tutorials apparently do not mention the tops command (even
   once), but really should as it's the starting point for discovering
   what is in databases that are opened or imported.
-
-* nburst appears to be missing logging output (bounding volume lines)
-  and isn't outputting units (outputs NULL).  can run regress-burst
-  and regress-nburst to compare (have to manually save files).  the
-  ktank test isn't comprehensive, really should tests all the primary
-  options.
 
 * add metaball scaling feature (presently in a tclscript)
 

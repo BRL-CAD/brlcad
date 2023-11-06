@@ -33,9 +33,9 @@
 #  define static_assert(expr) do { int _array[(expr) ? 1 : -1]; (void) _array[0]; } while (0)
 #endif
 
-#define slang_string_compare(str1, str2) _mesa_strcmp (str1, str2)
-#define slang_string_copy(dst, src) _mesa_strcpy (dst, src)
-#define slang_string_length(str) _mesa_strlen (str)
+#define slang_string_compare(str1, str2) strcmp (str1, str2)
+#define slang_string_copy(dst, src) strcpy (dst, src)
+#define slang_string_length(str) strlen (str)
 
 char *slang_string_concat(char *, const char *);
 

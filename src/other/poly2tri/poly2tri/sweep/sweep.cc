@@ -34,6 +34,7 @@
 #endif
 #include <math.h>
 #include <float.h>
+#include <limits.h>
 #include <stdexcept>
 #include <iostream>
 #include "sweep.h"
@@ -44,9 +45,10 @@
 namespace p2t {
 
     // Triangulate simple polygon with holes
-    void Sweep::Triangulate(SweepContext& tcx, bool finalize, int num_points)
+    void Sweep::Triangulate(SweepContext& tcx, bool finalize, int num_points, long maxtime)
     {
 	tri_start_time = std::chrono::steady_clock::now();
+	timeout = (maxtime > 0) ? maxtime : LONG_MAX;
 	tcx.InitTriangulation();
 	tcx.CreateAdvancingFront(nodes_);
 	// Sweep points; build mesh
@@ -311,7 +313,7 @@ namespace p2t {
     {
 
 	curr_time = std::chrono::steady_clock::now();
-	if (std::chrono::duration_cast<std::chrono::microseconds>(curr_time - tri_start_time).count() > POLY2TRI_MAXTIME)
+	if (std::chrono::duration_cast<std::chrono::microseconds>(curr_time - tri_start_time).count() > timeout)
 	    throw std::runtime_error("Poly2Tri timeout");
 
 	// Fill right holes

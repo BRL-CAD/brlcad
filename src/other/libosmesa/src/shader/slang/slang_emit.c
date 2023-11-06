@@ -173,7 +173,7 @@ free_temp_storage(slang_var_table *vt, slang_ir_node *n)
 	    _slang_free_temp(vt, n->Store);
 	    n->Store->Index = -1;
 	    n->Store->Size = -1;
-	    /*_mesa_free(n->Store);*/ /* XXX leak */
+	    /*free(n->Store);*/ /* XXX leak */
 	    n->Store = NULL;
 	}
     }
@@ -423,7 +423,7 @@ instruction_annotation(gl_inst_opcode opcode, char *dstAnnot,
     s = (char *) malloc(len);
     sprintf(s, "%s = %s %s %s %s", dstAnnot,
 	    srcAnnot0, operator, srcAnnot1, srcAnnot2);
-    assert(_mesa_strlen(s) < len);
+    assert(strlen(s) < len);
 
     free(dstAnnot);
     free(srcAnnot0);
@@ -1748,7 +1748,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
     GLuint *subroutineLoc, i, total;
 
     subroutineLoc
-	= (GLuint *) _mesa_malloc(emitInfo->NumSubroutines * sizeof(GLuint));
+	= (GLuint *) malloc(emitInfo->NumSubroutines * sizeof(GLuint));
 
     /* total number of instructions */
     total = mainP->NumInstructions;
@@ -1786,7 +1786,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
 
     /* free subroutine list */
     if (emitInfo->Subroutines) {
-	_mesa_free(emitInfo->Subroutines);
+	free(emitInfo->Subroutines);
 	emitInfo->Subroutines = NULL;
     }
     emitInfo->NumSubroutines = 0;
@@ -1805,7 +1805,7 @@ _slang_resolve_subroutines(slang_emit_info *emitInfo)
 	}
     }
 
-    _mesa_free(subroutineLoc);
+    free(subroutineLoc);
 }
 
 

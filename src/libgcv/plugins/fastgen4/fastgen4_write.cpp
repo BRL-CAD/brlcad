@@ -2414,7 +2414,7 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	if (!facetize && subtracted)
 	    data.m_failed_regions.insert(region_dir);
 	else
-	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
+	    return rt_booltree_leaf_tess(tree_state, path, internal, client_data);
     }
 
     tree *result;

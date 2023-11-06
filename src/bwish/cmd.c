@@ -46,7 +46,6 @@
 #include "bu/cmd.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "libtermio.h"
 
 struct bu_cmdhist {
     struct bu_vls h_command;

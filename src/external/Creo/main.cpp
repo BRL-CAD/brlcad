@@ -56,6 +56,7 @@ creo_conv_info_init(struct creo_conv_info *cinfo)
 
     cinfo->xform_mode = XFORM_NONE;                   /* xform mode         */
 
+    cinfo->dbip = NULL;
     cinfo->wdbp = NULL;
 
     /* Units - model */
@@ -644,7 +645,7 @@ doit(char *UNUSED(dialog), char *UNUSED(compnent), ProAppData UNUSED(appdata))
             }
         } else {
             /* Create new file */
-            if ((cinfo->dbip = db_create(out_fname, 5)) != DBI_NULL)
+            if ((cinfo->dbip = db_create(out_fname, BRLCAD_DB_FORMAT_LATEST)) != DBI_NULL)
                 cinfo->wdbp = wdb_dbopen(cinfo->dbip, RT_WDB_TYPE_DB_DISK);
             else {
                 creo_log(NULL,  MSG_STATUS, "FAILURE: Unable to open output file \"%s\"  ", out_fname);

@@ -4,6 +4,7 @@ set(ged_headers
   analyze.h
   commands.h
   database.h
+  dbi.h
   debug.h
   defines.h
   framebuffer.h

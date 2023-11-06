@@ -24,8 +24,8 @@
 #include "bu/units.h"
 #include "bu/vls.h"
 #include "bv/defines.h"
+#include "bv/lod.h"
 #include "bv/util.h"
-#include "bg/lod.h"
 #define DM_WITH_RT
 #include "dm.h"
 
@@ -302,16 +302,18 @@ dm_draw_lines(struct dm *dmp, struct bv_data_line_state *gdlsp)
 
 
 void
-dm_draw_faceplate(struct bview *v, double base2local, double local2base)
+dm_draw_faceplate(struct bview *v)
 {
+    struct dm *dmp = (struct dm *)v->dmp;
+
     /* Center dot */
     if (v->gv_s->gv_center_dot.gos_draw) {
-	(void)dm_set_fg((struct dm *)v->dmp,
+	(void)dm_set_fg(dmp,
 			v->gv_s->gv_center_dot.gos_line_color[0],
 			v->gv_s->gv_center_dot.gos_line_color[1],
 			v->gv_s->gv_center_dot.gos_line_color[2],
 			1, 1.0);
-	(void)dm_draw_point_2d((struct dm *)v->dmp, 0.0, 0.0);
+	(void)dm_draw_point_2d(dmp, 0.0, 0.0);
     }
 
     /* Model axes */
@@ -320,10 +322,10 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 	point_t save_map;
 
 	VMOVE(save_map, v->gv_s->gv_model_axes.axes_pos);
-	VSCALE(map, v->gv_s->gv_model_axes.axes_pos, local2base);
+	VSCALE(map, v->gv_s->gv_model_axes.axes_pos, v->gv_local2base);
 	MAT4X3PNT(v->gv_s->gv_model_axes.axes_pos, v->gv_model2view, map);
 
-	dm_draw_hud_axes((struct dm *)v->dmp,
+	dm_draw_hud_axes(dmp,
 		     v->gv_size,
 		     v->gv_rotation,
 		     &v->gv_s->gv_model_axes);
@@ -338,11 +340,11 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
 	fastf_t save_ypos;
 
 	save_ypos = v->gv_s->gv_view_axes.axes_pos[Y];
-	width = dm_get_width((struct dm *)v->dmp);
-	height = dm_get_height((struct dm *)v->dmp);
+	width = dm_get_width(dmp);
+	height = dm_get_height(dmp);
 	inv_aspect = (fastf_t)height / (fastf_t)width;
 	v->gv_s->gv_view_axes.axes_pos[Y] = save_ypos * inv_aspect;
-	dm_draw_hud_axes((struct dm *)v->dmp,
+	dm_draw_hud_axes(dmp,
 		     v->gv_size,
 		     v->gv_rotation,
 		     &v->gv_s->gv_view_axes);
@@ -351,70 +353,93 @@ dm_draw_faceplate(struct bview *v, double base2local, double local2base)
     }
 
 
-    /* View scale */
+    /* View scale - TODO view_scale needs its own text color */
     if (v->gv_s->gv_view_scale.gos_draw)
-	dm_draw_scale((struct dm *)v->dmp,
-		      v->gv_size*base2local,
-		      bu_units_string(1/base2local),
+	dm_draw_scale(dmp,
+		      v->gv_size*v->gv_base2local,
+		      bu_units_string(1/v->gv_base2local),
 		      v->gv_s->gv_view_scale.gos_line_color,
-		      v->gv_s->gv_view_params.gos_text_color);
+		      v->gv_s->gv_view_params.color);
 
 
     /* Draw the angle distance cursor */
     if (v->gv_s->gv_adc.draw)
-	dm_draw_adc((struct dm *)v->dmp, &(v->gv_s->gv_adc), v->gv_view2model, v->gv_model2view);
+	dm_draw_adc(dmp, &(v->gv_s->gv_adc), v->gv_view2model, v->gv_model2view);
 
     /* Draw grid */
     if (v->gv_s->gv_grid.draw) {
-	dm_draw_grid((struct dm *)v->dmp, &v->gv_s->gv_grid, v->gv_scale, v->gv_model2view, base2local);
+	dm_draw_grid(dmp, &v->gv_s->gv_grid, v->gv_scale, v->gv_model2view, v->gv_base2local);
     }
 
     /* Draw rect */
     if (v->gv_s->gv_rect.draw && v->gv_s->gv_rect.line_width)
-	dm_draw_rect((struct dm *)v->dmp, &v->gv_s->gv_rect);
+	dm_draw_rect(dmp, &v->gv_s->gv_rect);
 
     /* View parameters - drawn last so the FPS incorporates as much as possible
      * of the drawing work. */
-    if (v->gv_s->gv_view_params.gos_draw || v->gv_s->gv_fps) {
+    if (v->gv_s->gv_view_params.draw) {
+
+	// Save current font size
+	int ofontsize = dm_get_fontsize(dmp);
+	// Set font size for params
+	dm_set_fontsize(dmp, v->gv_s->gv_view_params.font_size);
+
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
 	point_t center;
-	char *ustr = (char *)bu_units_string(local2base);
+	char *ustr = (char *)bu_units_string(v->gv_local2base);
 	MAT_DELTAS_GET_NEG(center, v->gv_center);
-	VSCALE(center, center, base2local);
-	int64_t elapsed_time = bu_gettime() - ((struct dm *)v->dmp)->start_time;
+	VSCALE(center, center, v->gv_base2local);
+	int64_t elapsed_time = bu_gettime() - (dmp)->start_time;
 	/* Only use reasonable measurements */
 	if (elapsed_time > 10LL && elapsed_time < 30000000LL) {
 	    /* Smoothly transition to new speed */
 	    v->gv_s->gv_frametime = 0.9 * v->gv_s->gv_frametime + 0.1 * elapsed_time / 1000000LL;
 	}
 
-	if (v->gv_s->gv_view_params.gos_draw && v->gv_s->gv_fps) {
-	    bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f) az:%.2f  el:%.2f  tw::%.2f  FPS:%.2f",
-		    ustr,
-		    v->gv_size * base2local,
-		    V3ARGS(center),
-		    V3ARGS(v->gv_aet),
-		    1/v->gv_s->gv_frametime
-		    );
-	} else if (v->gv_s->gv_view_params.gos_draw && !v->gv_s->gv_fps) {
-	    bu_vls_printf(&vls, "units:%s  size:%.2f  center:(%.2f, %.2f, %.2f) az:%.2f  el:%.2f  tw::%.2f",
-		    ustr,
-		    v->gv_size * base2local,
-		    V3ARGS(center),
-		    V3ARGS(v->gv_aet));
-	} else if (!v->gv_s->gv_view_params.gos_draw || v->gv_s->gv_fps) {
+	struct bv_params_state *ps = &v->gv_s->gv_view_params;
+	if (ps->draw_size) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
+	    bu_vls_printf(&vls, "size[%s]: %.2f", ustr, v->gv_size * v->gv_base2local);
+	}
+	if (ps->draw_center) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
+	    bu_vls_printf(&vls, "center[%s]: (%.2f, %.2f, %.2f)", ustr, V3ARGS(center));
+	}
+	if (ps->draw_az) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
+	    bu_vls_printf(&vls, "az:%.2f", v->gv_aet[0]);
+	}
+	if (ps->draw_el) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
+	    bu_vls_printf(&vls, "el:%.2f", v->gv_aet[1]);
+	}
+	if (ps->draw_tw) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
+	    bu_vls_printf(&vls, "tw:%.2f", v->gv_aet[2]);
+	}
+	if (ps->draw_fps) {
+	    if (bu_vls_strlen(&vls) > 0)
+		bu_vls_printf(&vls, " ");
 	    bu_vls_printf(&vls, "FPS:%.2f", 1/v->gv_s->gv_frametime);
 	}
 
 	// TODO - really should put a rectangle behind this to ensure visibility...
 
-	(void)dm_set_fg((struct dm *)v->dmp,
-			v->gv_s->gv_view_params.gos_text_color[0],
-			v->gv_s->gv_view_params.gos_text_color[1],
-			v->gv_s->gv_view_params.gos_text_color[2],
+	(void)dm_set_fg(dmp,
+			v->gv_s->gv_view_params.color[0],
+			v->gv_s->gv_view_params.color[1],
+			v->gv_s->gv_view_params.color[2],
 			1, 1.0);
-	(void)dm_draw_string_2d((struct dm *)v->dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
+	(void)dm_draw_string_2d(dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
 	bu_vls_free(&vls);
+
+	// Restore previous font setting
+	dm_set_fontsize(dmp, ofontsize);
     }
 }
 
@@ -549,33 +574,49 @@ dm_draw_labels(struct dm *dmp, struct bv_data_label_state *gdlsp, matp_t m2vmat)
 static void
 draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
 {
-    if (s->s_flag == DOWN)
+    if (!s || !v || s->s_flag == DOWN)
 	return;
-
-    // If this is a database object, it may have a view dependent
-    // update to do.
-    if (s->s_update_callback)
-	(*s->s_update_callback)(s, v, 0);
 
     // Draw children. TODO - drawing children first may not
     // always be the desired behavior - might need interior and exterior
     // children tables to provide some control
     for (size_t i = 0; i < BU_PTBL_LEN(&s->children); i++) {
 	struct bv_scene_obj *s_c = (struct bv_scene_obj *)BU_PTBL_GET(&s->children, i);
-	struct bv_scene_obj *sv = bv_obj_for_view(s_c, s->s_v);
-	draw_scene_obj(dmp, sv, v);
+	draw_scene_obj(dmp, s_c, v);
     }
 
     // Assign color attributes
-    if (s->s_os->color_override) {
-	dm_set_fg(dmp, s->s_os->color[0], s->s_os->color[1], s->s_os->color[2], 0, s->s_os->transparency);
+    if (s->s_iflag == UP) {
+	dm_set_fg(dmp, 255, 255, 255, 0, s->s_os->transparency);
     } else {
-	dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os->transparency);
+	if (s->s_os->color_override) {
+	    dm_set_fg(dmp, s->s_os->color[0], s->s_os->color[1], s->s_os->color[2], 0, s->s_os->transparency);
+	} else {
+	    dm_set_fg(dmp, s->s_color[0], s->s_color[1], s->s_color[2], 0, s->s_os->transparency);
+	}
     }
     dm_set_line_attr(dmp, s->s_os->s_line_width, s->s_soldash);
 
-    // Primary object drawing
-    dm_draw_obj(dmp, s);
+    // Primary object drawing.  See if we have an active view-specific object - if so,
+    // use that, otherwise use the original object
+    if (s->s_type_flags & BV_DB_OBJS) {
+	struct bv_scene_obj *vo = bv_obj_for_view(s, v);
+	if (!vo) {
+	    vo = s;
+	    bv_log(1, "draw_scene_obj - no view obj, drawing %s", bu_vls_cstr(&s->s_name));
+	} else {
+	    bv_log(1, "draw_scene_obj - drawing view obj %s[%s]", bu_vls_cstr(&vo->s_name), bu_vls_cstr(&v->gv_name));
+	}
+
+	// If this is a database object, it may have a view dependent
+	// update to do.
+	if (vo->s_update_callback)
+	    (*vo->s_update_callback)(vo, v, 0);
+
+	dm_draw_obj(dmp, vo);
+    } else {
+	dm_draw_obj(dmp, s);
+    }
 
     if (!(s->s_type_flags & BV_MESH_LOD)) {
 	dm_add_arrows(dmp, s);
@@ -588,12 +629,12 @@ draw_scene_obj(struct dm *dmp, struct bv_scene_obj *s, struct bview *v)
     if (s->s_type_flags & BV_LABELS) {
 	dm_draw_label(dmp, s);
     }
-
 }
 
 void
-dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, double base2local, double local2base)
+dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd)
 {
+    bv_log(3, "libdm:dm_draw_viewobjs");
     struct dm *dmp = (struct dm *)v->dmp;
     int width = dm_get_width(dmp);
     fastf_t sf = (fastf_t)(v->gv_size) / (fastf_t)width;
@@ -632,24 +673,40 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 
     // Draw geometry view objects
     struct bu_ptbl *db_objs = bv_view_objs(v, BV_DB_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
-	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
-	struct bv_scene_obj *s = bv_obj_for_view(g, v);
-	draw_scene_obj(dmp, s, v);
+    if (db_objs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
+	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
+	    draw_scene_obj(dmp, g, v);
+	}
+    }
+    struct bu_ptbl *local_db_objs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
+    if (local_db_objs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(local_db_objs); i++) {
+	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(local_db_objs, i);
+	    draw_scene_obj(dmp, g, v);
+	}
     }
 
     // Draw view-only objects
     struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	struct bv_scene_obj *sv = bv_obj_for_view(s, v);
-	draw_scene_obj(dmp, sv, v);
+    if (view_objs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    draw_scene_obj(dmp, s, v);
+	}
+    }
+    struct bu_ptbl *local_view_objs = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
+    if (view_objs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(local_view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(local_view_objs, i);
+	    draw_scene_obj(dmp, s, v);
+	}
     }
 
     /* Set up matrices for HUD drawing, rather than 3D scene drawing. */
     (void)dm_hud_begin(dmp);
 
-    dm_draw_faceplate(v, base2local, local2base);
+    dm_draw_faceplate(v);
 
     if (v->gv_tcl.gv_data_labels.gdls_draw)
 	dm_draw_labels(dmp, &v->gv_tcl.gv_data_labels, v->gv_model2view);
@@ -686,14 +743,19 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd, 
 // doesn't guarantee raw OpenGL drawing is supported, but the dmp should
 // provide enough information for the calling app to know if that is possible.)
 void
-dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_draw_custom)(struct bview *, double, double, void *), void *u_data)
+dm_draw_objs(struct bview *v, void (*dm_draw_custom)(struct bview *, void *), void *u_data)
 {
+    bv_log(3, "libdm:dm_draw_objs");
     if (dm_draw_custom) {
-	(*dm_draw_custom)(v, base2local, local2base, u_data);
+	(*dm_draw_custom)(v, u_data);
 	return;
     }
 
     struct dm *dmp = (struct dm *)v->dmp;
+    if (!dmp) {
+	bu_log("Warning - dm_draw_objs called when view has no associated display manager\n");
+	return;
+    }
 
     // This is the start of a draw cycle - start the stopwatch to time the
     // frame.  If the faceplate fps display is enabled, the faceplate draw at
@@ -716,15 +778,6 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
 	}
     }
 
-
-#if 0
-    // Update selections (if any)
-    for (size_t i = 0; i < BU_PTBL_LEN(v->gv_selected); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(v->gv_selected, i);
-	// TODO - set illum flag or otherwise visually indicate what is selected
-    }
-#endif
-
     // On to the scene objects - for drawing those we need the view matrix
     matp_t mat = v->gv_model2view;
     dm_loadmatrix(dmp, mat, 0);
@@ -741,33 +794,32 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
     // Draw geometry view objects
     // TODO - draw opaque, then transparent
     struct bu_ptbl *sobjs = bv_view_objs(v, BV_DB_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
-	struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sobjs, i);
-	struct bv_scene_obj *s = bv_obj_for_view(g, v);
-	//bu_log("dm_draw_objs %s\n", bu_vls_cstr(&g->s_name));
-	draw_scene_obj(dmp, s, v);
+    if (!v->independent && sobjs) {
+	for (size_t i = 0; i < BU_PTBL_LEN(sobjs); i++) {
+	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(sobjs, i);
+	    //bu_log("dm_draw_objs %s\n", bu_vls_cstr(&g->s_name));
+	    draw_scene_obj(dmp, g, v);
+	}
     }
     struct bu_ptbl *iobjs = bv_view_objs(v, BV_DB_OBJS | BV_LOCAL_OBJS);
-    if (iobjs != sobjs) {
+    if (iobjs && (iobjs != sobjs || v->independent)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(iobjs); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(iobjs, i);
-	    struct bv_scene_obj *s = bv_obj_for_view(g, v);
 	    //bu_log("dm_draw_objs(i) %s\n", bu_vls_cstr(&g->s_name));
-	    draw_scene_obj(dmp, s, v);
+	    draw_scene_obj(dmp, g, v);
 	}
     }
 
-    // Draw view-only objects (shared if settings match, otherwise view-specific)
+    // Draw view-only objects
     struct bu_ptbl *view_objs = bv_view_objs(v, BV_VIEW_OBJS);
-    for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
-	struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
-	struct bv_scene_obj *sv = bv_obj_for_view(s, v);
-	draw_scene_obj(dmp, sv, v);
+    if (view_objs && !v->independent) {
+	for (size_t i = 0; i < BU_PTBL_LEN(view_objs); i++) {
+	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(view_objs, i);
+	    draw_scene_obj(dmp, s, v);
+	}
     }
-
-    // Draw view-specific view-only objects if we haven't already done so
     struct bu_ptbl *vo = bv_view_objs(v, BV_VIEW_OBJS | BV_LOCAL_OBJS);
-    if (vo != view_objs) {
+    if (vo && (vo != view_objs || v->independent)) {
 	for (size_t i = 0; i < BU_PTBL_LEN(vo); i++) {
 	    struct bv_scene_obj *s = (struct bv_scene_obj *)BU_PTBL_GET(vo, i);
 	    draw_scene_obj(dmp, s, v);
@@ -782,7 +834,7 @@ dm_draw_objs(struct bview *v, double base2local, double local2base, void (*dm_dr
     (void)dm_hud_begin(dmp);
 
     /* Draw faceplate elements based on their current enable/disable settings */
-    dm_draw_faceplate(v, base2local, local2base);
+    dm_draw_faceplate(v);
 
     /* Restore non-HUD settings. */
     (void)dm_hud_end(dmp);

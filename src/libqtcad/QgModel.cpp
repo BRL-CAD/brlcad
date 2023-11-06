@@ -29,12 +29,12 @@
  * instances, and we can tell via a failed lookup whether a particular instance
  * in the QgItem is still valid.
  *
- * QgItems form the explicit hierarchical representation implied by the gInstances,
- * which means gInstance changes have potentially global impacts on the QgItems
- * hierarchy and it must be fully checked for validity (and repaired as appropriate)
- * after each cycle.  A validity check would be something like:  1) check the hash
- * of the QgItem against the gInstance array to see if it is still a valid instance.
- * If not, it must be either removed or replaced
+ * QgItems form the explicit hierarchical representation implied by the instances,
+ * which means instance changes have potentially global impacts on the QgItems
+ * hierarchy and it must be fully checked for validity (and repaired as
+ * appropriate) after each cycle.  A validity check would be something like:
+ * 1) check the hash of the QgItem against the DbiState sets to see if it is
+ * still valid.  If not, it must be either removed or replaced
  */
 
 #include "common.h"
@@ -46,18 +46,19 @@
 #include <QAction>
 #include <QFileInfo>
 
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
 #include "xxhash.h"
 
 #include "bu/env.h"
 #include "bu/sort.h"
-#include "bg/lod.h"
+#include "bv/lod.h"
 #define ALPHANUM_IMPL
 #include "../libged/alphanum.h"
 #include "raytrace.h"
-#include "qtcad/gInstance.h"
 #include "qtcad/QgModel.h"
 #include "qtcad/QgUtil.h"
-#include "qtcad/SignalFlags.h"
+#include "qtcad/QgSignalFlags.h"
 
 struct QgItem_cmp {
     inline bool operator() (const QgItem *i1, const QgItem *i2)
@@ -75,13 +76,15 @@ struct QgItem_cmp {
 	if (i1->ihash && !i2->ihash)
 	    return false;
 
-	gInstance *inst1 = NULL;
-	gInstance *inst2 = NULL;
-	if (i1->ctx->instances->find(i1->ihash) != i1->ctx->instances->end()) {
-	    inst1 = (*i1->ctx->instances)[i1->ihash];
+	struct directory *inst1 = NULL;
+	struct directory *inst2 = NULL;
+	DbiState *ctx1 = i1->mdl->gedp->dbi_state;
+	DbiState *ctx2 = i2->mdl->gedp->dbi_state;
+	if (ctx1->d_map.find(i1->ihash) != ctx1->d_map.end()) {
+	    inst1 = ctx1->d_map[i1->ihash];
 	}
-	if (i2->ctx->instances->find(i2->ihash) != i2->ctx->instances->end()) {
-	    inst2 = (*i2->ctx->instances)[i2->ihash];
+	if (ctx2->d_map.find(i2->ihash) != ctx2->d_map.end()) {
+	    inst2 = ctx2->d_map[i2->ihash];
 	}
 
 	if (!inst1 && !inst2)
@@ -91,15 +94,8 @@ struct QgItem_cmp {
 	if (inst1 && !inst2)
 	    return false;
 
-	if (!inst1->dp_name.length() && !inst2->dp_name.length())
-	    return false;
-	if (!inst1->dp_name.length() && inst2->dp_name.length())
-	    return true;
-	if (inst1->dp_name.length() && !inst2->dp_name.length())
-	    return false;
-
-	const char *n1 = inst1->dp_name.c_str();
-	const char *n2 = inst2->dp_name.c_str();
+	const char *n1 = inst1->d_namep;
+	const char *n2 = inst2->d_namep;
 	if (alphanum_impl(n1, n2, NULL) < 0)
 	    return true;
 
@@ -107,22 +103,28 @@ struct QgItem_cmp {
     }
 };
 
-QgItem::QgItem(gInstance *g, QgModel *ictx)
+QgItem::QgItem(unsigned long long hash, QgModel *ictx)
 {
-    ctx = ictx;
-    if (g) {
-	parentItem = NULL;
-	c_count = g->children(ictx->instances).size();
-	ihash = g->hash;
-	// TODO - these copies may be moot - the child relationship needs
-	// the gInstance, so we may have to just ensure gInstances aren't
-	// removed until after the QgItems are updated.  If that's the case,
-	// there's no point in these copies.
-	bu_vls_sprintf(&name, "%s", g->dp_name.c_str());
-	icon = QgIcon(g->dp, g->dbip);
-	op = g->op;
-	dp = g->dp;
+    mdl = ictx;
+    DbiState *ctx = mdl->gedp->dbi_state;
+    ihash = hash;
+    parentItem = NULL;
+    if (!ctx)
+	return;
+
+    // Get the child count from the .g info
+    std::unordered_map<unsigned long long, std::unordered_set<unsigned long long>>::iterator pc_it;
+    pc_it = ctx->p_c.find(ihash);
+    if (pc_it != ctx->p_c.end()) {
+	c_count = pc_it->second.size();
+    } else {
+	c_count = 0;
     }
+
+    // Local item information
+    ctx->print_hash(&name, ihash);
+    dp = ctx->get_hdp(ihash);
+    icon = QgIcon(dp, ictx->gedp->dbip);
 }
 
 QgItem::~QgItem()
@@ -133,11 +135,11 @@ QgItem::~QgItem()
 void
 QgItem::open()
 {
-    if (!ctx)
+    if (!mdl)
 	return;
     open_itm = true;
-    QModelIndex ind = ctx->NodeIndex(this);
-    ctx->fetchMore(ind);
+    QModelIndex ind = mdl->NodeIndex(this);
+    mdl->fetchMore(ind);
 }
 
 
@@ -145,20 +147,6 @@ void
 QgItem::close()
 {
     open_itm = false;
-}
-
-gInstance *
-QgItem::instance()
-{
-    if (!ctx)
-	return NULL;
-
-    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
-    g_it = ctx->instances->find(ihash);
-    if (g_it == ctx->instances->end())
-	return NULL;
-
-    return g_it->second;
 }
 
 void
@@ -179,10 +167,10 @@ QgItem::child(int n)
 int
 QgItem::childCount() const
 {
-    if (!ctx)
+    if (!mdl)
 	return 0;
 
-    if (this == ctx->root())
+    if (this == mdl->root())
 	return children.size();
 
     return (int)c_count;
@@ -214,100 +202,28 @@ QgItem::childNumber() const
     return 0;
 }
 
-struct db_full_path *
-QgItem::fp()
+std::vector<unsigned long long>
+QgItem::path_items()
 {
-    std::vector<QgItem *> path_items;
+    std::vector<unsigned long long> pitems;
     QgItem *citem = this;
-    path_items.push_back(this);
-    while (citem->parent() && citem->parent()->instance()) {
+    pitems.push_back(this->ihash);
+    while (citem->parent()) {
 	citem = citem->parent();
-	path_items.push_back(citem);
+	if (citem->ihash)
+	    pitems.push_back(citem->ihash);
     }
-    std::reverse(path_items.begin(), path_items.end());
-    if (!path_items[0]->instance())
-	return NULL;
-    struct db_full_path *ifp;
-    BU_GET(ifp, struct db_full_path);
-    db_full_path_init(ifp);
-    for (size_t i = 0; i < path_items.size(); i++) {
-	db_add_node_to_full_path(ifp, path_items[i]->dp);
-	DB_FULL_PATH_SET_CUR_COMB_INST(ifp, path_items[i]->instance()->icnt);
-    }
-    return ifp;
+    std::reverse(pitems.begin(), pitems.end());
+    return pitems;
 }
 
-
-QString
-QgItem::toString()
+unsigned long long
+QgItem::path_hash()
 {
-    std::vector<QgItem *> path_items;
-    QgItem *citem = this;
-    path_items.push_back(this);
-    while (citem->parent() && citem->parent()->instance()) {
-	citem = citem->parent();
-	path_items.push_back(citem);
-    }
-    std::reverse(path_items.begin(), path_items.end());
-    struct db_full_path *ifp = fp();
-    if (!ifp)
-	return QString();
-    struct bu_vls fpstr = BU_VLS_INIT_ZERO;
-    db_path_to_vls(&fpstr, ifp);
-    QString fpqstr(bu_vls_cstr(&fpstr));
-    bu_vls_free(&fpstr);
-    db_free_full_path(ifp);
-    BU_PUT(ifp, struct db_full_path);
-    return fpqstr;
+    std::vector<unsigned long long> pitems = path_items();
+    unsigned long long phash = mdl->gedp->dbi_state->path_hash(pitems, 0);
+    return phash;
 }
-
-// 0 = exact, 1 = name + op, 2 = name + mat, 3 = name only, -1 name mismatch
-int
-qgitem_cmp_score(QgItem *i1, QgItem *i2)
-{
-    int ret = -1;
-    if (!i1 || !i2 || !i1->ihash || !i2->ihash)
-	return ret;
-
-    gInstance *inst1 = (*i1->ctx->instances)[i1->ihash];
-    gInstance *inst2 = (*i2->ctx->instances)[i2->ihash];
-    if (inst1->dp_name != inst2->dp_name)
-	return ret;
-
-    // Names match
-    ret = 3;
-
-    // Look for a matrix match
-    struct bn_tol mtol = BN_TOL_INIT_TOL;
-    if (bn_mat_is_equal(inst1->c_m, inst2->c_m, &mtol))
-	ret = 2;
-
-    // Look for a boolean op match
-    if (inst1->op == inst2->op)
-	ret = (ret == 2) ? 0 : 1;
-
-    return ret;
-}
-
-
-QgItem *
-find_similar_qgitem(QgItem *c, std::vector<QgItem *> &v)
-{
-    QgItem *m = NULL;
-    int lret = INT_MAX;
-    for (size_t i = 0; i < v.size(); i++) {
-	int score = qgitem_cmp_score(c, v[i]);
-	if (score < 0)
-	    continue;
-	m = (score < lret) ? v[i] : m;
-	if (!score)
-	    return m;
-    }
-
-    return m;
-}
-
-
 
 extern "C" void
 qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent_dp, struct directory *child_dp, const char *child_name, db_op_t op, matp_t m, void *u_data)
@@ -334,48 +250,41 @@ qgmodel_update_nref_callback(struct db_i *UNUSED(dbip), struct directory *parent
 extern "C" void
 qgmodel_changed_callback(struct db_i *UNUSED(dbip), struct directory *dp, int mode, void *u_data)
 {
-    std::queue<std::unordered_map<unsigned long long, gInstance *>::iterator> rmq;
-    std::unordered_map<unsigned long long, gInstance *>::iterator i_it, trm_it;
-    QgModel *ctx = (QgModel *)u_data;
-    gInstance *inst = NULL;
-    ctx->need_update_nref = true;
-    ctx->changed_db_flag = 1;
+    XXH64_state_t h_state;
+    unsigned long long hash;
+    QgModel *mdl = (QgModel *)u_data;
+    DbiState *ctx = mdl->gedp->dbi_state;
+    mdl->need_update_nref = true;
+    mdl->changed_db_flag = 1;
+
+    // Clear cached GED drawing data and update
+    ctx->clear_cache(dp);
 
     // Need to invalidate any LoD caches associated with this dp
     if (dp->d_minor_type == DB5_MINORTYPE_BRLCAD_BOT && ctx->gedp) {
-	unsigned long long key = bg_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
+	unsigned long long key = bv_mesh_lod_key_get(ctx->gedp->ged_lod, dp->d_namep);
 	if (key) {
-	    bg_mesh_lod_clear_cache(ctx->gedp->ged_lod, key);
-	    bg_mesh_lod_key_put(ctx->gedp->ged_lod, dp->d_namep, 0);
+	    bv_mesh_lod_clear_cache(ctx->gedp->ged_lod, key);
+	    bv_mesh_lod_key_put(ctx->gedp->ged_lod, dp->d_namep, 0);
 	}
     }
 
     switch(mode) {
 	case 0:
-	    // The view needs to regenerate the wireframe(s) for anything drawn
-	    // using this dp, as it may have changed
-	    ctx->changed_dp.insert(dp);
-
+	    ctx->changed.insert(dp);
 	    break;
 	case 1:
-	    // If we have any name-only references that can now point to a dp, update them
-	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
-		inst = i_it->second;
-		if (!inst->dp && inst->dp_name == std::string(dp->d_namep)) {
-		    inst->dp = dp;
-		}
-	    }
-
+	    ctx->added.insert(dp);
 	    break;
 	case 2:
-	    // invalidate the dps in any instances where they match.
-	    for (i_it = ctx->instances->begin(); i_it != ctx->instances->end(); i_it++) {
-		inst = i_it->second;
-		if (inst->dp == dp)
-		    inst->dp = NULL;
-	    }
-
-	    ctx->changed_dp.insert(dp);
+	    // When this callback is made, dp is still valid, but in subsequent
+	    // processing it will not be.  We need to capture everything we
+	    // will need from this dp now, for later use when updating state
+	    XXH64_reset(&h_state, 0);
+	    XXH64_update(&h_state, dp->d_namep, strlen(dp->d_namep)*sizeof(char));
+	    hash = (unsigned long long)XXH64_digest(&h_state);
+	    ctx->removed.insert(hash);
+	    ctx->old_names[hash] = std::string(dp->d_namep);
 	    break;
 	default:
 	    bu_log("changed callback mode error: %d\n", mode);
@@ -399,19 +308,14 @@ QgModel::QgModel(QObject *p, const char *npath)
     // with commands needing a view.
     BU_GET(empty_gvp, struct bview);
     bv_init(empty_gvp, &gedp->ged_views);
+    bv_set_add_view(&gedp->ged_views, empty_gvp);
     gedp->ged_gvp = empty_gvp;
     bu_vls_sprintf(&gedp->ged_gvp->gv_name, "default");
     gedp->ged_gvp->independent = 0;
 
     // Set up the root item
-    rootItem = new QgItem(NULL, this);
-    rootItem->ctx = this;
-
-    // Initialize the instance containers
-    tops_instances = new std::unordered_map<unsigned long long, gInstance *>;
-    tops_instances->clear();
-    instances = new std::unordered_map<unsigned long long, gInstance *>;
-    instances->clear();
+    rootItem = new QgItem(0, this);
+    rootItem->mdl = this;
 
     items = new std::unordered_set<QgItem *>;
     items->clear();
@@ -436,8 +340,6 @@ QgModel::QgModel(QObject *p, const char *npath)
 QgModel::~QgModel()
 {
     delete items;
-    delete tops_instances;
-    delete instances;
 
     bv_free(empty_gvp);
     BU_PUT(empty_gvp, struct bview);
@@ -458,77 +360,47 @@ QgModel::item_rebuild(QgItem *item)
 	return;
     }
 
+    unsigned long long chash = item->ihash;
+    if (gedp->dbi_state->p_v.find(chash) == gedp->dbi_state->p_v.end()) {
+	// TODO - invalid hash
+	return;
+    }
+
+    // Get the current child instances
+    std::vector<unsigned long long> &nh = gedp->dbi_state->p_v[chash];
+
     // If we have no cached children, update only the child count - fetchMore
     // will populate it if and when it is expanded, and there will be no
     // QgItems we need to re-use.  However, an edit operation may have
     // invalidated the original c_count stored when the item was created.
     if (!item->children.size()) {
-	std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
-	gInstance *g = NULL;
-	g_it = instances->find(item->ihash);
-	if (g_it != instances->end()) {
-	    g = g_it->second;
-	    item->c_count = g->children(instances).size();
-	} else {
-	    item->c_count = 0;
-	}
+	item->c_count = gedp->dbi_state->p_v[chash].size();
 	return;
     }
 
-    // Get the current child instances
-    std::vector<unsigned long long> nh = (*instances)[item->ihash]->children(instances);
-
-    // Note that the ordering is important here - when we "pop" off the queue
-    // in the next step, we need consistent ordering so repeated fetchMore
-    // calls don't end up swapping around QgItems unnecessarily.  Remember -
-    // the gInstance hashes are not unique by themselves, so they are not
-    // enough to ensure stable ordering.  When we pushed these into the oc
-    // containers the wrong way, trying to expand havoc's
-    // havoc/havoc_front/nose_skin/r.nos1 made a mess out of the model and
-    // display due to multiple instances of s.rad1 subtractions being present.
-    std::unordered_map<unsigned long long, std::queue<QgItem *>> oc;
+    std::unordered_map<unsigned long long, QgItem *> oc;
     for (size_t i = 0; i < item->children.size(); i++) {
 	QgItem *qii = item->children[i];
-	oc[qii->ihash].push(qii);
+	oc[qii->ihash] = qii;
     }
 
-    // Iterate the gInstance's array of child hashes, building up  the
+    // Iterate the instance's array of child hashes, building up the
     // corresponding QgItems array using either the stored QgItems from the
-    // previous state or new items.  Remember, all QgItems in a queue
-    // correspond to the same gInstance (i.e. their parent, bool op, matrix
-    // and child obj are all identical) so if there are multiple QgItems in the
-    // same queue it doesn't matter what "order" the QgItems are re-added in as
-    // far as the correctness of the tree is concerned.  We are attempting to
-    // preserve the "open/closed" state of the items via the queue ordering,
-    // but that won't always be possible. "Preserving" an existing open state
-    // after a tree change isn't always well defined - if, for example, we have
-    // two QgItems that both point to the same instance and were duplicated in
-    // the same child list, but only one of them was opened, if the tree
-    // rebuild now only has one QgItem being produced you could make the case
-    // that either of the previous QgItems was the one being removed.  So if we
-    // do hit that duplicate case, the QgItems that are left over in the queues
-    // once the new state is built up are the ones removed.  This is arbitrary,
-    // but that arbitrariness is an accurate reflection of the underlying data
-    // model.
+    // previous state or new items.
     std::vector<QgItem *> nc;
-    for (size_t i = 0; i < nh.size(); i++) {
+    std::vector<unsigned long long>::reverse_iterator nh_it;
+    for (nh_it = nh.rbegin(); nh_it != nh.rend(); nh_it++) {
 	// For each new child, look up its instance in the original data to see
 	// if we have a corresponding QgItem available.
-	if (oc.find(nh[i]) != oc.end() && !oc[nh[i]].empty()) {
+	if (oc.find(*nh_it) != oc.end()) {
 	    // We have a viable QgItem from the previous state - reuse it
-	    QgItem *itm = oc[nh[i]].front();
-	    oc[nh[i]].pop();
-	    nc.push_back(itm);
+	    nc.push_back(oc[*nh_it]);
 	} else {
 	    // Previous tree did not have an appropriate QgItem -
 	    // make a new one
-	    std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
-	    gInstance *g = NULL;
-	    g_it = instances->find(nh[i]);
-	    if (g_it != instances->end())
-		g = g_it->second;
-	    QgItem *nitem = new QgItem(g, this);
+	    QgItem *nitem = new QgItem(*nh_it, this);
 	    nitem->parentItem = item;
+	    nitem->op = gedp->dbi_state->bool_op(item->ihash, *nh_it);
 	    nc.push_back(nitem);
 	    items->insert(nitem);
 	}
@@ -547,7 +419,6 @@ QgModel::item_rebuild(QgItem *item)
 	    item->c_noderow[nc[i]] = i;
 	}
     }
-
 }
 
 void
@@ -568,15 +439,20 @@ QgModel::g_update(struct db_i *n_dbip)
     if (!n_dbip) {
 	// if we have no dbip, clear out everything
 	beginResetModel();
-	sync_instances(tops_instances, instances, n_dbip, flatten_hierarchy);
 	std::unordered_set<QgItem *>::iterator s_it;
 	for (s_it = items->begin(); s_it != items->end(); s_it++) {
 	    QgItem *itm = *s_it;
 	    delete itm;
 	}
+	// Deleted all items, but we need a root item regardless
+	// of whether a .g is open - recreate it
+	rootItem = new QgItem(0, this);
+	rootItem->mdl = this;
+
 	items->clear();
 	tops_items.clear();
 	emit mdl_changed_db((void *)gedp);
+	emit view_change(QG_VIEW_DRAWN);
 	emit layoutChanged();
 	changed_db_flag = 0;
 	endResetModel();
@@ -589,7 +465,7 @@ QgModel::g_update(struct db_i *n_dbip)
 
 	// Step 1 - make sure our instances are current - i.e. they match the
 	// .g database state
-	sync_instances(tops_instances, instances, n_dbip, flatten_hierarchy);
+	gedp->dbi_state->update();
 
 	// Clear out any QgItems with invalid info.  We need to be fairly
 	// aggressive here - first we find all the existing invalid ones, and
@@ -600,19 +476,18 @@ QgModel::g_update(struct db_i *n_dbip)
 	std::unordered_set<QgItem *>::iterator s_it;
 	for (s_it = items->begin(); s_it != items->end(); s_it++) {
 	    QgItem *itm = *s_it;
-	    if (instances->find(itm->ihash) == instances->end()) {
-		invalid.insert(itm);
+	    if (gedp->dbi_state->p_v.find(itm->ihash) == gedp->dbi_state->p_v.end() &&
+		    gedp->dbi_state->d_map.find(itm->ihash) == gedp->dbi_state->d_map.end())
 		to_clear.push(itm);
-	    }
+	    if (!itm->dp && gedp->dbi_state->get_hdp(itm->ihash))
+		to_clear.push(itm);
 	}
 	while (!to_clear.empty()) {
 	    QgItem *i_itm = to_clear.front();
 	    to_clear.pop();
-	    for (size_t i = 0; i < i_itm->children.size(); i++) {
-		QgItem *itm = i_itm->children[i];
-		invalid.insert(itm);
-		to_clear.push(itm);
-	    }
+	    invalid.insert(i_itm);
+	    for (size_t i = 0; i < i_itm->children.size(); i++)
+		to_clear.push(i_itm->children[i]);
 	}
 
 	for (s_it = items->begin(); s_it != items->end(); s_it++) {
@@ -634,11 +509,13 @@ QgModel::g_update(struct db_i *n_dbip)
 	    item_rebuild(i_itm);
 	}
 
-	// Validate existing tops QgItems based on the now-updated tops_instances data.
+	// Validate existing tops QgItems based on the tops data.
+	std::vector<unsigned long long> tops = gedp->dbi_state->tops(true);
+	std::unordered_set<unsigned long long> tset(tops.begin(), tops.end());
 	std::unordered_map<unsigned long long, QgItem *> vtops_items;
 	for (size_t i = 0; i < tops_items.size(); i++) {
 	    QgItem *titem = tops_items[i];
-	    if (tops_instances->find(titem->ihash) != tops_instances->end()) {
+	    if (tset.find(titem->ihash) != tset.end()) {
 		// Still a tops item
 		vtops_items[titem->ihash] = titem;
 	    }
@@ -647,16 +524,16 @@ QgModel::g_update(struct db_i *n_dbip)
 	// Using tops_instances, construct a new tops vector.  Reuse any still valid
 	// QgItems, and make new ones 
 	std::vector<QgItem *> ntops_items;
-	std::unordered_map<unsigned long long, gInstance *>::iterator i_it;
-	for (i_it = tops_instances->begin(); i_it != tops_instances->end(); i_it++) {
+
+	for (size_t i = 0; i < tops.size(); i++) {
 	    std::unordered_map<unsigned long long, QgItem *>::iterator v_it;
-	    v_it = vtops_items.find(i_it->first);
+	    v_it = vtops_items.find(tops[i]);
 	    if (v_it != vtops_items.end()) {
 		ntops_items.push_back(v_it->second);
 	    } else {
-		gInstance *ninst = i_it->second;
-		QgItem *nitem = new QgItem(ninst, this);
+		QgItem *nitem = new QgItem(tops[i], this);
 		nitem->parentItem = rootItem;
+		nitem->op = gedp->dbi_state->bool_op(0, tops[i]);
 		ntops_items.push_back(nitem);
 		items->insert(nitem);
 	    }
@@ -730,13 +607,13 @@ QgModel::canFetchMore(const QModelIndex &idx) const
     if (item == rootItem)
        	return false;
 
-    // If we are trying to update a QgItem and it references an
-    // invalid instance, there's nothing to update.
-    if (instances->find(item->ihash) == instances->end()) {
-	return false;
+    // If there are children to be fetched, we can fetch them
+    if (gedp->dbi_state->p_v.find(item->ihash) != gedp->dbi_state->p_v.end()) {
+	if (gedp->dbi_state->p_v[item->ihash].size())
+	    return true;
     }
 
-    return (*instances)[item->ihash]->has_children();
+    return false;
 }
 
 void
@@ -755,41 +632,19 @@ QgModel::fetchMore(const QModelIndex &idx)
     if (item->children.size())
 	return;
 
-    // We need the QgItem child array to reflect the current state of the comb
-    // tree, but we also want to keep the old QgItems to minimize disturbances
-    // to the model that aren't necessary due to .g changes. However, unlike
-    // the tops case we can't just alphanum sort and compare old to new - we
-    // need to use the ordering derived from the comb tree.  Moreover, we have
-    // to add new QgItems for new instances *at the right point in the array*
-    // to reflect the tree ordering - we can't just tack them on at the end.
-    // To make it even more complicated, we don't have a uniqueness guarantee
-    // for instance hashes - we may have the same hash in multiple distinct
-    // QgItems.
-    //
-    // To manage this, we make a map of queues and iterate over the old QgItems
-    // array, queueing up the old items in a manner that allows us to look them
-    // up using their hash and pop the item closest to the "top" of the tree
-    // off the queue.  This way, whenever we need a particular item, we are
-    // trying to keep the ordering of the childern close to the previous
-    // positions.
+    unsigned long long chash = item->ihash;
+    if (gedp->dbi_state->p_v.find(chash) == gedp->dbi_state->p_v.end()) {
+	// TODO - invalid hash
+	return;
+    }
 
-    // We depend on the instance's set of child hashes being current, either
-    // from initialization or from the per-object editing callback.  If this
-    // set is not current, we need to fix logic elsewhere to ensure that list
-    // IS correct before this logic is called - we're not going to try and fix
-    // it here.
-    std::vector<unsigned long long> nh = (*instances)[item->ihash]->children(instances);
+    std::vector<unsigned long long> &nh = gedp->dbi_state->p_v[chash];
     std::vector<QgItem *> nc;
-    for (size_t i = 0; i < nh.size(); i++) {
-	// For each new child, look up its instance in the original data to see
-	// if we have a corresponding QgItem available.
-	std::unordered_map<unsigned long long, gInstance *>::iterator g_it;
-	gInstance *g = NULL;
-	g_it = instances->find(nh[i]);
-	if (g_it != instances->end())
-	    g = g_it->second;
-	QgItem *nitem = new QgItem(g, this);
+    std::vector<unsigned long long>::reverse_iterator nh_it;
+    for (nh_it = nh.rbegin(); nh_it != nh.rend(); nh_it++) {
+	QgItem *nitem = new QgItem(*nh_it, this);
 	nitem->parentItem = item;
+	nitem->op = gedp->dbi_state->bool_op(item->ihash, *nh_it);
 	nc.push_back(nitem);
 	items->insert(nitem);
     }
@@ -804,7 +659,7 @@ QgModel::fetchMore(const QModelIndex &idx)
     }
     endInsertRows();
     emit check_highlights();
-    emit item->ctx->opened_item(item);
+    emit item->mdl->opened_item(item);
 }
 
 
@@ -886,15 +741,41 @@ QgModel::data(const QModelIndex &index, int role) const
 	return QVariant(qi->op);
     if (role == DirectoryInternalRole)
 	return QVariant::fromValue((void *)(qi->dp));
-    if (role == DrawnDisplayRole)
-	return QVariant(qi->draw_state);
-    if (role == SelectDisplayRole)
-	return QVariant(qi->select_state);
+    if (role == DrawnDisplayRole) {
+	BViewState *vs = qi->mdl->gedp->dbi_state->get_view_state(gedp->ged_gvp);
+	return QVariant(vs->is_hdrawn(-1, qi->path_hash()));
+    }
+    if (role == SelectDisplayRole) {
+	BSelectState *ss = qi->mdl->gedp->dbi_state->find_selected_state(NULL);
+	if (ss)
+	    return QVariant(ss->is_selected(qi->path_hash()));
+    }
 
     if (role == TypeIconDisplayRole)
 	return QVariant(qi->icon);
+
     if (role == HighlightDisplayRole) {
-	return qi->instance()->active_flag;
+	BSelectState *ss = qi->mdl->gedp->dbi_state->find_selected_state(NULL);
+	if (!ss)
+	    return QVariant();
+	switch (qi->mdl->interaction_mode) {
+	    case 0:
+		if (qi->open_itm == false && ss->is_active_parent(qi->path_hash()))
+		    return QVariant(1);
+		return QVariant(0);
+	    case 1:
+		if (ss->is_parent_obj(qi->ihash))
+		    return QVariant(2);
+		return QVariant(0);
+	    case 2:
+		if (ss->is_immediate_parent_obj(qi->ihash))
+		    return QVariant(3);
+		if (ss->is_grand_parent_obj(qi->ihash))
+		    return QVariant(2);
+		return QVariant(0);
+	    default:
+		return QVariant(0);
+	}
     }
 
     return QVariant();
@@ -994,20 +875,25 @@ QgModel::run_cmd(struct bu_vls *msg, int argc, const char **argv)
 int
 QgModel::draw_action()
 {
+    QTCAD_SLOT("QgModel::draw_action", 1);
     // https://stackoverflow.com/a/28647342/2037687
     QAction *a = qobject_cast<QAction *>(sender());
     QVariant v = a->data();
     QgItem *cnode  = (QgItem *) v.value<void *>();
     if (!cnode)
 	return BRLCAD_ERROR;
-    QString cnode_str = cnode->toString();
-    return draw(cnode_str);
+    std::vector<unsigned long long> path_hashes = cnode->path_items();
+    struct bu_vls path_str = BU_VLS_INIT_ZERO;
+    gedp->dbi_state->print_path(&path_str, path_hashes);
+    int ret = draw(bu_vls_cstr(&path_str));
+    bu_vls_free(&path_str);
+    return ret;
 }
 
 int
-QgModel::draw(QString &qpath)
+QgModel::draw(const char *inst_path)
 {
-    const char *inst_path = bu_strdup(qpath.toLocal8Bit().data());
+    QTCAD_SLOT("QgModel::draw", 1);
     const char *argv[2];
     argv[0] = "draw";
     argv[1] = inst_path;
@@ -1015,29 +901,32 @@ QgModel::draw(QString &qpath)
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     int ret = ged_exec(gedp, 2, argv);
 
-    bu_free((void *)inst_path, "inst_path");
-
-    emit view_change(QTCAD_VIEW_DRAWN);
+    emit view_change(QG_VIEW_DRAWN);
     return ret;
 }
 
 int
 QgModel::erase_action()
 {
+    QTCAD_SLOT("QgModel::erase_action", 1);
     // https://stackoverflow.com/a/28647342/2037687
     QAction *a = qobject_cast<QAction *>(sender());
     QVariant v = a->data();
     QgItem *cnode  = (QgItem *) v.value<void *>();
     if (!cnode)
 	return BRLCAD_ERROR;
-    QString cnode_str = cnode->toString();
-    return erase(cnode_str);
+    std::vector<unsigned long long> path_hashes = cnode->path_items();
+    struct bu_vls path_str = BU_VLS_INIT_ZERO;
+    gedp->dbi_state->print_path(&path_str, path_hashes);
+    int ret = erase(bu_vls_cstr(&path_str));
+    bu_vls_free(&path_str);
+    return ret;
 }
 
 int
-QgModel::erase(QString &qpath)
+QgModel::erase(const char *inst_path)
 {
-    const char *inst_path = bu_strdup(qpath.toLocal8Bit().data());
+    QTCAD_SLOT("QgModel::erase", 1);
     const char *argv[2];
     argv[0] = "erase";
     argv[1] = inst_path;
@@ -1045,15 +934,14 @@ QgModel::erase(QString &qpath)
     bu_setenv("GED_TEST_NEW_CMD_FORMS", "1", 1);
     int ret = ged_exec(gedp, 2, argv);
 
-    bu_free((void *)inst_path, "inst_path");
-
-    emit view_change(QTCAD_VIEW_DRAWN);
+    emit view_change(QG_VIEW_DRAWN);
     return ret;
 }
 
 void
 QgModel::toggle_hierarchy()
 {
+    QTCAD_SLOT("QgModel::toggle_hierarchy", 1);
     if (!gedp || !gedp->dbip)
 	return;
 
@@ -1065,6 +953,7 @@ QgModel::toggle_hierarchy()
 void
 QgModel::item_collapsed(const QModelIndex &index)
 {
+    QTCAD_SLOT("QgModel::item_collapsed", 1);
     QgItem *itm = getItem(index);
     itm->open_itm = false;
 }
@@ -1072,6 +961,7 @@ QgModel::item_collapsed(const QModelIndex &index)
 void
 QgModel::item_expanded(const QModelIndex &index)
 {
+    QTCAD_SLOT("QgModel::item_expanded", 1);
     QgItem *itm = getItem(index);
     itm->open_itm = true;
 }

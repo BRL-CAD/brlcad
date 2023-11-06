@@ -5,6 +5,7 @@ if(TARGET libtclcad)
     ${TERMIO_INCLUDE_DIRS}
     ${TCLCAD_INCLUDE_DIRS}
     ${TCL_INCLUDE_PATH}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libtermio
     )
   if (TK_INCLUDE_PATH)
     set(BWISH_INCLUDE_DIRS ${BWISH_INCLUDE_DIRS} ${TK_INCLUDE_PATH})
@@ -13,10 +14,6 @@ if(TARGET libtclcad)
   BRLCAD_INCLUDE_DIRS(BWISH_INCLUDE_DIRS)
 
   set(btclsh_libs libtclcad libbu ${TCL_LIBRARY})
-
-  if(TARGET libtermio)
-    set(btclsh_libs ${btclsh_libs} libtermio)
-  endif(TARGET libtermio)
 
   # Define the btclsh target
   BRLCAD_ADDEXEC(btclsh "main.c;cmd.c;input.c" "${btclsh_libs}")
@@ -29,10 +26,6 @@ if(TARGET libtclcad)
   if(BRLCAD_ENABLE_TK)
 
     set(bwish_libs libtclcad libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
-
-    if(TARGET libtermio)
-      set(bwish_libs ${bwish_libs} libtermio)
-    endif(TARGET libtermio)
 
     BRLCAD_ADDEXEC(bwish "main.c;cmd.c;input.c" "${bwish_libs}" GUI)
     set_property(TARGET bwish APPEND PROPERTY COMPILE_DEFINITIONS "BWISH=1")

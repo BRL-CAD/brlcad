@@ -2841,6 +2841,24 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
     return BRLCAD_OK;
 }
 
+void
+rt_extrude_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_extrude_internal* ip;
+
+    intern->idb_type = ID_EXTRUDE;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ip, struct rt_extrude_internal);
+    intern->idb_ptr = (void *)ip;
+
+    ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
+    ip->sketch_name = bu_strdup("");
+}
+
 
 int
 rt_extrude_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)

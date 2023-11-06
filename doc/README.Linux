@@ -34,6 +34,17 @@ cmake ../brlcad -DBRLCAD_WORD_SIZE=64BIT
 * Note that in both of the above situations you need both a compiler that
 works in the alternate mode and system libraries of the correct type.
 
+Alpine Linux
+------------
+
+Alpine is an interesting test platform in that it does not use
+glibc but instead relies on mucl.
+
+At a minimum, will need the following packages:
+apk add cmake git gcc g++ make linux-headers
+
+TODO - look into setup-xorg-base
+
 
 Arch Linux
 ----------

@@ -26,7 +26,7 @@
 #include <QLineEdit>
 #include <QButtonGroup>
 #include <QGroupBox>
-#include "../../../app.h"
+#include "../../../QgEdApp.h"
 #include "QEll.h"
 
 QEll::QEll()
@@ -93,7 +93,7 @@ QEll::~QEll()
 void
 QEll::read_from_db()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -127,7 +127,7 @@ QEll::write_to_db()
 {
     if (!bu_vls_strlen(&oname))
 	return;
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -160,13 +160,13 @@ QEll::write_to_db()
 
     rt_db_free_internal(&intern);
 
-    emit view_updated(QTCAD_VIEW_DB);
+    emit view_updated(QG_VIEW_DB);
 }
 
 void
 QEll::update_obj_wireframe()
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -215,13 +215,13 @@ QEll::update_obj_wireframe()
     // TODO - we should be able to set UP or DOWN on the various labels
     // when their respective controls are enabled/disabled...
 
-    emit view_updated(QTCAD_VIEW_REFRESH);
+    emit view_updated(QG_VIEW_REFRESH);
 }
 
 void
 QEll::update_viewobj_name(const QString &)
 {
-    QgModel *m = ((CADApp *)qApp)->mdl;
+    QgModel *m = ((QgEdApp *)qApp)->mdl;
     if (!m)
 	return;
     struct ged *gedp = m->gedp;
@@ -245,7 +245,6 @@ QEll::update_viewobj_name(const QString &)
     if (!bu_vls_strlen(&oname))
 	return;
     bu_vls_sprintf(&p->s_name, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&oname));
-    bu_vls_sprintf(&p->s_uuid, "%s:%s", bu_vls_cstr(&v->gv_name), bu_vls_cstr(&oname));
 
     // Update the directory pointer to reflect the name.  If there is a change,
     // and that change points us to a new object, we need to read the info from
@@ -258,7 +257,7 @@ QEll::update_viewobj_name(const QString &)
 	} else {
 	    // Turning off wireframe - obj name is now invalid
 	    p->s_flag = DOWN;
-	    emit view_updated(QTCAD_VIEW_REFRESH);
+	    emit view_updated(QG_VIEW_REFRESH);
 	}
     }
 }

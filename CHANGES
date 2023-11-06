@@ -129,13 +129,13 @@ generally listed for reference.
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
 
+7.38
+----
+MGED commands
+	E (a.k.a "big E") - replaced by "draw -m5"
+
 7.32
 ----
-burst
-	Point Burst Damage Assessment Model (PDAM) input preparation
-	tool.  Obsolete, no longer in use by upstream tools,
-	scheduling for removal
-
 include/bu/app.h
         bu_brlcad_root: replaced by bu_dir
         bu_brlcad_dir:  replaced by bu_dir
@@ -207,11 +207,6 @@ MGED commands
 	loadtk, match, memprint, preview, regdebug, regdef, rmats, rrt,
 	savekey, shaded_mode, sync
 	Removed as part of distillation effort [deprecated 7.28]
-
-libtermio, libcursor
-	Public API scope reduction - any client code that needs
-	to interact with the terminal at these levels should handle
-	what is needed locally.
 
 7.26
 ----
@@ -398,6 +393,18 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
+
+7.38.0
+------
+burst
+	Point Burst Damage Assessment Model (PDAM) input preparation
+	tool.  Obsolete, no longer in use by upstream tools,
+	removed [deprecated 7.32]
+
+libtermio, libcursor
+	Public API scope reduction - any client code that needs
+	to interact with the terminal at these levels should handle
+	what is needed locally. [deprecated 7.28]
 
 7.34.0
 ------
@@ -1676,4 +1683,17 @@ s/GED_UNKNOWN/BRLCAD_UNKNOWN/g
 s/bu_whereis\(/bu_whence\(/g
 s/bu_which\(/bu_whence\(/g
 s/rt_gettree_muves\(/rt_gettrees_and_attrs\(/g
+
+7.36
+----
+s/V3DIR_FROM_AZEL\(/bn_vec_ae\(/g
+s/AZEL_FROM_V3DIR\([[:space:]]*([^,]*),[[:space:]]*([^,]*),/bn_ae_vec\(&\1, &\2/g
+
+7.38
+----
+s/bg_polygon_triangulate/bg_poly_triangulate/g
+s/bg_nested_polygon_triangulate/bg_nested_poly_triangulate/g
+s/OP_NMG_TESS/OP_TESS/g
+s/tree_nmgregion/tree_tessellation/g
+s/nmg_booltree_leaf_tess/rt_booltree_leaf_tess/g
 

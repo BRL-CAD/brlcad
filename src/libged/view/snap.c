@@ -32,7 +32,7 @@
 
 #include "bu/opt.h"
 #include "bu/vls.h"
-#include "bg/lseg.h"
+#include "bv/snap.h"
 #include "dm.h"
 #include "../ged_private.h"
 #include "./ged_view.h"
@@ -168,10 +168,8 @@ ged_view_snap(struct ged *gedp, int argc, const char *argv[])
 	VMOVE(view_pt, p);
     }
 
-    GED_CHECK_DATABASE_OPEN(gedp, BRLCAD_ERROR);
     GED_CHECK_VIEW(gedp, BRLCAD_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, BRLCAD_ERROR);
-
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);

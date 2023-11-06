@@ -44,9 +44,9 @@ extern "C" {
 #include "rt/geom.h"
 #include "wdb.h"
 #include "analyze.h"
+}
 #include "../ged_private.h"
 #include "../pnts_util.h"
-}
 
 static void
 _pnt_to_tri(point_t *p, vect_t *n, struct rt_bot_internal *bot_ip, fastf_t scale, unsigned long pntcnt)
@@ -603,10 +603,10 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points, avg. partition thickness %g", pnt_prim, pnts->count, avg_thickness);
+
     GED_DB_DIRADD(gedp, dp, pnt_prim, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
-
-    bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points, avg. partition thickness %g", pnt_prim, pnts->count, avg_thickness);
 
     return BRLCAD_OK;
 }
@@ -620,7 +620,20 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
     for (i = 0; i < numcnt; i++) {
 	fastf_t val;
 	fc = fmt[i];
-	if (bu_opt_fastf_t(NULL, 1, (const char **)&nums[i], (void *)&val) == -1) {
+
+	// trim trailing whitespace
+	char* num = (char*)nums[i];
+	int j = strlen(nums[i]) - 1;
+	while (j > -1) {
+	    if (num[j] == ' ') {
+		j--;
+	    } else {
+		num[j+1] = '\0';
+		break;
+	    }
+	}
+
+	if (bu_opt_fastf_t(NULL, 1, (const char **)&num, (void *)&val) == -1) {
 	    bu_log("Error - failed to read number %s\n", nums[i]);
 	    return BRLCAD_ERROR;
 	}
@@ -633,7 +646,7 @@ _pnt_read(struct rt_pnts_internal *pnts, int numcnt, const char **nums, const ch
 	    continue;
 	}
 	if ((fc == 'r') || (fc == 'g') || (fc == 'b')) {
-	    _ged_pnt_c_set(point, pnts->type, fc, val);
+	    _ged_pnt_c_set(point, pnts->type, fc, val / 255.0);
 	    continue;
 	}
 	if (fc == 's') {
@@ -809,10 +822,10 @@ _read_pnts(struct ged *gedp, int argc, const char **argv)
     pnts->count = pnts_cnt;
     fclose(fp);
 
+    bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points", pnt_prim, pnts->count);
+
     GED_DB_DIRADD(gedp, dp, pnt_prim, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, BRLCAD_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, BRLCAD_ERROR);
-
-    bu_vls_printf(gedp->ged_result_str, "Generated pnts object %s with %ld points", pnt_prim, pnts->count);
 
     bu_vls_free(&fmt);
     if (nums) bu_free(nums, "free old nums array");
@@ -885,7 +898,8 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
     pnts = (struct rt_pnts_internal *)intern.idb_ptr;
     RT_PNTS_CK_MAGIC(pnts);
 
-    if (pnts->type != RT_PNT_TYPE_NRM) {
+    if (pnts->type == RT_PNT_UNKNOWN) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: unknown pnts type\n");
 	rt_db_free_internal(&intern);
 	return BRLCAD_ERROR;
     }
@@ -949,9 +963,10 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 		_pnts_fastf_t_to_vls(&pnt_str, pn->v[i], precis);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
-	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
 		rt_db_free_internal(&intern);
+		fclose(fp);
 		return BRLCAD_ERROR;
 	    }
 	    fprintf(fp, "%d %d %d\n", rgb[RED], rgb[GRN], rgb[BLU]);
@@ -1025,7 +1040,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
-	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
 		rt_db_free_internal(&intern);
 		fclose(fp);
@@ -1052,7 +1067,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 		_pnts_fastf_t_to_vls(&pnt_str, pn->n[i], precis);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
-	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
 		rt_db_free_internal(&intern);
 		fclose(fp);
@@ -1112,7 +1127,7 @@ _write_pnts(struct ged *gedp, int argc, const char **argv)
 		_pnts_fastf_t_to_vls(&pnt_str, pn->s, precis);
 		fprintf(fp, "%s ", bu_vls_addr(&pnt_str));
 	    }
-	    if (bu_color_to_rgb_chars(&(pn->c), rgb)) {
+	    if (!bu_color_to_rgb_chars(&(pn->c), rgb)) {
 		bu_vls_sprintf(gedp->ged_result_str, "Error: cannot process point color\n");
 		rt_db_free_internal(&intern);
 		fclose(fp);

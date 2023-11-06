@@ -27,22 +27,21 @@ both primitive edit and matrix edit modes.
 
   <para>Used to precisely control the translation of an object in
 both primitive edit and matrix edit modes. The keypoint of the edited object or shape
-is translated to the specified coordinates.
+is translated by the specified vector.
   </para>
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <para>The example shows the use of the <command>translate</command> command to move a currently edited object to specified model coordinates.
-
+  <para>The example shows the use of the <command>translate</command> command to move a 
+    currently edited object +10 units in the x direction, +20 units in the y direction, and
+    +30 units in the z direction.
   </para>
 
-  <example><title>Move a currently edited object to specified coordinates.</title>
+  <example><title>Move a currently edited object.</title>
 
     <para>
       <prompt>mged&gt; </prompt><userinput>translate 10 20 30</userinput>
-    </para>
-    <para>Moves a currently edited object to the model coordinates (10 20 30).
     </para>
   </example>
 

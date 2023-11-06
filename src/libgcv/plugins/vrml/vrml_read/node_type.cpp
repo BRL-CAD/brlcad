@@ -35,8 +35,6 @@
 #include "string_util.h"
 #include "node.h"
 
-using namespace std;
-
 static const char *nodeTypeString[] = {
     "",
     "Appearance",
@@ -56,7 +54,7 @@ static const char *nodeTypeString[] = {
 
 
 int
-NODETYPE::findNodeType(string instring)
+NODETYPE::findNodeType(std::string instring)
 {
     int i;
 

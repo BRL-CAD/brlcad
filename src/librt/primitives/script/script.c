@@ -349,6 +349,24 @@ rt_script_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const 
     return BRLCAD_OK;
 }
 
+void
+rt_script_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+{
+    struct rt_script_internal* ip;
+
+    intern->idb_type = ID_SCRIPT;
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+
+    BU_ASSERT(&OBJ[intern->idb_type] == ftp);
+    intern->idb_meth = ftp;
+
+    BU_ALLOC(ip, struct rt_script_internal);
+    intern->idb_ptr = (void *)ip;
+
+    ip->script_magic = RT_SCRIPT_INTERNAL_MAGIC;
+    BU_VLS_INIT(&ip->s_type);
+}
+
 
 int
 rt_script_adjust(struct bu_vls *UNUSED(logstr), struct rt_db_internal *intern, int UNUSED(argc), const char **UNUSED(argv))

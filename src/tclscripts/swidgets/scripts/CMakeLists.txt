@@ -5,10 +5,15 @@ set(swidgets_scripts_TCLSCRIPTS
   tooltip.itk
   tree.itk
   )
-BRLCAD_ADDDATA(swidgets_scripts_TCLSCRIPTS tclscripts/swidgets/scripts)
-tclIndex_BUILD(tclscripts/swidgets/scripts)
+if (BRLCAD_ENABLE_TCL)
+  BRLCAD_ADDDATA(swidgets_scripts_TCLSCRIPTS tclscripts/swidgets/scripts)
+  tclIndex_BUILD(tclscripts/swidgets/scripts)
+endif (BRLCAD_ENABLE_TCL)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  ${swidgets_scripts_TCLSCRIPTS}
+  )
 
 # Local Variables:
 # tab-width: 8

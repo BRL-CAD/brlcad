@@ -57,7 +57,7 @@ nonlinear_to_linear(GLubyte cs8)
 	    if (cs <= 0.04045) {
 		table[i] = cs / 12.92;
 	    } else {
-		table[i] = _mesa_pow((cs + 0.055) / 1.055, 2.4);
+		table[i] = pow((cs + 0.055) / 1.055, 2.4);
 	    }
 	}
 	tableReady = GL_TRUE;

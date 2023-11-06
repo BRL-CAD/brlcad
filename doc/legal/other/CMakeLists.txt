@@ -2,7 +2,6 @@ set(other_licenses
   Eigen.txt
   assetimport.txt
   openNURBS.txt
-  gct.txt
   gdal.txt
   itcl3.txt
   itk3.txt
@@ -11,6 +10,7 @@ set(other_licenses
   libutahrle.txt
   linenoise.txt
   lmdb.txt
+  manifold.txt
   netpbm.txt
   openmesh.txt
   openNURBS.txt
@@ -26,8 +26,7 @@ set(other_licenses
   tktable.txt
   zlib.txt
   )
-
-ADD_DOC(other_licenses legal/other)
+BRLCAD_MANAGE_FILES(other_licenses ${DOC_DIR}/legal/other)
 
 CMAKEFILES(CMakeLists.txt)
 
