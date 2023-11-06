@@ -676,7 +676,6 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd)
     if (db_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(db_objs); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(db_objs, i);
-	    bu_log("Draw %s\n", bu_vls_cstr(&g->s_name));
 	    draw_scene_obj(dmp, g, v);
 	}
     }
@@ -684,7 +683,6 @@ dm_draw_viewobjs(struct rt_wdb *wdbp, struct bview *v, struct dm_view_data *vd)
     if (local_db_objs) {
 	for (size_t i = 0; i < BU_PTBL_LEN(local_db_objs); i++) {
 	    struct bv_scene_group *g = (struct bv_scene_group *)BU_PTBL_GET(local_db_objs, i);
-	    bu_log("Draw %s\n", bu_vls_cstr(&g->s_name));
 	    draw_scene_obj(dmp, g, v);
 	}
     }
