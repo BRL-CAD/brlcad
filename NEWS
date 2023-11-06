@@ -10,19 +10,18 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2023-11-0X  Release 7.38.0                                     ---
+--- 2023-11-06  Release 7.38.0                                     ---
 ----------------------------------------------------------------------
 This major release of BRL-CAD introduces significant improvements to
-the robustness of the facetize command. Facetization is an operation
+the robustness of the facetize command by leveraging the Manifold
+library for boolean evaluation of meshes. Facetization is an operation
 that converts boolean CSG hierarchies to evaluated triangle meshes,
-commonly used as a preliminary step in geometry export).  Leveraging
-the Manifold library for boolean evaluation of meshes, this release
-shows significant improvement in the overall success rate and speed of
-facetize when processing regions and assemblies of BRL-CAD's example
-geometry (excluding those containing half primitives):
+commonly used as a preliminary step in geometry export).  As an
+example, the following results show before-and-after differences when
+high level assemblies in BRL-CAD's example geometry files:
 
-% success, old: 88.9%  (249 of 280) Elapsed:  7256 seconds
-% success, new: 98.9%  (277 of 280) Elapsed:  1044 seconds
+% success, old: 88.9%  (249 of 280) Time elapsed:  7256 seconds
+% success, new: 98.9%  (277 of 280) Time elapsed:  1044 seconds
 
 Also in this release is an alpha version of the new "gist" tool, which
 leverages the OpenCV library to create one page summaries of the
