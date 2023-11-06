@@ -171,18 +171,17 @@ void generateReport(Options opt)
         return;
     }
 
-    // TODO SAM: mass distinction in correctDefaultUnits?
+    // Correct units and measurement presentation
     if (opt.isOriginalUnitsLength()) {
+        info.correctDefaultUnitsLength();
+    }
+    if (opt.isOriginalUnitsMass()) {
         info.correctDefaultUnitsMass();
     }
 
-    // if (opt.isOriginalUnitsLength()) {
-    //     info.correctDefaultUnitsLength();
-    // }
-    // if (opt.isOriginalUnitsMass()) {
-    //     info.correctDefaultUnitsMass();
-    // }
+    info.checkScientificNotation();
 
+    // Truncate title
     std::string title = info.getInfo("title");
     if (title.size() > 88) {
         std::string continuation = title.substr(88);
@@ -220,7 +219,7 @@ void generateReport(Options opt)
     makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     //brl-cad logo
     img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg");
-    
+
     // paint renderings
 
     // optionally, display the scene

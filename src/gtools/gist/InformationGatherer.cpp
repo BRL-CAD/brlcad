@@ -735,6 +735,16 @@ std::string InformationGatherer::getFormattedInfo(std::string key)
 	return infoMap[key];
 }
 
+Unit InformationGatherer::getUnit(std::string name)
+{
+    auto it = unitsMap.find(name);
+    if (it != unitsMap.end()) {
+        return it->second;
+    }
+
+    throw std::runtime_error("Unit not found for key: " + name);
+}
+
 bool InformationGatherer::dimensionSizeCondition()
 {
     if (std::stod(infoMap["dimX"]) > 200) return true;
@@ -803,12 +813,27 @@ void InformationGatherer::correctDefaultUnitsMass()
     unit.unit = toUnits;
 }
 
-Unit InformationGatherer::getUnit(std::string name)
-{
-    auto it = unitsMap.find(name);
-    if (it != unitsMap.end()) {
-        return it->second;
-    }
+void InformationGatherer::checkScientificNotation() {
+    for (auto& pair : unitsMap) {
+        const std::string& key = pair.first;
+        Unit& unit = pair.second;
 
-    throw std::runtime_error("Unit not found for key: " + name);
+        if (unit.power == 0) continue;
+        if (getInfo(key).size() < 11) continue;
+
+        double value;
+
+        try {
+            value = std::stod(getInfo(key));
+        } catch (const std::invalid_argument& e) {
+            throw std::runtime_error("Value for " + key + " is invalid");
+        } catch (const std::out_of_range& e) {
+            throw std::runtime_error("Value for " + key + " is out of range");
+        }
+
+        std::stringstream ss;
+        ss << std::scientific << std::setprecision(2) << value;
+        infoMap[key] = ss.str();
+
+    }
 }
