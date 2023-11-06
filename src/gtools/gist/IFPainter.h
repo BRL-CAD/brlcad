@@ -21,12 +21,12 @@ class IFPainter
 
 private:
 	cv::Mat img;
-	
+
 	int standardTextWeight;
 	int boldTextWeight;
-	
+
 	std::map<int, int> heightToFontSizeMap;
-	
+
 	int getFontSizeFromHeightAndWidth(int height, int width, std::string text);
 
 public:
@@ -39,6 +39,7 @@ public:
 	void drawImage(int x, int y, int width, int height, std::string imgPath);
 	void drawTransparentImage(int x, int y, int width, int height, std::string imgPath);
 	void drawImageFitted(int x, int y, int width, int height, std::string imgPath);
+	void drawImageTransparentFitted(int x, int y, int width, int height, std::string imgPath);
 	void drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text);
 	void drawText(int x, int y, int height, int width, std::string text, int flags = 0);
 	void drawTextCentered(int x, int y, int height, int width, std::string text, int flags = 0);
@@ -55,4 +56,3 @@ public:
 	void openInGUI();
 	void exportToFile(std::string filePath);
 };
-
