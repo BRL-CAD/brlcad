@@ -33,6 +33,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   3d points evaluated from a valid 2d parametric curve associated
   with the same edge.  Hoping to use this to repair geometry
   that has valid face and 2D parametric info but bad 3d edge curves.
+  Preliminary work is in the brep repair subcommand.
 
 * ability to draw lines, boxes, and text on rendered outputs/images.
   we sort of have this ability through plot3 and composition tools
