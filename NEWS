@@ -16,7 +16,7 @@ This major release of BRL-CAD introduces significant improvements to
 the robustness of the facetize command by leveraging the Manifold
 library for boolean evaluation of meshes. Facetization is an operation
 that converts boolean CSG hierarchies to evaluated triangle meshes,
-commonly used as a preliminary step in geometry export).  As an
+commonly used as a preliminary step in geometry export.  As an
 example, the following results show before-and-after differences when
 processing high level assemblies in BRL-CAD's example geometry files:
 
