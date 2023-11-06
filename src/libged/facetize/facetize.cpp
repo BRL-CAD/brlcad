@@ -1728,7 +1728,9 @@ _manifold_do_bool(
 #ifdef USE_MANIFOLD
     struct rt_bot_internal *lbot = NULL;
     struct rt_bot_internal *rbot = NULL;
-    struct manifold_mesh *lmesh, *rmesh, *omesh;
+    struct manifold_mesh *lmesh = NULL;
+    struct manifold_mesh *rmesh = NULL;
+    struct manifold_mesh *omesh = NULL;
     //struct _ged_facetize_opts *o = (struct _ged_facetize_opts *)data;
 
     // Translate op for MANIFOLD
