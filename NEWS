@@ -18,7 +18,7 @@ library for boolean evaluation of meshes. Facetization is an operation
 that converts boolean CSG hierarchies to evaluated triangle meshes,
 commonly used as a preliminary step in geometry export).  As an
 example, the following results show before-and-after differences when
-high level assemblies in BRL-CAD's example geometry files:
+processing high level assemblies in BRL-CAD's example geometry files:
 
 % success, old: 88.9%  (249 of 280) Time elapsed:  7256 seconds
 % success, new: 98.9%  (277 of 280) Time elapsed:  1044 seconds
