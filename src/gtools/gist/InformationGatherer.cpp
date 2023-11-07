@@ -622,7 +622,7 @@ InformationGatherer::gatherInformation(std::string name)
                 DomainName = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwDomainName * sizeof(wchar_t));
                 if (DomainName == NULL) {
                     worked = false;
-                } eelse {
+                } else {
                     bRtnBool = LookupAccountSid(NULL, pSidOwner, AcctName, (LPDWORD)&dwAcctName, DomainName, (LPDWORD)&dwDomainName, &eUse);
                     if (bRtnBool == FALSE) {
                         worked = false;
