@@ -114,7 +114,7 @@ _ged_facetize_state_create()
     bu_avs_init_empty(s->s_map);
 
     s->log_s = logging_state_create();
-    
+
     BU_GET(s->froot, struct bu_vls);
     bu_vls_init(s->froot);
 

@@ -34,8 +34,9 @@
 #include "./ged_facetize.h"
 
 int
-_nonovlp_brep_facetize(struct _ged_facetize_state *s, struct ged *gedp, int argc, const char **argv)
+_nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 {
+    struct ged *gedp = s->gedp;
     char *newname = NULL;
     int newobj_cnt = 0;
     struct directory **dpa = NULL;
