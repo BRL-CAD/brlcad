@@ -31,34 +31,35 @@
 
 #include "bu/hook.h"
 #include "bu/vls.h"
-#include "../ged_private.h"
+#include "bu/log.h"
+#include "./ged_facetize.h"
 
 static int
 _ged_facetize_bomb_hook(void *cdata, void *str)
 {
-    struct _ged_facetize_opts *o = (struct _ged_facetize_opts *)cdata;
-    if (o->nmg_log_print_header) {
-	bu_vls_printf(o->nmg_log, "%s\n", bu_vls_addr(o->nmg_log_header));
-	o->nmg_log_print_header = 0;
+    struct _ged_facetize_state *o = (struct _ged_facetize_state *)cdata;
+    if (o->log_s->nmg_log_print_header) {
+	bu_vls_printf(o->log_s->nmg_log, "%s\n", bu_vls_addr(o->log_s->nmg_log_header));
+	o->log_s->nmg_log_print_header = 0;
     }
-    bu_vls_printf(o->nmg_log, "%s\n", (const char *)str);
+    bu_vls_printf(o->log_s->nmg_log, "%s\n", (const char *)str);
     return 0;
 }
 
 static int
 _ged_facetize_nmg_logging_hook(void *data, void *str)
 {
-    struct _ged_facetize_opts *o = (struct _ged_facetize_opts *)data;
-    if (o->nmg_log_print_header) {
-	bu_vls_printf(o->nmg_log, "%s\n", bu_vls_addr(o->nmg_log_header));
-	o->nmg_log_print_header = 0;
+    struct _ged_facetize_state *o = (struct _ged_facetize_state *)data;
+    if (o->log_s->nmg_log_print_header) {
+	bu_vls_printf(o->log_s->nmg_log, "%s\n", bu_vls_addr(o->log_s->nmg_log_header));
+	o->log_s->nmg_log_print_header = 0;
     }
-    bu_vls_printf(o->nmg_log, "%s\n", (const char *)str);
+    bu_vls_printf(o->log_s->nmg_log, "%s\n", (const char *)str);
     return 0;
 }
 
 void
-_ged_facetize_log_nmg(struct _ged_facetize_opts *o)
+_ged_facetize_log_nmg(struct _ged_facetize_state *o)
 {
     if (fileno(stderr) < 0)
 	return;
@@ -66,16 +67,16 @@ _ged_facetize_log_nmg(struct _ged_facetize_opts *o)
     /* Seriously, bu_bomb, we don't want you blathering
      * to stderr... shut down stderr temporarily, assuming
      * we can find /dev/null or something similar */
-    o->fnull = open("/dev/null", O_WRONLY);
-    if (o->fnull == -1) {
+    o->log_s->fnull = open("/dev/null", O_WRONLY);
+    if (o->log_s->fnull == -1) {
 	/* https://gcc.gnu.org/ml/gcc-patches/2005-05/msg01793.html */
-	o->fnull = open("nul", O_WRONLY);
+	o->log_s->fnull = open("nul", O_WRONLY);
     }
-    if (o->fnull != -1) {
-	o->serr = fileno(stderr);
-	o->stderr_stashed = dup(o->serr);
-	dup2(o->fnull, o->serr);
-	close(o->fnull);
+    if (o->log_s->fnull != -1) {
+	o->log_s->serr = fileno(stderr);
+	o->log_s->stderr_stashed = dup(o->log_s->serr);
+	dup2(o->log_s->fnull, o->log_s->serr);
+	close(o->log_s->fnull);
     }
 
     /* Set bu_log logging to capture in nmg_log, rather than the
@@ -90,26 +91,26 @@ _ged_facetize_log_nmg(struct _ged_facetize_opts *o)
 
 
 void
-_ged_facetize_log_default(struct _ged_facetize_opts *o)
+_ged_facetize_log_default(struct _ged_facetize_state *o)
 {
     if (fileno(stderr) < 0)
 	return;
 
     /* Put stderr back */
-    if (o->fnull != -1) {
+    if (o->log_s->fnull != -1) {
 	fflush(stderr);
-	dup2(o->stderr_stashed, o->serr);
-	close(o->stderr_stashed);
-	o->fnull = -1;
+	dup2(o->log_s->stderr_stashed, o->log_s->serr);
+	close(o->log_s->stderr_stashed);
+	o->log_s->fnull = -1;
     }
 
     /* Restore bu_bomb hooks to the application defaults */
     bu_bomb_delete_all_hooks();
-    bu_bomb_restore_hooks(o->saved_bomb_hooks);
+    bu_bomb_restore_hooks(o->log_s->saved_bomb_hooks);
 
     /* Restore bu_log hooks to the application defaults */
     bu_log_hook_delete_all();
-    bu_log_hook_restore_all(o->saved_log_hooks);
+    bu_log_hook_restore_all(o->log_s->saved_log_hooks);
 }
 
 /*
