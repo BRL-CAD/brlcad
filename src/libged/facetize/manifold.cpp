@@ -235,8 +235,8 @@ bool_meshes(
     return rmesh.triVerts.size();
 }
 
-static int
-_manifold_do_bool(
+int
+_ged_manifold_do_bool(
         union tree *tp, union tree *tl, union tree *tr,
         int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *UNUSED(data))
 {
@@ -245,7 +245,6 @@ _manifold_do_bool(
     struct manifold_mesh *lmesh = NULL;
     struct manifold_mesh *rmesh = NULL;
     struct manifold_mesh *omesh = NULL;
-    //struct _ged_facetize_state *o = (struct _ged_facetize_state *)data;
 
     // Translate op for MANIFOLD
     manifold::OpType manifold_op = manifold::OpType::Add;
@@ -380,39 +379,7 @@ _manifold_do_bool(
     return 0;
 }
 
-static union tree *
-facetize_region_end(struct db_tree_state *tsp,
-	const struct db_full_path *pathp,
-	union tree *curtree,
-	void *client_data)
-{
-    union tree **facetize_tree;
-
-    if (tsp) RT_CK_DBTS(tsp);
-    if (pathp) RT_CK_FULL_PATH(pathp);
-
-    facetize_tree = (union tree **)client_data;
-
-    if (curtree->tr_op == OP_NOP) return curtree;
-
-    if (*facetize_tree) {
-	union tree *tr;
-	BU_ALLOC(tr, union tree);
-	RT_TREE_INIT(tr);
-	tr->tr_op = OP_UNION;
-	tr->tr_b.tb_regionp = REGION_NULL;
-	tr->tr_b.tb_left = *facetize_tree;
-	tr->tr_b.tb_right = curtree;
-	*facetize_tree = tr;
-    } else {
-	*facetize_tree = curtree;
-    }
-
-    /* Tree has been saved, and will be freed later */
-    return TREE_NULL;
-}
-
-
+#if 0
 static struct manifold_mesh *
 _try_manifold_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
 {
@@ -560,6 +527,7 @@ ged_manifold_obj_memfree:
 
     return ret;
 }
+#endif
 
 // Local Variables:
 // tab-width: 8

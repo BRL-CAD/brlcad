@@ -29,6 +29,7 @@
 #include "common.h"
 #include "vmath.h"
 #include "bu/vls.h"
+#include "bn/tol.h"
 #include "bg/spsr.h"
 #include "raytrace.h"
 
@@ -130,6 +131,11 @@ struct _ged_facetize_state {
 
 extern int _db_uniq_test(struct bu_vls *n, void *data);
 
+extern int
+_ged_manifold_do_bool(
+        union tree *tp, union tree *tl, union tree *tr,
+        int op, struct bu_list *vlfree, const struct bn_tol *tol, void *data);
+
 extern void _ged_facetize_mkname(struct _ged_facetize_state *s, const char *n, int type);
 extern int _ged_validate_objs_list(struct _ged_facetize_state *s, int argc, const char *argv[], int newobj_cnt);
 extern int _ged_facetize_verify_solid(struct _ged_facetize_state *s, int argc, struct directory **dpa);
@@ -149,7 +155,7 @@ extern struct rt_bot_internal *
 _ged_facetize_decimate(struct _ged_facetize_state *s, struct rt_bot_internal *bot, fastf_t feature_size);
 
 extern int
-_ged_nmg_obj(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname);
+_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname);
 
 extern int
 _ged_continuation_obj(struct _ged_facetize_state *s, const char *objname, const char *newname);

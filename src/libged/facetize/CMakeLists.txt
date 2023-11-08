@@ -14,12 +14,12 @@ set(FACETIZE_LOCAL_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(facetize FACETIZE_INCLUDE_DIRS FACETIZE_LOCAL_INCLUDE_DIRS)
 
 set(FACETIZE_SRCS
+  booleval.cpp
   brep.cpp
   continuation.cpp
   facetize.cpp
   facetize_log.c
   manifold.cpp
-  nmg.cpp
   regions.cpp
   spsr.cpp
   util.cpp

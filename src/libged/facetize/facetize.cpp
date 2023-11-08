@@ -168,7 +168,7 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
 }
 
 int
-_ged_facetize_objlist(struct _ged_facetize_state *s, int argc, const char **argv)
+_ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 {
     struct ged *gedp = s->gedp;
     int ret = BRLCAD_ERROR;
@@ -200,24 +200,22 @@ _ged_facetize_objlist(struct _ged_facetize_state *s, int argc, const char **argv
 	/* Find a new name for the original object - that's also our working
 	 * "newname" for the initial processing, until we swap at the end. */
 	bu_vls_sprintf(&oname, "%s_original", argv[0]);
-	if (db_lookup(dbip, bu_vls_addr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	if (db_lookup(dbip, bu_vls_cstr(&oname), LOOKUP_QUIET) != RT_DIR_NULL) {
 	    bu_vls_printf(&oname, "-0");
 	    bu_vls_incr(&oname, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	}
-	newname = (char *)bu_vls_addr(&oname);
+	newname = (char *)bu_vls_cstr(&oname);
     }
 
     /* Before we try this, check that all the objects in the specified tree(s) are valid solids */
     if (!_ged_facetize_verify_solid(s, argc, dpa)) {
 	if (flags & FACETIZE_SPSR) {
-	    if (flags != FACETIZE_SPSR) {
+	    if (flags != FACETIZE_SPSR)
 		bu_log("non-solid objects in specified tree(s) - falling back on point sampling/reconstruction methodology\n");
-	    }
 	    flags = FACETIZE_SPSR;
 	} else {
-	    if (!s->quiet) {
+	    if (!s->quiet)
 		bu_log("Facetization aborted: non-solid objects in specified tree(s).\n");
-	    }
 	    bu_free(dpa, "dp array");
 	    return BRLCAD_ERROR;
 	}
@@ -226,83 +224,64 @@ _ged_facetize_objlist(struct _ged_facetize_state *s, int argc, const char **argv
     /* Done with dpa */
     bu_free(dpa, "dp array");
 
+    /* Given there are multiple possible methods, we need to iterate until either
+     * we succeed or we exhaust all enabled methods. */
     while (!done_trying) {
-
-#if 0
-	if (flags & FACETIZE_MANIFOLD) {
-	    if (argc == 1) {
-		bu_vls_sprintf(s->nmg_log_header, "MANIFOLD: tessellating %s...\n", argv[0]);
-	    } else {
-		bu_vls_sprintf(s->nmg_log_header, "MANIFOLD: tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
-	    }
-	    /* Let the user know what's going on, unless output is suppressed */
-	    if (!s->quiet) {
-		bu_log("%s", bu_vls_addr(s->nmg_log_header));
-	    }
-
-	    if (_ged_manifold_obj(gedp, argc, argv, newname, opts) == BRLCAD_OK) {
-		ret = BRLCAD_OK;
-		break;
-	    } else {
-		flags = flags & ~(FACETIZE_MANIFOLD);
-		continue;
-	    }
-	}
-#endif
 
 	if (flags & FACETIZE_NMG) {
 	    s->log_s->nmg_log_print_header = 1;
-	    if (argc == 1) {
-		bu_vls_sprintf(s->log_s->nmg_log_header, "NMG: tessellating %s...\n", argv[0]);
-	    } else {
+	    bu_vls_sprintf(s->log_s->nmg_log_header, "NMG: tessellating %s...\n", argv[0]);
+	    if (argc != 1)
 		bu_vls_sprintf(s->log_s->nmg_log_header, "NMG: tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
-	    }
-	    /* Let the user know what's going on, unless output is suppressed */
-	    if (!s->quiet) {
-		bu_log("%s", bu_vls_addr(s->log_s->nmg_log_header));
-	    }
 
-	    if (_ged_nmg_obj(s, argc, argv, newname) == BRLCAD_OK) {
+	    /* Let the user know what's going on, unless output is suppressed */
+	    if (!s->quiet)
+		bu_log("%s", bu_vls_cstr(s->log_s->nmg_log_header));
+
+	    if (_ged_facetize_booleval(s, argc, argv, newname) == BRLCAD_OK) {
 		ret = BRLCAD_OK;
 		break;
-	    } else {
-		flags = flags & ~(FACETIZE_NMG);
-		continue;
 	    }
+
+	    // NMG didn't work
+	    flags = flags & ~(FACETIZE_NMG);
+	    continue;
 	}
+
 
 	if (flags & FACETIZE_CONTINUATION) {
 	    if (argc != 1) {
-		if (s->verbosity) {
+		if (s->verbosity)
 		    bu_log("Continuation mode (currently) only supports one existing object at a time as input - not attempting.\n");
-		}
 		flags = flags & ~(FACETIZE_CONTINUATION);
-	    } else {
-		if (_ged_continuation_obj(s, argv[0], newname) == FACETIZE_SUCCESS) {
-		    ret = BRLCAD_OK;
-		    break;
-		} else {
-		    flags = flags & ~(FACETIZE_CONTINUATION);
-		    continue;
-		}
+		continue;
 	    }
+
+	    if (_ged_continuation_obj(s, argv[0], newname) == FACETIZE_SUCCESS) {
+		ret = BRLCAD_OK;
+		break;
+	    }
+
+	    // Continuation didn't work
+	    flags = flags & ~(FACETIZE_CONTINUATION);
+	    continue;
 	}
 
 	if (flags & FACETIZE_SPSR) {
 	    if (argc != 1) {
-		if (s->verbosity) {
+		if (s->verbosity)
 		    bu_log("Screened Poisson mode (currently) only supports one existing object at a time as input - not attempting.\n");
-		}
 		flags = flags & ~(FACETIZE_SPSR);
-	    } else {
-		if (_ged_spsr_obj(s, argv[0], newname) == FACETIZE_SUCCESS) {
-		    ret = BRLCAD_OK;
-		    break;
-		} else {
-		    flags = flags & ~(FACETIZE_SPSR);
-		    continue;
-		}
+		continue;
 	    }
+
+	    if (_ged_spsr_obj(s, argv[0], newname) == FACETIZE_SUCCESS) {
+		ret = BRLCAD_OK;
+		break;
+	    }
+
+	    flags = flags & ~(FACETIZE_SPSR);
+	    continue;
 	}
 
 	/* Out of options */
@@ -317,7 +296,7 @@ _ged_facetize_objlist(struct _ged_facetize_state *s, int argc, const char **argv
     }
 
     if (bu_vls_strlen(s->log_s->nmg_log) && s->method_flags & FACETIZE_NMG && s->verbosity > 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(s->log_s->nmg_log));
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(s->log_s->nmg_log));
     }
 
     return ret;
@@ -394,13 +373,14 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     bu_log_hook_save_all(s->log_s->saved_log_hooks);
 
     /* Sync -q and -v options */
-    if (s->quiet && s->verbosity) s->verbosity = 0;
+    if (s->quiet && s->verbosity)
+       	s->verbosity = 0;
 
-    /* Enforce type matching on suffix */
-    if (s->make_nmg && BU_STR_EQUAL(bu_vls_addr(s->faceted_suffix), ".bot")) {
+    /* Don't allow incorrect type suffixes */
+    if (s->make_nmg && BU_STR_EQUAL(bu_vls_cstr(s->faceted_suffix), ".bot")) {
 	bu_vls_sprintf(s->faceted_suffix, ".nmg");
     }
-    if (!s->make_nmg && BU_STR_EQUAL(bu_vls_addr(s->faceted_suffix), ".nmg")) {
+    if (!s->make_nmg && BU_STR_EQUAL(bu_vls_cstr(s->faceted_suffix), ".nmg")) {
 	bu_vls_sprintf(s->faceted_suffix, ".bot");
     }
 
@@ -457,7 +437,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     if (s->regions) {
 	ret = _ged_facetize_regions(s, argc, argv);
     } else {
-	ret = _ged_facetize_objlist(s, argc, argv);
+	ret = _ged_facetize_objs(s, argc, argv);
     }
 
 ged_facetize_memfree:

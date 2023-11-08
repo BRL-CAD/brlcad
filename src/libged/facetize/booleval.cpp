@@ -1,4 +1,4 @@
-/*                     F A C E T I Z E . C P P
+/*                  B O O L E V A L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2023 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/facetize.cpp
+/** @file libged/facetize/booleval.cpp
  *
- * The facetize command.
+ * The core evaluation logic of the facetize command.
  *
  */
 
@@ -156,7 +156,7 @@ _try_nmg_to_bot(struct _ged_facetize_state *s, struct model *nmg_model)
 }
 
 int
-_ged_nmg_obj(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname)
+_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname)
 {
     int ret = FACETIZE_SUCCESS;
     struct model *nmg_model = NULL;
