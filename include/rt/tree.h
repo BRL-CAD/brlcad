@@ -88,7 +88,7 @@ struct db_tree_state {
     const struct bg_tess_tol *  ts_ttol;        /**< @brief  Tessellation tolerance */
     const struct bn_tol *       ts_tol;         /**< @brief  Math tolerance */
     struct model **             ts_m;           /**< @brief  ptr to ptr to NMG "model" */
-    int				(*ts_m_clbk)(struct nmgregion **, struct db_tree_state *, const struct db_full_path *);
+    int				(*ts_m_clbk)(struct nmgregion **, struct db_tree_state *, const struct db_full_path *, void *);
     struct rt_i *               ts_rtip;        /**< @brief  Helper for rt_gettrees() */
     struct resource *           ts_resp;        /**< @brief  Per-CPU data */
 };

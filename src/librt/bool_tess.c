@@ -55,7 +55,7 @@
  * This routine must be prepared to run in parallel.
  */
 union tree *
-rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
+rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *data)
 {
     int ts_status = 0;
     struct model *m;
@@ -81,7 +81,7 @@ rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *path
 	if (!tsp->ts_m_clbk)
 	    bu_log("ERROR(%s): tessellation support not available\n", dp->d_namep);
 	if (tsp->ts_m_clbk) {
-	    ts_status = (*tsp->ts_m_clbk)(&r1, tsp, pathp);
+	    ts_status = (*tsp->ts_m_clbk)(&r1, tsp, pathp, data);
 	    if (ts_status < 0) {
 		bu_log("ERROR(%s): NMG tessellation support not available and fallback was not successful\n", dp->d_namep);
 		return TREE_NULL;
@@ -97,7 +97,7 @@ rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *path
 	if (ts_status < 0) {
 	    bu_log("ERROR(%s): NMG tessellation failure\n", dp->d_namep);
 	    if (tsp->ts_m_clbk) {
-		ts_status = (*tsp->ts_m_clbk)(&r1, tsp, pathp);
+		ts_status = (*tsp->ts_m_clbk)(&r1, tsp, pathp, data);
 		if (ts_status < 0) {
 		    bu_log("ERROR(%s): tessellation fallback was not successful\n", dp->d_namep);
 		    return TREE_NULL;
