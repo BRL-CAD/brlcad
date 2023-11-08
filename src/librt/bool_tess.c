@@ -57,6 +57,7 @@
 union tree *
 rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
+    int ts_status = 0;
     struct model *m;
     struct nmgregion *r1 = (struct nmgregion *)NULL;
     union tree *curtree;
@@ -70,27 +71,53 @@ rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *path
     dp = DB_FULL_PATH_CUR_DIR(pathp);
     RT_CK_DIR(dp);
 
-    if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
-	bu_log("ERROR(%s): tessellation support not available\n", dp->d_namep);
-	return TREE_NULL;
-    }
-
     if (tsp->ts_m)
 	NMG_CK_MODEL(*tsp->ts_m);
     BN_CK_TOL(tsp->ts_tol);
     BG_CK_TESS_TOL(tsp->ts_ttol);
     RT_CK_RESOURCE(tsp->ts_resp);
 
-    m = nmg_mm();
-
-    if (ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol) < 0) {
-	bu_log("ERROR(%s): tessellation failure\n", dp->d_namep);
-	return TREE_NULL;
+    if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
+	if (!tsp->ts_m_clbk)
+	    bu_log("ERROR(%s): tessellation support not available\n", dp->d_namep);
+	if (tsp->ts_m_clbk) {
+	    ts_status = (*tsp->ts_m_clbk)(&r1, tsp, pathp);
+	    if (ts_status < 0) {
+		bu_log("ERROR(%s): NMG tessellation support not available and fallback was not successful\n", dp->d_namep);
+		return TREE_NULL;
+	    }
+	} else {
+	    return TREE_NULL;
+	}
     }
 
-    NMG_CK_REGION(r1);
-    if (nmg_debug & NMG_DEBUG_VERIFY) {
-	nmg_vshell(&r1->s_hd, r1);
+    if (!r1) {
+	m = nmg_mm();
+	ts_status = ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol);
+	if (ts_status < 0) {
+	    bu_log("ERROR(%s): NMG tessellation failure\n", dp->d_namep);
+	    if (tsp->ts_m_clbk) {
+		ts_status = (*tsp->ts_m_clbk)(&r1, tsp, pathp);
+		if (ts_status < 0) {
+		    bu_log("ERROR(%s): tessellation fallback was not successful\n", dp->d_namep);
+		    return TREE_NULL;
+		}
+	    } else {
+		return TREE_NULL;
+	    }
+	}
+    }
+
+    // A tessellation routine may decide there are no results for an object and
+    // return nothing (but not as an error) - if so, we create a union tree
+    // with the name but null td_r to indicate this for boolean operations.  A
+    // TREE_NULL return will indicate an error, and can be used to immediately
+    // abort an operation.
+    if (r1) {
+	NMG_CK_REGION(r1);
+	if (nmg_debug & NMG_DEBUG_VERIFY) {
+	    nmg_vshell(&r1->s_hd, r1);
+	}
     }
 
     BU_GET(curtree, union tree);
