@@ -142,9 +142,9 @@ void makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX
 	int textYOffset = textHeight * 8 / 5;
 
 	int N = 4; // number of sub components you want
-	int offY = height * (2.5 - 1) / 2.5 + offsetY;
+	int offY = height * (2.6 - 1) / 3 + offsetY;
 	int offX = offsetX + 5;
-	int imgH = height / 2.5;
+	int imgH = height / 2.6;
 	int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
 
 	int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
