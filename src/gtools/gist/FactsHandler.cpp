@@ -134,7 +134,7 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 
 }
 
-void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
+void makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
 
 	int textOffset = width / 10;
 	int textHeight = height / 20;
