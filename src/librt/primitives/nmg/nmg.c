@@ -2322,12 +2322,12 @@ int nmg_bool_eval_silent=0;
  *
  * Typical calls will be of this form:
  * (void)nmg_model_fuse(m, tol);
- * curtree = rt_booltree_evaluate(curtree, vlfree, tol, resp, &rt_nmg_do_bool, 0);
+ * curtree = rt_booltree_evaluate(curtree, vlfree, tol, resp, &rt_nmg_do_bool, 0, NULL);
  */
 int
 rt_nmg_do_bool(
         union tree *tp, union tree *tl, union tree *tr,
-        int op, struct bu_list *vlfree, const struct bn_tol *tol)
+        int op, struct bu_list *vlfree, const struct bn_tol *tol, void *UNUSED(data))
 {
     int nmg_op = NMG_BOOL_ADD;
     switch (op) {
@@ -2388,7 +2388,7 @@ rt_nmg_do_bool(
 union tree *
 nmg_booltree_evaluate(register union tree *tp, struct bu_list *vlfree, const struct bn_tol *tol, struct resource *resp)
 {
-    return rt_booltree_evaluate(tp, vlfree, tol, resp, &rt_nmg_do_bool, nmg_bool_eval_silent);
+    return rt_booltree_evaluate(tp, vlfree, tol, resp, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
 }
 
 #if 0
@@ -2508,7 +2508,7 @@ nmg_boolean(union tree *tp, struct model *m, struct bu_list *vlfree, const struc
      * Evaluate the nodes of the boolean tree one at a time, until
      * only a single region remains.
      */
-    result = rt_booltree_evaluate(tp, vlfree, tol, resp, &rt_nmg_do_bool, nmg_bool_eval_silent);
+    result = rt_booltree_evaluate(tp, vlfree, tol, resp, &rt_nmg_do_bool, nmg_bool_eval_silent, NULL);
 
     if (result == TREE_NULL) {
 	bu_log("nmg_boolean(): result of nmg_booltree_evaluate() is NULL\n");

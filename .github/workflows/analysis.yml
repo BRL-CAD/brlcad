@@ -36,6 +36,13 @@ jobs:
           mkdir build && cd build && cp ../misc/clang-static-analyzer-run.sh .
           ./clang-static-analyzer-run.sh
 
+      - name: Summary
+        if: success() || failure()
+        run: |
+          sudo apt-get install html2text
+          html2text build/scan-reports-all/*/index.html
+
+
   linux_cov:
     # See https://app.codecov.io/gh/BRL-CAD/brlcad for analysis results
     name: LCOV Coverage testing

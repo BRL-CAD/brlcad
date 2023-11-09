@@ -81,14 +81,6 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 }
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
-	// //Determine units
-	// std::string unit;
-	// if (opt.isOriginalUnitsLength()) {
-	// 	unit = info.getInfo("units");
-	// }
-	// else {
-	// 	unit = opt.getUnitLength();
-	// }
 
 	// draw bounding rectangle
 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
@@ -104,7 +96,9 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	int col2Offset = offsetX + width / 2;
 	int col3Offset = (offsetX + (width*3) / 4) + textOffset;
 
-	int curiX = 0;
+	int curiX = 1;
+
+	std::string summaryTitle = "\"" + info.largestComponents[0].name + "\" Summary";
 
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Geometry Type", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("representation"));
@@ -112,9 +106,9 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Orientation", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, opt.getOrientationRightLeft() + ", " + opt.getOrientationZYUp());
 	curiX++;
-	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Entity Summary", TO_BOLD);
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions") + " regions");
-	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("assemblies") + " assemblies, " + info.getInfo("total") + " total");
+	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, summaryTitle, TO_BOLD);
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions_parts") + " regions");
+	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("groups_assemblies") + " assemblies");
 	//curiX++;
 	//img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Units", TO_BOLD);
 	//img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
@@ -183,7 +177,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
     for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
         render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
         // std::cout << "INSIDE factshandler DBG: " << render << std::endl;
-        img.drawTransparentImage(offX + (i-1)*imgW, offY, imgW, imgH, render);
+        img.drawImageTransparentFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
         img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY-70, textHeight, width, info.largestComponents[i].name, TO_BOLD);
         img.drawLine(offX + (i-1)*imgW + imgW/2, offY-100, offX + (i-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
         img.drawCirc(offX + (i-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
@@ -197,7 +191,7 @@ void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX
         for (int i = N; i < info.largestComponents.size(); i++)
             subcomponents += info.largestComponents[i].name + " ";
         render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
-        img.drawImageFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
+        img.drawImageTransparentFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
         img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY-70, textHeight, width, "...", TO_BOLD);
         img.drawLine(offX + (N-1)*imgW + imgW/2, offY-100, offX + (N-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
         img.drawCirc(offX + (N-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));

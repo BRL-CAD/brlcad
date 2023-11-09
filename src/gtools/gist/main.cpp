@@ -171,18 +171,17 @@ void generateReport(Options opt)
         return;
     }
 
-    // TODO SAM: mass distinction in correctDefaultUnits?
+    // Correct units and measurement presentation
     if (opt.isOriginalUnitsLength()) {
+        info.correctDefaultUnitsLength();
+    }
+    if (opt.isOriginalUnitsMass()) {
         info.correctDefaultUnitsMass();
     }
 
-    // if (opt.isOriginalUnitsLength()) {
-    //     info.correctDefaultUnitsLength();
-    // }
-    // if (opt.isOriginalUnitsMass()) {
-    //     info.correctDefaultUnitsMass();
-    // }
+    info.checkScientificNotation();
 
+    // Truncate title
     std::string title = info.getInfo("title");
     if (title.size() > 88) {
         std::string continuation = title.substr(88);
@@ -207,7 +206,7 @@ void generateReport(Options opt)
     Position imagePosition(0, 0, opt.getWidth(), opt.getLength());
     Position topSection(margin, margin, imagePosition.width() - 2*margin, header_footer_height);
     Position bottomSection(margin, imagePosition.bottom() - header_footer_height - margin, imagePosition.width() - 2*margin, header_footer_height);
-    Position hierarchySection(imagePosition.right() - imagePosition.thirdWidth() - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.thirdWidth(), vvHeight);
+    Position hierarchySection(imagePosition.right() - imagePosition.width()/3.5 - margin, imagePosition.height() - margin - header_footer_height - padding - vvHeight, imagePosition.width()/3.5, vvHeight);
     Position fileSection(imagePosition.right() - imagePosition.sixthWidth() - margin, topSection.bottom() + padding, imagePosition.sixthWidth(), hierarchySection.top() - topSection.bottom() - padding);
     Position renderSection(margin, topSection.bottom() + padding, fileSection.left() - margin - padding, bottomSection.top() - topSection.bottom() - 2*padding);
 

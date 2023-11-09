@@ -48,6 +48,13 @@
 #  include <sys/stat.h>
 #endif
 
+#if defined(__FreeBSD__)
+#  include <sys/thr.h> // for thr_self
+#endif
+#if defined(__NetBSD__)
+#  include <lwp.h>     // for _lwp_self
+#endif
+
 #ifdef __APPLE__
 #  include <sys/stat.h>
 #  include <sys/param.h>

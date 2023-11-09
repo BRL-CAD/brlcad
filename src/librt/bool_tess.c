@@ -125,8 +125,9 @@ rt_booltree_evaluate(
 	struct bu_list *vlfree,
 	const struct bn_tol *tol,
 	struct resource *resp,
-	int (*do_bool)(union tree *, union tree *, union tree *, int op, struct bu_list *, const struct bn_tol *),
-	int verbose
+	int (*do_bool)(union tree *, union tree *, union tree *, int op, struct bu_list *, const struct bn_tol *, void *),
+	int verbose,
+	void *data
 	)
 {
     if (!do_bool) {
@@ -134,11 +135,11 @@ rt_booltree_evaluate(
 	return TREE_NULL;
     }
 
-    union tree *tl;
-    union tree *tr;
-    const char *op_str = " u "; /* default value */
-    size_t rem;
-    char *name;
+    union tree *tl = NULL;
+    union tree *tr = NULL;
+    const char *op_str = NULL;
+    size_t rem = 0;
+    char *name = NULL;
 
     RT_CK_TREE(tp);
     if (tol)
@@ -168,8 +169,8 @@ rt_booltree_evaluate(
     }
 
     /* Handle a boolean operation node.  First get its leaves. */
-    tl = rt_booltree_evaluate(tp->tr_b.tb_left, vlfree, tol, resp, do_bool, verbose);
-    tr = rt_booltree_evaluate(tp->tr_b.tb_right, vlfree, tol, resp, do_bool, verbose);
+    tl = rt_booltree_evaluate(tp->tr_b.tb_left, vlfree, tol, resp, do_bool, verbose, data);
+    tr = rt_booltree_evaluate(tp->tr_b.tb_right, vlfree, tol, resp, do_bool, verbose, data);
 
     if (tl) {
 	RT_CK_TREE(tl);
@@ -268,7 +269,7 @@ rt_booltree_evaluate(
     }
 
     // Execute the specified method that actually evaluates the mesh geometries
-    int b = do_bool(tp, tl, tr, tp->tr_op, vlfree, tol);
+    int b = do_bool(tp, tl, tr, tp->tr_op, vlfree, tol, data);
 
     if (b) {
 	/* result was null */

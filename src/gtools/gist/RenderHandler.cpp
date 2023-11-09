@@ -777,17 +777,6 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		if (i == 1) me = info.getFormattedInfo("dimX");
 		if (i == 2) me = info.getFormattedInfo("dimZ");
 
-		// //Determine units
-		// std::string unit;
-		// if (opt.isOriginalUnitsLength()) {
-		// 	unit = info.getInfo("units");
-		// }
-		// else {
-		// 	unit = opt.getUnitLength();
-		// }
-
-		// me << " " << unit;
-
 		if (det.second == 0) // draw to the right
 		{
 			img.drawLine(newX + newW + offset, newY, newX + newW + offset, newY + newH, 5, cv::Scalar(160, 0, 0));

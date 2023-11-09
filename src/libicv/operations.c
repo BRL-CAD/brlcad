@@ -360,6 +360,73 @@ icv_diff(
     return ret;
 }
 
+icv_image_t *
+icv_diffimg(icv_image_t *img1, icv_image_t *img2)
+{
+    long p;
+
+    if (!img1 || !img2 || !img1->width || !img2->width)
+	return NULL;
+
+    if ((img1->width != img2->width) || (img1->height != img2->height) || (img1->channels != img2->channels)) {
+	bu_log("icv_diffimg : Image Parameters not Equal");
+	return NULL;
+    }
+
+    // Have images
+    unsigned char *d1 = icv_data2uchar(img1);
+    unsigned char *d2 = icv_data2uchar(img2);
+    unsigned char *od = icv_data2uchar(img1);
+    size_t s = img1->width * img1->height;
+    for (size_t i = 0; i < s; i++) {
+	int r1 = d1[i*3+0];
+	int g1 = d1[i*3+1];
+	int b1 = d1[i*3+2];
+	int r2 = d2[i*3+0];
+	int g2 = d2[i*3+1];
+	int b2 = d2[i*3+2];
+	int dcnt = 0;
+	dcnt += (r1 != r2) ? 1 : 0;
+	dcnt += (g1 != g2) ? 1 : 0;
+	dcnt += (b1 != b2) ? 1 : 0;
+	switch (dcnt) {
+	    case 0:
+		p = ((22937 * r1 + 36044 * g1 + 6553 * b1)>>17);
+		if (p < 0)
+		    p = 0;
+		p /= 2;
+
+		od[3*i+0] = (int)p;
+		od[3*i+1] = (int)p;
+		od[3*i+2] = (int)p;
+		break;
+	    case 1:
+		od[3*i+0] = 0xC0;
+		od[3*i+1] = 0xC0;
+		od[3*i+2] = 0xC0;
+		break;
+	    default:
+		od[3*i+0] = 0xFF;
+		od[3*i+1] = 0xFF;
+		od[3*i+2] = 0xFF;
+	}
+    }
+
+    icv_image_t *out_img;
+    BU_ALLOC(out_img, struct icv_image);
+    ICV_IMAGE_INIT(out_img);
+    out_img->width = img1->width;
+    out_img->height = img1->height;
+    out_img->channels = 3;
+    out_img->data = icv_uchar2double(od, img1->width * img1->height * 3);
+
+    bu_free(d1, "image 1 rgb");
+    bu_free(d2, "image 2 rgb");
+
+    return out_img;
+}
+
+
 int
 icv_fit(icv_image_t *img, struct bu_vls *msg, size_t o_width_req, size_t o_height_req, fastf_t sf)
 {

@@ -27,7 +27,7 @@ if (BRLCAD_PNG_BUILD)
 
   set(PNG_VERSION_MAJOR ${PNG_MAJOR_VERSION}${PNG_MINOR_VERSION})
   set(PNG_VERSION_MINOR ${PNG_PATCH_VERSION})
-  set(PNG_LIB_NAME png${PNG_VERSION_MAJOR})
+  set(PNG_LIB_NAME png_brl${PNG_VERSION_MAJOR})
 
   # NOTE: when we bump to libpng 1.6.40, they expose a PNG_DEBUG_POSTFIX which
   # we can supply empty at build time.  For the current version we've added a
@@ -127,9 +127,9 @@ if (BRLCAD_PNG_BUILD)
     png.h
     pngconf.h
     pnglibconf.h
-    libpng${PNG_VERSION_MAJOR}/png.h
-    libpng${PNG_VERSION_MAJOR}/pngconf.h
-    libpng${PNG_VERSION_MAJOR}/pnglibconf.h
+    libpng_brl${PNG_VERSION_MAJOR}/png.h
+    libpng_brl${PNG_VERSION_MAJOR}/pngconf.h
+    libpng_brl${PNG_VERSION_MAJOR}/pnglibconf.h
     )
 
   set(PNG_LIBRARY_DEBUG png CACHE STRING "Building bundled libpng" FORCE)

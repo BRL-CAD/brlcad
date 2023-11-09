@@ -58,6 +58,15 @@ if(HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET libbrep APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "OPENNURBS_IMPORTS")
 endif(HIDE_INTERNAL_SYMBOLS)
 
+# With newer GCC, optimized linking of poly2tri_CDT triggers a compiler warning about a
+# new allocation potentially exceeding maximum object size.
+if(${BRLCAD_OPTIMIZED} MATCHES "ON")
+  check_c_compiler_flag(-Wno-error=alloc-size-larger-than= HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+  if (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+    target_link_options(libbrep PRIVATE -Wno-error=alloc-size-larger-than=)
+  endif (HAVE_NO_ALLOC_SIZE_LARGER_THAN)
+endif(${BRLCAD_OPTIMIZED} MATCHES "ON")
+
 add_subdirectory(tests)
 
 CMAKEFILES(

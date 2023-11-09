@@ -40,6 +40,7 @@ set(BREP_SRCS
   intersect.cpp
   pick.cpp
   plot.cpp
+  repair.cpp
   tikz.cpp
   topology.cpp
   valid.cpp

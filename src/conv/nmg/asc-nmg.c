@@ -55,7 +55,8 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    char		*afile = "-", *bfile = "nmg.g";
+    char		*afile = NULL;
+    char		*bfile = "nmg.g";
     FILE		*fpin;
     struct rt_wdb	*fpout;
 
@@ -83,7 +84,7 @@ main(int argc, char **argv)
 		    argv[0], afile);
 	    bu_exit(1, NULL);
 	}
-    bu_log("%s: will be reading from file %s\n",argv[0],afile);
+	bu_log("%s: will be reading from file %s\n",argv[0],afile);
     }
 
     /* Get BRL-CAD output data base name. */

@@ -199,6 +199,13 @@ ICV_EXPORT extern int icv_rot(size_t argc, const char *argv[]);
  */
 ICV_EXPORT extern int icv_diff(int *matching, int *off_by_1, int *off_by_many, icv_image_t *img1, icv_image_t *img2);
 
+/**
+ * Generate a visual representation of the differences between two images.
+ * (At least for now, images must be the same size.)
+ *
+ * Returns NULL if there is an error.
+ */
+ICV_EXPORT extern icv_image_t *icv_diffimg(icv_image_t *img1, icv_image_t *img2);
 
 /**
  * Compare two images using perceptual image hashing and report the Hamming

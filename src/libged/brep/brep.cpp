@@ -41,7 +41,6 @@
 #include <string>
 #include <vector>
 #include <locale>
-#include <codecvt>
 
 #include "bu/cmd.h"
 #include "bu/color.h"
@@ -598,9 +597,9 @@ _brep_cmd_dump(void *bs, int argc, const char **argv)
 
 	ON_3dmObjectAttributes attrs;
 
-	// https://stackoverflow.com/a/18597384/2037687
-	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> wcc;
-	std::wstring wc= wcc.from_bytes(dp->d_namep);
+	// NOTE: this naive conversion ONLY works on ASCII chars 
+	std::string dnamep_str(dp->d_namep);
+	std::wstring wc(dnamep_str.begin(), dnamep_str.end());
 	attrs.SetName(wc.c_str(), true);
 
 	int rgb[3];
@@ -936,6 +935,32 @@ _brep_cmd_plot(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     return brep_plot(gb, argc, argv);
+}
+
+extern "C" int
+_brep_cmd_repair(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    struct ged *gedp = gb->gedp;
+
+    const char *purpose_string = "attempt repairs on the BRep object";
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
+	return BRLCAD_OK;
+    }
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	return brep_info(gedp->ged_result_str, NULL, argc, argv);
+    }
+
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return BRLCAD_ERROR;
+    }
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
+
+    argc--; argv++;
+
+    return brep_repair(gedp, b_ip->brep, gb->solid_name.c_str(), argc, argv);
 }
 
 extern "C" int
@@ -1402,6 +1427,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "pick",            _brep_cmd_pick},
     { "plate_mode",      _brep_cmd_plate_mode},
     { "plot",            _brep_cmd_plot},
+    { "repair",          _brep_cmd_repair},
     { "selection",       _brep_cmd_selection},
     { "solid",           _brep_cmd_solid},
     { "split",           _brep_cmd_split},

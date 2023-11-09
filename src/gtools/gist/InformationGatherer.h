@@ -58,8 +58,13 @@ public:
 	std::string getInfo(std::string key);
     std::string getFormattedInfo(std::string key);
 
+    Unit getUnit(std::string name);
+
     bool dimensionSizeCondition();
     void correctDefaultUnitsLength();
     void correctDefaultUnitsMass();
-    Unit getUnit(std::string name);
+
+    void checkScientificNotation();
+
+
 };

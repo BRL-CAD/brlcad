@@ -125,6 +125,60 @@ void IFPainter::drawImageFitted(int x, int y, int width, int height, std::string
 	resized_image.copyTo(destRoi);
 }
 
+void IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, std::string imgPath)
+{
+	cv::Mat imageRaw = imread(imgPath, cv::IMREAD_UNCHANGED); // Load color image
+	// Convert the image to grayscale for creating the mask
+	cv::Mat gray_image;
+	cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
+	// Create a mask of non-white pixels
+	cv::Mat mask = gray_image < 255;
+	// Find the bounding rectangle of non-white pixels
+	cv::Rect bounding_rect = boundingRect(mask);
+	// Crop the image to the bounding rectangle
+	cv::Mat lilImage = imageRaw(bounding_rect);
+
+
+	int imgWidth = lilImage.size().width;
+	int imgHeight = lilImage.size().height;
+	int heightOffset = 0;
+	int widthOffset = 0;
+
+	if ((double)imgWidth / imgHeight > (double)width / height)
+	{
+		// image width is too large; bound on width
+		int newHeight = (int)(width * (double)imgHeight / imgWidth);
+		heightOffset = (height - newHeight) / 2;
+		height = newHeight;
+	}
+	else
+	{
+		// image height is too large; bound on height
+		int newWidth = (int)(height * (double)imgWidth / imgHeight);
+		widthOffset = (width - newWidth) / 2;
+		width = newWidth;
+	}
+
+	cv::Mat resized_image;
+
+	// prevent crashes
+	if (width <= 0) width = 1;
+	if (height <= 0) height = 1;
+
+	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
+
+	for(int r = 0; r < height; r++) {
+		for(int c = 0; c < width; c++) {
+			for(int i=0; i<3; i++){
+                cv::Vec3b color = resized_image.at<cv::Vec3b>(cv::Point(c,r));
+                if(color[0] < 240 && color[1] < 240 && color[2] < 240){
+                    img.at<cv::Vec3b>(cv::Point(c+x,r+y)) = resized_image.at<cv::Vec3b>(cv::Point(c,r));;
+                }
+			}
+	    }
+    }
+}
+
 void IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
 {
 	y += 65;
@@ -200,7 +254,7 @@ int IFPainter::getFontSizeFromHeightAndWidth(int height, int width, std::string 
 	while (getTextSize("I", cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).height < height)
 		fontSize++;
 	fontSize--;
-	
+
 	heightToFontSizeMap[height] = fontSize;
 	while (getTextSize(text, cv::FONT_HERSHEY_DUPLEX, fontSize, standardTextWeight, 0).width > width) {
 		fontSize--;
@@ -220,7 +274,7 @@ void IFPainter::drawText(int x, int y, int height, int width, std::string text, 
 	if (flags & TO_UNDERLINE) {
     	isUnderline = true;
 	}
-	
+
 
 	cv::Scalar color = (flags & TO_WHITE) ? cv::Scalar(255, 255, 255) : (flags & TO_BLUE ? cv::Scalar(160, 0, 0) : cv::Scalar(0, 0, 0));
 	int fontSize = getFontSizeFromHeightAndWidth(height, width, text);
@@ -312,7 +366,7 @@ void IFPainter::drawTextRightAligned(int x, int y, int height, int width, std::s
     }
 }
 
-/*This function will evenly space out all of the texts in the header and footer. The algorithm is to get the total lenght of all of the words combined and then the spacing is the total 
+/*This function will evenly space out all of the texts in the header and footer. The algorithm is to get the total lenght of all of the words combined and then the spacing is the total
 length divided by how many words there are*/
 int IFPainter::justify(int x, int y, int height, int width, std::vector<std::string> text, int flags)
 {
@@ -392,7 +446,7 @@ void IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int heig
 	std::vector<std::string> words;
 
 	std::string word;
-	while (iss >> word) { 
+	while (iss >> word) {
 		words.push_back(word);
 	}
 	int x = x1;
@@ -482,5 +536,3 @@ void IFPainter::exportToFile(std::string filePath)
 {
 	cv::imwrite(filePath, this->img);
 }
-
-

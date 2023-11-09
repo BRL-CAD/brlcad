@@ -2275,9 +2275,14 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
     for (;;) {
 	struct nmg_radial *next;
 	next = rmax;
+	if (!next)
+	    break;
 	do {
 	    next = BU_LIST_PNEXT_CIRC(nmg_radial, next);
-	} while (next->fu == (struct faceuse *)NULL);
+	} while (next && next->fu == (struct faceuse *)NULL);
+
+	if (!next)
+	    break;
 
 	if ((next->ang > amax) || (ZERO(next->ang - amax))) {
 	    rmax = next;		/* a repeated max */
@@ -2286,6 +2291,10 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	} else
 	    break;
     }
+
+    if (!rmax)
+	return;
+
     /* wires before min establish new rmin */
     first = rmin;
     for (;;) {

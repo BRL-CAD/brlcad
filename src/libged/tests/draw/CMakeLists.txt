@@ -74,7 +74,7 @@ set(lod_test_ctrls
 BRLCAD_ADDEXEC(ged_test_lod "lod.cpp;util.cpp" "libged;libdm" TEST)
 add_dependencies(ged_test_lod ${test_deps})
 BRLCAD_ADD_TEST(NAME ged_test_drawing_lod COMMAND ged_test_lod "${CMAKE_CURRENT_SOURCE_DIR}")
-
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/moss_lod_tmp.g)
 
 set(select_test_ctrls
   select001_ctrl.png
@@ -124,6 +124,7 @@ set(select_test_ctrls
 BRLCAD_ADDEXEC(ged_test_select_draw "select.cpp;util.cpp" "libged;libdm" TEST)
 add_dependencies(ged_test_select_draw ${test_deps})
 BRLCAD_ADD_TEST(NAME ged_test_drawing_select COMMAND ged_test_select_draw "${CMAKE_CURRENT_SOURCE_DIR}")
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/moss_select_tmp.g)
 
 set(quad_test_ctrls
   quad_00_001_ctrl.png
@@ -162,6 +163,7 @@ set(quad_test_ctrls
 BRLCAD_ADDEXEC(ged_test_quad quad.cpp "libged;libdm" TEST)
 add_dependencies(ged_test_quad ${test_deps})
 BRLCAD_ADD_TEST(NAME ged_test_drawing_quad COMMAND ged_test_quad "${CMAKE_CURRENT_SOURCE_DIR}")
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/moss_quad_tmp.g)
 
 # The idea here is to test view stability across resize events
 set(aet_test_ctrls
