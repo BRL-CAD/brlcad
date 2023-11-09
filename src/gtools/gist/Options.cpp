@@ -18,7 +18,7 @@ Options::Options()
 	classification = "";
 	rightLeft = "Right hand";
 	zY = "+Z-up";
-	notes = "N/A";
+	notes = "None";
 	uLength = "m";
 	originalUnitsLength = true;
 	uMass = "g";

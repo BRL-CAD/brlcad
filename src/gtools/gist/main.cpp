@@ -186,7 +186,7 @@ void generateReport(Options opt)
     if (title.size() > 88) {
         std::string continuation = title.substr(88);
 
-        if (opt.getNotes() == "N/A") {
+        if (opt.getNotes() == "None") {
             opt.setNotes("Continued Title: " + continuation);
         } else {
             opt.setNotes(opt.getNotes() + "\nContinued Title : " + continuation);
