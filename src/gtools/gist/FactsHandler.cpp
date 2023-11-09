@@ -23,12 +23,16 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	std::vector<std::string> text;
 	std::vector<std::string> text2;
 	std::string concatFile = info.getInfo("file");
+	std::string concatOwner = info.getInfo("owner");
 	if (info.getInfo("file").size() > 20) {
         concatFile = info.getInfo("file").substr(0,15) + "... .g";
     }
+	if (info.getInfo("owner").size() > 20) {
+        concatOwner = info.getInfo("owner").substr(0,15) + "...";
+    }
 	int endTextXPosition = 0;
 	if (info.getInfo("classification") != "") {
-		text.push_back("Owner: " + info.getInfo("owner"));
+		text.push_back("Owner: " + concatOwner);
 		text.push_back("MD5 Checksum: " + info.getInfo("checksum"));
 		text2.push_back("Last Updated: " + info.getInfo("lastUpdate"));
 		text2.push_back("Source File: " + concatFile);

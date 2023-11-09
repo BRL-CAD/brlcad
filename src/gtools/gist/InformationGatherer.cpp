@@ -500,9 +500,6 @@ bool InformationGatherer::gatherInformation(std::string name)
     ged_exec(g, 4, cmd);
     infoMap["regions_parts"] = std::to_string(getEntityData(bu_vls_addr(g->ged_result_str)));
 
-	//Gather name of preparer
-    infoMap["preparer"] = name;
-
     //Gather volume and mass
     double volume = 0;
     double mass = 0;
@@ -647,8 +644,17 @@ bool InformationGatherer::gatherInformation(std::string name)
         owner = pw->pw_name;
     }
 #endif
-
+    if(opt->getOwner() != ""){
+        owner = opt->getOwner();
+    }
     infoMap.insert(std::pair<std::string, std::string>("owner", owner));
+
+	//Default name of preparer to owner if "N/A"
+    if(opt->getName() == "N/A"){
+        infoMap["preparer"] = owner;
+    }else{
+        infoMap["preparer"] = name;
+    }
 
     //Gather last date updated
     struct stat info;

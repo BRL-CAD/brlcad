@@ -15,6 +15,7 @@ Options::Options()
 	exportFolderName = "";
 	fileName = "";
 	name = "N/A";
+	owner = "";
 	classification = "";
 	rightLeft = "Right hand";
 	zY = "+Z-up";
@@ -76,6 +77,10 @@ void Options::setFileName(std::string n) {
 
 void Options::setName(std::string n) {
 	name = n;
+}
+
+void Options::setOwner(std::string n) {
+	owner = n;
 }
 
 void Options::setClassification(std::string c) {
@@ -158,6 +163,10 @@ std::string Options::getFileName() {
 
 std::string Options::getName() {
 	return name;
+}
+
+std::string Options::getOwner() {
+	return owner;
 }
 
 std::string Options::getClassification() {

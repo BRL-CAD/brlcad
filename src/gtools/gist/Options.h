@@ -25,6 +25,7 @@ public:
 	void setFileName(std::string n);
 	void setFolder(std::string n);
 	void setName(std::string n);
+	void setOwner(std::string n);
 	void setClassification(std::string c);
 	void setOrientationRightLeft(bool rL);
 	void setOrientationZYUp(bool zy);
@@ -49,6 +50,7 @@ public:
 	std::string getFolder();
 	std::string getExportFolder();
 	std::string getName();
+	std::string getOwner();
 	std::string getClassification();
 	std::string getOrientationRightLeft();
 	std::string getOrientationZYUp();
@@ -87,6 +89,8 @@ private:
 	std::string exportFolderName;
 	// Name of preparer
 	std::string name;
+	// Name of owner (override)
+	std::string owner;
 	// Classification word
 	std::string classification;
 	// Orientation
