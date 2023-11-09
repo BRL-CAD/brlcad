@@ -200,7 +200,6 @@ void generateReport(Options opt)
     int padding = opt.getLength() / 250;
     int vvHeight = (opt.getLength() - 2*header_footer_height - 2*margin) / 3;
 
-
     // Has same height and width as V&V Checks, offset X by V&V checks width
     // makeHeirarchySection(img, info, XY_margin + vvSectionWidth + (opt.getLength() / 250), vvOffsetY, vvSectionWidth, vvSectionHeight, opt);
 
@@ -220,7 +219,7 @@ void generateReport(Options opt)
     makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     //brl-cad logo
     img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg");
-    
+
     // paint renderings
 
     // optionally, display the scene
