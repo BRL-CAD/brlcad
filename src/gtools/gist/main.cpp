@@ -64,7 +64,7 @@ bool readParameters(int argc, char** argv, Options &opt)
 
 
 
-    while ((opts = bu_getopt(argc, argv, "g?Oop:w:F:P:f:n:T:E:N:l:m:c:t:Z")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "g?Oop:w:F:P:f:n:T:E:N:l:L:m:c:t:Z")) != -1) {
 
         switch (opts) {
             case 'p':
@@ -120,6 +120,9 @@ bool readParameters(int argc, char** argv, Options &opt)
             case 'l':
                 opt.setUnitLength(bu_optarg);
                 break;
+            case 'L':
+                opt.setLogopath(bu_optarg);
+                break;
             case 'm':
                 opt.setUnitMass(bu_optarg);
                 break;
@@ -148,10 +151,11 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    o = orientation of the file, default is right hand, flag will change orientation output to left hand\n");
         bu_log("    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up\n");
         bu_log("    N = notes that a user would like to add to be specified in the report");
-        bu_log("    Z = option to re-use pre-made renders in the output folder.  Should only be used when running on the same model multiple times.\n");
-        bu_log("    t = option to specify the top component of the report. Useful when there are multiple tops.\n");
-        bu_log("    l = override the default length units in a file.\n");
-        bu_log("    m = override the default mass units in a file.\n");
+        bu_log("    Z = option to re-use pre-made renders in the output folder.  Should only be used when running on the same model multiple times.");
+        bu_log("    t = option to specify the top component of the report. Useful when there are multiple tops");
+        bu_log("    l = override the default length units in a file.");
+        bu_log("    L = filepath for optional logo.");
+        bu_log("    m = override the default mass units in a file.");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
@@ -238,7 +242,11 @@ void generateReport(Options opt)
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
     makeHierarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     //brl-cad logo
-    img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg");
+    img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg", 250);
+    //branding logo
+    if (opt.getLogopath() != ""){
+        img.drawTransparentImage(3350, 2360, 100, 90, opt.getLogopath());
+    }
 
     // paint renderings
 

@@ -56,7 +56,7 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 	resized_image.copyTo(destRoi);
 }
 
-void IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string imgPath)
+void IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string imgPath, int threshold)
 {
 	cv::Mat foreground = cv::imread(imgPath, cv::IMREAD_UNCHANGED);
     cv::Mat resized_image;
@@ -64,7 +64,7 @@ void IFPainter::drawTransparentImage(int x, int y, int width, int height, std::s
     for(int r = 0; r < height; r++) {
 		for(int c = 0; c < width; c++) {
 			cv::Vec3b color = resized_image.at<cv::Vec3b>(cv::Point(c,r));
-			if(color[0] < 240 && color[1] < 240 && color[2] < 240){
+			if(!(color[0] >= threshold && color[1] >= threshold && color[2] >= threshold)){
 				img.at<cv::Vec3b>(cv::Point(c+x,r+y)) = resized_image.at<cv::Vec3b>(cv::Point(c,r));;
 			}
 	    }

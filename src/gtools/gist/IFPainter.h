@@ -37,7 +37,7 @@ public:
 	std::pair<int, int> getCroppedImageDims(std::string imgPath);
 
 	void drawImage(int x, int y, int width, int height, std::string imgPath);
-	void drawTransparentImage(int x, int y, int width, int height, std::string imgPath);
+	void drawTransparentImage(int x, int y, int width, int height, std::string imgPath, int threshold = 255);
 	void drawImageFitted(int x, int y, int width, int height, std::string imgPath);
 	void drawImageTransparentFitted(int x, int y, int width, int height, std::string imgPath);
 	void drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text);
