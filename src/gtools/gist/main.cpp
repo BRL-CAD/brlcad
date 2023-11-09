@@ -37,6 +37,23 @@ bool readParameters(int argc, char** argv, Options &opt)
     * g = GUI output
     * f = filename of png export
     * E = folder name of png export
+    * p = filepath
+    * P = pixels per inch
+    * F = path specified is a folder of models
+    * E = path to folder to export reports
+    * g = GUI output
+    * f = filepath of png export
+    * w = override name of owner of geometry file (defauts to system name)
+    * n = name of preparer
+    * T = directory where rt and rtwizard executables are stored
+    * c = classification of a file
+    * o = orientation (left vs right hand) of the file
+    * O = orientation (Z-up vs Y-up) of the file
+    * N = notes that a user would like to add to be specified in the report
+    * Z = option to re-use pre-made renders in the output folder
+    * t = option to specify the top component of the report
+    * l = override the default length units in a file
+    * m = override the default mass units in a file
     */
 
     bool h = false; // user requested help
@@ -128,13 +145,13 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    n = name of preparer, to be used in report\n");
         bu_log("    T = directory where rt and rtwizard executables are stored\n");
         bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report. If the classification is a security access label, a corresponding color will be applied to the border\n");
-        bu_log("    o = orientation of the file, default is right hand, flag will change orientation output to left hand");
-        bu_log("    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up");
+        bu_log("    o = orientation of the file, default is right hand, flag will change orientation output to left hand\n");
+        bu_log("    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up\n");
         bu_log("    N = notes that a user would like to add to be specified in the report");
-        bu_log("    Z = option to re-use pre-made renders in the output folder.  Should only be used when running on the same model multiple times.");
-        bu_log("    t = option to specify the top component of the report. Useful when there are multiple tops");
-        bu_log("    l = override the default length units in a file.");
-        bu_log("    m = override the default mass units in a file.");
+        bu_log("    Z = option to re-use pre-made renders in the output folder.  Should only be used when running on the same model multiple times.\n");
+        bu_log("    t = option to specify the top component of the report. Useful when there are multiple tops.\n");
+        bu_log("    l = override the default length units in a file.\n");
+        bu_log("    m = override the default mass units in a file.\n");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
@@ -187,13 +204,13 @@ void generateReport(Options opt)
 
     // Truncate title
     std::string title = info.getInfo("title");
-    if (title.size() > 88) {
-        std::string continuation = title.substr(88);
+    if (title.size() > 35) {
+        std::string continuation = title.substr(35);
 
         if (opt.getNotes() == "None") {
-            opt.setNotes("Continued Title: " + continuation);
+            opt.setNotes("Title: ..." + continuation);
         } else {
-            opt.setNotes(opt.getNotes() + "\nContinued Title : " + continuation);
+            opt.setNotes("Title: ..." + continuation + "\n" + opt.getNotes());
         }
     }
 
