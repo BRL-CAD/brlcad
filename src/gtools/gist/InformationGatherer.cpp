@@ -85,7 +85,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
         }
     }
 
-    //Get volume of region
+    //Get presented area of region
     for (int i = 0; i < toVisit.size(); i++) {
         std::string val = toVisit[i];
         std::string command = opt->getTemppath() + "gqa -Av -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\" " + opt->getFilepath() + " " + val + " 2>&1";
