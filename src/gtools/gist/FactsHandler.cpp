@@ -138,69 +138,66 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 
 }
 
-void makeHeirarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
-	// img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, 3, cv::Scalar(0, 0, 0));
+void makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
 
-  int textOffset = width / 10;
-  int textHeight = height / 20;
-  int textXOffset = textHeight * 53 / 5;
-  int textYOffset = textHeight * 8 / 5;
+	int textOffset = width / 10;
+	int textHeight = height / 20;
+	int textXOffset = textHeight * 53 / 5;
+	int textYOffset = textHeight * 8 / 5;
 
-	// img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Object Hierarchy", TO_BOLD);
+	int N = 4; // number of sub components you want
+	int offY = height * (2.6 - 1) / 3 + offsetY;
+	int offX = offsetX + 5;
+	int imgH = height / 2.6;
+	int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
 
-  int N = 4; // number of sub components you want
-  int offY = height / 2 + offsetY;
-  int offX = offsetX + 5;
-  int imgH = height / 2;
-  int imgW = (width - 5*fmin(N, info.largestComponents.size()-1)) / fmin(N, info.largestComponents.size()-1);
+	int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
 
-  int centerPt = offX + imgW/2 + (fmin(N-1, info.largestComponents.size()-2)*imgW) / 2;
+	// main component
+	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
+	//img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
+	img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width, info.largestComponents[0].name, TO_BOLD);
 
-  // main component
-  std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
-  //img.drawImageFitted(offX + width/10, offsetY + textHeight/3, imgW, imgH, render);
-  img.drawTextCentered(offsetX + width / 2, offY - 180, textHeight, width, info.largestComponents[0].name, TO_BOLD);
+	img.drawLine(offX + imgW/2, offY - 100, offX + fmin(N-1, info.largestComponents.size()-2)*imgW + imgW/2, offY - 100, 3, cv::Scalar(94, 58, 32));
+	img.drawLine(centerPt, offY-100, centerPt, offY-130, 3, cv::Scalar(94, 58, 32));
+	img.drawCirc(centerPt, offY-130, 7, -1, cv::Scalar(94, 58, 32));
+	// img.drawCirc(centerPt, offY-30, 20, 3, cv::Scalar(94, 58, 32));
 
-  img.drawLine(offX + imgW/2, offY - 100, offX + fmin(N-1, info.largestComponents.size()-2)*imgW + imgW/2, offY - 100, 3, cv::Scalar(94, 58, 32));
-  img.drawLine(centerPt, offY-100, centerPt, offY-130, 3, cv::Scalar(94, 58, 32));
-  img.drawCirc(centerPt, offY-130, 7, -1, cv::Scalar(94, 58, 32));
-  // img.drawCirc(centerPt, offY-30, 20, 3, cv::Scalar(94, 58, 32));
-
-    // entity summary
-    int curiX = 0;
-    // img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Groups & Assemblies:", TO_BOLD);
-    // img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("groups_assemblies"), TO_BOLD);
-	// img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Regions & Parts:", TO_BOLD);
-	// img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("regions_parts"), TO_BOLD);
-	// img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Primitive Shapes:", TO_BOLD);
-	// img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("primitives"), TO_BOLD);
+		// entity summary
+		int curiX = 0;
+		// img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Groups & Assemblies:", TO_BOLD);
+		// img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("groups_assemblies"), TO_BOLD);
+		// img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Regions & Parts:", TO_BOLD);
+		// img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("regions_parts"), TO_BOLD);
+		// img.drawTextRightAligned(offsetX + width*9/10, offsetY + 20 + curiX * textYOffset, textHeight/1.3, width, "Primitive Shapes:", TO_BOLD);
+		// img.drawText(offsetX + width*9/10, offsetY + 20 + curiX++ * textYOffset, textHeight/1.3, width, " " + info.getInfo("primitives"), TO_BOLD);
 
 
 
-    // sub components
-    for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
-        render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
-        // std::cout << "INSIDE factshandler DBG: " << render << std::endl;
-        img.drawImageTransparentFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
-        img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY-70, textHeight, width, info.largestComponents[i].name, TO_BOLD);
-        img.drawLine(offX + (i-1)*imgW + imgW/2, offY-100, offX + (i-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
-        img.drawCirc(offX + (i-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
-        // img.drawCirc(offX + (i-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
-        // img.drawLine(offX + (i-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (i-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
-    }
+		// sub components
+		for (int i = 1; i < fmin(N, info.largestComponents.size()); i++) {
+			render = renderPerspective(GHOST, opt, info.largestComponents[i].name, info.largestComponents[0].name);
+			// std::cout << "INSIDE factshandler DBG: " << render << std::endl;
+			img.drawImageTransparentFitted(offX + (i-1)*imgW, offY, imgW, imgH, render);
+			img.drawTextCentered(offX + (i-1)*imgW + imgW/2, offY-70, textHeight, width, info.largestComponents[i].name, TO_BOLD);
+			img.drawLine(offX + (i-1)*imgW + imgW/2, offY-100, offX + (i-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
+			img.drawCirc(offX + (i-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
+			// img.drawCirc(offX + (i-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
+			// img.drawLine(offX + (i-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (i-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
+		}
 
-    if (info.largestComponents.size() > N) {
-        // render the smaller sub components all in one
-        std::string subcomponents = "";
-        for (int i = N; i < info.largestComponents.size(); i++)
-            subcomponents += info.largestComponents[i].name + " ";
-        render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
-        img.drawImageTransparentFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
-        img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY-70, textHeight, width, "...", TO_BOLD);
-        img.drawLine(offX + (N-1)*imgW + imgW/2, offY-100, offX + (N-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
-        img.drawCirc(offX + (N-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
-        // img.drawCirc(offX + (N-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
-        // img.drawLine(offX + (N-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (N-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
+		if (info.largestComponents.size() > N) {
+			// render the smaller sub components all in one
+			std::string subcomponents = "";
+			for (int i = N; i < info.largestComponents.size(); i++)
+				subcomponents += info.largestComponents[i].name + " ";
+			render = renderPerspective(GHOST, opt, subcomponents, info.largestComponents[0].name);
+			img.drawImageTransparentFitted(offX + (N-1)*imgW, offY, imgW, imgH, render);
+			img.drawTextCentered(offX + (N-1)*imgW + imgW/2, offY-70, textHeight, width, "...", TO_BOLD);
+			img.drawLine(offX + (N-1)*imgW + imgW/2, offY-100, offX + (N-1)*imgW + imgW/2, offY-70, 3, cv::Scalar(94, 58, 32));
+			img.drawCirc(offX + (N-1)*imgW + imgW/2, offY-70, 7, -1, cv::Scalar(94, 58, 32));
+			// img.drawCirc(offX + (N-1)*imgW + imgW/2, offY+10, 20, 3, cv::Scalar(94, 58, 32));
+			// img.drawLine(offX + (N-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (N-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
     }
 }
 

@@ -190,7 +190,7 @@ void generateReport(Options opt)
     if (title.size() > 88) {
         std::string continuation = title.substr(88);
 
-        if (opt.getNotes() == "N/A") {
+        if (opt.getNotes() == "None") {
             opt.setNotes("Continued Title: " + continuation);
         } else {
             opt.setNotes(opt.getNotes() + "\nContinued Title : " + continuation);
@@ -219,7 +219,7 @@ void generateReport(Options opt)
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
     makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
-    makeHeirarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
+    makeHierarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     //brl-cad logo
     img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg");
 

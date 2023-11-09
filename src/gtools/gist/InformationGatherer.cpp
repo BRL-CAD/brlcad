@@ -527,7 +527,7 @@ bool InformationGatherer::gatherInformation(std::string name)
     unitsMap["surfaceArea900"] = u;
 
     if (!hasDensities) {
-        infoMap.insert(std::pair<std::string, std::string>("mass", "No Material Densities"));
+        infoMap.insert(std::pair<std::string, std::string>("mass", "Not Available"));
         u = {mUnit, 0};
         unitsMap["mass"] = u;
     } else {

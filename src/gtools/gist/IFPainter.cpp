@@ -212,6 +212,7 @@ void IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::stri
 		// image height is too large; bound on height
 		int newWidth = (int)(height * (double)imgWidth / imgHeight);
 		widthOffset = (width - newWidth) / 2;
+		widthOffset /= 2.5;
 		width = newWidth;
 	}
 
