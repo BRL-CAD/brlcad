@@ -4,6 +4,7 @@ Options::Options()
 {
 	filepath = "";
 	temppath = "../build/bin/";
+	logopath = "";
 	ppi = 300;
 	width = 3508;
 	length = 2480;
@@ -39,6 +40,10 @@ void Options::setTemppath(std::string f) {
 	if (f[f.size() - 1] != '/' && f[f.size() - 1] != '\\')
 		f = f + '\\';
 	temppath = f;
+}
+
+void Options::setLogopath(std::string f) {
+	logopath = f;
 }
 
 void Options::setPPI(int p) {
@@ -119,6 +124,10 @@ void Options::setUnitMass(std::string m) {
 
 std::string Options::getFilepath() {
 	return filepath;
+}
+
+std::string Options::getLogopath() {
+	return logopath;
 }
 
 std::string Options::getFolder() {

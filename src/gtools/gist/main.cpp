@@ -47,7 +47,7 @@ bool readParameters(int argc, char** argv, Options &opt)
 
 
 
-    while ((opts = bu_getopt(argc, argv, "g?Oop:w:F:P:f:n:T:E:N:l:m:c:t:Z")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "g?Oop:w:F:P:f:n:T:E:N:l:L:m:c:t:Z")) != -1) {
 
         switch (opts) {
             case 'p':
@@ -103,6 +103,9 @@ bool readParameters(int argc, char** argv, Options &opt)
             case 'l':
                 opt.setUnitLength(bu_optarg);
                 break;
+            case 'L':
+                opt.setLogopath(bu_optarg);
+                break;
             case 'm':
                 opt.setUnitMass(bu_optarg);
                 break;
@@ -134,6 +137,7 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    Z = option to re-use pre-made renders in the output folder.  Should only be used when running on the same model multiple times.");
         bu_log("    t = option to specify the top component of the report. Useful when there are multiple tops");
         bu_log("    l = override the default length units in a file.");
+        bu_log("    L = filepath for optional logo.");
         bu_log("    m = override the default mass units in a file.");
         return false;
     }
@@ -222,6 +226,10 @@ void generateReport(Options opt)
     makeHierarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     //brl-cad logo
     img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg");
+    //branding logo
+    if (opt.getLogopath() != ""){
+        img.drawTransparentImage(3350, 2360, 100, 90, opt.getLogopath());
+    }
 
     // paint renderings
 

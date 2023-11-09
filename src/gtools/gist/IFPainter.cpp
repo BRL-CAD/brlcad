@@ -64,7 +64,7 @@ void IFPainter::drawTransparentImage(int x, int y, int width, int height, std::s
     for(int r = 0; r < height; r++) {
 		for(int c = 0; c < width; c++) {
 			cv::Vec3b color = resized_image.at<cv::Vec3b>(cv::Point(c,r));
-			if(color[0] < 240 && color[1] < 240 && color[2] < 240){
+			if(!(color[0] >= 240 && color[1] >= 240 && color[2] >= 240)){
 				img.at<cv::Vec3b>(cv::Point(c+x,r+y)) = resized_image.at<cv::Vec3b>(cv::Point(c,r));;
 			}
 	    }
