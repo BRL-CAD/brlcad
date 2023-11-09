@@ -147,7 +147,9 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    w = override name of owner of geometry file (defauts to system name), to be used in report\n");
         bu_log("    n = name of preparer, to be used in report\n");
         bu_log("    T = directory where rt and rtwizard executables are stored\n");
-        bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report. If the classification is a security access label, a corresponding color will be applied to the border\n");
+        bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report. \n");
+        bu_log("           * If the classification is a security access label, a corresponding color will be applied to the border\n");
+        bu_log("           * Options: UNCLASSIFIED, CONFIDENTIAL, SECRET, TOP_SECRET, <CUSTOM>\n");
         bu_log("    o = orientation of the file, default is right hand, flag will change orientation output to left hand\n");
         bu_log("    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up\n");
         bu_log("    N = notes that a user would like to add to be specified in the report\n");
