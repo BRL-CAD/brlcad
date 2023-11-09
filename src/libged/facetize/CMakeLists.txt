@@ -19,7 +19,6 @@ set(FACETIZE_SRCS
   continuation.cpp
   facetize.cpp
   facetize_log.c
-  manifold.cpp
   regions.cpp
   spsr.cpp
   util.cpp
