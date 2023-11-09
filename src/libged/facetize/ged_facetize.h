@@ -119,6 +119,9 @@ struct _ged_facetize_state {
 
     /* Implementation */
     struct ged *gedp;
+
+    union tree *facetize_tree;
+
     struct bu_attribute_value_set *c_map; // TODO - this should probably be a std::map
     struct bu_attribute_value_set *s_map; // TODO - this should probably be a std::map
     struct _ged_facetize_logging_state *log_s;

@@ -47,7 +47,8 @@ facetize_region_end(struct db_tree_state *tsp,
     if (tsp) RT_CK_DBTS(tsp);
     if (pathp) RT_CK_FULL_PATH(pathp);
 
-    facetize_tree = (union tree **)client_data;
+    struct _ged_facetize_state *s = (struct _ged_facetize_state *)client_data;
+    facetize_tree = &s->facetize_tree;
 
     if (curtree->tr_op == OP_NOP) return curtree;
 
@@ -75,6 +76,7 @@ struct manifold_mesh {
     unsigned int *faces;
 };
 
+
 static
 struct manifold_mesh *
 bot_to_mmesh(struct rt_bot_internal *bot)
@@ -92,6 +94,26 @@ bot_to_mmesh(struct rt_bot_internal *bot)
 	omesh->vertices[i] = bot->vertices[i];
     }
     return omesh;
+}
+
+static
+struct manifold_mesh *
+nmg_to_mmesh(struct nmgregion *r)
+{
+    if (!r)
+	return NULL;
+
+    return NULL;
+}
+
+static
+struct nmgregion *
+mmesh_to_nmg(struct manifold_mesh *m)
+{
+    if (!m)
+	return NULL;
+
+    return NULL;
 }
 
 // TODO - need to replace this with logic that uses Manifold's
@@ -268,7 +290,7 @@ bool_meshes(
 int
 _ged_manifold_do_bool(
         union tree *tp, union tree *tl, union tree *tr,
-        int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *UNUSED(data))
+        int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *data)
 {
     // If we're planning to write out an NMG primitive, we can't stage through
     // Manifold since it operates on triangles and we would lose any higher order
@@ -282,6 +304,8 @@ _ged_manifold_do_bool(
     struct manifold_mesh *lmesh = NULL;
     struct manifold_mesh *rmesh = NULL;
     struct manifold_mesh *omesh = NULL;
+    struct _ged_facetize_state *s = (struct _ged_facetize_state *)data;
+    struct rt_wdb *wdbp = wdb_dbopen(s->gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
     // Translate op for MANIFOLD
     manifold::OpType manifold_op = manifold::OpType::Add;
@@ -480,7 +504,7 @@ _try_facetize(struct manifold_mesh **omesh, struct model **omodel, struct _ged_f
     init_state.ts_ttol = &wdbp->wdb_ttol;
     init_state.ts_tol = &wdbp->wdb_tol;
     init_state.ts_m = &nmg_model;
-    union tree *facetize_tree = (union tree *)0;
+    s->facetize_tree = (union tree *)0;
 
     if (!BU_SETJUMP) {
 	/* try */
@@ -490,7 +514,7 @@ _try_facetize(struct manifold_mesh **omesh, struct model **omodel, struct _ged_f
 			 0,			/* take all regions */
 			 facetize_region_end,
 			 rt_booltree_leaf_tess,
-			 (void *)&facetize_tree
+			 (void *)s
 			);
     } else {
 	/* catch */
@@ -505,7 +529,7 @@ _try_facetize(struct manifold_mesh **omesh, struct model **omodel, struct _ged_f
 	return -1;
     }
 
-    if (facetize_tree) {
+    if (s->facetize_tree) {
 
 	if (s->make_nmg) {
 	    // We're processing as an NMG, so we can't use Manifold - it works
@@ -513,7 +537,7 @@ _try_facetize(struct manifold_mesh **omesh, struct model **omodel, struct _ged_f
 	    // faces from the NMG primitives.  Use an old school nmg_boolean
 	    if (!BU_SETJUMP) {
 		/* try */
-		failed = nmg_boolean(facetize_tree, nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource);
+		failed = nmg_boolean(s->facetize_tree, nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource);
 	    } else {
 		/* catch */
 		BU_UNSETJUMP;
@@ -521,13 +545,13 @@ _try_facetize(struct manifold_mesh **omesh, struct model **omodel, struct _ged_f
 		return failed;
 	    } BU_UNSETJUMP;
 
-	    if (!failed && facetize_tree) {
-		NMG_CK_REGION(facetize_tree->tr_d.td_r);
-		facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
+	    if (!failed && s->facetize_tree) {
+		NMG_CK_REGION(s->facetize_tree->tr_d.td_r);
+		s->facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
 	    }
 
-	    if (facetize_tree) {
-		db_free_tree(facetize_tree, &rt_uniresource);
+	    if (s->facetize_tree) {
+		db_free_tree(s->facetize_tree, &rt_uniresource);
 	    }
 
 	    *omodel = (failed) ? NULL : nmg_model;
@@ -535,7 +559,7 @@ _try_facetize(struct manifold_mesh **omesh, struct model **omodel, struct _ged_f
 	}
 
 	// We're not making an NMG - use Manifold
-	ftree = rt_booltree_evaluate(facetize_tree, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource, &_ged_manifold_do_bool, 0, (void *)s);
+	ftree = rt_booltree_evaluate(s->facetize_tree, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource, &_ged_manifold_do_bool, 0, (void *)s);
 	if (!ftree) {
 	    _ged_facetize_log_default(s);
 	    return -1;
@@ -577,9 +601,9 @@ _try_facetize(struct manifold_mesh **omesh, struct model **omodel, struct _ged_f
 	}
     }
 
-    // We don't have a tree - whether that's an error or not depends
+    // TODO - We don't have a tree - whether that's an error or not depends
     _ged_facetize_log_default(s);
-    return ftree->tr_d.tm_status;
+    return 0;
 }
 
 int
