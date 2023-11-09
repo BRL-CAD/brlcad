@@ -225,7 +225,7 @@ void generateReport(Options opt)
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
     makeHierarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     //brl-cad logo
-    img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg");
+    img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg", 250);
     //branding logo
     if (opt.getLogopath() != ""){
         img.drawTransparentImage(3350, 2360, 100, 90, opt.getLogopath());
