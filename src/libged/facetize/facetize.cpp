@@ -1667,6 +1667,15 @@ bool_meshes(
 	return -1;
     }
 
+#if 0
+    std::cerr << "\n";
+    std::cerr << "left: " << lname << "\n";
+    std::cerr << "right: " << lname << "\n";
+    std::cerr << "Manifold op: " << (int)b_op << "\n";
+    tris_to_stl("left", a_coords, a_tris, a_tricnt);
+    tris_to_stl("right", b_coords, b_tris, b_tricnt);
+#endif
+
     manifold::Manifold result;
     try {
 	result = a_manifold.Boolean(b_manifold, b_op);
@@ -1723,6 +1732,7 @@ bool_meshes(
 static int
 _manifold_do_bool(
         union tree *tp, union tree *tl, union tree *tr,
+        //int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *data)
         int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *tol, void *UNUSED(data))
 {
 #ifdef USE_MANIFOLD
@@ -1731,7 +1741,8 @@ _manifold_do_bool(
     struct manifold_mesh *lmesh = NULL;
     struct manifold_mesh *rmesh = NULL;
     struct manifold_mesh *omesh = NULL;
-    //struct _ged_facetize_opts *o = (struct _ged_facetize_opts *)data;
+    //struct _ged_facetize_opts *s = (struct _ged_facetize_opts *)data;
+    //_ged_facetize_log_default(s);
 
     // Translate op for MANIFOLD
     manifold::OpType manifold_op = manifold::OpType::Add;
