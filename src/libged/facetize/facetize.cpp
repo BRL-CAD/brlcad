@@ -33,7 +33,9 @@
 
 #ifdef USE_MANIFOLD
 #include "manifold/manifold.h"
+#ifdef USE_ASSETIMPORT
 #include "manifold/meshIO.h"
+#endif
 #endif
 
 #include "bu/app.h"
@@ -1579,11 +1581,13 @@ bool_meshes(
     }
 
 #if 0
+#ifdef USE_ASSETIMPORT
     std::cerr << lname << " " << (int)b_op << " " << rname << "\n";
     std::remove("left.glb");
     std::remove("right.glb");
     manifold::ExportMesh(std::string("left.glb"), a_manifold.GetMesh(), {});
     manifold::ExportMesh(std::string("right.glb"), b_manifold.GetMesh(), {});
+#endif
 #endif
 
     manifold::Manifold result;
@@ -1595,6 +1599,7 @@ bool_meshes(
 	}
     } catch (...) {
 	bu_log("Manifold boolean library threw failure\n");
+#ifdef USE_ASSETIMPORT
 	const char *evar = getenv("GED_MANIFOLD_DEBUG");
 	// write out the failing inputs to files to aid in debugging
 	if (evar && strlen(evar)) {
@@ -1603,6 +1608,7 @@ bool_meshes(
 	    manifold::ExportMesh(std::string(rname)+std::string(".glb"), b_manifold.GetMesh(), {});
 	    bu_exit(EXIT_FAILURE, "Exiting to avoid overwriting debug outputs from Manifold boolean failure.\n");
 	}
+#endif
 	return -1;
     }
     manifold::Mesh rmesh = result.GetMesh();

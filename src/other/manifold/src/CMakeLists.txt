@@ -37,9 +37,9 @@ set(MANIFOLD_SRCS
 	smoothing.cpp
 	sort.cpp
 	)
-if (assimp_DIR)
+if (ASSETIMPORT_LIBRARIES)
 	set(MANIFOLD_SRCS ${MANIFOLD_SRCS} meshIO.cpp)
-endif (assimp_DIR)
+endif (ASSETIMPORT_LIBRARIES)
 
 add_library(manifold SHARED ${MANIFOLD_SRCS})
 target_include_directories(manifold PUBLIC
@@ -50,9 +50,9 @@ target_include_directories(manifold PUBLIC
 	${PROJECT_SOURCE_DIR}/thrust/dependencies/libcudacxx/include
 	${PROJECT_SOURCE_DIR}/thrust/dependencies/cub
 	)
-if (assimp_DIR)
+if (ASSETIMPORT_LIBRARIES)
 	target_link_libraries(manifold ${ASSETIMPORT_LIBRARIES})
-endif (assimp_DIR)
+endif (ASSETIMPORT_LIBRARIES)
 target_compile_options(manifold PRIVATE ${MANIFOLD_FLAGS} -DTHRUST_DEVICE_SYSTEM=THRUST_DEVICE_SYSTEM_CPP)
 target_compile_features(manifold PUBLIC cxx_std_17)
 set_property(TARGET manifold APPEND PROPERTY COMPILE_DEFINITIONS "MANIFOLD_DLL_EXPORTS")

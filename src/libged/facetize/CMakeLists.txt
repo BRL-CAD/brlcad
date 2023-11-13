@@ -14,6 +14,11 @@ if (MANIFOLD_LIBRARIES)
     ${MANIFOLD_INCLUDE_DIRS}
     )
   add_definitions(-DUSE_MANIFOLD)
+
+  if (ASSETIMPORT_LIBRARY)
+    include_directories(SYSTEM ${ASSETIMPORT_INCLUDE_DIR})
+    add_definitions(-DUSE_ASSETIMPORT)
+  endif (ASSETIMPORT_LIBRARY)
 endif (MANIFOLD_LIBRARIES)
 # We want to include 3rd party libraries with -isystem - use
 # BRLCAD_LIB_INCLUDE_DIRS for that purpose

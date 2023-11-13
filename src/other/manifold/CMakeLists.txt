@@ -20,7 +20,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(MANIFOLD_PAR "NONE" CACHE STRING "Parallel backend, either \"TBB\" or \"NONE\"")
 set(MANIFOLD_FLAGS "" CACHE STRING "Manifold compiler flags")
 
-find_package(assimp)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+find_package(ASSETIMPORT)
 
 if (MSVC)
   set(MANIFOLD_FLAGS ${MANIFOLD_FLAGS} /DNOMINMAX)
