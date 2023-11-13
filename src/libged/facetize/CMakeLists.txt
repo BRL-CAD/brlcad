@@ -19,7 +19,7 @@ endif (MANIFOLD_LIBRARIES)
 # BRLCAD_LIB_INCLUDE_DIRS for that purpose
 BRLCAD_LIB_INCLUDE_DIRS(facetize FACETIZE_INCLUDE_DIRS FACETIZE_LOCAL_INCLUDE_DIRS)
 
-set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES})
+set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES} ${ASSETIMPORT_LIBRARIES})
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-facetize SHARED facetize.cpp facetize_log.c)
