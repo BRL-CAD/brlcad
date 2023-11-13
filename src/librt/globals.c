@@ -115,6 +115,7 @@ const struct db_tree_state rt_initial_tree_state = {
     NULL,			/* ts_ttol */
     NULL,			/* ts_tol */
     NULL,			/* ts_m */
+    NULL,			/* ts_m_pclbk */
     NULL,			/* ts_m_clbk */
     NULL,			/* ts_rtip */
     NULL			/* ts_resp */

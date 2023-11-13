@@ -27,6 +27,11 @@
 #define LIBGED_FACETIZE_GED_PRIVATE_H
 
 #include "common.h"
+
+#ifdef __cplusplus
+#include "manifold/manifold.h"
+#endif
+
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn/tol.h"
@@ -130,8 +135,33 @@ struct _ged_facetize_state {
     struct bu_vls *nmg_comb;
     struct bu_vls *continuation_comb;
     struct bu_vls *spsr_comb;
+
+    /* Internal - any C++ containers should be hidden here so
+     * the C logging file doesn't choke on them */
+    void *iptr;
+};
+__END_DECLS
+
+#ifdef __cplusplus
+#include <unordered_set>
+struct facetize_maps {
+    // Half spaces are handled differently depending on the boolean
+    // op, so we need to ID them specifically.
+    std::unordered_set<manifold::Manifold *> half_spaces;
 };
 
+#endif
+
+extern int
+bot_repair(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
+
+extern int
+plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
+
+extern int
+_pre_tess_clbk(void **out, struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *data);
+
+__BEGIN_DECLS
 extern int _db_uniq_test(struct bu_vls *n, void *data);
 
 extern int

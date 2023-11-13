@@ -157,6 +157,8 @@ bool_meshes(
 	return -1;
     }
 
+    // TODO - we'll probably want to just keep this container in lieu of using
+    // the manifold_mesh struct
     manifold::Manifold *result = new manifold::Manifold();
     try {
 	*result = a_manifold.Boolean(b_manifold, b_op);

@@ -77,46 +77,55 @@ rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *path
     BG_CK_TESS_TOL(tsp->ts_ttol);
     RT_CK_RESOURCE(tsp->ts_resp);
 
-    if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
-	if (!tsp->ts_m_clbk)
-	    bu_log("ERROR(%s): tessellation support not available\n", dp->d_namep);
-	if (tsp->ts_m_clbk) {
-	    ts_status = (*tsp->ts_m_clbk)(&r1, tsp, pathp, data);
-	    if (ts_status < 0) {
-		bu_log("ERROR(%s): NMG tessellation support not available and fallback was not successful\n", dp->d_namep);
-		return TREE_NULL;
-	    }
-	} else {
-	    return TREE_NULL;
-	}
-    }
+    // See if we are doing something other than the
+    // standard ft_tessellate
+    void *s = NULL;
+    int pret = -1;
+    if (tsp->ts_m_pclbk)
+	pret = (*tsp->ts_m_pclbk)(&s, tsp, pathp, ip, data);
 
-    if (!r1) {
-	m = nmg_mm();
-	ts_status = ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol);
-	if (ts_status < 0) {
-	    bu_log("ERROR(%s): NMG tessellation failure\n", dp->d_namep);
+    if (pret < 0) {
+	// Nope - work as normal
+	if (!ip->idb_meth || !ip->idb_meth->ft_tessellate) {
+	    // If the standard tessellation isn't available,
+	    // check for a callback
+	    if (!tsp->ts_m_clbk)
+		bu_log("ERROR(%s): tessellation support not available\n", dp->d_namep);
 	    if (tsp->ts_m_clbk) {
-		ts_status = (*tsp->ts_m_clbk)(&r1, tsp, pathp, data);
+		ts_status = (*tsp->ts_m_clbk)(&r1, tsp, pathp, ip, data);
 		if (ts_status < 0) {
-		    bu_log("ERROR(%s): tessellation fallback was not successful\n", dp->d_namep);
+		    bu_log("ERROR(%s): NMG tessellation support not available and fallback was not successful\n", dp->d_namep);
 		    return TREE_NULL;
 		}
 	    } else {
 		return TREE_NULL;
 	    }
 	}
-    }
 
-    // A tessellation routine may decide there are no results for an object and
-    // return nothing (but not as an error) - if so, we create a union tree
-    // with the name but null td_r to indicate this for boolean operations.  A
-    // TREE_NULL return will indicate an error, and can be used to immediately
-    // abort an operation.
-    if (r1) {
-	NMG_CK_REGION(r1);
-	if (nmg_debug & NMG_DEBUG_VERIFY) {
-	    nmg_vshell(&r1->s_hd, r1);
+	if (!r1) {
+	    m = nmg_mm();
+	    ts_status = ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol);
+	    if (ts_status < 0) {
+		// If the standard tessellation failed, see if we have a
+		// callback to try
+		bu_log("ERROR(%s): NMG tessellation failure\n", dp->d_namep);
+		if (tsp->ts_m_clbk) {
+		    ts_status = (*tsp->ts_m_clbk)(&r1, tsp, pathp, ip, data);
+		    if (ts_status < 0) {
+			bu_log("ERROR(%s): tessellation fallback was not successful\n", dp->d_namep);
+			return TREE_NULL;
+		    }
+		} else {
+		    return TREE_NULL;
+		}
+	    }
+	}
+
+	if (r1) {
+	    NMG_CK_REGION(r1);
+	    if (nmg_debug & NMG_DEBUG_VERIFY) {
+		nmg_vshell(&r1->s_hd, r1);
+	    }
 	}
     }
 
@@ -125,7 +134,8 @@ rt_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *path
     curtree->tr_op = OP_TESS;
     curtree->tr_d.td_name = bu_strdup(dp->d_namep);
     curtree->tr_d.td_r = r1;
-    curtree->tr_d.td_d = NULL;
+    if (pret >= 0 && s)
+	curtree->tr_d.td_d = s;
 
     if (RT_G_DEBUG&RT_DEBUG_TREEWALK)
 	bu_log("booltree_leaf_tess(%s) OK\n", dp->d_namep);

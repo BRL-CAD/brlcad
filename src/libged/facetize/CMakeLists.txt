@@ -24,6 +24,8 @@ set(FACETIZE_SRCS
   continuation.cpp
   facetize.cpp
   facetize_log.c
+  plate.cpp
+  preprocess.cpp
   regions.cpp
   spsr.cpp
   util.cpp
