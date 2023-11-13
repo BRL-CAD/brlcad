@@ -157,10 +157,10 @@ bool_meshes(
 	return -1;
     }
 
-    manifold::Manifold result;
+    manifold::Manifold *result = new manifold::Manifold();
     try {
-	result = a_manifold.Boolean(b_manifold, b_op);
-	if (result.Status() != manifold::Manifold::Error::NoError) {
+	*result = a_manifold.Boolean(b_manifold, b_op);
+	if (result->Status() != manifold::Manifold::Error::NoError) {
 	    bu_log("Error - bool result invalid\n");
 	    return -1;
 	}
@@ -178,7 +178,8 @@ bool_meshes(
 #endif
 	return -1;
     }
-    manifold::Mesh rmesh = result.GetMesh();
+    manifold::Mesh rmesh = result->GetMesh();
+    delete result;
 
     (*o_coords) = (double *)calloc(rmesh.vertPos.size()*3, sizeof(double));
     (*o_tris) = (unsigned int *)calloc(rmesh.triVerts.size()*3, sizeof(unsigned int));
