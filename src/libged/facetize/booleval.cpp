@@ -126,7 +126,11 @@ bool_meshes(
 	manifold::OpType b_op,
 	double *a_coords, int a_ccnt, unsigned int *a_tris, int a_tricnt,
 	double *b_coords, int b_ccnt, unsigned int *b_tris, int b_tricnt,
+#ifdef USE_ASSETIMPORT
 	const char *lname, const char *rname)
+#else
+	const char *UNUSED(lname), const char *UNUSED(rname))
+#endif
 {
     if (!o_coords || !o_ccnt || !o_tris || !o_tricnt)
 	return -1;
