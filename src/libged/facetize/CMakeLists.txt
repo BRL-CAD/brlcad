@@ -7,6 +7,7 @@ set(FACETIZE_INCLUDE_DIRS
   )
 set(FACETIZE_LOCAL_INCLUDE_DIRS
   ${MANIFOLD_INCLUDE_DIRS}
+  ${ASSETIMPORT_INCLUDE_DIR}
   )
 
 # We want to include 3rd party libraries with -isystem - use
@@ -24,7 +25,7 @@ set(FACETIZE_SRCS
   util.cpp
   )
 
-set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES})
+set(FACETIZE_LIBS libged libbu ${MANIFOLD_LIBRARIES} ${ASSETIMPORT_LIBRARIES})
 
 add_definitions(-DGED_PLUGIN)
 ged_plugin_library(ged-facetize SHARED ${FACETIZE_SRCS})

@@ -449,6 +449,7 @@ include/collider.h
 include/hashtable.h
 include/manifold/cross_section.h
 include/manifold/manifold.h
+include/manifold/meshIO.h
 include/manifold/public.h
 include/manifold/sdf.h
 include/optional_assert.h
@@ -1299,6 +1300,7 @@ src/face_op.cpp
 src/impl.cpp
 src/impl.h
 src/manifold.cpp
+src/meshIO.cpp
 src/mesh_fixes.h
 src/polygon.cpp
 src/properties.cpp
