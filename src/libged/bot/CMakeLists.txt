@@ -40,6 +40,10 @@ endif (BRLCAD_ENABLE_OPENVDB)
 # BRLCAD_LIB_INCLUDE_DIRS for that purpose
 BRLCAD_LIB_INCLUDE_DIRS(bot BOT_INCLUDE_DIRS BOT_LOCAL_INCLUDE_DIRS)
 
+
+# TODO - investigate https://github.com/nissmar/VSA to see if it could be
+# a viable way to simplify large, complex BoT primitives...
+
 set(BOT_SRCS
   bot_condense.c
   bot.cpp
