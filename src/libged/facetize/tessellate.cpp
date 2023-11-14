@@ -26,204 +26,164 @@
 
 #include "common.h"
 
-#include "bu/opt.h"
+#include <chrono>
+#include <thread>
+
+#include "bu/process.h"
 
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
-// We use an arbn to define the enclosed volume, and facetize that
-static int
-half_to_manifold(void **out, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
-{
-    plane_t equations[7];
-    // First, bound the volume to its limits
-    HSET(equations[0], -1, 0, 0, FLT_MAX);
-    HSET(equations[1], 1, 0, 0, FLT_MAX);
-    HSET(equations[2], 0, -1, 0, FLT_MAX);
-    HSET(equations[3], 0, 1, 0, FLT_MAX);
-    HSET(equations[4], 0, 0, -1, FLT_MAX);
-    HSET(equations[5], 0, 0, 1, FLT_MAX);
-
-    // Then introduce the half plane
-    struct rt_half_internal *h = (struct rt_half_internal *)ip->idb_ptr;
-    HMOVE(equations[6], h->eqn);
-
-    struct rt_arbn_internal arbn;
-    arbn.magic = RT_ARBN_INTERNAL_MAGIC;
-    arbn.neqn = 7;
-    arbn.eqn = equations;
-
-    struct rt_db_internal intern;
-    RT_DB_INTERNAL_INIT(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_ARBN;
-    intern.idb_ptr = &arbn;
-    intern.idb_meth = &OBJ[ID_ARBN];
-
-    struct nmgregion *r1 = NULL;
-    struct model *m = nmg_mm();
-    if (!intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol)) {
-	(*out) = new manifold::Manifold();
-	return 1;
-    }
-
-    struct rt_bot_internal *hbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
-    if (!hbot) {
-    	(*out) = new manifold::Manifold();
-	return 1;
-    }
-
-    manifold::Mesh half_m;
-    for (size_t j = 0; j < hbot->num_vertices ; j++)
-	half_m.vertPos.push_back(glm::vec3(hbot->vertices[3*j], hbot->vertices[3*j+1], hbot->vertices[3*j+2]));
-    for (size_t j = 0; j < hbot->num_faces; j++)
-	half_m.triVerts.push_back(glm::vec3(hbot->faces[3*j], hbot->faces[3*j+1], hbot->faces[3*j+2]));
-
-    manifold::Manifold half_manifold(half_m);
-    if (half_manifold.Status() != manifold::Manifold::Error::NoError) {
-	bu_log("half->arbn->bot conversion failed - cannot define manifold from half facetization\n");
-	(*out) = new manifold::Manifold();
-	return 1;
-    }
-
-    (*out) = new manifold::Manifold(half_manifold);
-    return 0;
-}
-
-// TODO - this is a hard problem, without a truly general solution - we need to try to handle
-// "almost correct" meshes, but can't do much with complete garbage.  Potential resources
-// to investigate:
-//
-// https://github.com/wjakob/instant-meshes (also https://github.com/Volumental/instant-meshes)
-// https://github.com/BrunoLevy/geogram (hole filling, Co3Ne)
-//
-int
-bot_repair(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
-{
-    if (!out || !bot || !ttol || !tol)
-	return -1;
-    return 0;
-}
-
-// TODO - if this can be run the actual ft_tessellate and/or fallback method
-// calls in a separate process, it should improve our robustness by allowing us
-// to "time out" primitive conversions that get into infinite loops or are just
-// running too long by killing the subprocess.  Simple workflow would be to
-// write out the ip to its own temp .g, process, then dbconcat it back in.
 int
 manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *data)
 {
     if (!out || !tsp || !ip || !data)
 	return -1;
 
+    struct _ged_facetize_state *s = (struct _ged_facetize_state *)data;
+    struct directory *dp = DB_PATH_CURR_DIR(pathp);
     char *path_str = db_path_to_string(pathp);
     bu_log("Tessellate %s\n", path_str);
     bu_free(path_str, "path string");
 
-    struct _ged_facetize_state *s = (struct _ged_facetize_state *)data;
-    struct facetize_maps *fm = (struct facetize_maps *)s->iptr;
+    // In order to control the process of generating a suitable input mesh,
+    // we run the tessellation logic itself in a separate process.
 
-    struct rt_bot_internal *bot = NULL;
-    int propVal = 0, ret = -1;
-    manifold::Mesh bot_mesh;
-    manifold::Manifold bot_manifold;
+    /* Build up a temp file path to use for writing out ip */
+    // TODO - incorporate a text printing of the ip pointer address, so we have
+    // instance uniqueness in the name as well in case we save this file for
+    // later use...
+    char tmpfil[MAXPATHLEN];
+    bu_dir(tmpfil, MAXPATHLEN, BU_DIR_TEMP, bu_temp_file_name(NULL, 0), dp->d_namep, "_tess.g", NULL);
 
-    switch (ip->idb_minor_type) {
-	// If we've got no-volume objects, they get an empty Manifold -
-	// they can be safely treated as a no-op in any of the booleans
-	case ID_ANNOT:
-	case ID_BINUNIF:
-	case ID_CONSTRAINT:
-	case ID_DATUM:
-	case ID_GRIP:
-	case ID_JOINT:
-	case ID_MATERIAL:
-	case ID_PNTS:
-	case ID_SCRIPT:
-	case ID_SKETCH:
-	    (*out) = new manifold::Manifold();
-	    return 0;
-	case ID_HALF:
-	    // Halfspace objects get a large arb.
-	    ret = half_to_manifold(out, ip, tsp->ts_ttol, tsp->ts_tol);
-	    if (*out)
-		fm->half_spaces.insert((manifold::Manifold *)*out);
-	    return ret;
-	case ID_BOT:
-	    bot = (struct rt_bot_internal *)(ip->idb_ptr);
-	    propVal = (int)rt_bot_propget(bot, "type");
-	    // Surface meshes are zero volume, and thus no-op
-	    if (propVal == RT_BOT_SURFACE) {
-		(*out) = new manifold::Manifold();
-		return 0;
-	    }
-	    // Plate mode BoTs need an explicit volume representation
-	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
-		return plate_eval(out, bot, tsp->ts_ttol, tsp->ts_tol);
-	    }
-	    // Volumetric bot - make a manifold.  There is no need to stage through NMG - what
-	    // we care about is whether this mesh is something Manifold's boolean can handle,
-	    // or whether we need to try to repair it.
-	    for (size_t j = 0; j < bot->num_vertices ; j++)
-		bot_mesh.vertPos.push_back(glm::vec3(bot->vertices[3*j], bot->vertices[3*j+1], bot->vertices[3*j+2]));
-	    for (size_t j = 0; j < bot->num_faces; j++)
-		bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
-	    bot_manifold = manifold::Manifold(bot_mesh);
-	    if (bot_manifold.Status() != manifold::Manifold::Error::NoError) {
-		// Nope - try repairing
-		return bot_repair(out, bot, tsp->ts_ttol, tsp->ts_tol);
-	    }
-	    // Passed - return the manifold
-	    (*out) = new manifold::Manifold(bot_manifold);
-	    return 0;
-	case ID_BREP:
-	    // TODO - need to handle plate mode NURBS the way we handle plate mode BoTs
-	default:
-	    break;
+    // Create the temporary database
+    struct db_i *dbip = db_create(tmpfil, BRLCAD_DB_FORMAT_LATEST);
+    if (!dbip) {
+	bu_log("Unable to create temp database %s\n", tmpfil);
+	return -1;
     }
 
-    // If we got this far, it's not a special case - see if we can do "normal"
-    // tessellation
-    int status = -1;
-    struct rt_bot_internal *nbot = NULL;
-    if (ip->idb_meth) {
-	struct model *m = nmg_mm();
-	struct nmgregion *r1 = (struct nmgregion *)NULL;
-	// Try the NMG routines (primary means of CSG implicit -> explicit mesh conversion)
-	// TODO - needs to be separate process...
-	if (!BU_SETJUMP) {
-	    status = ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol);
-	} else {
-	    BU_UNSETJUMP;
-	    status = -1;
-	    nbot = NULL;
-	} BU_UNSETJUMP;
-	if (status > -1) {
-	    // NMG reports success, now get a BoT
-	    if (!BU_SETJUMP) {
-		nbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tsp->ts_tol);
-	    } else {
-		BU_UNSETJUMP;
-		nbot = NULL;
-	    } BU_UNSETJUMP;
-	    if (nbot) {
-		// We got a BoT, now see if we can get a Manifold
-		for (size_t j = 0; j < nbot->num_vertices ; j++)
-		    bot_mesh.vertPos.push_back(glm::vec3(nbot->vertices[3*j], nbot->vertices[3*j+1], nbot->vertices[3*j+2]));
-		for (size_t j = 0; j < nbot->num_faces; j++)
-		    bot_mesh.triVerts.push_back(glm::vec3(nbot->faces[3*j], nbot->faces[3*j+1], nbot->faces[3*j+2]));
-		bot_manifold = manifold::Manifold(bot_mesh);
-		if (bot_manifold.Status() != manifold::Manifold::Error::NoError) {
-		    // Urk - we got an NMG mesh, but it's no good for a Manifold(??)
-		    if (nbot->vertices)
-			bu_free(nbot->vertices, "verts");
-		    if (nbot->faces)
-			bu_free(nbot->faces, "faces");
-		    BU_FREE(nbot, struct rt_bot_internal);
-		    nbot = NULL;
-		}
+    // Write the object in question
+    struct rt_wdb *wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DEFAULT);
+    wdb_put_internal(wdbp, dp->d_namep, ip, 1.0);
+
+    // Close the temporary .g file
+    db_close(dbip);
+
+    // Build up the path to the tessellation exec name
+    char tess_exec[MAXPATHLEN];
+    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_tessellate", BU_DIR_EXT, NULL);
+
+    // Build up the command to run
+    struct bu_vls abs_str = BU_VLS_INIT_ZERO;
+    struct bu_vls rel_str = BU_VLS_INIT_ZERO;
+    struct bu_vls norm_str = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&abs_str, "%0.17f", tsp->ts_ttol->abs);
+    bu_vls_sprintf(&rel_str, "%0.17f", tsp->ts_ttol->rel);
+    bu_vls_sprintf(&norm_str, "%0.17f", tsp->ts_ttol->norm);
+    char *tess_cmd[11] = {NULL};
+    tess_cmd[0] = tess_exec;
+    tess_cmd[1] = "--abs";
+    tess_cmd[2] = bu_vls_cstr(&abs_str);
+    tess_cmd[3] = "--rel";
+    tess_cmd[4] = bu_vls_cstr(&rel_str);
+    tess_cmd[5] = "--norm";
+    tess_cmd[6] = bu_vls_cstr(&norm_str);
+    tess_cmd[7] = tmpfil;
+    tess_cmd[8] = dp->d_namep;
+    tess_cmd[9] = "--default";
+
+    // There are a number of methods that can be tried.  We try them in priority
+    // order, timing out if one of them goes too long.
+    int rc = 0;
+    int method_flags = s->method_flags;
+    while (rc) {
+	if (!method_flags)
+	    break;
+	bool have_method = false;
+	if (!have_method && method_flags & FACETIZE_NMG) {
+	    method_flags = method_flags & ~(FACETIZE_NMG);
+	    tess_cmd[9] = "--default";
+	    have_method = true;
+	}
+	if (!have_method && method_flags & FACETIZE_CONTINUATION) {
+	    method_flags = method_flags & ~(FACETIZE_CONTINUATION);
+	    tess_cmd[9] = "--CM";
+	    have_method = true;
+	}
+	if (!have_method && method_flags & FACETIZE_SPSR) {
+	    method_flags = method_flags & ~(FACETIZE_SPSR);
+	    tess_cmd[9] = "--SPSR";
+	}
+
+	int aborted = 0, timeout = 0;
+	int64_t start = bu_gettime();
+	int64_t elapsed = 0;
+	fastf_t seconds = 0.0;
+	struct bu_process *p = NULL;
+	bu_process_exec(&p, tess_cmd[0], 10, tess_cmd, 0, 0);
+	while (p && (bu_process_pid(p) != -1)) {
+	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	    elapsed = bu_gettime() - start;
+	    seconds = elapsed / 1000000.0;
+	    if (seconds > s->max_time) {
+		bu_terminate(bu_process_pid(p));
+		timeout = 1;
 	    }
 	}
+	int w_rc = bu_process_wait(&aborted, p, 0);
+	rc = (timeout) ? -1 : w_rc;
+    }
+
+    if (rc) {
+	// If we tried all the methods and didn't get any successes, we have an
+	// error.  We can either terminate the whole conversion based on this
+	// failure, or ignore this object and process the remainder of the
+	// tree.  The latter will be incorrect if this object was supposed to
+	// materially contribute to the final object shape, but for some
+	// applications like visualization there are cases where "something is
+	// better than nothing"
+	return -1;
+    }
+
+    // If we succeeded, tmpfil should now hold a BoT that will be a suitable
+    // basis for a Manifold.
+    if (!bu_file_exists(tmpfil, NULL)) {
+    	bu_log("Unable to locate tessellation result database %s\n", tmpfil);
+	return -1;
+    }
+
+    // TODO - it may be worth doing this "on the fly" for larger meshes, to
+    // save our in-memory footprint during the boolean process...  save the
+    // temp .g files, stash the paths for later lookup, and clean them all up
+    // at the end...
+    int fsize = bu_file_size(tmpfil);
+
+    struct rt_bot_internal *bot = NULL;
+    struct db_i *dbip = db_open(tmpfil, DB_OPEN_READONLY);
+    if (!dbip) {
+	bu_log("Unable to open tessellation database %s for result reading\n", tmpfil);
+	return -1;
+    }
+
+
+
+
+    manifold::Mesh bot_mesh;
+    for (size_t j = 0; j < nbot->num_vertices ; j++)
+	bot_mesh.vertPos.push_back(glm::vec3(nbot->vertices[3*j], nbot->vertices[3*j+1], nbot->vertices[3*j+2]));
+    for (size_t j = 0; j < nbot->num_faces; j++)
+	bot_mesh.triVerts.push_back(glm::vec3(nbot->faces[3*j], nbot->faces[3*j+1], nbot->faces[3*j+2]));
+
+    manifold::Manifold bot_manifold = manifold::Manifold(bot_mesh);
+    if (bot_manifold.Status() != manifold::Manifold::Error::NoError) {
+	// Urk - we got a mesh, but it's no good for a Manifold(??)
+	if (nbot->vertices)
+	    bu_free(nbot->vertices, "verts");
+	if (nbot->faces)
+	    bu_free(nbot->faces, "faces");
+	BU_FREE(nbot, struct rt_bot_internal);
+	nbot = NULL;
     }
 
     if (status >= 0) {
@@ -232,8 +192,6 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 	return 0;
     }
 
-    // Nothing worked - try fallback methods, if enabled
-    // TODO - needs to be separate process...
     return 0;
 }
 

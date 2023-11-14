@@ -153,6 +153,18 @@ bu_process_pid(struct bu_process *pinfo)
 {
     if (!pinfo)
 	return -1;
+
+    // Check if the process is still running.  If not, return -1
+#ifdef HAVE_UNISTD_H
+    if ((kill(pinfo->pid, 0) == -1) && (errno == ESRCH))
+	return -1;
+#elif defined(_WIN32)
+    // https://stackoverflow.com/a/1591379/2037687
+    DWORD rc = WaitForSingleObject(pinfo->hProcess, 0);
+    if (rc != WAIT_TIMEOUT)
+	return -1;
+#endif
+
     return (int)pinfo->pid;
 }
 

@@ -28,9 +28,11 @@
 
 #include <set>
 
+#include "manifold/manifold.h"
+
 #include "vmath.h"
 #include "raytrace.h"
-#include "./ged_facetize.h"
+#include "../../ged_private.h"
 
 static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
