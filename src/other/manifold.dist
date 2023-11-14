@@ -1,5 +1,6 @@
 set(manifold_ignore_files
 AUTHORS
+CMake/FindASSETIMPORT.cmake
 CMakeLists.txt
 CONTRIBUTING.md
 LICENSE
