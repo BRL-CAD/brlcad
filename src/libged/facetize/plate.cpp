@@ -125,19 +125,18 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	// Make a sph at the vertex point with a radius based on the thickness
 	VMOVE(v, &bot->vertices[3**v_it]);
 
-	struct rt_ell_internal *ell;
-	BU_ALLOC(ell, struct rt_ell_internal);
-	ell->magic = RT_ELL_INTERNAL_MAGIC;
-	VMOVE(ell->v, v);
-	VSET(ell->a, r, 0, 0);
-	VSET(ell->b, 0, r, 0);
-	VSET(ell->c, 0, 0, r);
+	struct rt_ell_internal ell;
+	ell.magic = RT_ELL_INTERNAL_MAGIC;
+	VMOVE(ell.v, v);
+	VSET(ell.a, r, 0, 0);
+	VSET(ell.b, 0, r, 0);
+	VSET(ell.c, 0, 0, r);
 
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_ELL;
-	intern.idb_ptr = ell;
+	intern.idb_ptr = &ell;
 	intern.idb_meth = &OBJ[ID_ELL];
 
 	struct nmgregion *r1 = NULL;
@@ -155,11 +154,15 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	for (size_t j = 0; j < sbot->num_faces; j++)
 	    sph_m.triVerts.push_back(glm::vec3(sbot->faces[3*j], sbot->faces[3*j+1], sbot->faces[3*j+2]));
 
+	if (sbot->vertices)
+	    bu_free(sbot->vertices, "verts");
+	if (sbot->faces)
+	    bu_free(sbot->faces, "faces");
+	BU_FREE(sbot, struct rt_bot_internal);
+
 	manifold::Manifold left = c;
 	manifold::Manifold right(sph_m);
 	c = left.Boolean(right, manifold::OpType::Add);
-
-	BU_FREE(ell, struct rt_ell_internal);
     }
 
     std::set<std::pair<int, int>>::iterator e_it;
@@ -182,21 +185,20 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	VUNITIZE(cross2);
 	VSCALE(a, cross1, r);
 	VSCALE(b, cross2, r);
-	struct rt_tgc_internal *tgc;
-	BU_ALLOC(tgc, struct rt_tgc_internal);
-	tgc->magic = RT_TGC_INTERNAL_MAGIC;
-	VMOVE(tgc->v, base);
-	VMOVE(tgc->h, h);
-	VMOVE(tgc->a, a);
-	VMOVE(tgc->b, b);
-	VMOVE(tgc->c, a);
-	VMOVE(tgc->d, b);
+	struct rt_tgc_internal tgc;
+	tgc.magic = RT_TGC_INTERNAL_MAGIC;
+	VMOVE(tgc.v, base);
+	VMOVE(tgc.h, h);
+	VMOVE(tgc.a, a);
+	VMOVE(tgc.b, b);
+	VMOVE(tgc.c, a);
+	VMOVE(tgc.d, b);
 
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_TGC;
-	intern.idb_ptr = tgc;
+	intern.idb_ptr = &tgc;
 	intern.idb_meth = &OBJ[ID_TGC];
 
 	struct nmgregion *r1 = NULL;
@@ -214,11 +216,15 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	for (size_t j = 0; j < cbot->num_faces; j++)
 	    rcc_m.triVerts.push_back(glm::vec3(cbot->faces[3*j], cbot->faces[3*j+1], cbot->faces[3*j+2]));
 
+	if (cbot->vertices)
+	    bu_free(cbot->vertices, "verts");
+	if (cbot->faces)
+	    bu_free(cbot->faces, "faces");
+	BU_FREE(cbot, struct rt_bot_internal);
+
 	manifold::Manifold left = c;
 	manifold::Manifold right(rcc_m);
 	c = left.Boolean(right, manifold::OpType::Add);
-
-	BU_FREE(tgc, struct rt_tgc_internal);
     }
 
     // Now, handle the primary arb faces
@@ -258,17 +264,16 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	/* 5 */ pts[12] = pnts[5][X]; pts[13] = pnts[5][Y]; pts[14] = pnts[5][Z];
 	/* 6 */ pts[15] = pnts[2][X]; pts[16] = pnts[2][Y]; pts[17] = pnts[2][Z];
 
-	struct rt_arb_internal *arb;
-	BU_ALLOC(arb, struct rt_arb_internal);
-	arb->magic = RT_ARB_INTERNAL_MAGIC;
+	struct rt_arb_internal arb;
+	arb.magic = RT_ARB_INTERNAL_MAGIC;
 	for (int j = 0; j < 8; j++)
-	    VMOVE(arb->pt[j], &pts[j*3]);
+	    VMOVE(arb.pt[j], &pts[j*3]);
 
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_ARB8;
-	intern.idb_ptr = arb;
+	intern.idb_ptr = &arb;
 	intern.idb_meth = &OBJ[ID_ARB8];
 
 	struct nmgregion *r1 = NULL;
@@ -286,11 +291,15 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	for (size_t j = 0; j < abot->num_faces; j++)
 	    arb_m.triVerts.push_back(glm::vec3(abot->faces[3*j], abot->faces[3*j+1], abot->faces[3*j+2]));
 
+	if (abot->vertices)
+	    bu_free(abot->vertices, "verts");
+	if (abot->faces)
+	    bu_free(abot->faces, "faces");
+	BU_FREE(abot, struct rt_bot_internal);
+
 	manifold::Manifold left = c;
 	manifold::Manifold right(arb_m);
 	c = left.Boolean(right, manifold::OpType::Add);
-
-	BU_FREE(arb, struct rt_arb_internal);
     }
 
     *om = c;

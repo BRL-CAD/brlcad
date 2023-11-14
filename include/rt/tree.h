@@ -88,14 +88,12 @@ struct db_tree_state {
     const struct bg_tess_tol *  ts_ttol;        /**< @brief  Tessellation tolerance */
     const struct bn_tol *       ts_tol;         /**< @brief  Math tolerance */
     struct model **             ts_m;           /**< @brief  ptr to ptr to NMG "model" */
-    int				(*ts_m_pclbk)(void **, struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *);
-    int				(*ts_m_clbk)(struct nmgregion **, struct db_tree_state *, const struct db_full_path *,struct rt_db_internal *, void *);
     struct rt_i *               ts_rtip;        /**< @brief  Helper for rt_gettrees() */
     struct resource *           ts_resp;        /**< @brief  Per-CPU data */
 };
-#define RT_DBTS_INIT_ZERO { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 0, RT_MATER_INFO_INIT_ZERO, MAT_INIT_ZERO, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+#define RT_DBTS_INIT_ZERO { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 0, RT_MATER_INFO_INIT_ZERO, MAT_INIT_ZERO, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 /* from mged_initial_tree_state */
-#define RT_DBTS_INIT_IDN { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 100, RT_MATER_INFO_INIT_IDN, MAT_INIT_IDN, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
+#define RT_DBTS_INIT_IDN { RT_DBTS_MAGIC, NULL, 0, 0, 0, 0, 100, RT_MATER_INFO_INIT_IDN, MAT_INIT_IDN, 0, BU_AVS_INIT_ZERO, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 
 #define TS_SOFAR_MINUS  1       /**< @brief  Subtraction encountered above */
 #define TS_SOFAR_INTER  2       /**< @brief  Intersection encountered above */

@@ -1,4 +1,4 @@
-/*                   P R E P R O C E S S . C P P
+/*                   T E S S E L L A T E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2023 United States Government as represented by
@@ -17,19 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/facetize.cpp
+/** @file libged/facetize/tessellate.cpp
  *
- * Logic for cleaning up or otherwise preparing geometry for facetize
- * that is known to be problematic for the standard routines.  Examples
- * include:
- *
- * pnts are non-volumetric and can be ignored
- * Half planes (need to be represented with arb8s for boolean purposes)
- * Non-manifold meshes, non-plate - need to attempt repair
- * Non-manifold meshes, plate-mode - need offset surfaces
- *
- * Probably others...
- *
+ * Primary management of the process of getting Manifold mesh inputs from other
+ * BRL-CAD data.  Usually this just means calling ft_tessellate and translating
+ * the result into a Manifold, but there are a variety other scenarios as well.
  */
 
 #include "common.h"
@@ -38,53 +30,6 @@
 
 #include "../ged_private.h"
 #include "./ged_facetize.h"
-
-#if 0
-// TODO - cline has a facetize routine, so this is probably not needed.  However, it might
-// be usable as a fallback option if the cline facetize routine fails.
-static int
-cline_to_pipe(void **out, struct rt_db_internal *ip)
-{
-    struct rt_pipe_internal pipe;
-    int ret = rt_cline_to_pipe(&pipe, ip);
-    struct rt_db_internal intern;
-    RT_DB_INTERNAL_INIT(&intern);
-    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    intern.idb_type = ID_PIPE;
-    intern.idb_ptr = &pipe;
-    intern.idb_meth = &OBJ[ID_PIPE];
-
-    struct nmgregion *r1 = NULL;
-    struct model *m = nmg_mm();
-    if (!intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol)) {
-	(*out) = new manifold::Manifold();
-	return 1;
-    }
-
-    struct rt_bot_internal *sbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
-    if (!sbot) {
-    	(*out) = new manifold::Manifold();
-	return 1;
-    }
-
-    manifold::Mesh pipe_m;
-    for (size_t j = 0; j < sbot->num_vertices ; j++)
-	pipe_m.vertPos.push_back(glm::vec3(sbot->vertices[3*j], sbot->vertices[3*j+1], sbot->vertices[3*j+2]));
-    for (size_t j = 0; j < sbot->num_faces; j++)
-	pipe_m.triVerts.push_back(glm::vec3(sbot->faces[3*j], sbot->faces[3*j+1], sbot->faces[3*j+2]));
-
-    manifold::Manifold pipe_manifold(pipe_m);
-    if (pipe_manifold.Status() != manifold::Manifold::Error::NoError) {
-	bu_log("cline conversion - cannot define manifold from pipe facetization\n");
-	(*out) = new manifold::Manifold();
-	return 1;
-    }
-
-    (*out) = new manifold::Manifold(pipe_manifold);
-    return 0;
-}
-#endif
-
 
 // We use an arbn to define the enclosed volume, and facetize that
 static int
@@ -154,7 +99,7 @@ bot_repair(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 }
 
 int
-_pre_tess_clbk(void **out, struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, void *data)
+manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, void *data)
 {
     if (!out || !tsp || !ip || !data)
 	return -1;
@@ -218,11 +163,60 @@ _pre_tess_clbk(void **out, struct db_tree_state *tsp, const struct db_full_path 
 	case ID_BREP:
 	    // TODO - need to handle plate mode NURBS the way we handle plate mode BoTs
 	default:
-	    // If we're not dealing with one of the above types, proceed
-	    // normally
-	    return -1;
+	    break;
     }
 
+    // If we got this far, it's not a special case - see if we can do "normal"
+    // tessellation
+    int status = -1;
+    struct rt_bot_internal *nbot = NULL;
+    if (ip->idb_meth) {
+	struct model *m = nmg_mm();
+	struct nmgregion *r1 = (struct nmgregion *)NULL;
+	// Try the NMG routines (primary means of CSG implicit -> explicit mesh conversion)
+	if (!BU_SETJUMP) {
+	    status = ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol);
+	} else {
+	    BU_UNSETJUMP;
+	    status = -1;
+	    nbot = NULL;
+	} BU_UNSETJUMP;
+	if (status > -1) {
+	    // NMG reports success, now get a BoT
+	    if (!BU_SETJUMP) {
+		nbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tsp->ts_tol);
+	    } else {
+		BU_UNSETJUMP;
+		nbot = NULL;
+	    } BU_UNSETJUMP;
+	    if (nbot) {
+		// We got a BoT, now see if we can get a Manifold
+		for (size_t j = 0; j < nbot->num_vertices ; j++)
+		    bot_mesh.vertPos.push_back(glm::vec3(nbot->vertices[3*j], nbot->vertices[3*j+1], nbot->vertices[3*j+2]));
+		for (size_t j = 0; j < nbot->num_faces; j++)
+		    bot_mesh.triVerts.push_back(glm::vec3(nbot->faces[3*j], nbot->faces[3*j+1], nbot->faces[3*j+2]));
+		bot_manifold = manifold::Manifold(bot_mesh);
+		if (bot_manifold.Status() != manifold::Manifold::Error::NoError) {
+		    // Urk - we got an NMG mesh, but it's no good for a Manifold(??)
+		    if (nbot->vertices)
+			bu_free(nbot->vertices, "verts");
+		    if (nbot->faces)
+			bu_free(nbot->faces, "faces");
+		    BU_FREE(nbot, struct rt_bot_internal);
+		    nbot = NULL;
+		}
+	    }
+	}
+    }
+
+    if (status >= 0) {
+	// Passed - return the manifold
+	(*out) = new manifold::Manifold(bot_manifold);
+	return 0;
+    }
+
+    // Nothing worked - try fallback methods, if enabled
+    return 0;
 }
 
 // Local Variables:

@@ -159,7 +159,7 @@ extern int
 plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 extern int
-_pre_tess_clbk(void **out, struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *data);
+manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, void *data);
 
 __BEGIN_DECLS
 extern int _db_uniq_test(struct bu_vls *n, void *data);
