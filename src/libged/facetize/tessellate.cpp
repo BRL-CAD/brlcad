@@ -90,6 +90,13 @@ half_to_manifold(void **out, struct rt_db_internal *ip, const struct bg_tess_tol
     return 0;
 }
 
+// TODO - this is a hard problem, without a truly general solution - we need to try to handle
+// "almost correct" meshes, but can't do much with complete garbage.  Potential resources
+// to investigate:
+//
+// https://github.com/wjakob/instant-meshes (also https://github.com/Volumental/instant-meshes)
+// https://github.com/BrunoLevy/geogram (hole filling, Co3Ne)
+//
 int
 bot_repair(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
