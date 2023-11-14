@@ -105,6 +105,11 @@ bot_repair(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
     return 0;
 }
 
+// TODO - if this can be run the actual ft_tessellate and/or fallback method
+// calls in a separate process, it should improve our robustness by allowing us
+// to "time out" primitive conversions that get into infinite loops or are just
+// running too long by killing the subprocess.  Simple workflow would be to
+// write out the ip to its own temp .g, process, then dbconcat it back in.
 int
 manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, void *data)
 {
@@ -181,6 +186,7 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 	struct model *m = nmg_mm();
 	struct nmgregion *r1 = (struct nmgregion *)NULL;
 	// Try the NMG routines (primary means of CSG implicit -> explicit mesh conversion)
+	// TODO - needs to be separate process...
 	if (!BU_SETJUMP) {
 	    status = ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol);
 	} else {
@@ -223,6 +229,7 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
     }
 
     // Nothing worked - try fallback methods, if enabled
+    // TODO - needs to be separate process...
     return 0;
 }
 
