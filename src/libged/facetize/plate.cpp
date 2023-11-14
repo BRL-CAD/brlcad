@@ -118,6 +118,7 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	edges_fcnt[std::make_pair(e31, e32)]++;
     }
 
+    int ecnt = 0;
     std::set<int>::iterator v_it;
     for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	point_t v;
@@ -141,7 +142,7 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 
 	struct nmgregion *r1 = NULL;
 	struct model *m = nmg_mm();
-	if (!intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol))
+	if (intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol))
 	    continue;
 
 	struct rt_bot_internal *sbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
@@ -163,8 +164,11 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	manifold::Manifold left = c;
 	manifold::Manifold right(sph_m);
 	c = left.Boolean(right, manifold::OpType::Add);
+	bu_log("Vert %d\n" , ecnt);
+	ecnt++;
     }
 
+    ecnt = 0;
     std::set<std::pair<int, int>>::iterator e_it;
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
 	double r = ((double)edges_thickness[*e_it]/(double)(edges_fcnt[*e_it]));
@@ -203,7 +207,7 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 
 	struct nmgregion *r1 = NULL;
 	struct model *m = nmg_mm();
-	if (!intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol))
+	if (intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol))
 	    continue;
 
 	struct rt_bot_internal *cbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
@@ -225,6 +229,8 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	manifold::Manifold left = c;
 	manifold::Manifold right(rcc_m);
 	c = left.Boolean(right, manifold::OpType::Add);
+	bu_log("Edge %d\n" , ecnt);
+	ecnt++;
     }
 
     // Now, handle the primary arb faces
@@ -264,10 +270,20 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	/* 5 */ pts[12] = pnts[5][X]; pts[13] = pnts[5][Y]; pts[14] = pnts[5][Z];
 	/* 6 */ pts[15] = pnts[2][X]; pts[16] = pnts[2][Y]; pts[17] = pnts[2][Z];
 
+	point_t pt8[8];
+	VMOVE(pt8[0], &pts[0*3]);
+	VMOVE(pt8[1], &pts[1*3]);
+	VMOVE(pt8[2], &pts[2*3]);
+	VMOVE(pt8[3], &pts[3*3]);
+	VMOVE(pt8[4], &pts[4*3]);
+	VMOVE(pt8[5], &pts[4*3]);
+	VMOVE(pt8[6], &pts[5*3]);
+	VMOVE(pt8[7], &pts[5*3]);
+
 	struct rt_arb_internal arb;
 	arb.magic = RT_ARB_INTERNAL_MAGIC;
 	for (int j = 0; j < 8; j++)
-	    VMOVE(arb.pt[j], &pts[j*3]);
+	    VMOVE(arb.pt[j], pt8[j]);
 
 	struct rt_db_internal intern;
 	RT_DB_INTERNAL_INIT(&intern);
@@ -278,7 +294,7 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 
 	struct nmgregion *r1 = NULL;
 	struct model *m = nmg_mm();
-	if (!intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol))
+	if (intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol))
 	    continue;
 
 	struct rt_bot_internal *abot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
@@ -300,6 +316,7 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	manifold::Manifold left = c;
 	manifold::Manifold right(arb_m);
 	c = left.Boolean(right, manifold::OpType::Add);
+	bu_log("Face %zd\n" , i);
     }
 
     *om = c;
