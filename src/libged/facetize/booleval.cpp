@@ -187,6 +187,14 @@ _ged_manifold_do_bool(
 #endif
 	    failed = 1;
 	}
+
+#if 0
+	// If we're debugging and need to capture glb for a "successful" case, these can be uncommented
+	manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::string(".glb"), lm->GetMesh(), {});
+	manifold::ExportMesh(std::string(tr->tr_d.td_name)+std::string(".glb"), rm->GetMesh(), {});
+	manifold::ExportMesh(std::string(tl->tr_d.td_name)+std::to_string(op)+std::string(tr->tr_d.td_name)+std::string(".glb"), bool_out.GetMesh(), {});
+#endif
+
 	if (!failed)
 	    result = new manifold::Manifold(bool_out);
     }
