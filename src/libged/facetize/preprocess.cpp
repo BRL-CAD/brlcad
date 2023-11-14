@@ -136,7 +136,7 @@ half_to_manifold(void **out, struct rt_db_internal *ip, const struct bg_tess_tol
 
     manifold::Manifold half_manifold(half_m);
     if (half_manifold.Status() != manifold::Manifold::Error::NoError) {
-	bu_log("cline conversion - cannot define manifold from half facetization\n");
+	bu_log("half->arbn->bot conversion failed - cannot define manifold from half facetization\n");
 	(*out) = new manifold::Manifold();
 	return 1;
     }
