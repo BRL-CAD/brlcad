@@ -85,6 +85,66 @@ cline_to_pipe(void **out, struct rt_db_internal *ip)
 }
 #endif
 
+
+// We use an arbn to define the enclosed volume, and facetize that
+static int
+half_to_manifold(void **out, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+{
+    plane_t equations[7];
+    // First, bound the volume to its limits
+    HSET(equations[0], -1, 0, 0, FLT_MAX);
+    HSET(equations[1], 1, 0, 0, FLT_MAX);
+    HSET(equations[2], 0, -1, 0, FLT_MAX);
+    HSET(equations[3], 0, 1, 0, FLT_MAX);
+    HSET(equations[4], 0, 0, -1, FLT_MAX);
+    HSET(equations[5], 0, 0, 1, FLT_MAX);
+
+    // Then introduce the half plane
+    struct rt_half_internal *h = (struct rt_half_internal *)ip->idb_ptr;
+    HMOVE(equations[6], h->eqn);
+
+    struct rt_arbn_internal arbn;
+    arbn.magic = RT_ARBN_INTERNAL_MAGIC;
+    arbn.neqn = 7;
+    arbn.eqn = equations;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_ARBN;
+    intern.idb_ptr = &arbn;
+    intern.idb_meth = &OBJ[ID_ARBN];
+
+    struct nmgregion *r1 = NULL;
+    struct model *m = nmg_mm();
+    if (!intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol)) {
+	(*out) = new manifold::Manifold();
+	return 1;
+    }
+
+    struct rt_bot_internal *hbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
+    if (!hbot) {
+    	(*out) = new manifold::Manifold();
+	return 1;
+    }
+
+    manifold::Mesh half_m;
+    for (size_t j = 0; j < hbot->num_vertices ; j++)
+	half_m.vertPos.push_back(glm::vec3(hbot->vertices[3*j], hbot->vertices[3*j+1], hbot->vertices[3*j+2]));
+    for (size_t j = 0; j < hbot->num_faces; j++)
+	half_m.triVerts.push_back(glm::vec3(hbot->faces[3*j], hbot->faces[3*j+1], hbot->faces[3*j+2]));
+
+    manifold::Manifold half_manifold(half_m);
+    if (half_manifold.Status() != manifold::Manifold::Error::NoError) {
+	bu_log("cline conversion - cannot define manifold from half facetization\n");
+	(*out) = new manifold::Manifold();
+	return 1;
+    }
+
+    (*out) = new manifold::Manifold(half_manifold);
+    return 0;
+}
+
 int
 bot_repair(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
@@ -102,15 +162,13 @@ _pre_tess_clbk(void **out, struct db_tree_state *tsp, const struct db_full_path 
     struct _ged_facetize_state *s = (struct _ged_facetize_state *)data;
     struct facetize_maps *fm = (struct facetize_maps *)s->iptr;
 
-    manifold::Manifold *hm = NULL;
-
     struct rt_bot_internal *bot = NULL;
-    int propVal = 0;
+    int propVal = 0, ret = -1;
     manifold::Mesh bot_mesh;
     manifold::Manifold bot_manifold;
 
     switch (ip->idb_minor_type) {
-	// If we've got no-volume objects, they get an empty manifold_mesh -
+	// If we've got no-volume objects, they get an empty Manifold -
 	// they can be safely treated as a no-op in any of the booleans
 	case ID_ANNOT:
 	case ID_BINUNIF:
@@ -125,17 +183,11 @@ _pre_tess_clbk(void **out, struct db_tree_state *tsp, const struct db_full_path 
 	    (*out) = new manifold::Manifold();
 	    return 0;
 	case ID_HALF:
-	    // Halfspace objects get a large arb.  Really should based this on
-	    // the total scene size, but maybe punt and just make it just below
-	    // the limits of the world size?
-	    // Construct the arb
-	    // facetize the arb
-	    // nmg->bot
-	    // bot->manifold
-	    // (*out) = manifold;
-	    if (fm)
-		fm->half_spaces.insert(hm);
-	    return 0;
+	    // Halfspace objects get a large arb.
+	    ret = half_to_manifold(out, ip, tsp->ts_ttol, tsp->ts_tol);
+	    if (*out)
+		fm->half_spaces.insert((manifold::Manifold *)*out);
+	    return ret;
 	case ID_BOT:
 	    bot = (struct rt_bot_internal *)(ip->idb_ptr);
 	    propVal = (int)rt_bot_propget(bot, "type");
