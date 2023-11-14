@@ -273,7 +273,7 @@ _try_nmg_facetize(struct model **omodel, struct _ged_facetize_state *s, int argc
     int i, failed;
     struct model *nmg_model = nmg_mm();
 
-    _ged_facetize_log_nmg(s);
+    //_ged_facetize_log_nmg(s);
 
     struct db_tree_state init_state;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -357,7 +357,7 @@ _try_facetize(struct rt_bot_internal **obot, struct model **omodel, struct _ged_
     int i;
     union tree *ftree = NULL;
 
-    _ged_facetize_log_nmg(s);
+    //_ged_facetize_log_nmg(s);
 
     struct db_tree_state init_state;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);

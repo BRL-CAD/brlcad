@@ -72,7 +72,7 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
     struct model *nmg_model;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
-    _ged_facetize_log_nmg(s);
+    //_ged_facetize_log_nmg(s);
 
     db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
 
@@ -141,7 +141,7 @@ _try_nmg_to_bot(struct _ged_facetize_state *s, struct model *nmg_model)
     struct ged *gedp = s->gedp;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
     struct rt_bot_internal *bot = NULL;
-    _ged_facetize_log_nmg(s);
+    //_ged_facetize_log_nmg(s);
     if (!BU_SETJUMP) {
 	/* try */
 	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol);

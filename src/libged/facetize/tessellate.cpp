@@ -111,10 +111,14 @@ bot_repair(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 // running too long by killing the subprocess.  Simple workflow would be to
 // write out the ip to its own temp .g, process, then dbconcat it back in.
 int
-manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_path *UNUSED(pathp), struct rt_db_internal *ip, void *data)
+manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *data)
 {
     if (!out || !tsp || !ip || !data)
 	return -1;
+
+    char *path_str = db_path_to_string(pathp);
+    bu_log("Tessellate %s\n", path_str);
+    bu_free(path_str, "path string");
 
     struct _ged_facetize_state *s = (struct _ged_facetize_state *)data;
     struct facetize_maps *fm = (struct facetize_maps *)s->iptr;

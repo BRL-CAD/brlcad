@@ -207,6 +207,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 	newname = (char *)bu_vls_cstr(&oname);
     }
 
+#if 0
     /* Before we try this, check that all the objects in the specified tree(s) are valid solids */
     if (!_ged_facetize_verify_solid(s, argc, dpa)) {
 	if (flags & FACETIZE_SPSR) {
@@ -220,6 +221,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
     }
+#endif
 
     /* Done with dpa */
     bu_free(dpa, "dp array");
