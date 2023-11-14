@@ -310,6 +310,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     struct _ged_facetize_state *s = _ged_facetize_state_create();
+    s->gedp = gedp;
 
     /* General options */
     struct bu_opt_desc d[19];
