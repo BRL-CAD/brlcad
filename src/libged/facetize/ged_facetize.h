@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ged_brep.h
+/** @file ged_facetize.h
  *
  * Private header for libged facetize cmd.
  *
@@ -179,10 +179,6 @@ extern int _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const 
 
 
 extern int _ged_check_plate_mode(struct ged *gedp, struct directory *dp);
-
-extern double _ged_facetize_bbox_vol(point_t b_min, point_t b_max);
-extern void _ged_facetize_pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts);
-extern void _ged_facetize_rt_pnts_bbox(point_t rpp_min, point_t rpp_max, struct rt_pnts_internal *pnts);
 
 extern struct rt_bot_internal *
 _ged_facetize_decimate(struct _ged_facetize_state *s, struct rt_bot_internal *bot, fastf_t feature_size);

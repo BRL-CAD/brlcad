@@ -33,6 +33,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "../../ged_private.h"
+#include "./tessellate.h"
 
 static bool
 bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)

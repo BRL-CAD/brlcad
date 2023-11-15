@@ -49,11 +49,17 @@ bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const str
 extern int
 plate_eval(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
-extern int
-_ged_continuation_obj(struct _ged_facetize_state *s, const char *objname, const char *newname);
+extern struct rt_bot_internal *
+_tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size);
 
 extern int
-_ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *newname);
+_tess_facetize_write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name);
+
+extern int
+_ged_continuation_obj(struct ged *gedp, const char *objname, const char *newname);
+
+extern int
+_ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname);
 
 __END_DECLS
 

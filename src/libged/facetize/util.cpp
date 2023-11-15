@@ -39,44 +39,6 @@ _db_uniq_test(struct bu_vls *n, void *data)
     return 0;
 }
 
-double
-_ged_facetize_bbox_vol(point_t b_min, point_t b_max)
-{
-    double bbox_vol = 0.0;
-    fastf_t b_xlen, b_ylen, b_zlen;
-    b_xlen = fabs(b_max[X] - b_min[X]);
-    b_ylen = fabs(b_max[Y] - b_min[Y]);
-    b_zlen = fabs(b_max[Z] - b_min[Z]);
-    bbox_vol = b_xlen * b_ylen * b_zlen;
-    return bbox_vol;
-}
-
-void
-_ged_facetize_pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts)
-{
-    int i = 0;
-    if (!rpp_min || !rpp_max || !pnts || !pnts || !pnt_cnt) return;
-    VSETALL(rpp_min, INFINITY);
-    VSETALL(rpp_max, -INFINITY);
-    for (i = 0; i < pnt_cnt; i++) {
-	VMINMAX(rpp_min, rpp_max, pnts[i]);
-    }
-}
-
-void
-_ged_facetize_rt_pnts_bbox(point_t rpp_min, point_t rpp_max, struct rt_pnts_internal *pnts)
-{
-    struct pnt_normal *pn = NULL;
-    struct pnt_normal *pl = NULL;
-    if (!rpp_min || !rpp_max || !pnts || !pnts->point) return;
-    VSETALL(rpp_min, INFINITY);
-    VSETALL(rpp_max, -INFINITY);
-    pl = (struct pnt_normal *)pnts->point;
-    for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
-	VMINMAX(rpp_min, rpp_max, pn->v);
-    }
-}
-
 void
 _ged_facetize_mkname(struct _ged_facetize_state *s, const char *n, int type)
 {
@@ -294,62 +256,6 @@ ged_facetize_obj_swap_memfree:
     bu_vls_free(&nname);
     bu_vls_free(&tname);
     return ret;
-}
-
-struct rt_bot_internal *
-_ged_facetize_decimate(struct _ged_facetize_state *s, struct rt_bot_internal *bot, fastf_t feature_size)
-{
-    size_t success = 0;
-    /* these are static for longjmp */
-    static struct rt_bot_internal *nbot;
-    static struct rt_bot_internal *obot;
-
-    obot = bot;
-    nbot = NULL;
-
-    BU_ALLOC(nbot, struct rt_bot_internal);
-    nbot->magic = RT_BOT_INTERNAL_MAGIC;
-    nbot->mode = RT_BOT_SOLID;
-    nbot->orientation = RT_BOT_UNORIENTED;
-    nbot->thickness = (fastf_t *)NULL;
-    nbot->face_mode = (struct bu_bitv *)NULL;
-    nbot->num_faces = bot->num_faces;
-    nbot->num_vertices = bot->num_vertices;
-    nbot->faces = (int *)bu_calloc(nbot->num_faces*3, sizeof(int), "copy of faces array");
-    nbot->vertices = (fastf_t *)bu_calloc(nbot->num_vertices*3, sizeof(fastf_t), "copy of faces array");
-    memcpy(nbot->faces, bot->faces, nbot->num_faces*3*sizeof(int));
-    memcpy(nbot->vertices, bot->vertices, nbot->num_vertices*3*sizeof(fastf_t));
-
-    _ged_facetize_log_nmg(s);
-    if (!BU_SETJUMP) {
-	/* try */
-	success = rt_bot_decimate_gct(nbot, feature_size);
-    } else {
-	/* catch */
-	BU_UNSETJUMP;
-	/* Failed - free the working copy */
-	bu_free(nbot->faces, "free faces");
-	bu_free(nbot->vertices, "free vertices");
-	bu_free(nbot, "free bot");
-	_ged_facetize_log_default(s);
-	return obot;
-    } BU_UNSETJUMP;
-
-    if (success) {
-	/* Success - free the old BoT, return the new one */
-	bu_free(obot->faces, "free faces");
-	bu_free(obot->vertices, "free vertices");
-	bu_free(obot, "free bot");
-	_ged_facetize_log_default(s);
-	return nbot;
-    } else {
-	/* Failed - free the working copy */
-	bu_free(nbot->faces, "free faces");
-	bu_free(nbot->vertices, "free vertices");
-	bu_free(nbot, "free bot");
-	_ged_facetize_log_default(s);
-	return obot;
-    }
 }
 
 int

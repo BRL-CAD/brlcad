@@ -29,7 +29,9 @@
 #include <chrono>
 #include <thread>
 
+#include "bu/app.h"
 #include "bu/process.h"
+#include "bu/time.h"
 
 #include "../ged_private.h"
 #include "./ged_facetize.h"
@@ -41,7 +43,7 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 	return -1;
 
     struct _ged_facetize_state *s = (struct _ged_facetize_state *)data;
-    struct directory *dp = DB_PATH_CURR_DIR(pathp);
+    struct directory *dp = DB_FULL_PATH_CUR_DIR(pathp);
     char *path_str = db_path_to_string(pathp);
     bu_log("Tessellate %s\n", path_str);
     bu_free(path_str, "path string");
@@ -81,7 +83,7 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
     bu_vls_sprintf(&abs_str, "%0.17f", tsp->ts_ttol->abs);
     bu_vls_sprintf(&rel_str, "%0.17f", tsp->ts_ttol->rel);
     bu_vls_sprintf(&norm_str, "%0.17f", tsp->ts_ttol->norm);
-    char *tess_cmd[11] = {NULL};
+    const char *tess_cmd[11] = {NULL};
     tess_cmd[0] = tess_exec;
     tess_cmd[1] = "--abs";
     tess_cmd[2] = bu_vls_cstr(&abs_str);
@@ -159,15 +161,14 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
     // at the end...
     //int fsize = bu_file_size(tmpfil);
 
-    struct rt_bot_internal *bot = NULL;
-    struct db_i *dbip = db_open(tmpfil, DB_OPEN_READONLY);
+    dbip = db_open(tmpfil, DB_OPEN_READONLY);
     if (!dbip) {
 	bu_log("Unable to open tessellation database %s for result reading\n", tmpfil);
 	return -1;
     }
 
     std::string oname = std::string(dp->d_namep) + std::string("_tess.bot");
-    dp = db_lookup(oname.c_str(), LOOKUP_QUIET);
+    dp = db_lookup(dbip, oname.c_str(), LOOKUP_QUIET);
     if (!dp) {
 	bu_log("Unable to find tessellation output object %s\n", oname.c_str());
 	return -1;
@@ -175,7 +176,7 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 
     struct rt_db_internal obot_intern;
     RT_DB_INTERNAL_INIT(&obot_intern);
-    ret = rt_db_get_internal(&obot_intern, dp, dbip, NULL, &rt_uniresource);
+    int ret = rt_db_get_internal(&obot_intern, dp, dbip, NULL, &rt_uniresource);
     if (ret < 0) {
 	bu_log("rt_db_get_internal failed for %s\n", oname.c_str());
 	return -1;
@@ -196,12 +197,8 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 	    bu_free(nbot->faces, "faces");
     }
 
-    if (status >= 0) {
-	// Passed - return the manifold
-	(*out) = new manifold::Manifold(bot_manifold);
-	return 0;
-    }
-
+    // Passed - return the manifold
+    (*out) = new manifold::Manifold(bot_manifold);
     return 0;
 }
 

@@ -5,6 +5,7 @@ set(GED_TESS_SRCS
   repair.cpp
   spsr.cpp
   main.cpp
+  util.cpp
   )
 
 BRLCAD_ADDEXEC(ged_tessellate "${GED_TESS_SRCS}" "libged;${MANIFOLD_LIBRARIES}")

@@ -26,16 +26,24 @@
 #include "common.h"
 
 #include "bg/spsr.h"
-#include "../ged_private.h"
-#include "./ged_facetize.h"
+#include "../../ged_private.h"
+#include "./tessellate.h"
+
+static int
+_db_uniq_test(struct bu_vls *n, void *data)
+{
+    struct ged *gedp = (struct ged *)data;
+    if (db_lookup(gedp->dbip, bu_vls_addr(n), LOOKUP_QUIET) == RT_DIR_NULL) return 1;
+    return 0;
+}
 
 int
-_ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *newname)
+_ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname)
 {
-    struct ged *gedp = s->gedp;
     int ret = BRLCAD_OK;
     struct directory *dp;
     int decimation_succeeded = 0;
+    int max_time = 0; // TODO - pass in
     struct db_i *dbip = gedp->dbip;
     struct rt_db_internal in_intern;
     struct bn_tol btol = BN_TOL_INIT_TOL;
@@ -46,6 +54,7 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
     int flags = 0;
     int i = 0;
     int free_pnts = 0;
+    struct bg_3d_spsr_opts s_opts = BG_3D_SPSR_OPTS_DEFAULT;
     point_t *input_points_3d = NULL;
     vect_t *input_normals_3d = NULL;
     point_t rpp_min, rpp_max;
@@ -55,22 +64,18 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
 
     dp = db_lookup(dbip, objname, LOOKUP_QUIET);
     if (!dp) {
-	if (s->verbosity) {
-	    bu_log("Error: could not determine type of object %s, skipping\n", objname);
-	}
-	return FACETIZE_FAILURE;
+	bu_log("Error: could not determine type of object %s, skipping\n", objname);
+	return BRLCAD_ERROR;
     }
 
     if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	if (s->verbosity) {
-	    bu_log("Error: could not determine type of object %s, skipping\n", objname);
-	}
-	return FACETIZE_FAILURE;
+	bu_log("Error: could not determine type of object %s, skipping\n", objname);
+	return BRLCAD_ERROR;
     }
 
     /* If we have a half, this won't work */
     if (in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_HALF) {
-	return FACETIZE_FAILURE;
+	return BRLCAD_ERROR;
     }
 
     /* Key some settings off the bbox size */
@@ -84,7 +89,7 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
 	pnts = (struct rt_pnts_internal *)in_intern.idb_ptr;
 
     } else {
-	int max_pnts = (s->max_pnts) ? s->max_pnts : 200000;
+	int max_pnts = 200000; // TODO - pass in
 	BU_ALLOC(pnts, struct rt_pnts_internal);
 	pnts->magic = RT_PNTS_INTERNAL_MAGIC;
 	pnts->scale = 0.0;
@@ -92,12 +97,10 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
 	flags = ANALYZE_OBJ_TO_PNTS_RAND;
 	free_pnts = 1;
 
-	if (s->verbosity) {
-	    bu_log("SPSR: generating %d points from %s\n", max_pnts, objname);
-	}
+	bu_log("SPSR: generating %d points from %s\n", max_pnts, objname);
 
-	if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->dbip, objname, &btol, flags, max_pnts, s->max_time, s->verbosity)) {
-	    ret = FACETIZE_FAILURE;
+	if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->dbip, objname, &btol, flags, max_pnts, max_time, 1)) {
+	    ret = BRLCAD_ERROR;
 	    goto ged_facetize_spsr_memfree;
 	}
     }
@@ -124,36 +127,30 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
 		   (int *)&(bot->num_vertices),
 		   (const point_t *)input_points_3d,
 		   (const vect_t *)input_normals_3d,
-		   pnts->count, &(s->s_opts)) ) {
-	ret = FACETIZE_FAILURE;
+		   pnts->count, &s_opts) ) {
+	ret = BRLCAD_ERROR;
 	goto ged_facetize_spsr_memfree;
     }
 
     /* do decimation */
     {
 	struct rt_bot_internal *obot = bot;
-	fastf_t feature_size = 0.0;
-	if (s->feature_size > 0) {
-	    feature_size = s->feature_size;
-	} else {
-	    fastf_t xlen = fabs(rpp_max[X] - rpp_min[X]);
-	    fastf_t ylen = fabs(rpp_max[Y] - rpp_min[Y]);
-	    fastf_t zlen = fabs(rpp_max[Z] - rpp_min[Z]);
-	    feature_size = (xlen < ylen) ? xlen : ylen;
-	    feature_size = (feature_size < zlen) ? feature_size : zlen;
-	    feature_size = feature_size * 0.15;
-	}
+	fastf_t feature_size = 0.0; // TODO - pass in
+	fastf_t xlen = fabs(rpp_max[X] - rpp_min[X]);
+	fastf_t ylen = fabs(rpp_max[Y] - rpp_min[Y]);
+	fastf_t zlen = fabs(rpp_max[Z] - rpp_min[Z]);
+	feature_size = (xlen < ylen) ? xlen : ylen;
+	feature_size = (feature_size < zlen) ? feature_size : zlen;
+	feature_size = feature_size * 0.15;
 
-	if (s->verbosity) {
-	    bu_log("SPSR: decimating with feature size: %g\n", feature_size);
-	}
+	bu_log("SPSR: decimating with feature size: %g\n", feature_size);
 
-	bot = _ged_facetize_decimate(s, bot, feature_size);
+	bot = _tess_facetize_decimate(bot, feature_size);
 
 	if (bot == obot) {
 	    if (bot->vertices) bu_free(bot->vertices, "verts");
 	    if (bot->faces) bu_free(bot->faces, "verts");
-	    ret = FACETIZE_FAILURE;
+	    ret = BRLCAD_ERROR;
 	    goto ged_facetize_spsr_memfree;
 	}
 	if (bot != obot) {
@@ -167,10 +164,8 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
 	if (not_solid) {
 	    if (bot->vertices) bu_free(bot->vertices, "verts");
 	    if (bot->faces) bu_free(bot->faces, "verts");
-	    ret = FACETIZE_FAILURE;
-	    if (!s->quiet) {
-		bu_log("SPSR: facetization failed, final BoT was not solid\n");
-	    }
+	    ret = BRLCAD_ERROR;
+	    bu_log("SPSR: facetization failed, final BoT was not solid\n");
 	    goto ged_facetize_spsr_memfree;
 	}
     }
@@ -180,7 +175,7 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
      * the candidate BoT and compare the avg. thicknesses */
     if (avg_thickness > 0) {
 	const char *av[3];
-	int max_pnts = (s->max_pnts) ? s->max_pnts : 200000;
+	int max_pnts = 200000; // TODO - pass in
 	double navg_thickness = 0.0;
 	struct bu_vls tmpname = BU_VLS_INIT_ZERO;
 	struct rt_bot_internal *tbot = NULL;
@@ -204,16 +199,16 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
 	    bu_vls_printf(&tmpname, "-0");
 	    bu_vls_incr(&tmpname, NULL, NULL, &_db_uniq_test, (void *)gedp);
 	}
-	if (_ged_facetize_write_bot(s, tbot, bu_vls_addr(&tmpname)) & BRLCAD_ERROR) {
+	if (_tess_facetize_write_bot(gedp, tbot, bu_vls_addr(&tmpname)) & BRLCAD_ERROR) {
 	    bu_log("SPSR: could not write BoT to temporary name %s\n", bu_vls_addr(&tmpname));
 	    bu_vls_free(&tmpname);
-	    ret = FACETIZE_FAILURE;
+	    ret = BRLCAD_ERROR;
 	    goto ged_facetize_spsr_memfree;
 	}
 
-	if (analyze_obj_to_pnts(NULL, &navg_thickness, gedp->dbip, bu_vls_addr(&tmpname), &btol, flags, max_pnts, s->max_time, s->verbosity)) {
+	if (analyze_obj_to_pnts(NULL, &navg_thickness, gedp->dbip, bu_vls_addr(&tmpname), &btol, flags, max_pnts, max_time, 1)) {
 	    bu_log("SPSR: could not raytrace temporary BoT %s\n", bu_vls_addr(&tmpname));
-	    ret = FACETIZE_FAILURE;
+	    ret = BRLCAD_ERROR;
 	}
 
 	/* Remove the temporary BoT object, succeed or fail. */
@@ -222,7 +217,7 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
 	av[2] = NULL;
 	(void)ged_exec(gedp, 2, (const char **)av);
 
-	if (ret == FACETIZE_FAILURE) {
+	if (ret == BRLCAD_ERROR) {
 	    bu_vls_free(&tmpname);
 	    goto ged_facetize_spsr_memfree;
 	}
@@ -230,7 +225,7 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
 
 	if (fabs(avg_thickness - navg_thickness) > avg_thickness * 0.5) {
 	    bu_log("SPSR: BoT average sampled thickness %f is widely different from original sampled thickness %f\n", navg_thickness, avg_thickness);
-	    ret = FACETIZE_FAILURE;
+	    ret = BRLCAD_ERROR;
 	    bu_vls_free(&tmpname);
 	    goto ged_facetize_spsr_memfree;
 	}
@@ -239,39 +234,11 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
 	bu_vls_free(&tmpname);
     }
 
-    if (decimation_succeeded && !s->quiet) {
+    if (decimation_succeeded) {
 	bu_log("SPSR: decimation succeeded, final BoT has %d faces\n", (int)bot->num_faces);
     }
 
-    if (!s->make_nmg) {
-
-	ret = _ged_facetize_write_bot(s, bot, newname);
-
-    } else {
-	/* Convert BoT to NMG */
-	struct model *m = nmg_mm();
-	struct nmgregion *nr;
-	struct rt_db_internal intern;
-
-	/* Use intern to fake out rt_bot_tess, since it expects an
-	 * rt_db_internal wrapper */
-	RT_DB_INTERNAL_INIT(&intern);
-	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-	intern.idb_type = ID_BOT;
-	intern.idb_ptr = (void *)bot;
-	if (rt_bot_tess(&nr, m, &intern, NULL, &btol) < 0) {
-	    if (!s->quiet) {
-		bu_log("SPSR: failed to convert BoT to NMG: %s\n", objname);
-	    }
-	    rt_db_free_internal(&intern);
-	    ret = FACETIZE_FAILURE;
-	    goto ged_facetize_spsr_memfree;
-	} else {
-	    /* OK,have NMG now - write it out */
-	    ret = _ged_facetize_write_nmg(s, m, newname);
-	    rt_db_free_internal(&intern);
-	}
-    }
+    ret = _tess_facetize_write_bot(gedp, bot, newname);
 
 ged_facetize_spsr_memfree:
     if (free_pnts) bu_free(pnts, "free pnts");
