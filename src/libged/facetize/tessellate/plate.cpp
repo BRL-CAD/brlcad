@@ -57,9 +57,9 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 }
 
 int
-plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+plate_eval(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
-    if (!bot || !out || !ttol || !tol)
+    if (!obot || !bot || !ttol || !tol)
 	return 1;
 
     if (bot->mode != RT_BOT_PLATE)
@@ -74,11 +74,9 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	}
     }
 
-    manifold::Manifold *om = new manifold::Manifold();
-
-    // If there's no volume, we get an empty manifold to use with boolean ops
+    // If there's no volume, there's nothing to produce
     if (!have_solid) {
-	*out = (void *)om;
+	*obot = NULL;
 	return 0;
     }
 
@@ -321,8 +319,30 @@ plate_eval(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *tt
 	bu_log("Face %zd\n" , i);
     }
 
-    *om = c;
-    (*out) = om;
+    manifold::Mesh rmesh = c.GetMesh();
+    struct rt_bot_internal *rbot;
+    BU_GET(rbot, struct rt_bot_internal);
+    rbot->magic = RT_BOT_INTERNAL_MAGIC;
+    rbot->mode = RT_BOT_SOLID;
+    rbot->orientation = RT_BOT_CCW;
+    rbot->thickness = NULL;
+    rbot->face_mode = (struct bu_bitv *)NULL;
+    rbot->bot_flags = 0;
+    rbot->num_vertices = (int)rmesh.vertPos.size();
+    rbot->num_faces = (int)rmesh.triVerts.size();
+    rbot->vertices = (double *)calloc(rmesh.vertPos.size()*3, sizeof(double));;
+    rbot->faces = (int *)calloc(rmesh.triVerts.size()*3, sizeof(int));
+    for (size_t j = 0; j < rmesh.vertPos.size(); j++) {
+	rbot->vertices[3*j] = rmesh.vertPos[j].x;
+	rbot->vertices[3*j+1] = rmesh.vertPos[j].y;
+	rbot->vertices[3*j+2] = rmesh.vertPos[j].z;
+    }
+    for (size_t j = 0; j < rmesh.triVerts.size(); j++) {
+	rbot->faces[3*j] = rmesh.triVerts[j].x;
+	rbot->faces[3*j+1] = rmesh.triVerts[j].y;
+	rbot->faces[3*j+2] = rmesh.triVerts[j].z;
+    }
+    *obot = rbot;
     return 0;
 }
 

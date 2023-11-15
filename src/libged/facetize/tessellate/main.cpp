@@ -27,9 +27,10 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/opt.h"
 
-#include "../../ged_private.h"
+#include "ged.h"
 #include "./tessellate.h"
 
 int
@@ -40,12 +41,31 @@ main(int argc, const char **argv)
 
     bu_setprogname(argv[0]);
 
-    struct rt_bot_internal *bot;
-    int propVal;
-    struct bg_tess_tol ttol;
-    struct bn_tol tol;
+    struct ged *gedp = ged_open("db", argv[1], 1);
+    if (!gedp)
+	return BRLCAD_ERROR;
 
-    switch (ip->idb_minor_type) {
+    struct directory *dp = db_lookup(gedp->dbip, argv[2], LOOKUP_QUIET);
+    if (!dp)
+	return BRLCAD_ERROR;
+
+    struct rt_db_internal intern;
+    RT_DB_INTERNAL_INIT(&intern);
+    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
+	bu_log("rt_db_get_internal failed for %s\n", argv[2]);
+	return BRLCAD_ERROR;
+    }
+
+    struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
+    struct bn_tol tol = BN_TOL_INIT_TOL;
+    struct rt_bot_internal *bot = NULL;
+    struct rt_bot_internal *obot = NULL;
+    manifold::Mesh bot_mesh;
+    manifold::Manifold bot_manifold;
+    int propVal;
+    int ret = 0;
+
+    switch (intern.idb_minor_type) {
 	// If we've got no-volume objects, they get an empty Manifold -
 	// they can be safely treated as a no-op in any of the booleans
 	case ID_ANNOT:
@@ -61,16 +81,17 @@ main(int argc, const char **argv)
 	    return BRLCAD_OK;
 	case ID_HALF:
 	    // Halfspace objects get a large arb.
-	    return half_to_bot(out, ip, tsp->ts_ttol, tsp->ts_tol);
+	    ret = half_to_bot(&obot, &intern, &ttol, &tol);
+	    break;
 	case ID_BOT:
-	    bot = (struct rt_bot_internal *)(ip->idb_ptr);
+	    bot = (struct rt_bot_internal *)(intern.idb_ptr);
 	    propVal = (int)rt_bot_propget(bot, "type");
 	    // Surface meshes are zero volume, and thus no-op
 	    if (propVal == RT_BOT_SURFACE)
 		return BRLCAD_OK;
 	    // Plate mode BoTs need an explicit volume representation
 	    if (propVal == RT_BOT_PLATE || propVal == RT_BOT_PLATE_NOCOS) {
-		return plate_eval(out, bot, tsp->ts_ttol, tsp->ts_tol);
+		ret = plate_eval(&obot, bot, &ttol, &tol);
 	    }
 	    // Volumetric bot - if it can be manifold we're good, but if
 	    // not we need to try and repair it.
@@ -81,27 +102,30 @@ main(int argc, const char **argv)
 	    bot_manifold = manifold::Manifold(bot_mesh);
 	    if (bot_manifold.Status() != manifold::Manifold::Error::NoError) {
 		// Nope - try repairing
-		return bot_repair(out, bot, tsp->ts_ttol, tsp->ts_tol);
+		ret = bot_repair(&obot, bot, &ttol, &tol);
 	    }
-	    // Passed - return the manifold
-	    return BRLCAD_OK;
 	case ID_BREP:
 	    // TODO - need to handle plate mode NURBS the way we handle plate mode BoTs
 	default:
 	    break;
     }
 
+    if (ret == BRLCAD_OK && obot) {
+	// TODO - have output bot?  write it to disk and return
+	return BRLCAD_OK;
+    }
+
     // If we got this far, it's not a special case - see if we can do "normal"
     // tessellation
     int status = -1;
     struct rt_bot_internal *nbot = NULL;
-    if (ip->idb_meth) {
+    if (intern.idb_meth) {
 	struct model *m = nmg_mm();
 	struct nmgregion *r1 = (struct nmgregion *)NULL;
 	// Try the NMG routines (primary means of CSG implicit -> explicit mesh conversion)
 	// TODO - needs to be separate process...
 	if (!BU_SETJUMP) {
-	    status = ip->idb_meth->ft_tessellate(&r1, m, ip, tsp->ts_ttol, tsp->ts_tol);
+	    status = intern.idb_meth->ft_tessellate(&r1, m, &intern, &ttol, &tol);
 	} else {
 	    BU_UNSETJUMP;
 	    status = -1;
@@ -110,7 +134,7 @@ main(int argc, const char **argv)
 	if (status > -1) {
 	    // NMG reports success, now get a BoT
 	    if (!BU_SETJUMP) {
-		nbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tsp->ts_tol);
+		nbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, &tol);
 	    } else {
 		BU_UNSETJUMP;
 		nbot = NULL;

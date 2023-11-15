@@ -38,9 +38,9 @@
 // https://github.com/wjakob/instant-meshes (also https://github.com/Volumental/instant-meshes)
 // https://github.com/BrunoLevy/geogram (hole filling, Co3Ne)
 int
-bot_repair(void **out, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+bot_repair(struct rt_bot_internal **obot, struct rt_bot_internal *bot, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
-    if (!out || !bot || !ttol || !tol)
+    if (!obot || !bot || !ttol || !tol)
 	return -1;
     return 0;
 }

@@ -18,15 +18,13 @@ endif(ASSETIMPORT_LIBRARIES)
 # BRLCAD_LIB_INCLUDE_DIRS for that purpose
 BRLCAD_LIB_INCLUDE_DIRS(facetize FACETIZE_INCLUDE_DIRS FACETIZE_LOCAL_INCLUDE_DIRS)
 
+add_subdirectory(tessellate)
+
 set(FACETIZE_SRCS
   booleval.cpp
   brep.cpp
-  continuation.cpp
   facetize.cpp
   facetize_log.c
-  plate.cpp
-  regions.cpp
-  spsr.cpp
   tessellate.cpp
   util.cpp
   )
@@ -39,6 +37,7 @@ target_link_libraries(ged-facetize ${FACETIZE_LIBS})
 set_property(TARGET ged-facetize APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H MANIFOLD_DLL_IMPORTS)
 VALIDATE_STYLE(ged-facetize facetize.cpp)
 PLUGIN_SETUP(ged-facetize ged)
+add_dependencies(ged-facetize ged_tessellate)
 
 CMAKEFILES(
   CMakeLists.txt

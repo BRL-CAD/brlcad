@@ -157,7 +157,7 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
     // save our in-memory footprint during the boolean process...  save the
     // temp .g files, stash the paths for later lookup, and clean them all up
     // at the end...
-    int fsize = bu_file_size(tmpfil);
+    //int fsize = bu_file_size(tmpfil);
 
     struct rt_bot_internal *bot = NULL;
     struct db_i *dbip = db_open(tmpfil, DB_OPEN_READONLY);
@@ -166,9 +166,21 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 	return -1;
     }
 
+    std::string oname = std::string(dp->d_namep) + std::string("_tess.bot");
+    dp = db_lookup(oname.c_str(), LOOKUP_QUIET);
+    if (!dp) {
+	bu_log("Unable to find tessellation output object %s\n", oname.c_str());
+	return -1;
+    }
 
-
-
+    struct rt_db_internal obot_intern;
+    RT_DB_INTERNAL_INIT(&obot_intern);
+    ret = rt_db_get_internal(&obot_intern, dp, dbip, NULL, &rt_uniresource);
+    if (ret < 0) {
+	bu_log("rt_db_get_internal failed for %s\n", oname.c_str());
+	return -1;
+    }
+    struct rt_bot_internal *nbot = (struct rt_bot_internal *)obot_intern.idb_ptr;
     manifold::Mesh bot_mesh;
     for (size_t j = 0; j < nbot->num_vertices ; j++)
 	bot_mesh.vertPos.push_back(glm::vec3(nbot->vertices[3*j], nbot->vertices[3*j+1], nbot->vertices[3*j+2]));
@@ -182,8 +194,6 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 	    bu_free(nbot->vertices, "verts");
 	if (nbot->faces)
 	    bu_free(nbot->faces, "faces");
-	BU_FREE(nbot, struct rt_bot_internal);
-	nbot = NULL;
     }
 
     if (status >= 0) {

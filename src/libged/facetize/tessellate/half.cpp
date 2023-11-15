@@ -59,15 +59,14 @@ half_to_bot(struct rt_bot_internal **out, struct rt_db_internal *ip, const struc
 
     struct nmgregion *r1 = NULL;
     struct model *m = nmg_mm();
-    if (!intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol)) {
-	(*out) = new manifold::Manifold();
-	return 1;
+    if (intern.idb_meth->ft_tessellate(&r1, m, &intern, ttol, tol)) {
+	(*out) = NULL;
+	return BRLCAD_ERROR;
     }
 
     struct rt_bot_internal *hbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
-
-
-    return BRLCAD_OK;
+    (*out) = hbot;
+    return (!hbot) ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
 // Local Variables:
