@@ -825,7 +825,7 @@ void InformationGatherer::checkScientificNotation() {
         Unit& unit = pair.second;
 
         if (unit.power == 0) continue;
-        if (getInfo(key).size() < 11) continue;
+        if (getInfo(key).size() < 15) continue;
 
         double value;
 
