@@ -792,8 +792,12 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	// render ambient occlusion view
 	std::string render = renderPerspective(DETAILED, opt, info.largestComponents[0].name);
 	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
+
 	std::string title = info.getInfo("title");
-	if (title.size() > 29)
-		title = title.substr(0, 27) + "...";
+	if (title.size() > 35)
+	{
+		title = title.substr(0, 34) + "...";
+	}
+
 	img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
 }
