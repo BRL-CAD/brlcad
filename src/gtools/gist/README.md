@@ -14,11 +14,9 @@ This code has been run and tested on:
 * Visual Studio
 * CMake
 
-
 ## External Deps  ##
 
 * BRL-CAD - Download latest version at https://brlcad.org/wiki/Compiling
-* Appleseed - Download latest version at appleseed - A modern, open source production renderer (appleseedhq.net)
 * OpenCV C++ - Download lastest version at https://docs.opencv.org/4.x/df/d65/tutorial_table_of_content_introduction.html
 * Boost - Download required version at Boost C++ Libraries download | SourceForge.net
 * CMake - Download latest CMake at https://cmake.org/
@@ -115,7 +113,6 @@ Since this application is a command line tool, no deployment is required.
 ## References ##
 
 https://brlcad.org/wiki/Compiling
-appleseed - A modern, open source production renderer (appleseedhq.net)
 
 ## Support ##
 
