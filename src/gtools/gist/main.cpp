@@ -208,18 +208,6 @@ void generateReport(Options opt)
 
     info.checkScientificNotation();
 
-    // Truncate title
-    std::string title = info.getInfo("title");
-    if (title.size() > 35) {
-        std::string continuation = title.substr(35);
-
-        if (opt.getNotes() == "None") {
-            opt.setNotes("Title: ..." + continuation);
-        } else {
-            opt.setNotes("Title: ..." + continuation + "\n" + opt.getNotes());
-        }
-    }
-
     // Define commonly used ratio variables
     int margin = opt.getWidth() / 150;
     int header_footer_height = opt.getLength() / 25;
@@ -240,8 +228,8 @@ void generateReport(Options opt)
     // draw all sections
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
-    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
+    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
     makeHierarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     //brl-cad logo
     img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg", 250);

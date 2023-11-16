@@ -179,7 +179,7 @@ void IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, 
     }
 }
 
-void IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
+int IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
 {
 	y += 65;
 	height -= 65;
@@ -226,13 +226,32 @@ void IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::stri
 	}
 	catch (...) {
 		std::cerr << "Trying to create roi out of image boundaries" << std::endl;
-		return;
+		return -1;
 	}
 	resized_image.copyTo(destRoi);
 
+	// truncate title until it fits on line
+	int countCharDisplayedText = text.length();
+	getTextWidth(50, width, text, TO_BOLD); // needed for while loop to run correctly
+	while (getTextWidth(50, width, text, TO_BOLD) > width) {
+		if (countCharDisplayedText == text.length()) {
+			text = text + " ...";
+		}
+		if (text.length() >= 5) {
+			text.erase(text.length() - 5, 1);
+			countCharDisplayedText--;
+		}
+		while (text.length() >= 5 && text[text.length() - 5] == ' ') {
+        	// Remove the fifth-to-last character (if it is a space)
+        	text.erase(text.length() - 5, 1);
+			countCharDisplayedText--;
+    	}
+	}
 	// now, draw text and line
 	this->drawLine(x + widthOffset, y + heightOffset - 5, x + widthOffset + width, y + heightOffset - 5, 5, cv::Scalar(0, 0, 0));
 	this->drawTextCentered(x + widthOffset + width / 2, y + heightOffset - 65, 50, width, text, TO_BOLD);
+
+	return countCharDisplayedText;
 }
 
 //Helper funciton to support getting the width of a text
@@ -440,7 +459,7 @@ void IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int heig
 {
 	if (ellipsis == TO_ELLIPSIS) {
 		if (numOfCharactersBeforeEllipsis < text.length()) {
-			text = text.substr(0, numOfCharactersBeforeEllipsis) + "...";
+			text = text.substr(0, numOfCharactersBeforeEllipsis) + " ...";
 		}
 	}
 	std::istringstream iss(text);
