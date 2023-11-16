@@ -63,7 +63,7 @@ Run the program using
 
 Example
 
-`./bin/gist -p ../../build/share/db/m35.g -f report.png`
+`./bin/gist -p ../build/share/db/m35.g -f report.png`
 
 ### Command Line Arguments
 
@@ -102,7 +102,11 @@ All options that allow entering in custom text should use double quotation marks
 
 ## Environmental Variables/Files ##
 
-No environmental variables are needed yet, but they will be listed here soon.
+Every environmental needed to install BRL-CAD is needed. COnsult the BRL-CAD documentation for more information.
+
+For this project specifically, the OpenCV Environmental Variable is needed which is:
+
+OpenCV_DIR
 
 ## Deployment ##
 
