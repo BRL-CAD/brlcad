@@ -64,7 +64,7 @@ bool readParameters(int argc, char** argv, Options &opt)
 
 
 
-    while ((opts = bu_getopt(argc, argv, "g?Oop:w:F:P:f:n:T:E:N:l:L:m:c:t:Z")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "ghOop:w:F:P:f:n:T:E:N:l:L:m:c:t:Z")) != -1) {
 
         switch (opts) {
             case 'p':
@@ -126,7 +126,7 @@ bool readParameters(int argc, char** argv, Options &opt)
             case 'm':
                 opt.setUnitMass(bu_optarg);
                 break;
-            case '?':
+            case 'h':
                 h = true;
                 break;
             default:
@@ -149,7 +149,7 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    T = directory where rt and rtwizard executables are stored\n");
         bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report. \n");
         bu_log("           * If the classification is a security access label, a corresponding color will be applied to the border\n");
-        bu_log("           * Options: UNCLASSIFIED, CONFIDENTIAL, SECRET, TOP_SECRET, <CUSTOM>\n");
+        bu_log("           * Options: UNCLASSIFIED, CONFIDENTIAL, SECRET, TOP SECRET, <CUSTOM>\n");
         bu_log("    o = orientation of the file, default is right hand, flag will change orientation output to left hand\n");
         bu_log("    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up\n");
         bu_log("    N = notes that a user would like to add to be specified in the report\n");
@@ -158,12 +158,13 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    l = override the default length units in a file.\n");
         bu_log("    L = filepath for optional logo.\n");
         bu_log("    m = override the default mass units in a file.\n");
+        bu_log("All options that allow entering in custom text should use double quotation marks (\"\").\n");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
     else if (argc < 2 || (hasFolder == hasFile)) {
         bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
-        bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
+        bu_log("\nPlease specify the path to the file for report generation, use flag \"-h\" to see all options\n");
         return false;
     } else if (!bu_file_exists(opt.getFilepath().c_str(), NULL)) {
         bu_log("ERROR: %s doesn't exist\n", opt.getFilepath().c_str());

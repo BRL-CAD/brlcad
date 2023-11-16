@@ -54,6 +54,7 @@ public:
 	~InformationGatherer();
 
 	bool gatherInformation(std::string name);
+    void GetFullNameOrUsername(std::string& name);
 
 	std::string getInfo(std::string key);
     std::string getFormattedInfo(std::string key);
@@ -65,6 +66,7 @@ public:
     void correctDefaultUnitsMass();
 
     void checkScientificNotation();
+
 
 
 };
