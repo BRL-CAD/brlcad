@@ -85,7 +85,7 @@ getVerificationData(struct ged* g, Options* opt, std::map<std::string, std::stri
         }
     }
 
-    //Get volume of region
+    //Get presented area of region
     for (int i = 0; i < toVisit.size(); i++) {
         std::string val = toVisit[i];
         std::string command = opt->getTemppath() + "gqa -Av -q -g 2 -u " + lUnit + ",\"cu " + lUnit + "\" " + opt->getFilepath() + " " + val + " 2>&1";
@@ -584,64 +584,43 @@ bool InformationGatherer::gatherInformation(std::string name)
     bool worked = true;
     std::string owner = "username";
 
+    char buffer[1024];  //for name of owner
 #ifdef HAVE_WINDOWS_H
     /*
     * Code primarily taken from https://learn.microsoft.com/en-us/windows/win32/secauthz/finding-the-owner-of-a-file-object-in-c--
     */
-    DWORD dwRtnCode = 0;
-    PSID pSidOwner = NULL;
-    BOOL bRtnBool = TRUE;
-    LPTSTR AcctName = NULL;
-    LPTSTR DomainName = NULL;
-    DWORD dwAcctName = 1, dwDomainName = 1;
-    SID_NAME_USE eUse = SidTypeUnknown;
-    HANDLE hFile;
-    PSECURITY_DESCRIPTOR pSD = NULL;
-
-    hFile = CreateFile(TEXT(opt->getFilepath().c_str()), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-
-    if (hFile == INVALID_HANDLE_VALUE) {
-        worked = false;
-    }
-    else {
-        dwRtnCode = GetSecurityInfo(hFile, SE_FILE_OBJECT, OWNER_SECURITY_INFORMATION, &pSidOwner, NULL, NULL, NULL, &pSD);
-        if (dwRtnCode != ERROR_SUCCESS) {
-            worked = false;
+    DWORD buffer_len = sizeof(buffer) / sizeof(buffer[0]);
+    if (!GetUserNameEx(NAME_DISPLAY, buffer, &buffer_len)) {
+        // If GetUserNameEx fails, fallback to GetUserName for the username
+        if (!GetUserName(buffer, &buffer_len)) {
+            owner = "Unknown";
+        } else {
+            owner = std::string(buffer);
         }
-        else {
-            bRtnBool = LookupAccountSid(NULL, pSidOwner, AcctName, (LPDWORD)&dwAcctName, DomainName, (LPDWORD)&dwDomainName, &eUse);
-            AcctName = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwAcctName * sizeof(wchar_t));
-            if (AcctName == NULL) {
-                worked = false;
-            }
-            else {
-                DomainName = (LPTSTR)GlobalAlloc(GMEM_FIXED, dwDomainName * sizeof(wchar_t));
-                if (DomainName == NULL) {
-                    worked = false;
-                }
-                else {
-                    bRtnBool = LookupAccountSid(NULL, pSidOwner, AcctName, (LPDWORD)&dwAcctName, DomainName, (LPDWORD)&dwDomainName, &eUse);
-                    if (bRtnBool == FALSE) {
-                        worked = false;
-                    }
-                    else {
-                        owner = AcctName;
-                    }
-                }
-            }
-        }
+    } else {
+        owner = std::string(buffer);
     }
-    CloseHandle(hFile);
-#endif
-#ifdef __APPLE__
+#else   // UNIX-like systems
     struct stat fileInfo;
     stat(opt->getFilepath().c_str(), &fileInfo);
     uid_t ownerUID = fileInfo.st_uid;
     struct passwd *pw = getpwuid(ownerUID);
-    if (pw == NULL) {
-        owner = "N/A";
+    if (pw && pw->pw_gecos && pw->pw_gecos[0]) {
+        // Try to extract the full name from pw_gecos, if available
+        std::string full_name(pw->pw_gecos);
+        std::size_t comma_pos = full_name.find(',');
+        if (comma_pos != std::string::npos) {
+            owner = full_name.substr(0, comma_pos); // Full name is before the first comma
+        } else {
+            owner = full_name; // Use the whole string if there's no comma
+        }
     } else {
-        owner = pw->pw_name;
+        // Fallback to login name
+        if (getlogin_r(buffer, sizeof(buffer)) == 0) {
+            owner = std::string(buffer);
+        } else {
+            owner = "Unknown";
+        }
     }
 #endif
     if(opt->getOwner() != ""){
@@ -718,6 +697,49 @@ bool InformationGatherer::gatherInformation(std::string name)
 	infoMap.insert(std::pair<std::string, std::string>("checksum", ss2.str()));
 
 	return true;
+}
+
+void GetFullNameOrUsername(std::string& name) {
+    char buffer[1024];
+
+    #if defined(_WIN32) || defined(_WIN64) // Windows systems
+
+    DWORD buffer_len = sizeof(buffer) / sizeof(buffer[0]);
+    if (!GetUserNameEx(NAME_DISPLAY, buffer, &buffer_len)) {
+        // If GetUserNameEx fails, fallback to GetUserName for the username
+        if (!GetUserName(buffer, &buffer_len)) {
+            name = "Unknown";
+        } else {
+            name = std::string(buffer);
+        }
+    } else {
+        name = std::string(buffer);
+    }
+
+    #else // UNIX-like systems
+
+    struct passwd *pw;
+    uid_t uid = geteuid();
+    pw = getpwuid(uid);
+    if (pw && pw->pw_gecos && pw->pw_gecos[0]) {
+        // Try to extract the full name from pw_gecos, if available
+        std::string full_name(pw->pw_gecos);
+        std::size_t comma_pos = full_name.find(',');
+        if (comma_pos != std::string::npos) {
+            name = full_name.substr(0, comma_pos); // Full name is before the first comma
+        } else {
+            name = full_name; // Use the whole string if there's no comma
+        }
+    } else {
+        // Fallback to login name
+        if (getlogin_r(buffer, sizeof(buffer)) == 0) {
+            name = std::string(buffer);
+        } else {
+            name = "Unknown";
+        }
+    }
+
+    #endif
 }
 
 std::string InformationGatherer::getInfo(std::string key)

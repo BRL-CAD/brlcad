@@ -13,11 +13,19 @@
 #include <sstream>
 #include <vector>
 #include <ctime>
-#include <sys/stat.h> 
 #include "picohash.h"
 #include<cstdio>
 #include<filesystem>
-#include <sys/stat.h>
+
+// Necessary C++ headers to get user account name for Windows and Unix
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#include <Lmcons.h>
+#elif defined(__unix__) || defined(__unix) || defined(unix) || defined(__APPLE__) || defined(__MACH__) || defined(__FreeBSD__)
+#include <pwd.h>
+#include <unistd.h>
+#include <sys/types.h>
+#endif
 
 // BRL-CAD header files
 #include "bu/getopt.h"

@@ -12,7 +12,7 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	else if (info.getInfo("classification") == "SECRET") {		//Red
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(46, 16, 200));
 	}
-	else if (info.getInfo("classification") == "TOP_SECRET") {	//Orange
+	else if (info.getInfo("classification") == "TOP SECRET") {	//Orange
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(31, 103, 255));
 	}
 	else {	//Draw black rectangle
@@ -24,12 +24,14 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	std::vector<std::string> text2;
 	std::string concatFile = info.getInfo("file");
 	std::string concatOwner = info.getInfo("owner");
+	/*
 	if (info.getInfo("file").size() > 20) {
         concatFile = info.getInfo("file").substr(0,15) + "... .g";
     }
 	if (info.getInfo("owner").size() > 20) {
         concatOwner = info.getInfo("owner").substr(0,15) + "...";
     }
+	*/
 	int endTextXPosition = 0;
 	if (info.getInfo("classification") != "") {
 		text.push_back("Owner: " + concatOwner);
@@ -58,7 +60,7 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	else if (info.getInfo("classification") == "SECRET") {		//Red
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(46, 16, 200));
 	}
-	else if (info.getInfo("classification") == "TOP_SECRET") {	//Orange
+	else if (info.getInfo("classification") == "TOP SECRET") {	//Orange
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(31, 103, 255));
 	}
 	else {	//Draw black rectangle
@@ -81,7 +83,6 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		text.push_back("Date Generated : " + info.getInfo("dateGenerated"));
 		img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
-	//img.drawImageFitted(3350, 2360, 100, 90, "../src/gtools/gist/afcLogoB.jpg");
 }
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
