@@ -144,7 +144,7 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    E = path to folder to export reports. Used for processing folder of models\n");
         bu_log("    g = GUI output\n");
         bu_log("    f = filepath of png export, MUST end in .png\n");
-        bu_log("    w = override name of owner of geometry file (defauts to system name), to be used in report\n");
+        bu_log("    w = override name of owner of geometry file (defaults to user's full/account name), to be used in report\n");
         bu_log("    n = name of preparer, to be used in report\n");
         bu_log("    T = directory where rt and rtwizard executables are stored\n");
         bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report. \n");
