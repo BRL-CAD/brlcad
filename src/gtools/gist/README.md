@@ -65,6 +65,34 @@ Example
 
 `./bin/gist -p ../../build/share/db/m35.g -f report.png`
 
+### Command Line Arguments
+
+You can see these by running:
+`./bin/gist -h `
+
+    p = filepath
+    P = pixels per inch, default is 300ppi
+    F = path specified is a folder of models
+    E = path to folder to export reports. Used for processing folder of models
+    g = GUI output
+    f = filepath of png export, MUST end in .png
+    w = override name of owner of geometry file (defauts to system name), to be used in report
+    n = name of preparer, to be used in report
+    T = directory where rt and rtwizard executables are stored
+    c = classification of a file, to be displayed in uppercase on top and bottom of report.
+           * If the classification is a security access label, a corresponding color will be applied to the border
+           * Options: UNCLASSIFIED, CONFIDENTIAL, SECRET, TOP SECRET, <CUSTOM>
+    o = orientation of the file, default is right hand, flag will change orientation output to left hand
+    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up
+    N = notes that a user would like to add to be specified in the report
+    Z = option to re-use pre-made renders in the output folder.  Should only be used when running on the same model multiple times.
+    t = option to specify the top component of the report. Useful when there are multiple tops
+    l = override the default length units in a file.
+    L = filepath for optional logo.
+    m = override the default mass units in a file.
+    
+All options that allow entering in custom text should use double quotation marks ("") if you want to include spaces.
+
 ### Windows OS Setup
 1. Download and install OpenCV. Be sure to select “Windows” and the 4.6.0 version.
 2. Download, install and compile BRL-CAD.
