@@ -158,7 +158,7 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    l = override the default length units in a file.\n");
         bu_log("    L = filepath for optional logo.\n");
         bu_log("    m = override the default mass units in a file.\n");
-        bu_log("All options that allow entering in custom text should use double quotation marks (\"\").\n");
+        bu_log("All options that allow entering in custom text should use double quotation marks (\"\") if you want to include spaces.\n");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
