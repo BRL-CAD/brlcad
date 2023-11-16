@@ -102,7 +102,7 @@ All options that allow entering in custom text should use double quotation marks
 
 ## Environmental Variables/Files ##
 
-Every environmental needed to install BRL-CAD is needed. COnsult the BRL-CAD documentation for more information.
+Every environmental needed to install BRL-CAD is needed. Consult the BRL-CAD documentation for more information.
 
 For this project specifically, the OpenCV Environmental Variable is needed which is:
 
