@@ -82,7 +82,7 @@ extern struct rt_pnts_internal *
 _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s);
 
 extern int
-_ged_continuation_obj(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, struct tess_opts *s, point_t seed);
+continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, struct tess_opts *s, point_t seed);
 
 extern int
 _ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname);

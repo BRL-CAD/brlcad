@@ -59,7 +59,7 @@ _bbox_vol(point_t b_min, point_t b_max)
 }
 
 int
-_ged_continuation_obj(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, struct tess_opts *s, point_t seed)
+continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, struct tess_opts *s, point_t seed)
 {
 
     int first_run = 1;
