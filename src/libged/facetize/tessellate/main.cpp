@@ -49,25 +49,23 @@ main(int argc, const char **argv)
     int print_help = 0;
     struct tess_opts s = TESS_OPTS_DEFAULT;
 
-    struct bu_opt_desc d[18];
-    BU_OPT(d[0],   "h",                  "help",  "",            NULL,                  &print_help, "Print help and exit");
-    BU_OPT(d[1],    "",               "tol-abs", "#", &bu_opt_fastf_t,                  &(ttol.abs), "Absolute distance tolerance");
-    BU_OPT(d[2],    "",               "tol-rel", "#", &bu_opt_fastf_t,                  &(ttol.rel), "Relative distance tolerance");
-    BU_OPT(d[3],    "",              "tol-norm", "#", &bu_opt_fastf_t,                 &(ttol.norm), "Normal tolerance");
-    BU_OPT(d[4],    "",           "disable-nmg",  "",            NULL,                  &(s.no_nmg), "Disable use of the N-Manifold Geometry (NMG) meshing method");
-    BU_OPT(d[5],    "",           "disable-nmg",  "",            NULL,                  &(s.no_nmg), "Disable use of the N-Manifold Geometry (NMG) meshing method");
-    BU_OPT(d[6],    "",           "disable-nmg",  "",            NULL,                  &(s.no_nmg), "Disable use of the N-Manifold Geometry (NMG) meshing method");
-    BU_OPT(d[7],    "",            "disable-cm",  "",            NULL,         &(s.no_continuation), "Disable use of the Continuation Method (CM) meshing method");
-    BU_OPT(d[8],    "",           "enable-spsr",  "",            NULL,        &(s.screened_poisson), "Enable Screened Poisson Surface Reconstruction (SPSR) meshing method (run -h --SPSR to see more options for this mode)");
-    BU_OPT(d[9],   "F",                "fscale", "#", &bu_opt_fastf_t,           &(s.feature_scale), "Percentage of the average thickness observed by the raytracer to use for a targeted feature size with sampling based methods.  Defaults to 0.15, overridden   by --fsize");
-    BU_OPT(d[10],   "",                 "fsize", "#", &bu_opt_fastf_t,            &(s.feature_size), "Explicit feature length to try for sampling based methods - overrides feature-scale.");
-    BU_OPT(d[11],   "",                "fsized", "#", &bu_opt_fastf_t,          &(s.d_feature_size), "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
-    BU_OPT(d[12],   "",              "max-time", "#",     &bu_opt_int,                &(s.max_time), "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to   completion (if there is a theoretical termination point for the algorithm).  Be careful when specifying zero - it can produce very long runs!.");
-    BU_OPT(d[13],   "",              "max-pnts", "#",     &bu_opt_int,                &(s.max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
-    BU_OPT(d[14],   "",            "spsr-depth", "#",     &bu_opt_int,            &(s.s_opts.depth), "Maximum reconstruction depth (default 8)");
-    BU_OPT(d[15],  "w",      "spsr-interpolate", "#", &bu_opt_fastf_t,     &(s.s_opts.point_weight), "Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. (Default 2.0)");
-    BU_OPT(d[16],   "", "spsr-samples-per-node", "#", &bu_opt_fastf_t, &(s.s_opts.samples_per_node), "How many samples should go into a cell before it is refined. (Default 1.5)");
-    BU_OPT_NULL(d[17]);
+    struct bu_opt_desc d[16];
+    BU_OPT(d[ 0],  "h",                  "help",  "",            NULL,                  &print_help, "Print help and exit");
+    BU_OPT(d[ 1],   "",               "tol-abs", "#", &bu_opt_fastf_t,                  &(ttol.abs), "Absolute distance tolerance");
+    BU_OPT(d[ 2],   "",               "tol-rel", "#", &bu_opt_fastf_t,                  &(ttol.rel), "Relative distance tolerance");
+    BU_OPT(d[ 3],   "",              "tol-norm", "#", &bu_opt_fastf_t,                 &(ttol.norm), "Normal tolerance");
+    BU_OPT(d[ 4],   "",           "disable-nmg",  "",            NULL,                  &(s.no_nmg), "Disable use of the N-Manifold Geometry (NMG) meshing method");
+    BU_OPT(d[ 5],   "",            "disable-cm",  "",            NULL,         &(s.no_continuation), "Disable use of the Continuation Method (CM) meshing method");
+    BU_OPT(d[ 6],   "",           "enable-spsr",  "",            NULL,        &(s.screened_poisson), "Enable Screened Poisson Surface Reconstruction (SPSR) meshing method (run -h --SPSR to see more options for this mode)");
+    BU_OPT(d[ 7],  "F",                "fscale", "#", &bu_opt_fastf_t,           &(s.feature_scale), "Percentage of the average thickness observed by the raytracer to use for a targeted feature size with sampling based methods.  Defaults to 0.15, overridden   by --fsize");
+    BU_OPT(d[ 8],   "",                 "fsize", "#", &bu_opt_fastf_t,            &(s.feature_size), "Explicit feature length to try for sampling based methods - overrides feature-scale.");
+    BU_OPT(d[ 9],   "",                "fsized", "#", &bu_opt_fastf_t,          &(s.d_feature_size), "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
+    BU_OPT(d[10],   "",              "max-time", "#",     &bu_opt_int,                &(s.max_time), "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to   completion (if there is a theoretical termination point for the algorithm).  Be careful when specifying zero - it can produce very long runs!.");
+    BU_OPT(d[11],   "",              "max-pnts", "#",     &bu_opt_int,                &(s.max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
+    BU_OPT(d[12],   "",            "spsr-depth", "#",     &bu_opt_int,            &(s.s_opts.depth), "Maximum reconstruction depth (default 8)");
+    BU_OPT(d[13],  "w",      "spsr-interpolate", "#", &bu_opt_fastf_t,     &(s.s_opts.point_weight), "Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. (Default 2.0)");
+    BU_OPT(d[14],   "", "spsr-samples-per-node", "#", &bu_opt_fastf_t, &(s.s_opts.samples_per_node), "How many samples should go into a cell before it is refined. (Default 1.5)");
+    BU_OPT_NULL(d[15]);
 
     /* parse options */
     struct bu_vls omsg = BU_VLS_INIT_ZERO;
