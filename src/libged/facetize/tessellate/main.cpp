@@ -33,6 +33,9 @@
 #include "ged.h"
 #include "./tessellate.h"
 
+// TODO - this needs to be a util function - it's probably what we should
+// be using instead of the solid2 check to determine if an input will
+// work for boolean processing.
 static bool
 bot_is_manifold(struct rt_bot_internal *bot)
 {
@@ -297,14 +300,20 @@ main(int argc, const char **argv)
     }
 
     if (s.continuation) {
+	// The continuation method (CM) is a marching algorithm using an
+	// inside/outside test, building from a seed point on the surface.
+	//
+	// CM needs some awareness of properties of the solid, so we use the
+	// raytrace interrogation to build up that data.  Unlike the sampling
+	// methods we don't make direct use of the points beyond using one of
+	// them for the seed, but we do use information collected during the
+	// sampling process.
+	struct pnt_normal *pn = BU_LIST_PNEXT(pnt_normal, pl);
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
+	    struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
+	    pn = BU_LIST_PNEXT(pnt_normal, pl);
 	}
-	// CM is a marching method using an inside/outside test.  We need a
-	// seed point on the surface, so we get one that we know was a raytrace
-	// hit from the pnts sample.
-	struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
-	struct pnt_normal *pn = BU_LIST_PNEXT(pnt_normal, pl);
 	ret = continuation_mesh(&obot, gedp->dbip, dp->d_namep, &s, pn->v);
 	if (ret == BRLCAD_OK)
 	    goto write_obot;
