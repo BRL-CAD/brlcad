@@ -240,9 +240,16 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 	    if (!s->quiet)
 		bu_log("%s", bu_vls_cstr(s->log_s->nmg_log_header));
 
-	    if (_ged_facetize_booleval(s, argc, argv, newname) == BRLCAD_OK) {
-		ret = BRLCAD_OK;
-		break;
+	    if (s->make_nmg) {
+		if (_ged_facetize_nmgeval(s, argc, argv, newname) == BRLCAD_OK) {
+		    ret = BRLCAD_OK;
+		    break;
+		}
+	    } else {
+		if (_ged_facetize_booleval(s, argc, argv, newname) == BRLCAD_OK) {
+		    ret = BRLCAD_OK;
+		    break;
+		}
 	    }
 
 	    // NMG didn't work

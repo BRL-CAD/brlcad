@@ -1,4 +1,4 @@
-/*                  B O O L E V A L . C P P
+/*                N M G _ B O O L E V A L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2023 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/facetize/booleval.cpp
+/** @file libged/facetize/nmg_booleval.cpp
  *
- * The core evaluation logic of the facetize command.
+ * Classic NMG boolean evaluation path.
  *
  */
 
@@ -135,32 +135,44 @@ _try_nmg_facetize(struct _ged_facetize_state *s, int argc, const char **argv)
     return (failed) ? NULL : nmg_model;
 }
 
-static struct rt_bot_internal *
-_try_nmg_to_bot(struct _ged_facetize_state *s, struct model *nmg_model)
+static int
+_write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *name)
 {
     struct ged *gedp = s->gedp;
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    struct rt_bot_internal *bot = NULL;
-    //_ged_facetize_log_nmg(s);
-    if (!BU_SETJUMP) {
-	/* try */
-	bot = (struct rt_bot_internal *)nmg_mdl_to_bot(nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol);
-    } else {
-	/* catch */
-	BU_UNSETJUMP;
-	_ged_facetize_log_default(s);
-	return NULL;
-    } BU_UNSETJUMP;
-    _ged_facetize_log_default(s);
-    return bot;
-}
+    struct rt_db_internal intern;
+    struct directory *dp;
+    struct db_i *dbip = gedp->dbip;
 
+    /* Export NMG as a new solid */
+    RT_DB_INTERNAL_INIT(&intern);
+    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern.idb_type = ID_NMG;
+    intern.idb_meth = &OBJ[ID_NMG];
+    intern.idb_ptr = (void *)nmg_model;
+
+    dp = db_diradd(dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
+    if (dp == RT_DIR_NULL) {
+	if (s->verbosity) {
+	    bu_log("Cannot add %s to directory\n", name);
+	}
+	return BRLCAD_ERROR;
+    }
+
+    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+	if (s->verbosity) {
+	    bu_log("Failed to write %s to database\n", name);
+	}
+	rt_db_free_internal(&intern);
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
 int
-_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname)
+_ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname)
 {
     int ret = FACETIZE_SUCCESS;
     struct model *nmg_model = NULL;
-    struct rt_bot_internal *bot = NULL;
 
     nmg_model = _try_nmg_facetize(s, argc, argv);
     if (nmg_model == NULL) {
@@ -171,27 +183,8 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **arg
 	goto ged_nmg_obj_memfree;
     }
 
-    if (!s->make_nmg) {
-
-	/* Make and write out the bot */
-	bot = _try_nmg_to_bot(s, nmg_model);
-
-	if (!bot) {
-	    if (s->verbosity > 1) {
-		bu_log("NMG(%s): conversion to BOT failed, aborting\n", newname);
-	    }
-	    ret = FACETIZE_FAILURE;
-	    goto ged_nmg_obj_memfree;
-	}
-
-	ret = _ged_facetize_write_bot(s, bot, newname);
-
-    } else {
-
-	/* Just write the NMG */
-	ret = _ged_facetize_write_nmg(s, nmg_model, newname);
-
-    }
+    /* Write the NMG */
+    ret = _write_nmg(s, nmg_model, newname);
 
 ged_nmg_obj_memfree:
     if (!s->quiet && ret != BRLCAD_OK) {

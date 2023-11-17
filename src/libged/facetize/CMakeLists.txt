@@ -21,11 +21,13 @@ BRLCAD_LIB_INCLUDE_DIRS(facetize FACETIZE_INCLUDE_DIRS FACETIZE_LOCAL_INCLUDE_DI
 add_subdirectory(tessellate)
 
 set(FACETIZE_SRCS
-  booleval.cpp
   brep.cpp
   facetize.cpp
   facetize_log.c
+  nmg_booleval.cpp
+  regions.cpp
   tessellate.cpp
+  tri_booleval.cpp
   util.cpp
   )
 

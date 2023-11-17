@@ -184,6 +184,9 @@ extern struct rt_bot_internal *
 _ged_facetize_decimate(struct _ged_facetize_state *s, struct rt_bot_internal *bot, fastf_t feature_size);
 
 extern int
+_ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname);
+
+extern int
 _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname);
 
 extern int
@@ -194,8 +197,6 @@ _ged_spsr_obj(struct _ged_facetize_state *s, const char *objname, const char *ne
 
 extern int
 _ged_facetize_write_bot(struct _ged_facetize_state *s, struct rt_bot_internal *bot, const char *name);
-extern int
-_ged_facetize_write_nmg(struct _ged_facetize_state *s, struct model *nmg_model, const char *name);
 
 extern int
 _ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n);

@@ -1,4 +1,4 @@
-/*                     B O O L E V A L . C P P
+/*               T R I _ B O O L E V A L . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2023 United States Government as represented by
@@ -17,9 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/facetize/booleval.cpp
+/** @file libged/facetize/tri_booleval.cpp
  *
- * The core evaluation logic of the facetize command.
+ * The core evaluation logic of the facetize command when targeting
+ * triangle output.
  */
 
 #include "common.h"
@@ -263,95 +264,17 @@ _ged_manifold_do_bool(
     return 0;
 }
 
-static int
-_try_nmg_facetize(struct model **omodel, struct _ged_facetize_state *s, int argc, const char **argv)
-{
-    if (!omodel || !s || !argc || !argv)
-	return -1;
-
-    struct ged *gedp = s->gedp;
-    int i, failed;
-    struct model *nmg_model = nmg_mm();
-
-    //_ged_facetize_log_nmg(s);
-
-    struct db_tree_state init_state;
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
-    /* Establish tolerances */
-    init_state.ts_ttol = &wdbp->wdb_ttol;
-    init_state.ts_tol = &wdbp->wdb_tol;
-    init_state.ts_m = &nmg_model;
-    s->facetize_tree = (union tree *)0;
-
-    // We're processing as an NMG, so we can't use Manifold - it works
-    // only on triangles, and we would lose any higher order polygon
-    // faces from the NMG primitives.  Use an old school nmg_boolean
-    if (!BU_SETJUMP) {
-	/* try */
-	i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
-		1,
-		&init_state,
-		0,			/* take all regions */
-		facetize_region_end,
-		rt_booltree_leaf_tess,
-		(void *)s
-		);
-    } else {
-	/* catch */
-	BU_UNSETJUMP;
-	_ged_facetize_log_default(s);
-	return -1;
-    } BU_UNSETJUMP;
-
-    if (i < 0) {
-	/* Destroy NMG */
-	_ged_facetize_log_default(s);
-	return -1;
-    }
-
-    if (s->facetize_tree) {
-
-	if (!BU_SETJUMP) {
-	    /* try */
-	    failed = nmg_boolean(s->facetize_tree, nmg_model, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource);
-	} else {
-	    /* catch */
-	    BU_UNSETJUMP;
-	    _ged_facetize_log_default(s);
-	    return failed;
-	} BU_UNSETJUMP;
-
-	if (!failed && s->facetize_tree) {
-	    NMG_CK_REGION(s->facetize_tree->tr_d.td_r);
-	    s->facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
-	}
-
-	if (s->facetize_tree) {
-	    db_free_tree(s->facetize_tree, &rt_uniresource);
-	}
-
-	*omodel = (failed) ? NULL : nmg_model;
-	return failed;
-    }
-
-    // TODO - We don't have a tree - whether that's an error or not depends
-    _ged_facetize_log_default(s);
-    return 0;
-}
-
-
-static int
-_try_facetize(struct rt_bot_internal **obot, struct model **omodel, struct _ged_facetize_state *s, int argc, const char **argv)
+int
+_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname)
 {
     if (!s)
-	return -1;
+	return BRLCAD_ERROR;
 
     if (s->make_nmg)
-	return _try_nmg_facetize(omodel, s, argc, argv);
+	return BRLCAD_ERROR;
 
-    if (!obot || !argc || !argv)
-	return -1;
+    if (!argc || !argv)
+	return BRLCAD_ERROR;
 
     struct ged *gedp = s->gedp;
     int i;
@@ -426,51 +349,21 @@ _try_facetize(struct rt_bot_internal **obot, struct model **omodel, struct _ged_
 	    bot->faces[3*j+1] = rmesh.triVerts[j].y;
 	    bot->faces[3*j+2] = rmesh.triVerts[j].z;
 	}
-	*obot = bot;
-
 	delete om;
 	ftree->tr_d.td_d = NULL;
 
 	_ged_facetize_log_default(s);
-	return 0;
+
+	// If we have a manifold_mesh, write it out as a bot
+	return _ged_facetize_write_bot(s, bot, newname);
     }
 
     _ged_facetize_log_default(s);
-    return -1;
-}
-
-int
-_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname)
-{
-    // Depending on the options, the tree walk with produce either
-    // a manifold_mesh or an NMG model.
-    struct rt_bot_internal *bot = NULL;
-    struct model *nmg_model = NULL;
-
-    int ret = BRLCAD_ERROR;
-    if (!s || !argc || !argv || !newname)
-	goto ged_manifold_obj_memfree;
-
-    ret = _try_facetize(&bot, &nmg_model, s, argc, argv);
-
-    // If we have a manifold_mesh, write it out as a bot
-    if (bot && bot->num_faces > 0) {
-	ret = _ged_facetize_write_bot(s, bot, newname);
-	goto ged_manifold_obj_memfree;
-    }
-
-    // If we have an NMG, write it out
-    if (nmg_model) {
-	ret = _ged_facetize_write_nmg(s, nmg_model, newname);
-	goto ged_manifold_obj_memfree;
-    }
-
-ged_manifold_obj_memfree:
-    if (!s->quiet && ret != BRLCAD_OK) {
+    if (!s->quiet) {
 	bu_log("FACETIZE: failed to generate %s\n", newname);
     }
 
-    return ret;
+    return -1;
 }
 
 // Local Variables:
