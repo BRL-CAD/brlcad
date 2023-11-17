@@ -54,9 +54,14 @@ struct tess_opts {
     int max_time;
     int max_pnts;
     struct bg_3d_spsr_opts s_opts;
+    struct bg_tess_tol *ttol;
+    struct bn_tol *tol;
+    double obj_bbox_vol;
+    double pnts_bbox_vol;
+    fastf_t target_feature_size;
 };
 
-#define TESS_OPTS_DEFAULT {0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, BG_3D_SPSR_OPTS_DEFAULT}
+#define TESS_OPTS_DEFAULT {0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 50000, BG_3D_SPSR_OPTS_DEFAULT, NULL, NULL, 0.0, 0.0, 0.0}
 
 extern int
 half_to_bot(struct rt_bot_internal **obot, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
@@ -73,8 +78,11 @@ _tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size);
 extern int
 _tess_facetize_write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name);
 
+extern struct rt_pnts_internal *
+_tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s);
+
 extern int
-_ged_continuation_obj(struct ged *gedp, const char *objname, const char *newname);
+_ged_continuation_obj(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, struct tess_opts *s, point_t seed);
 
 extern int
 _ged_spsr_obj(struct ged *gedp, const char *objname, const char *newname);

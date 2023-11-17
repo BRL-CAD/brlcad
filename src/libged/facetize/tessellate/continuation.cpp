@@ -34,8 +34,8 @@
 
 #define FACETIZE_MEMORY_THRESHOLD 150000000
 
-void
-_ged_facetize_pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts)
+static void
+_pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts)
 {
     int i = 0;
     if (!rpp_min || !rpp_max || !pnts || !pnts || !pnt_cnt) return;
@@ -46,22 +46,8 @@ _ged_facetize_pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *
     }
 }
 
-void
-_ged_facetize_rt_pnts_bbox(point_t rpp_min, point_t rpp_max, struct rt_pnts_internal *pnts)
-{
-    struct pnt_normal *pn = NULL;
-    struct pnt_normal *pl = NULL;
-    if (!rpp_min || !rpp_max || !pnts || !pnts->point) return;
-    VSETALL(rpp_min, INFINITY);
-    VSETALL(rpp_max, -INFINITY);
-    pl = (struct pnt_normal *)pnts->point;
-    for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
-	VMINMAX(rpp_min, rpp_max, pn->v);
-    }
-}
-
-double
-_ged_facetize_bbox_vol(point_t b_min, point_t b_max)
+static double
+_bbox_vol(point_t b_min, point_t b_max)
 {
     double bbox_vol = 0.0;
     fastf_t b_xlen, b_ylen, b_zlen;
@@ -72,132 +58,23 @@ _ged_facetize_bbox_vol(point_t b_min, point_t b_max)
     return bbox_vol;
 }
 
-
-struct cm_info {
-    double feature_size;
-    double avg_thickness;
-    double obj_bbox_vol;
-    double pnts_bbox_vol;
-    double bot_bbox_vol;
-};
-#define CM_INFO_INIT {0.0, 0.0, 0.0, 0.0, 0.0}
-
 int
-_ged_continuation_obj(struct ged *gedp, const char *objname, const char *newname)
+_ged_continuation_obj(struct rt_bot_internal **obot, struct db_i *dbip, const char *objname, struct tess_opts *s, point_t seed)
 {
-    struct cm_info cmi = CM_INFO_INIT;
 
-    int max_time = 0; // TODO - pass in
-    int max_pnts = 50000;  // TODO - pass in
-    fastf_t feature_size = 0.0; // TODO - pass in
-    fastf_t feature_scale = 1.0; // TODO - pass in
-    fastf_t d_feature_size = 0.0; // TODO - pass in
-    fastf_t target_feature_size = 0.0;
     int first_run = 1;
     int fatal_error_cnt = 0;
-    int ret = BRLCAD_OK;
-    double avg_thickness = 0.0;
-    double min_len = 0.0;
     int face_cnt = 0;
     double successful_feature_size = 0.0;
     unsigned int successful_bot_count = 0;
     int decimation_succeeded = 0;
-    double xlen, ylen, zlen;
-    struct directory *dp;
-    struct db_i *dbip = gedp->dbip;
-    struct rt_db_internal in_intern;
-    struct bn_tol btol = BN_TOL_INIT_TOL;
-    struct rt_pnts_internal *pnts;
     struct rt_bot_internal *bot = NULL;
-    struct pnt_normal *pn, *pl;
     int polygonize_failure = 0;
     struct analyze_polygonize_params params = ANALYZE_POLYGONIZE_PARAMS_DEFAULT;
-    int flags = 0;
-    int free_pnts = 0;
-    point_t rpp_min, rpp_max;
-    point_t obj_min, obj_max;
-    VSETALL(rpp_min, INFINITY);
-    VSETALL(rpp_max, -INFINITY);
-
-    dp = db_lookup(dbip, objname, LOOKUP_QUIET);
-    if (!dp)
-       	return BRLCAD_ERROR;
-
-    // TODO - sanity check.  CM + plate mode == no-go
-
-    if (rt_db_get_internal(&in_intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
-	bu_log("Error: could not determine type of object %s, skipping\n", objname);
-	return BRLCAD_ERROR;
-    }
-
-    if (in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_PNTS || in_intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_HALF) {
-	/* If we have a point cloud or half, this won't work */
-	return BRLCAD_ERROR;
-    }
-
-
-    BU_ALLOC(pnts, struct rt_pnts_internal);
-    pnts->magic = RT_PNTS_INTERNAL_MAGIC;
-    pnts->scale = 0.0;
-    pnts->count = 0;
-    pnts->type = RT_PNT_TYPE_NRM;
-    pnts->point = NULL;
-    free_pnts = 1;
-
-    /* Key some settings off the bbox size */
-    rt_obj_bounds(gedp->ged_result_str, gedp->dbip, 1, (const char **)&objname, 0, obj_min, obj_max);
-    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
-    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
-    xlen = fabs(rpp_max[X] - rpp_min[X]);
-    ylen = fabs(rpp_max[Y] - rpp_min[Y]);
-    zlen = fabs(rpp_max[Z] - rpp_min[Z]);
-
-    /* Pick our mode(s) */
-    flags |= ANALYZE_OBJ_TO_PNTS_RAND;
-    flags |= ANALYZE_OBJ_TO_PNTS_SOBOL;
-
-    /* Shoot - we need both the avg thickness of the hit partitions and seed points */
-    if (analyze_obj_to_pnts(pnts, &avg_thickness, gedp->dbip, objname, &btol, flags, max_pnts, max_time, 1) || pnts->count <= 0) {
-	ret = BRLCAD_ERROR;
-	goto ged_facetize_continuation_memfree;
-    }
-
-    /* Check the volume of the bounding box of input object against the bounding box
-     * of the point cloud - a large difference means something probably isn't
-     * right.  This one we are a bit more generous with, since the parent bbox
-     * may not be terribly tight. */
-    {
-	point_t p_min, p_max;
-	VSETALL(p_min, INFINITY);
-	VSETALL(p_max, -INFINITY);
-	_ged_facetize_rt_pnts_bbox(p_min, p_max, pnts);
-	cmi.pnts_bbox_vol = _ged_facetize_bbox_vol(p_min, p_max);
-	cmi.obj_bbox_vol = _ged_facetize_bbox_vol(rpp_min, rpp_max);
-	if (fabs(cmi.obj_bbox_vol - cmi.pnts_bbox_vol)/cmi.obj_bbox_vol > 1) {
-	    ret = BRLCAD_ERROR;
-	    goto ged_facetize_continuation_memfree;
-	}
-    }
-
-    bu_log("CM: average raytrace thickness: %g\n", avg_thickness);
-
-    /* Find the smallest value from either the bounding box lengths or the avg
-     * thickness observed by the rays.  Some fraction of this value is our box
-     * size for the polygonizer and the decimation routine */
-    min_len = (xlen < ylen) ? xlen : ylen;
-    min_len = (min_len < zlen) ? min_len : zlen;
-    min_len = (min_len < avg_thickness) ? min_len : avg_thickness;
-
-    if (feature_size > 0) {
-	target_feature_size = 0.5*feature_size;
-    } else {
-	target_feature_size = min_len * feature_scale;
-    }
-
-    bu_log("CM: targeting feature size %g\n", target_feature_size);
+    double feature_size = s->feature_size;
 
     /* Build the BoT */
-    BU_ALLOC(bot, struct rt_bot_internal);
+    BU_GET(bot, struct rt_bot_internal);
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->mode = RT_BOT_SOLID;
     bot->orientation = RT_BOT_UNORIENTED;
@@ -214,17 +91,11 @@ _ged_continuation_obj(struct ged *gedp, const char *objname, const char *newname
      * max_time has been explicitly set to 0 by the caller this will run
      * unbounded, but the algorithm is n**2 and we're trying the finest level
      * first so may run a *very* long time... */
-    pl = (struct pnt_normal *)pnts->point;
-    pn = BU_LIST_PNEXT(pnt_normal, pl);
-    if (!(feature_size > 0)) {
-	feature_size = 2*avg_thickness;
-    }
-
-    params.max_time = max_time;
+    params.max_time = s->max_time;
     params.verbosity = 1;
     params.minimum_free_mem = FACETIZE_MEMORY_THRESHOLD;
 
-    while (!polygonize_failure && (feature_size > 0.9*target_feature_size || face_cnt < 1000) && fatal_error_cnt < 8) {
+    while (!polygonize_failure && (feature_size > 0.9*s->target_feature_size || face_cnt < 1000) && fatal_error_cnt < 8) {
 	double timestamp = bu_gettime();
 	int delta;
 	fastf_t *verts = bot->vertices;
@@ -233,19 +104,24 @@ _ged_continuation_obj(struct ged *gedp, const char *objname, const char *newname
 	int num_verts = bot->num_vertices;
 	bot->vertices = NULL;
 	bot->faces = NULL;
+	// TODO - analyze_polygonize should take an rt_db_internal, if possible - the matrix
+	// positioning of a tree walk isn't baked into a name or dp, so if we're going to
+	// sample in a tree walk with matrices we really need to work with the positioned data...
 	polygonize_failure = analyze_polygonize(&(bot->faces), (int *)&(bot->num_faces),
 						(point_t **)&(bot->vertices),
 						(int *)&(bot->num_vertices),
-						feature_size, pn->v, objname, gedp->dbip, &params);
+						feature_size, seed, objname, dbip, &params);
 	delta = (int)((bu_gettime() - timestamp)/1e6);
 	if (polygonize_failure || bot->num_faces < successful_bot_count || delta < 2) {
 	    if (polygonize_failure == 3) {
 		bu_log("CM: Too little available memory to continue, aborting\n");
-		ret = BRLCAD_ERROR;
-		goto ged_facetize_continuation_memfree;
+		if (bot->vertices) bu_free(bot->vertices, "verts");
+		if (bot->faces) bu_free(bot->faces, "verts");
+		BU_PUT(bot, struct rt_bot_internal *);
+		return BRLCAD_ERROR;
 	    }
 	    if (polygonize_failure == 2) {
-		bu_log("CM: timed out after %d seconds with size %g\n", max_time, feature_size);
+		bu_log("CM: timed out after %d seconds with size %g\n", s->max_time, feature_size);
 		/* If we still haven't had a successful run, back the feature size out and try again */
 		if (first_run) {
 		    polygonize_failure = 0;
@@ -276,7 +152,7 @@ _ged_continuation_obj(struct ged *gedp, const char *objname, const char *newname
 	    feature_size = successful_feature_size;
 	    if (bot->faces) {
 		if (feature_size <= 0) {
-		    bu_log("CM: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n", target_feature_size, (int)bot->num_faces, successful_feature_size);
+		    bu_log("CM: unable to polygonize at target size (%g), using last successful BoT with %d faces, feature size %g\n", s->target_feature_size, (int)bot->num_faces, successful_feature_size);
 		} else {
 		    bu_log("CM: successfully created %d faces, feature size %g\n", (int)bot->num_faces, successful_feature_size);
 		}
@@ -295,68 +171,54 @@ _ged_continuation_obj(struct ged *gedp, const char *objname, const char *newname
 	first_run = 0;
     }
 
-    if (bot->num_faces && feature_size < target_feature_size) {
+    if (bot->num_faces && feature_size < s->target_feature_size) {
 	bu_log("CM: successfully polygonized BoT with %d faces at feature size %g\n", (int)bot->num_faces, feature_size);
     }
 
     if (!bot->faces) {
 	bu_log("CM: surface reconstruction failed: %s\n", objname);
-	ret = BRLCAD_ERROR;
-	goto ged_facetize_continuation_memfree;
+	if (bot->vertices) bu_free(bot->vertices, "verts");
+	if (bot->faces) bu_free(bot->faces, "verts");
+	BU_PUT(bot, struct rt_bot_internal *);
+	return BRLCAD_ERROR;
     }
 
     /* do decimation */
     {
-	d_feature_size = (d_feature_size > 0) ? d_feature_size : 1.5 * feature_size;
-	struct rt_bot_internal *obot = bot;
+	double d_feature_size = (s->d_feature_size > 0) ? s->d_feature_size : 1.5 * feature_size;
+	*obot = bot;
 
 	bu_log("CM: decimating with feature size %g\n", d_feature_size);
 
 	bot = _tess_facetize_decimate(bot, d_feature_size);
 
-	if (bot == obot) {
+	if (bot == *obot) {
 	    if (bot->vertices) bu_free(bot->vertices, "verts");
 	    if (bot->faces) bu_free(bot->faces, "verts");
-	    ret = BRLCAD_ERROR;
-	    goto ged_facetize_continuation_memfree;
+	    BU_PUT(bot, struct rt_bot_internal *);
+	    return BRLCAD_ERROR;
 	}
-	if (bot != obot) {
+	// TODO - double check that we're freeing memory here - did _tess_facetize_decimate handle it?
+	if (bot != *obot) {
 	    decimation_succeeded = 1;
 	}
     }
 
-    /* Check the volume of the bounding box of the BoT against the bounding box
-     * of the point cloud - a large difference means something probably isn't
-     * right.  For the moment, use >50% difference. */
-    {
-	point_t b_min, b_max;
-	VSETALL(b_min, INFINITY);
-	VSETALL(b_max, -INFINITY);
-	_ged_facetize_pnts_bbox(b_min, b_max, bot->num_vertices, (point_t *)bot->vertices);
-	cmi.bot_bbox_vol = _ged_facetize_bbox_vol(b_min, b_max);
-	if (fabs(cmi.pnts_bbox_vol - cmi.bot_bbox_vol) > cmi.pnts_bbox_vol * 0.5) {
-	    ret = BRLCAD_ERROR;
-	    if (bot->vertices) bu_free(bot->vertices, "verts");
-	    if (bot->faces) bu_free(bot->faces, "verts");
-	    goto ged_facetize_continuation_memfree;
-	}
-    }
+    /* Get the volume of the bounding box of the BoT */
+    point_t b_min, b_max;
+    VSETALL(b_min, INFINITY);
+    VSETALL(b_max, -INFINITY);
+    _pnts_bbox(b_min, b_max, bot->num_vertices, (point_t *)bot->vertices);
+    double bot_bbox_vol = _bbox_vol(b_min, b_max);
 
-    /* Check the volume of the bounding box of the BoT against the bounding box
+    /* Check the BoT bbox vol against the bounding box
      * of the point cloud - a large difference means something probably isn't
      * right.  For the moment, use >50% difference. */
-    {
-	point_t b_min, b_max;
-	VSETALL(b_min, INFINITY);
-	VSETALL(b_max, -INFINITY);
-	_ged_facetize_pnts_bbox(b_min, b_max, bot->num_vertices, (point_t *)bot->vertices);
-	cmi.bot_bbox_vol = _ged_facetize_bbox_vol(b_min, b_max);
-	if (fabs(cmi.pnts_bbox_vol - cmi.bot_bbox_vol) > cmi.pnts_bbox_vol * 0.5) {
-	    ret = BRLCAD_ERROR;
-	    if (bot->vertices) bu_free(bot->vertices, "verts");
-	    if (bot->faces) bu_free(bot->faces, "verts");
-	    goto ged_facetize_continuation_memfree;
-	}
+    if (fabs(s->pnts_bbox_vol - bot_bbox_vol) > s->pnts_bbox_vol * 0.5) {
+	if (bot->vertices) bu_free(bot->vertices, "verts");
+	if (bot->faces) bu_free(bot->faces, "verts");
+	BU_PUT(bot, struct rt_bot_internal);
+	return BRLCAD_ERROR;
     }
 
     /* Check validity - do not return an invalid BoT */
@@ -365,9 +227,9 @@ _ged_continuation_obj(struct ged *gedp, const char *objname, const char *newname
 	if (not_solid) {
 	    if (bot->vertices) bu_free(bot->vertices, "verts");
 	    if (bot->faces) bu_free(bot->faces, "verts");
-	    ret = BRLCAD_ERROR;
+	    BU_PUT(bot, struct rt_bot_internal);
 	    bu_log("CM: facetization failed, final BoT was not solid\n");
-	    goto ged_facetize_continuation_memfree;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -375,27 +237,9 @@ _ged_continuation_obj(struct ged *gedp, const char *objname, const char *newname
 	bu_log("CM: decimation succeeded, final BoT has %d faces\n", (int)bot->num_faces);
     }
 
-    ret = _tess_facetize_write_bot(gedp, bot, newname);
+    *obot = bot;
 
-ged_facetize_continuation_memfree:
-    cmi.feature_size = feature_size;
-    cmi.avg_thickness = avg_thickness;
-
-    if (free_pnts && pnts) {
-	struct pnt_normal *rpnt = (struct pnt_normal *)pnts->point;
-	if (rpnt) {
-	    struct pnt_normal *entry;
-	    while (BU_LIST_WHILE(entry, pnt_normal, &(rpnt->l))) {
-		BU_LIST_DEQUEUE(&(entry->l));
-		BU_PUT(entry, struct pnt_normal);
-	    }
-	    BU_PUT(rpnt, struct pnt_normal);
-	}
-	bu_free(pnts, "free pnts");
-    }
-    rt_db_free_internal(&in_intern);
-
-    return ret;
+    return BRLCAD_OK;
 }
 
 // Local Variables:

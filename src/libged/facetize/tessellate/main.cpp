@@ -138,11 +138,13 @@ main(int argc, const char **argv)
     // Done with prog name
     argc--; argv++;
 
+    int print_help = 0;
+    struct rt_pnts_internal *pnts = NULL;
     struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
     struct bn_tol tol = BN_TOL_INIT_TOL;
-    int print_help = 0;
     struct tess_opts s = TESS_OPTS_DEFAULT;
-    bool pnts_sampled = false;
+    s.ttol = &ttol;
+    s.tol = &tol;
 
     struct bu_opt_desc d[19];
     BU_OPT(d[ 0],  "h",                  "help",  "",            NULL,                  &print_help, "Print help and exit");
@@ -230,8 +232,8 @@ main(int argc, const char **argv)
 	    s.continuation = 0;
 	    s.instant_mesh = 0; // TODO - can this handle a point cloud?
 
-	    // TODO - point the pnts arguments to the internal point data
-	    pnts_sampled = true;
+	    // point the pnts arguments to the internal point data
+	    pnts = (struct rt_pnts_internal *)intern.idb_ptr;
 
 	    goto pnt_sampling_methods;
 	case ID_HALF:
@@ -295,6 +297,9 @@ main(int argc, const char **argv)
     }
 
     if (s.continuation) {
+	if (!pnts) {
+	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
+	}
 	// CM is a marching method using an inside/outside test
 	//ret = _cm_tessellate(&obot, &intern, &ttol, &tol);
 	if (ret == BRLCAD_OK)
@@ -308,8 +313,8 @@ pnt_sampling_methods:
     // input for other methods.
 
     if (s.Co3Ne) {
-	if (!pnts_sampled) {
-	    // TODO - point sampling
+	if (!pnts) {
+	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
 	}
 	//ret = _co3ne_tessellate(&obot, &intern, &ttol, &tol);
 	if (ret == BRLCAD_OK)
@@ -317,8 +322,8 @@ pnt_sampling_methods:
     }
 
     if (s.screened_poisson) {
-	if (!pnts_sampled) {
-	    // TODO - point sampling
+	if (!pnts) {
+	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
 	}
 	//ret = _spsr_tessellate(&obot, &intern, &ttol, &tol);
 	if (ret == BRLCAD_OK)
