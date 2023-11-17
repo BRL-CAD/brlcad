@@ -30,7 +30,7 @@ This tool is part of the BRL-CAD repository which you can download using git fro
 
 ## Tests ##
 
-No test suites are available yet, but will be listed here soon.
+End-to-end testing available by running `./bin/gist -p ../build/share/db/m35.g -f report.png` and comparing with provided expected report titled `TEST.png`.
 
 ## Execute Code ##
 ### Setting up BRL-CAD
