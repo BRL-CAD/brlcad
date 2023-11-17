@@ -41,7 +41,38 @@ main(int argc, const char **argv)
 
     bu_setprogname(argv[0]);
 
-    struct ged *gedp = ged_open("db", argv[1], 1);
+    // Done with prog name
+    argc--; argv++;
+
+    int print_help = 0;
+    struct tess_opts s = TESS_OPTS_DEFAULT;
+
+    struct bu_opt_desc d[19];
+    BU_OPT(d[0],  "h",                  "help",  "",            NULL,                   &print_help, "Print help and exit");
+    BU_OPT(d[1],   "",           "disable-nmg",  "",            NULL,                  &(s.no_nmg), "Disable use of the N-Manifold Geometry (NMG) meshing method");
+    BU_OPT(d[2],   "",            "disable-cm",  "",            NULL,         &(s.no_continuation), "Disable use of the Continuation Method (CM) meshing method");
+    BU_OPT(d[3],   "",           "enable-spsr",  "",            NULL,        &(s.screened_poisson), "Enable Screened Poisson Surface Reconstruction (SPSR) meshing method (run -h --SPSR to see more options for this mode)");
+    BU_OPT(d[4],  "F",                "fscale", "#", &bu_opt_fastf_t,           &(s.feature_scale), "Percentage of the average thickness observed by the raytracer to use for a targeted feature size with sampling based methods.  Defaults to 0.15, overridden   by --fsize");
+    BU_OPT(d[5],   "",                 "fsize", "#", &bu_opt_fastf_t,            &(s.feature_size), "Explicit feature length to try for sampling based methods - overrides feature-scale.");
+    BU_OPT(d[6],   "",                "fsized", "#", &bu_opt_fastf_t,          &(s.d_feature_size), "Initial feature length to try for decimation in sampling based methods.  By default, this value is set to 1.5x the feature size.");
+    BU_OPT(d[7],   "",              "max-time", "#",     &bu_opt_int,                &(s.max_time), "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to   completion (if there is a theoretical termination point for the algorithm).  Be careful when specifying zero - it can produce very long runs!.");
+    BU_OPT(d[8],   "",              "max-pnts", "#",     &bu_opt_int,                &(s.max_pnts), "Maximum number of pnts to use when applying ray sampling methods.");
+    BU_OPT(d[9],   "",            "spsr-depth", "#",     &bu_opt_int,            &(s.s_opts.depth), "Maximum reconstruction depth (default 8)");
+    BU_OPT(d[10], "w",      "spsr-interpolate", "#", &bu_opt_fastf_t,     &(s.s_opts.point_weight), "Lower values (down to 0.0) bias towards a smoother mesh, higher values bias towards interpolation accuracy. (Default 2.0)");
+    BU_OPT(d[11],  "", "spsr-samples-per-node", "#", &bu_opt_fastf_t, &(s.s_opts.samples_per_node), "How many samples should go into a cell before it is refined. (Default 1.5)");
+    BU_OPT_NULL(d[12]);
+
+    /* parse options */
+    struct bu_vls omsg = BU_VLS_INIT_ZERO;
+    argc = bu_opt_parse(&omsg, argc, argv, d);
+    if (argc < 0) {
+	bu_log("Option parsing error: %s\n", bu_vls_cstr(&omsg));
+	bu_vls_free(&omsg);
+	bu_exit(BRLCAD_ERROR, "%s failed", bu_getprogname());
+    }
+    bu_vls_free(&omsg);
+
+    struct ged *gedp = ged_open("db", argv[0], 1);
     if (!gedp)
 	return BRLCAD_ERROR;
 
