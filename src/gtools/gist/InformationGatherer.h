@@ -58,6 +58,7 @@ public:
 
 	std::string getInfo(std::string key);
     std::string getFormattedInfo(std::string key);
+    std::string getPower(std::string key);
 
     Unit getUnit(std::string name);
 
