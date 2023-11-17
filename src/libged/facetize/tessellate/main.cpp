@@ -109,10 +109,20 @@ main(int argc, const char **argv)
 	case ID_GRIP:
 	case ID_JOINT:
 	case ID_MATERIAL:
-	case ID_PNTS:
 	case ID_SCRIPT:
 	case ID_SKETCH:
 	    return BRLCAD_OK;
+	case ID_PNTS:
+	    // At this low level, allow SPSR to have a crack at a point
+	    // primitive to wrap it in a mesh.  If we don't want facetize
+	    // generating a mesh from a pnts object during a general tree walk,
+	    // we should implement that at the higher level.  Even if we don't
+	    // want to have facetize turn pnts objects into meshes (which we
+	    // probably don't), that is a capability we will most likely want
+	    // to expose through the pnts command - which will make this
+	    // executable useful to more than just facetize.
+	    if (!s.enable_spsr)
+		return BRLCAD_OK;
 	case ID_HALF:
 	    // Halfspace objects get a large arb.
 	    ret = half_to_bot(&obot, &intern, &ttol, &tol);
