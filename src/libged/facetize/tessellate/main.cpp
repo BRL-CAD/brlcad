@@ -103,6 +103,30 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern,  c
     return BRLCAD_OK;
 }
 
+static void
+method_enablement_check(struct tess_opts *s)
+{
+    if (!s)
+	return;
+    bool e = false;
+    if (s->Co3Ne) e = true;
+    if (s->ball_pivot) e = true;
+    if (s->continuation) e = true;
+    if (s->instant_mesh) e = true;
+    if (s->nmg) e = true;
+    if (s->screened_poisson) e = true;
+
+    // If nothing was specified, try everything
+    if (!e) {
+	s->Co3Ne = 1;
+	s->ball_pivot = 1;
+	s->continuation = 1;
+	s->instant_mesh = 1;
+	s->nmg = 1;
+	s->screened_poisson = 1;
+    }
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -151,6 +175,9 @@ main(int argc, const char **argv)
     }
     bu_vls_free(&omsg);
 
+    // If no method(s) were specified, try everything
+    method_enablement_check(&s);
+
     struct ged *gedp = ged_open("db", argv[0], 1);
     if (!gedp)
 	return BRLCAD_ERROR;
@@ -186,14 +213,14 @@ main(int argc, const char **argv)
 	case ID_SKETCH:
 	    return BRLCAD_OK;
 	case ID_PNTS:
-	    // At this low level, allow Ball Pivot and SPSR to have a crack at
-	    // a point primitive to wrap it in a mesh.  If we don't want
-	    // facetize generating a mesh from a pnts object during a general
-	    // tree walk, we should implement that at the higher level.  Even
-	    // if we don't want to have facetize turn pnts objects into meshes
-	    // (which we probably don't), that is a capability we will most
-	    // likely want to expose through the pnts command - which will make
-	    // this executable useful to more than just facetize.
+	    // At this low level, allow point processing methods to have a
+	    // crack at a point primitive to wrap it in a mesh.  If we don't
+	    // want facetize generating a mesh from a pnts object during a
+	    // general tree walk, we should skip point objects at the higher
+	    // level.  Even if we don't want to have facetize turn pnts objects
+	    // into meshes (which we probably don't), that is a capability we
+	    // will most likely want to expose through the pnts command - which
+	    // will make this executable useful to more than just facetize.
 	    if (!s.Co3Ne && !s.ball_pivot && !s.screened_poisson)
 		return BRLCAD_OK;
 
@@ -297,7 +324,6 @@ pnt_sampling_methods:
 	if (ret == BRLCAD_OK)
 	    goto write_obot;
     }
-
 
 write_obot:
 
