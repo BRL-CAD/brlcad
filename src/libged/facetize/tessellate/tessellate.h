@@ -41,8 +41,11 @@
 __BEGIN_DECLS
 
 struct tess_opts {
-    int no_nmg;
-    int no_continuation;
+    int nmg;
+    int instant_mesh;
+    int continuation;
+    int ball_pivot;
+    int Co3Ne;
     int screened_poisson;
     fastf_t feature_size;
     fastf_t fsize;
@@ -53,7 +56,7 @@ struct tess_opts {
     struct bg_3d_spsr_opts s_opts;
 };
 
-#define TESS_OPTS_DEFAULT {0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, BG_3D_SPSR_OPTS_DEFAULT}
+#define TESS_OPTS_DEFAULT {0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, BG_3D_SPSR_OPTS_DEFAULT}
 
 extern int
 half_to_bot(struct rt_bot_internal **obot, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
