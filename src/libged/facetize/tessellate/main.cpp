@@ -33,6 +33,76 @@
 #include "ged.h"
 #include "./tessellate.h"
 
+static bool
+bot_is_manifold(struct rt_bot_internal *bot)
+{
+    if (!bot)
+	return false;
+
+    manifold::Mesh bot_mesh;
+    manifold::Manifold bot_manifold;
+
+    // We have a BoT, but make sure we can get a Manifold before we accept it
+    for (size_t j = 0; j < bot->num_vertices ; j++)
+	bot_mesh.vertPos.push_back(glm::vec3(bot->vertices[3*j], bot->vertices[3*j+1], bot->vertices[3*j+2]));
+    for (size_t j = 0; j < bot->num_faces; j++)
+	bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
+    bot_manifold = manifold::Manifold(bot_mesh);
+    if (bot_manifold.Status() != manifold::Manifold::Error::NoError)
+	return false;
+    return true;
+}
+
+static int
+_nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern,  const struct bg_tess_tol *ttol, const struct bn_tol *tol)
+{
+    int status = -1;
+
+    if (!nbot || !intern || !intern->idb_meth || !ttol || !tol)
+	return BRLCAD_ERROR;
+
+    (*nbot) = NULL;
+
+    struct model *m = nmg_mm();
+    struct nmgregion *r1 = (struct nmgregion *)NULL;
+    // Try the NMG routines (primary means of CSG implicit -> explicit mesh conversion)
+    // TODO - needs to be separate process...
+    if (!BU_SETJUMP) {
+	status = intern->idb_meth->ft_tessellate(&r1, m, intern, ttol, tol);
+    } else {
+	BU_UNSETJUMP;
+	status = -1;
+	nbot = NULL;
+    } BU_UNSETJUMP;
+
+    if (status <= -1)
+	return BRLCAD_ERROR;
+
+    // NMG reports success, now get a BoT
+    if (!BU_SETJUMP) {
+	(*nbot) = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, tol);
+    } else {
+	BU_UNSETJUMP;
+	(*nbot) = NULL;
+    } BU_UNSETJUMP;
+
+    if (!(*nbot))
+	return BRLCAD_ERROR;
+
+    if (!bot_is_manifold(*nbot)) {
+	// Urk - we got an NMG mesh, but it's no good for a Manifold(??)
+	if ((*nbot)->vertices)
+	    bu_free((*nbot)->vertices, "verts");
+	if ((*nbot)->faces)
+	    bu_free((*nbot)->faces, "faces");
+	BU_FREE((*nbot), struct rt_bot_internal);
+	(*nbot) = NULL;
+	return BRLCAD_ERROR;
+    }
+
+    return BRLCAD_OK;
+}
+
 int
 main(int argc, const char **argv)
 {
@@ -44,11 +114,11 @@ main(int argc, const char **argv)
     // Done with prog name
     argc--; argv++;
 
-    int status = -1;
     struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
     struct bn_tol tol = BN_TOL_INIT_TOL;
     int print_help = 0;
     struct tess_opts s = TESS_OPTS_DEFAULT;
+    bool pnts_sampled = false;
 
     struct bu_opt_desc d[19];
     BU_OPT(d[ 0],  "h",                  "help",  "",            NULL,                  &print_help, "Print help and exit");
@@ -99,8 +169,6 @@ main(int argc, const char **argv)
     struct rt_bot_internal *bot = NULL;
     struct rt_bot_internal *nbot = NULL;
     struct rt_bot_internal *obot = NULL;
-    manifold::Mesh bot_mesh;
-    manifold::Manifold bot_manifold;
     int propVal;
     int ret = BRLCAD_OK;
 
@@ -133,8 +201,12 @@ main(int argc, const char **argv)
 	    // candidates in the fallback methods list that we can use.
 	    s.nmg = 0;
 	    s.continuation = 0;
-	    s.instant_mesh = 0;
-	    goto fallback_methods;
+	    s.instant_mesh = 0; // TODO - can this handle a point cloud?
+
+	    // TODO - point the pnts arguments to the internal point data
+	    pnts_sampled = true;
+
+	    goto pnt_sampling_methods;
 	case ID_HALF:
 	    // Halfspace objects get a large arb.
 	    ret = half_to_bot(&obot, &intern, &ttol, &tol);
@@ -151,12 +223,7 @@ main(int argc, const char **argv)
 	    }
 	    // Volumetric bot - if it can be manifold we're good, but if
 	    // not we need to try and repair it.
-	    for (size_t j = 0; j < bot->num_vertices ; j++)
-		bot_mesh.vertPos.push_back(glm::vec3(bot->vertices[3*j], bot->vertices[3*j+1], bot->vertices[3*j+2]));
-	    for (size_t j = 0; j < bot->num_faces; j++)
-		bot_mesh.triVerts.push_back(glm::vec3(bot->faces[3*j], bot->faces[3*j+1], bot->faces[3*j+2]));
-	    bot_manifold = manifold::Manifold(bot_mesh);
-	    if (bot_manifold.Status() != manifold::Manifold::Error::NoError) {
+	    if (!bot_is_manifold(nbot)) {
 		// Nope - try repairing
 		ret = bot_repair(&obot, bot, &ttol, &tol);
 	    } else {
@@ -186,59 +253,55 @@ main(int argc, const char **argv)
     }
 
     if (ret == BRLCAD_OK && obot) {
-	// TODO - already have the output bot?  write it to disk and return
-	return BRLCAD_OK;
+	// Already have the output bot?  Write it to disk and return
+	goto write_obot;
     }
 
-    // If we got this far, it's not a special case - see if we can do "normal"
-    // tessellation
-    if (intern.idb_meth) {
-	struct model *m = nmg_mm();
-	struct nmgregion *r1 = (struct nmgregion *)NULL;
-	// Try the NMG routines (primary means of CSG implicit -> explicit mesh conversion)
-	// TODO - needs to be separate process...
-	if (!BU_SETJUMP) {
-	    status = intern.idb_meth->ft_tessellate(&r1, m, &intern, &ttol, &tol);
-	} else {
-	    BU_UNSETJUMP;
-	    status = -1;
-	    nbot = NULL;
-	} BU_UNSETJUMP;
-	if (status > -1) {
-	    // NMG reports success, now get a BoT
-	    if (!BU_SETJUMP) {
-		nbot = (struct rt_bot_internal *)nmg_mdl_to_bot(m, &RTG.rtg_vlfree, &tol);
-	    } else {
-		BU_UNSETJUMP;
-		nbot = NULL;
-	    } BU_UNSETJUMP;
-	    if (nbot) {
-		// We got a BoT, now see if we can get a Manifold
-		for (size_t j = 0; j < nbot->num_vertices ; j++)
-		    bot_mesh.vertPos.push_back(glm::vec3(nbot->vertices[3*j], nbot->vertices[3*j+1], nbot->vertices[3*j+2]));
-		for (size_t j = 0; j < nbot->num_faces; j++)
-		    bot_mesh.triVerts.push_back(glm::vec3(nbot->faces[3*j], nbot->faces[3*j+1], nbot->faces[3*j+2]));
-		bot_manifold = manifold::Manifold(bot_mesh);
-		if (bot_manifold.Status() != manifold::Manifold::Error::NoError) {
-		    // Urk - we got an NMG mesh, but it's no good for a Manifold(??)
-		    if (nbot->vertices)
-			bu_free(nbot->vertices, "verts");
-		    if (nbot->faces)
-			bu_free(nbot->faces, "faces");
-		    BU_FREE(nbot, struct rt_bot_internal);
-		    nbot = NULL;
-		}
-	    }
+    // If we got this far, it's not a special case.  Start trying whatever tessellation methods
+    // are enabled
+
+    if (s.nmg) {
+	// NMG is best, if it works
+	ret = _nmg_tessellate(&obot, &intern, &ttol, &tol);
+	if (ret == BRLCAD_OK)
+	    goto write_obot;
+    }
+
+    if (s.continuation) {
+	// CM is a marching method using an inside/outside test
+	//ret = _cm_tessellate(&obot, &intern, &ttol, &tol);
+	if (ret == BRLCAD_OK)
+	    goto write_obot;
+    }
+
+pnt_sampling_methods:
+
+    // TODO - all of the following methods require first sampling points from the solid
+    // with the raytracer.  Do this once - if one method fails, we can use the same point
+    // input for other methods.
+
+    if (s.Co3Ne) {
+	if (!pnts_sampled) {
+	    // TODO - point sampling
 	}
+	//ret = _co3ne_tessellate(&obot, &intern, &ttol, &tol);
+	if (ret == BRLCAD_OK)
+	    goto write_obot;
     }
 
-    if (status >= 0)
-	return BRLCAD_OK;
+    if (s.screened_poisson) {
+	if (!pnts_sampled) {
+	    // TODO - point sampling
+	}
+	//ret = _spsr_tessellate(&obot, &intern, &ttol, &tol);
+	if (ret == BRLCAD_OK)
+	    goto write_obot;
+    }
 
-    // TODO - nothing worked - try fallback methods, if enabled
-fallback_methods:
 
-    return 0;
+write_obot:
+
+    return ret;
 }
 
 // Local Variables:
