@@ -102,7 +102,7 @@ main(int argc, const char **argv)
     manifold::Mesh bot_mesh;
     manifold::Manifold bot_manifold;
     int propVal;
-    int ret = 0;
+    int ret = BRLCAD_OK;
 
     switch (intern.idb_minor_type) {
 	// If we've got no-volume objects, they get an empty Manifold -
@@ -159,6 +159,25 @@ main(int argc, const char **argv)
 	    if (bot_manifold.Status() != manifold::Manifold::Error::NoError) {
 		// Nope - try repairing
 		ret = bot_repair(&obot, bot, &ttol, &tol);
+	    } else {
+		// Passed - we're good to go. For this case we should rename
+		// rather than writing it out again - no need for two of the
+		// same object
+
+		/* Change object name in the in-memory directory. */
+		if (db_rename(gedp->dbip, dp, argv[2]) < 0) {
+		    rt_db_free_internal(&intern);
+		    bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", argv[2]);
+		    return BRLCAD_ERROR;
+		}
+
+		/* Re-write to the database.  New name is applied on the way out. */
+		if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
+		    bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", argv[2]);
+		    return BRLCAD_ERROR;
+		}
+
+		return BRLCAD_OK;
 	    }
 	case ID_BREP:
 	    // TODO - need to handle plate mode NURBS the way we handle plate mode BoTs
@@ -167,7 +186,7 @@ main(int argc, const char **argv)
     }
 
     if (ret == BRLCAD_OK && obot) {
-	// TODO - have output bot?  write it to disk and return
+	// TODO - already have the output bot?  write it to disk and return
 	return BRLCAD_OK;
     }
 
