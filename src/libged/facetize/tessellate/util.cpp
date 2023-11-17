@@ -83,10 +83,8 @@ _tess_facetize_decimate(struct rt_bot_internal *bot, fastf_t feature_size)
 }
 
 int
-_tess_facetize_write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name)
+_tess_facetize_write_bot(struct db_i *dbip, struct rt_bot_internal *bot, const char *name)
 {
-    struct db_i *dbip = gedp->dbip;
-
     /* Export BOT as a new solid */
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);

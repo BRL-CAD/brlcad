@@ -104,9 +104,6 @@ continuation_mesh(struct rt_bot_internal **obot, struct db_i *dbip, const char *
 	int num_verts = bot->num_vertices;
 	bot->vertices = NULL;
 	bot->faces = NULL;
-	// TODO - analyze_polygonize should take an rt_db_internal, if possible - the matrix
-	// positioning of a tree walk isn't baked into a name or dp, so if we're going to
-	// sample in a tree walk with matrices we really need to work with the positioned data...
 	polygonize_failure = analyze_polygonize(&(bot->faces), (int *)&(bot->num_faces),
 						(point_t **)&(bot->vertices),
 						(int *)&(bot->num_vertices),

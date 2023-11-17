@@ -90,7 +90,7 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern,  c
 	return BRLCAD_ERROR;
 
     if (!bot_is_manifold(*nbot)) {
-	// Urk - we got an NMG mesh, but it's no good for a Manifold(??)
+	bu_log("We got an NMG mesh, but it's no good for a Manifold(!?)\n");
 	if ((*nbot)->vertices)
 	    bu_free((*nbot)->vertices, "verts");
 	if ((*nbot)->faces)
@@ -300,23 +300,32 @@ main(int argc, const char **argv)
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
 	}
-	// CM is a marching method using an inside/outside test
-	//ret = _cm_tessellate(&obot, &intern, &ttol, &tol);
+	// CM is a marching method using an inside/outside test.  We need a
+	// seed point on the surface, so we get one that we know was a raytrace
+	// hit from the pnts sample.
+	struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
+	struct pnt_normal *pn = BU_LIST_PNEXT(pnt_normal, pl);
+	ret = continuation_mesh(&obot, gedp->dbip, dp->d_namep, &s, pn->v);
 	if (ret == BRLCAD_OK)
 	    goto write_obot;
     }
 
 pnt_sampling_methods:
 
-    // TODO - all of the following methods require first sampling points from the solid
-    // with the raytracer.  Do this once - if one method fails, we can use the same point
-    // input for other methods.
-
     if (s.Co3Ne) {
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
 	}
-	//ret = _co3ne_tessellate(&obot, &intern, &ttol, &tol);
+	//ret = co3ne_mesh(&obot, &intern, &ttol, &tol);
+	if (ret == BRLCAD_OK)
+	    goto write_obot;
+    }
+
+    if (s.ball_pivot) {
+	if (!pnts) {
+	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
+	}
+	//ret = ball_pivot_mesh(&obot, &intern, &ttol, &tol);
 	if (ret == BRLCAD_OK)
 	    goto write_obot;
     }
@@ -325,7 +334,7 @@ pnt_sampling_methods:
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
 	}
-	//ret = _spsr_tessellate(&obot, &intern, &ttol, &tol);
+	//ret = spsr_mesh(&obot, &intern, &ttol, &tol);
 	if (ret == BRLCAD_OK)
 	    goto write_obot;
     }

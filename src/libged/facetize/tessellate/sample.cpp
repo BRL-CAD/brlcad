@@ -94,7 +94,7 @@ _tess_pnts_sample(const char *oname, struct db_i *dbip, struct tess_opts *s)
     /* Pick our mode(s) */
     int flags = 0;
     flags |= ANALYZE_OBJ_TO_PNTS_RAND;
-    flags |= ANALYZE_OBJ_TO_PNTS_SOBOL;
+    //flags |= ANALYZE_OBJ_TO_PNTS_SOBOL;
 
     struct rt_pnts_internal *pnts = NULL;
     BU_GET(pnts, struct rt_pnts_internal);
