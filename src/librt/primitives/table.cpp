@@ -1681,7 +1681,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* plot */
 	NULL, /* adaptive_plot */
 	NULL, /* vshot */
-	NULL, /* tess */
+	NULL, /* tess - TODO - is there any reason we can't do the treewalk evaluation as a rt_comb_tess? */
 	NULL, /* tnurb */
 	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_comb_import5),
