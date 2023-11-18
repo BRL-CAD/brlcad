@@ -278,6 +278,11 @@ main(int argc, const char **argv)
 
 		return BRLCAD_OK;
 	    }
+	case ID_DSP:
+	    // TODO - need to create a Triangulated Irregular Network for these - the
+	    // current NMG routine apparently fails even on the sample terra.g solid.
+	    // Possible resources:
+	    // https://github.com/heremaps/tin-terrain
 	case ID_BREP:
 	    // TODO - need to handle plate mode NURBS the way we handle plate mode BoTs
 	default:
@@ -308,13 +313,11 @@ main(int argc, const char **argv)
 	// methods we don't make direct use of the points beyond using one of
 	// them for the seed, but we do use information collected during the
 	// sampling process.
-	struct pnt_normal *pn = BU_LIST_PNEXT(pnt_normal, pl);
 	if (!pnts) {
 	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
-	    struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
-	    pn = BU_LIST_PNEXT(pnt_normal, pl);
 	}
-	ret = continuation_mesh(&obot, gedp->dbip, dp->d_namep, &s, pn->v);
+	struct pnt_normal *seed = BU_LIST_PNEXT(pnt_normal, (struct pnt_normal *)pnts->point);
+	ret = continuation_mesh(&obot, gedp->dbip, dp->d_namep, &s, seed->v);
 	if (ret == BRLCAD_OK)
 	    goto write_obot;
     }
