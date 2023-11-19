@@ -763,15 +763,6 @@ std::string InformationGatherer::getFormattedInfo(std::string key)
 	return infoMap[key];
 }
 
-std::string InformationGatherer::getPower(std::string key)
-{
-    Unit u = unitsMap[key];
-    if (u.power > 1) {
-        return "^" + std::to_string(u.power);
-    }
-    return "";
-}
-
 Unit InformationGatherer::getUnit(std::string name)
 {
     auto it = unitsMap.find(name);
@@ -781,7 +772,6 @@ Unit InformationGatherer::getUnit(std::string name)
 
     throw std::runtime_error("Unit not found for key: " + name);
 }
-
 
 bool InformationGatherer::dimensionSizeCondition()
 {
