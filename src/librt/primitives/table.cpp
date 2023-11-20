@@ -143,7 +143,7 @@ extern void rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal 
 extern int rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
 extern int rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
 
-/* from comb/comb.c and comb/db_comb.c */
+/* from tcl.c and db5_comb.c */
 extern int rt_comb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp);
 extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
 extern int rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item);
@@ -151,7 +151,6 @@ extern int rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, 
 extern int rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern void rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
 extern void rt_comb_ifree(struct rt_db_internal *ip);
-extern int rt_comb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 extern int rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
@@ -1682,7 +1681,7 @@ const struct rt_functab OBJ[] = {
 	NULL, /* plot */
 	NULL, /* adaptive_plot */
 	NULL, /* vshot */
-	RTFUNCTAB_FUNC_TESS_CAST(rt_comb_tess),
+	NULL, /* tess - TODO - is there any reason we can't do the treewalk evaluation as a rt_comb_tess? */
 	NULL, /* tnurb */
 	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_comb_import5),

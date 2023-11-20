@@ -127,13 +127,6 @@ rt_db_get_internal(
 
     RT_DB_INTERNAL_INIT(ip);
 
-    // Store our source dp and dbip for reference.  These may become invalid
-    // without the rt_db_internal itself being invalid - there are no
-    // guarantees made by the dbio layer to update all rt_db_internal data
-    // containers, as the internal data is "detached" from its source.
-    ip->src_dbip = dbip;
-    ip->src_dp = dp;
-
     if (dbip->dbi_version > 4)
 	return rt_db_get_internal5(ip, dp, dbip, mat, resp);
 
@@ -193,10 +186,6 @@ rt_db_put_internal(
     int ret;
 
     RT_CK_DB_INTERNAL(ip);
-
-    /* Note - deliberately not checking ip's dbip pointer against the supplied
-     * dbip - we may be writing out to a different database than we read from,
-     * and that's fine. */
 
     if (db_version(dbip) > 4)
 	return rt_db_put_internal5(dp, dbip, ip, resp,

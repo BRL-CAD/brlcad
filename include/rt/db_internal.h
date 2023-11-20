@@ -50,31 +50,6 @@ struct rt_db_internal {
     const struct rt_functab *idb_meth;  /**< @brief for ft_ifree(), etc. */
     void *              idb_ptr;
     struct bu_attribute_value_set idb_avs;
-
-    /* NOTE - src_dbip is usable as long as the rt_db_internal is used within a
-     * context that hasn't invalidated its source database instance.
-     * Technically that CAN happen without invalidating the rt_db_internal
-     * itself (although most normal use cases of rt_db_internal make it
-     * unlikely.) In the event the source db_i context IS destroyed AND the
-     * rt_db_internal continues to be used, operations requiring this pointer
-     * to be current (such as rt_comb_tess) will not work until the calling
-     * code updates src_dbip to a new parent.
-     *
-     * If there is another way to obtain dbip other than referencing this
-     * variable, that's what callers should do.  Use this ONLY when you're sure
-     * it is the only way to get the job done, and ALWAYS validate it before
-     * use with RT_CK_DBI. */
-    const struct db_i         *src_dbip;
-
-    /* The directory pointer has the same weaknesses as src_dbip, only more so
-     * - once the rt_db_internal is created, there is no longer any guarantee
-     * whatsoever that the dp itself remains valid or (even if it does) that
-     * the geometry represented by the dp still aligns with the values in the
-     * rt_db_internal.  Hence the variable name "src_dp".
-     *
-     * Users of this pointer should be VERY sure they know what they are doing
-     * and validate it with RT_CK_DIR. */
-    const struct directory    *src_dp;
 };
 #define idb_type                idb_minor_type
 #define RT_DB_INTERNAL_INIT(_p) { \
@@ -84,10 +59,8 @@ struct rt_db_internal {
 	(_p)->idb_meth = (const struct rt_functab *) ((void *)0); \
 	(_p)->idb_ptr = ((void *)0); \
 	bu_avs_init_empty(&(_p)->idb_avs); \
-	(_p)->src_dbip = NULL; \
-	(_p)->src_dp = NULL; \
     }
-#define RT_DB_INTERNAL_INIT_ZERO {RT_DB_INTERNAL_MAGIC, -1, -1, NULL, NULL, BU_AVS_INIT_ZERO, NULL, NULL}
+#define RT_DB_INTERNAL_INIT_ZERO {RT_DB_INTERNAL_MAGIC, -1, -1, NULL, NULL, BU_AVS_INIT_ZERO}
 #define RT_CK_DB_INTERNAL(_p) BU_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
 
 /**
