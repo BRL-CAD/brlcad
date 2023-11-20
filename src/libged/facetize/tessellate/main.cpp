@@ -69,7 +69,6 @@ _nmg_tessellate(struct rt_bot_internal **nbot, struct rt_db_internal *intern,  c
     struct model *m = nmg_mm();
     struct nmgregion *r1 = (struct nmgregion *)NULL;
     // Try the NMG routines (primary means of CSG implicit -> explicit mesh conversion)
-    // TODO - needs to be separate process...
     if (!BU_SETJUMP) {
 	status = intern->idb_meth->ft_tessellate(&r1, m, intern, ttol, tol);
     } else {
@@ -141,6 +140,7 @@ main(int argc, const char **argv)
     // Done with prog name
     argc--; argv++;
 
+    static const char *usage = "Usage: ged_tessellate [options] file.g input_obj [output_obj]\n";
     int print_help = 0;
     struct rt_pnts_internal *pnts = NULL;
     struct bg_tess_tol ttol = BG_TESS_TOL_INIT_ZERO;
@@ -179,6 +179,23 @@ main(int argc, const char **argv)
 	bu_exit(BRLCAD_ERROR, "%s failed", bu_getprogname());
     }
     bu_vls_free(&omsg);
+
+    if (print_help) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	char *option_help;
+
+	bu_vls_sprintf(&str, "%s", usage);
+
+	if ((option_help = bu_opt_describe(d, NULL))) {
+	    bu_vls_printf(&str, "Options:\n%s\n", option_help);
+	    bu_free(option_help, "help str");
+	}
+
+	bu_log("%s\n", bu_vls_cstr(&str));
+	bu_vls_free(&str);
+        return BRLCAD_OK;
+    }
+
 
     // If no method(s) were specified, try everything
     method_enablement_check(&s);
