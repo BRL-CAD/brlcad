@@ -830,7 +830,7 @@ void InformationGatherer::correctDefaultUnitsLength()
 void InformationGatherer::correctDefaultUnitsMass()
 {
     // mass conditionals
-    bool isGrams = infoMap["units"] == "g";
+    bool isGrams = unitsMap["mass"].unit == "g";
     std::string toUnits = "";
 
     if (isGrams) {
