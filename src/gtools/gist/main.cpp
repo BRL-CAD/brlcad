@@ -236,7 +236,7 @@ void generateReport(Options opt)
     img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg", 250);
     //branding logo
     if (opt.getLogopath() != ""){
-        img.drawTransparentImage(3350, 2360, 100, 90, opt.getLogopath(), 250);
+        img.drawTransparentImage(3250, 2280, 200, 200, opt.getLogopath(), 250);
     }
 
     // paint renderings
