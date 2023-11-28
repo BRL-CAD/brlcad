@@ -18,6 +18,8 @@
  * information.
  */
 
+#define _GNU_SOURCE  // for syscall - https://stackoverflow.com/a/42469772
+
 #include "common.h"
 
 #include <stdlib.h>
