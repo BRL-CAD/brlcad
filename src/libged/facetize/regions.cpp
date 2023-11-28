@@ -477,7 +477,7 @@ _ged_facetize_region_obj(struct _ged_facetize_state *s, const char *oname, const
 	    bu_log("CM: tessellating %s (%d of %d)\n", oname, ocnt, max_cnt);
 	}
 
-	ret = _ged_continuation_obj(s, oname, sname);
+	//ret = _ged_continuation_obj(s, oname, sname);
 	if (ret == FACETIZE_FAILURE) {
 	    if (!s->quiet) {
 		struct bu_vls lmsg = BU_VLS_INIT_ZERO;
@@ -504,7 +504,7 @@ _ged_facetize_region_obj(struct _ged_facetize_state *s, const char *oname, const
 	    bu_log("SPSR: tessellating %s with depth %d, interpolation weight %g, and samples-per-node %g\n", oname, s->s_opts.depth, s->s_opts.point_weight, s->s_opts.samples_per_node);
 	}
 
-	ret =_ged_spsr_obj(s, oname, sname);
+	//ret =_ged_spsr_obj(s, oname, sname);
 	if (ret == FACETIZE_FAILURE) {
 	    if (!s->quiet) {
 		struct bu_vls lmsg = BU_VLS_INIT_ZERO;

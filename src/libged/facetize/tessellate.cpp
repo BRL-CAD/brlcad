@@ -29,12 +29,37 @@
 #include <chrono>
 #include <thread>
 
+extern "C" {
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_IMPLEMENTATION
+#include "xxhash.h"
+}
+
 #include "bu/app.h"
 #include "bu/process.h"
 #include "bu/time.h"
 
 #include "../ged_private.h"
 #include "./ged_facetize.h"
+
+unsigned long long
+name_hash(const char *name)
+{
+    // Hash the input filename to generate a key for uniqueness
+    XXH64_state_t h_state;
+    XXH64_reset(&h_state, 0);
+    struct bu_vls fname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&fname, "%s", name);
+    // TODO - xxhash needs a minimum input size per Coverity - figure out what it is...
+    if (bu_vls_strlen(&fname) < 10) {
+	bu_vls_printf(&fname, "GGGGGGGGGGGGG");
+    }
+    XXH64_update(&h_state, bu_vls_cstr(&fname), bu_vls_strlen(&fname)*sizeof(char));
+    XXH64_hash_t hash_val;
+    hash_val = XXH64_digest(&h_state);
+    unsigned long long hash = (unsigned long long)hash_val;
+    return hash;
+}
 
 // Translate flags to ged_tessellate opts.  These need to match the options
 // used by that executable to specify algorithms.
@@ -100,13 +125,13 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 
     // In order to control the process of generating a suitable input mesh,
     // we run the tessellation logic itself in a separate process.
-
-    /* Build up a temp file path to use for writing out ip */
-    // TODO - incorporate a text printing of the ip pointer address, so we have
-    // instance uniqueness in the name as well in case we save this file for
-    // later use...
+    struct bu_vls gname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&gname, "%s_%p", dp->d_namep, (void *)ip);
+    unsigned long long nhash = name_hash(bu_vls_cstr(&gname));
+    bu_vls_sprintf(&gname, "BRL-CAD_tess_%s_%llu", dp->d_namep, nhash);
+    bu_vls_simplify(&gname, NULL, NULL, NULL);
     char tmpfil[MAXPATHLEN];
-    bu_dir(tmpfil, MAXPATHLEN, BU_DIR_TEMP, bu_temp_file_name(NULL, 0), dp->d_namep, "_tess.g", NULL);
+    bu_dir(tmpfil, MAXPATHLEN, BU_DIR_TEMP, bu_temp_file_name(bu_vls_addr(&gname), 0), NULL);
 
     // Create the temporary database
     struct db_i *dbip = db_create(tmpfil, BRLCAD_DB_FORMAT_LATEST);
@@ -135,11 +160,11 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
     bu_vls_sprintf(&norm_str, "%0.17f", tsp->ts_ttol->norm);
     const char *tess_cmd[MAXPATHLEN] = {NULL};
     tess_cmd[ 0] = tess_exec;
-    tess_cmd[ 1] = "--abs";
+    tess_cmd[ 1] = "--tol-abs";
     tess_cmd[ 2] = bu_vls_cstr(&abs_str);
-    tess_cmd[ 3] = "--rel";
+    tess_cmd[ 3] = "--tol-rel";
     tess_cmd[ 4] = bu_vls_cstr(&rel_str);
-    tess_cmd[ 5] = "--norm";
+    tess_cmd[ 5] = "--tol-norm";
     tess_cmd[ 6] = bu_vls_cstr(&norm_str);
     tess_cmd[ 7] = tmethod;
     tess_cmd[ 8] = tmpfil;
@@ -155,7 +180,7 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 	fastf_t seconds = 0.0;
 	struct bu_process *p = NULL;
 	bu_process_exec(&p, tess_cmd[0], 10, tess_cmd, 0, 0);
-	while (p && (bu_process_pid(p) != -1)) {
+	while (!timeout && p && (bu_process_pid(p) != -1)) {
 	    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	    elapsed = bu_gettime() - start;
 	    seconds = elapsed / 1000000.0;
@@ -201,6 +226,11 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
     dbip = db_open(tmpfil, DB_OPEN_READONLY);
     if (!dbip) {
 	bu_log("Unable to open tessellation database %s for result reading\n", tmpfil);
+	return -1;
+    }
+    if (db_dirbuild(dbip) < 0) {
+        db_close(dbip);
+        bu_log("db_dirbuild failed on output database file %s", tmpfil);
 	return -1;
     }
 

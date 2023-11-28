@@ -270,17 +270,12 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **arg
     if (!s)
 	return BRLCAD_ERROR;
 
-    if (s->make_nmg)
-	return BRLCAD_ERROR;
-
     if (!argc || !argv)
 	return BRLCAD_ERROR;
 
     struct ged *gedp = s->gedp;
     int i;
     union tree *ftree = NULL;
-
-    //_ged_facetize_log_nmg(s);
 
     struct db_tree_state init_state;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
@@ -315,7 +310,7 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **arg
 
     // TODO - We don't have a tree - whether that's an error or not depends
     if (!s->facetize_tree) {
-	_ged_facetize_log_default(s);
+	//_ged_facetize_log_default(s);
 	return 0;
     }
 
@@ -352,13 +347,10 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **arg
 	delete om;
 	ftree->tr_d.td_d = NULL;
 
-	_ged_facetize_log_default(s);
-
 	// If we have a manifold_mesh, write it out as a bot
 	return _ged_facetize_write_bot(s, bot, newname);
     }
 
-    _ged_facetize_log_default(s);
     if (!s->quiet) {
 	bu_log("FACETIZE: failed to generate %s\n", newname);
     }

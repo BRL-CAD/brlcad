@@ -204,14 +204,14 @@ main(int argc, const char **argv)
     if (!gedp)
 	return BRLCAD_ERROR;
 
-    struct directory *dp = db_lookup(gedp->dbip, argv[2], LOOKUP_QUIET);
+    struct directory *dp = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
     if (!dp)
 	return BRLCAD_ERROR;
 
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
     if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
-	bu_log("rt_db_get_internal failed for %s\n", argv[2]);
+	bu_log("rt_db_get_internal failed for %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -381,7 +381,9 @@ pnt_sampling_methods:
 
 write_obot:
 
-    return ret;
+    struct bu_vls obot_name = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&obot_name, "%s_tess.bot", dp->d_namep);
+    return _tess_facetize_write_bot(gedp->dbip, obot, bu_vls_cstr(&obot_name));
 }
 
 // Local Variables:
