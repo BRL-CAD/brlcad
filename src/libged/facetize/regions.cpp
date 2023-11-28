@@ -99,9 +99,9 @@ _ged_facetize_attr(int method)
     static const char *nmg_flag = "facetize:NMG";
     static const char *continuation_flag = "facetize:CM";
     static const char *spsr_flag = "facetize:SPSR";
-    if (method == FACETIZE_NMG) return nmg_flag;
-    if (method == FACETIZE_CONTINUATION) return continuation_flag;
-    if (method == FACETIZE_SPSR) return spsr_flag;
+    if (method == FACETIZE_METHOD_NMG) return nmg_flag;
+    if (method == FACETIZE_METHOD_CONTINUATION) return continuation_flag;
+    if (method == FACETIZE_METHOD_SPSR) return spsr_flag;
     return NULL;
 }
 
@@ -279,29 +279,29 @@ _ged_methodcomb_add(struct _ged_facetize_state *s, const char *objname, int meth
     struct ged *gedp = s->gedp;
     int ret = BRLCAD_OK;
     struct bu_vls method_cname = BU_VLS_INIT_ZERO;
-    if (!objname || method == FACETIZE_NULL) return BRLCAD_ERROR;
+    if (!objname || method == FACETIZE_METHOD_NULL) return BRLCAD_ERROR;
 
-    if (method == FACETIZE_NMG && !bu_vls_strlen(s->nmg_comb)) {
+    if (method == FACETIZE_METHOD_NMG && !bu_vls_strlen(s->nmg_comb)) {
 	bu_vls_sprintf(s->nmg_comb, "%s_NMG-0", bu_vls_addr(s->froot));
 	bu_vls_incr(s->nmg_comb, NULL, NULL, &_db_uniq_test, (void *)gedp);
     }
-    if (method == FACETIZE_CONTINUATION && !bu_vls_strlen(s->continuation_comb)) {
+    if (method == FACETIZE_METHOD_CONTINUATION && !bu_vls_strlen(s->continuation_comb)) {
 	bu_vls_sprintf(s->continuation_comb, "%s_CONTINUATION-0", bu_vls_addr(s->froot));
 	bu_vls_incr(s->continuation_comb, NULL, NULL, &_db_uniq_test, (void *)gedp);
     }
-    if (method == FACETIZE_SPSR && !bu_vls_strlen(s->spsr_comb)) {
+    if (method == FACETIZE_METHOD_SPSR && !bu_vls_strlen(s->spsr_comb)) {
 	bu_vls_sprintf(s->spsr_comb, "%s_SPSR-0", bu_vls_addr(s->froot));
 	bu_vls_incr(s->spsr_comb, NULL, NULL, &_db_uniq_test, (void *)gedp);
     }
 
     switch (method) {
-	case FACETIZE_NMG:
+	case FACETIZE_METHOD_NMG:
 	    bu_vls_sprintf(&method_cname, "%s", bu_vls_addr(s->nmg_comb));
 	    break;
-	case FACETIZE_CONTINUATION:
+	case FACETIZE_METHOD_CONTINUATION:
 	    bu_vls_sprintf(&method_cname, "%s", bu_vls_addr(s->continuation_comb));
 	    break;
-	case FACETIZE_SPSR:
+	case FACETIZE_METHOD_SPSR:
 	    bu_vls_sprintf(&method_cname, "%s", bu_vls_addr(s->spsr_comb));
 	    break;
 	default:
@@ -326,7 +326,7 @@ _ged_methodattr_set(struct _ged_facetize_state *s, const char *rcname, int metho
     attrav[2] = rcname;
     struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
 
-    if (method == FACETIZE_NMG) {
+    if (method == FACETIZE_METHOD_NMG) {
 	struct bg_tess_tol *tol = &(wdbp->wdb_ttol);
 	attrav[3] = _ged_facetize_attr(method);
 	attrav[4] = "1";
@@ -353,7 +353,7 @@ _ged_methodattr_set(struct _ged_facetize_state *s, const char *rcname, int metho
 	}
     }
 
-    if (info && method == FACETIZE_CONTINUATION) {
+    if (info && method == FACETIZE_METHOD_CONTINUATION) {
 	attrav[3] = _ged_facetize_attr(method);
 	attrav[4] = "1";
 	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && s->verbosity) {
@@ -373,7 +373,7 @@ _ged_methodattr_set(struct _ged_facetize_state *s, const char *rcname, int metho
 	}
     }
 
-    if (method == FACETIZE_SPSR) {
+    if (method == FACETIZE_METHOD_SPSR) {
 	attrav[3] = _ged_facetize_attr(method);
 	attrav[4] = "1";
 	if (ged_exec(gedp, 5, (const char **)&attrav) != BRLCAD_OK && s->verbosity) {
@@ -447,7 +447,7 @@ _ged_facetize_region_obj(struct _ged_facetize_state *s, const char *oname, const
     }
 #endif
 
-    if (cmethod == FACETIZE_NMG) {
+    if (cmethod == FACETIZE_METHOD_NMG) {
 
 	/* We're staring a new object, so we want to write out the header in the
 	 * log file the first time we get an NMG logging event.  (Re)set the flag
@@ -463,7 +463,7 @@ _ged_facetize_region_obj(struct _ged_facetize_state *s, const char *oname, const
 	ret = _ged_facetize_booleval(s, 1, (const char **)&oname, sname);
 
 	if (ret != FACETIZE_FAILURE) {
-	    if (_ged_methodcomb_add(s, sname, FACETIZE_NMG) != BRLCAD_OK && s->verbosity > 1) {
+	    if (_ged_methodcomb_add(s, sname, FACETIZE_METHOD_NMG) != BRLCAD_OK && s->verbosity > 1) {
 		bu_log("Error adding %s to methodology combination\n", sname);
 	    }
 	}
@@ -471,7 +471,7 @@ _ged_facetize_region_obj(struct _ged_facetize_state *s, const char *oname, const
 	return ret;
     }
 
-    if (cmethod == FACETIZE_CONTINUATION) {
+    if (cmethod == FACETIZE_METHOD_CONTINUATION) {
 
 	if (!s->quiet) {
 	    bu_log("CM: tessellating %s (%d of %d)\n", oname, ocnt, max_cnt);
@@ -486,7 +486,7 @@ _ged_facetize_region_obj(struct _ged_facetize_state *s, const char *oname, const
 		bu_vls_free(&lmsg);
 	    }
 	} else {
-	    if (_ged_methodcomb_add(s, sname, FACETIZE_CONTINUATION) != BRLCAD_OK && s->verbosity > 1) {
+	    if (_ged_methodcomb_add(s, sname, FACETIZE_METHOD_CONTINUATION) != BRLCAD_OK && s->verbosity > 1) {
 		bu_log("Error adding %s to methodology combination\n", sname);
 	    }
 	}
@@ -494,7 +494,7 @@ _ged_facetize_region_obj(struct _ged_facetize_state *s, const char *oname, const
 	return ret;
     }
 
-    if (cmethod == FACETIZE_SPSR) {
+    if (cmethod == FACETIZE_METHOD_SPSR) {
 
 	if (!s->quiet) {
 	    bu_log("SPSR: tessellating %s (%d of %d)\n", oname, ocnt, max_cnt);
@@ -513,7 +513,7 @@ _ged_facetize_region_obj(struct _ged_facetize_state *s, const char *oname, const
 		bu_vls_free(&lmsg);
 	    }
 	} else {
-	    if (_ged_methodcomb_add(s, sname, FACETIZE_SPSR) != BRLCAD_OK && s->verbosity > 1) {
+	    if (_ged_methodcomb_add(s, sname, FACETIZE_METHOD_SPSR) != BRLCAD_OK && s->verbosity > 1) {
 		bu_log("Error adding %s to methodology combination\n", sname);
 	    }
 	}
@@ -610,19 +610,19 @@ _ged_facetize_regions_resume(struct _ged_facetize_state *s, int argc, const char
 	ssize_t avail_mem = 0;
 	bu_ptbl_reset(ar);
 
-	if (!cmethod && (methods & FACETIZE_NMG)) {
-	    cmethod = FACETIZE_NMG;
-	    methods = methods & ~(FACETIZE_NMG);
+	if (!cmethod && (methods & FACETIZE_METHOD_NMG)) {
+	    cmethod = FACETIZE_METHOD_NMG;
+	    methods = methods & ~(FACETIZE_METHOD_NMG);
 	}
 
-	if (!cmethod && (methods & FACETIZE_CONTINUATION)) {
-	    cmethod = FACETIZE_CONTINUATION;
-	    methods = methods & ~(FACETIZE_CONTINUATION);
+	if (!cmethod && (methods & FACETIZE_METHOD_CONTINUATION)) {
+	    cmethod = FACETIZE_METHOD_CONTINUATION;
+	    methods = methods & ~(FACETIZE_METHOD_CONTINUATION);
 	}
 
-	if (!cmethod && (methods & FACETIZE_SPSR)) {
-	    cmethod = FACETIZE_SPSR;
-	    methods = methods & ~(FACETIZE_SPSR);
+	if (!cmethod && (methods & FACETIZE_METHOD_SPSR)) {
+	    cmethod = FACETIZE_METHOD_SPSR;
+	    methods = methods & ~(FACETIZE_METHOD_SPSR);
 	}
 
 	for (i = 0; i < BU_PTBL_LEN(ar2); i++) {
@@ -641,7 +641,7 @@ _ged_facetize_regions_resume(struct _ged_facetize_state *s, int argc, const char
 		    /* Regardless of the outcome, record what settings were tried. */
 		    _ged_methodattr_set(s, cname, cmethod, &cinfo);
 
-		    if (odp == RT_DIR_NULL || (!_ged_facetize_verify_solid(s, 1, &odp) && cmethod != FACETIZE_SPSR)) {
+		    if (odp == RT_DIR_NULL || (!_ged_facetize_verify_solid(s, 1, &odp) && cmethod != FACETIZE_METHOD_SPSR)) {
 			if (!s->quiet) {
 			    bu_log("%s: non-solid objects in specified tree(s) - cannot apply facetization method %s\n", oname, _ged_facetize_attr(cmethod));
 			}
@@ -692,7 +692,7 @@ ged_facetize_regions_resume_memfree:
     /* Done changing stuff - update nref. */
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    if (bu_vls_strlen(s->log_s->nmg_log) && s->method_flags & FACETIZE_NMG && s->verbosity > 1) {
+    if (bu_vls_strlen(s->log_s->nmg_log) && s->method_flags & FACETIZE_METHOD_NMG && s->verbosity > 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(s->log_s->nmg_log));
     }
 
@@ -941,19 +941,19 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	ssize_t avail_mem = 0;
 	bu_ptbl_reset(ar2);
 
-	if (!cmethod && (methods & FACETIZE_NMG)) {
-	    cmethod = FACETIZE_NMG;
-	    methods = methods & ~(FACETIZE_NMG);
+	if (!cmethod && (methods & FACETIZE_METHOD_NMG)) {
+	    cmethod = FACETIZE_METHOD_NMG;
+	    methods = methods & ~(FACETIZE_METHOD_NMG);
 	}
 
-	if (!cmethod && (methods & FACETIZE_CONTINUATION)) {
-	    cmethod = FACETIZE_CONTINUATION;
-	    methods = methods & ~(FACETIZE_CONTINUATION);
+	if (!cmethod && (methods & FACETIZE_METHOD_CONTINUATION)) {
+	    cmethod = FACETIZE_METHOD_CONTINUATION;
+	    methods = methods & ~(FACETIZE_METHOD_CONTINUATION);
 	}
 
-	if (!cmethod && (methods & FACETIZE_SPSR)) {
-	    cmethod = FACETIZE_SPSR;
-	    methods = methods & ~(FACETIZE_SPSR);
+	if (!cmethod && (methods & FACETIZE_METHOD_SPSR)) {
+	    cmethod = FACETIZE_METHOD_SPSR;
+	    methods = methods & ~(FACETIZE_METHOD_SPSR);
 	}
 
 	if (!cmethod) {
@@ -976,7 +976,7 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 		/* Regardless of the outcome, record what settings were tried. */
 		_ged_methodattr_set(s, cname, cmethod, &cinfo);
 
-		if (odp == RT_DIR_NULL || (!_ged_facetize_verify_solid(s, 1, &odp) && cmethod != FACETIZE_SPSR)) {
+		if (odp == RT_DIR_NULL || (!_ged_facetize_verify_solid(s, 1, &odp) && cmethod != FACETIZE_METHOD_SPSR)) {
 		    if (!s->quiet) {
 			bu_log("%s: non-solid objects in specified tree(s) - cannot apply facetization method %s\n", oname, _ged_facetize_attr(cmethod));
 		    }
@@ -1040,7 +1040,7 @@ ged_facetize_regions_memfree:
     /* Done changing stuff - update nref. */
     db_update_nref(gedp->dbip, &rt_uniresource);
 
-    if (bu_vls_strlen(s->log_s->nmg_log) && s->method_flags & FACETIZE_NMG && s->verbosity > 1) {
+    if (bu_vls_strlen(s->log_s->nmg_log) && s->method_flags & FACETIZE_METHOD_NMG && s->verbosity > 1) {
 	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(s->log_s->nmg_log));
     }
 

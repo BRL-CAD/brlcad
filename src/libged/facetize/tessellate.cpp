@@ -83,7 +83,7 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
     bu_vls_sprintf(&abs_str, "%0.17f", tsp->ts_ttol->abs);
     bu_vls_sprintf(&rel_str, "%0.17f", tsp->ts_ttol->rel);
     bu_vls_sprintf(&norm_str, "%0.17f", tsp->ts_ttol->norm);
-    const char *tess_cmd[11] = {NULL};
+    const char *tess_cmd[MAXPATHLEN] = {NULL};
     tess_cmd[0] = tess_exec;
     tess_cmd[1] = "--abs";
     tess_cmd[2] = bu_vls_cstr(&abs_str);
@@ -103,18 +103,18 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 	if (!method_flags)
 	    break;
 	bool have_method = false;
-	if (!have_method && method_flags & FACETIZE_NMG) {
-	    method_flags = method_flags & ~(FACETIZE_NMG);
+	if (!have_method && method_flags & FACETIZE_METHOD_NMG) {
+	    method_flags = method_flags & ~(FACETIZE_METHOD_NMG);
 	    tess_cmd[9] = "--default";
 	    have_method = true;
 	}
-	if (!have_method && method_flags & FACETIZE_CONTINUATION) {
-	    method_flags = method_flags & ~(FACETIZE_CONTINUATION);
+	if (!have_method && method_flags & FACETIZE_METHOD_CONTINUATION) {
+	    method_flags = method_flags & ~(FACETIZE_METHOD_CONTINUATION);
 	    tess_cmd[9] = "--CM";
 	    have_method = true;
 	}
-	if (!have_method && method_flags & FACETIZE_SPSR) {
-	    method_flags = method_flags & ~(FACETIZE_SPSR);
+	if (!have_method && method_flags & FACETIZE_METHOD_SPSR) {
+	    method_flags = method_flags & ~(FACETIZE_METHOD_SPSR);
 	    tess_cmd[9] = "--SPSR";
 	}
 

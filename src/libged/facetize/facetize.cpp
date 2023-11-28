@@ -30,47 +30,6 @@
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
-static struct _ged_facetize_logging_state *
-logging_state_create()
-{
-    struct _ged_facetize_logging_state *ls;
-    BU_GET(ls, struct _ged_facetize_logging_state);
-
-    BU_ALLOC(ls->saved_log_hooks, struct bu_hook_list);
-    bu_hook_list_init(ls->saved_log_hooks);
-
-    BU_ALLOC(ls->saved_bomb_hooks, struct bu_hook_list);
-    bu_hook_list_init(ls->saved_bomb_hooks);
-
-    BU_GET(ls->nmg_log, struct bu_vls);
-    bu_vls_init(ls->nmg_log);
-
-    BU_GET(ls->nmg_log_header, struct bu_vls);
-    bu_vls_init(ls->nmg_log_header);
-
-    return ls;
-}
-
-void
-logging_state_destroy(struct _ged_facetize_logging_state *s)
-{
-    if (!s)
-	return;
-
-    bu_hook_delete_all(s->saved_log_hooks);
-    bu_free(s->saved_log_hooks, "saved log hooks");
-
-    bu_hook_delete_all(s->saved_bomb_hooks);
-    bu_free(s->saved_bomb_hooks, "saved log hooks");
-
-    bu_vls_free(s->nmg_log);
-    bu_vls_free(s->nmg_log_header);
-    BU_PUT(s->nmg_log, struct bu_vls);
-    BU_PUT(s->nmg_log_header, struct bu_vls);
-
-    BU_PUT(s, struct _ged_facetize_logging_state);
-}
-
 struct _ged_facetize_state *
 _ged_facetize_state_create()
 {
@@ -87,16 +46,13 @@ _ged_facetize_state_create()
     s->retry = 0;
     s->in_place = 0;
 
-    s->no_nmg = 0;
-    s->no_continuation = 0;
-    s->screened_poisson = 0;
+    s->method_flags = 0;
 
     BU_GET(s->faceted_suffix, struct bu_vls);
     bu_vls_init(s->faceted_suffix);
     bu_vls_sprintf(s->faceted_suffix, ".bot");
 
     s->max_time = 30;
-    s->method_flags = 0;
     s->feature_size = 0.0;
     s->feature_scale = 0.15;
     s->d_feature_size = 0.0;
@@ -112,8 +68,6 @@ _ged_facetize_state_create()
     BU_ALLOC(s->s_map, struct bu_attribute_value_set);
     bu_avs_init_empty(s->c_map);
     bu_avs_init_empty(s->s_map);
-
-    s->log_s = logging_state_create();
 
     BU_GET(s->froot, struct bu_vls);
     bu_vls_init(s->froot);
@@ -147,8 +101,6 @@ void _ged_facetize_state_destroy(struct _ged_facetize_state *s)
     bu_free(s->c_map, "comb map");
     bu_free(s->s_map, "solid map");
 
-    logging_state_destroy(s->log_s);
-
     bu_vls_free(s->froot);
     BU_PUT(s->froot, struct bu_vls);
 
@@ -172,15 +124,11 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 {
     struct ged *gedp = s->gedp;
     int ret = BRLCAD_ERROR;
-    int done_trying = 0;
     int newobj_cnt;
     char *newname;
     struct directory **dpa = NULL;
     struct db_i *dbip = gedp->dbip;
     struct bu_vls oname = BU_VLS_INIT_ZERO;
-    int flags = s->method_flags;
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    struct bg_tess_tol *tol = &(wdbp->wdb_ttol);
 
     RT_CHECK_DBI(dbip);
 
@@ -207,107 +155,29 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 	newname = (char *)bu_vls_cstr(&oname);
     }
 
-#if 0
-    /* Before we try this, check that all the objects in the specified tree(s) are valid solids */
-    if (!_ged_facetize_verify_solid(s, argc, dpa)) {
-	if (flags & FACETIZE_SPSR) {
-	    if (flags != FACETIZE_SPSR)
-		bu_log("non-solid objects in specified tree(s) - falling back on point sampling/reconstruction methodology\n");
-	    flags = FACETIZE_SPSR;
-	} else {
-	    if (!s->quiet)
-		bu_log("Facetization aborted: non-solid objects in specified tree(s).\n");
-	    bu_free(dpa, "dp array");
-	    return BRLCAD_ERROR;
-	}
-    }
-#endif
-
     /* Done with dpa */
     bu_free(dpa, "dp array");
 
-    /* Given there are multiple possible methods, we need to iterate until either
-     * we succeed or we exhaust all enabled methods. */
-    while (!done_trying) {
+    /* If we're doing an NMG output, use the old-school libnmg booleval */
+    if (s->make_nmg) {
+	ret = _ged_facetize_nmgeval(s, argc, argv, newname);
+	bu_vls_free(&oname);
 
-	if (flags & FACETIZE_NMG) {
-	    s->log_s->nmg_log_print_header = 1;
-	    bu_vls_sprintf(s->log_s->nmg_log_header, "NMG: tessellating %s...\n", argv[0]);
-	    if (argc != 1)
-		bu_vls_sprintf(s->log_s->nmg_log_header, "NMG: tessellating %d objects with tolerances a=%g, r=%g, n=%g\n", argc, tol->abs, tol->rel, tol->norm);
+	// Check for the in-place flag
+	if (ret == BRLCAD_OK && s->in_place)
+	    ret = _ged_facetize_obj_swap(gedp, argv[0], newname);
 
-	    /* Let the user know what's going on, unless output is suppressed */
-	    if (!s->quiet)
-		bu_log("%s", bu_vls_cstr(s->log_s->nmg_log_header));
-
-	    if (s->make_nmg) {
-		if (_ged_facetize_nmgeval(s, argc, argv, newname) == BRLCAD_OK) {
-		    ret = BRLCAD_OK;
-		    break;
-		}
-	    } else {
-		if (_ged_facetize_booleval(s, argc, argv, newname) == BRLCAD_OK) {
-		    ret = BRLCAD_OK;
-		    break;
-		}
-	    }
-
-	    // NMG didn't work
-	    flags = flags & ~(FACETIZE_NMG);
-	    continue;
-	}
-
-
-	if (flags & FACETIZE_CONTINUATION) {
-	    if (argc != 1) {
-		if (s->verbosity)
-		    bu_log("Continuation mode (currently) only supports one existing object at a time as input - not attempting.\n");
-		flags = flags & ~(FACETIZE_CONTINUATION);
-		continue;
-	    }
-
-	    if (_ged_continuation_obj(s, argv[0], newname) == FACETIZE_SUCCESS) {
-		ret = BRLCAD_OK;
-		break;
-	    }
-
-	    // Continuation didn't work
-	    flags = flags & ~(FACETIZE_CONTINUATION);
-	    continue;
-	}
-
-	if (flags & FACETIZE_SPSR) {
-	    if (argc != 1) {
-		if (s->verbosity)
-		    bu_log("Screened Poisson mode (currently) only supports one existing object at a time as input - not attempting.\n");
-		flags = flags & ~(FACETIZE_SPSR);
-		continue;
-	    }
-
-	    if (_ged_spsr_obj(s, argv[0], newname) == FACETIZE_SUCCESS) {
-		ret = BRLCAD_OK;
-		break;
-	    }
-
-	    flags = flags & ~(FACETIZE_SPSR);
-	    continue;
-	}
-
-	/* Out of options */
-	done_trying = 1;
-
+	return ret;
     }
 
-    if ((ret == BRLCAD_OK) && s->in_place) {
-	if (_ged_facetize_obj_swap(gedp, argv[0], newname) != BRLCAD_OK) {
-	    return BRLCAD_ERROR;
-	}
-    }
+    // If we're not doing NMG, use the Manifold booleval
+    ret = _ged_facetize_booleval(s, argc, argv, newname);
 
-    if (bu_vls_strlen(s->log_s->nmg_log) && s->method_flags & FACETIZE_NMG && s->verbosity > 1) {
-	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(s->log_s->nmg_log));
-    }
+    // Check for the in-place flag
+    if (ret == BRLCAD_OK && s->in_place)
+	ret = _ged_facetize_obj_swap(gedp, argv[0], newname);
 
+    bu_vls_free(&oname);
     return ret;
 }
 
@@ -318,6 +188,10 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "Usage: facetize [options] [old_obj1 ...] new_obj\n";
     int print_help = 0;
     int need_help = 0;
+    int no_nmg = 0;
+    int no_continuation = 0;
+    int screened_poisson = 0;
+
     struct _ged_facetize_state *s = _ged_facetize_state_create();
     s->gedp = gedp;
 
@@ -326,9 +200,9 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[0],  "h", "help",          "",  NULL,            &print_help,            "Print help and exit");
     BU_OPT(d[1],  "v", "verbose",       "",  &_ged_vopt,      &(s->verbosity),        "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[2],  "q", "quiet",         "",  NULL,            &(s->quiet),            "Suppress all output (overrides verbose flag)");
-    BU_OPT(d[3],  "",  "disable-nmg",   "",  NULL,            &(s->no_nmg),           "Disable use of the N-Manifold Geometry (NMG) meshing method");
-    BU_OPT(d[4],  "",  "disable-cm",    "",  NULL,            &(s->no_continuation),  "Disable use of the Continuation Method (CM) meshing method");
-    BU_OPT(d[5],  "",  "enable-spsr",   "",  NULL,            &(s->screened_poisson), "Enable Screened Poisson Surface Reconstruction (SPSR) meshing method (run -h --SPSR to see more options for this mode)");
+    BU_OPT(d[3],  "",  "disable-nmg",   "",  NULL,            &(no_nmg),              "Disable use of the N-Manifold Geometry (NMG) meshing method");
+    BU_OPT(d[4],  "",  "disable-cm",    "",  NULL,            &(no_continuation),     "Disable use of the Continuation Method (CM) meshing method");
+    BU_OPT(d[5],  "",  "enable-spsr",   "",  NULL,            &(screened_poisson),    "Enable Screened Poisson Surface Reconstruction (SPSR) meshing method (run -h --SPSR to see more options for this mode)");
     BU_OPT(d[6],  "n", "nmg-output",    "",  NULL,            &(s->make_nmg),         "Create an N-Manifold Geometry (NMG) object (default is to create a triangular BoT mesh).  Note that this will limit processing options and may reduce the conversion success rate.");
     BU_OPT(d[7],  "r", "regions",       "",  NULL,            &(s->regions),          "For combs, walk the trees and create new copies of the hierarchies with each region replaced by a facetized evaluation of that region. (Default is to create one facetized object for all specified inputs.)");
     BU_OPT(d[8],  "",  "resume",        "",  NULL,            &(s->resume),           "Resume an interrupted conversion (region mode only)");
@@ -371,17 +245,6 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     }
     bu_vls_free(&omsg);
 
-    /* It is known that libnmg will (as of 2018 anyway) throw a lot of
-     * bu_bomb calls during operation. Because we need facetize to run
-     * to completion and potentially try multiple ways to convert before
-     * giving up, we need to un-hook any pre-existing bu_bomb hooks */
-    bu_bomb_save_all_hooks(s->log_s->saved_bomb_hooks);
-
-    /* We will need to catch libnmg output and store it up for later
-     * use, while still bu_logging our own status updates. Cache the
-     * current bu_log hooks so they can be restored at need */
-    bu_log_hook_save_all(s->log_s->saved_log_hooks);
-
     /* Sync -q and -v options */
     if (s->quiet && s->verbosity)
        	s->verbosity = 0;
@@ -396,14 +259,14 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
 
     /* Sort out which methods we can try */
     s->method_flags = 0;
-    if (!s->no_nmg)
-	s->method_flags |= FACETIZE_NMG;
-    if (!s->no_continuation)
-	s->method_flags |= FACETIZE_CONTINUATION;
-    if (s->screened_poisson)
-	s->method_flags |= FACETIZE_SPSR;
+    if (!no_nmg)
+	s->method_flags |= FACETIZE_METHOD_NMG;
+    if (!no_continuation)
+	s->method_flags |= FACETIZE_METHOD_CONTINUATION;
+    if (screened_poisson)
+	s->method_flags |= FACETIZE_METHOD_SPSR;
 
-    if (s->method_flags & FACETIZE_SPSR) {
+    if (s->method_flags & FACETIZE_METHOD_SPSR) {
 	/* Parse Poisson specific options, if that method is enabled */
 	argc = bu_opt_parse(NULL, argc, argv, pd);
 
@@ -426,7 +289,7 @@ ged_facetize_core(struct ged *gedp, int argc, const char *argv[])
     need_help += (argc < 2 && !s->in_place && !s->resume && !s->nonovlp_brep);
     if (print_help || need_help || argc < 1) {
 	_ged_cmd_help(gedp, usage, d);
-	if (s->method_flags & FACETIZE_SPSR) {
+	if (s->method_flags & FACETIZE_METHOD_SPSR) {
 	    _ged_cmd_help(gedp, usage, pd);
 	}
 	ret = (need_help) ? BRLCAD_ERROR : BRLCAD_OK;

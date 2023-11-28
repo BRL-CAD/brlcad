@@ -41,10 +41,10 @@
 #define SOLID_OBJ_NAME 1
 #define COMB_OBJ_NAME 2
 
-#define FACETIZE_NULL  0x0
-#define FACETIZE_NMG  0x1
-#define FACETIZE_SPSR  0x2
-#define FACETIZE_CONTINUATION  0x4
+#define FACETIZE_METHOD_NULL          0x0
+#define FACETIZE_METHOD_NMG           0x1
+#define FACETIZE_METHOD_CONTINUATION  0x2
+#define FACETIZE_METHOD_SPSR          0x4
 
 #define FACETIZE_SUCCESS 0
 #define FACETIZE_FAILURE 1
@@ -101,17 +101,14 @@ struct _ged_facetize_state {
     int retry;
     int in_place;
 
-    // Methodologies
-    int no_nmg;           // method is on by default
-    int no_continuation;  // method is on by default
-    int screened_poisson; // off by default
+    // Enabled Meshing Methodologies (FACETIZE_METHOD_* flags)
+    int method_flags;
 
     // Output Naming
     struct bu_vls *faceted_suffix;
 
     // Settings
     int max_time;
-    int method_flags;
     fastf_t feature_size;
     fastf_t feature_scale;
     fastf_t d_feature_size;
