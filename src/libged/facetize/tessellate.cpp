@@ -36,14 +36,64 @@
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
+// Translate flags to ged_tessellate opts.  These need to match the options
+// used by that executable to specify algorithms.
+const char *
+method_opt(int *method_flags, struct directory *dp)
+{
+    switch (dp->d_minor_type) {
+	case ID_DSP:
+	    // DSP primitives need to avoid the methodology, since NMG
+	    // doesn't seem to work very well
+	    // TODO - revisit this if we get a better NMG facetize, perhaps
+	    // using http://mgarland.org/software/terra.html
+	    *method_flags = *method_flags & ~(FACETIZE_METHOD_NMG);
+	    break;
+	default:
+	    break;
+    }
+
+    // NMG is best, when it works
+    static const char *nmg_opt = "--nmg";
+    if (*method_flags & FACETIZE_METHOD_NMG) {
+	*method_flags = *method_flags & ~(FACETIZE_METHOD_NMG);
+	return nmg_opt;
+    }
+
+    // CM is currently the best bet fallback
+    static const char *cm_opt = "--cm";
+    if (*method_flags & FACETIZE_METHOD_CONTINUATION) {
+	*method_flags = *method_flags & ~(FACETIZE_METHOD_CONTINUATION);
+	return cm_opt;
+    }
+
+    // SPSR via point sampling is currently our only option for a non-manifold
+    // input
+    static const char *spsr_opt = "--spsr";
+    if (*method_flags & FACETIZE_METHOD_SPSR) {
+	*method_flags = *method_flags & ~(FACETIZE_METHOD_SPSR);
+	return spsr_opt;
+    }
+
+    // If we've exhausted the methods available, no option is available
+    return NULL;
+}
+
 int
 manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *data)
 {
     if (!out || !tsp || !ip || !data)
-	return -1;
+	return BRLCAD_ERROR;
 
     struct _ged_facetize_state *s = (struct _ged_facetize_state *)data;
     struct directory *dp = DB_FULL_PATH_CUR_DIR(pathp);
+    int method_flags = s->method_flags;
+
+    // If we don't have at least one method we can try, we're done
+    const char *tmethod = method_opt(&method_flags, dp);
+    if (!tmethod)
+	return BRLCAD_ERROR;
+
     char *path_str = db_path_to_string(pathp);
     bu_log("Tessellate %s\n", path_str);
     bu_free(path_str, "path string");
@@ -84,40 +134,21 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
     bu_vls_sprintf(&rel_str, "%0.17f", tsp->ts_ttol->rel);
     bu_vls_sprintf(&norm_str, "%0.17f", tsp->ts_ttol->norm);
     const char *tess_cmd[MAXPATHLEN] = {NULL};
-    tess_cmd[0] = tess_exec;
-    tess_cmd[1] = "--abs";
-    tess_cmd[2] = bu_vls_cstr(&abs_str);
-    tess_cmd[3] = "--rel";
-    tess_cmd[4] = bu_vls_cstr(&rel_str);
-    tess_cmd[5] = "--norm";
-    tess_cmd[6] = bu_vls_cstr(&norm_str);
-    tess_cmd[7] = tmpfil;
-    tess_cmd[8] = dp->d_namep;
-    tess_cmd[9] = "--default";
+    tess_cmd[ 0] = tess_exec;
+    tess_cmd[ 1] = "--abs";
+    tess_cmd[ 2] = bu_vls_cstr(&abs_str);
+    tess_cmd[ 3] = "--rel";
+    tess_cmd[ 4] = bu_vls_cstr(&rel_str);
+    tess_cmd[ 5] = "--norm";
+    tess_cmd[ 6] = bu_vls_cstr(&norm_str);
+    tess_cmd[ 7] = tmethod;
+    tess_cmd[ 8] = tmpfil;
+    tess_cmd[ 9] = dp->d_namep;
 
     // There are a number of methods that can be tried.  We try them in priority
     // order, timing out if one of them goes too long.
     int rc = 0;
-    int method_flags = s->method_flags;
-    while (rc) {
-	if (!method_flags)
-	    break;
-	bool have_method = false;
-	if (!have_method && method_flags & FACETIZE_METHOD_NMG) {
-	    method_flags = method_flags & ~(FACETIZE_METHOD_NMG);
-	    tess_cmd[9] = "--default";
-	    have_method = true;
-	}
-	if (!have_method && method_flags & FACETIZE_METHOD_CONTINUATION) {
-	    method_flags = method_flags & ~(FACETIZE_METHOD_CONTINUATION);
-	    tess_cmd[9] = "--CM";
-	    have_method = true;
-	}
-	if (!have_method && method_flags & FACETIZE_METHOD_SPSR) {
-	    method_flags = method_flags & ~(FACETIZE_METHOD_SPSR);
-	    tess_cmd[9] = "--SPSR";
-	}
-
+    while (tmethod) {
 	int aborted = 0, timeout = 0;
 	int64_t start = bu_gettime();
 	int64_t elapsed = 0;
@@ -135,9 +166,15 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 	}
 	int w_rc = bu_process_wait(&aborted, p, 0);
 	rc = (timeout) ? -1 : w_rc;
+
+	if (rc == BRLCAD_OK)
+	    break;
+
+	tmethod = method_opt(&method_flags, dp);
+	tess_cmd[7] = tmethod;
     }
 
-    if (rc) {
+    if (rc != BRLCAD_OK) {
 	// If we tried all the methods and didn't get any successes, we have an
 	// error.  We can either terminate the whole conversion based on this
 	// failure, or ignore this object and process the remainder of the
