@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include <cerrno>
 #include "bu/app.h"
 #include "bu/opt.h"
 
@@ -137,6 +138,10 @@ main(int argc, const char **argv)
 
     bu_setprogname(argv[0]);
 
+    // If we're communicating via pipes, make sure we're in binary mode.
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     // Done with prog name
     argc--; argv++;
 
@@ -200,20 +205,85 @@ main(int argc, const char **argv)
     // If no method(s) were specified, try everything
     method_enablement_check(&s);
 
-    struct ged *gedp = ged_open("db", argv[0], 1);
-    if (!gedp)
-	return BRLCAD_ERROR;
 
-    struct directory *dp = db_lookup(gedp->dbip, argv[1], LOOKUP_QUIET);
-    if (!dp)
-	return BRLCAD_ERROR;
-
+    // One way or another, we need a rt_db_internal.  We either read it from a
+    // specified .g file, or a bu_external buffer gets piped to us over stdin
+    struct db_i *dbip = NULL;
+    struct directory *dp = NULL;
     struct rt_db_internal intern;
     RT_DB_INTERNAL_INIT(&intern);
-    if (rt_db_get_internal(&intern, dp, gedp->dbip, NULL, &rt_uniresource) < 0) {
-	bu_log("rt_db_get_internal failed for %s\n", argv[1]);
-	return BRLCAD_ERROR;
+    bool output_stdout = false;
+
+    if (!argc) {
+
+	output_stdout = true;
+	dbip = db_create_inmem();
+	if (!dbip)
+	    return BRLCAD_ERROR;
+
+	// First, read the size of the ext buffer we're expecting
+	size_t ext_nbytes = 0;
+	if (fread(&ext_nbytes, sizeof(size_t), 1, stdin) != 1) {
+	    strerror(errno);
+	    return BRLCAD_ERROR;
+	}
+
+	size_t scanlen = 4096;
+	char *rbuf = (char *)bu_malloc(scanlen, "rbuf");
+	size_t offset = 0;
+	size_t bufsize = 4*scanlen;
+	char *ext_data = (char *)bu_calloc(bufsize, sizeof(char), "initial ext buffer");
+	// read from stdin
+	while (offset < ext_nbytes) {
+	    size_t ret = fread(rbuf, 1, scanlen, stdin);
+	    memcpy((void *)(&ext_data[offset]), rbuf, ret);
+	    offset += ret;
+	    if ((offset + scanlen) > bufsize) {
+		bufsize = bufsize * 4;
+		ext_data = (char *)bu_realloc(ext_data, bufsize, "bu_external buf");
+	    }
+	    if (ferror(stdin)) {
+		bu_log("fread error");
+		bu_free(ext_data, "ext_data");
+		return BRLCAD_ERROR;
+	    }
+	    if (feof(stdin))
+		break;
+	}
+	bu_free(rbuf, "rbuf");
+
+	struct bu_external ext;
+	BU_EXTERNAL_INIT(&ext);
+	ext.ext_nbytes = ext_nbytes;
+	ext.ext_buf = (uint8_t *)ext_data;
+
+	// We wind up doing this a bit backwards, since we need to get the minor type
+	// from the internal in order to create the dp
+	rt_db_external5_to_internal5(&intern, &ext, "input", dbip, bn_mat_identity, &rt_uniresource);
+	dp = db_diradd(dbip, "input", RT_DIR_PHONY_ADDR, 0, 0, (void *)&intern.idb_minor_type);
+	db_inmem(dp, &ext, 0, dbip);
+
+    } else {
+
+	if (argc < 2)
+	    return BRLCAD_ERROR;
+
+	struct ged *gedp = ged_open("db", argv[0], 1);
+	if (!gedp)
+	    return BRLCAD_ERROR;
+
+	dbip = gedp->dbip;
+
+	dp = db_lookup(dbip, argv[1], LOOKUP_QUIET);
+	if (!dp)
+	    return BRLCAD_ERROR;
+
+	if (rt_db_get_internal(&intern, dp, dbip, NULL, &rt_uniresource) < 0) {
+	    bu_log("rt_db_get_internal failed for %s\n", argv[1]);
+	    return BRLCAD_ERROR;
+	}
     }
+
 
     struct rt_bot_internal *bot = NULL;
     struct rt_bot_internal *nbot = NULL;
@@ -280,17 +350,21 @@ main(int argc, const char **argv)
 		// rather than writing it out again - no need for two of the
 		// same object
 
-		/* Change object name in the in-memory directory. */
-		if (db_rename(gedp->dbip, dp, argv[2]) < 0) {
-		    rt_db_free_internal(&intern);
-		    bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", argv[2]);
-		    return BRLCAD_ERROR;
-		}
+		if (output_stdout) {
+		    // TODO Just write back out the bu_external we read in
+		} else {
+		    /* Change object name in the in-memory directory. */
+		    if (db_rename(dbip, dp, argv[2]) < 0) {
+			rt_db_free_internal(&intern);
+			bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", argv[2]);
+			return BRLCAD_ERROR;
+		    }
 
-		/* Re-write to the database.  New name is applied on the way out. */
-		if (rt_db_put_internal(dp, gedp->dbip, &intern, &rt_uniresource) < 0) {
-		    bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", argv[2]);
-		    return BRLCAD_ERROR;
+		    /* Re-write to the database.  New name is applied on the way out. */
+		    if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
+			bu_log("BoT is suitable for boolean operations as-is, but error encountered in renaming to %s, aborting", argv[2]);
+			return BRLCAD_ERROR;
+		    }
 		}
 
 		return BRLCAD_OK;
@@ -342,10 +416,10 @@ main(int argc, const char **argv)
 	// them for the seed, but we do use information collected during the
 	// sampling process.
 	if (!pnts) {
-	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
+	    pnts = _tess_pnts_sample(dp->d_namep, dbip, &s);
 	}
 	struct pnt_normal *seed = BU_LIST_PNEXT(pnt_normal, (struct pnt_normal *)pnts->point);
-	ret = continuation_mesh(&obot, gedp->dbip, dp->d_namep, &s, seed->v);
+	ret = continuation_mesh(&obot, dbip, dp->d_namep, &s, seed->v);
 	if (ret == BRLCAD_OK)
 	    goto write_obot;
     }
@@ -354,7 +428,7 @@ pnt_sampling_methods:
 
     if (s.Co3Ne) {
 	if (!pnts) {
-	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
+	    pnts = _tess_pnts_sample(dp->d_namep, dbip, &s);
 	}
 	//ret = co3ne_mesh(&obot, &intern, &ttol, &tol);
 	if (ret == BRLCAD_OK)
@@ -363,7 +437,7 @@ pnt_sampling_methods:
 
     if (s.ball_pivot) {
 	if (!pnts) {
-	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
+	    pnts = _tess_pnts_sample(dp->d_namep, dbip, &s);
 	}
 	//ret = ball_pivot_mesh(&obot, &intern, &ttol, &tol);
 	if (ret == BRLCAD_OK)
@@ -372,7 +446,7 @@ pnt_sampling_methods:
 
     if (s.screened_poisson) {
 	if (!pnts) {
-	    pnts = _tess_pnts_sample(dp->d_namep, gedp->dbip, &s);
+	    pnts = _tess_pnts_sample(dp->d_namep, dbip, &s);
 	}
 	//ret = spsr_mesh(&obot, &intern, &ttol, &tol);
 	if (ret == BRLCAD_OK)
@@ -381,9 +455,13 @@ pnt_sampling_methods:
 
 write_obot:
 
+    if (output_stdout) {
+	// TODO
+	return BRLCAD_OK;
+    }
     struct bu_vls obot_name = BU_VLS_INIT_ZERO;
     bu_vls_sprintf(&obot_name, "%s_tess.bot", dp->d_namep);
-    return _tess_facetize_write_bot(gedp->dbip, obot, bu_vls_cstr(&obot_name));
+    return _tess_facetize_write_bot(dbip, obot, bu_vls_cstr(&obot_name));
 }
 
 // Local Variables:
