@@ -58,9 +58,46 @@ void IFPainter::drawImage(int x, int y, int width, int height, std::string imgPa
 
 void IFPainter::drawTransparentImage(int x, int y, int width, int height, std::string imgPath, int threshold)
 {
-	cv::Mat foreground = cv::imread(imgPath, cv::IMREAD_UNCHANGED);
-    cv::Mat resized_image;
-    resize(foreground, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
+	cv::Mat imageRaw = cv::imread(imgPath, cv::IMREAD_UNCHANGED);
+	// Convert the image to grayscale for creating the mask
+	cv::Mat gray_image;
+	cv::cvtColor(imageRaw, gray_image, cv::COLOR_BGR2GRAY);
+	// Create a mask of non-white pixels
+	cv::Mat mask = gray_image < 255;
+	// Find the bounding rectangle of non-white pixels
+	cv::Rect bounding_rect = boundingRect(mask);
+	// Crop the image to the bounding rectangle
+	cv::Mat lilImage = imageRaw(bounding_rect);
+
+
+	int imgWidth = lilImage.size().width;
+	int imgHeight = lilImage.size().height;
+	int heightOffset = 0;
+	int widthOffset = 0;
+
+	if ((double)imgWidth / imgHeight > (double)width / height)
+	{
+		// image width is too large; bound on width
+		int newHeight = (int)(width * (double)imgHeight / imgWidth);
+		heightOffset = (height - newHeight) / 2;
+		height = newHeight;
+	}
+	else
+	{
+		// image height is too large; bound on height
+		int newWidth = (int)(height * (double)imgWidth / imgHeight);
+		widthOffset = (width - newWidth) / 2;
+		width = newWidth;
+	}
+
+	cv::Mat resized_image;
+
+	// prevent crashes
+	if (width <= 0) width = 1;
+	if (height <= 0) height = 1;
+
+	resize(lilImage, resized_image, cv::Size(width, height), cv::INTER_LINEAR);
+
     for(int r = 0; r < height; r++) {
 		for(int c = 0; c < width; c++) {
 			cv::Vec3b color = resized_image.at<cv::Vec3b>(cv::Point(c,r));
@@ -179,7 +216,7 @@ void IFPainter::drawImageTransparentFitted(int x, int y, int width, int height, 
     }
 }
 
-void IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
+int IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::string imgPath, std::string text)
 {
 	y += 65;
 	height -= 65;
@@ -226,13 +263,32 @@ void IFPainter::drawDiagramFitted(int x, int y, int width, int height, std::stri
 	}
 	catch (...) {
 		std::cerr << "Trying to create roi out of image boundaries" << std::endl;
-		return;
+		return -1;
 	}
 	resized_image.copyTo(destRoi);
 
+	// truncate title until it fits on line
+	int countCharDisplayedText = text.length();
+	getTextWidth(50, width, text, TO_BOLD); // needed for while loop to run correctly
+	while (getTextWidth(50, width, text, TO_BOLD) > width) {
+		if (countCharDisplayedText == text.length()) {
+			text = text + " ...";
+		}
+		if (text.length() >= 5) {
+			text.erase(text.length() - 5, 1);
+			countCharDisplayedText--;
+		}
+		while (text.length() >= 5 && text[text.length() - 5] == ' ') {
+        	// Remove the fifth-to-last character (if it is a space)
+        	text.erase(text.length() - 5, 1);
+			countCharDisplayedText--;
+    	}
+	}
 	// now, draw text and line
 	this->drawLine(x + widthOffset, y + heightOffset - 5, x + widthOffset + width, y + heightOffset - 5, 5, cv::Scalar(0, 0, 0));
 	this->drawTextCentered(x + widthOffset + width / 2, y + heightOffset - 65, 50, width, text, TO_BOLD);
+
+	return countCharDisplayedText;
 }
 
 //Helper funciton to support getting the width of a text
@@ -440,7 +496,7 @@ void IFPainter::textWrapping(int x1, int y1, int x2, int y2, int width, int heig
 {
 	if (ellipsis == TO_ELLIPSIS) {
 		if (numOfCharactersBeforeEllipsis < text.length()) {
-			text = text.substr(0, numOfCharactersBeforeEllipsis) + "...";
+			text = text.substr(0, numOfCharactersBeforeEllipsis) + " ...";
 		}
 	}
 	std::istringstream iss(text);

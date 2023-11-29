@@ -14,11 +14,9 @@ This code has been run and tested on:
 * Visual Studio
 * CMake
 
-
 ## External Deps  ##
 
 * BRL-CAD - Download latest version at https://brlcad.org/wiki/Compiling
-* Appleseed - Download latest version at appleseed - A modern, open source production renderer (appleseedhq.net)
 * OpenCV C++ - Download lastest version at https://docs.opencv.org/4.x/df/d65/tutorial_table_of_content_introduction.html
 * Boost - Download required version at Boost C++ Libraries download | SourceForge.net
 * CMake - Download latest CMake at https://cmake.org/
@@ -32,7 +30,7 @@ This tool is part of the BRL-CAD repository which you can download using git fro
 
 ## Tests ##
 
-No test suites are available yet, but will be listed here soon.
+End-to-end testing available by running `./bin/gist -p ../build/share/db/m35.g -f report.png` and comparing with provided expected report titled `TEST.png`.
 
 ## Execute Code ##
 ### Setting up BRL-CAD
@@ -63,7 +61,35 @@ Run the program using
 
 Example
 
-`./bin/gist -p ../../build/share/db/m35.g -f report.png`
+`./bin/gist -p ../build/share/db/m35.g -f report.png`
+
+### Command Line Arguments
+
+You can see these by running:
+`./bin/gist -h `
+
+    p = filepath
+    P = pixels per inch, default is 300ppi
+    F = path specified is a folder of models
+    E = path to folder to export reports. Used for processing folder of models
+    g = GUI output
+    f = filepath of png export, MUST end in .png
+    w = override name of owner of geometry file (defauts to system name), to be used in report
+    n = name of preparer, to be used in report
+    T = directory where rt and rtwizard executables are stored
+    c = classification of a file, to be displayed in uppercase on top and bottom of report.
+           * If the classification is a security access label, a corresponding color will be applied to the border
+           * Options: UNCLASSIFIED, CONFIDENTIAL, SECRET, TOP SECRET, <CUSTOM>
+    o = orientation of the file, default is right hand, flag will change orientation output to left hand
+    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up
+    N = notes that a user would like to add to be specified in the report
+    Z = option to re-use pre-made renders in the output folder.  Should only be used when running on the same model multiple times.
+    t = option to specify the top component of the report. Useful when there are multiple tops
+    l = override the default length units in a file.
+    L = filepath for optional logo.
+    m = override the default mass units in a file.
+    
+All options that allow entering in custom text should use double quotation marks ("") if you want to include spaces.
 
 ### Windows OS Setup
 1. Download and install OpenCV. Be sure to select “Windows” and the 4.6.0 version.
@@ -74,7 +100,11 @@ Example
 
 ## Environmental Variables/Files ##
 
-No environmental variables are needed yet, but they will be listed here soon.
+Every environmental needed to install BRL-CAD is needed. Consult the BRL-CAD documentation for more information.
+
+For this project specifically, the OpenCV Environmental Variable is needed which is:
+
+OpenCV_DIR
 
 ## Deployment ##
 
@@ -83,7 +113,6 @@ Since this application is a command line tool, no deployment is required.
 ## References ##
 
 https://brlcad.org/wiki/Compiling
-appleseed - A modern, open source production renderer (appleseedhq.net)
 
 ## Support ##
 

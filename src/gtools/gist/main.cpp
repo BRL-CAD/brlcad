@@ -64,7 +64,7 @@ bool readParameters(int argc, char** argv, Options &opt)
 
 
 
-    while ((opts = bu_getopt(argc, argv, "g?Oop:w:F:P:f:n:T:E:N:l:L:m:c:t:Z")) != -1) {
+    while ((opts = bu_getopt(argc, argv, "ghOop:w:F:P:f:n:T:E:N:l:L:m:c:t:Z")) != -1) {
 
         switch (opts) {
             case 'p':
@@ -126,7 +126,7 @@ bool readParameters(int argc, char** argv, Options &opt)
             case 'm':
                 opt.setUnitMass(bu_optarg);
                 break;
-            case '?':
+            case 'h':
                 h = true;
                 break;
             default:
@@ -144,12 +144,12 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    E = path to folder to export reports. Used for processing folder of models\n");
         bu_log("    g = GUI output\n");
         bu_log("    f = filepath of png export, MUST end in .png\n");
-        bu_log("    w = override name of owner of geometry file (defauts to system name), to be used in report\n");
+        bu_log("    w = override name of owner of geometry file (defaults to user's full/account name), to be used in report\n");
         bu_log("    n = name of preparer, to be used in report\n");
         bu_log("    T = directory where rt and rtwizard executables are stored\n");
         bu_log("    c = classification of a file, to be displayed in uppercase on top and bottom of report. \n");
         bu_log("           * If the classification is a security access label, a corresponding color will be applied to the border\n");
-        bu_log("           * Options: UNCLASSIFIED, CONFIDENTIAL, SECRET, TOP_SECRET, <CUSTOM>\n");
+        bu_log("           * Options: UNCLASSIFIED, CONFIDENTIAL, SECRET, TOP SECRET, <CUSTOM>\n");
         bu_log("    o = orientation of the file, default is right hand, flag will change orientation output to left hand\n");
         bu_log("    O = orientation of the file, default is +Z-up, flag will change orientation output to +Y-up\n");
         bu_log("    N = notes that a user would like to add to be specified in the report\n");
@@ -158,12 +158,13 @@ bool readParameters(int argc, char** argv, Options &opt)
         bu_log("    l = override the default length units in a file.\n");
         bu_log("    L = filepath for optional logo.\n");
         bu_log("    m = override the default mass units in a file.\n");
+        bu_log("All options that allow entering in custom text should use double quotation marks (\"\") if you want to include spaces.\n");
         return false;
     }
     //If user has no arguments or did not specify filepath, give shortened help
     else if (argc < 2 || (hasFolder == hasFile)) {
         bu_log("\nUsage:  %s [options] -p path/to/model.g\n", argv[0]);
-        bu_log("\nPlease specify the path to the file for report generation, use flag \"-?\" to see all options\n");
+        bu_log("\nPlease specify the path to the file for report generation, use flag \"-h\" to see all options\n");
         return false;
     } else if (!bu_file_exists(opt.getFilepath().c_str(), NULL)) {
         bu_log("ERROR: %s doesn't exist\n", opt.getFilepath().c_str());
@@ -208,18 +209,6 @@ void generateReport(Options opt)
 
     info.checkScientificNotation();
 
-    // Truncate title
-    std::string title = info.getInfo("title");
-    if (title.size() > 35) {
-        std::string continuation = title.substr(35);
-
-        if (opt.getNotes() == "None") {
-            opt.setNotes("Title: ..." + continuation);
-        } else {
-            opt.setNotes("Title: ..." + continuation + "\n" + opt.getNotes());
-        }
-    }
-
     // Define commonly used ratio variables
     int margin = opt.getWidth() / 150;
     int header_footer_height = opt.getLength() / 25;
@@ -240,14 +229,14 @@ void generateReport(Options opt)
     // draw all sections
     makeTopSection(img, info, topSection.x(), topSection.y(), topSection.width(), topSection.height());
     makeBottomSection(img, info, bottomSection.x(), bottomSection.y(), bottomSection.width(), bottomSection.height());
-    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
     makeRenderSection(img, info, renderSection.x(), renderSection.y(), renderSection.width(), renderSection.height(), opt);
+    makeFileInfoSection(img, info, fileSection.x(), fileSection.y(), fileSection.width(), fileSection.height(), opt);
     makeHierarchySection(img, info, hierarchySection.x(), hierarchySection.y(), hierarchySection.width(), hierarchySection.height(), opt);
     //brl-cad logo
     img.drawTransparentImage(3250, 10, 200, 200, "../src/gtools/gist/brlLogoW.jpg", 250);
     //branding logo
     if (opt.getLogopath() != ""){
-        img.drawTransparentImage(3350, 2360, 100, 90, opt.getLogopath());
+        img.drawTransparentImage(3250, 2280, 200, 200, opt.getLogopath(), 250);
     }
 
     // paint renderings

@@ -794,10 +794,22 @@ void makeRenderSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	std::vector<int> coords = bestLayout.getCoordinates(-1); // fetch ambient occlusion coordinates
 
 	std::string title = info.getInfo("title");
-	if (title.size() > 35)
-	{
-		title = title.substr(0, 34) + "...";
-	}
+	int countCharDisplayedTitle = img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
 
-	img.drawDiagramFitted(offsetX + coords[0], offsetY + coords[1], coords[2] - coords[0], coords[3] - coords[1], aRender, title);
+	if (countCharDisplayedTitle < title.length())
+	{
+		std::string continuation = title.substr(countCharDisplayedTitle);
+
+		// Remove trailing spaces from the beginning
+		size_t startPos = continuation.find_first_not_of(' ');
+		if (startPos != std::string::npos) {
+			continuation = continuation.substr(startPos);
+
+			if (opt.getNotes() == "None") {
+            	opt.setNotes("... " + continuation);
+			} else {
+				opt.setNotes("... " + continuation + "\n" + opt.getNotes());
+			}
+		}
+    }
 }

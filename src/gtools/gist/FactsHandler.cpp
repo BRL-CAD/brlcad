@@ -12,7 +12,7 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	else if (info.getInfo("classification") == "SECRET") {		//Red
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(46, 16, 200));
 	}
-	else if (info.getInfo("classification") == "TOP_SECRET") {	//Orange
+	else if (info.getInfo("classification") == "TOP SECRET") {	//Orange
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(31, 103, 255));
 	}
 	else {	//Draw black rectangle
@@ -24,12 +24,14 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	std::vector<std::string> text2;
 	std::string concatFile = info.getInfo("file");
 	std::string concatOwner = info.getInfo("owner");
+	/*
 	if (info.getInfo("file").size() > 20) {
         concatFile = info.getInfo("file").substr(0,15) + "... .g";
     }
 	if (info.getInfo("owner").size() > 20) {
         concatOwner = info.getInfo("owner").substr(0,15) + "...";
     }
+	*/
 	int endTextXPosition = 0;
 	if (info.getInfo("classification") != "") {
 		text.push_back("Owner: " + concatOwner);
@@ -58,7 +60,7 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	else if (info.getInfo("classification") == "SECRET") {		//Red
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(46, 16, 200));
 	}
-	else if (info.getInfo("classification") == "TOP_SECRET") {	//Orange
+	else if (info.getInfo("classification") == "TOP SECRET") {	//Orange
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(31, 103, 255));
 	}
 	else {	//Draw black rectangle
@@ -81,7 +83,6 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 		text.push_back("Date Generated : " + info.getInfo("dateGenerated"));
 		img.justify(offsetX, offsetY + textYOffset, textHeight, width, text, TO_WHITE);
 	}
-	//img.drawImageFitted(3350, 2360, 100, 90, "../src/gtools/gist/afcLogoB.jpg");
 }
 
 void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
@@ -113,9 +114,6 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, summaryTitle, TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("primitives") + " primitives, " + info.getInfo("regions_parts") + " regions");
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("groups_assemblies") + " assemblies");
-	//curiX++;
-	//img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Units", TO_BOLD);
-	//img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
 	curiX++;
 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Dimensions (x, y, z)", TO_BOLD);
 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getFormattedInfo("dimX"));
@@ -200,94 +198,6 @@ void makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX
 			// img.drawLine(offX + (N-1)*imgW + imgW/2 - imgW/10, offY+10, offX + (N-1)*imgW + imgW/2 + imgW/10, offY+10, 3, cv::Scalar(0, 0, 0));
     }
 }
-
-
-
-
-
-
-// Depricated Code
-
-
-
-
-
-// void makeVerificationSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-// 	// img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
-
-// 	int headerOffset = width / 20;
-// 	int textOffset = width / 10;
-// 	int textHeight = height / 30;
-// 	int textYOffset = textHeight * 8 / 5;
-
-// 	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeight, width, "Verification", TO_BOLD);
-
-// 	int curiX = 3;
-
-
-// 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Unit", TO_BOLD);
-// 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("units"));
-
-// 	curiX++;
-// 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Approximate Volume", TO_BOLD);
-// 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("volume"));
-// 	curiX++;
-// 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Surface Area", TO_BOLD);
-// 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("surfaceArea") + " (Projected)");
-// 	//img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, "(Sample) 128 m^2 (Projected)");
-// 	curiX++;
-// 	img.drawText(offsetX + headerOffset, offsetY + curiX++ * textYOffset, textHeight, width, "Mass", TO_BOLD);
-// 	img.drawText(offsetX + textOffset, offsetY + curiX++ * textYOffset, textHeight, width, info.getInfo("mass"));
-// }
-
-// void makeVVSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
-// 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
-
-// 	int boxOffset = width / 40;
-// 	int textHeightTitle = height / 20;
-// 	int textHeight = height / 30;
-// 	int textYOffset = textHeight * 8 / 5;
-
-// 	int textOffset = 2 * boxOffset + textHeight;
-
-// 	img.drawTextCentered(offsetX + width / 2, offsetY + textHeight, textHeightTitle, width, "V&V Checks", TO_BOLD);
-
-// 	// left side
-// 	int curX = offsetX;
-// 	int curY = offsetY + 2 * textOffset;
-// 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-// 	img.drawText(curX + textOffset, curY, textHeight, width, "Has Material Properties");
-// 	curY += textOffset;
-// 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-// 	img.drawText(curX + textOffset, curY, textHeight, width, "Has Optical Properties");
-// 	curY += textOffset;
-// 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-// 	img.drawText(curX + textOffset, curY, textHeight, width, "Has Analytical Properties");
-// 	curY += textOffset;
-
-// 	// right side
-// 	curX = offsetX + width*7/16;
-// 	curY = offsetY + 2 * textOffset;
-// 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-// 	img.drawText(curX + textOffset, curY, textHeight, width, "Watertight and Solid");
-// 	curY += textOffset;
-// 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-// 	img.drawText(curX + textOffset, curY, textHeight, width, "Has Overlaps/Interferences");
-// 	curY += textOffset;
-// 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-// 	img.drawText(curX + textOffset, curY, textHeight, width, "Has Domain-Specific Issues");
-// 	curY += textOffset;
-// 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-// 	img.drawText(curX + textOffset, curY, textHeight, width, "Suitable for Scientific Analysis");
-// 	curY += textOffset;
-// 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-// 	img.drawText(curX + textOffset, curY, textHeight, width, "Suitable for Gaming/Visualization");
-// 	curY += textOffset;
-// 	img.drawRect(curX + boxOffset, curY, curX + boxOffset + textHeight, curY + textHeight, 2, cv::Scalar(0, 0, 0));
-// 	img.drawText(curX + textOffset, curY, textHeight, width, "Suitable for 3D Printing");
-// 	curY += textOffset;
-// }
-
 
 // Local Variables:
 // tab-width: 8
