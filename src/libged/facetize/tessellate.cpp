@@ -217,20 +217,23 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 	return -1;
     }
 
-    // TODO - it may be worth doing this "on the fly" for larger meshes, to
-    // save our in-memory footprint during the boolean process...  save the
-    // temp .g files, stash the paths for later lookup, and clean them all up
-    // at the end...
+    // TODO - it may be worth doing the read-into-manifold "on the fly" for
+    // larger meshes, to save our in-memory footprint during the boolean
+    // process...  save the temp .g files, stash the paths for later lookup,
+    // and clean them all up at the end...
     //int fsize = bu_file_size(tmpfil);
 
     dbip = db_open(tmpfil, DB_OPEN_READONLY);
     if (!dbip) {
 	bu_log("Unable to open tessellation database %s for result reading\n", tmpfil);
+	bu_file_delete(tmpfil);
 	return -1;
     }
     if (db_dirbuild(dbip) < 0) {
         db_close(dbip);
         bu_log("db_dirbuild failed on output database file %s", tmpfil);
+	db_close(dbip);
+	bu_file_delete(tmpfil);
 	return -1;
     }
 
@@ -238,6 +241,8 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
     dp = db_lookup(dbip, oname.c_str(), LOOKUP_QUIET);
     if (!dp) {
 	bu_log("Unable to find tessellation output object %s\n", oname.c_str());
+	db_close(dbip);
+	bu_file_delete(tmpfil);
 	return -1;
     }
 
@@ -246,6 +251,8 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
     int ret = rt_db_get_internal(&obot_intern, dp, dbip, NULL, &rt_uniresource);
     if (ret < 0) {
 	bu_log("rt_db_get_internal failed for %s\n", oname.c_str());
+	db_close(dbip);
+	bu_file_delete(tmpfil);
 	return -1;
     }
     struct rt_bot_internal *nbot = (struct rt_bot_internal *)obot_intern.idb_ptr;
@@ -266,6 +273,11 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 
     // Passed - return the manifold
     (*out) = new manifold::Manifold(bot_manifold);
+
+    // Clean up the temporary .g file
+    rt_db_free_internal(&obot_intern);
+    db_close(dbip);
+    bu_file_delete(tmpfil);
     return 0;
 }
 
