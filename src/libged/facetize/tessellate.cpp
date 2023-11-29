@@ -271,7 +271,17 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
 	// If we're using pipes, we need to try and read in output from
 	// the child process's stdout pipe and assemble a bu_external that
 	// gets turned into the obot_intern
-
+	//
+	// TODO - there will probably be common code for both the parent and
+	// child here, and it may be generic beyond just facetize - the basic
+	// problem is to send an rt_db_internal between processes via pipes,
+	// and that's likely to be something we'll want for a lot of
+	// ged-command-as-subprocess scenarios.
+	//
+	// One option might be to take a page from the rt_read_cmd/rt_do_cmd
+	// logic and set up a reusable ged_geom_io.h file... the unpacking and
+	// packing logic, as well as the I/O assembly, feels like something
+	// that should be generic across multiple commands.
     }
 
     struct rt_bot_internal *nbot = (struct rt_bot_internal *)obot_intern.idb_ptr;
