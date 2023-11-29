@@ -28,6 +28,9 @@
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
+extern void _ged_facetize_log_nmg(struct _ged_facetize_state *s);
+extern void _ged_facetize_log_default(struct _ged_facetize_state *s);
+
 static union tree *
 facetize_region_end(struct db_tree_state *tsp,
 		    const struct db_full_path *pathp,

@@ -126,9 +126,6 @@ _ged_manifold_do_bool(
     if (!s)
 	return -1;
 
-    // Uncomment to see debugging output
-    //_ged_facetize_log_default(s);
-
     // Translate op for MANIFOLD
     manifold::OpType manifold_op = manifold::OpType::Add;
     switch (op) {
@@ -304,19 +301,16 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **arg
     } BU_UNSETJUMP;
 
     if (i < 0) {
-	_ged_facetize_log_default(s);
 	return -1;
     }
 
     // TODO - We don't have a tree - whether that's an error or not depends
     if (!s->facetize_tree) {
-	//_ged_facetize_log_default(s);
 	return 0;
     }
 
     ftree = rt_booltree_evaluate(s->facetize_tree, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource, &_ged_manifold_do_bool, 0, (void *)s);
     if (!ftree) {
-	_ged_facetize_log_default(s);
 	return -1;
     }
     if (ftree->tr_d.td_d) {

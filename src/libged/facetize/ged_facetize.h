@@ -200,9 +200,6 @@ _ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n);
 
 extern int _nonovlp_brep_facetize(struct _ged_facetize_state *s, int argc, const char **argv);
 
-extern void _ged_facetize_log_nmg(struct _ged_facetize_state *s);
-extern void _ged_facetize_log_default(struct _ged_facetize_state *s);
-
 __END_DECLS
 
 #endif /* LIBGED_FACETIZE_GED_PRIVATE_H */
