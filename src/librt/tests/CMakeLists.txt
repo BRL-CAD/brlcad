@@ -8,6 +8,9 @@ BRLCAD_ADD_TEST(NAME rt_pattern_5 COMMAND rt_pattern 5)
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${CMAKE_CURRENT_BINARY_DIR}/rt_pattern_test_5.plot3")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/rt_pattern_test_5.plot3")
 
+# TODO - need a round-trip test of piping bu_external geometry
+# between two programs.  Need to unpack and make sure the rt_db_internal
+# representations survive the process intact.
 
 BRLCAD_ADDEXEC(rt_dvec dvec.cpp "librt" NO_STRICT TEST)
 BRLCAD_ADD_TEST(NAME rt_dvec COMMAND rt_dvec)
