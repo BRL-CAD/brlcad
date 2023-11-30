@@ -85,7 +85,6 @@ set(LIBRT_SOURCES
   memalloc.c
   mkbundle.c
   op.c
-  pipe.cpp
   pr.c
   prep.cpp
   primitives/annot/annot.c

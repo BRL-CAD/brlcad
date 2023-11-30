@@ -46,8 +46,6 @@ _ged_facetize_state_create()
     s->retry = 0;
     s->in_place = 0;
 
-    s->no_pipes = 0;
-
     s->method_flags = 0;
 
     BU_GET(s->faceted_suffix, struct bu_vls);

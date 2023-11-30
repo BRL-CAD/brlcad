@@ -133,9 +133,6 @@ struct _ged_facetize_state {
     struct bu_vls *continuation_comb;
     struct bu_vls *spsr_comb;
 
-    /* Processing option */
-    int no_pipes;
-
     /* Internal - any C++ containers should be hidden here so
      * the C logging file doesn't choke on them */
     void *iptr;
