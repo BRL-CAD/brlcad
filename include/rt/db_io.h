@@ -991,6 +991,9 @@ RT_EXPORT extern size_t db5_type_sizeof_h_binu(const int minor);
 
 RT_EXPORT extern size_t db5_type_sizeof_n_binu(const int minor);
 
+RT_EXPORT extern int rt_send_external(FILE *pipe, struct bu_external *ext);
+RT_EXPORT extern int rt_read_external(struct bu_external **ext, int pipe, int timeout_ms, int coffset);
+
 __END_DECLS
 
 #endif /* RT_DB_IO_H */

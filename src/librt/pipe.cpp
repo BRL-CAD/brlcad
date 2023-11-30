@@ -98,11 +98,12 @@ rt_read_external(struct bu_external **ext, int pipe, int timeout_ms, int coffset
     int64_t elapsed = 0;
 
     // First, read the size of the ext buffer we're expecting
+    // TODO - harden this to spot if the process completes without sending us the right info...
     size_t ext_nbytes = 0;
     while (read(pipe, &ext_nbytes, sizeof(size_t)) != 1) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	elapsed = bu_gettime() - start;
-	if (elapsed > timeout_ms)
+	if (timeout_ms && elapsed > timeout_ms)
 	    return 0;
     }
 
