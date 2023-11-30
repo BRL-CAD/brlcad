@@ -131,6 +131,8 @@ manifold_tessellate(void **out, struct db_tree_state *tsp, const struct db_full_
     bu_vls_sprintf(&gname, "BRL-CAD_tess_%s_%llu", dp->d_namep, nhash);
     bu_vls_simplify(&gname, NULL, NULL, NULL);
     char tmpfil[MAXPATHLEN];
+    // TODO - this should probably be in the user cache, not the temp directory - we may
+    // want to persist this file beyond this process for resume/recovery operations.
     bu_dir(tmpfil, MAXPATHLEN, BU_DIR_TEMP, bu_temp_file_name(bu_vls_addr(&gname), 0), NULL);
 
     // Create the temporary database
