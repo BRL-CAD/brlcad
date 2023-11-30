@@ -127,6 +127,9 @@ main(int argc, char *argv[])
     // Done with prog name
     argc--; argv++;
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     struct bu_opt_desc d[4];
     BU_OPT(d[0], "h",    "help",  "", NULL, &print_help,  "Print help and exit");
     BU_OPT(d[1], "c",  "client",  "", NULL, &client_mode, "Receive data from server");
@@ -225,12 +228,16 @@ main(int argc, char *argv[])
     }
 
     if (client_mode) {
-	bu_log("client running\n");
-	std::this_thread::sleep_for(std::chrono::milliseconds(100000));
 
+	bu_log("client running\n");
 	// read bu_external from stdin
-	// unpack, generate new bu_external from internal
+	struct bu_external *ext = NULL;
+	rt_read_external(&ext, fileno(stdin), 0, 0);
+
+	// TODO - unpack, generate new bu_external from internal
 	// send new bu_external to stdout
+	rt_send_external(stdout, ext);
+	bu_free_external(ext);
     }
 
     return BRLCAD_OK;
