@@ -4,7 +4,8 @@ bool readParameters(int argc, char** argv, Options &opt);
 void generateReport(Options opt);
 void handleFolder(Options& opt);
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     Options options;
     if (readParameters(argc, argv, options)) {
         if (options.getIsFolder()) {
@@ -26,7 +27,8 @@ int main(int argc, char **argv) {
  *
  * @returns if the given parameters are valid.
  */
-bool readParameters(int argc, char** argv, Options &opt)
+bool
+readParameters(int argc, char** argv, Options &opt)
 {
     /*
     * A list of parameters is as follows:
@@ -185,7 +187,8 @@ bool readParameters(int argc, char** argv, Options &opt)
  *
  * @opt options to be used in report generation
  */
-void generateReport(Options opt)
+void
+generateReport(Options opt)
 {
     // create image frame
     IFPainter img(opt.getLength(), opt.getWidth());
@@ -259,7 +262,8 @@ void generateReport(Options opt)
  * @param options
  * @return * Checks
  */
-void handleFolder(Options& options)
+void
+handleFolder(Options& options)
 {
     int cnt = 1;
     for (const auto & entry : std::filesystem::directory_iterator(options.getFolder())) {

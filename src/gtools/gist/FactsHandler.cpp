@@ -1,7 +1,9 @@
 #include "FactsHandler.h"
 #include "RenderHandler.h"
 
-void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
+void
+makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
+{
 	//scalar color order is BGR
 	if (info.getInfo("classification") == "UNCLASSIFIED") {		//Green
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(51, 122, 0));
@@ -49,7 +51,9 @@ void makeTopSection(IFPainter& img, InformationGatherer& info, int offsetX, int 
 	}
 }
 
-void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height) {
+void
+makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height)
+{
 	//scalar color order is BGR
 	if (info.getInfo("classification") == "UNCLASSIFIED") {		//Green
 		img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(51, 122, 0));
@@ -85,7 +89,9 @@ void makeBottomSection(IFPainter& img, InformationGatherer& info, int offsetX, i
 	}
 }
 
-void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt) {
+void
+makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options &opt)
+{
 
 	// draw bounding rectangle
 	img.drawRect(offsetX, offsetY, offsetX + width, offsetY + height, -1, cv::Scalar(220, 220, 220));
@@ -136,7 +142,9 @@ void makeFileInfoSection(IFPainter& img, InformationGatherer& info, int offsetX,
 
 }
 
-void makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt) {
+void
+makeHierarchySection(IFPainter& img, InformationGatherer& info, int offsetX, int offsetY, int width, int height, Options& opt)
+{
 
 	int textOffset = width / 10;
 	int textHeight = height / 20;

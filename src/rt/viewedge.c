@@ -866,11 +866,13 @@ void view_setup(struct rt_i *UNUSED(rtip))
 /**
  * end of a frame, called after rt_clean()
  */
-void view_cleanup(struct rt_i *UNUSED(rtip))
+void
+view_cleanup(struct rt_i *UNUSED(rtip))
 {
 }
 
-void draw_pixel(const double x, const double y, const RGBpixel pixel)
+void
+draw_pixel(const double x, const double y, const RGBpixel pixel)
 {
     if (fbp != FB_NULL) {
         (void)fb_write(fbp, x, y, pixel, 1);
@@ -881,7 +883,8 @@ void draw_pixel(const double x, const double y, const RGBpixel pixel)
 }
 
 // Draws a 'X' with bottom left pixel location denoted by (X, Y).
-void draw_x_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
+void
+draw_x_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
 {
     if (!draw_axes) {
         return;
@@ -893,7 +896,8 @@ void draw_x_label(const double x, const double y, const unsigned int lineLength,
 }
 
 // Draws a 'Y' with bottom pixel location denoted by (X, Y).
-void draw_y_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
+void
+draw_y_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
 {
     if (!draw_axes) {
         return;
@@ -906,7 +910,8 @@ void draw_y_label(const double x, const double y, const unsigned int lineLength,
 }
 
 // Draws a 'Z' with bottom left pixel location denoted by (X, Y).
-void draw_z_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
+void
+draw_z_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
 {
     if (!draw_axes) {
         return;
@@ -921,7 +926,8 @@ void draw_z_label(const double x, const double y, const unsigned int lineLength,
 /**
  * end of each frame, draws axis aligned axes and origin if "draw_axes" is enabled
  */
-void view_end(struct application* ap)
+void
+view_end(struct application* ap)
 {
     if (!draw_axes || (fbp == NULL && bif == NULL)) {
         return;
@@ -944,7 +950,7 @@ void view_end(struct application* ap)
     const unsigned int OFFSET = 5;
 
     // front view
-    if (abs(azimuth) <= EPSILON && abs(elevation) <= EPSILON)
+    if (fabs(azimuth) <= EPSILON && fabs(elevation) <= EPSILON)
     {
         // drawing positive axis labels (+X, +Y, +Z)
         draw_z_label(modelCenter[0] - 5, modelCenter[1] + AXES_END + OFFSET, 10, pixel);
@@ -956,7 +962,7 @@ void view_end(struct application* ap)
         }
     }
     // top view
-    else if (abs(azimuth) <= EPSILON && abs(elevation - 90.0) <= EPSILON)
+    else if (fabs(azimuth) <= EPSILON && fabs(elevation - 90.0) <= EPSILON)
     {
         draw_x_label(modelCenter[0] - AXES_END - OFFSET - 7, modelCenter[1] - 5, 10, pixel);
         draw_y_label(modelCenter[0], modelCenter[1] - AXES_END - OFFSET - 10, 6, pixel);
@@ -966,7 +972,7 @@ void view_end(struct application* ap)
         }
     }
     // left view
-    else if (abs(azimuth - 270.0) <= EPSILON && abs(elevation) <= EPSILON) {
+    else if (fabs(azimuth - 270.0) <= EPSILON && fabs(elevation) <= EPSILON) {
         draw_z_label(modelCenter[0] - 5, modelCenter[1] + AXES_END + OFFSET, 10, pixel);
         draw_x_label(modelCenter[0] - AXES_END - OFFSET - 7, modelCenter[1] - 5, 10, pixel);
         for (int i = 1; i <= POSITIVE_AXES_EXTRA_LENGTH; i++) {
