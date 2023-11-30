@@ -27,7 +27,7 @@ jobs:
           sudo apt-get clean
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run Analyzer
         run: |
@@ -70,7 +70,7 @@ jobs:
 #         cache: 'true'
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure
         run: |
