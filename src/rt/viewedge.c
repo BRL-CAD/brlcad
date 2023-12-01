@@ -870,6 +870,9 @@ void view_cleanup(struct rt_i *UNUSED(rtip))
 {
 }
 
+/**
+ * draws a pixel depending on whether we're writing to a file or a window
+ */
 void draw_pixel(const double x, const double y, const RGBpixel pixel)
 {
     if (fbp != FB_NULL) {
@@ -880,7 +883,9 @@ void draw_pixel(const double x, const double y, const RGBpixel pixel)
     }
 }
 
-// Draws a 'X' with bottom left pixel location denoted by (X, Y).
+/**
+ * draws a 'X' with bottom left pixel location denoted by (X, Y).
+ */
 void draw_x_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
 {
     if (!draw_axes) {
@@ -892,7 +897,9 @@ void draw_x_label(const double x, const double y, const unsigned int lineLength,
     }
 }
 
-// Draws a 'Y' with bottom pixel location denoted by (X, Y).
+/**
+ * draws a 'Y' with bottom left pixel location denoted by (X, Y).
+ */
 void draw_y_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
 {
     if (!draw_axes) {
@@ -905,7 +912,9 @@ void draw_y_label(const double x, const double y, const unsigned int lineLength,
     }
 }
 
-// Draws a 'Z' with bottom left pixel location denoted by (X, Y).
+/**
+ * Draws a 'Z' with bottom left pixel location denoted by(X, Y).
+ */
 void draw_z_label(const double x, const double y, const unsigned int lineLength, const RGBpixel pixel)
 {
     if (!draw_axes) {
@@ -946,7 +955,8 @@ void view_end(struct application* ap)
     // front view
     if (abs(azimuth) <= EPSILON && abs(elevation) <= EPSILON)
     {
-        // drawing positive axis labels (+X, +Y, +Z)
+        // drawing positive axis labels (+X, +Y, +Z).
+        // The added magic numbers are used to offset the space taken up by the label.
         draw_z_label(modelCenter[0] - 5, modelCenter[1] + AXES_END + OFFSET, 10, pixel);
         draw_y_label(modelCenter[0] + AXES_END + OFFSET + 3, modelCenter[1] - 5, 6, pixel);
         for (int i = 1; i <= POSITIVE_AXES_EXTRA_LENGTH; i++) {
