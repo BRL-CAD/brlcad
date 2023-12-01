@@ -26,7 +26,6 @@ set(FACETIZE_SRCS
   facetize_log.c
   nmg_booleval.cpp
   regions.cpp
-  tessellate.cpp
   tri_booleval.cpp
   util.cpp
   )

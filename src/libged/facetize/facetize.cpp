@@ -155,11 +155,12 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
 	newname = (char *)bu_vls_cstr(&oname);
     }
 
-    /* Done with dpa */
-    bu_free(dpa, "dp array");
-
     /* If we're doing an NMG output, use the old-school libnmg booleval */
     if (s->make_nmg) {
+
+	/* Done with dpa */
+	bu_free(dpa, "dp array");
+
 	ret = _ged_facetize_nmgeval(s, argc, argv, newname);
 	bu_vls_free(&oname);
 
@@ -171,7 +172,7 @@ _ged_facetize_objs(struct _ged_facetize_state *s, int argc, const char **argv)
     }
 
     // If we're not doing NMG, use the Manifold booleval
-    ret = _ged_facetize_booleval(s, argc, argv, newname);
+    ret = _ged_facetize_booleval(s, newobj_cnt, dpa, newname);
 
     // Check for the in-place flag
     if (ret == BRLCAD_OK && s->in_place)

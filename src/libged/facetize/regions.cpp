@@ -460,7 +460,7 @@ _ged_facetize_region_obj(struct _ged_facetize_state *s, const char *oname, const
 	    bu_log("%s", bu_vls_addr(s->log_s->nmg_log_header));
 	}
 
-	ret = _ged_facetize_booleval(s, 1, (const char **)&oname, sname);
+	//ret = _ged_facetize_booleval(s, 1, (const char **)&oname, sname);
 
 	if (ret != FACETIZE_FAILURE) {
 	    if (_ged_methodcomb_add(s, sname, FACETIZE_METHOD_NMG) != BRLCAD_OK && s->verbosity > 1) {
@@ -785,9 +785,9 @@ _ged_facetize_regions(struct _ged_facetize_state *s, int argc, const char **argv
 	    }
 	    s->log_s->nmg_log_print_header = 1;
 
-	    if (_ged_facetize_booleval(s, 1, (const char **)&argv[i], bu_avs_get(s->s_map, argv[i])) != BRLCAD_OK) {
-		return BRLCAD_ERROR;
-	    }
+	    //if (_ged_facetize_booleval(s, 1, (const char **)&argv[i], bu_avs_get(s->s_map, argv[i])) != BRLCAD_OK) {
+	//	return BRLCAD_ERROR;
+	 //   }
 	}
     }
 

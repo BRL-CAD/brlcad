@@ -51,6 +51,7 @@ struct tess_opts {
     fastf_t fsize;
     fastf_t feature_scale;
     fastf_t d_feature_size;
+    int overwrite_obj;
     int max_time;
     int max_pnts;
     struct bg_3d_spsr_opts s_opts;
@@ -61,7 +62,7 @@ struct tess_opts {
     fastf_t target_feature_size;
 };
 
-#define TESS_OPTS_DEFAULT {0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 50000, BG_3D_SPSR_OPTS_DEFAULT, NULL, NULL, 0.0, 0.0, 0.0}
+#define TESS_OPTS_DEFAULT {0, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 50000, BG_3D_SPSR_OPTS_DEFAULT, NULL, NULL, 0.0, 0.0, 0.0}
 
 extern int
 half_to_bot(struct rt_bot_internal **obot, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);

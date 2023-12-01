@@ -184,7 +184,7 @@ extern int
 _ged_facetize_nmgeval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname);
 
 extern int
-_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname);
+_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *newname);
 
 extern int
 _ged_continuation_obj(struct _ged_facetize_state *s, const char *objname, const char *newname);

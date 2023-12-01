@@ -28,6 +28,8 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <iostream>
+#include <fstream>
 
 #include <string.h>
 
@@ -37,12 +39,86 @@
 #endif
 
 #include "bu/app.h"
+#include "bu/path.h"
+#include "bu/time.h"
 #include "../ged_private.h"
 #include "./ged_facetize.h"
 
+// Translate flags to ged_tessellate opts.  These need to match the options
+// used by that executable to specify algorithms.
+static const char *
+method_opt(int *method_flags, struct directory *dp)
+{
+    switch (dp->d_minor_type) {
+	case ID_DSP:
+	    // DSP primitives need to avoid the methodology, since NMG
+	    // doesn't seem to work very well
+	    // TODO - revisit this if we get a better NMG facetize, perhaps
+	    // using http://mgarland.org/software/terra.html
+	    *method_flags = *method_flags & ~(FACETIZE_METHOD_NMG);
+	    break;
+	default:
+	    break;
+    }
+
+    // NMG is best, when it works
+    static const char *nmg_opt = "--nmg";
+    if (*method_flags & FACETIZE_METHOD_NMG) {
+	*method_flags = *method_flags & ~(FACETIZE_METHOD_NMG);
+	return nmg_opt;
+    }
+
+    // CM is currently the best bet fallback
+    static const char *cm_opt = "--cm";
+    if (*method_flags & FACETIZE_METHOD_CONTINUATION) {
+	*method_flags = *method_flags & ~(FACETIZE_METHOD_CONTINUATION);
+	return cm_opt;
+    }
+
+    // SPSR via point sampling is currently our only option for a non-manifold
+    // input
+    static const char *spsr_opt = "--spsr";
+    if (*method_flags & FACETIZE_METHOD_SPSR) {
+	*method_flags = *method_flags & ~(FACETIZE_METHOD_SPSR);
+	return spsr_opt;
+    }
+
+    // If we've exhausted the methods available, no option is available
+    return NULL;
+}
+
+static int
+bot_to_manifold(void **out, struct db_tree_state *tsp, struct rt_db_internal *ip)
+{
+    if (!out || !tsp || !ip)
+	return BRLCAD_ERROR;
+
+    // By this point all leaves should be bots
+    if (ip->idb_minor_type != ID_BOT)
+	return BRLCAD_ERROR;
+
+    struct rt_bot_internal *nbot = (struct rt_bot_internal *)ip->idb_ptr;
+
+    manifold::Mesh bot_mesh;
+    for (size_t j = 0; j < nbot->num_vertices ; j++)
+	bot_mesh.vertPos.push_back(glm::vec3(nbot->vertices[3*j], nbot->vertices[3*j+1], nbot->vertices[3*j+2]));
+    for (size_t j = 0; j < nbot->num_faces; j++)
+	bot_mesh.triVerts.push_back(glm::vec3(nbot->faces[3*j], nbot->faces[3*j+1], nbot->faces[3*j+2]));
+
+    manifold::Manifold bot_manifold = manifold::Manifold(bot_mesh);
+    if (bot_manifold.Status() != manifold::Manifold::Error::NoError) {
+	// Urk - we got a mesh, but it's no good for a Manifold(??)
+	return BRLCAD_ERROR;
+    }
+
+    // Passed - return the manifold
+    (*out) = new manifold::Manifold(bot_manifold);
+    return 0;
+}
+
 // Customized version of rt_booltree_leaf_tess for Manifold processing
 static union tree *
-_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *data)
+_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(data))
 {
     int ts_status = 0;
     union tree *curtree;
@@ -64,13 +140,9 @@ _booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp,
 
 
     void *odata = NULL;
-    // TODO - update this to create Manifolds from working .g BoTs, rather than calling
-    // ged_tessellate - that should have been done in the previous step.  May be worth
-    // using a different tree walk so we don't end up creating rt_db_internals for non
-    // comb objects in the original tree.
-    ts_status = manifold_tessellate(&odata, tsp, pathp, ip, data);
+    ts_status = bot_to_manifold(&odata, tsp, ip);
     if (ts_status < 0) {
-	// If nothing worked, return TREE_NULL
+	// If we failed, return TREE_NULL
 	return TREE_NULL;
     }
 
@@ -121,8 +193,8 @@ facetize_region_end(struct db_tree_state *tsp,
     return TREE_NULL;
 }
 
-int
-_ged_manifold_do_bool(
+static int
+manifold_do_bool(
         union tree *tp, union tree *tl, union tree *tr,
         int op, struct bu_list *UNUSED(vlfree), const struct bn_tol *UNUSED(tol), void *data)
 {
@@ -146,7 +218,7 @@ _ged_manifold_do_bool(
 	    manifold_op = manifold::OpType::Add;
     };
 
-    // manifold_tessellate should have prepared our Manifold inputs - now
+    // By this point we should have prepared our Manifold inputs - now
     // it's a question of doing the evaluation
 
     // We're either working with the results of CSG NMG tessellations,
@@ -266,57 +338,173 @@ _ged_manifold_do_bool(
 }
 
 int
-_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **argv, const char *newname)
+_ged_facetize_booleval(struct _ged_facetize_state *s, int argc, struct directory **dpa, const char *newname)
 {
     if (!s)
 	return BRLCAD_ERROR;
 
-    if (!argc || !argv)
+    if (!argc || !dpa)
 	return BRLCAD_ERROR;
 
-    int i;
     struct ged *gedp = s->gedp;
 
     /* First stage is to process the primitive instances */
+    const char *sfilter = "! -type comb";
+    struct bu_ptbl leaf_dps = BU_PTBL_INIT_ZERO;
+    if (db_search(&leaf_dps, DB_SEARCH_RETURN_UNIQ_DP, sfilter, argc, dpa, gedp->dbip, NULL) < 0) {
+	// Empty input - nothing to facetize;
+	return BRLCAD_ERROR;
+    }
 
-    // Find dp leaves in specified tree(s)
+    /* OK, we have work to do. Figure out the working .g filename */
+    struct bu_vls wfilename = BU_VLS_INIT_ZERO;
+    struct bu_vls bname = BU_VLS_INIT_ZERO;
+    struct bu_vls dname = BU_VLS_INIT_ZERO;
+    bu_path_component(&bname, gedp->dbip->dbi_filename, BU_PATH_BASENAME);
+    bu_path_component(&dname, gedp->dbip->dbi_filename, BU_PATH_DIRNAME);
+    unsigned long long hash_num = bu_str_hash(bu_vls_cstr(&dname));
+    bu_vls_free(&dname);
+    // TODO - Hash the path to the .g file - the filename and path in combination should be unique, so we
+    // can avoid collisions between .g files with the same name in different directories
+    bu_vls_sprintf(&wfilename, "%lld_%s_tess.g", hash_num, bu_vls_cstr(&bname));
+    bu_vls_free(&bname);
+    char wfile[MAXPATHLEN];
+    bu_dir(wfile, MAXPATHLEN, BU_DIR_CACHE, bu_vls_cstr(&wfilename), NULL);
+    bu_vls_free(&wfilename);
+
+    /* TODO - If we're resuming, see if we already have an appropriately named
+     * .g file.  If we don't, or we're not resuming, make the working copy. */
     // Copy current .g file to a temp file name for processing
-    // Sort out dp objects by d_len and type
-    // Call ged_tessellate to produce evaluated solids
-    // Open working .g copy READONLY so we can load BoTs from it
+    std::ifstream orig_file(gedp->dbip->dbi_filename, std::ios::binary);
+    std::ofstream work_file(wfile, std::ios::binary);
+    if (!orig_file.is_open() || !work_file.is_open())
+	return BRLCAD_ERROR;
+    work_file << orig_file.rdbuf();
+    orig_file.close();
+    work_file.close();
+
+    // TODO - Sort out dp objects by d_len and type
+
+    // Build up the path to the ged_tessellate executable
+    char tess_exec[MAXPATHLEN];
+    bu_dir(tess_exec, MAXPATHLEN, BU_DIR_BIN, "ged_tessellate", BU_DIR_EXT, NULL);
+
+    // Call ged_tessellate to produce evaluated solids - TODO batch
+    // into groupings that can be fed to ged_tessellate for parallel
+    // processing, with fallback to individual if parallel fails
+    // Build up the command to run
+    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
+    struct bu_vls abs_str = BU_VLS_INIT_ZERO;
+    struct bu_vls rel_str = BU_VLS_INIT_ZERO;
+    struct bu_vls norm_str = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&abs_str, "%0.17f", wdbp->wdb_ttol.abs);
+    bu_vls_sprintf(&rel_str, "%0.17f", wdbp->wdb_ttol.rel);
+    bu_vls_sprintf(&norm_str, "%0.17f", wdbp->wdb_ttol.norm);
+    int method_flags = s->method_flags;
+    const char *tess_cmd[MAXPATHLEN] = {NULL};
+    tess_cmd[ 0] = tess_exec;
+    tess_cmd[ 1] = "--tol-abs";
+    tess_cmd[ 2] = bu_vls_cstr(&abs_str);
+    tess_cmd[ 3] = "--tol-rel";
+    tess_cmd[ 4] = bu_vls_cstr(&rel_str);
+    tess_cmd[ 5] = "--tol-norm";
+    tess_cmd[ 6] = bu_vls_cstr(&norm_str);
+    tess_cmd[ 7] = NULL;
+    tess_cmd[ 8] = "-O";
+    tess_cmd[ 9] = wfile;
+
+    for (size_t i = 0; i < BU_PTBL_LEN(&leaf_dps); i++) {
+	struct directory *ldp = (struct directory *)BU_PTBL_GET(&leaf_dps, i);
+	tess_cmd[10] = ldp->d_namep;
+	// There are a number of methods that can be tried.  We try them in priority
+	// order, timing out if one of them goes too long.
+	int rc = -1;
+	method_flags = s->method_flags;
+	tess_cmd[7] = method_opt(&method_flags, ldp);
+	while (tess_cmd[7]) {
+	    int aborted = 0, timeout = 0;
+	    int64_t start = bu_gettime();
+	    int64_t elapsed = 0;
+	    fastf_t seconds = 0.0;
+	    struct bu_process *p = NULL;
+	    bu_process_exec(&p, tess_cmd[0], 11, tess_cmd, 0, 0);
+	    while (!timeout && p && (bu_process_pid(p) != -1)) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		elapsed = bu_gettime() - start;
+		seconds = elapsed / 1000000.0;
+		if (seconds > s->max_time) {
+		    bu_terminate(bu_process_pid(p));
+		    timeout = 1;
+		}
+	    }
+	    int w_rc = bu_process_wait(&aborted, p, 0);
+	    rc = (timeout) ? -1 : w_rc;
+
+	    if (rc == BRLCAD_OK)
+		break;
+
+	    tess_cmd[7] = method_opt(&method_flags, ldp);
+	}
+
+	if (rc != BRLCAD_OK) {
+	    // If we tried all the methods and didn't get any successes, we have an
+	    // error.  We can either terminate the whole conversion based on this
+	    // failure, or ignore this object and process the remainder of the
+	    // tree.  The latter will be incorrect if this object was supposed to
+	    // materially contribute to the final object shape, but for some
+	    // applications like visualization there are cases where "something is
+	    // better than nothing" applies
+	    return -1;
+	}
+    }
+
+    // Open working .g copy with BoTs replacing CSG solids and perform
+    // the tree walk to set up Manifold data.  Using the working copy
+    // means we will be getting the correct triangle data for each solid
+    const char **av = (const char **)bu_calloc(argc+1, sizeof(char *), "av");
+    for (int i = 0; i < argc; i++) {
+	av[i] = dpa[i]->d_namep;
+    }
+    struct db_i *wdbip = db_open(wfile, DB_OPEN_READONLY);
+    if (!wdbip)
+	return BRLCAD_ERROR;
+    if (db_dirbuild(wdbip) < 0)
+	return BRLCAD_ERROR;
+    db_update_nref(wdbip, &rt_uniresource);
+    struct rt_wdb *wwdbp = wdb_dbopen(wdbip, RT_WDB_TYPE_DB_DEFAULT);
 
     /* Second stage is to instance the BoTs generated by stage 1 and
      * prepare Manifold inputs for evaluation */
-    union tree *ftree = NULL;
-    struct db_tree_state init_state;
-    struct rt_wdb *wdbp = wdb_dbopen(gedp->dbip, RT_WDB_TYPE_DB_DEFAULT);
-    db_init_db_tree_state(&init_state, gedp->dbip, wdbp->wdb_resp);
-    /* Establish tolerances */
-    init_state.ts_ttol = &wdbp->wdb_ttol;
-    init_state.ts_tol = &wdbp->wdb_tol;
-    init_state.ts_m = NULL;
-    s->facetize_tree = (union tree *)0;
+    {
+	struct db_tree_state init_state;
+	db_init_db_tree_state(&init_state, wdbip, wwdbp->wdb_resp);
+	/* Establish tolerances */
+	init_state.ts_ttol = &wwdbp->wdb_ttol;
+	init_state.ts_tol = &wwdbp->wdb_tol;
+	init_state.ts_m = NULL;
+	s->facetize_tree = (union tree *)0;
+	int i = 0;
+	if (!BU_SETJUMP) {
+	    /* try */
+	    i = db_walk_tree(wdbip, argc, av,
+		    1,
+		    &init_state,
+		    0,			/* take all regions */
+		    facetize_region_end,
+		    _booltree_leaf_tess,
+		    (void *)s
+		    );
+	} else {
+	    /* catch */
+	    BU_UNSETJUMP;
+	    i = -1;
+	} BU_UNSETJUMP;
 
-    /* First stage is to process the primitive instances */
-    if (!BU_SETJUMP) {
-	/* try */
-	i = db_walk_tree(gedp->dbip, argc, (const char **)argv,
-			 1,
-			&init_state,
-			 0,			/* take all regions */
-			 facetize_region_end,
-			 _booltree_leaf_tess,
-			 (void *)s
-			);
-    } else {
-	/* catch */
-	BU_UNSETJUMP;
-	i = -1;
-    } BU_UNSETJUMP;
-
-    if (i < 0) {
-	return -1;
+	if (i < 0) {
+	    return -1;
+	}
     }
+    bu_free(av, "av");
 
     // TODO - We don't have a tree - whether that's an error or not depends
     if (!s->facetize_tree) {
@@ -324,10 +512,16 @@ _ged_facetize_booleval(struct _ged_facetize_state *s, int argc, const char **arg
     }
 
     // Third stage is to execute the boolean operations
-    ftree = rt_booltree_evaluate(s->facetize_tree, &RTG.rtg_vlfree, &wdbp->wdb_tol, &rt_uniresource, &_ged_manifold_do_bool, 0, (void *)s);
+    union tree *ftree = rt_booltree_evaluate(s->facetize_tree, &RTG.rtg_vlfree, &wwdbp->wdb_tol, &rt_uniresource, &manifold_do_bool, 0, (void *)s);
     if (!ftree) {
 	return -1;
     }
+
+    // By this point, we should be done with the temporary copy
+    // TODO - this needs to be cleaned up in other error cases
+    db_close(wdbip);
+    bu_file_delete(wfile);
+
     if (ftree->tr_d.td_d) {
 	manifold::Manifold *om = (manifold::Manifold *)ftree->tr_d.td_d;
 	manifold::Mesh rmesh = om->GetMesh();
